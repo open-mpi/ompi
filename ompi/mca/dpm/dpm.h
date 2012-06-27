@@ -9,7 +9,6 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -31,7 +30,7 @@
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 
-#include "orca/include/rte_orca.h"
+#include "orte/mca/rml/rml_types.h"
 #include "ompi/info/info.h"
 #include "ompi/communicator/communicator.h"
 
@@ -39,9 +38,9 @@ BEGIN_C_DECLS
 
 /* OMPI port definitions */
 /* carry over the INVALID def */
-#define OMPI_RML_TAG_INVALID                        ORCA_OOB_TAG_INVALID
+#define OMPI_RML_TAG_INVALID                        ORTE_RML_TAG_INVALID
 /* define a starting point to avoid conflicts */
-#define OMPI_RML_TAG_BASE                           ORCA_OOB_TAG_MAX
+#define OMPI_RML_TAG_BASE                           ORTE_RML_TAG_MAX
 
 #define OMPI_RML_TAG_UDAPL                          OMPI_RML_TAG_BASE+1
 #define OMPI_RML_TAG_OPENIB                         OMPI_RML_TAG_BASE+2
@@ -117,20 +116,20 @@ typedef void (*ompi_dpm_base_module_mark_dyncomm_fn_t)(ompi_communicator_t *comm
  * specified tag is valid, then it will be used to form the port. Otherwise,
  * a dynamically assigned tag that is unique to this request will be provided
  */
-typedef int (*ompi_dpm_base_module_open_port_fn_t)(char *port_name, orca_oob_tag_t tag);
+typedef int (*ompi_dpm_base_module_open_port_fn_t)(char *port_name, orte_rml_tag_t tag);
 
 /*
  * Converts an opaque port string to a RML process nane and tag.
  */
 typedef int (*ompi_dpm_base_module_parse_port_name_t)(char *port_name,
                                                       char **hnp_uri, char **rml_uri,
-                                                      orca_oob_tag_t *tag);
+                                                      orte_rml_tag_t *tag);
 
 /* 
  * Update the routed component to make sure that the RML can send messages to
  * the remote port
  */
-typedef int (*ompi_dpm_base_module_route_to_port_t)(char *rml_uri, orca_process_name_t *rproc);
+typedef int (*ompi_dpm_base_module_route_to_port_t)(char *rml_uri, orte_process_name_t *rproc);
 
 
 /*

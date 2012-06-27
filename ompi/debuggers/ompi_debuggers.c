@@ -11,7 +11,6 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007-2011 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -73,7 +72,9 @@
 #include "ompi/datatype/ompi_datatype.h"
 #include "ompi/include/mpi.h"
 
-#include "orca/include/rte_orca.h"
+#include "orte/mca/errmgr/errmgr.h"
+#include "orte/mca/rml/rml.h"
+#include "orte/runtime/orte_globals.h"
 
 #if defined(OMPI_MSGQ_DLL)
 /* This variable is old/deprecated -- the mpimsgq_dll_locations[]
@@ -169,17 +170,17 @@ void ompi_wait_for_debugger(void)
 {
     int i, debugger;
     char *a, *b, **dirs, **tmp1 = NULL, **tmp2 = NULL;
-#if ORCA_WITH_FULL_ORTE_SUPPORT
+#if !ORTE_DISABLE_FULL_SUPPORT
     opal_buffer_t buf;
     int rc;
 #endif
 
     /* See lengthy comment in orte/tools/orterun/debuggers.c about
        orte_in_parallel_debugger */
-#if !ORCA_WITH_FULL_ORTE_SUPPORT
+#if ORTE_DISABLE_FULL_SUPPORT
     debugger = 0;
 #else
-    debugger = orca_info_in_parallel_debugger();
+    debugger = orte_in_parallel_debugger;
 #endif
 
     /* Add in environment variables for other launchers, such as yod,
@@ -224,8 +225,8 @@ void ompi_wait_for_debugger(void)
     mpimsgq_dll_locations = tmp1;
     mpidbg_dll_locations = tmp2;
 
-#if ORCA_WITH_FULL_ORTE_SUPPORT
-    if (orca_info_standalone_operation()) {
+#if !ORTE_DISABLE_FULL_SUPPORT
+    if (orte_standalone_operation) {
 #endif
         /* spin until debugger attaches and releases us */
         while (MPIR_debug_gate == 0) {
@@ -237,7 +238,7 @@ void ompi_wait_for_debugger(void)
             sleep(1);       /* seconds */
 #endif
         }
-#if ORCA_WITH_FULL_ORTE_SUPPORT
+#if !ORTE_DISABLE_FULL_SUPPORT
     } else {
     
         /* only the rank=0 proc waits for either a message from the
@@ -245,21 +246,21 @@ void ompi_wait_for_debugger(void)
          * spin in * the grpcomm barrier in ompi_mpi_init until rank=0
          * joins them.
          */
-        if (0 != orca_process_info_get_vpid(ORCA_PROC_MY_NAME) ) {
+        if (0 != ORTE_PROC_MY_NAME->vpid) {
             return;
         }
     
         /* VPID 0 waits for a message from the HNP */
         OBJ_CONSTRUCT(&buf, opal_buffer_t);
-        rc = orca_oob_recv_buffer(ORCA_NAME_WILDCARD, &buf, 
-                                       ORCA_OOB_TAG_DEBUGGER_RELEASE, 0);
+        rc = orte_rml.recv_buffer(ORTE_NAME_WILDCARD, &buf, 
+                                  ORTE_RML_TAG_DEBUGGER_RELEASE, 0);
         OBJ_DESTRUCT(&buf);  /* don't care about contents of message */
         if (rc < 0) {
             /* if it failed for some reason, then we are in trouble -
              * for now, just report the problem and give up waiting
              */
             opal_output(0, "Debugger_attach[rank=%ld]: could not wait for debugger!",
-                        (long)orca_process_info_get_vpid(ORCA_PROC_MY_NAME) );
+                        (long)ORTE_PROC_MY_NAME->vpid);
         }
     }
 #endif

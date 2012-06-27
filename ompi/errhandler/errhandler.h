@@ -12,7 +12,6 @@
  *                         All rights reserved.
  * Copyright (c) 2008-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2008-2009 Sun Microsystems, Inc.  All rights reserved.
- * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -36,7 +35,7 @@
 #include "ompi/errhandler/errhandler_predefined.h"
 #include "ompi/errhandler/errcode-internal.h"
 
-#include "orca/include/rte_orca.h"
+#include "orte/types.h"
 
 BEGIN_C_DECLS
 

@@ -11,7 +11,6 @@
  *                         All rights reserved.
  * Copyright (c) 2008-2011 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
- * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -943,7 +942,7 @@ void mca_btl_sctp_component_accept(void)
  */
 static void mca_btl_sctp_component_recv_handler(int sd, short flags, void* user)
 {
-    orca_process_name_t guid;
+    orte_process_name_t guid;
     struct sockaddr_in addr;
     int retval;
     mca_btl_sctp_proc_t* btl_proc;
@@ -967,7 +966,7 @@ static void mca_btl_sctp_component_recv_handler(int sd, short flags, void* user)
     }
     SCTP_BTL_ERROR(("mca_btl_sctp_component_recv_handler() sd=%d, got %d byte guid.\n", sd, retval));
 
-    ORCA_PROCESS_NAME_NTOH(guid);
+    ORTE_PROCESS_NAME_NTOH(guid);
    
     /* lookup the corresponding process */
     btl_proc = mca_btl_sctp_proc_lookup(&guid);

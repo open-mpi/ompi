@@ -10,7 +10,6 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2011 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -91,28 +90,6 @@ int orte_show_help(const char *filename, const char *topic,
     output = opal_show_help_vstring(filename, topic, want_error_header, 
                                     arglist);
     va_end(arglist);
-    
-    /* If nothing came back, there's nothing to do */
-    if (NULL == output) {
-        return ORTE_SUCCESS;
-    }
-    
-    opal_output(0, "%s", output);
-    return ORTE_SUCCESS;
-}
-
-int orte_show_helpv(const char *filename, const char *topic, 
-                    bool want_error_header, va_list arglist)
-{
-    /* JJH: We can combine this with the non-va_list version in the future */
-    char *output;
-    
-    if (orte_execute_quiet) {
-        return ORTE_SUCCESS;
-    }
-    
-    output = opal_show_help_vstring(filename, topic, want_error_header, 
-                                    arglist);
     
     /* If nothing came back, there's nothing to do */
     if (NULL == output) {

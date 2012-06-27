@@ -14,7 +14,7 @@
  * Copyright (c) 2007-2009 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
+ *
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -26,7 +26,7 @@
 #include "ompi_config.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param.h"
-#include "orca/include/rte_orca.h"
+#include "orte/util/proc_info.h"
 #include "ompi/runtime/params.h"
 #include "mpool_grdma.h"
 #ifdef HAVE_UNISTD_H

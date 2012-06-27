@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007-2012 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2009-2012 Oak Ridge National Labs.  All rights reserved.
+ * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -41,7 +41,7 @@
 #include "opal/memoryhooks/memory.h"
 #include "opal/mca/base/mca_base_param.h"
 
-#include "orca/include/rte_orca.h"
+#include "orte/util/show_help.h"
 
 #include "ompi/tools/ompi_info/ompi_info.h"
 #include "ompi/include/mpi_portable_platform.h"
@@ -140,7 +140,7 @@ void ompi_info_do_params(bool want_all_in, bool want_internal)
             
             if (!found) {
                 char *usage = opal_cmd_line_get_usage_msg(ompi_info_cmd_line);
-                orca_show_help("help-ompi_info.txt", "not-found", true, type);
+                orte_show_help("help-ompi_info.txt", "not-found", true, type);
                 free(usage);
                 exit(1);
             }
@@ -445,7 +445,7 @@ void ompi_info_do_path(bool want_all, opal_cmd_line_t *cmd_line)
                 ompi_info_show_path(ompi_info_path_pkgincludedir, opal_install_dirs.pkgincludedir);
             } else {
                 char *usage = opal_cmd_line_get_usage_msg(cmd_line);
-                orca_show_help("help-ompi_info.txt", "usage", true, usage);
+                orte_show_help("help-ompi_info.txt", "usage", true, usage);
                 free(usage);
                 exit(1);
             }
@@ -656,11 +656,7 @@ void ompi_info_do_config(bool want_all)
     fortran_usempi_profiling = (OMPI_ENABLE_MPI_PROFILING && OMPI_BUILD_FORTRAN_USEMPI_BINDINGS) ? "yes" : "no";
     fortran_usempif08_profiling = (OMPI_ENABLE_MPI_PROFILING && OMPI_BUILD_FORTRAN_USEMPIF08_BINDINGS) ? "yes" : "no";
     want_libltdl = OPAL_WANT_LIBLTDL ? "yes" : "no";
-#if ORCA_WITH_ORTE_SUPPORT
     mpirun_prefix_by_default = ORTE_WANT_ORTERUN_PREFIX_BY_DEFAULT ? "yes" : "no";
-#else 
-    log_event = "no";
-#endif /* ORCA_WITH_ORTE_SUPPORT */
     sparse_groups = OMPI_GROUP_SPARSE ? "yes" : "no";
     have_mpi_io = OMPI_PROVIDE_MPI_FILE_INTERFACE ? "yes" : "no";
     wtime_support = OPAL_TIMER_USEC_NATIVE ? "native" : "gettimeofday";

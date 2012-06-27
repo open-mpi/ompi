@@ -14,7 +14,6 @@
  * Copyright (c) 2008-2011 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
- * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -33,17 +32,17 @@
 #include "opal_stdint.h"
 #include "ompi/constants.h"
 #include "opal/prefetch.h"
-
-#include "orca/include/rte_orca.h"
-
+#include "orte/util/show_help.h"
 #include "ompi/mca/btl/btl.h"
 #include "opal/mca/timer/base/base.h"
 #include "opal/util/argv.h"
 #include "opal/mca/base/mca_base_param.h"
-
+#include "orte/mca/errmgr/errmgr.h"
 #include "ompi/mca/btl/base/base.h"
 #include "ompi/runtime/ompi_module_exchange.h"
 #include "ompi/runtime/mpiruntime.h"
+
+#include "orte/runtime/orte_globals.h"
 
 #include "btl_ofud.h"
 #include "btl_ofud_frag.h"
@@ -440,7 +439,7 @@ mca_btl_base_module_t** mca_btl_ud_component_init(int* num_btl_modules,
     *num_btl_modules = 0;
     num_devs = 0;
 
-    seedv[0] = orca_process_info_get_vpid(ORCA_PROC_MY_NAME);
+    seedv[0] = ORTE_PROC_MY_NAME->vpid;
     seedv[1] = opal_timer_base_get_cycles();
     seedv[2] = opal_timer_base_get_cycles();
     seed48(seedv);
@@ -452,7 +451,7 @@ mca_btl_base_module_t** mca_btl_ud_component_init(int* num_btl_modules,
         mca_btl_ofud_component.if_list = NULL;
     if (NULL != mca_btl_ofud_component.if_include &&
         NULL != mca_btl_ofud_component.if_exclude) {
-        orca_show_help("help-mpi-btl-openib.txt",
+        orte_show_help("help-mpi-btl-openib.txt",
                        "specified include and exclude", true,
                        mca_btl_ofud_component.if_include,
                        mca_btl_ofud_component.if_exclude, NULL);
@@ -554,14 +553,14 @@ mca_btl_base_module_t** mca_btl_ud_component_init(int* num_btl_modules,
     mca_btl_ofud_component.ud_btls = (mca_btl_ud_module_t*)
         malloc(sizeof(mca_btl_ud_module_t) * mca_btl_ofud_component.num_btls);
     if(NULL == mca_btl_ofud_component.ud_btls) {
-        ORCA_ERROR_LOG(ORCA_ERR_OUT_OF_RESOURCE);
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         return NULL;
     }
 
     btls = (struct mca_btl_base_module_t**)
         malloc(mca_btl_ofud_component.num_btls * sizeof(mca_btl_ud_module_t*));
     if(NULL == btls) {
-        ORCA_ERROR_LOG(ORCA_ERR_OUT_OF_RESOURCE);
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         return NULL;
     }
 

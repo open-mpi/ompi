@@ -4,7 +4,6 @@
 # Copyright (c) 2009      High Performance Computing Center Stuttgart, 
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
-# Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -14,9 +13,6 @@
 
 
 EXTRA_DIST = .windows
-
-CFLAGS = $(dpm_orte_CFLAGS)
-AM_CPPFLAGS = $(dpm_orte_CPPFLAGS)
 
 dist_pkgdata_DATA = help-ompi-dpm-orte.txt
 

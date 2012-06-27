@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007-2011 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
- * Copyright (c) 2009-2012 Oak Ridge National Laboratory
+ * Copyright (c) 2009      Oak Ridge National Laboratory
  * Copyright (c) 2012      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * $COPYRIGHT$
@@ -57,7 +57,9 @@
 #include "opal/util/net.h"
 #include "opal/mca/base/mca_base_param.h"
 
-#include "orca/include/rte_orca.h"
+#include "orte/types.h"
+#include "orte/util/show_help.h"
+#include "orte/mca/ess/ess.h"
 
 #include "ompi/constants.h"
 #include "ompi/mca/btl/btl.h"
@@ -213,8 +215,8 @@ static int mca_btl_tcp_component_register(void)
         mca_btl_tcp_param_register_int( "port_min_v4",
             "The minimum port where the TCP BTL will try to bind (default 1024)", 1024 );
     if( mca_btl_tcp_component.tcp_port_min > USHRT_MAX ) {
-        orca_show_help("help-mpi-btl-tcp.txt", "invalid minimum port",
-                       true, "v4", orca_process_info_get_nodename(),
+        orte_show_help("help-mpi-btl-tcp.txt", "invalid minimum port",
+                       true, "v4", orte_process_info.nodename,
                        mca_btl_tcp_component.tcp_port_min );
         mca_btl_tcp_component.tcp_port_min = 1024;
     }
@@ -232,8 +234,8 @@ static int mca_btl_tcp_component_register(void)
         mca_btl_tcp_param_register_int( "port_min_v6",
             "The minimum port where the TCP BTL will try to bind (default 1024)", 1024 );
     if( mca_btl_tcp_component.tcp6_port_min > USHRT_MAX ) {
-        orca_show_help("help-mpi-btl-tcp.txt", "invalid minimum port",
-                       true, "v6", orca_process_info_get_nodename(),
+        orte_show_help("help-mpi-btl-tcp.txt", "invalid minimum port",
+                       true, "v6", orte_process_info.nodename,
                        mca_btl_tcp_component.tcp6_port_min );
         mca_btl_tcp_component.tcp6_port_min = 1024;
     }
@@ -279,10 +281,10 @@ static int mca_btl_tcp_component_register(void)
 
         if (NULL != argv && '\0' != *(argv[0])) {
             int if_index, rc, count;
-            orca_node_rank_t node_rank;
+            orte_node_rank_t node_rank;
             char name[256];
 
-            node_rank = orca_node_info_get_rank(ORCA_PROC_MY_NAME);
+            node_rank = orte_ess.get_node_rank(ORTE_PROC_MY_NAME);
 
             /* Now that we've got that local rank, take the
                corresponding entry from the tcp_if_seq list (wrapping
@@ -304,10 +306,10 @@ static int mca_btl_tcp_component_register(void)
                 }
             }
             if (if_index < 0) {
-                orca_show_help("help-mpi-btl-tcp.txt", 
+                orte_show_help("help-mpi-btl-tcp.txt", 
                                "invalid if_inexclude",
                                true, "if_seq",
-                               orca_process_info_get_nodename(),
+                               orte_process_info.nodename,
                                mca_btl_tcp_component.tcp_if_seq,
                                "Interface does not exist");
                 return OMPI_ERR_BAD_PARAM;
@@ -518,8 +520,8 @@ static char **split_and_resolve(char **orig_str, char *name)
         tmp = strdup(argv[i]);
         str = strchr(argv[i], '/');
         if (NULL == str) {
-            orca_show_help("help-mpi-btl-tcp.txt", "invalid if_inexclude",
-                           true, name, orca_process_info_get_nodename(), 
+            orte_show_help("help-mpi-btl-tcp.txt", "invalid if_inexclude",
+                           true, name, orte_process_info.nodename, 
                            tmp, "Invalid specification (missing \"/\")");
             free(argv[i]);
             free(tmp);
@@ -535,8 +537,8 @@ static char **split_and_resolve(char **orig_str, char *name)
         free(argv[i]);
 
         if (1 != ret) {
-            orca_show_help("help-mpi-btl-tcp.txt", "invalid if_inexclude",
-                           true, name, orca_process_info_get_nodename(), tmp,
+            orte_show_help("help-mpi-btl-tcp.txt", "invalid if_inexclude",
+                           true, name, orte_process_info.nodename, tmp,
                            "Invalid specification (inet_pton() failed)");
             free(tmp);
             continue;
@@ -562,8 +564,8 @@ static char **split_and_resolve(char **orig_str, char *name)
         
         /* If we didn't find a match, keep trying */
         if (if_index < 0) {
-            orca_show_help("help-mpi-btl-tcp.txt", "invalid if_inexclude",
-                           true, name, orca_process_info_get_nodename(), tmp,
+            orte_show_help("help-mpi-btl-tcp.txt", "invalid if_inexclude",
+                           true, name, orte_process_info.nodename, tmp,
                            "Did not find interface matching this subnet");
             free(tmp);
             continue;
@@ -1126,7 +1128,7 @@ static void mca_btl_tcp_component_accept_handler( int incoming_sd,
  */
 static void mca_btl_tcp_component_recv_handler(int sd, short flags, void* user)
 {
-    orca_process_name_t guid;
+    orte_process_name_t guid;
     struct sockaddr_storage addr;
     int retval;
     mca_btl_tcp_proc_t* btl_proc;
@@ -1141,7 +1143,7 @@ static void mca_btl_tcp_component_recv_handler(int sd, short flags, void* user)
         CLOSE_THE_SOCKET(sd);
         return;
     }
-    ORCA_PROCESS_NAME_NTOH(guid);
+    ORTE_PROCESS_NAME_NTOH(guid);
 
     /* now set socket up to be non-blocking */
     if((flags = fcntl(sd, F_GETFL, 0)) < 0) {

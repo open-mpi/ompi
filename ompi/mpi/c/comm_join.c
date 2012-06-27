@@ -11,7 +11,6 @@
  *                         All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -35,7 +34,8 @@
 #include <netinet/in.h>
 #endif
 
-#include "orca/include/rte_orca.h"
+#include "orte/util/name_fns.h"
+#include "orte/runtime/orte_globals.h"
 
 #include "ompi/mpi/c/bindings.h"
 #include "ompi/runtime/params.h"
@@ -64,7 +64,7 @@ int MPI_Comm_join(int fd, MPI_Comm *intercomm)
     int send_first=0;
     char *rport;
     char *my_name, *remote_name;
-    orca_process_name_t rname;
+    orte_process_name_t rname;
 
     ompi_communicator_t *newcomp;
     char port_name[MPI_MAX_PORT_NAME];
@@ -87,8 +87,7 @@ int MPI_Comm_join(int fd, MPI_Comm *intercomm)
     }
     
     /* send my process name */
-    if (OMPI_SUCCESS != (rc = orca_process_info_get_name_as_string(&my_name,
-                                                                        ORCA_PROC_MY_NAME))) {
+    if (ORTE_SUCCESS != (rc = orte_util_convert_process_name_to_string(&my_name, ORTE_PROC_MY_NAME))) {
         *intercomm = MPI_COMM_NULL;
         OPAL_CR_EXIT_LIBRARY();
         return MPI_ERR_INTERN;
@@ -110,7 +109,7 @@ int MPI_Comm_join(int fd, MPI_Comm *intercomm)
     }
     ompi_socket_recv(fd, remote_name, lrlen);
     /* convert the remote name */
-    if (OMPI_SUCCESS != (rc = orca_process_info_convert_string_to_name(&rname, remote_name))) {
+    if (ORTE_SUCCESS != (rc = orte_util_convert_string_to_process_name(&rname, remote_name))) {
         free(remote_name);
         *intercomm = MPI_COMM_NULL;
         OPAL_CR_EXIT_LIBRARY();
@@ -119,10 +118,10 @@ int MPI_Comm_join(int fd, MPI_Comm *intercomm)
     free(remote_name);
 
     /* compare the two to get send_first */
-    if (orca_process_info_get_jobid(ORCA_PROC_MY_NAME) == rname.jobid) {
-        if (orca_process_info_get_vpid(ORCA_PROC_MY_NAME) < rname.vpid) {
+    if (ORTE_PROC_MY_NAME->jobid == rname.jobid) {
+        if (ORTE_PROC_MY_NAME->vpid < rname.vpid) {
             send_first = true;
-        } else if (orca_process_info_get_vpid(ORCA_PROC_MY_NAME) == rname.vpid) {
+        } else if (ORTE_PROC_MY_NAME->vpid == rname.vpid) {
             /* joining to myself is not allowed */
             *intercomm = MPI_COMM_NULL;
             OPAL_CR_EXIT_LIBRARY();
@@ -130,7 +129,7 @@ int MPI_Comm_join(int fd, MPI_Comm *intercomm)
         } else {
             send_first = false;
         }
-    } else if (orca_process_info_get_jobid(ORCA_PROC_MY_NAME) < rname.jobid) {
+    } else if (ORTE_PROC_MY_NAME->jobid < rname.jobid) {
         send_first = true;
     }
 

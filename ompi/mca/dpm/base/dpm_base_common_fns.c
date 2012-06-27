@@ -14,7 +14,7 @@
  * Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2007      Cisco Systems, Inc. All rights reserved.
- * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
+ *
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -237,7 +237,7 @@ void ompi_dpm_base_mark_dyncomm (ompi_communicator_t *comm)
     int i;
     int size, rsize;
     bool found=false;
-    orca_jobid_t thisjobid;
+    orte_jobid_t thisjobid;
     ompi_group_t *grp=NULL;
     ompi_proc_t *proc = NULL;
 

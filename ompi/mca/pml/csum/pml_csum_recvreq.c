@@ -16,7 +16,6 @@
  *                         reserved. 
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
- * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -30,7 +29,9 @@
 #include "opal/util/crc.h"
 #include "opal/util/output.h"
 
-#include "orca/include/rte_orca.h"
+#include "orte/mca/errmgr/errmgr.h"
+#include "orte/util/name_fns.h"
+#include "orte/runtime/orte_globals.h"
 
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/bml/bml.h" 
@@ -268,7 +269,7 @@ int mca_pml_csum_recv_request_ack_send_btl(
     ack->hdr_common.hdr_csum = opal_csum16(ack, sizeof(mca_pml_csum_ack_hdr_t));
     
     OPAL_OUTPUT_VERBOSE((1, mca_pml_base_output,
-                         "%s Sending \'ACK\' with header csum:0x%04x\n", ORCA_NAME_PRINT(ORCA_PROC_MY_NAME), ack->hdr_common.hdr_csum));
+                         "%s Sending \'ACK\' with header csum:0x%04x\n", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ack->hdr_common.hdr_csum));
 
     csum_hdr_hton(ack, MCA_PML_CSUM_HDR_TYPE_ACK, proc);
 
@@ -365,8 +366,8 @@ static void mca_pml_csum_rget_completion( mca_btl_base_module_t* btl,
     /* check completion status */
     if( OPAL_UNLIKELY(OMPI_SUCCESS != status) ) {
         /* TSW - FIX */
-        ORCA_ERROR_LOG(status);
-        orca_error_mgr_abort(-1, NULL);
+        ORTE_ERROR_LOG(status);
+        orte_errmgr.abort(-1, NULL);
     }
 
     mca_pml_csum_send_fin(recvreq->req_recv.req_base.req_proc,
@@ -433,8 +434,8 @@ int mca_pml_csum_recv_request_get_frag( mca_pml_csum_rdma_frag_t* frag )
             OPAL_THREAD_UNLOCK(&mca_pml_csum.lock);
             return OMPI_ERR_OUT_OF_RESOURCE;
         } else {
-            ORCA_ERROR_LOG(rc);
-            orca_error_mgr_abort(-1, NULL);
+            ORTE_ERROR_LOG(rc);
+            orte_errmgr.abort(-1, NULL);
         }
     }
 
@@ -492,12 +493,12 @@ void mca_pml_csum_recv_request_progress_frag( mca_pml_csum_recv_request_t* recvr
         csum = recvreq->req_recv.req_base.req_convertor.checksum;
         OPAL_OUTPUT_VERBOSE((1, mca_pml_base_output,
                              "%s Received \'frag\' with data csum:0x%x, frag csum:0x%04x, size:%lu\n",
-                             ORCA_NAME_PRINT(ORCA_PROC_MY_NAME), csum, hdr->hdr_frag.hdr_csum, (unsigned long)bytes_received));
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), csum, hdr->hdr_frag.hdr_csum, (unsigned long)bytes_received));
         if(csum != hdr->hdr_frag.hdr_csum) {
             opal_output(0, "%s:%s:%d: Invalid \'frag data\' - received csum:0x%x  != computed csum:0x%x\n",
-                        ORCA_NAME_PRINT(ORCA_PROC_MY_NAME), __FILE__, __LINE__, hdr->hdr_frag.hdr_csum, csum);
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), __FILE__, __LINE__, hdr->hdr_frag.hdr_csum, csum);
             dump_csum_error_data(segments, num_segments);
-            orca_error_mgr_abort(-1,NULL);
+            orte_errmgr.abort(-1,NULL);
         }
     }
     OPAL_THREAD_ADD_SIZE_T(&recvreq->req_bytes_received, bytes_received);
@@ -541,8 +542,8 @@ void mca_pml_csum_recv_request_progress_rget( mca_pml_csum_recv_request_t* recvr
     MCA_PML_CSUM_RDMA_FRAG_ALLOC(frag,rc);
     if( OPAL_UNLIKELY(NULL == frag) ) {
         /* GLB - FIX */
-         ORCA_ERROR_LOG(rc);
-         orca_error_mgr_abort(-1, NULL);
+         ORTE_ERROR_LOG(rc);
+         orte_errmgr.abort(-1, NULL);
     }
 
     /* lookup bml datastructures */
@@ -569,7 +570,7 @@ void mca_pml_csum_recv_request_progress_rget( mca_pml_csum_recv_request_t* recvr
     frag->rdma_bml = mca_bml_base_btl_array_find(&bml_endpoint->btl_rdma, btl);
     if( OPAL_UNLIKELY(NULL == frag->rdma_bml) ) {
         opal_output(0, "[%s:%d] invalid bml for rdma get", __FILE__, __LINE__);
-        orca_error_mgr_abort(-1, NULL);
+        orte_errmgr.abort(-1, NULL);
     }
     frag->rdma_hdr.hdr_rget = *hdr;
     frag->rdma_req = recvreq;
@@ -635,12 +636,12 @@ void mca_pml_csum_recv_request_progress_rndv( mca_pml_csum_recv_request_t* recvr
         csum = recvreq->req_recv.req_base.req_convertor.checksum;
         OPAL_OUTPUT_VERBOSE((1, mca_pml_base_output,
                              "%s Received \'rndv\' with csum:0x%x, header csum:0x%04x, size:%lu\n",
-                             ORCA_NAME_PRINT(ORCA_PROC_MY_NAME), csum, hdr->hdr_match.hdr_csum, (unsigned long)bytes_received));
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), csum, hdr->hdr_match.hdr_csum, (unsigned long)bytes_received));
         if (csum != hdr->hdr_match.hdr_csum) {
             opal_output(0, "%s:%s:%d: Invalid \'rndv data\' - received csum:0x%x  != computed csum:0x%x\n",
-                        ORCA_NAME_PRINT(ORCA_PROC_MY_NAME), __FILE__, __LINE__, hdr->hdr_match.hdr_csum, csum);
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), __FILE__, __LINE__, hdr->hdr_match.hdr_csum, csum);
             dump_csum_error_data(segments, num_segments);
-            orca_error_mgr_abort(-1,NULL);
+            orte_errmgr.abort(-1,NULL);
         }
     }
     OPAL_THREAD_ADD_SIZE_T(&recvreq->req_bytes_received, bytes_received);
@@ -692,12 +693,12 @@ void mca_pml_csum_recv_request_progress_match( mca_pml_csum_recv_request_t* recv
         csum = recvreq->req_recv.req_base.req_convertor.checksum;
         OPAL_OUTPUT_VERBOSE((1, mca_pml_base_output,
                              "%s Received \'match\' with csum:0x%x, header csum:0x%04x, size:%lu\n",
-                             ORCA_NAME_PRINT(ORCA_PROC_MY_NAME), csum, hdr->hdr_match.hdr_csum, (unsigned long)bytes_received));
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), csum, hdr->hdr_match.hdr_csum, (unsigned long)bytes_received));
         if (csum != hdr->hdr_match.hdr_csum) {
             opal_output(0, "%s:%s:%d: Invalid \'match data\' - received csum:0x%x  != computed csum:0x%x\n",
-                        ORCA_NAME_PRINT(ORCA_PROC_MY_NAME), __FILE__, __LINE__, hdr->hdr_match.hdr_csum, csum);
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), __FILE__, __LINE__, hdr->hdr_match.hdr_csum, csum);
             dump_csum_error_data(segments, num_segments);
-            orca_error_mgr_abort(-1,NULL);
+            orte_errmgr.abort(-1,NULL);
         }
     }
 
@@ -874,7 +875,7 @@ int mca_pml_csum_recv_request_schedule_once( mca_pml_csum_recv_request_t* recvre
         
         OPAL_OUTPUT_VERBOSE((1, mca_pml_base_output,
                              "%s Sending \'PUT\' with header csum:0x%04x\n",
-                             ORCA_NAME_PRINT(ORCA_PROC_MY_NAME), hdr->hdr_common.hdr_csum));
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), hdr->hdr_common.hdr_csum));
         
         csum_hdr_hton(hdr, MCA_PML_CSUM_HDR_TYPE_PUT, recvreq->req_recv.req_base.req_proc);
 

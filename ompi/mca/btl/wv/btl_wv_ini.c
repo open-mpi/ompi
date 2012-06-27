@@ -13,7 +13,6 @@
  * Copyright (c) 2008      Mellanox Technologies. All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
- * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -31,8 +30,7 @@
 #include <unistd.h>
 #endif
 
-#include "orca/include/rte_orca.h"
-
+#include "orte/util/show_help.h"
 #include "opal/mca/base/mca_base_param.h"
 
 #include "btl_wv.h"
@@ -243,7 +241,7 @@ static int parse_file(char *filename)
     ini_filename = filename;
     btl_wv_ini_yyin = fopen(filename, "r");
     if (NULL == btl_wv_ini_yyin) {
-        orca_show_help("help-mpi-btl-wv.txt", "ini file:file not found",
+        orte_show_help("help-mpi-btl-wv.txt", "ini file:file not found",
                        true, filename);
         ret = OMPI_ERR_NOT_FOUND;
         goto cleanup;
@@ -420,7 +418,7 @@ static int parse_line(parsed_section_values_t *sv)
         /* Have no idea what this parameter is.  Not an error -- just
            ignore it */
         if (!showed_unknown_field_warning) {
-            orca_show_help("help-mpi-btl-wv.txt",
+            orte_show_help("help-mpi-btl-wv.txt",
                            "ini file:unknown field", true,
                            ini_filename, btl_wv_ini_yynewlines,
                            key_buffer);
@@ -689,7 +687,7 @@ static inline void show_help(const char *topic)
     if (0 == strcmp("\n", btl_wv_ini_yytext)) {
         btl_wv_ini_yytext = "<end of line>";
     }
-    orca_show_help("help-mpi-btl-wv.txt", topic, true,
+    orte_show_help("help-mpi-btl-wv.txt", topic, true,
                    ini_filename, btl_wv_ini_yynewlines,
                    btl_wv_ini_yytext);
     btl_wv_ini_yytext = save;

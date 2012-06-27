@@ -13,7 +13,7 @@
  * Copyright (c) 2006      Sandia National Laboratories. All rights
  *                         reserved.
  * Copyright (c) 2007-2009 Sun Microsystems, Inc.  All rights reserved.
- * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
+ *
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -28,8 +28,8 @@
 #include "ompi/types.h"
 #include "opal/align.h"
 
-#include "orca/include/rte_orca.h"
-
+#include "orte/mca/rml/rml.h"
+#include "orte/mca/errmgr/errmgr.h"
 #include "opal/dss/dss.h"
 #include "opal/class/opal_pointer_array.h"
 
@@ -46,9 +46,9 @@
 
 static void mca_btl_udapl_endpoint_send_cb(
     int status,
-    orca_process_name_t* endpoint, 
+    orte_process_name_t* endpoint, 
     opal_buffer_t* buffer,
-    orca_oob_tag_t tag,
+    orte_rml_tag_t tag,
     void* cbdata);
 static int mca_btl_udapl_start_connect(mca_btl_base_endpoint_t* endpoint);
 static int mca_btl_udapl_endpoint_post_recv(
@@ -57,9 +57,9 @@ static int mca_btl_udapl_endpoint_post_recv(
 void mca_btl_udapl_endpoint_connect(mca_btl_udapl_endpoint_t* endpoint);
 void mca_btl_udapl_endpoint_recv(
     int status,
-    orca_process_name_t* endpoint, 
+    orte_process_name_t* endpoint, 
     opal_buffer_t* buffer,
-    orca_oob_tag_t tag,
+    orte_rml_tag_t tag,
     void* cbdata);
 static int mca_btl_udapl_endpoint_finish_eager(mca_btl_udapl_endpoint_t*);
 static int mca_btl_udapl_endpoint_finish_max(mca_btl_udapl_endpoint_t*);
@@ -322,8 +322,8 @@ int mca_btl_udapl_endpoint_send(mca_btl_base_endpoint_t* endpoint,
 }
 
 
-static void mca_btl_udapl_endpoint_send_cb(int status, orca_process_name_t* endpoint, 
-        opal_buffer_t* buffer, orca_oob_tag_t tag, void* cbdata)
+static void mca_btl_udapl_endpoint_send_cb(int status, orte_process_name_t* endpoint, 
+        opal_buffer_t* buffer, orte_rml_tag_t tag, void* cbdata)
 {
     OBJ_RELEASE(buffer);
 }
@@ -523,7 +523,7 @@ static int mca_btl_udapl_start_connect(mca_btl_base_endpoint_t* endpoint)
     int rc;
 
     if(NULL == buf) {
-        ORCA_ERROR_LOG(ORCA_ERR_OUT_OF_RESOURCE);
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
@@ -532,21 +532,21 @@ static int mca_btl_udapl_start_connect(mca_btl_base_endpoint_t* endpoint)
     /* Pack our address information */
     rc = opal_dss.pack(buf, &addr->port, 1, OPAL_UINT64);
     if(OPAL_SUCCESS != rc) {
-        ORCA_ERROR_LOG(rc);
+        ORTE_ERROR_LOG(rc);
         return rc;
     }
 
     rc = opal_dss.pack(buf, &addr->addr, sizeof(DAT_SOCK_ADDR), OPAL_UINT8);
     if(OPAL_SUCCESS != rc) {
-        ORCA_ERROR_LOG(rc);
+        ORTE_ERROR_LOG(rc);
         return rc;
     }
 
     /* Send the buffer */
-    rc = orca_oob_send_buffer_nb(&endpoint->endpoint_proc->proc_ompi->proc_name, buf,
+    rc = orte_rml.send_buffer_nb(&endpoint->endpoint_proc->proc_ompi->proc_name, buf,
             OMPI_RML_TAG_UDAPL, 0, mca_btl_udapl_endpoint_send_cb, NULL);
     if(0 > rc) {
-        ORCA_ERROR_LOG(rc);
+        ORTE_ERROR_LOG(rc);
         return rc;
     }
 
@@ -555,8 +555,8 @@ static int mca_btl_udapl_start_connect(mca_btl_base_endpoint_t* endpoint)
 }
 
 
-void mca_btl_udapl_endpoint_recv(int status, orca_process_name_t* endpoint, 
-        opal_buffer_t* buffer, orca_oob_tag_t tag, void* cbdata)
+void mca_btl_udapl_endpoint_recv(int status, orte_process_name_t* endpoint, 
+        opal_buffer_t* buffer, orte_rml_tag_t tag, void* cbdata)
 {
     mca_btl_udapl_addr_t addr;
     mca_btl_udapl_proc_t* proc;
@@ -568,14 +568,14 @@ void mca_btl_udapl_endpoint_recv(int status, orca_process_name_t* endpoint,
     /* Unpack data */
     rc = opal_dss.unpack(buffer, &addr.port, &cnt, OPAL_UINT64);
     if(OPAL_SUCCESS != rc) {
-        ORCA_ERROR_LOG(rc);
+        ORTE_ERROR_LOG(rc);
         return;
     }
 
     cnt = sizeof(mca_btl_udapl_addr_t);
     rc = opal_dss.unpack(buffer, &addr.addr, &cnt, OPAL_UINT8);
     if(OPAL_SUCCESS != rc) {
-        ORCA_ERROR_LOG(rc);
+        ORTE_ERROR_LOG(rc);
         return;
     }
 
@@ -587,7 +587,7 @@ void mca_btl_udapl_endpoint_recv(int status, orca_process_name_t* endpoint,
                 opal_list_get_end(&mca_btl_udapl_component.udapl_procs);
             proc  = (mca_btl_udapl_proc_t*)opal_list_get_next(proc)) {
 
-        if(OPAL_EQUAL == orca_process_name_compare(ORCA_NAME_CMP_ALL, &proc->proc_ompi->proc_name, endpoint)) {
+        if(OPAL_EQUAL == orte_util_compare_name_fields(ORTE_NS_CMP_ALL, &proc->proc_ompi->proc_name, endpoint)) {
             for(i = 0; i < proc->proc_endpoint_count; i++) {
                 ep = proc->proc_endpoints[i];
 
@@ -613,8 +613,8 @@ void mca_btl_udapl_endpoint_recv(int status, orca_process_name_t* endpoint,
 
 void mca_btl_udapl_endpoint_post_oob_recv(void)
 {
-    orca_oob_recv_buffer_nb(ORCA_NAME_WILDCARD, OMPI_RML_TAG_UDAPL,
-            ORCA_OOB_PERSISTENT, mca_btl_udapl_endpoint_recv, NULL);
+    orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, OMPI_RML_TAG_UDAPL,
+            ORTE_RML_PERSISTENT, mca_btl_udapl_endpoint_recv, NULL);
 }
 
 
@@ -631,7 +631,7 @@ void mca_btl_udapl_endpoint_connect(mca_btl_udapl_endpoint_t* endpoint)
     /* Nasty test to prevent deadlock and unwanted connection attempts */
     /* This right here is the whole point of using the ORTE/RML handshake */
     if((MCA_BTL_UDAPL_CONN_EAGER == endpoint->endpoint_state &&
-            0 > orca_process_name_compare(ORCA_NAME_CMP_ALL,
+            0 > orte_util_compare_name_fields(ORTE_NS_CMP_ALL,
                     &endpoint->endpoint_proc->proc_ompi->proc_name,
                     &ompi_proc_local()->proc_name)) ||
             (MCA_BTL_UDAPL_CLOSED != endpoint->endpoint_state &&
@@ -782,7 +782,7 @@ static int mca_btl_udapl_endpoint_finish_eager(
     }
 
     /* Only one side does dat_ep_connect() */
-    if(0 < orca_process_name_compare(ORCA_NAME_CMP_ALL,
+    if(0 < orte_util_compare_name_fields(ORTE_NS_CMP_ALL,
                 &endpoint->endpoint_proc->proc_ompi->proc_name,
                 &ompi_proc_local()->proc_name)) {
     
@@ -970,7 +970,7 @@ static int mca_btl_udapl_endpoint_pd_finish_eager(
      * with this.
      */
     if((BTL_UDAPL_NUM_CONNECTION != endpoint->endpoint_connections_completed)
-        && (0 < orca_process_name_compare(ORCA_NAME_CMP_ALL,
+        && (0 < orte_util_compare_name_fields(ORTE_NS_CMP_ALL,
                 &endpoint->endpoint_proc->proc_ompi->proc_name,
                 &ompi_proc_local()->proc_name))) {
     

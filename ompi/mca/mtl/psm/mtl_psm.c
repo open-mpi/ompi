@@ -10,7 +10,6 @@
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006      QLogic Corporation. All rights reserved.
- * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -20,8 +19,8 @@
 
 #include "ompi_config.h"
 
-#include "orca/include/rte_orca.h"
-
+#include "orte/util/show_help.h"
+#include "orte/util/proc_info.h"
 #include "ompi/mca/mtl/mtl.h"
 #include "ompi/runtime/ompi_module_exchange.h"
 #include "ompi/mca/mtl/base/mtl_base_datatype.h"
@@ -69,7 +68,7 @@ ompi_mtl_psm_errhandler(psm_ep_t ep, const psm_error_t error,
 	case PSM_EP_NO_PORTS_AVAIL:
 	case PSM_EP_NO_NETWORK:
 	case PSM_EP_INVALID_UUID_KEY:
-	  orca_show_help("help-mtl-psm.txt",
+	  orte_show_help("help-mtl-psm.txt",
 			 "unable to open endpoint", true,
 			 psm_error_get_string(error));
 	    break;
@@ -103,10 +102,10 @@ int ompi_mtl_psm_module_init(int local_rank, int num_local_procs) {
     if (!generated_key || (strlen(generated_key) != 33) ||
         sscanf(generated_key, "%016llx-%016llx", &uu[0], &uu[1]) != 2)
     {
-      orca_show_help("help-mtl-psm.txt",
+      orte_show_help("help-mtl-psm.txt",
 		     "no uuid present", true,
 		     generated_key ? "could not be parsed from" :
-                          "not present in", orca_process_info_get_nodename() );
+		     "not present in", orte_process_info.nodename);
       return OMPI_ERROR;
       
     }
@@ -147,7 +146,7 @@ int ompi_mtl_psm_module_init(int local_rank, int num_local_procs) {
     /* Open PSM endpoint */
     err = psm_ep_open(unique_job_key, &ep_opt, &ep, &epid);
     if (err) {
-      orca_show_help("help-mtl-psm.txt",
+      orte_show_help("help-mtl-psm.txt",
 		     "unable to open endpoint", true,
 		     psm_error_get_string(err));
       return OMPI_ERROR;
@@ -162,7 +161,7 @@ int ompi_mtl_psm_module_init(int local_rank, int num_local_procs) {
 		      0,
 		      &mq);
     if (err) {
-      orca_show_help("help-mtl-psm.txt",
+      orte_show_help("help-mtl-psm.txt",
 		     "psm init", true,
 		     psm_error_get_string(err));
       return OMPI_ERROR;
@@ -444,7 +443,7 @@ int ompi_mtl_psm_progress( void ) {
     while (1);
 
  error: 
-    orca_show_help("help-mtl-psm.txt",
+    orte_show_help("help-mtl-psm.txt",
 		   "error polling network", true,
 		   psm_error_get_string(err));
     return 1;

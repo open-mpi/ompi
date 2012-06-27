@@ -10,7 +10,6 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2010 QLogic Corporation. All rights reserved.
- * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -20,7 +19,7 @@
 
 #include "ompi_config.h"
 
-#include "orca/include/rte_orca.h"
+#include "orte/util/show_help.h"
 #include "opal/mca/event/event.h"
 #include "opal/util/output.h"
 #include "opal/mca/base/mca_base_param.h"
@@ -132,7 +131,7 @@ ompi_mtl_psm_component_register(void)
       if (!strcasecmp(path_res, "opp"))
 	ompi_mtl_psm.path_res_type = PSM_PATH_RES_OPP;
       else {
-	orca_show_help("help-mtl-psm.txt",
+	orte_show_help("help-mtl-psm.txt",
 		       "path query mechanism unknown", true,
 		       path_res, "OfedPlus (opp) | Static Routes (none)");
 	return OMPI_ERR_NOT_FOUND;
@@ -229,7 +228,7 @@ ompi_mtl_psm_component_init(bool enable_progress_threads,
 		     sizeof(unsigned));
     if (err) {
       /* Non fatal error. Can continue */
-      orca_show_help("help-mtl-psm.txt",
+      orte_show_help("help-mtl-psm.txt",
 		     "psm init", false,
 		     psm_error_get_string(err));
     }
@@ -248,7 +247,7 @@ ompi_mtl_psm_component_init(bool enable_progress_threads,
     
     err = psm_init(&verno_major, &verno_minor);
     if (err) {
-      orca_show_help("help-mtl-psm.txt",
+      orte_show_help("help-mtl-psm.txt",
 		     "psm init", true,
 		     psm_error_get_string(err));
       return NULL;

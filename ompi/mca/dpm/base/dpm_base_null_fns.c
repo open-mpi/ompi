@@ -14,7 +14,7 @@
  * Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2007      Cisco Systems, Inc. All rights reserved.
- * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
+ *
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -66,18 +66,18 @@ void ompi_dpm_base_null_mark_dyncomm (ompi_communicator_t *comm)
     return;
 }
 
-int ompi_dpm_base_null_open_port(char *port_name, orca_oob_tag_t given_tag)
+int ompi_dpm_base_null_open_port(char *port_name, orte_rml_tag_t given_tag)
 {
     return OMPI_ERR_NOT_SUPPORTED;
 }
 
 int ompi_dpm_base_null_parse_port(char *port_name, 
-                                  char **hnp_uri, char **rml_uri, orca_oob_tag_t *tag)
+                                  char **hnp_uri, char **rml_uri, orte_rml_tag_t *tag)
 {
     return OMPI_ERR_NOT_SUPPORTED;
 }
 
-int ompi_dpm_base_null_route_to_port(char *rml_uri, orca_process_name_t *rproc)
+int ompi_dpm_base_null_route_to_port(char *rml_uri, orte_process_name_t *rproc)
 {
     return OMPI_ERR_NOT_SUPPORTED;
 }

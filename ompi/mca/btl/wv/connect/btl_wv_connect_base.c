@@ -3,7 +3,7 @@
  * Copyright (c) 2007 Mellanox Technologies, Inc.  All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
- * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
+ *
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -18,8 +18,7 @@
 #include "connect/btl_wv_connect_oob.h"
 
 
-#include "orca/include/rte_orca.h"
-
+#include "orte/util/show_help.h"
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
 
@@ -86,9 +85,9 @@ int ompi_btl_wv_connect_base_register(void)
                 }
             }
             if (NULL == all[i]) {
-                orca_show_help("help-mpi-btl-wv-cpc-base.txt",
+                orte_show_help("help-mpi-btl-wv-cpc-base.txt",
                                "cpc name not found", true,
-                                    "include", orca_process_info_get_nodename(),
+                               "include", orte_process_info.nodename,
                                "include", cpc_include, temp[j], 
                                all_cpc_names);
                 opal_argv_free(temp);
@@ -112,9 +111,9 @@ int ompi_btl_wv_connect_base_register(void)
                 }
             }
             if (NULL == all[i]) {
-                orca_show_help("help-mpi-btl-wv-cpc-base.txt",
+                orte_show_help("help-mpi-btl-wv-cpc-base.txt",
                                "cpc name not found", true,
-                                    "exclude", orca_process_info_get_nodename(),
+                               "exclude", orte_process_info.nodename,
                                "exclude", cpc_exclude, temp[j], 
                                all_cpc_names);
                 opal_argv_free(temp);
@@ -258,9 +257,9 @@ int ompi_btl_wv_connect_base_select_for_local_port(mca_btl_wv_module_t *btl)
 
     /* If we got an empty array, then no CPCs were eligible.  Doh! */
     if (0 == cpc_index) {
-        orca_show_help("help-mpi-btl-wv-cpc-base.txt",
+        orte_show_help("help-mpi-btl-wv-cpc-base.txt",
                        "no cpcs for port", true,
-                            orca_process_info_get_nodename(),
+                       orte_process_info.nodename,
 					   btl->device->ib_dev->name,
                        btl->port_num, msg);
         free(cpcs);
