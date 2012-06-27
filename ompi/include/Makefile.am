@@ -34,6 +34,7 @@ pkginclude_HEADERS =
 
 if OMPI_BUILD_FORTRAN_MPIFH_BINDINGS
 include_HEADERS += \
+	mpif-all-common.h \
 	mpif-common.h \
 	mpif-mpi-io.h
 endif
