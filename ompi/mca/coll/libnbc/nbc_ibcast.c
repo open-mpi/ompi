@@ -31,20 +31,21 @@ int NBC_Bcast_args_compare(NBC_Bcast_args *a, NBC_Bcast_args *b, void *param) {
 }
 #endif
 
-#ifdef HAVE_SYS_WEAK_ALIAS_PRAGMA
-#pragma weak NBC_Ibcast=PNBC_Ibcast
-#define NBC_Ibcast PNBC_Ibcast
-#endif
-
-int NBC_Ibcast(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm, NBC_Handle* handle) {
+int ompi_coll_libnbc_ibcast(void *buffer, int count, MPI_Datatype datatype, int root,
+                            struct ompi_communicator_t *comm, ompi_request_t ** request,
+                              struct mca_coll_base_module_2_0_0_t *module)
+{
   int rank, p, res, size, segsize;
   NBC_Schedule *schedule;
 #ifdef NBC_CACHE_SCHEDULE
   NBC_Bcast_args *args, *found, search;
 #endif
   enum { NBC_BCAST_LINEAR, NBC_BCAST_BINOMIAL, NBC_BCAST_CHAIN } alg;
-  
-  res = NBC_Init_handle(handle, comm);
+  NBC_Handle *handle;
+  ompi_coll_libnbc_request_t **coll_req = (ompi_coll_libnbc_request_t**) request;
+  ompi_coll_libnbc_module_t *libnbc_module = (ompi_coll_libnbc_module_t*) module;
+
+  res = NBC_Init_handle(comm, coll_req, libnbc_module);
   if(res != NBC_OK) { printf("Error in NBC_Init_handle(%i)\n", res); return res; }
   res = MPI_Comm_rank(comm, &rank);
   if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Comm_rank() (%i)\n", res); return res; }
@@ -248,40 +249,3 @@ static inline int bcast_sched_chain(int rank, int p, int root, NBC_Schedule *sch
   
   return NBC_OK;
 }
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-/* Fortran bindings */
-#ifdef HAVE_SYS_WEAK_ALIAS_PRAGMA
-NBC_F77_ALLFUNC_(nbc_ibcast,NBC_IBCAST,(void *buf, int *count, int *datatype, int *root, int *fcomm, int *fhandle, int *ierr));
-#pragma weak NBC_IBCAST = nbc_ibcast_f
-#pragma weak nbc_ibcast = nbc_ibcast_f
-#pragma weak nbc_ibcast_ = nbc_ibcast_f
-#pragma weak nbc_ibcast__ = nbc_ibcast_f
-#pragma weak PNBC_IBCAST = nbc_ibcast_f
-#pragma weak pnbc_ibcast = nbc_ibcast_f
-#pragma weak pnbc_ibcast_ = nbc_ibcast_f
-#pragma weak pnbc_ibcast__ = nbc_ibcast_f
-void nbc_ibcast_f(void *buf, int *count, int *datatype, int *root, int *fcomm, int *fhandle, int *ierr) {
-#else
-void NBC_F77_FUNC_(nbc_ibcast,NBC_IBCAST)(void *buf, int *count, int *datatype, int *root, int *fcomm, int *fhandle, int *ierr);
-void NBC_F77_FUNC_(nbc_ibcast,NBC_IBCAST)(void *buf, int *count, int *datatype, int *root, int *fcomm, int *fhandle, int *ierr)  {
-#endif
-  MPI_Datatype dtype;
-  MPI_Comm comm;
-  NBC_Handle *handle;
-
-  /* this is the only MPI-2 we need :-( */
-  dtype = MPI_Type_f2c(*datatype);
-  comm = MPI_Comm_f2c(*fcomm);
-
-  /* create a new handle in handle table */
-  NBC_Create_fortran_handle(fhandle, &handle);
-
-  /* call NBC function */
-  *ierr = NBC_Ibcast(buf, *count, dtype, *root, comm, handle);
-}
-#ifdef __cplusplus
-}
-#endif

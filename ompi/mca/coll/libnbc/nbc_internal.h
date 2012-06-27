@@ -28,7 +28,7 @@
  * still in the cache and second, the tmpbuf used by the schedule must
  * be attached to the handle that uses this schedule !!!! 
  * I.E., THIS IS EXPERIMENTAL AND MIGHT NOT WORK */
-/* #define NBC_CACHE_SCHEDULE  */
+#define NBC_CACHE_SCHEDULE
 #define NBC_SCHED_DICT_UPPER 1024 /* max. number of dict entries */
 #define NBC_SCHED_DICT_LOWER 512  /* nuber of dict entries after wipe, if SCHED_DICT_UPPER is reached */
 
