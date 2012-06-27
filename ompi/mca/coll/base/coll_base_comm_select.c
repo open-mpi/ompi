@@ -197,7 +197,12 @@ int mca_coll_base_comm_select(ompi_communicator_t * comm)
         (NULL == comm->c_coll.coll_reduce_scatter) ||
         ((OMPI_COMM_IS_INTRA(comm)) && (NULL == comm->c_coll.coll_scan)) ||
         (NULL == comm->c_coll.coll_scatter) ||
-        (NULL == comm->c_coll.coll_scatterv) ||
+        (NULL == comm->c_coll.coll_scatterv)
+
+#if 0
+        /* JMS These need to be activated before the nb coll branch is
+           done */
+        ||
         (NULL == comm->c_coll.coll_iallgather) ||
         (NULL == comm->c_coll.coll_iallgatherv) ||
         (NULL == comm->c_coll.coll_iallreduce) ||
@@ -214,10 +219,12 @@ int mca_coll_base_comm_select(ompi_communicator_t * comm)
         ((OMPI_COMM_IS_INTRA(comm)) && (NULL == comm->c_coll.coll_iscan)) ||
         (NULL == comm->c_coll.coll_iscatter) ||
         (NULL == comm->c_coll.coll_iscatterv)
+#endif
         ) {
         mca_coll_base_comm_unselect(comm);
         return OMPI_ERR_NOT_FOUND;
     }
+
     return OMPI_SUCCESS;
 }
 

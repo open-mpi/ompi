@@ -10,16 +10,15 @@
  */
 #include "nbc_internal.h"
 
-int ompi_coll_libnbc_ibcast_inter(void *buffer, int count, MPI_Datatype datatype, int root,
-                                  struct ompi_communicator_t *comm, ompi_request_t ** request,
-                                  struct mca_coll_base_module_2_0_0_t *module) {
-  int rank, p, res, size, peer;
-  NBC_Schedule *schedule;
-  NBC_Handle *handle;
-  ompi_coll_libnbc_request_t **coll_req = (ompi_coll_libnbc_request_t**) request;
-  ompi_coll_libnbc_module_t *libnbc_module = (ompi_coll_libnbc_module_t*) module;
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-  res = NBC_Init_handle(comm, coll_req, libnbc_module);
+int NBC_Ibcast_inter(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm, NBC_Handle* handle) {
+  int rank, p, res, size, segsize, peer;
+  NBC_Schedule *schedule;
+  
+  res = NBC_Init_handle(handle, comm);
   if(res != NBC_OK) { printf("Error in NBC_Init_handle(%i)\n", res); return res; }
   res = MPI_Comm_rank(comm, &rank);
   if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Comm_rank() (%i)\n", res); return res; }
@@ -41,7 +40,7 @@ int ompi_coll_libnbc_ibcast_inter(void *buffer, int count, MPI_Datatype datatype
       int remsize;
 
       res = MPI_Comm_remote_size(comm, &remsize);
-      if(MPI_SUCCESS != res) { printf("MPI_Comm_remote_size() failed\n"); return res; }
+      if(MPI_SUCCESS != res) { printf("MPI_Comm_remote_size() failed\n", res); return res; }
 
       for (peer=0;peer<remsize;peer++) {
         /* send msg to peer */
@@ -63,3 +62,7 @@ int ompi_coll_libnbc_ibcast_inter(void *buffer, int count, MPI_Datatype datatype
   
   return NBC_OK;
 }
+
+#ifdef __cplusplus
+}
+#endif

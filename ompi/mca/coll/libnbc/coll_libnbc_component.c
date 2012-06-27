@@ -23,7 +23,7 @@
 
 #include "mpi.h"
 #include "ompi/mca/coll/coll.h"
-#include "ompi/communicator/communicator.h"
+
 
 /*
  * Public string showing the coll ompi_libnbc component version number
@@ -105,6 +105,10 @@ libnbc_close(void)
 {
     OBJ_DESTRUCT(&mca_coll_libnbc_component.requests);
 
+    if (0 < mca_coll_libnbc_component.active_comms) {
+        opal_progress_unregister(libnbc_progress);
+    }
+
     return OMPI_SUCCESS;
 }
 
@@ -156,43 +160,9 @@ libnbc_comm_query(struct ompi_communicator_t *comm,
     *priority = libnbc_priority;
 
     module->super.coll_module_enable = libnbc_module_enable;
-    if (OMPI_COMM_IS_INTER(comm)) {
-        module->super.coll_iallgather = ompi_coll_libnbc_iallgather_inter;
-        module->super.coll_iallgatherv = ompi_coll_libnbc_iallgatherv_inter;
-        module->super.coll_iallreduce = ompi_coll_libnbc_iallreduce_inter;
-        module->super.coll_ialltoall = ompi_coll_libnbc_ialltoall_inter;
-        module->super.coll_ialltoallv = ompi_coll_libnbc_ialltoallv_inter;
-        module->super.coll_ialltoallw = ompi_coll_libnbc_ialltoallw_inter;
-        module->super.coll_ibarrier = ompi_coll_libnbc_ibarrier_inter;
-        module->super.coll_ibcast = ompi_coll_libnbc_ibcast_inter;
-        module->super.coll_iexscan = NULL;
-        module->super.coll_igather = ompi_coll_libnbc_igather_inter;
-        module->super.coll_igatherv = ompi_coll_libnbc_igatherv_inter;
-        module->super.coll_ireduce = ompi_coll_libnbc_ireduce_inter;
-        module->super.coll_ireduce_scatter = ompi_coll_libnbc_ireduce_scatter_inter;
-        module->super.coll_ireduce_scatter_block = ompi_coll_libnbc_ireduce_scatter_block_inter;
-        module->super.coll_iscan = NULL;
-        module->super.coll_iscatter = ompi_coll_libnbc_iscatter_inter;
-        module->super.coll_iscatterv = ompi_coll_libnbc_iscatterv_inter;
-    } else {
-        module->super.coll_iallgather = ompi_coll_libnbc_iallgather;
-        module->super.coll_iallgatherv = ompi_coll_libnbc_iallgatherv;
-        module->super.coll_iallreduce = ompi_coll_libnbc_iallreduce;
-        module->super.coll_ialltoall = ompi_coll_libnbc_ialltoall;
-        module->super.coll_ialltoallv = ompi_coll_libnbc_ialltoallv;
-        module->super.coll_ialltoallw = ompi_coll_libnbc_ialltoallw;
-        module->super.coll_ibarrier = ompi_coll_libnbc_ibarrier;
-        module->super.coll_ibcast = ompi_coll_libnbc_ibcast;
-        module->super.coll_iexscan = ompi_coll_libnbc_iexscan;
-        module->super.coll_igather = ompi_coll_libnbc_igather;
-        module->super.coll_igatherv = ompi_coll_libnbc_igatherv;
-        module->super.coll_ireduce = ompi_coll_libnbc_ireduce;
-        module->super.coll_ireduce_scatter = ompi_coll_libnbc_ireduce_scatter;
-        module->super.coll_ireduce_scatter_block = ompi_coll_libnbc_ireduce_scatter_block;
-        module->super.coll_iscan = ompi_coll_libnbc_iscan;
-        module->super.coll_iscatter = ompi_coll_libnbc_iscatter;
-        module->super.coll_iscatterv = ompi_coll_libnbc_iscatterv;
-    }
+
+    module->super.coll_ibarrier = ompi_coll_libnbc_ibarrier;
+
     module->super.ft_event = NULL;
 
     if (OMPI_SUCCESS != NBC_Init_comm(comm, module)) {
@@ -250,9 +220,6 @@ libnbc_module_construct(ompi_coll_libnbc_module_t *module)
 static void
 libnbc_module_destruct(ompi_coll_libnbc_module_t *module)
 {
-    if (0 == --mca_coll_libnbc_component.active_comms) {
-        opal_progress_unregister(libnbc_progress);
-    }
 }
 
 
