@@ -23,7 +23,6 @@ sources = \
 	coll_libnbc_component.c \
 	coll_libnbc_not_implemented.c \
 	nbc.c \
-	nbc.h \
 	nbc_internal.h \
 	libdict/dict.h \
 	libdict/dict_private.h \

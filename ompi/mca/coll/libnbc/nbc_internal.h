@@ -43,8 +43,6 @@
 #include "ompi/include/ompi/constants.h"
 #include "ompi/request/request.h"
 
-#include "nbc.h"
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdarg.h>
