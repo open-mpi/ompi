@@ -59,13 +59,21 @@ AC_DEFUN([ORCA_CHECK_ORTE], [
     #   ./configure --without-orte
     #
     # /include
-    AC_ARG_WITH([orte],
-        [AC_HELP_STRING([--with-orte(=DIR)],
-                [Path to External ORTE Installation in DIR])])
+    #AC_ARG_WITH([orte],
+    #    [AC_HELP_STRING([--with-orte(=DIR)],
+    #            [Path to External ORTE Installation in DIR])])
     # /lib
-    AC_ARG_WITH([orte-libdir],
-        [AC_HELP_STRING([--with-orte-libdir=DIR],
-                [Search for External ORTE libraries in DIR])])
+    #AC_ARG_WITH([orte-libdir],
+    #    [AC_HELP_STRING([--with-orte-libdir=DIR],
+    #            [Search for External ORTE libraries in DIR])])
+
+    #
+    # JJH: Disable the --with-orte for now until we sort out the linking issues
+    #
+    m4_ifdef([project_orte],
+        [orca_check_orte_enabled_autogen="yes"],
+        [orca_check_orte_enabled_autogen="no"
+         with_orte="no"])
 
     AS_IF([test ! -z "$with_orte" -a "$with_orte" != "no"],
         [orca_check_orte_enabled_configure="yes"],
