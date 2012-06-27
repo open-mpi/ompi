@@ -15,31 +15,6 @@ static inline int allred_sched_diss(int rank, int p, int count, MPI_Datatype dat
 static inline int allred_sched_chain(int rank, int p, int count, MPI_Datatype datatype, void *sendbuf, void *recvbuf, MPI_Op op, int size, int ext, NBC_Schedule *schedule, NBC_Handle *handle, int fragsize);
 static inline int allred_sched_ring(int rank, int p, int count, MPI_Datatype datatype, void *sendbuf, void *recvbuf, MPI_Op op, int size, int ext, NBC_Schedule *schedule, NBC_Handle *handle);
 
-// DCMF allreduce is actually not non-blocking!!!
-#ifdef USE_DCMF
-#undef USE_DCMF
-#endif
-
-#ifdef USE_DCMF
-#error "DCMF allreduce is not nonblocking and thus disabled"
-#include <dcmf_globalcollectives.h>
-static int initialized=0;
-static void cbfunc(void *clientdata, DCMF_Error_t *error) {
-  //printf("in allreduce callback!\n");
-  *(unsigned*)clientdata=2;
-}
-
-DCMF_Protocol_t allred_reg;
-DCMF_Request_t allred_req;
-
-static void init_dcmf_allred() {
-  DCMF_GlobalAllreduce_Configuration_t allred_config;
-  allred_config.protocol = DCMF_DEFAULT_GLOBALALLREDUCE_PROTOCOL;
-  DCMF_GlobalAllreduce_register(&allred_reg, &allred_config);
-  initialized=1;
-}
-#endif
-
 #ifdef NBC_CACHE_SCHEDULE
 /* tree comparison function for schedule cache */
 int NBC_Allreduce_args_compare(NBC_Allreduce_args *a, NBC_Allreduce_args *b, void *param) {
@@ -58,12 +33,10 @@ int NBC_Allreduce_args_compare(NBC_Allreduce_args *a, NBC_Allreduce_args *b, voi
 }
 #endif
 
-#ifdef HAVE_SYS_WEAK_ALIAS_PRAGMA
-#pragma weak NBC_Iallreduce=PNBC_Iallreduce
-#define NBC_Iallreduce PNBC_Iallreduce
-#endif
-
-int NBC_Iallreduce(void* sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, NBC_Handle* handle) {
+int ompi_coll_libnbc_iallreduce(void* sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, 
+                                struct ompi_communicator_t *comm, ompi_request_t ** request,
+                                struct mca_coll_base_module_2_0_0_t *module)
+{
   int rank, p, res, size;
   MPI_Aint ext;
   NBC_Schedule *schedule;
@@ -72,74 +45,13 @@ int NBC_Iallreduce(void* sendbuf, void* recvbuf, int count, MPI_Datatype datatyp
 #endif
   enum { NBC_ARED_BINOMIAL, NBC_ARED_RING } alg;
   char inplace;
+  NBC_Handle *handle;
+  ompi_coll_libnbc_request_t **coll_req = (ompi_coll_libnbc_request_t**) request;
+  ompi_coll_libnbc_module_t *libnbc_module = (ompi_coll_libnbc_module_t*) module;
 
-#ifdef USE_DCMF
-  int ws, s;
-  MPI_Comm_size(comm, &s);
-  MPI_Comm_size(MPI_COMM_WORLD, &ws);
-  if(s != ws) {
-    printf("DCMF only works on MPI_COMM_WORLD (or dups of it) for now -- fallback needs to be implemented :-)\n");
-    return NBC_NOT_IMPLEMENTED;
-  }
-  if(!initialized) init_dcmf_allred();
-  handle->dcmf_hndl = (NBC_DCMF_Handle*)malloc(sizeof(NBC_DCMF_Handle));
-  handle->dcmf_hndl->done=0;
-  handle->dcmf_hndl->type=DCMF_TYPE_ALLREDUCE;
-  DCMF_Callback_t callback={ cbfunc, &handle->dcmf_hndl->done };
- 
-
-  DCMF_Dt dt;
-  switch(datatype) {
-    case MPI_UNSIGNED_LONG_LONG: 
-       dt = DCMF_UNSIGNED_LONG_LONG;
-       break;
-    case MPI_LONG_LONG: 
-       dt = DCMF_SIGNED_LONG_LONG;
-       break;
-    case MPI_UNSIGNED: 
-       dt = DCMF_UNSIGNED_INT;
-       break;
-    case MPI_INT: 
-       dt = DCMF_SIGNED_INT;
-       break;
-    case MPI_UNSIGNED_LONG:  // we assume it's the same as integer!!!
-       dt = DCMF_UNSIGNED_INT;
-       assert(sizeof(unsigned int) == sizeof(unsigned long));
-       break;
-    case MPI_LONG:  // we assume it's the same as integer !!!
-       dt = DCMF_SIGNED_INT;
-       assert(sizeof(int) == sizeof(long));
-       break;
-    case MPI_DOUBLE: 
-       dt = DCMF_DOUBLE;
-       break;
-    default:
-     printf("Datatype not supported\n");
-     return NBC_NOT_IMPLEMENTED;
-     break;
-  }
-
-  DCMF_Op dop;
-  switch(op) {
-    case MPI_SUM: 
-       dop = DCMF_SUM;
-       break;
-    default:
-     printf("Operations not supported\n"); 
-     return NBC_NOT_IMPLEMENTED;
-     break;
-  }
-  
-int r;
-MPI_Comm_rank(comm, &r);
-printf("[%i] LibNBC starting allreduce\n", r);
-  DCMF_GlobalAllreduce(&allred_reg, &allred_req, callback, DCMF_MATCH_CONSISTENCY, -1 /* root?? */, (char*)sendbuf, (char*)recvbuf, count, dt, dop);
-printf("[%i] LibNBC after allreduce\n", r);
-
-#else  
   NBC_IN_PLACE(sendbuf, recvbuf, inplace);
   
-  res = NBC_Init_handle(handle, comm);
+  res = NBC_Init_handle(comm, coll_req, libnbc_module);
   if(res != NBC_OK) { printf("Error in NBC_Init_handle(%i)\n", res); return res; }
   res = MPI_Comm_rank(comm, &rank);
   if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Comm_rank() (%i)\n", res); return res; }
@@ -218,7 +130,6 @@ printf("[%i] LibNBC after allreduce\n", r);
   
   res = NBC_Start(handle, schedule);
   if(res != NBC_OK) { free(handle->tmpbuf); printf("Error in NBC_Start() (%i)\n", res); return res; }
-#endif
   
   /* tmpbuf is freed with the handle */
   return NBC_OK;
@@ -439,8 +350,7 @@ static inline int allred_sched_ring(int r, int p, int count, MPI_Datatype dataty
   int i; /* runner */
   int segsize, *segsizes, *segoffsets; /* segment sizes and offsets per segment (number of segments == number of nodes */
   int speer, rpeer; /* send and recvpeer */
-  int res;
-
+  
   if(count == 0) return NBC_OK;
 
   {
@@ -459,7 +369,7 @@ static inline int allred_sched_ring(int r, int p, int count, MPI_Datatype dataty
         mycount = 0;
       }
       if(i) segoffsets[i] = segoffsets[i-1] + segsizes[i-1];
-      //if(!r) printf("count: %i, (%i) size: %i, offset: %i\n", count, i, segsizes[i], segoffsets[i]);
+      /*if(!r) printf("count: %i, (%i) size: %i, offset: %i\n", count, i, segsizes[i], segoffsets[i]); */
     }
   }
 
@@ -577,16 +487,12 @@ static inline int allred_sched_ring(int r, int p, int count, MPI_Datatype dataty
       /* first message come out of sendbuf */
       if(round == 0) {
         NBC_Sched_send((char*)sendbuf+soffset, false, segsizes[selement], datatype, speer, schedule);
-        //printf("[%i] round %i - sending %i\n", r, round, selement);
       } else {
         NBC_Sched_send((char*)recvbuf+soffset, false, segsizes[selement], datatype, speer, schedule);
-        //printf("[%i] round %i - sending %i\n", r, round, selement);
       }
       NBC_Sched_recv((char*)recvbuf+roffset, false, segsizes[relement], datatype, rpeer, schedule);
-      //printf("[%i] round %i - receiving %i\n", r, round, relement);
 
       NBC_Sched_barrier(schedule);
-      //printf("[%i] round %i - reducing %i\n", r, round, relement);
       NBC_Sched_op((char*)recvbuf+roffset, false, (char*)sendbuf+roffset, false, (char*)recvbuf+roffset, false, segsizes[relement], datatype, op, schedule);
       NBC_Sched_barrier(schedule);
 
@@ -599,7 +505,6 @@ static inline int allred_sched_ring(int r, int p, int count, MPI_Datatype dataty
       int relement = (r-round + 2*p /*2*p avoids negative mod*/)%p; /* the element that I receive from my neighbor */
       int roffset = segoffsets[relement]*ext;
 
-      //printf("[%i] round %i receiving %i sending %i\n", r, round, relement, selement);
       NBC_Sched_send((char*)recvbuf+soffset, false, segsizes[selement], datatype, speer, schedule);
       NBC_Sched_recv((char*)recvbuf+roffset, false, segsizes[relement], datatype, rpeer, schedule);
       NBC_Sched_barrier(schedule);
@@ -607,49 +512,5 @@ static inline int allred_sched_ring(int r, int p, int count, MPI_Datatype dataty
     } while (round < 2*p-2);
   }
 
-  //NBC_PRINT_SCHED(*schedule);
-
   return NBC_OK;
 }
-
-
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-/* Fortran bindings */
-#ifdef HAVE_SYS_WEAK_ALIAS_PRAGMA
-NBC_F77_ALLFUNC_(nbc_iallreduce,NBC_IALLREDUCE,(void *sendbuf, void *recvbuf, int *count, int *datatype, int *fop, int *fcomm, int *fhandle, int *ierr));
-#pragma weak NBC_IALLREDUCE = nbc_iallreduce_f
-#pragma weak nbc_iallreduce = nbc_iallreduce_f
-#pragma weak nbc_iallreduce_ = nbc_iallreduce_f
-#pragma weak nbc_iallreduce__ = nbc_iallreduce_f
-#pragma weak PNBC_IALLREDUCE = nbc_iallreduce_f
-#pragma weak pnbc_iallreduce = nbc_iallreduce_f
-#pragma weak pnbc_iallreduce_ = nbc_iallreduce_f
-#pragma weak pnbc_iallreduce__ = nbc_iallreduce_f
-void nbc_iallreduce_f(void *sendbuf, void *recvbuf, int *count, int *datatype, int *fop, int *fcomm, int *fhandle, int *ierr) {
-#else
-void NBC_F77_FUNC_(nbc_iallreduce,NBC_IALLREDUCE)(void *sendbuf, void *recvbuf, int *count, int *datatype, int *fop, int *fcomm, int *fhandle, int *ierr);
-void NBC_F77_FUNC_(nbc_iallreduce,NBC_IALLREDUCE)(void *sendbuf, void *recvbuf, int *count, int *datatype, int *fop, int *fcomm, int *fhandle, int *ierr)  {
-#endif
-  MPI_Datatype dtype;
-  MPI_Comm comm;
-  MPI_Op op;
-  NBC_Handle *handle;
-
-  /* this is the only MPI-2 we need :-( */
-  dtype = MPI_Type_f2c(*datatype);
-  comm = MPI_Comm_f2c(*fcomm);
-  op = MPI_Op_f2c(*fop);
-
-  /* create a new handle in handle table */
-  NBC_Create_fortran_handle(fhandle, &handle);
-
-  /* call NBC function */
-  *ierr = NBC_Iallreduce(sendbuf, recvbuf, *count, dtype, op, comm, handle);
-}
-
-#ifdef __cplusplus
-}
-#endif
