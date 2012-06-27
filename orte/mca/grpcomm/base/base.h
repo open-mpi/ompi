@@ -79,16 +79,9 @@ ORTE_DECLSPEC void orte_grpcomm_base_rollup_recv(int status, orte_process_name_t
                                                  void* cbdata);
 
 /* modex support */
-ORTE_DECLSPEC   int orte_grpcomm_base_set_proc_attr(const char *attr_name,
-                                                    const void *data,
-                                                    size_t size);
-ORTE_DECLSPEC   int orte_grpcomm_base_get_proc_attr(const orte_process_name_t *proc,
-                                                    const char *attribute_name, void **val, 
-                                                    size_t *size);
 ORTE_DECLSPEC   void orte_grpcomm_base_store_peer_modex(opal_buffer_t *rbuf, void *cbdata);
 ORTE_DECLSPEC   void orte_grpcomm_base_store_modex(opal_buffer_t *rbuf, void *cbdata);
 ORTE_DECLSPEC   int orte_grpcomm_base_modex(orte_grpcomm_collective_t *modex);
-ORTE_DECLSPEC   int orte_grpcomm_base_purge_proc_attrs(void);
 ORTE_DECLSPEC   int orte_grpcomm_base_pack_modex_entries(opal_buffer_t *buf);
 ORTE_DECLSPEC   int orte_grpcomm_base_update_modex_entries(orte_process_name_t *proc_name,
                                                            opal_buffer_t *rbuf);

@@ -42,7 +42,7 @@ static int pmi_component_query(mca_base_module_t **module, int *priority);
  */
 orte_ess_base_component_t mca_ess_pmi_component = {
     {
-        ORTE_ESS_BASE_VERSION_2_0_0,
+        ORTE_ESS_BASE_VERSION_3_0_0,
 
         /* Component name and version */
         "pmi",

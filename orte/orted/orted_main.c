@@ -484,20 +484,14 @@ int orte_daemon(int argc, char *argv[])
         orte_node_t *node;
         orte_app_context_t *app;
         char *tmp, *nptr, *sysinfo;
-        int32_t ljob, one32;
-        orte_vpid_t vpid1;
-        orte_local_rank_t lrank;
-        orte_node_rank_t nrank;
-        opal_byte_object_t *bo;
-        orte_proc_state_t state;
-        orte_app_idx_t app_idx;
+        int32_t ljob;
 
         /* setup the singleton's job */
         jdata = OBJ_NEW(orte_job_t);
         orte_plm_base_create_jobid(jdata);
         ljob = ORTE_LOCAL_JOBID(jdata->jobid);
         opal_pointer_array_set_item(orte_job_data, ljob, jdata);
-        
+
         /* must create a map for it (even though it has no
          * info in it) so that the job info will be picked
          * up in subsequent pidmaps or other daemons won't
@@ -535,64 +529,40 @@ int orte_daemon(int argc, char *argv[])
         proc->alive = true;
         proc->state = ORTE_PROC_STATE_RUNNING;
         proc->app_idx = 0;
-        /* obviously, they are on my node */
+        /* obviously, it is on my node */
         node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, 0);
         proc->node = node;
         OBJ_RETAIN(node);  /* keep accounting straight */
         opal_pointer_array_add(jdata->procs, proc);
         jdata->num_procs = 1;
-        /* and obviously they are one of my local procs */
+        /* and obviously it is one of my local procs */
         OBJ_RETAIN(proc);
         opal_pointer_array_add(orte_local_children, proc);
         jdata->num_local_procs = 1;
-        
+        /* set the trivial */
+        proc->local_rank = 0;
+        proc->node_rank = 0;
+        proc->app_rank = 0;
+        proc->state = ORTE_PROC_STATE_RUNNING;
+        proc->alive = true;
+        proc->app_idx = 0;
+        proc->local_proc = true;
+#if OPAL_HAVE_HWLOC
+        proc->bind_idx = 0;
+#endif
+
         /* the singleton will use the first three collectives
          * for its modex/barriers
          */
         orte_grpcomm_base.coll_id += 3;
 
         /* need to setup a pidmap for it */
-        buffer = OBJ_NEW(opal_buffer_t);
-        opal_dss.pack(buffer, &jdata->jobid, 1, ORTE_JOBID); /* jobid */
-        vpid1 = 1;
-        opal_dss.pack(buffer, &vpid1, 1, ORTE_VPID); /* num_procs */
-#if OPAL_HAVE_HWLOC
-        {
-            opal_hwloc_level_t bind_level;
-            bind_level = OPAL_HWLOC_NODE_LEVEL;
-            opal_dss.pack(buffer, &bind_level, 1, OPAL_HWLOC_LEVEL_T); /* num_procs */
-        }
-#endif
-        one32 = 0;
-        opal_dss.pack(buffer, &one32, 1, OPAL_INT32); /* node index */
-        lrank = 0;
-        opal_dss.pack(buffer, &lrank, 1, ORTE_LOCAL_RANK);  /* local rank */
-        nrank = 0;
-        opal_dss.pack(buffer, &nrank, 1, ORTE_NODE_RANK);  /* node rank */
-#if OPAL_HAVE_HWLOC
-        {
-            uint bind_idx;
-            bind_idx = 0;
-            opal_dss.pack(buffer, &bind_idx, 1, OPAL_UINT);  /* bind index */
-        }
-#endif
-        state = ORTE_PROC_STATE_RUNNING;
-        opal_dss.pack(buffer, &state, 1, ORTE_PROC_STATE);  /* proc state */
-        app_idx = 0;
-        opal_dss.pack(buffer, &app_idx, 1, ORTE_APP_IDX);  /* app index */
-        one32 = 0;
-        opal_dss.pack(buffer, &one32, 1, OPAL_INT32);  /* restarts */
-        /* setup a byte object and unload the packed data to it */
-        bo = (opal_byte_object_t*)malloc(sizeof(opal_byte_object_t));
-        opal_dss.unload(buffer, (void**)&bo->bytes, &bo->size);
-        OBJ_RELEASE(buffer);
-        /* save a copy to send back to the proc */
-        opal_dss.copy((void**)&jdata->pmap, bo, OPAL_BYTE_OBJECT);
-        /* update our ess data - this will release the byte object's data */
-        if (ORTE_SUCCESS != (ret = orte_ess.update_pidmap(bo))) {
+        jdata->pmap = (opal_byte_object_t*)malloc(sizeof(opal_byte_object_t));
+        if (ORTE_SUCCESS != (ret = orte_util_encode_pidmap(jdata->pmap))) {
             ORTE_ERROR_LOG(ret);
+            goto DONE;
         }
-        free(bo);
+    
     
         /* if we don't yet have a daemon map, then we have to generate one
          * to pass back to it
@@ -602,14 +572,7 @@ int orte_daemon(int argc, char *argv[])
             /* construct a nodemap */
             if (ORTE_SUCCESS != (ret = orte_util_encode_nodemap(orte_odls_globals.dmap))) {
                 ORTE_ERROR_LOG(ret);
-            }
-            /* we also need to update our local nidmap - copy the dmap
-             * as this will release the byte object's data. The copy function
-             * will automatically malloc the bo itself, so we don't need to do so here
-             */
-            opal_dss.copy((void**)&bo, orte_odls_globals.dmap, OPAL_BYTE_OBJECT);
-            if (ORTE_SUCCESS != (ret = orte_ess.update_nidmap(bo))) {
-                ORTE_ERROR_LOG(ret);
+                goto DONE;
             }
         }
 

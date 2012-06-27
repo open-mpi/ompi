@@ -76,9 +76,6 @@ ORTE_DECLSPEC int orte_odls_base_select(void);
 ORTE_DECLSPEC int orte_odls_base_finalize(void);
 ORTE_DECLSPEC int orte_odls_base_close(void);
 
-/* setup singleton job data */
-ORTE_DECLSPEC void orte_odls_base_setup_singleton_jobdat(orte_jobid_t jobid);
-
 #endif /* ORTE_DISABLE_FULL_SUPPORT */
 
 END_C_DECLS

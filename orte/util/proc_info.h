@@ -103,6 +103,7 @@ struct orte_proc_info_t {
     uint16_t my_port;                   /**< TCP port for out-of-band comm */
     int32_t num_restarts;               /**< number of times this proc has restarted */
     orte_node_rank_t my_node_rank;      /**< node rank */
+    orte_local_rank_t my_local_rank;    /**< local rank */
     /* The session directory has the form
      * <prefix>/<openmpi-sessions-user>/<jobid>/<procid>, where the prefix
      * can either be provided by the user via the
@@ -121,8 +122,7 @@ struct orte_proc_info_t {
     opal_hwloc_level_t bind_level;
     unsigned int bind_idx;
 #endif
-    int32_t my_node;                    /**< index in the node array of the node I am on */
-    int32_t app_rank;                   /**< rank within my app_context */
+    int32_t app_rank;                       /**< rank within my app_context */
     orte_grpcomm_coll_id_t peer_modex;   /**< modex collective id */
     orte_grpcomm_coll_id_t peer_init_barrier;   /**< barrier id during init */
     orte_grpcomm_coll_id_t peer_fini_barrier;   /**< barrier id during finalize */

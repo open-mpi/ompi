@@ -22,6 +22,8 @@
 #include "opal/mca/mca.h"
 #include "opal/dss/dss_types.h"
 
+#include "orte/mca/db/db_types.h"
+
 /**
  * DATABASE DESIGN
  *
@@ -32,28 +34,6 @@
  */
 
 BEGIN_C_DECLS
-
-/**
- * Container for data for a particular key-value pair
- */
-typedef struct orte_db_keyval_t {
-    /** Structure can be put on lists */
-    opal_list_item_t super;
-    /** Key */
-    char *key;
-    /** Byte object containing binary blob of data associated with this proc,key pair */
-    opal_byte_object_t value;
-} orte_db_keyval_t;
-OBJ_CLASS_DECLARATION(orte_db_keyval_t);
-
-/* define the callback function for returning data - note that
- * the memory backing the data belongs to the DB framework. The
- * receiver must NOT release it
- */
-typedef void (*orte_db_fetch_callback_fn_t)(orte_process_name_t *src,
-                                            char *key,
-                                            orte_db_keyval_t *data,
-                                            int num_entries);
 
 /*
  * Initialize the module
@@ -66,30 +46,52 @@ typedef int (*orte_db_base_module_init_fn_t)(void);
 typedef void (*orte_db_base_module_finalize_fn_t)(void);
 
 /*
- * Store data in the database - overwrites if already present. The data is
+ * Store a copy of data in the database - overwrites if already present. The data is
  * copied into the database and therefore does not need to be preserved by
- * the caller. Note that this is a non-blocking call - if data is stored
- * offsite, the transfer will occur in the background.
+ * the caller.
  */
 typedef int (*orte_db_base_module_store_fn_t)(const orte_process_name_t *proc,
-                                              const char *key,
-                                              const void *object, int32_t size);
+                                              const char *key, const void *data, opal_data_type_t type);
+
+/*
+ * Store a pointer to data in the database - data must be retained by the user.
+ * This allows users to share data across the code base without consuming
+ * additional memory, but while retaining local access
+ */
+typedef int (*orte_db_base_module_store_pointer_fn_t)(const orte_process_name_t *proc,
+                                                      opal_value_t *kv);
 
 /*
  * Retrieve data
  *
- * Retrieve the data for the given proc associated with the specified key. Wildcards
- * are supported here as well. This is a non-blocking
- * call - data will be returned via the callback function ONCE IT BECOMES AVAILABLE. Use
- * of the "timeout" MCA parameter is encouraged to avoid hanging on fetch requests for
- * "blocking" data that can never be resolved.
- *
- * NOTE: INTERIM IMPLEMENTATION WILL SIMPLY LOOKUP EXISTING DATA, RETURNING AN ERROR IF
- * NOT ALREADY PRESENT.
+ * Retrieve data for the given proc associated with the specified key. Wildcards
+ * are supported here as well. Caller is responsible for releasing any returned
+ * object.
  */
 typedef int (*orte_db_base_module_fetch_fn_t)(const orte_process_name_t *proc,
                                               const char *key,
-                                              opal_list_t *values);
+                                              void **data, opal_data_type_t type);
+
+/*
+ * Retrieve a pointer to data
+ *
+ * Retrieve a pointer to the data for the given proc associated with the specified key. Wildcards
+ * are supported here as well. Callers are cautioned against modifying the data as this
+ * will directly alter information in the database! A local copy of the data should be made
+ * wherever modification is possible.
+ */
+typedef int (*orte_db_base_module_fetch_pointer_fn_t)(const orte_process_name_t *proc,
+                                                      const char *key,
+                                                      void **data, opal_data_type_t type);
+/*
+ * Retrieve multiple data elements
+ *
+ * Retrieve data for the given proc associated with the specified key. Wildcards
+ * are supported here as well. Caller is responsible for releasing the objects on the list.
+ */
+typedef int (*orte_db_base_module_fetch_multiple_fn_t)(const orte_process_name_t *proc,
+                                                       const char *key,
+                                                       opal_list_t *kvs);
 
 /*
  * Delete data
@@ -100,8 +102,6 @@ typedef int (*orte_db_base_module_fetch_fn_t)(const orte_process_name_t *proc,
  * This function also supports wildcard values in the proc field. A NULL proc indicates
  * that ALL data in the database is to be purged. A WILDCARD vpid will delete all matching
  * keys from that jobid. Etc.
- *
- * Note that this is a non-blocking call - data stored off-site will be deleted asynchronously.
  */
 typedef int (*orte_db_base_module_remove_fn_t)(const orte_process_name_t *proc, const char *key);
 
@@ -109,11 +109,14 @@ typedef int (*orte_db_base_module_remove_fn_t)(const orte_process_name_t *proc, 
  * the standard module data structure
  */
 struct orte_db_base_module_1_0_0_t {
-    orte_db_base_module_init_fn_t           init;
-    orte_db_base_module_finalize_fn_t       finalize;
-    orte_db_base_module_store_fn_t          store;
-    orte_db_base_module_fetch_fn_t          fetch;
-    orte_db_base_module_remove_fn_t         remove;
+    orte_db_base_module_init_fn_t                      init;
+    orte_db_base_module_finalize_fn_t                  finalize;
+    orte_db_base_module_store_fn_t                     store;
+    orte_db_base_module_store_pointer_fn_t             store_pointer;
+    orte_db_base_module_fetch_fn_t                     fetch;
+    orte_db_base_module_fetch_pointer_fn_t             fetch_pointer;
+    orte_db_base_module_fetch_multiple_fn_t            fetch_multiple;
+    orte_db_base_module_remove_fn_t                    remove;
 };
 typedef struct orte_db_base_module_1_0_0_t orte_db_base_module_1_0_0_t;
 typedef struct orte_db_base_module_1_0_0_t orte_db_base_module_t;

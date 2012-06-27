@@ -148,13 +148,13 @@ int ompi_mtl_mxm_module_init(void)
     }
     MXM_VERBOSE(1, "MXM support enabled");
 
-    if ((lr = orte_ess.get_node_rank(ORTE_PROC_MY_NAME)) == ORTE_NODE_RANK_INVALID) {
+    if ((lr = orte_process_info.my_node_rank) == ORTE_NODE_RANK_INVALID) {
         MXM_ERROR("Unable to obtain local node rank");
         return OMPI_ERROR;
     }
 
     for (proc = 0; proc < totps; proc++) {
-        if(OPAL_PROC_ON_LOCAL_NODE(orte_ess.proc_get_locality(&procs[proc]->proc_name))) {
+        if (OPAL_PROC_ON_LOCAL_NODE(procs[proc]->proc_flags)) {
             mxlr = max(mxlr, procs[proc]->proc_name.vpid);
             nlps++;
         }

@@ -470,3 +470,11 @@ int opal_dss_print_node_stat(char **output, char *prefix, opal_node_stats_t *src
     
     return OPAL_SUCCESS;
 }
+
+/*
+ * OPAL_NODE_STAT
+ */
+int opal_dss_print_value(char **output, char *prefix, opal_value_t *src, opal_data_type_t type)
+{
+    return OPAL_SUCCESS;
+}

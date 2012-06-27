@@ -90,6 +90,8 @@ void orte_routed_base_coll_relay_routing(orte_grpcomm_collective_t *coll)
     opal_list_item_t *item, *itm;
     orte_namelist_t *nm, *n2, *n3;
     bool dup;
+    orte_job_t *jdata;
+    orte_proc_t *proc;
 
     if (ORTE_PROC_IS_HNP) {
         /* nobody to send to */
@@ -112,7 +114,13 @@ void orte_routed_base_coll_relay_routing(orte_grpcomm_collective_t *coll)
         if (ORTE_VPID_WILDCARD == n2->name.vpid) {
             nm->name.vpid = ORTE_PROC_MY_PARENT->vpid;
         } else {
-            nm->name.vpid = orte_ess.proc_get_daemon(&n2->name);
+            jdata = orte_get_job_data_object(n2->name.jobid);
+            proc = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, n2->name.vpid);
+            if (NULL == proc || NULL == proc->node || NULL == proc->node->daemon) {
+                ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+                continue;
+            }
+            nm->name.vpid = proc->node->daemon->name.vpid;
         }
         /* if it is me, then ignore */
         if (nm->name.vpid == ORTE_PROC_MY_NAME->vpid) {

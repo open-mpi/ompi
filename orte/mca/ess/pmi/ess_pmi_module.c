@@ -47,14 +47,15 @@
 #include "opal/mca/hwloc/base/base.h"
 #include "opal/util/printf.h"
 
+#include "orte/mca/db/db.h"
+#include "orte/mca/errmgr/errmgr.h"
 #include "orte/util/proc_info.h"
 #include "orte/util/show_help.h"
-#include "orte/mca/errmgr/errmgr.h"
 #include "orte/util/name_fns.h"
-#include "orte/runtime/orte_globals.h"
 #include "orte/util/nidmap.h"
 #include "orte/util/pre_condition_transports.h"
 #include "orte/util/regex.h"
+#include "orte/runtime/orte_globals.h"
 #include "orte/runtime/orte_wait.h"
 
 #include "orte/mca/ess/ess.h"
@@ -69,13 +70,6 @@ orte_ess_base_module_t orte_ess_pmi_module = {
     rte_init,
     rte_finalize,
     rte_abort,
-    orte_ess_base_proc_get_locality,
-    orte_ess_base_proc_get_daemon,
-    orte_ess_base_proc_get_hostname,
-    orte_ess_base_proc_get_local_rank,
-    orte_ess_base_proc_get_node_rank,
-    orte_ess_base_update_pidmap,
-    orte_ess_base_update_nidmap,
     NULL /* ft_event */
 };
 
@@ -93,12 +87,12 @@ static int rte_init(void)
     uint64_t unique_key[2];
     char *cs_env, *string_key;
     char *pmi_id=NULL;
-    orte_nid_t *nid;
-    orte_jmap_t *jmap;
-    orte_pmap_t *pmap;
     int *ranks;
     char *tmp;
     orte_jobid_t jobid;
+    orte_process_name_t proc;
+    orte_local_rank_t local_rank;
+    orte_node_rank_t node_rank;
 
     /* run the prolog */
     if (ORTE_SUCCESS != (ret = orte_ess_base_std_prolog())) {
@@ -227,42 +221,28 @@ static int rte_init(void)
          */
         orte_process_info.app_num = 0;
 
-        /* setup the nidmap arrays - they will be filled by the modex */
-        if (ORTE_SUCCESS != (ret = orte_util_nidmap_init(NULL))) {
-            ORTE_ERROR_LOG(ret);
-            error = "orte_util_nidmap_init";
-            goto error;
-        }
-        /* initialize our entry */
-        if (ORTE_SUCCESS != (ret = orte_util_setup_local_nidmap_entries())) {
-            ORTE_ERROR_LOG(ret);
-            error = "orte_util_setup_local_nidmap_entries";
-            goto error;
-        }
-        /* correct the daemon entry on our nidmap object - note that
-         * each proc's nidmap will be different, but the only thing that
-         * matters here (since we are not routing messages) is that
-         * we know which procs are on the same nodes
-         */
-        nid = (orte_nid_t*)opal_pointer_array_get_item(&orte_nidmap, 0);
-        nid->daemon = 0;
         /* setup my daemon's name - arbitrary, since we don't route
          * messages
          */
         ORTE_PROC_MY_DAEMON->jobid = 0;
         ORTE_PROC_MY_DAEMON->vpid = 0;
 
-        /* get the job map for this job */
-        jmap = (orte_jmap_t*)opal_pointer_array_get_item(&orte_jobmap, 0);
-        /* update the num procs */
-        jmap->num_procs = orte_process_info.num_procs;
-        /* set the size of the pidmap storage so we minimize realloc's */
-        if (ORTE_SUCCESS != (ret = opal_pointer_array_set_size(&jmap->pmap, jmap->num_procs))) {
+        /* ensure we pick the correct critical components */
+        putenv("OMPI_MCA_grpcomm=pmi");
+        putenv("OMPI_MCA_routed=direct");
+    
+        /* now use the default procedure to finish my setup */
+        if (ORTE_SUCCESS != (ret = orte_ess_base_app_setup())) {
             ORTE_ERROR_LOG(ret);
-            error = "could not set array size for pidmap";
+            error = "orte_ess_base_app_setup";
             goto error;
         }
 
+        /* store our info into the database */
+        if (ORTE_SUCCESS != (ret = orte_db.store(ORTE_PROC_MY_NAME, ORTE_DB_HOSTNAME, orte_process_info.nodename, OPAL_STRING))) {
+            error = "db store daemon vpid";
+            goto error;
+        }
         /* get our local proc info to find our local rank */
         if (PMI_SUCCESS != (ret = PMI_Get_clique_size(&i))) {
             ORTE_PMI_ERROR(ret, "PMI_Get_clique_size");
@@ -279,28 +259,25 @@ static int rte_init(void)
          * cycle thru the array and update the local/node
          * rank info
          */
+        proc.jobid = ORTE_PROC_MY_NAME->jobid;
         for (j=0; j < i; j++) {
-            if (NULL == (pmap = (orte_pmap_t*)opal_pointer_array_get_item(&jmap->pmap, ranks[j]))) {
-                /* need to create this entry */
-                pmap = OBJ_NEW(orte_pmap_t);
-                pmap->node = nid->index;
-                opal_pointer_array_set_item(&jmap->pmap, ranks[j], pmap);
+            proc.vpid = ranks[j];
+            local_rank = j;
+            node_rank = j;
+            if (ranks[j] == (int)ORTE_PROC_MY_NAME->vpid) {
+                orte_process_info.my_local_rank = local_rank;
+                orte_process_info.my_node_rank = node_rank;
             }
-            pmap->local_rank = j;
-            pmap->node_rank = j;
+            if (ORTE_SUCCESS != (ret = orte_db.store(&proc, ORTE_DB_LOCALRANK, &local_rank, ORTE_LOCAL_RANK))) {
+                error = "db store local rank";
+                goto error;
+            }
+            if (ORTE_SUCCESS != (ret = orte_db.store(&proc, ORTE_DB_NODERANK, &node_rank, ORTE_NODE_RANK))) {
+                error = "db store node rank";
+                goto error;
+            }
         }
         free(ranks);
-
-        /* ensure we pick the correct critical components */
-        putenv("OMPI_MCA_grpcomm=pmi");
-        putenv("OMPI_MCA_routed=direct");
-    
-        /* now use the default procedure to finish my setup */
-        if (ORTE_SUCCESS != (ret = orte_ess_base_app_setup())) {
-            ORTE_ERROR_LOG(ret);
-            error = "orte_ess_base_app_setup";
-            goto error;
-        }
 
         /* setup process binding */
         if (ORTE_SUCCESS != (ret = orte_ess_base_proc_binding())) {

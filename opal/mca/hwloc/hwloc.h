@@ -171,6 +171,7 @@ typedef uint16_t opal_binding_policy_t;
 
 /* ******************************************************************** */
 typedef uint16_t opal_hwloc_locality_t;
+#define OPAL_HWLOC_LOCALITY_T OPAL_UINT16
 
 /** Process locality definitions */
 enum {

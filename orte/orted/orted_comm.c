@@ -889,13 +889,13 @@ void orte_daemon_recv(int status, orte_process_name_t* sender,
             proc.jobid = ORTE_CONSTRUCT_LOCAL_JOBID(ORTE_PROC_MY_NAME->jobid, proc.jobid);
             if (ORTE_PROC_IS_HNP) {
                 return_addr = sender;
+                proc2.jobid = ORTE_PROC_MY_NAME->jobid;
                 /* if the request is for a wildcard vpid, then it goes to every
                  * daemon. For scalability, we should probably xcast this some
                  * day - but for now, we just loop
                  */
                 if (ORTE_VPID_WILDCARD == proc.vpid) {
                     /* loop across all daemons */
-                    proc2.jobid = ORTE_PROC_MY_NAME->jobid;
                     for (proc2.vpid=1; proc2.vpid < orte_process_info.num_procs; proc2.vpid++) {
 
                         /* setup the cmd */
@@ -935,7 +935,7 @@ void orte_daemon_recv(int status, orte_process_name_t* sender,
                     /* this is for a single proc - see which daemon
                      * this rank is on
                      */
-                    if (ORTE_VPID_INVALID == (proc2.vpid = orte_ess.proc_get_daemon(&proc))) {
+                    if (ORTE_VPID_INVALID == (proc2.vpid = orte_get_proc_daemon_vpid(&proc))) {
                         ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
                         goto SEND_TOP_ANSWER;
                     }
@@ -955,7 +955,6 @@ void orte_daemon_recv(int status, orte_process_name_t* sender,
                         OBJ_RELEASE(relay_msg);
                         goto SEND_TOP_ANSWER;
                     }
-                    proc2.jobid = ORTE_PROC_MY_NAME->jobid;
                     if (ORTE_SUCCESS != (ret = opal_dss.pack(relay_msg, &proc, 1, ORTE_NAME))) {
                         ORTE_ERROR_LOG(ret);
                         OBJ_RELEASE(relay_msg);

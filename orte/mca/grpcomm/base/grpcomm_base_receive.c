@@ -33,7 +33,6 @@
 #include "orte/util/proc_info.h"
 #include "orte/util/error_strings.h"
 #include "orte/mca/errmgr/errmgr.h"
-#include "orte/mca/ess/ess.h"
 #include "orte/mca/odls/base/base.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/routed/routed.h"
@@ -374,7 +373,8 @@ void orte_grpcomm_base_progress_collectives(void)
     orte_grpcomm_collective_t *coll;
     orte_namelist_t *nm;
     orte_job_t *jdata;
-    orte_vpid_t nlp, vpid;
+    orte_proc_t *proc;
+    orte_vpid_t nlp;
     opal_buffer_t *relay;
     int rc;
 
@@ -427,14 +427,28 @@ void orte_grpcomm_base_progress_collectives(void)
                 nlp += jdata->num_local_procs;
             } else {
                 /* see if this is a local proc */
-                if (ORTE_VPID_INVALID == (vpid = orte_ess.proc_get_daemon(&nm->name))) {
+                if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, nm->name.vpid))) {
+                    OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base.output,
+                                         "%s COLL %d PROC %s NOT FOUND",
+                                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                         coll->id, ORTE_NAME_PRINT(&nm->name)));
+                    goto next_coll;
+                }
+                if (NULL == proc->node || NULL == proc->node->daemon) {
+                    OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base.output,
+                                         "%s COLL %d NODE OR DAEMON NOT FOUND FOR PROC %s",
+                                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                         coll->id, ORTE_NAME_PRINT(&nm->name)));
+                    goto next_coll;
+                }
+                if (ORTE_VPID_INVALID == proc->node->daemon->name.vpid) {
                     OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base.output,
                                          "%s COLL %d VPID %s NONLOCAL",
                                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                          coll->id, ORTE_VPID_PRINT(nm->name.vpid)));
                     continue;
                 }
-                if (vpid == ORTE_PROC_MY_NAME->vpid) {
+                if (proc->node->daemon->name.vpid == ORTE_PROC_MY_NAME->vpid) {
                     OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base.output,
                                          "%s grpcomm:prog:collectives Counting %s as local participant",
                                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),

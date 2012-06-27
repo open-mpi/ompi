@@ -294,7 +294,11 @@ static int check_local_proc(orte_job_t *jdata, orte_proc_t *pptr)
     OPAL_OUTPUT_VERBOSE((20, orte_odls_globals.output,
                          "%s odls:constructing child list - looking for daemon for proc %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_NAME_PRINT(&pptr->name)));
-    if (ORTE_VPID_INVALID == (host_daemon = orte_ess.proc_get_daemon(&pptr->name))) {
+    if (NULL == pptr->node || NULL == pptr->node->daemon) {
+        ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+        return ORTE_ERR_NOT_FOUND;
+    }
+    if (ORTE_VPID_INVALID == (host_daemon = pptr->node->daemon->name.vpid)) {
         ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
         return ORTE_ERR_NOT_FOUND;
     }
@@ -535,7 +539,7 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
     }
     opal_dss.copy((void**)&jdata->pmap, bo, OPAL_BYTE_OBJECT);
     /* decode the pidmap  - this will also free the bytes in bo */
-    if (ORTE_SUCCESS != (rc = orte_ess.update_pidmap(bo))) {
+    if (ORTE_SUCCESS != (rc = orte_util_decode_daemon_pidmap(bo))) {
         ORTE_ERROR_LOG(rc);
         goto REPORT_ERROR;
     }
@@ -800,8 +804,6 @@ static int odls_base_default_setup_fork(orte_app_context_t *context,
 static int setup_child(orte_proc_t *child, orte_job_t *jobdat, char ***env)
 {
     char *param, *value;
-    orte_node_rank_t node_rank;
-    orte_local_rank_t local_rank;
     int rc;
     
     /* setup the jobid */
@@ -849,12 +851,12 @@ static int setup_child(orte_proc_t *child, orte_job_t *jobdat, char ***env)
      * AND YES - THIS BREAKS THE ABSTRACTION BARRIER TO SOME EXTENT.
      * We know - just live with it
      */
-    if (ORTE_LOCAL_RANK_INVALID == (local_rank = orte_ess.get_local_rank(&child->name))) {
+    if (ORTE_LOCAL_RANK_INVALID == child->local_rank) {
         ORTE_ERROR_LOG(ORTE_ERR_VALUE_OUT_OF_BOUNDS);
         rc = ORTE_ERR_VALUE_OUT_OF_BOUNDS;
         return rc;
     }
-    asprintf(&value, "%lu", (unsigned long) local_rank);
+    asprintf(&value, "%lu", (unsigned long) child->local_rank);
     opal_setenv("OMPI_COMM_WORLD_LOCAL_RANK", value, true, env);
     free(value);
     
@@ -865,12 +867,12 @@ static int setup_child(orte_proc_t *child, orte_job_t *jobdat, char ***env)
      * AND YES - THIS BREAKS THE ABSTRACTION BARRIER TO SOME EXTENT.
      * We know - just live with it
      */
-    if (ORTE_NODE_RANK_INVALID == (node_rank = orte_ess.get_node_rank(&child->name))) {
+    if (ORTE_NODE_RANK_INVALID ==child->node_rank) {
         ORTE_ERROR_LOG(ORTE_ERR_VALUE_OUT_OF_BOUNDS);
         rc = ORTE_ERR_VALUE_OUT_OF_BOUNDS;
         return rc;
     }
-    asprintf(&value, "%lu", (unsigned long) node_rank);
+    asprintf(&value, "%lu", (unsigned long) child->node_rank);
     opal_setenv("OMPI_COMM_WORLD_NODE_RANK", value, true, env);
     /* set an mca param for it too */
     if(NULL == (param = mca_base_param_environ_variable("orte","ess","node_rank"))) {
@@ -1598,87 +1600,6 @@ int orte_odls_base_default_signal_local_procs(const orte_process_name_t *proc, i
      */
     ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
     return ORTE_ERR_NOT_FOUND;
-}
-
-void orte_odls_base_setup_singleton_jobdat(orte_jobid_t jobid)
-{
-    orte_job_t *jobdat;
-    orte_vpid_t vpid1;
-    int32_t one32;
-    orte_local_rank_t lrank;
-    orte_node_rank_t nrank;
-    orte_proc_state_t state;
-    orte_app_idx_t app_idx;
-    opal_buffer_t buffer;
-    opal_byte_object_t *bo;
-    int rc;
-#if OPAL_HAVE_HWLOC
-    opal_hwloc_level_t bind_level;
-    unsigned int bind_idx;
-#endif
-
-    /* create a job tracking object for it */
-    jobdat = OBJ_NEW(orte_job_t);
-    jobdat->jobid = jobid;
-    jobdat->num_procs = 1;
-    jobdat->num_local_procs = 1;
-    opal_pointer_array_set_item(orte_job_data, ORTE_LOCAL_JOBID(jobid), jobdat);
-    /* need to setup a pidmap for it */
-    OBJ_CONSTRUCT(&buffer, opal_buffer_t);
-    opal_dss.pack(&buffer, &jobid, 1, ORTE_JOBID); /* jobid */
-    vpid1 = 1;
-    opal_dss.pack(&buffer, &vpid1, 1, ORTE_VPID); /* num_procs */
-#if OPAL_HAVE_HWLOC
-    bind_level = OPAL_HWLOC_NODE_LEVEL;
-    opal_dss.pack(&buffer, &bind_level, 1, OPAL_HWLOC_LEVEL_T); /* binding level */
-#endif
-    one32 = 0;
-    opal_dss.pack(&buffer, &one32, 1, OPAL_INT32); /* node index */
-    lrank = 0;
-    opal_dss.pack(&buffer, &lrank, 1, ORTE_LOCAL_RANK);  /* local rank */
-    nrank = 0;
-    opal_dss.pack(&buffer, &nrank, 1, ORTE_NODE_RANK);  /* node rank */
-#if OPAL_HAVE_HWLOC
-    bind_idx = 0;
-    opal_dss.pack(&buffer, &bind_idx, 1, OPAL_UINT);  /* bind index */
-#endif
-    state = ORTE_PROC_STATE_RUNNING;
-    opal_dss.pack(&buffer, &state, 1, ORTE_PROC_STATE);  /* proc state */
-    app_idx = 0;
-    opal_dss.pack(&buffer, &app_idx, 1, ORTE_APP_IDX);  /* app index */
-    one32 = 0;
-    opal_dss.pack(&buffer, &one32, 1, OPAL_INT32);  /* restarts */
-    /* setup a byte object and unload the packed data to it */
-    bo = (opal_byte_object_t*)malloc(sizeof(opal_byte_object_t));
-    opal_dss.unload(&buffer, (void**)&bo->bytes, &bo->size);
-    OBJ_DESTRUCT(&buffer);
-    /* save a copy to send back to the proc */
-    opal_dss.copy((void**)&jobdat->pmap, bo, OPAL_BYTE_OBJECT);
-    /* update our ess data - this will release the byte object's data */
-    if (ORTE_SUCCESS != (rc = orte_ess.update_pidmap(bo))) {
-        ORTE_ERROR_LOG(rc);
-    }
-    free(bo);
-    
-    /* if we don't yet have a daemon map, then we have to generate one
-     * to pass back to it
-     */
-    if (NULL == orte_odls_globals.dmap) {
-        orte_odls_globals.dmap = (opal_byte_object_t*)malloc(sizeof(opal_byte_object_t));
-        /* construct a nodemap */
-        if (ORTE_SUCCESS != (rc = orte_util_encode_nodemap(orte_odls_globals.dmap))) {
-            ORTE_ERROR_LOG(rc);
-        }
-        /* we also need to update our local nidmap - copy the dmap
-         * as this will release the byte object's data. The copy function
-         * will automatically malloc the bo itself, so we don't need to do so here
-         */
-        opal_dss.copy((void**)&bo, orte_odls_globals.dmap, OPAL_BYTE_OBJECT);
-        if (ORTE_SUCCESS != (rc = orte_ess.update_nidmap(bo))) {
-            ORTE_ERROR_LOG(rc);
-        }
-        free(bo);
-    }
 }
 
 int orte_odls_base_default_require_sync(orte_process_name_t *proc,

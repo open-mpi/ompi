@@ -762,7 +762,7 @@ static int remote_spawn(opal_buffer_t *launch)
         goto cleanup;
     }
     /* update our nidmap - this will free data in the byte object */
-    if (ORTE_SUCCESS != (rc = orte_ess.update_nidmap(bo))) {
+    if (ORTE_SUCCESS != (rc = orte_util_decode_daemon_nodemap(bo))) {
         ORTE_ERROR_LOG(rc);
         goto cleanup;
     }
@@ -817,7 +817,7 @@ static int remote_spawn(opal_buffer_t *launch)
         target.vpid = child->name.vpid;
         
         /* get the host where this daemon resides */
-        if (NULL == (hostname = orte_ess.proc_get_hostname(&target))) {
+        if (NULL == (hostname = orte_get_proc_hostname(&target))) {
             opal_output(0, "%s unable to get hostname for daemon %s",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_VPID_PRINT(child->name.vpid));
             rc = ORTE_ERR_NOT_FOUND;

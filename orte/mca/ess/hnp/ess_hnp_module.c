@@ -92,20 +92,11 @@
 static int rte_init(void);
 static int rte_finalize(void);
 static void rte_abort(int status, bool report) __opal_attribute_noreturn__;
-static int update_pidmap(opal_byte_object_t *bo);
-static int update_nidmap(opal_byte_object_t *bo);
 
 orte_ess_base_module_t orte_ess_hnp_module = {
     rte_init,
     rte_finalize,
     rte_abort,
-    NULL,
-    orte_ess_base_proc_get_daemon,
-    orte_ess_base_proc_get_hostname,
-    orte_ess_base_proc_get_local_rank,
-    orte_ess_base_proc_get_node_rank,
-    update_pidmap,
-    update_nidmap,
     NULL /* ft_event */
 };
 
@@ -740,32 +731,6 @@ static void rte_abort(int status, bool report)
     
     /* just exit */
     exit(status);
-}
-
-static int update_pidmap(opal_byte_object_t *bo)
-{
-    /* there is nothing to do here - the HNP can resolve
-     * all requests directly from its internal data. However,
-     * we do need to free the data in the byte object to
-     * be consistent with other modules
-     */
-    if (NULL != bo && NULL != bo->bytes) {
-        free(bo->bytes);
-    }
-    return ORTE_SUCCESS;
-}
-
-static int update_nidmap(opal_byte_object_t *bo)
-{
-    /* there is nothing to do here - the HNP can resolve
-     * all requests directly from its internal data. However,
-     * we do need to free the data in the byte object to
-     * be consistent with other modules
-     */
-    if (NULL != bo && NULL != bo->bytes) {
-        free(bo->bytes);
-    }
-    return ORTE_SUCCESS;
 }
 
 /*

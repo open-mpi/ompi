@@ -403,7 +403,7 @@ static orte_process_name_t get_route(orte_process_name_t *target)
     
         ret.jobid = ORTE_PROC_MY_NAME->jobid;
         /* find out what daemon hosts this proc */
-        if (ORTE_VPID_INVALID == (ret.vpid = orte_ess.proc_get_daemon(target))) {
+        if (ORTE_VPID_INVALID == (ret.vpid = orte_get_proc_daemon_vpid(target))) {
             ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
             ret = *ORTE_NAME_INVALID;
             break;
@@ -793,7 +793,7 @@ static bool route_is_defined(const orte_process_name_t *target)
     }
 
     /* find out what daemon hosts this proc */
-    if (ORTE_VPID_INVALID == orte_ess.proc_get_daemon((orte_process_name_t*)target)) {
+    if (ORTE_VPID_INVALID == orte_get_proc_daemon_vpid((orte_process_name_t*)target)) {
         return false;
     }
     

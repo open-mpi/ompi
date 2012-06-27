@@ -330,7 +330,7 @@ int opal_dss_pack_string(opal_buffer_t *buffer, const void *src,
  * OPAL_DATA_TYPE
  */
 int opal_dss_pack_data_type(opal_buffer_t *buffer, const void *src, int32_t num_vals,
-                             opal_data_type_t type)
+                            opal_data_type_t type)
 {
     int ret;
     
@@ -508,6 +508,114 @@ int opal_dss_pack_node_stat(opal_buffer_t *buffer, const void *src,
         tmp = ptr[i]->sample_time.tv_usec;
         if (OPAL_SUCCESS != (ret = opal_dss_pack_buffer(buffer, &tmp, 1, OPAL_INT32))) {
             return ret;
+        }
+    }
+
+    return OPAL_SUCCESS;
+}
+
+/*
+ * OPAL_VALUE
+ */
+int opal_dss_pack_value(opal_buffer_t *buffer, const void *src,
+                        int32_t num_vals, opal_data_type_t type)
+{
+    opal_value_t **ptr;
+    int32_t i, n;
+    int ret;
+
+    ptr = (opal_value_t **) src;
+    
+    for (i = 0; i < num_vals; ++i) {
+        /* pack the key and type */
+        if (OPAL_SUCCESS != (ret = opal_dss_pack_string(buffer, &ptr[i]->key, 1, OPAL_STRING))) {
+            return ret;
+        }
+        if (OPAL_SUCCESS != (ret = opal_dss_pack_data_type(buffer, &ptr[i]->type, 1, OPAL_DATA_TYPE))) {
+            return ret;
+        }
+        /* now pack the right field */
+        switch (ptr[i]->type) {
+        case OPAL_BYTE:
+            if (OPAL_SUCCESS != (ret = opal_dss_pack_buffer(buffer, &ptr[i]->data.byte, 1, OPAL_BYTE))) {
+                return ret;
+            }
+            break;
+        case OPAL_STRING:
+            if (OPAL_SUCCESS != (ret = opal_dss_pack_buffer(buffer, &ptr[i]->data.string, 1, OPAL_STRING))) {
+                return ret;
+            }
+            break;
+        case OPAL_PID:
+            if (OPAL_SUCCESS != (ret = opal_dss_pack_buffer(buffer, &ptr[i]->data.pid, 1, OPAL_PID))) {
+                return ret;
+            }
+            break;
+        case OPAL_INT:
+            if (OPAL_SUCCESS != (ret = opal_dss_pack_buffer(buffer, &ptr[i]->data.integer, 1, OPAL_INT))) {
+                return ret;
+            }
+            break;
+        case OPAL_INT8:
+            if (OPAL_SUCCESS != (ret = opal_dss_pack_buffer(buffer, &ptr[i]->data.int8, 1, OPAL_INT8))) {
+                return ret;
+            }
+            break;
+        case OPAL_INT16:
+            if (OPAL_SUCCESS != (ret = opal_dss_pack_buffer(buffer, &ptr[i]->data.int16, 1, OPAL_INT16))) {
+                return ret;
+            }
+            break;
+        case OPAL_INT32:
+            if (OPAL_SUCCESS != (ret = opal_dss_pack_buffer(buffer, &ptr[i]->data.int32, 1, OPAL_INT32))) {
+                return ret;
+            }
+            break;
+        case OPAL_INT64:
+            if (OPAL_SUCCESS != (ret = opal_dss_pack_buffer(buffer, &ptr[i]->data.int64, 1, OPAL_INT64))) {
+                return ret;
+            }
+            break;
+        case OPAL_UINT:
+            if (OPAL_SUCCESS != (ret = opal_dss_pack_buffer(buffer, &ptr[i]->data.uint, 1, OPAL_UINT))) {
+                return ret;
+            }
+            break;
+        case OPAL_UINT8:
+            if (OPAL_SUCCESS != (ret = opal_dss_pack_buffer(buffer, &ptr[i]->data.uint8, 1, OPAL_UINT8))) {
+                return ret;
+            }
+            break;
+        case OPAL_UINT16:
+            if (OPAL_SUCCESS != (ret = opal_dss_pack_buffer(buffer, &ptr[i]->data.uint16, 1, OPAL_UINT16))) {
+                return ret;
+            }
+            break;
+        case OPAL_UINT32:
+            if (OPAL_SUCCESS != (ret = opal_dss_pack_buffer(buffer, &ptr[i]->data.uint32, 1, OPAL_UINT32))) {
+                return ret;
+            }
+            break;
+        case OPAL_UINT64:
+            if (OPAL_SUCCESS != (ret = opal_dss_pack_buffer(buffer, &ptr[i]->data.uint64, 1, OPAL_UINT64))) {
+                return ret;
+            }
+            break;
+        case OPAL_BYTE_OBJECT:
+            /* have to pack by hand so we can match unpack without allocation */
+            n = ptr[i]->data.bo.size;
+            if (OPAL_SUCCESS != (ret = opal_dss_pack_int32(buffer, &n, 1, OPAL_INT32))) {
+                return ret;
+            }
+            if (0 < n) {
+                if (OPAL_SUCCESS != (ret = opal_dss_pack_byte(buffer, ptr[i]->data.bo.bytes, n, OPAL_BYTE))) {
+                    return ret;
+                }
+            }
+            break;
+        default:
+            opal_output(0, "PACK-OPAL-VALUE: UNSUPPORTED TYPE %d", (int)ptr[i]->type);
+            return OPAL_ERROR;
         }
     }
 

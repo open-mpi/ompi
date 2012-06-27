@@ -74,20 +74,8 @@ typedef int (*orte_grpcomm_base_module_barrier_fn_t)(orte_grpcomm_collective_t *
  *  OF HOW THIS ALL WORKS
  */
 
-/* send an attribute buffer */
-typedef int (*orte_grpcomm_base_module_modex_set_proc_attr_fn_t)(const char* attr_name, 
-                                                                 const void *buffer, size_t size);
-
-/* get an attribute buffer */
-typedef int (*orte_grpcomm_base_module_modex_get_proc_attr_fn_t)(const orte_process_name_t *name,
-                                                                 const char* attr_name,
-                                                                 void **buffer, size_t *size);
-
 /* perform a modex operation */
 typedef int (*orte_grpcomm_base_module_modex_fn_t)(orte_grpcomm_collective_t *coll);
-
-/* purge the internal attr table */
-typedef int (*orte_grpcomm_base_module_purge_proc_attrs_fn_t)(void);
 
 /*
  * Ver 2.0
@@ -99,11 +87,7 @@ struct orte_grpcomm_base_module_2_0_0_t {
     orte_grpcomm_base_module_xcast_fn_t                 xcast;
     orte_grpcomm_base_module_allgather_fn_t             allgather;
     orte_grpcomm_base_module_barrier_fn_t               barrier;
-    /* modex functions */
-    orte_grpcomm_base_module_modex_set_proc_attr_fn_t   set_proc_attr;
-    orte_grpcomm_base_module_modex_get_proc_attr_fn_t   get_proc_attr;
     orte_grpcomm_base_module_modex_fn_t                 modex;
-    orte_grpcomm_base_module_purge_proc_attrs_fn_t      purge_proc_attrs;
 };
 
 typedef struct orte_grpcomm_base_module_2_0_0_t orte_grpcomm_base_module_2_0_0_t;

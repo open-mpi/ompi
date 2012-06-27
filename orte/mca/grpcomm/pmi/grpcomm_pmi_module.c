@@ -25,6 +25,7 @@
 #include "opal/dss/dss.h"
 #include "opal/mca/hwloc/base/base.h"
 
+#include "orte/mca/db/db.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/util/name_fns.h"
@@ -42,13 +43,7 @@ static int xcast(orte_jobid_t job,
                  orte_rml_tag_t tag);
 static int pmi_allgather(orte_grpcomm_collective_t *coll);
 static int pmi_barrier(orte_grpcomm_collective_t *coll);
-static int pmi_set_proc_attr(const char* attr_name, 
-                             const void *buffer, size_t size);
-static int pmi_get_proc_attr(const orte_process_name_t name,
-                             const char* attr_name,
-                             void **buffer, size_t *size);
 static int modex(orte_grpcomm_collective_t *coll);
-static int purge_proc_attrs(void);
 
 /* Module def */
 orte_grpcomm_base_module_t orte_grpcomm_pmi_module = {
@@ -57,10 +52,7 @@ orte_grpcomm_base_module_t orte_grpcomm_pmi_module = {
     xcast,
     pmi_allgather,
     pmi_barrier,
-    pmi_set_proc_attr,
-    pmi_get_proc_attr,
-    modex,
-    purge_proc_attrs
+    modex
 };
 
 static int pmi_encode(const void *val, size_t vallen);
@@ -345,67 +337,102 @@ static int pmi_get_proc_attr(const orte_process_name_t name,
 /***   MODEX SECTION ***/
 static int modex(orte_grpcomm_collective_t *coll)
 {
-    int rc, i;
+    int rc;
     size_t len;
     char *rml_uri;
     orte_vpid_t v;
     orte_process_name_t name;
-    orte_jmap_t *jmap;
-    orte_nid_t *nid, *loc;
-    orte_pmap_t *pmap;
     void *tmp_val;
+    orte_node_rank_t node_rank;
+    orte_local_rank_t local_rank;
+    opal_list_t modex_data;
+    opal_value_t *kv;
+    uint32_t arch;
+    uint8_t th_level;
+    opal_byte_object_t bo;
+    char *hostname;
 
     OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base.output,
                          "%s grpcomm:pmi: modex entered",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
-    /* provide our hostname so others can know our location */
+    /* check size of our hostname */
     if (strlen(orte_process_info.nodename) > (size_t)pmi_vallen_max) {
         ORTE_ERROR_LOG(ORTE_ERR_VALUE_OUT_OF_BOUNDS);
         return ORTE_ERR_VALUE_OUT_OF_BOUNDS;
     }
 
 
-    rc = pmi_set_proc_attr ("HOSTNAME", orte_process_info.nodename, strlen(orte_process_info.nodename));
-    if (ORTE_SUCCESS != rc) {
-	return rc;
-    }
-
     /* add our oob endpoint info so that oob communications
      * can be supported
      */
     rml_uri = orte_rml.get_contact_info();
-    rc = pmi_set_proc_attr ("RMLURI", rml_uri, strlen (rml_uri));
+    rc = pmi_set_proc_attr (ORTE_DB_RMLURI, rml_uri, strlen (rml_uri));
     if (ORTE_SUCCESS != rc) {
 	return rc;
     }
     free(rml_uri);
 
 #if OPAL_HAVE_HWLOC
-    rc = pmi_set_proc_attr ("BIND_LEVEL", &orte_process_info.bind_level, sizeof (orte_process_info.bind_level));
+    rc = pmi_set_proc_attr (ORTE_DB_BIND_LEVEL, &orte_process_info.bind_level, sizeof (orte_process_info.bind_level));
     if (ORTE_SUCCESS != rc) {
 	return rc;
     }
 
-    rc = pmi_set_proc_attr ("BIND_IDX", &orte_process_info.bind_idx, sizeof (orte_process_info.bind_idx));
+    rc = pmi_set_proc_attr (ORTE_DB_BIND_INDEX, &orte_process_info.bind_idx, sizeof (orte_process_info.bind_idx));
     if (ORTE_SUCCESS != rc) {
 	return rc;
     }
 #endif
 
-    /* get the job map for this job */
-    jmap = (orte_jmap_t*)opal_pointer_array_get_item(&orte_jobmap, 0);
-    /* get my pidmap entry */
-    pmap = (orte_pmap_t*)opal_pointer_array_get_item(&jmap->pmap, ORTE_PROC_MY_NAME->vpid);
-
-    rc = pmi_set_proc_attr ("LOCALRANK", &pmap->local_rank, sizeof (pmap->local_rank));
-    if (ORTE_SUCCESS != rc) {
-	return rc;
+    /* fetch all of my connection info from the database and push it to PMI - includes
+     * my hostname, daemon vpid, local rank, and node rank
+     */
+    OBJ_CONSTRUCT(&modex_data, opal_list_t);
+    if (ORTE_SUCCESS != (rc = orte_db.fetch_multiple(ORTE_PROC_MY_NAME, NULL, &modex_data))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
     }
-    rc = pmi_set_proc_attr ("NODERANK", &pmap->node_rank, sizeof (pmap->node_rank));
-    if (ORTE_SUCCESS != rc) {
-	return rc;
+    while (NULL != (kv = (opal_value_t*)opal_list_remove_first(&modex_data))) {
+        switch (kv->type) {
+        case OPAL_STRING:
+            if (ORTE_SUCCESS != (rc = pmi_set_proc_attr(kv->key, kv->data.string, strlen(kv->data.string)))) {
+                ORTE_ERROR_LOG(rc);
+                return rc;
+            }
+            break;
+        case OPAL_INT:
+            if (ORTE_SUCCESS != (rc = pmi_set_proc_attr(kv->key, &kv->data.integer, sizeof(int)))) {
+                ORTE_ERROR_LOG(rc);
+                return rc;
+            }
+            break;
+        case ORTE_VPID:
+        case OPAL_UINT32:
+            if (ORTE_SUCCESS != (rc = pmi_set_proc_attr(kv->key, &kv->data.uint32, sizeof(uint32_t)))) {
+                ORTE_ERROR_LOG(rc);
+                return rc;
+            }
+            break;
+        case OPAL_UINT16:
+            if (ORTE_SUCCESS != (rc = pmi_set_proc_attr(kv->key, &kv->data.uint16, sizeof(uint16_t)))) {
+                ORTE_ERROR_LOG(rc);
+                return rc;
+            }
+            break;
+        case OPAL_BYTE_OBJECT:
+            if (ORTE_SUCCESS != (rc = pmi_set_proc_attr(kv->key, kv->data.bo.bytes, kv->data.bo.size))) {
+                ORTE_ERROR_LOG(rc);
+                return rc;
+            }
+            break;
+        default:
+            ORTE_ERROR_LOG(ORTE_ERR_NOT_SUPPORTED);
+            return ORTE_ERR_NOT_SUPPORTED;
+        }
+        OBJ_RELEASE(kv);
     }
+    OBJ_DESTRUCT(&modex_data);
 
     rc = pmi_put_last_key ();
     if (ORTE_SUCCESS != rc) {
@@ -431,7 +458,7 @@ static int modex(orte_grpcomm_collective_t *coll)
 
         name.vpid = v;
 
-	rc = pmi_get_proc_attr (name, "RMLURI", (void **) &rml_uri, &len);
+	rc = pmi_get_proc_attr (name, ORTE_DB_RMLURI, (void **) &rml_uri, &len);
 	if (ORTE_SUCCESS != rc) {
 	    return rc;
 	}
@@ -447,7 +474,7 @@ static int modex(orte_grpcomm_collective_t *coll)
         }
         free(rml_uri);
 
-	rc = pmi_get_proc_attr (name, "HOSTNAME", &tmp_val, &len);
+	rc = pmi_get_proc_attr (name, ORTE_DB_HOSTNAME, (void**)&hostname, &len);
 	if (ORTE_SUCCESS != rc) {
 	    return rc;
 	}
@@ -455,110 +482,151 @@ static int modex(orte_grpcomm_collective_t *coll)
         OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base.output,
                              "%s grpcomm:pmi: proc %s location %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             ORTE_NAME_PRINT(&name), (char *) tmp_val));
+                             ORTE_NAME_PRINT(&name), hostname));
 
-        /* see if this node is already in nidmap */
-        for (i = 0, loc = NULL; i < orte_nidmap.size; i++) {
-            if (NULL == (nid = (orte_nid_t*)opal_pointer_array_get_item(&orte_nidmap, i))) {
-                continue;
-            }
-            if (0 == strcmp(tmp_val, nid->name)) {
-                /* found it */
-                loc = nid;
-		free (tmp_val);
-                break;
-            }
-        }
-        if (NULL == loc) {
-            /* new node - save it */
-            loc = OBJ_NEW(orte_nid_t);
-            loc->name = tmp_val;
-            loc->index = opal_pointer_array_add(&orte_nidmap, loc);
-            loc->daemon = loc->index;
-            /* keep track */
-            orte_process_info.num_nodes++;
-	}
-
-        /* see if this proc is already in the pidmap */
-        if (NULL == (pmap = opal_pointer_array_get_item(&jmap->pmap, v))) {
-            /* nope - add it */
-            pmap = OBJ_NEW(orte_pmap_t);
-            pmap->node = loc->index;
-            if (ORTE_SUCCESS != (rc = opal_pointer_array_set_item(&jmap->pmap, v, pmap))) {
-                ORTE_ERROR_LOG(rc);
-                return rc;
-            }
+        /* store it */
+        if (ORTE_SUCCESS != (rc = orte_db.store(&name, ORTE_DB_HOSTNAME, hostname, OPAL_STRING))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
         }
 
 #if OPAL_HAVE_HWLOC
         {
             opal_hwloc_level_t bind_level;
             unsigned int bind_idx;
+            opal_hwloc_locality_t locality;
 
             /* get the proc's locality info, if available */
-	    pmi_get_proc_attr (name, "BIND_LEVEL", &tmp_val, &len);
+	    pmi_get_proc_attr (name, ORTE_DB_BIND_LEVEL, &tmp_val, &len);
 	    if (ORTE_SUCCESS == rc && 0 < len) {
 		assert (len == sizeof (bind_level));
 		memmove (&bind_level, tmp_val, len);
 		free (tmp_val);
 	    }
+            if (ORTE_SUCCESS != (rc = orte_db.store(&name, ORTE_DB_BIND_LEVEL, &bind_level, OPAL_HWLOC_LEVEL_T))) {
+                ORTE_ERROR_LOG(rc);
+                return rc;
+            }
 
-	    rc = pmi_get_proc_attr (name, "BIND_IDX", &tmp_val, &len);
+	    rc = pmi_get_proc_attr (name, ORTE_DB_BIND_INDEX, &tmp_val, &len);
 	    if (ORTE_SUCCESS == rc && 0 < len) {
 		assert (len == sizeof (bind_idx));
 		memmove (&bind_idx, tmp_val, len);
 		free (tmp_val);
 	    }
+            if (ORTE_SUCCESS != (rc = orte_db.store(&name, ORTE_DB_BIND_INDEX, &bind_idx, OPAL_UINT))) {
+                ORTE_ERROR_LOG(rc);
+                return rc;
+            }
 
 	    if (name.jobid == ORTE_PROC_MY_NAME->jobid &&
 		name.vpid == ORTE_PROC_MY_NAME->vpid) {
 		/* if this data is from myself, then set locality to all */
-		pmap->locality = OPAL_PROC_ALL_LOCAL;
-	    } else if (loc->daemon != ORTE_PROC_MY_DAEMON->vpid) {
+		locality = OPAL_PROC_ALL_LOCAL;
+	    } else if (0 != strcmp(hostname, orte_process_info.nodename)) {
 		/* this is on a different node, then mark as non-local */
-		pmap->locality = OPAL_PROC_NON_LOCAL;
+		locality = OPAL_PROC_NON_LOCAL;
 	    } else if (0 == len) {
 		/* if we share a node, but we don't know anything more, then
 		 * mark us as on the node as this is all we know
 		 */
-		pmap->locality = OPAL_PROC_ON_NODE;
+		locality = OPAL_PROC_ON_NODE;
 	    } else {
 		/* determine relative location on our node */
-		pmap->locality = opal_hwloc_base_get_relative_locality(opal_hwloc_topology,
-								       orte_process_info.bind_level,
-								       orte_process_info.bind_idx,
-								       bind_level, bind_idx);
+		locality = opal_hwloc_base_get_relative_locality(opal_hwloc_topology,
+                                                                 orte_process_info.bind_level,
+                                                                 orte_process_info.bind_idx,
+                                                                 bind_level, bind_idx);
 	    }
 	    OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base.output,
 				 "%s grpcomm:pmi setting proc %s locale %s",
 				 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
 				 ORTE_NAME_PRINT(&name),
-				 opal_hwloc_base_print_locality(pmap->locality)));
+				 opal_hwloc_base_print_locality(locality)));
+            if (ORTE_SUCCESS != (rc = orte_db.store(&name, ORTE_DB_LOCALITY, &locality, OPAL_HWLOC_LOCALITY_T))) {
+                ORTE_ERROR_LOG(rc);
+                return rc;
+            }
 	}
 #endif
         /* get the proc's local/node rank info */
-	rc = pmi_get_proc_attr (name, "LOCALRANK", &tmp_val, &len);
+	rc = pmi_get_proc_attr (name, ORTE_DB_LOCALRANK, &tmp_val, &len);
 	if (ORTE_SUCCESS != rc) {
 	    return rc;
 	}
-	assert (len == sizeof (pmap->local_rank));
-	memmove (&pmap->local_rank, tmp_val, len);
+	assert (len == sizeof (local_rank));
+	memmove (&local_rank, tmp_val, len);
 	free (tmp_val);
+        if (ORTE_SUCCESS != (rc = orte_db.store(&name, ORTE_DB_LOCALRANK, &local_rank, ORTE_LOCAL_RANK))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
 
-	rc = pmi_get_proc_attr (name, "NODERANK", &tmp_val, &len);
+	rc = pmi_get_proc_attr (name, ORTE_DB_NODERANK, &tmp_val, &len);
 	if (ORTE_SUCCESS != rc) {
 	    return rc;
 	}
-	assert (len == sizeof (pmap->node_rank));
-	memmove (&pmap->node_rank, tmp_val, len);
+	assert (len == sizeof (node_rank));
+	memmove (&node_rank, tmp_val, len);
 	free (tmp_val);
+        if (ORTE_SUCCESS != (rc = orte_db.store(&name, ORTE_DB_NODERANK, &node_rank, ORTE_NODE_RANK))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
 
         OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base.output,
                              "%s grpcomm:pmi: proc %s lrank %u nrank %u",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_NAME_PRINT(&name),
-                             (unsigned int)pmap->local_rank,
-                             (unsigned int)pmap->node_rank));
+                             (unsigned int)local_rank,
+                             (unsigned int)node_rank));
+
+        /* have to get two other items that are for the MPI layer - these
+         * need to be stored in a particular way to match how they will
+         * be retrieved
+         */
+        rc = pmi_get_proc_attr (name, "OMPI_ARCH", &tmp_val, &len);
+        if (ORTE_SUCCESS != rc) {
+            return rc;
+        }
+        assert (len == sizeof (uint32_t));
+        memmove (&arch, tmp_val, len);
+        free (tmp_val);
+        if (ORTE_SUCCESS != (rc = orte_db.store(&name, "OMPI_ARCH", &arch, OPAL_UINT32))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        rc = pmi_get_proc_attr (name, "MPI_THREAD_LEVEL", &tmp_val, &len);
+        if (ORTE_SUCCESS != rc) {
+            return rc;
+        }
+        assert (len == sizeof (uint8_t));
+        memmove (&th_level, tmp_val, len);
+        free (tmp_val);
+        bo.bytes = &th_level;
+        bo.size = 1;
+        if (ORTE_SUCCESS != (rc = orte_db.store(&name, "MPI_THREAD_LEVEL", (void*)&bo, OPAL_BYTE_OBJECT))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+
+        /* harvest all btl info that we know about and store it */
+        OBJ_CONSTRUCT(&modex_data, opal_list_t);
+        if (ORTE_SUCCESS != (rc = orte_db.fetch_multiple(ORTE_PROC_MY_NAME, "btl.*", &modex_data))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        while (NULL != (kv = (opal_value_t*)opal_list_remove_first(&modex_data))) {
+            if (ORTE_SUCCESS != (rc = pmi_get_proc_attr(name, kv->key, &tmp_val, &len))) {
+                return rc;
+            }
+            if (ORTE_SUCCESS != (rc = orte_db.store(&name, kv->key, (void*)&(kv->data.bo), OPAL_BYTE_OBJECT))) {
+                ORTE_ERROR_LOG(rc);
+                return rc;
+            }
+            OBJ_RELEASE(kv);
+        }
+        OBJ_DESTRUCT(&modex_data);
     }
 
     OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base.output,
@@ -571,12 +639,6 @@ static int modex(orte_grpcomm_collective_t *coll)
         coll->cbfunc(NULL, coll->cbdata);
     }
     return rc;
-}
-
-static int purge_proc_attrs(void)
-{
-    /* nothing to do here */
-    return ORTE_SUCCESS;
 }
 
 static inline unsigned char pmi_base64_encsym (unsigned char value) {

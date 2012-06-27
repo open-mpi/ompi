@@ -425,6 +425,16 @@ int opal_dss_open(void)
                                                      "OPAL_NODE_STAT", &tmp))) {
         return rc;
     }
+    tmp = OPAL_VALUE;
+    if (OPAL_SUCCESS != (rc = opal_dss.register_type(opal_dss_pack_value,
+                                                     opal_dss_unpack_value,
+                                                     (opal_dss_copy_fn_t)opal_dss_copy_value,
+                                                     (opal_dss_compare_fn_t)opal_dss_compare_value,
+                                                     (opal_dss_print_fn_t)opal_dss_print_value,
+                                                     OPAL_DSS_STRUCTURED,
+                                                     "OPAL_VALUE", &tmp))) {
+        return rc;
+    }
     /* All done */
 
     opal_dss_initialized = true;

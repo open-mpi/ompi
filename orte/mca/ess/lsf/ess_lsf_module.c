@@ -55,13 +55,6 @@ orte_ess_base_module_t orte_ess_lsf_module = {
     rte_init,
     rte_finalize,
     orte_ess_base_app_abort,
-    orte_ess_base_proc_get_locality,
-    orte_ess_base_proc_get_daemon,
-    orte_ess_base_proc_get_hostname,
-    orte_ess_base_proc_get_local_rank,
-    orte_ess_base_proc_get_node_rank,
-    orte_ess_base_update_pidmap,
-    orte_ess_base_update_nidmap,
     NULL /* ft_event */
 };
 
