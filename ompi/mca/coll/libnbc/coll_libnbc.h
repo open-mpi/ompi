@@ -55,7 +55,7 @@ BEGIN_C_DECLS
 #define NBC_INVALID_TOPOLOGY_COMM 8 /* invalid topology attached to communicator */
 
 /* number of implemented collective functions */
-#define NBC_NUM_COLL 19
+#define NBC_NUM_COLL 17
 
 struct ompi_coll_libnbc_component_t {
     mca_coll_base_component_2_0_0_t super;
