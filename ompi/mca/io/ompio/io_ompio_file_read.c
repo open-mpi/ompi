@@ -9,7 +9,7 @@
  *                          University of Stuttgart.  All rights reserved.
  *  Copyright (c) 2004-2005 The Regents of the University of California.
  *                          All rights reserved.
- *  Copyright (c) 2008-2011 University of Houston. All rights reserved.
+ *  Copyright (c) 2008-2012 University of Houston. All rights reserved.
  *  $COPYRIGHT$
  *  
  *  Additional copyrights may follow
@@ -30,7 +30,6 @@
 #include "ompi/mca/fcoll/static/fcoll_static.h"
 #include "ompi/mca/fcoll/individual/fcoll_individual.h"
 #include "ompi/mca/fcoll/two_phase/fcoll_two_phase.h"
-#include "ompi/mca/fcoll/ylib/fcoll_ylib.h"
 #include "ompi/mca/fbtl/fbtl.h"
 #include "ompi/mca/fbtl/base/base.h"
 
@@ -210,6 +209,10 @@ mca_io_ompio_file_read (ompi_file_t *fp,
     if (NULL != decoded_iov) {
         free (decoded_iov);
         decoded_iov = NULL;
+    }
+
+    if ( MPI_STATUS_IGNORE != status ) {
+	status->_ucount = max_data;
     }
 
     return ret;
@@ -465,40 +468,3 @@ mca_io_ompio_file_read_ordered_end (ompi_file_t *fh,
 
     return ret;
 }
-
-
-    /*
-    if (! (fh->f_flags & OMPIO_AGGREGATOR_IS_SET)) {
-        if (!strcmp (data->ompio_fh.f_fcoll_component->mca_component_name,
-                     "dynamic")) {
-            printf ("Dynamic: %d\n",mca_fcoll_dynamic_num_io_procs);
-            ompi_io_ompio_set_aggregator_props (&data->ompio_fh, 
-                                                mca_fcoll_dynamic_num_io_procs);
-        }
-        else if (!strcmp (data->ompio_fh.f_fcoll_component->mca_component_name,
-                     "static")) {
-            printf ("Static: %d\n",mca_fcoll_static_num_io_procs);
-            ompi_io_ompio_set_aggregator_props (&data->ompio_fh, 
-                                                mca_fcoll_static_num_io_procs);
-        }
-        else if (!strcmp (data->ompio_fh.f_fcoll_component->mca_component_name,
-                     "two_phase")) {
-            printf ("Two Phase: %d\n",mca_fcoll_two_phase_num_io_procs);
-            ompi_io_ompio_set_aggregator_props (&data->ompio_fh, 
-                                                mca_fcoll_two_phase_num_io_procs);
-            mca_fcoll_two_phase_num_io_procs = 
-                ceil((float)data->ompio_fh.f_size/data->ompio_fh.f_procs_per_group);
-            data->ompio_fh.f_aggregator_index = 
-                ceil((float)data->ompio_fh.f_size/mca_fcoll_two_phase_num_io_procs);
-        }
-        else if (!strcmp (data->ompio_fh.f_fcoll_component->mca_component_name,
-                     "ylib")) {
-            ompi_io_ompio_set_aggregator_props (&data->ompio_fh, 
-                                                mca_fcoll_ylib_num_io_procs);
-            mca_fcoll_ylib_num_io_procs = 
-                ceil((float)data->ompio_fh.f_size/data->ompio_fh.f_procs_per_group);
-            data->ompio_fh.f_aggregator_index = 
-                ceil((float)data->ompio_fh.f_size/mca_fcoll_ylib_num_io_procs);
-        }
-    }
-    */
