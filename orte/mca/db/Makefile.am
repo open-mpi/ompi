@@ -17,7 +17,7 @@ libmca_db_la_SOURCES =
 dist_pkgdata_DATA =
 
 # local files
-headers = db.h
+headers = db.h db_types.h
 libmca_db_la_SOURCES += $(headers)
 
 # Conditionally install the header files
