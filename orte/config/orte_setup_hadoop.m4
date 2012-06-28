@@ -32,32 +32,34 @@ AC_DEFUN([ORTE_SETUP_HADOOP],[
     # Only build the Hadoop support if requested
     if test "$enable_hadoop" == "yes"; then
         AC_MSG_RESULT([yes])
-        WANT_HADOOP_SUPPORT=1
+        orte_enable_hadoop_support=0
         # if this is Hadoop 2.x, we will find a share/hadoop/common
         # directory under the location given in the environ
         AC_MSG_CHECKING([for Hadoop 2.0 commons directory])
         AS_IF([test "x$HADOOP_COMMON_HOME" != "x" -a -d "$HADOOP_COMMON_HOME/share/hadoop/common"],
               [AC_MSG_RESULT([found])
+               orte_enable_hadoop_support=1
                ORTE_HAVE_HADOOP_SERIES_2=1],
               [AC_MSG_RESULT([not found])
                # check instead for Hadoop 1.0.2
                AC_MSG_CHECKING([for Hadoop 1.0.2])
                AS_IF([test "x$HADOOP_HOME" != "x" -a -f "$HADOOP_HOME/hadoop-core-1.0.2.jar"],
                      [AC_MSG_RESULT([found])
+                      orte_enable_hadoop_support=1
                       ORTE_HAVE_HADOOP_SERIES_1=1],
                      [AC_MSG_RESULT([not found])
                          AC_MSG_WARN([HADOOP support requested but supported version not found])
                          AC_MSG_ERROR([Cannot continue])])])
     else
         AC_MSG_RESULT([no])
-        WANT_HADOOP_SUPPORT=0
+        orte_enable_hadoop_support=0
     fi
 
     AC_SUBST([ORTE_HAVE_HADOOP_SERIES_1])
 
-    AC_DEFINE_UNQUOTED([ORTE_WANT_HADOOP_SUPPORT], [$WANT_HADOOP_SUPPORT],
+    AC_DEFINE_UNQUOTED([ORTE_WANT_HADOOP_SUPPORT], [$orte_enable_hadoop_support],
                        [do we want hadoop support])
-    AM_CONDITIONAL(ORTE_WANT_HADOOP_SUPPORT, test "$WANT_HADOOP_SUPPORT" = "1")
+    AM_CONDITIONAL(ORTE_WANT_HADOOP_SUPPORT, test "$orte_enable_hadoop_support" = "1")
 
     AM_CONDITIONAL(ORTE_HAVE_HADOOP_SERIES1, test "$ORTE_HAVE_HADOOP_SERIES_1" = "1")
     AC_DEFINE_UNQUOTED([ORTE_HAVE_HADOOP_SERIES1], [$ORTE_HAVE_HADOOP_SERIES_1],

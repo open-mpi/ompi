@@ -13,7 +13,7 @@
 AC_DEFUN([MCA_orte_iof_mr_orted_CONFIG], [
     AC_CONFIG_FILES([orte/mca/iof/mr_orted/Makefile])
 
-    AS_IF([test "$orte_without_full_support" = 0],
+    AS_IF([test "$orte_enable_hadoop_support" = 1 -a test "$orte_without_full_support" = 0],
           [$1],
           [$2])
 ])
