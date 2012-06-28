@@ -120,6 +120,18 @@ mca_io_ompio_file_open (ompi_communicator_t *comm,
     }
 
     fh->f_flags |= OMPIO_FILE_IS_OPEN;
+
+    /* If file has been opened in the append mode, move the internal 
+       file pointer of OMPIO to the very end of the file. */
+    if ( data->ompio_fh.f_amode & MPI_MODE_APPEND ) {
+	OMPI_MPI_OFFSET_TYPE current_size;
+
+        data->ompio_fh.f_fs->fs_file_get_size (&data->ompio_fh, 
+					       &current_size);
+	ompi_io_ompio_set_explicit_offset (&data->ompio_fh, current_size);
+    }
+
+
     
     return OMPI_SUCCESS;
 
