@@ -10,6 +10,8 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2012      Los Alamos National Security, LLC.
+#                         All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -19,17 +21,23 @@
 
 # This makefile.am does not stand on its own - it is included from opal/Makefile.am
 
+AM_CFLAGS = \
+            -DOPAL_CONFIGURE_HOST="\"@OPAL_CONFIGURE_HOST@\""
+
 # Source code files
-dist_pkgdata_DATA += runtime/help-opal-runtime.txt
+dist_pkgdata_DATA += runtime/help-opal-runtime.txt \
+                     runtime/help-opal_info.txt
 
 headers += \
         runtime/opal_progress.h \
         runtime/opal.h \
-		runtime/opal_cr.h
+        runtime/opal_cr.h \
+        runtime/opal_info_support.h
 
 libopen_pal_la_SOURCES += \
         runtime/opal_progress.c \
         runtime/opal_finalize.c \
         runtime/opal_init.c \
-		runtime/opal_params.c \
-		runtime/opal_cr.c
+        runtime/opal_params.c \
+        runtime/opal_cr.c \
+        runtime/opal_info_support.c
