@@ -9,7 +9,7 @@
  *                          University of Stuttgart.  All rights reserved.
  *  Copyright (c) 2004-2005 The Regents of the University of California.
  *                          All rights reserved.
- *  Copyright (c) 2008-2011 University of Houston. All rights reserved.
+ *  Copyright (c) 2008-2012 University of Houston. All rights reserved.
  *  $COPYRIGHT$
  *  
  *  Additional copyrights may follow
@@ -30,7 +30,6 @@
 #include "ompi/mca/fcoll/static/fcoll_static.h"
 #include "ompi/mca/fcoll/individual/fcoll_individual.h"
 #include "ompi/mca/fcoll/two_phase/fcoll_two_phase.h"
-#include "ompi/mca/fcoll/ylib/fcoll_ylib.h"
 #include "ompi/mca/fbtl/fbtl.h"
 #include "ompi/mca/fbtl/base/base.h"
 
@@ -202,6 +201,10 @@ mca_io_ompio_file_write (ompi_file_t *fp,
     if (NULL != decoded_iov) {
         free (decoded_iov);
         decoded_iov = NULL;
+    }
+
+    if ( MPI_STATUS_IGNORE != status ) {
+	status->_ucount = max_data;
     }
 
     return ret;
