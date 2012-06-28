@@ -11,6 +11,8 @@
 #                         All rights reserved.
 # Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
+# Copyright (c) 2012      Los Alamos National Security, LLC.
+#                         All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -45,8 +47,6 @@ if OMPI_INSTALL_BINARIES
 
 bin_PROGRAMS = ompi_info
 
-dist_pkgdata_DATA = help-ompi_info.txt
-
 nodist_man_MANS = $(man_pages)
 
 # Ensure that the man pages are rebuilt if the opal_config.h file
@@ -59,7 +59,6 @@ endif
 ompi_info_SOURCES = \
         ompi_info.h \
         ompi_info.c \
-        output.c \
         param.c \
         components.c \
         version.c

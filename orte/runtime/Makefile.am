@@ -30,7 +30,11 @@ headers += \
         runtime/orte_globals.h \
         runtime/orte_quit.h \
         runtime/runtime_internals.h \
-        runtime/data_type_support/orte_dt_support.h
+        runtime/data_type_support/orte_dt_support.h \
+	runtime/orte_wait.h \
+        runtime/orte_cr.h \
+        runtime/orte_data_server.h \
+        runtime/orte_info_support.h
 
 libopen_rte_la_SOURCES += \
         runtime/orte_finalize.c \
@@ -43,17 +47,8 @@ libopen_rte_la_SOURCES += \
         runtime/data_type_support/orte_dt_print_fns.c \
         runtime/data_type_support/orte_dt_packing_fns.c \
         runtime/data_type_support/orte_dt_unpacking_fns.c \
-        runtime/orte_mca_params.c
-
-if !ORTE_DISABLE_FULL_SUPPORT
-
-headers += \
-	runtime/orte_wait.h \
-        runtime/orte_cr.h \
-        runtime/orte_data_server.h
-
-libopen_rte_la_SOURCES += \
+        runtime/orte_mca_params.c \
         runtime/orte_wait.c \
         runtime/orte_cr.c \
-        runtime/orte_data_server.c
-endif
+        runtime/orte_data_server.c \
+        runtime/orte_info_support.c
