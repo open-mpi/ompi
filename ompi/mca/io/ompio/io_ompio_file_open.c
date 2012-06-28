@@ -45,22 +45,22 @@ mca_io_ompio_file_open (ompi_communicator_t *comm,
 
     if ( ((amode&MPI_MODE_RDONLY)?1:0) + ((amode&MPI_MODE_RDWR)?1:0) +
 	 ((amode&MPI_MODE_WRONLY)?1:0) != 1 ) {
-	ret = MPI_ERR_AMODE;
-	goto fn_fail;
+	return MPI_ERR_AMODE;
     }
 
     if ((amode & MPI_MODE_RDONLY) && 
         ((amode & MPI_MODE_CREATE) || (amode & MPI_MODE_EXCL))) {
-	ret = MPI_ERR_AMODE;
-	goto fn_fail;
+	return  MPI_ERR_AMODE;
     }
 
     if ((amode & MPI_MODE_RDWR) && (amode & MPI_MODE_SEQUENTIAL)) {
-	ret = MPI_ERR_AMODE;
-	goto fn_fail;
+	return MPI_ERR_AMODE;
     }
 
     data = (mca_io_ompio_data_t *) fh->f_io_selected_data;
+    if ( NULL == data ) {	
+	return  OMPI_ERR_OUT_OF_RESOURCE;
+    }
 
     data->ompio_fh.f_iov_type = MPI_DATATYPE_NULL;
     data->ompio_fh.f_rank = ompi_comm_rank (fh->f_comm);
@@ -68,27 +68,24 @@ mca_io_ompio_file_open (ompi_communicator_t *comm,
     remote_arch = opal_local_arch;
     data->ompio_fh.f_convertor = opal_convertor_create (remote_arch, 0);
 
-    ompi_comm_dup (comm, &data->ompio_fh.f_comm);
-
-    data->ompio_fh.f_fstype = NONE;
-    data->ompio_fh.f_amode = amode;
-    data->ompio_fh.f_info = fh->f_info;
-    data->ompio_fh.f_atomicity = 0;
-
-    ompi_io_ompio_set_file_defaults (&data->ompio_fh);
-
-    data->ompio_fh.f_filename = strdup(fh->f_filename);
-    if (NULL == data->ompio_fh.f_filename) {
-        ret = OMPI_ERROR;
-        goto fn_fail;
+    ret = ompi_comm_dup (comm, &data->ompio_fh.f_comm);
+    if ( ret != OMPI_SUCCESS )  {
+	goto fn_fail;
     }
 
+    data->ompio_fh.f_fstype = NONE;
+    data->ompio_fh.f_amode  = amode;
+    data->ompio_fh.f_info   = fh->f_info;
+    data->ompio_fh.f_atomicity = 0;
+
+    ompi_io_ompio_set_file_defaults ( &data->ompio_fh);
+
+    data->ompio_fh.f_filename = fh->f_filename;
+
     /*
-    if (MPI_INFO_NULL != info)
-    {
+    if (MPI_INFO_NULL != info)  {
         ret = ompi_info_dup (info, &data->ompio_fh.f_info);
-	if (OMPI_SUCCESS != ret)
-	{
+	if (OMPI_SUCCESS != ret) {
              goto fn_fail;
 	}
     }
@@ -123,8 +120,14 @@ mca_io_ompio_file_open (ompi_communicator_t *comm,
     }
 
     fh->f_flags |= OMPIO_FILE_IS_OPEN;
+    
+    return OMPI_SUCCESS;
 
  fn_fail:
+    /* no need to free resources here, since the destructor
+      is calling mca_io_ompio_file_close, which actually gets 
+      rid of all allocated memory items */
+
     return ret;
 }
 
@@ -136,6 +139,11 @@ mca_io_ompio_file_close (ompi_file_t *fh)
     int delete_flag = 0;
 
     data = (mca_io_ompio_data_t *) fh->f_io_selected_data;
+    if ( NULL == data ) {
+	/* structure has already been freed, this is an erroneous call to file_close */
+	return ret;
+    }
+
     if ( data->ompio_fh.f_amode & MPI_MODE_DELETE_ON_CLOSE ) {
 	delete_flag = 1;
     }
@@ -178,14 +186,7 @@ mca_io_ompio_file_close (ompi_file_t *fh)
         ompi_datatype_destroy (&data->ompio_fh.f_iov_type);
     }
 
-    if (NULL != data->ompio_fh.f_filename)
-    {
-        free (data->ompio_fh.f_filename);
-        data->ompio_fh.f_filename = NULL;
-    }
-
-    if (MPI_COMM_NULL != data->ompio_fh.f_comm)
-    {
+    if (MPI_COMM_NULL != data->ompio_fh.f_comm)  {
         ompi_comm_free (&data->ompio_fh.f_comm);
     }
 
@@ -196,6 +197,10 @@ mca_io_ompio_file_close (ompi_file_t *fh)
         ompi_info_free (&data->ompio_fh.f_info);
     }
     */
+
+    if ( NULL != data ) {
+	free ( data );
+    }
 
     return ret;
 }
