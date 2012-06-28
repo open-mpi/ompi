@@ -20,7 +20,7 @@
 EXTRA_DIST =
 
 sources = \
-        coll_libnbc.h
+        coll_libnbc.h \
 	coll_libnbc_component.c \
 	coll_libnbc_not_implemented.c \
 	nbc.c \

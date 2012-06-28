@@ -57,8 +57,6 @@ extern "C" {
 #define NBC_SCAN 13
 #define NBC_SCATTER 14
 #define NBC_SCATTERV 15
-#define NBC_CART_SHIFT_XCHG 16
-#define NBC_NEIGHBOR_XCHG 17
 /* set the number of collectives in nbc.h !!!! */
   
 /* several typedefs for NBC */
@@ -230,34 +228,7 @@ typedef struct {
 } NBC_Scatter_args;
 int NBC_Scatter_args_compare(NBC_Scatter_args *a, NBC_Scatter_args *b, void *param);
 
-typedef struct {
-  NBC_Schedule *schedule;
-  void *sbuf; 
-  int scount; 
-  MPI_Datatype stype;
-  void *rbuf; 
-  int rcount; 
-  MPI_Datatype rtype; 
-  int direction; 
-  int disp;
-  MPI_Comm comm; 
-} NBC_Icart_shift_xchg_args;
-int NBC_Icart_shift_xchg_args_compare(NBC_Icart_shift_xchg_args *a, NBC_Icart_shift_xchg_args *b, void *param);
-
-typedef struct {
-  NBC_Schedule *schedule;
-  void *sbuf;
-  int scount;
-  MPI_Datatype stype;
-  void *rbuf;
-  int rcount;
-  MPI_Datatype rtype; 
-  MPI_Comm comm; 
-} NBC_Ineighbor_xchg_args;
-int NBC_Ineighbor_xchg_args_compare(NBC_Ineighbor_xchg_args *a, NBC_Ineighbor_xchg_args *b, void *param);
-
 /* Schedule cache structures/functions */
-u_int32_t adler32(u_int32_t adler, int8_t *buf, int len);
 void NBC_SchedCache_args_delete(void *entry);
 void NBC_SchedCache_args_delete_key_dummy(void *k);
   
