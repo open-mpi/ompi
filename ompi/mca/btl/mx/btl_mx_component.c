@@ -196,14 +196,16 @@ static int mca_btl_mx_component_open(void)
 
 static int mca_btl_mx_component_close(void)
 {
-    if( NULL == mca_btl_mx_component.mx_btls )
-        return OMPI_SUCCESS;
-    
+   
     if(OMPI_SUCCESS != ompi_common_mx_finalize()) { 
         return OMPI_ERROR;
     }
 
+    if( NULL == mca_btl_mx_component.mx_btls )
+        return OMPI_SUCCESS;
+
     /* release resources */
+    OBJ_DESTRUCT(&mca_btl_mx_component.mx_procs);
     OBJ_DESTRUCT(&mca_btl_mx_component.mx_send_eager_frags);
     OBJ_DESTRUCT(&mca_btl_mx_component.mx_send_user_frags);
     OBJ_DESTRUCT(&mca_btl_mx_component.mx_procs);
@@ -433,20 +435,6 @@ mca_btl_base_module_t** mca_btl_mx_component_init(int *num_btl_modules,
     mca_btl_mx_addr_t *mx_addrs;
 
     *num_btl_modules = 0;
-
-    /**
-     * As the MX MTL get initialized before the MX BTL it will call the
-     * mx_init and the environment variables set by the BTL will be useless.
-     * Closing the MX will force the next call to mx_init to take these
-     * environment variables into account.
-     */
-    /*(void)ompi_common_mx_finalize();*/
-
-    /* set the MX error handle to always return. This function is the only MX function
-     * allowed to be called before mx_init in order to make sure that if the MX is not
-     * up and running the MX library does not exit the application.
-     */
-    mx_set_error_handler(MX_ERRORS_RETURN);
 
     /* First check if MX is available ... */
     if( OMPI_SUCCESS != ompi_common_mx_initialize() ) { 
