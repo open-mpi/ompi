@@ -153,7 +153,7 @@ mca_btl_ugni_prepare_src_send (struct mca_btl_base_module_t *btl,
 
     opal_convertor_get_current_pointer (convertor, &data_ptr);
 
-    send_in_place = !(*size >= 4096 || opal_convertor_need_buffers(convertor) ||
+    send_in_place = !(opal_convertor_need_buffers(convertor) ||
                       (use_eager_get && ((uintptr_t)data_ptr & 3)));
 
     if (send_in_place) {

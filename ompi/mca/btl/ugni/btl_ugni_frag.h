@@ -16,6 +16,13 @@
 #include "btl_ugni.h"
 #include "btl_ugni_endpoint.h"
 
+typedef struct mca_btl_ugni_segment_t {
+    mca_btl_base_segment_t base;
+    gni_mem_handle_t       memory_handle;
+    uint8_t                extra_bytes[3];
+    uint8_t                extra_byte_count;
+} mca_btl_ugni_segment_t;
+
 typedef struct mca_btl_ugni_send_frag_hdr_t {
     uint32_t lag;
 } mca_btl_ugni_send_frag_hdr_t;
@@ -26,14 +33,12 @@ typedef struct mca_btl_ugni_send_ex_frag_hdr_t {
 } mca_btl_ugni_send_ex_frag_hdr_t;
 
 typedef struct mca_btl_ugni_rdma_frag_hdr_t {
-    mca_btl_base_segment_t src_seg;
-    mca_btl_base_segment_t dst_seg;
     void *ctx;
 } mca_btl_ugni_rdma_frag_hdr_t;
 
 typedef struct mca_btl_ugni_eager_frag_hdr_t {
     mca_btl_ugni_send_frag_hdr_t send;
-    mca_btl_base_segment_t src_seg;
+    mca_btl_ugni_segment_t src_seg;
     void *ctx;
 } mca_btl_ugni_eager_frag_hdr_t;
 
@@ -60,13 +65,6 @@ enum {
 struct mca_btl_ugni_base_frag_t;
 
 typedef void (*frag_cb_t) (struct mca_btl_ugni_base_frag_t *, int);
-
-typedef struct mca_btl_ugni_segment_t {
-    mca_btl_base_segment_t base;
-    gni_mem_handle_t       memory_handle;
-    uint8_t                extra_bytes[3];
-    uint8_t                extra_byte_count;
-} mca_btl_ugni_segment_t;
 
 typedef struct mca_btl_ugni_base_frag_t {
     mca_btl_base_descriptor_t    base;

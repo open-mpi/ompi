@@ -49,7 +49,7 @@ int mca_btl_ugni_send (struct mca_btl_base_module_t *btl,
         /* fast path: remote side has received the frag */
         frag->base.des_flags = flags_save;
         mca_btl_ugni_frag_complete (frag, OMPI_SUCCESS);
-            
+
         return 1;
     }
 

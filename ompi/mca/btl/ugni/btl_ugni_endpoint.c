@@ -145,6 +145,7 @@ static inline int mca_btl_ugni_ep_connect_finish (mca_btl_base_endpoint_t *ep) {
 
     rc = mca_btl_progress_send_wait_list (ep);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != rc)) {
+        ep->wait_listed = true;
         opal_list_append (&ep->btl->ep_wait_list, &ep->super);
     }
 
