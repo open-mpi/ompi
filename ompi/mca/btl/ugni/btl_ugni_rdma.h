@@ -78,15 +78,20 @@ static inline int mca_btl_ugni_post_bte (mca_btl_ugni_base_frag_t *frag, gni_pos
     return OMPI_SUCCESS;
 }
 
-static inline int mca_btl_ugni_post (mca_btl_ugni_base_frag_t *frag, bool get, mca_btl_ugni_segment_t *lcl_seg,
-                                     mca_btl_ugni_segment_t *rem_seg) {
-    frag->cbfunc = mca_btl_ugni_frag_complete;
+static inline int mca_btl_ugni_post_wcb (mca_btl_ugni_base_frag_t *frag, bool get, mca_btl_ugni_segment_t *lcl_seg,
+                                         mca_btl_ugni_segment_t *rem_seg, frag_cb_t cb) {
+    frag->cbfunc = cb;
 
     if (frag->base.des_src->seg_len <= mca_btl_ugni_component.ugni_fma_limit) {
         return mca_btl_ugni_post_fma (frag, get ? GNI_POST_FMA_GET : GNI_POST_FMA_PUT, lcl_seg, rem_seg);
     }
 
     return mca_btl_ugni_post_bte (frag, get ? GNI_POST_RDMA_GET : GNI_POST_RDMA_PUT, lcl_seg, rem_seg);
+}
+
+static inline int mca_btl_ugni_post (mca_btl_ugni_base_frag_t *frag, bool get, mca_btl_ugni_segment_t *lcl_seg,
+                                     mca_btl_ugni_segment_t *rem_seg) {
+    return mca_btl_ugni_post_wcb (frag, get, lcl_seg, rem_seg, mca_btl_ugni_frag_complete);
 }
 
 static inline void mca_btl_ugni_repost (mca_btl_ugni_base_frag_t *frag, int rc) {

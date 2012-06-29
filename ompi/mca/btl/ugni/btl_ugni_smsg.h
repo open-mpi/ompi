@@ -92,8 +92,6 @@ static inline int ompi_mca_btl_ugni_smsg_send (mca_btl_ugni_base_frag_t *frag,
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
-    (void) mca_btl_ugni_progress_remote_smsg ((mca_btl_ugni_module_t *) frag->endpoint->btl);
-
     BTL_ERROR(("GNI_SmsgSendWTag failed with rc = %d. handle = %lu, hdr_len = %d, payload_len = %d",
                grc, (uintptr_t) frag->endpoint->smsg_ep_handle, (int) hdr_len, (int) payload_len));
 
@@ -109,7 +107,7 @@ static inline int mca_btl_ugni_send_frag (struct mca_btl_base_endpoint_t *btl_pe
                                             MCA_BTL_UGNI_TAG_SEND);
     }
 
-    frag->hdr.eager.src_seg = frag->segments[1].base;
+    frag->hdr.eager.src_seg = frag->segments[1];
     frag->hdr.eager.ctx     = (void *) frag;
 
     return ompi_mca_btl_ugni_smsg_send (frag, &frag->hdr.eager, frag->hdr_size,

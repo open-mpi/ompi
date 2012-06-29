@@ -43,7 +43,7 @@ int mca_btl_ugni_get (struct mca_btl_base_module_t *btl,
     }
 
     if (src_seg->extra_byte_count) {
-        memmove (dst_seg->base.seg_addr.pval + size, src_seg->extra_bytes, src_seg->extra_byte_count);
+        memmove ((char *) dst_seg->base.seg_addr.pval + size, src_seg->extra_bytes, src_seg->extra_byte_count);
         src_seg->base.seg_len = size;
         dst_seg->base.seg_len = size;
     }
@@ -53,19 +53,11 @@ int mca_btl_ugni_get (struct mca_btl_base_module_t *btl,
     return mca_btl_ugni_post (frag, true, dst_seg, src_seg);
 }
 
-static void mca_btl_ugni_frag_set_ownership (mca_btl_base_module_t *btl, mca_btl_base_endpoint_t *endpoint,
-                                             mca_btl_base_descriptor_t *desc, int rc) {
-    desc->des_flags |= MCA_BTL_DES_FLAGS_BTL_OWNERSHIP;
-}
-
 static void mca_btl_ugni_callback_rdma_complete (mca_btl_ugni_base_frag_t *frag, int rc)
 {
     BTL_VERBOSE(("rdma operation for rem_ctx %p complete", frag->hdr.rdma.ctx));
 
-    frag->base.des_cbfunc = mca_btl_ugni_frag_set_ownership;
-    frag->base.des_flags |= MCA_BTL_DES_SEND_ALWAYS_CALLBACK;
-
-    /* tell peer the put is complete */
+    /* tell peer the get is complete */
     rc = ompi_mca_btl_ugni_smsg_send (frag, &frag->hdr.rdma, sizeof (frag->hdr.rdma),
                                       NULL, 0, MCA_BTL_UGNI_TAG_RDMA_COMPLETE);
     if (OPAL_UNLIKELY(0 > rc)) {
@@ -81,13 +73,11 @@ static void mca_btl_ugni_callback_eager_get_retry (mca_btl_ugni_base_frag_t *fra
     (void) mca_btl_ugni_start_eager_get(frag->endpoint, frag->hdr.eager_ex, frag);
 }
 
-static void mca_btl_ugni_callback_eager_get (mca_btl_base_module_t *btl, mca_btl_base_endpoint_t *endpoint,
-                                             mca_btl_base_descriptor_t *desc, int rc)
+static void mca_btl_ugni_callback_eager_get (mca_btl_ugni_base_frag_t *frag, int rc)
 {
-    mca_btl_ugni_base_frag_t *frag = (mca_btl_ugni_base_frag_t *) desc;
     uint32_t len = frag->hdr.eager.send.lag & 0x00ffffff;
     uint8_t tag = frag->hdr.eager.send.lag >> 24;
-    size_t payload_len = frag->hdr.eager.src_seg.seg_len;
+    size_t payload_len = frag->hdr.eager.src_seg.base.seg_len;
     size_t hdr_len = len - payload_len;
     mca_btl_active_message_callback_t *reg;
     mca_btl_base_segment_t segs[2];
@@ -144,24 +134,26 @@ int mca_btl_ugni_start_eager_get (mca_btl_base_endpoint_t *ep,
         }
 
         frag->hdr.eager_ex = hdr;
+        frag->flags = 0;
 
-        frag->base.des_cbfunc = mca_btl_ugni_callback_eager_get;
-        frag->base.des_flags  = MCA_BTL_DES_SEND_ALWAYS_CALLBACK;
+        frag->base.des_flags  = MCA_BTL_DES_FLAGS_BTL_OWNERSHIP;
 
-        frag->segments[1].base = hdr.eager.src_seg;
+        frag->segments[1] = hdr.eager.src_seg;
 
         /* increase size to a multiple of 4 bytes (required for get) */
         frag->segments[0].base.seg_len = frag->segments[1].base.seg_len =
-            (hdr.eager.src_seg.seg_len + 3) & ~3;
+            (hdr.eager.src_seg.base.seg_len + 3) & ~3;
 
-        rc = mca_btl_ugni_post (frag, true, frag->segments, frag->segments + 1);
+        frag->base.des_src = &frag->segments[1].base;
+
+        rc = mca_btl_ugni_post_wcb (frag, GNI_POST_RDMA_GET, frag->segments, frag->segments + 1,
+                                    mca_btl_ugni_callback_eager_get);
         if (OPAL_UNLIKELY(OMPI_SUCCESS == rc)) {
             return OMPI_SUCCESS;
         }
     } while (0);
 
     frag->cbfunc = mca_btl_ugni_callback_eager_get_retry;
-
     opal_list_append (&ep->btl->failed_frags, (opal_list_item_t *) frag);
 
     return rc;
