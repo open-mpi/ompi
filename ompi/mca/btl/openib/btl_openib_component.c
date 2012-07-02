@@ -17,6 +17,7 @@
  * Copyright (c) 2006-2007 Voltaire All rights reserved.
  * Copyright (c) 2009-2012 Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2011      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2012      Oak Ridge National Laboratory.  All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -60,6 +61,7 @@ const char *ibv_get_sysfs_path(void);
 #include "opal/util/argv.h"
 #include "opal/memoryhooks/memory.h"
 #include "opal/mca/base/mca_base_param.h"
+#include "ompi/mca/common/ofautils/common_ofautils.h"
 /* Define this before including hwloc.h so that we also get the hwloc
    verbs helper header file, too.  We have to do this level of
    indirection because the hwloc subsystem is a component -- we don't
@@ -2339,53 +2341,6 @@ static int finish_btl_init(mca_btl_openib_module_t *openib_btl)
             mca_btl_openib_component.buffer_alignment, size_t);
 
     return OMPI_SUCCESS;
-}
-
-static struct ibv_device **ibv_get_device_list_compat(int *num_devs)
-{
-    struct ibv_device **ib_devs;
-
-#ifdef HAVE_IBV_GET_DEVICE_LIST
-    ib_devs = ibv_get_device_list(num_devs);
-#else
-    struct dlist *dev_list;
-    struct ibv_device *ib_dev;
-    *num_devs = 0;
-
-    /* Determine the number of device's available on the host */
-    dev_list = ibv_get_devices();
-    if (NULL == dev_list)
-        return NULL;
-
-    dlist_start(dev_list);
-
-    dlist_for_each_data(dev_list, ib_dev, struct ibv_device)
-        (*num_devs)++;
-
-    /* Allocate space for the ib devices */
-    ib_devs = (struct ibv_device**)malloc(*num_devs * sizeof(struct ibv_dev*));
-    if(NULL == ib_devs) {
-        *num_devs = 0;
-        BTL_ERROR(("Failed malloc: %s:%d", __FILE__, __LINE__));
-        return NULL;
-    }
-
-    dlist_start(dev_list);
-
-    dlist_for_each_data(dev_list, ib_dev, struct ibv_device)
-        *(++ib_devs) =  ib_dev;
-#endif
-
-    return ib_devs;
-}
-
-static void ibv_free_device_list_compat(struct ibv_device **ib_devs)
-{
-#ifdef HAVE_IBV_GET_DEVICE_LIST
-    ibv_free_device_list(ib_devs);
-#else
-    free(ib_devs);
-#endif
 }
 
 struct dev_distance {
