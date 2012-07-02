@@ -130,7 +130,7 @@ typedef ompi_coll_libnbc_request_t NBC_Handle;
 
 int NBC_Init_comm(MPI_Comm comm, ompi_coll_libnbc_module_t *module);
 int NBC_Progress(NBC_Handle *handle);
-int NBC_Operation(void *buf3, void *buf1, void *buf2, MPI_Op op, MPI_Datatype type, int count);
+
 
 int ompi_coll_libnbc_iallgather(void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, int recvcount, 
                                 MPI_Datatype recvtype, struct ompi_communicator_t *comm, ompi_request_t ** request,
