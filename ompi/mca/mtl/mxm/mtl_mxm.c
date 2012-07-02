@@ -128,13 +128,6 @@ int ompi_mtl_mxm_module_init(void)
     	return OMPI_ERROR;
     }
 
-#if 0 /* https://svn.open-mpi.org/trac/ompi/ticket/2971 */
-    if ((rc = ompi_proc_refresh()) != OMPI_SUCCESS) {
-        MXM_ERROR("Unable to refresh processes");
-        return OMPI_ERROR;
-    }
-#endif
-
     if (NULL == (procs = ompi_proc_world(&totps))) {
         MXM_ERROR("Unable to obtain process list");
         return OMPI_ERROR;
