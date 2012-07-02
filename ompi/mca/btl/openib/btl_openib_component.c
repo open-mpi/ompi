@@ -1,4 +1,4 @@
-/* -*- Mode: C; c-basic-offset:4 ; -*- */
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2011 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2006-2009 Mellanox Technologies. All rights reserved.
- * Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2006-2012 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2006-2007 Voltaire All rights reserved.
  * Copyright (c) 2009-2012 Oracle and/or its affiliates.  All rights reserved.
@@ -598,10 +598,6 @@ static int openib_reg_mr(void *reg_data, void *base, size_t size,
     openib_reg->mr = ibv_reg_mr(device->ib_pd, base, size, access_flag);
  
     if (NULL == openib_reg->mr) {
-        orte_show_help("help-mpi-btl-openib.txt", "mem-reg-fail",
-                        true, orte_process_info.nodename,
-                        ibv_get_device_name(device->ib_dev),
-                        __func__, strerror(errno), errno);
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 

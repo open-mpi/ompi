@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -11,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2008      UT-Battelle, LLC. All rights reserved.
  * Copyright (c) 2009      IBM Corporation.  All rights reserved.
- * Copyright (c) 2009      Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2009-2012 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * $COPYRIGHT$
  * 
@@ -72,6 +73,8 @@ void mca_pml_csum_send_request_process_pending(mca_bml_base_btl_t *bml_btl)
         case MCA_PML_CSUM_SEND_PENDING_START:
             send_dst = mca_bml_base_btl_array_find(
                     &sendreq->req_endpoint->btl_eager, bml_btl->btl);
+            /* reset the converter */
+            MCA_PML_CSUM_SEND_REQUEST_RESET(sendreq);
             if( (NULL == send_dst) ||
                 (mca_pml_csum_send_request_start_btl(sendreq, send_dst) ==
                  OMPI_ERR_OUT_OF_RESOURCE) ) {
@@ -266,8 +269,10 @@ mca_pml_csum_rget_completion( mca_btl_base_module_t* btl,
     size_t req_bytes_delivered = 0;
 
     /* count bytes of user data actually delivered and check for request completion */
-    MCA_PML_CSUM_COMPUTE_SEGMENT_LENGTH( des->des_src, des->des_src_cnt,
-                                        0, req_bytes_delivered );
+    if (OPAL_LIKELY(OMPI_SUCCESS == status)) {
+        MCA_PML_CSUM_COMPUTE_SEGMENT_LENGTH( des->des_src, des->des_src_cnt,
+                                             0, req_bytes_delivered );
+    }
     OPAL_THREAD_ADD_SIZE_T(&sendreq->req_bytes_delivered, req_bytes_delivered);
 
     send_request_pml_complete_check(sendreq);
@@ -680,7 +685,7 @@ int mca_pml_csum_send_request_start_rdma( mca_pml_csum_send_request_t* sendreq,
      * operation is achieved.
      */
 
-    mca_btl_base_descriptor_t* des;
+  mca_btl_base_descriptor_t* des, *src = NULL;
     mca_btl_base_segment_t* segment;
     mca_pml_csum_hdr_t* hdr;
     bool need_local_cb = false;
@@ -690,7 +695,6 @@ int mca_pml_csum_send_request_start_rdma( mca_pml_csum_send_request_t* sendreq,
 
     if((sendreq->req_rdma_cnt == 1) && (bml_btl->btl_flags & MCA_BTL_FLAGS_GET)) {
         mca_mpool_base_registration_t* reg = sendreq->req_rdma[0].btl_reg;
-        mca_btl_base_descriptor_t* src;
         size_t i;
         size_t old_position = sendreq->req_send.req_base.req_convertor.bConverted;
 
@@ -722,6 +726,7 @@ int mca_pml_csum_send_request_start_rdma( mca_pml_csum_send_request_t* sendreq,
                                         &old_position);
             return OMPI_ERR_OUT_OF_RESOURCE;
         } 
+
         src->des_cbfunc = mca_pml_csum_rget_completion;
         src->des_cbdata = sendreq;
 
@@ -830,6 +835,11 @@ int mca_pml_csum_send_request_start_rdma( mca_pml_csum_send_request_t* sendreq,
         return OMPI_SUCCESS;
     }
     mca_bml_base_free(bml_btl, des);
+
+    if (NULL != src) {
+        mca_bml_base_free (bml_btl, src);
+    }
+
     return rc;
 }
 
@@ -1284,6 +1294,8 @@ void mca_pml_csum_send_request_put( mca_pml_csum_send_request_t* sendreq,
     if(hdr->hdr_common.hdr_flags & MCA_PML_CSUM_HDR_TYPE_ACK) { 
         OPAL_THREAD_ADD32(&sendreq->req_state, -1);
     }
+
+    sendreq->req_recv.pval = hdr->hdr_recv_req.pval;
 
     MCA_PML_CSUM_RDMA_FRAG_ALLOC(frag, rc); 
 

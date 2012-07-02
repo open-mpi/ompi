@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -11,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2008      UT-Battelle, LLC. All rights reserved.
  * Copyright (c) 2009      IBM Corporation.  All rights reserved.
- * Copyright (c) 2009      Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2009-2012 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * $COPYRIGHT$
  * 
@@ -404,11 +405,24 @@ int mca_pml_csum_recv_request_get_frag( mca_pml_csum_rdma_frag_t* frag )
                               MCA_BTL_DES_FLAGS_BTL_OWNERSHIP | MCA_BTL_DES_SEND_ALWAYS_CALLBACK,
                               &descriptor );
     if( OPAL_UNLIKELY(NULL == descriptor) ) {
-        frag->rdma_length = save_size;
-        OPAL_THREAD_LOCK(&mca_pml_csum.lock);
-        opal_list_append(&mca_pml_csum.rdma_pending, (opal_list_item_t*)frag);
-        OPAL_THREAD_UNLOCK(&mca_pml_csum.lock);
-        return OMPI_ERR_OUT_OF_RESOURCE;
+        if (frag->retries < mca_pml_csum.rdma_put_retries_limit) {
+            frag->rdma_length = save_size;
+            OPAL_THREAD_LOCK(&mca_pml_csum.lock);
+            opal_list_append(&mca_pml_csum.rdma_pending, (opal_list_item_t*)frag);
+            OPAL_THREAD_UNLOCK(&mca_pml_csum.lock);
+            return OMPI_ERR_OUT_OF_RESOURCE;
+        } else {
+            /* tell peer to release the rdma descriptor */
+            mca_pml_csum_send_fin (recvreq->req_recv.req_base.req_proc, bml_btl,
+                                   frag->rdma_hdr.hdr_rget.hdr_des.pval, MCA_BTL_NO_ORDER, 1);
+
+            /* tell peer to fall back on send */
+            rc = mca_pml_csum_recv_request_ack_send_btl (recvreq->req_recv.req_base.req_proc, bml_btl,
+                                                         frag->rdma_hdr.hdr_rget.hdr_rndv.hdr_src_req.lval,
+                                                         recvreq, 0, true);
+            MCA_PML_CSUM_RDMA_FRAG_RETURN(frag);
+            return rc;
+        }
     }
 
     descriptor->des_src = frag->rdma_segs;
@@ -883,6 +897,7 @@ int mca_pml_csum_recv_request_schedule_once( mca_pml_csum_recv_request_t* recvre
         hdr->hdr_des.pval = dst;
         hdr->hdr_rdma_offset = recvreq->req_rdma_offset;
         hdr->hdr_seg_cnt = dst->des_dst_cnt;
+        hdr->hdr_recv_req.pval = recvreq;
 
         for( i = 0; i < dst->des_dst_cnt; i++ ) {
             hdr->hdr_segs[i].seg_addr.lval = ompi_ptr_ptol(dst->des_dst[i].seg_addr.pval);

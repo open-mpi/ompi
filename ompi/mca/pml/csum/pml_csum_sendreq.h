@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -10,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2009      IBM Corporation.  All rights reserved.
- * Copyright (c) 2009      Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2009-2012 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
  * $COPYRIGHT$
@@ -155,6 +156,13 @@ get_request_from_send_pending(mca_pml_csum_send_pending_t *type)
         (sendreq)->req_recv.pval = NULL;                                        \
     }
 
+#define MCA_PML_CSUM_SEND_REQUEST_RESET(sendreq)                               \
+    {                                                                          \
+        size_t _position = 0;                                                  \
+        opal_convertor_set_position(&sendreq->req_send.req_base.req_convertor, \
+                                    &_position);                               \
+        assert( 0 == _position );                                              \
+    }
 
 static inline void mca_pml_csum_free_rdma_resources(mca_pml_csum_send_request_t* sendreq)
 {

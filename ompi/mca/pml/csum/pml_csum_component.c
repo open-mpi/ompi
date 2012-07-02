@@ -1,4 +1,4 @@
-/* -*- Mode: C; c-basic-offset:4 ; -*- */
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2009      IBM Corporation.  All rights reserved.
- * Copyright (c) 2009      Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2009-2012 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2007-2010 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
@@ -108,8 +108,14 @@ static int mca_pml_csum_component_open(void)
         mca_pml_csum_param_register_int("send_pipeline_depth", 3);
     mca_pml_csum.recv_pipeline_depth =
         mca_pml_csum_param_register_int("recv_pipeline_depth", 4);
-    mca_pml_csum.rdma_put_retries_limit =
-        mca_pml_csum_param_register_int("rdma_put_retries_limit", 5);
+
+    /* NTH: we can get into a live-lock situation in the RDMA failure path so disable
+       RDMA retries for now. Falling back to send may suck but it is better than
+       hanging */
+    mca_pml_csum.rdma_put_retries_limit = 0;
+    /*     mca_pml_csum.rdma_put_retries_limit = */
+    /*         mca_pml_csum_param_register_int("rdma_put_retries_limit", 5); */
+
     mca_pml_csum.max_rdma_per_request =
         mca_pml_csum_param_register_int("max_rdma_per_request", 4);
     mca_pml_csum.max_send_per_range =

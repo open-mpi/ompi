@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -10,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2009      IBM Corporation.  All rights reserved.
- * Copyright (c) 2009      Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2009-2012 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * $COPYRIGHT$
  * 
@@ -247,6 +248,7 @@ struct mca_pml_csum_rdma_hdr_t {
     uint32_t hdr_seg_cnt;                     /**< number of segments for rdma */
     ompi_ptr_t hdr_req;                       /**< destination request */
     ompi_ptr_t hdr_des;                       /**< source descriptor */
+    ompi_ptr_t hdr_recv_req;                  /**< receive request */
     uint64_t hdr_rdma_offset;                 /**< current offset into user buffer */ 
     mca_btl_base_segment_t hdr_segs[1];       /**< list of segments for rdma */
 };
