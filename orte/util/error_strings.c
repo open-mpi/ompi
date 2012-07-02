@@ -233,6 +233,10 @@ const char *orte_job_state_to_str(orte_job_state_t state)
         return "UNTERMINATED";
     case ORTE_JOB_STATE_TERMINATED:
         return "NORMALLY TERMINATED";
+    case ORTE_JOB_STATE_NOTIFY_COMPLETED:
+        return "NOTIFY COMPLETED";
+    case ORTE_JOB_STATE_NOTIFIED:
+        return "NOTIFIED";
     case ORTE_JOB_STATE_ALL_JOBS_COMPLETE:
         return "ALL JOBS COMPLETE";
     case ORTE_JOB_STATE_ERROR:
