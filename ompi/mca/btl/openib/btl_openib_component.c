@@ -110,7 +110,7 @@ static int btl_openib_component_progress(void);
  * Local variables
  */
 static mca_btl_openib_device_t *receive_queues_device = NULL;
-
+static bool malloc_hook_set = false;
 mca_btl_openib_component_t mca_btl_openib_component = {
     {
         /* First, the mca_base_component_t struct containing meta information
@@ -183,14 +183,6 @@ static int btl_openib_component_register(void)
            "open" failing is not printed */
         return OMPI_ERR_NOT_AVAILABLE;
     }
-
-#if BTL_OPENIB_MALLOC_HOOKS_ENABLED
-    mca_btl_openib_component.previous_malloc_hook = __malloc_hook;
-    if (mca_btl_openib_component.use_memalign > 0) {
-        __malloc_hook = btl_openib_malloc_hook; 
-    }
-#endif
-
     return OMPI_SUCCESS;
 }
 
@@ -268,7 +260,12 @@ static int btl_openib_component_close(void)
     }
     
 #if BTL_OPENIB_MALLOC_HOOKS_ENABLED
-    __malloc_hook = mca_btl_openib_component.previous_malloc_hook;
+    /* Must check to see whether the malloc hook was set before 
+       assigning it back because ompi_info will call _register() and 
+       then _close() (which won't set the hook) */ 
+    if (malloc_hook_set) { 
+        __malloc_hook = mca_btl_openib_component.previous_malloc_hook; 
+    } 
 #endif
 
     return rc;
@@ -2477,7 +2474,17 @@ btl_openib_component_init(int *num_btl_modules,
     /* initialization */
     *num_btl_modules = 0;
     num_devs = 0;
-
+#if BTL_OPENIB_MALLOC_HOOKS_ENABLED 
+    /* If we got this far, then setup the memory alloc hook (because 
+       we're most likely going to be using this component). The hook is to be set up 
+       as early as possible in this function since we want most of the allocated resources 
+       be aligned.*/ 
+    if (mca_btl_openib_component.use_memalign > 0) { 
+        mca_btl_openib_component.previous_malloc_hook = __malloc_hook; 
+        __malloc_hook = btl_openib_malloc_hook;  
+        malloc_hook_set = true; 
+    } 
+#endif 
     /* Currently refuse to run if MPI_THREAD_MULTIPLE is enabled */
     if (ompi_mpi_thread_multiple && !mca_btl_base_thread_multiple_override) {
         BTL_VERBOSE(("openib BTL disqualifying itself because MPI_THREAD_MULTIPLE is being used"));
@@ -2923,6 +2930,12 @@ btl_openib_component_init(int *num_btl_modules,
 
     mca_btl_openib_component.ib_num_btls = 0;
     btl_openib_modex_send();
+#if BTL_OPENIB_MALLOC_HOOKS_ENABLED 
+    /*Unset malloc hook since the component won't start*/ 
+    if (malloc_hook_set) { 
+        __malloc_hook = mca_btl_openib_component.previous_malloc_hook; 
+    } 
+#endif
     return NULL;
 }
 
