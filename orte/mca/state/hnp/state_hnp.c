@@ -550,8 +550,6 @@ static void check_all_complete(int fd, short args, void *cbdata)
                     opal_pointer_array_set_item(orte_job_data, j, NULL);  /* ensure the array has a NULL */
                     OBJ_RELEASE(jdata);
                 }
-            } else {
-                opal_output(0, "STATE WAS %s", orte_job_state_to_str(jdata->state));
             }
             continue;
         }
