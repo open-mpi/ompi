@@ -531,7 +531,6 @@ static void check_all_complete(int fd, short args, void *cbdata)
          * can pretty-print completion message
          */
         if (NULL != jdata && job->jobid == jdata->jobid) {
-            opal_output(0, "CHECKING JOB %s", ORTE_JOBID_PRINT(jdata->jobid));
             if (jdata->state == ORTE_JOB_STATE_TERMINATED) {
                 OPAL_OUTPUT_VERBOSE((2, orte_state_base_output,
                                      "%s state:hnp:check_job_completed state is terminated - activating notify",
