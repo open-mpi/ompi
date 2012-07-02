@@ -15,6 +15,7 @@
 #                         reserved.
 # Copyright (c) 2006-2009 Mellanox Technologies. All rights reserved.
 # Copyright (c) 2010-2012 Oracle and/or its affiliates.  All rights reserved.
+# Copyright (c) 2009-2012 Oak Ridge National Laboratory.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -23,12 +24,12 @@
 #
 
 
-# OMPI_CHECK_OPENIB(prefix, [action-if-found], [action-if-not-found])
+# OMPI_CHECK_OPENFABRICS(prefix, [action-if-found], [action-if-not-found])
 # --------------------------------------------------------
 # check if OPENIB support can be found.  sets prefix_{CPPFLAGS, 
 # LDFLAGS, LIBS} as needed and runs action-if-found if there is
 # support, otherwise executes action-if-not-found
-AC_DEFUN([OMPI_CHECK_OPENIB],[
+AC_DEFUN([OMPI_CHECK_OPENFABRICS],[
     OPAL_VAR_SCOPE_PUSH([$1_msg])
 
     # Setup the --with switches to allow users to specify where
@@ -68,29 +69,6 @@ AC_DEFUN([OMPI_CHECK_OPENIB],[
     fi
     AC_DEFINE_UNQUOTED([OMPI_OPENIB_PAD_HDR], [$ompi_openib_pad_hdr],
                        [Add padding bytes to the openib BTL control header])
-
-    #
-    # ConnectX XRC support
-    #
-    AC_ARG_ENABLE([openib-connectx-xrc],
-        [AC_HELP_STRING([--enable-openib-connectx-xrc],
-                        [Enable ConnectX XRC support in the openib BTL. If you do not have InfiniBand ConnectX adapters, you may disable the ConnectX XRC support. If you do not know which InfiniBand adapter is installed on your cluster, leave this option enabled (default: enabled)])],
-                        [enable_connectx_xrc="$enableval"], [enable_connectx_xrc="yes"])
-
-    #
-    # Unconnect Datagram (UD) based connection manager
-    #
-    AC_ARG_ENABLE([openib-udcm],
-        [AC_HELP_STRING([--enable-openib-udcm],
-                        [Enable datagram connection support in openib BTL (default: enabled)])], 
-                        [enable_openib_udcm="$enableval"], [enable_openib_udcm="yes"])
-
-    #
-    # Openfabrics RDMACM
-    #
-    AC_ARG_ENABLE([openib-rdmacm],
-        [AC_HELP_STRING([--enable-openib-rdmacm],
-                        [Enable Open Fabrics RDMACM support in openib BTL (default: enabled)])])
 
     AS_IF([test "$opal_want_verbs" = "no"],
           [ompi_check_openib_happy="no"],
@@ -170,8 +148,6 @@ AC_DEFUN([OMPI_CHECK_OPENIB],[
     # Set these up so that we can do an AC_DEFINE below
     # (unconditionally)
     $1_have_xrc=0
-    $1_have_udcm=0
-    $1_have_rdmacm=0
     $1_have_opensm_devel=0
 
     # If we have the openib stuff available, find out what we've got
@@ -187,11 +163,6 @@ AC_DEFUN([OMPI_CHECK_OPENIB],[
            # ibv_create_xrc_rcv_qp was added in OFED 1.3
            if test "$enable_connectx_xrc" = "yes"; then
                AC_CHECK_FUNCS([ibv_create_xrc_rcv_qp], [$1_have_xrc=1])
-           fi
-
-           # is udcm enabled
-           if test "$enable_openib_udcm" = "yes"; then
-               $1_have_udcm=1
            fi
 
            if test "no" != "$enable_openib_dynamic_sl"; then
@@ -219,30 +190,6 @@ AC_DEFUN([OMPI_CHECK_OPENIB],[
                              AC_MSG_ERROR([Cannot continue])])])
            fi
 
-           # Do we have a recent enough RDMA CM?  Need to have the
-           # rdma_get_peer_addr (inline) function (originally appeared
-           # in OFED v1.3).
-           if test "$enable_openib_rdmacm" != "no"; then
-                 AC_CHECK_HEADERS([rdma/rdma_cma.h],
-                     [AC_CHECK_LIB([rdmacm], [rdma_create_id],
-                         [AC_MSG_CHECKING([for rdma_get_peer_addr])
-                         $1_msg=no
-                         AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include "rdma/rdma_cma.h"
-                                 ]], [[void *ret = (void*) rdma_get_peer_addr((struct rdma_cm_id*)0);]])],
-                             [$1_have_rdmacm=1 
-                             $1_msg=yes])
-                         AC_MSG_RESULT([$$1_msg])])])
-
-                 if test "1" = "$$1_have_rdmacm"; then
-                     $1_LIBS="-lrdmacm $$1_LIBS"
-                 else
-                     AS_IF([test "$enable_openib_rdmacm" = "yes"],
-                           [AC_MSG_WARN([--enable-openib-rdmacm was specified but the])
-                            AC_MSG_WARN([appropriate files could not be found])
-                            AC_MSG_WARN([Please install librdmacm and librdmacm-devel or disable rdmacm support])
-                            AC_MSG_ERROR([Cannot continue])])
-                 fi
-           fi
 
            # Check support for RDMAoE devices
            $1_have_rdmaoe=0
@@ -291,24 +238,6 @@ AC_DEFUN([OMPI_CHECK_OPENIB],[
         AC_MSG_RESULT([no])
     fi
 
-    AC_MSG_CHECKING([if UD CM is enabled])
-    AC_DEFINE_UNQUOTED([OMPI_HAVE_UDCM], [$$1_have_udcm],
-        [Whether UD CM is available or not])
-    if test "1" = "$$1_have_udcm"; then
-        AC_MSG_RESULT([yes])
-    else
-        AC_MSG_RESULT([no])
-    fi
-
-    AC_MSG_CHECKING([if OpenFabrics RDMACM support is enabled])
-    AC_DEFINE_UNQUOTED([OMPI_HAVE_RDMACM], [$$1_have_rdmacm],
-        [Whether RDMA CM is available or not])
-    if test "1" = "$$1_have_rdmacm"; then
-        AC_MSG_RESULT([yes])
-    else
-        AC_MSG_RESULT([no])
-    fi
-
     AS_IF([test -z "$opal_verbs_dir"],
           [openib_include_dir="/usr/include"],
           [openib_include_dir="$opal_verbs_dir/include"])
@@ -327,3 +256,148 @@ AC_DEFUN([OMPI_CHECK_OPENIB],[
 
      OPAL_VAR_SCOPE_POP
 ])
+
+AC_DEFUN([OMPI_CHECK_OPENFABRICS_CM_ARGS],[
+    #
+    # ConnectX XRC support
+    #
+    AC_ARG_ENABLE([openib-connectx-xrc],
+        [AC_HELP_STRING([--enable-openib-connectx-xrc],
+                        [Enable ConnectX XRC support in the openib BTL. If you do not have InfiniBand ConnectX adapters, you may disable the ConnectX XRC support. If you do not know which InfiniBand adapter is installed on your cluster, leave this option enabled (default: enabled)])],
+                        [enable_connectx_xrc="$enableval"], [enable_connectx_xrc="yes"])
+    #
+    # Unconnect Datagram (UD) based connection manager
+    #
+    AC_ARG_ENABLE([openib-udcm],
+        [AC_HELP_STRING([--enable-openib-udcm],
+                        [Enable datagram connection support in openib BTL (default: enabled)])], 
+                        [enable_openib_udcm="$enableval"], [enable_openib_udcm="yes"])
+    
+    #
+    # Openfabrics RDMACM
+    #
+    AC_ARG_ENABLE([openib-rdmacm],
+        [AC_HELP_STRING([--enable-openib-rdmacm],
+                        [Enable Open Fabrics RDMACM support in openib BTL (default: enabled)])])
+])dnl
+
+AC_DEFUN([OMPI_CHECK_OPENFABRICS_CM],[
+    AC_REQUIRE([OMPI_CHECK_OPENFABRICS_CM_ARGS])
+    $1_have_udcm=0
+    $1_have_rdmacm=0
+
+    AS_IF([test "$ompi_check_openib_happy" = "yes"],
+          [# Do we have a recent enough RDMA CM?  Need to have the
+           # rdma_get_peer_addr (inline) function (originally appeared
+           # in OFED v1.3).
+           if test "$enable_openib_rdmacm" != "no"; then
+                 AC_CHECK_HEADERS([rdma/rdma_cma.h],
+                     [AC_CHECK_LIB([rdmacm], [rdma_create_id],
+                         [AC_MSG_CHECKING([for rdma_get_peer_addr])
+                         $1_msg=no
+                         AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include "rdma/rdma_cma.h"
+                                 ]], [[void *ret = (void*) rdma_get_peer_addr((struct rdma_cm_id*)0);]])],
+                             [$1_have_rdmacm=1 
+                             $1_msg=yes])
+                         AC_MSG_RESULT([$$1_msg])])])
+
+                 if test "1" = "$$1_have_rdmacm"; then
+                     $1_LIBS="-lrdmacm $$1_LIBS"
+                 else
+                     AS_IF([test "$enable_openib_rdmacm" = "yes"],
+                           [AC_MSG_WARN([--enable-openib-rdmacm was specified but the])
+                            AC_MSG_WARN([appropriate files could not be found])
+                            AC_MSG_WARN([Please install librdmacm and librdmacm-devel or disable rdmacm support])
+                            AC_MSG_ERROR([Cannot continue])])
+                 fi
+           fi
+
+           # is udcm enabled
+           if test "$enable_openib_udcm" = "yes"; then
+               $1_have_udcm=1
+           fi
+           ])
+
+    AC_MSG_CHECKING([if UD CM is enabled])
+    AC_DEFINE_UNQUOTED([OMPI_HAVE_UDCM], [$$1_have_udcm],
+        [Whether UD CM is available or not])
+    if test "1" = "$$1_have_udcm"; then
+        AC_MSG_RESULT([yes])
+    else
+        AC_MSG_RESULT([no])
+    fi
+
+    AC_MSG_CHECKING([if OpenFabrics RDMACM support is enabled])
+    AC_DEFINE_UNQUOTED([OMPI_HAVE_RDMACM], [$$1_have_rdmacm],
+        [Whether RDMA CM is available or not])
+    if test "1" = "$$1_have_rdmacm"; then
+        AC_MSG_RESULT([yes])
+    else
+        AC_MSG_RESULT([no])
+    fi
+])dnl
+
+AC_DEFUN([OMPI_CHECK_MLNX_OPENFABRICS],[
+     $1_have_mverbs=0
+     $1_have_mqe=0
+
+    AS_IF([test "$ompi_check_openib_happy" = "yes"], 
+           [OMPI_CHECK_PACKAGE([$1],
+                               [infiniband/mverbs.h],
+                               [mverbs],
+                               [ibv_m_query_device],
+                               ["$$1_LIBS"],
+                               [$opal_verbs_dir],
+                               [$opal_verbs_libdir],
+                               [$1_have_mverbs=1],
+                               [])])
+
+    AS_IF([test "$ompi_check_openib_happy" = "yes"], 
+           [OMPI_CHECK_PACKAGE([$1],
+                               [infiniband/mqe.h],
+                               [mqe],
+                               [mqe_context_create],
+                               ["$$1_LIBS"],
+                               [$opal_verbs_dir],
+                               [$opal_verbs_libdir],
+                               [$1_have_mqe=1],
+                               [])])
+
+    AC_MSG_CHECKING([if Mellanox OpenFabrics VERBS is enabled])
+    AC_DEFINE_UNQUOTED([OMPI_HAVE_MVERBS], [$$1_have_mverbs],
+        [Whether MVERBS is available or not])
+    AS_IF([test "1" = "$$1_have_mverbs"],
+          [AC_MSG_RESULT([yes])],
+          [AC_MSG_RESULT([no])])
+
+    # save the CPPFLAGS since we would have to update it for next test
+    ompi_check_mellanox_openfabrics_$1_save_CPPFLAGS="$CPPFLAGS"
+
+    # If openfabrics custom directory have been defined, we have
+    # to use it for MACRO test that uses mverbs.h file.
+    #
+    if test ! -z "$ompi_check_verbs_dir" ; then
+        CPPFLAGS="-I${opal_verbs_dir}/include $CPPFLAGS"
+    fi
+
+    AS_IF([test "1" = "$$1_have_mverbs"],
+          [AC_CHECK_DECLS([IBV_M_WR_CALC_RDMA_WRITE_WITH_IMM], 
+                          [AC_DEFINE_UNQUOTED([OMPI_HAVE_IBOFFLOAD_CALC_RDMA], [1],
+                                              [Whether IBV_M_WR_CALC_SEND is defined or not])], 
+                          [AC_DEFINE_UNQUOTED([OMPI_HAVE_IBOFFLOAD_CALC_RDMA], [0],
+                                              [Whether IBV_M_WR_CALC_SEND is defined or not])], 
+                          [#include <infiniband/mverbs.h>])])
+
+    # restoring the CPPFLAGS
+    CPPFLAGS="$ompi_check_mellanox_openfabrics_$1_save_CPPFLAGS"
+
+    AC_MSG_CHECKING([if Mellanox OpenFabrics MQE is enabled])
+    AC_DEFINE_UNQUOTED([OMPI_HAVE_MQE], [$$1_have_mqe],
+        [Whether MQE is available or not])
+    AS_IF([test "1" = "$$1_have_mqe"],
+          [AC_MSG_RESULT([yes])],
+          [AC_MSG_RESULT([no])])
+
+    AS_IF([test "1" = "$$1_have_mverbs" -a "1" = $$1_have_mqe],
+            [$2], [$3])
+])dnl

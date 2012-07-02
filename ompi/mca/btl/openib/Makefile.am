@@ -13,6 +13,7 @@
 # Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
 # Copyright (c) 2011      NVIDIA Corporation.  All rights reserved.
 # Copyright (c) 2011      Mellanox Technologies.  All rights reserved.
+# Copyright (c) 2012      Oak Ridge National Laboratory.  All rights reserved
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -126,7 +127,8 @@ mcacomponentdir = $(pkglibdir)
 mcacomponent_LTLIBRARIES = $(component)
 mca_btl_openib_la_SOURCES = $(component_sources)
 mca_btl_openib_la_LDFLAGS = -module -avoid-version $(btl_openib_LDFLAGS)
-mca_btl_openib_la_LIBADD = $(btl_openib_LIBS)
+mca_btl_openib_la_LIBADD = $(btl_openib_LIBS) \
+    $(top_ompi_builddir)/ompi/mca/common/ofautils/libmca_common_ofautils.la
 if MCA_ompi_cuda_support
 mca_btl_openib_la_LIBADD += \
     $(top_ompi_builddir)/ompi/mca/common/cuda/libmca_common_cuda.la
