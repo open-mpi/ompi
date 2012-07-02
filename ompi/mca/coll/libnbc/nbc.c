@@ -10,6 +10,7 @@
  */
 #include "nbc_internal.h"
 #include "ompi/mca/coll/base/coll_tags.h"
+#include "ompi/op/op.h"
 
 /* only used in this file */
 static inline int NBC_Start_round(NBC_Handle *handle);
@@ -449,8 +450,7 @@ static inline int NBC_Start_round(NBC_Handle *handle) {
           buf3=(char*)handle->tmpbuf+(long)opargs->buf3;
         else
           buf3=opargs->buf3;
-        res = NBC_Operation(buf3, buf1, buf2, opargs->op, opargs->datatype, opargs->count);
-        if(res != NBC_OK) { printf("NBC_Operation() failed (code: %i)\n", res); ret=res; goto error; }
+          ompi_3buff_op_reduce(opargs->op, buf1, buf2, buf3, opargs->count, opargs->datatype);
         break;
       case COPY:
         NBC_DEBUG(5, "  COPY   (offset %li) ", (long)typeptr-(long)myschedule);
