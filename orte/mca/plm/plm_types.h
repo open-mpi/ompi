@@ -121,6 +121,8 @@ typedef int32_t orte_job_state_t;
 #define ORTE_JOB_STATE_TERMINATED               21  /* all processes have terminated and job is no longer running */
 #define ORTE_JOB_STATE_ALL_JOBS_COMPLETE        22
 #define ORTE_JOB_STATE_DAEMONS_TERMINATED       23
+#define ORTE_JOB_STATE_NOTIFY_COMPLETED         24  /* callback to notify when job completes */
+#define ORTE_JOB_STATE_NOTIFIED                 25
 
 /* Define a boundary so we can easily and quickly determine
  * if a job abnormally terminated - leave a little room
