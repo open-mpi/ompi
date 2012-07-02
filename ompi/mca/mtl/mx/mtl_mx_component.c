@@ -33,6 +33,7 @@
 #define  MCA_MTL_MX_QUEUE_LENGTH_MAX 2*1024*1024
 static int ompi_mtl_mx_component_open(void);
 static int ompi_mtl_mx_component_close(void);
+static int ompi_mtl_mx_component_initialized = 0;
 
 static mca_mtl_base_module_t* ompi_mtl_mx_component_init( bool enable_progress_threads, 
                                                           bool enable_mpi_threads );
@@ -106,6 +107,13 @@ ompi_mtl_mx_component_open(void)
 static int
 ompi_mtl_mx_component_close(void)
 {
+    --ompi_mtl_mx_component_initialized;
+    if( 0 == ompi_mtl_mx_component_initialized ) {
+        int ret = ompi_common_mx_finalize();
+        if(OMPI_SUCCESS != ret) { 
+            return NULL;
+        }
+     }
     return OMPI_SUCCESS;
 }
 
@@ -120,7 +128,8 @@ ompi_mtl_mx_component_init(bool enable_progress_threads,
     if(OMPI_SUCCESS != ret) { 
         return NULL;
     }
-        
+    ompi_mtl_mx_component_initialized++;
+
     ret = ompi_mtl_mx_module_init();
     if (OMPI_SUCCESS != ret) {
         return NULL;

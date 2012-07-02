@@ -92,6 +92,7 @@ ompi_common_mx_initialize(void)
             ompi_common_mx_available = -1;
             if (ompi_common_mx_fake_mpool) {
                 mca_mpool_base_module_destroy(ompi_common_mx_fake_mpool);
+	        ompi_common_mx_fake_mpool = NULL;
             }
             opal_output(0,
                         "Error in mx_init (error %s)\n",
@@ -109,12 +110,14 @@ ompi_common_mx_initialize(void)
 int
 ompi_common_mx_finalize(void)
 {
-    mx_return_t mx_return;
     ompi_common_mx_initialize_ref_cnt--;
     if( 0 == ompi_common_mx_initialize_ref_cnt ) { 
+        mx_return_t mx_return;
 
-        if (ompi_common_mx_fake_mpool) 
+        if (ompi_common_mx_fake_mpool) {
 	  mca_mpool_base_module_destroy(ompi_common_mx_fake_mpool);
+	  ompi_common_mx_fake_mpool = NULL;
+        }
         
         mx_return = mx_finalize(); 
         if(mx_return != MX_SUCCESS){ 
