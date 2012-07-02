@@ -39,7 +39,11 @@ AC_DEFUN([OMPI_FORTRAN_GET_HANDLE_MAX],[
              # top nybble is 0x7 to avoid sign issues.
              ompi_numf=`expr $OMPI_SIZEOF_FORTRAN_INTEGER \* 8 - 1`
              ompi_fint_max=1
-             while test $ompi_numf -gt 0; do
+             # Use string comparisons when comparing these values to
+             # 0, because $ompi_numf may be larger than "test -eq
+             # ..." can handle (e.g., if we compile Fortran with
+             # "ifort -i8").
+             while test "$ompi_numf" != "0"; do
                  ompi_fint_max=`expr $ompi_fint_max \* 2`
                  ompi_numf=`expr $ompi_numf - 1`
              done
@@ -60,23 +64,28 @@ fclose(fp);]])],
              [ #cross compiling is fun.  compute INT_MAX same as INTEGER max
               ompi_numf=`expr $ac_cv_sizeof_int \* 8 - 1`
               ompi_cint_max=1
-              while test $ompi_numf -gt 0 ; do
+              # Use string comparisons with "test"; see comment above
+              # for rationale.
+              while test "$ompi_numf" != "0" ; do
                   ompi_cint_max=`expr $ompi_cint_max \* 2`
                   ompi_numf=`expr $ompi_numf - 1`
               done])
 
-         if test $ompi_cint_max -eq 0 ; then
+         # Use string comparisons with "test"; see comment above for
+         # rationale.
+         if test "$ompi_cint_max" = "0" ; then
              # wow - something went really wrong.  Be conservative
              value=32767
-         elif test $ompi_fint_max -eq 0 ; then
+         elif test "$ompi_fint_max" = "0" ; then
              # we aren't compiling Fortran - just set it to C INT_MAX
              value=$ompi_cint_max
          else
-             # take the lesser of C INT_MAX and Fortran INTEGER
-             # max.  The resulting value will then be storable in
-             # either type.  
+             # Take the lesser of C INT_MAX and Fortran INTEGER max.
+             # The resulting value will then be storable in either
+             # type.  Use expr (instead of "test -lt"), because it can
+             # handle 8-byte integer values.
              value=$ompi_fint_max
-             if test $ompi_cint_max -lt $value; then
+             if test "`expr $ompi_cint_max \< $value`" = "1"; then
                  value=$ompi_cint_max
              fi
           fi
