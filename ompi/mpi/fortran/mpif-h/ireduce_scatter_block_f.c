@@ -28,8 +28,8 @@
 #pragma weak pmpi_ireduce_scatter_block_ = ompi_ireduce_scatter_block_f
 #pragma weak pmpi_ireduce_scatter_block__ = ompi_ireduce_scatter_block_f
 
-#pragma weak PMPI_ireduce_scatter_block_f = ompi_ireduce_scatter_block_f
-#pragma weak PMPI_ireduce_scatter_block_f08 = ompi_ireduce_scatter_block_f
+#pragma weak PMPI_Ireduce_scatter_block_f = ompi_ireduce_scatter_block_f
+#pragma weak PMPI_Ireduce_scatter_block_f08 = ompi_ireduce_scatter_block_f
 #elif OMPI_PROFILE_LAYER
 OMPI_GENERATE_F77_BINDINGS (PMPI_IREDUCE_SCATTER_BLOCK,
                             pmpi_ireduce_scatter_block,
@@ -46,8 +46,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_IREDUCE_SCATTER_BLOCK,
 #pragma weak mpi_ireduce_scatter_block_ = ompi_ireduce_scatter_block_f
 #pragma weak mpi_ireduce_scatter_block__ = ompi_ireduce_scatter_block_f
 
-#pragma weak MPI_ireduce_scatter_block_f = ompi_ireduce_scatter_block_f
-#pragma weak MPI_ireduce_scatter_block_f08 = ompi_ireduce_scatter_block_f
+#pragma weak MPI_Ireduce_scatter_block_f = ompi_ireduce_scatter_block_f
+#pragma weak MPI_Ireduce_scatter_block_f08 = ompi_ireduce_scatter_block_f
 #endif
 
 #if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER

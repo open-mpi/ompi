@@ -93,6 +93,6 @@ void ompi_graph_create_f(MPI_Fint *comm_old, MPI_Fint *nnodes,
         *comm_graph = MPI_Comm_c2f(c_comm_graph);
     }
 
-    OMPI_ARRAY_FINT_2_INT_CLEANUP(idx);
+    OMPI_ARRAY_FINT_2_INT_CLEANUP(indx);
     OMPI_ARRAY_FINT_2_INT_CLEANUP(edges);
 }
