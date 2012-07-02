@@ -47,6 +47,7 @@ int ompi_coll_libnbc_ibcast(void *buffer, int count, MPI_Datatype datatype, int 
 
   res = NBC_Init_handle(comm, coll_req, libnbc_module);
   if(res != NBC_OK) { printf("Error in NBC_Init_handle(%i)\n", res); return res; }
+  handle = (*coll_req);
   res = MPI_Comm_rank(comm, &rank);
   if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Comm_rank() (%i)\n", res); return res; }
   res = MPI_Comm_size(comm, &p);
