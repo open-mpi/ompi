@@ -39,8 +39,9 @@ AC_DEFUN([MCA_ompi_btl_openib_CONFIG],[
     OPAL_VAR_SCOPE_PUSH([cpcs have_threads])
     cpcs="oob"
 
-    OMPI_CHECK_OPENIB([btl_openib],
-                     [btl_openib_happy="yes"],
+    OMPI_CHECK_OPENFABRICS([btl_openib],
+                     [btl_openib_happy="yes"]
+                     OMPI_CHECK_OPENFABRICS_CM([btl_openib]),
                      [btl_openib_happy="no"])
 
     AS_IF([test "$btl_openib_happy" = "yes"],

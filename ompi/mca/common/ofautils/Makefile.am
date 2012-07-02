@@ -1,0 +1,68 @@
+#
+# Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
+# Copyright (c) 2009-2012 Oak Ridge National Laboratory.  All rights reserved.
+# $COPYRIGHT$
+# 
+# Additional copyrights may follow
+# 
+# $HEADER$
+#
+
+AM_CPPFLAGS = $(common_ofautils_CPPFLAGS)
+
+headers = \
+	common_ofautils.h
+
+sources = \
+	common_ofautils.c
+
+# To simplify components that link to this library, we will *always*
+# have an output libtool library named libmca_<type>_<name>.la -- even
+# for case 2) described above (i.e., so there's no conditional logic
+# necessary in component Makefile.am's that link to this library).
+# Hence, if we're creating a noinst version of this library (i.e.,
+# case 2), we sym link it to the libmca_<type>_<name>.la name
+# (libtool will do the Right Things under the covers).  See the
+# all-local and clean-local rules, below, for how this is effected.
+
+lib_LTLIBRARIES =
+noinst_LTLIBRARIES =
+comp_inst = libmca_common_ofautils.la
+comp_noinst = libmca_common_ofautils_noinst.la
+
+if MCA_BUILD_ompi_common_ofautils_DSO
+lib_LTLIBRARIES += $(comp_inst)
+else
+noinst_LTLIBRARIES += $(comp_noinst)
+endif
+
+libmca_common_ofautils_la_SOURCES = $(headers) $(sources)
+# TBD: create own config file 
+libmca_common_ofautils_la_CPPFLAGS = $(common_ofautils_CPPFLAGS)
+libmca_common_ofautils_la_LDFLAGS =  $(common_ofautils_LDFLAGS)
+libmca_common_ofautils_la_LIBADD =   $(common_ofautils_LIBS)
+libmca_common_ofautils_noinst_la_SOURCES = $(libmca_common_ofautils_la_SOURCES)
+
+# Conditionally install the header files
+
+if WANT_INSTALL_HEADERS
+ompidir = $(includedir)/openmpi/ompi/mca/common/ofautils
+ompi_HEADERS = $(headers)
+else
+ompidir = $(includedir)
+endif
+
+# These two rules will sym link the "noinst" libtool library filename
+# to the installable libtool library filename in the case where we are
+# compiling this component statically (case 2), described above).
+
+all-local:
+	if test -z "$(lib_LTLIBRARIES)"; then \
+	  rm -f "$(comp_inst)"; \
+	  $(LN_S) "$(comp_noinst)" "$(comp_inst)"; \
+	fi
+
+clean-local:
+	if test -z "$(lib_LTLIBRARIES)"; then \
+	  rm -f "$(comp_inst)"; \
+	fi

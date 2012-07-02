@@ -56,6 +56,10 @@ BEGIN_C_DECLS
 /* common sm component query result index */
 #define OMPI_RML_TAG_COMMON_SM_COMP_INDEX           OMPI_RML_TAG_BASE+10
 
+/* OFACM RML TAGs */
+#define OMPI_RML_TAG_OFACM                          OMPI_RML_TAG_BASE+11
+#define OMPI_RML_TAG_XOFACM                         OMPI_RML_TAG_BASE+12
+
 #define OMPI_RML_TAG_DYNAMIC                        OMPI_RML_TAG_BASE+200
 
 

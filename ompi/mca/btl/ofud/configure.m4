@@ -27,7 +27,7 @@
 AC_DEFUN([MCA_ompi_btl_ofud_CONFIG],[
     AC_CONFIG_FILES([ompi/mca/btl/ofud/Makefile])
 
-    OMPI_CHECK_OPENIB([btl_ofud],
+    OMPI_CHECK_OPENFABRICS([btl_ofud],
                         [btl_ofud_happy="yes"],
                         [btl_ofud_happy="no"])
 
