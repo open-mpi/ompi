@@ -307,9 +307,9 @@ hwloc_win_get_thisproc_membind(hwloc_topology_t topology, hwloc_nodeset_t nodese
   return hwloc_win_get_proc_membind(topology, GetCurrentProcess(), nodeset, policy, flags);
 }
 
-static LPVOID WINAPI (*VirtualAllocExNumaProc)(HANDLE hProcess, LPVOID lpAddress, SIZE_T dwSize, DWORD flAllocationType, DWORD flProtect, DWORD nndPreferred);
-static BOOL WINAPI (*VirtualFreeExProc)(HANDLE hProcess, LPVOID lpAddress, SIZE_T dwSize, DWORD dwFreeType);
-static BOOL WINAPI (*QueryWorkingSetExProc)(HANDLE hProcess, PVOID pv, DWORD cb);
+static LPVOID (WINAPI *VirtualAllocExNumaProc)(HANDLE hProcess, LPVOID lpAddress, SIZE_T dwSize, DWORD flAllocationType, DWORD flProtect, DWORD nndPreferred);
+static BOOL (WINAPI *VirtualFreeExProc)(HANDLE hProcess, LPVOID lpAddress, SIZE_T dwSize, DWORD dwFreeType);
+static BOOL (WINAPI *QueryWorkingSetExProc)(HANDLE hProcess, PVOID pv, DWORD cb);
 
 static int hwloc_win_get_VirtualAllocExNumaProc(void) {
   if (VirtualAllocExNumaProc == NULL) {
@@ -463,10 +463,10 @@ hwloc_win_get_area_membind(hwloc_topology_t topology __hwloc_attribute_unused, c
 void
 hwloc_look_windows(struct hwloc_topology *topology)
 {
-  BOOL WINAPI (*GetLogicalProcessorInformationProc)(PSYSTEM_LOGICAL_PROCESSOR_INFORMATION Buffer, PDWORD ReturnLength);
-  BOOL WINAPI (*GetLogicalProcessorInformationExProc)(LOGICAL_PROCESSOR_RELATIONSHIP relationship, PSYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX Buffer, PDWORD ReturnLength);
-  BOOL WINAPI (*GetNumaAvailableMemoryNodeProc)(UCHAR Node, PULONGLONG AvailableBytes);
-  BOOL WINAPI (*GetNumaAvailableMemoryNodeExProc)(USHORT Node, PULONGLONG AvailableBytes);
+  BOOL (WINAPI *GetLogicalProcessorInformationProc)(PSYSTEM_LOGICAL_PROCESSOR_INFORMATION Buffer, PDWORD ReturnLength);
+  BOOL (WINAPI *GetLogicalProcessorInformationExProc)(LOGICAL_PROCESSOR_RELATIONSHIP relationship, PSYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX Buffer, PDWORD ReturnLength);
+  BOOL (WINAPI *GetNumaAvailableMemoryNodeProc)(UCHAR Node, PULONGLONG AvailableBytes);
+  BOOL (WINAPI *GetNumaAvailableMemoryNodeExProc)(USHORT Node, PULONGLONG AvailableBytes);
   SYSTEM_INFO SystemInfo;
 
   DWORD length;
