@@ -11,8 +11,12 @@
 #define _ATFILE_SOURCE
 #include <assert.h>
 #include <sys/types.h>
+#ifndef WIN32
 #include <dirent.h>
+#endif
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
 #include <string.h>
 #include <errno.h>
 #include <stdio.h>

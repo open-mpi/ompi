@@ -13,7 +13,9 @@
 #include <private/debug.h>
 
 #include <assert.h>
+#ifndef _WIN32
 #include <strings.h>
+#endif
 
 #ifdef HWLOC_HAVE_LIBXML2
 #include <libxml/parser.h>
