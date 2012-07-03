@@ -61,7 +61,7 @@ ENDIF(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
 
 # Make the include path visible to all targets
 INCLUDE_DIRECTORIES (
-  ${OpenMPI_SOURCE_DIR}/contrib/platform/win32
+  ${OpenMPI_SOURCE_DIR}/contrib/platform/win32/include
   ${OpenMPI_SOURCE_DIR}/
   ${OpenMPI_SOURCE_DIR}/opal
   ${OpenMPI_SOURCE_DIR}/opal/include
