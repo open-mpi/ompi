@@ -689,3 +689,15 @@ device).
 
 Use "ibv_devinfo -v" on the local host to see the GID table of this
 device.
+#
+[cq length too large]
+The mca_btl_openib_cq_size MCA parameter was set to a value larger
+than what a local device supports.  You can use the command
+"ibv_devinfo -v | grep max_cqe" to find out a device's max CQ length.
+
+Open MPI will default to using the device's max CQ length.
+
+  Local host:              %s
+  Local adapter:           %s (vendor 0x%x, part ID %d)
+  Requested CQ length:     %u
+  Max supported CQ length: %u
