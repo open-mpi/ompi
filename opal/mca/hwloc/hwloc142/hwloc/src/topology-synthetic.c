@@ -14,7 +14,7 @@
 
 #include <limits.h>
 #include <assert.h>
-#ifndef _WIN32
+#ifdef HAVE_STRINGS_H
 #include <strings.h>
 #endif
 
