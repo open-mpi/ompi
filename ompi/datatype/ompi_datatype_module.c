@@ -494,7 +494,7 @@ int32_t ompi_datatype_init( void )
                                      OMPI_DATATYPE_MPI_INT,
                                      OMPI_DATATYPE_FLAG_DATA_C | OMPI_DATATYPE_FLAG_DATA_INT );
     DECLARE_MPI2_COMPOSED_BLOCK_DDT( &ompi_mpi_2integer.dt, OMPI_DATATYPE_2INTEGER, "MPI_2INTEGER",
-                                     OMPI_DATATYPE_MPI_INT,
+                                     OMPI_DATATYPE_MPI_INTEGER,
                                      OMPI_DATATYPE_FLAG_DATA_FORTRAN | OMPI_DATATYPE_FLAG_DATA_INT);
     DECLARE_MPI2_COMPOSED_BLOCK_DDT( &ompi_mpi_2real.dt, OMPI_DATATYPE_2REAL, "MPI_2REAL",
                                      OMPI_DATATYPE_MPI_FLOAT,
