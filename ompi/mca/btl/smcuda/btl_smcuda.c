@@ -14,6 +14,7 @@
  * Copyright (c) 2010-2012 Los Alamos National Security, LLC.  
  *                         All rights reserved. 
  * Copyright (c) 2012      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2012      Oracle and/or its affiliates.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -715,7 +716,7 @@ struct mca_btl_base_descriptor_t* mca_btl_smcuda_prepare_src(
         }
         iov.iov_len = max_data;
         iov.iov_base =
-            (IOVBASE_TYPE*)(frag->segment.base.seg_addr.lval + reserve);
+            (IOVBASE_TYPE*)(frag->segment.base.seg_addr.pval + reserve);
 
         rc = opal_convertor_pack(convertor, &iov, &iov_count, &max_data );
         if( OPAL_UNLIKELY(rc < 0) ) {
