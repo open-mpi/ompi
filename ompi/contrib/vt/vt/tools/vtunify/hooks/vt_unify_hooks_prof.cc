@@ -10,12 +10,8 @@
  * See the file COPYING in the package base directory for details
  **/
 
-#include "vt_unify.h"
 #include "vt_unify_hooks_prof.h"
 
-#include "vt_inttypes.h"
-
-#include <algorithm>
 #include <iostream>
 
 #include <stdio.h>
@@ -80,6 +76,10 @@ HooksProfC::finalizeHook( const bool & error )
 void
 HooksProfC::phaseHook_GetUnifyControls_post()
 {
+   // return, if the input trace has no statistics
+   if( !UnifyControlS::have_stats() )
+      return;
+
    // create function profile maps for each assigned stream
    // to allow simultaneous access from multiple threads
    //
@@ -116,6 +116,10 @@ HooksProfC::phaseHook_UnifyStatistics_post()
 void
 HooksProfC::writeRecHook_DefTimerResolution( HooksC::VaArgsT & args )
 {
+   // return, if the input trace has no statistics
+   if( !UnifyControlS::have_stats() )
+      return;
+
    // get hook arguments
    //
 
@@ -131,6 +135,10 @@ HooksProfC::writeRecHook_DefTimerResolution( HooksC::VaArgsT & args )
 void
 HooksProfC::writeRecHook_DefProcess( HooksC::VaArgsT & args )
 {
+   // return, if the input trace has no statistics
+   if( !UnifyControlS::have_stats() )
+      return;
+
    // get hook arguments
    //
 
@@ -148,6 +156,10 @@ HooksProfC::writeRecHook_DefProcess( HooksC::VaArgsT & args )
 void
 HooksProfC::writeRecHook_DefFunction( HooksC::VaArgsT & args )
 {
+   // return, if the input trace has no statistics
+   if( !UnifyControlS::have_stats() )
+      return;
+
    // get hook arguments
    //
 

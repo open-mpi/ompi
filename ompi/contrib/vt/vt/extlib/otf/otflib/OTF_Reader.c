@@ -1041,7 +1041,7 @@ int OTF_Reader_init( OTF_Reader* reader ) {
 	reader->buffersizes= 1024*1024;
 	
 #ifdef HAVE_ZLIB
-	reader->zbuffersizes= 1024 *10;
+	reader->zbuffersizes= OTF_ZBUFFER_DEFAULTSIZE;
 #endif /* HAVE_ZLIB */
 	
 	reader->manager= NULL;

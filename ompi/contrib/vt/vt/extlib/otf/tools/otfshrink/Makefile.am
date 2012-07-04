@@ -10,6 +10,7 @@ otfshrink_DEPENDENCIES = $(otfaux_LDADD)
 otfshrink_SOURCES = \
 	otfshrink.h \
 	Handler.h \
+	procList.h \
 	otfshrink.cpp \
 	Handler.cpp
 

@@ -13,12 +13,7 @@
 #ifndef _VT_UNIFY_USRCOM_H_
 #define _VT_UNIFY_USRCOM_H_
 
-#include "config.h"
-
-#include "vt_inttypes.h"
-
-#include <map>
-#include <set>
+#include "vt_unify.h"
 
 //
 // UserComC class

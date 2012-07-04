@@ -95,14 +95,17 @@ cat <<End-of-File >$tmp.awk
     next
   }
 
-  aint_convert=1
+  aint_convert=0
 
-  if (index(mpicall,"MPI_Get_address") != 0 ||
-      index(mpicall,"MPI_Type_create_hindexed") != 0 ||
-      index(mpicall,"MPI_Type_create_hvector") != 0 ||
-      index(mpicall,"MPI_Type_create_struct") != 0)
+  if (index(mpicall,"MPI_Address") != 0 ||
+      index(mpicall,"MPI_Type_extent") != 0 ||
+      index(mpicall,"MPI_Type_hindexed") != 0 ||
+      index(mpicall,"MPI_Type_hvector") != 0 ||
+      index(mpicall,"MPI_Type_lb") != 0 ||
+      index(mpicall,"MPI_Type_struct") != 0 ||
+      index(mpicall,"MPI_Type_ub") != 0)
   {
-      aint_convert=0
+    aint_convert=1
   }
 
   optional=0

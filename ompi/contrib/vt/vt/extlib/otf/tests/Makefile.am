@@ -3,8 +3,7 @@ SUBDIRS = \
 	generic_streams \
 	generic_streams-mpi \
 	progress \
-	read_from_buffer \
-	thumbnail
+	read_from_buffer
 	
 EXTRA_DIST= \
 	python/groups.py \

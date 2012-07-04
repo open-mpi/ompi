@@ -1,6 +1,5 @@
 CC="bgxlc_r"
 CXX="bgxlC_r"
-F77="bgxlf_r"
 FC="bgxlf95_r"
 MPICC="mpixlc_r"
 MPICXX="mpixlcxx_r"
@@ -14,5 +13,5 @@ enable_shared="no"
 enable_cpuidtrace="no"
 with_cross_prefix="bg"
 with_mpibgp="yes"
-with_cxxrtlib="-L/opt/ibmcmp/lib/bg/bglib -L/opt/ibmcmp/lib/bg/9.0/bglib -libmc++ -lstdc++"
+with_cxxrtlib="-L/opt/ibmcmp/lib/bg/bglib -L/opt/ibmcmp/vacpp/bg/9.0/bglib -libmc++ -lstdc++"
 with_shlibc=/lib/libc.so.6

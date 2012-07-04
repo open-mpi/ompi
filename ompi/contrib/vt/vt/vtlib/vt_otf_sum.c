@@ -29,7 +29,7 @@
 
 #define VTSUM_STACK_BSIZE  100
 #define VTSUM_STAT_BSIZE   500
-#define VTSUM_HASH_MAX    1021
+#define VTSUM_HASH_MAX    1024
 
 /*
  *-----------------------------------------------------------------------------
@@ -318,7 +318,7 @@ static uint64_t SumIntv = 0;
 /* Stores index of function statistic `stat_idx' under hash code `h' */
 
 static void hash_put_func(VTSum* sum, uint32_t h, uint64_t stat_idx) {
-  uint32_t id = h % VTSUM_HASH_MAX;
+  uint32_t id = h & (VTSUM_HASH_MAX - 1);
   VTSum_funcHashNode* add =
     (VTSum_funcHashNode*)malloc(sizeof(VTSum_funcHashNode));
   add->id = h;
@@ -331,7 +331,7 @@ static void hash_put_func(VTSum* sum, uint32_t h, uint64_t stat_idx) {
  * Returns hash table entry if already stored, otherwise NULL */
 
 static VTSum_funcHashNode* hash_get_func(VTSum* sum, uint32_t h) {
-  uint32_t id = h % VTSUM_HASH_MAX;
+  uint32_t id = h & (VTSUM_HASH_MAX - 1);
   VTSum_funcHashNode* curr = sum->func_stat_htab[id];
   while ( curr ) {
     if ( curr->id == h ) {
@@ -376,7 +376,7 @@ static void hash_put_msg(VTSum* sum, uint32_t peer, uint32_t cid, uint32_t tag,
   if ( peer > 0 ) id = vt_hash((uint8_t*)&peer, sizeof(uint32_t), id);
   if ( cid > 0 )  id = vt_hash((uint8_t*)&cid,  sizeof(uint32_t), id);
   if ( tag > 0 )  id = vt_hash((uint8_t*)&tag,  sizeof(uint32_t), id);
-  id %= VTSUM_HASH_MAX;
+  id &= (VTSUM_HASH_MAX - 1);
 
   add = (VTSum_msgHashNode*)malloc(sizeof(VTSum_msgHashNode));
   add->peer     = peer;
@@ -399,7 +399,7 @@ static VTSum_msgHashNode* hash_get_msg(VTSum* sum, uint32_t peer, uint32_t cid,
   if ( peer > 0 ) id = vt_hash((uint8_t*)&peer, sizeof(uint32_t), id);
   if ( cid > 0 )  id = vt_hash((uint8_t*)&cid,  sizeof(uint32_t), id);
   if ( tag > 0 )  id = vt_hash((uint8_t*)&tag,  sizeof(uint32_t), id);
-  id %= VTSUM_HASH_MAX;
+  id &= (VTSUM_HASH_MAX - 1);
 
   curr = sum->msg_stat_htab[id];
   while ( curr ) {
@@ -445,7 +445,7 @@ static void hash_put_collop(VTSum* sum, uint32_t rid, uint32_t cid,
   id = 0;
   if ( rid > 0 ) id = vt_hash((uint8_t*)&rid, sizeof(uint32_t), id);
   if ( cid > 0 ) id = vt_hash((uint8_t*)&cid, sizeof(uint32_t), id);
-  id %= VTSUM_HASH_MAX;
+  id &= (VTSUM_HASH_MAX - 1);
 
   add = (VTSum_collopHashNode*)malloc(sizeof(VTSum_collopHashNode));
   add->rid        = rid;
@@ -466,7 +466,7 @@ static VTSum_collopHashNode* hash_get_collop(VTSum* sum, uint32_t rid,
   id = 0;
   if ( rid > 0 ) id = vt_hash((uint8_t*)&rid, sizeof(uint32_t), id);
   if ( cid > 0 ) id = vt_hash((uint8_t*)&cid, sizeof(uint32_t), id);
-  id %= VTSUM_HASH_MAX;
+  id &= (VTSUM_HASH_MAX - 1);
 
   curr = sum->collop_stat_htab[id];
   while ( curr ) {
@@ -503,7 +503,7 @@ static void hash_clear_collop(VTSum* sum) {
 /* Stores index of file operation statistic `stat_idx' under hash code `h' */
 
 static void hash_put_fileop(VTSum* sum, uint32_t h, uint64_t stat_idx) {
-  uint32_t id = h % VTSUM_HASH_MAX;
+  uint32_t id = h & (VTSUM_HASH_MAX - 1);
   VTSum_fileopHashNode* add =
     (VTSum_fileopHashNode*)malloc(sizeof(VTSum_fileopHashNode));
   add->id       = h;
@@ -516,7 +516,7 @@ static void hash_put_fileop(VTSum* sum, uint32_t h, uint64_t stat_idx) {
  * Returns hash table entry if already stored, otherwise NULL */
 
 static VTSum_fileopHashNode* hash_get_fileop(VTSum* sum, uint32_t h) {
-  uint32_t id = h % VTSUM_HASH_MAX;
+  uint32_t id = h & (VTSUM_HASH_MAX - 1);
   VTSum_fileopHashNode* curr = sum->fileop_stat_htab[id];
   while ( curr ) {
     if ( curr->id == h ) {

@@ -23,8 +23,6 @@
   (((uintptr_t) (buffer) & ((align)-1)) ? \
         ((buffer) - ((uintptr_t) (buffer) & ((align)-1))) : (buffer)) 
 
-#define VT_CUPTI_ACT_DEFAULT_BSIZE 65536
-
 /* mutex for locking global CUPTI activity attributes */
 #if (defined(VT_MT) || defined(VT_HYB))
 static VTThrdMutex* VTThrdMutexCuptiAct = NULL;
@@ -95,6 +93,7 @@ typedef struct vtcuptiactctx_st
   CUdevice cuDev;                   /**< CUDA device handle */
   uint32_t ptid;                    /**< VampirTrace process/thread */
   vt_cuptiact_strm_t *strmList;     /**< list of streams */
+  uint32_t defaultStrmID;           /**< CUPTI stream ID of default stream */
   vt_cuptiact_gpumem_t *gpuMemList; /**< list of allocated GPU memory fields */
   size_t gpuMemAllocated;           /**< memory allocated on CUDA device */
   vt_cuptiact_sync_t sync;          /**< store synchronization information */
@@ -120,6 +119,9 @@ static uint32_t vt_cuptiact_cid_knStaticSharedMem = VT_NO_ID;
 static uint32_t vt_cuptiact_cid_knDynamicSharedMem = VT_NO_ID;
 static uint32_t vt_cuptiact_cid_knLocalMemTotal = VT_NO_ID;
 static uint32_t vt_cuptiact_cid_knRegistersPerThread = VT_NO_ID;
+
+/* global region IDs for wrapper internal tracing */
+static uint32_t vt_cuptiact_rid_flush = VT_NO_ID;
 
 /* list of VampirTrace CUPTI activity context list */
 static vt_cuptiact_ctx_t* vt_cuptiact_ctxList = NULL;
@@ -174,10 +176,11 @@ void vt_cupti_activity_init()
                       "cuptiActivityEnqueueBuffer");*/
       }
       
-      if(vt_cupti_trace_kernels > 1){
 #if (defined(VT_MT) || defined(VT_HYB))
       VTTHRD_LOCK_IDS();
 #endif
+      if(vt_gpu_trace_kernels > 1){
+        /* define kernel counters */
         vt_cuptiact_cid_knStaticSharedMem = vt_def_counter(VT_MASTER_THREAD, 
                       "staticSharedMemory", "Bytes",
                       VT_CNTR_ABS | VT_CNTR_NEXT | VT_CNTR_UNSIGNED, 
@@ -194,20 +197,24 @@ void vt_cupti_activity_init()
                       "registersPerThread", "#",
                       VT_CNTR_ABS | VT_CNTR_NEXT | VT_CNTR_UNSIGNED, 
                       vt_cupti_cgid_cuda_kernel, 0);
+      }
+     
+      /* define region for GPU activity flush */
+      vt_cuptiact_rid_flush = vt_def_region(VT_MASTER_THREAD, "flushActivities", 
+                        VT_NO_ID, VT_NO_LNO, VT_NO_LNO, "VT_CUDA", VT_FUNCTION);
 #if (defined(VT_MT) || defined(VT_HYB))
       VTTHRD_UNLOCK_IDS();
 #endif
-      }
       
       /*** enable the activities ***/
       /* enable kernel tracing */
-      if(vt_cupti_trace_kernels > 0){
+      if(vt_gpu_trace_kernels > 0){
         VT_CUPTI_CALL(cuptiActivityEnable(CUPTI_ACTIVITY_KIND_KERNEL), 
                       "cuptiActivityEnable");
       }
       
       /* enable memory copy tracing */
-      if(vt_cupti_trace_mcpy){
+      if(vt_gpu_trace_mcpy){
         VT_CUPTI_CALL(cuptiActivityEnable(CUPTI_ACTIVITY_KIND_MEMCPY), 
                       "cuptiActivityEnable");
       }
@@ -307,11 +314,8 @@ static vt_cuptiact_strm_t* vt_cuptiact_createStream(vt_cuptiact_ctx_t *vtCtx,
   if(vtStrm == NULL)
     vt_error_msg("[CUPTI Activity] Could not allocate memory for stream!");
   vtStrm->strmID = strmID;
-  vtStrm->vtLastTime = vt_start_time;
+  vtStrm->vtLastTime = vt_gpu_init_time;
   vtStrm->next = NULL;
-  
-  /* if no valid stream ID is given, create default stream 0 */
-  if((uint32_t)-1 == strmID) strmID = 0;
   
   {
     char thread_name[16];
@@ -329,14 +333,17 @@ static vt_cuptiact_strm_t* vt_cuptiact_createStream(vt_cuptiact_ctx_t *vtCtx,
     vt_gpu_registerThread(thread_name, VT_MY_THREAD, &(vtStrm->vtThrdID));
   }
   
-    /* if first stream created for this device, make it the default stream */
+  /* if first stream created for this device, make it the default stream */
   if(vtCtx->strmList == NULL){
     /* write enter event for GPU_IDLE on first stream */
     if(vt_gpu_trace_idle == 1){
-      vt_enter(vtStrm->vtThrdID, &vt_start_time, vt_gpu_rid_idle);
-      /*vt_warning("IDLEente: %llu (%d)", vt_start_time, vtStrm->vtThrdID);*/
+      if(vt_gpu_init_time < vt_start_time)
+        vt_gpu_init_time = vt_start_time;
+          
+      vt_enter(vtStrm->vtThrdID, &vt_gpu_init_time, vt_gpu_rid_idle);
+      /*vt_warning("IDLEente: %llu (%d)", vt_gpu_init_time, vtStrm->vtThrdID);*/
+      vtCtx->gpuIdleOn = 1;
     }
-    vtCtx->gpuIdleOn = 1;
   }
   
   return vtStrm;
@@ -366,7 +373,7 @@ static vt_cuptiact_ctx_t* vt_cuptiact_createContext(uint32_t ctxID,
   vtCtx->gpuMemAllocated = 0;
   vtCtx->gpuMemList = NULL;
   vtCtx->buffer = NULL;
-  vtCtx->vtLastGPUTime = vt_start_time;
+  vtCtx->vtLastGPUTime = vt_gpu_init_time;
   vtCtx->gpuIdleOn = 1;
   
   /* 
@@ -383,6 +390,10 @@ static vt_cuptiact_ctx_t* vt_cuptiact_createContext(uint32_t ctxID,
   
   if(cuCtx == NULL) CHECK_CU_ERROR(cuCtxGetCurrent(&cuCtx), NULL);
   vtCtx->cuCtx = cuCtx;
+  
+  /* set default CUPTI stream ID (needed for memory usage and idle tracing) */
+  VT_CUPTI_CALL(cuptiGetStreamId(vtCtx->cuCtx, NULL, &(vtCtx->defaultStrmID)), 
+                                 "cuptiGetStreamId");
   
   if(devID == (uint32_t)-1){
     CUdevice cuDev;
@@ -411,11 +422,11 @@ static vt_cuptiact_ctx_t* vt_cuptiact_createContext(uint32_t ctxID,
 static void vt_cuptiact_destroyContext(vt_cuptiact_ctx_t* vtCtx)
 {
   /* write exit event for GPU idle time */
-  if(vt_gpu_trace_idle == 1){
+  if(vt_gpu_trace_idle == 1 && vtCtx->gpuIdleOn == 1){
     uint64_t idle_end = vt_pform_wtime();
-    vt_exit(vtCtx->strmList->vtThrdID, &idle_end);
     /*vt_warning("IDLEexit: %llu (%d)", idle_end, vtCtx->strmList->vtThrdID);*/
-    vtCtx->gpuIdleOn = 0;
+    vt_exit(vtCtx->strmList->vtThrdID, &idle_end);
+    /*vtCtx->gpuIdleOn = 0;*/
   }
   
   /* cleanup stream list */
@@ -432,7 +443,7 @@ static void vt_cuptiact_destroyContext(vt_cuptiact_ctx_t* vtCtx)
   while(vtCtx->gpuMemList != NULL){
     vt_cuptiact_gpumem_t *vtMem =  vtCtx->gpuMemList;
     
-    if(vt_cupti_trace_gpu_mem > 1)
+    if(vt_gpu_trace_memusage > 1)
       vt_cntl_msg(1, "[CUPTI Activity] Free of %d bytes GPU memory missing!", 
                      vtMem->size);
     
@@ -508,15 +519,21 @@ static vt_cuptiact_strm_t* vt_cuptiact_checkStream(vt_cuptiact_ctx_t* vtCtx,
     currStrm = currStrm->next;
   }
   
-  /* check if stream 0 has already been created */
-  if(vtCtx->strmList != NULL && vtCtx->strmList->strmID == (uint32_t)-1){
-    vtCtx->strmList->strmID = strmID;
-    return vtCtx->strmList;
+  /* 
+   * If stream list is empty, the stream to be created is not the default
+   * stream and GPU idle and memory copy tracing is enabled, then create
+   * a default stream.
+   */
+  if(vtCtx->strmList == NULL && strmID != vtCtx->defaultStrmID && 
+     vt_gpu_trace_idle == 1 && vt_gpu_trace_mcpy){
+    vtCtx->strmList = vt_cuptiact_createStream(vtCtx, vtCtx->defaultStrmID);
+    lastStrm = vtCtx->strmList;
   }
   
+  /* create the stream, which has not been created yet */
   currStrm = vt_cuptiact_createStream(vtCtx, strmID);
   
-  /* append */
+  /* append the newly created stream */
   if(NULL != lastStrm) lastStrm->next = currStrm;
   else vtCtx->strmList = currStrm;
   
@@ -532,6 +549,7 @@ void vt_cuptiact_flushCtxActivities(CUcontext cuCtx)
   CUpti_Activity *record = NULL;
   vt_cuptiact_ctx_t *vtCtx = NULL;
   uint64_t hostStop, gpuStop;
+  uint32_t ptid = VT_NO_ID;
   
   /* check if the buffer contains records */
   status = cuptiActivityQueryBuffer(cuCtx, 0, &bufSize);
@@ -542,10 +560,18 @@ void vt_cuptiact_flushCtxActivities(CUcontext cuCtx)
     }
   }
   
+  /* expose VampirTrace CUPTI activity flush */
+  VT_CHECK_THREAD;
+  ptid = VT_MY_THREAD;
+  hostStop = vt_pform_wtime();
+  vt_enter(ptid, &hostStop, vt_cuptiact_rid_flush);
+  
   /* get the corresponding VampirTrace CUPTI context */
   vtCtx = vt_cuptiact_getCtx(cuCtx);
   if(vtCtx == NULL){
     vt_warning("[CUPTI Activity] Context not found!");
+    hostStop = vt_pform_wtime();
+    vt_exit(ptid, &hostStop);
     return;
   }
   
@@ -568,7 +594,7 @@ void vt_cuptiact_flushCtxActivities(CUcontext cuCtx)
     vtCtx->sync.hostStop = hostStop;
     
     vtCtx->sync.factor = (double)(hostStop - vtCtx->sync.hostStart)
-                     /(double)(gpuStop - vtCtx->sync.gpuStart);
+                       /(double)(gpuStop - vtCtx->sync.gpuStart);
     
   }
 
@@ -593,7 +619,7 @@ void vt_cuptiact_flushCtxActivities(CUcontext cuCtx)
     VT_CUPTI_CALL(cuptiActivityGetNumDroppedRecords(cuCtx, 0, &dropped), 
                   "cuptiActivityGetNumDroppedRecords");
     if(dropped != 0)
-      vt_warning("[CUPTI Activity] Dropped %u records. Current buffer size: %llu \n"
+      vt_warning("[CUPTI Activity] Dropped %u records. Current buffer size: %llu bytes\n"
                  "To avoid dropping of records increase the buffer size!\n"
                  "Proposed minimum VT_CUDATRACE_BUFFER_SIZE=%llu", 
                  (unsigned int)dropped, vt_cuptiact_bufSize, 
@@ -618,6 +644,9 @@ void vt_cuptiact_flushCtxActivities(CUcontext cuCtx)
   vtCtx->sync.gpuStart = gpuStop;
   
   VT_CUPTI_ACT_UNLOCK();
+  
+  hostStop = vt_pform_wtime();
+  vt_exit(ptid, &hostStop);
 }
 
 /*
@@ -666,9 +695,13 @@ static void vt_cuptiact_writeKernelRecord(CUpti_ActivityKernel *kernel,
   if(hn){
     knRID = hn->rid;
   }else{
-    char knName[VTGPU_KERNEL_STRING_SIZE];
-
-    vt_cuda_symbolToKernel(knName, kernel->name);
+    char *knName = vt_cuda_demangleKernel(kernel->name);
+    
+    if(knName == NULL) {
+      knName = (char *)kernel->name;
+      if(knName == NULL) knName = "unknownKernel";
+    }
+    
     knRID = vt_def_region(VT_MASTER_THREAD, knName, VT_NO_ID,
                           VT_NO_LNO, VT_NO_LNO, "CUDA_KERNEL", VT_FUNCTION);
 
@@ -703,19 +736,20 @@ static void vt_cuptiact_writeKernelRecord(CUpti_ActivityKernel *kernel,
     vtStrm->vtLastTime = stop;
 
     /*vt_cntl_msg(1, "'%s'(%d) start: %llu; stop: %llu (tid: %d)", 
-                   knName, knRID, start, stop, vtThrdID);*/
-            /* GPU idle time will be written to first CUDA stream in list */
+                   kernel->name, knRID, start, stop, vtThrdID);*/
+    
+    /* GPU idle time will be written to first CUDA stream in list */
     if(vt_gpu_trace_idle){
       if(vtCtx->gpuIdleOn){
-        vt_exit(vtCtx->strmList->vtThrdID, &start);
         /*vt_warning("IDLEexit: %llu (%d)", start, vtCtx->strmList->vtThrdID);*/
+        vt_exit(vtCtx->strmList->vtThrdID, &start);
         vtCtx->gpuIdleOn = 0;
       }else if(start > vtCtx->vtLastGPUTime){
         /* idle is off and kernels are consecutive */
-        vt_enter(vtCtx->strmList->vtThrdID, &(vtCtx->vtLastGPUTime), vt_gpu_rid_idle);
-        vt_exit(vtCtx->strmList->vtThrdID, &start);
         /*vt_warning("IDLEente: %llu (%d)", vtCtx->vtLastGPUTime, vtCtx->strmList->vtThrdID);
         vt_warning("IDLEexit: %llu (%d)", start, vtCtx->strmList->vtThrdID);*/
+        vt_enter(vtCtx->strmList->vtThrdID, &(vtCtx->vtLastGPUTime), vt_gpu_rid_idle);
+        vt_exit(vtCtx->strmList->vtThrdID, &start);
       }
     }
 
@@ -723,7 +757,7 @@ static void vt_cuptiact_writeKernelRecord(CUpti_ActivityKernel *kernel,
     /*vt_warning("KERNente: %llu (%d)", start, vtThrdID);*/
     
     /* use counter to provide additional information for kernels */
-    if(vt_cupti_trace_kernels > 1){
+    if(vt_gpu_trace_kernels > 1){
       /* grid and block size counter (start) */
       {
         uint32_t threadsPerBlock = kernel->blockX * kernel->blockY * kernel->blockZ;
@@ -840,6 +874,12 @@ static void vt_cuptiact_writeMemcpyRecord(CUpti_ActivityMemcpy *mcpy,
     }
   }
   
+  if(vtCtx->gpuIdleOn == 0 && mcpy->streamId == vtCtx->defaultStrmID){
+    vt_enter(vtCtx->strmList->vtThrdID, &(vtCtx->vtLastGPUTime), vt_gpu_rid_idle);
+    vtCtx->gpuIdleOn = 1;
+    /*vt_warning("IDLMente: %llu (%d)", vtCtx->vtLastGPUTime, vtCtx->strmList->vtThrdID);*/
+  }
+  
   /*VT_CUPTI_ACT_LOCK();*/
   if(kind != VT_GPU_DEV2DEV) vt_gpu_prop[vtCtx->ptid] |= VTGPU_GPU_COMM;
   vt_gpu_prop[vtThrdID] |= VTGPU_GPU_COMM;
@@ -863,7 +903,7 @@ static void vt_cuptiact_writeMemcpyRecord(CUpti_ActivityMemcpy *mcpy,
     vt_mpi_rma_end(vtThrdID, &stop, vt_gpu_commCID, 0);
   }
   
-  if(vtCtx->vtLastGPUTime < stop) vtCtx->vtLastGPUTime = stop;
+  /*if(vtCtx->vtLastGPUTime < stop) vtCtx->vtLastGPUTime = stop;*/
   
   /*vt_cntl_msg(1, "MEMCPY %llu -> %llu[%llu ns] device %u, context %u, stream %u, "
                      "correlation %u/r%u",
@@ -913,15 +953,18 @@ void vt_cuptiact_writeMalloc(uint32_t ctxID, CUcontext cuCtx,
 
   /* check if first CUDA stream is available */
   if(vtCtx->strmList == NULL){
-    vtCtx->strmList = vt_cuptiact_createStream(vtCtx, (uint32_t)-1);
-    vt_count(vtCtx->strmList->vtThrdID, &vt_start_time, vt_cupti_cid_cudaMalloc, 0);
+    if(vt_gpu_init_time < vt_start_time)
+      vt_gpu_init_time = vt_start_time;
+        
+    vtCtx->strmList = vt_cuptiact_createStream(vtCtx, vtCtx->defaultStrmID);
+    vt_count(vtCtx->strmList->vtThrdID, &vt_gpu_init_time, vt_gpu_cid_memusage, 0);
   }
   
   VT_CUPTI_ACT_UNLOCK();
   
   /* write counter value */
   vtTime = vt_pform_wtime();
-  vt_count(vtCtx->strmList->vtThrdID, &vtTime, vt_cupti_cid_cudaMalloc, 
+  vt_count(vtCtx->strmList->vtThrdID, &vtTime, vt_gpu_cid_memusage, 
            (uint64_t)(vtCtx->gpuMemAllocated));
 }
 
@@ -960,7 +1003,7 @@ void vt_cuptiact_writeFree(uint32_t ctxID, CUcontext cuCtx, void *devPtr)
       /* decrease allocated counter value and write it */
       vtTime = vt_pform_wtime();
       vtCtx->gpuMemAllocated -= curMalloc->size;
-      vt_count(vtCtx->strmList->vtThrdID, &vtTime, vt_cupti_cid_cudaMalloc,
+      vt_count(vtCtx->strmList->vtThrdID, &vtTime, vt_gpu_cid_memusage,
                (uint64_t)(vtCtx->gpuMemAllocated));
 
 

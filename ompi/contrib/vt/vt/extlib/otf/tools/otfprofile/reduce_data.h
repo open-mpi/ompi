@@ -13,6 +13,8 @@
 /* reduce the data to the master process */
 bool ReduceData( AllData& alldata );
 
+/* reduce the dispersion data to the master process */
+bool ReduceDataDispersion( AllData& alldata );
 
 #endif /* REDUCE_DATA_H */
 

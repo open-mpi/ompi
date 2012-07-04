@@ -10,13 +10,9 @@
  * See the file COPYING in the package base directory for details
  **/
 
-#include "vt_unify.h"
 #include "vt_unify_hooks_raw.h"
 
-#include "vt_inttypes.h"
-
 #include <iostream>
-#include <string>
 
 //////////////////// class HooksRawC ////////////////////
 
@@ -195,6 +191,16 @@ void HooksRawC::writeRecHook_Counter( HooksC::VaArgsT & args ) { DOSOMETHING; }
 
 void HooksRawC::readRecHook_EventComment( HooksC::VaArgsT & args ) { DOSOMETHING; }
 void HooksRawC::writeRecHook_EventComment( HooksC::VaArgsT & args ) { DOSOMETHING; }
+
+// snapshot records
+
+void HooksRawC::writeRecHook_EnterSnapshot( HooksC::VaArgsT & args ) { DOSOMETHING; }
+void HooksRawC::writeRecHook_SendSnapshot( HooksC::VaArgsT & args ) { DOSOMETHING; }
+void HooksRawC::writeRecHook_OpenFileSnapshot( HooksC::VaArgsT & args ) { DOSOMETHING; }
+void HooksRawC::writeRecHook_BeginFileOpSnapshot( HooksC::VaArgsT & args ) { DOSOMETHING; }
+void HooksRawC::writeRecHook_BeginCollOpSnapshot( HooksC::VaArgsT & args ) { DOSOMETHING; }
+void HooksRawC::writeRecHook_CollOpCountSnapshot( HooksC::VaArgsT & args ) { DOSOMETHING; }
+void HooksRawC::writeRecHook_CounterSnapshot( HooksC::VaArgsT & args ) { DOSOMETHING; }
 
 // generic hook
 void HooksRawC::genericHook( const uint32_t & id, HooksC::VaArgsT & args ) { DOSOMETHING; }

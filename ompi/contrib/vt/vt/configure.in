@@ -15,10 +15,14 @@ m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
 inside_openmpi="no"
 AC_ARG_WITH(openmpi-inside, [],
 [
-	AS_IF([test x"$withval" != "xno"],
+	AS_IF([test x"$withval" = "xyes" -o x"$withval" = "x1.7"],
 	[
-		inside_openmpi="yes"
+		inside_openmpi="$withval"
 		CPPFLAGS="-DINSIDE_OPENMPI $CPPFLAGS"
+
+		# Set FC to F77 if Open MPI version < 1.7
+		AS_IF([test x"$withval" = "xyes" -a x"$FC" = x -a x"$F77" != x],
+		[FC="$F77"])
 	])
 ])
 
@@ -73,9 +77,9 @@ AM_CONDITIONAL(AMHAVECSFS, test x"$have_csfs" = "xyes")
 # Correct install paths
 AS_IF([test x"$prefix" = x -o x"$prefix" = "xNONE"], [prefix="$ac_default_prefix"])
 AS_IF([test x"$exec_prefix" = x -o x"$exec_prefix" = "xNONE"], [exec_prefix="\${prefix}"])
-AS_IF([test x"$inside_openmpi" = "xyes" -o "$includedir" = "\${prefix}/include"],
+AS_IF([test x"$inside_openmpi" != "xno" -o "$includedir" = "\${prefix}/include"],
 [includedir="$includedir/vampirtrace"])
-AS_IF([test x"$inside_openmpi" = "xyes" -o "$datarootdir" = "\${prefix}/share"],
+AS_IF([test x"$inside_openmpi" != "xno" -o "$datarootdir" = "\${prefix}/share"],
 [datarootdir="$datarootdir/vampirtrace"])
 AS_IF([test "$docdir" = "\${datarootdir}/doc/\${PACKAGE_TARNAME}"],
 [docdir="\${datarootdir}/doc"])
@@ -108,7 +112,6 @@ AC_ARG_ENABLE(fortran,
 		],
 		[
 			check_fortran="no"
-			F77=
 			FC=
 		])
 	])
@@ -116,26 +119,20 @@ AC_ARG_ENABLE(fortran,
 # Check for Fortran compiler
 AS_IF([test x"$check_fortran" = "xyes"],
 [
-	AS_IF([test x"$F77" = x -a x"$FC" != x], [F77=$FC])
-
-	AC_PROG_F77
-	AS_IF([test x"$F77" = x],
+	# Exclude F77-only compiler names when searching Fortran compiler
+	AC_PROG_FC([gfortran f95 fort xlf95 ifort ifc efc pgfortran pgf95 lf95 f90 xlf90 pgf90 epcf90])
+	AS_IF([test x"$FC" = x],
 	[
-		AC_MSG_NOTICE([error: no Fortran 77 compiler found])
+		AC_MSG_NOTICE([error: no Fortran compiler found])
 		AS_IF([test x"$force_fortran" = "xyes"], [exit 1])
 	])
-
-	AC_PROG_FC
 ])
 
 AC_LANG([C])
 
-AS_IF([test x"$F77" != x],
-[AC_DEFINE([HAVE_F77], [1], [Define to 1 if VT is configured with Fortran 77 support.])])
-AM_CONDITIONAL(AMHAVEF77, test x"$F77" != x)
 AS_IF([test x"$FC" != x],
-[AC_DEFINE([HAVE_F90], [1], [Define to 1 if VT is configured with Fortran 90 support.])])
-AM_CONDITIONAL(AMHAVEF90, test x"$FC" != x)
+[AC_DEFINE([HAVE_FC], [1], [Define to 1 if VT is configured with Fortran support.])])
+AM_CONDITIONAL(AMHAVEFC, test x"$FC" != x)
 
 # Check cross-build related stuff
 ACVT_CROSS
@@ -239,6 +236,7 @@ AS_IF([test x"$enable_config_titles" = "xyes" -a x"$check_compinst" = "xno"],
 AM_CONDITIONAL(AMHAVECOMPINST, test x"$have_compinst" = "xyes")
 AM_CONDITIONAL(AMBUILDCOMPINST_GNU, test x"$compinst_type" = "xgnu" -o x"$compinst_type" = "xpgi9")
 AM_CONDITIONAL(AMBUILDCOMPINST_PGI, test x"$compinst_type" = "xpgi")
+AM_CONDITIONAL(AMBUILDCOMPINST_CRAYCCE, test x"$compinst_type" = "xcraycce")
 AM_CONDITIONAL(AMBUILDCOMPINST_PHAT, test x"$compinst_type" = "xsun")
 AM_CONDITIONAL(AMBUILDCOMPINST_XL, test x"$compinst_type" = "xxl")
 AM_CONDITIONAL(AMBUILDCOMPINST_FTRACE, test x"$compinst_type" = "xnecsx")
@@ -381,10 +379,15 @@ AS_IF([test x"$enable_config_titles" = "xyes" -a x"$check_getcpu" = "xno"],
 AS_IF([test x"$force_getcpu" = "xyes" -a x"$getcpu_error" = "xyes"], [exit 1])
 AM_CONDITIONAL(AMHAVEGETCPU, test x"$have_getcpu" = "xyes")
 
-#Check for NVIDIA CUDA support
+# Check for NVIDIA CUDA support
 ACVT_CONF_TITLE([NVIDIA CUDA])
 
-#Check for CUDA Toolkit
+# Check for symbol demangling support by libiberty
+ACVT_CONF_SUBTITLE([Symbol demangling])
+ACVT_LIBERTY
+AM_CONDITIONAL(AMHAVELIBERTY, test x"$have_liberty" = "xyes")
+
+# Check for CUDA Toolkit
 ACVT_CONF_SUBTITLE([CUDA Toolkit])
 ACVT_CUDA
 AS_IF([test x"$enable_config_titles" = "xyes" -a x"$check_cuda" = "xno"],
@@ -436,6 +439,8 @@ ACVT_CONF_TITLE([Open Trace Format (OTF)])
 ACVT_OTF
 AS_IF([test x"$use_extern_otf" = "xyes" -a x"$otf_error" = "xyes"], [exit 1])
 AM_CONDITIONAL(AMEXTERNOTF, test x"$use_extern_otf" = "xyes")
+AM_CONDITIONAL(AMHAVEIOFSL, test x"$have_iofsl" = "xyes")
+AM_CONDITIONAL(AMBUILDIOFSLSCRIPTS, test x"$have_iofsl" = "xyes" -a x"$IOFSLSCRIPTS" != x)
 
 # Check for capabilities of vtsetup
 ACVT_CONF_TITLE([VTSetup])
@@ -469,6 +474,10 @@ AC_CONFIG_FILES([Makefile
 	tools/vtdyn/dynattlib/Makefile
 	tools/vtfilter/Makefile
 	tools/vtfilter/mpi/Makefile
+	tools/vtiofsl/Makefile
+	tools/vtiofsl/vtiofsl-common
+	tools/vtiofsl/vtiofsl-start
+	tools/vtiofsl/vtiofsl-stop
 	tools/vtjava/Makefile
 	tools/vtjava/vtjava
 	tools/vtlibwrapgen/Makefile
@@ -485,13 +494,11 @@ AC_CONFIG_FILES([Makefile
 	tools/vtwrapper/Makefile
 	tools/vtwrapper/vtcc-wrapper-data.txt
 	tools/vtwrapper/vtc++-wrapper-data.txt
-	tools/vtwrapper/vtf77-wrapper-data.txt
-	tools/vtwrapper/vtf90-wrapper-data.txt
+	tools/vtwrapper/vtfort-wrapper-data.txt
 	tools/vtwrapper/vtnvcc-wrapper-data.txt
 	include/Makefile
 	include/vt_inttypes.h
 	doc/Makefile
-	etc/Makefile
 ])
 
 # Add MPI wrapper generator scripts to output files
@@ -519,6 +526,27 @@ makefile_to_patch="vtlib/Makefile tools/vtunify/mpi/Makefile"
 for makefile in $makefile_to_patch; do
 	sed -e "s/^\(.*LIBDIR =.*\)\/$/\1/g" $makefile >$makefile.tmp
 	mv $makefile.tmp $makefile
+done
+
+# Patch the compiler wrapper configuration file for vtnvcc in order to pass
+# compiler/linker options directly to the compiler/linker using the option
+# -Xcompiler/-Xlinker.
+wrapper_data_file="tools/vtwrapper/vtnvcc-wrapper-data.txt"
+# keywords containing compiler/linker options
+# (<compiler options> -- <linker options>)
+wrapper_data_keys="compiler_flags compinst_compiler_flags dyninst_compiler_flags -- linker_flags libs vtlib vtmpilib vtmtlib vthyblib vtpomplib vtdynattlib"
+
+value_prefix="-Xcompiler"
+for key in $wrapper_data_keys; do
+	if test $key = "--"; then
+		value_prefix="-Xlinker"
+	else
+		value=`grep "^$key=" $wrapper_data_file | sed "s/^$key=//;s/^ *//;s/ *$//;s/ \{1,\}/ /g;s/ /,/g"`
+		if test x"$value" != x; then
+			sed -e "s@^$key=.*@$key=$value_prefix $value@" $wrapper_data_file >$wrapper_data_file.tmp
+			mv $wrapper_data_file.tmp $wrapper_data_file
+		fi
+	fi
 done
 
 # Generate MPI wrappers

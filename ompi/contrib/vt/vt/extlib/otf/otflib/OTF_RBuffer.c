@@ -166,7 +166,7 @@ int OTF_RBuffer_init( OTF_RBuffer* rbuffer ) {
 	rbuffer->list = NULL;
 	
 #ifdef HAVE_ZLIB
-	rbuffer->zbuffersize= 1024*10;
+	rbuffer->zbuffersize= OTF_ZBUFFER_DEFAULTSIZE;
 #endif /* HAVE_ZLIB */
 
 	return 1;
@@ -552,10 +552,19 @@ char *OTF_RBuffer_printRecord( OTF_RBuffer* rbuffer ) {
 
 	char *ret= NULL;
 	uint32_t pos= 0;
-	uint32_t size= 0;
+	uint32_t size= REALLOCSIZE;
 	uint32_t c= rbuffer->pos;
 	
 	
+	ret= (char*) malloc( size );
+	if( NULL == ret ) {
+		
+		OTF_Error( "ERROR in function %s, file: %s, line: %i:\n "
+				"no memory left.\n",
+				__FUNCTION__, __FILE__, __LINE__ );
+
+		return NULL;
+	}
 	while ( ( '\n' != rbuffer->buffer[c] ) && ( c < rbuffer->end ) ) {
 	
 		while( (pos+1) >= size ) {
@@ -994,7 +1003,7 @@ int OTF_RBuffer_getFileProperties( OTF_RBuffer* rbuffer ) {
 
 
 /* range where the last timestamp is searched */
-#define SEARCH_RANGE 1024
+#define SEARCH_RANGE 4096
 
 
 	uint64_t pos;
@@ -1126,10 +1135,28 @@ int OTF_RBuffer_searchTime( OTF_RBuffer* rbuffer, uint64_t time ) {
 
 		return 1;
 	}
+	else if ( time > timeB ) {
+		/* consume all records, so that the caller get none */
 
-	if ( time > timeB ) {
+		if ( posB > rbuffer->jumpsize ) {
+			posB -= rbuffer->jumpsize;
+		} else {
+			posB = 0;
+		}
+		ret= OTF_RBuffer_jump( rbuffer, posB );
+		if ( 1 != ret ) {
 
-		time= timeB;
+			OTF_Error( "ERROR in function %s, file: %s, line: %i:\n "
+					"unsuccessful jump to end pos= %llu.\n",
+					__FUNCTION__, __FILE__, __LINE__, (unsigned long long) posB );
+
+			return 0;
+		}
+		while ( OTF_RBuffer_getRecord( rbuffer ) ) {
+
+			OTF_RBuffer_readNewline( rbuffer );
+		}
+		return 1;
 	}
 
 

@@ -59,6 +59,14 @@ int pyOTF_Writer_writeDefAttributeListKV( OTF_Writer* writer, uint32_t stream,
 int pyOTF_Writer_writeDefAttributeList( OTF_Writer* writer, uint32_t stream, 
 	uint32_t attr_token, uint32_t num, PyObject* array);
 
+int pyOTF_Writer_writeDefCounterAssignments( OTF_Writer* writer, uint32_t stream, 
+	uint32_t counter, uint32_t number_of_members, PyObject* procs_or_groups, 
+	OTF_KeyValueList* list);
+
+int pyOTF_Writer_writeDefProcessSubstitutes( OTF_Writer* writer, uint32_t stream, 
+	uint32_t representative, uint32_t numberOfProcs, PyObject* procs, 
+	OTF_KeyValueList* list);
+
 
 
 /* *** handler declarations **************************************************** */
@@ -87,7 +95,7 @@ int pyOTF_Handler_DefAttributeList( void* userData, uint32_t stream,
 
 
 int pyOTF_Handler_DefProcessOrGroupAttributes( void* userData, uint32_t stream, 
-	uint32_t proc_token, uint32_t attr_token, OTF_KeyValueList *list  );
+	uint32_t proc_token, uint32_t attr_token, OTF_KeyValueList *list );
 
 
 int pyOTF_Handler_DefFunction( void* userData, uint32_t stream, 
@@ -126,6 +134,10 @@ int pyOTF_Handler_DefCreator( void* userData, uint32_t stream,
 	const char* creator, OTF_KeyValueList *list );
 
 
+int pyOTF_Handler_DefUniqueId( void* userData, uint32_t stream, 
+	uint64_t uid, OTF_KeyValueList *list );
+
+
 int pyOTF_Handler_DefVersion( void* userData, uint32_t stream, 
 	uint8_t major, uint8_t minor, uint8_t sub, 
 	const char* string, OTF_KeyValueList *list );
@@ -143,6 +155,20 @@ int pyOTF_Handler_DefFileGroup( void* userData, uint32_t stream,
 int pyOTF_Handler_DefKeyValue( void* userData, uint32_t stream, 
 	uint32_t key, OTF_Type type, const char *name, 
 	const char *description, OTF_KeyValueList *list );
+
+
+int pyOTF_Handler_DefTimeRange( void* userData, uint32_t stream, 
+	uint64_t minTime, uint64_t maxTime, OTF_KeyValueList* list );
+
+
+int pyOTF_Handler_DefCounterAssignments( void* userData, uint32_t stream, 
+	uint32_t counter, uint32_t number_of_members, const uint32_t* procs_or_groups, 
+	OTF_KeyValueList* list );
+
+
+int pyOTF_Handler_DefProcessSubstitutes( void* userData, uint32_t stream, 
+	uint32_t representative, uint32_t numberOfProcs, const uint32_t* procs, 
+	OTF_KeyValueList* list );
 
 
 int pyOTF_Handler_NoOp( void* userData, uint64_t time, 
@@ -274,6 +300,16 @@ int pyOTF_Handler_BeginCollopSnapshot( void* userData, uint64_t time,
 int pyOTF_Handler_BeginFileOpSnapshot( void* userData, uint64_t time, 
 	uint64_t originaltime, uint32_t process, uint64_t matchingId, 
 	uint32_t scltoken, OTF_KeyValueList *list );
+
+
+int pyOTF_Handler_CollopCountSnapshot( void* userData, uint64_t time, 
+	uint32_t process, uint32_t communicator, uint64_t count, 
+	OTF_KeyValueList *list );
+
+
+int pyOTF_Handler_CounterSnapshot( void* userData, uint64_t time, 
+	uint64_t originaltime, uint32_t process, uint32_t counter, 
+	uint64_t value, OTF_KeyValueList *list );
 
 
 int pyOTF_Handler_SummaryComment( void* userData, uint64_t time, 
@@ -479,6 +515,42 @@ int pyOTF_Writer_writeDefAttributeList( OTF_Writer* writer, uint32_t stream,
 		attr_token, num, pyarray);
 
 	free( pyarray );
+
+	return ret;
+}
+
+int pyOTF_Writer_writeDefCounterAssignments( OTF_Writer* writer, uint32_t stream, 
+	uint32_t counter, uint32_t number_of_members, PyObject* procs_or_groups, 
+	OTF_KeyValueList* list) {
+
+
+	int ret;
+	uint32_t* pyprocs_or_groups= createInt32ArrayFromSequence( procs_or_groups );
+
+
+	ret= OTF_Writer_writeDefCounterAssignments( writer, stream, 
+		counter, number_of_members, pyprocs_or_groups, 
+		list);
+
+	free( pyprocs_or_groups );
+
+	return ret;
+}
+
+int pyOTF_Writer_writeDefProcessSubstitutes( OTF_Writer* writer, uint32_t stream, 
+	uint32_t representative, uint32_t numberOfProcs, PyObject* procs, 
+	OTF_KeyValueList* list) {
+
+
+	int ret;
+	uint32_t* pyprocs= createInt32ArrayFromSequence( procs );
+
+
+	ret= OTF_Writer_writeDefProcessSubstitutes( writer, stream, 
+		representative, numberOfProcs, pyprocs, 
+		list);
+
+	free( pyprocs );
 
 	return ret;
 }
@@ -712,7 +784,7 @@ int pyOTF_Handler_DefAttributeList( void* userData, uint32_t stream,
 }
 
 int pyOTF_Handler_DefProcessOrGroupAttributes( void* userData, uint32_t stream, 
-	uint32_t proc_token, uint32_t attr_token, OTF_KeyValueList *list  ) {
+	uint32_t proc_token, uint32_t attr_token, OTF_KeyValueList *list ) {
 
 
 	pyOTF_FirstHandlerArgument* fha= (pyOTF_FirstHandlerArgument*) userData;
@@ -1043,6 +1115,42 @@ int pyOTF_Handler_DefCreator( void* userData, uint32_t stream,
 	}
 }
 
+int pyOTF_Handler_DefUniqueId( void* userData, uint32_t stream, 
+	uint64_t uid, OTF_KeyValueList *list ) {
+
+
+	pyOTF_FirstHandlerArgument* fha= (pyOTF_FirstHandlerArgument*) userData;
+	PyObject *result;
+	PyObject* arglist;
+	int ret;
+	PyObject* pylist;
+
+	/** creates a new python object of type "OTF_KeyValueList" from a C pointer */
+	pylist = SWIG_NewPointerObj(SWIG_as_voidptr(list), SWIGTYPE_p_OTF_KeyValueList_struct, 0 );
+
+	arglist= Py_BuildValue("OHKO", fha->realfha, stream, 
+		uid, pylist );
+
+	result= PyEval_CallObject(fha->func, arglist);
+
+	Py_DECREF(pylist);
+
+	Py_DECREF(arglist);
+
+	ret= (int) PyInt_AsLong( result );
+
+	if( NULL == PyErr_Occurred() ){
+
+		return ret;
+
+	} else {
+
+		PyErr_Print();
+		return OTF_RETURN_ABORT;
+
+	}
+}
+
 int pyOTF_Handler_DefVersion( void* userData, uint32_t stream, 
 	uint8_t major, uint8_t minor, uint8_t sub, 
 	const char* string, OTF_KeyValueList *list ) {
@@ -1172,6 +1280,140 @@ int pyOTF_Handler_DefKeyValue( void* userData, uint32_t stream,
 	arglist= Py_BuildValue("OHHHssO", fha->realfha, stream, 
 		key, type, name, 
 		description, pylist );
+
+	result= PyEval_CallObject(fha->func, arglist);
+
+	Py_DECREF(pylist);
+
+	Py_DECREF(arglist);
+
+	ret= (int) PyInt_AsLong( result );
+
+	if( NULL == PyErr_Occurred() ){
+
+		return ret;
+
+	} else {
+
+		PyErr_Print();
+		return OTF_RETURN_ABORT;
+
+	}
+}
+
+int pyOTF_Handler_DefTimeRange( void* userData, uint32_t stream, 
+	uint64_t minTime, uint64_t maxTime, OTF_KeyValueList* list ) {
+
+
+	pyOTF_FirstHandlerArgument* fha= (pyOTF_FirstHandlerArgument*) userData;
+	PyObject *result;
+	PyObject* arglist;
+	int ret;
+	PyObject* pylist;
+
+	/** creates a new python object of type "OTF_KeyValueList" from a C pointer */
+	pylist = SWIG_NewPointerObj(SWIG_as_voidptr(list), SWIGTYPE_p_OTF_KeyValueList_struct, 0 );
+
+	arglist= Py_BuildValue("OHKKO", fha->realfha, stream, 
+		minTime, maxTime, pylist );
+
+	result= PyEval_CallObject(fha->func, arglist);
+
+	Py_DECREF(pylist);
+
+	Py_DECREF(arglist);
+
+	ret= (int) PyInt_AsLong( result );
+
+	if( NULL == PyErr_Occurred() ){
+
+		return ret;
+
+	} else {
+
+		PyErr_Print();
+		return OTF_RETURN_ABORT;
+
+	}
+}
+
+int pyOTF_Handler_DefCounterAssignments( void* userData, uint32_t stream, 
+	uint32_t counter, uint32_t number_of_members, const uint32_t* procs_or_groups, 
+	OTF_KeyValueList* list ) {
+
+
+	pyOTF_FirstHandlerArgument* fha= (pyOTF_FirstHandlerArgument*) userData;
+	PyObject *result;
+	PyObject* arglist;
+	int ret;
+
+	PyObject* pyprocs_or_groups;
+	uint32_t i;
+	PyObject* pylist;
+
+
+	pyprocs_or_groups= PyList_New( number_of_members );
+	for( i= 0; i < number_of_members; ++i ) {
+
+		PyList_SetItem( pyprocs_or_groups, i, PyInt_FromLong((long) procs_or_groups[i]) );
+
+	}
+
+	/** creates a new python object of type "OTF_KeyValueList" from a C pointer */
+	pylist = SWIG_NewPointerObj(SWIG_as_voidptr(list), SWIGTYPE_p_OTF_KeyValueList_struct, 0 );
+
+	arglist= Py_BuildValue("OHHHOO", fha->realfha, stream, 
+		counter, number_of_members, pyprocs_or_groups, 
+		pylist );
+
+	result= PyEval_CallObject(fha->func, arglist);
+
+	Py_DECREF(pylist);
+
+	Py_DECREF(arglist);
+
+	ret= (int) PyInt_AsLong( result );
+
+	if( NULL == PyErr_Occurred() ){
+
+		return ret;
+
+	} else {
+
+		PyErr_Print();
+		return OTF_RETURN_ABORT;
+
+	}
+}
+
+int pyOTF_Handler_DefProcessSubstitutes( void* userData, uint32_t stream, 
+	uint32_t representative, uint32_t numberOfProcs, const uint32_t* procs, 
+	OTF_KeyValueList* list ) {
+
+
+	pyOTF_FirstHandlerArgument* fha= (pyOTF_FirstHandlerArgument*) userData;
+	PyObject *result;
+	PyObject* arglist;
+	int ret;
+
+	PyObject* pyprocs;
+	uint32_t i;
+	PyObject* pylist;
+
+
+	pyprocs= PyList_New( numberOfProcs );
+	for( i= 0; i < numberOfProcs; ++i ) {
+
+		PyList_SetItem( pyprocs, i, PyInt_FromLong((long) procs[i]) );
+
+	}
+
+	/** creates a new python object of type "OTF_KeyValueList" from a C pointer */
+	pylist = SWIG_NewPointerObj(SWIG_as_voidptr(list), SWIGTYPE_p_OTF_KeyValueList_struct, 0 );
+
+	arglist= Py_BuildValue("OHHHOO", fha->realfha, stream, 
+		representative, numberOfProcs, pyprocs, 
+		pylist );
 
 	result= PyEval_CallObject(fha->func, arglist);
 
@@ -2155,6 +2397,82 @@ int pyOTF_Handler_BeginFileOpSnapshot( void* userData, uint64_t time,
 	}
 }
 
+int pyOTF_Handler_CollopCountSnapshot( void* userData, uint64_t time, 
+	uint32_t process, uint32_t communicator, uint64_t count, 
+	OTF_KeyValueList *list ) {
+
+
+	pyOTF_FirstHandlerArgument* fha= (pyOTF_FirstHandlerArgument*) userData;
+	PyObject *result;
+	PyObject* arglist;
+	int ret;
+	PyObject* pylist;
+
+	/** creates a new python object of type "OTF_KeyValueList" from a C pointer */
+	pylist = SWIG_NewPointerObj(SWIG_as_voidptr(list), SWIGTYPE_p_OTF_KeyValueList_struct, 0 );
+
+	arglist= Py_BuildValue("OKHHKO", fha->realfha, time, 
+		process, communicator, count, 
+		pylist );
+
+	result= PyEval_CallObject(fha->func, arglist);
+
+	Py_DECREF(pylist);
+
+	Py_DECREF(arglist);
+
+	ret= (int) PyInt_AsLong( result );
+
+	if( NULL == PyErr_Occurred() ){
+
+		return ret;
+
+	} else {
+
+		PyErr_Print();
+		return OTF_RETURN_ABORT;
+
+	}
+}
+
+int pyOTF_Handler_CounterSnapshot( void* userData, uint64_t time, 
+	uint64_t originaltime, uint32_t process, uint32_t counter, 
+	uint64_t value, OTF_KeyValueList *list ) {
+
+
+	pyOTF_FirstHandlerArgument* fha= (pyOTF_FirstHandlerArgument*) userData;
+	PyObject *result;
+	PyObject* arglist;
+	int ret;
+	PyObject* pylist;
+
+	/** creates a new python object of type "OTF_KeyValueList" from a C pointer */
+	pylist = SWIG_NewPointerObj(SWIG_as_voidptr(list), SWIGTYPE_p_OTF_KeyValueList_struct, 0 );
+
+	arglist= Py_BuildValue("OKKHHKO", fha->realfha, time, 
+		originaltime, process, counter, 
+		value, pylist );
+
+	result= PyEval_CallObject(fha->func, arglist);
+
+	Py_DECREF(pylist);
+
+	Py_DECREF(arglist);
+
+	ret= (int) PyInt_AsLong( result );
+
+	if( NULL == PyErr_Occurred() ){
+
+		return ret;
+
+	} else {
+
+		PyErr_Print();
+		return OTF_RETURN_ABORT;
+
+	}
+}
+
 int pyOTF_Handler_SummaryComment( void* userData, uint64_t time, 
 	uint32_t process, const char* comment, OTF_KeyValueList *list ) {
 
@@ -2717,6 +3035,13 @@ int pyOTF_HandlerArray_setHandler( OTF_HandlerArray* handlers, PyObject* functio
 
 			break;
 
+		case OTF_DEFUNIQUEID_RECORD :
+
+			OTF_HandlerArray_setHandler( handlers,
+				(OTF_FunctionPointer*) pyOTF_Handler_DefUniqueId, recordtype );
+
+			break;
+
 		case OTF_DEFVERSION_RECORD :
 
 			OTF_HandlerArray_setHandler( handlers,
@@ -2742,6 +3067,27 @@ int pyOTF_HandlerArray_setHandler( OTF_HandlerArray* handlers, PyObject* functio
 
 			OTF_HandlerArray_setHandler( handlers,
 				(OTF_FunctionPointer*) pyOTF_Handler_DefKeyValue, recordtype );
+
+			break;
+
+		case OTF_DEFTIMERANGE_RECORD :
+
+			OTF_HandlerArray_setHandler( handlers,
+				(OTF_FunctionPointer*) pyOTF_Handler_DefTimeRange, recordtype );
+
+			break;
+
+		case OTF_DEFCOUNTERASSIGNMENTS_RECORD :
+
+			OTF_HandlerArray_setHandler( handlers,
+				(OTF_FunctionPointer*) pyOTF_Handler_DefCounterAssignments, recordtype );
+
+			break;
+
+		case OTF_DEFPROCESSSUBSTITUTES_RECORD :
+
+			OTF_HandlerArray_setHandler( handlers,
+				(OTF_FunctionPointer*) pyOTF_Handler_DefProcessSubstitutes, recordtype );
 
 			break;
 
@@ -2917,6 +3263,20 @@ int pyOTF_HandlerArray_setHandler( OTF_HandlerArray* handlers, PyObject* functio
 
 			OTF_HandlerArray_setHandler( handlers,
 				(OTF_FunctionPointer*) pyOTF_Handler_BeginFileOpSnapshot, recordtype );
+
+			break;
+
+		case OTF_COLLOPCOUNTSNAPSHOT_RECORD :
+
+			OTF_HandlerArray_setHandler( handlers,
+				(OTF_FunctionPointer*) pyOTF_Handler_CollopCountSnapshot, recordtype );
+
+			break;
+
+		case OTF_COUNTERSNAPSHOT_RECORD :
+
+			OTF_HandlerArray_setHandler( handlers,
+				(OTF_FunctionPointer*) pyOTF_Handler_CounterSnapshot, recordtype );
 
 			break;
 

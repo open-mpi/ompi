@@ -226,7 +226,7 @@ bool SummarizeData( AllData& alldata ) {
             alldata.functionMapPerRank.clear();
         }
     }
-
+  
     /* summarize map ( rank x func x counter ) to map ( counter x func ) */
     {
         map< Triple, CounterData, ltTriple >::const_iterator it= alldata.counterMapPerFunctionRank.begin();
@@ -377,3 +377,51 @@ bool SummarizeData( AllData& alldata ) {
 
     return !error;
 }
+
+bool SummarizeDataDispersion( AllData& alldata ) {
+    
+    bool error= false;
+    
+    /* start runtime measurement for summarizing dispersion data */
+    StartMeasurement( alldata, 1, true, "summarize dispersion data" );
+    
+    VerbosePrint( alldata, 1, true, "summarize dispersion data\n" );
+    
+    /* summarize map ( rank x func x bin ) to map (  func x bin ) */
+    {
+        map< Triple, FunctionData, ltTriple>::const_iterator it= alldata.functionDurationSectionMapPerRank.begin();
+        map< Triple, FunctionData, ltTriple>::const_iterator itend= alldata.functionDurationSectionMapPerRank.end();
+        while ( itend != it ) {
+     
+            const uint64_t& func= it->first.b;
+            const uint64_t& bin= it->first.c;
+     
+            alldata.functionDurationSectionMapGlobal[ Pair( func, bin ) ].add( it->second );
+            it++;
+        }
+
+        /* in case of producing CSV output do not clear map ( rank x func x bin )
+         because it is needed later */
+        if ( !alldata.params.create_csv ) {    
+            
+            alldata.functionDurationSectionMapPerRank.clear();
+            
+        }
+    }
+
+#ifdef OTFPROFILE_MPI
+    /* synchronize error indicator with workers */
+    /*SyncError( alldata, error );*/
+#endif /* OTFPROFILE_MPI */
+    
+    //cerr << " Size of functionDurationSectionMapGlobal: " << alldata.functionDurationSectionMapGlobal.size() << endl;
+    
+    if ( !error ) {
+        
+        /* stop runtime measurement for summarizing dispersion data */
+        StopMeasurement( alldata, true, "summarize dispersion data" );
+    }
+    
+    return !error;
+}
+

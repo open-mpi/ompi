@@ -190,10 +190,10 @@ uint8_t vt_mpi_trace_is_on = 1;
 #define IS_MPI_TRACE_ON ( vt_is_alive && vt_mpi_trace_is_on )
 #define MPI_TRACE_OFF() \
   VT_MEMHOOKS_OFF(); \
-  vt_mpi_trace_is_on = 0;
+  vt_mpi_trace_is_on = (uint8_t)(vt_mpitrace && MPI_TRACE_INSIDE)
 #define MPI_TRACE_ON() \
   VT_MEMHOOKS_ON(); \
-  vt_mpi_trace_is_on = vt_mpitrace;
+  vt_mpi_trace_is_on = vt_mpitrace
 
 /* -- MPI_Init -- */
 
@@ -269,7 +269,7 @@ VT_MPI_INT MPI_Init( VT_MPI_INT* argc, char*** argv )
 VT_MPI_INT MPI_Init_thread( VT_MPI_INT* argc, char*** argv,
                             VT_MPI_INT required, VT_MPI_INT* provided )
 {
-  VT_MPI_INT result;
+  VT_MPI_INT result, me;
   uint64_t time;
   uint8_t was_recorded;
 
@@ -296,23 +296,49 @@ VT_MPI_INT MPI_Init_thread( VT_MPI_INT* argc, char*** argv,
       CALL_PMPI_4(MPI_Init_thread, argc, argv, required, provided,
                   result, was_recorded, &time);
 
+      PMPI_Comm_rank(MPI_COMM_WORLD, &me);
+
       switch (required)
-      {
-        case MPI_THREAD_SINGLE:
-        case MPI_THREAD_FUNNELED:
-          break;
-        case MPI_THREAD_SERIALIZED:
+        {
+          case MPI_THREAD_SINGLE:
+          case MPI_THREAD_FUNNELED:
+            {
+              /* these MPI thread support levels are fully supported */
+              break;
+            }
+          case MPI_THREAD_SERIALIZED:
+            {
+              if (*provided == MPI_THREAD_SERIALIZED)
+                {
+                  if (me == 0)
+                    {
+                      vt_warning("MPI thread support level "
+                                 "MPI_THREAD_SERIALIZED not yet supported. "
+                                 "No MPI communication events will "
+                                 "be recorded. Continuing.");
+                    }
+                  vt_mpi_thread_serialized = 1;
+                }
+              break;
+            }
         case MPI_THREAD_MULTIPLE:
-          if (*provided == MPI_THREAD_SERIALIZED ||
-              *provided == MPI_THREAD_MULTIPLE)
           {
-            vt_error_msg("MPI thread support levels MPI_THREAD_SERIALIZED and "
-                         "MPI_THREAD_MULTIPLE not yet supported");
+            if (*provided == MPI_THREAD_MULTIPLE)
+              {
+                if (me == 0)
+                  {
+                    vt_error_msg("MPI thread support level MPI_THREAD_MULTIPLE "
+                                 "not yet supported. Cannot continue.");
+                  }
+                PMPI_Abort(MPI_COMM_WORLD, 1);
+              }
+            break;
           }
-          break;
         default:
-          vt_error_msg("Unknown level of MPI thread support required");
-          break;
+          {
+            vt_error_msg("Unknown level of MPI thread support required");
+            break;
+          }
       }
 
       /* initialize mpi event handling */
@@ -2830,6 +2856,7 @@ VT_MPI_INT MPI_Bcast( void* buf,
   VT_MPI_INT result, sendcount, sz, me;
   uint64_t time;
   uint64_t matchid = 0;
+  uint8_t iam_root;
   uint8_t was_recorded;
 
   if (IS_MPI_TRACE_ON)
@@ -2839,17 +2866,30 @@ VT_MPI_INT MPI_Bcast( void* buf,
       time = vt_pform_wtime();
       was_recorded = vt_enter(VT_CURRENT_THREAD, &time, vt_mpi_regid[VT__MPI_BCAST]);
 
-      if (was_recorded)
+      if (root != MPI_PROC_NULL && was_recorded)
         {
-          matchid = VTTHRD_MPICOLLOP_NEXT_MATCHINGID(VTTHRD_MY_VTTHRD);
+#if defined(HAVE_DECL_MPI_ROOT) && HAVE_DECL_MPI_ROOT
+          VT_MPI_INT inter;
+          PMPI_Comm_test_inter(comm, &inter);
+          if (inter)
+            {
+              iam_root = (root == MPI_ROOT);
+            }
+          else
+#endif /* HAVE_DECL_MPI_ROOT */
+            {
+              PMPI_Comm_rank(comm, &me);
+              iam_root = (root == me);
+            }
 
           PMPI_Type_size(datatype, &sz);
-          PMPI_Comm_rank(comm, &me);
-          if ( me == root )
+          if (iam_root)
             sendcount = count;
           else
             sendcount = 0;
-    
+
+          matchid = VTTHRD_MPICOLLOP_NEXT_MATCHINGID(VTTHRD_MY_VTTHRD);
+
           vt_mpi_collbegin(VT_CURRENT_THREAD, &time,
                            vt_mpi_regid[VT__MPI_BCAST], matchid,
                            VT_RANK_TO_PE(root, comm), VT_COMM_ID(comm),
@@ -2861,7 +2901,8 @@ VT_MPI_INT MPI_Bcast( void* buf,
 
       time = vt_pform_wtime();
 
-      vt_mpi_collend(VT_CURRENT_THREAD, &time, matchid, &comm, was_recorded);
+      vt_mpi_collend(VT_CURRENT_THREAD, &time, matchid, &comm,
+                     (root != MPI_PROC_NULL && was_recorded));
 
       vt_exit(VT_CURRENT_THREAD, &time);
 
@@ -2890,6 +2931,7 @@ VT_MPI_INT MPI_Gather( void* sendbuf,
   VT_MPI_INT result, ssz, rsz, N, me;
   uint64_t time;
   uint64_t matchid = 0;
+  uint8_t iam_root;
   uint8_t was_recorded;
 
   if (IS_MPI_TRACE_ON)
@@ -2899,9 +2941,21 @@ VT_MPI_INT MPI_Gather( void* sendbuf,
       time = vt_pform_wtime();
       was_recorded = vt_enter(VT_CURRENT_THREAD, &time, vt_mpi_regid[VT__MPI_GATHER]);
 
-      if (was_recorded)
+      if (root != MPI_PROC_NULL && was_recorded)
         {
-          matchid = VTTHRD_MPICOLLOP_NEXT_MATCHINGID(VTTHRD_MY_VTTHRD);
+#if defined(HAVE_DECL_MPI_ROOT) && HAVE_DECL_MPI_ROOT
+          VT_MPI_INT inter;
+          PMPI_Comm_test_inter(comm, &inter);
+          if (inter)
+            {
+              iam_root = (root == MPI_ROOT);
+            }
+          else
+#endif /* HAVE_DECL_MPI_ROOT */
+            {
+              PMPI_Comm_rank(comm, &me);
+              iam_root = (root == me);
+            }
 
 #if defined(HAVE_DECL_MPI_IN_PLACE) && HAVE_DECL_MPI_IN_PLACE
           if (sendbuf == MPI_IN_PLACE)
@@ -2912,8 +2966,8 @@ VT_MPI_INT MPI_Gather( void* sendbuf,
 #endif /* HAVE_DECL_MPI_IN_PLACE */
 
           PMPI_Type_size(sendtype, &ssz);
-          PMPI_Comm_rank(comm, &me);
-          if ( me == root )
+
+          if (iam_root)
             {
               PMPI_Comm_size(comm, &N);
               PMPI_Type_size(recvtype, &rsz);
@@ -2922,6 +2976,8 @@ VT_MPI_INT MPI_Gather( void* sendbuf,
             {
               N = rsz = 0;
             }
+
+          matchid = VTTHRD_MPICOLLOP_NEXT_MATCHINGID(VTTHRD_MY_VTTHRD);
 
           vt_mpi_collbegin(VT_CURRENT_THREAD, &time,
                            vt_mpi_regid[VT__MPI_GATHER], matchid,
@@ -2935,7 +2991,8 @@ VT_MPI_INT MPI_Gather( void* sendbuf,
 
       time = vt_pform_wtime();
 
-      vt_mpi_collend(VT_CURRENT_THREAD, &time, matchid, &comm, was_recorded);
+      vt_mpi_collend(VT_CURRENT_THREAD, &time, matchid, &comm,
+                     (root != MPI_PROC_NULL && was_recorded));
 
       vt_exit(VT_CURRENT_THREAD, &time);
 
@@ -2964,6 +3021,7 @@ VT_MPI_INT MPI_Reduce( void* sendbuf,
   VT_MPI_INT result, recvcount, sz, me;
   uint64_t time;
   uint64_t matchid = 0;
+  uint8_t iam_root;
   uint8_t was_recorded;
 
   if (IS_MPI_TRACE_ON)
@@ -2973,16 +3031,30 @@ VT_MPI_INT MPI_Reduce( void* sendbuf,
       time = vt_pform_wtime();
       was_recorded = vt_enter(VT_CURRENT_THREAD, &time, vt_mpi_regid[VT__MPI_REDUCE]);
 
-      if (was_recorded)
+      if (root != MPI_PROC_NULL && was_recorded)
         {
-          matchid = VTTHRD_MPICOLLOP_NEXT_MATCHINGID(VTTHRD_MY_VTTHRD);
+#if defined(HAVE_DECL_MPI_ROOT) && HAVE_DECL_MPI_ROOT
+          VT_MPI_INT inter;
+          PMPI_Comm_test_inter(comm, &inter);
+          if (inter)
+            {
+              iam_root = (root == MPI_ROOT);
+            }
+          else
+#endif /* HAVE_DECL_MPI_ROOT */
+            {
+              PMPI_Comm_rank(comm, &me);
+              iam_root = (root == me);
+            }
 
-          PMPI_Type_size(datatype, &sz);
-          PMPI_Comm_rank(comm, &me);
-          if ( me == root )
+          if (iam_root)
             recvcount = count;
           else
             recvcount = 0;
+
+          PMPI_Type_size(datatype, &sz);
+
+          matchid = VTTHRD_MPICOLLOP_NEXT_MATCHINGID(VTTHRD_MY_VTTHRD);
 
           vt_mpi_collbegin(VT_CURRENT_THREAD, &time,
                            vt_mpi_regid[VT__MPI_REDUCE], matchid,
@@ -2996,7 +3068,8 @@ VT_MPI_INT MPI_Reduce( void* sendbuf,
 
       time = vt_pform_wtime();
 
-      vt_mpi_collend(VT_CURRENT_THREAD, &time, matchid, &comm, was_recorded);
+      vt_mpi_collend(VT_CURRENT_THREAD, &time, matchid, &comm,
+                     (root != MPI_PROC_NULL && was_recorded));
 
       vt_exit(VT_CURRENT_THREAD, &time);
 
@@ -3027,6 +3100,7 @@ VT_MPI_INT MPI_Gatherv( void* sendbuf,
   VT_MPI_INT result, recvsz, sendsz, recvcount, me, N, i;
   uint64_t time;
   uint64_t matchid = 0;
+  uint8_t iam_root;
   uint8_t was_recorded;
 
   if (IS_MPI_TRACE_ON)
@@ -3036,14 +3110,24 @@ VT_MPI_INT MPI_Gatherv( void* sendbuf,
       time = vt_pform_wtime();
       was_recorded = vt_enter(VT_CURRENT_THREAD, &time, vt_mpi_regid[VT__MPI_GATHERV]);
 
-      if (was_recorded)
+      if (root != MPI_PROC_NULL && was_recorded)
         {
-          matchid = VTTHRD_MPICOLLOP_NEXT_MATCHINGID(VTTHRD_MY_VTTHRD);
-
-          PMPI_Comm_rank(comm, &me);
+#if defined(HAVE_DECL_MPI_ROOT) && HAVE_DECL_MPI_ROOT
+          VT_MPI_INT inter;
+          PMPI_Comm_test_inter(comm, &inter);
+          if (inter)
+            {
+              iam_root = (root == MPI_ROOT);
+            }
+          else
+#endif /* HAVE_DECL_MPI_ROOT */
+            {
+              PMPI_Comm_rank(comm, &me);
+              iam_root = (root == me);
+            }
 
           recvcount = recvsz = 0;
-          if (me == root)
+          if (iam_root)
             {
               PMPI_Comm_size(comm, &N);
               PMPI_Type_size(recvtype, &recvsz);
@@ -3060,6 +3144,8 @@ VT_MPI_INT MPI_Gatherv( void* sendbuf,
 
           PMPI_Type_size(sendtype, &sendsz);
 
+          matchid = VTTHRD_MPICOLLOP_NEXT_MATCHINGID(VTTHRD_MY_VTTHRD);
+
           vt_mpi_collbegin(VT_CURRENT_THREAD, &time,
                            vt_mpi_regid[VT__MPI_GATHERV], matchid,
                            VT_RANK_TO_PE(root, comm), VT_COMM_ID(comm),
@@ -3072,7 +3158,8 @@ VT_MPI_INT MPI_Gatherv( void* sendbuf,
 
       time = vt_pform_wtime();
 
-      vt_mpi_collend(VT_CURRENT_THREAD, &time, matchid, &comm, was_recorded);
+      vt_mpi_collend(VT_CURRENT_THREAD, &time, matchid, &comm,
+                     (root != MPI_PROC_NULL && was_recorded));
 
       vt_exit(VT_CURRENT_THREAD, &time);
 
@@ -3416,6 +3503,7 @@ VT_MPI_INT MPI_Scatter( void* sendbuf,
   VT_MPI_INT result, sendsz, recvsz, N, me;
   uint64_t time;
   uint64_t matchid = 0;
+  uint8_t iam_root;
   uint8_t was_recorded;
 
   if (IS_MPI_TRACE_ON)
@@ -3425,9 +3513,21 @@ VT_MPI_INT MPI_Scatter( void* sendbuf,
       time = vt_pform_wtime();
       was_recorded = vt_enter(VT_CURRENT_THREAD, &time, vt_mpi_regid[VT__MPI_SCATTER]);
 
-      if (was_recorded)
+      if (root != MPI_PROC_NULL && was_recorded)
         {
-          matchid = VTTHRD_MPICOLLOP_NEXT_MATCHINGID(VTTHRD_MY_VTTHRD);
+#if defined(HAVE_DECL_MPI_ROOT) && HAVE_DECL_MPI_ROOT
+          VT_MPI_INT inter;
+          PMPI_Comm_test_inter(comm, &inter);
+          if (inter)
+            {
+              iam_root = (root == MPI_ROOT);
+            }
+          else
+#endif /* HAVE_DECL_MPI_ROOT */
+            {
+              PMPI_Comm_rank(comm, &me);
+              iam_root = (root == me);
+            }
 
 #if defined(HAVE_DECL_MPI_IN_PLACE) && HAVE_DECL_MPI_IN_PLACE
           if (sendbuf == MPI_IN_PLACE)
@@ -3438,8 +3538,7 @@ VT_MPI_INT MPI_Scatter( void* sendbuf,
 #endif /* HAVE_DECL_MPI_IN_PLACE */
 
           PMPI_Type_size(recvtype, &recvsz);
-          PMPI_Comm_rank(comm, &me);
-          if ( me == root )
+          if (iam_root)
             {
               PMPI_Comm_size(comm, &N);
               PMPI_Type_size(sendtype, &sendsz);
@@ -3448,6 +3547,8 @@ VT_MPI_INT MPI_Scatter( void* sendbuf,
             {
               N = sendsz = 0;
             }
+
+          matchid = VTTHRD_MPICOLLOP_NEXT_MATCHINGID(VTTHRD_MY_VTTHRD);
 
           vt_mpi_collbegin(VT_CURRENT_THREAD, &time,
                            vt_mpi_regid[VT__MPI_SCATTER], matchid,
@@ -3461,7 +3562,8 @@ VT_MPI_INT MPI_Scatter( void* sendbuf,
 
       time = vt_pform_wtime();
 
-      vt_mpi_collend(VT_CURRENT_THREAD, &time, matchid, &comm, was_recorded);
+      vt_mpi_collend(VT_CURRENT_THREAD, &time, matchid, &comm,
+                     (root != MPI_PROC_NULL && was_recorded));
 
       vt_exit(VT_CURRENT_THREAD, &time);
 
@@ -3493,6 +3595,7 @@ VT_MPI_INT MPI_Scatterv( void* sendbuf,
   VT_MPI_INT result, sendcount, recvsz, sendsz, me, N, i;
   uint64_t time;
   uint64_t matchid = 0;
+  uint8_t iam_root;
   uint8_t was_recorded;
 
   if (IS_MPI_TRACE_ON)
@@ -3502,14 +3605,24 @@ VT_MPI_INT MPI_Scatterv( void* sendbuf,
       time = vt_pform_wtime();
       was_recorded = vt_enter(VT_CURRENT_THREAD, &time, vt_mpi_regid[VT__MPI_SCATTERV]);
 
-      if (was_recorded)
+      if (root != MPI_PROC_NULL && was_recorded)
         {
-          matchid = VTTHRD_MPICOLLOP_NEXT_MATCHINGID(VTTHRD_MY_VTTHRD);
-
-          PMPI_Comm_rank(comm, &me);
+#if defined(HAVE_DECL_MPI_ROOT) && HAVE_DECL_MPI_ROOT
+          VT_MPI_INT inter;
+          PMPI_Comm_test_inter(comm, &inter);
+          if (inter)
+            {
+              iam_root = (root == MPI_ROOT);
+            }
+          else
+#endif /* HAVE_DECL_MPI_ROOT */
+            {
+              PMPI_Comm_rank(comm, &me);
+              iam_root = (root == me);
+            }
 
           sendcount = sendsz = 0;
-          if (me == root)
+          if (iam_root)
             {
               PMPI_Comm_size(comm, &N);
               PMPI_Type_size(sendtype, &sendsz);
@@ -3526,6 +3639,8 @@ VT_MPI_INT MPI_Scatterv( void* sendbuf,
 
           PMPI_Type_size(recvtype, &recvsz);
 
+          matchid = VTTHRD_MPICOLLOP_NEXT_MATCHINGID(VTTHRD_MY_VTTHRD);
+
           vt_mpi_collbegin(VT_CURRENT_THREAD, &time,
                            vt_mpi_regid[VT__MPI_SCATTERV], matchid,
                            VT_RANK_TO_PE(root, comm), VT_COMM_ID(comm),
@@ -3538,7 +3653,8 @@ VT_MPI_INT MPI_Scatterv( void* sendbuf,
 
       time = vt_pform_wtime();
 
-      vt_mpi_collend(VT_CURRENT_THREAD, &time, matchid, &comm, was_recorded);
+      vt_mpi_collend(VT_CURRENT_THREAD, &time, matchid, &comm,
+                     (root != MPI_PROC_NULL && was_recorded));
 
       vt_exit(VT_CURRENT_THREAD, &time);
 

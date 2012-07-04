@@ -48,6 +48,7 @@ void POMP_Init() {
   static int pomp_init_called = 0;
   static struct VTRegDescr rd_data_table[1000];
   char anno_rname[256]; /* annotated region name */
+  int max_threads = omp_get_max_threads();
   int i;
   uint8_t rtype = VT_UNKNOWN;
   char* rname = "";
@@ -62,7 +63,7 @@ void POMP_Init() {
     /* register all threads in sequential order to make the VT thread ids equal
        to the OpenMP thread ids */
 #   pragma omp parallel for ordered private(i)
-    for(i = 0; i < omp_get_max_threads(); i++) {
+    for(i = 0; i < max_threads; i++) {
 #     pragma omp ordered
       VT_CHECK_THREAD;
     }

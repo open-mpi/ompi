@@ -452,6 +452,29 @@ int OTF_Handler_DefCreator( void* userData,
 
 
 /**
+ * Provides file unique id.
+ *
+ * @param userData     Pointer to user data which can be set with
+ *                     OTF_HandlerArray_setFirstHandlerArg(). 
+ * @param stream       Identifies the stream to which this definition
+ *                     belongs to. stream = 0 represents a global
+ *                     definition.
+ * @param uid          unique id
+ *
+ * @param list         Pointer to an OTF_KeyValueList() that contains individual data.
+ *
+ * @return             OTF_RETURN_ABORT  for aborting the reading process immediately
+ *                     OTF_RETURN_OK     for continue reading
+ *
+ * \ingroup handler
+ */
+int OTF_Handler_DefUniqueId( void* userData,
+                             uint32_t stream,
+                             uint64_t uid,
+                             OTF_KeyValueList *list );
+
+
+/**
  * Provides information on the trace´s otf-version. This record can only be read
  * and not be written.
  *
@@ -617,6 +640,33 @@ int OTF_Handler_DefCounterAssignments( void*             userData,
                                        uint32_t          number_of_members,
                                        const uint32_t*   procs_or_groups,
                                        OTF_KeyValueList* list );
+
+
+/**
+ * Provides a auxiliary sample point definition.
+ *
+ * It is intentional a per-stream or global (stream id equals 0) definition.
+ *
+ * @param userData     Pointer to user data which can be set with
+ *                     OTF_HandlerArray_setFirstHandlerArg().
+ * @param stream       Identifies the stream to which this definition
+ *                     belongs to. stream = 0 represents a global
+ *                     definition.
+ *
+ * @param time         Time at which the auxiliary sample point information
+ *                     is available.
+ *
+ * @param type         Type of the auxiliary sample point. See @a OTF_AuxSamplePointType.
+ *
+ * @param list         Pointer to an OTF_KeyValueList() that contains individual data.
+ *
+ * \ingroup handler
+ */
+int OTF_Handler_DefAuxSamplePoint( void*                  userData,
+                                   uint32_t               stream,
+                                   uint63_t               time,
+                                   OTF_AuxSamplePointType type,
+                                   OTF_KeyValueList *     list );
 
 
 /* Handlers for OTF event records ****************************************** */
@@ -1371,6 +1421,7 @@ int OTF_Handler_BeginCollopSnapshot ( void* userData,
                                         uint64_t received,
                                         uint32_t scltoken,
 				  		                OTF_KeyValueList *list );
+
 /**
  * @param userData     Pointer to user data which can be set with
  *                     OTF_HandlerArray_setFirstHandlerArg(). 
@@ -1392,6 +1443,63 @@ int OTF_Handler_BeginFileOpSnapshot ( void* userData,
                                         uint64_t matchingId,
                                         uint32_t scltoken,
 				  	                    OTF_KeyValueList *list );
+
+
+/**
+ * Provides a snapshot how many collective operation this process has finished
+ * until now (ie. the begin coll op records are not counted) in the specified
+ * communicator.
+ *
+ * @param userData     Pointer to user data which can be set with
+ *                     OTF_HandlerArray_setFirstHandlerArg().
+ * @param time         The time of the snapshot.
+ * @param process      Process identifier.
+ * @param communicator The communicator for which the count hold.
+ * @param count        The number of coll ops this process has finished in this
+ *                     comm.
+ *
+ * @param list         Pointer to an OTF_KeyValueList() that contains individual
+ *                     data.
+ *
+ * @return             OTF_RETURN_ABORT  for aborting the reading process immediately
+ *                     OTF_RETURN_OK     for continue reading
+ *
+ * \ingroup handler
+ */
+int OTF_Handler_CollopCountSnapshot( void* userData,
+                                     uint64_t time,
+                                     uint32_t process,
+                                     uint32_t communicator,
+                                     uint64_t count,
+                                     OTF_KeyValueList *list );
+
+/**
+ * Provides the value of the counter before the snapshot.
+ *
+ * @param userData     Pointer to user data which can be set with
+ *                     OTF_HandlerArray_setFirstHandlerArg().
+ * @param time         Time of the snapshot.
+ * @param originaltime Timestamp when the counter was sampled with this value.
+ * @param process      Process identifier.
+ *
+ * @param counter      The counter.
+ * @param name1        The value of the counter.
+ *
+ * @param list         Pointer to an OTF_KeyValueList() that contains individual
+ *                     data.
+ *
+ * @return             OTF_RETURN_ABORT  for aborting the reading process immediately
+ *                     OTF_RETURN_OK     for continue reading
+ *
+ * \ingroup handler
+ */
+int OTF_Handler_CounterSnapshot( void*             userData,
+                                 uint64_t          time,
+                                 uint64_t          originaltime,
+                                 uint32_t          process,
+                                 uint32_t          counter,
+                                 uint64_t          value,
+                                 OTF_KeyValueList *list );
 
 
 /* Handlers for OTF summary records **************************************** */

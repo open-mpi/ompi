@@ -37,7 +37,7 @@ typedef unsigned char* buffer_t;
  */
 
 #define VT_PROCESS_ID_BITNESS    32
-#define VT_PROCESS_ID_SPLITTING  16
+#define VT_PROCESS_ID_SPLITTING  20
 #define VT_TRACEID_BITMASK       ((1<<VT_PROCESS_ID_SPLITTING) - 1)
 #define VT_THREADID_BITMASK      (~VT_TRACEID_BITMASK)
 #define VT_PROCESS_ID(trace_id, thread_id) \
@@ -276,6 +276,15 @@ typedef unsigned char* buffer_t;
 #define VT_KEYVAL_TYPE_UINT64  4
 #define VT_KEYVAL_TYPE_FLOAT   5
 #define VT_KEYVAL_TYPE_DOUBLE  6
+#define VT_KEYVAL_TYPE_STRING  7
+
+/*
+ *-----------------------------------------------------------------------------
+ * VT libraries/vtunify compatibility identifier
+ *-----------------------------------------------------------------------------
+ */
+
+#define VT_UNIFY_COMPAT_ID  1000
 
 /*
  *-----------------------------------------------------------------------------
@@ -299,6 +308,17 @@ typedef unsigned char* buffer_t;
 #define VT_UNIFY_STRID_USER_COMM_PROCGRP        "__USER_COMM__"
 
 #define VT_UNIFY_STRID_ASYNC_SOURCE_KEY         "__ASYNC_SOURCE__"
+
+/*
+ *-----------------------------------------------------------------------------
+ * IOFSL modes and flags
+ *-----------------------------------------------------------------------------
+ */
+
+#define VT_IOFSL_MODE_MULTIFILE        0
+#define VT_IOFSL_MODE_MULTIFILE_SPLIT  1
+
+#define VT_IOFSL_FLAG_ASYNC_IO         1<<0
 
 /*
  *-----------------------------------------------------------------------------

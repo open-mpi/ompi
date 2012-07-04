@@ -38,7 +38,8 @@ static int vt_init = 1;        /* is initialization needed? */
     VT_MEMHOOKS_ON(); \
   }
 
-#define HASH_MAX 1021
+#define REGION_HASH_MAX 1024
+#define ADDR_HASH_MAX   1021
 
 typedef struct HN_RegionS
 {
@@ -56,8 +57,8 @@ typedef struct HN_AddrS
   struct HN_AddrS* next;
 } HN_AddrT;
 
-static HN_RegionT* htab_region[HASH_MAX];
-static HN_AddrT* htab_addr[HASH_MAX];
+static HN_RegionT* htab_region[REGION_HASH_MAX];
+static HN_AddrT* htab_addr[ADDR_HASH_MAX];
 
 static uint32_t hash_get_region(const char* name, const char* file,
                                 int lno)
@@ -72,7 +73,7 @@ static uint32_t hash_get_region(const char* name, const char* file,
     idx = (uint32_t)vt_hash((unsigned char*)file, strlen(file), idx);
     idx = (uint32_t)vt_hash((unsigned char*)&lno, sizeof(uint32_t), idx);
   }
-  idx %= HASH_MAX;
+  idx &= (REGION_HASH_MAX - 1);
 
   /* -- search for matching entry at calculated hash index -- */
   curr = htab_region[idx];
@@ -106,7 +107,7 @@ static void hash_put_region(const char* name, const char* file, int lno,
     idx = (uint32_t)vt_hash((unsigned char*)file, strlen(file), idx);
     idx = (uint32_t)vt_hash((unsigned char*)&lno, sizeof(uint32_t), idx);
   }
-  idx %= HASH_MAX;
+  idx &= (REGION_HASH_MAX - 1);
 
   /* -- allocate/initialize new hash entry -- */
   add = (HN_RegionT*)calloc(1, sizeof(HN_RegionT));
@@ -129,7 +130,7 @@ static void hash_put_region(const char* name, const char* file, int lno,
 static uint32_t hash_get_addr(unsigned long addr)
 {
   /* -- get hash index */
-  unsigned long idx = addr % HASH_MAX;
+  unsigned long idx = addr % ADDR_HASH_MAX;
 
   /* -- search for matching entry at calculated hash index -- */
   HN_AddrT* curr = htab_addr[idx];
@@ -146,7 +147,7 @@ static uint32_t hash_get_addr(unsigned long addr)
 static void hash_put_addr(unsigned long addr, uint32_t rid)
 {
   /* -- get hash index */
-  unsigned long idx = addr % HASH_MAX;
+  unsigned long idx = addr % ADDR_HASH_MAX;
 
   /* -- allocate/initialize new hash entry -- */
   HN_AddrT* add = (HN_AddrT*)malloc(sizeof(HN_AddrT));

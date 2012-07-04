@@ -21,9 +21,13 @@
 #include "vt_error.h"
 #include "vt_env.h"
 #include "vt_iowrap.h"
+#include "vt_trc.h"
 
 #define VT_MSG_PFIX  "VampirTrace"
 #define VT_MSG_SIZE  1024
+
+/* exit without performing exit handler (vt_close) on fatal error */
+#define DO_EXIT_FAILURE vt_failure = 1; exit(EXIT_FAILURE)
 
 static int vt_pid = -1;
 
@@ -55,7 +59,7 @@ void vt_libassert_fail(const char* f, int l, const char* expr)
   vt_iowrap_externals_init();
   libc_fprintf(stderr, "%s: FATAL: %s:%d: Assertion `%s' failed\n\nPlease report this incident to " PACKAGE_BUGREPORT "\n",
 	       VT_MSG_PFIX, f, l, expr);
-  exit(EXIT_FAILURE);
+  DO_EXIT_FAILURE;
 }
 
 void vt_error_impl(const char* f, int l)
@@ -65,7 +69,8 @@ void vt_error_impl(const char* f, int l)
 
   perror(buffer);
   fflush(stderr);
-  exit(EXIT_FAILURE);
+  
+  DO_EXIT_FAILURE;
 }
 
 void vt_error_msg(const char* fmt, ...)
@@ -75,7 +80,8 @@ void vt_error_msg(const char* fmt, ...)
   va_start(ap, fmt);
   vt_print_msg("FATAL", fmt, ap);
   va_end(ap);
-  exit(EXIT_FAILURE);
+  
+  DO_EXIT_FAILURE;
 }
 
 void vt_warning(const char* fmt, ...)

@@ -18,6 +18,7 @@ endif
 
 if AMBUILDJAVA
 VTJAVALIBRARY = libvt-java.la
+VTJAVAETCDATA = vt-java-default-filter.spec
 if AMMACOS
 install-exec-hook:
 	(cd $(DESTDIR)$(libdir); \
@@ -26,6 +27,7 @@ install-exec-hook:
 endif
 else
 VTJAVALIBRARY =
+VTJAVAETCDATA =
 endif
 
 if AMBUILDOPARI
@@ -126,6 +128,14 @@ ETIMESYNCSOURCES =
 ETIMESYNCCFLAGS =
 endif
 
+if AMHAVEIOFSL
+IOFSLSOURCES = vt_iofsl.c
+IOFSLCFLAGS = -DVT_IOFSL
+else
+IOFSLSOURCES =
+IOFSLCFLAGS =
+endif
+
 if AMHAVEUNIMCI
 UNIMCISOURCES = vt_unimci.c
 UNIMCICFLAGS = -DVT_UNIMCI $(UNIMCI_CFLAGS)
@@ -173,6 +183,11 @@ GPULIBRARY =
 if AMBUILDCUDA
 GPUHEADERS += vt_cuda_driver_api.h
 GPUCFLAGS += -DVT_CUDA $(CUDATKINCDIR)
+endif
+
+if AMHAVELIBERTY
+GPUCFLAGS += -DVT_LIBERTY $(LIBERTYINCDIR)
+GPULIBRARY += $(LIBERTYLIBDIR) $(LIBERTYLIB)
 endif
 
 if AMBUILDLIBWRAP
@@ -272,24 +287,35 @@ endif
 if AMHAVECOMPINST
 if AMBUILDCOMPINST_GNU
 COMPINSTSOURCES = vt_comp_gnu.c
+COMPINSTCFLAGS =
+endif
+if AMBUILDCOMPINST_CRAYCCE
+COMPINSTSOURCES = vt_comp_gnu.c
+COMPINSTCFLAGS = -DVT_COMPINST_CRAYCCE
 endif
 if AMBUILDCOMPINST_PGI
 COMPINSTSOURCES = vt_comp_pgi.c
+COMPINSTCFLAGS =
 endif
 if AMBUILDCOMPINST_PHAT
 COMPINSTSOURCES = vt_comp_phat.c
+COMPINSTCFLAGS =
 endif
 if AMBUILDCOMPINST_XL
 COMPINSTSOURCES = vt_comp_xl.c
+COMPINSTCFLAGS =
 endif
 if AMBUILDCOMPINST_FTRACE
 COMPINSTSOURCES = vt_comp_ftrace.c vt_comp_ftrace_1.s
+COMPINSTCFLAGS =
 endif
 if AMBUILDCOMPINST_OPENUH
 COMPINSTSOURCES = vt_comp_openuh.c
+COMPINSTCFLAGS =
 endif
 else
 COMPINSTSOURCES =
+COMPINSTCFLAGS =
 endif
 
 if AMHAVEDYNINST
@@ -316,12 +342,14 @@ VT_COMMON_SOURCES = \
 	vt_comp.h \
 	$(GPUHEADERS) \
 	vt_defs.h \
+	vt_demangle.h \
 	vt_env.h \
 	vt_error.h \
 	vt_esync.h \
 	vt_fbindings.h \
 	vt_fork.h \
 	vt_getcpu.h \
+	vt_iofsl.h \
 	vt_iowrap.h \
 	vt_iowrap_helper.h \
 	vt_java.h \
@@ -380,6 +408,7 @@ VT_MPI_SOURCES = \
 	vt_sync.c \
 	$(MPI2IOSOURCES) \
 	$(ETIMESYNCSOURCES) \
+	$(IOFSLSOURCES) \
 	$(UNIMCISOURCES)
 
 VT_MT_SOURCES = \
@@ -409,13 +438,13 @@ VT_FMPI_SOURCES = \
 	$(FMPI2CONSTSOURCES)
 
 CC = $(MPICC)
-AM_CFLAGS = -I$(top_srcdir)/include -I$(top_builddir)/include -I$(top_srcdir)/rfg $(OTFCFLAGS) $(DLCFLAGS) $(LIBWRAPCFLAGS) $(GPUCFLAGS) $(LIBCWRAPCFLAGS) $(IOWRAPCFLAGS) $(MEMHOOKCFLAGS) $(GETCPUCFLAGS) $(RUSAGECFLAGS) $(METRCFLAGS) $(PLUGINCNTRCFLAGS)
+AM_CFLAGS = -I$(top_srcdir)/include -I$(top_builddir)/include -I$(top_srcdir)/rfg $(OTFCFLAGS) $(DLCFLAGS) $(COMPINSTCFLAGS) $(LIBWRAPCFLAGS) $(GPUCFLAGS) $(LIBCWRAPCFLAGS) $(IOWRAPCFLAGS) $(MEMHOOKCFLAGS) $(GETCPUCFLAGS) $(RUSAGECFLAGS) $(METRCFLAGS) $(PLUGINCNTRCFLAGS)
 
 libvt_la_LIBADD = $(top_builddir)/util/libvt_util.la $(top_builddir)/rfg/libvt_rfg.la $(OTFLIBRARY) $(METRLIBRARY) $(GPULIBRARY) $(DLLIBRARY) $(MATHLIBRARY)
 libvt_la_DEPENDENCIES = $(top_builddir)/util/libvt_util.la $(top_builddir)/rfg/libvt_rfg.la $(OTFDEPENDENCIES)
 libvt_la_SOURCES = $(VT_COMMON_SOURCES) $(VT_SEQ_SOURCES)
 
-libvt_mpi_la_CFLAGS = -DVT_MPI $(AM_CFLAGS) $(MPICFLAGS) $(MPIINCDIR) $(VTMPIUNIFYLIBCFLAGS) $(ETIMESYNCCFLAGS) $(UNIMCICFLAGS)
+libvt_mpi_la_CFLAGS = -DVT_MPI $(AM_CFLAGS) $(MPICFLAGS) $(MPIINCDIR) $(VTMPIUNIFYLIBCFLAGS) $(ETIMESYNCCFLAGS) $(IOFSLCFLAGS) $(UNIMCICFLAGS)
 libvt_mpi_la_LIBADD = $(top_builddir)/util/libvt_util.la $(top_builddir)/rfg/libvt_rfg.la $(OTFLIBRARY) $(VTMPIUNIFYLIBLIBRARY) $(MPILIBDIR) $(PMPILIB) $(METRLIBRARY) $(GPULIBRARY) $(DLLIBRARY) $(MATHLIBRARY)
 libvt_mpi_la_DEPENDENCIES = $(top_builddir)/util/libvt_util.la $(top_builddir)/rfg/libvt_rfg.la $(OTFDEPENDENCIES) $(VTMPIUNIFYLIBDEPENDENCIES)
 libvt_mpi_la_SOURCES = $(VT_COMMON_SOURCES) $(VT_MPI_SOURCES)
@@ -425,7 +454,7 @@ libvt_mt_la_LIBADD = $(top_builddir)/util/libvt_util.la $(top_builddir)/rfg/libv
 libvt_mt_la_DEPENDENCIES = $(top_builddir)/util/libvt_util.la $(top_builddir)/rfg/libvt_rfg.la $(OTFDEPENDENCIES)
 libvt_mt_la_SOURCES = $(VT_COMMON_SOURCES) $(VT_MT_SOURCES)
 
-libvt_hyb_la_CFLAGS = -DVT_HYB $(AM_CFLAGS) $(MPICFLAGS) $(MPIINCDIR) $(VTMPIUNIFYLIBCFLAGS) $(PTHREADCFLAGS) $(OMPCFLAGS) $(THRDCFLAGS) $(ETIMESYNCCFLAGS) $(UNIMCICFLAGS)
+libvt_hyb_la_CFLAGS = -DVT_HYB $(AM_CFLAGS) $(MPICFLAGS) $(MPIINCDIR) $(VTMPIUNIFYLIBCFLAGS) $(PTHREADCFLAGS) $(OMPCFLAGS) $(THRDCFLAGS) $(ETIMESYNCCFLAGS) $(IOFSLCFLAGS) $(UNIMCICFLAGS)
 libvt_hyb_la_LIBADD = $(top_builddir)/util/libvt_util.la $(top_builddir)/rfg/libvt_rfg.la $(OTFLIBRARY) $(VTMPIUNIFYLIBLIBRARY) $(MPILIBDIR) $(PMPILIB) $(METRLIBRARY) $(GPULIBRARY) $(DLLIBRARY) $(MATHLIBRARY)
 libvt_hyb_la_DEPENDENCIES = $(top_builddir)/util/libvt_util.la $(top_builddir)/rfg/libvt_rfg.la $(OTFDEPENDENCIES) $(VTMPIUNIFYLIBDEPENDENCIES)
 libvt_hyb_la_SOURCES = $(VT_COMMON_SOURCES) $(VT_HYB_SOURCES)
@@ -440,10 +469,14 @@ libvt_pomp_la_CFLAGS = -static -prefer-pic $(AM_CFLAGS) $(OPENMP_CFLAGS) -I$(top
 libvt_pomp_la_LDFLAGS = -static
 libvt_pomp_la_SOURCES = $(VT_POMP_SOURCES)
 
-F77 = $(MPIF77)
+F77 = $(MPIFC)
 libvt_fmpi_la_CFLAGS = $(libvt_mpi_la_CFLAGS)
-libvt_fmpi_la_FFLAGS = $(MPIFFLAGS) $(FMPIINCDIR)
+libvt_fmpi_la_FCFLAGS = $(MPIFCFLAGS) $(FMPIINCDIR)
 libvt_fmpi_la_SOURCES = $(VT_FMPI_SOURCES)
+
+vtsysconf_DATA = \
+	$(VTJAVAETCDATA)
+vtsysconfdir = $(sysconfdir)
 
 EXTRA_DIST = \
 	vt_pform_altix.c \
@@ -460,7 +493,8 @@ EXTRA_DIST = \
 	vt_pform_necsx.c \
 	vt_pform_origin.c \
 	vt_pform_sicortex.c \
-	vt_pform_sun.c
+	vt_pform_sun.c \
+	vt-java-default-filter.spec
 
 DISTCLEANFILES = \
 	vt_mpireg.gen.c \

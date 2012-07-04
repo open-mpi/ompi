@@ -301,6 +301,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\OTF_File_iofsl.h"
+				>
+			</File>
+			<File
 				RelativePath=".\OTF_FileManager.h"
 				>
 			</File>
@@ -402,6 +406,10 @@
 			</File>
 			<File
 				RelativePath=".\OTF_File.c"
+				>
+			</File>
+			<File
+				RelativePath=".\OTF_File_iofsl.c"
 				>
 			</File>
 			<File

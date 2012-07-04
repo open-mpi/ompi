@@ -35,6 +35,9 @@
 #include <string>
 #include <vector>
 
+#include <ctype.h>
+#include <errno.h>
+#include <limits.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -53,6 +56,11 @@ static bool getUnifyControls( void );
 
 // parse command line options
 static bool parseCommandLine( int argc, char ** argv );
+
+#if defined(HAVE_IOFSL) && HAVE_IOFSL
+   // parse comma-separated list of IOFSL server addresses
+   static bool parseIofslServerList( char* list );
+#endif // HAVE_IOFSL
 
 // write OTF master control file
 static bool writeMasterControl( void );
@@ -75,6 +83,7 @@ static void showUsage( void );
 //
 
 // name of program's executable
+//
 #ifdef VT_MPI
 #  ifdef VT_LIB
       const std::string ExeName = "libvt-mpi-unify";
@@ -103,6 +112,14 @@ std::map<uint32_t, UnifyControlS*> StreamId2UnifyCtl;
 // vector of stream ids to process by my rank
 std::vector<uint32_t> MyStreamIds;
 
+// number of available streams
+uint32_t NumAvailStreams = 0;
+
+#ifdef VT_UNIFY_REMOVE_UNDEF_PROCID_REFERENCES
+   // set of absent stream ids (for fast searching)
+   std::set<uint32_t> AbsentStreamIds;
+#endif /* VT_UNIFY_REMOVE_UNDEF_PROCID_REFERENCES */
+
 #ifdef VT_MPI
    // number of MPI-ranks
    VT_MPI_INT NumRanks;
@@ -116,6 +133,14 @@ std::vector<uint32_t> MyStreamIds;
    // map MPI-rank <-> stream ids
    std::map<VT_MPI_INT, std::set<uint32_t> > Rank2StreamIds;
 #endif // VT_MPI
+
+// VT mode flags bitmask (VT_MODE_TRACE and/or VT_MODE_STAT)
+uint32_t UnifyControlS::mode_flags = (uint32_t)-1;
+
+// unify control's IOFSL properties
+//
+uint32_t UnifyControlS::iofsl_num_servers = (uint32_t)-1;
+uint32_t UnifyControlS::iofsl_mode = (uint32_t)-1;
 
 int
 VTUNIFY_MAIN( int argc, char ** argv )
@@ -210,11 +235,12 @@ VTUNIFY_MAIN( int argc, char ** argv )
 #endif // VT_MPI
 
      // unify events
-     if( !Params.onlystats && (error = !theEvents->run()) )
+     if( UnifyControlS::have_events() && !Params.onlystats &&
+         (error = !theEvents->run()) )
         break;
 
      // unify statistics
-     if( (error = !theStatistics->run()) )
+     if( UnifyControlS::have_stats() && (error = !theStatistics->run()) )
         break;
 
      // create OTF master control file
@@ -314,9 +340,44 @@ getParams( int argc, char ** argv )
             }
          }
 
+#if defined(HAVE_IOFSL) && HAVE_IOFSL
+         if( Params.doiofsl() )
+         {
+            // in IOFSL mode, the absolute path of the output trace file prefix
+            // is required
+            //
+
+            std::string out_file_dir = "./";
+            std::string out_file_prefix = Params.out_file_prefix;
+
+            std::string::size_type si = Params.out_file_prefix.rfind('/');
+            if( si != std::string::npos )
+            {
+               out_file_dir = Params.out_file_prefix.substr( 0, si );
+               out_file_prefix = Params.out_file_prefix.substr( si + 1 );
+            }
+
+            char* abs_out_file_dir = realpath( out_file_dir.c_str(), 0 );
+            if( !abs_out_file_dir )
+            {
+               std::cerr << ExeName << ": Error: "
+                         << "Could not retrieve the absolute path of "
+                         << out_file_dir << ": "
+                         << strerror( errno ) << std::endl;
+               error = true;
+            }
+            else
+            {
+               Params.out_file_prefix =
+                  std::string( abs_out_file_dir ) + '/' + out_file_prefix;
+               free( abs_out_file_dir );
+            }
+         }
+#endif // HAVE_IOFSL
+
 #ifdef VT_UNIFY_HOOKS_PROF
          // set profile output filename, if necessary
-         if( Params.prof_out_file.length() == 0 )
+         if( !error && Params.prof_out_file.length() == 0 )
             Params.prof_out_file = Params.out_file_prefix + ".prof.txt";
 #endif // VT_UNIFY_HOOKS_PROF
       }
@@ -374,10 +435,14 @@ getUnifyControls()
 
    MASTER
    {
-      // flag which indicates whether any stream is available
+      // indicator for compatibility error
+      bool compat_error = false;
+
+      // indicator for available streams
       bool any_stream_avail = false;
 
       char buffer[STRBUFSIZE];
+      char delim = '\n';
       uint32_t line_no = 1;
       uint32_t i;
 
@@ -385,8 +450,7 @@ getUnifyControls()
       {
          uint32_t line_no_sec = 1;
 
-         std::vector<uint32_t> streamids;
-         std::vector<bool>     streamavs;
+         std::vector<std::pair<uint32_t, bool> > streamids;
          std::vector<uint32_t> col_no;
          int64_t ltime[2] = { 0, 1 };
          int64_t offset[2] = { 0, 0 };
@@ -398,22 +462,101 @@ getUnifyControls()
 
          // read file content
          //
-         while( !in.getline((char*)buffer, STRBUFSIZE, ':').eof() && !error )
+         while( !error && !in.getline((char*)buffer, STRBUFSIZE, delim).eof() )
          {
-            // new unify control section?
+            // header with VT version and compatibility id at the first line?
+            if( line_no == 1 )
+            {
+               char version[STRBUFSIZE];
+               char tail[STRBUFSIZE];
+               uint32_t compat_id;
+
+               // read VT version and compatibility id
+               if( sscanf( buffer, "<VTUCTL %s %x%s",
+                           version, &compat_id, tail ) != 3 ||
+                   strcmp( tail, ">" ) != 0 )
+               {
+                  error = true;
+               }
+               // check for trace/vtunify compatibility
+               //
+               else if( compat_id < VT_UNIFY_COMPAT_ID )
+               {
+                  std::cerr << ExeName << ": Error: "
+                            << "You tried to unify a trace file that was "
+                            << "generated with a VampirTrace version that is "
+                            << "too old (" << version << "). Please use this "
+                            << "older version to unify the trace file instead "
+                            << "(Your installed version is "
+                            << PACKAGE_VERSION << "). Aborting." << std::endl;
+                  error = compat_error = true;
+               }
+               else if( compat_id > VT_UNIFY_COMPAT_ID )
+               {
+                  std::cerr << ExeName << ": Error: "
+                            << "You tried to unify a trace file that was "
+                            << "generated with a VampirTrace version that is "
+                            << "too recent (" << version << "). Please use "
+                            << "this newer version to unify the trace file "
+                            << "instead (Your installed version is "
+                            << PACKAGE_VERSION << "). Aborting." << std::endl;
+                  error = compat_error = true;
+               }
+               else
+               {
+                  line_no++;
+                  delim = ':';
+               }
+
+               continue;
+            }
+            // VT mode and IOFSL properties at the second line?
+            else if( line_no == 2 )
+            {
+               std::istringstream iss( buffer );
+               assert( iss );
+
+               // read VT mode flags
+               if( UnifyControlS::mode_flags == (uint32_t)-1 )
+               {
+                  error =
+                     ( !( iss >> std::hex >> UnifyControlS::mode_flags )
+                       || UnifyControlS::mode_flags == (uint32_t)-1
+                       || ( !UnifyControlS::have_events() &&
+                            !UnifyControlS::have_stats() ) );
+               }
+               // read number of IOFSL servers used
+               else if( UnifyControlS::iofsl_num_servers == (uint32_t)-1 )
+               {
+                  error =
+                     ( !( iss >> std::hex >> UnifyControlS::iofsl_num_servers )
+                       || UnifyControlS::iofsl_num_servers == (uint32_t)-1 );
+               }
+               // read IOFSL mode
+               else if( UnifyControlS::iofsl_mode == (uint32_t)-1 )
+               {
+                  error =
+                     ( !( iss >> std::hex >> UnifyControlS::iofsl_mode )
+                       || UnifyControlS::iofsl_mode == (uint32_t)-1 );
+               }
+               // end of line
+               else
+               {
+                  if( buffer[0] != '\n' )
+                     error = true;
+                  else
+                     line_no++;
+               }
+
+               continue;
+            }
+
+            // new unify control section except the first one?
             if( std::string(buffer).find( '*' ) != std::string::npos )
             {
-              // if that's the first section, continue reading
-              if( line_no == 1 )
-              {
-                continue;
-              }
-              // otherwise, leave read loop to finalize previous section
-              else
-              {
-                line_no++;
-                break;
-              }
+               // leave read loop to finalize previous section
+               line_no++;
+               break;
             }
 
             // increment line number and remove new-line
@@ -432,31 +575,19 @@ getUnifyControls()
                //
                case 1:
                {
-                  uint32_t stream_id;
-                  bool stream_avail = true;
-                  std::istringstream iss;
-
-                  // is stream not available?
-                  if( buffer[strlen( buffer ) - 1] == '!' )
-                  {
-                     stream_avail = false;
-                     // remove trailing '!'
-                     buffer[strlen( buffer ) - 1] = '\0';
-                  }
-                  else
-                  {
-                     any_stream_avail = true;
-                  }
-
-                  iss.str( buffer );
+                  std::pair<uint32_t, bool> stream_id;
+                  std::istringstream iss( buffer );
                   assert( iss );
-                  error = !( iss >> std::hex >> stream_id );
 
-                  if( !error && stream_id > 0 )
-                  {
-                     streamids.push_back( stream_id );
-                     streamavs.push_back( stream_avail );
-                  }
+                  if( ( error = !( iss >> std::hex >> stream_id.first ) ) )
+                     break;
+
+                  if( iss.get() == '!' )
+                     stream_id.second = false;
+                  else
+                     stream_id.second = any_stream_avail = true;
+
+                  streamids.push_back( stream_id );
 
                   break;
                }
@@ -665,8 +796,11 @@ getUnifyControls()
          //
          if( error )
          {
-            std::cerr << filename << ":" << line_no 
-                      << ": Could not be parsed" << std::endl;
+            if( !compat_error )
+            {
+               std::cerr << filename << ":" << line_no
+                         << ": Could not be parsed" << std::endl;
+            }
          }
          // otherwise, add unify control to vector
          //
@@ -674,17 +808,17 @@ getUnifyControls()
          {
             for( i = 0; i < streamids.size(); i++ )
             {
-               uint32_t streamid = streamids[i];
-               uint32_t pstreamid = (i == 0) ? 0 : streamids[0];
-               bool     streamav = streamavs[i];
+               uint32_t stream_id = streamids[i].first;
+               uint32_t pstream_id = (i == 0) ? 0 : streamids[0].first;
+               bool     stream_avail = streamids[i].second;
 
 #ifdef VT_ETIMESYNC
                UnifyCtls.push_back(
-                  new UnifyControlS( streamid, pstreamid, streamav, ltime,
+                  new UnifyControlS( stream_id, pstream_id, stream_avail, ltime,
                      offset, sync_phases, sync_times, sync_pairs ) );
 #else // VT_ETIMESYNC
                UnifyCtls.push_back(
-                  new UnifyControlS( streamid, pstreamid, streamav, ltime,
+                  new UnifyControlS( stream_id, pstream_id, stream_avail, ltime,
                      offset) );
 #endif // VT_ETIMESYNC
             }
@@ -702,13 +836,24 @@ getUnifyControls()
       in.close();
 
       if( !error )
+      {
          VPrint( 3, " Closed %s\n", filename );
 
-      if( !any_stream_avail )
-      {
-         std::cerr << ExeName << ": Error: "
-                   << "No streams are available" << std::endl;
-         error = true;
+         if( Params.onlystats && !UnifyControlS::have_stats() )
+         {
+            std::cout << ExeName << ": Error: "
+                      << "The input trace file does not contain the requested "
+                      << "summarized information. Aborting." << std::endl;
+            error = true;
+         }
+         else if( !any_stream_avail )
+         {
+            std::cerr << ExeName << ": Error: "
+                      << "The input trace file does not have any available "
+                      << "stream; nothing to do. Aborting."
+                      << std::endl;
+            error = true;
+         }
       }
 
    } // MASTER
@@ -727,6 +872,25 @@ getUnifyControls()
 
    if( !error )
    {
+#ifdef VT_MPI
+      VT_MPI_INT rank = 0;
+
+#if defined(HAVE_IOFSL) && HAVE_IOFSL
+      uint32_t iofsl_num_workers = 0;
+
+      if( Params.doiofsl() )
+      {
+         // in IOFSL mode, calculate number of ranks for unification; must be a
+         // multiple or less than Params.iofsl_num_servers
+         //
+         iofsl_num_workers =
+            ( NumRanks / Params.iofsl_num_servers ) * Params.iofsl_num_servers;
+         if( iofsl_num_workers == 0 )
+            iofsl_num_workers = NumRanks;
+      }
+#endif // HAVE_IOFSL
+#endif // VT_MPI
+
       // get stream context information
       //
       for( uint32_t i = 0; i < UnifyCtls.size(); i++ )
@@ -745,7 +909,15 @@ getUnifyControls()
                // separated from its parent stream id
                //
 
-               static VT_MPI_INT rank = 0;
+#if defined(HAVE_IOFSL) && HAVE_IOFSL
+               if( Params.doiofsl() )
+               {
+                  // in IOFSL mode, calculate rank for the current stream id
+                  rank =
+                     ( uctl->streamid & VT_TRACEID_BITMASK ) %
+                     iofsl_num_workers;
+               }
+#endif // HAVE_IOFSL
 
                // assign stream id to rank
                if( rank == MyRank )
@@ -757,31 +929,65 @@ getUnifyControls()
                // add stream id to processing rank
                Rank2StreamIds[rank].insert( uctl->streamid );
 
-               // get rank for the next stream id
+               // in non-IOFSL mode, get rank for the next stream id
                //
+#if defined(HAVE_IOFSL) && HAVE_IOFSL
+               if( !Params.doiofsl() )
+#endif // HAVE_IOFSL
                if( i < UnifyCtls.size() - 1 && UnifyCtls[i+1]->pstreamid == 0 )
                {
-                  if( rank + 1 < NumRanks )
-                     rank++;
-                  else
+                  if( rank + 1 == NumRanks )
                      rank = 0;
+                  else
+                     rank++;
                }
             }
             else
 #endif // VT_MPI
             {
+               // take all stream ids, if serial
                MyStreamIds.push_back( uctl->streamid );
             }
+
+            // increment number of available streams
+            NumAvailStreams++;
          }
+#ifdef VT_UNIFY_REMOVE_UNDEF_PROCID_REFERENCES
+         else
+         {
+            // store absent stream id
+            AbsentStreamIds.insert( uctl->streamid );
+         }
+#endif // VT_UNIFY_REMOVE_UNDEF_PROCID_REFERENCES
       }
 
 #if defined(HAVE_OMP) && HAVE_OMP
-      // reset number of threads, if necessary
+      // reset max. number of threads
       //
-      if( !MyStreamIds.empty() &&
+
+      int new_max_threads = 0;
+
+      // due to not yet thread-safe implementation in OTF disable OpenMP if
+      // IOFSL mode is enabled for reading and/or writing
+      //
+      if( UnifyControlS::is_iofsl() ) new_max_threads = 1;
+#if defined(HAVE_IOFSL) && HAVE_IOFSL
+      if( Params.doiofsl() ) new_max_threads = 1;
+#endif // HAVE_IOFSL
+
+      // adapt max. number of threads to number of stream ids, if necessary
+      //
+      if( new_max_threads == 0 && !MyStreamIds.empty() &&
           (int)MyStreamIds.size() < omp_get_max_threads() )
       {
-         omp_set_num_threads( (int)MyStreamIds.size() );
+         new_max_threads = (int)MyStreamIds.size();
+      }
+
+      // set new max. number of threads, if it differs from the current setting
+      //
+      if( new_max_threads != 0 && new_max_threads != omp_get_max_threads() )
+      {
+         omp_set_num_threads( new_max_threads );
          PVPrint( 3, "Reset maximum number of threads to %d\n",
                   omp_get_max_threads() );
       }
@@ -799,27 +1005,118 @@ parseCommandLine( int argc, char ** argv )
 {
    bool error = false;
 
-   for( int i = 1; i < argc; i++ )
+   // read environment variables
+   //
+
+#if defined(HAVE_IOFSL) && HAVE_IOFSL
+
+   char* env;
+
+   // VT_IOFSL_SERVERS
+   //
+   if( ( env = getenv( "VT_IOFSL_SERVERS" ) ) && strlen( env ) > 0 )
    {
+      // get a copy of env. value
+      //
+      char* tmp = new char[strlen( env ) + 1];
+      assert( tmp );
+      strcpy( tmp, env );
+
+      // extract IOFSL servers from env. value
+      //
+      if( !parseIofslServerList( tmp ) )
+      {
+         std::cerr << ExeName << ": invalid value for environment variable -- "
+                   << "VT_IOFSL_SERVERS" << std::endl;
+         error = true;
+      }
+
+      delete [] tmp;
+   }
+   // VT_IOFSL_MODE
+   //
+   if( ( env = getenv( "VT_IOFSL_MODE" ) ) && strlen( env ) > 0 )
+   {
+      // get a copy of env. value
+      //
+      char* tmp = new char[strlen( env ) + 1];
+      assert( tmp );
+      strcpy( tmp, env );
+
+      // convert env. value's letter to lower case
+      //
+      char* p = tmp;
+      while( *p ) { *p = tolower(*p); p++; }
+
+      // set IOFSL mode
+      //
+      if( strcmp( tmp, "multifile" ) == 0 )
+      {
+         Params.iofsl_mode = VT_IOFSL_MODE_MULTIFILE;
+      }
+      else if( strcmp( tmp, "multifile_split" ) == 0 )
+      {
+         Params.iofsl_mode = VT_IOFSL_MODE_MULTIFILE_SPLIT;
+      }
+      else
+      {
+         std::cerr << ExeName << ": invalid value for environment "
+                   << "variable -- VT_IOFSL_MODE" << std::endl;
+         error = true;
+      }
+
+      delete [] tmp;
+   }
+   // VT_IOFSL_ASYNC_IO
+   //
+   if( ( env = getenv( "VT_IOFSL_ASYNC_IO" ) ) && strlen( env ) > 0 )
+   {
+      // get a copy of env. value
+      //
+      char* tmp = new char[strlen( env ) + 1];
+      assert( tmp );
+      strcpy( tmp, env );
+
+      // convert env. value's letter to lower case
+      //
+      char* p = tmp;
+      while( *p ) { *p = tolower(*p); p++; }
+
+      // set IOFSL flag
+      //
+      if( strcmp( tmp, "yes" ) == 0 || strcmp( tmp, "true" ) == 0 ||
+          strcmp( tmp, "1" ) == 0 )
+      {
+         Params.iofsl_flags |= VT_IOFSL_FLAG_ASYNC_IO;
+      }
+
+      delete [] tmp;
+   }
+
+#endif // HAVE_IOFSL
+
+   // parse command line options
+   //
+   for( int i = 1; i < argc && !error; i++ )
+   {
+      // -h, --help
+      //
       if( strcmp( argv[i], "-h" ) == 0
           || strcmp( argv[i], "--help" ) == 0 )
       {
          Params.showusage = true;
          break;
       }
+      // -V, --version
+      //
       else if( strcmp( argv[i], "-V" ) == 0
                || strcmp( argv[i], "--version" ) == 0 )
       {
          Params.showversion = true;
          break;
       }
-      else if( i == 1 )
-      {
-         Params.in_file_prefix = argv[1];
-         if( Params.in_file_prefix.compare( 0, 1, "/" ) != 0 &&
-             Params.in_file_prefix.compare( 0, 2, "./" ) != 0 )
-             Params.in_file_prefix = std::string("./") + Params.in_file_prefix;
-      }
+      // -o
+      //
       else if( strcmp( argv[i], "-o" ) == 0 )
       {
          if( i == argc - 1 )
@@ -836,6 +1133,8 @@ parseCommandLine( int argc, char ** argv )
          }
       }
 #ifdef VT_UNIFY_HOOKS_PROF
+      // -f
+      //
       else if( strcmp( argv[i], "-f" ) == 0 )
       {
          if( i == argc - 1 )
@@ -852,33 +1151,126 @@ parseCommandLine( int argc, char ** argv )
          }
       }
 #endif // VT_UNIFY_HOOKS_PROF
-#ifdef VT_UNIFY_HOOKS_MSGMATCH
+#ifdef VT_UNIFY_HOOKS_MSGMATCH_SNAPS
+      // --snapshots
+      //
+      else if( strcmp( argv[i], "--nosnapshots" ) == 0 )
+      {
+         Params.createsnaps = false;
+      }
+      // --maxsnapshots
+      //
+      else if( strcmp( argv[i], "--maxsnapshots" ) == 0 )
+      {
+         if( i == argc - 1 )
+         {
+            std::cerr << ExeName << ": N expected -- --maxsnapshots" << std::endl;
+            error = true;
+         }
+         else
+         {
+            int tmp = atoi( argv[++i] );
+            if( tmp < 1 )
+            {
+               std::cerr << ExeName << ": invalid argument for option -- "
+                         << "--maxsnapshots" << std::endl;
+               error = true;
+            }
+            else
+            {
+               Params.maxsnapshots = (uint32_t)tmp;
+            }
+         }
+      }
+      // --nomsgmatch
+      //
       else if( strcmp( argv[i], "--nomsgmatch" ) == 0 )
       {
          Params.domsgmatch = false;
       }
+      // --droprecvs
+      //
       else if( strcmp( argv[i], "--droprecvs" ) == 0 )
       {
          Params.droprecvs = true;
       }
-#endif // VT_UNIFY_HOOKS_MSGMATCH
-#ifdef VT_UNIFY_HOOKS_THUMB
-      else if( strcmp( argv[i], "--nothumb" ) == 0 )
-      {
-         Params.createthumb = false;
-      }
-#endif // VT_UNIFY_HOOKS_THUMB
+#endif // VT_UNIFY_HOOKS_MSGMATCH_SNAPS
 #if defined(HAVE_ZLIB) && HAVE_ZLIB
+      // --nocompress
+      //
       else if( strcmp( argv[i], "--nocompress" ) == 0 )
       {
          Params.docompress = false;
       }
 #endif // HAVE_ZLIB
+#if defined(HAVE_IOFSL) && HAVE_IOFSL
+      // --iofsl-servers
+      //
+      else if( strcmp( argv[i], "--iofsl-servers" ) == 0 )
+      {
+         if( i == argc - 1 )
+         {
+            std::cerr << ExeName << ": LIST expected -- --iofsl-servers"
+                      << std::endl;
+            error = true;
+         }
+         else
+         {
+            if( !parseIofslServerList( argv[++i] ) )
+            {
+               std::cerr << ExeName << ": invalid argument for option -- "
+                         << "--iofsl-servers" << std::endl;
+               error = true;
+            }
+         }
+      }
+      // --iofsl-mode
+      //
+      else if( strcmp( argv[i], "--iofsl-mode" ) == 0 )
+      {
+         if( i == argc - 1 )
+         {
+            std::cerr << ExeName << ": MODE expected -- --iofsl-mode"
+                      << std::endl;
+            error = true;
+         }
+         else
+         {
+            char* p = argv[++i];
+            while( *p ) { *p = tolower(*p); p++; }
+
+            if( strcmp( argv[i], "multifile" ) == 0 )
+            {
+               Params.iofsl_mode = VT_IOFSL_MODE_MULTIFILE;
+            }
+            else if( strcmp( argv[i], "multifile_split" ) == 0 )
+            {
+               Params.iofsl_mode = VT_IOFSL_MODE_MULTIFILE_SPLIT;
+            }
+            else
+            {
+               std::cerr << ExeName << ": invalid argument for option -- "
+                         << "--iofsl-mode" << std::endl;
+               error = true;
+            }
+         }
+      }
+      // --iofsl-asyncio
+      //
+      else if( strcmp( argv[i], "--iofsl-asyncio" ) == 0 )
+      {
+         Params.iofsl_flags |= VT_IOFSL_FLAG_ASYNC_IO;
+      }
+#endif // HAVE_IOFSL
+      // -k, --keeplocal
+      //
       else if( strcmp( argv[i], "-k" ) == 0
                || strcmp( argv[i], "--keeplocal" ) == 0 )
       {
          Params.doclean = false;
       }
+      // -p, --progress
+      //
       else if( strcmp( argv[i], "-p" ) == 0
                || strcmp( argv[i], "--progress" ) == 0 )
       {
@@ -886,6 +1278,8 @@ parseCommandLine( int argc, char ** argv )
          std::cerr << ExeName << ": Warning: Progress not yet implemented -- "
                    << argv[i] << std::endl;
       }
+      // -q, --quiet
+      //
       else if( strcmp( argv[i], "-q" ) == 0 
                || strcmp( argv[i], "--quiet" ) == 0 )
       {
@@ -893,23 +1287,36 @@ parseCommandLine( int argc, char ** argv )
          Params.showprogress = false;
          Params.verbose_level = 0;
       }
-      else if( strcmp( argv[i], "--stats" ) == 0 )
+      // --stat, --stats
+      //
+      else if( strcmp( argv[i], "--stat" ) == 0
+               ||strcmp( argv[i], "--stats" ) == 0 )
       {
          Params.onlystats = true;
       }
+      // -v, --verbose
+      //
       else if( strcmp( argv[i], "-v" ) == 0 
                || strcmp( argv[i], "--verbose" ) == 0 )
       {
          Params.verbose_level++;
       }
+      // input trace file prefix
+      //
+      else if( Params.in_file_prefix.length() == 0 )
+      {
+         Params.in_file_prefix = argv[i];
+         if( Params.in_file_prefix.compare( 0, 1, "/" ) != 0 &&
+             Params.in_file_prefix.compare( 0, 2, "./" ) != 0 )
+            Params.in_file_prefix = std::string("./") + Params.in_file_prefix;
+      }
+      // unrecognized option
+      //
       else
       {
          std::cerr << ExeName << ": invalid option -- " << argv[i] << std::endl;
          error = true;
       }
-
-      if( error )
-         break;
    }
 
    // set flag to show usage text, if command line parameters are incomplete
@@ -922,6 +1329,65 @@ parseCommandLine( int argc, char ** argv )
 
    return !error;
 }
+
+#if defined(HAVE_IOFSL) && HAVE_IOFSL
+
+static bool
+parseIofslServerList( char* list )
+{
+   bool error = false;
+
+   // re-initialize list of IOFSL servers, if necessary
+   //
+   if( Params.iofsl_num_servers > 0 )
+   {
+      for( uint32_t i = 0; i < Params.iofsl_num_servers; i++ )
+         delete [] Params.iofsl_servers[i];
+      delete [] Params.iofsl_servers;
+
+      Params.iofsl_num_servers = 0;
+   }
+
+   // get number of IOFSL servers by counting separators in list
+   //
+   char* p = list;
+   uint32_t n = 0;
+   while( *p )
+   {
+      if( *p == ',' ) n++;
+         p++;
+   }
+   n++;
+
+   // allocate list of IOFSL servers
+   //
+   Params.iofsl_servers = new char*[n];
+   assert( Params.iofsl_servers );
+
+   // extract IOFSL servers from list
+   //
+   Params.iofsl_num_servers = 0;
+   char* token = strtok( list, "," );
+   do
+   {
+      if( !token || strlen( token ) == 0 )
+      {
+         error = true;
+         break;
+      }
+
+      Params.iofsl_servers[Params.iofsl_num_servers] =
+         new char[strlen( token ) + 1];
+      assert( Params.iofsl_servers[Params.iofsl_num_servers] );
+      strcpy( Params.iofsl_servers[Params.iofsl_num_servers], token );
+      Params.iofsl_num_servers++;
+
+  } while( ( token = strtok( 0, "," ) ) );
+
+  return !error;
+}
+
+#endif // HAVE_IOFSL
 
 static bool
 writeMasterControl()
@@ -940,6 +1406,25 @@ writeMasterControl()
    //
    OTF_FileManager * manager = OTF_FileManager_open( 1 );
    assert( manager );
+
+#if defined(HAVE_IOFSL) && HAVE_IOFSL
+   // initialize IOFSL stuff for writing, if necessary
+   //
+   if( Params.doiofsl() )
+   {
+      OTF_IofslMode otf_iofsl_mode =
+         ( Params.iofsl_mode == VT_IOFSL_MODE_MULTIFILE ) ?
+            OTF_IOFSL_MULTIFILE : OTF_IOFSL_MULTIFILE_SPLIT;
+
+      uint32_t otf_iofsl_flags = 0;
+      if( ( Params.iofsl_flags & VT_IOFSL_FLAG_ASYNC_IO ) != 0 )
+         otf_iofsl_flags |= OTF_IOFSL_FLAG_NONBLOCKING;
+
+      OTF_FileManager_setIofsl( manager, Params.iofsl_num_servers,
+         Params.iofsl_servers, otf_iofsl_mode, otf_iofsl_flags, 0,
+         VT_TRACEID_BITMASK );
+   }
+#endif // HAVE_IOFSL
 
    // create master control
    //
@@ -1049,11 +1534,12 @@ cleanUp()
          break;
 
       // rename temporary event output files
-      if( !Params.onlystats && (error = !theEvents->cleanUp()) )
+      if( UnifyControlS::have_events() && !Params.onlystats &&
+          (error = !theEvents->cleanUp()) )
          break;
 
       // rename temporary statistic output files
-      if( (error = !theStatistics->cleanUp()) )
+      if( UnifyControlS::have_stats() && (error = !theStatistics->cleanUp()) )
          break;
 
       // remove unify control file and rename temporary OTF master control file
@@ -1079,7 +1565,7 @@ cleanUp()
 
             if( remove( filename1 ) != 0 )
             {
-               std::cerr << ExeName << ": Error Could not remove "
+               std::cerr << ExeName << ": Error: Could not remove "
                          << filename1 << std::endl;
                error = true;
                break;
@@ -1121,7 +1607,7 @@ showUsage()
    std::cout << std::endl
       << " " << ExeName << " - local trace unifier for VampirTrace."  << std::endl
       << std::endl
-      << " Syntax: " << ExeName << " <input trace prefix> [options]" << std::endl
+      << " Syntax: " << ExeName << " [options] <input trace prefix>" << std::endl
       << std::endl
       << "   options:" << std::endl
       << "     -h, --help          Show this help message." << std::endl
@@ -1145,23 +1631,44 @@ showUsage()
       << "     -q, --quiet         Enable quiet mode." << std::endl
       << "                         (only emergency output)" << std::endl
       << std::endl
+#if defined(HAVE_IOFSL) && HAVE_IOFSL
+      << "     --iofsl-servers LIST" << std::endl
+      << "                         Enable IOFSL mode where LIST contains a comma-separated" << std::endl
+      << "                         list of IOFSL server addresses." << std::endl
+      << std::endl
+      << "     --iofsl-mode MODE   IOFSL mode (MULTIFILE or MULTIFILE_SPLIT)." << std::endl
+      << "                         (default: MULTIFILE_SPLIT)" << std::endl
+      << std::endl
+      << "     --iofsl-asyncio     Use asynchronous I/O in IOFSL mode." << std::endl
+      << std::endl
+#endif // HAVE_IOFSL
       << "     --stats             Unify only summarized information (*.stats), no events" << std::endl
       << std::endl
 #if defined(HAVE_ZLIB) && HAVE_ZLIB
       << "     --nocompress        Don't compress output trace files." << std::endl
       << std::endl
 #endif // HAVE_ZLIB
-#ifdef VT_UNIFY_HOOKS_MSGMATCH
+#ifdef VT_UNIFY_HOOKS_MSGMATCH_SNAPS
+      << "     --nosnapshots       Don't create snapshots." << std::endl
+      << std::endl
+      << "     --maxsnapshots N    Maximum number of snapshots." << std::endl
+      << "                         (default: 1024)" << std::endl
+      << std::endl
       << "     --nomsgmatch        Don't match messages." << std::endl
       << std::endl
       << "     --droprecvs         Drop message receive events, if msg. matching" << std::endl
       << "                         is enabled." << std::endl
       << std::endl
-#endif // VT_UNIFY_HOOKS_MSGMATCH
-#ifdef VT_UNIFY_HOOKS_THUMB
-      << "     --nothumb           Don't create Vampir thumbnail." << std::endl
+#endif // VT_UNIFY_HOOKS_MSGMATCH_SNAPS
+#if defined(HAVE_IOFSL) && HAVE_IOFSL
+      << "   environment variables:" << std::endl
+      << "     VT_IOFSL_SERVERS=LIST" << std::endl
+      << "                         equivalent to '--iofsl-servers'" << std::endl
+      << "     VT_IOFSL_MODE       equivalent to '--iofsl-mode'" << std::endl
+      << "     VT_IOFSL_ASYNC_IO=<yes|true|1>" << std::endl
+      << "                         equivalent to '--iofsl-asyncio'" << std::endl
       << std::endl
-#endif // VT_UNIFY_HOOKS_THUMB
+#endif // HAVE_IOFSL
       ;
 }
 
@@ -1177,77 +1684,368 @@ shareParams()
    // block until all ranks have reached this point
    CALL_MPI( MPI_Barrier( MPI_COMM_WORLD ) );
 
-   // create MPI datatype for ParamsS
-   //
+   char * buffer;
+   VT_MPI_INT buffer_size;
+   VT_MPI_INT position;
 
-   char **filenames;
-   char flags[9];
-   VT_MPI_INT blockcounts[4] = { 3*1024, 1, 1, 9 };
-   MPI_Aint displ[4];
-   MPI_Datatype oldtypes[4] =
-   { MPI_CHAR, MPI_UNSIGNED_SHORT, MPI_INT,
-     MPI_CHAR };
-   MPI_Datatype newtype;
-
-   filenames = new char*[3];
-   filenames[0] = new char[3*1024];
-   filenames[1] = filenames[0] + ( 1024 * sizeof(char) );
-   filenames[2] = filenames[1] + ( 1024 * sizeof(char) );
-
-   CALL_MPI( MPI_Address( filenames[0], &displ[0] ) );
-   CALL_MPI( MPI_Address( &(Params.verbose_level), &displ[1] ) );
-   CALL_MPI( MPI_Address( &(Params.prof_sort_flags), &displ[2] ) );
-   CALL_MPI( MPI_Address( &flags, &displ[3] ) );
-   CALL_MPI( MPI_Type_struct( 4, blockcounts, displ, oldtypes, &newtype ) );
-   CALL_MPI( MPI_Type_commit( &newtype ) );
-
-   // fill elements of new MPI datatype
+   // get buffer size needed to pack unify parameters
    //
    MASTER
    {
-     strncpy( filenames[0], Params.in_file_prefix.c_str(), 1023 );
-     filenames[0][1023] = '\0';
-     strncpy( filenames[1], Params.out_file_prefix.c_str(), 1023 );
-     filenames[1][1023] = '\0';
-     strncpy( filenames[2], Params.prof_out_file.c_str(), 1023 );
-     filenames[2][1023] = '\0';
-     flags[0] = (char)Params.docompress;
-     flags[1] = (char)Params.doclean;
-     flags[2] = (char)Params.showusage;
-     flags[3] = (char)Params.showversion;
-     flags[4] = (char)Params.showprogress;
-     flags[5] = (char)Params.bequiet;
-     flags[6] = (char)Params.onlystats;
-     flags[7] = (char)Params.domsgmatch;
-     flags[8] = (char)Params.droprecvs;
-   }
+      VT_MPI_INT size;
 
-   // share unify parameters
-   CALL_MPI( MPI_Bcast( MPI_BOTTOM, 1, newtype, 0, MPI_COMM_WORLD ) );
+      buffer_size = 0;
 
-   // "receive" unify parameters
+      // in_file_prefix.length() + out_file_prefix.length() + verbose_level
+      //
+      CALL_MPI( MPI_Pack_size( 3, MPI_UNSIGNED, MPI_COMM_WORLD, &size ) );
+      buffer_size += size;
+
+      // in_file_prefix + out_file_prefix + docompress + doclean + showusage +
+      // showversion + showprogress + bequiet + onlystats
+      //
+      CALL_MPI( MPI_Pack_size( (VT_MPI_INT)Params.in_file_prefix.length()+1+
+                               (VT_MPI_INT)Params.out_file_prefix.length()+1+
+                               7, MPI_CHAR, MPI_COMM_WORLD, &size ) );
+      buffer_size += size;
+
+#if defined(HAVE_IOFSL) && HAVE_IOFSL
+      // iofsl_mode + iofsl_flags + iofsl_num_servers
+      //
+      CALL_MPI( MPI_Pack_size( 3, MPI_UNSIGNED, MPI_COMM_WORLD, &size ) );
+      buffer_size += size;
+
+      // iofsl_servers
+      //
+      for( uint32_t i = 0; i < Params.iofsl_num_servers; i++ )
+      {
+         // strlen(iofsl_servers[i])
+         //
+         CALL_MPI( MPI_Pack_size( 1, MPI_UNSIGNED, MPI_COMM_WORLD, &size ) );
+         buffer_size += size;
+
+         // iofsl_servers[i]
+         //
+         CALL_MPI( MPI_Pack_size( strlen( Params.iofsl_servers[i] ) + 1,
+                                  MPI_CHAR, MPI_COMM_WORLD, &size ) );
+         buffer_size += size;
+      }
+#endif // HAVE_IOFSL
+
+#ifdef VT_UNIFY_HOOKS_MSGMATCH_SNAPS
+      // domsgmatch + droprecvs + createsnaps
+      //
+      CALL_MPI( MPI_Pack_size( 3, MPI_CHAR, MPI_COMM_WORLD, &size ) );
+      buffer_size += size;
+#endif // VT_UNIFY_HOOKS_MSGMATCH_SNAPS
+
+#ifdef VT_UNIFY_HOOKS_PROF
+      // prof_out_file.length() + prof_sort_flags
+      //
+      CALL_MPI( MPI_Pack_size( 2, MPI_UNSIGNED, MPI_COMM_WORLD, &size ) );
+      buffer_size += size;
+
+      // prof_out_file
+      //
+      CALL_MPI( MPI_Pack_size( (VT_MPI_INT)Params.prof_out_file.length()+1,
+                               MPI_CHAR, MPI_COMM_WORLD, &size ) );
+      buffer_size += size;
+#endif // VT_UNIFY_HOOKS_PROF
+   } // MASTER
+
+   // share buffer size
+   CALL_MPI( MPI_Bcast( &buffer_size, 1, MPI_INT, 0, MPI_COMM_WORLD ) );
+
+   // allocate buffer
+   //
+   buffer = new char[buffer_size];
+   assert( buffer );
+
+   // pack unify parameters
+   //
+   MASTER
+   {
+      position = 0;
+
+      // in_file_prefix.length()
+      //
+      uint32_t in_file_prefix_length = Params.in_file_prefix.length() + 1;
+      CALL_MPI( MPI_Pack( &in_file_prefix_length, 1, MPI_UNSIGNED, buffer,
+                          buffer_size, &position, MPI_COMM_WORLD ) );
+
+      // in_file_prefix
+      CALL_MPI( MPI_Pack( const_cast<char*>(Params.in_file_prefix.c_str()),
+                          (VT_MPI_INT)in_file_prefix_length, MPI_CHAR,
+                          buffer, buffer_size, &position, MPI_COMM_WORLD ) );
+
+      // out_file_prefix.length()
+      //
+      uint32_t out_file_prefix_length = Params.out_file_prefix.length() + 1;
+      CALL_MPI( MPI_Pack( &out_file_prefix_length, 1, MPI_UNSIGNED, buffer,
+                          buffer_size, &position, MPI_COMM_WORLD ) );
+
+      // out_file_prefix
+      CALL_MPI( MPI_Pack( const_cast<char*>(Params.out_file_prefix.c_str()),
+                          (VT_MPI_INT)out_file_prefix_length, MPI_CHAR,
+                          buffer, buffer_size, &position, MPI_COMM_WORLD ) );
+
+      // verbose_level
+      CALL_MPI( MPI_Pack( &(Params.verbose_level), 1, MPI_UNSIGNED, buffer,
+                          buffer_size, &position, MPI_COMM_WORLD ) );
+
+      // docompress
+      CALL_MPI( MPI_Pack( &(Params.docompress), 1, MPI_CHAR, buffer,
+                          buffer_size, &position, MPI_COMM_WORLD ) );
+
+      // doclean
+      CALL_MPI( MPI_Pack( &(Params.doclean), 1, MPI_CHAR, buffer,
+                          buffer_size, &position, MPI_COMM_WORLD ) );
+
+      // showusage
+      CALL_MPI( MPI_Pack( &(Params.showusage), 1, MPI_CHAR, buffer,
+                          buffer_size, &position, MPI_COMM_WORLD ) );
+
+      // showversion
+      CALL_MPI( MPI_Pack( &(Params.showversion), 1, MPI_CHAR, buffer,
+                          buffer_size, &position, MPI_COMM_WORLD ) );
+
+      // showprogress
+      CALL_MPI( MPI_Pack( &(Params.showprogress), 1, MPI_CHAR, buffer,
+                          buffer_size, &position, MPI_COMM_WORLD ) );
+
+      // bequiet
+      CALL_MPI( MPI_Pack( &(Params.bequiet), 1, MPI_CHAR, buffer,
+                          buffer_size, &position, MPI_COMM_WORLD ) );
+
+      // onlystats
+      CALL_MPI( MPI_Pack( &(Params.onlystats), 1, MPI_CHAR, buffer,
+                          buffer_size, &position, MPI_COMM_WORLD ) );
+
+#if defined(HAVE_IOFSL) && HAVE_IOFSL
+      // iofsl_mode
+      CALL_MPI( MPI_Pack( &(Params.iofsl_mode), 1, MPI_UNSIGNED, buffer,
+                          buffer_size, &position, MPI_COMM_WORLD ) );
+
+      // iofsl_flags
+      CALL_MPI( MPI_Pack( &(Params.iofsl_flags), 1, MPI_UNSIGNED, buffer,
+                          buffer_size, &position, MPI_COMM_WORLD ) );
+
+      // iofsl_num_servers
+      CALL_MPI( MPI_Pack( &(Params.iofsl_num_servers), 1, MPI_UNSIGNED, buffer,
+                          buffer_size, &position, MPI_COMM_WORLD ) );
+
+      // iofsl_servers
+      //
+      for( uint32_t i = 0; i < Params.iofsl_num_servers; i++ )
+      {
+         // strlen(iofsl_servers[i])
+         //
+         uint32_t len = strlen( Params.iofsl_servers[i] ) + 1;
+         CALL_MPI( MPI_Pack( &len, 1, MPI_UNSIGNED, buffer, buffer_size,
+                             &position, MPI_COMM_WORLD ) );
+
+         // iofsl_servers[i]
+         CALL_MPI( MPI_Pack( Params.iofsl_servers[i], len, MPI_CHAR, buffer,
+                             buffer_size, &position, MPI_COMM_WORLD ) );
+      }
+#endif // HAVE_IOFSL
+
+#ifdef VT_UNIFY_HOOKS_MSGMATCH_SNAPS
+      // domsgmatch
+      CALL_MPI( MPI_Pack( &(Params.domsgmatch), 1, MPI_CHAR, buffer,
+                          buffer_size, &position, MPI_COMM_WORLD ) );
+
+      // droprecvs
+      CALL_MPI( MPI_Pack( &(Params.droprecvs), 1, MPI_CHAR, buffer,
+                          buffer_size, &position, MPI_COMM_WORLD ) );
+
+      // createsnaps
+      CALL_MPI( MPI_Pack( &(Params.createsnaps), 1, MPI_CHAR, buffer,
+                          buffer_size, &position, MPI_COMM_WORLD ) );
+#endif // VT_UNIFY_HOOKS_MSGMATCH_SNAPS
+
+#ifdef VT_UNIFY_HOOKS_PROF
+      // prof_out_file.length()
+      //
+      uint32_t prof_out_file_length = Params.prof_out_file.length() + 1;
+      CALL_MPI( MPI_Pack( &prof_out_file_length, 1, MPI_UNSIGNED, buffer,
+                          buffer_size, &position, MPI_COMM_WORLD ) );
+
+      // prof_out_file
+      CALL_MPI( MPI_Pack( const_cast<char*>(Params.prof_out_file.c_str()),
+                          (VT_MPI_INT)prof_out_file_length, MPI_CHAR, buffer,
+                          buffer_size, &position, MPI_COMM_WORLD ) );
+
+      // prof_sort_flags
+      CALL_MPI( MPI_Pack( &(Params.prof_sort_flags), 1, MPI_UNSIGNED, buffer,
+                          buffer_size, &position, MPI_COMM_WORLD ) );
+#endif // VT_UNIFY_HOOKS_PROF
+   } // MASTER
+
+   // share packed unify parameters
+   CALL_MPI( MPI_Bcast( buffer, buffer_size, MPI_PACKED, 0, MPI_COMM_WORLD ) );
+
+   // unpack unify parameters
    //
    SLAVE
    {
-      Params.in_file_prefix = filenames[0];
-      Params.out_file_prefix = filenames[1];
-      Params.prof_out_file = filenames[2];
-      Params.docompress = (flags[0] == 1);
-      Params.doclean = (flags[1] == 1);
-      Params.showusage = (flags[2] == 1);
-      Params.showversion = (flags[3] == 1);
-      Params.showprogress = (flags[4] == 1);
-      Params.bequiet = (flags[5] == 1);
-      Params.onlystats = (flags[6] == 1);
-      Params.domsgmatch = (flags[7] == 1);
-      Params.droprecvs = (flags[8] == 1);
-   }
+      position = 0;
 
-   delete [] filenames[0];
-   delete [] filenames;
+      // in_file_prefix.length()
+      //
+      uint32_t in_file_prefix_length;
+      CALL_MPI( MPI_Unpack( buffer, buffer_size, &position,
+                            &in_file_prefix_length, 1, MPI_UNSIGNED,
+                            MPI_COMM_WORLD ) );
 
-   // free MPI datatype
-   CALL_MPI( MPI_Type_free( &newtype ) );
+      // in_file_prefix
+      //
+      char* in_file_prefix = new char[in_file_prefix_length];
+      assert( in_file_prefix );
+      CALL_MPI( MPI_Unpack( buffer, buffer_size, &position,
+                            in_file_prefix, (VT_MPI_INT)in_file_prefix_length,
+                            MPI_CHAR, MPI_COMM_WORLD ) );
+      Params.in_file_prefix = in_file_prefix;
+      delete [] in_file_prefix;
+
+      // out_file_prefix.length()
+      //
+      uint32_t out_file_prefix_length;
+      CALL_MPI( MPI_Unpack( buffer, buffer_size, &position,
+                            &out_file_prefix_length, 1, MPI_UNSIGNED,
+                            MPI_COMM_WORLD ) );
+
+      // out_file_prefix
+      //
+      char* out_file_prefix = new char[out_file_prefix_length];
+      assert( out_file_prefix );
+      CALL_MPI( MPI_Unpack( buffer, buffer_size, &position,
+                            out_file_prefix, (VT_MPI_INT)out_file_prefix_length,
+                            MPI_CHAR, MPI_COMM_WORLD ) );
+      Params.out_file_prefix = out_file_prefix;
+      delete [] out_file_prefix;
+
+      // verbose_level
+      CALL_MPI( MPI_Unpack( buffer, buffer_size, &position,
+                            &(Params.verbose_level), 1, MPI_UNSIGNED,
+                            MPI_COMM_WORLD ) );
+
+      // docompress
+      CALL_MPI( MPI_Unpack( buffer, buffer_size, &position,
+                            &(Params.docompress), 1, MPI_CHAR,
+                            MPI_COMM_WORLD ) );
+
+      // doclean
+      CALL_MPI( MPI_Unpack( buffer, buffer_size, &position, &(Params.doclean),
+                            1, MPI_CHAR, MPI_COMM_WORLD ) );
+
+      // showusage
+      CALL_MPI( MPI_Unpack( buffer, buffer_size, &position, &(Params.showusage),
+                            1, MPI_CHAR, MPI_COMM_WORLD ) );
+
+      // showversion
+      CALL_MPI( MPI_Unpack( buffer, buffer_size, &position,
+                            &(Params.showversion), 1, MPI_CHAR,
+                            MPI_COMM_WORLD ) );
+
+      // showprogress
+      CALL_MPI( MPI_Unpack( buffer, buffer_size, &position,
+                            &(Params.showprogress), 1, MPI_CHAR,
+                            MPI_COMM_WORLD ) );
+
+      // bequiet
+      CALL_MPI( MPI_Unpack( buffer, buffer_size, &position, &(Params.bequiet),
+                            1, MPI_CHAR, MPI_COMM_WORLD ) );
+
+      // onlystats
+      CALL_MPI( MPI_Unpack( buffer, buffer_size, &position, &(Params.onlystats),
+                            1, MPI_CHAR, MPI_COMM_WORLD ) );
+
+#if defined(HAVE_IOFSL) && HAVE_IOFSL
+      // iofsl_mode
+      CALL_MPI( MPI_Unpack( buffer, buffer_size, &position,
+                            &(Params.iofsl_mode), 1, MPI_UNSIGNED,
+                            MPI_COMM_WORLD ) );
+
+      // iofsl_flags
+      CALL_MPI( MPI_Unpack( buffer, buffer_size, &position,
+                            &(Params.iofsl_flags), 1, MPI_UNSIGNED,
+                            MPI_COMM_WORLD ) );
+
+      // iofsl_num_servers
+      CALL_MPI( MPI_Unpack( buffer, buffer_size, &position,
+                            &(Params.iofsl_num_servers), 1, MPI_UNSIGNED,
+                            MPI_COMM_WORLD ) );
+
+      // iofsl_servers
+      //
+      if( Params.iofsl_num_servers > 0 )
+      {
+         Params.iofsl_servers = new char*[Params.iofsl_num_servers];
+         assert( Params.iofsl_servers );
+
+         for( uint32_t i = 0; i < Params.iofsl_num_servers; i++ )
+         {
+            // strlen(iofsl_servers[i])
+            //
+            uint32_t len;
+            CALL_MPI( MPI_Unpack( buffer, buffer_size, &position, &len, 1,
+                                  MPI_UNSIGNED, MPI_COMM_WORLD ) );
+
+            // iofsl_servers[i]
+            //
+            Params.iofsl_servers[i] = new char[len];
+            assert( Params.iofsl_servers[i] );
+            CALL_MPI( MPI_Unpack( buffer, buffer_size, &position,
+                                  Params.iofsl_servers[i], len, MPI_CHAR,
+                                  MPI_COMM_WORLD ) );
+         }
+      }
+#endif // HAVE_IOFSL
+
+#ifdef VT_UNIFY_HOOKS_MSGMATCH_SNAPS
+      // domsgmatch
+      CALL_MPI( MPI_Unpack( buffer, buffer_size, &position,
+                            &(Params.domsgmatch), 1, MPI_CHAR,
+                            MPI_COMM_WORLD ) );
+
+      // droprecvs
+      CALL_MPI( MPI_Unpack( buffer, buffer_size, &position, &(Params.droprecvs),
+                            1, MPI_CHAR, MPI_COMM_WORLD ) );
+
+      // createsnaps
+      CALL_MPI( MPI_Unpack( buffer, buffer_size, &position,
+                            &(Params.createsnaps), 1, MPI_CHAR,
+                            MPI_COMM_WORLD ) );
+#endif // VT_UNIFY_HOOKS_MSGMATCH_SNAPS
+
+#ifdef VT_UNIFY_HOOKS_PROF
+      // prof_out_file.length()
+      //
+      uint32_t prof_out_file_length;
+      CALL_MPI( MPI_Unpack( buffer, buffer_size, &position,
+                            &prof_out_file_length, 1, MPI_UNSIGNED,
+                            MPI_COMM_WORLD ) );
+
+      // prof_out_file
+      //
+      char* prof_out_file = new char[prof_out_file_length];
+      assert( prof_out_file );
+      CALL_MPI( MPI_Unpack( buffer, buffer_size, &position,
+                            prof_out_file, (VT_MPI_INT)prof_out_file_length,
+                            MPI_CHAR, MPI_COMM_WORLD ) );
+      Params.prof_out_file = prof_out_file;
+      delete [] prof_out_file;
+
+      // prof_sort_flags
+      CALL_MPI( MPI_Unpack( buffer, buffer_size, &position,
+                            &(Params.prof_sort_flags), 1, MPI_UNSIGNED,
+                            MPI_COMM_WORLD ) );
+#endif // VT_UNIFY_HOOKS_PROF
+   } // SLAVE
+
+   // free buffer
+   delete [] buffer;
 
    return !error;
 }
@@ -1316,7 +2114,7 @@ shareUnifyControls()
    CALL_MPI( MPI_Type_commit( &sync_time_newtype ) );
 #endif // VT_ETIMESYNC
 
-   // calculate buffer size
+   // get buffer size needed to pack unify control data
    //
    MASTER
    {
@@ -1324,45 +2122,49 @@ shareUnifyControls()
 
       buffer_size = 0;
 
-      // UnifyCtls.size()
-      CALL_MPI( MPI_Pack_size( 1, MPI_UNSIGNED, MPI_COMM_WORLD, &size ) );
+      // UnifyCtls.size() + mode_flags + iofsl_num_servers + iofsl_mode
+      //
+      CALL_MPI( MPI_Pack_size( 4, MPI_UNSIGNED, MPI_COMM_WORLD, &size ) );
       buffer_size += size;
 
       for( i = 0; i < unify_ctl_size; i++ )
       {
-         // streamid
-         CALL_MPI( MPI_Pack_size( 1, MPI_UNSIGNED, MPI_COMM_WORLD, &size ) );
-         buffer_size += size;
-
-         // pstreamid
-         CALL_MPI( MPI_Pack_size( 1, MPI_UNSIGNED, MPI_COMM_WORLD, &size ) );
+         // streamid + pstreamid
+         //
+         CALL_MPI( MPI_Pack_size( 2, MPI_UNSIGNED, MPI_COMM_WORLD, &size ) );
          buffer_size += size;
 
          // stream_avail
+         //
          CALL_MPI( MPI_Pack_size( 1, MPI_CHAR, MPI_COMM_WORLD, &size ) );
          buffer_size += size;
 
          // ltime, offset
+         //
          CALL_MPI( MPI_Pack_size( 4, MPI_LONG_LONG_INT, MPI_COMM_WORLD,
                                   &size ) );
          buffer_size += size;
 
 #ifdef VT_ETIMESYNC
          // sync_offset
+         //
          CALL_MPI( MPI_Pack_size( 1, MPI_LONG_LONG_INT, MPI_COMM_WORLD,
                                   &size ) );
          buffer_size += size;
 
          // sync_drift
+         //
          CALL_MPI( MPI_Pack_size( 1, MPI_DOUBLE, MPI_COMM_WORLD, &size ) );
          buffer_size += size;
 
          // sync_phases.size(), sync_times.size(),
          // sync_pairs.size()
+         //
          CALL_MPI( MPI_Pack_size( 3, MPI_UNSIGNED, MPI_COMM_WORLD, &size ) );
          buffer_size += size;
 
          // sync_phases
+         //
          if( UnifyCtls[i]->sync_phases.size() > 0 )
          {
             CALL_MPI( MPI_Pack_size(
@@ -1383,6 +2185,7 @@ shareUnifyControls()
          }
 
          // sync_pairs
+         //
          if( UnifyCtls[i]->sync_pairs.size() > 0 )
          {
             CALL_MPI(
@@ -1394,13 +2197,15 @@ shareUnifyControls()
          }
 #endif // VT_ETIMESYNC
       }
-   }
+   } // MASTER
 
    // share buffer size
    CALL_MPI( MPI_Bcast( &buffer_size, 1, MPI_INT, 0, MPI_COMM_WORLD ) );
 
    // allocate buffer
+   //
    buffer = new char[buffer_size];
+   assert( buffer );
 
    // pack unify control data
    //
@@ -1411,6 +2216,18 @@ shareUnifyControls()
       // UnifyCtls.size()
       CALL_MPI( MPI_Pack( &unify_ctl_size, 1, MPI_UNSIGNED, buffer, buffer_size,
                           &position, MPI_COMM_WORLD ) );
+
+      // mode_flags
+      CALL_MPI( MPI_Pack( &(UnifyControlS::mode_flags), 1, MPI_UNSIGNED,
+                          buffer, buffer_size, &position, MPI_COMM_WORLD ) );
+
+      // iofsl_num_servers
+      CALL_MPI( MPI_Pack( &(UnifyControlS::iofsl_num_servers), 1, MPI_UNSIGNED,
+                          buffer, buffer_size, &position, MPI_COMM_WORLD ) );
+
+      // iofsl_mode
+      CALL_MPI( MPI_Pack( &(UnifyControlS::iofsl_mode), 1, MPI_UNSIGNED,
+                          buffer, buffer_size, &position, MPI_COMM_WORLD ) );
 
       for( i = 0; i < unify_ctl_size; i++ )
       {
@@ -1445,8 +2262,7 @@ shareUnifyControls()
 
          // sync_phases.size()
          //
-         uint32_t sync_phases_size =
-                     UnifyCtls[i]->sync_phases.size();
+         uint32_t sync_phases_size = UnifyCtls[i]->sync_phases.size();
          CALL_MPI( MPI_Pack( &sync_phases_size, 1, MPI_UNSIGNED, buffer,
                              buffer_size, &position, MPI_COMM_WORLD ) );
 
@@ -1524,7 +2340,7 @@ shareUnifyControls()
          }
 #endif // VT_ETIMESYNC
       }
-   }
+   } // MASTER
 
    // share packed unify control data
    CALL_MPI( MPI_Bcast( buffer, buffer_size, MPI_PACKED, 0, MPI_COMM_WORLD ) );
@@ -1540,6 +2356,21 @@ shareUnifyControls()
       CALL_MPI( MPI_Unpack( buffer, buffer_size, &position, &unify_ctl_size, 1,
                             MPI_UNSIGNED, MPI_COMM_WORLD ) );
       UnifyCtls.resize( unify_ctl_size );
+
+      // mode_flags
+      CALL_MPI( MPI_Unpack( buffer, buffer_size, &position,
+                            &(UnifyControlS::mode_flags), 1, MPI_UNSIGNED,
+                            MPI_COMM_WORLD ) );
+
+      // iofsl_num_servers
+      CALL_MPI( MPI_Unpack( buffer, buffer_size, &position,
+                            &(UnifyControlS::iofsl_num_servers), 1,
+                            MPI_UNSIGNED, MPI_COMM_WORLD ) );
+
+      // iofsl_mode
+      CALL_MPI( MPI_Unpack( buffer, buffer_size, &position,
+                            &(UnifyControlS::iofsl_mode), 1, MPI_UNSIGNED,
+                            MPI_COMM_WORLD ) );
 
       for( i = 0; i < unify_ctl_size; i++ )
       {
@@ -1671,6 +2502,7 @@ shareUnifyControls()
       }
    } // SLAVE
 
+   // free buffer
    delete [] buffer;
 
 #ifdef VT_ETIMESYNC
@@ -1693,14 +2525,14 @@ VPrint( uint8_t level, const char * fmt, ... )
    {
       MASTER
       {
-#ifdef TIME_VERBOSE
+#ifdef VT_UNIFY_VERBOSE_TIME_PREFIX
          char tstamp[STRBUFSIZE];
          time_t t;
          time( &t );
          ctime_r( &t, tstamp );
          tstamp[strlen(tstamp)-1] = '\0';
          printf( "%s: ", tstamp );
-#endif // TIME_VERBOSE
+#endif // VT_UNIFY_VERBOSE_TIME_PREFIX
 
          va_start( ap, fmt );
          vprintf( fmt, ap );
@@ -1716,14 +2548,14 @@ PVPrint( uint8_t level, const char * fmt, ... )
 
    if( Params.verbose_level >= level )
    {
-#ifdef TIME_VERBOSE
+#ifdef VT_UNIFY_VERBOSE_TIME_PREFIX
       char tstamp[STRBUFSIZE];
       time_t t;
       time( &t );
       ctime_r( &t, tstamp );
       tstamp[strlen(tstamp)-1] = '\0';
       printf( "%s: ", tstamp );
-#endif // TIME_VERBOSE
+#endif // VT_UNIFY_VERBOSE_TIME_PREFIX
 
       va_start( ap, fmt );
 #if !(defined(VT_MPI) || (defined(HAVE_OMP) && HAVE_OMP))

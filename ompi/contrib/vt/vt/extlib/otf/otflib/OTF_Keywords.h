@@ -109,6 +109,10 @@ the keywords identifying record types must follow some special rules:
 #define OTF_KEYWORD_S_DEFSCLFILE 				"SF"
 #define OTF_KEYWORD_F_DEFSCLFILE 				'S'
 
+#define OTF_KEYWORD_L_DEFUNIQUEID				"UNIQUEID"
+#define OTF_KEYWORD_S_DEFUNIQUEID				"UI"
+#define OTF_KEYWORD_F_DEFUNIQUEID				'U'
+
 #define OTF_KEYWORD_L_DEFVERSION 				"VERSION"
 #define OTF_KEYWORD_S_DEFVERSION 				"V"
 #define OTF_KEYWORD_F_DEFVERSION 				'V'
@@ -140,6 +144,10 @@ the keywords identifying record types must follow some special rules:
 #define OTF_KEYWORD_L_DEFPROCESSSUBSTITUTES 	"PROCESSSUBSTITUTES"
 #define OTF_KEYWORD_S_DEFPROCESSSUBSTITUTES 	"PS"
 #define OTF_KEYWORD_F_DEFPROCESSSUBSTITUTES 	'P'
+
+#define OTF_KEYWORD_L_DEFAUXSAMPLEPOINT "AUXSAMPLEPOINT"
+#define OTF_KEYWORD_S_DEFAUXSAMPLEPOINT "AUX"
+#define OTF_KEYWORD_F_DEFAUXSAMPLEPOINT 'A'
 
 /* *** event record keywords *** */
 
@@ -303,6 +311,14 @@ the keywords identifying record types must follow some special rules:
 #define OTF_KEYWORD_S_SNAPSHOT_BEGINFILEOP      "BF"
 #define OTF_KEYWORD_F_SNAPSHOT_BEGINFILEOP      'B'
 
+#define OTF_KEYWORD_L_SNAPSHOT_COLLOPCOUNT      "COLLOPCOUNT"
+#define OTF_KEYWORD_S_SNAPSHOT_COLLOPCOUNT      "COC"
+#define OTF_KEYWORD_F_SNAPSHOT_COLLOPCOUNT      'C'
+
+#define OTF_KEYWORD_L_SNAPSHOT_COUNTER          "COUNTER"
+#define OTF_KEYWORD_S_SNAPSHOT_COUNTER          "CNT"
+#define OTF_KEYWORD_F_SNAPSHOT_COUNTER          'C'
+
 /* *** marker keywords */
 
 
@@ -345,6 +361,9 @@ the keywords identifying record types must follow some special rules:
 
 #define OTF_KEYWORD_L_LOCAL_COUNT				"COUNT"
 #define OTF_KEYWORD_S_LOCAL_COUNT				"N"
+
+#define OTF_KEYWORD_L_LOCAL_COUNTER				"COUNTER"
+#define OTF_KEYWORD_S_LOCAL_COUNTER				"CNT"
 
 #define OTF_KEYWORD_L_LOCAL_DURATION			"DUR"
 #define OTF_KEYWORD_S_LOCAL_DURATION			"D"

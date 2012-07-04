@@ -8,6 +8,7 @@
  *
  */
 
+#include <OTFAUX_State.h>
 #include <OTFAUX_MsgMatching.h>
 #include <OTFAUX_Thumbnail.h>
 

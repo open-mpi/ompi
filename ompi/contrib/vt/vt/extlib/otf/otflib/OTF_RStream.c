@@ -44,7 +44,7 @@ int OTF_RStream_init( OTF_RStream* rstream ) {
 	rstream->buffersizes= 1024*1024;
 	
 #ifdef HAVE_ZLIB
-	rstream->zbuffersizes= 1024*10;
+	rstream->zbuffersizes= OTF_ZBUFFER_DEFAULTSIZE;
 #endif /* HAVE_ZLIB */
 
 	rstream->manager= NULL;
@@ -973,7 +973,7 @@ uint64_t OTF_RStream_readMarker( OTF_RStream* rstream, OTF_HandlerArray* handler
 		if ( NULL == rstream->markerBuffer ) {
 		
 			OTF_Error( "ERROR in function %s, file: %s, line: %i:\n "
-					"the stream has no def buffer.\n",
+					"the stream has no marker buffer.\n",
 					__FUNCTION__, __FILE__, __LINE__ );
 			
 			/* there is no def buffer available for this stream */

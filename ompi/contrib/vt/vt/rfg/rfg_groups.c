@@ -145,14 +145,15 @@ int RFG_Groups_readDefFile( RFG_Groups* groups )
     /* remove leading and trailing spaces from line */
     vt_strtrim( line );
 
+    /* cut possible comment from line */
+
+    p = strchr( line, '#' );
+    if( p != NULL )
+      *p = '\0';
+
     /* continue if line is empty */
     if( strlen( line ) == 0 )
       continue;
-
-    /* continue if line is a comment */
-    if( line[0] == '#' )
-      continue;
-
 
     /* search for '='
        e.g. "GROUP=func1;func2;func3"

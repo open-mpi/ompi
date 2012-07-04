@@ -19,8 +19,6 @@
 #include "otf.h"
 
 #include <deque>
-#include <map>
-#include <set>
 
 //
 // HooksAsyncEventsC class

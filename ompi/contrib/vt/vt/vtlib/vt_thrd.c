@@ -154,7 +154,10 @@ uint32_t VTThrd_create(const char* tname, uint32_t ptid, uint8_t is_virtual)
              VTThrdv[ptid]->name_suffix, child_no);
   }
 
-  /* set parent ID of thread */
+  /* set thread ID */
+  thrd->tid = tid;
+
+  /* set parent thread ID */
   thrd->parent_tid = ptid;
 
   /* set the virtual thread flag */
@@ -165,7 +168,7 @@ uint32_t VTThrd_create(const char* tname, uint32_t ptid, uint8_t is_virtual)
 #endif /* VT_GETCPU */
 
 #if defined(VT_RUSAGE)
-  if ( num_rusage > 0 )
+  if ( num_rusage > 0 && !is_virtual )
   {
     /* create rusage object */
     thrd->ru_obj = vt_rusage_create();
@@ -181,7 +184,7 @@ uint32_t VTThrd_create(const char* tname, uint32_t ptid, uint8_t is_virtual)
 #endif /* VT_RUSAGE */
 
 #if defined(VT_METR)
-  if ( num_metrics > 0 && is_virtual == 0)
+  if ( num_metrics > 0 && !is_virtual )
   {
     /* create event set */
     thrd->metv = vt_metric_create();
@@ -245,12 +248,12 @@ void VTThrd_open(uint32_t tid)
   }
 #endif /* VT_MT || VT_HYB || VT_JAVA */
 
-  if ( thrd )
-  {
-    thrd->gen = VTGen_open(thrd->name, thrd->name_suffix,
-                           thrd->parent_tid, tid, bsize);
-  }
+  /* create trace buffer */
+  thrd->gen = VTGen_open(thrd->name, thrd->name_suffix,
+                         thrd->parent_tid, tid, bsize);
 
+  /* MPI stuff, I/O, and plugin counter not available for
+     virtual threads (e.g. GPU); return */
   if ( tid != 0 && thrd->is_virtual )
     return;
 
@@ -318,16 +321,15 @@ void VTThrd_delete(VTThrd* thrd, uint32_t tid)
   /* must be called before VTGen_delete */
 #if defined(VT_PLUGIN_CNTR)
   /* if we really use plugins and this thread also uses some */
-  if ( vt_plugin_cntr_used && thrd->plugin_cntr_defines ){
+  if ( vt_plugin_cntr_used && thrd->plugin_cntr_defines && !(thrd->is_virtual) )
     vt_plugin_cntr_thread_exit(thrd);
-  }
 #endif /* VT_PLUGIN_CNTR */
 
   if ( thrd->gen )
     VTGen_delete(thrd->gen);
 
 #if defined(VT_RUSAGE)
-  if ( vt_rusage_num() > 0 )
+  if ( vt_rusage_num() > 0 && !(thrd->is_virtual) )
   {
     if ( thrd->ru_obj )
     {
@@ -343,7 +345,7 @@ void VTThrd_delete(VTThrd* thrd, uint32_t tid)
 #endif /* VT_RUSAGE */
 
 #if defined(VT_METR)
-  if ( vt_metric_num() > 0 && thrd->is_virtual == 0 )
+  if ( vt_metric_num() > 0 && !(thrd->is_virtual) )
   {
     if ( thrd->metv )
     {
@@ -385,7 +387,7 @@ void VTThrd_destroy(VTThrd* thrd, uint32_t tid)
   VTGen_destroy(thrd->gen);
 
 #if defined(VT_RUSAGE)
-  if ( vt_rusage_num() > 0 )
+  if ( vt_rusage_num() > 0 && !(thrd->is_virtual) )
   {
     if ( thrd->ru_obj )
     {
@@ -401,7 +403,7 @@ void VTThrd_destroy(VTThrd* thrd, uint32_t tid)
 #endif /* VT_RUSAGE */
 
 #if defined(VT_METR)
-  if ( vt_metric_num() > 0 && thrd->is_virtual == 0 )
+  if ( vt_metric_num() > 0 && !(thrd->is_virtual) )
   {
     if ( thrd->metv )
     {
