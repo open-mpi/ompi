@@ -106,7 +106,7 @@ AC_DEFUN([OMPI_contrib_vt_CONFIG],[
     fi
 
     if test "$contrib_vt_happy" = "1"; then
-        contrib_vt_args="--disable-option-checking --with-openmpi-inside"
+        contrib_vt_args="--disable-option-checking --with-openmpi-inside=1.7"
 
         contrib_vt_skip=no
         eval "set x $ac_configure_args"; shift
