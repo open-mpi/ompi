@@ -113,8 +113,8 @@ void mca_pml_dr_recv_frag_callback(
         (btl->btl_flags & MCA_BTL_FLAGS_NEED_CSUM); 
     
     if(segments->seg_len < sizeof(mca_pml_dr_common_hdr_t)) {
-        MCA_PML_DR_DEBUG(0,(0, "%s:%d: wtf? segments->seg_len:%d < sizeof(mca_pml_dr_common_hdr_t):%lu\n", 
-                            __FILE__, __LINE__, segments->seg_len, (unsigned long)sizeof(mca_pml_dr_common_hdr_t)));
+        MCA_PML_DR_DEBUG(0,(0, "%s:%d: ???? segments->seg_len:%lu < sizeof(mca_pml_dr_common_hdr_t):%lu\n", 
+                            __FILE__, __LINE__, (unsigned long)segments->seg_len, (unsigned long)sizeof(mca_pml_dr_common_hdr_t)));
     
         return;
     }

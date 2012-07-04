@@ -222,7 +222,7 @@ char* orte_errmgr_base_pmi_error(int pmi_err)
         case PMI_ERR_INVALID_KEYVALP: err_msg = "Invalid keyvalp argument"; break;
         case PMI_ERR_INVALID_SIZE: err_msg = "Invalid size argument"; break;
 #if defined(PMI_ERR_INVALID_KVS)
-	/* pmi.h calls this a valid return code but mpich doesn't define it (slurm does). wtf */
+	/* pmi.h calls this a valid return code but mpich doesn't define it (slurm does). */
         case PMI_ERR_INVALID_KVS: err_msg = "Invalid kvs argument"; break;
 #endif
         case PMI_SUCCESS: err_msg = "Success"; break;
