@@ -89,10 +89,14 @@
 %ignore OTF_Handler_DefScl;
 %ignore OTF_Handler_DefSclFile;
 %ignore OTF_Handler_DefCreator;
+%ignore OTF_Handler_DefUniqueId;
 %ignore OTF_Handler_DefVersion;
 %ignore OTF_Handler_DefFile;
 %ignore OTF_Handler_DefFileGroup;
 %ignore OTF_Handler_DefKeyValue;
+%ignore OTF_Handler_DefTimeRange;
+%ignore OTF_Handler_DefCounterAssignments;
+%ignore OTF_Handler_DefProcessSubstitutes;
 %ignore OTF_Handler_NoOp;
 %ignore OTF_Handler_Enter;
 %ignore OTF_Handler_Leave;
@@ -118,6 +122,8 @@
 %ignore OTF_Handler_OpenFileSnapshot;
 %ignore OTF_Handler_BeginCollopSnapshot;
 %ignore OTF_Handler_BeginFileOpSnapshot;
+%ignore OTF_Handler_CollopCountSnapshot;
+%ignore OTF_Handler_CounterSnapshot;
 %ignore OTF_Handler_SummaryComment;
 %ignore OTF_Handler_FunctionSummary;
 %ignore OTF_Handler_FunctionGroupSummary;
@@ -168,6 +174,8 @@
 %ignore OTF_Writer_writeDefProcessGroup;
 %ignore OTF_Writer_writeDefAttributeListKV;
 %ignore OTF_Writer_writeDefAttributeList;
+%ignore OTF_Writer_writeDefCounterAssignments;
+%ignore OTF_Writer_writeDefProcessSubstitutes;
 
 
 %include ../otflib/OTF_Writer.h
@@ -196,6 +204,8 @@
 %rename(OTF_Writer_writeDefProcessGroup) pyOTF_Writer_writeDefProcessGroup;
 %rename(OTF_Writer_writeDefAttributeListKV) pyOTF_Writer_writeDefAttributeListKV;
 %rename(OTF_Writer_writeDefAttributeList) pyOTF_Writer_writeDefAttributeList;
+%rename(OTF_Writer_writeDefCounterAssignments) pyOTF_Writer_writeDefCounterAssignments;
+%rename(OTF_Writer_writeDefProcessSubstitutes) pyOTF_Writer_writeDefProcessSubstitutes;
 
 
 %ignore pyOTF_FirstHandlerArgument;
@@ -215,10 +225,14 @@
 %ignore pyOTF_Handler_DefScl;
 %ignore pyOTF_Handler_DefSclFile;
 %ignore pyOTF_Handler_DefCreator;
+%ignore pyOTF_Handler_DefUniqueId;
 %ignore pyOTF_Handler_DefVersion;
 %ignore pyOTF_Handler_DefFile;
 %ignore pyOTF_Handler_DefFileGroup;
 %ignore pyOTF_Handler_DefKeyValue;
+%ignore pyOTF_Handler_DefTimeRange;
+%ignore pyOTF_Handler_DefCounterAssignments;
+%ignore pyOTF_Handler_DefProcessSubstitutes;
 %ignore pyOTF_Handler_NoOp;
 %ignore pyOTF_Handler_Enter;
 %ignore pyOTF_Handler_Leave;
@@ -244,6 +258,8 @@
 %ignore pyOTF_Handler_OpenFileSnapshot;
 %ignore pyOTF_Handler_BeginCollopSnapshot;
 %ignore pyOTF_Handler_BeginFileOpSnapshot;
+%ignore pyOTF_Handler_CollopCountSnapshot;
+%ignore pyOTF_Handler_CounterSnapshot;
 %ignore pyOTF_Handler_SummaryComment;
 %ignore pyOTF_Handler_FunctionSummary;
 %ignore pyOTF_Handler_FunctionGroupSummary;
@@ -430,6 +446,17 @@ def OTF_CopyHandler_DefCreator( writer , stream,
 		return OTF_RETURN_OK
 
 
+def OTF_CopyHandler_DefUniqueId( writer , stream, 
+		uid, pylist):
+
+	if OTF_Writer_writeDefUniqueId( writer , stream, 
+		uid, pylist ) == 0 :
+
+		return OTF_RETURN_ABORT
+	else :
+		return OTF_RETURN_OK
+
+
 def OTF_CopyHandler_DefVersion( writer , stream, 
 		major, minor, sub, 
 		string, pylist):
@@ -470,6 +497,43 @@ def OTF_CopyHandler_DefKeyValue( writer , stream,
 	if OTF_Writer_writeDefKeyValueKV( writer , stream, 
 		key, type, name, 
 		description, pylist ) == 0 :
+
+		return OTF_RETURN_ABORT
+	else :
+		return OTF_RETURN_OK
+
+
+def OTF_CopyHandler_DefTimeRange( writer , stream, 
+		minTime, maxTime, pylist):
+
+	if OTF_Writer_writeDefTimeRange( writer , stream, 
+		minTime, maxTime, pylist ) == 0 :
+
+		return OTF_RETURN_ABORT
+	else :
+		return OTF_RETURN_OK
+
+
+def OTF_CopyHandler_DefCounterAssignments( writer , stream, 
+		counter, number_of_members, pyprocs_or_groups, 
+		pylist):
+
+	if OTF_Writer_writeDefCounterAssignments( writer , stream, 
+		counter, number_of_members, pyprocs_or_groups, 
+		pylist ) == 0 :
+
+		return OTF_RETURN_ABORT
+	else :
+		return OTF_RETURN_OK
+
+
+def OTF_CopyHandler_DefProcessSubstitutes( writer , stream, 
+		representative, numberOfProcs, pyprocs, 
+		pylist):
+
+	if OTF_Writer_writeDefProcessSubstitutes( writer , stream, 
+		representative, numberOfProcs, pyprocs, 
+		pylist ) == 0 :
 
 		return OTF_RETURN_ABORT
 	else :
@@ -813,6 +877,32 @@ def OTF_CopyHandler_BeginFileOpSnapshot( writer , time,
 		return OTF_RETURN_OK
 
 
+def OTF_CopyHandler_CollopCountSnapshot( writer , time, 
+		process, communicator, count, 
+		pylist):
+
+	if OTF_Writer_writeCollopCountSnapshot( writer , time, 
+		process, communicator, count, 
+		pylist ) == 0 :
+
+		return OTF_RETURN_ABORT
+	else :
+		return OTF_RETURN_OK
+
+
+def OTF_CopyHandler_CounterSnapshot( writer , time, 
+		originaltime, process, counter, 
+		value, pylist):
+
+	if OTF_Writer_writeCounterSnapshot( writer , time, 
+		originaltime, process, counter, 
+		value, pylist ) == 0 :
+
+		return OTF_RETURN_ABORT
+	else :
+		return OTF_RETURN_OK
+
+
 def OTF_CopyHandler_SummaryComment( writer , time, 
 		process, comment, pylist):
 
@@ -995,6 +1085,9 @@ def OTF_HandlerArray_getCopyHandler( handlers, writer ):
 	OTF_HandlerArray_setHandler( handlers, OTF_CopyHandler_DefCreator, OTF_DEFCREATOR_RECORD  )
 	OTF_HandlerArray_setFirstHandlerArg( handlers, writer, OTF_DEFCREATOR_RECORD  )
 
+	OTF_HandlerArray_setHandler( handlers, OTF_CopyHandler_DefUniqueId, OTF_DEFUNIQUEID_RECORD  )
+	OTF_HandlerArray_setFirstHandlerArg( handlers, writer, OTF_DEFUNIQUEID_RECORD  )
+
 	OTF_HandlerArray_setHandler( handlers, OTF_CopyHandler_DefVersion, OTF_DEFVERSION_RECORD  )
 	OTF_HandlerArray_setFirstHandlerArg( handlers, writer, OTF_DEFVERSION_RECORD  )
 
@@ -1006,6 +1099,15 @@ def OTF_HandlerArray_getCopyHandler( handlers, writer ):
 
 	OTF_HandlerArray_setHandler( handlers, OTF_CopyHandler_DefKeyValue, OTF_DEFKEYVALUE_RECORD  )
 	OTF_HandlerArray_setFirstHandlerArg( handlers, writer, OTF_DEFKEYVALUE_RECORD  )
+
+	OTF_HandlerArray_setHandler( handlers, OTF_CopyHandler_DefTimeRange, OTF_DEFTIMERANGE_RECORD  )
+	OTF_HandlerArray_setFirstHandlerArg( handlers, writer, OTF_DEFTIMERANGE_RECORD  )
+
+	OTF_HandlerArray_setHandler( handlers, OTF_CopyHandler_DefCounterAssignments, OTF_DEFCOUNTERASSIGNMENTS_RECORD  )
+	OTF_HandlerArray_setFirstHandlerArg( handlers, writer, OTF_DEFCOUNTERASSIGNMENTS_RECORD  )
+
+	OTF_HandlerArray_setHandler( handlers, OTF_CopyHandler_DefProcessSubstitutes, OTF_DEFPROCESSSUBSTITUTES_RECORD  )
+	OTF_HandlerArray_setFirstHandlerArg( handlers, writer, OTF_DEFPROCESSSUBSTITUTES_RECORD  )
 
 	OTF_HandlerArray_setHandler( handlers, OTF_CopyHandler_NoOp, OTF_NOOP_RECORD  )
 	OTF_HandlerArray_setFirstHandlerArg( handlers, writer, OTF_NOOP_RECORD  )
@@ -1081,6 +1183,12 @@ def OTF_HandlerArray_getCopyHandler( handlers, writer ):
 
 	OTF_HandlerArray_setHandler( handlers, OTF_CopyHandler_BeginFileOpSnapshot, OTF_BEGINFILEOPSNAPSHOT_RECORD  )
 	OTF_HandlerArray_setFirstHandlerArg( handlers, writer, OTF_BEGINFILEOPSNAPSHOT_RECORD  )
+
+	OTF_HandlerArray_setHandler( handlers, OTF_CopyHandler_CollopCountSnapshot, OTF_COLLOPCOUNTSNAPSHOT_RECORD  )
+	OTF_HandlerArray_setFirstHandlerArg( handlers, writer, OTF_COLLOPCOUNTSNAPSHOT_RECORD  )
+
+	OTF_HandlerArray_setHandler( handlers, OTF_CopyHandler_CounterSnapshot, OTF_COUNTERSNAPSHOT_RECORD  )
+	OTF_HandlerArray_setFirstHandlerArg( handlers, writer, OTF_COUNTERSNAPSHOT_RECORD  )
 
 	OTF_HandlerArray_setHandler( handlers, OTF_CopyHandler_SummaryComment, OTF_SUMMARYCOMMENT_RECORD  )
 	OTF_HandlerArray_setFirstHandlerArg( handlers, writer, OTF_SUMMARYCOMMENT_RECORD  )

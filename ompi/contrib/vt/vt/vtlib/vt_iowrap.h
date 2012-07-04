@@ -29,6 +29,54 @@
 
 #include <string.h>
 
+#define VT_IOWRAP_MAP_OPEN_MODE_STRING(MODE) \
+	switch( *MODE ) { \
+		case 'r':  \
+			open_flags=VT_IOWRAP_FILE_MODE_READ; \
+			break; \
+		case 'w':  \
+			open_flags=VT_IOWRAP_FILE_MODE_WRITE; \
+			break; \
+		case 'a':  \
+			open_flags=VT_IOWRAP_FILE_MODE_WRITE|VT_IOWRAP_FILE_MODE_APPEND; \
+			break; \
+		default: \
+		    break; \
+	}
+
+#define VT_IOWRAP_MAP_OPENFLAGSEXT(FLAGS,MODE) \
+	if( FLAGS & O_RDONLY ) { \
+		open_flags=VT_IOWRAP_FILE_MODE_READ; \
+	} \
+	if( FLAGS & O_WRONLY ) { \
+		open_flags=VT_IOWRAP_FILE_MODE_WRITE; \
+	} \
+	if( MODE & O_APPEND ) { \
+		open_flags|=VT_IOWRAP_FILE_MODE_APPEND; \
+	}
+
+#define VT_IOWRAP_1_EXTENDED_ARGUMENT( KEY1, VAL1) \
+    { \
+		uint64_t keyval_value=VAL1; \
+		if( was_recorded && extended_enabled ) { \
+			vt_guarantee_buffer( VT_CURRENT_THREAD, NULL, sizeof(VTBuf_Entry_KeyValue) + \
+													sizeof(VTBuf_Entry_EndFileOperation) ); \
+			vt_keyval( VT_CURRENT_THREAD, KEY1, VT_KEYVAL_TYPE_INT64, &keyval_value); \
+		} \
+	}
+
+#define VT_IOWRAP_2_EXTENDED_ARGUMENTS( KEY1, VAL1, KEY2, VAL2) \
+    { \
+		uint64_t keyval_value_1=VAL1; \
+		uint64_t keyval_value_2=VAL2; \
+		if( was_recorded && extended_enabled ) { \
+			vt_guarantee_buffer( VT_CURRENT_THREAD, NULL, sizeof(VTBuf_Entry_KeyValue) + \
+													sizeof(VTBuf_Entry_KeyValue) + \
+													sizeof(VTBuf_Entry_EndFileOperation) ); \
+			vt_keyval( VT_CURRENT_THREAD, KEY1, VT_KEYVAL_TYPE_INT64, &keyval_value_1); \
+			vt_keyval( VT_CURRENT_THREAD, KEY2, VT_KEYVAL_TYPE_INT64, &keyval_value_2); \
+		} \
+	}
 
 #define VT_ENABLE_IO_TRACING() \
   VT_CHECK_THREAD; \
@@ -264,7 +312,12 @@ EXTERN int(*libc_fprintf)(FILE *, const char *, ...);
 #define DBG_TRACECHK    4
 #define DBG_FULL        255
 
+/* modes for open/creat */
+#define VT_IOWRAP_FILE_MODE_READ   1
+#define VT_IOWRAP_FILE_MODE_WRITE  2
+#define VT_IOWRAP_FILE_MODE_APPEND 4
 
+/* helper macros */
 #define FUNC_IDX(f) _FUNC_IDX(f)
 #define _FUNC_IDX(f) f ## _IDX
 #define VT_IOWRAP_FUNCDEF(f) f ## _FUNCDEF
@@ -653,6 +706,7 @@ EXTERN int(*libc_fprintf)(FILE *, const char *, ...);
         } \
         if( was_recorded ) { \
         	vt_debug_msg(DBG_VT_CALL, "vt_ioend(" stringify(VT_IOWRAP_THISFUNCNAME) "), stamp %llu", (unsigned long long)time); \
+			VT_IOWRAP_1_EXTENDED_ARGUMENT( key_type_mode, open_flags) \
         	vt_ioend( VT_CURRENT_THREAD, &time, fid, matchingid, handle, ioop, 0 ); \
         } \
         vt_exit( VT_CURRENT_THREAD, &time ); \

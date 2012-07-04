@@ -1,18 +1,18 @@
-# VampirTrace region groups specification
+# VampirTrace function group specification
 #
-# group definitions and region assignments
+# Group definitions and region assignments:
 #
-# syntax: <group>=<regions>
+# Syntax: <group>=<functions>
 #
 #   group      group name 
-#   regions    semicolon-seperated list of regions
-#              (can be wildcards)
+#   regions    semicolon-seperated list of functions
+#              (can contain wildcards)
 #
-# example:
+# Example:
 #
-# CALC=add;sub;mul;div
-# USER=app_*
+#   MATH=add;sub;mul;div
+#   USER=app_*
 #
-# These group assignments make the functions "add", "sub", "mul" and "div"
-# associated with group "CALC" and all functions with the prefix "app_" are
-# associated with group "USER".
+# These group assignments associate the functions "add", "sub", "mul" and "div"
+# with group "MATH" and all functions with the prefix "app_" are associated with
+# group "USER".

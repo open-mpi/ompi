@@ -16,10 +16,13 @@
 #include "OTF_Platform.h"
 
 #include "collect_data.h"
+#include "collect_dispersion.h"
 #include "otfprofile.h"
+#include "process_dispersion.h"
 #include "summarize_data.h"
 #include "clustering.h"
 #include "create_csv.h"
+#include "create_marker.h" 
 #include "create_latex.h"
 
 
@@ -129,7 +132,7 @@ int main( int argc, char** argv ) {
             break;
 
         }
-
+       
 #ifndef SHOW_RESULTS
         if ( alldata.params.create_tex )
 #endif /* SHOW_RESULTS */
@@ -163,12 +166,80 @@ int main( int argc, char** argv ) {
 
         }
 #endif /* OTFPROFILE_MPI */
+     
+        if ( alldata.params.create_marker ) {
+           
+        
+            /* step 5: collect dispersion information by re-reading input 
+               trace file */
+            if ( !CollectDispersion( alldata ) ) {
 
-        /* step 5: produce outputs */
+                ret= 1;
+                break;
+                
+            }
+        }
+        
+#ifndef SHOW_RESULTS
+        if ( alldata.params.create_marker )
+#endif /* SHOW_RESULTS */
+        {
+            /* step 5.1: summarize dispersion information */
+            if ( !SummarizeDataDispersion( alldata ) ) {
+                
+                ret= 1;
+                break;
+                
+            }
+            
+        }
+        
+#ifdef OTFPROFILE_MPI
+       if ( 1 < alldata.numRanks &&
+            ( alldata.params.create_marker ) ) {
+              
+            /* step 5.2: reduce data to master; summarized data for producing
+            LaTeX output; per-process/function statistics for additional
+            clustering */
+            if ( !ReduceDataDispersion( alldata ) ) {
+           
+                ret= 1;
+                break;
+                
+            }
+        }
+#endif /* OTFPROFILE_MPI */       
+
+
+        
+        if ( alldata.params.create_marker ) {
+            
+            /* step 5.3: process dispersion information */
+            if ( !ProcessDispersion( alldata ) ) {
+            
+                ret= 1;
+                break;
+            
+            }
+       
+        }
+        
+        if ( alldata.params.create_marker ) {
+         
+            /* step 5.4: create dispersion output */
+            if ( !CreateMarker( alldata ) ) {
+             
+                ret= 1;
+                break;
+                
+            }
+        }
+            
+        /* step 6: produce outputs */
 
         if ( alldata.params.create_csv ) {
 
-            /* step 5.1: create CSV output */
+            /* step 6.1: create CSV output */
             if ( !CreateCSV( alldata ) ) {
 
                 ret= 1;
@@ -180,7 +251,7 @@ int main( int argc, char** argv ) {
 
         if ( alldata.params.create_tex && 0 == alldata.myRank ) {
 
-            /* step 5.2: create LaTeX output */
+            /* step 6.2: create LaTeX output */
             if ( !CreateTex( alldata ) ) {
 
                 ret= 1;
@@ -191,7 +262,7 @@ int main( int argc, char** argv ) {
         }
 
 #ifdef SHOW_RESULTS
-        /* step 5.3: show result data on stdout */
+        /* step 6.3: show result data on stdout */
 
         if ( 0 == alldata.myRank ) {
 
@@ -202,7 +273,7 @@ int main( int argc, char** argv ) {
 
         if ( alldata.params.clustering.enabled ) {
 
-            /* step 6: do additional process clustering */
+            /* step 7: do additional process clustering */
             if ( !ProcessClustering( alldata ) ) {
 
                 ret= 1;
@@ -367,6 +438,11 @@ static int parse_command_line( int argc, char** argv, AllData& alldata ) {
 
             params.max_groups= tmp;
             i++;
+            
+        /* --nologaxis */
+        } else if ( 0 == strcmp( "--nologaxis", argv[i] ) ) {
+
+            params.logaxis = false;
 
         /* -c */
         } else if ( 0 == strcmp( "-c", argv[i] ) ) {
@@ -520,6 +596,16 @@ static int parse_command_line( int argc, char** argv, AllData& alldata ) {
 
             params.create_csv= false;
 
+        /* --marker */
+        } else if ( 0 == strcmp( "--marker", argv[i] ) ) {
+            
+            params.create_marker= true;
+            
+        /* --nomarker */
+        } else if ( 0 == strcmp( "--nomarker", argv[i] ) ) {
+            
+            params.create_marker= false;
+            
         /* --tex */
         } else if ( 0 == strcmp( "--tex", argv[i] ) ) {
 
@@ -837,7 +923,53 @@ static void show_results( const AllData& alldata ) {
             it++;
         }
     }
+/*
+    cout << endl << " global function duration section data per bin: " << endl;
+    {
+    
+        map< Pair, FunctionData, ltPair >::const_iterator it= alldata.functionDurationSectionMapGlobal.begin();
+        map< Pair, FunctionData, ltPair >::const_iterator itend= alldata.functionDurationSectionMapGlobal.end();
 
+        while ( itend != it ) {
+         
+            cout << "     global function  " << it->first.a << " bin " << it->first.b << " -> ";
+            if ( it->second.count.cnt ) {
+                cout << "\t"<<
+                " cnt: " << PRINT_MIN_MAX_AVG(it->second.count,"[#]") << 
+                " exc: " << PRINT_MIN_MAX_AVG(it->second.excl_time,"[t]") << 
+                " inc: " << PRINT_MIN_MAX_AVG(it->second.incl_time,"[t]") << endl;
+            }
+         
+            it++;
+        }
+    }
+*/   
+    cout << endl << " global function dispersion: " << endl;
+    {
+     
+        map< Pair, FunctionDispersionData, ltPair >::const_iterator it= alldata.functionDispersionMap.begin();
+        map< Pair, FunctionDispersionData, ltPair >::const_iterator itend= alldata.functionDispersionMap.end();
+        
+        
+        while ( itend != it ) {
+            
+            cout << "     dispersion  " << it->first.a << " global function " << it->first.b << " -> ";
+            
+            if ( it->second.count ) {
+                cout << "\t" <<
+                " tmin: " << it->second.excl_time_minimum <<
+                "\t t_25: " << it->second.excl_time_low_quartile <<
+                "\t tmed: " << it->second.excl_time_median <<
+                "\t t_75: " << it->second.excl_time_top_quartile <<
+                "\t tmax: " << it->second.excl_time_maximum <<
+                "\t tavg: " << it->second.excl_time_sum / it->second.count << endl;
+            }
+            
+            it++;
+        }
+        
+    }
+    
     cout << endl << " global message data per group pair: " << endl;
     {
         map< Pair, MessageData >::const_iterator it=    alldata.messageMapPerGroupPair.begin();
@@ -997,49 +1129,51 @@ static void show_results( const AllData& alldata ) {
 static void show_helptext() {
 
     cout << endl
-         << " " << ExeName << " - generate a profile of a trace in LaTeX format." << endl
+         << " " << ExeName << " - Generate a profile of an OTF trace in LaTeX format." << endl
          << endl
          << " Syntax: " << ExeName << " [options] <input file name>" << endl
          << endl
          << "   options:" << endl
-         << "      -h, --help           show this help message" << endl
-         << "      -V                   show OTF version" << endl
-         << "      -v                   increase output verbosity" << endl
-         << "                           (can be used more than once)" << endl
-         << "      -p                   show progress" << endl
-         << "      -f <n>               max. number of filehandles available per rank" << endl
-         << "                           (default: " << Params::DEFAULT_MAX_FILE_HANDLES << ")" << endl
-         << "      -b <size>            set buffersize of the reader" << endl
-         << "                           (default: " << Params::DEFAULT_BUFFER_SIZE << ")" << endl
-         << "      -o <prefix>          specify the prefix of output file(s)" << endl
-         << "                           (default: " << Params::DEFAULT_OUTPUT_FILE_PREFIX() << ")" << endl
-         << "      -g <n>               max. number of process groups in LaTeX output" << endl
-         << "                           (range: 1-" << Grouping::MAX_GROUPS << ", default: " << Params::DEFAULT_MAX_GROUPS << ")" << endl
+         << "      -h, --help    show this help message" << endl
+         << "      -V            show OTF version" << endl
+         << "      -v            increase output verbosity" << endl
+         << "                    (can be used more than once)" << endl
+         << "      -p            show progress" << endl
+         << "      -f <n>        max. number of filehandles available per rank" << endl
+         << "                    (default: " << Params::DEFAULT_MAX_FILE_HANDLES << ")" << endl
+         << "      -b <size>     set buffersize of the reader" << endl
+         << "                    (default: " << Params::DEFAULT_BUFFER_SIZE << ")" << endl
+         << "      -o <prefix>   specify the prefix of output file(s)" << endl
+         << "                    (default: " << Params::DEFAULT_OUTPUT_FILE_PREFIX() << ")" << endl
+         << "      -g <n>        max. number of process groups in LaTeX output" << endl
+         << "                    (range: 1-" << Grouping::MAX_GROUPS << ", default: " << Params::DEFAULT_MAX_GROUPS << ")" << endl
          << "      -c, --cluster[ <alg>]" << endl
-         << "                           do additional clustering of processes/threads using" << endl
-         << "                           comparison algorithm <alg> (KMEANS or CLINKAGE)" << endl
-         << "                           (default comparison algorithm: ";
+         << "                    do additional clustering of processes/threads using" << endl
+         << "                    comparison algorithm <alg> (KMEANS or CLINKAGE)" << endl
+         << "                    (default comparison algorithm: ";
 if( Params::Clustering::DEFAULT_ALGORITHM == CLUSTER_ALG_CLINKAGE )
     cout << "CLINKAGE)" << endl;
 else
     cout << "KMEANS)" << endl;
-    cout << "      -m <mapfile>         write cluster mapping to <mapfile>" << endl
-         << "                           (implies -c, default: " << Params::Clustering::DEFAULT_MAP_FILE_NAME() << ")" << endl
-         << "      -s <prefix>          call otfshrink to apply the cluster mapping to" << endl
-         << "                           input trace and produce a new trace named <prefix>" << endl
-         << "                           with symbolic links to the original (implies -c)" << endl
-         << "      -H                   use hard groups for CLINKAGE clustering" << endl
-         << "                           (implies --cluster CLINKAGE)" << endl
-         << "      -q <0-1>             quality threshold for CLINKAGE clustering" << endl
-         << "                           (implies --cluster CLINKAGE, default: " << Params::Clustering::DEFAULT_QUALITY_THRESHOLD() << ")" << endl
-         << "      --stat               read only summarized information, no events" << endl
-         << "      --[no]csv            enable/disable producing CSV output" << endl
-         << "                           (default: " << ( Params::DEFAULT_CREATE_CSV ? "enabled" : "disabled" ) << ")" << endl
-         << "      --[no]tex            enable/disable producing LaTeX output" << endl
-         << "                           (default: " << ( Params::DEFAULT_CREATE_TEX ? "enabled" : "disabled" ) << ")" << endl
+    cout << "      -m <mapfile>  write cluster mapping to <mapfile>" << endl
+         << "                    (implies -c, default: " << Params::Clustering::DEFAULT_MAP_FILE_NAME() << ")" << endl
+         << "      -s <prefix>   call otfshrink to apply the cluster mapping to" << endl
+         << "                    input trace and produce a new trace named <prefix>" << endl
+         << "                    with symbolic links to the original (implies -c)" << endl
+         << "      -H            use hard groups for CLINKAGE clustering" << endl
+         << "                    (implies --cluster CLINKAGE)" << endl
+         << "      -q <0-1>      quality threshold for CLINKAGE clustering" << endl
+         << "                    (implies --cluster CLINKAGE, default: " << Params::Clustering::DEFAULT_QUALITY_THRESHOLD() << ")" << endl
+         << "      --stat        read only summarized information, no events" << endl
+         << "      --[no]csv     enable/disable producing CSV output" << endl
+         << "                    (default: " << ( Params::DEFAULT_CREATE_CSV ? "enabled" : "disabled" ) << ")" << endl
+         << "      --[no]marker  enable/disable producing marker output for irregularity hints" << endl
+         << "                    (default: " << ( Params::DEFAULT_CREATE_MARKER ? "enabled" : "disabled" ) << ")" << endl    
+         << "      --[no]tex     enable/disable producing LaTeX output" << endl
+         << "                    (default: " << ( Params::DEFAULT_CREATE_TEX ? "enabled" : "disabled" ) << ")" << endl
 #if defined(PDFTEX) && defined(HAVE_PGFPLOTS_1_4) && HAVE_PGFPLOTS_1_4
-         << "      --[no]pdf            enable/disable producing PDF output" << endl
-         << "                           (implies --tex if enabled, default: " << ( Params::DEFAULT_CREATE_PDF ? "enabled" : "disabled" ) << ")" << endl
+         << "      --[no]pdf     enable/disable producing PDF output" << endl
+         << "                    (implies --tex if enabled, default: " << ( Params::DEFAULT_CREATE_PDF ? "enabled" : "disabled" ) << ")" << endl
 #else /* PDFTEX && HAVE_PGFPLOTS_1_4 */
          << endl
          << " PDF creation requires the PGFPLOTS package version >1.4" << endl

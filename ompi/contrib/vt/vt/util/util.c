@@ -172,12 +172,6 @@ static int guess_strlen(const char* fmt, va_list ap)
 }
 
 
-void vt_assert_fail(const char* file, int line, const char* expr)
-{
-  printf("%s:%u: failed assertion `%s'\n", file, line, expr);
-  abort();
-}
-
 int vt_asprintf(char** ptr, const char* fmt, ...)
 {
   int length;

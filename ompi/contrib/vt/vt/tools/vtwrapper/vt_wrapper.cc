@@ -22,6 +22,7 @@
 #include <string>
 #include <vector>
 
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -39,8 +40,7 @@ typedef enum
 {
   LANG_CC,  // C
   LANG_CXX, // C++
-  LANG_F77, // Fortran 77
-  LANG_F90  // Fortran 90
+  LANG_FC   // Fortran
 } LangTypeT;
 
 //
@@ -71,10 +71,10 @@ struct ConfigS
 {
   ConfigS()
     : lang_type( LANG_CC ), inst_type( INST_TYPE_MANUAL ), inst_avail( 0 ),
-      showme_flags( 0 ), be_verbose( false ), cleanup( true ),
-      comp_only( false ), outfile_given( false ), uses_mpi( false ),
-      uses_threads( false ), uses_openmp( false ), preprocess( false ),
-      opari_rcfile( DEFAULT_OPARI_RCFILE() ),
+      showme_flags( 0 ), be_verbose( false ), keep_files( false ),
+      reuse_files( false ), comp_only( false ), outfile_given( false ),
+      uses_mpi( false ), uses_threads( false ), uses_openmp( false ),
+      preprocess( false ), opari_rcfile( DEFAULT_OPARI_RCFILE() ),
       opari_tabfile( DEFAULT_OPARI_TABFILE() ), opari_keep_rcfile( false ) {}
 
   // set language type
@@ -150,7 +150,8 @@ struct ConfigS
   int         inst_avail;            // bitmask for available instr.-types
   int         showme_flags;          // bitmask for showme flags
   bool        be_verbose;            // Flag: be verbose?
-  bool        cleanup;               // Flag: remove intermediate files?
+  bool        keep_files;            // Flag: remove intermediate files?
+  bool        reuse_files;           // Flag: reuse intermediate files?
   bool        comp_only;             // Flag: compile only?
   bool        outfile_given;         // Flag: output file given?
   bool        uses_mpi;              // Flag: uses MPI?
@@ -397,10 +398,8 @@ readDataFile()
           error = !Config.setLanguage( LANG_CC );
         else if( value.compare( "C++" ) == 0 )
           error = !Config.setLanguage( LANG_CXX );
-        else if( value.compare( "Fortran 77" ) == 0 )
-          error = !Config.setLanguage( LANG_F77 );
-        else if( value.compare( "Fortran 90" ) == 0 )
-          error = !Config.setLanguage( LANG_F90 );
+        else if( value.compare( "Fortran" ) == 0 )
+          error = !Config.setLanguage( LANG_FC );
         else
         {
           std::cerr << ExeName << ": "
@@ -641,7 +640,7 @@ readEnvironmentVars()
   char* env;
 
   // read environment var. for compiler command
-  // (VT_<CC|CXX|F77|F90>)
+  // (VT_<CC|CXX|FC>)
   //
   env = getenv( Config.comp_cmdenv.c_str() );
   if( env ) Config.setCompilerCmd( env );
@@ -772,11 +771,26 @@ parseCommandLine( int argc, char** argv )
     {
       Config.be_verbose = true;
     }
+    // -vt:keepfiles
+    //
+    else if( arg.compare( "-vt:keepfiles" ) == 0 )
+    {
+      Config.keep_files = true;
+    }
     // -vt:nocleanup
     //
     else if( arg.compare( "-vt:nocleanup" ) == 0 )
     {
-      Config.cleanup = false;
+      std::cerr << ExeName << ": Warning: The option -vt:nocleanup is "
+                << "deprecated, please use -vt:keepfiles instead."
+                << std::endl;
+      Config.keep_files = true;
+    }
+    // -vt:reusefiles
+    //
+    else if( arg.compare( "-vt:reusefiles" ) == 0 )
+    {
+       Config.reuse_files = true;
     }
     // -vt:inst <type>
     //
@@ -1065,7 +1079,9 @@ parseCommandLine( int argc, char** argv )
         arg.compare( "-vt:showme-compile" ) == 0 ||
         arg.compare( "-vt:showme-link" ) == 0 ||
         arg.compare( "-vt:verbose" ) == 0 ||
+        arg.compare( "-vt:keepfiles" ) == 0 ||
         arg.compare( "-vt:nocleanup" ) == 0 ||
+        arg.compare( "-vt:reusefiles" ) == 0 ||
         arg.compare( "-vt:seq" ) == 0 ||
         arg.compare( "-vt:mpi" ) == 0 ||
         arg.compare( "-vt:mt" ) == 0 ||
@@ -1087,7 +1103,7 @@ parseCommandLine( int argc, char** argv )
       // skip next argument, if necessary
       i++;
     }
-    // -vt:<cc|CC|c++|cxx|f77|f90> <cmd>
+    // -vt:<cc|CC|c++|cxx|fc> <cmd>
     //
     else if( ( Config.lang_type == LANG_CC &&
                arg.compare( "-vt:cc" ) == 0 ) ||
@@ -1095,10 +1111,10 @@ parseCommandLine( int argc, char** argv )
                ( arg.compare( "-vt:CC" ) == 0 ||
                  arg.compare( "-vt:c++" ) == 0 ||
                  arg.compare( "-vt:cxx" ) == 0 ) ) ||
-             ( Config.lang_type == LANG_F77 &&
-               arg.compare( "-vt:f77" ) == 0 ) ||
-             ( Config.lang_type == LANG_F90 &&
-               arg.compare( "-vt:f90" ) == 0 ) )
+             ( Config.lang_type == LANG_FC &&
+               ( arg.compare( "-vt:fc" ) == 0 ||
+                 arg.compare( "-vt:f77" ) == 0 ||
+                 arg.compare( "-vt:f90" ) == 0 ) ) )
     {
       if( i == args.size() - 1 )
       {
@@ -1323,7 +1339,7 @@ doWrap()
       //
       std::string cpp_file = src_file;
       si = cpp_file.rfind( '.' );
-      vt_assert( si != std::string::npos );
+      assert( si != std::string::npos );
       cpp_file.insert( si, ".cpp" );
 
       files_to_remove.push_back( cpp_file );
@@ -1357,7 +1373,7 @@ doWrap()
 
       std::string pomp_file = src_file;
       si = pomp_file.rfind( '.' );
-      vt_assert( si != std::string::npos );
+      assert( si != std::string::npos );
       pomp_file.insert( si, ".pomp" );
 
       // convert Fortran source file suffix to upper case, in order to
@@ -1380,19 +1396,29 @@ doWrap()
         files_to_remove.push_back( inc_file );
       }
 
-      // compose OPARI command
+      // run OPARI or reuse existing output file
       //
-      cmd =
-        Config.opari_cmd + " " +
-        Config.opari_args + " " +
-        "-rcfile " + Config.opari_rcfile + " " +
-        "-table " + Config.opari_tabfile.first + " " +
-        src_file + " " +
-        pomp_file;
+      if( !Config.reuse_files || access( pomp_file.c_str(), R_OK ) != 0 )
+      {
+        // compose OPARI command
+        //
+        cmd =
+          Config.opari_cmd + " " +
+          Config.opari_args + " " +
+          "-rcfile " + Config.opari_rcfile + " " +
+          "-table " + Config.opari_tabfile.first + " " +
+          src_file + " " +
+          pomp_file;
 
-      // show/execute OPARI command
-      if( ( rc = showOrExecuteCommand( cmd ) ) != 0 )
-        return rc;
+        // show/execute OPARI command
+        if( ( rc = showOrExecuteCommand( cmd ) ) != 0 )
+          return rc;
+      }
+      else
+      {
+        if( Config.be_verbose )
+          std::cout << "+++ reuse existing " << pomp_file << std::endl;
+      }
 
       src_file = pomp_file;
     }
@@ -1408,7 +1434,7 @@ doWrap()
       if( si != std::string::npos )
         pdb_file = src_file.substr( si+1 );
       si = pdb_file.rfind( '.' );
-      vt_assert( si != std::string::npos );
+      assert( si != std::string::npos );
       pdb_file.replace( si, 4, ".pdb" );
 
       files_to_remove.push_back( pdb_file );
@@ -1418,7 +1444,7 @@ doWrap()
 
       std::string tau_file = src_file;
       si = tau_file.rfind( '.' );
-      vt_assert( si != std::string::npos );
+      assert( si != std::string::npos );
       tau_file.insert( si, ".tau" );
 
       // convert Fortran source file suffix to upper case, in order to
@@ -1447,31 +1473,53 @@ doWrap()
         Config.addTauinstParseArg( "-D_OPENMP" );
       }
 
-      // compose PDT parse command
+      // run PDT parser or reuse existing output file(s)
       //
-      cmd =
-        Config.tauinst_parsecmd + " " +
-        src_file + " " +
-        Config.vt_incdir + " " +
-        Config.tauinst_parseargs;
+      if( !Config.reuse_files ||
+          ( access( pdb_file.c_str(), R_OK ) != 0 &&
+            access( tau_file.c_str(), R_OK ) != 0 ) )
+      {
+        // compose PDT parse command
+        //
+        cmd =
+          Config.tauinst_parsecmd + " " +
+          src_file + " " +
+          Config.vt_incdir + " " +
+          Config.tauinst_parseargs;
 
-      // show/execute PDT parse command
-      if( ( rc = showOrExecuteCommand( cmd ) ) != 0 )
-        return rc;
+        // show/execute PDT parse command
+        if( ( rc = showOrExecuteCommand( cmd ) ) != 0 )
+          return rc;
+      }
+      else
+      {
+        if( Config.be_verbose )
+          std::cout << "+++ reuse existing " << pdb_file << std::endl;
+      }
 
-      // compose TAU instrumentor command
+      // run TAU instrumentor or reuse existing output file
       //
-      cmd =
-        Config.tauinst_cmd + " " +
-        pdb_file + " " +
-        src_file + " " +
-        "-o " +
-        tau_file + " " +
-        Config.tauinst_args;
+      if( !Config.reuse_files || access( tau_file.c_str(), R_OK ) != 0 )
+      {
+        // compose TAU instrumentor command
+        //
+        cmd =
+          Config.tauinst_cmd + " " +
+          pdb_file + " " +
+          src_file + " " +
+          "-o " +
+          tau_file + " " +
+          Config.tauinst_args;
 
-      // show/execute TAU instrumentor command
-      if( ( rc = showOrExecuteCommand( cmd ) ) != 0 )
-        return rc;
+        // show/execute TAU instrumentor command
+        if( ( rc = showOrExecuteCommand( cmd ) ) != 0 )
+          return rc;
+      }
+      else
+      {
+        if( Config.be_verbose )
+          std::cout << "+++ reuse existing " << tau_file << std::endl;
+      }
 
       src_file = tau_file;
     }
@@ -1488,7 +1536,7 @@ doWrap()
         obj_file = src_file.substr( si+1 );
 
       si = obj_file.rfind( '.' );
-      vt_assert( si != std::string::npos );
+      assert( si != std::string::npos );
       obj_file = obj_file.substr( 0, si ) + ".o";
 
       obj_files_to_rename[obj_file] = Config.mod_files[i].second;
@@ -1643,7 +1691,7 @@ doWrap()
 
   // remove intermediate files
   //
-  if( Config.showme_flags == 0 && Config.cleanup )
+  if( Config.showme_flags == 0 && !Config.keep_files )
   {
     for( i = 0; i < files_to_remove.size(); i++ )
     {
@@ -1734,13 +1782,9 @@ showUsage()
       str_lang = "C++";
       str_lang_suffix = "cxx";
       break;
-    case LANG_F77:
-      str_lang = "Fortran 77";
-      str_lang_suffix = "f77";
-      break;
-    case LANG_F90:
-      str_lang = "Fortran 90";
-      str_lang_suffix = "f90";
+    case LANG_FC:
+      str_lang = "Fortran";
+      str_lang_suffix = "fc";
       break;
   }
 
@@ -1754,7 +1798,8 @@ showUsage()
             << std::endl
             << "     -vt:version         Show VampirTrace version." << std::endl
             << std::endl
-            << "     -vt:" << str_lang_suffix << " <cmd>       Set the underlying compiler command." <<  std::endl
+            << "     -vt:" << str_lang_suffix << " <cmd>" << std::endl
+            << "                         Set the underlying compiler command." <<  std::endl
             << "                         (default: " << Config.comp_cmd << ")" << std::endl
             << std::endl
             << "     -vt:inst <insttype> Set the instrumentation type." << std::endl
@@ -1809,7 +1854,9 @@ showUsage()
             << std::endl
             << "     -vt:verbose         Enable verbose mode." << std::endl
             << std::endl
-            << "     -vt:nocleanup       Do not remove intermediate files." << std::endl
+            << "     -vt:keepfiles       Keep intermediate files." << std::endl
+            << std::endl
+            << "     -vt:reusefiles      Reuse intermediate files, if exist." << std::endl
             << std::endl
             << "     -vt:show[me]        Do not invoke the underlying compiler." << std::endl
             << "                         Instead, show the command line(s) that would be" << std::endl
@@ -1838,13 +1885,9 @@ showUsage()
       std::cout << "     VT_CXX              C++ compiler command (equivalent to '-vt:" << str_lang_suffix << "'*)" << std::endl
                 << "     VT_CXXFLAGS         C++ compiler flags" << std::endl;
       break;
-    case LANG_F77:
-      std::cout << "     VT_F77              Fortran 77 compiler command (equivalent to '-vt:" << str_lang_suffix << "'*)" << std::endl
-                << "     VT_FFLAGS           Fortran 77 compiler flags" << std::endl;
-      break;
-    case LANG_F90:
-      std::cout << "     VT_F90              Fortran 90 compiler command (equivalent to '-vt:" << str_lang_suffix <<"'*)" << std::endl
-                << "     VT_FCFLAGS          Fortran 90 compiler flags" << std::endl;
+    case LANG_FC:
+      std::cout << "     VT_FC               Fortran compiler command (equivalent to '-vt:" << str_lang_suffix <<"'*)" << std::endl
+                << "     VT_FCFLAGS          Fortran compiler flags" << std::endl;
       break;
   }
   std::cout << "     VT_LDFLAGS          Linker flags" << std::endl
@@ -1876,23 +1919,14 @@ showUsage()
                 << std::endl
                 << "        vtcxx -vt:inst manual foobar.cpp -o foobar -DVTRACE";
       break;
-    case LANG_F77:
-      std::cout << "        vtf77 -vt:f77 g77 -vt:inst compinst -c foo.F -o foo.o" << std::endl
-                << "        vtf77 -vt:f77 g77 -vt:inst compinst bar.F -o bar.o" << std::endl
-                << "        vtf77 -vt:f77 g77 -vt:inst compinst foo.o bar.o -o foo" << std::endl
+    case LANG_FC:
+      std::cout << "        vtfort -vt:fc gfortran -vt:inst compinst -c foo.F90 -o foo.o" << std::endl
+                << "        vtfort -vt:fc gfortran -vt:inst compinst bar.F90 -o bar.o" << std::endl
+                << "        vtfort -vt:fc gfortran -vt:inst compinst foo.o bar.o -o foo" << std::endl
                 << std::endl
                 << "     manually instrumentation by using VT's API:" << std::endl
                 << std::endl
-                << "        vtf77 -vt:inst manual foobar.F -o foobar -DVTRACE";
-      break;
-    case LANG_F90:
-      std::cout << "        vtf90 -vt:f90 gfortran -vt:inst compinst -c foo.F90 -o foo.o" << std::endl
-                << "        vtf90 -vt:f90 gfortran -vt:inst compinst bar.F90 -o bar.o" << std::endl
-                << "        vtf90 -vt:f90 gfortran -vt:inst compinst foo.o bar.o -o foo" << std::endl
-                << std::endl
-                << "     manually instrumentation by using VT's API:" << std::endl
-                << std::endl
-                << "        vtf90 -vt:inst manual foobar.F90 -o foobar -DVTRACE";
+                << "        vtfort -vt:inst manual foobar.F90 -o foobar -DVTRACE";
       break;
   }
 
@@ -1998,48 +2032,25 @@ trimString( std::string& str )
 bool
 ConfigS::setLanguage( const LangTypeT lang )
 {
-#if !(defined(HAVE_F77) && HAVE_F77) || !(defined(HAVE_F90) && HAVE_F90)
-  bool error = false;
-  std::string str_lang;
-
-  if( lang == LANG_F77 )
-  {
-#   if !(defined(HAVE_F77) && HAVE_F77)
-      str_lang = "Fortran 77";
-      error = true;
-#   endif // HAVE_F77
-  }
-  else if( lang == LANG_F90 )
-  {
-#   if !(defined(HAVE_F90) && HAVE_F90)
-      str_lang = "Fortran 90";
-      error = true;
-#   endif // HAVE_F90
-  }
-
-  if( !error )
-  {
-    lang_type = lang;
-  }
-  else
+#if !(defined(HAVE_FC) && HAVE_FC)
+  if( lang == LANG_FC )
   {
     std::cerr << "Unfortunately, this installation of VampirTrace "
-              << "was not compiled with" << std::endl
-              << str_lang << " support.  As such, the " << ExeName
-              << " compiler is non-functional." << std::endl;
+              << "was not compiled with Fortran support." << std::endl
+              << "As such, the " << ExeName << " compiler is non-functional."
+              << std::endl;
+    return false;
   }
+#endif // HAVE_FC
 
-  return !error;
-#else // HAVE_F77 || HAVE_F90
   lang_type = lang;
   return true;
-#endif // HAVE_F77 || HAVE_F90
 }
 
 bool
 ConfigS::fortran() const
 {
-  return ( lang_type == LANG_F77 || lang_type == LANG_F90 );
+  return ( lang_type == LANG_FC );
 }
 
 void
@@ -2075,14 +2086,14 @@ ConfigS::setCompilerCmd( const std::string& cmd )
 void
 ConfigS::addCompilerArg( const std::string& arg )
 {
-  vt_assert( arg.length() > 0 );
+  assert( arg.length() > 0 );
   addOrSetStringList( Config.comp_args, arg );
 }
 
 void
 ConfigS::addCompilerLib( const std::string& lib )
 {
-  vt_assert( lib.length() > 0 );
+  assert( lib.length() > 0 );
   addOrSetStringList( Config.comp_libs, lib );
 }
 
@@ -2103,7 +2114,7 @@ ConfigS::addModSrcFile( const std::string& file )
   // create object file name of source file
   //
   si = file_base.rfind( '.' );
-  vt_assert( si != std::string::npos );
+  assert( si != std::string::npos );
   file_obj = file_base.substr( 0, si ) + ".o";
 
   // store source/object file name for later processing by OPARI and/or TAU
@@ -2113,7 +2124,7 @@ ConfigS::addModSrcFile( const std::string& file )
   //
 
   si = file.rfind( '.' );
-  vt_assert( si != std::string::npos );
+  assert( si != std::string::npos );
 
   std::string base = file.substr( 0, si );
   std::string suffix = file.substr( si );
@@ -2167,28 +2178,28 @@ ConfigS::setOpariRcFile( const std::string& file )
 void
 ConfigS::addOpariArg( const std::string& arg )
 {
-  vt_assert( arg.length() > 0 );
+  assert( arg.length() > 0 );
   addOrSetStringList( Config.opari_args, arg, arg[0] == '!' );
 }
 
 void
 ConfigS::addTauinstArg( const std::string& arg )
 {
-  vt_assert( arg.length() > 0 );
+  assert( arg.length() > 0 );
   addOrSetStringList( Config.tauinst_args, arg, arg[0] == '!' );
 }
 
 void
 ConfigS::addTauinstParseArg( const std::string& arg )
 {
-  vt_assert( arg.length() > 0 );
+  assert( arg.length() > 0 );
   addOrSetStringList( Config.tauinst_parseargs, arg, arg[0] == '!' );
 }
 
 void
 ConfigS::addPrepFlag( const std::string& flag )
 {
-  vt_assert( flag.length() > 0 );
+  assert( flag.length() > 0 );
   addOrSetStringList( Config.prep_flags, flag, flag[0] == '!' );
 }
 
@@ -2288,7 +2299,7 @@ ConfigS::setInstAvail( const std::string& type )
 bool
 ConfigS::setInstType( const InstTypeT type )
 {
-  vt_assert( inst_avail != 0 );
+  assert( inst_avail != 0 );
 
   // instrumentation available ?
   if( !isInstAvail( type ) )

@@ -85,6 +85,17 @@ uint8_t OTF_KeyValueList_close(OTF_KeyValueList* list) {
 	return 0;
 }
 
+OTF_KeyValueList* OTF_KeyValueList_clone(OTF_KeyValueList* list) {
+
+	OTF_KeyValueList *new_list;
+	new_list = OTF_KeyValueList_new();
+	if ( new_list == NULL || list == NULL ) {
+		return new_list;
+	}
+	OTF_KeyValueList_appendKeyValueList( new_list, list );
+	return new_list;
+}
+
 uint8_t OTF_KeyValueList_reset(OTF_KeyValueList* list) {
 	
 	/*OTF_KeyValuePairList *next;

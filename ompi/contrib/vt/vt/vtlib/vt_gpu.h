@@ -25,12 +25,31 @@
 #include "vt_trc.h"         /* VampirTrace events */
 #include "vt_error.h"       /* VampirTrace warning and error messages */
 
+/* definition for the GPU tracing features/configuration */
+#define VT_GPU_TRACE_CUDA          (1 << 0)
+#define VT_GPU_TRACE_CUPTI         (1 << 1)
+#define VT_GPU_TRACE_OPENCL        (1 << 2)
+#define VT_GPU_TRACE_RUNTIME_API   (1 << 3)
+#define VT_GPU_TRACE_DRIVER_API    (1 << 4)
+#define VT_GPU_TRACE_KERNEL        (1 << 5)
+#define VT_GPU_TRACE_IDLE          (1 << 6)
+#define VT_GPU_TRACE_MEMCPY        (1 << 7)
+#define VT_GPU_TRACE_MEMUSAGE      (1 << 8)
+#define VT_GPU_TRACE_DEBUG         (1 << 9)
+#define VT_GPU_TRACE_ERROR         (1 << 10)
+#define VT_GPU_TRACE_DEFAULT \
+  (VT_GPU_TRACE_CUDA | VT_GPU_TRACE_RUNTIME_API | VT_GPU_TRACE_OPENCL | \
+   VT_GPU_TRACE_KERNEL | VT_GPU_TRACE_MEMCPY)
+
 /* defines the maximum string length of a function/kernel executed on GPU */
 #define VTGPU_KERNEL_STRING_SIZE 256
 
 /* default and maximum buffer size for asynchronous on-device tasks (in bytes) */
 #define VTGPU_DEFAULT_BSIZE 8192
 #define VTGPU_MAX_BSIZE     2097152 /* 8192^8 bytes */
+
+/* default buffer size for CUPTI activities */
+#define VT_CUPTI_ACT_DEFAULT_BSIZE 65536
 
 /* defines for GPU GROUP and GPU COMM (8 bit only!!!) */
 #define VTGPU_NO_GPU   0x00 /* thread is no gpu and does no gpu communication */
@@ -48,6 +67,17 @@
   (VT_PROCESS_ID(vt_my_trace, thread_id)-1)
 
 #if (defined(VT_CUDARTWRAP) || defined(VT_CUPTI))
+
+#if defined(VT_LIBERTY)
+#include "vt_demangle.h"
+
+#define vt_cuda_demangleKernel(mangled) \
+  cplus_demangle(mangled, 0)
+
+#else
+
+EXTERN char vt_gpu_kernel_name[VTGPU_KERNEL_STRING_SIZE];
+
 /*
  * Parse the device function name:
  * "_Z<kernel_length><kernel_name><templates>..." (no name space)
@@ -56,7 +86,8 @@
  * @param kname the extracted kernel name
  * @param devFunc the CUDA internal kernel function name
  */
-EXTERN void vt_cuda_symbolToKernel(char *kname, const char* devFunc);
+EXTERN char* vt_cuda_demangleKernel(const char* mangled);
+#endif /* defined(VT_DEMANGLE) */
 #endif /* defined(VT_CUDARTWRAP) || defined(VT_CUPTI) */
 
 
@@ -113,9 +144,29 @@ EXTERN uint32_t vt_gpu_commCID;
 EXTERN uint8_t *vt_gpu_prop;
 
 /*
+ * bit mask holding the GPU tracing configuration
+ */
+EXTERN uint32_t vt_gpu_config;
+
+/*
+ * flag: trace GPU kernels?
+ */
+EXTERN uint8_t vt_gpu_trace_kernels;
+
+/*
  * flag: write GPU idle time as region into first GPU stream/queue?
  */
 EXTERN uint8_t vt_gpu_trace_idle;
+
+/*
+ * flag: trace GPU data transfers (memory copies)?
+ */
+EXTERN uint8_t vt_gpu_trace_mcpy;
+
+/*
+ * flag: trace GPU memory usage (allocation, free)?
+ */
+EXTERN uint8_t vt_gpu_trace_memusage;
 
 /*
  * flag: Is debugging on? (yes: do not call CUDA functions in finalize)
@@ -127,10 +178,21 @@ EXTERN uint8_t vt_gpu_debug;
  */
 EXTERN uint8_t vt_gpu_error;
 
+/*
+ * VampirTrace timestamp during vt_gpu_init(). Is only set if kernel and idle 
+ * time measurement is enabled.
+ */
+EXTERN uint64_t vt_gpu_init_time;
+
 /* 
  * VampirTrace region ID for GPU idle time 
  */
 EXTERN uint32_t vt_gpu_rid_idle;
+
+/*
+ * VampirTrace GPU memory allocation counter
+ */
+EXTERN uint32_t vt_gpu_cid_memusage;
 
 /*
  * Initialization for all GPU API wrappers.
@@ -143,6 +205,11 @@ EXTERN void vt_gpu_init(void);
  * VampirTrace IDS have to be locked, before calling this function.
  */
 EXTERN void vt_gpu_finalize(void);
+
+/*
+ * Get GPU tracing configuration.
+ */
+EXTERN uint32_t vt_gpu_get_config(void);
 
 /* 
  * Uses VampirTrace Thread API to create a GPU thread

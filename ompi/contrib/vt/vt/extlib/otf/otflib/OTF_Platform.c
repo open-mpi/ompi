@@ -20,6 +20,9 @@
 #if defined(_WIN32) /* windows */
 
 #include <Windows.h>
+#include <io.h>
+
+#include "OTF_inttypes_win.h"
 
 
 int gettimeofday(struct timeval* tv, void* dummytimezone) {
@@ -33,6 +36,35 @@ int gettimeofday(struct timeval* tv, void* dummytimezone) {
 	tv->tv_sec = (long) ((now.ns100 - 116444736000000000LL) / 10000000LL);
 
 	return 0;
+}
+
+/* Taken from: http://www.mail-archive.com/pan-devel@nongnu.org/msg00294.html */
+int mkstemp(char *tmpl)
+{
+	int ret = -1;
+
+	mktemp(tmpl);
+	ret = open(tmpl, O_RDWR|O_BINARY|O_CREAT|O_EXCL|_O_SHORT_LIVED, _S_IREAD|_S_IWRITE);
+
+	return ret;
+}
+
+
+/* Taken from: http://gnuwin32.sourceforge.net/packages/libgw32c.htm */
+long int nrand48 (unsigned short int xsubi[3])
+{
+    uint64_t x = (uint64_t) xsubi[2] << 32 | (uint32_t) xsubi[1] << 16 | xsubi[0];
+    x = x * 0x5deece66dull + 0xb;
+
+    xsubi[0] = x & 0xffff;
+    xsubi[1] = (x >> 16) & 0xffff;
+    xsubi[2] = (x >> 32) & 0xffff;
+
+    if (sizeof (unsigned short int) == 2) {
+        return xsubi[2] << 15 | xsubi[1] >> 1;
+    } else {
+        return xsubi[2] >> 1;
+    }
 }
 
 #else /* unix */

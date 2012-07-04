@@ -74,6 +74,11 @@ CHECK_ZLIB
 if test x"$force_zlib" = "xyes" -a x"$zlib_error" = "xyes"; then exit 1; fi
 AM_CONDITIONAL(AMHAVEZLIB, test x"$have_zlib" = xyes)
 
+# Checks for zoidfs support.
+CHECK_ZOIDFS
+if test x"$force_zoidfs" = "xyes" -a x"$zoidfs_error" = "xyes"; then exit 1; fi
+AM_CONDITIONAL(AMHAVEZOIDFS, test x"$have_zoidfs" = xyes)
+
 # Checks for math library.
 CHECK_MATH
 
@@ -92,7 +97,7 @@ WITH_VERBOSE
 
 # Checks for header files.
 AC_HEADER_STDC
-AC_CHECK_HEADERS([fcntl.h stddef.h stdlib.h string.h sys/param.h sys/select.h sys/time.h unistd.h])
+AC_CHECK_HEADERS([ctype.h fcntl.h stddef.h stdlib.h string.h sys/param.h sys/select.h sys/time.h unistd.h])
 AC_CHECK_HEADER([stdint.h], [have_stdint_h=1], [have_stdint_h=0])
 AC_CHECK_HEADER([inttypes.h], [have_inttypes_h=1], [have_inttypes_h=0])
 AC_SUBST([have_stdint_h])
@@ -157,7 +162,6 @@ AC_CONFIG_FILES([Makefile
 	tests/generic_streams-mpi/Makefile
 	tests/progress/Makefile
 	tests/read_from_buffer/Makefile
-	tests/thumbnail/Makefile
 	docu/Makefile
 ])
 

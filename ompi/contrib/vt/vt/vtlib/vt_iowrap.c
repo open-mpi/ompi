@@ -75,8 +75,26 @@ static uint32_t	vt_fid = VT_NO_ID;
 /** \brief      VT file id to be used when user supplied fd == -1 */
 static uint32_t invalid_fd_fid = 0;
 
+/** \brief      whether extended recording is enabled or not */
+static int      extended_enabled = 0;
+
 /** \brief      VT file id to be used for functions like sync() */
 static uint32_t all_files_fid = 0;
+
+/** \brief      key type for mode */
+static uint32_t key_type_mode = 0;
+
+/** \brief      key type for offset */
+static uint32_t key_type_offset = 0;
+
+/** \brief      key type for whence */
+static uint32_t key_type_whence = 0;
+
+/** \brief      key type for number of elements */
+static uint32_t key_type_numelements = 0;
+
+/** \brief      key type for size of a single element */
+static uint32_t key_type_elementsize = 0;
 
 /*********************************************/
 /*                                           */ 
@@ -121,6 +139,17 @@ static void get_iolib_handle(void)
 /*     init & finalize                       */
 /*                                           */ 
 /*********************************************/
+
+static void vt_iowrap_init_extended_tracing(void)
+{
+	/* not much to do, just register key types for the key-value stuff */
+	key_type_mode        = vt_def_keyval( VT_CURRENT_THREAD, VT_KEYVAL_TYPE_INT64, "file mode" );
+	key_type_offset      = vt_def_keyval( VT_CURRENT_THREAD, VT_KEYVAL_TYPE_INT64, "file offset" );
+	key_type_whence      = vt_def_keyval( VT_CURRENT_THREAD, VT_KEYVAL_TYPE_INT64, "seek whence" );
+	key_type_numelements = vt_def_keyval( VT_CURRENT_THREAD, VT_KEYVAL_TYPE_INT64, "read/write numelements" );
+	key_type_elementsize = vt_def_keyval( VT_CURRENT_THREAD, VT_KEYVAL_TYPE_INT64, "read/write elementsize" );
+	extended_enabled     = 1;
+}
 
 int (*libc_fprintf)(FILE *, const char *, ...) = NULL;
 void vt_iowrap_externals_init()
@@ -257,6 +286,12 @@ void vt_iowrap_init()
 #if defined(HAVE_FDATASYNC) && HAVE_FDATASYNC
         VT_IOWRAP_INIT_FUNC(fdatasync)
 #endif /* HAVE_FDATASYNC */
+
+		/* init extended recording of function arguments as well */
+		if( vt_env_iotrace_extended() )
+		{
+			vt_iowrap_init_extended_tracing();
+		}
 }
 
 void vt_iowrap_reg()
@@ -373,6 +408,7 @@ int open(const char *path, int flags, ...)
 	mode_t mode = 0;
 	int ret;
 	uint64_t enter_time;
+	uint64_t open_flags=0;
 
         /* checks whether tracing is enabled and initializes
 	   if necessary */
@@ -402,6 +438,7 @@ int open(const char *path, int flags, ...)
 	vt_debug_msg(DBG_IO, "real_" stringify(VT_IOWRAP_THISFUNCNAME));
 	VT_IOWRAP_CALL_LIBFUNC3(VT_IOWRAP_THISFUNCNAME, ret, path, flags, mode);
 
+	VT_IOWRAP_MAP_OPENFLAGSEXT( flags, mode);
 	VT_IOWRAP_LEAVE_IOFUNC_OPEN( ret==-1, ret );
 
 	return ret;
@@ -416,6 +453,7 @@ int open64(const char *path, int flags, ...)
 	mode_t mode = 0;
 	int ret;
 	uint64_t enter_time;
+	uint64_t open_flags=0;
 
 	VT_IOWRAP_INIT_IOFUNC_OPEN();
 
@@ -441,6 +479,7 @@ int open64(const char *path, int flags, ...)
 	vt_debug_msg(DBG_IO, "real_" stringify(VT_IOWRAP_THISFUNCNAME));
 	VT_IOWRAP_CALL_LIBFUNC3(VT_IOWRAP_THISFUNCNAME, ret, path, flags, mode);
 
+	VT_IOWRAP_MAP_OPENFLAGSEXT( flags, mode);
 	VT_IOWRAP_LEAVE_IOFUNC_OPEN( ret==-1, ret);
 
 	return ret;
@@ -453,7 +492,9 @@ int creat(const char *path, mode_t mode)
 {
 #define VT_IOWRAP_THISFUNCNAME creat
 	int ret;
+	int dummy=0;
 	uint64_t enter_time;
+	uint64_t open_flags=0;
 
 	VT_IOWRAP_INIT_IOFUNC_OPEN();
 
@@ -466,6 +507,7 @@ int creat(const char *path, mode_t mode)
 	vt_debug_msg(DBG_IO, "real_" stringify(VT_IOWRAP_THISFUNCNAME));
 	VT_IOWRAP_CALL_LIBFUNC2(VT_IOWRAP_THISFUNCNAME, ret, path, mode);
 
+	VT_IOWRAP_MAP_OPENFLAGSEXT( dummy, mode);
 	VT_IOWRAP_LEAVE_IOFUNC_OPEN( ret==-1, ret);
 
 	return ret;
@@ -478,7 +520,9 @@ int creat64(const char *path, mode_t mode)
 {
 #define VT_IOWRAP_THISFUNCNAME creat64
 	int ret;
+	int dummy=0;
 	uint64_t enter_time;
+	uint64_t open_flags=0;
 
 	VT_IOWRAP_INIT_IOFUNC_OPEN();
 
@@ -491,6 +535,7 @@ int creat64(const char *path, mode_t mode)
 	vt_debug_msg(DBG_IO, "real_" stringify(VT_IOWRAP_THISFUNCNAME));
 	VT_IOWRAP_CALL_LIBFUNC2(VT_IOWRAP_THISFUNCNAME, ret, path, mode);
 
+	VT_IOWRAP_MAP_OPENFLAGSEXT( dummy, mode);
 	VT_IOWRAP_LEAVE_IOFUNC_OPEN( ret==-1, ret);
 
 	return ret;
@@ -588,6 +633,7 @@ off_t lseek(int fd, off_t offset, int whence)
 	vt_debug_msg(DBG_IO, "real_" stringify(VT_IOWRAP_THISFUNCNAME));
 	VT_IOWRAP_CALL_LIBFUNC3(VT_IOWRAP_THISFUNCNAME, ret, fd, offset, whence);
 
+	VT_IOWRAP_2_EXTENDED_ARGUMENTS( key_type_offset, offset, key_type_whence, whence);
 	VT_IOWRAP_LEAVE_IOFUNC( ret==(off_t)-1, fd);
 
 	return ret;
@@ -613,6 +659,7 @@ off64_t lseek64(int fd, off64_t offset, int whence)
 	vt_debug_msg(DBG_IO, "real_" stringify(VT_IOWRAP_THISFUNCNAME));
 	VT_IOWRAP_CALL_LIBFUNC3(VT_IOWRAP_THISFUNCNAME, ret, fd, offset, whence);
 
+	VT_IOWRAP_2_EXTENDED_ARGUMENTS( key_type_offset, offset, key_type_whence, whence);
 	VT_IOWRAP_LEAVE_IOFUNC( ret==(off64_t)-1, fd);
 
 	return ret;
@@ -739,6 +786,7 @@ ssize_t pread(int fd, void *buf, size_t count, off_t offset)
 	VT_IOWRAP_CALL_LIBFUNC4(VT_IOWRAP_THISFUNCNAME, ret, fd, buf, count, offset);
 	num_bytes = ret;
 
+	VT_IOWRAP_1_EXTENDED_ARGUMENT( key_type_offset, offset);
 	VT_IOWRAP_LEAVE_IOFUNC( ret==-1, fd);
 
 	return ret;
@@ -764,6 +812,7 @@ ssize_t pwrite(int fd, const void *buf, size_t count, off_t offset)
 	VT_IOWRAP_CALL_LIBFUNC4(VT_IOWRAP_THISFUNCNAME, ret, fd, buf, count, offset);
 	num_bytes = ret;
 
+	VT_IOWRAP_1_EXTENDED_ARGUMENT( key_type_offset, offset);
 	VT_IOWRAP_LEAVE_IOFUNC( ret==-1, fd);
 
 	return ret;
@@ -790,6 +839,7 @@ ssize_t pread64(int fd, void *buf, size_t count, off64_t offset)
 	VT_IOWRAP_CALL_LIBFUNC4(VT_IOWRAP_THISFUNCNAME, ret, fd, buf, count, offset);
 	num_bytes = ret;
 
+	VT_IOWRAP_1_EXTENDED_ARGUMENT( key_type_offset, offset);
 	VT_IOWRAP_LEAVE_IOFUNC( ret==-1, fd);
 
 	return ret;
@@ -817,6 +867,7 @@ ssize_t pwrite64(int fd, const void *buf, size_t count, off64_t offset)
 	VT_IOWRAP_CALL_LIBFUNC4(VT_IOWRAP_THISFUNCNAME, ret, fd, buf, count, offset);
 	num_bytes = ret;
 
+	VT_IOWRAP_1_EXTENDED_ARGUMENT( key_type_offset, offset);
 	VT_IOWRAP_LEAVE_IOFUNC( ret==-1, fd);
 
 	return ret;
@@ -830,7 +881,8 @@ FILE *fopen(const char *path, const char *mode)
 #define VT_IOWRAP_THISFUNCNAME fopen
 	FILE *ret;
 	uint64_t enter_time;
-        int tmp;
+    int tmp;
+	uint64_t open_flags=0;
 
 	VT_IOWRAP_INIT_IOFUNC_OPEN();
 
@@ -844,6 +896,7 @@ FILE *fopen(const char *path, const char *mode)
 	VT_IOWRAP_CALL_LIBFUNC2(VT_IOWRAP_THISFUNCNAME, ret, path, mode);
         tmp=(ret!=NULL) ? fileno(ret): 0;
 
+	VT_IOWRAP_MAP_OPEN_MODE_STRING( mode );
 	VT_IOWRAP_LEAVE_IOFUNC_OPEN( ret==NULL, tmp);
 
 	return ret;
@@ -857,7 +910,8 @@ FILE *fopen64(const char *path, const char *mode)
 #define VT_IOWRAP_THISFUNCNAME fopen64
 	FILE *ret;
 	uint64_t enter_time;
-        int tmp;
+    int tmp;
+	uint64_t open_flags=0;
 
 	VT_IOWRAP_INIT_IOFUNC_OPEN();
 
@@ -871,6 +925,7 @@ FILE *fopen64(const char *path, const char *mode)
 	VT_IOWRAP_CALL_LIBFUNC2(VT_IOWRAP_THISFUNCNAME, ret, path, mode);
         tmp=(ret!=NULL) ? fileno(ret): 0;
 
+	VT_IOWRAP_MAP_OPEN_MODE_STRING( mode );
 	VT_IOWRAP_LEAVE_IOFUNC_OPEN( ret==NULL, tmp);
 
 	return ret;
@@ -923,7 +978,7 @@ int fclose(FILE *stream)
 	vt_debug_msg(DBG_IO, "real_" stringify(VT_IOWRAP_THISFUNCNAME));
 	VT_IOWRAP_CALL_LIBFUNC1(VT_IOWRAP_THISFUNCNAME, ret, stream);
 
-	VT_IOWRAP_LEAVE_IOFUNC( ret==EOF, tmp );
+	VT_IOWRAP_LEAVE_IOFUNC( ret!=0, tmp );
 
 	return ret;
 #undef VT_IOWRAP_THISFUNCNAME
@@ -951,6 +1006,7 @@ int fseek(FILE *stream, long offset, int whence)
 	VT_IOWRAP_CALL_LIBFUNC3(VT_IOWRAP_THISFUNCNAME, ret, stream, offset, whence);
         tmp=(stream!=NULL) ? fileno(stream): 0;
 
+	VT_IOWRAP_2_EXTENDED_ARGUMENTS( key_type_offset, offset, key_type_whence, whence);
 	VT_IOWRAP_LEAVE_IOFUNC( ret==-1, tmp );
 
 	return ret;
@@ -980,6 +1036,7 @@ int fseeko(FILE *stream, off_t offset, int whence)
 	VT_IOWRAP_CALL_LIBFUNC3(VT_IOWRAP_THISFUNCNAME, ret, stream, offset, whence);
         tmp=(stream!=NULL) ? fileno(stream): 0;
 
+	VT_IOWRAP_2_EXTENDED_ARGUMENTS( key_type_offset, offset, key_type_whence, whence);
 	VT_IOWRAP_LEAVE_IOFUNC( ret==-1, tmp );
 
 	return ret;
@@ -1010,6 +1067,7 @@ int fseeko64(FILE *stream, off64_t offset, int whence)
 	VT_IOWRAP_CALL_LIBFUNC3(VT_IOWRAP_THISFUNCNAME, ret, stream, offset, whence);
         tmp=(stream!=NULL) ? fileno(stream): 0;
 
+	VT_IOWRAP_2_EXTENDED_ARGUMENTS( key_type_offset, offset, key_type_whence, whence);
 	VT_IOWRAP_LEAVE_IOFUNC( ret==-1, tmp );
 
 	return ret;
@@ -1117,6 +1175,7 @@ size_t fread(void *buf, size_t size, size_t nmemb, FILE *stream)
         num_bytes = (ssize_t)(size*ret);
         tmp=(stream!=NULL) ? fileno(stream): 0;
 
+	VT_IOWRAP_2_EXTENDED_ARGUMENTS( key_type_numelements, nmemb, key_type_elementsize, size);
 	VT_IOWRAP_LEAVE_IOFUNC( ret==(size_t) 0, tmp );
 
 	return ret;
@@ -1146,6 +1205,7 @@ size_t fwrite( const void *buf, size_t size, size_t nmemb, FILE *stream)
         num_bytes = (ssize_t)(size*ret);
         tmp=(stream!=NULL) ? fileno(stream): 0;
 
+	VT_IOWRAP_2_EXTENDED_ARGUMENTS( key_type_numelements, nmemb, key_type_elementsize, size);
 	VT_IOWRAP_LEAVE_IOFUNC( ret==(size_t)0, tmp );
 
 	return ret;

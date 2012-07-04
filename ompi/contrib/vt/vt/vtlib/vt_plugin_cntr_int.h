@@ -22,6 +22,21 @@
 #define VT_PLUGIN_PROCESS_GROUP_HOST_STRING "Processes on Host "
 #define VT_PLUGIN_PROCESS_GROUP_PROCESS_STRING "Threads on Process "
 
+#define VT_PLUGIN_CNTR_WRITING_POST_MORTEM(tid, flag) \
+  { \
+    VTThrd * thrd; \
+    if (tid == VT_CURRENT_THREAD) \
+    { \
+      VT_CHECK_THREAD; \
+      thrd = VTTHRD_MY_VTTHRD; \
+    } \
+    else \
+    { \
+      thrd = VTThrdv[tid]; \
+    } \
+    flag = VTTHRD_PLUGIN_CNTR_WRITING_POST_MORTEM(thrd); \
+  }
+
 enum cntr_group{
 	VT_PLUGIN_PROCESS_GROUP_ALL = 0,
 	VT_PLUGIN_PROCESS_GROUP_HOST,

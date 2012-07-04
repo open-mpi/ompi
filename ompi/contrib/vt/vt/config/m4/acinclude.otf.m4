@@ -5,9 +5,11 @@ AC_DEFUN([ACVT_OTF],
 	OTFDIR=
 	OTFINCDIR=
 	OTFLIBDIR=
+	OTFLIB=
 
 	AC_REQUIRE([ACVT_MPI])
 	AC_REQUIRE([ACVT_ZLIB])
+	AC_REQUIRE([ACVT_IOFSL])
 
 	AC_ARG_WITH(extern-otf,
 		AC_HELP_STRING([--with-extern-otf], [use external OTF library, default: not set]),
@@ -30,7 +32,7 @@ AC_DEFUN([ACVT_OTF],
 	[AS_IF([test x"$OTFDIR" != x], [OTFLIBDIR="-L$OTFDIR"lib/])])
 
 	AC_ARG_WITH(otf-lib,
-		AC_HELP_STRING([--with-otf-lib=OTFLIB], [use given otf lib, default: -lotf ZLIBLIBDIR ZLIBLIB]),
+		AC_HELP_STRING([--with-otf-lib=OTFLIB], [use given otf lib, default: -lotf ZLIBLIBDIR ZLIBLIB ZOIDFSLIBDIR ZOIDFSLIB BMILIBDIR BMILIB]),
 	[OTFLIB="$withval"])
 
 	AC_ARG_WITH(otf-flags,
@@ -50,10 +52,10 @@ AC_DEFUN([ACVT_OTF],
 		AS_IF([test x"$OTFLIB" = x -a "$otf_error" = "no"],
 		[
 			sav_LIBS=$LIBS
-			LIBS="$LIBS $OTFLIBDIR -lotf $ZLIBLIBDIR $ZLIBLIB"
-			AC_MSG_CHECKING([whether linking with -lotf $ZLIBLIBDIR $ZLIBLIB works])
+			LIBS="$LIBS $OTFLIBDIR -lotf $ZLIBLIBDIR $ZLIBLIB $ZOIDFSLIBDIR $ZOIDFSLIB $BMILIBDIR $BMILIB"
+			AC_MSG_CHECKING([whether linking with -lotf $ZLIBLIBDIR $ZLIBLIB $ZOIDFSLIBDIR $ZOIDFSLIB $BMILIBDIR $BMILIB works])
 			AC_TRY_LINK([],[],
-			[AC_MSG_RESULT([yes]); OTFLIB="-lotf $ZLIBLIBDIR $ZLIBLIB"],[AC_MSG_RESULT([no])])
+			[AC_MSG_RESULT([yes]); OTFLIB="-lotf $ZLIBLIBDIR $ZLIBLIB $ZOIDFSLIBDIR $ZOIDFSLIB $BMILIBDIR $BMILIB"],[AC_MSG_RESULT([no])])
 			LIBS=$sav_LIBS
 		])
 
@@ -144,9 +146,37 @@ dnl				[otf_conf_args="$otf_conf_args --with-mpi-inc-dir=`echo $MPIINCDIR | sed 
 		[
 			otf_conf_args="$otf_conf_args --without-zlib"
 		])
+		AS_IF([test x"$have_iofsl" = "xyes"],
+		[
+			AS_IF([test x"$force_iofsl" = "xyes"],
+			[otf_conf_args="$otf_conf_args --with-zoidfs"])
+
+			AS_IF([test x"$ZOIDFSDIR" != x],
+			[otf_conf_args="$otf_conf_args --with-zoidfs-dir=$ZOIDFSDIR"])
+			AS_IF([test x"$ZOIDFSINCDIR" != x],
+			[otf_conf_args="$otf_conf_args --with-zoidfs-inc-dir=`echo $ZOIDFSINCDIR | sed s/-I//`"])
+			AS_IF([test x"$ZOIDFSLIBDIR" != x],
+			[otf_conf_args="$otf_conf_args --with-zoidfs-lib-dir=`echo $ZOIDFSLIBDIR | sed s/-L//`"])
+			AS_IF([test x"$ZOIDFSLIB" != x],
+			[otf_conf_args="$otf_conf_args --with-zoidfs-lib=\"$ZOIDFSLIB\""])
+
+			AS_IF([test x"$BMIDIR" != x],
+			[otf_conf_args="$otf_conf_args --with-bmi-dir=$BMIDIR"])
+			AS_IF([test x"$BMIINCDIR" != x],
+			[otf_conf_args="$otf_conf_args --with-bmi-inc-dir=`echo $BMIINCDIR | sed s/-I//`"])
+			AS_IF([test x"$BMILIBDIR" != x],
+			[otf_conf_args="$otf_conf_args --with-bmi-lib-dir=`echo $BMILIBDIR | sed s/-L//`"])
+			AS_IF([test x"$BMILIB" != x],
+			[otf_conf_args="$otf_conf_args --with-bmi-lib=\"$BMILIB\""])
+		],
+		[
+			otf_conf_args="$otf_conf_args --without-zoidfs"
+		])
 
 		otf_conf_args="$otf_conf_args --prefix=\"$prefix\" --exec-prefix=\"$exec_prefix\" --bindir=\"$bindir\" --libdir=\"$libdir\" --includedir=\"$includedir\" --docdir=\"$docdir/otf\" $OTFFLAGS --cache-file=\"/dev/null\" --srcdir=\"$otf_srcdir\""
-		
+
+		export CPPFLAGS
+
 		AC_MSG_NOTICE([running $SHELL $otf_conf_cmd $otf_conf_args])
 		eval "$SHELL '$otf_conf_cmd' $otf_conf_args"
 		AS_IF([test $? != "0"], [AC_MSG_ERROR([$otf_conf_cmd failed for $otf_dir])])
@@ -157,7 +187,7 @@ dnl				[otf_conf_args="$otf_conf_args --with-mpi-inc-dir=`echo $MPIINCDIR | sed 
 
 		OTFINCDIR=
 		OTFLIBDIR=
-		AS_IF([test x"$OTFLIB" = x], [OTFLIB="-lotf $ZLIBLIBDIR $ZLIBLIB"])
+		AS_IF([test x"$OTFLIB" = x], [OTFLIB="-lotf $ZLIBLIBDIR $ZLIBLIB $ZOIDFSLIBDIR $ZOIDFSLIB $BMILIBDIR $BMILIB"])
 	])
 
 	AC_SUBST(OTFDIR)

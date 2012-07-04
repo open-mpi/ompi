@@ -4,8 +4,12 @@ COMMONINCLUDES = \
 	-I$(top_builddir)/otfauxlib -I$(top_srcdir)/otfauxlib
 
 COMMONCFLAGS =
-COMMONLDADD = $(top_builddir)/otflib/libotf.la
-COMMONDEPENDENCIES = $(top_builddir)/otflib/libotf.la
+COMMONLDADD = \
+	$(top_builddir)/otflib/libotf.la \
+	$(top_builddir)/otfauxlib/libotfaux.la
+COMMONDEPENDENCIES = \
+	$(top_builddir)/otflib/libotf.la \
+        $(top_builddir)/otfauxlib/libotfaux.la
 COMMONSOURCES = \
 	$(OTFMERGESRCDIR)/handler.h \
 	$(OTFMERGESRCDIR)/handler.c \

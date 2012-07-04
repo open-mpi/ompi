@@ -46,32 +46,37 @@ struct struct_OTF_Writer {
 
     /** Default size of buffers managed by this Writer. */
     uint32_t buffersizes;
-	
-	/** Default output format */
-	uint32_t format;
-    
+
+    /** Default output format */
+    uint32_t format;
+
     /** File handle manager. Handles the re-usage of file handles
         in a thread safe way. */
     OTF_FileManager* manager;
 
 #ifdef HAVE_ZLIB
-	/** Default compression type of buffers managed by this writer */
-	OTF_FileCompression compression;
-	
-	/** Default size of zbuffers managed by this reader. */
-	uint32_t zbuffersizes;
+    /** Default compression type of buffers managed by this writer */
+    OTF_FileCompression compression;
+
+    /** Default size of zbuffers managed by this reader. */
+    uint32_t zbuffersizes;
 #endif /* HAVE_ZLIB */
-	
-	/** Has the OtfVersion record been written? 1= yes 0= no */
-	uint32_t versionWritten;
+
+    /** Are the definition header records (e.g. DEFVERSION, DEFUNIQUEID)
+        written? 1= yes 0= no */
+    uint32_t defHeaderWritten;
 };
 
 
-/**	constructor - internal use only */
+/** constructor - internal use only */
 int OTF_Writer_init( OTF_Writer* writer );
 
 /** destructor - internal use only */
 int OTF_Writer_finish( OTF_Writer* writer );
+
+/** write header records (e.g. DEFVERSION, DEFUNIQUEID) to global
+    definition stream - internal use only */
+int OTF_Writer_writeDefinitionHeader( OTF_Writer* writer );
 
 
 /* ************************************************************************* */
@@ -95,10 +100,10 @@ int OTF_Writer_init( OTF_Writer* writer ) {
 
 #ifdef HAVE_ZLIB
 	writer->compression= 0;
-	writer->zbuffersizes= 1024 *10;
+	writer->zbuffersizes= OTF_ZBUFFER_DEFAULTSIZE;
 #endif /* HAVE_ZLIB */
 
-	writer->versionWritten= 0;
+	writer->defHeaderWritten= 0;
 
 	return 1;
 }
@@ -353,7 +358,7 @@ uint32_t OTF_Writer_getZBufferSizes( OTF_Writer* writer ) {
 void OTF_Writer_setFormat( OTF_Writer* writer, uint32_t format ) {
 
 
-	if ( format > 1 ) {
+	if ( format > 3 ) {
 	
 		OTF_Error( "ERROR in function %s, file: %s, line: %i:\n "
 				"unknown ouput format chosen.\n",
@@ -581,6 +586,20 @@ void OTF_Writer_setMasterControl( OTF_Writer* writer, OTF_MasterControl* mc ) {
 }
 
 
+int OTF_Writer_writeDefinitionHeader( OTF_Writer* writer ) {
+
+	/* write DEFVERSION record */
+	if ( 0 == OTF_WStream_writeOtfVersion( OTF_Writer_getStream( writer, 0 ) ) )
+		return 0;
+
+	/* write DEFUNIQUEID record */
+	if ( 0 == OTF_WStream_writeUniqueId( OTF_Writer_getStream( writer, 0 ) ) )
+		return 0;
+
+	return 1;
+}
+
+
 /* *** definition record write handlers *** ******************************** */
 
 
@@ -590,10 +609,10 @@ int OTF_Writer_writeDefinitionComment( OTF_Writer* writer, uint32_t streamid,
 
 	OTF_WStream* stream= OTF_Writer_getStream( writer, (uint32_t) streamid );
 
-	if ( 0 == writer->versionWritten ) {
+	if ( 0 == writer->defHeaderWritten ) {
 	
-		OTF_WStream_writeOtfVersion( OTF_Writer_getStream( writer, 0 ) );
-		writer->versionWritten= 1;
+		OTF_Writer_writeDefinitionHeader( writer );
+		writer->defHeaderWritten= 1;
 	}
 	
 	return OTF_WStream_writeDefinitionComment( stream, comment );
@@ -605,12 +624,12 @@ int OTF_Writer_writeDefinitionCommentKV( OTF_Writer* writer, uint32_t streamid,
 
 	OTF_WStream* stream= OTF_Writer_getStream( writer, (uint32_t) streamid );
 
-	if ( 0 == writer->versionWritten ) {
+	if ( 0 == writer->defHeaderWritten ) {
 	
-		OTF_WStream_writeOtfVersion( OTF_Writer_getStream( writer, 0 ) );
-		writer->versionWritten= 1;
+		OTF_Writer_writeDefinitionHeader( writer );
+		writer->defHeaderWritten= 1;
 	}
-	
+
 	return OTF_WStream_writeDefinitionCommentKV( stream, comment, list );
 }
 
@@ -621,12 +640,12 @@ int OTF_Writer_writeDefTimerResolution( OTF_Writer* writer, uint32_t streamid,
 
 	OTF_WStream* stream= OTF_Writer_getStream( writer, (uint32_t) streamid );
 
-	if ( 0 == writer->versionWritten ) {
+	if ( 0 == writer->defHeaderWritten ) {
 	
-		OTF_WStream_writeOtfVersion( OTF_Writer_getStream( writer, 0 ) );
-		writer->versionWritten= 1;
+		OTF_Writer_writeDefinitionHeader( writer );
+		writer->defHeaderWritten= 1;
 	}
-	
+
 	return OTF_WStream_writeDefTimerResolution( stream, ticksPerSecond );
 }
 
@@ -636,12 +655,12 @@ int OTF_Writer_writeDefTimerResolutionKV( OTF_Writer* writer, uint32_t streamid,
 
 	OTF_WStream* stream= OTF_Writer_getStream( writer, (uint32_t) streamid );
 
-	if ( 0 == writer->versionWritten ) {
+	if ( 0 == writer->defHeaderWritten ) {
 	
-		OTF_WStream_writeOtfVersion( OTF_Writer_getStream( writer, 0 ) );
-		writer->versionWritten= 1;
+		OTF_Writer_writeDefinitionHeader( writer );
+		writer->defHeaderWritten= 1;
 	}
-	
+
 	return OTF_WStream_writeDefTimerResolutionKV( stream, ticksPerSecond, list );
 }
 
@@ -652,12 +671,12 @@ int OTF_Writer_writeDefProcess( OTF_Writer* writer, uint32_t streamid,
 
 	OTF_WStream* stream= OTF_Writer_getStream( writer, (uint32_t) streamid );
 
-	if ( 0 == writer->versionWritten ) {
+	if ( 0 == writer->defHeaderWritten ) {
 	
-		OTF_WStream_writeOtfVersion( OTF_Writer_getStream( writer, 0 ) );
-		writer->versionWritten= 1;
+		OTF_Writer_writeDefinitionHeader( writer );
+		writer->defHeaderWritten= 1;
 	}
-	
+
 	return OTF_WStream_writeDefProcess( stream, deftoken, name, parent );
 }
 
@@ -667,12 +686,12 @@ int OTF_Writer_writeDefProcessKV( OTF_Writer* writer, uint32_t streamid,
 
 	OTF_WStream* stream= OTF_Writer_getStream( writer, (uint32_t) streamid );
 
-	if ( 0 == writer->versionWritten ) {
+	if ( 0 == writer->defHeaderWritten ) {
 	
-		OTF_WStream_writeOtfVersion( OTF_Writer_getStream( writer, 0 ) );
-		writer->versionWritten= 1;
+		OTF_Writer_writeDefinitionHeader( writer );
+		writer->defHeaderWritten= 1;
 	}
-	
+
 	return OTF_WStream_writeDefProcessKV( stream, deftoken, name, parent, list );
 }
 
@@ -684,12 +703,12 @@ int OTF_Writer_writeDefProcessGroup( OTF_Writer* writer, uint32_t streamid,
 
 	OTF_WStream* stream= OTF_Writer_getStream( writer, (uint32_t) streamid );
 
-	if ( 0 == writer->versionWritten ) {
+	if ( 0 == writer->defHeaderWritten ) {
 	
-		OTF_WStream_writeOtfVersion( OTF_Writer_getStream( writer, 0 ) );
-		writer->versionWritten= 1;
+		OTF_Writer_writeDefinitionHeader( writer );
+		writer->defHeaderWritten= 1;
 	}
-	
+
 	return OTF_WStream_writeDefProcessGroup( stream, deftoken, 
 		name, n, (uint32_t*) array );
 }
@@ -701,12 +720,12 @@ int OTF_Writer_writeDefProcessGroupKV( OTF_Writer* writer, uint32_t streamid,
 
 	OTF_WStream* stream= OTF_Writer_getStream( writer, (uint32_t) streamid );
 
-	if ( 0 == writer->versionWritten ) {
+	if ( 0 == writer->defHeaderWritten ) {
 	
-		OTF_WStream_writeOtfVersion( OTF_Writer_getStream( writer, 0 ) );
-		writer->versionWritten= 1;
+		OTF_Writer_writeDefinitionHeader( writer );
+		writer->defHeaderWritten= 1;
 	}
-	
+
 	return OTF_WStream_writeDefProcessGroupKV( stream, deftoken, 
 		name, n, (uint32_t*) array, list );
 }
@@ -718,10 +737,10 @@ int OTF_Writer_writeDefAttributeList ( OTF_Writer* writer, uint32_t streamid,
 	
 	OTF_WStream* stream= OTF_Writer_getStream( writer, (uint32_t) streamid );
 
-	if ( 0 == writer->versionWritten ) {
+	if ( 0 == writer->defHeaderWritten ) {
 	
-		OTF_WStream_writeOtfVersion( OTF_Writer_getStream( writer, 0 ) );
-		writer->versionWritten= 1;
+		OTF_Writer_writeDefinitionHeader( writer );
+		writer->defHeaderWritten= 1;
 	}
 
 	return OTF_WStream_writeDefAttributeList( stream, attr_token, num, array );
@@ -733,10 +752,10 @@ int OTF_Writer_writeDefAttributeListKV ( OTF_Writer* writer, uint32_t streamid,
 	
 	OTF_WStream* stream= OTF_Writer_getStream( writer, (uint32_t) streamid );
 
-	if ( 0 == writer->versionWritten ) {
+	if ( 0 == writer->defHeaderWritten ) {
 	
-		OTF_WStream_writeOtfVersion( OTF_Writer_getStream( writer, 0 ) );
-		writer->versionWritten= 1;
+		OTF_Writer_writeDefinitionHeader( writer );
+		writer->defHeaderWritten= 1;
 	}
 
 	return OTF_WStream_writeDefAttributeListKV( stream, attr_token, num, array, list );
@@ -749,10 +768,10 @@ int OTF_Writer_writeDefProcessOrGroupAttributes( OTF_Writer* writer, uint32_t st
 
 	OTF_WStream* stream= OTF_Writer_getStream( writer, (uint32_t) streamid );
 
-	if ( 0 == writer->versionWritten ) {
+	if ( 0 == writer->defHeaderWritten ) {
 	
-		OTF_WStream_writeOtfVersion( OTF_Writer_getStream( writer, 0 ) );
-		writer->versionWritten= 1;
+		OTF_Writer_writeDefinitionHeader( writer );
+		writer->defHeaderWritten= 1;
 	}
 
 	return OTF_WStream_writeDefProcessOrGroupAttributes( stream, proc_token, attr_token );
@@ -764,10 +783,10 @@ int OTF_Writer_writeDefProcessOrGroupAttributesKV( OTF_Writer* writer, uint32_t 
 
 	OTF_WStream* stream= OTF_Writer_getStream( writer, (uint32_t) streamid );
 
-	if ( 0 == writer->versionWritten ) {
+	if ( 0 == writer->defHeaderWritten ) {
 	
-		OTF_WStream_writeOtfVersion( OTF_Writer_getStream( writer, 0 ) );
-		writer->versionWritten= 1;
+		OTF_Writer_writeDefinitionHeader( writer );
+		writer->defHeaderWritten= 1;
 	}
 
 	return OTF_WStream_writeDefProcessOrGroupAttributesKV( stream, proc_token, attr_token, list );
@@ -780,12 +799,12 @@ int OTF_Writer_writeDefFunction( OTF_Writer* writer, uint32_t streamid,
 
 	OTF_WStream* stream= OTF_Writer_getStream( writer, (uint32_t) streamid );
 
-	if ( 0 == writer->versionWritten ) {
+	if ( 0 == writer->defHeaderWritten ) {
 	
-		OTF_WStream_writeOtfVersion( OTF_Writer_getStream( writer, 0 ) );
-		writer->versionWritten= 1;
+		OTF_Writer_writeDefinitionHeader( writer );
+		writer->defHeaderWritten= 1;
 	}
-	
+
 	return OTF_WStream_writeDefFunction( stream, deftoken, name, group, 
 		scltoken );
 }
@@ -796,12 +815,12 @@ int OTF_Writer_writeDefFunctionKV( OTF_Writer* writer, uint32_t streamid,
 
 	OTF_WStream* stream= OTF_Writer_getStream( writer, (uint32_t) streamid );
 
-	if ( 0 == writer->versionWritten ) {
+	if ( 0 == writer->defHeaderWritten ) {
 	
-		OTF_WStream_writeOtfVersion( OTF_Writer_getStream( writer, 0 ) );
-		writer->versionWritten= 1;
+		OTF_Writer_writeDefinitionHeader( writer );
+		writer->defHeaderWritten= 1;
 	}
-	
+
 	return OTF_WStream_writeDefFunctionKV( stream, deftoken, name, group, 
 		scltoken, list );
 }
@@ -813,12 +832,12 @@ int OTF_Writer_writeDefFunctionGroup( OTF_Writer* writer, uint32_t streamid,
 
 	OTF_WStream* stream= OTF_Writer_getStream( writer, (uint32_t) streamid );
 
-	if ( 0 == writer->versionWritten ) {
+	if ( 0 == writer->defHeaderWritten ) {
 	
-		OTF_WStream_writeOtfVersion( OTF_Writer_getStream( writer, 0 ) );
-		writer->versionWritten= 1;
+		OTF_Writer_writeDefinitionHeader( writer );
+		writer->defHeaderWritten= 1;
 	}
-	
+
 	return OTF_WStream_writeDefFunctionGroup( stream, deftoken, name );
 }
 
@@ -828,12 +847,12 @@ int OTF_Writer_writeDefFunctionGroupKV( OTF_Writer* writer, uint32_t streamid,
 
 	OTF_WStream* stream= OTF_Writer_getStream( writer, (uint32_t) streamid );
 
-	if ( 0 == writer->versionWritten ) {
+	if ( 0 == writer->defHeaderWritten ) {
 	
-		OTF_WStream_writeOtfVersion( OTF_Writer_getStream( writer, 0 ) );
-		writer->versionWritten= 1;
+		OTF_Writer_writeDefinitionHeader( writer );
+		writer->defHeaderWritten= 1;
 	}
-	
+
 	return OTF_WStream_writeDefFunctionGroupKV( stream, deftoken, name, list );
 }
 
@@ -844,12 +863,12 @@ int OTF_Writer_writeDefCollectiveOperation( OTF_Writer* writer, uint32_t streami
 
 	OTF_WStream* stream= OTF_Writer_getStream( writer, (uint32_t) streamid );
 
-	if ( 0 == writer->versionWritten ) {
+	if ( 0 == writer->defHeaderWritten ) {
 	
-		OTF_WStream_writeOtfVersion( OTF_Writer_getStream( writer, 0 ) );
-		writer->versionWritten= 1;
+		OTF_Writer_writeDefinitionHeader( writer );
+		writer->defHeaderWritten= 1;
 	}
-	
+
 	return OTF_WStream_writeDefCollectiveOperation( stream, collective, name, type );
 }
 
@@ -859,12 +878,12 @@ int OTF_Writer_writeDefCollectiveOperationKV( OTF_Writer* writer, uint32_t strea
 
 	OTF_WStream* stream= OTF_Writer_getStream( writer, (uint32_t) streamid );
 
-	if ( 0 == writer->versionWritten ) {
+	if ( 0 == writer->defHeaderWritten ) {
 	
-		OTF_WStream_writeOtfVersion( OTF_Writer_getStream( writer, 0 ) );
-		writer->versionWritten= 1;
+		OTF_Writer_writeDefinitionHeader( writer );
+		writer->defHeaderWritten= 1;
 	}
-	
+
 	return OTF_WStream_writeDefCollectiveOperationKV( stream, collective, name, type, list );
 }
 
@@ -876,12 +895,12 @@ int OTF_Writer_writeDefCounter( OTF_Writer* writer, uint32_t streamid,
 
 	OTF_WStream* stream= OTF_Writer_getStream( writer, streamid );
 
-	if ( 0 == writer->versionWritten ) {
+	if ( 0 == writer->defHeaderWritten ) {
 	
-		OTF_WStream_writeOtfVersion( OTF_Writer_getStream( writer, 0 ) );
-		writer->versionWritten= 1;
+		OTF_Writer_writeDefinitionHeader( writer );
+		writer->defHeaderWritten= 1;
 	}
-	
+
 	return OTF_WStream_writeDefCounter( stream, deftoken, name, properties, 
 		countergroup, unit );
 }
@@ -893,12 +912,12 @@ int OTF_Writer_writeDefCounterKV( OTF_Writer* writer, uint32_t streamid,
 
 	OTF_WStream* stream= OTF_Writer_getStream( writer, streamid );
 
-	if ( 0 == writer->versionWritten ) {
+	if ( 0 == writer->defHeaderWritten ) {
 	
-		OTF_WStream_writeOtfVersion( OTF_Writer_getStream( writer, 0 ) );
-		writer->versionWritten= 1;
+		OTF_Writer_writeDefinitionHeader( writer );
+		writer->defHeaderWritten= 1;
 	}
-	
+
 	return OTF_WStream_writeDefCounterKV( stream, deftoken, name, properties, 
 		countergroup, unit, list );
 }
@@ -910,12 +929,12 @@ int OTF_Writer_writeDefCounterGroup( OTF_Writer* writer, uint32_t streamid,
 
 	OTF_WStream* stream= OTF_Writer_getStream( writer, (uint32_t) streamid );
 
-	if ( 0 == writer->versionWritten ) {
+	if ( 0 == writer->defHeaderWritten ) {
 	
-		OTF_WStream_writeOtfVersion( OTF_Writer_getStream( writer, 0 ) );
-		writer->versionWritten= 1;
+		OTF_Writer_writeDefinitionHeader( writer );
+		writer->defHeaderWritten= 1;
 	}
-	
+
 	return OTF_WStream_writeDefCounterGroup( stream, deftoken, name );
 }
 
@@ -925,12 +944,12 @@ int OTF_Writer_writeDefCounterGroupKV( OTF_Writer* writer, uint32_t streamid,
 
 	OTF_WStream* stream= OTF_Writer_getStream( writer, (uint32_t) streamid );
 
-	if ( 0 == writer->versionWritten ) {
+	if ( 0 == writer->defHeaderWritten ) {
 	
-		OTF_WStream_writeOtfVersion( OTF_Writer_getStream( writer, 0 ) );
-		writer->versionWritten= 1;
+		OTF_Writer_writeDefinitionHeader( writer );
+		writer->defHeaderWritten= 1;
 	}
-	
+
 	return OTF_WStream_writeDefCounterGroupKV( stream, deftoken, name, list );
 }
 
@@ -941,12 +960,12 @@ int OTF_Writer_writeDefScl( OTF_Writer* writer, uint32_t streamid,
 
 	OTF_WStream* stream= OTF_Writer_getStream( writer, (uint32_t) streamid );
 
-	if ( 0 == writer->versionWritten ) {
+	if ( 0 == writer->defHeaderWritten ) {
 	
-		OTF_WStream_writeOtfVersion( OTF_Writer_getStream( writer, 0 ) );
-		writer->versionWritten= 1;
+		OTF_Writer_writeDefinitionHeader( writer );
+		writer->defHeaderWritten= 1;
 	}
-	
+
 	return OTF_WStream_writeDefScl( stream, deftoken, sclfile, sclline );
 }
 
@@ -956,12 +975,12 @@ int OTF_Writer_writeDefSclKV( OTF_Writer* writer, uint32_t streamid,
 
 	OTF_WStream* stream= OTF_Writer_getStream( writer, (uint32_t) streamid );
 
-	if ( 0 == writer->versionWritten ) {
+	if ( 0 == writer->defHeaderWritten ) {
 	
-		OTF_WStream_writeOtfVersion( OTF_Writer_getStream( writer, 0 ) );
-		writer->versionWritten= 1;
+		OTF_Writer_writeDefinitionHeader( writer );
+		writer->defHeaderWritten= 1;
 	}
-	
+
 	return OTF_WStream_writeDefSclKV( stream, deftoken, sclfile, sclline, list );
 }
 
@@ -972,12 +991,12 @@ int OTF_Writer_writeDefSclFile( OTF_Writer* writer, uint32_t streamid,
 
 	OTF_WStream* stream= OTF_Writer_getStream( writer, (uint32_t) streamid );
 
-	if ( 0 == writer->versionWritten ) {
+	if ( 0 == writer->defHeaderWritten ) {
 	
-		OTF_WStream_writeOtfVersion( OTF_Writer_getStream( writer, 0 ) );
-		writer->versionWritten= 1;
+		OTF_Writer_writeDefinitionHeader( writer );
+		writer->defHeaderWritten= 1;
 	}
-	
+
 	return OTF_WStream_writeDefSclFile( stream, deftoken, filename );
 }
 
@@ -987,12 +1006,12 @@ int OTF_Writer_writeDefSclFileKV( OTF_Writer* writer, uint32_t streamid,
 
 	OTF_WStream* stream= OTF_Writer_getStream( writer, (uint32_t) streamid );
 
-	if ( 0 == writer->versionWritten ) {
+	if ( 0 == writer->defHeaderWritten ) {
 	
-		OTF_WStream_writeOtfVersion( OTF_Writer_getStream( writer, 0 ) );
-		writer->versionWritten= 1;
+		OTF_Writer_writeDefinitionHeader( writer );
+		writer->defHeaderWritten= 1;
 	}
-	
+
 	return OTF_WStream_writeDefSclFileKV( stream, deftoken, filename, list );
 }
 
@@ -1015,12 +1034,12 @@ int OTF_Writer_writeDefCreator( OTF_Writer* writer, uint32_t streamid,
 
 	OTF_WStream* stream= OTF_Writer_getStream( writer, (uint32_t) streamid );
 
-	if ( 0 == writer->versionWritten ) {
+	if ( 0 == writer->defHeaderWritten ) {
 	
-		OTF_WStream_writeOtfVersion( OTF_Writer_getStream( writer, 0 ) );
-		writer->versionWritten= 1;
+		OTF_Writer_writeDefinitionHeader( writer );
+		writer->defHeaderWritten= 1;
 	}
-	
+
 	return OTF_WStream_writeDefCreator( stream, creator );
 }
 
@@ -1030,12 +1049,12 @@ int OTF_Writer_writeDefCreatorKV( OTF_Writer* writer, uint32_t streamid,
 
 	OTF_WStream* stream= OTF_Writer_getStream( writer, (uint32_t) streamid );
 
-	if ( 0 == writer->versionWritten ) {
+	if ( 0 == writer->defHeaderWritten ) {
 	
-		OTF_WStream_writeOtfVersion( OTF_Writer_getStream( writer, 0 ) );
-		writer->versionWritten= 1;
+		OTF_Writer_writeDefinitionHeader( writer );
+		writer->defHeaderWritten= 1;
 	}
-	
+
 	return OTF_WStream_writeDefCreatorKV( stream, creator, list );
 }
 
@@ -1084,12 +1103,12 @@ int OTF_Writer_writeDefKeyValue( OTF_Writer* writer, uint32_t streamid,
 
 	OTF_WStream* stream= OTF_Writer_getStream( writer, (uint32_t) streamid );
 
-	if ( 0 == writer->versionWritten ) {
+	if ( 0 == writer->defHeaderWritten ) {
 	
-		OTF_WStream_writeOtfVersion( OTF_Writer_getStream( writer, 0 ) );
-		writer->versionWritten= 1;
+		OTF_Writer_writeDefinitionHeader( writer );
+		writer->defHeaderWritten= 1;
 	}
-	
+
 	return OTF_WStream_writeDefKeyValue( stream, key, type, name, description );
 }
 
@@ -1099,12 +1118,12 @@ int OTF_Writer_writeDefKeyValueKV( OTF_Writer* writer, uint32_t streamid, uint32
 
 	OTF_WStream* stream= OTF_Writer_getStream( writer, (uint32_t) streamid );
 
-	if ( 0 == writer->versionWritten ) {
+	if ( 0 == writer->defHeaderWritten ) {
 	
-		OTF_WStream_writeOtfVersion( OTF_Writer_getStream( writer, 0 ) );
-		writer->versionWritten= 1;
+		OTF_Writer_writeDefinitionHeader( writer );
+		writer->defHeaderWritten= 1;
 	}
-	
+
 	return OTF_WStream_writeDefKeyValueKV( stream, key, type, name, description, list );
 }
 
@@ -1118,10 +1137,10 @@ int OTF_Writer_writeDefTimeRange( OTF_Writer*       writer,
 
     OTF_WStream* stream= OTF_Writer_getStream( writer, streamid );
 
-    if ( 0 == writer->versionWritten ) {
+    if ( 0 == writer->defHeaderWritten ) {
 
-        OTF_WStream_writeOtfVersion( OTF_Writer_getStream( writer, 0 ) );
-        writer->versionWritten= 1;
+        OTF_Writer_writeDefinitionHeader( writer );
+        writer->defHeaderWritten= 1;
     }
 
     return OTF_WStream_writeDefTimeRange( stream,
@@ -1141,10 +1160,10 @@ int OTF_Writer_writeDefCounterAssignments( OTF_Writer*       writer,
 
     OTF_WStream* stream= OTF_Writer_getStream( writer, streamid );
 
-    if ( 0 == writer->versionWritten ) {
+    if ( 0 == writer->defHeaderWritten ) {
 
-        OTF_WStream_writeOtfVersion( OTF_Writer_getStream( writer, 0 ) );
-        writer->versionWritten= 1;
+        OTF_Writer_writeDefinitionHeader( writer );
+        writer->defHeaderWritten= 1;
     }
 
     return OTF_WStream_writeDefCounterAssignments( stream,
@@ -1162,16 +1181,34 @@ int OTF_Writer_writeDefProcessSubstitutes( OTF_Writer* writer, uint32_t streamid
 
     OTF_WStream* stream= OTF_Writer_getStream( writer, (uint32_t) streamid );
 
-    if ( 0 == writer->versionWritten ) {
+    if ( 0 == writer->defHeaderWritten ) {
 
-        OTF_WStream_writeOtfVersion( OTF_Writer_getStream( writer, 0 ) );
-        writer->versionWritten= 1;
+        OTF_Writer_writeDefinitionHeader( writer );
+        writer->defHeaderWritten= 1;
     }
 
     return OTF_WStream_writeDefProcessSubstitutes( stream, representative, 
         numberOfProcs, (uint32_t*) procs, list );
 }
 
+
+int OTF_Writer_writeDefAuxSamplePoint( OTF_Writer*            writer,
+                                       uint32_t               streamid,
+                                       uint64_t               time,
+                                       OTF_AuxSamplePointType type,
+                                       OTF_KeyValueList*      list ) {
+
+
+    OTF_WStream* stream= OTF_Writer_getStream( writer, streamid );
+
+    if ( 0 == writer->defHeaderWritten ) {
+
+        OTF_Writer_writeDefinitionHeader( writer );
+        writer->defHeaderWritten= 1;
+    }
+
+    return OTF_WStream_writeDefAuxSamplePoint( stream, time, type, list );
+}
 
 
 /* *** Event Records *** ****************************************** */
@@ -1794,6 +1831,44 @@ int OTF_Writer_writeBeginFileOpSnapshotKV( OTF_Writer* writer, uint64_t time,
 
 }
 
+int OTF_Writer_writeCollopCountSnapshot( OTF_Writer* writer,
+                                         uint64_t time,
+                                         uint32_t process,
+                                         uint32_t communicator,
+                                         uint64_t count,
+                                         OTF_KeyValueList *list ) {
+
+    OTF_WStream* stream= OTF_Writer_getStream( writer,
+        OTF_Writer_mapProcess( writer, process ) );
+
+
+    return OTF_WStream_writeCollopCountSnapshot( stream,
+                                                 time,
+                                                 process,
+                                                 communicator,
+                                                 count,
+                                                 list );
+}
+
+int OTF_Writer_writeCounterSnapshot( OTF_Writer*       writer,
+                                     uint64_t          time,
+                                     uint64_t          originaltime,
+                                     uint32_t          process,
+                                     uint32_t          counter,
+                                     uint64_t          value,
+                                     OTF_KeyValueList *list ) {
+
+    OTF_WStream* stream= OTF_Writer_getStream( writer,
+        OTF_Writer_mapProcess( writer, process ) );
+
+    return OTF_WStream_writeCounterSnapshot( stream,
+                                             time,
+                                             originaltime,
+                                             process,
+                                             counter,
+                                             value,
+                                             list );
+}
 
 
 /* *** public statistics record write handlers *** */

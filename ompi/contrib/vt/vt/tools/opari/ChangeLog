@@ -1,3 +1,6 @@
+23. Fixed parsing
+    source files containing Carriage Returns
+
 22. Fixed Fortran parsing
     for detecting end of block DO loops
 

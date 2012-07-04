@@ -10,7 +10,6 @@
  * See the file COPYING in the package base directory for details
  **/
 
-#include "vt_unify.h"
 #include "vt_unify_usrcom.h"
 
 UserComC * theUserCom = 0; // instance of class UserComC

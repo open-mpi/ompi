@@ -13,17 +13,7 @@
 #ifndef _VT_UNIFY_SYNC_H_
 #define _VT_UNIFY_SYNC_H_
 
-#include "config.h"
-
 #include "vt_unify.h"
-
-#ifdef VT_ETIMESYNC
-#  include "vt_unify_esync.h"
-#endif // VT_ETIMESYNC
-
-#include "vt_inttypes.h"
-
-#include <map>
 
 //
 // TimeSyncC class
@@ -136,11 +126,10 @@ public:
          const int64_t * offset = it->second->offset;
 
          return
-            (uint64_t)( ( (double)time +
-                        ( ( ( (double)offset[1] - (double)offset[0] ) /
-                            ( (double)ltime[1] - (double)ltime[0] ) )
-                          * ( (double)time - (double)ltime[0]) )
-                        + (double)offset[0] ) - m_minStartTime );
+            (uint64_t)( (int64_t)( (double)( offset[1] - offset[0] ) /
+                                   (double)( ltime[1]  - ltime[0] ) ) *
+                                 ( time - ltime[0] ) + time + offset[0] -
+                                 m_minStartTime );
       }
    }
 

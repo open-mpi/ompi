@@ -1512,3 +1512,312 @@ cudaError_t  cudaPeerGetDevicePointer(void **pDevice, void *peerDevicePointer, i
 }*/
 
 #endif /* CUDA 4.0 */
+
+/*
+ *  Adaptations for CUDA 4.1
+ */
+#if (defined(CUDART_VERSION) && (CUDART_VERSION >= 4010))
+
+/* -- cuda_runtime_api.h:cudaArrayGetInfo -- */
+cudaError_t  cudaArrayGetInfo(struct cudaChannelFormatDesc *desc, struct cudaExtent *extent, unsigned int *flags, struct cudaArray *array)
+{
+  cudaError_t  ret;
+
+  CUDARTWRAP_FUNC_INIT(vt_cudart_lw, vt_cudart_lw_attr, "cudaArrayGetInfo",
+    cudaError_t , (struct cudaChannelFormatDesc *, struct cudaExtent *, unsigned int *, struct cudaArray *),
+    NULL, 0);
+
+  CUDARTWRAP_FUNC_START(vt_cudart_lw);
+
+  ret = VT_LIBWRAP_FUNC_CALL(vt_cudart_lw, (desc, extent, flags, array));
+
+  CUDARTWRAP_FUNC_END(vt_cudart_lw);
+
+  return ret;
+}
+
+#endif /* CUDA 4.1 */
+
+/*
+ *  Adaptations for CUDA 4.2
+ */
+#if (defined(CUDART_VERSION) && (CUDART_VERSION >= 4020))
+
+/* -- cuda_runtime_api.h:cudaDeviceGetSharedMemConfig -- */
+cudaError_t  cudaDeviceGetSharedMemConfig(enum cudaSharedMemConfig *pConfig)
+{
+  cudaError_t  ret;
+
+  CUDARTWRAP_FUNC_INIT(vt_cudart_lw, vt_cudart_lw_attr, "cudaDeviceGetSharedMemConfig",
+    cudaError_t , (enum cudaSharedMemConfig *),
+    NULL, 0);
+
+  CUDARTWRAP_FUNC_START(vt_cudart_lw);
+
+  ret = VT_LIBWRAP_FUNC_CALL(vt_cudart_lw, (pConfig));
+
+  CUDARTWRAP_FUNC_END(vt_cudart_lw);
+
+  return ret;
+}
+
+/* -- cuda_runtime_api.h:cudaDeviceSetSharedMemConfig -- */
+cudaError_t  cudaDeviceSetSharedMemConfig(enum cudaSharedMemConfig config)
+{
+  cudaError_t  ret;
+
+  CUDARTWRAP_FUNC_INIT(vt_cudart_lw, vt_cudart_lw_attr, "cudaDeviceSetSharedMemConfig",
+    cudaError_t , (enum cudaSharedMemConfig ),
+    NULL, 0);
+
+  CUDARTWRAP_FUNC_START(vt_cudart_lw);
+
+  ret = VT_LIBWRAP_FUNC_CALL(vt_cudart_lw, (config));
+
+  CUDARTWRAP_FUNC_END(vt_cudart_lw);
+
+  return ret;
+}
+
+/* -- cuda_runtime_api.h:cudaFuncSetSharedMemConfig -- */
+cudaError_t  cudaFuncSetSharedMemConfig(const char *func, enum cudaSharedMemConfig config)
+{
+  cudaError_t  ret;
+
+  CUDARTWRAP_FUNC_INIT(vt_cudart_lw, vt_cudart_lw_attr, "cudaFuncSetSharedMemConfig",
+    cudaError_t , (const char *, enum cudaSharedMemConfig ),
+    NULL, 0);
+
+  CUDARTWRAP_FUNC_START(vt_cudart_lw);
+
+  ret = VT_LIBWRAP_FUNC_CALL(vt_cudart_lw, (func, config));
+
+  CUDARTWRAP_FUNC_END(vt_cudart_lw);
+
+  return ret;
+}
+
+#endif
+
+/*
+ *  Adaptations for CUDA 5.0.7
+ */
+#if (defined(CUDART_VERSION) && (CUDART_VERSION >= 5000))
+
+/* -- cuda_runtime_api.h:cudaStreamCreateWithFlags -- */
+cudaError_t  cudaStreamCreateWithFlags(cudaStream_t *pStream, unsigned int flags)
+{
+  cudaError_t  ret;
+
+  CUDARTWRAP_FUNC_INIT(vt_cudart_lw, vt_cudart_lw_attr, "cudaStreamCreateWithFlags",
+    cudaError_t , (cudaStream_t *, unsigned int ),
+    NULL, 0);
+
+  CUDARTWRAP_FUNC_START(vt_cudart_lw);
+
+  ret = VT_LIBWRAP_FUNC_CALL(vt_cudart_lw, (pStream, flags));
+
+  CUDARTWRAP_FUNC_END(vt_cudart_lw);
+
+  return ret;
+}
+
+/* -- cuda_runtime_api.h:cudaStreamAddCallback -- */
+cudaError_t  cudaStreamAddCallback(cudaStream_t stream, cudaStreamCallback_t callback, void *userData, unsigned int flags)
+{
+  cudaError_t  ret;
+
+  CUDARTWRAP_FUNC_INIT(vt_cudart_lw, vt_cudart_lw_attr, "cudaStreamAddCallback",
+    cudaError_t , (cudaStream_t , cudaStreamCallback_t , void *, unsigned int ),
+    NULL, 0);
+
+  CUDARTWRAP_FUNC_START(vt_cudart_lw);
+
+  ret = VT_LIBWRAP_FUNC_CALL(vt_cudart_lw, (stream, callback, userData, flags));
+
+  CUDARTWRAP_FUNC_END(vt_cudart_lw);
+
+  return ret;
+}
+
+/* -- cuda_runtime_api.h:cudaGetMipmappedArrayLevel -- */
+cudaError_t  cudaGetMipmappedArrayLevel(cudaArray_t *levelArray, cudaMipmappedArray_const_t mipmappedArray, unsigned int level)
+{
+  cudaError_t  ret;
+
+  CUDARTWRAP_FUNC_INIT(vt_cudart_lw, vt_cudart_lw_attr, "cudaGetMipmappedArrayLevel",
+    cudaError_t , (cudaArray_t *, cudaMipmappedArray_const_t , unsigned int ),
+    NULL, 0);
+
+  CUDARTWRAP_FUNC_START(vt_cudart_lw);
+
+  ret = VT_LIBWRAP_FUNC_CALL(vt_cudart_lw, (levelArray, mipmappedArray, level));
+
+  CUDARTWRAP_FUNC_END(vt_cudart_lw);
+
+  return ret;
+}
+
+/* -- cuda_runtime_api.h:cudaGraphicsResourceGetMappedMipmappedArray -- */
+cudaError_t  cudaGraphicsResourceGetMappedMipmappedArray(cudaMipmappedArray_t *mipmappedArray, cudaGraphicsResource_t resource)
+{
+  cudaError_t  ret;
+
+  CUDARTWRAP_FUNC_INIT(vt_cudart_lw, vt_cudart_lw_attr, "cudaGraphicsResourceGetMappedMipmappedArray",
+    cudaError_t , (cudaMipmappedArray_t *, cudaGraphicsResource_t ),
+    NULL, 0);
+
+  CUDARTWRAP_FUNC_START(vt_cudart_lw);
+
+  ret = VT_LIBWRAP_FUNC_CALL(vt_cudart_lw, (mipmappedArray, resource));
+
+  CUDARTWRAP_FUNC_END(vt_cudart_lw);
+
+  return ret;
+}
+
+/* -- cuda_runtime_api.h:cudaCreateTextureObject -- */
+cudaError_t  cudaCreateTextureObject(cudaTextureObject_t *pTexObject, const struct cudaResourceDesc *pResDesc, const struct cudaTextureDesc *pTexDesc, const struct cudaResourceViewDesc *pResViewDesc)
+{
+  cudaError_t  ret;
+
+  CUDARTWRAP_FUNC_INIT(vt_cudart_lw, vt_cudart_lw_attr, "cudaCreateTextureObject",
+    cudaError_t , (cudaTextureObject_t *, const struct cudaResourceDesc *, const struct cudaTextureDesc *, const struct cudaResourceViewDesc *),
+    NULL, 0);
+
+  CUDARTWRAP_FUNC_START(vt_cudart_lw);
+
+  ret = VT_LIBWRAP_FUNC_CALL(vt_cudart_lw, (pTexObject, pResDesc, pTexDesc, pResViewDesc));
+
+  CUDARTWRAP_FUNC_END(vt_cudart_lw);
+
+  return ret;
+}
+
+/* -- cuda_runtime_api.h:cudaDestroyTextureObject -- */
+cudaError_t  cudaDestroyTextureObject(cudaTextureObject_t texObject)
+{
+  cudaError_t  ret;
+
+  CUDARTWRAP_FUNC_INIT(vt_cudart_lw, vt_cudart_lw_attr, "cudaDestroyTextureObject",
+    cudaError_t , (cudaTextureObject_t ),
+    NULL, 0);
+
+  CUDARTWRAP_FUNC_START(vt_cudart_lw);
+
+  ret = VT_LIBWRAP_FUNC_CALL(vt_cudart_lw, (texObject));
+
+  CUDARTWRAP_FUNC_END(vt_cudart_lw);
+
+  return ret;
+}
+
+/* -- cuda_runtime_api.h:cudaGetTextureObjectResourceDesc -- */
+cudaError_t  cudaGetTextureObjectResourceDesc(struct cudaResourceDesc *pResDesc, cudaTextureObject_t texObject)
+{
+  cudaError_t  ret;
+
+  CUDARTWRAP_FUNC_INIT(vt_cudart_lw, vt_cudart_lw_attr, "cudaGetTextureObjectResourceDesc",
+    cudaError_t , (struct cudaResourceDesc *, cudaTextureObject_t ),
+    NULL, 0);
+
+  CUDARTWRAP_FUNC_START(vt_cudart_lw);
+
+  ret = VT_LIBWRAP_FUNC_CALL(vt_cudart_lw, (pResDesc, texObject));
+
+  CUDARTWRAP_FUNC_END(vt_cudart_lw);
+
+  return ret;
+}
+
+/* -- cuda_runtime_api.h:cudaGetTextureObjectTextureDesc -- */
+cudaError_t  cudaGetTextureObjectTextureDesc(struct cudaTextureDesc *pTexDesc, cudaTextureObject_t texObject)
+{
+  cudaError_t  ret;
+
+  CUDARTWRAP_FUNC_INIT(vt_cudart_lw, vt_cudart_lw_attr, "cudaGetTextureObjectTextureDesc",
+    cudaError_t , (struct cudaTextureDesc *, cudaTextureObject_t ),
+    NULL, 0);
+
+  CUDARTWRAP_FUNC_START(vt_cudart_lw);
+
+  ret = VT_LIBWRAP_FUNC_CALL(vt_cudart_lw, (pTexDesc, texObject));
+
+  CUDARTWRAP_FUNC_END(vt_cudart_lw);
+
+  return ret;
+}
+
+/* -- cuda_runtime_api.h:cudaGetTextureObjectResourceViewDesc -- */
+cudaError_t  cudaGetTextureObjectResourceViewDesc(struct cudaResourceViewDesc *pResViewDesc, cudaTextureObject_t texObject)
+{
+  cudaError_t  ret;
+
+  CUDARTWRAP_FUNC_INIT(vt_cudart_lw, vt_cudart_lw_attr, "cudaGetTextureObjectResourceViewDesc",
+    cudaError_t , (struct cudaResourceViewDesc *, cudaTextureObject_t ),
+    NULL, 0);
+
+  CUDARTWRAP_FUNC_START(vt_cudart_lw);
+
+  ret = VT_LIBWRAP_FUNC_CALL(vt_cudart_lw, (pResViewDesc, texObject));
+
+  CUDARTWRAP_FUNC_END(vt_cudart_lw);
+
+  return ret;
+}
+
+/* -- cuda_runtime_api.h:cudaCreateSurfaceObject -- */
+cudaError_t  cudaCreateSurfaceObject(cudaSurfaceObject_t *pSurfObject, const struct cudaResourceDesc *pResDesc)
+{
+  cudaError_t  ret;
+
+  CUDARTWRAP_FUNC_INIT(vt_cudart_lw, vt_cudart_lw_attr, "cudaCreateSurfaceObject",
+    cudaError_t , (cudaSurfaceObject_t *, const struct cudaResourceDesc *),
+    NULL, 0);
+
+  CUDARTWRAP_FUNC_START(vt_cudart_lw);
+
+  ret = VT_LIBWRAP_FUNC_CALL(vt_cudart_lw, (pSurfObject, pResDesc));
+
+  CUDARTWRAP_FUNC_END(vt_cudart_lw);
+
+  return ret;
+}
+
+/* -- cuda_runtime_api.h:cudaDestroySurfaceObject -- */
+cudaError_t  cudaDestroySurfaceObject(cudaSurfaceObject_t surfObject)
+{
+  cudaError_t  ret;
+
+  CUDARTWRAP_FUNC_INIT(vt_cudart_lw, vt_cudart_lw_attr, "cudaDestroySurfaceObject",
+    cudaError_t , (cudaSurfaceObject_t ),
+    NULL, 0);
+
+  CUDARTWRAP_FUNC_START(vt_cudart_lw);
+
+  ret = VT_LIBWRAP_FUNC_CALL(vt_cudart_lw, (surfObject));
+
+  CUDARTWRAP_FUNC_END(vt_cudart_lw);
+
+  return ret;
+}
+
+/* -- cuda_runtime_api.h:cudaGetSurfaceObjectResourceDesc -- */
+cudaError_t  cudaGetSurfaceObjectResourceDesc(struct cudaResourceDesc *pResDesc, cudaSurfaceObject_t surfObject)
+{
+  cudaError_t  ret;
+
+  CUDARTWRAP_FUNC_INIT(vt_cudart_lw, vt_cudart_lw_attr, "cudaGetSurfaceObjectResourceDesc",
+    cudaError_t , (struct cudaResourceDesc *, cudaSurfaceObject_t ),
+    NULL, 0);
+
+  CUDARTWRAP_FUNC_START(vt_cudart_lw);
+
+  ret = VT_LIBWRAP_FUNC_CALL(vt_cudart_lw, (pResDesc, surfObject));
+
+  CUDARTWRAP_FUNC_END(vt_cudart_lw);
+
+  return ret;
+}
+
+#endif

@@ -70,55 +70,17 @@ included AFTER this macro definitions */
 #endif /* HAVE_ZLIB */
 
 #include "OTF_File.h"
+#include "OTF_File_iofsl.h"
 #include "OTF_Platform.h"
 #include "OTF_Definitions.h"
 #include "OTF_Errno.h"
 
-
-struct struct_OTF_File {
-
-	/** own copy of filename */
-	char* filename;
-
-	/** actual file handle, it is NULL if file is currently closed, 
-	!= NULL otherwise */
-	FILE* file;
-
-#ifdef HAVE_ZLIB
-
-	/** zlib object */
-	z_stream* z;
-
-	/** zlib entry buffer ... what a nice wordplay */
-	unsigned char* zbuffer;
-
-	uint32_t zbuffersize;
-
-#endif /* HAVE_ZLIB */
-
-	/** keep file pos when the real file is closed, 
-	undefined while file is open, == 0 before opened for the first time */
-	uint64_t pos;
-	
-	OTF_FileMode mode;
-
-	OTF_FileManager* manager;
-
-
-	/** Reference to external buffer to read from instead of a real file. 
-	This is for reading of definitions only and has some limitations. */
-	const char* externalbuffer;
-
-	/** the current position in the 'externalbuffer' */
-	uint64_t externalpos;
-	/** the total length of the 'externalbuffer' */
-	uint64_t externallen;
-
-};
+static int OTF_File_nameSuffixCmp(const char *filename, const char *suffix);
 
 
 void OTF_File_init( OTF_File* file ) {
-
+/* internal function, called only by OTF_File_open*,
+ * no need (and possibility) to check for Iofsl */
 
 	file->filename= NULL;
 	file->file= NULL;
@@ -134,11 +96,13 @@ void OTF_File_init( OTF_File* file ) {
 	file->externalbuffer= NULL;
 	file->externalpos= 0;
 	file->externallen= 0;
+	file->iofsl= NULL;
 }
 
 
 void OTF_File_finalize( OTF_File* file ) {
-
+	/* internal function, called only by OTF_File_close,
+	 * no need to check for Iofsl */
 
 	file->filename= NULL;
 	file->file= NULL;
@@ -159,8 +123,6 @@ void OTF_File_finalize( OTF_File* file ) {
 
 OTF_File* OTF_File_open( const char* filename, 
 	OTF_FileManager* manager, OTF_FileMode mode ) {
-
-
 	return OTF_File_open_zlevel( filename, manager, mode, OTF_FILECOMPRESSION_COMPRESSED );
 }
 
@@ -206,13 +168,13 @@ OTF_File* OTF_File_open_with_external_buffer( uint32_t len, const char* buffer,
 			return NULL;
 		}
 
-		ret->z->next_in= NULL;
-		ret->z->avail_in= 0;
-		ret->z->zalloc= NULL;
-		ret->z->zfree= NULL;
-		ret->z->opaque= NULL;
+		OTF_FILE_Z(ret)->next_in= NULL;
+		OTF_FILE_Z(ret)->avail_in= 0;
+		OTF_FILE_Z(ret)->zalloc= NULL;
+		OTF_FILE_Z(ret)->zfree= NULL;
+		OTF_FILE_Z(ret)->opaque= NULL;
 
-		inflateInit( ret->z );
+		inflateInit( OTF_FILE_Z(ret) );
 
 		ret->zbuffer= malloc( ret->zbuffersize );
 		if( NULL == ret->zbuffer ) {
@@ -264,7 +226,7 @@ size_t OTF_File_write( OTF_File* file, const void* ptr, size_t size ) {
 	int status;
 #endif/* HAVE_ZLIB */
 
-
+	/* IOFSL is used in the _internal functions */
 	if ( NULL != file->externalbuffer ) {
 
 		OTF_Error( "ERROR in function %s, file: %s, line: %i:\n "
@@ -298,12 +260,12 @@ size_t OTF_File_write( OTF_File* file, const void* ptr, size_t size ) {
 	if ( NULL != file->z ) {
 
 		/* compress the data without using the ybuffer */
-		file->z->avail_in = size;
-		file->z->next_in = (void*)ptr;
+		OTF_FILE_Z(file)->avail_in = size;
+		OTF_FILE_Z(file)->next_in = (void*)ptr;
 
-		while (file->z->avail_in > 0) {
+		while (OTF_FILE_Z(file)->avail_in > 0) {
 
-			status = deflate(file->z, Z_FULL_FLUSH);
+			status = deflate(OTF_FILE_Z(file), Z_FULL_FLUSH);
 			if (status == Z_STREAM_ERROR) {
 
 				OTF_Error( "ERROR in function %s, file: %s, line: %i:\n "
@@ -312,19 +274,19 @@ size_t OTF_File_write( OTF_File* file, const void* ptr, size_t size ) {
 				return byteswritten;
 			}
 
-			while (file->z->avail_out == 0) {
+			while (OTF_FILE_Z(file)->avail_out == 0) {
 
-				size_t towrite = file->zbuffersize - file->z->avail_out;
-				if (towrite != fwrite(file->zbuffer, 1, towrite, file->file)) {
+				size_t towrite = file->zbuffersize - OTF_FILE_Z(file)->avail_out;
+				if (towrite != OTF_File_write_internal(file, file->zbuffer, towrite)) {
 
 					OTF_Error( "ERROR in function %s, file: %s, line %i:\n",
 							"Failed to write %u bytes to file!\n", 
 							__FUNCTION__, __FILE__, __LINE__, towrite);
 					return byteswritten;
 				}
-				file->z->avail_out = file->zbuffersize;
-				file->z->next_out = file->zbuffer;
-				status = deflate(file->z, Z_FULL_FLUSH);
+				OTF_FILE_Z(file)->avail_out = file->zbuffersize;
+				OTF_FILE_Z(file)->next_out = file->zbuffer;
+				status = deflate(OTF_FILE_Z(file), Z_FULL_FLUSH);
 				if (status == Z_STREAM_ERROR) {
 
 					OTF_Error( "ERROR in function %s, file: %s, line: %i:\n "
@@ -334,13 +296,13 @@ size_t OTF_File_write( OTF_File* file, const void* ptr, size_t size ) {
 					return byteswritten;
 				}
 			}
-			byteswritten = size - file->z->avail_in;
+			byteswritten = size - OTF_FILE_Z(file)->avail_in;
 		}
 	} else {
 
 #endif /* HAVE_ZLIB */
 
-		byteswritten= fwrite( ptr, 1, size, file->file );
+		byteswritten= OTF_File_write_internal(file, ptr, size);
 		if( byteswritten < size ) {
 
 			OTF_Error( "ERROR in function %s, file: %s, line: %i:\n "
@@ -367,6 +329,7 @@ size_t OTF_File_read( OTF_File* file, void* ptr, size_t size ) {
 	int status;
 #endif /* HAVE_ZLIB */
 
+	/* IOFSL is used in the _internal functions */
 
 	if( OTF_FILEMODE_WRITE == file->mode ) {
 		
@@ -390,27 +353,24 @@ size_t OTF_File_read( OTF_File* file, void* ptr, size_t size ) {
 
 	if ( NULL != file->z ) {
 
-		file->z->next_out= ptr;
-		file->z->avail_out= (uInt) size;
+		OTF_FILE_Z(file)->next_out= ptr;
+		OTF_FILE_Z(file)->avail_out= (uInt) size;
 
-		while ( 0 < file->z->avail_out ) {
+		while ( 0 < OTF_FILE_Z(file)->avail_out ) {
 
-			if ( 0 == file->z->avail_in ) {
+			if ( 0 == OTF_FILE_Z(file)->avail_in ) {
 
 		
-				/* OLD:
-				file->z->avail_in= (uInt) fread( file->zbuffer, 1, file->zbuffersize, file->file );
-				*/
-				file->z->avail_in= (uInt) OTF_File_read_internal( file, file->zbuffer, file->zbuffersize );
-				file->z->next_in= file->zbuffer;
+				OTF_FILE_Z(file)->avail_in= (uInt) OTF_File_read_internal( file, file->zbuffer, file->zbuffersize );
+				OTF_FILE_Z(file)->next_in= file->zbuffer;
 			}
 
-			if ( 0 == file->z->avail_in ) {
+			if ( 0 == OTF_FILE_Z(file)->avail_in ) {
 
 				break;
 			}
 
-			status = inflate( file->z, Z_SYNC_FLUSH );
+			status = inflate( OTF_FILE_Z(file), Z_SYNC_FLUSH );
 			if ( status != Z_OK ) {
 		
 				OTF_Error( "ERROR in function %s, file: %s, line: %i:\n "
@@ -421,21 +381,15 @@ size_t OTF_File_read( OTF_File* file, void* ptr, size_t size ) {
 			}
 		}
 
-		return size - file->z->avail_out;
+		return size - OTF_FILE_Z(file)->avail_out;
 
 	} else {
 
-		/* OLD
-		return fread( ptr, 1, size, file->file );
-		*/
 		return OTF_File_read_internal( file, ptr, size );
 	}
 
 #else /* HAVE_ZLIB */
 
-		/* OLD
-		return fread( ptr, 1, size, file->file );
-		*/
 		return OTF_File_read_internal( file, ptr, size );
 
 #endif /* HAVE_ZLIB */
@@ -452,6 +406,9 @@ int OTF_File_seek( OTF_File* file, uint64_t pos ) {
 	uint64_t read;
 #endif /* HAVE_ZLIB */
 
+	if ( NULL != file->iofsl ) {
+		return OTF_File_iofsl_seek( file, pos );
+	}
 
 	if ( NULL != file->externalbuffer ) {
 
@@ -495,19 +452,19 @@ int OTF_File_seek( OTF_File* file, uint64_t pos ) {
 			*/
 			read= OTF_File_read_internal( file, file->zbuffer, file->zbuffersize );
 
-			file->z->next_in= file->zbuffer;
-			file->z->avail_in= (uInt) read;
-			file->z->total_in= 0;
+			OTF_FILE_Z(file)->next_in= file->zbuffer;
+			OTF_FILE_Z(file)->avail_in= (uInt) read;
+			OTF_FILE_Z(file)->total_in= 0;
 
 			/* re-initialize z object */
-			inflateReset(file->z);
+			inflateReset(OTF_FILE_Z(file));
 
 			/* do not sync at very beginning of compressed stream because it 
 			would skip the first block */
 			sync= Z_OK;
 			if ( 0 != pos ) {
 
-				sync= inflateSync( file->z );
+				sync= inflateSync( OTF_FILE_Z(file) );
 			}
 
 			if ( Z_OK == sync ) {
@@ -547,6 +504,9 @@ int OTF_File_seek( OTF_File* file, uint64_t pos ) {
 
 uint64_t OTF_File_tell( OTF_File* file ) {
 
+	if ( NULL != file->iofsl ) {
+		return OTF_File_iofsl_tell( file );
+	}
 
 	if ( NULL != file->externalbuffer ) {
 
@@ -571,6 +531,9 @@ uint64_t OTF_File_size( OTF_File* file ) {
 
 	struct stat st;
 
+	if ( NULL != file->iofsl ) {
+		return OTF_File_iofsl_size( file );
+	}
 
 	if ( NULL != file->externalbuffer ) {
 
@@ -605,7 +568,10 @@ int OTF_File_close( OTF_File* file ) {
 	int status;
 #endif /* HAVE_ZLIB */
 
-	
+	if ( NULL != file->iofsl ) {
+		return OTF_File_iofsl_close( file );
+	}
+
 	if ( NULL == file ) {
 			
 		OTF_Error( "ERROR in function %s, file: %s, line: %i:\n "
@@ -622,7 +588,7 @@ int OTF_File_close( OTF_File* file ) {
 
         if ( OTF_FILEMODE_WRITE != file->mode ) {
 
-			inflateEnd( file->z );
+			inflateEnd( OTF_FILE_Z(file) );
 
 		} else {
 
@@ -638,13 +604,13 @@ int OTF_File_close( OTF_File* file ) {
 				return 0;
 			}
 
-			status = deflate( file->z, Z_FULL_FLUSH );
+			status = deflate( OTF_FILE_Z(file), Z_FULL_FLUSH );
 			assert( status != Z_STREAM_ERROR );
 
-			towrite = file->zbuffersize - file->z->avail_out;
+			towrite = file->zbuffersize - OTF_FILE_Z(file)->avail_out;
 			byteswritten = 0;
 			if (towrite > 0)
-				byteswritten = fwrite( file->zbuffer, 1, towrite, file->file );
+				byteswritten = OTF_File_write_internal(file, file->zbuffer, towrite);
 			if (towrite != byteswritten) {
 
 				OTF_Error( "ERROR in function %s, file: %s, line: %i:\n"
@@ -652,18 +618,18 @@ int OTF_File_close( OTF_File* file ) {
 						__FUNCTION__, __FILE__, __LINE__, towrite );
 			}
 
-			while (file->z->avail_out != file->zbuffersize) {
+			while (OTF_FILE_Z(file)->avail_out != file->zbuffersize) {
 
-				file->z->avail_out = file->zbuffersize;
-				file->z->next_out = file->zbuffer;
-				deflate( file->z, Z_FULL_FLUSH );
+				OTF_FILE_Z(file)->avail_out = file->zbuffersize;
+				OTF_FILE_Z(file)->next_out = file->zbuffer;
+				deflate( OTF_FILE_Z(file), Z_FULL_FLUSH );
 				assert(status != Z_STREAM_ERROR);
 
-				towrite = file->zbuffersize - file->z->avail_out;
+				towrite = file->zbuffersize - OTF_FILE_Z(file)->avail_out;
 				if (towrite > 0)
-					fwrite( file->zbuffer, 1, towrite, file->file );
+					OTF_File_write_internal(file, file->zbuffer, towrite);
 			}
-			deflateEnd( file->z );
+			deflateEnd( OTF_FILE_Z(file) );
 		}
 		free( file->z );
 		file->z = NULL;
@@ -692,6 +658,9 @@ int OTF_File_close( OTF_File* file ) {
 
 OTF_FileStatus OTF_File_status( OTF_File* file ) {
 
+	if ( NULL != file->iofsl ) {
+		return OTF_File_iofsl_status( file );
+	}
 
 	if ( NULL != file->externalbuffer ) {
 
@@ -720,6 +689,10 @@ OTF_FileStatus OTF_File_status( OTF_File* file ) {
 
 void OTF_File_suspend( OTF_File* file ) {
 
+	if ( NULL != file->iofsl ) {
+		OTF_File_iofsl_suspend( file );
+		return;
+	}
 
 	if ( NULL != file->externalbuffer ) {
 
@@ -740,6 +713,9 @@ void OTF_File_suspend( OTF_File* file ) {
 
 int OTF_File_revive( OTF_File* file, OTF_FileMode mode  ) {
 
+	if ( NULL != file->iofsl ) {
+		return OTF_File_iofsl_revive( file, mode );
+	}
 
 	if ( NULL != file->externalbuffer ) {
 
@@ -1015,7 +991,7 @@ int OTF_File_revive( OTF_File* file, OTF_FileMode mode  ) {
 
 
 void OTF_File_setZBufferSize( OTF_File* file, uint32_t size ) {
-
+	/* no specific IOFSL version */
 
 #ifdef HAVE_ZLIB
 	
@@ -1057,13 +1033,28 @@ void OTF_File_setZBufferSize( OTF_File* file, uint32_t size ) {
         }
         file->zbuffer = tmp;
 		file->zbuffersize= size;
-        file->z->avail_out = size;
-        file->z->next_out  = file->z->next_in = file->zbuffer;
+        OTF_FILE_Z(file)->avail_out = size;
+        OTF_FILE_Z(file)->next_out  = OTF_FILE_Z(file)->next_in = file->zbuffer;
 		
 	
 	}
 
 #endif /* HAVE_ZLIB */
+}
+
+/**
+ * returns 0 if suffix is-suffix of filename
+ *         true if suffix is not NOT a suffix of filename
+ */
+static int OTF_File_nameSuffixCmp(const char *filename, const char *suffix) {
+	size_t filename_length, suffix_length;
+	assert( filename && suffix );
+	filename_length = strlen( filename );
+	suffix_length = strlen( suffix );
+	if ( suffix_length >  filename_length ) {
+		return 1;
+	}
+	return strncmp( filename + filename_length - suffix_length, suffix, suffix_length);
 }
 
 
@@ -1073,6 +1064,17 @@ OTF_File* OTF_File_open_zlevel( const char* filename, OTF_FileManager* manager,
 
 	uint32_t len;
 	OTF_File* ret;
+
+	if ( OTF_FileManager_isIofsl( manager ) ) {
+		/* open all files except *.otf and global definitions/markers with iofsl */
+		if ( OTF_File_nameSuffixCmp( filename, ".otf" )
+			&& OTF_File_nameSuffixCmp( filename, ".0.def" )
+			&& OTF_File_nameSuffixCmp( filename, ".0.def.z" )
+			&& OTF_File_nameSuffixCmp( filename, ".0.marker" )
+			&& OTF_File_nameSuffixCmp( filename, ".0.marker.z" ) ) {
+			return OTF_File_iofsl_open_zlevel( filename, manager, mode, zlevel );
+		}
+	}
 
 	/* Check input parameters */
 	if( NULL == filename ) {
@@ -1158,13 +1160,13 @@ OTF_File* OTF_File_open_zlevel( const char* filename, OTF_FileManager* manager,
 				return NULL;
 			}
 
-			ret->z->next_in= NULL;
-			ret->z->avail_in= 0;
-			ret->z->zalloc= NULL;
-			ret->z->zfree= NULL;
-			ret->z->opaque= NULL;
+			OTF_FILE_Z(ret)->next_in= NULL;
+			OTF_FILE_Z(ret)->avail_in= 0;
+			OTF_FILE_Z(ret)->zalloc= NULL;
+			OTF_FILE_Z(ret)->zfree= NULL;
+			OTF_FILE_Z(ret)->opaque= NULL;
 
-			inflateInit( ret->z );
+			inflateInit( OTF_FILE_Z(ret) );
 
 			ret->zbuffer= malloc( ret->zbuffersize );
 
@@ -1237,13 +1239,13 @@ OTF_File* OTF_File_open_zlevel( const char* filename, OTF_FileManager* manager,
 				return NULL;
 			}
 
-			ret->z->next_in= NULL;
-			ret->z->avail_in= 0;
-			ret->z->zalloc= NULL;
-			ret->z->zfree= NULL;
-			ret->z->opaque= NULL;
+			OTF_FILE_Z(ret)->next_in= NULL;
+			OTF_FILE_Z(ret)->avail_in= 0;
+			OTF_FILE_Z(ret)->zalloc= NULL;
+			OTF_FILE_Z(ret)->zfree= NULL;
+			OTF_FILE_Z(ret)->opaque= NULL;
 
-			deflateInit( ret->z, zlevel );
+			deflateInit( OTF_FILE_Z(ret), zlevel );
 
 			ret->zbuffer= malloc( ret->zbuffersize );
 			if( NULL == ret->zbuffer ) {
@@ -1271,11 +1273,18 @@ OTF_File* OTF_File_open_zlevel( const char* filename, OTF_FileManager* manager,
 	return ret;
 }
 
-
+size_t OTF_File_write_internal( OTF_File* file, const void* src, size_t length ) {
+	if ( NULL != file->iofsl )
+		return OTF_File_iofsl_write_internal( file, src, length );
+        return fwrite(src, 1, length, file->file);
+}
 
 size_t OTF_File_read_internal( OTF_File* file, void* dest, size_t length ) {
-
     uint64_t actual_length;
+
+
+    if ( NULL != file->iofsl )
+	return OTF_File_iofsl_read_internal( file, dest, length );
 
     /* default behavior first */
     if ( NULL == file->externalbuffer ) 

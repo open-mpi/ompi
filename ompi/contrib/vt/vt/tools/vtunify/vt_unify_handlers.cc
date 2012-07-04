@@ -10,7 +10,6 @@
  * See the file COPYING in the package base directory for details
  **/
 
-#include "vt_unify.h"
 #include "vt_unify_defs.h"
 #include "vt_unify_handlers.h"
 #include "vt_unify_hooks.h"
@@ -19,7 +18,17 @@
 #include "vt_unify_tkfac.h"
 #include "vt_unify_usrcom.h"
 
-#include "otf.h"
+#ifdef VT_UNIFY_REMOVE_UNDEF_PROCID_REFERENCES
+
+// check whether given stream id is available
+static bool is_stream_avail( const uint32_t streamid )
+{
+   return
+      ( AbsentStreamIds.empty() ||
+        AbsentStreamIds.find( streamid ) == AbsentStreamIds.end() );
+}
+
+#endif // VT_UNIFY_REMOVE_UNDEF_PROCID_REFERENCES
 
 void
 HandleKeyValueList( const uint32_t & proc, OTF_KeyValueList * kvs )
@@ -282,6 +291,27 @@ HandleDefProcessGroup( FirstHandlerArg_DefsS * fha,
    {
       type = DefRec_DefProcessGroupS::TYPE_OTHER;
    }
+
+#ifdef VT_UNIFY_REMOVE_UNDEF_PROCID_REFERENCES
+   if( n > 0 && !AbsentStreamIds.empty() &&
+       type != DefRec_DefProcessGroupS::TYPE_ALL &&
+       type != DefRec_DefProcessGroupS::TYPE_NODE &&
+       type != DefRec_DefProcessGroupS::TYPE_MPI_COMM_SELF )
+   {
+      // remove unavailable stream ids from member array
+      //
+      uint32_t j = 0;
+      for( uint32_t i = 0; i < n; i++ )
+      {
+         if( is_stream_avail( array[i] ) && j < i )
+            array[j++] = array[i];
+      }
+      n = j;
+      // drop record, if member array is empty
+      if( n == 0 )
+         return OTF_RETURN_OK;
+   }
+#endif // VT_UNIFY_REMOVE_UNDEF_PROCID_REFERENCES
 
    // add local definition to vector
    fha->loc_defs.push_back( new DefRec_DefProcessGroupS
@@ -919,6 +949,12 @@ HandleSendMsg( FirstHandlerArg_EventsS * fha,
       return OTF_RETURN_OK;
    }
 
+#ifdef VT_UNIFY_REMOVE_UNDEF_PROCID_REFERENCES
+   // drop record, if receiver stream isn't available
+   if( !is_stream_avail( receiver ) )
+      return OTF_RETURN_OK;
+#endif // VT_UNIFY_REMOVE_UNDEF_PROCID_REFERENCES
+
    // trigger write record hook
    theHooks->triggerWriteRecordHook( HooksC::Record_SendMsg, 10,
       &(fha->wstream), &time, &sender, &receiver, &global_comm, &tag, &length,
@@ -982,6 +1018,12 @@ HandleRecvMsg( FirstHandlerArg_EventsS * fha,
       // TODO: show warning message?
       return OTF_RETURN_OK;
    }
+
+#ifdef VT_UNIFY_REMOVE_UNDEF_PROCID_REFERENCES
+   // drop record, if sender stream isn't available
+   if( !is_stream_avail( sender ) )
+      return OTF_RETURN_OK;
+#endif // VT_UNIFY_REMOVE_UNDEF_PROCID_REFERENCES
 
    // trigger write record hook
    theHooks->triggerWriteRecordHook( HooksC::Record_RecvMsg, 10,
@@ -1116,6 +1158,12 @@ HandleRMAPut( FirstHandlerArg_EventsS * fha,
    static const TokenFactoryScopeI * tkfac_defscl =
       theTokenFactory->getScope( DEF_REC_TYPE__DefScl );
 
+#ifdef VT_UNIFY_REMOVE_UNDEF_PROCID_REFERENCES
+   // drop record, if origin or destination stream isn't available
+   if( !is_stream_avail( origin ) || !is_stream_avail( dest ) )
+      return OTF_RETURN_OK;
+#endif // VT_UNIFY_REMOVE_UNDEF_PROCID_REFERENCES
+
    // translate local comm. token
    //
    uint32_t global_comm = tkfac_defprocgrp->translate( proc, comm );
@@ -1170,6 +1218,12 @@ HandleRMAPutRemoteEnd( FirstHandlerArg_EventsS * fha,
    // get global token factory for DefScl
    static const TokenFactoryScopeI * tkfac_defscl =
       theTokenFactory->getScope( DEF_REC_TYPE__DefScl );
+
+#ifdef VT_UNIFY_REMOVE_UNDEF_PROCID_REFERENCES
+   // drop record, if origin or destination stream isn't available
+   if( !is_stream_avail( origin ) || !is_stream_avail( dest ) )
+      return OTF_RETURN_OK;
+#endif // VT_UNIFY_REMOVE_UNDEF_PROCID_REFERENCES
 
    // translate local comm. token
    //
@@ -1226,6 +1280,12 @@ HandleRMAGet( FirstHandlerArg_EventsS * fha,
    static const TokenFactoryScopeI * tkfac_defscl =
       theTokenFactory->getScope( DEF_REC_TYPE__DefScl );
 
+#ifdef VT_UNIFY_REMOVE_UNDEF_PROCID_REFERENCES
+   // drop record, if origin or destination stream isn't available
+   if( !is_stream_avail( origin ) || !is_stream_avail( dest ) )
+      return OTF_RETURN_OK;
+#endif // VT_UNIFY_REMOVE_UNDEF_PROCID_REFERENCES
+
    // translate local comm. token
    //
    uint32_t global_comm = tkfac_defprocgrp->translate( proc, comm );
@@ -1280,6 +1340,12 @@ HandleRMAEnd( FirstHandlerArg_EventsS * fha,
    // get global token factory for DefScl
    static const TokenFactoryScopeI * tkfac_defscl =
       theTokenFactory->getScope( DEF_REC_TYPE__DefScl );
+
+#ifdef VT_UNIFY_REMOVE_UNDEF_PROCID_REFERENCES
+   // drop record, if remote stream isn't available
+   if( !is_stream_avail( remote ) )
+      return OTF_RETURN_OK;
+#endif // VT_UNIFY_REMOVE_UNDEF_PROCID_REFERENCES
 
    // translate local comm. token
    //

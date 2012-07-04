@@ -320,7 +320,8 @@ FilterTraceC::readFilter(
       int32_t limit;
 
       // get function's call limit
-      RFG_Filter_get( rfg_filter, func_name.c_str(), &limit );
+      // TODO: consider function groups and recursiveness
+      RFG_Filter_get( rfg_filter, func_name.c_str(), 0, &limit, 0, 0 );
 
       // if it's not the default call limit, assign it to function
       //
@@ -374,7 +375,8 @@ FilterTraceC::readFilter(
           int32_t limit;
 
           // get function's call limit
-          RFG_Filter_get( rfg_filter, func_name.c_str(), &limit );
+          // TODO: consider function groups and recursiveness
+          RFG_Filter_get( rfg_filter, func_name.c_str(), 0, &limit, 0, 0 );
 
           // if it's not the default call limit and the function has no global
           // filter rule, assign the process specific call limit to function

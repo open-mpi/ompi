@@ -13,10 +13,7 @@
 #ifndef _VT_UNIFY_DEFS_RECS_H_
 #define _VT_UNIFY_DEFS_RECS_H_
 
-#include "config.h"
-
-#include "vt_unify.h"
-
+#include "vt_defs.h"
 #include "vt_inttypes.h"
 
 #include "util/hash.h"
@@ -26,9 +23,8 @@
 #include <algorithm>
 #include <set>
 #include <string>
-#include <vector>
 
-#include <string.h>
+#include <assert.h>
 
 //
 // definition record types

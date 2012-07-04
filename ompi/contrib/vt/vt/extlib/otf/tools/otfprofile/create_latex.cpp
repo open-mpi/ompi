@@ -49,6 +49,7 @@ static const double PLOT_HEIGHT = 8; //cm
 
 /* will be set before latex creation and can be used in all local functions */
 static bool grouped = false;
+static bool logaxis = true;
 static vector<string> xLabels;
 static int xLabelNum = 0;
 
@@ -784,6 +785,249 @@ static void write_counterTables(fstream& tex, struct AllData& alldata)
 }
 
 /*
+ * Write a latex dispersion diagram.
+ *
+ * @param tex the given file stream (reference)
+ * @param alldata the global data
+ */
+static void write_Dispersion(fstream& tex, struct AllData& alldata)
+{
+  map< Pair, FunctionDispersionData, gtPair >::const_iterator it = 
+          alldata.functionDispersionMap.begin();
+  map< Pair, FunctionDispersionData, gtPair >::const_iterator itend = 
+          alldata.functionDispersionMap.end();
+    
+  /* write boxplot command (vertical standalone)
+  tex << "%#1: position, #2: median, #3: 1/4 quartile, #4: 3/4 quartile, #5: min, #6: max" << endl;
+  tex << "\\newcommand{\\boxplotlv}[6]{" << endl;
+  tex << "  \\filldraw[fill=green!20] (#1,#3) rectangle (#1+0.5,#4);% draw the box" << endl;
+  tex << "  \\draw (#1,#2) -- (#1+0.5,#2);% node[right]{$\\textsc{#2}$};% median" << endl;
+  tex << "  \\draw (#1+0.25,#4) -- (#1+0.25,#6);% node[right]{$\\textsc{#4}$};% draw upper whisker" << endl;
+  tex << "  \\draw (#1+0.25,#3) -- (#1+0.25,#5);% draw lower whisker" << endl;
+  tex << "  \\draw (#1,#5) -- (#1+0.5,#5);% node[right]{$\\textsc{#5}$};% draw min" << endl;
+  tex << "  \\draw (#1,#6) -- (#1+0.5,#6);% node[right]{$\\textsc{#6}$};% draw max" << endl;
+  tex << "  %\\draw (#1,#6) node[above,xshift=0.5cm]{$ \\textsc{Function x}$};" << endl;
+  tex << "}" << endl;*/
+  
+  /*
+  tex << "\\newcommand{\\fdbplot}[6]{%" << endl;
+  tex << "\\begin{tikzpicture}" << endl;
+  tex << "\\begin{axis}[" << endl;
+  tex << "  width=14cm, height=3cm," << endl;
+  tex << "  xmin=#4, xmax=#5, " << endl;
+  tex << "  restrict x to domain=#4:#5," << endl;
+  tex << "  ymin=0.5, ymax=1.5," << endl;
+  tex << "  axis y line=none," << endl;
+  tex << "  axis x line=bottom,x axis line style={-,line width=1pt}," << endl;
+  tex << "  xmode=#6,log basis x=10, enlarge x limits={value=0.02,true}," << endl;
+  tex << "  scaled x ticks" << endl;
+  tex << "]" << endl;
+  tex << "    \\filldraw[fill=green!20,line width=0.2mm] (axis cs:#2,0.85) rectangle (axis cs:#3,1.15);% draw the box " << endl;
+  tex << "    \\draw[line width=0.2mm, color=red] (axis cs:#1,0.85) -- (axis cs:#1,1.15);              % median" << endl;
+  tex << "    \\draw[line width=0.2mm] (axis cs:#3,1) -- (axis cs:#5,1);                         % line right" << endl;
+  tex << "    \\draw[line width=0.2mm] (axis cs:#5,0.85) -- (axis cs:#5,1.15);                   % max" << endl;
+  tex << "    \\draw[line width=0.2mm] (axis cs:#2,1) -- (axis cs:#4,1);                         % line left" << endl;
+  tex << "    \\draw[line width=0.2mm] (axis cs:#4,0.85) -- (axis cs:#4,1.15);                   % min" << endl;
+  tex << "\\end{axis}" << endl;
+  tex << "\\end{tikzpicture}" << endl;
+  tex << "}" << endl;*/
+  
+  const unsigned int BP_WIDTH = 13;
+  const unsigned int LABEL_WIDTH = 3; /* avoid overlapping of labels */
+  
+  tex << "\\begin{center}" << endl;
+  tex << "{\\Large \\bf Top 50 Dispersion of Functions (in seconds)}";
+	tex << endl << "\\bigskip" << endl;
+  tex << "\\end{center}" << endl;
+  
+  // define a counter for label shifting and lengths for \ifdim compare
+  tex << "\\newcounter{shiftctr}" << endl;
+  tex << "\\newlength{\\lowqpos}" << endl;
+  tex << "\\newlength{\\medianpos}" << endl;
+  
+  tex.precision(0);
+  tex << "%#1: min, #2: 1/4 quartile, #3: 1/4pos, #4: median, #5: medianpos, #6: 3/4 quartile, #7: 3/4pos, #8: max" << endl;
+  tex << "\\newcommand{\\boxplotlh}[8]{" << endl;
+  tex << "\\begin{tikzpicture}" << endl;
+  tex << "\\begin{small}" << endl;
+  tex << "  % set all counters and lengths to zero" << endl;
+  tex << "  \\setcounter{shiftctr}{0}" << endl;
+  tex << "  \\setlength{\\lowqpos}{#3 pt}" << endl;
+  tex << "  \\addtolength{\\lowqpos}{" << LABEL_WIDTH << "pt}" << endl;
+  tex << "  \\setlength{\\medianpos}{#5 pt}" << endl;
+  tex << "  \\addtolength{\\medianpos}{" << LABEL_WIDTH << "pt}" << endl;
+  tex << "  \\filldraw[fill=green!20] (#3,0) rectangle (#7,0.5);% box" << endl;
+  tex << "  \\draw (0,0) node[below]{$t_{min}:#1$} -- (0,0.5);" << endl;
+  tex << "  \\draw (0,0.25) -- (#3,0.25);% left whisker" << endl << endl;
+  
+  tex << "  % check overlap of lower quartile label" << endl;
+  tex << "  \\ifdim #3 pt > " << BP_WIDTH-LABEL_WIDTH << "pt" << endl;
+  tex << "    \\addtocounter{shiftctr}{4}" << endl;
+  tex << "  \\else" << endl;
+  tex << "    \\ifdim #3 pt < 2pt" << endl;
+  tex << "      \\addtocounter{shiftctr}{4}" << endl;
+  tex << "    \\fi" << endl;
+  tex << "  \\fi" << endl;
+  tex << "  \\node at (#3,0) [below,yshift=-\\theshiftctr mm] {$t_{1/4}:#2$};" << endl << endl;
+  
+  tex << "  % check overlap of median label" << endl;
+  tex << "  \\ifdim #5 pt > " << BP_WIDTH-LABEL_WIDTH << "pt" << endl;
+  tex << "    \\addtocounter{shiftctr}{4}" << endl;
+  tex << "  \\else" << endl;
+  tex << "    \\ifnum\\theshiftctr=4" << endl;
+  tex << "      \\ifdim #5 pt < " << LABEL_WIDTH << "pt" << endl;
+  tex << "        \\addtocounter{shiftctr}{4}" << endl;
+  tex << "      \\else" << endl;
+  tex << "        \\setcounter{shiftctr}{0}" << endl;
+  tex << "      \\fi" << endl;
+  tex << "    \\else" << endl;
+  tex << "      \\ifdim #5 pt < \\lowqpos" << endl;
+  tex << "        \\addtocounter{shiftctr}{4}" << endl;
+  tex << "      \\fi" << endl;
+  tex << "    \\fi" << endl;
+  tex << "  \\fi" << endl;
+  tex << "  \\draw[color=red] (#5,0.5) -- (#5,0) node[below,color=black,yshift=-\\theshiftctr mm]{$t_{med}:#4$};" << endl << endl;
+
+  tex << "% check overlap of higher quartile label" << endl;
+  tex << "  \\ifdim #7 pt > " << BP_WIDTH-LABEL_WIDTH << "pt" << endl;
+  tex << "    \\addtocounter{shiftctr}{4}" << endl;
+  tex << "  \\else" << endl;
+  tex << "    \\ifnum\\theshiftctr>0" << endl;
+  tex << "      \\ifdim #7 pt < \\lowqpos" << endl;
+  tex << "        \\addtocounter{shiftctr}{4}" << endl;
+  tex << "      \\else" << endl;
+  tex << "        \\setcounter{shiftctr}{0}" << endl;
+  tex << "      \\fi" << endl;
+  tex << "    \\else" << endl;
+  tex << "      \\ifdim #7 pt < \\medianpos" << endl;
+	tex << "        \\addtocounter{shiftctr}{4}" << endl;
+  tex << "      \\fi" << endl;
+  tex << "    \\fi" << endl;
+  tex << "  \\fi" << endl;
+  tex << "  \\node at (#7,0) [below,yshift=-\\theshiftctr mm] {$t_{3/4}:#6$};" << endl << endl;
+            
+  tex << "  \\draw (#7,0.25) -- (" << BP_WIDTH << ",0.25);% right whisker" << endl;
+  tex << "  \\draw (" << BP_WIDTH << ",0.5) -- (" << BP_WIDTH << ",0) node[below]{$t_{max}:#8$};" << endl;
+  tex << "\\end{small}" << endl;
+  tex << "\\end{tikzpicture}" << endl;
+  tex << "}" << endl;
+  
+  tex.setf(ios::fixed, ios::floatfield);
+  tex.precision(6);
+  
+  tex << "\\begin{flushleft}" << endl;
+  
+  unsigned long int count = 1;
+  while ( itend != it ) {
+    if(count % 50 == 0) break;
+    
+    // write only 9 plots per page */
+    if(count % 9 == 0){
+      tex << "\\newpage" << endl << endl;
+    }
+    
+    // init value for plot dimensions
+    double factor = it->second.excl_time_maximum - it->second.excl_time_minimum;
+    double lowq =  it->second.excl_time_low_quartile - it->second.excl_time_minimum;
+    double median = it->second.excl_time_median - it->second.excl_time_minimum;
+    double topq = it->second.excl_time_top_quartile - it->second.excl_time_minimum;
+    
+    string func_name = alldata.functionIdNameMap[it->first.b];
+    if(func_name.size() > 2*FUNC_NAME_MAX_LEN)
+      func_name.resize(2*FUNC_NAME_MAX_LEN);
+    tex << "\\verb|" << func_name << "|";
+    
+    if((factor <= 0) | (lowq < 0) | (median < 0) | (topq < 0)){
+      cout.setf(ios::scientific, ios::floatfield);
+      cout.precision(5);
+      
+      cout << endl << "Cannot create latex output!" << endl
+          << "min: " << it->second.excl_time_minimum << ", "
+          << "low quartile: " << it->second.excl_time_low_quartile << ", "
+          << "median: " << it->second.excl_time_median << ", "
+          << "top quartile: " << it->second.excl_time_top_quartile << ", "
+          << "maximum: " << it->second.excl_time_maximum << endl;
+      
+      count++;
+      it++;
+    }
+    
+    /*** calculation of the boxplot's positions ***/
+    /* logarithmic */
+    if( it->second.excl_time_top_quartile < 
+        ((it->second.excl_time_maximum-it->second.excl_time_minimum)/2 
+        + it->second.excl_time_minimum) ){
+      tex << " ($log_{10}$)";
+      
+      factor = BP_WIDTH / log10(factor);
+      
+      if(lowq > 0) lowq = log10(lowq) * factor;
+      else lowq = 0;
+      
+      if(median > 0) median = log10(median) * factor;
+      else median = lowq;
+      
+      if(topq > 0) topq = log10(topq) * factor;
+      else topq = median;
+    /* linear */
+    }else{
+      factor = BP_WIDTH / factor;
+      
+      if(lowq > 0) lowq = lowq * factor;
+      else lowq = 0;
+      
+      if(median > 0) median = median * factor;
+      else median = lowq;
+      
+      if(topq > 0) topq = topq * factor;
+      else topq = median;
+    }
+    
+    tex << endl;
+    
+    /* write the values and their plot x-coordinate */
+    /* min, 1/4 quartile, 1/4pos, median, medianpos, 3/4 quartile, 3/4pos, max */
+    {
+      tex << "\\boxplotlh{";
+      tex.precision(5);
+      tex.setf(ios::scientific, ios::floatfield);
+      tex << it->second.excl_time_minimum/(double)alldata.timerResolution << "}{"
+          << it->second.excl_time_low_quartile/(double)alldata.timerResolution << "}{";
+      tex.setf(ios::fixed, ios::floatfield);
+      tex.precision(6);
+      tex << lowq << "}{";
+      tex.setf(ios::scientific, ios::floatfield);
+      tex.precision(5);
+      tex << it->second.excl_time_median/(double)alldata.timerResolution << "}{";
+      tex.setf(ios::fixed, ios::floatfield);
+      tex.precision(6);
+      tex << median << "}{";
+      tex.setf(ios::scientific, ios::floatfield);
+      tex.precision(5);
+      tex << it->second.excl_time_top_quartile/(double)alldata.timerResolution << "}{";
+      tex.precision(6);
+      tex.setf(ios::fixed, ios::floatfield);
+      tex << topq << "}{";
+      tex.setf(ios::scientific, ios::floatfield);
+      tex.precision(5);
+      tex << it->second.excl_time_maximum/(double)alldata.timerResolution 
+          << "}" << endl;
+      tex << "\\smallskip" << endl << endl;
+    }
+    
+    count++;
+    it++;
+  }
+  
+  tex << "\\end{flushleft}" << endl << endl;
+  
+  tex.setf(ios::floatfield);
+  tex.precision(6);
+
+  tex << "\\newpage" << endl << endl;
+}
+
+/*
  * Write header of a ybar chart. This function decides about the y axis scaling
  * type (logarithmic basis 10 or 2 or linear scaling)
  *
@@ -830,8 +1074,10 @@ template <class type> static void write_ybarPlotHead(
   /* this works only for pgfplots since version 1.3 */
   // @TODO: ymin == 0, min - max line cannot be drawn
   if(metricType == MSGLENGTH){
-    tex << "  ymode=log,log basis y=2,ymin=\\ymin," << endl;
-    tex << "  try min ticks log={8}," << endl;
+    if(logaxis){
+      tex << "  ymode=log,log basis y=2,ymin=\\ymin," << endl;
+      tex << "  try min ticks log={8}," << endl;
+    }
     
     /* check for label overlapping */
     if((double)minMax.max > (double)8191)
@@ -844,7 +1090,7 @@ template <class type> static void write_ybarPlotHead(
     double ymax = (double)minMax.max;
 
     // @TODO: ymin == 0, min - max line cannot be drawn
-    if(ymax - ymin > 1000 || (ymax - ymin > 0.01 && ymax < 1)){
+    if((ymax - ymin > 1000 || (ymax - ymin > 0.01 && ymax < 1)) && logaxis){
       // logarithmic mode
       tex << "  ymode=log,log basis y=10,";
       if(ymin <= 0){
@@ -1738,14 +1984,19 @@ static void write_CollectiveClass(fstream& tex, uint64_t cclassType,
     write_ybarPlotHead(tex, cclassType, MSGLENGTH, vector<string>(),
                        minMax.bytes);
     write_CollectiveClassMetricPlot(tex, cclassType, MSGLENGTH, xnum);
-    write_ybarPlotFoot(tex, 0);
+    
+    if(minMax.duration.max > 0)
+      write_ybarPlotFoot(tex, 0);
   }
   /*****************************/
 
   /***** duration *****/
-  write_ybarPlotHead(tex, cclassType, DURATION, xLabels, minMax.duration);
+  if(minMax.duration.max > 0){
+    write_ybarPlotHead(tex, cclassType, DURATION, xLabels, minMax.duration);
 
-  write_CollectiveClassMetricPlot(tex, cclassType, DURATION, xnum);
+    write_CollectiveClassMetricPlot(tex, cclassType, DURATION, xnum);
+  }
+  
   if(cclassType == OTF_COLLECTIVE_TYPE_BARRIER)
     write_ybarPlotFoot(tex, 2);
   else
@@ -2153,6 +2404,7 @@ bool CreateTex( AllData& alldata ) {
     tex_file.precision(6);
 
     grouped= alldata.grouping.enabled;
+    logaxis= alldata.params.logaxis;
 
     /* write the document header (including the \begin{document} */
     write_header(tex_file);
@@ -2160,6 +2412,7 @@ bool CreateTex( AllData& alldata ) {
 
     /* write the function and counter tables */
     write_functionTable(tex_file, alldata);
+    write_Dispersion(tex_file, alldata);
     write_counterTables(tex_file, alldata);
 
     /* get the x axis labels */

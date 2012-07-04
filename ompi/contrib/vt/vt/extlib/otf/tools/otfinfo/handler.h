@@ -38,6 +38,7 @@ typedef struct definitionInfoS
   uint8_t     otfVersionMinor;
   uint8_t     otfVersionSub;
   uint64_t    traceFileSize;
+  uint64_t    traceUniqueId;
   uint64_t    counterCollectiveOperation;
   uint64_t    counterDefinitionComment;
   uint64_t    counterSourceFileName;
@@ -67,6 +68,8 @@ int handleUnknownRecord( void *userData, uint64_t time, uint32_t process,
                          const char *record );
 
 int handleDefCreator( void *userData, uint32_t stream, const char *creator );
+
+int handleDefUniqueId( void *userData, uint32_t stream, uint64_t uid );
 
 int handleDefVersion( void *userData, uint32_t stream, uint8_t major,
                       uint8_t minor, uint8_t sub, const char *string );

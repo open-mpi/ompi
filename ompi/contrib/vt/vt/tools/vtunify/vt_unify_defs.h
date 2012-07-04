@@ -13,19 +13,12 @@
 #ifndef _VT_UNIFY_DEFS_H_
 #define _VT_UNIFY_DEFS_H_
 
-#include "config.h"
-
+#include "vt_unify.h"
 #include "vt_unify_defs_recs.h"
 #include "vt_unify_lvector.hh"
-#include "vt_unify_usrcom.h"
-
-#include "vt_inttypes.h"
 
 #include <algorithm>
 #include <list>
-#include <map>
-#include <set>
-#include <string>
 
 //
 // DefinitionsC class

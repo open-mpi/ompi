@@ -3,6 +3,8 @@ Microsoft Visual Studio Solution File, Format Version 10.00
 # Visual Studio 2008
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libotf", "otflib\libotf_vs08.vcproj", "{6B9B49C9-75CD-400D-B736-5EACA04D0A82}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libotfaux", "otfauxlib\libotfaux_vs08.vcproj", "{6B9B49C9-75CD-400D-B736-5EACA04D0A83}"
+EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "otfaux", "tools\otfaux\otfaux_vs08.vcproj", "{24587836-ED5E-49DF-A7AD-419FDC208C08}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "otfcompress", "tools\otfcompress\otfcompress_vs08.vcproj", "{B6BBC220-1492-4BEA-A299-9D062133ABAA}"

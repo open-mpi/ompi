@@ -19,20 +19,21 @@
 	int l = 0; while( Helptext[l] ) { printf( "%s", Helptext[l++] ); } }
 
 static const char* Helptext[] = {
-"                                                                  \n",
-" otfconfig - shows parameters of the otf configuration.           \n",
-"                                                                  \n",
-" otfconfig [Options]                                              \n",
-"                                                                  \n",
-"   options:                                                       \n",
-"      -h, --help    show this help message                        \n",
-"      --version     show the otf version                          \n",
-"      --have-zlib   is zlib enabled                               \n",
-"      --includes    path to the otf headers                       \n",
-"      --libs        libline needed for linking otf                \n",
-"      --sizes       print size of integer types                   \n",
-"                                                                  \n",
-"                                                                  \n", NULL };
+"                                                                           \n",
+" otfconfig - Show parameters of the OTF configuration.                     \n",
+"                                                                           \n",
+" Syntax: otfconfig [options]                                               \n",
+"                                                                           \n",
+"   options:                                                                \n",
+"      -h, --help    show this help message                                 \n",
+"      -V, --version show OTF version                                       \n",
+"      --have-zlib   is zlib enabled                                        \n",
+"      --have-zoidfs is ZOIDFS for IOFSL enabled                            \n",
+"      --includes    path to the otf headers                                \n",
+"      --libs        libline needed for linking otf                         \n",
+"      --sizes       print size of integer types                            \n",
+"                                                                           \n",
+NULL };
 
 int main( int argc, char** argv ) {
 
@@ -56,11 +57,12 @@ int main( int argc, char** argv ) {
 			SHOW_HELPTEXT;
 			return 0;
 
-		} else if ( 0 == strcmp( argv[i], "--version" ) ) {
+		} else if ( 0 == strcmp( argv[i], "-V" ) ||
+		            0 == strcmp( argv[i], "--version" ) ) {
 
-			printf( "%u.%u.%u %s\n",
+  			printf( "%u.%u.%u \"%s\"\n",
 				OTF_VERSION_MAJOR, OTF_VERSION_MINOR,
-				OTF_VERSION_SUB, OTF_VERSION_STRING );
+				OTF_VERSION_SUB, OTF_VERSION_STRING) ;
 			return 0;
 
 		} else if ( 0 == strcmp( argv[i], "--have-zlib" ) ) {
@@ -70,6 +72,15 @@ int main( int argc, char** argv ) {
 #else /* HAVE_ZLIB */
 			printf( "no\n" );
 #endif /* HAVE_ZLIB */
+			return 0;
+
+		} else if ( 0 == strcmp( argv[i], "--have-zoidfs" ) ) {
+
+#ifdef HAVE_ZOIDFS
+			printf( "yes\n" );
+#else /* HAVE_ZOIDFS */
+			printf( "no\n" );
+#endif /* HAVE_ZOIDFS */
 			return 0;
 
 		} else if ( 0 == strcmp( argv[i], "--includes" ) ) {
@@ -84,13 +95,8 @@ int main( int argc, char** argv ) {
 
 		        if ( !(*libs) ) {
 
-				strncpy( libs,
-					 "-L"OTFCONFIG_LIBDIR" -lotfaux -lotf",
-					 sizeof( libs ) - 1 );
-#ifdef HAVE_ZLIB
-				strncat( libs, " -lz",
-					 sizeof( libs ) - strlen( libs ) - 1 );
-#endif /* HAVE_ZLIB */
+				strncpy( libs, "-L"OTFCONFIG_LIBDIR" "
+					 OTFCONFIG_LIBS, sizeof( libs ) - 1 );
 			}
 
 		} else if ( 0 == strcmp( argv[i], "--sizes" ) ) {

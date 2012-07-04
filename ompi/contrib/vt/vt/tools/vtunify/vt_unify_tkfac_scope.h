@@ -13,14 +13,10 @@
 #ifndef _VT_UNIFY_TKFAC_SCOPE_H_
 #define _VT_UNIFY_TKFAC_SCOPE_H_
 
-#include "config.h"
-
 #include "vt_unify.h"
 
 #include <algorithm>
 #include <iostream>
-#include <map>
-#include <set>
 
 //
 // TokenFactoryScopeI interface class

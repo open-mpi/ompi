@@ -57,20 +57,20 @@ int main(int argc, char **argv)
 
   static const char* Helptext[] = {
     "                                                                  \n",
-    " otfinfo - program to get basic information of a trace.           \n",
+    " otfinfo - Program to get basic information of an OTF trace.      \n",
     "                                                                  \n",
-    " otfinfo [Options] <input file name>                              \n",
+    " Syntax: otfinfo [options] <input file name>                      \n",
     "                                                                  \n",
     "   options:                                                       \n",
     "      -h, --help    show this help message                        \n",
     "      -V            show OTF version                              \n",
     "      -f <n>        set max number of filehandles available       \n",
     "      -l <ilevel>   set the information level for the output      \n",
-    "                    (0 - 4) the default level is 1                \n",
+    "                    (0 - 4, default: 1)                           \n",
     "      -a            set the information level to 4                \n",
     "      -p            show progress bar for reading event files     \n",
     "                                                                  \n",
-    "                                                                  \n", NULL };
+    NULL };
 
   info.infoLevel = 1; /*level of information for the handles*/
 
@@ -188,9 +188,10 @@ int main(int argc, char **argv)
     static char filename[1024];
     static uint32_t filecomp = OTF_FILECOMPRESSION_COMPRESSED;
     static struct stat filestat;
+    OTF_MapEntry* entry = OTF_MasterControl_getEntryByIndex( master, i );
 
     /*get event file name of stream*/
-    OTF_getFilename( fileLocation, i+1, OTF_FILETYPE_EVENT | filecomp,
+    OTF_getFilename( fileLocation, entry->argument, OTF_FILETYPE_EVENT | filecomp,
                      sizeof(filename), filename );
 
     /*if stat succeeds, compute total file size*/
@@ -323,6 +324,12 @@ static void set_handles_level_1( OTF_HandlerArray *handles,
                                OTF_DEFCREATOR_RECORD );
   OTF_HandlerArray_setFirstHandlerArg( handles, info, OTF_DEFCREATOR_RECORD );
 
+  /*handler and inits for getting trace's unique id*/
+  info->traceUniqueId = 0;
+  OTF_HandlerArray_setHandler( handles, (OTF_FunctionPointer*)handleDefUniqueId,
+                               OTF_DEFUNIQUEID_RECORD );
+  OTF_HandlerArray_setFirstHandlerArg( handles, info, OTF_DEFUNIQUEID_RECORD );
+
   /*handler and inits for getting the otf version*/
   info->otfVersionString = NULL;
   info->otfVersionMajor = 0;
@@ -400,6 +407,7 @@ static void show_info_level_1( definitionInfoT *info )
   printf( "+----------------------+--------------------------------------------------------\n" );
   printf( "| tracefile name       | %s\n", info->filePrefix );
   printf( "| creator of the trace | %s\n", info->creatorName );
+  printf( "| trace unique id      | %lli\n", (unsigned long long int)info->traceUniqueId );
   printf( "| used OTF version     | %i.%i.%i %s\n", info->otfVersionMajor,
           info->otfVersionMinor, info->otfVersionSub, info->otfVersionString );
   printf( "| event files size     | %.2f %s\n", fileSize,unitFileSize );

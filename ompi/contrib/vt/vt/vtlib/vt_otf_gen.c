@@ -12,10 +12,13 @@
 
 #include "config.h"
 
-#include <unistd.h>
+#include <errno.h>
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
 #include "vt_otf_gen.h"
 #include "vt_otf_sum.h"
@@ -26,6 +29,14 @@
 #include "vt_inttypes.h"
 #include "vt_pform.h"
 #include "vt_trc.h"
+
+#if defined(VT_IOFSL)
+# include "vt_iofsl.h"
+#endif /* VT_IOFSL */
+
+#if defined(VT_PLUGIN_CNTR)
+# include "vt_plugin_cntr_int.h"
+#endif /* VT_PLUGIN_CNTR */
 
 #include "otf.h"
 
@@ -93,6 +104,8 @@ struct VTGen_struct
   OTF_WStream*        filestream;
   OTF_FileCompression filecomp;
   char*               fileprefix;
+  const char*         ldir;
+  const char*         gdir;
   const char*         tname;
   const char*         tnamesuffix;
   uint32_t            ptid;
@@ -102,6 +115,7 @@ struct VTGen_struct
   uint8_t             hasdata;
   uint8_t             mode;
   uint8_t             sum_props;
+  uint8_t             same_ldir_gdir;
   VTRewindMark        rewindmark;
   VTTimeRange         timerange;
   VTSum*              sum;
@@ -112,26 +126,56 @@ VTGen* VTGen_open(const char* tname, const char* tnamesuffix,
                   uint32_t ptid, uint32_t tid, size_t buffer_size)
 {
   VTGen* gen;
-  char* ldir = vt_env_ldir();
-  char* gdir = vt_env_gdir();
 
-  /* check write permissions */
-
-  if (vt_env_ldir_check())
-  {
-    if (access(ldir, W_OK) != 0)
-      vt_error_msg("Cannot access %s: Permission denied", ldir);
-  }
-  if (vt_env_gdir_check())
-  {
-    if (access(gdir, W_OK) != 0)
-      vt_error_msg("Cannot access %s: Permission denied", gdir);
-  }
+  struct stat stat_ldir;
+  struct stat stat_gdir;
 
   /* allocate VTGen record */
   gen = (VTGen*)calloc(1, sizeof(VTGen));
   if (gen == NULL)
     vt_error();
+
+  /* get trace directory paths from environment variables */
+  gen->ldir = vt_env_ldir();
+  gen->gdir = vt_env_gdir();
+
+  /* check write permissions */
+
+  if (vt_env_ldir_check())
+  {
+    if (access(gen->ldir, W_OK) == -1)
+    {
+      vt_error_msg("Could not access %s for writing: %s", gen->ldir,
+                   strerror(errno));
+    }
+  }
+  if (vt_env_gdir_check())
+  {
+    if (access(gen->gdir, W_OK) == -1)
+    {
+      vt_error_msg("Could not access %s for writing: %s", gen->gdir,
+                   strerror(errno));
+    }
+  }
+
+  /* get the device id and inode number of the trace directories to check
+     whether they're the same or not */
+
+  if (stat(gen->ldir, &stat_ldir) == -1)
+    vt_error_msg("Could not stat %s: %s", gen->ldir, strerror(errno));
+  if (stat(gen->gdir, &stat_gdir) == -1)
+    vt_error_msg("Could not stat %s: %s", gen->gdir, strerror(errno));
+
+  if (stat_ldir.st_dev == stat_gdir.st_dev &&
+      stat_ldir.st_ino == stat_gdir.st_ino)
+  {
+    gen->same_ldir_gdir = 1;
+  }
+
+#if defined(VT_IOFSL)
+  /* local and global trace directory *must* be the same in IOFSL mode */
+  vt_libassert( !vt_iofsl_enabled || gen->same_ldir_gdir );
+#endif /* VT_IOFSL */
 
   /* store thread name */
   gen->tname = tname;
@@ -196,9 +240,16 @@ VTGen* VTGen_open(const char* tname, const char* tnamesuffix,
   return gen;
 }
 
-void VTGen_guarantee(VTGen* gen, size_t size)
+void VTGen_guarantee(VTGen* gen, uint64_t* time, size_t size)
 {
-  VTGEN_ALLOC(gen, VTGEN_ALIGN_LENGTH(size));
+  if (time)
+  {
+    VTGEN_ALLOC(gen, VTGEN_ALIGN_LENGTH(size));
+  }
+  else
+  {
+    VTGEN_ALLOC_EVENT(gen, VTGEN_ALIGN_LENGTH(size), time);
+  }
 }
 
 void VTGen_flush(VTGen* gen, uint8_t lastFlush,
@@ -223,7 +274,15 @@ void VTGen_flush(VTGen* gen, uint8_t lastFlush,
 
   /* mark begin of flush */
   if (!lastFlush)
+  {
+#if defined(VT_PLUGIN_CNTR)
+    /* ... but not when writing post mortem counters */
+    uint8_t flag;
+    VT_PLUGIN_CNTR_WRITING_POST_MORTEM(gen->tid, flag);
+    if (!flag)
+#endif /* VT_PLUGIN_CNTR */
     vt_enter_flush(gen->tid, &flushBTime);
+  }
 
   /* get process id */
   pid = VT_PROCESS_ID(vt_my_trace, gen->tid);
@@ -237,9 +296,29 @@ void VTGen_flush(VTGen* gen, uint8_t lastFlush,
     if (gen->fileprefix == NULL)
       vt_error();
 
-    snprintf(gen->fileprefix, VT_PATH_MAX, "%s/%s.%lx.%u",
-             vt_env_ldir(), vt_env_fprefix(),
-             vt_pform_node_id(), getpid());
+    /* if the local and global trace directory are the same (i.e. in IOFSL mode)
+       set the temporary base file name to the final one to prevent
+       copying/renaming before starting the unification */
+    if (gen->same_ldir_gdir)
+    {
+      if (vt_my_funique > 0)
+      {
+        snprintf(gen->fileprefix, VT_PATH_MAX, "%s/%s_%u",
+                 gen->gdir, vt_env_fprefix(), vt_my_funique);
+      }
+      else
+      {
+        snprintf(gen->fileprefix, VT_PATH_MAX, "%s/%s",
+                 gen->gdir, vt_env_fprefix());
+      }
+    }
+    /* otherwise, compose an unique temporary base file name by adding the
+       node- and process id */
+    else
+    {
+      snprintf(gen->fileprefix, VT_PATH_MAX, "%s/%s.%lx.%u",
+               gen->ldir, vt_env_fprefix(), vt_pform_node_id(), getpid());
+    }
 
     /* open file manager for writer stream */
 
@@ -247,16 +326,36 @@ void VTGen_flush(VTGen* gen, uint8_t lastFlush,
     if (gen->filemanager == NULL)
       vt_error_msg("OTF_FileManager_open failed:\n %s", otf_strerr);
 
+#if defined(VT_IOFSL)
+    if (vt_iofsl_enabled)
+    {
+       /* initialize file manager for IOFSL mode */
+
+       OTF_IofslMode otf_iofsl_mode =
+         (vt_iofsl_mode == VT_IOFSL_MODE_MULTIFILE) ?
+           OTF_IOFSL_MULTIFILE : OTF_IOFSL_MULTIFILE_SPLIT;
+
+       uint32_t otf_iofsl_flags = 0;
+       if ((vt_iofsl_flags & VT_IOFSL_FLAG_ASYNC_IO) != 0)
+         otf_iofsl_flags |= OTF_IOFSL_FLAG_NONBLOCKING;
+
+       OTF_FileManager_setIofsl(gen->filemanager, vt_iofsl_servers_num,
+         vt_iofsl_servers_list, otf_iofsl_mode, otf_iofsl_flags, 0,
+         VT_TRACEID_BITMASK);
+    }
+#endif /* VT_IOFSL */
+
     /* open writer stream */
 
     gen->filestream =
-      OTF_WStream_open(gen->fileprefix, gen->tid+1, gen->filemanager);
+      OTF_WStream_open(gen->fileprefix, VT_PROCESS_ID(vt_my_trace, gen->tid),
+        gen->filemanager);
     if (gen->filestream == NULL)
       vt_error_msg("OTF_WStream_open failed:\n %s", otf_strerr);
 
     vt_cntl_msg(2, "Opened OTF writer stream [namestub %s id %x] for "
                 "generation [buffer %llu bytes]",
-                gen->fileprefix, gen->tid+1,
+                gen->fileprefix, VT_PROCESS_ID(vt_my_trace, gen->tid),
                 (unsigned long long)gen->buf->size);
 
     /* set writer stream's buffer size */
@@ -343,9 +442,6 @@ void VTGen_flush(VTGen* gen, uint8_t lastFlush,
     gen->isfirstflush = 0;
   }
 
-  /* set has data flag */
-  gen->hasdata = (gen->hasdata || gen->buf->pos > gen->buf->mem);
-
   /* walk through the buffer and write records */
 
   p = gen->buf->mem;
@@ -361,6 +457,11 @@ void VTGen_flush(VTGen* gen, uint8_t lastFlush,
       if (gen->timerange.min == (uint64_t)-1)
         gen->timerange.min = entry->time;
       gen->timerange.max = entry->time;
+
+      /* set indicator for having events/statistics,
+         if it's not a marker record */
+      if (!gen->hasdata && entry->type != VTBUF_ENTRY_TYPE__Marker)
+        gen->hasdata = 1;
     }
 
     /* write record */
@@ -633,6 +734,9 @@ void VTGen_flush(VTGen* gen, uint8_t lastFlush,
           case VT_KEYVAL_TYPE_DOUBLE:
             vtype = OTF_DOUBLE;
             break;
+          case VT_KEYVAL_TYPE_STRING:
+            vtype = OTF_BYTE_ARRAY;
+            break;
           default:
             vt_libassert(0);
         }
@@ -755,8 +859,8 @@ void VTGen_flush(VTGen* gen, uint8_t lastFlush,
         OTF_WBuffer* filestream_buffer;
         OTF_KeyValuePair kvpair;
 
-        filestream_buffer = OTF_WStream_getEventBuffer( gen->filestream );
-        if (filestream_buffer == NULL )
+        filestream_buffer = OTF_WStream_getEventBuffer(gen->filestream);
+        if (filestream_buffer == NULL)
           vt_error_msg("OTF_WStream_getEventBuffer failed:\n %s", otf_strerr);
 
         kvpair.key = entry->kid;
@@ -791,12 +895,19 @@ void VTGen_flush(VTGen* gen, uint8_t lastFlush,
             kvpair.type = OTF_DOUBLE;
             kvpair.value.otf_double = entry->kvalue.d;
             break;
+          case VT_KEYVAL_TYPE_STRING:
+            kvpair.type = OTF_BYTE_ARRAY;
+            kvpair.value.otf_byte_array.len = strlen(entry->kvalue.s);
+            memcpy(kvpair.value.otf_byte_array.array, entry->kvalue.s,
+                   kvpair.value.otf_byte_array.len * sizeof(uint8_t));
+            free(entry->kvalue.s);
+            break;
           default:
             vt_libassert(0);
         }
 
-        if (OTF_WBuffer_writeKeyValuePair_short( filestream_buffer,
-              &kvpair ) == 0)
+        if (OTF_WBuffer_writeKeyValuePair_short(filestream_buffer,
+              &kvpair) == 0)
         {
           vt_error_msg("OTF_WBuffer_writeKeyValuePair_short failed:\n %s",
                        otf_strerr);
@@ -997,8 +1108,21 @@ void VTGen_flush(VTGen* gen, uint8_t lastFlush,
          max flushes not reached */
       if (!lastFlush && gen->flushcntr > 1)
       {
-        uint64_t flush_etime = vt_pform_wtime();
-        vt_exit_flush(gen->tid, &flush_etime);
+        uint64_t flush_etime;
+#if defined(VT_PLUGIN_CNTR)
+        /* ... but not when writing post mortem counters */
+        uint8_t flag;
+        VT_PLUGIN_CNTR_WRITING_POST_MORTEM(gen->tid, flag);
+        if (flag)
+        {
+          flush_etime = flushBTime;
+        }
+        else
+#endif /* VT_PLUGIN_CNTR */
+        {
+          flush_etime = vt_pform_wtime();
+          vt_exit_flush(gen->tid, &flush_etime);
+        }
         if (flushETime != NULL) *flushETime = flush_etime;
       }
 
@@ -1010,8 +1134,8 @@ void VTGen_flush(VTGen* gen, uint8_t lastFlush,
 
   if (lastFlush)
   {
-    /* if nothing is recorded, write event/summary comment record in order
-       that all event/summary files will exist */
+    /* if no events or statistics recorded, write event/summary comment record
+       in order that all event/summary files will exist */
     if (!gen->hasdata)
     {
       uint64_t time = vt_pform_wtime();
@@ -1035,7 +1159,9 @@ void VTGen_flush(VTGen* gen, uint8_t lastFlush,
       }
 
       /* set time range */
-      gen->timerange.min = gen->timerange.max = time;
+      if (gen->timerange.min == (uint64_t)-1)
+        gen->timerange.min = time;
+      gen->timerange.max = time;
     }
 
     /* write time range record */
@@ -1051,7 +1177,7 @@ void VTGen_flush(VTGen* gen, uint8_t lastFlush,
   gen->buf->pos = gen->buf->mem;
 
   vt_cntl_msg(2, "Flushed OTF writer stream [namestub %s id %x]",
-              gen->fileprefix, gen->tid+1);
+              gen->fileprefix, VT_PROCESS_ID(vt_my_trace, gen->tid));
 
   /* decrement flush counter */
   if (gen->flushcntr > 0) gen->flushcntr--;
@@ -1067,10 +1193,9 @@ void VTGen_flush(VTGen* gen, uint8_t lastFlush,
     vt_trace_off(gen->tid, 1, 1);
 
     vt_def_comment(gen->tid,
-                   VT_UNIFY_STRID_VT_COMMENT"WARNING: This trace is "
-                   "incomplete, because the maximum number of "
-                   "buffer flushes was reached. "
-                   "(VT_MAX_FLUSHES=%d)", max_flushes);
+                   VT_UNIFY_STRID_VT_COMMENT"Warning: This trace is "
+                   "incomplete due to reached maximum number of buffer "
+                   "flushes. (VT_MAX_FLUSHES=%d)", max_flushes);
   }
 
   /* reset rewind mark and time */
@@ -1103,7 +1228,7 @@ void VTGen_close(VTGen* gen)
       vt_error_msg("OTF_FileManager_close failed:\n %s", otf_strerr);
 
     vt_cntl_msg(2, "Closed OTF writer stream [namestub %s id %x]",
-                gen->fileprefix, gen->tid+1);
+                gen->fileprefix, VT_PROCESS_ID(vt_my_trace, gen->tid));
   }
 
   /* free buffer memory */
@@ -1117,149 +1242,146 @@ void VTGen_delete(VTGen* gen)
 {
   if (gen->fileprefix)
   {
-    char* tmp_namev[5];
-    char* global_name;
-    uint32_t global_name_len;
-    char* suffix;
-
-    char* gdir = vt_env_gdir();
-    char* fprefix = vt_env_fprefix();
-    int do_clean = vt_env_do_clean();
-    int do_rename = do_clean;
-
-    uint8_t i;
-
-    /* determine (local) files for removal */
-
-    tmp_namev[0] =
-      OTF_getFilename(gen->fileprefix, gen->tid+1,
-                      OTF_FILETYPE_DEF | gen->filecomp,
-                      0, NULL);
-    vt_libassert(tmp_namev[0]);
-
-    tmp_namev[1] =
-      OTF_getFilename(gen->fileprefix, gen->tid+1,
-                      OTF_FILETYPE_EVENT | gen->filecomp,
-                      0, NULL);
-    vt_libassert(tmp_namev[1]);
-
-    tmp_namev[2] =
-      OTF_getFilename(gen->fileprefix, gen->tid+1,
-                      OTF_FILETYPE_STATS | gen->filecomp,
-                      0, NULL);
-    vt_libassert(tmp_namev[2]);
-
-    tmp_namev[3] =
-      OTF_getFilename(gen->fileprefix, gen->tid+1,
-                      OTF_FILETYPE_MARKER | gen->filecomp,
-                      0, NULL);
-    vt_libassert(tmp_namev[3]);
-
-    tmp_namev[4] = NULL;
-
-    i = 0;
-    while(tmp_namev[i] != NULL)
+    /* copy/move temporary trace files to global trace directory, if necessary */
+    if (!gen->same_ldir_gdir)
     {
-      /* local temp. trace file exists? */
-      if (access(tmp_namev[i], R_OK) != 0)
-      {
-        free(tmp_namev[i++]);
-        continue;
-      }
+      char* tmp_namev[5];
+      char* global_name;
+      uint32_t global_name_len;
+      char* suffix;
 
-      /* determine file suffix */
-      suffix = strchr(tmp_namev[i]+strlen(gen->fileprefix)+1, '.');
+      char* fprefix = vt_env_fprefix();
+      int do_rename = 1;
 
-      /* build global file name */
-      global_name_len = strlen(gdir) + strlen(fprefix) + 32;
-      global_name = (char*)calloc(global_name_len+1, sizeof(char));
+      uint8_t i;
 
-      if (vt_my_funique > 0)
-      {
-        snprintf(global_name, global_name_len, "%s/%s_%u.%x%s",
-                 gdir, fprefix, vt_my_funique,
-                 VT_PROCESS_ID(vt_my_trace, gen->tid), suffix);
-      }
-      else
-      {
-        snprintf(global_name, global_name_len, "%s/%s.%x%s",
-                 gdir, fprefix, VT_PROCESS_ID(vt_my_trace, gen->tid), suffix);
-      }
+      /* compose temporary file names for removal */
 
-      /* rename file, if possible */
-      if (do_rename)
+      tmp_namev[0] =
+        OTF_getFilename(gen->fileprefix, VT_PROCESS_ID(vt_my_trace, gen->tid),
+                        OTF_FILETYPE_DEF | gen->filecomp,
+                        0, NULL);
+      vt_libassert(tmp_namev[0]);
+
+      tmp_namev[1] =
+        OTF_getFilename(gen->fileprefix, VT_PROCESS_ID(vt_my_trace, gen->tid),
+                        OTF_FILETYPE_EVENT | gen->filecomp,
+                        0, NULL);
+      vt_libassert(tmp_namev[1]);
+
+      tmp_namev[2] =
+        OTF_getFilename(gen->fileprefix, VT_PROCESS_ID(vt_my_trace, gen->tid),
+                        OTF_FILETYPE_STATS | gen->filecomp,
+                        0, NULL);
+      vt_libassert(tmp_namev[2]);
+
+      tmp_namev[3] =
+        OTF_getFilename(gen->fileprefix, VT_PROCESS_ID(vt_my_trace, gen->tid),
+                        OTF_FILETYPE_MARKER | gen->filecomp,
+                        0, NULL);
+      vt_libassert(tmp_namev[3]);
+
+      tmp_namev[4] = NULL;
+
+      i = 0;
+      while(tmp_namev[i] != NULL)
       {
-        if (rename(tmp_namev[i], global_name) == 0)
+        /* local temp. trace file exists? */
+        if (access(tmp_namev[i], R_OK) != 0)
         {
-          vt_cntl_msg(2, "Moved trace file %s to %s", tmp_namev[i], global_name);
+          free(tmp_namev[i++]);
+          continue;
+        }
+
+        /* determine file suffix */
+        suffix = strchr(tmp_namev[i]+strlen(gen->fileprefix)+1, '.');
+
+        /* build global file name */
+        global_name_len = strlen(gen->gdir) + strlen(fprefix) + 32;
+        global_name = (char*)calloc(global_name_len+1, sizeof(char));
+
+        if (vt_my_funique > 0)
+        {
+          snprintf(global_name, global_name_len, "%s/%s_%u.%x%s",
+                   gen->gdir, fprefix, vt_my_funique,
+                   VT_PROCESS_ID(vt_my_trace, gen->tid), suffix);
         }
         else
         {
-          do_rename = 0;
-          free(global_name);
-          continue;
+          snprintf(global_name, global_name_len, "%s/%s.%x%s",
+                   gen->gdir, fprefix, VT_PROCESS_ID(vt_my_trace, gen->tid),
+                   suffix);
         }
-      }
-      /* otherwise, copy file */
-      else
-      {
-        size_t bytes_read;
-        void *buffer;
-        size_t buflen;
-        FILE* infile;
-        FILE* outfile;
 
-        /* allocate buffer */
-        buflen = vt_env_copy_bsize();
-        buffer = malloc( buflen );
-        if( !buffer )
-          vt_error_msg( "Cannot allocate %u bytes for copy buffer", buflen );
-
-        /* open files */
-        if ((infile = fopen(tmp_namev[i], "rb")) == NULL )
-          vt_error_msg("Cannot open trace file %s for reading", tmp_namev[i]);
-        if ((outfile = fopen(global_name, "wb")) == NULL)
-          vt_error_msg("Cannot open trace file %s for writing", global_name); 
-
-        /* copy file */
-        while((bytes_read = fread(buffer, 1, buflen, infile)))
+        /* rename file, if possible */
+        if (do_rename)
         {
-          if( bytes_read > fwrite(buffer, 1, bytes_read, outfile) )
+          if (rename(tmp_namev[i], global_name) == 0)
           {
-            fclose( infile );
-            fclose( outfile );
-            free( buffer );
-            vt_error_msg("Failed to write to file %s", global_name);
+            vt_cntl_msg(2, "Moved trace file %s to %s", tmp_namev[i],
+                        global_name);
+          }
+          else
+          {
+            do_rename = 0;
+            free(global_name);
+            continue;
           }
         }
-
-        /* close files */
-        fclose(infile);
-        fclose(outfile);
-
-        /* free buffer */
-        free( buffer );
-
-        vt_cntl_msg(2, "Copied trace file %s to %s", tmp_namev[i], global_name);
-
-        /* remove local temp. trace file, if desired */
-        if (do_clean)
+        /* otherwise, copy file */
+        else
         {
+          size_t bytes_read;
+          void *buffer;
+          size_t buflen;
+          FILE* infile;
+          FILE* outfile;
+
+          /* allocate buffer */
+          buflen = vt_env_copy_bsize();
+          buffer = malloc( buflen );
+          if( !buffer )
+            vt_error_msg( "Cannot allocate %u bytes for copy buffer", buflen );
+
+          /* open files */
+          if ((infile = fopen(tmp_namev[i], "rb")) == NULL )
+            vt_error_msg("Cannot open trace file %s for reading", tmp_namev[i]);
+          if ((outfile = fopen(global_name, "wb")) == NULL)
+            vt_error_msg("Cannot open trace file %s for writing", global_name);
+
+          /* copy file */
+          while((bytes_read = fread(buffer, 1, buflen, infile)))
+          {
+            if( bytes_read > fwrite(buffer, 1, bytes_read, outfile) )
+            {
+              fclose( infile );
+              fclose( outfile );
+              free( buffer );
+              vt_error_msg("Failed to write to file %s", global_name);
+            }
+          }
+
+          /* close files */
+          fclose(infile);
+          fclose(outfile);
+
+          /* free buffer */
+          free( buffer );
+
+          vt_cntl_msg(2, "Copied trace file %s to %s", tmp_namev[i], global_name);
+
+          /* remove local temp. trace file */
           if (remove(tmp_namev[i]) == 0 )
             vt_cntl_msg(2, "Removed trace file %s", tmp_namev[i]);
           else
             vt_error_msg("Cannot remove trace file %s", tmp_namev[i]);
         }
-        else
-        {
-          vt_cntl_msg(2, "*Left* trace file %s", tmp_namev[i]);
-        }
+
+        free(global_name);
+        free(tmp_namev[i]);
+
+        i++;
       }
-
-      free(global_name);
-      free(tmp_namev[i]);
-
-      i++;
     }
 
     free(gen->fileprefix);
@@ -1285,6 +1407,8 @@ void VTGen_destroy(VTGen* gen)
     /* no return value; check otf_errno for error */
     if (otf_errno != OTF_NO_ERROR)
       vt_error_msg("OTF_FileManager_close failed:\n %s", otf_strerr);
+
+    free(gen->fileprefix);
   }
 
   /* destroy sum record */
@@ -1953,7 +2077,8 @@ void VTGen_write_MARKER(VTGen* gen, uint64_t* time, uint32_t mid,
 
 /* -- Key-Value -- */
 
-void VTGen_write_KEYVAL(VTGen* gen, uint32_t kid, uint8_t vtype, void* kvalue)
+void VTGen_write_KEYVAL(VTGen* gen, uint32_t kid, uint8_t vtype,
+                        const void* kvalue)
 {
   VTGEN_CHECK(gen);
 
@@ -1998,6 +2123,16 @@ void VTGen_write_KEYVAL(VTGen* gen, uint32_t kid, uint8_t vtype, void* kvalue)
       case VT_KEYVAL_TYPE_DOUBLE:
         new_entry->kvalue.d = *((double*)kvalue);
         break;
+      case VT_KEYVAL_TYPE_STRING:
+      {
+        size_t kvalue_len = strlen((const char*)kvalue);
+        vt_libassert(kvalue_len > 0);
+        vt_libassert(kvalue_len <= OTF_KEYVALUE_MAX_ARRAY_LEN);
+        new_entry->kvalue.s = strdup((const char*)kvalue);
+        if (new_entry->kvalue.s == NULL)
+          vt_error();
+        break;
+      }
       default:
         vt_libassert(0);
     }

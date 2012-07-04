@@ -10,7 +10,6 @@
  * See the file COPYING in the package base directory for details
  **/
 
-#include "vt_unify.h"
 #include "vt_unify_hooks_margins.h"
 
 //////////////////// class HooksProcessMarginsC ////////////////////
@@ -114,7 +113,7 @@ HooksProcessMarginsC::genericHook( const uint32_t & id, HooksC::VaArgsT & args )
 {
    bool error = false;
 
-   if( ( id & VT_UNIFY_HOOKS_MARGINS_GENID__EVENT_STREAM_OPEN ) != 0 )
+   if( ( id & VT_UNIFY_HOOKS_MARGINS_GENID__EVENT_WSTREAM_OPEN ) != 0 )
    {
 #if defined(HAVE_OMP) && HAVE_OMP
       ThreadContextS & context = m_threadContexts[omp_get_thread_num()];
@@ -134,7 +133,7 @@ HooksProcessMarginsC::genericHook( const uint32_t & id, HooksC::VaArgsT & args )
       context.first_event = true;
       context.last_time = 0;
    }
-   else if( ( id & VT_UNIFY_HOOKS_MARGINS_GENID__EVENT_STREAM_CLOSE ) != 0 )
+   else if( ( id & VT_UNIFY_HOOKS_MARGINS_GENID__EVENT_WSTREAM_CLOSE ) != 0 )
    {
 #if defined(HAVE_OMP) && HAVE_OMP
       ThreadContextS & context = m_threadContexts[omp_get_thread_num()];
@@ -142,8 +141,9 @@ HooksProcessMarginsC::genericHook( const uint32_t & id, HooksC::VaArgsT & args )
       ThreadContextS & context = m_threadContexts[0];
 #endif // HAVE_OMP
 
-      // get stream id from hook arguments
-      uint32_t * stream_id = (uint32_t*)args[0];
+      // get hook arguments
+      //OTF_WStream ** wstream = (OTF_WStream**)args[0];
+      uint32_t * stream_id = (uint32_t*)args[1];
 
       assert( context.streamid == *stream_id );
 

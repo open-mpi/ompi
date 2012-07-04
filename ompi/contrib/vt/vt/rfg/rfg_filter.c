@@ -17,8 +17,10 @@
 
 typedef struct RFG_FilterAssigns_struct
 {
-  int32_t climit;               /* call limit */
-  char*   pattern;              /* pattern */
+  int32_t  climit;               /* call limit */
+  uint32_t sbounds[2];           /* stack level bounds */
+  uint8_t  flags;                /* flags bitmask (group, recursiveness) */
+  char*    pattern;              /* pattern */
 } RFG_FilterAssigns;
 
 struct RFG_Filter_struct
@@ -250,8 +252,8 @@ int RFG_Filter_readDefFile( RFG_Filter* filter, int rank, uint8_t* rank_off )
   while( !l_rank_off && !parse_err &&
          get_deffile_content_line( filter, line, MAX_LINE_LEN, &pos ) )
   {
-    int32_t climit;
     char* p;
+    char* q;
 
     /* increment line number */
     lineno++;
@@ -263,19 +265,20 @@ int RFG_Filter_readDefFile( RFG_Filter* filter, int rank, uint8_t* rank_off )
     /* remove leading and trailing spaces from line */
     vt_strtrim( line );
 
+    /* cut possible comment from line */
+
+    p = strchr( line, '#' );
+    if( p != NULL )
+      *p = '\0';
+
     /* continue if line is empty */
     if( strlen( line ) == 0 )
-      continue;
-
-    /* continue if line is a comment */
-    if( line[0] == '#' )
       continue;
 
     if( line[0] == '@' )
     {
       int a = -1;
       int b = -1;
-      char* q;
       uint8_t is_rank_off_rule = 0;
 
       /* check whether selected ranks shall be disabled */
@@ -394,8 +397,12 @@ int RFG_Filter_readDefFile( RFG_Filter* filter, int rank, uint8_t* rank_off )
     }
     else
     {
+      int32_t  climit;
+      uint32_t sbounds[2] = { 1, (uint32_t)-1 };
+      uint8_t  flags = 0;
+
       /* search for '--'
-         e.g. "func1;func2;func3 -- 1000"
+         e.g. "func1;func2;func3 -- 1000 S:5-10 R"
                                  p
       */
 
@@ -406,23 +413,107 @@ int RFG_Filter_readDefFile( RFG_Filter* filter, int rank, uint8_t* rank_off )
         break;
       }
 
-      /* get call limit
-         e.g. "func1;func2;func3 -- 1000"
-                                    p+2
-      */
-
-      climit = atoi( p+2 );
-      if( climit != -1 && climit != 0 )
-        climit++;
-
-      /* cut call limit from remaining line
-         e.g.   "func1;func2;func3 -- 1000"
+      /* cut call limit, stack level bounds, and flags from line
+         e.g.   "func1;func2;func3 -- 1000 S:5-10 R"
              => "func1;func2;func3"
       */
-
       *p = '\0';
 
-      /* split remaining line at ';' to get pattern */
+      /* split remaining line at ' ' to get call limit, stack level bounds,
+         and flags */
+
+      p = strtok( p+2, " " );
+      if( p == NULL )
+      {
+        parse_err = 1;
+        break;
+      }
+
+      /* parse call limit */
+      {
+        long l_climit;
+
+        l_climit = strtol( p, &q, 10 );
+        if( p == q || l_climit == LONG_MIN || l_climit == LONG_MAX ||
+            l_climit < -1 )
+        {
+          parse_err = 1;
+          break;
+        }
+
+        climit = (int32_t)l_climit;
+      }
+
+      /* parse stack level bounds and flags */
+      while( !parse_err && ( p = strtok( NULL, " " ) ) )
+      {
+        /* stack level bounds */
+        if( strlen( p ) > 2 && tolower( *p ) == 's' && *(p+1) == ':' )
+        {
+          long l_bounds[2] = { 1 };
+
+          p = p+2;
+
+          /* parse maximum (or minimum) stack level bound */
+
+          l_bounds[1] = strtol( p, &q, 10 );
+          if( p == q || l_bounds[1] == LONG_MIN || l_bounds[1] == LONG_MAX ||
+              l_bounds[1] < 1 )
+          {
+            parse_err = 1;
+            break;
+          }
+
+          p = q;
+
+          /* minimum stack level bound specified? */
+          if( *p == '-' )
+          {
+            p++;
+            l_bounds[0] = l_bounds[1];
+
+            /* parse maximum stack level bound */
+
+            l_bounds[1] = strtol( p, &q, 10 );
+            if( p == q || l_bounds[1] == LONG_MIN || l_bounds[1] == LONG_MAX ||
+                l_bounds[1] < l_bounds[0] )
+            {
+              parse_err = 1;
+              break;
+            }
+
+            p = q;
+          }
+
+          if( strlen( p ) > 1 || ( *p != '\0' && *p != '\t' ) )
+          {
+            parse_err = 1;
+            break;
+          }
+
+          sbounds[0] = (uint32_t)l_bounds[0];
+          sbounds[1] = (uint32_t)l_bounds[1];
+        }
+        /* group flag */
+        else if( strlen( p ) == 1 && tolower( *p ) == 'g' )
+        {
+          flags |= RFG_FILTER_FLAG_GROUP;
+        }
+        /* recursiveness flag */
+        else if( strlen( p ) == 1 && tolower( *p ) == 'r' )
+        {
+          flags |= RFG_FILTER_FLAG_RECURSIVE;
+        }
+        else
+        {
+          parse_err = 1;
+          break;
+        }
+      }
+      if( parse_err )
+        break;
+
+      /* split line at ';' to get pattern */
 
       p = strtok( line, ";" );
       do
@@ -440,7 +531,7 @@ int RFG_Filter_readDefFile( RFG_Filter* filter, int rank, uint8_t* rank_off )
 
         /* add call limit assignment */
         if( strlen( pattern ) > 0 && includes_current_rank )
-          RFG_Filter_add( filter, pattern, climit );
+          RFG_Filter_add( filter, pattern, climit, sbounds, flags );
 
         free( pattern );
 
@@ -463,8 +554,8 @@ int RFG_Filter_readDefFile( RFG_Filter* filter, int rank, uint8_t* rank_off )
   return 1;
 }
 
-int RFG_Filter_add( RFG_Filter* filter, const char* pattern,
-                    int32_t climit )
+int RFG_Filter_add( RFG_Filter* filter, const char* pattern, int32_t climit,
+                    uint32_t* sbounds, uint8_t flags )
 {
   if( !filter || !pattern ) return 0;
 
@@ -481,34 +572,62 @@ int RFG_Filter_add( RFG_Filter* filter, const char* pattern,
   /* add new filter assignment */
 
   filter->assigns[filter->nassigns].climit = climit;
+  filter->assigns[filter->nassigns].sbounds[0] = sbounds[0];
+  filter->assigns[filter->nassigns].sbounds[1] = sbounds[1];
+  filter->assigns[filter->nassigns].flags = flags;
   filter->assigns[filter->nassigns].pattern = strdup( pattern );
   filter->nassigns++;
 
   return 1;
 }
 
-int RFG_Filter_get( RFG_Filter* filter, const char* rname,
-                    int32_t* r_climit )
+int RFG_Filter_get( RFG_Filter* filter, const char* rname, const char* gname,
+                    int32_t* r_climit, uint32_t* r_sbounds, uint8_t* r_flags )
 {
   uint32_t i;
 
-  if( !filter || !rname ) return 0;
+  if( !filter || ( !rname && !gname ) )
+    return 0;
 
-  /* search for matching pattern by region name */
+  /* initialize return parameters by defaults */
+  if( r_climit != NULL )
+    *r_climit = filter->default_call_limit;
+  if( r_sbounds != NULL )
+  {
+    r_sbounds[0] = 1;
+    r_sbounds[1] = (uint32_t)-1;
+  }
+  if( r_flags != NULL )
+    *r_flags = 0;
 
+  /* search for matching filter rule either by ... */
   for( i = 0; i < filter->nassigns; i++ )
   {
-    if( fnmatch( filter->assigns[i].pattern, rname, 0 ) == 0 )
+    const uint8_t is_group_rule =
+      (filter->assigns[i].flags & RFG_FILTER_FLAG_GROUP) != 0;
+
+    if( /* ... region group name */
+        ( is_group_rule && gname &&
+          fnmatch( filter->assigns[i].pattern, gname, 0 ) == 0 ) ||
+        /* ... or by region name */
+        ( !is_group_rule && rname &&
+          fnmatch( filter->assigns[i].pattern, rname, 0 ) == 0 ) )
     {
-      *r_climit = filter->assigns[i].climit;
+      /* set return parameters regarding to found filter rules */
+      if( r_climit != NULL )
+        *r_climit = filter->assigns[i].climit;
+      if( r_sbounds != NULL )
+      {
+        r_sbounds[0] = filter->assigns[i].sbounds[0];
+        r_sbounds[1] = filter->assigns[i].sbounds[1];
+      }
+      if( r_flags != NULL )
+        *r_flags = filter->assigns[i].flags;
+
+      /* abort searching on first matching filter rule */
       break;
     }
   }
-
-  /* return default call limit, if no matching pattern found */
-
-  if( i == filter->nassigns )
-    *r_climit = filter->default_call_limit;
 
   return 1;
 }

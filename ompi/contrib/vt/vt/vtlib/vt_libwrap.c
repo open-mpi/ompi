@@ -64,15 +64,19 @@ static VTThrdMutex* lw_libc_mutex = NULL;
 /* get pointer to errno of external LIBC */
 static int* get_libc_errno_ptr(void)
 {
-  /* NOTE: in case of using GNU 'errno' is defined as a macro which calls the
-     function '__errno_location()' to get a per-thread value of errno */
+  /* NOTE: errno might be a macro which calls a function
+     (e.g. __errno_location() (GNU), _Errno() (AIX))
+     to get a per-thread value of errno */
 #if defined(HAVE_DECL___ERRNO_LOCATION) && HAVE_DECL___ERRNO_LOCATION
   static int* (*libc_errno)(void) = NULL;
   const char* libc_errno_sym = "__errno_location";
-#else /* HAVE_DECL___ERRNO_LOCATION */
+#elif defined(HAVE_DECL__ERRNO) && HAVE_DECL__ERRNO
+  static int* (*libc_errno)(void) = NULL;
+  const char* libc_errno_sym = "_Errno";
+#else /* HAVE_DECL___ERRNO_LOCATION || HAVE_DECL__ERRNO */
   static int* libc_errno = NULL;
   const char* libc_errno_sym = "errno";
-#endif /* HAVE_DECL___ERRNO_LOCATION */
+#endif /* HAVE_DECL___ERRNO_LOCATION || HAVE_DECL__ERRNO */
 
   static void* libc_handle = NULL;
 
@@ -83,11 +87,12 @@ static int* get_libc_errno_ptr(void)
   if( libc_errno == NULL )
   {
     (void)dlerror();
-#if defined(HAVE_DECL___ERRNO_LOCATION) && HAVE_DECL___ERRNO_LOCATION
+#if (defined(HAVE_DECL___ERRNO_LOCATION) && HAVE_DECL___ERRNO_LOCATION) || \
+    (defined(HAVE_DECL__ERRNO) && HAVE_DECL__ERRNO)
     *(void**)(&libc_errno) = dlsym(libc_handle, libc_errno_sym);
-#else /* HAVE_DECL___ERRNO_LOCATION */
+#else /* HAVE_DECL___ERRNO_LOCATION || HAVE_DECL__ERRNO */
     libc_errno = (int*)dlsym(libc_handle, libc_errno_sym);
-#endif /* HAVE_DECL___ERRNO_LOCATION */
+#endif /* HAVE_DECL___ERRNO_LOCATION || HAVE_DECL__ERRNO */
     if( libc_errno == NULL )
     {
 #ifdef VT_IOWRAP
@@ -102,11 +107,12 @@ static int* get_libc_errno_ptr(void)
     }
   }
 
-#if defined(HAVE_DECL___ERRNO_LOCATION) && HAVE_DECL___ERRNO_LOCATION
+#if (defined(HAVE_DECL___ERRNO_LOCATION) && HAVE_DECL___ERRNO_LOCATION) || \
+    (defined(HAVE_DECL__ERRNO) && HAVE_DECL__ERRNO)
   return libc_errno();
-#else /* HAVE_DECL___ERRNO_LOCATION */
+#else /* HAVE_DECL___ERRNO_LOCATION || HAVE_DECL__ERRNO */
   return libc_errno;
-#endif /* HAVE_DECL___ERRNO_LOCATION */
+#endif /* HAVE_DECL___ERRNO_LOCATION || HAVE_DECL__ERRNO */
 }
 
 void vt_libwrap_init()

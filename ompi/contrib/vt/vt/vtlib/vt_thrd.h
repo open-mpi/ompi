@@ -66,8 +66,8 @@ typedef struct
 {
   VTGen* gen;                       /**< trace file and buffer */
 
-  char  name[512];                  /**< thread name */
-  char  name_suffix[128];           /**< suffix of thread name */
+  char name[512];                   /**< thread name */
+  char name_suffix[128];            /**< suffix of thread name */
 
   int stack_level;                  /**< current call stack level */
   int stack_level_at_off;           /**< call stack level at trace off */
@@ -78,10 +78,11 @@ typedef struct
                                       VT_TRACE_OFF, or
                                       VT_TRACE_OFF_PERMANENT */
 
+  uint32_t tid;                     /**< associated thread id */
   uint32_t parent_tid;              /**< parent thread id */
   uint32_t child_num;               /**< number of child threads */
 
-  uint8_t is_virtual;               /**< flag: is virtual thread? (e.g. GPU) */
+  uint8_t  is_virtual;              /**< flag: is virtual thread? (e.g. GPU) */
 
 #if !defined(VT_DISABLE_RFG)
 
@@ -141,7 +142,10 @@ typedef struct
 
   void* plugin_cntr_defines;        /**< plugin cntr handle */
 
-#endif /* VT_PLUGIN_CNTR || VT_CUDARTWRAP */
+  uint8_t plugin_cntr_writing_post_mortem; /**< flag: writing post mortem
+                                                counter? */
+
+#endif /* VT_PLUGIN_CNTR */
 
 } VTThrd;
 
@@ -165,10 +169,13 @@ typedef struct
 #define VTTHRD_NAME_EXTERNAL(thrd)  (thrd->name_extern)
 
 /* parent thread id */
-#define VTTHRD_PARENT_TID(thrd)     (thrd->parent_tid);
+#define VTTHRD_PARENT_TID(thrd)     (thrd->parent_tid)
 
 /* number of child threads */
-#define VTTHRD_CHILD_NUM(thrd)      (thrd->child_num);
+#define VTTHRD_CHILD_NUM(thrd)      (thrd->child_num)
+
+/* flag: is virtual thread? */
+#define VTTHRD_IS_VIRTUAL(thrd)     (thrd->is_virtual)
 
 /* current call stack level */
 #define VTTHRD_STACK_LEVEL(thrd)    (thrd->stack_level)
@@ -186,13 +193,14 @@ typedef struct
 
 /* pop the call stack */
 #define VTTHRD_STACK_POP(thrd)      if(--(thrd->stack_level) < 0) \
-                                      vt_error_msg("Stack underflow");
+                                      vt_error_msg("Stack underflow")
+
+#if !defined(VT_DISABLE_RFG)
 
 /* RFG regions object */
 #define VTTHRD_RFGREGIONS(thrd)     (thrd->rfg_regions)
 
-/* flag: is virtual thread? */
-#define VTTHRD_IS_VIRTUAL(thrd)     (thrd->is_virtual)
+#endif /* VT_DISABLE_RFG */
 
 #if (defined (VT_MPI) || defined (VT_HYB))
 /* matching id counter for MPI coll. ops. */
@@ -259,6 +267,10 @@ typedef struct
 /* plugin cntr handle */
 #define VTTHRD_PLUGIN_CNTR_DEFINES(thrd) \
                                     (thrd->plugin_cntr_defines)
+
+/* flag: writing post mortem counter? */
+#define VTTHRD_PLUGIN_CNTR_WRITING_POST_MORTEM(thrd) \
+                                    (thrd->plugin_cntr_writing_post_mortem)
 
 #endif /* VT_PLUGIN_CNTR */
 

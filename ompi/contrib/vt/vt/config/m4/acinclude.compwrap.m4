@@ -26,19 +26,6 @@ AC_DEFUN([ACVT_COMPWRAP],
 	VT_WRAPPER_CXX_COMPINST_COMPILER_FLAGS=
 	VT_WRAPPER_CXX_DEFAULT_PARTYPE="seq"
 
-	VT_WRAPPER_F77_COMPILER=$F77
-	VT_WRAPPER_F77_EXTRA_COMPILER_FLAGS=
-	VT_WRAPPER_F77_EXTRA_LINKER_FLAGS=
-	VT_WRAPPER_F77_EXTRA_LIBS=
-	VT_WRAPPER_F77_CPP=$CPP
-	VT_WRAPPER_F77_EXTRA_CPPFLAGS=
-	VT_WRAPPER_F77_DYNINST_COMPILER_FLAGS=
-	VT_WRAPPER_F77_TAUINST_OPTS=
-	VT_WRAPPER_F77_TAUINST_PARSE_BIN=
-	VT_WRAPPER_F77_TAUINST_PARSE_OPTS=
-	VT_WRAPPER_F77_COMPINST_COMPILER_FLAGS=
-	VT_WRAPPER_F77_DEFAULT_PARTYPE="seq"
-
 	VT_WRAPPER_FC_COMPILER=$FC
 	VT_WRAPPER_FC_EXTRA_COMPILER_FLAGS=
 	VT_WRAPPER_FC_EXTRA_LINKER_FLAGS=
@@ -172,83 +159,39 @@ AC_DEFUN([ACVT_COMPWRAP],
 		esac
 	])
 
-	AC_ARG_WITH(wrapper-f77-compiler,
-		AC_HELP_STRING([--with-wrapper-f77-compiler=WRAPPERF77],
-		[underlying Fortran 77 compiler command for vtf77, default: F77]),
-	[VT_WRAPPER_F77_COMPILER=$withval])
-
-	AC_ARG_WITH(wrapper-f77-compiler-flags,
-		AC_HELP_STRING([--with-wrapper-f77-compiler-flags=WRAPPERF77CFLAGS],
-		[extra compiler flags to add when using vtf77]),
-	[VT_WRAPPER_F77_EXTRA_COMPILER_FLAGS=$withval])
-
-	AC_ARG_WITH(wrapper-f77-linker-flags,
-		AC_HELP_STRING([--with-wrapper-f77-linker-flags=WRAPPERF77LDFLAGS],
-		[extra linker flags to add when using vtf77]),
-	[VT_WRAPPER_F77_EXTRA_LINKER_FLAGS=$withval])
-
-	AC_ARG_WITH(wrapper-f77-libs,
-		AC_HELP_STRING([--with-wrapper-f77-libs=WRAPPERF77LIBS],
-		[extra libraries to link when using vtf77]),
-	[VT_WRAPPER_F77_EXTRA_LIBS=$withval])
-
-	AC_ARG_WITH(wrapper-f77-cpp,
-		AC_HELP_STRING([--with-wrapper-f77-cpp=WRAPPERF77CPP],
-		[C preprocessor command for vtf77, default: CPP]),
-	[VT_WRAPPER_F77_CPP=$withval])
-
-	AC_ARG_WITH(wrapper-f77-cppflags,
-		AC_HELP_STRING([--with-wrapper-f77-cppflags=WRAPPERF77CPPFLAGS],
-		[extra preprocessor flags to add when using vtf77 -vt:preprocess]),
-	[VT_WRAPPER_F77_EXTRA_CPPFLAGS=$withval])
-
-	AC_ARG_WITH(wrapper-f77-default-partype,
-		AC_HELP_STRING([--with-wrapper-f77-default-partype=TYPE],
-		[default parallelization type for vtf77 (seq,mt,mpi,hyb), default: $VT_WRAPPER_F77_DEFAULT_PARTYPE]),
-	[
-		case $withval in
-			seq | mt | mpi | hyb)
-				VT_WRAPPER_F77_DEFAULT_PARTYPE=$withval
-				;;
-			*)
-				AC_MSG_ERROR([value of '--with-wrapper-f77-default-partype' not properly set])
-				;;
-		esac
-	])
-
 	AC_ARG_WITH(wrapper-fc-compiler,
 		AC_HELP_STRING([--with-wrapper-fc-compiler=WRAPPERFC],
-		[underlying Fortran compiler command for vtf90, default: FC]),
+		[underlying Fortran compiler command for vtfort, default: FC]),
 	[VT_WRAPPER_FC_COMPILER=$withval])
 
 	AC_ARG_WITH(wrapper-fc-compiler-flags,
 		AC_HELP_STRING([--with-wrapper-fc-compiler-flags=WRAPPERFCCFLAGS],
-		[extra compiler flags to add when using vtf90]),
+		[extra compiler flags to add when using vtfort]),
 	[VT_WRAPPER_FC_EXTRA_COMPILER_FLAGS=$withval])
 
 	AC_ARG_WITH(wrapper-fc-linker-flags,
 		AC_HELP_STRING([--with-wrapper-fc-linker-flags=WRAPPERFCLDFLAGS],
-		[extra linker flags to add when using vtf90]),
+		[extra linker flags to add when using vtfort]),
 	[VT_WRAPPER_FC_EXTRA_LINKER_FLAGS=$withval])
 
 	AC_ARG_WITH(wrapper-fc-libs,
 		AC_HELP_STRING([--with-wrapper-fc-libs=WRAPPERFCLIBS],
-		[extra libraries to link when using vtf90]),
+		[extra libraries to link when using vtfort]),
 	[VT_WRAPPER_FC_EXTRA_LIBS=$withval])
 
 	AC_ARG_WITH(wrapper-fc-cpp,
 		AC_HELP_STRING([--with-wrapper-fc-cpp=WRAPPERFCCPP],
-		[C preprocessor command for vtf90, default: CPP]),
+		[C preprocessor command for vtfort, default: CPP]),
 	[VT_WRAPPER_FC_CPP=$withval])
 
 	AC_ARG_WITH(wrapper-fc-cppflags,
 		AC_HELP_STRING([--with-wrapper-fc-cppflags=WRAPPERFCCPPFLAGS],
-		[extra preprocessor flags to add when using vtf90 -vt:preprocess]),
+		[extra preprocessor flags to add when using vtfort -vt:preprocess]),
 	[VT_WRAPPER_fC_EXTRA_CPPFLAGS=$withval])
 
 	AC_ARG_WITH(wrapper-fc-default-partype,
 		AC_HELP_STRING([--with-wrapper-fc-default-partype=TYPE],
-		[default parallelization type for vtf90 (seq,mt,mpi,hyb), default: $VT_WRAPPER_FC_DEFAULT_PARTYPE]),
+		[default parallelization type for vtfort (seq,mt,mpi,hyb), default: $VT_WRAPPER_FC_DEFAULT_PARTYPE]),
 	[
 		case $withval in
 			seq | mt | mpi | hyb)
@@ -308,7 +251,6 @@ AC_DEFUN([ACVT_COMPWRAP],
 	[
 		VT_WRAPPER_CC_EXTRA_LINKER_FLAGS="$VT_WRAPPER_CC_EXTRA_LINKER_FLAGS -Wl,-force_flat_namespace"
 		VT_WRAPPER_CXX_EXTRA_LINKER_FLAGS="$VT_WRAPPER_CXX_EXTRA_LINKER_FLAGS -Wl,-force_flat_namespace"
-		VT_WRAPPER_F77_EXTRA_LINKER_FLAGS="$VT_WRAPPER_F77_EXTRA_LINKER_FLAGS -Wl,-force_flat_namespace"
 		VT_WRAPPER_FC_EXTRA_LINKER_FLAGS="$VT_WRAPPER_FC_EXTRA_LINKER_FLAGS -Wl,-force_flat_namespace"
 		VT_WRAPPER_NVCC_EXTRA_LINKER_FLAGS="$VT_WRAPPER_NVCC_EXTRA_LINKER_FLAGS -Wl,-force_flat_namespace"
 	])
@@ -317,12 +259,11 @@ AC_DEFUN([ACVT_COMPWRAP],
 	[
 		VT_WRAPPER_CC_EXTRA_LINKER_FLAGS="$VT_WRAPPER_CC_EXTRA_LINKER_FLAGS -Wl,-dy"
 		VT_WRAPPER_CXX_EXTRA_LINKER_FLAGS="$VT_WRAPPER_CXX_EXTRA_LINKER_FLAGS -Wl,-dy"
-		VT_WRAPPER_F77_EXTRA_LINKER_FLAGS="$VT_WRAPPER_F77_EXTRA_LINKER_FLAGS -Wl,-dy"
 		VT_WRAPPER_FC_EXTRA_LINKER_FLAGS="$VT_WRAPPER_FC_EXTRA_LINKER_FLAGS -Wl,-dy"
 		VT_WRAPPER_NVCC_EXTRA_LINKER_FLAGS="$VT_WRAPPER_NVCC_EXTRA_LINKER_FLAGS -Wl,-dy"
 	])
 
-	AS_IF([test x"$compinst_type" = "xpgi9"],
+	AS_IF([test x"$compinst_type" = "xpgi9" -o x"$compinst_type" = "xcraycce"],
 	[
 		VT_WRAPPER_VTLIB="-Wl,--whole-archive $VT_WRAPPER_VTLIB -Wl,--no-whole-archive"
 		VT_WRAPPER_VTMPILIB="-Wl,--whole-archive $VT_WRAPPER_VTMPILIB -Wl,--no-whole-archive"
@@ -351,7 +292,6 @@ AC_DEFUN([ACVT_COMPWRAP],
 	[
 		VT_WRAPPER_CC_COMPINST_COMPILER_FLAGS="$compinst_cflags"
 		VT_WRAPPER_CXX_COMPINST_COMPILER_FLAGS="$compinst_cxxflags"
-		VT_WRAPPER_F77_COMPINST_COMPILER_FLAGS="$compinst_fflags"
 		VT_WRAPPER_FC_COMPINST_COMPILER_FLAGS="$compinst_fcflags"
 		VT_WRAPPER_NVCC_COMPINST_COMPILER_FLAGS="$compinst_cflags"
 		VT_WRAPPER_AVAIL_INST="$VT_WRAPPER_AVAIL_INST compinst"
@@ -362,7 +302,6 @@ AC_DEFUN([ACVT_COMPWRAP],
 	[
 		VT_WRAPPER_CC_DYNINST_COMPILER_FLAGS="-g"
 		VT_WRAPPER_CXX_DYNINST_COMPILER_FLAGS="-g"
-		VT_WRAPPER_F77_DYNINST_COMPILER_FLAGS="-g"
 		VT_WRAPPER_FC_DYNINST_COMPILER_FLAGS="-g"
 		VT_WRAPPER_NVCC_DYNINST_COMPILER_FLAGS="-g"
 		VT_WRAPPER_AVAIL_INST="$VT_WRAPPER_AVAIL_INST dyninst"
@@ -373,12 +312,12 @@ AC_DEFUN([ACVT_COMPWRAP],
 
 	AS_IF([test x"$have_mpi" = "xyes"],
 	[
-		AS_IF([test x"$inside_openmpi" = "xyes"],
+		AS_IF([test x"$inside_openmpi" != "xno"],
 		[mpiincdir="-I\${includedir}/.."],
 		[mpiincdir="$MPIINCDIR"])
 		AS_IF([test x"$have_fmpi" = "xyes"],
 		[
-			AS_IF([test x"$inside_openmpi" = "xyes"],
+			AS_IF([test x"$inside_openmpi" != "xno"],
 			[fmpiincdir="$mpiincdir"],
 			[fmpiincdir="$FMPIINCDIR"])
 		])
@@ -386,7 +325,6 @@ AC_DEFUN([ACVT_COMPWRAP],
 
 	VT_WRAPPER_CC_EXTRA_CPPFLAGS="$VT_WRAPPER_EXTRA_CPPFLAGS $mpiincdir"
 	VT_WRAPPER_CXX_EXTRA_CPPFLAGS="$VT_WRAPPER_EXTRA_CPPFLAGS $mpiincdir"
-	VT_WRAPPER_F77_EXTRA_CPPFLAGS="$VT_WRAPPER_EXTRA_CPPFLAGS $fmpiincdir"
 	VT_WRAPPER_FC_EXTRA_CPPFLAGS="$VT_WRAPPER_EXTRA_CPPFLAGS $fmpiincdir"
 	VT_WRAPPER_NVCC_EXTRA_CPPFLAGS="$VT_WRAPPER_EXTRA_CPPFLAGS $mpiincdir"
 
@@ -399,12 +337,9 @@ AC_DEFUN([ACVT_COMPWRAP],
 		VT_WRAPPER_CXX_TAUINST_OPTS="-c++ -spec \${datadir}/TAUINST.SPEC"
 		VT_WRAPPER_CXX_TAUINST_PARSE_BIN="$tauinst_cxxparse_cmd"
 		VT_WRAPPER_CXX_TAUINST_PARSE_OPTS="$VT_WRAPPER_CC_TAUINST_PARSE_OPTS"
-		VT_WRAPPER_F77_TAUINST_OPTS="-fortran -spec \${datadir}/TAUINST.SPEC"
-		VT_WRAPPER_F77_TAUINST_PARSE_BIN="$tauinst_fparse_cmd"
-		VT_WRAPPER_F77_TAUINST_PARSE_OPTS="$fmpiincdir"
-		VT_WRAPPER_FC_TAUINST_OPTS="$VT_WRAPPER_F77_TAUINST_OPTS"
-		VT_WRAPPER_FC_TAUINST_PARSE_BIN="$VT_WRAPPER_F77_TAUINST_PARSE_BIN"
-		VT_WRAPPER_FC_TAUINST_PARSE_OPTS="$VT_WRAPPER_F77_TAUINST_PARSE_OPTS"
+		VT_WRAPPER_FC_TAUINST_OPTS="-fortran -spec \${datadir}/TAUINST.SPEC"
+		VT_WRAPPER_FC_TAUINST_PARSE_BIN="$tauinst_fparse_cmd"
+		VT_WRAPPER_FC_TAUINST_PARSE_OPTS="$fmpiincdir"
 		VT_WRAPPER_NVCC_TAUINST_OPTS="$VT_WRAPPER_CC_TAUINST_OPTS"
 		VT_WRAPPER_NVCC_TAUINST_PARSE_BIN="$VT_WRAPPER_CC_TAUINST_PARSE_BIN"
 		VT_WRAPPER_NVCC_TAUINST_PARSE_OPTS="$VT_WRAPPER_CC_TAUINST_PARSE_OPTS"
@@ -436,19 +371,6 @@ AC_DEFUN([ACVT_COMPWRAP],
 	AC_SUBST(VT_WRAPPER_CXX_TAUINST_PARSE_OPTS)
 	AC_SUBST(VT_WRAPPER_CXX_COMPINST_COMPILER_FLAGS)
 	AC_SUBST(VT_WRAPPER_CXX_DEFAULT_PARTYPE)
-
-	AC_SUBST(VT_WRAPPER_F77_COMPILER)
-	AC_SUBST(VT_WRAPPER_F77_EXTRA_COMPILER_FLAGS)
-	AC_SUBST(VT_WRAPPER_F77_EXTRA_LINKER_FLAGS)
-	AC_SUBST(VT_WRAPPER_F77_EXTRA_LIBS)
-	AC_SUBST(VT_WRAPPER_F77_CPP)
-	AC_SUBST(VT_WRAPPER_F77_EXTRA_CPPFLAGS)
-	AC_SUBST(VT_WRAPPER_F77_DYNINST_COMPILER_FLAGS)
-	AC_SUBST(VT_WRAPPER_F77_TAUINST_OPTS)
-	AC_SUBST(VT_WRAPPER_F77_TAUINST_PARSE_BIN)
-	AC_SUBST(VT_WRAPPER_F77_TAUINST_PARSE_OPTS)
-	AC_SUBST(VT_WRAPPER_F77_COMPINST_COMPILER_FLAGS)
-	AC_SUBST(VT_WRAPPER_F77_DEFAULT_PARTYPE)
 
 	AC_SUBST(VT_WRAPPER_FC_COMPILER)
 	AC_SUBST(VT_WRAPPER_FC_EXTRA_COMPILER_FLAGS)
