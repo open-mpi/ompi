@@ -64,6 +64,7 @@ INCLUDE_DIRECTORIES (
   ${OpenMPI_SOURCE_DIR}/contrib/platform/win32/include
   ${OpenMPI_SOURCE_DIR}/
   ${OpenMPI_SOURCE_DIR}/opal
+  ${OpenMPI_SOURCE_DIR}/opal/mca/hwloc
   ${OpenMPI_SOURCE_DIR}/opal/include
   ${OpenMPI_SOURCE_DIR}/ompi
   ${OpenMPI_SOURCE_DIR}/ompi/include
