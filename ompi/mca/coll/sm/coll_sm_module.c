@@ -128,37 +128,10 @@ OBJ_CLASS_INSTANCE(mca_coll_sm_module_t,
 int mca_coll_sm_init_query(bool enable_progress_threads,
                            bool enable_mpi_threads)
 {
-    ompi_proc_t *my_proc, **procs;
-    size_t i, size;
-
-    /* See if there are other procs in my job on this node.  If not,
-       then don't bother going any further. */
-    if (NULL == (my_proc = ompi_proc_local()) ||
-        NULL == (procs = ompi_proc_all(&size))) {
-        opal_output_verbose(10, mca_coll_base_output,
-                            "coll:sm:init_query: weirdness on procs; disqualifying myself");
+    /* if no session directory was created, then we cannot be used */
+    if (!orte_create_session_dirs) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
-    if (size <= 1) {
-        opal_output_verbose(10, mca_coll_base_output,
-                            "coll:sm:init_query: comm size too small; disqualifying myself");
-        free(procs);
-        return OMPI_ERR_NOT_AVAILABLE;
-    }
-    for (i = 0; i < size; ++i) {
-        if (procs[i] != my_proc &&
-            procs[i]->proc_name.jobid == my_proc->proc_name.jobid &&
-            OPAL_PROC_ON_LOCAL_NODE(procs[i]->proc_flags)) {
-            break;
-        }
-    }
-    free(procs);
-    if (i >= size) {
-        opal_output_verbose(10, mca_coll_base_output,
-                            "coll:sm:init_query: no other local procs; disqualifying myself");
-        return OMPI_ERR_NOT_AVAILABLE;
-    }
-
     /* Don't do much here because we don't really want to allocate any
        shared memory until this component is selected to be used. */
     opal_output_verbose(10, mca_coll_base_output,
