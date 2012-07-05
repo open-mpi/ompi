@@ -11,7 +11,7 @@
 #define _ATFILE_SOURCE
 #include <assert.h>
 #include <sys/types.h>
-#ifndef WIN32
+#ifdef HAVE_DIRENT_H
 #include <dirent.h>
 #endif
 #ifdef HAVE_UNISTD_H
