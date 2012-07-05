@@ -1138,16 +1138,20 @@ int OTF_RBuffer_searchTime( OTF_RBuffer* rbuffer, uint64_t time ) {
 	else if ( time > timeB ) {
 		/* consume all records, so that the caller get none */
 
-		if ( posB > rbuffer->jumpsize ) {
-			posB -= rbuffer->jumpsize;
-		} else {
-			posB = 0;
-		}
-		ret= OTF_RBuffer_jump( rbuffer, posB );
-		if ( 1 != ret ) {
+		do {
+			/* need to loop, so that OTF_RBuffer_jump finds the
+			start of a zlib block */
+			if ( posB > rbuffer->jumpsize ) {
+				posB -= rbuffer->jumpsize;
+			} else {
+				posB = 0;
+			}
+			ret= OTF_RBuffer_jump( rbuffer, posB );
+		} while ( 1 != ret );
+		if ( posB == 0 && 1 != ret ) {
 
 			OTF_Error( "ERROR in function %s, file: %s, line: %i:\n "
-					"unsuccessful jump to end pos= %llu.\n",
+					"unsuccessful jump to begin pos= %llu.\n",
 					__FUNCTION__, __FILE__, __LINE__, (unsigned long long) posB );
 
 			return 0;

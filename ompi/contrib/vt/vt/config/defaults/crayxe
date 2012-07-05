@@ -15,3 +15,4 @@ CFLAGS_FOR_BUILD="-O3"
 CXXFLAGS_FOR_BUILD="-O3"
 enable_shared="no"
 with_mpich2="yes"
+with_shlibc=/lib64/libc.so.6

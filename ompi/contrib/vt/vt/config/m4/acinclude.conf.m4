@@ -341,7 +341,7 @@ AC_DEFUN([ACVT_CONF_SUMMARY],
 		], [answer=no])
 		echo "  Build CUPTI support:                       $answer"
 
-		AS_IF([test x"$have_compinst" != x],
+		AS_IF([test x"$have_compinst" = "xyes"],
 		[answer=`echo $compinst_type | sed s/gnu/gnu*/g`],
 		[answer="no"])
 		echo ""
