@@ -103,7 +103,12 @@ libnbc_open(void)
 static int
 libnbc_close(void)
 {
+    if (0 != mca_coll_libnbc_component.active_comms) {
+        opal_progress_unregister(libnbc_progress);
+    }
+
     OBJ_DESTRUCT(&mca_coll_libnbc_component.requests);
+    OBJ_DESTRUCT(&mca_coll_libnbc_component.active_requests);
 
     return OMPI_SUCCESS;
 }
@@ -231,6 +236,7 @@ libnbc_progress(void)
         if (NBC_OK == NBC_Progress(request)) {
             request->super.req_status.MPI_ERROR = OMPI_SUCCESS;
             /* done, remove */
+            fprintf(stderr, "why am i here?\n");
             item = opal_list_remove_item(&mca_coll_libnbc_component.active_requests,
                                          &request->super.super.super);
         }
