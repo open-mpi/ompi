@@ -10,6 +10,7 @@
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2012      Sandia National Laboratories. All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -35,6 +36,7 @@ sources = \
         coll_basic_module.c \
         coll_basic_reduce.c \
         coll_basic_reduce_scatter.c \
+        coll_basic_reduce_scatter_block.c \
         coll_basic_scan.c \
         coll_basic_exscan.c \
         coll_basic_scatter.c \

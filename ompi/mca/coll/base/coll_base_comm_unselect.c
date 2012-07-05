@@ -53,6 +53,7 @@ int mca_coll_base_comm_unselect(ompi_communicator_t * comm)
     CLOSE(comm, gather);
     CLOSE(comm, gatherv);
     CLOSE(comm, reduce);
+    CLOSE(comm, reduce_scatter_block);
     CLOSE(comm, reduce_scatter);
     CLOSE(comm, scan);
     CLOSE(comm, scatter);
@@ -70,6 +71,7 @@ int mca_coll_base_comm_unselect(ompi_communicator_t * comm)
     CLOSE(comm, igather);
     CLOSE(comm, igatherv);
     CLOSE(comm, ireduce);
+    CLOSE(comm, ireduce_scatter_block);
     CLOSE(comm, ireduce_scatter);
     CLOSE(comm, iscan);
     CLOSE(comm, iscatter);

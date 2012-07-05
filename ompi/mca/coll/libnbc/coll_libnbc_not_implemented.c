@@ -23,15 +23,6 @@ ompi_coll_libnbc_iexscan(void *sbuf, void *rbuf, int count, struct ompi_datatype
 
 
 int
-ompi_coll_libnbc_ireduce_scatter_block(void *sbuf, void *rbuf, int rcount, struct ompi_datatype_t *dtype,
-                                       struct ompi_op_t *op, struct ompi_communicator_t *comm, 
-                                       ompi_request_t **request, struct mca_coll_base_module_2_0_0_t *module)
-{
-    return OMPI_ERR_NOT_IMPLEMENTED;
-}
-
-
-int
 ompi_coll_libnbc_iallgather_inter(void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, int recvcount, 
                                   MPI_Datatype recvtype, struct ompi_communicator_t *comm, ompi_request_t ** request,
                                   struct mca_coll_base_module_2_0_0_t *module)

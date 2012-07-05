@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2012      Sandia National Laboratories. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -236,12 +237,27 @@ BEGIN_C_DECLS
                                         struct ompi_communicator_t *comm,
                                         mca_coll_base_module_t *module);
 
+    int mca_coll_basic_reduce_scatter_block_intra(void *sbuf, void *rbuf,
+                                                  int rcount,
+                                                  struct ompi_datatype_t *dtype,
+                                                  struct ompi_op_t *op,
+                                                  struct ompi_communicator_t *comm,
+                                                  mca_coll_base_module_t *module);
+
+    int mca_coll_basic_reduce_scatter_block_inter(void *sbuf, void *rbuf,
+                                                  int rcount,
+                                                  struct ompi_datatype_t *dtype,
+                                                  struct ompi_op_t *op,
+                                                  struct ompi_communicator_t *comm,
+                                                  mca_coll_base_module_t *module);
+
     int mca_coll_basic_reduce_scatter_intra(void *sbuf, void *rbuf,
                                             int *rcounts,
                                             struct ompi_datatype_t *dtype,
                                             struct ompi_op_t *op,
                                             struct ompi_communicator_t *comm,
                                             mca_coll_base_module_t *module);
+
     int mca_coll_basic_reduce_scatter_inter(void *sbuf, void *rbuf,
                                             int *rcounts,
                                             struct ompi_datatype_t *dtype,

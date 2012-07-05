@@ -71,6 +71,7 @@ static void coll_base_module_construct(mca_coll_base_module_t *m)
     m->coll_gather = NULL;
     m->coll_gatherv = NULL;
     m->coll_reduce = NULL;
+    m->coll_reduce_scatter_block = NULL;
     m->coll_reduce_scatter = NULL;
     m->coll_scan = NULL;
     m->coll_scatter = NULL;
@@ -89,6 +90,7 @@ static void coll_base_module_construct(mca_coll_base_module_t *m)
     m->coll_igather = NULL;
     m->coll_igatherv = NULL;
     m->coll_ireduce = NULL;
+    m->coll_ireduce_scatter_block = NULL;
     m->coll_ireduce_scatter = NULL;
     m->coll_iscan = NULL;
     m->coll_iscatter = NULL;
