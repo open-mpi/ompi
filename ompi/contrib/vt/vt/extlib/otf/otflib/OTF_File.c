@@ -451,6 +451,10 @@ int OTF_File_seek( OTF_File* file, uint64_t pos ) {
 			read= fread( file->zbuffer, 1, file->zbuffersize, file->file );
 			*/
 			read= OTF_File_read_internal( file, file->zbuffer, file->zbuffersize );
+			if ( 0 == read ) {
+
+				return 0;
+			}
 
 			OTF_FILE_Z(file)->next_in= file->zbuffer;
 			OTF_FILE_Z(file)->avail_in= (uInt) read;
