@@ -11,6 +11,7 @@
 #include "nbc_internal.h"
 #include "ompi/mca/coll/base/coll_tags.h"
 #include "ompi/op/op.h"
+#include "ompi/mca/pml/pml.h"
 
 /* only used in this file */
 static inline int NBC_Start_round(NBC_Handle *handle);
@@ -274,11 +275,6 @@ static inline int NBC_Free(NBC_Handle* handle) {
     handle->tmpbuf = NULL;
   }
 
-  handle->super.req_status.MPI_ERROR = OMPI_SUCCESS;
-  OPAL_THREAD_LOCK(&ompi_request_lock);
-  ompi_request_complete(&handle->super, true);
-  OPAL_THREAD_UNLOCK(&ompi_request_lock);
-
   return NBC_OK;
 }
 
@@ -298,11 +294,8 @@ int NBC_Progress(NBC_Handle *handle) {
 #ifdef NBC_TIMING
       Test_time -= MPI_Wtime();
 #endif
-#ifdef HAVE_OMPI
       res = ompi_request_test_all(handle->req_count, handle->req_array, &flag, MPI_STATUSES_IGNORE);
-      /*      res = MPI_Testall(handle->req_count, handle->req_array, &flag, MPI_STATUSES_IGNORE); */
       if(res != OMPI_SUCCESS) { printf("MPI Error in MPI_Testall() (%i)\n", res); ret=res; goto error; }
-#endif
 #ifdef NBC_TIMING
       Test_time += MPI_Wtime();
 #endif
@@ -393,14 +386,10 @@ static inline int NBC_Start_round(NBC_Handle *handle) {
 #ifdef NBC_TIMING
     Isend_time -= MPI_Wtime();
 #endif
-#ifdef HAVE_OMPI
         handle->req_array = (MPI_Request*)realloc((void*)handle->req_array, (handle->req_count)*sizeof(MPI_Request));
         NBC_CHECK_NULL(handle->req_array);
-        res = MCA_PML_CALL(isend_init(buf1, sendargs->count, sendargs->datatype, sendargs->dest, handle->tag, MCA_PML_BASE_SEND_STANDARD, handle->comm, handle->req_array+handle->req_count-1));
-        /*printf("MPI_Isend(%lu, %i, %lu, %i, %i, %lu) (%i)\n", (unsigned long)buf1, sendargs->count, (unsigned long)sendargs->datatype, sendargs->dest, handle->tag, (unsigned long)handle->comm, res);*/
-        /* res = MPI_Isend(buf1, sendargs->count, sendargs->datatype, sendargs->dest, handle->tag, handle->comm, handle->req_array+handle->req_count-1); */
+        res = MCA_PML_CALL(isend(buf1, sendargs->count, sendargs->datatype, sendargs->dest, handle->tag, MCA_PML_BASE_SEND_STANDARD, handle->comm, handle->req_array+handle->req_count-1));
         if(OMPI_SUCCESS != res) { printf("Error in MPI_Isend(%lu, %i, %lu, %i, %i, %lu) (%i)\n", (unsigned long)buf1, sendargs->count, (unsigned long)sendargs->datatype, sendargs->dest, handle->tag, (unsigned long)handle->comm, res); ret=res; goto error; }
-#endif
 #ifdef NBC_TIMING
     Isend_time += MPI_Wtime();
 #endif
@@ -421,14 +410,10 @@ static inline int NBC_Start_round(NBC_Handle *handle) {
 #ifdef NBC_TIMING
     Irecv_time -= MPI_Wtime();
 #endif
-#ifdef HAVE_OMPI
         handle->req_array = (MPI_Request*)realloc((void*)handle->req_array, (handle->req_count)*sizeof(MPI_Request));
         NBC_CHECK_NULL(handle->req_array);
         res = MCA_PML_CALL(irecv(buf1, recvargs->count, recvargs->datatype, recvargs->source, handle->tag, handle->comm, handle->req_array+handle->req_count-1)); 
-        /*printf("MPI_Irecv(%lu, %i, %lu, %i, %i, %lu) (%i)\n", (unsigned long)buf1, recvargs->count, (unsigned long)recvargs->datatype, recvargs->source, handle->tag, (unsigned long)handle->comm, res); */
-        /*res = MPI_Irecv(buf1, recvargs->count, recvargs->datatype, recvargs->source, handle->tag, handle->comm, handle->req_array+handle->req_count-1); */
         if(OMPI_SUCCESS != res) { printf("Error in MPI_Irecv(%lu, %i, %lu, %i, %i, %lu) (%i)\n", (unsigned long)buf1, recvargs->count, (unsigned long)recvargs->datatype, recvargs->source, handle->tag, (unsigned long)handle->comm, res); ret=res; goto error; }
-#endif
 #ifdef NBC_TIMING
     Irecv_time += MPI_Wtime();
 #endif
