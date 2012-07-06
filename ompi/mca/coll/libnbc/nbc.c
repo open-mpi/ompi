@@ -274,6 +274,7 @@ static inline int NBC_Free(NBC_Handle* handle) {
     handle->tmpbuf = NULL;
   }
 
+  handle->super.req_status.MPI_ERROR = OMPI_SUCCESS;
   OPAL_THREAD_LOCK(&ompi_request_lock);
   ompi_request_complete(&handle->super, true);
   OPAL_THREAD_UNLOCK(&ompi_request_lock);
