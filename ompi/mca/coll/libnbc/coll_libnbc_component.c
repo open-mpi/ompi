@@ -234,9 +234,7 @@ libnbc_progress(void)
          item = opal_list_get_next(item)) {
         ompi_coll_libnbc_request_t* request = (ompi_coll_libnbc_request_t*) item;
         if (NBC_OK == NBC_Progress(request)) {
-            request->super.req_status.MPI_ERROR = OMPI_SUCCESS;
             /* done, remove */
-            fprintf(stderr, "why am i here?\n");
             item = opal_list_remove_item(&mca_coll_libnbc_component.active_requests,
                                          &request->super.super.super);
         }
