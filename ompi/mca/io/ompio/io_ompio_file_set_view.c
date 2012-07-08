@@ -9,7 +9,7 @@
  *                          University of Stuttgart.  All rights reserved.
  *  Copyright (c) 2004-2005 The Regents of the University of California.
  *                          All rights reserved.
- *  Copyright (c) 2008-2011 University of Houston. All rights reserved.
+ *  Copyright (c) 2008-2012 University of Houston. All rights reserved.
  *  $COPYRIGHT$
  *
  *  Additional copyrights may follow
@@ -71,6 +71,16 @@ int mca_io_ompio_set_view_internal(mca_io_ompio_file_t *fh,
     ompi_datatype_duplicate (filetype, &fh->f_filetype);
     
     fh->f_cc_size = get_contiguous_chunk_size (fh);
+
+    if (opal_datatype_is_contiguous_memory_layout(&etype->super,1)) {
+        if (opal_datatype_is_contiguous_memory_layout(&filetype->super,1) && 
+	    fh->f_view_extent == (OPAL_PTRDIFF_TYPE)fh->f_view_size ) {
+            fh->f_flags |= OMPIO_CONTIGUOUS_FVIEW;
+        }
+    }
+
+
+
     
     return OMPI_SUCCESS;
 }
@@ -100,15 +110,11 @@ int mca_io_ompio_file_set_view (ompi_file_t *fp,
         fh->f_datarep = NULL;
     }
 
+    /* Reset the flags first */
+    fh->f_flags = 0;
+
     fh->f_flags |= OMPIO_FILE_VIEW_IS_SET;
     fh->f_datarep = strdup (datarep);
-
-    if (opal_datatype_is_contiguous_memory_layout(&etype->super,1)) {
-        if (opal_datatype_is_contiguous_memory_layout(&filetype->super,1)) {
-            fh->f_flags |= OMPIO_CONTIGUOUS_FVIEW;
-        }
-    }
-
 
     mca_io_ompio_set_view_internal (fh,
 				    disp,
