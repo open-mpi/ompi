@@ -135,7 +135,7 @@ int mca_btl_mx_register( struct mca_btl_base_module_t* btl,
                 }
                 break;  /* some fragments are already registered. Try to continue... */
             }
-            frag->base.des_dst     = frag->segment;
+            frag->base.des_dst     = (mca_btl_base_segment_t*)frag->segment;
             frag->base.des_dst_cnt = 1;
             frag->base.des_src     = NULL;
             frag->base.des_src_cnt = 0;
@@ -185,7 +185,7 @@ mca_btl_base_descriptor_t* mca_btl_mx_alloc( struct mca_btl_base_module_t* btl,
         size <= mx_btl->super.btl_eager_limit ? 
         size : mx_btl->super.btl_eager_limit ;
     frag->segment[0].base.seg_addr.pval = (void*)(frag+1);
-    frag->base.des_src = frag->segment;
+    frag->base.des_src = (mca_btl_base_segment_t*)frag->segment;
     frag->base.des_src_cnt = 1;
     frag->base.des_flags = flags;
     frag->base.order = MCA_BTL_NO_ORDER;
@@ -280,7 +280,7 @@ mca_btl_mx_prepare_src( struct mca_btl_base_module_t* btl,
         frag->segment[1].base.seg_len       = max_data;
         frag->segment[1].base.seg_addr.pval = iov.iov_base;
     }
-    frag->base.des_src   = frag->segment;
+    frag->base.des_src   = (mca_btl_base_segment_t*)frag->segment;
     frag->base.des_flags = flags;
     frag->base.order     = MCA_BTL_NO_ORDER;
 
@@ -350,7 +350,7 @@ mca_btl_base_descriptor_t* mca_btl_mx_prepare_dst( struct mca_btl_base_module_t*
 
     /* Allow the fragment to be recycled using the mca_btl_mx_free function */
     frag->type             = MCA_BTL_MX_SEND;
-    frag->base.des_dst     = frag->segment;
+    frag->base.des_dst     = (mca_btl_base_segment_t*)frag->segment;
     frag->base.des_dst_cnt = 1;
     frag->base.des_flags   = flags;
     frag->base.order       = MCA_BTL_NO_ORDER;
@@ -514,7 +514,6 @@ int mca_btl_mx_send( struct mca_btl_base_module_t* btl,
    
 {
     mca_btl_mx_segment_t *src_seg = (mca_btl_mx_segment_t *) descriptor->des_src;
-    mca_btl_mx_segment_t *dst_seg = (mca_btl_mx_segment_t *) descriptor->des_dst;
     mca_btl_mx_module_t* mx_btl = (mca_btl_mx_module_t*)btl;
     mca_btl_mx_frag_t* frag = (mca_btl_mx_frag_t*)descriptor;
     mx_segment_t mx_segment[2];
