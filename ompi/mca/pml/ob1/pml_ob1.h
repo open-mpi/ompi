@@ -286,15 +286,15 @@ void mca_pml_ob1_process_pending_rdma(void);
  */
 static inline int mca_pml_ob1_compute_segment_length (size_t seg_size, void *segments, size_t count,
                                                       size_t hdrlen) {
-    size_t i, length;
+    size_t i, length = 0;
 
-    for (i = 0, length = -hdrlen ; i < count ; ++i) {
+    for (i = 0; i < count ; ++i) {
         mca_btl_base_segment_t *segment =
             (mca_btl_base_segment_t *)((char *) segments + i * seg_size);
 
         length += segment->seg_len;
     }
-
+    length -= hdrlen;
     return length;
 }
 
