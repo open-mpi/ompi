@@ -26,10 +26,6 @@
 #include "ompi/mca/fs/base/base.h"
 #include "ompi/mca/fcoll/fcoll.h"
 #include "ompi/mca/fcoll/base/base.h"
-#include "ompi/mca/fcoll/dynamic/fcoll_dynamic.h"
-#include "ompi/mca/fcoll/static/fcoll_static.h"
-#include "ompi/mca/fcoll/individual/fcoll_individual.h"
-#include "ompi/mca/fcoll/two_phase/fcoll_two_phase.h"
 #include "ompi/mca/fbtl/fbtl.h"
 #include "ompi/mca/fbtl/base/base.h"
 
@@ -135,7 +131,8 @@ mca_io_ompio_file_write (ompi_file_t *fp,
                 fh->f_io_array[k].length =  decoded_iov[i].iov_len - 
                     (total_bytes_written - sum_previous_counts);
             }
-            if (! (fh->f_flags & OMPIO_CONTIGUOUS_FVIEW)) {
+
+            if (! (fh->f_flags & OMPIO_CONTIGUOUS_FVIEW)) { 
                 if (fh->f_decoded_iov[j].iov_len - 
                     (fh->f_total_bytes - sum_previous_length) <= 0) {
                     sum_previous_length += fh->f_decoded_iov[j].iov_len;
@@ -149,13 +146,13 @@ mca_io_ompio_file_write (ompi_file_t *fp,
                         fh->f_total_bytes = 0;
                     }
                 }
-            }
+            } 
 
             disp = (OPAL_PTRDIFF_TYPE)fh->f_decoded_iov[j].iov_base + 
                 (fh->f_total_bytes - sum_previous_length);
             fh->f_io_array[k].offset = (IOVBASE_TYPE *)(disp + fh->f_offset);
 
-            if (! (fh->f_flags & OMPIO_CONTIGUOUS_FVIEW)) {
+            if (! (fh->f_flags & OMPIO_CONTIGUOUS_FVIEW)) { 
                 if (fh->f_decoded_iov[j].iov_len - 
                     (fh->f_total_bytes - sum_previous_length) 
                     < fh->f_io_array[k].length) {

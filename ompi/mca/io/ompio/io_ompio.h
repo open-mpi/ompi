@@ -310,35 +310,6 @@ OMPI_DECLSPEC int ompi_io_ompio_scatter_data (mca_io_ompio_file_t *fh,
                                               int num_aggregators,
                                               size_t stripe_size);
 
-OMPI_DECLSPEC int ompi_io_ompio_send_data (mca_io_ompio_file_t *fh,
-                                           void *send_buf,
-                                           size_t total_bytes_sent,
-                                           struct iovec *decoded_iov,
-                                           int decoded_count,
-                                           int *bytes_sent,
-                                           struct iovec *broken_iovec,
-                                           int *current,
-                                           size_t *part,
-                                           void *global_buf,
-                                           int *bytes_per_process,
-                                           int *displs,
-                                           int num_aggregators,
-                                           size_t stripe_size);
-
-OMPI_DECLSPEC int ompi_io_ompio_receive_data (mca_io_ompio_file_t *fh,
-                                              void *recv_buf,
-                                              size_t total_bytes_recv,
-                                              struct iovec *decoded_iov,
-                                              int decoded_count,
-                                              int *bytes_recv,
-                                              struct iovec *broken_iovec,
-                                              int *current,
-                                              size_t *part,
-                                              void *global_buf,
-                                              int *bytes_per_process,
-                                              int *displs,
-                                              int num_aggregators,
-                                              size_t stripe_size);
 
 /*
  * Modified versions of Collective operations
