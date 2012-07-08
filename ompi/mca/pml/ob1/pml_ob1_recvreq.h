@@ -258,7 +258,6 @@ do {                                                                            
         size_t n, offset = seg_offset;                                            \
         mca_btl_base_segment_t* segment = segments;                               \
                                                                                   \
-        OPAL_THREAD_LOCK(&request->lock);                                         \
         for( n = 0; n < num_segments; n++, segment++ ) {                          \
             if(offset >= segment->seg_len) {                                      \
                 offset -= segment->seg_len;                                       \
@@ -270,6 +269,7 @@ do {                                                                            
                 offset = 0;                                                       \
             }                                                                     \
         }                                                                         \
+        OPAL_THREAD_LOCK(&request->lock);                                         \
         PERUSE_TRACE_COMM_OMPI_EVENT (PERUSE_COMM_REQ_XFER_CONTINUE,              \
                                       &(recvreq->req_recv.req_base), max_data,    \
                                       PERUSE_RECV);                               \
