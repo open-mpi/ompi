@@ -72,6 +72,7 @@
 #include "orte/runtime/orte_locks.h"
 
 #include "orte/mca/ess/ess.h"
+#include "orte/mca/state/state.h"
 #include "orte/mca/odls/odls.h"
 #include "orte/mca/plm/plm.h"
 #include "orte/mca/rml/rml.h"
@@ -596,6 +597,7 @@ int orte_errmgr_base_restart_job(orte_jobid_t jobid, char * global_handle, int s
 {
     int ret, exit_status = ORTE_SUCCESS;
     orte_process_name_t loc_proc;
+    orte_job_t *jdata;
     orte_sstore_base_handle_t prev_sstore_handle = ORTE_SSTORE_HANDLE_INVALID;
 
     /* JJH First determine if we can recover this way */
@@ -613,15 +615,21 @@ int orte_errmgr_base_restart_job(orte_jobid_t jobid, char * global_handle, int s
         goto cleanup;
     }
 
+    /* get the job object */
+    if (NULL == (jdata = orte_get_job_data_object(jobid))) {
+        exit_status = ORTE_ERR_NOT_FOUND;
+        ORTE_ERROR_LOG(exit_status);
+        goto cleanup;
+    }
+
     /*
      * Start the recovery
      */
     orte_snapc_base_has_recovered = false;
     loc_proc.jobid = jobid;
     loc_proc.vpid  = 0;
-    orte_errmgr.update_state(jobid, ORTE_JOB_STATE_RESTART,
-                             &loc_proc, ORTE_PROC_STATE_KILLED_BY_CMD,
-                             0, 0);
+    ORTE_ACTIVATE_PROC_STATE(&loc_proc, ORTE_PROC_STATE_KILLED_BY_CMD);
+    ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_CONTROL_RESTART);
     while( !orte_snapc_base_has_recovered ) {
         opal_progress();
     }

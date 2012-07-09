@@ -169,9 +169,7 @@ static void sstore_stage_global_recv(int status,
                                        opal_buffer_t* buffer,
                                        orte_rml_tag_t tag,
                                        void* cbdata);
-static void sstore_stage_global_process_cmd(int fd,
-                                              short event,
-                                              void *cbdata);
+
 static int process_local_pull(orte_process_name_t* peer, opal_buffer_t* buffer, orte_sstore_stage_global_snapshot_info_t *handle_info);
 static int process_local_push(orte_process_name_t* peer, opal_buffer_t* buffer, orte_sstore_stage_global_snapshot_info_t *handle_info);
 static int process_local_done(orte_process_name_t* peer, opal_buffer_t* buffer, orte_sstore_stage_global_snapshot_info_t *handle_info);
@@ -1039,32 +1037,31 @@ static void sstore_stage_global_recv(int status,
                                        orte_rml_tag_t tag,
                                        void* cbdata)
 {
-    if( ORTE_RML_TAG_SSTORE_INTERNAL != tag ) {
-        return;
-    }
-
-    ORTE_MESSAGE_EVENT(sender, buffer, tag, sstore_stage_global_process_cmd);
-
-    return;
-}
-
-static void sstore_stage_global_process_cmd(int fd,
-                                              short event,
-                                              void *cbdata)
-{
     int ret;
-    orte_message_event_t *mev = (orte_message_event_t*)cbdata;
-    orte_process_name_t *sender = NULL;
     orte_sstore_stage_cmd_flag_t command;
     orte_std_cntr_t count;
     orte_sstore_base_handle_t loc_id;
     orte_sstore_stage_global_snapshot_info_t *handle_info = NULL;
 
-    sender = &(mev->sender);
+    if( ORTE_RML_TAG_SSTORE_INTERNAL != tag ) {
+        return;
+    }
 
     OPAL_OUTPUT_VERBOSE((10, mca_sstore_stage_component.super.output_handle,
                          "sstore:stage:(global): process_cmd(%s)",
                          ORTE_NAME_PRINT(sender)));
+
+    count = 1;
+    if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &command, &count, ORTE_SSTORE_STAGE_CMD))) {
+        ORTE_ERROR_LOG(ret);
+        goto cleanup;
+    }
+
+    count = 1;
+    if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &loc_id, &count, ORTE_SSTORE_HANDLE )) ) {
+        ORTE_ERROR_LOG(ret);
+        goto cleanup;
+    }
 
     /*
      * If this was an application process contacting us, then act like an orted
@@ -1073,20 +1070,13 @@ static void sstore_stage_global_process_cmd(int fd,
     if(OPAL_EQUAL != orte_util_compare_name_fields(ORTE_NS_CMP_JOBID,
                                                    ORTE_PROC_MY_NAME,
                                                    sender)) {
-        orte_sstore_stage_local_process_cmd(fd, event, cbdata);
+
+        OPAL_OUTPUT_VERBOSE((10, mca_sstore_stage_component.super.output_handle,
+                             "sstore:stage:(local): process_cmd(%s)",
+                             ORTE_NAME_PRINT(sender)));
+
+        orte_sstore_stage_local_process_cmd_action(sender, command, loc_id, buffer);
         return;
-    }
-
-    count = 1;
-    if (ORTE_SUCCESS != (ret = opal_dss.unpack(mev->buffer, &command, &count, ORTE_SSTORE_STAGE_CMD))) {
-        ORTE_ERROR_LOG(ret);
-        goto cleanup;
-    }
-
-    count = 1;
-    if (ORTE_SUCCESS != (ret = opal_dss.unpack(mev->buffer, &loc_id, &count, ORTE_SSTORE_HANDLE )) ) {
-        ORTE_ERROR_LOG(ret);
-        goto cleanup;
     }
 
     /*
@@ -1108,17 +1098,17 @@ static void sstore_stage_global_process_cmd(int fd,
      * Process the command
      */
     if( ORTE_SSTORE_STAGE_PULL == command ) {
-        process_local_pull(sender, mev->buffer, handle_info);
+        process_local_pull(sender, buffer, handle_info);
     }
     else if( ORTE_SSTORE_STAGE_PUSH == command ) {
-        process_local_push(sender, mev->buffer, handle_info);
+        process_local_push(sender, buffer, handle_info);
     }
     else if( ORTE_SSTORE_STAGE_REMOVE == command ) {
         /* This is actually intended for the local coordinator */
-        orte_sstore_stage_local_process_cmd_action(sender, command, loc_id, mev->buffer);
+        orte_sstore_stage_local_process_cmd_action(sender, command, loc_id, buffer);
     }
     else if( ORTE_SSTORE_STAGE_DONE == command ) {
-        process_local_done(sender, mev->buffer, handle_info);
+        process_local_done(sender, buffer, handle_info);
     }
 
  cleanup:

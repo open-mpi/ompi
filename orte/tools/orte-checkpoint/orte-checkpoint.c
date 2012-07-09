@@ -393,7 +393,7 @@ static int parse_args(int argc, char *argv[]) {
     opal_cmd_line_create(&cmd_line, cmd_line_opts);
     mca_base_open();
     mca_base_cmd_line_setup(&cmd_line);
-    ret = opal_cmd_line_parse(&cmd_line, false, argc, argv);
+    ret = opal_cmd_line_parse(&cmd_line, true, argc, argv);
 
     if (OPAL_SUCCESS != ret) {
         if (OPAL_ERR_SILENT != ret) {

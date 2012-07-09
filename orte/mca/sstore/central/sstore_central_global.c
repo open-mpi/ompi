@@ -845,32 +845,15 @@ static void sstore_central_global_recv(int status,
                                        orte_rml_tag_t tag,
                                        void* cbdata)
 {
-    if( ORTE_RML_TAG_SSTORE_INTERNAL != tag ) {
-        return;
-    }
-
-    ORTE_MESSAGE_EVENT(sender, buffer, tag, sstore_central_global_process_cmd);
-
-    return;
-}
-
-static void sstore_central_global_process_cmd(int fd,
-                                              short event,
-                                              void *cbdata)
-{
     int ret;
-    orte_message_event_t *mev = (orte_message_event_t*)cbdata;
-    orte_process_name_t *sender = NULL;
     orte_sstore_central_cmd_flag_t command;
     orte_std_cntr_t count;
     orte_sstore_base_handle_t loc_id;
     orte_sstore_central_global_snapshot_info_t *handle_info = NULL;
 
-    sender = &(mev->sender);
-
-    OPAL_OUTPUT_VERBOSE((10, mca_sstore_central_component.super.output_handle,
-                         "sstore:central:(global): process_cmd(%s)",
-                         ORTE_NAME_PRINT(sender)));
+    if( ORTE_RML_TAG_SSTORE_INTERNAL != tag ) {
+        return;
+    }
 
     /*
      * If this was an application process contacting us, then act like an orted
@@ -879,18 +862,23 @@ static void sstore_central_global_process_cmd(int fd,
     if(OPAL_EQUAL != orte_util_compare_name_fields(ORTE_NS_CMP_JOBID,
                                                    ORTE_PROC_MY_NAME,
                                                    sender)) {
-        orte_sstore_central_local_process_cmd(fd, event, cbdata);
+        orte_sstore_central_local_recv(status, sender, buffer, tag, cbdata);
         return;
     }
 
+
+    OPAL_OUTPUT_VERBOSE((10, mca_sstore_central_component.super.output_handle,
+                         "sstore:central:(global): process_cmd(%s)",
+                         ORTE_NAME_PRINT(sender)));
+
     count = 1;
-    if (ORTE_SUCCESS != (ret = opal_dss.unpack(mev->buffer, &command, &count, ORTE_SSTORE_CENTRAL_CMD))) {
+    if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &command, &count, ORTE_SSTORE_CENTRAL_CMD))) {
         ORTE_ERROR_LOG(ret);
         goto cleanup;
     }
 
     count = 1;
-    if (ORTE_SUCCESS != (ret = opal_dss.unpack(mev->buffer, &loc_id, &count, ORTE_SSTORE_HANDLE )) ) {
+    if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &loc_id, &count, ORTE_SSTORE_HANDLE )) ) {
         ORTE_ERROR_LOG(ret);
         goto cleanup;
     }
@@ -906,10 +894,10 @@ static void sstore_central_global_process_cmd(int fd,
      * Process the command
      */
     if( ORTE_SSTORE_CENTRAL_PULL == command ) {
-        process_local_pull(sender, mev->buffer, handle_info);
+        process_local_pull(sender, buffer, handle_info);
     }
     else if( ORTE_SSTORE_CENTRAL_PUSH == command ) {
-        process_local_push(sender, mev->buffer, handle_info);
+        process_local_push(sender, buffer, handle_info);
     }
 
  cleanup:

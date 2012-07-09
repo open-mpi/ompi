@@ -681,7 +681,6 @@ int orte_sstore_stage_local_fetch_app_deps(orte_app_context_t *app)
     int ret, exit_status = ORTE_SUCCESS;
     orte_sstore_stage_local_snapshot_info_t *handle_info = NULL;
     orte_sstore_stage_local_app_snapshot_info_t *app_info = NULL;
-    opal_list_item_t *item;
     char **sstore_args = NULL;
     char * req_snap_loc = NULL;
     char * req_snap_global_ref = NULL;
@@ -693,7 +692,8 @@ int orte_sstore_stage_local_fetch_app_deps(orte_app_context_t *app)
     char * compress_ref = NULL;
     char * tmp_str = NULL;
     int req_snap_seq = 0;
-    orte_odls_child_t *child = NULL;
+    int i;
+    orte_proc_t *child = NULL;
     int loc_argc = 0;
     bool skip_xfer = false;
 
@@ -747,15 +747,16 @@ int orte_sstore_stage_local_fetch_app_deps(orte_app_context_t *app)
         /*
          * Find the process
          */
-        for (item = opal_list_get_first(&orte_local_children);
-             item != opal_list_get_end(&orte_local_children);
-             item = opal_list_get_next(item)) {
-            child = (orte_odls_child_t*)item;
+        for (i=0; i < orte_local_children->size; i++) {
+            if (NULL == (child = (orte_proc_t*)opal_pointer_array_get_item(orte_local_children, i))) {
+                continue;
+            }
+
             if( app->idx == child->app_idx ) {
                 /*
                  * Find the app snapshot ref
                  */
-                app_info = find_app_handle_info(handle_info, child->name);
+                app_info = find_app_handle_info(handle_info, &child->name);
                 break;
             }
         }
@@ -930,8 +931,8 @@ int orte_sstore_stage_local_wait_all_deps(void)
 static orte_sstore_stage_local_snapshot_info_t *create_new_handle_info(orte_sstore_base_handle_t handle)
 {
     orte_sstore_stage_local_snapshot_info_t *handle_info = NULL;
-    opal_list_item_t *item = NULL;
-    orte_odls_child_t *child = NULL;
+    int i;
+    orte_proc_t *child = NULL;
 
     if( NULL == active_handles ) {
         active_handles = OBJ_NEW(opal_list_t);
@@ -946,11 +947,11 @@ static orte_sstore_stage_local_snapshot_info_t *create_new_handle_info(orte_ssto
     /*
      * Create a sub structure for each child
      */
-    for (item  = opal_list_get_first(&orte_local_children);
-         item != opal_list_get_end(&orte_local_children);
-         item  = opal_list_get_next(item)) {
-        child = (orte_odls_child_t*)item;
-        append_new_app_handle_info(handle_info, child->name);
+    for (i=0; i < orte_local_children->size; i++) {
+	    if (NULL == (child = (orte_proc_t*)opal_pointer_array_get_item(orte_local_children, i))) {
+            continue;
+        }
+        append_new_app_handle_info(handle_info, &child->name);
     }
 
     handle_info->status = SSTORE_LOCAL_INIT;
@@ -1087,45 +1088,32 @@ static void sstore_stage_local_recv(int status,
                                     orte_rml_tag_t tag,
                                     void* cbdata)
 {
-    if( ORTE_RML_TAG_SSTORE_INTERNAL != tag ) {
-        return;
-    }
-
-    ORTE_MESSAGE_EVENT(sender, buffer, tag, orte_sstore_stage_local_process_cmd);
-
-    return;
-}
-
-void orte_sstore_stage_local_process_cmd(int fd,
-                                         short event,
-                                         void *cbdata)
-{
     int ret;
-    orte_message_event_t *mev = (orte_message_event_t*)cbdata;
-    orte_process_name_t *sender = NULL;
     orte_sstore_stage_cmd_flag_t command;
     orte_std_cntr_t count;
     orte_sstore_base_handle_t loc_id;
 
-    sender = &(mev->sender);
+    if( ORTE_RML_TAG_SSTORE_INTERNAL != tag ) {
+        return;
+    }
 
     OPAL_OUTPUT_VERBOSE((10, mca_sstore_stage_component.super.output_handle,
                          "sstore:stage:(local): process_cmd(%s)",
                          ORTE_NAME_PRINT(sender)));
 
     count = 1;
-    if (ORTE_SUCCESS != (ret = opal_dss.unpack(mev->buffer, &command, &count, ORTE_SSTORE_STAGE_CMD))) {
+    if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &command, &count, ORTE_SSTORE_STAGE_CMD))) {
         ORTE_ERROR_LOG(ret);
         goto cleanup;
     }
 
     count = 1;
-    if (ORTE_SUCCESS != (ret = opal_dss.unpack(mev->buffer, &loc_id, &count, ORTE_SSTORE_HANDLE )) ) {
+    if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &loc_id, &count, ORTE_SSTORE_HANDLE )) ) {
         ORTE_ERROR_LOG(ret);
         goto cleanup;
     }
 
-    orte_sstore_stage_local_process_cmd_action(sender, command, loc_id, mev->buffer);
+    orte_sstore_stage_local_process_cmd_action(sender, command, loc_id, buffer);
 
  cleanup:
     return;
