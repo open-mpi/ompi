@@ -313,65 +313,6 @@ OMPI_DECLSPEC int ompi_io_ompio_scatter_data (mca_io_ompio_file_t *fh,
 
 /*
  * Modified versions of Collective operations
- * Based on root offsets
- */
-OMPI_DECLSPEC int ompi_io_ompio_gatherv (void *sbuf,
-                                         int scount,
-                                         ompi_datatype_t *sdtype,
-                                         void *rbuf,
-                                         int *rcounts,
-                                         int *disps,
-                                         ompi_datatype_t *rdtype,
-                                         int root_offset,
-                                         int procs_per_group,
-                                         ompi_communicator_t *comm);
-OMPI_DECLSPEC int ompi_io_ompio_scatterv (void *sbuf,
-                                          int *scounts,
-                                          int *disps,
-                                          ompi_datatype_t *sdtype,
-                                          void *rbuf,
-                                          int rcount,
-                                          ompi_datatype_t *rdtype,
-                                          int root_offset,
-                                          int procs_per_group,
-                                          ompi_communicator_t *comm);
-OMPI_DECLSPEC int ompi_io_ompio_allgather (void *sbuf, 
-                                           int scount,
-                                           ompi_datatype_t *sdtype, 
-                                           void *rbuf,
-                                           int rcount, 
-                                           ompi_datatype_t *rdtype,
-                                           int root_offset,
-                                           int procs_per_group,
-                                           ompi_communicator_t *comm);
-OMPI_DECLSPEC int ompi_io_ompio_allgatherv (void *sbuf, 
-                                            int scount,
-                                            ompi_datatype_t *sdtype, 
-                                            void *rbuf,
-                                            int *rcounts, 
-                                            int *disps,
-                                            ompi_datatype_t *rdtype,
-                                            int root_offset,
-                                            int procs_per_group,
-                                            ompi_communicator_t *comm);
-OMPI_DECLSPEC int ompi_io_ompio_gather (void *sbuf, 
-                                        int scount,
-                                        ompi_datatype_t *sdtype,
-                                        void *rbuf, 
-                                        int rcount,
-                                        ompi_datatype_t *rdtype,
-                                        int root_offset, 
-                                        int procs_per_group,
-                                        ompi_communicator_t *comm);
-OMPI_DECLSPEC int ompi_io_ompio_bcast (void *buff, 
-                                       int count,
-                                       ompi_datatype_t *datatype, 
-                                       int root_offset,
-                                       int procs_per_group,
-                                       ompi_communicator_t *comm);
-
-/*
- * Modified versions of Collective operations
  * Based on an array of procs in group
  */
 OMPI_DECLSPEC int ompi_io_ompio_gatherv_array (void *sbuf,
