@@ -71,16 +71,6 @@ void ompi_ibarrier_f(MPI_Fint *comm, MPI_Fint *request, MPI_Fint *ierr)
     MPI_Request c_req;
     volatile int rank;
 
-    {
-        static int first = 1;
-        if (first) {
-            rank = 0;
-            printf("PID %d waiting\n", getpid());
-            while (0 == rank) sleep(5);
-        }
-        first = 0;
-    }
-
     c_comm = MPI_Comm_f2c(*comm);
 
     ierr_c = MPI_Ibarrier(c_comm, &c_req);
