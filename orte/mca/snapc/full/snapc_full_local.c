@@ -93,7 +93,6 @@ static void snapc_full_local_hnp_cmd_recv(int status,
                                           opal_buffer_t* buffer,
                                           orte_rml_tag_t tag,
                                           void* cbdata);
-static void snapc_full_process_hnp_request_cmd(int fd, short event, void *cbdata);
 
 static bool snapc_local_app_recv_issued = false;
 static int  snapc_full_local_start_app_listener(void);
@@ -103,7 +102,6 @@ static void snapc_full_local_app_cmd_recv(int status,
                                        opal_buffer_t* buffer,
                                        orte_rml_tag_t tag,
                                        void* cbdata);
-static void snapc_full_local_process_app_update_cmd(int fd, short event, void *cbdata);
 
 static orte_snapc_full_app_snapshot_t *find_vpid_snapshot(orte_process_name_t *name );
 static int snapc_full_local_get_vpids(void);
@@ -464,7 +462,7 @@ static int snapc_full_local_stop_app_listener(void)
 }
 
 /******************
- * Listener Callbacks
+ * Listener Handlers
  ******************/
 void snapc_full_local_app_cmd_recv(int status,
                                    orte_process_name_t* sender,
@@ -472,6 +470,20 @@ void snapc_full_local_app_cmd_recv(int status,
                                    orte_rml_tag_t tag,
                                    void* cbdata)
 {
+    int ret;
+    opal_list_item_t* item = NULL;
+    orte_snapc_full_app_snapshot_t *vpid_snapshot = NULL;
+    orte_snapc_cmd_flag_t command;
+    orte_process_name_t proc;
+    pid_t proc_pid = 0;
+    orte_std_cntr_t count;
+    int cr_state;
+    bool is_done;
+#if OPAL_ENABLE_CRDEBUG == 1
+    bool all_done = false;
+    bool crdebug_enabled = false;
+#endif
+
     if( ORTE_RML_TAG_SNAPC != tag ) {
         opal_output(mca_snapc_full_component.super.output_handle,
                     "Local) Error: Unknown tag: Received a command message from %s (tag = %d).",
@@ -481,78 +493,10 @@ void snapc_full_local_app_cmd_recv(int status,
     }
 
     /*
-     * Do not handle here, use the event engine to queue this until we are out
-     * of the RML
-     */
-    ORTE_MESSAGE_EVENT(sender, buffer, tag, snapc_full_local_process_app_update_cmd);
-
-    return;
-}
-
-void snapc_full_local_hnp_cmd_recv(int status,
-                                   orte_process_name_t* sender,
-                                   opal_buffer_t* buffer,
-                                   orte_rml_tag_t tag,
-                                   void* cbdata)
-{
-    if( ORTE_RML_TAG_SNAPC_FULL != tag ) {
-        opal_output(mca_snapc_full_component.super.output_handle,
-                    "Local) Error: Unknown tag: Received a command message from %s (tag = %d).",
-                    ORTE_NAME_PRINT(sender), tag);
-        ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
-        return;
-    }
-
-    /*
-     * This is a Global Coordinator message.
-     */
-    OPAL_OUTPUT_VERBOSE((5, mca_snapc_full_component.super.output_handle,
-                         "Local) Receive a command message."));
-
-    /*
-     * Do not process this right away - we need to get out of the recv before
-     * we process the message to avoid performing the rest of the job while
-     * inside this receive! Instead, setup an event so that the message gets processed
-     * as soon as we leave the recv.
-     *
-     * The macro makes a copy of the buffer, which we release above - the incoming
-     * buffer, however, is NOT released here, although its payload IS transferred
-     * to the message buffer for later processing
-     *
-     */
-    ORTE_MESSAGE_EVENT(sender, buffer, tag, snapc_full_process_hnp_request_cmd);
-
-    return;
-}
-
-/******************
- * Listener Handlers
- ******************/
-static void snapc_full_local_process_app_update_cmd(int fd, short event, void *cbdata)
-{
-    int ret;
-    orte_message_event_t *mev = (orte_message_event_t*)cbdata;
-    opal_list_item_t* item = NULL;
-    orte_snapc_full_app_snapshot_t *vpid_snapshot = NULL;
-    orte_snapc_cmd_flag_t command;
-    orte_process_name_t proc;
-    pid_t proc_pid = 0;
-    orte_std_cntr_t count;
-    int cr_state;
-    orte_process_name_t *sender = NULL;
-    bool is_done;
-#if OPAL_ENABLE_CRDEBUG == 1
-    bool all_done = false;
-    bool crdebug_enabled = false;
-#endif
-
-    sender = &(mev->sender);
-
-    /*
      * Verify the command
      */
     count = 1;
-    if (ORTE_SUCCESS != (ret = opal_dss.unpack(mev->buffer, &command, &count, ORTE_SNAPC_CMD))) {
+    if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &command, &count, ORTE_SNAPC_CMD))) {
         ORTE_ERROR_LOG(ret);
         goto cleanup;
     }
@@ -579,18 +523,18 @@ static void snapc_full_local_process_app_update_cmd(int fd, short event, void *c
          */
         count = 1;
         /* JJH CLEANUP: Do we really need this, it is equal to sender */
-        if (ORTE_SUCCESS != (ret = opal_dss.unpack(mev->buffer, &proc, &count, ORTE_NAME))) {
+        if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &proc, &count, ORTE_NAME))) {
             ORTE_ERROR_LOG(ret);
             goto cleanup;
         }
         count = 1;
-        if (ORTE_SUCCESS != (ret = opal_dss.unpack(mev->buffer, &proc_pid, &count, OPAL_PID))) {
+        if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &proc_pid, &count, OPAL_PID))) {
             ORTE_ERROR_LOG(ret);
             goto cleanup;
         }
 #if OPAL_ENABLE_CRDEBUG == 1
         count = 1;
-        if (ORTE_SUCCESS != (ret = opal_dss.unpack(mev->buffer, &crdebug_enabled, &count, OPAL_BOOL))) {
+        if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &crdebug_enabled, &count, OPAL_BOOL))) {
             ORTE_ERROR_LOG(ret);
             goto cleanup;
         }
@@ -645,7 +589,7 @@ static void snapc_full_local_process_app_update_cmd(int fd, short event, void *c
          * - cr_state
          */
         count = 1;
-        if (ORTE_SUCCESS != (ret = opal_dss.unpack(mev->buffer, &cr_state, &count, OPAL_INT))) {
+        if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &cr_state, &count, OPAL_INT))) {
             ORTE_ERROR_LOG(ret);
             goto cleanup;
         }
@@ -711,8 +655,6 @@ static void snapc_full_local_process_app_update_cmd(int fd, short event, void *c
     }
 
  cleanup:
-    /* release the message event */
-    OBJ_RELEASE(mev);
     return;
 }
 
@@ -798,18 +740,32 @@ static int snapc_full_local_send_restart_proc_info(void)
 }
 #endif
 
-static void snapc_full_process_hnp_request_cmd(int fd, short event, void *cbdata)
+void snapc_full_local_hnp_cmd_recv(int status,
+                                   orte_process_name_t* sender,
+                                   opal_buffer_t* buffer,
+                                   orte_rml_tag_t tag,
+                                   void* cbdata)
 {
     int ret;
-    orte_message_event_t *mev = (orte_message_event_t*)cbdata;
-    orte_process_name_t *sender = NULL;
     orte_snapc_full_cmd_flag_t command;
     orte_std_cntr_t count;
 
-    sender = &(mev->sender);
+    if( ORTE_RML_TAG_SNAPC_FULL != tag ) {
+        opal_output(mca_snapc_full_component.super.output_handle,
+                    "Local) Error: Unknown tag: Received a command message from %s (tag = %d).",
+                    ORTE_NAME_PRINT(sender), tag);
+        ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
+        return;
+    }
+
+    /*
+     * This is a Global Coordinator message.
+     */
+    OPAL_OUTPUT_VERBOSE((5, mca_snapc_full_component.super.output_handle,
+                         "Local) Receive a command message."));
 
     count = 1;
-    if (ORTE_SUCCESS != (ret = opal_dss.unpack(mev->buffer, &command, &count, ORTE_SNAPC_FULL_CMD))) {
+    if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &command, &count, ORTE_SNAPC_FULL_CMD))) {
         ORTE_ERROR_LOG(ret);
         goto cleanup;
     }
@@ -819,14 +775,14 @@ static void snapc_full_process_hnp_request_cmd(int fd, short event, void *cbdata
             OPAL_OUTPUT_VERBOSE((10, mca_snapc_full_component.super.output_handle,
                                  "Local) Command: Update Job state command (quick)"));
 
-            snapc_full_local_process_job_update_cmd(sender, mev->buffer, true);
+            snapc_full_local_process_job_update_cmd(sender, buffer, true);
             break;
 
         case ORTE_SNAPC_FULL_UPDATE_JOB_STATE_CMD:
             OPAL_OUTPUT_VERBOSE((10, mca_snapc_full_component.super.output_handle,
                                  "Local) Command: Update Job state command"));
 
-            snapc_full_local_process_job_update_cmd(sender, mev->buffer, false);
+            snapc_full_local_process_job_update_cmd(sender, buffer, false);
             break;
 
         case ORTE_SNAPC_FULL_RESTART_PROC_INFO:
@@ -840,8 +796,6 @@ static void snapc_full_process_hnp_request_cmd(int fd, short event, void *cbdata
     }
 
  cleanup:
-    /* release the message event */
-    OBJ_RELEASE(mev);
     return;
 }
 
@@ -1471,7 +1425,6 @@ static int snapc_full_local_start_ckpt_open_comm(orte_snapc_full_app_snapshot_t 
                                      s_time/usleep_time, max_wait_time/usleep_time));
             }
             usleep(usleep_time);
-            opal_event_loop(orte_event_base, OPAL_EVLOOP_NONBLOCK);
             continue;
         }
         else if( 0 > (ret = access(vpid_snapshot->comm_pipe_w, F_OK) )) {
@@ -1483,7 +1436,6 @@ static int snapc_full_local_start_ckpt_open_comm(orte_snapc_full_app_snapshot_t 
                                      s_time/usleep_time, max_wait_time/usleep_time));
             }
             usleep(usleep_time);
-            opal_event_loop(orte_event_base, OPAL_EVLOOP_NONBLOCK);
             continue;
         }
         else {
@@ -1996,9 +1948,9 @@ static int snapc_full_get_min_state(void)
 
 static int snapc_full_local_get_vpids(void)
 {
-    opal_list_item_t *item = NULL;
     orte_snapc_full_app_snapshot_t *vpid_snapshot = NULL;
-    orte_odls_child_t *child = NULL;
+    int i;
+    orte_proc_t *child = NULL;
     size_t list_len = 0;
 
     /*
@@ -2016,14 +1968,14 @@ static int snapc_full_local_get_vpids(void)
     /*
      * Otherwise update or populate the list
      */
-    for (item  = opal_list_get_first(&orte_local_children);
-         item != opal_list_get_end(&orte_local_children);
-         item  = opal_list_get_next(item)) {
-        child = (orte_odls_child_t*)item;
+    for (i=0; i < orte_local_children->size; i++) {
+	    if (NULL == (child = (orte_proc_t*)opal_pointer_array_get_item(orte_local_children, i))) {
+		    continue;
+	    }
 
         /* if the list is empty or this child is not in the list then add it */
         if( 0    >= list_len ||
-            NULL == (vpid_snapshot = find_vpid_snapshot(child->name)) ) {
+            NULL == (vpid_snapshot = find_vpid_snapshot(&child->name)) ) {
             vpid_snapshot = OBJ_NEW(orte_snapc_full_app_snapshot_t);
             opal_list_append(&(local_global_snapshot.local_snapshots), &(vpid_snapshot->super.super));
         }
@@ -2031,8 +1983,8 @@ static int snapc_full_local_get_vpids(void)
         /* Only update if the PID is -not- already set */
         if( 0 >= vpid_snapshot->process_pid ) {
             vpid_snapshot->process_pid              = child->pid;
-            vpid_snapshot->super.process_name.jobid = child->name->jobid;
-            vpid_snapshot->super.process_name.vpid  = child->name->vpid;
+            vpid_snapshot->super.process_name.jobid = child->name.jobid;
+            vpid_snapshot->super.process_name.vpid  = child->name.vpid;
         }
     }
 
@@ -2041,9 +1993,10 @@ static int snapc_full_local_get_vpids(void)
 
 static int snapc_full_local_refresh_vpids(void)
 {
-    opal_list_item_t *item = NULL, *v_item = NULL;
+    opal_list_item_t *v_item = NULL;
     orte_snapc_full_app_snapshot_t *vpid_snapshot = NULL;
-    orte_odls_child_t *child = NULL;
+    int i;
+    orte_proc_t *child = NULL;
     bool found = false;
 
     /*
@@ -2056,13 +2009,13 @@ static int snapc_full_local_refresh_vpids(void)
         vpid_snapshot = (orte_snapc_full_app_snapshot_t*)v_item;
 
         found = false;
-        for (item  = opal_list_get_first(&orte_local_children);
-             item != opal_list_get_end(&orte_local_children);
-             item  = opal_list_get_next(item)) {
-            child = (orte_odls_child_t*)item;
+        for (i=0; i < orte_local_children->size; i++) {
+            if (NULL == (child = (orte_proc_t*)opal_pointer_array_get_item(orte_local_children, i))) {
+                continue;
+            }
 
             if(OPAL_EQUAL == orte_util_compare_name_fields(ORTE_NS_CMP_ALL,
-                                                           child->name,
+                                                           &child->name,
                                                            &(vpid_snapshot->super.process_name) )) {
                 found = true;
                 break;
@@ -2082,18 +2035,18 @@ static int snapc_full_local_refresh_vpids(void)
      * Next pass to find new processes that we are not already tracking
      * (processes migrated to us).
      */
-    for (item  = opal_list_get_first(&orte_local_children);
-         item != opal_list_get_end(&orte_local_children);
-         item  = opal_list_get_next(item)) {
-        child = (orte_odls_child_t*)item;
+    for (i=0; i < orte_local_children->size; i++) {
+        if (NULL == (child = (orte_proc_t*)opal_pointer_array_get_item(orte_local_children, i))) {
+            continue;
+        }
 
         /* if the list is empty or this child is not in the list then add it */
-        if( NULL == (vpid_snapshot = find_vpid_snapshot(child->name)) ) {
+        if( NULL == (vpid_snapshot = find_vpid_snapshot(&child->name)) ) {
             vpid_snapshot = OBJ_NEW(orte_snapc_full_app_snapshot_t);
 
             vpid_snapshot->process_pid              = child->pid;
-            vpid_snapshot->super.process_name.jobid = child->name->jobid;
-            vpid_snapshot->super.process_name.vpid  = child->name->vpid;
+            vpid_snapshot->super.process_name.jobid = child->name.jobid;
+            vpid_snapshot->super.process_name.vpid  = child->name.vpid;
             /*vpid_snapshot->migrating = true;*/
 
             opal_list_append(&(local_global_snapshot.local_snapshots), &(vpid_snapshot->super.super));
@@ -2107,8 +2060,8 @@ static int snapc_full_local_refresh_vpids(void)
         /* Only update if the PID is -not- already set */
         else if( 0 >= vpid_snapshot->process_pid ) {
             vpid_snapshot->process_pid              = child->pid;
-            vpid_snapshot->super.process_name.jobid = child->name->jobid;
-            vpid_snapshot->super.process_name.vpid  = child->name->vpid;
+            vpid_snapshot->super.process_name.jobid = child->name.jobid;
+            vpid_snapshot->super.process_name.vpid  = child->name.vpid;
         }
     }
 

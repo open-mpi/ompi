@@ -72,10 +72,6 @@ static void errmgr_base_tool_cmdline_recv(int status,
                                          opal_buffer_t* buffer,
                                          orte_rml_tag_t tag,
                                          void* cbdata);
-static void errmgr_base_tool_cmdline_process_recv(int fd,
-                                                 short event,
-                                                 void *cbdata);
-
 
 /******************
  * Object stuff
@@ -317,41 +313,8 @@ static void errmgr_base_tool_cmdline_recv(int status,
                                          orte_rml_tag_t tag,
                                          void* cbdata)
 {
-    if( ORTE_RML_TAG_MIGRATE != tag ) {
-        opal_output(orte_errmgr_base.output,
-                    "errmgr:base:tool:recv() Error: Unknown tag: Received a command message from %s (tag = %d).",
-                    ORTE_NAME_PRINT(sender), tag);
-        ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
-        return;
-    }
-
-    OPAL_OUTPUT_VERBOSE((10, orte_errmgr_base.output,
-                         "errmgr:base:tool:recv() Command Line: Start a migration operation [Sender = %s]",
-                         ORTE_NAME_PRINT(sender)));
-
-    errmgr_cmdline_recv_issued = false; /* Not a persistent RML message */
-
-    /*
-     * Do not process this right away - we need to get out of the recv before
-     * we process the message to avoid performing the rest of the job while
-     * inside this receive! Instead, setup an event so that the message gets processed
-     * as soon as we leave the recv.
-     *
-     * The macro makes a copy of the buffer, which we release above - the incoming
-     * buffer, however, is NOT released here, although its payload IS transferred
-     * to the message buffer for later processing
-     *
-     */
-    ORTE_MESSAGE_EVENT(sender, buffer, tag, errmgr_base_tool_cmdline_process_recv);
-
-    return;
-}
-
-static void errmgr_base_tool_cmdline_process_recv(int fd, short event, void *cbdata)
-{
     int ret;
-    orte_message_event_t *mev = (orte_message_event_t*)cbdata;
-    orte_process_name_t *sender = NULL, swap_dest;
+    orte_process_name_t swap_dest;
     orte_errmgr_tool_cmd_flag_t command;
     orte_std_cntr_t count = 1;
     char *off_nodes  = NULL;
@@ -368,7 +331,20 @@ static void errmgr_base_tool_cmdline_process_recv(int fd, short event, void *cbd
     orte_errmgr_predicted_map_t  *onto_map = NULL;
     int cnt = 0, i;
 
-    sender = &(mev->sender);
+
+    if( ORTE_RML_TAG_MIGRATE != tag ) {
+        opal_output(orte_errmgr_base.output,
+                    "errmgr:base:tool:recv() Error: Unknown tag: Received a command message from %s (tag = %d).",
+                    ORTE_NAME_PRINT(sender), tag);
+        ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
+        return;
+    }
+
+    OPAL_OUTPUT_VERBOSE((10, orte_errmgr_base.output,
+                         "errmgr:base:tool:recv() Command Line: Start a migration operation [Sender = %s]",
+                         ORTE_NAME_PRINT(sender)));
+
+    errmgr_cmdline_recv_issued = false; /* Not a persistent RML message */
 
     /*
      * If we are already interacting with a command line tool then reject this
@@ -385,15 +361,15 @@ static void errmgr_base_tool_cmdline_process_recv(int fd, short event, void *cbd
         errmgr_cmdline_sender.jobid = swap_dest.jobid;
         errmgr_cmdline_sender.vpid  = swap_dest.vpid;
 
-        goto cleanup;
+        return;
     }
 
     errmgr_cmdline_sender = *sender;
 
     count = 1;
-    if (ORTE_SUCCESS != (ret = opal_dss.unpack(mev->buffer, &command, &count, ORTE_ERRMGR_MIGRATE_TOOL_CMD))) {
+    if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &command, &count, ORTE_ERRMGR_MIGRATE_TOOL_CMD))) {
         ORTE_ERROR_LOG(ret);
-        goto cleanup;
+        return;
     }
 
     /*
@@ -408,19 +384,19 @@ static void errmgr_base_tool_cmdline_process_recv(int fd, short event, void *cbd
          * Unpack the buffer from the orte-migrate command
          */
         count = 1;
-        if (ORTE_SUCCESS != (ret = opal_dss.unpack(mev->buffer, &(off_procs), &count, OPAL_STRING))) {
+        if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &(off_procs), &count, OPAL_STRING))) {
             ORTE_ERROR_LOG(ret);
-            goto cleanup;
+	    return;
         }
 
-        if (ORTE_SUCCESS != (ret = opal_dss.unpack(mev->buffer, &(off_nodes), &count, OPAL_STRING))) {
+        if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &(off_nodes), &count, OPAL_STRING))) {
             ORTE_ERROR_LOG(ret);
-            goto cleanup;
+            return;
         }
 
-        if (ORTE_SUCCESS != (ret = opal_dss.unpack(mev->buffer, &(onto_nodes), &count, OPAL_STRING))) {
+        if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &(onto_nodes), &count, OPAL_STRING))) {
             ORTE_ERROR_LOG(ret);
-            goto cleanup;
+            return;
         }
 
         /*
@@ -473,12 +449,7 @@ static void errmgr_base_tool_cmdline_process_recv(int fd, short event, void *cbd
                              "errmgr:base:tool:recv() Command line sent an unknown command (command %d)\n",
                              command));
         ORTE_ERROR_LOG(ORTE_ERR_NOT_SUPPORTED);
-        goto cleanup;
     }
-
- cleanup:
-    /* release the message event */
-    OBJ_RELEASE(mev);
 
     return;
 }

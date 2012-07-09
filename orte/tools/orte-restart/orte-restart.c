@@ -288,9 +288,6 @@ main(int argc, char *argv[])
         goto cleanup;
     }
 
-    opal_output_verbose(10, orte_restart_globals.output,
-                        "orte_restart: Restarted Child with PID = %d\n", child_pid);
-
     /***************
      * Cleanup
      ***************/
@@ -754,6 +751,9 @@ static int spawn_children(orte_sstore_base_global_snapshot_info_t *snapshot, pid
         exit_status = status;
         goto cleanup;
     }
+
+    opal_output_verbose(10, orte_restart_globals.output,
+                        "orte_restart: Restarted Child with PID = %d\n", child_pid);
 
  cleanup:
     if( NULL != argv)

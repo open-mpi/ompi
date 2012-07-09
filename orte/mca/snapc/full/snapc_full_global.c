@@ -93,7 +93,6 @@ static void snapc_full_global_orted_recv(int status,
                                          opal_buffer_t* buffer,
                                          orte_rml_tag_t tag,
                                          void* cbdata);
-static void snapc_full_process_orted_request_cmd(int fd, short event, void *cbdata);
 
 static void snapc_full_process_restart_proc_info_cmd(orte_process_name_t* sender,
                                                      opal_buffer_t* buffer);
@@ -111,7 +110,6 @@ static void snapc_full_global_cmdline_recv(int status,
                                            opal_buffer_t* buffer,
                                            orte_rml_tag_t tag,
                                            void* cbdata);
-static void snapc_full_process_cmdline_request_cmd(int fd, short event, void *cbdata);
 
 static int snapc_full_establish_snapshot_dir(bool empty_metadata);
 
@@ -260,7 +258,7 @@ int global_coord_setup_job(orte_jobid_t jobid) {
             return ORTE_ERR_NOT_FOUND;
         }
 
-        if( ORTE_JOB_STATE_RESTART == jdata->state ) {
+        if( ORTE_JOB_CONTROL_RESTART == jdata->controls ) {
             OPAL_OUTPUT_VERBOSE((10, mca_snapc_full_component.super.output_handle,
                                  "Global) Restarting Job %s...",
                                  ORTE_JOBID_PRINT(jobid)));
@@ -992,6 +990,12 @@ static void snapc_full_global_cmdline_recv(int status,
                                            orte_rml_tag_t tag,
                                            void* cbdata)
 {
+    int ret;
+    orte_snapc_cmd_flag_t command;
+    orte_std_cntr_t count = 1;
+    orte_jobid_t jobid;
+    opal_crs_base_ckpt_options_t *options = NULL;
+
     if( ORTE_RML_TAG_CKPT != tag ) {
         opal_output(mca_snapc_full_component.super.output_handle,
                     "Global) Error: Unknown tag: Received a command message from %s (tag = %d).",
@@ -1006,76 +1010,10 @@ static void snapc_full_global_cmdline_recv(int status,
 
     snapc_cmdline_recv_issued = false; /* Not a persistent RML message */
 
-    /*
-     * Do not process this right away - we need to get out of the recv before
-     * we process the message to avoid performing the rest of the job while
-     * inside this receive! Instead, setup an event so that the message gets processed
-     * as soon as we leave the recv.
-     *
-     * The macro makes a copy of the buffer, which we release above - the incoming
-     * buffer, however, is NOT released here, although its payload IS transferred
-     * to the message buffer for later processing
-     *
-     */
-    ORTE_MESSAGE_EVENT(sender, buffer, tag, snapc_full_process_cmdline_request_cmd);
-
-    return;
-}
-
-void snapc_full_global_orted_recv(int status,
-                                  orte_process_name_t* sender,
-                                  opal_buffer_t* buffer,
-                                  orte_rml_tag_t tag,
-                                  void* cbdata)
-{
-    if( ORTE_RML_TAG_SNAPC_FULL != tag ) {
-        opal_output(mca_snapc_full_component.super.output_handle,
-                    "Global) Error: Unknown tag: Received a command message from %s (tag = %d).",
-                    ORTE_NAME_PRINT(sender), tag);
-        ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
-        return;
-    }
-
-    /*
-     * This is a message from a Local Coordinator
-     */
-    OPAL_OUTPUT_VERBOSE((5, mca_snapc_full_component.super.output_handle,
-                         "Global) Receive a command message from %s.",
-                         ORTE_NAME_PRINT(sender)));
-
-    /*
-     * Do not process this right away - we need to get out of the recv before
-     * we process the message to avoid performing the rest of the job while
-     * inside this receive! Instead, setup an event so that the message gets processed
-     * as soon as we leave the recv.
-     *
-     * The macro makes a copy of the buffer, which we release above - the incoming
-     * buffer, however, is NOT released here, although its payload IS transferred
-     * to the message buffer for later processing
-     *
-     */
-    ORTE_MESSAGE_EVENT(sender, buffer, tag, snapc_full_process_orted_request_cmd);
-
-    return;
-}
-
-/************************************/
-static void snapc_full_process_cmdline_request_cmd(int fd, short event, void *cbdata)
-{
-    int ret;
-    orte_message_event_t *mev = (orte_message_event_t*)cbdata;
-    orte_process_name_t *sender = NULL;
-    orte_snapc_cmd_flag_t command;
-    orte_std_cntr_t count = 1;
-    orte_jobid_t jobid;
-    opal_crs_base_ckpt_options_t *options = NULL;
-
-    sender = &(mev->sender);
-
     options = OBJ_NEW(opal_crs_base_ckpt_options_t);
 
     count = 1;
-    if (ORTE_SUCCESS != (ret = opal_dss.unpack(mev->buffer, &command, &count, ORTE_SNAPC_CMD))) {
+    if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &command, &count, ORTE_SNAPC_CMD))) {
         ORTE_ERROR_LOG(ret);
         goto cleanup;
     }
@@ -1092,7 +1030,7 @@ static void snapc_full_process_cmdline_request_cmd(int fd, short event, void *cb
          * Unpack the buffer from the orte_checkpoint command
          */
         if( ORTE_SUCCESS != (ret = orte_snapc_base_global_coord_ckpt_init_cmd(sender,
-                                                                              mev->buffer,
+                                                                              buffer,
                                                                               options,
                                                                               &jobid)) ) {
             ORTE_ERROR_LOG(ret);
@@ -1176,23 +1114,39 @@ static void snapc_full_process_cmdline_request_cmd(int fd, short event, void *cb
         options = NULL;
     }
 
-    /* release the message event */
-    OBJ_RELEASE(mev);
     return;
 }
 
-static void snapc_full_process_orted_request_cmd(int fd, short event, void *cbdata)
+void snapc_full_global_orted_recv(int status,
+                                  orte_process_name_t* sender,
+                                  opal_buffer_t* buffer,
+                                  orte_rml_tag_t tag,
+                                  void* cbdata)
 {
     int ret;
-    orte_message_event_t *mev = (orte_message_event_t*)cbdata;
     orte_snapc_full_cmd_flag_t command;
     orte_std_cntr_t count;
     static int num_inside = 0;
 
+    if( ORTE_RML_TAG_SNAPC_FULL != tag ) {
+        opal_output(mca_snapc_full_component.super.output_handle,
+                    "Global) Error: Unknown tag: Received a command message from %s (tag = %d).",
+                    ORTE_NAME_PRINT(sender), tag);
+        ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
+        return;
+    }
+
+    /*
+     * This is a message from a Local Coordinator
+     */
+    OPAL_OUTPUT_VERBOSE((5, mca_snapc_full_component.super.output_handle,
+                         "Global) Receive a command message from %s.",
+                         ORTE_NAME_PRINT(sender)));
+
     count = 1;
-    if (ORTE_SUCCESS != (ret = opal_dss.unpack(mev->buffer, &command, &count, ORTE_SNAPC_FULL_CMD))) {
+    if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &command, &count, ORTE_SNAPC_FULL_CMD))) {
         ORTE_ERROR_LOG(ret);
-        goto cleanup;
+        return;
     }
 
     ++num_inside;
@@ -1202,51 +1156,48 @@ static void snapc_full_process_orted_request_cmd(int fd, short event, void *cbda
             OPAL_OUTPUT_VERBOSE((10, mca_snapc_full_component.super.output_handle,
                                  "Global) Command: Job State Update (quick)"));
 
-            snapc_full_process_job_update_cmd(&(mev->sender), mev->buffer, true);
+            snapc_full_process_job_update_cmd(&sender, buffer, true);
             break;
 
         case ORTE_SNAPC_FULL_UPDATE_JOB_STATE_CMD:
             OPAL_OUTPUT_VERBOSE((10, mca_snapc_full_component.super.output_handle,
                                  "Global) Command: Job State Update"));
 
-            snapc_full_process_job_update_cmd(&(mev->sender), mev->buffer, false);
+            snapc_full_process_job_update_cmd(sender, buffer, false);
             break;
 
         case ORTE_SNAPC_FULL_UPDATE_ORTED_STATE_QUICK_CMD:
             OPAL_OUTPUT_VERBOSE((10, mca_snapc_full_component.super.output_handle,
                                  "Global) Command: Daemon State Update (quick)"));
 
-            snapc_full_process_orted_update_cmd(&(mev->sender), mev->buffer, true);
+            snapc_full_process_orted_update_cmd(sender, buffer, true);
             break;
 
         case ORTE_SNAPC_FULL_UPDATE_ORTED_STATE_CMD:
             OPAL_OUTPUT_VERBOSE((10, mca_snapc_full_component.super.output_handle,
                                  "Global) Command: Daemon State Update"));
 
-            snapc_full_process_orted_update_cmd(&(mev->sender), mev->buffer, false);
+            snapc_full_process_orted_update_cmd(sender, buffer, false);
             break;
 
         case ORTE_SNAPC_FULL_RESTART_PROC_INFO:
             OPAL_OUTPUT_VERBOSE((10, mca_snapc_full_component.super.output_handle,
                                  "Global) Command: Update hostname/pid associations"));
  
-            snapc_full_process_restart_proc_info_cmd(&(mev->sender), mev->buffer);
+            snapc_full_process_restart_proc_info_cmd(sender, buffer);
             break;
 
         case ORTE_SNAPC_FULL_REQUEST_OP_CMD:
             OPAL_OUTPUT_VERBOSE((10, mca_snapc_full_component.super.output_handle,
                                  "Global) Command: Request Op"));
 
-            snapc_full_process_request_op_cmd(&(mev->sender), mev->buffer);
+            snapc_full_process_request_op_cmd(sender, buffer);
             break;
 
         default:
             ORTE_ERROR_LOG(ORTE_ERR_VALUE_OUT_OF_BOUNDS);
     }
 
- cleanup:
-    /* release the message event */
-    OBJ_RELEASE(mev);
     return;
 }
 

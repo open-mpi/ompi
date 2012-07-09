@@ -257,6 +257,10 @@ static int rte_ft_event(int state)
 {
     int ret, exit_status = ORTE_SUCCESS;
     orte_proc_type_t svtype;
+    orte_grpcomm_collective_t coll;
+
+    OBJ_CONSTRUCT(&coll, orte_grpcomm_collective_t);
+    coll.id = orte_process_info.peer_init_barrier;
 
     /******** Checkpoint Prep ********/
     if(OPAL_CRS_CHECKPOINT == state) {
@@ -325,10 +329,14 @@ static int rte_ft_event(int state)
              * Barrier to make all processes have been successfully restarted before
              * we try to remove some restart only files.
              */
-            if (ORTE_SUCCESS != (ret = orte_grpcomm.barrier())) {
+            if (ORTE_SUCCESS != (ret = orte_grpcomm.barrier(&coll))) {
                 opal_output(0, "ess:env: ft_event(%2d): Failed in orte_grpcomm.barrier (%d)",
                             state, ret);
-                return ret;
+                exit_status = ret;
+                goto cleanup;
+            }
+            while (coll.active) {
+                opal_progress();
             }
 
             if( orte_cr_flush_restart_files ) {
@@ -448,11 +456,16 @@ static int rte_ft_event(int state)
          * Barrier to make all processes have been successfully restarted before
          * we try to remove some restart only files.
          */
-        if (ORTE_SUCCESS != (ret = orte_grpcomm.barrier())) {
+        if (ORTE_SUCCESS != (ret = orte_grpcomm.barrier(&coll))) {
             opal_output(0, "ess:env ft_event(%2d): Failed in orte_grpcomm.barrier (%d)",
                         state, ret);
-            return ret;
+            exit_status = ret;
+            goto cleanup;
         }
+        while (coll.active) {
+            opal_progress();
+        }
+
         if( orte_cr_flush_restart_files ) {
             OPAL_OUTPUT_VERBOSE((1, orte_ess_base_output,
                                  "ess:env ft_event(%2d): %s "
@@ -494,8 +507,8 @@ static int rte_ft_event(int state)
         /* Error state = Nothing */
     }
 
- cleanup:
-
+cleanup:
+    OBJ_DESTRUCT(&coll);
     return exit_status;
 }
 #endif

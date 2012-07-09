@@ -671,11 +671,17 @@ int mca_pml_bfo_ft_event( int state )
     ompi_proc_t** procs = NULL;
     size_t num_procs;
     int ret, p;
+    orte_grpcomm_collective_t *coll, *modex;
 
+    coll = OBJ_NEW(orte_grpcomm_collective_t);
+    coll->id = orte_process_info.peer_init_barrier;
     if(OPAL_CRS_CHECKPOINT == state) {
         if( opal_cr_timing_barrier_enabled ) {
             OPAL_CR_SET_TIMER(OPAL_CR_TIMER_CRCPBR1);
-            orte_grpcomm.barrier();
+            orte_grpcomm.barrier(coll);
+            while (coll->active) {
+                opal_progress();
+            }
         }
 
         OPAL_CR_SET_TIMER(OPAL_CR_TIMER_P2P0);
@@ -686,7 +692,10 @@ int mca_pml_bfo_ft_event( int state )
         if( !first_continue_pass ) { 
             if( opal_cr_timing_barrier_enabled ) {
                 OPAL_CR_SET_TIMER(OPAL_CR_TIMER_COREBR0);
-                orte_grpcomm.barrier();
+                orte_grpcomm.barrier(coll);
+                while (coll->active) {
+                    opal_progress();
+                }
             }
             OPAL_CR_SET_TIMER(OPAL_CR_TIMER_P2P2);
         }
@@ -697,7 +706,8 @@ int mca_pml_bfo_ft_event( int state )
              */
             procs = ompi_proc_all(&num_procs);
             if(NULL == procs) {
-                return OMPI_ERR_OUT_OF_RESOURCE;
+                ret = OMPI_ERR_OUT_OF_RESOURCE;
+                goto clean;
             }
 
             /*
@@ -715,7 +725,7 @@ int mca_pml_bfo_ft_event( int state )
                     OBJ_RELEASE(procs[p]);
                 }
                 free (procs);
-                return ret;
+                goto clean;
             }
         }
     }
@@ -728,7 +738,8 @@ int mca_pml_bfo_ft_event( int state )
          */
         procs = ompi_proc_all(&num_procs);
         if(NULL == procs) {
-            return OMPI_ERR_OUT_OF_RESOURCE;
+            ret = OMPI_ERR_OUT_OF_RESOURCE;
+            goto clean;
         }
 
         /*
@@ -754,7 +765,7 @@ int mca_pml_bfo_ft_event( int state )
                 OBJ_RELEASE(procs[p]);
             }
             free (procs);
-            return ret;
+            goto clean;
         }
     }
     else if(OPAL_CRS_TERM == state ) {
@@ -786,7 +797,10 @@ int mca_pml_bfo_ft_event( int state )
         if( !first_continue_pass ) {
             if( opal_cr_timing_barrier_enabled ) {
                 OPAL_CR_SET_TIMER(OPAL_CR_TIMER_P2PBR1);
-                orte_grpcomm.barrier();
+                orte_grpcomm.barrier(coll);
+                while (coll->active) {
+                    opal_progress();
+                }
             }
             OPAL_CR_SET_TIMER(OPAL_CR_TIMER_P2P3);
         }
@@ -796,12 +810,19 @@ int mca_pml_bfo_ft_event( int state )
              * Exchange the modex information once again.
              * BTLs will have republished their modex information.
              */
-            if (OMPI_SUCCESS != (ret = orte_grpcomm.modex(NULL))) {
+            modex = OBJ_NEW(orte_grpcomm_collective_t);
+            modex->id = orte_process_info.peer_modex;
+            if (OMPI_SUCCESS != (ret = orte_grpcomm.modex(modex))) {
                 opal_output(0,
                             "pml:bfo: ft_event(Restart): Failed orte_grpcomm.modex() = %d",
                             ret);
-                return ret;
+                OBJ_RELEASE(modex);
+                goto clean;
             }
+            while (modex->active) {
+                opal_progress();
+            }
+            OBJ_RELEASE(modex);
 
             /*
              * Startup the PML stack now that the modex is running again
@@ -809,13 +830,16 @@ int mca_pml_bfo_ft_event( int state )
              */
             if( OMPI_SUCCESS != (ret = mca_pml_bfo_add_procs(procs, num_procs) ) ) {
                 opal_output(0, "pml:bfo: ft_event(Restart): Failed in add_procs (%d)", ret);
-                return ret;
+                goto clean;
             }
 
             /* Is this barrier necessary ? JJH */
-            if (OMPI_SUCCESS != (ret = orte_grpcomm.barrier())) {
+            if (OMPI_SUCCESS != (ret = orte_grpcomm.barrier(coll))) {
                 opal_output(0, "pml:bfo: ft_event(Restart): Failed in orte_grpcomm.barrier (%d)", ret);
                 return ret;
+            }
+            while (coll->active) {
+                opal_progress();
             }
 
             if( NULL != procs ) {
@@ -829,7 +853,10 @@ int mca_pml_bfo_ft_event( int state )
         if( !first_continue_pass ) {
             if( opal_cr_timing_barrier_enabled ) {
                 OPAL_CR_SET_TIMER(OPAL_CR_TIMER_P2PBR2);
-                orte_grpcomm.barrier();
+                orte_grpcomm.barrier(coll);
+                while (coll->active) {
+                    opal_progress();
+                }
             }
             OPAL_CR_SET_TIMER(OPAL_CR_TIMER_CRCP1);
         }
@@ -842,12 +869,19 @@ int mca_pml_bfo_ft_event( int state )
          * Exchange the modex information once again.
          * BTLs will have republished their modex information.
          */
+        modex = OBJ_NEW(orte_grpcomm_collective_t);
+        modex->id = orte_process_info.peer_modex;
         if (OMPI_SUCCESS != (ret = orte_grpcomm.modex(NULL))) {
             opal_output(0,
                         "pml:bfo: ft_event(Restart): Failed orte_grpcomm.modex() = %d",
                         ret);
-            return ret;
+            OBJ_RELEASE(modex);
+            goto clean;
         }
+        while (modex->active) {
+            opal_progress();
+        }
+        OBJ_RELEASE(modex);
 
         /*
          * Startup the PML stack now that the modex is running again
@@ -855,13 +889,16 @@ int mca_pml_bfo_ft_event( int state )
          */
         if( OMPI_SUCCESS != (ret = mca_pml_bfo_add_procs(procs, num_procs) ) ) {
             opal_output(0, "pml:bfo: ft_event(Restart): Failed in add_procs (%d)", ret);
-            return ret;
+            goto clean;
         }
 
         /* Is this barrier necessary ? JJH */
-        if (OMPI_SUCCESS != (ret = orte_grpcomm.barrier())) {
+        if (OMPI_SUCCESS != (ret = orte_grpcomm.barrier(coll))) {
             opal_output(0, "pml:bfo: ft_event(Restart): Failed in orte_grpcomm.barrier (%d)", ret);
-            return ret;
+            goto clean;
+        }
+        while (coll->active) {
+            opal_progress();
         }
 
         if( NULL != procs ) {
@@ -879,7 +916,11 @@ int mca_pml_bfo_ft_event( int state )
         ;
     }
 
-    return OMPI_SUCCESS;
+    ret = OMPI_SUCCESS;
+
+clean:
+    OBJ_RELEASE(coll);
+    return ret;
 }
 #endif /* OPAL_ENABLE_FT_CR */
 

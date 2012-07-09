@@ -110,6 +110,7 @@ int app_coord_init()
     orte_snapc_full_cmd_flag_t command = ORTE_SNAPC_FULL_REQUEST_OP_CMD;
     orte_snapc_base_request_op_event_t op_event = ORTE_SNAPC_OP_INIT;
     opal_buffer_t buffer;
+    orte_grpcomm_collective_t coll;
 
     OPAL_OUTPUT_VERBOSE((20, mca_snapc_full_component.super.output_handle,
                          "App) Initalized for Application %s\n", 
@@ -153,11 +154,18 @@ int app_coord_init()
                              "app) Startup Barrier..."));
     }
 
-    if( ORTE_SUCCESS != (ret = orte_grpcomm.barrier()) ) {
+    OBJ_CONSTRUCT(&coll, orte_grpcomm_collective_t);
+    coll.id = orte_process_info.peer_init_barrier;
+    if( ORTE_SUCCESS != (ret = orte_grpcomm.barrier(&coll)) ) {
         ORTE_ERROR_LOG(ret);
         exit_status = ret;
+        OBJ_DESTRUCT(&coll);
         goto cleanup;
     }
+    while (coll.active) {
+        opal_progress();
+    }
+    OBJ_DESTRUCT(&coll);
 
     if( 0 == ORTE_PROC_MY_NAME->vpid ) {
         OPAL_OUTPUT_VERBOSE((3, mca_snapc_full_component.super.output_handle,
@@ -211,6 +219,7 @@ int app_coord_finalize()
     orte_snapc_base_request_op_event_t op_event = ORTE_SNAPC_OP_FIN;
     opal_buffer_t buffer;
     orte_std_cntr_t count;
+    orte_grpcomm_collective_t coll;
 
     /*
      * All processes must sync here, so the Global coordinator can know that
@@ -222,10 +231,15 @@ int app_coord_finalize()
                              "app) Shutdown Barrier..."));
     }
 
-    if( ORTE_SUCCESS != (ret = orte_grpcomm.barrier()) ) {
+    OBJ_CONSTRUCT(&coll, orte_grpcomm_collective_t);
+    coll.id = orte_process_info.peer_init_barrier;
+    if( ORTE_SUCCESS != (ret = orte_grpcomm.barrier(&coll)) ) {
         ORTE_ERROR_LOG(ret);
         exit_status = ret;
         goto cleanup;
+    }
+    while (coll.active) {
+        opal_progress();
     }
 
     if( 0 == ORTE_PROC_MY_NAME->vpid ) {
@@ -297,7 +311,8 @@ int app_coord_finalize()
                              "app) Shutdown Barrier: Waiting on barrier...!"));
     }
 
-    if( ORTE_SUCCESS != (ret = orte_grpcomm.barrier()) ) {
+    coll.id = orte_process_info.peer_fini_barrier;
+    if( ORTE_SUCCESS != (ret = orte_grpcomm.barrier(&coll)) ) {
         ORTE_ERROR_LOG(ret);
         exit_status = ret;
         goto cleanup;
@@ -309,6 +324,9 @@ int app_coord_finalize()
     }
 
  cleanup:
+    /* cleanup */
+    OBJ_DESTRUCT(&coll);
+
     /*
      * Cleanup named pipes
      */
