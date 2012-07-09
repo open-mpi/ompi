@@ -9,7 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2008-2011 University of Houston. All rights reserved.
+# Copyright (c) 2008-2012 University of Houston. All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -45,7 +45,6 @@ sources = \
         io_ompio.c \
         io_ompio_component.c \
         io_ompio_module.c \
-        io_ompio_coll_offset.c \
         io_ompio_coll_array.c \
         io_ompio_file_set_view.c \
         io_ompio_file_open.c \
