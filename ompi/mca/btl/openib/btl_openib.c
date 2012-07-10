@@ -1649,7 +1649,8 @@ int mca_btl_openib_put( mca_btl_base_module_t* btl,
     frag->sr_desc.wr.rdma.remote_addr = rem_addr;
     frag->sr_desc.wr.rdma.rkey = rkey;
 
-    to_com_frag(frag)->sg_entry.addr = src_seg->base.seg_addr.pval;
+    to_com_frag(frag)->sg_entry.addr = 
+        (uint64_t)(uintptr_t)src_seg->base.seg_addr.pval;
     to_com_frag(frag)->sg_entry.length = src_seg->base.seg_len;
     to_com_frag(frag)->endpoint = ep;
 #if HAVE_XRC
@@ -1731,7 +1732,8 @@ int mca_btl_openib_get(mca_btl_base_module_t* btl,
     frag->sr_desc.wr.rdma.remote_addr = rem_addr;
     frag->sr_desc.wr.rdma.rkey = rkey;
 
-    to_com_frag(frag)->sg_entry.addr = dst_seg->base.seg_addr.pval;
+    to_com_frag(frag)->sg_entry.addr = 
+        (uint64_t)(uintptr_t)dst_seg->base.seg_addr.pval;
     to_com_frag(frag)->sg_entry.length = dst_seg->base.seg_len;
     to_com_frag(frag)->endpoint = ep;
 
