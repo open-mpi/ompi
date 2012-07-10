@@ -44,13 +44,15 @@
             void single_underscore signature { wrapper_function params; } \
             void double_underscore signature { wrapper_function params; } 
 /*
- * We maintain 2 separate sets of defines and prototypes. This ensures that
- * we can build MPI_* bindings or PMPI_* bindings as ad when needed. The 
- * top-level always builds MPI_* bindings and bottom level will always build
- * PMPI_* bindings. This means that top-level includes "src/mpi/interface/f77"
- * .h files and lower-level includes "src/mpi/interface/f77/profile" .h files
+ * We maintain 2 separate sets of defines and prototypes. This ensures
+ * that we can build MPI_* bindings or PMPI_* bindings as needed. The
+ * top level always builds MPI_* bindings and bottom level will always
+ * build PMPI_* bindings.  This means that top-level includes
+ * "ompi/mpi/fortran/mpif-h/" .h files and lower-level includes
+ * "ompi/mpi/fortran/mpif-h/profile" .h files.
  *
- * Both prototypes for all MPI- PMPI functions is moved into prototypes_mpi.h
+ * Both prototypes for all MPI / PMPI functions is moved into
+ * prototypes_mpi.h.
  */
 
 #include "ompi/mpi/fortran/mpif-h/prototypes_mpi.h"
