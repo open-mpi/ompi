@@ -942,7 +942,7 @@ struct mca_btl_base_descriptor_t* mca_btl_sm_prepare_dst(
     
     frag->base.des_src = NULL;
     frag->base.des_src_cnt = 0;
-    frag->base.des_dst = &frag->segment;
+    frag->base.des_dst = (mca_btl_base_segment_t*)&frag->segment;
     frag->base.des_dst_cnt = 1;
     frag->base.des_flags = flags;
     return &frag->base;
@@ -962,8 +962,8 @@ int mca_btl_sm_get_sync(struct mca_btl_base_module_t* btl,
     int btl_ownership;
     mca_btl_sm_t* sm_btl = (mca_btl_sm_t*) btl;
     mca_btl_sm_frag_t* frag = (mca_btl_sm_frag_t*)des;
-    mca_btl_sm_segment_t *src = des->des_src;
-    mca_btl_sm_segment_t *dst = des->des_dst;
+    mca_btl_sm_segment_t *src = (mca_btl_sm_segment_t*)des->des_src;
+    mca_btl_sm_segment_t *dst = (mca_btl_sm_segment_t*)des->des_dst;
 #if OMPI_BTL_SM_HAVE_KNEM
     if (OPAL_LIKELY(mca_btl_sm_component.use_knem)) {
         struct knem_cmd_inline_copy icopy;
@@ -1069,8 +1069,8 @@ int mca_btl_sm_get_async(struct mca_btl_base_module_t* btl,
     int btl_ownership;
     mca_btl_sm_t* sm_btl = (mca_btl_sm_t*) btl;
     mca_btl_sm_frag_t* frag = (mca_btl_sm_frag_t*)des;
-    mca_btl_sm_segment_t *src = des->des_src;
-    mca_btl_sm_segment_t *dst = des->des_dst;
+    mca_btl_sm_segment_t *src = (mca_btl_sm_segment_t*)des->des_src;
+    mca_btl_sm_segment_t *dst = (mca_btl_sm_segment_t*)des->des_dst;
     struct knem_cmd_inline_copy icopy;
     struct knem_cmd_param_iovec recv_iovec;
     
