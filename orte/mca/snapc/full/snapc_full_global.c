@@ -46,6 +46,7 @@
 #include "orte/mca/rmaps/rmaps_types.h"
 #include "orte/mca/plm/plm.h"
 #include "orte/mca/grpcomm/grpcomm.h"
+#include "orte/mca/db/db.h"
 #include "orte/runtime/orte_wait.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/errmgr/base/base.h"
@@ -513,7 +514,7 @@ int global_coord_end_ckpt(orte_snapc_base_quiesce_t *datum)
     if( currently_migrating ) {
         OPAL_OUTPUT_VERBOSE((10, mca_snapc_full_component.super.output_handle,
                              "Global) End Ckpt: Flush the modex cached data\n"));
-        if (ORTE_SUCCESS != (ret = orte_grpcomm.purge_proc_attrs())) {
+        if (ORTE_SUCCESS != (ret = orte_db.remove(NULL, NULL))) {
             ORTE_ERROR_LOG(ret);
             exit_status = ret;
             goto cleanup;

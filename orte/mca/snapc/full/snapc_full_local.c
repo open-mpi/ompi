@@ -64,6 +64,7 @@
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/routed/routed.h"
 #include "orte/mca/grpcomm/grpcomm.h"
+#include "orte/mca/db/db.h"
 
 #include "orte/mca/snapc/snapc.h"
 #include "orte/mca/snapc/base/base.h"
@@ -1794,7 +1795,7 @@ static void snapc_full_local_comm_read_event(int fd, short flags, void *arg)
     if( currently_migrating && !flushed_modex ) {
         OPAL_OUTPUT_VERBOSE((10, mca_snapc_full_component.super.output_handle,
                              "Local) Read Event: Flush the modex cached data\n"));
-        if (ORTE_SUCCESS != (ret = orte_grpcomm.purge_proc_attrs())) {
+        if (ORTE_SUCCESS != (ret = orte_db.remove(NULL, NULL))) {
             ORTE_ERROR_LOG(ret);
             exit_status = ret;
             goto cleanup;
