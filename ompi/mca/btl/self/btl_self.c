@@ -324,7 +324,7 @@ int mca_btl_self_rdma( struct mca_btl_base_module_t* btl,
     size_t dst_cnt = des->des_dst_cnt;
     unsigned char* src_addr = (unsigned char*)src->seg_addr.pval;
     size_t src_len = src->seg_len;
-    unsigned char* dst_addr = (unsigned char*)ompi_ptr_ltop(dst->seg_addr.lval);
+    unsigned char* dst_addr = (unsigned char*)dst->seg_addr.pval;
     size_t dst_len = dst->seg_len;
     int btl_ownership = (des->des_flags & MCA_BTL_DES_FLAGS_BTL_OWNERSHIP);
 

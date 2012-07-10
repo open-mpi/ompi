@@ -461,7 +461,7 @@ advance_iov_position11:
                         goto repeat11;
                     } else if (frag->iov_idx == 2) {
                         for(i=0; i<frag->hdr.count; i++) {
-                            frag->iov[i+2].iov_base = (IOVBASE_TYPE*)ompi_ptr_ltop(frag->segments[i].seg_addr.lval);
+                            frag->iov[i+2].iov_base = (IOVBASE_TYPE*) frag->segments[i].seg_addr.pval;
                             frag->iov[i+2].iov_len = frag->segments[i].seg_len;
                             frag->iov_cnt++;
                         }
@@ -620,7 +620,7 @@ ret_false:
                         goto repeat;
                     } else if (frag->iov_idx == 2) {
                         for(i=0; i<frag->hdr.count; i++) {
-                            frag->iov[i+2].iov_base = (IOVBASE_TYPE*)ompi_ptr_ltop(frag->segments[i].seg_addr.lval);
+                            frag->iov[i+2].iov_base = (IOVBASE_TYPE*) frag->segments[i].seg_addr.pval;
                             frag->iov[i+2].iov_len = frag->segments[i].seg_len;
                             frag->iov_cnt++;
                         }

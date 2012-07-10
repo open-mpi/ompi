@@ -508,7 +508,7 @@ static int mca_btl_elan_put( mca_btl_base_module_t* btl,
     mca_btl_base_segment_t* dst = des->des_dst;
     unsigned char* src_addr = (unsigned char*)src->seg_addr.pval;
     size_t src_len = src->seg_len;
-    unsigned char* dst_addr = (unsigned char*)ompi_ptr_ltop(dst->seg_addr.lval);
+    unsigned char* dst_addr = (unsigned char*)dst->seg_addr.pval;
 
     frag->endpoint = endpoint;
     frag->btl = elan_btl;
