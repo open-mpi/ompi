@@ -57,6 +57,7 @@
 #include "orte/mca/rmaps/base/base.h"
 #if OPAL_ENABLE_FT_CR == 1
 #include "orte/mca/snapc/base/base.h"
+#include "orte/mca/db/db.h"
 #endif
 #include "orte/mca/filem/base/base.h"
 #include "orte/util/proc_info.h"
@@ -406,7 +407,7 @@ static int rte_ft_event(int state)
             exit_status = ret;
             goto cleanup;
         }
-        if (ORTE_SUCCESS != (ret = orte_grpcomm.purge_proc_attrs())) {
+        if (ORTE_SUCCESS != (ret = orte_db.remove(NULL, NULL))) {
             ORTE_ERROR_LOG(ret);
             exit_status = ret;
             goto cleanup;

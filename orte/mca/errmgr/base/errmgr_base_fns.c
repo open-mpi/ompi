@@ -329,7 +329,7 @@ void orte_errmgr_base_proc_state_notify(orte_proc_state_t state, orte_process_na
         case ORTE_PROC_STATE_TERMINATED:
         case ORTE_PROC_STATE_KILLED_BY_CMD:
         case ORTE_PROC_STATE_SENSOR_BOUND_EXCEEDED:
-            opal_output(0,, "%d: Process %s is dead.",
+            opal_output(0, "%d: Process %s is dead.",
                         orte_process_info.pid, ORTE_JOBID_PRINT(proc->jobid));
             break;
 
