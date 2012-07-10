@@ -59,7 +59,7 @@ int mca_oob_base_init(void)
 {
     opal_list_item_t *item;
     mca_base_component_list_item_t *cli;
-    mca_oob_base_component_t *component, *s_component;
+    mca_oob_base_component_t *component, *s_component = NULL;
     mca_oob_t *module;
     mca_oob_t *s_module = NULL;
     int  s_priority = -1;
