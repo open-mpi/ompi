@@ -1011,7 +1011,7 @@ int mca_btl_sm_get_sync(struct mca_btl_base_module_t* btl,
         remote_address = (char *) src->base.seg_addr.pval;
         remote_length = src->base.seg_len;
 
-        local_address = (char *) dst->base,seg_addr.pval;
+        local_address = (char *) dst->base.seg_addr.pval;
         local_length = dst->base.seg_len;
 
         remote_pid = src->key;
