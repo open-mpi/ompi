@@ -165,52 +165,27 @@ static inline struct ibv_cq *create_cq_compat(struct ibv_context *context,
 #endif
 }
 
-static int create_cq(mca_btl_openib_device_t *device, const int cq)
+static int adjust_cq(mca_btl_openib_device_t *device, const int cq)
 {
-    if (NULL == device->ib_cq[cq]) {
-        uint32_t cq_size = (uint32_t) device->ib_dev_attr.max_cqe;
+    uint32_t cq_size = device->cq_size[cq];
 
-        /* Was the MCA param set? */
-        if (mca_btl_openib_component.ib_cq_size[cq] > 0) {
+    /* make sure we don't exceed the maximum CQ size and that we
+     * don't size the queue smaller than otherwise requested
+     */
+     if(cq_size < mca_btl_openib_component.ib_cq_size[cq])
+        cq_size = mca_btl_openib_component.ib_cq_size[cq];
 
-            /* If the MCA param is <= the max device CQ size, use it.
-               Otherwise, warn and keep it set to the device max. */
-            if (mca_btl_openib_component.ib_cq_size[cq] <= 
-                device->ib_dev_attr.max_cqe) {
-                cq_size = mca_btl_openib_component.ib_cq_size[cq];
-            } else {
-                static bool showed_already = false;
+    if(cq_size > (uint32_t)device->ib_dev_attr.max_cqe)
+        cq_size = device->ib_dev_attr.max_cqe;
 
-                /* Since we usually create multiple CQs in each
-                   process (on each device), put some protection to
-                   only show this message once per process. */
-                if (!showed_already) {
-                    orte_show_help("help-mpi-btl-openib.txt",
-                                   "cq length too large", true,
-                                   orte_process_info.nodename,
-                                   ibv_get_device_name(device->ib_dev),
-                                   device->ib_dev_attr.vendor_id,
-                                   device->ib_dev_attr.vendor_part_id,
-                                   mca_btl_openib_component.ib_cq_size[cq],
-                                   device->ib_dev_attr.max_cqe);
-                }
-                showed_already = true;
-
-                /* No need to adjust cq_size -- it's already set to
-                   the device max */
-            }
-        }
-
-        BTL_VERBOSE(("creating CQ with %u CQ entries (max supported: %u)\n", 
-                     cq_size, device->ib_dev_attr.max_cqe));
-        device->ib_cq[cq] = create_cq_compat(device->ib_dev_context, 
-                                             cq_size,
+    if(NULL == device->ib_cq[cq]) {
+        device->ib_cq[cq] = create_cq_compat(device->ib_dev_context, cq_size,
 #if OMPI_ENABLE_PROGRESS_THREADS == 1
-                                             device, device->ib_channel,
+                device, device->ib_channel,
 #else
-                                             NULL, NULL,
+                NULL, NULL,
 #endif
-                                             0);
+                0);
 
         if (NULL == device->ib_cq[cq]) {
             mca_btl_openib_show_init_error(__FILE__, __LINE__, "ibv_create_cq",
@@ -238,6 +213,18 @@ static int create_cq(mca_btl_openib_device_t *device, const int cq)
         OPAL_THREAD_UNLOCK(&device->device_lock);
 #endif
     }
+#ifdef HAVE_IBV_RESIZE_CQ
+    else if (cq_size > mca_btl_openib_component.ib_cq_size[cq]){
+        int rc;
+        rc = ibv_resize_cq(device->ib_cq[cq], cq_size);
+        /* For ConnectX the resize CQ is not implemented and verbs returns -ENOSYS
+         * but should return ENOSYS. So it is reason for abs */
+        if(rc && ENOSYS != abs(rc)) {
+            BTL_ERROR(("cannot resize completion queue, error: %d", rc));
+            return OMPI_ERROR;
+        }
+    }
+#endif
 
     return OMPI_SUCCESS;
 }
@@ -402,12 +389,26 @@ static int mca_btl_openib_size_queues(struct mca_btl_openib_module_t* openib_btl
     int rc = OMPI_SUCCESS, qp;
     mca_btl_openib_device_t *device = openib_btl->device;
 
-    rc = create_cq(device, BTL_OPENIB_HP_CQ);
+    /* figure out reasonable sizes for completion queues */
+    for(qp = 0; qp < mca_btl_openib_component.num_qps; qp++) {
+        if(BTL_OPENIB_QP_TYPE_SRQ(qp)) {
+            send_cqes = mca_btl_openib_component.qp_infos[qp].u.srq_qp.sd_max;
+            recv_cqes = mca_btl_openib_component.qp_infos[qp].rd_num;
+        } else {
+            send_cqes = (mca_btl_openib_component.qp_infos[qp].rd_num +
+                mca_btl_openib_component.qp_infos[qp].u.pp_qp.rd_rsv) * nprocs;
+            recv_cqes = send_cqes;
+        }
+        openib_btl->device->cq_size[qp_cq_prio(qp)] += recv_cqes;
+        openib_btl->device->cq_size[BTL_OPENIB_LP_CQ] += send_cqes;
+    }
+
+    rc = adjust_cq(device, BTL_OPENIB_HP_CQ);
     if (OMPI_SUCCESS != rc) {
         goto out;
     }
 
-    rc = create_cq(device, BTL_OPENIB_LP_CQ);
+    rc = adjust_cq(device, BTL_OPENIB_LP_CQ);
     if (OMPI_SUCCESS != rc) {
         goto out;
     }
