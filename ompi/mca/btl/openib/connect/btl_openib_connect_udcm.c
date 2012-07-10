@@ -284,7 +284,6 @@ static int udcm_module_allocate_buffers (udcm_module_t *m);
 static void udcm_module_destroy_buffers (udcm_module_t *m);
 
 static int udcm_module_post_all_recvs (udcm_module_t *m);
-static bool i_initiate(udcm_module_t *m, mca_btl_openib_endpoint_t *lcl_ep);
 
 static int udcm_send_request (mca_btl_base_endpoint_t *lcl_ep,
 			      mca_btl_base_endpoint_t *rem_ep);
@@ -945,20 +944,6 @@ static int udcm_module_post_all_recvs (udcm_module_t *m)
 
 
 /*--------------------------------------------------------------------*/
-static bool i_initiate(udcm_module_t *m, mca_btl_openib_endpoint_t *ep)
-{
-    modex_msg_t *msg = UDCM_ENDPOINT_REM_MODEX(ep);
-
-    if (m->modex.mm_lid == msg->mm_lid &&
-	m->modex.mm_qp_num == msg->mm_qp_num) {
-	opal_output (0, "BAD THINGS");
-    }
-
-    return
-        (m->modex.mm_lid == msg->mm_lid &&
-         m->modex.mm_qp_num < msg->mm_qp_num) ? true :
-        (m->modex.mm_lid < msg->mm_lid) ? true : false;
-}
 
 /* Returns max inlne size for qp #N */
 static uint32_t max_inline_size(int qp, mca_btl_openib_device_t *device)
