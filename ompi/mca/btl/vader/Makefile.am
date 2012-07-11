@@ -24,7 +24,7 @@ AM_CPPFLAGS = $(btl_vader_CPPFLAGS)
 dist_pkgdata_DATA = help-mpi-btl-vader.txt
 
 libmca_btl_vader_la_sources = \
-    btl_vader.c \
+    btl_vader_module.c \
     btl_vader.h \
     btl_vader_component.c \
     btl_vader_endpoint.h \
