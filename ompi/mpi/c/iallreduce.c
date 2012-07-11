@@ -89,14 +89,6 @@ int MPI_Iallreduce(void *sendbuf, void *recvbuf, int count,
         OMPI_ERRHANDLER_CHECK(err, comm, err, FUNC_NAME);
     }
 
-    /* MPI-1, p114, says that each process must supply at least
-       one element.  But at least the Pallas benchmarks call
-       MPI_REDUCE with a count of 0.  So be sure to handle it. */
-    
-    if (0 == count) {
-        return MPI_SUCCESS;
-    }
-
     OPAL_CR_ENTER_LIBRARY();
 
     /* Invoke the coll component to perform the back-end operation */

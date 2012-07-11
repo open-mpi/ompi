@@ -105,20 +105,6 @@ int MPI_Ireduce_scatter(void *sendbuf, void *recvbuf, int *recvcounts,
         }
     }
 
-    /* MPI-1, p114, says that each process must supply at least one
-       element.  But at least the Pallas benchmarks call MPI_REDUCE
-       with a count of 0.  So be sure to handle it.  Grrr... */
-
-    size = ompi_comm_size(comm);
-    for (count = i = 0; i < size; ++i) {
-        if (0 == recvcounts[i]) {
-            ++count;
-        }
-    }
-    if (size == count) {
-        return MPI_SUCCESS;
-    }
-
     OPAL_CR_ENTER_LIBRARY();
 
     /* Invoke the coll component to perform the back-end operation */

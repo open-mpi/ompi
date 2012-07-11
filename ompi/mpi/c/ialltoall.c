@@ -75,12 +75,6 @@ int MPI_Ialltoall(void *sendbuf, int sendcount, MPI_Datatype sendtype,
       OMPI_ERRHANDLER_CHECK(err, comm, err, FUNC_NAME);
     }
 
-    /* Do we need to do anything? */
-
-    if (0 == sendcount && 0 == recvcount) {
-        return MPI_SUCCESS;
-    }
-
     OPAL_CR_ENTER_LIBRARY();
 
     /* Invoke the coll component to perform the back-end operation */

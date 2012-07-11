@@ -116,14 +116,6 @@ int MPI_Ireduce(void *sendbuf, void *recvbuf, int count,
         }
     }
 
-    /* Do we need to do anything? (MPI says that reductions have to
-       have a count of at least 1, but at least IMB calls reduce with
-       a count of 0 -- blah!) */
-
-    if (0 == count) {
-        return MPI_SUCCESS;
-    }
-
     OPAL_CR_ENTER_LIBRARY();
 
     /* Invoke the coll component to perform the back-end operation */
