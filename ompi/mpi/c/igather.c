@@ -160,17 +160,6 @@ int MPI_Igather(void *sendbuf, int sendcount, MPI_Datatype sendtype,
         }
     }
 
-    /* Do we need to do anything? */
-
-    if ((0 == sendcount && MPI_ROOT != root && 
-         (ompi_comm_rank(comm) != root ||
-          (ompi_comm_rank(comm) == root && MPI_IN_PLACE != sendbuf))) ||
-        (ompi_comm_rank(comm) == root && MPI_IN_PLACE == sendbuf && 
-         0 == recvcount) || 
-        (0 == recvcount && (MPI_ROOT == root || MPI_PROC_NULL == root))) {
-        return MPI_SUCCESS;
-    }
-
     OPAL_CR_ENTER_LIBRARY();
 
     /* Invoke the coll component to perform the back-end operation */

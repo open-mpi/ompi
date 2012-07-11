@@ -56,21 +56,7 @@ int MPI_Ibarrier(MPI_Comm comm, MPI_Request *request)
 
     OPAL_CR_ENTER_LIBRARY();
 
-    /* Intracommunicators: Only invoke the back-end coll module barrier
-       function if there's more than one process in the communicator */
-
-    if (OMPI_COMM_IS_INTRA(comm)) {
-        if (ompi_comm_size(comm) > 1) {
-            err = comm->c_coll.coll_ibarrier(comm, request, comm->c_coll.coll_ibarrier_module);
-        }
-    } 
-
-    /* Intercommunicators -- always invoke, because, by definition,
-       there's always at least 2 processes in an intercommunicator. */
-
-    else {
-        err = comm->c_coll.coll_ibarrier(comm, request, comm->c_coll.coll_ibarrier_module);
-    }
+    err = comm->c_coll.coll_ibarrier(comm, request, comm->c_coll.coll_ibarrier_module);
 
     /* All done */
 
