@@ -250,6 +250,13 @@ mca_io_ompio_file_write_all (ompi_file_t *fh,
                                        datatype,
                                        status);
     
+    if ( MPI_STATUS_IGNORE != status ) {
+	size_t size;
+
+	opal_datatype_type_size (&datatype->super, &size);
+	status->_ucount = count * size;
+    }
+
     return ret;
 }
 
@@ -312,6 +319,7 @@ mca_io_ompio_file_write_at_all (ompi_file_t *fh,
                                        count, 
                                        datatype, 
                                        status);
+
     return ret;
 }
 

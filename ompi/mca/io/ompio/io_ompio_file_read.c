@@ -255,6 +255,12 @@ mca_io_ompio_file_read_all (ompi_file_t *fh,
                                      count, 
                                      datatype,
                                      status);
+    if ( MPI_STATUS_IGNORE != status ) {
+	size_t size;
+
+	opal_datatype_type_size (&datatype->super, &size);
+	status->_ucount = count * size;
+    }
 
     return ret;
 }
