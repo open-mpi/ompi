@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2010 The Trustees of Indiana University.
+ * Copyright (c) 2004-2012 The Trustees of Indiana University.
  *                         All rights reserved.
  * Copyright (c) 2004-2011 The Trustees of the University of Tennessee.
  *                         All rights reserved.
@@ -194,6 +194,13 @@ int orte_snapc_full_module_init(bool seed, bool app)
      * Application Snapshot Coordinator
      */
     else if(app) {
+        /*
+         * Start the app coordinator only after ORTE has initialized.
+         */
+        if(!orte_initialized) {
+            goto cleanup;
+        }
+
         opal_output_verbose(5, mca_snapc_full_component.super.output_handle,
                             "snapc:full: module_init: Application Snapshot Coordinator");
 

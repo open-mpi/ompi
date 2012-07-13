@@ -336,9 +336,7 @@ static int rte_ft_event(int state)
                 exit_status = ret;
                 goto cleanup;
             }
-            while (coll.active) {
-                opal_progress();
-            }
+            ORTE_WAIT_FOR_COMPLETION(coll.active);
 
             if( orte_cr_flush_restart_files ) {
                 OPAL_OUTPUT_VERBOSE((1, orte_ess_base_output,
@@ -463,9 +461,7 @@ static int rte_ft_event(int state)
             exit_status = ret;
             goto cleanup;
         }
-        while (coll.active) {
-            opal_progress();
-        }
+	ORTE_WAIT_FOR_COMPLETION(coll.active);
 
         if( orte_cr_flush_restart_files ) {
             OPAL_OUTPUT_VERBOSE((1, orte_ess_base_output,
