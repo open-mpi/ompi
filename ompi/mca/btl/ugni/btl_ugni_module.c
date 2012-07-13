@@ -300,7 +300,7 @@ mca_btl_ugni_prepare_dst (mca_btl_base_module_t *btl,
 
     frag->segments[0].memory_handle      = ((mca_btl_ugni_reg_t *)registration)->memory_hdl;
     frag->segments[0].base.seg_len       = *size;
-    frag->segments[0].base.seg_addr.pval = data_ptr;
+    frag->segments[0].base.seg_addr.lval = (uint64_t)(uintptr_t) data_ptr;
 
     frag->base.des_dst     = &frag->segments->base;
     frag->base.des_dst_cnt = 1;

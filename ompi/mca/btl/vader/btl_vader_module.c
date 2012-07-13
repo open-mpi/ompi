@@ -570,7 +570,7 @@ struct mca_btl_base_descriptor_t *vader_prepare_dst(struct mca_btl_base_module_t
     
     opal_convertor_get_current_pointer (convertor, (void **) &data_ptr);
 
-    frag->segment.seg_addr.pval = data_ptr;
+    frag->segment.seg_addr.lval = (uint64_t)(uintptr_t) data_ptr;
     frag->segment.seg_len       = *size;
     
     frag->base.des_dst     = &frag->segment;
@@ -665,7 +665,7 @@ static struct mca_btl_base_descriptor_t *vader_prepare_src (struct mca_btl_base_
             return NULL;
         }
 
-        frag->segment.seg_addr.pval = data_ptr;
+        frag->segment.seg_addr.lval = (uint64_t)(uintptr_t) data_ptr;
         frag->segment.seg_len       = reserve + *size;
     }
 

@@ -1884,7 +1884,7 @@ static int init_one_device(opal_list_t *btl_list, struct ibv_device* ib_dev)
                        "eager RDMA and progress threads", true);
     }
 
-    mpool_resources.pool_name = "verbs";
+    asprintf (&mpool_resources.pool_name, "verbs.%" PRIu64, device->ib_dev_attr.node_guid);
     mpool_resources.reg_data = (void*)device;
     mpool_resources.sizeof_reg = sizeof(mca_btl_openib_reg_t);
     mpool_resources.register_mem = openib_reg_mr;

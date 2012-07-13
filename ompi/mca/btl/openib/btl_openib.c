@@ -1041,6 +1041,8 @@ int mca_btl_openib_free(
             to_com_frag(des)->sg_entry.addr =
                 (uint64_t)(uintptr_t)to_send_frag(des)->hdr;
             to_send_frag(des)->coalesced_length = 0;
+	    to_base_frag(des)->segment.base.seg_addr.pval =
+		to_send_frag(des)->hdr + 1;
             assert(!opal_list_get_size(&to_send_frag(des)->coalesced_frags));
             /* fall throug */
         case MCA_BTL_OPENIB_FRAG_SEND_USER:
@@ -1094,6 +1096,7 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_src(
     struct iovec iov;
     uint32_t iov_count = 1;
     size_t max_data = *size;
+    void *ptr;
     int rc;
 
     openib_btl = (mca_btl_openib_module_t*)btl;
@@ -1133,7 +1136,7 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_src(
             to_base_frag(frag)->base.order = order;
             to_base_frag(frag)->base.des_flags = flags;
             to_base_frag(frag)->segment.base.seg_len = max_data;
-            to_base_frag(frag)->segment.base.seg_addr.pval = iov.iov_base;
+            to_base_frag(frag)->segment.base.seg_addr.lval = (uint64_t)(uintptr_t) iov.iov_base;
             to_base_frag(frag)->segment.key = frag->sg_entry.lkey;
 
             assert(MCA_BTL_NO_ORDER == order);
@@ -1151,17 +1154,28 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_src(
         max_data = btl->btl_max_send_size - reserve;
     }
 
-    frag = (mca_btl_openib_com_frag_t*)(reserve ?
-            mca_btl_openib_alloc(btl, endpoint, order, max_data + reserve,
-                flags) :
-            ib_frag_alloc(openib_btl, max_data, order, flags));
+    if (OPAL_UNLIKELY(0 == reserve)) {
+	frag = (mca_btl_openib_com_frag_t *) ib_frag_alloc(openib_btl, max_data, order, flags);
+	if(NULL == frag)
+	    return NULL;
 
-    if(NULL == frag)
-        return NULL;
+	/* NTH: this frag will be ue used for either a get or put so we need to set the lval to be
+	   consistent with the usage in get and put. the pval will be restored in mca_btl_openib_free */
+	ptr = to_base_frag(frag)->segment.base.seg_addr.pval;
+	to_base_frag(frag)->segment.base.seg_addr.lval =
+	    (uint64_t)(uintptr_t) ptr;
+    } else {
+	frag =
+	    (mca_btl_openib_com_frag_t *) mca_btl_openib_alloc(btl, endpoint, order,
+							       max_data + reserve, flags);
+	if(NULL == frag)
+	    return NULL;
+
+	ptr = to_base_frag(frag)->segment.base.seg_addr.pval;
+    }
 
     iov.iov_len = max_data;
-    iov.iov_base = (IOVBASE_TYPE *) ( (unsigned char*)to_base_frag(frag)->segment.base.seg_addr.pval +
-        reserve );
+    iov.iov_base = (IOVBASE_TYPE *) ( (unsigned char*) ptr + reserve );
     rc = opal_convertor_pack(convertor, &iov, &iov_count, &max_data);
 
     *size = max_data;
@@ -1250,7 +1264,7 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_dst(
     frag->sg_entry.lkey = openib_reg->mr->lkey;
     frag->sg_entry.addr = (uint64_t)(uintptr_t)buffer;
 
-    to_base_frag(frag)->segment.base.seg_addr.pval = buffer;
+    to_base_frag(frag)->segment.base.seg_addr.lval = (uint64_t)(uintptr_t) buffer;
     to_base_frag(frag)->segment.base.seg_len = *size;
     to_base_frag(frag)->segment.key = openib_reg->mr->rkey;
     to_base_frag(frag)->base.order = order;
@@ -1649,8 +1663,7 @@ int mca_btl_openib_put( mca_btl_base_module_t* btl,
     frag->sr_desc.wr.rdma.remote_addr = rem_addr;
     frag->sr_desc.wr.rdma.rkey = rkey;
 
-    to_com_frag(frag)->sg_entry.addr = 
-        (uint64_t)(uintptr_t)src_seg->base.seg_addr.pval;
+    to_com_frag(frag)->sg_entry.addr = src_seg->base.seg_addr.lval;
     to_com_frag(frag)->sg_entry.length = src_seg->base.seg_len;
     to_com_frag(frag)->endpoint = ep;
 #if HAVE_XRC
@@ -1732,8 +1745,7 @@ int mca_btl_openib_get(mca_btl_base_module_t* btl,
     frag->sr_desc.wr.rdma.remote_addr = rem_addr;
     frag->sr_desc.wr.rdma.rkey = rkey;
 
-    to_com_frag(frag)->sg_entry.addr = 
-        (uint64_t)(uintptr_t)dst_seg->base.seg_addr.pval;
+    to_com_frag(frag)->sg_entry.addr = dst_seg->base.seg_addr.lval;
     to_com_frag(frag)->sg_entry.length = dst_seg->base.seg_len;
     to_com_frag(frag)->endpoint = ep;
 
