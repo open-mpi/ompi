@@ -33,6 +33,7 @@
 #include "opal/util/crc.h"
 #include "opal/util/output.h"
 
+#include "orte/runtime/orte_wait.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/grpcomm/grpcomm.h"
 #include "orte/util/show_help.h"
@@ -662,9 +663,7 @@ int mca_pml_csum_ft_event( int state )
         if( opal_cr_timing_barrier_enabled ) {
             OPAL_CR_SET_TIMER(OPAL_CR_TIMER_CRCPBR1);
             orte_grpcomm.barrier(coll);
-            while (coll->active) {
-                opal_progress();
-            }
+            ORTE_WAIT_FOR_COMPLETION(coll->active);
         }
 
         OPAL_CR_SET_TIMER(OPAL_CR_TIMER_P2P0);
@@ -676,9 +675,7 @@ int mca_pml_csum_ft_event( int state )
             if( opal_cr_timing_barrier_enabled ) {
                 OPAL_CR_SET_TIMER(OPAL_CR_TIMER_COREBR0);
                 orte_grpcomm.barrier(coll);
-                while (coll->active) {
-                    opal_progress();
-                }
+                ORTE_WAIT_FOR_COMPLETION(coll->active);
             }
             OPAL_CR_SET_TIMER(OPAL_CR_TIMER_P2P2);
         }
@@ -781,9 +778,7 @@ int mca_pml_csum_ft_event( int state )
             if( opal_cr_timing_barrier_enabled ) {
                 OPAL_CR_SET_TIMER(OPAL_CR_TIMER_P2PBR1);
                 orte_grpcomm.barrier(coll);
-                while (coll->active) {
-                    opal_progress();
-                }
+                ORTE_WAIT_FOR_COMPLETION(coll->active);
             }
             OPAL_CR_SET_TIMER(OPAL_CR_TIMER_P2P3);
         }
@@ -802,9 +797,7 @@ int mca_pml_csum_ft_event( int state )
                 OBJ_RELEASE(modex);
                 goto clean;
             }
-            while (modex->active) {
-                opal_progress();
-            }
+            ORTE_WAIT_FOR_COMPLETION(modex->active);
             OBJ_RELEASE(modex);
 
             /*
@@ -821,9 +814,7 @@ int mca_pml_csum_ft_event( int state )
                 opal_output(0, "pml:csum: ft_event(Restart): Failed in orte_grpcomm.barrier (%d)", ret);
                 goto clean;
             }
-            while (coll->active) {
-                opal_progress();
-            }
+            ORTE_WAIT_FOR_COMPLETION(coll->active);
 
             if( NULL != procs ) {
                 for(p = 0; p < (int)num_procs; ++p) {
@@ -837,9 +828,7 @@ int mca_pml_csum_ft_event( int state )
             if( opal_cr_timing_barrier_enabled ) {
                 OPAL_CR_SET_TIMER(OPAL_CR_TIMER_P2PBR2);
                 orte_grpcomm.barrier(coll);
-                while (coll->active) {
-                    opal_progress();
-                }
+                ORTE_WAIT_FOR_COMPLETION(coll->active);
             }
             OPAL_CR_SET_TIMER(OPAL_CR_TIMER_CRCP1);
         }
@@ -861,9 +850,7 @@ int mca_pml_csum_ft_event( int state )
             OBJ_RELEASE(modex);
             goto clean;
         }
-        while (modex->active) {
-            opal_progress();
-        }
+        ORTE_WAIT_FOR_COMPLETION(modex->active);
         OBJ_RELEASE(modex);
 
         /*
@@ -880,9 +867,7 @@ int mca_pml_csum_ft_event( int state )
             opal_output(0, "pml:csum: ft_event(Restart): Failed in orte_grpcomm.barrier (%d)", ret);
             goto clean;
         }
-        while (coll->active) {
-            opal_progress();
-        }
+        ORTE_WAIT_FOR_COMPLETION(coll->active);
 
         if( NULL != procs ) {
             for(p = 0; p < (int)num_procs; ++p) {
