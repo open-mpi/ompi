@@ -746,7 +746,7 @@ struct mca_btl_base_descriptor_t* mca_btl_smcuda_prepare_src(
            MCA_BTL_SMCUDA_FRAG_RETURN(frag);
             return NULL;
         }
-        frag->segment.base.seg_addr.pval = iov.iov_base;
+        frag->segment.base.seg_addr.lval = (uint64_t)(uintptr_t) iov.iov_base;
         frag->segment.base.seg_len = max_data;
         memcpy(frag->segment.key, ((mca_mpool_common_cuda_reg_t *)registration)->memHandle,
                sizeof(((mca_mpool_common_cuda_reg_t *)registration)->memHandle) + 
@@ -938,6 +938,7 @@ struct mca_btl_base_descriptor_t* mca_btl_smcuda_prepare_dst(
         uint32_t flags)
 {
     int rc;
+    void *ptr;
     mca_btl_smcuda_frag_t* frag;
 
     /* Only support GPU buffers */
@@ -951,7 +952,8 @@ struct mca_btl_base_descriptor_t* mca_btl_smcuda_prepare_dst(
     }
     
     frag->segment.base.seg_len = *size;
-    opal_convertor_get_current_pointer( convertor, (void**)&(frag->segment.base.seg_addr.pval) );
+    opal_convertor_get_current_pointer( convertor, &ptr );
+    frag->segment.base.seg_addr.lval = (uint64_t)(uintptr_t) ptr;
 
     frag->base.des_src = NULL;
     frag->base.des_src_cnt = 0;
@@ -1021,9 +1023,10 @@ int mca_btl_smcuda_get_cuda(struct mca_btl_base_module_t* btl,
      * rget_reg, not reg_ptr, as we do not cache the event. */
     mca_common_wait_stream_synchronize(&rget_reg);
 
-    rc = mca_common_cuda_memcpy(dst_seg->base.seg_addr.pval, remote_memory_address,
-                                dst_seg->base.seg_len, "mca_btl_smcuda_get",
-                                (mca_btl_base_descriptor_t *)frag, &done);
+    rc = mca_common_cuda_memcpy((void *)(uintptr_t) dst_seg->base.seg_addr.lval,
+				remote_memory_address, dst_seg->base.seg_len,
+				"mca_btl_smcuda_get", (mca_btl_base_descriptor_t *)frag,
+				&done);
     if (OMPI_SUCCESS != rc) {
         /* Out of resources can be handled by upper layers. */
         if (OMPI_ERR_OUT_OF_RESOURCE != rc) {
