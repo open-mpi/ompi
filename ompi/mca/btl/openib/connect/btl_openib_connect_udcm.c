@@ -77,6 +77,8 @@
 #include "btl_openib_fd.h"
 #include "connect/connect.h"
 
+#include "ompi/mca/mpool/grdma/mpool_grdma.h"
+
 #if (ENABLE_DYNAMIC_SL)
 #include "connect/btl_openib_connect_sl.h"
 #endif
@@ -1104,9 +1106,16 @@ static int udcm_qp_create_one(udcm_module_t *m, mca_btl_base_endpoint_t* lcl_ep,
     }
     init_attr.cap.max_send_wr  = max_send_wr;
 
-    lcl_ep->qps[qp].qp->lcl_qp = ibv_create_qp(m->btl->device->ib_pd,
-					       &init_attr);
-    if (NULL == lcl_ep->qps[qp].qp->lcl_qp) { 
+    while (NULL == (lcl_ep->qps[qp].qp->lcl_qp = ibv_create_qp(m->btl->device->ib_pd,
+							       &init_attr))) {
+	/* NTH: this process may be out of registered memory. try evicting an item from
+	   the lru of this btl's mpool */
+	if (false == mca_mpool_grdma_evict (m->btl->super.btl_mpool)) {
+	    break;
+	}
+    }
+
+    if (NULL == lcl_ep->qps[qp].qp->lcl_qp) {
         orte_show_help("help-mpi-btl-openib-cpc-base.txt",
                        "ibv_create_qp failed", true, orte_process_info.nodename,
                        ibv_get_device_name(m->btl->device->ib_dev),
