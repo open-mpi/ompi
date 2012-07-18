@@ -693,12 +693,12 @@ static int udcm_module_finalize(mca_btl_openib_module_t *btl,
 
     BTL_VERBOSE(("destroying listing thread"));
 
+    /* stop monitoring the channel's fd before destroying the listen qp */
+    ompi_btl_openib_fd_unmonitor(m->cm_channel->fd, NULL, NULL);
+
     /* destroy the listen queue pair. this will cause ibv_get_cq_event to
        return. */
     udcm_module_destroy_listen_qp (m);
-
-    /* stop monitoring the channel's fd */
-    ompi_btl_openib_fd_unmonitor(m->cm_channel->fd, NULL, NULL);
 
     udcm_module_destroy_buffers (m);
 
