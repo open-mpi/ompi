@@ -1,4 +1,4 @@
-/* -*- Mode: C; c-basic-offset:4 ; -*- */
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -822,7 +822,7 @@ static int init_one_port(opal_list_t *btl_list, mca_btl_openib_device_t *device,
             mca_btl_base_active_message_trigger[MCA_BTL_TAG_IB].cbfunc = btl_openib_control;
             mca_btl_base_active_message_trigger[MCA_BTL_TAG_IB].cbdata = NULL;
 
-	    openib_btl->super.btl_seg_size = sizeof (mca_btl_openib_segment_t);
+            openib_btl->super.btl_seg_size = sizeof (mca_btl_openib_segment_t);
 
             /* Check bandwidth configured for this device */
             sprintf(param, "bandwidth_%s", ibv_get_device_name(device->ib_dev));

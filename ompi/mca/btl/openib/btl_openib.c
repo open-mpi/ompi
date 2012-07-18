@@ -1,4 +1,4 @@
-/* -*- Mode: C; c-basic-offset:4 ; -*- */
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -1041,8 +1041,8 @@ int mca_btl_openib_free(
             to_com_frag(des)->sg_entry.addr =
                 (uint64_t)(uintptr_t)to_send_frag(des)->hdr;
             to_send_frag(des)->coalesced_length = 0;
-	    to_base_frag(des)->segment.base.seg_addr.pval =
-		to_send_frag(des)->hdr + 1;
+            to_base_frag(des)->segment.base.seg_addr.pval =
+                to_send_frag(des)->hdr + 1;
             assert(!opal_list_get_size(&to_send_frag(des)->coalesced_frags));
             /* fall throug */
         case MCA_BTL_OPENIB_FRAG_SEND_USER:
@@ -1155,23 +1155,23 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_src(
     }
 
     if (OPAL_UNLIKELY(0 == reserve)) {
-	frag = (mca_btl_openib_com_frag_t *) ib_frag_alloc(openib_btl, max_data, order, flags);
-	if(NULL == frag)
-	    return NULL;
+        frag = (mca_btl_openib_com_frag_t *) ib_frag_alloc(openib_btl, max_data, order, flags);
+        if(NULL == frag)
+            return NULL;
 
-	/* NTH: this frag will be ue used for either a get or put so we need to set the lval to be
-	   consistent with the usage in get and put. the pval will be restored in mca_btl_openib_free */
-	ptr = to_base_frag(frag)->segment.base.seg_addr.pval;
-	to_base_frag(frag)->segment.base.seg_addr.lval =
-	    (uint64_t)(uintptr_t) ptr;
+        /* NTH: this frag will be ue used for either a get or put so we need to set the lval to be
+           consistent with the usage in get and put. the pval will be restored in mca_btl_openib_free */
+        ptr = to_base_frag(frag)->segment.base.seg_addr.pval;
+        to_base_frag(frag)->segment.base.seg_addr.lval =
+            (uint64_t)(uintptr_t) ptr;
     } else {
-	frag =
-	    (mca_btl_openib_com_frag_t *) mca_btl_openib_alloc(btl, endpoint, order,
-							       max_data + reserve, flags);
-	if(NULL == frag)
-	    return NULL;
+        frag =
+            (mca_btl_openib_com_frag_t *) mca_btl_openib_alloc(btl, endpoint, order,
+                                                               max_data + reserve, flags);
+        if(NULL == frag)
+            return NULL;
 
-	ptr = to_base_frag(frag)->segment.base.seg_addr.pval;
+        ptr = to_base_frag(frag)->segment.base.seg_addr.pval;
     }
 
     iov.iov_len = max_data;
