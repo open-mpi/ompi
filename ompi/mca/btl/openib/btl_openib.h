@@ -390,6 +390,8 @@ typedef struct mca_btl_openib_device_t {
     mca_btl_openib_device_qp_t *qps;
     /* Maximum value supported by this device for max_inline_data */
     uint32_t max_inline_data;
+    /* Registration limit and current count */
+    uint64_t mem_reg_max, mem_reg_active;
 } mca_btl_openib_device_t;
 OBJ_CLASS_DECLARATION(mca_btl_openib_device_t);
 
@@ -467,6 +469,8 @@ struct mca_btl_openib_module_t {
     mca_btl_base_module_error_cb_fn_t error_cb; /**< error handler */
 
     mca_btl_openib_module_qp_t * qps;
+
+    int local_procs;                   /** number of local procs */
 };
 typedef struct mca_btl_openib_module_t mca_btl_openib_module_t;
 
