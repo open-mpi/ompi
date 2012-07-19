@@ -41,7 +41,7 @@ static const char FUNC_NAME[] = "MPI_Ireduce_scatter";
 int MPI_Ireduce_scatter(void *sendbuf, void *recvbuf, int *recvcounts,
                        MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPI_Request *request) 
 {
-    int i, err, size, count;
+    int i, err, size;
 
     MEMCHECKER(
         int rank;
