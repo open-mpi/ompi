@@ -45,6 +45,7 @@ int MPI_Ireduce_scatter(void *sendbuf, void *recvbuf, int *recvcounts,
 
     MEMCHECKER(
         int rank;
+        int count;
         
         size = ompi_comm_size(comm);
         rank = ompi_comm_rank(comm);
