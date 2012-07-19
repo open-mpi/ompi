@@ -34,7 +34,7 @@ int ompi_coll_libnbc_igather(void* sendbuf, int sendcount, MPI_Datatype sendtype
                              MPI_Datatype recvtype, int root, struct ompi_communicator_t *comm, ompi_request_t ** request,
                              struct mca_coll_base_module_2_0_0_t *module) {
   int rank, p, res, i;
-  MPI_Aint rcvext;
+  MPI_Aint rcvext = 0;
   NBC_Schedule *schedule;
   char *rbuf, inplace;
 #ifdef NBC_CACHE_SCHEDULE
@@ -53,12 +53,16 @@ int ompi_coll_libnbc_igather(void* sendbuf, int sendcount, MPI_Datatype sendtype
   if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Comm_rank() (%i)\n", res); return res; }
   res = MPI_Comm_size(comm, &p);
   if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Comm_rank() (%i)\n", res); return res; }
-  res = MPI_Type_extent(recvtype, &rcvext);
-  if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Type_extent() (%i)\n", res); return res; }
-
+  if (rank == root) {
+      res = MPI_Type_extent(recvtype, &rcvext);
+      if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Type_extent() (%i)\n", res); return res; }
+  }
   handle->tmpbuf = NULL;
-  
-  if((rank == root) && (!inplace)) {
+
+  if (inplace) {
+      sendcount = recvcount;
+      sendtype = recvtype;
+  } else if (rank == root) {
     rbuf = ((char *)recvbuf) + (rank*recvcount*rcvext);
     /* if I am the root - just copy the message (only without MPI_IN_PLACE) */
     res = NBC_Copy(sendbuf, sendcount, sendtype, rbuf, recvcount, recvtype, comm);
