@@ -12,7 +12,6 @@
 #include <assert.h>
 
 static inline int allred_sched_diss(int rank, int p, int count, MPI_Datatype datatype, void *sendbuf, void *recvbuf, MPI_Op op, NBC_Schedule *schedule, NBC_Handle *handle);
-static inline int allred_sched_chain(int rank, int p, int count, MPI_Datatype datatype, void *sendbuf, void *recvbuf, MPI_Op op, int size, int ext, NBC_Schedule *schedule, NBC_Handle *handle, int fragsize);
 static inline int allred_sched_ring(int rank, int p, int count, MPI_Datatype datatype, void *sendbuf, void *recvbuf, MPI_Op op, int size, int ext, NBC_Schedule *schedule, NBC_Handle *handle);
 
 #ifdef NBC_CACHE_SCHEDULE
@@ -73,7 +72,7 @@ int ompi_coll_libnbc_iallreduce(void* sendbuf, void* recvbuf, int count, MPI_Dat
   }
   
   /* algorithm selection */
-  if(p < 4 || size*count < 65536) {
+  if(p < 4 || size*count < 65536 || inplace) {
     alg = NBC_ARED_BINOMIAL;
   } else {
     alg = NBC_ARED_RING;
@@ -191,7 +190,7 @@ static inline int allred_sched_diss(int rank, int p, int count, MPI_Datatype dat
         /* we have to wait until we have the data */
         res = NBC_Sched_barrier(schedule);
         if(res != NBC_OK) { free(handle->tmpbuf); printf("Error in NBC_Sched_barrier() (%i)\n", res); return res; }
-        if(firstred) {
+        if(firstred && MPI_IN_PLACE != sendbuf) {
           /* perform the reduce with the senbuf */
           res = NBC_Sched_op(recvbuf, false, sendbuf, false, 0, true, count, datatype, op, schedule);
           firstred = 0;
@@ -208,7 +207,7 @@ static inline int allred_sched_diss(int rank, int p, int count, MPI_Datatype dat
       /* we have to send this round */
       vpeer = vrank - (1<<(r-1));
       VRANK2RANK(peer, vpeer, root)
-      if(firstred) {
+      if(firstred && MPI_IN_PLACE != sendbuf) {
         /* we have to use the sendbuf in the first round .. */
         res = NBC_Sched_send(sendbuf, false, count, datatype, peer, schedule);
       } else {
@@ -248,102 +247,6 @@ static inline int allred_sched_diss(int rank, int p, int count, MPI_Datatype dat
   }
   /* end of the bcast */
   
-  return NBC_OK;
-}
-
-static inline int allred_sched_chain(int rank, int p, int count, MPI_Datatype datatype, void *sendbuf, void *recvbuf, MPI_Op op, int size, int ext, NBC_Schedule *schedule, NBC_Handle *handle, int fragsize) {
-  int res, rrpeer, rbpeer, srpeer, sbpeer, numfrag, fragnum, fragcount, thiscount, bstart, bend;
-  long roffset, boffset;
-  
-  /* reduce peers */
-  rrpeer = rank+1; 
-  srpeer = rank-1;
-  /* bcast peers */
-  rbpeer = rank-1;
-  sbpeer = rank+1;
-  
-  if(count == 0) return NBC_OK;
-  
-  numfrag = count*size/fragsize;
-  if((count*size)%fragsize != 0) numfrag++;
-  fragcount = count/numfrag;
-
-  /* determine the starting round of bcast ... the first reduced packet
-   * is after p-1 rounds at rank 0 and will be sent back ... */
-  bstart = p-1+rank;
-  /* determine the ending round of bcast ... after arrival of the first
-   * packet, each rank has to forward numfrag packets */
-  bend = bstart+numfrag;
-  /*printf("[%i] numfrag: %i, count: %i, size: %i, fragcount: %i, bstart: %i, bend: %i\n", rank, numfrag, count, size, fragcount, bstart, bend);*/
-
-  /* this are two loops in one - this is a little nasty :-( */
-  for(fragnum = 0; fragnum < bend; fragnum++) {
-    roffset = fragnum*fragcount*ext;
-    boffset = (fragnum-bstart)*fragcount*ext;
-    thiscount = fragcount;
-
-    /* first numfrag rounds ... REDUCE to rank 0 */
-    if(fragnum < numfrag) {
-      if(fragnum == numfrag-1) {
-        /* last fragment may not be full */
-        thiscount = count-fragcount*fragnum;
-      }
-      /*printf("[%i] reduce %i elements from %lu\n", rank, thiscount, roffset); */
-
-      /* REDUCE - PART last node does not recv */
-      if(rank != p-1) {
-        res = NBC_Sched_recv((char*)roffset, true, thiscount, datatype, rrpeer, schedule);
-        if (NBC_OK != res) { printf("Error in NBC_Sched_recv() (%i)\n", res); return res; }
-        res = NBC_Sched_barrier(schedule);
-        /* root reduces into receivebuf */
-        if(rank == 0) {
-          res = NBC_Sched_op((char*)recvbuf+roffset, false, (char*)sendbuf+roffset, false, (char*)roffset, true, thiscount, datatype, op, schedule);
-        } else {
-          res = NBC_Sched_op((char*)roffset, true, (char*)sendbuf+roffset, false, (char*)roffset, true, thiscount, datatype, op, schedule);
-        }
-        res = NBC_Sched_barrier(schedule);
-      }
-
-      /* REDUCE PART root does not send */
-      if(rank != 0) {
-        /* rank p-1 has to send out of sendbuffer :) */
-        if(rank == p-1) {
-          res = NBC_Sched_send((char*)sendbuf+roffset, false, thiscount, datatype, srpeer, schedule);
-        } else {
-          res = NBC_Sched_send((char*)roffset, true, thiscount, datatype, srpeer, schedule);
-        }
-        if (NBC_OK != res) { printf("Error in NBC_Sched_send() (%i)\n", res); return res; }
-        /* this barrier here seems awkward but isn't!!!! */
-        /*res = NBC_Sched_barrier(schedule);*/
-      }
-    }
-
-    /* BCAST from rank 0 */
-    if(fragnum >= bstart) {
-      /*printf("[%i] bcast %i elements from %lu\n", rank, thiscount, boffset); */
-      if(fragnum == bend-1) {
-        /* last fragment may not be full */
-        thiscount = count-fragcount*(fragnum-bstart);
-      }
-      
-      /* BCAST PART root does not receive */
-      if(rank != 0) {
-        res = NBC_Sched_recv((char*)recvbuf+boffset, false, thiscount, datatype, rbpeer, schedule);
-        if (NBC_OK != res) { printf("Error in NBC_Sched_recv() (%i)\n", res); return res; }
-        res = NBC_Sched_barrier(schedule);
-      }
-      
-      /* BCAST PART last rank does not send */
-      if(rank != p-1) {
-        res = NBC_Sched_send((char*)recvbuf+boffset, false, thiscount, datatype, sbpeer, schedule);
-        if (NBC_OK != res) { printf("Error in NBC_Sched_send() (%i)\n", res); return res; }
-        res = NBC_Sched_barrier(schedule);
-      }
-    }
-  }
-
-  /*NBC_PRINT_SCHED(*schedule);*/
-
   return NBC_OK;
 }
 

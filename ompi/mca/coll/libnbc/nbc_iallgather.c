@@ -38,7 +38,7 @@ int ompi_coll_libnbc_iallgather(void* sendbuf, int sendcount, MPI_Datatype sendt
                                 struct mca_coll_base_module_2_0_0_t *module)
 {
   int rank, p, res, r;
-  MPI_Aint rcvext, sndext;
+  MPI_Aint rcvext;
   NBC_Schedule *schedule;
   char *rbuf, *sbuf, inplace;
 #ifdef NBC_CACHE_SCHEDULE
@@ -57,14 +57,15 @@ int ompi_coll_libnbc_iallgather(void* sendbuf, int sendcount, MPI_Datatype sendt
   if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Comm_rank() (%i)\n", res); return res; }
   res = MPI_Comm_size(comm, &p);
   if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Comm_size() (%i)\n", res); return res; }
-  res = MPI_Type_extent(sendtype, &sndext);
-  if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Type_extent() (%i)\n", res); return res; }
   res = MPI_Type_extent(recvtype, &rcvext);
   if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Type_extent() (%i)\n", res); return res; }
 
   handle->tmpbuf = NULL;
 
-  if(!((rank == 0) && inplace)) {
+  if (inplace) {
+      sendtype = recvtype;
+      sendcount = recvcount;
+  } else {
     /* copy my data to receive buffer */
     rbuf = ((char *)recvbuf) + (rank*recvcount*rcvext);
     res = NBC_Copy(sendbuf, sendcount, sendtype, rbuf, recvcount, recvtype, comm);
@@ -134,86 +135,3 @@ int ompi_coll_libnbc_iallgather(void* sendbuf, int sendcount, MPI_Datatype sendt
  
   return NBC_OK;
 }
-
-
-/* this is a new possible dissemination based allgather algorithm - we should
- * try it some time (big comm, small data) */
-#if 0
-
-static inline void diss_unpack(int rank, int vrank, int round, int p, int *pos, void *tmpbuf, int datasize, int slotsize, void *recvbuf, int sendcount, MPI_Datatype sendtype, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, NBC_Schedule *schedule) {
-  int r, res;
-  char *sbuf, *rbuf;
-  
-  sbuf = (char *)tmpbuf + (*pos*datasize);
-  rbuf = (char *)recvbuf + (vrank*slotsize);
-  printf("[%i] unpacking tmpbuf pos: %i (%lu) to rbuf elem: %i (%lu) - %i elems, datasize %i\n", rank, *pos, (unsigned long)sbuf, vrank, (unsigned long)rbuf, recvcount, datasize);
-  res = NBC_Sched_unpack(sbuf, recvcount, recvtype, rbuf, schedule);
-  if (NBC_OK != res) { printf("Error in NBC_Unpack() (%i)\n", res); }
-  *pos=*pos+1;
-  
-  for(r=0; r<=round; r++) {
-    if(r != 0) {
-      diss_unpack(rank, (vrank-(1<<(r-1))+p)%p, r-1, p, pos, tmpbuf, datasize, slotsize, recvbuf, sendcount, sendtype, recvcount, recvtype, comm, schedule);
-    }
-  }
-}
-
-static inline int a2a_sched_diss(int rank, int p, MPI_Aint sndext, MPI_Aint rcvext, NBC_Schedule* schedule, void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, NBC_Handle *handle) {
-  int res, r, maxround, size, speer, rpeer, pos, datasize;
-  char *sbuf, *rbuf;
-
-  res = NBC_OK;
-  if(p < 2) return res;
-  
-  maxround = (int)ceil((log(p)/LOG2));
-  
-  if(NBC_Type_intrinsic(sendtype)) {
-    datasize = sndext*sendcount;
-  } else {
-    res = MPI_Pack_size(sendcount, sendtype, comm, &datasize);
-    if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Pack_size() (%i)\n", res); return res; }
-  }
-    
-  /* tmpbuf is probably bigger than p -> next power of 2 */
-  handle->tmpbuf=malloc(datasize*(1<<maxround));
-
-  /* copy my send - data to temp send/recv buffer */
-  sbuf = ((char *)sendbuf) + (rank*sendcount*sndext);
-  /* pack send buffer */
-  if(NBC_Type_intrinsic(sendtype)) {
-    /* it is contiguous - we can just memcpy it */
-    memcpy(handle->tmpbuf, sbuf, datasize);
-  } else {
-    pos = 0;
-    res = MPI_Pack(sbuf, sendcount, sendtype, handle->tmpbuf, datasize, &pos, comm);
-    if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Pack() (%i)\n", res); return res; }
-  }
-  
-  printf("[%i] receive buffer is at %lu of size %i, maxround: %i\n", rank, (unsigned long)handle->tmpbuf, (int)sndext*sendcount*(1<<maxround), maxround);
-  for(r = 0; r < maxround; r++) {
-    size = datasize*(1<<r); /* size doubles every round */
-    rbuf = (char*)handle->tmpbuf+size;
-    sbuf = (char*)handle->tmpbuf;
-    
-    speer = (rank + (1<<r)) % p;
-    /* add p because modulo does not work with negative values */
-    rpeer = ((rank - (1<<r))+p) % p;
-    
-    printf("[%i] receiving %i bytes from host %i into rbuf %lu\n", rank, size, rpeer, (unsigned long)rbuf);
-    res = NBC_Sched_recv(rbuf, size, MPI_BYTE, rpeer, schedule);
-    if (NBC_OK != res) { printf("Error in NBC_Sched_recv() (%i)\n", res); return res; }
-    
-    printf("[%i] sending %i bytes to host %i from sbuf %lu\n", rank, size, speer, (unsigned long)sbuf);
-    res = NBC_Sched_send(sbuf, size, MPI_BYTE, speer, schedule);
-    if (NBC_OK != res) { printf("Error in NBC_Sched_send() (%i)\n", res); return res; }
-
-    res = NBC_Sched_barrier(schedule);
-    if (NBC_OK != res) { printf("Error in NBC_Sched_barrier() (%i)\n", res); return res; }
-  }
-    
-  pos = 0;
-  diss_unpack(rank, rank, r, p, &pos, handle->tmpbuf, datasize, recvcount*rcvext, recvbuf, sendcount, sendtype, recvcount, recvtype, comm, schedule);
-    
-  return NBC_OK;
-}
-#endif
