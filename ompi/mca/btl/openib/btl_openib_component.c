@@ -596,13 +596,6 @@ static int openib_reg_mr(void *reg_data, void *base, size_t size,
     enum ibv_access_flags access_flag = (enum ibv_access_flags) (IBV_ACCESS_LOCAL_WRITE |
         IBV_ACCESS_REMOTE_WRITE | IBV_ACCESS_REMOTE_READ);
 
-    if (device->mem_reg_max &&
-        device->mem_reg_max < (device->mem_reg_active + size)) {
-        return OMPI_ERR_OUT_OF_RESOURCE;
-    }
-
-    device->mem_reg_active += size;
-
 #if HAVE_DECL_IBV_ACCESS_SO
     if (reg->flags & MCA_MPOOL_FLAGS_SO_MEM) {
         access_flag |= IBV_ACCESS_SO;
@@ -644,9 +637,6 @@ static int openib_dereg_mr(void *reg_data, mca_mpool_base_registration_t *reg)
 #endif
 
     }
-
-    device->mem_reg_active -= (uint64_t) (reg->bound - reg->base + 1);
-
     openib_reg->mr = NULL;
     return OMPI_SUCCESS;
 }
@@ -828,7 +818,6 @@ static int init_one_port(opal_list_t *btl_list, mca_btl_openib_device_t *device,
 
             openib_btl->cpcs = NULL;
             openib_btl->num_cpcs = 0;
-            openib_btl->local_procs = 0;
 
             mca_btl_base_active_message_trigger[MCA_BTL_TAG_IB].cbfunc = btl_openib_control;
             mca_btl_base_active_message_trigger[MCA_BTL_TAG_IB].cbdata = NULL;
@@ -1680,10 +1669,6 @@ static int init_one_device(opal_list_t *btl_list, struct ibv_device* ib_dev)
         BTL_ERROR(("Failed malloc: %s:%d", __FILE__, __LINE__));
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
-
-    device->mem_reg_active = 0;
-    /* NTH: set some high default until we know how many local peers we have */
-    device->mem_reg_max    = 1ull << 48;
 
     device->ib_dev = ib_dev;
     device->ib_dev_context = ibv_open_device(ib_dev);

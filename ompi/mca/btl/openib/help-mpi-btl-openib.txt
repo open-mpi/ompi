@@ -689,22 +689,3 @@ device).
 
 Use "ibv_devinfo -v" on the local host to see the GID table of this
 device.
-[reg mem limit low]
-WARNING: It appears that your OpenFabrics subsystem is configured to only
-allow registering part of your physical memory.  This can cause MPI jobs to
-run with erratic performance, hang, and/or crash.
-
-This may be caused by your OpenFabrics vendor limiting the amount of
-physical memory that can be registered.  You should investigate the
-relevant Linux kernel module parameters that control how much physical
-memory can be registered, and increase them to allow registering all
-physical memory on your machine.
-
-See this Open MPI FAQ item for more information on these Linux kernel module
-parameters:
-
-    http://www.open-mpi.org/faq/?category=openfabrics#ib-locked-pages
-
-  Local host:              %s
-  Registerable memory:     %lu MiB
-  Total memory:            %lu MiB
