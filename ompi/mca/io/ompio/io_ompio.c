@@ -350,12 +350,12 @@ int ompi_io_ompio_decode_datatype (mca_io_ompio_file_t *fh,
                                    &temp_count, 
                                    &temp_data)) {
 /* #if 0 */
-        printf ("%d: New raw extraction (iovec_count = %d, max_data = %d)\n",
-                fh->f_rank,temp_count, temp_data);
+        printf ("%d: New raw extraction (iovec_count = %d, max_data = %lu)\n",
+                fh->f_rank,temp_count, (unsigned long)temp_data);
         for (i = 0; i < temp_count; i++) {
-            printf ("%d: \t{%p, %d}\n",fh->f_rank,
+            printf ("%d: \t{%p, %lu}\n",fh->f_rank,
 		    temp_iov[i].iov_base,
-		    temp_iov[i].iov_len);
+		    (unsigned long)temp_iov[i].iov_len);
         }
 /* #endif */
 
