@@ -119,7 +119,7 @@ int opal_info_init(int argc, char **argv,
     char **app_env = NULL, **global_env = NULL;
 
     /* Initialize the argv parsing handle */
-    if (OPAL_SUCCESS != opal_init_util(&argc, &argv)) {
+    if (OPAL_SUCCESS != (ret = opal_init_util(&argc, &argv))) {
         opal_show_help("help-opal_info.txt", "lib-call-fail", true, 
                        "opal_init_util", __FILE__, __LINE__, NULL);
         exit(ret);
