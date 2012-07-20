@@ -46,7 +46,7 @@ int ompi_modex_send(const mca_base_component_t *source_component,
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
-    bo.bytes = (void*)data;
+    bo.bytes = (uint8_t *)data;
     bo.size = size;
 
     /* the store API makes a copy of the provided data */
@@ -116,7 +116,7 @@ ompi_modex_send_string(const char* key,
     int rc;
     opal_byte_object_t bo;
 
-    bo.bytes = (void*)buffer;
+    bo.bytes = (uint8_t *)buffer;
     bo.size = size;
 
     /* the store API makes a copy of the provided data */
