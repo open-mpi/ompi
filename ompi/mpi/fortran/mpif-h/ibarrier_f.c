@@ -69,7 +69,6 @@ void ompi_ibarrier_f(MPI_Fint *comm, MPI_Fint *request, MPI_Fint *ierr)
     int ierr_c;
     MPI_Comm c_comm;
     MPI_Request c_req;
-    volatile int rank;
 
     c_comm = MPI_Comm_f2c(*comm);
 

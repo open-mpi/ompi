@@ -4,6 +4,7 @@
  *                    Corporation.  All rights reserved.
  * Copyright (c) 2006 The Technical University of Chemnitz. All 
  *                    rights reserved.
+ * Copyright (c) 2012      Sandia National Laboratories. All rights reserved.
  *
  * Author(s): Torsten Hoefler <htor@cs.indiana.edu>
  *
@@ -11,7 +12,7 @@
 #include "nbc_internal.h"
 
 /* an reduce_csttare schedule can not be cached easily because the contents
- * ot the recvcounts array may change, so a comparison of the address
+ * ot the recvcount value may change, so a comparison of the address
  * would not be sufficient ... we simply do not cache it */
 
 /* binomial reduce to rank 0 followed by a linear scatter ...
@@ -27,7 +28,7 @@
  *    
  */
 
-int ompi_coll_libnbc_ireduce_scatter(void* sendbuf, void* recvbuf, int *recvcounts, MPI_Datatype datatype, 
+int ompi_coll_libnbc_ireduce_scatter_block(void* sendbuf, void* recvbuf, int recvcount, MPI_Datatype datatype, 
                                      MPI_Op op, struct ompi_communicator_t *comm, ompi_request_t ** request,
                                      struct mca_coll_base_module_2_0_0_t *module) {
   int peer, rank, maxr, p, r, res, count, offset, firstred;
@@ -59,7 +60,7 @@ int ompi_coll_libnbc_ireduce_scatter(void* sendbuf, void* recvbuf, int *recvcoun
   maxr = (int)ceil((log(p)/LOG2));
 
   count = 0;
-  for(r=0;r<p;r++) count += recvcounts[r];
+  for(r=0;r<p;r++) count += recvcount;
   
   handle->tmpbuf = malloc(ext*count*2);
   if(handle->tmpbuf == NULL) { printf("Error in malloc()\n"); return NBC_OOR; }
@@ -117,20 +118,20 @@ int ompi_coll_libnbc_ireduce_scatter(void* sendbuf, void* recvbuf, int *recvcoun
 
   /* rank 0 is root and sends - all others receive */
   if(rank != 0) {
-    res = NBC_Sched_recv(recvbuf, false, recvcounts[rank], datatype, 0, schedule);
+    res = NBC_Sched_recv(recvbuf, false, recvcount, datatype, 0, schedule);
    if (NBC_OK != res) { free(handle->tmpbuf); printf("Error in NBC_Sched_recv() (%i)\n", res); return res; }
   }
 
   if(rank == 0) {
     offset = 0;
     for(r=1;r<p;r++) {
-      offset += recvcounts[r-1];
+      offset += recvcount;
       sbuf = ((char *)redbuf) + (offset*ext);
       /* root sends the right buffer to the right receiver */
-      res = NBC_Sched_send(sbuf-(unsigned long)handle->tmpbuf, true, recvcounts[r], datatype, r, schedule);
+      res = NBC_Sched_send(sbuf-(unsigned long)handle->tmpbuf, true, recvcount, datatype, r, schedule);
       if (NBC_OK != res) { free(handle->tmpbuf); printf("Error in NBC_Sched_send() (%i)\n", res); return res; }
     }
-    res = NBC_Sched_copy(redbuf-(unsigned long)handle->tmpbuf, true, recvcounts[0], datatype, recvbuf, false, recvcounts[0], datatype, schedule);
+    res = NBC_Sched_copy(redbuf-(unsigned long)handle->tmpbuf, true, recvcount, datatype, recvbuf, false, recvcount, datatype, schedule);
     if (NBC_OK != res) { free(handle->tmpbuf); printf("Error in NBC_Sched_copy() (%i)\n", res); return res; }
   }
 

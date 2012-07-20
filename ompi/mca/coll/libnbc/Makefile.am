@@ -23,6 +23,7 @@ sources = \
         coll_libnbc.h \
 	coll_libnbc_component.c \
 	coll_libnbc_not_implemented.c \
+	coll_libnbc_ireduce_scatter_block.c \
 	nbc.c \
 	nbc_internal.h \
 	libdict/dict.h \

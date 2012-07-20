@@ -22,6 +22,7 @@
 
 #include "ompi/mca/coll/coll.h"
 #include "ompi/request/request.h"
+#include "opal/sys/atomic.h"
 
 BEGIN_C_DECLS
 
@@ -62,6 +63,7 @@ struct ompi_coll_libnbc_component_t {
     ompi_free_list_t requests;
     opal_list_t active_requests;
     uint32_t active_comms;
+    opal_atomic_lock_t progress_lock;
 };
 typedef struct ompi_coll_libnbc_component_t ompi_coll_libnbc_component_t;
 
@@ -95,8 +97,7 @@ struct ompi_coll_libnbc_request_t {
     long row_offset;
     int tag;
     volatile int req_count;
-    /*ompi_request_t **req_array;*/
-    MPI_Request *req_array;
+    ompi_request_t **req_array;
     NBC_Comminfo *comminfo;
     volatile NBC_Schedule *schedule;
     void *tmpbuf; /* temporary buffer e.g. used for Reduce */

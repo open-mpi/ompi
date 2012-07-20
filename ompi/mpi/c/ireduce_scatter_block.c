@@ -99,7 +99,7 @@ int MPI_Ireduce_scatter_block(void *sendbuf, void *recvbuf, int recvcount,
     err = comm->c_coll.coll_ireduce_scatter_block(sendbuf, recvbuf, recvcount,
                                                   datatype, op, comm,
                                                   request,
-                                                  comm->c_coll.coll_reduce_scatter_block_module);
+                                                  comm->c_coll.coll_ireduce_scatter_block_module);
     OBJ_RELEASE(op);
     OMPI_ERRHANDLER_RETURN(err, comm, err, FUNC_NAME);
 }

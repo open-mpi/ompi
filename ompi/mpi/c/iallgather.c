@@ -88,28 +88,6 @@ int MPI_Iallgather(void *sendbuf, int sendcount, MPI_Datatype sendtype,
         OMPI_ERRHANDLER_CHECK(err, comm, err, FUNC_NAME);
     }
 
-    /* Do we need to do anything?  Everyone had to give the same send
-       signature, which means that everyone must have given a
-       sendcount > 0 if there's anything to send for the intra-communicator
-       case.  If we're doing IN_PLACE, however, check recvcount, 
-       not sendcount. */
-    if ( OMPI_COMM_IS_INTRA(comm) ) {
-       if ((MPI_IN_PLACE != sendbuf && 0 == sendcount) ||
-            (0 == recvcount)) {
-            return MPI_SUCCESS;
-       }
-    }
-    else if ( OMPI_COMM_IS_INTER(comm) ){
-        /* for inter comunicators, the communication pattern
-           need not be symmetric. Specifically, one group is
-	   allows to have sendcount=0, while the other has
-           a valid sendcount. Thus, the only way not to do
-           anything is if both sendcount and recvcount are zero. */
-        if ( 0 == sendcount && 0 == recvcount ) {
-            return MPI_SUCCESS;
-        }
-    }
-
     OPAL_CR_ENTER_LIBRARY();
 
     /* Invoke the coll component to perform the back-end operation */

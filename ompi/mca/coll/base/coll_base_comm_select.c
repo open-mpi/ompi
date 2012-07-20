@@ -152,6 +152,7 @@ int mca_coll_base_comm_select(ompi_communicator_t * comm)
         COPY(avail->ac_module, comm, gather);
         COPY(avail->ac_module, comm, gatherv);
         COPY(avail->ac_module, comm, reduce);
+        COPY(avail->ac_module, comm, reduce_scatter_block);
         COPY(avail->ac_module, comm, reduce_scatter);
         COPY(avail->ac_module, comm, scan);
         COPY(avail->ac_module, comm, scatter);
@@ -169,6 +170,7 @@ int mca_coll_base_comm_select(ompi_communicator_t * comm)
         COPY(avail->ac_module, comm, igather);
         COPY(avail->ac_module, comm, igatherv);
         COPY(avail->ac_module, comm, ireduce);
+        COPY(avail->ac_module, comm, ireduce_scatter_block);
         COPY(avail->ac_module, comm, ireduce_scatter);
         COPY(avail->ac_module, comm, iscan);
         COPY(avail->ac_module, comm, iscatter);
@@ -194,6 +196,7 @@ int mca_coll_base_comm_select(ompi_communicator_t * comm)
         (NULL == comm->c_coll.coll_gather) ||
         (NULL == comm->c_coll.coll_gatherv) ||
         (NULL == comm->c_coll.coll_reduce) ||
+        (NULL == comm->c_coll.coll_reduce_scatter_block) ||
         (NULL == comm->c_coll.coll_reduce_scatter) ||
         ((OMPI_COMM_IS_INTRA(comm)) && (NULL == comm->c_coll.coll_scan)) ||
         (NULL == comm->c_coll.coll_scatter) ||
@@ -210,6 +213,7 @@ int mca_coll_base_comm_select(ompi_communicator_t * comm)
         (NULL == comm->c_coll.coll_igather) ||
         (NULL == comm->c_coll.coll_igatherv) ||
         (NULL == comm->c_coll.coll_ireduce) ||
+        (NULL == comm->c_coll.coll_ireduce_scatter_block) ||
         (NULL == comm->c_coll.coll_ireduce_scatter) ||
         ((OMPI_COMM_IS_INTRA(comm)) && (NULL == comm->c_coll.coll_iscan)) ||
         (NULL == comm->c_coll.coll_iscatter) ||

@@ -111,27 +111,6 @@ int MPI_Iallgatherv(void *sendbuf, int sendcount, MPI_Datatype sendtype,
         }
     }
 
-    /* Do we need to do anything?  Everyone had to give the same 
-       signature, which means that everyone must have given a
-       sum(recvounts) > 0 if there's anything to do. */
-
-    if ( OMPI_COMM_IS_INTRA( comm) ) {
-	for (i = 0; i < ompi_comm_size(comm); ++i) {
-	    if (0 != recvcounts[i]) {
-		break;
-	    }
-	}
-	if (i >= ompi_comm_size(comm)) {
-	    return MPI_SUCCESS;
-	}
-    }
-    /* There is no rule that can be applied for inter-communicators, since
-       recvcount(s)=0 only indicates that the processes in the other group 
-       do not send anything, sendcount=0 only indicates that I do not send
-       anything. However, other processes in my group might very well send 
-       something */
-
-
     OPAL_CR_ENTER_LIBRARY();
 
     /* Invoke the coll component to perform the back-end operation */

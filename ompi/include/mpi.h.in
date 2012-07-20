@@ -2005,8 +2005,6 @@ OMPI_DECLSPEC  int PMPI_Reduce_scatter(void *sendbuf, void *recvbuf, int *recvco
                                        MPI_Datatype datatype, MPI_Op op, MPI_Comm comm);
 OMPI_DECLSPEC  int PMPI_Ireduce_scatter(void *sendbuf, void *recvbuf, int *recvcounts,
                                         MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPI_Request *request);
-OMPI_DECLSPEC  int PMPI_Reduce_scatter(void *sendbuf, void *recvbuf, int *recvcounts,
-                                       MPI_Datatype datatype, MPI_Op op, MPI_Comm comm);
 OMPI_DECLSPEC  int PMPI_Reduce_scatter_block(void *sendbuf, void *recvbuf, int recvcount,
                                              MPI_Datatype datatype, MPI_Op op, MPI_Comm comm);
 OMPI_DECLSPEC  int PMPI_Ireduce_scatter_block(void *sendbuf, void *recvbuf, int recvcount,

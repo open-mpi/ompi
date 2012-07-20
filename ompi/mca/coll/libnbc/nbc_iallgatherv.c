@@ -27,9 +27,9 @@ int ompi_coll_libnbc_iallgatherv(void* sendbuf, int sendcount, MPI_Datatype send
                                  struct mca_coll_base_module_2_0_0_t *module)
 {
   int rank, p, res, r, speer, rpeer;
-  MPI_Aint rcvext, sndext;
+  MPI_Aint rcvext;
   NBC_Schedule *schedule;
-  char *rbuf, inplace;
+  char *rbuf, *sbuf, inplace;
   NBC_Handle *handle;
   ompi_coll_libnbc_request_t **coll_req = (ompi_coll_libnbc_request_t**) request;
   ompi_coll_libnbc_module_t *libnbc_module = (ompi_coll_libnbc_module_t*) module;
@@ -38,12 +38,11 @@ int ompi_coll_libnbc_iallgatherv(void* sendbuf, int sendcount, MPI_Datatype send
   
   res = NBC_Init_handle(comm, coll_req, libnbc_module);
   if(res != NBC_OK) { printf("Error in NBC_Init_handle(%i)\n", res); return res; }
+  handle = (*coll_req);
   res = MPI_Comm_rank(comm, &rank);
   if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Comm_rank() (%i)\n", res); return res; }
   res = MPI_Comm_size(comm, &p);
   if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Comm_size() (%i)\n", res); return res; }
-  res = MPI_Type_extent(sendtype, &sndext);
-  if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Type_extent() (%i)\n", res); return res; }
   res = MPI_Type_extent(recvtype, &rcvext);
   if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Type_extent() (%i)\n", res); return res; }
 
@@ -55,12 +54,16 @@ int ompi_coll_libnbc_iallgatherv(void* sendbuf, int sendcount, MPI_Datatype send
   res = NBC_Sched_create(schedule);
   if(res != NBC_OK) { printf("Error in NBC_Sched_create, (%i)\n", res); return res; }
   
-  if(!inplace) {
+  if (inplace) {
+      sendtype = recvtype;
+      sendcount = recvcounts[rank];
+  } else {
     /* copy my data to receive buffer */
     rbuf = ((char *)recvbuf) + (displs[rank]*rcvext);
     NBC_Copy(sendbuf, sendcount, sendtype, rbuf, recvcounts[rank], recvtype, comm);
     if (NBC_OK != res) { printf("Error in NBC_Copy() (%i)\n", res); return res; }
   }
+  sbuf = ((char*) recvbuf) + (displs[rank]*rcvext);
 
   /* do p-1 rounds */
   for(r=1;r<p;r++) {
@@ -70,7 +73,7 @@ int ompi_coll_libnbc_iallgatherv(void* sendbuf, int sendcount, MPI_Datatype send
     
     res = NBC_Sched_recv(rbuf, false, recvcounts[rpeer], recvtype, rpeer, schedule);
     if (NBC_OK != res) { printf("Error in NBC_Sched_recv() (%i)\n", res); return res; }
-    res = NBC_Sched_send(sendbuf, false, sendcount, sendtype, speer, schedule);
+    res = NBC_Sched_send(sbuf, false, sendcount, sendtype, speer, schedule);
     if (NBC_OK != res) { printf("Error in NBC_Sched_send() (%i)\n", res); return res; }
   }
 

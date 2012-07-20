@@ -41,10 +41,11 @@ static const char FUNC_NAME[] = "MPI_Ireduce_scatter";
 int MPI_Ireduce_scatter(void *sendbuf, void *recvbuf, int *recvcounts,
                        MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPI_Request *request) 
 {
-    int i, err, size, count;
+    int i, err, size;
 
     MEMCHECKER(
         int rank;
+        int count;
         
         size = ompi_comm_size(comm);
         rank = ompi_comm_rank(comm);
@@ -103,20 +104,6 @@ int MPI_Ireduce_scatter(void *sendbuf, void *recvbuf, int *recvcounts,
           OMPI_CHECK_DATATYPE_FOR_SEND(err, datatype, recvcounts[i]);
           OMPI_ERRHANDLER_CHECK(err, comm, err, FUNC_NAME);
         }
-    }
-
-    /* MPI-1, p114, says that each process must supply at least one
-       element.  But at least the Pallas benchmarks call MPI_REDUCE
-       with a count of 0.  So be sure to handle it.  Grrr... */
-
-    size = ompi_comm_size(comm);
-    for (count = i = 0; i < size; ++i) {
-        if (0 == recvcounts[i]) {
-            ++count;
-        }
-    }
-    if (size == count) {
-        return MPI_SUCCESS;
     }
 
     OPAL_CR_ENTER_LIBRARY();

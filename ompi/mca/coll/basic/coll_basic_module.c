@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2012      Sandia National Laboratories. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -89,6 +90,7 @@ mca_coll_basic_comm_query(struct ompi_communicator_t *comm,
         basic_module->super.coll_gather     = mca_coll_basic_gather_inter;
         basic_module->super.coll_gatherv    = mca_coll_basic_gatherv_inter;
         basic_module->super.coll_reduce     = mca_coll_basic_reduce_lin_inter;
+        basic_module->super.coll_reduce_scatter_block = mca_coll_basic_reduce_scatter_block_inter;
         basic_module->super.coll_reduce_scatter = mca_coll_basic_reduce_scatter_inter;
         basic_module->super.coll_scan       = NULL;
         basic_module->super.coll_scatter    = mca_coll_basic_scatter_inter;
@@ -106,6 +108,7 @@ mca_coll_basic_comm_query(struct ompi_communicator_t *comm,
         basic_module->super.coll_gather     = mca_coll_basic_gather_intra;
         basic_module->super.coll_gatherv    = mca_coll_basic_gatherv_intra;
         basic_module->super.coll_reduce     = mca_coll_basic_reduce_lin_intra;
+        basic_module->super.coll_reduce_scatter_block = mca_coll_basic_reduce_scatter_block_intra;
         basic_module->super.coll_reduce_scatter = mca_coll_basic_reduce_scatter_intra;
         basic_module->super.coll_scan       = mca_coll_basic_scan_intra;
         basic_module->super.coll_scatter    = mca_coll_basic_scatter_intra;
@@ -123,6 +126,7 @@ mca_coll_basic_comm_query(struct ompi_communicator_t *comm,
         basic_module->super.coll_gather     = mca_coll_basic_gather_intra;
         basic_module->super.coll_gatherv    = mca_coll_basic_gatherv_intra;
         basic_module->super.coll_reduce     = mca_coll_basic_reduce_log_intra;
+        basic_module->super.coll_reduce_scatter_block = mca_coll_basic_reduce_scatter_block_intra;
         basic_module->super.coll_reduce_scatter = mca_coll_basic_reduce_scatter_intra;
         basic_module->super.coll_scan       = mca_coll_basic_scan_intra;
         basic_module->super.coll_scatter    = mca_coll_basic_scatter_intra;
