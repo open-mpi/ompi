@@ -175,87 +175,113 @@ OPAL_WITH_OPTION_MIN_MAX_VALUE(datarep_string 128 64 256)
 
 OMPI_DEF_CACHE_VAR(OMPI_MPIEXT_COMPONENTS none STRING "Specify user defined MPI Extended Interface Components." 1 1)
 
-OMPI_DEF_OPT(MCA_ompi_mtl_DIRECT_CALL "Whether mtl should use direct calls instead of components." OFF)
+OMPI_DEF(MCA_ompi_mtl_DIRECT_CALL 0 "Whether mtl should use direct calls instead of components." 0 1)
 
-OMPI_DEF_OPT(MCA_ompi_pml_DIRECT_CALL "Whether pml should use direct calls instead of components." OFF)
+OMPI_DEF(MCA_ompi_pml_DIRECT_CALL 0 "Whether pml should use direct calls instead of components." 0 1)
 
-OMPI_DEF_OPT(MPI_PARAM_CHECK "Whether we want to check MPI parameters always, never, or decide at run-time." OFF)
+OMPI_DEF_OPT(enable-mpi-param-check MPI_PARAM_CHECK "Whether we want to check MPI parameters always, never, or decide at run-time." OFF)
 
-OMPI_DEF_OPT(OPAL_ENABLE_DEBUG "Whether we want developer-level debugging code or not." OFF)
+OMPI_DEF_OPT(enable-debug OPAL_ENABLE_DEBUG "Whether we want developer-level debugging code or not." OFF)
 
-OMPI_DEF_OPT(OPAL_ENABLE_HETEROGENEOUS_SUPPORT "Enable features required for heterogeneous support." OFF)
+OMPI_DEF_OPT(enable-heterogeneous-support OPAL_ENABLE_HETEROGENEOUS_SUPPORT "Enable features required for heterogeneous support." OFF)
 
-OMPI_DEF_OPT(OPAL_ENABLE_MEM_DEBUG "Whether we want the memory debug or not." OFF)
+OMPI_DEF_OPT(enable-mem-debug OPAL_ENABLE_MEM_DEBUG "Whether we want the memory debug or not." OFF)
 
-OMPI_DEF_OPT(OPAL_ENABLE_MEM_PROFILE "Whether we want the memory profiling or not." OFF)
+OMPI_DEF_OPT(enable-mem-profile OPAL_ENABLE_MEM_PROFILE "Whether we want the memory profiling or not." OFF)
 
-OMPI_DEF_OPT(OMPI_ENABLE_MPI_PROFILING "Whether we want MPI profiling or not." ON)
+OMPI_DEF_OPT(enable-mpi-profiling OMPI_ENABLE_MPI_PROFILING "Whether we want MPI profiling or not." ON)
 
-OMPI_DEF_OPT(OMPI_ENABLE_THREAD_MULTIPLE "Enable MPI_THREAD_MULTIPLE." OFF)
+OMPI_DEF_OPT(enable-thread-multiple OMPI_ENABLE_THREAD_MULTIPLE "Enable MPI_THREAD_MULTIPLE." OFF)
 
 OMPI_DEF(OMPI_ENABLE_PROGRESS_THREADS 0 "Hardwire OMPI progress threads to be off." 0 1)
 
 OMPI_DEF(ORTE_ENABLE_PROGRESS_THREADS 0 "Hardwire ORTE progress threads to be off." 0 1)
 
-OMPI_DEF_OPT(OPAL_ENABLE_MULTI_THREADS "Whether we should enable OPAL thread support." OFF)
+OMPI_DEF_OPT(enable-multi-threads OPAL_ENABLE_MULTI_THREADS "Whether we should enable OPAL thread support." OFF)
 
-OMPI_DEF_OPT(OPAL_ENABLE_PTY_SUPPORT "Whether we should enable PTY support for STDIO forwarding." OFF)
+OMPI_DEF_OPT(enable-pty-support OPAL_ENABLE_PTY_SUPPORT "Whether we should enable PTY support for STDIO forwarding." OFF)
 
-OMPI_DEF_OPT ( OMPI_GROUP_SPARSE "Wether we want sparse process groups." OFF)
+OMPI_DEF_OPT(enable-sparse-group OMPI_GROUP_SPARSE "Wether we want sparse process groups." OFF)
 
-OMPI_DEF_OPT (OMPI_PROVIDE_MPI_FILE_INTERFACE "Whether OMPI should provide MPI File interface" ON)
+OMPI_DEF(OMPI_PROVIDE_MPI_FILE_INTERFACE 1 "Whether OMPI should provide MPI File interface" 0 1)
 
-OMPI_DEF_OPT(OMPI_WANT_CXX_BINDINGS "Whether we want MPI cxx support or not." ON)
+OMPI_DEF_OPT(enable-mpi-cxx OMPI_BUILD_CXX_BINDINGS "Whether we want MPI cxx support or not." ON)
 
-OMPI_DEF_OPT(OMPI_WANT_FORTRAN_BINDINGS "Whether we want MPI FORTRAN support or not." OFF)
+OMPI_DEF_OPT(enable-mpi-fortran OMPI_BUILD_FORTRAN_USEMPI_BINDINGS "Whether we want MPI FORTRAN support or not." OFF)
 
-OMPI_DEF_OPT(OMPI_WANT_F90_BINDINGS "Whether we want MPI F90 support or not." OFF)
+OMPI_DEF(OMPI_BUILD_FORTRAN_F08_SUBARRAYS 0 "fortran compiler has fortran08 subarrays" 0 1)
 
-OMPI_DEF_OPT(OMPI_WANT_MPI_CXX_SEEK "Do we want to try to work around C++ bindings SEEK_* issue?" OFF)
+OMPI_DEF(OMPI_FORTRAN_HAVE_PRIVATE 0 "fortran compiler has private" 0 1)
 
-OMPI_DEF_OPT(OMPI_WANT_PERUSE "Whether the peruse interface should be enabled." OFF)
+OMPI_DEF(OMPI_FORTRAN_HAVE_ABSTRACT 0 "fortran compiler has abstract" 0 1)
 
-OMPI_DEF_OPT( OPAL_WANT_PRETTY_PRINT_STACKTRACE "Whether we want pretty-print stack trace feature." ON)
+OMPI_DEF(OMPI_FORTRAN_HAVE_ASYNCHRONOUS 0 "fortran compiler has asynchronous" 0 1)
 
-OMPI_DEF_OPT( OPAL_WANT_SMP_LOCKS "Whether we want to have smp locks in atomic ops or not." ON)
+OMPI_DEF(OMPI_FORTRAN_HAVE_PROCEDURE 0 "fortran compiler has procedure" 0 1)
 
-OMPI_DEF_OPT( OPAL_ENABLE_FT "Enable fault tolerance general components and logic." ON)
+OMPI_DEF(OMPI_FORTRAN_NEED_WRAPPER_ROUTINES 0 "fortran compiler needs wrapper routines" 0 1)
 
-OMPI_DEF_OPT( OPAL_ENABLE_FT_CR "Enable fault tolerance checkpoint/restart components and logic." OFF)
+OMPI_DEF(OMPI_FORTRAN_HAVE_IGNORE_TKR 0 "fortran compiler has ignore tkr" 0 1)
 
-OMPI_DEF_OPT( OPAL_ENABLE_FT_THREAD "Enable fault tolerance thread in Open PAL." OFF)
+OMPI_DEF(OMPI_FORTRAN_HAVE_F08_ASSUMED_SHAPE 0 "fortran compiler has f08 assumed shape" 0 1)
 
-OMPI_DEF_OPT( OPAL_ENABLE_IPV6 "Enable IPv6 support, but only if the underlying system supports it." ON)
+OMPI_DEF(OMPI_FORTRAN_HAVE_OPTIONAL_ARGS 0 "fortran compiler has f08 assumed shape" 0 1)
 
-OMPI_DEF_OPT( OPAL_ENABLE_TRACE "Enable run-time tracing of internal functions." OFF)
+OMPI_DEF(OMPI_FORTRAN_HAVE_BIND_C 0 "fortran compiler has f08 assumed shape" 0 1)
 
-OMPI_DEF_OPT( ORTE_DISABLE_FULL_SUPPORT "Enable full RTE support (Default OFF)." OFF)
+OMPI_DEF(OMPI_FORTRAN_IGNORE_TKR_PREDECL 0 "fortran compiler has f08 assumed shape" 0 1)
 
-OMPI_DEF_OPT( ORTE_WANT_ORTERUN_PREFIX_BY_DEFAULT "Whether we want orterun to effect \"--prefix $prefix\" by default." ON)
+OMPI_DEF(OMPI_BUILD_FORTRAN_USEMPIF08_BINDINGS 0 "fortran compiler has f08 assumed shape" 0 1)
 
-OMPI_DEF_OPT( OMPI_WANT_MPI_INTERFACE_WARNING "enable warnings in wrong (e.g. deprecated) usage in user-level code (default: disabled)." OFF)
+OMPI_DEF(OMPI_BUILD_FORTRAN_MPIFH_BINDINGS 0 "fortran compiler has f08 assumed shape" 0 1)
 
-OMPI_DEF_OPT(ORTE_WANT_CCP "Whether we want to have the CCP remote process launch support." ON)
+OMPI_DEF_OPT(enable-mpi-cxx-seek OMPI_WANT_MPI_CXX_SEEK "Do we want to try to work around C++ bindings SEEK_* issue?" OFF)
 
-OMPI_DEF_OPT(OPAL_WANT_LIBLTDL "Whether we want to enable DSO build for Windows." OFF)
+OMPI_DEF_OPT(enable-peruse OMPI_WANT_PERUSE "Whether the peruse interface should be enabled." OFF)
 
-OMPI_DEF_OPT(OMPI_WANT_NETWORK_DIRECT "Whether we want to enable Network Direct support." ON)
+OMPI_DEF_OPT(enable-pretty-print-stacktrace OPAL_WANT_PRETTY_PRINT_STACKTRACE "Whether we want pretty-print stack trace feature." ON)
 
-OMPI_DEF_OPT(ORTE_WANT_NOTIFIER_LOG_EVENT "if the notifier_log_event should be enabled" OFF)
+OMPI_DEF_OPT(enable-smp-locksb OPAL_WANT_SMP_LOCKS "enable smp locks in atomic ops. Do not disable if code will ever run in SMP or multi-threaded environment. (default: enabled)." ON)
 
-OMPI_DEF_OPT(OMPI_WANT_OFED "Whether we want to enable OFED support." OFF)
+#OMPI_DEF_OPT(OPAL_ENABLE_FT "Enable fault tolerance general components and logic." ON)
 
-OMPI_DEF_OPT(OMPI_WANT_WINVERBS "Whether we want to enable Winverbs support." ON)
+#OMPI_DEF_OPT( OPAL_ENABLE_FT_CR "Enable fault tolerance checkpoint/restart components and logic." OFF)
 
-OMPI_DEF_OPT(OPAL_ENABLE_CRDEBUG "Whether we want checkpoint/restart enabled debugging functionality or not." OFF)
+#OMPI_DEF_OPT( OPAL_ENABLE_FT_THREAD "Enable fault tolerance thread in Open PAL." OFF)
 
-OMPI_DEF_OPT(OPAL_EVENT_HAVE_THREAD_SUPPORT "Whether we want to enable event library internal thread support." OFF)
+OMPI_DEF_OPT(enable-ipv6 OPAL_ENABLE_IPV6 "Enable IPv6 support, but only if the underlying system supports it. (default: disabled)" OFF)
 
-OMPI_DEF_OPT(OMPI_RELEASE_BUILD "Whether it is a build for binary release (this will skip the path settings in mca_installdirs_config)." OFF)
+OMPI_DEF_OPT(enable-trace OPAL_ENABLE_TRACE "Enable internal tracing of OMPI/ORTE/OPAL calls -- used only for developer debugging, not tracing of MPI applications (default: disabled)." OFF)
 
-OMPI_DEF_OPT(OMPI_WANT_JAVA_BINDINGS "Whether we want to enable MPI Java support." OFF)
+OMPI_DEF_OPT(without-rte-support ORTE_DISABLE_FULL_SUPPORT "Build without RTE support for systems that do not require it (default: full RTE support built)." OFF)
 
-OMPI_DEF_OPT(OPAL_HAVE_HWLOC "Whether we have hwloc support or not" ON)
+OMPI_DEF_OPT(enable-orterun-prefix-by-default ORTE_WANT_ORTERUN_PREFIX_BY_DEFAULT " Make \"orterun ...\" behave exactly the same as \"orterun --prefix \$prefix\" (where \$prefix is the value given to --prefix in configure). (default enabled)" ON)
+
+OMPI_DEF_OPT(enable-mpi-interface-warning OMPI_WANT_MPI_INTERFACE_WARNING "enable compile-time warnings when deprecated MPI functions are used (default: enabled)." ON)
+
+OMPI_DEF_OPT(enable-ccp ORTE_WANT_CCP "Whether we want to have the CCP remote process launch support." ON)
+
+OMPI_DEF_OPT(enable-libltdl-build OPAL_WANT_LIBLTDL "Whether we want to enable DSO build for Windows." OFF)
+
+OMPI_DEF_OPT(enable-network-direct OMPI_WANT_NETWORK_DIRECT "Whether we want to enable Network Direct support." ON)
+
+#OMPI_DEF_OPT(ORTE_WANT_NOTIFIER_LOG_EVENT "if the notifier_log_event should be enabled" OFF)
+
+OMPI_DEF_OPT(enable-ofed OMPI_WANT_OFED "Whether we want to enable OFED support." OFF)
+
+OMPI_DEF_OPT(enable-winverbs OMPI_WANT_WINVERBS "Whether we want to enable Winverbs support." ON)
+
+OMPI_DEF_OPT(enable-crdebug OPAL_ENABLE_CRDEBUG "enable checkpoint/restart debugging functionality (default: disabled)." OFF)
+
+OMPI_DEF_OPT(enable-event-thread-support OPAL_EVENT_HAVE_THREAD_SUPPORT "Whether we want to enable event library internal thread support." OFF)
+
+OMPI_DEF_OPT(enable-release-build OMPI_RELEASE_BUILD "Whether it is a build for binary release (this will skip the path settings in mca_installdirs_config). (default: disabled)" OFF)
+
+OMPI_DEF_OPT(enable-java-bindings OMPI_WANT_JAVA_BINDINGS "Whether we want to enable MPI Java support. (default: disabled)" OFF)
+
+OMPI_DEF_OPT(enable-hwloc OPAL_HAVE_HWLOC "Whether we have hwloc support or not. (default: enabled)" ON)
+
+OMPI_DEF(OPAL_HAVE_HWLOC_XML 1 "Enable xml support or not" 0 1)
 
 OMPI_DEF(OMPI_ENABLE_CONTRIB_vt 0 "Whether we want to enable VampirTrace support." 0 1)
 
@@ -628,7 +654,7 @@ OMPI_CHECK_TYPES (uintptr_t UINTPTR_T none c)
 ###################################################################
 #                      Check Fortran 77 types                     #
 ###################################################################
-INCLUDE(setup_FORTRAN)
+INCLUDE(setup_fortran)
 INCLUDE(fortran_check)
 INCLUDE(fortran_check_real16_c_equiv)
 INCLUDE(fortran_get_value_true)
@@ -736,6 +762,8 @@ IF(WIN32)
 
   OMPI_DEF(MCA_timer_IMPLEMENTATION_HEADER "opal/mca/timer/windows/timer_windows.h" "Header to include for timer implementation." 1 1)
 
+  OMPI_DEF(MCA_hwloc_IMPLEMENTATION_HEADER "opal/mca/hwloc/hwloc142/hwloc142.h" "Header to include for hwloc implementation." 1 1)
+
   OMPI_DEF(MCA_memory_IMPLEMENTATION_HEADER "opal/mca/memory/base/empty.h" "Header to include for memory implementation." 1 1)
 
   OMPI_DEF(OPAL_ASSEMBLY_ARCH "OMPI_WINDOWS" "Architecture type of assembly to use for atomic operations." 0 1)
@@ -757,9 +785,7 @@ IF(WIN32)
   OMPI_DEF_CACHE(MCA_pml_DIRECT_CALL_HEADER " " STRING "Header pml includes to be direct called." 1 1)
 
   OMPI_DEF_CACHE(OMPI_MPI_CONTRIBS none STRING "List of contributed package names that will be built." 1 1)
-  
-  OMPI_DEF(OPAL_HAVE_HWLOC_XML 0 "Enable xml support or not" 0 1)
-  
+
   CHECK_C_INLINE()
 
 ENDIF(WIN32)

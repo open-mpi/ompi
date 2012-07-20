@@ -29,6 +29,9 @@ IF(OMPI_WANT_FORTRAN_BINDINGS AND NOT FORTRAN_SETUP_DONE)
 
   SET(FORTRAN ${FORTRAN_NAME} CACHE INTERNAL "Name of the fortran compiler.")
 
+  OMPI_DEF(OMPI_FC ${FORTRAN} "The fortran compiler name." 1 1)
+  OMPI_DEF(OMPI_FC_ABSOLUTE ${CMAKE_Fortran_COMPILER} "The absolute path of the fortran compiler." 1 1)
+
   # Default compiler settings.
   IF(${FORTRAN} STREQUAL "ifort.exe")
     #settings for Intel Fortran

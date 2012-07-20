@@ -63,7 +63,6 @@ typedef struct opal_hwloc_base_component_2_0_0_t opal_hwloc_component_t;
     MCA_BASE_VERSION_2_0_0, \
     "hwloc", 2, 0, 0
 
-END_C_DECLS
 
 /* Define a hierarchical level value that
  * helps resolve the hwloc behavior of
@@ -215,5 +214,7 @@ OPAL_DECLSPEC extern hwloc_obj_type_t opal_hwloc_levels[];
 OPAL_DECLSPEC extern bool opal_hwloc_use_hwthreads_as_cpus;
 
 #endif
+
+END_C_DECLS
 
 #endif /* OPAL_HWLOC_H_ */

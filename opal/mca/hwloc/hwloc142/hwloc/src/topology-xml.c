@@ -13,7 +13,9 @@
 #include <private/debug.h>
 
 #include <assert.h>
+#ifdef HAVE_STRINGS_H
 #include <strings.h>
+#endif
 
 #ifdef HWLOC_HAVE_LIBXML2
 #include <libxml/parser.h>

@@ -14,7 +14,9 @@
 
 #include <limits.h>
 #include <assert.h>
+#ifdef HAVE_STRINGS_H
 #include <strings.h>
+#endif
 
 /* Read from DESCRIPTION a series of integers describing a symmetrical
    topology and update `topology->synthetic_description' accordingly.  On
