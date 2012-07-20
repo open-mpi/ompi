@@ -122,6 +122,7 @@ EXTRA_DIST = \
         platform/win32/CMakeModules/fortran_get_sizeof.cmake \
         platform/win32/CMakeModules/setup_fortran.cmake \
         platform/win32/CMakeModules/fortran_check_real16_c_equiv.cmake \
+        platform/win32/CMakeModules/opal_hwloc_config.cmake \
         platform/win32/include/hwloc/autogen/config.h \
         platform/win32/include/hwloc/bitmap.h \
         platform/win32/include/hwloc/cpuset.h \

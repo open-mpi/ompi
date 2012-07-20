@@ -95,6 +95,10 @@ typedef DWORD in_port_t;
 typedef char* caddr_t;
 typedef unsigned int uint;
 
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+
 #ifdef _MSC_VER
 #if defined(OMPI_BUILDING) && OMPI_BUILDING
 #include "opal/win32/ompi_uio.h"

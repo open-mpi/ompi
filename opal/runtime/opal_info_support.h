@@ -52,7 +52,6 @@ typedef struct {
 } opal_info_component_map_t;
 OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_info_component_map_t);
 
-END_C_DECLS
 
 OPAL_DECLSPEC int opal_info_init(int argc, char **argv,
                                  opal_cmd_line_t *opal_info_cmd_line);
@@ -104,5 +103,7 @@ OPAL_DECLSPEC void opal_info_out(const char *pretty_message, const char *plain_m
 OPAL_DECLSPEC void opal_info_out_int(const char *pretty_message, 
                                      const char *plain_message, 
                                      int value);
+
+END_C_DECLS
 
 #endif

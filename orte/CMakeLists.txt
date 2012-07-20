@@ -49,6 +49,7 @@ ENDIF(NOT EXISTS ${PROJECT_SOURCE_DIR}/util/hostfile/hostfile_lex.c)
 INCLUDE (check_mca_subdirs)
 SET (ORTE_SOURCE_FILES ${ORTE_SOURCE_FILES} ${MCA_FILES})
 
+list(REMOVE_ITEM ORTE_SOURCE_FILES ${PROJECT_SOURCE_DIR}/runtime/data_type_support/orte_dt_size_fns.c)
 ADD_LIBRARY (libopen-rte ${ORTE_SOURCE_FILES})
 
 ADD_DEPENDENCIES(libopen-rte libopen-pal)

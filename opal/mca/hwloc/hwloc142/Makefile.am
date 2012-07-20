@@ -12,7 +12,8 @@
 EXTRA_DIST = \
         hwloc/doc/README.txt \
         hwloc/tests/README.txt \
-        hwloc/utils/README.txt
+        hwloc/utils/README.txt \
+        .windows
 
 SUBDIRS = hwloc
 
