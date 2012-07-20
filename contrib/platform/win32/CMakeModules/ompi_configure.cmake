@@ -243,11 +243,11 @@ OMPI_DEF_OPT(enable-pretty-print-stacktrace OPAL_WANT_PRETTY_PRINT_STACKTRACE "W
 
 OMPI_DEF_OPT(enable-smp-locksb OPAL_WANT_SMP_LOCKS "enable smp locks in atomic ops. Do not disable if code will ever run in SMP or multi-threaded environment. (default: enabled)." ON)
 
-#OMPI_DEF_OPT(OPAL_ENABLE_FT "Enable fault tolerance general components and logic." ON)
+OMPI_DEF_OPT(enable-ft OPAL_ENABLE_FT "Enable fault tolerance general components and logic." ON)
 
-#OMPI_DEF_OPT( OPAL_ENABLE_FT_CR "Enable fault tolerance checkpoint/restart components and logic." OFF)
+OMPI_DEF_OPT(enable-ft-cr OPAL_ENABLE_FT_CR "Enable fault tolerance checkpoint/restart components and logic." OFF)
 
-#OMPI_DEF_OPT( OPAL_ENABLE_FT_THREAD "Enable fault tolerance thread in Open PAL." OFF)
+OMPI_DEF_OPT(enable-ft-thread OPAL_ENABLE_FT_THREAD "Enable fault tolerance thread in Open PAL." OFF)
 
 OMPI_DEF_OPT(enable-ipv6 OPAL_ENABLE_IPV6 "Enable IPv6 support, but only if the underlying system supports it. (default: disabled)" OFF)
 
