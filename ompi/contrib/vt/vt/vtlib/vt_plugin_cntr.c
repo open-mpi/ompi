@@ -945,7 +945,7 @@ int32_t callback_function(void * ID, vt_plugin_cntr_timevalue tv) {
 #define WRITE_ASYNCH_DATA(thrd, tid, counter, timevalue, dummy_time)    \
 	if (VTTHRD_TRACE_STATUS(thrd) == VT_TRACE_ON){                   \
 	if (timevalue.timestamp > 0){                                    \
-		vt_guarantee_buffer(tid, sizeof(VTBuf_Entry_KeyValue)  \
+		vt_guarantee_buffer(tid, NULL, sizeof(VTBuf_Entry_KeyValue)  \
                                  +sizeof(VTBuf_Entry_Counter));    \
 		vt_next_async_time(tid,                                \
 		    		counter.vt_asynch_key,                                 \
@@ -1060,6 +1060,9 @@ void vt_plugin_cntr_write_post_mortem(VTThrd * thrd) {
   number_of_counters
     = plugin_cntr_defines->size_of_counters[VT_PLUGIN_CNTR_ASYNCH_POST_MORTEM];
   dummy_time = vt_pform_wtime();
+  /* set flag for writing post mortem counters; prevents writing of flush
+   * enter/exit event when flushing */
+  thrd->plugin_cntr_writing_post_mortem = 1;
   /* we assume that for each counter (not plugin),
    * the data is monotonically increasing */
   /* for all counters of this thread */
@@ -1079,6 +1082,8 @@ void vt_plugin_cntr_write_post_mortem(VTThrd * thrd) {
     }
     free(time_values);
   }
+  /* unset flag for writing post mortem counters */
+  thrd->plugin_cntr_writing_post_mortem = 0;
 }
 
 int vt_plugin_cntr_is_registered_monitor_thread() {

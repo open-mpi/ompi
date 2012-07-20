@@ -97,7 +97,8 @@ AC_DEFUN([ACVT_LIBWRAP],
 				AC_DEFINE_UNQUOTED([SHLIBC_PATHNAME],
 				["$shlibc_pathname"], [pathname of shared LIBC])
 
-				AC_CHECK_DECLS([__errno_location], [], [], [#include <errno.h>])
+				AC_CHECK_DECLS([__errno_location], [],
+				[AC_CHECK_DECLS([_Errno], [], [], [#include <errno.h>])], [#include <errno.h>])
 			],
 			[
 				AC_MSG_RESULT([unknown])

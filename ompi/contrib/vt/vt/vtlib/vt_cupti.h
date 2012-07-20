@@ -31,20 +31,8 @@
     vt_cupti_handleError(_err, _msg,__FILE__, __LINE__); \
   }
 
-/* flag: tracing of cudaMalloc*() and cudaFree*() enabled? */
-EXTERN uint8_t vt_cupti_trace_gpu_mem;
-
-/* flag: tracing of kernels enabled? */
-EXTERN uint8_t vt_cupti_trace_kernels;
-
-/* flag: tracing of (asynchronous) memory copies enabled? */
-EXTERN uint8_t vt_cupti_trace_mcpy;
-
 /* CUPTI global CUDA kernel counter group ID */
 EXTERN uint32_t vt_cupti_cgid_cuda_kernel;
-
-/* GPU memory allocation counter */
-EXTERN uint32_t vt_cupti_cid_cudaMalloc;
 
 /* global counter IDs for CUPTI callback and activity API */
 EXTERN uint32_t vt_cupti_cid_blocksPerGrid;

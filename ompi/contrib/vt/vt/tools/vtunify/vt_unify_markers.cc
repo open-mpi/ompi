@@ -110,74 +110,158 @@ MarkersC::cleanUp()
    char filename1[STRBUFSIZE];
    char filename2[STRBUFSIZE];
 
-   // remove local marker files, if necessary
+   // base file type
+   const OTF_FileType base_file_type = OTF_FILETYPE_MARKER;
+
+   // temporary output file prefix
+   const std::string tmp_out_file_prefix =
+      Params.out_file_prefix + TmpFileSuffix;
+
+   // remove local files, if necessary
    //
    if( Params.doclean )
    {
-      int streams_num = (int)MyStreamIds.size();
+      int begin;
+      int end;
+      int step;
       int i;
+
+      // get begin, end, and step of loop removing files
+      //
+      begin = 0;
+      end = (int)MyStreamIds.size();
+      step = 1;
+      if( UnifyControlS::is_iofsl() )
+      {
+         end = (int)UnifyControlS::iofsl_num_servers;
+#ifdef VT_MPI
+         begin = MyRank;
+         step = NumRanks;
+#endif // VT_MPI
+      }
 
 #if defined(HAVE_OMP) && HAVE_OMP
 #     pragma omp parallel for private(i, filename1)
 #endif // HAVE_OMP
-      for( i = 0; i < streams_num; i++ )
+      for( i = begin; i < end; i+=step )
       {
-         const uint32_t & streamid = MyStreamIds[i];
+         // (re)initialize file type
+         OTF_FileType file_type = base_file_type;
 
-         // try to remove file without compression suffix
-         OTF_getFilename( Params.in_file_prefix.c_str(), streamid,
-                          OTF_FILETYPE_MARKER, STRBUFSIZE, filename1 );
-         if( remove( filename1 ) == 0 )
-            PVPrint( 3, " Removed %s\n", filename1 );
+         // iterate over compression types (compressed, uncompressed)
+         for( uint8_t j = 0; j < 2; j++ )
+         {
+            // set compression bits of file type
+            //
+            if( j == 0 )
+            {
+               file_type &= ~OTF_FILECOMPRESSION_COMPRESSED;
+               file_type |= OTF_FILECOMPRESSION_UNCOMPRESSED;
+            }
+            else // j == 1
+            {
+               file_type &= ~OTF_FILECOMPRESSION_UNCOMPRESSED;
+               file_type |= OTF_FILECOMPRESSION_COMPRESSED;
+            }
 
-         // try to remove file with compression suffix
-         OTF_getFilename( Params.in_file_prefix.c_str(), streamid,
-                          OTF_FILETYPE_MARKER | OTF_FILECOMPRESSION_COMPRESSED,
-                          STRBUFSIZE, filename1 );
-         if( remove( filename1 ) == 0 )
-            PVPrint( 3, " Removed %s\n", filename1 );
+            if( UnifyControlS::is_iofsl() )
+            {
+               // iterate over IOFSL file types (all, idx)
+               for( uint8_t k = 0; k < 2; k++ )
+               {
+                  // set IOFSL bits of file type
+                  //
+                  if( k == 0 )
+                  {
+                     file_type &= ~OTF_FILETYPE_IOFSL_IDX;
+                     file_type |= OTF_FILETYPE_IOFSL_ALL;
+                  }
+                  else // k == 1
+                  {
+                     file_type &= ~OTF_FILETYPE_IOFSL_ALL;
+                     file_type |= OTF_FILETYPE_IOFSL_IDX;
+                  }
+
+                  // get file name
+                  OTF_getFilename( Params.in_file_prefix.c_str(), i,
+                     file_type, STRBUFSIZE, filename1 );
+                  // try to remove file
+                  if( remove( filename1 ) == 0 )
+                     PVPrint( 3, " Removed %s\n", filename1 );
+               }
+            }
+            else
+            {
+               // get file name
+               OTF_getFilename( Params.in_file_prefix.c_str(), MyStreamIds[i],
+                  file_type, STRBUFSIZE, filename1 );
+               // try to remove file
+               if( remove( filename1 ) == 0 )
+                  PVPrint( 3, " Removed %s\n", filename1 );
+            }
+         }
       }
    }
 
    MASTER
    {
-      // remove previous created marker output file
+      // remove previous created output file
       //
+      {
+         // initialize file type
+         OTF_FileType file_type = base_file_type;
 
-      // try to remove file without compression suffix
-      OTF_getFilename( Params.out_file_prefix.c_str(), 0,
-                       OTF_FILETYPE_MARKER, STRBUFSIZE, filename1 );
-      if( remove( filename1 ) == 0 )
-         VPrint( 3, " Removed %s\n", filename1 );
+         // iterate over compression types (compressed, uncompressed)
+         for( uint8_t j = 0; j < 2; j++ )
+         {
+            // set compression bits of file type
+            //
+            if( j == 0 )
+            {
+               file_type &= ~OTF_FILECOMPRESSION_COMPRESSED;
+               file_type |= OTF_FILECOMPRESSION_UNCOMPRESSED;
+            }
+            else // j == 1
+            {
+               file_type &= ~OTF_FILECOMPRESSION_UNCOMPRESSED;
+               file_type |= OTF_FILECOMPRESSION_COMPRESSED;
+            }
 
-      // try to remove file with compression suffix
-      OTF_getFilename( Params.out_file_prefix.c_str(), 0,
-                       OTF_FILETYPE_MARKER | OTF_FILECOMPRESSION_COMPRESSED,
-                       STRBUFSIZE, filename1 );
-      if( remove( filename1 ) == 0 )
-         VPrint( 3, " Removed %s\n", filename1 );
+            // NOTE: IOFSL handling not needed here, global marker files
+            // are not handled by IOFSL
 
-      // rename temporary marker output file
+            // get file name
+            OTF_getFilename( Params.out_file_prefix.c_str(), 0, file_type,
+               STRBUFSIZE, filename1 );
+            // try to remove file
+            if( remove( filename1 ) == 0 )
+               PVPrint( 3, " Removed %s\n", filename1 );
+         }
+      }
+
+      // rename temporary output file
       //
+      {
+         // NOTE: IOFSL handling not needed here, global marker files
+         // are not handled by IOFSL
 
-      // get temporary output file prefix
-      const std::string tmp_out_file_prefix =
-         Params.out_file_prefix + TmpFileSuffix;
+         // initialize file type
+         OTF_FileType file_type =
+            base_file_type | ( Params.docompress ?
+               OTF_FILECOMPRESSION_COMPRESSED :
+               OTF_FILECOMPRESSION_UNCOMPRESSED );
 
-      // get output file type
-      const OTF_FileType out_file_type = OTF_FILETYPE_MARKER |
-         ( Params.docompress ? OTF_FILECOMPRESSION_COMPRESSED : 0 );
+         // get old and new file name
+         //
+         OTF_getFilename( tmp_out_file_prefix.c_str(), 0, file_type,
+            STRBUFSIZE, filename1 );
+         OTF_getFilename( Params.out_file_prefix.c_str(), 0, file_type,
+            STRBUFSIZE, filename2 );
 
-      // get temporary file name
-      OTF_getFilename( tmp_out_file_prefix.c_str(), 0, out_file_type,
-                       STRBUFSIZE, filename1 );
-      // get new file name
-      OTF_getFilename( Params.out_file_prefix.c_str(), 0, out_file_type,
-                       STRBUFSIZE, filename2 );
-
-      // rename file
-      if( rename( filename1, filename2 ) == 0 )
-         VPrint( 3, " Renamed %s to %s\n", filename1, filename2 );
+         // rename file
+         if( rename( filename1, filename2 ) == 0 )
+            VPrint( 3, " Renamed %s to %s\n", filename1, filename2 );
+      }
    }
 
 #ifdef VT_MPI
@@ -330,6 +414,18 @@ MarkersC::readLocal( const uint32_t & streamId,
    OTF_FileManager * manager = OTF_FileManager_open( 1 );
    assert( manager );
 
+   // initialize IOFSL stuff for reading, if necessary
+   //
+   if( UnifyControlS::is_iofsl() )
+   {
+      OTF_IofslMode otf_iofsl_mode =
+         ( UnifyControlS::iofsl_mode == VT_IOFSL_MODE_MULTIFILE ) ?
+            OTF_IOFSL_MULTIFILE : OTF_IOFSL_MULTIFILE_SPLIT;
+
+      OTF_FileManager_setIofsl( manager, UnifyControlS::iofsl_num_servers,
+         0, otf_iofsl_mode, 0, 0, VT_TRACEID_BITMASK );
+   }
+
    // open stream for reading
    //
    OTF_RStream * rstream =
@@ -352,11 +448,6 @@ MarkersC::readLocal( const uint32_t & streamId,
 
       // close markers buffer
       OTF_RStream_closeMarkerBuffer( rstream );
-
-      // create record handler and set defs./spots vector as
-      // first handler argument for ...
-      //
-
 
       // create record handler array
       //
@@ -427,6 +518,25 @@ MarkersC::writeGlobal()
    //
    OTF_FileManager * manager = OTF_FileManager_open( 1 );
    assert( manager );
+
+#if defined(HAVE_IOFSL) && HAVE_IOFSL
+   // initialize IOFSL stuff for writing, if necessary
+   //
+   if( Params.doiofsl() )
+   {
+      OTF_IofslMode otf_iofsl_mode =
+         ( Params.iofsl_mode == VT_IOFSL_MODE_MULTIFILE ) ?
+            OTF_IOFSL_MULTIFILE : OTF_IOFSL_MULTIFILE_SPLIT;
+
+      uint32_t otf_iofsl_flags = 0;
+      if( ( Params.iofsl_flags & VT_IOFSL_FLAG_ASYNC_IO ) != 0 )
+         otf_iofsl_flags |= OTF_IOFSL_FLAG_NONBLOCKING;
+
+      OTF_FileManager_setIofsl( manager, Params.iofsl_num_servers,
+         Params.iofsl_servers, otf_iofsl_mode, otf_iofsl_flags, 0,
+         VT_TRACEID_BITMASK );
+   }
+#endif // HAVE_IOFSL
 
    // open stream for writing (stream id = 0)
    //

@@ -95,9 +95,10 @@ EXTERN uint8_t vt_is_trace_on(uint32_t tid);
  * TODO: Description
  *
  * @param tid   thread id
+ * @param time  timestamp (optional)
  * @param size  buffer size to be guaranteed
  */
-EXTERN void vt_guarantee_buffer(uint32_t tid, size_t size);
+EXTERN void vt_guarantee_buffer(uint32_t tid, uint64_t* time, size_t size);
 
 /**
  * TODO: Description
@@ -499,9 +500,10 @@ EXTERN void vt_marker_hint(uint32_t tid, uint64_t* time,
  * @param time   timestamp
  * @param kid    key id
  * @param vtype  value type
- * @param kval   value
+ * @param kval   pointer to value
  */
-EXTERN void vt_keyval(uint32_t tid, uint32_t kid, uint8_t vtype, void* kvalue);
+EXTERN void vt_keyval(uint32_t tid, uint32_t kid, uint8_t vtype,
+                      const void* kvalue);
 
 /**
  * TODO: Description
@@ -790,7 +792,15 @@ EXTERN int vt_my_ptrace;  /** parent process id */
 EXTERN uint8_t vt_my_trace_is_master; /** 1st process on local node? */
 EXTERN uint8_t vt_my_trace_is_disabled; /** process disabled? */
 EXTERN uint8_t vt_my_trace_is_first_avail; /** 1st not disabled process? */
-EXTERN int vt_my_funique; /** unique file id */
+
+#if defined(HAVE_MPI2_THREAD) && HAVE_MPI2_THREAD
+/** is requested MPI thread support level MPI_THREAD_SERIALIZED?
+    (not yet supported; no MPI communication events will be recorded) */
+EXTERN uint8_t vt_mpi_thread_serialized;
+#endif /* HAVE_MPI2_THREAD */
+
+/** unique file id */
+EXTERN int vt_my_funique;
 
 /** array of indices for internal regions */
 EXTERN uint32_t vt_trc_regid[VT__TRC_REGID_NUM];
@@ -809,6 +819,10 @@ EXTERN uint32_t vt_misc_cgid;
 
 /** flag: indicates whether VampirTrace is initialized and ready to trace */
 EXTERN uint8_t vt_is_alive;
+
+/** flag: indicates whether VampirTrace aborted by a fatal error
+ * (i.e. vt_error_msg); return immediately from vt_close, if it's the case */
+EXTERN uint8_t vt_failure;
 
 /** flag: indicates whether VampirTrace shall be closed if MPI_Finalize is
           called */

@@ -13,8 +13,6 @@
 #ifndef _VT_UNIFY_LVECTOR_HH_
 #define _VT_UNIFY_LVECTOR_HH_
 
-#include "config.h"
-
 #include <vector>
 
 //

@@ -16,6 +16,10 @@
 #include "vt_unify.h"
 #include "vt_unify_hooks_base.h"
 
+#ifdef VT_UNIFY_HOOKS_MSGMATCH_SNAPS
+#  include "vt_unify_hooks_msgmatch_snaps.h"
+#endif // VT_UNIFY_HOOKS_MSGMATCH_SNAPS
+
 #include "otf.h"
 
 //
@@ -156,6 +160,57 @@ private:
       writeRecHook_Event( (OTF_WStream**)args[0], (uint64_t*)args[1],
          (uint32_t*)args[2], (bool*)args[8] );
    }
+
+#if defined(VT_UNIFY_HOOKS_MSGMATCH_SNAPS) && \
+    defined(VT_UNIFY_HOOKS_MSGMATCH_SNAPS__INLINE_SNAPSHOTS)
+
+   // snapshot records
+   // (only needed when generating inline snapshots)
+
+   void writeRecHook_EnterSnapshot( HooksC::VaArgsT & args )
+   {
+      writeRecHook_Event( (OTF_WStream**)args[0], (uint64_t*)args[1],
+         (uint32_t*)args[4], (bool*)args[7] );
+   }
+
+   void writeRecHook_SendSnapshot( HooksC::VaArgsT & args )
+   {
+      writeRecHook_Event( (OTF_WStream**)args[0], (uint64_t*)args[1],
+         (uint32_t*)args[3], (bool*)args[10] );
+   }
+
+   void writeRecHook_OpenFileSnapshot( HooksC::VaArgsT & args )
+   {
+      writeRecHook_Event( (OTF_WStream**)args[0], (uint64_t*)args[1],
+         (uint32_t*)args[4], (bool*)args[8] );
+   }
+
+   void writeRecHook_BeginFileOpSnapshot( HooksC::VaArgsT & args )
+   {
+      writeRecHook_Event( (OTF_WStream**)args[0], (uint64_t*)args[1],
+         (uint32_t*)args[3], (bool*)args[7] );
+   }
+
+   void writeRecHook_BeginCollOpSnapshot( HooksC::VaArgsT & args )
+   {
+      writeRecHook_Event( (OTF_WStream**)args[0], (uint64_t*)args[1],
+         (uint32_t*)args[3], (bool*)args[12] );
+   }
+
+   void writeRecHook_CollOpCountSnapshot( HooksC::VaArgsT & args )
+   {
+      writeRecHook_Event( (OTF_WStream**)args[0], (uint64_t*)args[1],
+         (uint32_t*)args[2], (bool*)args[6] );
+   }
+
+   void writeRecHook_CounterSnapshot( HooksC::VaArgsT & args )
+   {
+      writeRecHook_Event( (OTF_WStream**)args[0], (uint64_t*)args[1],
+         (uint32_t*)args[3], (bool*)args[7] );
+   }
+
+#endif // VT_UNIFY_HOOKS_MSGMATCH_SNAPS &&
+       // VT_UNIFY_HOOKS_MSGMATCH_SNAPS__INLINE_SNAPSHOTS
 
    // generic hook
    void genericHook( const uint32_t & id, HooksC::VaArgsT & args );

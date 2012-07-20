@@ -19,6 +19,8 @@
 #   define EXTERN extern 
 #endif
 
+#include "vt_defs.h"
+
 #include <stdio.h>
 
 EXTERN char*  vt_env_apppath(void);
@@ -42,6 +44,8 @@ EXTERN int    vt_env_stat_intv(void);
 EXTERN int    vt_env_stat_props(void);
 EXTERN int    vt_env_stat_msg_dtls(void);
 EXTERN int    vt_env_stat_collop_dtls(void);
+EXTERN int    vt_env_snapshots(void);
+EXTERN int    vt_env_max_snapshots(void);
 EXTERN int    vt_env_verbose(void);
 EXTERN int    vt_env_debug(void);
 EXTERN int    vt_env_do_unify(void);
@@ -50,6 +54,7 @@ EXTERN int    vt_env_memtrace(void);
 EXTERN int    vt_env_memtrace_marker(void);
 EXTERN int    vt_env_cpuidtrace(void);
 EXTERN int    vt_env_iotrace(void);
+EXTERN int    vt_env_iotrace_extended(void);
 EXTERN char*  vt_env_iolibpathname(void);
 EXTERN int    vt_env_libctrace(void);
 EXTERN int    vt_env_omptrace(void);
@@ -79,19 +84,17 @@ EXTERN char*  vt_env_filter_spec(void);
 EXTERN char*  vt_env_groups_spec(void);
 EXTERN int    vt_env_etimesync(void);
 EXTERN int    vt_env_etimesync_intv(void);
-EXTERN int    vt_env_cudatrace(void);
-EXTERN int    vt_env_cudarttrace(void);
+EXTERN void   vt_env_cudatrace(void);
 EXTERN size_t vt_env_cudatrace_bsize(void);
-EXTERN int    vt_env_cudatrace_memcpy(void);
 EXTERN int    vt_env_cudatrace_sync(void);
-EXTERN int    vt_env_cudatrace_cupti(void);
 EXTERN char*  vt_env_cupti_events(void);
 EXTERN int    vt_env_cupti_sampling(void);
+EXTERN char*  vt_env_gputrace(void);
 EXTERN int    vt_env_gputrace_kernel(void);
-EXTERN int    vt_env_gputrace_idle(void);
 EXTERN int    vt_env_gputrace_memusage(void);
-EXTERN int    vt_env_gputrace_debug(void);
-EXTERN int    vt_env_gputrace_error(void);
+EXTERN char*  vt_env_iofsl_servers(void);
+EXTERN int    vt_env_iofsl_mode(void);
+EXTERN int    vt_env_iofsl_async_io(void);
 
 #endif /* _VT_ENV_H */
 

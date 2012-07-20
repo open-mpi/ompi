@@ -45,20 +45,24 @@ struct Params {
     static const uint32_t DEFAULT_MAX_FILE_HANDLES= 50;
     static const uint32_t DEFAULT_BUFFER_SIZE= 1024 * 1024;
     static const uint32_t DEFAULT_MAX_GROUPS= 16;
+    static const bool     DEFAULT_LOG_AXIS= true;
     static const uint8_t  DEFAULT_VERBOSE_LEVEL= 0;
     static const bool     DEFAULT_CREATE_CSV= false;
+    static const bool     DEFAULT_CREATE_MARKER= false;
     static const bool     DEFAULT_CREATE_TEX= true;
     static const bool     DEFAULT_CREATE_PDF= true;
     static const string   DEFAULT_OUTPUT_FILE_PREFIX() { return "result"; }
-
+   
     uint32_t max_file_handles;
     uint32_t buffer_size;
     uint32_t max_groups;
+    bool     logaxis;
     uint8_t  verbose_level;
     bool     progress;
     bool     read_from_stats;
 
     bool     create_csv;
+    bool     create_marker;
     bool     create_tex;
     bool     create_pdf;
     string   input_file_prefix;
@@ -97,8 +101,10 @@ struct Params {
     Params()
         : max_file_handles(DEFAULT_MAX_FILE_HANDLES),
           buffer_size(DEFAULT_BUFFER_SIZE), max_groups(DEFAULT_MAX_GROUPS),
+          logaxis(DEFAULT_LOG_AXIS),
           verbose_level(DEFAULT_VERBOSE_LEVEL), progress(false),
-          read_from_stats(false), create_csv(DEFAULT_CREATE_CSV),
+          read_from_stats(false), create_csv(DEFAULT_CREATE_CSV), 
+          create_marker(DEFAULT_CREATE_MARKER),
           create_tex(DEFAULT_CREATE_TEX), create_pdf(DEFAULT_CREATE_PDF),
           output_file_prefix(DEFAULT_OUTPUT_FILE_PREFIX()) {}
 
@@ -202,6 +208,23 @@ struct ltPair {
     }
 };
 
+struct gtPair {
+    
+    bool operator()( const Pair& p1, const Pair& p2 ) const {
+        
+        /* a is the major number for comparison, this gives a better 
+         order when reducing the entries over the first argument */
+        
+        if ( p1.a == p2.a ) {
+            
+            return p1.b < p2.b;
+            
+        } else {
+            
+            return p1.a > p2.a;
+        }
+    }
+};
 
 /* *** triplett of values as map key *** */
 
@@ -301,6 +324,60 @@ public:
         max= ( other.max > max ) ? other.max : max;
         sum += other.sum;
         cnt += other.cnt;
+    }
+};
+
+/* class that collects the location of the minimum and maximum and their values
+for some values */
+template <class type>
+class min_max_Location {
+    
+public:
+    
+    type min;
+    type max;
+    uint64_t loc_min;
+    uint64_t loc_max;
+    uint64_t time_min;
+    uint64_t time_max;
+    
+    min_max_Location( type a= (type) OTF_UINT64_MAX, type b= (type) 0, 
+                     uint64_t p= 0, uint64_t q= 0,
+                     uint64_t s= 0, uint64_t t= 0 ) : 
+    min( a ), max( b ), loc_min( p ), loc_max( q ), time_min( s ), time_max( t ) {}
+    ~min_max_Location() {}
+    
+    /* append a single value with its location*/
+    void append( const type& value, uint64_t location, uint64_t time ) {
+        
+        if ( ((type) 0) != value ) {
+            
+            if ( value < min ) {
+                min= value;
+                loc_min= location;
+                time_min= time;
+            }
+            if ( value > max ) {
+                max= value;
+                loc_max= location;
+                time_max= time;
+            }
+        }
+    }
+    
+    /* add another min_max_Location object as if all their values were appended to on object */
+    void add( const min_max_Location<type>& other ) {
+        
+        if ( other.min < min ) {
+            min= other.min;
+            loc_min= other.loc_min;
+            time_min= other.time_min;
+        }
+        if ( other.max > max ) {
+            max= other.max;
+            loc_max= other.loc_max;
+            time_max= other.time_max;
+        }
     }
 };
 
@@ -426,7 +503,7 @@ struct StackType {
 
 
 struct FunctionData {
-
+   
     min_max_avg<uint64_t> count;
     min_max_avg<double> excl_time;
     min_max_avg<double> incl_time;
@@ -446,6 +523,45 @@ struct FunctionData {
         count.add( other.count );
         excl_time.add( other.excl_time );
         incl_time.add( other.incl_time );
+    }
+};
+
+
+struct FunctionDispersionData {
+    
+    uint64_t count;
+    double excl_time_sum;
+    
+    double excl_time_minimum;
+    double excl_time_low_quartile;
+    double excl_time_median;
+    double excl_time_top_quartile;
+    double excl_time_maximum;
+    
+    FunctionDispersionData( uint64_t a= 0, double b=0.0, double c=0.0, 
+                           double d=0.0, double e=0.0, double f=0.0, 
+                           double g=0.0 ) : 
+        count( a ), excl_time_sum( b ), excl_time_minimum( c ), 
+        excl_time_low_quartile ( d ), excl_time_median( e ), 
+        excl_time_top_quartile( f ), excl_time_maximum( g ) {}
+    ~FunctionDispersionData( ) {}
+    
+};
+
+
+struct FunctionMinMaxLocationData {
+    
+    min_max_Location<uint64_t> location;
+
+    FunctionMinMaxLocationData( ) {}
+    ~FunctionMinMaxLocationData( ) {}
+    
+    void add( uint64_t duration= 0, uint64_t loc= 0, uint64_t time= 0 ) {
+        location.append( duration, loc, time);
+    }
+    
+    void add( const FunctionMinMaxLocationData& other ) {
+        location.add( other.location );
     }
 };
 
@@ -634,6 +750,10 @@ struct AllData {
     be done */
     map< Pair, FunctionData, ltPair > functionMapPerRank;
 
+    /* store per-function duration section information over the ranks, Triple is 
+    <rank,funcId,bin> */
+    map< Triple, FunctionData, ltTriple > functionDurationSectionMapPerRank;
+   
     /* store per-counter statistics over the functions and ranks,
     Triple is <rank,funcId,counterId> */
     map< Triple, CounterData, ltTriple > counterMapPerFunctionRank;
@@ -650,8 +770,10 @@ struct AllData {
     Pair is <rank,collective-class> */
     map< Pair, CollectiveData, ltPair > collectiveMapPerRank;
 
-
-
+    /* store per-function dispersion information over the rank, Triple is 
+    <bin,funcId,rank> */
+    map< Triple, FunctionDispersionData, ltTriple > functionDispersionMapPerRank;
+    
 
     /* data summarization and reduction containers:
     the following maps are filled when summarizing the previous set of maps,
@@ -660,6 +782,10 @@ struct AllData {
     /* compact function statistics summed over all ranks */
     map< uint64_t, FunctionData > functionMapGlobal;
 
+    /* compact function duration section information over the functions and bins,
+    Pair is <funcId,bin> */
+    map< Pair, FunctionData, ltPair > functionDurationSectionMapGlobal;
+    
     /* store per-counter statistics over the functions and ranks, 
     Pair is <counterId,funcId> */
     map< Pair, CounterData, ltPair > counterMapGlobal;
@@ -682,7 +808,12 @@ struct AllData {
     map< Pair, CollectiveData, ltPair > collectiveMapPerGroup;
 
 
-
+    /* compact function location information over the functions */
+    map< uint64_t, FunctionMinMaxLocationData > functionMinMaxLocationMap;
+    
+    /* dispersion information over functions, Pair is < dispersion, funcId > */
+    map< Pair, FunctionDispersionData, gtPair > functionDispersionMap;
+    
 
     AllData( uint32_t my_rank= 0, uint32_t num_ranks= 1 ) :
         myRank(my_rank), numRanks(num_ranks), myProcessesNum(0),

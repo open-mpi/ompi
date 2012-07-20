@@ -136,6 +136,8 @@ int handleDefSclFile( void *userData, uint32_t stream, uint32_t sourceFile,
 int handleDefCreator( void *userData, uint32_t stream, const char *creator,
         OTF_KeyValueList *list );
 
+int handleDefUniqueId( void *userData, uint32_t stream, uint64_t uid );
+
 int handleDefVersion( void *userData, uint32_t stream, uint8_t major,
         uint8_t minor, uint8_t sub, const char *string );
 
@@ -160,8 +162,17 @@ int handleDefProcessSubstitutes( void* userData, uint32_t stream,
         uint32_t representative, uint32_t numberOfProcs, const uint32_t* procs,
         OTF_KeyValueList *list );
 
+int handleDefAuxSamplePoint( void *fcbx,
+                             uint32_t               streamid,
+                             uint64_t               time,
+                             OTF_AuxSamplePointType type,
+                             OTF_KeyValueList*      list );
+
 int handleDefMarker( void *userData, uint32_t stream, uint32_t token,
         const char *name, uint32_t type, OTF_KeyValueList *list );
+
+int handleMarker( void *userData, uint64_t time, uint32_t process,
+        uint32_t token, const char* text, OTF_KeyValueList* list );
 
 int handleUnknownRecord( void *userData, uint64_t time, uint32_t process,
         const char *record );

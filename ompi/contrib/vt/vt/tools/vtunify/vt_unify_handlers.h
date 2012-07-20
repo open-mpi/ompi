@@ -13,8 +13,7 @@
 #ifndef _VT_UNIFY_HANDLERS_H_
 #define _VT_UNIFY_HANDLERS_H_
 
-#include "config.h"
-
+#include "vt_unify.h"
 #include "vt_unify_defs_recs.h"
 #include "vt_unify_lvector.hh"
 #include "vt_unify_markers.h"

@@ -12,8 +12,6 @@
 
 #include "vt_unify_hooks_base.h"
 
-#include "vt_inttypes.h"
-
 //////////////////// class HooksBaseC ////////////////////
 
 // public methods
@@ -267,6 +265,23 @@ HooksBaseC::HooksBaseC()
       &HooksBaseC::readRecHook_EventComment;
    m_writeRecHookMethods[HooksC::Record_EventComment] =
       &HooksBaseC::writeRecHook_EventComment;
+
+   // snapshot records
+
+   m_writeRecHookMethods[HooksC::Record_EnterSnapshot] =
+      &HooksBaseC::writeRecHook_EnterSnapshot;
+   m_writeRecHookMethods[HooksC::Record_SendSnapshot] =
+      &HooksBaseC::writeRecHook_SendSnapshot;
+   m_writeRecHookMethods[HooksC::Record_OpenFileSnapshot] =
+      &HooksBaseC::writeRecHook_OpenFileSnapshot;
+   m_writeRecHookMethods[HooksC::Record_BeginFileOpSnapshot] =
+      &HooksBaseC::writeRecHook_BeginFileOpSnapshot;
+   m_writeRecHookMethods[HooksC::Record_BeginCollOpSnapshot] =
+      &HooksBaseC::writeRecHook_BeginCollOpSnapshot;
+   m_writeRecHookMethods[HooksC::Record_CollOpCountSnapshot] =
+      &HooksBaseC::writeRecHook_CollOpCountSnapshot;
+   m_writeRecHookMethods[HooksC::Record_CounterSnapshot] =
+      &HooksBaseC::writeRecHook_CounterSnapshot;
 }
 
 HooksBaseC::~HooksBaseC()

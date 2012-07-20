@@ -44,6 +44,10 @@
 # include "vt_libwrap.h"
 #endif /* VT_LIBWRAP */
 
+#if defined(VT_GPU)
+# include "vt_gpu.h"
+#endif /* VT_GPU */
+
 #if defined(VT_CUDARTWRAP)
 # include "vt_cudartwrap.h"
 #endif /* VT_CUDARTWRAP */
@@ -66,6 +70,9 @@
 # if (defined(VT_ETIMESYNC) && TIMER_IS_GLOBAL == 0)
 #   include "vt_esync.h"
 # endif /* VT_ETIMESYNC && !TIMER_IS_GLOBAL */
+# if defined(VT_IOFSL)
+#   include "vt_iofsl.h"
+# endif /* VT_IOFSL */
 # include "mpi.h"
 #endif /* VT_MPI || VT_HYB */
 
@@ -90,103 +97,27 @@
 
 /*
  *-----------------------------------------------------------------------------
- * Two simple hash tables 1: maps region groups to region group identifier
- *                        2: maps file name to file identifier
+ * Simple hash table for mapping strings to ids
  *-----------------------------------------------------------------------------
  */
 
-#define HASH_TAB__RDESC  0
-#define HASH_TAB__SFILE  1
-#define HASH_MAX 1021
+/* hash table purposes */
 
-typedef struct HN_rdesc
+#define STR_HASH_TAB_RDESC 0 /* region group names <-> ids */
+#define STR_HASH_TAB_SFILE 1 /* source file names <-> ids */
+#define STR_HASH_TAB_NUM   2
+
+/* size of hash tables (must be a power of two!) */
+#define STR_HASH_MAX 1024
+
+/* structure of hash table entry */
+
+typedef struct HN
 {
-  char*             rdesc;  /* region group name */
-  uint32_t          rdid;   /* associated region group identifier */
-  struct HN_rdesc*  next;
-} HashNode_rdesc;
-
-typedef struct HN_sfile
-{
-  char*             fname;  /* source file name */
-  uint32_t          fid;    /* associated source file identifier */
-  struct HN_sfile*  next;
-} HashNode_sfile;
-
-static HashNode_rdesc* htab_rdesc[HASH_MAX];
-static HashNode_sfile* htab_sfile[HASH_MAX];
-
-static void hash_put(int t, const char* n, int i)
-{
-  uint32_t id = (uint32_t)vt_hash((uint8_t*)n, strlen(n), 0) % HASH_MAX;
-  if(t==HASH_TAB__RDESC)
-  {
-    HashNode_rdesc *add = (HashNode_rdesc*)malloc(sizeof(HashNode_rdesc));
-    add->rdesc = strdup(n);
-    add->rdid = i;
-    add->next = htab_rdesc[id];
-    htab_rdesc[id] = add;
-  }
-  else if(t==HASH_TAB__SFILE)
-  {
-    HashNode_sfile *add = (HashNode_sfile*)malloc(sizeof(HashNode_sfile));
-    add->fname = strdup(n);
-    add->fid = i;
-    add->next = htab_sfile[id];
-    htab_sfile[id] = add;
-  }
-}
-
-static void* hash_get(int t, const char* n)
-{
-  uint32_t id = (uint32_t)vt_hash((uint8_t*)n, strlen(n), 0) % HASH_MAX;
-  if(t==HASH_TAB__RDESC)
-  {
-    HashNode_rdesc *curr = htab_rdesc[id];
-    while ( curr ) {
-      if ( strcmp( curr->rdesc, n ) == 0 )
-        return curr;
-
-      curr = curr->next;
-    }
-  }
-  else if(t==HASH_TAB__SFILE)
-  {
-    HashNode_sfile *curr = htab_sfile[id];
-    while ( curr ) {
-      if ( strcmp( curr->fname, n ) == 0 )
-        return curr;
-
-      curr = curr->next;
-    }
-  }
-  return NULL;
-}
-
-static void hash_clear(void)
-{
-  int i;
-  HashNode_rdesc* tmp_rdesc;
-  HashNode_sfile* tmp_sfile;
-
-  for ( i = 0; i < HASH_MAX; i++ )
-  {
-    while( htab_rdesc[i] )
-    {
-      tmp_rdesc = htab_rdesc[i]->next;
-      free( htab_rdesc[i]->rdesc );
-      free( htab_rdesc[i] );
-      htab_rdesc[i] = tmp_rdesc;
-    }
-    while( htab_sfile[i] )
-    {
-      tmp_sfile = htab_sfile[i]->next;
-      free( htab_sfile[i]->fname );
-      free( htab_sfile[i] );
-      htab_sfile[i] = tmp_sfile;
-    }
-  }
-}
+  char*      str;  /* string (i.e. name of region group or source file) */
+  uint32_t   id;   /* assigned id */
+  struct HN* next;
+} StringHashNode;
 
 /*
  *-----------------------------------------------------------------------------
@@ -200,7 +131,15 @@ int vt_my_ptrace  = -1; /* parent process id */
 uint8_t vt_my_trace_is_master = 1; /* 1st process on local node? */
 uint8_t vt_my_trace_is_disabled = 0; /* process disabled? */
 uint8_t vt_my_trace_is_first_avail = 0; /* 1st not disabled process? */
-int vt_my_funique =  0; /* unique file id */
+
+#if defined(HAVE_MPI2_THREAD) && HAVE_MPI2_THREAD
+/* is requested MPI thread support level MPI_THREAD_SERIALIZED?
+  (not yet supported; no MPI communication events will be recorded) */
+uint8_t vt_mpi_thread_serialized = 0;
+#endif /* HAVE_MPI2_THREAD */
+
+/* unique file id */
+int vt_my_funique =  0;
 
 /* array of indices for internal regions */
 uint32_t vt_trc_regid[VT__TRC_REGID_NUM];
@@ -220,6 +159,10 @@ uint32_t vt_misc_cgid = 0;
 /* flag: indicates whether VampirTrace is initialized and ready to trace */
 uint8_t vt_is_alive = 0;
 
+/* flag: indicates whether VampirTrace aborted by a fatal error
+ * (i.e. vt_error_msg); return immediately from vt_close, if it's the case */
+uint8_t vt_failure = 0;
+
 /* flag: indicates whether VampirTrace shall be closed if MPI_Finalize is
          called */
 uint8_t vt_close_on_mpi_finalize = 0;
@@ -235,7 +178,7 @@ uint64_t vt_start_time_epoch = 0;
 
 /*
  *-----------------------------------------------------------------------------
- * Static variables
+ * Local variables
  *-----------------------------------------------------------------------------
  */
 
@@ -277,11 +220,67 @@ static uint8_t vt_close_called = 0;
   static uint8_t vt_mpi_finalize_called = 0;
 #endif /* VT_MPI || VT_HYB */
 
+/* array of hash tables to map strings (i.e. region groups, files) to ids */
+static StringHashNode* str_htab[STR_HASH_TAB_NUM][STR_HASH_MAX];
+
 /*
  *-----------------------------------------------------------------------------
- * Static functions
+ * Local functions
  *-----------------------------------------------------------------------------
  */
+
+static void hash_init(void)
+{
+  int i;
+
+  for( i = 0; i < STR_HASH_TAB_NUM; i++ )
+    memset( str_htab[i], 0, STR_HASH_MAX * sizeof(StringHashNode*) );
+}
+
+static void hash_clear(void)
+{
+  int i, j;
+
+  for ( i = 0; i < STR_HASH_TAB_NUM; i++ )
+  {
+    for ( j = 0; j < STR_HASH_MAX; j++ )
+    {
+      while ( str_htab[i][j] )
+      {
+        StringHashNode* tmp = str_htab[i][j]->next;
+        free( str_htab[i][j]->str );
+        free( str_htab[i][j] );
+        str_htab[i][j] = tmp;
+      }
+    }
+  }
+}
+
+static void hash_put(int t, const char* s, int i)
+{
+  uint32_t id =
+    (uint32_t)vt_hash((uint8_t*)s, strlen(s), 0) & (STR_HASH_MAX - 1);
+  StringHashNode* add = (StringHashNode*)malloc(sizeof(StringHashNode));
+  add->str = strdup(s);
+  add->id = i;
+  add->next = str_htab[t][id];
+  str_htab[t][id] = add;
+}
+
+static void* hash_get(int t, const char* s)
+{
+  uint32_t id =
+    (uint32_t)vt_hash((uint8_t*)s, strlen(s), 0) & (STR_HASH_MAX - 1);
+  StringHashNode* curr = str_htab[t][id];
+  while ( curr )
+  {
+    if ( strcmp( curr->str, s ) == 0 )
+      return curr;
+
+    curr = curr->next;
+  }
+  return NULL;
+}
 
 static uint32_t get_unique_file_id(void)
 {
@@ -424,6 +423,16 @@ static void write_def_header(void)
                  VT_UNIFY_STRID_VT_COMMENT" VT_SYNC_FLUSH_LEVEL: %i",
                  vt_env_sync_flush_level());
 
+  /* VT_SNAPSHOTS */
+  vt_def_comment(VT_MASTER_THREAD,
+                 VT_UNIFY_STRID_VT_COMMENT" VT_SNAPSHOTS: %s",
+                 vt_env_snapshots() ? "yes" : "no");
+
+  /* VT_MAX_SNAPSHOTS */
+  vt_def_comment(VT_MASTER_THREAD,
+                 VT_UNIFY_STRID_VT_COMMENT" VT_MAX_SNAPSHOTS: %i",
+                 vt_env_max_snapshots());
+
   /* VT_ONOFF_CHECK_STACK_BALANCE */
   vt_def_comment(VT_MASTER_THREAD,
                  VT_UNIFY_STRID_VT_COMMENT" VT_ONOFF_CHECK_STACK_BALANCE: %s",
@@ -553,103 +562,95 @@ static void write_def_header(void)
   /* VT_IOTRACE */
   vt_def_comment(VT_MASTER_THREAD, VT_UNIFY_STRID_VT_COMMENT" VT_IOTRACE: %s",
                  vt_env_iotrace() ? "yes" : "no");
+  /* VT_IOTRACE_EXTENDED */
+  vt_def_comment(VT_MASTER_THREAD, VT_UNIFY_STRID_VT_COMMENT" VT_IOTRACE_EXTENDED: %s",
+                 vt_env_iotrace_extended() ? "yes" : "no");
 #endif /* VT_IOWRAP */
 
-#if defined (VT_CUDARTWRAP)
-  /* VT_CUDARTTRACE */
-  vt_def_comment(VT_MASTER_THREAD,
-                 VT_UNIFY_STRID_VT_COMMENT" VT_CUDARTTRACE: %s",
-                 vt_env_cudarttrace() ? "yes" : "no");
-#endif /* VT_CUDARTWRAP */
-
-# if defined(VT_CUPTI_CALLBACKS)
-    /* VT_CUDATRACE_CUPTI */
+/* check the general GPU settings */
+#if defined(VT_GPU)
+  if(vt_env_gputrace())
+  {
+    /* VT_GPUTRACE */
     vt_def_comment(VT_MASTER_THREAD,
-                   VT_UNIFY_STRID_VT_COMMENT" VT_CUDATRACE_CUPTI: %s",
-                   vt_env_cudatrace_cupti() ? "yes" : "no");
-# endif /* VT_CUPTI_CALLBACKS */
+                    VT_UNIFY_STRID_VT_COMMENT" VT_GPUTRACE: %s",
+                    vt_env_gputrace());
+    
+    (void)vt_gpu_get_config();
+    
+    /* VT_GPUTRACE_KERNEL */
+    if(vt_env_gputrace_kernel() > 1)
+      vt_def_comment(VT_MASTER_THREAD,
+                    VT_UNIFY_STRID_VT_COMMENT" VT_GPUTRACE_KERNEL: %i",
+                    vt_env_gputrace_kernel());
+  }
+# endif /* VT_GPU */
 
+/* check CUDA specific settings */
 #if (defined(VT_CUDARTWRAP) || defined(VT_CUPTI_CALLBACKS))
     
-  /* VT_CUDATRACE */
-  vt_def_comment(VT_MASTER_THREAD,
-                 VT_UNIFY_STRID_VT_COMMENT" VT_CUDATRACE: %i",
-                 vt_env_cudatrace());
-
-  if( vt_env_cudarttrace() || vt_env_cudatrace() || vt_env_cudatrace_cupti())
+  if((vt_gpu_config & VT_GPU_TRACE_CUDA) == VT_GPU_TRACE_CUDA ||
+     (vt_gpu_config & VT_GPU_TRACE_CUPTI) == VT_GPU_TRACE_CUPTI)
   {
     /* VT_CUDATRACE_BUFFER_SIZE */
     tmp_uint64 = (uint64_t)vt_env_cudatrace_bsize();
+
+    /* if CUDA buffer size has not been set by the user, set the default */
+    if(tmp_uint64 == 0)
+    {
+      if((vt_gpu_config & VT_GPU_TRACE_CUPTI) == VT_GPU_TRACE_CUPTI)
+        tmp_uint64 = VT_CUPTI_ACT_DEFAULT_BSIZE;
+      else
+        tmp_uint64 = VTGPU_DEFAULT_BSIZE;
+    } 
 
     if( tmp_uint64 >= (1024*1024*1024) )
     {
       tmp_uint64 /= (1024*1024*1024);
       snprintf(tmp_char, sizeof(tmp_char)-1, "%lluG",
-               (unsigned long long)tmp_uint64);
+              (unsigned long long)tmp_uint64);
     }
     else if( tmp_uint64 >= (1024*1024) )
     {
       tmp_uint64 /= (1024*1024);
       snprintf(tmp_char, sizeof(tmp_char)-1, "%lluM",
-               (unsigned long long)tmp_uint64);
+              (unsigned long long)tmp_uint64);
     }
     else
     {
       snprintf(tmp_char, sizeof(tmp_char)-1, "%llu",
-               (unsigned long long)tmp_uint64);
+              (unsigned long long)tmp_uint64);
     }
 
     vt_def_comment(VT_MASTER_THREAD,
-                   VT_UNIFY_STRID_VT_COMMENT" VT_CUDATRACE_BUFFER_SIZE: %s",
-                   tmp_char);
-
-    /* VT_CUDATRACE_MEMCPY */
-    vt_def_comment(VT_MASTER_THREAD,
-                   VT_UNIFY_STRID_VT_COMMENT" VT_CUDATRACE_MEMCPY: %s",
-                   vt_env_cudatrace_memcpy() ? "yes" : "no");
-
-    /* VT_GPUTRACE_MEMUSAGE */
-    vt_def_comment(VT_MASTER_THREAD,
-                   VT_UNIFY_STRID_VT_COMMENT" VT_GPUTRACE_MEMUSAGE: %s",
-                   vt_env_gputrace_memusage() ? "yes" : "no");
+                  VT_UNIFY_STRID_VT_COMMENT" VT_CUDATRACE_BUFFER_SIZE: %s",
+                  tmp_char);
 
     /* VT_CUDATRACE_SYNC */
-    vt_def_comment(VT_MASTER_THREAD,
-                   VT_UNIFY_STRID_VT_COMMENT" VT_CUDATRACE_SYNC: %i",
-                   vt_env_cudatrace_sync());
+    if((vt_gpu_config & VT_GPU_TRACE_CUDA) == VT_GPU_TRACE_CUDA &&
+       vt_env_cudatrace_sync() != 3)
+      vt_def_comment(VT_MASTER_THREAD,
+                    VT_UNIFY_STRID_VT_COMMENT" VT_CUDATRACE_SYNC: %i",
+                    vt_env_cudatrace_sync());
+    
+    /* VT_GPUTRACE_MEMUSAGE */
+    if(vt_env_gputrace_memusage() > 1)
+      vt_def_comment(VT_MASTER_THREAD,
+                    VT_UNIFY_STRID_VT_COMMENT" VT_GPUTRACE_MEMUSAGE: %i",
+                    vt_gpu_trace_memusage);
 
 # if defined(VT_CUPTI_EVENTS)
-    /* VT_CUPTI_EVENTS */
-    vt_def_comment(VT_MASTER_THREAD,
-                   VT_UNIFY_STRID_VT_COMMENT" VT_CUPTI_METRICS: %s",
-                   vt_env_cupti_events() ? "yes" : "no");
+      /* VT_CUPTI_EVENTS */
+      vt_def_comment(VT_MASTER_THREAD,
+                    VT_UNIFY_STRID_VT_COMMENT" VT_CUPTI_METRICS: %s",
+                    vt_env_cupti_events());
+      
+      /* VT_CUPTI_EVENTS */
+      vt_def_comment(VT_MASTER_THREAD,
+                    VT_UNIFY_STRID_VT_COMMENT" VT_CUPTI_SAMPLING: %s",
+                    vt_env_cupti_sampling() ? "yes" : "no");
 # endif /* VT_CUPTI_EVENTS */
-
-    /* VT_GPUTRACE_ERROR */
-    vt_def_comment(VT_MASTER_THREAD,
-                   VT_UNIFY_STRID_VT_COMMENT" VT_GPUTRACE_ERROR: %s",
-                   vt_env_gputrace_error() ? "yes" : "no");
-
-    /* VT_GPUTRACE_DEBUG */
-    vt_def_comment(VT_MASTER_THREAD,
-                   VT_UNIFY_STRID_VT_COMMENT" VT_GPUTRACE_DEBUG: %s",
-                   vt_env_gputrace_debug() ? "yes" : "no");
-  }
-#endif /* VT_CUDARTWRAP || VT_CUPTI_CALLBACKS */
-
-#if (defined(VT_CUDARTWRAP) || defined(VT_CUPTI_CALLBACKS))
-  if( vt_env_cudarttrace() || vt_env_cudatrace() > 0)
-  {
-    /* VT_GPUTRACE_KERNEL */
-    vt_def_comment(VT_MASTER_THREAD,
-                   VT_UNIFY_STRID_VT_COMMENT" VT_CUDATRACE_KERNEL: %s",
-                   vt_env_gputrace_kernel() ? "yes" : "no");
-    
-    /* VT_CUDATRACE_IDLE */
-    vt_def_comment(VT_MASTER_THREAD,
-                   VT_UNIFY_STRID_VT_COMMENT" VT_CUDATRACE_IDLE: %s",
-                   vt_env_gputrace_idle() ? "yes" : "no");
-  }
+    }
 #endif /* VT_CUDARTWRAP || VT_CUPTI_CALLBACKS */
 
 #if (defined (VT_ETIMESYNC) && TIMER_IS_GLOBAL == 0)
@@ -673,6 +674,38 @@ static void write_def_header(void)
                  VT_UNIFY_STRID_VT_COMMENT" VT_PTHREAD_REUSE: %s",
                  vt_env_pthread_reuse() ? "yes" : "no");
 #endif /* VT_THRD_PTHREAD */
+
+#if defined(VT_IOFSL)
+  /* VT_IOFSL_SERVERS */
+  vt_def_comment(VT_MASTER_THREAD,
+                 VT_UNIFY_STRID_VT_COMMENT" VT_IOFSL_SERVERS: %s",
+                 vt_env_iofsl_servers() ? vt_env_iofsl_servers() : "<not set>");
+
+  if( vt_env_iofsl_servers() )
+  {
+    /* VT_IOFSL_MODE */
+    tmp_int32 = vt_env_iofsl_mode();
+
+    if( tmp_int32 == VT_IOFSL_MODE_MULTIFILE )
+    {
+      strncpy(tmp_char, "MULTIFILE", sizeof(tmp_char)-1);
+      tmp_char[sizeof(tmp_char)-1] = '\0';
+    }
+    else /* VT_IOFSL_MODE_MULTIFILE_SPLIT */
+    {
+      strncpy(tmp_char, "MULTIFILE_SPLIT", sizeof(tmp_char)-1);
+      tmp_char[sizeof(tmp_char)-1] = '\0';
+    }
+
+    vt_def_comment(VT_MASTER_THREAD,
+                   VT_UNIFY_STRID_VT_COMMENT" VT_IOFSL_MODE: %s", tmp_char);
+
+    /* VT_IOFSL_ASYNC_IO */
+    vt_def_comment(VT_MASTER_THREAD,
+                   VT_UNIFY_STRID_VT_COMMENT" VT_IOFSL_ASYNC_IO: %s",
+                   vt_env_iofsl_async_io() ? "yes" : "no");
+  }
+#endif /* VT_IOFSL */
 
   /* VT_FILER_SPEC */
   vt_def_comment(VT_MASTER_THREAD,
@@ -699,22 +732,62 @@ static void write_uctl_file(void)
   /* calculate size needed for uctl data */
 
   uctl_data_size =
-    2 +                     /* "*:" */
-    VTThrdn * (8 + 1 + 1) + 1 + /* stream ids[!]: + '\n' */
-    4 * (16 + 1) + 1 + 1;   /* 2xltime + 2xoffset + '\n' + '\0' */
+    2 +                         /* "*:" */
+    VTThrdn * (8 + 1 + 1) + 1 + /* stream ids[!]:\n */
+    4 * (16 + 1) + 1 + 1;       /* ltime0:offset0:ltime1:offset1:\n */
 #if (defined(VT_LIBCWRAP) && defined(VT_FORK))
   if (vt_env_libctrace())
+  {
+    /* additional stream ids of forked processes */
     uctl_data_size += vt_fork_get_num_childs_tot() * (8 + 1);
+  }
 #endif /* VT_LIBCWRAP && VT_FORK */
+
+  if (vt_my_trace == 0)
+  {
+    uctl_data_size +=
+      /* <VTUCTL PACKAGE_VERSION/VT_UNIFY_COMPAT_ID>\n */
+      1 + 6 + 1 + strlen(PACKAGE_VERSION) + 1 + 8 + 1 + 1 +
+      1 + 1 + /* vt_env_mode(): */
+      8 + 1 + /* vt_iofsl_servers_num: */
+      1 + 1;  /* vt_iofsl_mode: */
+  }
+
+  /* trailing '\0' */
+  uctl_data_size++;
 
   /* allocate memory for unify control data */
   uctl_data = (char*)malloc(uctl_data_size * sizeof(char));
   if (uctl_data == NULL)
     vt_error();
+  *uctl_data = '\0';
 
-  sprintf(uctl_data, "*:");
+  if (vt_my_trace == 0)
+  {
+    /* add header with VT version and compatibility id to uctl data */
+    sprintf(uctl_data, "<VTUCTL %s %x>\n", PACKAGE_VERSION, VT_UNIFY_COMPAT_ID);
+
+    /* add VT_MODE flags to uctl data */
+    sprintf(uctl_data + strlen(uctl_data), "%x:", vt_env_mode());
+
+    /* add IOFSL configuration to uctl data */
+#if defined(VT_IOFSL)
+    if (vt_iofsl_enabled)
+    {
+      sprintf(uctl_data + strlen(uctl_data), "%x:%x:\n",
+              vt_iofsl_servers_num, vt_iofsl_mode);
+    }
+    else
+#endif /* VT_IOFSL */
+    {
+      sprintf(uctl_data + strlen(uctl_data), "0:0:\n");
+    }
+  }
 
   /* add stream ids to uctl data */
+
+  sprintf(uctl_data + strlen(uctl_data), "*:");
+
   for (i = 0; i < (int)VTThrdn; i++)
   {
     sprintf(uctl_data + strlen(uctl_data), "%x%s:",
@@ -877,7 +950,6 @@ static void unify_traces(void)
   }
   argc++;
 
-  if ((vt_env_mode() & VT_MODE_TRACE) == 0) argv[argc++] = strdup("--stats");
 #if defined(HAVE_ZLIB) && HAVE_ZLIB
   if (!vt_env_compression()) argv[argc++] = strdup("--nocompress");
 #endif /* HAVE_ZLIB */
@@ -888,6 +960,14 @@ static void unify_traces(void)
     for (i=0;i<vt_env_verbose()+1;i++)
       argv[argc++] = strdup("-v");
     argv[argc++] = strdup("-p");
+  }
+  if (!vt_env_snapshots())   argv[argc++] = strdup("--nosnapshots");
+  else
+  {
+    argv[argc++] = strdup("--maxsnapshots");
+    argv[argc] = (char*)calloc(11, sizeof(char));
+    if (argv[argc] == NULL) vt_error();
+    snprintf(argv[argc++], 10, "%i", vt_env_max_snapshots());
   }
 
   /* do actual unify */
@@ -937,6 +1017,115 @@ static void unify_traces(void)
   free(argv);
 }
 
+static void update_counter(uint32_t tid, uint64_t* time)
+{
+#if (defined(VT_METR) || defined(VT_RUSAGE) || defined(VT_GETCPU) ||           \
+     defined(VT_PLUGIN_CNTR))
+  GET_THREAD_ID(tid);
+
+  /* no CPU counter on virtual threads (e.g. GPU); return */
+  if ( VTTHRD_IS_VIRTUAL(VTThrdv[tid]) )
+    return;
+
+#if defined(VT_METR)
+  /* update hardware performance counters (VT_METRICS) */
+  if ( num_metrics > 0 && VTTHRD_TRACE_STATUS(VTThrdv[tid]) == VT_TRACE_ON )
+  {
+    int i;
+
+    vt_metric_read(VTTHRD_METV(VTThrdv[tid]),
+                   VTTHRD_OFFV(VTThrdv[tid]),
+                   VTTHRD_VALV(VTThrdv[tid]));
+
+    for ( i = 0; i < num_metrics; i++ )
+    {
+      if ( VTTHRD_TRACE_STATUS(VTThrdv[tid]) != VT_TRACE_ON) break;
+
+      VTGen_write_COUNTER(VTTHRD_GEN(VTThrdv[tid]),
+                          time,
+                          i+1,
+                          VTTHRD_VALV(VTThrdv[tid])[i]);
+    }
+  }
+#endif /* VT_METR */
+
+#if defined(VT_RUSAGE)
+  /* update resource usage counters (VT_RUSAGE) */
+  if ( num_rusage > 0 && VTTHRD_TRACE_STATUS(VTThrdv[tid]) == VT_TRACE_ON &&
+       *(time) >= VTTHRD_RU_NEXT_READ(VTThrdv[tid]) )
+  {
+    int i;
+    uint32_t changed;
+    vt_rusage_read(VTTHRD_RU_OBJ(VTThrdv[tid]),
+                   VTTHRD_RU_VALV(VTThrdv[tid]), &changed);
+    for ( i = 0; i < num_rusage; i++ )
+    {
+      if ( VTTHRD_TRACE_STATUS(VTThrdv[tid]) != VT_TRACE_ON) break;
+
+      if ( (changed & (1<<i)) != 0 )
+      {
+        VTGen_write_COUNTER(VTTHRD_GEN(VTThrdv[tid]),
+                            time,
+                            vt_rusage_cidv[i],
+                            VTTHRD_RU_VALV(VTThrdv[tid])[i]);
+      }
+    }
+
+    VTTHRD_RU_NEXT_READ(VTThrdv[tid]) = *(time) + vt_rusage_intv;
+  }
+#endif /* VT_RUSAGE */
+
+#if defined(VT_GETCPU)
+  /* update cpu id counter (VT_GETCPU) */
+  if ( vt_env_cpuidtrace() && VTTHRD_TRACE_STATUS(VTThrdv[tid]) == VT_TRACE_ON )
+  {
+    uint8_t changed;
+    vt_getcpu_read(&(VTTHRD_CPUID_VAL(VTThrdv[tid])), &changed);
+    if ( changed )
+    {
+      VTGen_write_COUNTER(VTTHRD_GEN(VTThrdv[tid]),
+                          time,
+                          vt_getcpu_cid,
+                          VTTHRD_CPUID_VAL(VTThrdv[tid]));
+    }
+  }
+#endif /* VT_GETCPU */
+
+#if defined(VT_PLUGIN_CNTR)
+  /* update synchronous, asynchronous callback and asynchronous on event
+   * plugin values. */
+  /* But only if we really use plugins and this thread also uses some */
+  if (vt_plugin_cntr_used && VTTHRD_PLUGIN_CNTR_DEFINES(VTThrdv[tid]))
+  {
+    if (VTTHRD_TRACE_STATUS(VTThrdv[tid]) == VT_TRACE_ON)
+    {
+      int plugin_metrics = vt_plugin_cntr_get_num_synch_metrics(VTThrdv[tid]);
+      uint32_t counter_id;
+      uint64_t value;
+      int i;
+      for ( i = 0; i < plugin_metrics; i++ )
+      {
+        if ( VTTHRD_TRACE_STATUS(VTThrdv[tid]) != VT_TRACE_ON) break;
+
+        vt_plugin_cntr_get_synch_value(VTThrdv[tid], i, &counter_id, &value);
+
+        VTGen_write_COUNTER(VTTHRD_GEN(VTThrdv[tid]),
+                            time,
+                            counter_id,
+                            value);
+      }
+
+      if ( VTTHRD_TRACE_STATUS(VTThrdv[tid]) == VT_TRACE_ON){
+        vt_plugin_cntr_write_callback_data(*time,tid);
+        vt_plugin_cntr_write_asynch_event_data(*time,tid);
+      }
+    }
+  }
+#endif /* VT_PLUGIN_CNTR */
+
+#endif /* VT_METR) || VT_RUSAGE || VT_GETCPU || VT_PLUGIN_CNTR */
+}
+
 /*
  *-----------------------------------------------------------------------------
  * Global functions
@@ -966,8 +1155,7 @@ void vt_open()
   vt_pform_init();
 
   /* make sure the hash tables are zero'd */
-  memset( htab_rdesc, 0, sizeof(htab_rdesc) );
-  memset( htab_sfile, 0, sizeof(htab_sfile) );
+  hash_init();
 
   /* get maximum stack depth */
   max_stack_depth = vt_env_max_stack_depth();
@@ -1240,14 +1428,9 @@ void vt_open()
 #endif /* VT_PLUGIN_CNTR */
   
 #if defined(VT_CUPTI_CALLBACKS)
-#if defined(VT_CUDARTWRAP)
-  /* VT_CUDATRACE>1 is only available for CUPTI -> call cupti callback init */
-  if(vt_env_cudatrace() > 1 || vt_env_cudatrace_cupti())
+  if((vt_gpu_get_config() & VT_GPU_TRACE_CUPTI) == VT_GPU_TRACE_CUPTI ||
+     (vt_gpu_get_config() & VT_GPU_TRACE_DRIVER_API) == VT_GPU_TRACE_DRIVER_API)
     vt_cupti_callback_init();
-#else
-  if(vt_env_cudatrace())
-    vt_cupti_callback_init();
-#endif
 #endif /* VT_CUPTI_CALLBACKS */
 
   vt_is_alive = 1;
@@ -1361,6 +1544,13 @@ void vt_reset()
 
 #endif /* VT_ETIMESYNC && !TIMER_IS_GLOBAL */
 
+#if defined(VT_IOFSL)
+
+  /* finalize IOFSL mode */
+  vt_iofsl_finalize();
+
+#endif /* VT_IOFSL */
+
   /* re-initialize some variables */
 
   vt_open_called = 0;
@@ -1399,6 +1589,10 @@ void vt_close()
   int tnum;
   int i;
 
+  /* return immediately, if VT is aborted by a fatal error
+     (i.e. vt_error_msg) */
+  if ( vt_failure ) return;
+  
   /* catch vt_close called from child processes through atexit */
   if ( init_pid != getpid() ) return;
 
@@ -1430,19 +1624,16 @@ void vt_close()
   /* threads might be created even now in CUPTI callback finalize */
 #if defined(VT_CUPTI_CALLBACKS)
   /* finalize CUPTI API callback if enabled */
-#if defined(VT_CUDARTWRAP)
-  if(vt_env_cudatrace() > 1 || vt_env_cudatrace_cupti())
+  if((vt_gpu_get_config() & VT_GPU_TRACE_CUPTI) == VT_GPU_TRACE_CUPTI ||
+     (vt_gpu_get_config() & VT_GPU_TRACE_DRIVER_API) == VT_GPU_TRACE_DRIVER_API)
     vt_cupti_callback_finalize();
-#else
-  if(vt_env_cudatrace())
-    vt_cupti_callback_finalize();
-#endif
+
 #endif /* VT_CUPTI_CALLBACKS */
 
 #if defined(VT_CUDARTWRAP)
 
   /* finalize CUDA runtime wrapping if enabled */
-  if (vt_env_cudarttrace())
+  if (vt_cudart_initialized)
     vt_cudartwrap_finalize();
 
 #endif /* VT_CUDARTWRAP */
@@ -1617,6 +1808,13 @@ void vt_close()
 
 #endif /* VT_PLUGIN_CNTR */
 
+#if defined(VT_IOFSL)
+
+  /* finalize IOFSL mode */
+  vt_iofsl_finalize();
+
+#endif /* VT_IOFSL */
+
   /* unify local traces, if desired */
   if ( vt_env_do_unify() )
     unify_traces();
@@ -1681,7 +1879,7 @@ void vt_trace_off(uint32_t tid, uint8_t mark, uint8_t permanent)
       uint64_t time;
       time = vt_pform_wtime();
 
-      /* directly call the VTGen API to prevent calling to vt_update_counter()
+      /* directly call the VTGen API to prevent calling to update_counter()
          if tracing is going to switch off permanently */
       if ( permanent )
         VTGen_write_ENTER(VTTHRD_GEN(VTThrdv[tid]), &time,
@@ -1717,12 +1915,12 @@ uint8_t vt_is_trace_on(uint32_t tid)
   return (vt_is_alive && VTTHRD_TRACE_STATUS(VTThrdv[tid]) == VT_TRACE_ON);
 }
 
-void vt_guarantee_buffer(uint32_t tid, size_t size)
+void vt_guarantee_buffer(uint32_t tid, uint64_t* time, size_t size)
 {
   GET_THREAD_ID(tid);
 
   if ( VTTHRD_TRACE_STATUS(VTThrdv[tid]) == VT_TRACE_ON )
-    VTGen_guarantee(VTTHRD_GEN(VTThrdv[tid]), size);
+    VTGen_guarantee(VTTHRD_GEN(VTThrdv[tid]), time, size);
 }
 
 void vt_buffer_flush(uint32_t tid)
@@ -1736,110 +1934,9 @@ void vt_buffer_flush(uint32_t tid)
 
 void vt_update_counter(uint32_t tid, uint64_t* time)
 {
-#if (defined(VT_METR) || defined(VT_RUSAGE) || defined(VT_GETCPU) ||           \
-     defined(VT_PLUGIN_CNTR))
-  GET_THREAD_ID(tid);
-
-#if defined(VT_METR)
-  /* update hardware performance counters (VT_METRICS) */
-  if ( num_metrics > 0 && !VTTHRD_IS_VIRTUAL(VTThrdv[tid]) &&
-       VTTHRD_TRACE_STATUS(VTThrdv[tid]) == VT_TRACE_ON )
-  {
-    int i;
-
-    vt_metric_read(VTTHRD_METV(VTThrdv[tid]),
-                   VTTHRD_OFFV(VTThrdv[tid]),
-                   VTTHRD_VALV(VTThrdv[tid]));
-
-    for ( i = 0; i < num_metrics; i++ )
-    {
-      if ( VTTHRD_TRACE_STATUS(VTThrdv[tid]) != VT_TRACE_ON) break;
-
-      VTGen_write_COUNTER(VTTHRD_GEN(VTThrdv[tid]),
-                          time,
-                          i+1,
-                          VTTHRD_VALV(VTThrdv[tid])[i]);
-    }
-  }
-#endif /* VT_METR */
-
-#if defined(VT_RUSAGE)
-  /* update resource usage counters (VT_RUSAGE) */
-  if ( num_rusage > 0 &&
-       VTTHRD_TRACE_STATUS(VTThrdv[tid]) == VT_TRACE_ON &&
-       *(time) >= VTTHRD_RU_NEXT_READ(VTThrdv[tid]) )
-  {
-    int i;
-    uint32_t changed;
-    vt_rusage_read(VTTHRD_RU_OBJ(VTThrdv[tid]),
-                   VTTHRD_RU_VALV(VTThrdv[tid]), &changed);
-    for ( i = 0; i < num_rusage; i++ )
-    {
-      if ( VTTHRD_TRACE_STATUS(VTThrdv[tid]) != VT_TRACE_ON) break;
-
-      if ( (changed & (1<<i)) != 0 )
-      {
-        VTGen_write_COUNTER(VTTHRD_GEN(VTThrdv[tid]),
-                            time,
-                            vt_rusage_cidv[i],
-                            VTTHRD_RU_VALV(VTThrdv[tid])[i]);
-      }
-    }
-
-    VTTHRD_RU_NEXT_READ(VTThrdv[tid]) = *(time) + vt_rusage_intv;
-  }
-#endif /* VT_RUSAGE */
-
-#if defined(VT_GETCPU)
-  /* update cpu id counter (VT_GETCPU) */
-  if ( vt_env_cpuidtrace() &&
-       VTTHRD_TRACE_STATUS(VTThrdv[tid]) == VT_TRACE_ON )
-  {
-    uint8_t changed;
-    vt_getcpu_read(&(VTTHRD_CPUID_VAL(VTThrdv[tid])), &changed);
-    if ( changed )
-    {
-      VTGen_write_COUNTER(VTTHRD_GEN(VTThrdv[tid]),
-                          time,
-                          vt_getcpu_cid,
-                          VTTHRD_CPUID_VAL(VTThrdv[tid]));
-    }
-  }
-#endif /* VT_GETCPU */
-
-#if defined(VT_PLUGIN_CNTR)
-  /* update synchronous, asynchronous callback and asynchronous on event
-   * plugin values. */
-  /* But only if we really use plugins and this thread also uses some */
-  if (vt_plugin_cntr_used && VTTHRD_PLUGIN_CNTR_DEFINES(VTThrdv[tid]))
-  {
-    if (VTTHRD_TRACE_STATUS(VTThrdv[tid]) == VT_TRACE_ON)
-    {
-      int plugin_metrics = vt_plugin_cntr_get_num_synch_metrics(VTThrdv[tid]);
-      uint32_t counter_id;
-      uint64_t value;
-      int i;
-      for ( i = 0; i < plugin_metrics; i++ )
-      {
-        if ( VTTHRD_TRACE_STATUS(VTThrdv[tid]) != VT_TRACE_ON) break;
-
-        vt_plugin_cntr_get_synch_value(VTThrdv[tid], i, &counter_id, &value);
-
-        VTGen_write_COUNTER(VTTHRD_GEN(VTThrdv[tid]),
-                            time,
-                            counter_id,
-                            value);
-      }
-
-      if ( VTTHRD_TRACE_STATUS(VTThrdv[tid]) == VT_TRACE_ON){
-        vt_plugin_cntr_write_callback_data(*time,tid);
-        vt_plugin_cntr_write_asynch_event_data(*time,tid);
-      }
-    }
-  }
-#endif /* VT_PLUGIN_CNTR */
-
-#endif /* VT_METR) || VT_RUSAGE || VT_GETCPU || VT_PLUGIN_CNTR */
+  /* call the local version of this function which should hopefully
+     be inlined */
+  update_counter(tid, time);
 }
 
 void vt_mpi_init()
@@ -1852,6 +1949,7 @@ void vt_mpi_init()
   PMPI_Comm_size(MPI_COMM_WORLD, &size);
   vt_my_trace = (int)myrank;
   vt_num_traces = (int)size;
+  vt_my_trace_is_first_avail = (myrank == 0);
 
   vt_error_pid(vt_my_trace);
 
@@ -1862,39 +1960,49 @@ void vt_mpi_init()
 
 #if !defined(VT_DISABLE_RFG)
 
-  /* read filter rules for current rank */
+  if (vt_env_filter_spec())
   {
-    char* filter_deffile = vt_env_filter_spec();
-    if (filter_deffile)
-    {
-      if (!RFG_Regions_readFilterDefFile(VTThrdv[0]->rfg_regions,
-                                         vt_my_trace, &vt_my_trace_is_disabled))
-      {
-        vt_error_msg("Could not read region filter specification file");
-      }
-
-      /* if the current rank shall be disabled, switch tracing off */
-      if( vt_my_trace_is_disabled )
-        vt_trace_off(VT_MASTER_THREAD, 0, 1);
-    }
-  }
-
-  /* determine first available (not disabled) rank */
-  {
-    VT_MPI_INT rank_avail = vt_my_trace_is_disabled ? 0x7FFFFFFF : myrank;
+    VT_MPI_INT rank_avail;
     VT_MPI_INT first_avail_rank;
+    VT_MPI_INT avail_ranks_num;
 
+    /* read filter rules for current rank */
+    if (!RFG_Regions_readFilterDefFile(VTThrdv[0]->rfg_regions,
+                                       vt_my_trace, &vt_my_trace_is_disabled))
+      vt_error_msg("Could not read region filter specification file");
+
+    /* get the first enabled rank */
+
+    rank_avail = vt_my_trace_is_disabled ? 0x7FFFFFFF : myrank;
     PMPI_Allreduce(&rank_avail, &first_avail_rank, 1, MPI_INT, MPI_MIN,
                    MPI_COMM_WORLD);
 
+    if (first_avail_rank == 0x7FFFFFFF)
+      vt_error_msg("The specified filter file excludes all ranks from tracing");
+
     if (myrank == first_avail_rank)
       vt_my_trace_is_first_avail = 1;
+
+    /* get the total number of enabled ranks */
+
+    rank_avail = !(VT_MPI_INT)vt_my_trace_is_disabled;
+    PMPI_Reduce(&rank_avail, &avail_ranks_num, 1, MPI_INT, MPI_SUM,
+                first_avail_rank, MPI_COMM_WORLD);
+
+    if (vt_my_trace_is_first_avail && (int)avail_ranks_num < vt_num_traces)
+    {
+      vt_def_comment(VT_MASTER_THREAD,
+                     VT_UNIFY_STRID_VT_COMMENT"NOTE: This trace represents "
+                     "only a subset of the MPI ranks used by the application. "
+                     "%i of %i ranks were excluded from tracing by the "
+                     "specified filter file in VT_FILTER_SPEC.",
+                     vt_num_traces - (int)avail_ranks_num, vt_num_traces);
+    }
+
+    /* if the current rank shall be disabled, switch tracing off */
+    if (vt_my_trace_is_disabled)
+      vt_trace_off(VT_MASTER_THREAD, 0, 1);
   }
-
-#else /* VT_DISABLE_RFG */
-
-  if (vt_my_trace == 0)
-    vt_my_trace_is_first_avail = 1;
 
 #endif /* VT_DISABLE_RFG */
 
@@ -1944,6 +2052,11 @@ void vt_mpi_init()
       vt_sync(MPI_COMM_WORLD, &my_ltime[0], &my_offset[0]);
   }
 #endif /* TIMER_IS_GLOBAL */
+
+#if defined(VT_IOFSL)
+  /* initialize IOFSL mode */
+  vt_iofsl_init();
+#endif /* VT_IOFSL */
 
 #if defined(VT_PLUGIN_CNTR)
   /* call it when it can be called */
@@ -2120,11 +2233,11 @@ uint32_t vt_def_scl_file(uint32_t tid, const char* fname)
 {
   uint32_t fid;
 
-  HashNode_sfile* hn;
+  StringHashNode* hn;
 
   GET_THREAD_ID(tid);
 
-  hn = hash_get(HASH_TAB__SFILE, fname);
+  hn = hash_get(STR_HASH_TAB_SFILE, fname);
 
   if( hn == NULL )
   {
@@ -2134,11 +2247,11 @@ uint32_t vt_def_scl_file(uint32_t tid, const char* fname)
                              fid,
                              fname);
 
-    hash_put(HASH_TAB__SFILE, fname, fid);
+    hash_put(STR_HASH_TAB_SFILE, fname, fid);
   }
   else
   {
-    fid = hn->fid;
+    fid = hn->id;
   }
 
   return fid;
@@ -2198,11 +2311,11 @@ uint32_t vt_def_region_group(uint32_t tid, const char* gname)
 {
   uint32_t rdid;
 
-  HashNode_rdesc* hn;
+  StringHashNode* hn;
 
   GET_THREAD_ID(tid);
 
-  hn = hash_get(HASH_TAB__RDESC, gname);
+  hn = hash_get(STR_HASH_TAB_RDESC, gname);
 
   if(hn == NULL)
   {
@@ -2212,11 +2325,11 @@ uint32_t vt_def_region_group(uint32_t tid, const char* gname)
                                    rdid,
                                    gname);
 
-    hash_put(HASH_TAB__RDESC, gname, rdid);
+    hash_put(STR_HASH_TAB_RDESC, gname, rdid);
   }
   else
   {
-    rdid = hn->rdid;
+    rdid = hn->id;
   }
 
   return rdid;
@@ -2238,17 +2351,7 @@ uint32_t vt_def_region(uint32_t tid, const char* rname, uint32_t fid,
   sid = vt_def_scl(tid, fid, begln, endln);
   rid = curid++;
 
-#if !defined(VT_DISABLE_RFG)
-  /* get region's filter/group information */
-  rinf = RFG_Regions_add(VTTHRD_RFGREGIONS(VTThrdv[0]), rname, rid);
-  vt_libassert(rinf != NULL);
-
-  /* get region's group name, if specified by VT_GROUPS_SPEC */
-  if ( rinf->groupName != NULL )
-    rdesc = rinf->groupName;
-#endif /* VT_DISABLE_RFG */
-
-  /* get region's default group name, if necessary */
+  /* get region's default group name, if not given */
   if ( rdesc == NULL )
   {
     switch ( rtype )
@@ -2307,6 +2410,16 @@ uint32_t vt_def_region(uint32_t tid, const char* rname, uint32_t fid,
         break;
     }
   }
+
+#if !defined(VT_DISABLE_RFG)
+  /* get region's filter/group information */
+  rinf = RFG_Regions_add(VTTHRD_RFGREGIONS(VTThrdv[0]), rid, rname, rdesc);
+  vt_libassert(rinf != NULL);
+
+  /* get region's group name, if specified by VT_GROUPS_SPEC */
+  if ( rinf->groupName != NULL )
+    rdesc = rinf->groupName;
+#endif /* VT_DISABLE_RFG */
 
   /* define group and store identifier */
   rdid = vt_def_region_group(tid, rdesc);
@@ -2576,81 +2689,101 @@ uint32_t vt_def_async_source(uint32_t tid, const char* sname)
 
 uint8_t vt_enter(uint32_t tid, uint64_t* time, uint32_t rid)
 {
-#if !defined(VT_DISABLE_RFG)
-  RFG_RegionInfo* rinf;
-#endif
   uint8_t do_trace;
 
   GET_THREAD_ID(tid);
 
+  /* immediately return, if tracing is disabled permanently */
   if (VTTHRD_TRACE_STATUS(VTThrdv[tid]) == VT_TRACE_OFF_PERMANENT) return 0;
 
+  /* increment call stack level */
   VTTHRD_STACK_PUSH(VTThrdv[tid]);
 
-  do_trace = ((VTTHRD_TRACE_STATUS(VTThrdv[tid]) == VT_TRACE_ON) &&
-              (VTTHRD_STACK_LEVEL(VTThrdv[tid]) <= max_stack_depth));
+  /* prevent region enter from recording, if tracing is temporary disabled or
+     the maximum call stack depth will be exceeded */
+  do_trace = !((VTTHRD_TRACE_STATUS(VTThrdv[tid]) == VT_TRACE_OFF) ||
+               (VTTHRD_STACK_LEVEL(VTThrdv[tid]) > max_stack_depth));
 
 #if !defined(VT_DISABLE_RFG)
-  if( !RFG_Regions_stackPush(VTTHRD_RFGREGIONS(VTThrdv[tid]),
-                             rid, do_trace, &rinf) )
   {
-#   if (defined(VT_MT) || defined(VT_HYB) || defined(VT_JAVA) || defined(VT_GPU))
-    RFG_RegionInfo* rinf_master;
-#if (defined(VT_MT) || defined(VT_HYB) || defined(VT_JAVA))
-    VTTHRD_LOCK_IDS();
-#endif /* VT_MT || VT_HYB || V_JAVA */
-    rinf_master = RFG_Regions_get(VTTHRD_RFGREGIONS(VTThrdv[0]), rid);
-#if (defined(VT_MT) || defined(VT_HYB) || defined(VT_JAVA))
-    VTTHRD_UNLOCK_IDS();
-#endif /* VT_MT || VT_HYB || V_JAVA */
-    vt_libassert(rinf_master != NULL);
+    RFG_RegionInfo* rinf;
+    uint8_t rejected;
 
-    rinf = RFG_Regions_add(VTTHRD_RFGREGIONS(VTThrdv[tid]),
-                           rinf_master->regionName, rid);
-
-    /* copy master's call limit */
-    rinf->callLimit = rinf_master->callLimit;
-
-    /* initialize call limit count down */
-    rinf->callLimitCD = rinf->callLimit;
-
+    /* push RFG's call stack to get region info and indicator flag whether
+       this region enter should be recorded or not */
     if (!RFG_Regions_stackPush(VTTHRD_RFGREGIONS(VTThrdv[tid]),
-                               rid, do_trace, &rinf))
-      vt_libassert(0);
-#   else /* VT_MT || VT_HYB || VT_JAVA || VT_GPU */
-    vt_libassert(0);
-#   endif /* VT_MT || VT_HYB || VT_JAVA || VT_GPU */
-  }
+                               rid, do_trace, &rinf, &rejected))
+    {
+#if (defined(VT_MT) || defined(VT_HYB) || defined(VT_JAVA) || defined(VT_GPU))
+      if (tid != 0)
+      {
+        /* if no region info found on this thread, then take it from the
+           master thread */
 
-  if (do_trace)
-  {
-    /* write marker, if the next enter will reach the call limit */
-    if (rinf->callLimitCD == 1)
-    {
-      char marktext[1024];
-      snprintf(marktext, sizeof(marktext) - 1,
-               "Beginning to filter out function '%s' "
-               "(call limit (=%i) reached at this point)",
-               rinf->regionName,
-               rinf->callLimit-1);
-      vt_marker_hint(tid, time, marktext);
+        RFG_RegionInfo* rinf_master;
+
+        /* get region info from master thread */
+#       if (defined(VT_MT) || defined(VT_HYB) || defined(VT_JAVA))
+        VTTHRD_LOCK_IDS();
+#       endif /* VT_MT || VT_HYB || VT_JAVA */
+        rinf_master = RFG_Regions_get(VTTHRD_RFGREGIONS(VTThrdv[0]), rid);
+#       if (defined(VT_MT) || defined(VT_HYB) || defined(VT_JAVA))
+        VTTHRD_UNLOCK_IDS();
+#       endif /* VT_MT || VT_HYB || VT_JAVA */
+        vt_libassert(rinf_master != NULL);
+
+        /* "copy" master thread's region info */
+        rinf = RFG_Regions_add(VTTHRD_RFGREGIONS(VTThrdv[tid]), rid,
+                               rinf_master->regionName, rinf_master->groupName);
+
+        /* re-initialize regions's call limit */
+        rinf->callLimit = rinf->callLimitCD = rinf_master->callLimit;
+
+        /* push RFG's call stack again which should succeed now */
+        if (!RFG_Regions_stackPush(VTTHRD_RFGREGIONS(VTThrdv[tid]),
+                                   rid, do_trace, &rinf, &rejected))
+          vt_libassert(0);
+      }
+      else
+#endif /* VT_MT || VT_HYB || VT_JAVA || VT_GPU */
+      {
+        vt_libassert(0);
+      }
     }
-    /* don't record this enter, if call limit reached */
-    else if (rinf->callLimitCD == 0)
+
+    if (do_trace)
     {
-      do_trace = 0;
+      /* region enter rejected by the filter? */
+      if (rejected)
+      {
+        do_trace = 0;
+      }
+      else
+      {
+        /* write marker, if the next enter will reach the call limit */
+        if (rinf->callLimitCD == 0)
+        {
+          char marktext[1024];
+          snprintf(marktext, sizeof(marktext) - 1,
+                   "Beginning to filter out function '%s' "
+                   "(call limit (=%i) reached at this point)",
+                   rinf->regionName,
+                   rinf->callLimit);
+          vt_marker_hint(tid, time, marktext);
+        }
+      }
     }
   }
 #endif /* VT_DISABLE_RFG */
 
   if (do_trace)
   {
-    VTGen_write_ENTER(VTTHRD_GEN(VTThrdv[tid]),
-                      time,
-                      rid,
-                      0);
+    /* write enter event record */
+    VTGen_write_ENTER(VTTHRD_GEN(VTThrdv[tid]), time, rid, 0);
+    if (VTTHRD_TRACE_STATUS(VTThrdv[tid]) != VT_TRACE_ON) return 0;
 
-    vt_update_counter(tid, time);
+    /* write counter event record(s) */
+    update_counter(tid, time);
   }
 
   return do_trace;
@@ -2658,42 +2791,47 @@ uint8_t vt_enter(uint32_t tid, uint64_t* time, uint32_t rid)
 
 void vt_exit(uint32_t tid, uint64_t* time)
 {
-#if !defined(VT_DISABLE_RFG)
-  RFG_RegionInfo* rinf;
-  int climitbyenter;
-#endif
   uint8_t do_trace;
 
   GET_THREAD_ID(tid);
 
-  if (VTTHRD_TRACE_STATUS(VTThrdv[tid]) ==
-      VT_TRACE_OFF_PERMANENT) return;
+  /* immediately return, if tracing is disabled permanently */
+  if (VTTHRD_TRACE_STATUS(VTThrdv[tid]) == VT_TRACE_OFF_PERMANENT) return;
 
+  /* prevent region exit from recording, if tracing is temporary disabled or
+     the maximum call stack depth is exceeded */
+  do_trace = !((VTTHRD_TRACE_STATUS(VTThrdv[tid]) == VT_TRACE_OFF) ||
+               (VTTHRD_STACK_LEVEL(VTThrdv[tid]) > max_stack_depth));
+
+  /* decrement call stack level */
   VTTHRD_STACK_POP(VTThrdv[tid]);
 
-  do_trace = ((VTTHRD_TRACE_STATUS(VTThrdv[tid]) == VT_TRACE_ON) &&
-              (VTTHRD_STACK_LEVEL(VTThrdv[tid])+1 <= max_stack_depth));
-
 #if !defined(VT_DISABLE_RFG)
-  if (!RFG_Regions_stackPop(VTTHRD_RFGREGIONS(VTThrdv[tid]),
-                            &rinf, &climitbyenter))
   {
-    vt_libassert(0);
-  }
+    RFG_RegionInfo* rinf;
+    uint8_t rejected;
 
-  if (climitbyenter == 0)
-    do_trace = 0;
+    /* pop RFG's call stack to get region info and indicator flag whether
+       this region exit should be recorded or not */
+    if (!RFG_Regions_stackPop(VTTHRD_RFGREGIONS(VTThrdv[tid]),
+                              &rinf, &rejected))
+    {
+      vt_libassert(0);
+    }
+
+    if (do_trace && rejected)
+      do_trace = 0;
+  }
 #endif /* VT_DISABLE_RFG */
 
   if (do_trace)
   {
-    vt_update_counter(tid, time);
+    /* write counter event record(s) */
+    update_counter(tid, time);
     if (VTTHRD_TRACE_STATUS(VTThrdv[tid]) != VT_TRACE_ON) return;
 
-    VTGen_write_LEAVE(VTTHRD_GEN(VTThrdv[tid]),
-                      time,
-                      0,
-                      0);
+    /* write leave event record */
+    VTGen_write_LEAVE(VTTHRD_GEN(VTThrdv[tid]), time, 0, 0);
   }
 }
 
@@ -2916,7 +3054,7 @@ void vt_marker_hint(uint32_t tid, uint64_t* time, const char* fmt, ...)
 
 /* -- Key-Value -- */
 
-void vt_keyval(uint32_t tid, uint32_t kid, uint8_t vtype, void* kvalue)
+void vt_keyval(uint32_t tid, uint32_t kid, uint8_t vtype, const void* kvalue)
 {
   GET_THREAD_ID(tid);
 
@@ -2945,6 +3083,10 @@ void vt_next_async_time(uint32_t tid, uint32_t kid, uint64_t atime)
 void vt_mpi_send(uint32_t tid, uint64_t* time, uint32_t dpid, uint32_t cid,
                  uint32_t tag, uint32_t sent)
 {
+#if defined(HAVE_MPI2_THREAD) && HAVE_MPI2_THREAD
+  if (vt_mpi_thread_serialized) return;
+#endif /* HAVE_MPI2_THREAD */
+
   GET_THREAD_ID(tid);
 
   if (VTTHRD_TRACE_STATUS(VTThrdv[tid]) != VT_TRACE_ON) return;
@@ -2961,6 +3103,10 @@ void vt_mpi_send(uint32_t tid, uint64_t* time, uint32_t dpid, uint32_t cid,
 void vt_mpi_recv(uint32_t tid, uint64_t* time, uint32_t spid, uint32_t cid,
                  uint32_t tag, uint32_t recvd)
 {
+#if defined(HAVE_MPI2_THREAD) && HAVE_MPI2_THREAD
+  if (vt_mpi_thread_serialized) return;
+#endif /* HAVE_MPI2_THREAD */
+
   GET_THREAD_ID(tid);
 
   if (VTTHRD_TRACE_STATUS(VTThrdv[tid]) != VT_TRACE_ON) return;
@@ -2978,6 +3124,10 @@ void vt_mpi_collexit(uint32_t tid, uint64_t* time, uint64_t* etime,
                      uint32_t rid, uint32_t rpid, uint32_t cid, void* comm,
                      uint32_t sent, uint32_t recvd)
 {
+#if defined(HAVE_MPI2_THREAD) && HAVE_MPI2_THREAD
+  if (vt_mpi_thread_serialized) return;
+#endif /* HAVE_MPI2_THREAD */
+
   GET_THREAD_ID(tid);
 
   if (VTTHRD_TRACE_STATUS(VTThrdv[tid]) == VT_TRACE_ON)
@@ -3004,6 +3154,10 @@ void vt_mpi_collbegin(uint32_t tid, uint64_t* time, uint32_t rid, uint64_t mid,
                       uint32_t rpid, uint32_t cid, uint64_t sent,
                       uint64_t recvd)
 {
+#if defined(HAVE_MPI2_THREAD) && HAVE_MPI2_THREAD
+  if (vt_mpi_thread_serialized) return;
+#endif /* HAVE_MPI2_THREAD */
+
   GET_THREAD_ID(tid);
 
   if (VTTHRD_TRACE_STATUS(VTThrdv[tid]) != VT_TRACE_ON) return;
@@ -3021,8 +3175,13 @@ void vt_mpi_collbegin(uint32_t tid, uint64_t* time, uint32_t rid, uint64_t mid,
 
 /* NOTE: collend has to be called by each process to ENSURE that sync is done 
    even by processes that have tracing disabled (allreduce) */
-void vt_mpi_collend(uint32_t tid, uint64_t* time, uint64_t mid, void* comm, uint8_t was_recorded)
+void vt_mpi_collend(uint32_t tid, uint64_t* time, uint64_t mid, void* comm,
+                    uint8_t was_recorded)
 {
+#if defined(HAVE_MPI2_THREAD) && HAVE_MPI2_THREAD
+  if (vt_mpi_thread_serialized) return;
+#endif /* HAVE_MPI2_THREAD */
+
   GET_THREAD_ID(tid);
 
   if (was_recorded && (VTTHRD_TRACE_STATUS(VTThrdv[tid]) == VT_TRACE_ON))
@@ -3042,6 +3201,10 @@ void vt_mpi_collend(uint32_t tid, uint64_t* time, uint64_t mid, void* comm, uint
 void vt_mpi_rma_put(uint32_t tid, uint64_t* time, uint32_t tpid, uint32_t cid,
                     uint32_t tag, uint64_t sent)
 {
+#if defined(HAVE_MPI2_THREAD) && HAVE_MPI2_THREAD
+  if (vt_mpi_thread_serialized) return;
+#endif /* HAVE_MPI2_THREAD */
+
   GET_THREAD_ID(tid);
 
   if (VTTHRD_TRACE_STATUS(VTThrdv[tid]) != VT_TRACE_ON) return;
@@ -3059,6 +3222,10 @@ void vt_mpi_rma_put(uint32_t tid, uint64_t* time, uint32_t tpid, uint32_t cid,
 void vt_mpi_rma_putre(uint32_t tid, uint64_t* time, uint32_t tpid, uint32_t cid,
                       uint32_t tag, uint64_t sent)
 {
+#if defined(HAVE_MPI2_THREAD) && HAVE_MPI2_THREAD
+  if (vt_mpi_thread_serialized) return;
+#endif /* HAVE_MPI2_THREAD */
+
   GET_THREAD_ID(tid);
 
   if (VTTHRD_TRACE_STATUS(VTThrdv[tid]) != VT_TRACE_ON) return;
@@ -3076,6 +3243,10 @@ void vt_mpi_rma_putre(uint32_t tid, uint64_t* time, uint32_t tpid, uint32_t cid,
 void vt_mpi_rma_get(uint32_t tid, uint64_t* time, uint32_t tpid, uint32_t cid,
                     uint32_t tag, uint64_t recvd)
 {
+#if defined(HAVE_MPI2_THREAD) && HAVE_MPI2_THREAD
+  if (vt_mpi_thread_serialized) return;
+#endif /* HAVE_MPI2_THREAD */
+
   GET_THREAD_ID(tid);
 
   if (VTTHRD_TRACE_STATUS(VTThrdv[tid]) != VT_TRACE_ON) return;
@@ -3092,6 +3263,10 @@ void vt_mpi_rma_get(uint32_t tid, uint64_t* time, uint32_t tpid, uint32_t cid,
 
 void vt_mpi_rma_end(uint32_t tid, uint64_t* time, uint32_t cid, uint32_t tag)
 {
+#if defined(HAVE_MPI2_THREAD) && HAVE_MPI2_THREAD
+  if (vt_mpi_thread_serialized) return;
+#endif /* HAVE_MPI2_THREAD */
+
   GET_THREAD_ID(tid);
 
   if (VTTHRD_TRACE_STATUS(VTThrdv[tid]) != VT_TRACE_ON) return;
@@ -3128,6 +3303,10 @@ void vt_omp_join(uint32_t tid)
 void vt_omp_parallel_begin(uint32_t tid)
 {
   GET_THREAD_ID(tid);
+
+#if 0 /* it's not clear whether it's necessary to restart hardware counters
+         (e.g. PAPI) for new parallel regions, but it's definitely very
+         expensive; disabled for now */
 #if defined(VT_METR)
   if ( tid > 0 && vt_metric_num() > 0 && !VTTHRD_METV(VTThrdv[tid]) )
   {
@@ -3136,6 +3315,7 @@ void vt_omp_parallel_begin(uint32_t tid)
     vt_cntl_msg(2, "Recreated metrics in thread #%d", tid);
   }
 #endif /* VT_METR */
+#endif
 
 #if defined(VT_PLUGIN_CNTR)
   /* if we really use plugins and this thread also uses some;
@@ -3158,6 +3338,9 @@ void vt_omp_parallel_end(uint32_t tid)
 {
   GET_THREAD_ID(tid);
 
+#if 0 /* it's not clear whether it's necessary to restart hardware counters
+         (e.g. PAPI) for new parallel regions, but it's definitely very
+         expensive; disabled for now */
 #if defined(VT_METR)
   if ( tid > 0 && vt_metric_num() > 0 && VTTHRD_METV(VTThrdv[tid]) ) {
     /* shut down metrics in worker threads */
@@ -3174,6 +3357,7 @@ void vt_omp_parallel_end(uint32_t tid)
     }
   }
 #endif /* VT_METR */
+#endif
 
 #if defined(VT_PLUGIN_CNTR)
   /* if we really use plugins and this thread also uses some;
@@ -3262,7 +3446,7 @@ void vt_enter_stat(uint32_t tid, uint64_t* time)
   VTGen_write_ENTER(VTTHRD_GEN(VTThrdv[tid]), time,
                     vt_trc_regid[VT__TRC_STAT], 0);
 
-  vt_update_counter(tid, time);
+  update_counter(tid, time);
 }
 
 void vt_exit_stat(uint32_t tid, uint64_t* time)
@@ -3271,7 +3455,7 @@ void vt_exit_stat(uint32_t tid, uint64_t* time)
 
   if (VTTHRD_TRACE_STATUS(VTThrdv[tid]) != VT_TRACE_ON) return;
 
-  vt_update_counter(tid, time);
+  update_counter(tid, time);
   if (VTTHRD_TRACE_STATUS(VTThrdv[tid]) != VT_TRACE_ON) return;
 
   VTGen_write_LEAVE(VTTHRD_GEN(VTThrdv[tid]), time, 0, 0);
@@ -3311,7 +3495,7 @@ void vt_exit_rewind(uint32_t tid, uint64_t* time)
 
   if (VTTHRD_TRACE_STATUS(VTThrdv[tid]) != VT_TRACE_ON) return;
 
-  vt_update_counter(tid, time);
+  update_counter(tid, time);
   if (VTTHRD_TRACE_STATUS(VTThrdv[tid]) != VT_TRACE_ON) return;
 
   VTGen_write_LEAVE(VTTHRD_GEN(VTThrdv[tid]), time, 0, 0);
@@ -3328,7 +3512,7 @@ void vt_set_rewind_mark(uint32_t tid, uint64_t* time)
   VTTHRD_STACK_LEVEL_AT_REWIND_MARK(VTThrdv[tid]) =
     VTTHRD_STACK_LEVEL(VTThrdv[tid]);
 
-  vt_update_counter(tid, time);
+  update_counter(tid, time);
   VTGen_set_rewind_mark(VTTHRD_GEN(VTThrdv[tid]), time);
 
   vt_cntl_msg(2, "Rewind mark set");

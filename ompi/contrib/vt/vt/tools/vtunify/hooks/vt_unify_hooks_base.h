@@ -13,8 +13,6 @@
 #ifndef _VT_UNIFY_HOOKS_BASE_H_
 #define _VT_UNIFY_HOOKS_BASE_H_
 
-#include "config.h"
-
 #include "vt_unify_hooks.h"
 
 //
@@ -220,6 +218,17 @@ private:
 
    virtual void readRecHook_EventComment( HooksC::VaArgsT & args ) { (void)args; }
    virtual void writeRecHook_EventComment( HooksC::VaArgsT & args ) { (void)args; }
+
+   // snapshot records
+   //
+
+   virtual void writeRecHook_EnterSnapshot( HooksC::VaArgsT & args ) { (void)args; }
+   virtual void writeRecHook_SendSnapshot( HooksC::VaArgsT & args ) { (void)args; }
+   virtual void writeRecHook_OpenFileSnapshot( HooksC::VaArgsT & args ) { (void)args; }
+   virtual void writeRecHook_BeginFileOpSnapshot( HooksC::VaArgsT & args ) { (void)args; }
+   virtual void writeRecHook_BeginCollOpSnapshot( HooksC::VaArgsT & args ) { (void)args; }
+   virtual void writeRecHook_CollOpCountSnapshot( HooksC::VaArgsT & args ) { (void)args; }
+   virtual void writeRecHook_CounterSnapshot( HooksC::VaArgsT & args ) { (void)args; }
 
    // generic hook
    virtual void genericHook( const uint32_t & id, HooksC::VaArgsT & args ) { (void)args; }

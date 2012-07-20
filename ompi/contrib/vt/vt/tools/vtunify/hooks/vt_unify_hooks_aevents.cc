@@ -10,7 +10,6 @@
  * See the file COPYING in the package base directory for details
  **/
 
-#include "vt_unify.h"
 #include "vt_unify_defs.h"
 #include "vt_unify_handlers.h"
 #include "vt_unify_hooks_aevents.h"
@@ -265,6 +264,10 @@ HooksAsyncEventsC::phaseHook_UnifyEvents_pre()
 void
 HooksAsyncEventsC::writeRecHook_DefKeyValue( HooksC::VaArgsT & args )
 {
+   // return, the input trace has no events
+   if( !UnifyControlS::have_events() )
+      return;
+
    // get string identifier for async. source key as std::string
    static const std::string async_source_key_prefix =
       VT_UNIFY_STRID_ASYNC_SOURCE_KEY;
@@ -300,7 +303,7 @@ HooksAsyncEventsC::writeRecHook_Event( uint64_t * time, uint32_t * streamid,
 
    // return, if no async. source defined
    if( m_sourceKeys.empty() )
-      return;
+      return /* true */;
 
    // get async. source manager by stream id
    //
@@ -327,11 +330,11 @@ HooksAsyncEventsC::genericHook( const uint32_t & id, HooksC::VaArgsT & args )
 {
    bool error = false;
 
-   // return, if no async. source defined
-   if( m_sourceKeys.empty() )
-      return;
+   // return, if the input trace has no events of no async. source defined
+   if( !UnifyControlS::have_events() || m_sourceKeys.empty() )
+      return /* true */;
 
-   if( ( id & VT_UNIFY_HOOKS_AEVENTS_GENID__EVENT_STREAM_OPEN ) != 0 )
+   if( ( id & VT_UNIFY_HOOKS_AEVENTS_GENID__EVENT_WSTREAM_OPEN ) != 0 )
    {
       // get hook arguments
       //
@@ -347,10 +350,12 @@ HooksAsyncEventsC::genericHook( const uint32_t & id, HooksC::VaArgsT & args )
       // open reader streams of async. sources
       error = !openSources( *manager, *stream_id, *stream_prefix, *wstream );
    }
-   else if( ( id & VT_UNIFY_HOOKS_AEVENTS_GENID__EVENT_STREAM_CLOSE ) != 0 )
+   else if( ( id & VT_UNIFY_HOOKS_AEVENTS_GENID__EVENT_WSTREAM_CLOSE ) != 0 )
    {
-      // get stream id from hook arguments
-      uint32_t * stream_id = (uint32_t*)args[0];
+      // get hook arguments
+      //
+      //OTF_WStream ** wstream = (OTF_WStream**)args[0];
+      uint32_t * stream_id = (uint32_t*)args[1];
 
       // get async. source manager by stream id
       //
@@ -391,6 +396,19 @@ HooksAsyncEventsC::openSources( AsyncSourceManagerS & manager,
       //
       source.file_manager = OTF_FileManager_open( 1 );
       assert( source.file_manager );
+
+      // initialize IOFSL stuff for reading, if necessary
+      //
+      if( UnifyControlS::is_iofsl() )
+      {
+         OTF_IofslMode otf_iofsl_mode =
+            ( UnifyControlS::iofsl_mode == VT_IOFSL_MODE_MULTIFILE ) ?
+               OTF_IOFSL_MULTIFILE : OTF_IOFSL_MULTIFILE_SPLIT;
+
+         OTF_FileManager_setIofsl( source.file_manager,
+            UnifyControlS::iofsl_num_servers, 0, otf_iofsl_mode, 0, 0,
+            VT_TRACEID_BITMASK );
+      }
 
       // open stream for reading
       //
@@ -723,7 +741,7 @@ HooksAsyncEventsC::shareSourceKeys()
    // block until all ranks have reached this point
    CALL_MPI( MPI_Barrier( MPI_COMM_WORLD ) );
 
-   VPrint( 2, "  Sharing global key tokens of async. event sources\n" );
+   VPrint( 2, "  Sharing global key tokens for async. event sources\n" );
 
    uint32_t keys_num;
 

@@ -1,6 +1,5 @@
 CC="blrts_xlc"
 CXX="blrts_xlC"
-F77="blrts_xlf90"
 FC="blrts_xlf90"
 MPICC="mpixlc"
 MPICXX="mpixlcxx"

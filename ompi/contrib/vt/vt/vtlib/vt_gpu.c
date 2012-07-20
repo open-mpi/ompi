@@ -11,24 +11,39 @@
  **/
 
 #include "vt_gpu.h"
-#include "vt_env.h"
+#include "vt_env.h"         /* get environment variables */
+#include "vt_pform.h"       /* VampirTrace time measurement */
+
+#include <string.h> /* needed for hashing and manual CUDA kernel demangling */
 
 uint32_t vt_gpu_groupCID;
 uint32_t vt_gpu_commCID;
 uint8_t *vt_gpu_prop;
 
+uint32_t vt_gpu_config = 0;
+
+uint8_t vt_gpu_trace_kernels = 0;
+
 uint8_t vt_gpu_trace_idle = 0;
 
-uint32_t vt_gpu_rid_idle = VT_NO_ID;
+uint8_t vt_gpu_trace_mcpy = 0;
 
-/* gpu debugging flag is '0' by default */
+uint8_t vt_gpu_trace_memusage = 0;
+
 uint8_t vt_gpu_debug = 0;
 
 uint8_t vt_gpu_error = 0;
 
+uint32_t vt_gpu_rid_idle = VT_NO_ID;
+
+uint32_t vt_gpu_cid_memusage = VT_NO_ID;
+
+uint64_t vt_gpu_init_time = 0;
+
 static uint8_t vt_gpu_initialized = 0;
 static uint8_t vt_gpu_finalized = 0;
 
+/* declaration of internal functions */
 static void vt_gpu_createGroups(void);
 
 /*
@@ -44,16 +59,26 @@ void vt_gpu_init(void)
     /* get a communicator id for GPU communication */
     vt_gpu_commCID = vt_get_curid();
     vt_gpu_groupCID = vt_get_curid();
+    
+    /* make sure that the GPU environment is configured */
+    vt_gpu_get_config();
 
-    vt_gpu_trace_idle = (uint8_t)vt_env_gputrace_idle();
-    vt_gpu_debug = (uint8_t)vt_env_gputrace_debug();
-    vt_gpu_error = (uint8_t)vt_env_gputrace_error();
-
-    if(vt_gpu_trace_idle && vt_env_gputrace_kernel()){
+    /* GPU idle time */
+    if(vt_gpu_trace_idle && vt_gpu_trace_kernels > 0){
       vt_gpu_rid_idle = vt_def_region(VT_MASTER_THREAD, "compute_idle", VT_NO_ID,
-                                VT_NO_LNO, VT_NO_LNO, "CUDA_IDLE", VT_FUNCTION);
+                                VT_NO_LNO, VT_NO_LNO, "GPU_IDLE", VT_FUNCTION);
+      
+      vt_gpu_init_time = vt_pform_wtime();
     }else{
       vt_gpu_trace_idle = 0;
+    }
+    
+    /* GPU memory usage */
+    if(vt_gpu_trace_memusage > 0){
+      vt_gpu_cid_memusage = vt_def_counter(VT_MASTER_THREAD, "gpu_mem_usage", "Bytes",
+                      VT_CNTR_ABS | VT_CNTR_NEXT | VT_CNTR_UNSIGNED,
+                      vt_def_counter_group(VT_MASTER_THREAD, "GPU_MEMORY_USAGE"),
+                      0);
     }
 
     vt_gpu_initialized = 1;
@@ -77,6 +102,80 @@ void vt_gpu_finalize(void)
     VTTHRD_UNLOCK_IDS();
 #endif
   }
+}
+
+uint32_t vt_gpu_get_config(void)
+{
+  static uint8_t init_config = 0;
+  
+  if(init_config == 0){
+    char *args = vt_env_gputrace();
+    const char *sep = ",:";
+    char *feature = NULL;
+
+    init_config = 1;
+    
+    /* check, if the old environment variable has been set */
+    (void)vt_env_cudatrace();
+    
+    /* check for disable CUDA measurement first */
+    if(args == NULL || strcmp(args, "no") == 0){
+      vt_gpu_trace_kernels = 0;
+      vt_gpu_trace_mcpy = 0;
+      return vt_gpu_config;
+    }
+    
+    /* check for individual features */
+    feature = strtok(args, sep);
+    while (feature != NULL){
+      if(strcmp(feature, "yes") == 0 || strcmp(feature, "default") == 0) {
+        vt_gpu_config |= VT_GPU_TRACE_DEFAULT;
+        vt_gpu_trace_kernels = 1;
+        vt_gpu_trace_mcpy = 1;
+      }else if(strcmp(feature, "cuda") == 0){
+        vt_gpu_config |= VT_GPU_TRACE_CUDA;
+      }else if(strcmp(feature, "cupti") == 0){
+        vt_gpu_config |= VT_GPU_TRACE_CUPTI;
+      }else if(strcmp(feature, "opencl") == 0){
+        vt_gpu_config |= VT_GPU_TRACE_OPENCL;
+      }else if(strcmp(feature, "runtime") == 0){
+        vt_gpu_config |= VT_GPU_TRACE_RUNTIME_API;
+      }else if(strcmp(feature, "driver") == 0){
+        vt_gpu_config |= VT_GPU_TRACE_DRIVER_API;
+      }else if(strcmp(feature, "kernel") == 0){
+        vt_gpu_config |= VT_GPU_TRACE_KERNEL;
+        vt_gpu_trace_kernels = 1;
+      }else if(strcmp(feature, "idle") == 0){
+        vt_gpu_config |= VT_GPU_TRACE_IDLE;
+        vt_gpu_trace_idle = 1;
+      }else if(strcmp(feature, "memcpy") == 0){
+        vt_gpu_config |= VT_GPU_TRACE_MEMCPY;
+        vt_gpu_trace_mcpy = 1;
+      }else if(strcmp(feature, "memusage") == 0){
+        vt_gpu_config |= VT_GPU_TRACE_MEMUSAGE;
+        vt_gpu_trace_memusage = 1;
+      }else if(strcmp(feature, "debug") == 0){
+        vt_gpu_config |= VT_GPU_TRACE_DEBUG;
+        vt_gpu_debug = 1;
+      }else if(strcmp(feature, "error") == 0){
+        vt_gpu_config |= VT_GPU_TRACE_ERROR;
+        vt_gpu_error = 1;
+      }else{
+        vt_warning("[GPU] Unknown GPU tracing option: '%s'", feature);
+      }
+      
+      feature = strtok(NULL, sep);
+    }
+    
+    /* environment variables for further refinement */
+    if(vt_env_gputrace_kernel() > 1)
+      vt_gpu_trace_kernels = (uint8_t)vt_env_gputrace_kernel();
+
+    if(vt_env_gputrace_memusage() > 1)
+      vt_gpu_trace_memusage = (uint8_t)vt_env_gputrace_memusage();
+  }
+
+  return vt_gpu_config;
 }
 
 /*
@@ -185,8 +284,9 @@ void vt_gpu_handleCuError(CUresult ecode, const char* msg,
 
 #if (defined(VT_CUDARTWRAP) || defined(VT_CUPTI))
 
-#include <string.h>
+#if !defined(VT_LIBERTY)
 #include <stdio.h>
+char vt_gpu_kernel_name[VTGPU_KERNEL_STRING_SIZE];
 
 /*
  * Parse the device function name:
@@ -196,7 +296,7 @@ void vt_gpu_handleCuError(CUresult ecode, const char* msg,
  * @param kname the extracted kernel name
  * @param devFunc the CUDA internal kernel function name
  */
-void vt_cuda_symbolToKernel(char *kname, const char* devFunc)
+char* vt_cuda_demangleKernel(const char* mangled)
 {
   int i = 0;       /* position in device function (source string) */
   int nlength = 0; /* length of name space or kernel */
@@ -207,53 +307,53 @@ void vt_cuda_symbolToKernel(char *kname, const char* devFunc)
   /*vt_cntl_msg(1,"[CUDART] device function name: %s'", devFunc);*/
 
   /* init for both cases: name space available or not */
-  if(devFunc[2] == 'N'){
-    nlength = atoi(&devFunc[3]); /* get length of first name space */
+  if(mangled[2] == 'N'){
+    nlength = atoi(&mangled[3]); /* get length of first name space */
     i = 4;
   }else{
-    nlength = atoi(&devFunc[2]); /* get length of kernel */
+    nlength = atoi(&mangled[2]); /* get length of kernel */
     i = 3;
   }
 
   /* unless string null termination */
-  while(devFunc[i] != '\0'){
+  while(mangled[i] != '\0'){
     /* found either name space or kernel name (no digits) */
-    if(devFunc[i] < '0' || devFunc[i] > '9'){
+    if(mangled[i] < '0' || mangled[i] > '9'){
       /* copy name to kernel function */
       if((ePos + nlength) < VTGPU_KERNEL_STRING_SIZE){
-        (void)strncpy(&kname[ePos], &devFunc[i], nlength);
+        (void)strncpy(&vt_gpu_kernel_name[ePos], &mangled[i], nlength);
         ePos += nlength; /* set next position to write */
       }else{
         nlength = VTGPU_KERNEL_STRING_SIZE - ePos;
-        (void)strncpy(&kname[ePos], &devFunc[i], nlength);
+        (void)strncpy(&vt_gpu_kernel_name[ePos], &mangled[i], nlength);
         vt_cntl_msg(1,"[CUDART]: kernel name '%s' contains more than %d chars!",
-                      devFunc, VTGPU_KERNEL_STRING_SIZE);
-        return;
+                      mangled, VTGPU_KERNEL_STRING_SIZE);
+        return vt_gpu_kernel_name;
       }
 
       i += nlength; /* jump over name */
-      nlength = atoi(&devFunc[i]); /* get length of next name space or kernel */
+      nlength = atoi(&mangled[i]); /* get length of next name space or kernel */
 
       /* finish if no digit after name space or kernel */
       if(nlength == 0){
-        kname[ePos] = '\0'; /* set string termination */
+        vt_gpu_kernel_name[ePos] = '\0'; /* set string termination */
         break;
       }else{
         if((ePos + 3) < VTGPU_KERNEL_STRING_SIZE){
-          (void)strncpy(&kname[ePos], "::\0", 3);
+          (void)strncpy(&vt_gpu_kernel_name[ePos], "::\0", 3);
           ePos += 2;
         }else{
           vt_cntl_msg(1,"[CUDART]: kernel name '%s' contains more than %d chars!",
-                        devFunc, VTGPU_KERNEL_STRING_SIZE);
-          return;
+                        mangled, VTGPU_KERNEL_STRING_SIZE);
+          return vt_gpu_kernel_name;
         }
       }
     }else i++;
   }
 
   /* copy the end of the kernel name string to extract templates */
-  if(-1 == snprintf(kn_templates, VTGPU_KERNEL_STRING_SIZE, "%s", &devFunc[i+1]))
-    vt_cntl_msg(1, "[CUDART]: Error parsing kernel '%s'", devFunc);
+  if(-1 == snprintf(kn_templates, VTGPU_KERNEL_STRING_SIZE, "%s", &mangled[i+1]))
+    vt_cntl_msg(1, "[CUDART]: Error parsing kernel '%s'", mangled);
   curr_elem = kn_templates; /* should be 'L' */
 
   /* search templates (e.g. "_Z10cptCurrentILb1ELi10EEv6SField8SParListifff") */
@@ -264,8 +364,8 @@ void vt_cuda_symbolToKernel(char *kname, const char* devFunc)
 
     /* write at position 'I' with '<' */
     /* elem->name[ePos]='<'; */
-    if(-1 == snprintf(&(kname[ePos]),VTGPU_KERNEL_STRING_SIZE-ePos,"<"))
-      vt_cntl_msg(1,"[CUDART] Parsing templates of kernel '%s' failed!", devFunc);
+    if(-1 == snprintf(&(vt_gpu_kernel_name[ePos]),VTGPU_KERNEL_STRING_SIZE-ePos,"<"))
+      vt_cntl_msg(1,"[CUDART] Parsing templates of kernel '%s' failed!", mangled);
     ePos++; /* continue with next character */
 
     do{
@@ -273,22 +373,26 @@ void vt_cuda_symbolToKernel(char *kname, const char* devFunc)
       curr_elem++; /* set pointer to template type length or template type */
       /* find end of template element */
       tmpElemEnd = strchr(curr_elem + atoi(curr_elem), 'E');
+      if(tmpElemEnd == NULL) continue;
       tmpElemEnd[0] = '\0'; /* set termination char after template element */
       /* find next non-digit char */
       while(*curr_elem >= '0' && *curr_elem <= '9') curr_elem++;
       /* append template value to kernel name */
-      if(-1 == (res = snprintf(&(kname[ePos]),
+      if(-1 == (res = snprintf(&(vt_gpu_kernel_name[ePos]),
                                VTGPU_KERNEL_STRING_SIZE-ePos,"%s,",curr_elem)))
-        vt_cntl_msg(1,"[CUDART]: Parsing templates of kernel '%s' crashed!", devFunc);
+        vt_cntl_msg(1,"[CUDART]: Parsing templates of kernel '%s' crashed!", mangled);
       ePos += res; /* continue after template value */
       curr_elem =tmpElemEnd + 1; /* set current element to begin of next template */
     }while(tmpElemEnd < tmpEnd);
-    if((ePos-1) < VTGPU_KERNEL_STRING_SIZE) (void)strncpy(&kname[ePos-1], ">\0", 2);
-    else vt_cntl_msg(1,"[CUDART]: Templates of '%s' too long for internal buffer!", devFunc);
+    if((ePos-1) < VTGPU_KERNEL_STRING_SIZE) (void)strncpy(&vt_gpu_kernel_name[ePos-1], ">\0", 2);
+    else vt_cntl_msg(1,"[CUDART]: Templates of '%s' too long for internal buffer!", mangled);
   } /* else: kernel has no templates */
   /*vt_cntl_msg(1,"[CUDART] function name: %s'",e->name);*/
+  
+  return vt_gpu_kernel_name;
 }
 
+#endif /* defined(VT_LIBERTY) */
 #endif /* defined(VT_CUDARTWRAP) || defined(VT_CUPTI) */
 
 /***************************** hashing of strings *****************************/

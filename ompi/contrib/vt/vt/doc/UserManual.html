@@ -67,7 +67,7 @@ BODY			{ font-family: sans-serif; }
 <P>
 
 <P>
-<B><BIG CLASS="XHUGE">VampirTrace 5.12.2&nbsp;User Manual</BIG></B>
+<B><BIG CLASS="XHUGE">VampirTrace 5.13&nbsp;User Manual</BIG></B>
 <BR>
 <BR>
 <BR>
@@ -98,186 +98,227 @@ Contents</A>
 <!--Table of Contents-->
 
 <UL CLASS="TofC">
-<LI><A NAME="tex2html104"
+<LI><A NAME="tex2html127"
   HREF="#SECTION00200000000000000000">Introduction</A>
-<LI><A NAME="tex2html105"
+<LI><A NAME="tex2html128"
   HREF="#SECTION00300000000000000000">Instrumentation</A>
 <UL>
-<LI><A NAME="tex2html106"
+<LI><A NAME="tex2html129"
   HREF="#SECTION00310000000000000000">Compiler Wrappers</A>
-<LI><A NAME="tex2html107"
+<LI><A NAME="tex2html130"
   HREF="#SECTION00320000000000000000">Instrumentation Types</A>
-<LI><A NAME="tex2html108"
+<LI><A NAME="tex2html131"
   HREF="#SECTION00330000000000000000">Automatic Instrumentation</A>
 <UL>
-<LI><A NAME="tex2html109"
+<LI><A NAME="tex2html132"
   HREF="#SECTION00331000000000000000">Supported Compilers</A>
-<LI><A NAME="tex2html110"
+<LI><A NAME="tex2html133"
   HREF="#SECTION00332000000000000000">Notes for Using the GNU, Intel, PathScale, or Open64 Compiler</A>
-<LI><A NAME="tex2html111"
+<LI><A NAME="tex2html134"
   HREF="#SECTION00333000000000000000">Notes on Instrumentation of Inline Functions</A>
-<LI><A NAME="tex2html112"
+<LI><A NAME="tex2html135"
   HREF="#SECTION00334000000000000000">Instrumentation of Loops with OpenUH Compiler</A>
 </UL>
-<LI><A NAME="tex2html113"
+<LI><A NAME="tex2html136"
   HREF="#SECTION00340000000000000000">Manual Instrumentation</A>
 <UL>
-<LI><A NAME="tex2html114"
+<LI><A NAME="tex2html137"
   HREF="#SECTION00341000000000000000">Using the VampirTrace API</A>
-<LI><A NAME="tex2html115"
+<LI><A NAME="tex2html138"
   HREF="#SECTION00342000000000000000">Measurement Controls</A>
 </UL>
-<LI><A NAME="tex2html116"
+<LI><A NAME="tex2html139"
   HREF="#SECTION00350000000000000000">Source Instrumentation Using PDT/TAU</A>
-<LI><A NAME="tex2html117"
+<LI><A NAME="tex2html140"
   HREF="#SECTION00360000000000000000">Binary Instrumentation Using Dyninst</A>
 <UL>
-<LI><A NAME="tex2html118"
+<LI><A NAME="tex2html141"
   HREF="#SECTION00361000000000000000">Static Binary Instrumentation</A>
 </UL>
-<LI><A NAME="tex2html119"
+<LI><A NAME="tex2html142"
   HREF="#SECTION00370000000000000000">Runtime Instrumentation Using VTRun</A>
-<LI><A NAME="tex2html120"
+<LI><A NAME="tex2html143"
   HREF="#SECTION00380000000000000000">Tracing Java Applications Using JVMTI</A>
-<LI><A NAME="tex2html121"
+<LI><A NAME="tex2html144"
   HREF="#SECTION00390000000000000000">Tracing Calls to 3rd-Party Libraries</A>
 </UL>
 <BR>
-<LI><A NAME="tex2html122"
+<LI><A NAME="tex2html145"
   HREF="#SECTION00400000000000000000">Runtime Measurement</A>
 <UL>
-<LI><A NAME="tex2html123"
+<LI><A NAME="tex2html146"
   HREF="#SECTION00410000000000000000">Trace File Name and Location</A>
-<LI><A NAME="tex2html124"
+<LI><A NAME="tex2html147"
   HREF="#SECTION00420000000000000000">Environment Variables</A>
-<LI><A NAME="tex2html125"
+<LI><A NAME="tex2html148"
   HREF="#SECTION00430000000000000000">Influencing Trace Buffer Size</A>
-<LI><A NAME="tex2html126"
+<LI><A NAME="tex2html149"
   HREF="#SECTION00440000000000000000">Profiling an Application</A>
-<LI><A NAME="tex2html127"
+<LI><A NAME="tex2html150"
   HREF="#SECTION00450000000000000000">Unification of Local Traces</A>
-<LI><A NAME="tex2html128"
+<LI><A NAME="tex2html151"
   HREF="#SECTION00460000000000000000">Synchronized Buffer Flush</A>
-<LI><A NAME="tex2html129"
+<LI><A NAME="tex2html152"
   HREF="#SECTION00470000000000000000">Enhanced Timer Synchronization</A>
-<LI><A NAME="tex2html130"
+<LI><A NAME="tex2html153"
   HREF="#SECTION00480000000000000000">Environment Configuration Using VTSetup</A>
 </UL>
 <BR>
-<LI><A NAME="tex2html131"
+<LI><A NAME="tex2html154"
   HREF="#SECTION00500000000000000000">Recording Additional Events and Counters</A>
 <UL>
-<LI><A NAME="tex2html132"
+<LI><A NAME="tex2html155"
   HREF="#SECTION00510000000000000000">Hardware Performance Counters</A>
-<LI><A NAME="tex2html133"
+<LI><A NAME="tex2html156"
   HREF="#SECTION00520000000000000000">Resource Usage Counters</A>
-<LI><A NAME="tex2html134"
+<LI><A NAME="tex2html157"
   HREF="#SECTION00530000000000000000">Memory Allocation Counter</A>
-<LI><A NAME="tex2html135"
+<LI><A NAME="tex2html158"
   HREF="#SECTION00540000000000000000">CPU ID Counter</A>
-<LI><A NAME="tex2html136"
+<LI><A NAME="tex2html159"
   HREF="#SECTION00550000000000000000">NVIDIA CUDA</A>
-<LI><A NAME="tex2html137"
+<LI><A NAME="tex2html160"
   HREF="#SECTION00560000000000000000">Pthread API Calls</A>
-<LI><A NAME="tex2html138"
+<LI><A NAME="tex2html161"
   HREF="#SECTION00570000000000000000">Plugin Counter Metrics</A>
-<LI><A NAME="tex2html139"
+<LI><A NAME="tex2html162"
   HREF="#SECTION00580000000000000000">I/O Calls</A>
-<LI><A NAME="tex2html140"
+<LI><A NAME="tex2html163"
   HREF="#SECTION00590000000000000000">fork/system/exec Calls</A>
-<LI><A NAME="tex2html141"
+<LI><A NAME="tex2html164"
   HREF="#SECTION005100000000000000000">MPI Correctness Checking Using UniMCI</A>
-<LI><A NAME="tex2html142"
+<LI><A NAME="tex2html165"
   HREF="#SECTION005110000000000000000">User-defined Counters</A>
-<LI><A NAME="tex2html143"
+<LI><A NAME="tex2html166"
   HREF="#SECTION005120000000000000000">User-defined Markers</A>
-<LI><A NAME="tex2html144"
+<LI><A NAME="tex2html167"
   HREF="#SECTION005130000000000000000">User-defined Communcation</A>
 </UL>
 <BR>
-<LI><A NAME="tex2html145"
+<LI><A NAME="tex2html168"
   HREF="#SECTION00600000000000000000">Filtering &amp; Grouping</A>
 <UL>
-<LI><A NAME="tex2html146"
+<LI><A NAME="tex2html169"
   HREF="#SECTION00610000000000000000">Function Filtering</A>
-<LI><A NAME="tex2html147"
+<LI><A NAME="tex2html170"
   HREF="#SECTION00620000000000000000">Java Specific Filtering</A>
-<LI><A NAME="tex2html148"
+<LI><A NAME="tex2html171"
   HREF="#SECTION00630000000000000000">Function Grouping</A>
 </UL>
 <BR>
-<LI><A NAME="tex2html149"
+<LI><A NAME="tex2html172"
   HREF="#SECTION00700000000000000000">VampirTrace Installation</A>
 <UL>
-<LI><A NAME="tex2html150"
+<LI><A NAME="tex2html173"
   HREF="#SECTION00710000000000000000">Basics</A>
-<LI><A NAME="tex2html151"
+<LI><A NAME="tex2html174"
   HREF="#SECTION00720000000000000000">Configure Options</A>
-<LI><A NAME="tex2html152"
+<LI><A NAME="tex2html175"
   HREF="#SECTION00730000000000000000">Cross Compilation</A>
-<LI><A NAME="tex2html153"
+<LI><A NAME="tex2html176"
   HREF="#SECTION00740000000000000000">Environment Set-Up</A>
-<LI><A NAME="tex2html154"
+<LI><A NAME="tex2html177"
   HREF="#SECTION00750000000000000000">Notes for Developers</A>
 </UL>
 <BR>
-<LI><A NAME="tex2html155"
+<LI><A NAME="tex2html178"
   HREF="#SECTION00800000000000000000">Command Reference</A>
 <UL>
-<LI><A NAME="tex2html156"
-  HREF="#SECTION00810000000000000000">Compiler Wrappers (vtcc,vtcxx,vtf77,vtf90)</A>
-<LI><A NAME="tex2html157"
+<LI><A NAME="tex2html179"
+  HREF="#SECTION00810000000000000000">Compiler Wrappers (vtcc,vtcxx,vtfort)</A>
+<LI><A NAME="tex2html180"
   HREF="#SECTION00820000000000000000">Local Trace Unifier (vtunify)</A>
-<LI><A NAME="tex2html158"
+<LI><A NAME="tex2html181"
   HREF="#SECTION00830000000000000000">Binary Instrumentor (vtdyn)</A>
-<LI><A NAME="tex2html159"
+<LI><A NAME="tex2html182"
   HREF="#SECTION00840000000000000000">Trace Filter Tool (vtfilter)</A>
-<LI><A NAME="tex2html160"
+<LI><A NAME="tex2html183"
   HREF="#SECTION00850000000000000000">Library Wrapper Generator (vtlibwrapgen)</A>
-<LI><A NAME="tex2html161"
+<LI><A NAME="tex2html184"
   HREF="#SECTION00860000000000000000">Application Execution Wrapper (vtrun)</A>
+<LI><A NAME="tex2html185"
+  HREF="#SECTION00870000000000000000">IOFSL server startup script (vtiofsl-start)</A>
+<LI><A NAME="tex2html186"
+  HREF="#SECTION00880000000000000000">IOFSL server shutdown script (vtiofsl-stop)</A>
 </UL>
 <BR>
-<LI><A NAME="tex2html162"
+<LI><A NAME="tex2html187"
   HREF="#SECTION00900000000000000000">Counter Specifications</A>
 <UL>
-<LI><A NAME="tex2html163"
+<LI><A NAME="tex2html188"
   HREF="#SECTION00910000000000000000">PAPI</A>
-<LI><A NAME="tex2html164"
+<LI><A NAME="tex2html189"
   HREF="#SECTION00920000000000000000">CPC</A>
-<LI><A NAME="tex2html165"
+<LI><A NAME="tex2html190"
   HREF="#SECTION00930000000000000000">NEC SX Hardware Performance Counter</A>
-<LI><A NAME="tex2html166"
+<LI><A NAME="tex2html191"
   HREF="#SECTION00940000000000000000">Resource Usage</A>
 </UL>
 <BR>
-<LI><A NAME="tex2html167"
-  HREF="#SECTION001000000000000000000">FAQ</A>
+<LI><A NAME="tex2html192"
+  HREF="#SECTION001000000000000000000">Using VampirTrace with IOFSL</A>
 <UL>
-<LI><A NAME="tex2html168"
-  HREF="#SECTION001010000000000000000">Can I use different compilers for VampirTrace and my application?</A>
-<LI><A NAME="tex2html169"
-  HREF="#SECTION001020000000000000000">Why does my application need such a long time for starting?</A>
-<LI><A NAME="tex2html170"
-  HREF="#SECTION001030000000000000000">Why do I see multiple
+<LI><A NAME="tex2html193"
+  HREF="#SECTION001010000000000000000">Introduction</A>
+<LI><A NAME="tex2html194"
+  HREF="#SECTION001020000000000000000">Overview</A>
+<UL>
+<LI><A NAME="tex2html195"
+  HREF="#SECTION001021000000000000000">File handling in OTF</A>
+<LI><A NAME="tex2html196"
+  HREF="#SECTION001022000000000000000">I/O Forwarding Scalability Layer</A>
+<LI><A NAME="tex2html197"
+  HREF="#SECTION001023000000000000000">Architecture</A>
+</UL>
+<LI><A NAME="tex2html198"
+  HREF="#SECTION001030000000000000000">Installation</A>
+<UL>
+<LI><A NAME="tex2html199"
+  HREF="#SECTION001031000000000000000">Support Libraries</A>
+<LI><A NAME="tex2html200"
+  HREF="#SECTION001032000000000000000">Building IOFSL</A>
+<LI><A NAME="tex2html201"
+  HREF="#SECTION001033000000000000000">Building VampirTrace &amp; OTF</A>
+</UL>
+<LI><A NAME="tex2html202"
+  HREF="#SECTION001040000000000000000">Usage Examples</A>
+<UL>
+<LI><A NAME="tex2html203"
+  HREF="#SECTION001041000000000000000">Using VampirTrace with IOFSL on Cray XK6 / with PBS</A>
+<LI><A NAME="tex2html204"
+  HREF="#SECTION001042000000000000000">Manual Usage</A>
+</UL>
+</UL>
+<BR>
+<LI><A NAME="tex2html205"
+  HREF="#SECTION001100000000000000000">FAQ</A>
+<UL>
+<LI><A NAME="tex2html206"
+  HREF="#SECTION001110000000000000000">Can I use different compilers for VampirTrace and my application?</A>
+<LI><A NAME="tex2html207"
+  HREF="#SECTION001120000000000000000">Why does my application need such a long time for starting?</A>
+<LI><A NAME="tex2html208"
+  HREF="#SECTION001130000000000000000">How can I limit compiler instrumentation?</A>
+<LI><A NAME="tex2html209"
+  HREF="#SECTION001140000000000000000">Why do I see multiple
 I/O operations for a single (un)formatted file read/write from my Fortran
 application?</A>
-<LI><A NAME="tex2html171"
-  HREF="#SECTION001040000000000000000">The application has run to completion, but there is no *.otf file. What can I do?</A>
-<LI><A NAME="tex2html172"
-  HREF="#SECTION001050000000000000000">What limitations are associated with "on/off" and buffer rewind?</A>
-<LI><A NAME="tex2html173"
-  HREF="#SECTION001060000000000000000">VampirTrace warns that it ``cannot lock file a.lock'', what's wrong?</A>
-<LI><A NAME="tex2html174"
-  HREF="#SECTION001070000000000000000">Can I relocate my VampirTrace installation without rebuilding from source?</A>
-<LI><A NAME="tex2html175"
-  HREF="#SECTION001080000000000000000">What are the byte counts in collective communication records?</A>
-<LI><A NAME="tex2html176"
-  HREF="#SECTION001090000000000000000">I get ``error: unknown asm constraint letter''</A>
-<LI><A NAME="tex2html177"
-  HREF="#SECTION0010100000000000000000">I have a question that is not answered in this document!</A>
-<LI><A NAME="tex2html178"
-  HREF="#SECTION0010110000000000000000">I need support for additional features so I can trace application xyz.</A>
+<LI><A NAME="tex2html210"
+  HREF="#SECTION001150000000000000000">The application has run to completion, but there is no *.otf file. What can I do?</A>
+<LI><A NAME="tex2html211"
+  HREF="#SECTION001160000000000000000">What limitations are associated with "on/off" and buffer rewind?</A>
+<LI><A NAME="tex2html212"
+  HREF="#SECTION001170000000000000000">VampirTrace warns that it ``cannot lock file a.lock'', what's wrong?</A>
+<LI><A NAME="tex2html213"
+  HREF="#SECTION001180000000000000000">Can I relocate my VampirTrace installation without rebuilding from source?</A>
+<LI><A NAME="tex2html214"
+  HREF="#SECTION001190000000000000000">What are the byte counts in collective communication records?</A>
+<LI><A NAME="tex2html215"
+  HREF="#SECTION0011100000000000000000">I get ``error: unknown asm constraint letter''</A>
+<LI><A NAME="tex2html216"
+  HREF="#SECTION0011110000000000000000">I have a question that is not answered in this document!</A>
+<LI><A NAME="tex2html217"
+  HREF="#SECTION0011120000000000000000">I need support for additional features so I can trace application xyz.</A>
 </UL></UL>
 <!--End of Table of Contents-->
 <P>
@@ -314,20 +355,20 @@ OpenMP events, and performance counters.
 <P>
 After a successful tracing run, VampirTrace writes all collected data to a  
 trace file in the Open Trace Format (OTF)<A NAME="tex2html1"
-  HREF="#foot1533"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
+  HREF="#foot1526"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A>.
 As a result, the information is available for post-mortem analysis and 
 visualization by various tools. 
 Most notably, VampirTrace provides the input data for the Vampir analysis  
 and visualization tool<A NAME="tex2html2"
-  HREF="#foot1534"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
+  HREF="#foot1527"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A>. 
 
 <P>
 VampirTrace is included in OpenMPI&nbsp;1.3 and later versions.
 If not disabled explicitly, VampirTrace is built automatically when installing
 OpenMPI<A NAME="tex2html3"
-  HREF="#foot1535"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
+  HREF="#foot1528"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A>.
 
 <P>
@@ -558,8 +599,7 @@ Compiler Wrappers
 
 <P>
 All the necessary instrumentation of user functions, MPI, and
-OpenMP events is handled by VampirTrace's compiler wrappers (vtcc, vtcxx, vtf77, and
-vtf90).
+OpenMP events is handled by VampirTrace's compiler wrappers (vtcc, vtcxx, and vtfort).
 In the script used to build the application (e.g.&nbsp;a makefile), all compile
 and link commands should be replaced by the VampirTrace compiler wrapper.
 The wrappers perform the necessary instrumentation of the program and link
@@ -587,7 +627,7 @@ Simply replace the compiler by VampirTrace's wrapper:
 <TD ALIGN="LEFT"><TT>gfortran hello.f90 -o hello  </TT></TD>
 </TR>
 <TR><TD ALIGN="LEFT">with instrumentation:</TD>
-<TD ALIGN="LEFT"><TT><SPAN  CLASS="textbf">vtf90</SPAN> hello.f90 -o hello  </TT></TD>
+<TD ALIGN="LEFT"><TT><SPAN  CLASS="textbf">vtfort</SPAN> hello.f90 -o hello  </TT></TD>
 </TR>
 </TABLE>
 <BR>
@@ -659,7 +699,7 @@ calls are invoked. For OpenMP events OPARI is invoked for automatic source code 
 <TD ALIGN="LEFT"><TT>-o hello </TT></TD>
 </TR>
 <TR><TD ALIGN="LEFT">with instrumentation:</TD>
-<TD ALIGN="LEFT"><TT><SPAN  CLASS="textbf">vtf90</SPAN> &lt;-openmp|-pthread&gt; hello.f90 </TT></TD>
+<TD ALIGN="LEFT"><TT><SPAN  CLASS="textbf">vtfort</SPAN> &lt;-openmp|-pthread&gt; hello.f90 </TT></TD>
 </TR>
 <TR><TD ALIGN="LEFT">&nbsp;</TD>
 <TD ALIGN="LEFT"><TT>-o hello </TT></TD>
@@ -687,7 +727,7 @@ With a combination of the  above mentioned approaches, hybrid applications can b
 <TD ALIGN="LEFT"><TT>-o hello </TT></TD>
 </TR>
 <TR><TD ALIGN="LEFT">with instrumentation:</TD>
-<TD ALIGN="LEFT"><TT><SPAN  CLASS="textbf">vtf90 -vt:f90 mpif90</SPAN> </TT></TD>
+<TD ALIGN="LEFT"><TT><SPAN  CLASS="textbf">vtfort -vt:fc mpif90</SPAN> </TT></TD>
 </TR>
 <TR><TD ALIGN="LEFT">&nbsp;</TD>
 <TD ALIGN="LEFT"><TT>&lt;-openmp|-pthread&gt; hello.F90</TT></TD>
@@ -792,7 +832,7 @@ If available, simply use the compiler wrappers without any parameters, e.g.:
 <P>
 <BR>
 <BR>
-<code>   % vtf90 hello.f90 -o hello</code>
+<code>   % vtfort hello.f90 -o hello</code>
 <BR>
 
 <P>
@@ -813,13 +853,15 @@ VampirTrace supports following compilers for automatic instrumentation:
 </LI>
 <LI>Portland Group (PGI) (i.e.&nbsp;pgcc, pgCC, pgf90, pgf77)
 </LI>
+<LI>Cray CCE (i.e.&nbsp;craycc, crayCC, crayftn)
+</LI>
 <LI>SUN Fortran 90 (i.e.&nbsp;cc, CC, f90)
 </LI>
 <LI>IBM (i.e.&nbsp;xlcc, xlCC, xlf90)
 </LI>
 <LI>NEC SX (i.e.&nbsp;sxcc, sxc++, sxf90)
 </LI>
-<LI>Open64 (i.e.&nbsp;opencc, openCC, openf90)
+<LI>Open64 version &#8805;4.2 (i.e.&nbsp;opencc, openCC, openf90)
 </LI>
 <LI>OpenUH version &#8805;4.0 (i.e.&nbsp;uhcc, uhCC, uhf90)
 </LI>
@@ -1143,7 +1185,7 @@ in a single file, that
   The names in between may contain wildcards as ``?'', ``*', and ``#'', each entry gets a new line.
   The lists end with <TT>END[_FILE]_&lt;INCLUDE|EXCLUDE&gt;_LIST</TT>. For further information on selective 
   profiling have a look at the TAU documentation<A NAME="tex2html4"
-  HREF="#foot1559"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
+  HREF="#foot1552"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A>.
   To announce the file through the compiler wrapper use the option <TT>-vt:tau</TT>:
 <PRE>
@@ -1160,7 +1202,7 @@ Binary Instrumentation Using Dyninst
 The option <TT>-vt:inst dyninst</TT> is used with the compiler wrapper to 
 instrument the application during runtime (binary instrumentation), by using 
 Dyninst<A NAME="tex2html5"
-  HREF="#foot1560"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
+  HREF="#foot1553"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A>.
 Recompiling is not necessary for this kind of instrumentation,
 but relinking:
@@ -1168,7 +1210,7 @@ but relinking:
 <P>
 <BR>
 <BR>
-<code>   % vtf90 -vt:inst dyninst hello.o -o hello</code>
+<code>   % vtfort -vt:inst dyninst hello.o -o hello</code>
 <BR>
 <BR>
 <BR>
@@ -1311,7 +1353,7 @@ Tracing Calls to 3rd-Party Libraries
   VampirTrace is also capable to trace calls to third party libraries, which come with
   at least one C header file even without the library's source code. If VampirTrace was
   built with support for library tracing (the CTool library<A NAME="tex2html6"
-  HREF="#foot1561"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
+  HREF="#foot1554"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A>  is required), the tool <TT>vtlibwrapgen</TT> can be used to
   generate a wrapper library to intercept each call to the actual library functions.
   This wrapper library can be linked to the application or used in combination with the
@@ -1455,7 +1497,7 @@ of a VampirTrace instrumented executable:
 <TD ALIGN="LEFT">-</TD>
 </TR>
 <TR><TD ALIGN="LEFT"><A NAME="VT_SETUP_VT_BUFFER_SIZE"></A><TT>VT_BUFFER_SIZE</TT></TD>
-<TD ALIGN="LEFT">Size of internal event trace buffer. This is the place where
+<TD ALIGN="LEFT">Size of internal event trace buffer per process. This is the place where
 	event records are stored, before being written to OTF.
 	<BR>
 	&#8658; Section&nbsp;<A HREF="#sec:trace_file_size">3.3</A></TD>
@@ -1490,6 +1532,10 @@ of a VampirTrace instrumented executable:
 	&#8658; Section&nbsp;<A HREF="#sec:trace_file_size">3.3</A></TD>
 <TD ALIGN="LEFT">1</TD>
 </TR>
+<TR><TD ALIGN="LEFT"><A NAME="VT_SETUP_VT_MAX_SNAPSHOTS"></A><TT>VT_MAX_SNAPSHOTS</TT></TD>
+<TD ALIGN="LEFT">Maximum number of snapshots to generate.</TD>
+<TD ALIGN="LEFT">1024</TD>
+</TR>
 <TR><TD ALIGN="LEFT"><A NAME="VT_SETUP_VT_MAX_THREADS"></A><TT>VT_MAX_THREADS</TT></TD>
 <TD ALIGN="LEFT">Maximum number of threads per process that VampirTrace reserves resources for.</TD>
 <TD ALIGN="LEFT">65536</TD>
@@ -1507,8 +1553,12 @@ of a VampirTrace instrumented executable:
 <TD ALIGN="LEFT">Name of node-local directory which can be used to store temporary trace files.</TD>
 <TD ALIGN="LEFT"><TT>/tmp/</TT></TD>
 </TR>
+<TR><TD ALIGN="LEFT"><A NAME="VT_SETUP_VT_SNAPSHOTS"></A><TT>VT_SNAPSHOTS</TT></TD>
+<TD ALIGN="LEFT">Enable snapshot generation? Allows Vampir to load subsets of the resulting trace.</TD>
+<TD ALIGN="LEFT">yes</TD>
+</TR>
 <TR><TD ALIGN="LEFT"><A NAME="VT_SETUP_VT_THREAD_BUFFER_SIZE"></A><TT>VT_THREAD_BUFFER_SIZE</TT></TD>
-<TD ALIGN="LEFT">Size of internal event trace buffer for threads. If not defined, the 
+<TD ALIGN="LEFT">Size of internal event trace buffer per thread. If not defined, the 
 	size is set to 10% of <TT>VT_BUFFER_SIZE</TT>.
 	<BR>
 	&#8658; Section&nbsp;<A HREF="#sec:trace_file_size">3.3</A></TD>
@@ -1553,6 +1603,12 @@ of a VampirTrace instrumented executable:
 </TR>
 <TR><TD ALIGN="LEFT"><A NAME="VT_SETUP_VT_IOTRACE"></A><TT>VT_IOTRACE</TT></TD>
 <TD ALIGN="LEFT">Enable tracing of application I/O calls?
+	<BR>
+	&#8658; Section&nbsp;<A HREF="#sec:io_calls">4.8</A></TD>
+<TD ALIGN="LEFT">no</TD>
+</TR>
+<TR><TD ALIGN="LEFT"><A NAME="VT_SETUP_VT_IOTRACE_EXTENDED"></A><TT>VT_IOTRACE_EXTENDED</TT></TD>
+<TD ALIGN="LEFT">Enable tracing of additional function argument for application I/O calls?
 	<BR>
 	&#8658; Section&nbsp;<A HREF="#sec:io_calls">4.8</A></TD>
 <TD ALIGN="LEFT">no</TD>
@@ -1616,6 +1672,24 @@ of a VampirTrace instrumented executable:
 <TR><TD ALIGN="LEFT"><A NAME="VT_SETUP_VT_SYNC_FLUSH_LEVEL"></A><TT>VT_SYNC_FLUSH_LEVEL</TT></TD>
 <TD ALIGN="LEFT">Minimum buffer fill level for synchronized buffer flush in percent.</TD>
 <TD ALIGN="LEFT">80</TD>
+</TR>
+<TR><TD ALIGN="LEFT"><A NAME="VT_SETUP_VT_IOFSL_SERVERS"></A><TT>VT_IOFSL_SERVERS</TT></TD>
+<TD ALIGN="LEFT">Comma-separated list of IOFSL server addresses.
+	<BR>
+	&#8658; Section&nbsp;<A HREF="#sec:iofsl-manual">D.4.2</A></TD>
+<TD ALIGN="LEFT">-</TD>
+</TR>
+<TR><TD ALIGN="LEFT"><A NAME="VT_SETUP_VT_IOFSL_MODE"></A><TT>VT_IOFSL_MODE</TT></TD>
+<TD ALIGN="LEFT">Mode of the IOFSL communication (MULTIFILE_SPLIT, MULTIFILE)
+	<BR>
+	&#8658; Section&nbsp;<A HREF="#sec:iofsl-manual">D.4.2</A></TD>
+<TD ALIGN="LEFT">MULTIFILE_SPLIT</TD>
+</TR>
+<TR><TD ALIGN="LEFT"><A NAME="VT_SETUP_VT_IOFSL_ASYNC_IO"></A><TT>VT_IOFSL_ASYNC_IO</TT></TD>
+<TD ALIGN="LEFT">Enable buffered IOFSL writes?
+	<BR>
+	&#8658; Section&nbsp;<A HREF="#sec:iofsl-manual">D.4.2</A></TD>
+<TD ALIGN="LEFT">no</TD>
 </TR>
 <TR><TD ALIGN="LEFT"><A NAME="VT_SETUP_COUNTERS"></A></TD>
 <TD ALIGN="LEFT">
@@ -1774,15 +1848,31 @@ data, parts of the application may be swapped to disk, leading
 to a significant change in the behavior of the application.
 
 <P>
-In multi-threaded applications a single buffer cannot be shared across a process 
+<SPAN  CLASS="textbf">In multi-threaded applications</SPAN> a single buffer cannot be shared across a process 
 and the associated threads for performance reasons. Thus independent 
 buffers are created for every process and thread, at which the process buffer 
 size is 70% and the thread buffer size is 10% of the value set in 
-<TT>VT_BUFFER_SIZE</TT>. The buffer size of processes and threads can be 
-explicitly specified setting the environment variable 
-<TT>VT_THREAD_BUFFER_SIZE</TT>, which defines the buffer size of a thread, 
-whereas the buffer size of a process is then defined by the value of 
-<TT>VT_BUFFER_SIZE</TT>.
+<TT>VT_BUFFER_SIZE</TT>. 
+The buffer size of processes and threads can be explicitly specified setting 
+the environment variable <TT>VT_THREAD_BUFFER_SIZE</TT>, which defines the 
+buffer size of a thread, whereas the buffer size of a process is then defined 
+by the value of <TT>VT_BUFFER_SIZE</TT>.
+The total memory consumption of the application is calculated as follows  
+(assuming that every process has the same number of threads):
+<DL COMPACT>
+<DT>a)</DT>
+<DD>M = N * VT_BUFFER_SIZE * 0.7 + N * T * VT_BUFFER_SIZE * 0.1 
+<BR>    <SMALL CLASS="SCRIPTSIZE">(VT_THREAD_BUFFER_SIZE is <TT>not</TT> specified) </SMALL>
+  </DD>
+<DT>b)</DT>
+<DD>M = N * VT_BUFFER_SIZE + N * T * VT_THREAD_BUFFER_SIZE 
+<BR>    <SMALL CLASS="SCRIPTSIZE">(VT_THREAD_BUFFER_SIZE is specified) </SMALL>
+  </DD>
+</DL>
+<SMALL CLASS="FOOTNOTESIZE">M ... total allocated memory&nbsp;&nbsp;&nbsp;N ... number of processes&nbsp;&nbsp;&nbsp;T ... number of threads per process
+</SMALL> 
+<P>
+<BR>
 
 <P>
 Note that you can decrease the size of trace files significantly by
@@ -1903,7 +1993,7 @@ for the enhanced timer synchronization:
 
 <UL>
 <LI>CLAPACK <A NAME="tex2html7"
-  HREF="#foot1571"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
+  HREF="#foot1564"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A>
 </LI>
 <LI>AMD ACML
@@ -2167,57 +2257,75 @@ NVIDIA CUDA
   will not be traced by default.
   To enable tracing of CUDA runtime and driver API functions and CUDA device 
   activities (like kernel execution and memory copies) build VampirTrace with 
-  CUDA support and set the following environment variable: 
-<P></P>
+  CUDA support and set the following environment variable:
 
 <P>
 <DIV ALIGN="CENTER">
-<TT>export VT_CUDATRACE=[yes|1|2|3|4|no]</TT>
+<TT>export VT_GPUTRACE=[yes|default|no]</TT>
 <BR></DIV>
-<P><P>
-<BR>
-<DIV ALIGN="CENTER"></DIV>
+<P></P>
+<DIV ALIGN="CENTER">
+</DIV>  
+
 <P>
-<DIV ALIGN="CENTER"><TABLE CELLPADDING=3 BORDER="1">
-<TR><TD ALIGN="RIGHT">Option</TD>
-<TD ALIGN="CENTER">CUDA API</TD>
-<TD ALIGN="CENTER">GPU Activity</TD>
-<TD ALIGN="CENTER">CUDA Version <SPAN CLASS="MATH"><IMG
- ALIGN="MIDDLE" BORDER="0" SRC="img3.png"
- ALT="$ \geqq$"></SPAN></TD>
-</TR>
-<TR><TD ALIGN="RIGHT"><TT>yes, 1</TT></TD>
-<TD ALIGN="CENTER">runtime</TD>
-<TD ALIGN="CENTER">&check#checkmark;</TD>
-<TD ALIGN="CENTER">2.3</TD>
-</TR>
-<TR><TD ALIGN="RIGHT"><TT>2</TT></TD>
-<TD ALIGN="CENTER">driver</TD>
-<TD ALIGN="CENTER">&check#checkmark;</TD>
-<TD ALIGN="CENTER">4.1</TD>
-</TR>
-<TR><TD ALIGN="RIGHT"><TT>3</TT></TD>
-<TD ALIGN="CENTER">runtime &amp; driver</TD>
-<TD ALIGN="CENTER">&check#checkmark;</TD>
-<TD ALIGN="CENTER">4.1</TD>
-</TR>
-<TR><TD ALIGN="RIGHT"><TT>4</TT></TD>
-<TD ALIGN="CENTER">-</TD>
-<TD ALIGN="CENTER">&check#checkmark;</TD>
-<TD ALIGN="CENTER">4.1</TD>
-</TR>
-<TR><TD ALIGN="RIGHT"><TT>no, 0</TT></TD>
-<TD ALIGN="CENTER">-</TD>
-<TD ALIGN="CENTER">-</TD>
-<TD ALIGN="CENTER">-</TD>
-</TR>
-</TABLE>
+To enable a particular composition of CUDA measurement features the variable 
+  should contain a comma-separated list of available CUDA measurement options.
+
+<P>
+<DIV ALIGN="CENTER">
+<TT>export VT_GPUTRACE=option1,option2,option2,...</TT>
+<BR></DIV>
+<P></P>
+<DIV ALIGN="CENTER">
 </DIV>
 
 <P>
+<TABLE CELLPADDING=3>
+<TR><TD ALIGN="LEFT"><TT>cuda</TT></TD>
+<TD ALIGN="LEFT">enable CUDA (needed to use CUDA runtime API wrapper)</TD>
+</TR>
+<TR><TD ALIGN="LEFT">&nbsp;</TD>
+<TD ALIGN="LEFT">(OpenCL is available in VampirTrace GPU beta releases)</TD>
+</TR>
+<TR><TD ALIGN="LEFT"><TT>cupti</TT></TD>
+<TD ALIGN="LEFT">use the CUPTI interface instead of the library wrapper</TD>
+</TR>
+<TR><TD ALIGN="LEFT"><TT>runtime</TT></TD>
+<TD ALIGN="LEFT">CUDA runtime API</TD>
+</TR>
+<TR><TD ALIGN="LEFT"><TT>driver</TT></TD>
+<TD ALIGN="LEFT">CUDA driver API</TD>
+</TR>
+<TR><TD ALIGN="LEFT"><TT>kernel</TT></TD>
+<TD ALIGN="LEFT">CUDA kernels</TD>
+</TR>
+<TR><TD ALIGN="LEFT"><TT>idle</TT></TD>
+<TD ALIGN="LEFT">GPU compute idle time</TD>
+</TR>
+<TR><TD ALIGN="LEFT"><TT>memcpy</TT></TD>
+<TD ALIGN="LEFT">CUDA memory copies</TD>
+</TR>
+<TR><TD ALIGN="LEFT"><TT>memusage</TT></TD>
+<TD ALIGN="LEFT">CUDA memory allocation</TD>
+</TR>
+<TR><TD ALIGN="LEFT"><TT>debug</TT></TD>
+<TD ALIGN="LEFT">CUDA tracing debug mode</TD>
+</TR>
+<TR><TD ALIGN="LEFT"><TT>error</TT></TD>
+<TD ALIGN="LEFT">CUDA errors will exit the program</TD>
+</TR>
+<TR><TD ALIGN="LEFT"><TT>yes|default</TT></TD>
+<TD ALIGN="LEFT">same as ``cuda,runtime,kernel,memcpy''</TD>
+</TR>
+<TR><TD ALIGN="LEFT"><TT>no</TT></TD>
+<TD ALIGN="LEFT">disable CUDA measurement</TD>
+</TR>
+</TABLE>
+<BR><P></P>
+
+<P>
 Since CUDA Toolkit 4.1 the <SPAN  CLASS="textbf">CUDA</SPAN> <SPAN  CLASS="textbf">P</SPAN>rofiling and <SPAN  CLASS="textbf">T</SPAN>ool <SPAN  CLASS="textbf">I</SPAN>nterface 
-  (CUPTI) allows capturing of CUDA device activities. Therewith new tracing 
-  abilities (see option 2, 3 and 4 in the table above) are available. VampirTrace trace has currently 
+  (CUPTI) allows capturing of CUDA device activities. VampirTrace trace has currently 
   two methods to trace the CUDA runtime API and corresponding GPU activities: 
   traditional library wrapping with CUDA events for GPU activity measurement and 
   tracing via the CUPTI interface. Several features are 
@@ -2227,38 +2335,17 @@ Since CUDA Toolkit 4.1 the <SPAN  CLASS="textbf">CUDA</SPAN> <SPAN  CLASS="textb
 <BR>
 
 <P>
-There are additional feature switches implemented as environment 
-  variables to customize CUDA tracing (<TT>yes=1</TT>, <TT>no=0</TT>, the 
-  default is <TT><SPAN  CLASS="textbf">bold</SPAN></TT>):
+The new environment variable <TT>VT_GPUTRACE</TT> replaces several 
+  previously available environment variables. 
+  However, there are still additional feature switches implemented as environment 
+  variables to further refine CUDA tracing (the default is <TT><SPAN  CLASS="textbf">bold</SPAN></TT>):
   <DL>
 <DT></DT>
-<DD><TT>VT_CUDATRACE_CUPTI=[yes|<SPAN  CLASS="textbf">no</SPAN>]</TT> 
+<DD><TT>VT_GPUTRACE_KERNEL=[<SPAN  CLASS="textbf">yes</SPAN>|2]</TT>
 <BR>
-Use CUPTI for CUDA tracing instead of CUDA runtime API wrapper.
-
-<P>
-</DD>
-<DT></DT>
-<DD><TT>VT_CUDATRACE_KERNEL=[<SPAN  CLASS="textbf">yes</SPAN>|no|2]</TT>
-<BR>
-Tracing of CUDA kernels is enabled/disabled. With '<TT>2</TT>' additional 
-      kernel counters are captured. (CUPTI tracing only)
-
-<P>
-</DD>
-<DT></DT>
-<DD><TT>VT_CUDATRACE_IDLE=[yes|<SPAN  CLASS="textbf">no</SPAN>]</TT> 
-	  <SMALL CLASS="SCRIPTSIZE">(CUDA runtime API wrapper only) </SMALL>
-<BR>
-Show the GPU compute idle time on CUDA stream zero (default stream), if set to <TT>yes</TT>.
-
-<P>
-</DD>
-<DT></DT>
-<DD><TT>VT_CUDATRACE_MEMCPY=[<SPAN  CLASS="textbf">yes</SPAN>|no]</TT>
-<BR>
-Tracing of CUDA memory copies is enabled/disabled. For CUDA tracing via
-      library wrapper this will only have effect on asynchronous memory copies. 
+Tracing of CUDA kernels can be enabled with '<TT>yes</TT>'. This is the same 
+      as adding the option <TT>kernel</TT> to <TT>VT_GPUTRACE</TT>. 
+      With '<TT>2</TT>' additional kernel counters are captured. (CUPTI tracing only)
 
 <P>
 </DD>
@@ -2306,31 +2393,12 @@ Poll for CUPTI counter values during kernel execution, if set to <TT>yes</TT>.
 <P>
 </DD>
 <DT></DT>
-<DD><TT>VT_GPUTRACE_MEMUSAGE=[yes|<SPAN  CLASS="textbf">no</SPAN>|2]</TT>
+<DD><TT>VT_GPUTRACE_MEMUSAGE=[yes|2]</TT>
 <BR>
-Record GPU memory usage as counter ``gpu_mem_usage``, if set to <TT>yes</TT>.
-      Print missing <SPAN  CLASS="textit">cudaFree()</SPAN> calls to stderr, if set to '<TT>2</TT>'.
-
-<P>
-</DD>
-<DT></DT>
-<DD><TT>VT_GPUTRACE_ERROR=[yes|<SPAN  CLASS="textbf">no</SPAN>]</TT>
-	    <SMALL CLASS="SCRIPTSIZE">(CUDA runtime API wrapper only) </SMALL>
-<BR>
-Print out an error message and exit the program, if a function call to a 
-      GPU library does not return successfully. The default is just a warning 
-      message.
-
-<P>
-</DD>
-<DT></DT>
-<DD><TT>VT_GPUTRACE_DEBUG=[yes|<SPAN  CLASS="textbf">no</SPAN>]</TT>
-	    <SMALL CLASS="SCRIPTSIZE">(CUDA runtime API wrapper only) </SMALL>
-<BR>
-Do not cleanup all GPU resources (profiling events, contexts, event groups), 
-      as they might have already been implicitly cleaned up by the GPU runtime.
-
-<P>
+Record GPU memory usage as counter ``gpu_mem_usage``, if set to <TT>yes</TT>, 
+      which is the same as adding the option <TT>memusage</TT> to <TT>VT_GPUTRACE</TT>. 
+      With '<TT>2</TT>' missing <SPAN  CLASS="textit">cudaFree()</SPAN> calls are printed to stderr.
+ 
 </DD>
 </DL>
 
@@ -2382,7 +2450,7 @@ Several new region groups have been introduced:
 <TD ALIGN="LEFT" VALIGN="TOP" WIDTH=269>CUDA kernels (device functions) can only appear on 
 			      ``CUDA-Threads''</TD>
 </TR>
-<TR><TH ALIGN="LEFT"><SPAN  CLASS="textbf">CUDA_IDLE</SPAN></TH>
+<TR><TH ALIGN="LEFT"><SPAN  CLASS="textbf">GPU_IDLE</SPAN></TH>
 <TD ALIGN="LEFT" VALIGN="TOP" WIDTH=269>GPU compute idle time - the CUDA device does not run any 
 			      kernel currently (shown in first used stream of 
                               the device)</TD>
@@ -2457,7 +2525,7 @@ With kernel tracing enabled there are three counters, which provide
   <TT>blocks_per_grid</TT>, <TT>threads_per_block</TT>, <TT>threads_per_kernel</TT>.
   With CUPTI tracing additional kernel counters are available: static and 
   dynamic shared memory, total local memory and registers per thread 
-  (<TT>VT_CUDATRACE_KERNEL=2</TT>).
+  (<TT>VT_GPUTRACE_KERNEL=2</TT>).
 
 <P>
 
@@ -2749,6 +2817,10 @@ This works for both dynamically and statically linked executables.
 <P>
 If you'd like to experiment with some other I/O library, set the environment variable <TT>VT_IOLIB_PATHNAME</TT> to the alternative one.
   Beware that this library must provide all I/O functions mentioned above otherwise VampirTrace will abort.
+  Setting the environment variable <TT>VT_IOTRACE_EXTENDED</TT> to <TT>yes</TT> enables the collection of additional function arguments
+  for some of the I/O function mentioned above.
+  For example, this option stores offsets for <TT>pwrite</TT> and <TT>pread</TT> additionally to the I/O event record.
+  Enabling <TT>VT_IOTRACE_EXTENDED</TT> automatically enables <TT>VT_IOTRACE</TT>.
 
 <P>
 
@@ -3119,34 +3191,79 @@ By default, all calls of instrumented functions will be traced, so that the
   specified as follows:
 <BR>
 <P>
-<TT>&lt;function&gt; - &lt;limit&gt; [R]</TT> or <TT>&lt;groups&gt; - &lt;limit&gt; [R] G</TT>
+<TT>&lt;function&gt; - &lt;limit&gt; [S:&lt;[min-]max-stack-level&gt;] [R]</TT>
+<BR>
+or
+<BR>  <TT>&lt;groups&gt; - &lt;limit&gt; [S:&lt;[min-]max-stack-level&gt;] [R] G</TT>
 <BR>
 <P>
 <BR>
 <TABLE CELLPADDING=3>
 <TR><TD ALIGN="LEFT"><TT>functions, groups</TT></TD>
-<TD ALIGN="LEFT">semicolon-separated list of functions/groups</TD>
+<TD ALIGN="LEFT">Semicolon-separated list of</TD>
+</TR>
+<TR><TD ALIGN="LEFT">&nbsp;</TD>
+<TD ALIGN="LEFT">functions/groups.</TD>
 </TR>
 <TR><TD ALIGN="LEFT">&nbsp;</TD>
 <TD ALIGN="LEFT">(can contain wildcards)</TD>
 </TR>
+<TR><TD ALIGN="LEFT">&nbsp;</TD>
+<TD ALIGN="LEFT">&nbsp;</TD>
+</TR>
 <TR><TD ALIGN="LEFT"><TT>limit</TT></TD>
-<TD ALIGN="LEFT">assigned call limit</TD>
+<TD ALIGN="LEFT">call limit</TD>
 </TR>
 <TR><TD ALIGN="LEFT">&nbsp;</TD>
-<TD ALIGN="LEFT">0 = don't record functions/groups</TD>
+<TD ALIGN="LEFT">Stop recording of function/group when</TD>
 </TR>
 <TR><TD ALIGN="LEFT">&nbsp;</TD>
-<TD ALIGN="LEFT">-1 = unlimited</TD>
+<TD ALIGN="LEFT">the specified call limit is reached.</TD>
 </TR>
-<TR><TD ALIGN="LEFT"><TT>G</TT></TD>
-<TD ALIGN="LEFT">attribute for filtering function groups</TD>
+<TR><TD ALIGN="LEFT">&nbsp;</TD>
+<TD ALIGN="LEFT">(0 = don't record function/group,</TD>
+</TR>
+<TR><TD ALIGN="LEFT">&nbsp;</TD>
+<TD ALIGN="LEFT">-1 record unlimited)</TD>
+</TR>
+<TR><TD ALIGN="LEFT">&nbsp;</TD>
+<TD ALIGN="LEFT">&nbsp;</TD>
+</TR>
+<TR><TD ALIGN="LEFT"><TT>S:&lt;[min-]max-stack-level&gt;</TT></TD>
+<TD ALIGN="LEFT">&nbsp;</TD>
+</TR>
+<TR><TD ALIGN="LEFT">&nbsp;</TD>
+<TD ALIGN="LEFT">minimum/maximum call stack level</TD>
+</TR>
+<TR><TD ALIGN="LEFT">&nbsp;</TD>
+<TD ALIGN="LEFT">Don't record function/group called</TD>
+</TR>
+<TR><TD ALIGN="LEFT">&nbsp;</TD>
+<TD ALIGN="LEFT">beyond the specified stack level</TD>
+</TR>
+<TR><TD ALIGN="LEFT">&nbsp;</TD>
+<TD ALIGN="LEFT">boundaries.</TD>
+</TR>
+<TR><TD ALIGN="LEFT">&nbsp;</TD>
+<TD ALIGN="LEFT">(values must be &gt; 0, only valid if call</TD>
+</TR>
+<TR><TD ALIGN="LEFT">&nbsp;</TD>
+<TD ALIGN="LEFT">limit is != 0)</TD>
+</TR>
+<TR><TD ALIGN="LEFT">&nbsp;</TD>
+<TD ALIGN="LEFT">&nbsp;</TD>
 </TR>
 <TR><TD ALIGN="LEFT"><TT>R</TT></TD>
-<TD ALIGN="LEFT">attribute for recursive filtering; don't record callees</TD>
+<TD ALIGN="LEFT">Attribute for recursive filtering.</TD>
 </TR>
 <TR><TD ALIGN="LEFT">&nbsp;</TD>
-<TD ALIGN="LEFT">if function's call limit is reached</TD>
+<TD ALIGN="LEFT">Don't record callees of filtered</TD>
+</TR>
+<TR><TD ALIGN="LEFT">&nbsp;</TD>
+<TD ALIGN="LEFT">function/group.</TD>
+</TR>
+<TR><TD ALIGN="LEFT"><TT>G</TT></TD>
+<TD ALIGN="LEFT">Attribute for filtering function groups.</TD>
 </TR>
 </TABLE>
 <BR>
@@ -3158,15 +3275,16 @@ Example:
 <PRE>
   add;sub;mul;div -- 1000
   MATH            -- 500 G
-  *               -- 3000000
+  *               -- 3000000 S:5-10
 </PRE>
 
 <P>
 These filter directives cause that the functions <TT>add</TT>, <TT>sub</TT>,
   <TT>mul</TT>, and <TT>div</TT> will be recorded at most 1000 times. All the functions
-  of the group <TT>MATH</TT> at most 500 and the remaining functions (*) at most 3000000
-  times.
-
+  of the group <TT>MATH</TT> at most 500 times. The remaining functions <TT>*</TT> will
+  only be recorded when they are called between call stack level 5 and 10 but at most
+  3000000 times.
+<BR>
 <P>
 Besides creating filter files manually, you can also use the <TT>vtfilter</TT>
   tool to generate them automatically. This tool reads a provided trace
@@ -3445,7 +3563,7 @@ default: automatically by configure.
 enable support for Dyninst instrumentation,
                               default: enable if found by configure.
                               <SPAN  CLASS="textbf">Note:</SPAN> Requires Dyninst<A NAME="tex2html8"
-  HREF="#foot1599"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
+  HREF="#foot1586"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A> version 6.1 or higher!
 
 <P>
@@ -3467,9 +3585,9 @@ enable support for automatic source code
                               instrumentation by using TAU, default: enable if
                               found by configure.
                               <SPAN  CLASS="textbf">Note:</SPAN> Requires PDToolkit<A NAME="tex2html9"
-  HREF="#foot1600"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
+  HREF="#foot1587"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A> or TAU<A NAME="tex2html10"
-  HREF="#foot1601"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
+  HREF="#foot1588"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A>!
 
 <P>
@@ -4038,7 +4156,7 @@ give the path for JVMTI-include files, default:
 
 <P>
 To enable support for generating wrapper for 3th-Party libraries the C code parser CTool<A NAME="tex2html11"
-  HREF="#foot1602"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
+  HREF="#foot1589"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A> is needed:
 
 <P>
@@ -4158,7 +4276,7 @@ for the back-end (host system). Some <TT>configure</TT> options which are of int
 are shown below:
 
 <UL>
-<LI>Set <TT>CC</TT>, <TT>CXX</TT>, <TT>F77</TT>, and <TT>FC</TT> to the cross compilers installed on the front-end.
+<LI>Set <TT>CC</TT>, <TT>CXX</TT>, and <TT>FC</TT> to the cross compilers installed on the front-end.
 </LI>
 <LI>Set <TT>CC_FOR_BUILD</TT> and <TT>CXX_FOR_BUILD</TT> to the native compilers of the front-end.
 </LI>
@@ -4255,20 +4373,19 @@ Command Reference</A>
 <H1><A NAME="SECTION00810000000000000000"></A>
 <A NAME="sec:comm_wrappers"></A>
 <BR>
-Compiler Wrappers (vtcc,vtcxx,vtf77,vtf90)
+Compiler Wrappers (vtcc,vtcxx,vtfort)
 </H1>
 
 <P>
 <PRE>
-vtcc,vtcxx,vtf77,vtf90 - compiler wrappers for C, C++, 
-                         Fortran 77, Fortran 90
+vtcc,vtcxx,vtfort - compiler wrappers for C, C++, Fortran
 
-Syntax: vt&lt;cc|cxx|f77|f90&gt; [options] ...
+Syntax: vt&lt;cc|cxx|fc&gt; [options] ...
 
 options:
   -vt:help            Show this help message.
   -vt:version         Show VampirTrace version.
-  -vt:&lt;cc|cxx|f77|f90&gt; &lt;cmd&gt;
+  -vt:&lt;cc|cxx|fc&gt; &lt;cmd&gt;
                       Set the underlying compiler command.
 
   -vt:inst &lt;insttype&gt; Set the instrumentation type.
@@ -4320,6 +4437,10 @@ options:
 
   -vt:verbose         Enable verbose mode.
 
+  -vt:keepfiles       Keep intermediate files.
+
+  -vt:reusefiles      Reuse intermediate files, if exist.
+
   -vt:show[me]        Do not invoke the underlying compiler.
                       Instead, show the command line that would be
                       executed to compile and link the program.
@@ -4333,18 +4454,16 @@ options:
                       supplied to the compiler.
 
   See the man page for your underlying compiler for other 
-  options that can be passed through 'vt&lt;cc|cxx|f77|f90&gt;'.
+  options that can be passed through 'vt&lt;cc|cxx|fc&gt;'.
 
 Environment variables:
   VT_INST             Equivalent to '-vt:inst'
   VT_CC               Equivalent to '-vt:cc '
   VT_CXX              Equivalent to '-vt:cxx '
-  VT_F77              Equivalent to '-vt:f77'
-  VT_F90              Equivalent to '-vt:f90'
+  VT_FC               Equivalent to '-vt:fc'
   VT_CFLAGS           C compiler flags
   VT_CXXFLAGS         C++ compiler flags
-  VT_F77FLAGS         Fortran 77 compiler flags
-  VT_FCFLAGS          Fortran 90 compiler flags
+  VT_FCFLAGS          Fortran compiler flags
   VT_LDFLAGS          Linker flags
   VT_LIBS             Libraries to pass to the linker
 
@@ -4360,7 +4479,7 @@ Examples:
 
   manually instrumentation by using VT's API:
 
-     vtf90 -vt:inst manual foobar.F90 -o foobar -DVTRACE
+     vtfort -vt:inst manual foobar.F90 -o foobar -DVTRACE
 
   IMPORTANT: Fortran source files instrumented by VT's API
              have to be preprocessed by CPP.
@@ -4378,7 +4497,7 @@ Local Trace Unifier (vtunify)
 <PRE>
 vtunify[-mpi] - local trace unifier for VampirTrace.
 
-Syntax: vtunify[-mpi] &lt;input trace prefix&gt; [options]
+Syntax: vtunify[-mpi] [options] &lt;input trace prefix&gt;
 
 options:
   -h, --help          Show this help message.
@@ -4400,9 +4519,23 @@ options:
   -q, --quiet         Enable quiet mode.
                       (only emergency output)
 
+  --iofsl-servers LIST
+                      Enable IOFSL mode where LIST contains a comma-separated
+                      list of IOFSL server addresses.
+
+  --iofsl-mode MODE   IOFSL mode (MULTIFILE or MULTIFILE_SPLIT).
+                      (default: MULTIFILE_SPLIT)
+
+  --iofsl-asyncio     Use asynchronous I/O in IOFSL mode.
+
   --stats             Unify only summarized information (*.stats), no events
 
   --nocompress        Don't compress output trace files.
+
+  --nosnapshots       Don't create snapshots.
+
+  --maxsnapshots N    Maximum number of snapshots.
+                      (default: 1024)
 
   --nomsgmatch        Don't match messages.
 
@@ -4713,6 +4846,81 @@ Application Execution Wrapper (vtrun)
 
 <P>
 
+<H1><A NAME="SECTION00870000000000000000"></A>
+<A NAME="sec:VTIOFSL-START"></A>
+<BR>
+IOFSL server startup script (vtiofsl-start)
+</H1>
+
+<P>
+<PRE>
+ vtiofsl-start - set environment variables and start IOFSL servers.
+
+ Syntax: vtiofsl-start [options]
+
+   options:
+     -h, --help          Show this help message.
+
+     -V, --version       Show VampirTrace version.
+
+     -v, --verbose       Increase output verbosity.
+                         (can be used more than once)
+
+     -q, --quiet         Enable quiet mode.
+                         (only emergency output)
+
+     -n, --num NUM       Number of IOFSL servers to start.
+
+     -m, --mode MODE     IOFSL mode (MULTIFILE or MULTIFILE_SPLIT).
+                         (default: MULTIFILE_SPLIT)
+
+     --asyncio           Use asynchronous I/O.
+
+   environment variables:
+     VT_IOFSL_NUM_SERVERS
+                         equivalent to '-n' or '--num'
+     VT_IOFSL_MODE       equivalent to '-m' or '--mode'
+     VT_IOFSL_ASYNC_IO=&lt;yes|true|1&gt;
+                         equivalent to '--asyncio'
+
+   note:
+     This script needs to be sourced from a shell, since it sets
+     environment variables.
+     Either -n or VT_IOFSL_NUM_SERVERS must be specified.
+</PRE>
+
+<P>
+
+<H1><A NAME="SECTION00880000000000000000"></A>
+<A NAME="sec:VTIOFSL-STOP"></A>
+<BR>
+IOFSL server shutdown script (vtiofsl-stop)
+</H1>
+
+<P>
+<PRE>
+ vtiofsl-stop - stop running IOFSL servers.
+
+ Syntax: vtiofsl-stop [options]
+
+   options:
+     -h, --help          Show this help message.
+
+     -V, --version       Show VampirTrace version.
+
+     -v, --verbose       Increase output verbosity.
+                         (can be used more than once)
+
+     -q, --quiet         Enable quiet mode.
+                         (only emergency output)
+
+   note:
+     This script needs to be sourced from a shell, since it sets
+     environment variables.
+</PRE>
+
+<P>
+
 <H1><A NAME="SECTION00900000000000000000">
 Counter Specifications</A>
 </H1>
@@ -5012,12 +5220,472 @@ by the Linux 2.6 kernel are shown in the table.
 <P>
 
 <H1><A NAME="SECTION001000000000000000000">
+Using VampirTrace with IOFSL</A>
+</H1>
+<A NAME="chap:iofsl"></A>
+<H1><A NAME="SECTION001010000000000000000">
+Introduction</A>
+</H1>
+
+<P>
+VampirTrace and OTF can make use of the I/O Forwarding Scalability Layer (IOFSL) which allows users to write the data of many streams of a parallel trace into one or few physical files (so called multifiles) during program run. Compared with the default of writing at least two files per stream, process or even thread, this can provide a substantial performance benefit and is especially important for stability when recording highly parallel traces.
+
+<P>
+
+<H1><A NAME="SECTION001020000000000000000">
+Overview</A>
+</H1>
+
+<P>
+This section gives an overview over the architecture and principles from a technical point of view.
+
+<P>
+
+<H2><A NAME="SECTION001021000000000000000">
+File handling in OTF</A>
+</H2>
+
+<P>
+The Open Trace Format (OTF) is utilized by VampirTrace to store its trace information obtained during a run of the instrumented application. The OTF library provides an interface for reading and writing trace files. A trace consists of one or more so called streams, each containing the data of one process or thread. The data is stored in records encoded using a plain ASCII format and can optionally be transparently compressed. Although it basically offers a way to store several streams in one physical file, it does not offer mechanisms to assure data consistency for concurrent writes into one file.
+
+<P>
+To allow for arbitrary thread creation during a trace run and to avoid expensive locking, VampirTrace writes the obtained data of each process or thread into separate OTF files causing the creation of at least two files per process/thread (definitions and events). With the ever increasing number of parallel processes and the limitations of today's parallel filesystem's meta-data processing, this can become a severe problem for system performance and stability. Consequently, the goal was to significantly reduce the number of physical files used by VampirTrace and OTF during a trace run from at least two files per process/thread to a number that is acceptable for today's filesystems.
+
+<P>
+
+<H2><A NAME="SECTION001022000000000000000">
+I/O Forwarding Scalability Layer</A>
+</H2>
+
+<P>
+The goal of the I/O Forwarding Scalability Layer IOFSL is to provide a forwarding layer on the basis of a client-server architecture. It allows clients to send I/O requests to a server which is able to execute the original I/O calls and even aggregate these requests to improve performance. Besides the aggregation of normal write requests, the server also offers non-blocking write requests and a so-called atomic append mode which allows many clients to write potentially large blocks of data concurrently into one single physical file (multifile) without the need for client-side locking. In this case, the data is appended to the end of the file and the corresponding offset can be obtained later. Additionally, this atomic append feature can be used with more than one server allowing the write requests of many clients into one file being distributed across a smaller number of servers.
+
+<P>
+IOFSL is being developed at Argonne National Laboratory and is available at www.iofsl.org. By relying on open software, it is portable to a wide range of machines and has been tested on a generic Linux cluster as well as on the leadership-class computing system Jaguar.
+
+<P>
+
+<H2><A NAME="SECTION001023000000000000000">
+Architecture</A>
+</H2>
+Integrating the three previously described parts leads to an architecture with VampirTrace and OTF built on top of IOFSL.
+The instrumented application generates events that are handled and buffered by the VampirTrace runtime library.
+When the thread local buffer is full, the events are passed to the OTF library where they are compressed.
+If the IOFSL mode is enabled, the resulting write buffers are passed to the IOFSL client library (zoidfs) which sends the data to the IO forwarding servers where it is aggregated (atomic append), buffered and finally sent out to the file system.
+
+<P>
+Since IOFSL servers can handle multiple clients, an N:M mapping of clients to servers is possible. The exact ratio depends on the amount of data the clients send and the bandwidth available for the server nodes. In our test cases, a ratio of up to 300 clients per server was used.
+
+<P>
+When using the IOFSL integration, all write requests in OTF are issued using the zoidfs API<A NAME="tex2html12"
+  HREF="#foot3154"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
+ SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A>. Those writes are handled by the IOFSL forwarding servers and aggregated into a single file using the atomic append feature. The offset in the multifile is returned to OTF and stored in a second file, the so called index file, in order to maintain the mapping between written blocks and streams. For any block of a stream written into the multifile, the index file contains the ID of the stream, the start of the block, and its length. This allows for an efficient reading of blocks since only the index file has to be scanned for entries for a given stream ID. Additionally, a large number of logical files (streams) can be stored using only two physical files.
+
+<P>
+
+<H1><A NAME="SECTION001030000000000000000">
+Installation</A>
+</H1>
+
+<P>
+In order to use this setup, IOFSL and VampirTrace have to be compiled in order.
+In the following sections, the directory <TT>&lt;install_dir&gt;</TT> should be replaced with a - possibly user-local - directory used for installation, e.g. <TT>$HOME/local</TT><A NAME="tex2html13"
+  HREF="#foot3158"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
+ SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A>.
+The installation procedure for IOFSL is described at https://trac.mcs.anl.gov/projects/iofsl/wiki/Building.
+Currently the <TT>iofsl_vampir</TT> git branch is required.
+
+<P>
+
+<H2><A NAME="SECTION001031000000000000000">
+Support Libraries</A>
+</H2>
+IOFSL requires several libraries in order to work correctly:
+
+<UL>
+<LI>GNU autoconf in version 2.61 or higher
+</LI>
+<LI>Boost packages <TT>date_time</TT>, <TT>program_options</TT>, <TT>regex</TT>, <TT>thread</TT>, and <TT>test</TT>, available at www.boost.org
+</LI>
+<LI>BMI/PVFS, available at www.pvfs.org
+</LI>
+<LI>OpenPA, available at https://trac.mcs.anl.gov/projects/openpa/
+</LI>
+</UL>
+
+<P>
+Note that building boost, OpenPA or BMI/PVFS is not required in case it is already present on the machine. Building GNU autoconf is not covered by this document.
+For the use with VampirTrace, ROMIO and therefore rebuilding MPICH is not required.
+
+<P>
+
+<H4><A NAME="SECTION001031010000000000000">
+Building Boost</A>
+</H4>
+Boost Version 1.46.1 is recommended, other Versions might be incompatible.
+To build the required boost libraries, issue the following commands in the source directory:
+<PRE>
+$&gt; ./bootstrap.sh \
+   --with-libraries=system,date_time,\
+program_options,regex,thread,test \
+   --prefix=&lt;install_dir&gt;
+
+$&gt; ./bjam  --prefix=&lt;install_dir&gt; \
+   --libdir=&lt;install_dir&gt;/lib \
+   --includedir=&lt;install_dir&gt;/include \
+   install
+</PRE>
+
+<P>
+
+<H4><A NAME="SECTION001031020000000000000">
+Building OpenPA</A>
+</H4> To build the required OpenPA library, issue the following commands in the source directory:
+
+<P>
+<PRE>
+$&gt; ./configure --prefix=&lt;install_dir&gt;
+$&gt; make all install
+</PRE>
+
+<P>
+
+<H4><A NAME="SECTION001031030000000000000">
+Building BMI/PVFS</A>
+</H4> To build the required BMI/PVFS library, issue the following commands in the source directory:
+
+<P>
+<PRE>
+$&gt; ./configure --enable-bmi-only --prefix=&lt;install_dir&gt; \
+   --with-openib=&lt;openib_install_dir&gt;
+$&gt; make all install
+</PRE>
+Note that the option <TT>-with-openib</TT> can be omitted if support for direct access to InfiniBand is not required.
+
+<P>
+
+<H2><A NAME="SECTION001032000000000000000">
+Building IOFSL</A>
+</H2>
+Create a local copy of the git reposotiry branch:
+
+<P>
+<PRE>
+$&gt; mkdir iofsl
+$&gt; cd iofsl
+$&gt; git init
+$&gt; git remote add -t iofsl_vampir \
+   -f origin git://git.mcs.anl.gov/iofsl.git
+$&gt; git checkout iofsl_vampir
+$&gt; ./prepare
+</PRE>
+
+<P>
+The following commands can be used to build the IOFSL client and server:
+
+<P>
+<PRE>
+$&gt; ./configure --with-bmi=&lt;install_dir&gt; \
+   --with-boost=&lt;install_dir&gt; --with-openpa=&lt;install_dir&gt; \
+   --prefix=&lt;install_dir&gt; --with-cunit=no
+
+$&gt; make all install
+</PRE>
+
+<P>
+
+<H2><A NAME="SECTION001033000000000000000">
+Building VampirTrace &amp; OTF</A>
+</H2>
+After extracting the source code from the archive, issue the following commands:
+<PRE>
+$&gt; ./configure                         \
+   --prefix=&lt;install_dir&gt;              \
+   --enable-iofsl                      \
+   --with-zoidfs-dir=&lt;install_dir&gt;     \
+   --with-bmi-dir=&lt;install_dir&gt;        \
+# On Cray XK6 with PBS as batch system add
+   --enable-iofsl-scripts=crayxk6
+$&gt; make all install
+</PRE>
+
+<P>
+
+<H1><A NAME="SECTION001040000000000000000"></A>
+<A NAME="sec:examples"></A>
+<BR>
+Usage Examples
+</H1>
+
+<P>
+The use of I/O forwarding servers implicates a system specific deployment.
+VampirTrace mitigates this effort by providing convenient scripts for specific system setups.
+Currently Cray XK6 systems are supported, which are described here.
+Furthermore the IOFSL specific adjustable parameters of VampirTrace are described.
+
+<P>
+
+<H2><A NAME="SECTION001041000000000000000">
+Using VampirTrace with IOFSL on Cray XK6 / with PBS</A>
+</H2>
+
+<H3><A NAME="SECTION001041100000000000000">
+Building your application with VampirTrace</A>
+</H3>
+
+<P>
+We assume that VampirTrace with IOFSL support has been installed as previously described.
+This might be deployed to the user using a module.
+
+<P>
+<PRE>
+   # Check module av vampirtrace to
+   # see what is available at your system
+$&gt; module load vampirtrace/5.13
+</PRE>
+
+<P>
+Build your application as usual with VampirTrace.
+For details please refer to the general part of this documentation.
+
+<P>
+<PRE>
+$&gt; vtcc -vt:hyb application.c -o application
+</PRE>
+
+<P>
+
+<H3><A NAME="SECTION001041200000000000000">
+Running an Example</A>
+</H3>
+
+<P>
+The scripts <TT>vtiofsl-start</TT> and <TT>vtiofsl-stop</TT> are provided to control the IOFSL server instances.
+They will be launched on dedicated compute nodes that are part of the batch Job allocation.
+
+<P>
+
+<H4><A NAME="SECTION001041210000000000000">
+PBS Options</A>
+</H4>
+It is important to reserve a sufficient number of processor cores. The number of cores requested must be large enough to contain the number of application cores plus the number of cores required for the IOFSL server instances. Each IOFSL server will run on a dedicated node<A NAME="tex2html14"
+  HREF="#foot3202"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
+ SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A>.Thus N_allocated &#8805;((N_IOFSL * 16) + N_Application) must hold.
+<P>
+Example using 64 server instances:
+<PRE>
+#!/bin/sh
+#PBS...
+[...]
+## Allocate enough cores: (64 * 16) + 16384 =&gt; 17408
+#PBS -l size=17408
+## Preserve environment
+#PBS -V
+</PRE>
+
+<P>
+
+<H4><A NAME="SECTION001041220000000000000">
+Environment Variables</A>
+</H4>
+
+<P>
+It is highly recommended to set the following environment variable.
+
+<UL>
+<LI><TT>VT_PFORM_GDIR</TT>: The directory that will contain the final trace and some temporary IOFSL output.
+</LI>
+</UL>
+Example:
+<PRE>
+[...]
+# The directory to which the trace is written
+mkdir trace
+export VT_PFORM_GDIR=$PWD/trace
+</PRE>
+
+<P>
+
+<H4><A NAME="SECTION001041230000000000000">
+Execution</A>
+</H4>
+Launching and stopping the servers as is done using the supplied scripts.
+The scripts are sourced from the job script or interactive shell to allow them setting required environment variables for VampirTrace.
+<PRE>
+[...]
+# rca module need to be loaded!
+. /opt/modules/default/etc/modules.sh
+module load rca
+
+# Start server
+source vtiofsl-start -n 64
+
+# Run application as usual
+aprun -n 16384 application --parameter inputfile
+
+# Shutdown server
+source vtiofsl-stop
+</PRE>
+
+<P>
+
+<H4><A NAME="SECTION001041240000000000000">
+Interactive Jobs</A>
+</H4>
+
+<P>
+Interactive jobs work the same way. You can either run a script similar to the job submission script, or run the commands from your shell. However the scripts are developed and tested on <TT>bash</TT>. Other shells are not supported.
+
+<P>
+The <TT>vtiofsl</TT>-scripts assume to be run within a PBS job. If you run them multiple times within one job, the detailed log files may be overwritten.
+
+<P>
+
+<H4><A NAME="SECTION001041250000000000000">
+Log files and debug information</A>
+</H4>
+
+<P>
+The <TT>vtiofsl</TT>-scripts create a number of log files and configuration files in the <TT>$VT_PFORM_GDIR/.iofsl</TT> directory.
+
+<P>
+
+<H2><A NAME="SECTION001042000000000000000"></A>
+<A NAME="sec:iofsl-manual"></A>
+<BR>
+Manual Usage
+</H2>
+The machine specific installation strives to hide most of the complexity of the I/O forwarding solution from the end-user.
+In the background, the forwarding server(s) are started and environment variables are set in order to point VampirTrace / OTF to them.
+
+<P>
+
+<H4><A NAME="SECTION001042010000000000000">
+Configuring the Server</A>
+</H4>
+The server is configured using a configuration file.
+At server start-up, this file is provided using the <TT>-config</TT> argument.
+The cray XK6 configuration file is provided in the package<A NAME="tex2html15"
+  HREF="#foot3342"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
+ SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A>.
+For more information about the options available please refer to the IOFSL documentation<A NAME="tex2html16"
+  HREF="#foot3343"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
+ SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A>.
+The most important option is the <TT>serverlist</TT> entry in the <TT>bmi</TT> section which takes a list of server addresses, e.g. :
+<PRE>
+bmi
+{
+  serverlist =  ( "tcp://192.168.97.236:12345", 
+                  "tcp://192.168.97.237:12345", 
+                  "tcp://192.168.97.238:12346" );
+}
+</PRE>
+At start-up, the server looks for the environment variable <TT>ZOIDFS_SEVER_RANK</TT> to determine its address, e.g. <TT>ZOIDFS_SEVER_RANK=0</TT> would cause the address
+<TT>tcp://192.168.97.236:12345</TT> to be used. The configuration file can be shared between all server instances and lets the servers determine the coordination server, which is usually rank 0.
+
+<P>
+
+<H4><A NAME="SECTION001042020000000000000">
+Launching the Servers</A>
+</H4>
+
+<P>
+The I/O forwarding server (<TT>iofwd</TT>) can be deployed in multiple ways.
+This is highly system specific, possible ways to do so are:
+
+<UL>
+<LI><TT>ssh</TT> to the compute nodes and execute <TT>iofwd</TT> there.
+</LI>
+<LI>Running <TT>iofwd</TT> on dedicated I/O nodes with user access.
+</LI>
+<LI>Using a system specific launcher, e.g. <TT>aprun</TT> on Cray systems.
+</LI>
+<LI>Making use of advanced batch system features.
+</LI>
+</UL>
+
+<P>
+
+<H4><A NAME="SECTION001042030000000000000">
+Pointing VampirTrace to the servers</A>
+</H4>
+
+<P>
+The list of available I/O forwarding servers is provided to VampirTrace by setting <TT>VT_IOFSL_SERVERS</TT> to a comma-separated list of addresses, e.g.
+
+<P>
+<PRE>
+export VT_IOFSL_SERVERS= \
+     "tcp://192.168.1.1:12345,tcp://192.168.1.2:12345"
+</PRE>
+VampirTrace / OTF will choose a server upon opening the file based on the stream identifier encoded in the original filename.
+
+<P>
+
+<H4><A NAME="SECTION001042040000000000000">
+File modes</A>
+</H4>
+
+<P>
+In the default setting, each server will create two files for each type of file, the actual file containing the appended data and an index file.
+This mode is called <TT>MULTIFILE_SPLIT</TT>.
+It provides a good workload for parallel file systems.
+In the so called <TT>MULTIFILE</TT> mode, all servers share data and index files.
+It requires additional synchronization between the servers.
+Also the Lustre file system does not allow to stripe individual files over more than a maximum number of storage targets, introducing a performance-bottleneck.
+The <TT>MULTIFILE</TT> mode should be considered experimental.
+Therefore, using the default mode is recommended.
+The mode can be set using <TT>VT_IOFSL_MODE</TT> to either <TT>MULTIFILE_SPLIT</TT> or <TT>MULTIFILE</TT>.
+
+<P>
+
+<H4><A NAME="SECTION001042050000000000000">
+Asynchronous I/O</A>
+</H4>
+
+<P>
+IOFSL offers a capability, where write requests are buffered on the forwarding server.
+This can reduce the trace flush times, without consuming node local resources.
+To enable this, <TT>VT_IOFSL_ASYNC_IO</TT> is set to <TT>yes</TT>.
+
+<P>
+
+<H4><A NAME="SECTION001042060000000000000">
+Unification</A>
+</H4>
+
+<P>
+The unification step can also use the IOFSL mode for writing the output trace.
+This is controlled with the same environment variables.
+Therefore if VampirTrace uses IOFSL, the implicit unification at the end of the trace run will also use IOFSL for output.
+If <TT>VT_UNIFY=no</TT>, then one should make sure that the correct IOFSL environment is also available to the later <TT>vtunify(-mpi)</TT>, unless intended otherwise.
+
+<P>
+
+<H4><A NAME="SECTION001042070000000000000">
+Compatibility of the generated trace</A>
+</H4>
+
+<P>
+All tools that work on the generated trace need to be built with the appropriate OTF Version to ensure compatibility with traces generated with IOFSL.
+This especially applies to the Vampir visualization server and GUI.
+If backwards compatibility is required, the trace can be transformed using <TT>otfmerge</TT>, e.g.
+
+<P>
+<PRE>
+$&gt; mpirun -np 1024 \
+       otfmerge-mpi -n 0 -o merged-trace input-trace.otf
+</PRE>
+
+<P>
+
+<H1><A NAME="SECTION001100000000000000000">
 FAQ</A>
 </H1>
 
 <P>
 
-<H1><A NAME="SECTION001010000000000000000"></A>
+<H1><A NAME="SECTION001110000000000000000"></A>
 <A NAME="sec:faq_compiler"></A>
 <BR>
 Can I use different compilers for VampirTrace and my application?
@@ -5043,7 +5711,7 @@ to compile both VampirTrace and the application with the same compiler.
 
 <P>
 
-<H1><A NAME="SECTION001020000000000000000"></A>
+<H1><A NAME="SECTION001120000000000000000"></A>
 <A NAME="sec:gnu_getsrc"></A>
 <BR>
 Why does my application need such a long time for starting?
@@ -5060,7 +5728,66 @@ function names from the binary.
 
 <P>
 
-<H1><A NAME="SECTION001030000000000000000"></A>
+<H1><A NAME="SECTION001130000000000000000"></A>
+<A NAME="sec:faq_limitcompilerinst"></A>
+<BR>
+How can I limit compiler instrumentation?
+</H1>
+Fully-automatic instrumentation by the compilers is the most convenient method to instrument your program.
+However, a variety of functions will be instrumented and all calls of these functions will be traced.
+Runtime filters do not eliminate complete overhead of tracing automatically instrumented functions.
+Therefore, it is often desirable to limit compiler instrumentation to specific functions.
+Several compilers provide options to configure function instrumentation.
+Start with VampirTrace in Profiling Mode by setting <TT>VT_MODE</TT> to <TT>STAT</TT>.
+The profiling information can be used to determine functions which may be excluded from automatic instrumentation.
+
+<P>
+The IBM C compiler &#8805;11 and Fortran compiler &#8805;13 provide <TT>-qfunctrace</TT> option to enable tracing for all functions.
+To disable tracing for all functions you can use <TT>-qnofunctrace</TT>.
+Regardless of <TT>-qnofunctrace</TT> both <TT>-qfunctrace+</TT> and <TT>-qfunctrace-</TT> can be used to enable resp. disable tracing for a colon-separated list of function names, classes, or namespaces.
+For example, 
+
+<P>
+<BR>
+<BR>
+<code>   -qfunctrace -qfunctrace-myFunc1:myFunc2</code>
+<BR>
+<BR>
+<BR>
+enables tracing for all functions except for <TT>myFunc1</TT> and <TT>myFunc2</TT>.
+
+<P>
+Also GNU compiler &#8805;4.3 provides options to limit compiler instrumentation.
+<TT>-finstrument-functions-exclude-file-list</TT> sets a list of files.
+All functions defined in a file of this list will be excluded from instrumentation.
+The option <TT>-finstrument-functions-exclude-function-list</TT> sets a list of function names that are excluded from instrumentation.
+Arguments of both compiler options must be separated by comma.
+Matching of arguments with function or file names is done on substrings.
+For example,  
+
+<P>
+<BR>
+<BR>
+<code>   -finstrument-functions-exclude-file-list=include</code>
+<BR>
+<BR>
+<BR>
+will exclude any function defined in files whose pathnames contain "include".
+Maybe such a rule is too restrictive, because the "include" directory of your own program code is affected too.
+The pattern needs to be specified more precisely, for instance:
+
+<P>
+<BR>
+<BR>
+<code>   -finstrument-functions-exclude-file-list=/usr/include</code>
+<BR>
+<BR>
+<BR>
+This rule can be used to exclude Standard Template Library (STL) calls in C++ from tracing.
+
+<P>
+
+<H1><A NAME="SECTION001140000000000000000"></A>
 <A NAME="sec:faq_fortranio"></A>
 <BR>
 Why do I see multiple
@@ -5091,7 +5818,7 @@ next higher function in the call stack - the user function.
 
 <P>
 
-<H1><A NAME="SECTION001040000000000000000">
+<H1><A NAME="SECTION001150000000000000000">
 The application has run to completion, but there is no *.otf file. What can I do?</A>
 </H1>
 
@@ -5103,7 +5830,7 @@ are not available when the application ends and VampirTrace performs trace unifi
 <P>
 In those cases, a <TT>*.uctl</TT> file can be found in the directory of the trace file and the
 user needs to perform trace unification manually. 
-<H1><A NAME="SECTION001050000000000000000"></A>
+<H1><A NAME="SECTION001160000000000000000"></A>
 <A NAME="sec:faq_onoff"></A>
 <BR>
 What limitations are associated with "on/off" and buffer rewind?
@@ -5135,7 +5862,7 @@ be recorded in the trace. This can cause problems when analyzing the OTF trace a
 
 <P>
 
-<H1><A NAME="SECTION001060000000000000000"></A>
+<H1><A NAME="SECTION001170000000000000000"></A>
 <A NAME="sec:faq_filelock"></A>
 <BR>
 VampirTrace warns that it ``cannot lock file a.lock'', what's wrong?
@@ -5153,7 +5880,7 @@ Alternatively, you can manually control the unique file naming by setting
 
 <P>
 
-<H1><A NAME="SECTION001070000000000000000"></A>
+<H1><A NAME="SECTION001180000000000000000"></A>
 <A NAME="sec:faq_relocate"></A>
 <BR>
 Can I relocate my VampirTrace installation without rebuilding from source?
@@ -5177,7 +5904,7 @@ export VT_PREFIX=$HOME/vampirtrace
 
 <P>
 
-<H1><A NAME="SECTION001080000000000000000"></A>
+<H1><A NAME="SECTION001190000000000000000"></A>
 <A NAME="sec:faq_collective_bytes"></A>
 <BR>
 What are the byte counts in collective communication records?
@@ -5205,7 +5932,7 @@ Thanks to Eugene Loh for pointing this out!
 
 <P>
 
-<H1><A NAME="SECTION001090000000000000000"></A>
+<H1><A NAME="SECTION0011100000000000000000"></A>
 <A NAME="sec:faq_asm_error"></A>
 <BR>
 I get ``error: unknown asm constraint letter''
@@ -5218,7 +5945,7 @@ compiler instrumenation (&#8658;&nbsp;Section&nbsp;<A HREF="#sec:compinst">2.3</
 
 <P>
 
-<H1><A NAME="SECTION0010100000000000000000"></A>
+<H1><A NAME="SECTION0011110000000000000000"></A>
 <A NAME="sec:faq_unanswered"></A>
 <BR>
 I have a question that is not answered in this document!
@@ -5230,7 +5957,7 @@ for support on installing and using VampirTrace.
 
 <P>
 
-<H1><A NAME="SECTION0010110000000000000000"></A>
+<H1><A NAME="SECTION0011120000000000000000"></A>
 <A NAME="sec:faq_morefeatures"></A>
 <BR>
 I need support for additional features so I can trace application xyz.
@@ -5248,72 +5975,102 @@ If you provide us with your additions afterwards we will consider merging them
 into the official VampirTrace package.
 <BR><HR><H4>Footnotes</H4>
 <DL>
-<DT><A NAME="foot1533">... (OTF)</A><A
+<DT><A NAME="foot1526">... (OTF)</A><A
  HREF="#tex2html1"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A></DT>
 <DD>http://www.tu-dresden.de/zih/otf
 
 </DD>
-<DT><A NAME="foot1534">... tool </A><A
+<DT><A NAME="foot1527">... tool </A><A
  HREF="#tex2html2"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A></DT>
 <DD>http://www.vampir.eu
 
 </DD>
-<DT><A NAME="foot1535">...
+<DT><A NAME="foot1528">...
 Open MPI </A><A
  HREF="#tex2html3"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A></DT>
 <DD>http://www.open-mpi.org/faq/?category=vampirtrace
 
 </DD>
-<DT><A NAME="foot1559">... documentation </A><A
+<DT><A NAME="foot1552">... documentation </A><A
  HREF="#tex2html4"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A></DT>
 <DD>http://www.cs.uoregon.edu/Research/tau/docs/newguide/bk05ch02.html#d0e3770
 
 </DD>
-<DT><A NAME="foot1560">...
+<DT><A NAME="foot1553">...
 Dyninst </A><A
  HREF="#tex2html5"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A></DT>
 <DD>http://www.dyninst.org
 
 </DD>
-<DT><A NAME="foot1561">... library </A><A
+<DT><A NAME="foot1554">... library </A><A
  HREF="#tex2html6"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A></DT>
 <DD>http://sourceforge.net/projects/ctool
 
 </DD>
-<DT><A NAME="foot1571">... CLAPACK</A><A
+<DT><A NAME="foot1564">... CLAPACK</A><A
  HREF="#tex2html7"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A></DT>
 <DD>www.netlib.org/clapack
 
 </DD>
-<DT><A NAME="foot1599">... Dyninst </A><A
+<DT><A NAME="foot1586">... Dyninst </A><A
  HREF="#tex2html8"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A></DT>
 <DD>http://www.dyninst.org
 
 </DD>
-<DT><A NAME="foot1600">... PDToolkit </A><A
+<DT><A NAME="foot1587">... PDToolkit </A><A
  HREF="#tex2html9"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A></DT>
 <DD>http://www.cs.uoregon.edu/research/pdt/home.php
 
 </DD>
-<DT><A NAME="foot1601">... TAU </A><A
+<DT><A NAME="foot1588">... TAU </A><A
  HREF="#tex2html10"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A></DT>
 <DD>http://tau.uoregon.edu
 
 </DD>
-<DT><A NAME="foot1602">... CTool </A><A
+<DT><A NAME="foot1589">... CTool </A><A
  HREF="#tex2html11"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A></DT>
 <DD>http://sourceforge.net/projects/ctool
+
+</DD>
+<DT><A NAME="foot3154">... API</A><A
+ HREF="#tex2html12"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
+ SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A></DT>
+<DD>The OTF master control file is written using POSIX I/O in any case.
+
+</DD>
+<DT><A NAME="foot3158">...$HOME/local</A><A
+ HREF="#tex2html13"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
+ SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A></DT>
+<DD>The software packages can be installed in different directories.
+
+</DD>
+<DT><A NAME="foot3202">... node</A><A
+ HREF="#tex2html14"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
+ SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A></DT>
+<DD>The server makes use of all the nodes resources by multithreading and allocating large I/O buffers
+
+</DD>
+<DT><A NAME="foot3342">... package</A><A
+ HREF="#tex2html15"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
+ SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A></DT>
+<DD><TT>tools/vtiofsl/platform/crayxk6-iofwd.cf</TT>
+
+</DD>
+<DT><A NAME="foot3343">... documentation</A><A
+ HREF="#tex2html16"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
+ SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A></DT>
+<DD>https://trac.mcs.anl.gov/projects/iofsl/wiki/ConfigurationFile
 
 </DD>
 </DL>

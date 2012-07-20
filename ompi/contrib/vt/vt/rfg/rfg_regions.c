@@ -12,14 +12,15 @@
 #include <string.h>
 
 #define CSTACK_BSIZE 0x80 /* call stack block size */
-#define HASH_MAX 0x3fd    /* size of hash table */
+#define HASH_MAX 0x400    /* size of hash table (must be a power of two!) */
 
 /* data structure for call stack entry */
 
 typedef struct RFG_RegionStackEntry_struct
 {
-  RFG_RegionInfo* rinf;          /* region info */
-  int32_t         climitbypush;  /* call limit by push */
+  RFG_RegionInfo* rinf;     /* region info */
+  uint8_t rejected;         /* indicator flag whether region was rejected when
+                               pushed to stack */
 } RFG_RegionStackEntry;
 
 /* data structure for call stack */
@@ -28,22 +29,26 @@ typedef struct RFG_RegionStack_struct
 {
   RFG_RegionStackEntry* entries; /* call stack entries */
 
-  int32_t  pos;                  /* stack position */
-  uint32_t size;                 /* allocated stack size */
+  int32_t               pos;     /* current call stack position */
+  uint32_t              size;    /* allocated call stack size */
 } RFG_RegionStack;
 
 /* main data structure for RFG Regions */
 
 struct RFG_Regions_struct
 {
-  RFG_Filter*      filter;    /* instance for region filter */
-  RFG_Groups*      groups;    /* instance for region grouping */
+  RFG_Filter*      filter;              /* RFG filter object */
+  RFG_Groups*      groups;              /* RFG groups object */
 
-  RFG_RegionStack* stack;     /* instance for call stack */
+  RFG_RegionStack* stack;               /* call stack */
 
-  RFG_RegionInfo*  htab[HASH_MAX];   /* hash table for mapping
-					region id's and infos
-					(call limit, group, region name,...) */
+  RFG_RegionInfo*  htab[HASH_MAX];      /* hash table for mapping
+                                           region id's and infos
+                                           (call limit, stack level bounds,
+                                           group name, region name, ...) */
+
+  uint32_t recursive_filter_active_cnt; /* recursive filter activation
+                                           counter */
 };
 
 /* initializes call stack */
@@ -52,11 +57,12 @@ static int             stack_init( RFG_RegionStack** stack );
 static int             stack_enlarge( RFG_RegionStack* stack );
 
 /* puts region info to hash table */
-static void            hash_put( RFG_RegionInfo** htab, uint32_t h,
-				 const char* g, const char* r,
-				 int32_t l );
+static void            hash_put( RFG_RegionInfo** htab, uint32_t rid,
+                                 const char* gname, const char* rname,
+                                 int32_t climit, uint32_t* sbounds,
+                                 uint8_t flags );
 /* gets the region info by id */
-static RFG_RegionInfo* hash_get( RFG_RegionInfo** htab, uint32_t h );
+static RFG_RegionInfo* hash_get( RFG_RegionInfo** htab, uint32_t rid );
 /* frees hash node */
 static void            hash_free_node( RFG_RegionInfo* htab );
 /* frees whole hash table */
@@ -107,6 +113,9 @@ RFG_Regions* RFG_Regions_init()
      free( ret );
      return NULL;
   }
+
+  /* initialize recursive filter activation counter */
+  ret->recursive_filter_active_cnt = 0;
 
   return ret;
 }
@@ -169,7 +178,7 @@ int RFG_Regions_readGroupsDefFile( RFG_Regions* regions )
 }
 
 int RFG_Regions_setDefaultCallLimit( RFG_Regions* regions,
-				     const uint32_t limit )
+                                     const uint32_t limit )
 {
   if( !regions || !regions->filter ) return 0;
 
@@ -177,7 +186,7 @@ int RFG_Regions_setDefaultCallLimit( RFG_Regions* regions,
 }
 
 int RFG_Regions_addGroupAssign( RFG_Regions* regions,
-				const char* gname, int n, ... )
+                                const char* gname, int n, ... )
 {
   va_list ap;
   int i;
@@ -200,96 +209,25 @@ int RFG_Regions_addGroupAssign( RFG_Regions* regions,
   return 1;
 }
 
-int RFG_Regions_getFilteredRegions( RFG_Regions* regions,
-				    uint32_t* r_nrinfs, RFG_RegionInfo*** r_rinfs )
-{
-  uint32_t i;
-
-  if( !regions ) return 0;
-
-  *r_nrinfs = 0;
-  *r_rinfs = NULL;
-
-  for( i = 0; i < HASH_MAX; i++ )
-  {
-    if( regions->htab[i] )
-    {
-      RFG_RegionInfo* curr = regions->htab[i];
-      while( curr )
-      {
-	if( curr->callLimitCD == 0 )
-	{
-	  if( *r_nrinfs == 0 )
-	    *r_rinfs = ( RFG_RegionInfo** )malloc( sizeof( RFG_RegionInfo* ) );
-	  else
-	    *r_rinfs = ( RFG_RegionInfo** )realloc( *r_rinfs, ( *r_nrinfs + 1 )
-					   * sizeof( RFG_RegionInfo* ) );
-
-	  (*r_rinfs)[(*r_nrinfs)++] = curr;
-	}
-
-	curr = curr->next;
-      }
-    }
-  }
-
-  return 1;
-}
-
-int RFG_Regions_dumpFilteredRegions( RFG_Regions* regions,
-				     char* filename )
-{
-  uint32_t nrinfs = 0;
-  RFG_RegionInfo** rinfs = NULL;
-  FILE* filt_file;
-  uint32_t i;
-
-  if( !regions ) return 0;
-
-  /* get regions, whose call limit are reached */
-  RFG_Regions_getFilteredRegions( regions,
-				  &nrinfs, &rinfs);
-
-  if( nrinfs == 0) return 1;
-
-  if( ( filt_file = fopen( filename, "w" ) ) == NULL )
-  {
-    fprintf( stderr, "RFG_Regions_dumpFilteredRegions(): Error: Could not open %s\n", filename );
-    return 0;
-  }
-
-  fprintf( filt_file, "# list of regions, which are denied or whose call limit are reached\n" );
-  fprintf( filt_file, "# (region:limit)\n" );
-
-  /* write region names and call limits */
-  
-  for( i = 0; i < nrinfs; i++ )
-  {
-    fprintf( filt_file, "%s:%i\n",
-	     rinfs[i]->regionName,
-	     rinfs[i]->callLimit == 0 ? 0 : rinfs[i]->callLimit-1 );
-  }
-
-  fclose( filt_file );
-  free( rinfs );
-
-  return 1;
-}
-
 int RFG_Regions_stackPush( RFG_Regions* regions,
-			   const uint32_t rid, const uint8_t decr,
-			   RFG_RegionInfo** r_rinf )
+                           const uint32_t rid, const uint8_t decrement,
+                           RFG_RegionInfo** r_rinf, uint8_t* r_rejected )
 {
+  RFG_RegionStackEntry* top;
+
   if( !regions || !regions->stack ) return 0;
 
   /* get region info by region id */
 
-  *r_rinf = RFG_Regions_get( regions, rid );
+  *r_rinf = hash_get( regions->htab, rid );
   if( !(*r_rinf) ) return 0;
 
-  /* enlarge call stack if necessary */
+  /* increment call stack position */
+  regions->stack->pos++;
 
-  if( regions->stack->pos+1 == (int32_t)regions->stack->size )
+  /* enlarge call stack, if necessary */
+
+  if( regions->stack->pos == (int32_t)regions->stack->size )
   {
     if( !stack_enlarge( regions->stack ) )
     {       
@@ -298,24 +236,44 @@ int RFG_Regions_stackPush( RFG_Regions* regions,
     }
   }
 
-  /* decrement call limit of region, if desired */
+  /* get pointer to the top of the call stack */
+  top = &(regions->stack->entries[regions->stack->pos]);
 
-  if( decr && (*r_rinf)->callLimitCD > 0 ) 
-    (*r_rinf)->callLimitCD--;
+  /* reject or approve region enter */
+  if( regions->recursive_filter_active_cnt > 0 ||
+      (*r_rinf)->callLimitCD == 0 ||
+      (uint32_t)regions->stack->pos+1 < (*r_rinf)->stackBounds[0] ||
+      (uint32_t)regions->stack->pos+1 > (*r_rinf)->stackBounds[1] )
+  {
+    *r_rejected = 1;
 
-  /* push pointer new call stack entry to top of the call stack */
+    /* increment recursive filter activation counter, if region shall be
+       filtered recursively */
+    if( ((*r_rinf)->flags & RFG_FILTER_FLAG_RECURSIVE) != 0 )
+      regions->recursive_filter_active_cnt++;
+  }
+  else
+  {
+    *r_rejected = 0;
 
-  regions->stack->
-     entries[++regions->stack->pos].rinf = *r_rinf;
-  regions->stack->
-     entries[regions->stack->pos].climitbypush = (*r_rinf)->callLimitCD;
+    /* decrement region's call limit, if allowed */
+    if( decrement && (*r_rinf)->callLimitCD > 0 )
+      (*r_rinf)->callLimitCD--;
+  }
+
+  /* put region info and rejected indicator flag to the top of the call stack */
+
+  top->rinf = *r_rinf;
+  top->rejected = *r_rejected;
 
   return 1;
 }
 
 int RFG_Regions_stackPop( RFG_Regions* regions,
-			  RFG_RegionInfo** r_rinf, int32_t* r_climitbypush )
+                          RFG_RegionInfo** r_rinf, uint8_t* r_rejected )
 {
+  RFG_RegionStackEntry* top;
+
   if( !regions || !regions->stack ) return 0;
 
   if( regions->stack->pos == -1 )
@@ -324,20 +282,40 @@ int RFG_Regions_stackPop( RFG_Regions* regions,
     return 0;
   }
 
-  *r_rinf =
-     regions->stack->entries[regions->stack->pos].rinf;
-  *r_climitbypush =
-     regions->stack->entries[regions->stack->pos--].climitbypush;
+  /* get pointer to the top of the call stack and decrement call stack
+     position */
+  top = &(regions->stack->entries[regions->stack->pos--]);
+
+  /* decrement recursive filter activation counter, if region is rejected and
+     filtered recursively */
+  if( top->rejected && (top->rinf->flags & RFG_FILTER_FLAG_RECURSIVE) != 0 )
+  {
+    if( regions->recursive_filter_active_cnt == 0 )
+    {
+      fprintf( stderr, "RFG_Regions_stackPop(): Error: Underflow of recursive filter activation counter\n" );
+      return 0;
+    }
+
+    regions->recursive_filter_active_cnt--;
+  }
+
+  /* get region info and rejected indicator flag from the top of the
+     call stack */
+
+  *r_rinf = top->rinf;
+  *r_rejected = top->rejected;
 
   return 1;
 }
 
-RFG_RegionInfo* RFG_Regions_add( RFG_Regions* regions,
-				 const char* rname, uint32_t rid )
+RFG_RegionInfo* RFG_Regions_add( RFG_Regions* regions, uint32_t rid,
+                                 const char* rname, const char* defgname )
 {
   RFG_RegionInfo* rinf;
-  char*    gname;
-  int32_t  climit;
+  char* gname = NULL;
+  int32_t climit;
+  uint32_t sbounds[2];
+  uint8_t flags;
 
   if( !regions ) return NULL;
 
@@ -347,28 +325,37 @@ RFG_RegionInfo* RFG_Regions_add( RFG_Regions* regions,
     return NULL;
   }
 
-  /* look for already existing hash node of this region */
+  if( !defgname )
+  {
+    fprintf( stderr, "RFG_Regions_add(): Error: Empty default group name\n" );
+    return NULL;
+  }
 
+  /* look for already existing hash node of this region */
   rinf = hash_get( regions->htab, rid );
   if( !rinf )
   {
     /* get group information of this region */
-
     if( !RFG_Groups_get( regions->groups, rname, &gname ) )
       return NULL;
 
-    /* get filter information of this region */
+    /* set group name to given default, if no group information present */
+    if( !gname )
+      gname = (char*)defgname;
 
-    if( !RFG_Filter_get( regions->filter, rname, &climit ) )
+    /* get filter information of this region */
+    if( !RFG_Filter_get( regions->filter, rname, gname, &climit, sbounds,
+                         &flags ) )
       return NULL;
 
     /* add region information to hash table */
-
     hash_put( regions->htab,
-	      rid,
-	      gname,
-	      rname,
-	      climit );
+              rid,
+              gname,
+              rname,
+              climit,
+              sbounds,
+              flags );
 
     rinf = hash_get( regions->htab, rid );
   }
@@ -422,8 +409,8 @@ static int stack_enlarge( RFG_RegionStack* stack )
 
   stack->entries =
     ( RFG_RegionStackEntry* )realloc( stack->entries,
-				      ( stack->size + CSTACK_BSIZE )
-				      * sizeof( RFG_RegionStackEntry ) );
+                                      ( stack->size + CSTACK_BSIZE )
+                                      * sizeof( RFG_RegionStackEntry ) );
   if( stack->entries == NULL )
     return 0;
   
@@ -432,28 +419,31 @@ static int stack_enlarge( RFG_RegionStack* stack )
   return 1;
 }
 
-static void hash_put( RFG_RegionInfo** htab, uint32_t h,
-		      const char* g, const char* r,
-		      int32_t l )
+static void hash_put( RFG_RegionInfo** htab, uint32_t rid,
+                      const char* gname, const char* rname,
+                      int32_t climit, uint32_t* sbounds, uint8_t flags )
 {
-  uint32_t id         = h % HASH_MAX;
+  uint32_t id         = rid & ( HASH_MAX - 1 );
   RFG_RegionInfo* add = ( RFG_RegionInfo* )malloc( sizeof( RFG_RegionInfo ) );
-  add->regionId       = h;
-  add->groupName      = ( g != NULL ) ? strdup( g ) : NULL;
-  add->regionName     = strdup( r );
-  add->callLimit      = l;
-  add->callLimitCD    = l;
+  add->regionId       = rid;
+  add->groupName      = ( gname != NULL ) ? strdup( gname ) : NULL;
+  add->regionName     = strdup( rname );
+  add->callLimit      = climit;
+  add->callLimitCD    = climit;
+  add->stackBounds[0] = sbounds[0];
+  add->stackBounds[1] = sbounds[1];
+  add->flags          = flags;
   add->next           = htab[id];
   htab[id]            = add;
 }
 
-static RFG_RegionInfo* hash_get(RFG_RegionInfo** htab, uint32_t h)
+static RFG_RegionInfo* hash_get(RFG_RegionInfo** htab, uint32_t rid)
 {
-  uint32_t id = h % HASH_MAX;
+  uint32_t id = rid & ( HASH_MAX - 1 );
   RFG_RegionInfo* curr = htab[id];
   while( curr )
   {
-    if( curr->regionId == h )
+    if( curr->regionId == rid )
       return curr;
 
     curr = curr->next;

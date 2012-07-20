@@ -40,11 +40,18 @@ else
 VTSETUP =
 endif
 
+if AMBUILDIOFSLSCRIPTS
+VTIOFSL = vtiofsl
+else
+VTIOFSL =
+endif
+
 SUBDIRS = \
 	$(OPARI) \
 	$(VTCPCAVAIL) \
 	$(VTDYN) \
 	vtfilter \
+	$(VTIOFSL) \
 	$(VTJAVA) \
 	$(VTLIBWRAPGEN) \
 	$(VTRUN) \

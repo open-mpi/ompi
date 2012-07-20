@@ -12,8 +12,8 @@ uninstall-local:
 	rm -f $(DESTDIR)$(bindir)/otfdecompress$(EXEEXT)
 endif
 
-otfcompress_LDADD = $(top_builddir)/otflib/libotf.la
-otfcompress_DEPENDENCIES = $(otfcompress_LDADD)
+otfcompress_LDADD = $(top_builddir)/otflib/libotf.la $(ZLIB_LIB_LINE)
+otfcompress_DEPENDENCIES = $(top_builddir)/otflib/libotf.la
 otfcompress_SOURCES = \
 	sys_time.h \
 	otfcompress.c

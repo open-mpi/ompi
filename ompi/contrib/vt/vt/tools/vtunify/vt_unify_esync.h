@@ -13,14 +13,12 @@
 #ifndef _VT_UNIFY_ESYNC_H_
 #define _VT_UNIFY_ESYNC_H_
 
-#include "config.h"
-
 #include "vt_inttypes.h"
 
-#include <list>
 #include <map>
-#include <string>
 #include <vector>
+
+#include <assert.h>
 
 //
 // ETimeSyncC class

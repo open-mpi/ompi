@@ -10,7 +10,6 @@
  * See the file COPYING in the package base directory for details
  **/
 
-#include "vt_unify.h"
 #include "vt_unify_tkfac.h"
 
 TokenFactoryC * theTokenFactory = 0; // instance of class TokenFactoryC

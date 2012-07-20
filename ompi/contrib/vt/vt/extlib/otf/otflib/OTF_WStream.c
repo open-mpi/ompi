@@ -13,6 +13,19 @@
 
 #include <string.h>
 #include <stdio.h>
+#include <errno.h>
+
+#ifdef HAVE_SYS_TIME_H
+	#include <sys/time.h>
+#endif
+
+#ifdef HAVE_SYS_TYPES_H
+	#include <sys/types.h>
+#endif
+
+#ifdef HAVE_UNISTD_H
+	#include <unistd.h>
+#endif
 
 #include "OTF_WStream.h"
 #include "OTF_Platform.h"
@@ -27,13 +40,12 @@ int OTF_WStream_init( OTF_WStream* wstream );
 /** destructor - internal use only */
 int OTF_WStream_finish( OTF_WStream* wstream );
 
+/** Write a DEFUNIQUEID record to stream 'wstream'. */
+int OTF_WStream_writeDefUniqueId( OTF_WStream* wstream, uint64_t uid );
+
 /** Write a DEFVERSION record to stream 'wstream'. */
 int OTF_WStream_writeDefVersion( OTF_WStream* wstream, uint8_t major,
 	uint8_t minor, uint8_t sub, const char* string );
-
-/** Write a DEFVERSION record including an OTF_KeyValueList to stream 'wstream'. */
-int OTF_WStream_writeDefVersionKV( OTF_WStream* wstream, uint8_t major,
-	uint8_t minor, uint8_t sub, const char* string, OTF_KeyValueList* list );
 
 /* ************************************************************************* */
 
@@ -54,7 +66,7 @@ int OTF_WStream_init( OTF_WStream* wstream ) {
 
 #ifdef HAVE_ZLIB
 	wstream->compression= 0;
-	wstream->zbuffersizes= 1024*10;
+	wstream->zbuffersizes= OTF_ZBUFFER_DEFAULTSIZE;
 #endif /* HAVE_ZLIB */
 
 	wstream->buffersizes= 1024*1024;
@@ -421,6 +433,10 @@ OTF_WBuffer* OTF_WStream_getSnapshotBuffer( OTF_WStream* wstream ) {
 
 	char* filename;
 
+	if ( ( wstream->format & 2 ) == OTF_WSTREAM_FORMAT_INLINE_SNAPSHOTS ) {
+
+		return OTF_WStream_getEventBuffer( wstream );
+	}
 
 	if ( NULL == wstream->snapsBuffer ) {
 
@@ -756,7 +772,7 @@ uint32_t OTF_WStream_getZBufferSizes(OTF_WStream* wstream) {
 void OTF_WStream_setFormat( OTF_WStream* wstream, uint32_t format ) {
 
 
-	if ( format > 1 ) {
+	if ( format > 3 ) {
 	
 		OTF_Error( "ERROR in function %s, file: %s, line: %i:\n "
 				"unknown ouput format chosen.\n",
@@ -786,7 +802,7 @@ int OTF_WStream_writeDefinitionCommentKV( OTF_WStream* wstream,
 	/* buffer can be NULL if file-open fails */
 	if ( NULL == buffer ) return 0;
 
-	if ( OTF_WSTREAM_FORMAT_SHORT == wstream->format ) {
+	if ( OTF_WSTREAM_FORMAT_SHORT == ( wstream->format & 1 ) ) {
 	
 		OTF_WBuffer_writeKeyValueList_short(buffer, list);
 
@@ -797,7 +813,7 @@ int OTF_WStream_writeDefinitionCommentKV( OTF_WStream* wstream,
 		OTF_WBuffer_writeString( buffer, comment );
 		OTF_WBuffer_writeNewline( buffer );
 
-	} else if ( OTF_WSTREAM_FORMAT_LONG == wstream->format ) {
+	} else if ( OTF_WSTREAM_FORMAT_LONG == ( wstream->format & 1 ) ) {
 
 		OTF_WBuffer_writeKeyValueList_long(buffer, list);
 
@@ -830,7 +846,7 @@ int OTF_WStream_writeDefTimerResolutionKV( OTF_WStream* wstream,
 	/* buffer can be NULL if file-open fails */
 	if ( NULL == buffer ) return 0;
 
-	if ( OTF_WSTREAM_FORMAT_SHORT == wstream->format ) {
+	if ( OTF_WSTREAM_FORMAT_SHORT == ( wstream->format & 1 ) ) {
 
 		OTF_WBuffer_writeKeyValueList_short(buffer, list);
 	
@@ -841,7 +857,7 @@ int OTF_WStream_writeDefTimerResolutionKV( OTF_WStream* wstream,
 		OTF_WBuffer_writeUint64( buffer, ticksPerSecond );
 		OTF_WBuffer_writeNewline( buffer );
 	
-	} else if ( OTF_WSTREAM_FORMAT_LONG == wstream->format ) {
+	} else if ( OTF_WSTREAM_FORMAT_LONG == ( wstream->format & 1 ) ) {
 
 		OTF_WBuffer_writeKeyValueList_long(buffer, list);
 
@@ -885,7 +901,7 @@ int OTF_WStream_writeDefProcessKV( OTF_WStream* wstream, uint32_t deftoken,
 #	endif
 			
 
-	if ( OTF_WSTREAM_FORMAT_SHORT == wstream->format ) {
+	if ( OTF_WSTREAM_FORMAT_SHORT == ( wstream->format & 1 ) ) {
 
 		OTF_WBuffer_writeKeyValueList_short(buffer, list);
 	
@@ -909,7 +925,7 @@ int OTF_WStream_writeDefProcessKV( OTF_WStream* wstream, uint32_t deftoken,
 
 		OTF_WBuffer_writeNewline( buffer );
 	
-	} else if ( OTF_WSTREAM_FORMAT_LONG == wstream->format ) {
+	} else if ( OTF_WSTREAM_FORMAT_LONG == ( wstream->format & 1 ) ) {
 
 		OTF_WBuffer_writeKeyValueList_long(buffer, list);
 
@@ -965,7 +981,7 @@ int OTF_WStream_writeDefProcessGroupKV( OTF_WStream* wstream, uint32_t deftoken,
 		}
 #	endif
 
-	if ( OTF_WSTREAM_FORMAT_SHORT == wstream->format ) {
+	if ( OTF_WSTREAM_FORMAT_SHORT == ( wstream->format & 1 ) ) {
 
 		OTF_WBuffer_writeKeyValueList_short(buffer, list);
 	
@@ -987,7 +1003,7 @@ int OTF_WStream_writeDefProcessGroupKV( OTF_WStream* wstream, uint32_t deftoken,
 
 		OTF_WBuffer_writeNewline( buffer );
 	
-	} else if ( OTF_WSTREAM_FORMAT_LONG == wstream->format ) {
+	} else if ( OTF_WSTREAM_FORMAT_LONG == ( wstream->format & 1 ) ) {
 
 		OTF_WBuffer_writeKeyValueList_long(buffer, list);
 
@@ -1033,7 +1049,7 @@ int OTF_WStream_writeDefAttributeListKV( OTF_WStream* wstream, uint32_t attr_tok
 	/* buffer can be NULL if file-open fails */
 	if ( NULL == buffer ) return 0;
 
-	if ( OTF_WSTREAM_FORMAT_SHORT == wstream->format ) {
+	if ( OTF_WSTREAM_FORMAT_SHORT == ( wstream->format & 1 ) ) {
 
 		OTF_WBuffer_writeKeyValueList_short(buffer, list);
 
@@ -1053,7 +1069,7 @@ int OTF_WStream_writeDefAttributeListKV( OTF_WStream* wstream, uint32_t attr_tok
 
 		OTF_WBuffer_writeNewline( buffer );
 
-	} else if ( OTF_WSTREAM_FORMAT_LONG == wstream->format ) {
+	} else if ( OTF_WSTREAM_FORMAT_LONG == ( wstream->format & 1 ) ) {
 
 		OTF_WBuffer_writeKeyValueList_long(buffer, list);
 
@@ -1096,7 +1112,7 @@ int OTF_WStream_writeDefProcessOrGroupAttributesKV( OTF_WStream* wstream,
 	/* buffer can be NULL if file-open fails */
 	if ( NULL == buffer ) return 0;
 
-	if ( OTF_WSTREAM_FORMAT_SHORT == wstream->format ) {
+	if ( OTF_WSTREAM_FORMAT_SHORT == ( wstream->format & 1 ) ) {
 
 		OTF_WBuffer_writeKeyValueList_short(buffer, list);
 
@@ -1111,7 +1127,7 @@ int OTF_WStream_writeDefProcessOrGroupAttributesKV( OTF_WStream* wstream,
 
 		OTF_WBuffer_writeNewline( buffer );
 
-	} else if ( OTF_WSTREAM_FORMAT_LONG == wstream->format ) {
+	} else if ( OTF_WSTREAM_FORMAT_LONG == ( wstream->format & 1 ) ) {
 
 		OTF_WBuffer_writeKeyValueList_long(buffer, list);
 
@@ -1159,7 +1175,7 @@ int OTF_WStream_writeDefFunctionKV( OTF_WStream* wstream, uint32_t deftoken,
 #	endif
 			
 	
-	if ( OTF_WSTREAM_FORMAT_SHORT == wstream->format ) {
+	if ( OTF_WSTREAM_FORMAT_SHORT == ( wstream->format & 1 ) ) {
 
 		OTF_WBuffer_writeKeyValueList_short(buffer, list);
 	
@@ -1181,7 +1197,7 @@ int OTF_WStream_writeDefFunctionKV( OTF_WStream* wstream, uint32_t deftoken,
 
 		OTF_WBuffer_writeNewline( buffer );
 	
-	} else if ( OTF_WSTREAM_FORMAT_LONG == wstream->format ) {
+	} else if ( OTF_WSTREAM_FORMAT_LONG == ( wstream->format & 1 ) ) {
 
 		OTF_WBuffer_writeKeyValueList_long(buffer, list);
 
@@ -1235,7 +1251,7 @@ int OTF_WStream_writeDefFunctionGroupKV( OTF_WStream* wstream,
 #	endif
 			
 	
-	if ( OTF_WSTREAM_FORMAT_SHORT == wstream->format ) {
+	if ( OTF_WSTREAM_FORMAT_SHORT == ( wstream->format & 1 ) ) {
 
 		OTF_WBuffer_writeKeyValueList_short(buffer, list);
 
@@ -1248,7 +1264,7 @@ int OTF_WStream_writeDefFunctionGroupKV( OTF_WStream* wstream,
 		OTF_WBuffer_writeString( buffer, name );
 		OTF_WBuffer_writeNewline( buffer );
 
-	} else if ( OTF_WSTREAM_FORMAT_LONG == wstream->format ) {
+	} else if ( OTF_WSTREAM_FORMAT_LONG == ( wstream->format & 1 ) ) {
 
 		OTF_WBuffer_writeKeyValueList_long(buffer, list);
 
@@ -1293,7 +1309,7 @@ int OTF_WStream_writeDefCollectiveOperationKV( OTF_WStream* wstream,
 #	endif
 	
 
-	if ( OTF_WSTREAM_FORMAT_SHORT == wstream->format ) {
+	if ( OTF_WSTREAM_FORMAT_SHORT == ( wstream->format & 1 ) ) {
 
 		OTF_WBuffer_writeKeyValueList_short(buffer, list);
 
@@ -1308,7 +1324,7 @@ int OTF_WStream_writeDefCollectiveOperationKV( OTF_WStream* wstream,
 		OTF_WBuffer_writeUint32( buffer, type );
 		OTF_WBuffer_writeNewline( buffer );
 
-	} else if ( OTF_WSTREAM_FORMAT_LONG == wstream->format ) {
+	} else if ( OTF_WSTREAM_FORMAT_LONG == ( wstream->format & 1 ) ) {
 
 		OTF_WBuffer_writeKeyValueList_long(buffer, list);
 
@@ -1356,7 +1372,7 @@ int OTF_WStream_writeDefCounterKV( OTF_WStream* wstream, uint32_t deftoken,
 #	endif
 	
 
-	if ( OTF_WSTREAM_FORMAT_SHORT == wstream->format ) {
+	if ( OTF_WSTREAM_FORMAT_SHORT == ( wstream->format & 1 ) ) {
 
 		OTF_WBuffer_writeKeyValueList_short(buffer, list);
 
@@ -1375,7 +1391,7 @@ int OTF_WStream_writeDefCounterKV( OTF_WStream* wstream, uint32_t deftoken,
 		OTF_WBuffer_writeString( buffer, unit );
 		OTF_WBuffer_writeNewline( buffer );
 
-	} else if ( OTF_WSTREAM_FORMAT_LONG == wstream->format ) {
+	} else if ( OTF_WSTREAM_FORMAT_LONG == ( wstream->format & 1 ) ) {
 
 		OTF_WBuffer_writeKeyValueList_long(buffer, list);
 
@@ -1428,7 +1444,7 @@ int OTF_WStream_writeDefCounterGroupKV( OTF_WStream* wstream,
 #	endif
 	
 
-	if ( OTF_WSTREAM_FORMAT_SHORT == wstream->format ) {
+	if ( OTF_WSTREAM_FORMAT_SHORT == ( wstream->format & 1 ) ) {
 
 		OTF_WBuffer_writeKeyValueList_short(buffer, list);
 
@@ -1441,7 +1457,7 @@ int OTF_WStream_writeDefCounterGroupKV( OTF_WStream* wstream,
 		OTF_WBuffer_writeString( buffer, name );
 		OTF_WBuffer_writeNewline( buffer );
 
-	} else if ( OTF_WSTREAM_FORMAT_LONG == wstream->format ) {
+	} else if ( OTF_WSTREAM_FORMAT_LONG == ( wstream->format & 1 ) ) {
 
 		OTF_WBuffer_writeKeyValueList_long(buffer, list);
 
@@ -1486,7 +1502,7 @@ int OTF_WStream_writeDefSclKV( OTF_WStream* wstream, uint32_t deftoken,
 #	endif
 	
 
-	if ( OTF_WSTREAM_FORMAT_SHORT == wstream->format ) {
+	if ( OTF_WSTREAM_FORMAT_SHORT == ( wstream->format & 1 ) ) {
 
 		OTF_WBuffer_writeKeyValueList_short(buffer, list);
 
@@ -1501,7 +1517,7 @@ int OTF_WStream_writeDefSclKV( OTF_WStream* wstream, uint32_t deftoken,
 		OTF_WBuffer_writeUint32( buffer, sclline );
 		OTF_WBuffer_writeNewline( buffer );
 
-	} else if ( OTF_WSTREAM_FORMAT_LONG == wstream->format ) {
+	} else if ( OTF_WSTREAM_FORMAT_LONG == ( wstream->format & 1 ) ) {
 
 		OTF_WBuffer_writeKeyValueList_long(buffer, list);
 
@@ -1548,7 +1564,7 @@ int OTF_WStream_writeDefSclFileKV( OTF_WStream* wstream, uint32_t deftoken,
 #	endif
 	
 
-	if ( OTF_WSTREAM_FORMAT_SHORT == wstream->format ) {
+	if ( OTF_WSTREAM_FORMAT_SHORT == ( wstream->format & 1 ) ) {
 
 		OTF_WBuffer_writeKeyValueList_short(buffer, list);
 
@@ -1561,7 +1577,7 @@ int OTF_WStream_writeDefSclFileKV( OTF_WStream* wstream, uint32_t deftoken,
 		OTF_WBuffer_writeString( buffer, filename );
 		OTF_WBuffer_writeNewline( buffer );
 
-	} else if ( OTF_WSTREAM_FORMAT_LONG == wstream->format ) {
+	} else if ( OTF_WSTREAM_FORMAT_LONG == ( wstream->format & 1 ) ) {
 
 		OTF_WBuffer_writeKeyValueList_long(buffer, list);
 
@@ -1587,8 +1603,79 @@ int OTF_WStream_writeDefSclFile( OTF_WStream* wstream, uint32_t deftoken,
 }
 
 
-int OTF_WStream_writeDefVersionKV( OTF_WStream* wstream, uint8_t major,
-		uint8_t minor, uint8_t sub, const char* string, OTF_KeyValueList* list ) {
+int OTF_WStream_writeDefUniqueId( OTF_WStream* wstream, uint64_t uid ) {
+
+	OTF_WBuffer* buffer= OTF_WStream_getDefBuffer( wstream );
+
+	/* buffer can be NULL if file-open fails */
+	if ( NULL == buffer ) return 0;
+
+	if ( OTF_WSTREAM_FORMAT_SHORT == ( wstream->format & 1 ) ) {
+
+		OTF_WBuffer_writeKeyword( buffer, 
+			OTF_KEYWORD_S_DEF_PREFIX 
+			OTF_KEYWORD_S_DEFUNIQUEID );
+
+		OTF_WBuffer_writeUint64( buffer, uid );
+		OTF_WBuffer_writeNewline( buffer );
+
+	} else if ( OTF_WSTREAM_FORMAT_LONG == ( wstream->format & 1 ) ) {
+
+		OTF_WBuffer_writeKeyword( buffer, 
+			OTF_KEYWORD_L_DEF_PREFIX 
+			OTF_KEYWORD_L_DEFUNIQUEID " " );
+
+		OTF_WBuffer_writeUint64( buffer, uid );
+		OTF_WBuffer_writeNewline( buffer );
+	}
+
+	/* one or more of the last write operations could be failed;
+	check otf_errno for errors */
+	return ( OTF_NO_ERROR == otf_errno ) ? 1 : 0;
+}
+
+int OTF_WStream_writeUniqueId( OTF_WStream* wstream ) {
+
+	uint64_t uid;
+
+	struct timeval tv;
+	const uint64_t golden_ratio = 11400714819323198485ULL;
+	static unsigned short rnd_state[3] = { 0, 0, 0 };
+
+	/* generate an unique id */
+
+	/* 0. initialize random state */
+	if ( 0 == rnd_state[0] && 0 == rnd_state[1] && 0 == rnd_state[2] ) {
+
+		rnd_state[0] = (unsigned short)getpid();
+		rnd_state[1] = 1; rnd_state[2] = 2;
+	}
+
+	/* 1. get the current timestamp */
+	if ( -1 == gettimeofday( &tv, NULL ) ) {
+
+		OTF_Error( "ERROR in function %s, file: %s, line: %i:\n "
+			"gettimeofday() failed: %s\n",
+			__FUNCTION__, __FILE__, __LINE__,
+			strerror(errno) );
+
+		return 0;
+	}
+	uid = (uint64_t)( ( tv.tv_sec * 1000000LL ) + tv.tv_usec );
+
+	/* 2. multiply a pseudo-random integer */
+	uid *= (uint64_t)nrand48( rnd_state );
+
+	/* 3. multiply the golden ratio */
+	uid *= golden_ratio;
+
+	/* do actual write the unique-id record */
+	return OTF_WStream_writeDefUniqueId( wstream, uid );
+}
+
+
+int OTF_WStream_writeDefVersion( OTF_WStream* wstream, uint8_t major,
+		uint8_t minor, uint8_t sub, const char* string ) {
 
 
 	OTF_WBuffer* buffer= OTF_WStream_getDefBuffer( wstream );
@@ -1596,9 +1683,7 @@ int OTF_WStream_writeDefVersionKV( OTF_WStream* wstream, uint8_t major,
 	/* buffer can be NULL if file-open fails */
 	if ( NULL == buffer ) return 0;
 
-	if ( OTF_WSTREAM_FORMAT_SHORT == wstream->format ) {
-
-		OTF_WBuffer_writeKeyValueList_short(buffer, list);
+	if ( OTF_WSTREAM_FORMAT_SHORT == ( wstream->format & 1 ) ) {
 
 		OTF_WBuffer_writeKeyword( buffer, 
 			OTF_KEYWORD_S_DEF_PREFIX 
@@ -1612,9 +1697,7 @@ int OTF_WStream_writeDefVersionKV( OTF_WStream* wstream, uint8_t major,
 		OTF_WBuffer_writeString( buffer, string );
 		OTF_WBuffer_writeNewline( buffer );
 
-	} else if ( OTF_WSTREAM_FORMAT_LONG == wstream->format ) {
-
-		OTF_WBuffer_writeKeyValueList_long(buffer, list);
+	} else if ( OTF_WSTREAM_FORMAT_LONG == ( wstream->format & 1 ) ) {
 
 		OTF_WBuffer_writeKeyword( buffer, 
 			OTF_KEYWORD_L_DEF_PREFIX 
@@ -1634,13 +1717,6 @@ int OTF_WStream_writeDefVersionKV( OTF_WStream* wstream, uint8_t major,
 	return ( OTF_NO_ERROR == otf_errno ) ? 1 : 0;
 }
 
-int OTF_WStream_writeDefVersion( OTF_WStream* wstream, uint8_t major,
-		uint8_t minor, uint8_t sub, const char* string ) {
-
-	return OTF_WStream_writeDefVersionKV(wstream, major, minor, sub, string, NULL);
-}
-
-
 int OTF_WStream_writeOtfVersion( OTF_WStream* wstream ) {
 
 	return OTF_WStream_writeDefVersion( wstream, OTF_VERSION_MAJOR,
@@ -1657,7 +1733,7 @@ int OTF_WStream_writeDefCreatorKV( OTF_WStream* wstream, const char* creator,
 	/* buffer can be NULL if file-open fails */
 	if ( NULL == buffer ) return 0;
 
-	if ( OTF_WSTREAM_FORMAT_SHORT == wstream->format ) {
+	if ( OTF_WSTREAM_FORMAT_SHORT == ( wstream->format & 1 ) ) {
 
 		OTF_WBuffer_writeKeyValueList_short(buffer, list);
 
@@ -1668,7 +1744,7 @@ int OTF_WStream_writeDefCreatorKV( OTF_WStream* wstream, const char* creator,
 		OTF_WBuffer_writeString( buffer, creator );
 		OTF_WBuffer_writeNewline( buffer );
 
-	} else if ( OTF_WSTREAM_FORMAT_LONG == wstream->format ) {
+	} else if ( OTF_WSTREAM_FORMAT_LONG == ( wstream->format & 1 ) ) {
 
 		OTF_WBuffer_writeKeyValueList_long(buffer, list);
 
@@ -1710,7 +1786,7 @@ int OTF_WStream_writeDefFileKV( OTF_WStream* wstream, uint32_t token,
 #	endif
 			
 	
-	if ( OTF_WSTREAM_FORMAT_SHORT == wstream->format ) {
+	if ( OTF_WSTREAM_FORMAT_SHORT == ( wstream->format & 1 ) ) {
 
 		OTF_WBuffer_writeKeyValueList_short(buffer, list);
 	
@@ -1726,7 +1802,7 @@ int OTF_WStream_writeDefFileKV( OTF_WStream* wstream, uint32_t token,
 
 		OTF_WBuffer_writeNewline( buffer );
 	
-	} else if ( OTF_WSTREAM_FORMAT_LONG == wstream->format ) {
+	} else if ( OTF_WSTREAM_FORMAT_LONG == ( wstream->format & 1 ) ) {
 
 		OTF_WBuffer_writeKeyValueList_long(buffer, list);
 
@@ -1774,7 +1850,7 @@ int OTF_WStream_writeDefFileGroupKV( OTF_WStream* wstream, uint32_t token,
 #	endif
 			
 	
-	if ( OTF_WSTREAM_FORMAT_SHORT == wstream->format ) {
+	if ( OTF_WSTREAM_FORMAT_SHORT == ( wstream->format & 1 ) ) {
 
 		OTF_WBuffer_writeKeyValueList_short(buffer, list);
 	
@@ -1788,7 +1864,7 @@ int OTF_WStream_writeDefFileGroupKV( OTF_WStream* wstream, uint32_t token,
 
 		OTF_WBuffer_writeNewline( buffer );
 	
-	} else if ( OTF_WSTREAM_FORMAT_LONG == wstream->format ) {
+	} else if ( OTF_WSTREAM_FORMAT_LONG == ( wstream->format & 1 ) ) {
 
 		OTF_WBuffer_writeKeyValueList_long(buffer, list);
 
@@ -1826,7 +1902,7 @@ int OTF_WStream_writeDefKeyValueKV( OTF_WStream* wstream, uint32_t key, OTF_Type
 	/* buffer can be NULL if file-open fails */
 	if ( NULL == buffer ) return 0;
 
-	if ( OTF_WSTREAM_FORMAT_SHORT == wstream->format ) {
+	if ( OTF_WSTREAM_FORMAT_SHORT == ( wstream->format & 1 ) ) {
 
 		OTF_WBuffer_writeKeyValueList_short(buffer, list);
 
@@ -1844,7 +1920,7 @@ int OTF_WStream_writeDefKeyValueKV( OTF_WStream* wstream, uint32_t key, OTF_Type
 
 		OTF_WBuffer_writeNewline( buffer );
 
-	} else if ( OTF_WSTREAM_FORMAT_LONG == wstream->format ) {
+	} else if ( OTF_WSTREAM_FORMAT_LONG == ( wstream->format & 1 ) ) {
 
 		OTF_WBuffer_writeKeyValueList_long(buffer, list);
 
@@ -1891,7 +1967,7 @@ int OTF_WStream_writeDefTimeRange( OTF_WStream* wstream, uint64_t minTime,
 	/* buffer can be NULL if file-open fails */
 	if ( NULL == buffer ) return 0;
 
-	if ( OTF_WSTREAM_FORMAT_LONG == wstream->format ) {
+	if ( OTF_WSTREAM_FORMAT_LONG == ( wstream->format & 1 ) ) {
 
 		recordkw= OTF_KEYWORD_L_DEF_PREFIX
 			  OTF_KEYWORD_L_DEFTIMERANGE " ";
@@ -1936,7 +2012,7 @@ int OTF_WStream_writeDefCounterAssignments( OTF_WStream* wstream,
 	/* buffer can be NULL if file-open fails */
 	if ( NULL == buffer ) return 0;
 
-	if ( OTF_WSTREAM_FORMAT_LONG == wstream->format ) {
+	if ( OTF_WSTREAM_FORMAT_LONG == ( wstream->format & 1 ) ) {
 
 		recordkw=  OTF_KEYWORD_L_DEF_PREFIX
 			   OTF_KEYWORD_L_DEFCOUNTERASSIGNMENTS " ";
@@ -1973,6 +2049,9 @@ int OTF_WStream_writeDefProcessSubstitutes( OTF_WStream* wstream,
 	unsigned int i;
 	OTF_WBuffer* buffer= OTF_WStream_getDefBuffer( wstream );
 
+	/* buffer can be NULL if file-open fails */
+	if ( NULL == buffer ) return 0;
+
 	
 #	ifdef OTF_DEBUG
 		if( 0 == representative ) {
@@ -1983,7 +2062,7 @@ int OTF_WStream_writeDefProcessSubstitutes( OTF_WStream* wstream,
 		}
 #	endif
 
-	if ( OTF_WSTREAM_FORMAT_SHORT == wstream->format ) {
+	if ( OTF_WSTREAM_FORMAT_SHORT == ( wstream->format & 1 ) ) {
 
 		OTF_WBuffer_writeKeyValueList_short(buffer, list);
 	
@@ -2002,7 +2081,7 @@ int OTF_WStream_writeDefProcessSubstitutes( OTF_WStream* wstream,
 
 		OTF_WBuffer_writeNewline( buffer );
 	
-	} else if ( OTF_WSTREAM_FORMAT_LONG == wstream->format ) {
+	} else if ( OTF_WSTREAM_FORMAT_LONG == ( wstream->format & 1 ) ) {
 
 		OTF_WBuffer_writeKeyValueList_long(buffer, list);
 
@@ -2027,7 +2106,48 @@ int OTF_WStream_writeDefProcessSubstitutes( OTF_WStream* wstream,
 	return ( OTF_NO_ERROR == otf_errno ) ? 1 : 0;
 }
 
+int OTF_WStream_writeDefAuxSamplePoint( OTF_WStream*           wstream,
+                                        uint64_t               time,
+                                        OTF_AuxSamplePointType type,
+                                        OTF_KeyValueList*      list ) {
 
+
+    OTF_WBuffer* buffer= OTF_WStream_getDefBuffer( wstream );
+
+    const char* recordkw= OTF_KEYWORD_S_DEF_PREFIX
+                          OTF_KEYWORD_S_DEFAUXSAMPLEPOINT;
+    const char* typekw=   OTF_KEYWORD_S_LOCAL_TYPE;
+
+    uint32_t ( *writeKeyValueList )( OTF_WBuffer*, OTF_KeyValueList* )=
+        OTF_WBuffer_writeKeyValueList_short;
+
+    /* buffer can be NULL if file-open fails */
+    if ( NULL == buffer ) {
+        return 0;
+    }
+
+    if ( OTF_WSTREAM_FORMAT_LONG == ( wstream->format & 1 ) ) {
+        recordkw= OTF_KEYWORD_L_DEF_PREFIX
+                  OTF_KEYWORD_L_DEFAUXSAMPLEPOINT " ";
+        typekw=   " " OTF_KEYWORD_L_LOCAL_TYPE " ";
+
+        writeKeyValueList= OTF_WBuffer_writeKeyValueList_long;
+    }
+
+    writeKeyValueList( buffer, list );
+
+    OTF_WBuffer_writeKeyword( buffer, recordkw );
+    OTF_WBuffer_writeUint64( buffer, time );
+
+    OTF_WBuffer_writeKeyword( buffer, typekw );
+    OTF_WBuffer_writeUint32( buffer, type );
+
+    OTF_WBuffer_writeNewline( buffer );
+
+    /* one or more of the last write operations could be failed;
+    check otf_errno for errors */
+    return ( OTF_NO_ERROR == otf_errno ) ? 1 : 0;
+}
 
 /* *** event record write handlers *** ************************************* */
 
@@ -2042,7 +2162,7 @@ int OTF_WStream_writeNoOpKV( OTF_WStream* wstream, uint64_t time,
 
 	if ( 0 == OTF_WBuffer_setTimeAndProcess( buffer, time, process ) ) return 0;
 
-	if ( OTF_WSTREAM_FORMAT_SHORT == wstream->format ) {
+	if ( OTF_WSTREAM_FORMAT_SHORT == ( wstream->format & 1 ) ) {
 
 		OTF_WBuffer_writeKeyValueList_short(buffer, list);
 
@@ -2051,7 +2171,7 @@ int OTF_WStream_writeNoOpKV( OTF_WStream* wstream, uint64_t time,
 
 		OTF_WBuffer_writeNewline( buffer );
 
-	} else if ( OTF_WSTREAM_FORMAT_LONG == wstream->format ) {
+	} else if ( OTF_WSTREAM_FORMAT_LONG == ( wstream->format & 1 ) ) {
 
 		OTF_WBuffer_writeKeyValueList_long(buffer, list);
 
@@ -2078,7 +2198,7 @@ int OTF_WStream_writeEnterKV( OTF_WStream* wstream, uint64_t time,
 
 	if ( 0 == OTF_WBuffer_setTimeAndProcess( buffer, time, cpuid ) ) return 0;
 
-	if ( OTF_WSTREAM_FORMAT_SHORT == wstream->format ) {
+	if ( OTF_WSTREAM_FORMAT_SHORT == ( wstream->format & 1 ) ) {
 
 		OTF_WBuffer_writeKeyValueList_short(buffer, list);
 
@@ -2095,7 +2215,7 @@ int OTF_WStream_writeEnterKV( OTF_WStream* wstream, uint64_t time,
 
 		OTF_WBuffer_writeNewline( buffer );
 
-	} else if ( OTF_WSTREAM_FORMAT_LONG == wstream->format ) {
+	} else if ( OTF_WSTREAM_FORMAT_LONG == ( wstream->format & 1 ) ) {
 
 		OTF_WBuffer_writeKeyValueList_long(buffer, list);
 
@@ -2138,7 +2258,7 @@ int OTF_WStream_writeRecvMsgKV( OTF_WStream* wstream, uint64_t time,
 
 	if ( 0 == OTF_WBuffer_setTimeAndProcess( buffer, time, receiver ) ) return 0;
 
-	if ( OTF_WSTREAM_FORMAT_SHORT == wstream->format ) {
+	if ( OTF_WSTREAM_FORMAT_SHORT == ( wstream->format & 1 ) ) {
 
 		OTF_WBuffer_writeKeyValueList_short(buffer, list);
 
@@ -2161,7 +2281,7 @@ int OTF_WStream_writeRecvMsgKV( OTF_WStream* wstream, uint64_t time,
 
 		OTF_WBuffer_writeNewline( buffer );
 
-	} else if ( OTF_WSTREAM_FORMAT_LONG == wstream->format ) {
+	} else if ( OTF_WSTREAM_FORMAT_LONG == ( wstream->format & 1 ) ) {
 
 		OTF_WBuffer_writeKeyValueList_long(buffer, list);
 
@@ -2212,7 +2332,7 @@ int OTF_WStream_writeSendMsgKV( OTF_WStream* wstream, uint64_t time, uint32_t se
 
 	if ( 0 == OTF_WBuffer_setTimeAndProcess( buffer, time, sender ) ) return 0;
 
-	if ( OTF_WSTREAM_FORMAT_SHORT == wstream->format ) {
+	if ( OTF_WSTREAM_FORMAT_SHORT == ( wstream->format & 1 ) ) {
 
 		OTF_WBuffer_writeKeyValueList_short(buffer, list);
 
@@ -2235,7 +2355,7 @@ int OTF_WStream_writeSendMsgKV( OTF_WStream* wstream, uint64_t time, uint32_t se
 
 		OTF_WBuffer_writeNewline( buffer );
 
-	} else if ( OTF_WSTREAM_FORMAT_LONG == wstream->format ) {
+	} else if ( OTF_WSTREAM_FORMAT_LONG == ( wstream->format & 1 ) ) {
 
 		OTF_WBuffer_writeKeyValueList_long(buffer, list);
 
@@ -2286,7 +2406,7 @@ int OTF_WStream_writeLeaveKV( OTF_WStream* wstream, uint64_t time,
 	if ( 0 == OTF_WBuffer_setTimeAndProcess( buffer, time, cpuid ) ) return 0;
 
 
-	if ( OTF_WSTREAM_FORMAT_SHORT == wstream->format ) {
+	if ( OTF_WSTREAM_FORMAT_SHORT == ( wstream->format & 1 ) ) {
 
 		OTF_WBuffer_writeKeyValueList_short(buffer, list);
 
@@ -2306,7 +2426,7 @@ int OTF_WStream_writeLeaveKV( OTF_WStream* wstream, uint64_t time,
 
 		OTF_WBuffer_writeNewline( buffer );
 
-	} else if ( OTF_WSTREAM_FORMAT_LONG == wstream->format ) {
+	} else if ( OTF_WSTREAM_FORMAT_LONG == ( wstream->format & 1 ) ) {
 
 		OTF_WBuffer_writeKeyValueList_long(buffer, list);
 
@@ -2351,7 +2471,7 @@ int OTF_WStream_writeCounterKV( OTF_WStream* wstream, uint64_t time,
 
 	if ( 0 == OTF_WBuffer_setTimeAndProcess( buffer, time, process ) ) return 0;
 
-	if ( OTF_WSTREAM_FORMAT_SHORT == wstream->format ) {
+	if ( OTF_WSTREAM_FORMAT_SHORT == ( wstream->format & 1 ) ) {
 
 		OTF_WBuffer_writeKeyValueList_short(buffer, list);
 
@@ -2363,7 +2483,7 @@ int OTF_WStream_writeCounterKV( OTF_WStream* wstream, uint64_t time,
 		OTF_WBuffer_writeUint64( buffer, value );
 		OTF_WBuffer_writeNewline( buffer );
 
-	} else if ( OTF_WSTREAM_FORMAT_LONG == wstream->format ) {
+	} else if ( OTF_WSTREAM_FORMAT_LONG == ( wstream->format & 1 ) ) {
 
 		OTF_WBuffer_writeKeyValueList_long(buffer, list);
 
@@ -2401,7 +2521,7 @@ int OTF_WStream_writeCollectiveOperationKV( OTF_WStream* wstream, uint64_t time,
 
 	if ( 0 == OTF_WBuffer_setTimeAndProcess( buffer, time, process ) ) return 0;
 
-	if ( OTF_WSTREAM_FORMAT_SHORT == wstream->format ) {
+	if ( OTF_WSTREAM_FORMAT_SHORT == ( wstream->format & 1 ) ) {
 
 		OTF_WBuffer_writeKeyValueList_short(buffer, list);
 
@@ -2427,7 +2547,7 @@ int OTF_WStream_writeCollectiveOperationKV( OTF_WStream* wstream, uint64_t time,
 
 		OTF_WBuffer_writeNewline( buffer );
 
-	} else if ( OTF_WSTREAM_FORMAT_LONG == wstream->format ) {
+	} else if ( OTF_WSTREAM_FORMAT_LONG == ( wstream->format & 1 ) ) {
 
 		OTF_WBuffer_writeKeyValueList_long(buffer, list);
 
@@ -2483,7 +2603,7 @@ int OTF_WStream_writeBeginCollectiveOperationKV( OTF_WStream* wstream,
 
 	if( 0 == OTF_WBuffer_setTimeAndProcess( buffer, time, process ) ) return 0;
 
-	if( OTF_WSTREAM_FORMAT_SHORT == wstream->format ) {
+	if( OTF_WSTREAM_FORMAT_SHORT == ( wstream->format & 1 ) ) {
 
 		OTF_WBuffer_writeKeyValueList_short(buffer, list);
 
@@ -2512,7 +2632,7 @@ int OTF_WStream_writeBeginCollectiveOperationKV( OTF_WStream* wstream,
 
 		OTF_WBuffer_writeNewline( buffer );
 
-	} else if( OTF_WSTREAM_FORMAT_LONG == wstream->format ) {
+	} else if( OTF_WSTREAM_FORMAT_LONG == ( wstream->format & 1 ) ) {
 
 		OTF_WBuffer_writeKeyValueList_long(buffer, list);
 
@@ -2574,7 +2694,7 @@ int OTF_WStream_writeEndCollectiveOperationKV( OTF_WStream* wstream,
 
 	if( 0 == OTF_WBuffer_setTimeAndProcess( buffer, time, process ) ) return 0;
 
-	if( OTF_WSTREAM_FORMAT_SHORT == wstream->format ) {
+	if( OTF_WSTREAM_FORMAT_SHORT == ( wstream->format & 1 ) ) {
 
 		OTF_WBuffer_writeKeyValueList_short(buffer, list);
 
@@ -2585,7 +2705,7 @@ int OTF_WStream_writeEndCollectiveOperationKV( OTF_WStream* wstream,
 
 		OTF_WBuffer_writeNewline( buffer );
 
-	} else if( OTF_WSTREAM_FORMAT_LONG == wstream->format ) {
+	} else if( OTF_WSTREAM_FORMAT_LONG == ( wstream->format & 1 ) ) {
 
 		OTF_WBuffer_writeKeyValueList_long(buffer, list);
 
@@ -2620,7 +2740,7 @@ int OTF_WStream_writeEventCommentKV( OTF_WStream* wstream, uint64_t time,
 
 	if ( 0 == OTF_WBuffer_setTimeAndProcess( buffer, time, process ) ) return 0;
 
-	if ( OTF_WSTREAM_FORMAT_SHORT == wstream->format ) {
+	if ( OTF_WSTREAM_FORMAT_SHORT == ( wstream->format & 1 ) ) {
 
 		OTF_WBuffer_writeKeyValueList_short(buffer, list);
 
@@ -2630,7 +2750,7 @@ int OTF_WStream_writeEventCommentKV( OTF_WStream* wstream, uint64_t time,
 		OTF_WBuffer_writeString( buffer, comment );
 		OTF_WBuffer_writeNewline( buffer );
 
-	} else if ( OTF_WSTREAM_FORMAT_LONG == wstream->format ) {
+	} else if ( OTF_WSTREAM_FORMAT_LONG == ( wstream->format & 1 ) ) {
 
 		OTF_WBuffer_writeKeyValueList_long(buffer, list);
 
@@ -2664,7 +2784,7 @@ int OTF_WStream_writeBeginProcessKV( OTF_WStream* wstream, uint64_t time,
 
 	if ( 0 == OTF_WBuffer_setTimeAndProcess( buffer, time, process ) ) return 0;
 
-	if ( OTF_WSTREAM_FORMAT_SHORT == wstream->format ) {
+	if ( OTF_WSTREAM_FORMAT_SHORT == ( wstream->format & 1 ) ) {
 
 		OTF_WBuffer_writeKeyValueList_short(buffer, list);
 
@@ -2673,7 +2793,7 @@ int OTF_WStream_writeBeginProcessKV( OTF_WStream* wstream, uint64_t time,
 			
 		OTF_WBuffer_writeNewline( buffer );
 
-	} else if ( OTF_WSTREAM_FORMAT_LONG == wstream->format ) {
+	} else if ( OTF_WSTREAM_FORMAT_LONG == ( wstream->format & 1 ) ) {
 
 		OTF_WBuffer_writeKeyValueList_long(buffer, list);
 
@@ -2707,7 +2827,7 @@ int OTF_WStream_writeEndProcessKV( OTF_WStream* wstream, uint64_t time,
 
 	if ( 0 == OTF_WBuffer_setTimeAndProcess( buffer, time, process ) ) return 0;
 
-	if ( OTF_WSTREAM_FORMAT_SHORT == wstream->format ) {
+	if ( OTF_WSTREAM_FORMAT_SHORT == ( wstream->format & 1 ) ) {
 
 		OTF_WBuffer_writeKeyValueList_short(buffer, list);
 
@@ -2716,7 +2836,7 @@ int OTF_WStream_writeEndProcessKV( OTF_WStream* wstream, uint64_t time,
 			
 		OTF_WBuffer_writeNewline( buffer );
 
-	} else if ( OTF_WSTREAM_FORMAT_LONG == wstream->format ) {
+	} else if ( OTF_WSTREAM_FORMAT_LONG == ( wstream->format & 1 ) ) {
 
 		OTF_WBuffer_writeKeyValueList_long(buffer, list);
 
@@ -2751,7 +2871,7 @@ int OTF_WStream_writeFileOperationKV( OTF_WStream* wstream, uint64_t time,
 
 	if ( 0 == OTF_WBuffer_setTimeAndProcess( buffer, time, process ) ) return 0;
 
-	if ( OTF_WSTREAM_FORMAT_SHORT == wstream->format ) {
+	if ( OTF_WSTREAM_FORMAT_SHORT == ( wstream->format & 1 ) ) {
 
 		OTF_WBuffer_writeKeyValueList_short(buffer, list);
 
@@ -2777,7 +2897,7 @@ int OTF_WStream_writeFileOperationKV( OTF_WStream* wstream, uint64_t time,
 
 		OTF_WBuffer_writeNewline( buffer );
 
-	} else if ( OTF_WSTREAM_FORMAT_LONG == wstream->format ) {
+	} else if ( OTF_WSTREAM_FORMAT_LONG == ( wstream->format & 1 ) ) {
 
 		OTF_WBuffer_writeKeyValueList_long(buffer, list);
 
@@ -2830,7 +2950,7 @@ int OTF_WStream_writeBeginFileOperationKV( OTF_WStream* wstream, uint64_t time,
 
 	if( 0 == OTF_WBuffer_setTimeAndProcess( buffer, time, process ) ) return 0;
 
-	if( OTF_WSTREAM_FORMAT_SHORT == wstream->format ) {
+	if( OTF_WSTREAM_FORMAT_SHORT == ( wstream->format & 1 ) ) {
 
 		OTF_WBuffer_writeKeyValueList_short(buffer, list);
 
@@ -2847,7 +2967,7 @@ int OTF_WStream_writeBeginFileOperationKV( OTF_WStream* wstream, uint64_t time,
 
 		OTF_WBuffer_writeNewline( buffer );
 
-	} else if( OTF_WSTREAM_FORMAT_LONG == wstream->format ) {
+	} else if( OTF_WSTREAM_FORMAT_LONG == ( wstream->format & 1 ) ) {
 
 		OTF_WBuffer_writeKeyValueList_long(buffer, list);
 
@@ -2892,7 +3012,7 @@ int OTF_WStream_writeEndFileOperationKV( OTF_WStream* wstream, uint64_t time,
 
 	if( 0 == OTF_WBuffer_setTimeAndProcess( buffer, time, process ) ) return 0;
 
-	if( OTF_WSTREAM_FORMAT_SHORT == wstream->format ) {
+	if( OTF_WSTREAM_FORMAT_SHORT == ( wstream->format & 1 ) ) {
 
 		OTF_WBuffer_writeKeyValueList_short(buffer, list);
 
@@ -2916,7 +3036,7 @@ int OTF_WStream_writeEndFileOperationKV( OTF_WStream* wstream, uint64_t time,
 
 		OTF_WBuffer_writeNewline( buffer );
 
-	} else if( OTF_WSTREAM_FORMAT_LONG == wstream->format ) {
+	} else if( OTF_WSTREAM_FORMAT_LONG == ( wstream->format & 1 ) ) {
 
 		OTF_WBuffer_writeKeyValueList_long(buffer, list);
 
@@ -2975,7 +3095,7 @@ int OTF_WStream_writeRMAPutKV( OTF_WStream* wstream, uint64_t time,
 
 	if ( 0 == OTF_WBuffer_setTimeAndProcess( buffer, time, process ) ) return 0;
 
-	if ( OTF_WSTREAM_FORMAT_SHORT == wstream->format ) {
+	if ( OTF_WSTREAM_FORMAT_SHORT == ( wstream->format & 1 ) ) {
 
 		OTF_WBuffer_writeKeyValueList_short(buffer, list);
 
@@ -2999,7 +3119,7 @@ int OTF_WStream_writeRMAPutKV( OTF_WStream* wstream, uint64_t time,
 
 		OTF_WBuffer_writeNewline( buffer );
 
-	} else if ( OTF_WSTREAM_FORMAT_LONG == wstream->format ) {
+	} else if ( OTF_WSTREAM_FORMAT_LONG == ( wstream->format & 1 ) ) {
 
 		OTF_WBuffer_writeKeyValueList_long(buffer, list);
 
@@ -3052,7 +3172,7 @@ int OTF_WStream_writeRMAPutRemoteEndKV( OTF_WStream* wstream, uint64_t time,
 
 	if ( 0 == OTF_WBuffer_setTimeAndProcess( buffer, time, process ) ) return 0;
 
-	if ( OTF_WSTREAM_FORMAT_SHORT == wstream->format ) {
+	if ( OTF_WSTREAM_FORMAT_SHORT == ( wstream->format & 1 ) ) {
 
 		OTF_WBuffer_writeKeyValueList_short(buffer, list);
 
@@ -3076,7 +3196,7 @@ int OTF_WStream_writeRMAPutRemoteEndKV( OTF_WStream* wstream, uint64_t time,
 
 		OTF_WBuffer_writeNewline( buffer );
 
-	} else if ( OTF_WSTREAM_FORMAT_LONG == wstream->format ) {
+	} else if ( OTF_WSTREAM_FORMAT_LONG == ( wstream->format & 1 ) ) {
 
 		OTF_WBuffer_writeKeyValueList_long(buffer, list);
 
@@ -3129,7 +3249,7 @@ int OTF_WStream_writeRMAGetKV( OTF_WStream* wstream, uint64_t time,
 
 	if ( 0 == OTF_WBuffer_setTimeAndProcess( buffer, time, process ) ) return 0;
 
-	if ( OTF_WSTREAM_FORMAT_SHORT == wstream->format ) {
+	if ( OTF_WSTREAM_FORMAT_SHORT == ( wstream->format & 1 ) ) {
 
 		OTF_WBuffer_writeKeyValueList_short(buffer, list);
 
@@ -3153,7 +3273,7 @@ int OTF_WStream_writeRMAGetKV( OTF_WStream* wstream, uint64_t time,
 
 		OTF_WBuffer_writeNewline( buffer );
 
-	} else if ( OTF_WSTREAM_FORMAT_LONG == wstream->format ) {
+	} else if ( OTF_WSTREAM_FORMAT_LONG == ( wstream->format & 1 ) ) {
 
 		OTF_WBuffer_writeKeyValueList_long(buffer, list);
 
@@ -3205,7 +3325,7 @@ int OTF_WStream_writeRMAEndKV( OTF_WStream* wstream, uint64_t time,
 
 	if ( 0 == OTF_WBuffer_setTimeAndProcess( buffer, time, process ) ) return 0;
 
-	if ( OTF_WSTREAM_FORMAT_SHORT == wstream->format ) {
+	if ( OTF_WSTREAM_FORMAT_SHORT == ( wstream->format & 1 ) ) {
 
 		OTF_WBuffer_writeKeyValueList_short(buffer, list);
 
@@ -3225,7 +3345,7 @@ int OTF_WStream_writeRMAEndKV( OTF_WStream* wstream, uint64_t time,
 
 		OTF_WBuffer_writeNewline( buffer );
 
-	} else if ( OTF_WSTREAM_FORMAT_LONG == wstream->format ) {
+	} else if ( OTF_WSTREAM_FORMAT_LONG == ( wstream->format & 1 ) ) {
 
 		OTF_WBuffer_writeKeyValueList_long(buffer, list);
 
@@ -3274,7 +3394,7 @@ int OTF_WStream_writeSnapshotCommentKV( OTF_WStream* wstream, uint64_t time,
 
 	if ( 0 == OTF_WBuffer_setTimeAndProcess( buffer, time, process ) ) return 0;
 
-	if ( OTF_WSTREAM_FORMAT_SHORT == wstream->format ) {
+	if ( OTF_WSTREAM_FORMAT_SHORT == ( wstream->format & 1 ) ) {
 
 		OTF_WBuffer_writeKeyValueList_short(buffer, list);
 
@@ -3284,7 +3404,7 @@ int OTF_WStream_writeSnapshotCommentKV( OTF_WStream* wstream, uint64_t time,
 		OTF_WBuffer_writeString( buffer, comment );
 		OTF_WBuffer_writeNewline( buffer );
 
-	} else if ( OTF_WSTREAM_FORMAT_LONG == wstream->format ) {
+	} else if ( OTF_WSTREAM_FORMAT_LONG == ( wstream->format & 1 ) ) {
 
 		OTF_WBuffer_writeKeyValueList_long(buffer, list);
 
@@ -3319,7 +3439,7 @@ int OTF_WStream_writeEnterSnapshotKV( OTF_WStream* wstream, uint64_t time,
 
 	if ( 0 == OTF_WBuffer_setTimeAndProcess( buffer, time, cpuid ) ) return 0;
 
-	if ( OTF_WSTREAM_FORMAT_SHORT == wstream->format ) {
+	if ( OTF_WSTREAM_FORMAT_SHORT == ( wstream->format & 1 ) ) {
 
 		OTF_WBuffer_writeKeyValueList_short(buffer, list);
 
@@ -3339,7 +3459,7 @@ int OTF_WStream_writeEnterSnapshotKV( OTF_WStream* wstream, uint64_t time,
 
 		OTF_WBuffer_writeNewline( buffer );
 
-	} else if ( OTF_WSTREAM_FORMAT_LONG == wstream->format ) {
+	} else if ( OTF_WSTREAM_FORMAT_LONG == ( wstream->format & 1 ) ) {
 
 		OTF_WBuffer_writeKeyValueList_long(buffer, list);
 
@@ -3386,7 +3506,7 @@ int OTF_WStream_writeSendSnapshotKV( OTF_WStream* wstream, uint64_t time,
 
 	if ( 0 == OTF_WBuffer_setTimeAndProcess( buffer, time, sender ) ) return 0;
 
-	if ( OTF_WSTREAM_FORMAT_SHORT == wstream->format ) {
+	if ( OTF_WSTREAM_FORMAT_SHORT == ( wstream->format & 1 ) ) {
 
 		OTF_WBuffer_writeKeyValueList_short(buffer, list);
 
@@ -3415,7 +3535,7 @@ int OTF_WStream_writeSendSnapshotKV( OTF_WStream* wstream, uint64_t time,
 
 		OTF_WBuffer_writeNewline( buffer );
 
-	} else if ( OTF_WSTREAM_FORMAT_LONG == wstream->format ) {
+	} else if ( OTF_WSTREAM_FORMAT_LONG == ( wstream->format & 1 ) ) {
 
 		OTF_WBuffer_writeKeyValueList_long(buffer, list);
 
@@ -3471,7 +3591,7 @@ int OTF_WStream_writeOpenFileSnapshotKV( OTF_WStream* wstream,uint64_t time,
 
 	if ( 0 == OTF_WBuffer_setTimeAndProcess( buffer, time, process ) ) return 0;
 
-	if ( OTF_WSTREAM_FORMAT_SHORT == wstream->format ) {
+	if ( OTF_WSTREAM_FORMAT_SHORT == ( wstream->format & 1 ) ) {
 
 		OTF_WBuffer_writeKeyValueList_short(buffer, list);
 
@@ -3494,7 +3614,7 @@ int OTF_WStream_writeOpenFileSnapshotKV( OTF_WStream* wstream,uint64_t time,
 
 		OTF_WBuffer_writeNewline( buffer );
 
-	} else if ( OTF_WSTREAM_FORMAT_LONG == wstream->format ) {
+	} else if ( OTF_WSTREAM_FORMAT_LONG == ( wstream->format & 1 ) ) {
 
 		OTF_WBuffer_writeKeyValueList_long(buffer, list);
 
@@ -3544,7 +3664,7 @@ int OTF_WStream_writeBeginCollopSnapshotKV( OTF_WStream* wstream, uint64_t time,
 
 	if ( 0 == OTF_WBuffer_setTimeAndProcess( buffer, time, process ) ) return 0;
 
-	if ( OTF_WSTREAM_FORMAT_SHORT == wstream->format ) {
+	if ( OTF_WSTREAM_FORMAT_SHORT == ( wstream->format & 1 ) ) {
 
 		OTF_WBuffer_writeKeyValueList_short(buffer, list);
 
@@ -3579,7 +3699,7 @@ int OTF_WStream_writeBeginCollopSnapshotKV( OTF_WStream* wstream, uint64_t time,
 
 		OTF_WBuffer_writeNewline( buffer );
 
-	} else if ( OTF_WSTREAM_FORMAT_LONG == wstream->format ) {
+	} else if ( OTF_WSTREAM_FORMAT_LONG == ( wstream->format & 1 ) ) {
 
 		OTF_WBuffer_writeKeyValueList_long(buffer, list);
 
@@ -3642,7 +3762,7 @@ int OTF_WStream_writeBeginFileOpSnapshotKV( OTF_WStream* wstream, uint64_t time,
 
 	if ( 0 == OTF_WBuffer_setTimeAndProcess( buffer, time, process ) ) return 0;
 
-	if ( OTF_WSTREAM_FORMAT_SHORT == wstream->format ) {
+	if ( OTF_WSTREAM_FORMAT_SHORT == ( wstream->format & 1 ) ) {
 
 		OTF_WBuffer_writeKeyValueList_short(buffer, list);
 
@@ -3662,7 +3782,7 @@ int OTF_WStream_writeBeginFileOpSnapshotKV( OTF_WStream* wstream, uint64_t time,
 
 		OTF_WBuffer_writeNewline( buffer );
 
-	} else if ( OTF_WSTREAM_FORMAT_LONG == wstream->format ) {
+	} else if ( OTF_WSTREAM_FORMAT_LONG == ( wstream->format & 1 ) ) {
 
 		OTF_WBuffer_writeKeyValueList_long(buffer, list);
 
@@ -3698,6 +3818,112 @@ int OTF_WStream_writeBeginFileOpSnapshot( OTF_WStream* wstream, uint64_t time,
 }
 
 
+int OTF_WStream_writeCollopCountSnapshot( OTF_WStream* wstream,
+                                          uint64_t time,
+                                          uint32_t process,
+                                          uint32_t communicator,
+                                          uint64_t count,
+                                          OTF_KeyValueList* list ) {
+
+
+    OTF_WBuffer* buffer= OTF_WStream_getSnapshotBuffer( wstream );
+
+    const char* recordkw= OTF_KEYWORD_S_SNAPSHOT_PREFIX
+                          OTF_KEYWORD_S_SNAPSHOT_COLLOPCOUNT;
+    const char* countkw=  OTF_KEYWORD_S_LOCAL_COUNT;
+
+    uint32_t ( *writeKeyValueList )( OTF_WBuffer*, OTF_KeyValueList* )=
+        OTF_WBuffer_writeKeyValueList_short;
+
+    /* buffer can be NULL if file-open fails */
+    if ( NULL == buffer ) {
+        return 0;
+    }
+
+    if ( 0 == OTF_WBuffer_setTimeAndProcess( buffer, time, process ) ) {
+        return 0;
+    }
+
+    if ( OTF_WSTREAM_FORMAT_LONG == ( wstream->format & 1 ) ) {
+        recordkw= OTF_KEYWORD_L_SNAPSHOT_PREFIX
+                  OTF_KEYWORD_L_SNAPSHOT_COLLOPCOUNT " ";
+        countkw=  " " OTF_KEYWORD_L_LOCAL_COUNT " ";
+
+        writeKeyValueList = OTF_WBuffer_writeKeyValueList_long;
+    }
+
+    writeKeyValueList( buffer, list );
+
+    OTF_WBuffer_writeKeyword( buffer, recordkw );
+    OTF_WBuffer_writeUint32( buffer, communicator );
+
+    OTF_WBuffer_writeKeyword( buffer, countkw );
+    OTF_WBuffer_writeUint64( buffer, count );
+
+    OTF_WBuffer_writeNewline( buffer );
+
+    /* one or more of the last write operations could be failed;
+    check otf_errno for errors */
+    return ( OTF_NO_ERROR == otf_errno ) ? 1 : 0;
+}
+
+int OTF_WStream_writeCounterSnapshot( OTF_WStream*      wstream,
+                                      uint64_t          time,
+                                      uint64_t          originaltime,
+                                      uint32_t          process,
+                                      uint32_t          counter,
+                                      uint64_t          value,
+                                      OTF_KeyValueList* list ) {
+
+
+    OTF_WBuffer* buffer = OTF_WStream_getSnapshotBuffer( wstream );
+
+    const char* recordkw  = OTF_KEYWORD_S_SNAPSHOT_PREFIX
+                            OTF_KEYWORD_S_SNAPSHOT_COUNTER;
+    const char* counterkw = OTF_KEYWORD_S_LOCAL_COUNTER;
+    const char* valuekw   = OTF_KEYWORD_S_LOCAL_VALUE;
+
+    uint32_t ( *writeKeyValueList )( OTF_WBuffer*, OTF_KeyValueList* )
+        = OTF_WBuffer_writeKeyValueList_short;
+
+    /* buffer can be NULL if file-open fails */
+    if ( NULL == buffer ) {
+        return 0;
+    }
+
+    if ( 0 == OTF_WBuffer_setTimeAndProcess( buffer, time, process ) ) {
+        return 0;
+    }
+
+    if ( OTF_WSTREAM_FORMAT_LONG == ( wstream->format & 1 ) ) {
+        recordkw  = OTF_KEYWORD_L_SNAPSHOT_PREFIX
+                    OTF_KEYWORD_L_SNAPSHOT_COUNTER  " ";
+        counterkw = " " OTF_KEYWORD_L_LOCAL_COUNTER " ";
+        valuekw   = " " OTF_KEYWORD_L_LOCAL_VALUE   " ";
+
+        writeKeyValueList = OTF_WBuffer_writeKeyValueList_long;
+    }
+
+    writeKeyValueList( buffer, list );
+
+    OTF_WBuffer_writeKeyword( buffer, recordkw );
+
+    OTF_WBuffer_writeUint64( buffer, originaltime );
+
+    OTF_WBuffer_writeKeyword( buffer, counterkw );
+    OTF_WBuffer_writeUint32( buffer, counter );
+
+    OTF_WBuffer_writeKeyword( buffer, valuekw );
+    OTF_WBuffer_writeUint64( buffer, value );
+
+    OTF_WBuffer_writeNewline( buffer );
+
+    /* one or more of the last write operations could be failed;
+    check otf_errno for errors */
+    return ( OTF_NO_ERROR == otf_errno ) ? 1 : 0;
+}
+
+
 /* *** public summary record write handlers *** */
 
 
@@ -3712,7 +3938,7 @@ int OTF_WStream_writeSummaryCommentKV( OTF_WStream* wstream, uint64_t time,
 
 	if ( 0 == OTF_WBuffer_setTimeAndProcess( buffer, time, process ) ) return 0;
 
-	if ( OTF_WSTREAM_FORMAT_SHORT == wstream->format ) {
+	if ( OTF_WSTREAM_FORMAT_SHORT == ( wstream->format & 1 ) ) {
 
 		OTF_WBuffer_writeKeyValueList_short(buffer, list);
 
@@ -3722,7 +3948,7 @@ int OTF_WStream_writeSummaryCommentKV( OTF_WStream* wstream, uint64_t time,
 		OTF_WBuffer_writeString( buffer, comment );
 		OTF_WBuffer_writeNewline( buffer );
 
-	} else if ( OTF_WSTREAM_FORMAT_LONG == wstream->format ) {
+	} else if ( OTF_WSTREAM_FORMAT_LONG == ( wstream->format & 1 ) ) {
 
 		OTF_WBuffer_writeKeyValueList_long(buffer, list);
 
@@ -3758,7 +3984,7 @@ int OTF_WStream_writeFunctionSummaryKV( OTF_WStream* wstream,
 
 	if ( 0 == OTF_WBuffer_setTimeAndProcess( buffer, time, process ) ) return 0;
 
-	if ( OTF_WSTREAM_FORMAT_SHORT == wstream->format ) {
+	if ( OTF_WSTREAM_FORMAT_SHORT == ( wstream->format & 1 ) ) {
 
 		OTF_WBuffer_writeKeyValueList_short(buffer, list);
 
@@ -3773,7 +3999,7 @@ int OTF_WStream_writeFunctionSummaryKV( OTF_WStream* wstream,
 		OTF_WBuffer_writeKeyword( buffer, OTF_KEYWORD_S_LOCAL_INCLTIME );
 		OTF_WBuffer_writeUint64( buffer, incltime );
 
-	} else if ( OTF_WSTREAM_FORMAT_LONG == wstream->format ) {
+	} else if ( OTF_WSTREAM_FORMAT_LONG == ( wstream->format & 1 ) ) {
 
 		OTF_WBuffer_writeKeyValueList_long(buffer, list);
 
@@ -3818,7 +4044,7 @@ int OTF_WStream_writeFunctionGroupSummaryKV( OTF_WStream* wstream,
 
 	if ( 0 == OTF_WBuffer_setTimeAndProcess( buffer, time, process ) ) return 0;
 
-	if ( OTF_WSTREAM_FORMAT_SHORT == wstream->format ) {
+	if ( OTF_WSTREAM_FORMAT_SHORT == ( wstream->format & 1 ) ) {
 
 		OTF_WBuffer_writeKeyValueList_short(buffer, list);
 
@@ -3833,7 +4059,7 @@ int OTF_WStream_writeFunctionGroupSummaryKV( OTF_WStream* wstream,
 		OTF_WBuffer_writeKeyword( buffer, OTF_KEYWORD_S_LOCAL_INCLTIME );
 		OTF_WBuffer_writeUint64( buffer, incltime );
 
-	} else if ( OTF_WSTREAM_FORMAT_LONG == wstream->format ) {
+	} else if ( OTF_WSTREAM_FORMAT_LONG == ( wstream->format & 1 ) ) {
 
 		OTF_WBuffer_writeKeyValueList_long(buffer, list);
 
@@ -3879,7 +4105,7 @@ int OTF_WStream_writeMessageSummaryKV( OTF_WStream* wstream,
 
 	if ( 0 == OTF_WBuffer_setTimeAndProcess( buffer, time, process ) ) return 0;
 
-	if ( OTF_WSTREAM_FORMAT_SHORT == wstream->format ) {
+	if ( OTF_WSTREAM_FORMAT_SHORT == ( wstream->format & 1 ) ) {
 
 		OTF_WBuffer_writeKeyValueList_short(buffer, list);
 
@@ -3900,7 +4126,7 @@ int OTF_WStream_writeMessageSummaryKV( OTF_WStream* wstream,
 		OTF_WBuffer_writeKeyword( buffer, OTF_KEYWORD_S_LOCAL_RECVD );
 		OTF_WBuffer_writeUint64( buffer, bytes_recved );
 
-	} else if ( OTF_WSTREAM_FORMAT_LONG == wstream->format ) {
+	} else if ( OTF_WSTREAM_FORMAT_LONG == ( wstream->format & 1 ) ) {
 
 		OTF_WBuffer_writeKeyValueList_long(buffer, list);
 
@@ -3953,7 +4179,7 @@ int OTF_WStream_writeCollopSummaryKV( OTF_WStream* wstream,
 
 	if ( 0 == OTF_WBuffer_setTimeAndProcess( buffer, time, process ) ) return 0;
 
-	if ( OTF_WSTREAM_FORMAT_SHORT == wstream->format ) {
+	if ( OTF_WSTREAM_FORMAT_SHORT == ( wstream->format & 1 ) ) {
 
 		OTF_WBuffer_writeKeyValueList_short(buffer, list);
 
@@ -3972,7 +4198,7 @@ int OTF_WStream_writeCollopSummaryKV( OTF_WStream* wstream,
 		OTF_WBuffer_writeKeyword( buffer, OTF_KEYWORD_S_LOCAL_RECVD );
 		OTF_WBuffer_writeUint64( buffer, bytes_recved );
 
-	} else if ( OTF_WSTREAM_FORMAT_LONG == wstream->format ) {
+	} else if ( OTF_WSTREAM_FORMAT_LONG == ( wstream->format & 1 ) ) {
 
 		OTF_WBuffer_writeKeyValueList_long(buffer, list);
 
@@ -4022,7 +4248,7 @@ int OTF_WStream_writeFileOperationSummaryKV( OTF_WStream* wstream, uint64_t time
 
 	if ( 0 == OTF_WBuffer_setTimeAndProcess( buffer, time, process ) ) return 0;
 
-	if ( OTF_WSTREAM_FORMAT_SHORT == wstream->format ) {
+	if ( OTF_WSTREAM_FORMAT_SHORT == ( wstream->format & 1 ) ) {
 
 		OTF_WBuffer_writeKeyValueList_short(buffer, list);
 
@@ -4045,7 +4271,7 @@ int OTF_WStream_writeFileOperationSummaryKV( OTF_WStream* wstream, uint64_t time
 		OTF_WBuffer_writeKeyword( buffer, OTF_KEYWORD_S_LOCAL_BYTESWRITE );
 		OTF_WBuffer_writeUint64( buffer, byteswrite );
 
-	} else if ( OTF_WSTREAM_FORMAT_LONG == wstream->format ) {
+	} else if ( OTF_WSTREAM_FORMAT_LONG == ( wstream->format & 1 ) ) {
 
 		OTF_WBuffer_writeKeyValueList_long(buffer, list);
 
@@ -4099,7 +4325,7 @@ int OTF_WStream_writeFileGroupOperationSummaryKV( OTF_WStream* wstream, uint64_t
 
 	if ( 0 == OTF_WBuffer_setTimeAndProcess( buffer, time, process ) ) return 0;
 
-	if ( OTF_WSTREAM_FORMAT_SHORT == wstream->format ) {
+	if ( OTF_WSTREAM_FORMAT_SHORT == ( wstream->format & 1 ) ) {
 
 		OTF_WBuffer_writeKeyValueList_short(buffer, list);
 
@@ -4122,7 +4348,7 @@ int OTF_WStream_writeFileGroupOperationSummaryKV( OTF_WStream* wstream, uint64_t
 		OTF_WBuffer_writeKeyword( buffer, OTF_KEYWORD_S_LOCAL_BYTESWRITE );
 		OTF_WBuffer_writeUint64( buffer, byteswrite );
 
-	} else if ( OTF_WSTREAM_FORMAT_LONG == wstream->format ) {
+	} else if ( OTF_WSTREAM_FORMAT_LONG == ( wstream->format & 1 ) ) {
 
 		OTF_WBuffer_writeKeyValueList_long(buffer, list);
 
@@ -4175,7 +4401,7 @@ int OTF_WStream_writeDefMarkerKV( OTF_WStream* wstream,
 	/* buffer can be NULL if file-open fails */
 	if ( NULL == buffer ) return 0;
 
-	if ( OTF_WSTREAM_FORMAT_SHORT == wstream->format ) {
+	if ( OTF_WSTREAM_FORMAT_SHORT == ( wstream->format & 1 ) ) {
 
 		OTF_WBuffer_writeKeyValueList_short(buffer, list);
 
@@ -4189,7 +4415,7 @@ int OTF_WStream_writeDefMarkerKV( OTF_WStream* wstream,
 
 		OTF_WBuffer_writeNewline( buffer );
 
-	} else if ( OTF_WSTREAM_FORMAT_LONG == wstream->format ) {
+	} else if ( OTF_WSTREAM_FORMAT_LONG == ( wstream->format & 1 ) ) {
 
 		OTF_WBuffer_writeKeyValueList_long(buffer, list);
 
@@ -4230,7 +4456,7 @@ int OTF_WStream_writeMarkerKV( OTF_WStream* wstream,
 	/* time and process are written directly, 
 	this is completely different from event records! */
 
-	if ( OTF_WSTREAM_FORMAT_SHORT == wstream->format ) {
+	if ( OTF_WSTREAM_FORMAT_SHORT == ( wstream->format & 1 ) ) {
 
 		OTF_WBuffer_writeKeyValueList_short(buffer, list);
 
@@ -4246,7 +4472,7 @@ int OTF_WStream_writeMarkerKV( OTF_WStream* wstream,
 
 		OTF_WBuffer_writeNewline( buffer );
 
-	} else if ( OTF_WSTREAM_FORMAT_LONG == wstream->format ) {
+	} else if ( OTF_WSTREAM_FORMAT_LONG == ( wstream->format & 1 ) ) {
 
 		OTF_WBuffer_writeKeyValueList_long(buffer, list);
 

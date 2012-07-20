@@ -3,6 +3,8 @@
 
 #include <otf.h>
 
+#include <OTFAUX_State.h>
+
 /**
  *  @file otfauxlib/OTFAUX_MsgMatching.h
  *
@@ -20,7 +22,7 @@ extern "C" {
  */
 
 /** Opaque type for using the matching module. */
-typedef struct OTFAUX_MsgMatching_Context OTFAUX_MsgMatching_Context;
+typedef OTFAUX_State OTFAUX_MsgMatching_Context;
 
 /** Create a context for matching messages. */
 OTFAUX_MsgMatching_Context* OTFAUX_MsgMatching_create( void );

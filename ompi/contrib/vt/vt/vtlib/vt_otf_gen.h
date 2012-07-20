@@ -362,6 +362,7 @@ typedef struct
     uint64_t u64;
     float    f;
     double   d;
+    char*    s;
   } kvalue;
 
 } VTBuf_Entry_KeyValue;
@@ -537,7 +538,7 @@ typedef struct VTGen_struct VTGen;
 EXTERN VTGen* VTGen_open(const char* tname, const char* tnamesuffix,
                          uint32_t ptid, uint32_t tid, size_t buffer_size);
 
-EXTERN void VTGen_guarantee(VTGen* gen, size_t size);
+EXTERN void VTGen_guarantee(VTGen* gen, uint64_t* time, size_t size);
 
 EXTERN void VTGen_flush(VTGen* gen, uint8_t lastFlush,
                         uint64_t flushBTime, uint64_t* flushETime);
@@ -649,7 +650,7 @@ EXTERN void VTGen_write_MARKER(VTGen* gen, uint64_t* time, uint32_t mid,
 /* -- Key-Value -- */
 
 EXTERN void VTGen_write_KEYVAL(VTGen* gen, uint32_t kid, uint8_t vtype,
-                               void* kvalue);
+                               const void* kvalue);
 
 /* -- MPI-1 -- */
 

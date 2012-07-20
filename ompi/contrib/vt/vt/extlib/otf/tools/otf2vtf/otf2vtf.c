@@ -30,19 +30,20 @@
 	int l = 0; while( Helptext[l] ) { printf( "%s", Helptext[l++] ); } }
 
 static const char* Helptext[] = {
-"                                                                          \n",
-" otf2vtf - Convert OTF trace files to VTF format.                         \n",
-"                                                                          \n",
-" otf2vtf [Options] <input file name>                                      \n",
-"                                                                          \n",
-" Options:                                                                 \n",
-"     -h, --help     show this help message                                \n",
-"     -V             show OTF version                                      \n",
-"     -o <file>      output file                                           \n",
-"     -b <n>         size of the reader buffer                             \n",
-"     -A             write VTF3 ASCII sub-format (default)                 \n",
-"     -B             write VTF3 binary sub-format                          \n",
-"                                                                          \n", NULL };
+"                                                                           \n",
+" otf2vtf - Convert OTF trace files to VTF3 format.                          \n",
+"                                                                           \n",
+" Syntax: otf2vtf [Options] <input file name>                               \n",
+"                                                                           \n",
+"   options:                                                                \n",
+"      -h, --help    show this help message                                 \n",
+"      -V            show OTF version                                       \n",
+"      -o <file>     output file                                            \n",
+"      -b <n>        size of the reader buffer                              \n",
+"      -A            write VTF3 ASCII sub-format (default)                  \n",
+"      -B            write VTF3 binary sub-format                           \n",
+"                                                                           \n",
+NULL };
 
 void writenames_recursive ( void* firsthandlerarg, nodeT *p_node );
 

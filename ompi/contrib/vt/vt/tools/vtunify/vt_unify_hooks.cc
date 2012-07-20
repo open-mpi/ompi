@@ -10,8 +10,6 @@
  * See the file COPYING in the package base directory for details
  **/
 
-#include "vt_unify.h"
-
 #include "vt_unify_hooks.h"
 
 #include "hooks/vt_unify_hooks_base.h"
@@ -25,18 +23,15 @@
 #ifdef VT_UNIFY_HOOKS_MARGINS
 #  include "hooks/vt_unify_hooks_margins.h"
 #endif // VT_UNIFY_HOOKS_MARGINS
-#ifdef VT_UNIFY_HOOKS_MSGMATCH
-#  include "hooks/vt_unify_hooks_msgmatch.h"
-#endif // VT_UNIFY_HOOKS_MSGMATCH
+#ifdef VT_UNIFY_HOOKS_MSGMATCH_SNAPS
+#  include "hooks/vt_unify_hooks_msgmatch_snaps.h"
+#endif // VT_UNIFY_HOOKS_MSGMATCH_SNAPS
 #ifdef VT_UNIFY_HOOKS_PROF
 #  include "hooks/vt_unify_hooks_prof.h"
 #endif // VT_UNIFY_HOOKS_PROF
 #ifdef VT_UNIFY_HOOKS_TDB
 #  include "hooks/vt_unify_hooks_tdb.h"
 #endif // VT_UNIFY_HOOKS_TDB
-#ifdef VT_UNIFY_HOOKS_THUMB
-#  include "hooks/vt_unify_hooks_thumb.h"
-#endif // VT_UNIFY_HOOKS_THUMB
 
 
 HooksC * theHooks = 0; // instance of class HooksC
@@ -72,15 +67,10 @@ HooksC::registerHooks()
       m_hooks.push_back( new HooksAsyncEventsC() );
 #endif // VT_UNIFY_HOOKS_AEVENTS
 
-#ifdef VT_UNIFY_HOOKS_MSGMATCH
-   if( HooksMsgMatchC::isEnabled() )
-      m_hooks.push_back( new HooksMsgMatchC() );
-#endif // VT_UNIFY_HOOKS_MSGMATCH
-
-#ifdef VT_UNIFY_HOOKS_THUMB
-   if( HooksThumbC::isEnabled() )
-      m_hooks.push_back( new HooksThumbC() );
-#endif // VT_UNIFY_HOOKS_THUMB
+#ifdef VT_UNIFY_HOOKS_MSGMATCH_SNAPS
+   if( HooksMsgMatchAndSnapsC::isEnabled() )
+      m_hooks.push_back( new HooksMsgMatchAndSnapsC() );
+#endif // VT_UNIFY_HOOKS_MSGMATCH_SNAPS
 
 #ifdef VT_UNIFY_HOOKS_PROF
    if( HooksProfC::isEnabled() )
@@ -95,7 +85,7 @@ HooksC::registerHooks()
 #ifdef VT_UNIFY_HOOKS_MARGINS
    if( HooksProcessMarginsC::isEnabled() )
       m_hooks.push_back( new HooksProcessMarginsC() );
-#endif // VT_UNIFY_HOOKS_MSGMATCH
+#endif // VT_UNIFY_HOOKS_MARGINS
 }
 
 void
@@ -135,12 +125,14 @@ void
 HooksC::triggerReadRecordHook( const RecordTypeT & rectype, const uint32_t & n,
                                void * a0, void * a1, void * a2, void * a3,
                                void * a4, void * a5, void * a6, void * a7,
-                               void * a8, void * a9, void * a10, void * a11 )
+                               void * a8, void * a9, void * a10, void * a11,
+                               void * a12, void * a13 )
 {
    if( m_hooks.empty() ) return;
 
    // put arguments into an array
-   VaArgsT args = { a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11 };
+   VaArgsT args =
+      { a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13 };
 
    // forward this hook to all registered hook classes
    //
@@ -152,12 +144,14 @@ void
 HooksC::triggerWriteRecordHook( const RecordTypeT & rectype, const uint32_t & n,
                                 void * a0, void * a1, void * a2, void * a3,
                                 void * a4, void * a5, void * a6, void * a7,
-                                void * a8, void * a9, void * a10, void * a11 )
+                                void * a8, void * a9, void * a10, void * a11,
+                                void * a12, void * a13 )
 {
    if( m_hooks.empty() ) return;
 
    // put arguments into an array
-   VaArgsT args = { a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11 };
+   VaArgsT args =
+      { a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13 };
 
    // forward this hook to all registered hook classes
    //
@@ -169,12 +163,14 @@ void
 HooksC::triggerGenericHook( const uint32_t & id, const uint32_t & n,
                             void * a0, void * a1, void * a2, void * a3,
                             void * a4, void * a5, void * a6, void * a7,
-                            void * a8, void * a9, void * a10, void * a11 )
+                            void * a8, void * a9, void * a10, void * a11,
+                            void * a12, void * a13 )
 {
    if( m_hooks.empty() ) return;
 
    // put arguments into an array
-   VaArgsT args = { a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11 };
+   VaArgsT args =
+      { a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13 };
 
    // forward this hook to all registered hook classes
    //

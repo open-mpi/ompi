@@ -3,6 +3,8 @@
 
 #include <otf.h>
 
+#include <OTFAUX_State.h>
+
 /**
  *  @file otfauxlib/OTFAUX_Thumbnail.h
  *
@@ -38,7 +40,7 @@ extern "C" {
  */
 
 /** Opaque type for using the thumbnail module. */
-typedef struct OTFAUX_Thumbnail_Context OTFAUX_Thumbnail_Context;
+typedef OTFAUX_State OTFAUX_Thumbnail_Context;
 
 /**
  * Create a context for thumbnail generation.
@@ -66,10 +68,12 @@ OTFAUX_Thumbnail_destroy( OTFAUX_Thumbnail_Context* tn_context );
  * Declares that the process @a process should be handled by this context.
  *
  * @param tn_context   The context.
+ *
+ * @return             1 on success.
  */
-void
+int
 OTFAUX_Thumbnail_declareProcess( OTFAUX_Thumbnail_Context* tn_context,
-                                 uint64_t                  process );
+                                 uint64_t process );
 
 /**
  * Declare that the process @a process has entered the fucntion @a function
@@ -81,12 +85,14 @@ OTFAUX_Thumbnail_declareProcess( OTFAUX_Thumbnail_Context* tn_context,
  * @param timestamp    The timestamp.
  * @param process      The process.
  * @param function     The function.
+ *
+ * @return             1 on success.
  */
-void
+int
 OTFAUX_Thumbnail_handleEnter( OTFAUX_Thumbnail_Context* tn_context,
-                              uint64_t                  timestamp,
-                              uint64_t                  process,
-                              uint32_t                  function );
+                              uint64_t timestamp,
+                              uint64_t process,
+                              uint32_t function );
 
 /**
  * Declare that the process @a process has left the current fucntion at
@@ -97,91 +103,52 @@ OTFAUX_Thumbnail_handleEnter( OTFAUX_Thumbnail_Context* tn_context,
  * @param tn_context   The context.
  * @param timestamp    The timestamp.
  * @param process      The process.
- */
-void
-OTFAUX_Thumbnail_handleLeave( OTFAUX_Thumbnail_Context* tn_context,
-                               uint64_t                  timestamp,
-                               uint64_t                  process );
-
-/**
- * Get the number of entries for the process @a process.
  *
- * @param tn_context   The context.
- *
- * @param              The size.
- */
-uint32_t
-OTFAUX_Thumbnail_getSize( OTFAUX_Thumbnail_Context* context,
-                          uint64_t                  process );
-
-typedef struct {
-    uint32_t* start_pixel;
-    uint32_t* function;
-    uint32_t  size;
-} OTFAUX_Thumbnail_Data;
-
-/**
- * Get the collected thumbnail data for process @a process.
- *
- * @param tn_context   The context.
- * @param process      The process.
- * @param data         Pointer to storage where the data will be stored into.
- * @param size         Pointer to storage where the size will be stored into.
- *
- * @param              1 on success.
+ * @return             1 on success.
  */
 int
-OTFAUX_Thumbnail_getData( OTFAUX_Thumbnail_Context* context,
-                          uint64_t                  process,
-                          OTFAUX_Thumbnail_Data*    data );
+OTFAUX_Thumbnail_handleLeave( OTFAUX_Thumbnail_Context* tn_context,
+                              uint64_t timestamp,
+                              uint64_t process );
 
 /**
- * @}
+ * Declare that the handling of the enter and leave events is over.
+ *
+ * @param tn_context    The context.
+ *
+ * @return             1 on success.
  */
+int
+OTFAUX_Thumbnail_finalize( OTFAUX_Thumbnail_Context* tn_context );
 
 char*
-OTFAUX_Thumbnail_getFilename( const char* namestub,
-                              size_t length,
-                              char* name_buffer );
+OTFAUX_Thumbnail_getFilename( const char* namestub );
 
 /**
- * @defgroup thumbnailwriter Module to write a thumbnail.
+ * Writes the processes data of the context to a file.
  *
- * @usage:
+ * The writing is designed so that the data of multuiple contexts can be
+ * written to one file to form a thumbnail. The @a create parameter alows
+ * this. The writing of the first context should set the @a create
+ * parameter and provide in the variable argument list the total number of
+ * processes which will be written, over all comming contexts as an uint32_t.
+ * If the @a create parameter is not set, no file will be created and no
+ * header will be written, only the data from the given context will be
+ * appended to the file. The width of the file should match the width of this
+ * context.
  *
- *  writer = OTFAUX_ThumbnailWriter_create("foo.otf", 512, 1024, ...);
+ * @param tn_context    The context.
+ * @param namestub      The name of the file.
+ * @param create        Create the thumb file, or append.
+ * @param ...           The total number of processes as an uint32_t, if @a
+ *                      create is set.
  *
- *  for each process:
- *      OTFAUX_ThumbnailData td;
- *      OTFAUX_Thumbnail_getData( ctx, process, &td );
- *      OTFAUX_ThumbnailWriter_writeProcess( writer, process, &td );
- *
- *  OTFAUX_ThumbnailWriter_destroy( writer );
+ * @return             1 on success.
  */
-
-typedef struct OTFAUX_ThumbnailWriter OTFAUX_ThumbnailWriter;
-
-OTFAUX_ThumbnailWriter*
-OTFAUX_ThumbnailWriter_create( const char* filename,
-                               uint32_t height,
-                               uint32_t width,
-                               OTF_FileManager* manager );
-
 int
-OTFAUX_ThumbnailWriter_destroy( OTFAUX_ThumbnailWriter* tn_writer );
-
-int
-OTFAUX_ThumbnailWriter_close( OTFAUX_ThumbnailWriter* tn_writer );
-
-int
-OTFAUX_ThumbnailWriter_writeProcess( OTFAUX_ThumbnailWriter* tn_writer,
-                                     uint64_t process,
-                                     OTFAUX_Thumbnail_Data* data );
-
-/**
- * @}
- */
-
+OTFAUX_Thumbnail_write( const OTFAUX_Thumbnail_Context* tn_context,
+                        const char* namestub,
+                        int create, ... );
 
 /**
  * @defgroup thumbnailreader Module to read a thumbnail.
@@ -190,33 +157,29 @@ OTFAUX_ThumbnailWriter_writeProcess( OTFAUX_ThumbnailWriter* tn_writer,
 typedef struct OTFAUX_ThumbnailReader OTFAUX_ThumbnailReader;
 
 OTFAUX_ThumbnailReader*
-OTFAUX_ThumbnailReader_create( const char* filename,
-                               OTF_FileManager* manager );
-
-int
-OTFAUX_ThumbnailReader_destroy( OTFAUX_ThumbnailReader* tn_reader );
+OTFAUX_ThumbnailReader_open( const char* namestub );
 
 int
 OTFAUX_ThumbnailReader_close( OTFAUX_ThumbnailReader* tn_reader );
 
 int
-OTFAUX_ThumbnailReader_getDimension( OTFAUX_ThumbnailReader* tn_reader,
-                                     uint32_t* height,
-                                     uint32_t* width );
+OTFAUX_ThumbnailReader_getWidth( const OTFAUX_ThumbnailReader* tn_reader,
+                                 uint32_t* width );
+
+int
+OTFAUX_ThumbnailReader_getNumberOfProcs( const OTFAUX_ThumbnailReader* tn_reader,
+                                         uint32_t* nprocs );
 
 int
 OTFAUX_ThumbnailReader_read( OTFAUX_ThumbnailReader* tn_reader,
-                             void ( *process_handler )( void*,
-                                                        uint64_t,
-                                                        uint32_t,
-                                                        uint32_t ),
+                             void (* process_handler)( void*,
+                                                       uint64_t,
+                                                       const uint32_t* ),
                              void* data );
-
 
 /**
  * @}
  */
-
 
 #ifdef __cplusplus
 }

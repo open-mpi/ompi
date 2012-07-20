@@ -68,7 +68,7 @@ AC_DEFUN([ACVT_TAUINST],
 			AC_CHECK_PROG(tauinst_cxxparse_cmd, cxxparse, cxxparse)
 			AS_IF([test x"$tauinst_cxxparse_cmd" = x],
 			[AC_MSG_WARN([no cxxparse found; C++ source code cannot be instrumented by TAU])])
-			AS_IF([test x"$F77" != x],
+			AS_IF([test x"$FC" != x],
 			[
 				AC_CHECK_PROGS(tauinst_fparse_cmd, f95parse f90parse gfparse)
 				AS_IF([test x"$tauinst_fparse_cmd" = x],

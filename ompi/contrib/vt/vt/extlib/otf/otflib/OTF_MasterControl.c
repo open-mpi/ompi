@@ -12,7 +12,6 @@
 #include "OTF_MasterControl.h"
 #include "OTF_Errno.h"
 
-
 /**	constructor - internal use only */
 int OTF_MasterControl_init( OTF_MasterControl* mc );
 
@@ -198,6 +197,39 @@ int OTF_MasterControl_read( OTF_MasterControl* mc, const char* namestub ) {
 		/*
 		OTF_RBuffer_printRecord( buffer );
 		*/
+
+		/* IOFSL config line */
+		if ( OTF_RBuffer_testChar( buffer, 'i' ) ) {
+			uint32_t server_num;
+			OTF_IofslMode mode;
+			uint32_t streamid_bits;
+			server_num = OTF_RBuffer_readUint32( buffer );
+			if ( ! OTF_RBuffer_testChar( buffer, ':') ) {
+				OTF_Error( "OTF_MasterControl_read() "
+					"ERROR: missing expected character ':'" );
+				return 0;
+			}
+			mode = (OTF_IofslMode)OTF_RBuffer_readUint32( buffer );
+			if ( mode != OTF_IOFSL_MULTIFILE_SPLIT
+				&& mode != OTF_IOFSL_MULTIFILE ) {
+				OTF_Error( "OTF_MasterControl_read() "
+					"ERROR: invalid IofslMode." );
+				return 0;
+			}
+
+			if ( ! OTF_RBuffer_testChar( buffer, ':') ) {
+				OTF_Error( "OTF_MasterControl_read() "
+					"ERROR: missing expected character ':'" );
+				return 0;
+			}
+			streamid_bits = OTF_RBuffer_readUint32( buffer );
+			OTF_RBuffer_readNewline( buffer );
+
+			OTF_FileManager_setIofsl( mc->manager,
+					server_num, NULL, mode,
+					0, 0, streamid_bits );
+			continue;
+		}
 
 		/* read argument */
 		argument= OTF_RBuffer_readUint32( buffer );
@@ -704,6 +736,25 @@ int OTF_MasterControl_write( OTF_MasterControl* mc, const char* namestub ) {
 		OTF_WBuffer_writeNewline( buffer );
 	}
 
+	if ( OTF_FileManager_isIofsl( mc->manager ) ) {
+		uint32_t server_num;
+		char ** server_list;
+		OTF_IofslMode mode;
+		uint32_t flags;
+		uint32_t index_buffer_length;
+		uint32_t streamid_bits;
+		OTF_FileManager_getIofsl( mc->manager,
+				&server_num, &server_list, &mode,
+				&flags, &index_buffer_length, &streamid_bits );
+		OTF_WBuffer_writeChar( buffer, 'i' );
+		OTF_WBuffer_writeUint32( buffer, server_num );
+		OTF_WBuffer_writeChar( buffer, ':' );
+		OTF_WBuffer_writeUint32( buffer, (uint32_t)mode );
+		OTF_WBuffer_writeChar( buffer, ':' );
+		OTF_WBuffer_writeUint32( buffer, streamid_bits );
+		OTF_WBuffer_writeNewline( buffer );
+	}
+
 	OTF_WBuffer_close( buffer );
 
 	return 1;
@@ -967,3 +1018,28 @@ uint32_t OTF_MasterControl_getNewStreamId( OTF_MasterControl* mc ) {
 }
 
 
+OTF_MasterControl* OTF_MasterControl_clone( OTF_MasterControl* mc,
+		OTF_FileManager* manager ) {
+
+
+	int ret= 1;
+	uint32_t i;
+	OTF_MasterControl* mc_clone;
+
+	mc_clone= OTF_MasterControl_new( manager );
+	if ( !mc_clone )
+		return NULL;
+
+	for ( i= 0; i < mc->n; i++ ) {
+		OTF_MapEntry* entry= &mc->map[i];
+		ret = ret && OTF_MasterControl_appendList( mc_clone,
+				entry->argument, entry->n, entry->values );
+	}
+
+	if ( !ret ) {
+		OTF_MasterControl_close( mc_clone );
+		return NULL;
+	}
+
+	return mc_clone;
+}

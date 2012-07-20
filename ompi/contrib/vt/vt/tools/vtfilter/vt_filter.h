@@ -15,15 +15,48 @@
 
 #include "config.h"
 
-// disable OpenMP on NEC SX platforms to work around a compiler error
-#if (defined(HAVE_OMP) && HAVE_OMP) && defined(_SX)
-# undef HAVE_OMP
-#endif // HAVE_OMP && _SX
+#if defined(HAVE_OMP) && HAVE_OMP
+  // disable OpenMP under the following circumstances:
+
+  // on NEC SX platforms (causes "internal compiler error")
+# if defined(_SX)
+#   undef HAVE_OMP
+
+  // on MacOS X using GCC < v4.5
+  // causes "undefined reference to ___builtin_expect()"
+  // (induced by assert()'s within OpenMP-parallel regions)
+# elif (defined(__APPLE__) && defined(__MACH__) && defined(__GNUC__) && \
+       (__GNUC__ < 4 || (__GNUC__ == 4 &&  __GNUC_MINOR__ < 5)))
+#   undef HAVE_OMP
+
+  // using Open64 < v4.2.4 (causes "internal compiler error")
+# elif defined(__OPEN64__)
+#   if !defined(__OPENCC__) || !defined(__OPENCC_MINOR__) || !defined(__OPENCC_PATCHLEVEL__)
+      // unknown compiler version; disable OpenMP to be on the safe side
+#     undef HAVE_OMP
+#   else
+      // __OPENCC_PATCHLEVEL__ can be empty; redefine it to 0
+#     if !(__OPENCC_PATCHLEVEL__ + 0)
+#       undef __OPENCC_PATCHLEVEL__
+#       define __OPENCC_PATCHLEVEL__ 0
+#     endif
+      // disable OpenMP, if compiler version is less than 4.2.4
+#     if __OPENCC__ < 4 || (__OPENCC__ == 4 && (__OPENCC_MINOR__ < 2 || (__OPENCC_MINOR__ == 2 && __OPENCC_PATCHLEVEL__ < 4)))
+#       undef HAVE_OMP
+#     endif
+#   endif
+# endif // __OPEN64__
+#endif // HAVE_OMP
+#if defined(HAVE_OMP) && HAVE_OMP
+# include <omp.h>
+#endif // HAVE_OMP
 
 #include "vt_inttypes.h"
 
 #include <string>
 #include <vector>
+
+#include <assert.h>
 
 #ifdef VT_MPI
 # include "vt_defs.h" // to get VT_MPI_INT

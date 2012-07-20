@@ -13,8 +13,7 @@
 #ifndef _VT_UNIFY_TKFAC_H_
 #define _VT_UNIFY_TKFAC_H_
 
-#include "config.h"
-
+#include "vt_unify.h"
 #include "vt_unify_defs_recs.h"
 #include "vt_unify_tkfac_scope.h"
 

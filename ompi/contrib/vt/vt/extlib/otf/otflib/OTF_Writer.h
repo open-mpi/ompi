@@ -1030,16 +1030,12 @@ int OTF_Writer_writeDefKeyValueKV( OTF_Writer* writer,
 /**
  * Writes a TimeRange definition
  *
- * @param userData     Pointer to user data which can be set with
- *                     OTF_HandlerArray_setFirstHandlerArg().
+ * @param writer       Initialized OTF_Writer instance.
  * @param streamid     Identifies the stream to which this definition
  *                     belongs to. stream = 0 represents a global
  *                     definition.
- *
  * @param minTime      The smallest timestamp of the events in this @a streamid.
- *
  * @param maxTime      The greates timestamp of the events in this @a streamid (inclusive).
- *
  * @param list         Pointer to an OTF_KeyValueList() that contains individual data.
  *
  * @return             1 on success, 0 if an error occurs.
@@ -1055,19 +1051,14 @@ int OTF_Writer_writeDefTimeRange( OTF_Writer*       writer,
 /**
  * Writes a CounterAssignments definition
  *
- * @param userData     Pointer to user data which can be set with
- *                     OTF_HandlerArray_setFirstHandlerArg().
+ * @param writer       Initialized OTF_Writer instance.
  * @param streamid     Identifies the stream to which this definition
  *                     belongs to. stream = 0 represents a global
  *                     definition.
- *
  * @param counter_token     Counter id.
- *
  * @param number_of_members Number of entries in @procs_or_groups array.
- *
  * @param procs_or_groups   The processes or process groups which have recorded
  *                          counter data for counter @counter_token.
- *
  * @param list         Pointer to an OTF_KeyValueList() that contains individual data.
  *
  * @return             1 on success, 0 if an error occurs.
@@ -1085,20 +1076,15 @@ int OTF_Writer_writeDefCounterAssignments( OTF_Writer*       writer,
 /**
  * Writes a ProcessSubstitutes definition record
  *
- * @param userData     Pointer to user data which can be set with
- *                     OTF_HandlerArray_setFirstHandlerArg().
+ * @param writer       Initialized OTF_Writer instance.
  * @param streamid     Identifies the stream to which this definition
  *                     belongs to. stream = 0 represents a global
  *                     definition.
- *
  * @param representative     Process ID of the process that represents several others.
- *
  * @param numberOfProcs      Number of entries in @procs array.
- *
  * @param procs              The processes which are represented by
  *                           @representative. It may or may not include 
  *                           @representative itself.
- *
  * @param list         Pointer to an OTF_KeyValueList() that contains individual data.
  *
  * @return             1 on success, 0 if an error occurs.
@@ -1111,6 +1097,31 @@ int OTF_Writer_writeDefProcessSubstitutes( OTF_Writer*       writer,
                                            uint32_t          numberOfProcs,
                                            const uint32_t*   procs,
                                            OTF_KeyValueList* list );
+
+
+/**
+ * Write a auxiliary sample point definition record.
+ *
+ * @param writer       Initialized OTF_Writer instance.
+ * @param stream       Target stream identifier with
+ *                     0 < stream <= number of streams as defined in
+ *                     OTF_Writer_open().
+ * @param time         Time at which the auxiliary sample point information
+ *                     is available.
+ * @param type         Type of the auxiliary sample point.
+ *                     See @a OTF_AuxSamplePointType.
+ *
+ * @param list         Pointer to an OTF_KeyValueList() that contains individual data.
+ *
+ * @return             1 on success, 0 if an error occurs.
+ *
+ * \ingroup writer
+ */
+int OTF_Writer_writeDefAuxSamplePoint( OTF_Writer*            writer,
+                                       uint32_t               streamid,
+                                       uint64_t               time,
+                                       OTF_AuxSamplePointType type,
+                                       OTF_KeyValueList*      list );
 
 
 /**
@@ -2194,6 +2205,54 @@ int OTF_Writer_writeBeginFileOpSnapshotKV( OTF_Writer* writer,
 					uint32_t scltoken,
 					OTF_KeyValueList* list );
                            
+/**
+ * Write a snapshot for the count of finished collective operations from this
+ * process on this communicator.
+ *
+ * @param writer        Initialized OTF_Writer instance.
+ * @param time          Time when the snapshot was written(current time).
+ * @param process       Process identifier > 0.
+ * @param communicator  The communicator for what the count is for.
+ * @param count         The count of completed collective operations from process @.
+ *
+ * @param list          Initialized OTF_KeyValueList() instance or NULL.
+ *
+ * @return              1 on success, 0 if an error occurs.
+ *
+ * \ingroup writer
+ */
+int OTF_Writer_writeCollopCountSnapshot( OTF_Writer* writer,
+                                         uint64_t time,
+                                         uint32_t process,
+                                         uint32_t communicator,
+                                         uint64_t count,
+                                         OTF_KeyValueList *list );
+
+
+/**
+ * Write a snapshot for the last value of a counter into the snapshot.
+ *
+ * @param writer        Initialized OTF_Writer instance.
+ * @param time          Time when the snapshot was written(current time).
+ * @param originaltime  Sample time of the value.
+ * @param process       Process identifier > 0.
+ * @param counter       The counter.
+ * @param value         The value of the counter.
+ *
+ * @param list          Initialized OTF_KeyValueList() instance or NULL.
+ *
+ * @return              1 on success, 0 if an error occurs.
+ *
+ * \ingroup writer
+ */
+int OTF_Writer_writeCounterSnapshot( OTF_Writer*       writer,
+                                     uint64_t          time,
+                                     uint64_t          originaltime,
+                                     uint32_t          process,
+                                     uint32_t          counter,
+                                     uint64_t          value,
+                                     OTF_KeyValueList *list );
+
 /* *** public statistics record write handlers *** */
 
 

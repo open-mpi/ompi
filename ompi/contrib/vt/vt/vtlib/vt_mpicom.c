@@ -92,7 +92,7 @@ struct VTWin
 
 /*
  *-----------------------------------------------------------------------------
- * Static variables
+ * Local variables
  *-----------------------------------------------------------------------------
  */
 
@@ -149,7 +149,7 @@ static uint8_t comm_initialized = 0;
 
 /*
  *-----------------------------------------------------------------------------
- * Static functions
+ * Local functions
  *-----------------------------------------------------------------------------
  */
 
@@ -274,14 +274,23 @@ uint32_t vt_rank_to_pe(VT_MPI_INT rank, MPI_Comm comm)
   VT_MPI_INT global_rank;
   VT_MPI_INT inter;
 
-  PMPI_Comm_test_inter(comm, &inter);
-  if ( inter )
-    PMPI_Comm_remote_group(comm, &group);
+#if defined(HAVE_DECL_MPI_ROOT) && HAVE_DECL_MPI_ROOT
+  if ( rank == MPI_ROOT )
+    {
+      global_rank = (VT_MPI_INT)vt_my_trace;
+    }
   else
-    PMPI_Comm_group(comm, &group);
+#endif /* HAVE_DECL_MPI_ROOT */
+    {
+      PMPI_Comm_test_inter(comm, &inter);
+      if ( inter )
+        PMPI_Comm_remote_group(comm, &group);
+      else
+        PMPI_Comm_group(comm, &group);
 
-  PMPI_Group_translate_ranks(group, 1, &rank, world.group, &global_rank);
-  PMPI_Group_free(&group);
+      PMPI_Group_translate_ranks(group, 1, &rank, world.group, &global_rank);
+      PMPI_Group_free(&group);
+    }
 
   return (uint32_t)global_rank;
 }

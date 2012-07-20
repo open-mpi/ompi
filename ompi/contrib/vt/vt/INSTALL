@@ -56,7 +56,8 @@ How to install and configure VampirTrace
 
       --enable-compinst=LIST
                               enable support for compiler instrumentation,
-                              (gnu,intel,pathscale,pgi,sun,xl,ftrace,openuh)
+                              (gnu,intel,pathscale,pgi,pgi9,craycce,xl,necsx,
+                               open64,openuh)
                               A VampirTrace installation can handle different
                               compilers. The first item in the list is the
                               run-time default.
@@ -65,7 +66,7 @@ How to install and configure VampirTrace
       --enable-dyninst
                               enable support for Dyninst instrumentation,
                               default: enable if found by configure
-                              Note: Requires Dyninst version 5.1 or higher!
+                              Note: Requires Dyninst version 6.1 or higher!
 
       --enable-dyninst-attlib
                               build shared library which attaches Dyninst to 
@@ -331,7 +332,7 @@ How to install and configure VampirTrace
     vtfilter are built for the back-end (host system). Some configure options which are
     of interest for cross compilation are shown below:
 
-      * Set CC, CXX, F77, and FC to the cross compilers installed on the front-end.
+      * Set CC, CXX, and FC to the cross compilers installed on the front-end.
 
       * Set CC_FOR_BUILD and CXX_FOR_BUILD to the native compilers of the front-end.
 

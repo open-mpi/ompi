@@ -212,7 +212,7 @@ else
           par_type_enforced=1
           shift
           ;;
-        -hyb | --mpi)
+        -hyb | --hyb)
           mpi=1; mt=1
           par_type_enforced=1
           shift
@@ -232,6 +232,17 @@ else
           ;;
         *)
           exe=$arg
+          # prepend './' to the executable name if it is specified without
+          # abs./rel. path and it cannot be located in $PATH
+          case "$exe" in
+            /* | ./* | ../*) ;;
+            *)
+              which $exe >/dev/null 2>&1
+              if test $? -ne 0; then
+                exe="./$exe"
+              fi
+              ;;
+          esac
           shift
           ;;
       esac

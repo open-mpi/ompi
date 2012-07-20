@@ -75,8 +75,9 @@ yet it breaks the link compatibility of library versions.*/
 #define OTF_DEFFILEGROUP_RECORD					26
 #define OTF_DEFTIMERANGE_RECORD					61
 #define OTF_DEFCOUNTERASSIGNMENTS_RECORD		62
-
 #define OTF_DEFKEYVALUE_RECORD						57
+#define OTF_DEFUNIQUEID_RECORD						64
+#define OTF_DEFAUXSAMPLEPOINT_RECORD            65
 
 
 #define OTF_FUNCTIONSUMMARY_RECORD				28
@@ -97,18 +98,22 @@ yet it breaks the link compatibility of library versions.*/
 #define OTF_BEGINCOLLOPSNAPSHOT_RECORD          59
 #define OTF_BEGINFILEOPSNAPSHOT_RECORD          60
 
+#define OTF_COLLOPCOUNTSNAPSHOT_RECORD			66
+#define OTF_COUNTERSNAPSHOT_RECORD              67
+
 #define OTF_UNKNOWN_RECORD						41
 
 #define OTF_DEFMARKER_RECORD					45
 #define OTF_MARKER_RECORD						46
 
 /* Number of records */
-#define OTF_NRECORDS							64
+#define OTF_NRECORDS							68
 
 /* Stream format definition */
 
 #define OTF_WSTREAM_FORMAT_SHORT		0
 #define OTF_WSTREAM_FORMAT_LONG			1
+#define OTF_WSTREAM_FORMAT_INLINE_SNAPSHOTS	2
 
 
 /* 
@@ -256,6 +261,15 @@ typedef enum OTF_ATTR_TYPE_enum {
 	OTF_ATTR_IsCommunicator = 7 /**< */
 } OTF_ATTR_TYPE;
 
+/** Types of AuxSamplePoints */
+typedef enum OTF_AuxSamplePointType_enum {
+    /** There are snapshot information available at this time. */
+    OTF_AUX_SAMPLE_POINT_SNAPSHOT = 0,
+    /** There are summary information available at this time. */
+    OTF_AUX_SAMPLE_POINT_SUMMARY = 1,
+    /** There are snapshot information available in the event stream at this time. */
+    OTF_AUX_SAMPLE_POINT_INLINE_SNAPSHOT = 2
+} OTF_AuxSamplePointType;
 
 /* return values for handlers. they are not yet evaluated!!! */
 
@@ -271,5 +285,19 @@ stops reading immediately */
 
 #define OTF_READ_ERROR					(uint64_t)-1
 #define OTF_READ_MAXRECORDS				(uint64_t)-2
+
+#define OTF_ZBUFFER_DEFAULTSIZE                         (1 * 1024 * 1024)
+
+enum enum_OTF_IofslMode {
+	OTF_IOFSL_DISABLED        = 0,
+	OTF_IOFSL_MULTIFILE_SPLIT = 1,
+	OTF_IOFSL_MULTIFILE       = 2
+};
+typedef enum enum_OTF_IofslMode OTF_IofslMode;
+
+/** size in number of IdxEntry's (16 byte each) */
+#define OTF_IOFSL_INDEX_BUFFER_DEFAULTLENGTH		(1 * 1024)
+
+#define OTF_IOFSL_FLAG_NONBLOCKING			(1<<0)
 
 #endif /* OTF_DEFINITIONS_H */

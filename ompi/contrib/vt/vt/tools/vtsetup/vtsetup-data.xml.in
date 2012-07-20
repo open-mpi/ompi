@@ -22,6 +22,10 @@
     <desc>Settings according to the temporary file and buffer</desc>
     <parentid>gen</parentid>
   </group>
+  <group identifier="genIOFSLset" priority="300" descname="IOFSL Settings">
+    <desc>Settings according to IOFSL</desc>
+    <parentid>gen</parentid>
+  </group>
   <group identifier="libtrace" descname="Additional Event Sources" priority="000">
     <desc>Options for tracing of IO, lib-C, ... events.</desc>
     <parentid>optFeat</parentid>
@@ -64,6 +68,10 @@
   </group>
   <group identifier="mcor" priority="600" descname="MPI Correctness">
     <desc>MPI Correctness</desc>
+    <parentid>optFeat</parentid>
+  </group>
+  <group identifier="iofsl" priority="700" descname="I/O Forwarding (IOFSL)">
+    <desc>IOFSL</desc>
     <parentid>optFeat</parentid>
   </group>
   <group identifier="snam" priority="000" descname="Symbol Names">
@@ -176,6 +184,29 @@
     <since major="5" minor="0" patch="0" ></since>
     <available>@VT_SETUP_COMPRESSION@</available>
     <anchor>VT_SETUP_VT_COMPRESSION</anchor>
+  </env>
+  <env isdeprecated="0" priority="450" descname="Generate snaphots" isadvanced="1" group="genFset"
+    envname="VT_SNAPSHOTS">
+    <desc>Snapshots allows Vampir to load subsets of the resulting trace.</desc>
+    <valuedesc>
+      <value type="bool">
+        <default>1</default>
+      </value>
+    </valuedesc>
+    <since major="5" minor="13" patch="0" ></since>
+    <available>1</available>
+    <anchor>VT_SETUP_VT_SNAPSHOTS</anchor>
+  </env>
+  <env isdeprecated="0" priority="460" descname="Maximum number of snaphots" isadvanced="1" group="genFset"
+    envname="VT_MAX_SNAPSHOTS">
+    <desc>Maximum number of snapshots to generate.</desc>
+    <valuedesc>
+      <value type="integer">
+        <default>1024</default>
+      </value>
+    </valuedesc>
+    <since major="5" minor="13" patch="0" /><available>1</available>
+    <anchor>VT_SETUP_VT_MAX_SNAPSHOTS</anchor>
   </env>
   <env isdeprecated="0" priority="200" descname="Trace filename" isadvanced="0" group="genFset"
     envname="VT_FILE_PREFIX">
@@ -377,6 +408,44 @@
     <since major="5" minor="0" patch="0" ></since>
     <available>@VT_SETUP_MPICHECK@</available>
     <anchor>VT_SETUP_VT_MPICHECK_ERREXIT</anchor>
+  </env>
+  <env isdeprecated="0" priority="200" descname="IOFSL Server Addresses" isadvanced="1" group="iofsl"
+    envname="VT_IOFSL_SERVERS">
+    <desc>Comma-separated list of IOFSL server addresses.</desc>
+    <valuedesc>
+      <value type="string">
+        <default></default>
+      </value>
+    </valuedesc>
+    <since major="5" minor="13" patch="0" ></since><available>1</available>
+    <available>@VT_SETUP_IOFSL@</available>
+    <anchor>VT_SETUP_VT_IOFSL_SERVERS</anchor>
+  </env>
+  <env isdeprecated="0" priority="250" descname="IOFSL mode" isadvanced="1" group="iofsl"
+    envname="VT_IOFSL_MODE">
+    <desc>Mode of the IOFSL communication (MULTIFILE_SPLIT, MULTIFILE)</desc>
+    <valuedesc>
+      <value type="enum">
+        <default>MULTIFILE_SPLIT</default>
+        <enumid>vtiofslmodeenum</enumid>
+      </value>
+    </valuedesc>
+    <since major="5" minor="13" patch="0" ></since>
+    <available>@VT_SETUP_IOFSL@</available>
+    <anchor>VT_SETUP_VT_IOFSL_MODE</anchor>
+  </env>
+  <env isdeprecated="0" priority="300" descname="Enable buffered IOFSL writes" isadvanced="1" group="iofsl"
+    envname="VT_IOFSL_ASYNC_IO">
+    <desc>Enable / disable buffered IOFSL writes.</desc>
+    <valuedesc>
+      <value type="bool">
+        <default>0</default>
+        <noDefault>0</noDefault>
+      </value>
+    </valuedesc>
+    <since major="5" minor="13" patch="0" ></since>
+    <available>@VT_SETUP_IOFSL@</available>
+    <anchor>VT_SETUP_VT_IOFSL_ASYNC_IO</anchor>
   </env>
   <env isdeprecated="0" priority="100" descname="Reuse Pthread IDs" isadvanced="1" group="adpost"
     envname="VT_PTHREAD_REUSE">
@@ -658,6 +727,10 @@
     <entry>0</entry>
     <entry>1</entry>
     <entry>2</entry>
+  </enum>
+  <enum id="vtiofslmodeenum">
+    <entry>MULTIFILE_SPLIT</entry>
+    <entry>MULTIFILE</entry>
   </enum>
   <enumselection id="vtmodeenum" oneRequired="1">
     <entry>TRACE</entry>

@@ -3,14 +3,19 @@
  Authors: Andreas Knuepfer, Holger Brunst, Ronny Brendel, Thomas Kriebitzsch
 */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-
+#include <assert.h>
 
 #include "OTF_Platform.h"
 #include "OTF_FileManager.h"
 #include "OTF_File.h"
+#include "OTF_File_iofsl.h"
 #include "OTF_Errno.h"
 
 
@@ -39,6 +44,15 @@ struct struct_OTF_FileManager {
 
 	/** list of objects of type OTF_RBuffer or OTF_WBuffer */
 	OTF_FileList* list;
+
+	/** IOFSL specific settings, @see OTF_FileManager_setIofsl */
+	uint8_t  iofsl_enabled;
+	uint32_t  iofsl_flags;
+	uint32_t iofsl_server_num;
+	uint32_t iofsl_streamid_bits;
+	char**   iofsl_server_list;
+	OTF_IofslMode iofsl_mode;
+	uint32_t iofsl_index_buffer_length;
 };
 
 
@@ -58,11 +72,18 @@ void OTF_FileManager_listPrint( OTF_FileList** list );
 
 void OTF_FileManager_init( OTF_FileManager* fh ) {
 
+    fh->count= 0;
+    fh->number= 10;
 
-	fh->count= 0;
-	fh->number= 10;
+    fh->list= NULL;
 
-	fh->list= NULL;
+    fh->iofsl_enabled = 0;
+    fh->iofsl_flags = 0;
+    fh->iofsl_server_num = 0;
+    fh->iofsl_server_list = NULL;
+    fh->iofsl_streamid_bits = 0;
+    fh->iofsl_mode = OTF_IOFSL_DISABLED;
+    fh->iofsl_index_buffer_length = 0;
 }
 
 
@@ -98,6 +119,20 @@ void OTF_FileManager_finalize( OTF_FileManager* manager ) {
 	}
 
 	manager->list= NULL;
+
+	if ( manager->iofsl_server_list ) {
+		uint32_t i;
+		for ( i = 0; i < manager->iofsl_server_num; i++ ) {
+			free( manager->iofsl_server_list[i] );
+		}
+		manager->iofsl_server_list = NULL;
+        }
+	free ( manager->iofsl_server_list );
+	manager->iofsl_server_list = NULL;
+
+        if ( manager->iofsl_enabled ) {
+		OTF_File_iofsl_finalizeGlobal();
+        }
 }
 
 
@@ -122,12 +157,56 @@ OTF_FileManager* OTF_FileManager_open( uint32_t number ) {
 	return ret;
 }
 
+int OTF_FileManager_setIofsl( OTF_FileManager *m,
+		uint32_t server_num, char **server_list, OTF_IofslMode mode,
+		uint32_t flags, uint32_t index_buffer_length, uint32_t streamid_bits ) {
+	uint32_t i;
+
+	if ( m->iofsl_enabled ) {
+		OTF_Warning( "WARNING OTF_FileManager_setIofsl called twice, overwriting previous settings.\n");
+	}
+
+        assert( mode != OTF_IOFSL_DISABLED );
+	m->iofsl_enabled             = 1;
+        m->iofsl_server_num          = server_num;
+        m->iofsl_mode                = mode;
+        m->iofsl_index_buffer_length = index_buffer_length;
+        m->iofsl_flags               = flags;
+        m->iofsl_server_list         = NULL;
+        m->iofsl_streamid_bits       = streamid_bits;
+
+        /* it is allowed to give NULL for read only */
+        if ( server_list != NULL ) {
+        	m->iofsl_server_list= (char**)malloc(server_num * sizeof(*server_list));
+        	for (i = 0; i < server_num; i++) {
+        		m->iofsl_server_list[i] = strdup(server_list[i]);
+        	}
+        }
+
+        return 1;
+}
+
+int OTF_FileManager_getIofsl( OTF_FileManager *m, uint32_t *server_num,
+		char ***server_list, OTF_IofslMode *mode, uint32_t *flags,
+		uint32_t *index_buffer_length, uint32_t *streamid_bits ) {
+        if ( m->iofsl_enabled ) {
+                *server_num          = m->iofsl_server_num;
+                *server_list         = m->iofsl_server_list;
+                *mode                = m->iofsl_mode;
+                *index_buffer_length = m->iofsl_index_buffer_length;
+                *flags               = m->iofsl_flags;
+                *streamid_bits       = m->iofsl_streamid_bits;
+        }
+        return m->iofsl_enabled;
+}
+
+int OTF_FileManager_isIofsl( OTF_FileManager *m ) {
+	return m->iofsl_enabled;
+}
+
 
 void OTF_FileManager_close( OTF_FileManager* fh ) {
-
-
 	OTF_FileManager_finalize( fh );
-
 	free( fh );
 	fh = NULL;
 

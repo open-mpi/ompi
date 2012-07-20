@@ -32,7 +32,7 @@
  *-----------------------------------------------------------------------------
  */
 
-#define HASH_MAX 1021
+#define HASH_MAX 1024
 
 typedef struct HN_file {
   const char*       fname;  /* file name */
@@ -44,7 +44,7 @@ static HashNode_file*   htab_mpifile[HASH_MAX];
 
 static void hash_put( const char* n, uint32_t i )
 {
-  uint32_t id = (uint32_t)vt_hash((uint8_t*)n, strlen(n), 0) % HASH_MAX;
+  uint32_t id = (uint32_t)vt_hash((uint8_t*)n, strlen(n), 0) & (HASH_MAX - 1);
 
   HashNode_file* add = (HashNode_file*)malloc(sizeof(HashNode_file));
   add->fname = vt_strdup(n);
@@ -55,7 +55,7 @@ static void hash_put( const char* n, uint32_t i )
 
 static HashNode_file* hash_get( const char* n )
 {
-  uint32_t id = (uint32_t)vt_hash((uint8_t*)n, strlen(n), 0) % HASH_MAX;
+  uint32_t id = (uint32_t)vt_hash((uint8_t*)n, strlen(n), 0) & (HASH_MAX - 1);
 
   HashNode_file* curr = htab_mpifile[id];
   while ( curr ) {

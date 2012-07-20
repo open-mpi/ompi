@@ -46,6 +46,7 @@
 char* OTF_getFilename( const char* namestub, uint32_t id, OTF_FileType type,
 		unsigned int l, char* ret ) {
 
+	char* zsuffix = ((type&OTF_FILECOMPRESSION_BITS) > 0 && (type&OTF_FILECOMPRESSION_BITS) <= 9 ) ? ".z" : "";
 
 	if ( ( NULL == ret ) || ( 0 == l ) ) {
 
@@ -53,9 +54,61 @@ char* OTF_getFilename( const char* namestub, uint32_t id, OTF_FileType type,
 		ret= (char*) malloc( l * sizeof(char) );
 	}
 
-	
-	switch ( type&OTF_FILETYPE_BITS ) {
+	if ( ( type & OTF_FILETYPE_IOFSL_ALL ) || ( type & OTF_FILETYPE_IOFSL_IDX ) ) {
+		char *midfix = ( type & OTF_FILETYPE_IOFSL_ALL ) ? "all" : "idx";
+		switch ( type&OTF_FILETYPE_BITS ) {
+		case OTF_FILETYPE_MASTER:
 
+			/* mastercontrol file stays uncompressed even with compression or iofsl*/
+			snprintf( ret, l, "%s.%s", namestub, OTF_FILENAMESUFFIX_MAIN );
+			break;
+
+		case OTF_FILETYPE_GLOBAL_DEF:
+
+			snprintf( ret, l, "%s.%s%s", namestub, OTF_FILENAMESUFFIX_DEF,
+				zsuffix );
+			break;
+
+		case OTF_FILETYPE_DEF:
+
+			snprintf( ret, l, "%s.%s.%s.%i%s", namestub, midfix, OTF_FILENAMESUFFIX_DEF,
+				id, zsuffix );
+			break;
+
+		case OTF_FILETYPE_EVENT:
+
+			snprintf( ret, l, "%s.%s.%s.%i%s", namestub, midfix, OTF_FILENAMESUFFIX_EVENTS,
+				id, zsuffix );
+			break;
+
+		case OTF_FILETYPE_SNAPS:
+
+			snprintf( ret, l, "%s.%s.%s.%i%s", namestub, midfix, OTF_FILENAMESUFFIX_SNAPS,
+				id, zsuffix );
+			break;
+
+		case OTF_FILETYPE_STATS:
+	
+			snprintf( ret, l, "%s.%s.%s.%i%s", namestub, midfix, OTF_FILENAMESUFFIX_STATS,
+				id, zsuffix );
+			break;
+
+		case OTF_FILETYPE_MARKER:
+
+			snprintf( ret, l, "%s.%s.%s.%i%s", namestub, midfix, OTF_FILENAMESUFFIX_MARKER,
+				id, zsuffix );
+			break;
+
+		default:
+			free(ret);
+			ret = NULL;
+			return NULL;
+		}
+
+	return ret;
+	}
+
+	switch ( type&OTF_FILETYPE_BITS ) {
 	case OTF_FILETYPE_MASTER:
 
 		/* mastercontrol file stays uncompressed even with compression */
@@ -65,37 +118,37 @@ char* OTF_getFilename( const char* namestub, uint32_t id, OTF_FileType type,
 	case OTF_FILETYPE_GLOBAL_DEF:
 
 		snprintf( ret, l, "%s.%s%s", namestub, OTF_FILENAMESUFFIX_DEF,
-			((type&OTF_FILECOMPRESSION_BITS) > 0 && (type&OTF_FILECOMPRESSION_BITS) <= 9 ) ? ".z" : "" );
+			zsuffix );
 		break;
 
 	case OTF_FILETYPE_DEF:
 
 		snprintf( ret, l, "%s.%x.%s%s", namestub, id, OTF_FILENAMESUFFIX_DEF,
-			((type&OTF_FILECOMPRESSION_BITS) > 0 && (type&OTF_FILECOMPRESSION_BITS) <= 9 ) ? ".z" : "" );
+			zsuffix );
 		break;
 
 	case OTF_FILETYPE_EVENT:
 
 		snprintf( ret, l, "%s.%x.%s%s", namestub, id, OTF_FILENAMESUFFIX_EVENTS,
-			((type&OTF_FILECOMPRESSION_BITS) > 0 && (type&OTF_FILECOMPRESSION_BITS) <= 9 ) ? ".z" : "" );
+			zsuffix );
 		break;
 
 	case OTF_FILETYPE_SNAPS:
 
 		snprintf( ret, l, "%s.%x.%s%s", namestub, id, OTF_FILENAMESUFFIX_SNAPS,
-			((type&OTF_FILECOMPRESSION_BITS) > 0 && (type&OTF_FILECOMPRESSION_BITS) <= 9 ) ? ".z" : "" );
+			zsuffix );
 		break;
 
 	case OTF_FILETYPE_STATS:
 
 		snprintf( ret, l, "%s.%x.%s%s", namestub, id, OTF_FILENAMESUFFIX_STATS,
-			((type&OTF_FILECOMPRESSION_BITS) > 0 && (type&OTF_FILECOMPRESSION_BITS) <= 9 ) ? ".z" : "" );
+			zsuffix );
 		break;
 
 	case OTF_FILETYPE_MARKER:
 
 		snprintf( ret, l, "%s.%x.%s%s", namestub, id, OTF_FILENAMESUFFIX_MARKER,
-			((type&OTF_FILECOMPRESSION_BITS) > 0 && (type&OTF_FILECOMPRESSION_BITS) <= 9 ) ? ".z" : "" );
+			zsuffix );
 		break;
 
 	default:

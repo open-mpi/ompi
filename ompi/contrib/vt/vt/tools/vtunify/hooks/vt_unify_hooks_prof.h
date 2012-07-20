@@ -17,9 +17,6 @@
 #include "vt_unify_hooks_base.h"
 
 #include <algorithm>
-#include <map>
-#include <string>
-#include <vector>
 
 //
 // HooksProfC class

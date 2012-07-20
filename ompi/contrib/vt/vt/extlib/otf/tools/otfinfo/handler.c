@@ -28,6 +28,14 @@ int handleDefCreator( void *userData, uint32_t stream, const char *creator )
   return OTF_RETURN_OK;
 }
 
+int handleDefUniqueId( void *userData, uint32_t stream, uint64_t uid )
+{
+  definitionInfoT *info  = userData;
+  info->traceUniqueId = uid;
+
+  return OTF_RETURN_OK;
+}
+
 int handleDefVersion( void *userData, uint32_t stream, uint8_t major,
                       uint8_t minor, uint8_t sub, const char *string )
 {

@@ -4,13 +4,6 @@
 
 #include "util/util.h"
 
-/* use own implementation of assert() to work around a compiler bug
-   (seen on MacOS using GCC v4.2.1):
-   The linker results in an undefined reference to ___builtin_expect()
-   when using assert() within OpenMP-parallel regions. */
-#undef assert
-#define assert vt_assert
-
 #if !(defined(HAVE_ASPRINTF) && HAVE_ASPRINTF)
 # undef asprintf
 # define asprintf vt_asprintf

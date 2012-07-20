@@ -66,6 +66,9 @@ int OTF_CopyHandler_DefScl( void* userData, uint32_t stream, uint32_t source,
 int OTF_CopyHandler_DefSclFile( void* userData, uint32_t stream,
 	uint32_t sourceFile, const char* name, OTF_KeyValueList* list );
 
+int OTF_CopyHandler_DefUniqueId( void* userData, uint32_t stream,
+	uint64_t uid );
+
 int OTF_CopyHandler_DefVersion( void* userData, uint32_t stream,
 	uint8_t major, uint8_t minor, uint8_t sub, const char* string );
 
@@ -91,6 +94,12 @@ int OTF_CopyHandler_DefCounterAssignments( void* userData, uint32_t stream,
 int OTF_CopyHandler_DefProcessSubstitutes( void* userData, uint32_t stream,
 	uint32_t representative, uint32_t numberOfProcs, const uint32_t* procs,
 	OTF_KeyValueList* list );
+
+int OTF_CopyHandler_DefAuxSamplePoint( void*                  userData,
+                                       uint32_t               stream,
+                                       uint64_t               time,
+                                       OTF_AuxSamplePointType type,
+                                       OTF_KeyValueList*      list );
 
 int OTF_CopyHandler_NoOp( void* userData, uint64_t time, uint32_t process,
 	OTF_KeyValueList* list );
@@ -184,6 +193,20 @@ int OTF_CopyHandler_BeginFileOpSnapshot( void* userData, uint64_t time,
     uint64_t originaltime, uint32_t process, uint64_t matchingId,
     uint32_t scltoken, OTF_KeyValueList* list );
 
+int OTF_CopyHandler_CollopCountSnapshot( void* userData,
+                                         uint64_t time,
+                                         uint32_t process,
+                                         uint32_t communicator,
+                                         uint64_t count,
+                                         OTF_KeyValueList* list );
+
+int OTF_CopyHandler_CounterSnapshot( void*             userData,
+                                     uint64_t          time,
+                                     uint64_t          originaltime,
+                                     uint32_t          process,
+                                     uint32_t          counter,
+                                     uint64_t          value,
+                                     OTF_KeyValueList* list );
 
 int OTF_CopyHandler_SummaryComment( void * userData, uint64_t time,
 	uint32_t process, const char* comment, OTF_KeyValueList* list );

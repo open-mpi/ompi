@@ -129,6 +129,7 @@ See \`config.log' for more details.])
 		have_cuda="yes"
 	])
 
+	AC_SUBST(CUDATKDIR)
 	AC_SUBST(CUDATKINCDIR)
 	AC_SUBST(CUDATKLIBDIR)
 ])
