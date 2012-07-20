@@ -7,6 +7,8 @@
  *
  * Author(s): Torsten Hoefler <htor@cs.indiana.edu>
  *
+ * Copyright (c) 2012      Oracle and/or its affiliates.  All rights reserved.
+ *
  */
 #include "nbc_internal.h"
 
@@ -60,7 +62,7 @@ int ompi_coll_libnbc_iallgatherv(void* sendbuf, int sendcount, MPI_Datatype send
   } else {
     /* copy my data to receive buffer */
     rbuf = ((char *)recvbuf) + (displs[rank]*rcvext);
-    NBC_Copy(sendbuf, sendcount, sendtype, rbuf, recvcounts[rank], recvtype, comm);
+    res = NBC_Copy(sendbuf, sendcount, sendtype, rbuf, recvcounts[rank], recvtype, comm);
     if (NBC_OK != res) { printf("Error in NBC_Copy() (%i)\n", res); return res; }
   }
   sbuf = ((char*) recvbuf) + (displs[rank]*rcvext);
