@@ -393,7 +393,7 @@ int ompi_proc_refresh(void) {
                 break;
             }
             /* get the name of the node it is on */
-            ret = ompi_modex_recv_string_pointer(ORTE_DB_HOSTNAME, proc, (void*)&(proc->proc_hostname), OPAL_STRING);
+            ret = ompi_modex_recv_string_pointer(ORTE_DB_HOSTNAME, proc, (void**)&(proc->proc_hostname), OPAL_STRING);
             if (OMPI_SUCCESS != ret) {
                 break;
             }
