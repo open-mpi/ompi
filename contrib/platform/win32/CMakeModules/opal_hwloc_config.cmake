@@ -16,6 +16,8 @@ INCLUDE_DIRECTORIES ("${CURRENT_PATH}/"
     "${CURRENT_PATH}/../"
     "${CURRENT_PATH}/hwloc/include/")
 
+SET(HWLOC_PATH ${CURRENT_PATH} CACHE INERNAL "path to hwloc dir")
+
 SET(RESULT_COMPONENT_FILES
     ${RESULT_COMPONENT_FILES}
     ${CURRENT_PATH}/${hwloc_dir}_component.c

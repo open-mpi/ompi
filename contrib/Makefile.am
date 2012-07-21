@@ -124,17 +124,6 @@ EXTRA_DIST = \
         platform/win32/CMakeModules/fortran_check_real16_c_equiv.cmake \
         platform/win32/CMakeModules/opal_hwloc_config.cmake \
         platform/win32/include/hwloc/autogen/config.h \
-        platform/win32/include/hwloc/bitmap.h \
-        platform/win32/include/hwloc/cpuset.h \
-        platform/win32/include/hwloc/cuda.h \
-        platform/win32/include/hwloc/cudart.h \
-        platform/win32/include/hwloc/glibc-sched.h \
-        platform/win32/include/hwloc/helper.h \
-        platform/win32/include/hwloc/linux-libnuma.h \
-        platform/win32/include/hwloc/linux.h \
-        platform/win32/include/hwloc/myriexpress.h \
-        platform/win32/include/hwloc/openfabrics-verbs.h \
-        platform/win32/include/hwloc/rename.h \
         platform/win32/include/private/autogen/config.h \
 	platform/cisco/macosx-dynamic \
 	platform/cisco/macosx-dynamic.conf \
