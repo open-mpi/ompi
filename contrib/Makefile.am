@@ -134,7 +134,6 @@ EXTRA_DIST = \
         platform/win32/include/hwloc/myriexpress.h \
         platform/win32/include/hwloc/openfabrics-verbs.h \
         platform/win32/include/hwloc/rename.h \
-        platform/win32/include/hwloc/private/autogen/config.h \
 	platform/cisco/macosx-dynamic \
 	platform/cisco/macosx-dynamic.conf \
 	platform/cisco/linux \
