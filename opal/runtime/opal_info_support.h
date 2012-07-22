@@ -22,21 +22,21 @@
 
 BEGIN_C_DECLS
 
-extern const char *opal_info_path_prefix;
+OPAL_DECLSPEC extern const char *opal_info_path_prefix;
 
-extern const char *opal_info_type_all;
-extern const char *opal_info_type_opal;
-extern const char *opal_info_component_all;
+OPAL_DECLSPEC extern const char *opal_info_type_all;
+OPAL_DECLSPEC extern const char *opal_info_type_opal;
+OPAL_DECLSPEC extern const char *opal_info_component_all;
 extern const char *opal_info_param_all;
 
-extern const char *opal_info_ver_full;
+OPAL_DECLSPEC extern const char *opal_info_ver_full;
 extern const char *opal_info_ver_major;
 extern const char *opal_info_ver_minor;
 extern const char *opal_info_ver_release;
 extern const char *opal_info_ver_greek;
 extern const char *opal_info_ver_repo;
 
-extern const char *opal_info_ver_all;
+OPAL_DECLSPEC extern const char *opal_info_ver_all;
 extern const char *opal_info_ver_mca;
 extern const char *opal_info_ver_type;
 extern const char *opal_info_ver_component;
