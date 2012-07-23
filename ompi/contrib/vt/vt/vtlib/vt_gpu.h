@@ -37,6 +37,7 @@
 #define VT_GPU_TRACE_MEMUSAGE      (1 << 8)
 #define VT_GPU_TRACE_DEBUG         (1 << 9)
 #define VT_GPU_TRACE_ERROR         (1 << 10)
+#define VT_GPU_TRACE_STREAM_REUSE  (1 << 11)
 #define VT_GPU_TRACE_DEFAULT \
   (VT_GPU_TRACE_CUDA | VT_GPU_TRACE_RUNTIME_API | VT_GPU_TRACE_OPENCL | \
    VT_GPU_TRACE_KERNEL | VT_GPU_TRACE_MEMCPY)
@@ -162,6 +163,11 @@ EXTERN uint8_t vt_gpu_trace_idle;
  * flag: trace GPU data transfers (memory copies)?
  */
 EXTERN uint8_t vt_gpu_trace_mcpy;
+
+/*
+ * flag: Reuse destroyed GPU streams?
+ */
+EXTERN uint8_t vt_gpu_stream_reuse;
 
 /*
  * flag: trace GPU memory usage (allocation, free)?

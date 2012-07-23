@@ -355,20 +355,20 @@ OpenMP events, and performance counters.
 <P>
 After a successful tracing run, VampirTrace writes all collected data to a  
 trace file in the Open Trace Format (OTF)<A NAME="tex2html1"
-  HREF="#foot1526"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
+  HREF="#foot1549"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A>.
 As a result, the information is available for post-mortem analysis and 
 visualization by various tools. 
 Most notably, VampirTrace provides the input data for the Vampir analysis  
 and visualization tool<A NAME="tex2html2"
-  HREF="#foot1527"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
+  HREF="#foot1550"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A>. 
 
 <P>
 VampirTrace is included in OpenMPI&nbsp;1.3 and later versions.
 If not disabled explicitly, VampirTrace is built automatically when installing
 OpenMPI<A NAME="tex2html3"
-  HREF="#foot1528"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
+  HREF="#foot1551"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A>.
 
 <P>
@@ -1185,7 +1185,7 @@ in a single file, that
   The names in between may contain wildcards as ``?'', ``*', and ``#'', each entry gets a new line.
   The lists end with <TT>END[_FILE]_&lt;INCLUDE|EXCLUDE&gt;_LIST</TT>. For further information on selective 
   profiling have a look at the TAU documentation<A NAME="tex2html4"
-  HREF="#foot1552"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
+  HREF="#foot1575"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A>.
   To announce the file through the compiler wrapper use the option <TT>-vt:tau</TT>:
 <PRE>
@@ -1202,7 +1202,7 @@ Binary Instrumentation Using Dyninst
 The option <TT>-vt:inst dyninst</TT> is used with the compiler wrapper to 
 instrument the application during runtime (binary instrumentation), by using 
 Dyninst<A NAME="tex2html5"
-  HREF="#foot1553"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
+  HREF="#foot1576"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A>.
 Recompiling is not necessary for this kind of instrumentation,
 but relinking:
@@ -1353,7 +1353,7 @@ Tracing Calls to 3rd-Party Libraries
   VampirTrace is also capable to trace calls to third party libraries, which come with
   at least one C header file even without the library's source code. If VampirTrace was
   built with support for library tracing (the CTool library<A NAME="tex2html6"
-  HREF="#foot1554"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
+  HREF="#foot1577"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A>  is required), the tool <TT>vtlibwrapgen</TT> can be used to
   generate a wrapper library to intercept each call to the actual library functions.
   This wrapper library can be linked to the application or used in combination with the
@@ -1573,6 +1573,33 @@ of a VampirTrace instrumented executable:
         Quiet (0), Critical (1), Information (2)</TD>
 <TD ALIGN="LEFT">1</TD>
 </TR>
+<TR><TD ALIGN="LEFT"><A NAME="VT_SETUP_IOFSL"></A></TD>
+<TD ALIGN="LEFT">
+<BR>
+	<SPAN  CLASS="textbf">I/O Forwarding (IOFSL)</SPAN>
+	<BR></TD>
+<TD></TD>
+</TR>
+<TR><TD ALIGN="LEFT"><A NAME="VT_SETUP_VT_IOFSL_ASYNC_IO"></A><TT>VT_IOFSL_ASYNC_IO</TT></TD>
+<TD ALIGN="LEFT">Enable buffered IOFSL writes?
+	<BR>
+	&#8658; Section&nbsp;<A HREF="#sec:iofsl-manual">D.4.2</A></TD>
+<TD ALIGN="LEFT">no</TD>
+</TR>
+<TR><TD ALIGN="LEFT"><A NAME="VT_SETUP_VT_IOFSL_SERVERS"></A><TT>VT_IOFSL_SERVERS</TT></TD>
+<TD ALIGN="LEFT">Comma-separated list of IOFSL server addresses.
+	<BR>
+	&#8658; Section&nbsp;<A HREF="#sec:iofsl-manual">D.4.2</A></TD>
+<TD ALIGN="LEFT">-</TD>
+</TR>
+<TR><TD ALIGN="LEFT"><A NAME="VT_SETUP_VT_IOFSL_MODE"></A><TT>VT_IOFSL_MODE</TT></TD>
+<TD ALIGN="LEFT">Mode of the IOFSL communication:
+	<BR>
+	(MULTIFILE_SPLIT or MULTIFILE)
+	<BR>
+	&#8658; Section&nbsp;<A HREF="#sec:iofsl-manual">D.4.2</A></TD>
+<TD ALIGN="LEFT">MULTIFILE_SPLIT</TD>
+</TR>
 <TR><TD ALIGN="LEFT"><A NAME="VT_SETUP_OPTIONAL_FEATURES"></A></TD>
 <TD ALIGN="LEFT">
 <BR>
@@ -1673,24 +1700,6 @@ of a VampirTrace instrumented executable:
 <TD ALIGN="LEFT">Minimum buffer fill level for synchronized buffer flush in percent.</TD>
 <TD ALIGN="LEFT">80</TD>
 </TR>
-<TR><TD ALIGN="LEFT"><A NAME="VT_SETUP_VT_IOFSL_SERVERS"></A><TT>VT_IOFSL_SERVERS</TT></TD>
-<TD ALIGN="LEFT">Comma-separated list of IOFSL server addresses.
-	<BR>
-	&#8658; Section&nbsp;<A HREF="#sec:iofsl-manual">D.4.2</A></TD>
-<TD ALIGN="LEFT">-</TD>
-</TR>
-<TR><TD ALIGN="LEFT"><A NAME="VT_SETUP_VT_IOFSL_MODE"></A><TT>VT_IOFSL_MODE</TT></TD>
-<TD ALIGN="LEFT">Mode of the IOFSL communication (MULTIFILE_SPLIT, MULTIFILE)
-	<BR>
-	&#8658; Section&nbsp;<A HREF="#sec:iofsl-manual">D.4.2</A></TD>
-<TD ALIGN="LEFT">MULTIFILE_SPLIT</TD>
-</TR>
-<TR><TD ALIGN="LEFT"><A NAME="VT_SETUP_VT_IOFSL_ASYNC_IO"></A><TT>VT_IOFSL_ASYNC_IO</TT></TD>
-<TD ALIGN="LEFT">Enable buffered IOFSL writes?
-	<BR>
-	&#8658; Section&nbsp;<A HREF="#sec:iofsl-manual">D.4.2</A></TD>
-<TD ALIGN="LEFT">no</TD>
-</TR>
 <TR><TD ALIGN="LEFT"><A NAME="VT_SETUP_COUNTERS"></A></TD>
 <TD ALIGN="LEFT">
 <BR>
@@ -1709,6 +1718,12 @@ of a VampirTrace instrumented executable:
 <TD ALIGN="LEFT">Separator string between counter specifications in VT_METRICS.</TD>
 <TD ALIGN="LEFT">:</TD>
 </TR>
+<TR><TD ALIGN="LEFT"><A NAME="VT_SETUP_VT_PLUGIN_CNTR_METRICS"></A><TT>VT_PLUGIN_CNTR_METRICS</TT></TD>
+<TD ALIGN="LEFT">Colon-separated list of plugin counter metrics which shall be recorded.
+	<BR>
+	&#8658; Section&nbsp;<A HREF="#sec:plugin_counter_metrics">4.7</A></TD>
+<TD ALIGN="LEFT">-</TD>
+</TR>
 <TR><TD ALIGN="LEFT"><A NAME="VT_SETUP_VT_RUSAGE"></A><TT>VT_RUSAGE</TT></TD>
 <TD ALIGN="LEFT">Colon-separated list of resource usage counters which shall be recorded.
 	<BR>
@@ -1719,10 +1734,41 @@ of a VampirTrace instrumented executable:
 <TD ALIGN="LEFT">Sample interval for recording resource usage counters in ms.</TD>
 <TD ALIGN="LEFT">100</TD>
 </TR>
-<TR><TD ALIGN="LEFT"><A NAME="VT_SETUP_VT_PLUGIN_CNTR_METRICS"></A><TT>VT_PLUGIN_CNTR_METRICS</TT></TD>
-<TD ALIGN="LEFT">Colon-separated list of plugin counter metrics which shall be recorded.
+<TR><TD ALIGN="LEFT"><A NAME="VT_SETUP_DYNINST"></A></TD>
+<TD ALIGN="LEFT">
+<BR>
+	<SPAN  CLASS="textbf">Binary Instrumentation (Dyninst)</SPAN>
+	<BR></TD>
+<TD></TD>
+</TR>
+<TR><TD ALIGN="LEFT"><A NAME="VT_SETUP_VT_DYN_DETACH"></A><TT>VT_DYN_DETACH</TT></TD>
+<TD ALIGN="LEFT">Detach Dyninst mutator-program <TT>vtdyn</TT> from application process?</TD>
+<TD ALIGN="LEFT">yes</TD>
+</TR>
+<TR><TD ALIGN="LEFT"><A NAME="VT_SETUP_VT_DYN_IGNORE_NODBG"></A><TT>VT_DYN_IGNORE_NODBG</TT></TD>
+<TD ALIGN="LEFT">Disable instrumentation of functions which have no debug information?</TD>
+<TD ALIGN="LEFT">no</TD>
+</TR>
+<TR><TD ALIGN="LEFT"><A NAME="VT_SETUP_VT_DYN_INNER_LOOPS"></A><TT>VT_DYN_INNER_LOOPS</TT></TD>
+<TD ALIGN="LEFT">Instrument inner loops within outer loops?
 	<BR>
-	&#8658; Section&nbsp;<A HREF="#sec:plugin_counter_metrics">4.7</A></TD>
+	(implies <TT>VT_DYN_OUTER_LOOPS=yes</TT>)</TD>
+<TD ALIGN="LEFT">no</TD>
+</TR>
+<TR><TD ALIGN="LEFT"><A NAME="VT_SETUP_VT_DYN_LOOP_ITERS"></A><TT>VT_DYN_LOOP_ITERS</TT></TD>
+<TD ALIGN="LEFT">Instrument loop iterations? 
+	<BR>
+	(implies <TT>VT_DYN_OUTER_LOOPS=yes</TT>)</TD>
+<TD ALIGN="LEFT">no</TD>
+</TR>
+<TR><TD ALIGN="LEFT"><A NAME="VT_SETUP_VT_DYN_OUTER_LOOPS"></A><TT>VT_DYN_OUTER_LOOPS</TT></TD>
+<TD ALIGN="LEFT">Instrument outer loops within functions?</TD>
+<TD ALIGN="LEFT">no</TD>
+</TR>
+<TR><TD ALIGN="LEFT"><A NAME="VT_SETUP_VT_DYN_SHLIBS"></A><TT>VT_DYN_SHLIBS</TT></TD>
+<TD ALIGN="LEFT">Colon-separated list of shared libraries for Dyninst instrumentation.
+	<BR>
+	&#8658; Section&nbsp;<A HREF="#sec:dyninst">2.6</A></TD>
 <TD ALIGN="LEFT">-</TD>
 </TR>
 <TR><TD ALIGN="LEFT"><A NAME="VT_SETUP_FILTERING_GROUPING"></A></TD>
@@ -1731,20 +1777,6 @@ of a VampirTrace instrumented executable:
 	<SPAN  CLASS="textbf">Filtering, Grouping</SPAN> 
 	<BR></TD>
 <TD></TD>
-</TR>
-<TR><TD ALIGN="LEFT"><A NAME="VT_SETUP_VT_DYN_SHLIBS"></A><TT>VT_DYN_SHLIBS</TT></TD>
-<TD ALIGN="LEFT">Colon-separated list of shared libraries for Dyninst instrumentation.
-	<BR>
-	&#8658; Section&nbsp;<A HREF="#sec:dyninst">2.6</A></TD>
-<TD ALIGN="LEFT">-</TD>
-</TR>
-<TR><TD ALIGN="LEFT"><A NAME="VT_SETUP_VT_DYN_IGNORE_NODBG"></A><TT>VT_DYN_IGNORE_NODBG</TT></TD>
-<TD ALIGN="LEFT">Disable instrumentation of functions which have no debug information?</TD>
-<TD ALIGN="LEFT">no</TD>
-</TR>
-<TR><TD ALIGN="LEFT"><A NAME="VT_SETUP_VT_DYN_DETACH"></A><TT>VT_DYN_DETACH</TT></TD>
-<TD ALIGN="LEFT">Detach Dyninst mutator-program <TT>vtdyn</TT> from application process?</TD>
-<TD ALIGN="LEFT">yes</TD>
 </TR>
 <TR><TD ALIGN="LEFT"><A NAME="VT_SETUP_VT_FILTER_SPEC"></A><TT>VT_FILTER_SPEC</TT></TD>
 <TD ALIGN="LEFT">Name of function/region filter file.
@@ -1764,14 +1796,8 @@ of a VampirTrace instrumented executable:
 	&#8658; Section&nbsp;<A HREF="#sec:java_filter">5.2</A></TD>
 <TD ALIGN="LEFT">-</TD>
 </TR>
-<TR><TD ALIGN="LEFT"><A NAME="VT_SETUP_VT_GROUP_CLASSES"></A><TT>VT_GROUP_CLASSES</TT></TD>
+<TR><TD ALIGN="LEFT"><A NAME="VT_SETUP_VT_JAVA_GROUP_CLASSES"></A><TT>VT_JAVA_GROUP_CLASSES</TT></TD>
 <TD ALIGN="LEFT">Create a group for each Java class automatically?</TD>
-<TD ALIGN="LEFT">yes</TD>
-</TR>
-<TR><TD ALIGN="LEFT"><A NAME="VT_SETUP_VT_ONOFF_CHECK_STACK_BALANCE"></A><TT>VT_ONOFF_CHECK_STACK_BALANCE</TT></TD>
-<TD ALIGN="LEFT">Check stack level balance when switching tracing on/off.
-	<BR>
-	&#8658; Section&nbsp;<A HREF="#subsec:onoff">2.4.2</A></TD>
 <TD ALIGN="LEFT">yes</TD>
 </TR>
 <TR><TD ALIGN="LEFT"><A NAME="VT_SETUP_VT_MAX_STACK_DEPTH"></A><TT>VT_MAX_STACK_DEPTH</TT></TD>
@@ -1779,6 +1805,12 @@ of a VampirTrace instrumented executable:
 	<BR>
 	(0 = unlimited)</TD>
 <TD ALIGN="LEFT">0</TD>
+</TR>
+<TR><TD ALIGN="LEFT"><A NAME="VT_SETUP_VT_ONOFF_CHECK_STACK_BALANCE"></A><TT>VT_ONOFF_CHECK_STACK_BALANCE</TT></TD>
+<TD ALIGN="LEFT">Check stack level balance when switching tracing on/off.
+	<BR>
+	&#8658; Section&nbsp;<A HREF="#subsec:onoff">2.4.2</A></TD>
+<TD ALIGN="LEFT">yes</TD>
 </TR>
 <TR><TD ALIGN="LEFT"><A NAME="VT_SETUP_SYMBOL_LIST"></A></TD>
 <TD ALIGN="LEFT">
@@ -1993,7 +2025,7 @@ for the enhanced timer synchronization:
 
 <UL>
 <LI>CLAPACK <A NAME="tex2html7"
-  HREF="#foot1564"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
+  HREF="#foot1587"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A>
 </LI>
 <LI>AMD ACML
@@ -2305,6 +2337,9 @@ To enable a particular composition of CUDA measurement features the variable
 <TR><TD ALIGN="LEFT"><TT>memcpy</TT></TD>
 <TD ALIGN="LEFT">CUDA memory copies</TD>
 </TR>
+<TR><TD ALIGN="LEFT"><TT>stream_reuse</TT></TD>
+<TD ALIGN="LEFT">force reusing of CUDA streams after cudaStreamDestroy()</TD>
+</TR>
 <TR><TD ALIGN="LEFT"><TT>memusage</TT></TD>
 <TD ALIGN="LEFT">CUDA memory allocation</TD>
 </TR>
@@ -2405,7 +2440,7 @@ Record GPU memory usage as counter ``gpu_mem_usage``, if set to <TT>yes</TT>,
 <P>
 Every CUDA stream, which is executed on a cuda-capable device and 
   used during program execution, creates an own thread. ``CUDA-Threads'' can 
-  contain communication and kernel events and have the following notation:
+  contain CUDA communication, kernel and counter records and have the following notation:
 
 <P>
 <DIV ALIGN="CENTER">
@@ -2415,9 +2450,20 @@ Every CUDA stream, which is executed on a cuda-capable device and
 
 <P>
 Due to an issue with CUPTI, the device is not always properly 
-  shown. The CUDA stream number is increasing, beginning with the default 
-  stream '1'. The stream number provided by CUPTI might not be evenly increasing. 
-  Only streams with traceable information will be written. 
+  shown (<TT>device</TT> is displayed as <TT>?</TT>). The CUDA stream number is 
+  increasing, beginning with the default stream <TT>1</TT>. The stream number 
+  provided by CUPTI might not be evenly increasing. CUDA streams without records 
+  will not be written. 
+<P></P>
+
+<P>
+If CUDA libraries are used, which create CUDA streams themselves, 
+  many CUDA threads (CUDA streams per device) can appear in a program trace. 
+  In that case, it may be useful to force reusing of CUDA streams (add option 
+  <TT>stream_reuse</TT> to <TT>VT_GPUTRACE</TT>). This enables VampirTrace to 
+  reuse an existing thread buffer of a destroyed CUDA stream and therewith 
+  reduces the number of separate CUDA threads (or streams) in the trace. The 
+  CUDA stream number will then be missing in the CUDA thread notation. 
 <P></P>
 
 <P>
@@ -2426,10 +2472,12 @@ As kernels and asynchronous memory copies are executed asynchronously
   a synchronizing CUDA API function call or the program exits. 
   Every used CUDA device and its corresponding host thread has an own buffer 
   (8192 bytes by default), when CUDA tracing is done via the CUDA runtime API wrapper. 
+  If the buffer is full, it will be flushed immediately. 
   When using CUDA tracing via CUPTI every CUDA context creation initiates the 
-  allocation of an own buffer (65536 bytes by default). 
+  allocation of an own buffer (65536 bytes by default). If the buffer is full, 
+  further records will be dropped and a warning will be shown in <SPAN  CLASS="textit">stderr</SPAN> output. 
   The buffer size can be specified in bytes with the environment variable 
-  <TT>VT_CUDATRACE_BUFFER_SIZE</TT>. 
+  <TT>VT_CUDATRACE_BUFFER_SIZE</TT>.
 <P></P>
 
 <P>
@@ -2467,13 +2515,13 @@ Several new region groups have been introduced:
 <H3><A NAME="SECTION00550100000000000000">
 Tracing CUDA Runtime API via CUPTI</A>
 </H3>
-  Using CUPTI to trace the CUDA runtime API and GPU activities needs the 
-  environment variable <TT>VT_CUDATRACE_CUPTI</TT> to be set to <TT>yes</TT>.
-  By default, the library wrapper will be used. If both tracing methods are 
-  configured during the VampirTrace build process, the CUDA runtime library 
-  should be preloaded to reduce tracing overhead (<TT>LD_PRELOAD=libcudart.so</TT>).
-  Otherwise the library wrapper intercepts every CUDA runtime API call and makes 
-  a short but unnecessary check, whether it is enabled. 
+  To enable CUDA runtime API tracing via CUPTI, the option <TT>cupti</TT> has to be 
+  added to <TT>VT_GPUTRACE</TT>. By default, the library wrapper will be used. 
+  If both tracing methods are configured during the VampirTrace build process, 
+  the CUDA runtime library should be preloaded to reduce tracing overhead 
+  (the dynamic linker can use  <TT>LD_PRELOAD=libcudart.so</TT>). Otherwise 
+  the library wrapper intercepts every CUDA runtime API call and makes a short 
+  but unnecessary check, whether it is enabled. 
 <P></P>
 
 <P>
@@ -3563,7 +3611,7 @@ default: automatically by configure.
 enable support for Dyninst instrumentation,
                               default: enable if found by configure.
                               <SPAN  CLASS="textbf">Note:</SPAN> Requires Dyninst<A NAME="tex2html8"
-  HREF="#foot1586"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
+  HREF="#foot1609"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A> version 6.1 or higher!
 
 <P>
@@ -3585,9 +3633,9 @@ enable support for automatic source code
                               instrumentation by using TAU, default: enable if
                               found by configure.
                               <SPAN  CLASS="textbf">Note:</SPAN> Requires PDToolkit<A NAME="tex2html9"
-  HREF="#foot1587"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
+  HREF="#foot1610"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A> or TAU<A NAME="tex2html10"
-  HREF="#foot1588"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
+  HREF="#foot1611"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A>!
 
 <P>
@@ -4156,7 +4204,7 @@ give the path for JVMTI-include files, default:
 
 <P>
 To enable support for generating wrapper for 3th-Party libraries the C code parser CTool<A NAME="tex2html11"
-  HREF="#foot1589"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
+  HREF="#foot1612"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A> is needed:
 
 <P>
@@ -4570,11 +4618,19 @@ options:
 
   -o, --output FILE   Rewrite instrumented executable to specified pathname.
 
+  -f, --filter FILE   Pathname of input filter file.
+
   -s, --shlibs SHLIBS[,...]
                       Comma-separated list of shared libraries which shall
                       also be instrumented.
 
-  -f, --filter FILE   Pathname of input filter file.
+  --outer-loops       Do instrument outer loops within functions.
+
+  --inner-loops       Do instrument inner loops within outer loops.
+                      (implies --outer-loops)
+
+  --loop-iters        Do instrument loop iterations.
+                      (implies --outer-loops)
 
   --ignore-nodbg      Don't instrument functions which have no debug
                       information.
@@ -5278,7 +5334,7 @@ Since IOFSL servers can handle multiple clients, an N:M mapping of clients to se
 
 <P>
 When using the IOFSL integration, all write requests in OTF are issued using the zoidfs API<A NAME="tex2html12"
-  HREF="#foot3154"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
+  HREF="#foot3199"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A>. Those writes are handled by the IOFSL forwarding servers and aggregated into a single file using the atomic append feature. The offset in the multifile is returned to OTF and stored in a second file, the so called index file, in order to maintain the mapping between written blocks and streams. For any block of a stream written into the multifile, the index file contains the ID of the stream, the start of the block, and its length. This allows for an efficient reading of blocks since only the index file has to be scanned for entries for a given stream ID. Additionally, a large number of logical files (streams) can be stored using only two physical files.
 
 <P>
@@ -5290,7 +5346,7 @@ Installation</A>
 <P>
 In order to use this setup, IOFSL and VampirTrace have to be compiled in order.
 In the following sections, the directory <TT>&lt;install_dir&gt;</TT> should be replaced with a - possibly user-local - directory used for installation, e.g. <TT>$HOME/local</TT><A NAME="tex2html13"
-  HREF="#foot3158"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
+  HREF="#foot3203"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A>.
 The installation procedure for IOFSL is described at https://trac.mcs.anl.gov/projects/iofsl/wiki/Building.
 Currently the <TT>iofsl_vampir</TT> git branch is required.
@@ -5469,7 +5525,7 @@ They will be launched on dedicated compute nodes that are part of the batch Job 
 PBS Options</A>
 </H4>
 It is important to reserve a sufficient number of processor cores. The number of cores requested must be large enough to contain the number of application cores plus the number of cores required for the IOFSL server instances. Each IOFSL server will run on a dedicated node<A NAME="tex2html14"
-  HREF="#foot3202"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
+  HREF="#foot3247"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A>.Thus N_allocated &#8805;((N_IOFSL * 16) + N_Application) must hold.
 <P>
 Example using 64 server instances:
@@ -5566,10 +5622,10 @@ Configuring the Server</A>
 The server is configured using a configuration file.
 At server start-up, this file is provided using the <TT>-config</TT> argument.
 The cray XK6 configuration file is provided in the package<A NAME="tex2html15"
-  HREF="#foot3342"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
+  HREF="#foot3387"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A>.
 For more information about the options available please refer to the IOFSL documentation<A NAME="tex2html16"
-  HREF="#foot3343"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
+  HREF="#foot3388"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A>.
 The most important option is the <TT>serverlist</TT> entry in the <TT>bmi</TT> section which takes a list of server addresses, e.g. :
 <PRE>
@@ -5975,99 +6031,99 @@ If you provide us with your additions afterwards we will consider merging them
 into the official VampirTrace package.
 <BR><HR><H4>Footnotes</H4>
 <DL>
-<DT><A NAME="foot1526">... (OTF)</A><A
+<DT><A NAME="foot1549">... (OTF)</A><A
  HREF="#tex2html1"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A></DT>
 <DD>http://www.tu-dresden.de/zih/otf
 
 </DD>
-<DT><A NAME="foot1527">... tool </A><A
+<DT><A NAME="foot1550">... tool </A><A
  HREF="#tex2html2"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A></DT>
 <DD>http://www.vampir.eu
 
 </DD>
-<DT><A NAME="foot1528">...
+<DT><A NAME="foot1551">...
 Open MPI </A><A
  HREF="#tex2html3"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A></DT>
 <DD>http://www.open-mpi.org/faq/?category=vampirtrace
 
 </DD>
-<DT><A NAME="foot1552">... documentation </A><A
+<DT><A NAME="foot1575">... documentation </A><A
  HREF="#tex2html4"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A></DT>
 <DD>http://www.cs.uoregon.edu/Research/tau/docs/newguide/bk05ch02.html#d0e3770
 
 </DD>
-<DT><A NAME="foot1553">...
+<DT><A NAME="foot1576">...
 Dyninst </A><A
  HREF="#tex2html5"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A></DT>
 <DD>http://www.dyninst.org
 
 </DD>
-<DT><A NAME="foot1554">... library </A><A
+<DT><A NAME="foot1577">... library </A><A
  HREF="#tex2html6"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A></DT>
 <DD>http://sourceforge.net/projects/ctool
 
 </DD>
-<DT><A NAME="foot1564">... CLAPACK</A><A
+<DT><A NAME="foot1587">... CLAPACK</A><A
  HREF="#tex2html7"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A></DT>
 <DD>www.netlib.org/clapack
 
 </DD>
-<DT><A NAME="foot1586">... Dyninst </A><A
+<DT><A NAME="foot1609">... Dyninst </A><A
  HREF="#tex2html8"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A></DT>
 <DD>http://www.dyninst.org
 
 </DD>
-<DT><A NAME="foot1587">... PDToolkit </A><A
+<DT><A NAME="foot1610">... PDToolkit </A><A
  HREF="#tex2html9"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A></DT>
 <DD>http://www.cs.uoregon.edu/research/pdt/home.php
 
 </DD>
-<DT><A NAME="foot1588">... TAU </A><A
+<DT><A NAME="foot1611">... TAU </A><A
  HREF="#tex2html10"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A></DT>
 <DD>http://tau.uoregon.edu
 
 </DD>
-<DT><A NAME="foot1589">... CTool </A><A
+<DT><A NAME="foot1612">... CTool </A><A
  HREF="#tex2html11"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A></DT>
 <DD>http://sourceforge.net/projects/ctool
 
 </DD>
-<DT><A NAME="foot3154">... API</A><A
+<DT><A NAME="foot3199">... API</A><A
  HREF="#tex2html12"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A></DT>
 <DD>The OTF master control file is written using POSIX I/O in any case.
 
 </DD>
-<DT><A NAME="foot3158">...$HOME/local</A><A
+<DT><A NAME="foot3203">...$HOME/local</A><A
  HREF="#tex2html13"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A></DT>
 <DD>The software packages can be installed in different directories.
 
 </DD>
-<DT><A NAME="foot3202">... node</A><A
+<DT><A NAME="foot3247">... node</A><A
  HREF="#tex2html14"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A></DT>
 <DD>The server makes use of all the nodes resources by multithreading and allocating large I/O buffers
 
 </DD>
-<DT><A NAME="foot3342">... package</A><A
+<DT><A NAME="foot3387">... package</A><A
  HREF="#tex2html15"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A></DT>
 <DD><TT>tools/vtiofsl/platform/crayxk6-iofwd.cf</TT>
 
 </DD>
-<DT><A NAME="foot3343">... documentation</A><A
+<DT><A NAME="foot3388">... documentation</A><A
  HREF="#tex2html16"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A></DT>
 <DD>https://trac.mcs.anl.gov/projects/iofsl/wiki/ConfigurationFile

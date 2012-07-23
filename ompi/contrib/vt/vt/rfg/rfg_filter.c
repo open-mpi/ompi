@@ -572,8 +572,13 @@ int RFG_Filter_add( RFG_Filter* filter, const char* pattern, int32_t climit,
   /* add new filter assignment */
 
   filter->assigns[filter->nassigns].climit = climit;
-  filter->assigns[filter->nassigns].sbounds[0] = sbounds[0];
-  filter->assigns[filter->nassigns].sbounds[1] = sbounds[1];
+  filter->assigns[filter->nassigns].sbounds[0] = 1;
+  filter->assigns[filter->nassigns].sbounds[1] = (uint32_t)-1;
+  if( sbounds )
+  {
+     filter->assigns[filter->nassigns].sbounds[0] = sbounds[0];
+     filter->assigns[filter->nassigns].sbounds[1] = sbounds[1];
+  }
   filter->assigns[filter->nassigns].flags = flags;
   filter->assigns[filter->nassigns].pattern = strdup( pattern );
   filter->nassigns++;

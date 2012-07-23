@@ -533,24 +533,6 @@ cudaError_t  cudaStreamCreate(cudaStream_t *pStream)
   return ret;
 }
 
-/* -- cuda_runtime_api.h:cudaStreamDestroy -- */
-cudaError_t  cudaStreamDestroy(cudaStream_t stream)
-{
-  cudaError_t  ret;
-
-  CUDARTWRAP_FUNC_INIT(vt_cudart_lw, vt_cudart_lw_attr, "cudaStreamDestroy",
-    cudaError_t , (cudaStream_t ),
-    NULL, 0);
-
-  CUDARTWRAP_FUNC_START(vt_cudart_lw);
-
-  ret = VT_LIBWRAP_FUNC_CALL(vt_cudart_lw, (stream));
-
-  CUDARTWRAP_FUNC_END(vt_cudart_lw);
-
-  return ret;
-}
-
 /* -- cuda_runtime_api.h:cudaStreamSynchronize -- */
 cudaError_t  cudaStreamSynchronize(cudaStream_t stream)
 {
