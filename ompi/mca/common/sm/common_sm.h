@@ -73,6 +73,35 @@ typedef struct mca_common_sm_module_t {
 OBJ_CLASS_DECLARATION(mca_common_sm_module_t);
 
 /**
+ *  This routine is used to create a shared memory segment (whether
+ *  it's an mmaped file or a SYSV IPC segment).  It is assumed that
+ *  the shared memory segment does not exist before this call.
+ *
+ *  @returnvalue pointer to control structure at head of shared memory segment.
+ *  Returns NULL if an error occurred.
+ */
+mca_common_sm_module_t *
+mca_common_sm_module_create(size_t size,
+                            char *file_name,
+                            size_t size_ctl_structure,
+                            size_t data_seg_alignment);
+
+/**
+ *  This routine is used to attach to the shared memory segment associated with
+ *  *seg_meta.  It is assumed that the shared memory segment associated with
+ *  *seg_meta was already created with mca_common_sm_module_create.
+ *
+ *  @seg_meta points to shared memory information used for initialization and setup.
+ *
+ *  @returnvalue pointer to control structure at head of shared memory segment.
+ *  Returns NULL if an error occurred.
+ */
+mca_common_sm_module_t *
+mca_common_sm_module_attach(opal_shmem_ds_t *seg_meta,
+                            size_t size_ctl_structure,
+                            size_t data_seg_alignment);
+
+/**
  *  This routine is used to set up a shared memory segment (whether
  *  it's an mmaped file or a SYSV IPC segment).  It is assumed that
  *  the shared memory segment does not exist before any of the current
