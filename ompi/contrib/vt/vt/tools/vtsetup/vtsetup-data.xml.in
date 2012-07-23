@@ -42,10 +42,6 @@
     <desc>Resource Usage Counter</desc>
     <parentid>count</parentid>
   </group>
-  <group identifier="Dyninst" priority="200" descname="Dyninst">
-    <desc>Dyninst</desc>
-    <parentid>FiltGrp</parentid>
-  </group>
   <group identifier="java" priority="100" descname="Java">
     <desc> </desc>
     <parentid>FiltGrp</parentid>
@@ -66,13 +62,17 @@
     <desc>Operation Mode</desc>
     <parentid>optFeat</parentid>
   </group>
+  <group identifier="Dyninst" priority="500" descname="Binary instrumentation (Dyninst)">
+    <desc>Binary instrumentation (Dyninst)</desc>
+    <parentid>optFeat</parentid>
+  </group>
   <group identifier="mcor" priority="600" descname="MPI Correctness">
     <desc>MPI Correctness</desc>
     <parentid>optFeat</parentid>
   </group>
   <group identifier="iofsl" priority="700" descname="I/O Forwarding (IOFSL)">
     <desc>IOFSL</desc>
-    <parentid>optFeat</parentid>
+    <parentid>gen</parentid>
   </group>
   <group identifier="snam" priority="000" descname="Symbol Names">
     <desc>Symbol Names</desc>
@@ -572,7 +572,7 @@
     <since major="5" minor="0" patch="0" /><available>@VT_SETUP_RUSAGE@</available>
     <anchor>VT_SETUP_VT_RUSAGE_INTV</anchor>
   </env>
-  <env isdeprecated="0" priority="100" descname="Additional libraries for Dyninst binary instrumentation" isadvanced="1" group="Dyninst"
+  <env isdeprecated="0" priority="100" descname="Additional libraries to instrument" isadvanced="1" group="Dyninst"
     envname="VT_DYN_SHLIBS">
     <desc>Colon-separeted list of shared libraries for Dyninst instrumentation.</desc>
     <valuedesc>
@@ -593,6 +593,39 @@
     </valuedesc>
     <since major="5" minor="11" patch="0" /><available>@VT_SETUP_DYNINST@</available>
     <anchor>VT_SETUP_VT_DYN_IGNORE_NODBG</anchor>
+  </env>
+  <env isdeprecated="0" priority="100" descname="Instrumentation of outer loops within functions" isadvanced="1" group="Dyninst"
+    envname="VT_DYN_OUTER_LOOPS">
+    <desc>Enable / disable instrumentation of outer loops within functions.</desc>
+    <valuedesc>
+      <value type="bool">
+        <default>0</default>
+      </value>
+    </valuedesc>
+    <since major="5" minor="13" patch="0" /><available>@VT_SETUP_DYNINST@</available>
+    <anchor>VT_SETUP_VT_DYN_OUTER_LOOPS</anchor>
+  </env>
+  <env isdeprecated="0" priority="100" descname="Instrumentation of inner loops within outer loops" isadvanced="1" group="Dyninst"
+    envname="VT_DYN_INNER_LOOPS">
+    <desc>Enable / disable instrumentation of inner loops within outer loops.</desc>
+    <valuedesc>
+      <value type="bool">
+        <default>0</default>
+      </value>
+    </valuedesc>
+    <since major="5" minor="13" patch="0" /><available>@VT_SETUP_DYNINST@</available>
+    <anchor>VT_SETUP_VT_DYN_INNER_LOOPS</anchor>
+  </env>
+  <env isdeprecated="0" priority="100" descname="Instrumentation of loop iterations" isadvanced="1" group="Dyninst"
+    envname="VT_DYN_OUTER_LOOPS">
+    <desc>Enable / disable instrumentation of loop iterations.</desc>
+    <valuedesc>
+      <value type="bool">
+        <default>0</default>
+      </value>
+    </valuedesc>
+    <since major="5" minor="13" patch="0" /><available>@VT_SETUP_DYNINST@</available>
+    <anchor>VT_SETUP_VT_DYN_LOOP_ITERS</anchor>
   </env>
   <env isdeprecated="0" priority="100" descname="Detach Dyninst mutator-program from application process" isadvanced="1" group="Dyninst"
     envname="VT_DYN_DETACH">
@@ -641,7 +674,7 @@
     <anchor>VT_SETUP_VT_JAVA_FILTER_SPEC</anchor>
   </env>
   <env isdeprecated="0" priority="100" descname="Java class grouping" isadvanced="1" group="java"
-    envname="VT_GROUP_CLASSES">
+    envname="VT_JAVA_GROUP_CLASSES">
     <desc>Whether to create a group for each Java class automatically or not.</desc>
     <valuedesc>
       <value type="bool">
@@ -649,7 +682,7 @@
       </value>
     </valuedesc>
     <since major="5" minor="0" patch="0" /><available>@VT_SETUP_JAVA@</available>
-    <anchor>VT_SETUP_VT_GROUP_CLASSES</anchor>
+    <anchor>VT_SETUP_VT_JAVA_GROUP_CLASSES</anchor>
   </env>
   <env isdeprecated="0" priority="100" descname="Check stack level balance when switching tracing on/off" isadvanced="1" group="FiltGrpMisc"
     envname="VT_ONOFF_CHECK_STACK_BALANCE">

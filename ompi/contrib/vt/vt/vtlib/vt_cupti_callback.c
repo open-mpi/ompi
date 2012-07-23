@@ -161,6 +161,9 @@ uint32_t vt_cupti_cid_threadsPerKernel = VT_NO_ID;
 static uint8_t vt_cupticb_initialized = 0;
 static uint8_t vt_cupticb_finalized = 0;
 
+/* VampirTrace region ID for synchronization of host and CUDA device*/
+static uint32_t vt_cupticb_rid_sync = VT_NO_ID;
+
 #if !defined(VT_CUPTI_ACTIVITY)
 
 /* list of VampirTrace CUDA contexts */
@@ -174,9 +177,6 @@ static vt_cupticb_ctx_t* vt_cupticb_ctxList = NULL;
  * 2 show synchronization in extra region group to get host wait time
  */
 static uint8_t vt_cupticb_syncLevel = 3;
-
-/* VampirTrace region ID for synchronization of host and CUDA device*/
-static uint32_t vt_cupticb_rid_sync = VT_NO_ID;
 #endif /* !defined(VT_CUPTI_ACTIVITY) */
 
 /**************** The callback functions to be registered *********************/
@@ -1091,38 +1091,85 @@ void vt_cupticb_resource(CUpti_CallbackId cbid,
   /********************** CUDA memory allocation ******************************/
     case CUPTI_CBID_RESOURCE_CONTEXT_CREATED: {
       vt_cntl_msg(2, "[CUPTI Callbacks] Creating context %d", resData->context);
-      if(vt_cupticb_trace_driverAPI)
+      
+      /* add the context without tracing CUDA driver API calls, if enabled */
+      if(vt_cupticb_trace_driverAPI){
         cuptiEnableDomain(0, vt_cupticb_subscriber, CUPTI_CB_DOMAIN_DRIVER_API);
-      vt_cuptiact_addContext(resData->context, (CUdevice)-1);
-      if(vt_cupticb_trace_driverAPI)
+        vt_cuptiact_addContext(resData->context, (CUdevice)-1);
         cuptiEnableDomain(1, vt_cupticb_subscriber, CUPTI_CB_DOMAIN_DRIVER_API);
+      }else{
+        vt_cuptiact_addContext(resData->context, (CUdevice)-1);
+      }
       
       break;
     }
     
     case CUPTI_CBID_RESOURCE_CONTEXT_DESTROY_STARTING: {
       vt_cntl_msg(2, "[CUPTI Callbacks] Destroying context");
+
+      /* Only flush the activities of the context. The user code has to ensure, 
+         that the context is synchronized */
       vt_cuptiact_flushCtxActivities(resData->context);
       
       break;
     }
-    /*
+    
     case CUPTI_CBID_RESOURCE_STREAM_CREATED: {
-      resData->context;
-      resData->resourceHandle.stream;
-      vt_cntl_msg(1, "[CUPTI Callbacks] Creating stream");
+      if(vt_gpu_stream_reuse){
+        uint32_t strmID;
+        
+        VT_CUPTI_CALL(cuptiGetStreamId(resData->context, 
+                                       resData->resourceHandle.stream, 
+                                       &strmID), 
+                      "cuptiGetStreamId");
+        
+        vt_cntl_msg(2, "[CUPTI Callbacks] Creating stream %d (context %d)", 
+                       strmID, resData->context);
+      }
       
       break;
     }
     
-    case CUPTI_CBID_RESOURCE_STREAM_DESTROY_STARTING: {
-      resData->context;
-      resData->resourceHandle.stream;
-      vt_cntl_msg(1, "[CUPTI Callbacks] Destroying stream");
+    case CUPTI_CBID_RESOURCE_STREAM_DESTROY_STARTING: {      
+      if(vt_gpu_stream_reuse){
+        uint32_t ptid, strmID;
+        uint64_t time;
+  
+        VT_CHECK_THREAD;
+        ptid = VT_MY_THREAD;
+        
+        time = vt_pform_wtime();
+        vt_enter(ptid, &time, vt_cupticb_rid_sync);
+
+        /* implicitly flush context activities via cuCtxSynchronize() */
+        if(vt_cupticb_trace_driverAPI){
+          cuptiEnableDomain(0, vt_cupticb_subscriber, CUPTI_CB_DOMAIN_DRIVER_API);
+          CHECK_CU_ERROR(cuCtxSynchronize(), NULL);
+          cuptiEnableDomain(1, vt_cupticb_subscriber, CUPTI_CB_DOMAIN_DRIVER_API);
+        }else{
+          CHECK_CU_ERROR(cuCtxSynchronize(), NULL);
+        }
+        
+        time = vt_pform_wtime();
+        vt_exit(ptid, &time);
+        
+        /* get the stream id from stream type */
+        VT_CUPTI_CALL(cuptiGetStreamId(resData->context, 
+                                       resData->resourceHandle.stream, 
+                                       &strmID), 
+                      "cuptiGetStreamId");
+        
+        /* mark the stream as destroyed to be available for reuse */
+        vt_cuptiact_markStreamAsDestroyed(resData->context, 
+                                          strmID);
+        
+        vt_cntl_msg(2, "[CUPTI Callbacks] Destroying stream %d (context %d)", 
+                       strmID, resData->context);
+      }
       
       break;
     }
-    */
+    
     default: break;
   }
 }
@@ -1688,11 +1735,16 @@ void vt_cupti_callback_init()
                         vt_cupti_cgid_cuda_kernel, 0);
         }
 
-#if !defined(VT_CUPTI_ACTIVITY)
+#if defined(VT_CUPTI_ACTIVITY)
+        if(vt_gpu_stream_reuse){
+          vt_cupticb_rid_sync = vt_def_region(VT_MASTER_THREAD, "cudaSynchronize", 
+                      VT_NO_ID, VT_NO_LNO, VT_NO_LNO, "CUDA_SYNC", VT_FUNCTION);
+        }
+#else
         if(vt_gpu_trace_kernels > 0 || vt_gpu_trace_mcpy){
           vt_cupticb_syncLevel = (uint8_t)vt_env_cudatrace_sync();
           vt_cupticb_rid_sync = vt_def_region(VT_MASTER_THREAD, "cudaSynchronize", 
-                          VT_NO_ID, VT_NO_LNO, VT_NO_LNO, "CUDA_SYNC", VT_FUNCTION);
+                      VT_NO_ID, VT_NO_LNO, VT_NO_LNO, "CUDA_SYNC", VT_FUNCTION);
         }
 #endif
         

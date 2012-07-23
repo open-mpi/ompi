@@ -92,8 +92,10 @@ typedef struct
 
 #if (defined (VT_MPI) || defined (VT_HYB))
 
-  uint64_t mpicoll_next_matchingid; /**< matching id counter for MPI collective
-                                         operations. */
+  uint8_t mpi_tracing_enabled;       /**< actual mode of MPI tracing
+                                          operation */
+  uint64_t mpicoll_next_matchingid;  /**< matching id counter for MPI collective
+                                          operations */
 
 #endif /* VT_MPI || VT_HYB */
 
@@ -108,8 +110,9 @@ typedef struct
 
 #if (defined (VT_IOWRAP) || (defined(HAVE_MPI2_IO) && HAVE_MPI2_IO))
 
-  uint64_t io_next_matchingid;
-  uint64_t io_next_handle;
+  uint64_t io_next_matchingid;      /**< matching id counter for I/O
+                                         operations */
+  uint64_t io_next_handle;          /**< handle id counter for I/O operations */
 
 #endif
 
@@ -203,30 +206,42 @@ typedef struct
 #endif /* VT_DISABLE_RFG */
 
 #if (defined (VT_MPI) || defined (VT_HYB))
-/* matching id counter for MPI coll. ops. */
+
+/* actual mode of MPI tracing operation */
+#define VTTHRD_MPI_TRACING_ENABLED(thrd) \
+                                    (thrd->mpi_tracing_enabled)
+
+/* increment matching id counter for MPI collective operations */
 #define VTTHRD_MPICOLLOP_NEXT_MATCHINGID(thrd) \
                                     (thrd->mpicoll_next_matchingid++)
+
 #endif /* VT_MPI || VT_HYB */
 
 #if (defined (VT_IOWRAP))
 
-/* save enabled/disabled state of I/O tracing when switching off temporarily */
+/* save value of enabled flag during suspend */
 #define VTTHRD_IO_TRACING_STATE(thrd) \
                                     (thrd->io_tracing_state)
+
+/* save how often suspend was called */
 #define VTTHRD_IO_TRACING_SUSPEND_CNT(thrd) \
                                     (thrd->io_tracing_suspend_cnt)
 
-/* flag: is I/O tracing enabled? */
+/* actual mode of I/O tracing operation */
 #define VTTHRD_IO_TRACING_ENABLED(thrd) \
                                     (thrd->io_tracing_enabled)
 
 #endif /* VT_IOWRAP */
 
 #if (defined (VT_IOWRAP) || (defined(HAVE_MPI2_IO) && HAVE_MPI2_IO))
+
+/* increment matching id counter for I/O operations */
 #define VTTHRD_IO_NEXT_MATCHINGID(thrd) \
                                     (thrd->io_next_matchingid++)
-#define VTTHRD_IO_NEXT_HANDLE(thrd) \
-                                    (thrd->io_next_handle++)
+
+/* increment handle id counter for I/O operations */
+#define VTTHRD_IO_NEXT_HANDLE(thrd) (thrd->io_next_handle++)
+
 #endif /* VT_IOWRAP || (HAVE_MPI2_IO && HAVE_MPI2_IO) */
 
 #if (defined (VT_GETCPU))

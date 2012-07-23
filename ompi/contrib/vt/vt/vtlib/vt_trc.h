@@ -120,7 +120,7 @@ EXTERN void vt_update_counter(uint32_t tid, uint64_t* time);
  * This function have to be called immediately after initializing the
  * communication middle-ware, e.g. atfer MPI_Init().
  */
-EXTERN void vt_mpi_init(void);
+EXTERN void vt_mpi_init(uint8_t multithreaded);
 
 /**
  * TODO: Description
@@ -792,12 +792,6 @@ EXTERN int vt_my_ptrace;  /** parent process id */
 EXTERN uint8_t vt_my_trace_is_master; /** 1st process on local node? */
 EXTERN uint8_t vt_my_trace_is_disabled; /** process disabled? */
 EXTERN uint8_t vt_my_trace_is_first_avail; /** 1st not disabled process? */
-
-#if defined(HAVE_MPI2_THREAD) && HAVE_MPI2_THREAD
-/** is requested MPI thread support level MPI_THREAD_SERIALIZED?
-    (not yet supported; no MPI communication events will be recorded) */
-EXTERN uint8_t vt_mpi_thread_serialized;
-#endif /* HAVE_MPI2_THREAD */
 
 /** unique file id */
 EXTERN int vt_my_funique;
