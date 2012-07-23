@@ -65,16 +65,15 @@ OBJ_CLASS_INSTANCE(
     NULL
 );
 
-/* shared memory information used for initialization and setup. */
-static opal_shmem_ds_t shmem_ds;
-
 /* ////////////////////////////////////////////////////////////////////////// */
 /* static utility functions */
 /* ////////////////////////////////////////////////////////////////////////// */
 
 /* ////////////////////////////////////////////////////////////////////////// */
 static mca_common_sm_module_t *
-attach_and_init(size_t size_ctl_structure,
+attach_and_init(opal_shmem_ds_t *shmem_bufp,
+                size_t size,
+                size_t size_ctl_structure,
                 size_t data_seg_alignment,
                 bool first_call)
 {
@@ -82,25 +81,32 @@ attach_and_init(size_t size_ctl_structure,
     mca_common_sm_seg_header_t *seg = NULL;
     unsigned char *addr = NULL;
 
-    /* map the file and initialize segment state */
+    /* attach to the specified segment. note that at this point, the contents of
+     * *shmem_bufp have already been initialized via opal_shmem_segment_create.
+     */
     if (NULL == (seg = (mca_common_sm_seg_header_t *)
-                       opal_shmem_segment_attach(&shmem_ds))) {
+                       opal_shmem_segment_attach(shmem_bufp))) {
         return NULL;
     }
     opal_atomic_rmb();
 
-    /* set up the map object */
     if (NULL == (map = OBJ_NEW(mca_common_sm_module_t))) {
         ORTE_ERROR_LOG(OMPI_ERR_OUT_OF_RESOURCE);
+        (void)opal_shmem_segment_detach(shmem_bufp);
         return NULL;
     }
 
-    /* copy information: from ====> to */
-    opal_shmem_ds_copy(&shmem_ds, &map->shmem_ds);
+    /* copy meta information into common sm module
+     *                                     from ====> to                */
+    if (OPAL_SUCCESS != opal_shmem_ds_copy(shmem_bufp, &map->shmem_ds)) {
+        (void)opal_shmem_segment_detach(shmem_bufp);
+        free(map);
+        return NULL;
+    }
 
     /* the first entry in the file is the control structure. the first
      * entry in the control structure is an mca_common_sm_seg_header_t
-     * element
+     * element.
      */
     map->module_seg = seg;
 
@@ -113,31 +119,92 @@ attach_and_init(size_t size_ctl_structure,
     if (0 != data_seg_alignment) {
         addr = OPAL_ALIGN_PTR(addr, data_seg_alignment, unsigned char *);
         /* is addr past end of the shared memory segment? */
-        if ((unsigned char *)seg + shmem_ds.seg_size < addr) {
+        if ((unsigned char *)seg + shmem_bufp->seg_size < addr) {
             orte_show_help("help-mpi-common-sm.txt", "mmap too small", 1,
                            orte_process_info.nodename,
-                           (unsigned long)shmem_ds.seg_size,
+                           (unsigned long)shmem_bufp->seg_size,
                            (unsigned long)size_ctl_structure,
                            (unsigned long)data_seg_alignment);
+            (void)opal_shmem_segment_detach(shmem_bufp);
+            free(map);
             return NULL;
         }
     }
 
     map->module_data_addr = addr;
     map->module_seg_addr = (unsigned char *)seg;
-
-    /* map object successfully initialized - we can safely increment
-     * seg_num_procs_attached_and_inited. this value is used by
-     * opal_shmem_unlink.
-     */
+    
+    /* note that size is only used during the first call */
     if (first_call) {
-        /* make sure that the first call to this function initializes
-         * seg_num_procs_inited to zero */
+        /* initialize some segment information */
+        size_t mem_offset = map->module_data_addr -
+                            (unsigned char *)map->module_seg;
+        opal_atomic_init(&map->module_seg->seg_lock, OPAL_ATOMIC_UNLOCKED);
+        map->module_seg->seg_inited = 0;
         map->module_seg->seg_num_procs_inited = 0;
+        map->module_seg->seg_offset = mem_offset;
+        map->module_seg->seg_size = size - mem_offset;
         opal_atomic_wmb();
     }
+
+    /* increment the number of processes that are attached to the segment. */
     (void)opal_atomic_add_size_t(&map->module_seg->seg_num_procs_inited, 1);
+
+    /* commit the changes before we return */
     opal_atomic_wmb();
+
+    return map;
+}
+
+/* ////////////////////////////////////////////////////////////////////////// */
+/* api implementation */ 
+/* ////////////////////////////////////////////////////////////////////////// */
+
+/* ////////////////////////////////////////////////////////////////////////// */
+mca_common_sm_module_t *
+mca_common_sm_module_create(size_t size,
+                            char *file_name,
+                            size_t size_ctl_structure,
+                            size_t data_seg_alignment)
+{
+    mca_common_sm_module_t *map = NULL;
+    opal_shmem_ds_t *seg_meta = NULL;
+
+    if (NULL == (seg_meta = malloc(sizeof(*seg_meta)))) {
+        /* out of resources */
+        return NULL;
+    }
+    if (OPAL_SUCCESS == opal_shmem_segment_create(seg_meta, file_name, size)) {
+        map = attach_and_init(seg_meta, size, size_ctl_structure,
+                              data_seg_alignment, true);
+        if (NULL != map) {
+            /* at this point, seg_meta has been copied to the newly created
+             * shared memory segment, so we can free it */
+            free(seg_meta);
+            /* done! */
+            return map;
+        }
+    }
+    /* error path */
+    return NULL;
+}
+
+/* ////////////////////////////////////////////////////////////////////////// */
+/**
+ * @return a pointer to the mca_common_sm_module_t associated with seg_meta if
+ * everything was okay, otherwise returns NULL.
+ */
+mca_common_sm_module_t *
+mca_common_sm_module_attach(opal_shmem_ds_t *seg_meta,
+                            size_t size_ctl_structure,
+                            size_t data_seg_alignment)
+{
+    mca_common_sm_module_t *map = NULL;
+
+    /* notice that size is 0 here. it really doesn't matter because size WILL
+     * NOT be used because this is an attach (first_call is false). */
+    map = attach_and_init(seg_meta, 0, size_ctl_structure,
+                          data_seg_alignment, false);
 
     return map;
 }
@@ -157,6 +224,7 @@ mca_common_sm_init(ompi_proc_t **procs,
     ompi_proc_t *temp_proc = NULL;
     bool found_lowest = false;
     size_t num_local_procs = 0, p = 0;
+    opal_shmem_ds_t *seg_meta = NULL;
 
     /* o reorder procs array to have all the local procs at the beginning.
      * o look for the local proc with the lowest name.
@@ -176,10 +244,10 @@ mca_common_sm_init(ompi_proc_t **procs,
                 /* if we have a new lowest, swap it with position 0
                  * so that procs[0] is always the lowest named proc
                  */
-                if (OPAL_VALUE2_GREATER == orte_util_compare_name_fields(
-                                               ORTE_NS_CMP_ALL,
-                                               &(procs[p]->proc_name),
-                                               &(procs[0]->proc_name))) {
+                if (OPAL_VALUE2_GREATER ==
+                    orte_util_compare_name_fields(ORTE_NS_CMP_ALL,
+                                                  &(procs[p]->proc_name),
+                                                  &(procs[0]->proc_name))) {
                     temp_proc = procs[0];
                     procs[0] = procs[p];
                     procs[num_local_procs] = temp_proc;
@@ -197,55 +265,52 @@ mca_common_sm_init(ompi_proc_t **procs,
         return NULL;
     }
 
+    if (NULL == (seg_meta = malloc(sizeof(*seg_meta)))) {
+        /* out of resources - just bail */
+        return NULL;
+    }
+
     /* determine whether or not i am the lowest local process */
-    lowest_local_proc = (0 == orte_util_compare_name_fields(
-                                  ORTE_NS_CMP_ALL,
-                                  ORTE_PROC_MY_NAME,
-                                  &(procs[0]->proc_name)));
+    lowest_local_proc =
+        (0 == orte_util_compare_name_fields(ORTE_NS_CMP_ALL,
+                                            ORTE_PROC_MY_NAME,
+                                            &(procs[0]->proc_name)));
 
     /* figure out if i am the lowest rank in the group.
      * if so, i will create the shared memory backing store
      */
     if (lowest_local_proc) {
-        if (OPAL_SUCCESS == opal_shmem_segment_create(&shmem_ds, file_name,
+        if (OPAL_SUCCESS == opal_shmem_segment_create(seg_meta, file_name,
                                                       size)) {
-            map = attach_and_init(size_ctl_structure, data_seg_alignment, true);
-            if (NULL != map) {
-                size_t mem_offset = map->module_data_addr -
-                                        (unsigned char *)map->module_seg;
-                map->module_seg->seg_offset = mem_offset;
-                map->module_seg->seg_size = size - mem_offset;
-                opal_atomic_init(&map->module_seg->seg_lock,
-                                 OPAL_ATOMIC_UNLOCKED);
-                map->module_seg->seg_inited = 0;
-            }
-            else {
+            map = attach_and_init(seg_meta, size, size_ctl_structure,
+                                  data_seg_alignment, true);
+            if (NULL == map) {
                 /* fail!
                  * only invalidate the shmem_ds.  doing so will let the rest
                  * of the local processes know that the lowest local rank
                  * failed to properly initialize the shared memory segment, so
                  * they should try to carry on without shared memory support
                  */
-                 OPAL_SHMEM_DS_INVALIDATE(&shmem_ds);
+                 OPAL_SHMEM_DS_INVALIDATE(seg_meta);
             }
         }
     }
 
     /* send shmem info to the rest of the local procs. */
     if (OMPI_SUCCESS !=
-        mca_common_sm_rml_info_bcast(&shmem_ds, procs, num_local_procs,
+        mca_common_sm_rml_info_bcast(seg_meta, procs, num_local_procs,
                                      OMPI_RML_TAG_SM_BACK_FILE_CREATED,
                                      lowest_local_proc, file_name)) {
         goto out;
     }
 
-    /* are we dealing with a valid shmem_ds?  that is, did the lowest
-     * process successfully initialize the shared memory segment?
-     */
-    if (OPAL_SHMEM_DS_IS_VALID(&shmem_ds)) {
+    /* are we dealing with a valid shmem_ds?  that is, did the lowest process
+     * successfully initialize the shared memory segment? */
+    if (OPAL_SHMEM_DS_IS_VALID(seg_meta)) {
         if (!lowest_local_proc) {
-            map = attach_and_init(size_ctl_structure, data_seg_alignment,
-                                  false);
+            /* why is size zero? see comment in mca_common_sm_module_attach */
+            map = attach_and_init(seg_meta, 0, size_ctl_structure,
+                                  data_seg_alignment, false);
         }
         else {
             /* wait until every other participating process has attached to the
@@ -254,11 +319,14 @@ mca_common_sm_init(ompi_proc_t **procs,
             while (num_local_procs > map->module_seg->seg_num_procs_inited) {
                 opal_atomic_rmb();
             }
-            opal_shmem_unlink(&shmem_ds);
+            opal_shmem_unlink(seg_meta);
         }
     }
 
 out:
+    if (NULL != seg_meta) {
+        free(seg_meta);
+    }
     return map;
 }
 
@@ -325,7 +393,7 @@ mca_common_sm_seg_alloc(struct mca_mpool_base_module_t *mpool,
                         mca_mpool_base_registration_t **registration)
 {
     mca_mpool_sm_module_t *sm_module = (mca_mpool_sm_module_t *)mpool;
-    mca_common_sm_seg_header_t* seg = sm_module->sm_common_module->module_seg;
+    mca_common_sm_seg_header_t *seg = sm_module->sm_common_module->module_seg;
     void *addr;
 
     opal_atomic_lock(&seg->seg_lock);
