@@ -3,6 +3,10 @@
 
 #include "vt_inttypes.h"
 
+/* bits for filter flags bitmask*/
+#define RFG_FILTER_FLAG_GROUP     1
+#define RFG_FILTER_FLAG_RECURSIVE 2
+
 #ifdef __cplusplus
 extern "C" {
 #endif /* __cplusplus */
@@ -31,12 +35,12 @@ int RFG_Filter_setDefaultCallLimit( RFG_Filter* filter, int32_t limit );
 int RFG_Filter_readDefFile( RFG_Filter* filter, int rank, uint8_t* rank_off );
 
 /* adds filter assignment */
-int RFG_Filter_add( RFG_Filter* filter, const char* pattern,
-                    int32_t climit );
+int RFG_Filter_add( RFG_Filter* filter, const char* pattern, int32_t climit,
+                    uint32_t* sbounds, uint8_t flags );
 
-/* gets call limit by region name */
-int RFG_Filter_get( RFG_Filter* filter, const char* rname,
-                    int32_t* r_climit );
+/* gets call limit, stack level bounds, and flags by region/group name */
+int RFG_Filter_get( RFG_Filter* filter, const char* rname, const char* gname,
+                    int32_t* r_climit, uint32_t* r_sbounds, uint8_t* r_flags );
 
 #ifdef __cplusplus
 }

@@ -3,8 +3,10 @@
  Authors: Johannes Spazier
 */
 
-#include "handler.h"
+#include <stdio.h>
 
+#include "handler.h"
+#include "otfaux.h"
 
 #define fprintf_root \
     if( my_rank == 0 ) fprintf
@@ -26,32 +28,31 @@
 
 
 static const char* helptext[] = {
-    "\n",
-    " "EXENAME" - change the number of streams for an existing trace.         \n",
-    "                                                                         \n",
-    " Syntax: "EXENAME" [options] <input file name>                           \n",
-    "                                                                         \n",
-    "   options:                                                              \n",
-    "      -h, --help           show this help message                        \n",
-    "      -V                   show OTF version                              \n",
-    "      -p                   show progress                                 \n",
-    "      -n <n>               set number of streams for output              \n",
-    "                           set this to 0 for using one stream per process\n",
-    "                           (default: 1)                                  \n",
-    "      -f <n>               max. number of filehandles available per rank \n",
-    "      -o <name>            namestub of the output file                   \n",
-    "                           (default: out)                                \n",
-    "      -rb <size>           set buffersize of the reader (for each rank)  \n",
-    "      -wb <size>           set buffersize of the writer (for each rank)  \n",
-    "      -z <zlevel>          write compressed output                       \n",
-    "                           zlevel reaches from 0 to 9 where 0 is no      \n",
-    "                           compression and 9 is the highest level        \n",
-    "      --stats              cover statistics too                          \n",
-    "      --snaps              cover snapshots too                           \n",
-    "      --long               write long OTF format                         \n",
-    "\n",
-    NULL
-};
+"                                                                           \n",
+" "EXENAME" - Change the number of streams for an existing OTF trace.       \n",
+"                                                                           \n",
+" Syntax: "EXENAME" [options] <input file name>                             \n",
+"                                                                           \n",
+"   options:                                                                \n",
+"      -h, --help    show this help message                                 \n",
+"      -V            show OTF version                                       \n",
+"      -p            show progress                                          \n",
+"      -n <n>        set number of streams for output                       \n",
+"                    set this to 0 for using one stream per process         \n",
+"                    (default: 1)                                           \n",
+"      -f <n>        max. number of filehandles available per rank          \n",
+"      -o <name>     namestub of the output file                            \n",
+"                    (default: out)                                         \n",
+"      -rb <size>    set buffersize of the reader (for each rank)           \n",
+"      -wb <size>    set buffersize of the writer (for each rank)           \n",
+"      -z <zlevel>   write compressed output                                \n",
+"                    zlevel reaches from 0 to 9 where 0 is no               \n",
+"                    compression and 9 is the highest level                 \n",
+"      --stats       cover statistics too                                   \n",
+"      --snaps       cover snapshots too                                    \n",
+"      --long        write long OTF format                                  \n",
+"                                                                           \n",
+NULL };
 
 
 int main(int argc, char **argv) {
@@ -67,7 +68,7 @@ int main(int argc, char **argv) {
     char *infile = NULL;
     int rbufsize = 1024 * 1024;
     int wbufsize = 1024 * 1024;
-    int format = OTF_WSTREAM_FORMAT_SHORT;
+    int format = OTF_WSTREAM_FORMAT_SHORT | OTF_WSTREAM_FORMAT_INLINE_SNAPSHOTS;
     int read_stats = 0;
     int read_snaps = 0;
     OTF_FileCompression compression= 0;
@@ -97,7 +98,8 @@ int main(int argc, char **argv) {
     OTF_WStream* wstream = NULL;
     OTF_HandlerArray* handlers = NULL;
     OTF_MasterControl* master = NULL;
-    OTF_FileManager* manager = NULL;
+    OTF_FileManager* read_manager = NULL;
+    OTF_FileManager* write_manager = NULL;
     OTF_MapEntry* entry = NULL;
 
 #ifdef OTFMERGE_MPI
@@ -190,7 +192,8 @@ int main(int argc, char **argv) {
 
         } else if( 0 == strcmp( "--long", argv[i] ) ) {
 
-            format = OTF_WSTREAM_FORMAT_LONG;
+            format &= ~1;
+            format |= OTF_WSTREAM_FORMAT_LONG;
 
         } else if( 0 == strcmp( "--snaps", argv[i] ) ) {
 
@@ -272,9 +275,9 @@ int main(int argc, char **argv) {
     if( my_rank == 0 ) {
 
         /* read master of input file */
-        manager = OTF_FileManager_open( max_fhandles );
+        read_manager = OTF_FileManager_open( max_fhandles );
 
-        if( NULL == manager ) {
+        if( NULL == read_manager ) {
 
             fprintf( stderr, "Error: unable to initialize file manager.\n" );
 
@@ -282,7 +285,7 @@ int main(int argc, char **argv) {
 
         }
 
-        master = OTF_MasterControl_new( manager );
+        master = OTF_MasterControl_new( read_manager );
         OTF_MasterControl_read( master, infile );
 
         /* get the total number of processes in the otf master file */
@@ -336,7 +339,7 @@ int main(int argc, char **argv) {
             free( ostreams );
 
             OTF_MasterControl_close( master );
-            OTF_FileManager_close( manager );
+            OTF_FileManager_close( read_manager );
 
             return FINISH_EVERYTHING(1);
 
@@ -487,7 +490,7 @@ int main(int argc, char **argv) {
 
         /* close master */
         OTF_MasterControl_close( master );
-        OTF_FileManager_close( manager );
+        OTF_FileManager_close( read_manager );
 
     }
 #ifdef OTFMERGE_MPI
@@ -558,19 +561,27 @@ int main(int argc, char **argv) {
     }
 #endif /* OTFMERGE_MPI */
 
-    manager = OTF_FileManager_open( max_fhandles );
-    if( NULL == manager ) {
+    write_manager = OTF_FileManager_open( max_fhandles );
+    if( NULL == write_manager ) {
 
-        fprintf( stderr, "Error: unable to initialize file manager.\n" );
+        fprintf( stderr, "Error: unable to initialize write file manager.\n" );
 
         return FINISH_EVERYTHING(1);
 
     }
 
-    /* the root process should read the definitions now */
+    /* the root process should read the definitions and markers now */
     if( my_rank == 0 ) {
+	read_manager = OTF_FileManager_open( max_fhandles );
+	if( NULL == read_manager ) {
 
-        wstream = OTF_WStream_open( outfile, 0, manager );
+	    fprintf( stderr, "Error: unable to initialize read file manager.\n" );
+
+	    return FINISH_EVERYTHING(1);
+
+	}
+
+        wstream = OTF_WStream_open( outfile, 0, write_manager );
 
         OTF_WStream_setBufferSizes( wstream, wbufsize );
         OTF_WStream_setCompression( wstream, compression );
@@ -580,7 +591,7 @@ int main(int argc, char **argv) {
 
         setDefinitionHandlerArray( handlers, wstream );
 
-        reader = OTF_Reader_open( infile, manager);
+        reader = OTF_Reader_open( infile, read_manager);
 
         if( reader == NULL) {
 
@@ -588,7 +599,8 @@ int main(int argc, char **argv) {
 
             OTF_HandlerArray_close( handlers );
             OTF_WStream_close( wstream );
-            OTF_FileManager_close( manager );
+            OTF_FileManager_close( read_manager );
+            OTF_FileManager_close( write_manager );
 
             return FINISH_EVERYTHING(1);
         }
@@ -604,7 +616,8 @@ int main(int argc, char **argv) {
             OTF_Reader_close( reader );
             OTF_HandlerArray_close( handlers );
             OTF_WStream_close( wstream );
-            OTF_FileManager_close( manager );
+            OTF_FileManager_close( read_manager );
+            OTF_FileManager_close( write_manager );
 
             return FINISH_EVERYTHING(1);
         }
@@ -616,7 +629,8 @@ int main(int argc, char **argv) {
             OTF_Reader_close( reader );
             OTF_HandlerArray_close( handlers );
             OTF_WStream_close( wstream );
-            OTF_FileManager_close( manager );
+            OTF_FileManager_close( read_manager );
+            OTF_FileManager_close( write_manager );
 
             return FINISH_EVERYTHING(1);
         }
@@ -625,8 +639,18 @@ int main(int argc, char **argv) {
         OTF_HandlerArray_close( handlers );
         OTF_Reader_close( reader );
         OTF_WStream_close( wstream );
+        OTF_FileManager_close( read_manager );
+    }
+
+    read_manager = OTF_FileManager_open( max_fhandles );
+    if( NULL == read_manager ) {
+
+        fprintf( stderr, "Error: unable to initialize read file manager.\n" );
+
+        return FINISH_EVERYTHING(1);
 
     }
+
 
     for( i = 0; i < rank_data.num_ostreams; i++ ) {
 
@@ -635,7 +659,7 @@ int main(int argc, char **argv) {
         cur_bytes_ges = 0;
 
         wstream =
-            OTF_WStream_open( outfile, rank_data.ostreams[i].id, manager );
+            OTF_WStream_open( outfile, rank_data.ostreams[i].id, write_manager );
 
         OTF_WStream_setBufferSizes( wstream, wbufsize );
         OTF_WStream_setCompression( wstream, compression );
@@ -645,14 +669,15 @@ int main(int argc, char **argv) {
 
         setEventHandlerArray( handlers, wstream );
 
-        reader = OTF_Reader_open( infile, manager);
+        reader = OTF_Reader_open( infile, read_manager);
         if( reader == NULL) {
 
             fprintf_root( stderr, "Error: unable to open file %s.\n", infile );
 
             OTF_HandlerArray_close( handlers );
             OTF_WStream_close( wstream );
-            OTF_FileManager_close( manager );
+            OTF_FileManager_close( read_manager );
+            OTF_FileManager_close( write_manager );
 
             return FINISH_EVERYTHING(1);
         }
@@ -680,7 +705,8 @@ int main(int argc, char **argv) {
                 OTF_Reader_close( reader );
                 OTF_HandlerArray_close( handlers );
                 OTF_WStream_close( wstream );
-                OTF_FileManager_close( manager );
+                OTF_FileManager_close( read_manager );
+                OTF_FileManager_close( write_manager );
 
                 return FINISH_EVERYTHING(1);
 
@@ -698,7 +724,8 @@ int main(int argc, char **argv) {
                     OTF_Reader_close( reader );
                     OTF_HandlerArray_close( handlers );
                     OTF_WStream_close( wstream );
-                    OTF_FileManager_close( manager );
+                    OTF_FileManager_close( read_manager );
+                    OTF_FileManager_close( write_manager );
 
                     return FINISH_EVERYTHING(1);
 
@@ -718,7 +745,8 @@ int main(int argc, char **argv) {
                     OTF_Reader_close( reader );
                     OTF_HandlerArray_close( handlers );
                     OTF_WStream_close( wstream );
-                    OTF_FileManager_close( manager );
+                    OTF_FileManager_close( read_manager );
+                    OTF_FileManager_close( write_manager );
 
                     return FINISH_EVERYTHING(1);
 
@@ -759,7 +787,8 @@ int main(int argc, char **argv) {
                 OTF_Reader_close( reader );
                 OTF_HandlerArray_close( handlers );
                 OTF_WStream_close( wstream );
-                OTF_FileManager_close( manager );
+                OTF_FileManager_close( read_manager );
+                OTF_FileManager_close( write_manager );
 
                 return FINISH_EVERYTHING(1);
 
@@ -785,6 +814,11 @@ int main(int argc, char **argv) {
 
         /* read snapshots */
         if( read_snaps ) {
+            char* thumbnail_filename;
+
+            /* keep external snapshots external */
+            format &= ~2;
+            OTF_WStream_setFormat( wstream, format );
 
             while( 0 != ( ret_read =
                           OTF_Reader_readSnapshots( reader, handlers ) ) ) {
@@ -798,7 +832,8 @@ int main(int argc, char **argv) {
                     OTF_Reader_close( reader );
                     OTF_HandlerArray_close( handlers );
                     OTF_WStream_close( wstream );
-                    OTF_FileManager_close( manager );
+                    OTF_FileManager_close( read_manager );
+                    OTF_FileManager_close( write_manager );
 
                     return FINISH_EVERYTHING(1);
 
@@ -821,6 +856,86 @@ int main(int argc, char **argv) {
 
             }
 
+            thumbnail_filename = OTFAUX_Thumbnail_getFilename( infile );
+            if ( OTF_fileExists( thumbnail_filename ) && my_rank == 0 ) {
+                char* thumbnail_outname;
+                size_t bytes_read;
+                char buffer[ 1024 ];
+                FILE* instream;
+                FILE* outstream;
+
+                thumbnail_outname = OTFAUX_Thumbnail_getFilename( outfile );
+                if ( !thumbnail_outname ) {
+                    fprintf( stderr, "Error: out of memory.\n");
+
+                    free( thumbnail_filename );
+                    OTF_Reader_close( reader );
+                    OTF_HandlerArray_close( handlers );
+                    OTF_WStream_close( wstream );
+                    OTF_FileManager_close( read_manager );
+                    OTF_FileManager_close( write_manager );
+
+                    return FINISH_EVERYTHING(1);
+                }
+
+                /* open files */
+                instream = fopen( thumbnail_filename, "rb" );
+                if ( !instream ) {
+                    fprintf( stderr, "Error: Can't open existing thumbnail file for reading.\n");
+
+                    free( thumbnail_filename );
+                    free( thumbnail_outname );
+                    OTF_Reader_close( reader );
+                    OTF_HandlerArray_close( handlers );
+                    OTF_WStream_close( wstream );
+                    OTF_FileManager_close( read_manager );
+                    OTF_FileManager_close( write_manager );
+
+                    return FINISH_EVERYTHING(1);
+                }
+
+                outstream = fopen( thumbnail_outname, "wb" );
+                if ( !outstream ) {
+                    fprintf( stderr, "Error: Can't open thumbnail file for writing.\n");
+
+                    fclose( instream );
+                    free( thumbnail_outname );
+                    OTF_Reader_close( reader );
+                    OTF_HandlerArray_close( handlers );
+                    OTF_WStream_close( wstream );
+                    OTF_FileManager_close( read_manager );
+                    OTF_FileManager_close( write_manager );
+
+                    return FINISH_EVERYTHING(1);
+                }
+                free( thumbnail_outname );
+
+                /* copy file */
+                while ( ( bytes_read = fread( buffer, 1, sizeof( 1024 ), instream ) ) ) {
+
+                    if ( bytes_read > fwrite( buffer, 1, bytes_read, outstream ) ) {
+
+                        fprintf( stderr, "Error: Can't write thumbnail file.\n");
+
+                        fclose( instream );
+                        fclose( outstream );
+                        OTF_Reader_close( reader );
+                        OTF_HandlerArray_close( handlers );
+                        OTF_WStream_close( wstream );
+                        OTF_FileManager_close( read_manager );
+                        OTF_FileManager_close( write_manager );
+
+                        return FINISH_EVERYTHING(1);
+                    }
+                }
+
+                /* close files */
+                fclose( instream );
+                fclose( outstream );
+
+            }
+            free( thumbnail_filename );
+
         }
 
         cur_bytes_ges += cur_bytes;
@@ -840,7 +955,8 @@ int main(int argc, char **argv) {
                     OTF_Reader_close( reader );
                     OTF_HandlerArray_close( handlers );
                     OTF_WStream_close( wstream );
-                    OTF_FileManager_close( manager );
+                    OTF_FileManager_close( read_manager );
+                    OTF_FileManager_close( write_manager );
 
                     return FINISH_EVERYTHING(1);
 
@@ -861,25 +977,6 @@ int main(int argc, char **argv) {
 
                     update_progress( info, &global_data, i, rank_data.num_ostreams );
                 }
-
-            }
-
-        }
-
-        /* read markers */
-        while( 0 != ( ret_read =
-                      OTF_Reader_readMarkers( reader, handlers ) ) ) {
-
-            if( ret_read == OTF_READ_ERROR) {
-
-                fprintf( stderr, "Error: while reading markers from file %s\n", infile );
-
-                OTF_Reader_close( reader );
-                OTF_HandlerArray_close( handlers );
-                OTF_WStream_close( wstream );
-                OTF_FileManager_close( manager );
-
-                return FINISH_EVERYTHING(1);
 
             }
 
@@ -956,7 +1053,8 @@ int main(int argc, char **argv) {
 
     }
 
-    OTF_FileManager_close( manager );
+    OTF_FileManager_close( read_manager );
+    OTF_FileManager_close( write_manager );
 
     /* clear everything and exit */
     return FINISH_EVERYTHING(0);

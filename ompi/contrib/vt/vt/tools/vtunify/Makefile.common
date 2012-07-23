@@ -23,9 +23,9 @@ HOOKS3LIBRARY =
 HOOKS3DEPENDENCIES =
 
 HOOKS4SOURCES = \
-	$(VTUNIFYSRCDIR)/hooks/vt_unify_hooks_msgmatch.h \
-	$(VTUNIFYSRCDIR)/hooks/vt_unify_hooks_msgmatch.cc
-HOOKS4CXXFLAGS = -DVT_UNIFY_HOOKS_MSGMATCH
+	$(VTUNIFYSRCDIR)/hooks/vt_unify_hooks_msgmatch_snaps.h \
+	$(VTUNIFYSRCDIR)/hooks/vt_unify_hooks_msgmatch_snaps.cc
+HOOKS4CXXFLAGS = -DVT_UNIFY_HOOKS_MSGMATCH_SNAPS
 if AMEXTERNOTF
 HOOKS4INCLUDE =
 HOOKS4LIBRARY = $(OTFLIBDIR) -lotfaux
@@ -44,28 +44,19 @@ HOOKS5INCLUDE =
 HOOKS5LIBRARY =
 HOOKS5DEPENDENCIES =
 
-HOOKS6SOURCES = \
-       $(VTUNIFYSRCDIR)/hooks/vt_unify_hooks_tdb.h \
-       $(VTUNIFYSRCDIR)/hooks/vt_unify_hooks_tdb.cc
-HOOKS6CXXFLAGS = -DVT_UNIFY_HOOKS_TDB
-HOOKS6INCLUDE =
-HOOKS6LIBRARY =
-HOOKS6DEPENDENCIES =
+#HOOKS6SOURCES = \
+#       $(VTUNIFYSRCDIR)/hooks/vt_unify_hooks_tdb.h \
+#       $(VTUNIFYSRCDIR)/hooks/vt_unify_hooks_tdb.cc
+#HOOKS6CXXFLAGS = -DVT_UNIFY_HOOKS_TDB
+#HOOKS6INCLUDE =
+#HOOKS6LIBRARY =
+#HOOKS6DEPENDENCIES =
 
-#HOOKS7SOURCES = \
-#	$(VTUNIFYSRCDIR)/hooks/vt_unify_hooks_thumb.h \
-#	$(VTUNIFYSRCDIR)/hooks/vt_unify_hooks_thumb.cc
-#HOOKS7CXXFLAGS = -DVT_UNIFY_HOOKS_THUMB
-## dependency to libotfaux is already be set by the message matching hook above
-##if AMEXTERNOTF
-##HOOKS7INCLUDE =
-##HOOKS7LIBRARY = $(OTFLIBDIR) -lotfaux
-##HOOKS7DEPENDENCIES =
-##else
-##HOOKS7INCLUDE = -I$(top_srcdir)/extlib/otf/otfauxlib
-##HOOKS7LIBRARY = $(top_builddir)/extlib/otf/otfauxlib/libotfaux.la
-##HOOKS7DEPENDENCIES = $(HOOKS2LIBRARY)
-##endif
+#HOOKS7SOURCES =
+#HOOKS7CXXFLAGS =
+#HOOKS7INCLUDE =
+#HOOKS7LIBRARY =
+#HOOKS7DEPENDENCIES =
 
 HOOKSSOURCES = \
 	$(VTUNIFYSRCDIR)/hooks/vt_unify_hooks_base.h \

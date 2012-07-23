@@ -268,6 +268,19 @@ OTF_KeyValueList *OTF_KeyValueList_new(void);
 uint8_t OTF_KeyValueList_close(OTF_KeyValueList* list);
 
 
+/**
+ * Clone an OTF_KeyValueList instance.
+ *
+ * @param list     Pointer to an initialized OTF_KeyValueList object or NULL.
+ *                 See also OTF_KeyValueList_new().
+ * 
+ * @return	   Clone of the instance @a list or NULL.
+ *
+ * \ingroup keyvalue
+ */
+OTF_KeyValueList* OTF_KeyValueList_clone(OTF_KeyValueList* list);
+
+
 /** 
  * Reset an OTF_KeyValueList instance without deallocating memory.
  *

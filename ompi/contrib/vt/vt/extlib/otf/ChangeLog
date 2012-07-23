@@ -1,20 +1,68 @@
-1.10.2openmpi
+1.11.1openmpi
+	- new 'OTF_MasterControl_clone()' function to simplify making a copy
+	  of a master control object
+	- otfaux:
+		- keep the stream assignments of the input trace,
+		  when using the '-o' option
+	- otfmerge[-mpi]:
+		- keep inline snapshots
+
+1.11goldfish
+	- added support for highly parallel trace writing using the
+	  I/O Forwarding Scalability Layer (IOFSL) with atomic append
+	  aggregation
+	- added unique id record
+	- added new snapshot records which complete them by now
+	- added new definition record to indicates at which
+	  timestamps are snapshots or statistics available
+	- new 'OTF_KeyValueList_clone()' function to simplify making a copy
+	  of a key-value list
+	- updated python interface
+	- lib OTFAUX:
+		- learned to generate and read a thumbnail
+		- learned to generate snapshots
+	- otfaux:
+		- uses the new snapshot and thumbnail generating features
+		  from lib OTFAUX
+		- does not generate statistics by default now (use the new
+		  '--all' option to get the old behavior)
+		- new '-o' option to make a copy of the trace
+		- can attach message matching information suitable for Vampir
+		  (requires the '-o' option)
+		- can produce the new inline snapshots
+		  (requires the '-o' option)
+	- otfcompress:
+		- fixed link error using the GNU gold linker
+	- otfdump:
+		- fixed '-o' option
+	- otfmerge[-mpi]:
+		- fixed merging markers
+	- otfshrink:
+		- do not remove definitions of replaced processes
+		- keep original name of representing process
+        - otfprofile:
+                - added support for detecting irregularities and to present
+		  them as markers
+
+1.10.2coelacanth
 	- otfdump:
 		- don't abort when reading events fails - the input tracefile
 		  might only have statistics
+	- otfinfo:
+		- fixed file size calculation
 	- otfprofile:
 		- removed leading '=' from CSV lines to make it loadable into
 		  spreadsheets (e.g. Open Office) 
 		- fixed process naming in CSV output of collective operation
 		  statistics
 
-1.10.1openmpi
+1.10.1coelacanth
 	- fixed build issues in otfprofile[-mpi]:
 		- added missing header includes for WEXITSTATUS
 		- moved 'using namespace std' under the header includes to solve
 		  compile error with PGI compiler
 
-1.10openmpi
+1.10coelacanth
 	- added process substitute record
 	- added process group attribute 'OTF_ATTR_IsCommunicator'
 	- renamed OTF_fprintf to OTF_Error which sets the error variables

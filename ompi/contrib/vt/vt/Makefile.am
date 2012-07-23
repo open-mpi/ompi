@@ -7,10 +7,14 @@ SUBDIRS = \
 	vtlib \
 	tools \
 	include \
-	doc \
-	etc
+	doc
 
-vtdata_SCRIPTS = $(top_builddir)/libtool
+vtdata_DATA = \
+	$(top_builddir)/config.log
+
+vtdata_SCRIPTS = \
+	$(top_builddir)/libtool
+
 vtdatadir = $(datadir)
 
 EXTRA_DIST = \

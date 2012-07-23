@@ -1,4 +1,4 @@
-INCLUDES = $(ZLIB_INCLUDE_LINE)
+INCLUDES = $(ZLIB_INCLUDE_LINE) $(ZOIDFS_INCLUDE_LINE)
 
 include_HEADERS = otf.h \
 	OTF_CopyHandler.h \
@@ -6,6 +6,7 @@ include_HEADERS = otf.h \
 	OTF_Definitions.h \
 	OTF_Errno.h \
 	OTF_File.h \
+	OTF_File_iofsl.h \
 	OTF_FileManager.h \
 	OTF_Filenames.h \
 	OTF_HandlerArray.h \
@@ -32,12 +33,13 @@ lib_LTLIBRARIES = libotf.la
 
 libotf_la_CFLAGS = -prefer-pic
 libotf_la_LDFLAGS = -version-info @OTF_VERSION_LIBRARY@
-libotf_la_LIBADD = $(ZLIB_LIB_LINE)
+libotf_la_LIBADD = $(ZLIB_LIB_LINE) $(ZOIDFS_LIB_LINE)
 libotf_la_SOURCES = \
 	OTF_CopyHandler.c \
 	OTF_CopyHandler_stream.c \
 	OTF_Errno.c \
 	OTF_File.c \
+	OTF_File_iofsl.c \
 	OTF_FileManager.c \
 	OTF_Filenames.c \
 	OTF_HandlerArray.c \

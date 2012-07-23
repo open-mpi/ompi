@@ -8,11 +8,22 @@ AC_INIT([OTF],
 AC_CONFIG_AUX_DIR(config)
 AC_CONFIG_MACRO_DIR(config/m4)
 AC_CANONICAL_SYSTEM
-AM_INIT_AUTOMAKE
+AM_INIT_AUTOMAKE([foreign])
 AM_CONFIG_HEADER(config.h)
 
 # If Automake supports silent rules, enable them.
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
+
+# Check whether we are inside Open MPI package
+inside_openmpi="no"
+AC_ARG_WITH(openmpi-inside, [],
+[
+	AS_IF([test x"$withval" != "xno"],
+	[
+		inside_openmpi="yes"
+		CPPFLAGS="-DINSIDE_OPENMPI $CPPFLAGS"
+	])
+])
 
 # Get library version
 OTF_VERSION_LIBRARY=m4_normalize(esyscmd([config/otf_get_version.sh VERSION --library]))
@@ -63,6 +74,11 @@ CHECK_ZLIB
 if test x"$force_zlib" = "xyes" -a x"$zlib_error" = "xyes"; then exit 1; fi
 AM_CONDITIONAL(AMHAVEZLIB, test x"$have_zlib" = xyes)
 
+# Checks for zoidfs support.
+CHECK_ZOIDFS
+if test x"$force_zoidfs" = "xyes" -a x"$zoidfs_error" = "xyes"; then exit 1; fi
+AM_CONDITIONAL(AMHAVEZOIDFS, test x"$have_zoidfs" = xyes)
+
 # Checks for math library.
 CHECK_MATH
 
@@ -81,7 +97,7 @@ WITH_VERBOSE
 
 # Checks for header files.
 AC_HEADER_STDC
-AC_CHECK_HEADERS([fcntl.h stddef.h stdlib.h string.h sys/param.h sys/select.h sys/time.h unistd.h])
+AC_CHECK_HEADERS([ctype.h fcntl.h stddef.h stdlib.h string.h sys/param.h sys/select.h sys/time.h unistd.h])
 AC_CHECK_HEADER([stdint.h], [have_stdint_h=1], [have_stdint_h=0])
 AC_CHECK_HEADER([inttypes.h], [have_inttypes_h=1], [have_inttypes_h=0])
 AC_SUBST([have_stdint_h])
@@ -146,7 +162,6 @@ AC_CONFIG_FILES([Makefile
 	tests/generic_streams-mpi/Makefile
 	tests/progress/Makefile
 	tests/read_from_buffer/Makefile
-	tests/thumbnail/Makefile
 	docu/Makefile
 ])
 

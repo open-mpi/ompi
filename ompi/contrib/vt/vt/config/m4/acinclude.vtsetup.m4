@@ -22,6 +22,7 @@ AC_DEFUN([ACVT_SETUP],
 	VT_SETUP_PLUGIN_CNTR=0
 	VT_SETUP_PTHREAD=0
 	VT_SETUP_RUSAGE=0
+	VT_SETUP_IOFSL=0
 
 	AC_ARG_ENABLE(vtsetup,
 		AC_HELP_STRING([--enable-vtsetup],
@@ -58,6 +59,7 @@ AC_DEFUN([ACVT_SETUP],
 			AS_IF([test x"$have_plugin_cntr" = "xyes"], [VT_SETUP_PLUGIN_CNTR=1])
 			AS_IF([test x"$have_pthread"     = "xyes"], [VT_SETUP_PTHREAD=1])
 			AS_IF([test x"$have_rusage"      = "xyes"], [VT_SETUP_RUSAGE=1])
+			AS_IF([test x"$have_iofsl"       = "xyes"], [VT_SETUP_IOFSL=1])
 
 			build_vtsetup="yes"
 		])
@@ -80,5 +82,6 @@ AC_DEFUN([ACVT_SETUP],
 	AC_SUBST(VT_SETUP_PLUGIN_CNTR)
 	AC_SUBST(VT_SETUP_PTHREAD)
 	AC_SUBST(VT_SETUP_RUSAGE)
+	AC_SUBST(VT_SETUP_IOFSL)
 ])
 

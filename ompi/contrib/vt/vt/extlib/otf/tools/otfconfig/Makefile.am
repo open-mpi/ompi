@@ -10,4 +10,4 @@ otfconfig_DEPENDENCIES = $(otfconfig_LDADD)
 otfconfig_SOURCES = \
 	otfconfig.c
 
-AM_CFLAGS = -DOTFCONFIG_INCLUDEDIR=\"$(includedir)\" -DOTFCONFIG_LIBDIR=\"$(libdir)\"
+AM_CFLAGS = -DOTFCONFIG_INCLUDEDIR="\"$(includedir)\"" -DOTFCONFIG_LIBDIR="\"$(libdir)\"" -DOTFCONFIG_LIBS="\"-lotfaux -lotf $(ZLIB_LIB_LINE) $(ZOIDFS_LIB_LINE)\""

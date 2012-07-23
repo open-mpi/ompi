@@ -10,15 +10,12 @@ AC_DEFUN([ACVT_UNIMCI],
 	unimci_checker_version=
 	unimci_cc=
 	unimci_cxx=
-	unimci_f77=
-	unimci_f90=
+	unimci_fc=
 
 	UNIMCI_CFLAGS=
 	UNIMCI_CLIBS=
 	UNIMCI_CXXFLAGS=
 	UNIMCI_CXXLIBS=
-	UNIMCI_FFLAGS=
-	UNIMCI_FLIBS=
 	UNIMCI_FCFLAGS=
 	UNIMCI_FCLIBS=
 	UNIMCI_LDFLAGS=
@@ -154,54 +151,26 @@ dnl					check for C++ compiler flags and libs
 			], [unimci_error="yes"])
 		])
 
-dnl		check for Fortran 77 support
-
-		AS_IF([test x"$unimci_error" = "xno" -a x"$F77" != x],
-		[
-			AC_MSG_CHECKING([whether UniMCI's checker supports Fortran 77])
-			unimci_f77=`eval "$unimci_config_cmd --f77"`
-			AS_IF([test "$?" = "0"],
-			[
-				AS_IF([test x"$unimci_f77" != x],
-				[
-					AC_MSG_RESULT([yes])
-
-dnl					check for Fortran 77 compiler flags and libs
-
-					AC_MSG_CHECKING([for UniMCI's Fortran 77 compiler flags])
-					UNIMCI_FFLAGS=`eval "$unimci_config_cmd --f77flags"`
-					AS_IF([test "$?" = "0"],
-					[
-						AC_MSG_RESULT([$UNIMCI_FFLAGS])
-						AC_MSG_CHECKING([for UniMCI's Fortran 77 libs])
-						UNIMCI_FLIBS=`eval "$unimci_config_cmd --f77lib-dirs --f77libs"`
-						AS_IF([test "$?" = "0"],
-						[AC_MSG_RESULT([$UNIMCI_FLIBS])], [unimci_error="yes"])
-					], [unimci_error="yes"])
-				], [AC_MSG_RESULT([no])])
-			], [unimci_error="yes"])
-		])
-
-dnl		check for Fortran 90 support
+dnl		check for Fortran support
 
 		AS_IF([test x"$unimci_error" = "xno" -a x"$FC" != x],
 		[
-			AC_MSG_CHECKING([whether UniMCI's checker supports Fortran 90])
-			unimci_f90=`eval "$unimci_config_cmd --f90"`
+			AC_MSG_CHECKING([whether UniMCI's checker supports Fortran])
+			unimci_fc=`eval "$unimci_config_cmd --f90"`
 			AS_IF([test "$?" = "0"],
 			[
-				AS_IF([test x"$unimci_f90" != x],
+				AS_IF([test x"$unimci_fc" != x],
 				[
 					AC_MSG_RESULT([yes])
 
-dnl					check for Fortran 90 compiler flags and libs
+dnl					check for Fortran compiler flags and libs
 
-					AC_MSG_CHECKING([for UniMCI's Fortran 90 compiler flags])
+					AC_MSG_CHECKING([for UniMCI's Fortran compiler flags])
 					UNIMCI_FCFLAGS=`eval "$unimci_config_cmd --f90flags"`
 					AS_IF([test "$?" = "0"],
 					[
 						AC_MSG_RESULT([$UNIMCI_FCFLAGS])
-						AC_MSG_CHECKING([for UniMCI's Fortran 90 libs])
+						AC_MSG_CHECKING([for UniMCI's Fortran libs])
 						UNIMCI_FCLIBS=`eval "$unimci_config_cmd --f90lib-dirs --f90libs"`
 						AS_IF([test "$?" = "0"],
 						[AC_MSG_RESULT([$UNIMCI_FCLIBS])], [unimci_error="yes"])
@@ -210,7 +179,7 @@ dnl					check for Fortran 90 compiler flags and libs
 			], [unimci_error="yes"])
 		])
 
-		AS_IF([test x"$unimci_cc" = x -a x"$unimci_cxx" = x -a x"$unimci_f77" = x -a x"$unimci_f90" = x],
+		AS_IF([test x"$unimci_cc" = x -a x"$unimci_cxx" = x -a x"$unimci_fc" = x],
 		[unimci_error="yes"])
 
 dnl		check for linker flags
@@ -233,7 +202,7 @@ dnl		check for MPI Fortran interoperability
 
 		AS_IF([test x"$unimci_error" = "xno" -a x"$have_fmpi" = "xyes" -a x"$build_fmpiwraplib" = "xno"],
 		[
-			AS_IF([test x"$F77" != x -o x"$FC" != x],
+			AS_IF([test x"$FC" != x],
 			[
 				ACVT_CONF_SUBSUBTITLE([MPI Fortran interoperability])
 				ACVT_FMPIWRAPLIB
@@ -264,8 +233,6 @@ dnl		check for MPI Fortran interoperability
 	AC_SUBST(UNIMCI_CLIBS)
 	AC_SUBST(UNIMCI_CXXFLAGS)
 	AC_SUBST(UNIMCI_CXXLIBS)
-	AC_SUBST(UNIMCI_FFLAGS)
-	AC_SUBST(UNIMCI_FLIBS)
 	AC_SUBST(UNIMCI_FCFLAGS)
 	AC_SUBST(UNIMCI_FCLIBS)
 	AC_SUBST(UNIMCI_LDFLAGS)

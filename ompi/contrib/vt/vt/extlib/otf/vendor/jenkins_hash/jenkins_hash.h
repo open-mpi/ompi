@@ -1,8 +1,12 @@
 #ifndef VENDOR_HASH_JENKINS_H
 #define VENDOR_HASH_JENKINS_H
 
-#include <stddef.h>     /* defines size_t etc */
-#include <stdint.h>     /* defines uint32_t etc */
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#include <stddef.h>       /* defines size_t etc */
+#include <OTF_inttypes.h> /* defines uint32_t etc */
 
 #ifdef SELF_TEST
 # include <stdio.h>      /* defines printf for tests */
@@ -13,6 +17,17 @@
 extern "C" {
 #endif
 
+
+/*
+ * hash():
+ * compiletime multiplexer for littel- and big-endian.
+ * Note that the hash value is NOT endias agnostic.
+ */
+#ifdef WORDS_BIGENDIAN
+# define hash(key, length, initval) hashbig((key), (length), (initval))
+#else
+# define hash(key, length, initval) hashlittle((key), (length), (initval))
+#endif
 
 #define hashsize(n) ((uint32_t)1<<(n))
 #define hashmask(n) (hashsize(n)-1)
@@ -105,21 +120,6 @@ void hashlittle2(
  * big-endian byte ordering.
  */
 uint32_t hashbig( const void *key, size_t length, uint32_t initval);
-
-
-/*
- * hash():
- * compiletime multiplexer for littel- and big-endian.
- * Note that the hash value is NOT endias agnostic.
- */
-static inline uint32_t hash( const void *key, size_t length, uint32_t initval)
-{
-#ifdef WORDS_BIGENDIAN
-    return hashbig(key, length, initval);
-#else
-    return hashlittle(key, length, initval);
-#endif
-}
 
 
 #ifdef __cplusplus

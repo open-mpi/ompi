@@ -14,16 +14,16 @@
 
 #include "vt_env.h"
 #include "vt_error.h"
-#include "vt_defs.h"
 #include "vt_pform.h"
 
 #include "util/installdirs.h"
 
-#include <stdlib.h>
-#include <unistd.h>
-#include <string.h>
-#include <limits.h>
 #include <ctype.h>
+#include <errno.h>
+#include <limits.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
 static char* replace_vars(char *v) {
   char* start;
@@ -310,6 +310,22 @@ char* vt_env_gdir()
         {
           gdir = replace_vars(vt_pform_gdir());
         }
+
+#if defined(VT_IOFSL)
+      if (vt_env_iofsl_servers())
+      {
+        char* gdir_abs = realpath(gdir, NULL);
+        if (gdir_abs == NULL)
+          {
+            vt_error_msg("Could not retrieve the absolute path of %s:",
+                         gdir, strerror(errno));
+          }
+        else
+          {
+            gdir = gdir_abs;
+          }
+      }
+#endif /* VT_IOFSL */
     }
   return gdir;
 }
@@ -322,15 +338,31 @@ char* vt_env_ldir()
   if (! ldir)
     {
       tmp = getenv("VT_PFORM_LDIR");
-      if (tmp != NULL && strlen(tmp) > 0)
-        {
-          vt_cntl_msg(2, "VT_PFORM_LDIR=%s", tmp);
 
-          ldir = replace_vars(tmp);
+#if defined(VT_IOFSL)
+      if (vt_env_iofsl_servers())
+        {
+          ldir = vt_env_gdir();
+
+          if (tmp != NULL && strlen(tmp) > 0)
+            {
+              vt_warning("Setting of VT_PFORM_LDIR isn't allowed in IOFSL "
+                         "mode; reset it to VT_PFORM_GDIR (=%s)", ldir);
+            }
         }
       else
+#endif /* VT_IOFSL */
         {
-          ldir = replace_vars(vt_pform_ldir());
+          if (tmp != NULL && strlen(tmp) > 0)
+            {
+              vt_cntl_msg(2, "VT_PFORM_LDIR=%s", tmp);
+
+              ldir = replace_vars(tmp);
+            }
+          else
+            {
+              ldir = replace_vars(vt_pform_ldir());
+            }
         }
     }
   return ldir;
@@ -793,6 +825,52 @@ int vt_env_stat_collop_dtls()
   return dtlsflags;
 }
 
+int vt_env_snapshots()
+{
+  static int snapshots = -1;
+  char* tmp;
+
+  if (snapshots == -1)
+    {
+      tmp = getenv("VT_SNAPSHOTS");
+      if (tmp != NULL && strlen(tmp) > 0)
+        {
+          vt_cntl_msg(2, "VT_SNAPSHOTS=%s", tmp);
+
+          snapshots = parse_bool(tmp);
+        }
+      else
+        {
+          snapshots = 1;
+        }
+    }
+  return snapshots;
+}
+
+int vt_env_max_snapshots()
+{
+  static int max_snapshots = -1;
+  char* tmp;
+
+  if (max_snapshots == -1)
+    {
+      tmp = getenv("VT_MAX_SNAPSHOTS");
+      if (tmp != NULL && strlen(tmp) > 0)
+        {
+          vt_cntl_msg(2, "VT_MAX_SNAPSHOTS=%s", tmp);
+
+          max_snapshots = atoi(tmp);
+          if (max_snapshots < 1)
+            vt_error_msg("VT_MAX_SNAPSHOTS not properly set");
+        }
+      else
+        {
+          max_snapshots = 1024;
+        }
+    }
+  return max_snapshots;
+}
+
 int vt_env_verbose()
 {
   static int verbose = -1;
@@ -965,10 +1043,34 @@ int vt_env_iotrace()
         }
       else
         {
-          iotrace = 0;
+		  /* if iotrace is not enabled, iotrace can also be enabled through
+			 VT_IOTRACE_EXTENDED, so this is tested as well */
+		  iotrace = vt_env_iotrace_extended();
         }
     }
   return iotrace;
+}
+
+int vt_env_iotrace_extended()
+{
+  static int iotrace_extended = -1;
+  char* tmp;
+
+  if (iotrace_extended == -1)
+    {
+      tmp = getenv("VT_IOTRACE_EXTENDED");
+      if (tmp != NULL && strlen(tmp) > 0)
+        {
+          vt_cntl_msg(2, "VT_IOTRACE_EXTENDED=%s", tmp);
+
+          iotrace_extended = parse_bool(tmp);
+        }
+      else
+        {
+          iotrace_extended = 0;
+        }
+    }
+  return iotrace_extended;
 }
 
 char* vt_env_iolibpathname()
@@ -1611,48 +1713,36 @@ int vt_env_etimesync_intv()
   return etimesync_intv;
 }
 
-int vt_env_cudatrace()
+void vt_env_cudatrace()
 {
-  static int cudatrace = -1;
-  
-  if (cudatrace == -1)
+  char* tmp = getenv("VT_CUDATRACE");
+  if (tmp != NULL && strlen(tmp) > 0)
     {
-      char* tmp = getenv("VT_CUDATRACE");
-      if (tmp != NULL && strlen(tmp) > 0)
-        {
-          vt_cntl_msg(2, "VT_CUDATRACE=%s", tmp);
+      /* split error message in three parts due to C89 limitations */ 
+      char* error_msg[3] = {
+        "VT_CUDATRACE has been replaced by VT_GPUTRACE!\n"
+        "Usage: export VT_GPUTRACE=option1,option2,option2,...\n"
+        "The following CUDA measurement options are available:\n",
+        
+        " cuda    : enable CUDA (needed to use CUDA runtime API wrapper)\n"
+        " cupti   : use the CUPTI interface instead of the library wrapper\n"
+        " runtime : CUDA runtime API\n"
+        " driver  : CUDA driver API\n"
+        " kernel  : CUDA kernels\n"
+        " idle    : GPU compute idle time\n"
+        " memcpy  : CUDA memory copies\n"
+        " memusage: CUDA memory allocation\n"
+        " debug   : CUDA tracing debug mode\n"
+        " error   : CUDA errors will exit the program\n"
+        " yes|default: same as 'cuda,runtime,kernel,memcpy'\n"
+        " no: disable CUDA measurement\n",
+        
+        "VT_CUDATRACE_CUPTI, VT_CUDATRACE_MEMCPY, VT_GPUTRACE_IDLE, "
+        "VT_GPUTRACE_ERROR have been replaced by VT_GPUTRACE as well!\n"
+        "Read the user manual for further information!\n" };
 
-          cudatrace = atoi(tmp);
-          /* if user wrote 'yes' or 'true' */
-          if(cudatrace == 0 && parse_bool(tmp) == 1) cudatrace = 1;
-        }
-      else
-        {
-          cudatrace = 0;
-        }
+      vt_error_msg("%s%s%s", error_msg[0], error_msg[1], error_msg[2]);
     }
-  return cudatrace;
-}
-
-int vt_env_cudarttrace()
-{
-  static int cudarttrace = -1;
-
-  if (cudarttrace == -1)
-    {
-      char* tmp = getenv("VT_CUDARTTRACE");
-      if (tmp != NULL && strlen(tmp) > 0)
-        {
-          vt_cntl_msg(2, "VT_CUDARTTRACE=%s", tmp);
-
-          cudarttrace = parse_bool(tmp);
-        }
-      else
-        {
-          cudarttrace = 0;
-        }
-    }
-  return cudarttrace;
 }
 
 size_t vt_env_cudatrace_bsize()
@@ -1670,27 +1760,6 @@ size_t vt_env_cudatrace_bsize()
         }
     }
   return limit;
-}
-
-int vt_env_cudatrace_memcpy()
-{
-  static int cudamcpy = -1;
-
-  if (cudamcpy == -1)
-    {
-      char* tmp = getenv("VT_CUDATRACE_MEMCPY");
-      if (tmp != NULL && strlen(tmp) > 0)
-        {
-          vt_cntl_msg(2, "VT_CUDATRACE_MEMCPY=%s", tmp);
-
-          cudamcpy = parse_bool(tmp);
-        }
-      else
-        {
-          cudamcpy = 1;
-        }
-    }
-  return cudamcpy;
 }
 
 int vt_env_cudatrace_sync()
@@ -1714,27 +1783,6 @@ int vt_env_cudatrace_sync()
         }
     }
   return sync;
-}
-
-int vt_env_cudatrace_cupti()
-{
-  static int cupti_cb = -1;
-
-  if (cupti_cb == -1)
-    {
-      char* tmp = getenv("VT_CUDATRACE_CUPTI");
-      if (tmp != NULL && strlen(tmp) > 0)
-        {
-          vt_cntl_msg(2, "VT_CUDATRACE_CUPTI=%s", tmp);
-
-          cupti_cb = parse_bool(tmp);
-        }
-      else
-        {
-          cupti_cb = 0;
-        }
-    }
-  return cupti_cb;
 }
 
 char* vt_env_cupti_events()
@@ -1778,20 +1826,44 @@ int vt_env_cupti_sampling()
   return cuptisampling;
 }
 
+char* vt_env_gputrace()
+{
+  static int read = 1;
+  static char* args = NULL;
+  char* tmp;
+
+  if (read)
+    {
+      read = 0;
+      tmp = getenv("VT_GPUTRACE");
+      if (tmp && strlen(tmp) > 0)
+        {
+          vt_cntl_msg(2, "VT_GPUTRACE=%s", tmp);
+
+          args = tmp;
+        }
+    }
+  return args;
+}
+
 int vt_env_gputrace_kernel()
 {
   static int cudakernel = -1;
 
   if (cudakernel == -1)
     {
-      char* tmp = getenv("VT_CUDATRACE_KERNEL");
+      char* tmp = getenv("VT_GPUTRACE_KERNEL");
       if (tmp != NULL && strlen(tmp) > 0)
         {
-          vt_cntl_msg(2, "VT_CUDATRACE_KERNEL=%s", tmp);
+          vt_cntl_msg(2, "VT_GPUTRACE_KERNEL=%s", tmp);
 
           cudakernel = atoi(tmp);
           /* perhaps user wrote 'yes' or 'true' */
           if(cudakernel == 0 && parse_bool(tmp) == 1) cudakernel = 1;
+          
+          if(cudakernel > 0)
+            vt_warning("VT_GPUTRACE_KERNEL is deprecated, "
+                      "use option 'kernel' with VT_GPUTRACE instead!");
         }
       else
         {
@@ -1799,27 +1871,6 @@ int vt_env_gputrace_kernel()
         }
     }
   return cudakernel;
-}
-
-int vt_env_gputrace_idle()
-{
-  static int gpuidle = -1;
-
-  if (gpuidle == -1)
-    {
-      char* tmp = getenv("VT_CUDATRACE_IDLE");
-      if (tmp != NULL && strlen(tmp) > 0)
-        {
-          vt_cntl_msg(2, "VT_CUDATRACE_IDLE=%s", tmp);
-
-          gpuidle = parse_bool(tmp);
-        }
-      else
-        {
-          gpuidle = 0;
-        }
-    }
-  return gpuidle;
 }
 
 int vt_env_gputrace_memusage()
@@ -1841,50 +1892,86 @@ int vt_env_gputrace_memusage()
         {
           gpumem = 0;
         }
+      
+      if (gpumem > 0)
+        vt_warning("VT_GPUTRACE_MEMUSAGE is deprecated, "
+                  "use option 'memusage' with VT_GPUTRACE instead!");
     }
   return gpumem;
 }
 
-int vt_env_gputrace_debug()
+char* vt_env_iofsl_servers()
 {
-  static int debug = -1;
+  static int read = 1;
+  static char* iofsl_servers = NULL;
+  char* tmp;
 
-  if (debug == -1)
+  if (read)
     {
-      char* tmp = getenv("VT_GPUTRACE_DEBUG");
-      if (tmp != NULL && strlen(tmp) > 0)
+      read = 0;
+      tmp = getenv("VT_IOFSL_SERVERS");
+      if (tmp && strlen(tmp) > 0)
         {
-          vt_cntl_msg(2, "VT_GPUTRACE_DEBUG=%s", tmp);
+          vt_cntl_msg(2, "VT_IOFSL_SERVERS=%s", tmp);
 
-          debug = atoi(tmp);
-          /* perhaps user wrote 'yes' or 'true' */
-          if(debug == 0 && parse_bool(tmp) == 1) debug = 1;
-        }
-      else
-        {
-          debug = 0;
+          iofsl_servers = tmp;
         }
     }
-  return debug;
+  return iofsl_servers;
 }
 
-int vt_env_gputrace_error()
+int vt_env_iofsl_mode()
 {
-  static int error = -1;
+  static int mode = -1;
+  char* tmp;
 
-  if (error == -1)
+  if (mode == -1)
     {
-      char* tmp = getenv("VT_GPUTRACE_ERROR");
+      tmp = getenv("VT_IOFSL_MODE");
       if (tmp != NULL && strlen(tmp) > 0)
         {
-          vt_cntl_msg(2, "VT_GPUTRACE_ERROR=%s", tmp);
+          char tmpbuf[128];
+          char* p;
 
-          error = parse_bool(tmp);
+          vt_cntl_msg(2, "VT_IOFSL_MODE=%s", tmp);
+
+          p = tmpbuf;
+          strncpy(tmpbuf, tmp, 127);
+          tmpbuf[127] = '\0';
+          while( *p ) { *p = tolower(*p); p++; }
+
+          if (strcmp(tmpbuf, "multifile") == 0)
+            mode = VT_IOFSL_MODE_MULTIFILE;
+          else if (strcmp(tmpbuf, "multifile_split") == 0)
+            mode = VT_IOFSL_MODE_MULTIFILE_SPLIT;
+          else
+            vt_error_msg("VT_IOFSL_MODE not properly set");
         }
       else
         {
-          error = 0;
+          mode = VT_IOFSL_MODE_MULTIFILE_SPLIT;
         }
     }
-  return error;
+  return mode;
+}
+
+int vt_env_iofsl_async_io()
+{
+  static int async_io = -1;
+
+  if (async_io == -1)
+    {
+      char* tmp = getenv("VT_IOFSL_ASYNC_IO");
+      if (tmp != NULL && strlen(tmp) > 0)
+        {
+          vt_cntl_msg(2, "VT_IOFSL_ASYNC_IO=%s", tmp);
+
+          async_io = parse_bool(tmp);
+        }
+      else
+        {
+          async_io = 0;
+        }
+    }
+  return async_io;
 }

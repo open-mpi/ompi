@@ -342,6 +342,10 @@ void process_fortran(istream& is, const char* infile, ostream& os,
     /* workaround for bogus getline implementations */
     if ( line.size() == 1 && line[0] == '\0' ) break;
 
+    /* remove possible trailing Carriage Return from line */
+    if ( line.size() > 0 && line[line.length()-1] == '\r' )
+      line.erase(line.length()-1);
+
     ++lineno;
     string lowline(line);
     transform(line.begin(), line.end(), lowline.begin(), fo_tolower());

@@ -17,11 +17,13 @@ typedef struct RFG_Regions_struct RFG_Regions;
 
 typedef struct RFG_RegionInfo_struct
 {
-  uint32_t regionId;         /* region id */
-  char*    groupName;        /* group name */
-  char*    regionName;       /* region name */
-  int32_t  callLimit;        /* call limit */
-  int32_t  callLimitCD;      /* call limit count down */
+  uint32_t regionId;       /* region id */
+  char*    groupName;      /* group name */
+  char*    regionName;     /* region name */
+  int32_t  callLimit;      /* call limit */
+  int32_t  callLimitCD;    /* call limit count down */
+  uint32_t stackBounds[2]; /* stack level bounds */
+  uint8_t  flags;          /* flags bitmask (group, recursiveness) */
   struct RFG_RegionInfo_struct* next;
 } RFG_RegionInfo;
 
@@ -55,26 +57,18 @@ int RFG_Regions_setDefaultCallLimit( RFG_Regions* regions,
 int RFG_Regions_addGroupAssign( RFG_Regions* regions,
 				const char* gname, int n, ... );
 
-/* gets list of regions, whose call limit are reached */
-int RFG_Regions_getFilteredRegions( RFG_Regions* regions,
-				    uint32_t* r_nrinfs, RFG_RegionInfo*** r_rinfs );
-
-/* dump filtered regions to file */
-int RFG_Regions_dumpFilteredRegions( RFG_Regions* regions,
-				     char* filename );
-
 /* function that should be called if a region enter event invoked */
 int RFG_Regions_stackPush( RFG_Regions* regions,
-			   const uint32_t rid, const uint8_t decr,
-			   RFG_RegionInfo** r_rinf );
+			   const uint32_t rid, const uint8_t decrement,
+			   RFG_RegionInfo** r_rinf, uint8_t* r_rejected );
 
 /* function that should be called if a region leave event invoked */
 int RFG_Regions_stackPop( RFG_Regions* regions,
-			  RFG_RegionInfo** r_rinf, int32_t* r_climitbypush );
+			  RFG_RegionInfo** r_rinf, uint8_t* r_rejected );
 
 /* adds region */
-RFG_RegionInfo* RFG_Regions_add( RFG_Regions* regions,
-				 const char* rname, uint32_t rid );
+RFG_RegionInfo* RFG_Regions_add( RFG_Regions* regions, uint32_t rid,
+                                 const char* rname, const char* defgname );
 
 /* gets region informations by region id */
 RFG_RegionInfo* RFG_Regions_get( RFG_Regions* regions,

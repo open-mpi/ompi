@@ -39,13 +39,13 @@ int printKeyValueList(Control* c, OTF_KeyValueList* list) {
 			break;
 		  case OTF_UINT8:
 		        OTF_KeyValueList_getUint8( list, key, &(value.otf_uint8) );
-		    	fprintf(c->outfile, "%u:%hu", key, value.otf_uint8);
+		    	fprintf(c->outfile, "%u:%hu", key, (unsigned short)value.otf_uint8);
 			
 			break;
 			
 		  case OTF_INT8:
 		        OTF_KeyValueList_getInt8( list, key, &(value.otf_int8) );
-		    	fprintf(c->outfile, "%u:%hd", key, value.otf_int8);
+		    	fprintf(c->outfile, "%u:%hd", key, (short)value.otf_int8);
 		    
 		   	break;
 		  
@@ -117,7 +117,7 @@ int printKeyValueList(Control* c, OTF_KeyValueList* list) {
 		
 			    for( j = 0; j < len; j++ ) {
 			
-		            fprintf(c->outfile, "%02hX", byte_array[j]);
+		            fprintf(c->outfile, "%02hX", (unsigned short)byte_array[j]);
 				
 			    }
 
@@ -605,7 +605,26 @@ int handleDefCreator( void* userData, uint32_t stream,
 	return OTF_RETURN_OK;
 }
 
+
+int handleDefUniqueId( void* userData, uint32_t stream, uint64_t uid ) {
+	Control* c= (Control*) userData;
+
+
+	if( c->records[OTF_DEFUNIQUEID_RECORD] ) {
 	
+		++c->num;
+		if( c->num >= c->minNum && c->num <= c->maxNum && ! c->silent_mode ) {
+
+			fprintf( c->outfile, "(#%llu) \tDefUniqueId: stream %u, uid: %llu\n",
+				(long long unsigned) c->num, stream, (long long unsigned) uid );
+		}
+	}
+
+
+	return OTF_RETURN_OK;
+}
+
+
 int handleDefVersion( void* userData, uint32_t stream, uint8_t major,
 	uint8_t minor, uint8_t sub, const char* string ) {
 	Control* c= (Control*) userData;
@@ -822,6 +841,54 @@ int handleDefProcessSubstitutes( void* userData, uint32_t streamid,
 }
 
 
+static const char* auxSamplePointTypeToString( OTF_AuxSamplePointType type ) {
+
+
+    #define CASE_RETURN(type) \
+            case OTF_AUX_SAMPLE_POINT_##type: return #type
+
+    switch( type ) {
+    CASE_RETURN( SNAPSHOT );
+    CASE_RETURN( SUMMARY );
+    CASE_RETURN( INLINE_SNAPSHOT );
+
+    default:
+		static char unknown_buffer[ 64 ];
+		sprintf( unknown_buffer, "UNKNOWN <%u>", type );
+		return unknown_buffer;
+    }
+
+    #undef CASE_RETURN
+}
+
+int handleDefAuxSamplePoint( void*                  userData,
+                             uint32_t               streamid,
+                             uint64_t               time,
+                             OTF_AuxSamplePointType type,
+                             OTF_KeyValueList*      kvlist ) {
+
+
+    Control* c= (Control*) userData;
+
+
+    if ( c->records[OTF_DEFAUXSAMPLEPOINT_RECORD] ) {
+
+        ++c->num;
+        if ( c->num >= c->minNum && c->num <= c->maxNum && !c->silent_mode ) {
+
+            fprintf( c->outfile, "(#%llu) \tDefAuxSamplePoint: stream %u, time %llu, type %s",
+                    (long long unsigned) c->num, streamid,
+                    (long long unsigned) time,
+                    auxSamplePointTypeToString( type ) );
+
+            printKeyValueList(c, kvlist);
+        }
+    }
+
+    return OTF_RETURN_OK;
+}
+
+
 int handleNoOp( void* userData, uint64_t time, uint32_t process,
 	OTF_KeyValueList* kvlist ) {
   
@@ -994,7 +1061,8 @@ static void printCounterValue( Control* c, uint32_t counter, uint64_t value ) {
 	}
 
 	default:
-		fprintf( c->outfile, "<invalid>" );
+		fprintf( c->outfile, "INVALID TYPE <%08llx>",
+			(unsigned long long)value );
 	}
 }
 
@@ -1066,7 +1134,7 @@ int handleBeginCollectiveOperation( void* userData, uint64_t time,
 
 			fprintf( c->outfile, "(#%llu) \t%llu BeginCollective: "
 					"process %u, collective %u, "
-					"group %u, matchinId %llu, "
+					"group %u, matchingId %llu, "
 					"root %u, sent %llu, "
 					"received %llu, source %u",
 					(long long unsigned) c->num,
@@ -1322,7 +1390,7 @@ int handleBeginCollopSnapshot( void *userData, uint64_t time, uint64_t originalt
     
 int handleBeginFileOpSnapshot( void *userData, uint64_t time,
     uint64_t originaltime, uint32_t process, uint64_t matchingId,
-    uint32_t scltoken, OTF_KeyValueList *kvlist) {
+    uint32_t scltoken, OTF_KeyValueList *kvlist ) {
   
   
     Control* c= (Control*) userData;
@@ -1344,6 +1412,63 @@ int handleBeginFileOpSnapshot( void *userData, uint64_t time,
     }
     
   
+    return OTF_RETURN_OK;
+}
+
+
+int handleCollopCountSnapshot( void *userData, uint64_t time,
+    uint32_t process, uint32_t communicator, uint64_t count,
+    OTF_KeyValueList *kvlist) {
+
+    Control* c= (Control*) userData;
+
+    if ( c->records[OTF_COLLOPCOUNTSNAPSHOT_RECORD] ) {
+
+        ++c->num;
+        if ( c->num >= c->minNum && c->num <= c->maxNum && !c->silent_mode ) {
+
+            fprintf( c->outfile, "(#%llu) \t%llu SnapCollopCount: process %u, "
+                     "communicator %u, count %llu",
+                (long long unsigned) c->num, (long long unsigned) time,
+                process, communicator, (long long unsigned) count );
+
+            printKeyValueList(c, kvlist);
+        }
+    }
+
+    return OTF_RETURN_OK;
+}
+
+
+int handleCounterSnapshot( void             *userData,
+                           uint64_t          time,
+                           uint32_t          process,
+                           uint64_t          originaltime,
+                           uint32_t          counter,
+                           uint64_t          value,
+                           OTF_KeyValueList *kvlist ) {
+
+    Control* c= (Control*) userData;
+
+    if ( c->records[OTF_COUNTERSNAPSHOT_RECORD] ) {
+
+        ++c->num;
+        if ( c->num >= c->minNum && c->num <= c->maxNum && !c->silent_mode ) {
+
+            fprintf( c->outfile,
+                "(#%llu) \t%llu SnapCounter: "
+                "otime %llu, process %u, counter %u, value ",
+                (long long unsigned) c->num,
+                (long long unsigned) time,
+                (long long unsigned) originaltime,
+                process,
+                counter );
+            printCounterValue( c, counter, value );
+
+            printKeyValueList(c, kvlist);
+        }
+    }
+
     return OTF_RETURN_OK;
 }
 

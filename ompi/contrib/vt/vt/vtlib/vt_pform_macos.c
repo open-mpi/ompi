@@ -63,7 +63,6 @@ void vt_pform_init()
   int    argmax;
   char*  procargs;
   size_t len;
-  int    hostid_retries;
 
   /* get timer resolution */
 #if TIMER == TIMER_GETTIMEOFDAY

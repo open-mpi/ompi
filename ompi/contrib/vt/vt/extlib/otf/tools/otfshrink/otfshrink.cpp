@@ -7,9 +7,12 @@
 #include "config.h"
 #endif
 
-#include <string.h>
-#include <iostream>
 #include <string>
+#include <iostream>
+#include <sstream>
+#include <iterator>
+#include <vector>
+#include <list>
 
 #include <map>
 #include <set>
@@ -22,7 +25,9 @@
 
 #include "OTF_Platform.h"
 
+#include "procList.h"
 #include "Handler.h"
+#include "otfshrink.h"
 
 #define MAX_L	10
 #define LIST_MODE 0
@@ -32,36 +37,45 @@
 #define CLEAR_EVERYTHING free_all_pointers(ch_i, first, entries, writer, reader, \
 					   handlers, manager, master, new_master);
 
-#define HELPTEXT "" \
-"                                                                  \n" \
-" otfshrink  -  creates a new otf file that only includes          \n" \
-"               specified processes                                \n" \
-"                                                                  \n" \
-"  options:                                                        \n" \
-"      -h, --help    show this help message                        \n" \
-"      -V            show OTF version                              \n" \
-"      -i <file>     specify the input trace file                  \n" \
-"      -o <file>     specify the output file                       \n" \
-"      -l \"<list>\"   a space-separated list of processes in quotes \n" \
-"                    to enable, i.e. keep in the copy,             \n" \
-"                    e.g. '-l \"1 2 3 4 8 5\"'                       \n" \
-"      -v            invert setting from '-l',                     \n" \
-"                    i.e. deactivate/exclude listed processes      \n" \
-"      -m \"<list>\"   map all listed processes to one representative\n" \
-"                    and remove all remaining ones                 \n" \
-"                    must not be mixed with '-l' and '-v'          \n" \
-"      -f <file>     read multiple '-m' lists from the given file  \n" \
-"                    one list/group per line, empty lines allowed  \n" \
-"      -s <mode>     simulation mode: display all selected         \n" \
-"                    processes, no files are created,              \n" \
-"                    display modes: (l)ist, (r)ange or (t)able     \n" \
-"                    defaut: range                                 \n" \
-"                                                                  \n" \
-"   Multiple instances of '-l', '-m', and '-f' may be used         \n" \
+#define DEFAULT_OUTFILE "out"
 
+#define SHOW_HELPTEXT { \
+	int l = 0; while( Helptext[l] ) { printf( "%s", Helptext[l++] ); } }
 
-
-#include "otfshrink.h"
+static const char* Helptext[] = {
+"                                                                           \n",
+" otfshrink - Create a new OTF trace that only includes                     \n",
+"             specified processes.                                          \n",
+"                                                                           \n",
+" Syntax: otfshrink [options] -i <file>                                     \n",
+"                                                                           \n",
+"   options:                                                                \n",
+"      -h, --help    show this help message                                 \n",
+"      -V            show OTF version                                       \n",
+"      -i <file>     input file name                                        \n",
+"      -o <name>     namestub of the output file                            \n",
+"                    (default: "DEFAULT_OUTFILE")                           \n",
+"      -l \"<list>\"   a list of processes in quotes                        \n",
+"                    to enable, i.e. keep in the copy,                      \n",
+"                    e.g. '-l \"1,2 4-8 3\",10 12-20'                       \n",
+"      -v            invert setting from '-l',                              \n",
+"                    i.e. deactivate/exclude listed processes               \n",
+"      -m \"<list>\"   map all listed processes to one representative       \n",
+"                    and remove all remaining ones                          \n",
+"                    first process in list is the representative,           \n",
+"                    must not be mixed with '-l' and '-v'                   \n",
+"      -f <file>     read multiple '-m' lists from the given file           \n",
+"                    one list/group per line, empty lines allowed           \n",
+"      -s <mode>     simulation mode: display all selected                  \n",
+"                    processes, no files are created,                       \n",
+"                    (display modes: (l)ist, (r)ange, or (t)able,           \n",
+"                     defaut: range)                                        \n",
+"      -p <file>     displays all processes with name and id                \n",
+"                    input file without \".otf\"                            \n",
+"                                                                           \n",
+" Multiple instances of '-l', '-m', and '-f' may be used.                   \n",
+"                                                                           \n",
+NULL };
 
 
 /* well, we have some global variables */
@@ -94,20 +108,24 @@ string output_file;
 string output_folder;
 string output_path;
 
-
-
 int write_master(string input, string output, bool show, int sim_mode);
 int display_processes(firstarg *first, int sim_mode);
 void free_all_pointers(char *ch_i, firstarg *first, OTF_MapEntry** entries, OTF_Writer *writer,
 		      OTF_Reader *reader, OTF_HandlerArray *handlers, OTF_FileManager *manager,
 		      OTF_MasterControl *master, OTF_MasterControl *new_master);
-
+/*initialize OTF_Stream_Reader*/
+int readDefProc (string filename);
 int parse_parameters( int argc, char* argv[] );
 
-
+int parse_p(string line);
+int parse_token(char* token,set<uint32_t>& tMap);
+int parse_range(char* line, int op);
 int parse_replacement_file( const char* filename );
-int parse_replacement_line( char* line );
-int parse_list_line( char* line );
+string convert_ItoA (int num);
+bool checkString(char* str);
+// int parse_replacement_line( char* line );
+/*parse -l option, accept ranges, ',' and ' ' are accepted as seperators*/
+int parse_list_line( char* line  );
 
 
 int parse_replacement_file( const char* filename ) {
@@ -133,9 +151,9 @@ int parse_replacement_file( const char* filename ) {
     /*
     while ( -1 != getline( &line, &len, f ) ) {
     */
+    set<uint32_t> s;
     while ( NULL != fgets( line, len, f ) ) {
-
-        if ( 0 != parse_replacement_line( line ) ) return 1;
+	if ( 0 != parse_range( line, 1 ) ) return 1;
     }
 
     fclose( f );
@@ -145,76 +163,170 @@ int parse_replacement_file( const char* filename ) {
 
     return 0;
 }
-
-
-int parse_replacement_line( char* line ) {
-
+int parse_token(char* token,set<uint32_t>& tMap) {
+    if( false == checkString(token) ) {
+      cout << "Error: '" << token << "' includes (a) letter(s)" << endl;
+      return 1;
+    }
+    if (!token) return 0;
+    const char* delim="-";
+    char* tok;
+    uint32_t start=0;
+    uint32_t end=0;
+    
+    tok=strtok(token, delim);
+    
+	start=strtoll( tok, &tok, 10);
+	if(0 == start) {
+	  cout << "Error: argument '0' is not possible" << endl;
+	  return 1;
+	}  
+	end=start;
+	tok=strtok(NULL, delim);
+	if(NULL!=tok) {
+	    end=strtoll( tok, &tok, 10);
+	    if(0 == end) {
+	      cout << "Error: argument '0' is not possible" << endl;
+	      return 1;
+	    }  
+            tok=strtok(NULL, delim);
+	    if(NULL!=tok || start > end) {
+		cerr << "Error: could not parse '" << token << "', abort" << endl;
+		return 1;
+	    } 
+	}	
+	for(uint32_t i=start; i<=end; i++) {
+	    tMap.insert( i );
+	} 
+	return 0;
+}
+string convert_ItoA (int num) {
+    string result;          	// string which will contain the result
+    ostringstream convert;   	// stream used for the conversion
+    convert << num;      	// insert the textual representation of 'Number' in the characters in the stream
+    result = convert.str();
+    return result;
+}
+bool checkString(char* str) {
+    char* delim = (char*)"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+    for(uint32_t i = 0; i < strlen(str); i++) {
+       for(uint32_t y = 0; y < strlen(delim); y++) {
+	if(str[i]==delim[y]) {
+	  return false;
+	}
+      }
+    }
+    return true;
+}
+int parse_range(char* line, int op) {
     char* tmp;
     char* token;
-    const char* delim= " {}\t\n";
-
-    token= strtok_r( line, delim, &tmp );
-    if ( NULL == token ) return 0 ; // ignore blank lines without an error
-
-    int64_t id= strtoll( token, NULL, 10 );
-    if ( 0 >= id ) {
-
-        cerr << "Error: could not parse '" << token << "', abort" << endl;
-        return 1;
+    string flash;
+    uint32_t begin = 0;
+    int ret=0;
+    const char* delim= " {},:;\t\n";
+    set<uint32_t >* s=NULL;
+    token=strtok_r(line,delim,&tmp);
+    if(!token) 
+	return 0;	//ignore empty lines  
+    
+    if( '-' == token [0] ) {
+	begin =1;
+	flash = (char*)"1-";
+	flash += (char*)(token+1);
+    } else if( '-' == token [strlen(token)-1]) { 
+	cout << "Error: missing number after '-' at '" << token << "'" << endl;
+	return 1;
+    } else {
+	begin=strtoll( token, NULL, 10);
+	if (0 == begin) {
+	  cout << "Error: argument '0' is not possible" << endl;
+	  return 1; 
+	}
+	flash = token;
     }
-    set<uint32_t >& s= replacementMap[ id ];
-
-    /* do not add first entry in */
-
-    while ( NULL != ( token= strtok_r( NULL, delim, &tmp ) ) ) {
-
-        id= strtoll( token, NULL, 10 );
-        if ( 0 >= id ) {
-
-            cerr << "Error: could not parse '" << token << "', abort" << endl;
-            return 1;
-        }
-
-        s.insert( id );
+    if(0==op) {
+	ret=parse_token((char*)flash.c_str(),cpuMap);
+    } else if(1==op) {
+	s=&(replacementMap[ begin ]);
+	ret=parse_token((char*)flash.c_str(),*s);
     }
 
-    return 0;
+    for (token=strtok_r(NULL,delim,&tmp); token && ret == 0; token=strtok_r(NULL,delim,&tmp)) {
+	if( '-' == token [0] ) {
+	  flash = (char*)"1-";
+	  flash += (char*)(token+1);
+	} else if( '-' == token [strlen(token)-1]) { 
+	  cout << "Error: missing number after '-' at '" << token << "'" << endl;
+	  return 1;
+	}
+	else {
+	  flash = token; 
+	}
+	if(0==op) {
+	    ret=parse_token((char*)flash.c_str(),cpuMap);
+	} else if(1==op) {
+	    ret=parse_token((char*)flash.c_str(),*s);
+	}
+    }
+    /*only for testing purposes*/
+//        cout << "-------------------" << endl;
+//        set<uint32_t>::iterator myIterator;
+//        if(0==op) {
+//     	for(myIterator = cpuMap.begin();myIterator != cpuMap.end(); myIterator++) {
+//     	    cout << *myIterator << endl;
+//     	}
+//      	cout << "cputMap Size: " << cpuMap.size() << endl;
+//         }else if(1==op) {
+//     	for(myIterator = s->begin();myIterator != s->end(); myIterator++) {
+//     	    cout << *myIterator << endl;
+//     	}
+//      	cout << "s Size: " << s->size() << endl;
+//         }
+    return ret;
 }
-
-
-int parse_list_line( char* line ) {
-
-
-    char* tmp;
-    char* token;
-    const char* delim= " {}\t\n";
-
-    token= strtok_r( line, delim, &tmp );
-    if ( NULL == token ) return 0 ; // ignore blank lines without an error
-
-    int64_t id= strtoll( token, NULL, 10 );
-    if ( 0 >= id ) {
-        cerr << "Error: could not parse '" << token << "', abort" << endl;
-        return 1;
-    }
-    cpuMap.insert( id );
-
-
-    while ( NULL != ( token= strtok_r( NULL, delim, &tmp ) ) ) {
-
-        id= strtoll( token, NULL, 10 );
-        if ( 0 >= id ) {
-
-            cerr << "Error: could not parse '" << token << "', abort" << endl;
-            return 1;
-        }
-
-        cpuMap.insert( id );
-    }
-
-    return 0;
+int handleDefProcesses (void *userData, uint32_t stream, uint32_t process, const char *name, uint32_t parent) {
+     procList_append(procList,process,parent,(char*)name);
+     return OTF_RETURN_OK;
 }
+int readDefProc(string filename) {
+     /*---------------------------------------------------------*/
+     /*Creates a new OTF_Stream_Reader to read all definitions	*/
+     /*of a trace and write them into a new datatype.		*/
+     /*---------------------------------------------------------*/
+     OTF_RStream* rstream;
+     OTF_FileManager* myManager;
+     OTF_HandlerArray* myHandlers;
+     
+     myManager= OTF_FileManager_open( 100 );
+     assert( myManager );
+     myHandlers = OTF_HandlerArray_open();
+     assert( myHandlers );
+     rstream = OTF_RStream_open( filename.c_str(), 0, myManager );
+     assert( rstream );
+     
+     OTF_HandlerArray_setHandler( myHandlers, (OTF_FunctionPointer*) handleDefProcesses, OTF_DEFPROCESS_RECORD );
+     OTF_RStream_readDefinitions( rstream, myHandlers );
 
+     OTF_RStream_close( rstream );
+     OTF_HandlerArray_close( myHandlers );
+     OTF_FileManager_close( myManager );
+     
+   return 0;
+}
+int parse_p(string line) {
+//   string inputF=argv[i];
+			if ( access((line+".otf").c_str(), F_OK) ) {
+			    cerr << "Error while reading tracefile. File \""<<line<<".otf\" does not exist." << endl;
+			    return 1;
+			}
+			readDefProc(line);
+			printf("\n%-6s    %-30s    %-25s\n","group","process_name","process_id");
+ 			printf("%-6s    %-30s    %-25s\n","-----","-------------","-----------");
+			procList_print(procList);
+			exit( 0 );
+			return 0; // actually not needed, but prevents a compiler warning
+}
 
 int parse_parameters( int argc, char* argv[] ) {
 
@@ -223,13 +335,42 @@ int parse_parameters( int argc, char* argv[] ) {
 	for ( int i = 1; i < argc; i++ ) {
 		if ( 0 == strcmp("-h", argv[i]) || 0 == strcmp("--help", argv[i]) ) {
 
-			cout << HELPTEXT << endl;
+			SHOW_HELPTEXT
 			exit( 0 );
+		}
+	}
+	
+	/*------------------------------------------------------*/
+	/*Handles -p option. If -p was given as an argument,	*/
+	/*no other parameters are allowed. -p calls function to	*/
+	/*writes definitions, read by an OTF_Stream_Reader, to 	*/
+	/*a new datatype and then displays each process with 	*/
+	/*its name and id sorted and grouped.			*/
+	/*------------------------------------------------------*/
+	for ( int i = 1; i < argc; i++ ) {
+		if ( 0 == strcmp("-p", argv[i]) ) {
+		    if(i+1 < argc) {
+			++i;
+			parse_p( argv[i] );
+// 			string inputF=argv[i];
+// 			if ( access((inputF+".otf").c_str(), F_OK) ) {
+// 			    cerr << "Error while reading tracefile. File \""<<inputF<<".otf\" does not exist." << endl;
+// 			    return 1;
+// 			}
+// 			readDefProc(inputF);
+// 			printf("\n%-6s    %-30s    %-25s\n","group","process_name","process_id");
+//  			printf("%-6s    %-30s    %-25s\n","-----","-------------","-----------");
+// 			procList_print(procList);
+			exit( 0 );
+		    }
+		    else {
+		      cerr << "Error: No argument given after "<< argv[i] << endl;
+		      return 1;
+		    }
 		}
 	}
 
 	for ( int i = 1; i < argc; i++ ) {
-
 		if ( 0 == strcmp( "-V", argv[i] ) ) {
 
 			printf( "%u.%u.%u \"%s\"\n", OTF_VERSION_MAJOR, OTF_VERSION_MINOR,
@@ -239,10 +380,10 @@ int parse_parameters( int argc, char* argv[] ) {
 		} else if ( 0 == strcmp( "-m", argv[i] ) ) {
 
 
-            if ( ( i +1 >= argc ) || ( '-' == argv[i+1][0] ) ) {
+            if ( ( i +1 >= argc ) ) {
 
 				cerr << "Error: No argument given after " << argv[i] << endl;
-				return 1;
+// 				return 1;
 			}
 
             if ( MODE_NORMAL == mode ) {
@@ -259,9 +400,7 @@ int parse_parameters( int argc, char* argv[] ) {
 
             mode= MODE_MAP;
             inverse= true;
-
-
-            int ret= parse_replacement_line( argv[i+1] );
+            int ret= parse_range( argv[i+1], 1);
             if ( 0 != ret ) {
             
                 cerr << "Error parsing '"<< argv[i+1] << "'" << endl;
@@ -306,32 +445,28 @@ int parse_parameters( int argc, char* argv[] ) {
 
 		} else if ( 0 == strcmp("-l", argv[i]) ) {
 
-            if ( ( i +1 >= argc ) || ( '-' == argv[i+1][0] ) ) {
+		    if ( ( i +1 >= argc ) || ( '-' == argv[i+1][0] ) ) {
 
-				cerr << "Error: No argument given after " << argv[i] << endl;
-				return 1;
-			}
+					cerr << "Error: No argument given after " << argv[i] << endl;
+					return 1;
+		    }
 
-            if ( MODE_MAP == mode ) {
+		    if ( MODE_MAP == mode ) {
 
-                cerr << "Error: must not mix '-m' and '-l'" << endl;
-                return 1;
-            }
+			cerr << "Error: must not mix '-m' and '-l'" << endl;
+			return 1;
+		    }
 
-            if ( MODE_DEFAULT == mode ) {
-            
-                mode= MODE_NORMAL;
-            }
-
-            int ret= parse_list_line( argv[i+1] );
-            if ( 0 != ret ) {
-            
-                cerr << "Error parsing '"<< argv[i+1] << "'" << endl;
-                return 1;
-            }
-
-            ++i;
-
+		    if ( MODE_DEFAULT == mode ) {
+		    
+			mode= MODE_NORMAL;
+		    }
+		    int ret= parse_range( argv[i+1], 0);
+		    if ( 0 != ret ) {
+			cerr << "Error parsing '"<< argv[i+1] << "'" << endl;
+			return 1;
+		    }
+		    ++i;
 		} else if ( 0 == strcmp("-v", argv[i]) ) {
 
                 if ( MODE_MAP == mode  ) {
@@ -396,12 +531,11 @@ int parse_parameters( int argc, char* argv[] ) {
 
 
 int main ( int argc, char* argv[] ) {
-	
 //	char *pwd = NULL;
 	size_t found;
 
 	if ( argc <= 1 ) {
-		cout << HELPTEXT << endl;
+		SHOW_HELPTEXT
 		return 0;
 	}
 
@@ -421,16 +555,18 @@ int main ( int argc, char* argv[] ) {
 
         for ( ; jt != jtend ; ++jt ) {
 
-            /*cout << *jt << " ";*/
-
-            cpuMap.insert( *jt );
+            if (*jt != it->first) {
+                /*cout << *jt << " ";*/
+                cpuMap.insert( *jt );
+            }
         }
 
         /*cout << endl;*/
     }
 
 	/* string operations to handle input and output path */
-	/* check if -i was set */
+
+	/* check if input file is given */
 	if ( input_path.empty() ) {
 		cerr << "Error: No input file given." << endl;
 		return 101;
@@ -521,9 +657,9 @@ int main ( int argc, char* argv[] ) {
 	/* make output path if some information are missing */
 	if ( output_file.empty() ) {
 		if ( output_folder.empty() ) {
-			output_path = input_folder + string("s_") + input_file;
+			output_path = input_folder + DEFAULT_OUTFILE;
 		} else {
-			output_path = output_folder + string("s_") + input_file;
+			output_path = output_folder + DEFAULT_OUTFILE;
 		}
 	}
 
@@ -618,7 +754,7 @@ int write_master(string input, string output, bool show, int sim_mode) {
 		}
 
 		/* if there is nothing to append or show_mode is active, don't create symbolic link */
-		if ( ( ! append) || (show) ) {
+		if ( ! append || show ) {
 			continue;
 		}
 
@@ -703,10 +839,12 @@ int write_master(string input, string output, bool show, int sim_mode) {
 	OTF_HandlerArray_setFirstHandlerArg(handlers, 
 	(void*) first, OTF_DEFPROCESS_RECORD);
 
-	OTF_HandlerArray_setHandler(handlers, 
-		(OTF_FunctionPointer*) handleDefProcessGroup, OTF_DEFPROCESSGROUP_RECORD);
-	OTF_HandlerArray_setFirstHandlerArg(handlers, 
-	(void*) first, OTF_DEFPROCESSGROUP_RECORD);
+	if( replacementMap.empty() ) {
+		OTF_HandlerArray_setHandler(handlers, 
+			(OTF_FunctionPointer*) handleDefProcessGroup, OTF_DEFPROCESSGROUP_RECORD);
+		OTF_HandlerArray_setFirstHandlerArg(handlers, 
+			(void*) first, OTF_DEFPROCESSGROUP_RECORD);
+	}
 
 	OTF_HandlerArray_setHandler(handlers, 
 		(OTF_FunctionPointer*) handleDefProcessSubstitutes, OTF_DEFPROCESSSUBSTITUTES_RECORD);
@@ -720,14 +858,42 @@ int write_master(string input, string output, bool show, int sim_mode) {
 
 	/* in mapping mode write additional definitions */
 
+	/* write substitute record(s) */
+	map< uint32_t, set< uint32_t > >::const_iterator it= replacementMap.begin();
+	map< uint32_t, set< uint32_t > >::const_iterator itend= replacementMap.end();
+	for ( ; it != itend; ++it ) {
 
+		if ( it->second.size() <= 1 )
+			continue;
+
+		uint32_t* substitutes= new uint32_t[it->second.size()];
+		assert( substitutes );
+		uint32_t* p= substitutes;
+
+		set< uint32_t >::const_iterator jt= it->second.begin();
+		set< uint32_t >::const_iterator jtend= it->second.end();
+
+		for ( ; jt != jtend; ++jt ) {
+
+			*p= *jt; p++;
+		}
+
+		if ( 0 == OTF_Writer_writeDefProcessSubstitutes( writer, 0,
+			it->first, it->second.size(), substitutes, NULL ) ) {
+			CLEAR_EVERYTHING
+			return 112;
+		}
+
+		delete [] substitutes;
+	}
+	
 	/* set the writer's master to the modified master instance */
 	/* closing the writer at the end writes the new master file to harddisk */
 	OTF_Writer_setMasterControl(writer, new_master);
 
 	/* clear everything */
 	CLEAR_EVERYTHING
-
+	
 	return 0;
 }
 

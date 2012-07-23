@@ -106,7 +106,7 @@ See \`config.log' for more details.])])
 	cross_prefix="cross-"
 	AC_ARG_WITH(cross-prefix,
 		AC_HELP_STRING([--with-cross-prefix=PREFIX],
-		[prefix for cross-tool's executables (e.g. PREFIXvtcc, PREFIXvtf77), default: cross-]),
+		[prefix for cross-tool's executables (e.g. PREFIXvtcc, PREFIXvtfort), default: cross-]),
 	[
 		AS_IF([test x"$withval" = "xno"], [cross_prefix=],
 		[AS_IF([test x"$withval" != "xyes"], [cross_prefix=$withval])])

@@ -42,7 +42,7 @@ int OTF_WBuffer_init( OTF_WBuffer* wbuffer ) {
 	wbuffer->time = 0;
 
 #ifdef HAVE_ZLIB
-	wbuffer->zbuffersize= 1024*10;
+	wbuffer->zbuffersize= OTF_ZBUFFER_DEFAULTSIZE;
 #endif /* HAVE_ZLIB */
 	
 	return 1;
@@ -79,17 +79,33 @@ OTF_WBuffer* OTF_WBuffer_open( const char* filename, OTF_FileManager* manager ) 
 
 int OTF_WBuffer_close( OTF_WBuffer* wbuffer ) {
 
+	int ret;
+
+	if( (uint32_t) -1 != wbuffer->process ) {
+
+		OTF_WBuffer_writeUint64( wbuffer, wbuffer->time );
+		OTF_WBuffer_writeNewline( wbuffer );
+
+		OTF_WBuffer_writeChar( wbuffer, '*' );
+		OTF_WBuffer_writeUint32( wbuffer, wbuffer->process );
+		OTF_WBuffer_writeNewline( wbuffer );
+	}
 
 #	ifndef OTF_DEBUG
-		int ret= OTF_WBuffer_flush( wbuffer );
+	{
+		ret= OTF_WBuffer_flush( wbuffer );
 		
 		ret&= OTF_File_close( wbuffer->file );
 		
 		ret&= OTF_WBuffer_finish( wbuffer );
-	
+	}
 #	else
-		int ret= 1;
-		int tmpret= OTF_WBuffer_flush( wbuffer );
+	{
+		int tmpret;
+
+		ret= 1;
+
+		tmpret= OTF_WBuffer_flush( wbuffer );
 		if( 0 == tmpret ) {
 			
 			OTF_Error( "ERROR in function %s, file: %s, line: %i:\n "
@@ -115,7 +131,7 @@ int OTF_WBuffer_close( OTF_WBuffer* wbuffer ) {
 					__FUNCTION__, __FILE__, __LINE__ );
 		}
 		ret&= tmpret;
-
+	}
 #	endif
 
 	free( wbuffer );

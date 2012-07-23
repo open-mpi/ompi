@@ -15,63 +15,28 @@ int handleDefProcess (void *userData, uint32_t stream, uint32_t process,
 	int ret;
 	firstarg *first = (firstarg*) userData;
 
-	if ( ( cpuMap.end() == cpuMap.find( process ) ) != inverse ) {
+	if ( replacementMap.empty() ) {
 
-		/* process was replaced, drop definition */
-		return OTF_RETURN_OK;
-	}
+		if ( ( cpuMap.end() == cpuMap.find( process ) ) != inverse ) {
 
-    /* disable parent process specification if the original parent process was dropped */
-    if ( parent ) {
-
-        if ( ( cpuMap.end() == cpuMap.find( parent ) ) != inverse ) {
-
-            parent= 0;
-        } 
-    }
-
-	/* if process represents other processes, modify its name */
-
-	map< uint32_t, set< uint32_t > >::const_iterator ft= replacementMap.find( process );
-	map< uint32_t, set< uint32_t > >::const_iterator ftend= replacementMap.end();
-	if ( ftend != ft && 0 < ft->second.size() ) {
-
-		uint32_t len= ft->second.size() +1;
-		/* copy of name, truncate at 99 characters */
-		char newname[100];
-		/* alter process name, append hint about the number of processes replaced by this 
-		one including itself */
-		snprintf( newname, 100, "%s #%u", name, len );
-
-		uint32_t* substitutes= (uint32_t*) malloc( len * sizeof(uint32_t) );
-		assert( substitutes );
-		uint32_t* p= substitutes;
-		*p= process; ++p;
-
-		set< uint32_t >::const_iterator it= ft->second.begin();
-		set< uint32_t >::const_iterator itend= ft->second.end();
-		for ( ; it != itend; ++it ) {
-
-			*p= *it; ++p;
+			/* process was disabled, drop definition */
+			return OTF_RETURN_OK;
 		}
 
-		ret= OTF_Writer_writeDefProcessSubstitutes( (OTF_Writer*) first->writer, 
-			stream, process, len, substitutes, NULL );
-		if ( 0 == ret ) return OTF_RETURN_ABORT;
+		/* disable parent process specification if the original parent
+		process was dropped */
+		if ( parent ) {
 
-		free( substitutes );
-		substitutes= NULL;
+			if ( ( cpuMap.end() == cpuMap.find( parent ) ) != inverse ) {
 
-		ret= OTF_Writer_writeDefProcessKV ( (OTF_Writer*) first->writer, 
-			stream, process, newname, parent, list);
-		if ( 0 == ret ) return OTF_RETURN_ABORT;
-
-	} else {
-
-		ret= OTF_Writer_writeDefProcessKV ( (OTF_Writer*) first->writer, 
-		stream, process, name, parent, list);
-		if ( 0 == ret ) return OTF_RETURN_ABORT;
+				parent= 0;
+			}
+		}
 	}
+
+	ret= OTF_Writer_writeDefProcessKV ( (OTF_Writer*) first->writer, 
+	stream, process, name, parent, list);
+	if ( 0 == ret ) return OTF_RETURN_ABORT;
 
 	return OTF_RETURN_OK;
 }

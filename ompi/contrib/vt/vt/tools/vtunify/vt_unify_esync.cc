@@ -16,10 +16,8 @@
 #include <fstream>
 #include <iostream>
 #include <list>
-#include <map>
 #include <sstream>
 #include <string>
-#include <vector>
 
 #include <stdio.h>
 #include <stdlib.h>

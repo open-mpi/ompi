@@ -88,6 +88,12 @@ void setDefinitionHandlerArray( OTF_HandlerArray* handlers,
         (void*) wstream, OTF_DEFSCLFILE_RECORD );
 
     OTF_HandlerArray_setHandler( handlers,
+        (OTF_FunctionPointer*) handleDefUniqueId,
+        OTF_DEFUNIQUEID_RECORD );
+    OTF_HandlerArray_setFirstHandlerArg( handlers,
+        (void*) wstream, OTF_DEFUNIQUEID_RECORD );
+
+    OTF_HandlerArray_setHandler( handlers,
         (OTF_FunctionPointer*) handleDefVersion,
         OTF_DEFVERSION_RECORD );
     OTF_HandlerArray_setFirstHandlerArg( handlers,
@@ -124,6 +130,12 @@ void setDefinitionHandlerArray( OTF_HandlerArray* handlers,
         (void*) wstream, OTF_DEFMARKER_RECORD );
 
     OTF_HandlerArray_setHandler( handlers,
+        (OTF_FunctionPointer*) handleMarker,
+        OTF_MARKER_RECORD );
+    OTF_HandlerArray_setFirstHandlerArg( handlers,
+        (void*) wstream, OTF_MARKER_RECORD );
+
+    OTF_HandlerArray_setHandler( handlers,
         (OTF_FunctionPointer*) handleDefTimeRange,
         OTF_DEFTIMERANGE_RECORD );
     OTF_HandlerArray_setFirstHandlerArg( handlers,
@@ -140,6 +152,12 @@ void setDefinitionHandlerArray( OTF_HandlerArray* handlers,
         OTF_DEFPROCESSSUBSTITUTES_RECORD );
     OTF_HandlerArray_setFirstHandlerArg( handlers,
         (void*) wstream, OTF_DEFPROCESSSUBSTITUTES_RECORD );
+
+    OTF_HandlerArray_setHandler( handlers,
+        (OTF_FunctionPointer*) handleDefAuxSamplePoint,
+        OTF_DEFAUXSAMPLEPOINT_RECORD );
+    OTF_HandlerArray_setFirstHandlerArg( handlers,
+        (void*) wstream, OTF_DEFAUXSAMPLEPOINT_RECORD );
 
     OTF_HandlerArray_setHandler( handlers, 
         (OTF_FunctionPointer*) handleUnknownRecord,
@@ -388,6 +406,7 @@ int handleDefCounter( void *userData, uint32_t stream, uint32_t counter,
     }
 }
 
+/* *** Event handler *** ****************************************** */
 
 int handleDefCounterGroup( void *userData, uint32_t stream,
         uint32_t counterGroup, const char *name, OTF_KeyValueList *list ) {
@@ -472,6 +491,27 @@ int handleDefCreator( void *userData, uint32_t stream, const char *creator,
 
         return ( 0 == OTF_WStream_writeDefCreatorKV( wstream, creator,
                           list) ) ? OTF_RETURN_ABORT : OTF_RETURN_OK;
+
+    }
+}
+
+
+int handleDefUniqueId( void *userData, uint32_t stream, uint64_t uid ) {
+
+    OTF_WStream* wstream = (OTF_WStream*) userData;
+
+    if( 0 != stream ) {
+
+        fprintf( stderr,
+                 "Error: cannot merge traces with local definitions. "
+                 "Aborting.\n" );
+
+        return OTF_RETURN_ABORT;
+
+    } else {
+
+        return ( 0 == OTF_WStream_writeUniqueId( 
+                          wstream ) ) ? OTF_RETURN_ABORT : OTF_RETURN_OK;
 
     }
 }
@@ -640,8 +680,66 @@ int handleDefMarker( void *userData, uint32_t stream, uint32_t token,
 
     OTF_WStream* wstream = (OTF_WStream*) userData;
 
-    return ( 0 == OTF_WStream_writeDefMarkerKV( wstream, token, name, type,
-                      list) ) ? OTF_RETURN_ABORT : OTF_RETURN_OK;
+    if( 0 != wstream->id ) {
+
+        fprintf( stderr,
+                 "Error: cannot merge traces with local markers. "
+                 "Aborting.\n" );
+
+        return OTF_RETURN_ABORT;
+
+    } else {
+
+        return ( 0 == OTF_WStream_writeDefMarkerKV( wstream, token, name, type,
+                          list) ) ? OTF_RETURN_ABORT : OTF_RETURN_OK;
+    }
+}
+
+
+int handleMarker( void *userData, uint64_t time, uint32_t process,
+        uint32_t token, const char* text, OTF_KeyValueList* list ) {
+
+    OTF_WStream* wstream = (OTF_WStream*) userData;
+
+    if( 0 != wstream->id ) {
+
+        fprintf( stderr,
+                 "Error: cannot merge traces with local markers. "
+                 "Aborting.\n" );
+
+        return OTF_RETURN_ABORT;
+
+    } else {
+
+        return ( 0 == OTF_WStream_writeMarkerKV( wstream, time, process, token,
+                          text, list ) ) ? OTF_RETURN_ABORT : OTF_RETURN_OK;
+    }
+}
+
+
+int handleDefAuxSamplePoint( void*                  userData,
+                             uint32_t               streamid,
+                             uint64_t               time,
+                             OTF_AuxSamplePointType type,
+                             OTF_KeyValueList*      list ) {
+
+    OTF_WStream* wstream = (OTF_WStream*) userData;
+
+    if( 0 != streamid ) {
+
+         fprintf( stderr,
+                  "Error: cannot merge traces with local definitions. "
+                  "Aborting.\n" );
+
+        return OTF_RETURN_ABORT;
+
+    } else {
+
+        return ( 0 == OTF_WStream_writeDefAuxSamplePoint( wstream,
+                time,
+                type,
+                list ) ) ? OTF_RETURN_ABORT : OTF_RETURN_OK;
+    }
 }
 
 

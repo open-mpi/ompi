@@ -97,6 +97,12 @@ int OTF_Reader_readDefScl( OTF_RBuffer* buffer,
 int OTF_Reader_readDefSclFile( OTF_RBuffer* buffer, 
 	OTF_HandlerArray* handlers, uint32_t streamid );
 
+/**	This function reads a DEFUNIQUEID record from buffer,
+	parse the parameter of the record and call the
+	appropriate handler.*/
+int OTF_Reader_readDefUniqueId( OTF_RBuffer* buffer, 
+	OTF_HandlerArray* handlers, uint32_t streamid );
+
 /**	This function reads a DEFVERSION record from buffer,
 	parse the parameter of the record and call the
 	appropriate handler.*/
@@ -132,6 +138,10 @@ int OTF_Reader_readDefCounterAssignments( OTF_RBuffer* buffer,
 
 int OTF_Reader_readDefProcessSubstitutes( OTF_RBuffer* buffer,
 	OTF_HandlerArray* handlers, uint32_t streamid );
+
+int OTF_Reader_readDefAuxSamplePoint( OTF_RBuffer*      buffer,
+                                      OTF_HandlerArray* handlers,
+                                      uint32_t          streamid );
 
 /* *** Event records *** ****************************************** */
 
@@ -298,6 +308,18 @@ int OTF_Reader_readBeginCollopSnapshot( OTF_RBuffer* buffer,
 	appropriate handler.*/
 int OTF_Reader_readBeginFileOpSnapshot( OTF_RBuffer* buffer,
 	OTF_HandlerArray* handlers );
+
+/** This function reads a TCOLLOPCOUNT record from buffer,
+    parse the parameter of the record and call the
+    appropriate handler.*/
+int OTF_Reader_readCollopCountSnapshot( OTF_RBuffer* buffer,
+    OTF_HandlerArray* handlers );
+
+/** This function reads a TCOUNTER record from buffer,
+    parse the parameter of the record and call the
+    appropriate handler.*/
+int OTF_Reader_readCounterSnapshot( OTF_RBuffer* buffer,
+    OTF_HandlerArray* handlers );
 
 /* *** Summary records *** ****************************************** */
 
@@ -552,7 +574,8 @@ int OTF_Reader_parseEventRecord( OTF_RBuffer* buffer,
                         return OTF_Reader_readRMAPut( buffer, handlers );
                 }
 
-                break;
+                /* try inline snapshots */
+                return OTF_Reader_parseSnapshotsRecord( buffer, handlers );
 
         case OTF_KEYWORD_F_RMAPUTRE /* U */ :
 
@@ -620,6 +643,7 @@ int OTF_Reader_parseDefRecord( OTF_RBuffer* buffer,
 
 	switch( buffer->buffer[buffer->pos] ) {
 
+	/* case OTF_KEYWORD_F_DEFAUXSAMPLEPOINT 'A' : */
 	case OTF_KEYWORD_F_DEFATTRLIST /* 'A' */ :
 
 		if ( OTF_RBuffer_testKeyword( buffer, 
@@ -629,6 +653,12 @@ int OTF_Reader_parseDefRecord( OTF_RBuffer* buffer,
 
 			return OTF_Reader_readDefAttributeList( buffer, handlers, streamid );
 		}
+
+        if ( OTF_RBuffer_testKeyword( buffer, OTF_KEYWORD_S_DEFAUXSAMPLEPOINT ) ||
+                OTF_RBuffer_testKeyword( buffer, OTF_KEYWORD_L_DEFAUXSAMPLEPOINT ) ) {
+
+            return OTF_Reader_readDefAuxSamplePoint( buffer, handlers, streamid );
+        }
 
 		break;
 
@@ -809,6 +839,16 @@ int OTF_Reader_parseDefRecord( OTF_RBuffer* buffer,
 				OTF_RBuffer_testKeyword( buffer, OTF_KEYWORD_L_DEFVERSION ) ) {
 
 			return OTF_Reader_readDefVersion( buffer, handlers, streamid );
+		}
+
+		break;
+
+	case OTF_KEYWORD_F_DEFUNIQUEID /* 'U' */ :
+
+		if ( OTF_RBuffer_testKeyword( buffer, OTF_KEYWORD_S_DEFUNIQUEID ) ||
+				OTF_RBuffer_testKeyword( buffer, OTF_KEYWORD_L_DEFUNIQUEID ) ) {
+
+			return OTF_Reader_readDefUniqueId( buffer, handlers, streamid );
 		}
 
 		break;
@@ -996,6 +1036,8 @@ int OTF_Reader_parseSnapshotsRecord( OTF_RBuffer* buffer,
 		break;
 	
 	case OTF_KEYWORD_F_SNAPSHOT_COMMENT /* 'C' */ :
+    /*case OTF_KEYWORD_F_SNAPSHOT_COLLOPCOUNT*/ /* 'C' */
+    /*case OTF_KEYWORD_F_SNAPSHOT_COUNTER*/ /* 'C' */
 
 		if ( OTF_RBuffer_testKeyword( buffer, 
 				OTF_KEYWORD_S_SNAPSHOT_COMMENT ) || 
@@ -1005,10 +1047,22 @@ int OTF_Reader_parseSnapshotsRecord( OTF_RBuffer* buffer,
 			return OTF_Reader_readSnapshotComment( buffer, handlers );
 		}
 
+        if ( OTF_RBuffer_testKeyword( buffer, OTF_KEYWORD_S_SNAPSHOT_COLLOPCOUNT )
+            || OTF_RBuffer_testKeyword( buffer, OTF_KEYWORD_L_SNAPSHOT_COLLOPCOUNT ) ) {
+
+            return OTF_Reader_readCollopCountSnapshot( buffer, handlers );
+        }
+
+        if ( OTF_RBuffer_testKeyword( buffer, OTF_KEYWORD_S_SNAPSHOT_COUNTER )
+            || OTF_RBuffer_testKeyword( buffer, OTF_KEYWORD_L_SNAPSHOT_COUNTER ) ) {
+
+            return OTF_Reader_readCounterSnapshot( buffer, handlers );
+        }
+
 		break;
 
     case OTF_KEYWORD_F_SNAPSHOT_BEGINCOLLOP /* 'B' */ :
-    /*case OTF_KEYWORD_F_SNAPSHOT_BEGINFILEOP*/ /* 'F' */
+    /*case OTF_KEYWORD_F_SNAPSHOT_BEGINFILEOP*/ /* 'B' */
 
         if ( OTF_RBuffer_testKeyword( buffer, 
 				OTF_KEYWORD_S_SNAPSHOT_BEGINCOLLOP ) || 
@@ -1941,6 +1995,39 @@ int OTF_Reader_readDefSclFile( OTF_RBuffer* buffer,
 }
 
 
+int OTF_Reader_readDefUniqueId( OTF_RBuffer* buffer, 
+		OTF_HandlerArray* handlers, uint32_t streamid ) {
+
+
+	uint64_t uid;
+
+
+	if ( handlers->pointer[OTF_DEFUNIQUEID_RECORD] == NULL ) {
+
+		return OTF_RBuffer_readNewline( buffer );
+	}
+
+	uid = OTF_RBuffer_readUint64( buffer );
+
+	if ( OTF_RBuffer_readNewline( buffer ) ) {
+
+		/* 0 is considered as the non-error return value of call-back handlers, 
+		but the current function returns 0 on errors! */
+		return ( OTF_RETURN_OK /*0*/ == ( (
+			(OTF_Handler_DefUniqueId*)
+			handlers->pointer[OTF_DEFUNIQUEID_RECORD] )
+			( handlers->firsthandlerarg[OTF_DEFUNIQUEID_RECORD],
+			streamid, uid, buffer->list ) ) );
+
+	} else {
+
+		PARSE_ERROR( buffer );
+		
+		return 0;
+	}
+}
+
+
 int OTF_Reader_readDefVersion( OTF_RBuffer* buffer, 
 		OTF_HandlerArray* handlers, uint32_t streamid ) {
 
@@ -2393,6 +2480,52 @@ int OTF_Reader_readDefProcessSubstitutes( OTF_RBuffer* buffer,
 
 		return 0;
 	}
+}
+
+int OTF_Reader_readDefAuxSamplePoint( OTF_RBuffer*      buffer,
+                                      OTF_HandlerArray* handlers,
+                                      uint32_t          streamid ) {
+
+
+    uint64_t time;
+    OTF_AuxSamplePointType type;
+
+    if ( handlers->pointer[OTF_DEFAUXSAMPLEPOINT_RECORD] == NULL ) {
+
+        return OTF_RBuffer_readNewline( buffer );
+    }
+
+    time= OTF_RBuffer_readUint64( buffer );
+
+    if ( OTF_RBuffer_testKeyword( buffer, OTF_KEYWORD_S_LOCAL_TYPE ) ||
+            OTF_RBuffer_testKeyword( buffer, OTF_KEYWORD_L_LOCAL_TYPE ) ) {
+
+        type= (OTF_AuxSamplePointType) OTF_RBuffer_readUint32( buffer );
+
+    } else {
+
+        PARSE_ERROR( buffer );
+
+        return 0;
+    }
+
+    if ( OTF_RBuffer_readNewline( buffer ) ) {
+
+        /* 0 is considered as the non-error return value of call-back handlers,
+        but the current function returns 0 on errors! */
+
+        return ( OTF_RETURN_OK /*0*/ == ( (
+                (OTF_Handler_DefAuxSamplePoint*)
+                handlers->pointer[OTF_DEFAUXSAMPLEPOINT_RECORD] )
+                ( handlers->firsthandlerarg[OTF_DEFAUXSAMPLEPOINT_RECORD],
+                        streamid, time, type, buffer->list ) ) );
+
+    } else {
+
+        PARSE_ERROR( buffer );
+
+        return 0;
+    }
 }
 
 /* *** Event records *** ****************************************** */
@@ -4347,6 +4480,109 @@ int OTF_Reader_readBeginFileOpSnapshot( OTF_RBuffer* buffer,
 
 }
 
+int OTF_Reader_readCollopCountSnapshot( OTF_RBuffer* buffer,
+                                        OTF_HandlerArray* handlers ) {
+
+    uint32_t communicator;
+    uint64_t count;
+
+    if ( handlers->pointer[OTF_COLLOPCOUNTSNAPSHOT_RECORD] == NULL ) {
+
+        return OTF_RBuffer_readNewline( buffer );
+    }
+
+    communicator = OTF_RBuffer_readUint32( buffer );
+
+    if ( OTF_RBuffer_testKeyword( buffer, OTF_KEYWORD_S_LOCAL_COUNT )
+            || OTF_RBuffer_testKeyword( buffer, OTF_KEYWORD_L_LOCAL_COUNT ) ) {
+
+            count = OTF_RBuffer_readUint64( buffer );
+
+    } else {
+
+        PARSE_ERROR( buffer );
+
+        return 0;
+    }
+
+    if ( OTF_RBuffer_readNewline( buffer ) ) {
+
+        /* 0 is considered as the non-error return value of call-back handlers,
+         but the current function returns 0 on errors! */
+        return ( OTF_RETURN_OK /*0*/ == ( (
+            (OTF_Handler_CollopCountSnapshot*)
+            handlers->pointer[OTF_COLLOPCOUNTSNAPSHOT_RECORD] )
+            ( handlers->firsthandlerarg[OTF_COLLOPCOUNTSNAPSHOT_RECORD],
+            buffer->time, buffer->process, communicator,
+            count, buffer->list ) ) );
+
+    } else {
+
+        PARSE_ERROR( buffer );
+
+        return 0;
+    }
+}
+
+int OTF_Reader_readCounterSnapshot( OTF_RBuffer* buffer,
+                                    OTF_HandlerArray* handlers ) {
+
+    uint64_t originaltime;
+    uint32_t counter;
+    uint64_t value;
+
+    if ( handlers->pointer[OTF_COUNTERSNAPSHOT_RECORD] == NULL ) {
+
+        return OTF_RBuffer_readNewline( buffer );
+    }
+
+    originaltime = OTF_RBuffer_readUint64( buffer );
+
+    if ( OTF_RBuffer_testKeyword( buffer, OTF_KEYWORD_S_LOCAL_COUNTER )
+            || OTF_RBuffer_testKeyword( buffer, OTF_KEYWORD_L_LOCAL_COUNTER ) ) {
+
+            counter = OTF_RBuffer_readUint32( buffer );
+
+    } else {
+
+        PARSE_ERROR( buffer );
+
+        return 0;
+    }
+
+    if ( OTF_RBuffer_testKeyword( buffer, OTF_KEYWORD_S_LOCAL_VALUE )
+            || OTF_RBuffer_testKeyword( buffer, OTF_KEYWORD_L_LOCAL_VALUE ) ) {
+
+            value = OTF_RBuffer_readUint64( buffer );
+
+    } else {
+
+        PARSE_ERROR( buffer );
+
+        return 0;
+    }
+
+    if ( OTF_RBuffer_readNewline( buffer ) ) {
+
+        /* 0 is considered as the non-error return value of call-back handlers,
+         but the current function returns 0 on errors! */
+        return OTF_RETURN_OK /*0*/ == ( (OTF_Handler_CounterSnapshot*)
+            handlers->pointer[OTF_COUNTERSNAPSHOT_RECORD] )(
+                handlers->firsthandlerarg[OTF_COUNTERSNAPSHOT_RECORD],
+                buffer->time,
+                originaltime,
+                buffer->process,
+                counter,
+                value,
+                buffer->list );
+
+    } else {
+
+        PARSE_ERROR( buffer );
+
+        return 0;
+    }
+}
 
 
 /* *** Summary records *** ****************************************** */

@@ -286,6 +286,12 @@ int OTF_HandlerArray_getCopyHandler( OTF_HandlerArray* handlers,
 	OTF_HandlerArray_setFirstHandlerArg( handlers, writer,
 		OTF_DEFPROCESSSUBSTITUTES_RECORD );
 	
+    OTF_HandlerArray_setHandler( handlers,
+        (OTF_FunctionPointer*) OTF_CopyHandler_DefAuxSamplePoint,
+        OTF_DEFAUXSAMPLEPOINT_RECORD );
+    OTF_HandlerArray_setFirstHandlerArg( handlers, writer,
+        OTF_DEFAUXSAMPLEPOINT_RECORD );
+
 	OTF_HandlerArray_setHandler( handlers, 
 		(OTF_FunctionPointer*) OTF_CopyHandler_NoOp,
 		OTF_NOOP_RECORD );
@@ -439,6 +445,20 @@ int OTF_HandlerArray_getCopyHandler( OTF_HandlerArray* handlers,
 		OTF_BEGINFILEOPSNAPSHOT_RECORD );
 
 
+    OTF_HandlerArray_setHandler( handlers,
+        (OTF_FunctionPointer*) OTF_CopyHandler_CollopCountSnapshot,
+        OTF_COLLOPCOUNTSNAPSHOT_RECORD );
+    OTF_HandlerArray_setFirstHandlerArg( handlers, writer,
+        OTF_COLLOPCOUNTSNAPSHOT_RECORD );
+
+
+    OTF_HandlerArray_setHandler( handlers,
+        (OTF_FunctionPointer*) OTF_CopyHandler_CounterSnapshot,
+        OTF_COUNTERSNAPSHOT_RECORD );
+    OTF_HandlerArray_setFirstHandlerArg( handlers, writer,
+        OTF_COUNTERSNAPSHOT_RECORD );
+
+
 	OTF_HandlerArray_setHandler( handlers, 
 		(OTF_FunctionPointer*) OTF_CopyHandler_SummaryComment,
 		OTF_SUMMARYCOMMENT_RECORD );
@@ -579,6 +599,12 @@ int OTF_HandlerArray_getCopyHandler_stream( OTF_HandlerArray* handlers,
 		OTF_DEFSCLFILE_RECORD );
 
 	OTF_HandlerArray_setHandler( handlers, 
+		(OTF_FunctionPointer*) OTF_CopyHandler_stream_DefUniqueId,
+		OTF_DEFUNIQUEID_RECORD );
+	OTF_HandlerArray_setFirstHandlerArg( handlers, wstream, 
+		OTF_DEFUNIQUEID_RECORD );
+
+	OTF_HandlerArray_setHandler( handlers, 
 		(OTF_FunctionPointer*) OTF_CopyHandler_stream_DefVersion,
 		OTF_DEFVERSION_RECORD );
 	OTF_HandlerArray_setFirstHandlerArg( handlers, wstream, 
@@ -625,6 +651,12 @@ int OTF_HandlerArray_getCopyHandler_stream( OTF_HandlerArray* handlers,
 		OTF_DEFPROCESSSUBSTITUTES_RECORD );
 	OTF_HandlerArray_setFirstHandlerArg( handlers, wstream,
 		OTF_DEFPROCESSSUBSTITUTES_RECORD );
+
+    OTF_HandlerArray_setHandler( handlers,
+        (OTF_FunctionPointer*) OTF_CopyHandler_stream_DefAuxSamplePoint,
+        OTF_DEFAUXSAMPLEPOINT_RECORD );
+    OTF_HandlerArray_setFirstHandlerArg( handlers, wstream,
+        OTF_DEFAUXSAMPLEPOINT_RECORD );
 
 	OTF_HandlerArray_setHandler( handlers, 
 		(OTF_FunctionPointer*) OTF_CopyHandler_stream_NoOp,
@@ -777,6 +809,19 @@ int OTF_HandlerArray_getCopyHandler_stream( OTF_HandlerArray* handlers,
 		OTF_BEGINFILEOPSNAPSHOT_RECORD );
 	OTF_HandlerArray_setFirstHandlerArg( handlers, wstream, 
 		OTF_BEGINFILEOPSNAPSHOT_RECORD );
+
+    OTF_HandlerArray_setHandler( handlers,
+        (OTF_FunctionPointer*) OTF_CopyHandler_stream_CollopCountSnapshot,
+        OTF_COLLOPCOUNTSNAPSHOT_RECORD );
+    OTF_HandlerArray_setFirstHandlerArg( handlers, wstream,
+        OTF_COLLOPCOUNTSNAPSHOT_RECORD );
+
+
+    OTF_HandlerArray_setHandler( handlers,
+        (OTF_FunctionPointer*) OTF_CopyHandler_stream_CounterSnapshot,
+        OTF_COUNTERSNAPSHOT_RECORD );
+    OTF_HandlerArray_setFirstHandlerArg( handlers, wstream,
+        OTF_COUNTERSNAPSHOT_RECORD );
 
 
 	OTF_HandlerArray_setHandler( handlers, 

@@ -15,6 +15,50 @@
 
 #include "config.h"
 
+#if defined(HAVE_OMP) && HAVE_OMP
+   // disable OpenMP under the following circumstances:
+
+   // when building the vtunify library
+#  if defined(VT_LIB)
+#     undef HAVE_OMP
+
+   // on NEC SX platforms (causes "internal compiler error")
+#  elif defined(_SX)
+#     undef HAVE_OMP
+
+   // on MacOS X using GCC < v4.5
+   // causes
+   // "undefined reference to ___builtin_expect()"
+   // (induced by assert()'s within OpenMP-parallel regions)
+   // and
+   // "sorry, unimplemented: threadprivate variables not supported in
+   // this target"
+#  elif (defined(__APPLE__) && defined(__MACH__) && defined(__GNUC__) && \
+       (__GNUC__ < 4 || (__GNUC__ == 4 &&  __GNUC_MINOR__ < 5)))
+#     undef HAVE_OMP
+
+   // using Open64 < v4.2.4 (causes "internal compiler error")
+#  elif defined(__OPEN64__)
+#     if !defined(__OPENCC__) || !defined(__OPENCC_MINOR__) || !defined(__OPENCC_PATCHLEVEL__)
+         // unknown compiler version; disable OpenMP to be on the safe side
+#        undef HAVE_OMP
+#     else
+         // __OPENCC_PATCHLEVEL__ can be empty; redefine it to 0
+#        if !(__OPENCC_PATCHLEVEL__ + 0)
+#           undef __OPENCC_PATCHLEVEL__
+#           define __OPENCC_PATCHLEVEL__ 0
+#        endif
+         // disable OpenMP, if compiler version is less than 4.2.4
+#        if __OPENCC__ < 4 || (__OPENCC__ == 4 && (__OPENCC_MINOR__ < 2 || (__OPENCC_MINOR__ == 2 && __OPENCC_PATCHLEVEL__ < 4)))
+#           undef HAVE_OMP
+#        endif
+#     endif
+#  endif // __OPEN64__
+#endif // HAVE_OMP
+#if defined(HAVE_OMP) && HAVE_OMP
+#  include <omp.h>
+#endif // HAVE_OMP
+
 #ifdef VT_MPI
 #  include "vt_unify_mpi.h"
 #endif // VT_MPI
@@ -31,21 +75,15 @@
 #include <string>
 #include <vector>
 
-#if defined(HAVE_OMP) && HAVE_OMP
-#  ifdef VT_LIB
-#     undef HAVE_OMP
-   // disable OpenMP on NEC SX platforms to work around a compiler error
-#  elif defined(_SX)
-#     undef HAVE_OMP
-#  else // VT_LIB || _SX
-#     include <omp.h>
-#  endif // VT_LIB
-#endif // HAVE_OMP
+#include <assert.h>
 
 #define STRBUFSIZE 1024
 
 // define to prefix each verbose message with a timestamp
-//#define TIME_VERBOSE
+//#define VT_UNIFY_VERBOSE_TIME_PREFIX
+
+// define to remove references to undefined processes from records
+#define VT_UNIFY_REMOVE_UNDEF_PROCID_REFERENCES
 
 #ifdef VT_MPI
 #  define MASTER if( MyRank == 0 )
@@ -64,46 +102,80 @@ struct ParamsS
    ParamsS()
       : verbose_level( 0 ), docompress( false ), doclean( true ),
         showusage( false ), showversion( false ), showprogress( false ),
-        bequiet( false ), onlystats( false ), domsgmatch( false ),
-        droprecvs( false ), prof_sort_flags( 0x22 ), createthumb( false )
+        bequiet( false ), onlystats( false )
    {
 #if defined(HAVE_ZLIB) && HAVE_ZLIB
       docompress = true;
 #endif // HAVE_ZLIB
 
-#ifdef VT_UNIFY_HOOKS_MSGMATCH
-      domsgmatch = true;
-#endif // VT_UNIFY_HOOKS_MSGMATCH
+#if defined(HAVE_IOFSL) && HAVE_IOFSL
+      iofsl_mode = VT_IOFSL_MODE_MULTIFILE_SPLIT;
+      iofsl_flags = 0;
+      iofsl_num_servers = 0;
+      iofsl_servers = 0;
+#endif // HAVE_IOFSL
 
-#ifdef VT_UNIFY_HOOKS_THUMB
-      createthumb = true;
-#endif // VT_UNIFY_HOOKS_THUMB
+#ifdef VT_UNIFY_HOOKS_MSGMATCH_SNAPS
+      domsgmatch = true;
+      droprecvs = false;
+      createsnaps = true;
+      maxsnapshots = 1024;
+#endif // VT_UNIFY_HOOKS_MSGMATCH_SNAPS
+
+#ifdef VT_UNIFY_HOOKS_PROF
+      prof_sort_flags = 0x22;
+#endif // VT_UNIFY_HOOKS_PROF
    }
 
-   std::string in_file_prefix;  // input trace file prefix
-   std::string out_file_prefix; // output trace file prefix
-   uint8_t     verbose_level;   // verbose level
-   bool        docompress;      // flag: do compress output trace?
-   bool        doclean;         // flag: do remove local trace?
-   bool        showusage;       // flag: show usage text?
-   bool        showversion;     // flag: show VampirTrace version?
-   bool        showprogress;    // flag: show progress?
-   bool        bequiet;         // flag: print no messages?
-   bool        onlystats;       // flag: unify only summarized information?
+   ~ParamsS()
+   {
+#if defined(HAVE_IOFSL) && HAVE_IOFSL
+      if( iofsl_num_servers > 0 )
+      {
+         for( uint32_t i = 0; i < iofsl_num_servers; i++ )
+            delete [] iofsl_servers[i];
+         delete [] iofsl_servers;
+      }
+#endif // HAVE_IOFSL
+   }
 
-   // HooksMsgMatchC's parameters
+   std::string in_file_prefix;    // input trace file prefix
+   std::string out_file_prefix;   // output trace file prefix
+   uint32_t    verbose_level;     // verbose level
+   bool        docompress;        // flag: do compress output trace?
+   bool        doclean;           // flag: do remove local trace?
+   bool        showusage;         // flag: show usage text?
+   bool        showversion;       // flag: show VampirTrace version?
+   bool        showprogress;      // flag: show progress?
+   bool        bequiet;           // flag: print no messages?
+   bool        onlystats;         // flag: unify only summarized information?
+
+#if defined(HAVE_IOFSL) && HAVE_IOFSL
+   // IOFSL parameters
    //
-   bool        domsgmatch;      // flag: do match messages?
-   bool        droprecvs;       // flag: drop receive messages, if matching?
+   bool        doiofsl() const { return iofsl_num_servers > 0; }
+   uint32_t    iofsl_mode;        // IOFSL mode (either VT_IOFSL_MODE_MULTIFILE
+                                  // or VT_IOFSL_MODE_MULTIFILE_SPLIT)
+   uint32_t    iofsl_flags;       // IOFSL flags bitmask
+   uint32_t    iofsl_num_servers; // number of IOFSL servers
+   char**      iofsl_servers;     // IOFSL server addresses
+#endif // HAVE_IOFSL
 
+#ifdef VT_UNIFY_HOOKS_MSGMATCH_SNAPS
+   // HooksMsgMatchAndSnapsC's parameters
+   //
+   bool        domsgmatch;        // flag: do match messages?
+   bool        droprecvs;         // flag: drop receive messages, if matching?
+   bool        createsnaps;       // flag: create snapshots?
+   uint32_t    maxsnapshots;      // max. number of snapshots to generate
+#endif // VT_UNIFY_HOOKS_MSGMATCH_SNAPS
+
+#ifdef VT_UNIFY_HOOKS_PROF
    // HooksProfC's parameters
    //
-   std::string prof_out_file;   // profile output file
-   int         prof_sort_flags; // profile sort flags
-
-   // HooksThumbC's parameters
-   //
-   bool        createthumb;     // flag: create Vampir thumbnail?
+   std::string prof_out_file;     // profile output file
+   uint32_t    prof_sort_flags;   // profile sort flags
+#endif // VT_UNIFY_HOOKS_PROF
 
 };
 
@@ -152,14 +224,28 @@ struct UnifyControlS
    }
 #endif // VT_ETIMESYNC
 
-   uint32_t    streamid;     // id of input stream
-   uint32_t    pstreamid;    // id of parent input stream
-   bool        stream_avail; // is stream available?
+   static bool have_events() { return ( mode_flags & VT_MODE_TRACE ) != 0; }
+   static bool have_stats()  { return ( mode_flags & VT_MODE_STAT ) != 0;  }
+   static uint32_t mode_flags;        // VT mode flags bitmask
+                                      // (VT_MODE_TRACE and/or VT_MODE_STAT)
+
+   // IOFSL properties
+   //
+   static bool is_iofsl() { return iofsl_num_servers > 0; }
+   static uint32_t iofsl_num_servers; // number of IOFSL servers used
+   static uint32_t iofsl_mode;        // IOFSL mode
+                                      // (VT_IOFSL_MODE_MULTIFILE or
+                                      //  VT_IOFSL_MODE_MULTIFILE_SPLIT)
+
+   uint32_t    streamid;              // id of input stream
+   uint32_t    pstreamid;             // id of parent input stream
+   bool        stream_avail;          // is stream available?
 
    // time sync. information
    //
-   int64_t     ltime[2];     // local times ...
-   int64_t     offset[2];    // ... and chronological offsets to global time
+   int64_t     ltime[2];              // local times ...
+   int64_t     offset[2];             // ... and chronological offsets to
+                                      // global time
 #ifdef VT_ETIMESYNC
    uint64_t    sync_offset;
    double      sync_drift;
@@ -202,6 +288,14 @@ extern std::map<uint32_t, UnifyControlS*> StreamId2UnifyCtl;
 
 // vector of stream ids to process by my rank
 extern std::vector<uint32_t> MyStreamIds;
+
+// number of available streams
+extern uint32_t NumAvailStreams;
+
+#ifdef VT_UNIFY_REMOVE_UNDEF_PROCID_REFERENCES
+   // set of absent stream ids (for fast searching)
+   extern std::set<uint32_t> AbsentStreamIds;
+#endif // VT_UNIFY_REMOVE_UNDEF_PROCID_REFERENCES
 
 #ifdef VT_MPI
    // number of MPI-ranks

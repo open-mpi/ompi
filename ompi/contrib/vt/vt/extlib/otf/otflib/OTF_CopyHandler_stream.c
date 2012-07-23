@@ -131,6 +131,15 @@ int OTF_CopyHandler_stream_DefSclFile(  void* userData, uint32_t stream,
 }
 
 
+int OTF_CopyHandler_stream_DefUniqueId( void* userData, uint32_t stream,
+		uint64_t uid ) {
+
+	/* update unique-id record */
+	return ( 0 == OTF_WStream_writeUniqueId( (OTF_WStream*)userData ) ) ?
+		OTF_RETURN_ABORT : OTF_RETURN_OK;
+}
+
+
 int OTF_CopyHandler_stream_DefVersion( void* userData, uint32_t stream, 
 		uint8_t major, uint8_t minor, uint8_t sub, const char* string ) {
 
@@ -201,6 +210,19 @@ int OTF_CopyHandler_stream_DefProcessSubstitutes( void* userData, uint32_t strea
 	return ( 0 == OTF_WStream_writeDefProcessSubstitutes( (OTF_WStream*)userData,
 		representative, numberOfProcs, procs,
 		list ) ) ? OTF_RETURN_ABORT : OTF_RETURN_OK;
+}
+
+int OTF_CopyHandler_stream_DefAuxSamplePoint( void*                  userData,
+                                              uint32_t               stream,
+                                              uint64_t               time,
+                                              OTF_AuxSamplePointType type,
+                                              OTF_KeyValueList*      list ) {
+
+
+    return ( 0 == OTF_WStream_writeDefAuxSamplePoint( (OTF_WStream*)userData,
+            time,
+            type,
+            list ) ) ? OTF_RETURN_ABORT : OTF_RETURN_OK;
 }
 
 /* *** Event handlers *** ****************************************** */
@@ -470,6 +492,40 @@ int OTF_CopyHandler_stream_BeginFileOpSnapshot( void* userData, uint64_t time,
 		 ) ? OTF_RETURN_ABORT : OTF_RETURN_OK;
 
 }
+
+
+int OTF_CopyHandler_stream_CollopCountSnapshot( void* userData,
+                                                uint64_t time,
+                                                uint32_t process,
+                                                uint32_t communicator,
+                                                uint64_t count,
+                                                OTF_KeyValueList* list ) {
+
+    return ( 0 == OTF_WStream_writeCollopCountSnapshot( (OTF_WStream*)userData,
+        time,
+        process,
+        communicator,
+        count,
+        list ) ) ? OTF_RETURN_ABORT : OTF_RETURN_OK;
+}
+
+int OTF_CopyHandler_stream_CounterSnapshot( void*             userData,
+                                            uint64_t          time,
+                                            uint64_t          originaltime,
+                                            uint32_t          process,
+                                            uint32_t          counter,
+                                            uint64_t          value,
+                                            OTF_KeyValueList* list ) {
+
+    return ( 0 == OTF_WStream_writeCounterSnapshot( (OTF_WStream*)userData,
+        time,
+        originaltime,
+        process,
+        counter,
+        value,
+        list ) ) ? OTF_RETURN_ABORT : OTF_RETURN_OK;
+}
+
 /* *** summary handlers ********************************************** */
 int OTF_CopyHandler_stream_SummaryComment( void * userData, uint64_t time,
 	uint32_t process, const char* comment, OTF_KeyValueList* list ) {

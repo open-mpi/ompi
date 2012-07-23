@@ -45,6 +45,11 @@
 # define DEREF_IA64_FUNC_PTR(ptr) (ptr)
 #endif /* __ia64__ */
 
+#ifdef VT_COMPINST_CRAYCCE
+# define __cyg_profile_func_enter __pat_tp_func_entry
+# define __cyg_profile_func_exit  __pat_tp_func_return
+#endif /* VT_COMPINST_CRAYCCE */
+
 #define NM_LINE_BLK_LEN 1024
 #define NM_LINE_MAX_LEN 16384
 

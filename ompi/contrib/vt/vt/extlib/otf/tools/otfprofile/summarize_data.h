@@ -13,6 +13,8 @@
 /* summarize the data for all trace processes on the current worker */
 bool SummarizeData( AllData& alldata );
 
+/* summarize the dispersion data for all trace processes on the current worker */
+bool SummarizeDataDispersion( AllData& alldata );
 
 #endif /* SUMMARIZE_DATA_H */
 

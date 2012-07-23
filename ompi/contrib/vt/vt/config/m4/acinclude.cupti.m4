@@ -23,7 +23,8 @@ AC_DEFUN([ACVT_CUPTI],
 	AC_ARG_WITH(cupti-dir,
 		AC_HELP_STRING([--with-cupti-dir=CUPTIDIR],
 		[give the path for CUPTI, default: /usr]),
-	[CUPTIDIR="$withval/"])
+	[CUPTIDIR="$withval/"],
+	[AS_IF([test x"$CUDATKDIR" != x], [CUPTIDIR="$CUDATKDIR/extras/CUPTI/"])])
 
 	AC_ARG_WITH(cupti-inc-dir,
 		AC_HELP_STRING([--with-cupti-inc-dir=CUPTIINCDIR],
@@ -33,9 +34,9 @@ AC_DEFUN([ACVT_CUPTI],
 
 	AC_ARG_WITH(cupti-lib-dir,
 		AC_HELP_STRING([--with-cupti-lib-dir=CUPTILIBDIR],
-		[give the path for CUPTI-libraries, default: CUPTIDIR/lib]),
+		[give the path for CUPTI-libraries, default: CUPTIDIR/lib64]),
 	[CUPTILIBDIR="-L$withval/"],
-	[AS_IF([test x"$CUPTIDIR" != x], [CUPTILIBDIR="-L$CUPTIDIR"lib/])])
+	[AS_IF([test x"$CUPTIDIR" != x], [CUPTILIBDIR="-L$CUPTIDIR"lib64/])])
 
 	AC_ARG_WITH(cupti-lib,
 		AC_HELP_STRING([--with-cupti-lib=CUPTILIB], [use given cupti lib, default: -lcupti CUDALIB]),
@@ -106,6 +107,11 @@ AC_DEFUN([ACVT_CUPTI],
 			CPPFLAGS=$sav_CPPFLAGS
 		])
 	])
+
+dnl	if no CUPTI found, remove content of CUPTILIBDIR to prevent adding the
+dnl	'-LCUPTILIBDIR' linker flag by the VT compiler wrappers
+	AS_IF([test x"$have_cupti" = "xno"],
+	[CUPTILIBDIR=])
 
 	AC_SUBST(CUPTIINCDIR)
 	AC_SUBST(CUPTILIBDIR)

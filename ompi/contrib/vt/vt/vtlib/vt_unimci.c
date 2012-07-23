@@ -100,7 +100,7 @@ void vt_unimci_check_msg(uint8_t record, uint64_t* time)
       vt_cntl_msg( 1, "Application terminated due to "UNIMCI_CHECKER_NAME" "
                       "detected an error, see the trace for details" );
       vt_def_comment( VT_CURRENT_THREAD,
-                      VT_UNIFY_STRID_VT_COMMENT"WARNING: This trace is incomplete, "
+                      VT_UNIFY_STRID_VT_COMMENT"Warning: This trace is incomplete, "
                       "because "UNIMCI_CHECKER_NAME" detected an error." );
 
       /* this should invoke vt_close() to shutdown VampirTrace */

@@ -34,8 +34,6 @@ on 1 byte), but shoehorning those bytes into integers efficiently is messy.
 -------------------------------------------------------------------------------
 */
 
-#include <config.h>
-
 #include "jenkins_hash.h"
 
 #if defined(WORDS_BIGENDIAN) && WORDS_BIGENDIAN

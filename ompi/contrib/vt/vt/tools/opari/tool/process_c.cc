@@ -147,6 +147,10 @@ void process_c_or_cxx(istream& is, const char* infile, ostream& os,
     /* workaround for bogus getline implementations */
     if ( line.size() == 1 && line[0] == '\0' ) break;
 
+    /* remove possible trailing Carriage Return from line */
+    if ( line.size() > 0 && line[line.length()-1] == '\r' )
+      line.erase(line.length()-1);
+
     if ( preContLine ) {
       /*
        * preprocessor directive continuation

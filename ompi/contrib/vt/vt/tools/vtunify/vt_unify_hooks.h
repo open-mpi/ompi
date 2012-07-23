@@ -13,11 +13,7 @@
 #ifndef _VT_UNIFY_HOOKS_H_
 #define _VT_UNIFY_HOOKS_H_
 
-#include "config.h"
-
-#include "vt_inttypes.h"
-
-#include <vector>
+#include "vt_unify.h"
 
 // generic hooks' identifier bits
 //
@@ -30,8 +26,8 @@ enum
 
    // HooksAsyncEventsC's
    //
-   VT_UNIFY_HOOKS_AEVENTS_GENID__EVENT_STREAM_OPEN                      = 1<<2,
-   VT_UNIFY_HOOKS_AEVENTS_GENID__EVENT_STREAM_CLOSE                     = 1<<3,
+   VT_UNIFY_HOOKS_AEVENTS_GENID__EVENT_WSTREAM_OPEN                     = 1<<2,
+   VT_UNIFY_HOOKS_AEVENTS_GENID__EVENT_WSTREAM_CLOSE                    = 1<<3,
 
    // HooksTdbC's
    //
@@ -39,8 +35,14 @@ enum
 
    // HooksProcessMarginsC's
    //
-   VT_UNIFY_HOOKS_MARGINS_GENID__EVENT_STREAM_OPEN                      = 1<<5,
-   VT_UNIFY_HOOKS_MARGINS_GENID__EVENT_STREAM_CLOSE                     = 1<<6
+   VT_UNIFY_HOOKS_MARGINS_GENID__EVENT_WSTREAM_OPEN                     = 1<<5,
+   VT_UNIFY_HOOKS_MARGINS_GENID__EVENT_WSTREAM_CLOSE                    = 1<<6,
+
+   // HooksMsgMatchAndSnapsC's
+   //
+   VT_UNIFY_HOOKS_MSGMATCH_SNAPS_GENID__DEF_WSTREAM_CLOSE               = 1<<7,
+   VT_UNIFY_HOOKS_MSGMATCH_SNAPS_GENID__EVENT_WSTREAM_OPEN              = 1<<8,
+   VT_UNIFY_HOOKS_MSGMATCH_SNAPS_GENID__EVENT_WSTREAM_CLOSE             = 1<<9
 
 };
 
@@ -56,7 +58,7 @@ class HooksC
 public:
 
    // maximum number of variable arguments for record and generic hooks
-   static const uint32_t MAX_VA_ARGS = 12;
+   static const uint32_t MAX_VA_ARGS = 14;
 
    //
    // variable hook arguments type
@@ -133,6 +135,16 @@ public:
       Record_Counter,
       Record_EventComment,
 
+      // snapshot records
+      //
+      Record_EnterSnapshot,
+      Record_SendSnapshot,
+      Record_OpenFileSnapshot,
+      Record_BeginFileOpSnapshot,
+      Record_BeginCollOpSnapshot,
+      Record_CollOpCountSnapshot,
+      Record_CounterSnapshot,
+
       // number of records
       Record_Num
    } RecordTypeT;
@@ -160,21 +172,24 @@ public:
                                void * a0 = 0, void * a1 = 0, void * a2 = 0,
                                void * a3 = 0, void * a4 = 0, void * a5 = 0,
                                void * a6 = 0, void * a7 = 0, void * a8 = 0,
-                               void * a9 = 0, void * a10 = 0, void * a11 = 0 );
+                               void * a9 = 0, void * a10 = 0, void * a11 = 0,
+                               void * a12 = 0, void * a13 = 0 );
 
    // trigger write record hook
    void triggerWriteRecordHook( const RecordTypeT & rectype, const uint32_t & n,
                                 void * a0 = 0, void * a1 = 0, void * a2 = 0,
                                 void * a3 = 0, void * a4 = 0, void * a5 = 0,
                                 void * a6 = 0, void * a7 = 0, void * a8 = 0,
-                                void * a9 = 0, void * a10 = 0, void * a11 = 0 );
+                                void * a9 = 0, void * a10 = 0, void * a11 = 0,
+                                void * a12 = 0, void * a13 = 0 );
 
    // trigger generic hook
    void triggerGenericHook( const uint32_t & id, const uint32_t & n,
                             void * a0 = 0, void * a1 = 0, void * a2 = 0,
                             void * a3 = 0, void * a4 = 0, void * a5 = 0,
                             void * a6 = 0, void * a7 = 0, void * a8 = 0,
-                            void * a9 = 0, void * a10 = 0, void * a11 = 0 );
+                            void * a9 = 0, void * a10 = 0, void * a11 = 0,
+                            void * a12 = 0, void * a13 = 0 );
 
 private:
 

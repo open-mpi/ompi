@@ -4,7 +4,7 @@ AC_DEFUN([ACVT_CONF_INIT],
 		AC_HELP_STRING([--enable-config-summary],
 			[show summary of configuration, default: enabled]), [],
 	[
-		AS_IF([test x"$inside_openmpi" = "xyes"],
+		AS_IF([test x"$inside_openmpi" != "xno"],
 		[enable_config_summary="no"], [enable_config_summary="yes"])
 	])
 
@@ -12,7 +12,7 @@ AC_DEFUN([ACVT_CONF_INIT],
 		AC_HELP_STRING([--enable-config-titles],
 			[show titles for each configure section, default: enabled]), [],
 	[
-		AS_IF([test x"$inside_openmpi" = "xyes"],
+		AS_IF([test x"$inside_openmpi" != "xno"],
 		[enable_config_titles="no"], [enable_config_titles="yes"])
 	])
 ])
@@ -150,8 +150,7 @@ AC_DEFUN([ACVT_CONF_SUMMARY],
 		AS_IF([test x"$cross_compiling" = "xyes"],
 		[echo "  C++ Compiler (H|B):                     $CXX | $CXX_FOR_BUILD"],
 		[echo "  C++ compiler:                           $CXX"])
-		echo "  Fortran 77 compiler:                    $F77"
-		echo "  Fortran 90 compiler:                    $FC"
+		echo "  Fortran compiler:                       $FC"
 		AS_IF([test x"$cross_compiling" = "xyes"],
 		[echo "  C preprocessor (H|B):                   $CPP | $CPP_FOR_BUILD"],
 		[echo "  C preprocessor:                         $CPP"])
@@ -165,7 +164,6 @@ AC_DEFUN([ACVT_CONF_SUMMARY],
 		AS_IF([test x"$cross_compiling" = "xyes"],
 		[echo "  CXXFLAGS (H|B):                         $CXXFLAGS | $CXXFLAGS_FOR_BUILD"],
 		[echo "  CXXFLAGS:                               $CXXFLAGS"])
-		echo "  FFLAGS:                                 $FFLAGS"
 		echo "  FCFLAGS:                                $FCFLAGS"
 		AS_IF([test x"$cross_compiling" = "xyes"],
 		[echo "  LDFLAGS (H|B):                          $LDFLAGS | $LDFLAGS_FOR_BUILD"],
@@ -179,11 +177,11 @@ AC_DEFUN([ACVT_CONF_SUMMARY],
 		[
 			echo "  MPI C compiler:                         $MPICC"
 			echo "  MPI C++ compiler:                       $MPICXX"
-			echo "  MPI Fortran 77 compiler:                $MPIF77"
+			echo "  MPI Fortran compiler:                   $MPIFC"
 			echo ""
 			echo "  MPICFLAGS (append to CFLAGS):           $MPICFLAGS"
 			echo "  MPICXXFLAGS (append to CXXFLAGS):       $MPICXXFLAGS"
-			echo "  MPIFFLAGS (append to FFLAGS):           $MPIFFLAGS"
+			echo "  MPIFCFLAGS (append to FCFLAGS):         $MPIFCFLAGS"
 			echo ""
 		])
 
@@ -197,7 +195,18 @@ AC_DEFUN([ACVT_CONF_SUMMARY],
 
 		AS_IF([test x"$have_zlib" = "xyes"],
 		[answer="yes"], [answer="no"])
-		echo "   ZLIB trace compression support:           $answer"
+		echo "   Build ZLIB trace compression support:     $answer"
+
+		AS_IF([test x"$have_iofsl" = "xyes"],
+		[answer="yes"], [answer="no"])
+		echo "   Build IOFSL I/O forwarding support:       $answer"
+
+		AS_IF([test x"$have_iofsl" = "xyes"],
+		[
+			AS_IF([test x"$IOFSLSCRIPTS" != x],
+			[answer="yes ($IOFSLSCRIPTS)"], [answer="no"])
+			echo "    Build IOFSL scripts:                     $answer"
+		])
 
 		AS_IF([test x"$have_mpi" = "xyes"],
 		[answer="yes"], [answer="no"])
@@ -306,6 +315,13 @@ AC_DEFUN([ACVT_CONF_SUMMARY],
 		], [answer="no"])
 		echo "  Build Library trace support:               $answer"
 
+		AS_IF([test x"$have_libwrap" = "xyes"],
+		[
+			AS_IF([test x"$build_libwrapgen" = "xyes"],
+			[answer="yes"], [answer="no"])
+			echo "   Build Library wrapper generator:          $answer"
+		])
+
 		AS_IF([test x"$have_cupti" = "xyes"],
 		[
 			answer=
@@ -322,17 +338,10 @@ AC_DEFUN([ACVT_CONF_SUMMARY],
 				 [answer="$answer, Events"],
 				 [answer="Events"])])
 			answer="yes ($answer)"
-			echo "  Build CUPTI support:                       $answer"
-		])
+		], [answer=no])
+		echo "  Build CUPTI support:                       $answer"
 
-		AS_IF([test x"$have_libwrap" = "xyes"],
-		[
-			AS_IF([test x"$build_libwrapgen" = "xyes"],
-			[answer="yes"], [answer="no"])
-			echo "   Build Library wrapper generator:          $answer"
-		])
-
-		AS_IF([test x"$have_compinst" != x],
+		AS_IF([test x"$have_compinst" = "xyes"],
 		[answer=`echo $compinst_type | sed s/gnu/gnu*/g`],
 		[answer="no"])
 		echo ""

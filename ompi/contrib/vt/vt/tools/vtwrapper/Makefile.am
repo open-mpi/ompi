@@ -21,6 +21,7 @@ bin_LINKS = \
 	@CROSS_PREFIX@vtc++$(EXEEXT) \
 	@CROSS_PREFIX@vtcxx$(EXEEXT) \
 	$(bin_LINK_vtCC) \
+	@CROSS_PREFIX@vtfort$(EXEEXT) \
 	@CROSS_PREFIX@vtf77$(EXEEXT) \
 	@CROSS_PREFIX@vtf90$(EXEEXT) \
 	$(bin_LINK_vtnvcc)
@@ -56,8 +57,7 @@ endif
 vtdata_DATA = \
 	@CROSS_PREFIX@vtcc-wrapper-data.txt \
 	@CROSS_PREFIX@vtc++-wrapper-data.txt \
-	@CROSS_PREFIX@vtf77-wrapper-data.txt \
-	@CROSS_PREFIX@vtf90-wrapper-data.txt \
+	@CROSS_PREFIX@vtfort-wrapper-data.txt \
 	$(vtdata_DATA_vtnvcc) \
 	$(vtdata_DATA_tauinst_spec)
 vtdatadir = $(datadir)
@@ -66,8 +66,16 @@ install-data-hook-always:
 	(cd $(DESTDIR)$(datadir); \
 	rm -f @CROSS_PREFIX@vtcxx-wrapper-data.txt; \
 	$(LN_S) @CROSS_PREFIX@vtc++-wrapper-data.txt @CROSS_PREFIX@vtcxx-wrapper-data.txt)
+	(cd $(DESTDIR)$(datadir); \
+	rm -f @CROSS_PREFIX@vtf77-wrapper-data.txt; \
+	$(LN_S) @CROSS_PREFIX@vtfort-wrapper-data.txt @CROSS_PREFIX@vtf77-wrapper-data.txt)
+	(cd $(DESTDIR)$(datadir); \
+	rm -f @CROSS_PREFIX@vtf90-wrapper-data.txt; \
+	$(LN_S) @CROSS_PREFIX@vtfort-wrapper-data.txt @CROSS_PREFIX@vtf90-wrapper-data.txt)
 uninstall-local-data-always:
 	rm -f $(DESTDIR)$(datadir)/@CROSS_PREFIX@vtcxx-wrapper-data.txt
+	rm -f $(DESTDIR)$(datadir)/@CROSS_PREFIX@vtf77-wrapper-data.txt
+	rm -f $(DESTDIR)$(datadir)/@CROSS_PREFIX@vtf90-wrapper-data.txt
 
 if AMHAVECSFS
 install-data-hook-1:
@@ -84,25 +92,22 @@ endif # AMHAVECSFS
 if AMMACOS
 install-data-hook-2:
 	cp $(srcdir)/TAUINST_MACOS.SPEC $(DESTDIR)$(datadir)/TAUINST.SPEC
+uninstall-local-data-2:
+	rm -f $(DESTDIR)$(datadir)/TAUINST.SPEC
 else # AMMACOS
 install-data-hook-2:
+uninstall-local-data-2:
 endif # AMMACOS
 
 install-exec-hook: install-exec-hook-always
 install-data-hook: install-data-hook-always install-data-hook-1 install-data-hook-2
-uninstall-local: uninstall-local-exec-always uninstall-local-data-always uninstall-local-data-1
+uninstall-local: uninstall-local-exec-always uninstall-local-data-always uninstall-local-data-1 uninstall-local-data-2
 
-if AMHAVEF77
-HAVEF77CXXFLAGS = -DHAVE_F77
-else # AMHAVEF77
-HAVEF77CXXFLAGS =
-endif # AMHAVEF77
-
-if AMHAVEF90
-HAVEF90CXXFLAGS = -DHAVE_F90
-else # AMHAVEF90
-HAVEF90CXXFLAGS =
-endif # AMHAVEF90
+if AMHAVEFC
+HAVEFCCXXFLAGS = -DHAVE_FC
+else # AMHAVEFC
+HAVEFCCXXFLAGS =
+endif # AMHAVEFC
 
 if AMHAVEMPI
 HAVEMPICXXFLAGS = -DHAVE_MPI
@@ -131,18 +136,15 @@ if AMHAVECROSSPREFIX
 	@cp vtcc-wrapper-data.txt @CROSS_PREFIX@vtcc-wrapper-data.txt
 @CROSS_PREFIX@vtc++-wrapper-data.txt: vtc++-wrapper-data.txt
 	@cp vtc++-wrapper-data.txt @CROSS_PREFIX@vtc++-wrapper-data.txt
-@CROSS_PREFIX@vtf77-wrapper-data.txt: vtf77-wrapper-data.txt
-	@cp vtf77-wrapper-data.txt @CROSS_PREFIX@vtf77-wrapper-data.txt
-@CROSS_PREFIX@vtf90-wrapper-data.txt: vtf90-wrapper-data.txt
-	@cp vtf90-wrapper-data.txt @CROSS_PREFIX@vtf90-wrapper-data.txt
+@CROSS_PREFIX@vtfort-wrapper-data.txt: vtfort-wrapper-data.txt
+	@cp vtfort-wrapper-data.txt @CROSS_PREFIX@vtfort-wrapper-data.txt
 @CROSS_PREFIX@vtnvcc-wrapper-data.txt: vtnvcc-wrapper-data.txt
 	@cp vtnvcc-wrapper-data.txt @CROSS_PREFIC@vtnvcc-wrapper-data.txt
 
 CROSSPREFIXCLEANFILES = \
 	@CROSS_PREFIX@vtcc-wrapper-data.txt \
 	@CROSS_PREFIX@vtc++-wrapper-data.txt \
-	@CROSS_PREFIX@vtf77-wrapper-data.txt \
-	@CROSS_PREFIX@vtf90-wrapper-data.txt \
+	@CROSS_PREFIX@vtfort-wrapper-data.txt \
 	@CROSS_PREFIX@vtnvcc-wrapper-data.txt
 else # AMHAVECROSSPREFIX
 CROSSPREFIXCLEANFILES =
@@ -166,8 +168,7 @@ LIBS = $(LIBS_FOR_BUILD)
 	$(top_srcdir)/util/util.c
 
 @CROSS_PREFIX@vtwrapper_CXXFLAGS = \
-	$(HAVEF77CXXFLAGS) \
-	$(HAVEF90CXXFLAGS) \
+	$(HAVEFCCXXFLAGS) \
 	$(HAVEMPICXXFLAGS) \
 	$(HAVEFMPICXXFLAGS) \
 	$(HAVETHREADSCXXFLAGS) \

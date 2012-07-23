@@ -152,8 +152,8 @@ void VT_Dyn_end(uint32_t index)
 
 void sig_usr1_handler(int signum);
 void sig_usr2_handler(int signum);
-int mutatee_cont = 0;
-int mutator_error = 0;
+volatile int mutatee_cont = 0;
+volatile int mutator_error = 0;
 
 /* ... for continue execution of mutatee */
 void sig_usr1_handler(int signum)
@@ -269,7 +269,7 @@ void VT_Dyn_attach()
       vt_cntl_msg(1, "[%i]: Waiting until instrumentation is done",
                   mutatee_pid);
 
-      do { sleep(1); } while(mutatee_cont == 0);
+      do { usleep(1000); } while(mutatee_cont == 0);
 
       if ( !mutator_error )
       {
