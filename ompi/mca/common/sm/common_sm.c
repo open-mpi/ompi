@@ -177,16 +177,14 @@ mca_common_sm_module_create(size_t size,
     if (OPAL_SUCCESS == opal_shmem_segment_create(seg_meta, file_name, size)) {
         map = attach_and_init(seg_meta, size, size_ctl_structure,
                               data_seg_alignment, true);
-        if (NULL != map) {
-            /* at this point, seg_meta has been copied to the newly created
-             * shared memory segment, so we can free it */
-            free(seg_meta);
-            /* done! */
-            return map;
-        }
     }
-    /* error path */
-    return NULL;
+    /* at this point, seg_meta has been copied to the newly created
+     * shared memory segment, so we can free it */
+    if (seg_meta) {
+        free(seg_meta);
+    }
+
+    return map;
 }
 
 /* ////////////////////////////////////////////////////////////////////////// */
