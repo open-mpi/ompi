@@ -23,7 +23,7 @@ int ompi_mtl_mxm_iprobe(struct mca_mtl_base_module_t* mtl,
     req.base.state = MXM_REQ_NEW;
     ompi_mtl_mxm_set_recv_envelope(&req, comm, src, tag);
 
-    err = mxm_req_probe(&req, NULL);
+    err = mxm_req_probe(&req);
     if (MXM_OK == err) {
         *flag = 1;
         if (MPI_STATUS_IGNORE != status) {
