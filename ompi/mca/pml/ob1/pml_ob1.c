@@ -31,6 +31,7 @@
 
 #include "opal/class/opal_bitmap.h"
 #include "opal/util/output.h"
+#include "opal_stdint.h"
 
 #include "orte/runtime/orte_wait.h"
 #include "orte/mca/errmgr/errmgr.h"
