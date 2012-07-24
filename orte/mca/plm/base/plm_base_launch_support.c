@@ -222,7 +222,9 @@ void orte_plm_base_setup_job_complete(int fd, short args, void *cbdata)
 
 void orte_plm_base_complete_setup(int fd, short args, void *cbdata)
 {
+#if OPAL_ENABLE_FT_CR == 1
     int rc;
+#endif
     orte_job_t *jdata, *jdatorted;
     orte_state_caddy_t *caddy = (orte_state_caddy_t*)cbdata;
 
