@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2009 The University of Tennessee and The University
+ * Copyright (c) 2004-2012 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -238,10 +238,6 @@ struct mca_btl_sm_t {
 };
 typedef struct mca_btl_sm_t mca_btl_sm_t;
 OMPI_MODULE_DECLSPEC extern mca_btl_sm_t mca_btl_sm;
-
-
-
-
 
 struct btl_sm_pending_send_item_t
 {
@@ -527,6 +523,10 @@ extern int mca_btl_sm_get_async(
                 struct mca_btl_base_descriptor_t* des );
 
 #endif
+
+extern void mca_btl_sm_dump(struct mca_btl_base_module_t* btl,
+                            struct mca_btl_base_endpoint_t* endpoint,
+                            int verbose);
 
 /**
  * Fault Tolerance Event Notification Function
