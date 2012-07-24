@@ -16,6 +16,7 @@
  * Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2012 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -454,15 +455,15 @@ static void mca_pml_ob1_dump_hdr(mca_pml_ob1_hdr_t* hdr)
         break;
     case MCA_PML_OB1_HDR_TYPE_RNDV:
         type = "RNDV";
-        snprintf( header, 128, "ctx %5d src %d tag %d seq %d msg_length %lu",
+        snprintf( header, 128, "ctx %5d src %d tag %d seq %d msg_length %" PRIu64,
                   hdr->hdr_rndv.hdr_match.hdr_ctx, hdr->hdr_rndv.hdr_match.hdr_src,
                   hdr->hdr_rndv.hdr_match.hdr_tag, hdr->hdr_rndv.hdr_match.hdr_seq,
                   hdr->hdr_rndv.hdr_msg_length);
         break;
     case MCA_PML_OB1_HDR_TYPE_RGET:
         type = "RGET";
-        snprintf( header, 128, "ctx %5d src %d tag %d seq %d msg_length %lu"
-                  "seg_cnt %d  hdr_des %lux",
+        snprintf( header, 128, "ctx %5d src %d tag %d seq %d msg_length %" PRIu64
+                  "seg_cnt %d  hdr_des %" PRIu64,
                   hdr->hdr_rndv.hdr_match.hdr_ctx, hdr->hdr_rndv.hdr_match.hdr_src,
                   hdr->hdr_rndv.hdr_match.hdr_tag, hdr->hdr_rndv.hdr_match.hdr_seq,
                   hdr->hdr_rndv.hdr_msg_length,
@@ -470,19 +471,19 @@ static void mca_pml_ob1_dump_hdr(mca_pml_ob1_hdr_t* hdr)
         break;
     case MCA_PML_OB1_HDR_TYPE_ACK:
         type = "ACK";
-        snprintf( header, 128, "src_req %p dst_req %p offset %lu",
+        snprintf( header, 128, "src_req %p dst_req %p offset %" PRIu64,
                   hdr->hdr_ack.hdr_src_req.pval, hdr->hdr_ack.hdr_dst_req.pval,
                   hdr->hdr_ack.hdr_send_offset);
         break;
     case MCA_PML_OB1_HDR_TYPE_FRAG:
         type = "FRAG";
-        snprintf( header, 128, "offset %lu src_req %p dst_req %p",
+        snprintf( header, 128, "offset %" PRIu64 " src_req %p dst_req %p",
                   hdr->hdr_frag.hdr_frag_offset,
                   hdr->hdr_frag.hdr_src_req.pval, hdr->hdr_frag.hdr_dst_req.pval);
         break;
     case MCA_PML_OB1_HDR_TYPE_PUT:
         type = "PUT";
-        snprintf( header, 128, "seg_cnt %d dst_req %p src_des %p recv_req %p offset %lu [%p %lu]",
+        snprintf( header, 128, "seg_cnt %d dst_req %p src_des %p recv_req %p offset %" PRIu64 " [%p %" PRIu64 "]",
                   hdr->hdr_rdma.hdr_seg_cnt, hdr->hdr_rdma.hdr_req.pval, hdr->hdr_rdma.hdr_des.pval,
                   hdr->hdr_rdma.hdr_recv_req.pval, hdr->hdr_rdma.hdr_rdma_offset,
                   hdr->hdr_rdma.hdr_segs[0].seg_addr.pval, hdr->hdr_rdma.hdr_segs[0].seg_len);
@@ -517,9 +518,11 @@ static void mca_pml_ob1_dump_frag_list(opal_list_t* queue, bool is_req)
             if( OMPI_ANY_TAG == req->req_tag ) snprintf(ctag, 64, "%s", "ANY_TAG");
             else snprintf(ctag, 64, "%d", req->req_tag);
 
-            opal_output(0, "req %p peer %s tag %s addr %p count %lu datatype %s [%p] [%s %s] req_seq %lu\n",
-                        req, cpeer, ctag, req->req_addr, req->req_count,
-                        (0 != req->req_count ? req->req_datatype->name : "N/A"), req->req_datatype,
+            opal_output(0, "req %p peer %s tag %s addr %p count %lu datatype %s [%p] [%s %s] req_seq %" PRIu64,
+                        (void*) req, cpeer, ctag, 
+                        (void*) req->req_addr, req->req_count,
+                        (0 != req->req_count ? req->req_datatype->name : "N/A"),
+                        (void*) req->req_datatype,
                         (req->req_pml_complete ? "pml_complete" : ""),
                         (req->req_free_called ? "freed" : ""),
                         req->req_sequence);
@@ -538,7 +541,7 @@ int mca_pml_ob1_dump(struct ompi_communicator_t* comm, int verbose)
     /* TODO: don't forget to dump mca_pml_ob1.non_existing_communicator_pending */
 
     opal_output(0, "Communicator %s [%p](%d) rank %d recv_seq %d num_procs %lu last_probed %lu\n",
-                comm->c_name, comm, comm->c_contextid, comm->c_my_rank,
+                comm->c_name, (void*) comm, comm->c_contextid, comm->c_my_rank,
                 pml_comm->recv_sequence, pml_comm->num_procs, pml_comm->last_probed);
     if( opal_list_get_size(&pml_comm->wild_receives) ) {
         opal_output(0, "expected MPI_ANY_SOURCE fragments\n");
@@ -552,7 +555,8 @@ int mca_pml_ob1_dump(struct ompi_communicator_t* comm, int verbose)
         size_t n;
 
         opal_output(0, "[Rank %d] expected_seq %d ompi_proc %p send_seq %d\n",
-                    i, proc->expected_sequence, proc->ompi_proc, proc->send_sequence);
+                    i, proc->expected_sequence, (void*) proc->ompi_proc, 
+                    proc->send_sequence);
         /* dump all receive queues */
         if( opal_list_get_size(&proc->specific_receives) ) {
             opal_output(0, "expected specific receives\n");
