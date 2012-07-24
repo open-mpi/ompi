@@ -441,10 +441,109 @@ int mca_pml_ob1_del_procs(ompi_proc_t** procs, size_t nprocs)
  * diagnostics
  */
 
+static void mca_pml_ob1_dump_hdr(mca_pml_ob1_hdr_t* hdr)
+{
+    char *type, header[128];
+
+    switch(hdr->hdr_common.hdr_type) {
+    case MCA_PML_OB1_HDR_TYPE_MATCH:
+        type = "MATCH";
+        snprintf( header, 128, "ctx %5d src %d tag %d seq %d",
+                  hdr->hdr_match.hdr_ctx, hdr->hdr_match.hdr_src,
+                  hdr->hdr_match.hdr_tag, hdr->hdr_match.hdr_seq);
+        break;
+    case MCA_PML_OB1_HDR_TYPE_RNDV:
+        type = "RNDV";
+        snprintf( header, 128, "ctx %5d src %d tag %d seq %d msg_length %lu",
+                  hdr->hdr_rndv.hdr_match.hdr_ctx, hdr->hdr_rndv.hdr_match.hdr_src,
+                  hdr->hdr_rndv.hdr_match.hdr_tag, hdr->hdr_rndv.hdr_match.hdr_seq,
+                  hdr->hdr_rndv.hdr_msg_length);
+        break;
+    case MCA_PML_OB1_HDR_TYPE_RGET:
+        type = "RGET";
+        snprintf( header, 128, "ctx %5d src %d tag %d seq %d msg_length %lu"
+                  "seg_cnt %d  hdr_des %lux",
+                  hdr->hdr_rndv.hdr_match.hdr_ctx, hdr->hdr_rndv.hdr_match.hdr_src,
+                  hdr->hdr_rndv.hdr_match.hdr_tag, hdr->hdr_rndv.hdr_match.hdr_seq,
+                  hdr->hdr_rndv.hdr_msg_length,
+                  hdr->hdr_rget.hdr_seg_cnt, hdr->hdr_rget.hdr_des.lval);
+        break;
+    case MCA_PML_OB1_HDR_TYPE_ACK:
+        type = "ACK";
+        snprintf( header, 128, "src_req %p dst_req %p offset %lu",
+                  hdr->hdr_ack.hdr_src_req.pval, hdr->hdr_ack.hdr_dst_req.pval,
+                  hdr->hdr_ack.hdr_send_offset);
+        break;
+    case MCA_PML_OB1_HDR_TYPE_FRAG:
+        type = "FRAG";
+        snprintf( header, 128, "offset %lu src_req %p dst_req %p",
+                  hdr->hdr_frag.hdr_frag_offset,
+                  hdr->hdr_frag.hdr_src_req.pval, hdr->hdr_frag.hdr_dst_req.pval);
+        break;
+    case MCA_PML_OB1_HDR_TYPE_PUT:
+        type = "PUT";
+        snprintf( header, 128, "seg_cnt %d dst_req %p src_des %p recv_req %p offset %lu [%p %lu]",
+                  hdr->hdr_rdma.hdr_seg_cnt, hdr->hdr_rdma.hdr_req.pval, hdr->hdr_rdma.hdr_des.pval,
+                  hdr->hdr_rdma.hdr_recv_req.pval, hdr->hdr_rdma.hdr_rdma_offset,
+                  hdr->hdr_rdma.hdr_segs[0].seg_addr.pval, hdr->hdr_rdma.hdr_segs[0].seg_len);
+        break;
+    case MCA_PML_OB1_HDR_TYPE_FIN:
+        type = "FIN";
+        break;
+    default:
+        assert(0);
+        break;
+    }
+    opal_output(0,"hdr %s [%s] %s", type,
+                (hdr->hdr_common.hdr_flags & MCA_PML_OB1_HDR_FLAGS_NBO ? "nbo" : "   "),
+                header);
+}
+
+static void mca_pml_ob1_dump_frag_list(opal_list_t* queue, bool is_req)
+{
+    opal_list_item_t* item;
+    char cpeer[64], ctag[64];
+
+    for( item = opal_list_get_first(queue);
+         item != opal_list_get_end(queue);
+         item =  opal_list_get_next(item) ) {
+
+        if( is_req ) {
+            mca_pml_base_request_t *req = &(((mca_pml_ob1_recv_request_t*)item)->req_recv.req_base);
+
+            if( OMPI_ANY_SOURCE == req->req_peer ) snprintf(cpeer, 64, "%s", "ANY_SOURCE");
+            else snprintf(cpeer, 64, "%d", req->req_peer);
+
+            if( OMPI_ANY_TAG == req->req_tag ) snprintf(ctag, 64, "%s", "ANY_TAG");
+            else snprintf(ctag, 64, "%d", req->req_tag);
+
+            opal_output(0, "req %p peer %s tag %s addr %p count %lu datatype %s [%p] [%s %s] req_seq %lu\n",
+                        req, cpeer, ctag, req->req_addr, req->req_count,
+                        (0 != req->req_count ? req->req_datatype->name : "N/A"), req->req_datatype,
+                        (req->req_pml_complete ? "pml_complete" : ""),
+                        (req->req_free_called ? "freed" : ""),
+                        req->req_sequence);
+        } else {
+            mca_pml_ob1_recv_frag_t* frag = (mca_pml_ob1_recv_frag_t*)item;
+            mca_pml_ob1_dump_hdr( &frag->hdr );
+        }
+    }
+}
+
 int mca_pml_ob1_dump(struct ompi_communicator_t* comm, int verbose)
 {
     struct mca_pml_comm_t* pml_comm = comm->c_pml_comm;
     int i;
+
+    /* TODO: don't forget to dump mca_pml_ob1.non_existing_communicator_pending */
+
+    opal_output(0, "Communicator %s [%p](%d) rank %d recv_seq %d num_procs %lu last_probed %lu\n",
+                comm->c_name, comm, comm->c_contextid, comm->c_my_rank,
+                pml_comm->recv_sequence, pml_comm->num_procs, pml_comm->last_probed);
+    if( opal_list_get_size(&pml_comm->wild_receives) ) {
+        opal_output(0, "expected MPI_ANY_SOURCE fragments\n");
+        mca_pml_ob1_dump_frag_list(&pml_comm->wild_receives, true);
+    }
 
     /* iterate through all procs on communicator */
     for( i = 0; i < (int)pml_comm->num_procs; i++ ) {
@@ -452,11 +551,23 @@ int mca_pml_ob1_dump(struct ompi_communicator_t* comm, int verbose)
         mca_bml_base_endpoint_t* ep = (mca_bml_base_endpoint_t*)proc->ompi_proc->proc_bml;
         size_t n;
 
-        opal_output(0, "[Rank %d]\n", i);
+        opal_output(0, "[Rank %d] expected_seq %d ompi_proc %p send_seq %d\n",
+                    i, proc->expected_sequence, proc->ompi_proc, proc->send_sequence);
         /* dump all receive queues */
-
-        /* dump all btls */
-        for(n=0; n<ep->btl_eager.arr_size; n++) {
+        if( opal_list_get_size(&proc->specific_receives) ) {
+            opal_output(0, "expected specific receives\n");
+            mca_pml_ob1_dump_frag_list(&proc->specific_receives, true);
+        }
+        if( opal_list_get_size(&proc->frags_cant_match) ) {
+            opal_output(0, "out of sequence\n");
+            mca_pml_ob1_dump_frag_list(&proc->frags_cant_match, false);
+        }
+        if( opal_list_get_size(&proc->unexpected_frags) ) {
+            opal_output(0, "unexpected frag\n");
+            mca_pml_ob1_dump_frag_list(&proc->unexpected_frags, false);
+        }
+        /* dump all btls used for eager messages */
+        for( n = 0; n < ep->btl_eager.arr_size; n++ ) {
             mca_bml_base_btl_t* bml_btl = &ep->btl_eager.bml_btls[n];
             bml_btl->btl->btl_dump(bml_btl->btl, bml_btl->btl_endpoint, verbose);
         }
