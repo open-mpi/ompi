@@ -43,6 +43,7 @@ mca_btl_template_module_t mca_btl_template_module = {
         0, /* latency */
         0, /* bandwidth */
         0, /* flags */
+        0, /* segment size */
         mca_btl_template_add_procs,
         mca_btl_template_del_procs,
         mca_btl_template_register,
