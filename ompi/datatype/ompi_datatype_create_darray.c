@@ -122,12 +122,9 @@ cyclic(const int *gsize_array, int dim, int ndims, int nprocs,
         /* if the last block is of size less than blksize, include
            it separately using MPI_Type_struct */
 
-        types[0] = *type_new;
-        types[1] = type_old;
-        disps[0] = 0;
-        disps[1] = count*stride;
-        blklens[0] = 1;
-        blklens[1] = rem;
+        types  [0] = *type_new; types  [1] = type_old;
+        disps  [0] = 0;         disps  [1] = count*stride;
+        blklens[0] = 1;         blklens[1] = rem;
 
         rc = ompi_datatype_create_struct(2, blklens, disps, types, &type_tmp);
         ompi_datatype_destroy(type_new);
@@ -138,26 +135,18 @@ cyclic(const int *gsize_array, int dim, int ndims, int nprocs,
     }
 
     /* need to set the UB for block-cyclic to work */
-    types[0] = *type_new;
-    types[1] = MPI_UB;
-    disps[0] = 0;
-    disps[1] = orig_extent;
+    disps[0] = 0;         disps[1] = orig_extent;
     if (order == MPI_ORDER_FORTRAN) {
-        for (i=0; i<=dim; i++) {
+        for(i=0; i<=dim; i++) {
             disps[1] *= gsize_array[i];
         }
     } else {
-        for (i=ndims-1; i>=dim; i--) {
+        for(i=ndims-1; i>=dim; i--) {
             disps[1] *= gsize_array[i];
         }
     }
-    blklens[0] = blklens[1] = 1;
-    rc = ompi_datatype_create_struct(2, blklens, disps, types, &type_tmp);
-    ompi_datatype_destroy(type_new);
-    /* even in error condition, need to destroy type_new, so check
-       for error after destroy. */
+    rc = opal_datatype_resize( &(*type_new)->super, disps[0], disps[1] );
     if (OMPI_SUCCESS != rc) return rc;
-    *type_new = type_tmp;
 
     *st_offset = rank * blksize;
     /* in terms of no. of elements of type oldtype in this dimension */
@@ -222,7 +211,7 @@ int32_t ompi_datatype_create_darray(int size,
     }
 
     /* Build up array */
-    for (i = start_loop ; i != end_loop; i += step) {
+    for (i = start_loop; i != end_loop; i += step) {
         int nprocs, tmp_rank;
 
         switch(distrib_array[i]) {
@@ -259,7 +248,7 @@ int32_t ompi_datatype_create_darray(int size,
     }
 
 
-    /* set displacement and UB correctly.  Use struct instead of
+    /* set displacement and UB correctly. Use struct instead of
        resized for same reason as subarray */
     {
         ptrdiff_t displs[3];

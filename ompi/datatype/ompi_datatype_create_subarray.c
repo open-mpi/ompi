@@ -86,7 +86,7 @@ int32_t ompi_datatype_create_subarray(int ndims,
     /**
      * We cannot use resized here. Resized will only set the soft lb and ub markers
      * without moving the real data inside. What we need is to force the displacement
-     * of the data create upward to the right position AND set the LB and UB. A type
+     * of the data upward to the right position AND set the LB and UB. A type
      * struct is the function we need.
      */
     {
