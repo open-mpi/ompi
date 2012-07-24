@@ -159,7 +159,8 @@ ENDIF (OMPI_DEBUG_BUILD AND WINDOWS_VS)
 IF(OMPI_WANT_FORTRAN_BINDINGS)
   INSTALL(FILES ${PROJECT_BINARY_DIR}/include/mpif.h
     ${PROJECT_BINARY_DIR}/include/mpif-config.h 
-    ${PROJECT_SOURCE_DIR}/include/mpif-common.h
+    ${PROJECT_BINARY_DIR}/include/mpif-common.h
+    ${PROJECT_SOURCE_DIR}/include/mpif-all-common.h
     ${PROJECT_SOURCE_DIR}/include/mpif-mpi-io.h
     DESTINATION include)
 ENDIF(OMPI_WANT_FORTRAN_BINDINGS)

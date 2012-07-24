@@ -104,9 +104,8 @@ INCLUDE (find_flex)
 FIND_FLEX()
 
 ADD_SUBDIRECTORY(opal)
-INCLUDE_DIRECTORIES(${HWLOC_PATH}/hwloc/include)
-# set up the libevent include dirs
-INCLUDE_DIRECTORIES (${LIBEVENT_INCLUDE_DIRS})
+# set up the libevent and hwloc include dirs
+INCLUDE_DIRECTORIES (${LIBEVENT_INCLUDE_DIRS} ${HWLOC_PATH}/hwloc/include)
 ADD_SUBDIRECTORY(ompi)
 ADD_SUBDIRECTORY(orte)
 ADD_SUBDIRECTORY(test)

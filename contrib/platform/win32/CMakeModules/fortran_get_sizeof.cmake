@@ -12,7 +12,7 @@
 # OMPI_FORTRAN_GET_SIZEOF(type, variable to set)
 # ------------------------------------------
 
-INCLUDE(FORTRAN_find_ext_symbol_convention)
+INCLUDE(fortran_find_ext_symbol_convention)
 
 MACRO(OMPI_FORTRAN_GET_SIZEOF TYPE OUTPUT_VARIABLE)
   MESSAGE(STATUS "Check size of Fortran 77 ${TYPE}...")
@@ -53,7 +53,7 @@ MACRO(OMPI_FORTRAN_GET_SIZEOF TYPE OUTPUT_VARIABLE)
        "#endif \n")
 
   # generate the C object file
-  EXECUTE_PROCESS(COMMAND ${CMAKE_C_COMPILER} ${OMPI_C_OPTION_COMPILE} conftest.c ${OMPI_C_OUTPUT_OBJ}conftest_c.obj
+  EXECUTE_PROCESS(COMMAND ${CC} ${OMPI_C_OPTION_COMPILE} conftest.c ${OMPI_C_OUTPUT_OBJ}conftest_c.obj
     WORKING_DIRECTORY ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeTmp
     OUTPUT_VARIABLE OUTPUT
     RESULT_VARIABLE RESULT
