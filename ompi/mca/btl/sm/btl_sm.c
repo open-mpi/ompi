@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2011 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2009 The University of Tennessee and The University
+ * Copyright (c) 2004-2012 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2007 High Performance Computing Center Stuttgart,
@@ -93,7 +93,7 @@ mca_btl_sm_t mca_btl_sm = {
         mca_btl_sm_sendi,
         NULL,  /* put */
         NULL,  /* get -- optionally filled during initialization */
-        mca_btl_base_dump,
+        mca_btl_sm_dump,
         NULL, /* mpool */
         mca_btl_sm_register_error_cb, /* register error */
         mca_btl_sm_ft_event
@@ -1138,6 +1138,28 @@ int mca_btl_sm_get_async(struct mca_btl_base_module_t* btl,
 }
 #endif /* OMPI_BTL_SM_HAVE_KNEM */
 
+/**
+ *
+ */
+void mca_btl_sm_dump(struct mca_btl_base_module_t* btl,
+                     struct mca_btl_base_endpoint_t* endpoint,
+                     int verbose)
+{
+    opal_list_item_t *item;
+    mca_btl_sm_frag_t* frag;
+
+    mca_btl_base_err("BTL SM %p endpoint %p [smp_rank %d] [peer_rank %d]\n",
+                     btl, endpoint, endpoint->my_smp_rank, endpoint->peer_smp_rank);
+    if( NULL != endpoint ) {
+        for(item =  opal_list_get_first(&endpoint->pending_sends);
+            item != opal_list_get_end(&endpoint->pending_sends); 
+            item = opal_list_get_next(item)) {
+            frag = (mca_btl_sm_frag_t*)item;
+            mca_btl_base_err(" |  frag %p size %lu (hdr frag %p len %lu rank tag %d)\n",
+                             frag, frag->size, frag->hdr->frag, frag->hdr->len, frag->hdr->my_smp_rank, frag->hdr->tag);
+        }
+    }
+}
 
 #if OPAL_ENABLE_FT_CR    == 0
 int mca_btl_sm_ft_event(int state) {
