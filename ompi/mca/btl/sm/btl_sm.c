@@ -1156,7 +1156,7 @@ void mca_btl_sm_dump(struct mca_btl_base_module_t* btl,
             item != opal_list_get_end(&endpoint->pending_sends); 
             item = opal_list_get_next(item)) {
             frag = (mca_btl_sm_frag_t*)item;
-            mca_btl_base_err(" |  frag %p size %lu (hdr frag %p len %lu rank tag %d)\n",
+            mca_btl_base_err(" |  frag %p size %lu (hdr frag %p len %lu rank %d tag %d)\n",
                              (void*) frag, frag->size, (void*) frag->hdr->frag,
                              frag->hdr->len, frag->hdr->my_smp_rank, 
                              frag->hdr->tag);
