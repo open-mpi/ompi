@@ -15,10 +15,10 @@
 #include "ompi_config.h"
 
 OMPI_DECLSPEC extern
-struct ibv_device **ibv_get_device_list_compat(int *num_devs);
+struct ibv_device **ompi_ibv_get_device_list(int *num_devs);
 
 OMPI_DECLSPEC extern
-void ibv_free_device_list_compat(struct ibv_device **ib_devs);
+void ompi_ibv_free_device_list(struct ibv_device **ib_devs);
 
 END_C_DECLS
 
