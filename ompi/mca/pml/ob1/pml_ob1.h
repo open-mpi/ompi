@@ -284,7 +284,7 @@ void mca_pml_ob1_process_pending_rdma(void);
 /*
  * Compute the total number of bytes on supplied descriptor
  */
-static inline int mca_pml_ob1_compute_segment_length (size_t seg_size, void *segments, size_t count,
+static inline size_t mca_pml_ob1_compute_segment_length (size_t seg_size, void *segments, size_t count,
                                                       size_t hdrlen) {
     size_t i, length = 0;
 
