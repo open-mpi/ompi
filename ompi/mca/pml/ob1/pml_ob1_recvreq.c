@@ -500,7 +500,7 @@ void mca_pml_ob1_recv_request_progress_frag( mca_pml_ob1_recv_request_t* recvreq
                                                               sizeof(mca_pml_ob1_frag_hdr_t));
     data_offset     = hdr->hdr_frag.hdr_frag_offset;
     /*
-     *  Make user buffer accessable(defined) before unpacking.
+     *  Make user buffer accessible(defined) before unpacking.
      */
     MEMCHECKER(
                memchecker_call(&opal_memchecker_base_mem_defined,
