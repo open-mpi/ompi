@@ -2797,7 +2797,7 @@ btl_openib_component_init(int *num_btl_modules,
             opal_argv_copy(mca_btl_openib_component.if_exclude_list);
     }
 
-    ib_devs = ibv_get_device_list_compat(&num_devs);
+    ib_devs = ompi_ibv_get_device_list(&num_devs);
 
     if(0 == num_devs || NULL == ib_devs) {
         mca_btl_base_error_no_nics("OpenFabrics (openib)", "device");
@@ -3015,7 +3015,7 @@ btl_openib_component_init(int *num_btl_modules,
     btl_openib_modex_send();
 
     *num_btl_modules = mca_btl_openib_component.ib_num_btls;
-    ibv_free_device_list_compat(ib_devs);
+    ompi_ibv_free_device_list(ib_devs);
     if (NULL != mca_btl_openib_component.if_include_list) {
         opal_argv_free(mca_btl_openib_component.if_include_list);
         mca_btl_openib_component.if_include_list = NULL;

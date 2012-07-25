@@ -41,7 +41,7 @@ const char *ibv_get_sysfs_path(void);
 #include "opal/util/output.h"
 #include "common_ofautils.h"
 
-struct ibv_device **ibv_get_device_list_compat(int *num_devs)
+struct ibv_device **ompi_ibv_get_device_list(int *num_devs)
 {
     struct ibv_device **ib_devs;
 
@@ -79,7 +79,7 @@ struct ibv_device **ibv_get_device_list_compat(int *num_devs)
     return ib_devs;
 }
 
-void ibv_free_device_list_compat(struct ibv_device **ib_devs)
+void ompi_ibv_free_device_list(struct ibv_device **ib_devs)
 {
 #ifdef HAVE_IBV_GET_DEVICE_LIST
     ibv_free_device_list(ib_devs);
