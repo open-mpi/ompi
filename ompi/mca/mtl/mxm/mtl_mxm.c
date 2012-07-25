@@ -399,3 +399,9 @@ int ompi_mtl_mxm_progress(void)
     }
     return 1;
 }
+
+OBJ_CLASS_INSTANCE(
+        ompi_mtl_mxm_message_t,
+        ompi_free_list_item_t,
+        NULL,
+        NULL);

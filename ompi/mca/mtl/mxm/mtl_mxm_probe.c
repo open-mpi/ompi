@@ -11,6 +11,7 @@
 #include "mtl_mxm.h"
 #include "mtl_mxm_types.h"
 
+#include "ompi/message/message.h"
 #include "ompi/communicator/communicator.h"
 
 int ompi_mtl_mxm_iprobe(struct mca_mtl_base_module_t* mtl,
@@ -50,5 +51,64 @@ int ompi_mtl_mxm_improbe(struct mca_mtl_base_module_t *mtl,
                          struct ompi_message_t **message,
                          struct ompi_status_public_t *status)
 {
+#if MXM_API >= 0x01010000
+    int rc;
+    mxm_error_t err;
+    mxm_recv_req_t req;
+
+    ompi_free_list_item_t *item;
+    ompi_mtl_mxm_message_t *msgp;
+
+    OMPI_FREE_LIST_WAIT(&mca_mtl_mxm_component.mxm_messages, item, rc);
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != rc)) {
+        return rc;
+    }
+
+    msgp = (ompi_mtl_mxm_message_t *) item;
+
+    req.base.state = MXM_REQ_NEW;
+    ompi_mtl_mxm_set_recv_envelope(&req, comm, src, tag);
+
+    msgp->mq       = req.base.mq;
+    msgp->conn     = req.base.conn;
+    msgp->tag      = req.tag;
+    msgp->tag_mask = req.tag_mask;
+
+    err = mxm_req_mprobe(&req, &msgp->mxm_msg);
+    if (MXM_OK == err) {
+        if (MPI_STATUS_IGNORE != status) {
+            *matched = 1;
+            ompi_mtl_mxm_to_mpi_status(err, status);
+            status->MPI_SOURCE = req.completion.sender_imm;
+            status->MPI_TAG    = req.completion.sender_tag;
+            status->_ucount    = req.completion.sender_len;
+        } else{
+			*matched = 0;
+			*message = MPI_MESSAGE_NULL;
+			return OMPI_SUCCESS;
+		}
+    } else if (MXM_ERR_NO_MESSAGE == err) {
+        *matched = 0;
+        *message = MPI_MESSAGE_NULL;
+        return OMPI_SUCCESS;
+    } else {
+        return OMPI_ERROR;
+    }
+
+	(*message) = ompi_message_alloc();
+	if (OPAL_UNLIKELY(NULL == (*message))) {
+        *matched = 0;
+		*message = MPI_MESSAGE_NULL;
+		return OMPI_ERR_OUT_OF_RESOURCE;
+	}
+
+	(*message)->comm = comm;
+	(*message)->req_ptr = msgp;
+	(*message)->peer = status->MPI_SOURCE;
+	(*message)->count = status->_ucount;
+
+    return OMPI_SUCCESS;
+#else
     return OMPI_ERR_NOT_IMPLEMENTED;
+#endif
 }
