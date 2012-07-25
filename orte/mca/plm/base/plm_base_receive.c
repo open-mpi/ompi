@@ -87,6 +87,12 @@ int orte_plm_base_comm_start(void)
                                                           orte_plm_base_daemon_callback, NULL))) {
             ORTE_ERROR_LOG(rc);
         }
+        if (ORTE_SUCCESS != (rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
+                                                          ORTE_RML_TAG_REPORT_REMOTE_LAUNCH,
+                                                          ORTE_RML_PERSISTENT,
+                                                          orte_plm_base_daemon_failed, NULL))) {
+            ORTE_ERROR_LOG(rc);
+        }
     }
     recv_issued = true;
     
