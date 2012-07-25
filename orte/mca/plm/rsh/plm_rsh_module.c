@@ -258,8 +258,6 @@ static int rsh_init(void)
  */
 static void rsh_wait_daemon(pid_t pid, int status, void* cbdata)
 {
-    orte_std_cntr_t cnt=1;
-    uint8_t flag;
     orte_job_t *jdata;
     orte_plm_rsh_caddy_t *caddy=(orte_plm_rsh_caddy_t*)cbdata;
     orte_proc_t *daemon=caddy->daemon;
@@ -283,10 +281,8 @@ static void rsh_wait_daemon(pid_t pid, int status, void* cbdata)
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  (int)daemon->name.vpid, WEXITSTATUS(status)));
             buf = OBJ_NEW(opal_buffer_t);
-            opal_dss.pack(buf, &cnt, 1, ORTE_STD_CNTR);
-            flag = 1;
-            opal_dss.pack(buf, &flag, 1, OPAL_UINT8);
             opal_dss.pack(buf, &(daemon->name.vpid), 1, ORTE_VPID);
+            opal_dss.pack(buf, &status, 1, OPAL_INT);
             orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, buf,
                                     ORTE_RML_TAG_REPORT_REMOTE_LAUNCH, 0,
                                     orte_rml_send_callback, NULL);
@@ -297,6 +293,8 @@ static void rsh_wait_daemon(pid_t pid, int status, void* cbdata)
                                  "%s daemon %d failed with status %d",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  (int)daemon->name.vpid, WEXITSTATUS(status)));
+            /* set the exit status */
+            ORTE_UPDATE_EXIT_STATUS(WEXITSTATUS(status));
             /* note that this daemon failed */
             daemon->state = ORTE_PROC_STATE_FAILED_TO_START;
             /* increment the #daemons terminated so we will exit properly */
@@ -735,7 +733,7 @@ static int remote_spawn(opal_buffer_t *launch)
     char **argv = NULL;
     char *prefix, *hostname, *var;
     int argc;
-    int rc;
+    int rc=ORTE_SUCCESS;
     bool failed_launch = true;
     orte_std_cntr_t n;
     opal_byte_object_t *bo;
@@ -748,6 +746,9 @@ static int remote_spawn(opal_buffer_t *launch)
                          "%s plm:rsh: remote spawn called",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
+    /* if we hit any errors, tell the HNP it was us */
+    target.vpid = ORTE_PROC_MY_NAME->vpid;
+
     /* extract the prefix from the launch buffer */
     n = 1;
     if (ORTE_SUCCESS != (rc = opal_dss.unpack(launch, &prefix, &n, OPAL_STRING))) {
@@ -867,12 +868,9 @@ cleanup:
     if (failed_launch) {
         /* report cannot launch this daemon to HNP */
         opal_buffer_t *buf;
-        orte_std_cntr_t cnt=1;
-        uint8_t flag=1;
         buf = OBJ_NEW(opal_buffer_t);
-        opal_dss.pack(buf, &cnt, 1, ORTE_STD_CNTR);
-        opal_dss.pack(buf, &flag, 1, OPAL_UINT8);
         opal_dss.pack(buf, &target.vpid, 1, ORTE_VPID);
+        opal_dss.pack(buf, &rc, 1, OPAL_INT);
         orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, buf,
                                 ORTE_RML_TAG_REPORT_REMOTE_LAUNCH, 0,
                                 orte_rml_send_callback, NULL);

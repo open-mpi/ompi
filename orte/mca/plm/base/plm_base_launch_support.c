@@ -741,6 +741,50 @@ void orte_plm_base_daemon_callback(int status, orte_process_name_t* sender,
 
 }
 
+void orte_plm_base_daemon_failed(int st, orte_process_name_t* sender,
+                                 opal_buffer_t *buffer,
+                                 orte_rml_tag_t tag, void *cbdata)
+{
+    int status, rc;
+    int32_t n;
+    orte_vpid_t vpid;
+    orte_proc_t *daemon;
+
+    /* get the daemon job, if necessary */
+    if (NULL == jdatorted) {
+        jdatorted = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid);
+    }
+
+    /* unpack the daemon that failed */
+    n=1;
+    if (OPAL_SUCCESS != (rc = opal_dss.unpack(buffer, &vpid, &n, ORTE_VPID))) {
+        ORTE_ERROR_LOG(rc);
+        ORTE_UPDATE_EXIT_STATUS(ORTE_ERROR_DEFAULT_EXIT_CODE);
+        goto finish;
+    }
+
+    /* unpack the exit status */
+    n=1;
+    if (OPAL_SUCCESS != (rc = opal_dss.unpack(buffer, &status, &n, OPAL_INT))) {
+        ORTE_ERROR_LOG(rc);
+        status = ORTE_ERROR_DEFAULT_EXIT_CODE;
+        ORTE_UPDATE_EXIT_STATUS(ORTE_ERROR_DEFAULT_EXIT_CODE);
+    } else {
+        ORTE_UPDATE_EXIT_STATUS(WEXITSTATUS(status));
+    }
+
+    /* find the daemon and update its state/status */
+    if (NULL == (daemon = (orte_proc_t*)opal_pointer_array_get_item(jdatorted->procs, vpid))) {
+        ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+        goto finish;
+    }
+    daemon->state = ORTE_PROC_STATE_FAILED_TO_START;
+    daemon->exit_code = status;
+
+ finish:
+    ORTE_ACTIVATE_PROC_STATE(&daemon->name, ORTE_PROC_STATE_FAILED_TO_START);
+}
+
 int orte_plm_base_setup_orted_cmd(int *argc, char ***argv)
 {
     int i, loc;

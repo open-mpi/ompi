@@ -78,6 +78,10 @@ ORTE_DECLSPEC int orte_plm_base_set_progress_sched(int sched);
 ORTE_DECLSPEC void orte_plm_base_daemon_callback(int status, orte_process_name_t* sender,
                                                  opal_buffer_t *buffer,
                                                  orte_rml_tag_t tag, void *cbdata);
+ORTE_DECLSPEC void orte_plm_base_daemon_failed(int status, orte_process_name_t* sender,
+                                               opal_buffer_t *buffer,
+                                               orte_rml_tag_t tag, void *cbdata);
+
 ORTE_DECLSPEC int orte_plm_base_create_jobid(orte_job_t *jdata);
 ORTE_DECLSPEC int orte_plm_base_set_hnp_name(void);
 ORTE_DECLSPEC void orte_plm_base_reset_job(orte_job_t *jdata);
