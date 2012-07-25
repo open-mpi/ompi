@@ -284,29 +284,30 @@ void mca_pml_ob1_process_pending_rdma(void);
 /*
  * Compute the total number of bytes on supplied descriptor
  */
-static inline size_t mca_pml_ob1_compute_segment_length (size_t seg_size, void *segments, size_t count,
-                                                      size_t hdrlen) {
+static inline size_t
+mca_pml_ob1_compute_segment_length(size_t seg_size, void *segments,
+                                   size_t count, size_t hdrlen)
+{
+    size_t i, length = 0;
+    mca_btl_base_segment_t *segment = (mca_btl_base_segment_t*)segments;
+
+    for (i = 0; i < count ; ++i) {
+        length += segment->seg_len;
+        segment = (mca_btl_base_segment_t *)((char *)segment + seg_size);
+    }
+    return (length - hdrlen);
+}
+
+static inline size_t
+mca_pml_ob1_compute_segment_length_base(mca_btl_base_segment_t *segments,
+                                        size_t count, size_t hdrlen)
+{
     size_t i, length = 0;
 
     for (i = 0; i < count ; ++i) {
-        mca_btl_base_segment_t *segment =
-            (mca_btl_base_segment_t *)((char *) segments + i * seg_size);
-
-        length += segment->seg_len;
-    }
-    length -= hdrlen;
-    return length;
-}
-
-static inline int mca_pml_ob1_compute_segment_length_base (mca_btl_base_segment_t *segments,
-                                                           size_t count, size_t hdrlen) {
-    size_t i, length;
-
-    for (i = 0, length = -hdrlen ; i < count ; ++i) {
         length += segments[i].seg_len;
     }
-
-    return length;
+    return (length - hdrlen);
 }
 
 /* represent BTL chosen for sending request */
