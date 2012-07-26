@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2009 The University of Tennessee and The University
+ * Copyright (c) 2004-2012 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart, 
@@ -15,6 +15,7 @@
  * Copyright (c) 2012      NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2012      FUJITSU LIMITED.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -97,36 +98,26 @@ static int mca_pml_ob1_recv_request_cancel(struct ompi_request_t* ompi_request, 
     mca_pml_ob1_recv_request_t* request = (mca_pml_ob1_recv_request_t*)ompi_request;
     mca_pml_ob1_comm_t* comm = request->req_recv.req_base.req_comm->c_pml_comm;
 
-    if( true == ompi_request->req_complete ) { /* way to late to cancel this one */
-        /*
-         * Receive request completed, make user buffer accessable.
-         */
-        MEMCHECKER(
-            memchecker_call(&opal_memchecker_base_mem_defined,
-                            request->req_recv.req_base.req_addr,
-                            request->req_recv.req_base.req_count,
-                            request->req_recv.req_base.req_datatype);
-        );
+    if( true == request->req_match_received ) { /* way to late to cancel this one */
+        assert( OMPI_ANY_TAG != ompi_request->req_status.MPI_TAG ); /* not matched isn't it */
         return OMPI_SUCCESS;
     }
 
     /* The rest should be protected behind the match logic lock */
     OPAL_THREAD_LOCK(&comm->matching_lock);
-    if( OMPI_ANY_TAG == ompi_request->req_status.MPI_TAG ) { /* the match has not been already done */
-       if( request->req_recv.req_base.req_peer == OMPI_ANY_SOURCE ) {
-          opal_list_remove_item( &comm->wild_receives, (opal_list_item_t*)request );
-       } else {
-          mca_pml_ob1_comm_proc_t* proc = comm->procs + request->req_recv.req_base.req_peer;
-          opal_list_remove_item(&proc->specific_receives, (opal_list_item_t*)request);
-       }
-       PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_REQ_REMOVE_FROM_POSTED_Q,
-                                &(request->req_recv.req_base), PERUSE_RECV );
-       /**
-        * As now the PML is done with this request we have to force the pml_complete
-        * to true. Otherwise, the request will never be freed.
-        */
-       request->req_recv.req_base.req_pml_complete = true;
+    if( request->req_recv.req_base.req_peer == OMPI_ANY_SOURCE ) {
+        opal_list_remove_item( &comm->wild_receives, (opal_list_item_t*)request );
+    } else {
+        mca_pml_ob1_comm_proc_t* proc = comm->procs + request->req_recv.req_base.req_peer;
+        opal_list_remove_item(&proc->specific_receives, (opal_list_item_t*)request);
     }
+    PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_REQ_REMOVE_FROM_POSTED_Q,
+                             &(request->req_recv.req_base), PERUSE_RECV );
+    /**
+     * As now the PML is done with this request we have to force the pml_complete
+     * to true. Otherwise, the request will never be freed.
+     */
+    request->req_recv.req_base.req_pml_complete = true;
     OPAL_THREAD_UNLOCK(&comm->matching_lock);
     
     OPAL_THREAD_LOCK(&ompi_request_lock);
@@ -138,7 +129,7 @@ static int mca_pml_ob1_recv_request_cancel(struct ompi_request_t* ompi_request, 
     MCA_PML_OB1_RECV_REQUEST_MPI_COMPLETE(request);
     OPAL_THREAD_UNLOCK(&ompi_request_lock);
     /*
-     * Receive request cancelled, make user buffer accessable.
+     * Receive request cancelled, make user buffer accessible.
      */
     MEMCHECKER(
         memchecker_call(&opal_memchecker_base_mem_defined,
