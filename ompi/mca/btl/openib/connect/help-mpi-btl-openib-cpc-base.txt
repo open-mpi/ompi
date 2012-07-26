@@ -40,3 +40,18 @@ a smaller inline data value than was requested.
   Local port:           %d
   Requested value:      %d
   Value used by device: %d
+#
+[ibv_create_qp failed]
+A process failed to create a queue pair. This usually means either
+the device has run out of queue pairs (too many connections) or
+there are insufficient resources available to allocate a queue pair
+(out of memory). The latter can happen if either 1) insufficient
+memory is available, or 2) no more physical memory can be registered
+with the device.
+
+For more information on memory registration see the Open MPI FAQs at:
+http://www.open-mpi.org/faq/?category=openfabrics#ib-locked-pages
+
+Local host:             %s
+Local device:           %s
+Queue pair type:        %s

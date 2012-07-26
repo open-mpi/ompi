@@ -483,11 +483,15 @@ static int qp_create_one(mca_btl_base_endpoint_t* endpoint, int qp,
     }
     init_attr.cap.max_send_wr  = max_send_wr;
 
-    my_qp = ibv_create_qp(openib_btl->device->ib_pd, &init_attr); 
-    
-    if (NULL == my_qp) { 
-        BTL_ERROR(("error creating qp errno says %s", strerror(errno))); 
-        return OMPI_ERROR; 
+    my_qp = ibv_create_qp(openib_btl->device->ib_pd, &init_attr);
+
+    if (NULL == my_qp) {
+	orte_show_help("help-mpi-btl-openib-cpc-base.txt",
+		       "ibv_create_qp failed", true,
+		       orte_process_info.nodename,
+		       ibv_get_device_name(m->btl->device->ib_dev),
+		       "Reliable connected (RC)");
+        return OMPI_ERROR;
     }
     endpoint->qps[qp].qp->lcl_qp = my_qp;
 
