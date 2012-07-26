@@ -31,7 +31,9 @@
 #include "ompi/class/ompi_free_list.h"
 #include "opal/mca/event/event.h"
 #include "ompi/mca/mpool/mpool.h"
+#if HAVE_SYS_MMAN_H
 #include <sys/mman.h>
+#endif
 
 BEGIN_C_DECLS
 

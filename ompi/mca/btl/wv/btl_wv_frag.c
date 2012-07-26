@@ -58,7 +58,7 @@ static void com_constructor(mca_btl_wv_com_frag_t *frag)
 
     if(reg) {
         frag->sg_entry.Lkey = reg->mr->lkey;
-        base_frag->segment.seg_key.key32[0] = reg->mr->lkey;
+        base_frag->segment.key = reg->mr->lkey;
     }
 }
 
@@ -66,7 +66,7 @@ static void out_constructor(mca_btl_wv_out_frag_t *frag)
 {
     mca_btl_wv_frag_t *base_frag = to_base_frag(frag);
 
-    base_frag->base.des_src = &base_frag->segment;
+    base_frag->base.des_src = (mca_btl_base_segment_t *) &base_frag->segment;
     base_frag->base.des_src_cnt = 1;
     base_frag->base.des_dst = NULL;
     base_frag->base.des_dst_cnt = 0;
@@ -83,7 +83,7 @@ static void in_constructor(mca_btl_wv_in_frag_t *frag)
 {
     mca_btl_wv_frag_t *base_frag = to_base_frag(frag);
 
-    base_frag->base.des_dst = &base_frag->segment;
+    base_frag->base.des_dst = (mca_btl_base_segment_t *) &base_frag->segment;
     base_frag->base.des_dst_cnt = 1;
     base_frag->base.des_src = NULL;
     base_frag->base.des_src_cnt = 0;
@@ -100,7 +100,7 @@ static void send_constructor(mca_btl_wv_send_frag_t *frag)
         (((unsigned char*)base_frag->base.super.ptr) +
         sizeof(mca_btl_wv_header_coalesced_t) +
         sizeof(mca_btl_wv_control_header_t));
-    base_frag->segment.seg_addr.pval = frag->hdr + 1;
+	base_frag->segment.base.seg_addr.pval = frag->hdr + 1;
     to_com_frag(frag)->sg_entry.pAddress = (void*)(uintptr_t)frag->hdr;
     frag->coalesced_length = 0;
     OBJ_CONSTRUCT(&frag->coalesced_frags, opal_list_t);
@@ -113,7 +113,7 @@ static void recv_constructor(mca_btl_wv_recv_frag_t *frag)
     base_frag->type = MCA_BTL_WV_FRAG_RECV;
 
     frag->hdr = (mca_btl_wv_header_t*)base_frag->base.super.ptr;
-    base_frag->segment.seg_addr.pval =
+    base_frag->segment.base.seg_addr.pval =
         ((unsigned char* )frag->hdr) + sizeof(mca_btl_wv_header_t);
     to_com_frag(frag)->sg_entry.pAddress = (void*)(uintptr_t)frag->hdr;
 
@@ -152,7 +152,7 @@ static void coalesced_constructor(mca_btl_wv_coalesced_frag_t *frag)
 
     base_frag->type = MCA_BTL_WV_FRAG_COALESCED;
 
-    base_frag->base.des_src = &base_frag->segment;
+    base_frag->base.des_src = (mca_btl_base_segment_t *) &base_frag->segment;
     base_frag->base.des_src_cnt = 1;
     base_frag->base.des_dst = NULL;
     base_frag->base.des_dst_cnt = 0;

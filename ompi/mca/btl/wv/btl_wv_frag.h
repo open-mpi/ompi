@@ -206,13 +206,18 @@ typedef enum mca_btl_wv_frag_type_t mca_btl_wv_frag_type_t;
 
 #define wv_frag_type(f) (to_base_frag(f)->type)
 /**
- * IB fragment derived type.
+ * WV fragment derived type.
  */
+
+typedef struct mca_btl_wv_segment_t {
+    mca_btl_base_segment_t base;
+    uint32_t key;
+} mca_btl_openib_segment_t;
 
 /* base wv frag */
 typedef struct mca_btl_wv_frag_t {
     mca_btl_base_descriptor_t base;
-    mca_btl_base_segment_t segment;
+    mca_btl_wv_segment_t segment;
     mca_btl_wv_frag_type_t type;
     ompi_free_list_t* list;
 } mca_btl_wv_frag_t;

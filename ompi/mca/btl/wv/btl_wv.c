@@ -80,6 +80,7 @@ mca_btl_wv_module_t mca_btl_wv_module = {
         0, /* latency */
         0, /* bandwidth */
         0, /* TODO this should be PUT btl flags */
+        0, /* segment size */
         mca_btl_wv_add_procs,
         mca_btl_wv_del_procs,
         NULL,
@@ -629,7 +630,7 @@ ib_frag_alloc(mca_btl_wv_module_t *btl, size_t size, uint8_t order,
         return NULL;
 
     /* not all upper layer users set this */
-    to_base_frag(item)->segment.seg_len = size;
+    to_base_frag(item)->segment.base.seg_len = size;
     to_base_frag(item)->base.order = order;
     to_base_frag(item)->base.des_flags = flags;
 
@@ -661,7 +662,7 @@ static mca_btl_wv_send_frag_t *check_coalescing(opal_list_t *frag_list,
         }
 
         total_length = size + frag->coalesced_length +
-            to_base_frag(frag)->segment.seg_len +
+            to_base_frag(frag)->segment.base.seg_len +
             sizeof(mca_btl_wv_header_coalesced_t);
 
         qp = to_base_frag(frag)->base.order;
@@ -737,8 +738,8 @@ mca_btl_base_descriptor_t* mca_btl_wv_alloc(struct mca_btl_base_module_t* btl,
         sfrag->hdr->tag = MCA_BTL_TAG_BTL;
         ctrl_hdr->type = MCA_BTL_WV_CONTROL_COALESCED;
         clsc_hdr->tag = org_tag;
-        clsc_hdr->size = to_base_frag(sfrag)->segment.seg_len;
-        clsc_hdr->alloc_size = to_base_frag(sfrag)->segment.seg_len;
+        clsc_hdr->size = to_base_frag(sfrag)->segment.base.seg_len;
+        clsc_hdr->alloc_size = to_base_frag(sfrag)->segment.base.seg_len;
         if(ep->nbo)
             BTL_WV_HEADER_COALESCED_HTON(*clsc_hdr);
         sfrag->coalesced_length = sizeof(mca_btl_wv_control_header_t) +
@@ -748,12 +749,12 @@ mca_btl_base_descriptor_t* mca_btl_wv_alloc(struct mca_btl_base_module_t* btl,
 
     cfrag->hdr = (mca_btl_wv_header_coalesced_t*)
         (((unsigned char*)(sfrag->hdr + 1)) + sfrag->coalesced_length +
-        to_base_frag(sfrag)->segment.seg_len);
+        to_base_frag(sfrag)->segment.base.seg_len);
     cfrag->hdr->alloc_size = size;
 
     /* point coalesced frag pointer into a data buffer */
-    to_base_frag(cfrag)->segment.seg_addr.pval = cfrag->hdr + 1;
-    to_base_frag(cfrag)->segment.seg_len = size;
+    to_base_frag(cfrag)->segment.base.seg_addr.pval = cfrag->hdr + 1;
+    to_base_frag(cfrag)->segment.base.seg_len = size;
 
     /* save coalesced fragment on a main fragment; we will need it after send
      * completion to free it and to call upper layer callback */
@@ -802,6 +803,8 @@ int mca_btl_wv_free(struct mca_btl_base_module_t* btl,
             to_com_frag(des)->sg_entry.pAddress =
                 (void*)(uintptr_t)to_send_frag(des)->hdr; 
             to_send_frag(des)->coalesced_length = 0;
+            to_base_frag(des)->segment.base.seg_addr.pval = 
+                to_send_frag(des)->hdr + 1; 
             assert(!opal_list_get_size(&to_send_frag(des)->coalesced_frags));
             /* fall throug */
         case MCA_BTL_WV_FRAG_SEND_USER:
@@ -854,6 +857,7 @@ mca_btl_base_descriptor_t* mca_btl_wv_prepare_src(struct mca_btl_base_module_t* 
     struct iovec iov;
     uint32_t iov_count = 1;
     size_t max_data = *size;
+    void *ptr;
     int rc;
 
     wv_btl = (mca_btl_wv_module_t*)btl;
@@ -890,10 +894,9 @@ mca_btl_base_descriptor_t* mca_btl_wv_prepare_src(struct mca_btl_base_module_t* 
             frag->sg_entry.pAddress = (void*)(uintptr_t)iov.iov_base;
             to_base_frag(frag)->base.order = order;
             to_base_frag(frag)->base.des_flags = flags;
-            to_base_frag(frag)->segment.seg_len = max_data;
-            to_base_frag(frag)->segment.seg_addr.pval = iov.iov_base;
-            to_base_frag(frag)->segment.seg_key.key32[0] =
-                (uint32_t)frag->sg_entry.Lkey;
+            to_base_frag(frag)->segment.base.seg_len = max_data;
+            to_base_frag(frag)->segment.base.seg_addr.lval = (uint64_t)(uintptr_t) iov.iov_base;
+            to_base_frag(frag)->segment.key = (uint32_t)frag->sg_entry.Lkey;
             assert(MCA_BTL_NO_ORDER == order);
             BTL_VERBOSE(("frag->sg_entry.lkey = %" PRIu32 " .addr = %" PRIx64
                          " frag->segment.seg_key.key32[0] = %" PRIu32,
@@ -910,21 +913,32 @@ mca_btl_base_descriptor_t* mca_btl_wv_prepare_src(struct mca_btl_base_module_t* 
         max_data = btl->btl_max_send_size - reserve;
     }
 
-    frag = (mca_btl_wv_com_frag_t*)(reserve ?
-            mca_btl_wv_alloc(btl, endpoint, order, max_data + reserve,
-                flags) :
-            ib_frag_alloc(wv_btl, max_data, order, flags));
+    if (OPAL_UNLIKELY(0 == reserve)) { 
+        frag = (mca_btl_wv_com_frag_t *) ib_frag_alloc(wv_btl, max_data, order, flags); 
+        if(NULL == frag) 
+           return NULL; 
 
-    if(NULL == frag)
-        return NULL;
+       /* NTH: this frag will be ue used for either a get or put so we need to set the lval to be 
+          consistent with the usage in get and put. the pval will be restored in mca_btl_openib_free */ 
+       ptr = to_base_frag(frag)->segment.base.seg_addr.pval; 
+       to_base_frag(frag)->segment.base.seg_addr.lval = 
+            (uint64_t)(uintptr_t) ptr; 
+   } else { 
+       frag = 
+         (mca_btl_wv_com_frag_t *) mca_btl_wv_alloc(btl, endpoint, order, 
+                                                              max_data + reserve, flags); 
+       if(NULL == frag) 
+           return NULL; 
+
+       ptr = to_base_frag(frag)->segment.base.seg_addr.pval; 
+   } 
 
     iov.iov_len = max_data;
-    iov.iov_base = (IOVBASE_TYPE *) ( (unsigned char*)to_base_frag(frag)->segment.seg_addr.pval +
-        reserve );
+    iov.iov_base = (IOVBASE_TYPE *) ( (unsigned char*) ptr + reserve ); 
     rc = opal_convertor_pack(convertor, &iov, &iov_count, &max_data);
     *size = max_data;
     /* not all upper layer users set this */
-    to_base_frag(frag)->segment.seg_len = max_data + reserve;
+    to_base_frag(frag)->segment.base.seg_len = max_data + reserve;
 
     return &to_base_frag(frag)->base;
 }
@@ -982,7 +996,7 @@ mca_btl_base_descriptor_t* mca_btl_wv_prepare_dst(struct mca_btl_base_module_t* 
     /* limit the message so to max_msg_size */
     if(*size > max_msg_sz) {
         *size = max_msg_sz;
-        BTL_VERBOSE("message size limited to %d",*size);
+        BTL_VERBOSE(("message size limited to %d",*size));
     }
 
     opal_convertor_get_current_pointer(convertor, &buffer);
@@ -1004,9 +1018,9 @@ mca_btl_base_descriptor_t* mca_btl_wv_prepare_dst(struct mca_btl_base_module_t* 
     frag->sg_entry.Length = *size;
     frag->sg_entry.Lkey = wv_reg->mr->lkey;
     frag->sg_entry.pAddress = (void*)(uintptr_t)buffer; 
-    to_base_frag(frag)->segment.seg_addr.pval = buffer;
-    to_base_frag(frag)->segment.seg_len = *size;
-    to_base_frag(frag)->segment.seg_key.key32[0] = wv_reg->mr->rkey;
+    to_base_frag(frag)->segment.base.seg_addr.lval = (uint64_t)(uintptr_t) buffer;
+    to_base_frag(frag)->segment.base.seg_len = *size;
+    to_base_frag(frag)->segment.key = wv_reg->mr->rkey;
     to_base_frag(frag)->base.order = order;
     to_base_frag(frag)->base.des_flags = flags;
     BTL_VERBOSE(("frag->sg_entry.lkey = %" PRIu32 " .addr = %" PRIx64 " "
@@ -1205,14 +1219,14 @@ int mca_btl_wv_sendi(struct mca_btl_base_module_t* btl,
     }
     frag = to_base_frag(item);
     hdr = to_send_frag(item)->hdr;
-    frag->segment.seg_len = size;
+    frag->segment.base.seg_len = size;
     frag->base.order = qp;
     frag->base.des_flags = flags;
     hdr->tag = tag;
     to_com_frag(item)->endpoint = ep;
 
     /* put match header */
-    memcpy(frag->segment.seg_addr.pval, header, header_size);
+    memcpy(frag->segment.base.seg_addr.pval, header, header_size);
 
     /* Pack data */
     if(payload_size) {
@@ -1220,7 +1234,7 @@ int mca_btl_wv_sendi(struct mca_btl_base_module_t* btl,
         struct iovec iov;
         uint32_t iov_count;
         /* pack the data into the supplied buffer */
-        iov.iov_base = (IOVBASE_TYPE*)((unsigned char*)frag->segment.seg_addr.pval + header_size);
+        iov.iov_base = (IOVBASE_TYPE*)((unsigned char*)frag->segment.base.seg_addr.pval + header_size);
         iov.iov_len  = max_data = payload_size;
         iov_count    = 1;
 
@@ -1334,8 +1348,12 @@ int mca_btl_wv_put(mca_btl_base_module_t* btl,
     HRESULT hr = 0;
     mca_btl_wv_out_frag_t* frag = to_out_frag(descriptor);
     int qp = descriptor->order;
+
+    mca_btl_openib_segment_t *src_seg = (mca_btl_openib_segment_t *) descriptor->des_src;
+    mca_btl_openib_segment_t *dst_seg = (mca_btl_openib_segment_t *) descriptor->des_dst;
+
     uint64_t rem_addr = descriptor->des_dst->seg_addr.lval;
-    uint32_t rkey = descriptor->des_dst->seg_key.key32[0];
+    uint32_t rkey = dst_seg->key;
     assert(wv_frag_type(frag) == MCA_BTL_WV_FRAG_SEND_USER ||
             wv_frag_type(frag) == MCA_BTL_WV_FRAG_SEND);
     descriptor->des_flags |= MCA_BTL_DES_SEND_ALWAYS_CALLBACK;
@@ -1366,7 +1384,7 @@ int mca_btl_wv_put(mca_btl_base_module_t* btl,
     frag->sr_desc.Wr.Rdma.RemoteAddress = htonll(rem_addr); 
     frag->sr_desc.Wr.Rdma.Rkey = htonl(rkey);  
     to_com_frag(frag)->sg_entry.pAddress =
-        (void*)(uintptr_t)descriptor->des_src->seg_addr.pval;
+        (void*)(uintptr_t)descriptor->des_src->seg_addr.lval;
     to_com_frag(frag)->sg_entry.Length = descriptor->des_src->seg_len;
     to_com_frag(frag)->endpoint = ep;
     descriptor->order = qp;
@@ -1394,8 +1412,12 @@ int mca_btl_wv_get(mca_btl_base_module_t* btl,
     HRESULT hr = 0;
     mca_btl_wv_get_frag_t* frag = to_get_frag(descriptor);
     int qp = descriptor->order;
+
+    mca_btl_openib_segment_t *src_seg = (mca_btl_openib_segment_t *) descriptor->des_src;
+    mca_btl_openib_segment_t *dst_seg = (mca_btl_openib_segment_t *) descriptor->des_dst;
+
     uint64_t rem_addr = descriptor->des_src->seg_addr.lval;
-    uint32_t rkey = descriptor->des_src->seg_key.key32[0];
+	uint32_t rkey = dst_seg->key;
     assert(wv_frag_type(frag) == MCA_BTL_WV_FRAG_RECV_USER);
     descriptor->des_flags |= MCA_BTL_DES_SEND_ALWAYS_CALLBACK;
 
@@ -1435,7 +1457,7 @@ int mca_btl_wv_get(mca_btl_base_module_t* btl,
     frag->sr_desc.Wr.Rdma.RemoteAddress = htonll(rem_addr);
     frag->sr_desc.Wr.Rdma.Rkey = htonl(rkey);
     to_com_frag(frag)->sg_entry.pAddress =
-        (void*)(uintptr_t)descriptor->des_dst->seg_addr.pval; 
+        (void*)(uintptr_t)descriptor->des_dst->seg_addr.lval; 
     to_com_frag(frag)->sg_entry.Length  = descriptor->des_dst->seg_len;
     to_com_frag(frag)->endpoint = ep;
     descriptor->order = qp;
