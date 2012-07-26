@@ -135,6 +135,7 @@ int ompi_mtl_mxm_imrecv(struct mca_mtl_base_module_t* mtl,
     OMPI_FREE_LIST_RETURN(&mca_mtl_mxm_component.mxm_messages,
                          (ompi_free_list_item_t *) msgp);
 
+    ompi_message_return(*message);
     (*message) = MPI_MESSAGE_NULL;
 
     return OMPI_SUCCESS;
