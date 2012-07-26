@@ -252,7 +252,7 @@ int btl_openib_register_mca_params(void)
                   "(CQs are automatically sized based on the number "
                   "of peer MPI processes; this value determines the "
                   "*minimum* size of all CQs)",
-                  1000, &ival, REGINT_GE_ONE));
+                  8192, &ival, REGINT_GE_ONE));
     mca_btl_openib_component.ib_cq_size[BTL_OPENIB_LP_CQ] =
         mca_btl_openib_component.ib_cq_size[BTL_OPENIB_HP_CQ] = (uint32_t) ival;
 
