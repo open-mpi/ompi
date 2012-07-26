@@ -858,6 +858,9 @@ static int remote_spawn(opal_buffer_t *launch)
                          "%s plm:rsh: activating launch event",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     opal_event_active(&launch_event, EV_WRITE, 1);
+
+    /* declare the launch a success */
+    failed_launch = false;
     
 cleanup:    
     if (NULL != argv) {
