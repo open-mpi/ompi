@@ -413,7 +413,7 @@ int ompi_btl_wv_connect_base_alloc_cts(mca_btl_base_endpoint_t *endpoint)
 
     /* Copy the lkey where it needs to go */
     endpoint->endpoint_cts_frag.super.sg_entry.Lkey = 
-        endpoint->endpoint_cts_frag.super.super.segment.seg_key.key32[0] = 
+        endpoint->endpoint_cts_frag.super.super.segment.key = 
         endpoint->endpoint_cts_mr->lkey;
     endpoint->endpoint_cts_frag.super.sg_entry.Length = length;
 
@@ -437,8 +437,8 @@ int ompi_btl_wv_connect_base_free_cts(mca_btl_base_endpoint_t *endpoint)
        because it was not registered there in the first place (see
        comment above, near call to ibv_reg_mr). */
     if (NULL != endpoint->endpoint_cts_mr) {
-		if(SUCCEEDED(endpoint->endpoint_cts_mr->pd->handle->DeregisterMemory(endpoint->endpoint_cts_mr->lkey,NULL)))
-			free(endpoint->endpoint_cts_mr);
+        if(SUCCEEDED(endpoint->endpoint_cts_mr->pd->handle->DeregisterMemory(endpoint->endpoint_cts_mr->lkey,NULL)))
+            free(endpoint->endpoint_cts_mr);
         endpoint->endpoint_cts_mr = NULL;
     }
     if (NULL != endpoint->endpoint_cts_frag.super.super.base.super.ptr) {

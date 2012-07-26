@@ -465,7 +465,7 @@ static inline int post_send(mca_btl_wv_endpoint_t *ep,
         mca_btl_wv_send_frag_t *frag, const bool rdma)
 {
     mca_btl_wv_module_t *wv_btl = ep->endpoint_btl;
-    mca_btl_base_segment_t *seg = &to_base_frag(frag)->segment;
+    mca_btl_base_segment_t *seg = (mca_btl_base_segment_t *) &to_base_frag(frag)->segment;
     WV_SGE *sg = &to_com_frag(frag)->sg_entry;
     WV_SEND_REQUEST *sr_desc = &to_out_frag(frag)->sr_desc;
     WV_SEND_REQUEST *bad_wr;

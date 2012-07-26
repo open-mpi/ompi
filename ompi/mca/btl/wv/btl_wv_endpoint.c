@@ -492,7 +492,7 @@ void mca_btl_wv_endpoint_send_cts(mca_btl_wv_endpoint_t *endpoint)
     base_des->des_cbdata = NULL;
     base_des->des_flags |= MCA_BTL_DES_FLAGS_PRIORITY|MCA_BTL_DES_SEND_ALWAYS_CALLBACK;
     base_des->order = mca_btl_wv_component.credits_qp;
-    wv_frag->segment.seg_len = sizeof(mca_btl_wv_control_header_t);
+    wv_frag->segment.base.seg_len = sizeof(mca_btl_wv_control_header_t);
     com_frag->endpoint = endpoint;
 
     sc_frag->hdr->tag = MCA_BTL_TAG_BTL;
@@ -500,7 +500,7 @@ void mca_btl_wv_endpoint_send_cts(mca_btl_wv_endpoint_t *endpoint)
     sc_frag->hdr->credits = 0;
 
     ctl_hdr = (mca_btl_wv_control_header_t*)
-        wv_frag->segment.seg_addr.pval;
+        wv_frag->segment.base.seg_addr.pval;
     ctl_hdr->type = MCA_BTL_WV_CONTROL_CTS;
 
     /* Send the fragment */
@@ -680,13 +680,13 @@ void mca_btl_wv_endpoint_send_credits(mca_btl_wv_endpoint_t* endpoint,
         to_base_frag(frag)->base.des_flags |= MCA_BTL_DES_SEND_ALWAYS_CALLBACK;;
         to_com_frag(frag)->endpoint = endpoint;
         frag->hdr->tag = MCA_BTL_TAG_BTL;
-        to_base_frag(frag)->segment.seg_len =
+        to_base_frag(frag)->segment.base.seg_len =
             sizeof(mca_btl_wv_rdma_credits_header_t);
     }
 
     assert(frag->qp_idx == qp);
     credits_hdr = (mca_btl_wv_rdma_credits_header_t*)
-        to_base_frag(frag)->segment.seg_addr.pval;
+        to_base_frag(frag)->segment.base.seg_addr.pval;
     if(OMPI_SUCCESS == acquire_eager_rdma_send_credit(endpoint)) {
         do_rdma = true;
     } else {
@@ -770,12 +770,12 @@ static int mca_btl_wv_endpoint_send_eager_rdma(
     to_base_frag(frag)->base.des_cbdata = NULL;
     to_base_frag(frag)->base.des_flags |= MCA_BTL_DES_FLAGS_PRIORITY|MCA_BTL_DES_SEND_ALWAYS_CALLBACK;
     to_base_frag(frag)->base.order = mca_btl_wv_component.credits_qp;
-    to_base_frag(frag)->segment.seg_len =
+    to_base_frag(frag)->segment.base.seg_len =
         sizeof(mca_btl_wv_eager_rdma_header_t);
     to_com_frag(frag)->endpoint = endpoint;
 
     frag->hdr->tag = MCA_BTL_TAG_BTL;
-    rdma_hdr = (mca_btl_wv_eager_rdma_header_t*)to_base_frag(frag)->segment.seg_addr.pval;
+    rdma_hdr = (mca_btl_wv_eager_rdma_header_t*)to_base_frag(frag)->segment.base.seg_addr.pval;
     rdma_hdr->control.type = MCA_BTL_WV_CONTROL_RDMA;
     rdma_hdr->rkey = endpoint->eager_rdma_local.reg->mr->rkey;
     rdma_hdr->rdma_start.lval = ompi_ptr_ptol(endpoint->eager_rdma_local.base.pval);
@@ -862,7 +862,7 @@ void mca_btl_wv_endpoint_connect_eager_rdma(
         to_base_frag(frag)->type = MCA_BTL_WV_FRAG_EAGER_RDMA;
         to_com_frag(frag)->endpoint = endpoint;
         frag->ftr = (mca_btl_wv_footer_t*)
-            ((char*)to_base_frag(frag)->segment.seg_addr.pval +
+            ((char*)to_base_frag(frag)->segment.base.seg_addr.pval +
              mca_btl_wv_component.eager_limit);
 
         MCA_BTL_WV_RDMA_MAKE_REMOTE(frag->ftr);

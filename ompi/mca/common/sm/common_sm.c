@@ -170,7 +170,7 @@ mca_common_sm_module_create(size_t size,
     mca_common_sm_module_t *map = NULL;
     opal_shmem_ds_t *seg_meta = NULL;
 
-    if (NULL == (seg_meta = malloc(sizeof(*seg_meta)))) {
+    if (NULL == (seg_meta = (opal_shmem_ds_t *) malloc(sizeof(*seg_meta)))) {
         /* out of resources */
         return NULL;
     }
@@ -263,7 +263,7 @@ mca_common_sm_init(ompi_proc_t **procs,
         return NULL;
     }
 
-    if (NULL == (seg_meta = malloc(sizeof(*seg_meta)))) {
+    if (NULL == (seg_meta = (opal_shmem_ds_t *) malloc(sizeof(*seg_meta)))) {
         /* out of resources - just bail */
         return NULL;
     }

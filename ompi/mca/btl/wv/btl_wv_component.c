@@ -42,6 +42,16 @@
 #include "opal/memoryhooks/memory.h"
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/mca/hwloc/base/base.h"
+/* Define this before including hwloc.h so that we also get the hwloc
+   verbs helper header file, too.  We have to do this level of
+   indirection because the hwloc subsystem is a component -- we don't
+   know its exact path.  We have to rely on the framework header files
+   to find the right hwloc verbs helper file for us. */
+#define OPAL_HWLOC_WANT_VERBS_HELPER 1
+#include "opal/mca/hwloc/hwloc.h"
+#include "opal/mca/hwloc/base/base.h"
+#include "hwloc/openfabrics-verbs.h"
+
 #include "opal/mca/installdirs/installdirs.h"
 #include "opal_stdint.h"
 
@@ -349,7 +359,7 @@ static void btl_wv_control(mca_btl_base_module_t* btl,
     mca_btl_wv_module_t *obtl = (mca_btl_wv_module_t*)btl;
     mca_btl_wv_endpoint_t* ep = to_com_frag(des)->endpoint;
     mca_btl_wv_control_header_t *ctl_hdr =
-        (mca_btl_wv_control_header_t *) to_base_frag(des)->segment.seg_addr.pval;
+        (mca_btl_wv_control_header_t *) to_base_frag(des)->segment.base.seg_addr.pval;
     mca_btl_wv_eager_rdma_header_t *rdma_hdr;
     mca_btl_wv_header_coalesced_t *clsc_hdr =
         (mca_btl_wv_header_coalesced_t*)(ctl_hdr + 1);
@@ -990,7 +1000,7 @@ static void merge_values(ompi_btl_wv_ini_values_t *target,
 static bool inline is_credit_message(const mca_btl_wv_recv_frag_t *frag)
 {
     mca_btl_wv_control_header_t* chdr =
-        (mca_btl_wv_control_header_t *) to_base_frag(frag)->segment.seg_addr.pval;
+        (mca_btl_wv_control_header_t *) to_base_frag(frag)->segment.base.seg_addr.pval;
     return (MCA_BTL_TAG_BTL == frag->hdr->tag) &&
         (MCA_BTL_WV_CONTROL_CREDITS == chdr->type);
 }
@@ -998,7 +1008,7 @@ static bool inline is_credit_message(const mca_btl_wv_recv_frag_t *frag)
 static bool inline is_cts_message(const mca_btl_wv_recv_frag_t *frag)
 {
     mca_btl_wv_control_header_t* chdr =
-        (mca_btl_wv_control_header_t *) to_base_frag(frag)->segment.seg_addr.pval;
+        (mca_btl_wv_control_header_t *) to_base_frag(frag)->segment.base.seg_addr.pval;
     return (MCA_BTL_TAG_BTL == frag->hdr->tag) &&
         (MCA_BTL_WV_CONTROL_CTS == chdr->type);
 }
@@ -1416,7 +1426,7 @@ static int init_one_device(opal_list_t *btl_list, struct wv_device* ib_dev)
         device->use_eager_rdma = values.use_eager_rdma;
     }
 
-    mpool_resources.pool_name = "$Sverbs";
+    asprintf (&mpool_resources.pool_name, "verbs.%" PRIu64, device->ib_dev_attr.NodeGuid);
     mpool_resources.reg_data = (void*)device;
     mpool_resources.sizeof_reg = sizeof(mca_btl_wv_reg_t);
     mpool_resources.register_mem = wv_reg_mr;
@@ -2096,7 +2106,7 @@ sort_devs_by_distance(struct wv_device **ib_devs, int count)
         if (orte_proc_is_bound) {
             /* If this process is bound to one or more PUs, we can get
                an accurate distance. */
-            devs[i].distance = get_ib_dev_distance(ib_devs[i]);
+            devs[i].distance = get_ib_dev_distance((ibv_device *)ib_devs[i]);
         } else {
             /* Since we're not bound, just assume that the device is
                close. */
@@ -2105,8 +2115,6 @@ sort_devs_by_distance(struct wv_device **ib_devs, int count)
     }
 
     qsort(devs, count, sizeof(struct dev_distance), compare_distance);
-
-    opal_carto_base_free_graph(host_topo);
 
     return devs;
 }
@@ -3067,7 +3075,7 @@ static int progress_one_device(mca_btl_wv_device_t *device)
             OPAL_THREAD_UNLOCK(&endpoint->eager_rdma_local.lock);
             frag->hdr = (mca_btl_wv_header_t*)(((char*)frag->ftr) -
                     size + sizeof(mca_btl_wv_footer_t));
-            to_base_frag(frag)->segment.seg_addr.pval =
+            to_base_frag(frag)->segment.base.seg_addr.pval =
                 ((unsigned char* )frag->hdr) + sizeof(mca_btl_wv_header_t);
             ret = btl_wv_handle_incoming(btl, to_com_frag(frag)->endpoint,
                     frag, size - sizeof(mca_btl_wv_footer_t));
