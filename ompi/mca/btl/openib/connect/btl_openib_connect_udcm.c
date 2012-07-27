@@ -2061,7 +2061,9 @@ static void *udcm_cq_event_dispatch(int fd, int flags, void *context)
     void *event_context;
     int rc;
 
-    assert (NULL != m && NULL != m->cm_channel);
+    if (OPAL_UNLIKELY(NULL == m || NULL == m->cm_channel)) {
+	return NULL;
+    }
 
     rc = ibv_get_cq_event (m->cm_channel, &event_cq, &event_context);
 
