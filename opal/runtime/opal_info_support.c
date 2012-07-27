@@ -42,6 +42,7 @@
 #include "opal/mca/backtrace/base/base.h"
 #include "opal/mca/shmem/base/base.h"
 #include "opal/mca/memory/base/base.h"
+#include "opal/mca/memcpy/base/base.h"
 #include "opal/mca/memchecker/base/base.h"
 #include "opal/mca/timer/base/base.h"
 #include "opal/mca/installdirs/base/base.h"
@@ -238,6 +239,7 @@ void opal_info_register_types(opal_pointer_array_t *mca_types)
     opal_pointer_array_add(mca_types, "mca");
     opal_pointer_array_add(mca_types, "memchecker");
     opal_pointer_array_add(mca_types, "memory");
+    opal_pointer_array_add(mca_types, "memcpy");
     opal_pointer_array_add(mca_types, "opal");
     opal_pointer_array_add(mca_types, "shmem");
     opal_pointer_array_add(mca_types, "timer");
@@ -366,7 +368,16 @@ int opal_info_register_components(opal_pointer_array_t *mca_types,
     map->type = strdup("memory");
     map->components = &opal_memory_base_components_opened;
     opal_pointer_array_add(component_map, map);
-    
+
+    if (OPAL_SUCCESS != opal_memcpy_base_open()) {
+        str = "memcpy open failed";
+        goto error;
+    }
+    map = OBJ_NEW(opal_info_component_map_t);
+    map->type = strdup("memcpy");
+    map->components = &opal_memcpy_base_components_opened;
+    opal_pointer_array_add(component_map, map);
+
     if (OPAL_SUCCESS != opal_memchecker_base_open()) {
         str = "memchecker open failed";
         goto error;
@@ -415,6 +426,7 @@ int opal_info_register_components(opal_pointer_array_t *mca_types,
 void opal_info_close_components(void)
 {
     (void) opal_backtrace_base_close();
+    (void) opal_memcpy_base_close();
     (void) opal_memory_base_close();
     (void) opal_memchecker_base_close();
     (void) opal_timer_base_close();
