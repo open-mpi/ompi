@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2007-2011 High Performance Computing Center Stuttgart, 
+# Copyright (c) 2007-2012 High Performance Computing Center Stuttgart, 
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2008      The University of Tennessee and The University
 #                         of Tennessee Research Foundation.  All rights
@@ -200,7 +200,10 @@ OMPI_DEF_OPT(enable-mpi-cxx OMPI_BUILD_CXX_BINDINGS "Whether we want MPI cxx sup
 
 OMPI_DEF_OPT(enable-mpi-fortran OMPI_BUILD_FORTRAN_USEMPI_BINDINGS "Whether we want MPI FORTRAN support or not." OFF)
 
-OMPI_DEF(OMPI_BUILD_FORTRAN_F08_SUBARRAYS 0 "fortran compiler has fortran08 subarrays" 0 1)
+OMPI_DEF_OPT(enable-mpi-f08-subarray-prototype OMPI_BUILD_FORTRAN_F08_SUBARRAYS 0
+  "Use the PROTOTYPE and SEVERLY FUNCTIONALITY-LIMITED Fortran 08 'use mpi_f08' 
+implementation that supports subarrrays (via Fortran descriptors). 
+This option will disable the normal 'use mpi_f08' implementation and *only* build the prototype implementation." 0 1)
 
 OMPI_DEF(OMPI_FORTRAN_HAVE_PRIVATE 0 "fortran compiler has private" 0 1)
 
@@ -645,6 +648,17 @@ OMPI_CHECK_TYPES (uintptr_t UINTPTR_T none c)
 ###################################################################
 #                      Check Fortran 77 types                     #
 ###################################################################
+
+IF(OMPI_BUILD_FORTRAN_USEMPI_BINDINGS)
+  SET(OMPI_WANT_FORTRAN_BINDINGS 1 CACHE INTERNAL "Whether we want MPI FORTRAN support or not.")
+  SET(OMPI_WANT_FORTRAN_MPIFH_BINDINGS 1 CACHE INTERNAL "OMPI_WANT_FORTRAN_MPIFH_BINDINGS")
+  SET(OMPI_WANT_FORTRAN_USEMPIF08_BINDINGS 1 CACHE INTERNAL "OMPI_WANT_FORTRAN_USEMPIF08_BINDINGS")
+ELSE(OMPI_BUILD_FORTRAN_USEMPI_BINDINGS)
+  SET(OMPI_WANT_FORTRAN_BINDINGS 0 CACHE INTERNAL "Whether we want MPI FORTRAN support or not.")
+  SET(OMPI_WANT_FORTRAN_MPIFH_BINDINGS 0 CACHE INTERNAL "OMPI_WANT_FORTRAN_MPIFH_BINDINGS")
+  SET(OMPI_WANT_FORTRAN_USEMPIF08_BINDINGS 0 CACHE INTERNAL "OMPI_WANT_FORTRAN_USEMPIF08_BINDINGS")
+ENDIF(OMPI_BUILD_FORTRAN_USEMPI_BINDINGS)
+
 INCLUDE(setup_fortran)
 INCLUDE(fortran_check)
 INCLUDE(fortran_check_real16_c_equiv)

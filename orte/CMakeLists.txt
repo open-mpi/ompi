@@ -66,9 +66,11 @@ IF (BUILD_SHARED_LIBS)
 
   IF(WINDOWS_MINGW)
     TARGET_LINK_LIBRARIES(libopen-rte ${OpenMPI_BINARY_DIR}/event${CMAKE_DEBUG_POSTFIX}.lib
+      ${OpenMPI_BINARY_DIR}/hwloc${CMAKE_DEBUG_POSTFIX}.lib
       libopen-pal Ws2_32.lib shlwapi.lib)
   ELSEIF(WINDOWS_VS)
     TARGET_LINK_LIBRARIES(libopen-rte ${OpenMPI_BINARY_DIR}/${CMAKE_CFG_INTDIR}/event${CMAKE_DEBUG_POSTFIX}.lib
+      ${OpenMPI_BINARY_DIR}/${CMAKE_CFG_INTDIR}/hwloc${CMAKE_DEBUG_POSTFIX}.lib
       libopen-pal Ws2_32.lib shlwapi.lib)
   ENDIF(WINDOWS_MINGW)
 ELSE (BUILD_SHARED_LIBS)
