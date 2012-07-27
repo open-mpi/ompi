@@ -1,4 +1,4 @@
-# Copyright (c) 2007-2010 High Performance Computing Center Stuttgart, 
+# Copyright (c) 2007-2012 High Performance Computing Center Stuttgart, 
 #                         University of Stuttgart.  All rights reserved.
 # $COPYRIGHT$
 # 
@@ -286,6 +286,8 @@ ENDIF (OMPI_DEBUG_BUILD)
           # Install help files if they are here.
           INSTALL(DIRECTORY ${CURRENT_PATH}/ DESTINATION share/openmpi/
             FILES_MATCHING PATTERN "*.txt"
+            PATTERN "hwloc" EXCLUDE
+            PATTERN "libevent" EXCLUDE
             PATTERN ".svn" EXCLUDE
             PATTERN ".hg" EXCLUDE)
 

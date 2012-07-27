@@ -1,4 +1,4 @@
-# Copyright (c) 2007-2010 High Performance Computing Center Stuttgart, 
+# Copyright (c) 2007-2012 High Performance Computing Center Stuttgart, 
 #                         University of Stuttgart.  All rights reserved.
 # $COPYRIGHT$
 # 
@@ -16,7 +16,3 @@ SET(CHELLO_FILES
 ADD_EXECUTABLE (chello ${CHELLO_FILES})
 
 TARGET_LINK_LIBRARIES (chello libmpi)
-
-INSTALL(FILES ${OpenMPI_SOURCE_DIR}/test/mpi/environment/chello.c
-  ${OpenMPI_BINARY_DIR}/test/mpi/environment/chello.*
-  DESTINATION share/examples)
