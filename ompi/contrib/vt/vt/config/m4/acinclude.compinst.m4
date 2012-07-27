@@ -159,10 +159,6 @@ AC_DEFUN([ACVT_COMPINST],
 									compinst_type="pgi9"
 									AC_MSG_RESULT([pgi9])
 									;;
-								*Cray*)
-									compinst_type="craycce"
-									AC_MSG_RESULT([craycce])
-									;;
 								*PathScale*)
 									compinst_type="gnu"
 									AC_MSG_RESULT([gnu (pathscale)])
@@ -174,6 +170,10 @@ AC_DEFUN([ACVT_COMPINST],
 								*gcc\ *)
 									compinst_type="gnu"
 									AC_MSG_RESULT([gnu])
+									;;
+								*Cray*)
+									compinst_type="craycce"
+									AC_MSG_RESULT([craycce])
 									;;
 							esac
 							AS_IF([test x"$compinst_type" != x], [break])

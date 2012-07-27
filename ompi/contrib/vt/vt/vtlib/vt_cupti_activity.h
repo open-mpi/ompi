@@ -59,6 +59,15 @@ EXTERN void vt_cuptiact_addContext(CUcontext cuCtx, CUdevice cuDev);
  */
 EXTERN void vt_cuptiact_flushCtxActivities(CUcontext cuCtx);
 
+/*
+ * Mark a CUDA stream as destroyed, so that it can be reused afterwards.
+ * 
+ * @param cuCtx CUDA context, which contains the stream
+ * @param strmID the CUDA stream ID to be marked as destroyed
+ * 
+ */
+EXTERN void vt_cuptiact_markStreamAsDestroyed(CUcontext cuCtx, uint32_t strmID);
+
 
 EXTERN void vt_cuptiact_writeMalloc(uint32_t ctxID, CUcontext cuCtx, 
                                     void *devPtr, size_t size);

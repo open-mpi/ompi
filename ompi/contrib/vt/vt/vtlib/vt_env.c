@@ -201,6 +201,72 @@ char* vt_env_dyn_shlibs()
   return dyn_shlibs;
 }
 
+int vt_env_dyn_outer_loops()
+{
+  static int dyn_outer_loops = -1;
+  char* tmp;
+
+  if (dyn_outer_loops == -1)
+    {
+      tmp = getenv("VT_DYN_OUTER_LOOPS");
+      if (tmp != NULL && strlen(tmp) > 0)
+        {
+          vt_cntl_msg(2, "VT_DYN_OUTER_LOOPS=%s", tmp);
+
+          dyn_outer_loops = parse_bool(tmp);
+        }
+      else
+        {
+          dyn_outer_loops = 0;
+        }
+    }
+  return dyn_outer_loops;
+}
+
+int vt_env_dyn_inner_loops()
+{
+  static int dyn_inner_loops = -1;
+  char* tmp;
+
+  if (dyn_inner_loops == -1)
+    {
+      tmp = getenv("VT_DYN_INNER_LOOPS");
+      if (tmp != NULL && strlen(tmp) > 0)
+        {
+          vt_cntl_msg(2, "VT_DYN_INNER_LOOPS=%s", tmp);
+
+          dyn_inner_loops = parse_bool(tmp);
+        }
+      else
+        {
+          dyn_inner_loops = 0;
+        }
+    }
+  return dyn_inner_loops;
+}
+
+int vt_env_dyn_loop_iters()
+{
+  static int dyn_loop_iters = -1;
+  char* tmp;
+
+  if (dyn_loop_iters == -1)
+    {
+      tmp = getenv("VT_DYN_LOOP_ITERS");
+      if (tmp != NULL && strlen(tmp) > 0)
+        {
+          vt_cntl_msg(2, "VT_DYN_LOOP_ITERS=%s", tmp);
+
+          dyn_loop_iters = parse_bool(tmp);
+        }
+      else
+        {
+          dyn_loop_iters = 0;
+        }
+    }
+  return dyn_loop_iters;
+}
+
 int vt_env_dyn_ignore_nodbg()
 {
   static int dyn_ignore_nodbg = -1;

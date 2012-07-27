@@ -1344,10 +1344,14 @@ doWrap()
 
       files_to_remove.push_back( cpp_file );
 
-      // add macro definition '_OPENMP' to preprocessor flags, if OpenMP
-      // is enabled
+      // add path to empty omp.h and macro definition '_OPENMP' to preprocessor
+      // flags, if OpenMP is enabled
       if( Config.uses_openmp )
-        Config.addPrepFlag( "-D_OPENMP" );
+      {
+        Config.addPrepFlag( std::string( "-I" ) +
+          vt_installdirs_get( VT_INSTALLDIR_DATADIR ) +
+          " -D_OPENMP" );
+      }
 
       // compose C preprocessor command
       //

@@ -231,8 +231,8 @@ void vt_request_free(struct VTRequest* req)
     }  
 }
 
-void vt_check_request(uint64_t* time, struct VTRequest* req, MPI_Status *status,
-		uint8_t record_event)
+void vt_check_request(uint32_t tid, uint64_t* time, struct VTRequest* req,
+                      MPI_Status *status, uint8_t record_event)
 {
   if (!req ||
       ((req->flags & ERF_IS_PERSISTENT) && !(req->flags & ERF_IS_ACTIVE)))
@@ -247,7 +247,7 @@ void vt_check_request(uint64_t* time, struct VTRequest* req, MPI_Status *status,
     VT_MPI_INT count, sz;
     PMPI_Type_size(req->datatype, &sz);
     PMPI_Get_count(status, req->datatype, &count);
-    vt_mpi_recv(VT_CURRENT_THREAD, time,
+    vt_mpi_recv(tid, time,
                 VT_RANK_TO_PE(status->MPI_SOURCE, req->comm),
                 VT_COMM_ID(req->comm), status->MPI_TAG, count * sz);
   }
@@ -259,7 +259,7 @@ void vt_check_request(uint64_t* time, struct VTRequest* req, MPI_Status *status,
     PMPI_Get_count(status, req->datatype, &count);
     if (count == MPI_UNDEFINED)
       count = 0;
-    vt_ioend(VT_CURRENT_THREAD, time, req->fileid, req->matchingid, req->handleid, req->fileop,
+    vt_ioend(tid, time, req->fileid, req->matchingid, req->handleid, req->fileop,
              (uint64_t)count*(uint64_t)sz);
   }
 

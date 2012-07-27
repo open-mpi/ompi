@@ -163,6 +163,10 @@ uint32_t VTThrd_create(const char* tname, uint32_t ptid, uint8_t is_virtual)
   /* set the virtual thread flag */
   thrd->is_virtual = is_virtual;
 
+#if (defined (VT_MPI) || defined (VT_HYB))
+  thrd->mpi_tracing_enabled = vt_env_mpitrace();
+#endif /* VT_MPI || VT_HYB */
+
 #if defined(VT_GETCPU)
   thrd->cpuid_val = (uint32_t)-1;
 #endif /* VT_GETCPU */

@@ -79,6 +79,13 @@ static void showUsage( void );
    static bool shareUnifyControls( void );
 #endif // VT_MPI
 
+// local variables
+//
+
+// output stream for verbose messages
+// (stdout if vtunify is started from the command line, otherwise stderr)
+static FILE * verboseStream = stderr;
+
 // global variables
 //
 
@@ -206,6 +213,13 @@ VTUNIFY_MAIN( int argc, char ** argv )
          MASTER std::cout << PACKAGE_VERSION << std::endl;
          break;
       }
+
+#ifndef VT_LIB
+      // set output stream for verbose messages to stdout, if vtunify is
+      // started from the command line
+      if( !Params.autostart )
+         verboseStream = stdout;
+#endif // VT_LIB
 
       // register hook classes
       theHooks->registerHooks();
@@ -1301,6 +1315,14 @@ parseCommandLine( int argc, char ** argv )
       {
          Params.verbose_level++;
       }
+#ifndef VT_LIB
+      // --autostart (hidden)
+      //
+      else if( strcmp( argv[i], "--autostart" ) == 0 )
+      {
+         Params.autostart = true;
+      }
+#endif // VT_LIB
       // input trace file prefix
       //
       else if( Params.in_file_prefix.length() == 0 )
@@ -1709,6 +1731,13 @@ shareParams()
                                7, MPI_CHAR, MPI_COMM_WORLD, &size ) );
       buffer_size += size;
 
+#ifndef VT_LIB
+      // autostart
+      //
+      CALL_MPI( MPI_Pack_size( 1, MPI_CHAR, MPI_COMM_WORLD, &size ) );
+      buffer_size += size;
+#endif // VT_LIB
+
 #if defined(HAVE_IOFSL) && HAVE_IOFSL
       // iofsl_mode + iofsl_flags + iofsl_num_servers
       //
@@ -1820,6 +1849,12 @@ shareParams()
       // onlystats
       CALL_MPI( MPI_Pack( &(Params.onlystats), 1, MPI_CHAR, buffer,
                           buffer_size, &position, MPI_COMM_WORLD ) );
+
+#ifndef VT_LIB
+      // autostart
+      CALL_MPI( MPI_Pack( &(Params.autostart), 1, MPI_CHAR, buffer,
+                          buffer_size, &position, MPI_COMM_WORLD ) );
+#endif // VT_LIB
 
 #if defined(HAVE_IOFSL) && HAVE_IOFSL
       // iofsl_mode
@@ -1960,6 +1995,12 @@ shareParams()
       // onlystats
       CALL_MPI( MPI_Unpack( buffer, buffer_size, &position, &(Params.onlystats),
                             1, MPI_CHAR, MPI_COMM_WORLD ) );
+
+#ifndef VT_LIB
+      // autostart
+      CALL_MPI( MPI_Unpack( buffer, buffer_size, &position, &(Params.autostart),
+                            1, MPI_CHAR, MPI_COMM_WORLD ) );
+#endif // VT_LIB
 
 #if defined(HAVE_IOFSL) && HAVE_IOFSL
       // iofsl_mode
@@ -2535,7 +2576,7 @@ VPrint( uint8_t level, const char * fmt, ... )
 #endif // VT_UNIFY_VERBOSE_TIME_PREFIX
 
          va_start( ap, fmt );
-         vprintf( fmt, ap );
+         vfprintf( verboseStream, fmt, ap );
          va_end( ap );
       } // MASTER
    }
@@ -2559,7 +2600,7 @@ PVPrint( uint8_t level, const char * fmt, ... )
 
       va_start( ap, fmt );
 #if !(defined(VT_MPI) || (defined(HAVE_OMP) && HAVE_OMP))
-      vprintf( fmt, ap );
+      vfprintf( verboseStream, fmt, ap );
 #else // !(VT_MPI || HAVE_OMP)
       char msg[STRBUFSIZE] = "";
 #  if defined(VT_MPI) && !(defined(HAVE_OMP) && HAVE_OMP)
@@ -2582,7 +2623,7 @@ PVPrint( uint8_t level, const char * fmt, ... )
 #  if defined(HAVE_OMP) && HAVE_OMP
 #     pragma omp critical
 #  endif // HAVE_OMP
-      printf( "%s", msg );
+      fprintf( verboseStream, "%s", msg );
 #endif // !(VT_MPI || HAVE_OMP)
       va_end( ap );
    }

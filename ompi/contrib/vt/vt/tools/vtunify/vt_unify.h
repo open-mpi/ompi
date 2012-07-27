@@ -104,6 +104,10 @@ struct ParamsS
         showusage( false ), showversion( false ), showprogress( false ),
         bequiet( false ), onlystats( false )
    {
+#ifndef VT_LIB
+      autostart = false;
+#endif // VT_LIB
+
 #if defined(HAVE_ZLIB) && HAVE_ZLIB
       docompress = true;
 #endif // HAVE_ZLIB
@@ -149,6 +153,11 @@ struct ParamsS
    bool        showprogress;      // flag: show progress?
    bool        bequiet;           // flag: print no messages?
    bool        onlystats;         // flag: unify only summarized information?
+
+#ifndef VT_LIB
+   bool        autostart;         // flag: vtunify started automatically after
+                                  //       program termination?
+#endif // VT_LIB
 
 #if defined(HAVE_IOFSL) && HAVE_IOFSL
    // IOFSL parameters

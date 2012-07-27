@@ -373,6 +373,7 @@ typedef struct vtcudaStream
   uint32_t tid;                /**< VT thread id for this stream (unique) */
   cudaEvent_t lastEvt;         /**< last written CUDA event (needed in flush) */
   uint64_t lastVTTime;         /**< last written VampirTrace time */
+  uint8_t destroyed;           /**< Is stream destroyed? Ready for reuse? */
   struct vtcudaStream *next;   /**< points to next cuda stream in list */
 }VTCUDAStrm;
 
@@ -1483,26 +1484,44 @@ static VTCUDADevice* VTCUDAcheckThread(cudaStream_t cuStrm, uint32_t ptid,
     while(vtDev != NULL){
       if(vtDev->device == device && vtDev->ptid == ptid){
         /* the CUDA device is already listed -> stream 0 exists */
-        VTCUDAStrm *curStrm, *ptrLastStrm;
+        VTCUDAStrm *curStrm, *ptrLastStrm, *reusableStrm;
+        reusableStrm = NULL;
         curStrm = vtDev->strmList;
 
         CUDARTWRAP_UNLOCK();
         do{
+          /* check for existing stream */
           if(cuStrm == curStrm->stream){
             *vtStrm = curStrm;
             time_check = vt_pform_wtime();
             vt_exit(ptid, &time_check);
             return vtDev;
           }
+          
+          /* check for reusable stream */
+          if(vt_gpu_stream_reuse && reusableStrm == NULL && curStrm->destroyed == 1){
+            reusableStrm = curStrm;
+          }
+          
           ptrLastStrm = curStrm;
           curStrm = curStrm->next;
         }while(curStrm != NULL);
         /* stream not found */
 
-        /* append newly created stream (stream 0 is probably used most, will
-           therefore always be the first element in the list */
-        ptrLastStrm->next = VTCUDAcreateStream(vtDev, cuStrm);
-        *vtStrm = ptrLastStrm->next;
+        /* reuse a destroyed stream, if available */
+        if(vt_gpu_stream_reuse && reusableStrm){
+          vt_cntl_msg(2, "[CUDART] Reusing CUDA stream %d for stream %d", 
+                         reusableStrm->stream, cuStrm);
+          
+          reusableStrm->destroyed = 0;
+          reusableStrm->stream = cuStrm;
+          *vtStrm = reusableStrm;
+        }else{
+          /* append newly created stream (stream 0 is probably used most, will
+             therefore always be the first element in the list */
+          ptrLastStrm->next = VTCUDAcreateStream(vtDev, cuStrm);
+          *vtStrm = ptrLastStrm->next;
+        }
 
         time_check = vt_pform_wtime();
         vt_exit(ptid, &time_check);
@@ -1524,7 +1543,7 @@ static VTCUDADevice* VTCUDAcheckThread(cudaStream_t cuStrm, uint32_t ptid,
    
    time_check = vt_pform_wtime();
    vt_exit(ptid, &time_check);
-     
+   
    return vtDev;
 }
 
@@ -1586,6 +1605,7 @@ static VTCUDAMemcpy* addMemcpy2Buf(enum cudaMemcpyKind kind, int count,
   VT_CHECK_THREAD;
   ptid = VT_MY_THREAD;
   vtDev = VTCUDAcheckThread(stream, ptid, &ptrStrm);
+
 
   /* check if there is enough buffer space */
   if(vtDev->buf_pos + sizeof(VTCUDAMemcpy) > vtDev->conf_stack){
@@ -2677,8 +2697,52 @@ cudaError_t  cudaLaunch(const char *entry)
   return ret;
 }
 
-/* -- cuda_runtime_api.h:cudaThreadExit -- */
+/* -- cuda_runtime_api.h:cudaStreamDestroy -- */
+cudaError_t  cudaStreamDestroy(cudaStream_t stream)
+{
+  cudaError_t  ret;
 
+  CUDARTWRAP_FUNC_INIT(vt_cudart_lw, vt_cudart_lw_attr, "cudaStreamDestroy",
+    cudaError_t , (cudaStream_t ),
+    NULL, 0);
+  
+  /* find the CUDA stream and mark it as destroyed */
+  if(vt_cudart_trace_enabled){
+    if(vt_gpu_stream_reuse){
+      uint32_t ptid;
+      VTCUDADevice *vtDev;
+      VTCUDAStrm *vtStrm = NULL;
+
+      VT_CHECK_THREAD;
+      ptid = VT_MY_THREAD;
+
+      vtDev = VTCUDAgetDevice(ptid);
+      if(vtDev)
+        vtStrm = vtDev->strmList;
+
+      while(vtStrm != NULL){
+        
+        if(stream == vtStrm->stream){
+          vtStrm->destroyed = 1;
+          vt_cntl_msg(2, "cudaStreamDestroy() called, reusing stream %d", stream);
+          break;
+        }
+        
+        vtStrm = vtStrm->next;
+      }
+    }
+
+    VT_LIBWRAP_FUNC_START(vt_cudart_lw); /* no extra if(trace_enabled) */
+  }
+
+  ret = VT_LIBWRAP_FUNC_CALL(vt_cudart_lw, (stream));
+
+  CUDARTWRAP_FUNC_END(vt_cudart_lw);
+
+  return ret;
+}
+
+/* -- cuda_runtime_api.h:cudaThreadExit -- */
 cudaError_t  cudaThreadExit()
 {
   cudaError_t  ret;
@@ -2711,7 +2775,6 @@ cudaError_t  cudaThreadExit()
 }
 
 /* -- cuda_runtime_api.h:cudaThreadSynchronize -- */
-
 cudaError_t  cudaThreadSynchronize()
 {
   cudaError_t  ret;

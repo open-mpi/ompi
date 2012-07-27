@@ -59,8 +59,9 @@ EXTERN void vt_iorequest_create( MPI_Request request,
 				 uint32_t flags );
 EXTERN struct VTRequest* vt_request_get(MPI_Request request);
 EXTERN void vt_request_free(struct VTRequest* req);
-EXTERN void vt_check_request(uint64_t* time, struct VTRequest* req,
-			     MPI_Status *status, uint8_t record_event);
+EXTERN void vt_check_request(uint32_t tid, uint64_t* time,
+                             struct VTRequest* req, MPI_Status *status,
+                             uint8_t record_event);
 EXTERN void vt_save_request_array(MPI_Request *arr_req, int arr_req_size);
 EXTERN struct VTRequest* vt_saved_request_get(int i);
 
