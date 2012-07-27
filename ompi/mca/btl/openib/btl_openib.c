@@ -53,6 +53,9 @@
 #include "ompi/mca/mpool/rdma/mpool_rdma.h"
 #include "orte/util/proc_info.h"
 #include <errno.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 #include <string.h>
 #include <math.h>
 #include <inttypes.h>
@@ -66,6 +69,10 @@
 #include <sys/resource.h>
 #endif
 #include <unistd.h>
+#ifdef OPAL_HAVE_HWLOC
+#include "opal/mca/hwloc/hwloc.h"
+#endif
+
 #ifndef MIN
 #define MIN(a,b) ((a)<(b)?(a):(b))
 #endif
@@ -569,6 +576,86 @@ static int mca_btl_openib_tune_endpoint(mca_btl_openib_module_t* openib_btl,
     return OMPI_SUCCESS;
 }
 
+/* read a single integer from a linux module parameters file */
+static uint64_t read_module_param(char *file, uint64_t value)
+{
+    int fd = open(file, O_RDONLY);
+    char buffer[64];
+    uint64_t ret;
+
+    if (0 > fd) {
+        return value;
+    }
+
+    read (fd, buffer, 64);
+
+    close (fd);
+
+    errno = 0;
+    ret = strtoull(buffer, NULL, 10);
+
+    return (0 == errno) ? ret : value;
+}
+
+/* calculate memory registation limits */
+static uint64_t calculate_total_mem (void)
+{
+#if OPAL_HAVE_HWLOC
+    hwloc_obj_t machine;
+
+    machine = hwloc_get_next_obj_by_type (opal_hwloc_topology, HWLOC_OBJ_MACHINE, NULL);
+    if (NULL == machine) {
+        return 0;
+    }
+    
+    return machine->memory.total_memory;
+#else
+    return 0;
+#endif
+}
+
+static uint64_t calculate_max_reg (void) 
+{
+    struct stat statinfo;
+    uint64_t mtts_per_seg = 1;
+    uint64_t num_mtt = 1 << 19;
+    uint64_t reserved_mtt = 0;
+    uint64_t max_reg, mem_total;
+
+    mem_total = calculate_total_mem ();
+
+    if (0 == stat("/sys/module/mlx4_core/parameters", &statinfo)) {
+        mtts_per_seg = 1 << read_module_param("/sys/module/mlx4_core/parameters/log_mtts_per_seg", 1);
+        num_mtt = 1 << read_module_param("/sys/module/mlx4_core/parameters/log_num_mtt", 20);
+        if (1 == num_mtt) {
+            /* NTH: is 19 a minimum? when log_num_mtt is set to 0 use 19 */
+            num_mtt = 1 << 20;
+        }
+
+        max_reg = (num_mtt - reserved_mtt) * getpagesize () * mtts_per_seg;
+    } else if (0 == stat("/sys/module/ib_mthca/parameters", &statinfo)) {
+        mtts_per_seg = 1 << read_module_param("/sys/module/ib_mthca/parameters/log_mtts_per_seg", 1);
+        num_mtt = read_module_param("/sys/module/ib_mthca/parameters/num_mtt", 1 << 20);
+        reserved_mtt = read_module_param("/sys/module/ib_mthca/parameters/fmr_reserved_mtts", 0);
+
+        max_reg = (num_mtt - reserved_mtt) * getpagesize () * mtts_per_seg;
+    } else {
+        /* need to update to determine the registration limit for this configuration */
+        max_reg = mem_total;
+    }
+
+    /* NTH: print a warning if we can't register more than 75% of physical memory */
+    if (max_reg < mem_total * 3 / 4) {
+        orte_show_help("help-mpi-btl-openib.txt", "reg mem limit low", true,
+                       orte_process_info.nodename, (unsigned long)(max_reg >> 20),
+                       (unsigned long)(mem_total >> 20));
+    }
+
+    /* limit us to 87.5% of the registered memory (some fluff for QPs, file systems, etc) */
+    return (max_reg * 7) >> 3;
+}
+
+
 /*
  *  add a proc to this btl module
  *    creates an endpoint that is setup on the
@@ -582,7 +669,7 @@ int mca_btl_openib_add_procs(
     opal_bitmap_t* reachable)
 {
     mca_btl_openib_module_t* openib_btl = (mca_btl_openib_module_t*)btl;
-    int i,j, rc;
+    int i,j, rc, local_procs;
     int rem_subnet_id_port_cnt;
     int lcl_subnet_id_port_cnt = 0;
     int btl_rank = 0;
@@ -611,15 +698,19 @@ int mca_btl_openib_add_procs(
     }
 #endif
 
-    for (i = 0; i < (int) nprocs; i++) {
+    for (i = 0, local_procs = 0 ; i < (int) nprocs; i++) {
         struct ompi_proc_t* ompi_proc = ompi_procs[i];
         mca_btl_openib_proc_t* ib_proc;
         int remote_matching_port;
 
         opal_output(-1, "add procs: adding proc %d", i);
 
-        /* OOB, XOOB, and RDMACM do not support SELF comunication, so 
-         * mark the prco as unreachable by openib btl  */
+        if (OPAL_PROC_ON_LOCAL_NODE(ompi_proc->proc_flags)) {
+            local_procs ++;
+        }
+
+        /* OOB, XOOB, and RDMACM do not support SELF comunication, so
+         * mark the proc as unreachable by openib btl  */
         if (OPAL_EQUAL == orte_util_compare_name_fields
                 (ORTE_NS_CMP_ALL, ORTE_PROC_MY_NAME, &ompi_proc->proc_name)) {
             continue;
@@ -783,6 +874,9 @@ int mca_btl_openib_add_procs(
 
         peers[i] = endpoint;
     }
+
+    openib_btl->local_procs += local_procs;
+    openib_btl->device->mem_reg_max = calculate_max_reg () / openib_btl->local_procs;
 
     return mca_btl_openib_size_queues(openib_btl, nprocs);
 }
