@@ -165,9 +165,9 @@ int ompi_coll_tuned_alltoallv_intra_dec_fixed(void *sbuf, int *scounts, int *sdi
                                               mca_coll_base_module_t *module)
 {
     /* For starters, just keep the original algorithm. */
-    return ompi_coll_tuned_alltoallv_intra_basic_linear(sbuf, scounts, sdisps, sdtype, 
-                                                        rbuf, rcounts, rdisps,rdtype,
-                                                        comm, module);
+    return ompi_coll_tuned_alltoallv_intra_pairwise(sbuf, scounts, sdisps, sdtype, 
+                                                    rbuf, rcounts, rdisps,rdtype,
+                                                    comm, module);
 }
 
 
