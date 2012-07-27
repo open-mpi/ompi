@@ -184,7 +184,7 @@ AC_DEFUN([MCA_opal_hwloc_CONFIG_REQUIRE],[
                    -L*)
                        dir=`echo $token | cut -c3-`
                        export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$dir
-                       AC_MSG_WARN([Adding to (DY)LD_LIBRARY_PATH: $dir])
+                       AC_MSG_WARN([Adding to LD_LIBRARY_PATH: $dir])
                        ;;
                    esac
                done])
