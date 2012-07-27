@@ -385,6 +385,9 @@ ACVT_CONF_TITLE([NVIDIA CUDA])
 # Check for symbol demangling support by libiberty
 ACVT_CONF_SUBTITLE([Symbol demangling])
 ACVT_LIBERTY
+AS_IF([test x"$enable_config_titles" = "xyes" -a x"$check_liberty" = "xno"],
+[AC_MSG_NOTICE([disabled by default])])
+AS_IF([test x"$force_liberty" = "xyes" -a x"$liberty_error" = "xyes"], [exit 1])
 AM_CONDITIONAL(AMHAVELIBERTY, test x"$have_liberty" = "xyes")
 
 # Check for CUDA Toolkit

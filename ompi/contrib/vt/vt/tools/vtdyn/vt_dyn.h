@@ -26,7 +26,6 @@
 #include "BPatch_image.h"
 
 #include <iostream>
-#include <set>
 #include <string>
 #include <vector>
 
@@ -53,19 +52,23 @@ typedef enum
 struct ParamsS
 {
    ParamsS()
-      : mode(MODE_CREATE), mutatee_pid(-1), verbose_level(1),
-        detach(true), ignore_no_dbg(false), show_usage(false),
-        show_version(false) {}
+      : mode( MODE_CREATE ), mutatee_pid( -1 ), verbose_level( 1 ),
+        detach( true ), outer_loops( false ), inner_loops( false ),
+        loop_iters( false ), ignore_no_dbg( false ), show_usage( false ),
+        show_version( false ) {}
 
    MutationT                mode;          // mutation mode
    std::string              mutatee;       // mutatee executable name
    int                      mutatee_pid;   // mutatee PID
    std::vector<std::string> mutatee_args;  // mutatee arguments
-   std::vector<std::string> shlibs;        // shared libs. to be instrumented
+   std::vector<std::string> shlibs;        // shared libs. to instrument
    std::string              filtfile;      // pathname of filter file
    std::string              outfile;       // file name of binary to rewrite
    uint32_t                 verbose_level; // verbose level
    bool                     detach;        // flag: detach from mutatee?
+   bool                     outer_loops;   // flag: instrument outer loops?
+   bool                     inner_loops;   // flag: instrument inner loops?
+   bool                     loop_iters;    // flag: instrument loop iterations?
    bool                     ignore_no_dbg; // flag: ignore funcs. without debug?
    bool                     show_usage;    // flag: show usage text?
    bool                     show_version;  // flag: show VampirTrace version?
@@ -91,34 +94,120 @@ public:
 private:
 
    //
-   // structure that contains context information about functions to
-   // be instrumented
+   // base structure for regions (=functions, loop, or loop iterations)
+   // to instrument
    //
-   struct InstFuncS
+   struct RegionS
    {
-      InstFuncS( const uint32_t & _index, const std::string & _name,
-                 const std::string & _file, const uint32_t & _lno,
-                 const BPatch_Vector<BPatch_point*> *& _entry_points,
-                 const BPatch_Vector<BPatch_point*> *& _exit_points )
-         : index( _index ), name( _name ), file( _file ), lno( _lno ),
-           entry_points( _entry_points ), exit_points( _exit_points ) {}
+      //
+      // structure for region source code location
+      //
+      struct SclS
+      {
+         SclS() : line_number( 0 ) {}
 
-      // function index within region id table
+         // check whether source code location is valid
+         bool valid() const
+         {
+            return ( line_number > 0 && file_name.length() > 0 );
+         }
+
+         std::string file_name; // source file name
+         uint32_t line_number;  // line number within source file
+
+      };
+
+      //
+      // structure for region instrumentation points
+      //
+      struct InstPointsS
+      {
+         InstPointsS() : entries( 0 ), exits( 0 ) {}
+
+         const BPatch_Vector<BPatch_point*> * entries; // entry points
+         const BPatch_Vector<BPatch_point*> * exits;   // exit points
+
+      };
+
+      // constructor
+      RegionS( const std::string & _name, const SclS & _scl,
+         const InstPointsS & _inst_points );
+
+      // destructor
+      virtual ~RegionS();
+
+      // new operator to check number of created regions
+      // (returns 0 if VT_MAX_DYNINST_REGIONS will be exceeded)
+      static inline void * operator new( size_t size ) throw();
+
+      // the overloaded new operator calls malloc(), so we have to have a
+      // delete operator which calls free()
+      static inline void operator delete( void * ptr );
+
+      // counter of regions to instrument (max. VT_MAX_DYNINST_REGIONS)
+      static uint32_t Count;
+
+      // region index
       uint32_t index;
 
-      // function name
+      // region name
       std::string name;
 
-      // source file name and line number of function definition
-      //
-      std::string file;
-      uint32_t lno;
+      // region source code location
+      SclS scl;
 
-      // function entry and exit points to be instrumented
-      //
-      const BPatch_Vector<BPatch_point*> * entry_points;
-      const BPatch_Vector<BPatch_point*> * exit_points;
+      // region instrumentation points
+      InstPointsS inst_points;
 
+   };
+
+   //
+   // structure for loop regions to instrument
+   //
+   struct LoopS : RegionS
+   {
+      //
+      // type for loop iteration regions
+      //
+      typedef RegionS IterationT;
+
+      // constructor
+      LoopS( const std::string & _name, const SclS & _scl,
+         const InstPointsS & _inst_points, IterationT * _iteration = 0 )
+         : RegionS( _name, _scl, _inst_points ), iteration( _iteration ) {}
+
+      // destructor
+      ~LoopS()
+      {
+         if( iteration )
+            delete iteration;
+      }
+
+      // loop iteration region to instrument
+      IterationT * iteration;
+
+   };
+
+   //
+   // structure for function regions to instrument
+   //
+   struct FunctionS : RegionS
+   {
+      // constructor
+      FunctionS( const std::string & _name, const SclS & _scl,
+         const InstPointsS & _inst_points,
+         const std::vector<LoopS*> & _loops = std::vector<LoopS*>() )
+         : RegionS( _name, _scl, _inst_points ), loops( _loops ) {}
+
+      // loops within the function
+      std::vector<LoopS*> loops;
+
+      // destructor
+      ~FunctionS()
+      {
+         for( uint32_t i = 0; i < loops.size(); i++ )
+            delete loops[i];
+      }
    };
 
    // create/attach to a process or open binary for rewriting
@@ -127,30 +216,33 @@ private:
    // continue execution of mutatee or rewrite binary
    bool finalize( bool & error );
 
-   // get functions to be instrumented
-   bool getFunctions( std::vector<InstFuncS> & instFuncs );
+   // get functions to instrument
+   bool getFunctions( std::vector<FunctionS*> & funcRegions ) const;
 
-   // instrument a function entry
-   bool instrumentFunctionEntry( const InstFuncS & instFunc );
+   // instrument functions
+   bool instrumentFunctions(
+           const std::vector<FunctionS*> & funcRegions ) const;
 
-   // instrument a function exit
-   bool instrumentFunctionExit( const InstFuncS & instFunc );
+   // instrument a region entry
+   inline bool instrumentRegionEntry( const RegionS * region,
+                  const bool isLoop ) const;
 
-   // read input filter file
-   bool readFilter();
+   // instrument a region exit
+   inline bool instrumentRegionExit( const RegionS * region,
+                  const bool isLoop ) const;
 
    // check whether module is excluded from instrumentation
    inline bool constraintModule( const std::string & name ) const;
 
-   // check whether function is excluded from instrumentation
-   inline bool constraintFunction( const std::string & name ) const;
+   // check whether region is excluded from instrumentation
+   inline bool constraintRegion( const std::string & name ) const;
 
    // check whether mutatee uses MPI
    inline bool isMPI() const;
 
    // find certain function in mutatee
    inline bool findFunction( const std::string & name,
-                             BPatch_function *& func ) const;
+                  BPatch_function *& func ) const;
 
    // entire Dyninst library object
    BPatch m_bpatch;
@@ -161,7 +253,7 @@ private:
    // mutatee's image object
    BPatch_image * m_appImage;
 
-   // instrumentation functions to be inserted at entry/exit points
+   // instrumentation functions to insert at entry/exit points
    //
    BPatch_function * m_vtStartFunc;
    BPatch_function * m_vtEndFunc;

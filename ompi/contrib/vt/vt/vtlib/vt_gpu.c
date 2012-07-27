@@ -28,6 +28,8 @@ uint8_t vt_gpu_trace_idle = 0;
 
 uint8_t vt_gpu_trace_mcpy = 0;
 
+uint8_t vt_gpu_stream_reuse = 0;
+
 uint8_t vt_gpu_trace_memusage = 0;
 
 uint8_t vt_gpu_debug = 0;
@@ -80,6 +82,10 @@ void vt_gpu_init(void)
                       vt_def_counter_group(VT_MASTER_THREAD, "GPU_MEMORY_USAGE"),
                       0);
     }
+    
+    /* disable stream reuse if neither kernels nor memory copies are enabled */
+    if(vt_gpu_stream_reuse && !(vt_gpu_trace_kernels > 0 || vt_gpu_trace_mcpy))
+      vt_gpu_stream_reuse = 0;
 
     vt_gpu_initialized = 1;
   }
@@ -151,6 +157,9 @@ uint32_t vt_gpu_get_config(void)
       }else if(strcmp(feature, "memcpy") == 0){
         vt_gpu_config |= VT_GPU_TRACE_MEMCPY;
         vt_gpu_trace_mcpy = 1;
+      }else if(strcmp(feature, "stream_reuse") == 0){
+        vt_gpu_config |= VT_GPU_TRACE_STREAM_REUSE;
+        vt_gpu_stream_reuse = 1;
       }else if(strcmp(feature, "memusage") == 0){
         vt_gpu_config |= VT_GPU_TRACE_MEMUSAGE;
         vt_gpu_trace_memusage = 1;

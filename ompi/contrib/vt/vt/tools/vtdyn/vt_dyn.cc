@@ -13,7 +13,14 @@
 
 #include "vt_dyn.h"
 
+#include "BPatch_module.h"
+#include "BPatch_process.h"
+#include "BPatch_snippet.h"
+#include "BPatch_statement.h"
+
 #include <fstream>
+#include <map>
+#include <sstream>
 #include <assert.h>
 #include <ctype.h>
 #include <signal.h>
@@ -23,11 +30,6 @@
 #include <string.h>
 #include <unistd.h>
 #include <sys/types.h>
-
-#include "BPatch_module.h"
-#include "BPatch_process.h"
-#include "BPatch_snippet.h"
-#include "BPatch_statement.h"
 
 // local functions
 //
@@ -40,6 +42,13 @@ static void showUsage( void );
 
 // print verbose message
 static void vPrint( uint8_t level, const char * fmt, ... );
+
+// local variables
+//
+
+// output stream for verbose messages
+// (stdout if vtdyn is started from the command line, otherwise stderr)
+static FILE * verboseStream = stdout;
 
 // global variables
 //
@@ -191,6 +200,24 @@ parseCommandLine( int argc, char ** argv )
 
          Params.filtfile = argv[++i];
       }
+      // --outer-loops
+      //
+      else if( strcmp( argv[i], "--outer-loops" ) == 0 )
+      {
+         Params.outer_loops = true;
+      }
+      // --inner-loops
+      //
+      else if( strcmp( argv[i], "--inner-loops" ) == 0 )
+      {
+         Params.outer_loops = Params.inner_loops = true;
+      }
+      // --loop-iters
+      //
+      else if( strcmp( argv[i], "--loop-iters" ) == 0 )
+      {
+         Params.outer_loops = Params.loop_iters = true;
+      }
       // --ignore-nodbg
       //
       else if( strcmp( argv[i], "--ignore-nodbg" ) == 0 )
@@ -216,6 +243,10 @@ parseCommandLine( int argc, char ** argv )
 
          Params.mutatee_pid = atoi( argv[++i] );
          Params.mode = MODE_ATTACH;
+
+         // vtdyn is obvious started from the Dyninst attach library
+         // (libvt-dynatt); set output stream for verbose messages to stderr
+         verboseStream = stderr;
       }
       // --nodetach
       //
@@ -266,11 +297,18 @@ showUsage()
       << std::endl
       << "     -o, --output FILE   Rewrite instrumented executable to specified pathname." << std::endl
       << std::endl
-      << "     -s, --shlibs SHLIBS[,...]" << std::endl
-      << "                         Comma-separated list of shared libraries which shall" << std::endl
-      << "                         also be instrumented." << std::endl
-      << std::endl
       << "     -f, --filter FILE   Pathname of input filter file." << std::endl
+      << std::endl
+      << "     -s, --shlibs LIB[,...]" << std::endl
+      << "                         Comma-separated list of shared libraries to instrument." << std::endl
+      << std::endl
+      << "     --outer-loops       Do instrument outer loops within functions." << std::endl
+      << std::endl
+      << "     --inner-loops       Do instrument inner loops within outer loops." << std::endl
+      << "                         (implies --outer-loops)" << std::endl
+      << std::endl
+      << "     --loop-iters        Do instrument loop iterations." << std::endl
+      << "                         (implies --outer-loops)" << std::endl
       << std::endl
       << "     --ignore-nodbg      Don't instrument functions which have no debug" << std::endl
       << "                         information." << std::endl
@@ -291,7 +329,7 @@ vPrint( uint8_t level, const char * fmt, ... )
       snprintf( msg, sizeof( msg ) - 1, "%s: [%d]: ", ExeName.c_str(), ExePid );
       vsnprintf( msg + strlen( msg ), sizeof( msg ) - 1, fmt, ap );
 
-      printf( "%s", msg );
+      fprintf( verboseStream, "%s", msg );
 
       va_end( ap );
    }
@@ -303,8 +341,8 @@ vPrint( uint8_t level, const char * fmt, ... )
 //
 
 MutatorC::MutatorC()
-   : m_appAddrSpace(0), m_appImage(0), m_vtStartFunc(0), m_vtEndFunc(0),
-     m_filter(0)
+   : m_appAddrSpace( 0 ), m_appImage( 0 ), m_vtStartFunc( 0 ), m_vtEndFunc( 0 ),
+     m_filter( 0 )
 {
    // Empty
 }
@@ -319,52 +357,30 @@ MutatorC::run()
 {
    bool error = false;
 
+   // vector of function regions to instrument
+   std::vector<FunctionS*> func_regions;
+
    do
    {
       // create/attach to a process or open binary for rewriting
       if( ( error = !initialize() ) )
          break;
 
-      // get instrumentable functions of image
-      //
-
-      std::vector<InstFuncS> inst_funcs;
-
-      if( ( error = !getFunctions( inst_funcs ) ) )
+      // get functions to instrument
+      if( ( error = !getFunctions( func_regions ) ) )
          break;
 
       // instrument functions
-      //
-
-      vPrint( 1, "Instrumenting functions\n" );
-
-      for( uint32_t i = 0; i < inst_funcs.size(); i++ )
-      {
-         // begin insertion set
-         m_appAddrSpace->beginInsertionSet();
-
-         // instrument function entry points
-         if( ( error = !instrumentFunctionEntry( inst_funcs[i] ) ) )
-            break;
-         // instrument function exit points
-         if( ( error = !instrumentFunctionExit( inst_funcs[i] ) ) )
-            break;
-
-         // finalize insertion set
-         //
-         if( !m_appAddrSpace->finalizeInsertionSet( true, 0 ) )
-         {
-            std::cerr << ExeName << ": [" << ExePid << "]: "
-                      << "Error: Could not finalize instrumentation set for "
-                      << "function '" << inst_funcs[i].name << "'. Aborting."
-                      << std::endl;
-            error = true;
-            break;
-         }
-      }
-      inst_funcs.clear();
+      if( ( error = !instrumentFunctions( func_regions ) ) )
+         break;
 
    } while( false );
+
+   // clear vector of function regions to instrument
+   //
+   for( uint32_t i = 0; i < func_regions.size(); i++ )
+      delete func_regions[i];
+   func_regions.clear();
 
    // continue execution of mutatee or rewrite binary
    error = !finalize( error );
@@ -398,16 +414,50 @@ MutatorC::initialize()
       // turn on floating point saves due to the instrumentation does clobber
       // floating point registers
       //
-
       m_bpatch.setSaveFPR( true );
 #ifdef DYNINST_7_0
       m_bpatch.forceSaveFPR( true );
 #endif // DYNINST_7_0
 
-      // read input filter file
-      if( ( error = !readFilter() ) )
-         break;
+      // read input filter file and add default filter rules
+      //
 
+      // get RFG filter object
+      //
+      m_filter = RFG_Filter_init();
+      assert( m_filter );
+
+      // read input filter files, if given
+      //
+      if( Params.filtfile.length() > 0 )
+      {
+         // set input filter file name
+         RFG_Filter_setDefFile( m_filter, Params.filtfile.c_str() );
+
+         // read input filter file to get global filter rules (rank = -1)
+         if( ( error = !RFG_Filter_readDefFile( m_filter, -1, 0 ) ) )
+            break;
+      }
+
+      // NOTE: at this point one can add some default filter rules
+      //
+
+      // examples:
+
+      //RFG_Filter_add( m_filter, "foo", 0, 0, 0 );
+      //RFG_Filter_add( m_filter, "bar", 0, 0, 0 );
+
+      // instrumenting this function generated by the Intel compiler
+      // causes a segmentation fault at application runtime
+      RFG_Filter_add( m_filter, "__intel_cpu_indicator_init", 0, 0, 0 );
+
+      // this function, also a built-in function from the Intel compiler,
+      // causes aborting instrumentation
+      // (reported by David Shrader / LANL)
+      RFG_Filter_add( m_filter, "__intel_proc_init_N", 0, 0, 0 );
+
+      // create/attach to a process or open binary for rewriting
+      //
       switch( Params.mode )
       {
          case MODE_CREATE:
@@ -542,7 +592,7 @@ MutatorC::initialize()
          break;
       }
 
-      // search instrumentation functions to be inserted at entry/exit points
+      // search instrumentation functions to insert at entry/exit points
       //
 
       if( !findFunction( "VT_Dyn_start", m_vtStartFunc ) ||
@@ -652,25 +702,25 @@ MutatorC::finalize( bool & error )
       }
    }
 
-   // free RFG filter object, if necessary
-   if( m_filter )
-      RFG_Filter_free( m_filter );
+   // free RFG filter object
+   RFG_Filter_free( m_filter );
 
    return !error;
 }
 
 bool
-MutatorC::getFunctions( std::vector<InstFuncS> & instFuncs )
+MutatorC::getFunctions( std::vector<FunctionS*> & funcRegions ) const
 {
    bool error = false;
 
-   vPrint( 1, "Get instrumentable functions\n" );
+   vPrint( 1, "Collecting functions to instrument\n" );
 
    do
    {
-      // get list of modules from image
+      // get modules of image
       //
-      const BPatch_Vector<BPatch_module*> * modules = m_appImage->getModules();
+      const BPatch_Vector<BPatch_module*> * modules =
+         m_appImage->getModules();
       if( !modules )
       {
          std::cerr << ExeName << ": [" << ExePid << "]: "
@@ -683,20 +733,21 @@ MutatorC::getFunctions( std::vector<InstFuncS> & instFuncs )
       // iterate over all modules
       for( uint32_t i = 0; i < modules->size() && !error; i++ )
       {
-         // get module name
-         //
+         BPatch_module * module = (*modules)[i];
 
-         std::string module_name;
          char buffer[STRBUFSIZE] = "";
 
-         (*modules)[i]->getName( buffer, STRBUFSIZE );
+         // get module name
+         //
+         std::string module_name;
+         module->getName( buffer, STRBUFSIZE );
          module_name = buffer;
 
-         // check whether module should be instrumented
+         // check whether module is excluded from instrumentation
          //
          if( constraintModule( module_name ) )
          {
-            vPrint( 2, " Skip module '%s'\n", module_name.c_str() );
+            vPrint( 2, " Skip module '%s' (excluded)\n", module_name.c_str() );
             continue;
          }
 
@@ -704,7 +755,7 @@ MutatorC::getFunctions( std::vector<InstFuncS> & instFuncs )
          //
 
          const BPatch_Vector<BPatch_function*> * functions =
-            (*modules)[i]->getProcedures();
+            module->getProcedures();
 
          if( !functions )
          {
@@ -716,115 +767,427 @@ MutatorC::getFunctions( std::vector<InstFuncS> & instFuncs )
          }
 
          // iterate over all functions
-         for( uint32_t j = 0; j < functions->size(); j++ )
+         for( uint32_t j = 0; j < functions->size() && !error; j++ )
          {
+            BPatch_function * function = (*functions)[j];
+
             // get function name
             //
 
             std::string function_name;
 
-            (*functions)[j]->getName( buffer, STRBUFSIZE );
+            // try to get the full function prototype
+            function->getTypedName( buffer, STRBUFSIZE );
+            if( strlen( buffer ) == 0 )
+            {
+               // if failed, try to get the plain function name
+               function->getName( buffer, STRBUFSIZE );
+
+               // if failed again, ignore function
+               if( strlen( buffer ) == 0 )
+                  continue;
+            }
+
             function_name = buffer;
 
             // check whether function is instrumentable
             //
-            if( !(*functions)[j]->isInstrumentable() )
+            if( !function->isInstrumentable() )
             {
                vPrint( 2, " Skip function '%s' (not instrumentable)\n",
                        function_name.c_str() );
                continue;
             }
 
-            // get function entry points
+            // get function's entry and exit instrumentation points
             //
-            const BPatch_Vector<BPatch_point*>* entry_points =
-               (*functions)[j]->findPoint( BPatch_entry );
-            if( !entry_points || entry_points->size() == 0 )
+
+            FunctionS::InstPointsS function_inst_points;
+
+            function_inst_points.entries = function->findPoint( BPatch_entry );
+            if( !function_inst_points.entries ||
+                function_inst_points.entries->empty() )
             {
                vPrint( 2, " Skip function '%s' "
-                          "(no entry instrumentation points found)\n",
+                          "(no entry instrumentation point found)\n",
                        function_name.c_str() );
                continue;
             }
 
-            // get function exit points
-            //
-            const BPatch_Vector<BPatch_point*>* exit_points =
-               (*functions)[j]->findPoint( BPatch_exit );
-            if( !exit_points || exit_points->size() == 0 )
+            function_inst_points.exits = function->findPoint( BPatch_exit );
+            if( !function_inst_points.exits ||
+                function_inst_points.exits->empty() )
             {
                vPrint( 2, " Skip function '%s' "
-                          "(no exit instrumentation points found)\n",
+                          "(no exit instrumentation point found)\n",
                        function_name.c_str() );
                continue;
             }
 
-            // check whether function should be instrumented
+            // check whether function is excluded from instrumentation
             //
-            if( constraintFunction( function_name ) )
+            if( constraintRegion( function_name ) )
             {
-               vPrint( 2, " Skip function '%s'\n", function_name.c_str() );
+               vPrint( 2, " Skip function '%s' (excluded)\n",
+                       function_name.c_str() );
                continue;
             }
 
-            // get address, source file, and line number of function
+            // get function's source code location
             //
 
-            std::vector<BPatch_statement> statements;
-            unsigned long addr;
-            const char* file_name = 0;
-            int line_number = 0;
+            FunctionS::SclS function_scl;
 
-            addr = (unsigned long)(*functions)[j]->getBaseAddr();
-            (*modules)[i]->getSourceLines( addr, statements );
+            std::vector<BPatch_statement> function_stmts;
 
-            if( !statements.empty() )
+            module->getSourceLines( (unsigned long)function->getBaseAddr(),
+               function_stmts );
+
+            if( !function_stmts.empty() && function_stmts[0].fileName() &&
+                function_stmts[0].lineNumber() > 0 )
             {
-               file_name = statements[0].fileName();
-               line_number = statements[0].lineNumber();
-            }
+               function_scl.file_name = function_stmts[0].fileName();
+               function_scl.line_number = function_stmts[0].lineNumber();
 
-            if( file_name )
-            {
-               if( constraintModule( file_name ) )
+               // check whether source file is excluded from instrumentation
+               //
+               if( constraintModule( function_scl.file_name ) )
                {
-                  vPrint( 2, " Skip function '%s'\n", function_name.c_str() );
+                  vPrint( 2, " Skip function '%s' "
+                             "(source file '%s' excluded)\n",
+                          function_name.c_str(),
+                          function_scl.file_name.c_str() );
                   continue;
                }
             }
-            else
+            else if( Params.ignore_no_dbg )
             {
-               if( Params.ignore_no_dbg )
-               {
-                  vPrint( 2, " Skip function '%s' (no debug information)\n",
-                          function_name.c_str() );
-                  continue;
-               }
-
-               file_name = "";
-               line_number = 0;
+               vPrint( 2, " Skip function '%s' (no debug information)\n",
+                       function_name.c_str() );
+               continue;
             }
+
+            // create new function region and add them to vector
+            //
 
             vPrint( 2, " Add function '%s' for instrumenting\n",
                     function_name.c_str() );
 
-            // get function index
-            //
-            uint32_t function_index = instFuncs.size();
-            if( function_index + 1 > VT_MAX_DYNINST_REGIONS )
+            FunctionS * function_region =
+               new FunctionS( function_name, function_scl,
+                  function_inst_points );
+            if( !function_region )
             {
-               std::cerr << ExeName << ": [" << ExePid << "]: "
-                         << "Error: Too many functions to instrument (max. "
-                         << VT_MAX_DYNINST_REGIONS << "). Aborting."
-                         << std::endl;
                error = true;
                break;
             }
 
-            // add function for instrumenting
-            instFuncs.push_back(
-               InstFuncS( function_index, function_name, file_name,
-                          line_number, entry_points, exit_points ) );
+            funcRegions.push_back( function_region );
+
+            // get loops of function, if desired
+            //
+            if( Params.outer_loops )
+            {
+               // get function's flow graph
+               //
+               BPatch_flowGraph * function_cfg = function->getCFG();
+               if( !function_cfg )
+               {
+                  vPrint( 2, " Skip loops of function '%s' "
+                             "(no flow graph information)\n",
+                          function_name.c_str() );
+                  continue;
+               }
+
+               // get function's outer (and inner) loops
+               //
+
+               BPatch_Vector<BPatch_basicBlockLoop*> loops;
+
+               if( Params.inner_loops )
+                  function_cfg->getLoops( loops );
+               else
+                  function_cfg->getOuterLoops( loops );
+
+               // iterate over all loops
+               for( uint32_t k = 0; k < loops.size() && !error; k++ )
+               {
+                  BPatch_basicBlockLoop * loop = loops[k];
+
+                  // get loop's index
+                  // (will be appended to the loop name, if the source code
+                  // location cannot be determined)
+                  const uint32_t loop_index = k + 1;
+
+                  // get loop's entry and exit instrumentation points
+                  //
+
+                  LoopS::InstPointsS loop_inst_points;
+
+                  loop_inst_points.entries =
+                     function_cfg->findLoopInstPoints( BPatch_locLoopEntry,
+                        loop );
+                  if( !loop_inst_points.entries ||
+                      loop_inst_points.entries->empty() )
+                  {
+                     vPrint( 2, " Skip loop #%u in function '%s' "
+                                "(no entry instrumentation point found)\n",
+                             loop_index, function_name.c_str() );
+                     continue;
+                  }
+
+                  loop_inst_points.exits =
+                     function_cfg->findLoopInstPoints( BPatch_locLoopExit,
+                        loop );
+                  if( !loop_inst_points.exits ||
+                      loop_inst_points.exits->empty() )
+                  {
+                     vPrint( 2, " Skip loop #%u in function '%s' "
+                                "(no exit instrumentation point found)\n",
+                             loop_index, function_name.c_str() );
+                     continue;
+                  }
+
+                  // get loop's source code location
+                  //
+
+                  LoopS::SclS loop_scl;
+
+                  std::vector<BPatch_statement> loop_stmts;
+
+                  module->getSourceLines(
+                     loop->getLoopHead()->getStartAddress(), loop_stmts );
+
+                  if( !loop_stmts.empty() && loop_stmts[0].fileName() &&
+                      loop_stmts[0].lineNumber() > 0 )
+                  {
+                     loop_scl.file_name = loop_stmts[0].fileName();
+                     loop_scl.line_number = loop_stmts[0].lineNumber();
+                  }
+
+                  // compose loop name
+                  //
+                  // if the source code location is available:
+                  //    <function> loop @<file>:<line>
+                  // otherwise:
+                  //    <function> loop #<loop index>
+                  //
+
+                  std::string loop_name;
+
+                  {
+                     std::ostringstream oss;
+
+                     oss << function_name << " loop ";
+
+                     if( loop_scl.valid() )
+                     {
+                        oss << "@" << loop_scl.file_name
+                            << ":" << loop_scl.line_number;
+                     }
+                     else
+                     {
+                        oss << "#" << loop_index;
+                     }
+
+                     loop_name = oss.str();
+                  }
+
+                  // check whether loop is excluded from instrumentation
+                  //
+                  if( constraintRegion( loop_name ) )
+                  {
+                     vPrint( 2, " Skip loop '%s' (excluded)\n",
+                             loop_name.c_str() );
+                     continue;
+                  }
+
+                  // create new loop region and add them to vector
+                  //
+
+                  vPrint( 2, " Add loop '%s' for instrumenting\n",
+                          loop_name.c_str() );
+
+                  LoopS * loop_region =
+                     new LoopS( loop_name, loop_scl, loop_inst_points );
+                  if( !loop_region )
+                  {
+                     error = true;
+                     break;
+                  }
+
+                  function_region->loops.push_back( loop_region );
+
+                  // get iteration of loop, if desired
+                  //
+                  if( Params.loop_iters )
+                  {
+                     do
+                     {
+                        // get loop iteration's entry and exit
+                        // instrumentation points
+                        //
+
+                        LoopS::IterationT::InstPointsS loop_iter_inst_points;
+
+                        loop_iter_inst_points.entries =
+                           function_cfg->findLoopInstPoints(
+                              BPatch_locLoopStartIter, loop );
+                        if( !loop_iter_inst_points.entries ||
+                            loop_iter_inst_points.entries->empty() )
+                        {
+                           vPrint( 2, " Skip iteration of loop '%s' in "
+                                      "function '%s' "
+                                      "(no start instrumentation point "
+                                      "found)\n",
+                                   loop_name.c_str(), function_name.c_str() );
+                           break;
+                        }
+
+                        loop_iter_inst_points.exits =
+                           function_cfg->findLoopInstPoints(
+                              BPatch_locLoopEndIter, loop );
+                        if( !loop_iter_inst_points.exits ||
+                            loop_iter_inst_points.exits->empty() )
+                        {
+                           vPrint( 2, " Skip iteration of loop '%s' in "
+                                      "function '%s' "
+                                      "(no end instrumentation point "
+                                      "found)\n",
+                                   loop_name.c_str(), function_name.c_str() );
+                           break;
+                        }
+
+                        // compose loop iteration name based on the name of
+                        // surrounding loop
+                        //
+                        // <function> loop <@file:line|#loop index>
+                        //                 ^ insert "iter " at this point
+                        //
+
+                        std::string loop_iter_name = loop_name;
+
+                        {
+                           std::string::size_type si =
+                              loop_iter_name.find_last_of( "@#" );
+                           assert( si != std::string::npos );
+
+                           loop_iter_name.insert( si, "iter " );
+                        }
+
+                        // check whether loop iteration is excluded from
+                        // instrumentation
+                        //
+                        if( constraintRegion( loop_iter_name ) )
+                        {
+                           vPrint( 2, " Skip loop iteration '%s' (excluded)\n",
+                                   loop_iter_name.c_str() );
+                        }
+
+                        // create new loop iteration region
+                        //
+
+                        vPrint( 2, " Add loop iteration '%s' for "
+                                   "instrumenting\n",
+                                loop_iter_name.c_str() );
+
+                        loop_region->iteration =
+                           new LoopS::IterationT( loop_iter_name, loop_scl,
+                              loop_iter_inst_points );
+                        if( !loop_region->iteration )
+                        {
+                           error = true;
+                           break;
+                        }
+
+                     } while( false );
+                  }
+               }
+            }
+         }
+      }
+
+   } while( false );
+
+   // check whether we have functions to instrument
+   //
+   if( !error && funcRegions.empty() )
+   {
+      std::cerr << ExeName << ": [" << ExePid << "]: "
+                << "Error: No functions to instrument. Aborting."
+                << std::endl;
+      error = true;
+   }
+
+   return !error;
+}
+
+bool
+MutatorC::instrumentFunctions( const std::vector<FunctionS*> & functions ) const
+{
+   bool error = false;
+
+   vPrint( 1, "Instrumenting functions\n" );
+
+   do
+   {
+      // instrument functions
+      //
+      for( uint32_t i = 0; i < functions.size(); i++ )
+      {
+         const FunctionS * function = functions[i];
+
+         // begin insertion set
+         m_appAddrSpace->beginInsertionSet();
+
+         // instrument function's entry point
+         if( ( error = !instrumentRegionEntry( function, false ) ) )
+            break;
+
+         // instrument function's loops
+         //
+         for( uint32_t j = 0; j < function->loops.size(); j++ )
+         {
+            const LoopS * loop = function->loops[j];
+
+            // instrument loop's entry point
+            if( ( error = !instrumentRegionEntry( loop, true ) ) )
+               break;
+
+            // instrument loop's iterations
+            //
+            if( loop->iteration )
+            {
+               // instrument loop iteration's entry point
+               if( ( error = !instrumentRegionEntry( loop->iteration, true ) ) )
+                  break;
+
+               // instrument loop iteration's exit point
+               if( ( error = !instrumentRegionExit( loop->iteration, true ) ) )
+                  break;
+            }
+            if( error ) break;
+
+            // instrument loop's exit point
+            if( ( error = !instrumentRegionExit( loop, true ) ) )
+               break;
+         }
+         if( error ) break;
+
+         // instrument function's exit point(s)
+         if( ( error = !instrumentRegionExit( function, false ) ) )
+            break;
+
+         // finalize insertion set
+         //
+         if( !m_appAddrSpace->finalizeInsertionSet( true, 0 ) )
+         {
+            std::cerr << ExeName << ": [" << ExePid << "]: "
+                      << "Error: Could not finalize instrumentation set for "
+                      << "function '" << function->name << "'. Aborting."
+                      << std::endl;
+            error = true;
+            break;
          }
       }
 
@@ -834,48 +1197,69 @@ MutatorC::getFunctions( std::vector<InstFuncS> & instFuncs )
 }
 
 bool
-MutatorC::instrumentFunctionEntry( const InstFuncS & instFunc )
+MutatorC::instrumentRegionEntry( const RegionS * region, bool isLoop ) const
 {
    bool error = false;
 
-   vPrint( 2, " Instrumenting-> '%s' Entry\n", instFunc.name.c_str() );
+   vPrint( 2, " Instrumenting-> '%s' Entry\n", region->name.c_str() );
 
    // set callee arguments
    //
 
-   static BPatch_Vector<BPatch_snippet*> callee_args( 4 );
+   static BPatch_Vector<BPatch_snippet*> callee_args( 5 );
 
-   // function index
+   // region index
    //
-   BPatch_constExpr const_expr_findex( instFunc.index );
+   BPatch_constExpr const_expr_findex( region->index );
    callee_args[0] = &const_expr_findex;
 
-   // function name
+   // region name
    //
-   BPatch_constExpr const_expr_fname( instFunc.name.c_str() );
+   BPatch_constExpr const_expr_fname( region->name.c_str() );
    callee_args[1] = &const_expr_fname;
 
    // source file name
    //
-   BPatch_constExpr const_expr_file( instFunc.file.c_str() );
+   BPatch_constExpr const_expr_file( region->scl.file_name.c_str() );
    callee_args[2] = &const_expr_file;
 
    // line number
    //
-   BPatch_constExpr const_expr_lno( instFunc.lno );
+   BPatch_constExpr const_expr_lno( region->scl.line_number );
    callee_args[3] = &const_expr_lno;
+
+   // flag for indicating a loop region
+   //
+   BPatch_constExpr const_expr_loop( (uint32_t)( isLoop ? 1 : 0 ) );
+   callee_args[4] = &const_expr_loop;
 
    // create instrumentation snippet
    BPatch_snippet snippet = BPatch_funcCallExpr( *m_vtStartFunc, callee_args );
 
    // insert instrumentation snippet
    //
-   if( !m_appAddrSpace->insertSnippet( snippet, *(instFunc.entry_points),
-          BPatch_callBefore, BPatch_lastSnippet ) )
+
+   BPatchSnippetHandle * snippet_handle;
+
+   if( isLoop )
+   {
+      snippet_handle =
+         m_appAddrSpace->insertSnippet( snippet,
+            *(region->inst_points.entries) );
+   }
+   else
+   {
+      snippet_handle =
+         m_appAddrSpace->insertSnippet( snippet,
+            *(region->inst_points.entries), BPatch_callBefore,
+            BPatch_firstSnippet );
+   }
+
+   if( !snippet_handle )
    {
       std::cerr << ExeName << ": [" << ExePid << "]: "
                 << "Error: Could not instrument entry points of "
-                << "function '" << instFunc.name << "'. Aborting."
+                << "region '" << region->name << "'. Aborting."
                 << std::endl;
       error = true;
    }
@@ -884,11 +1268,11 @@ MutatorC::instrumentFunctionEntry( const InstFuncS & instFunc )
 }
 
 bool
-MutatorC::instrumentFunctionExit( const InstFuncS & instFunc )
+MutatorC::instrumentRegionExit( const RegionS * region, bool isLoop ) const
 {
    bool error = false;
 
-   vPrint( 2, " Instrumenting-> '%s' Exit\n", instFunc.name.c_str() );
+   vPrint( 2, " Instrumenting-> '%s' Exit\n", region->name.c_str() );
 
    // set callee argument
    //
@@ -897,7 +1281,7 @@ MutatorC::instrumentFunctionExit( const InstFuncS & instFunc )
 
    // function index
    //
-   BPatch_constExpr const_expr_findex( instFunc.index );
+   BPatch_constExpr const_expr_findex( region->index );
    callee_args[0] = &const_expr_findex;
 
    // create instrumentation snippet
@@ -905,60 +1289,29 @@ MutatorC::instrumentFunctionExit( const InstFuncS & instFunc )
 
    // insert instrumentation snippet
    //
-   if( !m_appAddrSpace->insertSnippet( snippet, *(instFunc.exit_points),
-          BPatch_callAfter, BPatch_lastSnippet ) )
+
+   BPatchSnippetHandle * snippet_handle;
+
+   if( isLoop )
+   {
+      snippet_handle =
+         m_appAddrSpace->insertSnippet( snippet, *(region->inst_points.exits) );
+   }
+   else
+   {
+      snippet_handle =
+         m_appAddrSpace->insertSnippet( snippet, *(region->inst_points.exits),
+            BPatch_callAfter, BPatch_lastSnippet );
+   }
+
+   if( !snippet_handle )
    {
       std::cerr << ExeName << ": [" << ExePid << "]: "
                 << "Error: Could not instrument exit points of "
-                << "function '" << instFunc.name << "'. Aborting."
+                << "region '" << region->name << "'. Aborting."
                 << std::endl;
       error = true;
    }
-
-   return !error;
-}
-
-bool
-MutatorC::readFilter()
-{
-   bool error = false;
-
-   if( Params.filtfile.length() == 0 )
-      return true;
-
-   do
-   {
-      vPrint( 1, "Reading filter file\n" );
-
-      // get RFG filter object
-      m_filter = RFG_Filter_init();
-      assert( m_filter );
-
-      // set input filter file name
-      RFG_Filter_setDefFile( m_filter, Params.filtfile.c_str() );
-
-      // read input filter file to get global filter rules (rank = -1)
-      if( ( error = !RFG_Filter_readDefFile( m_filter, -1, 0 ) ) )
-         break;
-
-      // NOTE: at this point one can add some default filter rules
-      //
-
-      // examples:
-
-      //RFG_Filter_add( m_filter, "foo", 0, 0 );
-      //RFG_Filter_add( m_filter, "bar", 0, 0 );
-
-      // instrumenting this function generated by the Intel compiler
-      // causes a segmentation fault at application runtime
-      RFG_Filter_add( m_filter, "__intel_cpu_indicator_init", 0, 0, 0 );
-
-      // this function, also a built-in function from the Intel compiler,
-      // causes aborting instrumentation
-      // (reported by David Shrader / LANL)
-      RFG_Filter_add( m_filter, "__intel_proc_init_N", 0, 0, 0 );
-
-   } while( false );
 
    return !error;
 }
@@ -1001,7 +1354,7 @@ MutatorC::constraintModule( const std::string & name ) const
 }
 
 bool
-MutatorC::constraintFunction( const std::string & name ) const
+MutatorC::constraintRegion( const std::string & name ) const
 {
    if( isMPI() && name.compare( 0, 4, "MPI_" ) == 0 )
    {
@@ -1012,7 +1365,7 @@ MutatorC::constraintFunction( const std::string & name ) const
    {
       return true;
    }
-   else if( m_filter )
+   else
    {
       int32_t limit;
       uint8_t flags;
@@ -1021,11 +1374,6 @@ MutatorC::constraintFunction( const std::string & name ) const
       // don't instrument function if call limit is 0 and function isn't
       // filtered recursively
       return ( limit == 0 && (flags & RFG_FILTER_FLAG_RECURSIVE) == 0 );
-   }
-   else
-   {
-      // ok, function should be instrumented
-      return false;
    }
 }
 
@@ -1048,7 +1396,7 @@ MutatorC::isMPI() const
 
 bool
 MutatorC::findFunction( const std::string & name,
-                        BPatch_function *& func ) const
+   BPatch_function *& func ) const
 {
    BPatch_Vector<BPatch_function*> found_funcs;
 
@@ -1064,4 +1412,46 @@ MutatorC::findFunction( const std::string & name,
       func = 0;
       return false;
    }
+}
+
+//////////////////// struct MutatorC::RegionS ////////////////////
+
+uint32_t MutatorC::RegionS::Count = 0;
+
+MutatorC::RegionS::RegionS( const std::string & _name, const SclS & _scl,
+   const InstPointsS & _inst_points )
+   : name( _name ), scl( _scl ), inst_points( _inst_points )
+{
+   // the new operator should already catch this case
+   assert( Count < VT_MAX_DYNINST_REGIONS );
+
+   // set region's index and increment counter
+   index = Count++;
+}
+
+MutatorC::RegionS::~RegionS()
+{
+   // Empty
+}
+
+void *
+MutatorC::RegionS::operator new( size_t size ) throw()
+{
+   // maximum number of regions to instrument exceeded?
+   if( Count >= VT_MAX_DYNINST_REGIONS )
+   {
+      std::cerr << ExeName << ": [" << ExePid << "]: "
+                << "Error: Too many regions to instrument (max. "
+                << VT_MAX_DYNINST_REGIONS << "). Aborting." << std::endl;
+
+      return 0;
+   }
+
+   return malloc( size );
+}
+
+void
+MutatorC::RegionS::operator delete( void * ptr )
+{
+   free( ptr );
 }

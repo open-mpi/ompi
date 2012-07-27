@@ -471,7 +471,7 @@ libvt_pomp_la_SOURCES = $(VT_POMP_SOURCES)
 
 F77 = $(MPIFC)
 libvt_fmpi_la_CFLAGS = $(libvt_mpi_la_CFLAGS)
-libvt_fmpi_la_FCFLAGS = $(MPIFCFLAGS) $(FMPIINCDIR)
+libvt_fmpi_la_FFLAGS = $(MPIFCFLAGS) $(FMPIINCDIR)
 libvt_fmpi_la_SOURCES = $(VT_FMPI_SOURCES)
 
 vtsysconf_DATA = \

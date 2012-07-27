@@ -54,6 +54,8 @@ void vt_unimci_init()
 
 void vt_unimci_finalize()
 {
+  if( vt_unimci_is_initialized )
+    vt_unimci_is_initialized = 0;
 }
 
 void vt_unimci_check_msg(uint8_t record, uint64_t* time)

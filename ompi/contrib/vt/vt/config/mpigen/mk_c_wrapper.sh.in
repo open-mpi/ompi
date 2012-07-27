@@ -147,48 +147,74 @@ cat <<End-of-File >$tmp.awk
   print "{"
 
   printf"  %s result;\n", rettype
-  print "  uint64_t time;"
-  print "  uint8_t was_recorded;"
+  print "  uint32_t tid;"
   print ""
-  print "  if (IS_MPI_TRACE_ON)"
+  print "  GET_THREAD_ID(tid);"
+  print ""
+  print "  if (IS_MPI_TRACE_ON(tid))"
   print "  {"
-  print "    MPI_TRACE_OFF();"
+  print "    uint64_t time;"
+  print "    uint8_t was_recorded;"
+  print ""
+  print "    MPI_TRACE_OFF(tid);"
   print ""
   print "    time = vt_pform_wtime();"
-  printf"    was_recorded = vt_enter(VT_CURRENT_THREAD, &time, vt_mpi_regid[VT__%s]);\n", toupper(mpicall)
+  printf"    was_recorded = vt_enter(tid, &time, vt_mpi_regid[VT__%s]);\n", toupper(mpicall)
   print ""
-
-  printf"    CALL_PMPI_%d(%s", NF-2, mpicall
+  printf"    VT_UNIMCI_CHECK_PRE(%s,\n", mpicall
+  printf"      ("
   if (NF > 2) {
     for (i=3; i<=NF; i++) {
-      printf ", "
-      #remove arrays declarations from parameter:
       gsub("[[].*[]]","",para[i-2])
       printf para[i-2]
+      printf", "
     }
   }
-  print", result, was_recorded, &time);"
-
+  print "\"\", 0, 0),"
+  print "      was_recorded, &time);"
+  print ""
+  printf"    result = P%s(", mpicall
+  if (NF > 2) {
+    for (i=3; i<=NF; i++) {
+      gsub("[[].*[]]","",para[i-2])
+      printf para[i-2]
+      if (i < NF) {
+        printf", "
+      }
+    }
+  }
+  print ");"
+  print ""
+  printf"    VT_UNIMCI_CHECK_POST(%s,\n", mpicall
+  printf"      ("
+  if (NF > 2) {
+    for (i=3; i<=NF; i++) {
+      gsub("[[].*[]]","",para[i-2])
+      printf para[i-2]
+      printf ", "
+    }
+  }
+  print "\"\", 0, 0),"
+  print "      was_recorded, &time);"
   print ""
   print "    time = vt_pform_wtime();"
-  print "    vt_exit(VT_CURRENT_THREAD, &time);"
+  print "    vt_exit(tid, &time);"
   print ""
-  print "    MPI_TRACE_ON();"
+  print "    MPI_TRACE_ON(tid);"
   print "  }"
   print "  else"
   print "  {"
-
-  printf"    CALL_PMPI_%d(%s", NF-2, mpicall
+  printf"    result = P%s(", mpicall
   if (NF > 2) {
     for (i=3; i<=NF; i++) {
-      printf ", "
-      #remove arrays declarations from parameter:
       gsub("[[].*[]]","",para[i-2])
       printf para[i-2]
+      if (i < NF) {
+        printf", "
+      }
     }
   }
-  print", result, 0, NULL);"
- 
+  print ");"
   print "  }"
   print ""
   print "  return result;"

@@ -59,7 +59,8 @@ vtdata_DATA = \
 	@CROSS_PREFIX@vtc++-wrapper-data.txt \
 	@CROSS_PREFIX@vtfort-wrapper-data.txt \
 	$(vtdata_DATA_vtnvcc) \
-	$(vtdata_DATA_tauinst_spec)
+	$(vtdata_DATA_tauinst_spec) \
+	omp.h
 vtdatadir = $(datadir)
 
 install-data-hook-always:
@@ -177,6 +178,7 @@ LIBS = $(LIBS_FOR_BUILD)
 CLEANFILES = $(CROSSPREFIXCLEANFILES)
 
 EXTRA_DIST = \
+	omp.h \
 	TAUINST.SPEC \
 	TAUINST_MACOS.SPEC
 

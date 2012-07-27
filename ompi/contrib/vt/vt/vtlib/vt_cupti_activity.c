@@ -79,6 +79,7 @@ typedef struct vt_cuptiact_strm_st
   uint32_t strmID;             /**< the CUDA stream */
   uint32_t vtThrdID;           /**< VT thread id for this stream (unique) */
   uint64_t vtLastTime;         /**< last written VampirTrace timestamp */
+  uint8_t destroyed;           /**< Is stream destroyed? Ready for reuse? */
   struct vt_cuptiact_strm_st *next;
 }vt_cuptiact_strm_t;
 
@@ -315,18 +316,26 @@ static vt_cuptiact_strm_t* vt_cuptiact_createStream(vt_cuptiact_ctx_t *vtCtx,
     vt_error_msg("[CUPTI Activity] Could not allocate memory for stream!");
   vtStrm->strmID = strmID;
   vtStrm->vtLastTime = vt_gpu_init_time;
+  vtStrm->destroyed = 0;
   vtStrm->next = NULL;
   
+  /* create VT-User-Thread with name and parent id and get its id */
   {
-    char thread_name[16];
-    
-    /* create VT-User-Thread with name and parent id and get its id */
-    if(vtCtx->devID == VT_NO_ID){
-      if(-1 == snprintf(thread_name, 15, "CUDA[?:%d]", strmID))
-        vt_cntl_msg(1, "Could not create thread name for CUDA thread!");
+    char thread_name[16] = "CUDA";
+
+    if(vt_gpu_stream_reuse){
+      if(vtCtx->devID != VT_NO_ID){
+        if(-1 == snprintf(thread_name+4, 12, "[%d]", vtCtx->devID))
+          vt_cntl_msg(1, "Could not create thread name for CUDA thread!");
+      }
     }else{
-      if(-1 == snprintf(thread_name, 15, "CUDA[%d:%d]", vtCtx->devID, strmID))
-        vt_cntl_msg(1, "Could not create thread name for CUDA thread!");
+      if(vtCtx->devID == VT_NO_ID){
+        if(-1 == snprintf(thread_name+4, 12, "[?:%d]", strmID))
+          vt_cntl_msg(1, "Could not create thread name for CUDA thread!");
+      }else{
+        if(-1 == snprintf(thread_name+4, 12, "[%d:%d]", vtCtx->devID, strmID))
+          vt_cntl_msg(1, "Could not create thread name for CUDA thread!");
+      }
     }
     
     VT_CHECK_THREAD;
@@ -500,9 +509,10 @@ static vt_cuptiact_strm_t* vt_cuptiact_checkStream(vt_cuptiact_ctx_t* vtCtx,
 {
   vt_cuptiact_strm_t *currStrm = NULL;
   vt_cuptiact_strm_t *lastStrm = NULL;
+  vt_cuptiact_strm_t *reusableStrm = NULL;
   
   if(vtCtx == NULL){
-    vt_warning("[CUPTI Activity] No context given!");
+    vt_warning("[CUPTI Activity] No context given in vt_cuptiact_checkStream()!");
     return NULL;
   }
   
@@ -511,12 +521,29 @@ static vt_cuptiact_strm_t* vt_cuptiact_checkStream(vt_cuptiact_ctx_t* vtCtx,
   currStrm = vtCtx->strmList;
   lastStrm = vtCtx->strmList;
   while(currStrm != NULL){
+    /* check for existing stream */
     if(currStrm->strmID == strmID){
       /*VT_CUPTI_ACT_UNLOCK();*/
       return currStrm;
     }
+    
+    /* check for reusable stream */
+    if(vt_gpu_stream_reuse && reusableStrm == NULL && currStrm->destroyed == 1){
+      reusableStrm = currStrm;
+    }
+    
     lastStrm = currStrm;
     currStrm = currStrm->next;
+  }
+  
+  /* reuse a destroyed stream, if one is available */
+  if(vt_gpu_stream_reuse && reusableStrm){
+    vt_cntl_msg(2, "[CUPTI Activity] Reusing CUDA stream %d with stream %d",
+                   reusableStrm->strmID, strmID);
+    reusableStrm->destroyed = 0;
+    reusableStrm->strmID = strmID;
+
+    return reusableStrm;
   }
   
   /* 
@@ -539,6 +566,30 @@ static vt_cuptiact_strm_t* vt_cuptiact_checkStream(vt_cuptiact_ctx_t* vtCtx,
   
   /*VT_CUPTI_ACT_UNLOCK();*/
   return currStrm;
+}
+
+void vt_cuptiact_markStreamAsDestroyed(CUcontext cuCtx, uint32_t strmID)
+{
+  vt_cuptiact_ctx_t *vtCtx = vt_cuptiact_getCtx(cuCtx);
+  vt_cuptiact_strm_t *currStrm = NULL;
+  
+  if(vtCtx == NULL){
+    vt_warning("[CUPTI Activity] No context given in "
+               "vt_cuptiact_markStreamAsDestroyed()!");
+    return;
+  }
+  
+  VT_CUPTI_ACT_LOCK();
+  currStrm = vtCtx->strmList;
+  while(currStrm != NULL){
+    if(currStrm->strmID == strmID){
+      currStrm->destroyed = 1;
+      VT_CUPTI_ACT_UNLOCK();
+      return;
+    }
+    currStrm = currStrm->next;
+  }
+  VT_CUPTI_ACT_UNLOCK();
 }
 
 void vt_cuptiact_flushCtxActivities(CUcontext cuCtx)

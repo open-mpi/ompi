@@ -25,6 +25,9 @@
 
 EXTERN char*  vt_env_apppath(void);
 EXTERN char*  vt_env_dyn_shlibs(void);
+EXTERN int    vt_env_dyn_outer_loops(void);
+EXTERN int    vt_env_dyn_inner_loops(void);
+EXTERN int    vt_env_dyn_loop_iters(void);
 EXTERN int    vt_env_dyn_ignore_nodbg(void);
 EXTERN int    vt_env_dyn_detach(void);
 EXTERN char*  vt_env_gnu_nm(void);

@@ -37,7 +37,8 @@ static uint32_t* rtab = NULL;  /* region id lookup table */
  * Register new region
  */
 
-static void register_region(uint32_t* rid, char* func, char* file, int lno)
+static uint32_t register_region(const char* name, const char* file,
+                                uint32_t lno, uint32_t loop)
 {
   uint32_t fid;
 
@@ -54,11 +55,12 @@ static void register_region(uint32_t* rid, char* func, char* file, int lno)
   }
 
   /* Register region and store region identifier */
-  *rid = vt_def_region(VT_CURRENT_THREAD, func, fid, lno, VT_NO_LNO, NULL,
-                       VT_FUNCTION);
+  return vt_def_region(VT_CURRENT_THREAD, name, fid, lno, VT_NO_LNO, NULL,
+                       loop ? VT_LOOP : VT_FUNCTION);
 }
 
-void VT_Dyn_start(uint32_t index, char* name, char* fname, int lno);
+void VT_Dyn_start(uint32_t index, const char* name, const char* fname,
+                  uint32_t lno, uint32_t loop);
 void VT_Dyn_end(uint32_t index);
 void VT_Dyn_attach(void);
 void VT_Dyn_finalize(void);
@@ -67,7 +69,8 @@ void VT_Dyn_finalize(void);
  * This function is called at the entry of each function
  */
 
-void VT_Dyn_start(uint32_t index, char* name, char* fname, int lno)
+void VT_Dyn_start(uint32_t index, const char* name, const char* fname,
+                  uint32_t lno, uint32_t loop)
 {
   uint64_t time;
   uint32_t* rid;
@@ -107,10 +110,10 @@ void VT_Dyn_start(uint32_t index, char* name, char* fname, int lno)
 #if (defined(VT_MT) || defined(VT_HYB))
     VTTHRD_LOCK_IDS();
     if ( *rid == 0 )
-      register_region(rid, name, fname, lno);
+      *rid = register_region(name, fname, lno, loop);
     VTTHRD_UNLOCK_IDS();
 #else /* VT_MT || VT_HYB */
-    register_region(rid, name, fname, lno);
+    *rid = register_region(name, fname, lno, loop);
 #endif /* VT_MT || VT_HYB */
   }
 
@@ -235,12 +238,17 @@ void VT_Dyn_attach()
         shlibs_arg[strlen(shlibs_arg)-1] = '\0';
       }
 
-      snprintf(cmd, sizeof(cmd)-1, "%s/vtdyn %s %s %s %s %s %s %s %s -p %i %s",
+      snprintf(cmd,
+              sizeof(cmd)-1, "%s/vtdyn %s %s %s %s %s %s %s %s %s %s %s "
+                             "-p %i %s",
               vt_installdirs_get(VT_INSTALLDIR_BINDIR),
               (vt_env_verbose() == 0) ? "-q" : "",
               (vt_env_verbose() >= 2) ? "-v" : "",
               filter ? "-f" : "", filter ? filter : "",
               shlibs_arg ? "-s" : "", shlibs_arg ? shlibs_arg : "",
+              (vt_env_dyn_outer_loops()) ? "--outer-loops" : "",
+              (vt_env_dyn_inner_loops()) ? "--inner-loops" : "",
+              (vt_env_dyn_loop_iters()) ? "--loop-iters" : "",
               (vt_env_dyn_ignore_nodbg()) ? "--ignore-nodbg" : "",
               (vt_env_dyn_detach()) ? "" : "--nodetach",
               mutatee_pid,

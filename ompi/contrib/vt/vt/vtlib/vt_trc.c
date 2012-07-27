@@ -132,12 +132,6 @@ uint8_t vt_my_trace_is_master = 1; /* 1st process on local node? */
 uint8_t vt_my_trace_is_disabled = 0; /* process disabled? */
 uint8_t vt_my_trace_is_first_avail = 0; /* 1st not disabled process? */
 
-#if defined(HAVE_MPI2_THREAD) && HAVE_MPI2_THREAD
-/* is requested MPI thread support level MPI_THREAD_SERIALIZED?
-  (not yet supported; no MPI communication events will be recorded) */
-uint8_t vt_mpi_thread_serialized = 0;
-#endif /* HAVE_MPI2_THREAD */
-
 /* unique file id */
 int vt_my_funique =  0;
 
@@ -950,6 +944,9 @@ static void unify_traces(void)
   }
   argc++;
 
+#if !defined(VT_MPIUNIFYLIB)
+  argv[argc++] = strdup("--autostart");
+#endif /* VT_MPIUNIFYLIB */
 #if defined(HAVE_ZLIB) && HAVE_ZLIB
   if (!vt_env_compression()) argv[argc++] = strdup("--nocompress");
 #endif /* HAVE_ZLIB */
@@ -1939,7 +1936,7 @@ void vt_update_counter(uint32_t tid, uint64_t* time)
   update_counter(tid, time);
 }
 
-void vt_mpi_init()
+void vt_mpi_init(uint8_t multithreaded)
 {
 #if (defined(VT_MPI) || defined(VT_HYB))
 
@@ -2039,6 +2036,20 @@ void vt_mpi_init()
 
     vt_my_trace_is_master = (uint8_t)(host_rank == 0);
   }
+
+#ifdef VT_UNIMCI
+  /* disable UniMCI if MPI is initialized with an unsupported level of MPI
+     thread support (e.g. MPI_THREAD_SERILIZED, MPI_THREAD_MULTIPLE) */
+  if (vt_env_mpicheck() && multithreaded)
+  {
+    vt_unimci_finalize();
+    if (myrank == 0)
+    {
+      vt_warning("MPI correctness checking disabled due to not yet supported "
+                 "level of MPI thread support.");
+    }
+  }
+#endif /* VT_UNIMCI */
 
   /* first clock synchronization if necessary */
 #if TIMER_IS_GLOBAL == 0
@@ -3083,10 +3094,6 @@ void vt_next_async_time(uint32_t tid, uint32_t kid, uint64_t atime)
 void vt_mpi_send(uint32_t tid, uint64_t* time, uint32_t dpid, uint32_t cid,
                  uint32_t tag, uint32_t sent)
 {
-#if defined(HAVE_MPI2_THREAD) && HAVE_MPI2_THREAD
-  if (vt_mpi_thread_serialized) return;
-#endif /* HAVE_MPI2_THREAD */
-
   GET_THREAD_ID(tid);
 
   if (VTTHRD_TRACE_STATUS(VTThrdv[tid]) != VT_TRACE_ON) return;
@@ -3103,10 +3110,6 @@ void vt_mpi_send(uint32_t tid, uint64_t* time, uint32_t dpid, uint32_t cid,
 void vt_mpi_recv(uint32_t tid, uint64_t* time, uint32_t spid, uint32_t cid,
                  uint32_t tag, uint32_t recvd)
 {
-#if defined(HAVE_MPI2_THREAD) && HAVE_MPI2_THREAD
-  if (vt_mpi_thread_serialized) return;
-#endif /* HAVE_MPI2_THREAD */
-
   GET_THREAD_ID(tid);
 
   if (VTTHRD_TRACE_STATUS(VTThrdv[tid]) != VT_TRACE_ON) return;
@@ -3124,10 +3127,6 @@ void vt_mpi_collexit(uint32_t tid, uint64_t* time, uint64_t* etime,
                      uint32_t rid, uint32_t rpid, uint32_t cid, void* comm,
                      uint32_t sent, uint32_t recvd)
 {
-#if defined(HAVE_MPI2_THREAD) && HAVE_MPI2_THREAD
-  if (vt_mpi_thread_serialized) return;
-#endif /* HAVE_MPI2_THREAD */
-
   GET_THREAD_ID(tid);
 
   if (VTTHRD_TRACE_STATUS(VTThrdv[tid]) == VT_TRACE_ON)
@@ -3154,10 +3153,6 @@ void vt_mpi_collbegin(uint32_t tid, uint64_t* time, uint32_t rid, uint64_t mid,
                       uint32_t rpid, uint32_t cid, uint64_t sent,
                       uint64_t recvd)
 {
-#if defined(HAVE_MPI2_THREAD) && HAVE_MPI2_THREAD
-  if (vt_mpi_thread_serialized) return;
-#endif /* HAVE_MPI2_THREAD */
-
   GET_THREAD_ID(tid);
 
   if (VTTHRD_TRACE_STATUS(VTThrdv[tid]) != VT_TRACE_ON) return;
@@ -3178,10 +3173,6 @@ void vt_mpi_collbegin(uint32_t tid, uint64_t* time, uint32_t rid, uint64_t mid,
 void vt_mpi_collend(uint32_t tid, uint64_t* time, uint64_t mid, void* comm,
                     uint8_t was_recorded)
 {
-#if defined(HAVE_MPI2_THREAD) && HAVE_MPI2_THREAD
-  if (vt_mpi_thread_serialized) return;
-#endif /* HAVE_MPI2_THREAD */
-
   GET_THREAD_ID(tid);
 
   if (was_recorded && (VTTHRD_TRACE_STATUS(VTThrdv[tid]) == VT_TRACE_ON))
@@ -3201,10 +3192,6 @@ void vt_mpi_collend(uint32_t tid, uint64_t* time, uint64_t mid, void* comm,
 void vt_mpi_rma_put(uint32_t tid, uint64_t* time, uint32_t tpid, uint32_t cid,
                     uint32_t tag, uint64_t sent)
 {
-#if defined(HAVE_MPI2_THREAD) && HAVE_MPI2_THREAD
-  if (vt_mpi_thread_serialized) return;
-#endif /* HAVE_MPI2_THREAD */
-
   GET_THREAD_ID(tid);
 
   if (VTTHRD_TRACE_STATUS(VTThrdv[tid]) != VT_TRACE_ON) return;
@@ -3222,10 +3209,6 @@ void vt_mpi_rma_put(uint32_t tid, uint64_t* time, uint32_t tpid, uint32_t cid,
 void vt_mpi_rma_putre(uint32_t tid, uint64_t* time, uint32_t tpid, uint32_t cid,
                       uint32_t tag, uint64_t sent)
 {
-#if defined(HAVE_MPI2_THREAD) && HAVE_MPI2_THREAD
-  if (vt_mpi_thread_serialized) return;
-#endif /* HAVE_MPI2_THREAD */
-
   GET_THREAD_ID(tid);
 
   if (VTTHRD_TRACE_STATUS(VTThrdv[tid]) != VT_TRACE_ON) return;
@@ -3243,10 +3226,6 @@ void vt_mpi_rma_putre(uint32_t tid, uint64_t* time, uint32_t tpid, uint32_t cid,
 void vt_mpi_rma_get(uint32_t tid, uint64_t* time, uint32_t tpid, uint32_t cid,
                     uint32_t tag, uint64_t recvd)
 {
-#if defined(HAVE_MPI2_THREAD) && HAVE_MPI2_THREAD
-  if (vt_mpi_thread_serialized) return;
-#endif /* HAVE_MPI2_THREAD */
-
   GET_THREAD_ID(tid);
 
   if (VTTHRD_TRACE_STATUS(VTThrdv[tid]) != VT_TRACE_ON) return;
@@ -3263,10 +3242,6 @@ void vt_mpi_rma_get(uint32_t tid, uint64_t* time, uint32_t tpid, uint32_t cid,
 
 void vt_mpi_rma_end(uint32_t tid, uint64_t* time, uint32_t cid, uint32_t tag)
 {
-#if defined(HAVE_MPI2_THREAD) && HAVE_MPI2_THREAD
-  if (vt_mpi_thread_serialized) return;
-#endif /* HAVE_MPI2_THREAD */
-
   GET_THREAD_ID(tid);
 
   if (VTTHRD_TRACE_STATUS(VTThrdv[tid]) != VT_TRACE_ON) return;
