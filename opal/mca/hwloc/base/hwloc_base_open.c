@@ -77,7 +77,10 @@ int opal_hwloc_base_open(void)
             break;
         }
         mca_base_param_reg_string_name("hwloc", "base_mem_alloc_policy",
-                                       "Policy to determine where general memory allocations are placed (this is not memory binding). If using direct launch, this policy will not be in effect until after MPI_INIT. A value of \"none\" means that no memory policy is applied. A value of \"local_only\" means that all memory allocations will be restricted to the local NUMA node where each process is placed. Note that operating system paging policies are unaffected by this setting. For example, if \"local_only\" is used and local NUMA node memory is exhausted, a new memory allocation may cause paging.",
+                                       "General memory allocations placement policy (this is not memory binding). "
+                                       "\"none\" means that no memory policy is applied. \"local_only\" means that a process' memory allocations will be restricted to its local NUMA node. "
+                                       "If using direct launch, this policy will not be in effect until after MPI_INIT. "
+                                       "Note that operating system paging policies are unaffected by this setting. For example, if \"local_only\" is used and local NUMA node memory is exhausted, a new memory allocation may cause paging.",
                                        false, false, str_value, &str_value);
         if (strcasecmp(str_value, "none") == 0) {
             opal_hwloc_base_map = OPAL_HWLOC_BASE_MAP_NONE;
