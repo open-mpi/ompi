@@ -552,6 +552,14 @@ int orterun(int argc, char *argv[])
        use it in pretty-print error messages */
     orte_basename = opal_basename(argv[0]);
 
+    /* bozo check - we don't allow recursive calls of orterun */
+    if (NULL != getenv("OMPI_UNIVERSE_SIZE")) {
+        fprintf(stderr, "\n\n**********************************************************\n\n");
+        fprintf(stderr, "Open MPI does not support recursive calls of %s\n", orte_basename);
+        fprintf(stderr, "\n**********************************************************\n");
+        exit(1);
+    }
+
     /* Setup and parse the command line */
     init_globals();
     opal_cmd_line_create(&cmd_line, cmd_line_init);
