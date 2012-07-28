@@ -125,7 +125,7 @@ EXTRA_DIST = \
         platform/win32/CMakeModules/opal_hwloc_config.cmake \
         platform/win32/include/hwloc/autogen/config.h \
         platform/win32/include/private/autogen/config.h \
-        platform/win32/examples/chello.vxcproj \
+        platform/win32/examples/chello.vcxproj \
 	platform/cisco/macosx-dynamic \
 	platform/cisco/macosx-dynamic.conf \
 	platform/cisco/linux \
