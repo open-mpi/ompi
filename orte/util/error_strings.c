@@ -217,6 +217,8 @@ const char *orte_job_state_to_str(orte_job_state_t state)
         return "DAEMONS LAUNCHED";
     case ORTE_JOB_STATE_DAEMONS_REPORTED:
         return "ALL DAEMONS REPORTED";
+    case ORTE_JOB_STATE_VM_READY:
+        return "VM READY";
     case ORTE_JOB_STATE_LAUNCH_APPS:
         return "PENDING APP LAUNCH";
     case ORTE_JOB_STATE_RUNNING:
