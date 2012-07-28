@@ -77,7 +77,59 @@ Trunk (not on release branches yet)
   to override the system default for buffering of stdout/stderr streams
   (via setvbuf).
 - Added support for the DMTCP checkpoint/restart system.
-- Removed maffinity, paffinity, and carto frameworks (and associated MCA params).
+- Removed maffinity, paffinity, and carto frameworks (and associated
+  MCA params).
+
+1.6.1
+-----
+
+- A bunch of changes to eliminate hangs on OpenFabrics-based networks.
+  Users with Mellanox hardware are ***STRONGLY ENCOURAGED*** to check
+  their registered memory kernel module settings to ensure that the OS
+  will allow registering more than 8GB of memory.  See this FAQ item
+  for details:
+
+  http://www.open-mpi.org/faq/?category=openfabrics#ib-low-reg-mem
+
+  - Fall back to send/receive semantics if registered memory is
+    unavilable for RDMA.
+  - Fix two fragment leaks when registered memory is exhausted.
+  - Hueristically determine how much registered memory is available
+    and warn if it's significantly less than all of RAM.
+  - Artifically limit the amount of registered memory each MPI process
+    can use to about 1/Nth to total registered memory available.
+  - Improve error messages when events occur that are likely due to
+    unexpected registered memory exhaustion.
+  - Remove the last openib default per-peer receive queue
+    specification (and make it an SRQ).
+
+- Switch the MPI_ALLTOALLV default algorithm to a pairwise exchange.
+- Increase the openib BTL default CQ length to handle more types of
+  OpenFabrics devices.
+- Lots of VampirTrace fixes; upgrade to v5.13.0.4.
+- Map MPI_2INTEGER to underlying MPI_INTEGERs, not MPI_INTs.
+- Ensure that the OMPI version number is toleant of handling spaces.
+  Thanks to dragonboy for identifying the issue.
+- Fixed IN parameter marking on Fortran "mpi" module
+  MPI_COMM_TEST_INTER interface.
+- Various MXM improvements.
+- Make the output of "mpirun --report-bindings" much more friendly /
+  human-readable.
+- Properly handle MPI_COMPLEX8|16|32.
+- More fixes for mpirun's processor affinity options (--bind-to-core
+  and friends).
+- Use aligned memory for OpenFabrics registered memory.
+- Multiple fixes for parameter checking in MPI_ALLGATHERV,
+  MPI_REDUCE_SCATTER, MPI_SCATTERV, and MPI_GATHERV.  Thanks to the
+  mpi4py community (Bennet Fauber, Lisandro Dalcin, Jonathan Dursi).
+- Fixed file positioning overflows in MPI_FILE_GET_POSITION,
+  MPI_FILE_GET_POSITION_SHARED, FILE_GET_SIZE, FILE_GET_VIEW.
+- Removed the broken --cpu-set mpirun option.
+- Fix cleanup of MPI errorcodes.  Thanks to Alexey Bayduraev for the
+  patch.
+- Fix default hostfile location.  Thanks to Götz Waschk for noticing
+  the issue.
+- Improve several error messages.
 
 
 1.6
