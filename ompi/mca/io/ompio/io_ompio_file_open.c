@@ -62,9 +62,10 @@ mca_io_ompio_file_open (ompi_communicator_t *comm,
 	return  OMPI_ERR_OUT_OF_RESOURCE;
     }
 
+    data->ompio_fh.f_fh       = fh;
     data->ompio_fh.f_iov_type = MPI_DATATYPE_NULL;
-    data->ompio_fh.f_rank = ompi_comm_rank (fh->f_comm);
-    data->ompio_fh.f_size = ompi_comm_size (fh->f_comm);
+    data->ompio_fh.f_rank     = ompi_comm_rank (fh->f_comm);
+    data->ompio_fh.f_size     = ompi_comm_size (fh->f_comm);
     remote_arch = opal_local_arch;
     data->ompio_fh.f_convertor = opal_convertor_create (remote_arch, 0);
 
@@ -581,11 +582,7 @@ mca_io_ompio_file_seek_shared (ompi_file_t *fh,
                                OMPI_MPI_OFFSET_TYPE offset,
                                int whence)
 {
-    int ret = OMPI_SUCCESS;
-    mca_io_ompio_data_t *data;
-
-    data = (mca_io_ompio_data_t *) fh->f_io_selected_data;
-
+    int ret = MPI_ERR_OTHER;
     return ret;
 }
 
@@ -594,10 +591,6 @@ int
 mca_io_ompio_file_get_position_shared (ompi_file_t *fh,
                                        OMPI_MPI_OFFSET_TYPE * offset)
 {
-    int ret = OMPI_SUCCESS;
-    mca_io_ompio_data_t *data;
-
-    data = (mca_io_ompio_data_t *) fh->f_io_selected_data;
-
+    int ret = MPI_ERR_OTHER;
     return ret;
 }

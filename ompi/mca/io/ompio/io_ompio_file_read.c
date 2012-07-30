@@ -375,11 +375,7 @@ mca_io_ompio_file_iread (ompi_file_t *fh,
                          struct ompi_datatype_t *datatype,
                          ompi_request_t **request)
 {
-    int ret = OMPI_SUCCESS;
-    mca_io_ompio_data_t *data;
-
-    data = (mca_io_ompio_data_t *) fh->f_io_selected_data;
-
+    int ret = MPI_ERR_OTHER;
     return ret;
 }
 
@@ -391,11 +387,7 @@ mca_io_ompio_file_iread_at (ompi_file_t *fh,
                             struct ompi_datatype_t *datatype,
                             ompi_request_t **request)
 {
-    int ret = OMPI_SUCCESS;
-    mca_io_ompio_data_t *data;
-
-    data = (mca_io_ompio_data_t *) fh->f_io_selected_data;
-
+    int ret = MPI_ERR_OTHER;
     return ret;
 }
 
@@ -406,11 +398,7 @@ mca_io_ompio_file_read_shared (ompi_file_t *fh,
                                struct ompi_datatype_t *datatype,
                                ompi_status_public_t * status)
 {
-    int ret = OMPI_SUCCESS;
-    mca_io_ompio_data_t *data;
-
-    data = (mca_io_ompio_data_t *) fh->f_io_selected_data;
-
+    int ret = MPI_ERR_OTHER;
     return ret;
 }
 
@@ -421,11 +409,7 @@ mca_io_ompio_file_iread_shared (ompi_file_t *fh,
                                 struct ompi_datatype_t *datatype,
                                 ompi_request_t **request)
 {
-    int ret = OMPI_SUCCESS;
-    mca_io_ompio_data_t *data;
-
-    data = (mca_io_ompio_data_t *) fh->f_io_selected_data;
-
+    int ret = MPI_ERR_OTHER;
     return ret;
 }
 
@@ -436,11 +420,7 @@ mca_io_ompio_file_read_ordered (ompi_file_t *fh,
                                 struct ompi_datatype_t *datatype,
                                 ompi_status_public_t * status)
 {
-    int ret = OMPI_SUCCESS;
-    mca_io_ompio_data_t *data;
-
-    data = (mca_io_ompio_data_t *) fh->f_io_selected_data;
-
+    int ret = MPI_ERR_OTHER;
     return ret;
 }
 
@@ -450,11 +430,7 @@ mca_io_ompio_file_read_ordered_begin (ompi_file_t *fh,
                                       int count,
                                       struct ompi_datatype_t *datatype)
 {
-    int ret = OMPI_SUCCESS;
-    mca_io_ompio_data_t *data;
-
-    data = (mca_io_ompio_data_t *) fh->f_io_selected_data;
-
+    int ret = MPI_ERR_OTHER;
     return ret;
 }
 
@@ -463,10 +439,6 @@ mca_io_ompio_file_read_ordered_end (ompi_file_t *fh,
                                     void *buf,
                                     ompi_status_public_t * status)
 {
-    int ret = OMPI_SUCCESS;
-    mca_io_ompio_data_t *data;
-
-    data = (mca_io_ompio_data_t *) fh->f_io_selected_data;
-
+    int ret = MPI_ERR_OTHER;
     return ret;
 }

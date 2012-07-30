@@ -120,8 +120,9 @@ typedef struct mca_io_ompio_access_array_t{
 struct mca_io_ompio_file_t {
     /* General parameters */
     int                    fd;
+    struct ompi_file_t    *f_fh;     /* pointer back to the file_t structure */
     OMPI_MPI_OFFSET_TYPE   f_offset; /* byte offset of current position */
-    OMPI_MPI_OFFSET_TYPE   f_disp; /* file_view displacement */
+    OMPI_MPI_OFFSET_TYPE   f_disp;   /* file_view displacement */
     int                    f_rank;
     int                    f_size;
     int                    f_amode;
