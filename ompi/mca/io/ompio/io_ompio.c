@@ -130,9 +130,6 @@ int ompi_io_ompio_generate_current_file_view (mca_io_ompio_file_t *fh,
                                               int *iov_count)
 {
 
-
-
-
     struct iovec *iov = NULL;
     size_t bytes_to_write;
     size_t sum_previous_counts = 0;
@@ -145,10 +142,6 @@ int ompi_io_ompio_generate_current_file_view (mca_io_ompio_file_t *fh,
     struct iovec *merged_iov = NULL;
     size_t merge_length = 0;
     IOVBASE_TYPE * merge_offset = 0;
-
-
-
-
 
 
     /* allocate an initial iovec, will grow if needed */
@@ -281,12 +274,12 @@ int ompi_io_ompio_set_explicit_offset (mca_io_ompio_file_t *fh,
     int i = 0;
     int k = 0;
 
-    fh->f_offset = fh->f_view_extent * 
-        ((offset*fh->f_etype_size - fh->f_disp) / fh->f_view_size);
+    fh->f_offset = (fh->f_view_extent * 
+		    ((offset*fh->f_etype_size) / fh->f_view_size)) + fh->f_disp;
 
     fh->f_position_in_file_view = 0;
 
-    fh->f_total_bytes = (offset*fh->f_etype_size - fh->f_disp) % fh->f_view_size;
+    fh->f_total_bytes = (offset*fh->f_etype_size) % fh->f_view_size;
 
     fh->f_index_in_file_view = 0;
     i = fh->f_total_bytes;
