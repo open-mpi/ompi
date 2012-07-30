@@ -356,6 +356,7 @@ int mca_oob_ud_module_init (void)
         }
 
         mca_oob_ud_event_start_monitor (device);
+        found_one = true;
     }
 
     if (found_one) {
