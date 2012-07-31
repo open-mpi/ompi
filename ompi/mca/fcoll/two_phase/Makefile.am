@@ -27,6 +27,7 @@ sources = \
         fcoll_two_phase_file_read_all_end.c \
         fcoll_two_phase_file_write_all.c \
         fcoll_two_phase_file_write_all_begin.c \
+	fcoll_two_phase_support_fns.c \
         fcoll_two_phase_file_write_all_end.c
 
 # Make the output library in this directory, and name it either
