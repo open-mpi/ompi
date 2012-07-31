@@ -82,7 +82,6 @@ static int ompi_mtl_mxm_component_register(void)
 
 static int ompi_mtl_mxm_component_open(void)
 {
-    int rc;
     mxm_error_t err;
 
     mca_mtl_mxm_output = opal_output_open(NULL);
@@ -100,6 +99,10 @@ static int ompi_mtl_mxm_component_open(void)
         return OPAL_ERR_NOT_AVAILABLE;
     }
 
+#if MXM_API >= 0x01010000
+{
+    int rc;
+
     OBJ_CONSTRUCT(&mca_mtl_mxm_component.mxm_messages, ompi_free_list_t);
     rc = ompi_free_list_init_new(&mca_mtl_mxm_component.mxm_messages,
                                   sizeof(ompi_mtl_mxm_message_t),
@@ -115,6 +118,8 @@ static int ompi_mtl_mxm_component_open(void)
                     mxm_error_string(err));
         return OPAL_ERR_NOT_AVAILABLE;
     }
+}
+#endif
 
     return OMPI_SUCCESS;
 }
@@ -123,7 +128,11 @@ static int ompi_mtl_mxm_component_close(void)
 {
     mxm_cleanup(ompi_mtl_mxm.mxm_context);
     ompi_mtl_mxm.mxm_context = NULL;
+
+#if MXM_API >= 0x01010000
     OBJ_DESTRUCT(&mca_mtl_mxm_component.mxm_messages);
+#endif
+
     return OMPI_SUCCESS;
 }
 

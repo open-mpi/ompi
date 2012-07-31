@@ -84,6 +84,7 @@ extern int ompi_mtl_mxm_finalize(struct mca_mtl_base_module_t* mtl);
 
 int ompi_mtl_mxm_module_init(void);
 
+#if MXM_API >= 0x01010000
 struct ompi_mtl_mxm_message_t {
     ompi_free_list_item_t super;
 
@@ -96,6 +97,7 @@ struct ompi_mtl_mxm_message_t {
 };
 typedef struct ompi_mtl_mxm_message_t ompi_mtl_mxm_message_t;
 OBJ_CLASS_DECLARATION(ompi_mtl_mxm_message_t);
+#endif
 
 END_C_DECLS
 
