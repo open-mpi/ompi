@@ -1645,7 +1645,6 @@ oob       - Out of band messaging
 plm       - Process lifecycle management
 ras       - Resource allocation system
 rmaps     - Resource mapping system
-rmcast    - Reliable multicast
 rml       - RTE message layer
 routed    - Routing table for the RML
 snapc     - Snapshot coordination

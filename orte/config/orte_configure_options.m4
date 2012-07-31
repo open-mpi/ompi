@@ -77,22 +77,4 @@ AC_DEFINE_UNQUOTED([ORTE_WANT_ORTERUN_PREFIX_BY_DEFAULT],
                    [$orte_want_orterun_prefix_by_default],
                    [Whether we want orterun to effect "--prefix $prefix" by default])
 
-#
-# Do we want reliable multicast enabled?
-#
-
-AC_MSG_CHECKING([if want reliable multicast])
-AC_ARG_ENABLE([multicast],
-    [AC_HELP_STRING([--enable-multicast],
-                    [Enable reliable multicast messaging (default: disabled)])])
-if test "$enable_multicast" = "yes"; then
-    AC_MSG_RESULT([yes])
-    orte_want_multicast=1
-else
-    AC_MSG_RESULT([no])
-    orte_want_multicast=0
-fi
-AC_DEFINE_UNQUOTED([ORTE_ENABLE_MULTICAST], [$orte_want_multicast],
-                   [Enable reliable multicast messaging])
-
 ])dnl

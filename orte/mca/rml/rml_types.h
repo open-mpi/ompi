@@ -171,14 +171,6 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_msg_packet_t);
 /* bootstrap */
 #define ORTE_RML_TAG_BOOTSTRAP              35
 
-/* TCP "fake" multicast */
-#define ORTE_RML_TAG_MULTICAST              36
-/* multicast messages sent direct */
-#define ORTE_RML_TAG_MULTICAST_DIRECT       37
-/* report a missed msg */
-#define ORTE_RML_TAG_MISSED_MSG             38
-
-
 #define ORTE_RML_TAG_MAX                   100
 
 
