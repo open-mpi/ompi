@@ -124,12 +124,13 @@ public:
       {
          const int64_t * ltime = it->second->ltime;
          const int64_t * offset = it->second->offset;
-
+ 
+         const double a = ( (double)( (int64_t)( ltime[1] -  time ) ) /
+                            (double)( (int64_t)( ltime[1]  - ltime[0] ) ) );
          return
-            (uint64_t)( (int64_t)( (double)( offset[1] - offset[0] ) /
-                                   (double)( ltime[1]  - ltime[0] ) ) *
-                                 ( time - ltime[0] ) + time + offset[0] -
-                                 m_minStartTime );
+            (uint64_t)( time + offset[1] - (int64_t)( a * (double)offset[1] ) +
+                        (int64_t)( a * (double)offset[0] ) - m_minStartTime );
+      
       }
    }
 

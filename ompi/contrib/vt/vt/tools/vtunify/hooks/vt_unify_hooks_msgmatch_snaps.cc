@@ -70,31 +70,40 @@ HooksMsgMatchAndSnapsC::HandleDefComment( MsgMatchBumpsS * msgMatchBumps,
       // irregularities shall be inserted?
       if( comment_idx == msgMatchBumps->def_comment_idx )
       {
-         char warning[STRBUFSIZE];
-
-         // write warning comment record ...
+         // write warning comment about
+         // unmatched messages (i == 0) and reversed messages (i == 1)
          //
-
-         // ... about unmatched messages
-         if( msgMatchBumps->num_unmatched > 0 )
+         for( uint8_t i = 0; i < 2; i++ )
          {
-            snprintf( warning, STRBUFSIZE - 1,
-                      MsgMatchBumpsS::UNMATCHED_WARNING_FMT(),
-                      (unsigned long long int)msgMatchBumps->num_unmatched );
+            uint64_t num;
+            const char* fmt;
 
-            if( OTF_WStream_writeDefinitionComment( msgMatchBumps->wstream,
-                   warning ) == 0 )
+            if( i == 0 && msgMatchBumps->num_unmatched > 0 )
             {
-               ret = OTF_RETURN_ABORT;
-               break;
+               num = msgMatchBumps->num_unmatched;
+               fmt = MsgMatchBumpsS::UNMATCHED_WARNING_FMT();
             }
-         }
-         // ... about reversed messages
-         if( msgMatchBumps->num_reversed > 0 )
-         {
-            snprintf( warning, STRBUFSIZE - 1,
-                      MsgMatchBumpsS::REVERSED_WARNING_FMT(),
-                      (unsigned long long int)msgMatchBumps->num_reversed );
+            else if( i == 1 && msgMatchBumps->num_reversed > 0 )
+            {
+               num = msgMatchBumps->num_reversed;
+               fmt = MsgMatchBumpsS::REVERSED_WARNING_FMT();
+            }
+            else
+            {
+               continue;
+            }
+
+            const double percent =
+               ( (double)num / (double)msgMatchBumps->num_messages ) * 100.0;
+            char percent_str[10];
+            if( percent < 1.0 )
+               strcpy( percent_str, "<1%" );
+            else
+               sprintf( percent_str, "%.1f%%", percent );
+
+            char warning[STRBUFSIZE];
+            snprintf( warning, sizeof(warning)-1, fmt,
+                      (unsigned long long int)num, percent_str );
 
             if( OTF_WStream_writeDefinitionComment( msgMatchBumps->wstream,
                    warning ) == 0 )
@@ -382,6 +391,24 @@ HooksMsgMatchAndSnapsC::WriteCounterSnapshotCB( OTF_WStream * wstream,
    return ret;
 }
 
+#ifdef VT_MPI
+
+// user-defined reduction operation to aggregate per-rank message matching
+// bumps statistics
+void
+HooksMsgMatchAndSnapsC::MsgMatchBumpsReduceOp( uint64_t * invec,
+   uint64_t * inoutvec, VT_MPI_INT * len, MPI_Datatype * datatype )
+{
+   (void)len;
+   (void)datatype;
+
+   inoutvec[0] += invec[0]; // number of unmatched messages
+   inoutvec[1] += invec[1]; // number of reversed messages
+   inoutvec[2] += invec[2]; // total number of messages
+}
+
+#endif // VT_MPI
+
 // vvvvvvvvvvvvvvvvvvvv HOOK METHODS vvvvvvvvvvvvvvvvvvvv
 
 // initialization/finalization hooks
@@ -398,22 +425,46 @@ HooksMsgMatchAndSnapsC::finalizeHook( const bool & error )
 {
    MASTER
    {
-      if( !error && Params.domsgmatch && !m_msgMatchBumps.empty() )
+      if( !error && Params.domsgmatch && Params.verbose_level > 0 &&
+          !m_msgMatchBumps.empty() )
       {
          // print warnings about message matching irregularities to stdout
          //
 
          VPrint( 1, "\n" );
 
-         if( m_msgMatchBumps.num_unmatched > 0 )
+         // print warning about
+         // unmatched messages (i == 0) and reversed messages (i == 1)
+         //
+         for( uint8_t i = 0; i < 2; i++ )
          {
-            VPrint( 1, MsgMatchBumpsS::UNMATCHED_WARNING_FMT(),
-               (unsigned long long int)m_msgMatchBumps.num_unmatched );
-         }
-         if( m_msgMatchBumps.num_reversed > 0 )
-         {
-            VPrint( 1, MsgMatchBumpsS::REVERSED_WARNING_FMT(),
-               (unsigned long long int)m_msgMatchBumps.num_reversed );
+            uint64_t num;
+            const char* fmt;
+
+            if( i == 0 && m_msgMatchBumps.num_unmatched > 0 )
+            {
+               num = m_msgMatchBumps.num_unmatched;
+               fmt = MsgMatchBumpsS::UNMATCHED_WARNING_FMT();
+            }
+            else if( i == 1 && m_msgMatchBumps.num_reversed > 0 )
+            {
+               num = m_msgMatchBumps.num_reversed;
+               fmt = MsgMatchBumpsS::REVERSED_WARNING_FMT();
+            }
+            else
+            {
+               continue;
+            }
+
+            const double percent =
+               ( (double)num / (double)m_msgMatchBumps.num_messages ) * 100.0;
+            char percent_str[10];
+            if( percent < 1.0 )
+               strcpy( percent_str, "<1%" );
+            else
+               sprintf( percent_str, "%.1f%%", percent );
+
+            VPrint( 1, fmt, (unsigned long long int)num, percent_str );
          }
 
          VPrint( 1, "\n" );
@@ -1300,6 +1351,9 @@ HooksMsgMatchAndSnapsC::writeRecHook_SendMsg( HooksC::VaArgsT & args )
             *time, *sender, *receiver, *comm, *tag, *length, *scl,
             &recv_time, &recv_length, &recv_scl, snapshot_kvs );
       assert( auxret );
+
+      // increment total number of messages
+      stream_context->msgmatch_bumps.num_messages++;
 
       // message matched?
       if( auxret == 1 )
@@ -2317,14 +2371,27 @@ HooksMsgMatchAndSnapsC::processMsgMatchBumps()
 #ifdef VT_MPI
    if( NumRanks > 1 )
    {
-      MsgMatchBumpsS tmp = m_msgMatchBumps;
+      MPI_Op op;
+      uint64_t sendbuf[3] = {
+         m_msgMatchBumps.num_unmatched, m_msgMatchBumps.num_reversed,
+         m_msgMatchBumps.num_messages
+      };
+      uint64_t recvbuf[3] = { 0, 0, 0 };
 
-      CALL_MPI( MPI_Reduce(&(tmp.num_unmatched),
-                &(m_msgMatchBumps.num_unmatched), 1, MPI_LONG_LONG_INT, MPI_SUM,
-                0, MPI_COMM_WORLD ) );
-      CALL_MPI( MPI_Reduce(&(tmp.num_reversed),
-                &(m_msgMatchBumps.num_reversed), 1, MPI_LONG_LONG_INT, MPI_SUM,
-                0, MPI_COMM_WORLD ) );
+      CALL_MPI( MPI_Op_create( (MPI_User_function*)MsgMatchBumpsReduceOp,
+                1, &op ) );
+
+      CALL_MPI( MPI_Reduce( sendbuf, recvbuf, 3, MPI_LONG_LONG_INT, op, 0,
+                MPI_COMM_WORLD ) );
+
+      CALL_MPI( MPI_Op_free( &op ) );
+
+      MASTER
+      {
+         m_msgMatchBumps.num_unmatched = recvbuf[0];
+         m_msgMatchBumps.num_reversed = recvbuf[1];
+         m_msgMatchBumps.num_messages = recvbuf[2];
+      }
    }
 #endif // VT_MPI
 

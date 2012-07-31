@@ -57,14 +57,16 @@ HooksAsyncEventsC::HandleAsyncEventPre(
 
    do
    {
-      static uint64_t min_async_time = theTimeSync->getMinStartTime();
-
-      uint64_t actual_time;
-      uint8_t otf_rc;
-
       // ignore event, if it doesn't belong to the given async. source
       if( !Obj->isAsyncEvent( kvs, source.key ) )
          break;
+
+      // get lower bound for async. timestamp (=process' start timestamp)
+      const uint64_t min_async_time =
+         theTimeSync->getTimeRange( proc ).first;
+
+      uint64_t actual_time;
+      uint8_t otf_rc;
 
       // get actual time from async. event's key-value list
       //
@@ -83,7 +85,7 @@ HooksAsyncEventsC::HandleAsyncEventPre(
          break;
       }
 
-      // correct time
+      // correct actual time
       time = theTimeSync->correctTime( proc, actual_time );
 
       // get a copy of key-value list
@@ -301,14 +303,17 @@ HooksAsyncEventsC::writeRecHook_Event( uint64_t * time, uint32_t * streamid,
 {
    bool error = false;
 
-   // return, if no async. source defined
-   if( m_sourceKeys.empty() )
-      return /* true */;
-
-   // get async. source manager by stream id
+   // get async. source manager by stream id, if necessary
    //
-   AsyncSourceManagerS * manager = getSourceManagerByStreamId( *streamid );
-   assert( manager );
+   static AsyncSourceManagerS * manager = 0;
+#if defined(HAVE_OMP) && HAVE_OMP
+#  pragma omp threadprivate(manager)
+#endif // HAVE_OMP
+   if( !manager || manager->stream_id != *streamid )
+   {
+      manager = getSourceManagerByStreamId( *streamid );
+      assert( manager );
+   }
 
    // ignore this event, if write record hooks are suspended
    if( !manager->hooks_suspended )

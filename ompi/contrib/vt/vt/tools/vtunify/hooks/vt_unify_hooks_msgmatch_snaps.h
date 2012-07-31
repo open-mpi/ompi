@@ -67,25 +67,26 @@ private:
       //
       static const char* UNMATCHED_WARNING_FMT()
       {
-         return "Warning: This trace contains %llu message send events "
-                "which could not be matched.\n";
+         return "Warning: This trace contains %llu (%s) message send "
+                "events which could not be matched.\n";
       }
       static const char* REVERSED_WARNING_FMT()
       {
-         return "Warning: This trace contains %llu message events which "
-                "are in wrong order (i.e. receive before send event).\n";
+         return "Warning: This trace contains %llu (%s) message events "
+                "which are in wrong order (i.e. receive before send event).\n";
       }
 
       // constructor
       MsgMatchBumpsS()
-         : num_unmatched( 0 ), num_reversed( 0 ), wstream( 0 ),
-           def_comment_idx( 0 ) {}
+         : num_unmatched( 0 ), num_reversed( 0 ), num_messages( 0 ),
+           wstream( 0 ), def_comment_idx( 0 ) {}
 
       // operator to add other message matching bumps statistics
       MsgMatchBumpsS & operator+=( const MsgMatchBumpsS & a )
       {
          num_unmatched += a.num_unmatched;
          num_reversed += a.num_reversed;
+         num_messages += a.num_messages;
 
          return *this;
       }
@@ -100,6 +101,10 @@ private:
       // number of reversed "backward running" messages
       // (i.e. receive before send event)
       uint64_t num_reversed;
+
+      // total number of messages for calculating percentage of
+      // unmatched/reversed messages
+      uint64_t num_messages;
 
       // the following variables are significant only for rewriting the global
       // definitions to insert warning comments about message matching
@@ -237,6 +242,15 @@ private:
                  uint64_t snapshotTime, uint64_t eventTime, uint64_t proc,
                  uint32_t counter, uint64_t value,
                  OTF_KeyValueList * kvs );
+
+#ifdef VT_MPI
+
+   // user-defined reduction operation to aggregate per-rank message matching
+   // bumps statistics
+   static void MsgMatchBumpsReduceOp( uint64_t * invec, uint64_t * inoutvec,
+                  VT_MPI_INT * len, MPI_Datatype * datatype );
+
+#endif // VT_MPI
 
    // vvvvvvvvvvvvvvvvvvvv HOOK METHODS vvvvvvvvvvvvvvvvvvvv
 

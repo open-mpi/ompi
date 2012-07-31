@@ -60,7 +60,6 @@ struct FirstHandlerArg_EventsS
 typedef FirstHandlerArg_EventsS FirstHandlerArg_StatsS;
 
 // key-value list "record handler"
-// translate local key tokens to global tokens
 void HandleKeyValueList( const uint32_t & proc, OTF_KeyValueList * kvs );
 
 // definition record handlers

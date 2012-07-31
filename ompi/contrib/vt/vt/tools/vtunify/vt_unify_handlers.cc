@@ -21,7 +21,8 @@
 #ifdef VT_UNIFY_REMOVE_UNDEF_PROCID_REFERENCES
 
 // check whether given stream id is available
-static bool is_stream_avail( const uint32_t streamid )
+static bool
+isStreamAvail( const uint32_t streamid )
 {
    return
       ( AbsentStreamIds.empty() ||
@@ -30,8 +31,9 @@ static bool is_stream_avail( const uint32_t streamid )
 
 #endif // VT_UNIFY_REMOVE_UNDEF_PROCID_REFERENCES
 
-void
-HandleKeyValueList( const uint32_t & proc, OTF_KeyValueList * kvs )
+// translate local key tokens to global tokens
+static void
+handleKeyValueList( const uint32_t & proc, OTF_KeyValueList * kvs )
 {
    // get number of key-value pairs
    uint32_t keys_num = OTF_KeyValueList_getCount( kvs );
@@ -57,6 +59,15 @@ HandleKeyValueList( const uint32_t & proc, OTF_KeyValueList * kvs )
          pair->key = global_key;
       }
    }
+}
+
+// key-value list "record handler"
+void
+HandleKeyValueList( const uint32_t & proc, OTF_KeyValueList * kvs )
+{
+   // call the local version of this function which should hopefully
+   // be inlined
+   handleKeyValueList( proc, kvs );
 }
 
 // definition record handlers
@@ -303,7 +314,7 @@ HandleDefProcessGroup( FirstHandlerArg_DefsS * fha,
       uint32_t j = 0;
       for( uint32_t i = 0; i < n; i++ )
       {
-         if( is_stream_avail( array[i] ) && j < i )
+         if( isStreamAvail( array[i] ) && j < i )
             array[j++] = array[i];
       }
       n = j;
@@ -586,7 +597,7 @@ HandleEventComment( FirstHandlerArg_EventsS * fha,
       &time, &proc, &_comment, &kvs );
 
    // translate local key token(s)
-   HandleKeyValueList( proc, kvs );
+   handleKeyValueList( proc, kvs );
 
 #ifdef VT_ETIMESYNC
    // update time sync. parameters, if necessary
@@ -659,7 +670,7 @@ HandleEnter( FirstHandlerArg_EventsS * fha,
    }
 
    // translate local key token(s)
-   HandleKeyValueList( proc, kvs );
+   handleKeyValueList( proc, kvs );
 
    // correct time
    time = theTimeSync->correctTime( proc, time );
@@ -718,7 +729,7 @@ HandleLeave( FirstHandlerArg_EventsS * fha,
    }
 
    // translate local key token(s)
-   HandleKeyValueList( proc, kvs );
+   handleKeyValueList( proc, kvs );
 
    // correct time
    time = theTimeSync->correctTime( proc, time );
@@ -777,7 +788,7 @@ HandleCounter( FirstHandlerArg_EventsS * fha,
    assert( global_counter != 0 );
 
    // translate local key token(s)
-   HandleKeyValueList( proc, kvs );
+   handleKeyValueList( proc, kvs );
 
    // correct time
    time = theTimeSync->correctTime( proc, time );
@@ -824,7 +835,7 @@ HandleBeginFileOp( FirstHandlerArg_EventsS * fha,
    }
 
    // translate local key token(s)
-   HandleKeyValueList( proc, kvs );
+   handleKeyValueList( proc, kvs );
 
    // correct time
    time = theTimeSync->correctTime( proc, time );
@@ -879,7 +890,7 @@ HandleEndFileOp( FirstHandlerArg_EventsS * fha,
    }
 
    // translate local key token(s)
-   HandleKeyValueList( proc, kvs );
+   handleKeyValueList( proc, kvs );
 
    // correct time
    time = theTimeSync->correctTime( proc, time );
@@ -935,7 +946,7 @@ HandleSendMsg( FirstHandlerArg_EventsS * fha,
    }
 
    // translate local key token(s)
-   HandleKeyValueList( sender, kvs );
+   handleKeyValueList( sender, kvs );
 
    // correct time
    time = theTimeSync->correctTime( sender, time );
@@ -951,7 +962,7 @@ HandleSendMsg( FirstHandlerArg_EventsS * fha,
 
 #ifdef VT_UNIFY_REMOVE_UNDEF_PROCID_REFERENCES
    // drop record, if receiver stream isn't available
-   if( !is_stream_avail( receiver ) )
+   if( !isStreamAvail( receiver ) )
       return OTF_RETURN_OK;
 #endif // VT_UNIFY_REMOVE_UNDEF_PROCID_REFERENCES
 
@@ -1005,7 +1016,7 @@ HandleRecvMsg( FirstHandlerArg_EventsS * fha,
    }
 
    // translate local key token(s)
-   HandleKeyValueList( receiver, kvs );
+   handleKeyValueList( receiver, kvs );
 
    // correct time
    time = theTimeSync->correctTime( receiver, time );
@@ -1021,7 +1032,7 @@ HandleRecvMsg( FirstHandlerArg_EventsS * fha,
 
 #ifdef VT_UNIFY_REMOVE_UNDEF_PROCID_REFERENCES
    // drop record, if sender stream isn't available
-   if( !is_stream_avail( sender ) )
+   if( !isStreamAvail( sender ) )
       return OTF_RETURN_OK;
 #endif // VT_UNIFY_REMOVE_UNDEF_PROCID_REFERENCES
 
@@ -1086,7 +1097,7 @@ HandleBeginCollOp( FirstHandlerArg_EventsS * fha,
    }
 
    // translate local key token(s)
-   HandleKeyValueList( proc, kvs );
+   handleKeyValueList( proc, kvs );
 
    // correct time
    time = theTimeSync->correctTime( proc, time );
@@ -1119,7 +1130,7 @@ HandleEndCollOp( FirstHandlerArg_EventsS * fha,
       &time, &proc, &matchid, &kvs );
 
    // translate local key token(s)
-   HandleKeyValueList( proc, kvs );
+   handleKeyValueList( proc, kvs );
 
    // correct time
    time = theTimeSync->correctTime( proc, time );
@@ -1160,7 +1171,7 @@ HandleRMAPut( FirstHandlerArg_EventsS * fha,
 
 #ifdef VT_UNIFY_REMOVE_UNDEF_PROCID_REFERENCES
    // drop record, if origin or destination stream isn't available
-   if( !is_stream_avail( origin ) || !is_stream_avail( dest ) )
+   if( !isStreamAvail( origin ) || !isStreamAvail( dest ) )
       return OTF_RETURN_OK;
 #endif // VT_UNIFY_REMOVE_UNDEF_PROCID_REFERENCES
 
@@ -1179,7 +1190,7 @@ HandleRMAPut( FirstHandlerArg_EventsS * fha,
    }
 
    // translate local key token(s)
-   HandleKeyValueList( proc, kvs );
+   handleKeyValueList( proc, kvs );
 
    // correct time
    time = theTimeSync->correctTime( proc, time );
@@ -1221,7 +1232,7 @@ HandleRMAPutRemoteEnd( FirstHandlerArg_EventsS * fha,
 
 #ifdef VT_UNIFY_REMOVE_UNDEF_PROCID_REFERENCES
    // drop record, if origin or destination stream isn't available
-   if( !is_stream_avail( origin ) || !is_stream_avail( dest ) )
+   if( !isStreamAvail( origin ) || !isStreamAvail( dest ) )
       return OTF_RETURN_OK;
 #endif // VT_UNIFY_REMOVE_UNDEF_PROCID_REFERENCES
 
@@ -1240,7 +1251,7 @@ HandleRMAPutRemoteEnd( FirstHandlerArg_EventsS * fha,
    }
 
    // translate local key token(s)
-   HandleKeyValueList( proc, kvs );
+   handleKeyValueList( proc, kvs );
 
    // correct time
    time = theTimeSync->correctTime( proc, time );
@@ -1282,7 +1293,7 @@ HandleRMAGet( FirstHandlerArg_EventsS * fha,
 
 #ifdef VT_UNIFY_REMOVE_UNDEF_PROCID_REFERENCES
    // drop record, if origin or destination stream isn't available
-   if( !is_stream_avail( origin ) || !is_stream_avail( dest ) )
+   if( !isStreamAvail( origin ) || !isStreamAvail( dest ) )
       return OTF_RETURN_OK;
 #endif // VT_UNIFY_REMOVE_UNDEF_PROCID_REFERENCES
 
@@ -1301,7 +1312,7 @@ HandleRMAGet( FirstHandlerArg_EventsS * fha,
    }
 
    // translate local key token(s)
-   HandleKeyValueList( proc, kvs );
+   handleKeyValueList( proc, kvs );
 
    // correct time
    time = theTimeSync->correctTime( proc, time );
@@ -1343,7 +1354,7 @@ HandleRMAEnd( FirstHandlerArg_EventsS * fha,
 
 #ifdef VT_UNIFY_REMOVE_UNDEF_PROCID_REFERENCES
    // drop record, if remote stream isn't available
-   if( !is_stream_avail( remote ) )
+   if( !isStreamAvail( remote ) )
       return OTF_RETURN_OK;
 #endif // VT_UNIFY_REMOVE_UNDEF_PROCID_REFERENCES
 
@@ -1362,7 +1373,7 @@ HandleRMAEnd( FirstHandlerArg_EventsS * fha,
    }
 
    // translate local key token(s)
-   HandleKeyValueList( proc, kvs );
+   handleKeyValueList( proc, kvs );
 
    // correct time
    time = theTimeSync->correctTime( proc, time );
