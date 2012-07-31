@@ -407,16 +407,16 @@ mca_fcoll_two_phase_file_read_all (mca_io_ompio_file_t *fh,
 #endif 
 	
 	
-	ret = ompi_io_ompio_domain_partition(fh,
-					     start_offsets,
-					     end_offsets,
-					     &min_st_offset,
-					     &fd_start,
-					     &fd_end,
-					     domain_size, 
-					     &fd_size,
-					     striping_unit,
-					     mca_fcoll_two_phase_num_io_procs);
+	ret = mca_fcoll_two_phase_domain_partition(fh,
+						   start_offsets,
+						   end_offsets,
+						   &min_st_offset,
+						   &fd_start,
+						   &fd_end,
+						   domain_size, 
+						   &fd_size,
+						   striping_unit,
+						   mca_fcoll_two_phase_num_io_procs);
 	if ( OMPI_SUCCESS != ret ){
 	  goto exit;
 	}
@@ -430,19 +430,19 @@ mca_fcoll_two_phase_file_read_all (mca_io_ompio_file_t *fh,
 #endif
 
 
-	ret = ompi_io_ompio_calc_my_requests (fh,
-					      iov,
-					      local_count,
-					      min_st_offset,
-					      fd_start,
-					      fd_end,
-					      fd_size,
-					      &count_my_req_procs,
-					      &count_my_req_per_proc,
-					      &my_req,
-					      &buf_indices,
-					      striping_unit,
-					      mca_fcoll_two_phase_num_io_procs,
+	ret = mca_fcoll_two_phase_calc_my_requests (fh,
+						    iov,
+						    local_count,
+						    min_st_offset,
+						    fd_start,
+						    fd_end,
+						    fd_size,
+						    &count_my_req_procs,
+						    &count_my_req_per_proc,
+						    &my_req,
+						    &buf_indices,
+						    striping_unit,
+						    mca_fcoll_two_phase_num_io_procs,
 					      aggregator_list);
 	if ( OMPI_SUCCESS != ret ){
 	  goto exit;
@@ -450,12 +450,12 @@ mca_fcoll_two_phase_file_read_all (mca_io_ompio_file_t *fh,
 	
 	
 
-	ret = ompi_io_ompio_calc_others_requests(fh,
-						 count_my_req_procs,
-						 count_my_req_per_proc,
-						 my_req,
-						 &count_other_req_procs,
-						 &others_req);
+	ret = mca_fcoll_two_phase_calc_others_requests(fh,
+						       count_my_req_procs,
+						       count_my_req_per_proc,
+						       my_req,
+						       &count_other_req_procs,
+						       &others_req);
 	if (OMPI_SUCCESS != ret ){
 	  goto exit;
 	}
@@ -1130,16 +1130,16 @@ static int two_phase_fill_user_buffer(mca_io_ompio_file_t *fh,
 
 	while (rem_len != 0) {
 	    len = rem_len;
-	    p = ompi_io_ompio_calc_aggregator(fh,
-					      off,
-					      min_st_offset,
-					      &len,
-					      fd_size,
-					      fd_start,
-					      fd_end,
-					      striping_unit,
-					      mca_fcoll_two_phase_num_io_procs,
-					      aggregator_list);
+	    p = mca_fcoll_two_phase_calc_aggregator(fh,
+						    off,
+						    min_st_offset,
+						    &len,
+						    fd_size,
+						    fd_start,
+						    fd_end,
+						    striping_unit,
+						    mca_fcoll_two_phase_num_io_procs,
+						    aggregator_list);
 
 
 	    if (recv_buf_idx[p] < recv_size[p]) {

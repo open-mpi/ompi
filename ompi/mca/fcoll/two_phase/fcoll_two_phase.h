@@ -81,6 +81,53 @@ int mca_fcoll_two_phase_file_write_all_end (mca_io_ompio_file_t *fh,
                                           void *buf, 
                                           ompi_status_public_t * status);
 
+int mca_fcoll_two_phase_calc_aggregator (mca_io_ompio_file_t *fh,
+					 OMPI_MPI_OFFSET_TYPE off, 
+					 OMPI_MPI_OFFSET_TYPE min_off,
+					 OMPI_MPI_OFFSET_TYPE *len,
+					 OMPI_MPI_OFFSET_TYPE fd_size,
+					 OMPI_MPI_OFFSET_TYPE *fd_start,
+					 OMPI_MPI_OFFSET_TYPE *fd_end,
+					 int striping_unit,
+					 int num_aggregators, 
+					 int *aggregator_list);
+
+int mca_fcoll_two_phase_calc_others_requests(mca_io_ompio_file_t *fh,
+					     int count_my_req_procs,
+					     int *count_my_req_per_proc,
+					     mca_io_ompio_access_array_t *my_req,
+					     int *count_others_req_procs_ptr,
+					     mca_io_ompio_access_array_t **others_req_ptr);
+
+int mca_fcoll_two_phase_calc_my_requests (mca_io_ompio_file_t *fh,
+					  struct iovec *offset_len,
+					  int contig_access_count,
+					  OMPI_MPI_OFFSET_TYPE min_st_offset,
+					  OMPI_MPI_OFFSET_TYPE *fd_start,
+					  OMPI_MPI_OFFSET_TYPE *fd_end,
+					  OMPI_MPI_OFFSET_TYPE fd_size,
+					  int *count_my_req_procs_ptr,
+					  int **count_my_req_per_proc_ptr,
+					  mca_io_ompio_access_array_t **my_req_ptr,
+					  int **buf_indices,
+					  int striping_unit,
+					  int num_aggregators,
+					  int *aggregator_list);
+
+int mca_fcoll_two_phase_domain_partition (mca_io_ompio_file_t *fh,
+					   OMPI_MPI_OFFSET_TYPE *start_offsets,
+					   OMPI_MPI_OFFSET_TYPE *end_offsets,
+					   OMPI_MPI_OFFSET_TYPE *min_st_offset_ptr,
+					   OMPI_MPI_OFFSET_TYPE **fd_st_ptr,
+					   OMPI_MPI_OFFSET_TYPE **fd_end_ptr,
+					   int min_fd_size,
+					   OMPI_MPI_OFFSET_TYPE *fd_size_ptr,
+					   int striping_unit,
+					   int nprocs_for_coll);
+
+
+
+
 END_C_DECLS
 
 #endif /* MCA_FCOLL_TWO_PHASE_EXPORT_H */
