@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2012      Los Alamos National Security, LLC.
+ *                         All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -59,6 +61,7 @@ ORTE_DECLSPEC orte_proc_info_t orte_process_info = {
     /*  .num_restarts =         */   0,
     /*  .my_node_rank =         */   ORTE_NODE_RANK_INVALID,
     /*  .my_local_rank =        */   ORTE_LOCAL_RANK_INVALID,
+    /*  .num_local_peers =      */   0,
     /*  .tmpdir_base =          */   NULL,
     /*  .top_session_dir =      */   NULL,
     /*  .job_session_dir =      */   NULL,

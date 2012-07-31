@@ -104,6 +104,7 @@ struct orte_proc_info_t {
     int32_t num_restarts;               /**< number of times this proc has restarted */
     orte_node_rank_t my_node_rank;      /**< node rank */
     orte_local_rank_t my_local_rank;    /**< local rank */
+    int32_t num_local_peers;            /**< number of procs from my job that share my node with me */
     /* The session directory has the form
      * <prefix>/<openmpi-sessions-user>/<jobid>/<procid>, where the prefix
      * can either be provided by the user via the
