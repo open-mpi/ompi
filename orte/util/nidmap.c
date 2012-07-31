@@ -950,6 +950,10 @@ int orte_util_decode_pidmap(opal_byte_object_t *bo)
                                      "%s orte:util:decode:pidmap proc %s shares node",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                      ORTE_NAME_PRINT(&proc)));
+                /* we share a node, so add them to the count of peers
+                 * sharing the node with me
+                 */
+                orte_process_info.num_local_peers++;
 #if OPAL_HAVE_HWLOC
                 /* retrieve the bind level for the other proc's job */
                 lvptr = &pbind;
