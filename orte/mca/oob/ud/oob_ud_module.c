@@ -354,6 +354,10 @@ int mca_oob_ud_module_init (void)
 
             /* NTH: only supports one port for now */
             found_one = true;
+
+            /* NTH: since we only support one port start monitoring now */
+            mca_oob_ud_event_start_monitor (device);
+
             break;
         }
     }
@@ -361,8 +365,6 @@ int mca_oob_ud_module_init (void)
     if (!found_one) {
         return ORTE_ERR_NOT_FOUND;
     }
-
-    mca_oob_ud_event_start_monitor (device);
 
     return ORTE_SUCCESS;
 }
