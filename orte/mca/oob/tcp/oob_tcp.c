@@ -747,7 +747,7 @@ mca_oob_tcp_create_listen(int *target_sd, unsigned short *target_port, uint16_t 
                  */
                 orte_node_rank_t nrank;
                 /* do I know my node_local_rank yet? */
-                if (ORTE_NODE_RANK_INVALID != (nrank = orte_ess.get_node_rank(ORTE_PROC_MY_NAME)) &&
+                if (ORTE_NODE_RANK_INVALID != (nrank = orte_process_info.my_node_rank) &&
                     (nrank+1) < opal_argv_count(mca_oob_tcp_component.tcp6_static_ports)) {
                     /* any daemon takes the first entry, so we start with the second */
                     opal_argv_append_nosize(&ports, mca_oob_tcp_component.tcp6_static_ports[nrank+1]);
@@ -1717,7 +1717,7 @@ int mca_oob_tcp_resolve(mca_oob_tcp_peer_t* peer)
                     port = strtol(mca_oob_tcp_component.tcp6_static_ports[0], NULL, 10);
                 } else {
                     /* lookup the node rank of the proc */
-                    if (ORTE_NODE_RANK_INVALID == (nrank = orte_ess.get_node_rank(&peer->peer_name)) ||
+                    if (ORTE_NODE_RANK_INVALID == (nrank = orte_get_proc_node_rank(&peer->peer_name)) ||
                         (nrank+1) > opal_argv_count(mca_oob_tcp_component.tcp6_static_ports)) {
                         /* this isn't an error - it just means we don't know
                          * how to compute a contact info for this proc
