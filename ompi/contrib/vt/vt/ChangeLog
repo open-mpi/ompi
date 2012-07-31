@@ -1,5 +1,20 @@
+5.13.1openmpi
+	- updated version of internal OTF to 1.11.2openmpi
+	  (see extlib/otf/ChangeLog)
+	- compiler wrappers:
+		- vtnvcc:
+			- add path to cuda.h to the PDT parser command
+			- exclude *.cu source files from instrumenting with
+			  PDT/TAU; the PDT parser is not (yet) able to handle
+			  CUDA statements and kernels
+	- vtunify[-mpi]:
+		- fixed timestamp boundary check for merging asynchronous
+		  plugin counters
+		- enhanced precision of timestamp conversion from local 
+		  to global 
+
 5.13openmpi
-	- updated version of internal OTF to 1.11.1openmpi
+	- updated version of internal OTF to 1.11.1goldfish
 	  (see extlib/otf/ChangeLog)
 	- added support for highly parallel trace writing using the 
 	  I/O Forwarding Scalability Layer (IOFSL) with atomic append 
