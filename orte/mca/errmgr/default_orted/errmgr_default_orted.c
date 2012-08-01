@@ -282,12 +282,13 @@ static void proc_errors(int fd, short args, void *cbdata)
                 }
             }
         }
-        /* if all my routes and children are gone, then terminate ourselves */
+        /* if all my routes and children are gone, then terminate
+           ourselves nicely (i.e., this is a normal termination) */
         if (0 == orte_routed.num_routes()) {
             OPAL_OUTPUT_VERBOSE((2, orte_errmgr_base.output,
                                  "%s errmgr:default:orted all routes gone - exiting",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-            ORTE_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
+            ORTE_TERMINATE(0);
         } else {
             OPAL_OUTPUT_VERBOSE((2, orte_errmgr_base.output,
                                  "%s errmgr:default:orted not exiting, num_routes() == %d",
