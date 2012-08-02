@@ -104,16 +104,17 @@ orte_ess_base_module_t orte_ess_hnp_module = {
 static bool signals_set=false;
 static bool forcibly_die=false;
 static opal_event_t term_handler;
-static opal_event_t int_handler;
 static opal_event_t epipe_handler;
 #ifndef __WINDOWS__
+static int term_pipe[2];
 static opal_event_t sigusr1_handler;
 static opal_event_t sigusr2_handler;
 static opal_event_t sigtstp_handler;
 static opal_event_t sigcont_handler;
 #endif  /* __WINDOWS__ */
 
-static void abort_signal_callback(int fd, short flags, void *arg);
+static void abort_signal_callback(int signal);
+static void clean_abort(int fd, short flags, void *arg);
 static void epipe_signal_callback(int fd, short flags, void *arg);
 static void signal_forward_callback(int fd, short event, void *arg);
 
@@ -147,10 +148,22 @@ static int rte_init(void)
     setup_sighandler(SIGPIPE, &epipe_handler, epipe_signal_callback);
     /** setup callbacks for abort signals - from this point
      * forward, we need to abort in a manner that allows us
-     * to cleanup
+     * to cleanup. However, we cannot directly use libevent
+     * to trap these signals as otherwise we cannot respond
+     * to them if we are stuck in an event! So instead use
+     * the basic POSIX trap functions to handle the signal,
+     * and then let that signal handler do some magic to
+     * avoid the hang
      */
-    setup_sighandler(SIGTERM, &term_handler, abort_signal_callback);
-    setup_sighandler(SIGINT, &int_handler, abort_signal_callback);
+    pipe(term_pipe);
+    /* setup an event to attempt normal termination on signal */
+    opal_event_set(orte_event_base, &term_handler, term_pipe[0], OPAL_EV_READ, clean_abort, NULL);
+    opal_event_set_priority(&term_handler, ORTE_ERROR_PRI);
+    opal_event_add(&term_handler, NULL);
+    /* point the signal trap to a function that will activate that event */
+    signal(SIGTERM, abort_signal_callback);
+    signal(SIGINT, abort_signal_callback);
+    signal(SIGHUP, abort_signal_callback);
 
     /** setup callbacks for signals we should foward */
     setup_sighandler(SIGUSR1, &sigusr1_handler, signal_forward_callback);
@@ -668,9 +681,6 @@ static int rte_finalize(void)
     if (signals_set) {
         /* Remove the epipe handler */
         opal_event_signal_del(&epipe_handler);
-        /* Remove the TERM and INT signal handlers */
-        opal_event_signal_del(&term_handler);
-        opal_event_signal_del(&int_handler);
 #ifndef __WINDOWS__
         /** Remove the USR signal handlers */
         opal_event_signal_del(&sigusr1_handler);
@@ -733,11 +743,7 @@ static void rte_abort(int status, bool report)
     exit(status);
 }
 
-/*
- * Attempt to terminate the job and wait for callback indicating
- * the job has been aborted.
- */
-static void abort_signal_callback(int fd, short flags, void *arg)
+static void clean_abort(int fd, short flags, void *arg)
 {
     /* if we have already ordered this once, don't keep
      * doing it to avoid race conditions
@@ -786,6 +792,42 @@ static void abort_signal_callback(int fd, short flags, void *arg)
     ORTE_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
 }
 
+static struct timeval current, last={0,0};
+static bool first = true;
+
+/*
+ * Attempt to terminate the job and wait for callback indicating
+ * the job has been aborted.
+ */
+static void abort_signal_callback(int fd)
+{
+    uint8_t foo = 1;
+    char *msg = "Abort is already in progress...hit ctrl-c again within 5 seconds to forcibly terminate\n\n";
+
+    /* if this is the first time thru, just get
+     * the current time
+     */
+    if (first) {
+        first = false;
+        gettimeofday(&current, NULL);
+    } else {
+        /* get the current time */
+        gettimeofday(&current, NULL);
+        /* if this is within 5 seconds of the
+         * last time we were called, then just
+         * exit - we are probably stuck
+         */
+        if ((current.tv_sec - last.tv_sec) < 5) {
+            exit(1);
+        }
+    }
+    /* save the time */
+    last.tv_sec = current.tv_sec;
+    /* tell the event lib to attempt to abnormally terminate */
+    write(term_pipe[1], &foo, 1);
+    write(1, (void*)msg, strlen(msg));
+}
+
 /**
  * Deal with sigpipe errors
  */
@@ -797,7 +839,7 @@ static void epipe_signal_callback(int fd, short flags, void *arg)
     if (10 < sigpipe_error_count) {
         /* time to abort */
         opal_output(0, "%s: SIGPIPE detected on fd %d - aborting", orte_basename, fd);
-        abort_signal_callback(0, 0, NULL);
+        clean_abort(0, 0, NULL);
     }
 
     return;
