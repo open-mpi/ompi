@@ -1,5 +1,7 @@
 /*
  * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2012      Los Alamos National Security, LLC. All rights reserved
+ *
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -51,18 +53,32 @@ static int allocate(opal_list_t *nodes)
     bool use_local_topology = false;
 #endif
     char **node_cnt=NULL;
+    char **slot_cnt=NULL;
+    char **max_slot_cnt=NULL;
+    char *tmp;
     char prefix[6];
 
     node_cnt = opal_argv_split(mca_ras_simulator_component.num_nodes, ',');
+    slot_cnt = opal_argv_split(mca_ras_simulator_component.slots, ',');
+    max_slot_cnt = opal_argv_split(mca_ras_simulator_component.slots_max, ',');
+
+    /* backfill the slot_cnt as reqd so we don't have to
+     * specify slot_cnt for each set of nodes - we'll set
+     * */
+    tmp = slot_cnt[opal_argv_count(slot_cnt)-1];
+    for (n=opal_argv_count(slot_cnt); n < opal_argv_count(node_cnt); n++) {
+        opal_argv_append_nosize(&slot_cnt, tmp);
+    }
+    /* backfill the max_slot_cnt as reqd */
+    tmp = max_slot_cnt[opal_argv_count(slot_cnt)-1];
+    for (n=opal_argv_count(max_slot_cnt); n < opal_argv_count(max_slot_cnt); n++) {
+        opal_argv_append_nosize(&max_slot_cnt, tmp);
+    }
 
 #if OPAL_HAVE_HWLOC
     if (NULL == mca_ras_simulator_component.topofiles) {
         /* use our topology */
         use_local_topology = true;
-        if (1 != opal_argv_count(node_cnt)) {
-            orte_show_help("help-ras-base.txt", "ras-sim:mismatch", true);
-            return ORTE_ERR_SILENT;
-        }
     } else {
         files = opal_argv_split(mca_ras_simulator_component.topofiles, ',');
         if (opal_argv_count(files) != opal_argv_count(node_cnt)) {
@@ -153,11 +169,14 @@ static int allocate(opal_list_t *nodes)
             asprintf(&node->name, "%s%0*d", prefix, dig, i);
             node->state = ORTE_NODE_STATE_UP;
             node->slots_inuse = 0;
-            node->slots_max = mca_ras_simulator_component.slots_max;
-            node->slots = mca_ras_simulator_component.slots;
+            node->slots_max = (NULL == max_slot_cnt[n] ? 0 : atoi(max_slot_cnt[n]));
+            node->slots = (NULL == slot_cnt[n] ? 0 : atoi(slot_cnt[n]));
 #if OPAL_HAVE_HWLOC
             node->topology = topo;
 #endif
+            opal_output_verbose(1, orte_ras_base.ras_output,
+                                "Created Node <%10s> [%3d : %3d]",
+                                node->name, node->slots, node->slots_max);
             opal_list_append(nodes, &node->super);
         }
     }
