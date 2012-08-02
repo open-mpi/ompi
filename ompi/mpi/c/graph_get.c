@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2012      Los Alamos Nat Security, LLC. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -38,7 +39,7 @@ static const char FUNC_NAME[] = "MPI_Graph_get";
 
 
 int MPI_Graph_get(MPI_Comm comm, int maxindx, int maxedges,
-                  int *indx, int *edges) 
+                  int indx[], int edges[]) 
 {
     int err;
     mca_topo_base_module_graph_get_fn_t func;
