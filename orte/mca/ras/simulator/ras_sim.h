@@ -19,8 +19,8 @@ BEGIN_C_DECLS
 struct orte_ras_sim_component_t {
     orte_ras_base_component_t super;
     char *num_nodes;
-    int slots;
-    int slots_max;
+    char * slots;
+    char * slots_max;
     char *topofiles;
     bool have_cpubind;
     bool have_membind;

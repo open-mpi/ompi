@@ -416,7 +416,7 @@ void orte_ras_base_allocate(int fd, short args, void *cbdata)
 
  DISPLAY:
     /* shall we display the results? */
-    if (0 < opal_output_get_verbosity(orte_ras_base.ras_output) || orte_ras_base.display_alloc) {
+    if (4 < opal_output_get_verbosity(orte_ras_base.ras_output) || orte_ras_base.display_alloc) {
         display_alloc();
     }
 

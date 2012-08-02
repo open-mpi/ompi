@@ -101,13 +101,13 @@ static int orte_ras_gridengine_component_query(mca_base_module_t **module, int *
 
     if (NULL != getenv("SGE_ROOT") && NULL != getenv("ARC") && 
         NULL != getenv("PE_HOSTFILE") && NULL != getenv("JOB_ID")) {
-        OPAL_OUTPUT_VERBOSE((1, orte_ras_base.ras_output,
+        OPAL_OUTPUT_VERBOSE((2, orte_ras_base.ras_output,
                              "%s ras:gridengine: available for selection",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
         *module = (mca_base_module_t *) &orte_ras_gridengine_module;
         return ORTE_SUCCESS;
     }
-    OPAL_OUTPUT_VERBOSE((1, orte_ras_base.ras_output,
+    OPAL_OUTPUT_VERBOSE((2, orte_ras_base.ras_output,
                          "%s ras:gridengine: NOT available for selection",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     *module = NULL;
