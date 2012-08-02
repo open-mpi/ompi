@@ -179,7 +179,7 @@ orte_ras_alps_component_query(mca_base_module_t **module,
     }
     if (0 != orte_ras_alps_res_id) {
         mca_base_param_lookup_int(param_priority, priority);
-        opal_output_verbose(1, orte_ras_base.ras_output,
+        opal_output_verbose(2, orte_ras_base.ras_output,
                              "ras:alps: available for selection");
         *module = (mca_base_module_t *) &orte_ras_alps_module;
         return ORTE_SUCCESS;
@@ -198,7 +198,7 @@ int
 orte_ras_alps_get_appinfo_attempts(int *attempts)
 {
     mca_base_param_lookup_int(param_read_attempts, attempts);
-    opal_output_verbose(1, orte_ras_base.ras_output,
+    opal_output_verbose(2, orte_ras_base.ras_output,
                          "ras:alps:orte_ras_alps_get_appinfo_attempts: %d",
                          *attempts);
     return ORTE_SUCCESS;

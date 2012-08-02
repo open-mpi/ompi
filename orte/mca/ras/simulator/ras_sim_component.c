@@ -32,7 +32,7 @@
 /*
  * Local functions
  */
-static int ras_sim_open(void);
+static int ras_sim_register(void);
 static int ras_sim_component_query(mca_base_module_t **module, int *priority);
 
 
@@ -51,9 +51,10 @@ orte_ras_sim_component_t mca_ras_simulator_component = {
             ORTE_RELEASE_VERSION,
         
             /* Component open and close functions */
-            ras_sim_open,
             NULL,
-            ras_sim_component_query
+            NULL,
+            ras_sim_component_query,
+            ras_sim_register
         },
         {
             /* The component is checkpoint ready */
@@ -63,16 +64,16 @@ orte_ras_sim_component_t mca_ras_simulator_component = {
 };
 
 
-static int ras_sim_open(void)
+static int ras_sim_register(void)
 {
-    mca_base_param_reg_int(&mca_ras_simulator_component.super.base_version,
+    mca_base_param_reg_string(&mca_ras_simulator_component.super.base_version,
                            "slots",
-                           "Number of slots on each node to simulate",
-                           false, false, 1, &mca_ras_simulator_component.slots);
-    mca_base_param_reg_int(&mca_ras_simulator_component.super.base_version,
+                           "Comma-separated list of number of slots on each node to simulate",
+                           false, false, "1", &mca_ras_simulator_component.slots);
+    mca_base_param_reg_string(&mca_ras_simulator_component.super.base_version,
                            "max_slots",
-                           "Number of max slots on each node to simulate",
-                           false, false, 0, &mca_ras_simulator_component.slots_max);
+                           "Comma-separated list of number of max slots on each node to simulate",
+                           false, false, "0", &mca_ras_simulator_component.slots_max);
 #if OPAL_HAVE_HWLOC
     {
         int tmp;

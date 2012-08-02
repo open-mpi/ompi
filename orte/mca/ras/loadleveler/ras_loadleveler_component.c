@@ -82,7 +82,7 @@ static int orte_ras_loadleveler_component_query(mca_base_module_t **module, int 
     /* Are we running under a LOADLEVELER job? */
     if (NULL != getenv("LOADL_STEP_ID")) {
         mca_base_param_lookup_int(param_priority, priority);
-        OPAL_OUTPUT_VERBOSE((1, orte_ras_base.ras_output,
+        OPAL_OUTPUT_VERBOSE((2, orte_ras_base.ras_output,
                              "%s ras:loadleveler: available for selection",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
         *module = (mca_base_module_t *) &orte_ras_loadleveler_module;
@@ -90,7 +90,7 @@ static int orte_ras_loadleveler_component_query(mca_base_module_t **module, int 
     }
 
     /* Sadly, no */
-    OPAL_OUTPUT_VERBOSE((1, orte_ras_base.ras_output,
+    OPAL_OUTPUT_VERBOSE((2, orte_ras_base.ras_output,
                          "%s ras:loadleveler: NOT available for selection",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     *module = NULL;
