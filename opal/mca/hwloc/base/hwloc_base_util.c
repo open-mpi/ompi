@@ -240,6 +240,7 @@ static void free_object(hwloc_obj_t obj)
     if (NULL != obj->userdata) {
         data = (opal_hwloc_obj_data_t*)obj->userdata;
         OBJ_RELEASE(data);
+        obj->userdata = NULL;
     }
 
     /* loop thru our children */
@@ -259,6 +260,7 @@ void opal_hwloc_base_free_topology(hwloc_topology_t topo)
     if (NULL != obj->userdata) {
         rdata = (opal_hwloc_topo_data_t*)obj->userdata;
         OBJ_RELEASE(rdata);
+        obj->userdata = NULL;
     }
     /* now recursively descend and release userdata
      * in the rest of the objects

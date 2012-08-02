@@ -333,6 +333,7 @@ static void topo_data_const(opal_hwloc_topo_data_t *ptr)
 {
     ptr->available = NULL;
     OBJ_CONSTRUCT(&ptr->summaries, opal_list_t);
+    ptr->userdata = NULL;
 }
 static void topo_data_dest(opal_hwloc_topo_data_t *ptr)
 {
@@ -345,6 +346,7 @@ static void topo_data_dest(opal_hwloc_topo_data_t *ptr)
         OBJ_RELEASE(item);
     }
     OBJ_DESTRUCT(&ptr->summaries);
+    ptr->userdata = NULL;
 }
 OBJ_CLASS_INSTANCE(opal_hwloc_topo_data_t,
                    opal_object_t,

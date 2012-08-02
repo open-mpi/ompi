@@ -132,6 +132,9 @@ typedef struct {
     opal_object_t super;
     hwloc_cpuset_t available;
     opal_list_t summaries;
+
+    /** \brief Additional space for custom data */
+    void *userdata;
 } opal_hwloc_topo_data_t;
 OBJ_CLASS_DECLARATION(opal_hwloc_topo_data_t);
 
