@@ -13,6 +13,7 @@
  * Copyright (c) 2008-2009 Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2009-2012 Oak Rigde National Laboratory.  All rights reserved.
  * Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
+ * Copyright (c) 2012      Los Alamos Nat Security, LLC. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -1103,11 +1104,11 @@ OMPI_DECLSPEC  int MPI_Bsend_init(void *buf, int count, MPI_Datatype datatype,
 OMPI_DECLSPEC  int MPI_Buffer_attach(void *buffer, int size);
 OMPI_DECLSPEC  int MPI_Buffer_detach(void *buffer, int *size);
 OMPI_DECLSPEC  int MPI_Cancel(MPI_Request *request);
-OMPI_DECLSPEC  int MPI_Cart_coords(MPI_Comm comm, int rank, int maxdims, int *coords);
+OMPI_DECLSPEC  int MPI_Cart_coords(MPI_Comm comm, int rank, int maxdims, int coords[]);
 OMPI_DECLSPEC  int MPI_Cart_create(MPI_Comm old_comm, int ndims, int *dims,
                                    int *periods, int reorder, MPI_Comm *comm_cart);
-OMPI_DECLSPEC  int MPI_Cart_get(MPI_Comm comm, int maxdims, int *dims,
-                                int *periods, int *coords);
+OMPI_DECLSPEC  int MPI_Cart_get(MPI_Comm comm, int maxdims, int dims[],
+                                int periods[], int coords[]);
 OMPI_DECLSPEC  int MPI_Cart_map(MPI_Comm comm, int ndims, int *dims,
                                 int *periods, int *newrank);
 OMPI_DECLSPEC  int MPI_Cart_rank(MPI_Comm comm, int *coords, int *rank);
@@ -1294,12 +1295,12 @@ OMPI_DECLSPEC  int MPI_Get_version(int *version, int *subversion);
 OMPI_DECLSPEC  int MPI_Graph_create(MPI_Comm comm_old, int nnodes, int *index,
                                     int *edges, int reorder, MPI_Comm *comm_graph);
 OMPI_DECLSPEC  int MPI_Graph_get(MPI_Comm comm, int maxindex, int maxedges,
-                                 int *index, int *edges);
+                                 int index[], int edges[]);
 OMPI_DECLSPEC  int MPI_Graph_map(MPI_Comm comm, int nnodes, int *index, int *edges,
                                  int *newrank);
 OMPI_DECLSPEC  int MPI_Graph_neighbors_count(MPI_Comm comm, int rank, int *nneighbors);
 OMPI_DECLSPEC  int MPI_Graph_neighbors(MPI_Comm comm, int rank, int maxneighbors,
-                                       int *neighbors);
+                                       int neighbors[]);
 OMPI_DECLSPEC  int MPI_Graphdims_get(MPI_Comm comm, int *nnodes, int *nedges);
 OMPI_DECLSPEC  int MPI_Grequest_complete(MPI_Request request);
 OMPI_DECLSPEC  int MPI_Grequest_start(MPI_Grequest_query_function *query_fn,
@@ -1310,11 +1311,11 @@ OMPI_DECLSPEC  MPI_Fint MPI_Group_c2f(MPI_Group group);
 OMPI_DECLSPEC  int MPI_Group_compare(MPI_Group group1, MPI_Group group2, int *result);
 OMPI_DECLSPEC  int MPI_Group_difference(MPI_Group group1, MPI_Group group2,
                                         MPI_Group *newgroup);
-OMPI_DECLSPEC  int MPI_Group_excl(MPI_Group group, int n, int *ranks,
+OMPI_DECLSPEC  int MPI_Group_excl(MPI_Group group, int n, int ranks[],
                                   MPI_Group *newgroup);
 OMPI_DECLSPEC  MPI_Group MPI_Group_f2c(MPI_Fint group);
 OMPI_DECLSPEC  int MPI_Group_free(MPI_Group *group);
-OMPI_DECLSPEC  int MPI_Group_incl(MPI_Group group, int n, int *ranks,
+OMPI_DECLSPEC  int MPI_Group_incl(MPI_Group group, int n, int ranks[],
                                   MPI_Group *newgroup);
 OMPI_DECLSPEC  int MPI_Group_intersection(MPI_Group group1, MPI_Group group2,
                                           MPI_Group *newgroup);
@@ -1324,8 +1325,8 @@ OMPI_DECLSPEC  int MPI_Group_range_incl(MPI_Group group, int n, int ranges[][3],
                                         MPI_Group *newgroup);
 OMPI_DECLSPEC  int MPI_Group_rank(MPI_Group group, int *rank);
 OMPI_DECLSPEC  int MPI_Group_size(MPI_Group group, int *size);
-OMPI_DECLSPEC  int MPI_Group_translate_ranks(MPI_Group group1, int n, int *ranks1,
-                                             MPI_Group group2, int *ranks2);
+OMPI_DECLSPEC  int MPI_Group_translate_ranks(MPI_Group group1, int n, int ranks1[],
+                                             MPI_Group group2, int ranks2[]);
 OMPI_DECLSPEC  int MPI_Group_union(MPI_Group group1, MPI_Group group2,
                                    MPI_Group *newgroup);
 OMPI_DECLSPEC  int MPI_Ibsend(void *buf, int count, MPI_Datatype datatype, int dest,
