@@ -764,6 +764,8 @@ static void clean_abort(int fd, short flags, void *arg)
         }
         fprintf(stderr, "%s: abort is already in progress...hit ctrl-c again to forcibly terminate\n\n", orte_basename);
         forcibly_die = true;
+        /* reset the event */
+        opal_event_add(&term_handler, NULL);
         return;
     }
 
@@ -790,6 +792,9 @@ static void clean_abort(int fd, short flags, void *arg)
        Instead, we have to exit this handler and setup to call
        job_completed() after this. */
     ORTE_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
+
+    /* reset the event */
+    opal_event_add(&term_handler, NULL);
 }
 
 static struct timeval current, last={0,0};
@@ -802,7 +807,7 @@ static bool first = true;
 static void abort_signal_callback(int fd)
 {
     uint8_t foo = 1;
-    char *msg = "Abort is already in progress...hit ctrl-c again within 5 seconds to forcibly terminate\n\n";
+    char *msg = "Abort is in progress...hit ctrl-c again within 5 seconds to forcibly terminate\n\n";
 
     /* if this is the first time thru, just get
      * the current time
@@ -820,12 +825,12 @@ static void abort_signal_callback(int fd)
         if ((current.tv_sec - last.tv_sec) < 5) {
             exit(1);
         }
+    write(1, (void*)msg, strlen(msg));
     }
     /* save the time */
     last.tv_sec = current.tv_sec;
     /* tell the event lib to attempt to abnormally terminate */
     write(term_pipe[1], &foo, 1);
-    write(1, (void*)msg, strlen(msg));
 }
 
 /**
