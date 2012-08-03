@@ -50,7 +50,6 @@ int orte_rmaps_rr_byslot(orte_job_t *jdata,
 #endif
     float balance;
     bool add_one=false;
-    bool oversubscribed = false;
 
     opal_output_verbose(2, orte_rmaps_base.rmaps_output,
                         "mca:rmaps:rr: mapping by slot for job %s slots %d num_procs %lu",
@@ -63,7 +62,6 @@ int orte_rmaps_rr_byslot(orte_job_t *jdata,
                            true, app->num_procs, app->app);
             return ORTE_ERR_SILENT;
         }
-        oversubscribed = true;
     }
 
     /* first pass: map the number of procs to each node until we
@@ -218,8 +216,8 @@ int orte_rmaps_rr_bynode(orte_job_t *jdata,
     bool oversubscribed=false;
 
     opal_output_verbose(2, orte_rmaps_base.rmaps_output,
-                        "mca:rmaps:rr: mapping by node for job %s slots %d num_procs %lu",
-                        ORTE_JOBID_PRINT(jdata->jobid),
+                        "mca:rmaps:rr: mapping by node for job %s app %d slots %d num_procs %lu",
+                        ORTE_JOBID_PRINT(jdata->jobid), (int)app->idx,
                         (int)num_slots, (unsigned long)num_procs);
 
     /* quick check to see if we can map all the procs */
@@ -350,6 +348,36 @@ int orte_rmaps_rr_bynode(orte_job_t *jdata,
             proc->locale = obj;
 #endif
         }
+        /* not all nodes are equal, so only set oversubscribed for
+         * this node if it is in that state
+         */
+        if (node->slots_alloc < (int)node->num_procs) {
+            /* flag the node as oversubscribed so that sched-yield gets
+             * properly set
+             */
+            node->oversubscribed = true;
+        }
+        if (nprocs_mapped == app->num_procs) {
+            /* we are done */
+            break;
+        }
+    }
+
+    /* if we have some remaining lag, then put one/node until
+     * all are assigned
+     */
+    for (item = opal_list_get_first(node_list);
+         0 < lag && item != opal_list_get_end(node_list);
+         item = opal_list_get_next(item)) {
+        node = (orte_node_t*)item;
+        if (NULL == (proc = orte_rmaps_base_setup_proc(jdata, node, app->idx))) {
+            return ORTE_ERR_OUT_OF_RESOURCE;
+        }
+        nprocs_mapped++;
+        lag--;
+#if OPAL_HAVE_HWLOC
+        proc->locale = obj;
+#endif
         /* not all nodes are equal, so only set oversubscribed for
          * this node if it is in that state
          */
