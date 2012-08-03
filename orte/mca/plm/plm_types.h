@@ -99,18 +99,20 @@ typedef int32_t orte_job_state_t;
 #define ORTE_JOB_STATE_INIT                      1  /* ready to be assigned id */
 #define ORTE_JOB_STATE_INIT_COMPLETE             2  /* jobid assigned and setup */
 #define ORTE_JOB_STATE_ALLOCATE                  3  /* ready to be allocated */
-#define ORTE_JOB_STATE_MAP                       4  /* ready to be mapped */
-#define ORTE_JOB_STATE_SYSTEM_PREP               5  /* ready for final sanity check and system values updated */
-#define ORTE_JOB_STATE_LAUNCH_DAEMONS            6  /* ready to launch daemons */
-#define ORTE_JOB_STATE_DAEMONS_LAUNCHED          7  /* daemons for this job have been launched */
-#define ORTE_JOB_STATE_DAEMONS_REPORTED          8  /* all launched daemons have reported */
-#define ORTE_JOB_STATE_VM_READY                  9  /* the VM is ready for operation */
-#define ORTE_JOB_STATE_LAUNCH_APPS              10  /* ready to launch apps */
-#define ORTE_JOB_STATE_RUNNING                  11  /* all procs have been fork'd */
-#define ORTE_JOB_STATE_SUSPENDED                12  /* job has been suspended */
-#define ORTE_JOB_STATE_REGISTERED               13  /* all procs registered for sync */
-#define ORTE_JOB_STATE_READY_FOR_DEBUGGERS      14  /* job ready for debugger init after spawn */
-#define ORTE_JOB_STATE_LOCAL_LAUNCH_COMPLETE    15  /* all local procs have attempted launch */
+#define ORTE_JOB_STATE_ALLOCATION_COMPLETE       4  /* allocation completed */
+#define ORTE_JOB_STATE_MAP                       5  /* ready to be mapped */
+#define ORTE_JOB_STATE_MAP_COMPLETE              6  /* mapping complete */
+#define ORTE_JOB_STATE_SYSTEM_PREP               7  /* ready for final sanity check and system values updated */
+#define ORTE_JOB_STATE_LAUNCH_DAEMONS            8  /* ready to launch daemons */
+#define ORTE_JOB_STATE_DAEMONS_LAUNCHED          9  /* daemons for this job have been launched */
+#define ORTE_JOB_STATE_DAEMONS_REPORTED         10  /* all launched daemons have reported */
+#define ORTE_JOB_STATE_VM_READY                 11  /* the VM is ready for operation */
+#define ORTE_JOB_STATE_LAUNCH_APPS              12  /* ready to launch apps */
+#define ORTE_JOB_STATE_RUNNING                  13  /* all procs have been fork'd */
+#define ORTE_JOB_STATE_SUSPENDED                14  /* job has been suspended */
+#define ORTE_JOB_STATE_REGISTERED               15  /* all procs registered for sync */
+#define ORTE_JOB_STATE_READY_FOR_DEBUGGERS      16  /* job ready for debugger init after spawn */
+#define ORTE_JOB_STATE_LOCAL_LAUNCH_COMPLETE    17  /* all local procs have attempted launch */
 
 /*
  * Define a "boundary" so we can easily and quickly determine

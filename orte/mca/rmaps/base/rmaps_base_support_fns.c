@@ -129,10 +129,17 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
     orte_std_cntr_t num_slots;
     orte_std_cntr_t i;
     int rc;
+    orte_job_t *daemons;
+    bool novm;
 
     /** set default answer */
     *total_num_slots = 0;
     
+    /* get the daemon job object */
+    daemons = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid);
+    /* see is we have a vm or not */
+    novm = ORTE_JOB_CONTROL_NO_VM & daemons->controls;
+
     /* if the hnp was allocated, include it unless flagged not to */
     if (orte_hnp_is_allocated && !(ORTE_GET_MAPPING_DIRECTIVE(policy) & ORTE_MAPPING_NO_USE_LOCAL)) {
         if (NULL != (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, 0))) {
@@ -180,8 +187,10 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
                 /* not to be used */
                 continue;
             }
-            /* if this node wasn't included in the vm (e.g., by -host), ignore it */
-            if (NULL == node->daemon) {
+            /* if this node wasn't included in the vm (e.g., by -host), ignore it,
+             * unless we are mapping prior to launching the vm
+             */
+            if (NULL == node->daemon && !novm) {
                 continue;
             }
             /* retain a copy for our use in case the item gets
@@ -195,7 +204,8 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
                  */
                 node->mapped = false;
             }
-            if (NULL == nd || nd->daemon->name.vpid < node->daemon->name.vpid) {
+            if (NULL == nd || NULL == nd->daemon ||
+                nd->daemon->name.vpid < node->daemon->name.vpid) {
                 /* just append to end */
                 opal_list_append(allocated_nodes, &node->super);
                 nd = node;

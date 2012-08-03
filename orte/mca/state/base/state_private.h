@@ -79,6 +79,13 @@ ORTE_DECLSPEC int orte_state_base_remove_proc_state(orte_proc_state_t state);
 
 ORTE_DECLSPEC void orte_util_print_proc_state_machine(void);
 
+/* common state processing functions */
+ORTE_DECLSPEC void orte_state_base_local_launch_complete(int fd, short argc, void *cbdata);
+ORTE_DECLSPEC void orte_state_base_cleanup_job(int fd, short argc, void *cbdata);
+ORTE_DECLSPEC void orte_state_base_report_progress(int fd, short argc, void *cbdata);
+ORTE_DECLSPEC void orte_state_base_track_procs(int fd, short argc, void *cbdata);
+ORTE_DECLSPEC void orte_state_base_check_all_complete(int fd, short args, void *cbdata);
+
 
 END_C_DECLS
 #endif

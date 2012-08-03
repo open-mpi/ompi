@@ -207,8 +207,12 @@ const char *orte_job_state_to_str(orte_job_state_t state)
         return "INIT_COMPLETE";
     case ORTE_JOB_STATE_ALLOCATE:
         return "PENDING ALLOCATION";
+    case ORTE_JOB_STATE_ALLOCATION_COMPLETE:
+        return "ALLOCATION COMPLETE";
     case ORTE_JOB_STATE_MAP:
         return "PENDING MAPPING";
+    case ORTE_JOB_STATE_MAP_COMPLETE:
+        return "MAP COMPLETE";
     case ORTE_JOB_STATE_SYSTEM_PREP:
         return "PENDING FINAL SYSTEM PREP";
     case ORTE_JOB_STATE_LAUNCH_DAEMONS:

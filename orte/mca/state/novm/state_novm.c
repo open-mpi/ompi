@@ -33,7 +33,7 @@
 #include "orte/mca/state/state.h"
 #include "orte/mca/state/base/base.h"
 #include "orte/mca/state/base/state_private.h"
-#include "state_hnp.h"
+#include "state_novm.h"
 
 /*
  * Module functions: Global
@@ -42,12 +42,12 @@ static int init(void);
 static int finalize(void);
 
 /******************
- * HNP module - just uses base functions after
+ * NOVM module - just uses base functions after
  * initializing the proc state machine. Job state
- * machine is unused by hnplication procs at this
+ * machine is unused by application procs at this
  * time.
  ******************/
-orte_state_base_module_t orte_state_hnp_module = {
+orte_state_base_module_t orte_state_novm_module = {
     init,
     finalize,
     orte_state_base_activate_job_state,
@@ -62,7 +62,11 @@ orte_state_base_module_t orte_state_hnp_module = {
     orte_state_base_remove_proc_state
 };
 
-/* defined default state machine sequence - individual
+static void allocation_complete(int fd, short args, void *cbdata);
+static void map_complete(int fd, short args, void *cbdata);
+static void vm_ready(int fd, short args, void *cbdata);
+
+/* defined state machine sequence for no VM - individual
  * plm's must add a state for launching daemons
  */
 static orte_job_state_t launch_states[] = {
@@ -90,12 +94,12 @@ static orte_state_cbfunc_t launch_callbacks[] = {
     orte_plm_base_setup_job,
     orte_plm_base_setup_job_complete,
     orte_ras_base_allocate,
-    orte_plm_base_allocation_complete,
+    allocation_complete,
     orte_plm_base_daemons_launched,
     orte_plm_base_daemons_reported,
-    orte_plm_base_vm_ready,
+    vm_ready,
     orte_rmaps_base_map_job,
-    orte_plm_base_mapping_complete,
+    map_complete,
     orte_plm_base_complete_setup,
     orte_plm_base_launch_apps,
     orte_state_base_local_launch_complete,
@@ -186,4 +190,79 @@ static int finalize(void)
     OBJ_DESTRUCT(&orte_proc_states);
 
     return ORTE_SUCCESS;
+}
+
+/* after we allocate, we need to map the processes
+ * so we know what nodes will be used
+ */
+static void allocation_complete(int fd, short args, void *cbdata)
+{
+    orte_state_caddy_t *state = (orte_state_caddy_t*)cbdata;
+    orte_job_t *jdata = state->jdata;
+    orte_job_t *daemons;
+
+    jdata->state = ORTE_JOB_STATE_ALLOCATION_COMPLETE;
+
+    /* get the daemon job object */
+    if (NULL == (daemons = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid))) {
+        ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+        ORTE_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
+        goto done;
+    }
+    /* mark that we are not using a VM */
+    daemons->controls |= ORTE_JOB_CONTROL_NO_VM;
+
+#if OPAL_HAVE_HWLOC
+    {
+        hwloc_topology_t t;
+        orte_node_t *node;
+        int i;
+
+        /* ensure that all nodes point to our topology - we
+         * cannot support hetero nodes with this state machine
+         */
+        t = (hwloc_topology_t)opal_pointer_array_get_item(orte_node_topologies, 0);
+        for (i=1; i < orte_node_pool->size; i++) {
+            if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, i))) {
+                continue;
+            }
+            node->topology = t;
+        }
+    }
+#endif
+    
+    /* move to the map stage */
+    ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_MAP);
+
+ done:
+    /* cleanup */
+    OBJ_RELEASE(state);
+}
+
+/* after we map, we are ready to launch the daemons */
+static void map_complete(int fd, short args, void *cbdata)
+{
+    orte_state_caddy_t *state = (orte_state_caddy_t*)cbdata;
+    orte_job_t *jdata = state->jdata;
+
+    jdata->state = ORTE_JOB_STATE_MAP_COMPLETE;
+    /* move to the map stage */
+    ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_LAUNCH_DAEMONS);
+
+    /* cleanup */
+    OBJ_RELEASE(state);
+}
+
+static void vm_ready(int fd, short args, void *cbdata)
+{
+    orte_state_caddy_t *state = (orte_state_caddy_t*)cbdata;
+    orte_job_t *jdata = state->jdata;
+
+    /* now that the daemons are launched, we are ready
+     * to roll
+     */
+    jdata->state = ORTE_JOB_STATE_VM_READY;
+    ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_SYSTEM_PREP);
+
+    OBJ_RELEASE(state);
 }
