@@ -11,8 +11,8 @@
 .nf
 #include <mpi.h>
 int MPI_Allgatherv(void\fI *sendbuf\fP, int\fI sendcount\fP,
-	MPI_Datatype\fI sendtype\fP, void\fI *recvbuf\fP, int\fI *recvcount\fP,
-	int\fI *displs\fP, MPI_Datatype\fI recvtype\fP, MPI_Comm\fI comm\fP)
+	MPI_Datatype\fI sendtype\fP, void\fI *recvbuf\fP, int\fI recvcounts[]\fP,
+	int\fI displs[]\fP, MPI_Datatype\fI recvtype\fP, MPI_Comm\fI comm\fP)
 
 .fi
 .SH Fortran Syntax

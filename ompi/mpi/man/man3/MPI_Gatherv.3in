@@ -11,7 +11,7 @@
 .nf
 #include <mpi.h>
 int MPI_Gatherv(void *\fIsendbuf\fP, int\fI sendcount\fP, MPI_Datatype\fI sendtype\fP,
-	void\fI *recvbuf\fP, int\fI *recvcounts\fP, int\fI *displs\fP, MPI_Datatype\fI recvtype\fP,
+	void\fI *recvbuf\fP, int\fI recvcounts[]\fP, int\fI displs[]\fP, MPI_Datatype\fI recvtype\fP,
 	int \fIroot\fP, MPI_Comm\fI comm\fP)
 
 .fi

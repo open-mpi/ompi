@@ -10,7 +10,7 @@
 .SH C Syntax
 .nf
 #include <mpi.h>
-int MPI_Scatterv(void *\fIsendbuf\fP, int\fI *sendcounts\fP, int\fI *displs\fP,
+int MPI_Scatterv(void *\fIsendbuf\fP, int\fI sendcounts[]\fP, int\fI displs[]\fP,
 	MPI_Datatype\fI sendtype\fP, void\fI *recvbuf\fP, int\fI recvcount\fP,
 	MPI_Datatype\fI recvtype\fP, int\fI root\fP, MPI_Comm\fI comm\fP)
 

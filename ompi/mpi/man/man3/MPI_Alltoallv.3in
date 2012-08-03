@@ -11,10 +11,10 @@
 .SH C Syntax
 .nf
 #include <mpi.h>
-int MPI_Alltoallv(void *\fIsendbuf\fP, int *\fIsendcounts\fP,
-	int *\fIsdispls\fP, MPI_Datatype \fIsendtype\fP,
-	void *\fIrecvbuf\fP, int\fI *recvcounts\fP,
-	int *\fIrdispls\fP, MPI_Datatype \fIrecvtype\fP, MPI_Comm \fIcomm\fP)
+int MPI_Alltoallv(void *\fIsendbuf\fP, int \fIsendcounts\fP[],
+	int \fIsdispls\f[]P, MPI_Datatype \fIsendtype\fP,
+	void *\fIrecvbuf\fP, int\fI recvcounts\fP[],
+	int \fIrdispls\fP[], MPI_Datatype \fIrecvtype\fP, MPI_Comm \fIcomm\fP)
 
 .fi
 .SH Fortran Syntax

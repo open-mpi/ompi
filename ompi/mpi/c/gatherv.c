@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2012      Los Alamos National Security, LLC.  All rights
+ *                         reserved. 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -38,7 +40,7 @@ static const char FUNC_NAME[] = "MPI_Gatherv";
 
 
 int MPI_Gatherv(void *sendbuf, int sendcount, MPI_Datatype sendtype,
-                void *recvbuf, int *recvcounts, int *displs,
+                void *recvbuf, int recvcounts[], int displs[],
                 MPI_Datatype recvtype, int root, MPI_Comm comm) 
 {
     int i, size, err;

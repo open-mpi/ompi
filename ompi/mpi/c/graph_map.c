@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2012      Los Alamos National Security, LLC.  All rights
+ *                         reserved. 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -37,7 +39,7 @@
 static const char FUNC_NAME[] = "MPI_Graph_map";
 
 
-int MPI_Graph_map(MPI_Comm comm, int nnodes, int *indx, int *edges,
+int MPI_Graph_map(MPI_Comm comm, int nnodes, int indx[], int edges[],
                   int *newrank) 
 {
     int err;
