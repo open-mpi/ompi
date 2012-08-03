@@ -408,14 +408,16 @@ int orte_rmaps_base_compute_vpids(orte_job_t *jdata,
     orte_proc_t *proc;
     int rc;
     opal_list_item_t *item;
+    bool one_found;
 
     map = jdata->map;
 
     if (ORTE_RANK_BY_NODE == ORTE_GET_RANKING_POLICY(map->ranking) ||
         ORTE_RANK_BY_BOARD == ORTE_GET_RANKING_POLICY(map->ranking)) {
         opal_output_verbose(5, orte_rmaps_base.rmaps_output,
-                            "mca:rmaps:base: computing vpids by node for job %s",
-                            ORTE_JOBID_PRINT(jdata->jobid));
+                            "mca:rmaps:base: computing vpids by node for job %s app %d on %d nodes",
+                            ORTE_JOBID_PRINT(jdata->jobid), (int)app->idx,
+                            (int)opal_list_get_size(nodes));
         /* bozo check */
         if (0 == opal_list_get_size(nodes)) {
             ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
@@ -426,7 +428,9 @@ int orte_rmaps_base_compute_vpids(orte_job_t *jdata,
          */
         cnt=0;
         vpid=jdata->num_procs;
-        while (cnt < app->num_procs) {
+        one_found = true;
+        while (cnt < app->num_procs && one_found) {
+            one_found = false;
             for (item = opal_list_get_first(nodes);
                  item != opal_list_get_end(nodes);
                  item = opal_list_get_next(item)) {
@@ -456,6 +460,7 @@ int orte_rmaps_base_compute_vpids(orte_job_t *jdata,
                         return rc;
                     }
                     cnt++;
+                    one_found = true;
                     /* track where the highest vpid landed - this is our
                      * new bookmark
                      */
@@ -463,6 +468,9 @@ int orte_rmaps_base_compute_vpids(orte_job_t *jdata,
                     break;  /* move on to next node */
                 }                
             }
+        }
+        if (cnt < app->num_procs) {
+            return ORTE_ERR_FATAL;
         }
         return ORTE_SUCCESS;
     }
