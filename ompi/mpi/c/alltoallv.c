@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2012      Los Alamos National Security, LLC.  All rights
+ *                         reserved. 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -38,9 +40,9 @@
 static const char FUNC_NAME[] = "MPI_Alltoallv";
 
 
-int MPI_Alltoallv(void *sendbuf, int *sendcounts, int *sdispls,
+int MPI_Alltoallv(void *sendbuf, int sendcounts[], int sdispls[],
                   MPI_Datatype sendtype, 
-                  void *recvbuf, int *recvcounts, int *rdispls, 
+                  void *recvbuf, int recvcounts[], int rdispls[], 
                   MPI_Datatype recvtype, MPI_Comm comm) 
 {
     int i, size, err;

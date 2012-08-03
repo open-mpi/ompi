@@ -11,6 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2010      University of Houston.  All rights reserved.
  * Copyright (c) 2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2012      Los Alamos National Security, LLC.  All rights
+ *                         reserved. 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -40,8 +42,8 @@ static const char FUNC_NAME[] = "MPI_Iallgatherv";
 
 
 int MPI_Iallgatherv(void *sendbuf, int sendcount, MPI_Datatype sendtype,
-                   void *recvbuf, int *recvcounts,
-                   int *displs, MPI_Datatype recvtype, MPI_Comm comm, MPI_Request *request) 
+                   void *recvbuf, int recvcounts[],
+                   int displs[], MPI_Datatype recvtype, MPI_Comm comm, MPI_Request *request) 
 {
     int i, size, err;
 

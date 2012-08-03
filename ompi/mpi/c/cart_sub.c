@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2012      Los Alamos National Security, LLC.  All rights
+ *                         reserved. 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -37,7 +39,7 @@
 static const char FUNC_NAME[] = "MPI_Cart_sub";
 
 
-int MPI_Cart_sub(MPI_Comm comm, int *remain_dims, MPI_Comm *new_comm) 
+int MPI_Cart_sub(MPI_Comm comm, int remain_dims[], MPI_Comm *new_comm) 
 {
     int err;
     mca_topo_base_module_cart_sub_fn_t func;

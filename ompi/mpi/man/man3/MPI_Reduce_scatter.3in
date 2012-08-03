@@ -10,7 +10,7 @@
 .SH C Syntax
 .nf
 #include <mpi.h>
-int MPI_Reduce_scatter(void *\fIsendbuf\fP, void\fI *recvbuf\fP, int\fI *recvcounts\fP,
+int MPI_Reduce_scatter(void *\fIsendbuf\fP, void\fI *recvbuf\fP, int\fI recvcounts\fP[],
 	MPI_Datatype\fI datatype\fP, MPI_Op\fI op\fP, MPI_Comm\fI comm\fP)        
 
 .fi

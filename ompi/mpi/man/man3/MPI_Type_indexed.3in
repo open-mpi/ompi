@@ -10,8 +10,8 @@
 .SH C Syntax
 .nf
 #include <mpi.h>
-int MPI_Type_indexed(int \fIcount\fP, int\fI *array_of_blocklengths\fP,
-	int\fI *array_of_displacements\fP, MPI_Datatype\fI oldtype\fP,
+int MPI_Type_indexed(int \fIcount\fP, int\fI array_of_blocklengths[]\fP,
+	int\fI array_of_displacements[]\fP, MPI_Datatype\fI oldtype\fP,
 	MPI_Datatype\fI *newtype\fP)
 
 .fi
