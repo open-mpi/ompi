@@ -302,7 +302,7 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
         }
     }
     /* set the job state to the next position */
-    ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_SYSTEM_PREP);
+    ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_MAP_COMPLETE);
 
     /* cleanup */
     OBJ_RELEASE(caddy);
