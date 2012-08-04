@@ -525,6 +525,16 @@ int orte_rmaps_rr_byobj(orte_job_t *jdata,
         nobjs = opal_hwloc_base_get_nbobjs_by_type(node->topology, target, cache_level, OPAL_HWLOC_AVAILABLE);
         opal_output_verbose(2, orte_rmaps_base.rmaps_output,
                             "mca:rmaps:rr:byobj: found %d objs on node %s", nobjs, node->name);
+        /* if there are no objects of this type, then report the error
+         * and abort - this can happen, for example, on systems that
+         * don't report "sockets" as an independent object
+         */
+        if (0 == nobjs) {
+            orte_show_help("help-orte-rmaps-base.txt", "orte-rmaps-base:no-objects",
+                           true,  hwloc_obj_type_string(target), node->name);
+            return ORTE_ERR_SILENT;
+        }
+
         /* compute the number of procs to go on each object */
         nperobj = num_procs_to_assign / nobjs;
         opal_output_verbose(2, orte_rmaps_base.rmaps_output,

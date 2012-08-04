@@ -196,3 +196,11 @@ was detected to be missing a daemon:
 This usually indicates a mismatch between what the
 allocation provided for the node name versus what was
 actually found on the node.
+#
+[orte-rmaps-base:no-objects]
+No objects of the specified type were found on at least one node:
+
+  Type: %s
+  Node: %s
+
+The map cannot be done as specified.
