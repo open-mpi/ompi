@@ -370,16 +370,25 @@ static opal_cmd_line_init_t cmd_line_init[] = {
     { "rmaps", "base", "mapping_policy", '\0', NULL, "map-by", 1,
       NULL, OPAL_CMD_LINE_TYPE_STRING,
       "Mapping Policy [slot (default) | hwthread | core | socket | numa | board | node]" },
+    { "rmaps", "base", "mapping_policy", '\0', NULL, "map-to", 1,
+      NULL, OPAL_CMD_LINE_TYPE_STRING,
+      "Synonym for map-by" },
 
       /* Ranking options */
     { "rmaps", "base", "ranking_policy", '\0', NULL, "rank-by", 1,
       NULL, OPAL_CMD_LINE_TYPE_STRING,
       "Ranking Policy [slot (default) | hwthread | core | socket | numa | board | node]" },
+    { "rmaps", "base", "ranking_policy", '\0', NULL, "rank-to", 1,
+      NULL, OPAL_CMD_LINE_TYPE_STRING,
+      "Synonym for rank-by" },
 
       /* Binding options */
     { "hwloc", "base", "binding_policy", '\0', NULL, "bind-to", 1,
       NULL, OPAL_CMD_LINE_TYPE_STRING,
       "Policy for binding processes [none (default) | hwthread | core | socket | numa | board] (supported qualifiers: overload-allowed,if-supported)" },
+    { "hwloc", "base", "binding_policy", '\0', NULL, "bind-by", 1,
+      NULL, OPAL_CMD_LINE_TYPE_STRING,
+      "Synonym for bind-to" },
 
     /* backward compatiblity */
     { "hwloc", "base", "bind_to_core", '\0', "bind-to-core", "bind-to-core", 0,
