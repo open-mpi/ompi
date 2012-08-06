@@ -99,7 +99,7 @@ static int ompi_mtl_mxm_component_open(void)
         return OPAL_ERR_NOT_AVAILABLE;
     }
 
-#if MXM_API >= 0x01010000
+#if MXM_API >= MXM_VERSION(1,5)
 {
     int rc;
 
@@ -129,7 +129,7 @@ static int ompi_mtl_mxm_component_close(void)
     mxm_cleanup(ompi_mtl_mxm.mxm_context);
     ompi_mtl_mxm.mxm_context = NULL;
 
-#if MXM_API >= 0x01010000
+#if MXM_API >= MXM_VERSION(1,5)
     OBJ_DESTRUCT(&mca_mtl_mxm_component.mxm_messages);
 #endif
 

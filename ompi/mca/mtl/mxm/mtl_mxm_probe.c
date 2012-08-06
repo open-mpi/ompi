@@ -51,7 +51,7 @@ int ompi_mtl_mxm_improbe(struct mca_mtl_base_module_t *mtl,
                          struct ompi_message_t **message,
                          struct ompi_status_public_t *status)
 {
-#if MXM_API >= 0x01010000
+#if MXM_API >= MXM_VERSION(1,5)
     int rc;
     mxm_error_t err;
     mxm_recv_req_t req;
