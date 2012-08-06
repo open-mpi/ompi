@@ -28,6 +28,10 @@
 
 BEGIN_C_DECLS
 
+#ifndef MXM_VERSION
+#define MXM_VERSION(major, minor) (((major)<<MXM_MAJOR_BIT)|((minor)<<MXM_MINOR_BIT))
+#endif
+
 /* MTL interface functions */
 extern int ompi_mtl_mxm_add_procs(struct mca_mtl_base_module_t* mtl,
                                   size_t nprocs, struct ompi_proc_t** procs,
@@ -84,7 +88,7 @@ extern int ompi_mtl_mxm_finalize(struct mca_mtl_base_module_t* mtl);
 
 int ompi_mtl_mxm_module_init(void);
 
-#if MXM_API >= 0x01010000
+#if MXM_API >= MXM_VERSION(1,5)
 struct ompi_mtl_mxm_message_t {
     ompi_free_list_item_t super;
 

@@ -102,7 +102,7 @@ int ompi_mtl_mxm_imrecv(struct mca_mtl_base_module_t* mtl,
                         struct ompi_message_t **message,
                         struct mca_mtl_request_t *mtl_request)
 {
-#if MXM_API >= 0x01010000
+#if MXM_API >= MXM_VERSION(1,5)
     int ret;
     mxm_error_t err;
     mxm_recv_req_t *mxm_recv_req;
