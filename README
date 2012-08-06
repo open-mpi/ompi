@@ -1084,7 +1084,7 @@ PKG_CONFIG  - Path to the pkg-config utility
 
 For example:
 
-  shell$ ./configure CC=mycc CXX=myc++ F77=myf77 F90=myf90 ...
+  shell$ ./configure CC=mycc CXX=myc++ F77=myf77 FC=myf90 ...
 
 ***Note: We generally suggest using the above command line form for
    setting different compilers (vs. setting environment variables and
