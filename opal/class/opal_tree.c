@@ -445,7 +445,7 @@ static opal_tree_item_t *find_in_descendants(opal_tree_item_t* item, void *key)
  */
 opal_tree_item_t *opal_tree_find_with(opal_tree_item_t *item, void *key)
 {
-    opal_tree_item_t *root, *curr_item = item, *result = NULL;
+    opal_tree_item_t *curr_item = item, *result = NULL;
     
     if (!opal_tree_is_empty(item->opal_tree_container)) {
         /* check my descendant for a match */
@@ -459,7 +459,6 @@ opal_tree_item_t *opal_tree_find_with(opal_tree_item_t *item, void *key)
         }
             
         /* check my ancestors (uncles) for match */
-        root = opal_tree_get_root(item->opal_tree_container);
         curr_item = item;
         while (!result && curr_item && curr_item->opal_tree_num_ancestors > 0){
             curr_item = opal_tree_get_next_sibling(item->opal_tree_parent);

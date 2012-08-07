@@ -375,7 +375,7 @@ int opal_cr_init(void )
     }
 #else
     /* Silence a compiler warning */
-    t = 0;
+    (void)t;
 #endif
 
     mca_base_param_reg_string_name("opal_cr", "tmp_dir",
@@ -928,7 +928,7 @@ int opal_cr_refresh_environ(int prev_pid) {
                         "opal_cr: init: C/R Debugging Enabled [%s] (refresh)\n",
                         (MPIR_debug_with_checkpoint ? "True": "False"));
 #else
-    val = 0; /* Silence Compiler warning */
+    (void)val; /* Silence Compiler warning */
 #endif
 
     if( NULL != file_name ){

@@ -389,10 +389,6 @@ static int open_components(const char *type_name, int output_id,
             ret = component->mca_register_component_params();
             if (MCA_SUCCESS == ret) {
                 registered = true;
-                opal_output_verbose(10, output_id, 
-                                    "mca: base: components_open: "
-                                    "component %s register function successful",
-                                    component->mca_component_name);
             } else if (OPAL_ERR_NOT_AVAILABLE != ret) {
                 /* If the component returns OPAL_ERR_NOT_AVAILABLE,
                    it's a cue to "silently ignore me" -- it's not a
@@ -411,11 +407,12 @@ static int open_components(const char *type_name, int output_id,
                                 component->mca_type_name,
                                 component->mca_component_name);
                 }
-                opal_output_verbose(10, output_id, 
-                                    "mca: base: components_open: "
-                                    "component %s register function failed",
-                                    component->mca_component_name);
             }
+            opal_output_verbose(10, output_id, 
+                                "mca: base: components_open: "
+                                "component %s register function %s",
+                                component->mca_component_name,
+                                (true == registered ? "successful": "failed"));
         }
 
         if (NULL == component->mca_open_component) {
