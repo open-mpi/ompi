@@ -216,6 +216,12 @@ int32_t ompi_datatype_set_args( ompi_datatype_t* pData,
     case MPI_COMBINER_RESIZED:
         break;
 
+    case MPI_COMBINER_HINDEXED_BLOCK:
+        pArgs->i[0] = i[0][0];
+        pArgs->i[1] = i[1][0];
+        memcpy( pArgs->i + 2, i[2], i[0][0] * sizeof(int) );
+        break;
+
     default:
         break;
     }
@@ -744,7 +750,15 @@ static ompi_datatype_t* __ompi_datatype_create_from_args( int32_t* i, MPI_Aint* 
         /*ompi_datatype_set_args( datatype, 0, NULL, 2, a, 1, d, MPI_COMBINER_RESIZED );*/
         break;
         /******************************************************************/
-    default:
+    case MPI_COMBINER_HINDEXED_BLOCK:
+        ompi_datatype_create_hindexed_block( i[0], i[1], a, d[0], &datatype );
+        {
+            int* a_i[2]; a_i[0] = &i[0]; a_i[1] = &i[1];
+            ompi_datatype_set_args( datatype, 2 + i[0], a_i, i[0], a, 1, d, MPI_COMBINER_HINDEXED_BLOCK );
+        }
+        break;
+        /******************************************************************/
+     default:
         break;
     }
 

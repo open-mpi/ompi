@@ -302,6 +302,7 @@
 #define MPI_Type_create_hindexed PMPI_Type_create_hindexed
 #define MPI_Type_create_hvector PMPI_Type_create_hvector
 #define MPI_Type_create_indexed_block PMPI_Type_create_indexed_block
+#define MPI_Type_create_hindexed_block PMPI_Type_create_hindexed_block
 #define MPI_Type_create_keyval PMPI_Type_create_keyval
 #define MPI_Type_create_resized PMPI_Type_create_resized
 #define MPI_Type_create_struct PMPI_Type_create_struct

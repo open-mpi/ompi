@@ -1,14 +1,7 @@
 /*
- * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
- *                         University Research and Technology
- *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2012      The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart, 
- *                         University of Stuttgart.  All rights reserved.
- * Copyright (c) 2004-2005 The Regents of the University of California.
- *                         All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -26,21 +19,21 @@
 #include "ompi/memchecker.h"
 
 #if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
-#pragma weak MPI_Type_create_indexed_block = PMPI_Type_create_indexed_block
+#pragma weak MPI_Type_create_hindexed_block = PMPI_Type_create_hindexed_block
 #endif
 
 #if OMPI_PROFILING_DEFINES
 #include "ompi/mpi/c/profile/defines.h"
 #endif
 
-static const char FUNC_NAME[] = "MPI_Type_create_indexed_block";
+static const char FUNC_NAME[] = "MPI_Type_create_hindexed_block";
 
 
-int MPI_Type_create_indexed_block(int count,
-                                  int blocklength, 
-                                  int array_of_displacements[],
-                                  MPI_Datatype oldtype,
-                                  MPI_Datatype *newtype)
+int MPI_Type_create_hindexed_block(int count,
+                                   int blocklength, 
+                                   MPI_Aint array_of_displacements[],
+                                   MPI_Datatype oldtype,
+                                   MPI_Datatype *newtype)
 {
    int rc;
 
@@ -65,19 +58,18 @@ int MPI_Type_create_indexed_block(int count,
 
    OPAL_CR_ENTER_LIBRARY();
 
-   rc = ompi_datatype_create_indexed_block( count, blocklength, array_of_displacements,
-                                      oldtype, newtype );
+   rc = ompi_datatype_create_hindexed_block( count, blocklength, array_of_displacements,
+                                             oldtype, newtype );
    if( rc != MPI_SUCCESS ) {
       ompi_datatype_destroy( newtype );
       OMPI_ERRHANDLER_RETURN( rc, MPI_COMM_WORLD, rc, FUNC_NAME );
    }
    {
-      int* a_i[3];
+      int* a_i[2];
       a_i[0] = &count;
       a_i[1] = &blocklength;
-      a_i[2] = array_of_displacements;
-      ompi_datatype_set_args( *newtype, 2 + count, a_i, 0, NULL, 1, &oldtype,
-                              MPI_COMBINER_INDEXED_BLOCK );
+      ompi_datatype_set_args( *newtype, 2 + count, a_i, count, array_of_displacements, 1, &oldtype,
+                              MPI_COMBINER_HINDEXED_BLOCK );
    }
 
    OPAL_CR_EXIT_LIBRARY();
