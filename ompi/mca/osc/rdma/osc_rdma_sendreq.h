@@ -80,13 +80,13 @@ OBJ_CLASS_DECLARATION(ompi_osc_rdma_sendreq_t);
     RETAINed for the life of the sendreq */
 int
 ompi_osc_rdma_sendreq_alloc_init(ompi_osc_rdma_req_type_t req_type,
-                                  void *origin_addr, int origin_count,
-                                  struct ompi_datatype_t *origin_dt,
-                                  int target, OPAL_PTRDIFF_TYPE target_disp, 
-				  int target_count,
-                                  struct ompi_datatype_t *target_datatype,
-                                  ompi_osc_rdma_module_t *module,
-                                  ompi_osc_rdma_sendreq_t **sendreq);
+                                 void *origin_addr, int origin_count,
+                                 struct ompi_datatype_t *origin_dt,
+                                 int target, OPAL_PTRDIFF_TYPE target_disp, 
+                                 int target_count,
+                                 struct ompi_datatype_t *target_datatype,
+                                 ompi_osc_rdma_module_t *module,
+                                 ompi_osc_rdma_sendreq_t **sendreq);
 
 static inline int
 ompi_osc_rdma_sendreq_alloc(ompi_osc_rdma_module_t *module,
