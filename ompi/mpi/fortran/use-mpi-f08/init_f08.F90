@@ -6,7 +6,6 @@
 ! $COPYRIGHT$
 
 subroutine MPI_Init_f08(ierror)
-   use :: mpi_f08_interfaces
    use :: mpi_f08, only : ompi_init_f
    implicit none
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
