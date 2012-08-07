@@ -100,7 +100,7 @@ installdirs_windows_open(void)
         RegCloseKey(ompi_key);
     }
 
-#ifdef OMPI_RELEASE_BUILD
+#if OMPI_RELEASE_BUILD
     /* the last try, check the executable path.
      * only used for binary releases, so that we 
      * don't bother with the configured paths in mca_installdirs_config

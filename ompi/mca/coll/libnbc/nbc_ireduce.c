@@ -178,7 +178,7 @@ static inline int red_sched_binomial(int rank, int p, int root, void *sendbuf, v
   int firstred, vrank, vpeer, peer, res, maxr, r;
 
   RANK2VRANK(rank, vrank, root);
-  maxr = (int)ceil((log(p)/LOG2));
+  maxr = (int)ceil((log((double)p)/LOG2));
 
   firstred = 1;
   for(r=1; r<=maxr; r++) {

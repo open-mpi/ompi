@@ -56,7 +56,7 @@ int ompi_coll_libnbc_ireduce_scatter(void* sendbuf, void* recvbuf, int *recvcoun
   res = NBC_Sched_create(schedule);
   if(res != NBC_OK) { printf("Error in NBC_Sched_create (%i)\n", res); return res; }
 
-  maxr = (int)ceil((log(p)/LOG2));
+  maxr = (int)ceil((log((double)p)/LOG2));
 
   count = 0;
   for(r=0;r<p;r++) count += recvcounts[r];

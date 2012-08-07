@@ -176,7 +176,7 @@ static inline int allred_sched_diss(int rank, int p, int count, MPI_Datatype dat
   
   root = 0; /* this makes the code for ireduce and iallreduce nearly identical - could be changed to improve performance */
   RANK2VRANK(rank, vrank, root);
-  maxr = (int)ceil((log(p)/LOG2));
+  maxr = (int)ceil((log((double)p)/LOG2));
 
   firstred = 1;
   for(r=1; r<=maxr; r++) {
