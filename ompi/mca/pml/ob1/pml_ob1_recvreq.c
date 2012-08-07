@@ -330,13 +330,15 @@ static void mca_pml_ob1_rget_completion( mca_btl_base_module_t* btl,
         orte_errmgr.abort(-1, NULL);
     }
 
-    mca_pml_ob1_send_fin(recvreq->req_recv.req_base.req_proc,
-                         bml_btl,
-                         frag->rdma_hdr.hdr_rget.hdr_des,
-                         des->order, 0); 
-
     /* is receive request complete */
     OPAL_THREAD_ADD_SIZE_T(&recvreq->req_bytes_received, frag->rdma_length);
+    if (recvreq->req_bytes_expected <= recvreq->req_bytes_received) {
+        mca_pml_ob1_send_fin(recvreq->req_recv.req_base.req_proc,
+                              bml_btl,
+    	                      frag->rdma_hdr.hdr_rget.hdr_des,
+    	                      des->order, 0);
+    }
+
     recv_request_pml_complete_check(recvreq);
 
     MCA_PML_OB1_RDMA_FRAG_RETURN(frag);
@@ -540,7 +542,11 @@ void mca_pml_ob1_recv_request_progress_rget( mca_pml_ob1_recv_request_t* recvreq
     mca_pml_ob1_rdma_frag_t* frag;
     size_t i, size = 0;
     int rc;
+    size_t bytes_remaining, prev_sent, offset;
+    mca_btl_base_segment_t * r_segments;
 
+    prev_sent = offset = 0;
+    bytes_remaining = hdr->hdr_rndv.hdr_msg_length;
     recvreq->req_recv.req_bytes_packed = hdr->hdr_rndv.hdr_msg_length;
 
     MCA_PML_OB1_RECV_REQUEST_MATCHED(recvreq, &hdr->hdr_rndv.hdr_match);
@@ -549,7 +555,7 @@ void mca_pml_ob1_recv_request_progress_rget( mca_pml_ob1_recv_request_t* recvreq
      * fall back to copy in/out protocol. It is a pity because buffer on the
      * sender side is already registered. We need to be smarter here, perhaps
      * do couple of RDMA reads */
-    if(opal_convertor_need_buffers(&recvreq->req_recv.req_base.req_convertor) == true) {
+    if (opal_convertor_need_buffers(&recvreq->req_recv.req_base.req_convertor) == true) {
 #if OMPI_CUDA_SUPPORT
         if (mca_pml_ob1_cuda_need_buffers(recvreq, btl)) {
             mca_pml_ob1_recv_request_ack(recvreq, &hdr->hdr_rndv, 0);
@@ -561,68 +567,91 @@ void mca_pml_ob1_recv_request_progress_rget( mca_pml_ob1_recv_request_t* recvreq
 #endif /* OMPI_CUDA_SUPPORT */
     }
     
-    MCA_PML_OB1_RDMA_FRAG_ALLOC(frag,rc);
-    if( OPAL_UNLIKELY(NULL == frag) ) {
-        /* GLB - FIX */
-         ORTE_ERROR_LOG(rc);
-         orte_errmgr.abort(-1, NULL);
-    }
 
-    /* lookup bml datastructures */
-    bml_endpoint = (mca_bml_base_endpoint_t*)recvreq->req_recv.req_base.req_proc->proc_bml; 
+    /* The while loop adds a fragmentation mechanism. The variable bytes_remaining holds the num
+     * of bytes left to be send. In each iteration we send the max possible bytes supported
+     * by the HCA. The field  frag->rdma_length holds the actual num of  bytes that were
+     * sent in each iteration. We subtract this number from bytes_remaining and continue to
+     * the next iteration with the updated size.
+     * Also - In each iteration we update the location in the buffer to be used for writing
+     * the message ,and the location to read from. This is done using the offset variable that
+     * accumulates the number of bytes that were sent so far. */
+    while (bytes_remaining > 0) {
+        MCA_PML_OB1_RDMA_FRAG_ALLOC(frag,rc);
+        if (OPAL_UNLIKELY(NULL == frag)) {
+            /* GLB - FIX */
+             ORTE_ERROR_LOG(rc);
+             orte_errmgr.abort(-1, NULL);
+        }
 
-    assert (btl->btl_seg_size * hdr->hdr_seg_cnt <= sizeof (frag->rdma_segs));
+        /* lookup bml datastructures */
+        bml_endpoint = (mca_bml_base_endpoint_t*)recvreq->req_recv.req_base.req_proc->proc_bml;
 
-    /* allocate/initialize a fragment */
-    memcpy (frag->rdma_segs, hdr + 1, btl->btl_seg_size * hdr->hdr_seg_cnt);
+        assert (btl->btl_seg_size * hdr->hdr_seg_cnt <= sizeof (frag->rdma_segs));
 
-    for(i = 0; i < hdr->hdr_seg_cnt; i++) {
-        mca_btl_base_segment_t *seg = (mca_btl_base_segment_t *)(frag->rdma_segs + i * btl->btl_seg_size);
+        /* allocate/initialize a fragment */
+        memcpy (frag->rdma_segs, hdr + 1, btl->btl_seg_size * hdr->hdr_seg_cnt);
+
+        /* updating the read location */
+        r_segments = (mca_btl_base_segment_t *) frag->rdma_segs;
+        r_segments->seg_addr.lval += offset;
+
+        /* updating the write location */
+        OPAL_THREAD_LOCK(&recvreq->lock);
+        opal_convertor_set_position( &recvreq->req_recv.req_base.req_convertor, &offset);
+        OPAL_THREAD_UNLOCK(&recvreq->lock);
+
+        for (i = 0; i < hdr->hdr_seg_cnt; i++) {
+            mca_btl_base_segment_t *seg = (mca_btl_base_segment_t *)(frag->rdma_segs + i * btl->btl_seg_size);
 
 #if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
-        if ((recvreq->req_recv.req_base.req_proc->proc_arch & OPAL_ARCH_ISBIGENDIAN) !=
-            (ompi_proc_local()->proc_arch & OPAL_ARCH_ISBIGENDIAN)) {
-            size += opal_swap_bytes4(seg->seg_len);
-        } else 
+            if ((recvreq->req_recv.req_base.req_proc->proc_arch & OPAL_ARCH_ISBIGENDIAN) !=
+                (ompi_proc_local()->proc_arch & OPAL_ARCH_ISBIGENDIAN)) {
+                size += opal_swap_bytes4(seg->seg_len);
+            } else
 #endif
-        {
-            size += seg->seg_len;
+            {
+                size += seg->seg_len;
+            }
         }
-    }
-    frag->rdma_bml = mca_bml_base_btl_array_find(&bml_endpoint->btl_rdma, btl);
+        frag->rdma_bml = mca_bml_base_btl_array_find(&bml_endpoint->btl_rdma, btl);
 #if OMPI_CUDA_SUPPORT
-    if( OPAL_UNLIKELY(NULL == frag->rdma_bml) ) {
-        if (recvreq->req_recv.req_base.req_convertor.flags & CONVERTOR_CUDA) {
-            /* Check to see if this is a CUDA get */
-            if (btl->btl_flags & MCA_BTL_FLAGS_CUDA_GET) {
-                frag->rdma_bml = mca_bml_base_btl_array_find(&bml_endpoint->btl_send, btl);
+        if (OPAL_UNLIKELY(NULL == frag->rdma_bml)) {
+            if (recvreq->req_recv.req_base.req_convertor.flags & CONVERTOR_CUDA) {
+                /* Check to see if this is a CUDA get */
+                if (btl->btl_flags & MCA_BTL_FLAGS_CUDA_GET) {
+                    frag->rdma_bml = mca_bml_base_btl_array_find(&bml_endpoint->btl_send, btl);
+                }
+                if( OPAL_UNLIKELY(NULL == frag->rdma_bml) ) {
+                    opal_output(0, "[%s:%d] invalid bml for rdma get", __FILE__, __LINE__);
+                    orte_errmgr.abort(-1, NULL);
+                }
+            } else {
+                /* Just default back to send and receive.  Must be mix of GPU and HOST memory. */
+                mca_pml_ob1_recv_request_ack(recvreq, &hdr->hdr_rndv, 0);
+                return;
             }
-            if( OPAL_UNLIKELY(NULL == frag->rdma_bml) ) {
-                opal_output(0, "[%s:%d] invalid bml for rdma get", __FILE__, __LINE__);
-                orte_errmgr.abort(-1, NULL);
-            }
-        } else {
-            /* Just default back to send and receive.  Must be mix of GPU and HOST memory. */
-            mca_pml_ob1_recv_request_ack(recvreq, &hdr->hdr_rndv, 0);
-            return;
         }
-    }
 #else /* OMPI_CUDA_SUPPORT */
-    if( OPAL_UNLIKELY(NULL == frag->rdma_bml) ) {
-        opal_output(0, "[%s:%d] invalid bml for rdma get", __FILE__, __LINE__);
-        orte_errmgr.abort(-1, NULL);
-    }
+        if (OPAL_UNLIKELY(NULL == frag->rdma_bml)) {
+            opal_output(0, "[%s:%d] invalid bml for rdma get", __FILE__, __LINE__);
+            orte_errmgr.abort(-1, NULL);
+        }
 #endif /* OMPI_CUDA_SUPPORT */
 
-    frag->rdma_hdr.hdr_rget = *hdr;
-    frag->retries = 0;
-    frag->rdma_req = recvreq;
-    frag->rdma_ep = bml_endpoint;
-    frag->rdma_length = size;
-    frag->rdma_state = MCA_PML_OB1_RDMA_GET;
-    frag->reg = NULL;
-
-    mca_pml_ob1_recv_request_get_frag(frag);
+        frag->rdma_hdr.hdr_rget = *hdr;
+        frag->retries = 0;
+        frag->rdma_req = recvreq;
+        frag->rdma_ep = bml_endpoint;
+        frag->rdma_length = size;
+        frag->rdma_state = MCA_PML_OB1_RDMA_GET;
+        frag->reg = NULL;
+        frag->rdma_length = bytes_remaining;
+        mca_pml_ob1_recv_request_get_frag(frag);
+        prev_sent = frag->rdma_length;
+        bytes_remaining -= prev_sent;
+        offset += prev_sent;
+    }
     return;
 }
 
