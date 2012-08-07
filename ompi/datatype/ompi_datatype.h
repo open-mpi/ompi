@@ -210,6 +210,8 @@ OMPI_DECLSPEC int32_t ompi_datatype_create_hindexed( int count, const int* pBloc
                                                      const ompi_datatype_t* oldType, ompi_datatype_t** newType );
 OMPI_DECLSPEC int32_t ompi_datatype_create_indexed_block( int count, int bLength, const int* pDisp,
                                                           const ompi_datatype_t* oldType, ompi_datatype_t** newType );
+OMPI_DECLSPEC int32_t ompi_datatype_create_hindexed_block( int count, int bLength, const OPAL_PTRDIFF_TYPE* pDisp,
+                                                           const ompi_datatype_t* oldType, ompi_datatype_t** newType );
 OMPI_DECLSPEC int32_t ompi_datatype_create_struct( int count, const int* pBlockLength, const OPAL_PTRDIFF_TYPE* pDisp,
                                                    ompi_datatype_t* const* pTypes, ompi_datatype_t** newType );
 OMPI_DECLSPEC int32_t ompi_datatype_create_darray( int size, int rank, int ndims, int const* gsize_array,
