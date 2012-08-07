@@ -154,7 +154,7 @@ int ompi_coll_libnbc_ibcast(void *buffer, int count, MPI_Datatype datatype, int 
 static inline int bcast_sched_binomial(int rank, int p, int root, NBC_Schedule *schedule, void *buffer, int count, MPI_Datatype datatype) {
   int maxr, vrank, peer, r, res;
   
-  maxr = (int)ceil((log(p)/LOG2));
+  maxr = (int)ceil((log((double)p)/LOG2));
 
   RANK2VRANK(rank, vrank, root);
 

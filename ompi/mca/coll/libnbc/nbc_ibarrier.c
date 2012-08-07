@@ -46,7 +46,7 @@ int ompi_coll_libnbc_ibarrier(struct ompi_communicator_t *comm, ompi_request_t *
     res = NBC_Sched_create(schedule);
     if(res != NBC_OK) { printf("Error in NBC_Sched_create (%i)\n", res); return res; }
 
-    maxround = (int)ceil((log(p)/LOG2)-1);
+    maxround = (int)ceil((log((double)p)/LOG2)-1);
 
     do {
       round++;

@@ -239,7 +239,7 @@ static int store(const orte_process_name_t *proc,
     switch (type) {
     case OPAL_STRING:
         kv->type = OPAL_STRING;
-        kv->data.string = strdup(data);
+        kv->data.string = strdup( (const char *) data);
         break;
     case ORTE_VPID:
     case OPAL_UINT32:
@@ -261,7 +261,7 @@ static int store(const orte_process_name_t *proc,
     case OPAL_BYTE_OBJECT:
         kv->type = OPAL_BYTE_OBJECT;
         boptr = (opal_byte_object_t*)data;
-        kv->data.bo.bytes = malloc(boptr->size);
+        kv->data.bo.bytes = (uint8_t *) malloc(boptr->size);
         memcpy(kv->data.bo.bytes, boptr->bytes, boptr->size);
         kv->data.bo.size = boptr->size;
         break;
@@ -413,7 +413,7 @@ static int fetch(const orte_process_name_t *proc,
             return ORTE_ERR_TYPE_MISMATCH;
         }
         boptr = (opal_byte_object_t*)malloc(sizeof(opal_byte_object_t));
-        boptr->bytes = malloc(kv->data.bo.size);
+        boptr->bytes = (uint8_t *) malloc(kv->data.bo.size);
         memcpy(boptr->bytes, kv->data.bo.bytes, kv->data.bo.size);
         boptr->size = kv->data.bo.size;
         *data = boptr;
