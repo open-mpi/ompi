@@ -40,7 +40,7 @@
  */
 static int guess_strlen(const char *fmt, va_list ap)
 {
-    char *sarg, carg;
+    char *sarg;
     double darg;
     float farg;
     size_t i;
@@ -58,7 +58,7 @@ static int guess_strlen(const char *fmt, va_list ap)
             ++i;
             switch (fmt[i]) {
             case 'c':
-                carg = va_arg(ap, int);
+                (void)va_arg(ap, int);
                 len += 1;  /* let's suppose it's a printable char */
                 break;
             case 's':
