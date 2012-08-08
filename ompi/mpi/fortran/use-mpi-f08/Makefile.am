@@ -1,6 +1,10 @@
 # -*- makefile -*-
 #
 # Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2012      The University of Tennessee and The University
+#                         of Tennessee Research Foundation.  All rights
+#                         reserved.
+# Copyright (c) 2012      Inria.  All rights reserved.
 #
 # $COPYRIGHT$
 # 
@@ -217,6 +221,7 @@ mpi_api_files = \
         type_create_hindexed_f08.F90 \
         type_create_hvector_f08.F90 \
         type_create_indexed_block_f08.F90 \
+        type_create_hindexed_block_f08.F90 \
         type_create_keyval_f08.F90 \
         type_create_resized_f08.F90 \
         type_create_struct_f08.F90 \
@@ -526,6 +531,7 @@ pmpi_api_files = \
         profile/ptype_create_hindexed_f08.F90 \
         profile/ptype_create_hvector_f08.F90 \
         profile/ptype_create_indexed_block_f08.F90 \
+        profile/ptype_create_hindexed_block_f08.F90 \
         profile/ptype_create_keyval_f08.F90 \
         profile/ptype_create_resized_f08.F90 \
         profile/ptype_create_struct_f08.F90 \

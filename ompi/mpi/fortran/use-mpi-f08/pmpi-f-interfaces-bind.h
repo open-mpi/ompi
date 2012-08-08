@@ -3,6 +3,10 @@
 ! Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
 ! Copyright (c) 2009-2012 Los Alamos National Security, LLC.
 !                         All rights reserved.
+! Copyright (c) 2012      The University of Tennessee and The University
+!                         of Tennessee Research Foundation.  All rights
+!                         reserved.
+! Copyright (c) 2012      Inria.  All rights reserved.
 ! $COPYRIGHT$
 !
 ! This file provides the interface specifications for the MPI Fortran
@@ -520,6 +524,17 @@ subroutine pompi_type_create_indexed_block_f(count,blocklength, &
    INTEGER, INTENT(OUT) :: newtype
    INTEGER, INTENT(OUT) :: ierror
 end subroutine pompi_type_create_indexed_block_f
+
+subroutine pompi_type_create_hindexed_block_f(count,blocklength, &
+                            array_of_displacements,oldtype,newtype,ierror) &
+   BIND(C, name="pompi_type_create_hindexed_block_f")
+   implicit none
+   INTEGER, INTENT(IN) :: count, blocklength
+   INTEGER(MPI_ADDRESS_KIND), INTENT(IN) :: array_of_displacements(count)
+   INTEGER, INTENT(IN) :: oldtype
+   INTEGER, INTENT(OUT) :: newtype
+   INTEGER, INTENT(OUT) :: ierror
+end subroutine pompi_type_create_hindexed_block_f
 
 subroutine pompi_type_create_resized_f(oldtype,lb,extent,newtype,ierror) &
    BIND(C, name="pompi_type_create_resized_f")
