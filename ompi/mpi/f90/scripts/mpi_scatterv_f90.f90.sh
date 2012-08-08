@@ -61,7 +61,12 @@ subroutine ${proc}(sendbuf, sendcounts, displs, sendtype, recvbuf, &
   integer, intent(in) :: root
   integer, intent(in) :: comm
   integer, intent(out) :: ierr
-  print *, "Open MPI WARNING: You are calling MPI_SCATTERV with incorrect sendcounts and displs arguments!  Your code may crash or produce incorrect results.  ***Your code will fail to compile in future versions of Open MPI*** because this old/incorrect Fortran subroutine binding will be removed.  Please update the type of your sendcounts and displs  parameters to make this warning go away (and have correct code!)."
+  print *, "Open MPI WARNING: You are calling MPI_SCATTERV with incorrect sendcounts and displs arguments!"
+  print *, "Open MPI WARNING: Your code may crash or produce incorrect results."
+  print *, "Open MPI WARNING: ***Your code will fail to compile in future versions of Open MPI***"
+  print *, "Open MPI WARNING: because this old/incorrect Fortran subroutine binding will be removed."
+  print *, "Open MPI WARNING: Please update the type of your sendcounts and displs parameters"
+  print *, "Open MPI WARNING: to make this warning go away (and have correct code!)."
   call ${procedure}(sendbuf, sendcounts, displs, sendtype, recvbuf, &
         recvcount, recvtype, root, comm, ierr)
 end subroutine ${proc}
