@@ -70,6 +70,9 @@ included in the vX.Y.Z section and be denoted as:
   - Remove the last openib default per-peer receive queue
     specification (and make it an SRQ).
 
+- Break up a giant "print *" statement in the ABI-preserving incorrect
+  MPI_SCATTER interface in the "large" Fortran "mpi" module.  Thanks
+  to Juan Escobar for the initial patch.
 - Switch the MPI_ALLTOALLV default algorithm to a pairwise exchange.
 - Increase the openib BTL default CQ length to handle more types of
   OpenFabrics devices.
