@@ -86,9 +86,22 @@ static int ompi_mtl_mxm_component_open(void)
 
     mca_mtl_mxm_output = opal_output_open(NULL);
     opal_output_set_verbosity(mca_mtl_mxm_output, ompi_mtl_mxm.verbose);
+#if MXM_API < MXM_VERSION(1,5)
+        mxm_fill_context_opts(&ompi_mtl_mxm.mxm_opts);
+        err = mxm_init(&ompi_mtl_mxm.mxm_opts, &ompi_mtl_mxm.mxm_context);
+        MXM_VERBOSE(1, "mxm component open");
+#else
+        err = mxm_config_read_context_opts(&ompi_mtl_mxm.mxm_opts);
+        if (err != MXM_OK) {
+           MXM_ERROR("Failed to parse MXM configuration");
+            return OPAL_ERR_BAD_PARAM;
+        }
 
-    mxm_fill_context_opts(&ompi_mtl_mxm.mxm_opts);
-    err = mxm_init(&ompi_mtl_mxm.mxm_opts, &ompi_mtl_mxm.mxm_context);
+        err = mxm_init(ompi_mtl_mxm.mxm_opts, &ompi_mtl_mxm.mxm_context);
+        MXM_VERBOSE(1, "mxm component open");
+#endif
+
+
     if (MXM_OK != err) {
         if (MXM_ERR_NO_DEVICE == err) {
             MXM_VERBOSE(1, "No supported device found, disqualifying mxm");
