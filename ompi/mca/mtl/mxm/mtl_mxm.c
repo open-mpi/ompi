@@ -119,7 +119,6 @@ int ompi_mtl_mxm_module_init(void)
 
     mxlr = 0;
     lr = -1;
-    nlps = 0;
 
     mp = ompi_proc_local();
     jobid = ompi_mtl_mxm_get_job_id();
@@ -141,15 +140,15 @@ int ompi_mtl_mxm_module_init(void)
     }
     MXM_VERBOSE(1, "MXM support enabled");
 
-    if ((lr = orte_process_info.my_node_rank) == ORTE_NODE_RANK_INVALID) {
+    if (ORTE_NODE_RANK_INVALID == (lr = orte_process_info.my_node_rank)) {
         MXM_ERROR("Unable to obtain local node rank");
         return OMPI_ERROR;
     }
+    nlps = orte_process_info.num_local_peers + 1;
 
     for (proc = 0; proc < totps; proc++) {
         if (OPAL_PROC_ON_LOCAL_NODE(procs[proc]->proc_flags)) {
             mxlr = max(mxlr, procs[proc]->proc_name.vpid);
-            nlps++;
         }
     }
 
