@@ -1367,7 +1367,7 @@ updated to point to the shared libraries in any successive v1.3.x or
 v1.4 release and still work properly (e.g., via the LD_LIBRARY_PATH
 environment variable or other operating system mechanism).
 
-For the v1.5 series, this means that all releases of v1.5.x and v1.6.x
+For the v1.7 series, this means that all releases of v1.7.x and v1.8.x
 will be ABI compatible, per the above definition.
 
 Note that in v1.5.4, a fix was applied to the "large" size of the "use
@@ -1376,29 +1376,32 @@ wrong type and were corrected.  Note that this fix *only* applies if
 Open MPI was configured with a Fortran 90 compiler and the
 --with-mpi-f90-size=large configure option.
 
-*** Note: the "large" F90 size is currently broken, and will not be
-    fixed.  The MPI Fortran bindings have been revamped for the v1.7
-    series.  
+However, in order to preserve the ABI with respect to prior v1.5.x
+releases, the old/incorrect MPI_SCATTERV interface was preserved in
+1.5.5 and all 1.6.x releases.  A new/corrected interface was added
+(note that Fortran 90 has function overloading, similar to C++; hence,
+both the old and new interface can be accessed via "call
+MPI_Scatterv(...)").
 
-However, in order to preserve ABI with all prior v1.5.x releases, the
-old/incorrect MPI_SCATTERV interface was preserved and a new/corrected
-interface was added (note that Fortran 90 has function overloading,
-similar to C++; hence, both the old and new interface can be accessed
-via "call MPI_Scatterv(...)").  
+The incorrect interface was removed in Open MPI v1.7.
 
-Applications that use the old/incorrect MPI_SCATTERV binding will
-continue to compile/link just like they did with prior v1.5.x
-releases.  However, application developers are ***STRONGLY***
-encouraged to fix their applications to use the correct bindings for
-the following reasons:
+To be clear: applications that use the old/incorrect MPI_SCATTERV
+binding will no longer be able to compile properly (*).  Developers
+must fix their applications or use an older version of Open MPI.
 
-  - The parameter type mismatch may cause application crashes or
-    silent data corruption.
-  - An annoying message (which cannot be disabled) is sent to stdout
-    warning the user that they are using an incorrect interface.
-  - The old/incorrect interface will be removed in Open MPI v1.7
-    (i.e., applications that use the old/incorrect binding will not
-    compile with Open MPI v1.7).
+(*) Note that using this incorrect MPI_SCATTERV interface will not be
+    recongized in v1.7 if you are using gfortran (as of gfortran
+    v4.8).
+
+    This is because gfortran <=v4.8 does not (yet) have the support
+    Open MPI needs for its new, full-featured "mpi" and "mpi_f08"
+    modules.  Hence, Open MPI falls back to the same "mpi" module from
+    the v1.6 series, but the "large" size of that module -- which
+    contains the MPI_SCATTERV interface -- been disabled because it is
+    broken.  Further, this "large" sized (old) "mpi" module has been
+    deemed unworthy of fixing because it has been wholly replaced by a
+    new, full-featured "mpi" module.  We anticipate supporting
+    gfortran in the new, full-featured module in the future.
 
 Open MPI reserves the right to break ABI compatibility at new feature
 release series.  For example, the same MPI application from above
