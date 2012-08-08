@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2012 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2007 High Performance Computing Center Stuttgart, 
@@ -278,7 +278,7 @@ void opal_graph_add_vertex(opal_graph_t *graph, opal_graph_vertex_t *vertex)
  */
 int opal_graph_add_edge(opal_graph_t *graph, opal_graph_edge_t *edge) 
 {
-    opal_adjacency_list_t *aj_list, *start_aj_list= NULL;
+    opal_adjacency_list_t *aj_list, *start_aj_list= NULL, *end_aj_list;
     opal_list_item_t *item;
     bool start_found = false, end_found = false;
 
@@ -296,6 +296,7 @@ int opal_graph_add_edge(opal_graph_t *graph, opal_graph_edge_t *edge)
         }
         if (aj_list->vertex == edge->end) {
             end_found = true;
+            end_aj_list = aj_list;
         }
     }
     /**
