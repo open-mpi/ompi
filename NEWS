@@ -53,7 +53,6 @@ included in the vX.Y.Z section and be denoted as:
 Trunk (not on release branches yet)
 -----------------------------------
 
-- Revamped autogen / build system.
 - ErrMgr framework redesigned to better support fault tolerance development
   activities. See the following RFC for details:
   http://www.open-mpi.org/community/lists/devel/2010/03/7589.php
@@ -63,22 +62,34 @@ Trunk (not on release branches yet)
   information (both application and system) to/from a database.
 - Add new "orte-info" tool that provides MCA params for only ORTE and
   OPAL levels - intended for use when configuring without MPI support
-- Modified paffinity system to provide warning when bindings result in
-  being "bound to all", which is equivalent to "not bound"
-- Added MPI-3 function: MPI_GET_LIBRARY_VERSION
-- Added MPI-3 matched probe interface.
-- Revamped Fortran MPI bindings:
-  - mpifort wrapper compiler
-  - "use mpi_f08" bindings (for compilers that support it)
-  - better "use mpi" support (for compilers that support it)
-- Enabled compile-time warning of deprecated MPI functions by default
-  (in supported compilers).
 - Added a new MCA parameter (ess_base_stream_buffering) that allows the user
   to override the system default for buffering of stdout/stderr streams
   (via setvbuf).
-- Added support for the DMTCP checkpoint/restart system.
+
+
+1.7
+---
+
+- Added MPI-3 functionality: 
+  - MPI_GET_LIBRARY_VERSION
+  - Matched probe
+  - MPI_TYPE_CREATE_HINDEXED_BLOCK
+  - Non-blocking collectives
+- Enabled compile-time warning of deprecated MPI functions by default
+  (in supported compilers).
+- Revamped Fortran MPI bindings (see the README for details):
+  - mpifort wrapper compiler
+  - "use mpi_f08" bindings (for compilers that support it)
+  - Better "use mpi" support (for compilers that support it)
+  - Removed incorrect MPI_SCATTERV interface from "mpi" module that was
+    added in the 1.5.x series for ABI reasons.
+- Modified paffinity system to provide warning when bindings result in
+  being "bound to all", which is equivalent to "not bound"
 - Removed maffinity, paffinity, and carto frameworks (and associated
   MCA params).
+- Added support for the DMTCP checkpoint/restart system.
+- Revamped autogen / build system.
+
 
 1.6.1
 -----
