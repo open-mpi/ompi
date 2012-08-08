@@ -731,7 +731,7 @@ interface  PMPI_Type_create_hindexed_block
 subroutine PMPI_Type_create_hindexed_block_f08(count,blocklength, &
                            array_of_displacements,oldtype,newtype,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Type_create_hindexed_block_f08")
-   use :: mpi_f08_types, only : MPI_Datatype
+   use :: mpi_f08_types, only : MPI_Datatype, MPI_ADDRESS_KIND
    implicit none
    INTEGER, INTENT(IN) :: count, blocklength
    INTEGER(MPI_ADDRESS_KIND), INTENT(IN) :: array_of_displacements(count)

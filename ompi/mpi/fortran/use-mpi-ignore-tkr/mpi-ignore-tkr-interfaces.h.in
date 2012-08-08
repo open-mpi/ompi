@@ -3230,6 +3230,7 @@ interface MPI_Type_create_hindexed_block
 
 subroutine MPI_Type_create_hindexed_block(count, blocklength, array_of_displacements, oldtype, newtype&
         , ierr)
+  include 'mpif-config.h'
   integer, intent(in) :: count
   integer, intent(in) :: blocklength
   integer(kind=MPI_ADDRESS_KIND), dimension(*), intent(in) :: array_of_displacements
