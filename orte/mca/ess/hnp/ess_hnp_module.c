@@ -105,8 +105,8 @@ static bool signals_set=false;
 static bool forcibly_die=false;
 static opal_event_t term_handler;
 static opal_event_t epipe_handler;
-#ifndef __WINDOWS__
 static int term_pipe[2];
+#ifndef __WINDOWS__
 static opal_event_t sigusr1_handler;
 static opal_event_t sigusr2_handler;
 static opal_event_t sigtstp_handler;
