@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2012 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2012      Inria.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -275,6 +276,7 @@
 #define ompi_type_create_hvector_f pompi_type_create_hvector_f
 #define ompi_type_create_keyval_f pompi_type_create_keyval_f
 #define ompi_type_create_indexed_block_f pompi_type_create_indexed_block_f
+#define ompi_type_create_hindexed_block_f pompi_type_create_hindexed_block_f
 #define ompi_type_create_struct_f pompi_type_create_struct_f
 #define ompi_type_create_subarray_f pompi_type_create_subarray_f
 #define ompi_type_create_resized_f pompi_type_create_resized_f

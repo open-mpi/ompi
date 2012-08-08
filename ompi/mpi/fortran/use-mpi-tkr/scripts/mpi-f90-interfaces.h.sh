@@ -3,10 +3,14 @@
 # Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
 #                         University Research and Technology
 #                         Corporation.  All rights reserved.
+# Copyright (c) 2012      The University of Tennessee and The University
+#                         of Tennessee Research Foundation.  All rights
+#                         reserved.
 # Copyright (c) 2004-2006 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2012      FUJITSU LIMITED.  All rights reserved.
+# Copyright (c) 2012      Inria.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -10796,4 +10800,33 @@ EOF
 start MPI_Comm_split_type small
 output_290 MPI_Comm_split_type
 end MPI_Comm_split_type
+
+#------------------------------------------------------------------------
+
+output_291() {
+    if test "$output" = "0"; then
+        return 0
+    fi
+
+    procedure=$1
+    cat <<EOF
+
+subroutine ${procedure}(count, blocklength, array_of_displacements, oldtype, newtype&
+        , ierr)
+  include 'mpif-config.h'
+  integer, intent(in) :: count
+  integer, intent(in) :: blocklength
+  integer(kind=MPI_ADDRESS_KIND), dimension(*), intent(in) :: array_of_displacements
+  integer, intent(in) :: oldtype
+  integer, intent(out) :: newtype
+  integer, intent(out) :: ierr
+end subroutine ${procedure}
+
+EOF
+}
+
+start MPI_Type_create_hindexed_block small
+output_291 MPI_Type_create_hindexed_block
+end MPI_Type_create_hindexed_block
+
 

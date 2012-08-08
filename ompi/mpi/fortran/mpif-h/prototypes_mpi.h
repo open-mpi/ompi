@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2012 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2012      Inria.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -330,6 +331,7 @@ PN2(void, MPI_Type_create_hindexed, mpi_type_create_hindexed, MPI_TYPE_CREATE_HI
 PN2(void, MPI_Type_create_hvector, mpi_type_create_hvector, MPI_TYPE_CREATE_HVECTOR, (MPI_Fint *count, MPI_Fint *blocklength, MPI_Aint *stride, MPI_Fint *oldtype, MPI_Fint *newtype, MPI_Fint *ierr));
 PN2(void, MPI_Type_create_keyval, mpi_type_create_keyval, MPI_TYPE_CREATE_KEYVAL, (ompi_mpi2_fortran_copy_attr_function* type_copy_attr_fn, ompi_mpi2_fortran_delete_attr_function* type_delete_attr_fn, MPI_Fint *type_keyval, MPI_Aint *extra_state, MPI_Fint *ierr));
 PN2(void, MPI_Type_create_indexed_block, mpi_type_create_indexed_block, MPI_TYPE_CREATE_INDEXED_BLOCK, (MPI_Fint *count, MPI_Fint *blocklength, MPI_Fint *array_of_displacements, MPI_Fint *oldtype, MPI_Fint *newtype, MPI_Fint *ierr));
+PN2(void, MPI_Type_create_hindexed_block, mpi_type_create_hindexed_block, MPI_TYPE_CREATE_HINDEXED_BLOCK, (MPI_Fint *count, MPI_Fint *blocklength, MPI_Aint *array_of_displacements, MPI_Fint *oldtype, MPI_Fint *newtype, MPI_Fint *ierr));
 PN2(void, MPI_Type_create_struct, mpi_type_create_struct, MPI_TYPE_CREATE_STRUCT, (MPI_Fint *count, MPI_Fint *array_of_block_lengths, MPI_Aint *array_of_displacements, MPI_Fint *array_of_types, MPI_Fint *newtype, MPI_Fint *ierr));
 PN2(void, MPI_Type_create_subarray, mpi_type_create_subarray, MPI_TYPE_CREATE_SUBARRAY, (MPI_Fint *ndims, MPI_Fint *size_array, MPI_Fint *subsize_array, MPI_Fint *start_array, MPI_Fint *order, MPI_Fint *oldtype, MPI_Fint *newtype, MPI_Fint *ierr));
 PN2(void, MPI_Type_create_resized, mpi_type_create_resized, MPI_TYPE_CREATE_RESIZED, (MPI_Fint *oldtype, MPI_Aint *lb, MPI_Aint *extent, MPI_Fint *newtype, MPI_Fint *ierr));

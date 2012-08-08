@@ -3,6 +3,10 @@
 ! Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
 ! Copyright (c) 2009-2012 Los Alamos National Security, LLC.
 !                         All rights reserved.
+! Copyright (c) 2012      The University of Tennessee and The University
+!                         of Tennessee Research Foundation.  All rights
+!                         reserved.
+! Copyright (c) 2012      Inria.  All rights reserved.
 ! $COPYRIGHT$
 !
 ! This file provides the interface specifications for the MPI Fortran
@@ -722,6 +726,20 @@ subroutine MPI_Type_create_indexed_block_f08(count,blocklength, &
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 end subroutine MPI_Type_create_indexed_block_f08
 end interface  MPI_Type_create_indexed_block
+
+interface  MPI_Type_create_hindexed_block
+subroutine MPI_Type_create_hindexed_block_f08(count,blocklength, &
+                           array_of_displacements,oldtype,newtype,ierror &
+           ) OMPI_F08_INTERFACE_BIND_C("MPI_Type_create_hindexed_block_f08")
+   use :: mpi_f08_types, only : MPI_Datatype
+   implicit none
+   INTEGER, INTENT(IN) :: count, blocklength
+   INTEGER(MPI_ADDRESS_KIND), INTENT(IN) :: array_of_displacements(count)
+   TYPE(MPI_Datatype), INTENT(IN) :: oldtype
+   TYPE(MPI_Datatype), INTENT(OUT) :: newtype
+   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+end subroutine MPI_Type_create_hindexed_block_f08
+end interface  MPI_Type_create_hindexed_block
 
 interface  MPI_Type_create_resized
 subroutine MPI_Type_create_resized_f08(oldtype,lb,extent,newtype,ierror &
