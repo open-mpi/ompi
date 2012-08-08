@@ -24,6 +24,7 @@
 #include "mtl_mxm_types.h"
 #include "mtl_mxm_endpoint.h"
 #include "mtl_mxm_request.h"
+#include <mxm/api/mxm_addr.h>
 
 mca_mtl_mxm_module_t ompi_mtl_mxm = {
     {
@@ -102,12 +103,66 @@ static int ompi_mtl_mxm_get_ep_address(ompi_mtl_mxm_ep_conn_info_t *ep_info, mxm
 
 #define max(a,b) ((a)>(b)?(a):(b))
 
-int ompi_mtl_mxm_module_init(void)
-{
+static mxm_error_t ompi_mtl_mxm_create_ep(mxm_h ctx, mxm_ep_h *ep, unsigned ptl_bitmap, int lr,
+                                          uint32_t jobid, uint64_t mxlr, int nlps) {
+    mxm_error_t err;
+
+#if MXM_API < MXM_VERSION(1,5)
+    mxm_ep_opts_t ep_opt;
     struct sockaddr_mxm_local_proc sa_bind_self;
     struct sockaddr_mxm_ib_local sa_bind_rdma;
     struct sockaddr_mxm_shm_proc sa_bind_shm;
-    mxm_ep_opts_t ep_opt;
+
+    mxm_fill_ep_opts(&ep_opt);
+
+    sa_bind_self.sa_family = AF_MXM_LOCAL_PROC;
+    sa_bind_self.context_id = lr;
+
+    sa_bind_rdma.sa_family = AF_MXM_IB_LOCAL;
+    sa_bind_rdma.lid = 0;
+    sa_bind_rdma.pkey = 0;
+    sa_bind_rdma.qp_num = 0;
+    sa_bind_rdma.sl = 0;
+
+    sa_bind_shm.sa_family = AF_MXM_SHM_PROC;
+    sa_bind_shm.jobid = jobid;
+    sa_bind_shm.process_id = lr;
+    sa_bind_shm.context_id = mxlr;
+    sa_bind_shm.num_procs = nlps;
+
+    ep_opt.ptl_bind_addr[MXM_PTL_SELF] =
+            (ptl_bitmap & MXM_BIT(MXM_PTL_SELF)) ?
+                    (struct sockaddr*) &sa_bind_self : NULL;
+    ep_opt.ptl_bind_addr[MXM_PTL_RDMA] =
+            (ptl_bitmap & MXM_BIT(MXM_PTL_RDMA)) ?
+                    (struct sockaddr*) &sa_bind_rdma : NULL;
+    ep_opt.ptl_bind_addr[MXM_PTL_SHM] =
+            (ptl_bitmap & MXM_BIT(MXM_PTL_SHM)) ?
+                    (struct sockaddr*) &sa_bind_shm : NULL;
+
+    MXM_VERBOSE(1, "MXM version is old, consider to upgrade");
+    err = mxm_ep_create(ctx, &ep_opt, ep);
+#else
+    mxm_ep_opts_t *ep_opts;
+    err = mxm_config_read_ep_opts(&ep_opts);
+    if (err != MXM_OK) {
+        MXM_ERROR("Failed to parse MXM configuration");
+        return err;
+    }
+
+    ep_opts->job_id = jobid;
+    ep_opts->local_rank = lr;
+    ep_opts->num_local_procs = nlps;
+    err = mxm_ep_create(ctx, ep_opts, ep);
+    mxm_config_free(ep_opts);
+#endif
+    return err;
+}
+
+
+int ompi_mtl_mxm_module_init(void)
+{
+
     ompi_mtl_mxm_ep_conn_info_t ep_info;
     mxm_error_t err;
     uint32_t jobid;
@@ -153,35 +208,16 @@ int ompi_mtl_mxm_module_init(void)
     }
 
     /* Setup the endpoint options and local addresses to bind to. */
-    mxm_fill_ep_opts(&ep_opt);
-
-    sa_bind_self.sa_family = AF_MXM_LOCAL_PROC;
-    sa_bind_self.context_id = lr;
-    sa_bind_self.process_id = mp->proc_name.vpid;
-
-    sa_bind_rdma.sa_family = AF_MXM_IB_LOCAL;
-    sa_bind_rdma.lid = 0;
-    sa_bind_rdma.pkey = 0;
-    sa_bind_rdma.qp_num = 0;
-    sa_bind_rdma.sl = 0;
-
-    sa_bind_shm.sa_family = AF_MXM_SHM_PROC;
-    sa_bind_shm.jobid = jobid;
-    sa_bind_shm.process_id = lr;
-    sa_bind_shm.context_id = mxlr;
-    sa_bind_shm.num_procs = nlps;
-
+#if MXM_API < MXM_VERSION(1,5)
     ptl_bitmap = ompi_mtl_mxm.mxm_opts.ptl_bitmap;
-
-    ep_opt.ptl_bind_addr[MXM_PTL_SELF] = (ptl_bitmap & MXM_BIT(MXM_PTL_SELF))?
-            (struct sockaddr*)&sa_bind_self:NULL;
-    ep_opt.ptl_bind_addr[MXM_PTL_RDMA] =(ptl_bitmap & MXM_BIT(MXM_PTL_RDMA))?
-            (struct sockaddr*)&sa_bind_rdma:NULL;
-    ep_opt.ptl_bind_addr[MXM_PTL_SHM] =(ptl_bitmap & MXM_BIT(MXM_PTL_SHM))?
-            (struct sockaddr*)&sa_bind_shm:NULL;
+#else
+    ptl_bitmap = ompi_mtl_mxm.mxm_opts->ptl_bitmap;
+#endif
 
     /* Open MXM endpoint */
-    err = mxm_ep_create(ompi_mtl_mxm.mxm_context, &ep_opt, &ompi_mtl_mxm.ep);
+    err = ompi_mtl_mxm_create_ep(ompi_mtl_mxm.mxm_context, &ompi_mtl_mxm.ep,
+            ptl_bitmap, lr, jobid, mxlr, nlps);
+
     if (MXM_OK != err) {
         orte_show_help("help-mtl-mxm.txt", "unable to create endpoint", true,
         		mxm_error_string(err));
@@ -257,6 +293,7 @@ int ompi_mtl_mxm_add_procs(struct mca_mtl_base_module_t *mtl, size_t nprocs,
     mxm_error_t err;
     size_t i;
     int rc;
+    int timeout;
 
     assert(mtl == &ompi_mtl_mxm.super);
 
@@ -317,7 +354,13 @@ int ompi_mtl_mxm_add_procs(struct mca_mtl_base_module_t *mtl, size_t nprocs,
     }
 
     /* Connect to remote peers */
-    err = mxm_ep_connect(ompi_mtl_mxm.ep, conn_reqs, nprocs, 1000);
+    if (mxm_get_version() < MXM_VERSION(1,5)) {
+            timeout = 1000;
+        } else {
+            timeout = -1;
+    }
+
+    err = mxm_ep_connect(ompi_mtl_mxm.ep, conn_reqs, nprocs, timeout);
     if (MXM_OK != err) {
         MXM_ERROR("MXM returned connect error: %s\n", mxm_error_string(err));
         for (i = 0; i < nprocs; ++i) {
