@@ -374,7 +374,6 @@
       parameter (MPI_COMBINER_F90_COMPLEX=15)
       parameter (MPI_COMBINER_F90_INTEGER=16)
       parameter (MPI_COMBINER_RESIZED=17)
-      parameter (MPI_COMBINER_INDEXED_BLOCK=18)
 
 ! 
 ! Communicator split type constants.
