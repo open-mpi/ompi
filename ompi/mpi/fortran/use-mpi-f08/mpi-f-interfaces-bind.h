@@ -528,6 +528,7 @@ end subroutine ompi_type_create_indexed_block_f
 subroutine ompi_type_create_hindexed_block_f(count,blocklength, &
                             array_of_displacements,oldtype,newtype,ierror) &
    BIND(C, name="ompi_type_create_hindexed_block_f")
+   use :: mpi_f08_types, only : MPI_ADDRESS_KIND
    implicit none
    INTEGER, INTENT(IN) :: count, blocklength
    INTEGER(MPI_ADDRESS_KIND), INTENT(IN) :: array_of_displacements(count)
