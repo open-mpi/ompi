@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2012 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -375,7 +375,7 @@ int opal_cr_init(void )
     }
 #else
     /* Silence a compiler warning */
-    (void)t;
+    t = 0;
 #endif
 
     mca_base_param_reg_string_name("opal_cr", "tmp_dir",
@@ -928,7 +928,7 @@ int opal_cr_refresh_environ(int prev_pid) {
                         "opal_cr: init: C/R Debugging Enabled [%s] (refresh)\n",
                         (MPIR_debug_with_checkpoint ? "True": "False"));
 #else
-    (void)val; /* Silence Compiler warning */
+    val = 0; /* Silence Compiler warning */
 #endif
 
     if( NULL != file_name ){

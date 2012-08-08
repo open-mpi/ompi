@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2008 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2008 The University of Tennessee and The University
+ * Copyright (c) 2004-2012 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -178,6 +178,7 @@ int mca_base_param_init(void)
 
 int mca_base_param_recache_files(bool rel_path_search)
 {
+    int id;
     char *files, *new_files = NULL, *new_agg_files = NULL;
     char * new_agg_path = NULL, *agg_default_path = NULL;
 
@@ -205,28 +206,28 @@ int mca_base_param_recache_files(bool rel_path_search)
     /* Initialize a parameter that says where MCA param files can
        be found */
 
-    mca_base_param_reg_string_name("mca", "param_files",
-                                   "Path for MCA configuration files containing default parameter values",
-                                   false, false, files, &new_files);
+    id = mca_base_param_reg_string_name("mca", "param_files",
+                                        "Path for MCA configuration files containing default parameter values",
+                                        false, false, files, &new_files);
 
     /* Aggregate MCA parameter files
      * A prefix search path to look up aggregate MCA parameter file
      * requests that do not specify an absolute path
      */
-    mca_base_param_reg_string_name("mca", "base_param_file_prefix",
-                                   "Aggregate MCA parameter file sets",
-                                   false, false, NULL, &new_agg_files);
+    id = mca_base_param_reg_string_name("mca", "base_param_file_prefix",
+                                        "Aggregate MCA parameter file sets",
+                                        false, false, NULL, &new_agg_files);
     
     asprintf(&agg_default_path,
              "%s"OPAL_PATH_SEP"amca-param-sets%c%s",
              opal_install_dirs.pkgdatadir, OPAL_ENV_SEP, cwd);
-    mca_base_param_reg_string_name("mca", "base_param_file_path",
-                                   "Aggregate MCA parameter Search path",
-                                   false, false, agg_default_path, &new_agg_path);
+    id = mca_base_param_reg_string_name("mca", "base_param_file_path",
+                                        "Aggregate MCA parameter Search path",
+                                        false, false, agg_default_path, &new_agg_path);
 
-    mca_base_param_reg_string_name("mca", "base_param_file_path_force",
-                                   "Forced Aggregate MCA parameter Search path",
-                                   false, false, NULL, &force_agg_path);
+    id = mca_base_param_reg_string_name("mca", "base_param_file_path_force",
+                                        "Forced Aggregate MCA parameter Search path",
+                                        false, false, NULL, &force_agg_path);
 
     if( NULL != force_agg_path ) {
         char *tmp_str = NULL;
