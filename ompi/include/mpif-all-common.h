@@ -307,6 +307,7 @@
       integer MPI_COMBINER_F90_COMPLEX
       integer MPI_COMBINER_F90_INTEGER
       integer MPI_COMBINER_RESIZED
+      integer MPI_COMBINER_HINDEXED_BLOCK
 
       parameter (MPI_COMBINER_NAMED=0)
       parameter (MPI_COMBINER_DUP=1)
@@ -326,6 +327,7 @@
       parameter (MPI_COMBINER_F90_COMPLEX=15)
       parameter (MPI_COMBINER_F90_INTEGER=16)
       parameter (MPI_COMBINER_RESIZED=17)
+      parameter (MPI_COMBINER_HINDEXED_BLOCK=18)
 
 ! 
 ! Communicator split type constants.
