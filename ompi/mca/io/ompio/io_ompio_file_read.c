@@ -26,10 +26,6 @@
 #include "ompi/mca/fs/base/base.h"
 #include "ompi/mca/fcoll/fcoll.h"
 #include "ompi/mca/fcoll/base/base.h"
-#include "ompi/mca/fcoll/dynamic/fcoll_dynamic.h"
-#include "ompi/mca/fcoll/static/fcoll_static.h"
-#include "ompi/mca/fcoll/individual/fcoll_individual.h"
-#include "ompi/mca/fcoll/two_phase/fcoll_two_phase.h"
 #include "ompi/mca/fbtl/fbtl.h"
 #include "ompi/mca/fbtl/base/base.h"
 
