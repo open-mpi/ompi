@@ -1106,7 +1106,10 @@ foreach my $s (@scripts) {
         print "Cannot find executable $s!\nAborting.\n";
         my_exit(1);
     }
-    system($s);
+    if (system($s) != 0) {
+        print "Script failed: $s\n";
+        my_exit(1);
+    }
 }
 
 #---------------------------------------------------------------------------
