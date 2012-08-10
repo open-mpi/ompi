@@ -43,12 +43,9 @@
 #include "opal/util/output.h"
 #include "opal/util/printf.h"
 #include "opal/mca/hwloc/base/base.h"
-#include "opal/mca/shmem/base/base.h"
-#include "opal/mca/shmem/shmem.h"
 #include "orte/util/proc_info.h"
 #include "opal/datatype/opal_convertor.h"
 #include "ompi/class/ompi_free_list.h"
-#include "ompi/runtime/ompi_module_exchange.h"
 #include "ompi/mca/btl/btl.h"
 #include "ompi/mca/mpool/base/base.h"
 #include "ompi/mca/mpool/sm/mpool_sm.h"
@@ -114,6 +111,7 @@ mca_btl_sm_t mca_btl_sm = {
  */
 #define OFFSET2ADDR(OFFSET, BASE) ((ptrdiff_t)(OFFSET) + (char*)(BASE))
 
+
 static void *mpool_calloc(size_t nmemb, size_t size)
 {
     void *buf;
@@ -129,83 +127,17 @@ static void *mpool_calloc(size_t nmemb, size_t size)
     return buf;
 }
 
-/*
- * Returns a pointer to node rank zero. Returns NULL on error.
- */
-static ompi_proc_t *
-get_node_rank_zero_proc_ptr(ompi_proc_t **proc_world,
-                            size_t proc_world_size)
+
+static int sm_btl_first_time_init(mca_btl_sm_t *sm_btl, int n)
 {
-    size_t num_local_procs = 0;
-
-    if (NULL == proc_world) {
-        return NULL;
-    }
-    /* sort the procs list and get a pointer to the lowest node rank */
-    if (OMPI_SUCCESS != mca_common_sm_local_proc_reorder(proc_world,
-                                                         proc_world_size,
-                                                         &num_local_procs)) {
-        opal_output(0, "mca_common_sm_local_proc_reorder failure! "
-                    "Cannot continue.\n");
-        return NULL;
-    }
-
-    return proc_world[0];
-}
-
-/*
- * Modex receive. Caller is responsible for freeing returned resources.
- */
-static inline int
-recv_modex(mca_btl_sm_component_t *comp_ptr,
-           mca_btl_sm_modex_t **out_modex)
-{
-    ompi_proc_t **proc_world = NULL;
-    ompi_proc_t *proc_node_rank_zero = NULL;
-    size_t proc_world_size = 0;
-    size_t modex_size = 0;
-    int rc = OMPI_SUCCESS;
-
-    if (NULL == (proc_world = ompi_proc_world(&proc_world_size))) {
-        opal_output(0, "ompi_proc_world failure! Cannot continue.\n");
-        rc = OMPI_ERROR;
-        goto out;
-    }
-    if (NULL == (proc_node_rank_zero =
-        get_node_rank_zero_proc_ptr(proc_world, proc_world_size))) {
-        opal_output(0, "get_node_rank_zero_proc_ptr failure! "
-                    "Cannot continue.\n");
-        rc = OMPI_ERROR;
-        goto out;
-    }
-    if (OMPI_SUCCESS != (rc =
-        ompi_modex_recv(&comp_ptr->super.btl_version,
-                        proc_node_rank_zero,
-                        (void **)out_modex,
-                        &modex_size))) {
-        opal_output(0, "recv_modex: ompi_modex_recv failure!\n");
-        /* rc is set */
-        goto out;
-    }
-
-out:
-    if (NULL != proc_world) {
-        free(proc_world);
-    }
-    return rc;
-}
-
-static int
-sm_btl_first_time_init(mca_btl_sm_t *sm_btl,
-                       int32_t my_smp_rank,
-                       int n)
-{
-    size_t length, length_payload;
+    size_t size, length, length_payload;
+    char *sm_ctl_file;
     sm_fifo_t *my_fifos;
-    int my_mem_node, num_mem_nodes, i, rc;
-    mca_mpool_base_resources_t *res = NULL;
+    int my_mem_node, num_mem_nodes, i;
+    ompi_proc_t **procs;
+    size_t num_procs;
+    mca_mpool_base_resources_t res;
     mca_btl_sm_component_t* m = &mca_btl_sm_component;
-    mca_btl_sm_modex_t *modex = NULL;
 
     /* Assume we don't have hwloc support and fill in dummy info */
     mca_btl_sm_component.mem_node = my_mem_node = 0;
@@ -258,42 +190,50 @@ sm_btl_first_time_init(mca_btl_sm_t *sm_btl,
     }
 #endif
 
-    if (NULL == (res = calloc(1, sizeof(*res)))) {
+    /* lookup shared memory pool */
+    mca_btl_sm_component.sm_mpools = (mca_mpool_base_module_t **) calloc(num_mem_nodes,
+                                            sizeof(mca_mpool_base_module_t*));
+
+    /* Disable memory binding, because each MPI process will claim
+       pages in the mpool for their local NUMA node */
+    res.mem_node = -1;
+
+    /* determine how much memory to create */
+    /*
+     * This heuristic formula mostly says that we request memory for:
+     * - nfifos FIFOs, each comprising:
+     *   . a sm_fifo_t structure
+     *   . many pointers (fifo_size of them per FIFO)
+     * - eager fragments (2*n of them, allocated in sm_free_list_inc chunks)
+     * - max fragments (sm_free_list_num of them)
+     *
+     * On top of all that, we sprinkle in some number of
+     * "opal_cache_line_size" additions to account for some
+     * padding and edge effects that may lie in the allocator.
+     */
+    res.size =
+        FIFO_MAP_NUM(n) * ( sizeof(sm_fifo_t) + sizeof(void *) * m->fifo_size + 4 * opal_cache_line_size )
+        + ( 2 * n + m->sm_free_list_inc ) * ( m->eager_limit   + 2 * opal_cache_line_size )
+        +           m->sm_free_list_num   * ( m->max_frag_size + 2 * opal_cache_line_size );
+
+    /* before we multiply by n, make sure the result won't overflow */
+    /* Stick that little pad in, particularly since we'll eventually
+     * need a little extra space.  E.g., in mca_mpool_sm_init() in
+     * mpool_sm_component.c when sizeof(mca_common_sm_module_t) is
+     * added.
+     */
+    if ( ((double) res.size) * n > LONG_MAX - 4096 ) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
-    /* everyone receive modex information. all but node rank zero attach to the
-     * segments stored within the modex.  remember: node rank zero is already
-     * attached to sm_seg. */
-    if (OMPI_SUCCESS != (rc = recv_modex(m, &modex))) {
-        free(res);
-        return rc;
-    }
-    /* lookup shared memory pool */
-    mca_btl_sm_component.sm_mpools =
-        (mca_mpool_base_module_t **)calloc(num_mem_nodes,
-                                           sizeof(mca_mpool_base_module_t *));
-
-    /* Disable memory binding, because each MPI process will claim pages in the
-     * mpool for their local NUMA node */
-    res->mem_node = -1;
-    res->size = modex->mpool_res_size;
-
-    if (OPAL_SUCCESS !=
-        opal_shmem_ds_copy(&(modex->sm_mpool_meta_buf),
-                           &(res->bs_meta_buf))) {
-        free(res);
-        free(modex);
-        return OMPI_ERROR;
-    }
-
+    res.size *= n;
+    
+    /* now, create it */
     mca_btl_sm_component.sm_mpools[0] =
         mca_mpool_base_module_create(mca_btl_sm_component.sm_mpool_name,
-                                     sm_btl, res);
+                                     sm_btl, &res);
     /* Sanity check to ensure that we found it */
     if (NULL == mca_btl_sm_component.sm_mpools[0]) {
-        free(res);
-        free(modex);
-        return OMPI_ERR_OUT_OF_RESOURCE;
+            return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
     mca_btl_sm_component.sm_mpool = mca_btl_sm_component.sm_mpools[0];
@@ -305,27 +245,37 @@ sm_btl_first_time_init(mca_btl_sm_t *sm_btl,
     mca_btl_sm_component.sm_peers = (struct mca_btl_base_endpoint_t**)
         calloc(n, sizeof(struct mca_btl_base_endpoint_t*));
     if (NULL == mca_btl_sm_component.sm_peers) {
-        free(res);
-        free(modex);
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
-    if (0 != my_smp_rank) {
-        if (NULL == (mca_btl_sm_component.sm_seg =
-            mca_common_sm_module_attach(&modex->sm_meta_buf,
-                                        sizeof(mca_common_sm_seg_header_t),
-                                        opal_cache_line_size))) {
-            /* don't have to detach here, because module_attach cleans up after
-             * itself on failure. */
-            opal_output(0, "sm_btl_first_time_init: "
-                        "mca_common_sm_module_attach failure!\n");
-            free(modex);
-            free(res);
-            return OMPI_ERROR;
-        }
+
+    /* Allocate Shared Memory BTL process coordination
+     * data structure.  This will reside in shared memory */
+
+    /* set file name */
+    if (asprintf(&sm_ctl_file, "%s"OPAL_PATH_SEP"shared_mem_btl_module.%s",
+                 orte_process_info.job_session_dir,
+                 orte_process_info.nodename) < 0) {
+        return OMPI_ERR_OUT_OF_RESOURCE;
     }
-    /* it is now safe to free the modex and the mpool resources */
-    free(modex);
-    free(res);
+
+    /* Pass in a data segment alignment of 0 to get no data
+       segment (only the shared control structure) */
+    size = sizeof(mca_common_sm_seg_header_t) +
+        n * (sizeof(sm_fifo_t*) + sizeof(char *) + sizeof(uint16_t)) + opal_cache_line_size;
+    procs = ompi_proc_world(&num_procs);
+    if (!(mca_btl_sm_component.sm_seg =
+          mca_common_sm_init(procs, num_procs, size, sm_ctl_file,
+                             sizeof(mca_common_sm_seg_header_t),
+                             opal_cache_line_size))) {
+        opal_output(0, "mca_btl_sm_add_procs: unable to create shared memory "
+                    "BTL coordinating strucure :: size %lu \n",
+                    (unsigned long)size);
+        free(procs);
+        free(sm_ctl_file);
+        return OMPI_ERROR;
+    }
+    free(procs);
+    free(sm_ctl_file);
 
     /* check to make sure number of local procs is within the
      * specified limits */
@@ -424,7 +374,6 @@ static struct mca_btl_base_endpoint_t *
 create_sm_endpoint(int local_proc, struct ompi_proc_t *proc)
 {
     struct mca_btl_base_endpoint_t *ep;
-
 #if OMPI_ENABLE_PROGRESS_THREADS == 1
     char path[PATH_MAX];
 #endif
@@ -452,6 +401,22 @@ create_sm_endpoint(int local_proc, struct ompi_proc_t *proc)
     return ep;
 }
 
+static void calc_sm_max_procs(int n)
+{
+    /* see if need to allocate space for extra procs */
+    if(0 > mca_btl_sm_component.sm_max_procs) {
+        /* no limit */
+        if(0 <= mca_btl_sm_component.sm_extra_procs) {
+            /* limit */
+            mca_btl_sm_component.sm_max_procs =
+                n + mca_btl_sm_component.sm_extra_procs;
+        } else {
+            /* no limit */
+            mca_btl_sm_component.sm_max_procs = 2 * n;
+        }
+    }
+}
+
 int mca_btl_sm_add_procs(
     struct mca_btl_base_module_t* btl,
     size_t nprocs,
@@ -465,9 +430,6 @@ int mca_btl_sm_add_procs(
     mca_btl_sm_t *sm_btl;
     bool have_connected_peer = false;
     char **bases;
-    /* for easy access to the mpool_sm_module */
-    mca_mpool_sm_module_t *sm_mpool_modp = NULL;
-
     /* initializion */
 
     sm_btl = (mca_btl_sm_t *)btl;
@@ -480,7 +442,7 @@ int mca_btl_sm_add_procs(
      * and idetify procs that are on this host.  Add procs on this
      * host to shared memory reachbility list.  Also, get number
      * of local procs in the procs list. */
-    for (proc = 0; proc < (int32_t)nprocs; proc++) {
+    for(proc = 0; proc < (int32_t)nprocs; proc++) {
         /* check to see if this proc can be reached via shmem (i.e.,
            if they're on my local host and in my job) */
         if (procs[proc]->proc_name.jobid != my_proc->proc_name.jobid ||
@@ -515,18 +477,18 @@ int mca_btl_sm_add_procs(
         goto CLEANUP;
 
     /* make sure that my_smp_rank has been defined */
-    if (-1 == my_smp_rank) {
+    if(-1 == my_smp_rank) {
         return_code = OMPI_ERROR;
         goto CLEANUP;
     }
 
+    calc_sm_max_procs(n_local_procs);
+
     if (!sm_btl->btl_inited) {
         return_code =
-            sm_btl_first_time_init(sm_btl, my_smp_rank,
-                                   mca_btl_sm_component.sm_max_procs);
-        if (return_code != OMPI_SUCCESS) {
+            sm_btl_first_time_init(sm_btl, mca_btl_sm_component.sm_max_procs);
+        if(return_code != OMPI_SUCCESS)
             goto CLEANUP;
-        }
     }
 
     /* set local proc's smp rank in the peers structure for
@@ -539,7 +501,6 @@ int mca_btl_sm_add_procs(
     }
 
     bases = mca_btl_sm_component.shm_bases;
-    sm_mpool_modp = (mca_mpool_sm_module_t *)mca_btl_sm_component.sm_mpool;
 
     /* initialize own FIFOs */
     /*
@@ -563,32 +524,11 @@ int mca_btl_sm_add_procs(
     /* Sync with other local procs. Force the FIFO initialization to always
      * happens before the readers access it.
      */
-    opal_atomic_add_32(&mca_btl_sm_component.sm_seg->module_seg->seg_inited, 1);
+    opal_atomic_add_32( &mca_btl_sm_component.sm_seg->module_seg->seg_inited, 1);
     while( n_local_procs >
            mca_btl_sm_component.sm_seg->module_seg->seg_inited) {
         opal_progress();
         opal_atomic_rmb();
-    }
-
-    /* it is now safe to unlink the shared memory segment. only one process
-     * needs to do this, so just let smp rank zero take care of it. */
-    if (0 == my_smp_rank) {
-        if (OMPI_SUCCESS !=
-            mca_common_sm_module_unlink(mca_btl_sm_component.sm_seg)) {
-            /* it is "okay" if this fails at this point. we have gone this far,
-             * so just warn about the failure and continue. this is probably
-             * only triggered by a programming error. */
-            opal_output(0, "WARNING: common_sm_module_unlink failed.\n");
-        }
-        /* SKG - another abstraction violation here, but I don't want to add
-         * extra code in the sm mpool for further synchronization. */
-
-        /* at this point, all processes have attached to the mpool segment. so
-         * it is safe to unlink it here. */
-        if (OMPI_SUCCESS !=
-            mca_common_sm_module_unlink(sm_mpool_modp->sm_common_module)) {
-            opal_output(0, "WARNING: common_sm_module_unlink failed.\n");
-        }
     }
 
     /* coordinate with other processes */
