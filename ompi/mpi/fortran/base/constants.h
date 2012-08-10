@@ -100,13 +100,13 @@ DECL(int, MPI_FORTRAN_IN_PLACE, mpi_fortran_in_place,
      mpi_fortran_in_place_, mpi_fortran_in_place__);
 DECL(char *, MPI_FORTRAN_ARGV_NULL, mpi_fortran_argv_null,
      mpi_fortran_argv_null_, mpi_fortran_argv_null__);
-DECL(double, MPI_FORTRAN_ARGVS_NULL, mpi_fortran_argvs_null,
+DECL(char *, MPI_FORTRAN_ARGVS_NULL, mpi_fortran_argvs_null,
      mpi_fortran_argvs_null_, mpi_fortran_argvs_null__);
 DECL(int *, MPI_FORTRAN_ERRCODES_IGNORE, mpi_fortran_errcodes_ignore,
      mpi_fortran_errcodes_ignore_, mpi_fortran_errcodes_ignore__);
 DECL(int *, MPI_FORTRAN_STATUS_IGNORE, mpi_fortran_status_ignore,
      mpi_fortran_status_ignore_, mpi_fortran_status_ignore__);
-DECL(double, MPI_FORTRAN_STATUSES_IGNORE, mpi_fortran_statuses_ignore,
+DECL(int *, MPI_FORTRAN_STATUSES_IGNORE, mpi_fortran_statuses_ignore,
      mpi_fortran_statuses_ignore_, mpi_fortran_statuses_ignore__);
 
 /*

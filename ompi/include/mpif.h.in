@@ -10,7 +10,7 @@
 !                         University of Stuttgart.  All rights reserved.
 ! Copyright (c) 2004-2005 The Regents of the University of California.
 !                         All rights reserved.
-! Copyright (c) 2006-2007 Cisco Systems, Inc.  All rights reserved.
+! Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
 ! $COPYRIGHT$
 !
 ! Additional copyrights may follow
@@ -51,35 +51,10 @@
 ! WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-!
-!     Include the back-end file that has the bulk of the MPI Fortran
-!     interface.
-!
-
-      include 'mpif-common.h'
-
-!
-!     These "external" statements are specific to the MPI mpif.h interface
-!     (and are toxic to the MPI F90 interface), and are therefore in the
-!     MPI Fortran-specific header file (i.e., this one).
-!
-      external MPI_NULL_COPY_FN, MPI_NULL_DELETE_FN
-      external MPI_COMM_NULL_COPY_FN, MPI_COMM_NULL_DELETE_FN
-      external MPI_TYPE_NULL_COPY_FN, MPI_TYPE_NULL_DELETE_FN
-      external MPI_DUP_FN, MPI_COMM_DUP_FN, MPI_TYPE_DUP_FN
-      external MPI_WIN_NULL_COPY_FN
-      external MPI_WIN_NULL_DELETE_FN
-      external MPI_WIN_DUP_FN
-!     Note that MPI_CONVERSION_FN_NULL is a "constant" (it is only ever
-!     checked for comparison; it is never invoked), but it is passed as
-!     a function pointer (to MPI_REGISTER_DATAREP) and therefore must be
-!     the same size/type.  It is therefore external'ed here, and not
-!     defined with an integer value in mpif-common.h.
-      external MPI_CONVERSION_FN_NULL
-
-!
-!     double precision functions
-!
-      external MPI_WTIME, MPI_WTICK @MPIF_H_PMPI_W_FUNCS@
-      double precision MPI_WTIME, MPI_WTICK @MPIF_H_PMPI_W_FUNCS@
-
+      include 'mpif-config.h'
+      include 'mpif-constants.h'
+      include 'mpif-handles.h'
+      @OMPI_MPIF_IO_CONSTANTS_INCLUDE@
+      @OMPI_MPIF_IO_HANDLES_INCLUDE@
+      include 'mpif-externals.h'
+      include 'mpif-sentinels.h'

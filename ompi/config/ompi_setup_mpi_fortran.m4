@@ -39,7 +39,7 @@ AC_DEFUN([OMPI_SETUP_MPI_FORTRAN],[
     OMPI_FORTRAN_HAVE_IGNORE_TKR=0
     OMPI_FORTRAN_HAVE_OPTIONAL_ARGS=0
     OMPI_FORTRAN_HAVE_BIND_C=0
-    OMPI_FORTRAN_HAVE_F08_ASSUMED_SHAPE=0
+    OMPI_FORTRAN_HAVE_F08_ASSUMED_RANK=0
     OMPI_FORTRAN_HAVE_PRIVATE=0
 
     # These macros control symbol names for Fortran/C interoperability
@@ -396,16 +396,16 @@ end type test_mpi_handle],
     OMPI_FORTRAN_NEED_WRAPPER_ROUTINES=1
     OMPI_FORTRAN_F08_PREDECL='!'
     OMPI_FORTRAN_F08_TYPE=real
-    OMPI_FORTRAN_HAVE_F08_ASSUMED_SHAPE=0
+    OMPI_FORTRAN_HAVE_F08_ASSUMED_RANK=0
     AS_IF([test $OMPI_WANT_FORTRAN_USEMPIF08_BINDINGS -eq 1 -a \
            $OMPI_BUILD_FORTRAN_USEMPIF08_BINDINGS -eq 1],
           [ # Look for Fortran 2008 assumed shape syntax
-           OMPI_FORTRAN_CHECK_F08_ASSUMED_SHAPE(
+           OMPI_FORTRAN_CHECK_F08_ASSUMED_RANK(
                [ # If we have assumed shape, we can build the use
                  # mpi_f08 module "better"
                 OMPI_FORTRAN_F08_PREDECL='!'
                 OMPI_FORTRAN_F08_TYPE='type(*), dimension(..)'
-                OMPI_FORTRAN_HAVE_F08_ASSUMED_SHAPE=1])
+                OMPI_FORTRAN_HAVE_F08_ASSUMED_RANK=1])
 
                # Which mpi_f08 implementation are we using?
                # a) partial, proof-of-concept that supports array
@@ -587,8 +587,8 @@ end type test_mpi_handle],
     AC_DEFINE_UNQUOTED(OMPI_BUILD_FORTRAN_USEMPIF08_BINDINGS, 
                        $OMPI_BUILD_FORTRAN_USEMPIF08_BINDINGS,
                        [For ompi_info: Whether we will build the MPI Fortran "use mpi_f08" bindings or not])
-    AC_DEFINE_UNQUOTED(OMPI_FORTRAN_HAVE_F08_ASSUMED_SHAPE,
-                       [$OMPI_FORTRAN_HAVE_F08_ASSUMED_SHAPE],
+    AC_DEFINE_UNQUOTED(OMPI_FORTRAN_HAVE_F08_ASSUMED_RANK,
+                       [$OMPI_FORTRAN_HAVE_F08_ASSUMED_RANK],
                        [For ompi_info: Whether the Fortran compiler supports the Fortran 2008 "assumed shape" syntax or not])
     AC_DEFINE_UNQUOTED(OMPI_FORTRAN_HAVE_BIND_C,
                        [$OMPI_FORTRAN_HAVE_BIND_C],

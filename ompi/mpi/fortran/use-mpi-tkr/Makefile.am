@@ -55,7 +55,7 @@ if OMPI_BUILD_FORTRAN_USEMPI_TKR_BINDINGS
 #  mpi-f90-interfaces.h                                     |
 #                 |                                         |
 #                \|/                                       \|/
-#            used by mpi.f90                 used by mpi_*.f90
+#            used by mpi.F90                 used by mpi_*.f90
 #           /        |                               |
 #          /        \|/                             \|/
 #         /  generates mpi.o                 generates mpi_*.o
@@ -116,30 +116,30 @@ $(nodist_libmpi_usempi_la_SOURCES): fortran_kinds.sh
 
 # Automake doesn't know how to do F90 dependency analysis, so manually
 # list this here (i.e., "mpi-f90-interfaces.h" is included in
-# mpi.f90).
+# mpi.F90).
 
-# Print a warning indicating that compiling mpi.f90 can take a while.
+# Print a warning indicating that compiling mpi.F90 can take a while.
 # The only way to do this portably is to have our own rules for mpi.o
 # and mpi.obj (having a "fake" target that just has echo statement in
 # it may trigger mpi.o|obj to be rebuilt because the fake name doesn't
 # exist; there aren't good portable ways to indicate that the target
 # name is fake and should never exist).
 
-# Note the "-I." in the commands below.  This is because mpi.f90
+# Note the "-I." in the commands below.  This is because mpi.F90
 # includes mpi-f90-interfaces.h, which will be in the build tree
 # (i.e., the current directory) because it is generated.
 
-mpi.o: mpi.f90 mpi-f90-interfaces.h
+mpi.o: mpi.F90 mpi-f90-interfaces.h
 	@echo "***************************************************************"
-	@echo "* Compiling the mpi.f90 file may take a few minutes."
+	@echo "* Compiling the mpi.F90 file may take a few minutes."
 	@echo "* This is quite normal -- do not be alarmed if the compile"
 	@echo "* process seems to 'hang' at this point for several minutes."
 	@echo "***************************************************************"
 	$(FCCOMPILE) -c -I. -o $@ $(FCFLAGS_f90) $<
 
-mpi.obj: mpi.f90 mpi-f90-interfaces.h
+mpi.obj: mpi.F90 mpi-f90-interfaces.h
 	@echo "***************************************************************"
-	@echo "* Compiling the mpi.f90 file may take a few minutes."
+	@echo "* Compiling the mpi.F90 file may take a few minutes."
 	@echo "* This is quite normal -- do not be alarmed if the compile"
 	@echo "* process seems to 'hang' at this point for several minutes."
 	@echo "***************************************************************"
@@ -148,13 +148,13 @@ mpi.obj: mpi.f90 mpi-f90-interfaces.h
 BUILT_SOURCES = mpi-f90-interfaces.h
 endif
 
-# mpi.f90 is the only f90 source file directly in libmpif90 that gets
+# mpi.F90 is the only f90 source file directly in libmpif90 that gets
 # distributed.  
 
 libmpi_usempi_la_SOURCES = \
      attr_fn-f90-interfaces.h \
      conversion_fn_null-f90-interface.h \
-     mpi.f90
+     mpi.F90
 libmpi_usempi_la_LIBADD = \
      $(top_builddir)/ompi/mpi/fortran/mpif-h/libmpi_mpifh.la
 

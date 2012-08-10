@@ -90,6 +90,7 @@
 #define ompi_error_class_f pompi_error_class_f
 #define ompi_error_string_f pompi_error_string_f
 #define ompi_exscan_f pompi_exscan_f
+#define ompi_f_sync_reg_f pompi_f_sync_reg_f
 #define ompi_file_call_errhandler_f pompi_file_call_errhandler_f
 #define ompi_file_create_errhandler_f pompi_file_create_errhandler_f
 #define ompi_file_set_errhandler_f pompi_file_set_errhandler_f

@@ -3017,6 +3017,12 @@ subroutine ompi_comm_split_type_f(comm,split_type,key,info,newcomm,ierror) &
    INTEGER, INTENT(OUT) :: ierror
 end subroutine ompi_comm_split_type_f
 
+subroutine ompi_f_sync_reg_f(buf) &
+   BIND(C, name="ompi_f_sync_reg_f")
+   implicit none
+   OMPI_FORTRAN_IGNORE_TKR_TYPE :: buf
+end subroutine ompi_f_sync_reg_f
+
 subroutine ompi_get_library_version_f(name,resultlen,ierror,name_len) &
    BIND(C, name="ompi_get_library_version_f")
    use, intrinsic :: ISO_C_BINDING, only : C_CHAR

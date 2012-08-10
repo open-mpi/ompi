@@ -22,23 +22,23 @@ dnl $HEADER$
 
 # Does this compiler support the Fortran 2008 assumed shape syntax?
 
-# OMPI_FORTRAN_CHECK_F08_ASSUMED_SHAPE([action if found], 
+# OMPI_FORTRAN_CHECK_F08_ASSUMED_RANK([action if found], 
 #                                      [action if not found])
 # ----------------------------------------------------------------
-AC_DEFUN([OMPI_FORTRAN_CHECK_F08_ASSUMED_SHAPE], [
-    AS_VAR_PUSHDEF([fortran_f08_assumed_shape], 
-                   [ompi_cv_fortran_f08_assumed_shape])
+AC_DEFUN([OMPI_FORTRAN_CHECK_F08_ASSUMED_RANK], [
+    AS_VAR_PUSHDEF([fortran_f08_assumed_rank], 
+                   [ompi_cv_fortran_f08_assumed_rank])
 
     AC_CACHE_CHECK([Fortran compiler F08 assumed shaped syntax],
-                    fortran_f08_assumed_shape,
-                    [_OMPI_FORTRAN_CHECK_F08_ASSUMED_SHAPE])
+                    fortran_f08_assumed_rank,
+                    [_OMPI_FORTRAN_CHECK_F08_ASSUMED_RANK])
 
-    AS_VAR_IF(fortran_f08_assumed_shape, [yes], [$1], [$2])
+    AS_VAR_IF(fortran_f08_assumed_rank, [yes], [$1], [$2])
 ])
 
 ###################################
 
-AC_DEFUN([_OMPI_FORTRAN_CHECK_F08_ASSUMED_SHAPE], [
+AC_DEFUN([_OMPI_FORTRAN_CHECK_F08_ASSUMED_RANK], [
     OPAL_VAR_SCOPE_PUSH([happy])
 
     # If we were called here, it means that the value was not cached,
@@ -52,7 +52,7 @@ AC_DEFUN([_OMPI_FORTRAN_CHECK_F08_ASSUMED_SHAPE], [
                                       [TYPE(*), DIMENSION(..)],
                                       [happy=yes], [happy=no])
 
-    AS_VAR_SET(fortran_f08_assumed_shape, [$happy]);
+    AS_VAR_SET(fortran_f08_assumed_rank, [$happy]);
 
     # Now put the orignal CACHE_CHECK MSG_CHECKING back so that it can
     # output the MSG_RESULT.

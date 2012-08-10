@@ -18,10 +18,7 @@
 # $HEADER$
 #
 
-# mpif-common.h is not generated, but mpif.h and mpif-config.h are.
-# See big comments in these files for an explanation.
-
-# note - headers and nodist_headers will go in ${includedir}/openmpi,
+# Note - headers and nodist_headers will go in ${includedir}/openmpi,
 # not ${includedir}/
 headers = 
 nodist_headers = ompi_config.h
@@ -34,9 +31,14 @@ pkginclude_HEADERS =
 
 if OMPI_BUILD_FORTRAN_MPIFH_BINDINGS
 include_HEADERS += \
-	mpif-all-common.h \
-	mpif-common.h \
-	mpif-mpi-io.h
+        mpif.h \
+        mpif-constants.h \
+        mpif-externals.h \
+        mpif-handles.h \
+        mpif-io-constants.h \
+        mpif-io-handles.h \
+        mpif-sentinels.h
+
 endif
 
 # These files are always installed in $(includedir), but shouldn't be
@@ -49,13 +51,21 @@ nodist_include_HEADERS = \
 
 if OMPI_BUILD_FORTRAN_MPIFH_BINDINGS
 nodist_include_HEADERS += \
-        mpif.h \
         mpif-config.h
 endif
 
 include ompi/Makefile.include
 
-EXTRA_DIST = $(headers) mpif-common.pl
+# This is complicated, but mpif-values.pl generates
+# several mpif-*.h files in this directory (during autogen.pl).
+# Hence, if any of those files change, it's safer to just force the
+# user to re-autogen.
+#mpif.h: mpif-constants.h mpif-handles.h mpif-io-constants.h mpif-io-handles.h
+#	@ echo "ERROR: an mpi-*.h header file has changed"
+#	@ echo "ERROR: you must re-run autogen.pl (sorry!)"
+#	@ exit 1
+
+EXTRA_DIST = $(headers) mpif-values.pl
 
 if WANT_INSTALL_HEADERS 
 ompidir = $(includedir)/openmpi

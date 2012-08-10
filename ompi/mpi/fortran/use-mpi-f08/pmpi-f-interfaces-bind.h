@@ -3023,6 +3023,12 @@ subroutine pompi_comm_split_type_f(comm,split_type,key,info,newcomm,ierror) &
    INTEGER, INTENT(OUT) :: ierror
 end subroutine pompi_comm_split_type_f
 
+subroutine pompi_f_sync_reg_f(buf) &
+   BIND(C, name="pompi_f_sync_reg_f")
+   implicit none
+   OMPI_FORTRAN_IGNORE_TKR_TYPE :: buf
+end subroutine pompi_f_sync_reg_f
+
 subroutine pompi_get_library_version_f(name,resultlen,ierror,name_len) &
    BIND(C, name="pompi_get_library_version_f")
    use, intrinsic :: ISO_C_BINDING, only : C_CHAR

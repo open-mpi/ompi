@@ -87,7 +87,7 @@ void ompi_info_do_config(bool want_all)
     char *fortran_usempif08;
     char *fortran_usempif08_compliance;
     char *fortran_have_ignore_tkr;
-    char *fortran_have_f08_assumed_shape;
+    char *fortran_have_f08_assumed_rank;
     char *fortran_build_f08_subarrays;
     char *fortran_have_optional_args;
     char *fortran_have_bind_c;
@@ -156,7 +156,7 @@ void ompi_info_do_config(bool want_all)
         fortran_usempi = "no";
     }
     fortran_usempif08 = OMPI_BUILD_FORTRAN_USEMPIF08_BINDINGS ? "yes" : "no";
-    fortran_have_f08_assumed_shape = OMPI_FORTRAN_HAVE_F08_ASSUMED_SHAPE ?
+    fortran_have_f08_assumed_rank = OMPI_FORTRAN_HAVE_F08_ASSUMED_RANK ?
         "yes" : "no";
     fortran_build_f08_subarrays = OMPI_BUILD_FORTRAN_F08_SUBARRAYS ? 
         "yes" : "no";
@@ -345,8 +345,8 @@ void ompi_info_do_config(bool want_all)
                   fortran_have_ignore_tkr);
     free(fortran_have_ignore_tkr);
     opal_info_out("Fort 08 assumed shape", 
-                  "compiler:fortran:f08_assumed_shape",
-                  fortran_have_f08_assumed_shape);
+                  "compiler:fortran:f08_assumed_rank",
+                  fortran_have_f08_assumed_rank);
     opal_info_out("Fort optional args", 
                   "compiler:fortran:optional_arguments",
                   fortran_have_optional_args);

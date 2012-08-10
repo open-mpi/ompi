@@ -17,6 +17,9 @@
 #ifndef OMPI_FORTRAN_CONFIGURE_OUTPUT_H
 #define OMPI_FORTRAN_CONFIGURE_OUTPUT_H
 
+! Whether we're building the MPI IO interface or not
+#define OMPI_PROVIDE_MPI_FILE_INTERFACE @OMPI_PROVIDE_MPI_FILE_INTERFACE@
+
 ! Whether we're using wrapper F08 functions or not
 #define OMPI_FORTRAN_NEED_WRAPPER_ROUTINES @OMPI_FORTRAN_NEED_WRAPPER_ROUTINES@
 

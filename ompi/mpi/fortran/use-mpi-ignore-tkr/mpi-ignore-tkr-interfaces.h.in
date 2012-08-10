@@ -785,7 +785,7 @@ subroutine MPI_Comm_spawn_multiple(count, array_of_commands, array_of_argv, arra
         root, comm, intercomm, array_of_errcodes, ierr)
   integer, intent(in) :: count
   character(len=*), dimension(*), intent(in) :: array_of_commands
-  character(len=*), dimension(count,*), intent(in) :: array_of_argv
+  character(len=*), dimension(count, *), intent(in) :: array_of_argv
   integer, dimension(*), intent(in) :: array_of_maxprocs
   integer, dimension(*), intent(in) :: array_of_info
   integer, intent(in) :: root
@@ -3025,24 +3025,14 @@ end interface
 
 interface MPI_Testall
 
-subroutine MPI_TestallS(count, array_of_requests, flag, array_of_statuses, ierr)
+subroutine MPI_Testall(count, array_of_requests, flag, array_of_statuses, ierr)
   include 'mpif-config.h'
   integer, intent(in) :: count
   integer, dimension(count), intent(inout) :: array_of_requests
   logical, intent(out) :: flag
-  integer, dimension(MPI_STATUS_SIZE, count), intent(out) :: array_of_statuses
+  integer, dimension(MPI_STATUS_SIZE, *), intent(out) :: array_of_statuses
   integer, intent(out) :: ierr
-end subroutine MPI_TestallS
-
-
-subroutine MPI_TestallI(count, array_of_requests, flag, array_of_statuses, ierr)
-  include 'mpif-config.h'
-  integer, intent(in) :: count
-  integer, dimension(count), intent(inout) :: array_of_requests
-  logical, intent(out) :: flag
-  double precision, intent(out) :: array_of_statuses
-  integer, intent(out) :: ierr
-end subroutine MPI_TestallI
+end subroutine MPI_Testall
 
 end interface
 
@@ -3065,28 +3055,16 @@ end interface
 
 interface MPI_Testsome
 
-subroutine MPI_TestsomeS(incount, array_of_requests, outcount, array_of_indices, array_of_statuses&
+subroutine MPI_Testsome(incount, array_of_requests, outcount, array_of_indices, array_of_statuses&
         , ierr)
   include 'mpif-config.h'
   integer, intent(in) :: incount
   integer, dimension(incount), intent(inout) :: array_of_requests
   integer, intent(out) :: outcount
   integer, dimension(*), intent(out) :: array_of_indices
-  integer, dimension(MPI_STATUS_SIZE, incount), intent(out) :: array_of_statuses
+  integer, dimension(MPI_STATUS_SIZE, *), intent(out) :: array_of_statuses
   integer, intent(out) :: ierr
-end subroutine MPI_TestsomeS
-
-
-subroutine MPI_TestsomeI(incount, array_of_requests, outcount, array_of_indices, array_of_statuses&
-        , ierr)
-  include 'mpif-config.h'
-  integer, intent(in) :: incount
-  integer, dimension(incount), intent(inout) :: array_of_requests
-  integer, intent(out) :: outcount
-  integer, dimension(*), intent(out) :: array_of_indices
-  double precision, intent(out) :: array_of_statuses
-  integer, intent(out) :: ierr
-end subroutine MPI_TestsomeI
+end subroutine MPI_Testsome
 
 end interface
 
@@ -3650,22 +3628,13 @@ end interface
 
 interface MPI_Waitall
 
-subroutine MPI_WaitallS(count, array_of_requests, array_of_statuses, ierr)
+subroutine MPI_Waitall(count, array_of_requests, array_of_statuses, ierr)
   include 'mpif-config.h'
   integer, intent(in) :: count
   integer, dimension(count), intent(inout) :: array_of_requests
-  integer, dimension(MPI_STATUS_SIZE, count), intent(out) :: array_of_statuses
+  integer, dimension(MPI_STATUS_SIZE, *), intent(out) :: array_of_statuses
   integer, intent(out) :: ierr
-end subroutine MPI_WaitallS
-
-
-subroutine MPI_WaitallI(count, array_of_requests, array_of_statuses, ierr)
-  include 'mpif-config.h'
-  integer, intent(in) :: count
-  integer, dimension(count), intent(inout) :: array_of_requests
-  double precision, intent(out) :: array_of_statuses
-  integer, intent(out) :: ierr
-end subroutine MPI_WaitallI
+end subroutine MPI_Waitall
 
 end interface
 
@@ -3686,28 +3655,16 @@ end interface
 
 interface MPI_Waitsome
 
-subroutine MPI_WaitsomeS(incount, array_of_requests, outcount, array_of_indices, array_of_statuses&
+subroutine MPI_Waitsome(incount, array_of_requests, outcount, array_of_indices, array_of_statuses&
         , ierr)
   include 'mpif-config.h'
   integer, intent(in) :: incount
   integer, dimension(incount), intent(inout) :: array_of_requests
   integer, intent(out) :: outcount
   integer, dimension(*), intent(out) :: array_of_indices
-  integer, dimension(MPI_STATUS_SIZE, incount), intent(out) :: array_of_statuses
+  integer, dimension(MPI_STATUS_SIZE, *), intent(out) :: array_of_statuses
   integer, intent(out) :: ierr
-end subroutine MPI_WaitsomeS
-
-
-subroutine MPI_WaitsomeI(incount, array_of_requests, outcount, array_of_indices, array_of_statuses&
-        , ierr)
-  include 'mpif-config.h'
-  integer, intent(in) :: incount
-  integer, dimension(incount), intent(inout) :: array_of_requests
-  integer, intent(out) :: outcount
-  integer, dimension(*), intent(out) :: array_of_indices
-  double precision, intent(out) :: array_of_statuses
-  integer, intent(out) :: ierr
-end subroutine MPI_WaitsomeI
+end subroutine MPI_Waitsome
 
 end interface
 

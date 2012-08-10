@@ -146,6 +146,7 @@ PN2(void, MPI_Errhandler_set, mpi_errhandler_set, MPI_ERRHANDLER_SET, (MPI_Fint 
 PN2(void, MPI_Error_class, mpi_error_class, MPI_ERROR_CLASS, (MPI_Fint *errorcode, MPI_Fint *errorclass, MPI_Fint *ierr));
 PN2(void, MPI_Error_string, mpi_error_string, MPI_ERROR_STRING, (MPI_Fint *errorcode, char *string, MPI_Fint *resultlen, MPI_Fint *ierr, int string_len));
 PN2(void, MPI_Exscan, mpi_exscan, MPI_EXSCAN, (char *sendbuf, char *recvbuf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *op, MPI_Fint *comm, MPI_Fint *ierr));
+PN2(void, MPI_F_sync_reg, mpi_f_sync_reg, MPI_F_SYNC_REG, (char *buf));
 PN2(void, MPI_File_call_errhandler, mpi_file_call_errhandler, MPI_FILE_CALL_ERRHANDLER, (MPI_Fint *fh, MPI_Fint *errorcode, MPI_Fint *ierr));
 PN2(void, MPI_File_create_errhandler, mpi_file_create_errhandler, MPI_FILE_CREATE_ERRHANDLER, (ompi_errhandler_fortran_handler_fn_t* function, MPI_Fint *errhandler, MPI_Fint *ierr));
 PN2(void, MPI_File_set_errhandler, mpi_file_set_errhandler, MPI_FILE_SET_ERRHANDLER, (MPI_Fint *file, MPI_Fint *errhandler, MPI_Fint *ierr));
