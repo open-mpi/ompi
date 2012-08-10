@@ -188,83 +188,97 @@ private:
 
    void writeRecHook_EventComment( HooksC::VaArgsT & args )
    {
+      if( m_sourceKeys.empty() ) return;
       writeRecHook_Event( (uint64_t*)args[1], (uint32_t*)args[2],
          (OTF_KeyValueList**)args[4], (bool*)args[5] );
    }
 
-   void writeRecHook_Enter( HooksC::VaArgsT & args )
+   inline void writeRecHook_Enter( HooksC::VaArgsT & args )
    {
+      if( m_sourceKeys.empty() ) return;
       writeRecHook_Event( (uint64_t*)args[1], (uint32_t*)args[3],
          (OTF_KeyValueList**)args[5], (bool*)args[6] );
    }
 
    void writeRecHook_Leave( HooksC::VaArgsT & args )
    {
+      if( m_sourceKeys.empty() ) return;
       writeRecHook_Event( (uint64_t*)args[1], (uint32_t*)args[3],
          (OTF_KeyValueList**)args[5], (bool*)args[6] );
    }
 
    void writeRecHook_Counter( HooksC::VaArgsT & args )
    {
+      if( m_sourceKeys.empty() ) return;
       writeRecHook_Event( (uint64_t*)args[1], (uint32_t*)args[2],
          (OTF_KeyValueList**)args[6], (bool*)args[7] );
    }
 
    void writeRecHook_BeginFileOp( HooksC::VaArgsT & args )
    {
+      if( m_sourceKeys.empty() ) return;
       writeRecHook_Event( (uint64_t*)args[1], (uint32_t*)args[2],
          (OTF_KeyValueList**)args[5], (bool*)args[6] );
    }
 
    void writeRecHook_EndFileOp( HooksC::VaArgsT & args )
    {
+      if( m_sourceKeys.empty() ) return;
       writeRecHook_Event( (uint64_t*)args[1], (uint32_t*)args[2],
          (OTF_KeyValueList**)args[9], (bool*)args[10] );
    }
 
    void writeRecHook_SendMsg( HooksC::VaArgsT & args )
    {
+      if( m_sourceKeys.empty() ) return;
       writeRecHook_Event( (uint64_t*)args[1], (uint32_t*)args[2],
          (OTF_KeyValueList**)args[8], (bool*)args[9] );
    }
 
    void writeRecHook_RecvMsg( HooksC::VaArgsT & args )
    {
+      if( m_sourceKeys.empty() ) return;
       writeRecHook_Event( (uint64_t*)args[1], (uint32_t*)args[2],
          (OTF_KeyValueList**)args[8], (bool*)args[9] );
    }
 
    void writeRecHook_BeginCollOp( HooksC::VaArgsT & args )
    {
+      if( m_sourceKeys.empty() ) return;
       writeRecHook_Event( (uint64_t*)args[1], (uint32_t*)args[2],
          (OTF_KeyValueList**)args[10], (bool*)args[11] );
    }
 
    void writeRecHook_EndCollOp( HooksC::VaArgsT & args )
    {
+      if( m_sourceKeys.empty() ) return;
       writeRecHook_Event( (uint64_t*)args[1], (uint32_t*)args[2],
          (OTF_KeyValueList**)args[4], (bool*)args[5] );
    }
 
    void writeRecHook_RMAPut( HooksC::VaArgsT & args )
    {
+      if( m_sourceKeys.empty() ) return;
       writeRecHook_Event( (uint64_t*)args[1], (uint32_t*)args[2],
          (OTF_KeyValueList**)args[9], (bool*)args[10] );
    }
 
    void writeRecHook_RMAPutRemoteEnd( HooksC::VaArgsT & args )
    {
+      if( m_sourceKeys.empty() ) return;
       writeRecHook_Event( (uint64_t*)args[1], (uint32_t*)args[2],
          (OTF_KeyValueList**)args[9], (bool*)args[10] );
    }
    void writeRecHook_RMAGet( HooksC::VaArgsT & args )
    {
+      if( m_sourceKeys.empty() ) return;
       writeRecHook_Event( (uint64_t*)args[1], (uint32_t*)args[2],
          (OTF_KeyValueList**)args[9], (bool*)args[10] );
    }
 
    void writeRecHook_RMAEnd( HooksC::VaArgsT & args )
    {
+      if( m_sourceKeys.empty() ) return;
       writeRecHook_Event( (uint64_t*)args[1], (uint32_t*)args[2],
          (OTF_KeyValueList**)args[7], (bool*)args[8] );
    }

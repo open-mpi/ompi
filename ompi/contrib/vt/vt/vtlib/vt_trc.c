@@ -1989,7 +1989,7 @@ void vt_mpi_init(uint8_t multithreaded)
     if (vt_my_trace_is_first_avail && (int)avail_ranks_num < vt_num_traces)
     {
       vt_def_comment(VT_MASTER_THREAD,
-                     VT_UNIFY_STRID_VT_COMMENT"NOTE: This trace represents "
+                     VT_UNIFY_STRID_VT_COMMENT"Note: This trace represents "
                      "only a subset of the MPI ranks used by the application. "
                      "%i of %i ranks were excluded from tracing by the "
                      "specified filter file in VT_FILTER_SPEC.",
