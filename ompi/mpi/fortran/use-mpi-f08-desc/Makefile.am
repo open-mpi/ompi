@@ -46,11 +46,10 @@ libmpi_usempif08_la_SOURCES = \
         constants.c
 
 #
-# Clean up all F90 module files and all generated files
+# Clean up all F90 module files
 #
 
 MOSTLYCLEANFILES = *.mod
-DISTCLEANFILES = $(libmpi_usempif08_la_SOURCES)
 
 #
 # Automake doesn't do Fortran dependency analysis, so must list them

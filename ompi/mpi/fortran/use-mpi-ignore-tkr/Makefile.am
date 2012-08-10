@@ -29,11 +29,10 @@ nodist_libmpi_usempi_ignore_tkr_la_SOURCES = \
         mpi-ignore-tkr-file-interfaces.h
 
 #
-# Clean up all module files and all generated files
+# Clean up all module files
 #
 
 MOSTLYCLEANFILES = *.mod
-DISTCLEANFILES = $(libmpi_usempi_ignore_tkr_la_SOURCES)
 
 # Install the generated .mod files.  Unfortunately, each F90 compiler
 # may generate different filenames, so we have to use a glob.  :-(
