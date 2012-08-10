@@ -462,8 +462,7 @@ AC_DEFUN([EXT_PROCESS_COMPONENT],[
 
     # Save the list of headers and convenience libraries that this
     # component will output
-    thisdir="mpiext/$component"
-    $2="$$2 $thisdir"
+    $2="$$2 $component"
     $3="$$3 $component"
 
     # JMS Where is this needed?
@@ -628,10 +627,6 @@ EOF
 
 EOF
     fi
-
-    # Add this component name to the master list of all EXT component
-    # subdirs
-    $2="$$2 ${component}"
 
     m4_ifdef([OMPI_MPIEXT_]$1[_NEED_INIT],
              [echo "extern const ompi_mpiext_component_t ompi_mpiext_${component};" >> $outfile.extern
