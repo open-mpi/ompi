@@ -113,6 +113,7 @@ nodist_libmpi_mpifh_pmpi_la_SOURCES = \
         perror_class_f.c \
         perror_string_f.c \
         pexscan_f.c \
+        pf_sync_reg_f.c \
         pfinalized_f.c \
         pfinalize_f.c \
         pfree_mem_f.c \

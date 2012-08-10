@@ -95,6 +95,7 @@ mpi_api_files = \
         error_class_f08.F90 \
         error_string_f08.F90 \
         exscan_f08.F90 \
+        f_sync_reg_f08.F90 \
         finalized_f08.F90 \
         finalize_f08.F90 \
         free_mem_f08.F90 \
@@ -407,6 +408,7 @@ pmpi_api_files = \
         profile/perror_class_f08.F90 \
         profile/perror_string_f08.F90 \
         profile/pexscan_f08.F90 \
+        profile/pf_sync_reg_f08.F90 \
         profile/pfinalized_f08.F90 \
         profile/pfinalize_f08.F90 \
         profile/pfree_mem_f08.F90 \

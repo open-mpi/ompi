@@ -144,6 +144,7 @@ libmpi_mpifh_la_SOURCES += \
         error_class_f.c \
         error_string_f.c \
         exscan_f.c \
+        f_sync_reg_f.c \
         finalized_f.c \
         finalize_f.c \
         free_mem_f.c \

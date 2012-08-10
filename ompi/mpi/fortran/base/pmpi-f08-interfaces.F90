@@ -461,7 +461,7 @@ subroutine PMPI_Testall_f08(count,array_of_requests,flag,array_of_statuses,ierro
    INTEGER, INTENT(IN) :: count
    TYPE(MPI_Request), INTENT(INOUT) :: array_of_requests(count)
    LOGICAL, INTENT(OUT) :: flag
-   TYPE(MPI_Status) :: array_of_statuses(count)
+   TYPE(MPI_Status) :: array_of_statuses(*)
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 end subroutine PMPI_Testall_f08
 end interface  PMPI_Testall
@@ -523,7 +523,7 @@ subroutine PMPI_Waitall_f08(count,array_of_requests,array_of_statuses,ierror &
    implicit none
    INTEGER, INTENT(IN) :: count
    TYPE(MPI_Request), INTENT(INOUT) :: array_of_requests(count)
-   TYPE(MPI_Status) :: array_of_statuses(count)
+   TYPE(MPI_Status) :: array_of_statuses(*)
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 end subroutine PMPI_Waitall_f08
 end interface  PMPI_Waitall
@@ -2564,7 +2564,7 @@ subroutine PMPI_Error_string_f08(errorcode,string,resultlen,ierror)
 end subroutine PMPI_Error_string_f08
 end interface  PMPI_Error_string
 
-#if OMPI_PROFILE_FILE_INTERFACE
+#if OMPI_PROVIDE_MPI_FILE_INTERFACE
 
 interface  PMPI_File_call_errhandler
 subroutine PMPI_File_call_errhandler_f08(fh,errorcode,ierror &
@@ -2611,7 +2611,7 @@ subroutine PMPI_File_set_errhandler_f08(file,errhandler,ierror &
 end subroutine PMPI_File_set_errhandler_f08
 end interface  PMPI_File_set_errhandler
 
-#endif ! OMPI_PROFILE_FILE_INTERFACE
+#endif ! OMPI_PROVIDE_MPI_FILE_INTERFACE
 
 interface  PMPI_Finalize
 subroutine PMPI_Finalize_f08(ierror &
@@ -2903,7 +2903,7 @@ subroutine PMPI_Comm_spawn_f08(command,argv,maxprocs,info,root,comm,intercomm, &
    TYPE(MPI_Info), INTENT(IN) :: info
    TYPE(MPI_Comm), INTENT(IN) :: comm
    TYPE(MPI_Comm), INTENT(OUT) :: intercomm
-   INTEGER, INTENT(OUT) :: array_of_errcodes(*)
+   INTEGER :: array_of_errcodes(*)
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 end subroutine PMPI_Comm_spawn_f08
 end interface  PMPI_Comm_spawn
@@ -2919,7 +2919,7 @@ subroutine PMPI_Comm_spawn_multiple_f08(count,array_of_commands,array_of_argv,ar
    TYPE(MPI_Info), INTENT(IN) :: array_of_info(*)
    TYPE(MPI_Comm), INTENT(IN) :: comm
    TYPE(MPI_Comm), INTENT(OUT) :: intercomm
-   INTEGER, INTENT(OUT) :: array_of_errcodes(*)
+   INTEGER :: array_of_errcodes(*)
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 end subroutine PMPI_Comm_spawn_multiple_f08
 end interface  PMPI_Comm_spawn_multiple
@@ -3233,7 +3233,7 @@ subroutine PMPI_Status_set_elements_f08(status,datatype,count,ierror &
 end subroutine PMPI_Status_set_elements_f08
 end interface  PMPI_Status_set_elements
 
-#if OMPI_PROFILE_FILE_INTERFACE
+#if OMPI_PROVIDE_MPI_FILE_INTERFACE
 
 interface  PMPI_File_close
 subroutine PMPI_File_close_f08(fh,ierror &
@@ -4004,7 +4004,7 @@ subroutine PMPI_File_write_shared_f08(fh,buf,count,datatype,status,ierror &
 end subroutine PMPI_File_write_shared_f08
 end interface  PMPI_File_write_shared
 
-#endif ! OMPI_PROFILE_FILE_INTERFACE
+#endif ! OMPI_PROVIDE_MPI_FILE_INTERFACE
 
 interface  PMPI_Register_datarep
 subroutine PMPI_Register_datarep_f08(datarep,read_conversion_fn,write_conversion_fn, &
@@ -4109,6 +4109,18 @@ subroutine PMPI_Comm_split_type_f08(comm,split_type,key,info,newcomm,ierror &
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 end subroutine PMPI_Comm_split_type_f08
 end interface  PMPI_Comm_split_type
+
+interface  PMPI_F_sync_reg
+subroutine PMPI_F_sync_reg_f08(buf &
+           ) OMPI_F08_INTERFACE_BIND_C("PMPI_F_sync_reg_f08")
+   implicit none
+   !DEC$ ATTRIBUTES NO_ARG_CHECK :: buf
+   !$PRAGMA IGNORE_TKR buf
+   !DIR$ IGNORE_TKR buf
+   !IBM* IGNORE_TKR buf
+   OMPI_FORTRAN_IGNORE_TKR_TYPE OMPI_ASYNCHRONOUS :: buf
+end subroutine PMPI_F_sync_reg_f08
+end interface  PMPI_F_sync_reg
 
 interface  PMPI_Get_library_version
 subroutine PMPI_Get_library_version_f08(name,resultlen,ierror)
