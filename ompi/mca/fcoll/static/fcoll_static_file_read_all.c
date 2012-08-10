@@ -115,6 +115,11 @@ mca_fcoll_static_file_read_all (mca_io_ompio_file_t *fh,
   else {
     max_data = count * datatype->super.size;
   }
+
+    if ( MPI_STATUS_IGNORE != status ) {
+	status->_ucount = max_data;
+    }
+
   
   if (! (fh->f_flags & OMPIO_AGGREGATOR_IS_SET)) {
     ompi_io_ompio_set_aggregator_props (fh, 
