@@ -20,11 +20,17 @@
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/mtl/mtl.h"
 #include "ompi/mca/mtl/base/base.h"
+#include "ompi/class/ompi_free_list.h"
+
 #include "opal/datatype/opal_convertor.h"
 
 #include "mtl_mxm_debug.h"
 
 BEGIN_C_DECLS
+
+#ifndef MXM_VERSION
+#define MXM_VERSION(major, minor) (((major)<<MXM_MAJOR_BIT)|((minor)<<MXM_MINOR_BIT))
+#endif
 
 /* MTL interface functions */
 extern int ompi_mtl_mxm_add_procs(struct mca_mtl_base_module_t* mtl,
@@ -81,6 +87,21 @@ extern int ompi_mtl_mxm_del_comm(struct mca_mtl_base_module_t *mtl,
 extern int ompi_mtl_mxm_finalize(struct mca_mtl_base_module_t* mtl);
 
 int ompi_mtl_mxm_module_init(void);
+
+#if MXM_API >= MXM_VERSION(1,5)
+struct ompi_mtl_mxm_message_t {
+    ompi_free_list_item_t super;
+
+    mxm_mq_h mq;
+    mxm_conn_h conn;
+    mxm_message_h mxm_msg;
+
+    mxm_tag_t tag;
+    mxm_tag_t tag_mask;
+};
+typedef struct ompi_mtl_mxm_message_t ompi_mtl_mxm_message_t;
+OBJ_CLASS_DECLARATION(ompi_mtl_mxm_message_t);
+#endif
 
 END_C_DECLS
 

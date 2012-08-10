@@ -399,3 +399,11 @@ int ompi_mtl_mxm_progress(void)
     }
     return 1;
 }
+
+#if MXM_API >= MXM_VERSION(1,5)
+OBJ_CLASS_INSTANCE(
+        ompi_mtl_mxm_message_t,
+        ompi_free_list_item_t,
+        NULL,
+        NULL);
+#endif
