@@ -64,6 +64,12 @@ AC_DEFUN([OMPI_SETUP_FC],[
            ompi_fc_happy=0],
           [ompi_fc_happy=1])
 
+    AS_IF([test $ompi_fc_happy -eq 1 -a "$WANT_DEBUG" = "1" -a "$enable_debug_symbols" != "no"],
+          [FCFLAGS="$FCFLAGS -g"
+           OPAL_UNIQ(FCFLAGS)
+           AC_MSG_WARN([-g has been added to FCFLAGS (--enable-debug)])
+          ])
+
     # Make sure the compiler actually works, if not cross-compiling.
     # Don't just use the AC macro so that we can have a pretty
     # message.
