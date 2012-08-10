@@ -42,6 +42,7 @@
 
 #include "opal/align.h"
 #include "opal/util/argv.h"
+#include "opal/mca/shmem/shmem.h"
 #if OPAL_ENABLE_FT_CR == 1
 #include "opal/runtime/opal_cr.h"
 #endif
@@ -133,7 +134,7 @@ attach_and_init(opal_shmem_ds_t *shmem_bufp,
 
     map->module_data_addr = addr;
     map->module_seg_addr = (unsigned char *)seg;
-    
+
     /* note that size is only used during the first call */
     if (first_call) {
         /* initialize some segment information */
@@ -157,20 +158,20 @@ attach_and_init(opal_shmem_ds_t *shmem_bufp,
 }
 
 /* ////////////////////////////////////////////////////////////////////////// */
-/* api implementation */ 
+/* api implementation */
 /* ////////////////////////////////////////////////////////////////////////// */
 
 /* ////////////////////////////////////////////////////////////////////////// */
 mca_common_sm_module_t *
-mca_common_sm_module_create(size_t size,
-                            char *file_name,
-                            size_t size_ctl_structure,
-                            size_t data_seg_alignment)
+mca_common_sm_module_create_and_attach(size_t size,
+                                       char *file_name,
+                                       size_t size_ctl_structure,
+                                       size_t data_seg_alignment)
 {
     mca_common_sm_module_t *map = NULL;
     opal_shmem_ds_t *seg_meta = NULL;
 
-    if (NULL == (seg_meta = (opal_shmem_ds_t *) malloc(sizeof(*seg_meta)))) {
+    if (NULL == (seg_meta = (opal_shmem_ds_t *)malloc(sizeof(*seg_meta)))) {
         /* out of resources */
         return NULL;
     }
@@ -197,33 +198,39 @@ mca_common_sm_module_attach(opal_shmem_ds_t *seg_meta,
                             size_t size_ctl_structure,
                             size_t data_seg_alignment)
 {
-    mca_common_sm_module_t *map = NULL;
-
     /* notice that size is 0 here. it really doesn't matter because size WILL
      * NOT be used because this is an attach (first_call is false). */
-    map = attach_and_init(seg_meta, 0, size_ctl_structure,
-                          data_seg_alignment, false);
-
-    return map;
+    return attach_and_init(seg_meta, 0, size_ctl_structure,
+                           data_seg_alignment, false);
 }
 
 /* ////////////////////////////////////////////////////////////////////////// */
-mca_common_sm_module_t *
-mca_common_sm_init(ompi_proc_t **procs,
-                   size_t num_procs,
-                   size_t size,
-                   char *file_name,
-                   size_t size_ctl_structure,
-                   size_t data_seg_alignment)
+int
+mca_common_sm_module_unlink(mca_common_sm_module_t *modp)
 {
-    /* indicates whether or not i'm the lowest named process */
-    bool lowest_local_proc = false;
-    mca_common_sm_module_t *map = NULL;
-    ompi_proc_t *temp_proc = NULL;
-    bool found_lowest = false;
-    size_t num_local_procs = 0, p = 0;
-    opal_shmem_ds_t *seg_meta = NULL;
+    if (NULL == modp) {
+        return OMPI_ERROR;
+    }
+    if (OPAL_SUCCESS != opal_shmem_unlink(&modp->shmem_ds)) {
+        return OMPI_ERROR;
+    }
+    return OMPI_SUCCESS;
+}
 
+/* ////////////////////////////////////////////////////////////////////////// */
+int
+mca_common_sm_local_proc_reorder(ompi_proc_t **procs,
+                                 size_t num_procs,
+                                 size_t *out_num_local_procs)
+{
+    size_t num_local_procs = 0;
+    bool found_lowest = false;
+    ompi_proc_t *temp_proc = NULL;
+    size_t p;
+
+    if (NULL == out_num_local_procs || NULL == procs) {
+        return OMPI_ERR_BAD_PARAM;
+    }
     /* o reorder procs array to have all the local procs at the beginning.
      * o look for the local proc with the lowest name.
      * o determine the number of local procs.
@@ -240,8 +247,7 @@ mca_common_sm_init(ompi_proc_t **procs,
                 /* save this proc */
                 procs[num_local_procs] = procs[p];
                 /* if we have a new lowest, swap it with position 0
-                 * so that procs[0] is always the lowest named proc
-                 */
+                 * so that procs[0] is always the lowest named proc */
                 if (OPAL_VALUE2_GREATER ==
                     orte_util_compare_name_fields(ORTE_NS_CMP_ALL,
                                                   &(procs[p]->proc_name),
@@ -257,6 +263,31 @@ mca_common_sm_init(ompi_proc_t **procs,
             ++num_local_procs;
         }
     }
+    *out_num_local_procs = num_local_procs;
+
+    return OMPI_SUCCESS;
+}
+
+/* ////////////////////////////////////////////////////////////////////////// */
+mca_common_sm_module_t *
+mca_common_sm_init(ompi_proc_t **procs,
+                   size_t num_procs,
+                   size_t size,
+                   char *file_name,
+                   size_t size_ctl_structure,
+                   size_t data_seg_alignment)
+{
+    /* indicates whether or not i'm the lowest named process */
+    bool lowest_local_proc = false;
+    mca_common_sm_module_t *map = NULL;
+    size_t num_local_procs = 0;
+    opal_shmem_ds_t *seg_meta = NULL;
+
+    if (OMPI_SUCCESS != mca_common_sm_local_proc_reorder(procs,
+                                                         num_procs,
+                                                         &num_local_procs)) {
+        return NULL;
+    }
 
     /* if there is less than 2 local processes, there's nothing to do. */
     if (num_local_procs < 2) {
@@ -270,9 +301,9 @@ mca_common_sm_init(ompi_proc_t **procs,
 
     /* determine whether or not i am the lowest local process */
     lowest_local_proc =
-        (0 == orte_util_compare_name_fields(ORTE_NS_CMP_ALL,
-                                            ORTE_PROC_MY_NAME,
-                                            &(procs[0]->proc_name)));
+        (OPAL_EQUAL == orte_util_compare_name_fields(ORTE_NS_CMP_ALL,
+                                                     ORTE_PROC_MY_NAME,
+                                                     &(procs[0]->proc_name)));
 
     /* figure out if i am the lowest rank in the group.
      * if so, i will create the shared memory backing store
@@ -434,4 +465,3 @@ mca_common_sm_fini(mca_common_sm_module_t *mca_common_sm_module)
     }
     return rc;
 }
-
