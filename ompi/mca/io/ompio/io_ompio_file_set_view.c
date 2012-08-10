@@ -50,10 +50,10 @@ int mca_io_ompio_set_view_internal(mca_io_ompio_file_t *fh,
     size_t max_data = 0;
     MPI_Aint lb,ub;    
 
-    fh->f_iov_count = 0;
-    fh->f_disp = disp;
-    fh->f_offset += disp;
-    
+    fh->f_iov_count   = 0;
+    fh->f_disp        = disp;
+    fh->f_offset      = disp;
+    fh->f_total_bytes = 0;
     
     ompi_io_ompio_decode_datatype (fh, 
                                    filetype, 
