@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2007 Voltaire. All rights reserved.
  * Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2010-2012 Los Alamos National Security, LLC.
+ * Copyright (c) 2010-2011 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2011      NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2010-2012 IBM Corporation.  All rights reserved.
@@ -42,20 +42,15 @@
 #include <sys/stat.h>  /* for mkfifo */
 #endif  /* HAVE_SYS_STAT_H */
 
+#include "ompi/constants.h"
 #include "opal/mca/event/event.h"
-#include "opal/mca/base/mca_base_param.h"
-#include "opal/mca/shmem/base/base.h"
-#include "opal/mca/shmem/shmem.h"
 #include "opal/util/bit_ops.h"
 #include "opal/util/output.h"
-
 #include "orte/util/proc_info.h"
 #include "orte/util/show_help.h"
 #include "orte/runtime/orte_globals.h"
-#include "orte/util/proc_info.h"
 
-#include "ompi/constants.h"
-#include "ompi/runtime/ompi_module_exchange.h"
+#include "opal/mca/base/mca_base_param.h"
 #include "ompi/mca/mpool/base/base.h"
 #include "ompi/mca/common/sm/common_sm.h"
 #include "ompi/mca/btl/base/btl_base_error.h"
@@ -356,197 +351,52 @@ CLEANUP:
     return return_value;
 }
 
-/* 
- * Returns the number of processes on the node.
- */
-static inline int
-get_num_local_procs(void)
-{
-    /* num_local_peers does not include us in
-     * its calculation, so adjust for that */
-    return (int)(1 + orte_process_info.num_local_peers);
-}
-
-static void
-calc_sm_max_procs(int n)
-{
-    /* see if need to allocate space for extra procs */
-    if (0 > mca_btl_sm_component.sm_max_procs) {
-        /* no limit */
-        if (0 <= mca_btl_sm_component.sm_extra_procs) {
-            /* limit */
-            mca_btl_sm_component.sm_max_procs =
-                n + mca_btl_sm_component.sm_extra_procs;
-        } else {
-            /* no limit */
-            mca_btl_sm_component.sm_max_procs = 2 * n;
-        }
-    }
-}
-
-/*
- * Creates the shared-memory segments required for this BTL. One for the sm
- * mpool and another for the shared memory store and populates *modex_buf_ptr.
- */
-static int
-populate_modex_bufp(mca_btl_sm_component_t *comp_ptr,
-                    mca_btl_sm_modex_t *modex_buf_ptr)
-{
-    int rc = OMPI_SUCCESS;
-    size_t size = 0;
-    char *sm_mpool_ctl_file = NULL;
-    char *sm_ctl_file = NULL;
-
-    /* first generate some unique paths for the shared-memory segments */
-    if (asprintf(&sm_mpool_ctl_file,
-                 "%s"OPAL_PATH_SEP"shared_mem_btl_module.%s",
-                 orte_process_info.job_session_dir,
-                 orte_process_info.nodename) < 0) {
-        rc = OMPI_ERR_OUT_OF_RESOURCE;
-        goto out;
-    }
-    if (asprintf(&sm_ctl_file,
-                 "%s"OPAL_PATH_SEP"shared_mem_btl_module.%s",
-                 orte_process_info.job_session_dir,
-                 orte_process_info.nodename) < 0) {
-        rc = OMPI_ERR_OUT_OF_RESOURCE;
-        goto out;
-    }
-
-    /* calculate the segment size */
-    size = sizeof(mca_common_sm_seg_header_t) +
-           comp_ptr->sm_max_procs * (sizeof(sm_fifo_t *) +
-           sizeof(char *) + sizeof(uint16_t)) + opal_cache_line_size;
-
-    /* create the things */
-    if (NULL == (comp_ptr->sm_seg =
-        mca_common_sm_module_create(size, sm_ctl_file,
-                                    sizeof(mca_common_sm_seg_header_t),
-                                    opal_cache_line_size))) {
-        opal_output(0, "mca_btl_sm_add_procs: unable to create shared memory "
-                    "BTL coordinating strucure :: size %lu \n",
-                    (unsigned long)size);
-        rc = OMPI_ERROR;
-        goto out;
-    }
-
-    /* now extract and store the shmem_ds info from the returned module */
-    if (OPAL_SUCCESS != opal_shmem_ds_copy(&(comp_ptr->sm_seg->shmem_ds),
-                                           &(modex_buf_ptr->sm_meta_buf))) {
-        rc = OMPI_ERROR;
-        goto out;
-    }
-
-out:
-    if (NULL != sm_mpool_ctl_file) {
-        free(sm_mpool_ctl_file);
-    }
-    if (NULL != sm_ctl_file) {
-        free(sm_ctl_file);
-    }
-    return rc;
-    
-}
-
-/*
- * Creates information required for the sm modex and modex sends it.
- */
-static int
-send_modex(mca_btl_sm_component_t *comp_ptr)
-{
-    int rc = OMPI_SUCCESS;
-    mca_btl_sm_modex_t *sm_modex = NULL;
-
-    if (NULL == (sm_modex = calloc(1, sizeof(*sm_modex)))) {
-        /* out of resources, so just bail. */
-        return OMPI_ERR_OUT_OF_RESOURCE;
-    }
-    if (OMPI_SUCCESS != (rc = populate_modex_bufp(comp_ptr, sm_modex))) {
-        opal_output(0, "send_modex: populate_modex_bufp failure!\n");
-        /* rc is set */
-        goto out;
-    }
-    /* send the modex */
-    rc = ompi_modex_send(&comp_ptr->super.btl_version, sm_modex,
-                         sizeof(*sm_modex));
-
-out:
-    if (NULL != sm_modex) {
-        free(sm_modex);
-    }
-    return rc;
-}
-
 /*
  *  SM component initialization
  */
-static mca_btl_base_module_t **
-mca_btl_sm_component_init(int *num_btls,
-                          bool enable_progress_threads,
-                          bool enable_mpi_threads)
+static mca_btl_base_module_t** mca_btl_sm_component_init(
+    int *num_btls,
+    bool enable_progress_threads,
+    bool enable_mpi_threads)
 {
     mca_btl_base_module_t **btls = NULL;
-    orte_node_rank_t my_node_rank = ORTE_NODE_RANK_INVALID;
 #if OMPI_BTL_SM_HAVE_KNEM
     int rc;
 #endif
 
     *num_btls = 0;
+
+    /* if no session directory was created, then we cannot be used */
+    if (!orte_create_session_dirs) {
+        return NULL;
+    }
+    
     /* lookup/create shared memory pool only when used */
     mca_btl_sm_component.sm_mpool = NULL;
     mca_btl_sm_component.sm_mpool_base = NULL;
 
-    /* if no session directory was created, then we cannot be used */
-    /* SKG - this isn't true anymore. Some backing facilities don't require a
-     * file-backed store. Extend shmem to provide this info one day. */
-    if (!orte_create_session_dirs) {
-        return NULL;
-    }
-    /* if we don't have locality information, then we cannot be used */
-    if (ORTE_NODE_RANK_INVALID ==
-        (my_node_rank = orte_process_info.my_node_rank)) {
-        orte_show_help("help-mpi-btl-sm.txt", "no locality", true);
-        return NULL;
-    }
-    /* calculate max procs so we can figure out how large to make the
-     * shared-memory segment. this routine sets component sm_max_procs. */
-    calc_sm_max_procs(get_num_local_procs());
-    /* let local rank 0 create the shared-memory segments and send shmem info */
-    if (0 == my_node_rank) {
-        if (OMPI_SUCCESS != send_modex(&mca_btl_sm_component)) {
-            return NULL;
-        }
-    }
-
 #if OMPI_ENABLE_PROGRESS_THREADS == 1
     /* create a named pipe to receive events  */
-    sprintf(mca_btl_sm_component.sm_fifo_path,
-             "%s"OPAL_PATH_SEP"sm_fifo.%lu",
-             orte_process_info.job_session_dir,
-             (unsigned long)ORTE_PROC_MY_NAME->vpid);
-    if (mkfifo(mca_btl_sm_component.sm_fifo_path, 0660) < 0) {
-        opal_output(0, "mca_btl_sm_component_init: "
-                    "mkfifo failed with errno=%d\n",errno);
+    sprintf( mca_btl_sm_component.sm_fifo_path,
+             "%s"OPAL_PATH_SEP"sm_fifo.%lu", orte_process_info.job_session_dir,
+             (unsigned long)ORTE_PROC_MY_NAME->vpid );
+    if(mkfifo(mca_btl_sm_component.sm_fifo_path, 0660) < 0) {
+        opal_output(0, "mca_btl_sm_component_init: mkfifo failed with errno=%d\n",errno);
         return NULL;
     }
-    mca_btl_sm_component.sm_fifo_fd = open(mca_btl_sm_component.sm_fifo_path,
-                                           O_RDWR);
+    mca_btl_sm_component.sm_fifo_fd = open(mca_btl_sm_component.sm_fifo_path, O_RDWR);
     if(mca_btl_sm_component.sm_fifo_fd < 0) {
-        opal_output(0, "mca_btl_sm_component_init: "
-                   "open(%s) failed with errno=%d\n",
+        opal_output(0, "mca_btl_sm_component_init: open(%s) failed with errno=%d\n",
                     mca_btl_sm_component.sm_fifo_path, errno);
         return NULL;
     }
 
     OBJ_CONSTRUCT(&mca_btl_sm_component.sm_fifo_thread, opal_thread_t);
-    mca_btl_sm_component.sm_fifo_thread.t_run =
-        (opal_thread_fn_t)mca_btl_sm_component_event_thread;
+    mca_btl_sm_component.sm_fifo_thread.t_run = (opal_thread_fn_t) mca_btl_sm_component_event_thread;
     opal_thread_start(&mca_btl_sm_component.sm_fifo_thread);
 #endif
 
-    mca_btl_sm_component.sm_btls =
-        (mca_btl_sm_t **)malloc(mca_btl_sm_component.sm_max_btls *
-                                sizeof(mca_btl_sm_t *));
+    mca_btl_sm_component.sm_btls = (mca_btl_sm_t **) malloc( mca_btl_sm_component.sm_max_btls * sizeof (mca_btl_sm_t *));
     if (NULL == mca_btl_sm_component.sm_btls) {
         return NULL;
     }
