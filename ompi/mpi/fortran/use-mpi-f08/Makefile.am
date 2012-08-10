@@ -664,11 +664,10 @@ libmpi_usempif08_la_LIBADD = \
         $(OMPI_MPIEXT_USEMPIF08_LIBS)
 
 #
-# Clean up all module files and all generated files
+# Clean up all module files
 #
 
 MOSTLYCLEANFILES = *.mod
-DISTCLEANFILES = $(libmpi_usempif08_la_SOURCES)
 
 #
 # Automake doesn't do Fortran dependency analysis, so must list them
