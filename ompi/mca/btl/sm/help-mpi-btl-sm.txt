@@ -4,6 +4,8 @@
 #                         of Tennessee Research Foundation.  All rights
 #                         reserved.
 # Copyright (c) 2006-2010 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2012      Los Alamos National Security, LLC.
+#                         All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -11,6 +13,10 @@
 # $HEADER$
 #
 # This is the US/English help file for Open MPI's shared memory support.
+#
+[no locality]
+WARNING: Missing locality information required for sm initialization.
+Continuing without shared memory support.
 #
 [knem requested but not supported]
 WARNING: Linux kernel knem support was requested for the shared memory

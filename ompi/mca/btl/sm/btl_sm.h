@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2007 Voltaire. All rights reserved.
  * Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2010      Los Alamos National Security, LLC.  
+ * Copyright (c) 2010-2012 Los Alamos National Security, LLC.  
  *                         All rights reserved. 
  * Copyright (c) 2010-2012 IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
@@ -42,6 +42,8 @@
 
 #include "opal/util/bit_ops.h"
 #include "opal/class/opal_free_list.h"
+#include "opal/mca/shmem/shmem.h"
+
 #include "ompi/mca/btl/btl.h"
 #include "ompi/mca/common/sm/common_sm.h"
 
@@ -120,6 +122,16 @@ typedef struct sm_fifo_t sm_fifo_t;
 typedef struct mca_btl_sm_mem_node_t {
     mca_mpool_base_module_t* sm_mpool; /**< shared memory pool */
 } mca_btl_sm_mem_node_t;
+
+/**
+ * Shared Memory (SM) BTL modex.
+ */
+struct mca_btl_sm_modex_t {
+    opal_shmem_ds_t sm_meta_buf;
+    opal_shmem_ds_t sm_mpool_meta_buf;
+    size_t mpool_res_size;
+};
+typedef struct mca_btl_sm_modex_t mca_btl_sm_modex_t;
 
 /**
  * Shared Memory (SM) BTL module.
