@@ -337,7 +337,7 @@ static int pmi_get_proc_attr(const orte_process_name_t name,
 /***   MODEX SECTION ***/
 static int modex(orte_grpcomm_collective_t *coll)
 {
-    int rc;
+    int rc, ival;
     size_t len;
     char *rml_uri;
     orte_vpid_t v;
@@ -348,7 +348,7 @@ static int modex(orte_grpcomm_collective_t *coll)
     opal_list_t modex_data;
     opal_value_t *kv;
     uint32_t arch;
-    uint8_t th_level;
+    uint16_t ui16;
     opal_byte_object_t bo;
     char *hostname;
 
@@ -600,31 +600,95 @@ static int modex(orte_grpcomm_collective_t *coll)
         if (ORTE_SUCCESS != rc) {
             return rc;
         }
-        assert (len == sizeof (uint8_t));
-        memmove (&th_level, tmp_val, len);
-        free (tmp_val);
-        bo.bytes = &th_level;
-        bo.size = 1;
+        bo.bytes = tmp_val;
+        bo.size = len;
         if (ORTE_SUCCESS != (rc = orte_db.store(&name, "MPI_THREAD_LEVEL", (void*)&bo, OPAL_BYTE_OBJECT))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
+        free(tmp_val);
 
-        /* harvest all btl info that we know about and store it */
+        /* harvest all other info for keys we know about and store it */
         OBJ_CONSTRUCT(&modex_data, opal_list_t);
-        if (ORTE_SUCCESS != (rc = orte_db.fetch_multiple(ORTE_PROC_MY_NAME, "btl.*", &modex_data))) {
+        if (ORTE_SUCCESS != (rc = orte_db.fetch_multiple(ORTE_PROC_MY_NAME, NULL, &modex_data))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
         while (NULL != (kv = (opal_value_t*)opal_list_remove_first(&modex_data))) {
-            if (ORTE_SUCCESS != (rc = pmi_get_proc_attr(name, kv->key, &tmp_val, &len))) {
-                return rc;
+            /* if this is an entry we already handled, then don't include it here */
+            if (0 == strcmp(kv->key, ORTE_DB_HOSTNAME) ||
+                0 == strcmp(kv->key, ORTE_DB_DAEMON_VPID) ||
+                0 == strcmp(kv->key, ORTE_DB_NODERANK) ||
+                0 == strcmp(kv->key, ORTE_DB_LOCALRANK) ||
+                0 == strcmp(kv->key, ORTE_DB_BIND_LEVEL) ||
+                0 == strcmp(kv->key, ORTE_DB_BIND_INDEX)) {
+                /* do NOT release the kv object here as we only
+                 * have a pointer to it!
+                 */
+                continue;
             }
-            if (ORTE_SUCCESS != (rc = orte_db.store(&name, kv->key, (void*)&(kv->data.bo), OPAL_BYTE_OBJECT))) {
+            if (ORTE_SUCCESS != (rc = pmi_get_proc_attr(name, kv->key, &tmp_val, &len))) {
                 ORTE_ERROR_LOG(rc);
                 return rc;
             }
-            OBJ_RELEASE(kv);
+            OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base.output,
+                                 "%s grpcomm:pmi: got modex value for proc %s key %s[%s] len %d",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 ORTE_NAME_PRINT(&name), kv->key,
+                                 opal_dss.lookup_data_type(kv->type), (int)len));
+            /* must be stored as same type so the fetch works correctly */
+            switch (kv->type) {
+            case OPAL_STRING:
+                if (ORTE_SUCCESS != (rc = orte_db.store(&name, kv->key, tmp_val, kv->type))) {
+                    ORTE_ERROR_LOG(rc);
+                    return rc;
+                }
+                free(tmp_val);
+                break;
+            case OPAL_INT:
+                assert (len == sizeof (int));
+                memmove(&ival, tmp_val, len);
+                free(tmp_val);
+                if (ORTE_SUCCESS != (rc = orte_db.store(&name, kv->key, &ival, kv->type))) {
+                    ORTE_ERROR_LOG(rc);
+                    return rc;
+                }
+                break;
+            case ORTE_VPID:
+            case OPAL_UINT32:
+                assert (len == sizeof (uint32_t));
+                memmove(&arch, tmp_val, len);
+                free(tmp_val);
+                if (ORTE_SUCCESS != (rc = orte_db.store(&name, kv->key, &arch, kv->type))) {
+                    ORTE_ERROR_LOG(rc);
+                    return rc;
+                }
+                break;
+            case OPAL_UINT16:
+                assert (len == sizeof (uint16_t));
+                memmove(&ui16, tmp_val, len);
+                free(tmp_val);
+                if (ORTE_SUCCESS != (rc = orte_db.store(&name, kv->key, &ui16, kv->type))) {
+                    ORTE_ERROR_LOG(rc);
+                    return rc;
+                }
+                break;
+            case OPAL_BYTE_OBJECT:
+                bo.bytes = (uint8_t*)tmp_val;
+                bo.size = len;
+                if (ORTE_SUCCESS != (rc = orte_db.store(&name, kv->key, (void*)&bo, OPAL_BYTE_OBJECT))) {
+                    ORTE_ERROR_LOG(rc);
+                    return rc;
+                }
+                free(tmp_val);
+                break;
+            default:
+                ORTE_ERROR_LOG(ORTE_ERR_NOT_SUPPORTED);
+                return ORTE_ERR_NOT_SUPPORTED;
+            }
+            /* do NOT release the kv object here as we only
+             * have a pointer to it!
+             */
         }
         OBJ_DESTRUCT(&modex_data);
     }

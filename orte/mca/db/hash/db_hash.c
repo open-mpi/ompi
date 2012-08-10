@@ -193,9 +193,9 @@ static int store(const orte_process_name_t *proc,
     opal_byte_object_t *boptr;
 
     OPAL_OUTPUT_VERBOSE((5, orte_db_base.output,
-                         "%s db:hash:store: storing key %s data type %d for proc %s",
+                         "%s db:hash:store: storing key %s[%s] for proc %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         key, (int)type, ORTE_NAME_PRINT(proc)));
+                         key, opal_dss.lookup_data_type(type), ORTE_NAME_PRINT(proc)));
 
     /* get the job data object for this proc */
     jtable = NULL;
@@ -331,9 +331,11 @@ static int fetch(const orte_process_name_t *proc,
     opal_byte_object_t *boptr;
 
     OPAL_OUTPUT_VERBOSE((5, orte_db_base.output,
-                         "%s db:hash:fetch: searching for key %s on proc %s",
+                         "%s db:hash:fetch: searching for key %s[%s] on proc %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         (NULL == key) ? "NULL" : key, ORTE_NAME_PRINT(proc)));
+                         (NULL == key) ? "NULL" : key,
+                         opal_dss.lookup_data_type(type),
+                         ORTE_NAME_PRINT(proc)));
 
     /* if the key is NULL, that is an error */
     if (NULL == key) {
