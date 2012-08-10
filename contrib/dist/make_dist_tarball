@@ -102,8 +102,8 @@ check_gnu_version() {
     # somehow" kind of message (because I'm not going to code up a
     # complex/clever alphanumeric lower/higher comparison thingy).
     # Sigh.
-    ver_release=`echo $ver_release | sed 's/[a-z]//g'`
-    target_release=`echo $target_release | sed 's/[a-z]//g'`
+    ver_release=`echo $ver_release | sed 's/[A-Za-z]//g'`
+    target_release=`echo $target_release | sed 's/[A-Za-z]//g'`
 
     result=same
     if test "$ver" != "$target"; then 
@@ -117,8 +117,12 @@ check_gnu_version() {
             result=high
         elif test "$ver_major" = "$target_major" -a "$ver_minor" -gt "$target_minor"; then
             result=high
+        elif test "$ver_major" = "$target_major" -a "$ver_minor" = "$target_minor" -a "$ver_release" = "$target_release"; then
+            result=same
         elif test "$ver_major" = "$target_major" -a "$ver_minor" = "$target_minor" -a "$ver_release" -gt "$target_release"; then
             result=high
+        elif test "$ver_major" = "$target_major" -a "$ver_minor" = "$target_minor" -a "$ver_release" -lt "$target_release"; then
+            result=low
         else
             result=unknown
         fi
