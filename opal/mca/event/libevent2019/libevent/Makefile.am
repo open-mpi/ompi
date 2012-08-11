@@ -105,7 +105,7 @@ OMPI_WINDOWS_EXTRA_DIST =\
         bufferevent_sock.c \
         bufferevent_pair.c \
         listener.c \
-        bufferevent_ratelim.c.
+        bufferevent_ratelim.c
 
 # Open MPI: removed test/Makefile.nmake and make-event-config.sed from
 # EXTRA_DIST
