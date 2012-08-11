@@ -117,7 +117,7 @@ EXTRA_DIST = \
 	Doxyfile \
 	whatsnew-2.0.txt \
 	Makefile.nmake \
-        $(OMPI_WINDOWS_EXTRA_DIST)
+        $(OMPI_WINDOWS_EXTRA_DIST) \
 	$(PLATFORM_DEPENDENT_SRC)
 
 # Open MPI: disable these lines
