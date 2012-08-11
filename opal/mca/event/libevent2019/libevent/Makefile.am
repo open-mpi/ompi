@@ -102,8 +102,8 @@ PLATFORM_DEPENDENT_SRC = \
 OMPI_WINDOWS_EXTRA_DIST =\
         buffer.c \
         bufferevent.c \
-        buffer_sock.c \
-        buffer_pair.c \
+        bufferevent_sock.c \
+        bufferevent_pair.c \
         listener.c \
         bufferevent_ratelim.c.
 
