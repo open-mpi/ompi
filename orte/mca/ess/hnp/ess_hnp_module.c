@@ -682,6 +682,8 @@ static int rte_finalize(void)
         /* Remove the epipe handler */
         opal_event_signal_del(&epipe_handler);
 #ifndef __WINDOWS__
+        /* remove the term handler */
+        opal_event_del(&term_handler);
         /** Remove the USR signal handlers */
         opal_event_signal_del(&sigusr1_handler);
         opal_event_signal_del(&sigusr2_handler);

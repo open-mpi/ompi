@@ -574,6 +574,14 @@ int orte_dt_unpack_app_context(opal_buffer_t *buffer, void *dest,
             return rc;
         }
 
+        /* get the first rank for this app */
+        max_n = 1;
+        if (ORTE_SUCCESS != (rc = opal_dss_unpack_buffer(buffer, &(app_context[i]->first_rank),
+                    &max_n, ORTE_VPID))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+
         /* get the number of argv strings that were packed */
         max_n = 1;
         if (ORTE_SUCCESS != (rc = opal_dss_unpack_buffer(buffer, &count, &max_n, ORTE_STD_CNTR))) {

@@ -638,7 +638,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     }
 
     /* initialize info */
-    if (OMPI_SUCCESS != (ret = ompi_info_init())) {
+    if (OMPI_SUCCESS != (ret = ompi_info_init(argc, argv))) {
         error = "ompi_info_init() failed";
         goto error;
     }

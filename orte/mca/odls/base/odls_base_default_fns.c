@@ -1051,6 +1051,9 @@ void orte_odls_base_default_launch_local(int fd, short sd, void *cbdata)
     orte_job_t *jobdat;
     orte_jobid_t job = caddy->job;
     orte_odls_base_fork_local_proc_fn_t fork_local = caddy->fork_local;
+    char *num_app_ctx = NULL;
+    char **nps, *npstring;
+    char **firstranks, *firstrankstring;
 
     /* establish our baseline working directory - we will be potentially
      * bouncing around as we execute various apps, but we will always return
@@ -1095,9 +1098,18 @@ void orte_odls_base_default_launch_local(int fd, short sd, void *cbdata)
     }
 #endif
     
-    /* Now we preload any files that are needed. This is done on a per
-     * app context basis
+    /* MPI-3 requires we provide some further info to the procs,
+     * so we pass them as envars to avoid introducing further
+     * ORTE calls in the MPI layer
      */
+    asprintf(&num_app_ctx, "%lu", (unsigned long)jobdat->num_apps);
+
+    /* Now we preload any files that are needed. This is done on a per
+     * app context basis, so let's take the opportunity to build
+     * some common envars we need to pass for MPI-3 compatibility
+     */
+    nps = NULL;
+    firstranks = NULL;
     for (j=0; j < jobdat->apps->size; j++) {
         if (NULL == (app = (orte_app_context_t*)opal_pointer_array_get_item(jobdat->apps, j))) {
             continue;
@@ -1109,7 +1121,13 @@ void orte_odls_base_default_launch_local(int fd, short sd, void *cbdata)
                 /* JJH: Do not fail here, instead try to execute without the preloaded options*/
             }
         }
+        opal_argv_append_nosize(&nps, ORTE_VPID_PRINT(app->num_procs));
+        opal_argv_append_nosize(&firstranks, ORTE_VPID_PRINT(app->first_rank));
     }
+    npstring = opal_argv_join(nps, ' ');
+    firstrankstring = opal_argv_join(firstranks, ' ');
+    opal_argv_free(nps);
+    opal_argv_free(firstranks);
 
 #if OPAL_ENABLE_FT_CR == 1
     for (j=0; j < jobdat->apps->size; j++) {
@@ -1226,6 +1244,11 @@ void orte_odls_base_default_launch_local(int fd, short sd, void *cbdata)
             }
             goto GETOUT;
         }
+
+        /* add the MPI-3 envars */
+        opal_setenv("OMPI_NUM_APP_CTX", num_app_ctx, true, &app->env);
+        opal_setenv("OMPI_FIRST_RANKS", firstrankstring, true, &app->env);
+        opal_setenv("OMPI_APP_CTX_NUM_PROCS", npstring, true, &app->env);
 
         /* okay, now let's launch all the local procs for this app using the provided fork_local fn */
         for (proc_rank = 0, idx=0; idx < orte_local_children->size; idx++) {

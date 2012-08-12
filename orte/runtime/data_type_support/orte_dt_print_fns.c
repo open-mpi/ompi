@@ -537,10 +537,11 @@ int orte_dt_print_app_context(char **output, char *prefix, orte_app_context_t *s
         asprintf(&pfx2, "%s", prefix);
     }
     
-    asprintf(&tmp, "\n%sData for app_context: index %lu\tapp: %s\n%s\tNum procs: %lu\tRecovery: %s\tMax Restarts: %d",
+    asprintf(&tmp, "\n%sData for app_context: index %lu\tapp: %s\n%s\tNum procs: %lu\tFirstRank: %s\tRecovery: %s\tMax Restarts: %d",
              pfx2, (unsigned long)src->idx,
              (NULL == src->app) ? "NULL" : src->app,
              pfx2, (unsigned long)src->num_procs,
+             ORTE_VPID_PRINT(src->first_rank),
              (src->recovery_defined) ? "DEFINED" : "DEFAULT",
              src->max_restarts);
     

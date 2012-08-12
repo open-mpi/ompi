@@ -12,6 +12,8 @@
  *                         All rights reserved.
  * Copyright (c) 2007-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2012      Los Alamos National Security, LLC.
+ *                         All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -20,6 +22,7 @@
  */
 
 #include "ompi_config.h"
+#include "ompi/constants.h"
 
 #ifdef HAVE_STRING_H
 #include <string.h>
@@ -28,12 +31,20 @@
 #ifdef HAVE_STDLIB_H
 #include <stdlib.h>
 #endif
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
 #include <limits.h>
 #include <ctype.h>
+#ifdef HAVE_SYS_UTSNAME_H
+#include <sys/utsname.h>
+#endif
 
+#include "opal/util/argv.h"
+#include "opal/util/opal_getcwd.h"
 #include "opal/util/output.h"
 #include "opal/util/strncpy.h"
-#include "ompi/constants.h"
+
 #include "ompi/info/info.h"
 #include "ompi/runtime/params.h"
 
@@ -43,6 +54,7 @@
  */
 ompi_predefined_info_t ompi_mpi_info_null;
 ompi_predefined_info_t *ompi_mpi_info_null_addr = &ompi_mpi_info_null;
+ompi_predefined_info_t ompi_mpi_info_get_env;
 
 
 /*
@@ -78,10 +90,14 @@ opal_pointer_array_t ompi_info_f_to_c_table;
 
 /*
  * This function is called during ompi_init and initializes the
- * fortran to C translation table.
+ * fortran to C translation table. It also fills in the values
+ * for the MPI_INFO_GET_ENV object
  */ 
-int ompi_info_init(void) 
+int ompi_info_init(int argc, char **argv) 
 {
+    char tmp[MPI_MAX_INFO_KEY];
+    char *cptr;
+
     /* initialize table */
 
     OBJ_CONSTRUCT(&ompi_info_f_to_c_table, opal_pointer_array_t);
@@ -94,6 +110,62 @@ int ompi_info_init(void)
 
     OBJ_CONSTRUCT(&ompi_mpi_info_null.info, ompi_info_t);
     ompi_mpi_info_null.info.i_f_to_c_index = 0;
+
+    /* Create MPI_INFO_GET_ENV */
+    OBJ_CONSTRUCT(&ompi_mpi_info_get_env.info, ompi_info_t);
+    ompi_mpi_info_get_env.info.i_f_to_c_index = 1;
+
+    /* fill the get_env info object */
+    /* command for this app_context */
+    ompi_info_set(&ompi_mpi_info_get_env.info, "command", argv[0]);
+    /* space-separated list of argv for this command */
+    if (1 < argc) {
+        cptr = opal_argv_join(&argv[1], ' ');
+        ompi_info_set(&ompi_mpi_info_get_env.info, "argv", cptr);
+        free(cptr);
+    } else {
+        ompi_info_set(&ompi_mpi_info_get_env.info, "argv", "N/A");
+    }
+    /* max procs for the entire job */
+    if (NULL == (cptr = getenv("OMPI_MCA_orte_ess_num_procs"))) {
+        cptr = "1";
+    }
+    ompi_info_set(&ompi_mpi_info_get_env.info, "maxprocs", cptr);
+    ompi_info_set(&ompi_mpi_info_get_env.info, "soft", "N/A");
+    /* local host name */
+    gethostname(tmp, MPI_MAX_INFO_KEY);
+    ompi_info_set(&ompi_mpi_info_get_env.info, "host", tmp);
+    /* architecture name */
+    if (NULL == (cptr = getenv("OMPI_MCA_orte_cpu_type"))) {
+#ifdef HAVE_SYS_UTSNAME_H
+        {
+            struct utsname sysname;
+            uname(&sysname);
+            cptr = sysname.machine;
+        }
+#else
+        cptr = "unknown";
+#endif
+    }
+    ompi_info_set(&ompi_mpi_info_get_env.info, "arch", cptr);
+    /* working directory of this process */
+    opal_getcwd(tmp, MPI_MAX_INFO_KEY);
+    ompi_info_set(&ompi_mpi_info_get_env.info, "wdir", tmp);
+    /* the number of app_contexts in this job */
+    if (NULL == (cptr = getenv("OMPI_NUM_APP_CTX"))) {
+        cptr = "1";
+    }
+    ompi_info_set(&ompi_mpi_info_get_env.info, "num_app_ctx", cptr);
+    /* space-separated list of first MPI rank of each app_context */
+    if (NULL == (cptr = getenv("OMPI_FIRST_RANKS"))) {
+        cptr = "0";
+    }
+    ompi_info_set(&ompi_mpi_info_get_env.info, "first_rank", cptr);
+    /* space-separated list of num procs for each app_context */
+    if (NULL == (cptr = getenv("OMPI_APP_CTX_NUM_PROCS"))) {
+        cptr = "1";
+    }
+    ompi_info_set(&ompi_mpi_info_get_env.info, "np", cptr);
 
     /* All done */
 
@@ -354,11 +426,15 @@ int ompi_info_finalize(void)
     OBJ_DESTRUCT(&ompi_mpi_info_null.info);
     opal_pointer_array_set_item(&ompi_info_f_to_c_table, 0, NULL);
     
+    /* ditto for MPI_INFO_GET_ENV */
+    OBJ_DESTRUCT(&ompi_mpi_info_get_env.info);
+    opal_pointer_array_set_item(&ompi_info_f_to_c_table, 1, NULL);
+
     /* Go through the f2c table and see if anything is left.  Free them
        all. */
     
     max = opal_pointer_array_get_size(&ompi_info_f_to_c_table);
-    for (i = 0; i < max; ++i) {
+    for (i = 2; i < max; ++i) {
         info = (ompi_info_t *)opal_pointer_array_get_item(&ompi_info_f_to_c_table, i);
         
         /* If the info was freed but still exists because the user

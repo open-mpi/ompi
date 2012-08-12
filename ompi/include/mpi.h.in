@@ -642,6 +642,11 @@ enum {
 #define MPI_FILE_NULL OMPI_PREDEFINED_GLOBAL(MPI_File, ompi_mpi_file_null)
 #endif
 
+/*
+ * GET_ENV handle
+ */
+#define MPI_INFO_GET_ENV OMPI_PREDEFINED_GLOBAL(MPI_Info, ompi_mpi_info_get_env)
+
 #define MPI_STATUS_IGNORE ((MPI_Status *) 0)
 #define MPI_STATUSES_IGNORE ((MPI_Status *) 0)
 
@@ -885,6 +890,7 @@ OMPI_DECLSPEC extern struct ompi_predefined_win_t ompi_mpi_win_null;
 OMPI_DECLSPEC extern struct ompi_predefined_file_t ompi_mpi_file_null;
 
 OMPI_DECLSPEC extern struct ompi_predefined_info_t ompi_mpi_info_null;
+OMPI_DECLSPEC extern struct ompi_predefined_info_t ompi_mpi_info_get_env;
 
 OMPI_DECLSPEC extern MPI_Fint *MPI_F_STATUS_IGNORE;
 OMPI_DECLSPEC extern MPI_Fint *MPI_F_STATUSES_IGNORE;

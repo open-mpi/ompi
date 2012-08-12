@@ -83,7 +83,7 @@ static int rte_init(void)
     int ret, i, j;
     char *error = NULL, *localj;
     int32_t jobfam, stepid;
-    char *envar;
+    char *envar, *ev1, *ev2;
     uint64_t unique_key[2];
     char *cs_env, *string_key;
     char *pmi_id=NULL;
@@ -195,6 +195,13 @@ static int rte_init(void)
             goto error;
         }
         orte_process_info.num_procs = i;
+        /* push into the environ for pickup in MPI layer for
+         * MPI-3 required info key
+         */
+        asprintf(&ev1, "OMPI_MCA_orte_ess_num_procs=%d", i);
+        putenv(ev1);
+        asprintf(&ev2, "OMPI_APP_CTX_NUM_PROCS=%d", i);
+        putenv(ev2);
 
         /* setup transport keys in case the MPI layer needs them -
          * we can use the jobfam and stepid as unique keys

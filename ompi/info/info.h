@@ -12,6 +12,8 @@
  *                         All rights reserved.
  * Copyright (c) 2007-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2012      Los Alamos National Security, LLC.
+ *                         All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -104,6 +106,11 @@ OMPI_DECLSPEC extern ompi_predefined_info_t ompi_mpi_info_null;
 OMPI_DECLSPEC extern ompi_predefined_info_t *ompi_mpi_info_null_addr;
 
 /**
+ * Global instance for MPI_INFO_GET_ENV
+ */
+OMPI_DECLSPEC extern ompi_predefined_info_t ompi_mpi_info_get_env;
+
+/**
  * \internal
  * Some declarations needed to use OBJ_NEW and OBJ_DESTRUCT macros
  */
@@ -119,7 +126,7 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_info_entry_t);
  * This function is invoked during ompi_mpi_init() and sets up
  * MPI_Info handling.
  */
-int ompi_info_init(void);
+int ompi_info_init(int argc, char **argv);
 
 /**
  * This functions is called during ompi_mpi_finalize() and shuts
