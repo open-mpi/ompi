@@ -106,9 +106,9 @@ OMPI_DECLSPEC extern ompi_predefined_info_t ompi_mpi_info_null;
 OMPI_DECLSPEC extern ompi_predefined_info_t *ompi_mpi_info_null_addr;
 
 /**
- * Global instance for MPI_INFO_GET_ENV
+ * Global instance for MPI_INFO_ENV
  */
-OMPI_DECLSPEC extern ompi_predefined_info_t ompi_mpi_info_get_env;
+OMPI_DECLSPEC extern ompi_predefined_info_t ompi_mpi_info_env;
 
 /**
  * \internal

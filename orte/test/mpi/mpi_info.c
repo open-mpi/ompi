@@ -31,9 +31,9 @@ int main(int argc, char* argv[])
     nk = sizeof(keys) / sizeof(char*);
 
     for (i=0; i < nk; i++) {
-        MPI_Info_get(MPI_INFO_GET_ENV, keys[i], MPI_MAX_INFO_KEY,
+        MPI_Info_get(MPI_INFO_ENV, keys[i], MPI_MAX_INFO_KEY,
                      value, &flag);
-        fprintf(stderr, "%s: %s\n", keys[i], value);
+        fprintf(stderr, "%s: %s\n", keys[i], (flag) ? value : "Not found");
     }
 
     MPI_Finalize();
