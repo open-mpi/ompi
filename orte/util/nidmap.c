@@ -67,12 +67,22 @@
 
 #include "orte/util/nidmap.h"
 
+static int orte_nidmap_verbose, orte_nidmap_output=-1;
+
 int orte_util_nidmap_init(opal_buffer_t *buffer)
 {
     int32_t cnt;
     int rc;
     opal_byte_object_t *bo;
     
+    mca_base_param_reg_int_name("orte", "nidmap_verbose",
+                                "Verbosity of the nidmap subsystem",
+                                true, false, 0,  &orte_nidmap_verbose);
+    if (0 < orte_nidmap_verbose) {
+        orte_nidmap_output = opal_output_open(NULL);
+        opal_output_set_verbosity(orte_nidmap_output, orte_nidmap_verbose);
+    }
+
     /* it is okay if the buffer is empty */
     if (NULL == buffer || 0 == buffer->bytes_used) {
         return ORTE_SUCCESS;
@@ -149,7 +159,7 @@ int orte_util_build_daemon_nidmap(char **nodes)
     
     num_nodes = opal_argv_count(nodes);
     
-    OPAL_OUTPUT_VERBOSE((2, orte_debug_output,
+    OPAL_OUTPUT_VERBOSE((2, orte_nidmap_output,
                          "%s orte:util:build:daemon:nidmap found %d nodes",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), num_nodes));
     
@@ -209,7 +219,7 @@ int orte_util_build_daemon_nidmap(char **nodes)
         /* construct the URI */
         orte_util_convert_process_name_to_string(&proc_name, &proc);
         asprintf(&uri, "%s;tcp://%s:%d", proc_name, addr, (int)orte_process_info.my_port);
-        OPAL_OUTPUT_VERBOSE((2, orte_debug_output,
+        OPAL_OUTPUT_VERBOSE((2, orte_nidmap_output,
                              "%s orte:util:build:daemon:nidmap node %s daemon %d addr %s uri %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              nodes[i], i+1, addr, uri));
@@ -312,7 +322,7 @@ int orte_util_decode_nodemap(opal_byte_object_t *bo)
     uint8_t oversub;
     char *nodename;
 
-    OPAL_OUTPUT_VERBOSE((1, orte_debug_output,
+    OPAL_OUTPUT_VERBOSE((1, orte_nidmap_output,
                          "%s decode:nidmap decoding nodemap",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
@@ -327,7 +337,7 @@ int orte_util_decode_nodemap(opal_byte_object_t *bo)
         return rc;
     }
  
-    OPAL_OUTPUT_VERBOSE((1, orte_debug_output,
+    OPAL_OUTPUT_VERBOSE((1, orte_nidmap_output,
                          "%s decode:nidmap decoding %d nodes",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), num_nodes));
     
@@ -355,6 +365,10 @@ int orte_util_decode_nodemap(opal_byte_object_t *bo)
             ORTE_ERROR_LOG(rc);
             return rc;
         }
+        OPAL_OUTPUT_VERBOSE((2, orte_nidmap_output,
+                             "%s orte:util:decode:nidmap daemon %s node %s",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             ORTE_VPID_PRINT(daemon.vpid), nodename));
         /* if this is my daemon, then store the data for me too */
         if (daemon.vpid == ORTE_PROC_MY_DAEMON->vpid) {
             if (ORTE_SUCCESS != (rc = orte_db.store(ORTE_PROC_MY_NAME, ORTE_DB_HOSTNAME, nodename, OPAL_STRING))) {
@@ -395,7 +409,7 @@ int orte_util_decode_daemon_nodemap(opal_byte_object_t *bo)
     orte_job_t *daemons;
     orte_proc_t *dptr;
 
-    OPAL_OUTPUT_VERBOSE((1, orte_debug_output,
+    OPAL_OUTPUT_VERBOSE((1, orte_nidmap_output,
                          "%s decode:nidmap decoding daemon nodemap",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
@@ -410,7 +424,7 @@ int orte_util_decode_daemon_nodemap(opal_byte_object_t *bo)
         return rc;
     }
  
-    OPAL_OUTPUT_VERBOSE((1, orte_debug_output,
+    OPAL_OUTPUT_VERBOSE((1, orte_nidmap_output,
                          "%s decode:nidmap decoding %d nodes",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), num_nodes));
     
@@ -491,12 +505,12 @@ int orte_util_decode_daemon_nodemap(opal_byte_object_t *bo)
     /* update num_daemons */
     orte_process_info.num_daemons = daemons->num_procs;
     
-    if (0 < opal_output_get_verbosity(orte_debug_output)) {
+    if (0 < opal_output_get_verbosity(orte_nidmap_output)) {
         for (i=0; i < num_nodes; i++) {
             if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, i))) {
                 continue;
             }
-            opal_output(5, "%s node[%d].name %s daemon %s",
+            opal_output(0, "%s node[%d].name %s daemon %s",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), i,
                         (NULL == node->name) ? "NULL" : node->name,
                         (NULL == node->daemon) ? "NONE" : ORTE_VPID_PRINT(node->daemon->name.vpid));
@@ -694,6 +708,10 @@ int orte_util_decode_pidmap(opal_byte_object_t *bo)
     /* cycle through the buffer */
     OBJ_CONSTRUCT(&jobs, opal_list_t);
     while (ORTE_SUCCESS == (rc = opal_dss.unpack(&buf, &proc.jobid, &n, ORTE_JOBID))) {
+        OPAL_OUTPUT_VERBOSE((2, orte_nidmap_output,
+                             "%s orte:util:decode:pidmap working job %s",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             ORTE_JOBID_PRINT(proc.jobid)));
         /* record the jobid */
         nm = OBJ_NEW(orte_namelist_t);
         nm->name.jobid = proc.jobid;
@@ -729,6 +747,11 @@ int orte_util_decode_pidmap(opal_byte_object_t *bo)
             orte_process_info.bind_level = bind_level;
         }
 #endif
+        OPAL_OUTPUT_VERBOSE((2, orte_nidmap_output,
+                             "%s orte:util:decode:pidmap nprocs %s bind level %s",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             ORTE_VPID_PRINT(num_procs),
+                             opal_hwloc_base_print_level(bind_level)));
 
         /* allocate memory for the daemon info */
         daemons = (orte_vpid_t*)malloc(num_procs * sizeof(orte_vpid_t));
@@ -869,6 +892,11 @@ int orte_util_decode_pidmap(opal_byte_object_t *bo)
                 goto cleanup;
             }
 #endif
+            OPAL_OUTPUT_VERBOSE((10, orte_nidmap_output,
+                                 "%s orte:util:decode:pidmap proc %s host %s lrank %d nrank %d bindidx %u",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 ORTE_NAME_PRINT(&proc), hostname,
+                                 (int)local_rank[i], (int)node_rank[i], bind_idx[i]));
         }
         /* release data */
         free(daemons);
@@ -918,6 +946,10 @@ int orte_util_decode_pidmap(opal_byte_object_t *bo)
                 goto cleanup;
             }
             if (daemon == ORTE_PROC_MY_DAEMON->vpid) {
+                OPAL_OUTPUT_VERBOSE((2, orte_nidmap_output,
+                                     "%s orte:util:decode:pidmap proc %s shares node",
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                     ORTE_NAME_PRINT(&proc)));
 #if OPAL_HAVE_HWLOC
                 /* retrieve the bind level for the other proc's job */
                 lvptr = &pbind;
@@ -945,9 +977,20 @@ int orte_util_decode_pidmap(opal_byte_object_t *bo)
 #endif
             } else {
                 /* we don't share a node */
+                OPAL_OUTPUT_VERBOSE((2, orte_nidmap_output,
+                                     "%s orte:util:decode:pidmap proc %s does NOT node [my daemon %s, their daemon %s]",
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                     ORTE_NAME_PRINT(&proc),
+                                     ORTE_VPID_PRINT(ORTE_PROC_MY_DAEMON->vpid),
+                                     ORTE_VPID_PRINT(daemon)));
                 locality = OPAL_PROC_NON_LOCAL;
             }
             /* store the locality */
+                OPAL_OUTPUT_VERBOSE((2, orte_nidmap_output,
+                                     "%s orte:util:decode:pidmap set proc %s locality to %s",
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                     ORTE_NAME_PRINT(&proc),
+                                     opal_hwloc_base_print_locality(locality)));
             if (ORTE_SUCCESS != (rc = orte_db.store(&proc, ORTE_DB_LOCALITY, &locality, OPAL_HWLOC_LOCALITY_T))) {
                 ORTE_ERROR_LOG(rc);
                 goto cleanup;
