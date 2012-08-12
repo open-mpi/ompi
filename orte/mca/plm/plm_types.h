@@ -104,12 +104,13 @@ typedef int32_t orte_job_state_t;
 #define ORTE_JOB_STATE_LAUNCH_DAEMONS            6  /* ready to launch daemons */
 #define ORTE_JOB_STATE_DAEMONS_LAUNCHED          7  /* daemons for this job have been launched */
 #define ORTE_JOB_STATE_DAEMONS_REPORTED          8  /* all launched daemons have reported */
-#define ORTE_JOB_STATE_LAUNCH_APPS               9  /* ready to launch apps */
-#define ORTE_JOB_STATE_RUNNING                  10  /* all procs have been fork'd */
-#define ORTE_JOB_STATE_SUSPENDED                11  /* job has been suspended */
-#define ORTE_JOB_STATE_REGISTERED               12  /* all procs registered for sync */
-#define ORTE_JOB_STATE_READY_FOR_DEBUGGERS      13  /* job ready for debugger init after spawn */
-#define ORTE_JOB_STATE_LOCAL_LAUNCH_COMPLETE    14  /* all local procs have attempted launch */
+#define ORTE_JOB_STATE_VM_READY                  9  /* the VM is ready for operation */
+#define ORTE_JOB_STATE_LAUNCH_APPS              10  /* ready to launch apps */
+#define ORTE_JOB_STATE_RUNNING                  11  /* all procs have been fork'd */
+#define ORTE_JOB_STATE_SUSPENDED                12  /* job has been suspended */
+#define ORTE_JOB_STATE_REGISTERED               13  /* all procs registered for sync */
+#define ORTE_JOB_STATE_READY_FOR_DEBUGGERS      14  /* job ready for debugger init after spawn */
+#define ORTE_JOB_STATE_LOCAL_LAUNCH_COMPLETE    15  /* all local procs have attempted launch */
 
 /*
  * Define a "boundary" so we can easily and quickly determine
@@ -121,6 +122,8 @@ typedef int32_t orte_job_state_t;
 #define ORTE_JOB_STATE_TERMINATED               21  /* all processes have terminated and job is no longer running */
 #define ORTE_JOB_STATE_ALL_JOBS_COMPLETE        22
 #define ORTE_JOB_STATE_DAEMONS_TERMINATED       23
+#define ORTE_JOB_STATE_NOTIFY_COMPLETED         24  /* callback to notify when job completes */
+#define ORTE_JOB_STATE_NOTIFIED                 25
 
 /* Define a boundary so we can easily and quickly determine
  * if a job abnormally terminated - leave a little room

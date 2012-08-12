@@ -79,6 +79,7 @@ static void local_launch_complete(int fd, short argc, void *cbdata)
 static void track_procs(int fd, short argc, void *cbdata);
 static void check_all_complete(int fd, short argc, void *cbdata);
 static void report_progress(int fd, short argc, void *cbdata);
+static void cleanup_job(int fd, short argc, void *cbdata);
 
 /* defined default state machine sequence - individual
  * plm's must add a state for launching daemons
@@ -89,6 +90,7 @@ static orte_job_state_t launch_states[] = {
     ORTE_JOB_STATE_ALLOCATE,
     ORTE_JOB_STATE_DAEMONS_LAUNCHED,
     ORTE_JOB_STATE_DAEMONS_REPORTED,
+    ORTE_JOB_STATE_VM_READY,
     ORTE_JOB_STATE_MAP,
     ORTE_JOB_STATE_SYSTEM_PREP,
     ORTE_JOB_STATE_LAUNCH_APPS,
@@ -97,6 +99,7 @@ static orte_job_state_t launch_states[] = {
     ORTE_JOB_STATE_REGISTERED,
     /* termination states */
     ORTE_JOB_STATE_TERMINATED,
+    ORTE_JOB_STATE_NOTIFY_COMPLETED,
     ORTE_JOB_STATE_ALL_JOBS_COMPLETE,
     ORTE_JOB_STATE_DAEMONS_TERMINATED
 };
@@ -106,6 +109,7 @@ static orte_state_cbfunc_t launch_callbacks[] = {
     orte_ras_base_allocate,
     orte_plm_base_daemons_launched,
     orte_plm_base_daemons_reported,
+    orte_plm_base_vm_ready,
     orte_rmaps_base_map_job,
     orte_plm_base_complete_setup,
     orte_plm_base_launch_apps,
@@ -113,6 +117,7 @@ static orte_state_cbfunc_t launch_callbacks[] = {
     orte_plm_base_post_launch,
     orte_plm_base_registered,
     check_all_complete,
+    cleanup_job,
     orte_quit,
     orte_quit
 };
@@ -341,6 +346,23 @@ static void track_procs(int fd, short argc, void *cbdata)
     OBJ_RELEASE(caddy);
 }
 
+static void cleanup_job(int fd, short argc, void *cbdata)
+{
+    orte_state_caddy_t *caddy = (orte_state_caddy_t*)cbdata;
+    orte_job_t *jdata = caddy->jdata;
+
+    OPAL_OUTPUT_VERBOSE((2, orte_state_base_output,
+                         "%s state:hnp:cleanup on job %s",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         (NULL == jdata) ? "NULL" : ORTE_JOBID_PRINT(jdata->jobid)));
+
+    /* flag that we were notified */
+    jdata->state = ORTE_JOB_STATE_NOTIFIED;
+    /* send us back thru job complete */
+    ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_TERMINATED);
+    OBJ_RELEASE(caddy);
+}
+
 static void check_all_complete(int fd, short args, void *cbdata)
 {
     orte_state_caddy_t *caddy = (orte_state_caddy_t*)cbdata;
@@ -361,12 +383,19 @@ static void check_all_complete(int fd, short args, void *cbdata)
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          (NULL == jdata) ? "NULL" : ORTE_JOBID_PRINT(jdata->jobid)));
 
-    if (NULL == jdata) {
+    if (NULL == jdata || jdata->jobid == ORTE_PROC_MY_NAME->jobid) {
         /* just check to see if the daemons are complete */
         OPAL_OUTPUT_VERBOSE((2, orte_state_base_output,
                              "%s state:hnp:check_job_complete - received NULL job, checking daemons",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
         goto CHECK_DAEMONS;
+    } else {
+        /* mark the job as terminated, but don't override any
+         * abnormal termination flags
+         */
+        if (jdata->state < ORTE_JOB_STATE_UNTERMINATED) {
+            jdata->state = ORTE_JOB_STATE_TERMINATED;
+        }
     }
 
     /* turn off any sensor monitors on this job */
@@ -480,7 +509,7 @@ static void check_all_complete(int fd, short args, void *cbdata)
     }
     
  CHECK_ALIVE:
-    /* now check to see if all jobs are done - release this jdata
+    /* now check to see if all jobs are done - trigger notification of this jdata
      * object when we find it
      */
     one_still_alive = false;
@@ -493,6 +522,9 @@ static void check_all_complete(int fd, short args, void *cbdata)
             continue;
         }
         /* if this is the job we are checking AND it normally terminated,
+         * then activate the "notify_completed" state - this will release
+         * the job state, but is provided so that the HNP main code can
+         * take alternative actions if desired. If the state is killed_by_cmd,
          * then go ahead and release it. We cannot release it if it
          * abnormally terminated as mpirun needs the info so it can
          * report appropriately to the user
@@ -500,16 +532,29 @@ static void check_all_complete(int fd, short args, void *cbdata)
          * NOTE: do not release the primary job (j=1) so we
          * can pretty-print completion message
          */
-        if (NULL != jdata && job->jobid == jdata->jobid &&
-            (jdata->state == ORTE_JOB_STATE_TERMINATED ||
-             jdata->state == ORTE_JOB_STATE_KILLED_BY_CMD)) {
-            /* release this object, ensuring that the
-             * pointer array internal accounting
-             * is maintained!
-             */
-            if (1 < j) {
-                opal_pointer_array_set_item(orte_job_data, j, NULL);  /* ensure the array has a NULL */
-                OBJ_RELEASE(jdata);
+        if (NULL != jdata && job->jobid == jdata->jobid) {
+            opal_output(0, "CHECKING JOB %s", ORTE_JOBID_PRINT(jdata->jobid));
+            if (jdata->state == ORTE_JOB_STATE_TERMINATED) {
+                OPAL_OUTPUT_VERBOSE((2, orte_state_base_output,
+                                     "%s state:hnp:check_job_completed state is terminated - activating notify",
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+                ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_NOTIFY_COMPLETED);
+                one_still_alive = true;
+            } else if (jdata->state == ORTE_JOB_STATE_KILLED_BY_CMD ||
+                       jdata->state == ORTE_JOB_STATE_NOTIFIED) {
+                OPAL_OUTPUT_VERBOSE((2, orte_state_base_output,
+                                     "%s state:hnp:check_job_completed state is killed or notified - cleaning up",
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+                /* release this object, ensuring that the
+                 * pointer array internal accounting
+                 * is maintained!
+                 */
+                if (1 < j) {
+                    opal_pointer_array_set_item(orte_job_data, j, NULL);  /* ensure the array has a NULL */
+                    OBJ_RELEASE(jdata);
+                }
+            } else {
+                opal_output(0, "STATE WAS %s", orte_job_state_to_str(jdata->state));
             }
             continue;
         }

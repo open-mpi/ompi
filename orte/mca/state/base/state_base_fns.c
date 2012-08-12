@@ -145,7 +145,15 @@ int orte_state_base_set_job_state_callback(orte_job_state_t state,
             return ORTE_SUCCESS;
         }
     }
-    return ORTE_ERR_NOT_FOUND;
+
+    /* if not found, assume SYS priority and install it */
+    st = OBJ_NEW(orte_state_t);
+    st->job_state = state;
+    st->cbfunc = cbfunc;
+    st->priority = ORTE_SYS_PRI;
+    opal_list_append(&orte_job_states, &(st->super));
+
+    return ORTE_SUCCESS;
 }
 
 int orte_state_base_set_job_state_priority(orte_job_state_t state,

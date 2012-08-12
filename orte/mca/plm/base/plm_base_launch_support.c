@@ -112,7 +112,7 @@ void orte_plm_base_daemons_reported(int fd, short args, void *cbdata)
 
     /* progress the job */
     caddy->jdata->state = ORTE_JOB_STATE_DAEMONS_REPORTED;
-    ORTE_ACTIVATE_JOB_STATE(caddy->jdata, ORTE_JOB_STATE_MAP);
+    ORTE_ACTIVATE_JOB_STATE(caddy->jdata, ORTE_JOB_STATE_VM_READY);
 
     /* cleanup */
     OBJ_RELEASE(caddy);
@@ -126,6 +126,18 @@ void orte_plm_base_daemons_launched(int fd, short args, void *cbdata)
      * daemons to report that they have actually
      * started before moving to the right state
      */
+    /* cleanup */
+    OBJ_RELEASE(caddy);
+}
+
+void orte_plm_base_vm_ready(int fd, short args, void *cbdata)
+{
+    orte_state_caddy_t *caddy = (orte_state_caddy_t*)cbdata;
+
+    /* progress the job */
+    caddy->jdata->state = ORTE_JOB_STATE_VM_READY;
+    ORTE_ACTIVATE_JOB_STATE(caddy->jdata, ORTE_JOB_STATE_MAP);
+
     /* cleanup */
     OBJ_RELEASE(caddy);
 }
