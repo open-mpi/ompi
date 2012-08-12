@@ -54,7 +54,7 @@
  */
 ompi_predefined_info_t ompi_mpi_info_null;
 ompi_predefined_info_t *ompi_mpi_info_null_addr = &ompi_mpi_info_null;
-ompi_predefined_info_t ompi_mpi_info_get_env;
+ompi_predefined_info_t ompi_mpi_info_env;
 
 
 /*
@@ -112,60 +112,66 @@ int ompi_info_init(int argc, char **argv)
     ompi_mpi_info_null.info.i_f_to_c_index = 0;
 
     /* Create MPI_INFO_GET_ENV */
-    OBJ_CONSTRUCT(&ompi_mpi_info_get_env.info, ompi_info_t);
-    ompi_mpi_info_get_env.info.i_f_to_c_index = 1;
+    OBJ_CONSTRUCT(&ompi_mpi_info_env.info, ompi_info_t);
+    ompi_mpi_info_env.info.i_f_to_c_index = 1;
 
     /* fill the get_env info object */
+
     /* command for this app_context */
-    ompi_info_set(&ompi_mpi_info_get_env.info, "command", argv[0]);
+    ompi_info_set(&ompi_mpi_info_env.info, "command", argv[0]);
+
     /* space-separated list of argv for this command */
     if (1 < argc) {
         cptr = opal_argv_join(&argv[1], ' ');
-        ompi_info_set(&ompi_mpi_info_get_env.info, "argv", cptr);
+        ompi_info_set(&ompi_mpi_info_env.info, "argv", cptr);
         free(cptr);
-    } else {
-        ompi_info_set(&ompi_mpi_info_get_env.info, "argv", "N/A");
     }
+
     /* max procs for the entire job */
-    if (NULL == (cptr = getenv("OMPI_MCA_orte_ess_num_procs"))) {
-        cptr = "1";
+    if (NULL != (cptr = getenv("OMPI_MCA_orte_ess_num_procs"))) {
+        ompi_info_set(&ompi_mpi_info_env.info, "maxprocs", cptr);
     }
-    ompi_info_set(&ompi_mpi_info_get_env.info, "maxprocs", cptr);
-    ompi_info_set(&ompi_mpi_info_get_env.info, "soft", "N/A");
+
+#if 0
+    /* Open MPI does not support the "soft" option */
+    ompi_info_set(&ompi_mpi_info_env.info, "soft", "N/A");
+#endif
+
     /* local host name */
     gethostname(tmp, MPI_MAX_INFO_KEY);
-    ompi_info_set(&ompi_mpi_info_get_env.info, "host", tmp);
+    ompi_info_set(&ompi_mpi_info_env.info, "host", tmp);
+
     /* architecture name */
-    if (NULL == (cptr = getenv("OMPI_MCA_orte_cpu_type"))) {
-#ifdef HAVE_SYS_UTSNAME_H
-        {
-            struct utsname sysname;
-            uname(&sysname);
-            cptr = sysname.machine;
-        }
-#else
-        cptr = "unknown";
-#endif
+    if (NULL != (cptr = getenv("OMPI_MCA_orte_cpu_type"))) {
+        ompi_info_set(&ompi_mpi_info_env.info, "arch", cptr);
     }
-    ompi_info_set(&ompi_mpi_info_get_env.info, "arch", cptr);
+#ifdef HAVE_SYS_UTSNAME_H
+    else {
+        struct utsname sysname;
+        uname(&sysname);
+        cptr = sysname.machine;
+        ompi_info_set(&ompi_mpi_info_env.info, "arch", cptr);
+    }
+#endif
+
     /* working directory of this process */
     opal_getcwd(tmp, MPI_MAX_INFO_KEY);
-    ompi_info_set(&ompi_mpi_info_get_env.info, "wdir", tmp);
+    ompi_info_set(&ompi_mpi_info_env.info, "wdir", tmp);
+
     /* the number of app_contexts in this job */
-    if (NULL == (cptr = getenv("OMPI_NUM_APP_CTX"))) {
-        cptr = "1";
+    if (NULL != (cptr = getenv("OMPI_NUM_APP_CTX"))) {
+        ompi_info_set(&ompi_mpi_info_env.info, "num_app_ctx", cptr);
     }
-    ompi_info_set(&ompi_mpi_info_get_env.info, "num_app_ctx", cptr);
+
     /* space-separated list of first MPI rank of each app_context */
-    if (NULL == (cptr = getenv("OMPI_FIRST_RANKS"))) {
-        cptr = "0";
+    if (NULL != (cptr = getenv("OMPI_FIRST_RANKS"))) {
+        ompi_info_set(&ompi_mpi_info_env.info, "first_rank", cptr);
     }
-    ompi_info_set(&ompi_mpi_info_get_env.info, "first_rank", cptr);
+
     /* space-separated list of num procs for each app_context */
-    if (NULL == (cptr = getenv("OMPI_APP_CTX_NUM_PROCS"))) {
-        cptr = "1";
+    if (NULL != (cptr = getenv("OMPI_APP_CTX_NUM_PROCS"))) {
+        ompi_info_set(&ompi_mpi_info_env.info, "np", cptr);
     }
-    ompi_info_set(&ompi_mpi_info_get_env.info, "np", cptr);
 
     /* All done */
 
@@ -427,7 +433,7 @@ int ompi_info_finalize(void)
     opal_pointer_array_set_item(&ompi_info_f_to_c_table, 0, NULL);
     
     /* ditto for MPI_INFO_GET_ENV */
-    OBJ_DESTRUCT(&ompi_mpi_info_get_env.info);
+    OBJ_DESTRUCT(&ompi_mpi_info_env.info);
     opal_pointer_array_set_item(&ompi_info_f_to_c_table, 1, NULL);
 
     /* Go through the f2c table and see if anything is left.  Free them
