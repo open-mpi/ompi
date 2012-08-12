@@ -142,6 +142,9 @@ static int rank_span(orte_job_t *jdata,
                     opal_output_verbose(5, orte_rmaps_base.rmaps_output,
                                         "mca:rmaps:rank_span: assigning vpid %s", ORTE_VPID_PRINT(vpid));
                     proc->name.vpid = vpid++;
+                    if (0 == cnt) {
+                        app->first_rank = proc->name.vpid;
+                    }
                     cnt++;
                         
                     if (ORTE_SUCCESS != (rc = opal_pointer_array_set_item(jdata->procs, proc->name.vpid, proc))) {
@@ -246,6 +249,9 @@ static int rank_fill(orte_job_t *jdata,
                 opal_output_verbose(5, orte_rmaps_base.rmaps_output,
                                     "mca:rmaps:rank_fill: assigning vpid %s", ORTE_VPID_PRINT(vpid));
                 proc->name.vpid = vpid++;
+                if (0 == cnt) {
+                    app->first_rank = proc->name.vpid;
+                }
                 cnt++;
                         
                 if (ORTE_SUCCESS != (rc = opal_pointer_array_set_item(jdata->procs, proc->name.vpid, proc))) {
@@ -367,6 +373,9 @@ static int rank_by(orte_job_t *jdata,
                         continue;
                     }
                     proc->name.vpid = vpid++;
+                    if (0 == cnt) {
+                        app->first_rank = proc->name.vpid;
+                    }
                     cnt++;
                     opal_output_verbose(5, orte_rmaps_base.rmaps_output,
                                         "mca:rmaps:rank_by: assigned rank %s", ORTE_VPID_PRINT(proc->name.vpid));
