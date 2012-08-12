@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2012      Los Alamos National Security, LLC.  All rights
+ *                         reserved. 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -37,7 +39,7 @@
 static const char FUNC_NAME[] = "MPI_Iscatterv";
 
 
-int MPI_Iscatterv(void *sendbuf, int *sendcounts, int *displs,
+int MPI_Iscatterv(void *sendbuf, int sendcounts[], int displs[],
                  MPI_Datatype sendtype, void *recvbuf, int recvcount,
                  MPI_Datatype recvtype, int root, MPI_Comm comm, MPI_Request *request) 
 {

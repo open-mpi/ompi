@@ -10,8 +10,8 @@
 .SH C Syntax
 .nf
 #include <mpi.h>
-int MPI_Cart_create(MPI_Comm\fI comm_old\fP, int\fI ndims\fP, int\fI *dims\fP,
-	int\fI *periods\fP, int\fI reorder\fP, MPI_Comm\fI *comm_cart\fP)
+int MPI_Cart_create(MPI_Comm\fI comm_old\fP, int\fI ndims\fP, int\fI dims\fP[],
+	int\fI periods\fP[], int\fI reorder\fP, MPI_Comm\fI *comm_cart\fP)
 
 .fi
 .SH Fortran Syntax
