@@ -107,18 +107,22 @@ int ompi_info_init(int argc, char **argv)
     }
 
     /* Create MPI_INFO_NULL */
-
     OBJ_CONSTRUCT(&ompi_mpi_info_null.info, ompi_info_t);
     ompi_mpi_info_null.info.i_f_to_c_index = 0;
 
-    /* Create MPI_INFO_GET_ENV */
+    /* Create MPI_INFO_ENV */
     OBJ_CONSTRUCT(&ompi_mpi_info_env.info, ompi_info_t);
     ompi_mpi_info_env.info.i_f_to_c_index = 1;
 
-    /* fill the get_env info object */
+    /* fill the env info object */
 
     /* command for this app_context */
-    ompi_info_set(&ompi_mpi_info_env.info, "command", argv[0]);
+    if (NULL != argv[0]) {
+        /* Java eats the name of the cmd, so argv will
+         * be empty
+         */
+        ompi_info_set(&ompi_mpi_info_env.info, "command", argv[0]);
+    }
 
     /* space-separated list of argv for this command */
     if (1 < argc) {
