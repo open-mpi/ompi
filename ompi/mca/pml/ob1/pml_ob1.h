@@ -310,6 +310,30 @@ mca_pml_ob1_compute_segment_length_base(mca_btl_base_segment_t *segments,
     return (length - hdrlen);
 }
 
+static inline size_t
+mca_pml_ob1_compute_segment_length_remote (size_t seg_size, void *segments,
+                                           size_t count, ompi_proc_t *rem_proc)
+{
+    mca_btl_base_segment_t *segment = (mca_btl_base_segment_t *) segments;
+    ompi_proc_t *local_proc = ompi_proc_local();
+    size_t i, length = 0;
+
+    for (i = 0 ; i < count ; ++i) {
+#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
+        if ((rem_proc->proc_arch & OPAL_ARCH_ISBIGENDIAN) !=
+            (local_proc->proc_arch & OPAL_ARCH_ISBIGENDIAN))
+            /* NTH: seg_len is always 64-bit so use swap_bytes8 */
+            length += opal_swap_bytes8(segment->seg_len);
+        else
+#endif
+            length += segment->seg_len;
+
+        segment = (mca_btl_base_segment_t *)((char *)segment + seg_size);
+    }
+
+    return length;
+}
+
 /* represent BTL chosen for sending request */
 struct mca_pml_ob1_com_btl_t {
     mca_bml_base_btl_t *bml_btl;
