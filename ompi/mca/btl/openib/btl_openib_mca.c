@@ -1,4 +1,3 @@
-/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -12,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2011 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2006-2009 Mellanox Technologies. All rights reserved.
- * Copyright (c) 2006-2012 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2006-2007 Voltaire All rights reserved.
  * Copyright (c) 2009-2010 Oracle and/or its affiliates.  All rights reserved.
@@ -563,12 +562,11 @@ int btl_openib_register_mca_params(void)
         mid_qp_size = 1024;
     }
 
-    /* NTH: use all SRQ by default */
     snprintf(default_qps, 100,
-             "S,128,256,192,128:S,%u,256,128,32:S,%u,256,128,32:S,%u,256,128,32",
-             mid_qp_size,
-             (uint32_t)mca_btl_openib_module.super.btl_eager_limit,
-             (uint32_t)mca_btl_openib_module.super.btl_max_send_size);
+            "P,128,256,192,128:S,%u,256,128,32:S,%u,256,128,32:S,%u,256,128,32",
+            mid_qp_size,
+            (uint32_t)mca_btl_openib_module.super.btl_eager_limit,
+            (uint32_t)mca_btl_openib_module.super.btl_max_send_size);
 
     mca_btl_openib_component.default_recv_qps = strdup(default_qps);
     if(NULL == mca_btl_openib_component.default_recv_qps) {
