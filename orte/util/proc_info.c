@@ -168,7 +168,6 @@ int orte_proc_info(void)
     } else {
         orte_process_info.nodename = strdup(hostname);
     }
-    opal_output(0, "HOSTNAME: %s", orte_process_info.nodename);
 
     /* get the number of nodes in the job */
     mca_base_param_reg_int_name("orte", "num_nodes",
