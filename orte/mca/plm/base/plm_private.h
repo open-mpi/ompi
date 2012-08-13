@@ -58,8 +58,6 @@ typedef struct {
     opal_buffer_t tree_spawn_cmd;
     /* daemon nodes assigned at launch */
     bool daemon_nodes_assigned_at_launch;
-    /* handle allocator-to-actual nodename matches */
-    bool strip_prefix_from_node_names;
 } orte_plm_globals_t;
 /**
  * Global instance of PLM framework data

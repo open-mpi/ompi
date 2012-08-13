@@ -620,7 +620,7 @@ void orte_plm_base_daemon_callback(int status, orte_process_name_t* sender,
                     nodename = ptr;
                 }
             }
-            if (orte_plm_globals.strip_prefix_from_node_names) {
+            if (orte_process_info.strip_prefix_from_node_names) {
                 /* remove all leading characters and zeroes */
                 ptr = nodename;
                 while (idx < (int)strlen(nodename) &&
