@@ -31,6 +31,7 @@
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
+#include <ctype.h>
 
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param.h"
@@ -41,42 +42,43 @@
 #define ORTE_NAME_INVALID {ORTE_JOBID_INVALID, ORTE_VPID_INVALID}
 
 ORTE_DECLSPEC orte_proc_info_t orte_process_info = {
-    /*  .my_name =              */   ORTE_NAME_INVALID,
-    /*  .my_daemon =            */   ORTE_NAME_INVALID,
-    /*  .my_daemon_uri =        */   NULL,
-    /*  .my_hnp =               */   ORTE_NAME_INVALID,
-    /*  .my_hnp_uri =           */   NULL,
-    /*  .my_parent =            */   ORTE_NAME_INVALID,
-    /*  .hnp_pid =              */   0,
-    /*  .app_num =              */   0,
-    /*  .num_procs =            */   1,
-    /*  .max_procs =            */   1,
-    /*  .num_daemons =          */   1,
-    /*  .num_nodes =            */   1,
-    /*  .nodename =             */   NULL,
-    /*  .pid =                  */   0,
-    /*  .proc_type =            */   ORTE_PROC_TYPE_NONE,
-    /*  .sync_buf =             */   NULL,
-    /*  .my_port =              */   0,
-    /*  .num_restarts =         */   0,
-    /*  .my_node_rank =         */   ORTE_NODE_RANK_INVALID,
-    /*  .my_local_rank =        */   ORTE_LOCAL_RANK_INVALID,
-    /*  .num_local_peers =      */   0,
-    /*  .tmpdir_base =          */   NULL,
-    /*  .top_session_dir =      */   NULL,
-    /*  .job_session_dir =      */   NULL,
-    /*  .proc_session_dir =     */   NULL,
-    /*  .sock_stdin =           */   NULL,
-    /*  .sock_stdout =          */   NULL,
-    /*  .sock_stderr =          */   NULL,
+    /*  .my_name =                      */   ORTE_NAME_INVALID,
+    /*  .my_daemon =                    */   ORTE_NAME_INVALID,
+    /*  .my_daemon_uri =                */   NULL,
+    /*  .my_hnp =                       */   ORTE_NAME_INVALID,
+    /*  .my_hnp_uri =                   */   NULL,
+    /*  .my_parent =                    */   ORTE_NAME_INVALID,
+    /*  .hnp_pid =                      */   0,
+    /*  .app_num =                      */   0,
+    /*  .num_procs =                    */   1,
+    /*  .max_procs =                    */   1,
+    /*  .num_daemons =                  */   1,
+    /*  .num_nodes =                    */   1,
+    /*  .nodename =                     */   NULL,
+    /*  .pid =                          */   0,
+    /*  .proc_type =                    */   ORTE_PROC_TYPE_NONE,
+    /*  .sync_buf =                     */   NULL,
+    /*  .my_port =                      */   0,
+    /*  .num_restarts =                 */   0,
+    /*  .my_node_rank =                 */   ORTE_NODE_RANK_INVALID,
+    /*  .my_local_rank =                */   ORTE_LOCAL_RANK_INVALID,
+    /*  .num_local_peers =              */   0,
+    /*  .tmpdir_base =                  */   NULL,
+    /*  .top_session_dir =              */   NULL,
+    /*  .job_session_dir =              */   NULL,
+    /*  .proc_session_dir =             */   NULL,
+    /*  .sock_stdin =                   */   NULL,
+    /*  .sock_stdout =                  */   NULL,
+    /*  .sock_stderr =                  */   NULL,
 #if OPAL_HAVE_HWLOC
-    /*  .bind_level =           */   OPAL_HWLOC_NODE_LEVEL,
-    /*  .bind_idx =             */   0,
+    /*  .bind_level =                   */   OPAL_HWLOC_NODE_LEVEL,
+    /*  .bind_idx =                     */   0,
 #endif
-    /*  .app_rank =             */   -1,
-    /*  .peer_modex =           */   -1,
-    /*  .peer_init_barrier =    */   -1,
-    /*  .peer_fini_barrier =    */   -1
+    /*  .app_rank =                     */   -1,
+    /*  .peer_modex =                   */   -1,
+    /*  .peer_init_barrier =            */   -1,
+    /*  .peer_fini_barrier =            */   -1,
+    /*  .strip_prefix_from_node_names = */ false
 };
 
 static bool init=false;
@@ -84,7 +86,7 @@ static bool init=false;
 int orte_proc_info(void)
 {
     
-    int tmp;
+    int tmp, idx;
     char *uri, *ptr;
     char hostname[ORTE_MAX_HOSTNAME_SIZE];
     
@@ -140,10 +142,34 @@ int orte_proc_info(void)
     /* get the process id */
     orte_process_info.pid = getpid();
 
+    mca_base_param_reg_int_name("orte", "strip_prefix_from_node_names",
+                                "Whether to strip leading characters and zeroes from node names returned by daemons",
+                                false, false, (int)false, &tmp);
+    orte_process_info.strip_prefix_from_node_names = OPAL_INT_TO_BOOL(tmp);
+
     /* get the nodename */
     gethostname(hostname, ORTE_MAX_HOSTNAME_SIZE);
-    orte_process_info.nodename = strdup(hostname);
-    
+    /* we have to strip node names here, if user directs, to ensure that
+     * the names exchanged in the modex match the names found locally
+     */
+    if (orte_process_info.strip_prefix_from_node_names) {
+        /* remove all leading characters and zeroes */
+        idx = 0;
+        while (idx < (int)strlen(hostname) &&
+               (hostname[idx] <= '0' || '9' < hostname[idx])) {
+            idx++;
+        }
+        if ((int)strlen(hostname) <= idx) {
+            /* there were no non-zero numbers in the name */
+            orte_process_info.nodename = strdup(hostname);
+        } else {
+            orte_process_info.nodename = strdup(&hostname[idx]);
+        }
+    } else {
+        orte_process_info.nodename = strdup(hostname);
+    }
+    opal_output(0, "HOSTNAME: %s", orte_process_info.nodename);
+
     /* get the number of nodes in the job */
     mca_base_param_reg_int_name("orte", "num_nodes",
                                 "Number of nodes in the job",
