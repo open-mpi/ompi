@@ -57,7 +57,6 @@ ELSE(${IN_USE} STREQUAL "0")
       ${CURRENT_PATH}/libevent/buffer.c
       ${CURRENT_PATH}/libevent/bufferevent.c
       ${CURRENT_PATH}/libevent/bufferevent_sock.c
-      ${CURRENT_PATH}/libevent/bufferevent_filter.c
       ${CURRENT_PATH}/libevent/bufferevent_pair.c
       ${CURRENT_PATH}/libevent/listener.c
       ${CURRENT_PATH}/libevent/bufferevent_ratelim.c
@@ -77,7 +76,6 @@ ELSE(${IN_USE} STREQUAL "0")
                                   ${CURRENT_PATH}/libevent/evthread.c
                                   ${CURRENT_PATH}/libevent/bufferevent.c
                                   ${CURRENT_PATH}/libevent/bufferevent_sock.c
-                                  ${CURRENT_PATH}/libevent/bufferevent_filter.c
                                   ${CURRENT_PATH}/libevent/bufferevent_pair.c
                                   ${CURRENT_PATH}/libevent/bufferevent_ratelim.c
                                   ${CURRENT_PATH}/libevent/evmap.c
@@ -102,7 +100,6 @@ ELSE(${IN_USE} STREQUAL "0")
       ${OBJ_PATH}/buffer.obj
       ${OBJ_PATH}/bufferevent.obj
       ${OBJ_PATH}/bufferevent_sock.obj
-      ${OBJ_PATH}/bufferevent_filter.obj
       ${OBJ_PATH}/bufferevent_pair.obj
       ${OBJ_PATH}/listener.obj
       ${OBJ_PATH}/bufferevent_ratelim.obj
