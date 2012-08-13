@@ -315,7 +315,9 @@ mca_pml_ob1_compute_segment_length_remote (size_t seg_size, void *segments,
                                            size_t count, ompi_proc_t *rem_proc)
 {
     mca_btl_base_segment_t *segment = (mca_btl_base_segment_t *) segments;
+#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
     ompi_proc_t *local_proc = ompi_proc_local();
+#endif
     size_t i, length = 0;
 
     for (i = 0 ; i < count ; ++i) {
