@@ -9,6 +9,7 @@
 #include "opal/mca/hwloc/hwloc.h"
 #include "mpi.h"
 
+#include "orte/util/proc_info.h"
 
 int main(int argc, char* argv[])
 {
@@ -24,7 +25,8 @@ int main(int argc, char* argv[])
     rc = hwloc_get_cpubind(opal_hwloc_topology, cpus, HWLOC_CPUBIND_PROCESS);
     hwloc_bitmap_list_asprintf(&bindings, cpus);
 
-    printf("Hello, World, I am %d of %d: get_cpubind: %d bitmap %s\n", rank, size, rc,
+    printf("Hello, World, I am %d of %d [%d local peers]: get_cpubind: %d bitmap %s\n",
+           rank, size, orte_process_info.num_local_peers, rc,
            (NULL == bindings) ? "NULL" : bindings);
 
     MPI_Finalize();
