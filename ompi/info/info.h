@@ -126,7 +126,7 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_info_entry_t);
  * This function is invoked during ompi_mpi_init() and sets up
  * MPI_Info handling.
  */
-int ompi_info_init(int argc, char **argv);
+int ompi_info_init(void);
 
 /**
  * This functions is called during ompi_mpi_finalize() and shuts
