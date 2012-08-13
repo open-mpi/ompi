@@ -93,7 +93,7 @@ opal_pointer_array_t ompi_info_f_to_c_table;
  * fortran to C translation table. It also fills in the values
  * for the MPI_INFO_GET_ENV object
  */ 
-int ompi_info_init(int argc, char **argv) 
+int ompi_info_init(void) 
 {
     char tmp[MPI_MAX_INFO_KEY];
     char *cptr;
@@ -117,18 +117,13 @@ int ompi_info_init(int argc, char **argv)
     /* fill the env info object */
 
     /* command for this app_context */
-    if (NULL != argv[0]) {
-        /* Java eats the name of the cmd, so argv will
-         * be empty
-         */
-        ompi_info_set(&ompi_mpi_info_env.info, "command", argv[0]);
+    if (NULL != (cptr = getenv("OMPI_COMMAND"))) {
+        ompi_info_set(&ompi_mpi_info_env.info, "command", cptr);
     }
 
     /* space-separated list of argv for this command */
-    if (1 < argc) {
-        cptr = opal_argv_join(&argv[1], ' ');
+    if (NULL != (cptr = getenv("OMPI_ARGV"))) {
         ompi_info_set(&ompi_mpi_info_env.info, "argv", cptr);
-        free(cptr);
     }
 
     /* max procs for the entire job */

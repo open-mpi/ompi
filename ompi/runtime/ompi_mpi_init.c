@@ -324,6 +324,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     char *event_val = NULL;
     bool orte_setup = false;
     orte_grpcomm_collective_t *coll;
+    char *cmd=NULL, *av=NULL;
 
     /* bitflag of the thread level support provided. To be used
      * for the modex in order to work in heterogeneous environments. */
@@ -383,6 +384,22 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         gettimeofday(&ompistart, NULL);
     }
     
+    /* if we were not externally started, then we need to setup
+     * two envars so the MPI_INFO_ENV can get the cmd name
+     * and argv
+     */
+    if (NULL == getenv("OMPI_COMMAND")) {
+        asprintf(&cmd, "OMPI_COMMAND=%s", argv[0]);
+        putenv(cmd);
+    }
+    if (NULL == getenv("OMPI_ARGV") && 1 < argc) {
+        char *tmp;
+        tmp = opal_argv_join(&argv[1], ' ');
+        asprintf(&av, "OMPI_ARGV=%s", tmp);
+        free(tmp);
+        putenv(av);
+    }
+
     /* Setup ORTE - note that we are an MPI process  */
     if (ORTE_SUCCESS != (ret = orte_init(NULL, NULL, ORTE_PROC_MPI))) {
         error = "ompi_mpi_init: orte_init failed";
@@ -638,7 +655,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     }
 
     /* initialize info */
-    if (OMPI_SUCCESS != (ret = ompi_info_init(argc, argv))) {
+    if (OMPI_SUCCESS != (ret = ompi_info_init())) {
         error = "ompi_info_init() failed";
         goto error;
     }
