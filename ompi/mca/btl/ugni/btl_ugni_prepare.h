@@ -216,7 +216,7 @@ mca_btl_ugni_prepare_src_rdma (struct mca_btl_base_module_t *btl,
         frag->segments[0].extra_byte_count = 0;
     }
 
-    frag->segments[0].base.seg_addr.pval = data_ptr;
+    frag->segments[0].base.seg_addr.lval = (uint64_t)(uintptr_t) data_ptr;
     frag->segments[0].base.seg_len       = *size;
 
     frag->base.des_src     = &frag->segments->base;

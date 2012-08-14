@@ -18,6 +18,7 @@
 
 #include "opal_config.h"
 
+#include "opal/util/output.h"
 #include "opal/dss/dss_internal.h"
 
 int opal_dss_copy(void **dest, void *src, opal_data_type_t type)
