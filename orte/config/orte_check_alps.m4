@@ -38,7 +38,7 @@ AC_DEFUN([ORTE_CHECK_ALPS],[
 	# save the CPPFLAGS so we can check for alps/apInfo.h without adding $with_alps/include to the global path
 	orte_check_alps_$1_save_CPPFLAGS="$CPPFLAGS"
 
-	if test "$with_alps" == "no" -o -z "$with_alps" ; then
+	if test "$with_alps" = "no" -o -z "$with_alps" ; then
            orte_check_alps_happy="no"
         else
            # Only need to do these tests once (this macro is invoked
