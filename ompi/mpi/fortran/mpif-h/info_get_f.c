@@ -99,10 +99,14 @@ void ompi_info_get_f(MPI_Fint *info, char *key, MPI_Fint *valuelen,
     if (MPI_SUCCESS == c_ierr) {
         OMPI_SINGLE_INT_2_LOGICAL(flag);
 
-        /* Use the full length of the Fortran string, not *valuelen.
-           See comment in ompi/mpi/f77/strings.c. */
-        if (OMPI_SUCCESS != (ret = ompi_fortran_string_c2f(c_value, value,
-                                                           value_len))) {
+        /* If we found the info key, copy the value back to the
+           Fortran string (note: all Fortran compilers have FALSE ==
+           0, so just check for any nonzero value, because not all
+           Fortran compilers have TRUE == 1).  Note: use the full
+           length of the Fortran string, not *valuelen.  See comment
+           in ompi/mpi/fortran/base/strings.c. */
+        if (*flag && OMPI_SUCCESS != 
+            (ret = ompi_fortran_string_c2f(c_value, value, value_len))) {
             c_ierr = OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, ret, FUNC_NAME);
             if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
             free(c_key);
