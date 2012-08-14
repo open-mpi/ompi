@@ -80,7 +80,10 @@ void ompi_test_f(MPI_Fint *request, ompi_fortran_logical_t *flag,
 
     OMPI_SINGLE_INT_2_LOGICAL(flag);
 
-    if (MPI_SUCCESS == c_ierr) {
+    /* Note that all Fortran compilers have logical FALSE == 0; we
+       just need to check for any nonzero value (because TRUE is not
+       always 1). */
+    if (MPI_SUCCESS == c_ierr && *flag) {
         *request = OMPI_INT_2_FINT(c_req->req_f_to_c_index);
         if (!OMPI_IS_FORTRAN_STATUS_IGNORE(status)) {
             MPI_Status_c2f(&c_status, status); 

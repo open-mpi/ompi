@@ -96,9 +96,9 @@ void ompi_testall_f(MPI_Fint *count, MPI_Fint *array_of_requests, ompi_fortran_l
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     OMPI_SINGLE_INT_2_LOGICAL(flag);
-    /*
-     * All Fortran Compilers have FALSE == 0 -- we just need a TRUE value, i.e. *flag != 0
-     */
+
+    /* All Fortran Compilers have FALSE == 0, so just check for any
+       nonzero value (because TRUE is not always == 1) */
     if (MPI_SUCCESS == c_ierr && *flag) {
         for (i = 0; i < OMPI_FINT_2_INT(*count); ++i) {
             array_of_requests[i] = c_req[i]->req_f_to_c_index;
