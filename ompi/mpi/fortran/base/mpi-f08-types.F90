@@ -104,6 +104,8 @@ module mpi_f08_types
 
   type(MPI_Message),    protected, bind(C, name="ompi_f08_mpi_message_no_proc")  :: MPI_MESSAGE_NO_PROC
 
+  type(MPI_Info),       protected, bind(C, name="ompi_f08_mpi_info_env")         :: MPI_INFO_ENV
+
   type(MPI_Op), protected, bind(C, name="ompi_f08_mpi_max"     )  ::  MPI_MAX
   type(MPI_Op), protected, bind(C, name="ompi_f08_mpi_min"     )  ::  MPI_MIN
   type(MPI_Op), protected, bind(C, name="ompi_f08_mpi_sum"     )  ::  MPI_SUM

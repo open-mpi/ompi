@@ -26,6 +26,7 @@ OMPI_DECLSPEC ompi_fortran_08_handle_t ompi_f08_mpi_group_empty      = {OMPI_MPI
 OMPI_DECLSPEC ompi_fortran_08_handle_t ompi_f08_mpi_errors_are_fatal = {OMPI_MPI_ERRORS_ARE_FATAL};
 OMPI_DECLSPEC ompi_fortran_08_handle_t ompi_f08_mpi_errors_return    = {OMPI_MPI_ERRORS_RETURN};
 OMPI_DECLSPEC ompi_fortran_08_handle_t ompi_f08_mpi_message_no_proc  = {OMPI_MPI_MESSAGE_NO_PROC};
+OMPI_DECLSPEC ompi_fortran_08_handle_t ompi_f08_mpi_info_env         = {OMPI_MPI_INFO_ENV};
 
 OMPI_DECLSPEC ompi_fortran_08_handle_t ompi_f08_mpi_max      = {OMPI_MPI_MAX};
 OMPI_DECLSPEC ompi_fortran_08_handle_t ompi_f08_mpi_min      = {OMPI_MPI_MIN};
