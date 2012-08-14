@@ -185,6 +185,8 @@ $handles->{MPI_OFFSET} = 67;
 
 $handles->{MPI_MESSAGE_NO_PROC} = 1;
 
+$handles->{MPI_INFO_ENV} = 1;
+
 #----------------------------------------------------------------------------
 
 my $io_handles;

@@ -39,6 +39,7 @@
 #ifdef HAVE_SYS_UTSNAME_H
 #include <sys/utsname.h>
 #endif
+#include <assert.h>
 
 #include "opal/util/argv.h"
 #include "opal/util/opal_getcwd.h"
@@ -95,7 +96,7 @@ opal_pointer_array_t ompi_info_f_to_c_table;
  */ 
 int ompi_info_init(void) 
 {
-    char tmp[MPI_MAX_INFO_KEY];
+    char val[MPI_MAX_INFO_VAL];
     char *cptr;
 
     /* initialize table */
@@ -108,11 +109,11 @@ int ompi_info_init(void)
 
     /* Create MPI_INFO_NULL */
     OBJ_CONSTRUCT(&ompi_mpi_info_null.info, ompi_info_t);
-    ompi_mpi_info_null.info.i_f_to_c_index = 0;
+    assert(ompi_mpi_info_null.info.i_f_to_c_index == 0);
 
     /* Create MPI_INFO_ENV */
     OBJ_CONSTRUCT(&ompi_mpi_info_env.info, ompi_info_t);
-    ompi_mpi_info_env.info.i_f_to_c_index = 1;
+    assert(ompi_mpi_info_env.info.i_f_to_c_index == 1);
 
     /* fill the env info object */
 
@@ -137,8 +138,8 @@ int ompi_info_init(void)
 #endif
 
     /* local host name */
-    gethostname(tmp, MPI_MAX_INFO_KEY);
-    ompi_info_set(&ompi_mpi_info_env.info, "host", tmp);
+    gethostname(val, MPI_MAX_INFO_VAL);
+    ompi_info_set(&ompi_mpi_info_env.info, "host", val);
 
     /* architecture name */
     if (NULL != (cptr = getenv("OMPI_MCA_orte_cpu_type"))) {
@@ -154,8 +155,8 @@ int ompi_info_init(void)
 #endif
 
     /* working directory of this process */
-    opal_getcwd(tmp, MPI_MAX_INFO_KEY);
-    ompi_info_set(&ompi_mpi_info_env.info, "wdir", tmp);
+    opal_getcwd(val, MPI_MAX_INFO_VAL);
+    ompi_info_set(&ompi_mpi_info_env.info, "wdir", val);
 
     /* the number of app_contexts in this job */
     if (NULL != (cptr = getenv("OMPI_NUM_APP_CTX"))) {
