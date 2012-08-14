@@ -45,7 +45,7 @@ AC_DEFUN([ORTE_CHECK_ALPS],[
 	   orte_check_alps_happy="yes"
 	   orte_check_alps_libdir="$with_alps_libdir"
 	   
-	   if -z "$orte_check_alps_libdir" ; then
+	   if test -z "$orte_check_alps_libdir" ; then
 	       if test "$with_alps" != "yes" ; then
 		   AS_IF([test -d "$with_alps/lib64"],
 		       [orte_check_alps_libdir="$with_alps/lib64"],
