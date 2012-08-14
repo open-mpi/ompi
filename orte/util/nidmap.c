@@ -451,14 +451,11 @@ int orte_util_decode_daemon_nodemap(opal_byte_object_t *bo)
             ORTE_ERROR_LOG(rc);
             return rc;
         }
-        /* do we already have this node? Nodes don't change
-         * position in the node_pool array, so take advantage
-         * of that fact
-         */
-        if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, i))) {
+        /* do we already have this node? */
+        if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, vpid))) {
             node = OBJ_NEW(orte_node_t);
             node->name = name;
-            opal_pointer_array_set_item(orte_node_pool, i, node);
+            opal_pointer_array_set_item(orte_node_pool, vpid, node);
         } else {
             free(name);
         }
@@ -1169,37 +1166,12 @@ int orte_util_decode_daemon_pidmap(opal_byte_object_t *bo)
                 proc->name.vpid = i;
                 opal_pointer_array_set_item(jdata->procs, i, proc);
             }
-            /* we can't just lookup the node in the node pool by daemon vpid
-             * as the daemons aren't stored that way - this was done because
-             * when holes exist in daemon vpids, we can generate huge orte_node_pool
-             * arrays even when only a few daemons actually exist. So we have to
-             * search for the vpid in the array
-             */
-            node = NULL;
-            for (j=0; j < orte_node_pool->size; j++) {
-                if (NULL == (nptr = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, j))) {
-                    continue;
-                }
-                if (nptr->daemon->name.vpid == nodes[i]) {
-                    node = nptr;
-                    break;
-                }
-            }
-            if (NULL == node) {
+            /* lookup the node - should always be present */
+            if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, nodes[i]))) {
                 /* this should never happen, but protect ourselves anyway */
                 node = OBJ_NEW(orte_node_t);
-                /* find the daemon */
-                found = false;
-                for (j=0; j < daemons->procs->size; j++) {
-                    if (NULL == (pptr = (orte_proc_t*)opal_pointer_array_get_item(daemons->procs, j))) {
-                        continue;
-                    }
-                    if (pptr->name.vpid == nodes[i]) {
-                        found = true;
-                        break;
-                    }
-                }
-                if (!found) {
+                /* get the daemon */
+                if (NULL == (pptr = (orte_proc_t*)opal_pointer_array_get_item(daemons->procs, nodes[i]))) {
                     pptr = OBJ_NEW(orte_proc_t);
                     pptr->name.jobid = ORTE_PROC_MY_NAME->jobid;
                     pptr->name.vpid = nodes[i];
