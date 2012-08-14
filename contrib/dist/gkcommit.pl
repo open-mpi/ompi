@@ -94,15 +94,17 @@ if (!@cmrs) {
         }
         
         print "CMR number (-1 to exit)? ";
-        my $cmr = <STDIN>;
-        chomp($cmr);
+        my $cmrs = <STDIN>;
+        chomp($cmrs);
         last
-            if (-1 == $cmr);
-        
-        if ($cmr > 0) {
-            push(@cmrs, $cmr);
-        } else {
-            print "Invalid CMR number; must be greater than 0 (ignored).\n";
+            if (-1 == $cmrs);
+
+        foreach my $cmr (split(/[\s,]+/, $cmrs)) {
+            if ($cmr > 0) {
+                push(@cmrs, $cmr);
+            } else {
+                print "Invalid CMR number ($cmr); must be greater than 0 (ignored).\n";
+            }
         }
     }
     print("\n");
@@ -124,15 +126,18 @@ if (!@rs) {
         }
         
         print "SVN r number (-1 to exit)? ";
-        my $r = <STDIN>;
-        chomp($r);
+        my $rs = <STDIN>;
+        chomp($rs);
         last
-            if (-1 == $r);
-        
-        if ($r > 0) {
-            push(@rs, $r);
-        } else {
-            print "Invalid SVN r number; must be greater than 0 (ignored).\n";
+            if (-1 == $rs);
+
+        foreach my $r (split(/[\s,]+/, $rs)) {
+            $r =~ s/^r//;
+            if ($r > 0) {
+                push(@rs, $r);
+            } else {
+                print "Invalid SVN r number ($r); must be greater than 0 (ignored).\n";
+            }
         }
     }
     print("\n");
