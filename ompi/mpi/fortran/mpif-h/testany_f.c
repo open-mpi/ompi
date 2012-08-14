@@ -100,7 +100,9 @@ void ompi_testany_f(MPI_Fint *count, MPI_Fint *array_of_requests, MPI_Fint *indx
     OMPI_SINGLE_INT_2_LOGICAL(flag);
     if (MPI_SUCCESS == c_ierr) {
 
-        /* Increment index by one for fortran conventions */
+        /* Increment index by one for fortran conventions.  Note that
+           all Fortran compilers have FALSE==0; we just need to check
+           for any nonzero value (because TRUE is not always 1) */
 
         OMPI_SINGLE_INT_2_FINT(indx);
         if (*flag &&
