@@ -271,6 +271,17 @@ for val in ${$1}; do
 	ompi_i="`expr $ompi_i + 1`"
     done
 
+    # Check for special cases where we do want to allow repeated
+    # arguments (per
+    # http://www.open-mpi.org/community/lists/devel/2012/08/11362.php).
+
+    case $val in
+    -Xclang)  
+            ompi_found=0 
+            ompi_i=`expr $ompi_count + 1`
+            ;;
+    esac
+
     # If we didn't find the token, add it to the "array"
 
     if test "$ompi_found" = "0"; then
