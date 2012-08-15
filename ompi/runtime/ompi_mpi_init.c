@@ -286,13 +286,13 @@ INST(int, MPI_FORTRAN_IN_PLACE, mpi_fortran_in_place,
      mpi_fortran_in_place_, mpi_fortran_in_place__);
 INST(char *, MPI_FORTRAN_ARGV_NULL, mpi_fortran_argv_null,
      mpi_fortran_argv_null_, mpi_fortran_argv_null__);
-INST(double, MPI_FORTRAN_ARGVS_NULL, mpi_fortran_argvs_null,
+INST(char *, MPI_FORTRAN_ARGVS_NULL, mpi_fortran_argvs_null,
      mpi_fortran_argvs_null_, mpi_fortran_argvs_null__);
 INST(int *, MPI_FORTRAN_ERRCODES_IGNORE, mpi_fortran_errcodes_ignore,
      mpi_fortran_errcodes_ignore_, mpi_fortran_errcodes_ignore__);
 INST(int *, MPI_FORTRAN_STATUS_IGNORE, mpi_fortran_status_ignore,
      mpi_fortran_status_ignore_, mpi_fortran_status_ignore__);
-INST (double, MPI_FORTRAN_STATUSES_IGNORE, mpi_fortran_statuses_ignore,
+INST(int *, MPI_FORTRAN_STATUSES_IGNORE, mpi_fortran_statuses_ignore,
       mpi_fortran_statuses_ignore_, mpi_fortran_statuses_ignore__);
 
 /*
@@ -324,6 +324,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     char *event_val = NULL;
     bool orte_setup = false;
     orte_grpcomm_collective_t *coll;
+    char *cmd=NULL, *av=NULL;
 
     /* bitflag of the thread level support provided. To be used
      * for the modex in order to work in heterogeneous environments. */
@@ -383,6 +384,22 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         gettimeofday(&ompistart, NULL);
     }
     
+    /* if we were not externally started, then we need to setup
+     * two envars so the MPI_INFO_ENV can get the cmd name
+     * and argv (but only if the user supplied a non-NULL argv!)
+     */
+    if (NULL == getenv("OMPI_COMMAND") && NULL != argv && NULL != argv[0]) {
+        asprintf(&cmd, "OMPI_COMMAND=%s", argv[0]);
+        putenv(cmd);
+    }
+    if (NULL == getenv("OMPI_ARGV") && 1 < argc) {
+        char *tmp;
+        tmp = opal_argv_join(&argv[1], ' ');
+        asprintf(&av, "OMPI_ARGV=%s", tmp);
+        free(tmp);
+        putenv(av);
+    }
+
     /* Setup ORTE - note that we are an MPI process  */
     if (ORTE_SUCCESS != (ret = orte_init(NULL, NULL, ORTE_PROC_MPI))) {
         error = "ompi_mpi_init: orte_init failed";

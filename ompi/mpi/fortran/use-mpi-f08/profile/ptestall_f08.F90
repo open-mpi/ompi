@@ -12,7 +12,7 @@ subroutine PMPI_Testall_f08(count,array_of_requests,flag,array_of_statuses,ierro
    INTEGER, INTENT(IN) :: count
    TYPE(MPI_Request), INTENT(INOUT) :: array_of_requests(count)
    LOGICAL, INTENT(OUT) :: flag
-   TYPE(MPI_Status), INTENT(OUT) :: array_of_statuses(count)
+   TYPE(MPI_Status), INTENT(OUT) :: array_of_statuses(*)
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
    integer :: c_ierror
 

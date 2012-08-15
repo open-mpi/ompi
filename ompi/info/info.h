@@ -12,6 +12,8 @@
  *                         All rights reserved.
  * Copyright (c) 2007-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2012      Los Alamos National Security, LLC.
+ *                         All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -102,6 +104,11 @@ OMPI_DECLSPEC extern ompi_predefined_info_t ompi_mpi_info_null;
  * Symbol for Fortran 03 bindings to bind to
  */
 OMPI_DECLSPEC extern ompi_predefined_info_t *ompi_mpi_info_null_addr;
+
+/**
+ * Global instance for MPI_INFO_ENV
+ */
+OMPI_DECLSPEC extern ompi_predefined_info_t ompi_mpi_info_env;
 
 /**
  * \internal

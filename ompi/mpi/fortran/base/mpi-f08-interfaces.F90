@@ -3,6 +3,10 @@
 ! Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
 ! Copyright (c) 2009-2012 Los Alamos National Security, LLC.
 !                         All rights reserved.
+! Copyright (c) 2012      The University of Tennessee and The University
+!                         of Tennessee Research Foundation.  All rights
+!                         reserved.
+! Copyright (c) 2012      Inria.  All rights reserved.
 ! $COPYRIGHT$
 !
 ! This file provides the interface specifications for the MPI Fortran
@@ -457,7 +461,7 @@ subroutine MPI_Testall_f08(count,array_of_requests,flag,array_of_statuses,ierror
    INTEGER, INTENT(IN) :: count
    TYPE(MPI_Request), INTENT(INOUT) :: array_of_requests(count)
    LOGICAL, INTENT(OUT) :: flag
-   TYPE(MPI_Status) :: array_of_statuses(count)
+   TYPE(MPI_Status) :: array_of_statuses(*)
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 end subroutine MPI_Testall_f08
 end interface  MPI_Testall
@@ -519,7 +523,7 @@ subroutine MPI_Waitall_f08(count,array_of_requests,array_of_statuses,ierror &
    implicit none
    INTEGER, INTENT(IN) :: count
    TYPE(MPI_Request), INTENT(INOUT) :: array_of_requests(count)
-   TYPE(MPI_Status) :: array_of_statuses(count)
+   TYPE(MPI_Status) :: array_of_statuses(*)
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 end subroutine MPI_Waitall_f08
 end interface  MPI_Waitall
@@ -722,6 +726,20 @@ subroutine MPI_Type_create_indexed_block_f08(count,blocklength, &
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 end subroutine MPI_Type_create_indexed_block_f08
 end interface  MPI_Type_create_indexed_block
+
+interface  MPI_Type_create_hindexed_block
+subroutine MPI_Type_create_hindexed_block_f08(count,blocklength, &
+                           array_of_displacements,oldtype,newtype,ierror &
+           ) OMPI_F08_INTERFACE_BIND_C("MPI_Type_create_hindexed_block_f08")
+   use :: mpi_f08_types, only : MPI_Datatype, MPI_ADDRESS_KIND
+   implicit none
+   INTEGER, INTENT(IN) :: count, blocklength
+   INTEGER(MPI_ADDRESS_KIND), INTENT(IN) :: array_of_displacements(count)
+   TYPE(MPI_Datatype), INTENT(IN) :: oldtype
+   TYPE(MPI_Datatype), INTENT(OUT) :: newtype
+   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+end subroutine MPI_Type_create_hindexed_block_f08
+end interface  MPI_Type_create_hindexed_block
 
 interface  MPI_Type_create_resized
 subroutine MPI_Type_create_resized_f08(oldtype,lb,extent,newtype,ierror &
@@ -2546,7 +2564,7 @@ subroutine MPI_Error_string_f08(errorcode,string,resultlen,ierror)
 end subroutine MPI_Error_string_f08
 end interface  MPI_Error_string
 
-#if OMPI_PROFILE_FILE_INTERFACE
+#if OMPI_PROVIDE_MPI_FILE_INTERFACE
 
 interface  MPI_File_call_errhandler
 subroutine MPI_File_call_errhandler_f08(fh,errorcode,ierror &
@@ -2593,7 +2611,7 @@ subroutine MPI_File_set_errhandler_f08(file,errhandler,ierror &
 end subroutine MPI_File_set_errhandler_f08
 end interface  MPI_File_set_errhandler
 
-#endif ! OMPI_PROFILE_FILE_INTERFACE
+#endif ! OMPI_PROVIDE_MPI_FILE_INTERFACE
 
 interface  MPI_Finalize
 subroutine MPI_Finalize_f08(ierror &
@@ -2885,7 +2903,7 @@ subroutine MPI_Comm_spawn_f08(command,argv,maxprocs,info,root,comm,intercomm, &
    TYPE(MPI_Info), INTENT(IN) :: info
    TYPE(MPI_Comm), INTENT(IN) :: comm
    TYPE(MPI_Comm), INTENT(OUT) :: intercomm
-   INTEGER, INTENT(OUT) :: array_of_errcodes(*)
+   INTEGER :: array_of_errcodes(*)
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 end subroutine MPI_Comm_spawn_f08
 end interface  MPI_Comm_spawn
@@ -2901,7 +2919,7 @@ subroutine MPI_Comm_spawn_multiple_f08(count,array_of_commands,array_of_argv,arr
    TYPE(MPI_Info), INTENT(IN) :: array_of_info(*)
    TYPE(MPI_Comm), INTENT(IN) :: comm
    TYPE(MPI_Comm), INTENT(OUT) :: intercomm
-   INTEGER, INTENT(OUT) :: array_of_errcodes(*)
+   INTEGER :: array_of_errcodes(*)
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 end subroutine MPI_Comm_spawn_multiple_f08
 end interface  MPI_Comm_spawn_multiple
@@ -3215,7 +3233,7 @@ subroutine MPI_Status_set_elements_f08(status,datatype,count,ierror &
 end subroutine MPI_Status_set_elements_f08
 end interface  MPI_Status_set_elements
 
-#if OMPI_PROFILE_FILE_INTERFACE
+#if OMPI_PROVIDE_MPI_FILE_INTERFACE
 
 interface  MPI_File_close
 subroutine MPI_File_close_f08(fh,ierror &
@@ -3986,7 +4004,7 @@ subroutine MPI_File_write_shared_f08(fh,buf,count,datatype,status,ierror &
 end subroutine MPI_File_write_shared_f08
 end interface  MPI_File_write_shared
 
-#endif ! OMPI_PROFILE_FILE_INTERFACE
+#endif ! OMPI_PROVIDE_MPI_FILE_INTERFACE
 
 interface  MPI_Register_datarep
 subroutine MPI_Register_datarep_f08(datarep,read_conversion_fn,write_conversion_fn, &
@@ -4091,6 +4109,18 @@ subroutine MPI_Comm_split_type_f08(comm,split_type,key,info,newcomm,ierror &
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 end subroutine MPI_Comm_split_type_f08
 end interface  MPI_Comm_split_type
+
+interface  MPI_F_sync_reg
+subroutine MPI_F_sync_reg_f08(buf &
+           ) OMPI_F08_INTERFACE_BIND_C("MPI_F_sync_reg_f08")
+   implicit none
+   !DEC$ ATTRIBUTES NO_ARG_CHECK :: buf
+   !$PRAGMA IGNORE_TKR buf
+   !DIR$ IGNORE_TKR buf
+   !IBM* IGNORE_TKR buf
+   OMPI_FORTRAN_IGNORE_TKR_TYPE OMPI_ASYNCHRONOUS :: buf
+end subroutine MPI_F_sync_reg_f08
+end interface  MPI_F_sync_reg
 
 interface  MPI_Get_library_version
 subroutine MPI_Get_library_version_f08(name,resultlen,ierror)

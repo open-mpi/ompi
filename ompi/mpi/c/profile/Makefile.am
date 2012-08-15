@@ -254,6 +254,7 @@ nodist_libmpi_c_pmpi_la_SOURCES = \
         ptype_create_hindexed.c \
         ptype_create_hvector.c \
         ptype_create_indexed_block.c \
+        ptype_create_hindexed_block.c \
         ptype_create_keyval.c \
         ptype_create_resized.c \
         ptype_create_struct.c \

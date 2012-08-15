@@ -1,6 +1,10 @@
 # -*- makefile -*-
 #
 # Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2012      The University of Tennessee and The University
+#                         of Tennessee Research Foundation.  All rights
+#                         reserved.
+# Copyright (c) 2012      Inria.  All rights reserved.
 #
 # $COPYRIGHT$
 # 
@@ -91,6 +95,7 @@ mpi_api_files = \
         error_class_f08.F90 \
         error_string_f08.F90 \
         exscan_f08.F90 \
+        f_sync_reg_f08.F90 \
         finalized_f08.F90 \
         finalize_f08.F90 \
         free_mem_f08.F90 \
@@ -217,6 +222,7 @@ mpi_api_files = \
         type_create_hindexed_f08.F90 \
         type_create_hvector_f08.F90 \
         type_create_indexed_block_f08.F90 \
+        type_create_hindexed_block_f08.F90 \
         type_create_keyval_f08.F90 \
         type_create_resized_f08.F90 \
         type_create_struct_f08.F90 \
@@ -402,6 +408,7 @@ pmpi_api_files = \
         profile/perror_class_f08.F90 \
         profile/perror_string_f08.F90 \
         profile/pexscan_f08.F90 \
+        profile/pf_sync_reg_f08.F90 \
         profile/pfinalized_f08.F90 \
         profile/pfinalize_f08.F90 \
         profile/pfree_mem_f08.F90 \
@@ -526,6 +533,7 @@ pmpi_api_files = \
         profile/ptype_create_hindexed_f08.F90 \
         profile/ptype_create_hvector_f08.F90 \
         profile/ptype_create_indexed_block_f08.F90 \
+        profile/ptype_create_hindexed_block_f08.F90 \
         profile/ptype_create_keyval_f08.F90 \
         profile/ptype_create_resized_f08.F90 \
         profile/ptype_create_struct_f08.F90 \
@@ -658,11 +666,10 @@ libmpi_usempif08_la_LIBADD = \
         $(OMPI_MPIEXT_USEMPIF08_LIBS)
 
 #
-# Clean up all module files and all generated files
+# Clean up all module files
 #
 
 MOSTLYCLEANFILES = *.mod
-DISTCLEANFILES = $(libmpi_usempif08_la_SOURCES)
 
 #
 # Automake doesn't do Fortran dependency analysis, so must list them

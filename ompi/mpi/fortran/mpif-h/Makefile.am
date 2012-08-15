@@ -2,7 +2,7 @@
 # Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
 #                         University Research and Technology
 #                         Corporation.  All rights reserved.
-# Copyright (c) 2004-2005 The University of Tennessee and The University
+# Copyright (c) 2004-2012 The University of Tennessee and The University
 #                         of Tennessee Research Foundation.  All rights
 #                         reserved.
 # Copyright (c) 2004-2009 High Performance Computing Center Stuttgart, 
@@ -10,6 +10,7 @@
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2012      Inria.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -143,6 +144,7 @@ libmpi_mpifh_la_SOURCES += \
         error_class_f.c \
         error_string_f.c \
         exscan_f.c \
+        f_sync_reg_f.c \
         finalized_f.c \
         finalize_f.c \
         free_mem_f.c \
@@ -269,6 +271,7 @@ libmpi_mpifh_la_SOURCES += \
         type_create_hindexed_f.c \
         type_create_hvector_f.c \
         type_create_indexed_block_f.c \
+        type_create_hindexed_block_f.c \
         type_create_keyval_f.c \
         type_create_resized_f.c \
         type_create_struct_f.c \

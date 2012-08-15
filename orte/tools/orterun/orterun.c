@@ -1787,7 +1787,7 @@ static int create_app(int argc, char* argv[],
     if (0 == strcmp(appname, "java")) {
         /* see if we were given a library path */
         found = false;
-        for (i=0; NULL != app->argv[i]; i++) {
+        for (i=1; NULL != app->argv[i]; i++) {
             if (NULL != strstr(app->argv[i], "java.library.path")) {
                 /* yep - but does it include the path to the mpi libs? */
                 found = true;
@@ -1801,6 +1801,7 @@ static int create_app(int argc, char* argv[],
                     free(app->argv[i]);
                     app->argv[i] = value;
                 }
+                break;
             }
         }
         if (!found) {
@@ -1812,7 +1813,7 @@ static int create_app(int argc, char* argv[],
         
         /* see if we were given a class path */
         found = false;
-        for (i=0; NULL != app->argv[i]; i++) {
+        for (i=1; NULL != app->argv[i]; i++) {
             if (NULL != strstr(app->argv[i], "cp") ||
                 NULL != strstr(app->argv[i], "classpath")) {
                 /* yep - but does it include the path to the mpi libs? */
@@ -1871,12 +1872,36 @@ static int create_app(int argc, char* argv[],
                 opal_argv_insert_element(&app->argv, 1, "-cp");
             }
         }
+        /* try to find the actual command - may not be perfect */
+        for (i=1; i < opal_argv_count(app->argv); i++) {
+            if (NULL != strstr(app->argv[i], "java.library.path")) {
+                continue;
+            } else if (NULL != strstr(app->argv[i], "cp") ||
+                       NULL != strstr(app->argv[i], "classpath")) {
+                /* skip the next field */
+                i++;
+                continue;
+            }
+            /* declare this the winner */
+            opal_setenv("OMPI_COMMAND", app->argv[i], true, &app->env);
+            /* collect everything else as the cmd line */
+            if ((i+1) < opal_argv_count(app->argv)) {
+                value = opal_argv_join(&app->argv[i+1], ' ');
+                opal_setenv("OMPI_ARGV", value, true, &app->env);
+                free(value);
+            }
+            break;
+        }
+    } else {
+        /* add the cmd to the environment for MPI_Info to pickup */
+        opal_setenv("OMPI_COMMAND", appname, true, &app->env);
+        if (1 < opal_argv_count(app->argv)) {
+            value = opal_argv_join(&app->argv[i+1], ' ');
+            opal_setenv("OMPI_ARGV", value, true, &app->env);
+            free(value);
+        }
     }
     free(appname);
-    if (orterun_globals.verbose) {
-        value = opal_argv_join(app->argv, ' ');
-        free(value);
-    }
     
     *app_ptr = app;
     app = NULL;

@@ -88,7 +88,7 @@ void ompi_get_processor_name_f(char *name, MPI_Fint *resultlen, MPI_Fint *ierr,
         OMPI_SINGLE_INT_2_FINT(resultlen);
 
         /* Use the full length of the Fortran string, not *resultlen.
-           See comment in ompi/mpi/f77/strings.c. */
+           See comment in ompi/mpi/fortran/base/strings.c. */
         if (OMPI_SUCCESS != (ret = ompi_fortran_string_c2f(c_name, name,
                                                            name_len))) {
             ierr_c = OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, ret, FUNC_NAME);

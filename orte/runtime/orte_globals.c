@@ -571,6 +571,7 @@ static void orte_app_context_construct(orte_app_context_t* app_context)
     app_context->idx=0;
     app_context->app=NULL;
     app_context->num_procs=0;
+    app_context->first_rank = 0;
     app_context->argv=NULL;
     app_context->env=NULL;
     app_context->cwd=NULL;

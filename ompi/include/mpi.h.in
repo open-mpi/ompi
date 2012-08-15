@@ -613,7 +613,8 @@ enum {
   MPI_COMBINER_F90_REAL,
   MPI_COMBINER_F90_COMPLEX,
   MPI_COMBINER_F90_INTEGER,
-  MPI_COMBINER_RESIZED
+  MPI_COMBINER_RESIZED,
+  MPI_COMBINER_HINDEXED_BLOCK
 };
 
 /* 
@@ -640,6 +641,11 @@ enum {
 #if OMPI_PROVIDE_MPI_FILE_INTERFACE
 #define MPI_FILE_NULL OMPI_PREDEFINED_GLOBAL(MPI_File, ompi_mpi_file_null)
 #endif
+
+/*
+ * MPI_INFO_ENV handle
+ */
+#define MPI_INFO_ENV OMPI_PREDEFINED_GLOBAL(MPI_Info, ompi_mpi_info_env)
 
 #define MPI_STATUS_IGNORE ((MPI_Status *) 0)
 #define MPI_STATUSES_IGNORE ((MPI_Status *) 0)
@@ -884,6 +890,7 @@ OMPI_DECLSPEC extern struct ompi_predefined_win_t ompi_mpi_win_null;
 OMPI_DECLSPEC extern struct ompi_predefined_file_t ompi_mpi_file_null;
 
 OMPI_DECLSPEC extern struct ompi_predefined_info_t ompi_mpi_info_null;
+OMPI_DECLSPEC extern struct ompi_predefined_info_t ompi_mpi_info_env;
 
 OMPI_DECLSPEC extern MPI_Fint *MPI_F_STATUS_IGNORE;
 OMPI_DECLSPEC extern MPI_Fint *MPI_F_STATUSES_IGNORE;
@@ -1501,6 +1508,10 @@ OMPI_DECLSPEC  int MPI_Type_create_darray(int size, int rank, int ndims,
 OMPI_DECLSPEC  int MPI_Type_create_f90_complex(int p, int r, MPI_Datatype *newtype);
 OMPI_DECLSPEC  int MPI_Type_create_f90_integer(int r, MPI_Datatype *newtype);
 OMPI_DECLSPEC  int MPI_Type_create_f90_real(int p, int r, MPI_Datatype *newtype);
+OMPI_DECLSPEC  int MPI_Type_create_hindexed_block(int count, int blocklength,
+                                                  MPI_Aint array_of_displacements[],
+                                                  MPI_Datatype oldtype,
+                                                  MPI_Datatype *newtype);
 OMPI_DECLSPEC  int MPI_Type_create_hindexed(int count, int array_of_blocklengths[],
                                             MPI_Aint array_of_displacements[],
                                             MPI_Datatype oldtype,
@@ -2096,6 +2107,10 @@ OMPI_DECLSPEC  int PMPI_Type_create_hvector(int count, int blocklength, MPI_Aint
 OMPI_DECLSPEC  int PMPI_Type_create_keyval(MPI_Type_copy_attr_function *type_copy_attr_fn,
                                            MPI_Type_delete_attr_function *type_delete_attr_fn,
                                            int *type_keyval, void *extra_state);
+OMPI_DECLSPEC  int PMPI_Type_create_hindexed_block(int count, int blocklength,
+                                                   MPI_Aint array_of_displacements[],
+                                                   MPI_Datatype oldtype,
+                                                   MPI_Datatype *newtype);
 OMPI_DECLSPEC  int PMPI_Type_create_indexed_block(int count, int blocklength,
                                                   int array_of_displacements[],
                                                   MPI_Datatype oldtype,

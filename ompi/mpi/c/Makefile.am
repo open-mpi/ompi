@@ -272,6 +272,7 @@ libmpi_c_mpi_la_SOURCES = \
         type_create_hindexed.c \
         type_create_hvector.c \
         type_create_indexed_block.c \
+        type_create_hindexed_block.c \
         type_create_keyval.c \
         type_create_resized.c \
         type_create_struct.c \

@@ -13,27 +13,32 @@
 # mpi" MPI bindings.
 if OMPI_BUILD_FORTRAN_USEMPI_IGNORE_TKR_BINDINGS
 
+AM_CPPFLAGS = -DOMPI_PROFILE_LAYER=0 -DOMPI_COMPILING_FORTRAN_WRAPPERS=1
+
 AM_FCFLAGS = -I$(top_builddir)/ompi/include -I$(top_srcdir)/ompi/include \
              -I$(top_builddir) -I$(top_srcdir) $(FCFLAGS_f90)
 
 lib_LTLIBRARIES = libmpi_usempi_ignore_tkr.la
 
-mpi-ignore-tkr.F90: mpi-ignore-tkr-interfaces.h
-mpi-ignore-tkr.F90: mpi-ignore-tkr-file-interfaces.h
+mpi-ignore-tkr-interfaces.h: mpi-ignore-tkr-interfaces.h.in
+mpi-ignore-tkr-file-interfaces.h: mpi-ignore-tkr-file-interfaces.h.in
+
+mpi-ignore-tkr.lo: mpi-ignore-tkr-interfaces.h
+mpi-ignore-tkr.lo: mpi-ignore-tkr-file-interfaces.h
 mpi-ignore-tkr.lo: mpi-ignore-tkr.F90
 
-libmpi_usempi_ignore_tkr_la_SOURCES = mpi-ignore-tkr.F90
+libmpi_usempi_ignore_tkr_la_SOURCES = \
+        mpi-ignore-tkr.F90
 # These files are generated; do not distribute them
 nodist_libmpi_usempi_ignore_tkr_la_SOURCES = \
         mpi-ignore-tkr-interfaces.h \
         mpi-ignore-tkr-file-interfaces.h
 
 #
-# Clean up all module files and all generated files
+# Clean up all module files
 #
 
 MOSTLYCLEANFILES = *.mod
-DISTCLEANFILES = $(libmpi_usempi_ignore_tkr_la_SOURCES)
 
 # Install the generated .mod files.  Unfortunately, each F90 compiler
 # may generate different filenames, so we have to use a glob.  :-(

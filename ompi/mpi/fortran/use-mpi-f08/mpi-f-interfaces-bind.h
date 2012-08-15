@@ -3,6 +3,10 @@
 ! Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
 ! Copyright (c) 2009-2012 Los Alamos National Security, LLC.
 !                         All rights reserved.
+! Copyright (c) 2012      The University of Tennessee and The University
+!                         of Tennessee Research Foundation.  All rights
+!                         reserved.
+! Copyright (c) 2012      Inria.  All rights reserved.
 ! $COPYRIGHT$
 !
 ! This file provides the interface specifications for the MPI Fortran
@@ -520,6 +524,18 @@ subroutine ompi_type_create_indexed_block_f(count,blocklength, &
    INTEGER, INTENT(OUT) :: newtype
    INTEGER, INTENT(OUT) :: ierror
 end subroutine ompi_type_create_indexed_block_f
+
+subroutine ompi_type_create_hindexed_block_f(count,blocklength, &
+                            array_of_displacements,oldtype,newtype,ierror) &
+   BIND(C, name="ompi_type_create_hindexed_block_f")
+   use :: mpi_f08_types, only : MPI_ADDRESS_KIND
+   implicit none
+   INTEGER, INTENT(IN) :: count, blocklength
+   INTEGER(MPI_ADDRESS_KIND), INTENT(IN) :: array_of_displacements(count)
+   INTEGER, INTENT(IN) :: oldtype
+   INTEGER, INTENT(OUT) :: newtype
+   INTEGER, INTENT(OUT) :: ierror
+end subroutine ompi_type_create_hindexed_block_f
 
 subroutine ompi_type_create_resized_f(oldtype,lb,extent,newtype,ierror) &
    BIND(C, name="ompi_type_create_resized_f")
@@ -3000,6 +3016,12 @@ subroutine ompi_comm_split_type_f(comm,split_type,key,info,newcomm,ierror) &
    INTEGER, INTENT(OUT) :: newcomm
    INTEGER, INTENT(OUT) :: ierror
 end subroutine ompi_comm_split_type_f
+
+subroutine ompi_f_sync_reg_f(buf) &
+   BIND(C, name="ompi_f_sync_reg_f")
+   implicit none
+   OMPI_FORTRAN_IGNORE_TKR_TYPE :: buf
+end subroutine ompi_f_sync_reg_f
 
 subroutine ompi_get_library_version_f(name,resultlen,ierror,name_len) &
    BIND(C, name="ompi_get_library_version_f")

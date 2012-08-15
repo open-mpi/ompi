@@ -241,6 +241,12 @@ static int rte_init(void)
     orte_process_info.peer_init_barrier = 1;
     orte_process_info.peer_fini_barrier = 2;
 
+    /* set some envars */
+    putenv("OMPI_NUM_APP_CTX=1");
+    putenv("OMPI_FIRST_RANKS=0");
+    putenv("OMPI_APP_CTX_NUM_PROCS=1");
+    putenv("OMPI_MCA_orte_ess_num_procs=1");
+
     return ORTE_SUCCESS;
 }
 

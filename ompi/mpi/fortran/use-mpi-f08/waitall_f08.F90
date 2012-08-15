@@ -11,7 +11,7 @@ subroutine MPI_Waitall_f08(count,array_of_requests,array_of_statuses,ierror)
    implicit none
    INTEGER, INTENT(IN) :: count
    TYPE(MPI_Request), INTENT(INOUT) :: array_of_requests(count)
-   TYPE(MPI_Status), INTENT(OUT) :: array_of_statuses(count)
+   TYPE(MPI_Status), INTENT(OUT) :: array_of_statuses(*)
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
    integer :: c_ierror
 

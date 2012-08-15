@@ -1092,12 +1092,13 @@ if ($include_arg) {
 ++$step;
 verbose "\n$step. Running template-generating scripts\n\n";
 
-# These scripts generate files that are used by configure (i.e., we
-# generate one .h.in file from another .h.in file so that humans don't
-# have to maintain two copies).
+# These scripts generate fortran header files of different types, but
+# guaranteed to have the same value (i.e., so humans don't have to
+# maintain two sets of files, and potentially have values get out of
+# sync).
 
 my @scripts;
-push(@scripts, "ompi/include/mpif-common.pl");
+push(@scripts, "ompi/include/mpif-values.pl");
 
 foreach my $s (@scripts) {
     verbose "=== $s\n";
@@ -1105,7 +1106,10 @@ foreach my $s (@scripts) {
         print "Cannot find executable $s!\nAborting.\n";
         my_exit(1);
     }
-    system($s);
+    if (system($s) != 0) {
+        print "Script failed: $s\n";
+        my_exit(1);
+    }
 }
 
 #---------------------------------------------------------------------------

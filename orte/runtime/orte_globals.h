@@ -244,6 +244,8 @@ typedef struct {
     char   *app;
     /** Number of copies of this process that are to be launched */
     orte_std_cntr_t num_procs;
+    /** First MPI rank of this app_context in the job */
+    orte_vpid_t first_rank;
     /** Standard argv-style array, including a final NULL pointer */
     char  **argv;
     /** Standard environ-style array, including a final NULL pointer */
