@@ -50,7 +50,18 @@ AC_DEFUN([OMPI_LOAD_PLATFORM], [
         # eval into environment
         OPAL_LOG_MSG([Loading environment file $with_platform, with contents below])
         OPAL_LOG_FILE([$with_platform])
-        . "$with_platform"
+
+        # setup by getting full pathname for the platform directories
+        platform_base="`dirname $with_platform`"
+        platform_file="`basename $with_platform`"
+        # get full pathname of where we are so we can return
+        platform_savedir="`pwd`"
+        # go to where the platform file is located
+        cd "$platform_base"
+        # get the full path to this location
+        platform_file_dir=`pwd`
+
+        . "$platform_file"
 
         # see if they left us a name
         if test "$OMPI_PLATFORM_LOADED" != "" ; then
@@ -63,14 +74,6 @@ AC_DEFUN([OMPI_LOAD_PLATFORM], [
 
         # look for default mca param file
 
-        # setup by getting full pathname for the platform directories
-        platform_base="`dirname $with_platform`"
-        # get full pathname of where we are so we can return
-        platform_savedir="`pwd`"
-        # go to where the platform file is located
-        cd "$platform_base"
-        # get the full path to this location
-        platform_file_dir=`pwd`
         # return to where we started
         cd "$platform_savedir"
 
