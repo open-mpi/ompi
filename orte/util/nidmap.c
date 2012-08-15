@@ -451,14 +451,11 @@ int orte_util_decode_daemon_nodemap(opal_byte_object_t *bo)
             ORTE_ERROR_LOG(rc);
             return rc;
         }
-        /* do we already have this node? Nodes don't change
-         * position in the node_pool array, so take advantage
-         * of that fact
-         */
-        if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, i))) {
+        /* do we already have this node? */
+        if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, vpid))) {
             node = OBJ_NEW(orte_node_t);
             node->name = name;
-            opal_pointer_array_set_item(orte_node_pool, i, node);
+            opal_pointer_array_set_item(orte_node_pool, vpid, node);
         } else {
             free(name);
         }
@@ -1045,7 +1042,7 @@ int orte_util_decode_daemon_pidmap(opal_byte_object_t *bo)
     orte_std_cntr_t n;
     opal_buffer_t buf;
     int rc, j, k;
-    orte_job_t *jdata;
+    orte_job_t *jdata, *daemons;
     orte_proc_t *proc, *pptr;
     orte_node_t *node, *nptr;
     orte_proc_state_t *states=NULL;
@@ -1061,6 +1058,8 @@ int orte_util_decode_daemon_pidmap(opal_byte_object_t *bo)
         goto cleanup;
     }
     
+    daemons = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid);
+
     n = 1;
     /* cycle through the buffer */
     while (ORTE_SUCCESS == (rc = opal_dss.unpack(&buf, &jobid, &n, ORTE_JOBID))) {
@@ -1167,10 +1166,19 @@ int orte_util_decode_daemon_pidmap(opal_byte_object_t *bo)
                 proc->name.vpid = i;
                 opal_pointer_array_set_item(jdata->procs, i, proc);
             }
+            /* lookup the node - should always be present */
             if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, nodes[i]))) {
                 /* this should never happen, but protect ourselves anyway */
                 node = OBJ_NEW(orte_node_t);
-                opal_pointer_array_set_item(orte_node_pool, nodes[i], node);
+                /* get the daemon */
+                if (NULL == (pptr = (orte_proc_t*)opal_pointer_array_get_item(daemons->procs, nodes[i]))) {
+                    pptr = OBJ_NEW(orte_proc_t);
+                    pptr->name.jobid = ORTE_PROC_MY_NAME->jobid;
+                    pptr->name.vpid = nodes[i];
+                    opal_pointer_array_set_item(daemons->procs, nodes[i], pptr);
+                }
+                node->daemon = pptr;
+                opal_pointer_array_add(orte_node_pool, node);
             }
             if (NULL != proc->node) {
                 if (node != proc->node) {
