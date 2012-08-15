@@ -617,21 +617,6 @@ void orte_plm_base_daemon_callback(int status, orte_process_name_t* sender,
                     nodename = ptr;
                 }
             }
-            if (orte_plm_globals.strip_prefix_from_node_names) {
-                /* remove all leading characters and zeroes */
-                ptr = nodename;
-                while (idx < (int)strlen(nodename) &&
-                       (isalpha(nodename[idx]) || '0' == nodename[idx])) {
-                    idx++;
-                }
-                if (idx == (int)strlen(nodename)) {
-                    ptr = strdup(nodename);
-                } else {
-                    ptr = strdup(&nodename[idx]);
-                }
-                free(nodename);
-                nodename = ptr;
-            }
             OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                                  "%s plm:base:orted_report_launch attempting to assign daemon %s to node %s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),

@@ -127,6 +127,7 @@ struct orte_proc_info_t {
     orte_grpcomm_coll_id_t peer_modex;   /**< modex collective id */
     orte_grpcomm_coll_id_t peer_init_barrier;   /**< barrier id during init */
     orte_grpcomm_coll_id_t peer_fini_barrier;   /**< barrier id during finalize */
+    bool strip_prefix_from_node_names;
 };
 typedef struct orte_proc_info_t orte_proc_info_t;
 
