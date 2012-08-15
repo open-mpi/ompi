@@ -238,6 +238,9 @@ int showOrExecuteCommand( std::string& cmd );
 // (only necessary for Fortran)
 void getIncFilesFromTabFile( std::vector<std::string>& incfiles );
 
+// is file name a CUDA (*.cu) file?
+inline bool isCuFile( const std::string& file );
+
 // add string to string-list or reset string-list to the given string
 inline void addOrSetStringList( std::string& list, const std::string& str,
   bool reset = false );
@@ -1329,6 +1332,12 @@ doWrap()
   {
     std::string src_file = Config.mod_files[i].first;
 
+    // skip *.cu source files for TAU instrumentation
+    //
+    const bool skip_tauinst =
+      ( Config.inst_type == INST_TYPE_TAUINST && isCuFile( src_file ) );
+    assert( !skip_tauinst || Config.uses_openmp );
+
     std::string::size_type si;
 
     // preprocess source file
@@ -1429,7 +1438,7 @@ doWrap()
 
     // run PDT parser and TAU instrumentor command on source file
     //
-    if( Config.inst_type == INST_TYPE_TAUINST )
+    if( Config.inst_type == INST_TYPE_TAUINST && !skip_tauinst )
     {
       // create output file name of the PDT parser
       //
@@ -1995,6 +2004,13 @@ getIncFilesFromTabFile( std::vector<std::string>& incfiles )
   }
 }
 
+bool
+isCuFile( const std::string& file )
+{
+  return
+    ( file.length() >= 3 && file.compare( file.length() - 3, 3, ".cu" ) == 0 );
+}
+
 void
 addOrSetStringList( std::string& list, const std::string& str, bool reset )
 {
@@ -2104,6 +2120,25 @@ ConfigS::addCompilerLib( const std::string& lib )
 void
 ConfigS::addModSrcFile( const std::string& file )
 {
+  // skip *.cu source files for TAU instrumentation
+  //
+  const bool skip_tauinst =
+    ( Config.inst_type == INST_TYPE_TAUINST && isCuFile( file ) );
+  if( skip_tauinst )
+  {
+    std::cerr << "Warning: Skip " << file << " for instrumenting with "
+              << "PDT/TAU - not yet supported." << std::endl;
+
+    // just add unmodified source file name to compiler arguments, if there
+    // is also nothing to do for OPARI
+    //
+    if( !uses_openmp )
+    {
+      addCompilerArg( file );
+      return;
+    }
+  }
+
   std::string file_base;
   std::string file_obj;
   std::string::size_type si;
@@ -2124,7 +2159,7 @@ ConfigS::addModSrcFile( const std::string& file )
   // store source/object file name for later processing by OPARI and/or TAU
   mod_files.push_back( std::make_pair( file, file_obj ) );
 
-  // add (modified) source file name to compiler arguments
+  // add modified source file name to compiler arguments
   //
 
   si = file.rfind( '.' );
@@ -2138,7 +2173,7 @@ ConfigS::addModSrcFile( const std::string& file )
     mod_file += ".cpp";
   if( uses_openmp )
     mod_file += ".pomp";
-  if( inst_type == INST_TYPE_TAUINST )
+  if( inst_type == INST_TYPE_TAUINST && !skip_tauinst )
     mod_file += ".tau";
 
   // convert Fortran source file suffix to upper case, in order to
