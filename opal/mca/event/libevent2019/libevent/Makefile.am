@@ -98,7 +98,17 @@ PLATFORM_DEPENDENT_SRC = \
 	epoll_sub.c \
 	arc4random.c
 
-# Open MPI: removed test/Makefile.nmake and make-event-config.sed from EXTRA_DIST
+# Open MPI: The Windows cmake build of Open MPI needs these files.
+OMPI_WINDOWS_EXTRA_DIST =\
+        buffer.c \
+        bufferevent.c \
+        bufferevent_sock.c \
+        bufferevent_pair.c \
+        listener.c \
+        bufferevent_ratelim.c
+
+# Open MPI: removed test/Makefile.nmake and make-event-config.sed from
+# EXTRA_DIST
 EXTRA_DIST = \
 	LICENSE \
 	autogen.sh \
@@ -107,6 +117,7 @@ EXTRA_DIST = \
 	Doxyfile \
 	whatsnew-2.0.txt \
 	Makefile.nmake \
+        $(OMPI_WINDOWS_EXTRA_DIST) \
 	$(PLATFORM_DEPENDENT_SRC)
 
 # Open MPI: disable these lines
@@ -131,6 +142,7 @@ if BUILD_WIN32
 SYS_LIBS = -lws2_32 -lshell32 -ladvapi32
 SYS_SRC = win32select.c evthread_win32.c buffer_iocp.c event_iocp.c \
 	bufferevent_async.c
+
 SYS_INCLUDES = -IWIN32-Code
 
 else

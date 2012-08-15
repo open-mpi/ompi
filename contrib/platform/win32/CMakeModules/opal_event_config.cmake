@@ -57,7 +57,6 @@ ELSE(${IN_USE} STREQUAL "0")
       ${CURRENT_PATH}/libevent/buffer.c
       ${CURRENT_PATH}/libevent/bufferevent.c
       ${CURRENT_PATH}/libevent/bufferevent_sock.c
-      ${CURRENT_PATH}/libevent/bufferevent_filter.c
       ${CURRENT_PATH}/libevent/bufferevent_pair.c
       ${CURRENT_PATH}/libevent/listener.c
       ${CURRENT_PATH}/libevent/bufferevent_ratelim.c
@@ -67,7 +66,6 @@ ELSE(${IN_USE} STREQUAL "0")
       ${CURRENT_PATH}/libevent/evutil_rand.c
       ${CURRENT_PATH}/libevent/strlcpy.c
       ${CURRENT_PATH}/libevent/signal.c
-      ${CURRENT_PATH}/libevent/event_tagging.c
     )
     IF(WINDOWS_MINGW)
       SET_SOURCE_FILES_PROPERTIES(${CURRENT_PATH}/libevent/win32select.c
@@ -78,7 +76,6 @@ ELSE(${IN_USE} STREQUAL "0")
                                   ${CURRENT_PATH}/libevent/evthread.c
                                   ${CURRENT_PATH}/libevent/bufferevent.c
                                   ${CURRENT_PATH}/libevent/bufferevent_sock.c
-                                  ${CURRENT_PATH}/libevent/bufferevent_filter.c
                                   ${CURRENT_PATH}/libevent/bufferevent_pair.c
                                   ${CURRENT_PATH}/libevent/bufferevent_ratelim.c
                                   ${CURRENT_PATH}/libevent/evmap.c
@@ -86,7 +83,6 @@ ELSE(${IN_USE} STREQUAL "0")
                                   ${CURRENT_PATH}/libevent/evutil_rand.c
                                   ${CURRENT_PATH}/libevent/strlcpy.c
                                   ${CURRENT_PATH}/libevent/signal.c
-                                  ${CURRENT_PATH}/libevent/event_tagging.c
                                   PROPERTIES COMPILE_FLAGS "-D intptr_t=int -D _INTPTR_T_DEFINED")
       SET(OBJ_PATH "${PROJECT_BINARY_DIR}/${CMAKE_FILES_DIRECTORY}/libopen-pal.dir/mca/event/${libevent_dir}/libevent")
       SET(EVENT_OBJ_FILES "${OBJ_PATH}/*.obj" CACHE INTERNAL "event obj files")
@@ -104,7 +100,6 @@ ELSE(${IN_USE} STREQUAL "0")
       ${OBJ_PATH}/buffer.obj
       ${OBJ_PATH}/bufferevent.obj
       ${OBJ_PATH}/bufferevent_sock.obj
-      ${OBJ_PATH}/bufferevent_filter.obj
       ${OBJ_PATH}/bufferevent_pair.obj
       ${OBJ_PATH}/listener.obj
       ${OBJ_PATH}/bufferevent_ratelim.obj
@@ -114,7 +109,6 @@ ELSE(${IN_USE} STREQUAL "0")
       ${OBJ_PATH}/evutil_rand.obj
       ${OBJ_PATH}/strlcpy.obj
       ${OBJ_PATH}/signal.obj
-      ${OBJ_PATH}/event_tagging.obj
       CACHE INTERNAL "event obj files")
     ENDIF(WINDOWS_MINGW)
 
