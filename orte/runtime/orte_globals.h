@@ -221,6 +221,7 @@ typedef uint16_t orte_job_controls_t;
 #define ORTE_JOB_CONTROL_MAPPER             0x0800
 #define ORTE_JOB_CONTROL_REDUCER            0x1000
 #define ORTE_JOB_CONTROL_COMBINER           0x2000
+#define ORTE_JOB_CONTROL_NO_VM              0x4000
 
 /* global type definitions used by RTE - instanced in orte_globals.c */
 

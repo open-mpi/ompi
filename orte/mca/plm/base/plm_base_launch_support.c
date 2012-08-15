@@ -118,6 +118,18 @@ void orte_plm_base_daemons_reported(int fd, short args, void *cbdata)
     OBJ_RELEASE(caddy);
 }
 
+void orte_plm_base_allocation_complete(int fd, short args, void *cbdata)
+{
+    orte_state_caddy_t *caddy = (orte_state_caddy_t*)cbdata;
+
+    /* move the state machine along */
+    caddy->jdata->state = ORTE_JOB_STATE_ALLOCATION_COMPLETE;
+    ORTE_ACTIVATE_JOB_STATE(caddy->jdata, ORTE_JOB_STATE_LAUNCH_DAEMONS);
+
+    /* cleanup */
+    OBJ_RELEASE(caddy);
+}
+
 void orte_plm_base_daemons_launched(int fd, short args, void *cbdata)
 {
     orte_state_caddy_t *caddy = (orte_state_caddy_t*)cbdata;
@@ -141,6 +153,19 @@ void orte_plm_base_vm_ready(int fd, short args, void *cbdata)
     /* cleanup */
     OBJ_RELEASE(caddy);
 }
+
+void orte_plm_base_mapping_complete(int fd, short args, void *cbdata)
+{
+    orte_state_caddy_t *caddy = (orte_state_caddy_t*)cbdata;
+
+    /* move the state machine along */
+    caddy->jdata->state = ORTE_JOB_STATE_MAP_COMPLETE;
+    ORTE_ACTIVATE_JOB_STATE(caddy->jdata, ORTE_JOB_STATE_SYSTEM_PREP);
+
+    /* cleanup */
+    OBJ_RELEASE(caddy);
+}
+
 
 void orte_plm_base_setup_job(int fd, short args, void *cbdata)
 {
@@ -1098,6 +1123,72 @@ int orte_plm_base_setup_virtual_machine(orte_job_t *jdata)
         return ORTE_ERR_NOT_FOUND;
     }
 
+    /* if we are not working with a virtual machine, then we
+     * look across all jobs and ensure that the "VM" contains
+     * all nodes with application procs on them
+     */
+    if (ORTE_JOB_CONTROL_NO_VM & daemons->controls) {
+        OBJ_CONSTRUCT(&nodes, opal_list_t);
+        if (NULL == daemons->map) {
+            OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+                                 "%s plm:base:setup_vm creating map",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+            /* this is the first time thru, so the vm is just getting
+             * defined - create a map for it
+             */
+            daemons->map = OBJ_NEW(orte_job_map_t);
+        }
+        map = daemons->map;
+        /* loop across all nodes and include those that have
+         * num_procs > 0 && no daemon already on them
+         */
+        for (i=1; i < orte_node_pool->size; i++) {
+            if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, i))) {
+                continue;
+            }
+            /* ignore nodes that are marked as do-not-use for this mapping */
+            if (ORTE_NODE_STATE_DO_NOT_USE == node->state) {
+                /* reset the state so it can be used another time */
+                node->state = ORTE_NODE_STATE_UP;
+                continue;
+            }
+            if (ORTE_NODE_STATE_DOWN == node->state) {
+                continue;
+            }
+            if (ORTE_NODE_STATE_NOT_INCLUDED == node->state) {
+                /* not to be used */
+                continue;
+            }
+            if (0 < node->num_procs) {
+                /* retain a copy for our use in case the item gets
+                 * destructed along the way
+                 */
+                OBJ_RETAIN(node);
+                opal_list_append(&nodes, &node->super);
+            }
+        }
+        /* see if anybody had procs */
+        if (0 == opal_list_get_size(&nodes)) {
+            /* if the HNP has some procs, then we are still good */
+            node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, 0);
+            if (0 < node->num_procs) {
+                OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+                                     "%s plm:base:setup_vm only HNP in use",
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+                OBJ_DESTRUCT(&nodes);
+                /* mark that the daemons have reported so we can proceed */
+                daemons->state = ORTE_JOB_STATE_DAEMONS_REPORTED;
+                return ORTE_SUCCESS;
+            }
+            /* well, if the HNP doesn't have any procs, and neither did
+             * anyone else...then we have a big problem
+             */
+            ORTE_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
+            return ORTE_ERR_FATAL;
+        }
+        goto process;
+    }
+
     if (NULL == daemons->map) {
         OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                              "%s plm:base:setup_vm creating map",
@@ -1226,6 +1317,7 @@ int orte_plm_base_setup_virtual_machine(orte_job_t *jdata)
         return ORTE_SUCCESS;
     }
 
+ process:
     /* cycle thru all available nodes and find those that do not already
      * have a daemon on them - no need to include our own as we are
      * obviously already here! If a max vm size was given, then limit

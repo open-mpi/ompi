@@ -519,6 +519,10 @@ static opal_cmd_line_init_t cmd_line_init[] = {
       &orterun_globals.disable_recovery, OPAL_CMD_LINE_TYPE_BOOL,
       "Disable recovery (resets all recovery options to off)" },
 
+    { "state", "novm", "select", '\0', "novm", "novm", 0,
+      NULL, OPAL_CMD_LINE_TYPE_BOOL,
+      "Execute without creating an allocation-spanning virtual machine (only start daemons on nodes hosting application procs)" },
+
     /* End of list */
     { NULL, NULL, NULL, '\0', NULL, NULL, 0,
       NULL, OPAL_CMD_LINE_TYPE_NULL, NULL }
