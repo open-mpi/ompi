@@ -26,6 +26,10 @@
 
 BEGIN_C_DECLS
 
+#ifndef MXM_VERSION
+#define MXM_VERSION(major, minor) (((major)<<MXM_MAJOR_BIT)|((minor)<<MXM_MINOR_BIT))
+#endif
+
 /* MTL interface functions */
 extern int ompi_mtl_mxm_add_procs(struct mca_mtl_base_module_t* mtl,
                                   size_t nprocs, struct ompi_proc_t** procs,
