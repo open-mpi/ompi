@@ -28,6 +28,7 @@ derbeyn     Nadia Derby                 Bull
 dgdimick    Denis Dimick                LANL
 dkerr       Donald Kerr                 Sun, Oracle
 dlacher     Dan Lacher                  Sun
+dorons      Doron Shoham                Mellanox
 edgar       Edgar Gabriel               HLRS, UH, UTK
 emallove    Ethan Mallove               Sun, Oracle
 eugene      Eugene Loh                  Sun, Oracle
@@ -42,11 +43,12 @@ hpcstork    Sven Stork                  HLRS
 htor        Torsten Hoefler             IU, TUC
 igb         Iain Bason                  Sun, Oracle
 jdmason     Jon Mason                   Chelsio
-jjhursey    Josh Hursey                 IU, ORNL, LANL, LBNL
+jjhursey    Josh Hursey                 IU, ORNL, LANL, LBNL, UW
 jnysal      Nysal Jan                   IBM
 jsquyres    Jeff Squyres                Cisco, IU
 jurenz      Matthias Jurenz             ZIH
 karenn      Karen Norteman              Sun
+kliteyn     Yevgeny Kliteynik           Mellanox
 kmroz       Karl Mroz                   UBC
 knuepfer    Andreas Knuepfer            ZIH
 koenig      Greg Koenig                 ORNL
@@ -60,23 +62,25 @@ mschaara    Mohamad Chaarawi            UH
 mt          Mark Taylor                 LANL
 ollie       Li-Ta Lo                    LANL
 paklui      Pak Lui                     Sun
-pasha       Pavel Shamis                Mellanox
+pasha       Pavel Shamis                Mellanox, ORNL
 patrick     Patrick Geoffray            Myricom
 penoff      Brad Penoff                 UBC
 pjesa       Jelena Pjesivac-Grbovic     UTK
 pkambadu    Prabhanjan Kambadur         IU
-rasmussn    Craig Rasmussen             LANL
+rasmussn    Craig Rasmussen             LANL, UO
 rbbrigh     Ron Brightwell              SNL
 rhc         Ralph Castain               LANL, Cisco
-rlgraham    Rich Graham                 ORNL, LANL
-rolfv       Rolf Vandevaart             Sun, Oracle
+rlgraham    Rich Graham                 ORNL, LANL, Mellanox
+rolfv       Rolf Vandevaart             Sun, Oracle, NVIDIA
 rta         Rob Awles                   LANL
 rusraink    Rainer Keller               HLRS, ORNL
 sami        Sami Ayyorgun               LANL
 samuel      Samuel K. Gutierrez         LANL
+sboehm      Swen Boehm                  ORNL
 santhana    Gopal Santhanaraman         OSU
 sharonm     Sharon Melamed              Voltaire
 shiqing     Shiqing Fan                 HLRS
+sjeaugey    Sylvain Jeaugey             Bull
 surs        Sayantan Sur                OSU
 sushant     Sushant Sharma              LANL
 swise       Steve Wise                  Chelsio
@@ -86,7 +90,9 @@ tprins      Tim Prins                   IU, LANL
 twoodall    Tim Woodall                 LANL
 vasily      Vasily Filipov              Mellanox
 vsahay      Vishal Sahay                IU
+vvenkatesan Vishwanath Venkatesan       UH
 wbland      Wesley Bland                UTK
+yaeld       Yael Dalen                  Mellanox
 yuw         Weikuan Yu                  LANL, OSU
 
 Affiliaion abbreviations:
@@ -110,6 +116,9 @@ Sun = Sun Microsystems, Inc.
 TUC = Technische Universtaet Chemnitz
 UBC = University of British Columbia
 UJ = Friedrich-Schiller-Universitat Jena
+UH = University of Houston
+OU = University of Oregon
 UTK = University of Tennessee, Knoxville
+UW = University of Wisconsin, LaCrosse
 Voltaire = Voltaire
 ZIH = Technische Universitaet Dresden
