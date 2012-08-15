@@ -57,15 +57,17 @@ orte_state_base_component_t mca_state_novm_component =
     },
 };
 
-static int my_priority;
+static bool select_me = false;
 
 static int state_novm_open(void) 
 {
+    int tmp;
     mca_base_component_t *c=&mca_state_novm_component.base_version;
 
-    mca_base_param_reg_int(c, "priority",
-                           "Selection priority",
-                           false, false, 50, &my_priority);
+    mca_base_param_reg_int(c, "select",
+                           "Use this component",
+                           false, false, (int)false, &tmp);
+    select_me = OPAL_INT_TO_BOOL(tmp);
     return ORTE_SUCCESS;
 }
 
@@ -76,9 +78,9 @@ static int state_novm_close(void)
 
 static int state_novm_component_query(mca_base_module_t **module, int *priority)
 {
-    if (ORTE_PROC_IS_HNP) {
-        /* set our priority mid-range so we'll be selected if user desires */
-        *priority = my_priority;
+    if (ORTE_PROC_IS_HNP && select_me) {
+        /* set our priority high so we'll be selected if user desires */
+        *priority = 1000;
         *module = (mca_base_module_t *)&orte_state_novm_module;
         return ORTE_SUCCESS;        
     }
