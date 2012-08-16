@@ -569,7 +569,6 @@ int mca_coll_ml_config_file_init(void)
 
     ret = parse_file(mca_coll_ml_component.config_file_name);
 
-    //return (OMPI_SUCCESS == ret || OMPI_ERR_NOT_FOUND == OPAL_SOS_GET_ERROR_CODE(ret)) ?
     return (OMPI_SUCCESS == ret ) ?
         OMPI_SUCCESS : ret;
 }

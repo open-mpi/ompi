@@ -38,7 +38,6 @@
 #include "orte/util/name_fns.h"
 #include "orte/mca/grpcomm/grpcomm.h"
 
-//#include "opal/mca/paffinity/base/base.h"
 #include "opal/util/argv.h"
 #include "opal/datatype/opal_datatype.h"
 #include "opal/util/output.h"
@@ -49,7 +48,6 @@
 #include "coll_ml_custom_utils.h"
 #include "coll_ml_allocation.h"
 
-//#include "coll_ml_resource_affinity.h"
 
 /* #define NEW_LEADER_SELECTION */
 
@@ -1995,7 +1993,6 @@ static int mca_coll_ml_tree_hierarchy_discovery(mca_coll_ml_module_t *ml_module,
     /*
     ** obtain list of procs
     */
-    //procs = ompi_comm_local_group_procs(ml_module->comm);
     procs = ml_module->comm->c_local_group->grp_proc_pointers;
 
     /* create private copy for manipulation */
@@ -2741,7 +2738,6 @@ static int mca_coll_ml_fill_in_route_tab(mca_coll_ml_topology_t *topo, ompi_comm
     }
 
     all_reachable_ranks[my_rank] = IS_RECHABLE;
-    //ompi_procs = ompi_comm_local_group_procs(comm);
     ompi_procs = comm->c_local_group->grp_proc_pointers;
 
     for (level = 0; level < topo->n_levels; ++level) {

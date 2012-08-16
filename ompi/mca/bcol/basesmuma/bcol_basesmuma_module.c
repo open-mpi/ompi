@@ -28,7 +28,6 @@
 
 #include "opal/util/show_help.h"
 #include "opal/align.h"
-//#include "opal/mca/paffinity/base/base.h" 
 
 #include "bcol_basesmuma.h"
 #include "bcol_basesmuma_utils.h"
