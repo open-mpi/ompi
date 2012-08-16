@@ -152,14 +152,6 @@ AC_MSG_CHECKING([for boostrap Libtool version])
 ltversion=`grep VERSION= $srcdir/config/ltmain.sh | head -n 1 | cut -d= -f2`
 AC_MSG_RESULT([$ltversion])
 
-#
-# Hardwire all progress threads to be off
-#
-OMPI_ENABLE_PROGRESS_THREADS=0
-AC_DEFINE_UNQUOTED([OMPI_ENABLE_PROGRESS_THREADS], [$OMPI_ENABLE_PROGRESS_THREADS],
-                   [Hardcode the OMPI progress thread to be off])
-
-
 # List header files to generate
 
 AM_CONFIG_HEADER([opal/include/opal_config.h])
