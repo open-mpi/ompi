@@ -3634,11 +3634,13 @@ void* mca_btl_openib_progress_thread(opal_object_t* arg)
     opal_output(-1, "WARNING: the openib btl progress thread code *does not yet work*.  Your run is likely to hang, crash, break the kitchen sink, and/or eat your cat.  You have been warned.");
 
     while (device->progress) {
+#if 0
         while(ompi_progress_threads()) {
             while(ompi_progress_threads())
                 sched_yield();
             usleep(100); /* give app a chance to re-enter library */
         }
+#endif
 
         if(ibv_get_cq_event(device->ib_channel, &ev_cq, &ev_ctx))
             BTL_ERROR(("Failed to get CQ event with error %s",
