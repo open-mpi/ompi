@@ -54,22 +54,51 @@
 
 BEGIN_C_DECLS
 
-/* Forward reference */
 struct opal_hotel_t;
-
-/* Internal representation of a room in the hotel; not exposed publicly */
-struct opal_hotel_room_t;
-
-/* Internal representation used for a libevent callback argument
-   bundle; not exposed publicly. */
-struct opal_hotel_room_eviction_callback_arg_t;
 
 /* User-supplied function to be invoked when an occupant is evicted. */
 typedef void (*opal_hotel_eviction_callback_fn_t)(struct opal_hotel_t *hotel, 
                                                   int room_num,
                                                   void *occupant);
 
-/* Main hotel class declaration */
+/* Note that this is an internal data structure; it is not part of the
+   public opal_hotel interface.  Public consumers of opal_hotel
+   shouldn't need to use this struct at all (we only have it here in
+   this .h file because some functions are inlined for speed, and need
+   to get to the internals of this struct).
+
+   The room struct should be as small as possible to be cache
+   friendly.  Specifically: it would be great if multiple rooms could
+   fit in a single cache line because we'll always allocate a
+   contiguous set of rooms in an array. */
+typedef struct {
+    void *occupant;
+    opal_event_t eviction_timer_event;
+} opal_hotel_room_t;
+
+/* Note that this is an internal data structure; it is not part of the
+   public opal_hotel interface.  Public consumers of opal_hotel
+   shouldn't need to use this struct at all (we only have it here in
+   this .h file because some functions are inlined for speed, and need
+   to get to the internals of this struct).
+
+   Use a unique struct for holding the arguments for eviction
+   callbacks.  We *could* make the to-be-evicted opal_hotel_room_t
+   instance as the argument, but we don't, for 2 reasons:
+
+   1. We want as many opal_hotel_room_t's to fit in a cache line as
+      possible (i.e., to be as cache-friendly as possible).  The
+      common/fast code path only needs to access the data in the
+      opal_hotel_room_t (and not the callback argument data).
+
+   2. Evictions will be uncommon, so we don't mind penalizing them a
+      bit by making the data be in a separate cache line.
+*/
+typedef struct {
+    struct opal_hotel_t *hotel;
+    int room_num;
+} opal_hotel_room_eviction_callback_arg_t;
+
 typedef struct opal_hotel_t {
     /* make this an object */
     opal_object_t super;
@@ -81,11 +110,11 @@ typedef struct opal_hotel_t {
     opal_hotel_eviction_callback_fn_t evict_callback_fn;
 
     /* All rooms in this hotel */
-    struct opal_hotel_room_t *rooms;
+    opal_hotel_room_t *rooms;
 
     /* Separate array for all the eviction callback arguments (see
        rationale above for why this is a separate array) */
-    struct opal_hotel_room_eviction_callback_arg_t *eviction_args;
+    opal_hotel_room_eviction_callback_arg_t *eviction_args;
 
     /* All currently unoccupied rooms in this hotel (not necessarily
        in any particular order) */
