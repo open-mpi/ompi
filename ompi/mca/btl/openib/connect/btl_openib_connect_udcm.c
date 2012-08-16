@@ -75,6 +75,7 @@
 #include "btl_openib_endpoint.h"
 #include "btl_openib_proc.h"
 #include "btl_openib_fd.h"
+#include "btl_openib_async.h"
 #include "connect/connect.h"
 
 #include "ompi/mca/mpool/grdma/mpool_grdma.h"
@@ -652,11 +653,21 @@ udcm_module_start_connect(ompi_btl_openib_connect_base_module_t *cpc,
     return rc;
 }
 
+static void *udcm_unmonitor(int fd, int flags, void *context)
+{
+    volatile int *barrier = (volatile int *)context;
+
+    *barrier = 1;
+
+    return NULL;
+}
+
 static int udcm_module_finalize(mca_btl_openib_module_t *btl,
 				ompi_btl_openib_connect_base_module_t *cpc)
 {
     udcm_module_t *m = (udcm_module_t *) cpc;
     opal_list_item_t *item;
+    volatile int barrier = 0;
 
     if (NULL == m) {
 	return OMPI_SUCCESS;
@@ -694,7 +705,13 @@ static int udcm_module_finalize(mca_btl_openib_module_t *btl,
     BTL_VERBOSE(("destroying listing thread"));
 
     /* stop monitoring the channel's fd before destroying the listen qp */
-    ompi_btl_openib_fd_unmonitor(m->cm_channel->fd, NULL, NULL);
+    ompi_btl_openib_fd_unmonitor(m->cm_channel->fd, udcm_unmonitor, (void *)&barrier);
+
+    while (0 == barrier) {
+#ifndef __WINDOWS__
+	sched_yield();
+#endif
+    }
 
     /* destroy the listen queue pair. this will cause ibv_get_cq_event to
        return. */
@@ -815,9 +832,25 @@ static void udcm_module_destroy_listen_qp (udcm_module_t *m)
     enum ibv_qp_attr_mask attr_mask;
     struct ibv_qp_attr attr;
     struct ibv_wc wc;
+    mca_btl_openib_async_cmd_t async_command;
 
     if (NULL == m->listen_qp) {
 	return;
+    }
+
+    /* Tell the openib async thread to ignore ERR state on the QP
+       we are about to manually set the ERR state on */
+    async_command.a_cmd = OPENIB_ASYNC_IGNORE_QP_ERR;
+    async_command.qp = m->listen_qp;
+    if (write(mca_btl_openib_component.async_pipe[1],
+	      &async_command, sizeof(mca_btl_openib_async_cmd_t))<0){
+	BTL_ERROR(("Failed to write to pipe [%d]",errno));
+	return;
+    }
+    /* wait for ok from thread */
+    if (OMPI_SUCCESS !=
+	btl_openib_async_command_done(OPENIB_ASYNC_IGNORE_QP_ERR)) {
+	BTL_ERROR(("Command to openib async thread to ignore QP ERR state failed"));
     }
 
     do {
@@ -827,6 +860,8 @@ static void udcm_module_destroy_listen_qp (udcm_module_t *m)
 	attr.qp_state = IBV_QPS_ERR;
 	attr.sq_psn = 0;
 	attr_mask = IBV_QP_STATE | IBV_QP_SQ_PSN;
+
+	BTL_VERBOSE(("Setting qp to err state %p", (void *)m->listen_qp));
 
 	if (0 != ibv_modify_qp(m->listen_qp, &attr, IBV_QP_STATE)) {
 	    BTL_VERBOSE(("error modifying qp to ERR. errno = %d",

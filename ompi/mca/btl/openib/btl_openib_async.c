@@ -36,11 +36,19 @@ struct mca_btl_openib_async_poll {
 };
 typedef struct mca_btl_openib_async_poll mca_btl_openib_async_poll;
 
+typedef struct {
+    opal_list_item_t super;
+    struct ibv_qp *qp;
+} mca_btl_openib_qp_list;
+
+OBJ_CLASS_INSTANCE(mca_btl_openib_qp_list, opal_list_item_t, NULL, NULL);
+
 static int return_status = OMPI_ERROR;
 
 static int btl_openib_async_poll_init(struct mca_btl_openib_async_poll *hcas_poll);
-static int btl_openib_async_commandh(struct mca_btl_openib_async_poll *hcas_poll);
-static int btl_openib_async_deviceh(struct mca_btl_openib_async_poll *hcas_poll, int index);
+static int btl_openib_async_commandh(struct mca_btl_openib_async_poll *hcas_poll, opal_list_t *ignore_qp_err_list);
+static int btl_openib_async_deviceh(struct mca_btl_openib_async_poll *hcas_poll, int index,
+				    opal_list_t *ignore_qp_err_list);
 static const char *openib_event_to_str (enum ibv_event_type event);
 static int send_command_comp(int in);
 
@@ -151,17 +159,21 @@ static int send_command_comp(int in)
 }
 
 /* Function handle async thread commands */
-static int btl_openib_async_commandh(struct mca_btl_openib_async_poll *devices_poll)
+static int btl_openib_async_commandh(struct mca_btl_openib_async_poll *devices_poll, opal_list_t *ignore_qp_err_list)
 {
     struct pollfd *async_pollfd_tmp;
+    mca_btl_openib_async_cmd_t cmd;
     int fd,flags,j;
     /* Got command from main thread */
-    if (read(devices_poll->async_pollfd[0].fd, &fd, sizeof(int)) < 0) {
+    if (read(devices_poll->async_pollfd[0].fd, &cmd, sizeof(mca_btl_openib_async_cmd_t)) < 0) {
         BTL_ERROR(("Read failed [%d]",errno));
         return OMPI_ERROR;
     }
-    BTL_VERBOSE(("GOT event from -> %d",fd));
-    if (fd > 0) {
+
+    BTL_VERBOSE(("Got cmd %d", cmd.a_cmd));
+    if (OPENIB_ASYNC_CMD_FD_ADD == cmd.a_cmd) {
+	fd = cmd.fd;
+	BTL_VERBOSE(("Got fd %d", fd));
         BTL_VERBOSE(("Adding device [%d] to async event poll[%d]",
                      fd, devices_poll->active_poll_size));
         flags = fcntl(fd, F_GETFL);
@@ -190,10 +202,13 @@ static int btl_openib_async_commandh(struct mca_btl_openib_async_poll *devices_p
         if (OMPI_SUCCESS != send_command_comp(fd)) {
             return OMPI_ERROR;
         }
-    } else if (fd < 0) {
+    } else if (OPENIB_ASYNC_CMD_FD_REMOVE == cmd.a_cmd) {
         bool fd_found = false;
+
+	fd = cmd.fd;
+	BTL_VERBOSE(("Got fd %d", fd));
+
         /* Removing device from poll */
-        fd = -(fd);
         BTL_VERBOSE(("Removing device [%d] from async event poll [%d]",
                      fd, devices_poll->active_poll_size));
         if (devices_poll->active_poll_size > 1) {
@@ -214,14 +229,29 @@ static int btl_openib_async_commandh(struct mca_btl_openib_async_poll *devices_p
             }
         }
         devices_poll->active_poll_size--;
-        if (OMPI_SUCCESS != send_command_comp(-(fd))) {
+        if (OMPI_SUCCESS != send_command_comp(fd)) {
             return OMPI_ERROR;
         }
-    } else {
+    } else if (OPENIB_ASYNC_IGNORE_QP_ERR == cmd.a_cmd) {
+	mca_btl_openib_qp_list *new_qp;
+	new_qp = OBJ_NEW(mca_btl_openib_qp_list);
+	BTL_VERBOSE(("Ignore errors on QP %p", (void *)cmd.qp));
+	new_qp->qp = cmd.qp;
+	opal_list_append(ignore_qp_err_list, (opal_list_item_t *)new_qp);
+	send_command_comp(OPENIB_ASYNC_IGNORE_QP_ERR);
+
+    } else if (OPENIB_ASYNC_THREAD_EXIT == cmd.a_cmd) {
         /* Got 0 - command to close the thread */
+	opal_list_item_t *item;
         BTL_VERBOSE(("Async event thread exit"));
         free(devices_poll->async_pollfd);
         return_status = OMPI_SUCCESS;
+
+	while ((item = opal_list_remove_first(ignore_qp_err_list))) {
+	    OBJ_RELEASE(item);
+	}
+	OBJ_DESTRUCT(ignore_qp_err_list);
+
         pthread_exit(&return_status);
     }
     return OMPI_SUCCESS;
@@ -285,7 +315,8 @@ srq_limit_event_exit:
 }
 
 /* Function handle async device events */
-static int btl_openib_async_deviceh(struct mca_btl_openib_async_poll *devices_poll, int index)
+static int btl_openib_async_deviceh(struct mca_btl_openib_async_poll *devices_poll, int index,
+				    opal_list_t *ignore_qp_err_list)
 {
     int j;
     mca_btl_openib_device_t *device = NULL;
@@ -344,6 +375,29 @@ static int btl_openib_async_deviceh(struct mca_btl_openib_async_poll *devices_po
                 OPAL_THREAD_ADD32(&mca_btl_openib_component.error_counter, 1);
             case IBV_EVENT_CQ_ERR:
             case IBV_EVENT_QP_FATAL:
+	      if (event_type == IBV_EVENT_QP_FATAL) {
+		  opal_list_item_t *item;
+		  mca_btl_openib_qp_list *qp_item;
+		  bool in_ignore_list = false;
+
+		  BTL_VERBOSE(("QP is in err state %p", (void *)event.element.qp));
+
+		  /* look through ignore list */
+		  for (item = opal_list_get_first(ignore_qp_err_list);
+		       item != opal_list_get_end(ignore_qp_err_list);
+		       item = opal_list_get_next(item)) {
+		      qp_item = (mca_btl_openib_qp_list *)item;
+		      if (qp_item->qp == event.element.qp) {
+			  BTL_VERBOSE(("QP %p is in error ignore list",
+				       (void *)event.element.qp));
+			  in_ignore_list = true;
+			  break;
+		      }
+		  }
+		  if (in_ignore_list)
+		      break;
+	      }
+
             case IBV_EVENT_QP_REQ_ERR:
             case IBV_EVENT_QP_ACCESS_ERR:
             case IBV_EVENT_PATH_MIG_ERR:
@@ -409,6 +463,9 @@ void* btl_openib_async_thread(void * async)
     int rc;
     int i;
     struct mca_btl_openib_async_poll devices_poll;
+    opal_list_t ignore_qp_err_list;
+
+    OBJ_CONSTRUCT(&ignore_qp_err_list, opal_list_t);
 
     if (OMPI_SUCCESS != btl_openib_async_poll_init(&devices_poll)) {
         BTL_ERROR(("Fatal error, stoping asynch event thread"));
@@ -442,7 +499,8 @@ void* btl_openib_async_thread(void * async)
                     /* Processing our event */
                     if (0 == i) {
                         /* 0 poll we use for comunication with main thread */
-                        if (OMPI_SUCCESS != btl_openib_async_commandh(&devices_poll)) {
+                        if (OMPI_SUCCESS != btl_openib_async_commandh(&devices_poll,
+								      &ignore_qp_err_list)) {
                             free(devices_poll.async_pollfd);
                             BTL_ERROR(("Failed to process async thread process.  "
                                         "Fatal error, stoping asynch event thread"));
@@ -450,7 +508,8 @@ void* btl_openib_async_thread(void * async)
                         }
                     } else {
                         /* We get device event */
-                        if (btl_openib_async_deviceh(&devices_poll, i)) {
+                        if (btl_openib_async_deviceh(&devices_poll, i,
+						     &ignore_qp_err_list)) {
                             free(devices_poll.async_pollfd);
                             BTL_ERROR(("Failed to process async thread process.  "
                                         "Fatal error, stoping asynch event thread"));
