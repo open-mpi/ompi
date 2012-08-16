@@ -252,5 +252,23 @@ fi
 AC_MSG_RESULT([$OMPI_FORTRAN_MAX_ARRAY_RANK])
 AC_SUBST(OMPI_FORTRAN_MAX_ARRAY_RANK)
 
+#
+# Allow enabling of ompi progress threads
+#
+AC_MSG_CHECKING([if want OMPI progress threads])
+AC_ARG_ENABLE([ompi-progress-threads],
+              [AC_HELP_STRING([--enable-ompi-progress-threads],
+              [Enable ompi progress threads - for experiment by developers only! (default: disabled)])])
+if test "$enable_ompi_progress_threads" = "yes"; then
+    AC_MSG_RESULT([yes])
+    ompi_enable_progress_threads=1
+else
+    AC_MSG_RESULT([no])
+    ompi_enable_progress_threads=0
+fi
+AC_DEFINE_UNQUOTED([OMPI_ENABLE_PROGRESS_THREADS],
+                   [$ompi_enable_progress_threads],
+                   [Whether we want OMPI progress threads enabled])
+
 ])dnl
 
