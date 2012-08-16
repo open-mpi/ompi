@@ -43,7 +43,7 @@ hpcstork    Sven Stork                  HLRS
 htor        Torsten Hoefler             IU, TUC
 igb         Iain Bason                  Sun, Oracle
 jdmason     Jon Mason                   Chelsio
-jjhursey    Josh Hursey                 IU, ORNL, LANL, LBNL, UW
+jjhursey    Josh Hursey                 IU, ORNL, LANL, LBNL, UWL
 jnysal      Nysal Jan                   IBM
 jsquyres    Jeff Squyres                Cisco, IU
 jurenz      Matthias Jurenz             ZIH
@@ -119,6 +119,6 @@ UJ = Friedrich-Schiller-Universitat Jena
 UH = University of Houston
 OU = University of Oregon
 UTK = University of Tennessee, Knoxville
-UW = University of Wisconsin, LaCrosse
+UWL = University of Wisconsin-La Crosse
 Voltaire = Voltaire
 ZIH = Technische Universitaet Dresden
