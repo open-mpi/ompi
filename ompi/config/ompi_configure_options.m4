@@ -264,7 +264,7 @@ if test "$enable_ompi_progress_threads" = "yes"; then
     ompi_enable_progress_threads=1
     # requires ORTE progress threads be enabled, which in turn
     # requires that libevent thread support be enabled
-    if test "$orte_enable_progress_threads" != "yes" ; then
+    if test "$orte_enable_progress_threads" != "1" ; then
         AC_MSG_WARN([OMPI progress threads requires that ORTE progress])
         AC_MSG_WARN([threads be enabled, which in turn requires that])
         AC_MSG_WARN([libevent thread support be enabled.])
