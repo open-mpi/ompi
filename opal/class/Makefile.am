@@ -17,13 +17,15 @@
 # $HEADER$
 #
 
-# This makefile.am does not stand on its own - it is included from opal/Makefile.am
+# This makefile.am does not stand on its own - it is included from
+# opal/Makefile.am
 
 # Source code files
 headers += \
         class/opal_bitmap.h \
         class/opal_free_list.h \
         class/opal_hash_table.h \
+        class/opal_hotel.h \
         class/opal_tree.h \
         class/opal_list.h \
         class/opal_object.h \
@@ -37,6 +39,7 @@ libopen_pal_la_SOURCES += \
         class/opal_bitmap.c \
         class/opal_free_list.c \
         class/opal_hash_table.c \
+        class/opal_hotel.c \
         class/opal_tree.c \
         class/opal_list.c \
         class/opal_object.c \
