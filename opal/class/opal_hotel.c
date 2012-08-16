@@ -17,6 +17,33 @@
 #include "opal/class/opal_hotel.h"
 
 
+/* The room struct should be as small as possible to be cache
+   friendly.  Specifically: it would be great if multiple rooms could
+   fit in a single cache line because we'll always allocate a
+   contiguous set of rooms in an array. */
+typedef struct opal_hotel_room_t {
+    void *occupant;
+    opal_event_t eviction_timer_event;
+} opal_hotel_room_t;
+
+/* Use a unique struct for holding the arguments for eviction
+   callbacks.  We *could* make the to-be-evicted opal_hotel_room_t
+   instance as the argument, but we don't, for 2 reasons:
+
+   1. We want as many opal_hotel_room_t's to fit in a cache line as
+      possible (i.e., to be as cache-friendly as possible).  The
+      common/fast code path only needs to access the data in the
+      opal_hotel_room_t (and not the callback argument data).
+
+   2. Evictions will be uncommon, so we don't mind penalizing them a
+      bit by making the data be in a separate cache line.
+*/
+typedef struct opal_hotel_room_eviction_callback_arg_t {
+    struct opal_hotel_t *hotel;
+    int room_num;
+} opal_hotel_room_eviction_callback_arg_t;
+
+
 static void local_eviction_callback(int fd, short flags, void *arg)
 {
     opal_hotel_room_eviction_callback_arg_t *eargs = 
