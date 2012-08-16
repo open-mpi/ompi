@@ -236,9 +236,10 @@ static int btl_openib_component_close(void)
     /* Tell the async thread to shutdown */
     if (mca_btl_openib_component.use_async_event_thread &&
         0 != mca_btl_openib_component.async_thread) {
-        int async_command = 0;
+	mca_btl_openib_async_cmd_t async_command;
+	async_command.a_cmd = OPENIB_ASYNC_THREAD_EXIT;
         if (write(mca_btl_openib_component.async_pipe[1], &async_command,
-                  sizeof(int)) < 0) {
+                  sizeof(mca_btl_openib_async_cmd_t)) < 0) {
             BTL_ERROR(("Failed to communicate with async event thread"));
             rc = OMPI_ERROR;
         } else {
@@ -1009,15 +1010,16 @@ static void device_destruct(mca_btl_openib_device_t *device)
     /* signaling to async_tread to stop poll for this device */
     if (mca_btl_openib_component.use_async_event_thread &&
         -1 != mca_btl_openib_component.async_pipe[1]) {
-        int device_to_remove;
-        device_to_remove = -(device->ib_dev_context->async_fd);
-        if (write(mca_btl_openib_component.async_pipe[1], &device_to_remove,
-                    sizeof(int)) < 0){
+	mca_btl_openib_async_cmd_t async_command;
+	async_command.a_cmd = OPENIB_ASYNC_CMD_FD_REMOVE;
+	async_command.fd = device->ib_dev_context->async_fd;
+        if (write(mca_btl_openib_component.async_pipe[1], &async_command,
+                    sizeof(mca_btl_openib_async_cmd_t)) < 0){
             BTL_ERROR(("Failed to write to pipe"));
             goto device_error;
         }
         /* wait for ok from thread */
-        if (OMPI_SUCCESS != btl_openib_async_command_done(device_to_remove)){
+        if (OMPI_SUCCESS != btl_openib_async_command_done(device->ib_dev_context->async_fd)){
             goto device_error;
         }
     }
@@ -1102,6 +1104,7 @@ static int prepare_device_for_use(mca_btl_openib_device_t *device)
 
 #if OPAL_HAVE_THREADS
     if(mca_btl_openib_component.use_async_event_thread) {
+	mca_btl_openib_async_cmd_t async_command;
         if(0 == mca_btl_openib_component.async_thread) {
             /* async thread is not yet started, so start it here */
             if(start_async_event_thread() != OMPI_SUCCESS)
@@ -1109,8 +1112,10 @@ static int prepare_device_for_use(mca_btl_openib_device_t *device)
         }
         device->got_fatal_event = false;
         device->got_port_event = false;
+	async_command.a_cmd = OPENIB_ASYNC_CMD_FD_ADD;
+	async_command.fd = device->ib_dev_context->async_fd;
         if (write(mca_btl_openib_component.async_pipe[1],
-                    &device->ib_dev_context->async_fd, sizeof(int))<0){
+                    &async_command, sizeof(mca_btl_openib_async_cmd_t))<0){
             BTL_ERROR(("Failed to write to pipe [%d]",errno));
             return OMPI_ERROR;
         }
