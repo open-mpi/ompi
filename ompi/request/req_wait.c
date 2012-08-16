@@ -29,6 +29,9 @@
 #include "ompi/mca/crcp/crcp.h"
 #include "ompi/mca/pml/base/pml_base_request.h"
 
+#if OMPI_ENABLE_PROGRESS_THREADS
+static int ompi_progress_thread_count=0;
+#endif
 
 int ompi_request_default_wait(
     ompi_request_t ** req_ptr,
