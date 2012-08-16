@@ -34,11 +34,6 @@
 #include "coll_ml_allocation.h"
 #include "coll_ml_config.h"
 
-/* For using carto graphs */
-//#include "opal/mca/carto/carto.h"
-//#include "opal/mca/carto/base/base.h"
-/* end carto graphs */
-
 BEGIN_C_DECLS
 
 /* macros for return status */

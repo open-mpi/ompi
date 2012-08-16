@@ -26,7 +26,6 @@
 
 #include "opal/mca/mca.h"
 #include "opal/util/arch.h"
-//#include "opal/mca/paffinity/base/base.h"
 #include "opal/util/argv.h"
 #include "opal/datatype/opal_datatype.h"
 #include "opal/util/output.h"
