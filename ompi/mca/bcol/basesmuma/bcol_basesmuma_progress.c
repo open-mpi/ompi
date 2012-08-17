@@ -23,7 +23,7 @@
 int bcol_basesmuma_progress(void)
 {
     /* local variables */
-   volatile uint64_t *cntr;
+   volatile int64_t *cntr;
     mca_bcol_basesmuma_component_t *cs = &mca_bcol_basesmuma_component;
 
     /* check to see if release of memory blocks needs to be done */
@@ -54,7 +54,7 @@ int bcol_basesmuma_progress(void)
                        ctl_buffs_mgmt[index].bank_gen_counter);
                      */
 
-                    cntr= (volatile uint64_t *) &(item_ptr->coll_buff->
+                    cntr= (volatile int64_t *) &(item_ptr->coll_buff->
                                 ctl_buffs_mgmt[index].bank_gen_counter);
                     item_ptr=(sm_nbbar_desc_t*)opal_list_remove_item((opal_list_t *)list,
                             ( opal_list_item_t *)item_ptr);
