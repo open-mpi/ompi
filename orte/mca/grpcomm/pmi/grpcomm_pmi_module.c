@@ -297,6 +297,7 @@ static int pmi_get_proc_attr(const orte_process_name_t name,
 
 	rc = kvs_get(pmi_kvs_key, tmp_val, pmi_vallen_max);
 	if (PMI_SUCCESS != rc) {
+            ORTE_ERROR_LOG(ORTE_ERR_VALUE_OUT_OF_BOUNDS);
 	    break;
 	}
 
@@ -315,7 +316,8 @@ static int pmi_get_proc_attr(const orte_process_name_t name,
 		*buffer = pmi_decode(size);
 
 		if (NULL == *buffer) {
-		    return ORTE_ERR_OUT_OF_RESOURCE;
+                    ORTE_ERROR_LOG(ORTE_ERR_VALUE_OUT_OF_BOUNDS);
+		    return ORTE_ERR_VALUE_OUT_OF_BOUNDS;
 		}
 
 		break;
@@ -460,6 +462,7 @@ static int modex(orte_grpcomm_collective_t *coll)
 
 	rc = pmi_get_proc_attr (name, ORTE_DB_RMLURI, (void **) &rml_uri, &len);
 	if (ORTE_SUCCESS != rc) {
+            ORTE_ERROR_LOG(rc);
 	    return rc;
 	}
 
@@ -476,6 +479,7 @@ static int modex(orte_grpcomm_collective_t *coll)
 
 	rc = pmi_get_proc_attr (name, ORTE_DB_HOSTNAME, (void**)&hostname, &len);
 	if (ORTE_SUCCESS != rc) {
+            ORTE_ERROR_LOG(rc);
 	    return rc;
 	}
 
@@ -552,6 +556,7 @@ static int modex(orte_grpcomm_collective_t *coll)
         /* get the proc's local/node rank info */
 	rc = pmi_get_proc_attr (name, ORTE_DB_LOCALRANK, &tmp_val, &len);
 	if (ORTE_SUCCESS != rc) {
+            ORTE_ERROR_LOG(rc);
 	    return rc;
 	}
 	assert (len == sizeof (local_rank));
@@ -564,6 +569,7 @@ static int modex(orte_grpcomm_collective_t *coll)
 
 	rc = pmi_get_proc_attr (name, ORTE_DB_NODERANK, &tmp_val, &len);
 	if (ORTE_SUCCESS != rc) {
+            ORTE_ERROR_LOG(rc);
 	    return rc;
 	}
 	assert (len == sizeof (node_rank));
@@ -587,6 +593,7 @@ static int modex(orte_grpcomm_collective_t *coll)
          */
         rc = pmi_get_proc_attr (name, "OMPI_ARCH", &tmp_val, &len);
         if (ORTE_SUCCESS != rc) {
+            ORTE_ERROR_LOG(rc);
             return rc;
         }
         assert (len == sizeof (uint32_t));
@@ -598,6 +605,7 @@ static int modex(orte_grpcomm_collective_t *coll)
         }
         rc = pmi_get_proc_attr (name, "MPI_THREAD_LEVEL", &tmp_val, &len);
         if (ORTE_SUCCESS != rc) {
+            ORTE_ERROR_LOG(rc);
             return rc;
         }
         bo.bytes = tmp_val;
