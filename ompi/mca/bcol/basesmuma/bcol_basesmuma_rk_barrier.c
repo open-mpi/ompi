@@ -52,7 +52,7 @@ int bcol_basesmuma_k_nomial_barrier_init(bcol_function_args_t *input_args,
                 struct coll_ml_function_t *const_args)
 {
     /* local variables */
-    int flag_offset;
+    int flag_offset = 0;
     volatile int8_t ready_flag;
     mca_bcol_basesmuma_module_t *bcol_module = (mca_bcol_basesmuma_module_t *) const_args->bcol_module;
     mca_common_netpatterns_k_exchange_node_t *exchange_node = &bcol_module->knomial_allgather_tree;

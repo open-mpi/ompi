@@ -190,7 +190,7 @@ static int mca_sbgp_map_to_logical_socket_id(int *socket)
           */
           for( obj = first_pu_object; obj != NULL; obj = obj->next_cousin ) {/* WTF is a "next_cousin" ? */ 
               /* is this PU the same as the bit I pulled off the mask? */
-              if( obj->os_index == pu_os_index) {
+              if( obj->os_index == (unsigned int) pu_os_index) {
                   /* Then I found it, break out of for loop */
                   break;
               }
@@ -217,7 +217,14 @@ static int mca_sbgp_map_to_logical_socket_id(int *socket)
                         * Seems I'm bound to more than a single PU. Question
                         * is, am I bound to the same socket?? 
                         */
-                        if( this_pus_logical_socket_id != obj->logical_index ){
+                       /* in order to get rid of the compiler warning, I had to cast 
+                        * "this_pus_logical_socket_id", at a glance this seems ok, 
+                        * but if subgrouping problems arise, maybe look here. I shall 
+                        * tag this line with the "mark of the beast" for grepability
+                        * 666
+                        */  
+                        if( (unsigned int) this_pus_logical_socket_id != obj->logical_index ){
+                            /* 666 */
                             /* Then we're bound to more than one socket...fail */
                             this_pus_logical_socket_id = -1;
                             my_logical_socket_id = -1;
