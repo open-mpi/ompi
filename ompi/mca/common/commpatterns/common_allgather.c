@@ -23,28 +23,6 @@
 #include "orte/util/proc_info.h"
 #include "ompi/mca/pml/pml.h"
 
-static void send_completion(int status, struct orte_process_name_t* peer, struct iovec* msg, 
-        int count, orte_rml_tag_t tag, void* cbdata)
-{
-    /* set send completion flag */
-    *(int *)cbdata=1;
-
-    return;
-}
-
-
-static void recv_completion(int status, struct orte_process_name_t* peer, struct iovec* msg, 
-        int count, orte_rml_tag_t tag, void* cbdata)
-{
-    /* set receive completion flag */
-    MB();
-    *(int *)cbdata=1;
-
-    return;
-}
-
-    
-
 /**
  * All-reduce - subgroup in communicator
  */
