@@ -36,6 +36,7 @@ EXTRA_DIST = .windows
 
 headers = \
         common_netpatterns.h \
+        common_netpatterns_knomial_tree.h \
         common_coll_ops.h
 
 # Source files
@@ -45,6 +46,7 @@ sources = \
 		common_netpatterns_multinomial_tree.c \
 		common_netpatterns_nary_tree.c \
 		common_netpatterns_knomial_tree.c
+
 #       common_allreduce.c # the allredeace is broken
 
 # As per above, we'll either have an installable or noinst result.

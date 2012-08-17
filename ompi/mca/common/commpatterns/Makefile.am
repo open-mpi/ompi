@@ -36,6 +36,7 @@ EXTRA_DIST = .windows
 
 headers = \
         common_coll_ops.h \
+        common_netpatterns.h \
         ompi_common_netpatterns_macros.h
 
 # Source files
