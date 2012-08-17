@@ -61,7 +61,7 @@ AC_DEFUN([OMPI_LOAD_PLATFORM], [
         # get the full path to this location
         platform_file_dir=`pwd`
 
-        . "$platform_file"
+        . ./"$platform_file"
 
         # see if they left us a name
         if test "$OMPI_PLATFORM_LOADED" != "" ; then
