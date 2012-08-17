@@ -1900,7 +1900,7 @@ static int create_app(int argc, char* argv[],
         /* add the cmd to the environment for MPI_Info to pickup */
         opal_setenv("OMPI_COMMAND", appname, true, &app->env);
         if (1 < opal_argv_count(app->argv)) {
-            value = opal_argv_join(&app->argv[i+1], ' ');
+            value = opal_argv_join(&app->argv[1], ' ');
             opal_setenv("OMPI_ARGV", value, true, &app->env);
             free(value);
         }
