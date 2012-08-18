@@ -685,8 +685,9 @@ void mca_btl_openib_endpoint_connected(mca_btl_openib_endpoint_t *endpoint)
         frag = to_send_frag(frag_item);
         /* We need to post this one */
 
-        if(OMPI_SUCCESS != mca_btl_openib_endpoint_post_send(endpoint, frag))
-            BTL_ERROR(("Error posting send"));
+        if (OMPI_ERROR == mca_btl_openib_endpoint_post_send(endpoint, frag)) {
+		     BTL_ERROR(("Error posting send"));
+		}
     }
     OPAL_THREAD_UNLOCK(&endpoint->endpoint_lock);
 
