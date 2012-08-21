@@ -1472,7 +1472,7 @@ mca_oob_t* mca_oob_tcp_component_init(int* priority)
     bool including = false, excluding = false;
     char name[32];
 
-    *priority = 1;
+    *priority = 50;
 
     /* are there any interfaces? */
     if (opal_ifcount() <= 0) {
