@@ -307,7 +307,7 @@ static int udcm_send_request (mca_btl_base_endpoint_t *lcl_ep,
 #define UDCM_GRH_SIZE (sizeof (struct ibv_grh))
 
 /* Priority of this connection module */
-static int udcm_priority        = 27;
+static int udcm_priority        = -1;
 
 /* Number of receive work requests to post */
 static int udcm_recv_count      = UDCM_MIN_RECV_COUNT;
