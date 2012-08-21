@@ -14,6 +14,10 @@
 #include "coll_ml.h"
 #include "coll_ml_mca.h"
 #include "coll_ml_lmngr.h"
+#ifndef HAVE_POSIX_MEMALIGN
+#include "opal/align.h"
+#include "opal_stdint.h"
+#endif
 
 /* Constructor for list memory manager */
 static void construct_lmngr(mca_coll_ml_lmngr_t *lmngr)
@@ -212,7 +216,7 @@ static int mca_coll_ml_lmngr_init(mca_coll_ml_lmngr_t *lmngr)
     }
 
     lmngr->base_addr = (void*)OPAL_ALIGN((uintptr_t)lmngr->base_addr, 
-            lmngr->list_align, uintptr_t);
+            lmngr->list_alignment, uintptr_t);
 #endif
     
     assert(lmngr->n_resources < MCA_COLL_ML_MAX_REG_INFO);
