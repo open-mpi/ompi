@@ -215,7 +215,7 @@ static mca_oob_t *mca_oob_ud_component_init(int *priority)
     /* set the priority so that we will select this component
      * only if someone directs to do so
      */
-    *priority = -1;
+    *priority = 0;
 
     opal_hash_table_init (&mca_oob_ud_component.ud_peers, 1024);
 
