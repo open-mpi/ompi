@@ -95,23 +95,19 @@ BEGIN_C_DECLS
 
 /* collectives */
 #define ORTE_RML_TAG_COLLECTIVE             30
-#define ORTE_RML_TAG_COLL_ID                50
-#define ORTE_RML_TAG_DAEMON_COLL            52
-#define ORTE_RML_TAG_COLL_ID_REQ            53
+#define ORTE_RML_TAG_COLL_ID                31
+#define ORTE_RML_TAG_DAEMON_COLL            32
+#define ORTE_RML_TAG_COLL_ID_REQ            33
 
 /* show help */
-#define ORTE_RML_TAG_SHOW_HELP              31
+#define ORTE_RML_TAG_SHOW_HELP              34
 
 /* debugger release */
-#define ORTE_RML_TAG_DEBUGGER_RELEASE       32
+#define ORTE_RML_TAG_DEBUGGER_RELEASE       35
 
 /* bootstrap */
-#define ORTE_RML_TAG_BOOTSTRAP              34
+#define ORTE_RML_TAG_BOOTSTRAP              36
 
-/* TCP "fake" multicast */
-#define ORTE_RML_TAG_MULTICAST              35
-/* multicast messages sent direct */
-#define ORTE_RML_TAG_MULTICAST_DIRECT       36
 /* report a missed msg */
 #define ORTE_RML_TAG_MISSED_MSG             37
 
@@ -122,17 +118,17 @@ BEGIN_C_DECLS
 #define ORTE_RML_TAG_HEARTBEAT              39
 
 /* Process Migration Tool Tag */
-#define ORTE_RML_TAG_MIGRATE                43
+#define ORTE_RML_TAG_MIGRATE                40
 
 /* For SStore Framework */
-#define ORTE_RML_TAG_SSTORE                 44
-#define ORTE_RML_TAG_SSTORE_INTERNAL        45
+#define ORTE_RML_TAG_SSTORE                 41
+#define ORTE_RML_TAG_SSTORE_INTERNAL        42
 
-#define ORTE_RML_TAG_SUBSCRIBE              46
+#define ORTE_RML_TAG_SUBSCRIBE              43
 
 
 /* Notify of failed processes */
-#define ORTE_RML_TAG_FAILURE_NOTICE         48
+#define ORTE_RML_TAG_FAILURE_NOTICE         44
 
 #define ORTE_RML_TAG_MAX                   100
 
