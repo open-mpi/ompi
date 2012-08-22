@@ -142,13 +142,31 @@ void orte_plm_base_daemons_launched(int fd, short args, void *cbdata)
     OBJ_RELEASE(caddy);
 }
 
+static void files_ready(int status, void *cbdata)
+{
+    orte_job_t *jdata = (orte_job_t*)cbdata;
+
+    if (ORTE_SUCCESS != status) {
+        ORTE_TERMINATE(status);
+    } else {
+        ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_MAP);
+    }
+}
+
 void orte_plm_base_vm_ready(int fd, short args, void *cbdata)
 {
     orte_state_caddy_t *caddy = (orte_state_caddy_t*)cbdata;
 
     /* progress the job */
     caddy->jdata->state = ORTE_JOB_STATE_VM_READY;
-    ORTE_ACTIVATE_JOB_STATE(caddy->jdata, ORTE_JOB_STATE_MAP);
+
+    /* position any required files - these would have been
+     * specified via MCA parameter, so we don't have to
+     * pass them here
+     */
+    if (ORTE_SUCCESS != orte_filem.preposition_files(NULL, files_ready, caddy->jdata)) {
+        ORTE_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
+    }
 
     /* cleanup */
     OBJ_RELEASE(caddy);
@@ -843,11 +861,12 @@ int orte_plm_base_orted_append_basic_args(int *argc, char ***argv,
     char * amca_param_path = NULL;
     char * amca_param_prefix = NULL;
     char * tmp_force = NULL;
-    int i, cnt, rc;
+    int i, j, cnt, rc;
     orte_job_t *jdata;
     char *rml_uri;
     unsigned long num_procs;
-    
+    bool ignore;
+
     /* check for debug flags */
     if (orte_debug_flag) {
         opal_argv_append(argc, argv, "--debug");
@@ -981,40 +1000,6 @@ int orte_plm_base_orted_append_basic_args(int *argc, char ***argv,
         opal_argv_append(argc, argv, "--tree-spawn");
     }
 
-    /* pass along any cmd line MCA params provided to mpirun,
-     * being sure to "purge" any that would cause problems
-     * on backend nodes
-     */
-    if (ORTE_PROC_IS_HNP || ORTE_PROC_IS_DAEMON) {
-        cnt = opal_argv_count(orted_cmd_line);    
-        for (i=0; i < cnt; i+=3) {
-            /* if the specified option is more than one word, we don't
-             * have a generic way of passing it as some environments ignore
-             * any quotes we add, while others don't - so we ignore any
-             * such options. In most cases, this won't be a problem as
-             * they typically only apply to things of interest to the HNP.
-             * Individual environments can add these back into the cmd line
-             * as they know if it can be supported
-             */
-            if (NULL != strchr(orted_cmd_line[i+2], ' ')) {
-                continue;
-            }
-            /* The daemon will attempt to open the PLM on the remote
-             * end. Only a few environments allow this, so the daemon
-             * only opens the PLM -if- it is specifically told to do
-             * so by giving it a specific PLM module. To ensure we avoid
-             * confusion, do not include any directives here
-             */
-            if (0 == strcmp(orted_cmd_line[i+1], "plm")) {
-                continue;
-            }
-            /* must be okay - pass it along */
-            opal_argv_append(argc, argv, orted_cmd_line[i]);
-            opal_argv_append(argc, argv, orted_cmd_line[i+1]);
-            opal_argv_append(argc, argv, orted_cmd_line[i+2]);
-        }
-    }
-
     /* if output-filename was specified, pass that along */
     if (NULL != orte_output_filename) {
         opal_argv_append(argc, argv, "-mca");
@@ -1084,6 +1069,50 @@ int orte_plm_base_orted_append_basic_args(int *argc, char ***argv,
         opal_argv_append(argc, argv, "-mca");
         opal_argv_append(argc, argv, "oob");
         opal_argv_append(argc, argv, orte_selected_oob_component);
+    }
+
+    /* pass along any cmd line MCA params provided to mpirun,
+     * being sure to "purge" any that would cause problems
+     * on backend nodes and ignoring all duplicates
+     */
+    if (ORTE_PROC_IS_HNP || ORTE_PROC_IS_DAEMON) {
+        cnt = opal_argv_count(orted_cmd_line);    
+        for (i=0; i < cnt; i+=3) {
+            /* if the specified option is more than one word, we don't
+             * have a generic way of passing it as some environments ignore
+             * any quotes we add, while others don't - so we ignore any
+             * such options. In most cases, this won't be a problem as
+             * they typically only apply to things of interest to the HNP.
+             * Individual environments can add these back into the cmd line
+             * as they know if it can be supported
+             */
+            if (NULL != strchr(orted_cmd_line[i+2], ' ')) {
+                continue;
+            }
+            /* The daemon will attempt to open the PLM on the remote
+             * end. Only a few environments allow this, so the daemon
+             * only opens the PLM -if- it is specifically told to do
+             * so by giving it a specific PLM module. To ensure we avoid
+             * confusion, do not include any directives here
+             */
+            if (0 == strcmp(orted_cmd_line[i+1], "plm")) {
+                continue;
+            }
+            /* check for duplicate */
+            ignore = false;
+            for (j=0; j < *argc; j++) {
+	      if (0 == strcmp((*argv)[j], orted_cmd_line[i+1])) {
+                    ignore = true;
+                    break;
+                }
+            }
+            if (!ignore) {
+                /* must be okay - pass it along */
+                opal_argv_append(argc, argv, orted_cmd_line[i]);
+                opal_argv_append(argc, argv, orted_cmd_line[i+1]);
+                opal_argv_append(argc, argv, orted_cmd_line[i+2]);
+            }
+        }
     }
 
     return ORTE_SUCCESS;
