@@ -67,13 +67,6 @@ orte_filem_rsh_component_t mca_filem_rsh_component = {
             /* The component is checkpoint ready */
             MCA_BASE_METADATA_PARAM_CHECKPOINT
         },
-
-        /* Verbosity level */
-        0,
-        /* opal_output handler */
-        -1,
-        /* Default priority */
-        20
     },
 
     /* cp_command */
@@ -88,30 +81,6 @@ orte_filem_rsh_component_t mca_filem_rsh_component = {
 
 static int filem_rsh_open(void) 
 {
-    mca_base_param_reg_int(&mca_filem_rsh_component.super.base_version,
-                           "priority",
-                           "Priority of the FILEM rsh component",
-                           false, false,
-                           mca_filem_rsh_component.super.priority,
-                           &mca_filem_rsh_component.super.priority);
-    
-    mca_base_param_reg_int(&mca_filem_rsh_component.super.base_version,
-                           "verbose",
-                           "Verbose level for the FILEM rsh component",
-                           false, false,
-                           mca_filem_rsh_component.super.verbose, 
-                           &mca_filem_rsh_component.super.verbose);
-    /* If there is a custom verbose level for this component than use it
-     * otherwise take our parents level and output channel
-     */
-    if ( 0 != mca_filem_rsh_component.super.verbose) {
-        mca_filem_rsh_component.super.output_handle = opal_output_open(NULL);
-        opal_output_set_verbosity(mca_filem_rsh_component.super.output_handle,
-                                  mca_filem_rsh_component.super.verbose);
-    } else {
-        mca_filem_rsh_component.super.output_handle = orte_filem_base_output;
-    }
-    
     mca_base_param_reg_string(&mca_filem_rsh_component.super.base_version,
                               "rcp",
                               "The rsh cp command for the FILEM rsh component",
@@ -164,21 +133,15 @@ static int filem_rsh_open(void)
     /*
      * Debug Output
      */
-    opal_output_verbose(10, mca_filem_rsh_component.super.output_handle,
+    opal_output_verbose(10, orte_filem_base_output,
                         "filem:rsh: open()");
-    opal_output_verbose(20, mca_filem_rsh_component.super.output_handle,
-                        "filem:rsh: open: priority   = %d", 
-                        mca_filem_rsh_component.super.priority);
-    opal_output_verbose(20, mca_filem_rsh_component.super.output_handle,
-                        "filem:rsh: open: verbosity  = %d", 
-                        mca_filem_rsh_component.super.verbose);
-    opal_output_verbose(20, mca_filem_rsh_component.super.output_handle,
+    opal_output_verbose(20, orte_filem_base_output,
                         "filem:rsh: open: cp command  = %s", 
                         mca_filem_rsh_component.cp_command);
-    opal_output_verbose(20, mca_filem_rsh_component.super.output_handle,
+    opal_output_verbose(20, orte_filem_base_output,
                         "filem:rsh: open: cp local command  = %s", 
                         mca_filem_rsh_component.cp_local_command);
-    opal_output_verbose(20, mca_filem_rsh_component.super.output_handle,
+    opal_output_verbose(20, orte_filem_base_output,
                         "filem:rsh: open: rsh command  = %s", 
                         mca_filem_rsh_component.remote_sh_command);
 
@@ -187,7 +150,7 @@ static int filem_rsh_open(void)
 
 static int filem_rsh_close(void)
 {
-    opal_output_verbose(10, mca_filem_rsh_component.super.output_handle,
+    opal_output_verbose(10, orte_filem_base_output,
                         "filem:rsh: close()");
 
     return ORTE_SUCCESS;

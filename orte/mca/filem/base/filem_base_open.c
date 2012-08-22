@@ -28,18 +28,6 @@
 
 #include "orte/mca/filem/base/static-components.h"
 
-#if ORTE_DISABLE_FULL_SUPPORT
-/* have to include a bogus function here so that
- * the build system sees at least one function
- * in the library
- */
-int orte_filem_base_open(void)
-{
-    return ORTE_SUCCESS;
-}
-
-#else
-
 /*
  * Globals
  */
@@ -95,5 +83,3 @@ int orte_filem_base_open(void)
     
     return ORTE_SUCCESS;
 }
-
-#endif

@@ -64,6 +64,7 @@
 #include "orte/mca/rmaps/rmaps_types.h"
 #include "orte/mca/sensor/sensor.h"
 #include "orte/mca/state/state.h"
+#include "orte/mca/filem/filem.h"
 
 #include "orte/util/context_fns.h"
 #include "orte/util/name_fns.h"
@@ -588,6 +589,12 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
     }
     
  COMPLETE:
+    /* setup any local files that were prepositioned for us */
+    if (ORTE_SUCCESS != (rc = orte_filem.link_local_files(jdata))) {
+        ORTE_ERROR_LOG(rc);
+        goto REPORT_ERROR;
+    }
+
     /* if we don't have any local procs, create
      * the collectives so the job doesn't stall
      */

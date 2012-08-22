@@ -9,6 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2012      Los Alamos National Security, LLC.
+ *                         All rights reserved
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -34,6 +36,7 @@
 
 #include "opal/class/opal_object.h"
 
+#include "orte/runtime/orte_globals.h"
 BEGIN_C_DECLS
 
 /**
@@ -43,9 +46,10 @@ BEGIN_C_DECLS
 #define ORTE_FILEM_TYPE_FILE      0
 #define ORTE_FILEM_TYPE_DIR       1
 #define ORTE_FILEM_TYPE_UNKNOWN   2
+#define ORTE_FILEM_TYPE_ARCHIVE   3
 
 /**
- * Type of moment
+ * Type of movement
  */
 #define ORTE_FILEM_MOVE_TYPE_PUT       0
 #define ORTE_FILEM_MOVE_TYPE_GET       1
@@ -129,7 +133,16 @@ struct orte_filem_base_request_1_0_0_t {
     opal_list_item_t super;
 
     /*
-     * A list of process sets
+     * A list of process sets - use WILDCARD to
+     * indicate all procs of a given vpid/jobid,
+     * INVALID to indicate not-applicable. For
+     * example, if you need to move a file at time
+     * of job start to each node that has a proc
+     * on it, then the process set would have a
+     * source proc with vpid=INVALID and a sink proc
+     * with vpid=WILDCARD, and a remote hint of "shared"
+     * in the file sets so we don't copy them over
+     * multiple times
      */
     opal_list_t process_sets;
 
@@ -311,6 +324,17 @@ typedef int (*orte_filem_base_wait_fn_t)
 typedef int (*orte_filem_base_wait_all_fn_t)
      (opal_list_t *request_list);
 
+typedef void (*orte_filem_completion_cbfunc_t)(int status, void *cbdata);
+
+/* Pre-position files
+ */
+typedef int (*orte_filem_base_preposition_files_fn_t)(opal_list_t *file_set,
+                                                      orte_filem_completion_cbfunc_t cbfunc,
+                                                      void *cbdata);
+
+/* link local files */
+typedef int (*orte_filem_base_link_local_files_fn_t)(orte_job_t *jdata);
+
 /**
  * Structure for FILEM components.
  */
@@ -319,13 +343,6 @@ struct orte_filem_base_component_2_0_0_t {
     mca_base_component_t base_version;
     /** MCA base data */
     mca_base_component_data_t base_data;
-
-    /** Verbosity Level */
-    int verbose;
-    /** Output Handle for opal_output */
-    int output_handle;
-    /** Default Priority */
-    int priority;
 };
 typedef struct orte_filem_base_component_2_0_0_t orte_filem_base_component_2_0_0_t;
 typedef struct orte_filem_base_component_2_0_0_t orte_filem_base_component_t;
@@ -353,6 +370,11 @@ struct orte_filem_base_module_1_0_0_t {
     /** Test functions for the non-blocking versions */
     orte_filem_base_wait_fn_t                  wait;
     orte_filem_base_wait_all_fn_t              wait_all;
+
+    /* pre-position files to every node */
+    orte_filem_base_preposition_files_fn_t     preposition_files;
+    /* create local links for all shared files */
+    orte_filem_base_link_local_files_fn_t      link_local_files;
 
 };
 typedef struct orte_filem_base_module_1_0_0_t orte_filem_base_module_1_0_0_t;
