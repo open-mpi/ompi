@@ -14,9 +14,13 @@
  */
 
 #include "ompi_config.h"
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
 #include <sys/types.h>
+#ifdef HAVE_SYS_MMAN_H
 #include <sys/mman.h>
+#endif
 #include <fcntl.h>
 
 #include "ompi/constants.h"
@@ -38,7 +42,6 @@ const char *mca_sbgp_basesmuma_component_version_string =
 
 static int basesmuma_open(void);
 static int basesmuma_close(void);
-struct mca_sbgp_base_module_t;
 static mca_sbgp_base_module_t *mca_sbgp_basesmuma_select_procs(struct ompi_proc_t ** procs,
         int n_procs_in, struct ompi_communicator_t *comm, char *key, void *output_data);
 

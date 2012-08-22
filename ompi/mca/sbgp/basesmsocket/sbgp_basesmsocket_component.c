@@ -15,7 +15,9 @@
 
 #include "ompi_config.h"
 
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
 #include <sys/types.h>
 #ifdef HAVE_SYS_MMAN_H
 #include <sys/mman.h>
@@ -53,7 +55,6 @@ const char *mca_sbgp_basesmsocket_component_version_string =
 
 static int basesmsocket_open(void);
 static int basesmsocket_close(void);
-struct mca_sbgp_base_module_t;
 static mca_sbgp_base_module_t *mca_sbgp_basesmsocket_select_procs(struct ompi_proc_t ** procs,
         int n_procs_in,
         struct ompi_communicator_t *comm,
