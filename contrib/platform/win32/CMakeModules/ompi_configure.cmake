@@ -205,6 +205,8 @@ OMPI_DEF_OPT(enable-mpi-f08-subarray-prototype OMPI_BUILD_FORTRAN_F08_SUBARRAYS 
 implementation that supports subarrrays (via Fortran descriptors). 
 This option will disable the normal 'use mpi_f08' implementation and *only* build the prototype implementation." 0 1)
 
+OMPI_DEF(OMPI_FORTRAN_HAVE_F08_ASSUMED_RANK 0 "fortran compiler has assumed rank" 0 1)
+
 OMPI_DEF(OMPI_FORTRAN_HAVE_PRIVATE 0 "fortran compiler has private" 0 1)
 
 OMPI_DEF(OMPI_FORTRAN_HAVE_ABSTRACT 0 "fortran compiler has abstract" 0 1)
