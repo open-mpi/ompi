@@ -139,7 +139,7 @@ static int ompi_sbgp_set_components_to_use(opal_list_t *sbgp_components_avail,
                         subgoups_requested[i]);
                 RELEASE_LIST_OF_STRINGS(sbgp_string);
                 rc = OMPI_ERROR;
-                goto ERROR;
+                goto error;
         }
         /* loop over discovered components */
         for (item = opal_list_get_first(sbgp_components_avail) ;
@@ -171,7 +171,7 @@ static int ompi_sbgp_set_components_to_use(opal_list_t *sbgp_components_avail,
                  if (NULL == clj) {
                      rc = OPAL_ERR_OUT_OF_RESOURCE;
                      RELEASE_LIST_OF_STRINGS(sbgp_string);
-                     goto ERROR;
+                     goto error;
                  }
                  /* fprintf(stderr,"sbgp selecting %s %s\n", sbgp_component, component_name); */
 
@@ -195,7 +195,7 @@ static int ompi_sbgp_set_components_to_use(opal_list_t *sbgp_components_avail,
     ** release resources
     ** */
     /* subgoups_requested */
-ERROR:
+error:
     /* RELEASE_LIST_OF_STRINGS(subgoups_requested); */
 
     return rc;
