@@ -677,6 +677,7 @@ error:
 static int rte_finalize(void)
 {
     char *contact_path;
+    char *jobfam_dir;
 
     if (signals_set) {
         /* Remove the epipe handler */
@@ -699,16 +700,17 @@ static int rte_finalize(void)
     orte_sensor.stop(ORTE_PROC_MY_NAME->jobid);
 
     /* remove my contact info file */
-    contact_path = opal_os_path(false, orte_process_info.top_session_dir,
-                                "contact.txt", NULL);
+    jobfam_dir = opal_dirname(orte_process_info.job_session_dir);
+    contact_path = opal_os_path(false, jobfam_dir, "contact.txt", NULL);
+    free(jobfam_dir);
     unlink(contact_path);
     free(contact_path);
     
     /* output any lingering stdout/err data */
     orte_iof_base_close();
 
-    /* finalize the session directory tree */
-    orte_session_dir_finalize(ORTE_PROC_MY_NAME);
+    /* ensure we scrub the session directory tree */
+    orte_session_dir_cleanup(ORTE_JOBID_WILDCARD);
     
     /* close the xml output file, if open */
     if (orte_xml_output) {
@@ -735,6 +737,9 @@ static void rte_abort(int status, bool report)
     
     /* CRS cleanup since it may have a named pipe and thread active */
     orte_cr_finalize();
+    
+    /* ensure we scrub the session directory tree */
+    orte_session_dir_cleanup(ORTE_JOBID_WILDCARD);
     
     /* - Clean out the global structures 
      * (not really necessary, but good practice)
