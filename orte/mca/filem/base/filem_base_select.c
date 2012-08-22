@@ -33,9 +33,6 @@
 
 
 static orte_filem_base_component_t none_component = {
-    /* Handle the general mca_component_t struct containing 
-     *  meta information about the component itself
-     */
     {
         ORTE_FILEM_BASE_VERSION_2_0_0,
         /* Component name and version */
@@ -53,13 +50,6 @@ static orte_filem_base_component_t none_component = {
         /* This component is checkpointable */
         MCA_BASE_METADATA_PARAM_CHECKPOINT
     },
-    
-    /* Verbosity level */
-    0,
-    /* opal_output handler */
-    -1,
-    /* Default priority */
-    1
 };
 
 static orte_filem_base_module_t none_module = {
@@ -69,8 +59,13 @@ static orte_filem_base_module_t none_module = {
     orte_filem_base_module_finalize,
 
     orte_filem_base_none_put,
+    orte_filem_base_none_put_nb,
     orte_filem_base_none_get,
-    orte_filem_base_none_rm
+    orte_filem_base_none_get_nb,
+    orte_filem_base_none_rm,
+    orte_filem_base_none_rm_nb,
+    orte_filem_base_none_wait,
+    orte_filem_base_none_wait_all
 };
 
 int orte_filem_base_select(void)
