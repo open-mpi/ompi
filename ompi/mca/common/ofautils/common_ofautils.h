@@ -13,6 +13,7 @@
 #define _COMMON_OFAUTILS_H_
 
 #include "ompi_config.h"
+BEGIN_C_DECLS
 
 OMPI_DECLSPEC extern
 struct ibv_device **ompi_ibv_get_device_list(int *num_devs);
