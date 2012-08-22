@@ -9,9 +9,13 @@
  */
 
 #include "ompi_config.h"
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
 #include <sys/types.h>
+#ifdef HAVE_SYS_MMAN_H
 #include <sys/mman.h>
+#endif
 #include <fcntl.h>
 #include <stdlib.h>
 #include <assert.h>

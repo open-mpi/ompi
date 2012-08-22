@@ -33,7 +33,7 @@ OMPI_DECLSPEC int comm_allgather_pml(void *src_buf, void *dest_buf, int count,
     /* local variables */
     int rc=OMPI_SUCCESS,msg_cnt;
     int pair_rank,exchange,extra_rank, n_extra_nodes,n_extra;
-    int proc_block,extra_start,extra_end,iov_len;
+    int proc_block,extra_start,extra_end,iovec_len;
     int remote_data_start_rank,remote_data_end_rank;
     int local_data_start_rank;
     mca_common_netpatterns_pair_exchange_node_t my_exchange_node;
@@ -62,7 +62,7 @@ OMPI_DECLSPEC int comm_allgather_pml(void *src_buf, void *dest_buf, int count,
     /* place my data in the correct destination buffer */
     rc=ompi_datatype_copy_content_same_ddt(dtype,count,
             (char *)dest_buf+my_rank_in_group*message_extent,
-            src_buf);
+            (char *)src_buf);
     if( OMPI_SUCCESS != rc ) {
         goto Error;
     }
@@ -139,13 +139,13 @@ OMPI_DECLSPEC int comm_allgather_pml(void *src_buf, void *dest_buf, int count,
         if(pair_rank > my_rank_in_group ){
             recv_iov[0].iov_base=src_buf_current+current_data_extent;
             recv_iov[0].iov_len=current_data_extent;
-            iov_len=1;
+            iovec_len=1;
             remote_data_start_rank=local_data_start_rank+proc_block;
             remote_data_end_rank=remote_data_start_rank+proc_block-1;
         } else {
             recv_iov[0].iov_base=src_buf_current-current_data_extent;
             recv_iov[0].iov_len=current_data_extent;
-            iov_len=1;
+            iovec_len=1;
             remote_data_start_rank=local_data_start_rank-proc_block;
             remote_data_end_rank=remote_data_start_rank+proc_block-1;
         }
@@ -167,7 +167,7 @@ OMPI_DECLSPEC int comm_allgather_pml(void *src_buf, void *dest_buf, int count,
             recv_iov[1].iov_base=(char *)dest_buf+
                 (extra_start+my_exchange_node.n_largest_pow_2)*message_extent;
             recv_iov[1].iov_len=n_extra*count;
-            iov_len=2;
+            iovec_len=2;
         }
 
         rc=MCA_PML_CALL(irecv(recv_iov[0].iov_base,
@@ -179,7 +179,7 @@ OMPI_DECLSPEC int comm_allgather_pml(void *src_buf, void *dest_buf, int count,
         }
         msg_cnt++;
 
-        if(iov_len > 1 ) {
+        if(iovec_len > 1 ) {
             rc=MCA_PML_CALL(irecv(recv_iov[1].iov_base,
                         recv_iov[1].iov_len,dtype,ranks_in_comm[pair_rank],
                         -OMPI_COMMON_TAG_ALLREDUCE,
@@ -193,7 +193,7 @@ OMPI_DECLSPEC int comm_allgather_pml(void *src_buf, void *dest_buf, int count,
         /* post non-blocking send */
         send_iov[0].iov_base=src_buf_current;
         send_iov[0].iov_len=current_data_extent;
-        iov_len=1;
+        iovec_len=1;
         /* the data from the non power of 2 ranks */
         if(local_data_start_rank<n_extra_nodes) {
             /* figure out how much data is at the remote rank */
@@ -212,7 +212,7 @@ OMPI_DECLSPEC int comm_allgather_pml(void *src_buf, void *dest_buf, int count,
             send_iov[1].iov_base=(char *)dest_buf+
                 (extra_start+my_exchange_node.n_largest_pow_2)*message_extent;
             send_iov[1].iov_len=n_extra*count;
-            iov_len=2;
+            iovec_len=2;
         }
 
         rc=MCA_PML_CALL(isend(send_iov[0].iov_base,
@@ -223,7 +223,7 @@ OMPI_DECLSPEC int comm_allgather_pml(void *src_buf, void *dest_buf, int count,
             goto Error;
         }
         msg_cnt++;
-        if( iov_len > 1 ) { 
+        if( iovec_len > 1 ) { 
             rc=MCA_PML_CALL(isend(send_iov[1].iov_base,
                         send_iov[1].iov_len,dtype,ranks_in_comm[pair_rank],
                         -OMPI_COMMON_TAG_ALLREDUCE,MCA_PML_BASE_SEND_STANDARD,

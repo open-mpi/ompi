@@ -59,7 +59,7 @@ OMPI_DECLSPEC int comm_allreduce_pml(void *sbuf, void *rbuf, int count,
     if(1 == n_peers) {
         /* place my data in the correct destination buffer */
         rc=ompi_datatype_copy_content_same_ddt(dtype,count,
-                rbuf, sbuf);
+                (char *)rbuf, (char *)sbuf);
         if( OMPI_SUCCESS != rc ) {
             goto Error;
         }

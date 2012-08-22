@@ -9,9 +9,13 @@
  */
 
 #include "ompi_config.h"
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
 #include <sys/types.h>
+#ifdef HAVE_SYS_MMAN_H
 #include <sys/mman.h>
+#endif
 #include <fcntl.h>
 #include <errno.h>
 #include <stdlib.h>
@@ -351,7 +355,7 @@ static int fill_in_node_data(int tree_order, int num_nodes, int my_node,
             {
                 fprintf(stderr, "Cannot allocate memory for children_ranks.\n");
                 rc = OMPI_ERR_OUT_OF_RESOURCE;
-                goto ERROR;
+                goto error;
             }
         }
     }
@@ -390,7 +394,7 @@ static int fill_in_node_data(int tree_order, int num_nodes, int my_node,
         n_ranks_to_child--;
         rc=fill_in_node_data(tree_order, n_ranks_to_child, rank, nodes_data);
         if( OMPI_SUCCESS != rc ) {
-            goto ERROR;
+            goto error;
         }
 
     }
@@ -399,7 +403,7 @@ static int fill_in_node_data(int tree_order, int num_nodes, int my_node,
     return OMPI_SUCCESS;
 
     /* Error */
-ERROR:
+error:
     return rc;
 
 }
