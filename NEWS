@@ -114,7 +114,7 @@ Trunk (not on release branches yet)
 
 - Fix double semicolon error in the C++ in <mpi.h>.  Thanks to John
   Foster for pointing out the issue.
-- Allow -Xclang to be specified multiple times in CFLAGD.  Thanks to
+- Allow -Xclang to be specified multiple times in CFLAGS.  Thanks to
   P. Martin for raising the issue.
 - Break up a giant "print *" statement in the ABI-preserving incorrect
   MPI_SCATTER interface in the "large" Fortran "mpi" module.  Thanks
