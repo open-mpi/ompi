@@ -17,7 +17,7 @@
 # $HEADER$
 #
 
-EXTRA_DIST =
+EXTRA_DIST = .windows
 
 sources = \
         coll_libnbc.h \

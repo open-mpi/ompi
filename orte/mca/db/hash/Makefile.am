@@ -7,6 +7,7 @@
 # 
 # $HEADER$
 #
+EXTRA_DIST = .windows
 
 sources = \
         db_hash.h \
