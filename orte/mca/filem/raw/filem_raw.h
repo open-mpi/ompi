@@ -60,6 +60,7 @@ typedef struct {
     char *top;
     char *fullpath;
     int32_t type;
+    char **link_pts;
     opal_list_t outputs;
 } orte_filem_raw_incoming_t;
 OBJ_CLASS_DECLARATION(orte_filem_raw_incoming_t);

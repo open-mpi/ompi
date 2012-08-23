@@ -46,7 +46,9 @@ BEGIN_C_DECLS
 #define ORTE_FILEM_TYPE_FILE      0
 #define ORTE_FILEM_TYPE_DIR       1
 #define ORTE_FILEM_TYPE_UNKNOWN   2
-#define ORTE_FILEM_TYPE_ARCHIVE   3
+#define ORTE_FILEM_TYPE_TAR       3
+#define ORTE_FILEM_TYPE_BZIP      4
+#define ORTE_FILEM_TYPE_GZIP      5
 
 /**
  * Type of movement
