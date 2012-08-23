@@ -298,7 +298,8 @@ static int iboffload_release_devices(void)
     OBJ_DESTRUCT(devs);
 
     /* release device list */
-    ibv_free_device_list_compat(cm->ib_devs);
+    /*ibv_free_device_list_compat(cm->ib_devs);*/
+    ompi_ibv_free_device_list(cm->ib_devs);
     cm->ib_devs = NULL;
 
     IBOFFLOAD_VERBOSE(10, ("All devices destroyed.\n"));
@@ -316,7 +317,8 @@ static int iboffload_load_devices(void)
     IBOFFLOAD_VERBOSE(10, ("Entering to iboffload_load_devices"));
 
     /* Get list of devices */
-    cm->ib_devs = ibv_get_device_list_compat(&num_devs);
+    /*cm->ib_devs = ibv_get_device_list_compat(&num_devs);*/
+    cm->ib_devs = ompi_ibv_get_device_list(&num_devs);
     if (0 == num_devs || NULL == cm->ib_devs) {
         IBOFFLOAD_ERROR(("No IB devices found"));
         /* No hca error*/

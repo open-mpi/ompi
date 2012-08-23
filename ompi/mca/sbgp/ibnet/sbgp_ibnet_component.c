@@ -524,7 +524,7 @@ static int ibnet_load_devices(void)
     IBNET_VERBOSE(7, ("Entering to ibnet_load_devices"));
 
     /* Get list of devices */
-    ib_devs = ibv_get_device_list_compat(&num_devs);
+    ib_devs = ompi_ibv_get_device_list(&num_devs);
 
     if(0 == num_devs || NULL == ib_devs) {
         IBNET_VERBOSE(10, ("No ib devices found"));
@@ -550,7 +550,7 @@ static int ibnet_load_devices(void)
         /* Maybe need to add error here*/
     }
 
-    ibv_free_device_list_compat(ib_devs);
+    ompi_ibv_free_device_list(ib_devs);
 
     return OMPI_SUCCESS;
 }

@@ -45,7 +45,7 @@ OBJ_CLASS_INSTANCE(
         frag_constructor,
         NULL);
 
-
+#if 0
 static mca_bcol_iboffload_frag_t*
     mca_bcol_iboffload_get_ml_frag_calc(mca_bcol_iboffload_module_t *iboffload,
                                     mca_bcol_iboffload_collreq_t *coll_request,
@@ -82,6 +82,8 @@ static mca_bcol_iboffload_frag_t*
 
     return fragment;
 }
+#endif
+
 
 static mca_bcol_iboffload_frag_t *
 mca_bcol_iboffload_get_packed_frag(mca_bcol_iboffload_module_t *iboffload,
@@ -125,6 +127,7 @@ mca_bcol_iboffload_get_packed_frag(mca_bcol_iboffload_module_t *iboffload,
     return frag;
 }
 
+#if 0
 static mca_bcol_iboffload_frag_t *
 mca_bcol_iboffload_get_calc_frag(mca_bcol_iboffload_module_t *iboffload, int qp_index,
                                  struct mca_bcol_iboffload_collreq_t *coll_request)
@@ -163,6 +166,7 @@ mca_bcol_iboffload_get_calc_frag(mca_bcol_iboffload_module_t *iboffload, int qp_
 
     return frag;
 }
+#endif
 
 mca_bcol_iboffload_frag_t*
 mca_bcol_iboffload_get_send_frag(mca_bcol_iboffload_collreq_t *coll_request,
@@ -213,24 +217,24 @@ mca_bcol_iboffload_get_send_frag(mca_bcol_iboffload_collreq_t *coll_request,
             IBOFFLOAD_VERBOSE(10, ("Getting MCA_BCOL_IBOFFLOAD_SEND_FRAG_CONVERT"));
             frag = mca_bcol_iboffload_get_packed_frag(iboffload, destination,
                          qp_index, len, &coll_request->send_convertor);
-
+#if 0
         break;
         case MCA_BCOL_IBOFFLOAD_SEND_FRAG_CALC:
             IBOFFLOAD_VERBOSE(10, ("Getting MCA_BCOL_IBOFFLOAD_SEND_FRAG_CALC"));
             frag = mca_bcol_iboffload_get_calc_frag(iboffload, qp_index, coll_request);
-
+#endif
         break;
         case MCA_BCOL_IBOFFLOAD_SEND_FRAG_ML:
             IBOFFLOAD_VERBOSE(10, ("Getting MCA_BCOL_IBOFFLOAD_SEND_FRAG_ML"));
             frag = mca_bcol_iboffload_get_ml_frag(
                   iboffload, qp_index, len, coll_request->buffer_info[buf_index].lkey,
                   (uint64_t)(uintptr_t) coll_request->buffer_info[buf_index].buf + src_offset);
-
+#if 0
         break;
         case MCA_BCOL_IBOFFLOAD_SEND_FRAG_ML_CALC:
             frag = mca_bcol_iboffload_get_ml_frag_calc(iboffload, coll_request, len, src_offset);
             IBOFFLOAD_VERBOSE(10, ("Getting MCA_BCOL_IBOFFLOAD_SEND_FRAG_ML_CALC"));
-
+#endif
         break;
         default:
             IBOFFLOAD_VERBOSE(10, ("Getting default"));

@@ -32,7 +32,7 @@
 #include "ompi/mca/bcol/base/base.h"
 #include "ompi/mca/mpool/base/base.h"
 #include "ompi/communicator/communicator.h"
-#include "ompi/mca/mpool/rdma/mpool_rdma.h"
+#include "ompi/mca/mpool/grdma/mpool_grdma.h"
 #include "ompi/mca/coll/ml/coll_ml_allocation.h"
 #include "ompi/mca/common/netpatterns/common_netpatterns.h"
 
@@ -728,10 +728,10 @@ static void load_func(mca_bcol_base_module_t *super)
 
     super->bcol_function_init_table[BCOL_BARRIER] = mca_bcol_iboffload_barrier_register;
     super->bcol_function_init_table[BCOL_BCAST] = mca_bcol_iboffload_bcast_register;
-    super->bcol_function_init_table[BCOL_ALLTOALL] = mca_bcol_iboffload_alltoall_register;
-    super->bcol_function_init_table[BCOL_ALLGATHER] = mca_bcol_iboffload_allgather_register;
+    /*super->bcol_function_init_table[BCOL_ALLTOALL] = mca_bcol_iboffload_alltoall_register;*/
+    /*super->bcol_function_init_table[BCOL_ALLGATHER] = mca_bcol_iboffload_allgather_register;*/
     super->bcol_function_init_table[BCOL_SYNC] = mca_bcol_iboffload_memsync_register;
-    super->bcol_function_init_table[BCOL_ALLREDUCE] = mca_bcol_iboffload_allreduce_register;
+    /*super->bcol_function_init_table[BCOL_ALLREDUCE] = mca_bcol_iboffload_allreduce_register;*/
 
     super->bcol_memory_init = mca_bcol_iboffload_init_buffer_memory;
 
