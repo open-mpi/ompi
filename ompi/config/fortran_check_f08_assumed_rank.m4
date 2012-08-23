@@ -20,7 +20,7 @@ dnl Additional copyrights may follow
 dnl 
 dnl $HEADER$
 
-# Does this compiler support the Fortran 2008 assumed shape syntax?
+# Does this compiler support the Fortran 2008 assumed rank syntax?
 
 # OMPI_FORTRAN_CHECK_F08_ASSUMED_RANK([action if found], 
 #                                      [action if not found])
@@ -29,7 +29,7 @@ AC_DEFUN([OMPI_FORTRAN_CHECK_F08_ASSUMED_RANK], [
     AS_VAR_PUSHDEF([fortran_f08_assumed_rank], 
                    [ompi_cv_fortran_f08_assumed_rank])
 
-    AC_CACHE_CHECK([Fortran compiler F08 assumed shaped syntax],
+    AC_CACHE_CHECK([Fortran compiler F08 assumed rank syntax],
                     fortran_f08_assumed_rank,
                     [_OMPI_FORTRAN_CHECK_F08_ASSUMED_RANK])
 
@@ -56,6 +56,6 @@ AC_DEFUN([_OMPI_FORTRAN_CHECK_F08_ASSUMED_RANK], [
 
     # Now put the orignal CACHE_CHECK MSG_CHECKING back so that it can
     # output the MSG_RESULT.
-    AC_MSG_CHECKING([Fortran compiler F08 assumed shaped syntax])
+    AC_MSG_CHECKING([Fortran compiler F08 assumed rank syntax])
     OPAL_VAR_SCOPE_POP
 ])
