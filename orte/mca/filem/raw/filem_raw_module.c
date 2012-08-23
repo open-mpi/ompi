@@ -293,6 +293,7 @@ static int raw_preposition_files(opal_list_t *fset,
     char **files=NULL;
     opal_list_t *file_set;
     orte_filem_raw_outbound_t *outbound;
+    char *cptr;
 
     if (NULL == fset) {
         /* see if any were provided via MCA param */
@@ -312,7 +313,32 @@ static int raw_preposition_files(opal_list_t *fset,
         for (i=0; NULL != files[i]; i++) {
             fs = OBJ_NEW(orte_filem_base_file_set_t);
             fs->local_target = strdup(files[i]);
-            fs->target_flag = ORTE_FILEM_TYPE_FILE;
+            /* check any suffix for file type */
+            if (NULL != (cptr = strchr(files[i], '.'))) {
+                if (0 == strncmp(cptr, ".tar", 4)) {
+                    OPAL_OUTPUT_VERBOSE((1, orte_filem_base_output,
+                                         "%s filem:raw: marking file %s as TAR",
+                                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                         files[i]));
+                    fs->target_flag = ORTE_FILEM_TYPE_TAR;
+                } else if (0 == strncmp(cptr, ".bz", 3)) {
+                    OPAL_OUTPUT_VERBOSE((1, orte_filem_base_output,
+                                         "%s filem:raw: marking file %s as BZIP",
+                                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                         files[i]));
+                    fs->target_flag = ORTE_FILEM_TYPE_BZIP;
+                } else if (0 == strncmp(cptr, ".gz", 3)) {
+                    OPAL_OUTPUT_VERBOSE((1, orte_filem_base_output,
+                                         "%s filem:raw: marking file %s as GZIP",
+                                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                         files[i]));
+                    fs->target_flag = ORTE_FILEM_TYPE_GZIP;
+                } else {
+                    fs->target_flag = ORTE_FILEM_TYPE_FILE;
+                }
+            } else {
+                fs->target_flag = ORTE_FILEM_TYPE_FILE;
+            }
             opal_list_append(file_set, &fs->super);
         }
     } else {
@@ -369,6 +395,36 @@ static int raw_preposition_files(opal_list_t *fset,
 #endif
 }
 
+static int create_link(char *my_dir, char *path,
+                       char *link_pt)
+{
+    char *mypath, *fullname;
+    struct stat buf;
+    int rc = ORTE_SUCCESS;
+
+    /* form the full source path name */
+    mypath = opal_os_path(false, my_dir, link_pt, NULL);
+    /* form the full target path name */
+    fullname = opal_os_path(false, path, link_pt, NULL);
+    /* there may have been multiple files placed under the
+     * same directory, so check for existence first
+     */
+    if (0 != stat(fullname, &buf)) {
+        OPAL_OUTPUT_VERBOSE((1, orte_filem_base_output,
+                             "%s filem:raw: creating symlink to %s",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), link_pt));
+        /* do the symlink */
+        if (0 != symlink(mypath, fullname)) {
+            opal_output(0, "%s Failed to symlink %s to %s",
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), mypath, fullname);
+            rc = ORTE_ERROR;
+        }
+    }
+    free(mypath);
+    free(fullname);
+    return rc;
+}
+
 static int raw_link_local_files(orte_job_t *jdata)
 {
 #ifdef __WINDOWS__
@@ -377,11 +433,9 @@ static int raw_link_local_files(orte_job_t *jdata)
     char *my_dir, *path=NULL;
     orte_proc_t *proc;
     char *prefix;
-    char *mypath, *fullname;
     int i, rc;
     orte_filem_raw_incoming_t *inbnd;
     opal_list_item_t *item;
-    struct stat buf;
 
     /* check my session directory for files I have received and
      * symlink them to the proc-level session directory of each
@@ -432,37 +486,17 @@ static int raw_link_local_files(orte_job_t *jdata)
             OPAL_OUTPUT_VERBOSE((1, orte_filem_base_output,
                                  "%s filem:raw: checking file %s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), inbnd->file));
-            if (opal_path_is_absolute(inbnd->top)) {
-                /* no link to create */
-                OPAL_OUTPUT_VERBOSE((1, orte_filem_base_output,
-                                     "%s filem:raw: file %s is absolute - no link created",
-                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), inbnd->file));
-                continue;
-            }
-            /* form the full source path name - we only need to 
-             * create a link to the top of the target's stack
-             */
-            mypath = opal_os_path(false, my_dir, inbnd->top, NULL);
-            /* form the full target path name */
-            fullname = opal_os_path(false, path, inbnd->top, NULL);
-            /* there may have been multiple files placed under the
-             * same directory, so check for existence first
-             */
-            if (0 != stat(fullname, &buf)) {
-                OPAL_OUTPUT_VERBOSE((1, orte_filem_base_output,
-                                     "%s filem:raw: creating symlink to %s",
-                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), inbnd->file));
-                /* do the symlink */
-                if (0 != symlink(mypath, fullname)) {
-                    opal_output(0, "%s Failed to symlink %s to %s",
-                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), mypath, fullname);
-                    free(mypath);
-                    free(fullname);
-                    return ORTE_ERROR;
+            if (NULL != inbnd->link_pts) {
+                /* cycle thru the link points and create symlinks to them */
+                for (i=0; NULL != inbnd->link_pts[i]; i++) {
+                    if (ORTE_SUCCESS != (rc = create_link(my_dir, path, inbnd->link_pts[i]))) {
+                        ORTE_ERROR_LOG(rc);
+                        free(my_dir);
+                        free(path);
+                        return rc;
+                    }
                 }
             }
-            free(mypath);
-            free(fullname);
         }
         free(path);
         if (NULL != prefix) {
@@ -470,6 +504,7 @@ static int raw_link_local_files(orte_job_t *jdata)
         }
     }
 
+    free(my_dir);
     return ORTE_SUCCESS;
 #endif
 }
@@ -623,6 +658,52 @@ static void send_complete(char *file, int status)
     }
 }
 
+/* This is a little tricky as the name of the archive doesn't
+ * necessarily have anything to do with the paths inside it -
+ * so we have to first query the archive to retrieve that info
+ */
+static int link_archive(orte_filem_raw_incoming_t *inbnd)
+{
+    FILE *fp;
+    char *cmd;
+    char path[MAXPATHLEN];
+
+    OPAL_OUTPUT_VERBOSE((1, orte_filem_base_output,
+                         "%s filem:raw: identifying links for archive %s",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         inbnd->fullpath));
+
+    asprintf(&cmd, "tar tf %s", inbnd->fullpath);
+    fp = popen(cmd, "r");
+    free(cmd);
+    if (NULL == fp) {
+        ORTE_ERROR_LOG(ORTE_ERR_FILE_OPEN_FAILURE);
+        return ORTE_ERR_FILE_OPEN_FAILURE;
+    }
+    while (fgets(path, sizeof(path), fp) != NULL) {
+        OPAL_OUTPUT_VERBOSE((1, orte_filem_base_output,
+                             "%s filem:raw: path %s",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             path));
+        /* if it is an absolute path, then do nothing - the user
+         * is responsible for knowing where it went
+         */
+        if (opal_path_is_absolute(path)) {
+            continue;
+        }
+        /* take the first element of the path as our
+         * link point
+         */
+        if (NULL != (cmd = strchr(path, '/'))) {
+            *cmd = '\0';
+        }
+        opal_argv_append_unique_nosize(&inbnd->link_pts, path, false);
+    }
+    /* close */
+    pclose(fp);
+    return ORTE_SUCCESS;
+}
+
 static void recv_files(int status, orte_process_name_t* sender,
                        opal_buffer_t* buffer, orte_rml_tag_t tag,
                        void* cbdata)
@@ -746,6 +827,7 @@ static void recv_files(int status, orte_process_name_t* sender,
             incoming->fullpath = opal_os_path(false, jobfam_dir, target, NULL);
             free(jobfam_dir);
         }
+
         OPAL_OUTPUT_VERBOSE((1, orte_filem_base_output,
                              "%s filem:raw: opening target file %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), incoming->fullpath));
@@ -815,7 +897,10 @@ static void write_handler(int fd, short event, void *cbdata)
     opal_list_item_t *item;
     orte_filem_raw_output_t *output;
     int num_written;
-    
+    char *dirname, *cmd;
+    char homedir[MAXPATHLEN];
+    int rc;
+
     OPAL_OUTPUT_VERBOSE((1, orte_filem_base_output,
                          "%s write:handler writing data to %d",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
@@ -833,6 +918,43 @@ static void write_handler(int fd, short event, void *cbdata)
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  sink->file));
             send_complete(sink->file, ORTE_SUCCESS);
+            if (ORTE_FILEM_TYPE_FILE == sink->type) {
+                /* if it is an absolute path, then no link is required - the
+                 * user is responsible for correctly pointing at it
+                 *
+                 * if it is a file and not an absolute path,
+                 * then just link to the top as this will be the
+                 * name we will want in each proc's session dir
+                 */
+                if (!opal_path_is_absolute(sink->top)) {
+                    opal_argv_append_nosize(&sink->link_pts, sink->top);
+                }
+            } else {
+                /* unarchive the file */
+                if (ORTE_FILEM_TYPE_TAR == sink->type) {
+                    asprintf(&cmd, "tar xf %s", sink->file);
+                } else if (ORTE_FILEM_TYPE_BZIP == sink->type) {
+                    asprintf(&cmd, "tar xjf %s", sink->file);
+                } else if (ORTE_FILEM_TYPE_GZIP == sink->type) {
+                    asprintf(&cmd, "tar xzf %s", sink->file);
+                }
+                getcwd(homedir, sizeof(homedir));
+                dirname = opal_dirname(sink->fullpath);
+                chdir(dirname);
+                OPAL_OUTPUT_VERBOSE((1, orte_filem_base_output,
+                                     "%s write:handler unarchiving file %s with cmd: %s",
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                     sink->file, cmd));
+                system(cmd);
+                chdir(homedir);
+                free(dirname);
+                free(cmd);
+                /* setup the link points */
+                if (ORTE_SUCCESS != (rc = link_archive(sink))) {
+                    ORTE_ERROR_LOG(rc);
+                    send_complete(sink->file, ORTE_ERR_FILE_WRITE_FAILURE);
+                }
+            }
             return;
         }
         num_written = write(sink->fd, output->data, output->numbytes);
@@ -931,6 +1053,7 @@ static void in_construct(orte_filem_raw_incoming_t *ptr)
     ptr->file = NULL;
     ptr->top = NULL;
     ptr->fullpath = NULL;
+    ptr->link_pts = NULL;
     OBJ_CONSTRUCT(&ptr->outputs, opal_list_t);
 }
 static void in_destruct(orte_filem_raw_incoming_t *ptr)
@@ -952,6 +1075,7 @@ static void in_destruct(orte_filem_raw_incoming_t *ptr)
     if (NULL != ptr->fullpath) {
         free(ptr->fullpath);
     }
+    opal_argv_free(ptr->link_pts);
     while (NULL != (item = opal_list_remove_first(&ptr->outputs))) {
         OBJ_RELEASE(item);
     }
