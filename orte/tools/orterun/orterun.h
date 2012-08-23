@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007-2011 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2012      Los Alamos National Security, LLC.
+ *                         All rights reserved
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -45,6 +47,7 @@ struct orterun_globals_t {
     char *env_val;
     char *appfile;
     char *wdir;
+    bool set_cwd_to_session_dir;
     char *path;
     char *preload_files;
     char *preload_files_dest_dir;
@@ -60,6 +63,7 @@ struct orterun_globals_t {
     char *sstore_load;
 #endif
     bool disable_recovery;
+    bool preload_binaries;
 };
 
 /**

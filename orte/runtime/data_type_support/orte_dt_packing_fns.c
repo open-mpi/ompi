@@ -9,8 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2011 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2011      Los Alamos National Security, LLC.
+ * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * $COPYRIGHT$
  *
@@ -571,6 +571,18 @@ int orte_dt_pack_app_context(opal_buffer_t *buffer, const void *src,
 
         /* pack the user specified cwd flag */
         if (app_context[i]->user_specified_cwd) {
+            user_specified = 1;
+        } else {
+            user_specified = 0;
+        }
+        if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer,
+                        (void*)(&user_specified), 1, OPAL_INT8))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+
+        /* pack the use-session-dir cwd flag */
+        if (app_context[i]->set_cwd_to_session_dir) {
             user_specified = 1;
         } else {
             user_specified = 0;

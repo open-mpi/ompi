@@ -142,6 +142,8 @@ struct mapreduce_globals_t {
     bool combiner;
     bool single_job;
     orte_job_t *combiner_job;
+    bool preload_binaries;
+    bool set_cwd_to_session_dir;
 };
 
 /*
@@ -246,8 +248,8 @@ static opal_cmd_line_init_t cmd_line_init[] = {
       "Command used to start processes on remote nodes (default: orted)" },
     
     /* Preload the binary on the remote machine */
-    { "orte", "preload", "binaries", 's', NULL, "preload-binary", 0,
-      NULL, OPAL_CMD_LINE_TYPE_BOOL,
+    { NULL, NULL, NULL, 's', NULL, "preload-binary", 0,
+      &mapreduce_globals.preload_binaries, OPAL_CMD_LINE_TYPE_BOOL,
       "Preload the binary on the remote machine before starting the remote process." },
 
     /* Preload files on the remote machine */
@@ -404,6 +406,9 @@ static opal_cmd_line_init_t cmd_line_init[] = {
     { NULL, NULL, NULL, '\0', "wd", "wd", 1,
       &mapreduce_globals.wdir, OPAL_CMD_LINE_TYPE_STRING,
       "Synonym for --wdir" },
+    { NULL, NULL, NULL, '\0', "set-cwd-to-session-dir", "set-cwd-to-session-dir", 0,
+      &mapreduce_globals.set_cwd_to_session_dir, OPAL_CMD_LINE_TYPE_BOOL,
+      "Set the working directory of the started processes to their session directory" },
     { NULL, NULL, NULL, '\0', "path", "path", 1,
       &mapreduce_globals.path, OPAL_CMD_LINE_TYPE_STRING,
       "PATH to be used to look for executables to start processes" },
@@ -946,13 +951,14 @@ static int init_globals(void)
         free( mapreduce_globals.path );
     mapreduce_globals.path =        NULL;
 
+    mapreduce_globals.preload_binaries = false;
     mapreduce_globals.preload_files  = NULL;
     mapreduce_globals.preload_files_dest_dir = NULL;
 
 #if OPAL_ENABLE_FT_CR == 1
     mapreduce_globals.sstore_load = NULL;
 #endif
-
+    mapreduce_globals.set_cwd_to_session_dir = false;
     mapreduce_globals.mapper = false;
     mapreduce_globals.reducer = false;
     mapreduce_globals.combiner = false;
@@ -1630,7 +1636,10 @@ static int create_app(int argc, char* argv[],
             app->cwd = opal_os_path(false, cwd, mapreduce_globals.wdir, NULL);
         }
         app->user_specified_cwd = true;
-    } else {
+    } else if (mapreduce_globals.set_cwd_to_session_dir) {
+        app->set_cwd_to_session_dir = true;
+        app->user_specified_cwd = true;
+    }  else {
         if (OPAL_SUCCESS != (rc = opal_getcwd(cwd, sizeof(cwd)))) {
             orte_show_help("help-orterun.txt", "orterun:init-failure",
                            true, "get the cwd", rc);
@@ -1743,7 +1752,14 @@ static int create_app(int argc, char* argv[],
     total_num_apps++;
 
     /* Preserve if we are to preload the binary */
-    app->preload_binary = orte_preload_binaries;
+    app->preload_binary = mapreduce_globals.preload_binaries;
+    /* if we were told to cwd to the session dir and the app was given in
+     * relative syntax, then we need to preload the binary to
+     * find the app
+     */
+    if (app->set_cwd_to_session_dir && !opal_path_is_absolute(app->app)) {
+        app->preload_binary = true;
+    }
     if( NULL != mapreduce_globals.preload_files)
         app->preload_files  = strdup(mapreduce_globals.preload_files);
     else 

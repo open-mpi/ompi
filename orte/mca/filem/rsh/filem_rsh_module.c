@@ -198,7 +198,7 @@ void orte_filem_rsh_work_pool_destruct( orte_filem_rsh_work_pool_item_t *obj) {
 }
 
 /* placeholders */
-static int rsh_preposition_files(opal_list_t *file_set,
+static int rsh_preposition_files(orte_job_t *jdata,
                                  orte_filem_completion_cbfunc_t cbfunc,
                                  void *cbdata)
 {

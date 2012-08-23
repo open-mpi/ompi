@@ -222,7 +222,7 @@ int orte_filem_base_none_wait_all(opal_list_t *request_list)
     return ORTE_SUCCESS;
 }
 
-int orte_filem_base_none_preposition_files(opal_list_t *file_set,
+int orte_filem_base_none_preposition_files(orte_job_t *jdata,
                                            orte_filem_completion_cbfunc_t cbfunc,
                                            void *cbdata)
 {

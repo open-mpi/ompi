@@ -255,6 +255,8 @@ typedef struct {
     char   *cwd;
     /** Whether the cwd was set by the user or by the system */
     bool user_specified_cwd;
+    /** Whether to set the current working directory to the proc session dir */
+    bool set_cwd_to_session_dir;
     /* Any hostfile that was specified */
     char *hostfile;
     /* Hostfile for adding hosts to an existing allocation */
@@ -675,9 +677,6 @@ ORTE_DECLSPEC extern int orte_stat_history_size;
 
 /* envars to forward */
 ORTE_DECLSPEC extern char *orte_forward_envars;
-
-/* preload binaries */
-ORTE_DECLSPEC extern bool orte_preload_binaries;
 
 /* map-reduce mode */
 ORTE_DECLSPEC extern bool orte_map_reduce;

@@ -639,6 +639,7 @@ int orte_dt_unpack_app_context(opal_buffer_t *buffer, void *dest,
         }
 
         /* unpack the user-specified cwd flag */
+        max_n=1;
         if (ORTE_SUCCESS != (rc = opal_dss_unpack_buffer(buffer, &user_specified,
                     &max_n, OPAL_INT8))) {
             ORTE_ERROR_LOG(rc);
@@ -648,6 +649,19 @@ int orte_dt_unpack_app_context(opal_buffer_t *buffer, void *dest,
             app_context[i]->user_specified_cwd = true;
         } else {
             app_context[i]->user_specified_cwd = false;
+        }
+
+        /* unpack the use-session-dir cwd flag */
+        max_n=1;
+        if (ORTE_SUCCESS != (rc = opal_dss_unpack_buffer(buffer, &user_specified,
+                    &max_n, OPAL_INT8))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        if (user_specified) {
+            app_context[i]->set_cwd_to_session_dir = true;
+        } else {
+            app_context[i]->set_cwd_to_session_dir = false;
         }
 
         /* unpack the hostfile name */

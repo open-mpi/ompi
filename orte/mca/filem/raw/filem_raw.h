@@ -23,7 +23,6 @@ BEGIN_C_DECLS
 
 ORTE_MODULE_DECLSPEC extern orte_filem_base_component_t mca_filem_raw_component;
 ORTE_DECLSPEC extern orte_filem_base_module_t mca_filem_raw_module;
-ORTE_DECLSPEC extern char *orte_filem_raw_files;
 
 #define ORTE_FILEM_RAW_CHUNK_MAX 16384
 

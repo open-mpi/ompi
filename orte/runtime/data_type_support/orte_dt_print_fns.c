@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2011      Los Alamos National Security, LLC.
+ * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * $COPYRIGHT$
  *
@@ -559,8 +559,8 @@ int orte_dt_print_app_context(char **output, char *prefix, orte_app_context_t *s
         tmp = tmp2;
     }
     
-    asprintf(&tmp2, "%s\n%s\tWorking dir: %s (user: %d)\n%s\tPrefix: %s\n%s\tHostfile: %s\tAdd-Hostfile: %s", tmp,
-             pfx2, (NULL == src->cwd) ? "NULL" : src->cwd, (int) src->user_specified_cwd,
+    asprintf(&tmp2, "%s\n%s\tWorking dir: %s (user: %d session-dir: %d)\n%s\tPrefix: %s\n%s\tHostfile: %s\tAdd-Hostfile: %s", tmp,
+             pfx2, (NULL == src->cwd) ? "NULL" : src->cwd, (int) src->user_specified_cwd, (int) src->set_cwd_to_session_dir,
              pfx2, (NULL == src->prefix_dir) ? "NULL" : src->prefix_dir,
              pfx2, (NULL == src->hostfile) ? "NULL" : src->hostfile,
              (NULL == src->add_hostfile) ? "NULL" : src->add_hostfile);

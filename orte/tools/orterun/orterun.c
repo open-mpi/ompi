@@ -221,8 +221,8 @@ static opal_cmd_line_init_t cmd_line_init[] = {
       "Command used to start processes on remote nodes (default: orted)" },
     
     /* Preload the binary on the remote machine */
-    { "orte", "preload", "binaries", 's', NULL, "preload-binary", 0,
-      NULL, OPAL_CMD_LINE_TYPE_BOOL,
+    { NULL, NULL, NULL, 's', NULL, "preload-binary", 0,
+      &orterun_globals.preload_binaries, OPAL_CMD_LINE_TYPE_BOOL,
       "Preload the binary on the remote machine before starting the remote process." },
 
     /* Preload files on the remote machine */
@@ -437,6 +437,9 @@ static opal_cmd_line_init_t cmd_line_init[] = {
     { NULL, NULL, NULL, '\0', "wd", "wd", 1,
       &orterun_globals.wdir, OPAL_CMD_LINE_TYPE_STRING,
       "Synonym for --wdir" },
+    { NULL, NULL, NULL, '\0', "set-cwd-to-session-dir", "set-cwd-to-session-dir", 0,
+      &orterun_globals.set_cwd_to_session_dir, OPAL_CMD_LINE_TYPE_BOOL,
+      "Set the working directory of the started processes to their session directory" },
     { NULL, NULL, NULL, '\0', "path", "path", 1,
       &orterun_globals.path, OPAL_CMD_LINE_TYPE_STRING,
       "PATH to be used to look for executables to start processes" },
@@ -983,11 +986,13 @@ static int init_globals(void)
     orterun_globals.appfile =     NULL;
     if( NULL != orterun_globals.wdir )
         free( orterun_globals.wdir );
+    orterun_globals.set_cwd_to_session_dir = false;
     orterun_globals.wdir =        NULL;
     if( NULL != orterun_globals.path )
         free( orterun_globals.path );
     orterun_globals.path =        NULL;
 
+    orterun_globals.preload_binaries = false;
     orterun_globals.preload_files  = NULL;
     orterun_globals.preload_files_dest_dir = NULL;
 
@@ -1636,6 +1641,9 @@ static int create_app(int argc, char* argv[],
             app->cwd = opal_os_path(false, cwd, orterun_globals.wdir, NULL);
         }
         app->user_specified_cwd = true;
+    } else if (orterun_globals.set_cwd_to_session_dir) {
+        app->set_cwd_to_session_dir = true;
+        app->user_specified_cwd = true;
     } else {
         if (OPAL_SUCCESS != (rc = opal_getcwd(cwd, sizeof(cwd)))) {
             orte_show_help("help-orterun.txt", "orterun:init-failure",
@@ -1750,16 +1758,25 @@ static int create_app(int argc, char* argv[],
 
     total_num_apps++;
 
-    /* Preserve if we are to preload the binary */
-    app->preload_binary = orte_preload_binaries;
-    if( NULL != orterun_globals.preload_files)
+    /* Capture any preload flags */
+    app->preload_binary = orterun_globals.preload_binaries;
+    /* if we were told to cwd to the session dir and the app was given in
+     * relative syntax, then we need to preload the binary to
+     * find the app
+     */
+    if (app->set_cwd_to_session_dir && !opal_path_is_absolute(app->argv[0])) {
+        app->preload_binary = true;
+    }
+    if (NULL != orterun_globals.preload_files) {
         app->preload_files  = strdup(orterun_globals.preload_files);
-    else 
+    } else {
         app->preload_files = NULL;
-    if( NULL != orterun_globals.preload_files_dest_dir)
+    }
+    if (NULL != orterun_globals.preload_files_dest_dir) {
         app->preload_files_dest_dir  = strdup(orterun_globals.preload_files_dest_dir);
-    else 
+    } else {
         app->preload_files_dest_dir = NULL;
+    }
 
 #if OPAL_ENABLE_FT_CR == 1
     if( NULL != orterun_globals.sstore_load ) {
