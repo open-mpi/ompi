@@ -32,7 +32,7 @@
 ! Whether we have ASYNCHRONOUS or not
 #define OMPI_FORTRAN_HAVE_ASYNCHRONOUS @OMPI_FORTRAN_HAVE_ASYNCHRONOUS@
 
-! Whether we have ASYNCHRONOUS or not
+! Whether we have PROCEDURE or not
 #define OMPI_FORTRAN_HAVE_PROCEDURE @OMPI_FORTRAN_HAVE_PROCEDURE@
 
 ! Whether we are building the MPI F08 bindings with subarray support or not
