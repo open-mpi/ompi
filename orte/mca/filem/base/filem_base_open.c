@@ -7,6 +7,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2012      Los Alamos National Security, LLC.
+ *                         All rights reserved
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -33,12 +35,18 @@
  */
 ORTE_DECLSPEC int  orte_filem_base_output  = -1;
 ORTE_DECLSPEC orte_filem_base_module_t orte_filem = {
-    NULL, /* filem_init     */
-    NULL, /* filem_finalize */
-
-    NULL, /* put */
-    NULL, /* get */
-    NULL  /* rm  */
+    orte_filem_base_module_init,
+    orte_filem_base_module_finalize,
+    orte_filem_base_none_put,
+    orte_filem_base_none_put_nb,
+    orte_filem_base_none_get,
+    orte_filem_base_none_get_nb,
+    orte_filem_base_none_rm,
+    orte_filem_base_none_rm_nb,
+    orte_filem_base_none_wait,
+    orte_filem_base_none_wait_all,
+    orte_filem_base_none_preposition_files,
+    orte_filem_base_none_link_local_files
 };
 opal_list_t orte_filem_base_components_available;
 orte_filem_base_component_t orte_filem_base_selected_component;
@@ -50,26 +58,9 @@ bool orte_filem_base_is_active = false;
  */
 int orte_filem_base_open(void)
 {
-    char *str_value = NULL;
-
     orte_filem_base_output = opal_output_open(NULL);
 
     orte_filem_base_is_active = false;
-
-    /* 
-     * Which FileM component to open
-     *  - NULL or "" = auto-select
-     *  - "none" = Empty component
-     *  - ow. select that specific component
-     */
-    mca_base_param_reg_string_name("filem", NULL,
-                                   "Which Filem component to use (empty = auto-select)",
-                                   false, false,
-                                   NULL, &str_value);
-    if( NULL != str_value ) {
-        free(str_value);
-        str_value = NULL;
-    }
 
     /* Open up all available components */
     if (OPAL_SUCCESS !=
