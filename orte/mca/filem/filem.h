@@ -330,7 +330,7 @@ typedef void (*orte_filem_completion_cbfunc_t)(int status, void *cbdata);
 
 /* Pre-position files
  */
-typedef int (*orte_filem_base_preposition_files_fn_t)(opal_list_t *file_set,
+typedef int (*orte_filem_base_preposition_files_fn_t)(orte_job_t *jdata,
                                                       orte_filem_completion_cbfunc_t cbfunc,
                                                       void *cbdata);
 

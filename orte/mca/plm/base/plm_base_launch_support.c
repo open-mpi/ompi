@@ -160,11 +160,8 @@ void orte_plm_base_vm_ready(int fd, short args, void *cbdata)
     /* progress the job */
     caddy->jdata->state = ORTE_JOB_STATE_VM_READY;
 
-    /* position any required files - these would have been
-     * specified via MCA parameter, so we don't have to
-     * pass them here
-     */
-    if (ORTE_SUCCESS != orte_filem.preposition_files(NULL, files_ready, caddy->jdata)) {
+    /* position any required files */
+    if (ORTE_SUCCESS != orte_filem.preposition_files(caddy->jdata, files_ready, caddy->jdata)) {
         ORTE_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
     }
 

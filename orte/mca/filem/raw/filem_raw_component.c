@@ -24,8 +24,6 @@
 const char *orte_filem_raw_component_version_string = 
 "ORTE FILEM raw MCA component version " ORTE_VERSION;
 
-char *orte_filem_raw_files = NULL;
-
 /*
  * Local functionality
  */
@@ -55,12 +53,6 @@ orte_filem_base_component_t mca_filem_raw_component = {
 
 static int filem_raw_open(void) 
 {
-    mca_base_component_t *c = &mca_filem_raw_component.base_version;
-
-    mca_base_param_reg_string(c, "files",
-                              "Comma-separated list of files to preposition",
-                              false, false, NULL, &orte_filem_raw_files);
-
     return ORTE_SUCCESS;
 }
 

@@ -11,6 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2007-2011 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2009-2010 Oracle and/or its affiliates.  All rights reserved. 
+ * Copyright (c) 2012      Los Alamos National Security, LLC.
+ *                         All rights reserved
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -537,11 +539,6 @@ int orte_register_params(void)
                                    "Comma-delimited environmental variables to forward, can include value to set",
                                    false, false, NULL, &orte_forward_envars);
 
-
-    mca_base_param_reg_int_name("orte", "preload_binaries",
-                                "Preload the binaries on remote machines before starting remote proceses",
-                                false, false, (int)false, &value);
-    orte_preload_binaries = OPAL_INT_TO_BOOL(value);
 
     mca_base_param_reg_int_name("orte", "max_vm_size",
                                 "Maximum size of virtual machine - used to subdivide allocation",

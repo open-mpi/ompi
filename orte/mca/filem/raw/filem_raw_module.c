@@ -66,7 +66,7 @@ static int raw_rm(orte_filem_base_request_t *req);
 static int raw_rm_nb(orte_filem_base_request_t *req);
 static int raw_wait(orte_filem_base_request_t *req);
 static int raw_wait_all(opal_list_t *reqs);
-static int raw_preposition_files(opal_list_t *file_set,
+static int raw_preposition_files(orte_job_t *jdata,
                                  orte_filem_completion_cbfunc_t cbfunc,
                                  void *cbdata);
 static int raw_link_local_files(orte_job_t *jdata);
@@ -278,71 +278,88 @@ static void recv_ack(int status, orte_process_name_t* sender,
     }
 }
 
-static int raw_preposition_files(opal_list_t *fset,
+static int raw_preposition_files(orte_job_t *jdata,
                                  orte_filem_completion_cbfunc_t cbfunc,
                                  void *cbdata)
 {
 #ifdef __WINDOWS__
     return ORTE_ERR_NOT_SUPPORTED;
 #else
+    orte_app_context_t *app;
     opal_list_item_t *item;
     orte_filem_base_file_set_t *fs;
     int fd, rc=ORTE_SUCCESS;
     orte_filem_raw_xfer_t *xfer;
     int flags, i;
     char **files=NULL;
-    opal_list_t *file_set;
     orte_filem_raw_outbound_t *outbound;
     char *cptr;
+    opal_list_t fsets;
 
-    if (NULL == fset) {
-        /* see if any were provided via MCA param */
-        if (NULL == orte_filem_raw_files) {
-            OPAL_OUTPUT_VERBOSE((1, orte_filem_base_output,
-                                 "%s filem:raw: no files to position",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-            /* just fire the callback */
-            if (NULL != cbfunc) {
-                cbfunc(ORTE_SUCCESS, cbdata);
-            }
-            return ORTE_SUCCESS;
+    /* cycle across the app_contexts looking for files or
+     * binaries to be prepositioned
+     */
+    OBJ_CONSTRUCT(&fsets, opal_list_t);
+    for (i=0; i < jdata->apps->size; i++) {
+        if (NULL == (app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, i))) {
+            continue;
         }
-        /* otherwise, use the provided files */
-        files = opal_argv_split(orte_filem_raw_files, ',');
-        file_set = OBJ_NEW(opal_list_t);
-        for (i=0; NULL != files[i]; i++) {
+        if (app->preload_binary) {
+            /* add the executable to our list */
             fs = OBJ_NEW(orte_filem_base_file_set_t);
-            fs->local_target = strdup(files[i]);
-            /* check any suffix for file type */
-            if (NULL != (cptr = strchr(files[i], '.'))) {
-                if (0 == strncmp(cptr, ".tar", 4)) {
-                    OPAL_OUTPUT_VERBOSE((1, orte_filem_base_output,
-                                         "%s filem:raw: marking file %s as TAR",
-                                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                         files[i]));
-                    fs->target_flag = ORTE_FILEM_TYPE_TAR;
-                } else if (0 == strncmp(cptr, ".bz", 3)) {
-                    OPAL_OUTPUT_VERBOSE((1, orte_filem_base_output,
-                                         "%s filem:raw: marking file %s as BZIP",
-                                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                         files[i]));
-                    fs->target_flag = ORTE_FILEM_TYPE_BZIP;
-                } else if (0 == strncmp(cptr, ".gz", 3)) {
-                    OPAL_OUTPUT_VERBOSE((1, orte_filem_base_output,
-                                         "%s filem:raw: marking file %s as GZIP",
-                                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                         files[i]));
-                    fs->target_flag = ORTE_FILEM_TYPE_GZIP;
+            fs->local_target = strdup(app->app);
+            fs->target_flag = ORTE_FILEM_TYPE_FILE;
+            opal_list_append(&fsets, &fs->super);
+            /* if we are preloading the binary, then the app must be in relative
+             * syntax or we won't find it - the binary will be positioned in the
+             * session dir
+             */
+            if (opal_path_is_absolute(app->app)) {
+                cptr = opal_basename(app->app);
+                free(app->app);
+                app->app = cptr;
+                free(app->argv[0]);
+                app->argv[0] = strdup(cptr);
+            }
+        }
+        if (NULL != app->preload_files) {
+            files = opal_argv_split(app->preload_files, ',');
+            for (i=0; NULL != files[i]; i++) {
+                fs = OBJ_NEW(orte_filem_base_file_set_t);
+                fs->local_target = strdup(files[i]);
+                /* check any suffix for file type */
+                if (NULL != (cptr = strchr(files[i], '.'))) {
+                    if (0 == strncmp(cptr, ".tar", 4)) {
+                        OPAL_OUTPUT_VERBOSE((1, orte_filem_base_output,
+                                             "%s filem:raw: marking file %s as TAR",
+                                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                             files[i]));
+                        fs->target_flag = ORTE_FILEM_TYPE_TAR;
+                    } else if (0 == strncmp(cptr, ".bz", 3)) {
+                        OPAL_OUTPUT_VERBOSE((1, orte_filem_base_output,
+                                             "%s filem:raw: marking file %s as BZIP",
+                                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                             files[i]));
+                        fs->target_flag = ORTE_FILEM_TYPE_BZIP;
+                    } else if (0 == strncmp(cptr, ".gz", 3)) {
+                        OPAL_OUTPUT_VERBOSE((1, orte_filem_base_output,
+                                             "%s filem:raw: marking file %s as GZIP",
+                                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                             files[i]));
+                        fs->target_flag = ORTE_FILEM_TYPE_GZIP;
+                    } else {
+                        fs->target_flag = ORTE_FILEM_TYPE_FILE;
+                    }
                 } else {
                     fs->target_flag = ORTE_FILEM_TYPE_FILE;
                 }
-            } else {
-                fs->target_flag = ORTE_FILEM_TYPE_FILE;
+                if (NULL != app->preload_files_dest_dir) {
+                    fs->remote_target = opal_os_path(false, app->preload_files_dest_dir, files[i], NULL);
+                }
+                opal_list_append(&fsets, &fs->super);
             }
-            opal_list_append(file_set, &fs->super);
+            opal_argv_free(files);
         }
-    } else {
-        file_set = fset;
     }
 
     /* track the outbound file sets */
@@ -355,14 +372,13 @@ static int raw_preposition_files(opal_list_t *fset,
      * fileset and initiate xcast transfer of each file to every
      * daemon
      */
-    for (item = opal_list_get_first(file_set);
-         item != opal_list_get_end(file_set);
-         item = opal_list_get_next(item)) {
+    while (NULL != (item = opal_list_remove_first(&fsets))) {
         fs = (orte_filem_base_file_set_t*)item;
         /* attempt to open the specified file */
         if (0 >= (fd = open(fs->local_target, O_RDONLY))) {
             opal_output(0, "%s CANNOT ACCESS FILE %s",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), fs->local_target);
+            OBJ_RELEASE(item);
             rc = ORTE_ERROR;
             continue;
         }
@@ -389,7 +405,9 @@ static int raw_preposition_files(opal_list_t *fset,
         opal_event_set_priority(&xfer->ev, ORTE_MSG_PRI);
         opal_event_add(&xfer->ev, 0);
         xfer->pending = true;
+        OBJ_RELEASE(item);
     }
+    OBJ_DESTRUCT(&fsets);
 
     return rc;
 #endif
@@ -798,8 +816,18 @@ static void recv_files(int status, orte_process_name_t* sender,
         incoming->type = type;
         /* define the full filename to point to the absolute location */
         if (NULL == target) {
+            /* if it starts with "./", then we need to remove
+             * that prefix
+             */
+            if (0 == strncmp(file, "./", 2) ||
+                0 == strncmp(file, "../", 3)) {
+                cptr = strchr(file, '/');
+                ++cptr;  /* step over the '/' */
+                tmp = strdup(cptr);
+            } else {
+                tmp = strdup(file);
+            }
             /* separate out the top-level directory of the target */
-            tmp = strdup(file);
             if (NULL != (cptr = strchr(tmp, '/'))) {
                 *cptr = '\0';
             }
@@ -814,8 +842,18 @@ static void recv_files(int status, orte_process_name_t* sender,
             incoming->top = strdup(target);
             incoming->fullpath = strdup(target);
         } else {
+            /* if it starts with "./", then we need to remove
+             * that prefix
+             */
+            if (0 == strncmp(target, "./", 2) ||
+                0 == strncmp(target, "../", 3)) {
+                cptr = strchr(target, '/');
+                ++cptr;  /* step over the '/' */
+                tmp = strdup(cptr);
+            } else {
+                tmp = strdup(target);
+            }
             /* separate out the top-level directory of the target */
-            tmp = strdup(target);
             if (NULL != (cptr = strchr(tmp, '/'))) {
                 *cptr = '\0';
             }

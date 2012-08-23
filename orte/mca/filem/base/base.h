@@ -112,7 +112,7 @@ int orte_filem_base_none_rm( orte_filem_base_request_t *request);
 int orte_filem_base_none_rm_nb( orte_filem_base_request_t *request);
 int orte_filem_base_none_wait( orte_filem_base_request_t *request);
 int orte_filem_base_none_wait_all( opal_list_t *request_list);
-int orte_filem_base_none_preposition_files(opal_list_t *file_set,
+int orte_filem_base_none_preposition_files(orte_job_t *jdata,
                                            orte_filem_completion_cbfunc_t cbfunc,
                                            void *cbdata);
 int orte_filem_base_none_link_local_files(orte_job_t *jdata);

@@ -175,9 +175,6 @@ int orte_stat_history_size;
 /* envars to forward */
 char *orte_forward_envars = NULL;
 
-/* preload binaries */
-bool orte_preload_binaries = false;
-
 /* map-reduce mode */
 bool orte_map_reduce = false;
 
@@ -576,6 +573,7 @@ static void orte_app_context_construct(orte_app_context_t* app_context)
     app_context->env=NULL;
     app_context->cwd=NULL;
     app_context->user_specified_cwd=false;
+    app_context->set_cwd_to_session_dir = false;
     app_context->hostfile=NULL;
     app_context->add_hostfile=NULL;
     app_context->add_host = NULL;
@@ -1035,5 +1033,4 @@ OBJ_CLASS_INSTANCE(orte_job_map_t,
                    opal_object_t,
                    orte_job_map_construct,
                    orte_job_map_destruct);
-
 #endif

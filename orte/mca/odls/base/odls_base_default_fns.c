@@ -44,6 +44,7 @@
 
 #include "opal/util/opal_environ.h"
 #include "opal/util/argv.h"
+#include "opal/util/os_dirpath.h"
 #include "opal/util/os_path.h"
 #include "opal/util/path.h"
 #include "opal/util/sys_limits.h"
@@ -808,11 +809,16 @@ static int odls_base_default_setup_fork(orte_app_context_t *context,
     return ORTE_SUCCESS;
 }
 
-static int setup_child(orte_proc_t *child, orte_job_t *jobdat, char ***env)
+static int setup_child(orte_proc_t *child,
+                       orte_job_t *jobdat,
+                       orte_app_context_t *app)
 {
-    char *param, *value;
+    char *param, *value, ***env;
     int rc;
-    
+
+    /* for convenience */
+    env = &app->env;
+
     /* setup the jobid */
     if (ORTE_SUCCESS != (rc = orte_util_convert_jobid_to_string(&value, child->name.jobid))) {
         ORTE_ERROR_LOG(rc);
@@ -923,6 +929,57 @@ static int setup_child(orte_proc_t *child, orte_job_t *jobdat, char ***env)
         child->iof_complete = true;
     }
 
+    /* construct the proc's session dir name */
+    if (NULL != orte_process_info.tmpdir_base) {
+        value = strdup(orte_process_info.tmpdir_base);
+    } else {
+        value = NULL;
+    }
+    param = NULL;
+    if (ORTE_SUCCESS != (rc = orte_session_dir_get_name(&param, &value, NULL,
+                                                        orte_process_info.nodename,
+                                                        NULL, &child->name))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    free(value);
+    /* pass an envar so the proc can find any files it had prepositioned */
+    opal_setenv("OMPI_FILE_LOCATION", param, true, env);
+
+    /* if the user wanted the cwd to be the proc's session dir, then
+     * switch to that location now
+     */
+    if (app->set_cwd_to_session_dir) {
+        /* create the session dir - we know it doesn't
+         * already exist!
+         */
+        if (OPAL_SUCCESS != (rc = opal_os_dirpath_create(param, S_IRWXU))) {
+            ORTE_ERROR_LOG(rc);
+            /* doesn't exist with correct permissions, and/or we can't
+             * create it - either way, we are done
+             */
+            free(param);
+            return rc;
+        }
+        /* change to it */
+        if (0 != chdir(param)) {
+            free(param);
+            return ORTE_ERROR;
+        }
+        /* It seems that chdir doesn't
+         * adjust the $PWD enviro variable when it changes the directory. This
+         * can cause a user to get a different response when doing getcwd vs
+         * looking at the enviro variable. To keep this consistent, we explicitly
+         * ensure that the PWD enviro variable matches the CWD we moved to.
+         *
+         * NOTE: if a user's program does a chdir(), then $PWD will once
+         * again not match getcwd! This is beyond our control - we are only
+         * ensuring they start out matching.
+         */
+        opal_setenv("PWD", param, true, env);
+    }
+    free(param);
+
     return ORTE_SUCCESS;
 }
 
@@ -934,31 +991,33 @@ static int setup_path(orte_app_context_t *app)
     char *pathenv = NULL, *mpiexec_pathenv = NULL;
     char *full_search;
 
-    /* Try to change to the app's cwd and check that the app
-       exists and is executable The function will
-       take care of outputting a pretty error message, if required
-    */
-    if (ORTE_SUCCESS != (rc = orte_util_check_context_cwd(app, true))) {
-        /* do not ERROR_LOG - it will be reported elsewhere */
-        goto CLEANUP;
+    if (!app->set_cwd_to_session_dir) {
+        /* Try to change to the app's cwd and check that the app
+           exists and is executable The function will
+           take care of outputting a pretty error message, if required
+        */
+        if (ORTE_SUCCESS != (rc = orte_util_check_context_cwd(app, true))) {
+            /* do not ERROR_LOG - it will be reported elsewhere */
+            goto CLEANUP;
+        }
+        
+        /* The prior function will have done a chdir() to jump us to
+         * wherever the app is to be executed. This could be either where
+         * the user specified (via -wdir), or to the user's home directory
+         * on this node if nothing was provided. It seems that chdir doesn't
+         * adjust the $PWD enviro variable when it changes the directory. This
+         * can cause a user to get a different response when doing getcwd vs
+         * looking at the enviro variable. To keep this consistent, we explicitly
+         * ensure that the PWD enviro variable matches the CWD we moved to.
+         *
+         * NOTE: if a user's program does a chdir(), then $PWD will once
+         * again not match getcwd! This is beyond our control - we are only
+         * ensuring they start out matching.
+         */
+        getcwd(dir, sizeof(dir));
+        opal_setenv("PWD", dir, true, &app->env);
     }
-        
-    /* The prior function will have done a chdir() to jump us to
-     * wherever the app is to be executed. This could be either where
-     * the user specified (via -wdir), or to the user's home directory
-     * on this node if nothing was provided. It seems that chdir doesn't
-     * adjust the $PWD enviro variable when it changes the directory. This
-     * can cause a user to get a different response when doing getcwd vs
-     * looking at the enviro variable. To keep this consistent, we explicitly
-     * ensure that the PWD enviro variable matches the CWD we moved to.
-     *
-     * NOTE: if a user's program does a chdir(), then $PWD will once
-     * again not match getcwd! This is beyond our control - we are only
-     * ensuring they start out matching.
-     */
-    getcwd(dir, sizeof(dir));
-    opal_setenv("PWD", dir, true, &app->env);
-        
+
     /* Search for the OMPI_exec_path and PATH settings in the environment. */
     for (argvptr = app->env; *argvptr != NULL; argvptr++) { 
         if (0 == strncmp("OMPI_exec_path=", *argvptr, 15)) {
@@ -1111,22 +1170,12 @@ void orte_odls_base_default_launch_local(int fd, short sd, void *cbdata)
      */
     asprintf(&num_app_ctx, "%lu", (unsigned long)jobdat->num_apps);
 
-    /* Now we preload any files that are needed. This is done on a per
-     * app context basis, so let's take the opportunity to build
-     * some common envars we need to pass for MPI-3 compatibility
-     */
+    /* build some common envars we need to pass for MPI-3 compatibility */
     nps = NULL;
     firstranks = NULL;
     for (j=0; j < jobdat->apps->size; j++) {
         if (NULL == (app = (orte_app_context_t*)opal_pointer_array_get_item(jobdat->apps, j))) {
             continue;
-        }
-        if(app->used_on_node &&
-           (app->preload_binary || NULL != app->preload_files)) {
-            if( ORTE_SUCCESS != (rc = orte_odls_base_preload_files_app_context(app)) ) {
-                ORTE_ERROR_LOG(rc);
-                /* JJH: Do not fail here, instead try to execute without the preloaded options*/
-            }
         }
         opal_argv_append_nosize(&nps, ORTE_VPID_PRINT(app->num_procs));
         opal_argv_append_nosize(&firstranks, ORTE_VPID_PRINT(app->first_rank));
@@ -1423,7 +1472,7 @@ void orte_odls_base_default_launch_local(int fd, short sd, void *cbdata)
             /* setup the rest of the environment with the proc-specific items - these
              * will be overwritten for each child
              */
-            if (ORTE_SUCCESS != (rc = setup_child(child, jobdat, &app->env))) {
+            if (ORTE_SUCCESS != (rc = setup_child(child, jobdat, app))) {
                 ORTE_ERROR_LOG(rc);
                 ORTE_ACTIVATE_PROC_STATE(&child->name, ORTE_PROC_STATE_FAILED_TO_LAUNCH);
                 continue;
@@ -2315,7 +2364,7 @@ int orte_odls_base_default_restart_proc(orte_proc_t *child,
     app = (orte_app_context_t*)opal_pointer_array_get_item(jobdat->apps, child->app_idx);
 
     /* reset envars to match this child */    
-    if (ORTE_SUCCESS != (rc = setup_child(child, jobdat, &app->env))) {
+    if (ORTE_SUCCESS != (rc = setup_child(child, jobdat, app))) {
         ORTE_ERROR_LOG(rc);
         goto CLEANUP;
     }
