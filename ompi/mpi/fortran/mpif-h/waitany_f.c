@@ -78,6 +78,15 @@ void ompi_waitany_f(MPI_Fint *count, MPI_Fint *array_of_requests,
     int i, c_ierr;
     OMPI_SINGLE_NAME_DECL(indx);
 
+    /* Shortcut to avoid malloc(0) if *count==0.  We're intentionally
+       skipping other parameter error checks. */
+    if (OPAL_UNLIKELY(0 == OMPI_FINT_2_INT(*count))) {
+        *indx = OMPI_INT_2_FINT(MPI_UNDEFINED);
+        MPI_Status_c2f(&ompi_status_empty, status); 
+        *ierr = OMPI_INT_2_FINT(MPI_SUCCESS);
+        return;
+    }
+
     c_req = (MPI_Request *) malloc(OMPI_FINT_2_INT(*count) * sizeof(MPI_Request));
     if (NULL == c_req) {
         c_ierr = OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_NO_MEM,

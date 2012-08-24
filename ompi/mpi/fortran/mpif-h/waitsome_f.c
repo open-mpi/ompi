@@ -81,6 +81,14 @@ void ompi_waitsome_f(MPI_Fint *incount, MPI_Fint *array_of_requests,
     OMPI_SINGLE_NAME_DECL(outcount);
     OMPI_ARRAY_NAME_DECL(array_of_indices);
 
+    /* Shortcut to avoid malloc(0) if *count==0.  We're intentionally
+       skipping other parameter error checks. */
+    if (OPAL_UNLIKELY(0 == OMPI_FINT_2_INT(*incount))) {
+        *outcount = OMPI_INT_2_FINT(MPI_UNDEFINED);
+        *ierr = OMPI_INT_2_FINT(MPI_SUCCESS);
+        return;
+    }
+
     c_req = (MPI_Request *) malloc(OMPI_FINT_2_INT(*incount) *
                    (sizeof(MPI_Request) + sizeof(MPI_Status)));
     if (NULL == c_req) {
