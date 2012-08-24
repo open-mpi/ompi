@@ -273,16 +273,8 @@ typedef struct {
     char *prefix_dir;
     /** Preload the binary on the remote machine (in PLM via FileM) */
     bool preload_binary;
-    /** Preload the libraries on the remote machine (in PLM via FileM) */
-    bool preload_libs;
     /** Preload the comma separated list of files to the remote machines cwd */
     char * preload_files;
-    /** Destination directory for the preloaded files 
-     * If NULL then the absolute and relative paths are obeyed */
-    char *preload_files_dest_dir;
-    /** Source directory for the preloaded files 
-     * If NULL then the absolute and relative paths are obeyed */
-    char *preload_files_src_dir;
     /* is being used on the local node */
     bool used_on_node;
 #if OPAL_ENABLE_FT_CR == 1

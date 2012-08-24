@@ -9,8 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2011 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2011      Los Alamos National Security, LLC.
+ * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * $COPYRIGHT$
  *
@@ -181,20 +181,11 @@ int orte_dt_copy_app_context(orte_app_context_t **dest, orte_app_context_t *src,
     }
     
     (*dest)->preload_binary = src->preload_binary;
-    (*dest)->preload_libs = src->preload_libs;
     
     if( NULL != src->preload_files) {
         (*dest)->preload_files  = strdup(src->preload_files);
     }
     
-    if( NULL != src->preload_files_dest_dir) {
-        (*dest)->preload_files_dest_dir  = strdup(src->preload_files_dest_dir);
-    }
-   
-    if( NULL != src->preload_files_src_dir) {
-        (*dest)->preload_files_src_dir  = strdup(src->preload_files_src_dir);
-    }
-
     (*dest)->recovery_defined = src->recovery_defined;
     (*dest)->max_restarts = src->max_restarts;
 

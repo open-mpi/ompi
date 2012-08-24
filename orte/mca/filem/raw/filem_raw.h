@@ -42,7 +42,6 @@ typedef struct {
     opal_event_t ev;
     bool pending;
     char *file;
-    char *target;
     int32_t type;
     int32_t nchunk;
     int status;

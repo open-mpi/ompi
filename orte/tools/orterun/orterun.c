@@ -230,11 +230,6 @@ static opal_cmd_line_init_t cmd_line_init[] = {
       &orterun_globals.preload_files, OPAL_CMD_LINE_TYPE_STRING,
       "Preload the comma separated list of files to the remote machines current working directory before starting the remote process." },
 
-    /* Where to Preload files on the remote machine */
-    { NULL, NULL, NULL, '\0', NULL, "preload-files-dest-dir", 1,
-      &orterun_globals.preload_files_dest_dir, OPAL_CMD_LINE_TYPE_STRING,
-      "The destination directory to use in conjunction with --preload-files. By default the absolute and relative paths provided by --preload-files are used." },
-
 #if OPAL_ENABLE_FT_CR == 1
     /* Tell SStore to preload a snapshot before launch */
     { NULL, NULL, NULL, '\0', NULL, "sstore-load", 1,
@@ -994,7 +989,6 @@ static int init_globals(void)
 
     orterun_globals.preload_binaries = false;
     orterun_globals.preload_files  = NULL;
-    orterun_globals.preload_files_dest_dir = NULL;
 
 #if OPAL_ENABLE_FT_CR == 1
     orterun_globals.sstore_load = NULL;
@@ -1762,20 +1756,19 @@ static int create_app(int argc, char* argv[],
     app->preload_binary = orterun_globals.preload_binaries;
     /* if we were told to cwd to the session dir and the app was given in
      * relative syntax, then we need to preload the binary to
-     * find the app
+     * find the app - don't do this for java apps, however, as we
+     * can't easily find the class on the cmd line. Java apps have to
+     * preload their binary via the preload_files option
      */
-    if (app->set_cwd_to_session_dir && !opal_path_is_absolute(app->argv[0])) {
+    if (app->set_cwd_to_session_dir &&
+        !opal_path_is_absolute(app->argv[0]) &&
+        NULL == strstr(app->argv[0], "java")) {
         app->preload_binary = true;
     }
     if (NULL != orterun_globals.preload_files) {
         app->preload_files  = strdup(orterun_globals.preload_files);
     } else {
         app->preload_files = NULL;
-    }
-    if (NULL != orterun_globals.preload_files_dest_dir) {
-        app->preload_files_dest_dir  = strdup(orterun_globals.preload_files_dest_dir);
-    } else {
-        app->preload_files_dest_dir = NULL;
     }
 
 #if OPAL_ENABLE_FT_CR == 1
