@@ -590,12 +590,6 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
     }
     
  COMPLETE:
-    /* setup any local files that were prepositioned for us */
-    if (ORTE_SUCCESS != (rc = orte_filem.link_local_files(jdata))) {
-        ORTE_ERROR_LOG(rc);
-        goto REPORT_ERROR;
-    }
-
     /* if we don't have any local procs, create
      * the collectives so the job doesn't stall
      */
@@ -950,9 +944,7 @@ static int setup_child(orte_proc_t *child,
      * switch to that location now
      */
     if (app->set_cwd_to_session_dir) {
-        /* create the session dir - we know it doesn't
-         * already exist!
-         */
+        /* create the session dir - may not exist */
         if (OPAL_SUCCESS != (rc = opal_os_dirpath_create(param, S_IRWXU))) {
             ORTE_ERROR_LOG(rc);
             /* doesn't exist with correct permissions, and/or we can't
@@ -1236,7 +1228,6 @@ void orte_odls_base_default_launch_local(int fd, short sd, void *cbdata)
             }
         }
         
-        
         /* setup the environment for this app */
         if (ORTE_SUCCESS != (rc = odls_base_default_setup_fork(app,
                                                                jobdat->num_local_procs,
@@ -1305,6 +1296,22 @@ void orte_odls_base_default_launch_local(int fd, short sd, void *cbdata)
         opal_setenv("OMPI_NUM_APP_CTX", num_app_ctx, true, &app->env);
         opal_setenv("OMPI_FIRST_RANKS", firstrankstring, true, &app->env);
         opal_setenv("OMPI_APP_CTX_NUM_PROCS", npstring, true, &app->env);
+
+        /* setup any local files that were prepositioned for us */
+        if (ORTE_SUCCESS != (rc = orte_filem.link_local_files(jobdat, app))) {
+            /* cycle through children to find those for this jobid */
+            for (idx=0; idx < orte_local_children->size; idx++) {
+                if (NULL == (child = (orte_proc_t*)opal_pointer_array_get_item(orte_local_children, idx))) {
+                    continue;
+                }
+                if (OPAL_EQUAL == opal_dss.compare(&job, &(child->name.jobid), ORTE_JOBID) &&
+                    j == (int)child->app_idx) {
+                    child->exit_code = rc;
+                    ORTE_ACTIVATE_PROC_STATE(&child->name, ORTE_PROC_STATE_FAILED_TO_LAUNCH);
+                }
+            }
+            goto GETOUT;
+        }
 
         /* okay, now let's launch all the local procs for this app using the provided fork_local fn */
         for (proc_rank = 0, idx=0; idx < orte_local_children->size; idx++) {

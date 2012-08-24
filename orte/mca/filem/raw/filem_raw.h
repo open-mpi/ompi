@@ -39,8 +39,10 @@ OBJ_CLASS_DECLARATION(orte_filem_raw_outbound_t);
 typedef struct {
     opal_list_item_t super;
     orte_filem_raw_outbound_t *outbound;
+    orte_app_idx_t app_idx;
     opal_event_t ev;
     bool pending;
+    char *src;
     char *file;
     int32_t type;
     int32_t nchunk;
@@ -51,6 +53,7 @@ OBJ_CLASS_DECLARATION(orte_filem_raw_xfer_t);
 
 typedef struct {
     opal_list_item_t super;
+    orte_app_idx_t app_idx;
     opal_event_t ev;
     bool pending;
     int fd;
