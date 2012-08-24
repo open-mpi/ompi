@@ -583,6 +583,7 @@ static int raw_link_local_files(orte_job_t *jdata,
                              ORTE_NAME_PRINT(&proc->name)));
 
         /* get the session dir name in absolute form */
+        path = NULL;
         rc = orte_session_dir_get_name(&path, &prefix, NULL,
                                        orte_process_info.nodename,
                                        NULL, &proc->name);
@@ -592,6 +593,7 @@ static int raw_link_local_files(orte_job_t *jdata,
             /* doesn't exist with correct permissions, and/or we can't
              * create it - either way, we are done
              */
+            free(path);
             return rc;
         }
 
@@ -636,11 +638,10 @@ static int raw_link_local_files(orte_job_t *jdata,
             }
         }
         free(path);
-        if (NULL != prefix) {
-            free(prefix);
-        }
     }
-
+    if (NULL != prefix) {
+        free(prefix);
+    }
     free(my_dir);
     return ORTE_SUCCESS;
 #endif
