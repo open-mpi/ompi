@@ -232,7 +232,8 @@ int orte_filem_base_none_preposition_files(orte_job_t *jdata,
     return ORTE_SUCCESS;
 }
 
-int orte_filem_base_none_link_local_files(orte_job_t *jdata)
+int orte_filem_base_none_link_local_files(orte_job_t *jdata,
+                                          orte_app_context_t *app)
 {
     return ORTE_SUCCESS;
 }

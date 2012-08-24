@@ -115,7 +115,8 @@ int orte_filem_base_none_wait_all( opal_list_t *request_list);
 int orte_filem_base_none_preposition_files(orte_job_t *jdata,
                                            orte_filem_completion_cbfunc_t cbfunc,
                                            void *cbdata);
-int orte_filem_base_none_link_local_files(orte_job_t *jdata);
+int orte_filem_base_none_link_local_files(orte_job_t *jdata,
+                                          orte_app_context_t *app);
 
 /**
  * Some utility functions

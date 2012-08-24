@@ -49,6 +49,7 @@ BEGIN_C_DECLS
 #define ORTE_FILEM_TYPE_TAR       3
 #define ORTE_FILEM_TYPE_BZIP      4
 #define ORTE_FILEM_TYPE_GZIP      5
+#define ORTE_FILEM_TYPE_EXE       6
 
 /**
  * Type of movement
@@ -99,6 +100,9 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_filem_base_process_set_t);
 struct orte_filem_base_file_set_1_0_0_t {
     /** This is an object, so must have a super */
     opal_list_item_t super;
+
+    /* the app_index this pertains to, if applicable */
+    orte_app_idx_t app_idx;
 
     /* Local file reference */
     char * local_target;
@@ -335,7 +339,8 @@ typedef int (*orte_filem_base_preposition_files_fn_t)(orte_job_t *jdata,
                                                       void *cbdata);
 
 /* link local files */
-typedef int (*orte_filem_base_link_local_files_fn_t)(orte_job_t *jdata);
+typedef int (*orte_filem_base_link_local_files_fn_t)(orte_job_t *jdata,
+                                                     orte_app_context_t *app);
 
 /**
  * Structure for FILEM components.

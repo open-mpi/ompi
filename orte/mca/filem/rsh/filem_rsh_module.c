@@ -208,7 +208,8 @@ static int rsh_preposition_files(orte_job_t *jdata,
     }
     return ORTE_SUCCESS;
 }
-static int rsh_link_local_files(orte_job_t *jdata)
+static int rsh_link_local_files(orte_job_t *jdata,
+                                orte_app_context_t *app)
 {
     return ORTE_SUCCESS;
 }
