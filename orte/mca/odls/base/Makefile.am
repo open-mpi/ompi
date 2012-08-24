@@ -9,6 +9,8 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2012      Los Alamos National Security, LLC.
+#                         All rights reserved
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -17,21 +19,13 @@
 #
 
 headers += \
-        base/base.h
-
-libmca_odls_la_SOURCES += \
-        base/odls_base_open.c
-
-if !ORTE_DISABLE_FULL_SUPPORT
-
-dist_pkgdata_DATA += base/help-orte-odls-base.txt
-
-headers += \
+        base/base.h \
         base/odls_private.h
 
 libmca_odls_la_SOURCES += \
+        base/odls_base_open.c \
         base/odls_base_close.c \
         base/odls_base_select.c \
-        base/odls_base_default_fns.c \
-        base/odls_base_state.c
-endif
+        base/odls_base_default_fns.c
+
+dist_pkgdata_DATA += base/help-orte-odls-base.txt

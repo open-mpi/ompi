@@ -501,9 +501,6 @@ int orte_errmgr_base_update_app_context_for_cr_recovery(orte_job_t *jobdata,
         new_app_context->prefix_dir             = (NULL == cur_app_context->prefix_dir ? NULL :
                                                    strdup(cur_app_context->prefix_dir));
         new_app_context->preload_binary         = false;
-        new_app_context->preload_libs           = false;
-        new_app_context->preload_files_dest_dir = NULL;
-        new_app_context->preload_files_src_dir  = NULL;
 
         asprintf(&tmp_str, reference_fmt_str, vpid_snapshot->process_name.vpid);
         asprintf(&(new_app_context->sstore_load),

@@ -317,10 +317,11 @@ static int raw_preposition_files(orte_job_t *jdata,
             if (opal_path_is_absolute(app->app)) {
                 cptr = opal_basename(app->app);
                 free(app->app);
-                app->app = cptr;
+                asprintf(&app->app, "./%s", cptr);
                 free(app->argv[0]);
-                app->argv[0] = strdup(cptr);
+                app->argv[0] = strdup(app->app);
             }
+            fs->remote_target = strdup(app->app);
         }
         if (NULL != app->preload_files) {
             files = opal_argv_split(app->preload_files, ',');
@@ -353,13 +354,29 @@ static int raw_preposition_files(orte_job_t *jdata,
                 } else {
                     fs->target_flag = ORTE_FILEM_TYPE_FILE;
                 }
-                if (NULL != app->preload_files_dest_dir) {
-                    fs->remote_target = opal_os_path(false, app->preload_files_dest_dir, files[i], NULL);
+                /* if this was an absolute path, then we need
+                 * to convert it to a relative path - we do not
+                 * allow positioning of files to absolute locations
+                 * due to the potential for unintentional overwriting
+                 * of files
+                 */
+                if (opal_path_is_absolute(files[i])) {
+                    fs->remote_target = strdup(&files[i][1]);
+                } else {
+                    fs->remote_target = strdup(files[i]);
                 }
                 opal_list_append(&fsets, &fs->super);
             }
             opal_argv_free(files);
         }
+    }
+    if (0 == opal_list_get_size(&fsets)) {
+        /* nothing to preposition */
+        if (NULL != cbfunc) {
+            cbfunc(ORTE_SUCCESS, cbdata);
+        }
+        OBJ_DESTRUCT(&fsets);
+        return ORTE_SUCCESS;
     }
 
     /* track the outbound file sets */
@@ -394,9 +411,16 @@ static int raw_preposition_files(orte_job_t *jdata,
                              "%s filem:raw: setting up to position file %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), fs->local_target));
         xfer = OBJ_NEW(orte_filem_raw_xfer_t);
-        xfer->file = strdup(fs->local_target);
-        if (NULL != fs->remote_target) {
-            xfer->target = strdup(fs->remote_target);
+        /* if the remote target starts with "./", then we need to remove
+         * that prefix
+         */
+        if (0 == strncmp(fs->remote_target, "./", 2) ||
+            0 == strncmp(fs->remote_target, "../", 3)) {
+            cptr = strchr(fs->remote_target, '/');
+            ++cptr;  /* step over the '/' */
+            xfer->file = strdup(cptr);
+        } else {
+            xfer->file = strdup(fs->remote_target);
         }
         xfer->type = fs->target_flag;
         xfer->outbound = outbound;
@@ -429,8 +453,9 @@ static int create_link(char *my_dir, char *path,
      */
     if (0 != stat(fullname, &buf)) {
         OPAL_OUTPUT_VERBOSE((1, orte_filem_base_output,
-                             "%s filem:raw: creating symlink to %s",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), link_pt));
+                             "%s filem:raw: creating symlink to %s\n\tmypath: %s\n\tlink: %s",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), link_pt,
+                             mypath, fullname));
         /* do the symlink */
         if (0 != symlink(mypath, fullname)) {
             opal_output(0, "%s Failed to symlink %s to %s",
@@ -481,9 +506,7 @@ static int raw_link_local_files(orte_job_t *jdata)
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_NAME_PRINT(&proc->name)));
 
-        /* get the session dir name in absolute form - create it
-         * if it doesn't already exist
-         */
+        /* get the session dir name in absolute form */
         rc = orte_session_dir_get_name(&path, &prefix, NULL,
                                        orte_process_info.nodename,
                                        NULL, &proc->name);
@@ -591,14 +614,9 @@ static void send_chunk(int fd, short argc, void *cbdata)
         close(fd);
         return;
     }
-    /* if it is the first chunk, then add file type and target path */
+    /* if it is the first chunk, then add file type */
     if (0 == rev->nchunk) {
         if (OPAL_SUCCESS != (rc = opal_dss.pack(&chunk, &rev->type, 1, OPAL_INT32))) {
-            ORTE_ERROR_LOG(rc);
-            close(fd);
-            return;
-        }
-        if (OPAL_SUCCESS != (rc = opal_dss.pack(&chunk, &rev->target, 1, OPAL_STRING))) {
             ORTE_ERROR_LOG(rc);
             close(fd);
             return;
@@ -703,12 +721,6 @@ static int link_archive(orte_filem_raw_incoming_t *inbnd)
                              "%s filem:raw: path %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              path));
-        /* if it is an absolute path, then do nothing - the user
-         * is responsible for knowing where it went
-         */
-        if (opal_path_is_absolute(path)) {
-            continue;
-        }
         /* take the first element of the path as our
          * link point
          */
@@ -734,7 +746,6 @@ static void recv_files(int status, orte_process_name_t* sender,
     orte_filem_raw_incoming_t *ptr, *incoming;
     opal_list_item_t *item;
     int32_t type;
-    char *target=NULL;
     char *tmp, *cptr;
 
     /* unpack the data */
@@ -773,13 +784,6 @@ static void recv_files(int status, orte_process_name_t* sender,
             free(file);
             return;
         }
-        n=1;
-        if (OPAL_SUCCESS != (rc = opal_dss.unpack(buffer, &target, &n, OPAL_STRING))) {
-            ORTE_ERROR_LOG(rc);
-            send_complete(file, rc);
-            free(file);
-            return;
-        }
     }
 
     OPAL_OUTPUT_VERBOSE((1, orte_filem_base_output,
@@ -805,66 +809,24 @@ static void recv_files(int status, orte_process_name_t* sender,
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), file);
             send_complete(file, ORTE_ERR_FILE_WRITE_FAILURE);
             free(file);
-            if (NULL != target) {
-                free(target);
-            }
             return;
         }
         /* nope - add it */
         incoming = OBJ_NEW(orte_filem_raw_incoming_t);
         incoming->file = strdup(file);
         incoming->type = type;
-        /* define the full filename to point to the absolute location */
-        if (NULL == target) {
-            /* if it starts with "./", then we need to remove
-             * that prefix
-             */
-            if (0 == strncmp(file, "./", 2) ||
-                0 == strncmp(file, "../", 3)) {
-                cptr = strchr(file, '/');
-                ++cptr;  /* step over the '/' */
-                tmp = strdup(cptr);
-            } else {
-                tmp = strdup(file);
-            }
-            /* separate out the top-level directory of the target */
-            if (NULL != (cptr = strchr(tmp, '/'))) {
-                *cptr = '\0';
-            }
-            /* save it */
-            incoming->top = strdup(tmp);
-            free(tmp);
-            /* define the full path to where we will put it */
-            jobfam_dir = opal_dirname(orte_process_info.job_session_dir);
-            incoming->fullpath = opal_os_path(false, jobfam_dir, file, NULL);
-            free(jobfam_dir);
-        } else if (opal_path_is_absolute(target)) {
-            incoming->top = strdup(target);
-            incoming->fullpath = strdup(target);
-        } else {
-            /* if it starts with "./", then we need to remove
-             * that prefix
-             */
-            if (0 == strncmp(target, "./", 2) ||
-                0 == strncmp(target, "../", 3)) {
-                cptr = strchr(target, '/');
-                ++cptr;  /* step over the '/' */
-                tmp = strdup(cptr);
-            } else {
-                tmp = strdup(target);
-            }
-            /* separate out the top-level directory of the target */
-            if (NULL != (cptr = strchr(tmp, '/'))) {
-                *cptr = '\0';
-            }
-            /* save it */
-            incoming->top = strdup(tmp);
-            free(tmp);
-            /* define the full path to where we will put it */
-            jobfam_dir = opal_dirname(orte_process_info.job_session_dir);
-            incoming->fullpath = opal_os_path(false, jobfam_dir, target, NULL);
-            free(jobfam_dir);
+        /* separate out the top-level directory of the target */
+        tmp = strdup(file);
+        if (NULL != (cptr = strchr(tmp, '/'))) {
+            *cptr = '\0';
         }
+        /* save it */
+        incoming->top = strdup(tmp);
+        free(tmp);
+        /* define the full path to where we will put it */
+        jobfam_dir = opal_dirname(orte_process_info.job_session_dir);
+        incoming->fullpath = opal_os_path(false, jobfam_dir, file, NULL);
+        free(jobfam_dir);
 
         OPAL_OUTPUT_VERBOSE((1, orte_filem_base_output,
                              "%s filem:raw: opening target file %s",
@@ -877,9 +839,6 @@ static void recv_files(int status, orte_process_name_t* sender,
             free(file);
             free(tmp);
             OBJ_RELEASE(incoming);
-            if (NULL != target) {
-                free(target);
-            }
             return;
         }
         /* open the file descriptor for writing */
@@ -889,9 +848,6 @@ static void recv_files(int status, orte_process_name_t* sender,
                         incoming->fullpath);
             send_complete(file, ORTE_ERR_FILE_WRITE_FAILURE);
             free(file);
-            if (NULL != target) {
-                free(target);
-            }
             return;
         }
         OPAL_OUTPUT_VERBOSE((1, orte_filem_base_output,
@@ -923,9 +879,6 @@ static void recv_files(int status, orte_process_name_t* sender,
 
     /* cleanup */
     free(file);
-    if (NULL != target) {
-        free(target);
-    }
 }
 
 
@@ -955,18 +908,12 @@ static void write_handler(int fd, short event, void *cbdata)
                                  "%s write:handler zero bytes - reporting complete for file %s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  sink->file));
-            send_complete(sink->file, ORTE_SUCCESS);
             if (ORTE_FILEM_TYPE_FILE == sink->type) {
-                /* if it is an absolute path, then no link is required - the
-                 * user is responsible for correctly pointing at it
-                 *
-                 * if it is a file and not an absolute path,
-                 * then just link to the top as this will be the
+                /* just link to the top as this will be the
                  * name we will want in each proc's session dir
                  */
-                if (!opal_path_is_absolute(sink->top)) {
-                    opal_argv_append_nosize(&sink->link_pts, sink->top);
-                }
+                opal_argv_append_nosize(&sink->link_pts, sink->top);
+                send_complete(sink->file, ORTE_SUCCESS);
             } else {
                 /* unarchive the file */
                 if (ORTE_FILEM_TYPE_TAR == sink->type) {
@@ -991,6 +938,8 @@ static void write_handler(int fd, short event, void *cbdata)
                 if (ORTE_SUCCESS != (rc = link_archive(sink))) {
                     ORTE_ERROR_LOG(rc);
                     send_complete(sink->file, ORTE_ERR_FILE_WRITE_FAILURE);
+                } else {
+                    send_complete(sink->file, ORTE_SUCCESS);
                 }
             }
             return;
@@ -1043,7 +992,6 @@ static void xfer_construct(orte_filem_raw_xfer_t *ptr)
 {
     ptr->pending = false;
     ptr->file = NULL;
-    ptr->target = NULL;
     ptr->nchunk = 0;
     ptr->status = ORTE_SUCCESS;
     ptr->nrecvd = 0;
@@ -1055,9 +1003,6 @@ static void xfer_destruct(orte_filem_raw_xfer_t *ptr)
     }
     if (NULL != ptr->file) {
         free(ptr->file);
-    }
-    if (NULL != ptr->target) {
-        free(ptr->target);
     }
 }
 OBJ_CLASS_INSTANCE(orte_filem_raw_xfer_t,

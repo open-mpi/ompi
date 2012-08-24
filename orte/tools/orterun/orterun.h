@@ -50,7 +50,6 @@ struct orterun_globals_t {
     bool set_cwd_to_session_dir;
     char *path;
     char *preload_files;
-    char *preload_files_dest_dir;
     opal_mutex_t lock;
     bool sleep;
     char *ompi_server;
