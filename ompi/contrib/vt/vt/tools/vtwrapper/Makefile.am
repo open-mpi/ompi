@@ -60,7 +60,7 @@ vtdata_DATA = \
 	@CROSS_PREFIX@vtfort-wrapper-data.txt \
 	$(vtdata_DATA_vtnvcc) \
 	$(vtdata_DATA_tauinst_spec) \
-	omp.h
+	fake_omp.h
 vtdatadir = $(datadir)
 
 install-data-hook-always:
@@ -73,10 +73,12 @@ install-data-hook-always:
 	(cd $(DESTDIR)$(datadir); \
 	rm -f @CROSS_PREFIX@vtf90-wrapper-data.txt; \
 	$(LN_S) @CROSS_PREFIX@vtfort-wrapper-data.txt @CROSS_PREFIX@vtf90-wrapper-data.txt)
+	$(am__mv) $(DESTDIR)$(datadir)/fake_omp.h $(DESTDIR)$(datadir)/omp.h
 uninstall-local-data-always:
 	rm -f $(DESTDIR)$(datadir)/@CROSS_PREFIX@vtcxx-wrapper-data.txt
 	rm -f $(DESTDIR)$(datadir)/@CROSS_PREFIX@vtf77-wrapper-data.txt
 	rm -f $(DESTDIR)$(datadir)/@CROSS_PREFIX@vtf90-wrapper-data.txt
+	rm -f $(DESTDIR)$(datadir)/omp.h
 
 if AMHAVECSFS
 install-data-hook-1:
@@ -140,7 +142,7 @@ if AMHAVECROSSPREFIX
 @CROSS_PREFIX@vtfort-wrapper-data.txt: vtfort-wrapper-data.txt
 	@cp vtfort-wrapper-data.txt @CROSS_PREFIX@vtfort-wrapper-data.txt
 @CROSS_PREFIX@vtnvcc-wrapper-data.txt: vtnvcc-wrapper-data.txt
-	@cp vtnvcc-wrapper-data.txt @CROSS_PREFIC@vtnvcc-wrapper-data.txt
+	@cp vtnvcc-wrapper-data.txt @CROSS_PREFIX@vtnvcc-wrapper-data.txt
 
 CROSSPREFIXCLEANFILES = \
 	@CROSS_PREFIX@vtcc-wrapper-data.txt \
@@ -178,7 +180,7 @@ LIBS = $(LIBS_FOR_BUILD)
 CLEANFILES = $(CROSSPREFIXCLEANFILES)
 
 EXTRA_DIST = \
-	omp.h \
+	fake_omp.h \
 	TAUINST.SPEC \
 	TAUINST_MACOS.SPEC
 
