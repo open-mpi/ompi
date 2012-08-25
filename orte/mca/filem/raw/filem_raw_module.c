@@ -315,15 +315,13 @@ static int raw_preposition_files(orte_job_t *jdata,
             opal_list_append(&fsets, &fs->super);
             /* if we are preloading the binary, then the app must be in relative
              * syntax or we won't find it - the binary will be positioned in the
-             * session dir
+             * session dir, so ensure the app is relative to that location
              */
-            if (opal_path_is_absolute(app->app)) {
-                cptr = opal_basename(app->app);
-                free(app->app);
-                asprintf(&app->app, "./%s", cptr);
-                free(app->argv[0]);
-                app->argv[0] = strdup(app->app);
-            }
+            cptr = opal_basename(app->app);
+            free(app->app);
+            asprintf(&app->app, "./%s", cptr);
+            free(app->argv[0]);
+            app->argv[0] = strdup(app->app);
             fs->remote_target = strdup(app->app);
         }
         if (NULL != app->preload_files) {
@@ -441,17 +439,7 @@ static int raw_preposition_files(orte_job_t *jdata,
         xfer = OBJ_NEW(orte_filem_raw_xfer_t);
         /* save the source so we can avoid duplicate transfers */
         xfer->src = strdup(fs->local_target);
-        /* if the remote target starts with "./", then we need to remove
-         * that prefix
-         */
-        if (0 == strncmp(fs->remote_target, "./", 2) ||
-            0 == strncmp(fs->remote_target, "../", 3)) {
-            cptr = strchr(fs->remote_target, '/');
-            ++cptr;  /* step over the '/' */
-            xfer->file = strdup(cptr);
-        } else {
-            xfer->file = strdup(fs->remote_target);
-        }
+        xfer->file = strdup(fs->remote_target);
         xfer->type = fs->target_flag;
         xfer->app_idx = fs->app_idx;
         xfer->outbound = outbound;
