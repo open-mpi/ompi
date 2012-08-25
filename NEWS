@@ -91,6 +91,17 @@ Trunk (not on release branches yet)
 - Revamped autogen / build system.
 
 
+1.6.2
+-----
+
+- Add btl_openib_abort_not_enough_reg_mem MCA parameter to cause Open
+  MPI to abort MPI jobs if there is not enough registered memory
+  available on the system (vs. just printing a warning).
+- Minor fix to Fortran MPI_INFO_GET: only copy a value back to the
+  user's buffer if the flag is .TRUE.
+- Fix VampirTrace compilation issue with the PGI compiler suite.
+
+
 1.6.1
 -----
 
