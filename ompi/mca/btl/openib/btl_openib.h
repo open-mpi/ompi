@@ -267,6 +267,10 @@ struct mca_btl_openib_component_t {
     /** Whether we want a warning if the user specifies a non-existent
         device and/or port via btl_openib_if_[in|ex]clude MCA params */
     bool warn_nonexistent_if;
+    /** Whether we want to abort if there's not enough registered
+        memory available */
+    bool abort_not_enough_reg_mem;
+
     /** Dummy argv-style list; a copy of names from the
         if_[in|ex]clude list that we use for error checking (to ensure
         that they all exist) */
