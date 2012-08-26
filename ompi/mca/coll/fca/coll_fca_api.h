@@ -113,7 +113,7 @@ static inline void mca_coll_fca_get_reduce_root(int root_rank, int my_rank,
     spec->is_root = root_rank == my_rank;
 }
 
-#elif OMPI_FCA_VERSION == 20 || OMPI_FCA_VERSION == 21 || OMPI_FCA_VERSION == 22
+#elif OMPI_FCA_VERSION == 20 || OMPI_FCA_VERSION == 21 || OMPI_FCA_VERSION == 22 || OMPI_FCA_VERSION == 25
 
 #define OMPI_FCA_ALLGATHER          1
 #define OMPI_FCA_ALLGATHERV         1
