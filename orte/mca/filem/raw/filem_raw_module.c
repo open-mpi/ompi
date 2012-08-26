@@ -294,7 +294,7 @@ static int raw_preposition_files(orte_job_t *jdata,
     int flags, i, j;
     char **files=NULL;
     orte_filem_raw_outbound_t *outbound, *optr;
-    char *cptr;
+    char *cptr, *nxt;
     opal_list_t fsets;
     bool already_sent;
 
@@ -439,7 +439,42 @@ static int raw_preposition_files(orte_job_t *jdata,
         xfer = OBJ_NEW(orte_filem_raw_xfer_t);
         /* save the source so we can avoid duplicate transfers */
         xfer->src = strdup(fs->local_target);
-        xfer->file = strdup(fs->remote_target);
+        /* strip any leading '.' directories to avoid
+         * stepping above the session dir location - all
+         * files will be relative to that point. Ensure
+         * we *don't* mistakenly strip the dot from a
+         * filename that starts with one
+         */
+        cptr = fs->remote_target;
+        nxt = cptr;
+        nxt++;
+        while ('\0' != *cptr) {
+            if ('.' == *cptr) {
+                /* have to check the next character to
+                 * see if it's a dotfile or not
+                 */
+                if ('.' == *nxt || '/' == *nxt) {
+                    cptr = nxt;
+                    nxt++;
+                } else {
+                    /* if the next character isn't a dot
+                     * or a slash, then this is a dot-file
+                     * and we need to leave it alone
+                     */
+                    break;
+                }
+            } else if ('/' == *cptr) {
+                /* move to the next character */
+                cptr = nxt;
+                nxt++;
+            } else {
+                /* the character isn't a dot or a slash,
+                 * so this is the beginning of the filename
+                 */
+                break;
+            }
+        }
+        xfer->file = strdup(cptr);
         xfer->type = fs->target_flag;
         xfer->app_idx = fs->app_idx;
         xfer->outbound = outbound;
