@@ -173,6 +173,13 @@ int ompi_info_init(void)
         ompi_info_set(&ompi_mpi_info_env.info, "np", cptr);
     }
 
+    /* location of the directory containing any prepositioned files
+     * the user may have requested
+     */
+    if (NULL != (cptr = getenv("OMPI_FILE_LOCATION"))) {
+        ompi_info_set(&ompi_mpi_info_env.info, "positioned_file_dir", cptr);
+    }
+
     /* All done */
 
     return OMPI_SUCCESS;
