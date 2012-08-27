@@ -77,7 +77,9 @@ int ompi_io_ompio_set_file_defaults (mca_io_ompio_file_t *fh)
 
         fh->f_procs_per_group = -1;
 
-	ompi_datatype_create_contiguous(1048576, &ompi_mpi_byte.dt, &default_file_view);
+	ompi_datatype_create_contiguous(1048576, 
+					&ompi_mpi_byte.dt,
+					&default_file_view);
 	ompi_datatype_commit (&default_file_view);
 		
 	fh->f_etype = &ompi_mpi_byte.dt;

@@ -52,6 +52,8 @@ mca_io_ompio_file_open (ompi_communicator_t *comm,
         ((amode & MPI_MODE_CREATE) || (amode & MPI_MODE_EXCL))) {
 	return  MPI_ERR_AMODE;
     }
+						
+
 
     if ((amode & MPI_MODE_RDWR) && (amode & MPI_MODE_SEQUENTIAL)) {
 	return MPI_ERR_AMODE;
@@ -91,6 +93,13 @@ mca_io_ompio_file_open (ompi_communicator_t *comm,
 	}
     }
     */
+    /* This fix is needed for data seiving to work with 
+       two-phase collective I/O */
+     if ((amode & MPI_MODE_WRONLY)){
+       amode -= MPI_MODE_WRONLY;
+       amode += MPI_MODE_RDWR;
+     }
+     /*--------------------------------------------------*/
 
 
     if (OMPI_SUCCESS != (ret = mca_fs_base_file_select (&data->ompio_fh, 
@@ -109,6 +118,7 @@ mca_io_ompio_file_open (ompi_communicator_t *comm,
         opal_output(1, "mca_fcoll_base_file_select() failed\n");
         goto fn_fail;
     }
+
 
     ret = data->ompio_fh.f_fs->fs_file_open (comm,
                                              filename,
