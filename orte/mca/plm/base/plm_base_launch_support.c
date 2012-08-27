@@ -1040,7 +1040,8 @@ int orte_plm_base_orted_append_basic_args(int *argc, char ***argv,
         if( NULL == tmp_force ) {
             /* Get the current working directory */
             tmp_force = (char *) malloc(sizeof(char) * OPAL_PATH_MAX);
-            if( NULL == (tmp_force = getcwd(tmp_force, OPAL_PATH_MAX) )) {
+            if (NULL == getcwd(tmp_force, OPAL_PATH_MAX)) {
+                free(tmp_force);
                 tmp_force = strdup("");
             }
         }
