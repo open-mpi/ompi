@@ -65,15 +65,15 @@ mca_fs_lustre_file_open (struct ompi_communicator_t *comm,
     }
 
     amode = 0;
-    if (fh->f_amode & MPI_MODE_CREATE)
+    if (access_mode & MPI_MODE_CREATE)
         amode = amode | O_CREAT;
-    if (fh->f_amode & MPI_MODE_RDONLY)
+    if (access_mode & MPI_MODE_RDONLY)
         amode = amode | O_RDONLY;
-    if (fh->f_amode & MPI_MODE_WRONLY)
+    if (access_mode & MPI_MODE_WRONLY)
         amode = amode | O_WRONLY;
-    if (fh->f_amode & MPI_MODE_RDWR)
+    if (access_mode & MPI_MODE_RDWR)
         amode = amode | O_RDWR;
-    if (fh->f_amode & MPI_MODE_EXCL)
+    if (access_mode & MPI_MODE_EXCL)
         amode = amode | O_EXCL;
 
     if ((mca_fs_lustre_stripe_size || mca_fs_lustre_stripe_width) &&
