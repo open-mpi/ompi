@@ -41,7 +41,6 @@ orte_rmaps_base_module_t orte_rmaps_staged_module = {
 static int staged_mapper(orte_job_t *jdata)
 {
     mca_base_component_t *c=&mca_rmaps_staged_component.base_version;
-    char *output;
     int i, j, rc;
     orte_app_context_t *app;
     opal_list_t node_list;
