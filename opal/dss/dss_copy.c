@@ -161,14 +161,17 @@ int opal_dss_copy_byte_object(opal_byte_object_t **dest, opal_byte_object_t *src
     (*dest)->size = src->size;
 
     /* allocate the required space for the bytes */
-    (*dest)->bytes = (uint8_t*)malloc(src->size);
-    if (NULL == (*dest)->bytes) {
-        OBJ_RELEASE(*dest);
-        return OPAL_ERR_OUT_OF_RESOURCE;
+    if (NULL == src->bytes) {
+        (*dest)->bytes = NULL;
+    } else {
+        (*dest)->bytes = (uint8_t*)malloc(src->size);
+        if (NULL == (*dest)->bytes) {
+            OBJ_RELEASE(*dest);
+            return OPAL_ERR_OUT_OF_RESOURCE;
+        }
+        /* copy the data across */
+        memcpy((*dest)->bytes, src->bytes, src->size);
     }
-
-    /* copy the data across */
-    memcpy((*dest)->bytes, src->bytes, src->size);
 
     return OPAL_SUCCESS;
 }
