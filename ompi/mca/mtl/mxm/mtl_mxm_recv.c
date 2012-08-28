@@ -58,7 +58,11 @@ static inline __opal_attribute_always_inline__ int
     mxm_recv_req->base.data_type           = MXM_REQ_DATA_BUFFER;
     mxm_recv_req->base.data.buffer.ptr     = mtl_mxm_request->buf;
     mxm_recv_req->base.data.buffer.length  = mtl_mxm_request->length;
+#if MXM_API < MXM_VERSION(1,5)
     mxm_recv_req->base.data.buffer.mkey    = MXM_MKEY_NONE;
+#else
+    mxm_recv_req->base.data.buffer.memh    = MXM_INVALID_MEM_HANDLE;
+#endif
     mxm_recv_req->base.context             = mtl_mxm_request;
     mxm_recv_req->base.completed_cb        = ompi_mtl_mxm_recv_completion_cb;
 
