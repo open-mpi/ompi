@@ -71,6 +71,7 @@ int MPI_Waitany(int count, MPI_Request *requests, int *indx, MPI_Status *status)
 
     if (OPAL_UNLIKELY(0 == count)) {
         *indx = MPI_UNDEFINED;
+        *status = ompi_status_empty;
         return MPI_SUCCESS;
     }
 

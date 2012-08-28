@@ -70,6 +70,7 @@ int MPI_Testany(int count, MPI_Request requests[], int *indx, int *completed, MP
     if (OPAL_UNLIKELY(0 == count)) {
         *completed = true;
         *indx = MPI_UNDEFINED;
+        *status = ompi_status_empty;
         return MPI_SUCCESS;
     }
 
