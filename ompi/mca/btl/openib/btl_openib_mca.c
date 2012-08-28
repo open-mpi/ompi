@@ -166,6 +166,14 @@ int btl_openib_register_mca_params(void)
                   1, &ival, 0));
     mca_btl_openib_component.warn_nonexistent_if = (0 != ival);
 
+    /* If we print a warning about not having enough registered memory
+       available, do we want to abort? */
+    CHECK(reg_int("abort_not_enough_reg_mem", NULL,
+                  "If there is not enough registered memory available on the system for Open MPI to function properly, Open MPI will issue a warning.  If this MCA parameter is set to true, then Open MPI will also abort all MPI jobs "
+                  "(0 = warn, but do not abort; any other value = warn and abort)",
+                  0, &ival, 0));
+    mca_btl_openib_component.abort_not_enough_reg_mem = (0 != ival);
+
     if (OMPI_HAVE_IBV_FORK_INIT) {
         ival2 = -1;
     } else {

@@ -29,6 +29,7 @@
 #include <inttypes.h>
 #include "orte/util/show_help.h"
 #include "orte/runtime/orte_globals.h"
+#include "orte/mca/errmgr/base/base.h"
 #include "opal/class/opal_bitmap.h"
 #include "opal/util/output.h"
 #include "opal/util/arch.h"
@@ -640,18 +641,32 @@ static uint64_t calculate_max_reg (void)
 
         max_reg = (num_mtt - reserved_mtt) * getpagesize () * mtts_per_seg;
     } else {
-        /* need to update to determine the registration limit for this configuration */
+        /* Need to update to determine the registration limit for this
+           configuration */
         max_reg = mem_total;
     }
 
-    /* NTH: print a warning if we can't register more than 75% of physical memory */
+    /* Print a warning if we can't register more than 75% of physical
+       memory.  Abort if the abort_not_enough_reg_mem MCA param was
+       set. */
     if (max_reg < mem_total * 3 / 4) {
+        char *action;
+
+        if (mca_btl_openib_component.abort_not_enough_reg_mem) {
+            action = "Your MPI job will now abort.";
+        } else {
+            action = "Your MPI job will continue, but may be behave poorly and/or hang.";
+        }
         orte_show_help("help-mpi-btl-openib.txt", "reg mem limit low", true,
                        orte_process_info.nodename, (unsigned long)(max_reg >> 20),
-                       (unsigned long)(mem_total >> 20));
+                       (unsigned long)(mem_total >> 20), action);
+        if (mca_btl_openib_component.abort_not_enough_reg_mem) {
+            orte_errmgr.abort(1, NULL);
+        }
     }
 
-    /* limit us to 87.5% of the registered memory (some fluff for QPs, file systems, etc) */
+    /* Limit us to 87.5% of the registered memory (some fluff for QPs,
+       file systems, etc) */
     return (max_reg * 7) >> 3;
 }
 

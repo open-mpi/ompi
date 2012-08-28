@@ -708,3 +708,5 @@ parameters:
   Local host:              %s
   Registerable memory:     %lu MiB
   Total memory:            %lu MiB
+
+%s
