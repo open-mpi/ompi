@@ -114,6 +114,8 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_job_map_t);
 #define ORTE_MAPPING_RR                0x000f
 /* sequential policy */
 #define ORTE_MAPPING_SEQ               20
+/* staged execution mapping */
+#define ORTE_MAPPING_STAGED            21
 /* rank file and other user-defined mapping */
 #define ORTE_MAPPING_BYUSER            22
 /* macro to separate out the mapping policy

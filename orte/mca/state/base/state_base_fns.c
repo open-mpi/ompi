@@ -500,45 +500,18 @@ void orte_state_base_track_procs(int fd, short argc, void *cbdata)
         }
         pdata->iof_complete = true;
         if (pdata->waitpid_recvd) {
-            /* the proc has terminated */
-            pdata->alive = false;
-            pdata->state = ORTE_PROC_STATE_TERMINATED;
-            /* return the allocated slot for reuse */
-            cleanup_node(pdata);
-            /* Clean up the session directory as if we were the process
-             * itself.  This covers the case where the process died abnormally
-             * and didn't cleanup its own session directory.
-             */
-            orte_session_dir_finalize(proc);
-            /* track job status */
-            jdata->num_terminated++;
-            if (jdata->num_terminated == jdata->num_procs) {
-                ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_TERMINATED);
-            }
+            ORTE_ACTIVATE_PROC_STATE(proc, ORTE_PROC_STATE_TERMINATED);
         }
     } else if (ORTE_PROC_STATE_WAITPID_FIRED == state) {
         /* update the proc state */
         pdata->state = state;
         pdata->waitpid_recvd = true;
         if (pdata->iof_complete) {
-            /* the proc has terminated */
-            pdata->alive = false;
-            pdata->state = ORTE_PROC_STATE_TERMINATED;
-            /* return the allocated slot for reuse */
-            cleanup_node(pdata);
-            /* Clean up the session directory as if we were the process
-             * itself.  This covers the case where the process died abnormally
-             * and didn't cleanup its own session directory.
-             */
-            orte_session_dir_finalize(proc);
-            /* track job status */
-            jdata->num_terminated++;
-            if (jdata->num_terminated == jdata->num_procs) {
-                ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_TERMINATED);
-            }
+            ORTE_ACTIVATE_PROC_STATE(proc, ORTE_PROC_STATE_TERMINATED);
         }
     } else if (ORTE_PROC_STATE_TERMINATED == state) {
         /* update the proc state */
+        pdata->alive = false;
         pdata->state = state;
 	if (pdata->local_proc) {
             /* Clean up the session directory as if we were the process

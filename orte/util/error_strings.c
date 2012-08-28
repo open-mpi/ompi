@@ -288,6 +288,24 @@ const char *orte_job_state_to_str(orte_job_state_t state)
     }
 }
 
+const char *orte_app_ctx_state_to_str(orte_app_state_t state)
+{
+    switch(state) {
+    case ORTE_APP_STATE_UNDEF:
+        return "UNDEFINED";
+    case ORTE_APP_STATE_INIT:
+        return "PENDING INIT";
+    case ORTE_APP_STATE_ALL_MAPPED:
+        return "ALL MAPPED";
+    case ORTE_APP_STATE_RUNNING:
+        return "RUNNING";
+    case ORTE_APP_STATE_COMPLETED:
+        return "COMPLETED";
+    default:
+        return "UNKNOWN STATE!";
+    }
+}
+
 const char *orte_proc_state_to_str(orte_proc_state_t state)
 {
     switch(state) {

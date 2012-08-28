@@ -139,7 +139,8 @@ void orte_plm_base_recv(int status, orte_process_name_t* sender,
     orte_process_name_t name;
     pid_t pid;
     bool running;
-        
+    int8_t flag;
+
     OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                          "%s plm:base:receive processing msg",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
@@ -328,13 +329,14 @@ void orte_plm_base_recv(int status, orte_process_name_t* sender,
         count=1;
         if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &job, &count, ORTE_JOBID))) {
             ORTE_ERROR_LOG(rc);
-            goto CLEANUP;
+            goto DEPART;
         }
         name.jobid = job;
         /* get the job object */
         if (NULL == (jdata = orte_get_job_data_object(job))) {
             ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-            goto CLEANUP;
+            rc = ORTE_ERR_NOT_FOUND;
+            goto DEPART;
         }
         count=1;
         while (ORTE_SUCCESS == opal_dss.unpack(buffer, &vpid, &count, ORTE_VPID)) {
@@ -342,6 +344,23 @@ void orte_plm_base_recv(int status, orte_process_name_t* sender,
                 break;
             }
             name.vpid = vpid;
+            /* unpack the mpi proc flag */
+            count=1;
+            if (OPAL_SUCCESS != (rc = opal_dss.unpack(buffer, &flag, &count, OPAL_INT8))) {
+                ORTE_ERROR_LOG(rc);
+                goto DEPART;
+            }
+            /* get the proc data object */
+            if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, vpid))) {
+                ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+                rc = ORTE_ERR_NOT_FOUND;
+                goto DEPART;
+            }
+            if (1 == flag) {
+                proc->mpi_proc = true;
+            } else {
+                proc->mpi_proc = false;
+            }
             ORTE_ACTIVATE_PROC_STATE(&name, ORTE_PROC_STATE_REGISTERED);
             count=1;
         }

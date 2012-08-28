@@ -252,7 +252,8 @@ int orte_routed_base_register_sync(bool setup)
     int rc;
     orte_daemon_cmd_flag_t command=ORTE_DAEMON_SYNC_BY_PROC;
     char *rml_uri;
-    
+    uint8_t flag;
+
     OPAL_OUTPUT_VERBOSE((5, orte_routed_base_output,
                          "%s registering sync to daemon %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
@@ -290,6 +291,18 @@ int orte_routed_base_register_sync(bool setup)
     }
     if (NULL != rml_uri) free(rml_uri);
     
+    /* tell the daemon if we are an MPI proc */
+    if (ORTE_PROC_IS_MPI) {
+        flag = 1;
+    } else {
+        flag = 0;
+    }
+    if (ORTE_SUCCESS != (rc = opal_dss.pack(buffer, &flag, 1, OPAL_UINT8))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_RELEASE(buffer);
+        return rc;
+    }
+
     /* send the sync command to our daemon */
     if (0 > (rc = orte_rml.send_buffer_nb(ORTE_PROC_MY_DAEMON, buffer,
                                           ORTE_RML_TAG_DAEMON, 0,

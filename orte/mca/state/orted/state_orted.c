@@ -203,6 +203,7 @@ static void track_procs(int fd, short argc, void *cbdata)
     int rc, i;
     orte_plm_cmd_flag_t cmd;
     orte_vpid_t null=ORTE_VPID_INVALID;
+    int8_t flag;
 
     OPAL_OUTPUT_VERBOSE((5, orte_state_base_output,
                          "%s state:orted:track_procs called for proc %s state %s",
@@ -255,6 +256,15 @@ static void track_procs(int fd, short argc, void *cbdata)
                 }
                 if (pptr->name.jobid == proc->jobid) {
                     if (ORTE_SUCCESS != (rc = opal_dss.pack(alert, &pptr->name.vpid, 1, ORTE_VPID))) {
+                        ORTE_ERROR_LOG(rc);
+                        goto cleanup;
+                    }
+                    if (pptr->mpi_proc) {
+                        flag = 1;
+                    } else {
+                        flag = 0;
+                    }
+                    if (ORTE_SUCCESS != (rc = opal_dss.pack(alert, &flag, 1, OPAL_INT8))) {
                         ORTE_ERROR_LOG(rc);
                         goto cleanup;
                     }

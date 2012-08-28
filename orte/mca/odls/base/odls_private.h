@@ -52,8 +52,6 @@ typedef struct {
     int output;
     /** Time to allow process to forcibly die */
     int timeout_before_sigkill;
-    /* byte object to store daemon map for later xmit to procs */
-    opal_byte_object_t *dmap;
     /* list of ranks to be displayed on separate xterms */
     opal_list_t xterm_ranks;
     /* the xterm cmd to be used */

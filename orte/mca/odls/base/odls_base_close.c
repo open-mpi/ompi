@@ -44,10 +44,6 @@ int orte_odls_base_close(void)
         OBJ_RELEASE(item);
     }
     OBJ_DESTRUCT(&orte_odls_globals.xterm_ranks);
-    if (NULL != orte_odls_globals.dmap && NULL != orte_odls_globals.dmap->bytes) {
-        free(orte_odls_globals.dmap->bytes);
-        free(orte_odls_globals.dmap);
-    }
     
     /* cleanup the global list of local children and job data */
     for (i=0; i < orte_local_children->size; i++) {

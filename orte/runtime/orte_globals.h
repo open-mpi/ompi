@@ -245,6 +245,12 @@ typedef struct {
     char   *app;
     /** Number of copies of this process that are to be launched */
     orte_std_cntr_t num_procs;
+    /** Array of pointers to the proc objects for procs of this app_context
+     * NOTE - not always used
+     */
+    opal_pointer_array_t procs;
+    /** State of the app_context */
+    orte_app_state_t state;
     /** First MPI rank of this app_context in the job */
     orte_vpid_t first_rank;
     /** Standard argv-style array, including a final NULL pointer */
@@ -362,6 +368,10 @@ typedef struct {
     opal_list_item_t super;
     /* jobid for this job */
     orte_jobid_t jobid;
+    /* flag indicating that the job has been updated
+     * and needs to be included in the pidmap message
+     */
+    bool updated;
     /* app_context array for this job */
     opal_pointer_array_t *apps;
     /* number of app_contexts in the array */
@@ -423,8 +433,6 @@ typedef struct {
     /* max time for launch msg to be received */
     struct timeval max_launch_msg_recvd;
     orte_vpid_t num_local_procs;
-    /* pidmap for delivery to procs */
-    opal_byte_object_t *pmap;
 #if OPAL_ENABLE_FT_CR == 1
     /* ckpt state */
     size_t ckpt_state;
@@ -471,6 +479,10 @@ struct orte_proc_t {
     bool alive;
     /* flag if it called abort */
     bool aborted;
+    /* flag that the proc has been updated and need to be
+     * included in the next pidmap message
+     */
+    bool updated;
     /* exit code */
     orte_exit_code_t exit_code;
     /* the app_context that generated this proc */
@@ -514,6 +526,7 @@ struct orte_proc_t {
     opal_ring_buffer_t stats;
     /* track finalization */
     bool registered;
+    bool mpi_proc;
     bool deregistered;
     bool iof_complete;
     bool waitpid_recvd;
@@ -681,6 +694,10 @@ ORTE_DECLSPEC extern int orte_max_vm_size;
 
 /* record the selected oob component */
 ORTE_DECLSPEC extern char *orte_selected_oob_component;
+
+/* global nidmap/pidmap for daemons to give to apps */
+ORTE_DECLSPEC extern opal_byte_object_t orte_nidmap;
+ORTE_DECLSPEC extern opal_byte_object_t orte_pidmap;
 
 #endif /* ORTE_DISABLE_FULL_SUPPORT */
 

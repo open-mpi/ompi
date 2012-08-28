@@ -56,6 +56,7 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
 
     /* convenience */
     jdata = caddy->jdata;
+    jdata->state = ORTE_JOB_STATE_MAP;
 
     /* NOTE: NO PROXY COMPONENT REQUIRED - REMOTE PROCS ARE NOT
      * ALLOWED TO CALL RMAPS INDEPENDENTLY. ONLY THE PLM CAN
@@ -155,7 +156,8 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
          item != opal_list_get_end(&orte_rmaps_base.selected_modules);
          item = opal_list_get_next(item)) {
         mod = (orte_rmaps_base_selected_module_t*)item;
-        if (ORTE_SUCCESS == (rc = mod->module->map_job(jdata))) {
+        if (ORTE_SUCCESS == (rc = mod->module->map_job(jdata)) ||
+            ORTE_ERR_RESOURCE_BUSY == rc) {
             did_map = true;
             break;
         }
@@ -169,6 +171,14 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
             return;
         }
     }
+    if (did_map && ORTE_ERR_RESOURCE_BUSY == rc) {
+        /* the map was done but nothing could be mapped
+         * for launch as all the resources were busy
+         */
+        OBJ_RELEASE(caddy);
+        return;
+    }
+
     /* if we get here without doing the map, or with zero procs in
      * the map, then that's an error
      */
