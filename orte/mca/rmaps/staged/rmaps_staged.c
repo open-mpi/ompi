@@ -156,8 +156,6 @@ static int staged_mapper(orte_job_t *jdata)
             }
         }
     }
-    opal_dss.print(&output, NULL, jdata->map, ORTE_JOB_MAP);
-    opal_output(orte_clean_output, "%s", output);
 
     /* if there isn't at least one proc that can be launched,
      * then indicate that we don't need to proceed with the
