@@ -229,6 +229,11 @@ static int pmi_put_last_key (void) {
 	return rc;
     }
 
+    OPAL_OUTPUT_VERBOSE((10, orte_grpcomm_base.output,
+                         "%s PUTTING KEY %s DATA %s",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         pmi_kvs_key, pmi_packed_data));
+
     rc = kvs_put(pmi_kvs_key, pmi_packed_data);
     if (PMI_SUCCESS != rc) {
 	ORTE_PMI_ERROR(rc, "PMI_KVS_Put");
@@ -256,7 +261,7 @@ static int pmi_set_proc_attr(const char *attr_name,
         return rc;
     }
 
-    if ((int)(pmi_packed_data_off + strlen (attr_name) + strlen (pmi_attr_val) + 2) > pmi_vallen_max) {
+    if ((int)(pmi_packed_data_off + strlen(attr_name) + strlen(pmi_attr_val) + 3) > pmi_vallen_max) {
 	pmi_put_last_key ();
     }
 
@@ -295,6 +300,11 @@ static int pmi_get_proc_attr(const orte_process_name_t name,
 	    return rc;
 	}
 
+        OPAL_OUTPUT_VERBOSE((10, orte_grpcomm_base.output,
+                             "%s GETTING KEY %s",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             pmi_kvs_key));
+
 	rc = kvs_get(pmi_kvs_key, tmp_val, pmi_vallen_max);
 	if (PMI_SUCCESS != rc) {
             ORTE_ERROR_LOG(ORTE_ERR_VALUE_OUT_OF_BOUNDS);
@@ -308,7 +318,6 @@ static int pmi_get_proc_attr(const orte_process_name_t name,
 	    if (NULL == tmp2) {
 		continue;
 	    }
-
 	    *tmp2 = '\0';
 
 	    if (strcmp (tmp, attr_name) == 0) {
