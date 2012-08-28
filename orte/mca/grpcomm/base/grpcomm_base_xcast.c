@@ -51,7 +51,7 @@ void orte_grpcomm_base_xcast_recv(int status, orte_process_name_t* sender,
     opal_list_item_t *item;
     orte_namelist_t *nm;
     int ret, cnt;
-    opal_buffer_t *relay;
+    opal_buffer_t *relay, *rly;
     orte_daemon_cmd_flag_t command;
     opal_buffer_t wireup;
     opal_byte_object_t *bo;
@@ -151,11 +151,12 @@ void orte_grpcomm_base_xcast_recv(int status, orte_process_name_t* sender,
                              "%s orte:daemon:send_relay sending relay msg to %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_NAME_PRINT(&nm->name)));
-        OBJ_RETAIN(relay);
-        if (0 > (ret = orte_rml.send_buffer_nb(&nm->name, relay, ORTE_RML_TAG_XCAST, 0,
+        rly = OBJ_NEW(opal_buffer_t);
+        opal_dss.copy_payload(rly, relay);
+        if (0 > (ret = orte_rml.send_buffer_nb(&nm->name, rly, ORTE_RML_TAG_XCAST, 0,
                                                orte_rml_send_callback, NULL))) {
             ORTE_ERROR_LOG(ret);
-            OBJ_RELEASE(relay);
+            OBJ_RELEASE(rly);
             continue;
         }
     }
