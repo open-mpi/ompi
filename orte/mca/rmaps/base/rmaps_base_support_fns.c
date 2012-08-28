@@ -205,6 +205,7 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
                 node->mapped = false;
             }
             if (NULL == nd || NULL == nd->daemon ||
+		NULL == node->daemon ||
                 nd->daemon->name.vpid < node->daemon->name.vpid) {
                 /* just append to end */
                 opal_list_append(allocated_nodes, &node->super);
