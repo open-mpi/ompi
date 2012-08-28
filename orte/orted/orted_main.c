@@ -716,6 +716,56 @@ int orte_daemon(int argc, char *argv[])
         }
     }
 
+    /* if we are tree-spawning, then we need to capture the MCA params
+     * from our cmd line so we can pass them along to the daemons we spawn -
+     * otherwise, only the first layer of daemons will ever see them
+     */
+    if (orted_globals.tree_spawn) {
+        int j, k;
+        bool ignore;
+        char *no_keep[] = {
+            "orte_hnp_uri",
+            "orte_ess_jobid",
+            "orte_ess_vpid",
+            "orte_ess_num_procs",
+            "orte_parent_uri",
+            NULL
+        };
+        for (i=0; i < argc; i++) {
+            if (0 == strcmp("-mca",  argv[i]) ||
+                0 == strcmp("--mca", argv[i]) ) {
+                ignore = false;
+                /* see if this is something we cannot pass along */
+                for (k=0; NULL != no_keep[k]; k++) {
+                    if (0 == strcmp(no_keep[k], argv[i+1])) {
+                        ignore = true;
+                        break;
+                    }
+                }
+                if (!ignore) {
+                    /* see if this is already present so we at least can
+                     * avoid growing the cmd line with duplicates
+                     */
+                    if (NULL != orted_cmd_line) {
+                        for (j=0; NULL != orted_cmd_line[j]; j++) {
+                            if (0 == strcmp(argv[i+1], orted_cmd_line[j])) {
+                                /* already here - ignore it */
+                                ignore = true;
+                                break;
+                            }
+                        }
+                    }
+                    if (!ignore) {
+                        opal_argv_append_nosize(&orted_cmd_line, argv[i]);
+                        opal_argv_append_nosize(&orted_cmd_line, argv[i+1]);
+                        opal_argv_append_nosize(&orted_cmd_line, argv[i+2]);
+                    }
+                }
+                i += 2;
+            }
+        }
+    }
+            
     if (orte_debug_daemons_flag) {
         opal_output(0, "%s orted: up and running - waiting for commands!", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
     }
