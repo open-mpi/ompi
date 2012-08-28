@@ -83,7 +83,8 @@ void orte_grpcomm_base_xcast_recv(int status, orte_process_name_t* sender,
         }
     
         /* update our local nidmap, if required - the decode function
-         * knows what to do - it will also free the bytes in the bo
+         * knows what to do - it will also free the bytes in the bo. Decode
+         * also updates our global nidmap object for sending to our local procs
          */
         OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base.output,
                              "%s grpcomm:base:xcast updating daemon nidmap",

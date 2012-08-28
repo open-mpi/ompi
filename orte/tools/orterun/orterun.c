@@ -521,6 +521,10 @@ static opal_cmd_line_init_t cmd_line_init[] = {
       NULL, OPAL_CMD_LINE_TYPE_BOOL,
       "Execute without creating an allocation-spanning virtual machine (only start daemons on nodes hosting application procs)" },
 
+    { "state", "staged", "select", '\0', "staged", "staged", 0,
+      NULL, OPAL_CMD_LINE_TYPE_BOOL,
+      "Used staged execution if inadequate resources are present (cannot support MPI jobs)" },
+
     /* End of list */
     { NULL, NULL, NULL, '\0', NULL, NULL, 0,
       NULL, OPAL_CMD_LINE_TYPE_NULL, NULL }

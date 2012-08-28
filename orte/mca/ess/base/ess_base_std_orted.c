@@ -171,6 +171,12 @@ int orte_ess_base_orted_setup(char **hosts)
     }
 #endif
     
+    /* setup the global nidmap/pidmap object */
+    orte_nidmap.bytes = NULL;
+    orte_nidmap.size = 0;
+    orte_pidmap.bytes = NULL;
+    orte_pidmap.size = 0;
+
     /* open and setup the opal_pstat framework so we can provide
      * process stats if requested
      */

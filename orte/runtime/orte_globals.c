@@ -190,6 +190,10 @@ opal_thread_t orte_progress_thread;
 opal_event_t orte_finalize_event;
 #endif
 
+/* global nidmap/pidmap for daemons to give to apps */
+opal_byte_object_t orte_nidmap;
+opal_byte_object_t orte_pidmap;
+
 char *orte_selected_oob_component = NULL;
 
 #endif /* !ORTE_DISABLE_FULL_RTE */
@@ -224,7 +228,7 @@ int orte_dt_init(void)
             opal_output_set_verbosity(orte_debug_output, 1);
         }
     }
-        
+
     /** register the base system types with the DSS */
     tmp = ORTE_STD_CNTR;
     if (ORTE_SUCCESS != (rc = opal_dss.register_type(orte_dt_pack_std_cntr,
@@ -568,6 +572,12 @@ static void orte_app_context_construct(orte_app_context_t* app_context)
     app_context->idx=0;
     app_context->app=NULL;
     app_context->num_procs=0;
+    OBJ_CONSTRUCT(&app_context->procs, opal_pointer_array_t);
+    opal_pointer_array_init(&app_context->procs,
+                            1,
+                            ORTE_GLOBAL_ARRAY_MAX_SIZE,
+                            16);
+    app_context->state = ORTE_APP_STATE_UNDEF;
     app_context->first_rank = 0;
     app_context->argv=NULL;
     app_context->env=NULL;
@@ -594,12 +604,21 @@ static void orte_app_context_construct(orte_app_context_t* app_context)
 static void orte_app_context_destructor(orte_app_context_t* app_context)
 {
     opal_list_item_t *item;
+    int i;
+    orte_proc_t *proc;
 
     if (NULL != app_context->app) {
         free (app_context->app);
         app_context->app = NULL;
     }
     
+    for (i=0; i < app_context->procs.size; i++) {
+        if (NULL != (proc = (orte_proc_t*)opal_pointer_array_get_item(&app_context->procs, i))) {
+            OBJ_RELEASE(proc);
+        }
+    }
+    OBJ_DESTRUCT(&app_context->procs);
+
     /* argv and env lists created by util/argv copy functions */
     if (NULL != app_context->argv) {
         opal_argv_free(app_context->argv);
@@ -669,6 +688,7 @@ OBJ_CLASS_INSTANCE(orte_app_context_t,
 static void orte_job_construct(orte_job_t* job)
 {
     job->jobid = ORTE_JOBID_INVALID;
+    job->updated = true;
     job->apps = OBJ_NEW(opal_pointer_array_t);
     opal_pointer_array_init(job->apps,
                             1,
@@ -685,7 +705,6 @@ static void orte_job_construct(orte_job_t* job)
                             ORTE_GLOBAL_ARRAY_BLOCK_SIZE,
                             ORTE_GLOBAL_ARRAY_MAX_SIZE,
                             ORTE_GLOBAL_ARRAY_BLOCK_SIZE);
-    
     job->map = NULL;
     job->bookmark = NULL;
     job->state = ORTE_JOB_STATE_UNDEF;
@@ -705,8 +724,6 @@ static void orte_job_construct(orte_job_t* job)
     job->recovery_defined = false;
     job->enable_recovery = false;
     job->num_local_procs = 0;
-
-    job->pmap = NULL;
 
 #if OPAL_ENABLE_FT_CR == 1
     job->ckpt_state = 0;
@@ -753,13 +770,6 @@ static void orte_job_destruct(orte_job_t* job)
     }
     OBJ_RELEASE(job->procs);
     
-    if (NULL != job->pmap) {
-        if (NULL != job->pmap->bytes) {
-            free(job->pmap->bytes);
-        }
-        free(job->pmap);
-    }
-
 #if OPAL_ENABLE_FT_CR == 1
     if (NULL != job->ckpt_snapshot_ref) {
         free(job->ckpt_snapshot_ref);
@@ -801,6 +811,7 @@ static void orte_node_construct(orte_node_t* node)
     node->daemon_launched = false;
     node->location_verified = false;
     node->launch_id = -1;
+    node->mapped = false;
 
     node->num_procs = 0;
     node->procs = OBJ_NEW(opal_pointer_array_t);
@@ -891,6 +902,7 @@ static void orte_proc_construct(orte_proc_t* proc)
     proc->state = ORTE_PROC_STATE_UNDEF;
     proc->alive = false;
     proc->aborted = false;
+    proc->updated = true;
     proc->app_idx = 0;
 #if OPAL_HAVE_HWLOC
     proc->locale = NULL;
@@ -913,6 +925,7 @@ static void orte_proc_construct(orte_proc_t* proc)
     OBJ_CONSTRUCT(&proc->stats, opal_ring_buffer_t);
     opal_ring_buffer_init(&proc->stats, orte_stat_history_size);
     proc->registered = false;
+    proc->mpi_proc = false;
     proc->deregistered = false;
     proc->iof_complete = false;
     proc->waitpid_recvd = false;

@@ -557,23 +557,17 @@ int orte_daemon(int argc, char *argv[])
         orte_grpcomm_base.coll_id += 3;
 
         /* need to setup a pidmap for it */
-        jdata->pmap = (opal_byte_object_t*)malloc(sizeof(opal_byte_object_t));
-        if (ORTE_SUCCESS != (ret = orte_util_encode_pidmap(jdata->pmap))) {
+        if (ORTE_SUCCESS != (ret = orte_util_encode_pidmap(&orte_pidmap, false))) {
             ORTE_ERROR_LOG(ret);
             goto DONE;
         }
     
-    
         /* if we don't yet have a daemon map, then we have to generate one
          * to pass back to it
          */
-        if (NULL == orte_odls_globals.dmap) {
-            orte_odls_globals.dmap = (opal_byte_object_t*)malloc(sizeof(opal_byte_object_t));
-            /* construct a nodemap */
-            if (ORTE_SUCCESS != (ret = orte_util_encode_nodemap(orte_odls_globals.dmap))) {
-                ORTE_ERROR_LOG(ret);
-                goto DONE;
-            }
+        if (ORTE_SUCCESS != (ret = orte_util_encode_nodemap(&orte_nidmap, false))) {
+            ORTE_ERROR_LOG(ret);
+            goto DONE;
         }
 
         /* create a string that contains our uri + the singleton's name + sysinfo */

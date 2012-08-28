@@ -120,8 +120,8 @@ int orte_odls_base_default_get_add_procs_data(opal_buffer_t *data,
         return ORTE_SUCCESS;
     }
      
-    /* construct a nodemap */
-    if (ORTE_SUCCESS != (rc = orte_util_encode_nodemap(&bo))) {
+    /* construct a nodemap - only want updated items */
+    if (ORTE_SUCCESS != (rc = orte_util_encode_nodemap(&bo, true))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
@@ -240,8 +240,8 @@ int orte_odls_base_default_get_add_procs_data(opal_buffer_t *data,
         }
     }
     
-    /* encode the pidmap */
-    if (ORTE_SUCCESS != (rc = orte_util_encode_pidmap(&bo))) {
+    /* encode the pidmap, taking only the updated procs */
+    if (ORTE_SUCCESS != (rc = orte_util_encode_pidmap(&bo, true))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
@@ -251,13 +251,14 @@ int orte_odls_base_default_get_add_procs_data(opal_buffer_t *data,
         ORTE_ERROR_LOG(rc);
         return rc;
     }
-    /* save it on the job data object as we won't be unpacking the buffer
-     * on our end
-     */
-    opal_dss.copy((void**)&jdata->pmap, &bo, OPAL_BYTE_OBJECT);
     /* release the data since it has now been copied into our buffer */
     free(bo.bytes);
-    
+    /* update our own version in case we have local procs */
+    if (ORTE_SUCCESS != (rc = orte_util_encode_pidmap(&orte_pidmap, false))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+
     /* pack the binding bitmaps */
     for (j=0; j < jdata->procs->size; j++) {
         if (NULL == (proc = (orte_proc_t *) opal_pointer_array_get_item(jdata->procs, j))) {
@@ -363,20 +364,14 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
 
     *job = ORTE_JOBID_INVALID;
     
-    /* extract the byte object holding the daemon map */
+    /* extract the byte object holding the daemon map - we dealt with it
+     * during the xcast, so we can ignore it here
+     */
     cnt=1;
     if (ORTE_SUCCESS != (rc = opal_dss.unpack(data, &bo, &cnt, OPAL_BYTE_OBJECT))) {
         ORTE_ERROR_LOG(rc);
         goto REPORT_ERROR;
     }
-    /* retain a copy for downloading to child processes */
-    if (NULL != orte_odls_globals.dmap) {
-        free(orte_odls_globals.dmap->bytes);
-        free(orte_odls_globals.dmap);
-        orte_odls_globals.dmap = NULL;
-    }
-    orte_odls_globals.dmap = bo;
-    bo = NULL;
 
     /* unpack the wireup info flag */
     cnt=1;
@@ -433,6 +428,10 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
     if (ORTE_PROC_IS_HNP) {
         for (n=0; n < jdata->procs->size; n++) {
             if (NULL == (pptr = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, n))) {
+                continue;
+            }
+            if (ORTE_PROC_STATE_UNDEF == pptr->state) {
+                /* not ready for use yet */
                 continue;
             }
             if (ORTE_SUCCESS != (rc = check_local_proc(jdata, pptr))) {
@@ -532,15 +531,9 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
         ORTE_ERROR_LOG(rc);
         goto REPORT_ERROR;
     }
-    /* retain a copy for downloading to child processes */
-    if (NULL != jdata->pmap) {
-        if (NULL != jdata->pmap->bytes) {
-            free(jdata->pmap->bytes);
-        }
-        free(jdata->pmap);
-    }
-    opal_dss.copy((void**)&jdata->pmap, bo, OPAL_BYTE_OBJECT);
-    /* decode the pidmap  - this will also free the bytes in bo */
+    /* decode the pidmap  - this will also free the bytes in bo, and
+     * update our global pidmap object
+     */
     if (ORTE_SUCCESS != (rc = orte_util_decode_daemon_pidmap(bo))) {
         ORTE_ERROR_LOG(rc);
         goto REPORT_ERROR;
@@ -580,6 +573,10 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
     /* check the procs */
     for (n=0; n < jdata->procs->size; n++) {
         if (NULL == (pptr = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, n))) {
+            continue;
+        }
+        if (ORTE_PROC_STATE_UNDEF == pptr->state) {
+            /* not ready for use yet */
             continue;
         }
         /* see if it belongs to us */
@@ -1337,7 +1334,13 @@ void orte_odls_base_default_launch_local(int fd, short sd, void *cbdata)
                 
                 continue;
             }
-            
+            /* is this child a candidate to start? it may not be alive
+             * because it already executed
+             */
+            if (ORTE_PROC_STATE_INIT != child->state &&
+                ORTE_PROC_STATE_RESTART != child->state) {
+                continue;
+            }
             /* do we have a child from the specified job. Because the
              * job could be given as a WILDCARD value, we must use
              * the dss.compare function to check for equality.
@@ -1698,6 +1701,8 @@ int orte_odls_base_default_require_sync(orte_process_name_t *proc,
     int rc=ORTE_SUCCESS, i;
     bool found=false, registering=false;
     orte_job_t *jobdat;
+    uint8_t flag;
+    opal_byte_object_t *boptr;
 
     OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                          "%s odls: require sync on child %s",
@@ -1748,6 +1753,16 @@ int orte_odls_base_default_require_sync(orte_process_name_t *proc,
         cnt = 1;
         if (ORTE_SUCCESS != (rc = opal_dss.unpack(buf, &(child->rml_uri), &cnt, OPAL_STRING))) {
             ORTE_ERROR_LOG(rc);
+            goto CLEANUP;
+        }
+        /* unpack the flag indicating MPI proc or not */
+        cnt = 1;
+        if (ORTE_SUCCESS != (rc = opal_dss.unpack(buf, &flag, &cnt, OPAL_UINT8))) {
+            ORTE_ERROR_LOG(rc);
+            goto CLEANUP;
+        }
+        if (1 == flag) {
+            child->mpi_proc = true;
         }
     }
     
@@ -1761,29 +1776,22 @@ int orte_odls_base_default_require_sync(orte_process_name_t *proc,
             goto CLEANUP;
         }
         OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
-                             "%s odls:sync nidmap requested for job %s: dmap %s pmap %s",
+                             "%s odls:sync nidmap requested for job %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             ORTE_JOBID_PRINT(jobdat->jobid),
-                             (NULL == orte_odls_globals.dmap) ? "NULL" : "READY",
-                             (NULL == jobdat->pmap) ? "NULL" : "READY"));
-        /* the proc needs a copy of both the daemon/node map, and
-         * the process map for its peers
+                             ORTE_JOBID_PRINT(jobdat->jobid)));
+        /* the proc needs a copy of both the daemon/node map and
+         * the process map
          */
-        if (NULL != orte_odls_globals.dmap &&
-            NULL != jobdat->pmap) {
-            /* the data is in the local byte objects - send them */
-            OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
-                                 "%s odls:sync sending byte object",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 #if OPAL_HAVE_HWLOC
-            /* send the local topology so the individual apps
-             * don't hammer the system to collect it themselves
-             */
-            opal_dss.pack(buffer, &opal_hwloc_topology, 1, OPAL_HWLOC_TOPO);
+        /* send the local topology so the individual apps
+         * don't hammer the system to collect it themselves
+         */
+        opal_dss.pack(buffer, &opal_hwloc_topology, 1, OPAL_HWLOC_TOPO);
 #endif
-            opal_dss.pack(buffer, &orte_odls_globals.dmap, 1, OPAL_BYTE_OBJECT);
-            opal_dss.pack(buffer, &jobdat->pmap, 1, OPAL_BYTE_OBJECT);
-        }
+        boptr = &orte_nidmap;
+        opal_dss.pack(buffer, &boptr, 1, OPAL_BYTE_OBJECT);
+        boptr = &orte_pidmap;
+        opal_dss.pack(buffer, &boptr, 1, OPAL_BYTE_OBJECT);
     }
     
     OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,

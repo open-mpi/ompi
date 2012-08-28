@@ -86,6 +86,17 @@ typedef uint32_t orte_proc_state_t;
  */
 #define ORTE_PROC_STATE_DYNAMIC 100
 
+/*
+ * App_context state codes
+ */
+typedef int32_t orte_app_state_t;
+#define ORTE_APP_STATE_T    OPAL_INT32
+
+#define ORTE_APP_STATE_UNDEF                0
+#define ORTE_APP_STATE_INIT                 1
+#define ORTE_APP_STATE_ALL_MAPPED           2
+#define ORTE_APP_STATE_RUNNING              3
+#define ORTE_APP_STATE_COMPLETED            4
 
 /*
  * Job state codes

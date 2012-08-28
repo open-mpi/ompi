@@ -1102,8 +1102,8 @@ static void launch_daemons(int fd, short args, void *cbdata)
             OBJ_RELEASE(orte_tree_launch_cmd);
             goto cleanup;
         }
-        /* construct a nodemap */
-        if (ORTE_SUCCESS != (rc = orte_util_encode_nodemap(&bo))) {
+        /* construct a nodemap of all daemons we know about */
+        if (ORTE_SUCCESS != (rc = orte_util_encode_nodemap(&bo, false))) {
             ORTE_ERROR_LOG(rc);
             OBJ_RELEASE(orte_tree_launch_cmd);
             goto cleanup;
