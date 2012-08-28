@@ -294,8 +294,6 @@ int orte_ess_base_app_finalize(void)
 #endif
     orte_filem_base_close();
     
-    orte_wait_finalize();
-
     orte_errmgr_base_close();
 
     /* now can close the rml and its friendly group comm */
