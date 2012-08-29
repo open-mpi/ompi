@@ -22,6 +22,7 @@
 #include "orte/util/show_help.h"
 #include "orte/util/proc_info.h"
 #include "coll_ml.h"
+#include "coll_ml_inlines.h"
 #include "coll_ml_mca.h"
 #include "coll_ml_lmngr.h"
 #include "ompi/mca/common/netpatterns/common_netpatterns.h"

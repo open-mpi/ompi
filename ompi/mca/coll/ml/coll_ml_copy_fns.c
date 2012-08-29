@@ -18,6 +18,7 @@
 #include "ompi/mca/bcol/bcol.h"
 #include "opal/sys/atomic.h"
 #include "ompi/mca/coll/ml/coll_ml.h"
+#include "ompi/mca/coll/ml/coll_ml_inlines.h"
 #include "ompi/mca/coll/ml/coll_ml_allocation.h"
 #include "coll_ml_colls.h"
 #include <unistd.h>

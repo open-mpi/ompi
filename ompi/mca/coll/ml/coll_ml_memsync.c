@@ -18,6 +18,7 @@
 #include "ompi/mca/coll/coll.h"
 #include "opal/sys/atomic.h"
 #include "ompi/mca/coll/ml/coll_ml.h"
+#include "ompi/mca/coll/ml/coll_ml_inlines.h"
 #include "ompi/mca/coll/ml/coll_ml_allocation.h"
 
 static int mca_coll_ml_memsync_recycle_memory(mca_coll_ml_collective_operation_progress_t *coll_op)

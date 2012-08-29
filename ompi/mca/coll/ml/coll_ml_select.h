@@ -9,6 +9,7 @@
 #include "ompi/op/op.h"
 #include "ompi/mca/bcol/bcol.h"
 #include "coll_ml.h"
+#include "coll_ml_inlines.h"
 
 
 

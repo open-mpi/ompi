@@ -18,6 +18,7 @@
 #include "ompi/mca/coll/coll.h"
 #include "opal/sys/atomic.h"
 #include "ompi/mca/coll/ml/coll_ml.h"
+#include "ompi/mca/coll/ml/coll_ml_inlines.h"
 
 static void mca_coll_ml_barrier_task_setup(
                 mca_coll_ml_task_status_t *task_status,

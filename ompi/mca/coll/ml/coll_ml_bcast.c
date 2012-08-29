@@ -23,6 +23,7 @@
 #include "ompi/mca/bcol/bcol.h"
 
 #include "coll_ml.h"
+#include "coll_ml_inlines.h"
 #include "coll_ml_colls.h"
 #include "coll_ml_allocation.h"
 

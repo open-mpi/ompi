@@ -9,6 +9,7 @@
  */
 #include "ompi_config.h"
 #include "coll_ml.h"
+#include "coll_ml_inlines.h"
 
 
 static inline void mca_coll_ml_fragment_constructor(mca_coll_ml_fragment_t *frag)

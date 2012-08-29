@@ -10,6 +10,7 @@
 
 #include "ompi/include/ompi/constants.h"
 #include "ompi/mca/coll/ml/coll_ml.h"
+#include "ompi/mca/coll/ml/coll_ml_inlines.h"
 #include "ompi/mca/coll/ml/coll_ml_allocation.h"
 
 /* collective managment descriptor initialization - called right after

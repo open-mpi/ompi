@@ -34,6 +34,7 @@
 #include "orte/mca/errmgr/errmgr.h"
 
 #include "coll_ml.h"
+#include "coll_ml_inlines.h"
 
 #include "ompi/mca/common/netpatterns/common_netpatterns.h"
 #include "coll_ml_mca.h"

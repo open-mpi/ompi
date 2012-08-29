@@ -12,6 +12,7 @@
 #include "opal/class/opal_list.h"
 #include "opal/threads/mutex.h"
 #include "coll_ml.h"
+#include "coll_ml_inlines.h"
 #include "coll_ml_mca.h"
 #include "coll_ml_lmngr.h"
 #ifndef HAVE_POSIX_MEMALIGN

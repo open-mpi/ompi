@@ -44,6 +44,7 @@
 #include "opal/util/arch.h"
 
 #include "coll_ml.h"
+#include "coll_ml_inlines.h"
 #include "coll_ml_select.h"
 #include "coll_ml_custom_utils.h"
 #include "coll_ml_allocation.h"
