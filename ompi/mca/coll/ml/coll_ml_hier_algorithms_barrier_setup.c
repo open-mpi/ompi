@@ -11,6 +11,7 @@
 #include "ompi_config.h"
 
 #include "ompi/mca/coll/ml/coll_ml.h"
+#include "ompi/mca/coll/ml/coll_ml_inlines.h"
 #include "ompi/include/ompi/constants.h"
 #include "ompi/mca/coll/ml/coll_ml_functions.h"
 

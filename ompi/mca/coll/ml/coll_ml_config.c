@@ -11,6 +11,7 @@
 #include "opal/mca/base/mca_base_param.h"
 
 #include "coll_ml.h"
+#include "coll_ml_inlines.h"
 #include "coll_ml_config.h"
 #include "coll_ml_lex.h"
 

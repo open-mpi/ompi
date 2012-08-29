@@ -15,6 +15,7 @@
 #endif  /* HAVE_STDLIB_H */
 
 #include "coll_ml.h"
+#include "coll_ml_inlines.h"
 #include "coll_ml_allocation.h"
 
 long memory_buffer_index;

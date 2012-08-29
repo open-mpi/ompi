@@ -11,6 +11,7 @@
 #include "ompi_config.h"
 #include "ompi/mca/bcol/bcol.h"
 #include "ompi/mca/coll/ml/coll_ml.h"
+#include "ompi/mca/coll/ml/coll_ml_inlines.h"
 #include "ompi/mca/coll/ml/coll_ml_hier_algorithms_common_setup.h"
 
 int mca_coll_ml_schedule_init_scratch(mca_coll_ml_topology_t *topo_info,

@@ -11,6 +11,7 @@
 #include "ompi_config.h"
 
 #include "ompi/mca/coll/ml/coll_ml.h"
+#include "ompi/mca/coll/ml/coll_ml_inlines.h"
 #include "ompi/include/ompi/constants.h"
 
 int ml_coll_up_and_down_hier_setup(mca_coll_ml_module_t *ml_module,

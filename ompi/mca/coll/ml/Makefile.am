@@ -16,6 +16,7 @@ dist_pkgdata_DATA = \
 not_used_yet = 
 
 sources = coll_ml.h \
+        coll_ml_inlines.h \
         coll_ml_module.c \
         coll_ml_allocation.h \
         coll_ml_allocation.c \
