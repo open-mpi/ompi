@@ -142,17 +142,6 @@ void orte_plm_base_daemons_launched(int fd, short args, void *cbdata)
     OBJ_RELEASE(caddy);
 }
 
-static void files_ready(int status, void *cbdata)
-{
-    orte_job_t *jdata = (orte_job_t*)cbdata;
-
-    if (ORTE_SUCCESS != status) {
-        ORTE_TERMINATE(status);
-    } else {
-        ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_MAP);
-    }
-}
-
 void orte_plm_base_vm_ready(int fd, short args, void *cbdata)
 {
     orte_state_caddy_t *caddy = (orte_state_caddy_t*)cbdata;
@@ -160,13 +149,7 @@ void orte_plm_base_vm_ready(int fd, short args, void *cbdata)
     /* progress the job */
     caddy->jdata->state = ORTE_JOB_STATE_VM_READY;
 
-    /* position any required files - these would have been
-     * specified via MCA parameter, so we don't have to
-     * pass them here
-     */
-    if (ORTE_SUCCESS != orte_filem.preposition_files(NULL, files_ready, caddy->jdata)) {
-        ORTE_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
-    }
+    ORTE_ACTIVATE_JOB_STATE(caddy->jdata, ORTE_JOB_STATE_MAP);
 
     /* cleanup */
     OBJ_RELEASE(caddy);
