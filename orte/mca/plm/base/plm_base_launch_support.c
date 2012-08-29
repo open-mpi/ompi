@@ -1269,6 +1269,7 @@ int orte_plm_base_setup_virtual_machine(orte_job_t *jdata)
         OBJ_DESTRUCT(&nodes);
         /* mark that the daemons have reported so we can proceed */
         daemons->state = ORTE_JOB_STATE_DAEMONS_REPORTED;
+	daemons->updated = false;
         return ORTE_SUCCESS;
     }
 
@@ -1429,6 +1430,9 @@ int orte_plm_base_setup_virtual_machine(orte_job_t *jdata)
         /* ensure our routing plan is up-to-date */
         orte_routed.update_routing_plan();
     }
+
+    /* mark that the daemon job changed */
+    daemons->updated = true;
 
     return ORTE_SUCCESS;
 }
