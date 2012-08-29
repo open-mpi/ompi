@@ -541,7 +541,7 @@ static inline __opal_attribute_always_inline__ mca_bcol_iboffload_task_t*
     SENDWR(task)->wr.calc_rdma.remote_addr = (uint64_t) (uintptr_t)
         ((unsigned char *) endpoint->remote_rdma_block.rdma_desc[coll_request->ml_buffer_index].data_addr + offset);
 #else
-    ML_ERROR(("Fatal error: RDMA CALC was called, but the driver does not support this operation"));
+    IBOFFLOAD_ERROR(("Fatal error: RDMA CALC was called, but the driver does not support this operation"));
     return NULL;
 #endif
 
