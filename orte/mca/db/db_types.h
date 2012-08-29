@@ -34,6 +34,7 @@ BEGIN_C_DECLS
 #define ORTE_DB_ARCH         "orte.arch"
 #define ORTE_DB_NPROCS       "orte.nprocs"
 #define ORTE_DB_RMLURI       "orte.rmluri"
+#define ORTE_DB_BIND_BITMAP  "orte.bind.bitmap"
 
 END_C_DECLS
 

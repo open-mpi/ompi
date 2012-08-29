@@ -710,6 +710,7 @@ static void orte_job_construct(orte_job_t* job)
     job->state = ORTE_JOB_STATE_UNDEF;
     job->restart = false;
 
+    job->num_mapped = 0;
     job->num_launched = 0;
     job->num_reported = 0;
     job->num_terminated = 0;

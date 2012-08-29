@@ -98,7 +98,6 @@ int orte_odls_base_default_get_add_procs_data(opal_buffer_t *data,
 {
     int rc;
     orte_job_t *jdata=NULL;
-    orte_proc_t *proc;
     orte_job_map_t *map=NULL;
     opal_buffer_t *wireup;
     opal_byte_object_t bo, *boptr;
@@ -259,18 +258,6 @@ int orte_odls_base_default_get_add_procs_data(opal_buffer_t *data,
         return rc;
     }
 
-    /* pack the binding bitmaps */
-    for (j=0; j < jdata->procs->size; j++) {
-        if (NULL == (proc = (orte_proc_t *) opal_pointer_array_get_item(jdata->procs, j))) {
-            continue;
-        }
-        /* okay to pack NULL strings */
-        if (ORTE_SUCCESS != (rc = opal_dss.pack(data, &proc->cpu_bitmap, 1, OPAL_STRING))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-    }
-
     /* pack the collective ids */
     if (ORTE_SUCCESS != (rc = opal_dss.pack(data, &jdata->peer_modex, 1, ORTE_GRPCOMM_COLL_ID_T))) {
         ORTE_ERROR_LOG(rc);
@@ -324,7 +311,8 @@ static int check_local_proc(orte_job_t *jdata, orte_proc_t *pptr)
     if (!pptr->local_proc) {
         /* not on the local list */
         OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
-                             "adding proc %s to my local list",
+                             "%s adding proc %s to my local list",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_NAME_PRINT(&pptr->name)));
         /* keep tabs of the number of local procs */
         jdata->num_local_procs++;
@@ -351,7 +339,6 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
     orte_vpid_t j;
     orte_std_cntr_t cnt;
     orte_job_t *jdata=NULL;
-    orte_proc_t *proc;
     opal_byte_object_t *bo;
     int8_t flag;
     int32_t n;
@@ -539,20 +526,6 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
         goto REPORT_ERROR;
     }
    
-    /* unpack the binding bitmaps */
-    for (j=0; j < jdata->num_procs; j++) {
-        if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, j))) {
-            ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-            rc = ORTE_ERR_NOT_FOUND;
-            goto REPORT_ERROR;
-        }
-        cnt = 1;
-        if (ORTE_SUCCESS != (rc = opal_dss.unpack(data, &proc->cpu_bitmap, &cnt, OPAL_STRING))) {
-            ORTE_ERROR_LOG(rc);
-            goto REPORT_ERROR;
-        }
-    }
-
     /* unpack the collective ids */
     cnt=1;
     if (ORTE_SUCCESS != (rc = opal_dss.unpack(data, &jdata->peer_modex, &cnt, ORTE_GRPCOMM_COLL_ID_T))) {

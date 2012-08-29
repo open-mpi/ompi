@@ -253,6 +253,7 @@ static void setup_job_complete(int fd, short args, void *cbdata)
         jdata->map = OBJ_NEW(orte_job_map_t);
         jdata->map->req_mapper = strdup("staged");
         ORTE_SET_MAPPING_POLICY(jdata->map->mapping, ORTE_MAPPING_STAGED);
+        ORTE_SET_MAPPING_DIRECTIVE(jdata->map->mapping, ORTE_MAPPING_NO_OVERSUBSCRIBE);
         jdata->map->display_map = orte_rmaps_base.display_map;
     }
     orte_plm_base_setup_job_complete(0, 0, (void*)caddy);
@@ -347,12 +348,13 @@ static void track_procs(int fd, short args, void *cbdata)
         if (jdata->num_terminated == jdata->num_procs) {
             /* no other procs are waiting, so end this job */
             ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_TERMINATED);
-        } else {
-            /* schedule the job for re-mapping so that any procs
+        } else if (jdata->num_mapped < jdata->num_procs) {
+            /* schedule the job for re-mapping so that procs
              * waiting for resources can execute
              */
             ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_MAP);
         }
+	/* otherwise, do nothing until more procs terminate */
         OBJ_RELEASE(caddy);
         return;
     }

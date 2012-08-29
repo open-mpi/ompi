@@ -602,6 +602,10 @@ int orte_util_encode_pidmap(opal_byte_object_t *boptr, bool update)
                 ORTE_ERROR_LOG(rc);
                 goto cleanup_and_return;
             }
+            if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &proc->cpu_bitmap, 1, OPAL_STRING))) {
+                ORTE_ERROR_LOG(rc);
+                goto cleanup_and_return;
+            }
 #endif
             if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &proc->state, 1, ORTE_PROC_STATE))) {
                 ORTE_ERROR_LOG(rc);
@@ -642,6 +646,7 @@ int orte_util_decode_pidmap(opal_byte_object_t *bo)
     opal_hwloc_level_t bind_level = OPAL_HWLOC_NODE_LEVEL, pbind, *lvptr;
     unsigned int bind_idx, pbidx, *uiptr;
     opal_hwloc_locality_t locality;
+    char *cpu_bitmap;
 #endif
     orte_std_cntr_t n;
     opal_buffer_t buf;
@@ -742,29 +747,19 @@ int orte_util_decode_pidmap(opal_byte_object_t *bo)
                 ORTE_ERROR_LOG(rc);
                 goto cleanup;
             }
+            n=1;
+            if (ORTE_SUCCESS != (rc = opal_dss.unpack(&buf, &cpu_bitmap, &n, OPAL_STRING))) {
+                ORTE_ERROR_LOG(rc);
+                goto cleanup;
+            }
 #endif
             if (proc.jobid == ORTE_PROC_MY_NAME->jobid &&
                 proc.vpid == ORTE_PROC_MY_NAME->vpid) {
                 /* set mine */
                 orte_process_info.my_local_rank = local_rank;
-                if (ORTE_SUCCESS != (rc = orte_db.store(ORTE_PROC_MY_NAME, ORTE_DB_LOCALRANK,
-                                                        &orte_process_info.my_local_rank, ORTE_LOCAL_RANK))) {
-                    ORTE_ERROR_LOG(rc);
-                    goto cleanup;
-                }
                 orte_process_info.my_node_rank = node_rank;
-                if (ORTE_SUCCESS != (rc = orte_db.store(ORTE_PROC_MY_NAME, ORTE_DB_NODERANK,
-                                                        &orte_process_info.my_node_rank, ORTE_NODE_RANK))) {
-                    ORTE_ERROR_LOG(rc);
-                    goto cleanup;
-                }
 #if OPAL_HAVE_HWLOC
                 orte_process_info.bind_idx = bind_idx;
-                if (ORTE_SUCCESS != (rc = orte_db.store(ORTE_PROC_MY_NAME, ORTE_DB_BIND_INDEX,
-                                                        &orte_process_info.bind_idx, OPAL_UINT))) {
-                    ORTE_ERROR_LOG(rc);
-                    goto cleanup;
-                }
 #endif
             }
             /* apps don't need the rest of the data in the buffer for this proc,
@@ -785,27 +780,7 @@ int orte_util_decode_pidmap(opal_byte_object_t *bo)
                 ORTE_ERROR_LOG(rc);
                 goto cleanup;
             }
-            /* we don't need to store data for ourself in the database
-             * as we already did so
-             */
-            if (proc.jobid == ORTE_PROC_MY_NAME->jobid &&
-                proc.vpid == ORTE_PROC_MY_NAME->vpid) {
-                continue;
-            }
-            /* store the data for this proc */
-            if (ORTE_SUCCESS != (rc = orte_db.store(&proc, ORTE_DB_DAEMON_VPID, &dmn.vpid, ORTE_VPID))) {
-                ORTE_ERROR_LOG(rc);
-                goto cleanup;
-            }
-            /* lookup and store the hostname for this proc */
-            if (ORTE_SUCCESS != (rc = orte_db.fetch_pointer(&dmn, ORTE_DB_HOSTNAME, (void**)&hostname, OPAL_STRING))) {
-                ORTE_ERROR_LOG(rc);
-                goto cleanup;
-            }
-            if (ORTE_SUCCESS != (rc = orte_db.store(&proc, ORTE_DB_HOSTNAME, hostname, OPAL_STRING))) {
-                ORTE_ERROR_LOG(rc);
-                goto cleanup;
-            }
+            /* store the values in the database */
             if (ORTE_SUCCESS != (rc = orte_db.store(&proc, ORTE_DB_LOCALRANK, &local_rank, ORTE_LOCAL_RANK))) {
                 ORTE_ERROR_LOG(rc);
                 goto cleanup;
@@ -819,7 +794,32 @@ int orte_util_decode_pidmap(opal_byte_object_t *bo)
                 ORTE_ERROR_LOG(rc);
                 goto cleanup;
             }
+            if (ORTE_SUCCESS != (rc = orte_db.store(&proc, ORTE_DB_BIND_BITMAP, cpu_bitmap, OPAL_STRING))) {
+                ORTE_ERROR_LOG(rc);
+                goto cleanup;
+            }
 #endif
+            /* we don't need to store the rest of the values
+             * for ourself in the database
+             * as we already did so during startup
+             */
+            if (proc.jobid != ORTE_PROC_MY_NAME->jobid ||
+                proc.vpid != ORTE_PROC_MY_NAME->vpid) {
+                /* store the data for this proc */
+                if (ORTE_SUCCESS != (rc = orte_db.store(&proc, ORTE_DB_DAEMON_VPID, &dmn.vpid, ORTE_VPID))) {
+                    ORTE_ERROR_LOG(rc);
+                    goto cleanup;
+                }
+                /* lookup and store the hostname for this proc */
+                if (ORTE_SUCCESS != (rc = orte_db.fetch_pointer(&dmn, ORTE_DB_HOSTNAME, (void**)&hostname, OPAL_STRING))) {
+                    ORTE_ERROR_LOG(rc);
+                    goto cleanup;
+                }
+                if (ORTE_SUCCESS != (rc = orte_db.store(&proc, ORTE_DB_HOSTNAME, hostname, OPAL_STRING))) {
+                    ORTE_ERROR_LOG(rc);
+                    goto cleanup;
+                }
+            }
         }
         /* setup for next cycle */
         n = 1;
@@ -929,6 +929,7 @@ int orte_util_decode_daemon_pidmap(opal_byte_object_t *bo)
 #if OPAL_HAVE_HWLOC
     opal_hwloc_level_t bind_level = OPAL_HWLOC_NODE_LEVEL;
     unsigned int bind_idx;
+    char *cpu_bitmap;
 #endif
     orte_std_cntr_t n;
     opal_buffer_t buf;
@@ -1011,6 +1012,11 @@ int orte_util_decode_daemon_pidmap(opal_byte_object_t *bo)
 #if OPAL_HAVE_HWLOC
             n=1;
             if (ORTE_SUCCESS != (rc = opal_dss.unpack(&buf, &bind_idx, &n, OPAL_UINT))) {
+                ORTE_ERROR_LOG(rc);
+                goto cleanup;
+            }
+            n=1;
+            if (ORTE_SUCCESS != (rc = opal_dss.unpack(&buf, &cpu_bitmap, &n, OPAL_STRING))) {
                 ORTE_ERROR_LOG(rc);
                 goto cleanup;
             }
@@ -1111,6 +1117,10 @@ int orte_util_decode_daemon_pidmap(opal_byte_object_t *bo)
             proc->app_idx = app_idx;
             proc->restarts = restarts;
             proc->state = state;
+#if OPAL_HAVE_HWLOC
+            proc->bind_idx = bind_idx;
+            proc->cpu_bitmap = cpu_bitmap;
+#endif
         }
         /* setup for next cycle */
         n = 1;
