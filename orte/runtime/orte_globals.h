@@ -406,6 +406,8 @@ typedef struct {
     orte_job_state_t state;
     /* some procs in this job are being restarted */
     bool restart;
+    /* number of procs mapped */
+    orte_vpid_t num_mapped;
     /* number of procs launched */
     orte_vpid_t num_launched;
     /* number of procs reporting contact info */

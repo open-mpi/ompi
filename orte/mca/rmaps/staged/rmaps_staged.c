@@ -48,6 +48,7 @@ static int staged_mapper(orte_job_t *jdata)
     orte_proc_t *proc;
     orte_node_t *node;
     bool work_to_do = false;
+    opal_list_item_t *item;
 
     /* only use this mapper if it was specified */
     if (NULL == jdata->map->req_mapper ||
@@ -100,6 +101,9 @@ static int staged_mapper(orte_job_t *jdata)
         }
         /* if nothing is available, then move on */
         if (0 == num_slots || 0 == opal_list_get_size(&node_list)) {
+	    opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+				"%s mca:rmaps:staged: no nodes available for this app",
+				ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
             OBJ_DESTRUCT(&node_list);
             continue;
         }
@@ -110,20 +114,46 @@ static int staged_mapper(orte_job_t *jdata)
             }
             if (ORTE_PROC_STATE_UNDEF != proc->state) {
                 /* this proc has already been mapped or executed */
+	        opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+				    "%s mca:rmaps:staged: proc %s has already been mapped",
+				    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+				    ORTE_NAME_PRINT(&proc->name));
                 continue;
             }
             /* flag that there is at least one proc still to
              * be executed
              */
             work_to_do = true;
+            /* track number mapped */
+            jdata->num_mapped++;
             /* map this proc to the first available slot */
             node = (orte_node_t*)opal_list_get_first(&node_list);
             OBJ_RETAIN(node);  /* maintain accounting on object */    
+	    opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+				"%s mca:rmaps:staged: assigning proc %s to node %s",
+				ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+				ORTE_NAME_PRINT(&proc->name), node->name);
             proc->node = node;
             proc->nodename = node->name;
+	    /* the local rank is the number of procs
+	     * on this node from this job - we don't
+	     * directly track this number, so it must
+	     * be found by looping across the node->procs
+	     * array and counting it each time. For now,
+	     * since we don't use this value in this mode
+	     * of operation, just set it to something arbitrary
+	     */
+	    proc->local_rank = node->num_procs;
+	    /* the node rank is simply the number of procs
+	     * on the node at this time
+	     */
+	    proc->node_rank = node->num_procs;
+	    /* track number of procs on node and number of slots used */
             node->num_procs++;
             node->slots_inuse++;
             if (node->slots_inuse == node->slots_alloc) {
+                opal_output(0, "%s slots on node %s are fully used",
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), node->name);
                 opal_list_remove_item(&node_list, &node->super);
                 OBJ_RELEASE(node);
             }
@@ -154,6 +184,11 @@ static int staged_mapper(orte_job_t *jdata)
                 break;
             }
         }
+	/* clear the list */
+	while (NULL != (item = opal_list_remove_first(&node_list))) {
+	  OBJ_RELEASE(item);
+	}
+	OBJ_DESTRUCT(&node_list);
     }
 
     /* if there isn't at least one proc that can be launched,
