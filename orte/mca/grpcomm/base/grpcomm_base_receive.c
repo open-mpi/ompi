@@ -155,9 +155,7 @@ static void coll_id_req(int status, orte_process_name_t* sender,
     orte_grpcomm_coll_id_t id;
     opal_buffer_t *relay;
     int rc;
-    /* collective - only the HNP ever gets this message, but check
-     * in case a developer makes a mistake!
-     */
+
     id = orte_grpcomm_base_get_coll_id();
     OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base.output,
                          "%s grpcomm:base:receive proc %s requested coll id - returned id %d",
@@ -316,7 +314,11 @@ static void daemon_local_recv(int status, orte_process_name_t* sender,
              * our own local procs, but this could involve a proc
              * running remotely that we don't know about yet
              */
-            do_progress = false;
+            OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base.output,
+                                 "%s cant find job %s - not progressing collective",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 ORTE_JOBID_PRINT(proc.jobid)));
+             do_progress = false;
         }
     }
 

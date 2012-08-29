@@ -509,10 +509,25 @@ int orte_util_encode_pidmap(opal_byte_object_t *boptr, bool update)
     opal_buffer_t buf;
     int i, j, rc = ORTE_SUCCESS;
     orte_job_t *jdata;
+    bool include_all;
 
     /* setup the working buffer */
     OBJ_CONSTRUCT(&buf, opal_buffer_t);
     
+    /* check the daemon job to see if it has changed - perhaps
+     * new daemons were added as the result of a comm_spawn
+     */
+    jdata = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid);
+    /* if it did change, then the pidmap will be going
+     * to new daemons - so we need to include everything.
+     * also include everything if we were asked to do so
+     */
+    if (jdata->updated || !update) {
+        include_all = true;
+    } else {
+        include_all = false;
+    }
+
     for (j=1; j < orte_job_data->size; j++) {
         /* the job array is no longer left-justified and may
          * have holes in it as we recover resources at job
@@ -532,7 +547,7 @@ int orte_util_encode_pidmap(opal_byte_object_t *boptr, bool update)
             continue;
         }
         /* if we want an update version and there is nothing to update, ignore it */
-        if (update && !jdata->updated) {
+        if (!include_all && !jdata->updated) {
             continue;
         }
         /* flag that we included it so we don't do so again */
