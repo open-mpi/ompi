@@ -307,8 +307,13 @@ static int pmi_get_proc_attr(const orte_process_name_t name,
 
 	rc = kvs_get(pmi_kvs_key, tmp_val, pmi_vallen_max);
 	if (PMI_SUCCESS != rc) {
-            ORTE_ERROR_LOG(ORTE_ERR_VALUE_OUT_OF_BOUNDS);
-	    break;
+            /* PMI has no record of this key - this isn't
+             * necessarily an error as it could be that
+             * the specified proc simply didn't post the
+             * given key, so let the layer above
+             * figure out if that's a problem
+             */
+            return ORTE_ERR_NOT_FOUND;
 	}
 
 	tmp = strtok_r (tmp_val, ",", &tok_ctx);
