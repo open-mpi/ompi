@@ -334,6 +334,11 @@ int orte_util_decode_nodemap(opal_byte_object_t *bo)
                          "%s decode:nidmap decoding nodemap",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
+    /* should never happen, but... */
+    if (NULL == bo->bytes || 0 == bo->size) {
+        return ORTE_SUCCESS;
+    }
+
     /* xfer the byte object to a buffer for unpacking */
     OBJ_CONSTRUCT(&buf, opal_buffer_t);
     opal_dss.load(&buf, bo->bytes, bo->size);
@@ -406,6 +411,11 @@ int orte_util_decode_daemon_nodemap(opal_byte_object_t *bo)
     OPAL_OUTPUT_VERBOSE((1, orte_nidmap_output,
                          "%s decode:nidmap decoding daemon nodemap",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+
+    if (NULL == bo->bytes || 0 == bo->size) {
+        /* nothing to unpack */
+        return ORTE_SUCCESS;
+    }
 
     /* xfer the byte object to a buffer for unpacking */
     OBJ_CONSTRUCT(&buf, opal_buffer_t);
