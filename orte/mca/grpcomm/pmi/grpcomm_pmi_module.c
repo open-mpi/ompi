@@ -474,6 +474,9 @@ static int modex(orte_grpcomm_collective_t *coll)
 
         name.vpid = v;
 
+        /* everyone must post the following basic keys, so any missing keys
+         * is an irrecoverable error
+         */
 	rc = pmi_get_proc_attr (name, ORTE_DB_RMLURI, (void **) &rml_uri, &len);
 	if (ORTE_SUCCESS != rc) {
             ORTE_ERROR_LOG(rc);
@@ -630,7 +633,13 @@ static int modex(orte_grpcomm_collective_t *coll)
         }
         free(tmp_val);
 
-        /* harvest all other info for keys we know about and store it */
+        /* harvest all other info for keys we know about and store their
+         * data - these keys, however, are OPTIONAL as not every process
+         * will necessarily post the same info. However, we only care
+         * about the data that matches our own as we can't communicate
+         * over interfaces we don't have, even if the other guy does.
+         * So it isn't an error to not find a matching PMI post here
+         */
         OBJ_CONSTRUCT(&modex_data, opal_list_t);
         if (ORTE_SUCCESS != (rc = orte_db.fetch_multiple(ORTE_PROC_MY_NAME, NULL, &modex_data))) {
             ORTE_ERROR_LOG(rc);
@@ -650,8 +659,20 @@ static int modex(orte_grpcomm_collective_t *coll)
                 continue;
             }
             if (ORTE_SUCCESS != (rc = pmi_get_proc_attr(name, kv->key, &tmp_val, &len))) {
-                ORTE_ERROR_LOG(rc);
-                return rc;
+                if (ORTE_ERR_NOT_FOUND == rc) {
+                    /* okay to be missing - if some layer above truly needs
+                     * this info, then they can deal with the lack of it
+                     * when they query the database and get a "not found"
+                     * response. In some cases, they may decide they can't
+                     * live without it - or they may decide that's just
+                     * fine and continue running. Up to them.
+                     */
+                    continue;
+                } else {
+                    /* any other error response IS an error */
+                    ORTE_ERROR_LOG(rc);
+                    return rc;
+                }
             }
             OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base.output,
                                  "%s grpcomm:pmi: got modex value for proc %s key %s[%s] len %d",
