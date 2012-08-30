@@ -439,6 +439,9 @@ int opal_dss_unpack_byte_object(opal_buffer_t *buffer, void *dest, int32_t *num,
                                             &(dbyteptr[i]->size), OPAL_BYTE))) {
                 return ret;
             }
+        } else {
+            /* be sure to init the bytes pointer to NULL! */
+            dbyteptr[i]->bytes = NULL;
         }
     }
 
