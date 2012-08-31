@@ -86,6 +86,13 @@ struct timeval orte_daemon_msg_recvd;
 
 static struct timeval mesg_recvd={0,0};
 
+static void send_cbfunc(int status, orte_process_name_t* sender,
+			opal_buffer_t *buffer, orte_rml_tag_t tag,
+			void* cbdata)
+{
+    OBJ_RELEASE(buffer);
+}
+
 static void send_relay(opal_buffer_t *buf)
 {
     opal_list_t recips;
@@ -93,7 +100,8 @@ static void send_relay(opal_buffer_t *buf)
     orte_routed_tree_t *nm;
     orte_process_name_t target;
     int ret;
-    
+    opal_buffer_t *relay;
+
     OPAL_OUTPUT_VERBOSE((1, orte_debug_output,
                          "%s orte:daemon:send_relay",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
@@ -120,9 +128,12 @@ static void send_relay(opal_buffer_t *buf)
                              "%s orte:daemon:send_relay sending relay msg to %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_VPID_PRINT(nm->vpid)));
-        
+        relay = OBJ_NEW(opal_buffer_t);
+	opal_dss.copy_payload(relay, buf);
         target.vpid = nm->vpid;
-        if (0 > (ret = orte_rml.send_buffer(&target, buf, ORTE_RML_TAG_DAEMON, 0))) {
+        if (0 > (ret = orte_rml.send_buffer_nb(&target, relay,
+					       ORTE_RML_TAG_DAEMON, 0,
+					       send_cbfunc, NULL))) {
             ORTE_ERROR_LOG(ret);
             goto CLEANUP;
         }
