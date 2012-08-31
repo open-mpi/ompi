@@ -62,10 +62,10 @@ static int orte_rmaps_lama_register(void)
     mca_base_component_t *c = &mca_rmaps_lama_component.base_version;
     int val;
 
-    /* JJH: Note the inflated priority, fix before release */
+    /* JMS Artifically low for now */
     mca_base_param_reg_int(c, "priority",
                            "Priority of the LAMA rmaps component",
-                           false, false, 5000,
+                           false, false, 0,
                            &module_priority);
 
     mca_base_param_reg_int(c, "timing",
