@@ -74,7 +74,7 @@ ompi_modex_recv(const mca_base_component_t *component,
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
     
-    /* the fetch API returns a pointer to the data */
+    /* the fetch API returns a copy of the data */
     rc = orte_db.fetch(&proc->proc_name, key, (void**)&boptr, OPAL_BYTE_OBJECT);
 
     if (ORTE_SUCCESS == rc) {
@@ -102,7 +102,7 @@ int ompi_modex_recv_pointer(const mca_base_component_t *component,
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
     
-    /* the fetch_poointer API returns a pointer to the data */
+    /* the fetch_pointer API returns a pointer to the data */
     rc = orte_db.fetch_pointer(&proc->proc_name, name, buffer, type);
     free(name);
 
@@ -185,7 +185,7 @@ int ompi_modex_recv_key_value(const char* key,
 {
     int rc;
 
-    /* the fetch API returns the data */
+    /* the fetch API returns a copy of the data */
     rc = orte_db.fetch(&source_proc->proc_name, key, (void**)value, type);
 
     return rc;
