@@ -1,0 +1,45 @@
+# -*- text -*-
+#
+# Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
+#
+# $COPYRIGHT$
+# 
+# Additional copyrights may follow
+# 
+# $HEADER$
+#
+# This is the US/English general help file for LAMA Mapper.
+#
+[orte-rmaps-lama:multi-apps-and-zero-np]
+RMAPS found multiple applications to be launched, with at least one that failed
+to specify the number of processes to execute. When specifying multiple
+applications, you must specify how many processes of each to launch via the
+-np argument.
+
+[orte-rmaps-lama:oversubscribe]
+RMaps LAMA detected oversubscription after mapping %d of %d processes.
+Since you have asked not to oversubscribe the resources the job will not
+be launched. If you would instead like to oversubscribe the resources
+try using the --oversubscribe option to mpirun.
+
+[orte-rmaps-lama:no-resources-available]
+RMaps LAMA detected that there are not enough resources to map the
+remainder of the job. Check the command line options, and the number of
+nodes allocated to this job.
+ Application Context : %d
+ # of Processes Successfully Mapped: %d 
+ # of Processes Requested          : %d
+ Mapping  : %s
+ Binding  : %s
+ MPPR     : %s
+ Ordering : %s
+
+[orte-rmaps-lama:merge-conflict-bad-prune-src]
+RMaps LAMA detected that it needed to prune a level of the hierarchy that
+was necessary for one of the command line parameters. Check your allocation
+and the options below to make sure they are correct.
+ Conflicting Level Description: %s
+ Mapping  : %s
+ Binding  : %s
+ MPPR     : %s
+ Ordering : %s
