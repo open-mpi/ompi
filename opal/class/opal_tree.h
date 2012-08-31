@@ -1,5 +1,7 @@
 /*
  * Copyright (c) 2011      Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
+ *
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -168,6 +170,11 @@ typedef int (*opal_tree_item_deserialize_fn_t)(opal_buffer_t *buffer,
 					       opal_tree_item_t **item);
 
 /**
+  * Get the 'key' associated with this item
+  */
+typedef void *(*opal_tree_get_key_fn_t)(opal_tree_item_t *item);
+
+/**
  * \internal
  *
  * Struct of an opal_tree_t
@@ -187,6 +194,8 @@ typedef struct opal_tree_t
     opal_tree_item_serialize_fn_t serialize;
     /** Function to deserialize tree item data */
     opal_tree_item_deserialize_fn_t deserialize;
+    /**< Function to deserialize tree item data */
+    opal_tree_get_key_fn_t get_key;
 } opal_tree_t;
 
 /** Macros to access items in the tree */
@@ -347,7 +356,8 @@ OPAL_DECLSPEC size_t opal_tree_get_size(opal_tree_t* tree);
 OPAL_DECLSPEC void opal_tree_init(opal_tree_t *tree, 
                                   opal_tree_comp_fn_t comp, 
                                   opal_tree_item_serialize_fn_t serialize,
-                                  opal_tree_item_deserialize_fn_t deserialize);
+                                  opal_tree_item_deserialize_fn_t deserialize,
+                                  opal_tree_get_key_fn_t get_key);
                                   
 /**
  * Add new item as child to its parent item
@@ -381,6 +391,18 @@ OPAL_DECLSPEC void opal_tree_add_child(opal_tree_item_t *parent_item,
  * in the tree before doing pointer manipulation.
  */
 OPAL_DECLSPEC opal_tree_item_t *opal_tree_remove_subtree(opal_tree_item_t *item);
+
+/**
+ * Remove an item, everything below inherited by parent.
+ *
+ * @param tree Tree from which to remove
+ * @param item The item to remove
+ *
+ * @returns Success/Failure
+ */
+OPAL_DECLSPEC int opal_tree_remove_item(opal_tree_t *tree,
+                                        opal_tree_item_t *item);
+
 /**
  * Serialize tree data
  *
@@ -421,6 +443,66 @@ OPAL_DECLSPEC int opal_tree_serialize(opal_tree_item_t *start_item,
  */
 OPAL_DECLSPEC int opal_tree_deserialize(opal_buffer_t *buffer,
                                         opal_tree_item_t *start_item);
+
+/**
+ * Access the 'key' associated with the item
+ *
+ * @param tree Source Tree
+ * @param item Item to access key of
+ *
+ * @returns Success/Failure
+ */
+OPAL_DECLSPEC void * opal_tree_get_key(opal_tree_t *tree, opal_tree_item_t *item);
+
+/**
+ * Copy/Duplicate a tree (requires serialize/deserialize)
+ *
+ * @param from Source tree to copy 'from'
+ * @param to   Destination tree to copy 'to'
+ *
+ * @returns Success/Failure
+ */
+OPAL_DECLSPEC int opal_tree_dup(opal_tree_t *from, opal_tree_t *to);
+
+/**
+ * Copy/Duplicate a subtree (requires serialize/deserialize)
+ *
+ * @param base Base tree
+ * @param from Source tree item to copy 'from'
+ *
+ * @returns Tree item copy
+ */
+OPAL_DECLSPEC int opal_tree_copy_subtree(opal_tree_t *from_tree, opal_tree_item_t *from_item,
+                                         opal_tree_t *to_tree,   opal_tree_item_t *to_parent);
+
+/**
+ * Copy/Duplicate a tree item (requires serialize/deserialize)
+ *
+ * @param base Base tree
+ * @param from Source tree item to copy 'from'
+ *
+ * @returns Tree item copy
+ */
+OPAL_DECLSPEC opal_tree_item_t *opal_tree_dup_item(opal_tree_t *base, opal_tree_item_t *from);
+
+/**
+ * Count the number of children of this parent
+ *
+ * @param parent A parent node in the tree
+ *
+ * @returns Number of children of this parent
+ */
+OPAL_DECLSPEC int opal_tree_num_children(opal_tree_item_t *parent);
+
+/**
+ * Compare two trees
+ *
+ * @param left Tree
+ * @param right Tree
+ *
+ * @returns 0 if identical, ow returns non-zero
+ */
+OPAL_DECLSPEC int opal_tree_compare(opal_tree_t *left, opal_tree_t *right);
 
 /* Functions to search for items on tree */
 /**
