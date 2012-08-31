@@ -90,7 +90,7 @@ int opal_hwloc_base_open(void)
         } else {
             char hostname[32];
             gethostname(hostname, sizeof(hostname));
-            opal_show_help("help-opal-hwloc-base.txt", "invalid policy",
+            opal_show_help("help-opal-hwloc-base.txt", "invalid mem_alloc_policy",
                            true, hostname, getpid(), str_value);
             return OPAL_ERR_BAD_PARAM;
         }
@@ -114,7 +114,8 @@ int opal_hwloc_base_open(void)
         } else {
             char hostname[32];
             gethostname(hostname, sizeof(hostname));
-            opal_show_help("help-opal-hwloc-base.txt", "invalid error action",
+            opal_show_help("help-opal-hwloc-base.txt", 
+                           "invalid mem_bind_failure_action",
                            true, hostname, getpid(), str_value);
             return OPAL_ERR_BAD_PARAM;
         }
