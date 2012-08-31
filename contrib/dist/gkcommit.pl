@@ -259,10 +259,30 @@ foreach my $r (@rs) {
     print FILE "r$r [[BR]]
 $logentries->{$r}->{msg}\n\n";
 }
+
+# Now add all the files that changes so that the gk can examine them
+print "Running 'svn status'...\n";
+open(SVN, "svn status|") ||
+    die "Can't open svn status";
+print FILE "--This line, and those below, will be ignored--
+
+****************************************************************************
+   GATEKEEPER: If you wish to abort this commit, delete all content from
+   this file, save the file, and then quit your editor as normal.  The
+   gkcommit script will see the 0-byte file and not perform the commit.
+****************************************************************************
+
+";
+
+while (<SVN>) {
+    print FILE $_;
+}
+close(SVN);
 close(FILE);
 
 # Now allow the gk to edit the file
 if ($dry_run_arg) {
+    # Dry run -- just show what would have happened.
     print "DRY RUN: skipping edit of this commit message:
 ----------------------------------------------------------------------------\n";
     my $pager = "more";
@@ -271,6 +291,7 @@ if ($dry_run_arg) {
     system("$pager $commit_file");
     print("----------------------------------------------------------------------------\n");
 } else {
+    # Let the GK edit the file
     if ($ENV{SVN_EDITOR}) {
         system("$ENV{SVN_EDITOR} $commit_file");
     } elsif ($ENV{EDITOR}) {
@@ -280,6 +301,12 @@ if ($dry_run_arg) {
     }
     if (! -f $commit_file) {
         print "Commit file no longer exists!  Aborting.\n";
+        exit(1);
+    }
+
+    # Ensure that the file is >0 bytes long
+    if (-z $commit_file) {
+        print "ABORT: Commit file is 0 bytes long.  Nothing committed.\n";
         exit(1);
     }
 }
