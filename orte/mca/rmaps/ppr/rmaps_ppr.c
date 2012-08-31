@@ -232,7 +232,7 @@ static int ppr_mapper(orte_job_t *jdata)
         /* get the available nodes */
         OBJ_CONSTRUCT(&node_list, opal_list_t);
         if(ORTE_SUCCESS != (rc = orte_rmaps_base_get_target_nodes(&node_list, &num_slots, app,
-                                                                  jdata->map->mapping, initial_map))) {
+                                                                  jdata->map->mapping, initial_map, false))) {
             ORTE_ERROR_LOG(rc);
             goto error;
         }

@@ -159,7 +159,7 @@ static int orte_rmaps_rf_map(orte_job_t *jdata)
          * option
          */
         if(ORTE_SUCCESS != (rc = orte_rmaps_base_get_target_nodes(&node_list, &num_slots, app,
-                                                                  map->mapping, initial_map))) {
+                                                                  map->mapping, initial_map, false))) {
             ORTE_ERROR_LOG(rc);
             goto error;
         }

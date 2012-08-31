@@ -596,6 +596,7 @@ int orte_util_filter_hostfile_nodes(opal_list_t *nodes,
             orte_node_t *node = (orte_node_t*)item2;
             if (0 == strcmp(node_from_file->name, node->name)) {
                 /* match - remove it */
+                opal_output(0, "HOST %s ON EXCLUDE LIST - REMOVING", node->name);
                 opal_list_remove_item(&newnodes, item2);
                 OBJ_RELEASE(item2);
                 break;
@@ -723,6 +724,8 @@ int orte_util_filter_hostfile_nodes(opal_list_t *nodes,
                  * we have to check for local interfaces
                  */
                 if (0 == strcmp(node_from_file->name, node_from_list->name) ||
+                    (0 == strcmp(node_from_file->name, "localhost") &&
+                     0 == strcmp(node_from_list->name, orte_process_info.nodename)) ||
                     (opal_ifislocal(node_from_list->name) &&
                      opal_ifislocal(node_from_file->name))) {
                     /* if the slot count here is less than the

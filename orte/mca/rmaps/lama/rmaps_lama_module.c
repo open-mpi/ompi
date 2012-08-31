@@ -631,7 +631,7 @@ static int orte_rmaps_lama_map_core(orte_job_t *jdata)
                                                &num_slots,
                                                cur_app_context,
                                                jdata->map->mapping,
-                                               initial_map);
+                                               initial_map, false);
         if(ORTE_SUCCESS != ret ) {
             ORTE_ERROR_LOG(ret);
             exit_status = ret;
