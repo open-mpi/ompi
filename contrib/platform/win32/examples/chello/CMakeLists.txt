@@ -15,4 +15,4 @@ SET(CHELLO_FILES
 
 ADD_EXECUTABLE (chello ${CHELLO_FILES})
 
-TARGET_LINK_LIBRARIES (chello libmpi)
+TARGET_LINK_LIBRARIES (chello libmpi libopen-rte libopen-pal Ws2_32.lib shlwapi.lib)
