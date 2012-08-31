@@ -10,6 +10,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2012      The University of Wisconsin-La Crosse. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -94,7 +96,7 @@ int ompi_cr_output = -1;
     do {                                                        \
         bool found = false;                                     \
         int k;                                                  \
-        mca_coll_base_module_t *my_module =               \
+        mca_coll_base_module_t *my_module =                     \
             comm->c_coll.coll_ ## func ## _module;              \
         if (NULL != my_module) {                                \
             for (k = 0 ; k < highest_module ; ++k) {            \
@@ -104,6 +106,9 @@ int ompi_cr_output = -1;
                 modules[highest_module++] = my_module;          \
                 if (NULL != my_module->ft_event) {              \
                     ret = my_module->ft_event(msg);             \
+                    if( OMPI_SUCCESS != ret ) {                 \
+                        return ret;                             \
+                    }                                           \
                 }                                               \
             }                                                   \
         }                                                       \
