@@ -201,6 +201,7 @@ int ompi_mtl_mxm_module_init(void)
     for (proc = 0; proc < totps; proc++) {
         if(OPAL_PROC_ON_LOCAL_NODE(orte_ess.proc_get_locality(&procs[proc]->proc_name))) {
             mxlr = max(mxlr, procs[proc]->proc_name.vpid);
+            nlps++;
         }
     }
 
