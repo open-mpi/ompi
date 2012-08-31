@@ -122,7 +122,7 @@ int orte_rmaps_base_filter_nodes(orte_app_context_t *app,
  */
 int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr_t *total_num_slots,
                                      orte_app_context_t *app, orte_mapping_policy_t policy,
-                                     bool initial_map)
+                                     bool initial_map, bool silent)
 {
     opal_list_item_t *item, *next;
     orte_node_t *node, *nd;
@@ -242,9 +242,11 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
 
     /** check that anything is here */
     if (0 == opal_list_get_size(allocated_nodes)) {
-        orte_show_help("help-orte-rmaps-base.txt",
-                       "orte-rmaps-base:no-available-resources",
-                       true);
+        if (!silent) {
+            orte_show_help("help-orte-rmaps-base.txt",
+                           "orte-rmaps-base:no-available-resources",
+                           true);
+        }
         return ORTE_ERR_SILENT;
     }
     
@@ -271,9 +273,11 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
 
         /** check that anything is here */
         if (0 == opal_list_get_size(allocated_nodes)) {
-            orte_show_help("help-orte-rmaps-base.txt",
-                           "orte-rmaps-base:no-available-resources",
-                           true);
+            if (!silent) {
+                orte_show_help("help-orte-rmaps-base.txt",
+                               "orte-rmaps-base:no-available-resources",
+                               true);
+            }
             return ORTE_ERR_SILENT;
         }
     }
@@ -337,8 +341,10 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
 
     /* Sanity check to make sure we have resources available */
     if (0 == num_slots) {
-        orte_show_help("help-orte-rmaps-base.txt", 
-                       "orte-rmaps-base:all-available-resources-used", true);
+        if (!silent) {
+            orte_show_help("help-orte-rmaps-base.txt", 
+                           "orte-rmaps-base:all-available-resources-used", true);
+        }
         return ORTE_ERR_SILENT;
     }
     

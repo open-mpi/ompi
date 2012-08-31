@@ -281,6 +281,10 @@ static void cleanup_node(orte_proc_t *proc)
             break;
         }
     }
+    OPAL_OUTPUT_VERBOSE((5, orte_state_base_output,
+                         "%s state:staged:track_procs node %s has %d slots alloc, %d slots inuse",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), node->name,
+                         (int)node->slots_alloc, (int)node->slots_inuse));
 }
 
 static void track_procs(int fd, short args, void *cbdata)

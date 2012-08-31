@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2011 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2011      Los Alamos National Security, LLC.
+ * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * $COPYRIGHT$
  * 
@@ -119,7 +119,7 @@ static int orte_rmaps_rr_map(orte_job_t *jdata)
          * option
          */
         if(ORTE_SUCCESS != (rc = orte_rmaps_base_get_target_nodes(&node_list, &num_slots, app,
-                                                                  jdata->map->mapping, initial_map))) {
+                                                                  jdata->map->mapping, initial_map, false))) {
             ORTE_ERROR_LOG(rc);
             goto error;
         }

@@ -388,6 +388,7 @@ static int raw_preposition_files(orte_job_t *jdata,
     outbound = OBJ_NEW(orte_filem_raw_outbound_t);
     outbound->cbfunc = cbfunc;
     outbound->cbdata = cbdata;
+    opal_list_append(&outbound_files, &outbound->super);
 
     /* only the HNP should ever call this function - loop thru the
      * fileset and initiate xcast transfer of each file to every
@@ -405,7 +406,7 @@ static int raw_preposition_files(orte_job_t *jdata,
                  itm2 != opal_list_get_end(&optr->xfers);
                  itm2 = opal_list_get_next(itm2)) {
                 xptr = (orte_filem_raw_xfer_t*)itm2;
-                if (0 == strcmp(fs->local_target, xfer->src)) {
+                if (0 == strcmp(fs->local_target, xptr->src)) {
                     already_sent = true;
                     break;
                 }
@@ -413,6 +414,9 @@ static int raw_preposition_files(orte_job_t *jdata,
         }
         if (already_sent) {
             /* no need to send it again */
+            OPAL_OUTPUT_VERBOSE((3, orte_filem_base_output,
+                                 "%s filem:raw: file %s is already queued for output - ignoring",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), xfer->src));
             OBJ_RELEASE(item);
             continue;
         }
@@ -500,7 +504,16 @@ static int raw_preposition_files(orte_job_t *jdata,
         }
         return ORTE_SUCCESS;
     }
-    opal_list_append(&outbound_files, &outbound->super);
+
+    if (0 < opal_output_get_verbosity(orte_filem_base_output)) {
+        opal_output(0, "%s Files to be positioned:", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+        for (itm2 = opal_list_get_first(&outbound->xfers);
+             itm2 != opal_list_get_end(&outbound->xfers);
+             itm2 = opal_list_get_next(itm2)) {
+            xptr = (orte_filem_raw_xfer_t*)itm2;
+            opal_output(0, "%s\t%s", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), xptr->src);
+        }
+    }
 
     return ORTE_SUCCESS;
 #endif
@@ -558,7 +571,7 @@ static int raw_link_local_files(orte_job_t *jdata,
     char *my_dir, *path=NULL;
     orte_proc_t *proc;
     char *prefix;
-    int i, rc;
+    int i, j, rc;
     orte_filem_raw_incoming_t *inbnd;
     opal_list_item_t *item;
 
@@ -645,8 +658,8 @@ static int raw_link_local_files(orte_job_t *jdata,
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                      inbnd->file));
                 /* cycle thru the link points and create symlinks to them */
-                for (i=0; NULL != inbnd->link_pts[i]; i++) {
-                    if (ORTE_SUCCESS != (rc = create_link(my_dir, path, inbnd->link_pts[i]))) {
+                for (j=0; NULL != inbnd->link_pts[j]; j++) {
+                    if (ORTE_SUCCESS != (rc = create_link(my_dir, path, inbnd->link_pts[j]))) {
                         ORTE_ERROR_LOG(rc);
                         free(my_dir);
                         free(path);

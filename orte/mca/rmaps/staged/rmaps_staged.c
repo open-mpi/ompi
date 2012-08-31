@@ -95,7 +95,8 @@ static int staged_mapper(orte_job_t *jdata)
          */
         OBJ_CONSTRUCT(&node_list, opal_list_t);
         if (ORTE_SUCCESS != (rc = orte_rmaps_base_get_target_nodes(&node_list, &num_slots, app,
-                                                                   jdata->map->mapping, false))) {
+                                                                   jdata->map->mapping, false, true)) &&
+            ORTE_ERR_SILENT != rc) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
@@ -152,8 +153,6 @@ static int staged_mapper(orte_job_t *jdata)
             node->num_procs++;
             node->slots_inuse++;
             if (node->slots_inuse == node->slots_alloc) {
-                opal_output(0, "%s slots on node %s are fully used",
-                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), node->name);
                 opal_list_remove_item(&node_list, &node->super);
                 OBJ_RELEASE(node);
             }
