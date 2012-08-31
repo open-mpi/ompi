@@ -94,15 +94,17 @@ if (!@cmrs) {
         }
         
         print "CMR number (-1 to exit)? ";
-        my $cmr = <STDIN>;
-        chomp($cmr);
+        my $cmrs = <STDIN>;
+        chomp($cmrs);
         last
-            if (-1 == $cmr);
-        
-        if ($cmr > 0) {
-            push(@cmrs, $cmr);
-        } else {
-            print "Invalid CMR number; must be greater than 0 (ignored).\n";
+            if (-1 == $cmrs);
+
+        foreach my $cmr (split(/[\s,]+/, $cmrs)) {
+            if ($cmr > 0) {
+                push(@cmrs, $cmr);
+            } else {
+                print "Invalid CMR number ($cmr); must be greater than 0 (ignored).\n";
+            }
         }
     }
     print("\n");
@@ -124,15 +126,18 @@ if (!@rs) {
         }
         
         print "SVN r number (-1 to exit)? ";
-        my $r = <STDIN>;
-        chomp($r);
+        my $rs = <STDIN>;
+        chomp($rs);
         last
-            if (-1 == $r);
-        
-        if ($r > 0) {
-            push(@rs, $r);
-        } else {
-            print "Invalid SVN r number; must be greater than 0 (ignored).\n";
+            if (-1 == $rs);
+
+        foreach my $r (split(/[\s,]+/, $rs)) {
+            $r =~ s/^r//;
+            if ($r > 0) {
+                push(@rs, $r);
+            } else {
+                print "Invalid SVN r number ($r); must be greater than 0 (ignored).\n";
+            }
         }
     }
     print("\n");
@@ -248,16 +253,36 @@ print FILE "\n";
 # If we have r numbers, print them.  Use a special line to make the
 # pre-commit hook ignore all of these messages (i.e., so that it
 # doesn't try to close some ticket twice, or something like that).
-print FILE "---svn-pre-commit-ignore-below---\n"
+print FILE "---svn-pre-commit-ignore-below---\n\n"
     if ($#rs >= 0);
 foreach my $r (@rs) {
-    print FILE "r$r
+    print FILE "r$r [[BR]]
 $logentries->{$r}->{msg}\n\n";
 }
+
+# Now add all the files that changes so that the gk can examine them
+print "Running 'svn status'...\n";
+open(SVN, "svn status|") ||
+    die "Can't open svn status";
+print FILE "--This line, and those below, will be ignored--
+
+****************************************************************************
+   GATEKEEPER: If you wish to abort this commit, delete all content from
+   this file, save the file, and then quit your editor as normal.  The
+   gkcommit script will see the 0-byte file and not perform the commit.
+****************************************************************************
+
+";
+
+while (<SVN>) {
+    print FILE $_;
+}
+close(SVN);
 close(FILE);
 
 # Now allow the gk to edit the file
 if ($dry_run_arg) {
+    # Dry run -- just show what would have happened.
     print "DRY RUN: skipping edit of this commit message:
 ----------------------------------------------------------------------------\n";
     my $pager = "more";
@@ -266,6 +291,7 @@ if ($dry_run_arg) {
     system("$pager $commit_file");
     print("----------------------------------------------------------------------------\n");
 } else {
+    # Let the GK edit the file
     if ($ENV{SVN_EDITOR}) {
         system("$ENV{SVN_EDITOR} $commit_file");
     } elsif ($ENV{EDITOR}) {
@@ -275,6 +301,12 @@ if ($dry_run_arg) {
     }
     if (! -f $commit_file) {
         print "Commit file no longer exists!  Aborting.\n";
+        exit(1);
+    }
+
+    # Ensure that the file is >0 bytes long
+    if (-z $commit_file) {
+        print "ABORT: Commit file is 0 bytes long.  Nothing committed.\n";
         exit(1);
     }
 }
