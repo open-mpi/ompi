@@ -263,18 +263,23 @@ static int connect_accept ( ompi_communicator_t *comm, int root,
             goto exit;
         }
         
-        if(OMPI_GROUP_IS_DENSE(group)) {
+        if (OMPI_GROUP_IS_DENSE(group)) {
             ompi_proc_pack(group->grp_proc_pointers, size, nbuf);
         } else {
             proc_list = (ompi_proc_t **) calloc (group->grp_proc_count, 
                                                  sizeof (ompi_proc_t *));
-            for(i=0 ; i<group->grp_proc_count ; i++)
-                proc_list[i] = ompi_group_peer_lookup(group,i);
-            
-            OPAL_OUTPUT_VERBOSE((3, ompi_dpm_base_output,
-                                 "%s dpm:orte:connect_accept adding %s to proc list",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 ORTE_NAME_PRINT(&proc_list[i]->proc_name)));
+            for (i=0 ; i<group->grp_proc_count ; i++) {
+                if (NULL == (proc_list[i] = ompi_group_peer_lookup(group,i))) {
+                    ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+                    rc = ORTE_ERR_NOT_FOUND;
+                    goto exit;
+                }
+                
+                OPAL_OUTPUT_VERBOSE((3, ompi_dpm_base_output,
+                                     "%s dpm:orte:connect_accept adding %s to proc list",
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                     ORTE_NAME_PRINT(&proc_list[i]->proc_name)));
+            }
             ompi_proc_pack(proc_list, size, nbuf);
         }
         
