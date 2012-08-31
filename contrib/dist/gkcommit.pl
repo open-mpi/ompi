@@ -259,10 +259,34 @@ foreach my $r (@rs) {
     print FILE "r$r [[BR]]
 $logentries->{$r}->{msg}\n\n";
 }
+
+# Now add all the files that changes so that the gk can examine them
+print "Running 'svn status'...\n";
+open(SVN, "svn status|") ||
+    die "Can't open svn status";
+print FILE "--This line, and those below, will be ignored--\n";
+while (<SVN>) {
+    print FILE $_;
+}
+close(SVN);
 close(FILE);
+
+# Make a copy of the file so that we can compare it when the gk is
+# done and see if they actually made any changes.
+my $commit_file2 = File::Temp::tempnam(Cwd::cwd(), "gkcommit");
+open(IN, $commit_file) ||
+    die "Can't open temp file";
+open(OUT, ">$commit_file2") ||
+    die "Can't open temp file";
+while (<IN>) {
+    print OUT $_;
+}
+close(OUT);
+close(IN);
 
 # Now allow the gk to edit the file
 if ($dry_run_arg) {
+    # Dry run -- just show what would have happened.
     print "DRY RUN: skipping edit of this commit message:
 ----------------------------------------------------------------------------\n";
     my $pager = "more";
@@ -271,16 +295,50 @@ if ($dry_run_arg) {
     system("$pager $commit_file");
     print("----------------------------------------------------------------------------\n");
 } else {
-    if ($ENV{SVN_EDITOR}) {
-        system("$ENV{SVN_EDITOR} $commit_file");
-    } elsif ($ENV{EDITOR}) {
-        system("$ENV{EDITOR} $commit_file");
-    } else {
-        system("vi $commit_file");
-    }
-    if (! -f $commit_file) {
-        print "Commit file no longer exists!  Aborting.\n";
-        exit(1);
+    # Let the GK edit the file
+    my $done = 0;
+    while (!$done) {
+        if ($ENV{SVN_EDITOR}) {
+            system("$ENV{SVN_EDITOR} $commit_file");
+        } elsif ($ENV{EDITOR}) {
+            system("$ENV{EDITOR} $commit_file");
+        } else {
+            system("vi $commit_file");
+        }
+        if (! -f $commit_file) {
+            print "Commit file no longer exists!  Aborting.\n";
+            exit(1);
+        }
+
+        # Did the file change?
+        my $rc = system("diff $commit_file $commit_file2");
+        if (0 != $rc) {
+            # If the diff came back different, then the file changed,
+            # and we're good to go ahead and commit.
+            $done = 1;
+            last;
+        } else {
+            # Otherwise, the file didn't change, and the GK may be
+            # trying to abort.  Prompt them to figure out what to do.
+            print "\n\nWARNING: GK commit message did not change.\n";
+            my $answer;
+            while (1) {
+                print "(a)bort, (c)ontinue, (e)dit:\n";
+                $answer = lc(<STDIN>);
+                chomp($answer);
+                if ($answer eq "a") {
+                    print "Aborted -- nothing committed\n";
+                    exit(0);
+                } elsif ($answer eq "c") {
+                    $done = 1;
+                    last;
+                } elsif ($answer eq "e") {
+                    last;
+                } else {
+                    print "Unrecognized: $answer\n";
+                }
+            }
+        }
     }
 }
 
