@@ -279,8 +279,8 @@ static int connect_accept ( ompi_communicator_t *comm, int root,
                                      "%s dpm:orte:connect_accept adding %s to proc list",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                      ORTE_NAME_PRINT(&proc_list[i]->proc_name)));
-                ompi_proc_pack(proc_list, size, nbuf);
             }
+            ompi_proc_pack(proc_list, size, nbuf);
         }
         
         /* pack wireup info - this is required so that all involved parties can
