@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2012 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -128,9 +129,9 @@ ompi_coll_tuned_bcast_intra_generic( void* buffer,
            5) Send the last segment to children
          */
         req_index = 0;
-        MCA_PML_CALL(irecv(tmpbuf, count_by_segment, datatype,
-                           tree->tree_prev, MCA_COLL_BASE_TAG_BCAST,
-                           comm, &recv_reqs[req_index]));
+        err = MCA_PML_CALL(irecv(tmpbuf, count_by_segment, datatype,
+                                 tree->tree_prev, MCA_COLL_BASE_TAG_BCAST,
+                                 comm, &recv_reqs[req_index]));
         if (err != MPI_SUCCESS) { line = __LINE__; goto error_hndl; }
         
         for( segindex = 1; segindex < num_segments; segindex++ ) {
@@ -138,10 +139,10 @@ ompi_coll_tuned_bcast_intra_generic( void* buffer,
             req_index = req_index ^ 0x1;
             
             /* post new irecv */
-            MCA_PML_CALL(irecv( tmpbuf + realsegsize, count_by_segment,
-                                datatype, tree->tree_prev, 
-                                MCA_COLL_BASE_TAG_BCAST, 
-                                comm, &recv_reqs[req_index]));
+            err = MCA_PML_CALL(irecv( tmpbuf + realsegsize, count_by_segment,
+                                      datatype, tree->tree_prev, 
+                                      MCA_COLL_BASE_TAG_BCAST, 
+                                      comm, &recv_reqs[req_index]));
             if (err != MPI_SUCCESS) { line = __LINE__; goto error_hndl; }
             
             /* wait for and forward the previous segment to children */
@@ -500,9 +501,9 @@ ompi_coll_tuned_bcast_intra_split_bintree ( void* buffer,
          * and we disseminating the data to all children.
          */
         sendcount[lr] = segcount[lr];
-        MCA_PML_CALL(irecv(tmpbuf[lr], sendcount[lr], datatype,
-                           tree->tree_prev, MCA_COLL_BASE_TAG_BCAST,
-                           comm, &base_req));
+        err = MCA_PML_CALL(irecv(tmpbuf[lr], sendcount[lr], datatype,
+                                 tree->tree_prev, MCA_COLL_BASE_TAG_BCAST,
+                                 comm, &base_req));
         if (err != MPI_SUCCESS) { line = __LINE__; goto error_hndl; }
 
         for( segindex = 1; segindex < num_segments[lr]; segindex++ ) {
@@ -510,17 +511,17 @@ ompi_coll_tuned_bcast_intra_split_bintree ( void* buffer,
             if( segindex == (num_segments[lr] - 1)) 
                 sendcount[lr] = counts[lr] - segindex*segcount[lr];
             /* post new irecv */
-            MCA_PML_CALL(irecv( tmpbuf[lr] + realsegsize[lr], sendcount[lr],
-                                datatype, tree->tree_prev, MCA_COLL_BASE_TAG_BCAST, 
-                                comm, &new_req));
+            err = MCA_PML_CALL(irecv( tmpbuf[lr] + realsegsize[lr], sendcount[lr],
+                                      datatype, tree->tree_prev, MCA_COLL_BASE_TAG_BCAST, 
+                                      comm, &new_req));
             if (err != MPI_SUCCESS) { line = __LINE__; goto error_hndl; }
 
             /* wait for and forward current segment */
             err = ompi_request_wait_all( 1, &base_req, MPI_STATUSES_IGNORE );
             for( i = 0; i < tree->tree_nextsize; i++ ) {  /* send data to children (segcount[lr]) */
-                MCA_PML_CALL(send( tmpbuf[lr], segcount[lr], datatype,
-                                   tree->tree_next[i], MCA_COLL_BASE_TAG_BCAST,
-                                   MCA_PML_BASE_SEND_STANDARD, comm));
+                err = MCA_PML_CALL(send( tmpbuf[lr], segcount[lr], datatype,
+                                         tree->tree_next[i], MCA_COLL_BASE_TAG_BCAST,
+                                         MCA_PML_BASE_SEND_STANDARD, comm));
                 if (err != MPI_SUCCESS) { line = __LINE__; goto error_hndl; }
             } /* end of for each child */
 
@@ -533,9 +534,9 @@ ompi_coll_tuned_bcast_intra_split_bintree ( void* buffer,
         /* wait for the last segment and forward current segment */
         err = ompi_request_wait_all( 1, &base_req, MPI_STATUSES_IGNORE );
         for( i = 0; i < tree->tree_nextsize; i++ ) {  /* send data to children */
-            MCA_PML_CALL(send(tmpbuf[lr], sendcount[lr], datatype,
-                              tree->tree_next[i], MCA_COLL_BASE_TAG_BCAST,
-                              MCA_PML_BASE_SEND_STANDARD, comm));
+            err = MCA_PML_CALL(send(tmpbuf[lr], sendcount[lr], datatype,
+                                    tree->tree_next[i], MCA_COLL_BASE_TAG_BCAST,
+                                    MCA_PML_BASE_SEND_STANDARD, comm));
             if (err != MPI_SUCCESS) { line = __LINE__; goto error_hndl; }
         } /* end of for each child */
     } 
@@ -548,9 +549,9 @@ ompi_coll_tuned_bcast_intra_split_bintree ( void* buffer,
             /* determine how many elements to expect in this round */
             if (segindex == (num_segments[lr] - 1)) sendcount[lr] = counts[lr] - segindex*segcount[lr];
             /* receive segments */
-            MCA_PML_CALL(recv(tmpbuf[lr], sendcount[lr], datatype,
-                              tree->tree_prev, MCA_COLL_BASE_TAG_BCAST,
-                              comm, MPI_STATUS_IGNORE));
+            err = MCA_PML_CALL(recv(tmpbuf[lr], sendcount[lr], datatype,
+                                    tree->tree_prev, MCA_COLL_BASE_TAG_BCAST,
+                                    comm, MPI_STATUS_IGNORE));
             if (err != MPI_SUCCESS) { line = __LINE__; goto error_hndl; }
             /* update the initial pointer to the buffer */
             tmpbuf[lr] += realsegsize[lr];
@@ -587,17 +588,17 @@ ompi_coll_tuned_bcast_intra_split_bintree ( void* buffer,
     } else if ( (size%2) == 0 ) {
         /* root sends right buffer to the last node */
         if( rank == root ) {
-            MCA_PML_CALL(send(tmpbuf[1], counts[1], datatype,
-                              (root+size-1)%size, MCA_COLL_BASE_TAG_BCAST,
-                              MCA_PML_BASE_SEND_STANDARD, comm));
+            err = MCA_PML_CALL(send(tmpbuf[1], counts[1], datatype,
+                                    (root+size-1)%size, MCA_COLL_BASE_TAG_BCAST,
+                                    MCA_PML_BASE_SEND_STANDARD, comm));
             if (err != MPI_SUCCESS) { line = __LINE__; goto error_hndl; }
 
         } 
         /* last node receives right buffer from the root */
         else if (rank == (root+size-1)%size) {
-            MCA_PML_CALL(recv(tmpbuf[1], counts[1], datatype,
-                              root, MCA_COLL_BASE_TAG_BCAST,
-                              comm, MPI_STATUS_IGNORE));
+            err = MCA_PML_CALL(recv(tmpbuf[1], counts[1], datatype,
+                                    root, MCA_COLL_BASE_TAG_BCAST,
+                                    comm, MPI_STATUS_IGNORE));
             if (err != MPI_SUCCESS) { line = __LINE__; goto error_hndl; }
         } 
         /* everyone else exchanges buffers */
