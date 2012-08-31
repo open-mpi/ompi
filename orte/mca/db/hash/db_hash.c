@@ -239,31 +239,56 @@ static int store(const orte_process_name_t *proc,
     switch (type) {
     case OPAL_STRING:
         kv->type = OPAL_STRING;
-        kv->data.string = strdup( (const char *) data);
+        if (NULL != data) {
+            kv->data.string = strdup( (const char *) data);
+        } else {
+            kv->data.string = NULL;
+        }
         break;
     case ORTE_VPID:
     case OPAL_UINT32:
+        if (NULL == data) {
+            ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
+            return ORTE_ERR_BAD_PARAM;
+        }
         kv->type = OPAL_UINT32;
         kv->data.uint32 = *(uint32_t*)data;
         break;
     case OPAL_UINT16:
+        if (NULL == data) {
+            ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
+            return ORTE_ERR_BAD_PARAM;
+        }
         kv->type = OPAL_UINT16;
         kv->data.uint16 = *(uint16_t*)(data);
         break;
     case OPAL_INT:
+        if (NULL == data) {
+            ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
+            return ORTE_ERR_BAD_PARAM;
+        }
         kv->type = OPAL_INT;
         kv->data.integer = *(int*)(data);
         break;
     case OPAL_UINT:
+        if (NULL == data) {
+            ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
+            return ORTE_ERR_BAD_PARAM;
+        }
         kv->type = OPAL_UINT;
         kv->data.uint = *(unsigned int*)(data);
         break;
     case OPAL_BYTE_OBJECT:
         kv->type = OPAL_BYTE_OBJECT;
         boptr = (opal_byte_object_t*)data;
-        kv->data.bo.bytes = (uint8_t *) malloc(boptr->size);
-        memcpy(kv->data.bo.bytes, boptr->bytes, boptr->size);
-        kv->data.bo.size = boptr->size;
+        if (NULL != boptr && NULL != boptr->bytes && 0 < boptr->size) {
+            kv->data.bo.bytes = (uint8_t *) malloc(boptr->size);
+            memcpy(kv->data.bo.bytes, boptr->bytes, boptr->size);
+            kv->data.bo.size = boptr->size;
+        } else {
+            kv->data.bo.bytes = NULL;
+            kv->data.bo.size = 0;
+        }
         break;
     default:
         ORTE_ERROR_LOG(ORTE_ERR_NOT_SUPPORTED);
@@ -380,7 +405,11 @@ static int fetch(const orte_process_name_t *proc,
         if (OPAL_STRING != kv->type) {
             return ORTE_ERR_TYPE_MISMATCH;
         }
-        *data = strdup(kv->data.string);
+        if (NULL != kv->data.string) {
+            *data = strdup(kv->data.string);
+        } else {
+            *data = NULL;
+        }
         break;
     case ORTE_VPID:
     case OPAL_UINT32:
@@ -415,9 +444,14 @@ static int fetch(const orte_process_name_t *proc,
             return ORTE_ERR_TYPE_MISMATCH;
         }
         boptr = (opal_byte_object_t*)malloc(sizeof(opal_byte_object_t));
-        boptr->bytes = (uint8_t *) malloc(kv->data.bo.size);
-        memcpy(boptr->bytes, kv->data.bo.bytes, kv->data.bo.size);
-        boptr->size = kv->data.bo.size;
+        if (NULL != kv->data.bo.bytes && 0 < kv->data.bo.size) {
+            boptr->bytes = (uint8_t *) malloc(kv->data.bo.size);
+            memcpy(boptr->bytes, kv->data.bo.bytes, kv->data.bo.size);
+            boptr->size = kv->data.bo.size;
+        } else {
+            boptr->bytes = NULL;
+            boptr->size = 0;
+        }
         *data = boptr;
         break;
     default:

@@ -491,6 +491,7 @@ int orte_util_decode_daemon_nodemap(opal_byte_object_t *bo)
      */
     if (NULL != orte_nidmap.bytes) {
         free(orte_nidmap.bytes);
+        orte_nidmap.bytes = NULL;
     }
     if (ORTE_SUCCESS != (rc = orte_util_encode_nodemap(&orte_nidmap, false))) {
         ORTE_ERROR_LOG(rc);
