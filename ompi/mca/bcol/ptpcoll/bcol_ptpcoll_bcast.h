@@ -55,7 +55,7 @@ int bcol_ptpcoll_bcast_binomial_scatter_gatther_known_root_extra_progress(bcol_f
         radix_mask_pow,                                                                                             \
         my_group_index, group_size, group_list,                                                                     \
         data_buffer, segment_size, count, tag,                                                                      \
-        comm, send_requests, num_pending_sends, completed)                                                          \
+        comm, send_requests, num_pending_sends)                                                                     \
 do {                                                                                                                \
     int rc = OMPI_SUCCESS;                                                                                          \
     int dst;                                                                                                        \
@@ -108,15 +108,6 @@ do {                                                                            
         ++(*num_pending_sends);                                                                                     \
         radix_mask >>= 1;                                                                                           \
         radix_mask_pow--;                                                                                           \
-    }                                                                                                               \
-                                                                                                                    \
-    if (*num_pending_sends > 0) {                                                                                   \
-        completed = mca_bcol_ptpcoll_test_all_for_match(num_pending_sends, send_requests, &rc);                     \
-        if (OMPI_SUCCESS != rc) {                                                                                   \
-            return OMPI_ERROR;                                                                                      \
-        }                                                                                                           \
-    } else {                                                                                                        \
-        completed = 1;                                                                                              \
     }                                                                                                               \
 } while(0)
 
@@ -565,15 +556,7 @@ PR_SCATTHER:
             my_group_index, group_size, group_list,
             data_buffer, base_block_size, 
             count, tag, comm, requests,
-            active_requests, completed);
-
-#if 0    
-    if (0 == completed) {
-        return BCOL_FN_STARTED;
-    } else {
-        return BCOL_FN_COMPLETE;
-    }
-#endif
+            active_requests);
 
     /* Since the next step (gather) does not really require 
        completion on scatter , we may return complete  */
@@ -626,7 +609,6 @@ int bcol_ptpcoll_bcast_binomial_test_and_scatter_known_root(mca_bcol_ptpcoll_mod
 {
     int *group_list = ptpcoll_module->super.sbgp_partner_module->group_list;
     int rc;
-    int completed = 0;
     int *active_requests = 
         &(ptpcoll_module->ml_mem.ml_buf_desc[buffer_index].active_requests);
     ompi_communicator_t* comm = ptpcoll_module->super.sbgp_partner_module->group_comm;
@@ -657,7 +639,7 @@ int bcol_ptpcoll_bcast_binomial_test_and_scatter_known_root(mca_bcol_ptpcoll_mod
             my_group_index, group_size, group_list,
             data_buffer, base_block_size, 
             count, tag, comm, requests,
-            active_requests, completed);
+            active_requests);
 
 
     return BCOL_FN_COMPLETE;

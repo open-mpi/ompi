@@ -1020,7 +1020,6 @@ int bcol_ptpcoll_bcast_binomial_scatter_gatther_anyroot(bcol_function_args_t *in
 
     int tag;
     int rc;
-    int completed = 0;
     int my_group_index = ptpcoll_module->super.sbgp_partner_module->my_index;
     int *group_list = ptpcoll_module->super.sbgp_partner_module->group_list;
     uint64_t sequence_number = input_args->sequence_num;
@@ -1104,7 +1103,7 @@ int bcol_ptpcoll_bcast_binomial_scatter_gatther_anyroot(bcol_function_args_t *in
         K_NOMIAL_ROOT_BCAST_NB_BINOMIAL_SCATTER(root_pow2,
                 my_group_index, group_size, group_list,
                 data_buffer, base_block_size, count, tag, comm, requests,
-                active_requests, completed);
+                active_requests);
 
         goto GATHER;
     }
@@ -1288,7 +1287,6 @@ int bcol_ptpcoll_bcast_binomial_scatter_gatther_known_root(bcol_function_args_t 
     int root_pow2 = ptpcoll_module->pow_2 - 1;
     int *status =
         &(ptpcoll_module->ml_mem.ml_buf_desc[buffer_index].status);
-    int completed = 0;
 
     PTPCOLL_VERBOSE(3, ("BCAST Anyroot, index_this_type %d, num_of_this_type %d",
                     const_args->index_of_this_type_in_collective + 1,
@@ -1346,7 +1344,7 @@ int bcol_ptpcoll_bcast_binomial_scatter_gatther_known_root(bcol_function_args_t 
         K_NOMIAL_ROOT_BCAST_NB_BINOMIAL_SCATTER(root_pow2,
                 my_group_index, group_size, group_list,
                 data_buffer, base_block_size, count, tag, comm, requests,
-                active_requests, completed);
+                active_requests);
 
         /* EXIT OR GO TO Gather */
         *iteration = 0;
