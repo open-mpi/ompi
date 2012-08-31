@@ -565,6 +565,9 @@ int orte_daemon(int argc, char *argv[])
         /* if we don't yet have a daemon map, then we have to generate one
          * to pass back to it
          */
+        if (NULL != orte_nidmap.bytes) {
+            free(orte_nidmap.bytes);
+        }
         if (ORTE_SUCCESS != (ret = orte_util_encode_nodemap(&orte_nidmap, false))) {
             ORTE_ERROR_LOG(ret);
             goto DONE;

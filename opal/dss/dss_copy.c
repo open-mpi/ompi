@@ -296,9 +296,14 @@ int opal_dss_copy_value(opal_value_t **dest, opal_value_t *src,
         p->data.uint64 = src->data.uint64;
         break;
     case OPAL_BYTE_OBJECT:
-        p->data.bo.bytes = malloc(src->data.bo.size);
-        memcpy(p->data.bo.bytes, src->data.bo.bytes, src->data.bo.size);
-        p->data.bo.size = src->data.bo.size;
+        if (NULL != src->data.bo.bytes && 0 < src->data.bo.size) {
+            p->data.bo.bytes = malloc(src->data.bo.size);
+            memcpy(p->data.bo.bytes, src->data.bo.bytes, src->data.bo.size);
+            p->data.bo.size = src->data.bo.size;
+        } else {
+            p->data.bo.bytes = NULL;
+            p->data.bo.size = 0;
+        }
         break;
     default:
         opal_output(0, "COPY-OPAL-VALUE: UNSUPPORTED TYPE %d", (int)src->type);

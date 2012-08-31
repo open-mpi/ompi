@@ -764,6 +764,8 @@ int opal_dss_unpack_value(opal_buffer_t *buffer, void *dest,
                                                                 &(ptr[i]->data.bo.size), OPAL_BYTE))) {
                     return ret;
                 }
+            } else {
+                ptr[i]->data.bo.bytes = NULL;
             }
             break;
         default:

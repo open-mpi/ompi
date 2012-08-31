@@ -413,6 +413,16 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
      * array of local children
      */
     if (ORTE_PROC_IS_HNP) {
+        /* we do need to ensure we have an up-to-date nidmap at hand
+         * to pass down to any local apps
+         */
+        if (NULL != orte_nidmap.bytes) {
+            free(orte_nidmap.bytes);
+        }
+        if (ORTE_SUCCESS != (rc = orte_util_encode_nodemap(&orte_nidmap, false))) {
+            ORTE_ERROR_LOG(rc);
+            goto REPORT_ERROR;
+        }
         for (n=0; n < jdata->procs->size; n++) {
             if (NULL == (pptr = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, n))) {
                 continue;
