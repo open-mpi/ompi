@@ -95,19 +95,32 @@ static int staged_mapper(orte_job_t *jdata)
          */
         OBJ_CONSTRUCT(&node_list, opal_list_t);
         if (ORTE_SUCCESS != (rc = orte_rmaps_base_get_target_nodes(&node_list, &num_slots, app,
-                                                                   jdata->map->mapping, false, true)) &&
-            ORTE_ERR_SILENT != rc) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
+                                                                   jdata->map->mapping, false, true))) {
+            if (ORTE_ERR_RESOURCE_BUSY == rc) {
+                /* if the return is "busy", then at least one of the
+                 * specified resources must exist, but no slots are
+                 * currently available. This means there is at least
+                 * a hope of eventually being able to map this app
+                 * within its specified constraints, so continue working
+                 */
+                opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+                                    "%s mca:rmaps:staged: all nodes for this app are currently busy",
+                                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+                OBJ_DESTRUCT(&node_list);
+                continue;
+            } else {
+                /* this indicates that there are no nodes that match
+                 * the specified constraints, so there is no hope of
+                 * ever being able to execute this app. This is an
+                 * unrecoverable error - note that a return of
+                 * "silent" means that the function already printed
+                 * an error message, so the error_log will print nothing
+                 */
+                ORTE_ERROR_LOG(rc);
+                return rc;
+            }
         }
-        /* if nothing is available, then move on */
-        if (0 == num_slots || 0 == opal_list_get_size(&node_list)) {
-	    opal_output_verbose(5, orte_rmaps_base.rmaps_output,
-				"%s mca:rmaps:staged: no nodes available for this app",
-				ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
-            OBJ_DESTRUCT(&node_list);
-            continue;
-        }
+
         /* assign any unmapped procs to an available slot */
         for (j=0; j < app->procs.size; j++) {
             if (NULL == (proc = opal_pointer_array_get_item(&app->procs, j))) {

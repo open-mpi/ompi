@@ -341,11 +341,16 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
 
     /* Sanity check to make sure we have resources available */
     if (0 == num_slots) {
-        if (!silent) {
+        if (silent) {
+            /* let the caller know that the resources exist,
+             * but are currently busy
+             */
+            return ORTE_ERR_RESOURCE_BUSY;
+        } else {
             orte_show_help("help-orte-rmaps-base.txt", 
                            "orte-rmaps-base:all-available-resources-used", true);
+            return ORTE_ERR_SILENT;
         }
-        return ORTE_ERR_SILENT;
     }
     
     *total_num_slots = num_slots;
