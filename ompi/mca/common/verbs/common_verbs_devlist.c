@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2009 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2006-2012 Mellanox Technologies.  All rights reserved.
  * Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
  *                         reserved.
@@ -39,8 +39,12 @@
 const char *ibv_get_sysfs_path(void);
 #endif
 #include "opal/util/output.h"
-#include "common_ofautils.h"
+#include "common_verbs.h"
 
+
+/*
+ * Portable wrapper around ibv_get_device_list() / ibv_get_devices().
+ */
 struct ibv_device **ompi_ibv_get_device_list(int *num_devs)
 {
     struct ibv_device **ib_devs;
@@ -54,8 +58,9 @@ struct ibv_device **ompi_ibv_get_device_list(int *num_devs)
 
     /* Determine the number of device's available on the host */
     dev_list = ibv_get_devices();
-    if (NULL == dev_list)
+    if (NULL == dev_list) {
         return NULL;
+    }
 
     dlist_start(dev_list);
 
@@ -64,7 +69,7 @@ struct ibv_device **ompi_ibv_get_device_list(int *num_devs)
 
     /* Allocate space for the ib devices */
     ib_devs = (struct ibv_device**)malloc(*num_devs * sizeof(struct ibv_dev*));
-    if(NULL == ib_devs) {
+    if (NULL == ib_devs) {
         *num_devs = 0;
         opal_output("Failed malloc: %s:%d", __FILE__, __LINE__);
         return NULL;
@@ -73,11 +78,12 @@ struct ibv_device **ompi_ibv_get_device_list(int *num_devs)
     dlist_start(dev_list);
 
     dlist_for_each_data(dev_list, ib_dev, struct ibv_device)
-        *(++ib_devs) =  ib_dev;
+        *(++ib_devs) = ib_dev;
 #endif
 
     return ib_devs;
 }
+
 
 void ompi_ibv_free_device_list(struct ibv_device **ib_devs)
 {

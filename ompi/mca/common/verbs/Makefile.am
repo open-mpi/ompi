@@ -1,6 +1,7 @@
 #
 # Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
 # Copyright (c) 2009-2012 Oak Ridge National Laboratory.  All rights reserved.
+# Copyright (c) 2012 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -8,13 +9,18 @@
 # $HEADER$
 #
 
-AM_CPPFLAGS = $(common_ofautils_CPPFLAGS)
+AM_CPPFLAGS = $(common_verbs_CPPFLAGS)
 
 headers = \
-	common_ofautils.h
+	common_verbs.h
 
 sources = \
-	common_ofautils.c
+	common_verbs_devlist.c \
+	common_verbs_find_ports.c \
+	common_verbs_port.c
+
+dist_pkgdata_DATA = \
+        help-ompi-common-verbs.txt
 
 # To simplify components that link to this library, we will *always*
 # have an output libtool library named libmca_<type>_<name>.la -- even
@@ -27,26 +33,26 @@ sources = \
 
 lib_LTLIBRARIES =
 noinst_LTLIBRARIES =
-comp_inst = libmca_common_ofautils.la
-comp_noinst = libmca_common_ofautils_noinst.la
+comp_inst = libmca_common_verbs.la
+comp_noinst = libmca_common_verbs_noinst.la
 
-if MCA_BUILD_ompi_common_ofautils_DSO
+if MCA_BUILD_ompi_common_verbs_DSO
 lib_LTLIBRARIES += $(comp_inst)
 else
 noinst_LTLIBRARIES += $(comp_noinst)
 endif
 
-libmca_common_ofautils_la_SOURCES = $(headers) $(sources)
+libmca_common_verbs_la_SOURCES = $(headers) $(sources)
 # TBD: create own config file 
-libmca_common_ofautils_la_CPPFLAGS = $(common_ofautils_CPPFLAGS)
-libmca_common_ofautils_la_LDFLAGS =  $(common_ofautils_LDFLAGS)
-libmca_common_ofautils_la_LIBADD =   $(common_ofautils_LIBS)
-libmca_common_ofautils_noinst_la_SOURCES = $(libmca_common_ofautils_la_SOURCES)
+libmca_common_verbs_la_CPPFLAGS = $(common_verbs_CPPFLAGS)
+libmca_common_verbs_la_LDFLAGS =  $(common_verbs_LDFLAGS)
+libmca_common_verbs_la_LIBADD =   $(common_verbs_LIBS)
+libmca_common_verbs_noinst_la_SOURCES = $(libmca_common_verbs_la_SOURCES)
 
 # Conditionally install the header files
 
 if WANT_INSTALL_HEADERS
-ompidir = $(includedir)/openmpi/ompi/mca/common/ofautils
+ompidir = $(includedir)/openmpi/ompi/mca/common/verbs
 ompi_HEADERS = $(headers)
 else
 ompidir = $(includedir)

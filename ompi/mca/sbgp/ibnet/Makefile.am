@@ -1,6 +1,7 @@
 #
 # Copyright (c) 2009-2012 Oak Ridge National Laboratory.  All rights reserved.
 # Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
+# Copyright (c) 2012 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -41,8 +42,8 @@ mca_sbgp_ibnet_la_SOURCES = $(sources)
 mca_sbgp_ibnet_la_LDFLAGS = -module -avoid-version $(sbgp_ibnet_LDFLAGS) $(btl_openib_LDFLAGS) 
 mca_sbgp_ibnet_la_LIBADD = $(sbgp_ibnet_LIBS) $(btl_openib_LIBS) \
     $(top_ompi_builddir)/ompi/mca/common/commpatterns/libmca_common_commpatterns.la \
-	$(top_ompi_builddir)/ompi/mca/common/ofautils/libmca_common_ofautils.la \
-	$(top_ompi_builddir)/ompi/mca/common/ofacm/libmca_common_ofacm.la
+    $(top_ompi_builddir)/ompi/mca/common/verbs/libmca_common_verbs.la \
+    $(top_ompi_builddir)/ompi/mca/common/ofacm/libmca_common_ofacm.la
 
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_sbgp_ibnet_la_SOURCES =$(sources)

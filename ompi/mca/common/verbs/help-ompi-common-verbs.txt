@@ -1,0 +1,36 @@
+#
+# Copyright (c) 2012 Cisco Systems, Inc.  All rights reserved.
+#
+# $COPYRIGHT$
+# 
+# Additional copyrights may follow
+# 
+# $HEADER$
+#
+[ibv_open_device fail]
+Open MPI failed to open an OpenFabrics device.  This is an unusual
+error; the system reported the OpenFabrics device as being present,
+but then later failed to access it successfully.  This usually
+indicates either a misconfiguration or a failed OpenFabrics hardware
+device.
+
+All OpenFabrics support has been disabled in this MPI process; your
+job may or may not continue.
+
+  Hostname:    %s
+  Device name: %s
+  Errror (%d): %s
+#
+[ibv_query_device fail]
+Open MPI failed to query an OpenFabrics device.  This is an unusual
+error; the system reported the OpenFabrics device as being present,
+Open MPI was able to open it succesfully, but then later failed to
+query it successfully.  This usually indicates either a
+misconfiguration or a failed OpenFabrics hardware device.
+
+All OpenFabrics support has been disabled in this MPI process; your
+job may or may not continue.
+
+  Hostname:    %s
+  Device name: %s
+  Errror (%d): %s

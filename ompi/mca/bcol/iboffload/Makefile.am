@@ -1,6 +1,7 @@
 #
 # Copyright (c) 2009-2012 Oak Ridge National Laboratory.  All rights reserved.
 # Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
+# Copyright (c) 2012 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -29,7 +30,7 @@ sources = \
         bcol_iboffload_barrier.c \
         bcol_iboffload_bcast.h \
         bcol_iboffload_bcast.c \
-       bcol_iboffload_collreq.h \
+        bcol_iboffload_collreq.h \
         bcol_iboffload_collreq.c \
         bcol_iboffload_qp_info.c \
         bcol_iboffload_fanin.c \
@@ -56,20 +57,9 @@ mca_bcol_iboffload_la_SOURCES = $(sources)
 mca_bcol_iboffload_la_LDFLAGS = -module -avoid-version $(btl_openib_LDFLAGS) $(bcol_iboffload_LDFLAGS)
 mca_bcol_iboffload_la_LIBADD = $(btl_openib_LIBS) $(bcol_iboffload_LIBS) \
         $(top_ompi_builddir)/ompi/mca/common/ofacm/libmca_common_ofacm.la \
-        $(top_ompi_builddir)/ompi/mca/common/ofautils/libmca_common_ofautils.la \
+        $(top_ompi_builddir)/ompi/mca/common/verbs/libmca_common_verbs.la \
         $(top_ompi_builddir)/ompi/mca/common/netpatterns/libmca_common_netpatterns.la
 
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_bcol_iboffload_la_SOURCES =$(sources)
 libmca_bcol_iboffload_la_LDFLAGS = -module -avoid-version  $(btl_openib_LDFLAGS) $(bcol_iboffload_LDFLAGS)
-
-$(top_ompi_builddir)/ompi/mca/common/ofacm/libmca_common_ofacm.la: foo.c
-	cd $(top_ompi_builddir)/ompi/mca/common/ofacm && $(MAKE)
-
-$(top_ompi_builddir)/ompi/mca/common/ofautils/libmca_common_ofautils.la: foo.c
-	cd $(top_ompi_builddir)/ompi/mca/common/ofautils && $(MAKE)
-
-$(top_ompi_builddir)/ompi/mca/common/netpatterns/libmca_common_netpatterns.la: foo.c
-	cd $(top_ompi_builddir)/ompi/mca/common/netpatterns && $(MAKE)
-
-foo.c:

@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2009-2012 Oak Ridge National Laboratory.  All rights reserved.
  * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
+ * Copyright (c) 2012 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -31,7 +32,7 @@
 #include "orte/util/show_help.h"
 #include "ompi/mca/common/ofacm/base.h"
 #include "ompi/mca/common/ofacm/connect.h"
-#include "ompi/mca/common/ofautils/common_ofautils.h"
+#include "ompi/mca/common/verbs/common_verbs.h"
 
 /*
  * Public string showing the coll ompi_sm V2 component version number

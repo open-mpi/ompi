@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2009-2012 Oak Ridge National Laboratory.  All rights reserved.
  * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
+ * Copyright (c) 2012 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -23,7 +24,7 @@
 #include "ompi/mca/mpool/base/base.h"
 #include "ompi/mca/common/ofacm/connect.h"
 #include "ompi/communicator/communicator.h"
-#include "ompi/mca/common/ofautils/common_ofautils.h"
+#include "ompi/mca/common/verbs/common_verbs.h"
 
 #include "orte/mca/rml/rml.h"
 #include "orte/util/show_help.c"
