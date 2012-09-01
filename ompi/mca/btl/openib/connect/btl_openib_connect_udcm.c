@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; -*- */
 /*
- * Copyright (c) 2007-2009 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2008-2009 Mellanox Technologies. All rights reserved.
  * Copyright (c) 2009      IBM Corporation.  All rights reserved.
  * Copyright (c) 2011      Los Alamos National Security, LLC.  All
@@ -400,7 +400,7 @@ static int udcm_component_query(mca_btl_openib_module_t *btl,
 	/* If we do not have struct ibv_device.transport_device, then
 	   we're in an old version of OFED that is IB only (i.e., no
 	   iWarp), so we can safely assume that we can use this CPC. */
-#if defined(HAVE_STRUCT_IBV_DEVICE_TRANSPORT_TYPE)
+#if defined(HAVE_STRUCT_IBV_DEVICE_TRANSPORT_TYPE) && OMPI_HAVE_IBV_LINK_LAYER
 	if (BTL_OPENIB_CONNECT_BASE_CHECK_IF_NOT_IB(btl)) {
 	    BTL_VERBOSE(("UD CPC only supported on InfiniBand; skipped on %s:%d",
 			 ibv_get_device_name(btl->device->ib_dev),

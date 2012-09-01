@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2010 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2006-2009 Mellanox Technologies. All rights reserved.
  * Copyright (c) 2006-2012 Los Alamos National Security, LLC.  All rights
  *                         reserved.
@@ -444,7 +444,7 @@ mca_btl_openib_transport_type_t mca_btl_openib_get_transport_type(mca_btl_openib
 #ifdef HAVE_STRUCT_IBV_DEVICE_TRANSPORT_TYPE
     switch(openib_btl->device->ib_dev->transport_type) {
         case IBV_TRANSPORT_IB:
-#ifdef OMPI_HAVE_RDMAOE
+#if defined(HAVE_IBV_LINK_LAYER_ETHERNET)
             switch(openib_btl->ib_port_attr.link_layer) {
                 case IBV_LINK_LAYER_ETHERNET:
                     return MCA_BTL_OPENIB_TRANSPORT_RDMAOE;

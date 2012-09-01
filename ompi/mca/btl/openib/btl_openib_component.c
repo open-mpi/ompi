@@ -61,7 +61,7 @@ const char *ibv_get_sysfs_path(void);
 #include "opal/util/argv.h"
 #include "opal/memoryhooks/memory.h"
 #include "opal/mca/base/mca_base_param.h"
-#include "ompi/mca/common/ofautils/common_ofautils.h"
+#include "ompi/mca/common/verbs/common_verbs.h"
 /* Define this before including hwloc.h so that we also get the hwloc
    verbs helper header file, too.  We have to do this level of
    indirection because the hwloc subsystem is a component -- we don't
@@ -81,6 +81,7 @@ const char *ibv_get_sysfs_path(void);
 #include "ompi/proc/proc.h"
 #include "ompi/mca/btl/btl.h"
 #include "ompi/mca/common/cuda/common_cuda.h"
+#include "ompi/mca/common/verbs/common_verbs.h"
 #include "ompi/mca/mpool/base/base.h"
 #include "ompi/mca/mpool/grdma/mpool_grdma.h"
 #include "ompi/mca/btl/base/base.h"
@@ -734,7 +735,7 @@ static int init_one_port(opal_list_t *btl_list, mca_btl_openib_device_t *device,
             return OMPI_ERR_NOT_FOUND;
         }
 
-#ifdef OMPI_HAVE_RDMAOE
+#if defined(HAVE_IBV_LINK_LAYER_ETHERNET)
         if (IBV_LINK_LAYER_ETHERNET == ib_port_attr->link_layer) {
             subnet_id = mca_btl_openib_get_ip_subnet_id(device->ib_dev,
                                                            port_num);
@@ -873,71 +874,18 @@ static int init_one_port(opal_list_t *btl_list, mca_btl_openib_device_t *device,
 
             /* Auto-detect the port bandwidth */
             if (0 == openib_btl->super.btl_bandwidth) {
-                /* To calculate the bandwidth available on this port,
-                   we have to look up the values corresponding to
-                   port->active_speed and port->active_width.  These
-                   are enums corresponding to the IB spec.  Overall
-                   forumula to get the true link speed is 8/10 or
-                   64/66 of the reported speed (depends on the coding
-                   that is being used for the particular speed) times
-                   the number of links. */
-                switch (ib_port_attr->active_speed) {
-                case 1:
-                    /* SDR: 2.5 Gbps * 0.8, in megabits */
-                    openib_btl->super.btl_bandwidth = 2000;
-                    break;
-                case 2:
-                    /* DDR: 5 Gbps * 0.8, in megabits */
-                    openib_btl->super.btl_bandwidth = 4000;
-                    break;
-                case 4:
-                    /* QDR: 10 Gbps * 0.8, in megabits */
-                    openib_btl->super.btl_bandwidth = 8000;
-                    break;
-                case 8:
-                    /* FDR10: 10.3125 Gbps * 64/66, in megabits */
-                    openib_btl->super.btl_bandwidth = 10000;
-                    break;
-                case 16:
-                    /* FDR: 14.0625 Gbps * 64/66, in megabits */
-                    openib_btl->super.btl_bandwidth = 13636;
-                    break;
-                case 32:
-                    /* EDR: 25.78125 Gbps * 64/66, in megabits */
-                    openib_btl->super.btl_bandwidth = 25000;
-                    break;
-                default:
-                    /* Who knows?  Declare this port unreachable (do
-                       *not* return ERR_VALUE_OF_OUT_OF_BOUNDS; that
-                       is reserved for when we exceed the number of
-                       allowable BTLs). */
-                    return OMPI_ERR_UNREACH;
-                }
-                switch (ib_port_attr->active_width) {
-                case 1:
-                    /* 1x */
-                    /* unity */
-                    break;
-                case 2:
-                    /* 4x */
-                    openib_btl->super.btl_bandwidth *= 4;
-                    break;
-                case 4:
-                    /* 8x */
-                    openib_btl->super.btl_bandwidth *= 8;
-                    break;
-                case 8:
-                    /* 12x */
-                    openib_btl->super.btl_bandwidth *= 12;
-                    break;
-                default:
-                    /* Who knows?  Declare this port unreachable (do
-                       *not* return ERR_VALUE_OF_OUT_OF_BOUNDS; that
-                       is reserved for when we exceed the number of
-                       allowable BTLs). */
+                if (OMPI_SUCCESS !=
+                    ompi_common_verbs_port_bw(ib_port_attr,
+                                              &openib_btl->super.btl_bandwidth)) {
+                    /* If we can't figure out the bandwidth, declare
+                       this port unreachable (do not* return
+                       ERR_VALUE_OF_OUT_OF_BOUNDS; that is reserved
+                       for when we exceed the number of allowable
+                       BTLs). */
                     return OMPI_ERR_UNREACH;
                 }
             }
+
             opal_list_append(btl_list, (opal_list_item_t*) ib_selected);
             opal_pointer_array_add(device->device_btls, (void*) openib_btl);
             ++device->btls;
