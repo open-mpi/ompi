@@ -293,7 +293,7 @@ opal_list_t *ompi_common_verbs_find_ibv_ports(const char *if_include,
         /* Make a device_item_t to hold the device information */
         di = OBJ_NEW(ompi_common_verbs_device_item_t);
         if (NULL == di) {
-            ibv_destroy_pd(pd);
+            ibv_dealloc_pd(pd);
             ibv_destroy_cq(cq);
             goto JMS;
         }
