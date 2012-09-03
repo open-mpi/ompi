@@ -18,8 +18,8 @@ IF(CMAKE_CL_64)
   STRING(REPLACE "X86" "X64"  EXAMPLE_SOLUTION "${EXAMPLE_SOLUTION}")
 ENDIF(CMAKE_CL_64)
 
-FILE(WRITE ${OpenMPI_SOURCE_DIR}/contrib/platform/win32/examples/chello/chello.vcxproj "${EXAMPLE_SOLUTION}")
+FILE(WRITE ${OpenMPI_BINARY_DIR}/contrib/platform/win32/examples/chello/chello.vcxproj "${EXAMPLE_SOLUTION}")
 
 INSTALL(FILES ${OpenMPI_SOURCE_DIR}/contrib/platform/win32/examples/chello/chello.c
-  ${OpenMPI_SOURCE_DIR}/contrib/platform/win32/examples/chello/chello.vcxproj
+  ${OpenMPI_BINARY_DIR}/contrib/platform/win32/examples/chello/chello.vcxproj
   DESTINATION share/examples)
