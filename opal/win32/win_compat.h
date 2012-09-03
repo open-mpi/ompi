@@ -327,6 +327,7 @@ typedef unsigned int uint;
  */
 #define bzero(p, l) memset(p, 0, l)
 #define bcopy(s, t, l) memmove(t, s, l)
+#define isblank(c) (c == ' ' || c == '\t')?1:0
 
 /*
  * OMPI functions that need to be redefined.
