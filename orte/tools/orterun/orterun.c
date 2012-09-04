@@ -410,10 +410,10 @@ static opal_cmd_line_init_t cmd_line_init[] = {
 #endif
 
     /* Allocation options */
-    { "ras", "base", "display_alloc", '\0', "display-allocation", "display-allocation", 0,
+    { "orte", "display", "alloc", '\0', "display-allocation", "display-allocation", 0,
       NULL, OPAL_CMD_LINE_TYPE_BOOL,
       "Display the allocation being used by this job"},
-    { "ras", "base", "display_devel_alloc", '\0', "display-devel-allocation", "display-devel-allocation", 0,
+    { "orte", "display", "devel_alloc", '\0', "display-devel-allocation", "display-devel-allocation", 0,
       NULL, OPAL_CMD_LINE_TYPE_BOOL,
       "Display a detailed list (mostly intended for developers) of the allocation being used by this job"},
 #if OPAL_HAVE_HWLOC
