@@ -234,11 +234,11 @@ void orte_ras_base_allocate(int fd, short args, void *cbdata)
                 return;
             }
         } else if (NULL != app->dash_host) {
+            OPAL_OUTPUT_VERBOSE((5, orte_ras_base.ras_output,
+                                 "%s ras:base:allocate adding dash_hosts",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
             if (ORTE_SUCCESS != (rc = orte_util_add_dash_host_nodes(&nodes,
                                                                     app->dash_host))) {
-                OPAL_OUTPUT_VERBOSE((5, orte_ras_base.ras_output,
-                                     "%s ras:base:allocate adding dash_hosts",
-                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
                 ORTE_ERROR_LOG(rc);
                 OBJ_DESTRUCT(&nodes);
                 ORTE_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
