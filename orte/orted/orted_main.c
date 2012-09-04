@@ -505,19 +505,6 @@ int orte_daemon(int argc, char *argv[])
         app->num_procs = 1;
         opal_pointer_array_add(jdata->apps, app);
         
-#if 0
-        /* run our local allocator to read the available
-         * allocation in case this singleton decides to
-         * comm_spawn other procs
-         */
-        if (ORTE_SUCCESS != (ret = orte_ras.allocate(jdata))) {
-            ORTE_ERROR_LOG(ret);
-            /* don't quit as this would cause the singleton
-             * to hang!
-             */
-        }
-#endif
-        
         /* setup a proc object for the singleton - since we
          * -must- be the HNP, and therefore we stored our
          * node on the global node pool, and since the singleton
@@ -535,6 +522,10 @@ int orte_daemon(int argc, char *argv[])
         OBJ_RETAIN(node);  /* keep accounting straight */
         opal_pointer_array_add(jdata->procs, proc);
         jdata->num_procs = 1;
+        /* and it obviously is on the node */
+        OBJ_RETAIN(proc);
+        opal_pointer_array_add(node->procs, proc);
+        node->num_procs++;
         /* and obviously it is one of my local procs */
         OBJ_RETAIN(proc);
         opal_pointer_array_add(orte_local_children, proc);
@@ -589,6 +580,27 @@ int orte_daemon(int argc, char *argv[])
 
         /* cleanup */
         free(tmp);
+
+        /* since a singleton spawned us, we need to harvest
+         * any MCA params from the local environment so
+         * we can pass them along to any subsequent daemons
+         * we may start as the result of a comm_spawn
+         */
+        for (i=0; NULL != environ[i]; i++) {
+            if (0 == strncmp(environ[i], "OMPI_MCA", 8)) {
+                /* make a copy to manipulate */
+                tmp = strdup(environ[i]);
+                /* find the equal sign */
+                nptr = strchr(tmp, '=');
+                *nptr = '\0';
+                nptr++;
+                /* add the mca param to the orted cmd line */
+                opal_argv_append_nosize(&orted_cmd_line, "-mca");
+                opal_argv_append_nosize(&orted_cmd_line, &tmp[9]);
+                opal_argv_append_nosize(&orted_cmd_line, nptr);
+                free(tmp);
+            }
+        }
     }
 
     /* if we were given a pipe to monitor for singleton termination, set that up */
