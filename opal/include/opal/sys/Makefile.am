@@ -24,7 +24,8 @@ headers += \
 	opal/sys/architecture.h \
 	opal/sys/atomic.h \
 	opal/sys/atomic_impl.h \
-	opal/sys/timer.h
+	opal/sys/timer.h \
+        opal/sys/cma.h
 
 include opal/sys/alpha/Makefile.am
 include opal/sys/amd64/Makefile.am
