@@ -95,6 +95,9 @@ char **orte_launch_environ;
 bool orte_hnp_is_allocated = false;
 bool orte_allocation_required;
 bool orte_managed_allocation = false;
+char *orte_set_slots = NULL;
+bool orte_display_allocation;
+bool orte_display_devel_allocation;
 
 /* launch agents */
 char *orte_launch_agent = NULL;
@@ -826,6 +829,7 @@ static void orte_node_construct(orte_node_t* node)
     node->oversubscribed = false;
     node->state = ORTE_NODE_STATE_UNKNOWN;
     node->slots = 0;
+    node->slots_given = false;
     node->slots_inuse = 0;
     node->slots_alloc = 0;
     node->slots_max = 0;

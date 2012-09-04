@@ -391,12 +391,14 @@ static int hostfile_parse_line(int token, opal_list_t* updates, opal_list_t* exc
     }
 
 done:
-    if (!got_count) {
-        if (got_max) {
-            node->slots = node->slots_max;
-        } else {
-            ++node->slots;
-        }
+    if (got_count) {
+        node->slots_given = true;
+    } else if (got_max) {
+        node->slots = node->slots_max;
+        node->slots_given = true;
+    } else {
+        /* should be set by obj_new, but just to be clear */
+        node->slots_given = false;
     }
     opal_list_append(updates, &node->super);
 

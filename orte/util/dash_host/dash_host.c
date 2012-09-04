@@ -96,6 +96,8 @@ int orte_util_add_dash_host_nodes(opal_list_t *nodes,
                (0 == strcmp(node->name, orte_process_info.nodename) &&
                (0 == strcmp(mapped_nodes[i], "localhost") || opal_ifislocal(mapped_nodes[i])))) {
                 ++node->slots;
+                /* the dash-host option presumes definition of num_slots */
+                node->slots_given = true;
                 break;
             }
         }
@@ -127,6 +129,8 @@ int orte_util_add_dash_host_nodes(opal_list_t *nodes,
             node->slots_inuse = 0;
             node->slots_max = 0;
             node->slots = 1;
+            /* the dash-host option presumes definition of num_slots */
+            node->slots_given = true;
             opal_list_append(nodes, &node->super);
         }
     }

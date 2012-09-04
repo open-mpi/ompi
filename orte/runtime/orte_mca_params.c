@@ -44,7 +44,7 @@ static bool passed_thru = false;
 
 int orte_register_params(void)
 {
-    int value;
+    int value, id;
     char *strval, *strval1, *strval2;
 
     /* only go thru this once - mpirun calls it twice, which causes
@@ -552,6 +552,29 @@ int orte_register_params(void)
 #else
     orte_use_common_port = false;
 #endif
+
+    mca_base_param_reg_string_name("orte", "set_default_slots",
+                                   "Set the number of slots on nodes that lack such info to the number of specified objects [a number, \"cores\", \"numas\", \"sockets\", or \"hwthreads\"]",
+                                   false, false, NULL, &orte_set_slots);
+
+    /* should we display the allocation after determining it? */
+    id = mca_base_param_reg_int_name("orte", "display_alloc",
+                                     "Whether to display the allocation after it is determined",
+                                     false, false, (int)false, NULL);
+    mca_base_param_reg_syn_name(id, "ras", "base_display_alloc", true);
+    mca_base_param_lookup_int(id, &value);
+    orte_display_allocation = OPAL_INT_TO_BOOL(value);
+
+    /* should we display a detailed (developer-quality) version of the allocation after determining it? */
+    id = mca_base_param_reg_int_name("orte", "display_devel_alloc",
+                                     "Whether to display a developer-detail allocation after it is determined",
+                                     false, false, 0, NULL);
+    mca_base_param_reg_syn_name(id, "ras", "base_display_devel_alloc", true);
+    mca_base_param_lookup_int(id, &value);
+    if (0 != value) {
+        orte_display_allocation = true;
+        orte_devel_level_output = true;
+    }
 
 #endif /* ORTE_DISABLE_FULL_SUPPORT */
     

@@ -48,8 +48,8 @@
 
 #include "orte/mca/ras/base/ras_private.h"
 
-/* static function to display allocation */
-static void display_alloc(void)
+/* function to display allocation */
+void orte_ras_base_display_alloc(void)
 {
     char *tmp=NULL, *tmp2, *tmp3, *pfx=NULL;
     int i, istart;
@@ -367,8 +367,8 @@ void orte_ras_base_allocate(int fd, short args, void *cbdata)
 
  DISPLAY:
     /* shall we display the results? */
-    if (4 < opal_output_get_verbosity(orte_ras_base.ras_output) || orte_ras_base.display_alloc) {
-        display_alloc();
+    if (4 < opal_output_get_verbosity(orte_ras_base.ras_output)) {
+        orte_ras_base_display_alloc();
     }
 
  next_state:
@@ -470,8 +470,8 @@ int orte_ras_base_add_hosts(orte_job_t *jdata)
     }
     
     /* shall we display the results? */
-    if (0 < opal_output_get_verbosity(orte_ras_base.ras_output) || orte_ras_base.display_alloc) {
-        display_alloc();
+    if (0 < opal_output_get_verbosity(orte_ras_base.ras_output)) {
+        orte_ras_base_display_alloc();
     }
     
     return ORTE_SUCCESS;

@@ -333,6 +333,10 @@ typedef struct {
         that we have been allocated on this note and would be the
         "ideal" number of processes for us to launch. */
     orte_std_cntr_t slots;
+    /* a flag indicating that the number of slots was specified - used
+     * only in non-managed environments
+     */
+    bool slots_given;
     /** How many processes have already been launched, used by one or
         more jobs on this node. */
     orte_std_cntr_t slots_inuse;
@@ -610,6 +614,9 @@ ORTE_DECLSPEC extern char **orte_launch_environ;
 ORTE_DECLSPEC extern bool orte_hnp_is_allocated;
 ORTE_DECLSPEC extern bool orte_allocation_required;
 ORTE_DECLSPEC extern bool orte_managed_allocation;
+ORTE_DECLSPEC extern char *orte_set_slots;
+ORTE_DECLSPEC extern bool orte_display_allocation;
+ORTE_DECLSPEC extern bool orte_display_devel_allocation;
 
 /* launch agents */
 ORTE_DECLSPEC extern char *orte_launch_agent;

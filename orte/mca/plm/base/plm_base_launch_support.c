@@ -107,8 +107,63 @@ void orte_plm_base_daemons_reported(int fd, short args, void *cbdata)
                 }
             }
         }
+        /* if this is an unmanaged allocation, then set the default
+         * slots on each node as directed or using default
+         */
+        if (!orte_managed_allocation) {
+            if (NULL != orte_set_slots) {
+                for (i=0; i < orte_node_pool->size; i++) {
+                    if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, i))) {
+                        continue;
+                    }
+                    if (!node->slots_given) {
+                        if (0 == strncmp(orte_set_slots, "cores", strlen(orte_set_slots))) {
+                            node->slots = opal_hwloc_base_get_nbobjs_by_type(node->topology,
+                                                                             HWLOC_OBJ_CORE, 0,
+                                                                             OPAL_HWLOC_LOGICAL);
+                        } else if (0 == strncmp(orte_set_slots, "sockets", strlen(orte_set_slots))) {
+                            if (0 == (node->slots = opal_hwloc_base_get_nbobjs_by_type(node->topology,
+                                                                                       HWLOC_OBJ_SOCKET, 0,
+                                                                                       OPAL_HWLOC_LOGICAL))) {
+                                /* some systems don't report sockets - in this case,
+                                 * use numanodes
+                                 */
+                                node->slots = opal_hwloc_base_get_nbobjs_by_type(node->topology,
+                                                                                 HWLOC_OBJ_NODE, 0,
+                                                                                 OPAL_HWLOC_LOGICAL);
+                            }
+                        } else if (0 == strncmp(orte_set_slots, "numas", strlen(orte_set_slots))) {
+                            node->slots = opal_hwloc_base_get_nbobjs_by_type(node->topology,
+                                                                             HWLOC_OBJ_NODE, 0,
+                                                                             OPAL_HWLOC_LOGICAL);
+                        } else if (0 == strncmp(orte_set_slots, "hwthreads", strlen(orte_set_slots))) {
+                            node->slots = opal_hwloc_base_get_nbobjs_by_type(node->topology,
+                                                                             HWLOC_OBJ_PU, 0,
+                                                                             OPAL_HWLOC_LOGICAL);
+                        } else {
+                            /* must be a number */
+                            node->slots = strtol(orte_set_slots, NULL, 10);
+                        }
+                    }
+                }
+            } else {
+                /* set any non-specified slot counts to 1 */
+                for (i=0; i < orte_node_pool->size; i++) {
+                    if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, i))) {
+                        continue;
+                    }
+                    if (!node->slots_given) {
+                        node->slots = 1;
+                    }
+                }
+            }
+        }
     }
 #endif
+
+    if (orte_display_allocation) {
+        orte_ras_base_display_alloc();
+    }
 
     /* progress the job */
     caddy->jdata->state = ORTE_JOB_STATE_DAEMONS_REPORTED;
