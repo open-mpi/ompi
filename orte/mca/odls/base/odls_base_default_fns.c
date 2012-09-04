@@ -2497,11 +2497,7 @@ int orte_odls_base_default_require_sync(orte_process_name_t *proc,
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                         ORTE_NAME_PRINT(proc), (long)buffer.bytes_used));
     
-    if (0 > (rc = orte_rml.send_buffer(proc, &buffer, ORTE_RML_TAG_SYNC, 0))) {
-        ORTE_ERROR_LOG(rc);
-        OBJ_DESTRUCT(&buffer);
-        goto CLEANUP;
-    }            
+    orte_rml.send_buffer(proc, &buffer, ORTE_RML_TAG_SYNC, 0);            
     OBJ_DESTRUCT(&buffer);
     
     /* now check to see if everyone in this job has registered */

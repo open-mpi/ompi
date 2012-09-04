@@ -71,6 +71,7 @@
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/grpcomm/grpcomm.h"
+#include "orte/mca/rmaps/rmaps_types.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/rml/rml_types.h"
 #include "orte/mca/odls/odls.h"
@@ -547,7 +548,7 @@ int orte_daemon(int argc, char *argv[])
     if (orted_globals.uri_pipe > 0) {
         orte_job_t *jdata;
         orte_proc_t *proc;
-        orte_node_t **nodes;
+        orte_node_t *node;
         orte_app_context_t *app;
         char *tmp, *nptr, *sysinfo;
         int rc;
@@ -576,8 +577,19 @@ int orte_daemon(int argc, char *argv[])
              */
         }
         
-        nodes = (orte_node_t**)orte_node_pool->addr;
+        /* setup a map for the job - even though we won't
+         * actually map it, we need a map object so the
+         * nidmap (if the singleton should call comm_spawn)
+         * will be complete
+         */
+        jdata->map = OBJ_NEW(orte_job_map_t);
         
+        node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, 0);
+        /* add the node to the map */
+        OBJ_RETAIN(node);
+        opal_pointer_array_add(jdata->map->nodes, node);
+        jdata->map->num_nodes = 1;
+
         /* setup a proc object for the singleton - since we
          * -must- be the HNP, and therefore we stored our
          * node on the global node pool, and since the singleton
@@ -588,8 +600,12 @@ int orte_daemon(int argc, char *argv[])
         proc->name.vpid = 0;
         proc->state = ORTE_PROC_STATE_RUNNING;
         proc->app_idx = 0;
-        proc->node = nodes[0]; /* hnp node must be there */
-        OBJ_RETAIN(nodes[0]);  /* keep accounting straight */
+        proc->node = node;
+        proc->local_rank = 0;
+        proc->node_rank = 0;
+        OBJ_RETAIN(node);  /* keep accounting straight */
+        node->num_procs = 1;
+        node->slots_inuse = 1;
         opal_pointer_array_add(jdata->procs, proc);
         jdata->num_procs = 1;
         
@@ -611,6 +627,27 @@ int orte_daemon(int argc, char *argv[])
 
         /* cleanup */
         free(tmp);
+
+        /* since a singleton spawned us, we need to harvest
+         * any MCA params from the local environment so
+         * we can pass them along to any subsequent daemons
+         * we may start as the result of a comm_spawn
+         */
+        for (i=0; NULL != environ[i]; i++) {
+            if (0 == strncmp(environ[i], "OMPI_MCA", 8)) {
+                /* make a copy to manipulate */
+                sysinfo = strdup(environ[i]);
+                /* find the equal sign */
+                nptr = strchr(sysinfo, '=');
+                *nptr = '\0';
+                nptr++;
+                /* add the mca param to the orted cmd line */
+                opal_argv_append_nosize(&orted_cmd_line, "-mca");
+                opal_argv_append_nosize(&orted_cmd_line, &sysinfo[9]);
+                opal_argv_append_nosize(&orted_cmd_line, nptr);
+                free(sysinfo);
+            }
+        }
     }
 
     /* if we were given a pipe to monitor for singleton termination, set that up */
