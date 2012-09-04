@@ -323,14 +323,15 @@ int ompi_mtl_mxm_add_procs(struct mca_mtl_base_module_t *mtl, size_t nprocs,
             int modex_name_id = 0;
 
             while (modex_buf_size > 0) {
-               /* modex name looks as mtl.mxm.1.5-18 where mtl.mxm.1.5 is the component and 18 is portion index */
-               sprintf(modex_name, "%s-%d", modex_component_name, modex_name_id);           
+                /* modex name looks as mtl.mxm.1.5-18 where mtl.mxm.1.5 is the component and 18 is portion index */
+                sprintf(modex_name, "%s-%d", modex_component_name, modex_name_id);
 
                 if (OMPI_SUCCESS != ompi_modex_recv_string((const char *)modex_name, procs[i], (void**)&modex_buf_ptr, &modex_cur_size)) {
                     MXM_ERROR("Open MPI couldn't distribute EP connection details");
                     free(modex_name);
-            goto bail;
-        }
+                    rc = OMPI_ERROR;
+                    goto bail;
+                }
                 /* fill in ep_info[i] with recieved data */
                 memcpy((void*)ep_info_ptr, modex_buf_ptr, modex_cur_size);
 
@@ -338,6 +339,7 @@ int ompi_mtl_mxm_add_procs(struct mca_mtl_base_module_t *mtl, size_t nprocs,
                     MXM_ERROR("Open MPI couldn't distribute EP connection details: incorrect size of message");
                     free(modex_component_name);
                     free(modex_name);
+                    rc = OMPI_ERROR;
                     goto bail;
                 }
                 modex_name_id++;
