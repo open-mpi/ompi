@@ -354,6 +354,11 @@ static int fork_hnp(void)
         opal_argv_append(&argc, &argv, "--debug-daemons-file");
     }
     
+    /* indicate that it must use the novm state machine */
+    opal_argv_append(&argc, &argv, "-mca");
+    opal_argv_append(&argc, &argv, "state_novm_select");
+    opal_argv_append(&argc, &argv, "1");
+
     /* Fork off the child */
     orte_process_info.hnp_pid = fork();
     if(orte_process_info.hnp_pid < 0) {
