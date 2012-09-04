@@ -136,7 +136,7 @@ typedef struct {
     /** \brief Additional space for custom data */
     void *userdata;
 } opal_hwloc_topo_data_t;
-OBJ_CLASS_DECLARATION(opal_hwloc_topo_data_t);
+OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_hwloc_topo_data_t);
 
 /* define binding policies */
 typedef uint16_t opal_binding_policy_t;
