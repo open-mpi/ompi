@@ -76,6 +76,14 @@ void ompi_testall_f(MPI_Fint *count, MPI_Fint *array_of_requests, ompi_fortran_l
     int i, c_ierr;
     OMPI_LOGICAL_NAME_DECL(flag);
 
+    /* Shortcut to avoid malloc(0) if *count==0.  We're intentionally
+       skipping other parameter error checks. */
+    if (OPAL_UNLIKELY(0 == OMPI_FINT_2_INT(*count))) {
+        *flag = OMPI_FORTRAN_VALUE_TRUE;
+        *ierr = OMPI_INT_2_FINT(MPI_SUCCESS);
+        return;
+    }
+
     c_req = (MPI_Request *) malloc(OMPI_FINT_2_INT(*count) *
                    (sizeof(MPI_Request) + sizeof(MPI_Status)));
     if (NULL == c_req){

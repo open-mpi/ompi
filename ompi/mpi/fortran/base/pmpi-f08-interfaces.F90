@@ -2611,7 +2611,8 @@ subroutine PMPI_File_set_errhandler_f08(file,errhandler,ierror &
 end subroutine PMPI_File_set_errhandler_f08
 end interface  PMPI_File_set_errhandler
 
-#endif ! OMPI_PROVIDE_MPI_FILE_INTERFACE
+! endif for OMPI_PROVIDE_MPI_FILE_INTERFACE
+#endif
 
 interface  PMPI_Finalize
 subroutine PMPI_Finalize_f08(ierror &
@@ -4004,7 +4005,8 @@ subroutine PMPI_File_write_shared_f08(fh,buf,count,datatype,status,ierror &
 end subroutine PMPI_File_write_shared_f08
 end interface  PMPI_File_write_shared
 
-#endif ! OMPI_PROVIDE_MPI_FILE_INTERFACE
+! endif for OMPI_PROVIDE_MPI_FILE_INTERFACE
+#endif
 
 interface  PMPI_Register_datarep
 subroutine PMPI_Register_datarep_f08(datarep,read_conversion_fn,write_conversion_fn, &

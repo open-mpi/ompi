@@ -27,7 +27,7 @@
 #endif
 
 ! PROCEDURE or not
-#if OMPI_HAVE_PROCEDURE
+#if OMPI_FORTRAN_HAVE_PROCEDURE
 #define OMPI_PROCEDURE(name) PROCEDURE(name)
 #else
 #define OMPI_PROCEDURE(name) EXTERNAL

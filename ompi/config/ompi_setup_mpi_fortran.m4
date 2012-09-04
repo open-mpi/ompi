@@ -399,9 +399,9 @@ end type test_mpi_handle],
     OMPI_FORTRAN_HAVE_F08_ASSUMED_RANK=0
     AS_IF([test $OMPI_WANT_FORTRAN_USEMPIF08_BINDINGS -eq 1 -a \
            $OMPI_BUILD_FORTRAN_USEMPIF08_BINDINGS -eq 1],
-          [ # Look for Fortran 2008 assumed shape syntax
+          [ # Look for Fortran 2008 assumed rank syntax
            OMPI_FORTRAN_CHECK_F08_ASSUMED_RANK(
-               [ # If we have assumed shape, we can build the use
+               [ # If we have assumed rank, we can build the use
                  # mpi_f08 module "better"
                 OMPI_FORTRAN_F08_PREDECL='!'
                 OMPI_FORTRAN_F08_TYPE='type(*), dimension(..)'
@@ -589,7 +589,7 @@ end type test_mpi_handle],
                        [For ompi_info: Whether we will build the MPI Fortran "use mpi_f08" bindings or not])
     AC_DEFINE_UNQUOTED(OMPI_FORTRAN_HAVE_F08_ASSUMED_RANK,
                        [$OMPI_FORTRAN_HAVE_F08_ASSUMED_RANK],
-                       [For ompi_info: Whether the Fortran compiler supports the Fortran 2008 "assumed shape" syntax or not])
+                       [For ompi_info: Whether the Fortran compiler supports the Fortran 2008 "assumed rank" syntax or not])
     AC_DEFINE_UNQUOTED(OMPI_FORTRAN_HAVE_BIND_C,
                        [$OMPI_FORTRAN_HAVE_BIND_C],
                        [For ompi_info: Whether we want to use BIND(C) in the mpi_f08 module or not (based on "good" or "bad" compiler determination, i.e., whether we are using fortran wrapper functions for choice buffers or not)])

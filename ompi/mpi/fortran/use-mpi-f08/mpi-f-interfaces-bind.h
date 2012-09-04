@@ -954,6 +954,7 @@ end subroutine ompi_op_commutative_f
 
 subroutine ompi_op_create_f(user_fn,commute,op,ierror) &
    BIND(C, name="ompi_op_create_f")
+   use :: mpi_f08_interfaces_callbacks, only : MPI_User_function
    implicit none
    OMPI_PROCEDURE(MPI_User_function) :: user_fn
    LOGICAL, INTENT(IN) :: commute
@@ -1148,6 +1149,8 @@ subroutine ompi_comm_create_keyval_f(comm_copy_attr_fn,comm_delete_attr_fn, &
                                      comm_keyval,extra_state,ierror) &
    BIND(C, name="ompi_comm_create_keyval_f")
    use :: mpi_f08_types, only : MPI_ADDRESS_KIND
+   use :: mpi_f08_interfaces_callbacks, only : MPI_Comm_copy_attr_function
+   use :: mpi_f08_interfaces_callbacks, only : MPI_Comm_delete_attr_function
    implicit none
    OMPI_PROCEDURE(MPI_Comm_copy_attr_function) :: comm_copy_attr_fn
    OMPI_PROCEDURE(MPI_Comm_delete_attr_function) :: comm_delete_attr_fn
@@ -1416,6 +1419,8 @@ subroutine ompi_type_create_keyval_f(type_copy_attr_fn,type_delete_attr_fn, &
                                      type_keyval,extra_state,ierror) &
    BIND(C, name="ompi_type_create_keyval_f")
    use :: mpi_f08_types, only : MPI_ADDRESS_KIND
+   use :: mpi_f08_interfaces_callbacks, only : MPI_Type_copy_attr_function
+   use :: mpi_f08_interfaces_callbacks, only : MPI_Type_delete_attr_function
    implicit none
    OMPI_PROCEDURE(MPI_Type_copy_attr_function) :: type_copy_attr_fn
    OMPI_PROCEDURE(MPI_Type_delete_attr_function) :: type_delete_attr_fn
@@ -1485,6 +1490,8 @@ subroutine ompi_win_create_keyval_f(win_copy_attr_fn,win_delete_attr_fn, &
                                     win_keyval,extra_state,ierror) &
    BIND(C, name="ompi_win_create_keyval_f")
    use :: mpi_f08_types, only : MPI_ADDRESS_KIND
+   use :: mpi_f08_interfaces_callbacks, only : MPI_Win_copy_attr_function
+   use :: mpi_f08_interfaces_callbacks, only : MPI_Win_delete_attr_function
    implicit none
    OMPI_PROCEDURE(MPI_Win_copy_attr_function) :: win_copy_attr_fn
    OMPI_PROCEDURE(MPI_Win_delete_attr_function) :: win_delete_attr_fn
@@ -1814,6 +1821,7 @@ end subroutine ompi_comm_call_errhandler_f
 
 subroutine ompi_comm_create_errhandler_f(comm_errhandler_fn,errhandler,ierror) &
    BIND(C, name="ompi_comm_create_errhandler_f")
+   use :: mpi_f08_interfaces_callbacks, only : MPI_Comm_errhandler_function
    implicit none
    OMPI_PROCEDURE(MPI_Comm_errhandler_function) :: comm_errhandler_fn
    INTEGER, INTENT(OUT) :: errhandler
@@ -1872,6 +1880,7 @@ end subroutine ompi_file_call_errhandler_f
 
 subroutine ompi_file_create_errhandler_f(file_errhandler_fn,errhandler,ierror) &
    BIND(C, name="ompi_file_create_errhandler_f")
+   use :: mpi_f08_interfaces_callbacks, only : MPI_File_errhandler_function
    implicit none
    OMPI_PROCEDURE(MPI_File_errhandler_function) :: file_errhandler_fn
    INTEGER, INTENT(OUT) :: errhandler
@@ -1955,6 +1964,7 @@ end subroutine ompi_win_call_errhandler_f
 
 subroutine ompi_win_create_errhandler_f(win_errhandler_fn,errhandler,ierror) &
    BIND(C, name="ompi_win_create_errhandler_f")
+   use :: mpi_f08_interfaces_callbacks, only : MPI_Win_errhandler_function
    implicit none
    OMPI_PROCEDURE(MPI_Win_errhandler_function) :: win_errhandler_fn
    INTEGER, INTENT(OUT) :: errhandler
@@ -2344,6 +2354,9 @@ subroutine ompi_grequest_start_f(query_fn,free_fn,cancel_fn, &
                                  extra_state,request,ierror) &
    BIND(C, name="ompi_grequest_start_f")
    use :: mpi_f08_types, only : MPI_ADDRESS_KIND
+   use :: mpi_f08_interfaces_callbacks, only : MPI_Grequest_query_function
+   use :: mpi_f08_interfaces_callbacks, only : MPI_Grequest_free_function
+   use :: mpi_f08_interfaces_callbacks, only : MPI_Grequest_cancel_function
    implicit none
    OMPI_PROCEDURE(MPI_Grequest_query_function) :: query_fn
    OMPI_PROCEDURE(MPI_Grequest_free_function) :: free_fn
@@ -2941,6 +2954,8 @@ subroutine ompi_register_datarep_f(datarep,read_conversion_fn, &
    BIND(C, name="ompi_register_datarep_f")
    use, intrinsic :: ISO_C_BINDING, only : C_CHAR
    use :: mpi_f08_types, only : MPI_ADDRESS_KIND
+   use :: mpi_f08_interfaces_callbacks, only : MPI_Datarep_conversion_function
+   use :: mpi_f08_interfaces_callbacks, only : MPI_Datarep_extent_function
    implicit none
    OMPI_PROCEDURE(MPI_Datarep_conversion_function) :: read_conversion_fn
    OMPI_PROCEDURE(MPI_Datarep_conversion_function) :: write_conversion_fn
