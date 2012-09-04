@@ -52,7 +52,7 @@
 static void display_alloc(void)
 {
     char *tmp=NULL, *tmp2, *tmp3, *pfx=NULL;
-    int i;
+    int i, istart;
     orte_node_t *alloc;
     
     if (orte_xml_output) {
@@ -61,7 +61,12 @@ static void display_alloc(void)
     } else {
         asprintf(&tmp, "\n======================   ALLOCATED NODES   ======================\n");
     }
-    for (i=0; i < orte_node_pool->size; i++) {
+    if (orte_hnp_is_allocated) {
+            istart = 0;
+    } else {
+        istart = 1;
+    }
+    for (i=istart; i < orte_node_pool->size; i++) {
         if (NULL == (alloc = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, i))) {
             continue;
         }
@@ -97,6 +102,7 @@ void orte_ras_base_allocate(int fd, short args, void *cbdata)
     orte_std_cntr_t i;
     orte_app_context_t *app;
     orte_state_caddy_t *caddy = (orte_state_caddy_t*)cbdata;
+    bool default_hostfile_used;
 
     OPAL_OUTPUT_VERBOSE((5, orte_ras_base.ras_output,
                          "%s ras:base:allocate",
@@ -178,56 +184,15 @@ void orte_ras_base_allocate(int fd, short args, void *cbdata)
         return;
     }
     
-    
-    
     OPAL_OUTPUT_VERBOSE((5, orte_ras_base.ras_output,
                          "%s ras:base:allocate nothing found in module - proceeding to hostfile",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
     /* nothing was found, or no active module was alive. Our next
      * option is to look for a hostfile and assign our global
-     * pool from there. First, we check for a default hostfile
-     * as set by an mca param.
+     * pool from there.
      *
-     * Note that any relative node syntax found in the hostfile will
-     * generate an error in this scenario, so only non-relative syntax
-     * can be present
-     */
-    if (NULL != orte_default_hostfile) {
-        OPAL_OUTPUT_VERBOSE((5, orte_ras_base.ras_output,
-                             "%s ras:base:allocate parsing default hostfile %s",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             orte_default_hostfile));
-        
-        /* a default hostfile was provided - parse it */
-        if (ORTE_SUCCESS != (rc = orte_util_add_hostfile_nodes(&nodes,
-                                                               orte_default_hostfile))) {
-            ORTE_ERROR_LOG(rc);
-            OBJ_DESTRUCT(&nodes);
-            ORTE_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
-            OBJ_RELEASE(caddy);
-            return;
-        }
-    }
-    /* if something was found in the default hostfile, we use that as our global
-     * pool - set it and we are done
-     */
-    if (!opal_list_is_empty(&nodes)) {
-        /* store the results in the global resource pool - this removes the
-         * list items
-         */
-        if (ORTE_SUCCESS != (rc = orte_ras_base_node_insert(&nodes, jdata))) {
-            ORTE_ERROR_LOG(rc);
-            ORTE_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
-            OBJ_RELEASE(caddy);
-            return;
-        }
-        /* cleanup */
-        OBJ_DESTRUCT(&nodes);
-        goto DISPLAY;
-    }
-    
-    /* Individual hostfile names, if given, are included
+     * Individual hostfile names, if given, are included
      * in the app_contexts for this job. We therefore need to
      * retrieve the app_contexts for the job, and then cycle
      * through them to see if anything is there. The parser will
@@ -235,18 +200,24 @@ void orte_ras_base_allocate(int fd, short args, void *cbdata)
      * the resulting list contains the UNION of all nodes specified
      * in hostfiles from across all app_contexts
      *
+     * Any app that fails to have a hostfile will be given the
+     * default hostfile, if we have it
+     *
+     * Any app that has no hostfile but has a dash-host, will have
+     * those nodes added to the list
+     *
      * Note that any relative node syntax found in the hostfiles will
      * generate an error in this scenario, so only non-relative syntax
      * can be present
      */
-    
+    default_hostfile_used = false;
     for (i=0; i < jdata->apps->size; i++) {
         if (NULL == (app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, i))) {
             continue;
         }
         if (NULL != app->hostfile) {
             OPAL_OUTPUT_VERBOSE((5, orte_ras_base.ras_output,
-                                 "%s ras:base:allocate checking hostfile %s",
+                                 "%s ras:base:allocate adding hostfile %s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  app->hostfile));
             
@@ -260,6 +231,37 @@ void orte_ras_base_allocate(int fd, short args, void *cbdata)
                 OBJ_RELEASE(caddy);
                 return;
             }
+        } else if (NULL != app->dash_host) {
+            if (ORTE_SUCCESS != (rc = orte_util_add_dash_host_nodes(&nodes,
+                                                                    app->dash_host))) {
+                OPAL_OUTPUT_VERBOSE((5, orte_ras_base.ras_output,
+                                     "%s ras:base:allocate adding dash_hosts",
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+                ORTE_ERROR_LOG(rc);
+                OBJ_DESTRUCT(&nodes);
+                ORTE_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
+                OBJ_RELEASE(caddy);
+                return;
+            }
+        } else if (!default_hostfile_used) {
+            if (NULL != orte_default_hostfile) {
+                OPAL_OUTPUT_VERBOSE((5, orte_ras_base.ras_output,
+                                     "%s ras:base:allocate parsing default hostfile %s",
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                     orte_default_hostfile));
+        
+                /* a default hostfile was provided - parse it */
+                if (ORTE_SUCCESS != (rc = orte_util_add_hostfile_nodes(&nodes,
+                                                                       orte_default_hostfile))) {
+                    ORTE_ERROR_LOG(rc);
+                    OBJ_DESTRUCT(&nodes);
+                    ORTE_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
+                    OBJ_RELEASE(caddy);
+                    return;
+                }
+            }
+            /* only look at it once */
+            default_hostfile_used = true;
         }
     }
 
@@ -282,61 +284,7 @@ void orte_ras_base_allocate(int fd, short args, void *cbdata)
     }
     
     OPAL_OUTPUT_VERBOSE((5, orte_ras_base.ras_output,
-                         "%s ras:base:allocate nothing found in hostfiles - checking dash-host options",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-    
-    /* Our next option is to look for hosts provided via the -host
-     * command line option. If they are present, we declare this
-     * to represent not just a mapping, but to define the global
-     * resource pool in the absence of any other info.
-     *
-     * -host lists are provided as part of the app_contexts for
-     * this job. We therefore need to retrieve the app_contexts
-     * for the job, and then cycle through them to see if anything
-     * is there. The parser will add the -host nodes to our list - i.e.,
-     * the resulting list contains the UNION of all nodes specified
-     * by -host across all app_contexts
-     *
-     * Note that any relative node syntax found in the -host lists will
-     * generate an error in this scenario, so only non-relative syntax
-     * can be present
-     */
-    for (i=0; i < jdata->apps->size; i++) {
-        if (NULL == (app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, i))) {
-            continue;
-        }
-        if (NULL != app->dash_host) {
-            if (ORTE_SUCCESS != (rc = orte_util_add_dash_host_nodes(&nodes,
-                                                                    app->dash_host))) {
-                ORTE_ERROR_LOG(rc);
-                OBJ_DESTRUCT(&nodes);
-                ORTE_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
-                OBJ_RELEASE(caddy);
-                return;
-            }
-        }
-    }
-
-    /* if something was found in -host, we use that as our global
-     * pool - set it and we are done
-     */
-    if (!opal_list_is_empty(&nodes)) {
-        /* store the results in the global resource pool - this removes the
-         * list items
-         */
-        if (ORTE_SUCCESS != (rc = orte_ras_base_node_insert(&nodes, jdata))) {
-            ORTE_ERROR_LOG(rc);
-            ORTE_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
-            OBJ_RELEASE(caddy);
-            return;
-        }
-        /* cleanup */
-        OBJ_DESTRUCT(&nodes);
-        goto DISPLAY;
-    }
-
-    OPAL_OUTPUT_VERBOSE((5, orte_ras_base.ras_output,
-                         "%s ras:base:allocate nothing found in dash-host - checking for rankfile",
+                         "%s ras:base:allocate nothing found in hostfiles - checking for rankfile",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
     /* Our next option is to look for a rankfile - if one was provided, we
