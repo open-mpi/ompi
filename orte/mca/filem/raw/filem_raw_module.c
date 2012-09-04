@@ -356,16 +356,23 @@ static int raw_preposition_files(orte_job_t *jdata,
                 } else {
                     fs->target_flag = ORTE_FILEM_TYPE_FILE;
                 }
-                /* if this was an absolute path, then we need
-                 * to convert it to a relative path - we do not
-                 * allow positioning of files to absolute locations
-                 * due to the potential for unintentional overwriting
-                 * of files
+                /* if we are flattening directory trees, then the
+                 * remote path is just the basename file name
                  */
-                if (opal_path_is_absolute(files[j])) {
-                    fs->remote_target = strdup(&files[j][1]);
+                if (orte_filem_raw_flatten_trees) {
+                    fs->remote_target = opal_basename(files[j]);
                 } else {
-                    fs->remote_target = strdup(files[j]);
+                    /* if this was an absolute path, then we need
+                     * to convert it to a relative path - we do not
+                     * allow positioning of files to absolute locations
+                     * due to the potential for unintentional overwriting
+                     * of files
+                     */
+                    if (opal_path_is_absolute(files[j])) {
+                        fs->remote_target = strdup(&files[j][1]);
+                    } else {
+                        fs->remote_target = strdup(files[j]);
+                    }
                 }
                 opal_list_append(&fsets, &fs->super);
             }
@@ -610,6 +617,12 @@ static int raw_link_local_files(orte_job_t *jdata,
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  ORTE_NAME_PRINT(&proc->name),
                                  (int)app->idx));
+            continue;
+        }
+        /* ignore children we have already handled */
+        if (proc->alive ||
+            (ORTE_PROC_STATE_INIT != proc->state &&
+             ORTE_PROC_STATE_RESTART != proc->state)) {
             continue;
         }
 

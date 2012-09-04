@@ -24,6 +24,8 @@ BEGIN_C_DECLS
 ORTE_MODULE_DECLSPEC extern orte_filem_base_component_t mca_filem_raw_component;
 ORTE_DECLSPEC extern orte_filem_base_module_t mca_filem_raw_module;
 
+extern bool orte_filem_raw_flatten_trees;
+
 #define ORTE_FILEM_RAW_CHUNK_MAX 16384
 
 /* local classes */
