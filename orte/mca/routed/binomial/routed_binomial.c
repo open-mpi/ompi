@@ -725,9 +725,10 @@ static int route_lost(const orte_process_name_t *route)
     if (!orte_finalizing &&
         NULL != lifeline &&
         OPAL_EQUAL == orte_util_compare_name_fields(ORTE_NS_CMP_ALL, route, lifeline)) {
-        opal_output(0, "%s routed:binomial: Connection to lifeline %s lost",
-                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                    ORTE_NAME_PRINT(lifeline));
+        opal_output_verbose(10, orte_routed_base_output,
+                            "%s routed:binomial: Connection to lifeline %s lost",
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                            ORTE_NAME_PRINT(lifeline));
         return ORTE_ERR_FATAL;
     }
 
