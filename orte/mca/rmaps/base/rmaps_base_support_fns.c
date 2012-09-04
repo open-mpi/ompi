@@ -125,12 +125,13 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
                                      bool initial_map, bool silent)
 {
     opal_list_item_t *item, *next;
-    orte_node_t *node, *nd;
+    orte_node_t *node, *nd, *nptr;
     orte_std_cntr_t num_slots;
     orte_std_cntr_t i;
     int rc;
     orte_job_t *daemons;
     bool novm;
+    opal_list_t nodes;
 
     /** set default answer */
     *total_num_slots = 0;
@@ -139,6 +140,160 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
     daemons = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid);
     /* see is we have a vm or not */
     novm = ORTE_JOB_CONTROL_NO_VM & daemons->controls;
+
+    /* if this is NOT a managed allocation, then we use the nodes
+     * that were specified for this app - there is no need to collect
+     * all available nodes and "filter" them
+     */
+    if (!orte_managed_allocation) {
+        OBJ_CONSTRUCT(&nodes, opal_list_t);
+        /* if the app provided a dash-host, then use those nodes */
+        if (NULL != app->dash_host) {
+            OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base.rmaps_output,
+                                 "%s using dash_host",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+            if (ORTE_SUCCESS != (rc = orte_util_add_dash_host_nodes(&nodes,
+                                                                    app->dash_host))) {
+                ORTE_ERROR_LOG(rc);
+                return rc;
+            }
+        } else if (NULL != app->hostfile) {
+            /* otherwise, if the app provided a hostfile, then use that */
+            OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base.rmaps_output,
+                                 "%s using hostfile %s",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 app->hostfile));
+            if (ORTE_SUCCESS != (rc = orte_util_add_hostfile_nodes(&nodes,
+                                                                   app->hostfile))) {
+                ORTE_ERROR_LOG(rc);
+                return rc;
+            }
+        } else if (NULL != orte_default_hostfile) {
+            /* fall back to the default hostfile, if provided */
+            OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base.rmaps_output,
+                                 "%s using default hostfile %s",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 orte_default_hostfile));
+            if (ORTE_SUCCESS != (rc = orte_util_add_hostfile_nodes(&nodes,
+                                                                   orte_default_hostfile))) {
+                ORTE_ERROR_LOG(rc);
+                return rc;
+            }
+            /* this is a special case - we always install a default
+             * hostfile, but it is empty. If the user didn't remove it
+             * or put something into it, then we will have pursued that
+             * option and found nothing. This isn't an error, we just need
+             * to use the local host
+             */
+            if (0 == opal_list_get_size(&nodes)) {
+                OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base.rmaps_output,
+                                     "%s nothing in default hostfile - using local host",
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+                node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, 0);
+                OBJ_RETAIN(node);
+                opal_list_append(allocated_nodes, &node->super);
+                OBJ_DESTRUCT(&nodes);
+                goto complete;
+            }
+        } else {
+            /* if nothing else was available, then use the local host */
+            OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base.rmaps_output,
+                                 "%s using local host",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+            node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, 0);
+            OBJ_RETAIN(node);
+            opal_list_append(allocated_nodes, &node->super);
+            OBJ_DESTRUCT(&nodes);
+            goto complete;
+        }
+        /** if we still don't have anything */
+        if (0 == opal_list_get_size(&nodes)) {
+            if (!silent) {
+                orte_show_help("help-orte-rmaps-base.txt",
+                               "orte-rmaps-base:no-available-resources",
+                               true);
+            }
+            OBJ_DESTRUCT(&nodes);
+            return ORTE_ERR_SILENT;
+        }
+        /* find the nodes in our node array and assemble them
+         * in daemon order if the vm was launched
+         */
+        while (NULL != (item = opal_list_remove_first(&nodes))) {
+            nptr = (orte_node_t*)item;
+            nd = NULL;
+            for (i=0; i < orte_node_pool->size; i++) {
+                if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, i))) {
+                    continue;
+                }
+                if (0 != strcmp(node->name, nptr->name)) {
+                    continue;
+                }
+                /* ignore nodes that are marked as do-not-use for this mapping */
+                if (ORTE_NODE_STATE_DO_NOT_USE == node->state) {
+                    /* reset the state so it can be used another time */
+                    node->state = ORTE_NODE_STATE_UP;
+                    continue;
+                }
+                if (ORTE_NODE_STATE_DOWN == node->state) {
+                    continue;
+                }
+                if (ORTE_NODE_STATE_NOT_INCLUDED == node->state) {
+                    /* not to be used */
+                    continue;
+                }
+                /* if this node wasn't included in the vm (e.g., by -host), ignore it,
+                 * unless we are mapping prior to launching the vm
+                 */
+                if (NULL == node->daemon && !novm) {
+                    continue;
+                }
+                /* retain a copy for our use in case the item gets
+                 * destructed along the way
+                 */
+                OBJ_RETAIN(node);
+                if (initial_map) {
+                    /* if this is the first app_context we
+                     * are getting for an initial map of a job,
+                     * then mark all nodes as unmapped
+                     */
+                    node->mapped = false;
+                }
+                if (NULL == nd || NULL == nd->daemon ||
+                    NULL == node->daemon ||
+                    nd->daemon->name.vpid < node->daemon->name.vpid) {
+                    /* just append to end */
+                    opal_list_append(allocated_nodes, &node->super);
+                    nd = node;
+                } else {
+                    /* starting from end, put this node in daemon-vpid order */
+                    while (node->daemon->name.vpid < nd->daemon->name.vpid) {
+                        if (opal_list_get_begin(allocated_nodes) == opal_list_get_prev(&nd->super)) {
+                            /* insert at beginning */
+                            opal_list_prepend(allocated_nodes, &node->super);
+                            goto moveon1;
+                        }
+                        nd = (orte_node_t*)opal_list_get_prev(&nd->super);
+                    }
+                    item = opal_list_get_next(&nd->super);
+                    if (item == opal_list_get_end(allocated_nodes)) {
+                        /* we are at the end - just append */
+                        opal_list_append(allocated_nodes, &node->super);
+                    } else {
+                        nd = (orte_node_t*)item;
+                        opal_list_insert_pos(allocated_nodes, item, &node->super);
+                    }
+                moveon1:
+                    /* reset us back to the end for the next node */
+                    nd = (orte_node_t*)opal_list_get_last(allocated_nodes);
+                }
+            }
+            OBJ_RELEASE(nptr);
+        }
+        OBJ_DESTRUCT(&nodes);
+        /* now prune for usage and compute total slots */
+        goto complete;
+    }
 
     /* if the hnp was allocated, include it unless flagged not to */
     if (orte_hnp_is_allocated && !(ORTE_GET_MAPPING_DIRECTIVE(policy) & ORTE_MAPPING_NO_USE_LOCAL)) {
@@ -297,7 +452,7 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          (int)opal_list_get_size(allocated_nodes)));
 
-    
+ complete:
     /* remove all nodes that are already at max usage, and
      * compute the total number of allocated slots while
      * we do so

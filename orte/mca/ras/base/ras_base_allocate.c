@@ -172,6 +172,8 @@ void orte_ras_base_allocate(int fd, short args, void *cbdata)
         if (!(ORTE_MAPPING_SUBSCRIBE_GIVEN & ORTE_GET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping))) {
             ORTE_SET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping, ORTE_MAPPING_NO_OVERSUBSCRIBE);
         }
+        /* flag that the allocation is managed */
+        orte_managed_allocation = true;
         goto DISPLAY;
     } else if (orte_allocation_required) {
         /* if nothing was found, and an allocation is
@@ -200,11 +202,11 @@ void orte_ras_base_allocate(int fd, short args, void *cbdata)
      * the resulting list contains the UNION of all nodes specified
      * in hostfiles from across all app_contexts
      *
-     * Any app that fails to have a hostfile will be given the
-     * default hostfile, if we have it
-     *
      * Any app that has no hostfile but has a dash-host, will have
      * those nodes added to the list
+     *
+     * Any app that fails to have a hostfile or a dash-host will be given the
+     * default hostfile, if we have it
      *
      * Note that any relative node syntax found in the hostfiles will
      * generate an error in this scenario, so only non-relative syntax
