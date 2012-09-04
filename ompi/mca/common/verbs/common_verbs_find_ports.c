@@ -286,16 +286,14 @@ opal_list_t *ompi_common_verbs_find_ibv_ports(const char *if_include,
             pd = ibv_alloc_pd(device_context);
             cq = ibv_create_cq(device_context, 1, NULL, NULL, 0);
             if (NULL == cq || NULL == pd) {
-                goto JMS;
+                goto err_destroy_cq_pd;
             }
         }
 
         /* Make a device_item_t to hold the device information */
         di = OBJ_NEW(ompi_common_verbs_device_item_t);
         if (NULL == di) {
-            ibv_dealloc_pd(pd);
-            ibv_destroy_cq(cq);
-            goto JMS;
+            goto err_destroy_cq_pd;
         }
         di->device = device;
         di->context = device_context;
@@ -318,7 +316,7 @@ opal_list_t *ompi_common_verbs_find_ibv_ports(const char *if_include,
                                orte_process_info.nodename,
                                ibv_get_device_name(device),
                                errno, strerror(errno));
-                goto err_free_port_list;
+                goto err_destroy_cq_pd;
             }
 
             /* We definitely only want ACTIVE ports */
@@ -367,7 +365,7 @@ opal_list_t *ompi_common_verbs_find_ibv_ports(const char *if_include,
                it and add it to the list. */
             pi = OBJ_NEW(ompi_common_verbs_port_item_t);
             if (NULL == pi) {
-                goto JMS;
+                goto err_destroy_cq_pd;
             }
             pi->device = di;            
             pi->port_num = j;
@@ -396,11 +394,8 @@ opal_list_t *ompi_common_verbs_find_ibv_ports(const char *if_include,
     /* All done! */
     return port_list;
 
- JMS:
-    /* JMS Need to verify the error exit paths */
-
- err_free_port_list:
-    if (pd) {
+ err_destroy_cq_pd:
+    if (NULL != pd) {
         ibv_dealloc_pd(pd);
         pd = NULL;
     }
@@ -409,6 +404,7 @@ opal_list_t *ompi_common_verbs_find_ibv_ports(const char *if_include,
         cq = NULL;
     }
 
+ err_free_port_list:
     for (item = opal_list_remove_first(port_list);
          item != NULL; 
          item = opal_list_remove_first(port_list)) {
