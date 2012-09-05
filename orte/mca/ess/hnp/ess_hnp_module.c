@@ -714,6 +714,8 @@ static int rte_finalize(void)
     
     /* output any lingering stdout/err data */
     orte_iof_base_close();
+    fflush(stdout);
+    fflush(stderr);
 
     /* ensure we scrub the session directory tree */
     orte_session_dir_cleanup(ORTE_JOBID_WILDCARD);
