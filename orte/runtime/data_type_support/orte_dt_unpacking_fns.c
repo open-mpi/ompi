@@ -405,7 +405,7 @@ int orte_dt_unpack_node(opal_buffer_t *buffer, void *dest,
         
         /* unpack the number of slots allocated */
         if (ORTE_SUCCESS != (rc = opal_dss_unpack_buffer(buffer,
-                         (&(nodes[i]->slots_alloc)), &n, ORTE_STD_CNTR))) {
+                         (&(nodes[i]->slots)), &n, ORTE_STD_CNTR))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }

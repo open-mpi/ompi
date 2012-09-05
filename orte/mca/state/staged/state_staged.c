@@ -282,9 +282,9 @@ static void cleanup_node(orte_proc_t *proc)
         }
     }
     OPAL_OUTPUT_VERBOSE((5, orte_state_base_output,
-                         "%s state:staged:track_procs node %s has %d slots alloc, %d slots inuse",
+                         "%s state:staged:track_procs node %s has %d slots, %d slots inuse",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), node->name,
-                         (int)node->slots_alloc, (int)node->slots_inuse));
+                         (int)node->slots, (int)node->slots_inuse));
 }
 
 static void track_procs(int fd, short args, void *cbdata)
@@ -314,7 +314,7 @@ static void track_procs(int fd, short args, void *cbdata)
      * inside MPI_Init - if it did, that is not acceptable
      */
     if (ORTE_PROC_STATE_REGISTERED == state) {
-        if (pdata->mpi_proc) {
+        if (pdata->mpi_proc && !jdata->gang_launched) {
             /* we can't support this - issue an error and abort */
             orte_show_help("help-state-staged.txt", "mpi-procs-not-supported", true);
             ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_SILENT_ABORT);

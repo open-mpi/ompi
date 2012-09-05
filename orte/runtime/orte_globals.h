@@ -340,11 +340,6 @@ typedef struct {
     /** How many processes have already been launched, used by one or
         more jobs on this node. */
     orte_std_cntr_t slots_inuse;
-    /** This represents the number of slots we (the allocator) are
-        attempting to allocate to the current job - or the number of
-        slots allocated to a specific job on a query for the jobs
-        allocations */
-    orte_std_cntr_t slots_alloc;
     /** A "hard" limit (if set -- a value of 0 implies no hard limit)
         on the number of slots that can be allocated on a given
         node. This is for some environments (e.g. grid) there may be
@@ -384,6 +379,11 @@ typedef struct {
      * for description of supported flags
      */
     orte_job_controls_t controls;
+    /* flag to indicate that MPI is allowed on this job - i.e.,
+     * that all members of the job are being simultaneously
+     * launched
+     */
+    bool gang_launched;
     /* rank desiring stdin - for now, either one rank, all ranks
      * (wildcard), or none (invalid)
      */

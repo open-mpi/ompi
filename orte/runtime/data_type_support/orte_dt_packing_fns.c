@@ -379,7 +379,7 @@ int orte_dt_pack_node(opal_buffer_t *buffer, const void *src,
         
         /* pack the number of slots allocated */
         if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer,
-                         (void*)(&(nodes[i]->slots_alloc)), 1, ORTE_STD_CNTR))) {
+                         (void*)(&(nodes[i]->slots)), 1, ORTE_STD_CNTR))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }

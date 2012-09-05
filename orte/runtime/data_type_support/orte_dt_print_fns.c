@@ -385,7 +385,7 @@ int orte_dt_print_node(char **output, char *prefix, orte_node_t *src, opal_data_
     tmp = tmp2;
     
     asprintf(&tmp2, "%s\n%s\tNum slots allocated: %ld\tMax slots: %ld", tmp, pfx2,
-             (long)src->slots_alloc, (long)src->slots_max);
+             (long)src->slots, (long)src->slots_max);
     free(tmp);
     tmp = tmp2;
     
