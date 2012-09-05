@@ -20,7 +20,6 @@ BEGIN_C_DECLS
 ORTE_MODULE_DECLSPEC extern orte_rmaps_base_component_t mca_rmaps_staged_component;
 extern orte_rmaps_base_module_t orte_rmaps_staged_module;
 
-
 END_C_DECLS
 
 #endif

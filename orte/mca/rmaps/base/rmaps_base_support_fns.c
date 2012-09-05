@@ -147,8 +147,10 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
      */
     if (!orte_managed_allocation) {
         OBJ_CONSTRUCT(&nodes, opal_list_t);
-        /* if the app provided a dash-host, then use those nodes */
-        if (NULL != app->dash_host) {
+        /* if the app provided a dash-host, and we are not treating
+         * them as requested or "soft" locations, then use those nodes
+         */
+        if (!orte_soft_locations && NULL != app->dash_host) {
             OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base.rmaps_output,
                                  "%s using dash_host",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
@@ -441,7 +443,7 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
     OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base.rmaps_output,
                          "%s Filtering thru apps",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-
+    
     if (ORTE_SUCCESS != (rc = orte_rmaps_base_filter_nodes(app, allocated_nodes, true))
         && ORTE_ERR_TAKE_NEXT_OPTION != rc) {
         ORTE_ERROR_LOG(rc);

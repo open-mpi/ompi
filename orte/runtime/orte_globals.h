@@ -617,6 +617,7 @@ ORTE_DECLSPEC extern bool orte_managed_allocation;
 ORTE_DECLSPEC extern char *orte_set_slots;
 ORTE_DECLSPEC extern bool orte_display_allocation;
 ORTE_DECLSPEC extern bool orte_display_devel_allocation;
+ORTE_DECLSPEC extern bool orte_soft_locations;
 
 /* launch agents */
 ORTE_DECLSPEC extern char *orte_launch_agent;
