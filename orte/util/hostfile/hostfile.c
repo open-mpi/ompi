@@ -565,7 +565,8 @@ int orte_util_filter_hostfile_nodes(opal_list_t *nodes,
     int num_empty, nodeidx;
     bool want_all_empty = false;
     opal_list_t keep;
-    
+    bool found;
+
     OPAL_OUTPUT_VERBOSE((1, orte_debug_output,
                         "%s hostfile: filtering nodes through hostfile %s",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), hostfile));
@@ -717,6 +718,7 @@ int orte_util_filter_hostfile_nodes(opal_list_t *nodes,
              * search the provided list of nodes to see if this
              * one is found
              */
+            found = false;
             for (item1 = opal_list_get_first(nodes);
                  item1 != opal_list_get_end(nodes);
                  item1 = opal_list_get_next(item1)) {
@@ -747,8 +749,19 @@ int orte_util_filter_hostfile_nodes(opal_list_t *nodes,
                         /* mark as included */
                         node_from_list->mapped = true;
                     }
+                    found = true;
                     break;
                 }
+            }
+            /* if the host in the newnode list wasn't found,
+             * then that is an error we need to report to the
+             * user and abort
+             */
+            if (!found) {
+                orte_show_help("help-hostfile.txt", "hostfile:extra-node-not-found",
+                               true, hostfile, node_from_file->name);
+                rc = ORTE_ERR_SILENT;
+                goto cleanup;
             }
         }
         /* cleanup the newnode list */
