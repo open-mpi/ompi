@@ -10,6 +10,8 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2012      Los Alamos National Security, LLC
+#                         All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -108,4 +110,18 @@ Open RTE detected a bad parameter in the hostfile:
     %s
 The cores parameter is less than 0:
     cores=%d
+
+#
+[hostfile:extra-node-not-found]
+A hostfile was provided that contains at least one node not
+present in the allocation:
+
+  hostfile:  %s
+  node:      %s
+
+If you are operating in a resource-managed environment, then only
+nodes that are in the allocation can be used in the hostfile. You
+may find relative node syntax to be a useful alternative to
+specifying absolute node names see the orte_hosts man page for
+further information.
 
