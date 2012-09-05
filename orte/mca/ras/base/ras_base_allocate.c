@@ -233,7 +233,14 @@ void orte_ras_base_allocate(int fd, short args, void *cbdata)
                 OBJ_RELEASE(caddy);
                 return;
             }
-        } else if (NULL != app->dash_host) {
+        } else if (!orte_soft_locations && NULL != app->dash_host) {
+            /* if we are using soft locations, then any dash-host would
+             * just include desired nodes and not required. We don't want
+             * to pick them up here as this would mean the request was
+             * always satisfied - instead, we want to allow the request
+             * to fail later on and use whatever nodes are actually
+             * available
+             */
             OPAL_OUTPUT_VERBOSE((5, orte_ras_base.ras_output,
                                  "%s ras:base:allocate adding dash_hosts",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));

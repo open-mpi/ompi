@@ -41,7 +41,7 @@ orte_rmaps_base_module_t orte_rmaps_staged_module = {
 static int staged_mapper(orte_job_t *jdata)
 {
     mca_base_component_t *c=&mca_rmaps_staged_component.base_version;
-    int i, j, rc;
+    int i, j, k, rc;
     orte_app_context_t *app;
     opal_list_t node_list;
     orte_std_cntr_t num_slots;
@@ -49,6 +49,7 @@ static int staged_mapper(orte_job_t *jdata)
     orte_node_t *node;
     bool work_to_do = false, first_pass = false;
     opal_list_item_t *item;
+    char *cptr, **minimap;
 
     /* only use this mapper if it was specified */
     if (NULL == jdata->map->req_mapper ||
@@ -101,8 +102,12 @@ static int staged_mapper(orte_job_t *jdata)
          * -hostfile or -host directives
          */
         OBJ_CONSTRUCT(&node_list, opal_list_t);
+        /* get nodes based on a strict interpretation of the location hints */
         if (ORTE_SUCCESS != (rc = orte_rmaps_base_get_target_nodes(&node_list, &num_slots, app,
                                                                    jdata->map->mapping, false, true))) {
+            /* we were unable to get any nodes that match those
+             * specified in the app
+             */
             if (ORTE_ERR_RESOURCE_BUSY == rc) {
                 /* if the return is "busy", then at least one of the
                  * specified resources must exist, but no slots are
@@ -125,6 +130,41 @@ static int staged_mapper(orte_job_t *jdata)
                  */
                 ORTE_ERROR_LOG(rc);
                 return rc;
+            }
+        }
+        /* if we are using soft locations, search the list of nodes
+         * for those that match the requested locations and bubble those
+         * to the top so we use them first
+         */
+        if (orte_soft_locations && NULL != app->dash_host) {
+            /* scan the dash hosts in reverse order as we want
+             * the first entry to be on top of the list
+             */
+            opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+                                "%s mca:rmaps:staged: ordering nodes by desired location",
+                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+            for (j=opal_argv_count(app->dash_host)-1; 0 <= j; j--) {
+                minimap = opal_argv_split(app->dash_host[j], ',');
+                for (k=opal_argv_count(minimap)-1; 0 <= k; k--) {
+                    cptr = minimap[k];
+                    for (item = opal_list_get_first(&node_list);
+                         item != opal_list_get_end(&node_list);
+                         item = opal_list_get_next(item)) {
+                        node = (orte_node_t*)item;
+                        if (0 == strcmp(node->name, cptr) ||
+                            (0 == strcmp("localhost", cptr) &&
+                             0 == strcmp(node->name, orte_process_info.nodename))) {
+                            opal_list_remove_item(&node_list, item);
+                            opal_list_prepend(&node_list, item);
+                            opal_output_verbose(10, orte_rmaps_base.rmaps_output,
+                                                "%s mca:rmaps:staged: placing node %s at top of list",
+                                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                                node->name);
+                            break;
+                        }
+                    }
+                }
+                opal_argv_free(minimap);
             }
         }
 

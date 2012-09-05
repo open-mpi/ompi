@@ -576,6 +576,14 @@ int orte_register_params(void)
         orte_devel_level_output = true;
     }
 
+    /* should we treat any -host directives as "soft" - i.e., desired
+     * but not required
+     */
+    mca_base_param_reg_int_name("orte", "soft_locations",
+                                "Treat -host directives as desired, but not required",
+                                false, false, (int)false, &value);
+    orte_soft_locations = OPAL_INT_TO_BOOL(value);
+
 #endif /* ORTE_DISABLE_FULL_SUPPORT */
     
     return ORTE_SUCCESS;
