@@ -25,6 +25,7 @@ struct ompi_mtl_portals4_pending_request_t {
     int contextid;
     int tag;
     int my_rank;
+    int fc_notified;
     struct mca_mtl_base_endpoint_t *endpoint;
     struct ompi_mtl_portals4_isend_request_t *ptl_request;
 };
