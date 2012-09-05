@@ -471,7 +471,7 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
                                  node->name));
             opal_list_remove_item(allocated_nodes, item);
             OBJ_RELEASE(item);  /* "un-retain" it */
-        } else if (node->slots_alloc <= node->slots_inuse &&
+        } else if (node->slots <= node->slots_inuse &&
                    (ORTE_MAPPING_NO_OVERSUBSCRIBE & ORTE_GET_MAPPING_DIRECTIVE(policy))) {
             /* remove the node as fully used */
             OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base.rmaps_output,
@@ -481,9 +481,9 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
             opal_list_remove_item(allocated_nodes, item);
             OBJ_RELEASE(item);  /* "un-retain" it */
         } else {
-            if (node->slots_alloc > node->slots_inuse) {
+            if (node->slots > node->slots_inuse) {
                 /* add the available slots */
-                num_slots += node->slots_alloc - node->slots_inuse;
+                num_slots += node->slots - node->slots_inuse;
             } else {
                 /* always allocate at least one */
                 num_slots++;
@@ -542,7 +542,7 @@ orte_proc_t* orte_rmaps_base_setup_proc(orte_job_t *jdata,
     proc->node = node;
     proc->nodename = node->name;
     node->num_procs++;
-    if (node->slots_inuse < node->slots_alloc) {
+    if (node->slots_inuse < node->slots) {
         node->slots_inuse++;
     }
     if (0 > (rc = opal_pointer_array_add(node->procs, (void*)proc))) {
@@ -600,8 +600,8 @@ orte_node_t* orte_rmaps_base_get_starting_point(opal_list_t *node_list,
      */
     node = (orte_node_t*)cur_node_item;
     ndmin = node;
-    overload = ndmin->slots_inuse - ndmin->slots_alloc;
-    if (node->slots_inuse >= node->slots_alloc) {
+    overload = ndmin->slots_inuse - ndmin->slots;
+    if (node->slots_inuse >= node->slots) {
         /* work down the list - is there another node that
          * would not be oversubscribed?
          */
@@ -613,7 +613,7 @@ orte_node_t* orte_rmaps_base_get_starting_point(opal_list_t *node_list,
         nd1 = NULL;
         while (item != cur_node_item) {
             nd1 = (orte_node_t*)item;
-            if (nd1->slots_inuse < nd1->slots_alloc) {
+            if (nd1->slots_inuse < nd1->slots) {
                 /* this node is not oversubscribed! use it! */
                 cur_node_item = item;
                 goto process;
@@ -623,9 +623,9 @@ orte_node_t* orte_rmaps_base_get_starting_point(opal_list_t *node_list,
              * find anyone who isn't fully utilized, we will
              * start with the least used node
              */
-            if (overload >= (nd1->slots_inuse - nd1->slots_alloc)) {
+            if (overload >= (nd1->slots_inuse - nd1->slots)) {
                 ndmin = nd1;
-                overload = ndmin->slots_inuse - ndmin->slots_alloc;
+                overload = ndmin->slots_inuse - ndmin->slots;
             }
             if (item == opal_list_get_last(node_list)) {
                 item = opal_list_get_first(node_list);
@@ -639,7 +639,7 @@ orte_node_t* orte_rmaps_base_get_starting_point(opal_list_t *node_list,
          * what we already have
          */
         if (NULL != nd1 &&
-            (nd1->slots_inuse - nd1->slots_alloc) < (node->slots_inuse - node->slots_alloc)) {
+            (nd1->slots_inuse - nd1->slots) < (node->slots_inuse - node->slots)) {
             cur_node_item = (opal_list_item_t*)ndmin;
         }
     }

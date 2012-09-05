@@ -736,7 +736,7 @@ int orte_util_filter_hostfile_nodes(opal_list_t *nodes,
                      * to subdivide an allocation
                      */
                     if (node_from_file->slots < node_from_list->slots) {
-                        node_from_list->slots_alloc = node_from_file->slots;
+                        node_from_list->slots = node_from_file->slots;
                     }
                     if (remove) {
                         /* remove the node from the list */
@@ -860,9 +860,9 @@ int orte_util_get_ordered_host_list(opal_list_t *nodes,
                      * to subdivide an allocation
                      */
                     if (node->slots < node_from_pool->slots) {
-                        newnode->slots_alloc = node->slots;
+                        newnode->slots = node->slots;
                     } else {
-                        newnode->slots_alloc = node_from_pool->slots;
+                        newnode->slots = node_from_pool->slots;
                     }
                     opal_list_insert_pos(nodes, item1, &newnode->super);
                     /* track number added */
@@ -913,9 +913,9 @@ int orte_util_get_ordered_host_list(opal_list_t *nodes,
              * to subdivide an allocation
              */
             if (node->slots < node_from_pool->slots) {
-                newnode->slots_alloc = node->slots;
+                newnode->slots = node->slots;
             } else {
-                newnode->slots_alloc = node_from_pool->slots;
+                newnode->slots = node_from_pool->slots;
             }
             /* insert it before item1 */
             opal_list_insert_pos(nodes, item1, &newnode->super);

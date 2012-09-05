@@ -347,7 +347,6 @@ void orte_ras_base_allocate(int fd, short args, void *cbdata)
      */
     node->name = strdup(orte_process_info.nodename);
     node->state = ORTE_NODE_STATE_UP;
-    node->slots_alloc = 1;
     node->slots_inuse = 0;
     node->slots_max = 0;
     node->slots = 1;

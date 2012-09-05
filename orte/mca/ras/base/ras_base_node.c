@@ -118,10 +118,7 @@ int orte_ras_base_node_insert(opal_list_t* nodes, orte_job_t *jdata)
             hnp_node->slots = node->slots;
             hnp_node->slots_max = node->slots_max;
             hnp_node->launch_id = node->launch_id;
-            /* default allocate all the slots - may be modified later
-             * as a result of filtering actions in mapper
-             */
-            hnp_node->slots_alloc = node->slots;
+            hnp_node->slots = node->slots;
             /* use the local name for our node - don't trust what
              * we got from an RM. If requested, store the resolved
              * nodename info
@@ -149,10 +146,6 @@ int orte_ras_base_node_insert(opal_list_t* nodes, orte_job_t *jdata)
                                  "%s ras:base:node_insert node %s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  (NULL == node->name) ? "NULL" : node->name));
-            /* default allocate all the slots - may be modified later
-             * as a result of filtering actions in mapper
-             */
-            node->slots_alloc = node->slots;
             /* insert it into the array */
             node->index = opal_pointer_array_add(orte_node_pool, (void*)node);
             if (ORTE_SUCCESS > (rc = node->index)) {

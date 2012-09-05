@@ -83,13 +83,13 @@ int orte_rmaps_rr_byslot(orte_job_t *jdata,
             obj = hwloc_get_root_obj(node->topology);
         }
 #endif
-        if (node->slots_alloc <= node->slots_inuse) {
+        if (node->slots <= node->slots_inuse) {
             opal_output_verbose(2, orte_rmaps_base.rmaps_output,
                                 "mca:rmaps:rr:slot working node %s is full - skipping",
                                 node->name);
             continue;
         }
-        num_procs_to_assign = node->slots_alloc - node->slots_inuse;
+        num_procs_to_assign = node->slots - node->slots_inuse;
         for (i=0; i < num_procs_to_assign && nprocs_mapped < app->num_procs; i++) {
             /* add this node to the map - do it only once */
             if (!node->mapped) {
@@ -170,7 +170,7 @@ int orte_rmaps_rr_byslot(orte_job_t *jdata,
                 --nxtra_nodes;
             }
         }
-        num_procs_to_assign = (node->slots_alloc - node->slots_inuse) + extra_procs_to_assign;
+        num_procs_to_assign = (node->slots - node->slots_inuse) + extra_procs_to_assign;
         opal_output_verbose(2, orte_rmaps_base.rmaps_output,
                             "mca:rmaps:rr:slot adding up to %d procs to node %s",
                             num_procs_to_assign, node->name);
@@ -186,7 +186,7 @@ int orte_rmaps_rr_byslot(orte_job_t *jdata,
         /* not all nodes are equal, so only set oversubscribed for
          * this node if it is in that state
          */
-        if (node->slots_alloc < (int)node->num_procs) {
+        if (node->slots < (int)node->num_procs) {
             /* flag the node as oversubscribed so that sched-yield gets
              * properly set
              */
@@ -306,7 +306,7 @@ int orte_rmaps_rr_bynode(orte_job_t *jdata,
              * have to track how many procs to "shift" elsewhere
              * to make up the difference
              */
-            if (node->slots_alloc <= node->slots_inuse) {
+            if (node->slots <= node->slots_inuse) {
                 /* if there are no extras to take, then we can
                  * ignore this node
                  */
@@ -320,16 +320,16 @@ int orte_rmaps_rr_bynode(orte_job_t *jdata,
                 /* update how many we are lagging behind */
                 lag += navg;
             } else {
-                /* if slots_alloc < avg, then take all */
-                if ((node->slots_alloc - node->slots_inuse) < navg) {
-                    num_procs_to_assign = (node->slots_alloc - node->slots_inuse) + extra_procs_to_assign;
+                /* if slots < avg, then take all */
+                if ((node->slots - node->slots_inuse) < navg) {
+                    num_procs_to_assign = (node->slots - node->slots_inuse) + extra_procs_to_assign;
                     /* update how many we are lagging behind */
-                    lag += navg - (node->slots_alloc - node->slots_inuse);
+                    lag += navg - (node->slots - node->slots_inuse);
                 } else {
                     /* take the avg plus as much of the "lag" as we can */
                     delta = 0;
                     if (0 < lag) {
-                        delta = (node->slots_alloc - node->slots_inuse) - navg;
+                        delta = (node->slots - node->slots_inuse) - navg;
                         if (lag < delta) {
                             delta = lag;
                         }
@@ -351,7 +351,7 @@ int orte_rmaps_rr_bynode(orte_job_t *jdata,
         /* not all nodes are equal, so only set oversubscribed for
          * this node if it is in that state
          */
-        if (node->slots_alloc < (int)node->num_procs) {
+        if (node->slots < (int)node->num_procs) {
             /* flag the node as oversubscribed so that sched-yield gets
              * properly set
              */
@@ -381,7 +381,7 @@ int orte_rmaps_rr_bynode(orte_job_t *jdata,
         /* not all nodes are equal, so only set oversubscribed for
          * this node if it is in that state
          */
-        if (node->slots_alloc < (int)node->num_procs) {
+        if (node->slots < (int)node->num_procs) {
             /* flag the node as oversubscribed so that sched-yield gets
              * properly set
              */
@@ -514,11 +514,11 @@ int orte_rmaps_rr_byobj(orte_job_t *jdata,
                 --nxtra_nodes;
             }
         }
-        if (node->slots_alloc <= node->slots_inuse) {
+        if (node->slots <= node->slots_inuse) {
             /* everybody takes at least the extras */
             num_procs_to_assign = extra_procs_to_assign;
         } else {
-            num_procs_to_assign = (node->slots_alloc - node->slots_inuse) + extra_procs_to_assign;
+            num_procs_to_assign = (node->slots - node->slots_inuse) + extra_procs_to_assign;
         }
 
         /* get the number of objects of this type on this node */
@@ -570,7 +570,7 @@ int orte_rmaps_rr_byobj(orte_job_t *jdata,
         /* not all nodes are equal, so only set oversubscribed for
          * this node if it is in that state
          */
-        if (node->slots_alloc < (int)node->num_procs) {
+        if (node->slots < (int)node->num_procs) {
             /* flag the node as oversubscribed so that sched-yield gets
              * properly set
              */
@@ -699,7 +699,7 @@ static int byobj_span(orte_job_t *jdata,
              * have to track how many procs to "shift" elsewhere
              * to make up the difference
              */
-            if (node->slots_alloc <= node->slots_inuse) {
+            if (node->slots <= node->slots_inuse) {
                 /* if there are no extras to take, then we can
                  * safely remove this node as we don't need it
                  */
@@ -716,16 +716,16 @@ static int byobj_span(orte_job_t *jdata,
                 /* update how many we are lagging behind */
                 lag += navg;
             } else {
-                /* if slots_alloc < avg, then take all */
-                if ((node->slots_alloc - node->slots_inuse) < navg) {
-                    num_procs_to_assign = (node->slots_alloc - node->slots_inuse) + extra_procs_to_assign;
+                /* if slots < avg, then take all */
+                if ((node->slots - node->slots_inuse) < navg) {
+                    num_procs_to_assign = (node->slots - node->slots_inuse) + extra_procs_to_assign;
                     /* update how many we are lagging behind */
-                    lag += navg - (node->slots_alloc - node->slots_inuse);
+                    lag += navg - (node->slots - node->slots_inuse);
                 } else {
                     /* take the avg plus as much of the "lag" as we can */
                     delta = 0;
                     if (0 < lag) {
-                        delta = (node->slots_alloc - node->slots_inuse) - navg;
+                        delta = (node->slots - node->slots_inuse) - navg;
                         if (lag < delta) {
                             delta = lag;
                         }
@@ -777,7 +777,7 @@ static int byobj_span(orte_job_t *jdata,
         /* not all nodes are equal, so only set oversubscribed for
          * this node if it is in that state
          */
-        if (node->slots_alloc < (int)node->num_procs) {
+        if (node->slots < (int)node->num_procs) {
             /* flag the node as oversubscribed so that sched-yield gets
              * properly set
              */

@@ -700,6 +700,7 @@ static void orte_job_construct(orte_job_t* job)
                             2);
     job->num_apps = 0;
     job->controls = ORTE_JOB_CONTROL_FORWARD_OUTPUT;
+    job->gang_launched = true;
     job->stdin_target = ORTE_VPID_INVALID;
     job->stdout_target = ORTE_JOBID_INVALID;
     job->total_slots_alloc = 0;
@@ -831,7 +832,6 @@ static void orte_node_construct(orte_node_t* node)
     node->slots = 0;
     node->slots_given = false;
     node->slots_inuse = 0;
-    node->slots_alloc = 0;
     node->slots_max = 0;
     
     node->username = NULL;

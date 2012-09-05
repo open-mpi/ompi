@@ -47,7 +47,7 @@ static int staged_mapper(orte_job_t *jdata)
     orte_std_cntr_t num_slots;
     orte_proc_t *proc;
     orte_node_t *node;
-    bool work_to_do = false;
+    bool work_to_do = false, first_pass = false;
     opal_list_item_t *item;
 
     /* only use this mapper if it was specified */
@@ -71,6 +71,13 @@ static int staged_mapper(orte_job_t *jdata)
         free(jdata->map->last_mapper);
     }
     jdata->map->last_mapper = strdup(c->mca_component_name);
+
+    /* if there are no nodes in the map, then this is our first
+     * pass thru this job
+     */
+    if (0 == jdata->map->num_nodes) {
+        first_pass = true;
+    }
 
     /* we assume that the app_contexts are in priority order,
      * with the highest priority being the first entry in the
@@ -165,7 +172,7 @@ static int staged_mapper(orte_job_t *jdata)
 	    /* track number of procs on node and number of slots used */
             node->num_procs++;
             node->slots_inuse++;
-            if (node->slots_inuse == node->slots_alloc) {
+            if (node->slots_inuse == node->slots) {
                 opal_list_remove_item(&node_list, &node->super);
                 OBJ_RELEASE(node);
             }
@@ -215,6 +222,17 @@ static int staged_mapper(orte_job_t *jdata)
      * included in the pidmap message
      */
     jdata->updated = true;
+
+    /* if we successfully mapped ALL procs in the first pass,
+     * then this job is capable of supporting MPI procs
+     */
+    if (first_pass && jdata->num_mapped == jdata->num_procs) {
+        opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+                            "%s mca:rmaps:staged: job %s is MPI-capable",
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                            ORTE_JOBID_PRINT(jdata->jobid));
+        jdata->gang_launched = true;
+    }
 
     return ORTE_SUCCESS;
 }
