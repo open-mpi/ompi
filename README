@@ -134,6 +134,11 @@ Compiler Notes
   might want to double check that you have the latest bug fixes and
   patches for your compiler.
 
+- Absoft 11.5.2 plus a service pack from September 2012 (which Absoft
+  says is available upon request), or a version later than 11.5.2
+  (e.g., 11.5.3), is required to compile the new Fortran mpi_f08
+  module.
+
 - Open MPI does not support the Sparc v8 CPU target.  However,
   as of Solaris Studio 12.1,  and later compilers, one should not 
   specify -xarch=v8plus or -xarch=v9.  The use of the options
