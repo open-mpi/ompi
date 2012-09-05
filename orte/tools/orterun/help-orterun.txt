@@ -171,7 +171,7 @@ prefix provided for the first app_context:
   App prefix:    %s
 
 Only one should be specified to avoid potential version
-confusion. Operation will continue, but the applicaton's prefix
+confusion. Operation will continue, but the application's prefix
 option will be ignored.
 #
 [orterun:empty-prefix]
