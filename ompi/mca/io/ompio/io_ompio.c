@@ -138,14 +138,6 @@ int ompi_io_ompio_generate_current_file_view (mca_io_ompio_file_t *fh,
     int j, k;
     int block = 1;
  
-   /*Merging if the data is split-up */
-    int merge = 0, i;
-    int merge_count = 0;    
-    struct iovec *merged_iov = NULL;
-    size_t merge_length = 0;
-    IOVBASE_TYPE * merge_offset = 0;
-
-
     /* allocate an initial iovec, will grow if needed */
     iov = (struct iovec *) malloc 
         (OMPIO_IOVEC_INITIAL_SIZE * sizeof (struct iovec));
@@ -207,65 +199,8 @@ int ompi_io_ompio_generate_current_file_view (mca_io_ompio_file_t *fh,
     fh->f_position_in_file_view = sum_previous_counts;
     fh->f_index_in_file_view = j;
 
-    
-    /* Merging Contiguous entries in case of using default fileview*/
-    merged_iov = (struct iovec *)malloc(k*sizeof(struct iovec));
-    for(i=0;i<k;i++){
-	if(k != i+1){
-	    if(((OPAL_PTRDIFF_TYPE)iov[i].iov_base +
-		(OPAL_PTRDIFF_TYPE)iov[i].iov_len)==
-	       (OPAL_PTRDIFF_TYPE)iov[i+1].iov_base) {
-		if(!merge){
-		    merge_offset = (IOVBASE_TYPE *)iov[i].iov_base;
-		}
-		merge_length += (size_t)iov[i].iov_len;
-		merge++;
-	    }
-	    else{ /*If there are many contiguous blocks... with breaks in-between*/
-		if (merge){
-		    merged_iov[merge_count].iov_base =(IOVBASE_TYPE *)merge_offset;
-		    /*1 has to be added as k goes till i+1*/
-		    merged_iov[merge_count].iov_len = merge_length+1;
-		    merge_count++;
-		    merge = 0;
-		}
-		else{ /* Non-contiguous entry also has to be added!,
-			 Handles cases where there are only non-contiguous
-			 entries and a mix*/
-		    merged_iov[merge_count].iov_base = iov[i].iov_base;
-		    merged_iov[merge_count].iov_len = iov[i].iov_len;
-		    merge_count++;
-		}
-	    }
-	}
-	else{/*When everything is contiguous*/
-	    if (merge){
-		merged_iov[merge_count].iov_base = (IOVBASE_TYPE *)merge_offset;
-		merged_iov[merge_count].iov_len = merge_length+1048576;
-		merge_count++;
-		merge = 0;
-	    }
-	    else{ /* When there is nothing to be merged */	    
-		merged_iov[merge_count].iov_base = iov[i].iov_base;
-		merged_iov[merge_count].iov_len = iov[i].iov_len;
-		merge_count++;
-	    }
-		
-	}
-	
-    }
-    
-    #if 0
-    printf("%d: Number of new_entries : %d\n", fh->f_rank, merge_count);
-    for (i=0;i<merge_count;i++){
-	printf("%d: OFFSET: %d, length: %ld\n",
-	       fh->f_rank, merged_iov[i].iov_base, merged_iov[i].iov_len);
-    }
-    #endif
-    *iov_count = merge_count;
-    *f_iov = merged_iov;
-
-
+    *iov_count = k;
+    *f_iov = iov;
 
     return OMPI_SUCCESS;
 }
