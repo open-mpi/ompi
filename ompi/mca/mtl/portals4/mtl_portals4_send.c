@@ -47,8 +47,14 @@ ompi_mtl_portals4_callback(ptl_event_t *ev,
             ptl_request->pending;
 
         OPAL_OUTPUT_VERBOSE((10, ompi_mtl_base_output,
-                             "send %lu hit flow control",
-                             ptl_request->opcount));
+                             "send %lu hit flow control (%d)",
+                             ptl_request->opcount, ev->type));
+
+        /* BWB: FIX ME: this is a hack.. */
+        if (pending->fc_notified) {
+            return;
+        }
+        pending->fc_notified = 1;
 
         if (!PtlHandleIsEqual(ptl_request->me_h, PTL_INVALID_HANDLE)) {
             ret = PtlMEUnlink(ptl_request->me_h);
@@ -414,6 +420,7 @@ ompi_mtl_portals4_send_start(struct mca_mtl_base_module_t* mtl,
     pending->contextid = comm->c_contextid;
     pending->tag = tag;
     pending->my_rank = comm->c_my_rank;
+    pending->fc_notified = 0;
     pending->endpoint = endpoint;
     pending->ptl_request = ptl_request;
 
