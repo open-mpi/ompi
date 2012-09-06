@@ -974,6 +974,13 @@ int orte_util_decode_daemon_pidmap(opal_byte_object_t *bo)
             opal_pointer_array_set_item(orte_job_data, ORTE_LOCAL_JOBID(jobid), jdata);
         }
         
+        /* setup the map */
+        map = jdata->map;
+        if (NULL == map) {
+            jdata->map = OBJ_NEW(orte_job_map_t);
+            map = jdata->map;
+        }
+
         /* unpack the number of procs */
         n=1;
         if (ORTE_SUCCESS != (rc = opal_dss.unpack(&buf, &num_procs, &n, ORTE_VPID))) {
@@ -989,14 +996,8 @@ int orte_util_decode_daemon_pidmap(opal_byte_object_t *bo)
             ORTE_ERROR_LOG(rc);
             goto cleanup;
         }
+        jdata->map->bind_level = bind_level;
 #endif
-        /* setup the map */
-        map = jdata->map;
-        if (NULL == map) {
-            jdata->map = OBJ_NEW(orte_job_map_t);
-            map = jdata->map;
-        }
-
         /* cycle thru the data until we hit an INVALID vpid indicating
          * all data for this job has been read
          */
