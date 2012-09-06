@@ -115,6 +115,18 @@ static int staged_mapper(orte_job_t *jdata)
                  * a hope of eventually being able to map this app
                  * within its specified constraints, so continue working
                  */
+                if (orte_soft_locations) {
+                    /* if soft locations were given, then we know that
+                     * none of the nodes in this allocation are available,
+                     * so there is no point in continuing to check the
+                     * remaining apps
+                     */
+                    while (NULL != (item = opal_list_remove_first(&node_list))) {
+                        OBJ_RELEASE(item);
+                    }
+                    OBJ_DESTRUCT(&node_list);
+                    goto complete;
+                }
                 opal_output_verbose(5, orte_rmaps_base.rmaps_output,
                                     "%s mca:rmaps:staged: all nodes for this app are currently busy",
                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
@@ -250,6 +262,7 @@ static int staged_mapper(orte_job_t *jdata)
 	OBJ_DESTRUCT(&node_list);
     }
 
+ complete:
     /* if there isn't at least one proc that can be launched,
      * then indicate that we don't need to proceed with the
      * launch sequence
