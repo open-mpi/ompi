@@ -1,0 +1,85 @@
+#
+# Copyright (c) 2009-2012 Oak Ridge National Laboratory.  All rights reserved.
+# Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
+# $COPYRIGHT$
+# 
+# Additional copyrights may follow
+# 
+# $HEADER$
+#
+AM_LFLAGS = -Pcoll_ml_config_yy
+LEX_OUTPUT_ROOT = lex.coll_ml_config_yy
+
+dist_pkgdata_DATA = \
+        mca-coll-ml.config
+
+not_used_yet = 
+
+sources = coll_ml.h \
+        coll_ml_inlines.h \
+        coll_ml_module.c \
+        coll_ml_allocation.h \
+        coll_ml_allocation.c \
+        coll_ml_barrier.c \
+        coll_ml_bcast.c \
+        coll_ml_colls.h \
+        coll_ml_component.c \
+        coll_ml_copy_fns.c \
+        coll_ml_descriptors.c  \
+        coll_ml_functions.h \
+        coll_ml_hier_algorithms.c \
+        coll_ml_hier_algorithms_setup.c \
+        coll_ml_hier_algorithms_bcast_setup.c \
+        coll_ml_hier_algorithms_common_setup.c \
+        coll_ml_hier_algorithms_common_setup.h \
+        coll_ml_hier_algorithm_memsync_setup.c \
+        coll_ml_custom_utils.h \
+        coll_ml_custom_utils.c \
+        coll_ml_progress.c \
+        coll_ml_mca.h \
+        coll_ml_mca.c \
+        coll_ml_lmngr.h \
+        coll_ml_lmngr.c \
+        coll_ml_hier_algorithms_barrier_setup.c \
+        coll_ml_select.h \
+        coll_ml_select.c \
+        coll_ml_memsync.c \
+        coll_ml_lex.h \
+        coll_ml_lex.l \
+        coll_ml_config.c \
+        coll_ml_config.h
+
+# Make the output library in this directory, and name it either
+# mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la
+# (for static builds).
+
+component_noinst =
+component_install =
+if MCA_BUILD_ompi_coll_ml_DSO
+component_install += mca_coll_ml.la
+else
+component_noinst += libmca_coll_ml.la
+endif
+
+# See ompi/mca/btl/ml/Makefile.am for an explanation of
+# libmca_common_ml.la.
+
+mcacomponentdir = $(pkglibdir)
+mcacomponent_LTLIBRARIES = $(component_install)
+mca_coll_ml_la_SOURCES = $(sources)
+mca_coll_ml_la_LDFLAGS = -module -avoid-version
+mca_coll_ml_la_LIBADD = \
+    $(top_ompi_builddir)/ompi/mca/common/commpatterns/libmca_common_commpatterns.la \
+    $(top_ompi_builddir)/ompi/mca/common/netpatterns/libmca_common_netpatterns.la
+
+
+noinst_LTLIBRARIES = $(component_noinst)
+libmca_coll_ml_la_SOURCES =$(sources)
+libmca_coll_ml_la_LDFLAGS = -module -avoid-version
+
+$(top_ompi_builddir)/ompi/mca/common/commpatterns/libmca_common_commpatterns.la: foo.c
+	cd $(top_ompi_builddir)/ompi/mca/common/commpatterns && $(MAKE)
+$(top_ompi_builddir)/ompi/mca/common/netpatterns/libmca_common_netpatterns.la: foo.c
+	cd $(top_ompi_builddir)/ompi/mca/common/netpatterns && $(MAKE)
+
+foo.c:
