@@ -311,7 +311,6 @@ static int raw_preposition_files(orte_job_t *jdata,
             fs = OBJ_NEW(orte_filem_base_file_set_t);
             fs->local_target = strdup(app->app);
             fs->target_flag = ORTE_FILEM_TYPE_EXE;
-            fs->app_idx = i;
             opal_list_append(&fsets, &fs->super);
             /* if we are preloading the binary, then the app must be in relative
              * syntax or we won't find it - the binary will be positioned in the
@@ -329,7 +328,6 @@ static int raw_preposition_files(orte_job_t *jdata,
             for (j=0; NULL != files[j]; j++) {
                 fs = OBJ_NEW(orte_filem_base_file_set_t);
                 fs->local_target = strdup(files[j]);
-                fs->app_idx = i;
                 /* check any suffix for file type */
                 if (NULL != (cptr = strchr(files[j], '.'))) {
                     if (0 == strncmp(cptr, ".tar", 4)) {
@@ -375,7 +373,51 @@ static int raw_preposition_files(orte_job_t *jdata,
                     }
                 }
                 opal_list_append(&fsets, &fs->super);
+                /* prep the filename for matching on the remote
+                 * end by stripping any leading '.' directories to avoid
+                 * stepping above the session dir location - all
+                 * files will be relative to that point. Ensure
+                 * we *don't* mistakenly strip the dot from a
+                 * filename that starts with one
+                 */
+                cptr = fs->remote_target;
+                nxt = cptr;
+                nxt++;
+                while ('\0' != *cptr) {
+                    if ('.' == *cptr) {
+                        /* have to check the next character to
+                         * see if it's a dotfile or not
+                         */
+                        if ('.' == *nxt || '/' == *nxt) {
+                            cptr = nxt;
+                            nxt++;
+                        } else {
+                            /* if the next character isn't a dot
+                             * or a slash, then this is a dot-file
+                             * and we need to leave it alone
+                             */
+                            break;
+                        }
+                    } else if ('/' == *cptr) {
+                        /* move to the next character */
+                        cptr = nxt;
+                        nxt++;
+                    } else {
+                        /* the character isn't a dot or a slash,
+                         * so this is the beginning of the filename
+                         */
+                        break;
+                    }
+                }
+                free(files[j]);
+                files[j] = strdup(cptr);
             }
+            /* replace the app's file list with the revised one so we
+             * can find them on the remote end
+             */
+            free(app->preload_files);
+            app->preload_files = opal_argv_join(files, ',');
+            /* cleanup for the next app */
             opal_argv_free(files);
         }
     }
@@ -581,6 +623,7 @@ static int raw_link_local_files(orte_job_t *jdata,
     int i, j, rc;
     orte_filem_raw_incoming_t *inbnd;
     opal_list_item_t *item;
+    char **files=NULL, *bname;
 
     /* check my session directory for files I have received and
      * symlink them to the proc-level session directory of each
@@ -593,6 +636,26 @@ static int raw_link_local_files(orte_job_t *jdata,
         prefix = strdup(orte_process_info.tmpdir_base);
     } else {
         prefix = NULL;
+    }
+
+    /* get the list of files this app wants */
+    if (NULL != app->preload_files) {
+        files = opal_argv_split(app->preload_files, ',');
+    }
+    if (app->preload_binary) {
+        /* add the app itself to the list */
+        bname = opal_basename(app->app);
+        opal_argv_append_nosize(&files, bname);
+        free(bname);
+    }
+
+    /* if there are no files to link, then ignore this */
+    if (NULL == files) {
+        free(my_dir);
+        if (NULL != prefix) {
+            free(prefix);
+        }
+        return ORTE_SUCCESS;
     }
 
     for (i=0; i < orte_local_children->size; i++) {
@@ -656,37 +719,37 @@ static int raw_link_local_files(orte_job_t *jdata,
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), inbnd->file));
 
             /* is this file for this app_context? */
-            if (inbnd->app_idx != app->idx) {
-                OPAL_OUTPUT_VERBOSE((10, orte_filem_base_output,
-                                     "%s filem:raw: file %s not for app_idx %d[%d]",
-                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                     inbnd->file, (int)app->idx, (int)inbnd->app_idx));
-                continue;
-            }
-
-            /* this must be one of the files we are to link against */
-            if (NULL != inbnd->link_pts) {
-                OPAL_OUTPUT_VERBOSE((10, orte_filem_base_output,
-                                     "%s filem:raw: creating links for file %s",
-                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                     inbnd->file));
-                /* cycle thru the link points and create symlinks to them */
-                for (j=0; NULL != inbnd->link_pts[j]; j++) {
-                    if (ORTE_SUCCESS != (rc = create_link(my_dir, path, inbnd->link_pts[j]))) {
-                        ORTE_ERROR_LOG(rc);
-                        free(my_dir);
-                        free(path);
-                        return rc;
+            for (j=0; NULL != files[j]; j++) {
+                if (0 == strcmp(inbnd->file, files[j])) {
+                    /* this must be one of the files we are to link against */
+                    if (NULL != inbnd->link_pts) {
+                        OPAL_OUTPUT_VERBOSE((10, orte_filem_base_output,
+                                             "%s filem:raw: creating links for file %s",
+                                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                             inbnd->file));
+                        /* cycle thru the link points and create symlinks to them */
+                        for (j=0; NULL != inbnd->link_pts[j]; j++) {
+                            if (ORTE_SUCCESS != (rc = create_link(my_dir, path, inbnd->link_pts[j]))) {
+                                ORTE_ERROR_LOG(rc);
+                                free(my_dir);
+                                free(path);
+                                return rc;
+                            }
+                        }
+                    } else {
+                        OPAL_OUTPUT_VERBOSE((10, orte_filem_base_output,
+                                             "%s filem:raw: file %s has no link points",
+                                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                             inbnd->file));
                     }
+                    break;
                 }
-            } else {
-                OPAL_OUTPUT_VERBOSE((10, orte_filem_base_output,
-                                     "%s filem:raw: file %s has no link points",
-                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                     inbnd->file));
             }
         }
         free(path);
+    }
+    if (NULL != files) {
+        opal_argv_free(files);
     }
     if (NULL != prefix) {
         free(prefix);
@@ -763,11 +826,6 @@ static void send_chunk(int fd, short argc, void *cbdata)
     /* if it is the first chunk, then add file type and index of the app */
     if (0 == rev->nchunk) {
         if (OPAL_SUCCESS != (rc = opal_dss.pack(&chunk, &rev->type, 1, OPAL_INT32))) {
-            ORTE_ERROR_LOG(rc);
-            close(fd);
-            return;
-        }
-        if (OPAL_SUCCESS != (rc = opal_dss.pack(&chunk, &rev->app_idx, 1, ORTE_APP_IDX))) {
             ORTE_ERROR_LOG(rc);
             close(fd);
             return;
@@ -894,7 +952,6 @@ static void recv_files(int status, orte_process_name_t* sender,
     opal_list_item_t *item;
     int32_t type;
     char *tmp, *cptr;
-    orte_app_idx_t app_idx;
 
     /* unpack the data */
     n=1;
@@ -932,13 +989,6 @@ static void recv_files(int status, orte_process_name_t* sender,
             free(file);
             return;
         }
-        n=1;
-        if (OPAL_SUCCESS != (rc = opal_dss.unpack(buffer, &app_idx, &n, ORTE_APP_IDX))) {
-            ORTE_ERROR_LOG(rc);
-            send_complete(file, rc);
-            free(file);
-            return;
-        }
     }
 
     OPAL_OUTPUT_VERBOSE((1, orte_filem_base_output,
@@ -970,7 +1020,6 @@ static void recv_files(int status, orte_process_name_t* sender,
         incoming = OBJ_NEW(orte_filem_raw_incoming_t);
         incoming->file = strdup(file);
         incoming->type = type;
-        incoming->app_idx = app_idx;
         /* separate out the top-level directory of the target */
         tmp = strdup(file);
         if (NULL != (cptr = strchr(tmp, '/'))) {
