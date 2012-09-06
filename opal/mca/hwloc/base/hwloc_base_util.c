@@ -1104,6 +1104,11 @@ opal_hwloc_locality_t opal_hwloc_base_get_relative_locality(hwloc_topology_t top
         return locality;
     }
 
+    /* if the binding level is NODE, then there is nothing to do */
+    if (OPAL_HWLOC_NODE_LEVEL == level1) {
+        return locality;
+    }
+
     lvl = level1;
 
     /* we know that the objects are bound to the same level, so
