@@ -9,6 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2012      Los Alamos National Security, LLC.  All rights
+ *                         reserved. 
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -44,14 +46,112 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
                                      orte_app_context_t *app, orte_mapping_policy_t policy)
 {
     opal_list_item_t *item, *next;
-    orte_node_t *node;
+    orte_node_t *node, *nptr;
     orte_std_cntr_t num_slots;
     orte_std_cntr_t i;
     int rc;
+    opal_list_t nodes;
+    bool ignore;
 
     /** set default answer */
     *total_num_slots = 0;
     
+    /* if this is NOT a managed allocation, then we use the nodes
+     * that were specified for this app - there is no need to collect
+     * all available nodes and "filter" them
+     */
+    if (!orte_managed_allocation) {
+        OBJ_CONSTRUCT(&nodes, opal_list_t);
+        /* if the app provided a dash-host, then use those nodes */
+        if (NULL != app->dash_host) {
+            OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base.rmaps_output,
+                                 "%s using dash_host",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+            if (ORTE_SUCCESS != (rc = orte_util_add_dash_host_nodes(&nodes, &ignore,
+                                                                    app->dash_host))) {
+                ORTE_ERROR_LOG(rc);
+                return rc;
+            }
+        } else if (NULL != app->hostfile) {
+            /* otherwise, if the app provided a hostfile, then use that */
+            OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base.rmaps_output,
+                                 "%s using hostfile %s",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 app->hostfile));
+            if (ORTE_SUCCESS != (rc = orte_util_add_hostfile_nodes(&nodes, &ignore,
+                                                                   app->hostfile))) {
+                ORTE_ERROR_LOG(rc);
+                return rc;
+            }
+        } else if (NULL != orte_default_hostfile) {
+            /* fall back to the default hostfile, if provided */
+            OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base.rmaps_output,
+                                 "%s using default hostfile %s",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 orte_default_hostfile));
+            if (ORTE_SUCCESS != (rc = orte_util_add_hostfile_nodes(&nodes, &ignore,
+                                                                   orte_default_hostfile))) {
+                ORTE_ERROR_LOG(rc);
+                return rc;
+            }
+            /* this is a special case - we always install a default
+             * hostfile, but it is empty. If the user didn't remove it
+             * or put something into it, then we will have pursued that
+             * option and found nothing. This isn't an error, we just need
+             * to use the local host
+             */
+            if (0 == opal_list_get_size(&nodes)) {
+                OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base.rmaps_output,
+                                     "%s nothing in default hostfile - using local host",
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+                node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, 0);
+                OBJ_RETAIN(node);
+                opal_list_append(allocated_nodes, &node->super);
+                OBJ_DESTRUCT(&nodes);
+                goto complete;
+            }
+        } else {
+            /* if nothing else was available, then use the local host */
+            OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base.rmaps_output,
+                                 "%s using local host",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+            node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, 0);
+            OBJ_RETAIN(node);
+            opal_list_append(allocated_nodes, &node->super);
+            OBJ_DESTRUCT(&nodes);
+            goto complete;
+        }
+        /** if we still don't have anything */
+        if (0 == opal_list_get_size(&nodes)) {
+            orte_show_help("help-orte-rmaps-base.txt",
+                           "orte-rmaps-base:no-available-resources",
+                           true);
+            OBJ_DESTRUCT(&nodes);
+            return ORTE_ERR_SILENT;
+        }
+        /* find the nodes in our node array */
+        while (NULL != (item = opal_list_remove_first(&nodes))) {
+            nptr = (orte_node_t*)item;
+            for (i=0; i < orte_node_pool->size; i++) {
+                if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, i))) {
+                    continue;
+                }
+                if (0 != strcmp(node->name, nptr->name)) {
+                    continue;
+                }
+                /* retain a copy for our use in case the item gets
+                 * destructed along the way
+                 */
+                OBJ_RETAIN(node);
+                opal_list_append(allocated_nodes, &node->super);
+                OBJ_RELEASE(nptr);
+            }
+        }
+        OBJ_DESTRUCT(&nodes);
+        /* now prune for usage and compute total slots */
+        goto complete;
+    }
+
     /* if the hnp was allocated, include it */
     if (orte_hnp_is_allocated) {
         node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, 0);
@@ -77,26 +177,6 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
                        true);
         return ORTE_ERR_SILENT;
     }
-    
-    /* is there a default hostfile? */
-    if (NULL != orte_default_hostfile) {
-        /* yes - filter the node list through the file, removing
-         * any nodes not in the file -or- excluded via ^
-         */
-        if (ORTE_SUCCESS != (rc = orte_util_filter_hostfile_nodes(allocated_nodes,
-                                                                  orte_default_hostfile))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-        /** check that anything is here */
-        if (0 == opal_list_get_size(allocated_nodes)) {
-            orte_show_help("help-orte-rmaps-base.txt",
-                           "orte-rmaps-base:no-available-resources",
-                           true);
-            return ORTE_ERR_SILENT;
-        }
-    }
-    
     
     /* did the app_context contain a hostfile? */
     if (NULL != app->hostfile) {
@@ -134,7 +214,6 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
             return ORTE_ERR_SILENT;
         }
     }
-    
     
     /* now filter the list through any -host specification */
     if (NULL != app->dash_host) {
@@ -192,6 +271,7 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
         }
     }
 
+ complete:
     /* remove all nodes that are already at max usage, and
      * compute the total number of allocated slots while
      * we do so

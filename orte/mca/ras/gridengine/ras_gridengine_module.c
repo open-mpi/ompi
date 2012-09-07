@@ -104,6 +104,9 @@ static int orte_ras_gridengine_allocate(opal_list_t *nodelist)
                 /* just add the slots */
                 node->slots += (int)strtol(num, (char **)NULL, 10);
                 found = true;
+                opal_output(mca_ras_gridengine_component.verbose,
+                            "ras:gridengine: %s: PE_HOSTFILE increased to slots=%d",
+                            node->name, node->slots);
                 break;
             }
         }

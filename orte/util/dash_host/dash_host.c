@@ -157,7 +157,6 @@ int orte_util_filter_dash_host_nodes(opal_list_t *nodes,
                                      char** host_argv)
 {
     opal_list_item_t* item;
-    bool found;
     opal_list_item_t *next;
     orte_std_cntr_t i, j, k, len_mapped_node=0;
     int rc;
@@ -325,7 +324,6 @@ int orte_util_filter_dash_host_nodes(opal_list_t *nodes,
                 next = opal_list_get_next(item);  /* save this position */
                 node = (orte_node_t*)item;
                 /* search -host list to see if this one is found */
-                found = false;
                 if ((0 == strcmp(node->name, mapped_nodes[i]) ||
                     (0 == strcmp(node->name, orte_process_info.nodename) &&
                     (0 == strcmp(mapped_nodes[i], "localhost") || opal_ifislocal(mapped_nodes[i]))))) {

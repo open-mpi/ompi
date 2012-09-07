@@ -553,6 +553,7 @@ ORTE_DECLSPEC extern char **orte_launch_environ;
 
 ORTE_DECLSPEC extern bool orte_hnp_is_allocated;
 ORTE_DECLSPEC extern bool orte_allocation_required;
+ORTE_DECLSPEC extern bool orte_managed_allocation;
 
 ORTE_DECLSPEC extern char *orte_launch_agent;
 ORTE_DECLSPEC extern char **orted_cmd_line;

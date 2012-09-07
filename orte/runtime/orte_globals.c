@@ -79,6 +79,7 @@ char **orte_launch_environ;
 
 bool orte_hnp_is_allocated = false;
 bool orte_allocation_required;
+bool orte_managed_allocation = false;
 
 char *orte_launch_agent = NULL;
 char **orted_cmd_line=NULL;
