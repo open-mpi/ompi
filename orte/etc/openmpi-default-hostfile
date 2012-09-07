@@ -21,6 +21,10 @@
 # the same set of default hosts, and is not using a batch scheduler
 # (such as SLURM, PBS, etc.).  
 #
+# Note that this file is *not* used when running in "managed"
+# environments (e.g., running in a job under a job scheduler, such as
+# SLURM or PBS / Torque).
+#
 # If you are primarily interested in running Open MPI on one node, you
 # should *not* simply list "localhost" in here (contrary to prior MPI
 # implementations, such as LAM/MPI).  A localhost-only node list is
