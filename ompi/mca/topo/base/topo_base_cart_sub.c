@@ -50,10 +50,10 @@ int mca_topo_base_cart_sub (ompi_communicator_t* comm,
      int ndim;
      int dim;
      int i;
-     int *d;
+     int *d, *dold;
      int *c;
      int *r;
-     int *p;
+     int *p, *pold;
 
      *new_comm = MPI_COMM_NULL;
 
@@ -99,15 +99,27 @@ int mca_topo_base_cart_sub (ompi_communicator_t* comm,
      if (temp_comm != MPI_COMM_NULL) {
         
         temp_comm->c_topo_comm->mtc_ndims_or_nnodes = ndim;
-        
+
         if (ndim >= 1) {
-            p = temp_comm->c_topo_comm->mtc_dims_or_index;
-            d = comm->c_topo_comm->mtc_dims_or_index;
+            /* Copy the dimensions */
+            d = temp_comm->c_topo_comm->mtc_dims_or_index;
+            dold = comm->c_topo_comm->mtc_dims_or_index;
             r = remain_dims;
             for (i = 0; i < comm->c_topo_comm->mtc_ndims_or_nnodes; 
-                 ++i, ++d, ++r) {
+                 ++i, ++dold, ++r) {
                 if (*r) {
-                    *p++ = *d;
+                    *d++ = *dold;
+                }
+            }
+
+            /* Copy the periods */
+            p = temp_comm->c_topo_comm->mtc_periods_or_edges;
+            pold = comm->c_topo_comm->mtc_periods_or_edges;
+            r = remain_dims;
+            for (i = 0; i < comm->c_topo_comm->mtc_ndims_or_nnodes; 
+                 ++i, ++pold, ++r) {
+                if (*r) {
+                    *p++ = *pold;
                 }
             }
 
