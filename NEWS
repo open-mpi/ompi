@@ -50,9 +50,16 @@ included in the vX.Y.Z section and be denoted as:
 1.6.2
 -----
 
+- Fix singleton MPI_COMM_SPAWN when the result job spans multiple nodes.
+- Fix MXM hang, and update for latest version of MXM.
+- Update to support Mellanox FCA 2.5.
+- Fix startup hang for large jobs.
+- Ensure MPI_TESTANY / MPI_WAITANY properly set the empty status when
+  count==0.
 - Add btl_openib_abort_not_enough_reg_mem MCA parameter to cause Open
   MPI to abort MPI jobs if there is not enough registered memory
-  available on the system (vs. just printing a warning).
+  available on the system (vs. just printing a warning).  Thanks to
+  Brock Palen for raising the issue.
 - Minor fix to Fortran MPI_INFO_GET: only copy a value back to the
   user's buffer if the flag is .TRUE.
 - Fix VampirTrace compilation issue with the PGI compiler suite.
