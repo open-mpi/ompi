@@ -100,7 +100,11 @@ AC_DEFUN([ORTE_SETUP_JAVA],[
 
                if test "$found" = "0"; then
                    # Various Linux
-                   dir='/usr/lib/jvm/java-*-openjdk-*/include/'
+                   if -z "$JAVA_HOME"; then
+                       dir='/usr/lib/jvm/java-*-openjdk-*/include/'
+                   else
+                       dir=$JAVA_HOME/include
+                   fi
                    jnih=`ls $dir/jni.h 2>/dev/null | head -n 1`
                    AC_MSG_CHECKING([Linux locations])
                    AS_IF([test -r "$jnih"], 
