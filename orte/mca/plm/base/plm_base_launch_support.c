@@ -38,6 +38,7 @@
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/mca/hwloc/hwloc.h"
 
+#include "orte/util/dash_host/dash_host.h"
 #include "orte/util/session_dir.h"
 #include "orte/util/show_help.h"
 #include "orte/mca/errmgr/errmgr.h"
@@ -1173,16 +1174,17 @@ int orte_plm_base_orted_append_basic_args(int *argc, char ***argv,
 
 int orte_plm_base_setup_virtual_machine(orte_job_t *jdata)
 {
-    orte_node_t *node;
+    orte_node_t *node, *nptr;
     orte_proc_t *proc;
     orte_job_map_t *map=NULL;
     int rc, i;
     orte_job_t *daemons;
-    opal_list_t nodes;
+    opal_list_t nodes, tnodes;
     opal_list_item_t *item, *next;
     orte_app_context_t *app;
     bool one_filter = false;
     int num_nodes;
+    bool default_hostfile_used;
 
     OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                          "%s plm:base:setup_vm",
@@ -1282,10 +1284,128 @@ int orte_plm_base_setup_virtual_machine(orte_job_t *jdata)
      */
     map->num_new_daemons = 0;
 
+    /* setup the list of nodes */
+    OBJ_CONSTRUCT(&nodes, opal_list_t);
+
+    /* if this is an unmanaged allocation, then we use
+     * the nodes that were specified for the union of
+     * all apps - there is no need to collect all
+     * available nodes and "filter" them
+     */
+    if (!orte_managed_allocation) {
+        OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+                             "%s setup:vm: working unmanaged allocation",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+        default_hostfile_used = false;
+        OBJ_CONSTRUCT(&tnodes, opal_list_t);
+        for (i=0; i < jdata->apps->size; i++) {
+            if (NULL == (app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, i))) {
+                continue;
+            }
+            /* if the app provided a dash-host, and we are not treating
+             * them as requested or "soft" locations, then use those nodes
+             */
+            if (!orte_soft_locations && NULL != app->dash_host) {
+                OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+                                     "%s using dash_host",
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+                if (ORTE_SUCCESS != (rc = orte_util_add_dash_host_nodes(&tnodes,
+                                                                        app->dash_host))) {
+                    ORTE_ERROR_LOG(rc);
+                    return rc;
+                }
+            } else if (NULL != app->hostfile) {
+                /* otherwise, if the app provided a hostfile, then use that */
+                OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+                                     "%s using hostfile %s",
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                     app->hostfile));
+                if (ORTE_SUCCESS != (rc = orte_util_add_hostfile_nodes(&tnodes,
+                                                                       app->hostfile))) {
+                    ORTE_ERROR_LOG(rc);
+                    return rc;
+                }
+            } else if (NULL != orte_default_hostfile) {
+                if (!default_hostfile_used) {
+                    /* fall back to the default hostfile, if provided */
+                    OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+                                         "%s using default hostfile %s",
+                                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                         orte_default_hostfile));
+                    if (ORTE_SUCCESS != (rc = orte_util_add_hostfile_nodes(&tnodes,
+                                                                           orte_default_hostfile))) {
+                        ORTE_ERROR_LOG(rc);
+                        return rc;
+                    }
+                    /* only include it once */
+                    default_hostfile_used = true;
+                }
+            }
+        }
+        /* cycle thru the resulting list, finding the nodes on
+         * the node pool array while removing ourselves
+         * and all nodes that are down or otherwise unusable
+         */
+        while (NULL != (item = opal_list_remove_first(&tnodes))) {
+            nptr = (orte_node_t*)item;
+            OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+                                 "%s checking node %s",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 nptr->name));
+            for (i=0; i < orte_node_pool->size; i++) {
+                if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, i))) {
+                    continue;
+                }
+                if (0 != strcmp(node->name, nptr->name)) {
+                    continue;
+                }
+                /* have a match - now see if we want this node */
+                /* ignore nodes that are marked as do-not-use for this mapping */
+                if (ORTE_NODE_STATE_DO_NOT_USE == node->state) {
+                    /* reset the state so it can be used another time */
+                    node->state = ORTE_NODE_STATE_UP;
+                    break;
+                }
+                if (ORTE_NODE_STATE_DOWN == node->state) {
+                    break;
+                }
+                if (ORTE_NODE_STATE_NOT_INCLUDED == node->state) {
+                    break;
+                }
+                /* if this node is us, ignore it */
+                if (0 == node->index) {
+                    OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+                                         "%s ignoring myself",
+                                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+                    break;
+                }
+                /* we want it - add it to list */
+                opal_list_append(&nodes, &node->super);
+            }
+            OBJ_RELEASE(nptr);
+        }
+        OBJ_DESTRUCT(&tnodes);
+        /* if we didn't get anything, then we are the only node in the
+         * allocation - so there is nothing else to do as no other
+         * daemons are to be launched
+         */
+        if (0 == opal_list_get_size(&nodes)) {
+            OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+                                 "%s plm:base:setup_vm only HNP in allocation",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+            OBJ_DESTRUCT(&nodes);
+            /* mark that the daemons have reported so we can proceed */
+            daemons->state = ORTE_JOB_STATE_DAEMONS_REPORTED;
+            daemons->updated = false;
+            return ORTE_SUCCESS;
+        }
+        /* continue processing */
+        goto process;
+    }
+
     /* construct a list of available nodes - don't need ours as
      * we already exist
      */
-    OBJ_CONSTRUCT(&nodes, opal_list_t);
     for (i=1; i < orte_node_pool->size; i++) {
         if (NULL != (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, i))) {
             /* ignore nodes that are marked as do-not-use for this mapping */
@@ -1328,22 +1448,6 @@ int orte_plm_base_setup_virtual_machine(orte_job_t *jdata)
         return ORTE_SUCCESS;
     }
 
-    /* is there a default hostfile? */
-    if (NULL != orte_default_hostfile) {
-        /* yes - filter the node list through the file, marking
-         * any nodes not in the file -or- excluded via ^
-         */
-        if (ORTE_SUCCESS != (rc = orte_util_filter_hostfile_nodes(&nodes, orte_default_hostfile, false)) &&
-            ORTE_ERR_TAKE_NEXT_OPTION != rc) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-        if (ORTE_SUCCESS == rc) {
-            /* we filtered something */
-            one_filter = true;
-        }
-    }
- 
     /* filter across the union of all app_context specs */
     for (i=0; i < jdata->apps->size; i++) {
         if (NULL == (app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, i))) {
