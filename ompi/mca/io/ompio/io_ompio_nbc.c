@@ -30,7 +30,7 @@
 
 #include <math.h>
 #include <unistd.h>
-#include "io_ompio.h"
+#include "io_ompio_nbc.h"
 
 
 
