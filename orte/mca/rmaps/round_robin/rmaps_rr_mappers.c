@@ -85,12 +85,15 @@ int orte_rmaps_rr_byslot(orte_job_t *jdata,
 #endif
         if (node->slots <= node->slots_inuse) {
             opal_output_verbose(2, orte_rmaps_base.rmaps_output,
-                                "mca:rmaps:rr:slot working node %s is full - skipping",
+                                "mca:rmaps:rr:slot node %s is full - skipping",
                                 node->name);
             continue;
         }
         num_procs_to_assign = node->slots - node->slots_inuse;
-        for (i=0; i < num_procs_to_assign && nprocs_mapped < app->num_procs; i++) {
+        opal_output_verbose(2, orte_rmaps_base.rmaps_output,
+                            "mca:rmaps:rr:slot assigning %d procs to node %s",
+                            (int)num_procs_to_assign, node->name);
+         for (i=0; i < num_procs_to_assign && nprocs_mapped < app->num_procs; i++) {
             /* add this node to the map - do it only once */
             if (!node->mapped) {
                 if (ORTE_SUCCESS > (rc = opal_pointer_array_add(jdata->map->nodes, (void*)node))) {
