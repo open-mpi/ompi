@@ -119,6 +119,18 @@ int orte_ras_base_node_insert(opal_list_t* nodes, orte_job_t *jdata)
             hnp_node->slots_max = node->slots_max;
             hnp_node->launch_id = node->launch_id;
             hnp_node->slots = node->slots;
+            if (orte_managed_allocation) {
+                /* the slots are always treated as sacred
+                 * in managed allocations
+                 */
+                hnp_node->slots_given = true;
+            } else {
+                /* in unmanaged allocations, take whatever
+                 * was determined by the hostfile or dash-host
+                 * parsers
+                 */
+                hnp_node->slots_given = node->slots_given;
+            }
             /* use the local name for our node - don't trust what
              * we got from an RM. If requested, store the resolved
              * nodename info
@@ -146,6 +158,12 @@ int orte_ras_base_node_insert(opal_list_t* nodes, orte_job_t *jdata)
                                  "%s ras:base:node_insert node %s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  (NULL == node->name) ? "NULL" : node->name));
+            if (orte_managed_allocation) {
+                /* the slots are always treated as sacred
+                 * in managed allocations
+                 */
+                node->slots_given = true;
+            }
             /* insert it into the array */
             node->index = opal_pointer_array_add(orte_node_pool, (void*)node);
             if (ORTE_SUCCESS > (rc = node->index)) {
