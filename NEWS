@@ -56,6 +56,8 @@ included in the vX.Y.Z section and be denoted as:
 - Fix startup hang for large jobs.
 - Ensure MPI_TESTANY / MPI_WAITANY properly set the empty status when
   count==0.
+- Fix MPI_CART_SUB behavior of not copying periods to the new
+  communicator properly.  Thanks to John Craske for the bug report.
 - Add btl_openib_abort_not_enough_reg_mem MCA parameter to cause Open
   MPI to abort MPI jobs if there is not enough registered memory
   available on the system (vs. just printing a warning).  Thanks to
