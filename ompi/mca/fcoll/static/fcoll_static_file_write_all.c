@@ -67,7 +67,7 @@ mca_fcoll_static_file_write_all (mca_io_ompio_file_t *fh,
   
   size_t max_data = 0, bytes_per_cycle=0;
   struct iovec *iov=NULL, *decoded_iov=NULL;
-  uint32_t iov_count, iov_index=0;
+  uint32_t iov_count=0, iov_index=0;
   int i=0,j=0,l=0, temp_index;
   int ret=OMPI_SUCCESS, cycles, local_cycles, *bytes_per_process=NULL;
   int index, *disp_index=NULL, **blocklen_per_process=NULL;
