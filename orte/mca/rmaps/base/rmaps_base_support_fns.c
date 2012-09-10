@@ -195,6 +195,10 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
                 OBJ_RETAIN(node);
                 opal_list_append(allocated_nodes, &node->super);
                 OBJ_DESTRUCT(&nodes);
+                if (initial_map) {
+                    /* mark the node as not in the map */
+                    node->mapped = false;
+                }
                 goto complete;
             }
         } else {
@@ -206,6 +210,10 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
             OBJ_RETAIN(node);
             opal_list_append(allocated_nodes, &node->super);
             OBJ_DESTRUCT(&nodes);
+            if (initial_map) {
+                /* mark the node as not in the map */
+                node->mapped = false;
+            }
             goto complete;
         }
         /** if we still don't have anything */
