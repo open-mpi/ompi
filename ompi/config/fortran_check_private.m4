@@ -27,12 +27,6 @@ dnl
 AC_DEFUN([OMPI_FORTRAN_CHECK_PRIVATE],[
     AS_VAR_PUSHDEF([private_var], [ompi_cv_fortran_private])
 
-# JMS Temporary override for the Absoft compiler until they are able
-# to fix derived types with private members and -g.
-    AC_ARG_ENABLE([f08-private-status],
-        [AC_HELP_STRING([--disable-f08-private-status],
-            [disable the "private" attribute in the mpi_f08 MPI_Status type for buggy compilers])])
-
     AC_CACHE_CHECK([if Fortran compiler supports private], private_var,
        [AC_LANG_PUSH([Fortran])
         AC_COMPILE_IFELSE([AC_LANG_SOURCE([[module test_for_private
@@ -46,11 +40,6 @@ end module test_for_private]])],
         touch conftest_foo.mod
         rm -rf *.mod 2>/dev/null
         AC_LANG_POP([Fortran])
-
-# JMS Temporary override for the Absoft compiler until they are able
-# to fix derived types with private members and -g.
-        AS_IF([test "enable_f08_private_status" = "no"],
-              [AS_VAR_SET(private_var, no)])
        ])
 
     AS_VAR_IF(private_var, [yes], [$1], [$2])
