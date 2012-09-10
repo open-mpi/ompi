@@ -145,6 +145,7 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
                 OBJ_RETAIN(node);
                 opal_list_append(allocated_nodes, &node->super);
                 OBJ_RELEASE(nptr);
+                break;
             }
         }
         OBJ_DESTRUCT(&nodes);
