@@ -831,9 +831,8 @@ int main ( int argc, const char** argv ) {
 		srand(1);
 		for ( i = 0; i < thumbnail_procs; i++ ) {
 
-			uint32_t r = (uint32_t)rint(
-				( (double)rand() / RAND_MAX )
-				* ( control->all_processes.size() - 1 - i ) );
+			uint32_t r = (uint32_t)( ( (double)rand() / RAND_MAX ) *
+				( control->all_processes.size() - 1 - i ) + 0.5 );
 			uint32_t t = control->all_processes[i+r];
 			control->all_processes[i+r] = control->all_processes[i];
 			control->all_processes[i] = t;
