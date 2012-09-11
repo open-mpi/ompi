@@ -33,8 +33,7 @@ AM_CPPFLAGS = -I$(top_srcdir)/test/support
 
 
 check_PROGRAMS = \
-	opal_bit_ops \
-	opal_path_nfs
+	opal_bit_ops
 
 TESTS = \
 	$(check_PROGRAMS)
@@ -75,11 +74,11 @@ opal_bit_ops_LDADD = \
 opal_bit_ops_DEPENDENCIES = $(opal_path_nfs_LDADD)
 
 
-opal_path_nfs_SOURCES = opal_path_nfs.c
-opal_path_nfs_LDADD = \
-        $(top_builddir)/opal/libopen-pal.la \
-        $(top_builddir)/test/support/libsupport.a
-opal_path_nfs_DEPENDENCIES = $(opal_path_nfs_LDADD)
+#opal_path_nfs_SOURCES = opal_path_nfs.c
+#opal_path_nfs_LDADD = \
+#        $(top_builddir)/opal/libopen-pal.la \
+#        $(top_builddir)/test/support/libsupport.a
+#opal_path_nfs_DEPENDENCIES = $(opal_path_nfs_LDADD)
 
 #opal_os_path_SOURCES = opal_os_path.c
 #opal_os_path_LDADD = \
@@ -119,4 +118,4 @@ opal_path_nfs_DEPENDENCIES = $(opal_path_nfs_LDADD)
 #orte_universe_setup_file_io_DEPENDENCIES = $(orte_universe_setup_file_io_LDADD)
 
 clean-local:
-	rm -f test_session_dir_out test-file opal_path_nfs.out
+	rm -f test_session_dir_out test-file
