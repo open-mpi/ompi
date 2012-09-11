@@ -10,7 +10,7 @@
 
 int main(int argc, char* argv[])
 {
-    char value[MPI_MAX_INFO_KEY];
+    char value[MPI_MAX_INFO_VAL];
     int flag;
     char *keys[] = {
         "command",
@@ -20,9 +20,10 @@ int main(int argc, char* argv[])
         "host",
         "arch",
         "wdir",
-        "num_app_ctx",
-        "first_rank",
-        "np"
+        "thread_level",
+        "ompi_num_apps",
+        "ompi_first_rank",
+        "ompi_np"
     };
     int i, nk;
 
@@ -31,7 +32,7 @@ int main(int argc, char* argv[])
     nk = sizeof(keys) / sizeof(char*);
 
     for (i=0; i < nk; i++) {
-        MPI_Info_get(MPI_INFO_ENV, keys[i], MPI_MAX_INFO_KEY,
+        MPI_Info_get(MPI_INFO_ENV, keys[i], MPI_MAX_INFO_VAL,
                      value, &flag);
         fprintf(stderr, "%s: %s\n", keys[i], (flag) ? value : "Not found");
     }
