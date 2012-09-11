@@ -50,7 +50,7 @@ fi
 for ax_openmp_flag in $ax_openmp_flags; do
   case $ax_openmp_flag in
     none) []_AC_LANG_PREFIX[]FLAGS="$save[]_AC_LANG_PREFIX[]FLAGS" ;;
-    *)    []_AC_LANG_PREFIX[]FLAGS="$save[]_AC_LANG_PREFIX[]FLAGS $ax_openmp_flag" ;;
+    *)    []_AC_LANG_PREFIX[]FLAGS="$ax_openmp_flag $save[]_AC_LANG_PREFIX[]FLAGS" ;;
   esac
   AC_TRY_COMPILE([], [
 #ifndef _OPENMP

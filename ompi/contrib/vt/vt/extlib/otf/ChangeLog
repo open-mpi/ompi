@@ -1,3 +1,11 @@
+1.11.3openmpi
+	- otfaux: fixed build error when using the Oracle compiler on Solaris
+
+1.11.2openmpi
+	- lib OTFAUX:
+		- speed-up messages matching, if no snapshots should
+		  be generated
+
 1.11.1openmpi
 	- new 'OTF_MasterControl_clone()' function to simplify making a copy
 	  of a master control object
