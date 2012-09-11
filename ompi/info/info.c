@@ -157,7 +157,6 @@ int ompi_info_init(void)
      * of determining the value
      */
     if (NULL != (cptr = getenv("OMPI_MCA_initial_wdir"))) {
-        opal_output(0, "GOT WDIR %s", cptr);
         ompi_info_set(&ompi_mpi_info_env.info, "wdir", cptr);
     }
 
