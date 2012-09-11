@@ -1,6 +1,8 @@
 /*
  * Copyright (c)      2010 The Trustees of Indiana University.
  *                         All rights reserved.
+ * Copyright (c) 2012      The University of Wisconsin-La Crosse. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -160,11 +162,13 @@ int orte_sstore_base_open(void)
      * Setup the prelaunch variable to point to the first possible snapshot
      * location
      */
-    asprintf(&orte_sstore_base_prelaunch_location,
-             "%s/%s/%d",
-             orte_sstore_base_global_snapshot_dir,
-             orte_sstore_base_global_snapshot_ref,
-             0);
+    if( NULL != orte_sstore_base_global_snapshot_ref ) {
+        asprintf(&orte_sstore_base_prelaunch_location,
+                 "%s/%s/%d",
+                 orte_sstore_base_global_snapshot_dir,
+                 orte_sstore_base_global_snapshot_ref,
+                 0);
+    }
 
     opal_output_verbose(10, orte_sstore_base_output,
                         "sstore:base: open()");
@@ -176,7 +180,7 @@ int orte_sstore_base_open(void)
                         (NULL == orte_sstore_base_global_snapshot_ref ? "Default" : orte_sstore_base_global_snapshot_ref));
     opal_output_verbose(10, orte_sstore_base_output,
                         "sstore:base: open: Prelaunch location        = %s",
-                        orte_sstore_base_prelaunch_location);
+                        (NULL == orte_sstore_base_prelaunch_location ? "Undefined" : orte_sstore_base_prelaunch_location));
 
     /* 
      * Which Sstore component to open
