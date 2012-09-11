@@ -324,7 +324,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     char *event_val = NULL;
     bool orte_setup = false;
     orte_grpcomm_collective_t *coll;
-    char *cmd=NULL, *av=NULL, *tv=NULL;
+    char *cmd=NULL, *av=NULL;
 
     /* bitflag of the thread level support provided. To be used
      * for the modex in order to work in heterogeneous environments. */
@@ -400,8 +400,6 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         free(tmp);
         putenv(av);
     }
-    asprintf(&tv, "OMPI_REQUESTED_THREAD_LEVEL=%d", requested);
-    putenv(tv);
 
     /* Setup ORTE - note that we are an MPI process  */
     if (ORTE_SUCCESS != (ret = orte_init(NULL, NULL, ORTE_PROC_MPI))) {

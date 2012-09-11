@@ -47,6 +47,7 @@
 #include "opal/util/strncpy.h"
 
 #include "ompi/info/info.h"
+#include "ompi/runtime/mpiruntime.h"
 #include "ompi/runtime/params.h"
 
 
@@ -161,32 +162,25 @@ int ompi_info_init(void)
     }
 
     /* provide the REQUESTED thread level - may be different
-     * than the ACTUAL thread level you get
-     */
-    if (NULL != (cptr = getenv("OMPI_REQUESTED_THREAD_LEVEL"))) {
-        /* harvest the integer */
-        lvl = strtol(cptr, NULL, 10);
-        /* ugly, but have to do a switch to find the string representation */
-        switch(lvl) {
-        case MPI_THREAD_SINGLE:
-            ompi_info_set(&ompi_mpi_info_env.info, "thread_level", "MPI_THREAD_SINGLE");
-            break;
-        case MPI_THREAD_FUNNELED:
-            ompi_info_set(&ompi_mpi_info_env.info, "thread_level", "MPI_THREAD_FUNNELED");
-            break;
-        case MPI_THREAD_SERIALIZED:
-            ompi_info_set(&ompi_mpi_info_env.info, "thread_level", "MPI_THREAD_SERIALIZED");
-            break;
-        case MPI_THREAD_MULTIPLE:
-            ompi_info_set(&ompi_mpi_info_env.info, "thread_level", "MPI_THREAD_MULTIPLE");
-            break;
-        default:
-            /* do nothing - don't know the value */
-            break;
-        }
+     * than the ACTUAL thread level you get.
+     * ugly, but have to do a switch to find the string representation */
+    switch (ompi_mpi_thread_requested) {
+    case MPI_THREAD_SINGLE:
+        ompi_info_set(&ompi_mpi_info_env.info, "thread_level", "MPI_THREAD_SINGLE");
+        break;
+    case MPI_THREAD_FUNNELED:
+        ompi_info_set(&ompi_mpi_info_env.info, "thread_level", "MPI_THREAD_FUNNELED");
+        break;
+    case MPI_THREAD_SERIALIZED:
+        ompi_info_set(&ompi_mpi_info_env.info, "thread_level", "MPI_THREAD_SERIALIZED");
+        break;
+    case MPI_THREAD_MULTIPLE:
+        ompi_info_set(&ompi_mpi_info_env.info, "thread_level", "MPI_THREAD_MULTIPLE");
+        break;
+    default:
+        /* do nothing - don't know the value */
+        break;
     }
-
-
 
     /**** now some OMPI-specific values that other MPIs may not provide ****/
 
