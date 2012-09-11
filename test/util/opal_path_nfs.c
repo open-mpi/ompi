@@ -86,7 +86,7 @@ void test(char* file, bool expect)
 #endif 
     if (expect == opal_path_nfs (file)) {
         test_success();
-    } else if (0 != strcmp(file, "soft")) {
+    } else {
         char * msg;
         asprintf(&msg, "Mismatch: input \"%s\", expected:%d got:%d\n",
                  file, expect, !expect);
