@@ -87,7 +87,7 @@ int orte_info_register_components(opal_pointer_array_t *mca_types,
 {
     opal_info_component_map_t *map;
     char *env, *str;
-    int i;
+    int i, rc;
     char *target, *save, *type;
     char **env_save=NULL;
 
@@ -113,157 +113,262 @@ int orte_info_register_components(opal_pointer_array_t *mca_types,
         free(env);
     }
 
-     /* Set orte_process_info.proc_type to HNP to force all frameworks to
+    /* Set orte_process_info.proc_type to HNP to force all frameworks to
      * open components
      */
     orte_process_info.proc_type = ORTE_PROC_HNP;
 
     /* Register the ORTE layer's MCA parameters */
     
-    if (ORTE_SUCCESS != orte_register_params()) {
-        return ORTE_ERROR;
+    if (ORTE_SUCCESS != (rc = orte_register_params()) &&
+        ORTE_ERR_BAD_PARAM != rc) {
+        str = "orte_register_params";
+        goto error;
     }
     
-    if (ORTE_SUCCESS != orte_db_base_open()) {
-        return ORTE_ERROR;
+    if (ORTE_SUCCESS != (rc = orte_db_base_open()) &&
+        ORTE_ERR_BAD_PARAM != rc) {
+        str = "db_base_open";
+        goto error;
     }
     map = OBJ_NEW(opal_info_component_map_t);
     map->type = strdup("db");
     map->components = &orte_db_base.available_components;
     opal_pointer_array_add(component_map, map);
-    
-    if (ORTE_SUCCESS != orte_errmgr_base_open()) {
-        return ORTE_ERROR;
+    if (ORTE_ERR_BAD_PARAM == rc)  {
+        str = "db";
+        goto breakout;
+    }
+
+    if (ORTE_SUCCESS != (rc = orte_errmgr_base_open()) &&
+        ORTE_ERR_BAD_PARAM != rc) {
+        str = "errmgr_base_open";
+        goto error;
     }
     map = OBJ_NEW(opal_info_component_map_t);
     map->type = strdup("errmgr");
     map->components = &orte_errmgr_base_components_available;
     opal_pointer_array_add(component_map, map);
-    
-    if (ORTE_SUCCESS != orte_ess_base_open()) {
-        return ORTE_ERROR;
+    if (ORTE_ERR_BAD_PARAM == rc)  {
+        str = "errmgr";
+        goto breakout;
+    }
+
+    if (ORTE_SUCCESS != (rc = orte_ess_base_open()) &&
+        ORTE_ERR_BAD_PARAM != rc) {
+        str = "ess_base_open";
+        goto error;
     }
     map = OBJ_NEW(opal_info_component_map_t);
     map->type = strdup("ess");
     map->components = &orte_ess_base_components_available;
     opal_pointer_array_add(component_map, map);
-    
-    if (ORTE_SUCCESS != orte_filem_base_open()) {
-        return ORTE_ERROR;
+    if (ORTE_ERR_BAD_PARAM == rc)  {
+        str = "ess";
+        goto breakout;
+    }
+
+    if (ORTE_SUCCESS != (rc = orte_filem_base_open()) &&
+        ORTE_ERR_BAD_PARAM != rc) {
+        str = "filem_base_open";
+        goto error;
     }
     map = OBJ_NEW(opal_info_component_map_t);
     map->type = strdup("filem");
     map->components = &orte_filem_base_components_available;
     opal_pointer_array_add(component_map, map);
+    if (ORTE_ERR_BAD_PARAM == rc)  {
+        str = "filem";
+        goto breakout;
+    }
 
-    if (ORTE_SUCCESS != orte_grpcomm_base_open()) {
-        return ORTE_ERROR;
+    if (ORTE_SUCCESS != (rc = orte_grpcomm_base_open()) &&
+        ORTE_ERR_BAD_PARAM != rc) {
+        str = "grpcomm_base_open";
+        goto error;
     }
     map = OBJ_NEW(opal_info_component_map_t);
     map->type = strdup("grpcomm");
     map->components = &orte_grpcomm_base.components_available;
     opal_pointer_array_add(component_map, map);
-    
-    if (ORTE_SUCCESS != orte_iof_base_open()) {
-        return ORTE_ERROR;
+    if (ORTE_ERR_BAD_PARAM == rc)  {
+        str = "grpcomm";
+        goto breakout;
+    }
+
+    if (ORTE_SUCCESS != (rc = orte_iof_base_open()) &&
+        ORTE_ERR_BAD_PARAM != rc) {
+        str = "iof_base_open";
+        goto error;
     }
     map = OBJ_NEW(opal_info_component_map_t);
     map->type = strdup("iof");
     map->components = &orte_iof_base.iof_components_opened;
     opal_pointer_array_add(component_map, map);
-    
-    if (ORTE_SUCCESS != orte_odls_base_open()) {
-        return ORTE_ERROR;
+    if (ORTE_ERR_BAD_PARAM == rc)  {
+        str = "iof";
+        goto breakout;
+    }
+
+    if (ORTE_SUCCESS != (rc = orte_odls_base_open()) &&
+        ORTE_ERR_BAD_PARAM != rc) {
+        str = "odls_base_open";
+        goto error;
     }
     map = OBJ_NEW(opal_info_component_map_t);
     map->type = strdup("odls");
     map->components = &orte_odls_base.available_components;
     opal_pointer_array_add(component_map, map);
-    
-    if (ORTE_SUCCESS != mca_oob_base_open()) {
-        return ORTE_ERROR;
+    if (ORTE_ERR_BAD_PARAM == rc)  {
+        str = "odls";
+        goto breakout;
+    }
+
+    if (ORTE_SUCCESS != (rc = mca_oob_base_open()) &&
+        ORTE_ERR_BAD_PARAM != rc) {
+        str = "oob_base_open";
+        goto error;
     }
     map = OBJ_NEW(opal_info_component_map_t);
     map->type = strdup("oob");
     map->components = &mca_oob_base_components;
     opal_pointer_array_add(component_map, map);
-    
-    if (ORTE_SUCCESS != orte_plm_base_open()) {
-        return ORTE_ERROR;
+    if (ORTE_ERR_BAD_PARAM == rc)  {
+        str = "oob";
+        goto breakout;
+    }
+
+    if (ORTE_SUCCESS != (rc = orte_plm_base_open()) &&
+        ORTE_ERR_BAD_PARAM != rc) {
+        str = "plm_base_open";
+        goto error;
     }
     map = OBJ_NEW(opal_info_component_map_t);
     map->type = strdup("plm");
     map->components = &orte_plm_base.available_components;
     opal_pointer_array_add(component_map, map);
+    if (ORTE_ERR_BAD_PARAM == rc)  {
+        str = "plm";
+        goto breakout;
+    }
 
-    if (ORTE_SUCCESS != orte_ras_base_open()) {
-        return ORTE_ERROR;
+    if (ORTE_SUCCESS != (rc = orte_ras_base_open()) &&
+        ORTE_ERR_BAD_PARAM != rc) {
+        str = "ras_base_open";
+        goto error;
     }
     map = OBJ_NEW(opal_info_component_map_t);
     map->type = strdup("ras");
     map->components = &orte_ras_base.ras_opened;
     opal_pointer_array_add(component_map, map);
-    
-    if (ORTE_SUCCESS != orte_rmaps_base_open()) {
-        return ORTE_ERROR;
+    if (ORTE_ERR_BAD_PARAM == rc)  {
+        str = "ras";
+        goto breakout;
+    }
+
+    if (ORTE_SUCCESS != (rc = orte_rmaps_base_open()) &&
+        ORTE_ERR_BAD_PARAM != rc) {
+        str = "rmaps_base_open";
+        goto error;
     }
     map = OBJ_NEW(opal_info_component_map_t);
     map->type = strdup("rmaps");
     map->components = &orte_rmaps_base.available_components;
     opal_pointer_array_add(component_map, map);
-    
-    if (ORTE_SUCCESS != orte_routed_base_open()) {
-        return ORTE_ERROR;
+    if (ORTE_ERR_BAD_PARAM == rc)  {
+        str = "rmaps";
+        goto breakout;
+    }
+
+    if (ORTE_SUCCESS != (rc = orte_routed_base_open()) &&
+        ORTE_ERR_BAD_PARAM != rc) {
+        str = "routed_base_open";
+        goto error;
     }
     map = OBJ_NEW(opal_info_component_map_t);
     map->type = strdup("routed");
     map->components = &orte_routed_base_components;
     opal_pointer_array_add(component_map, map);
-    
-    if (ORTE_SUCCESS != orte_rml_base_open()) {
-        return ORTE_ERROR;
+    if (ORTE_ERR_BAD_PARAM == rc)  {
+        str = "routed";
+        goto breakout;
+    }
+
+    if (ORTE_SUCCESS != (rc = orte_rml_base_open()) &&
+        ORTE_ERR_BAD_PARAM != rc) {
+        str = "rml_base_open";
+        goto error;
     }
     map = OBJ_NEW(opal_info_component_map_t);
     map->type = strdup("rml");
     map->components = &orte_rml_base_components;
     opal_pointer_array_add(component_map, map);
-    
+    if (ORTE_ERR_BAD_PARAM == rc)  {
+        str = "rml";
+        goto breakout;
+    }
+
 #if ORTE_ENABLE_SENSORS
-    if (ORTE_SUCCESS != orte_sensor_base_open()) {
-        return ORTE_ERROR;
+    if (ORTE_SUCCESS != (rc = orte_sensor_base_open()) &&
+        ORTE_ERR_BAD_PARAM != rc) {
+        str = "sensor_base_open";
+        goto error;
     }
     map = OBJ_NEW(opal_info_component_map_t);
     map->type = strdup("sensor");
     map->components = &mca_sensor_base_components_available;
     opal_pointer_array_add(component_map, map);
+    if (ORTE_ERR_BAD_PARAM == rc)  {
+        str = "sensor";
+        goto breakout;
+    }
 #endif
     
 #if OPAL_ENABLE_FT_CR == 1
-    if (ORTE_SUCCESS != orte_snapc_base_open()) {
-        return ORTE_ERROR;
+    if (ORTE_SUCCESS != (rc = orte_snapc_base_open()) &&
+        ORTE_ERR_BAD_PARAM != rc) {
+        str = "snapc_base_open";
+        goto error;
     }
     map = OBJ_NEW(opal_info_component_map_t);
     map->type = strdup("snapc");
     map->components = &orte_snapc_base_components_available;
     opal_pointer_array_add(component_map, map);
+    if (ORTE_ERR_BAD_PARAM == rc)  {
+        str = "snapc";
+        goto breakout;
+    }
 
-    if (ORTE_SUCCESS != orte_sstore_base_open()) {
-        return ORTE_ERROR;
+    if (ORTE_SUCCESS != (rc = orte_sstore_base_open()) &&
+        ORTE_ERR_BAD_PARAM != rc) {
+        str = "sstore_base_open";
+        goto error;
     }
     map = OBJ_NEW(opal_info_component_map_t);
     map->type = strdup("sstore");
     map->components = &orte_sstore_base_components_available;
     opal_pointer_array_add(component_map, map);
+    if (ORTE_ERR_BAD_PARAM == rc)  {
+        str = "sstore";
+        goto breakout;
+    }
 #endif
     
-    if (ORTE_SUCCESS != orte_state_base_open()) {
-        return ORTE_ERROR;
+    if (ORTE_SUCCESS != (rc = orte_state_base_open()) &&
+        ORTE_ERR_BAD_PARAM != rc) {
+        str = "state_base_open";
+        goto error;
     }
     map = OBJ_NEW(opal_info_component_map_t);
     map->type = strdup("state");
     map->components = &orte_state_base_components_available;
     opal_pointer_array_add(component_map, map);
+    if (ORTE_ERR_BAD_PARAM == rc)  {
+        str = "state";
+        goto breakout;
+    }
 
+ breakout:
     /* Restore the environment to what it was before we started so that
      * if users setenv OMPI_MCA_<framework name> to some value, they'll
      * see that value when it is shown via --param output.
@@ -274,7 +379,17 @@ int orte_info_register_components(opal_pointer_array_t *mca_types,
             putenv(env_save[i]);
         }
     }
-    return ORTE_SUCCESS;
+
+    if (ORTE_ERR_BAD_PARAM == rc) {
+        fprintf(stderr, "\nA \"bad parameter\" error was encountered when opening the ORTE %s framework\n", str);
+        fprintf(stderr, "The output received from that framework includes the following parameters:\n\n");
+    }
+
+    return rc;
+
+ error:
+    fprintf(stderr, "orte_info_register: %s failed\n", str);
+    return ORTE_ERROR;
 }
 
 void orte_info_close_components(void)

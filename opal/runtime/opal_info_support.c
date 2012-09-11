@@ -251,7 +251,7 @@ int opal_info_register_components(opal_pointer_array_t *mca_types,
 {
     opal_info_component_map_t *map;
     char *env, *str;
-    int i;
+    int i, rc;
     char *target, *save, *type;
     char **env_save=NULL;
 
@@ -278,52 +278,77 @@ int opal_info_register_components(opal_pointer_array_t *mca_types,
     }
 
     /* some components require the event library be active, so activate it */
-    if (OPAL_SUCCESS != opal_event_base_open()) {
+    if (OPAL_SUCCESS != (rc = opal_event_base_open())) {
+        if (OPAL_ERR_BAD_PARAM == rc)  {
+            goto breakout;
+        }
         str = "opal_event_base_open";
         goto error;
     }
     
     /* Open the DSS */
-    if (OPAL_SUCCESS != opal_dss_open()) {
-        str = "Unable to initialize the DSS";
+    if (OPAL_SUCCESS != (rc = opal_dss_open())) {
+        if (OPAL_ERR_BAD_PARAM == rc)  {
+            str = "opal_dss";
+            goto breakout;
+        }
+        str = "dss_open";
         goto error;
     }
     
     /* Register the OPAL layer's MCA parameters */
-    if (OPAL_SUCCESS != opal_register_params()) {
-        str = "opal_register_params failed";
+    if (OPAL_SUCCESS != (rc = opal_register_params())) {
+        str = "opal_register_params";
+        if (OPAL_ERR_BAD_PARAM == rc)  {
+            goto breakout;
+        }
         goto error;
     }
 
     /* OPAL frameworks */
     
-    if (OPAL_SUCCESS != opal_backtrace_base_open()) {
-        str = "backtrace open failed";
+    if (OPAL_SUCCESS != (rc = opal_backtrace_base_open()) &&
+        OPAL_ERR_BAD_PARAM != rc) {
+        str = "backtrace open";
         goto error;
     }
     map = OBJ_NEW(opal_info_component_map_t);
     map->type = strdup("backtrace");
     map->components = &opal_backtrace_base_components_opened;
     opal_pointer_array_add(component_map, map);
-    
+    if (OPAL_ERR_BAD_PARAM == rc)  {
+        str = "backtrace";
+        goto breakout;
+    }
+
 #if OPAL_ENABLE_FT_CR == 1
-    if (OPAL_SUCCESS != opal_compress_base_open()) {
-        str = "compress open failed";
+    if (OPAL_SUCCESS != (rc = opal_compress_base_open()) &&
+        OPAL_ERR_BAD_PARAM != rc) {
+        str = "compress open";
         goto error;
     }
     map = OBJ_NEW(opal_info_component_map_t);
     map->type = strdup("compress");
     map->components = &opal_compress_base_components_available;
     opal_pointer_array_add(component_map, map);
+    if (OPAL_ERR_BAD_PARAM == rc)  {
+        str = "compress";
+        goto breakout;
+    }
 
-    if (OPAL_SUCCESS != opal_crs_base_open()) {
-        str = "crs open failed";
+    if (OPAL_SUCCESS != (rc = opal_crs_base_open()) &&
+        OPAL_ERR_BAD_PARAM != rc) {
+        str = "crs open";
         goto error;
     }
     map = OBJ_NEW(opal_info_component_map_t);
     map->type = strdup("crs");
     map->components = &opal_crs_base_components_available;
     opal_pointer_array_add(component_map, map);
+    if (OPAL_ERR_BAD_PARAM == rc)  {
+        str = "crs";
+        goto breakout;
+    }
 #endif
 
     /* the event framework is already open - just get its components */
@@ -333,24 +358,34 @@ int opal_info_register_components(opal_pointer_array_t *mca_types,
     opal_pointer_array_add(component_map, map);
 
 #if OPAL_HAVE_HWLOC
-    if (OPAL_SUCCESS != opal_hwloc_base_open()) {
-        str = "hwloc open failed";
+    if (OPAL_SUCCESS != (rc = opal_hwloc_base_open()) &&
+        OPAL_ERR_BAD_PARAM != rc) {
+        str = "hwloc open";
         goto error;
     }
     map = OBJ_NEW(opal_info_component_map_t);
     map->type = strdup("hwloc");
     map->components = &opal_hwloc_base_components;
     opal_pointer_array_add(component_map, map);
+    if (OPAL_ERR_BAD_PARAM == rc)  {
+        str = "hwloc";
+        goto breakout;
+    }
 #endif
 
-    if (OPAL_SUCCESS != opal_if_base_open()) {
-        str = "if open failed";
+    if (OPAL_SUCCESS != (rc = opal_if_base_open()) &&
+        OPAL_ERR_BAD_PARAM != rc) {
+        str = "if open";
         goto error;
     }
     map = OBJ_NEW(opal_info_component_map_t);
     map->type = strdup("if");
     map->components = &opal_if_components;
     opal_pointer_array_add(component_map, map);
+    if (OPAL_ERR_BAD_PARAM == rc)  {
+        str = "if";
+        goto breakout;
+    }
 
     /* OPAL's installdirs base open has already been called as part of
      * opal_init_util() back in main().
@@ -360,51 +395,76 @@ int opal_info_register_components(opal_pointer_array_t *mca_types,
     map->components = &opal_installdirs_components;
     opal_pointer_array_add(component_map, map);
 
-    if (OPAL_SUCCESS != opal_memory_base_open()) {
-        str = "memory open failed";
+    if (OPAL_SUCCESS != (rc = opal_memory_base_open()) &&
+        OPAL_ERR_BAD_PARAM != rc) {
+        str = "memory open";
         goto error;
     }
     map = OBJ_NEW(opal_info_component_map_t);
     map->type = strdup("memory");
     map->components = &opal_memory_base_components_opened;
     opal_pointer_array_add(component_map, map);
+    if (OPAL_ERR_BAD_PARAM == rc)  {
+        str = "memory";
+        goto breakout;
+    }
 
-    if (OPAL_SUCCESS != opal_memcpy_base_open()) {
-        str = "memcpy open failed";
+    if (OPAL_SUCCESS != (rc = opal_memcpy_base_open()) &&
+        OPAL_ERR_BAD_PARAM != rc) {
+        str = "memcpy open";
         goto error;
     }
     map = OBJ_NEW(opal_info_component_map_t);
     map->type = strdup("memcpy");
     map->components = &opal_memcpy_base_components_opened;
     opal_pointer_array_add(component_map, map);
+    if (OPAL_ERR_BAD_PARAM == rc)  {
+        str = "memcpy";
+        goto breakout;
+    }
 
-    if (OPAL_SUCCESS != opal_memchecker_base_open()) {
-        str = "memchecker open failed";
+    if (OPAL_SUCCESS != (rc = opal_memchecker_base_open()) &&
+        OPAL_ERR_BAD_PARAM != rc) {
+        str = "memchecker open";
         goto error;
     }
     map = OBJ_NEW(opal_info_component_map_t);
     map->type = strdup("memchecker");
     map->components = &opal_memchecker_base_components_opened;
     opal_pointer_array_add(component_map, map);
-    
-    if (OPAL_SUCCESS != opal_shmem_base_open()) {
-        str = "shmem open failed";
+    if (OPAL_ERR_BAD_PARAM == rc)  {
+        str = "memchecker";
+        goto breakout;
+    }
+
+    if (OPAL_SUCCESS != (rc = opal_shmem_base_open()) &&
+        OPAL_ERR_BAD_PARAM != rc) {
+        str = "shmem open";
         goto error;
     }
     map = OBJ_NEW(opal_info_component_map_t);
     map->type = strdup("shmem");
     map->components = &opal_shmem_base_components_opened;
     opal_pointer_array_add(component_map, map);
-    
-    if (OPAL_SUCCESS != opal_timer_base_open()) {
-        str = "timer open failed";
+    if (OPAL_ERR_BAD_PARAM == rc)  {
+        str = "shmem";
+        goto breakout;
+    }
+
+    if (OPAL_SUCCESS != (rc = opal_timer_base_open()) &&
+        OPAL_ERR_BAD_PARAM != rc) {
+        str = "timer open";
         goto error;
     }
     map = OBJ_NEW(opal_info_component_map_t);
     map->type = strdup("timer");
     map->components = &opal_timer_base_components_opened;
     opal_pointer_array_add(component_map, map);
-    
+    if (OPAL_ERR_BAD_PARAM == rc)  {
+        str = "timer";
+    }
+
+ breakout:
     /* Restore the environment to what it was before we started so that
      * if users setenv OMPI_MCA_<framework name> to some value, they'll
      * see that value when it is shown via --param output.
@@ -416,12 +476,18 @@ int opal_info_register_components(opal_pointer_array_t *mca_types,
         }
     }
     
-    return OPAL_SUCCESS;
+    if (OPAL_ERR_BAD_PARAM == rc) {
+        fprintf(stderr, "\nA \"bad parameter\" error was encountered when opening the OPAL %s framework.\n", str);
+        fprintf(stderr, "The output received from that framework includes the following parameters:\n\n");
+    }
+
+    return rc;
 
  error:
-    fprintf(stderr, "opal_info_register: %s\n", str);
+    fprintf(stderr, "opal_info_register: %s failed\n", str);
     return OPAL_ERROR;
 }
+
 
 void opal_info_close_components(void)
 {
@@ -440,9 +506,10 @@ void opal_info_close_components(void)
     (void) opal_event_base_close();
         
     /* Do not call OPAL's installdirs close; it will be handled in
-     * opal_finalize_util().
+     * opal_finalize_util().  Ditto for opal_if_base_close().
      */
 }
+
 
 void opal_info_show_path(const char *type, const char *value)
 {
@@ -573,8 +640,8 @@ void opal_info_do_params(bool want_all_in, bool want_internal,
     if (want_all_in) {
         want_all = true;
     } else {
-        /* See if the special param "all" was givin to --param; that
-         * superceeds any individual type
+        /* See if the special param "all" was given to --param; that
+         * supercedes any individual type
          */
         count = opal_cmd_line_get_ninsts(opal_info_cmd_line, p);
         for (i = 0; i < count; ++i) {
@@ -628,6 +695,27 @@ void opal_info_do_params(bool want_all_in, bool want_internal,
     mca_base_param_dump_release(info);
 }
 
+void opal_info_err_params(opal_pointer_array_t *component_map)
+{
+    opal_info_component_map_t *map, *mptr;
+    int i;
+    opal_list_t *info=NULL;
+
+    /* all we want to do is display the LAST entry in the
+     * component_map array as this is the one that generated the error
+     */
+    for (i=0; i < component_map->size; i++) {
+        if (NULL == (mptr = (opal_info_component_map_t*)opal_pointer_array_get_item(component_map, i))) {
+            continue;
+        }
+        map = mptr;
+    }
+    mca_base_param_dump(&info, true);
+    opal_info_show_mca_params(info, map->type, opal_info_component_all, true);
+    fprintf(stderr, "\n");
+    return;
+}
+
 void opal_info_show_mca_params(opal_list_t *info,
                                const char *type, const char *component, 
                                bool want_internal)
@@ -640,7 +728,7 @@ void opal_info_show_mca_params(opal_list_t *info,
     mca_base_param_source_t source;
     char *src_file;
     
-    for (i = opal_list_get_first(info); i != opal_list_get_last(info);
+    for (i = opal_list_get_first(info); i != opal_list_get_end(info);
          i = opal_list_get_next(i)) {
         p = (mca_base_param_info_t*) i;
         

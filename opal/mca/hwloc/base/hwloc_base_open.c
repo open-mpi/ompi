@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -213,7 +213,7 @@ int opal_hwloc_base_open(void)
                 /* error - cannot redefine the default ranking policy */
                 opal_show_help("help-opal-hwloc-base.txt", "redefining-policy", true,
                                "core", opal_hwloc_base_print_binding(opal_hwloc_binding_policy));
-                return OPAL_ERR_SILENT;
+                return OPAL_ERR_BAD_PARAM;
             }
             OPAL_SET_BINDING_POLICY(opal_hwloc_binding_policy, OPAL_BIND_TO_CORE);
             opal_hwloc_binding_policy |= OPAL_BIND_GIVEN;

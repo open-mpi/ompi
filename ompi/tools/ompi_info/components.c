@@ -68,9 +68,6 @@
 
 
 #include "ompi/tools/ompi_info/ompi_info.h"
-/*
- * Public variables
- */
 
 
 /*
@@ -90,7 +87,7 @@ static bool opened_components = false;
 int ompi_info_register_components(opal_pointer_array_t *mca_types,
                                   opal_pointer_array_t *component_map)
 {
-    int i;
+    int i, rc;
     char *env, *str;
     char *target, *save, *type;
     char **env_save=NULL;
@@ -121,8 +118,11 @@ int ompi_info_register_components(opal_pointer_array_t *mca_types,
     }
     
     /* Register the MPI layer's MCA parameters */
-    if (OMPI_SUCCESS != ompi_mpi_register_params()) {
-        str = "ompi_mpi_Register_params failed";
+    if (OMPI_SUCCESS != (rc = ompi_mpi_register_params())) {
+        str = "ompi_mpi_register_params";
+        if (OMPI_ERR_BAD_PARAM == rc)  {
+            goto breakout;
+        }
         goto error;
     }
     
@@ -131,123 +131,205 @@ int ompi_info_register_components(opal_pointer_array_t *mca_types,
     map->type = strdup("base");
     opal_pointer_array_add(component_map, map);
     
-    /* set default error message from here forward */
-    str = "A component framework failed to open properly.";
-    
     /* MPI frameworks */
-    
-    if (OMPI_SUCCESS != mca_allocator_base_open()) {
+    if (OMPI_SUCCESS != (rc = mca_allocator_base_open()) &&
+        OMPI_ERR_BAD_PARAM != rc) {
+        str = "allocator open";
         goto error;
     }
     map = OBJ_NEW(opal_info_component_map_t);
     map->type = strdup("allocator");
     map->components = &mca_allocator_base_components;
     opal_pointer_array_add(component_map, map);
-    
-    if (OMPI_SUCCESS != mca_btl_base_open()) {
+    if (OMPI_ERR_BAD_PARAM == rc)  {
+        str = "allocator";
+        goto breakout;
+    }
+
+    if (OMPI_SUCCESS != (rc = mca_btl_base_open()) &&
+        OMPI_ERR_BAD_PARAM != rc) {
+        str = "btl open";
         goto error;
     }
     map = OBJ_NEW(opal_info_component_map_t);
     map->type = strdup("btl");
     map->components = &mca_btl_base_components_opened;
     opal_pointer_array_add(component_map, map);
-    
-    if (OMPI_SUCCESS != mca_coll_base_open()) {
+    if (OMPI_ERR_BAD_PARAM == rc)  {
+        str = "btl";
+        goto breakout;
+    }
+
+    if (OMPI_SUCCESS != (rc = mca_coll_base_open()) &&
+        OMPI_ERR_BAD_PARAM != rc) {
+        str = "coll open";
         goto error;
     }
     map = OBJ_NEW(opal_info_component_map_t);
     map->type = strdup("coll");
     map->components = &mca_coll_base_components_opened;
     opal_pointer_array_add(component_map, map);
-    
+    if (OMPI_ERR_BAD_PARAM == rc)  {
+        str = "coll";
+        goto breakout;
+    }
+
 #if OPAL_ENABLE_FT_CR == 1
-    if (OMPI_SUCCESS != ompi_crcp_base_open()) {
+    if (OMPI_SUCCESS != (rc = ompi_crcp_base_open()) &&
+        OMPI_ERR_BAD_PARAM != rc) {
+        str = "crcp open";
         goto error;
     }
     map = OBJ_NEW(opal_info_component_map_t);
     map->type = strdup("crcp");
     map->components = &ompi_crcp_base_components_available;
     opal_pointer_array_add(component_map, map);
+    if (OMPI_ERR_BAD_PARAM == rc)  {
+        str = "crcp";
+        goto breakout;
+    }
 #endif
     
-    if (OMPI_SUCCESS != ompi_dpm_base_open()) {
+    if (OMPI_SUCCESS != (rc = ompi_dpm_base_open()) &&
+        OMPI_ERR_BAD_PARAM != rc) {
+        str = "dpm open";
         goto error;
     }
     map = OBJ_NEW(opal_info_component_map_t);
     map->type = strdup("dpm");
     map->components = &ompi_dpm_base_components_available;
     opal_pointer_array_add(component_map, map);
-    
-    if (OMPI_SUCCESS != mca_fbtl_base_open()) {
+    if (OMPI_ERR_BAD_PARAM == rc)  {
+        str = "dpm";
+        goto breakout;
+    }
+
+    if (OMPI_SUCCESS != (rc = mca_fbtl_base_open()) &&
+        OMPI_ERR_BAD_PARAM != rc) {
+        str = "fbtl open";
         goto error;
     }
     map = OBJ_NEW(opal_info_component_map_t);
     map->type = strdup("fbtl");
     map->components = &mca_fbtl_base_components_opened;
     opal_pointer_array_add(component_map, map);
+    if (OMPI_ERR_BAD_PARAM == rc)  {
+        str = "fbtl";
+        goto breakout;
+    }
 
-    if (OMPI_SUCCESS != mca_fcoll_base_open()) {
+    if (OMPI_SUCCESS != (rc = mca_fcoll_base_open()) &&
+        OMPI_ERR_BAD_PARAM != rc) {
+        str = "fcoll open";
         goto error;
     }
     map = OBJ_NEW(opal_info_component_map_t);
     map->type = strdup("fcoll");
     map->components = &mca_fcoll_base_components_opened;
     opal_pointer_array_add(component_map, map);
+    if (OMPI_ERR_BAD_PARAM == rc)  {
+        str = "fcoll";
+        goto breakout;
+    }
 
-    if (OMPI_SUCCESS != mca_fs_base_open()) {
+    if (OMPI_SUCCESS != (rc = mca_fs_base_open()) &&
+        OMPI_ERR_BAD_PARAM != rc) {
+        str = "fs open";
         goto error;
     }
     map = OBJ_NEW(opal_info_component_map_t);
     map->type = strdup("fs");
     map->components = &mca_fs_base_components_opened;
     opal_pointer_array_add(component_map, map);
+    if (OMPI_ERR_BAD_PARAM == rc)  {
+        str = "fs";
+        goto breakout;
+    }
 
-    if (OMPI_SUCCESS != mca_io_base_open()) {
+    if (OMPI_SUCCESS != (rc = mca_io_base_open()) &&
+        OMPI_ERR_BAD_PARAM != rc) {
+        str = "io open";
         goto error;
     }
     map = OBJ_NEW(opal_info_component_map_t);
     map->type = strdup("io");
     map->components = &mca_io_base_components_opened;
     opal_pointer_array_add(component_map, map);
+    if (OMPI_ERR_BAD_PARAM == rc)  {
+        str = "io";
+        goto breakout;
+    }
 
-    if (OMPI_SUCCESS != mca_mpool_base_open()) {
+    if (OMPI_SUCCESS != (rc = mca_mpool_base_open()) &&
+        OMPI_ERR_BAD_PARAM != rc) {
+        str = "mpool open";
         goto error;
     }
     map = OBJ_NEW(opal_info_component_map_t);
     map->type = strdup("mpool");
     map->components = &mca_mpool_base_components;
     opal_pointer_array_add(component_map, map);
-    
-    if (OMPI_SUCCESS != ompi_mtl_base_open()) {
+    if (OMPI_ERR_BAD_PARAM == rc)  {
+        str = "mpool";
+        goto breakout;
+    }
+
+    if (OMPI_SUCCESS != (rc = ompi_mtl_base_open()) &&
+        OMPI_ERR_BAD_PARAM != rc) {
+        str = "mtl open";
         goto error;
     }
     map = OBJ_NEW(opal_info_component_map_t);
     map->type = strdup("mtl");
     map->components = &ompi_mtl_base_components_opened;
     opal_pointer_array_add(component_map, map);
-    
-    ompi_op_base_open();
+    if (OMPI_ERR_BAD_PARAM == rc)  {
+        str = "mtl";
+        goto breakout;
+    }
+
+    if (OMPI_SUCCESS != (rc = ompi_op_base_open()) &&
+        OMPI_ERR_BAD_PARAM != rc) {
+        str = "op open";
+        goto error;
+    }
     map = OBJ_NEW(opal_info_component_map_t);
     map->type = strdup("op");
     map->components = &ompi_op_base_components_opened;
     opal_pointer_array_add(component_map, map);
-    
-    if (OMPI_SUCCESS != ompi_osc_base_open()) {
+    if (OMPI_ERR_BAD_PARAM == rc)  {
+        str = "op";
+        goto breakout;
+    }
+
+    if (OMPI_SUCCESS != (rc = ompi_osc_base_open()) &&
+        OMPI_ERR_BAD_PARAM != rc) {
+        str = "osc open";
         goto error;
     }
     map = OBJ_NEW(opal_info_component_map_t);
     map->type = strdup("osc");
     map->components = &ompi_osc_base_open_components;
     opal_pointer_array_add(component_map, map);
-    
-    if (OMPI_SUCCESS != mca_pml_base_open()) {
+    if (OMPI_ERR_BAD_PARAM == rc)  {
+        str = "osc";
+        goto breakout;
+    }
+
+    if (OMPI_SUCCESS != (rc = mca_pml_base_open()) &&
+        OMPI_ERR_BAD_PARAM != rc) {
+        str = "pml open";
         goto error;
     }
     map = OBJ_NEW(opal_info_component_map_t);
     map->type = strdup("pml");
     map->components = &mca_pml_base_components_available;
     opal_pointer_array_add(component_map, map);
-    
+    if (OMPI_ERR_BAD_PARAM == rc)  {
+        str = "pml";
+        goto breakout;
+    }
+
     /* No need to call the bml_base_open() because the ob1 pml calls it.
      * mca_bml_base_open();
      */
@@ -256,49 +338,80 @@ int ompi_info_register_components(opal_pointer_array_t *mca_types,
     map->components = &mca_bml_base_components_available;
     opal_pointer_array_add(component_map, map);
     
-    if (OMPI_SUCCESS != ompi_pubsub_base_open()) {
+    if (OMPI_SUCCESS != (rc = ompi_pubsub_base_open()) &&
+        OMPI_ERR_BAD_PARAM != rc) {
+        str = "pubsub open";
         goto error;
     }
     map = OBJ_NEW(opal_info_component_map_t);
     map->type = strdup("pubsub");
     map->components = &ompi_pubsub_base_components_available;
     opal_pointer_array_add(component_map, map);
-    
-    if (OMPI_SUCCESS != mca_rcache_base_open()) {
+    if (OMPI_ERR_BAD_PARAM == rc)  {
+        str = "pubsub";
+        goto breakout;
+    }
+
+    if (OMPI_SUCCESS != (rc = mca_rcache_base_open()) &&
+        OMPI_ERR_BAD_PARAM != rc) {
+        str = "rcache open";
         goto error;
     }
     map = OBJ_NEW(opal_info_component_map_t);
     map->type = strdup("rcache");
     map->components = &mca_rcache_base_components;
     opal_pointer_array_add(component_map, map);
-    
-    if (OMPI_SUCCESS != mca_sharedfp_base_open()) {
+    if (OMPI_ERR_BAD_PARAM == rc)  {
+        str = "rcache";
+        goto breakout;
+    }
+
+    if (OMPI_SUCCESS != (rc = mca_sharedfp_base_open()) &&
+        OMPI_ERR_BAD_PARAM != rc) {
+        str = "sharedfp open";
         goto error;
     }
     map = OBJ_NEW(opal_info_component_map_t);
     map->type = strdup("sharedfp");
     map->components = &mca_sharedfp_base_components_opened;
     opal_pointer_array_add(component_map, map);
-    
-    if (OMPI_SUCCESS != mca_topo_base_open()) {
+    if (OMPI_ERR_BAD_PARAM == rc)  {
+        str = "sharedfp";
+        goto breakout;
+    }
+
+    if (OMPI_SUCCESS != (rc = mca_topo_base_open()) &&
+        OMPI_ERR_BAD_PARAM != rc) {
+        str = "topo open";
         goto error;
     }
     map = OBJ_NEW(opal_info_component_map_t);
     map->type = strdup("topo");
     map->components = &mca_topo_base_components_opened;
     opal_pointer_array_add(component_map, map);
-    
-    if (OMPI_SUCCESS != mca_vprotocol_base_open(NULL)) {
+    if (OMPI_ERR_BAD_PARAM == rc)  {
+        str = "topo";
+        goto breakout;
+    }
+
+    if (OMPI_SUCCESS != (rc = mca_vprotocol_base_open(NULL)) &&
+        OMPI_ERR_BAD_PARAM != rc) {
+        str = "vprotocol open";
         goto error;
     }
     map = OBJ_NEW(opal_info_component_map_t);
     map->type = strdup("vprotocol");
     map->components = &mca_vprotocol_base_components_available;
     opal_pointer_array_add(component_map, map);
+    if (OMPI_ERR_BAD_PARAM == rc)  {
+        str = "vprotocol";
+        goto breakout;
+    }
 
     /* flag that we need to close components */
     need_close_components = true;
 
+ breakout:
     /* Restore the environment to what it was before we started so that
      * if users setenv OMPI_MCA_<framework name> to some value, they'll
      * see that value when it is shown via --param output.
@@ -310,18 +423,17 @@ int ompi_info_register_components(opal_pointer_array_t *mca_types,
         }
     }
     
-    /* All done */
-    
-    opened_components = true;
-    return OMPI_SUCCESS;
-    
-error:
-    fprintf(stderr, "%s\n", str);
-    fprintf(stderr, "ompi_info will likely not display all configuration information\n");
-    if (need_close_components) {
-        opened_components = true;
-        ompi_info_close_components();
+    if (OPAL_ERR_BAD_PARAM == rc) {
+        fprintf(stderr, "\nA \"bad parameter\" error was encountered when opening the OMPI %s framework\n", str);
+        fprintf(stderr, "The output received from that framework includes the following parameters:\n\n");
     }
+
+    opened_components = true;
+    return rc;
+
+ error:
+    fprintf(stderr, "ompi_info_register: %s failed\n", str);
+    fprintf(stderr, "ompi_info will likely not display all configuration information\n");
     return OMPI_ERROR;
 }
 
@@ -338,12 +450,6 @@ void ompi_info_close_components()
      * error?
      */
         
-    /* close the OPAL components */
-    (void) opal_info_close_components();
-
-    /* close the ORTE components */
-    (void) orte_info_close_components();
-
 #if OPAL_ENABLE_FT_CR == 1
     (void) ompi_crcp_base_close();
 #endif
@@ -364,4 +470,7 @@ void ompi_info_close_components()
     (void) mca_coll_base_close();
     (void) mca_allocator_base_close();
     (void) ompi_osc_base_close();
+
+    /* close the ORTE components */
+    (void) orte_info_close_components();
 }
