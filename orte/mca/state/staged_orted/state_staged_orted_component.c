@@ -14,26 +14,26 @@
 
 #include "orte/mca/state/state.h"
 #include "orte/mca/state/base/base.h"
-#include "state_staged.h"
+#include "state_staged_orted.h"
 
 /*
  * Public string for version number
  */
-const char *orte_state_staged_component_version_string = 
-    "ORTE STATE staged MCA component version " ORTE_VERSION;
+const char *orte_state_staged_orted_component_version_string = 
+    "ORTE STATE staged_orted MCA component version " ORTE_VERSION;
 
 /*
  * Local functionality
  */
-static int state_staged_open(void);
-static int state_staged_close(void);
-static int state_staged_component_query(mca_base_module_t **module, int *priority);
+static int state_staged_orted_open(void);
+static int state_staged_orted_close(void);
+static int state_staged_orted_component_query(mca_base_module_t **module, int *priority);
 
 /*
  * Instantiate the public struct with all of our public information
  * and pointer to our public functions in it
  */
-orte_state_base_component_t mca_state_staged_component =
+orte_state_base_component_t mca_state_staged_orted_component =
 {
     /* Handle the general mca_component_t struct containing 
      *  meta information about the component
@@ -41,15 +41,15 @@ orte_state_base_component_t mca_state_staged_component =
     {
         ORTE_STATE_BASE_VERSION_1_0_0,
         /* Component name and version */
-        "staged",
+        "staged_orted",
         ORTE_MAJOR_VERSION,
         ORTE_MINOR_VERSION,
         ORTE_RELEASE_VERSION,
         
         /* Component open and close functions */
-        state_staged_open,
-        state_staged_close,
-        state_staged_component_query
+        state_staged_orted_open,
+        state_staged_orted_close,
+        state_staged_orted_component_query
     },
     {
         /* The component is checkpoint ready */
@@ -59,29 +59,29 @@ orte_state_base_component_t mca_state_staged_component =
 
 static bool select_me = false;
 
-static int state_staged_open(void) 
+static int state_staged_orted_open(void) 
 {
     int tmp;
-    mca_base_component_t *c=&mca_state_staged_component.base_version;
 
-    mca_base_param_reg_int(c, "select",
-                           "Use this component",
-                           false, false, (int)false, &tmp);
+    mca_base_param_reg_int_name("state", "staged_select",
+                                "Use this component",
+                                false, false, (int)false, &tmp);
     select_me = OPAL_INT_TO_BOOL(tmp);
 
     return ORTE_SUCCESS;
 }
 
-static int state_staged_close(void)
+static int state_staged_orted_close(void)
 {
     return ORTE_SUCCESS;
 }
 
-static int state_staged_component_query(mca_base_module_t **module, int *priority)
+static int state_staged_orted_component_query(mca_base_module_t **module, int *priority)
 {
-    if (ORTE_PROC_IS_HNP && select_me) {
+    if (ORTE_PROC_IS_DAEMON && select_me) {
+        /* set our priority high */
         *priority = 1000;
-        *module = (mca_base_module_t *)&orte_state_staged_module;
+        *module = (mca_base_module_t *)&orte_state_staged_orted_module;
         return ORTE_SUCCESS;        
     }
     
