@@ -98,6 +98,7 @@ int ompi_info_init(void)
 {
     char val[MPI_MAX_INFO_VAL];
     char *cptr;
+    int lvl;
 
     /* initialize table */
 
@@ -130,12 +131,9 @@ int ompi_info_init(void)
     /* max procs for the entire job */
     if (NULL != (cptr = getenv("OMPI_MCA_orte_ess_num_procs"))) {
         ompi_info_set(&ompi_mpi_info_env.info, "maxprocs", cptr);
+        /* Open MPI does not support the "soft" option, so set it to maxprocs */
+        ompi_info_set(&ompi_mpi_info_env.info, "soft", cptr);
     }
-
-#if 0
-    /* Open MPI does not support the "soft" option */
-    ompi_info_set(&ompi_mpi_info_env.info, "soft", "N/A");
-#endif
 
     /* local host name */
     gethostname(val, MPI_MAX_INFO_VAL);
@@ -154,30 +152,65 @@ int ompi_info_init(void)
     }
 #endif
 
-    /* working directory of this process */
-    opal_getcwd(val, MPI_MAX_INFO_VAL);
-    ompi_info_set(&ompi_mpi_info_env.info, "wdir", val);
+    /* initial working dir of this process - only set when
+     * run by mpiexec as we otherwise have no reliable way
+     * of determining the value
+     */
+    if (NULL != (cptr = getenv("OMPI_MCA_initial_wdir"))) {
+        opal_output(0, "GOT WDIR %s", cptr);
+        ompi_info_set(&ompi_mpi_info_env.info, "wdir", cptr);
+    }
+
+    /* provide the REQUESTED thread level - may be different
+     * than the ACTUAL thread level you get
+     */
+    if (NULL != (cptr = getenv("OMPI_REQUESTED_THREAD_LEVEL"))) {
+        /* harvest the integer */
+        lvl = strtol(cptr, NULL, 10);
+        /* ugly, but have to do a switch to find the string representation */
+        switch(lvl) {
+        case MPI_THREAD_SINGLE:
+            ompi_info_set(&ompi_mpi_info_env.info, "thread_level", "MPI_THREAD_SINGLE");
+            break;
+        case MPI_THREAD_FUNNELED:
+            ompi_info_set(&ompi_mpi_info_env.info, "thread_level", "MPI_THREAD_FUNNELED");
+            break;
+        case MPI_THREAD_SERIALIZED:
+            ompi_info_set(&ompi_mpi_info_env.info, "thread_level", "MPI_THREAD_SERIALIZED");
+            break;
+        case MPI_THREAD_MULTIPLE:
+            ompi_info_set(&ompi_mpi_info_env.info, "thread_level", "MPI_THREAD_MULTIPLE");
+            break;
+        default:
+            /* do nothing - don't know the value */
+            break;
+        }
+    }
+
+
+
+    /**** now some OMPI-specific values that other MPIs may not provide ****/
 
     /* the number of app_contexts in this job */
     if (NULL != (cptr = getenv("OMPI_NUM_APP_CTX"))) {
-        ompi_info_set(&ompi_mpi_info_env.info, "num_app_ctx", cptr);
+        ompi_info_set(&ompi_mpi_info_env.info, "ompi_num_apps", cptr);
     }
 
     /* space-separated list of first MPI rank of each app_context */
     if (NULL != (cptr = getenv("OMPI_FIRST_RANKS"))) {
-        ompi_info_set(&ompi_mpi_info_env.info, "first_rank", cptr);
+        ompi_info_set(&ompi_mpi_info_env.info, "ompi_first_rank", cptr);
     }
 
     /* space-separated list of num procs for each app_context */
     if (NULL != (cptr = getenv("OMPI_APP_CTX_NUM_PROCS"))) {
-        ompi_info_set(&ompi_mpi_info_env.info, "np", cptr);
+        ompi_info_set(&ompi_mpi_info_env.info, "ompi_np", cptr);
     }
 
     /* location of the directory containing any prepositioned files
      * the user may have requested
      */
     if (NULL != (cptr = getenv("OMPI_FILE_LOCATION"))) {
-        ompi_info_set(&ompi_mpi_info_env.info, "positioned_file_dir", cptr);
+        ompi_info_set(&ompi_mpi_info_env.info, "ompi_positioned_file_dir", cptr);
     }
 
     /* All done */
@@ -289,7 +322,7 @@ int ompi_info_get (ompi_info_t *info, char *key, int valuelen,
                strcpy(value, search->ie_value);
           } else {
                opal_strncpy(value, search->ie_value, valuelen);
-               value[valuelen] = 0;
+               value[valuelen-1] = 0;
           }
     }
     OPAL_THREAD_UNLOCK(info->i_lock);
