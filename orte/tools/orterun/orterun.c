@@ -1698,6 +1698,7 @@ static int create_app(int argc, char* argv[],
                     free(param);
                     param = strdup(orterun_globals.prefix);
                 }
+                free(value);
             } else if (NULL != orterun_globals.prefix) {
                 param = orterun_globals.prefix;
             } else if (opal_cmd_line_is_taken(&cmd_line, "prefix")){
