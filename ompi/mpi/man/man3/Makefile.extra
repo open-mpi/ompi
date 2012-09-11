@@ -1,6 +1,7 @@
 # -*- makefile -*-
 # Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
+# Copyright (c) 2012      Los Alamos National Security, LLC.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -181,6 +182,7 @@ mpi_api_man_pages = \
         mpi/man/man3/MPI_Info_create.3 \
         mpi/man/man3/MPI_Info_delete.3 \
         mpi/man/man3/MPI_Info_dup.3 \
+        mpi/man/man3/MPI_Info_env.3 \
         mpi/man/man3/MPI_Info_f2c.3 \
         mpi/man/man3/MPI_Info_free.3 \
         mpi/man/man3/MPI_Info_get.3 \
