@@ -205,6 +205,12 @@ int orte_odls_base_default_get_add_procs_data(opal_buffer_t *data,
         return rc;
     }
     
+    /* pack the MPI-allowed flag for this job */
+    if (ORTE_SUCCESS != (rc = opal_dss.pack(data, &jdata->gang_launched, 1, OPAL_BOOL))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    
     /* pack the stdin target  */
     if (ORTE_SUCCESS != (rc = opal_dss.pack(data, &jdata->stdin_target, 1, ORTE_VPID))) {
         ORTE_ERROR_LOG(rc);
@@ -482,6 +488,12 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
     /* unpack the control flags for the job */
     cnt=1;
     if (ORTE_SUCCESS != (rc = opal_dss.unpack(data, &jdata->controls, &cnt, ORTE_JOB_CONTROL))) {
+        ORTE_ERROR_LOG(rc);
+        goto REPORT_ERROR;
+    }
+    /* unpack the MPI-allowed flag for this job */
+    cnt=1;
+    if (ORTE_SUCCESS != (rc = opal_dss.unpack(data, &jdata->gang_launched, &cnt, OPAL_BOOL))) {
         ORTE_ERROR_LOG(rc);
         goto REPORT_ERROR;
     }
@@ -949,6 +961,8 @@ static int setup_child(orte_proc_t *child,
          * ensuring they start out matching.
          */
         opal_setenv("PWD", param, true, env);
+        /* update the initial wdir value too */
+        opal_setenv("OMPI_MCA_initial_wdir", param, true, env);
     }
     free(param);
 
@@ -988,6 +1002,8 @@ static int setup_path(orte_app_context_t *app)
          */
         getcwd(dir, sizeof(dir));
         opal_setenv("PWD", dir, true, &app->env);
+        /* update the initial wdir value too */
+        opal_setenv("OMPI_MCA_initial_wdir", dir, true, &app->env);
     }
 
     /* Search for the OMPI_exec_path and PATH settings in the environment. */
