@@ -615,7 +615,6 @@ int orterun(int argc, char *argv[])
     if (opal_cmd_line_is_taken(&cmd_line, "prefix") ||
         '/' == argv[0][0] || want_prefix_by_default) {
         size_t param_len;
-
         if ('/' == argv[0][0]) {
             char* tmp_basename = NULL;
             /* If they specified an absolute path, strip off the
@@ -638,22 +637,29 @@ int orterun(int argc, char *argv[])
         }
         /* if both are given, check to see if they match */
         if (opal_cmd_line_is_taken(&cmd_line, "prefix") && NULL != orterun_globals.path_to_mpirun) {
+            char *tmp_basename;
             /* if they don't match, then that merits a warning */
             param = strdup(opal_cmd_line_get_param(&cmd_line, "prefix", 0, 0));
-            if (0 != strcmp(param, orterun_globals.path_to_mpirun)) {
+            /* ensure we strip any trailing '/' */
+            if (0 == strcmp(OPAL_PATH_SEP, &(param[strlen(param)-1]))) {
+                param[strlen(param)-1] = '\0';
+            }
+            tmp_basename = strdup(orterun_globals.path_to_mpirun);
+            if (0 == strcmp(OPAL_PATH_SEP, &(tmp_basename[strlen(tmp_basename)-1]))) {
+                tmp_basename[strlen(tmp_basename)-1] = '\0';
+            }
+            if (0 != strcmp(param, tmp_basename)) {
                 orte_show_help("help-orterun.txt", "orterun:double-prefix",
-                               true, orte_basename, param,
-                               orterun_globals.path_to_mpirun, orte_basename);
+                               true, orte_basename, orte_basename,
+                               param, tmp_basename, orte_basename);
                 /* use the prefix over the path-to-mpirun so that
                  * people can specify the backend prefix as different
                  * from the local one
                  */
                 free(orterun_globals.path_to_mpirun);
                 orterun_globals.path_to_mpirun = NULL;
-            } else {
-                /* since they match, just use param */
-                free(orterun_globals.path_to_mpirun);
             }
+            free(tmp_basename);
         } else if (NULL != orterun_globals.path_to_mpirun) {
             param = orterun_globals.path_to_mpirun;
         } else if (opal_cmd_line_is_taken(&cmd_line, "prefix")){
@@ -1669,19 +1675,24 @@ static int create_app(int argc, char* argv[],
                 NULL != orterun_globals.prefix) {
                 /* if they don't match, then that merits a warning */
                 param = strdup(opal_cmd_line_get_param(&cmd_line, "prefix", 0, 0));
-                if (0 != strcmp(param, orterun_globals.prefix)) {
+                /* ensure we strip any trailing '/' */
+                if (0 == strcmp(OPAL_PATH_SEP, &(param[strlen(param)-1]))) {
+                    param[strlen(param)-1] = '\0';
+                }
+                value = strdup(orterun_globals.prefix);
+                if (0 == strcmp(OPAL_PATH_SEP, &(value[strlen(value)-1]))) {
+                    value[strlen(value)-1] = '\0';
+                }
+                if (0 != strcmp(param, value)) {
                     orte_show_help("help-orterun.txt", "orterun:app-prefix-conflict",
-                                   true, orte_basename, orterun_globals.prefix, param);
+                                   true, orte_basename, value, param);
                     /* let the global-level prefix take precedence since we
-                     * know that one is being  used
+                     * know that one is being used
                      */
                     free(param);
-                    param = orterun_globals.prefix;
-                } else {
-                    /* since they match, just use param */
-                    free(orterun_globals.prefix);
-                    orterun_globals.prefix = NULL;
+                    param = strdup(orterun_globals.prefix);
                 }
+                free(value);
             } else if (NULL != orterun_globals.prefix) {
                 param = orterun_globals.prefix;
             } else if (opal_cmd_line_is_taken(&cmd_line, "prefix")){
