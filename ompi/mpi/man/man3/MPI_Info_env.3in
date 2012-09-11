@@ -19,13 +19,13 @@ argv
 The argv given for the application. If no arguments are passed to the application, then this value will not be set. It will also not be set in the case of a singleton that calls MPI_Init with NULL parameters, or a Fortran program.
 .TP 1i
 maxprocs
-The number of processes in the job
+The number of processes in the job.
 .TP 1i
 soft
-Open MPI does not support the \fIsoft\fP option for specifying the number of processes to be executed, so this value is set to the same as \fImaxprocs\fP
+Open MPI does not support the \fIsoft\fP option for specifying the number of processes to be executed, so this value is set to the same as \fImaxprocs\fP.
 .TP 1i
 host
-The name of the host this process is executing upon - the value returned from \fIgethostname()\fP
+The name of the host this process is executing upon - the value returned from \fIgethostname()\fP.
 .TP 1i
 arch
 The architecture of the host this process is executing upon. This value indicates the underlying chip architecture (e.g., x86_64), if it can be determined.
@@ -40,17 +40,25 @@ thread_level
 The requested MPI thread level - note that this may differ from the \fIactual\fP MPI thread level of the application.
 .TP 1i
 ompi_num_apps
-The number of application contexts in an MPMD job
+The number of application contexts in an MPMD job.  
+This is an Open MPI-specific field and value.
 .TP 1i
 ompi_np
-The number of processes in each application context, provided as a space-delimited list of integers
+The number of processes in each application context, provided as a space-delimited list of integers.
+This is an Open MPI-specific field and value.
 .TP 1i
 ompi_first_rank
 The MPI rank of the first process in each application context, provided as a space-delimited list of integers
+This is an Open MPI-specific field and value.
 .TP 1i
 ompi_positioned_file_dir
 If Open MPI was asked to pre-position files, this field provides the top-level directory where those files were place.
+This is an Open MPI-specific field and value.
 
 .SH ERRORS
-The \fIflag\fP parameter will be set to zero (false) if a value for the field has not been set.
+When calling MPI_INFO_GET(3), the \fIflag\fP parameter will be set to zero (false) if a value for the field has not been set.
 .br
+
+.SH SEE ALSO
+.ft r
+MPI_Info_get
