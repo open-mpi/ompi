@@ -951,7 +951,9 @@ static int setup_path(orte_app_context_t *app)
      */
     getcwd(dir, sizeof(dir));
     opal_setenv("PWD", dir, true, &app->env);
-        
+    /* update the initial wdir value too */
+    opal_setenv("OMPI_MCA_initial_wdir", dir, true, &app->env);
+
     /* Search for the OMPI_exec_path and PATH settings in the environment. */
     for (argvptr = app->env; *argvptr != NULL; argvptr++) { 
         if (0 == strncmp("OMPI_exec_path=", *argvptr, 15)) {

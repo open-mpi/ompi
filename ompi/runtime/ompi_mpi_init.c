@@ -385,8 +385,9 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     }
     
     /* if we were not externally started, then we need to setup
-     * two envars so the MPI_INFO_ENV can get the cmd name
-     * and argv (but only if the user supplied a non-NULL argv!)
+     * some envars so the MPI_INFO_ENV can get the cmd name
+     * and argv (but only if the user supplied a non-NULL argv!), and
+     * the requested thread level
      */
     if (NULL == getenv("OMPI_COMMAND") && NULL != argv && NULL != argv[0]) {
         asprintf(&cmd, "OMPI_COMMAND=%s", argv[0]);

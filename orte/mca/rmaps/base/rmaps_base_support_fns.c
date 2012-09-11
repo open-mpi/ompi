@@ -208,11 +208,9 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
         }
         /** if we still don't have anything */
         if (0 == opal_list_get_size(&nodes)) {
-            if (!silent) {
-                orte_show_help("help-orte-rmaps-base.txt",
-                               "orte-rmaps-base:no-available-resources",
-                               true);
-            }
+            orte_show_help("help-orte-rmaps-base.txt",
+                           "orte-rmaps-base:no-available-resources",
+                           true);
             OBJ_DESTRUCT(&nodes);
             return ORTE_ERR_SILENT;
         }
