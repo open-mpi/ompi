@@ -34,7 +34,7 @@
 #include "orte/mca/state/state.h"
 #include "orte/mca/state/base/base.h"
 #include "orte/mca/state/base/state_private.h"
-#include "state_staged.h"
+#include "state_staged_hnp.h"
 
 /*
  * Module functions: Global
@@ -45,7 +45,7 @@ static int finalize(void);
 /******************
  * STAGED module
  ******************/
-orte_state_base_module_t orte_state_staged_module = {
+orte_state_base_module_t orte_state_staged_hnp_module = {
     init,
     finalize,
     orte_state_base_activate_job_state,
@@ -107,7 +107,7 @@ static orte_state_cbfunc_t launch_callbacks[] = {
     orte_quit
 };
 
-/* staged execution requires that we start as many
+/* staged_hnp execution requires that we start as many
  * procs initially as we have resources - if we have
  * adequate resources, then we behave just like the
  * default HNP module. If we don't, then we will have
@@ -218,8 +218,8 @@ static void setup_job_complete(int fd, short args, void *cbdata)
             continue;
         }
         if (app->num_procs <= 0) {
-            /* must specify -np for staged execution */
-            orte_show_help("help-state-staged.txt", "no-np", true);
+            /* must specify -np for staged_hnp execution */
+            orte_show_help("help-state-staged-hnp.txt", "no-np", true);
             ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_SILENT_ABORT);
             OBJ_RELEASE(caddy);
             return;
@@ -248,7 +248,7 @@ static void setup_job_complete(int fd, short args, void *cbdata)
         }
     }
 
-    /* set the job map to use the staged mapper */
+    /* set the job map to use the staged_hnp mapper */
     if (NULL == jdata->map) {
         jdata->map = OBJ_NEW(orte_job_map_t);
         jdata->map->req_mapper = strdup("staged");
@@ -282,7 +282,7 @@ static void cleanup_node(orte_proc_t *proc)
         }
     }
     OPAL_OUTPUT_VERBOSE((5, orte_state_base_output,
-                         "%s state:staged:track_procs node %s has %d slots, %d slots inuse",
+                         "%s state:staged_hnp:track_procs node %s has %d slots, %d slots inuse",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), node->name,
                          (int)node->slots, (int)node->slots_inuse));
 }
@@ -296,7 +296,7 @@ static void track_procs(int fd, short args, void *cbdata)
     orte_proc_t *pdata;
 
     OPAL_OUTPUT_VERBOSE((5, orte_state_base_output,
-                         "%s state:staged:track_procs called for proc %s state %s",
+                         "%s state:staged_hnp:track_procs called for proc %s state %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(proc),
                          orte_proc_state_to_str(state)));
@@ -316,7 +316,7 @@ static void track_procs(int fd, short args, void *cbdata)
     if (ORTE_PROC_STATE_REGISTERED == state) {
         if (pdata->mpi_proc && !jdata->gang_launched) {
             /* we can't support this - issue an error and abort */
-            orte_show_help("help-state-staged.txt", "mpi-procs-not-supported", true);
+            orte_show_help("help-state-staged-hnp.txt", "mpi-procs-not-supported", true);
             ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_SILENT_ABORT);
         }
         /* update the proc state */

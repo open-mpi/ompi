@@ -14,8 +14,8 @@
  * 
  */
 
-#ifndef MCA_STATE_STAGED_EXPORT_H
-#define MCA_STATE_STAGED_EXPORT_H
+#ifndef MCA_STATE_STAGED_HNP_EXPORT_H
+#define MCA_STATE_STAGED_HNP_EXPORT_H
 
 #include "orte_config.h"
 
@@ -27,10 +27,10 @@ BEGIN_C_DECLS
  * Local Component structures
  */
 
-ORTE_MODULE_DECLSPEC extern orte_state_base_component_t mca_state_staged_component;
+ORTE_MODULE_DECLSPEC extern orte_state_base_component_t mca_state_staged_hnp_component;
 
-ORTE_DECLSPEC extern orte_state_base_module_t orte_state_staged_module;
+ORTE_DECLSPEC extern orte_state_base_module_t orte_state_staged_hnp_module;
 
 END_C_DECLS
 
-#endif /* MCA_STATE_STAGED_EXPORT_H */
+#endif /* MCA_STATE_STAGED_HNP_EXPORT_H */

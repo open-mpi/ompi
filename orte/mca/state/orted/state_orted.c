@@ -38,24 +38,21 @@ static int init(void);
 static int finalize(void);
 
 /******************
- * ORTED module - just uses base functions after
- * initializing the proc state machine. Job state
- * machine is unused by ortedlication procs at this
- * time.
+ * ORTED module
  ******************/
 orte_state_base_module_t orte_state_orted_module = {
-		init,
-		finalize,
-		orte_state_base_activate_job_state,
-		orte_state_base_add_job_state,
-		orte_state_base_set_job_state_callback,
-		orte_state_base_set_job_state_priority,
-		orte_state_base_remove_job_state,
-		orte_state_base_activate_proc_state,
-		orte_state_base_add_proc_state,
-		orte_state_base_set_proc_state_callback,
-		orte_state_base_set_proc_state_priority,
-		orte_state_base_remove_proc_state
+    init,
+    finalize,
+    orte_state_base_activate_job_state,
+    orte_state_base_add_job_state,
+    orte_state_base_set_job_state_callback,
+    orte_state_base_set_job_state_priority,
+    orte_state_base_remove_job_state,
+    orte_state_base_activate_proc_state,
+    orte_state_base_add_proc_state,
+    orte_state_base_set_proc_state_callback,
+    orte_state_base_set_proc_state_priority,
+    orte_state_base_remove_proc_state
 };
 
 /* Local functions */
@@ -73,16 +70,16 @@ static orte_state_cbfunc_t job_callbacks[] = {
 };
 
 static orte_proc_state_t proc_states[] = {
-		ORTE_PROC_STATE_RUNNING,
-		ORTE_PROC_STATE_REGISTERED,
-		ORTE_PROC_STATE_IOF_COMPLETE,
-		ORTE_PROC_STATE_WAITPID_FIRED
+    ORTE_PROC_STATE_RUNNING,
+    ORTE_PROC_STATE_REGISTERED,
+    ORTE_PROC_STATE_IOF_COMPLETE,
+    ORTE_PROC_STATE_WAITPID_FIRED
 };
 static orte_state_cbfunc_t proc_callbacks[] = {
-		track_procs,
-		track_procs,
-		track_procs,
-		track_procs
+    track_procs,
+    track_procs,
+    track_procs,
+    track_procs
 };
 
 /************************
