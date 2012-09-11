@@ -27,7 +27,7 @@
 #include "orte/runtime/runtime.h"
 
 #include "opal/util/argv.h"
-
+#include "opal/runtime/opal_info_support.h"
 #include "opal/mca/event/base/base.h"
 #include "opal/util/output.h"
 #include "opal/mca/base/base.h"
@@ -528,6 +528,9 @@ void orte_info_close_components()
             }
         }
         OBJ_DESTRUCT(&component_map);
+
+        /* close the OPAL components */
+        (void) opal_info_close_components();
     }
     
     opened_components = false;

@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2008-2012 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -110,8 +110,7 @@ typedef struct mca_base_module_2_0_0_t mca_base_module_2_0_0_t;
 /**
  * MCA component open function.
  *
- * @retval MCA_SUCCESS (or OPAL_SUCCESS or ORTE_SUCCESS or
- * OMPI_SUCCESS) This component can be used in the process.
+ * @retval OPAL_SUCCESS This component can be used in the process.
  *
  * @retval OPAL_ERR_NOT_AVAILABLE Silently ignore this component for
  * the duration of the process (it may even be unloaded from the
@@ -122,19 +121,19 @@ typedef struct mca_base_module_2_0_0_t mca_base_module_2_0_0_t;
  * be unloaded from the process).
  *
  * All MCA components can have an "open" function that is invoked once
- * per process, when the component is located and loaded.  This function
- * should register any MCA parameters (using
- * mca_base_param_register_int() and mca_base_param_register_string())
- * that will be used by the component.  Parameter registrations should
- * occur in this function because the ompi_info command can be used by
- * users to display all available MCA parameters (and their default
- * values).  However, the ompi_info command \em only invokes this open
- * function on all components (i.e., no other component API methods).
+ * per process, when the component is located and loaded.  
+ *
+ * This function should avoid registering MCA parameters (use the
+ * component "register" function for that; i.e.,
+ * mca_base_register_component_params_2_0_0_fn_t for that).  Legacy
+ * components still register MCA params in their component "open"
+ * function, but their authors should update them to use the component
+ * "register" function.
  *
  * This function can also be used to allocate any resources necessary
  * for the component (e.g., heap memory).
  *
- * This function should return MCA_SUCCESS if it wishes to remain
+ * This function should return OPAL_SUCCESS if it wishes to remain
  * loaded in the process.  Any other return value will cause the MCA
  * base to unload the component.  Although most components do not use
  * this mechanism to force themselves to be unloaded (because if they
@@ -145,14 +144,14 @@ typedef struct mca_base_module_2_0_0_t mca_base_module_2_0_0_t;
  * resources to allocate, and c) can always be used in a process
  * (albiet perhaps not selected), it may provide NULL for this
  * function.  In this cause, the MCA will act as if it called the open
- * function and it returned MCA_SUCCESS.
+ * function and it returned OPAL_SUCCESS.
  */
 typedef int (*mca_base_open_component_1_0_0_fn_t)(void);
 
 /** 
  * MCA component close function.
  *
- * @retval MCA_SUCCESS The component successfully shut down.
+ * @retval OPAL_SUCCESS The component successfully shut down.
  *
  * @retval any_other_value Some error occurred, but is likely to be
  * ignored.
@@ -168,7 +167,7 @@ typedef int (*mca_base_open_component_1_0_0_fn_t)(void);
  *
  * If the component has no resources to free, it may provide NULL for
  * this function.  In this case, the MCA will act as if it called the
- * close function and it returned MCA_SUCCESS.
+ * close function and it returned OPAL_SUCCESS.
  */
 typedef int (*mca_base_close_component_1_0_0_fn_t)(void);
 
@@ -194,8 +193,10 @@ typedef int (*mca_base_query_component_2_0_0_fn_t)(mca_base_module_2_0_0_t **mod
 /**
  * MCA component parameter registration function.
  *
- * @retval MCA_SUCCESS This component successfully registered its
+ * @retval OPAL_SUCCESS This component successfully registered its
  * parameters and can be used in this process.
+ * @retval OPAL_ERR_BAD_PARAM Indicates that the register function
+ * failed because an MCA parameter got an invalid/incorrect value.  
  *
  * @retval anything_else The MCA will ignore this component for the
  * duration of the process.
@@ -214,18 +215,27 @@ typedef int (*mca_base_query_component_2_0_0_fn_t)(mca_base_module_2_0_0_t **mod
  * function invoked on a component; component authors should take care
  * that no resources are leaked in this case.
  *
- * This function should return MCA_SUCCESS if it wishes to remain
+ * This function should return OPAL_SUCCESS if it wishes to remain
  * loaded in the process.  Any other return value will cause the MCA
  * base to unload the component.  Although most components do not use
  * this mechanism to force themselves to be unloaded (because if they
  * are immediately unloaded, ompi_info will not display them), the
  * mechanism is available should the need arise.
  *
+ * Note that if the function returns OPAL_ERR_BAD_PARAM, it is
+ * possible (likely?) that the component didn't register all of its
+ * parameters.  When this happens, ompi_info (and friends) will stop
+ * execution and print out all existing registered parameters from the
+ * entire framework (since ompi_info doesn't track individual
+ * component register failures).  This allows a user to know exactly
+ * what value is incorrect, and from where it was set (e.g., via an
+ * MCA params file).
+ *
  * If the component a) has no MCA parameters to register, b) no
  * resources to allocate, and c) can always be used in a process
  * (albiet perhaps not selected), it may provide NULL for this
  * function.  In this cause, the MCA will act as if it called the
- * registration function and it returned MCA_SUCCESS.
+ * registration function and it returned OPAL_SUCCESS.
  */
 typedef int (*mca_base_register_component_params_2_0_0_fn_t)(void);
 
@@ -333,29 +343,5 @@ typedef struct mca_base_component_data_2_0_0_t mca_base_component_data_2_0_0_t;
 #define MCA_BASE_VERSION_RELEASE 0
 #define MCA_BASE_VERSION_2_0_0 MCA_BASE_VERSION_MAJOR, MCA_BASE_VERSION_MINOR, MCA_BASE_VERSION_RELEASE
 
-
-/**
- * MCA return codes.
- */
-enum {
-  MCA_SUCCESS = 0,
-  /**< Success. */
-  MCA_ERROR = -1,
-  /**< General error. */
-  MCA_ERR_OUT_OF_RESOURCE = -2,
-  /**< Out of resources; a fatal error. */
-  MCA_ERR_TEMP_OUT_OF_RESOURCE = -3,
-  /**< Out of resources; try again later. */
-  MCA_ERR_BAD_PARAM = -5,
-  /**< Equivalent to MPI_ERR_ARG error code. */
-  MCA_ERR_NOT_IMPLEMENTED = -10,
-  /**< Returned by functions or functionality that has not yet been
-     implemented */
-  MCA_ERR_NOT_SUPPORTED = -11,
-  /**< Returned by functionality that is not supported. */
-
-  MCA_MAX_ERROR = -20
-  /**< Maximum error code. */
-};
 
 #endif /* OPAL_MCA_H */
