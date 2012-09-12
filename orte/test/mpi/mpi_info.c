@@ -23,7 +23,8 @@ int main(int argc, char* argv[])
         "thread_level",
         "ompi_num_apps",
         "ompi_first_rank",
-        "ompi_np"
+        "ompi_np",
+        "ompi_positioned_file_dir"
     };
     int i, nk;
 
