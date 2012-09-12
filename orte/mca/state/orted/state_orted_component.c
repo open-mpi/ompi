@@ -57,7 +57,7 @@ orte_state_base_component_t mca_state_orted_component =
     },
 };
 
-static int my_priority=1000;
+static int my_priority=100;
 
 static int state_orted_open(void) 
 {

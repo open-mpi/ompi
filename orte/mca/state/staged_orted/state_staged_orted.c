@@ -164,10 +164,11 @@ static void track_procs(int fd, short argc, void *cbdata)
     orte_process_name_t *proc = &caddy->name;
     orte_proc_state_t state = caddy->proc_state;
     orte_job_t *jdata;
-    orte_proc_t *pdata;
+    orte_proc_t *pdata, *pptr;
     opal_buffer_t *alert;
     int rc;
     orte_plm_cmd_flag_t cmd;
+    int i;
 
     OPAL_OUTPUT_VERBOSE((5, orte_state_base_output,
                          "%s state:staged_orted:track_procs called for proc %s state %s",
@@ -238,7 +239,20 @@ static void track_procs(int fd, short argc, void *cbdata)
                                                   orte_rml_send_callback, NULL))) {
                 ORTE_ERROR_LOG(rc);
             }
-        }
+            /* find this proc in the children array and remove it so
+             * we don't keep telling the HNP that it died
+             */
+            for (i=0; i < orte_local_children->size; i++) {
+                if (NULL == (pptr = (orte_proc_t*)opal_pointer_array_get_item(orte_local_children, i))) {
+                    continue;
+                }
+                if (pptr == pdata) {
+                    opal_pointer_array_set_item(orte_local_children, i, NULL);
+                    OBJ_RELEASE(pdata);
+                    break;
+                }
+            }
+         }
         /* Release the stdin IOF file descriptor for this child, if one
          * was defined. File descriptors for the other IOF channels - stdout,
          * stderr, and stddiag - were released when their associated pipes
@@ -286,6 +300,19 @@ static void track_procs(int fd, short argc, void *cbdata)
                                                   ORTE_RML_TAG_PLM, 0,
                                                   orte_rml_send_callback, NULL))) {
                 ORTE_ERROR_LOG(rc);
+            }
+            /* find this proc in the children array and remove it so
+             * we don't keep telling the HNP that it died
+             */
+            for (i=0; i < orte_local_children->size; i++) {
+                if (NULL == (pptr = (orte_proc_t*)opal_pointer_array_get_item(orte_local_children, i))) {
+                    continue;
+                }
+                if (pptr == pdata) {
+                    opal_pointer_array_set_item(orte_local_children, i, NULL);
+                    OBJ_RELEASE(pdata);
+                    break;
+                }
             }
         }
         break;

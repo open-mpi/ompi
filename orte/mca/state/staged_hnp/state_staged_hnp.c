@@ -270,6 +270,11 @@ static void cleanup_node(orte_proc_t *proc)
     }
     node->num_procs--;
     node->slots_inuse--;
+    OPAL_OUTPUT_VERBOSE((5, orte_state_base_output,
+                         "%s state:staged_hnp:track_procs proc %s termed node %s has %d slots, %d slots inuse",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         ORTE_NAME_PRINT(&proc->name), node->name,
+                         (int)node->slots, (int)node->slots_inuse));
     for (i=0; i < node->procs->size; i++) {
         if (NULL == (p = (orte_proc_t*)opal_pointer_array_get_item(node->procs, i))) {
             continue;
@@ -281,10 +286,6 @@ static void cleanup_node(orte_proc_t *proc)
             break;
         }
     }
-    OPAL_OUTPUT_VERBOSE((5, orte_state_base_output,
-                         "%s state:staged_hnp:track_procs node %s has %d slots, %d slots inuse",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), node->name,
-                         (int)node->slots, (int)node->slots_inuse));
 }
 
 static void track_procs(int fd, short args, void *cbdata)
