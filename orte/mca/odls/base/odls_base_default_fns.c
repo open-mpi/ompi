@@ -350,6 +350,8 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
     int32_t n;
     orte_app_context_t *app;
     orte_proc_t *pptr;
+    orte_grpcomm_collective_t *coll;
+    orte_namelist_t *nm;
 
     OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                          "%s odls:constructing child list",
@@ -582,35 +584,25 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
     }
     
  COMPLETE:
-    /* if we don't have any local procs, create
-     * the collectives so the job doesn't stall
-     */
-    if (0 == jdata->num_local_procs) {
-        orte_grpcomm_collective_t *coll;
-        orte_namelist_t *nm;
-        coll = OBJ_NEW(orte_grpcomm_collective_t);
-        coll->id = jdata->peer_modex;
-        nm = OBJ_NEW(orte_namelist_t);
-        nm->name.jobid = jdata->jobid;
-        nm->name.vpid = ORTE_VPID_WILDCARD;
-        opal_list_append(&coll->participants, &nm->super);
-        opal_list_append(&orte_grpcomm_base.active_colls, &coll->super);
-        coll = OBJ_NEW(orte_grpcomm_collective_t);
-        coll->id = jdata->peer_init_barrier;
-        nm = OBJ_NEW(orte_namelist_t);
-        nm->name.jobid = jdata->jobid;
-        nm->name.vpid = ORTE_VPID_WILDCARD;
-        opal_list_append(&coll->participants, &nm->super);
-        opal_list_append(&orte_grpcomm_base.active_colls, &coll->super);
-        coll = OBJ_NEW(orte_grpcomm_collective_t);
-        coll->id = jdata->peer_fini_barrier;
-        nm = OBJ_NEW(orte_namelist_t);
-        nm->name.jobid = jdata->jobid;
-        nm->name.vpid = ORTE_VPID_WILDCARD;
-        opal_list_append(&coll->participants, &nm->super);
-        opal_list_append(&orte_grpcomm_base.active_colls, &coll->super);
-    }
+    /* create the collectives so the job doesn't stall */
+    coll = orte_grpcomm_base_setup_collective(jdata->peer_modex);
+    nm = OBJ_NEW(orte_namelist_t);
+    nm->name.jobid = jdata->jobid;
+    nm->name.vpid = ORTE_VPID_WILDCARD;
+    opal_list_append(&coll->participants, &nm->super);
 
+    coll = orte_grpcomm_base_setup_collective(jdata->peer_init_barrier);
+    nm = OBJ_NEW(orte_namelist_t);
+    nm->name.jobid = jdata->jobid;
+    nm->name.vpid = ORTE_VPID_WILDCARD;
+    opal_list_append(&coll->participants, &nm->super);
+
+    coll = orte_grpcomm_base_setup_collective(jdata->peer_fini_barrier);
+    nm = OBJ_NEW(orte_namelist_t);
+    nm->name.jobid = jdata->jobid;
+    nm->name.vpid = ORTE_VPID_WILDCARD;
+    opal_list_append(&coll->participants, &nm->super);
+    
     /* progress any pending collectives */
     orte_grpcomm_base_progress_collectives();
     

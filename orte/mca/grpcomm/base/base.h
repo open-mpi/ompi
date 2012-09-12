@@ -72,6 +72,7 @@ ORTE_DECLSPEC orte_grpcomm_collective_t* orte_grpcomm_base_setup_collective(orte
 ORTE_DECLSPEC void orte_grpcomm_base_progress_collectives(void);
 ORTE_DECLSPEC orte_grpcomm_coll_id_t orte_grpcomm_base_get_coll_id(void);
 ORTE_DECLSPEC void orte_grpcomm_base_pack_collective(opal_buffer_t *relay,
+                                                     orte_jobid_t jobid,
                                                      orte_grpcomm_collective_t *coll,
                                                      orte_grpcomm_internal_stage_t stg);
 ORTE_DECLSPEC void orte_grpcomm_base_rollup_recv(int status, orte_process_name_t* sender,

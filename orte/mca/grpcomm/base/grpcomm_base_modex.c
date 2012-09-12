@@ -65,26 +65,29 @@ orte_grpcomm_coll_id_t orte_grpcomm_base_get_coll_id(void)
 int orte_grpcomm_base_modex(orte_grpcomm_collective_t *modex)
 {
     int rc;
-    orte_namelist_t *nm;
+    orte_namelist_t *nm, *nm2;
+    opal_list_item_t *item, *itm;
+    bool found;
+    orte_grpcomm_collective_t *cptr;
 
     OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base.output,
                          "%s grpcomm:base:modex: performing modex",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
-    /* record the collective */
-    modex->active = true;
-    modex->next_cbdata = modex;
-    opal_list_append(&orte_grpcomm_base.active_colls, &modex->super);
-
-    /* put our process name in the buffer so it can be unpacked later */
-    if (ORTE_SUCCESS != (rc = opal_dss.pack(&modex->buffer, ORTE_PROC_MY_NAME, 1, ORTE_NAME))) {
-        ORTE_ERROR_LOG(rc);
-        goto cleanup;
-    }
-    
     if (0 == opal_list_get_size(&modex->participants)) {
+        /* record the collective */
+        modex->active = true;
+        modex->next_cbdata = modex;
+        opal_list_append(&orte_grpcomm_base.active_colls, &modex->super);
+
+        /* put our process name in the buffer so it can be unpacked later */
+        if (ORTE_SUCCESS != (rc = opal_dss.pack(&modex->buffer, ORTE_PROC_MY_NAME, 1, ORTE_NAME))) {
+            ORTE_ERROR_LOG(rc);
+            goto cleanup;
+        }
+
         /* add a wildcard name to the participants so the daemon knows
-         * that everyone in my job must participate
+         * the jobid that is involved in this collective
          */
         nm = OBJ_NEW(orte_namelist_t);
         nm->name.jobid = ORTE_PROC_MY_NAME->jobid;
@@ -92,11 +95,68 @@ int orte_grpcomm_base_modex(orte_grpcomm_collective_t *modex)
         opal_list_append(&modex->participants, &nm->super);
         modex->next_cb = orte_grpcomm_base_store_modex;
     } else {
+        /* see if the collective is already present - a race condition
+         * exists where other participants may have already sent us their
+         * contribution. This would place the collective on the global
+         * array, but leave it marked as "inactive" until we call
+         * modex with the list of participants
+         */
+        found = false;
+        for (item = opal_list_get_first(&orte_grpcomm_base.active_colls);
+             item != opal_list_get_end(&orte_grpcomm_base.active_colls);
+             item = opal_list_get_next(item)) {
+            cptr = (orte_grpcomm_collective_t*)item;
+            OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base.output,
+                                 "%s CHECKING COLL id %d",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 cptr->id));
+            
+            if (modex->id == cptr->id) {
+                found = true;
+                /* remove the old entry - we will replace it
+                 * with the modex one
+                 */
+                opal_list_remove_item(&orte_grpcomm_base.active_colls, item);
+                break;
+            }
+        }
+        if (found) {
+            /* since it already exists, the list of
+             * targets contains the list of procs
+             * that have already sent us their info. Cycle
+             * thru the targets and move those entries to
+             * the modex object
+             */
+            while (NULL != (item = opal_list_remove_first(&cptr->targets))) {
+                opal_list_append(&modex->targets, item);
+            }
+            /* copy the previously-saved data across */
+            opal_dss.copy_payload(&modex->local_bucket, &cptr->local_bucket);
+            /* cleanup */
+            OBJ_RELEASE(cptr);
+        }
+        /* now add the modex to the global list of active collectives */
+        modex->next_cb = orte_grpcomm_base_store_peer_modex;
+        modex->next_cbdata = modex;
+        modex->active = true;
+        opal_list_append(&orte_grpcomm_base.active_colls, &modex->super);
+
         /* this is not amongst our peers, but rather between a select
          * group of processes - e.g., during a connect/accept operation.
          * Thus, this requires we send additional info
          */
-        modex->next_cb = orte_grpcomm_base_store_peer_modex;
+
+        /* pack the collective id */
+        if (ORTE_SUCCESS != (rc = opal_dss.pack(&modex->buffer, &modex->id, 1, ORTE_GRPCOMM_COLL_ID_T))) {
+            ORTE_ERROR_LOG(rc);
+            goto cleanup;
+        }
+
+        /* pack our name */
+        if (ORTE_SUCCESS != (rc = opal_dss.pack(&modex->buffer, ORTE_PROC_MY_NAME, 1, ORTE_NAME))) {
+            ORTE_ERROR_LOG(rc);
+            goto cleanup;
+        }
 
         /* pack our hostname */
         if (ORTE_SUCCESS != (rc = opal_dss.pack(&modex->buffer, &orte_process_info.nodename, 1, OPAL_STRING))) {
@@ -249,7 +309,7 @@ void orte_grpcomm_base_store_peer_modex(opal_buffer_t *rbuf, void *cbdata)
                 goto cleanup;
             }
             OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base.output,
-                                 "%s grpcomm:base:modex setting proc %s level %s idx %u",
+                                 "%s store:peer:modex setting proc %s level %s idx %u",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  ORTE_NAME_PRINT(&proc_name),
                                  opal_hwloc_base_print_level(bind_level), bind_idx));
@@ -257,14 +317,14 @@ void orte_grpcomm_base_store_peer_modex(opal_buffer_t *rbuf, void *cbdata)
             if (OPAL_EQUAL == orte_util_compare_name_fields(ORTE_NS_CMP_ALL, &proc_name, ORTE_PROC_MY_NAME)) {
                 /* if this data is from myself, then set locality to all */
                 OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base.output,
-                                     "%s grpcomm:base:modex setting proc %s locale ALL",
+                                     "%s store:peer:modex setting proc %s locale ALL",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                      ORTE_NAME_PRINT(&proc_name)));
                 locality = OPAL_PROC_ALL_LOCAL;
             } else if (daemon != ORTE_PROC_MY_DAEMON->vpid) {
                 /* this is on a different node, then mark as non-local */
                 OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base.output,
-                                     "%s grpcomm:base:modex setting proc %s locale NONLOCAL",
+                                     "%s store:peer:modex setting proc %s locale NONLOCAL",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                      ORTE_NAME_PRINT(&proc_name)));
                 locality = OPAL_PROC_NON_LOCAL;
@@ -281,7 +341,7 @@ void orte_grpcomm_base_store_peer_modex(opal_buffer_t *rbuf, void *cbdata)
                                                                  orte_process_info.bind_idx,
                                                                  bind_level, bind_idx);
                 OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base.output,
-                                     "%s grpcomm:base:modex setting proc %s locale %s",
+                                     "%s store:peer:modex setting proc %s locale %s",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                      ORTE_NAME_PRINT(&proc_name),
                                      opal_hwloc_base_print_locality(locality)));
@@ -298,7 +358,7 @@ void orte_grpcomm_base_store_peer_modex(opal_buffer_t *rbuf, void *cbdata)
         } else if (daemon != ORTE_PROC_MY_DAEMON->vpid) {
             /* this is on a different node, then mark as non-local */
             OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base.output,
-                                 "%s grpcomm:base:modex setting proc %s locale NONLOCAL",
+                                 "%s store:peer:modex setting proc %s locale NONLOCAL",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  ORTE_NAME_PRINT(&proc_name)));
             locality = OPAL_PROC_NON_LOCAL;
@@ -313,7 +373,7 @@ void orte_grpcomm_base_store_peer_modex(opal_buffer_t *rbuf, void *cbdata)
         }
 
         OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base.output,
-                             "%s grpcomm:base:full:modex: adding modex entry for proc %s",
+                             "%s store:peer:modex: adding modex entry for proc %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_NAME_PRINT(&proc_name)));
         
@@ -322,6 +382,10 @@ void orte_grpcomm_base_store_peer_modex(opal_buffer_t *rbuf, void *cbdata)
             ORTE_ERROR_LOG(rc);
             goto cleanup;
         }            
+        OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base.output,
+                             "%s store:peer:modex: completed modex entry for proc %s",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             ORTE_NAME_PRINT(&proc_name)));
     }    
 
  cleanup:
@@ -337,6 +401,10 @@ void orte_grpcomm_base_store_peer_modex(opal_buffer_t *rbuf, void *cbdata)
                              "%s CALLING MODEX RELEASE",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
         modex->cbfunc(NULL, modex->cbdata);
+    } else {
+        OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base.output,
+                             "%s store:peer:modex NO MODEX RELEASE CBFUNC",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     }
 }
 
