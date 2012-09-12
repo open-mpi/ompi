@@ -8,11 +8,12 @@ bin_PROGRAMS = \
 	otfaux
 endif
 
-otfaux_LDADD = \
+otfaux_DEPENDENCIES = \
 	$(top_builddir)/otfauxlib/libotfaux.la \
-	$(top_builddir)/otflib/libotf.la \
+	$(top_builddir)/otflib/libotf.la
+otfaux_LDADD = \
+	$(otfaux_DEPENDENCIES) \
 	$(MATHLIB)
-otfaux_DEPENDENCIES = $(otfaux_LDADD)
 otfaux_SOURCES = \
 	Control.h \
 	Handler.h \
