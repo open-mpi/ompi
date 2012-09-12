@@ -15,6 +15,11 @@
 
 #include "ompi_config.h"
 
+#include <stdint.h>
+#include <infiniband/verbs.h>
+
+#include "opal/mca/mca.h"
+
 #include <infiniband/verbs.h>
 
 #include "opal/class/opal_list.h"
@@ -26,6 +31,17 @@ BEGIN_C_DECLS
  */
 OMPI_DECLSPEC struct ibv_device **ompi_ibv_get_device_list(int *num_devs);
 OMPI_DECLSPEC void ompi_ibv_free_device_list(struct ibv_device **ib_devs);
+
+/*
+ * common_verbs_mca.c
+ */
+extern bool ompi_common_verbs_warn_nonexistent_if;
+OMPI_DECLSPEC void ompi_common_verbs_mca_register(mca_base_component_t *component);
+
+/*
+ * common_verbs_basics.c
+ */
+bool ompi_common_verbs_check_basics(void);
 
 /*
  * common_verbs_find_ports.c
@@ -63,15 +79,20 @@ enum {
     OMPI_COMMON_VERBS_FLAGS_TRANSPORT_IB = 0x4,
     OMPI_COMMON_VERBS_FLAGS_TRANSPORT_IWARP = 0x8,
     /* Note that these 2 link layer flags will only be useful if
-       OMPI_HAVE_IBV_LINK_LAYER is set to 1. Otherwise, they will be
+       defined(HAVE_IBV_LINK_LAYER_ETHERNET). Otherwise, they will be
        ignored. */
     OMPI_COMMON_VERBS_FLAGS_LINK_LAYER_IB = 0x10,
     OMPI_COMMON_VERBS_FLAGS_LINK_LAYER_ETHERNET = 0x20,
     OMPI_COMMON_VERBS_FLAGS_MAX
 };
 
-/*
+/**
  * Find a list of ibv_device ports that match a specific criteria. 
+ *
+ * @param if_include (IN): comma-delimited list of interfaces to use
+ * @param if_exclude (IN): comma-delimited list of interfaces to NOT use
+ * @param flags (IN): bit flags
+ * @param verbose_stream (IN): stream to send opal_output_verbose messages to
  *
  * The ports will adhere to the if_include / if_exclude lists (only
  * one can be specified).  The lists are comma-delimited tokens in one
@@ -86,6 +107,9 @@ enum {
  * it includes any of the capabilities/characteristics listed in the
  * flags.
  *
+ * Note that if the verbose_stream is >=0, output will be sent to that
+ * stream with a verbose level of 5.
+ *
  * A valid list will always be returned.  It will contain zero or more
  * ompi_common_verbs_port_item_t items.  Each item can be individually
  * OBJ_RELEASE'd; the destructor will take care of cleaning up the
@@ -93,9 +117,10 @@ enum {
  * port_items referring to it have been freed).
  */
 OMPI_DECLSPEC opal_list_t *
-ompi_common_verbs_find_ibv_ports(const char *if_include, 
-                                 const char *if_exclude, 
-                                 int flags);
+ompi_common_verbs_find_ports(const char *if_include, 
+                             const char *if_exclude, 
+                             int flags,
+                             int verbose_stream);
 
 /*
  * Trivial function to compute the bandwidth on an ibv_port.
@@ -114,6 +139,18 @@ ompi_common_verbs_port_bw(struct ibv_port_attr *port_attr,
  */
 OMPI_DECLSPEC int
 ompi_common_verbs_mtu(struct ibv_port_attr *port_attr);
+
+/*
+ * Test a device to see if it can handle a specific QP type (RC and/or
+ * UD).  Will return the logical AND if multiple types are specified
+ * (e.g., if (RC|UD) are in flags, then will return OMPI_SUCCESS only
+ * if *both* types can be created on the device).
+ *
+ * Flags can be the logical OR of OMPI_COMMON_VERBS_FLAGS_RC and/or
+ * OMPI_COMMON_VERBS_FLAGS_UD.  All other values are ignored.
+ */
+OMPI_DECLSPEC int ompi_common_verbs_qp_test(struct ibv_context *device_context, 
+                                            int flags);
 
 END_C_DECLS
 

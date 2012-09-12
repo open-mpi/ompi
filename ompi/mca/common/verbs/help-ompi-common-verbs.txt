@@ -34,3 +34,15 @@ job may or may not continue.
   Hostname:    %s
   Device name: %s
   Errror (%d): %s
+#
+[nonexistent port]
+WARNING: One or more nonexistent OpenFabrics devices/ports were
+specified:
+
+  Host:                 %s
+  MCA parameter:        ompi_common_verbs_%sclude
+  Nonexistent entities: %s
+
+These entities will be ignored.  You can disable this warning by
+setting the ompi_common_verbs_warn_nonexistent_if MCA parameter to 0.
+#

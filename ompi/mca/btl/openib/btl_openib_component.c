@@ -28,17 +28,6 @@
 #include "ompi_config.h"
 
 #include <infiniband/verbs.h>
-/* This is crummy, but <infiniband/driver.h> doesn't work on all
-   platforms with all compilers.  Specifically, trying to include it
-   on RHEL4U3 with the PGI 32 bit compiler will cause problems because
-   certain 64 bit types are not defined.  Per advice from Roland D.,
-   just include the one prototype that we need in this case
-   (ibv_get_sysfs_path()). */
-#ifdef HAVE_INFINIBAND_DRIVER_H
-#include <infiniband/driver.h>
-#else
-const char *ibv_get_sysfs_path(void);
-#endif
 #include <errno.h>
 #include <string.h>
 #ifdef HAVE_UNISTD_H
@@ -282,29 +271,6 @@ static int btl_openib_component_close(void)
 #endif
 
     return rc;
-}
-
-static bool check_basics(void)
-{
-    int rc;
-    char *file;
-    struct stat s;
-
-#if defined(__linux__)
-    /* Check to see if $sysfsdir/class/infiniband/ exists */
-    asprintf(&file, "%s/class/infiniband", ibv_get_sysfs_path());
-    if (NULL == file) {
-        return false;
-    }
-    rc = stat(file, &s);
-    free(file);
-    if (0 != rc || !S_ISDIR(s.st_mode)) {
-        return false;
-    }
-#endif
-
-    /* It exists and is a directory -- good enough */
-    return true;
 }
 
 static void inline pack8(char **dest, uint8_t value)
@@ -1628,10 +1594,27 @@ static int init_one_device(opal_list_t *btl_list, struct ibv_device* ib_dev)
     ompi_btl_openib_ini_values_t values, default_values;
     int *allowed_ports = NULL;
     bool need_search;
+    struct ibv_context *dev_context = NULL;
+
+    /* Open up the device */
+    dev_context = ibv_open_device(ib_dev);
+    if (NULL == dev_context) {
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+
+    /* Find out if this device supports RC QPs */
+    if (OMPI_SUCCESS != ompi_common_verbs_qp_test(dev_context, 
+                                                  OMPI_COMMON_VERBS_FLAGS_RC)) {
+        ibv_close_device(dev_context);
+        BTL_VERBOSE(("openib: RC QPs not supported -- skipping %s",
+                     ibv_get_device_name(ib_dev)));
+        return OMPI_ERR_NOT_SUPPORTED;
+    }
 
     device = OBJ_NEW(mca_btl_openib_device_t);
     if(NULL == device){
         BTL_ERROR(("Failed malloc: %s:%d", __FILE__, __LINE__));
+        ibv_close_device(dev_context);
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
@@ -1640,7 +1623,7 @@ static int init_one_device(opal_list_t *btl_list, struct ibv_device* ib_dev)
     device->mem_reg_max    = 1ull << 48;
 
     device->ib_dev = ib_dev;
-    device->ib_dev_context = ibv_open_device(ib_dev);
+    device->ib_dev_context = dev_context;
     device->ib_pd = NULL;
     device->device_btls = OBJ_NEW(opal_pointer_array_t);
     if (OPAL_SUCCESS != opal_pointer_array_init(device->device_btls, 2, INT_MAX, 2)) {
@@ -2539,7 +2522,7 @@ btl_openib_component_init(int *num_btl_modules,
        assume that the RDMA hardware drivers are not loaded, and
        therefore we don't want OpenFabrics verbs support in this OMPI
        job.  No need to print a warning. */
-    if (!check_basics()) {
+    if (!ompi_common_verbs_check_basics()) {
         goto no_btls;
     }
 
