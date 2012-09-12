@@ -99,7 +99,6 @@ int ompi_info_init(void)
 {
     char val[MPI_MAX_INFO_VAL];
     char *cptr;
-    int lvl;
 
     /* initialize table */
 
