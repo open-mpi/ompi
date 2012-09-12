@@ -174,7 +174,8 @@ static int bad_barrier(orte_grpcomm_collective_t *coll)
      * unpacked without error
      */
     buf = OBJ_NEW(opal_buffer_t);
-    orte_grpcomm_base_pack_collective(buf, coll, ORTE_GRPCOMM_INTERNAL_STG_APP);
+    orte_grpcomm_base_pack_collective(buf, ORTE_PROC_MY_NAME->jobid,
+                                      coll, ORTE_GRPCOMM_INTERNAL_STG_APP);
 
     /* send the buffer to my daemon */
     if (0 > (rc = orte_rml.send_buffer_nb(ORTE_PROC_MY_DAEMON, buf, ORTE_RML_TAG_COLLECTIVE,
@@ -196,6 +197,8 @@ static int bad_allgather(orte_grpcomm_collective_t *gather)
 {
     int rc;
     opal_buffer_t *buf;
+    orte_namelist_t *nm;
+    opal_list_item_t *item;
 
     OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base.output,
                          "%s grpcomm:bad entering allgather",
@@ -221,18 +224,58 @@ static int bad_allgather(orte_grpcomm_collective_t *gather)
         opal_list_append(&orte_grpcomm_base.active_colls, &gather->super);
     }
 
-    /* start the allgather op by sending the data to our daemon - the
-     * user will have put the data in the "buffer" field
+    /* if the participants are not a WILDCARD, then we know that
+     * this is a collective operation between a limited subset
+     * of processes. In that scenario, we cannot use the daemon-based
+     * collective system as the daemons won't know anything about
+     * this collective
      */
-    buf = OBJ_NEW(opal_buffer_t);
-    orte_grpcomm_base_pack_collective(buf, gather, ORTE_GRPCOMM_INTERNAL_STG_APP);
-    /* send to our daemon */
-    if (0 > (rc = orte_rml.send_buffer_nb(ORTE_PROC_MY_DAEMON, buf,
-                                          ORTE_RML_TAG_COLLECTIVE, 0,
-                                          orte_rml_send_callback, NULL))) {
-        ORTE_ERROR_LOG(rc);
-        OBJ_RELEASE(buf);
-        opal_list_remove_item(&orte_grpcomm_base.active_colls, &gather->super);
+    nm = (orte_namelist_t*)opal_list_get_first(&gather->participants);
+    if (NULL == nm || ORTE_VPID_WILDCARD == nm->name.vpid) {
+        /* start the allgather op by sending the data to our daemon - the
+         * user will have put the data in the "buffer" field
+         */
+        buf = OBJ_NEW(opal_buffer_t);
+        orte_grpcomm_base_pack_collective(buf, ORTE_PROC_MY_NAME->jobid,
+                                          gather, ORTE_GRPCOMM_INTERNAL_STG_APP);
+
+        OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base.output,
+                             "%s grpcomm:bad sending collective %d to our daemon",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             (int)gather->id));
+        /* send to our daemon */
+        if (0 > (rc = orte_rml.send_buffer_nb(ORTE_PROC_MY_DAEMON, buf,
+                                              ORTE_RML_TAG_COLLECTIVE, 0,
+                                              orte_rml_send_callback, NULL))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_RELEASE(buf);
+            opal_list_remove_item(&orte_grpcomm_base.active_colls, &gather->super);
+            return rc;
+        }
+    } else {
+        /* send directly to each participant - note that this will
+         * include ourselves, which is fine as it will aid in
+         * determining the collective is complete
+         */
+        for (item = opal_list_get_first(&gather->participants);
+             item != opal_list_get_end(&gather->participants);
+             item = opal_list_get_next(item)) {
+            nm = (orte_namelist_t*)item;
+            buf = OBJ_NEW(opal_buffer_t);
+            opal_dss.copy_payload(buf, &gather->buffer);
+            OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base.output,
+                                 "%s grpcomm:bad sending collective %d to %s",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 (int)gather->id,
+                                 ORTE_NAME_PRINT(&nm->name)));
+            if (0 > (rc = orte_rml.send_buffer_nb(&nm->name, buf,
+                                                  ORTE_RML_TAG_COLLECTIVE, 0,
+                                                  orte_rml_send_callback, NULL))) {
+                ORTE_ERROR_LOG(rc);
+                OBJ_RELEASE(buf);
+                opal_list_remove_item(&orte_grpcomm_base.active_colls, &gather->super);
+            }
+        }
         return rc;
     }
     

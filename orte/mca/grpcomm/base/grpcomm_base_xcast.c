@@ -86,14 +86,22 @@ void orte_grpcomm_base_xcast_recv(int status, orte_process_name_t* sender,
          * knows what to do - it will also free the bytes in the bo. Decode
          * also updates our global nidmap object for sending to our local procs
          */
-        OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base.output,
-                             "%s grpcomm:base:xcast updating daemon nidmap",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+        if (ORTE_PROC_IS_HNP) {
+            /* no need - already have the info */
+            if (NULL != bo->bytes) {
+                free(bo->bytes);
+            }
+        } else {
+            OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base.output,
+                                 "%s grpcomm:base:xcast updating daemon nidmap",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
-        if (ORTE_SUCCESS != (ret = orte_util_decode_daemon_nodemap(bo))) {
-            ORTE_ERROR_LOG(ret);
-            goto relay;
+            if (ORTE_SUCCESS != (ret = orte_util_decode_daemon_nodemap(bo))) {
+                ORTE_ERROR_LOG(ret);
+                goto relay;
+            }
         }
+
         /* update the routing plan */
         orte_routed.update_routing_plan();
     
