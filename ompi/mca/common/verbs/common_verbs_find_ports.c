@@ -151,7 +151,6 @@ static bool want_this_port(char **include_list, char **exclude_list,
         }
 
         /* Didn't find it.  So we want it. */
-        free(name);
         return true;
     }
 
