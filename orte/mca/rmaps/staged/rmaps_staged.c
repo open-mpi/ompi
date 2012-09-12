@@ -224,6 +224,11 @@ static int staged_mapper(orte_job_t *jdata)
 	    /* track number of procs on node and number of slots used */
             node->num_procs++;
             node->slots_inuse++;
+            opal_output_verbose(10, orte_rmaps_base.rmaps_output,
+                                "%s Proc %s on node %s: slots %d inuse %d",
+                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                ORTE_NAME_PRINT(&proc->name), node->name,
+                                (int)node->slots, (int)node->slots_inuse);
             if (node->slots_inuse == node->slots) {
                 opal_list_remove_item(&node_list, &node->super);
                 OBJ_RELEASE(node);
