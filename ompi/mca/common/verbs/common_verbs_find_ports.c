@@ -28,7 +28,10 @@
 #include <stdio.h>
 #include <string.h>
 #include <infiniband/verbs.h>
+#include <stdint.h>
 
+#include "opal_stdint.h"
+#include "opal/types.h"
 #include "opal/util/output.h"
 #include "opal/util/argv.h"
 #include "opal/class/opal_object.h"
@@ -157,46 +160,72 @@ static bool want_this_port(char **include_list, char **exclude_list,
     /* Will never get here */
 }
 
+/***********************************************************************/
 
-/*
- * It seems you can't probe a device / port to see if it supports a
- * specific type of QP.  You just have to try to make it and see if it
- * works.  This is a short helper function to try to make a QP of a
- * specific type and return whether it worked.
- */
-static bool make_qp(struct ibv_pd *pd, struct ibv_cq *cq, 
-                    enum ibv_qp_type type)
+static const char *transport_name_to_str(enum ibv_transport_type transport_type)
 {
-    struct ibv_qp_init_attr qpia;
-    struct ibv_qp *qp;
+    switch(transport_type) {
+    case IBV_TRANSPORT_IB:      return "IB";
+    case IBV_TRANSPORT_IWARP:   return "IWARP";
+    case IBV_TRANSPORT_UNKNOWN: 
+    default:                    return "unknown";
+    }
+}
 
-    qpia.qp_context = NULL;
-    qpia.send_cq = cq;
-    qpia.recv_cq = cq;
-    qpia.srq = NULL;
-    qpia.cap.max_send_wr = 1;
-    qpia.cap.max_recv_wr = 1;
-    qpia.cap.max_send_sge = 1;
-    qpia.cap.max_recv_sge = 1;
-    qpia.cap.max_inline_data = 0;
-    qpia.qp_type = type;
-    qpia.sq_sig_all = 0;
-    
-    qp = ibv_create_qp(pd, &qpia);
-    if (NULL != qp) {
-        ibv_destroy_qp(qp);
-        return true;
+#if defined(HAVE_IBV_LINK_LAYER_ETHERNET)
+static const char *link_layer_to_str(int link_type)
+{
+    switch(link_type) {
+    case IBV_LINK_LAYER_INFINIBAND:   return "IB";
+    case IBV_LINK_LAYER_ETHERNET:     return "IWARP";
+    case IBV_LINK_LAYER_UNSPECIFIED: 
+    default:                          return "unspecified";
+    }
+}
+#endif
+
+/***********************************************************************/
+
+static void check_sanity(char ***if_sanity_list, const char *dev_name, int port)
+{
+    int i;
+    char tmp[BUFSIZ], **list = *if_sanity_list;
+    const char *compare;
+
+    if (NULL == if_sanity_list || NULL == *if_sanity_list) {
+        return;
     }
 
-    return false;
+    /* A match is found if:
+       - "dev_name" is in the list and port == -1, or
+       - "dev_name:port" is in the list
+       If a match is found, remove that entry from the list. */
+    memset(tmp, 0, sizeof(tmp));
+    if (port > 0) {
+        snprintf(tmp, sizeof(tmp) - 1, "%s:%d", dev_name, port);
+        compare = tmp;
+    } else {
+        compare = dev_name;
+    }
+
+    for (i = 0; NULL != list[i]; ++i) {
+        if (0 == strcmp(list[i], compare)) {
+            int count = opal_argv_count(list);
+            opal_argv_delete(&count, &list, i, 1);
+            --i;
+        }
+    }
 }
+
+/***********************************************************************/
 
 /*
  * Find a list of ibv_ports matching a set of criteria.
  */
-opal_list_t *ompi_common_verbs_find_ibv_ports(const char *if_include, 
-                                              const char *if_exclude, 
-                                              int flags)
+opal_list_t *ompi_common_verbs_find_ports(const char *if_include, 
+                                          const char *if_exclude, 
+                                          int flags,
+                                          int stream)
 {
     int32_t num_devs;
     struct ibv_device **devices;
@@ -204,9 +233,7 @@ opal_list_t *ompi_common_verbs_find_ibv_ports(const char *if_include,
     struct ibv_context *device_context;
     struct ibv_device_attr device_attr;
     struct ibv_port_attr port_attr;
-    struct ibv_pd *pd = NULL;
-    struct ibv_cq *cq = NULL;
-    char **if_include_list = NULL, **if_exclude_list = NULL;
+    char **if_include_list = NULL, **if_exclude_list = NULL, **if_sanity_list = NULL;
     ompi_common_verbs_device_item_t *di;
     ompi_common_verbs_port_item_t *pi;
     uint32_t i, j;
@@ -224,9 +251,15 @@ opal_list_t *ompi_common_verbs_find_ibv_ports(const char *if_include,
     if (NULL != if_include && NULL != if_exclude) {
         return port_list;
     } else if (NULL != if_include) {
+        opal_output_verbose(5, stream, "finding verbs interfaces, including %s", 
+                            if_include);
         if_include_list = opal_argv_split(if_include, ',');
+        if_sanity_list = opal_argv_copy(if_include_list);
     } else if (NULL != if_exclude) {
+        opal_output_verbose(5, stream, "finding verbs interfaces, excluding %s", 
+                            if_exclude);
         if_exclude_list = opal_argv_split(if_exclude, ',');
+        if_sanity_list = opal_argv_copy(if_exclude_list);
     }
 
     /* Query all the IBV devices on the machine.  Use an ompi
@@ -234,15 +267,27 @@ opal_list_t *ompi_common_verbs_find_ibv_ports(const char *if_include,
        over the history of the IBV API. */
     devices = ompi_ibv_get_device_list(&num_devs);
     if (0 == num_devs) {
+        opal_output_verbose(5, stream, "no verbs interfaces found");
         goto err_free_argv;
+    } else {
+        opal_output_verbose(5, stream, "found %d verbs interface%s", 
+                            num_devs, (num_devs != 1) ? "s" : "");
     }
 
     /* Now loop through all the devices.  Get the attributes for each
        port on each device to see if they match our selection
        criteria. */
     for (i = 0; (int32_t) i < num_devs; ++i) {
+        /* See if this device is on the include/exclude sanity check
+           list.  If it is, remove it from the sanity check list
+           (i.e., we should end up with an empty list at the end if
+           all entries in the sanity check list exist) */
         device = devices[i];
+        check_sanity(&if_sanity_list, ibv_get_device_name(device), -1);
+
         device_context = ibv_open_device(device);
+        opal_output_verbose(5, stream, "examining verbs interface: %s",
+                            ibv_get_device_name(device));
         if (NULL == device_context) {
             orte_show_help("help-ompi-common-verbs.txt",
                            "ibv_open_device fail", true,
@@ -261,16 +306,47 @@ opal_list_t *ompi_common_verbs_find_ibv_ports(const char *if_include,
             goto err_free_port_list;
         }
 
+        /* Now that we have the attributes of this device, remove all
+           ports of this device from the sanity check list.  Note that
+           IBV ports are indexed from 1, not 0. */
+        for (j = 1; j <= device_attr.phys_port_cnt; j++) {
+            check_sanity(&if_sanity_list, ibv_get_device_name(device), j);
+        }
+
         /* Check the the device-specific flags to see if we want this
            device */
         want = true;
         if (flags & OMPI_COMMON_VERBS_FLAGS_TRANSPORT_IB &&
             IBV_TRANSPORT_IB != device->transport_type) {
+            opal_output_verbose(5, stream, "verbs interface %s has wrong type (has %s, want IB)",
+                                ibv_get_device_name(device),
+                                transport_name_to_str(device->transport_type));
             want = false;
         }
         if (flags & OMPI_COMMON_VERBS_FLAGS_TRANSPORT_IWARP &&
             IBV_TRANSPORT_IWARP != device->transport_type) {
+            opal_output_verbose(5, stream, "verbs interface %s has wrong type (has %s, want IWARP)",
+                                ibv_get_device_name(device),
+                                transport_name_to_str(device->transport_type));
             want = false;
+        }
+
+        /* Check for RC or UD QP support */
+        if (flags & OMPI_COMMON_VERBS_FLAGS_RC ||
+            flags & OMPI_COMMON_VERBS_FLAGS_UD) {
+            if (OPAL_SUCCESS != ompi_common_verbs_qp_test(device_context, flags)) {
+                want = false;
+                opal_output_verbose(5, stream, 
+                                    "verbs interface %s:%d: failed to make %s QP",
+                                    ibv_get_device_name(device), j,
+                                    ((flags & (OMPI_COMMON_VERBS_FLAGS_RC |
+                                               OMPI_COMMON_VERBS_FLAGS_UD)) ==
+                                     (OMPI_COMMON_VERBS_FLAGS_RC |
+                                      OMPI_COMMON_VERBS_FLAGS_UD)) ? 
+                                    "both UD and RC" :
+                                    (flags & OMPI_COMMON_VERBS_FLAGS_RC) ? 
+                                    "RC" : "UD");
+            }
         }
 
         /* If we didn't want it, go to the next device */
@@ -278,21 +354,10 @@ opal_list_t *ompi_common_verbs_find_ibv_ports(const char *if_include,
             continue;
         }
 
-        /* If we asked for check for RC or UD support, then we'll need
-           a PD and CQ for checking, below.  So alloc one. */
-        if (flags & OMPI_COMMON_VERBS_FLAGS_RC ||
-            flags & OMPI_COMMON_VERBS_FLAGS_UD) {
-            pd = ibv_alloc_pd(device_context);
-            cq = ibv_create_cq(device_context, 1, NULL, NULL, 0);
-            if (NULL == cq || NULL == pd) {
-                goto err_destroy_cq_pd;
-            }
-        }
-
         /* Make a device_item_t to hold the device information */
         di = OBJ_NEW(ompi_common_verbs_device_item_t);
         if (NULL == di) {
-            goto err_destroy_cq_pd;
+            goto err_free_port_list;
         }
         di->device = device;
         di->context = device_context;
@@ -305,6 +370,8 @@ opal_list_t *ompi_common_verbs_find_ibv_ports(const char *if_include,
             /* If we don't want this port (based on if_include /
                if_exclude lists), skip it */
             if (!want_this_port(if_include_list, if_exclude_list, di, j)) {
+                opal_output_verbose(5, stream, "verbs interface %s:%d: rejected by include/exclude",
+                                    ibv_get_device_name(device), j);
                 continue;
             }
 
@@ -315,11 +382,13 @@ opal_list_t *ompi_common_verbs_find_ibv_ports(const char *if_include,
                                orte_process_info.nodename,
                                ibv_get_device_name(device),
                                errno, strerror(errno));
-                goto err_destroy_cq_pd;
+                goto err_free_port_list;
             }
 
             /* We definitely only want ACTIVE ports */
             if (IBV_PORT_ACTIVE != port_attr.state) {
+                opal_output_verbose(5, stream, "verbs interface %s:%d: not ACTIVE",
+                                    ibv_get_device_name(device), j);
                 continue;
             }
 
@@ -329,30 +398,35 @@ opal_list_t *ompi_common_verbs_find_ibv_ports(const char *if_include,
             if (0 == flags) {
                 want = true;
             }
-            if (flags & OMPI_COMMON_VERBS_FLAGS_RC) {
-                /* It doesn't look like you can query whether a
-                   device/port supports RC QP's.  You just have to try
-                   to make one.  :-( If it succeeds, the device/port
-                   supports it. */
-                if (make_qp(pd, cq, IBV_QPT_RC)) {
-                    want = true;
-                }
-            }
-            if (flags & OMPI_COMMON_VERBS_FLAGS_UD) {
-                /* See above comment about RC QP's -- same rationale holds
-                   true here. */
-                if (make_qp(pd, cq, IBV_QPT_UD)) {
-                    want = true;
-                }
-            }
+
+            if ((flags & (OMPI_COMMON_VERBS_FLAGS_LINK_LAYER_IB |
+                          OMPI_COMMON_VERBS_FLAGS_LINK_LAYER_ETHERNET)) ==
+                 (OMPI_COMMON_VERBS_FLAGS_LINK_LAYER_IB |
+                  OMPI_COMMON_VERBS_FLAGS_LINK_LAYER_ETHERNET)) {
+                /* If they specified both link layers, then we want this port */
+                want = true;
+            } else if ((flags & (OMPI_COMMON_VERBS_FLAGS_LINK_LAYER_IB |
+                                 OMPI_COMMON_VERBS_FLAGS_LINK_LAYER_ETHERNET)) == 0) {
+                /* If they specified neither link layer, then we want this port */
+                want = true;
+            } 
 #if defined(HAVE_IBV_LINK_LAYER_ETHERNET)
-            if (flags & OMPI_COMMON_VERBS_FLAGS_LINK_LAYER_IB &&
-                IBV_LINK_LAYER_INFINIBAND == port_attr.link_layer) {
-                want = true;
-            }
-            if (flags & OMPI_COMMON_VERBS_FLAGS_LINK_LAYER_ETHERNET &&
-                IBV_LINK_LAYER_ETHERNET == port_attr.link_layer) {
-                want = true;
+            else if (flags & OMPI_COMMON_VERBS_FLAGS_LINK_LAYER_IB) {
+                if (IBV_LINK_LAYER_INFINIBAND == port_attr.link_layer) {
+                    want = true;
+                } else {
+                    opal_output_verbose(5, stream, "verbs interface %s:%d has wrong link layer (has %s, want IB)",
+                                        ibv_get_device_name(device), j,
+                                        link_layer_to_str(port_attr.link_layer));
+                }
+            } else if (flags & OMPI_COMMON_VERBS_FLAGS_LINK_LAYER_ETHERNET) {
+                if (IBV_LINK_LAYER_ETHERNET == port_attr.link_layer) {
+                    want = true;
+                } else {
+                    opal_output_verbose(5, stream, "verbs interface %s:%d has wrong link layer (has %s, want Ethernet)",
+                                        ibv_get_device_name(device), j,
+                                        link_layer_to_str(port_attr.link_layer));
+                }
             }
 #endif
 
@@ -360,28 +434,20 @@ opal_list_t *ompi_common_verbs_find_ibv_ports(const char *if_include,
                 continue;
             }
 
-            /* If we got this far, we want the port.  Make an item for
-               it and add it to the list. */
+            /* If we got this far, we want the port.  Make an item for it. */
             pi = OBJ_NEW(ompi_common_verbs_port_item_t);
             if (NULL == pi) {
-                goto err_destroy_cq_pd;
+                goto err_free_port_list;
             }
             pi->device = di;            
             pi->port_num = j;
             pi->port_attr = port_attr;
             OBJ_RETAIN(di);
 
+            /* Add the port item to the list */
             opal_list_append(port_list, &pi->super);
-        }
-
-        /* If we allocated a pd for testing RC/UD, free it here */
-        if (NULL != pd) {
-            ibv_dealloc_pd(pd);
-            pd = NULL;
-        }
-        if (NULL != cq) {
-            ibv_destroy_cq(cq);
-            cq = NULL;
+            opal_output_verbose(5, stream, "found acceptable verbs interface %s:%d",
+                                ibv_get_device_name(device), j);
         }
 
         /* We're done with the device; if some ports are using it, its
@@ -390,18 +456,29 @@ opal_list_t *ompi_common_verbs_find_ibv_ports(const char *if_include,
         OBJ_RELEASE(di);
     }
 
+    /* Sanity check that the devices specified in the if_include /
+       if_exclude lists actually existed.  If this is true, then the
+       sanity list will now be empty.  If there are still items left
+       on the list, then they didn't exist.  Bad.  Print a warning (if
+       the warning is not disabled). */
+    if (0 != opal_argv_count(if_sanity_list)) {
+        if (ompi_common_verbs_warn_nonexistent_if) {
+            char *str = opal_argv_join(if_sanity_list, ',');
+            orte_show_help("help-ompi-common-verbs.txt", "nonexistent port",
+                           true, orte_process_info.nodename,
+                           ((NULL != if_include) ? "in" : "ex"), str);
+            free(str);
+
+            /* Only warn once per process */
+            ompi_common_verbs_warn_nonexistent_if = false;
+        }
+    }
+    if (NULL != if_sanity_list) {
+        opal_argv_free(if_sanity_list);
+    }
+
     /* All done! */
     return port_list;
-
- err_destroy_cq_pd:
-    if (NULL != pd) {
-        ibv_dealloc_pd(pd);
-        pd = NULL;
-    }
-    if (NULL != cq) {
-        ibv_destroy_cq(cq);
-        cq = NULL;
-    }
 
  err_free_port_list:
     for (item = opal_list_remove_first(port_list);
@@ -411,6 +488,10 @@ opal_list_t *ompi_common_verbs_find_ibv_ports(const char *if_include,
     }
 
  err_free_argv:
+    if (NULL != if_sanity_list) {
+        opal_argv_free(if_sanity_list);
+        if_sanity_list = NULL;
+    }
     opal_argv_free(if_include_list);
     if_include_list = NULL;
     opal_argv_free(if_exclude_list);
