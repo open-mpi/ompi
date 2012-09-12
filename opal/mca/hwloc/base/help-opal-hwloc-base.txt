@@ -9,7 +9,7 @@
 #
 # This is the US/English help file for Open MPI's hwloc base support
 #
-[invalid policy]
+[invalid mem_alloc_policy]
 WARNING: An invalid value was given for the
 hwloc_base_general_alloc_policy MCA parameter.  This MCA parameter
 determines the policy used for general memory allocations.  Note that
@@ -30,6 +30,28 @@ Valid values are:
 
 Your job will now abort.
 #
+[invalid mem_bind_failure_action]
+WARNING: An invalid value was given for the
+hwloc_base_mem_bind_failure_action MCA parameter.  This MCA parameter
+determines what happens when memory fails to bind to a specific
+locale.  Note that this parameter *only* has effect when MPI processes
+are bound to specific processors.
+
+The value provided was:
+
+  Local host: %s
+  PID:        %d
+  Value:      %s
+
+Valid values are:
+
+  silent:     do not print a warning, and continue the job (possibly
+              with lower-than-expected performance)
+  warn:       print a warning, but continue the job
+  error:      print a warning and abort the job
+
+Your job will now abort.
+#
 [mbind failure]
 Open MPI failed to bind internal memory to a specific NUMA node.  This
 message will only be reported at most once per process.
@@ -40,7 +62,7 @@ message will only be reported at most once per process.
   Message:    %s
   Severity:   %s
 #
-[unrecognized-policy]
+[invalid binding_policy]
 The specified %s policy is not recognized:
 
   Policy: %s

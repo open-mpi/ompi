@@ -65,6 +65,7 @@ OPAL_DECLSPEC int opal_info_register_components(opal_pointer_array_t *mca_types,
                                                 opal_pointer_array_t *component_map);
 
 OPAL_DECLSPEC void opal_info_close_components(void);
+OPAL_DECLSPEC void opal_info_err_params(opal_pointer_array_t *component_map);
 
 OPAL_DECLSPEC void opal_info_do_params(bool want_all_in, bool want_internal,
                                        opal_pointer_array_t *mca_type,

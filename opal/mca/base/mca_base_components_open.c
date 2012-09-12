@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2008-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * $COPYRIGHT$
@@ -387,7 +387,7 @@ static int open_components(const char *type_name, int output_id,
                                 component->mca_component_name);
         } else {
             ret = component->mca_register_component_params();
-            if (MCA_SUCCESS == ret) {
+            if (OPAL_SUCCESS == ret) {
                 registered = true;
                 opal_output_verbose(10, output_id, 
                                     "mca: base: components_open: "
@@ -427,7 +427,7 @@ static int open_components(const char *type_name, int output_id,
         } else {
             called_open = true;
             ret = component->mca_open_component();
-            if (MCA_SUCCESS == ret) {
+            if (OPAL_SUCCESS == ret) {
                 opened = true;
                 opal_output_verbose(10, output_id, 
                                     "mca: base: components_open: "

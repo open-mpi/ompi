@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2011 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2006-2009 Mellanox Technologies. All rights reserved.
  * Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
  *                         reserved.
@@ -182,7 +182,7 @@ int btl_openib_register_mca_params(void)
         orte_show_help("help-mpi-btl-openib.txt",
                        "ibv_fork requested but not supported", true,
                        orte_process_info.nodename);
-        return OMPI_ERROR;
+        return OMPI_ERR_BAD_PARAM;
     }
 #endif
 
@@ -213,7 +213,7 @@ int btl_openib_register_mca_params(void)
         orte_show_help("help-mpi-btl-openib.txt",
                        "ibv_fork requested but not supported", true,
                        orte_process_info.nodename);
-        return OMPI_ERROR;
+        return OMPI_ERR_BAD_PARAM;
     }
     free(str);
 
@@ -638,6 +638,7 @@ int btl_openib_register_mca_params(void)
     }
     mca_btl_openib_component.memalign_threshold = (size_t)ival;
 #endif
+
     /* Register any MCA params for the connect pseudo-components */
     if (OMPI_SUCCESS == ret) {
         ret = ompi_btl_openib_connect_base_register();

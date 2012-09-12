@@ -137,17 +137,31 @@ int main(int argc, char *argv[])
     
     /* Register OPAL's params */
     if (OPAL_SUCCESS != (ret = opal_info_register_components(&mca_types, &component_map))) {
-        exit(ret);
+        if (OPAL_ERR_BAD_PARAM == ret) {
+            /* output where the error occurred */
+            opal_info_err_params(&component_map);
+        }
+        exit(1);
     }
 
     /* Register ORTE's params */
     if (ORTE_SUCCESS != (ret = orte_info_register_components(&mca_types, &component_map))) {
-        exit(ret);
+        if (OPAL_ERR_BAD_PARAM == ret) {
+            /* output what we got */
+            opal_info_do_params(true, opal_cmd_line_is_taken(ompi_info_cmd_line, "internal"),
+                                &mca_types, NULL);
+        }
+        exit(1);
     }
 
     /* Register OMPI's params */
     if (OMPI_SUCCESS != (ret = ompi_info_register_components(&mca_types, &component_map))) {
-        exit(ret);
+        if (OMPI_ERR_BAD_PARAM == ret) {
+            /* output what we got */
+            opal_info_do_params(true, opal_cmd_line_is_taken(ompi_info_cmd_line, "internal"),
+                                &mca_types, NULL);
+        }
+        exit(1);
     }
 
     /* Execute the desired action(s) */    
@@ -219,6 +233,10 @@ int main(int argc, char *argv[])
     OBJ_DESTRUCT(&component_map);
 
     opal_info_finalize();
+
+    /* Put our own call to opal_finalize_util() here because we called
+       it up above (and it refcounts) */
+    opal_finalize_util();
     
     return 0;
 }
