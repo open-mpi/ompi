@@ -65,8 +65,8 @@ orte_grpcomm_coll_id_t orte_grpcomm_base_get_coll_id(void)
 int orte_grpcomm_base_modex(orte_grpcomm_collective_t *modex)
 {
     int rc;
-    orte_namelist_t *nm, *nm2;
-    opal_list_item_t *item, *itm;
+    orte_namelist_t *nm;
+    opal_list_item_t *item;
     bool found;
     orte_grpcomm_collective_t *cptr;
 
