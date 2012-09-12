@@ -485,6 +485,8 @@ int orte_daemon(int argc, char *argv[])
         orte_app_context_t *app;
         char *tmp, *nptr, *sysinfo;
         int32_t ljob;
+        orte_grpcomm_collective_t *coll;
+        orte_namelist_t *nm;
 
         /* setup the singleton's job */
         jdata = OBJ_NEW(orte_job_t);
@@ -551,10 +553,27 @@ int orte_daemon(int argc, char *argv[])
         proc->bind_idx = 0;
 #endif
 
-        /* the singleton will use the first three collectives
-         * for its modex/barriers
-         */
-        orte_grpcomm_base.coll_id += 3;
+        /* create the collectives for its modex/barriers */
+        jdata->peer_modex = orte_grpcomm_base_get_coll_id();
+        coll = orte_grpcomm_base_setup_collective(jdata->peer_modex);
+        nm = OBJ_NEW(orte_namelist_t);
+        nm->name.jobid = jdata->jobid;
+        nm->name.vpid = ORTE_VPID_WILDCARD;
+        opal_list_append(&coll->participants, &nm->super);
+
+        jdata->peer_init_barrier = orte_grpcomm_base_get_coll_id();
+        coll = orte_grpcomm_base_setup_collective(jdata->peer_init_barrier);
+        nm = OBJ_NEW(orte_namelist_t);
+        nm->name.jobid = jdata->jobid;
+        nm->name.vpid = ORTE_VPID_WILDCARD;
+        opal_list_append(&coll->participants, &nm->super);
+
+        jdata->peer_fini_barrier = orte_grpcomm_base_get_coll_id();
+        coll = orte_grpcomm_base_setup_collective(jdata->peer_fini_barrier);
+        nm = OBJ_NEW(orte_namelist_t);
+        nm->name.jobid = jdata->jobid;
+        nm->name.vpid = ORTE_VPID_WILDCARD;
+        opal_list_append(&coll->participants, &nm->super);
 
         /* need to setup a pidmap for it */
         jdata->pmap = (opal_byte_object_t*)malloc(sizeof(opal_byte_object_t));
