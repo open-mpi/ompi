@@ -100,7 +100,7 @@ AC_DEFUN([ORTE_SETUP_JAVA],[
 
                if test "$found" = "0"; then
                    # Various Linux
-                   if -z "$JAVA_HOME"; then
+                   if test -z "$JAVA_HOME"; then
                        dir='/usr/lib/jvm/java-*-openjdk-*/include/'
                    else
                        dir=$JAVA_HOME/include
