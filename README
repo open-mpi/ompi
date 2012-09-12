@@ -175,6 +175,13 @@ Compiler Notes
   platform/compiler combination.  The only effect that this should
   have is that the MCA parameter mpi_leave_pinned will be inoperative.
 
+- It has been reported that the Intel 9.1 and 10.0 compilers fail to
+  compile Open MPI on IA64 platforms.  As of 12 Sep 2012, there is
+  very little (if any) testing performed on IA64 platforms (with any
+  compiler).  Support is "best effort" for these platforms, but it is
+  doubtful that any effort will be expended to fix the Intel 9.1 /
+  10.0 compiler issuers on this platform.
+
 - Early versions of the Intel 12.1 Linux compiler suite on x86_64 seem
   to have a bug that prevents Open MPI from working.  Symptoms
   including immediate segv of the wrapper compilers (e.g., mpicc) and
