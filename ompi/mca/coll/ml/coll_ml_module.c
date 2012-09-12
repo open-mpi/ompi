@@ -629,7 +629,7 @@ static void ml_init_k_nomial_trees(mca_coll_ml_topology_t *topo, int *list_of_ra
 {
     int *list_n_connected;
     int *list;
-    int group_size, rank, i, j, knt, offset, k, my_sbgp;
+    int group_size, rank, i, j, knt, offset, k, my_sbgp = 0;
     int my_root;
     int level_one_knt;
     sub_group_params_t *array_of_all_subgroup_ranks = topo->
@@ -942,7 +942,7 @@ static int ml_setup_full_tree_data(mca_coll_ml_topology_t *topo,
     int in_num_total_subgroups = *num_total_subgroups;
     int i_sg, i_cnt, i_rank, i_offset, i_level, j_sg, j_rank,
         j_level, j_root,cnt, rank, rank_cnt;
-    int *scratch_space;
+    int *scratch_space = NULL;
     bool found;
     /* figure out who holds all the sub-group information - only those
      * ranks in the top level know this data at this point */
@@ -1950,7 +1950,7 @@ static int mca_coll_ml_tree_hierarchy_discovery(mca_coll_ml_module_t *ml_module,
         n_procs_in = 0, group_index = 0, n_remain = 0,
         i, j, ret = OMPI_SUCCESS, my_rank_in_list = 0,
         n_procs_selected = 0, original_group_size = 0, i_am_done = 0,
-        local_leader, my_rank_in_subgroup, my_rank_in_remaining_list;
+        local_leader, my_rank_in_subgroup, my_rank_in_remaining_list = 0;
 
     int32_t my_lowest_group_index = -1, my_highest_group_index = -1;
 

@@ -35,7 +35,7 @@ OMPI_DECLSPEC int mca_common_netpatterns_setup_recursive_knomial_allgather_tree_
     int n_levels,pow_k;
     int k_temp1;
     int k_temp2;
-    int myid, reindex_myid;
+    int myid, reindex_myid = 0;
     int base, peer_base,base_temp;
     int peer; 
     int *prev_data = NULL;

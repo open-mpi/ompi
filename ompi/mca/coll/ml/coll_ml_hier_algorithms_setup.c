@@ -331,7 +331,7 @@ int ml_coll_barrier_constant_group_data_setup(
         global_high_hierarchy_index = topo_info->global_highest_hier_group_index;
 
     bool call_for_top_function, prev_is_zero;
-    mca_coll_ml_utility_data_t *constant_group_data;
+    mca_coll_ml_utility_data_t *constant_group_data = NULL;
 
     int *scratch_indx = NULL, *scratch_num = NULL;
 
