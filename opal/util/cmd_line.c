@@ -267,7 +267,8 @@ int opal_cmd_line_parse(opal_cmd_line_t *cmd, bool ignore_unknown,
     int i, j, orig, ret;
     cmd_line_option_t *option;
     cmd_line_param_t *param;
-    bool is_unknown;
+    bool is_unknown_option;
+    bool is_unknown_token;
     bool is_option;
     bool has_unknowns;
     char **shortsv;
@@ -310,7 +311,8 @@ int opal_cmd_line_parse(opal_cmd_line_t *cmd, bool ignore_unknown,
     option = NULL;
     has_unknowns = false;
     for (i = 1; i < cmd->lcl_argc; ) {
-        is_unknown = false;
+        is_unknown_option = false;
+        is_unknown_token = false;
         is_option = false;
 
         /* Are we done?  i.e., did we find the special "--" token?  If
@@ -328,11 +330,12 @@ int opal_cmd_line_parse(opal_cmd_line_t *cmd, bool ignore_unknown,
             break;
         }
 
-        /* If it's not an option, then we've found an unrecognized
-           token. */
+        /* If it's not an option, then this is an error.  Note that
+           this is different than an unrecognized token; an
+           unrecognized option is *always* an error. */
 
         else if ('-' != cmd->lcl_argv[i][0]) {
-            is_unknown = true;
+            is_unknown_token = true;
         }
 
         /* Nope, this is supposedly an option.  Is it a long name? */
@@ -371,11 +374,11 @@ int opal_cmd_line_parse(opal_cmd_line_t *cmd, bool ignore_unknown,
                         opal_argv_insert(&cmd->lcl_argv, i, shortsv);
                         cmd->lcl_argc = opal_argv_count(cmd->lcl_argv);
                     } else {
-                        is_unknown = true;
+                        is_unknown_option = true;
                     }
                     opal_argv_free(shortsv);
                 } else {
-                    is_unknown = true;
+                    is_unknown_option = true;
                 }
             }
 
@@ -388,9 +391,9 @@ int opal_cmd_line_parse(opal_cmd_line_t *cmd, bool ignore_unknown,
 
         if (is_option) {
             if (NULL == option) {
-                is_unknown = true;
+                is_unknown_option = true;
             } else {
-                is_unknown = false;
+                is_unknown_option = false;
                 orig = i;
                 ++i;
 
@@ -496,9 +499,9 @@ int opal_cmd_line_parse(opal_cmd_line_t *cmd, bool ignore_unknown,
            handle it.  Copy everything (including the current token)
            into the tail.  If we're not ignoring unknowns, then print
            an error and return. */
-        if (is_unknown) {
+        if (is_unknown_option || is_unknown_token) {
             has_unknowns = true;
-            if (!ignore_unknown) {
+            if (!ignore_unknown || is_unknown_option) {
                 fprintf(stderr, "%s: Error: unknown option \"%s\"\n", 
                         cmd->lcl_argv[0], cmd->lcl_argv[i]);
                 printed_error = true;
