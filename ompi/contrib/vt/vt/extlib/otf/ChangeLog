@@ -1,5 +1,5 @@
 1.11.3openmpi
-	- otfaux: fixed build error when using the Oracle compiler on Solaris
+	- otfaux: fixed build errors on Solaris and NetBSD
 
 1.11.2openmpi
 	- lib OTFAUX:

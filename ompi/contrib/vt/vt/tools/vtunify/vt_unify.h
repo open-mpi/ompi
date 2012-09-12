@@ -53,7 +53,19 @@
 #           undef HAVE_OMP
 #        endif
 #     endif
-#  endif // __OPEN64__
+
+   // pre PGI 9.0 do not have "omp threadprivate()"
+#  elif defined(__PGI)
+#     if !defined(__PGIC__) || !defined(__PGIC_MINOR__) || !defined(__PGIC_PATCHLEVEL__)
+         // unknown compiler version; disable OpenMP to be on the safe side
+#        undef HAVE_OMP
+#     else
+         // disable OpenMP, if compiler version is less than 9.0
+#        if __PGIC__ < 9
+#           undef HAVE_OMP
+#        endif
+#     endif
+#  endif // __PGI
 #endif // HAVE_OMP
 #if defined(HAVE_OMP) && HAVE_OMP
 #  include <omp.h>
