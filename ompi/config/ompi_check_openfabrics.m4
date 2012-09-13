@@ -268,10 +268,13 @@ AC_DEFUN([OMPI_CHECK_OPENFABRICS_CM_ARGS],[
     #
     # Unconnect Datagram (UD) based connection manager
     #
-    AC_ARG_ENABLE([openib-udcm],
-        [AC_HELP_STRING([--enable-openib-udcm],
-                        [Enable datagram connection support in openib BTL (default: enabled)])], 
-                        [enable_openib_udcm="$enableval"], [enable_openib_udcm="yes"])
+#    AC_ARG_ENABLE([openib-udcm],
+#        [AC_HELP_STRING([--enable-openib-udcm],
+#                        [Enable datagram connection support in openib BTL (default: enabled)])], 
+#                        [enable_openib_udcm="$enableval"], [enable_openib_udcm="yes"])
+    # Per discussion with Ralph and Nathan, disable UDCM for now.
+    # It's borked and needs some surgery to get back on its feet.
+    enable_openib_udcm=no
     
     #
     # Openfabrics RDMACM
