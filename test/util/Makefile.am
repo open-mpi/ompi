@@ -118,4 +118,4 @@ opal_path_nfs_DEPENDENCIES = $(opal_path_nfs_LDADD)
 #orte_universe_setup_file_io_DEPENDENCIES = $(orte_universe_setup_file_io_LDADD)
 
 clean-local:
-	rm -f test_session_dir_out test-file
+	rm -f test_session_dir_out test-file opal_path_nfs.out
