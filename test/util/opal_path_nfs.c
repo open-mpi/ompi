@@ -134,8 +134,15 @@ void get_mounts (int * num_dirs, char ** dirs[], bool * nfs[])
          * Cannot distinguish it from NFS in opal_path_nfs, therefore just
          * disregard it, as it is NOT an parallel filesystem...
          */
-        if (0 == strcasecmp (fs, "rpc_pipefs"))
+        if (0 == strcasecmp (fs, "rpc_pipefs")) {
             continue;
+        }
+
+        /* If we get an fs type of "none", skip it (e.g.,
+           http://www.open-mpi.org/community/lists/devel/2012/09/11493.php) */
+        if (0 == strcasecmp(fs, "none")) {
+            continue;
+        }
 
         /*
          * Later mounts override earlier mounts
