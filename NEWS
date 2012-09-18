@@ -94,6 +94,7 @@ Trunk (not on release branches yet)
 1.6.2
 -----
 
+- Fix issue with MX MTL.  Thanks to Doug Eadline for raising the issue.
 - Fix singleton MPI_COMM_SPAWN when the result job spans multiple nodes.
 - Fix MXM hang, and update for latest version of MXM.
 - Update to support Mellanox FCA 2.5.
