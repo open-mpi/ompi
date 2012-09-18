@@ -1054,18 +1054,18 @@ static void recv_files(int status, orte_process_name_t* sender,
         }
     }
     if (NULL == incoming) {
-        /* better be first chunk! */
-        if (0 != nchunk) {
-            opal_output(0, "%s New file %s is missing first chunk",
-                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), file);
-            send_complete(file, ORTE_ERR_FILE_WRITE_FAILURE);
-            free(file);
-            return;
-        }
         /* nope - add it */
+        OPAL_OUTPUT_VERBOSE((1, orte_filem_base_output,
+                             "%s filem:raw: adding file %s to incoming list",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), file));
         incoming = OBJ_NEW(orte_filem_raw_incoming_t);
         incoming->file = strdup(file);
         incoming->type = type;
+        opal_list_append(&incoming_files, &incoming->super);
+    }
+
+    /* if this is the first chunk, we need to open the file descriptor */
+    if (0 == nchunk) {
         /* separate out the top-level directory of the target */
         tmp = strdup(file);
         if (NULL != (cptr = strchr(tmp, '/'))) {
@@ -1094,7 +1094,7 @@ static void recv_files(int status, orte_process_name_t* sender,
         }
         /* open the file descriptor for writing */
         if (ORTE_FILEM_TYPE_EXE == type) {
-            if (0 > (incoming->fd = open(incoming->fullpath, O_RDWR | O_CREAT, S_IRWXU))) {
+            if (0 > (incoming->fd = open(incoming->fullpath, O_RDWR | O_CREAT | O_TRUNC, S_IRWXU))) {
                 opal_output(0, "%s CANNOT CREATE FILE %s",
                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                             incoming->fullpath);
@@ -1112,10 +1112,6 @@ static void recv_files(int status, orte_process_name_t* sender,
                 return;
             }
         }
-        OPAL_OUTPUT_VERBOSE((1, orte_filem_base_output,
-                             "%s filem:raw: adding file %s to incoming list",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), file));
-        opal_list_append(&incoming_files, &incoming->super);
         opal_event_set(orte_event_base, &incoming->ev, incoming->fd, OPAL_EV_WRITE, write_handler, incoming);
         opal_event_set_priority(&incoming->ev, ORTE_MSG_PRI);
     }
@@ -1170,6 +1166,9 @@ static void write_handler(int fd, short event, void *cbdata)
                                  "%s write:handler zero bytes - reporting complete for file %s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  sink->file));
+            /* close the file descriptor */
+            close(sink->fd);
+            sink->fd = -1;
             if (ORTE_FILEM_TYPE_FILE == sink->type ||
                 ORTE_FILEM_TYPE_EXE == sink->type) {
                 /* just link to the top as this will be the
