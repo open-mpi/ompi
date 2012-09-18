@@ -141,7 +141,7 @@ ompi_mtl_mx_finalize(struct mca_mtl_base_module_t* mtl) {
         return OMPI_ERROR;
     }
     
-    return ompi_common_mx_finalize();
+    return OMPI_SUCCESS;
     
 }
 
