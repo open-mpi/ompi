@@ -8,6 +8,8 @@
 #define _GNU_SOURCE
 #include <stdio.h>
 #include <unistd.h>
+#include <stdlib.h>
+
 #include "mpi.h"
 
 int main(int argc, char* argv[])
@@ -18,6 +20,9 @@ int main(int argc, char* argv[])
     void *univ_size;
     char *appstr, *unistr;
     int flag;
+    char *envar;
+
+    envar = getenv("OMPI_UNIVERSE_SIZE");
 
     MPI_Init(&argc, &argv);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -36,8 +41,8 @@ int main(int argc, char* argv[])
     }
     
     gethostname(hostname, 512);
-    printf("Hello, World, I am %d of %d on host %s from app number %s universe size %s\n",
-                            rank, size, hostname, appstr, unistr);
+    printf("Hello, World, I am %d of %d on host %s from app number %s universe size %s universe envar %s\n",
+           rank, size, hostname, appstr, unistr, (NULL == envar) ? "NULL" : envar);
 
     MPI_Finalize();
     return 0;
