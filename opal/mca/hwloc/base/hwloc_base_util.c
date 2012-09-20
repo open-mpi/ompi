@@ -909,6 +909,7 @@ static void df_clear(hwloc_topology_t topo,
 void opal_hwloc_base_clear_usage(hwloc_topology_t topo)
 {
     hwloc_obj_t root;
+    unsigned k;
 
     /* bozo check */
     if (NULL == topo) {
@@ -918,7 +919,12 @@ void opal_hwloc_base_clear_usage(hwloc_topology_t topo)
     }
 
     root = hwloc_get_root_obj(topo);
-    df_clear(topo, root);
+    /* must not start at root as the root object has
+     * a different userdata attached to it
+     */
+    for (k=0; k < root->arity; k++) {
+        df_clear(topo, root->children[k]);
+    }
 }
 
 /* The current slot_list notation only goes to the core level - i.e., the location
