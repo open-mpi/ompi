@@ -293,8 +293,6 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
         goto complete;
     }
 
-    opal_output(0, "MANAGED ALLOCATION");
-
     /* if the hnp was allocated, include it unless flagged not to */
     if (orte_hnp_is_allocated && !(ORTE_GET_MAPPING_DIRECTIVE(policy) & ORTE_MAPPING_NO_USE_LOCAL)) {
         if (NULL != (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, 0))) {
