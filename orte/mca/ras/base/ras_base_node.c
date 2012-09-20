@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2011      Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2011-2012 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * $COPYRIGHT$
  *
@@ -108,8 +108,12 @@ int orte_ras_base_node_insert(opal_list_t* nodes, orte_job_t *jdata)
             
             /* flag that hnp has been allocated */
             orte_hnp_is_allocated = true;
-            /* adjust the total slots in the job */
-            jdata->total_slots_alloc -= hnp_node->slots;
+            /* adjust the total slots in the job - note
+             * that the HNP ess module will not have entered
+             * a value for its slots, so that will be zero.
+             * Thus, this only has impact if we re-allocate
+             */
+            orte_ras_base.total_slots_alloc -= hnp_node->slots;
             /* copy the allocation data to that node's info */
             hnp_node->slots = node->slots;
             hnp_node->slots_max = node->slots_max;
@@ -136,7 +140,7 @@ int orte_ras_base_node_insert(opal_list_t* nodes, orte_job_t *jdata)
                 }
             }
             /* update the total slots in the job */
-            jdata->total_slots_alloc += hnp_node->slots;
+            orte_ras_base.total_slots_alloc += hnp_node->slots;
             /* don't keep duplicate copy */
             OBJ_RELEASE(node);
         } else {
@@ -156,7 +160,7 @@ int orte_ras_base_node_insert(opal_list_t* nodes, orte_job_t *jdata)
                 return rc;
             }
             /* update the total slots in the job */
-            jdata->total_slots_alloc += node->slots;
+            orte_ras_base.total_slots_alloc += node->slots;
             /* check if we have fqdn names in the allocation */
             if (NULL != strchr(node->name, '.')) {
                 orte_have_fqdn_allocation = true;
