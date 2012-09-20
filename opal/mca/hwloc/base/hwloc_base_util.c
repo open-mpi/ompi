@@ -889,6 +889,38 @@ hwloc_obj_t opal_hwloc_base_get_obj_by_type(hwloc_topology_t topo,
     return df_search(topo, obj, target, cache_level, instance, rtype, &idx, NULL);
 }
 
+static void df_clear(hwloc_topology_t topo,
+                     hwloc_obj_t start)
+{
+    unsigned k;
+    opal_hwloc_obj_data_t *data;
+
+    /* see how many procs are bound to us */
+    data = (opal_hwloc_obj_data_t*)start->userdata;
+    if (NULL != data) {
+        data->num_bound = 0;
+    }
+
+    for (k=0; k < start->arity; k++) {
+        df_clear(topo, start->children[k]);
+    }
+}
+
+void opal_hwloc_base_clear_usage(hwloc_topology_t topo)
+{
+    hwloc_obj_t root;
+
+    /* bozo check */
+    if (NULL == topo) {
+        OPAL_OUTPUT_VERBOSE((5, opal_hwloc_base_output,
+                             "hwloc:base:clear_usage: NULL topology"));
+        return;
+    }
+
+    root = hwloc_get_root_obj(topo);
+    df_clear(topo, root);
+}
+
 /* The current slot_list notation only goes to the core level - i.e., the location
  * is specified as socket:core. Thus, the code below assumes that all locations
  * are to be parsed under that notation.
