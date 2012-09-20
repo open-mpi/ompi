@@ -1380,6 +1380,7 @@ int orte_plm_base_setup_virtual_machine(orte_job_t *jdata)
                     break;
                 }
                 /* we want it - add it to list */
+                OBJ_RETAIN(node);
                 opal_list_append(&nodes, &node->super);
             }
             OBJ_RELEASE(nptr);
@@ -1519,7 +1520,10 @@ int orte_plm_base_setup_virtual_machine(orte_job_t *jdata)
             OBJ_RELEASE(item);
             continue;
         }
-        /* add the node to the map */
+        /* add the node to the map - we retained it
+         * when adding it to the list, so we don't need
+         * to retain it again
+         */
         opal_pointer_array_add(map->nodes, (void*)node);
         ++(map->num_nodes);
         num_nodes++;
