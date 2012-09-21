@@ -42,7 +42,8 @@ OMPI_DECLSPEC int comm_allgather_pml(void *src_buf, void *dest_buf, int count,
     OPAL_PTRDIFF_TYPE dt_extent;
     char *src_buf_current;
     char *dest_buf_current;
-    struct iovec send_iov[2], recv_iov[2];
+    struct iovec send_iov[2] = {{0,0},{0,0}}, 
+                 recv_iov[2] = {{0,0},{0,0}};
     ompi_request_t *requests[4];
 
     /* get size of data needed - same layout as user data, so that
