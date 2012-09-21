@@ -3,28 +3,22 @@
 # Copyright (c) 2010 Cisco Systems, Inc.
 #
 # Script to generate PHP-ized files of Open MPI tarball-installed man
-# pages.
+# pages.  Run it from the top-level directory of an Open MPI tarball
+# or source checkout.  It will:
 #
-# Usage: ./make-html-man-pages.pl \
-#   --mandir <top-level-man-dir> \
-#   --version <version-string> \
-#   --outdir <outdir>
+# - run autogen if necessary
+# - run configure
+# - run make install
+# - frob the generated man pages a bit
+# - generate PHP versions of the man pages
 #
-# If outdir is not specified, it is assumed to be ".".  mandir and
-# version must be specified.  mandir is typically a directory that
-# ends in "/man" -- it is the directory that .so roff redirects use as
-# a base (e.g., MPI_Win_c2f.3 is ".so man3/MPI_Comm_f2c.3" -- so
-# specify a mandir that makes that work).
+# The PHP can then be copied to the OMPI web site.
 #
 
 use strict;
 use File::Find;
 use File::Basename;
 use Cwd;
-
-my $mandir;
-my $version;
-my $outdir_base = ".";
 
 sub absoluteize {
     my ($dir) = shift;
@@ -48,40 +42,52 @@ sub mkdir_p {
     }
 }
 
-# Read command line arguments
-while (@ARGV) {
-    my $a = $ARGV[0];
-    if ($a eq "--mandir" && $#ARGV >= 1) {
-        shift @ARGV;
-        $mandir = absoluteize($ARGV[0]);
-        print "Found mandir: $mandir\n";
-    }
-
-    elsif ($a eq "--version" && $#ARGV >= 1) {
-        shift @ARGV;
-        $version = $ARGV[0];
-        print "Found version: $version\n";
-    }
-
-    elsif ($a eq "--outdir" && $#ARGV >= 1) {
-        shift @ARGV;
-        $outdir_base = absoluteize($ARGV[0]);
-        print "Found outdir: $outdir_base\n";
-    }
-    shift @ARGV;
-}
-
 # Check that we have what we need
-if (!defined($mandir) || !defined($version)) {
-    print "Usage: $0 --mandir dir --version version [--outdir outdir]\n";
+if (!(-f "VERSION" && -f "ompi/include/mpi.h.in")) {
+    print "Run this script from the top-level Open MPI directory\n";
     exit(1);
 }
 
 # Setup
 my @files;
 my $pwd = Cwd::cwd();
+print "PWD: $pwd\n";
+my $basedir = "$pwd/man-page-generator";
+my $prefix = "$basedir/install";
+my $mandir = absoluteize("$prefix/share/man");
+my $outdir_base = absoluteize("$basedir/php");
 
-# Find all *.[0-9] files in the $mandir tree.
+# Remove old results
+system("rm -rf $basedir");
+
+# Configure, build, and install so that we get a full set of man pages
+
+sub doit {
+    my @cmd = @_;
+    print "Running: @cmd\n";
+    my $ret = system(@cmd);
+    die "Failed to run (@cmd)"
+        if (-1 == $ret);
+    $ret = $ret >> 8;
+    die "Command failed (@cmd) with status $ret"
+        if ($ret != 0);
+}
+
+# Autogen if we don't have a configure script
+doit("./autogen.pl")
+    if (! -x "configure");
+doit("./configure --prefix=$prefix --enable-mpi-ext=all");
+
+# Find this OMPI's version
+my $version = `fgrep PACKAGE_VERSION opal/include/opal_config.h | cut -d\\\" -f2`;
+chomp($version);
+print "Open MPI version: $version\n";
+
+# Build so that we get fresh man pages
+doit("make clean");
+doit("make -j 4 install");
+
+# Find all *.[0-9] files in the installed mandir tree.
 &File::Find::find(
     sub {
         push(@files, $File::Find::name) if (-f $_ && $_ =~ /\.[1-9]$/);
