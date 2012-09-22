@@ -150,7 +150,7 @@ AC_DEFUN([ORTE_SETUP_JAVA],[
             orte_java_happy=no
             PATH_save=$PATH
             AS_IF([test -n "$with_jdk_bindir" -a "$with_jdk_bindir" != "yes" -a "$with_jdk_bindir" != "no"], 
-                  [PATH="$PATH:$with_jdk_bindir"])
+                  [PATH="$with_jdk_bindir:$PATH"])
             AC_PATH_PROG(JAVAC, javac)
             AC_PATH_PROG(JAVAH, javah)
             AC_PATH_PROG(JAR, jar)
