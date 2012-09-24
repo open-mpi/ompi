@@ -2214,13 +2214,6 @@ int orte_odls_base_default_kill_local_procs(opal_pointer_array_t *procs,
                                      "%s SENDING SIGKILL TO %s",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                      ORTE_NAME_PRINT(&child->name)));
-                kill_local(child->pid, SIGKILL);
-                /* Double check that it actually died this time */
-                if (!child_died(child)) {
-                    orte_show_help("help-odls-default.txt",
-                                   "odls-default:could-not-kill",
-                                   true, orte_process_info.nodename, child->pid);
-                }
             } else {
                 /* Force the SIGKILL just to make sure things are dead
                  * This fixes an issue that, if the application is masking
@@ -2233,19 +2226,18 @@ int orte_odls_base_default_kill_local_procs(opal_pointer_array_t *procs,
                                      "%s SENDING FORCE SIGKILL TO %s",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                      ORTE_NAME_PRINT(&child->name)));
-                kill_local(child->pid, SIGKILL);
-                /* Double check that it actually died this time */
-                if (!child_died(child)) {
-                    orte_show_help("help-odls-default.txt",
-                                   "odls-default:could-not-kill",
-                                   true, orte_process_info.nodename, child->pid);
-                }
             }
-
-            OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
-                                 "%s odls:kill_local_proc child %s killed",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 ORTE_NAME_PRINT(&child->name)));
+            kill_local(child->pid, SIGKILL);
+            /* Double check that it actually died this time */
+            if (!child_died(child)) {
+                orte_show_help("help-orte-odls-base.txt",
+                               "orte-odls-base:could-not-kill",
+                               true, orte_process_info.nodename, child->pid);
+            } else
+                OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
+                                     "%s odls:kill_local_proc child %s killed",
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                     ORTE_NAME_PRINT(&child->name)));
             
             /* indicate the waitpid fired as this is effectively what
              * has happened
