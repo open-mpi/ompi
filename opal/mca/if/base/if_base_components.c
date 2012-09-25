@@ -16,7 +16,7 @@
 #include "opal/mca/if/base/base.h"
 #include "opal/mca/if/base/static-components.h"
 
-int opal_if_base_output;
+int opal_if_base_output=-1;
 opal_list_t opal_if_components;
 static bool already_done = false;
 
@@ -41,6 +41,14 @@ int opal_if_base_open(void)
     /* setup the global list */
     OBJ_CONSTRUCT(&opal_if_list, opal_list_t);
 
+    mca_base_param_reg_int_name("if", "base_verbose",
+                                "Provide verbose output if greater than 0",
+                                false, false, -1, &ret);
+    if (0 < ret) {
+        opal_if_base_output = opal_output_open(NULL);
+        opal_output_set_verbosity(opal_if_base_output, ret);
+    }
+
     mca_base_param_reg_int_name("opal", "if_do_not_resolve",
                                 "If nonzero, do not attempt to resolve interfaces",
                                 false, false, (int)false, &ret);
@@ -61,6 +69,10 @@ int opal_if_base_open(void)
         cli = OBJ_NEW(mca_base_component_list_item_t);
         cli->cli_component = mca_if_base_static_components[i];
         opal_list_append(&opal_if_components, &cli->super);
+
+        opal_output_verbose(5, opal_if_base_output,
+                            "if:base: opening component %s",
+                            component->component.mca_component_name);
 
         if (NULL != component->component.mca_open_component) {
             ret = component->component.mca_open_component();

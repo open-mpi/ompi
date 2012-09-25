@@ -27,6 +27,7 @@ OPAL_DECLSPEC int opal_if_base_close(void);
  * Globals
  */
 OPAL_DECLSPEC extern opal_list_t opal_if_components;
+OPAL_DECLSPEC extern int opal_if_base_output;
 
 END_C_DECLS
 
