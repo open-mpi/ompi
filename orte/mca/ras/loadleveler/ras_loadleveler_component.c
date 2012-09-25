@@ -68,12 +68,10 @@ static int orte_ras_loadleveler_open(void)
 {
     /* for now we set the priority lower then the priority of the POE RAS
      * so that it is used whenever the LOADL_PROCESSOR_LIST is actually set */
-    param_priority = 
-        mca_base_param_reg_int(&mca_ras_loadleveler_component.base_version,
-                               "priority",
-                               "Priority of the loadleveler ras component",
-                               false, false, 90, NULL);
-
+    mca_base_param_reg_int(&mca_ras_loadleveler_component.base_version,
+                           "priority",
+                           "Priority of the loadleveler ras component",
+                           false, false, 90, &param_priority);
     return ORTE_SUCCESS;
 }
 
