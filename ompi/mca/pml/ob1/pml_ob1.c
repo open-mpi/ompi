@@ -491,9 +491,11 @@ static void mca_pml_ob1_dump_hdr(mca_pml_ob1_hdr_t* hdr)
         break;
     case MCA_PML_OB1_HDR_TYPE_FIN:
         type = "FIN";
+        header[0] = '\0';
         break;
     default:
-        assert(0);
+        type = "UNKWN";
+        header[0] = '\0';
         break;
     }
     opal_output(0,"hdr %s [%s] %s", type,
