@@ -92,7 +92,9 @@ void* mca_mpool_sm_alloc(
 
     if(mpool_sm->mem_node >= 0) {
         mseg.mbs_len = size;
+#if OPAL_HAVE_HWLOC
         opal_hwloc_base_membind(&mseg, 1, mpool_sm->mem_node);
+#endif
     }
 
 #if OPAL_CUDA_SUPPORT
@@ -122,7 +124,9 @@ void* mca_mpool_sm_realloc(
                                             registration);
     if(mpool_sm->mem_node >= 0) {
         mseg.mbs_len = size;
+#if OPAL_HAVE_HWLOC
         opal_hwloc_base_membind(&mseg, 1, mpool_sm->mem_node);
+#endif
     }
 
     return mseg.mbs_start_addr;

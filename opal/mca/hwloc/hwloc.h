@@ -81,9 +81,48 @@ typedef enum {
 } opal_hwloc_level_t;
 #define OPAL_HWLOC_LEVEL_T OPAL_INT
 
-/* include implementation to call */
-#if OPAL_HAVE_HWLOC
-#include MCA_hwloc_IMPLEMENTATION_HEADER
+/* ******************************************************************** */
+/* Although we cannot bind if --without-hwloc is set,
+ * we do still need to know some basic locality data
+ * like on_node and not_on_node. So ensure that we
+ * always have access to that much info by including
+ * the definitions here, outside the if-have-hwloc test
+ */
+typedef uint16_t opal_hwloc_locality_t;
+#define OPAL_HWLOC_LOCALITY_T OPAL_UINT16
+
+/** Process locality definitions */
+enum {
+    OPAL_PROC_LOCALITY_UNKNOWN  = 0x0000,
+    OPAL_PROC_NON_LOCAL         = 0x8000,
+    OPAL_PROC_ON_CLUSTER        = 0x0400,
+    OPAL_PROC_ON_CU             = 0x0200,
+    OPAL_PROC_ON_NODE           = 0x0100,
+    OPAL_PROC_ON_BOARD          = 0x0080,
+    OPAL_PROC_ON_NUMA           = 0x0040,
+    OPAL_PROC_ON_SOCKET         = 0x0020,
+    OPAL_PROC_ON_L3CACHE        = 0x0010,
+    OPAL_PROC_ON_L2CACHE        = 0x0008,
+    OPAL_PROC_ON_L1CACHE        = 0x0004,
+    OPAL_PROC_ON_CORE           = 0x0002,
+    OPAL_PROC_ON_HWTHREAD       = 0x0001,
+    OPAL_PROC_ALL_LOCAL         = 0x0fff
+};
+
+/** Process locality macros */
+#define OPAL_PROC_ON_LOCAL_HWTHREAD(n)  ((n) & OPAL_PROC_ON_HWTHREAD)
+#define OPAL_PROC_ON_LOCAL_CORE(n)      ((n) & OPAL_PROC_ON_CORE)
+#define OPAL_PROC_ON_LOCAL_L1CACHE(n)   ((n) & OPAL_PROC_ON_L1CACHE)
+#define OPAL_PROC_ON_LOCAL_L2CACHE(n)   ((n) & OPAL_PROC_ON_L2CACHE)
+#define OPAL_PROC_ON_LOCAL_L3CACHE(n)   ((n) & OPAL_PROC_ON_L3CACHE)
+#define OPAL_PROC_ON_LOCAL_SOCKET(n)    ((n) & OPAL_PROC_ON_SOCKET)
+#define OPAL_PROC_ON_LOCAL_NUMA(n)      ((n) & OPAL_PROC_ON_NUMA)
+#define OPAL_PROC_ON_LOCAL_BOARD(n)     ((n) & OPAL_PROC_ON_BOARD)
+#define OPAL_PROC_ON_LOCAL_NODE(n)      ((n) & OPAL_PROC_ON_NODE)
+#define OPAL_PROC_ON_LOCAL_CU(n)        ((n) & OPAL_PROC_ON_CU)
+#define OPAL_PROC_ON_LOCAL_CLUSTER(n)   ((n) & OPAL_PROC_ON_CLUSTER)
+
+/* ******************************************************************** */
 
 /**
  * Struct used to describe a section of memory (starting address
@@ -103,6 +142,10 @@ typedef struct {
     /** Length of segment */
     size_t mbs_len;
 } opal_hwloc_base_memory_segment_t;
+
+/* include implementation to call */
+#if OPAL_HAVE_HWLOC
+#include MCA_hwloc_IMPLEMENTATION_HEADER
 
 /* define type of processor info requested */
 typedef uint8_t opal_hwloc_resource_type_t;
@@ -171,43 +214,6 @@ typedef uint16_t opal_binding_policy_t;
 /* macro to detect if binding is forced */
 #define OPAL_BIND_OVERLOAD_ALLOWED(n) \
     (OPAL_BIND_ALLOW_OVERLOAD & (n))
-
-/* ******************************************************************** */
-typedef uint16_t opal_hwloc_locality_t;
-#define OPAL_HWLOC_LOCALITY_T OPAL_UINT16
-
-/** Process locality definitions */
-enum {
-    OPAL_PROC_LOCALITY_UNKNOWN  = 0x0000,
-    OPAL_PROC_NON_LOCAL         = 0x8000,
-    OPAL_PROC_ON_CLUSTER        = 0x0400,
-    OPAL_PROC_ON_CU             = 0x0200,
-    OPAL_PROC_ON_NODE           = 0x0100,
-    OPAL_PROC_ON_BOARD          = 0x0080,
-    OPAL_PROC_ON_NUMA           = 0x0040,
-    OPAL_PROC_ON_SOCKET         = 0x0020,
-    OPAL_PROC_ON_L3CACHE        = 0x0010,
-    OPAL_PROC_ON_L2CACHE        = 0x0008,
-    OPAL_PROC_ON_L1CACHE        = 0x0004,
-    OPAL_PROC_ON_CORE           = 0x0002,
-    OPAL_PROC_ON_HWTHREAD       = 0x0001,
-    OPAL_PROC_ALL_LOCAL         = 0x0fff
-};
-
-/** Process locality macros */
-#define OPAL_PROC_ON_LOCAL_HWTHREAD(n)  ((n) & OPAL_PROC_ON_HWTHREAD)
-#define OPAL_PROC_ON_LOCAL_CORE(n)      ((n) & OPAL_PROC_ON_CORE)
-#define OPAL_PROC_ON_LOCAL_L1CACHE(n)   ((n) & OPAL_PROC_ON_L1CACHE)
-#define OPAL_PROC_ON_LOCAL_L2CACHE(n)   ((n) & OPAL_PROC_ON_L2CACHE)
-#define OPAL_PROC_ON_LOCAL_L3CACHE(n)   ((n) & OPAL_PROC_ON_L3CACHE)
-#define OPAL_PROC_ON_LOCAL_SOCKET(n)    ((n) & OPAL_PROC_ON_SOCKET)
-#define OPAL_PROC_ON_LOCAL_NUMA(n)      ((n) & OPAL_PROC_ON_NUMA)
-#define OPAL_PROC_ON_LOCAL_BOARD(n)     ((n) & OPAL_PROC_ON_BOARD)
-#define OPAL_PROC_ON_LOCAL_NODE(n)      ((n) & OPAL_PROC_ON_NODE)
-#define OPAL_PROC_ON_LOCAL_CU(n)        ((n) & OPAL_PROC_ON_CU)
-#define OPAL_PROC_ON_LOCAL_CLUSTER(n)   ((n) & OPAL_PROC_ON_CLUSTER)
-
-/* ******************************************************************** */
 
 /* some global values */
 OPAL_DECLSPEC extern hwloc_topology_t opal_hwloc_topology;

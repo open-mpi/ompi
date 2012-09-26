@@ -18,6 +18,7 @@
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param.h"
+#include "opal/threads/tsd.h"
 
 #include "opal/mca/hwloc/hwloc.h"
 #include "opal/mca/hwloc/base/base.h"
@@ -302,6 +303,137 @@ int opal_hwloc_base_open(void)
 #endif
 
     return OPAL_SUCCESS;
+}
+
+static bool fns_init=false;
+static opal_tsd_key_t print_tsd_key;
+static char* opal_hwloc_print_null = "NULL";
+
+static void buffer_cleanup(void *value)
+{
+    int i;
+    opal_hwloc_print_buffers_t *ptr;
+    
+    if (NULL != value) {
+        ptr = (opal_hwloc_print_buffers_t*)value;
+        for (i=0; i < OPAL_HWLOC_PRINT_NUM_BUFS; i++) {
+            free(ptr->buffers[i]);
+        }
+    }
+}
+
+opal_hwloc_print_buffers_t *opal_hwloc_get_print_buffer(void)
+{
+    opal_hwloc_print_buffers_t *ptr;
+    int ret, i;
+    
+    if (!fns_init) {
+        /* setup the print_args function */
+        if (OPAL_SUCCESS != (ret = opal_tsd_key_create(&print_tsd_key, buffer_cleanup))) {
+            return NULL;
+        }
+        fns_init = true;
+    }
+    
+    ret = opal_tsd_getspecific(print_tsd_key, (void**)&ptr);
+    if (OPAL_SUCCESS != ret) return NULL;
+    
+    if (NULL == ptr) {
+        ptr = (opal_hwloc_print_buffers_t*)malloc(sizeof(opal_hwloc_print_buffers_t));
+        for (i=0; i < OPAL_HWLOC_PRINT_NUM_BUFS; i++) {
+            ptr->buffers[i] = (char *) malloc((OPAL_HWLOC_PRINT_MAX_SIZE+1) * sizeof(char));
+        }
+        ptr->cntr = 0;
+        ret = opal_tsd_setspecific(print_tsd_key, (void*)ptr);
+    }
+    
+    return (opal_hwloc_print_buffers_t*) ptr;
+}
+
+char* opal_hwloc_base_print_locality(opal_hwloc_locality_t locality)
+{
+    opal_hwloc_print_buffers_t *ptr;
+    int idx;
+
+    ptr = opal_hwloc_get_print_buffer();
+    if (NULL == ptr) {
+        return opal_hwloc_print_null;
+    }
+    /* cycle around the ring */
+    if (OPAL_HWLOC_PRINT_NUM_BUFS == ptr->cntr) {
+        ptr->cntr = 0;
+    }
+
+    idx = 0;
+
+    if (OPAL_PROC_ON_LOCAL_CLUSTER(locality)) {
+        ptr->buffers[ptr->cntr][idx++] = 'C';
+        ptr->buffers[ptr->cntr][idx++] = 'L';
+        ptr->buffers[ptr->cntr][idx++] = ':';
+    }
+    if (OPAL_PROC_ON_LOCAL_CU(locality)) {
+        ptr->buffers[ptr->cntr][idx++] = 'C';
+        ptr->buffers[ptr->cntr][idx++] = 'U';
+        ptr->buffers[ptr->cntr][idx++] = ':';
+    }
+    if (OPAL_PROC_ON_LOCAL_NODE(locality)) {
+        ptr->buffers[ptr->cntr][idx++] = 'N';
+        ptr->buffers[ptr->cntr][idx++] = ':';
+    }
+    if (OPAL_PROC_ON_LOCAL_BOARD(locality)) {
+        ptr->buffers[ptr->cntr][idx++] = 'B';
+        ptr->buffers[ptr->cntr][idx++] = ':';
+    }
+    if (OPAL_PROC_ON_LOCAL_NUMA(locality)) {
+        ptr->buffers[ptr->cntr][idx++] = 'N';
+        ptr->buffers[ptr->cntr][idx++] = 'u';
+        ptr->buffers[ptr->cntr][idx++] = ':';
+    }
+    if (OPAL_PROC_ON_LOCAL_SOCKET(locality)) {
+        ptr->buffers[ptr->cntr][idx++] = 'S';
+        ptr->buffers[ptr->cntr][idx++] = ':';
+    }
+    if (OPAL_PROC_ON_LOCAL_L3CACHE(locality)) {
+        ptr->buffers[ptr->cntr][idx++] = 'L';
+        ptr->buffers[ptr->cntr][idx++] = '3';
+        ptr->buffers[ptr->cntr][idx++] = ':';
+    }
+    if (OPAL_PROC_ON_LOCAL_L2CACHE(locality)) {
+        ptr->buffers[ptr->cntr][idx++] = 'L';
+        ptr->buffers[ptr->cntr][idx++] = '2';
+        ptr->buffers[ptr->cntr][idx++] = ':';
+    }
+    if (OPAL_PROC_ON_LOCAL_L1CACHE(locality)) {
+        ptr->buffers[ptr->cntr][idx++] = 'L';
+        ptr->buffers[ptr->cntr][idx++] = '1';
+        ptr->buffers[ptr->cntr][idx++] = ':';
+    }
+    if (OPAL_PROC_ON_LOCAL_CORE(locality)) {
+        ptr->buffers[ptr->cntr][idx++] = 'C';
+        ptr->buffers[ptr->cntr][idx++] = ':';
+    }
+    if (OPAL_PROC_ON_LOCAL_HWTHREAD(locality)) {
+        ptr->buffers[ptr->cntr][idx++] = 'H';
+        ptr->buffers[ptr->cntr][idx++] = 'w';
+        ptr->buffers[ptr->cntr][idx++] = 't';
+        ptr->buffers[ptr->cntr][idx++] = ':';
+    }
+    if (0 < idx) {
+        ptr->buffers[ptr->cntr][idx-1] = '\0';
+    } else if (OPAL_PROC_NON_LOCAL & locality) {
+        ptr->buffers[ptr->cntr][idx++] = 'N';
+        ptr->buffers[ptr->cntr][idx++] = 'O';
+        ptr->buffers[ptr->cntr][idx++] = 'N';
+        ptr->buffers[ptr->cntr][idx++] = '\0';
+    } else {
+        /* must be an unknown locality */
+        ptr->buffers[ptr->cntr][idx++] = 'U';
+        ptr->buffers[ptr->cntr][idx++] = 'N';
+        ptr->buffers[ptr->cntr][idx++] = 'K';
+        ptr->buffers[ptr->cntr][idx++] = '\0';
+    }
+        
+    return ptr->buffers[ptr->cntr];
 }
 
 #if OPAL_HAVE_HWLOC

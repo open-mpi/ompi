@@ -77,6 +77,16 @@ OPAL_DECLSPEC extern opal_list_t opal_hwloc_base_components;
 OPAL_DECLSPEC extern bool opal_hwloc_base_inited;
 OPAL_DECLSPEC extern bool opal_hwloc_topology_inited;
 
+/* we always must have some minimal locality support */
+#define OPAL_HWLOC_PRINT_MAX_SIZE   50
+#define OPAL_HWLOC_PRINT_NUM_BUFS   16
+typedef struct {
+    char *buffers[OPAL_HWLOC_PRINT_NUM_BUFS];
+    int cntr;
+} opal_hwloc_print_buffers_t;
+opal_hwloc_print_buffers_t *opal_hwloc_get_print_buffer(void);
+OPAL_DECLSPEC char* opal_hwloc_base_print_locality(opal_hwloc_locality_t locality);
+
 #if OPAL_HAVE_HWLOC
 OPAL_DECLSPEC extern char *opal_hwloc_base_slot_list;
 OPAL_DECLSPEC extern char *opal_hwloc_base_cpu_set;
@@ -172,7 +182,6 @@ OPAL_DECLSPEC int opal_hwloc_base_get_local_index(hwloc_obj_type_t type,
 OPAL_DECLSPEC unsigned int opal_hwloc_base_get_npus(hwloc_topology_t topo,
                                                     hwloc_obj_t target);
 OPAL_DECLSPEC char* opal_hwloc_base_print_binding(opal_binding_policy_t binding);
-OPAL_DECLSPEC char* opal_hwloc_base_print_locality(opal_hwloc_locality_t locality);
 OPAL_DECLSPEC char* opal_hwloc_base_print_level(opal_hwloc_level_t level);
 
 /**
