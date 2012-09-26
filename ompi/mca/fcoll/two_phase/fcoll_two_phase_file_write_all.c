@@ -192,12 +192,6 @@ mca_fcoll_two_phase_file_write_all (mca_io_ompio_file_t *fh,
     max_data = count * datatype->super.size;
   }
     
-      
-
-    
-
-  
-  
   
     if(-1 == mca_fcoll_two_phase_num_io_procs){
       ret = ompi_io_ompio_set_aggregator_props (fh, 
@@ -271,28 +265,21 @@ mca_fcoll_two_phase_file_write_all (mca_io_ompio_file_t *fh,
       flat_buf->next = NULL;
       flat_buf->count = 0;
        
-       if(iov[0].iov_base == 0 ||
-	  (OMPI_MPI_OFFSET_TYPE)decoded_iov[iov_count-1].iov_base +
-	  (OMPI_MPI_OFFSET_TYPE)decoded_iov[iov_count-1].iov_len 
-	  == (OMPI_MPI_OFFSET_TYPE)total_bytes){
-	 local_size = iov_count/count + 1;
-       }
-       else
-	local_size = iov_count/count + 2;
-       flat_buf->indices = 
-	 (OMPI_MPI_OFFSET_TYPE *)malloc(local_size * 
-					sizeof(OMPI_MPI_OFFSET_TYPE));
 
-       if ( NULL == flat_buf->indices ){
-	 ret = OMPI_ERR_OUT_OF_RESOURCE;
-	 goto exit;
+      local_size = iov_count/count;
 
-       }
+      flat_buf->indices = 
+	(OMPI_MPI_OFFSET_TYPE *)malloc(local_size * 
+				       sizeof(OMPI_MPI_OFFSET_TYPE));
+      if ( NULL == flat_buf->indices ){
+	ret = OMPI_ERR_OUT_OF_RESOURCE;
+	goto exit;
 
+      }
+      
        flat_buf->blocklens = 
 	(OMPI_MPI_OFFSET_TYPE *)malloc(local_size * 
 				       sizeof(OMPI_MPI_OFFSET_TYPE));
-       
        if ( NULL == flat_buf->blocklens ){
 	 ret = OMPI_ERR_OUT_OF_RESOURCE;
 	 goto exit;
@@ -301,26 +288,11 @@ mca_fcoll_two_phase_file_write_all (mca_io_ompio_file_t *fh,
        flat_buf->count = local_size;
        i=0;j=0;
        while(j < local_size){
-	 if (0 == j && (OMPI_MPI_OFFSET_TYPE)decoded_iov[i].iov_base > 0){
-	   flat_buf->indices[j] = 0;
-	   flat_buf->blocklens[j] = 0;
+	   flat_buf->indices[j] = (OMPI_MPI_OFFSET_TYPE)decoded_iov[i].iov_base;
+	   flat_buf->blocklens[j] = decoded_iov[i].iov_len;
+	   if(i < (int)iov_count)
+	     i+=1;
 	   j+=1;
-	   flat_buf->indices[j] = (OMPI_MPI_OFFSET_TYPE)decoded_iov[i].iov_base;
-	   flat_buf->blocklens[j] = decoded_iov[i].iov_len;
-	 }
-	 else if ((local_size - 1  == j) && 
-		  (OMPI_MPI_OFFSET_TYPE)decoded_iov[iov_count-1].iov_base +
-		  (OMPI_MPI_OFFSET_TYPE)decoded_iov[iov_count-1].iov_len != (OMPI_MPI_OFFSET_TYPE)total_bytes){
-	   flat_buf->indices[j] = total_bytes;
-	   flat_buf->blocklens[j] = 0;
-	 }
-	 else {
-	   flat_buf->indices[j] = (OMPI_MPI_OFFSET_TYPE)decoded_iov[i].iov_base;
-	   flat_buf->blocklens[j] = decoded_iov[i].iov_len;
-	 }
-	 if(i < (int)iov_count)
-	   i+=1;
-	 j+=1;
        }
        
 #if DEBUG_ON
@@ -403,13 +375,6 @@ mca_fcoll_two_phase_file_write_all (mca_io_ompio_file_t *fh,
       goto exit;
     }
 				      
-    
-    /*MPI_Allgather(&start_offset, 1,MPI_OFFSET, start_offsets, 1,
-      MPI_OFFSET, fh->f_comm);
-      MPI_Allgather(&end_offset, 1, MPI_OFFSET, end_offsets, 1,
-      MPI_OFFSET, fh->f_comm);*/
-
-    
 #if DEBUG_ON
     for (i=0;i<fh->f_size;i++){
 	printf("%d: fcoll:two_phase:write_all:start[%d]:%ld,end[%d]:%ld\n",
@@ -515,7 +480,6 @@ mca_fcoll_two_phase_file_write_all (mca_io_ompio_file_t *fh,
 
  exit : 
 	if (flat_buf != NULL) {
-	  free (flat_buf);
 
 	  if (flat_buf->blocklens != NULL) {
 	    free (flat_buf->blocklens);
@@ -524,6 +488,8 @@ mca_fcoll_two_phase_file_write_all (mca_io_ompio_file_t *fh,
 	  if (flat_buf->indices != NULL) {
 	    free (flat_buf->indices);
 	  }
+	  free (flat_buf);
+
 	}
 
 
@@ -575,7 +541,8 @@ static int two_phase_exch_and_write(mca_io_ompio_file_t *fh,
     #endif
 
     char *write_buf=NULL;
-    /* To be moved to fbtl */
+
+
     MPI_Type_size(MPI_BYTE, &byte_size);
     
     for (i = 0; i < fh->f_size; i++){
@@ -594,7 +561,7 @@ static int two_phase_exch_and_write(mca_io_ompio_file_t *fh,
 	}
     }
     
-/*    printf("num_io_procs : %ld, csb : %ld\n", mca_fcoll_two_phase_num_io_procs, mca_fcoll_two_phase_cycle_buffer_size);*/
+
     ntimes = (int) ((end_loc - st_loc + mca_fcoll_two_phase_cycle_buffer_size)/mca_fcoll_two_phase_cycle_buffer_size); 
     
     if ((st_loc == -1) && (end_loc == -1)) {
@@ -1270,8 +1237,7 @@ static int two_phase_fill_send_buffer(mca_io_ompio_file_t *fh,
 		      if ( OMPI_SUCCESS != ret ){
 			return ret;
 		      }
-		      /*			MPI_Isend(send_buf[p], send_size[p], MPI_BYTE, p,  fh->f_rank+p+100*iter, fh->f_comm, requests+jj);*/
-			jj++;
+		      jj++;
 		    }
 		}
 		else {
