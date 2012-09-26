@@ -22,7 +22,6 @@ AM_CPPFLAGS = -DMALLOC_DEBUG=0
 if OPAL_HAVE_POSIX_THREADS
 AM_CPPFLAGS +=  \
     -D_GNU_SOURCE=1 \
-    -DUSE_TSD_DATA_HACK=1 \
     -DMALLOC_HOOKS=1 \
     -I$(srcdir)/sysdeps/pthread
 endif
