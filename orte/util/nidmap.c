@@ -656,9 +656,9 @@ int orte_util_decode_pidmap(opal_byte_object_t *bo)
 #if OPAL_HAVE_HWLOC
     opal_hwloc_level_t bind_level = OPAL_HWLOC_NODE_LEVEL, pbind, *lvptr;
     unsigned int bind_idx, pbidx, *uiptr;
-    opal_hwloc_locality_t locality;
     char *cpu_bitmap;
 #endif
+    opal_hwloc_locality_t locality;
     orte_std_cntr_t n;
     opal_buffer_t buf;
     int rc;
@@ -722,12 +722,13 @@ int orte_util_decode_pidmap(opal_byte_object_t *bo)
         if (proc.jobid == ORTE_PROC_MY_NAME->jobid) {
             orte_process_info.bind_level = bind_level;
         }
-#endif
+
         OPAL_OUTPUT_VERBOSE((2, orte_nidmap_output,
                              "%s orte:util:decode:pidmap nprocs %s bind level %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_VPID_PRINT(num_procs),
                              opal_hwloc_base_print_level(bind_level)));
+#endif
 
         /* cycle thru the data until we hit an INVALID vpid indicating
          * all data for this job has been read
