@@ -85,6 +85,7 @@ typedef struct {
     int cntr;
 } opal_hwloc_print_buffers_t;
 opal_hwloc_print_buffers_t *opal_hwloc_get_print_buffer(void);
+extern char* opal_hwloc_print_null;
 OPAL_DECLSPEC char* opal_hwloc_base_print_locality(opal_hwloc_locality_t locality);
 
 #if OPAL_HAVE_HWLOC

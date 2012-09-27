@@ -307,7 +307,7 @@ int opal_hwloc_base_open(void)
 
 static bool fns_init=false;
 static opal_tsd_key_t print_tsd_key;
-static char* opal_hwloc_print_null = "NULL";
+char* opal_hwloc_print_null = "NULL";
 
 static void buffer_cleanup(void *value)
 {
