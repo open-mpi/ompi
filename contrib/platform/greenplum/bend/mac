@@ -1,4 +1,3 @@
-enable_hadoop=yes
 enable_mem_debug=yes
 enable_mem_profile=no
 enable_debug_symbols=yes
@@ -16,7 +15,7 @@ enable_mpi_cxx_seek=no
 enable_mpi_java=yes
 enable_memchecker=no
 enable_vt=no
-enable_mca_no_build=crs,memchecker,snapc,crcp,rml-ftrm
+enable_mca_no_build=crs,memchecker,snapc,crcp,rml-ftrm,filem-rsh
 enable_contrib_no_build=libnbc,vt
 with_memory_manager=no
 with_devel_headers=yes
