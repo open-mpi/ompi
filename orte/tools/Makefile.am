@@ -37,12 +37,6 @@ SUBDIRS += \
         tools/orte-info \
         tools/orte-migrate
 
-#if ORTE_WANT_HADOOP_SUPPORT
-SUBDIRS += \
-	tools/allocators \
-	tools/mrplus
-#endif
-
 DIST_SUBDIRS += \
 	tools/orte-checkpoint \
 	tools/orte-clean \
@@ -53,7 +47,5 @@ DIST_SUBDIRS += \
 	tools/wrappers \
         tools/orte-top \
         tools/orte-info \
-        tools/orte-migrate \
-	tools/mrplus \
-        tools/allocators
+        tools/orte-migrate
 
