@@ -75,19 +75,13 @@ static int filem_raw_query(mca_base_module_t **module, int *priority)
 {
     *priority = 0;
 
-    /* only select when requested, and never for an APP */
+    /* never for an APP */
     if (ORTE_PROC_IS_APP) {
         *module = NULL;
         return ORTE_ERROR;
     }
 
-#if ORTE_WANT_HADOOP_SUPPORT
-    /* always use us if Hadoop is enabled */
-    *priority = 1000;
-    /* always flatten directory trees for Hadoop */
-    orte_filem_raw_flatten_trees = true;
-#endif
-
+    /* otherwise, use if selected */
     *module = (mca_base_module_t*) &mca_filem_raw_module;
     return ORTE_SUCCESS;
 }

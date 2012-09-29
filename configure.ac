@@ -561,14 +561,6 @@ m4_ifdef([project_orte], [ORTE_SETUP_JAVA])
 m4_ifdef([project_ompi], [OMPI_SETUP_JAVA_BINDINGS])
 
 ##################################
-# Hadoop support
-##################################
-
-# We can't use Hadoop support unless we're building ORTE
-m4_ifdef([project_orte], [ORTE_SETUP_HADOOP])
-
-
-##################################
 # Assembler Configuration
 ##################################
 
