@@ -999,9 +999,16 @@ static void two_phase_fill_user_buffer(mca_io_ompio_file_t *fh,
   OMPI_MPI_OFFSET_TYPE off=0, len=0, rem_len=0, user_buf_idx=0;
   unsigned *curr_from_proc=NULL, *done_from_proc=NULL, *recv_buf_idx=NULL;
   
-  curr_from_proc = (unsigned *) calloc (fh->f_size, sizeof(unsigned));
-  done_from_proc = (unsigned *) calloc (fh->f_size, sizeof(unsigned));
-  recv_buf_idx = (unsigned *) calloc (fh->f_size, sizeof(unsigned));
+  curr_from_proc = (unsigned *) malloc (fh->f_size * sizeof(unsigned));
+  done_from_proc = (unsigned *) malloc (fh->f_size * sizeof(unsigned));
+  recv_buf_idx = (unsigned *) malloc (fh->f_size * sizeof(unsigned));
+  
+  
+  for (i=0; i < fh->f_size; i++) {
+    recv_buf_idx[i] = curr_from_proc[i] = 0;
+    done_from_proc[i] = recd_from_proc[i];
+  }
+  
   
 
   
