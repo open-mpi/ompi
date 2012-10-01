@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
  * Copyright (c) 2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2012      Oracle and/or its affiliates.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -62,8 +63,8 @@ int MPI_Improbe(int source, int tag, MPI_Comm comm, int *flag,
             MEMCHECKER(
                 opal_memchecker_base_mem_undefined(&status->MPI_ERROR, sizeof(int));
             );
-            *message = &ompi_message_no_proc.message;
         }
+        *message = &ompi_message_no_proc.message;
         *flag = 1;
         return MPI_SUCCESS;
     }

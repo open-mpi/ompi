@@ -1,3 +1,4 @@
+.\" Copyright (c) 2012      Oracle and/or its affiliates.  All rights reserved.
 .\" Copyright 2012 Cisco Systems, Inc.  All rights reserved.
 .\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
@@ -66,7 +67,7 @@ allocate memory for the receive buffer according to the length of the
 probed message.
 .sp
 A matching probe with MPI_PROC_NULL as \fIsource\fP returns
-\fImessage\fP = MPI_MESSAGE_NULL, and the \fIstatus\fP object returns
+\fImessage\fP = MPI_MESSAGE_NO_PROC, and the \fIstatus\fP object returns
 source = MPI_PROC_NULL, tag = MPI_ANY_TAG, and count = 0.
 .sp
 When MPI_Mprobe returns (from a non-MPI_PROC_NULL \fIsource\fP), the
