@@ -93,6 +93,26 @@ OPAL_DECLSPEC extern char *opal_hwloc_base_slot_list;
 OPAL_DECLSPEC extern char *opal_hwloc_base_cpu_set;
 OPAL_DECLSPEC extern hwloc_cpuset_t opal_hwloc_base_given_cpus;
 
+/* convenience macro for debugging */
+#define OPAL_HWLOC_SHOW_BINDING(n, v)                                   \
+    do {                                                                \
+        char tmp1[1024];                                                \
+        hwloc_cpuset_t bind;                                            \
+        bind = opal_hwloc_alloc();                                      \
+        if (hwloc_get_cpubind(opal_hwloc_topology, bind,                \
+                              HWLOC_CPUBIND_PROCESS) < 0) {             \
+            opal_output_verbose(n, v,                                   \
+                                "CANNOT DETERMINE BINDING AT %s:%d",    \
+                                __FILE__, __LINE__);                    \
+        } else {                                                        \
+            opal_hwloc_base_cset2mapstr(tmp1, sizeof(tmp1), bind);      \
+            opal_output_verbose(n, v,                                   \
+                                "BINDINGS AT %s:%d: %s",                \
+                                __FILE__, __LINE__, tmp1);              \
+        }                                                               \
+        hwloc_bitmap_free(bind);                                        \
+    } while(0);
+
 OPAL_DECLSPEC opal_hwloc_locality_t opal_hwloc_base_get_relative_locality(hwloc_topology_t topo,
                                                                               opal_hwloc_level_t level1,
                                                                               unsigned int peer1,
