@@ -47,6 +47,16 @@ included in the vX.Y.Z section and be denoted as:
    (** also appeared: A.B.C)  -- indicating that this item was previously
                                  included in release version vA.B.C.
 
+1.6.3
+-----
+
+- Fix issue with MPI_OP_COMMUTATIVE in the mpif.h bindings.  Thanks to
+  Ake Sandgren for providing a patch to fix the issue.
+- Fix issue with MPI_SIZEOF when using CHARACTER and LOGICAL types in
+  the mpi module.  Thanks to Ake Sandgren for providing a patch to fix
+  the issue.
+
+
 1.6.2
 -----
 
