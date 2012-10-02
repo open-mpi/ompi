@@ -125,7 +125,7 @@ int ompi_mtl_psm_module_init(int local_rank, int num_local_procs) {
     bzero((void*) &ep_opt, sizeof(ep_opt));
     ep_opt.timeout = ompi_mtl_psm.connect_timeout * 1e9;
     ep_opt.unit = ompi_mtl_psm.ib_unit;
-    ep_opt.affinity = -1; /* Let PSM choose affinity */
+    ep_opt.affinity = PSM_EP_OPEN_AFFINITY_SKIP; /* do not let PSM set affinity */
     ep_opt.shm_mbytes = -1; /* Choose PSM defaults */
     ep_opt.sendbufs_num = -1; /* Choose PSM defaults */
 
