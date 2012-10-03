@@ -178,7 +178,6 @@ int mca_bcol_iboffload_small_msg_bcast_progress(
                         bcol_function_args_t *input_args,
                         struct coll_ml_function_t *const_args)
 {
-    int i;
     mca_bcol_iboffload_collreq_t *coll_request =
                  (mca_bcol_iboffload_collreq_t *)
                                    input_args->bcol_opaque_data;

@@ -24,10 +24,11 @@
 #include "ompi/mca/mpool/base/base.h"
 #include "ompi/mca/common/ofacm/connect.h"
 #include "ompi/communicator/communicator.h"
+#include "ompi/mca/common/ofacm/base.h"
 #include "ompi/mca/common/verbs/common_verbs.h"
 
 #include "orte/mca/rml/rml.h"
-#include "orte/util/show_help.c"
+#include "orte/util/show_help.h"
 
 #include "opal/util/argv.h"
 #include "opal/include/opal/types.h"
@@ -538,9 +539,10 @@ static int32_t atoi_param(char *param, int32_t dflt)
 static int setup_qps(void)
 {
     int ret = OMPI_SUCCESS, qp = 0;
-    int rd_num, rd_low, size, rd_win, rd_rsv, sd_max;
+    int rd_num = 0, rd_low = 0, size = 0,
+        rd_win = 0, rd_rsv = 0, sd_max = 0;
 
-    mca_bcol_iboffload_qp_type_t type;
+    mca_bcol_iboffload_qp_type_t type = 0;
 
     char **queues = NULL, **params = NULL;
 
