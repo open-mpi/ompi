@@ -1756,66 +1756,13 @@ static int init_one_device(opal_list_t *btl_list, struct ibv_device* ib_dev)
             }
         }
     }
-    /* Horrible.  :-( Per the thread starting here:
-       http://lists.openfabrics.org/pipermail/general/2008-June/051822.html,
-       we can't rely on the value reported by the device to determine
-       the maximum max_inline_data value.  So we have to search by
-       looping over max_inline_data values and trying to make dummy
-       QPs.  Yuck! */
+
+    /* If we don't have a set max inline data size, search for it */
     if (need_search) {
-        struct ibv_qp *qp;
-        struct ibv_cq *cq;
-        struct ibv_qp_init_attr init_attr;
-        uint32_t max_inline_data;
-
-        /* Make a dummy CQ */
-#if OMPI_IBV_CREATE_CQ_ARGS == 3
-        cq = ibv_create_cq(device->ib_dev_context, 1, NULL);
-#else
-        cq = ibv_create_cq(device->ib_dev_context, 1, NULL, NULL, 0);
-#endif
-        if (NULL == cq) {
-            orte_show_help("help-mpi-btl-openib.txt", "init-fail-create-q",
-                           true, orte_process_info.nodename,
-                           __FILE__, __LINE__, "ibv_create_cq",
-                           strerror(errno), errno,
-                           ibv_get_device_name(device->ib_dev));
-            ret = OMPI_ERR_NOT_AVAILABLE;
-            goto error;
-        }
-
-        /* Setup the QP attributes */
-        memset(&init_attr, 0, sizeof(init_attr));
-        init_attr.qp_type = IBV_QPT_RC;
-        init_attr.send_cq = cq;
-        init_attr.recv_cq = cq;
-        init_attr.srq = 0;
-        init_attr.cap.max_send_sge = 1;
-        init_attr.cap.max_recv_sge = 1;
-        init_attr.cap.max_recv_wr = 1;
-
-        /* Loop over max_inline_data values; just check powers of 2 --
-           that's good enough */
-        init_attr.cap.max_inline_data = max_inline_data = 1 << 20;
-        while (max_inline_data > 0) {
-            qp = ibv_create_qp(device->ib_pd, &init_attr);
-            if (NULL != qp) {
-                break;
-            }
-            max_inline_data >>= 1;
-            init_attr.cap.max_inline_data = max_inline_data;
-        }
-
-        /* Did we find it? */
-        if (NULL != qp) {
-            device->max_inline_data = max_inline_data;
-            ibv_destroy_qp(qp);
-        } else {
-            device->max_inline_data = 0;
-        }
-
-        /* Destroy the temp CQ */
-        ibv_destroy_cq(cq);
+        ompi_common_verbs_find_max_inline(device->ib_dev,
+                                          device->ib_dev_context,
+                                          device->ib_pd,
+                                          &device->max_inline_data);
     }
 
     /* Should we use RDMA for short / eager messages?  First check MCA

@@ -83,6 +83,11 @@ int ompi_common_verbs_qp_test(struct ibv_context *device_context, int flags)
         rc = OMPI_ERR_NOT_SUPPORTED;
         goto out;
     }
+    if (flags & OMPI_COMMON_VERBS_FLAGS_NOT_RC &&
+        make_qp(pd, cq, IBV_QPT_RC)) {
+        rc = OMPI_ERR_TYPE_MISMATCH;
+        goto out;
+    }
     if (flags & OMPI_COMMON_VERBS_FLAGS_UD &&
         !make_qp(pd, cq, IBV_QPT_UD)) {
         rc = OMPI_ERR_NOT_SUPPORTED;

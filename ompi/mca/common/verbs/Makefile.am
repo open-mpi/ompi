@@ -17,6 +17,7 @@ headers = \
 sources = \
 	common_verbs_basics.c \
 	common_verbs_devlist.c \
+	common_verbs_find_max_inline.c \
 	common_verbs_find_ports.c \
 	common_verbs_mca.c \
 	common_verbs_port.c \

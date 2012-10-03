@@ -75,14 +75,15 @@ OBJ_CLASS_DECLARATION(ompi_common_verbs_port_item_t);
 
 enum {
     OMPI_COMMON_VERBS_FLAGS_RC = 0x1,
-    OMPI_COMMON_VERBS_FLAGS_UD = 0x2,
-    OMPI_COMMON_VERBS_FLAGS_TRANSPORT_IB = 0x4,
-    OMPI_COMMON_VERBS_FLAGS_TRANSPORT_IWARP = 0x8,
+    OMPI_COMMON_VERBS_FLAGS_NOT_RC = 0x2,
+    OMPI_COMMON_VERBS_FLAGS_UD = 0x4,
+    OMPI_COMMON_VERBS_FLAGS_TRANSPORT_IB = 0x8,
+    OMPI_COMMON_VERBS_FLAGS_TRANSPORT_IWARP = 0x10,
     /* Note that these 2 link layer flags will only be useful if
        defined(HAVE_IBV_LINK_LAYER_ETHERNET). Otherwise, they will be
        ignored. */
-    OMPI_COMMON_VERBS_FLAGS_LINK_LAYER_IB = 0x10,
-    OMPI_COMMON_VERBS_FLAGS_LINK_LAYER_ETHERNET = 0x20,
+    OMPI_COMMON_VERBS_FLAGS_LINK_LAYER_IB = 0x20,
+    OMPI_COMMON_VERBS_FLAGS_LINK_LAYER_ETHERNET = 0x40,
     OMPI_COMMON_VERBS_FLAGS_MAX
 };
 
@@ -139,6 +140,15 @@ ompi_common_verbs_port_bw(struct ibv_port_attr *port_attr,
  */
 OMPI_DECLSPEC int
 ompi_common_verbs_mtu(struct ibv_port_attr *port_attr);
+
+/*
+ * Find the max_inline_data value for a given device
+ */
+OMPI_DECLSPEC int
+ompi_common_verbs_find_max_inline(struct ibv_device *device,
+                                  struct ibv_context *context,
+                                  struct ibv_pd *pd,
+                                  uint32_t *max_inline_arg);
 
 /*
  * Test a device to see if it can handle a specific QP type (RC and/or
