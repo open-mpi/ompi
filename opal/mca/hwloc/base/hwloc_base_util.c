@@ -1675,10 +1675,10 @@ static int build_map(int *num_sockets_arg, int *num_cores_arg,
     /* Find out how many sockets we have (cached so that we don't have
        to look this up every time) */
     if (num_sockets < 0) {
-        num_sockets = hwloc_get_nbobjs_by_type(opal_hwloc_topology, HWLOC_OBJ_CORE);
+        num_sockets = hwloc_get_nbobjs_by_type(opal_hwloc_topology, HWLOC_OBJ_SOCKET);
 
         /* Lazy: take the total number of cores that we have in the
-           topology; that'll be less than the max number of cores
+           topology; that'll be more than the max number of cores
            under any given socket */
         num_cores = hwloc_get_nbobjs_by_type(opal_hwloc_topology, HWLOC_OBJ_CORE);
     }
@@ -1716,7 +1716,7 @@ static int build_map(int *num_sockets_arg, int *num_cores_arg,
         }
         core_index = 0;
         if (NULL != core) {
-            core_index = core->os_index;
+            core_index = core->logical_index;
         }
 
         /* Go upward and find the socket this PU belongs to */
@@ -1726,7 +1726,7 @@ static int build_map(int *num_sockets_arg, int *num_cores_arg,
         }
         socket_index = 0;
         if (NULL != socket) {
-            socket_index = socket->os_index;
+            socket_index = socket->logical_index;
         }
 
         /* Save this socket/core/pu combo.  LAZY: Assuming that we
@@ -1756,7 +1756,7 @@ int opal_hwloc_base_cset2str(char *str, int len, hwloc_cpuset_t cpuset)
         return ret;
     }
 
-    /* Iterate over the data maxtrix and build up the string */
+    /* Iterate over the data matrix and build up the string */
     first = true;
     for (socket_index = 0; socket_index < num_sockets; ++socket_index) {
         for (core_index = 0; core_index < num_cores; ++core_index) {
