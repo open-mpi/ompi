@@ -40,7 +40,7 @@ int mca_fs_lustre_priority = 20;
    to 64KB. MCA parameter
    Can be changed at 
    runtime also*/
-int mca_fs_lustre_stripe_size = 65536;
+int mca_fs_lustre_stripe_size = 1048576;
 int mca_fs_lustre_stripe_width = 0;
 /*
  * Instantiate the public struct with all of our public information
