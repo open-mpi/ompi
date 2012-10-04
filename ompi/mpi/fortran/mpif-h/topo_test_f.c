@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2012      Oracle and/or its affiliates.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -35,8 +36,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_TOPO_TEST,
                            pmpi_topo_test_,
                            pmpi_topo_test__,
                            pompi_topo_test_f,
-                           (MPI_Fint *comm, MPI_Fint *status, MPI_Fint *ierr),
-                           (comm, status, ierr) )
+                           (MPI_Fint *comm, MPI_Fint *topo_type, MPI_Fint *ierr),
+                           (comm, topo_type, ierr) )
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -55,8 +56,8 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TOPO_TEST,
                            mpi_topo_test_,
                            mpi_topo_test__,
                            ompi_topo_test_f,
-                           (MPI_Fint *comm, MPI_Fint *status, MPI_Fint *ierr),
-                           (comm, status, ierr) )
+                           (MPI_Fint *comm, MPI_Fint *topo_type, MPI_Fint *ierr),
+                           (comm, topo_type, ierr) )
 #endif
 
 
@@ -64,18 +65,18 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TOPO_TEST,
 #include "ompi/mpi/fortran/mpif-h/profile/defines.h"
 #endif
 
-void ompi_topo_test_f(MPI_Fint *comm, MPI_Fint *status, MPI_Fint *ierr)
+void ompi_topo_test_f(MPI_Fint *comm, MPI_Fint *topo_type, MPI_Fint *ierr)
 {
     int c_ierr;
     MPI_Comm c_comm;
-    OMPI_SINGLE_NAME_DECL(status);
+    OMPI_SINGLE_NAME_DECL(topo_type);
 
     c_comm = MPI_Comm_f2c(*comm);
     
-    c_ierr = MPI_Topo_test(c_comm, OMPI_SINGLE_NAME_CONVERT(status));
+    c_ierr = MPI_Topo_test(c_comm, OMPI_SINGLE_NAME_CONVERT(topo_type));
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if (MPI_SUCCESS == c_ierr) {
-        OMPI_SINGLE_INT_2_FINT(status);
+        OMPI_SINGLE_INT_2_FINT(topo_type);
     }
 }

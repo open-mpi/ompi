@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2009-2010 Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2009-2012 Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2011-2012 Sandia National Laboratories. All rights reserved.
  * $COPYRIGHT$
  * 
@@ -41,7 +41,7 @@ int mca_pml_ob1_iprobe(int src,
 
     if( recvreq.req_recv.req_base.req_ompi.req_complete == true ) {
         if( NULL != status ) {
-            OMPI_STATUS_SET(status, &recvreq.req_recv.req_base.req_ompi.req_status);
+            *status = recvreq.req_recv.req_base.req_ompi.req_status;
         }
         rc = recvreq.req_recv.req_base.req_ompi.req_status.MPI_ERROR;
         *matched = 1;
@@ -72,7 +72,7 @@ int mca_pml_ob1_probe(int src,
     ompi_request_wait_completion(&recvreq.req_recv.req_base.req_ompi);
     rc = recvreq.req_recv.req_base.req_ompi.req_status.MPI_ERROR;
     if (NULL != status) {
-        OMPI_STATUS_SET(status, &recvreq.req_recv.req_base.req_ompi.req_status);
+        *status = recvreq.req_recv.req_base.req_ompi.req_status;
     }
 
     MCA_PML_BASE_RECV_REQUEST_FINI( &recvreq.req_recv );
