@@ -107,7 +107,7 @@ int mca_pml_bfo_recv(void *addr,
     ompi_request_wait_completion(&recvreq->req_recv.req_base.req_ompi);
 
     if (NULL != status) {  /* return status */
-        OMPI_STATUS_SET(status, &recvreq->req_recv.req_base.req_ompi.req_status);
+        *status = recvreq->req_recv.req_base.req_ompi.req_status;
     }
     rc = recvreq->req_recv.req_base.req_ompi.req_status.MPI_ERROR;
     ompi_request_free( (ompi_request_t**)&recvreq );

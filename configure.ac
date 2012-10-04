@@ -16,6 +16,7 @@
 #                         reserved.
 # Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
 # Copyright (c) 2011      NVIDIA Corporation.  All rights reserved.
+# Copyright (c) 2012      Oracle and/or its affiliates.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -432,6 +433,7 @@ if test "$ac_cv_type_long_double__Complex" = yes; then
 fi
 
 OMPI_C_GET_ALIGNMENT(void *, OPAL_ALIGNMENT_VOID_P)
+OMPI_C_GET_ALIGNMENT(size_t, OPAL_ALIGNMENT_SIZE_T)
 
 #
 # Does the C compiler native support "bool"? (i.e., without

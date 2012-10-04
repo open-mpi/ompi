@@ -11,6 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
  * Copyright (c) 2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2012      Oracle and/or its affiliates.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -21,6 +22,7 @@
 #include "ompi_config.h"
 
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
+#include "ompi/mpi/fortran/mpif-h/status-conversion.h"
 #include "ompi/mpi/fortran/base/constants.h"
 #include "ompi/communicator/communicator.h"
 
@@ -69,31 +71,14 @@ OMPI_GENERATE_F77_BINDINGS (MPI_MPROBE,
 void ompi_mprobe_f(MPI_Fint *source, MPI_Fint *tag, MPI_Fint *comm, 
                    MPI_Fint *message, MPI_Fint *status, MPI_Fint *ierr)
 {   
-    MPI_Status *c_status;
     MPI_Comm c_comm;
     MPI_Message c_message;
-#if OMPI_SIZEOF_FORTRAN_INTEGER != SIZEOF_INT
-    MPI_Status c_status2;
-#endif
+    OMPI_FORTRAN_STATUS_DECLARATION(c_status,c_status2)
     int c_ierr;
 
     c_comm = MPI_Comm_f2c (*comm);
 
-    /* See if we got MPI_STATUS_IGNORE */
-    if (OMPI_IS_FORTRAN_STATUS_IGNORE(status)) {
-        c_status = MPI_STATUS_IGNORE;
-    } else {
-
-        /* If sizeof(int) == sizeof(INTEGER), then there's no
-           translation necessary -- let the underlying functions write
-           directly into the Fortran status */
-
-#if OMPI_SIZEOF_FORTRAN_INTEGER == SIZEOF_INT
-        c_status = (MPI_Status *) status;
-#else
-        c_status = &c_status2;
-#endif
-    }
+    OMPI_FORTRAN_STATUS_SET_POINTER(c_status,c_status2,status)
 
     c_ierr = OMPI_INT_2_FINT(MPI_Mprobe(OMPI_FINT_2_INT(*source),
                                         OMPI_FINT_2_INT(*tag),
@@ -102,11 +87,7 @@ void ompi_mprobe_f(MPI_Fint *source, MPI_Fint *tag, MPI_Fint *comm,
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if (MPI_SUCCESS == c_ierr) {
-#if OMPI_SIZEOF_FORTRAN_INTEGER != SIZEOF_INT
-        if (MPI_STATUS_IGNORE != c_status) {
-            MPI_Status_c2f(c_status, status);
-        }
-#endif
+        OMPI_FORTRAN_STATUS_RETURN(c_status,c_status2,status,c_ierr)
         *message = MPI_Message_c2f(c_message);
     }
 }
