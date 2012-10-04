@@ -28,6 +28,9 @@
 
 int mca_io_ompio_cycle_buffer_size = OMPIO_PREALLOC_MAX_BUF_SIZE;
 int mca_io_ompio_bytes_per_agg = OMPIO_PREALLOC_MAX_BUF_SIZE;
+int mca_io_ompio_record_offset_info = 0;
+
+
 
 /*
  * Private functions
@@ -147,6 +150,13 @@ static int open_component(void)
                               "version", 
                               "Version of OMPIO",
                               false, true, NULL, NULL);
+
+    mca_base_param_reg_int (&mca_io_ompio_component.io_version,
+                            "record_file_offset_info",
+                            "The information of the file offset/length",
+                            false, false, mca_io_ompio_record_offset_info,
+                            &mca_io_ompio_record_offset_info);
+
 
     mca_base_param_reg_int (&mca_io_ompio_component.io_version,
                             "cycle_buffer_size",

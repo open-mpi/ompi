@@ -41,6 +41,7 @@
 
 extern int mca_io_ompio_cycle_buffer_size;
 extern int mca_io_ompio_bytes_per_agg;
+extern int mca_io_ompio_record_offset_info;
 
 /*
  * Flags
@@ -112,6 +113,13 @@ typedef struct mca_io_ompio_access_array_t{
     MPI_Aint *mem_ptrs;
     int count;
 } mca_io_ompio_access_array_t;
+
+/*Used in extracting offset adj-matrix*/
+typedef struct mca_io_ompio_offlen_array_t{
+    OMPI_MPI_OFFSET_TYPE offset;
+    MPI_Aint             length;
+    int                  process_id;
+}mca_io_ompio_offlen_array_t;
 
 
 /**
@@ -211,6 +219,12 @@ OMPI_DECLSPEC int ompi_io_ompio_sort (mca_io_ompio_io_array_t *io_array,
 OMPI_DECLSPEC int ompi_io_ompio_sort_iovec (struct iovec *iov, 
 					    int num_entries, 
 					    int *sorted);
+
+OMPI_DECLSPEC int ompi_io_ompio_sort_offlen (mca_io_ompio_offlen_array_t *io_array,
+                                             int num_entries,
+                                             int *sorted);
+
+
 
 OMPI_DECLSPEC int ompi_io_ompio_set_explicit_offset (mca_io_ompio_file_t *fh, 
 						     OMPI_MPI_OFFSET_TYPE offset);

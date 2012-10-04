@@ -137,8 +137,8 @@ int ompi_io_ompio_generate_current_file_view (mca_io_ompio_file_t *fh,
     size_t sum_previous_counts = 0;
     int j, k;
     int block = 1;
- 
-    /* allocate an initial iovec, will grow if needed */
+
+   /* allocate an initial iovec, will grow if needed */
     iov = (struct iovec *) malloc 
         (OMPIO_IOVEC_INITIAL_SIZE * sizeof (struct iovec));
     if (NULL == iov) {
@@ -198,10 +198,234 @@ int ompi_io_ompio_generate_current_file_view (mca_io_ompio_file_t *fh,
     }
     fh->f_position_in_file_view = sum_previous_counts;
     fh->f_index_in_file_view = j;
-
     *iov_count = k;
     *f_iov = iov;
 
+    if (mca_io_ompio_record_offset_info){
+	
+	int tot_entries=0, *recvcounts=NULL, *displs=NULL;
+	mca_io_ompio_offlen_array_t *per_process=NULL;
+	mca_io_ompio_offlen_array_t  *all_process=NULL;
+	int *sorted=NULL, *column_list=NULL, *values=NULL;
+	int *row_index=NULL, i=0, l=0, m=0;
+	int column_index=0, r_index=0;
+	int blocklen[3] = {1, 1, 1};
+	OPAL_PTRDIFF_TYPE d[3], base;
+	ompi_datatype_t *types[3];
+	ompi_datatype_t *io_array_type=MPI_DATATYPE_NULL;
+	int **adj_matrix=NULL;
+	FILE *fp;
+
+
+        recvcounts = (int *) malloc (fh->f_size * sizeof(int));
+        if (NULL == recvcounts){
+            return OMPI_ERR_OUT_OF_RESOURCE;
+	}
+        displs = (int *) malloc (fh->f_size * sizeof(int));
+        if (NULL == displs){
+            return OMPI_ERR_OUT_OF_RESOURCE;
+	}
+
+        fh->f_comm->c_coll.coll_gather (&k,
+                                        1,
+                                        MPI_INT,
+                                        recvcounts,
+                                        1,
+					MPI_INT,
+                                        OMPIO_ROOT,
+                                        fh->f_comm,
+                                        fh->f_comm->c_coll.coll_gather_module);
+
+        per_process = (mca_io_ompio_offlen_array_t *)
+	    malloc (k * sizeof(mca_io_ompio_offlen_array_t));
+	if (NULL == per_process){
+            opal_output(1,"Error while allocating per process!\n");
+            return  OMPI_ERR_OUT_OF_RESOURCE;
+        }
+        for (i=0;i<k;i++){
+            per_process[i].offset =
+                (OMPI_MPI_OFFSET_TYPE)iov[i].iov_base;
+            per_process[i].length =
+                (MPI_Aint)iov[i].iov_len;
+            per_process[i].process_id = fh->f_rank;
+        }
+	
+	types[0] = &ompi_mpi_long.dt;
+        types[1] = &ompi_mpi_long.dt;
+        types[2] = &ompi_mpi_int.dt;
+
+	d[0] = (OPAL_PTRDIFF_TYPE)&per_process[0];
+        d[1] = (OPAL_PTRDIFF_TYPE)&per_process[0].length;
+        d[2] = (OPAL_PTRDIFF_TYPE)&per_process[0].process_id;
+        base = d[0];
+        for (i=0;i<3;i++){
+            d[i] -= base;
+        }
+        ompi_datatype_create_struct (3,
+                                     blocklen,
+                                     d,
+                                     types,
+                                     &io_array_type);
+        ompi_datatype_commit (&io_array_type);
+
+	if (OMPIO_ROOT == fh->f_rank){
+            tot_entries = recvcounts[0];
+            displs[0] = 0;
+            for(i=1;i<fh->f_size;i++){
+                displs[i] = displs[i-1] + recvcounts[i-1];
+                tot_entries += recvcounts[i];
+            }
+            all_process = (mca_io_ompio_offlen_array_t *)
+                malloc (tot_entries * sizeof(mca_io_ompio_offlen_array_t));
+            if (NULL == all_process){
+                opal_output(1,"Error while allocating per process!\n");
+                return  OMPI_ERR_OUT_OF_RESOURCE;
+            }
+
+            sorted = (int *) malloc
+                (tot_entries * sizeof(int));
+            if (NULL == all_process){
+                opal_output(1,"Error while allocating per process!\n");
+                return  OMPI_ERR_OUT_OF_RESOURCE;
+            }
+
+            adj_matrix = (int **) malloc (fh->f_size *
+                                          sizeof(int *));
+            for (i=0;i<fh->f_size;i++){
+                adj_matrix[i] = (int *) malloc (fh->f_size *
+                                                sizeof (int ));
+            }
+
+            for (i=0;i<fh->f_size;i++){
+                for (j=0;j<fh->f_size;j++){
+                    adj_matrix[i][j] = 0;
+                }
+            }
+	}
+	fh->f_comm->c_coll.coll_gatherv (per_process,
+					 k,
+					 io_array_type,
+					 all_process,
+					 recvcounts,
+					 displs,
+					 io_array_type,
+					 OMPIO_ROOT,
+					 fh->f_comm,
+					 fh->f_comm->c_coll.coll_gatherv_module);
+
+	ompi_datatype_destroy(&io_array_type);
+	
+	if (OMPIO_ROOT == fh->f_rank){
+	    
+	    ompi_io_ompio_sort_offlen(all_process,
+				      tot_entries,
+				      sorted);
+	    
+	    for (i=0;i<tot_entries-1;i++){
+		j = all_process[sorted[i]].process_id;
+		l = all_process[sorted[i+1]].process_id;
+		adj_matrix[j][l] += 1;
+		adj_matrix[l][j] += 1;
+	    }
+	    
+	    /*Compress sparse matrix based on CRS to write to file */
+	    m = 0;
+	    for (i=0; i<fh->f_size; i++){
+		for (j=0; j<fh->f_size; j++){
+		    if (adj_matrix[i][j] > 0){
+			m++;
+		    }
+		}
+	    }
+	    fp = fopen("fileview_info.out", "w+");
+	    fprintf(fp,"FILEVIEW\n");
+	    column_list = (int *) malloc ( m * sizeof(int));
+	    if (NULL == column_list){
+		opal_output(1,"Error while allocating column list\n");
+		return OMPI_ERR_OUT_OF_RESOURCE;
+	    }
+	    values = (int *) malloc ( m * sizeof(int));
+	    if (NULL == values){
+		opal_output(1,"Error while allocating values list\n");
+		return OMPI_ERR_OUT_OF_RESOURCE;
+	    }
+	    
+	    row_index = (int *) malloc ((fh->f_size + 1) *
+					sizeof(int));
+	    if (NULL == row_index){
+		opal_output(1,"Error while allocating row_index list\n");
+		return OMPI_ERR_OUT_OF_RESOURCE;
+	    }
+	    fprintf(fp,"%d %d\n", m, fh->f_size+1);
+	    column_index = 0;
+	    r_index = 1;
+	    row_index[0] = r_index;
+	    for (i=0; i<fh->f_size; i++){
+		for (j=0; j<fh->f_size; j++){
+		    if (adj_matrix[i][j] > 0){
+			values[column_index]= adj_matrix[i][j];
+			column_list[column_index]= j;
+			fprintf(fp,"%d ", column_list[column_index]);
+			column_index++;
+			r_index++;
+		    }
+		    
+		}
+		row_index[i+1]= r_index;
+	    }
+
+	    fprintf(fp,"\n");
+	    for (i=0; i<m;i++){
+		fprintf(fp, "%d ", values[i]);
+	    }
+	    fprintf(fp, "\n");
+	    for (i=0; i< (fh->f_size + 1); i++){
+		fprintf(fp, "%d ", row_index[i]);
+	    }
+	    fprintf(fp, "\n");
+	    fclose(fp);
+
+	    if (NULL != recvcounts){
+		free(recvcounts);
+		recvcounts = NULL;
+	    }
+	    if (NULL != displs){
+		free(displs);
+		displs = NULL;
+	    }
+	    if (NULL != sorted){
+		free(sorted);
+		sorted = NULL;
+	    }
+	    if (NULL != per_process){
+		free(per_process);
+		per_process = NULL;
+	    }
+	    if (NULL != all_process){
+		free(all_process);
+		all_process = NULL;
+	    }
+	    if (NULL != column_list){
+		free(column_list);
+		column_list = NULL;
+	    }
+	    if (NULL != values){
+		free(values);
+		values = NULL;
+	    }
+	    if (NULL != row_index){
+		free(row_index);
+		row_index = NULL;
+	    }
+	    if (NULL != adj_matrix){
+		for (i=0;i<fh->f_size;i++){
+		    free(adj_matrix[i]);
+		}
+		free(adj_matrix);
+		adj_matrix = NULL;
+	    }
+	}
+    }
     return OMPI_SUCCESS;
 }
 
@@ -535,6 +759,109 @@ int ompi_io_ompio_sort_iovec (struct iovec *iov,
             if ((right <= heap_size) && 
                 (iov[temp_arr[right]].iov_base > 
                  iov[temp_arr[largest]].iov_base)) {
+                largest = right;
+            }
+            if (largest != j) {
+                temp = temp_arr[largest];
+                temp_arr[largest] = temp_arr[j];
+                temp_arr[j] = temp;
+                j = largest;
+            }
+            else {
+                done = 1;
+            }
+        }
+        sorted[i] = temp_arr[i];
+    }
+    sorted[0] = temp_arr[0];
+
+    if (NULL != temp_arr) {
+        free(temp_arr);
+        temp_arr = NULL;
+    }
+    return OMPI_SUCCESS;
+}
+
+int ompi_io_ompio_sort_offlen (mca_io_ompio_offlen_array_t *io_array,
+                               int num_entries,
+                               int *sorted){
+
+    int i = 0;
+    int j = 0;
+    int left = 0;
+    int right = 0;
+    int largest = 0;
+    int heap_size = num_entries - 1;
+    int temp = 0;
+    unsigned char done = 0;
+    int* temp_arr = NULL;
+
+    temp_arr = (int*)malloc(num_entries*sizeof(int));
+    if (NULL == temp_arr) {
+        opal_output (1, "OUT OF MEMORY\n");
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+    temp_arr[0] = 0;
+    for (i = 1; i < num_entries; ++i) {
+        temp_arr[i] = i;
+    }
+    /* num_entries can be a large no. so NO RECURSION */
+    for (i = num_entries/2-1 ; i>=0 ; i--) {
+        done = 0;
+        j = i;
+        largest = j;
+
+        while (!done) {
+	    left = j*2+1;
+            right = j*2+2;
+            if ((left <= heap_size) &&
+                (io_array[temp_arr[left]].offset > io_array[temp_arr[j]].offset)) {
+                largest = left;
+            }
+            else {
+                largest = j;
+            }
+            if ((right <= heap_size) &&
+                (io_array[temp_arr[right]].offset >
+                 io_array[temp_arr[largest]].offset)) {
+                largest = right;
+            }
+            if (largest != j) {
+                temp = temp_arr[largest];
+                temp_arr[largest] = temp_arr[j];
+                temp_arr[j] = temp;
+                j = largest;
+            }
+            else {
+                done = 1;
+            }
+        }
+    }
+
+    for (i = num_entries-1; i >=1; --i) {
+        temp = temp_arr[0];
+        temp_arr[0] = temp_arr[i];
+        temp_arr[i] = temp;
+        heap_size--;
+        done = 0;
+        j = 0;
+        largest = j;
+
+        while (!done) {
+            left =  j*2+1;
+            right = j*2+2;
+
+            if ((left <= heap_size) &&
+                (io_array[temp_arr[left]].offset >
+                 io_array[temp_arr[j]].offset)) {
+		largest = left;
+            }
+            else {
+                largest = j;
+            }
+            if ((right <= heap_size) &&
+                (io_array[temp_arr[right]].offset >
+                 io_array[temp_arr[largest]].offset)) {
                 largest = right;
             }
             if (largest != j) {
