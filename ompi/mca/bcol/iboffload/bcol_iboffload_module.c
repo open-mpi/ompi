@@ -795,7 +795,7 @@ int mca_bcol_iboffload_adjust_cq(mca_bcol_iboffload_device_t *device,
 static int init_recv_wr_manager(mca_bcol_iboffload_recv_wr_manager *recv_wr_manager)
 {
 
-    struct ibv_recv_wr *recv_wr;
+    struct ibv_recv_wr *recv_wr = NULL;
     int ret = OMPI_SUCCESS, qp, wr, num_qps;
 
     mca_bcol_iboffload_component_t *cm = &mca_bcol_iboffload_component;
