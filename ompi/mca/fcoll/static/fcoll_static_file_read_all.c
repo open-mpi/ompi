@@ -78,7 +78,7 @@ mca_fcoll_static_file_read_all (mca_io_ompio_file_t *fh,
   MPI_Aint *memory_displacements=NULL;
   int bytes_to_read_in_cycle=0;
   size_t max_data=0, bytes_per_cycle=0;
-  uint32_t iov_count, iov_index=0;
+  uint32_t iov_count=0, iov_index=0;
   struct iovec *decoded_iov=NULL, *iov=NULL;
   local_io_array *local_iov_array=NULL, *global_iov_array=NULL;
   local_io_array *file_offsets_for_agg=NULL;
