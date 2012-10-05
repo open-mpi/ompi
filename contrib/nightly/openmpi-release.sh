@@ -5,9 +5,10 @@
 
 # The tarballs to make
 if [ $# -eq 0 ] ; then
-  dirs="branches/v1.5"
+  dirs="branches/v1.6"
 else
-  dirs=$@
+  dirs=$1
+  shift
 fi
 
 # Build root - scratch space
@@ -41,6 +42,16 @@ for dir in $dirs; do
         module load "autotools/ompi-$ver"
 
         ./$script $@ >dist.out 2>&1
+	if test "$?" != "0"; then
+		cat <<EOF
+=============================================================================
+== Dist failure
+== Last few lines of output (full results in dist.out file):
+=============================================================================
+EOF
+		tail -n 20 dist.out
+		exit 1
+	fi
 
         module unload "autotools"
 done
