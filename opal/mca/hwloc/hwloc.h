@@ -116,6 +116,7 @@ typedef struct {
     hwloc_cpuset_t available;
     unsigned int npus;
     unsigned int idx;
+    unsigned int num_bound;
 } opal_hwloc_obj_data_t;
 OBJ_CLASS_DECLARATION(opal_hwloc_obj_data_t);
 

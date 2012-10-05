@@ -436,6 +436,25 @@ unsigned int opal_hwloc_base_get_npus(hwloc_topology_t topo,
     unsigned int cnt;
     hwloc_cpuset_t cpuset;
 
+    /* if the object is a hwthread (i.e., HWLOC_OBJ_PU),
+     * then the answer is always 1 since there isn't
+     * anything underneath it
+     */
+    if (HWLOC_OBJ_PU == obj->type) {
+        return 1;
+    }
+
+    /* if the object is a core (i.e., HWLOC_OBJ_CORE) and
+     * we are NOT treating hwthreads as independent cpus,
+     * then the answer is also 1 since we don't allow
+     * you to use the underlying hwthreads as separate
+     * entities
+     */
+    if (HWLOC_OBJ_CORE == obj->type &&
+        !opal_hwloc_use_hwthreads_as_cpus) {
+        return 1;
+    }
+
     data = (opal_hwloc_obj_data_t*)obj->userdata;
 
     if (NULL == data || 0 == data->npus) {
@@ -552,7 +571,7 @@ unsigned int opal_hwloc_base_get_obj_idx(hwloc_topology_t topo,
  * a multi-step test :-(
  *
  * And, of course, we make things even worse because we don't
- * always care about what is physically or logicallly present,
+ * always care about what is physically or logically present,
  * but rather what is available to us. For example, we don't
  * want to map or bind to a cpu that is offline, or one that
  * we aren't allowed by use by the OS. So we have to also filter
@@ -735,6 +754,110 @@ unsigned int opal_hwloc_base_get_nbobjs_by_type(hwloc_topology_t topo,
     return num_objs;
 }
 
+static hwloc_obj_t df_search_min_bound(hwloc_topology_t topo,
+                                       hwloc_obj_t start,
+                                       hwloc_obj_type_t target,
+                                       unsigned cache_level,
+                                       unsigned int *min_bound)
+{
+    unsigned k;
+    hwloc_obj_t obj, save=NULL;
+    opal_hwloc_obj_data_t *data;
+
+    if (target == start->type) {
+        if (HWLOC_OBJ_CACHE == start->type && cache_level != start->attr->cache.depth) {
+            goto notfound;
+        }
+        /* see how many procs are bound to us */
+        data = (opal_hwloc_obj_data_t*)start->userdata;
+        if (NULL == data) {
+            data = OBJ_NEW(opal_hwloc_obj_data_t);
+            start->userdata = data;
+        }
+        OPAL_OUTPUT_VERBOSE((5, opal_hwloc_base_output,
+                             "hwloc:base:min_bound_under_obj object %s:%u nbound %u min %u",
+                             hwloc_obj_type_string(target), start->logical_index,
+                             data->num_bound, *min_bound));
+        if (data->num_bound < *min_bound) {
+            *min_bound = data->num_bound;
+            return start;
+        }
+        /* if we have more procs bound to us than the min, return NULL */
+        return NULL;
+    }
+
+ notfound:
+    for (k=0; k < start->arity; k++) {
+        obj = df_search_min_bound(topo, start->children[k], target, cache_level, min_bound);
+        if (NULL != obj) {
+            save = obj;
+        }
+        /* if the target level is HWTHREAD and we are NOT treating
+         * hwthreads as separate cpus, then we can only consider
+         * the 0th hwthread on a core
+         */
+        if (HWLOC_OBJ_CORE == start->type && HWLOC_OBJ_PU == target &&
+            !opal_hwloc_use_hwthreads_as_cpus) {
+            break;
+        }
+    }
+    
+    return save;
+}
+
+hwloc_obj_t opal_hwloc_base_find_min_bound_target_under_obj(hwloc_topology_t topo,
+                                                            hwloc_obj_t obj,
+                                                            hwloc_obj_type_t target,
+                                                            unsigned cache_level)
+{
+    unsigned int min_bound;
+    hwloc_obj_t loc;
+
+    /* bozo check */
+    if (NULL == topo || NULL == obj) {
+        OPAL_OUTPUT_VERBOSE((5, opal_hwloc_base_output,
+                             "hwloc:base:find_min_bound_under_obj NULL %s",
+                             (NULL == topo) ? "topology" : "object"));
+        return NULL;
+    }
+
+
+    /* if the object and target is the same type, then there is
+     * nothing under it, so just return itself
+     */
+    if (target == obj->type) {
+        /* again, we have to treat caches differently as
+         * the levels distinguish them
+         */
+        if (HWLOC_OBJ_CACHE == target &&
+            cache_level < obj->attr->cache.depth) {
+            goto moveon;
+        }
+        return obj;
+    }
+
+ moveon:
+    /* the hwloc accessors all report at the topo level,
+     * so we have to do some work
+     */
+    min_bound = UINT_MAX;
+
+    loc = df_search_min_bound(topo, obj, target, cache_level, &min_bound);
+
+    if (HWLOC_OBJ_CACHE == target) {
+        OPAL_OUTPUT_VERBOSE((5, opal_hwloc_base_output,
+                             "hwloc:base:min_bound_under_obj found min bound of %u on %s:%u:%u",
+                             min_bound, hwloc_obj_type_string(target),
+                             cache_level, loc->logical_index));
+    } else {
+        OPAL_OUTPUT_VERBOSE((5, opal_hwloc_base_output,
+                             "hwloc:base:min_bound_under_obj found min bound of %u on %s:%u",
+                             min_bound, hwloc_obj_type_string(target), loc->logical_index));
+    }
+
+    return loc;
+}
+
 /* as above, only return the Nth instance of the specified object
  * type from inside the topology
  */
@@ -765,6 +888,44 @@ hwloc_obj_t opal_hwloc_base_get_obj_by_type(hwloc_topology_t topo,
     idx = 0;
     obj = hwloc_get_root_obj(topo);
     return df_search(topo, obj, target, cache_level, instance, rtype, &idx, NULL);
+}
+
+static void df_clear(hwloc_topology_t topo,
+                     hwloc_obj_t start)
+{
+    unsigned k;
+    opal_hwloc_obj_data_t *data;
+
+    /* see how many procs are bound to us */
+    data = (opal_hwloc_obj_data_t*)start->userdata;
+    if (NULL != data) {
+        data->num_bound = 0;
+    }
+
+    for (k=0; k < start->arity; k++) {
+        df_clear(topo, start->children[k]);
+    }
+}
+
+void opal_hwloc_base_clear_usage(hwloc_topology_t topo)
+{
+    hwloc_obj_t root;
+    unsigned k;
+
+    /* bozo check */
+    if (NULL == topo) {
+        OPAL_OUTPUT_VERBOSE((5, opal_hwloc_base_output,
+                             "hwloc:base:clear_usage: NULL topology"));
+        return;
+    }
+
+    root = hwloc_get_root_obj(topo);
+    /* must not start at root as the root object has
+     * a different userdata attached to it
+     */
+    for (k=0; k < root->arity; k++) {
+        df_clear(topo, root->children[k]);
+    }
 }
 
 /* The current slot_list notation only goes to the core level - i.e., the location
