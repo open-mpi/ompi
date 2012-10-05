@@ -99,7 +99,7 @@ typedef union ompi_mpi_object_t {
 struct ompi_request_t {
     ompi_free_list_item_t super;                /**< Base type */
     ompi_request_type_t req_type;               /**< Enum indicating the type of the request */
-    ompi_status_public_t req_status;            /**< Completion status */
+    struct ompi_status_public_t req_status;     /**< Completion status */
     volatile bool req_complete;                 /**< Flag indicating wether request has completed */
     volatile ompi_request_state_t req_state;    /**< enum indicate state of the request */
     bool req_persistent;                        /**< flag indicating if the this is a persistent request */
