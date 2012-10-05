@@ -7,7 +7,8 @@
 if [ $# -eq 0 ] ; then
   dirs="branches/v1.6"
 else
-  dirs=$@
+  dirs=$1
+  shift
 fi
 
 # Build root - scratch space
