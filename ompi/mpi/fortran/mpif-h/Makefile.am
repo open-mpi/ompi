@@ -67,7 +67,7 @@ endif
 headers = \
     bindings.h \
     prototypes_mpi.h \
-    status-conversions.h
+    status-conversion.h
 
 #
 # These files are only built and added to libmpi_mpifh.la in certain cases.
