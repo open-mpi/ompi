@@ -38,7 +38,7 @@ ompi_coll_tuned_alltoallv_intra_pairwise(void *sbuf, int *scounts, int *sdisps,
                                          struct ompi_communicator_t *comm,
                                          mca_coll_base_module_t *module)
 {
-    int line = -1, err = 0, rank, size, step, sendto, recvfrom;
+    int line = -1, err = 0, rank, size, step = 0, sendto, recvfrom;
     void *psnd, *prcv;
     ptrdiff_t sext, rext;
 
@@ -51,24 +51,8 @@ ompi_coll_tuned_alltoallv_intra_pairwise(void *sbuf, int *scounts, int *sdisps,
     ompi_datatype_type_extent(sdtype, &sext);
     ompi_datatype_type_extent(rdtype, &rext);
 
-    psnd = ((char *) sbuf) + (ptrdiff_t)sdisps[rank] * sext;
-    prcv = ((char *) rbuf) + (ptrdiff_t)rdisps[rank] * rext;
-
-    if (0 != scounts[rank]) {
-        err = ompi_datatype_sndrcv(psnd, scounts[rank], sdtype,
-                                   prcv, rcounts[rank], rdtype);
-        if (MPI_SUCCESS != err) {
-            return err;
-        }
-    }
-
-    /* If only one process, we're done. */
-    if (1 == size) {
-        return MPI_SUCCESS;
-    }
-
-    /* Perform pairwise exchange starting from 1 since local exhange is done */
-    for (step = 1; step < size + 1; step++) {
+   /* Perform pairwise exchange starting from 1 since local exhange is done */
+    for (step = 0; step < size; step++) {
 
         /* Determine sender and receiver for this step. */
         sendto  = (rank + step) % size;
@@ -84,15 +68,15 @@ ompi_coll_tuned_alltoallv_intra_pairwise(void *sbuf, int *scounts, int *sdisps,
                                         prcv, rcounts[recvfrom], rdtype, recvfrom, 
                                         MCA_COLL_BASE_TAG_ALLTOALLV,
                                         comm, MPI_STATUS_IGNORE, rank);
-        if (err != MPI_SUCCESS) { line = __LINE__; goto err_hndl;  }
+        if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl;  }
     }
 
     return MPI_SUCCESS;
  
  err_hndl:
     OPAL_OUTPUT((ompi_coll_tuned_stream,
-                 "%s:%4d\tError occurred %d, rank %2d", __FILE__, line, 
-                 err, rank));
+                 "%s:%4d\tError occurred %d, rank %2d at step %d", __FILE__, line, 
+                 err, rank, step));
     return err;
 }
 
