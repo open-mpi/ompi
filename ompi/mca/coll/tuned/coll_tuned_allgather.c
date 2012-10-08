@@ -113,7 +113,7 @@ int ompi_coll_tuned_allgather_intra_bruck(void *sbuf, int scount,
         err = ompi_datatype_sndrcv(tmpsend, scount, sdtype, tmprecv, rcount, rdtype);
         if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl;  }
 
-    } else if (0 != rank) {
+    } else if (0 != rank) {  /* non root with MPI_IN_PLACE */
         tmpsend = ((char*)rbuf) + (ptrdiff_t)rank * (ptrdiff_t)rcount * rext;
         err = ompi_datatype_copy_content_same_ddt(rdtype, rcount, tmprecv, tmpsend);
         if (err < 0) { line = __LINE__; goto err_hndl; }
@@ -178,18 +178,18 @@ int ompi_coll_tuned_allgather_intra_bruck(void *sbuf, int scount,
         }
         shift_buf = free_buf - rlb;
       
-        tmpsend = (char*) rbuf;
+        /* 1. copy blocks [0 .. (size - rank - 1)] from rbuf to shift buffer */
         err = ompi_datatype_copy_content_same_ddt(rdtype, ((ptrdiff_t)(size - rank) * (ptrdiff_t)rcount),
-                                                  shift_buf, tmpsend);
+                                                  shift_buf, rbuf);
         if (err < 0) { line = __LINE__; goto err_hndl;  }
 
-        tmprecv = (char*) rbuf;
+        /* 2. move blocks [(size - rank) .. size] from rbuf to the begining of rbuf */
         tmpsend = (char*) rbuf + (ptrdiff_t)(size - rank) * (ptrdiff_t)rcount * rext;
-
         err = ompi_datatype_copy_content_same_ddt(rdtype, (ptrdiff_t)rank * (ptrdiff_t)rcount, 
-                                                  tmprecv, tmpsend);
+                                                  rbuf, tmpsend);
         if (err < 0) { line = __LINE__; goto err_hndl;  }
 
+        /* 3. copy blocks from shift buffer back to rbuf starting at block [rank]. */
         tmprecv = (char*) rbuf + (ptrdiff_t)rank * (ptrdiff_t)rcount * rext;
         err = ompi_datatype_copy_content_same_ddt(rdtype, (ptrdiff_t)(size - rank) * (ptrdiff_t)rcount, 
                                                   tmprecv, shift_buf);
