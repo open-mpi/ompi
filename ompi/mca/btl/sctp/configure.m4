@@ -47,8 +47,8 @@ AC_DEFUN([OMPI_CHECK_SCTP],[
         ;;
     *bsd*)
         case "$host" in
-        *freebsd7*)
-            # FreeBSD 7 has SCTP in an unpatched default kernel with
+        *freebsd[789]*|*freebsd1[0-9]*)
+            # FreeBSD >= 7 has SCTP in an unpatched default kernel with
             #  the SCTP API contained within libc. 
             ompi_sctp_api_libname="c"
             ;;
