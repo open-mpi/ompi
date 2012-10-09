@@ -19,6 +19,7 @@
 
 ! This file is used by scripts/mpi_sizeof.f90.sh (and therefore mpi_sizeof.f90)
 
+integer :: OMPI_SIZEOF_F90_CHARACTER
 integer :: OMPI_SIZEOF_F90_LOGICAL
 
 integer :: OMPI_SIZEOF_F90_INT1
@@ -36,6 +37,7 @@ integer :: OMPI_SIZEOF_F90_COMPLEX8
 integer :: OMPI_SIZEOF_F90_COMPLEX16
 integer :: OMPI_SIZEOF_F90_COMPLEX32
 
+parameter(OMPI_SIZEOF_F90_CHARACTER = @OMPI_SIZEOF_F90_CHARACTER@)
 parameter(OMPI_SIZEOF_F90_LOGICAL = @OMPI_SIZEOF_F90_LOGICAL@)
 
 parameter(OMPI_SIZEOF_F90_INT1 = @OMPI_SIZEOF_F90_INTEGER1@)

@@ -165,6 +165,7 @@ nodist_libmpi_f77_pmpi_la_SOURCES = \
         pkeyval_create_f.c \
         pkeyval_free_f.c \
         plookup_name_f.c \
+        pop_commutative_f.c \
         pop_create_f.c \
         popen_port_f.c \
         pop_free_f.c \
