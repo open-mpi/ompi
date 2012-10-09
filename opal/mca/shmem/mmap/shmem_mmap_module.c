@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007-2011 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
- * Copyright (c) 2010-2011 Los Alamos National Security, LLC.
+ * Copyright (c) 2010-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
  *
  * $COPYRIGHT$
@@ -88,6 +88,11 @@ segment_unlink(opal_shmem_ds_t *ds_buf);
 static int
 module_finalize(void);
 
+static int
+enough_space(const char *filename,
+             long space_req,
+             bool *result);
+
 /*
  * mmap shmem module
  */
@@ -130,6 +135,57 @@ shmem_ds_reset(opal_shmem_ds_t *ds_buf)
     ds_buf->seg_size = 0;
     memset(ds_buf->seg_name, '\0', OPAL_PATH_MAX);
     ds_buf->seg_base_addr = (unsigned char *)MAP_FAILED;
+}
+
+/* ////////////////////////////////////////////////////////////////////////// */
+static int
+enough_space(const char *filename,
+             long space_req,
+             bool *result)
+{
+    long avail = 0;
+    long fluff = (long)(.05 * space_req);
+    bool enough = false;
+    char *last_sep = NULL;
+    /* the target file name is passed here, but we need to check the parent
+     * directory. store it so we can extract that info later. */
+    char *target_dir = strdup(filename);
+    int rc;
+
+    if (NULL == target_dir) {
+        rc = OPAL_ERR_OUT_OF_RESOURCE;
+        goto out;
+    }
+    /* get the parent directory */
+    last_sep = strrchr(target_dir, OPAL_PATH_SEP[0]);
+    *last_sep = '\0';
+    /* now check space availability */
+    if (OPAL_SUCCESS != (rc = opal_path_df(target_dir, &avail))) {
+        OPAL_OUTPUT_VERBOSE(
+            (70, opal_shmem_base_output,
+             "WARNING: opal_path_df failure!")
+        );
+        goto out;
+    }
+    /* do we have enough space? */
+    if (avail >= space_req + fluff) {
+        enough = true;
+    }
+    else {
+        OPAL_OUTPUT_VERBOSE(
+            (70, opal_shmem_base_output,
+             "WARNING: not enough space on %s to meet request!"
+             "available: %ld requested: %ld", target_dir,
+             avail, space_req + fluff)
+        );
+    }
+
+out:
+    if (NULL != target_dir) {
+        free(target_dir);
+    }
+    *result = enough;
+    return rc;
 }
 
 /* ////////////////////////////////////////////////////////////////////////// */
@@ -243,6 +299,7 @@ segment_create(opal_shmem_ds_t *ds_buf,
     int rc = OPAL_SUCCESS;
     char *real_file_name = NULL;
     pid_t my_pid = getpid();
+    bool space_available = false;
     /* the real size of the shared memory segment.  this includes enough space
      * to store our segment header.
      */
@@ -311,6 +368,25 @@ segment_create(opal_shmem_ds_t *ds_buf,
         opal_show_help("help-opal-shmem-mmap.txt", "mmap on nfs", 1, hn,
                        real_file_name);
     }
+    /* let's make sure we have enough space for the backing file */
+    if (OPAL_SUCCESS != (rc = enough_space(real_file_name,
+                                           (long)real_size,
+                                           &space_available))) {
+        opal_output(0, "shmem: mmap: an error occurred while determining "
+                    "whether or not %s could be created.", real_file_name);
+        /* rc is set */
+        goto out;
+    }
+    if (!space_available) {
+        char hn[MAXHOSTNAMELEN];
+        gethostname(hn, MAXHOSTNAMELEN - 1);
+        hn[MAXHOSTNAMELEN - 1] = '\0';
+        rc = OPAL_ERR_OUT_OF_RESOURCE;
+        opal_show_help("help-opal-shmem-mmap.txt", "target full", 1,
+                       real_file_name, hn, (long)real_size, space_available);
+        goto out;
+    }
+    /* enough space is available, so create the segment */
     if (-1 == (ds_buf->seg_id = open(real_file_name, O_CREAT | O_RDWR, 0600))) {
         int err = errno;
         char hn[MAXHOSTNAMELEN];

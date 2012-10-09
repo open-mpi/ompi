@@ -11,6 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2012      Los Alamos National Security, LLC.
+ *                         All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -533,3 +535,55 @@ found:
 #endif /* __WINDOWS__ */
 }
 
+int
+opal_path_df(const char *path,
+             long *out_avail)
+{
+#if !defined(__WINDOWS__)
+    int rc = -1;
+    int trials = 5;
+    int err = 0;
+#if defined(__SVR4) && defined(__sun)
+    struct statvfs buf;
+#elif defined(__linux__) || defined (__BSD) ||                                 \
+      (defined(__APPLE__) && defined(__MACH__))
+    struct statfs buf;
+#endif
+
+    if (NULL == path || NULL == out_avail) {
+        return OPAL_ERROR;
+    }
+
+    do {
+#if defined(__SVR4) && defined(__sun)
+        rc = statvfs(path, &buf);
+#elif defined(__linux__) || defined (__BSD) ||                                 \
+      (defined(__APPLE__) && defined(__MACH__))
+        rc = statfs(path, &buf);
+#endif
+        err = errno;
+    } while (-1 == rc && ESTALE == err && (--trials > 0));
+
+    if (-1 == rc) {
+        OPAL_OUTPUT_VERBOSE((10, 2, "opal_path_df: stat(v)fs on "
+                             "path: %s failed with errno: %d (%s)\n",
+                             path, err, strerror(err)));
+        return OPAL_ERROR;
+    }
+
+    /* now set the amount of free space available on path */
+                               /* sometimes buf.f_bavail is negative */
+    *out_avail = buf.f_bsize * ((int)buf.f_bavail < 0 ? 0 : buf.f_bavail);
+
+    OPAL_OUTPUT_VERBOSE((10, 2, "opal_path_df: stat(v)fs states "
+                         "path: %s has %ld B of free space.",
+                         path, *out_avail));
+
+    return OPAL_SUCCESS;
+
+#else /* defined __WINDOWS__ */
+    /* FIXME if need Windows support */
+    *out_avail = 0;
+    return OPAL_SUCCESS;
+#endif /* !defined(__WINDOWS__) */
+}
