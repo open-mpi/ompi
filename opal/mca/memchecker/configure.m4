@@ -43,6 +43,12 @@ AC_DEFUN([MCA_memchecker_CONFIG],[
     # first, compile all the components
     MCA_CONFIGURE_FRAMEWORK($1, $2, 1)
 
-    AC_DEFINE_UNQUOTED([OMPI_MEMCHECKER_HAVE_COMPONENT], [$memchecker_base_found],
-        [Whether any opal memchecker mca components were found])
+    AS_IF([test "$MCA_opal_memchecker_STATIC_COMPONENTS" != "" -o "$MCA_opal_memchecker_DSO_COMPONENTS" != ""],
+          [memchecker_base_found=1],
+          [memchecker_base_found=0])
+    AS_IF([test $WANT_MEMCHECKER -eq 1 -a $memchecker_base_found -eq 0],
+          [AC_MSG_WARN([Memchecker support requested, but no memchecker])
+           AC_MSG_WARN([components configured successfully.  Did you])
+           AC_MSG_WARN([forget --with-valgrind?])
+           AC_MSG_ERROR([Cannot continue])])
 ])
