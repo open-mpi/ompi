@@ -1,7 +1,7 @@
 # -*- text -*-
 #
 # Copyright (c) 2009-2011 Cisco Systems, Inc.  All rights reserved.
-# Copyright (c) 2010      Los Alamos National Security, LLC.
+# Copyright (c) 2010-2012 Los Alamos National Security, LLC.
 #                         All rights reserved.
 #
 # $COPYRIGHT$
@@ -42,3 +42,12 @@ the MCA parameter "orte_no_session_dir".
 
 You can set the MCA paramter shmem_mmap_enable_nfs_warning to 0 to
 disable this message.
+#
+[target full]
+It appears as if there is not enough space for %s (the shared-memory backing
+file). It is likely that your MPI job will now either abort or experience
+performance degradation.
+
+  Local host:  %s
+  Space Requested: %ld B
+  Space Available: %ld B

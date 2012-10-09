@@ -9,6 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2012      Los Alamos National Security, LLC.
+ *                         All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -22,6 +24,8 @@
 #define OPAL_PATH_H
 
 #include "opal_config.h"
+
+#include "opal/constants.h"
 
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
@@ -136,6 +140,18 @@ OPAL_DECLSPEC char *opal_path_access(char *fname, char *path, int mode) __opal_a
  */
 OPAL_DECLSPEC bool opal_path_nfs(char *fname) __opal_attribute_warn_unused_result__;
 
+/**
+ * @brief Returns the disk usage of path.
+ *
+ * @param[in] path       Path to check
+ * @out_avail[out]       Amount of free space available on path (if successful)
+ *
+ * @retval OPAL_SUCCESS  If the operation was successful
+ * @retval OPAL_ERROR    otherwise
+ */
+OPAL_DECLSPEC int
+opal_path_df(const char *path,
+             long *out_avail)__opal_attribute_warn_unused_result__;
+
 END_C_DECLS
 #endif /* OPAL_PATH_H */
-
