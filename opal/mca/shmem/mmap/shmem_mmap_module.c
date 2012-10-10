@@ -91,6 +91,7 @@ module_finalize(void);
 static int
 enough_space(const char *filename,
              long space_req,
+             long *space_avail,
              bool *result);
 
 /*
@@ -141,6 +142,7 @@ shmem_ds_reset(opal_shmem_ds_t *ds_buf)
 static int
 enough_space(const char *filename,
              long space_req,
+             long *space_avail,
              bool *result)
 {
     long avail = 0;
@@ -185,6 +187,7 @@ out:
         free(target_dir);
     }
     *result = enough;
+    *space_avail = avail;
     return rc;
 }
 
@@ -300,6 +303,8 @@ segment_create(opal_shmem_ds_t *ds_buf,
     char *real_file_name = NULL;
     pid_t my_pid = getpid();
     bool space_available = false;
+    long amount_space_avail = 0;
+
     /* the real size of the shared memory segment.  this includes enough space
      * to store our segment header.
      */
@@ -371,6 +376,7 @@ segment_create(opal_shmem_ds_t *ds_buf,
     /* let's make sure we have enough space for the backing file */
     if (OPAL_SUCCESS != (rc = enough_space(real_file_name,
                                            (long)real_size,
+                                           &amount_space_avail,
                                            &space_available))) {
         opal_output(0, "shmem: mmap: an error occurred while determining "
                     "whether or not %s could be created.", real_file_name);
@@ -383,7 +389,7 @@ segment_create(opal_shmem_ds_t *ds_buf,
         hn[MAXHOSTNAMELEN - 1] = '\0';
         rc = OPAL_ERR_OUT_OF_RESOURCE;
         opal_show_help("help-opal-shmem-mmap.txt", "target full", 1,
-                       real_file_name, hn, (long)real_size, space_available);
+                       real_file_name, hn, (long)real_size, amount_space_avail);
         goto out;
     }
     /* enough space is available, so create the segment */
