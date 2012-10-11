@@ -204,34 +204,6 @@ int opal_cmd_line_make_opt_mca(opal_cmd_line_t *cmd,
 /*
  * Create a command line option, --long-name and/or -s (short name).
  */
-int opal_cmd_line_make_opt(opal_cmd_line_t *cmd, char short_name, 
-                          const char *long_name, int num_params, 
-                          const char *desc)
-{
-    opal_cmd_line_init_t e;
-
-    e.ocl_mca_type_name = NULL;
-    e.ocl_mca_component_name = NULL;
-    e.ocl_mca_param_name = NULL;
-
-    e.ocl_cmd_short_name = short_name;
-    e.ocl_cmd_single_dash_name = NULL;
-    e.ocl_cmd_long_name = long_name;
-
-    e.ocl_num_params = num_params;
-
-    e.ocl_variable_dest = NULL;
-    e.ocl_variable_type = OPAL_CMD_LINE_TYPE_NULL;
-
-    e.ocl_description = desc;
-
-    return make_opt(cmd, &e);
-}
-
-
-/*
- * Create a command line option, --long-name and/or -s (short name).
- */
 int opal_cmd_line_make_opt3(opal_cmd_line_t *cmd, char short_name, 
                             const char *sd_name, const char *long_name, 
                             int num_params, const char *desc)
