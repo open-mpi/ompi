@@ -236,6 +236,7 @@ opal_list_t *ompi_common_verbs_find_ports(const char *if_include,
     char **if_include_list = NULL, **if_exclude_list = NULL, **if_sanity_list = NULL;
     ompi_common_verbs_device_item_t *di;
     ompi_common_verbs_port_item_t *pi;
+    int rc;
     uint32_t i, j;
     opal_list_t *port_list = NULL;
     opal_list_item_t *item;
@@ -334,7 +335,13 @@ opal_list_t *ompi_common_verbs_find_ports(const char *if_include,
         /* Check for RC or UD QP support */
         if (flags & OMPI_COMMON_VERBS_FLAGS_RC ||
             flags & OMPI_COMMON_VERBS_FLAGS_UD) {
-            if (OPAL_SUCCESS != ompi_common_verbs_qp_test(device_context, flags)) {
+            rc = ompi_common_verbs_qp_test(device_context, flags);
+            if (OMPI_ERR_TYPE_MISMATCH == rc) {
+                want = false;
+                opal_output_verbose(5, stream, 
+                                    "verbs interface %s:%d: made an RC QP! we don't want RC-capable devices",
+                                    ibv_get_device_name(device), j);
+            } else if (OMPI_SUCCESS != rc) {
                 want = false;
                 opal_output_verbose(5, stream, 
                                     "verbs interface %s:%d: failed to make %s QP",
