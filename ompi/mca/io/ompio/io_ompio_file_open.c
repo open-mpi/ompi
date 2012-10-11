@@ -43,6 +43,7 @@ mca_io_ompio_file_open (ompi_communicator_t *comm,
     mca_io_ompio_data_t *data=NULL;
     int remote_arch;
 
+
     if ( ((amode&MPI_MODE_RDONLY)?1:0) + ((amode&MPI_MODE_RDWR)?1:0) +
 	 ((amode&MPI_MODE_WRONLY)?1:0) != 1 ) {
 	return MPI_ERR_AMODE;
@@ -82,8 +83,14 @@ mca_io_ompio_file_open (ompi_communicator_t *comm,
     data->ompio_fh.f_atomicity = 0;
 
     ompi_io_ompio_set_file_defaults ( &data->ompio_fh);
-
     data->ompio_fh.f_filename = fh->f_filename;
+
+    /*Initialize the print_queues queues here!*/
+    coll_write_time = (print_queue *) malloc (sizeof(print_queue));
+    coll_read_time = (print_queue *) malloc (sizeof(print_queue));
+
+    ompi_io_ompio_initialize_print_queue(coll_write_time);
+    ompi_io_ompio_initialize_print_queue(coll_read_time);
 
     /*
     if (MPI_INFO_NULL != info)  {
@@ -160,6 +167,7 @@ mca_io_ompio_file_close (ompi_file_t *fh)
     int ret = OMPI_SUCCESS;
     mca_io_ompio_data_t *data;
     int delete_flag = 0;
+    char name[256];
 
     data = (mca_io_ompio_data_t *) fh->f_io_selected_data;
     if ( NULL == data ) {
@@ -167,6 +175,26 @@ mca_io_ompio_file_close (ompi_file_t *fh)
 	return ret;
     }
 
+    if(mca_io_ompio_coll_timing_info){
+      strcpy (name, "WRITE");
+      if (!ompi_io_ompio_empty_print_queue(coll_write_time)){
+	ret = ompi_io_ompio_print_time_info(coll_write_time,
+					    name,
+					    &data->ompio_fh);
+	if (OMPI_SUCCESS != ret){
+	  printf("Error in print_time_info ");
+	}
+      }
+      strcpy (name, "READ");
+      if (!ompi_io_ompio_empty_print_queue(coll_read_time)){
+	ret = ompi_io_ompio_print_time_info(coll_read_time,
+					    name,
+					    &data->ompio_fh);
+	if (OMPI_SUCCESS != ret){
+	  printf("Error in print_time_info ");
+	}
+      }
+    }
     if ( data->ompio_fh.f_amode & MPI_MODE_DELETE_ON_CLOSE ) {
 	delete_flag = 1;
     }
@@ -175,6 +203,8 @@ mca_io_ompio_file_close (ompi_file_t *fh)
     if ( delete_flag && 0 == data->ompio_fh.f_rank ) {
 	mca_io_ompio_file_delete ( data->ompio_fh.f_filename, MPI_INFO_NULL );
     }
+
+
 
     mca_fs_base_file_unselect (&data->ompio_fh);
     mca_fbtl_base_file_unselect (&data->ompio_fh);

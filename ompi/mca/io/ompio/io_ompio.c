@@ -51,10 +51,14 @@
 
 #include "io_ompio.h"
 
+print_queue *coll_write_time=NULL;
+print_queue *coll_read_time=NULL;
+
+
 int ompi_io_ompio_set_file_defaults (mca_io_ompio_file_t *fh)
 {
 
-    if (NULL != fh) {
+   if (NULL != fh) {
         ompi_datatype_t *types[2], *default_file_view;
         int blocklen[2] = {1, 1};
         OPAL_PTRDIFF_TYPE d[2], base;
@@ -1991,4 +1995,188 @@ int ompi_io_ompio_scatter_data (mca_io_ompio_file_t *fh,
     return rc;
 }
 
+/* Print queue related function implementations */
+
+
+int ompi_io_ompio_initialize_print_queue(print_queue *q){
+
+    q->first = 0;
+    q->last = QUEUESIZE - 1;
+    q->count = 0;
+
+    return OMPI_SUCCESS;
+}
+int ompi_io_ompio_register_print_entry (print_queue *q,
+					print_entry x){
+    
+    if (q->count >= QUEUESIZE){
+	return OMPI_ERROR;
+    }
+    else{
+	q->last = (q->last + 1) % QUEUESIZE;
+	q->entry[q->last] = x;
+	q->count = q->count + 1;
+
+    }
+    return OMPI_SUCCESS;
+}
+
+int  ompi_io_ompio_unregister_print_entry (print_queue *q, print_entry *x){
+    
+    if (q->count <= 0){
+	return OMPI_ERROR;
+    }
+    else{
+	*x = q->entry[q->first];
+	q->first = (q->first+1) % QUEUESIZE;
+	q->count = q->count - 1;
+    }
+    return OMPI_SUCCESS;
+}
+
+int ompi_io_ompio_empty_print_queue(print_queue *q){
+    
+    if (q->count <= 0){
+	return 1;
+    }
+    else
+	return 0;
+}
+
+int ompi_io_ompio_full_print_queue(print_queue *q){
+    
+    if (q->count < QUEUESIZE)
+	return 0;
+    else
+	return 1;
+}
+
+
+int ompi_io_ompio_print_time_info(print_queue *q,
+				      char *name,
+				      mca_io_ompio_file_t *fh){
+    
+    int i = 0, j=0, nprocs_for_coll = 0, ret = OMPI_SUCCESS, count = 0;
+    double *time_details = NULL, *final_sum = NULL;
+    double *final_max = NULL, *final_min = NULL;
+    double *final_time_details=NULL;
+
+	
+
+    nprocs_for_coll = q->entry[0].nprocs_for_coll;
+    time_details = (double *) malloc (4*sizeof(double));
+    if ( NULL == time_details){
+	ret = OMPI_ERR_OUT_OF_RESOURCE;
+	goto exit;
+	
+    }
+   
+    if (!fh->f_rank){
+	
+	final_min = (double *) malloc (3*sizeof(double));
+	if ( NULL == final_min){
+	    ret = OMPI_ERR_OUT_OF_RESOURCE;
+	    goto exit;
+	}
+
+	final_max = (double *) malloc (3*sizeof(double));
+	if ( NULL == final_max){
+	    ret = OMPI_ERR_OUT_OF_RESOURCE;
+	    goto exit;
+
+	}
+
+	final_sum = (double *) malloc (3*sizeof(double));
+	if ( NULL == final_sum){
+	    ret = OMPI_ERR_OUT_OF_RESOURCE;
+	    goto exit;
+	}
+    
+	final_time_details = 
+	    (double *)malloc
+	    (fh->f_size * 4 * sizeof(double));
+	if (NULL == final_time_details){
+	    ret = OMPI_ERR_OUT_OF_RESOURCE;
+	    goto exit;
+
+
+	}
+    }
+    
+    for (i = 0; i < 4; i++){
+	time_details[i] = 0.0;
+    } 
+
+    if (q->count > 0){
+	for (i=0; i < q->count; i++){
+	    for (j=0;j<3;j++){
+		if (!fh->f_rank){
+		    final_min[j] = 100000.0;
+		    final_max[j] = 0.0;
+		    final_sum[j] = 0.0;
+		}
+		time_details[j] += q->entry[i].time[j];
+	    }
+	    time_details[3]  = q->entry[i].aggregator;
+	}
+    }
+
+    fh->f_comm->c_coll.coll_gather(time_details,
+				   4,
+				   MPI_DOUBLE,
+				   final_time_details,
+				   4,
+				   MPI_DOUBLE,
+				   0,
+				   fh->f_comm,
+				   fh->f_comm->c_coll.coll_gather_module);
+	    
+        
+
+    if (!fh->f_rank){
+
+	count = 4 * fh->f_size;
+
+	for (i=0;i<count;i+=4){
+	    if (final_time_details[i+3] == 1){
+		for (j=i; j<i+3;j++){
+		    final_sum[j-i] += final_time_details[j];
+		    if ( final_time_details[j] < final_min[j-i])
+			final_min[j-i] = final_time_details[j];
+		    if ( final_time_details[j] > final_max[j-i])
+			final_max[j-i] = final_time_details[j];
+		}
+	    }
+	}
+	printf ("\n# MAX-%s AVG-%s MIN-%s MAX-COMM AVG-COMM MIN-COMM",
+		name, name, name);
+	printf (" MAX-EXCH AVG-EXCH MIN-EXCH\n");
+	printf (" %f %f %f %f %f %f %f %f %f\n\n",
+		final_max[0], final_sum[0]/nprocs_for_coll, final_min[0],
+		final_max[1], final_sum[1]/nprocs_for_coll, final_min[1],
+		final_max[2], final_sum[2]/nprocs_for_coll, final_min[2]);
+	
+    }
+    
+ exit:
+    if ( NULL != final_max){
+	free(final_max);
+	final_max = NULL;
+    }
+    if (NULL != final_min){
+	free(final_min);
+	final_min = NULL;
+    }
+    if (NULL != final_sum){
+	free(final_sum);
+	final_sum = NULL;
+    }
+    if (NULL != time_details){
+	free(time_details);
+	time_details = NULL;
+    }
+
+    return ret;
+}
+    
 
