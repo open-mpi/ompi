@@ -2060,7 +2060,7 @@ int ompi_io_ompio_print_time_info(print_queue *q,
     double *time_details = NULL, *final_sum = NULL;
     double *final_max = NULL, *final_min = NULL;
     double *final_time_details=NULL;
-
+    
 	
 
     nprocs_for_coll = q->entry[0].nprocs_for_coll;
@@ -2098,9 +2098,14 @@ int ompi_io_ompio_print_time_info(print_queue *q,
 	if (NULL == final_time_details){
 	    ret = OMPI_ERR_OUT_OF_RESOURCE;
 	    goto exit;
-
-
 	}
+
+	count = 4 * fh->f_size;
+	for(i=0;i<count;i++){
+	    final_time_details[i] = 0.0;
+	}
+
+ 
     }
     
     for (i = 0; i < 4; i++){
@@ -2131,23 +2136,35 @@ int ompi_io_ompio_print_time_info(print_queue *q,
 				   fh->f_comm,
 				   fh->f_comm->c_coll.coll_gather_module);
 	    
-        
+
 
     if (!fh->f_rank){
 
-	count = 4 * fh->f_size;
-
 	for (i=0;i<count;i+=4){
 	    if (final_time_details[i+3] == 1){
-		for (j=i; j<i+3;j++){
-		    final_sum[j-i] += final_time_details[j];
-		    if ( final_time_details[j] < final_min[j-i])
-			final_min[j-i] = final_time_details[j];
-		    if ( final_time_details[j] > final_max[j-i])
-			final_max[j-i] = final_time_details[j];
-		}
+		final_sum[0] += final_time_details[i];
+		final_sum[1] += final_time_details[i+1];
+		final_sum[2] += final_time_details[i+2];
+
+		if ( final_time_details[i] < final_min[0])
+		    final_min[0] = final_time_details[i];
+		if ( final_time_details[i+1] < final_min[1])
+		    final_min[1] = final_time_details[i+1];
+		if ( final_time_details[i+2] < final_min[2])
+		    final_min[2] = final_time_details[i+2];
+
+
+
+		if ( final_time_details[i] > final_max[0])
+		    final_max[0] = final_time_details[i];
+		if ( final_time_details[i+1] > final_max[1])
+		    final_max[1] = final_time_details[i+1];
+		if ( final_time_details[i+2] > final_max[2])
+		    final_max[2] = final_time_details[i+2];
+
 	    }
 	}
+    
 	printf ("\n# MAX-%s AVG-%s MIN-%s MAX-COMM AVG-COMM MIN-COMM",
 		name, name, name);
 	printf (" MAX-EXCH AVG-EXCH MIN-EXCH\n");
