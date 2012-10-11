@@ -1,7 +1,7 @@
 # -*- text -*-
 #
 # Copyright (c) 2009-2011 Cisco Systems, Inc.  All rights reserved.
-# Copyright (c) 2010      Los Alamos National Security, LLC.
+# Copyright (c) 2010-2012 Los Alamos National Security, LLC.
 #                         All rights reserved.
 #
 # $COPYRIGHT$
@@ -21,3 +21,11 @@ experience performance degradation.
   System call: %s %s
   Error:       %s (errno %d)
 #
+[target full]
+It appears as if there is not enough space for %s (the shared-memory backing
+file). It is likely that your MPI job will now either abort or experience
+performance degradation.
+
+  Local host:  %s
+  Space Requested: %ld B
+  Space Available: %ld B

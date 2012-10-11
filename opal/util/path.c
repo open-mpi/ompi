@@ -582,8 +582,25 @@ opal_path_df(const char *path,
     return OPAL_SUCCESS;
 
 #else /* defined __WINDOWS__ */
-    /* FIXME if need Windows support */
     *out_avail = 0;
+    if (!GetDiskFreeSpaceEx(NULL, (PULARGE_INTEGER)out_avail, NULL, NULL)) {
+        DWORD dwSectorsPerCluster = 0, dwBytesPerSector = 0;
+        DWORD dwFreeClusters = 0, dwTotalClusters = 0;
+
+        if (!GetDiskFreeSpaceA(NULL, &dwSectorsPerCluster,
+            &dwBytesPerSector, &dwFreeClusters, &dwTotalClusters)) {
+            OPAL_OUTPUT_VERBOSE((10, 2, "opal_path_df: GetDiskFreeSpaceA on "
+                        "path: %s failed with errno: %d (%s)\n",
+                        path, err, strerror(err)));
+            return OPAL_ERROR;
+        }
+        *out_avail = dwFreeClusters * dwSectorsPerCluster * dwBytesPerSector; 
+    }
+
+    OPAL_OUTPUT_VERBOSE((10, 2, "opal_path_df: stat(v)fs states "
+                        "path: %s has %ld B of free space.",
+                        path, *out_avail));
+
     return OPAL_SUCCESS;
 #endif /* !defined(__WINDOWS__) */
 }
