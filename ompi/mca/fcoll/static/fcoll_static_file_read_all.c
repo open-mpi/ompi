@@ -31,7 +31,7 @@
 #include <unistd.h>
 
 #define DEBUG_ON 0
-#define TIME_BREAKDOWN 0
+
 
 
 typedef struct local_io_array {
@@ -93,6 +93,10 @@ mca_fcoll_static_file_read_all (mca_io_ompio_file_t *fh,
   MPI_Request *send_req=NULL, *recv_req=NULL;
   /*  MPI_Request *grecv_req=NULL, *gsend_req=NULL; */
 
+  double read_time = 0.0, start_read_time = 0.0, end_read_time = 0.0;
+  double rcomm_time = 0.0, start_rcomm_time = 0.0, end_rcomm_time = 0.0;
+  double read_exch = 0.0, start_rexch = 0.0, end_rexch = 0.0;
+  print_entry nentry;
 #if DEBUG_ON 
     MPI_Aint gc_in;
 #endif
@@ -346,6 +350,9 @@ mca_fcoll_static_file_read_all (mca_io_ompio_file_t *fh,
   }
 #endif
   
+  if(mca_io_ompio_coll_timing_info)
+    start_rexch = MPI_Wtime();
+
   for (index = 0; index < cycles; index++){
 
 
@@ -436,6 +443,8 @@ mca_fcoll_static_file_read_all (mca_io_ompio_file_t *fh,
       ret = OMPI_ERR_OUT_OF_RESOURCE;
       goto exit;
     }
+    if(mca_io_ompio_coll_timing_info)
+      start_rcomm_time = MPI_Wtime();
     
     ret = MCA_PML_CALL(irecv(receive_buf,
 			     bytes_to_read_in_cycle,
@@ -448,6 +457,11 @@ mca_fcoll_static_file_read_all (mca_io_ompio_file_t *fh,
       goto exit;
     }
 
+    if(mca_io_ompio_coll_timing_info){
+      end_rcomm_time = MPI_Wtime();
+      rcomm_time  += end_rcomm_time - start_rcomm_time;
+    }
+    
     
     if (fh->f_procs_in_group[fh->f_aggregator_index] == fh->f_rank) {
       for (i=0;i<fh->f_procs_per_group; i++){
@@ -459,6 +473,7 @@ mca_fcoll_static_file_read_all (mca_io_ompio_file_t *fh,
 	    if (bytes_remaining[i]){ /*Remaining bytes in the current entry of 
 				       the global offset array*/
 	      if (bytes_remaining[i] <= bytes_per_process[i]){
+
 		blocklen_per_process[i][disp_index[i] - 1] = bytes_remaining[i];
 		displs_per_process[i][disp_index[i] - 1] = 
 		  global_iov_array[sorted[current_index[i]]].offset + 
@@ -678,6 +693,8 @@ mca_fcoll_static_file_read_all (mca_io_ompio_file_t *fh,
 	       fh->f_io_array[i].length);
       }
 #endif
+      if(mca_io_ompio_coll_timing_info)
+	start_read_time = MPI_Wtime();
 
       if (fh->f_num_of_io_entries) {
 	if (OMPI_SUCCESS != fh->f_fbtl->fbtl_preadv (fh, NULL)) {
@@ -686,6 +703,13 @@ mca_fcoll_static_file_read_all (mca_io_ompio_file_t *fh,
 	  goto exit;
 	}
       }
+
+      if(mca_io_ompio_coll_timing_info){
+	end_read_time = MPI_Wtime();
+	read_time += end_read_time - start_read_time;
+      }
+
+
 #if DEBUG_ON
       printf("************Cycle: %d,  Aggregator: %d ***************\n", 
 	     index+1,fh->f_rank);
@@ -727,6 +751,9 @@ mca_fcoll_static_file_read_all (mca_io_ompio_file_t *fh,
 	ret = OMPI_ERR_OUT_OF_RESOURCE;
 	goto exit;
       }
+      if(mca_io_ompio_coll_timing_info)
+	start_rcomm_time = MPI_Wtime();
+
       for (i=0;i<fh->f_procs_per_group; i++){
 	ompi_datatype_create_hindexed(disp_index[i],
 				      blocklen_per_process[i],
@@ -758,6 +785,11 @@ mca_fcoll_static_file_read_all (mca_io_ompio_file_t *fh,
     ret = ompi_request_wait (recv_req, MPI_STATUS_IGNORE);
     if (OMPI_SUCCESS != ret){
       goto exit;
+    }
+
+    if(mca_io_ompio_coll_timing_info){
+      end_rcomm_time = MPI_Wtime();
+      rcomm_time += end_rcomm_time - start_rcomm_time;
     }
 
     position += bytes_to_read_in_cycle;
@@ -798,6 +830,7 @@ mca_fcoll_static_file_read_all (mca_io_ompio_file_t *fh,
 	receive_buf = NULL;
       }
     }
+
     if (NULL != recv_req){
       free(recv_req);
       recv_req = NULL;
@@ -841,6 +874,24 @@ mca_fcoll_static_file_read_all (mca_io_ompio_file_t *fh,
       }
     }
   }
+  if(mca_io_ompio_coll_timing_info){
+    end_rexch = MPI_Wtime();
+    read_exch += end_rexch - start_rexch;
+    nentry.time[0] = read_time;
+    nentry.time[1] = rcomm_time;
+    nentry.time[2] = read_exch;
+    if (fh->f_procs_in_group[fh->f_aggregator_index] == fh->f_rank)
+      nentry.aggregator = 1;
+    else
+      nentry.aggregator = 0;
+    nentry.nprocs_for_coll = mca_fcoll_static_num_io_procs;
+    if (!ompi_io_ompio_full_print_queue(coll_read_time)){
+      ompi_io_ompio_register_print_entry(coll_read_time,
+					 nentry);
+    } 
+  }
+  
+
     
     
     
