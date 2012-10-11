@@ -49,6 +49,7 @@
 #include <sys/mount.h>
 #endif
 
+#include "opal_stdint.h"
 #include "opal/util/output.h"
 #include "opal/util/path.h"
 #include "opal/util/os_path.h"
@@ -537,7 +538,7 @@ found:
 
 int
 opal_path_df(const char *path,
-             long *out_avail)
+             uint64_t *out_avail)
 {
 #if !defined(__WINDOWS__)
     int rc = -1;
@@ -553,6 +554,7 @@ opal_path_df(const char *path,
     if (NULL == path || NULL == out_avail) {
         return OPAL_ERROR;
     }
+    *out_avail = 0;
 
     do {
 #if defined(__SVR4) && defined(__sun)
@@ -576,7 +578,7 @@ opal_path_df(const char *path,
     *out_avail = buf.f_bsize * ((int)buf.f_bavail < 0 ? 0 : buf.f_bavail);
 
     OPAL_OUTPUT_VERBOSE((10, 2, "opal_path_df: stat(v)fs states "
-                         "path: %s has %ld B of free space.",
+                         "path: %s has %"PRIu64 " B of free space.",
                          path, *out_avail));
 
     return OPAL_SUCCESS;
@@ -594,11 +596,11 @@ opal_path_df(const char *path,
                         path, err, strerror(err)));
             return OPAL_ERROR;
         }
-        *out_avail = dwFreeClusters * dwSectorsPerCluster * dwBytesPerSector; 
+        *out_avail = dwFreeClusters * dwSectorsPerCluster * dwBytesPerSector;
     }
 
     OPAL_OUTPUT_VERBOSE((10, 2, "opal_path_df: stat(v)fs states "
-                        "path: %s has %ld B of free space.",
+                        "path: %s has %"PRIu64 " B of free space.",
                         path, *out_avail));
 
     return OPAL_SUCCESS;

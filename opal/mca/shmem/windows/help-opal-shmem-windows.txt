@@ -27,5 +27,5 @@ file). It is likely that your MPI job will now either abort or experience
 performance degradation.
 
   Local host:  %s
-  Space Requested: %ld B
-  Space Available: %ld B
+  Space Requested: %lu B
+  Space Available: %llu B
