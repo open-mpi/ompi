@@ -29,6 +29,8 @@
 #include "ompi/mca/pml/pml.h"
 #include <unistd.h>
 
+
+
 int
 mca_fcoll_dynamic_file_read_all (mca_io_ompio_file_t *fh, 
                                  void *buf, 
@@ -74,6 +76,14 @@ mca_fcoll_dynamic_file_read_all (mca_io_ompio_file_t *fh,
     int *bytes_per_process = NULL;
     MPI_Aint bytes_left = 0;
     MPI_Aint *total_bytes_per_process = NULL;
+
+
+    double read_time = 0.0, start_read_time = 0.0, end_read_time = 0.0;
+    double rcomm_time = 0.0, start_rcomm_time = 0.0, end_rcomm_time = 0.0;
+    double read_exch = 0.0, start_rexch = 0.0, end_rexch = 0.0;
+    print_entry nentry;
+
+
 
     if (opal_datatype_is_contiguous_memory_layout(&datatype->super,1)) {
         fh->f_flags |= OMPIO_CONTIGUOUS_MEMORY;
@@ -270,6 +280,9 @@ mca_fcoll_dynamic_file_read_all (mca_io_ompio_file_t *fh,
     bytes_remaining = 0;  
     current_index = 0;
 
+    if(mca_io_ompio_coll_timing_info)
+      start_rexch = MPI_Wtime();
+    
     for (index = 0; index < cycles; index++) {
         int k;
 
@@ -363,6 +376,7 @@ mca_fcoll_dynamic_file_read_all (mca_io_ompio_file_t *fh,
                 }
             }
         }
+
         /* Calculate the displacement on where to put the data and allocate
            the recieve buffer (global_buf) */
         if (fh->f_procs_in_group[fh->f_aggregator_index] == fh->f_rank) {
@@ -497,12 +511,22 @@ mca_fcoll_dynamic_file_read_all (mca_io_ompio_file_t *fh,
                        fh->f_io_array[i].length);
             }
             */
+	    if(mca_io_ompio_coll_timing_info)
+	      start_read_time = MPI_Wtime();
+
             if (fh->f_num_of_io_entries) {
                 if (OMPI_SUCCESS != fh->f_fbtl->fbtl_preadv (fh, NULL)) {
                     opal_output (1, "READ FAILED\n");
                     return OMPI_ERROR;
                 }
             }
+
+	    if(mca_io_ompio_coll_timing_info){
+	      end_read_time = MPI_Wtime();
+	      read_time += end_read_time - start_read_time;
+	    }
+
+
             if (NULL != temp) {
                 free (temp);
                 temp = NULL;
@@ -511,6 +535,10 @@ mca_fcoll_dynamic_file_read_all (mca_io_ompio_file_t *fh,
         /**********************************************************
          ******************** DONE READING ************************
          *********************************************************/
+
+	if(mca_io_ompio_coll_timing_info)
+	  start_rcomm_time = MPI_Wtime();
+
 
         /**********************************************************
          ********* Scatter the Data from the readers **************
@@ -575,11 +603,17 @@ mca_fcoll_dynamic_file_read_all (mca_io_ompio_file_t *fh,
                 }
             }
 
+
             if (NULL != receive_buf) {
                 free (receive_buf);
                 receive_buf = NULL;
             }
         }
+	if(mca_io_ompio_coll_timing_info){
+	  end_rcomm_time = MPI_Wtime();
+	  rcomm_time += end_rcomm_time - start_rcomm_time;
+	}
+
 
         /**********************************************************
          **************** DONE SCATTERING OF DATA *****************
@@ -597,6 +631,24 @@ mca_fcoll_dynamic_file_read_all (mca_io_ompio_file_t *fh,
             }
         }
     }
+    if(mca_io_ompio_coll_timing_info){
+      end_rexch = MPI_Wtime();
+      read_exch += end_rexch - start_rexch;
+      nentry.time[0] = read_time;
+      nentry.time[1] = rcomm_time;
+      nentry.time[2] = read_exch;
+      if (fh->f_procs_in_group[fh->f_aggregator_index] == fh->f_rank)
+	nentry.aggregator = 1;
+      else
+	nentry.aggregator = 0;
+      nentry.nprocs_for_coll = mca_fcoll_dynamic_num_io_procs;
+      if (!ompi_io_ompio_full_print_queue(coll_read_time)){
+	ompi_io_ompio_register_print_entry(coll_read_time,
+					   nentry);
+      } 
+    }
+    
+
     if (NULL != sorted) {
         free (sorted);
         sorted = NULL;
