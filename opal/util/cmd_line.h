@@ -70,13 +70,13 @@
  *
  * The caller to this interface creates a command line handle
  * (opal_cmd_line_t) with OBJ_NEW() and then uses it to register the
- * desired parameters via opal_cmd_line_make_opt3() (or the deprecated
- * opal_cmd_line_make_opt()).  Once all the parameters have been
- * registered, the user invokes opal_cmd_line_parse() with the command
- * line handle and the argv/argc pair to be parsed (typically the
- * arguments from main()).  The parser will examine the argv and find
- * registered options and parameters.  It will stop parsing when it
- * runs into an recognized string token or the special "--" token.
+ * desired parameters via opal_cmd_line_make_opt3(). Once all the
+ * parameters have been registered, the user invokes
+ * opal_cmd_line_parse() with the command line handle and the argv/argc
+ * pair to be parsed (typically the arguments from main()).  The parser
+ * will examine the argv and find registered options and parameters.
+ * It will stop parsing when it runs into an recognized string token or
+ * the special "--" token.
  *
  * After the parse has occurred, various accessor functions can be
  * used to determine which options were selected, what parameters were
@@ -289,22 +289,6 @@ BEGIN_C_DECLS
                                                  opal_cmd_line_init_t entry);
 
     /**
-     * \deprecated
-     *
-     * Create a command line option.
-     *
-     * This function is an older [deprecated] form of
-     * opal_cmd_line_make_opt3().  It is exactly equivalent to
-     * opal_cmd_line_make_opt3(cmd, short_name, NULL, long_name,
-     * num_params, desc).
-     */
-    OPAL_DECLSPEC int opal_cmd_line_make_opt(opal_cmd_line_t *cmd,
-                                             char short_name, 
-                                             const char *long_name,
-                                             int num_params, 
-                                             const char *desc) __opal_attribute_deprecated__;
-
-    /**
      * Create a command line option.
      *
      * @param cmd OPAL command line handle.
@@ -318,7 +302,7 @@ BEGIN_C_DECLS
      * @retval OPAL_ERR_BAD_PARAM If bad parameters passed.
      * @retval OPAL_SUCCESS Upon success.
      *
-     * Adds a command line option to the list of options that a a OPAL
+     * Adds a command line option to the list of options that an OPAL
      * command line handle will accept.  The short_name may take the
      * special value '\0' to not have a short name.  Likewise, the
      * sd_name and long_name may take the special value NULL to not have
@@ -440,7 +424,7 @@ BEGIN_C_DECLS
      * Returns a formatted string suitable for printing that lists the
      * expected usage message and a short description of each option on
      * the OPAL command line handle.  Options that passed a NULL
-     * description to opal_cmd_line_make_opt() will not be included in the
+     * description to opal_cmd_line_make_opt3() will not be included in the
      * display (to allow for undocumented options).
      *
      * This function is typically only invoked internally by the
