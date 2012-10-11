@@ -29,7 +29,7 @@
 int mca_io_ompio_cycle_buffer_size = OMPIO_PREALLOC_MAX_BUF_SIZE;
 int mca_io_ompio_bytes_per_agg = OMPIO_PREALLOC_MAX_BUF_SIZE;
 int mca_io_ompio_record_offset_info = 0;
-
+int mca_io_ompio_coll_timing_info = 0;
 
 
 /*
@@ -156,6 +156,12 @@ static int open_component(void)
                             "The information of the file offset/length",
                             false, false, mca_io_ompio_record_offset_info,
                             &mca_io_ompio_record_offset_info);
+
+    mca_base_param_reg_int (&mca_io_ompio_component.io_version,
+                            "coll_timing_info",
+                            "Enable collective algorithm timing information",
+                            false, false, mca_io_ompio_coll_timing_info,
+                            &mca_io_ompio_coll_timing_info);
 
 
     mca_base_param_reg_int (&mca_io_ompio_component.io_version,

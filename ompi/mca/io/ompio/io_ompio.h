@@ -42,6 +42,7 @@
 extern int mca_io_ompio_cycle_buffer_size;
 extern int mca_io_ompio_bytes_per_agg;
 extern int mca_io_ompio_record_offset_info;
+extern int mca_io_ompio_coll_timing_info;
 
 /*
  * Flags
@@ -52,6 +53,7 @@ extern int mca_io_ompio_record_offset_info;
 #define OMPIO_FILE_VIEW_IS_SET  0x00000008
 #define OMPIO_CONTIGUOUS_FVIEW  0x00000010
 #define OMPIO_AGGREGATOR_IS_SET 0x00000020
+#define QUEUESIZE 2048
 
 #define OMPIO_MIN(a, b) (((a) < (b)) ? (a) : (b))
 #define OMPIO_MAX(a, b) (((a) < (b)) ? (b) : (a))
@@ -120,6 +122,20 @@ typedef struct mca_io_ompio_offlen_array_t{
     MPI_Aint             length;
     int                  process_id;
 }mca_io_ompio_offlen_array_t;
+
+/*To extract time-information */
+typedef struct {
+    double time[3];
+    int nprocs_for_coll;
+    int aggregator;
+}print_entry;
+
+typedef struct {
+    print_entry entry[QUEUESIZE + 1];
+    int first;
+    int last;
+    int count;
+} print_queue;
 
 
 /**
@@ -193,6 +209,10 @@ struct mca_io_ompio_data_t {
     mca_io_ompio_file_t ompio_fh;
 };
 typedef struct mca_io_ompio_data_t mca_io_ompio_data_t;
+
+extern print_queue *coll_write_time;
+extern print_queue *coll_read_time;
+
 
 OMPI_DECLSPEC int ompi_io_ompio_set_file_defaults (mca_io_ompio_file_t *fh);
 
@@ -353,6 +373,21 @@ OMPI_DECLSPEC int ompi_io_ompio_bcast_array (void *buff,
                                              int procs_per_group,
                                              ompi_communicator_t *comm);
 
+OMPI_DECLSPEC int ompi_io_ompio_register_print_entry (print_queue *q,
+						      print_entry x);
+
+OMPI_DECLSPEC int ompi_io_ompio_unregister_print_entry (print_queue *q, print_entry *x);
+
+OMPI_DECLSPEC int ompi_io_ompio_empty_print_queue(print_queue *q);
+
+OMPI_DECLSPEC int ompi_io_ompio_full_print_queue(print_queue *q);
+
+OMPI_DECLSPEC int ompi_io_ompio_initialize_print_queue(print_queue *q);
+
+OMPI_DECLSPEC int ompi_io_ompio_print_time_info(print_queue *q,
+						char *name_operation,
+						mca_io_ompio_file_t *fh);
+						       
 
 /*
  * ******************************************************************
