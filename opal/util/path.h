@@ -151,7 +151,7 @@ OPAL_DECLSPEC bool opal_path_nfs(char *fname) __opal_attribute_warn_unused_resul
  */
 OPAL_DECLSPEC int
 opal_path_df(const char *path,
-             long *out_avail)__opal_attribute_warn_unused_result__;
+             uint64_t *out_avail)__opal_attribute_warn_unused_result__;
 
 END_C_DECLS
 #endif /* OPAL_PATH_H */
