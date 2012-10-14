@@ -1864,11 +1864,6 @@ void odls_base_default_wait_local_proc(pid_t pid, int status, void* cbdata)
     orte_job_t *jobdat;
     orte_proc_state_t state=ORTE_PROC_STATE_WAITPID_FIRED;
 
-    OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
-                         "%s odls:wait_local_proc child process %ld terminated",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         (long)pid));
-    
     /* find this child */
     for (i=0; i < orte_local_children->size; i++) {
         if (NULL == (cptr = (orte_proc_t*)opal_pointer_array_get_item(orte_local_children, i))) {
@@ -1891,6 +1886,11 @@ void odls_base_default_wait_local_proc(pid_t pid, int status, void* cbdata)
         return;
     }
 
+    opal_output_verbose(5, orte_odls_globals.output,
+                         "%s odls:wait_local_proc child process %s pid %ld terminated",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                        ORTE_NAME_PRINT(&proc->name), (long)pid);
+    
     /* if the child was previously flagged as dead, then just
      * ensure that its exit state gets reported to avoid hanging
      */

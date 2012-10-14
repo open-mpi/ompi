@@ -460,11 +460,11 @@ void orte_state_base_track_procs(int fd, short argc, void *cbdata)
     orte_job_t *jdata;
     orte_proc_t *pdata;
 
-    OPAL_OUTPUT_VERBOSE((5, orte_state_base_output,
-                         "%s state:base:track_procs called for proc %s state %s",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_NAME_PRINT(proc),
-                         orte_proc_state_to_str(state)));
+    opal_output_verbose(5, orte_state_base_output,
+                        "%s state:base:track_procs called for proc %s state %s",
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                        ORTE_NAME_PRINT(proc),
+                        orte_proc_state_to_str(state));
 
     /* get the job object for this proc */
     if (NULL == (jdata = orte_get_job_data_object(proc->jobid))) {
@@ -548,10 +548,10 @@ void orte_state_base_check_all_complete(int fd, short args, void *cbdata)
     bool one_still_alive;
     orte_vpid_t lowest=0;
 
-    OPAL_OUTPUT_VERBOSE((2, orte_state_base_output,
-                         "%s state:base:check_job_complete on job %s",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         (NULL == jdata) ? "NULL" : ORTE_JOBID_PRINT(jdata->jobid)));
+    opal_output_verbose(2, orte_state_base_output,
+                        "%s state:base:check_job_complete on job %s",
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                        (NULL == jdata) ? "NULL" : ORTE_JOBID_PRINT(jdata->jobid));
 
     if (NULL == jdata || jdata->jobid == ORTE_PROC_MY_NAME->jobid) {
         /* just check to see if the daemons are complete */

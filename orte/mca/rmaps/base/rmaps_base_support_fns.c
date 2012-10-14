@@ -444,18 +444,18 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
         node = (orte_node_t*)item;
         if (0 != node->slots_max && node->slots_inuse > node->slots_max) {
             OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base.rmaps_output,
-                                 "%s Removing node %s",
+                                 "%s Removing node %s: max %d inuse %d",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 node->name));
+                                 node->name, node->slots_max, node->slots_inuse));
             opal_list_remove_item(allocated_nodes, item);
             OBJ_RELEASE(item);  /* "un-retain" it */
         } else if (node->slots <= node->slots_inuse &&
                    (ORTE_MAPPING_NO_OVERSUBSCRIBE & ORTE_GET_MAPPING_DIRECTIVE(policy))) {
             /* remove the node as fully used */
             OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base.rmaps_output,
-                                 "%s Removing node %s",
+                                 "%s Removing node %s slots %d inuse %d",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 node->name));
+                                 node->name, node->slots, node->slots_inuse));
             opal_list_remove_item(allocated_nodes, item);
             OBJ_RELEASE(item);  /* "un-retain" it */
         } else {

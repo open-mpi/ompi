@@ -129,10 +129,10 @@ static orte_proc_state_t proc_states[] = {
     ORTE_PROC_STATE_TERMINATED
 };
 static orte_state_cbfunc_t proc_callbacks[] = {
-    orte_state_base_track_procs,
     track_procs,
-    orte_state_base_track_procs,
-    orte_state_base_track_procs,
+    track_procs,
+    track_procs,
+    track_procs,
     track_procs
 };
 
@@ -296,11 +296,11 @@ static void track_procs(int fd, short args, void *cbdata)
     orte_job_t *jdata;
     orte_proc_t *pdata;
 
-    OPAL_OUTPUT_VERBOSE((5, orte_state_base_output,
-                         "%s state:staged_hnp:track_procs called for proc %s state %s",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_NAME_PRINT(proc),
-                         orte_proc_state_to_str(state)));
+    opal_output_verbose(2, orte_state_base_output,
+                        "%s state:staged_hnp:track_procs called for proc %s state %s",
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                        ORTE_NAME_PRINT(proc),
+                        orte_proc_state_to_str(state));
 
     /* get the job object for this proc */
     if (NULL == (jdata = orte_get_job_data_object(proc->jobid))) {
@@ -310,6 +310,15 @@ static void track_procs(int fd, short args, void *cbdata)
         return;
     }
     pdata = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, proc->vpid);
+
+    if (ORTE_PROC_STATE_RUNNING == state) {
+        /* update the proc state */
+        pdata->state = state;
+        jdata->num_launched++;
+        if (jdata->num_launched == jdata->num_procs) {
+            ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_RUNNING);
+        }
+    }
 
     /* if this is a registration, check to see if it came from
      * inside MPI_Init - if it did, that is not acceptable
@@ -330,15 +339,46 @@ static void track_procs(int fd, short args, void *cbdata)
         return;
     }
 
+    if (ORTE_PROC_STATE_IOF_COMPLETE == state) {
+        /* update the proc state */
+        pdata->state = state;
+        /* Release only the stdin IOF file descriptor for this child, if one
+         * was defined. File descriptors for the other IOF channels - stdout,
+         * stderr, and stddiag - were released when their associated pipes
+         * were cleared and closed due to termination of the process
+         */
+        if (NULL != orte_iof.close) {
+            orte_iof.close(proc, ORTE_IOF_STDIN);
+        }
+        pdata->iof_complete = true;
+        if (pdata->waitpid_recvd) {
+            goto terminated;
+        }
+        OBJ_RELEASE(caddy);
+        return;
+    }
+
+    if (ORTE_PROC_STATE_WAITPID_FIRED == state) {
+        /* update the proc state */
+        pdata->state = state;
+        pdata->waitpid_recvd = true;
+        if (pdata->iof_complete) {
+            goto terminated;
+        }
+        OBJ_RELEASE(caddy);
+        return;
+    }
+    
     /* if the proc terminated, see if any other procs are
      * waiting to run. We assume that the app_contexts are
      * in priority order, with the highest priority being
      * at position 0 in the app_context array for this job
      */
     if (ORTE_PROC_STATE_TERMINATED == state) {
+    terminated:
         /* update the proc state */
         pdata->alive = false;
-        pdata->state = state;
+        pdata->state = ORTE_PROC_STATE_TERMINATED;
         if (pdata->local_proc) {
             /* Clean up the session directory as if we were the process
              * itself.  This covers the case where the process died abnormally

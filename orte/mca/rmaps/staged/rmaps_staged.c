@@ -27,6 +27,7 @@
 
 #include "orte/util/show_help.h"
 #include "orte/mca/errmgr/errmgr.h"
+#include "orte/mca/state/state.h"
 
 #include "orte/mca/rmaps/base/rmaps_private.h"
 #include "orte/mca/rmaps/base/base.h"
@@ -46,9 +47,9 @@ static int staged_mapper(orte_job_t *jdata)
     opal_list_t node_list;
     orte_std_cntr_t num_slots;
     orte_proc_t *proc;
-    orte_node_t *node;
+    orte_node_t *node, *next;
     bool work_to_do = false, first_pass = false;
-    opal_list_item_t *item;
+    opal_list_item_t *item, *it2;
     char *cptr, **minimap;
 
     /* only use this mapper if it was specified */
@@ -62,10 +63,10 @@ static int staged_mapper(orte_job_t *jdata)
         return ORTE_ERR_TAKE_NEXT_OPTION;
     }
 
-    opal_output_verbose(5, orte_rmaps_base.rmaps_output,
-                        "%s mca:rmaps:staged: mapping job %s",
+    opal_output_verbose(2, orte_rmaps_base.rmaps_output,
+                        "%s mca:rmaps:staged: mapping job %s with %d procs",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                        ORTE_JOBID_PRINT(jdata->jobid));
+                        ORTE_JOBID_PRINT(jdata->jobid), (int)jdata->num_procs);
  
     /* flag that I did the mapping */
     if (NULL != jdata->map->last_mapper) {
@@ -180,7 +181,36 @@ static int staged_mapper(orte_job_t *jdata)
             }
         }
 
-        /* assign any unmapped procs to an available slot */
+        /* if a max number of procs/node was given for this
+         * app, remove all nodes from the list that exceed
+         * that limit
+         */
+        if (0 < app->max_procs_per_node) {
+            item = opal_list_get_first(&node_list);
+            while (item != opal_list_get_end(&node_list)) {
+                it2 = opal_list_get_next(item);
+                node = (orte_node_t*)item;
+                if (app->max_procs_per_node <= node->num_procs) {
+                    opal_list_remove_item(&node_list, item);
+                    OBJ_RELEASE(item);
+                }
+                item = it2;
+            }
+        }
+
+        /* if we have no available nodes, then move on to next app */
+        if (0 == opal_list_get_size(&node_list)) {
+            OBJ_DESTRUCT(&node_list);
+            continue;
+        }
+
+        /* start on first node on the list */
+        node = (orte_node_t*)opal_list_get_first(&node_list);
+        next = (orte_node_t*)opal_list_get_next(&node->super);
+        opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+                            "%s mca:rmaps:staged: starting the map with node %s",
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), node->name);
+
         for (j=0; j < app->procs.size; j++) {
             if (NULL == (proc = opal_pointer_array_get_item(&app->procs, j))) {
                 continue;
@@ -200,7 +230,6 @@ static int staged_mapper(orte_job_t *jdata)
             /* track number mapped */
             jdata->num_mapped++;
             /* map this proc to the first available slot */
-            node = (orte_node_t*)opal_list_get_first(&node_list);
             OBJ_RETAIN(node);  /* maintain accounting on object */    
 	    opal_output_verbose(5, orte_rmaps_base.rmaps_output,
 				"%s mca:rmaps:staged: assigning proc %s to node %s",
@@ -255,14 +284,22 @@ static int staged_mapper(orte_job_t *jdata)
                 OBJ_RETAIN(node);  /* maintain accounting on object */
                 jdata->map->num_nodes++;
             }
+        moveon:
             if (0 == opal_list_get_size(&node_list)) {
                 /* nothing more we can do */
                 break;
             }
+            /* move to the next node */
+            if (&node->super == opal_list_get_end(&node_list)) {
+                node = (orte_node_t*)opal_list_get_first(&node_list);
+            } else {
+                node = next;
+            }
+            next = (orte_node_t*)opal_list_get_next(&node->super);
         }
 	/* clear the list */
 	while (NULL != (item = opal_list_remove_first(&node_list))) {
-	  OBJ_RELEASE(item);
+            OBJ_RELEASE(item);
 	}
 	OBJ_DESTRUCT(&node_list);
     }

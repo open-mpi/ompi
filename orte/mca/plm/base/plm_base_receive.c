@@ -243,25 +243,22 @@ void orte_plm_base_recv(int status, orte_process_name_t* sender,
         break;
                 
     case ORTE_PLM_UPDATE_PROC_STATE:
-        OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
-                             "%s plm:base:receive update proc state command from %s",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             ORTE_NAME_PRINT(sender)));
+        opal_output_verbose(5, orte_plm_globals.output,
+                            "%s plm:base:receive update proc state command from %s",
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                            ORTE_NAME_PRINT(sender));
         count = 1;
         while (ORTE_SUCCESS == (rc = opal_dss.unpack(buffer, &job, &count, ORTE_JOBID))) {
                     
-            OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
-                                 "%s plm:base:receive got update_proc_state for job %s",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 ORTE_JOBID_PRINT(job)));
+            opal_output_verbose(5, orte_plm_globals.output,
+                                "%s plm:base:receive got update_proc_state for job %s",
+                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                ORTE_JOBID_PRINT(job));
                     
             name.jobid = job;
             running = false;
             /* get the job object */
-            if (NULL == (jdata = orte_get_job_data_object(job))) {
-                ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-                goto CLEANUP;
-            }
+            jdata = orte_get_job_data_object(job);
             count = 1;
             while (ORTE_SUCCESS == (rc = opal_dss.unpack(buffer, &vpid, &count, ORTE_VPID))) {
                 if (ORTE_VPID_INVALID == vpid) {
@@ -296,22 +293,24 @@ void orte_plm_base_recv(int status, orte_process_name_t* sender,
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                      (unsigned long)vpid, orte_proc_state_to_str(state), (int)exit_code));
 
-                /* get the proc data object */
-                if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, vpid))) {
-                    ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-                    ORTE_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
-                }
-                proc->state = state;
-                proc->pid = pid;
-                proc->exit_code = exit_code;
-                ORTE_ACTIVATE_PROC_STATE(&name, state);
-            }
-            if (running) {
-                jdata->num_daemons_reported++;
-                if (orte_report_launch_progress) {
-                    if (0 == jdata->num_daemons_reported % 100 ||
-                        jdata->num_daemons_reported == orte_process_info.num_procs) {
-                        ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_REPORT_PROGRESS);
+                if (NULL != jdata) {
+                    /* get the proc data object */
+                    if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, vpid))) {
+                        ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+                        ORTE_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
+                    }
+                    proc->state = state;
+                    proc->pid = pid;
+                    proc->exit_code = exit_code;
+                    ORTE_ACTIVATE_PROC_STATE(&name, state);
+                    if (running) {
+                        jdata->num_daemons_reported++;
+                        if (orte_report_launch_progress) {
+                            if (0 == jdata->num_daemons_reported % 100 ||
+                                jdata->num_daemons_reported == orte_process_info.num_procs) {
+                                ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_REPORT_PROGRESS);
+                            }
+                        }
                     }
                 }
             }

@@ -84,7 +84,7 @@ static int state_staged_orted_component_query(mca_base_module_t **module, int *p
         *module = (mca_base_module_t *)&orte_state_staged_orted_module;
         return ORTE_SUCCESS;        
     }
-    
+   
     *priority = -1;
     *module = NULL;
     return ORTE_ERROR;
