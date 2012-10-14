@@ -284,7 +284,6 @@ static int staged_mapper(orte_job_t *jdata)
                 OBJ_RETAIN(node);  /* maintain accounting on object */
                 jdata->map->num_nodes++;
             }
-        moveon:
             if (0 == opal_list_get_size(&node_list)) {
                 /* nothing more we can do */
                 break;
