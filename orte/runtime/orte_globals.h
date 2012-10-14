@@ -292,7 +292,7 @@ typedef struct {
     /* max number of times a process can be restarted */
     int32_t max_restarts;
     /* maximum number of procs/node for this app */
-    int32_t max_procs_per_node;
+    orte_vpid_t max_procs_per_node;
 } orte_app_context_t;
 
 ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_app_context_t);
