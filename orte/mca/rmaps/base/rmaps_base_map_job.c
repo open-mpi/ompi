@@ -152,6 +152,11 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
      * the job
      */
     did_map = false;
+    if (1 == opal_list_get_size(&orte_rmaps_base.selected_modules)) {
+        /* forced selection */
+        mod = (orte_rmaps_base_selected_module_t*)opal_list_get_first(&orte_rmaps_base.selected_modules);
+        jdata->map->req_mapper = strdup(mod->component->mca_component_name);
+    }
     for (item = opal_list_get_first(&orte_rmaps_base.selected_modules);
          item != opal_list_get_end(&orte_rmaps_base.selected_modules);
          item = opal_list_get_next(item)) {

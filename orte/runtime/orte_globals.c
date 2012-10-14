@@ -604,6 +604,7 @@ static void orte_app_context_construct(orte_app_context_t* app_context)
 #endif
     app_context->recovery_defined = false;
     app_context->max_restarts = -1000;
+    app_context->max_procs_per_node = -1;
 }
 
 static void orte_app_context_destructor(orte_app_context_t* app_context)

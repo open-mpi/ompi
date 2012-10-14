@@ -71,26 +71,26 @@ ORTE_DECLSPEC extern int orte_state_base_output;
 #define ORTE_ACTIVATE_JOB_STATE(j, s)                                   \
     do {                                                                \
         orte_job_t *shadow=(j);                                         \
-        OPAL_OUTPUT_VERBOSE((1, orte_state_base_output,			\
-			     "%s ACTIVATE JOB %s STATE %s AT %s:%d",	\
-			     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),	\
-			     (NULL == shadow) ? "NULL" :		\
-			     ORTE_JOBID_PRINT(shadow->jobid),		\
-			     orte_job_state_to_str((s)),		\
-			     __FILE__, __LINE__));			\
+        opal_output_verbose(1, orte_state_base_output,			\
+                            "%s ACTIVATE JOB %s STATE %s AT %s:%d",	\
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),         \
+                            (NULL == shadow) ? "NULL" :                 \
+                            ORTE_JOBID_PRINT(shadow->jobid),		\
+                            orte_job_state_to_str((s)),                 \
+                            __FILE__, __LINE__);			\
         orte_state.activate_job_state(shadow, (s));                     \
     } while(0);
 
 #define ORTE_ACTIVATE_PROC_STATE(p, s)                                  \
     do {                                                                \
         orte_process_name_t *shadow=(p);                                \
-	OPAL_OUTPUT_VERBOSE((1, orte_state_base_output,			\
+	opal_output_verbose(1, orte_state_base_output,			\
 			     "%s ACTIVATE PROC %s STATE %s AT %s:%d",	\
 			     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),	\
 			     (NULL == shadow) ? "NULL" :		\
 			     ORTE_NAME_PRINT(shadow),			\
 			     orte_proc_state_to_str((s)),		\
-			     __FILE__, __LINE__));			\
+			     __FILE__, __LINE__);			\
         orte_state.activate_proc_state(shadow, (s));                    \
     } while(0);
 
