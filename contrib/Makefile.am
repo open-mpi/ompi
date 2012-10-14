@@ -137,13 +137,13 @@ EXTRA_DIST = \
 	platform/ibm/debug-ppc64-gcc \
 	platform/ibm/optimized-ppc32-gcc \
 	platform/ibm/optimized-ppc64-gcc \
-	platform/greenplum/bend/mac \
-	platform/greenplum/bend/mac.conf \
-	platform/greenplum/bend/linux \
-	platform/greenplum/bend/linux.conf \
-	platform/hadoop/linux \
-	platform/hadoop/linux.conf \
-	platform/hadoop/mac \
-	platform/hadoop/mac.conf
+	platform/greenplum/mrplus/mac \
+	platform/greenplum/mrplus/mac.conf \
+	platform/greenplum/mrplus/linux \
+	platform/greenplum/mrplus/linux.conf \
+	platform/greenplum/mrplus/mac-optimized \
+	platform/greenplum/mrplus/mac-optimized.conf \
+	platform/greenplum/mrplus/linux-optimized \
+	platform/greenplum/mrplus/linux-optimized.conf
 
 dist_pkgdata_DATA = openmpi-valgrind.supp
