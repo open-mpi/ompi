@@ -192,6 +192,9 @@ mca_fcoll_two_phase_file_write_all (mca_io_ompio_file_t *fh,
     max_data = count * datatype->super.size;
   }
     
+  if ( MPI_STATUS_IGNORE != status ) {
+    status->_ucount = max_data;
+  }
   
     if(-1 == mca_fcoll_two_phase_num_io_procs){
       ret = ompi_io_ompio_set_aggregator_props (fh, 

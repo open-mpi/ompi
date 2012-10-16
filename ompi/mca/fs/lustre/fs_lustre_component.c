@@ -36,7 +36,11 @@ const char *mca_fs_lustre_component_version_string =
 static int lustre_register(void);
 
 int mca_fs_lustre_priority = 20;
-int mca_fs_lustre_stripe_size = 0;
+ /*setting default stripe size
+   to 64KB. MCA parameter
+   Can be changed at 
+   runtime also*/
+int mca_fs_lustre_stripe_size = 1048576;
 int mca_fs_lustre_stripe_width = 0;
 /*
  * Instantiate the public struct with all of our public information
