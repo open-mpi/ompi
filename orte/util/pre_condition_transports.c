@@ -161,7 +161,7 @@ int orte_pre_condition_transports(orte_job_t *jdata)
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
 
-    if (NULL == (cs_env = mca_base_param_environ_variable("orte_precondition_transports",NULL,NULL))) {
+    if (NULL == (cs_env = mca_base_param_env_var ("orte_precondition_transports"))) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }

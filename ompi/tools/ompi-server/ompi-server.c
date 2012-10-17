@@ -82,24 +82,24 @@ static char *report_uri=NULL;
  */
 opal_cmd_line_init_t ompi_server_cmd_line_opts[] = {
     /* Various "obvious" options */
-    { NULL, NULL, NULL, 'h', NULL, "help", 0,
+    { NULL, 'h', NULL, "help", 0,
       &help, OPAL_CMD_LINE_TYPE_BOOL,
       "This help message" },
 
-    { NULL, NULL, NULL, 'd', NULL, "debug", 0,
+    { NULL, 'd', NULL, "debug", 0,
       &debug, OPAL_CMD_LINE_TYPE_BOOL,
         "Debug the Open MPI server" },
         
-    { "orte", "no_daemonize", NULL, '\0', NULL, "no-daemonize", 0,
+    { "orte_no_daemonize", '\0', NULL, "no-daemonize", 0,
       &no_daemonize, OPAL_CMD_LINE_TYPE_BOOL,
       "Don't daemonize into the background" },
     
-    { NULL, NULL, NULL, 'r', NULL, "report-uri", 1,
+    { NULL, 'r', NULL, "report-uri", 1,
       &report_uri, OPAL_CMD_LINE_TYPE_STRING,
       "Report the server's uri on stdout [-], stderr [+], or a file [anything else]"},
 
     /* End of list */
-    { NULL, NULL, NULL, '\0', NULL, NULL, 0,
+    { NULL, '\0', NULL, NULL, 0,
       NULL, OPAL_CMD_LINE_TYPE_NULL, NULL }
 };
 
