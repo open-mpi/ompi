@@ -50,6 +50,13 @@ included in the vX.Y.Z section and be denoted as:
 1.6.3
 -----
 
+- Add Mellanox ConnextIB IDs
+- Fix rankfile when no -np is given.
+- FreeBSD detection improvement.  Thanks to Brooks Davis for the
+  patch.
+- Removed TCP warnings on Windows.
+- Improved collective algorithm selection for very large messages.
+- Fix PSM MTL affinity settings.
 - Fix issue with MPI_OP_COMMUTATIVE in the mpif.h bindings.  Thanks to
   Ake Sandgren for providing a patch to fix the issue.
 - Fix issue with MPI_SIZEOF when using CHARACTER and LOGICAL types in
