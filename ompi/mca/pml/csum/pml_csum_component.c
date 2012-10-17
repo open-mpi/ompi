@@ -88,9 +88,11 @@ static inline int mca_pml_csum_param_register_int(
     const char* param_name,
     int default_value)
 {
-    int id = mca_base_param_register_int("pml","csum",param_name,NULL,default_value);
     int param_value = default_value;
-    mca_base_param_lookup_int(id,&param_value);
+
+    (void) mca_base_param_reg_int (&mca_pml_csum_component.pmlm_version, param_name,
+                                   NULL, false, false, default_value, &param_value);
+
     return param_value;
 }
 

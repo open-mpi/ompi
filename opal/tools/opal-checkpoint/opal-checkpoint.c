@@ -102,37 +102,37 @@ typedef struct {
 opal_checkpoint_globals_t opal_checkpoint_globals;
 
 opal_cmd_line_init_t cmd_line_opts[] = {
-    { NULL, NULL, NULL, 
+    { NULL, 
       'h', NULL, "help", 
       0,
       &opal_checkpoint_globals.help, OPAL_CMD_LINE_TYPE_BOOL,
       "This help message" },
 
-    { NULL, NULL, NULL, 
+    { NULL,
       'v', NULL, "verbose", 
       0,
       &opal_checkpoint_globals.verbose, OPAL_CMD_LINE_TYPE_BOOL,
       "Be Verbose" },
 
-    { NULL, NULL, NULL, 
+    { NULL,
       'q', NULL, "quiet", 
       0,
       &opal_checkpoint_globals.quiet, OPAL_CMD_LINE_TYPE_BOOL,
       "Be Super Quiet" },
 
-    { NULL, NULL, NULL, 
+    { NULL,
       '\0', NULL, "term", 
       0,
       &opal_checkpoint_globals.term, OPAL_CMD_LINE_TYPE_BOOL,
       "Terminate the application after checkpoint" },
 
-    { NULL, NULL, NULL, 
+    { NULL,
       'n', NULL, "name",
       1,
       &opal_checkpoint_globals.snapshot_name, OPAL_CMD_LINE_TYPE_STRING,
       "Request a specific snapshot reference." },
 
-    { "crs", "base", "snapshot_dir", 
+    { "crs_base_snapshot_dir", 
       'w', NULL, "where", 
       1,
       &opal_checkpoint_globals.snapshot_loc, OPAL_CMD_LINE_TYPE_STRING,
@@ -141,7 +141,7 @@ opal_cmd_line_init_t cmd_line_opts[] = {
       "the desired directory." },
 
     /* End of list */
-    { NULL, NULL, NULL, '\0', NULL, NULL, 0,
+    { NULL, '\0', NULL, NULL, 0,
       NULL, OPAL_CMD_LINE_TYPE_NULL,
       NULL }
 };

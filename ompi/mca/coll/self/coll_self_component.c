@@ -88,7 +88,8 @@ static int self_open(void)
        communicator */
     
     mca_coll_self_priority_param = 
-        mca_base_param_register_int("coll", "self", "priority", NULL, 75);
+      mca_base_param_reg_int (&mca_coll_self_component.collm_version,
+                              "priority", NULL, false, false, 75, NULL);
 
     return OMPI_SUCCESS;
 }

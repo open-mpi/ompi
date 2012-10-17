@@ -167,50 +167,50 @@ typedef struct {
 orte_ps_globals_t orte_ps_globals;
 
 opal_cmd_line_init_t cmd_line_opts[] = {
-    { NULL, NULL, NULL, 
+    { NULL,
       'h', NULL, "help", 
       0,
       &orte_ps_globals.help, OPAL_CMD_LINE_TYPE_BOOL,
       "This help message" },
 
-    { NULL, NULL, NULL, 
+    { NULL,
       'v', NULL, "verbose", 
       0,
       &orte_ps_globals.verbose, OPAL_CMD_LINE_TYPE_BOOL,
       "Be Verbose" },
 
-    { NULL, NULL, NULL, 
+    { NULL,
       '\0', NULL, "parseable", 
       0,
       &orte_ps_globals.parseable, OPAL_CMD_LINE_TYPE_BOOL,
       "Provide parseable output" },
 
-    { NULL, NULL, NULL, 
+    { NULL,
       '\0', NULL, "daemons", 
       0,
      &orte_ps_globals.daemons, OPAL_CMD_LINE_TYPE_INT,
       "Display daemon job information" },
 
-    { NULL, NULL, NULL, 
+    { NULL,
       'j', NULL, "jobid", 
       1,
       &orte_ps_globals.jobid, OPAL_CMD_LINE_TYPE_INT,
       "Specify a local jobid for the given mpirun - a value from 0 to N" },
 
-    { NULL, NULL, NULL, 
+    { NULL,
       'p', NULL, "pid", 
       1,
       &orte_ps_globals.pid, OPAL_CMD_LINE_TYPE_INT,
       "Specify mpirun pid" },
 
-    { NULL, NULL, NULL, 
+    { NULL,
       'n', NULL, "nodes", 
       0,
       &orte_ps_globals.nodes, OPAL_CMD_LINE_TYPE_INT,
       "Display Node Information" },
 
     /* End of list */
-    { NULL, NULL, NULL, 
+    { NULL,
       '\0', NULL, NULL, 
       0,
       NULL, OPAL_CMD_LINE_TYPE_NULL,
