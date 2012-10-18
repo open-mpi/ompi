@@ -29,6 +29,7 @@
 #include "opal/mca/base/base.h"
 #include "opal/class/opal_list.h"
 #include "opal/util/output.h"
+#include "opal/util/argv.h"
 
 #include "orte/util/show_help.h"
 #include "opal/dss/dss.h"
@@ -404,6 +405,9 @@ int orte_ras_base_add_hosts(orte_job_t *jdata)
                 OBJ_DESTRUCT(&nodes);
                 return rc;
             }
+            /* now indicate that this app is to run across it */
+            app->hostfile = app->add_hostfile;
+            app->add_hostfile = NULL;
         }
     }
 
@@ -421,6 +425,12 @@ int orte_ras_base_add_hosts(orte_job_t *jdata)
             continue;
         }
         if (NULL != app->add_host) {
+            if (4 < opal_output_get_verbosity(orte_ras_base.ras_output)) {
+                char *fff = opal_argv_join(app->add_host, ',');
+                opal_output(0, "%s ras:base:add_hosts checking add-host %s",
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), fff);
+                free(fff);
+            }
             if (ORTE_SUCCESS != (rc = orte_util_add_dash_host_nodes(&nodes,
                                                                     &override_oversubscribed,
                                                                     app->add_host))) {
@@ -428,6 +438,9 @@ int orte_ras_base_add_hosts(orte_job_t *jdata)
                 OBJ_DESTRUCT(&nodes);
                 return rc;
             }
+            /* now indicate that this app is to run across them */
+            app->dash_host = app->add_host;
+            app->add_host = NULL;
         }
     }
     
