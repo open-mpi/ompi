@@ -50,6 +50,9 @@ included in the vX.Y.Z section and be denoted as:
 1.6.3
 -----
 
+- Fix spawning from a singleton to multiple hosts when the "add-host"
+  MPI_Info key is used.  Thanks to Brian Budge for pointing out the
+  problem.
 - Add Mellanox ConnextIB IDs
 - Fix rankfile when no -np is given.
 - FreeBSD detection improvement.  Thanks to Brooks Davis for the
