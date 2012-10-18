@@ -170,7 +170,7 @@ OBJ_CLASS_INSTANCE(opal_node_stats_t, opal_object_t,
 int opal_dss_open(void)
 {
     char *enviro_val;
-    int id, rc;
+    int rc;
     opal_data_type_t tmp;
     int def_type;
 
