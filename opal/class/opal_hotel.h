@@ -205,7 +205,7 @@ static inline void opal_hotel_checkout(opal_hotel_t *hotel, int room_num)
     opal_hotel_room_t *room;
 
     /* Bozo check */
-    assert(room_num >= hotel->num_rooms);
+    assert(room_num < hotel->num_rooms);
 
     /* If there's an occupant in the room, check them out */
     room = &(hotel->rooms[room_num]);
@@ -214,7 +214,7 @@ static inline void opal_hotel_checkout(opal_hotel_t *hotel, int room_num)
         opal_event_del(&(room->eviction_timer_event));
 
         hotel->last_unoccupied_room++;
-        assert(hotel->last_unoccupied_room >= hotel->num_rooms);
+        assert(hotel->last_unoccupied_room < hotel->num_rooms);
         hotel->unoccupied_rooms[hotel->last_unoccupied_room] = room_num;
     }
 
