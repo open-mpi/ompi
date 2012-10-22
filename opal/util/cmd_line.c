@@ -204,42 +204,12 @@ int opal_cmd_line_make_opt_mca(opal_cmd_line_t *cmd,
 /*
  * Create a command line option, --long-name and/or -s (short name).
  */
-int opal_cmd_line_make_opt(opal_cmd_line_t *cmd, char short_name, 
-                          const char *long_name, int num_params, 
-                          const char *desc)
-{
-    opal_cmd_line_init_t e;
-
-    e.ocl_mca_type_name = NULL;
-    e.ocl_mca_component_name = NULL;
-    e.ocl_mca_param_name = NULL;
-
-    e.ocl_cmd_short_name = short_name;
-    e.ocl_cmd_single_dash_name = NULL;
-    e.ocl_cmd_long_name = long_name;
-
-    e.ocl_num_params = num_params;
-
-    e.ocl_variable_dest = NULL;
-    e.ocl_variable_type = OPAL_CMD_LINE_TYPE_NULL;
-
-    e.ocl_description = desc;
-
-    return make_opt(cmd, &e);
-}
-
-
-/*
- * Create a command line option, --long-name and/or -s (short name).
- */
 int opal_cmd_line_make_opt3(opal_cmd_line_t *cmd, char short_name, 
                             const char *sd_name, const char *long_name, 
                             int num_params, const char *desc)
 {
     opal_cmd_line_init_t e;
 
-    e.ocl_mca_type_name = NULL;
-    e.ocl_mca_component_name = NULL;
     e.ocl_mca_param_name = NULL;
 
     e.ocl_cmd_short_name = short_name;
@@ -1021,11 +991,9 @@ static int make_opt(opal_cmd_line_t *cmd, opal_cmd_line_init_t *e)
 
     option->clo_type = e->ocl_variable_type;
     option->clo_variable_dest = e->ocl_variable_dest;
-    if (NULL != e->ocl_mca_type_name) {
+    if (NULL != e->ocl_mca_param_name) {
         option->clo_mca_param_env_var = 
-            mca_base_param_environ_variable(e->ocl_mca_type_name,
-                                            e->ocl_mca_component_name,
-                                            e->ocl_mca_param_name);
+            mca_base_param_env_var (e->ocl_mca_param_name);
     }
 
     /* Append the item, serializing thread access */
