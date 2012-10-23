@@ -96,7 +96,6 @@ int orte_odls_base_default_get_add_procs_data(opal_buffer_t *data,
 {
     int rc;
     orte_job_t *jdata=NULL;
-    orte_proc_t *proc;
     orte_job_map_t *map=NULL;
     opal_buffer_t *wireup;
     opal_byte_object_t bo, *boptr;
@@ -104,6 +103,9 @@ int orte_odls_base_default_get_add_procs_data(opal_buffer_t *data,
     int8_t flag;
     int j;
     orte_app_context_t *app;
+#if OPAL_HAVE_HWLOC
+    orte_proc_t *proc;
+#endif
 
     /* get the job data pointer */
     if (NULL == (jdata = orte_get_job_data_object(job))) {
@@ -256,6 +258,7 @@ int orte_odls_base_default_get_add_procs_data(opal_buffer_t *data,
     /* release the data since it has now been copied into our buffer */
     free(bo.bytes);
     
+#if OPAL_HAVE_HWLOC
     /* pack the binding bitmaps */
     for (j=0; j < jdata->procs->size; j++) {
         if (NULL == (proc = (orte_proc_t *) opal_pointer_array_get_item(jdata->procs, j))) {
@@ -267,6 +270,7 @@ int orte_odls_base_default_get_add_procs_data(opal_buffer_t *data,
             return rc;
         }
     }
+#endif
 
     /* pack the collective ids */
     if (ORTE_SUCCESS != (rc = opal_dss.pack(data, &jdata->peer_modex, 1, ORTE_GRPCOMM_COLL_ID_T))) {
@@ -348,7 +352,6 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
     orte_vpid_t j;
     orte_std_cntr_t cnt;
     orte_job_t *jdata=NULL;
-    orte_proc_t *proc;
     opal_byte_object_t *bo;
     int8_t flag;
     int32_t n;
@@ -356,6 +359,9 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
     orte_proc_t *pptr;
     orte_grpcomm_collective_t *coll;
     orte_namelist_t *nm;
+#if OPAL_HAVE_HWLOC
+    orte_proc_t *proc;
+#endif
 
     OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                          "%s odls:constructing child list",
@@ -546,6 +552,7 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
         goto REPORT_ERROR;
     }
    
+#if OPAL_HAVE_HWLOC
     /* unpack the binding bitmaps */
     for (j=0; j < jdata->num_procs; j++) {
         if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, j))) {
@@ -559,6 +566,7 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
             goto REPORT_ERROR;
         }
     }
+#endif
 
     /* unpack the collective ids */
     cnt=1;

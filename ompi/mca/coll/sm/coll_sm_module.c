@@ -256,7 +256,9 @@ int ompi_coll_sm_lazy_enable(mca_coll_base_module_t *module,
     mca_coll_sm_comm_t *data = NULL;
     size_t control_size, frag_size;
     mca_coll_sm_component_t *c = &mca_coll_sm_component;
+#if OPAL_HAVE_HWLOC
     opal_hwloc_base_memory_segment_t *maffinity;
+#endif
     int parent, min_child, max_child, num_children;
     unsigned char *base = NULL;
     const int num_barrier_buffers = 2;
@@ -267,6 +269,7 @@ int ompi_coll_sm_lazy_enable(mca_coll_base_module_t *module,
     }
     sm_module->enabled = true;
 
+#if OPAL_HAVE_HWLOC
     /* Get some space to setup memory affinity (just easier to try to
        alloc here to handle the error case) */
     maffinity = (opal_hwloc_base_memory_segment_t*)
@@ -278,6 +281,7 @@ int ompi_coll_sm_lazy_enable(mca_coll_base_module_t *module,
                             comm->c_contextid, comm->c_name);
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
+#endif
 
     /* Allocate data to hang off the communicator.  The memory we
        alloc will be laid out as follows:
@@ -299,7 +303,9 @@ int ompi_coll_sm_lazy_enable(mca_coll_base_module_t *module,
                 (sizeof(mca_coll_sm_tree_node_t) +
                  (sizeof(mca_coll_sm_tree_node_t*) * c->sm_tree_degree))));
     if (NULL == data) {
+#if OPAL_HAVE_HWLOC
         free(maffinity);
+#endif
         opal_output_verbose(10, mca_coll_base_output,
                             "coll:sm:enable (%d/%s): malloc failed (2)", 
                             comm->c_contextid, comm->c_name);
@@ -364,7 +370,9 @@ int ompi_coll_sm_lazy_enable(mca_coll_base_module_t *module,
     /* Attach to this communicator's shmem data segment */
     if (OMPI_SUCCESS != (ret = bootstrap_comm(comm, sm_module))) {
         free(data);
+#if OPAL_HAVE_HWLOC
         free(maffinity);
+#endif
         sm_module->sm_comm_data = NULL;
         return ret;
     }
@@ -410,10 +418,11 @@ int ompi_coll_sm_lazy_enable(mca_coll_base_module_t *module,
        that they're marked as unused. */
     j = 0;
     if (0 == rank) {
+#if OPAL_HAVE_HWLOC
         maffinity[j].mbs_start_addr = base;
         maffinity[j].mbs_len = c->sm_control_size * 
             c->sm_comm_num_in_use_flags;
-
+#endif
         /* Set the op counts to 1 (actually any nonzero value will do)
            so that the first time children/leaf processes come
            through, they don't see a value of 0 and think that the
@@ -438,6 +447,7 @@ int ompi_coll_sm_lazy_enable(mca_coll_base_module_t *module,
             (((char*) data->mcb_data_index[i].mcbmi_control) + 
              control_size);
 
+#if OPAL_HAVE_HWLOC
         /* Memory affinity: control */
 
         maffinity[j].mbs_len = c->sm_control_size;
@@ -453,12 +463,15 @@ int ompi_coll_sm_lazy_enable(mca_coll_base_module_t *module,
             data->mcb_data_index[i].mcbmi_data +
             (rank * c->sm_control_size);
         ++j;
+#endif
     }
 
+#if OPAL_HAVE_HWLOC
     /* Setup memory affinity so that the pages that belong to this
        process are local to this process */
     opal_hwloc_base_memory_set(maffinity, j);
     free(maffinity);
+#endif
 
     /* Zero out the control structures that belong to this process */
     memset(data->mcb_barrier_control_me, 0, 

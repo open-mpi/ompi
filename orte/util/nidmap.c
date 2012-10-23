@@ -681,8 +681,8 @@ int orte_util_decode_pidmap(opal_byte_object_t *bo)
 #if OPAL_HAVE_HWLOC
     opal_hwloc_level_t bind_level = OPAL_HWLOC_NODE_LEVEL, pbind, *lvptr;
     unsigned int *bind_idx=NULL, pbidx, *uiptr;
-    opal_hwloc_locality_t locality;
 #endif
+    opal_hwloc_locality_t locality;
     orte_std_cntr_t n;
     opal_buffer_t buf;
     int rc;
@@ -743,12 +743,13 @@ int orte_util_decode_pidmap(opal_byte_object_t *bo)
         if (proc.jobid == ORTE_PROC_MY_NAME->jobid) {
             orte_process_info.bind_level = bind_level;
         }
-#endif
+
         OPAL_OUTPUT_VERBOSE((2, orte_nidmap_output,
                              "%s orte:util:decode:pidmap nprocs %s bind level %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_VPID_PRINT(num_procs),
                              opal_hwloc_base_print_level(bind_level)));
+#endif
 
         /* allocate memory for the daemon info */
         daemons = (orte_vpid_t*)malloc(num_procs * sizeof(orte_vpid_t));
@@ -888,12 +889,12 @@ int orte_util_decode_pidmap(opal_byte_object_t *bo)
                 ORTE_ERROR_LOG(rc);
                 goto cleanup;
             }
-#endif
             OPAL_OUTPUT_VERBOSE((10, orte_nidmap_output,
                                  "%s orte:util:decode:pidmap proc %s host %s lrank %d nrank %d bindidx %u",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  ORTE_NAME_PRINT(&proc), hostname,
                                  (int)local_rank[i], (int)node_rank[i], bind_idx[i]));
+#endif
         }
         /* release data */
         free(daemons);
