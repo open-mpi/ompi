@@ -50,34 +50,107 @@ included in the vX.Y.Z section and be denoted as:
    (** also appeared: A.B.C)  -- indicating that this item was previously
                                  included in release version vA.B.C.
 
-Trunk (not on release branches yet)
------------------------------------
 
-- Revamped autogen / build system.
-- ErrMgr framework redesigned to better support fault tolerance development
-  activities. See the following RFC for details:
-  http://www.open-mpi.org/community/lists/devel/2010/03/7589.php
-- Add new sensor framework to ORTE that includes modules for detecting
-  stalled applications and processes that consume too much memory.
-- Add new state framework to ORTE for saving and retrieving state
-  information (both application and system) to/from a database.
-- Add new "orte-info" tool that provides MCA params for only ORTE and
-  OPAL levels - intended for use when configuring without MPI support
-- Modified paffinity system to provide warning when bindings result in
-  being "bound to all", which is equivalent to "not bound"
-- Added MPI-3 function: MPI_GET_LIBRARY_VERSION
-- Added MPI-3 matched probe interface.
-- Revamped Fortran MPI bindings:
-  - mpifort wrapper compiler
-  - "use mpi_f08" bindings (for compilers that support it)
-  - better "use mpi" support (for compilers that support it)
+1.7
+---
+
+- Added MPI-3 functionality: 
+  - MPI_GET_LIBRARY_VERSION
+  - Matched probe
+  - MPI_TYPE_CREATE_HINDEXED_BLOCK
+  - Non-blocking collectives
 - Enabled compile-time warning of deprecated MPI functions by default
   (in supported compilers).
-- Added a new MCA parameter (ess_base_stream_buffering) that allows the user
-  to override the system default for buffering of stdout/stderr streams
-  (via setvbuf).
+- Revamped Fortran MPI bindings (see the README for details):
+  - mpifort wrapper compiler
+  - "use mpi_f08" bindings (for compilers that support it)
+  - Better "use mpi" support (for compilers that support it)
+  - Removed incorrect MPI_SCATTERV interface from "mpi" module that was
+    added in the 1.5.x series for ABI reasons.
+- Modified paffinity system to provide warning when bindings result in
+  being "bound to all", which is equivalent to "not bound"
+- Removed maffinity, paffinity, and carto frameworks (and associated
+  MCA params).
 - Added support for the DMTCP checkpoint/restart system.
-- Removed maffinity, paffinity, and carto frameworks (and associated MCA params).
+- Revamped autogen / build system.
+
+
+1.6.2
+-----
+
+- Fix issue with MX MTL.  Thanks to Doug Eadline for raising the issue.
+- Fix singleton MPI_COMM_SPAWN when the result job spans multiple nodes.
+- Fix MXM hang, and update for latest version of MXM.
+- Update to support Mellanox FCA 2.5.
+- Fix startup hang for large jobs.
+- Ensure MPI_TESTANY / MPI_WAITANY properly set the empty status when
+  count==0.
+- Fix MPI_CART_SUB behavior of not copying periods to the new
+  communicator properly.  Thanks to John Craske for the bug report.
+- Add btl_openib_abort_not_enough_reg_mem MCA parameter to cause Open
+  MPI to abort MPI jobs if there is not enough registered memory
+  available on the system (vs. just printing a warning).  Thanks to
+  Brock Palen for raising the issue.
+- Minor fix to Fortran MPI_INFO_GET: only copy a value back to the
+  user's buffer if the flag is .TRUE.
+- Fix VampirTrace compilation issue with the PGI compiler suite.
+
+
+1.6.1
+-----
+
+- A bunch of changes to eliminate hangs on OpenFabrics-based networks.
+  Users with Mellanox hardware are ***STRONGLY ENCOURAGED*** to check
+  their registered memory kernel module settings to ensure that the OS
+  will allow registering more than 8GB of memory.  See this FAQ item
+  for details:
+
+  http://www.open-mpi.org/faq/?category=openfabrics#ib-low-reg-mem
+
+  - Fall back to send/receive semantics if registered memory is
+    unavilable for RDMA.
+  - Fix two fragment leaks when registered memory is exhausted.
+  - Hueristically determine how much registered memory is available
+    and warn if it's significantly less than all of RAM.
+  - Artifically limit the amount of registered memory each MPI process
+    can use to about 1/Nth to total registered memory available.
+  - Improve error messages when events occur that are likely due to
+    unexpected registered memory exhaustion.
+
+- Fix double semicolon error in the C++ in <mpi.h>.  Thanks to John
+  Foster for pointing out the issue.
+- Allow -Xclang to be specified multiple times in CFLAGS.  Thanks to
+  P. Martin for raising the issue.
+- Break up a giant "print *" statement in the ABI-preserving incorrect
+  MPI_SCATTER interface in the "large" Fortran "mpi" module.  Thanks
+  to Juan Escobar for the initial patch.
+- Switch the MPI_ALLTOALLV default algorithm to a pairwise exchange.
+- Increase the openib BTL default CQ length to handle more types of
+  OpenFabrics devices.
+- Lots of VampirTrace fixes; upgrade to v5.13.0.4.
+- Map MPI_2INTEGER to underlying MPI_INTEGERs, not MPI_INTs.
+- Ensure that the OMPI version number is toleant of handling spaces.
+  Thanks to dragonboy for identifying the issue.
+- Fixed IN parameter marking on Fortran "mpi" module
+  MPI_COMM_TEST_INTER interface.
+- Various MXM improvements.
+- Make the output of "mpirun --report-bindings" much more friendly /
+  human-readable.
+- Properly handle MPI_COMPLEX8|16|32.
+- More fixes for mpirun's processor affinity options (--bind-to-core
+  and friends).
+- Use aligned memory for OpenFabrics registered memory.
+- Multiple fixes for parameter checking in MPI_ALLGATHERV,
+  MPI_REDUCE_SCATTER, MPI_SCATTERV, and MPI_GATHERV.  Thanks to the
+  mpi4py community (Bennet Fauber, Lisandro Dalcin, Jonathan Dursi).
+- Fixed file positioning overflows in MPI_FILE_GET_POSITION,
+  MPI_FILE_GET_POSITION_SHARED, FILE_GET_SIZE, FILE_GET_VIEW.
+- Removed the broken --cpu-set mpirun option.
+- Fix cleanup of MPI errorcodes.  Thanks to Alexey Bayduraev for the
+  patch.
+- Fix default hostfile location.  Thanks to Götz Waschk for noticing
+  the issue.
+- Improve several error messages.
 
 
 1.6
