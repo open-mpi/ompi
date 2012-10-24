@@ -50,10 +50,14 @@ included in the vX.Y.Z section and be denoted as:
 1.6.3
 -----
 
+- Fix mpirun --launch-agent behavior when a prefix is specified.
+  Thanks to Reuti for identifying the issue.
+- Fixed memchecker configury.
+- Brought over some compiler warning squashes from the development trunk.
 - Fix spawning from a singleton to multiple hosts when the "add-host"
   MPI_Info key is used.  Thanks to Brian Budge for pointing out the
   problem.
-- Add Mellanox ConnextIB IDs
+- Add Mellanox ConnextIB IDs and max inline value.
 - Fix rankfile when no -np is given.
 - FreeBSD detection improvement.  Thanks to Brooks Davis for the
   patch.
