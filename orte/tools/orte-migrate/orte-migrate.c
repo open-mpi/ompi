@@ -124,51 +124,51 @@ typedef struct {
 orte_migrate_globals_t orte_migrate_globals;
 
 opal_cmd_line_init_t cmd_line_opts[] = {
-    { NULL,
+    { NULL, NULL, NULL, 
       'h', NULL, "help", 
       0,
       &orte_migrate_globals.help, OPAL_CMD_LINE_TYPE_BOOL,
       "This help message" },
 
-    { NULL,
+    { NULL, NULL, NULL, 
       'v', NULL, "verbose", 
       0,
       &orte_migrate_globals.verbose, OPAL_CMD_LINE_TYPE_BOOL,
       "Be Verbose" },
 
-    { NULL,
+    { NULL, NULL, NULL, 
       'V', NULL, NULL, 
       1,
       &orte_migrate_globals.verbose_level, OPAL_CMD_LINE_TYPE_INT,
       "Set the verbosity level (For additional debugging information)" },
 
-    { "hnp-pid",
+    { "hnp-pid", NULL, NULL,
       '\0', NULL, "hnp-pid", 
       1,
       &orte_migrate_globals.pid, OPAL_CMD_LINE_TYPE_INT,
       "This should be the pid of the mpirun whose applications you wish "
       "to migrate." },
 
-    { NULL,
+    { NULL, NULL, NULL,
       'x', NULL, "off", 
       1,
       &orte_migrate_globals.off_nodes, OPAL_CMD_LINE_TYPE_STRING,
       "List of nodes to migrate off of (comma separated)" },
 
-    { NULL,
+    { NULL, NULL, NULL,
       'r', NULL, "ranks", 
       1,
       &orte_migrate_globals.off_procs, OPAL_CMD_LINE_TYPE_STRING,
       "List of MPI_COMM_WORLD ranks to migrate (comma separated)" },
 
-    { NULL,
+    { NULL, NULL, NULL,
       't', NULL, "onto", 
       1,
       &orte_migrate_globals.onto_nodes, OPAL_CMD_LINE_TYPE_STRING,
       "List of nodes to migrate onto (comma separated)" },
 
     /* End of list */
-    { NULL, '\0', NULL, NULL, 0,
+    { NULL, NULL, NULL, '\0', NULL, NULL, 0,
       NULL, OPAL_CMD_LINE_TYPE_NULL,
       NULL }
 };

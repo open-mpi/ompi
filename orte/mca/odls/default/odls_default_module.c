@@ -533,14 +533,13 @@ static int do_child(orte_app_context_t* context,
                 /* Set an info MCA param that tells
                    the launched processes that it was bound by us (e.g., so that
                    MPI_INIT doesn't try to bind itself) */
-                param = mca_base_param_env_var ("orte_bound_at_launch");
+                param = mca_base_param_environ_variable("orte","bound","at_launch");
                 opal_setenv(param, "1", true, &environ_copy);
                 free(param);
                 /* ...and provide a nice string representation of what we
                    bound to */
-                param = mca_base_param_env_var ("orte_base_applied_binding");
+                param = mca_base_param_environ_variable("orte","base","applied_binding");
                 opal_setenv(param, child->cpu_bitmap, true, &environ_copy);
-                free (param);
             }
         }
 #endif

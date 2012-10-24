@@ -108,56 +108,56 @@ static bool p_found = false;
 #define MAX_LINES 20
 
 opal_cmd_line_init_t cmd_line_opts[] = {
-    { NULL,
+    { NULL, NULL, NULL, 
       'h', NULL, "help", 
       0,
       &help, OPAL_CMD_LINE_TYPE_BOOL,
       "This help message" },
 
-    { NULL,
+    { NULL, NULL, NULL, 
       '\0', "pid", "pid", 
       1,
       &hnppidstr, OPAL_CMD_LINE_TYPE_STRING,
       "The pid of the mpirun that you wish to query/monitor" },
 
-    { NULL,
+    { NULL, NULL, NULL, 
       '\0', "uri", "uri", 
       1,
       &hnpuristr, OPAL_CMD_LINE_TYPE_STRING,
       "The uri of the mpirun that you wish to query/monitor" },
     
-    { NULL,
+    { NULL, NULL, NULL, 
       '\0', "rank", "rank", 
       1,
       &ranks, OPAL_CMD_LINE_TYPE_STRING,
       "Rank whose resource usage is to be displayed/monitored" },
 
-    { NULL,
+    { NULL, NULL, NULL, 
       '\0', "update-rate", "update-rate", 
       1,
       &update_rate, OPAL_CMD_LINE_TYPE_INT,
       "Number of seconds between updates" },
     
-    { NULL,
+    { NULL, NULL, NULL, 
       '\0', "timestamp", "timestamp", 
       0,
       &timestamp, OPAL_CMD_LINE_TYPE_BOOL,
       "Time stamp each sample" },
     
-    { NULL,
+    { NULL, NULL, NULL, 
       '\0', "log-file", "log-file", 
       1,
       &logfile, OPAL_CMD_LINE_TYPE_STRING,
       "Output file for returned statistics" },
  
-    { NULL,
+    { NULL, NULL, NULL, 
       '\0', "bynode", "bynode", 
       0,
       &bynode, OPAL_CMD_LINE_TYPE_BOOL,
       "Group statistics by node, sorted by rank within each node" },
 
     /* End of list */
-    { NULL,
+    { NULL, NULL, NULL, 
       '\0', NULL, NULL, 
       0,
       NULL, OPAL_CMD_LINE_TYPE_NULL,

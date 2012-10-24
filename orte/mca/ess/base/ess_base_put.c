@@ -42,7 +42,7 @@ int orte_ess_env_put(orte_std_cntr_t num_procs,
     /* tell the ESS to select the env component - but don't override
      * anything that may have been provided elsewhere
      */
-    if(NULL == (param = mca_base_param_env_var ("ess"))) {
+    if(NULL == (param = mca_base_param_environ_variable("ess",NULL,NULL))) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
@@ -52,7 +52,7 @@ int orte_ess_env_put(orte_std_cntr_t num_procs,
     /* since we want to pass the name as separate components, make sure
      * that the "name" environmental variable is cleared!
      */
-    if(NULL == (param = mca_base_param_env_var ("orte_ess_name"))) {
+    if(NULL == (param = mca_base_param_environ_variable("orte","ess","name"))) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
@@ -60,7 +60,7 @@ int orte_ess_env_put(orte_std_cntr_t num_procs,
     free(param);
 
     asprintf(&value, "%ld", (long) num_procs);
-    if(NULL == (param = mca_base_param_env_var ("orte_ess_num_procs"))) {
+    if(NULL == (param = mca_base_param_environ_variable("orte","ess","num_procs"))) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
