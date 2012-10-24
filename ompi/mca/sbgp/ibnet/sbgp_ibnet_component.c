@@ -48,6 +48,15 @@ static int mca_sbgp_ibnet_close(void);
 static int mca_sbgp_ibnet_init_query(bool enable_progress_threads,
         bool enable_mpi_threads);
 
+static inline int mca_sbgp_ibnet_param_register_int(
+        const char* param_name, int default_value)
+{
+    int id = mca_base_param_register_int("sbgp","ibnet",param_name,NULL,default_value);
+    int param_value = default_value;
+    mca_base_param_lookup_int(id,&param_value);
+    return param_value;
+}
+
 /*
  * Instantiate the public struct with all of our public information
  * and pointers to our public functions in it

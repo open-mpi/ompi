@@ -31,8 +31,8 @@
  * During library initialization, all available BTL components are
  * loaded and opened via their mca_base_open_component_fn_t
  * function. The BTL open function should register any mca parameters
- * used to tune/adjust the behaviour of the BTL (mca_base_param_reg_int(),
- * mca_base_param_reg_string()). Note that the open function may fail
+ * used to tune/adjust the behaviour of the BTL (mca_base_param_register_int(),
+ * mca_base_param_register_string()). Note that the open function may fail
  * if the resources (e.g. shared libraries, etc) required by the network
  * transport are not available.
  *
