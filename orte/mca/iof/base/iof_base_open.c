@@ -205,6 +205,7 @@ int orte_iof_base_open(void)
     /* Initialize globals */
     OBJ_CONSTRUCT(&orte_iof_base.iof_components_opened, opal_list_t);
     OBJ_CONSTRUCT(&orte_iof_base.iof_write_output_lock, opal_mutex_t);
+    orte_iof_base.output_limit = UINT_MAX;
 
     /* did the user request we print output to files? */
     if (NULL != orte_output_filename) {
@@ -224,6 +225,14 @@ int orte_iof_base_open(void)
         }
     }
     
+   /* check for maximum number of pending output messages */
+    mca_base_param_reg_int_name("iof", "base_output_limit",
+                                "Maximum backlog of output messages [default: unlimited]",
+                                false, false, -1, &rc);
+    if (0 < rc) {
+        orte_iof_base.output_limit = rc;
+    }
+
     /* check for files to be sent to stdin of procs */
     mca_base_param_reg_string_name("iof", "base_input_files",
                                    "Comma-separated list of input files to be read and sent to stdin of procs (default: NULL)",
