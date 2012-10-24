@@ -438,8 +438,14 @@ static int setup_launch(int *argcptr, char ***argvptr,
         char *opal_prefix = getenv("OPAL_PREFIX");
         char* full_orted_cmd = NULL;
         
-        if( NULL != orted_cmd ) {
-            asprintf( &full_orted_cmd, "%s/%s/%s", prefix_dir, bin_base, orted_cmd );
+        if (NULL != orted_cmd) {
+            if (0 == strcmp(orted_cmd, "orted")) {
+                /* if the cmd is our standard one, then add the prefix */
+                asprintf(&full_orted_cmd, "%s/%s/%s", prefix_dir, bin_base, orted_cmd);
+            } else {
+                /* someone specified something different, so don't prefix it */
+                full_orted_cmd = strdup(orted_cmd);
+            }
         }
         
         if (ORTE_PLM_RSH_SHELL_SH == remote_shell ||
