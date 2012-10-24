@@ -123,6 +123,7 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_iof_write_output_t);
 /* the iof globals struct */
 struct orte_iof_base_t {
     int                     iof_output;
+    size_t                  output_limit;
     char                    *input_files;
     opal_list_t             iof_components_opened;
     opal_mutex_t            iof_write_output_lock;
