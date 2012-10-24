@@ -149,6 +149,7 @@ typedef struct orte_iof_base_t orte_iof_base_t;
                            ep->wev->ev, ep->wev->fd,                \
                            OPAL_EV_WRITE,                           \
                            wrthndlr, ep);                           \
+            opal_event_set_priority(ep->wev->ev, ORTE_MSG_PRI);     \
         }                                                           \
         if (NULL != (eplist)) {                                     \
             opal_list_append((eplist), &ep->super);                 \
@@ -180,6 +181,7 @@ typedef struct orte_iof_base_t orte_iof_base_t;
                        rev->ev, (fid),                              \
                        OPAL_EV_READ,                                \
                        (cbfunc), rev);                              \
+        opal_event_set_priority(rev->ev, ORTE_MSG_PRI);             \
         if ((actv)) {                                               \
             rev->active = true;                                     \
             opal_event_add(rev->ev, 0);                             \
