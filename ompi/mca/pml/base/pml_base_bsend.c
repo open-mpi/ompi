@@ -78,6 +78,7 @@ static void* mca_pml_bsend_alloc_segment(
  */
 int mca_pml_base_bsend_init(bool thread_safe)
 {
+    int id = mca_base_param_register_string("pml", "base", "bsend_allocator", NULL, "basic");
     char *name;
     size_t tmp;
 
@@ -89,9 +90,7 @@ int mca_pml_base_bsend_init(bool thread_safe)
     OBJ_CONSTRUCT(&mca_pml_bsend_condition, opal_condition_t);
 
     /* lookup name of the allocator to use for buffered sends */
-    (void) mca_base_param_reg_string_name ("pml", "base_bsend_allocator", NULL, false, false,
-                                           "basic", &name);
-
+    mca_base_param_lookup_string(id, &name);
     if(NULL == (mca_pml_bsend_allocator_component = mca_allocator_component_lookup(name))) {
         free(name);
         return OMPI_ERR_BUFFER;

@@ -90,26 +90,26 @@ typedef struct {
 orte_clean_globals_t orte_clean_globals;
 
 opal_cmd_line_init_t cmd_line_opts[] = {
-    { NULL,
+    { NULL, NULL, NULL, 
       'h', NULL, "help", 
       0,
       &orte_clean_globals.help, OPAL_CMD_LINE_TYPE_BOOL,
       "This help message" },
 
-    { NULL,
+    { NULL, NULL, NULL, 
       'v', NULL, "verbose", 
       0,
       &orte_clean_globals.verbose, OPAL_CMD_LINE_TYPE_BOOL,
       "Generate verbose output" },
 
-    { NULL,
+    { NULL, NULL, NULL, 
       'd', NULL, "debug", 
       0,
       &orte_clean_globals.debug, OPAL_CMD_LINE_TYPE_BOOL,
       "Extra debug output for developers to ensure that orte-clean is working" },
 
     /* End of list */
-    { NULL,
+    { NULL, NULL, NULL, 
       '\0', NULL, NULL, 
       0,
       NULL, OPAL_CMD_LINE_TYPE_NULL,

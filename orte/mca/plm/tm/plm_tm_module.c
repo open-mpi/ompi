@@ -312,7 +312,7 @@ static void launch_daemons(int fd, short args, void *cbdata)
     env = opal_argv_copy(orte_launch_environ);
 
     /* enable local launch by the orteds */
-    var = mca_base_param_env_var ("plm");
+    var = mca_base_param_environ_variable("plm", NULL, NULL);
     opal_setenv(var, "rsh", true, &env);
     free(var);
     

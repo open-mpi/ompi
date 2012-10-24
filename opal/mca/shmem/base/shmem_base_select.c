@@ -96,7 +96,8 @@ opal_shmem_base_runtime_query(mca_base_module_t **best_module,
      * is for internal use only!
      * see odls_base_default_fns.c for more details.
      */
-    env_hint_name = mca_base_param_env_var ("shmem_RUNTIME_QUERY_hint");
+    env_hint_name = mca_base_param_environ_variable("shmem_RUNTIME_QUERY_hint",
+                                                    NULL, NULL);
     env_hint_val = getenv(env_hint_name);
     free(env_hint_name);
 

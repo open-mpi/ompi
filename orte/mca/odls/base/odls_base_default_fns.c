@@ -669,7 +669,7 @@ static int odls_base_default_setup_fork(orte_app_context_t *context,
     }
     
     /* pass my contact info to the local proc so we can talk */
-    param = mca_base_param_env_var ("orte_local_daemon_uri");
+    param = mca_base_param_environ_variable("orte","local_daemon","uri");
     opal_setenv(param, orte_process_info.my_daemon_uri, true, environ_copy);
     free(param);
     
@@ -677,23 +677,23 @@ static int odls_base_default_setup_fork(orte_app_context_t *context,
      * needs it
      */
     if (NULL != orte_process_info.my_hnp_uri) {
-        param = mca_base_param_env_var ("orte_hnp_uri");
+        param = mca_base_param_environ_variable("orte","hnp","uri");
         opal_setenv(param, orte_process_info.my_hnp_uri, true, environ_copy);
         free(param);
     }
     
     /* setup yield schedule - do not override any user-supplied directive! */
     if (oversubscribed) {
-        param = mca_base_param_env_var ("mpi_yield_when_idle");
+        param = mca_base_param_environ_variable("mpi", NULL, "yield_when_idle");
         opal_setenv(param, "1", false, environ_copy);
     } else {
-        param = mca_base_param_env_var ("mpi_yield_when_idle");
+        param = mca_base_param_environ_variable("mpi", NULL, "yield_when_idle");
         opal_setenv(param, "0", false, environ_copy);
     }
     free(param);
     
     /* set the app_context number into the environment */
-    param = mca_base_param_env_var ("orte_app_num");
+    param = mca_base_param_environ_variable("orte","app","num");
     asprintf(&param2, "%ld", (long)context->idx);
     opal_setenv(param, param2, true, environ_copy);
     free(param);
@@ -712,7 +712,7 @@ static int odls_base_default_setup_fork(orte_app_context_t *context,
     free(param2);
     
     /* pass the number of nodes involved in this job */
-    param = mca_base_param_env_var ("orte_num_nodes");
+    param = mca_base_param_environ_variable("orte","num","nodes");
     asprintf(&param2, "%ld", (long)num_nodes);
     opal_setenv(param, param2, true, environ_copy);
     free(param);
@@ -730,24 +730,24 @@ static int odls_base_default_setup_fork(orte_app_context_t *context,
             obj = hwloc_get_root_obj(opal_hwloc_topology);
             if (NULL != (htmp = (char*)hwloc_obj_get_info_by_name(obj, "CPUType")) ||
                 NULL != (htmp = orte_local_cpu_type)) {
-                param = mca_base_param_env_var ("orte_cpu_type");
+                param = mca_base_param_environ_variable("orte","cpu","type");
                 opal_setenv(param, htmp, true, environ_copy);
                 free(param);
             }
             if (NULL != (htmp = (char*)hwloc_obj_get_info_by_name(obj, "CPUModel")) ||
                 NULL != (htmp = orte_local_cpu_model)) {
-                param = mca_base_param_env_var ("orte_cpu_model");
+                param = mca_base_param_environ_variable("orte","cpu","model");
                 opal_setenv(param, htmp, true, environ_copy);
                 free(param);
             }
         } else {
             if (NULL != orte_local_cpu_type) {
-                param = mca_base_param_env_var ("orte_cpu_type");
+                param = mca_base_param_environ_variable("orte","cpu","type");
                 opal_setenv(param, orte_local_cpu_type, true, environ_copy);
                 free(param);
             }
             if (NULL != orte_local_cpu_model) {
-                param = mca_base_param_env_var ("orte_cpu_model");
+                param = mca_base_param_environ_variable("orte","cpu","model");
                 opal_setenv(param, orte_local_cpu_model, true, environ_copy);
                 free(param);
             }
@@ -763,8 +763,8 @@ static int odls_base_default_setup_fork(orte_app_context_t *context,
      */
     if (NULL != (param2 = opal_shmem_base_best_runnable_component_name())) {
         if (NULL != (param =
-                     mca_base_param_env_var ("shmem_RUNTIME_QUERY_hint"))) {
-                                             
+                     mca_base_param_environ_variable("shmem_RUNTIME_QUERY_hint",
+                                                     NULL, NULL))) {
             opal_setenv(param, param2, true, environ_copy);
             free(param);
         }
@@ -780,7 +780,7 @@ static int odls_base_default_setup_fork(orte_app_context_t *context,
     orte_ess_env_put(vpid_range, num_local_procs, environ_copy);
     
     /* forcibly set the local tmpdir base to match ours */
-    param = mca_base_param_env_var ("orte_tmpdir_base");
+    param = mca_base_param_environ_variable("orte","tmpdir","base");
     opal_setenv(param, orte_process_info.tmpdir_base, true, environ_copy);
     free(param);
 
@@ -802,7 +802,7 @@ static int setup_child(orte_proc_t *child,
         ORTE_ERROR_LOG(rc);
         return rc;
     }
-    if (NULL == (param = mca_base_param_env_var ("orte_ess_jobid"))) {
+    if (NULL == (param = mca_base_param_environ_variable("orte","ess","jobid"))) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         rc = ORTE_ERR_OUT_OF_RESOURCE;
         return rc;
@@ -816,7 +816,7 @@ static int setup_child(orte_proc_t *child,
         ORTE_ERROR_LOG(rc);
         return rc;
     }
-    if (NULL == (param = mca_base_param_env_var ("orte_ess_vpid"))) {
+    if (NULL == (param = mca_base_param_environ_variable("orte","ess","vpid"))) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         rc = ORTE_ERR_OUT_OF_RESOURCE;
         return rc;
@@ -866,7 +866,7 @@ static int setup_child(orte_proc_t *child,
     asprintf(&value, "%lu", (unsigned long) child->node_rank);
     opal_setenv("OMPI_COMM_WORLD_NODE_RANK", value, true, env);
     /* set an mca param for it too */
-    if(NULL == (param = mca_base_param_env_var ("orte_ess_node_rank"))) {
+    if(NULL == (param = mca_base_param_environ_variable("orte","ess","node_rank"))) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         rc = ORTE_ERR_OUT_OF_RESOURCE;
         return rc;
@@ -879,7 +879,7 @@ static int setup_child(orte_proc_t *child,
      * an initial start, but procs would like to know if they are being
      * restarted so they can take appropriate action
      */
-    if (NULL == (param = mca_base_param_env_var ("orte_num_restarts"))) {
+    if (NULL == (param = mca_base_param_environ_variable("orte","num","restarts"))) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         rc = ORTE_ERR_OUT_OF_RESOURCE;
         return rc;
@@ -891,7 +891,7 @@ static int setup_child(orte_proc_t *child,
     
     /* if the proc should not barrier in orte_init, tell it */
     if (child->do_not_barrier || 0 < child->restarts) {
-        if (NULL == (param = mca_base_param_env_var ("orte_do_not_barrier"))) {
+        if (NULL == (param = mca_base_param_environ_variable("orte","do_not","barrier"))) {
             ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
             rc = ORTE_ERR_OUT_OF_RESOURCE;
             return rc;

@@ -54,17 +54,21 @@ int mca_bml_base_open(void)
 #if OPAL_ENABLE_DEBUG_RELIABILITY
     do {
         int param, value;
+        
+        mca_base_param_register_int("bml", NULL, "error_rate_floor", "error_rate_floor", 0);
+        param = mca_base_param_find("bml", NULL, "error_rate_floor");
+        mca_base_param_lookup_int(param, &value);
+        mca_bml_base_error_rate_floor = value;
 
-        (void) mca_base_param_reg_int_name ("bml", "error_rate_floor", NULL, false, false,
-                                            0, &value);
-        mca_bml_base_error_rate_floor = (double) value;
+        mca_base_param_register_int("bml", NULL, "error_rate_ceiling", "error_rate_ceiling", 0);
+        param = mca_base_param_find("bml", NULL, "error_rate_ceiling");
+        mca_base_param_lookup_int(param, &value);
+        mca_bml_base_error_rate_ceiling = value;
 
-        (void) mca_base_param_reg_int_name ("bml", "error_rate_ceiling", NULL, false, false,
-                                            0, &value);
-        mca_bml_base_error_rate_ceiling = (double) value;
 
-        (void) mca_base_param_reg_int_name ("bml", "srand", NULL, false, false,
-                                            1, &value);
+        mca_base_param_register_int("bml", NULL, "srand", "srand", 1);
+        param = mca_base_param_find("bml", NULL, "srand");
+        mca_base_param_lookup_int(param, &value);
 
         /* seed random number generator */
         if(value) {

@@ -177,8 +177,17 @@ BEGIN_C_DECLS
      * opal_cmd_line_create().
      */
     struct opal_cmd_line_init_t {
+        /** If want to set an MCA parameter, set its type name here.
+            WARNING: This MCA tuple (type, component, param) will
+            eventually be replaced with a single name! */
+        const char *ocl_mca_type_name;
+        /** If want to set an MCA parameter, set its component name
+            here.  WARNING: This MCA tuple (type, component, param)
+            will eventually be replaced with a single name! */
+        const char *ocl_mca_component_name;
         /** If want to set an MCA parameter, set its parameter name
-            here. */
+            here.  WARNING: This MCA tuple (type, component, param)
+            will eventually be replaced with a single name! */
         const char *ocl_mca_param_name;
 
         /** "Short" name (i.e., "-X", where "X" is a single letter) */

@@ -62,7 +62,7 @@ int mca_base_cmd_line_setup(opal_cmd_line_t *cmd)
 
     {
         opal_cmd_line_init_t entry = 
-            {"mca_base_param_file_prefix", '\0', "am", NULL, 1,
+            {"mca", "base", "param_file_prefix", '\0', "am", NULL, 1,
              NULL, OPAL_CMD_LINE_TYPE_STRING,
              "Aggregate MCA parameter set file list"
             };
@@ -171,7 +171,7 @@ static void add_to_env(char **params, char **values, char ***env)
        vars of the form OMPI_MCA_*=value. */
 
     for (i = 0; NULL != params && NULL != params[i]; ++i) {
-        name = mca_base_param_env_var (params[i]);
+        name = mca_base_param_environ_variable(params[i], NULL, NULL);
         opal_setenv(name, values[i], true, env);
         free(name);
     }

@@ -86,12 +86,10 @@ const mca_coll_base_component_2_0_0_t mca_coll_demo_component = {
 static int demo_open(void)
 {
     mca_coll_demo_priority_param = 
-      mca_base_param_reg_int(&mca_coll_demo_component.collm_version,
-                             "priority", NULL, false, false, 20, NULL);
+        mca_base_param_register_int("coll", "demo", "priority", NULL, 20);
     mca_coll_demo_verbose_param = 
-      mca_base_param_reg_int(&mca_coll_demo_component.collm_version,
-                             "verbose", NULL, false, false,
-                             mca_coll_demo_verbose, NULL);
+        mca_base_param_register_int("coll", "demo", "verbose", NULL, 
+                                    mca_coll_demo_verbose);
 
     return OMPI_SUCCESS;
 }

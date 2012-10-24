@@ -54,7 +54,24 @@ const char *mca_coll_ml_component_version_string =
 static int ml_open(void);
 static int ml_close(void);
 static int coll_ml_progress(void);
-
+/*
+static inline int mca_coll_ml_param_register_int(
+        const char* param_name, int default_value)
+{
+    int id = mca_base_param_register_int("coll","ml",param_name,NULL,default_value);
+    int param_value = default_value;
+    mca_base_param_lookup_int(id,&param_value);
+    return param_value;
+}
+static inline char* mca_coll_ml_param_register_string(
+        const char* param_name, const char* default_value)
+{
+    char *param_value;
+    int id = mca_base_param_register_string("coll","ml",param_name,NULL,default_value);
+    mca_base_param_lookup_string(id, &param_value);
+    return param_value;
+}
+*/
 /*
  * Instantiate the public struct with all of our public information
  * and pointers to our public functions in it
