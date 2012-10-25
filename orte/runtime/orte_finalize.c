@@ -32,6 +32,7 @@
 #include "orte/runtime/orte_globals.h"
 #include "orte/runtime/runtime.h"
 #include "orte/runtime/orte_locks.h"
+#include "orte/util/name_fns.h"
 #include "orte/util/show_help.h"
 
 /**
@@ -44,7 +45,13 @@
  */
 int orte_finalize(void)
 {
-    if (!orte_initialized) {
+    --orte_initialized;
+    if (0 != orte_initialized) {
+        /* check for mismatched calls */
+        if (0 > orte_initialized) {
+            opal_output(0, "%s MISMATCHED CALLS TO ORTE FINALIZE",
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+        }
         return ORTE_SUCCESS;
     }
 
@@ -99,6 +106,5 @@ int orte_finalize(void)
     /* finalize the opal utilities */
     opal_finalize();
     
-    orte_initialized = false;
     return ORTE_SUCCESS;
 }
