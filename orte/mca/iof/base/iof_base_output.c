@@ -43,6 +43,7 @@
 #include "orte/util/name_fns.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/mca/errmgr/errmgr.h"
+#include "orte/mca/state/state.h"
 
 #include "orte/mca/iof/base/base.h"
 
@@ -296,6 +297,12 @@ void orte_iof_base_write_handler(int fd, short event, void *cbdata)
             if (EAGAIN == errno || EINTR == errno) {
                 /* push this item back on the front of the list */
                 opal_list_prepend(&wev->outputs, item);
+                /* if the list is getting too large, abort */
+                if (orte_iof_base.output_limit < opal_list_get_size(&wev->outputs)) {
+                    opal_output(0, "IO Forwarding is running too far behind - something is blocking us from writing");
+                    ORTE_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
+                    goto ABORT;
+                }
                 /* leave the write event running so it will call us again
                  * when the fd is ready.
                  */
@@ -311,6 +318,12 @@ void orte_iof_base_write_handler(int fd, short event, void *cbdata)
             memmove(output->data, &output->data[num_written], output->numbytes - num_written);
             /* push this item back on the front of the list */
             opal_list_prepend(&wev->outputs, item);
+            /* if the list is getting too large, abort */
+            if (orte_iof_base.output_limit < opal_list_get_size(&wev->outputs)) {
+                opal_output(0, "IO Forwarding is running too far behind - something is blocking us from writing");
+                ORTE_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
+                goto ABORT;
+            }
             /* leave the write event running so it will call us again
              * when the fd is ready
              */
