@@ -50,7 +50,7 @@
 /*
  * Whether we have completed orte_init or we are in orte_finalize
  */
-bool orte_initialized = false;
+int orte_initialized = 0;
 bool orte_finalizing = false;
 bool orte_debug_flag = false;
 int orte_debug_verbosity;
@@ -96,9 +96,12 @@ int orte_init(int* pargc, char*** pargv, orte_proc_type_t flags)
     int ret;
     char *error = NULL;
 
-    if (orte_initialized) {
+    if (0 < orte_initialized) {
+        /* track number of times we have been called */
+        orte_initialized++;
         return ORTE_SUCCESS;
     }
+    orte_initialized++;
 
     /* initialize the opal layer */
     if (ORTE_SUCCESS != (ret = opal_init(pargc, pargv))) {
@@ -196,7 +199,6 @@ int orte_init(int* pargc, char*** pargv, orte_proc_type_t flags)
     }
     
     /* All done */
-    orte_initialized = true;
     return ORTE_SUCCESS;
     
  error:

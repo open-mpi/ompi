@@ -41,7 +41,7 @@ ORTE_DECLSPEC extern const char orte_version_string[];
 /**
  * Whether ORTE is initialized or we are in orte_finalize
  */
-ORTE_DECLSPEC extern bool orte_initialized;
+ORTE_DECLSPEC extern int orte_initialized;
 ORTE_DECLSPEC extern bool orte_finalizing;
 ORTE_DECLSPEC extern int orte_debug_output;
 ORTE_DECLSPEC extern bool orte_debug_flag;
