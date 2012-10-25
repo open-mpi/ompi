@@ -67,6 +67,7 @@ typedef struct {
     uint8_t *read_buffer;
     long read_length;
     orte_dfs_open_callback_fn_t open_cbfunc;
+    orte_dfs_size_callback_fn_t size_cbfunc;
     orte_dfs_read_callback_fn_t read_cbfunc;
     void *cbdata;
 } orte_dfs_request_t;

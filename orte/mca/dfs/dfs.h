@@ -13,6 +13,10 @@
 
 #include "orte_config.h"
 
+#ifdef HAVE_FCNTL_H
+#include <fcntl.h>
+#endif
+
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 
@@ -62,11 +66,21 @@ typedef void (*orte_dfs_base_module_open_fn_t)(char *uri,
  */
 typedef void (*orte_dfs_base_module_close_fn_t)(int fd);
 
+/* Get the size of a file
+ *
+ */
+typedef void (*orte_dfs_base_module_get_file_size_fn_t)(int fd,
+                                                        orte_dfs_size_callback_fn_t cbfunc,
+                                                        void *cbdata);
+
 /* Position a file
  *
  * Move the read position in the file to the specified byte number
+ * relative to the location specified by whence:
+ *     SEEK_SET => from beginning of file
+ *     SEEK_CUR => from current location
  */
-typedef void (*orte_dfs_base_module_seek_fn_t)(int fd, size_t offset);
+typedef void (*orte_dfs_base_module_seek_fn_t)(int fd, size_t offset, int whence);
 
 /* Read bytes from a possibly remote file
  *
@@ -94,10 +108,11 @@ struct orte_dfs_base_module_1_0_0_t {
     /** Finalization Function */
     orte_dfs_base_module_finalize_fn_t    finalize;
 
-    orte_dfs_base_module_open_fn_t        open;
-    orte_dfs_base_module_close_fn_t       close;
-    orte_dfs_base_module_seek_fn_t        seek;
-    orte_dfs_base_module_read_fn_t        read;
+    orte_dfs_base_module_open_fn_t           open;
+    orte_dfs_base_module_close_fn_t          close;
+    orte_dfs_base_module_get_file_size_fn_t  get_file_size;
+    orte_dfs_base_module_seek_fn_t           seek;
+    orte_dfs_base_module_read_fn_t           read;
 };
 typedef struct orte_dfs_base_module_1_0_0_t orte_dfs_base_module_1_0_0_t;
 typedef orte_dfs_base_module_1_0_0_t orte_dfs_base_module_t;
