@@ -117,6 +117,10 @@ int orte_info_register_components(opal_pointer_array_t *mca_types,
      * open components
      */
     orte_process_info.proc_type = ORTE_PROC_HNP;
+    /* set the event base to be the opal event base as we
+     * aren't attempting to do anything with progress threads here
+     */
+    orte_event_base = opal_event_base;
 
     /* Register the ORTE layer's MCA parameters */
     
