@@ -130,6 +130,9 @@ BEGIN_C_DECLS
 /* Notify of failed processes */
 #define ORTE_RML_TAG_FAILURE_NOTICE         44
 
+/* distributed file system */
+#define ORTE_RML_TAG_DFS                    45
+
 #define ORTE_RML_TAG_MAX                   100
 
 

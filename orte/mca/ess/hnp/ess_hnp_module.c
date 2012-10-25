@@ -51,6 +51,7 @@
 #include "orte/mca/routed/base/base.h"
 #include "orte/mca/routed/routed.h"
 #include "orte/mca/db/base/base.h"
+#include "orte/mca/dfs/base/base.h"
 #include "orte/mca/errmgr/base/base.h"
 #include "orte/mca/grpcomm/base/base.h"
 #include "orte/mca/iof/base/base.h"
@@ -636,6 +637,18 @@ static int rte_init(void)
     /* start the local sensors */
     orte_sensor.start(ORTE_PROC_MY_NAME->jobid);
     
+    /* setup the dfs framework */
+    if (ORTE_SUCCESS != (ret = orte_dfs_base_open())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_dfs_open";
+        goto error;
+    }
+    if (ORTE_SUCCESS != (ret = orte_dfs_base_select())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_dfs_select";
+        goto error;
+    }
+
     /* if a tool has launched us and is requesting event reports,
      * then set its contact info into the comm system
      */
@@ -701,6 +714,9 @@ static int rte_finalize(void)
 #endif  /* __WINDOWS__ */
         signals_set = false;
     }
+
+    /* close the dfs */
+    orte_dfs_base_close();
 
     /* stop the local sensors */
     orte_sensor.stop(ORTE_PROC_MY_NAME->jobid);

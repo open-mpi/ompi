@@ -44,13 +44,14 @@ static int staged_mapper(orte_job_t *jdata)
     mca_base_component_t *c=&mca_rmaps_staged_component.base_version;
     int i, j, k, rc;
     orte_app_context_t *app;
-    opal_list_t node_list;
+    opal_list_t node_list, desired;
     orte_std_cntr_t num_slots;
     orte_proc_t *proc;
     orte_node_t *node, *next;
     bool work_to_do = false, first_pass = false;
     opal_list_item_t *item, *it2;
     char *cptr, **minimap;
+    orte_vpid_t load;
 
     /* only use this mapper if it was specified */
     if (NULL == jdata->map->req_mapper ||
@@ -145,41 +146,6 @@ static int staged_mapper(orte_job_t *jdata)
                 return rc;
             }
         }
-        /* if we are using soft locations, search the list of nodes
-         * for those that match the requested locations and bubble those
-         * to the top so we use them first
-         */
-        if (orte_soft_locations && NULL != app->dash_host) {
-            /* scan the dash hosts in reverse order as we want
-             * the first entry to be on top of the list
-             */
-            opal_output_verbose(5, orte_rmaps_base.rmaps_output,
-                                "%s mca:rmaps:staged: ordering nodes by desired location",
-                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
-            for (j=opal_argv_count(app->dash_host)-1; 0 <= j; j--) {
-                minimap = opal_argv_split(app->dash_host[j], ',');
-                for (k=opal_argv_count(minimap)-1; 0 <= k; k--) {
-                    cptr = minimap[k];
-                    for (item = opal_list_get_first(&node_list);
-                         item != opal_list_get_end(&node_list);
-                         item = opal_list_get_next(item)) {
-                        node = (orte_node_t*)item;
-                        if (0 == strcmp(node->name, cptr) ||
-                            (0 == strcmp("localhost", cptr) &&
-                             0 == strcmp(node->name, orte_process_info.nodename))) {
-                            opal_list_remove_item(&node_list, item);
-                            opal_list_prepend(&node_list, item);
-                            opal_output_verbose(10, orte_rmaps_base.rmaps_output,
-                                                "%s mca:rmaps:staged: placing node %s at top of list",
-                                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                                node->name);
-                            break;
-                        }
-                    }
-                }
-                opal_argv_free(minimap);
-            }
-        }
 
         /* if a max number of procs/node was given for this
          * app, remove all nodes from the list that exceed
@@ -204,13 +170,144 @@ static int staged_mapper(orte_job_t *jdata)
             continue;
         }
 
-        /* start on first node on the list */
-        node = (orte_node_t*)opal_list_get_first(&node_list);
-        next = (orte_node_t*)opal_list_get_next(&node->super);
-        opal_output_verbose(5, orte_rmaps_base.rmaps_output,
-                            "%s mca:rmaps:staged: starting the map with node %s",
-                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), node->name);
+        /* if the app specified locations, soft or not, search the list of nodes
+         * for those that match the requested locations and move those
+         * to the desired list so we use them first
+         */
+        if (NULL != app->dash_host) {
+            OBJ_CONSTRUCT(&desired, opal_list_t);
+            /* no particular order is required */
+            for (j=0; j < opal_argv_count(app->dash_host); j++) {
+                minimap = opal_argv_split(app->dash_host[j], ',');
+                for (k=0; k < opal_argv_count(minimap); k++) {
+                    cptr = minimap[k];
+                    for (item = opal_list_get_first(&node_list);
+                         item != opal_list_get_end(&node_list);
+                         item = opal_list_get_next(item)) {
+                        node = (orte_node_t*)item;
+                        if (0 == strcmp(node->name, cptr) ||
+                            (0 == strcmp("localhost", cptr) &&
+                             0 == strcmp(node->name, orte_process_info.nodename))) {
+                            opal_list_remove_item(&node_list, item);
+                            opal_list_append(&desired, item);
+                            opal_output_verbose(10, orte_rmaps_base.rmaps_output,
+                                                "%s mca:rmaps:staged: placing node %s on desired list",
+                                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                                node->name);
+                            break;
+                        }
+                    }
+                }
+                opal_argv_free(minimap);
+            }
+            /* if no nodes made the transition and the app specified soft
+             * locations, then we can skip to look at the non-desired list
+             */
+            if (0 == opal_list_get_size(&desired)) {
+                OBJ_DESTRUCT(&desired);
+                if (orte_soft_locations) {
+                    goto process;
+                } else {
+                    /* move on to next app */
+                    continue;
+                }
+            }
+            /* cycle thru the procs for this app and attempt to map them
+             * to the desired nodes using a load-balancing algo
+             */
+            for (j=0; j < app->procs.size; j++) {
+                if (NULL == (proc = opal_pointer_array_get_item(&app->procs, j))) {
+                    continue;
+                }
+                if (ORTE_PROC_STATE_UNDEF != proc->state) {
+                    /* this proc has already been mapped or executed */
+                    opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+                                        "%s mca:rmaps:staged: proc %s has already been mapped",
+                                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                        ORTE_NAME_PRINT(&proc->name));
+                    continue;
+                }
+                /* flag that there is at least one proc still to
+                 * be executed
+                 */
+                work_to_do = true;
+                /* track number mapped */
+                jdata->num_mapped++;
+                /* find the lightest-loaded node on the desired list */
+                node = NULL;
+                load = ORTE_VPID_MAX;
+                for (item = opal_list_get_first(&desired);
+                     item != opal_list_get_end(&desired);
+                     item = opal_list_get_next(item)) {
+                    next = (orte_node_t*)item;
+                    if (next->num_procs < load) {
+                        node = next;
+                        load = next->num_procs;
+                    }
+                }
+                /* put the proc there */
+                proc->node = node;
+                proc->nodename = node->name;
+                /* the local rank is the number of procs
+                 * on this node from this job - we don't
+                 * directly track this number, so it must
+                 * be found by looping across the node->procs
+                 * array and counting it each time. For now,
+                 * since we don't use this value in this mode
+                 * of operation, just set it to something arbitrary
+                 */
+                proc->local_rank = node->num_procs;
+                /* the node rank is simply the number of procs
+                 * on the node at this time
+                 */
+                proc->node_rank = node->num_procs;
+                /* track number of procs on node and number of slots used */
+                node->num_procs++;
+                node->slots_inuse++;
+                opal_output_verbose(10, orte_rmaps_base.rmaps_output,
+                                    "%s Proc %s on node %s: slots %d inuse %d",
+                                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                    ORTE_NAME_PRINT(&proc->name), node->name,
+                                    (int)node->slots, (int)node->slots_inuse);
+                if (node->slots_inuse == node->slots) {
+                    opal_list_remove_item(&desired, &node->super);
+                    OBJ_RELEASE(node);
+                }
+                if (0 > (rc = opal_pointer_array_add(node->procs, (void*)proc))) {
+                    ORTE_ERROR_LOG(rc);
+                    OBJ_RELEASE(proc);
+                    return rc;
+                }
+                /* retain the proc struct so that we correctly track its release */
+                OBJ_RETAIN(proc);
+                proc->state = ORTE_PROC_STATE_INIT;
+                /* flag the proc as updated so it will be included
+                 * in the next pidmap message
+                 */
+                proc->updated =true;
+                /* add the node to the map, if needed */
+                if (!node->mapped) {
+                    if (ORTE_SUCCESS > (rc = opal_pointer_array_add(jdata->map->nodes, (void*)node))) {
+                        ORTE_ERROR_LOG(rc);
+                        return rc;
+                    }
+                    node->mapped = true;
+                    OBJ_RETAIN(node);  /* maintain accounting on object */
+                    jdata->map->num_nodes++;
+                }
+                if (0 == opal_list_get_size(&desired)) {
+                    /* nothing more we can do */
+                    break;
+                }
+            }
+            /* clear the list */
+            while (NULL != (item = opal_list_remove_first(&desired))) {
+                OBJ_RELEASE(item);
+            }
+            OBJ_DESTRUCT(&desired);
+        }
 
+    process:
         for (j=0; j < app->procs.size; j++) {
             if (NULL == (proc = opal_pointer_array_get_item(&app->procs, j))) {
                 continue;
@@ -222,6 +319,18 @@ static int staged_mapper(orte_job_t *jdata)
 				    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
 				    ORTE_NAME_PRINT(&proc->name));
                 continue;
+            }
+            /* find the lightest-loaded node on the node list */
+            node = NULL;
+            load = ORTE_VPID_MAX;
+            for (item = opal_list_get_first(&node_list);
+                 item != opal_list_get_end(&node_list);
+                 item = opal_list_get_next(item)) {
+                next = (orte_node_t*)item;
+                if (next->num_procs < load) {
+                    node = next;
+                    load = next->num_procs;
+                }
             }
             /* flag that there is at least one proc still to
              * be executed
@@ -288,13 +397,6 @@ static int staged_mapper(orte_job_t *jdata)
                 /* nothing more we can do */
                 break;
             }
-            /* move to the next node */
-            if (&node->super == opal_list_get_end(&node_list)) {
-                node = (orte_node_t*)opal_list_get_first(&node_list);
-            } else {
-                node = next;
-            }
-            next = (orte_node_t*)opal_list_get_next(&node->super);
         }
 	/* clear the list */
 	while (NULL != (item = opal_list_remove_first(&node_list))) {

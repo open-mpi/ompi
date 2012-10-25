@@ -42,6 +42,7 @@
 #include "orte/mca/routed/base/base.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/db/base/base.h"
+#include "orte/mca/dfs/base/base.h"
 #include "orte/mca/grpcomm/base/base.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/odls/odls_types.h"
@@ -250,6 +251,18 @@ int orte_ess_base_app_setup(void)
         goto error;
     }
 
+    /* open the distributed file system */
+    if (ORTE_SUCCESS != (ret = orte_dfs_base_open())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_dfs_base_open";
+        goto error;
+    }
+    if (ORTE_SUCCESS != (ret = orte_dfs_base_select())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_dfs_base_select";
+        goto error;
+    }
+
     /* if we are an ORTE app - and not an MPI app - then
      * we need to barrier here. MPI_Init has its own barrier,
      * so we don't need to do two of them. However, if we
@@ -286,7 +299,8 @@ error:
 }
 
 int orte_ess_base_app_finalize(void)
-{    
+{
+    orte_dfs_base_close();
     orte_cr_finalize();
     
 #if OPAL_ENABLE_FT_CR == 1
