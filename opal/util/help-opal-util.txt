@@ -47,3 +47,17 @@ Routing (CIDR) notation specifications. For example:
      172.16/12
      192.168
      169.254.0.0/16
+#
+[malformed-uri]
+Open MPI has detected a malformed URI:
+
+  URI:  %s
+
+Accepted values follow IETF RFC3986, e.g. file://192.168.1.1/over/there
+#
+[relative-path]
+When creating a URI, all files must be specified in absolute paths:
+
+  Value provided: %s
+
+Please update your application to provide the full path to the file.
