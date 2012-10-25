@@ -5,6 +5,7 @@
  */
 #include <stdio.h>
 #include <unistd.h>
+#include <fcntl.h>
 
 #include "opal/util/output.h"
 #include "opal/util/uri.h"
@@ -22,12 +23,21 @@ static bool active;
 static bool read_active;
 static int numread = 0;
 
+#define READ_SIZE 1000
+
 static void dfs_open_cbfunc(int fd, void *cbdata)
 {
     int *remote_fd = (int*)cbdata;
 
     opal_output(0, "GOT FD %d", fd);
     *remote_fd = fd;
+    active = false;
+
+}
+
+static void dfs_size_cbfunc(long size, void *cbdata)
+{
+    opal_output(0, "GOT FILE SIZE %ld", size);
     active = false;
 
 }
@@ -42,7 +52,7 @@ static void read_cbfunc(long status, uint8_t *buffer, void *cbdata)
     }
     numread += status;
 
-    if (status < 100) {
+    if (status < READ_SIZE) {
         read_active = false;
         opal_output(0, "EOF RECEIVED: read total of %d bytes", numread);
         active = false;
@@ -56,8 +66,7 @@ int main(int argc, char* argv[])
     int rc;
     int fd;
     char *uri, *host;
-    char *testname, *testhost;
-    uint8_t buffer[1000];
+    uint8_t buffer[READ_SIZE];
 
     /* user must provide a file to be read - the contents
      * of the file will be output to stdout
@@ -81,17 +90,15 @@ int main(int argc, char* argv[])
     if (NULL == (uri = opal_filename_to_uri(argv[1], host))) {
         return 1;
     }
-    fprintf(stderr, "Got uri %s\n", uri);
-    if (NULL == (testname = opal_filename_from_uri(uri, &testhost))) {
-        fprintf(stderr, "Error: failed to get filename from uri %s\n", uri);
-        return 1;
-    }
-    fprintf(stderr, "Got file %s host %s from uri %s\n",
-            testname, (NULL == testhost) ? "NULL" : testhost, uri);
 
     active = true;
     orte_dfs.open(uri, dfs_open_cbfunc, &fd);
+    while (active) {
+        opal_event_loop(orte_event_base, OPAL_EVLOOP_ONCE);
+    }
 
+    active = true;
+    orte_dfs.get_file_size(fd, dfs_size_cbfunc, NULL);
     while (active) {
         opal_event_loop(orte_event_base, OPAL_EVLOOP_ONCE);
     }
@@ -101,14 +108,14 @@ int main(int argc, char* argv[])
     rc = 0;
     numread = 0;
     while (read_active) {
-        fprintf(stderr, "reading next 100 bytes\n");
-        orte_dfs.read(fd, buffer, 100, read_cbfunc, NULL);
+        fprintf(stderr, "reading next %d bytes\n", READ_SIZE);
+        orte_dfs.read(fd, buffer, READ_SIZE, read_cbfunc, NULL);
         while (active) {
             opal_event_loop(orte_event_base, OPAL_EVLOOP_ONCE);
         }
         rc++;
         if (2 == rc) {
-            orte_dfs.seek(fd, 326);
+            orte_dfs.seek(fd, 326, SEEK_SET);
         }
         active = true;
     }

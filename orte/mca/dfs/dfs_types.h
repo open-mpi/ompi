@@ -20,10 +20,13 @@ typedef uint8_t orte_dfs_cmd_t;
 
 #define ORTE_DFS_OPEN_CMD   1
 #define ORTE_DFS_CLOSE_CMD  2
-#define ORTE_DFS_SEEK_CMD   3
-#define ORTE_DFS_READ_CMD   4
+#define ORTE_DFS_SIZE_CMD   3
+#define ORTE_DFS_SEEK_CMD   4
+#define ORTE_DFS_READ_CMD   5
 
 typedef void (*orte_dfs_open_callback_fn_t)(int fd, void *cbdata);
+
+typedef void (*orte_dfs_size_callback_fn_t)(long size, void *cbdata);
 
 typedef void (*orte_dfs_read_callback_fn_t)(long status,
                                             uint8_t *buffer,

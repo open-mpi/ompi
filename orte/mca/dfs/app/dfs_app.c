@@ -20,6 +20,7 @@
 #ifdef HAVE_FCNTL_H
 #include <fcntl.h>
 #endif
+#include <sys/stat.h>
 
 #include "opal/util/if.h"
 #include "opal/util/output.h"
@@ -47,7 +48,10 @@ static void dfs_open(char *uri,
                      orte_dfs_open_callback_fn_t cbfunc,
                      void *cbdata);
 static void dfs_close(int fd);
-static void dfs_seek(int fd, size_t offset);
+static void dfs_get_file_size(int fd,
+                              orte_dfs_size_callback_fn_t cbfunc,
+                              void *cbdata);
+static void dfs_seek(int fd, size_t offset, int whence);
 static void dfs_read(int fd, uint8_t *buffer,
                      long length,
                      orte_dfs_read_callback_fn_t cbfunc,
@@ -61,6 +65,7 @@ orte_dfs_base_module_t orte_dfs_app_module = {
     finalize,
     dfs_open,
     dfs_close,
+    dfs_get_file_size,
     dfs_seek,
     dfs_read
 };
@@ -79,7 +84,7 @@ static int init(void)
     OBJ_CONSTRUCT(&requests, opal_list_t);
     OBJ_CONSTRUCT(&active_files, opal_list_t);
     if (ORTE_SUCCESS != (rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
-                                                      ORTE_RML_TAG_DFS,
+                                                      ORTE_RML_TAG_DFS_DATA,
                                                       ORTE_RML_PERSISTENT,
                                                       recv_dfs,
                                                       NULL))) {
@@ -92,7 +97,7 @@ static int finalize(void)
 {
     opal_list_item_t *item;
 
-    orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_DFS);
+    orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_DFS_DATA);
     while (NULL != (item = opal_list_remove_first(&requests))) {
         OBJ_RELEASE(item);
     }
@@ -209,6 +214,48 @@ static void recv_dfs(int status, orte_process_name_t* sender,
         OBJ_RELEASE(dfs);
         break;
 
+    case ORTE_DFS_SIZE_CMD:
+        /* unpack the request id for this request */
+        cnt = 1;
+        if (OPAL_SUCCESS != (rc = opal_dss.unpack(buffer, &rid, &cnt, OPAL_UINT64))) {
+            ORTE_ERROR_LOG(rc);
+            return;
+        }
+        /* search our list of requests to find the matching one */
+        dfs = NULL;
+        for (item = opal_list_get_first(&requests);
+             item != opal_list_get_end(&requests);
+             item = opal_list_get_next(item)) {
+            dptr = (orte_dfs_request_t*)item;
+            if (dptr->id == rid) {
+                /* request was fulfilled, so remove it */
+                opal_list_remove_item(&requests, item);
+                dfs = dptr;
+                break;
+            }
+        }
+        if (NULL == dfs) {
+            opal_output_verbose(1, orte_dfs_base.output,
+                                "%s recvd size - no corresponding request found for local fd %d",
+                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), local_fd);
+            ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+            return;
+        }
+        /* get the size */
+        cnt = 1;
+        if (OPAL_SUCCESS != (rc = opal_dss.unpack(buffer, &i64, &cnt, OPAL_INT64))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_RELEASE(dfs);
+            return;
+        }
+        /* pass them back to the original caller */
+        if (NULL != dfs->size_cbfunc) {
+            dfs->size_cbfunc(i64, dfs->cbdata);
+        }
+        /* release the request */
+        OBJ_RELEASE(dfs);
+        break;
+
     case ORTE_DFS_READ_CMD:
         /* unpack the request id for this read */
         cnt = 1;
@@ -296,7 +343,7 @@ static void open_local_file(orte_dfs_request_t *dfs)
     trk = OBJ_NEW(orte_dfs_tracker_t);
     trk->requestor.jobid = ORTE_PROC_MY_NAME->jobid;
     trk->requestor.vpid = ORTE_PROC_MY_NAME->vpid;
-    trk->filename = strdup(dfs->uri);
+    trk->filename = strdup(filename);
     /* define the local fd */
     trk->local_fd = local_fd++;
     /* record the remote file descriptor */
@@ -433,7 +480,7 @@ static void process_opens(int fd, short args, void *cbdata)
                         filename);
     /* send it */
     if (0 > (rc = orte_rml.send_buffer_nb(&daemon, buffer,
-                                          ORTE_RML_TAG_DFS, 0,
+                                          ORTE_RML_TAG_DFS_CMD, 0,
                                           orte_rml_send_callback, NULL))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(buffer);
@@ -530,7 +577,7 @@ static void process_close(int fd, short args, void *cbdata)
                         trk->local_fd);
     /* send it */
     if (0 > (rc = orte_rml.send_buffer_nb(&trk->host_daemon, buffer,
-                                          ORTE_RML_TAG_DFS, 0,
+                                          ORTE_RML_TAG_DFS_CMD, 0,
                                           orte_rml_send_callback, NULL))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(buffer);
@@ -558,6 +605,130 @@ static void dfs_close(int fd)
     /* post it for processing */
     ORTE_DFS_POST_REQUEST(dfs, process_close);
 }
+
+static void process_sizes(int fd, short args, void *cbdata)
+{
+    orte_dfs_request_t *size_dfs = (orte_dfs_request_t*)cbdata;
+    orte_dfs_tracker_t *tptr, *trk;
+    opal_list_item_t *item;
+    opal_buffer_t *buffer;
+    int rc;
+    struct stat buf;
+
+    opal_output_verbose(1, orte_dfs_base.output,
+                        "%s processing get_size on fd %d",
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                        size_dfs->local_fd);
+
+    /* look in our local records for this fd */
+    trk = NULL;
+    for (item = opal_list_get_first(&active_files);
+         item != opal_list_get_end(&active_files);
+         item = opal_list_get_next(item)) {
+        tptr = (orte_dfs_tracker_t*)item;
+        if (tptr->local_fd == size_dfs->local_fd) {
+            trk = tptr;
+            break;
+        }
+    }
+    if (NULL == trk) {
+        ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+        OBJ_RELEASE(size_dfs);
+        return;
+    }
+
+    /* if the file is local, execute the seek on it - we
+     * stuck the "whence" value in the remote_fd
+     */
+    if (trk->host_daemon.vpid == ORTE_PROC_MY_DAEMON->vpid) {
+        /* stat the file and get its size */
+        if (0 > stat(trk->filename, &buf)) {
+            /* cannot stat file */
+            opal_output_verbose(1, orte_dfs_base.output,
+                                "%s could not stat %s",
+                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                trk->filename);
+            if (NULL != size_dfs->size_cbfunc) {
+                size_dfs->size_cbfunc(-1, size_dfs->cbdata);
+            }
+        } else {
+            if (NULL != size_dfs->size_cbfunc) {
+                size_dfs->size_cbfunc(buf.st_size, size_dfs->cbdata);
+            }
+        }
+        goto complete;
+    }
+    /* add this request to our local list so we can
+     * match it with the returned response when it comes
+     */
+    size_dfs->id = req_id++;
+    opal_list_append(&requests, &size_dfs->super);
+
+    /* setup a message for the daemon telling
+     * them what file we want to access
+     */
+    buffer = OBJ_NEW(opal_buffer_t);
+    if (OPAL_SUCCESS != (rc = opal_dss.pack(buffer, &size_dfs->cmd, 1, ORTE_DFS_CMD_T))) {
+        ORTE_ERROR_LOG(rc);
+        opal_list_remove_item(&requests, &size_dfs->super);
+        goto complete;
+    }
+    /* pass the request id */
+    if (OPAL_SUCCESS != (rc = opal_dss.pack(buffer, &size_dfs->id, 1, OPAL_UINT64))) {
+        ORTE_ERROR_LOG(rc);
+        opal_list_remove_item(&requests, &size_dfs->super);
+        goto complete;
+    }
+    if (OPAL_SUCCESS != (rc = opal_dss.pack(buffer, &trk->remote_fd, 1, OPAL_INT))) {
+        ORTE_ERROR_LOG(rc);
+        opal_list_remove_item(&requests, &size_dfs->super);
+        goto complete;
+    }
+
+    opal_output_verbose(1, orte_dfs_base.output,
+                        "%s sending get_size request to %s for fd %d",
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                        ORTE_NAME_PRINT(&trk->host_daemon),
+                        trk->local_fd);
+    /* send it */
+    if (0 > (rc = orte_rml.send_buffer_nb(&trk->host_daemon, buffer,
+                                          ORTE_RML_TAG_DFS_CMD, 0,
+                                          orte_rml_send_callback, NULL))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_RELEASE(buffer);
+        opal_list_remove_item(&requests, &size_dfs->super);
+        if (NULL != size_dfs->size_cbfunc) {
+            size_dfs->size_cbfunc(-1, size_dfs->cbdata);
+        }
+        goto complete;
+    }
+    /* leave the request there */
+    return;
+
+ complete:
+    OBJ_RELEASE(size_dfs);
+}
+
+static void dfs_get_file_size(int fd,
+                              orte_dfs_size_callback_fn_t cbfunc,
+                              void *cbdata)
+{
+    orte_dfs_request_t *dfs;
+
+    opal_output_verbose(1, orte_dfs_base.output,
+                        "%s get_size called on fd %d",
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), fd);
+
+    dfs = OBJ_NEW(orte_dfs_request_t);
+    dfs->cmd = ORTE_DFS_SIZE_CMD;
+    dfs->local_fd = fd;
+    dfs->size_cbfunc = cbfunc;
+    dfs->cbdata = cbdata;
+
+    /* post it for processing */
+    ORTE_DFS_POST_REQUEST(dfs, process_sizes);
+}
+
 
 static void process_seeks(int fd, short args, void *cbdata)
 {
@@ -590,9 +761,15 @@ static void process_seeks(int fd, short args, void *cbdata)
         return;
     }
 
-    /* if the file is local, execute the seek on it */
+    /* if the file is local, execute the seek on it - we
+     * stuck the "whence" value in the remote_fd
+     */
     if (trk->host_daemon.vpid == ORTE_PROC_MY_DAEMON->vpid) {
-        lseek(trk->remote_fd, seek_dfs->read_length, SEEK_SET);
+        opal_output_verbose(1, orte_dfs_base.output,
+                            "%s local seek on fd %d",
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                            seek_dfs->local_fd);
+        lseek(trk->remote_fd, seek_dfs->read_length, seek_dfs->remote_fd);
         goto complete;
     }
 
@@ -613,7 +790,11 @@ static void process_seeks(int fd, short args, void *cbdata)
         ORTE_ERROR_LOG(rc);
         goto complete;
     }
-    
+    if (OPAL_SUCCESS != (rc = opal_dss.pack(buffer, &seek_dfs->remote_fd, 1, OPAL_INT))) {
+        ORTE_ERROR_LOG(rc);
+        goto complete;
+    }
+
     opal_output_verbose(1, orte_dfs_base.output,
                         "%s sending seek file request to %s for fd %d",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
@@ -621,7 +802,7 @@ static void process_seeks(int fd, short args, void *cbdata)
                         trk->local_fd);
     /* send it */
     if (0 > (rc = orte_rml.send_buffer_nb(&trk->host_daemon, buffer,
-                                          ORTE_RML_TAG_DFS, 0,
+                                          ORTE_RML_TAG_DFS_CMD, 0,
                                           orte_rml_send_callback, NULL))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(buffer);
@@ -633,7 +814,7 @@ static void process_seeks(int fd, short args, void *cbdata)
 }
 
 
-static void dfs_seek(int fd, size_t offset)
+static void dfs_seek(int fd, size_t offset, int whence)
 {
     orte_dfs_request_t *dfs;
 
@@ -645,6 +826,7 @@ static void dfs_seek(int fd, size_t offset)
     dfs->cmd = ORTE_DFS_SEEK_CMD;
     dfs->local_fd = fd;
     dfs->read_length = offset;
+    dfs->remote_fd = whence;
 
     /* post it for processing */
     ORTE_DFS_POST_REQUEST(dfs, process_seeks);
@@ -722,7 +904,7 @@ static void process_reads(int fd, short args, void *cbdata)
                         trk->local_fd);
     /* send it */
     if (0 > (rc = orte_rml.send_buffer_nb(&trk->host_daemon, buffer,
-                                          ORTE_RML_TAG_DFS, 0,
+                                          ORTE_RML_TAG_DFS_CMD, 0,
                                           orte_rml_send_callback, NULL))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(buffer);
