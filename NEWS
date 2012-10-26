@@ -101,6 +101,7 @@ Trunk (not on release branches yet)
   in assigning process locations and bindings
 - Added the -novm option to preserve the prior launch behavior
 - Added new MCA parameter to provide protection against IO forwarding backlog
+- Added MPI Java bindings
 
 1.6.3
 -----
