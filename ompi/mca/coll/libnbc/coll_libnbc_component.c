@@ -41,7 +41,7 @@ static int libnbc_register(void);
 static int libnbc_init_query(bool, bool);
 static mca_coll_base_module_t *libnbc_comm_query(struct ompi_communicator_t *, int *);
 static int libnbc_module_enable(mca_coll_base_module_t *, struct ompi_communicator_t *);
-static int libnbc_progress(void);
+
 
 /*
  * Instantiate the public struct with all of our public information
@@ -95,6 +95,8 @@ libnbc_open(void)
     if (OMPI_SUCCESS != ret) return ret;
 
     OBJ_CONSTRUCT(&mca_coll_libnbc_component.active_requests, opal_list_t);
+    /* note: active comms is the number of communicators who have had
+       a non-blocking collective started */
     mca_coll_libnbc_component.active_comms = 0;
 
     opal_atomic_init(&mca_coll_libnbc_component.progress_lock, OPAL_ATOMIC_UNLOCKED);
@@ -106,7 +108,7 @@ static int
 libnbc_close(void)
 {
     if (0 != mca_coll_libnbc_component.active_comms) {
-        opal_progress_unregister(libnbc_progress);
+        opal_progress_unregister(ompi_coll_libnbc_progress);
     }
 
     OBJ_DESTRUCT(&mca_coll_libnbc_component.requests);
@@ -219,15 +221,12 @@ libnbc_module_enable(mca_coll_base_module_t *module,
                      struct ompi_communicator_t *comm)
 {
     /* All done */
-    if (0 == mca_coll_libnbc_component.active_comms++) {
-        opal_progress_register(libnbc_progress);
-    }
     return OMPI_SUCCESS;
 }
 
 
-static int
-libnbc_progress(void)
+int
+ompi_coll_libnbc_progress(void)
 {
     opal_list_item_t *item;
 
@@ -259,14 +258,23 @@ libnbc_progress(void)
 static void
 libnbc_module_construct(ompi_coll_libnbc_module_t *module)
 {
+    OBJ_CONSTRUCT(&module->mutex, opal_mutex_t);
+    module->comm_registered = false;
 }
 
 
 static void
 libnbc_module_destruct(ompi_coll_libnbc_module_t *module)
 {
-    if (0 == --mca_coll_libnbc_component.active_comms) {
-        opal_progress_unregister(libnbc_progress);
+    OBJ_DESTRUCT(&module->mutex);
+
+    /* if we ever were used for a collective op, do the progress cleanup. */
+    if (true == module->comm_registered) {
+        uint64_t tmp = 
+            OPAL_THREAD_ADD32(&mca_coll_libnbc_component.active_comms, -1);
+        if (0 == tmp) {
+            opal_progress_unregister(ompi_coll_libnbc_progress);
+        }
     }
 }
 
