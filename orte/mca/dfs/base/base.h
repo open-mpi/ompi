@@ -52,6 +52,7 @@ typedef struct {
     char *filename;  /* for debug purposes */
     int local_fd;
     int remote_fd;
+    size_t location;
 } orte_dfs_tracker_t;
 OBJ_CLASS_DECLARATION(orte_dfs_tracker_t);
 
@@ -66,9 +67,11 @@ typedef struct {
     int remote_fd;
     uint8_t *read_buffer;
     long read_length;
-    orte_dfs_open_callback_fn_t open_cbfunc;
-    orte_dfs_size_callback_fn_t size_cbfunc;
-    orte_dfs_read_callback_fn_t read_cbfunc;
+    orte_dfs_open_callback_fn_t  open_cbfunc;
+    orte_dfs_close_callback_fn_t close_cbfunc;
+    orte_dfs_size_callback_fn_t  size_cbfunc;
+    orte_dfs_seek_callback_fn_t  seek_cbfunc;
+    orte_dfs_read_callback_fn_t  read_cbfunc;
     void *cbdata;
 } orte_dfs_request_t;
 OBJ_CLASS_DECLARATION(orte_dfs_request_t);

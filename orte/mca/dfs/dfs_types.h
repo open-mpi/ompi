@@ -26,7 +26,11 @@ typedef uint8_t orte_dfs_cmd_t;
 
 typedef void (*orte_dfs_open_callback_fn_t)(int fd, void *cbdata);
 
+typedef void (*orte_dfs_close_callback_fn_t)(int fd, void *cbdata);
+
 typedef void (*orte_dfs_size_callback_fn_t)(long size, void *cbdata);
+
+typedef void (*orte_dfs_seek_callback_fn_t)(long offset, void *cbdata);
 
 typedef void (*orte_dfs_read_callback_fn_t)(long status,
                                             uint8_t *buffer,
