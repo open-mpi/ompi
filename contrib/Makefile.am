@@ -90,50 +90,6 @@ EXTRA_DIST = \
         platform/lanl/tlcc2/optimized-panasas.conf \
 	platform/snl/portals4-m5 \
 	platform/snl/portals4-orte \
-        platform/win32/CMakeModules/check_bool.cmake \
-        platform/win32/CMakeModules/check_c_inline.cmake \
-        platform/win32/CMakeModules/check_c_type_exists.cmake \
-        platform/win32/CMakeModules/check_mca_subdirs.cmake \
-        platform/win32/CMakeModules/ompi_base_checks.cmake \
-        platform/win32/CMakeModules/ompi_define.cmake \
-        platform/win32/CMakeModules/ompi_ext_config.cmake \
-        platform/win32/CMakeModules/find_ccp.cmake \
-        platform/win32/CMakeModules/find_flex.cmake \
-        platform/win32/CMakeModules/find_libltdl.cmake \
-        platform/win32/CMakeModules/find_ofed_sdk.cmake \
-        platform/win32/CMakeModules/find_winverbs.cmake \
-        platform/win32/CMakeModules/generate_version_file.cmake \
-        platform/win32/CMakeModules/get_c_alignment.cmake \
-        platform/win32/CMakeModules/list_subdirs.cmake \
-        platform/win32/CMakeModules/ompi_check_Microsoft.cmake \
-        platform/win32/CMakeModules/ompi_check_MinGW.cmake \
-        platform/win32/CMakeModules/ompi_configure.cmake \
-        platform/win32/CMakeModules/ompi_find_type.cmake \
-        platform/win32/CMakeModules/opal_event_config.cmake \
-        platform/win32/CMakeModules/opal_get_version.cmake \
-        platform/win32/CMakeModules/opal_functions.cmake \
-        platform/win32/ConfigFiles/revision.in \
-        platform/win32/CMakeModules/fortran_get_value_true.cmake \
-        platform/win32/CMakeModules/fortran_check.cmake \
-        platform/win32/CMakeModules/fortran_get_alignment.cmake \
-        platform/win32/CMakeModules/fortran_check_type.cmake \
-        platform/win32/CMakeModules/fortran_find_ext_symbol_convention.cmake \
-        platform/win32/CMakeModules/fortran_get_fortran_handle_max.cmake \
-        platform/win32/CMakeModules/fortran_get_sizeof.cmake \
-        platform/win32/CMakeModules/setup_fortran.cmake \
-        platform/win32/CMakeModules/fortran_check_real16_c_equiv.cmake \
-        platform/win32/include/hwloc/autogen/config.h \
-        platform/win32/include/hwloc/bitmap.h \
-        platform/win32/include/hwloc/cpuset.h \
-        platform/win32/include/hwloc/cuda.h \
-        platform/win32/include/hwloc/cudart.h \
-        platform/win32/include/hwloc/glibc-sched.h \
-        platform/win32/include/hwloc/helper.h \
-        platform/win32/include/hwloc/linux-libnuma.h \
-        platform/win32/include/hwloc/linux.h \
-        platform/win32/include/hwloc/myriexpress.h \
-        platform/win32/include/hwloc/openfabrics-verbs.h \
-        platform/win32/include/hwloc/rename.h \
 	platform/cisco/macosx-dynamic \
 	platform/cisco/macosx-dynamic.conf \
 	platform/cisco/linux \
