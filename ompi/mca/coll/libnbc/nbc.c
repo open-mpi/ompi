@@ -521,7 +521,8 @@ error:
 
 int NBC_Init_handle(struct ompi_communicator_t *comm, ompi_coll_libnbc_request_t **request, ompi_coll_libnbc_module_t *comminfo)
 {
-  int res;
+  int res, tmp_tag;
+  bool need_register = false;
   ompi_coll_libnbc_request_t *handle;
 
   OMPI_COLL_LIBNBC_REQUEST_ALLOC(comm, handle, res);
@@ -538,18 +539,32 @@ int NBC_Init_handle(struct ompi_communicator_t *comm, ompi_coll_libnbc_request_t
 
   /******************** Do the tag and shadow comm administration ...  ***************/
 
-  /* we found it */
-  comminfo->tag--;
+  OPAL_THREAD_LOCK(&comminfo->mutex);
+  tmp_tag = comminfo->tag--;
+  if (tmp_tag == (-1 * mca_pml.pml_max_tag)) {
+      tmp_tag = comminfo->tag = MCA_COLL_BASE_TAG_NONBLOCKING_BASE;
+      NBC_DEBUG(2,"resetting tags ...\n"); 
+  }
+
+  if (true != comminfo->comm_registered) {
+      comminfo->comm_registered = true;
+      need_register = true;
+  }
+  OPAL_THREAD_UNLOCK(&comminfo->mutex);
+
   handle->tag=comminfo->tag;
+
+  /* register progress */
+  if (need_register) {
+      uint32_t tmp = 
+          OPAL_THREAD_ADD32(&mca_coll_libnbc_component.active_comms, 1);
+      if (tmp == 1) {
+          opal_progress_register(ompi_coll_libnbc_progress);
+      }
+  }
+
   handle->comm=comm;
   /*printf("got comminfo: %lu tag: %i\n", comminfo, comminfo->tag);*/
-
-  /* reset counter ... */ 
-  if(handle->tag == -32767) {
-    handle->tag=1;
-    comminfo->tag=1;
-    NBC_DEBUG(2,"resetting tags ...\n"); 
-  }
   
   /******************** end of tag and shadow comm administration ...  ***************/
   handle->comminfo = comminfo;

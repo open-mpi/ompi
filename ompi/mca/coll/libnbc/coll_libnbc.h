@@ -72,6 +72,8 @@ OMPI_MODULE_DECLSPEC extern ompi_coll_libnbc_component_t mca_coll_libnbc_compone
 
 struct ompi_coll_libnbc_module_t {
     mca_coll_base_module_t super;
+    opal_mutex_t mutex;
+    bool comm_registered;
     int tag;
 #ifdef NBC_CACHE_SCHEDULE
   void *NBC_Dict[NBC_NUM_COLL]; /* this should point to a struct
@@ -128,6 +130,8 @@ typedef ompi_coll_libnbc_request_t NBC_Handle;
         OMPI_FREE_LIST_RETURN(&mca_coll_libnbc_component.requests,      \
                               (ompi_free_list_item_t*) req);            \
     } while (0)
+
+int ompi_coll_libnbc_progress(void);
 
 int NBC_Init_comm(MPI_Comm comm, ompi_coll_libnbc_module_t *module);
 int NBC_Progress(NBC_Handle *handle);
