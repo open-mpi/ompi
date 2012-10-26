@@ -7,8 +7,6 @@
 # $HEADER$
 #
 
-EXTRA_DIST = .windows
-
 sources = \
         dfs_orted.h \
         dfs_orted_component.c \
