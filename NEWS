@@ -59,6 +59,7 @@ included in the vX.Y.Z section and be denoted as:
   - Matched probe
   - MPI_TYPE_CREATE_HINDEXED_BLOCK
   - Non-blocking collectives
+  - MPI_INFO_ENV support
 - Enabled compile-time warning of deprecated MPI functions by default
   (in supported compilers).
 - Revamped Fortran MPI bindings (see the README for details):
@@ -67,12 +68,25 @@ included in the vX.Y.Z section and be denoted as:
   - Better "use mpi" support (for compilers that support it)
   - Removed incorrect MPI_SCATTERV interface from "mpi" module that was
     added in the 1.5.x series for ABI reasons.
-- Modified paffinity system to provide warning when bindings result in
+- Modified process affinity system to provide warning when bindings result in
   being "bound to all", which is equivalent to "not bound"
 - Removed maffinity, paffinity, and carto frameworks (and associated
   MCA params).
 - Added support for the DMTCP checkpoint/restart system.
 - Revamped autogen / build system.
+- Add new sensor framework to ORTE that includes modules for detecting
+  stalled applications and processes that consume too much memory.
+- Added new state machine framework to ORTE that converts ORTE into an
+  event-driven state machine using the event library
+- Added a new MCA parameter (ess_base_stream_buffering) that allows the user
+  to override the system default for buffering of stdout/stderr streams
+  (via setvbuf). Parameter is not visible via ompi_info
+- Revamped the launch system to allow consideration of node hardware
+  in assigning process locations and bindings
+- Added the -novm option to preserve the prior launch behavior
+- Revamped the process mapping system to utilize node hardware by adding
+  new map-by, rank-by, and bind-to cmd line options
+- Added new MCA parameter to provide protection against IO forwarding backlog
 
 
 1.6.3
