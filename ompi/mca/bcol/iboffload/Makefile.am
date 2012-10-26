@@ -29,9 +29,10 @@ sources = \
         bcol_iboffload_barrier.c \
         bcol_iboffload_bcast.h \
         bcol_iboffload_bcast.c \
-       bcol_iboffload_collreq.h \
+        bcol_iboffload_collreq.h \
         bcol_iboffload_collreq.c \
         bcol_iboffload_qp_info.c \
+        bcol_iboffload_qp_info.h 
         bcol_iboffload_fanin.c \
         bcol_iboffload_fanout.c 
 
