@@ -60,11 +60,11 @@ typedef void (*orte_dfs_base_module_open_fn_t)(char *uri,
 
 /* Close a file
  *
- * Closes and invalidates the file descriptor. Note that this doesn't
- * imply closure of the remote file descriptor as other processes
- * may also be accessing it
+ * Closes and invalidates the file descriptor
  */
-typedef void (*orte_dfs_base_module_close_fn_t)(int fd);
+typedef void (*orte_dfs_base_module_close_fn_t)(int fd,
+                                                orte_dfs_close_callback_fn_t cbfunc,
+                                                void *cbdata);
 
 /* Get the size of a file
  *
@@ -79,8 +79,15 @@ typedef void (*orte_dfs_base_module_get_file_size_fn_t)(int fd,
  * relative to the location specified by whence:
  *     SEEK_SET => from beginning of file
  *     SEEK_CUR => from current location
+ *
+ * The callback will return the offset, or a negative value if
+ * the requested seek would take the pointer past the end of the
+ * file. This is contrary to standard lseek behavior, but is consistent
+ * with the read-only nature of this framework
  */
-typedef void (*orte_dfs_base_module_seek_fn_t)(int fd, size_t offset, int whence);
+typedef void (*orte_dfs_base_module_seek_fn_t)(int fd, long offset, int whence,
+                                               orte_dfs_seek_callback_fn_t cbfunc,
+                                               void *cbdata);
 
 /* Read bytes from a possibly remote file
  *

@@ -81,6 +81,7 @@ static void trk_con(orte_dfs_tracker_t *trk)
     trk->host_daemon.jobid = ORTE_JOBID_INVALID;
     trk->host_daemon.vpid = ORTE_VPID_INVALID;
     trk->filename = NULL;
+    trk->location = 0;
 }
 static void trk_des(orte_dfs_tracker_t *trk)
 {
@@ -100,6 +101,9 @@ static void req_const(orte_dfs_request_t *dfs)
     dfs->read_length = -1;
     dfs->read_buffer = NULL;
     dfs->open_cbfunc = NULL;
+    dfs->close_cbfunc = NULL;
+    dfs->size_cbfunc = NULL;
+    dfs->seek_cbfunc = NULL;
     dfs->read_cbfunc = NULL;
     dfs->cbdata = NULL;
 }

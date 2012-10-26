@@ -160,6 +160,7 @@ int orte_init(int* pargc, char*** pargv, orte_proc_type_t flags)
          */
         opal_event_set(orte_event_base, &orte_finalize_event, -1, OPAL_EV_WRITE, ignore_callback, NULL);
         opal_event_set_priority(&orte_finalize_event, ORTE_ERROR_PRI);
+#if 0
         {
             /* seems strange, but wake us up once a second just so we can check for new events */
             opal_event_t *ev;
@@ -170,6 +171,7 @@ int orte_init(int* pargc, char*** pargv, orte_proc_type_t flags)
             opal_event_set_priority(ev, ORTE_INFO_PRI);
             opal_event_evtimer_add(ev, &tv);
         }
+#endif
         /* construct the thread object */
         OBJ_CONSTRUCT(&orte_progress_thread, opal_thread_t);
         /* fork off a thread to progress it */

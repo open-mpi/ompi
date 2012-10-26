@@ -16,6 +16,7 @@
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/runtime/runtime.h"
+#include "orte/runtime/orte_wait.h"
 
 #include "orte/mca/dfs/dfs.h"
 
@@ -23,7 +24,8 @@ static bool active;
 static bool read_active;
 static int numread = 0;
 
-#define READ_SIZE 1000
+#define READ_SIZE 500
+#define OFFSET_VALUE   313
 
 static void dfs_open_cbfunc(int fd, void *cbdata)
 {
@@ -35,10 +37,26 @@ static void dfs_open_cbfunc(int fd, void *cbdata)
 
 }
 
+static void dfs_close_cbfunc(int fd, void *cbdata)
+{
+    opal_output(0, "CLOSE CONFIRMED");
+    active = false;
+}
+
 static void dfs_size_cbfunc(long size, void *cbdata)
 {
     opal_output(0, "GOT FILE SIZE %ld", size);
     active = false;
+
+}
+
+static void dfs_seek_cbfunc(long offset, void *cbdata)
+{
+    opal_output(0, "GOT FILE OFFSET %ld vs %d", offset, OFFSET_VALUE);
+    active = false;
+    if (offset != OFFSET_VALUE) {
+        exit(1);
+    }
 
 }
 
@@ -93,35 +111,39 @@ int main(int argc, char* argv[])
 
     active = true;
     orte_dfs.open(uri, dfs_open_cbfunc, &fd);
-    while (active) {
-        opal_event_loop(orte_event_base, OPAL_EVLOOP_ONCE);
-    }
+    ORTE_WAIT_FOR_COMPLETION(active);
 
     active = true;
     orte_dfs.get_file_size(fd, dfs_size_cbfunc, NULL);
-    while (active) {
-        opal_event_loop(orte_event_base, OPAL_EVLOOP_ONCE);
-    }
+    ORTE_WAIT_FOR_COMPLETION(active);
 
     active = true;
     read_active = true;
     rc = 0;
     numread = 0;
     while (read_active) {
-        fprintf(stderr, "reading next %d bytes\n", READ_SIZE);
+        opal_output(0, "reading next %d bytes\n", READ_SIZE);
         orte_dfs.read(fd, buffer, READ_SIZE, read_cbfunc, NULL);
-        while (active) {
-            opal_event_loop(orte_event_base, OPAL_EVLOOP_ONCE);
-        }
+        ORTE_WAIT_FOR_COMPLETION(active);
         rc++;
         if (2 == rc) {
-            orte_dfs.seek(fd, 326, SEEK_SET);
+            active = true;
+            opal_output(0, "execute absolute seek of %d bytes\n", OFFSET_VALUE);
+            orte_dfs.seek(fd, OFFSET_VALUE, SEEK_SET, dfs_seek_cbfunc, NULL);
+            ORTE_WAIT_FOR_COMPLETION(active);
+        }
+        if (5 == rc) {
+            active = true;
+            opal_output(0, "execute relative seek of %d bytes\n", OFFSET_VALUE);
+            orte_dfs.seek(fd, OFFSET_VALUE, SEEK_CUR, dfs_seek_cbfunc, NULL);
+            ORTE_WAIT_FOR_COMPLETION(active);
         }
         active = true;
     }
 
-    orte_dfs.close(fd);
-    opal_event_loop(orte_event_base, OPAL_EVLOOP_ONCE);
+    active= true;
+    orte_dfs.close(fd, dfs_close_cbfunc, NULL);
+    ORTE_WAIT_FOR_COMPLETION(active);
 
     orte_finalize();
     return 0;
