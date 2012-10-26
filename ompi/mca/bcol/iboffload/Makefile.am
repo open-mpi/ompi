@@ -15,6 +15,7 @@ not_used_yet =
 
 sources = \
         bcol_iboffload.h \
+        bcol_iboffload_device.h \
         bcol_iboffload_module.c \
         bcol_iboffload_mca.h \
         bcol_iboffload_mca.c \
@@ -33,6 +34,7 @@ sources = \
         bcol_iboffload_collreq.h \
         bcol_iboffload_collreq.c \
         bcol_iboffload_qp_info.c \
+        bcol_iboffload_qp_info.h \
         bcol_iboffload_fanin.c \
         bcol_iboffload_fanout.c 
 
