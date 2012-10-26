@@ -62,6 +62,10 @@ Trunk (not on release branches yet)
 - Added staged state machine to support sequential work flows
 - Added distributed file system support for accessing files across
   nodes that do not have networked file systems
+- Extended filem framework to support scalable pre-positioning of
+  files for use by applications, adding new "raw" component that
+  transmits files across the daemon network
+
 
 1.7
 ---
