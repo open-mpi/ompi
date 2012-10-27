@@ -37,6 +37,7 @@
 #include "ompi/mca/pml/pml.h"
 #include "ompi/peruse/peruse-internal.h"
 #include "ompi/memchecker.h"
+#include "ompi/memchecker_rw_check.h"
 
 #include "pml_ob1.h"
 #include "pml_ob1_comm.h"
@@ -209,6 +210,7 @@ void mca_pml_ob1_recv_frag_callback_match(mca_btl_base_module_t* btl,
                                        match->req_recv.req_base.req_addr,
                                        match->req_recv.req_base.req_count,
                                        match->req_recv.req_base.req_datatype);
+                       memchecker_rw_disable_check();
                        );
             
             iov[0].iov_len = bytes_received;
@@ -233,6 +235,7 @@ void mca_pml_ob1_recv_frag_callback_match(mca_btl_base_module_t* btl,
                                        match->req_recv.req_base.req_addr,
                                        match->req_recv.req_base.req_count,
                                        match->req_recv.req_base.req_datatype);
+                       memchecker_rw_enable_check();
                        );
         }
         

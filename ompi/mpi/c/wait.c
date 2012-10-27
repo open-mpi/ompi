@@ -25,6 +25,7 @@
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/request/request.h"
 #include "ompi/memchecker.h"
+#include "ompi/memchecker_rw_check.h"
 
 #if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Wait = PMPI_Wait
@@ -60,6 +61,7 @@ int MPI_Wait(MPI_Request *request, MPI_Status *status)
              */
             MEMCHECKER(
                 opal_memchecker_base_mem_undefined(&status->MPI_ERROR, sizeof(int));
+                memchecker_check_phase(1);
             );
         }
         return MPI_SUCCESS;
@@ -73,13 +75,15 @@ int MPI_Wait(MPI_Request *request, MPI_Status *status)
          */
         MEMCHECKER(
             opal_memchecker_base_mem_undefined(&status->MPI_ERROR, sizeof(int));
+            memchecker_check_phase(1);
         );
         OPAL_CR_EXIT_LIBRARY();
         return MPI_SUCCESS;
     }
 
     MEMCHECKER(
-        opal_memchecker_base_mem_undefined(&status->MPI_ERROR, sizeof(int));        
+        opal_memchecker_base_mem_undefined(&status->MPI_ERROR, sizeof(int));
+        memchecker_check_phase(1);
     );
     OPAL_CR_EXIT_LIBRARY();
     return ompi_errhandler_request_invoke(1, request, FUNC_NAME);

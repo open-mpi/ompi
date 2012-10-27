@@ -24,6 +24,7 @@
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/datatype/ompi_datatype.h"
 #include "ompi/memchecker.h"
+#include "ompi/memchecker_rw_check.h"
 
 #if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Bcast = PMPI_Bcast
@@ -105,6 +106,10 @@ int MPI_Bcast(void *buffer, int count, MPI_Datatype datatype,
 
     OPAL_CR_ENTER_LIBRARY();
 
+    MEMCHECKER (
+        memchecker_check_phase(1);
+        memchecker_reg_mem_rw_check(buffer, count, datatype, MEMCHECKER_WATCH_WRITE);
+    );
     /* Invoke the coll component to perform the back-end operation */
 
     err = comm->c_coll.coll_bcast(buffer, count, datatype, root, comm,

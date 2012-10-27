@@ -43,10 +43,14 @@ static int valgrind_module_mem_defined_if_addressable(void * p, size_t len);
 static int valgrind_module_create_block(void * p, size_t len, char * description);
 static int valgrind_module_discard_block(void * p); /* Here, we need to do some mapping for valgrind */
 static int valgrind_module_leakcheck(void);
-#if 0
 static int valgrind_module_get_vbits(void * p, char * vbits, size_t len);
 static int valgrind_module_set_vbits(void * p, char * vbits, size_t len);
-#endif
+static int valgrind_module_reg_mem_watch(void * p, size_t len, int op, void *cb, void *info);
+static int valgrind_module_unreg_mem_watch(void * p, size_t len);
+static int valgrind_module_unreg_all_mem_watch();
+static int valgrind_module_search_mem_index(void * p, size_t len, size_t *index);
+static int valgrind_module_mem_watch_count();
+static int valgrind_module_print_callstack();
 
 /*
  * Valgrind memchecker module
@@ -65,7 +69,15 @@ static const opal_memchecker_base_module_1_0_0_t loc_module = {
     valgrind_module_mem_defined_if_addressable,
     valgrind_module_create_block,
     valgrind_module_discard_block,
-    valgrind_module_leakcheck
+    valgrind_module_leakcheck,
+    valgrind_module_get_vbits,
+    valgrind_module_set_vbits,
+    valgrind_module_reg_mem_watch,
+    valgrind_module_unreg_mem_watch,
+    valgrind_module_unreg_all_mem_watch,
+    valgrind_module_search_mem_index,
+    valgrind_module_mem_watch_count,
+    valgrind_module_print_callstack
 };
 
 
@@ -185,7 +197,6 @@ static int valgrind_module_leakcheck(void)
 }
 
 
-#if 0
 static int valgrind_module_get_vbits(void * p, char * vbits, size_t len)
 {
     if (len > 0) {
@@ -204,5 +215,45 @@ static int valgrind_module_set_vbits(void * p, char * vbits, size_t len)
 
     return OPAL_SUCCESS;
 }
-#endif
 
+
+static int valgrind_module_reg_mem_watch(void * p, size_t len, int op, void *cb, void *info)
+{
+    /*if (len > 0) {
+        return VALGRIND_REG_MEM_WATCH(p, len, op, cb, info);
+    }*/
+
+    return OPAL_SUCCESS;
+}
+
+static int valgrind_module_unreg_mem_watch(void * p, size_t len)
+{
+    /*if (len > 0) {
+        return VALGRIND_UNREG_MEM_WATCH(p, len);
+    }*/
+
+    return OPAL_SUCCESS;
+}
+
+static int valgrind_module_unreg_all_mem_watch()
+{
+/*     return VALGRIND_UNREG_USER_ALL_MEM_WATCH(); */
+    return OPAL_SUCCESS;
+}
+
+static int valgrind_module_search_mem_index(void * p, size_t len, size_t *index)
+{
+    return OPAL_SUCCESS;
+}
+
+
+static int valgrind_module_mem_watch_count()
+{
+    return OPAL_SUCCESS;
+}
+
+
+static int valgrind_module_print_callstack()
+{
+    return OPAL_SUCCESS;
+}
