@@ -1,5 +1,3 @@
-/* -*- Mode: C; c-basic-offset:4 ; -*- */
-
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
