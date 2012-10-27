@@ -1,3 +1,5 @@
+/* -*- Mode: C; c-basic-offset:4 ; -*- */
+
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -28,6 +30,7 @@
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/request/request.h"
 #include "ompi/memchecker.h"
+#include "ompi/memchecker_rw_check.h"
 
 #if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Waitsome = PMPI_Waitsome
@@ -80,6 +83,10 @@ int MPI_Waitsome(int incount, MPI_Request requests[],
 
     if (OMPI_SUCCESS == ompi_request_wait_some( incount, requests, 
                                                 outcount, indices, statuses )) {
+        MEMCHECKER(
+            memchecker_check_phase(1);
+        );
+
         OPAL_CR_EXIT_LIBRARY();
         return MPI_SUCCESS;
     }
@@ -89,6 +96,10 @@ int MPI_Waitsome(int incount, MPI_Request requests[],
         OPAL_CR_EXIT_LIBRARY();
         return MPI_ERR_IN_STATUS;
     }
+
+    MEMCHECKER(
+        memchecker_check_phase(1);
+    );
 
     OPAL_CR_EXIT_LIBRARY();
     return MPI_SUCCESS;

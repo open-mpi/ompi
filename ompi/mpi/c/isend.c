@@ -26,6 +26,7 @@
 #include "ompi/mca/pml/pml.h"
 #include "ompi/request/request.h"
 #include "ompi/memchecker.h"
+#include "ompi/memchecker_rw_check.h"
 
 #if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Isend = PMPI_Isend
@@ -80,6 +81,8 @@ int MPI_Isend(void *buf, int count, MPI_Datatype type, int dest,
 
     MEMCHECKER (
         memchecker_call(&opal_memchecker_base_mem_noaccess, buf, count, type);
+        memchecker_check_phase(0);
+        memchecker_reg_mem_rw_check(buf, count, type, MEMCHECKER_WATCH_WRITE);
     );
     rc = MCA_PML_CALL(isend(buf,count,type,dest,tag,MCA_PML_BASE_SEND_STANDARD,comm,request));
     OMPI_ERRHANDLER_RETURN(rc, comm, rc, FUNC_NAME);
