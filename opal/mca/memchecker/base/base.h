@@ -15,21 +15,12 @@
 #include "opal_config.h"
 
 #include "opal/mca/memchecker/memchecker.h"
-#include "ompi/datatype/ompi_datatype.h"
 
 /*
  * Global functions for MCA overall memchecker open and close
  */
 
 BEGIN_C_DECLS
-
-OPAL_DECLSPEC extern memchecker_rw_check_t *memchecker_rw_check;
-
-OPAL_DECLSPEC extern size_t memchecker_num_mem;
-
-OPAL_DECLSPEC extern bool memchecker_enable_check;
-
-OPAL_DECLSPEC extern int memchecker_phase;
 
 /**
  * Initialize the memchecker MCA framework
@@ -296,98 +287,7 @@ OPAL_DECLSPEC int opal_memchecker_base_set_vbits(void * p, char * vbits, size_t 
 #if OMPI_WANT_MEMCHECKER == 0
 #define opal_memchecker_base_set_vbits(p, vbits, len)
 #endif
-
-/**
- * Register memory watch
- *
- * @param p    Pointer to the memory region
- * @param len  Length of the memory region
- * @param op   type of operation under watched
- * @param cb   callback function pointer
- * @param info information returned from cb
- *
- * @retval OPAL_SUCCESS upon success.
- *
- * This function calls the selected memchecker, to register
- * the memory region for specified operation.
- */
-OPAL_DECLSPEC int opal_memchecker_base_reg_mem_watch(void * p, size_t len, int op, void *cb, void *info);
-#if OMPI_WANT_MEMCHECKER == 0
-#define opal_memchecker_base_reg_mem_watch(p, len, op, cb, info) 0
-#endif
-
-/**
- * Unregister memory watch
- *
- * @param p    Pointer to the memory region
- * @param len  Length of the memory region
- * @param cb   callback function pointer
- *
- * @retval OPAL_SUCCESS upon success.
- *
- * This function calls the selected memchecker, to unregister
- * the memory watch.
- */
-OPAL_DECLSPEC int opal_memchecker_base_unreg_mem_watch(void * p, size_t len);
-#if OMPI_WANT_MEMCHECKER == 0
-#define opal_memchecker_base_unreg_mem_watch(p, len) 0
-#endif
-
-
-/**
- * Unregister all memory watch
- *
- * @retval OPAL_SUCCESS upon success.
- *
- * This function calls the selected memchecker, to unregister
- * all memory watch.
- */
-OPAL_DECLSPEC int opal_memchecker_base_unreg_all_mem_watch();
-#if OMPI_WANT_MEMCHECKER == 0
-#define opal_memchecker_base_unreg_all_mem_watch()
-#endif
-
-
-/**
- * Search the entry index
- *
- * @retval OPAL_SUCCESS upon success.
- *
- * This function calls the selected memchecker, to search
- * the entry index.
- */
-OPAL_DECLSPEC int opal_memchecker_base_search_mem_index(void * p, size_t len, size_t *index);
-#if OMPI_WANT_MEMCHECKER == 0
-#define opal_memchecker_base_search_mem_index(p, len, index) 0
-#endif
-
-
-/**
- * Check mem watch count
- *
- * @retval OPAL_SUCCESS upon success.
- *
- * This function calls the selected memchecker, to get mem count
- */
-OPAL_DECLSPEC int opal_memchecker_base_mem_watch_count();
-#if OMPI_WANT_MEMCHECKER == 0
-#define opal_memchecker_base_mem_watch_count()
-#endif
-
-
-/**
- * Print user application callstack
- *
- * @retval OPAL_SUCCESS upon success.
- *
- * This function calls the selected memchecker, to print
- * user application callstack.
- */
-OPAL_DECLSPEC int opal_memchecker_base_print_callstack();
-#if OMPI_WANT_MEMCHECKER == 0
-#define opal_memchecker_base_print_callstack()
-#endif
-
+    
 END_C_DECLS
 
 #endif /* OPAL_MEMCHECKER_BASE_H */

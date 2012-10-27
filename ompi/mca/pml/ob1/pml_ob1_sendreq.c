@@ -37,7 +37,6 @@
 #include "pml_ob1_recvreq.h"
 #include "ompi/mca/bml/base/base.h"
 #include "ompi/memchecker.h"
-#include "ompi/memchecker_rw_check.h"
 
 OBJ_CLASS_INSTANCE(mca_pml_ob1_send_range_t, ompi_free_list_item_t,
         NULL, NULL);
@@ -114,9 +113,6 @@ static int mca_pml_ob1_send_request_free(struct ompi_request_t** request)
         MEMCHECKER(
             memchecker_call(&opal_memchecker_base_mem_defined,
                             sendreq->req_send.req_base.req_addr,
-                            sendreq->req_send.req_base.req_count,
-                            sendreq->req_send.req_base.req_datatype);
-            memchecker_unreg_mem_rw_check(sendreq->req_send.req_base.req_addr,
                             sendreq->req_send.req_base.req_count,
                             sendreq->req_send.req_base.req_datatype);
         );
@@ -521,7 +517,6 @@ int mca_pml_ob1_send_request_start_copy( mca_pml_ob1_send_request_t* sendreq,
                             sendreq->req_send.req_base.req_addr,
                             sendreq->req_send.req_base.req_count,
                             sendreq->req_send.req_base.req_datatype);
-            memchecker_rw_disable_check();
         );
         (void)opal_convertor_pack( &sendreq->req_send.req_base.req_convertor,
                                    &iov, &iov_count, &max_data );
@@ -533,7 +528,6 @@ int mca_pml_ob1_send_request_start_copy( mca_pml_ob1_send_request_t* sendreq,
                             sendreq->req_send.req_base.req_addr,
                             sendreq->req_send.req_base.req_count,
                             sendreq->req_send.req_base.req_datatype);
-            memchecker_rw_enable_check();
         );
     }
 
@@ -589,13 +583,7 @@ int mca_pml_ob1_send_request_start_prepare( mca_pml_ob1_send_request_t* sendreq,
     mca_btl_base_segment_t* segment;
     mca_pml_ob1_hdr_t* hdr;
     int rc;
-    MEMCHECKER(
-        memchecker_call(&opal_memchecker_base_mem_defined,
-                        sendreq->req_send.req_base.req_addr,
-                        sendreq->req_send.req_base.req_count,
-                        sendreq->req_send.req_base.req_datatype);
-        memchecker_rw_disable_check();
-    );
+
     /* prepare descriptor */
     mca_bml_base_prepare_src( bml_btl,
                               NULL,
@@ -605,13 +593,6 @@ int mca_pml_ob1_send_request_start_prepare( mca_pml_ob1_send_request_t* sendreq,
                               &size,
                               MCA_BTL_DES_FLAGS_PRIORITY | MCA_BTL_DES_FLAGS_BTL_OWNERSHIP,
                               &des );
-    MEMCHECKER(
-        memchecker_call(&opal_memchecker_base_mem_noaccess,
-                        sendreq->req_send.req_base.req_addr,
-                        sendreq->req_send.req_base.req_count,
-                        sendreq->req_send.req_base.req_datatype);
-        memchecker_rw_enable_check();
-    );
     if( OPAL_UNLIKELY(NULL == des) ) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
@@ -681,7 +662,6 @@ int mca_pml_ob1_send_request_start_rdma( mca_pml_ob1_send_request_t* sendreq,
                                sendreq->req_send.req_base.req_addr,
                                sendreq->req_send.req_base.req_count,
                                sendreq->req_send.req_base.req_datatype);
-               memchecker_rw_disable_check();
                );
     /* prepare source descriptor/segment(s) */
     /* PML owns this descriptor and will free it in */
@@ -695,7 +675,6 @@ int mca_pml_ob1_send_request_start_rdma( mca_pml_ob1_send_request_t* sendreq,
                                sendreq->req_send.req_base.req_addr,
                                sendreq->req_send.req_base.req_count,
                                sendreq->req_send.req_base.req_datatype);
-               memchecker_rw_enable_check();
                );
     if( OPAL_UNLIKELY(NULL == src) ) {
         return OMPI_ERR_OUT_OF_RESOURCE;
@@ -794,7 +773,6 @@ int mca_pml_ob1_send_request_start_rndv( mca_pml_ob1_send_request_t* sendreq,
                             sendreq->req_send.req_base.req_addr,
                             sendreq->req_send.req_base.req_count,
                             sendreq->req_send.req_base.req_datatype);
-            memchecker_rw_disable_check();
         );
         mca_bml_base_prepare_src( bml_btl, 
                                   NULL,
@@ -809,7 +787,6 @@ int mca_pml_ob1_send_request_start_rndv( mca_pml_ob1_send_request_t* sendreq,
                             sendreq->req_send.req_base.req_addr,
                             sendreq->req_send.req_base.req_count,
                             sendreq->req_send.req_base.req_datatype);
-            memchecker_rw_enable_check();
         );
     }
 

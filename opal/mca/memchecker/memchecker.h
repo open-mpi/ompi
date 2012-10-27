@@ -38,15 +38,6 @@
 
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
-#include "ompi/datatype/ompi_datatype.h"
-
-/* basic type for memory rw check */
-typedef struct {
-    void            *addr;      /* starting address of the memory region */
-    size_t           len;       /* size of the memory */
-    char            *rw_flag;   /* read/write (R/W) bit flag */
-    ompi_datatype_t *datatype;  /* MPI datatype */
-} memchecker_rw_check_t;
 
 /**
  * Module initialization function.  Should return OPAL_SUCCESS.
@@ -114,36 +105,6 @@ typedef int (*opal_memchecker_base_module_get_vbits_fn_t)(void * p, char * vbits
  */
 typedef int (*opal_memchecker_base_module_set_vbits_fn_t)(void * p, char * vbits, size_t len);
 
-/**
- * Module function to register watch memory
- */
-typedef int (*opal_memchecker_base_module_reg_mem_watch_fn_t)(void * p, size_t len, int op, void *cb, void *info);
-
-/**
- * Module function to unregister watch memory
- */
-typedef int (*opal_memchecker_base_module_unreg_mem_watch_fn_t)(void * p, size_t len);
-
-/**
- * Module function to unregister all watch memory
- */
-typedef int (*opal_memchecker_base_module_unreg_all_mem_watch_fn_t)();
-
-/**
- * Module function to search memory entry index
- */
-typedef int (*opal_memchecker_base_module_search_mem_index_fn_t)(void * p, size_t len, size_t *index);
-
-/**
- * Module function to get memory count
- */
-typedef int (*opal_memchecker_base_module_mem_watch_count_fn_t)();
-
-
-/**
- * Module function to print callstack
- */
-typedef int (*opal_memchecker_base_module_print_callstack_fn_t)();
 
 
 /**
@@ -198,30 +159,12 @@ struct opal_memchecker_base_module_1_0_0_t {
 
     /** Module function to check for any leaks */
     opal_memchecker_base_module_leakcheck_fn_t leakcheck;
-
+    
     /** Module function to get vbits */
     opal_memchecker_base_module_get_vbits_fn_t get_vbits;
     
     /** Module function to set vbits */
     opal_memchecker_base_module_set_vbits_fn_t set_vbits;
-
-    /** Module function to register memory watch */
-    opal_memchecker_base_module_reg_mem_watch_fn_t reg_mem_watch;
-
-    /** Module function to unregister memory watch */
-    opal_memchecker_base_module_unreg_mem_watch_fn_t unreg_mem_watch;
-
-    /** Module function to unregister all memory watch */
-    opal_memchecker_base_module_unreg_all_mem_watch_fn_t unreg_all_mem_watch;
-
-    /** Module function to unregister all memory watch */
-    opal_memchecker_base_module_search_mem_index_fn_t search_mem_index;
-
-    /** Module function to get memory count */
-    opal_memchecker_base_module_mem_watch_count_fn_t mem_watch_count;
-
-    /** Module function to print callstack */
-    opal_memchecker_base_module_print_callstack_fn_t print_callstack;
 };
 
 /**

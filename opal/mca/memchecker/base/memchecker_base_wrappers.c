@@ -85,33 +85,4 @@ int opal_memchecker_base_set_vbits(void * p, char * vbits, size_t len)
     return opal_memchecker_base_module->set_vbits(p, vbits, len);
 }
 
-int opal_memchecker_base_reg_mem_watch(void * p, size_t len, int op, void *cb, void *info)
-{
-    return opal_memchecker_base_module->reg_mem_watch(p, len, op, cb, info);
-}
-
-int opal_memchecker_base_unreg_mem_watch(void * p, size_t len)
-{
-    return opal_memchecker_base_module->unreg_mem_watch(p, len);
-}
-
-int opal_memchecker_base_unreg_all_mem_watch()
-{
-    return opal_memchecker_base_module->unreg_all_mem_watch();
-}
-
-int opal_memchecker_base_search_mem_index(void * p, size_t len, size_t *index)
-{
-    return opal_memchecker_base_module->search_mem_index(p, len, index);
-}
-
-int opal_memchecker_base_mem_watch_count()
-{
-    return opal_memchecker_base_module->mem_watch_count();
-}
-
-int opal_memchecker_base_print_callstack()
-{
-    return opal_memchecker_base_module->print_callstack();
-}
 #endif /* OMPI_WANT_MEMCHECKER */

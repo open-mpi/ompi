@@ -34,12 +34,6 @@ int opal_memchecker_base_output = -1;
 bool opal_memchecker_base_components_opened_valid = false;
 opal_list_t opal_memchecker_base_components_opened;
 
-memchecker_rw_check_t *memchecker_rw_check;
-
-size_t memchecker_num_mem = 0;
-bool memchecker_enable_check = true;
-int memchecker_phase   = 0;
-int callback_count     = 0;
 /*
  * Function for finding and opening either all MCA components, or the one
  * that was specifically requested via a MCA parameter.
