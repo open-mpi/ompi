@@ -23,7 +23,6 @@ headers += \
 	ompi/constants.h \
 	ompi/types.h \
     ompi/memchecker.h \
-    ompi/memchecker_rw_check.h \
 	ompi/totalview.h
 
 nodist_headers += \

@@ -25,7 +25,6 @@
 #include "ompi/mca/pml/pml.h"
 #include "ompi/request/request.h"
 #include "ompi/memchecker.h"
-#include "ompi/memchecker_rw_check.h"
 
 #if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Irecv = PMPI_Irecv
@@ -76,8 +75,6 @@ int MPI_Irecv(void *buf, int count, MPI_Datatype type, int source,
 
     MEMCHECKER (
         memchecker_call(&opal_memchecker_base_mem_noaccess, buf, count, type);
-        memchecker_check_phase(0);
-        memchecker_reg_mem_rw_check(buf, count, type, MEMCHECKER_WATCH_RW);
     );
     rc = MCA_PML_CALL(irecv(buf,count,type,source,tag,comm,request));
     OMPI_ERRHANDLER_RETURN(rc, comm, rc, FUNC_NAME);

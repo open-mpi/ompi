@@ -27,7 +27,6 @@
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/request/request.h"
 #include "ompi/memchecker.h"
-#include "ompi/memchecker_rw_check.h"
 
 #if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Waitall = PMPI_Waitall
@@ -75,18 +74,9 @@ int MPI_Waitall(int count, MPI_Request requests[], MPI_Status statuses[])
     OPAL_CR_ENTER_LIBRARY();
 
     if (OMPI_SUCCESS == ompi_request_wait_all(count, requests, statuses)) {
-
-        MEMCHECKER(
-            memchecker_check_phase(1);
-        );
-
         OPAL_CR_EXIT_LIBRARY();
         return MPI_SUCCESS;
     }
-
-    MEMCHECKER(
-        memchecker_check_phase(1);
-    );
 
     if (MPI_SUCCESS != 
         ompi_errhandler_request_invoke(count, requests, FUNC_NAME)) {
