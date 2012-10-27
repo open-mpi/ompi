@@ -1,0 +1,60 @@
+/bin/date
+echo "Loading bashrc"
+echo "Have fun!"
+echo ""
+
+#echo "Loading .tcshrc\n\nHave a lot of fun\n"
+
+
+alias ls='ls --color=auto'
+alias la='ls --color=auto -a'
+alias e='easyterm -i slsrbht -a /H/ads8260.fhb'
+alias d='ls -F -l --full-time -G --color=auto'
+alias cls='clear'
+alias ll='ls -F -al -G'
+alias h='history'
+alias up='cd ..'
+
+alias xterm='\xterm -bg black -sl 50000 +tb -sk -si -rightbar -fg white -geometry 120x40 -e bash'
+
+#PS1="\u@\h:\w >"
+#export PS1="\[\e[36;1m\]\u@\H> \[\e[0m\]"
+export PS1="\[\e]2; \w\a\e[32;1m\]\[\e[36;1m\]\u@\H:\W>\[\e[0m\] "
+
+#set tperiod=120
+#alias periodic='echo "\a\n\n\nTime for a break\n\n"'
+set rmstar
+set autolist
+set correct='cmd'
+set histdup='prev'
+set history=5000
+set savehist
+set color
+set listlinks
+set nobeep
+set autologout=0
+
+
+export DISPLAY=":0.0"
+export TERM=cygwin
+export LS_COLORS='no=00:fi=00:di=36;01:ln=01;36:pi=40;33:so=01;35:bd=40;33;01:cd=44;33;01:or=40;31;01:ex=01;32:*.tar=01;31:*.tgz=01;31:*.arj=01;31:*.taz=01;31:*.lzh=01;31:*.zip=01;31:*.z=01;31:*.Z=01;31:*.gz=01;31:*.deb=01;31:*.jpg=01;35:*.gif=01;35:*.bmp=01;35:*.ppm=01;35:*.tga=01;35:*.xbm=01;35:*.xpm=01;35:*.tif=01;35:*.mpg=01;37:*.avi=01;37:*.gl=01;37:*.dl=01;37:*.txt=01;37:*.s=00;35:*.h=01;33:*.c=00;33:*.cc=01;31:*.o=01;31:*~=00;40';
+ 
+export TZ='CET-1CEST-2,M3.5.0/02:00:00,M10.5.0/03:00:00'
+
+export PATH=.:$HOME/bin:/bin:/usr/sbin:/usr/local/bin:/usr/X11R6/bin:$PATH
+
+##### run MTT #####
+
+cd /cygdrive/d/tools/MTT-HLRS/mtt-files
+
+./run-hlrs-windows-trunk.sh
+
+#./run-hlrs-windows-v1.4.sh
+
+#./run-hlrs-windows-v1.5.sh
+
+./run-hlrs-windows-v1.6.sh
+
+#./run-hlrs-windows-v1.7.sh
+
+exit
