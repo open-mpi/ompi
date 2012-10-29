@@ -67,7 +67,19 @@ static void dfs_read(int fd, uint8_t *buffer,
                      long length,
                      orte_dfs_read_callback_fn_t cbfunc,
                      void *cbdata);
-
+static void dfs_post_file_map(opal_byte_object_t *bo,
+                              orte_dfs_post_callback_fn_t cbfunc,
+                              void *cbdata);
+static void dfs_get_file_map(orte_process_name_t *target,
+                             orte_dfs_fm_callback_fn_t cbfunc,
+                             void *cbdata);
+static void dfs_load_file_maps(orte_jobid_t jobid,
+                               opal_byte_object_t *bo,
+                               orte_dfs_load_callback_fn_t cbfunc,
+                               void *cbdata);
+static void dfs_purge_file_maps(orte_jobid_t jobid,
+                                orte_dfs_purge_callback_fn_t cbfunc,
+                                void *cbdata);
 /******************
  * Daemon/HNP module
  ******************/
@@ -78,10 +90,14 @@ orte_dfs_base_module_t orte_dfs_orted_module = {
     dfs_close,
     dfs_get_file_size,
     dfs_seek,
-    dfs_read
+    dfs_read,
+    dfs_post_file_map,
+    dfs_get_file_map,
+    dfs_load_file_maps,
+    dfs_purge_file_maps
 };
 
-static opal_list_t requests, active_files;
+static opal_list_t requests, active_files, file_maps;
 static int local_fd = 0;
 static uint64_t req_id = 0;
 static void recv_dfs_cmd(int status, orte_process_name_t* sender,
@@ -97,6 +113,7 @@ static int init(void)
 
     OBJ_CONSTRUCT(&requests, opal_list_t);
     OBJ_CONSTRUCT(&active_files, opal_list_t);
+    OBJ_CONSTRUCT(&file_maps, opal_list_t);
     if (ORTE_SUCCESS != (rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
                                                       ORTE_RML_TAG_DFS_CMD,
                                                       ORTE_RML_PERSISTENT,
@@ -128,6 +145,10 @@ static int finalize(void)
         OBJ_RELEASE(item);
     }
     OBJ_DESTRUCT(&active_files);
+    while (NULL != (item = opal_list_remove_first(&file_maps))) {
+        OBJ_RELEASE(item);
+    }
+    OBJ_DESTRUCT(&file_maps);
 
     return ORTE_SUCCESS;
 }
@@ -794,6 +815,350 @@ static void dfs_read(int fd, uint8_t *buffer,
     ORTE_DFS_POST_REQUEST(dfs, process_reads);
 }
 
+static void process_posts(int fd, short args, void *cbdata)
+{
+    orte_dfs_request_t *dfs = (orte_dfs_request_t*)cbdata;
+    orte_dfs_jobfm_t *jptr, *jfm;
+    orte_dfs_vpidfm_t *vptr, *vfm;
+    opal_list_item_t *item;
+    int rc;
+    opal_buffer_t buf;
+
+    opal_output_verbose(1, orte_dfs_base.output,
+                        "%s posting file map for target %s",
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                        ORTE_NAME_PRINT(&dfs->target));
+
+    /* lookup the job map */
+    jfm = NULL;
+    for (item = opal_list_get_first(&file_maps);
+         item != opal_list_get_end(&file_maps);
+         item = opal_list_get_next(item)) {
+        jptr = (orte_dfs_jobfm_t*)item;
+        if (jptr->jobid == dfs->target.jobid) {
+            jfm = jptr;
+            break;
+        }
+    }
+    if (NULL == jfm) {
+        /* add it */
+        jfm = OBJ_NEW(orte_dfs_jobfm_t);
+        jfm->jobid = dfs->target.jobid;
+        opal_list_append(&file_maps, &jfm->super);
+    }
+    /* see if we already have an entry for this source */
+    vfm = NULL;
+    for (item = opal_list_get_first(&jfm->maps);
+         item != opal_list_get_end(&jfm->maps);
+         item = opal_list_get_next(item)) {
+        vptr = (orte_dfs_vpidfm_t*)item;
+        if (vptr->vpid == dfs->target.vpid) {
+            vfm = vptr;
+            break;
+        }
+    }
+    if (NULL == vfm) {
+        /* add it */
+        vfm = OBJ_NEW(orte_dfs_vpidfm_t);
+        vfm->vpid = dfs->target.vpid;
+        opal_list_append(&jfm->maps, &vfm->super);
+    }
+
+    /* add this entry to any prior one */
+    OBJ_CONSTRUCT(&buf, opal_buffer_t);
+    opal_dss.load(&buf, vfm->fm.bytes, vfm->fm.size);
+    if (OPAL_SUCCESS != (rc = opal_dss.pack(&buf, &dfs->bo, 1, OPAL_BYTE_OBJECT))) {
+        ORTE_ERROR_LOG(rc);
+        goto complete;
+    }
+    vfm->num_entries++;
+    opal_dss.unload(&buf, (void**)&vfm->fm.bytes, &vfm->fm.size);
+    opal_output_verbose(1, orte_dfs_base.output,
+                        "%s target %s now has %d entries",
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                        ORTE_NAME_PRINT(&dfs->target),
+                        vfm->num_entries);
+
+ complete:
+    if (NULL != dfs->post_cbfunc) {
+        dfs->post_cbfunc(dfs->cbdata);
+    }
+    OBJ_RELEASE(dfs);
+}
+
+static void dfs_post_file_map(opal_byte_object_t *bo,
+                              orte_dfs_post_callback_fn_t cbfunc,
+                              void *cbdata)
+{
+    orte_dfs_request_t *dfs;
+
+    dfs = OBJ_NEW(orte_dfs_request_t);
+    dfs->cmd = ORTE_DFS_POST_CMD;
+    dfs->target.jobid = ORTE_PROC_MY_NAME->jobid;
+    dfs->target.vpid = ORTE_PROC_MY_NAME->vpid;
+    dfs->bo = bo;
+    dfs->post_cbfunc = cbfunc;
+    dfs->cbdata = cbdata;
+
+    /* post it for processing */
+    ORTE_DFS_POST_REQUEST(dfs, process_posts);
+}
+
+static void get_job_maps(orte_dfs_jobfm_t *jfm,
+                         orte_vpid_t vpid,
+                         opal_buffer_t *buf)
+{
+    orte_dfs_vpidfm_t *vfm;
+    opal_list_item_t *item;
+    opal_byte_object_t *boptr;
+    int rc;
+
+    /* if the target vpid is WILDCARD, then process
+     * data for all vpids - else, find the one
+     */
+    for (item = opal_list_get_first(&jfm->maps);
+         item != opal_list_get_end(&jfm->maps);
+         item = opal_list_get_next(item)) {
+        vfm = (orte_dfs_vpidfm_t*)item;
+        if (ORTE_VPID_WILDCARD == vpid ||
+            vfm->vpid == vpid) {
+            /* indicate data from this vpid */
+            if (OPAL_SUCCESS != (rc = opal_dss.pack(buf, &vfm->vpid, 1, ORTE_VPID))) {
+                ORTE_ERROR_LOG(rc);
+                return;
+            }
+            /* pack the number of entries in its byte object */
+            if (OPAL_SUCCESS != (rc = opal_dss.pack(buf, &vfm->num_entries, 1, OPAL_INT32))) {
+                ORTE_ERROR_LOG(rc);
+                return;
+            }
+            /* pack the byte object */
+            boptr = &vfm->fm;
+            if (OPAL_SUCCESS != (rc = opal_dss.pack(buf, &boptr, 1, OPAL_BYTE_OBJECT))) {
+                ORTE_ERROR_LOG(rc);
+                return;
+            }
+        }
+    }
+}
+
+static void process_getfm(int fd, short args, void *cbdata)
+{
+    orte_dfs_request_t *dfs = (orte_dfs_request_t*)cbdata;
+    orte_dfs_jobfm_t *jfm;
+    opal_buffer_t buf;
+    opal_list_item_t *item;
+    opal_byte_object_t bo;
+
+    /* prep the collection bucket */
+    OBJ_CONSTRUCT(&buf, opal_buffer_t);
+
+    /* if the target job is WILDCARD, then process
+     * data for all jobids - else, find the one
+     */
+    for (item = opal_list_get_first(&file_maps);
+         item != opal_list_get_end(&file_maps);
+         item = opal_list_get_next(item)) {
+        jfm = (orte_dfs_jobfm_t*)item;
+        if (ORTE_JOBID_WILDCARD == dfs->target.jobid ||
+            jfm->jobid == dfs->target.jobid) {
+            get_job_maps(jfm, dfs->target.vpid, &buf);
+        }
+    }
+
+    /* unload the result */
+    opal_dss.unload(&buf, (void**)&bo.bytes, &bo.size);
+    OBJ_DESTRUCT(&buf);
+
+    if (NULL != dfs->fm_cbfunc) {
+        dfs->fm_cbfunc(&bo, dfs->cbdata);
+    }
+    if (NULL != bo.bytes) {
+        free(bo.bytes);
+    }
+    OBJ_RELEASE(dfs);
+}
+
+static void dfs_get_file_map(orte_process_name_t *target,
+                             orte_dfs_fm_callback_fn_t cbfunc,
+                             void *cbdata)
+{
+    orte_dfs_request_t *dfs;
+
+    opal_output_verbose(1, orte_dfs_base.output,
+                        "%s get file map for %s",
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                        ORTE_NAME_PRINT(target));
+
+    dfs = OBJ_NEW(orte_dfs_request_t);
+    dfs->cmd = ORTE_DFS_GETFM_CMD;
+    dfs->target.jobid = target->jobid;
+    dfs->target.vpid = target->vpid;
+    dfs->fm_cbfunc = cbfunc;
+    dfs->cbdata = cbdata;
+
+    /* post it for processing */
+    ORTE_DFS_POST_REQUEST(dfs, process_getfm);
+}
+
+static void process_load(int fd, short args, void *cbdata)
+{
+    orte_dfs_request_t *dfs = (orte_dfs_request_t*)cbdata;
+    opal_list_item_t *item;
+    orte_dfs_jobfm_t *jfm, *jptr;
+    orte_dfs_vpidfm_t *vfm;
+    orte_vpid_t vpid;
+    int32_t entries;
+    opal_byte_object_t *boptr;
+    opal_buffer_t buf;
+    int cnt;
+    int rc;
+
+    /* see if we already have a tracker for this job */
+    jfm = NULL;
+    for (item = opal_list_get_first(&file_maps);
+         item != opal_list_get_end(&file_maps);
+         item = opal_list_get_next(item)) {
+        jptr = (orte_dfs_jobfm_t*)item;
+        if (jptr->jobid == dfs->target.jobid) {
+            jfm = jptr;
+            break;
+        }
+    }
+    if (NULL != jfm) {
+        /* need to purge it first */
+        while (NULL != (item = opal_list_remove_first(&jfm->maps))) {
+            OBJ_RELEASE(item);
+        }
+    } else {
+        jfm = OBJ_NEW(orte_dfs_jobfm_t);
+        jfm->jobid = dfs->target.jobid;
+        opal_list_append(&file_maps, &jfm->super);
+    }
+
+    /* setup to unpack the byte object */
+    OBJ_CONSTRUCT(&buf, opal_buffer_t);
+    opal_dss.load(&buf, dfs->bo->bytes, dfs->bo->size);
+
+    /* unpack the buffer */
+    cnt = 1;
+    while (OPAL_SUCCESS == opal_dss.unpack(&buf, &vpid, &cnt, ORTE_VPID)) {
+        /* unpack the number of entries contained in the byte object */
+        cnt = 1;
+        if (OPAL_SUCCESS != (rc = opal_dss.unpack(&buf, &entries, &cnt, OPAL_INT32))) {
+            ORTE_ERROR_LOG(rc);
+            goto complete;
+        }
+        /* unpack the byte object */
+        cnt = 1;
+        if (OPAL_SUCCESS != (rc = opal_dss.unpack(&buf, &boptr, &cnt, OPAL_BYTE_OBJECT))) {
+            ORTE_ERROR_LOG(rc);
+            goto complete;
+        }
+        /* create the entry */
+        vfm = OBJ_NEW(orte_dfs_vpidfm_t);
+        vfm->vpid = vpid;
+        vfm->num_entries = entries;
+        vfm->fm.bytes = boptr->bytes;
+        boptr->bytes = NULL;
+        vfm->fm.size = boptr->size;
+        opal_list_append(&jfm->maps, &vfm->super);
+        /* cleanup */
+        free(boptr);
+    }
+
+ complete:
+    /* must reload the byte object as it belongs to
+     * our original caller - the load function will
+     * have cleared it
+     */
+    opal_dss.unload(&buf, (void**)&dfs->bo->bytes, &dfs->bo->size);
+    OBJ_DESTRUCT(&buf);
+
+    if (NULL != dfs->load_cbfunc) {
+        dfs->load_cbfunc(dfs->cbdata);
+    }
+    OBJ_RELEASE(dfs);
+}
+
+static void dfs_load_file_maps(orte_jobid_t jobid,
+                               opal_byte_object_t *bo,
+                               orte_dfs_load_callback_fn_t cbfunc,
+                               void *cbdata)
+{
+    orte_dfs_request_t *dfs;
+
+    opal_output_verbose(1, orte_dfs_base.output,
+                        "%s loading file maps for %s",
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                        ORTE_JOBID_PRINT(jobid));
+
+    dfs = OBJ_NEW(orte_dfs_request_t);
+    dfs->cmd = ORTE_DFS_LOAD_CMD;
+    dfs->target.jobid = jobid;
+    dfs->bo = bo;
+    dfs->load_cbfunc = cbfunc;
+    dfs->cbdata = cbdata;
+
+    /* post it for processing */
+    ORTE_DFS_POST_REQUEST(dfs, process_load);
+}
+
+static void process_purge(int fd, short args, void *cbdata)
+{
+    orte_dfs_request_t *dfs = (orte_dfs_request_t*)cbdata;
+    opal_list_item_t *item;
+    orte_dfs_jobfm_t *jfm, *jptr;
+
+    /* find the job tracker */
+    jfm = NULL;
+    for (item = opal_list_get_first(&file_maps);
+         item != opal_list_get_end(&file_maps);
+         item = opal_list_get_next(item)) {
+        jptr = (orte_dfs_jobfm_t*)item;
+        if (jptr->jobid == dfs->target.jobid) {
+            jfm = jptr;
+            break;
+        }
+    }
+    if (NULL == jptr) {
+        ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+    } else {
+        /* remove it from the list */
+        opal_list_remove_item(&file_maps, &jptr->super);
+        /* the destructor will release the list of maps
+         * in the jobfm object
+         */
+        OBJ_RELEASE(jptr);
+    }
+
+    if (NULL != dfs->purge_cbfunc) {
+        dfs->purge_cbfunc(dfs->cbdata);
+    }
+    OBJ_RELEASE(dfs);
+}
+
+static void dfs_purge_file_maps(orte_jobid_t jobid,
+                                orte_dfs_purge_callback_fn_t cbfunc,
+                                void *cbdata)
+{
+    orte_dfs_request_t *dfs;
+
+    opal_output_verbose(1, orte_dfs_base.output,
+                        "%s purging file maps for job %s",
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                        ORTE_JOBID_PRINT(jobid));
+
+    dfs = OBJ_NEW(orte_dfs_request_t);
+    dfs->cmd = ORTE_DFS_PURGE_CMD;
+    dfs->target.jobid = jobid;
+    dfs->purge_cbfunc = cbfunc;
+    dfs->cbdata = cbdata;
+
+    /* post it for processing */
+    ORTE_DFS_POST_REQUEST(dfs, process_purge);
+}
+
 
 /* receives take place in an event, so we are free to process
  * the request list without fear of getting things out-of-order
@@ -813,6 +1178,11 @@ static void recv_dfs_cmd(int status, orte_process_name_t* sender,
     uint64_t rid;
     int whence;
     struct stat buf;
+    orte_process_name_t source;
+    opal_byte_object_t *bo;
+    orte_dfs_request_t *dfs;
+    orte_dfs_jobfm_t *jfm;
+    opal_buffer_t *answer, bucket;
 
     /* unpack the command */
     cnt = 1;
@@ -860,25 +1230,25 @@ static void recv_dfs_cmd(int status, orte_process_name_t* sender,
         opal_list_append(&active_files, &trk->super);
     answer_open:
         /* construct the return message */
-        buffer = OBJ_NEW(opal_buffer_t);
-        if (OPAL_SUCCESS != (rc = opal_dss.pack(buffer, &cmd, 1, ORTE_DFS_CMD_T))) {
+        answer = OBJ_NEW(opal_buffer_t);
+        if (OPAL_SUCCESS != (rc = opal_dss.pack(answer, &cmd, 1, ORTE_DFS_CMD_T))) {
             ORTE_ERROR_LOG(rc);
             return;
         }
-        if (OPAL_SUCCESS != (rc = opal_dss.pack(buffer, &rid, 1, OPAL_UINT64))) {
+        if (OPAL_SUCCESS != (rc = opal_dss.pack(answer, &rid, 1, OPAL_UINT64))) {
             ORTE_ERROR_LOG(rc);
             return;
         }
-        if (OPAL_SUCCESS != (rc = opal_dss.pack(buffer, &my_fd, 1, OPAL_INT))) {
+        if (OPAL_SUCCESS != (rc = opal_dss.pack(answer, &my_fd, 1, OPAL_INT))) {
             ORTE_ERROR_LOG(rc);
             return;
         }
         /* send it */
-        if (0 > (rc = orte_rml.send_buffer_nb(sender, buffer,
+        if (0 > (rc = orte_rml.send_buffer_nb(sender, answer,
                                               ORTE_RML_TAG_DFS_DATA, 0,
                                               orte_rml_send_callback, NULL))) {
             ORTE_ERROR_LOG(rc);
-            OBJ_RELEASE(buffer);
+            OBJ_RELEASE(answer);
             return;
         }
         break;
@@ -940,25 +1310,25 @@ static void recv_dfs_cmd(int status, orte_process_name_t* sender,
             }
         }
         /* construct the return message */
-        buffer = OBJ_NEW(opal_buffer_t);
-        if (OPAL_SUCCESS != (rc = opal_dss.pack(buffer, &cmd, 1, ORTE_DFS_CMD_T))) {
+        answer = OBJ_NEW(opal_buffer_t);
+        if (OPAL_SUCCESS != (rc = opal_dss.pack(answer, &cmd, 1, ORTE_DFS_CMD_T))) {
             ORTE_ERROR_LOG(rc);
             return;
         }
-        if (OPAL_SUCCESS != (rc = opal_dss.pack(buffer, &rid, 1, OPAL_UINT64))) {
+        if (OPAL_SUCCESS != (rc = opal_dss.pack(answer, &rid, 1, OPAL_UINT64))) {
             ORTE_ERROR_LOG(rc);
             return;
         }
-        if (OPAL_SUCCESS != (rc = opal_dss.pack(buffer, &i64, 1, OPAL_INT64))) {
+        if (OPAL_SUCCESS != (rc = opal_dss.pack(answer, &i64, 1, OPAL_INT64))) {
             ORTE_ERROR_LOG(rc);
             return;
         }
         /* send it */
-        if (0 > (rc = orte_rml.send_buffer_nb(sender, buffer,
+        if (0 > (rc = orte_rml.send_buffer_nb(sender, answer,
                                               ORTE_RML_TAG_DFS_DATA, 0,
                                               orte_rml_send_callback, NULL))) {
             ORTE_ERROR_LOG(rc);
-            OBJ_RELEASE(buffer);
+            OBJ_RELEASE(answer);
             return;
         }
         break;
@@ -1033,17 +1403,17 @@ static void recv_dfs_cmd(int status, orte_process_name_t* sender,
             }
         }
         /* construct the return message */
-        buffer = OBJ_NEW(opal_buffer_t);
-        if (OPAL_SUCCESS != (rc = opal_dss.pack(buffer, &cmd, 1, ORTE_DFS_CMD_T))) {
+        answer = OBJ_NEW(opal_buffer_t);
+        if (OPAL_SUCCESS != (rc = opal_dss.pack(answer, &cmd, 1, ORTE_DFS_CMD_T))) {
             ORTE_ERROR_LOG(rc);
             return;
         }
-        if (OPAL_SUCCESS != (rc = opal_dss.pack(buffer, &rid, 1, OPAL_UINT64))) {
+        if (OPAL_SUCCESS != (rc = opal_dss.pack(answer, &rid, 1, OPAL_UINT64))) {
             ORTE_ERROR_LOG(rc);
             return;
         }
         /* return the offset/status */
-        if (OPAL_SUCCESS != (rc = opal_dss.pack(buffer, &bytes_read, 1, OPAL_INT64))) {
+        if (OPAL_SUCCESS != (rc = opal_dss.pack(answer, &bytes_read, 1, OPAL_INT64))) {
             ORTE_ERROR_LOG(rc);
             return;
         }
@@ -1053,11 +1423,11 @@ static void recv_dfs_cmd(int status, orte_process_name_t* sender,
                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                             (long)bytes_read,
                             ORTE_NAME_PRINT(sender));
-        if (0 > (rc = orte_rml.send_buffer_nb(sender, buffer,
+        if (0 > (rc = orte_rml.send_buffer_nb(sender, answer,
                                               ORTE_RML_TAG_DFS_DATA, 0,
                                               orte_rml_send_callback, NULL))) {
             ORTE_ERROR_LOG(rc);
-            OBJ_RELEASE(buffer);
+            OBJ_RELEASE(answer);
             return;
         }
         break;
@@ -1113,23 +1483,23 @@ static void recv_dfs_cmd(int status, orte_process_name_t* sender,
         }
     answer_read:
         /* construct the return message */
-        buffer = OBJ_NEW(opal_buffer_t);
-        if (OPAL_SUCCESS != (rc = opal_dss.pack(buffer, &cmd, 1, ORTE_DFS_CMD_T))) {
+        answer = OBJ_NEW(opal_buffer_t);
+        if (OPAL_SUCCESS != (rc = opal_dss.pack(answer, &cmd, 1, ORTE_DFS_CMD_T))) {
             ORTE_ERROR_LOG(rc);
             return;
         }
-        if (OPAL_SUCCESS != (rc = opal_dss.pack(buffer, &rid, 1, OPAL_UINT64))) {
+        if (OPAL_SUCCESS != (rc = opal_dss.pack(answer, &rid, 1, OPAL_UINT64))) {
             ORTE_ERROR_LOG(rc);
             return;
         }
         /* include the number of bytes read */
-        if (OPAL_SUCCESS != (rc = opal_dss.pack(buffer, &bytes_read, 1, OPAL_INT64))) {
+        if (OPAL_SUCCESS != (rc = opal_dss.pack(answer, &bytes_read, 1, OPAL_INT64))) {
             ORTE_ERROR_LOG(rc);
             return;
         }
         /* include the bytes read */
         if (0 < bytes_read) {
-            if (OPAL_SUCCESS != (rc = opal_dss.pack(buffer, read_buf, bytes_read, OPAL_UINT8))) {
+            if (OPAL_SUCCESS != (rc = opal_dss.pack(answer, read_buf, bytes_read, OPAL_UINT8))) {
                 ORTE_ERROR_LOG(rc);
                 return;
             }
@@ -1140,15 +1510,126 @@ static void recv_dfs_cmd(int status, orte_process_name_t* sender,
                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                             (long)bytes_read,
                             ORTE_NAME_PRINT(sender));
-        if (0 > (rc = orte_rml.send_buffer_nb(sender, buffer,
+        if (0 > (rc = orte_rml.send_buffer_nb(sender, answer,
                                               ORTE_RML_TAG_DFS_DATA, 0,
                                               orte_rml_send_callback, NULL))) {
             ORTE_ERROR_LOG(rc);
-            OBJ_RELEASE(buffer);
+            OBJ_RELEASE(answer);
             return;
         }
         if (NULL != read_buf) {
             free(read_buf);
+        }
+        break;
+
+    case ORTE_DFS_POST_CMD:
+        /* unpack their request id */
+        cnt = 1;
+        if (OPAL_SUCCESS != (rc = opal_dss.unpack(buffer, &rid, &cnt, OPAL_UINT64))) {
+            ORTE_ERROR_LOG(rc);
+            return;
+        }
+        /* unpack the name of the source of this data */
+        cnt = 1;
+        if (OPAL_SUCCESS != (rc = opal_dss.unpack(buffer, &source, &cnt, ORTE_NAME))) {
+            ORTE_ERROR_LOG(rc);
+            return;
+        }
+        /* unpack their byte object */
+        cnt = 1;
+        if (OPAL_SUCCESS != (rc = opal_dss.unpack(buffer, &bo, &cnt, OPAL_BYTE_OBJECT))) {
+            ORTE_ERROR_LOG(rc);
+            goto answer_read;
+        }
+        /* add the contents to the storage for this process */
+        dfs = OBJ_NEW(orte_dfs_request_t);
+        dfs->target.jobid = source.jobid;
+        dfs->target.vpid = source.vpid;
+        dfs->bo = bo;
+        dfs->post_cbfunc = NULL;
+        process_posts(0, 0, (void*)dfs);
+        /* return an ack */
+        answer = OBJ_NEW(opal_buffer_t);
+        if (OPAL_SUCCESS != (rc = opal_dss.pack(answer, &cmd, 1, ORTE_DFS_CMD_T))) {
+            ORTE_ERROR_LOG(rc);
+            return;
+        }
+        if (OPAL_SUCCESS != (rc = opal_dss.pack(answer, &rid, 1, OPAL_UINT64))) {
+            ORTE_ERROR_LOG(rc);
+            return;
+        }
+        if (0 > (rc = orte_rml.send_buffer_nb(sender, answer,
+                                              ORTE_RML_TAG_DFS_DATA, 0,
+                                              orte_rml_send_callback, NULL))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_RELEASE(answer);
+        }
+        if (NULL != bo->bytes) {
+            free(bo->bytes);
+        }
+        free(bo);
+        break;
+
+    case ORTE_DFS_GETFM_CMD:
+        /* unpack their request id */
+        cnt = 1;
+        if (OPAL_SUCCESS != (rc = opal_dss.unpack(buffer, &rid, &cnt, OPAL_UINT64))) {
+            ORTE_ERROR_LOG(rc);
+            return;
+        }
+        /* unpack the target */
+        cnt = 1;
+        if (OPAL_SUCCESS != (rc = opal_dss.unpack(buffer, &source, &cnt, ORTE_NAME))) {
+            ORTE_ERROR_LOG(rc);
+            goto answer_read;
+        }
+        /* search our data tree for matches, assembling them
+         * into a byte object
+         */
+        /* if the target job is WILDCARD, then process
+         * data for all jobids - else, find the one
+         */
+        OBJ_CONSTRUCT(&bucket, opal_buffer_t);
+        for (item = opal_list_get_first(&file_maps);
+             item != opal_list_get_end(&file_maps);
+             item = opal_list_get_next(item)) {
+            jfm = (orte_dfs_jobfm_t*)item;
+            if (ORTE_JOBID_WILDCARD == source.jobid ||
+                jfm->jobid == source.jobid) {
+                get_job_maps(jfm, source.vpid, &bucket);
+            }
+        }
+        /* unload the result */
+        bo = (opal_byte_object_t*)malloc(sizeof(opal_byte_object_t));
+        opal_dss.unload(&bucket, (void**)&bo->bytes, &bo->size);
+        OBJ_DESTRUCT(&bucket);
+        opal_output_verbose(1, orte_dfs_base.output,
+                            "%s getf-cmd: returning %d bytes to sender %s",
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), bo->size,
+                            ORTE_NAME_PRINT(sender));
+        /* construct the response */
+        answer = OBJ_NEW(opal_buffer_t);
+        if (OPAL_SUCCESS != (rc = opal_dss.pack(answer, &cmd, 1, ORTE_DFS_CMD_T))) {
+            ORTE_ERROR_LOG(rc);
+            return;
+        }
+        if (OPAL_SUCCESS != (rc = opal_dss.pack(answer, &rid, 1, OPAL_UINT64))) {
+            ORTE_ERROR_LOG(rc);
+            return;
+        }
+        if (OPAL_SUCCESS != (rc = opal_dss.pack(answer, &bo, 1, OPAL_BYTE_OBJECT))) {
+            ORTE_ERROR_LOG(rc);
+            return;
+        }
+        if (NULL != bo->bytes) {
+            free(bo->bytes);
+        }
+        free(bo);
+        if (0 > (rc = orte_rml.send_buffer_nb(sender, answer,
+                                              ORTE_RML_TAG_DFS_DATA, 0,
+                                              orte_rml_send_callback, NULL))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_RELEASE(answer);
         }
         break;
 

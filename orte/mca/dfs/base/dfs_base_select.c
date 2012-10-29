@@ -24,29 +24,30 @@
 
 int orte_dfs_base_select(void)
 {
-    int exit_status = OPAL_SUCCESS;
+    int exit_status = ORTE_SUCCESS;
     orte_dfs_base_component_t *best_component = NULL;
     orte_dfs_base_module_t *best_module = NULL;
 
     /*
      * Select the best component
      */
-    if( OPAL_SUCCESS != mca_base_select("dfs", orte_dfs_base.output,
+    if (OPAL_SUCCESS != mca_base_select("dfs", orte_dfs_base.output,
                                         &orte_dfs_base.components_available,
                                         (mca_base_module_t **) &best_module,
-                                        (mca_base_component_t **) &best_component) ) {
-        /* This will only happen if no component was selected */
-        exit_status = ORTE_ERROR;
-        goto cleanup;
+                                        (mca_base_component_t **) &best_component)) {
+        /* This will only happen if no component was selected, which
+         * is okay - we don't have to select anything
+         */
+        return ORTE_SUCCESS;
     }
 
     /* Save the winner */
     orte_dfs = *best_module;
 
     /* Initialize the winner */
-    if (NULL != best_module) {
-        if (OPAL_SUCCESS != orte_dfs.init()) {
-            exit_status = OPAL_ERROR;
+    if (NULL != best_module && NULL != orte_dfs.init) {
+        if (ORTE_SUCCESS != orte_dfs.init()) {
+            exit_status = ORTE_ERROR;
             goto cleanup;
         }
     }

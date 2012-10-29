@@ -60,6 +60,19 @@ static void dfs_read(int fd, uint8_t *buffer,
                      long length,
                      orte_dfs_read_callback_fn_t cbfunc,
                      void *cbdata);
+static void dfs_post_file_map(opal_byte_object_t *bo,
+                              orte_dfs_post_callback_fn_t cbfunc,
+                              void *cbdata);
+static void dfs_get_file_map(orte_process_name_t *target,
+                             orte_dfs_fm_callback_fn_t cbfunc,
+                             void *cbdata);
+static void dfs_load_file_maps(orte_jobid_t jobid,
+                               opal_byte_object_t *bo,
+                               orte_dfs_load_callback_fn_t cbfunc,
+                               void *cbdata);
+static void dfs_purge_file_maps(orte_jobid_t jobid,
+                                orte_dfs_purge_callback_fn_t cbfunc,
+                                void *cbdata);
 
 /******************
  * APP module
@@ -71,7 +84,11 @@ orte_dfs_base_module_t orte_dfs_app_module = {
     dfs_close,
     dfs_get_file_size,
     dfs_seek,
-    dfs_read
+    dfs_read,
+    dfs_post_file_map,
+    dfs_get_file_map,
+    dfs_load_file_maps,
+    dfs_purge_file_maps
 };
 
 static opal_list_t requests, active_files;
@@ -128,6 +145,7 @@ static void recv_dfs(int status, orte_process_name_t* sender,
     int64_t i64;
     uint64_t rid;
     orte_dfs_tracker_t *trk;
+    opal_byte_object_t *bo;
 
     /* unpack the command this message is responding to */
     cnt = 1;
@@ -352,6 +370,79 @@ static void recv_dfs(int status, orte_process_name_t* sender,
         OBJ_RELEASE(dfs);
         break;
 
+    case ORTE_DFS_POST_CMD:
+        /* unpack the request id for this read */
+        cnt = 1;
+        if (OPAL_SUCCESS != (rc = opal_dss.unpack(buffer, &rid, &cnt, OPAL_UINT64))) {
+            ORTE_ERROR_LOG(rc);
+            return;
+        }
+        /* search our list of requests to find the matching one */
+        dfs = NULL;
+        for (item = opal_list_get_first(&requests);
+             item != opal_list_get_end(&requests);
+             item = opal_list_get_next(item)) {
+            dptr = (orte_dfs_request_t*)item;
+            if (dptr->id == rid) {
+                /* request was fulfilled, so remove it */
+                opal_list_remove_item(&requests, item);
+                dfs = dptr;
+                break;
+            }
+        }
+        if (NULL == dfs) {
+            opal_output_verbose(1, orte_dfs_base.output,
+                                "%s recvd post - no corresponding request found",
+                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+            ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+            return;
+        }
+        if (NULL != dfs->post_cbfunc) {
+            dfs->post_cbfunc(dfs->cbdata);
+        }
+        OBJ_RELEASE(dfs);
+        break;
+
+    case ORTE_DFS_GETFM_CMD:
+        /* unpack the request id for this read */
+        cnt = 1;
+        if (OPAL_SUCCESS != (rc = opal_dss.unpack(buffer, &rid, &cnt, OPAL_UINT64))) {
+            ORTE_ERROR_LOG(rc);
+            return;
+        }
+        /* search our list of requests to find the matching one */
+        dfs = NULL;
+        for (item = opal_list_get_first(&requests);
+             item != opal_list_get_end(&requests);
+             item = opal_list_get_next(item)) {
+            dptr = (orte_dfs_request_t*)item;
+            if (dptr->id == rid) {
+                /* request was fulfilled, so remove it */
+                opal_list_remove_item(&requests, item);
+                dfs = dptr;
+                break;
+            }
+        }
+        if (NULL == dfs) {
+            opal_output_verbose(1, orte_dfs_base.output,
+                                "%s recvd getfm - no corresponding request found",
+                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+            ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+            return;
+        }
+        /* unpack the byte object */
+        cnt = 1;
+        if (OPAL_SUCCESS != (rc = opal_dss.unpack(buffer, &bo, &cnt, OPAL_BYTE_OBJECT))) {
+            ORTE_ERROR_LOG(rc);
+            return;
+        }
+        /* return it to caller */
+        if (NULL != dfs->fm_cbfunc) {
+            dfs->fm_cbfunc(bo, dfs->cbdata);
+        }
+        OBJ_RELEASE(dfs);
+        break;
+
     default:
         opal_output(0, "APP:DFS:RECV WTF");
         break;
@@ -382,7 +473,6 @@ static void open_local_file(orte_dfs_request_t *dfs)
         if (NULL != dfs->open_cbfunc) {
             dfs->open_cbfunc(dfs->remote_fd, dfs->cbdata);
         }
-        OBJ_RELEASE(dfs);
         return;
     }
     /* otherwise, create a tracker for this file */
@@ -1046,3 +1136,152 @@ static void dfs_read(int fd, uint8_t *buffer,
     /* post it for processing */
     ORTE_DFS_POST_REQUEST(dfs, process_reads);
 }
+
+static void process_posts(int fd, short args, void *cbdata)
+{
+    orte_dfs_request_t *dfs = (orte_dfs_request_t*)cbdata;
+    opal_buffer_t *buffer;
+    int rc;
+
+    /* we will get confirmation in our receive function, so
+     * add this request to our list */
+    dfs->id = req_id++;
+    opal_list_append(&requests, &dfs->super);
+
+    /* Send the byte object to our local daemon for storage */
+    buffer = OBJ_NEW(opal_buffer_t);
+    if (OPAL_SUCCESS != (rc = opal_dss.pack(buffer, &dfs->cmd, 1, ORTE_DFS_CMD_T))) {
+        ORTE_ERROR_LOG(rc);
+        goto error;
+    }
+    /* include the request id */
+    if (OPAL_SUCCESS != (rc = opal_dss.pack(buffer, &dfs->id, 1, OPAL_UINT64))) {
+        ORTE_ERROR_LOG(rc);
+        goto error;
+    }
+    /* add my name */
+    if (OPAL_SUCCESS != (rc = opal_dss.pack(buffer, ORTE_PROC_MY_NAME, 1, ORTE_NAME))) {
+        ORTE_ERROR_LOG(rc);
+        goto error;
+    }
+    if (OPAL_SUCCESS != (rc = opal_dss.pack(buffer, &dfs->bo, 1, OPAL_BYTE_OBJECT))) {
+        ORTE_ERROR_LOG(rc);
+        goto error;
+    }
+    /* send it */
+    if (0 > (rc = orte_rml.send_buffer_nb(ORTE_PROC_MY_DAEMON, buffer,
+                                          ORTE_RML_TAG_DFS_CMD, 0,
+                                          orte_rml_send_callback, NULL))) {
+        ORTE_ERROR_LOG(rc);
+        goto error;
+    }
+    return;
+
+ error:
+    OBJ_RELEASE(buffer);
+    opal_list_remove_item(&requests, &dfs->super);
+    if (NULL != dfs->post_cbfunc) {
+        dfs->post_cbfunc(dfs->cbdata);
+    }
+    OBJ_RELEASE(dfs);
+}
+
+static void dfs_post_file_map(opal_byte_object_t *bo,
+                              orte_dfs_post_callback_fn_t cbfunc,
+                              void *cbdata)
+{
+    orte_dfs_request_t *dfs;
+
+    dfs = OBJ_NEW(orte_dfs_request_t);
+    dfs->cmd = ORTE_DFS_POST_CMD;
+    dfs->bo = bo;
+    dfs->post_cbfunc = cbfunc;
+    dfs->cbdata = cbdata;
+
+    /* post it for processing */
+    ORTE_DFS_POST_REQUEST(dfs, process_posts);
+}
+
+static void process_getfm(int fd, short args, void *cbdata)
+{
+    orte_dfs_request_t *dfs = (orte_dfs_request_t*)cbdata;
+    opal_buffer_t *buffer;
+    int rc;
+
+    /* we will get confirmation in our receive function, so
+     * add this request to our list */
+    dfs->id = req_id++;
+    opal_list_append(&requests, &dfs->super);
+
+    /* Send the request to our local daemon */
+    buffer = OBJ_NEW(opal_buffer_t);
+    if (OPAL_SUCCESS != (rc = opal_dss.pack(buffer, &dfs->cmd, 1, ORTE_DFS_CMD_T))) {
+        ORTE_ERROR_LOG(rc);
+        goto error;
+    }
+    /* include the request id */
+    if (OPAL_SUCCESS != (rc = opal_dss.pack(buffer, &dfs->id, 1, OPAL_UINT64))) {
+        ORTE_ERROR_LOG(rc);
+        goto error;
+    }
+    /* and the target */
+    if (OPAL_SUCCESS != (rc = opal_dss.pack(buffer, &dfs->target, 1, ORTE_NAME))) {
+        ORTE_ERROR_LOG(rc);
+        goto error;
+    }
+    /* send it */
+    if (0 > (rc = orte_rml.send_buffer_nb(ORTE_PROC_MY_DAEMON, buffer,
+                                          ORTE_RML_TAG_DFS_CMD, 0,
+                                          orte_rml_send_callback, NULL))) {
+        ORTE_ERROR_LOG(rc);
+        goto error;
+    }
+    return;
+
+ error:
+    OBJ_RELEASE(buffer);
+    opal_list_remove_item(&requests, &dfs->super);
+    if (NULL != dfs->fm_cbfunc) {
+        dfs->fm_cbfunc(NULL, dfs->cbdata);
+    }
+    OBJ_RELEASE(dfs);
+}
+
+static void dfs_get_file_map(orte_process_name_t *target,
+                             orte_dfs_fm_callback_fn_t cbfunc,
+                             void *cbdata)
+{
+    orte_dfs_request_t *dfs;
+
+    dfs = OBJ_NEW(orte_dfs_request_t);
+    dfs->cmd = ORTE_DFS_GETFM_CMD;
+    dfs->target.jobid = target->jobid;
+    dfs->target.vpid = target->vpid;
+    dfs->fm_cbfunc = cbfunc;
+    dfs->cbdata = cbdata;
+
+    /* post it for processing */
+    ORTE_DFS_POST_REQUEST(dfs, process_getfm);
+}
+
+static void dfs_load_file_maps(orte_jobid_t jobid,
+                               opal_byte_object_t *bo,
+                               orte_dfs_load_callback_fn_t cbfunc,
+                               void *cbdata)
+{
+    /* apps don't store file maps */
+    if (NULL != cbfunc) {
+        cbfunc(cbdata);
+    }
+}
+
+static void dfs_purge_file_maps(orte_jobid_t jobid,
+                                orte_dfs_purge_callback_fn_t cbfunc,
+                                void *cbdata)
+{
+    /* apps don't store file maps */
+    if (NULL != cbfunc) {
+        cbfunc(cbdata);
+    }
+}
+
