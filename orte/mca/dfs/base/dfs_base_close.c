@@ -22,12 +22,12 @@
 int orte_dfs_base_close(void)
 {
     /* if not initialized, then skip this action. */
-    if( !orte_dfs_base.initialized ) {
+    if (!orte_dfs_base.initialized) {
         return ORTE_SUCCESS;
     }
 
     /* Close selected component */
-    if( NULL != orte_dfs.finalize ) {
+    if (NULL != orte_dfs.finalize) {
         orte_dfs.finalize();
     }
 

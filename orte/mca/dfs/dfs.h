@@ -12,6 +12,7 @@
 #define ORTE_MCA_DFS_H
 
 #include "orte_config.h"
+#include "orte/types.h"
 
 #ifdef HAVE_FCNTL_H
 #include <fcntl.h>
@@ -106,20 +107,54 @@ typedef void (*orte_dfs_base_module_read_fn_t)(int fd, uint8_t *buffer,
                                                void *cbdata);
 
 
+/* Post a file map so others may access it */
+typedef void (*orte_dfs_base_module_post_file_map_fn_t)(opal_byte_object_t *bo,
+                                                        orte_dfs_post_callback_fn_t cbfunc,
+                                                        void *cbdata);
+
+/* Get the file map for a process
+ * 
+ * Returns the file map associated with the specified process name. If
+ * NULL is provided, then all known process maps will be returned in the
+ * byte object. It is the responsibility of the caller to unpack it, so
+ * applications are free to specify whatever constitutes a "file map" that
+ * suits their purposes
+ */
+typedef void (*orte_dfs_base_module_get_file_map_fn_t)(orte_process_name_t *target,
+                                                       orte_dfs_fm_callback_fn_t cbfunc,
+                                                       void *cbdata);
+
+
+/* Load file maps for a job
+ */
+typedef void (*orte_dfs_base_module_load_file_maps_fn_t)(orte_jobid_t jobid,
+                                                         opal_byte_object_t *bo,
+                                                         orte_dfs_load_callback_fn_t cbfunc,
+                                                         void *cbdata);
+
+/* Purge file maps for a job */
+typedef void (*orte_dfs_base_module_purge_file_maps_fn_t)(orte_jobid_t jobid,
+                                                          orte_dfs_purge_callback_fn_t cbfunc,
+                                                          void *cbdata);
+
 /*
  * Module Structure
  */
 struct orte_dfs_base_module_1_0_0_t {
     /** Initialization Function */
-    orte_dfs_base_module_init_fn_t        init;
+    orte_dfs_base_module_init_fn_t           init;
     /** Finalization Function */
-    orte_dfs_base_module_finalize_fn_t    finalize;
+    orte_dfs_base_module_finalize_fn_t       finalize;
 
-    orte_dfs_base_module_open_fn_t           open;
-    orte_dfs_base_module_close_fn_t          close;
-    orte_dfs_base_module_get_file_size_fn_t  get_file_size;
-    orte_dfs_base_module_seek_fn_t           seek;
-    orte_dfs_base_module_read_fn_t           read;
+    orte_dfs_base_module_open_fn_t             open;
+    orte_dfs_base_module_close_fn_t            close;
+    orte_dfs_base_module_get_file_size_fn_t    get_file_size;
+    orte_dfs_base_module_seek_fn_t             seek;
+    orte_dfs_base_module_read_fn_t             read;
+    orte_dfs_base_module_post_file_map_fn_t    post_file_map;
+    orte_dfs_base_module_get_file_map_fn_t     get_file_map;
+    orte_dfs_base_module_load_file_maps_fn_t   load_file_maps;
+    orte_dfs_base_module_purge_file_maps_fn_t  purge_file_maps;
 };
 typedef struct orte_dfs_base_module_1_0_0_t orte_dfs_base_module_1_0_0_t;
 typedef orte_dfs_base_module_1_0_0_t orte_dfs_base_module_t;

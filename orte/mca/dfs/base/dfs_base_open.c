@@ -42,7 +42,19 @@ opal_list_t orte_dfs_base_components_available;
 
 orte_dfs_base_t orte_dfs_base;
 
-orte_dfs_base_module_t orte_dfs;
+orte_dfs_base_module_t orte_dfs = {
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL
+};
 
 /**
  * Function for finding and opening either all MCA components, or the one
@@ -105,6 +117,10 @@ static void req_const(orte_dfs_request_t *dfs)
     dfs->size_cbfunc = NULL;
     dfs->seek_cbfunc = NULL;
     dfs->read_cbfunc = NULL;
+    dfs->post_cbfunc = NULL;
+    dfs->fm_cbfunc = NULL;
+    dfs->load_cbfunc = NULL;
+    dfs->purge_cbfunc = NULL;
     dfs->cbdata = NULL;
 }
 static void req_dest(orte_dfs_request_t *dfs)
@@ -116,3 +132,36 @@ static void req_dest(orte_dfs_request_t *dfs)
 OBJ_CLASS_INSTANCE(orte_dfs_request_t,
                    opal_list_item_t,
                    req_const, req_dest);
+
+static void jobfm_const(orte_dfs_jobfm_t *fm)
+{
+    OBJ_CONSTRUCT(&fm->maps, opal_list_t);
+}
+static void jobfm_dest(orte_dfs_jobfm_t *fm)
+{
+    opal_list_item_t *item;
+
+    while (NULL != (item = opal_list_remove_first(&fm->maps))) {
+        OBJ_RELEASE(item);
+    }
+    OBJ_DESTRUCT(&fm->maps);
+}
+OBJ_CLASS_INSTANCE(orte_dfs_jobfm_t,
+                   opal_list_item_t,
+                   jobfm_const, jobfm_dest);
+
+static void vpidfm_const(orte_dfs_vpidfm_t *fm)
+{
+    fm->fm.bytes = NULL;
+    fm->fm.size = 0;
+    fm->num_entries = 0;
+}
+static void vpidfm_dest(orte_dfs_vpidfm_t *fm)
+{
+    if (NULL != fm->fm.bytes) {
+        free(fm->fm.bytes);
+    }
+}
+OBJ_CLASS_INSTANCE(orte_dfs_vpidfm_t,
+                   opal_list_item_t,
+                   vpidfm_const, vpidfm_dest);
