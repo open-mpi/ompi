@@ -63,6 +63,7 @@ struct orterun_globals_t {
 #endif
     bool disable_recovery;
     bool preload_binaries;
+    bool staged;
 };
 
 /**

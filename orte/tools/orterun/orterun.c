@@ -86,6 +86,7 @@
 #include "orte/util/hnp_contact.h"
 #include "orte/util/show_help.h"
 
+#include "orte/mca/dfs/dfs.h"
 #include "orte/mca/odls/odls.h"
 #include "orte/mca/plm/plm.h"
 #include "orte/mca/plm/base/plm_private.h"
@@ -522,13 +523,16 @@ static opal_cmd_line_init_t cmd_line_init[] = {
       "Execute without creating an allocation-spanning virtual machine (only start daemons on nodes hosting application procs)" },
 
     { "state", "staged", "select", '\0', "staged", "staged", 0,
-      NULL, OPAL_CMD_LINE_TYPE_BOOL,
+      &orterun_globals.staged, OPAL_CMD_LINE_TYPE_BOOL,
       "Used staged execution if inadequate resources are present (cannot support MPI jobs)" },
 
     /* End of list */
     { NULL, NULL, NULL, '\0', NULL, NULL, 0,
       NULL, OPAL_CMD_LINE_TYPE_NULL, NULL }
 };
+
+/* local data */
+static opal_list_t job_stack;
 
 /*
  * Local functions
@@ -544,6 +548,50 @@ static int parse_appfile(orte_job_t *jdata, char *filename, char ***env);
 static void run_debugger(char *basename, opal_cmd_line_t *cmd_line,
                          int argc, char *argv[], int num_procs) __opal_attribute_noreturn__;
 
+static void spawn_next_job(opal_byte_object_t *bo, void *cbdata)
+{
+    orte_job_t *jdata = (orte_job_t*)cbdata;
+
+    /* add the data to the job's file map */
+    jdata->file_maps.bytes = bo->bytes;
+    jdata->file_maps.size = bo->size;
+    bo->bytes = NULL;
+    bo->size = 0;
+
+    /* spawn the next job */
+    orte_plm.spawn(jdata);
+}
+static void run_next_job(int fd, short args, void *cbdata)
+{
+    orte_state_caddy_t *caddy = (orte_state_caddy_t*)cbdata;
+    orte_job_t *jdata;
+    orte_process_name_t name;
+
+    /* get next job on stack */
+    jdata = (orte_job_t*)opal_list_remove_first(&job_stack);
+
+    if (NULL == jdata) {
+        /* all done - trip the termination sequence */
+        orte_event_base_active = false;
+        OBJ_DESTRUCT(&job_stack);
+        OBJ_RELEASE(caddy);
+        return;
+    }
+
+    if (NULL != orte_dfs.get_file_map) {
+        /* collect any file maps and spawn the next job */
+        name.jobid = caddy->jdata->jobid;
+        name.vpid = ORTE_VPID_WILDCARD;
+        
+        orte_dfs.get_file_map(&name, spawn_next_job, jdata);
+    } else {
+        /* just spawn the job */
+        orte_plm.spawn(jdata);
+    }
+
+    OBJ_RELEASE(caddy);
+}
+
 int orterun(int argc, char *argv[])
 {
     int rc;
@@ -552,7 +600,7 @@ int orterun(int argc, char *argv[])
     char *param;
     orte_job_t *daemons;
     orte_app_context_t *app, *dapp;
-    orte_job_t *jdata=NULL;
+    orte_job_t *jdata=NULL, *jptr;
 
     /* find our basename (the name of the executable) so that we can
        use it in pretty-print error messages */
@@ -937,6 +985,39 @@ int orterun(int argc, char *argv[])
                              ORTE_SYS_PRI);
 #endif
 
+    if (orterun_globals.staged) {
+        /* staged execution is requested - each app_context
+         * is treated as a separate job and executed in
+         * sequence
+         */
+        int i;
+        jdata->num_procs = 0;
+        OBJ_CONSTRUCT(&job_stack, opal_list_t);
+        for (i=1; i < jdata->apps->size; i++) {
+            if (NULL == (app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, i))) {
+                continue;
+            }
+            jptr = OBJ_NEW(orte_job_t);
+            opal_list_append(&job_stack, &jptr->super);
+            /* transfer the app */
+            opal_pointer_array_set_item(jdata->apps, i, NULL);
+            --jdata->num_apps;
+            /* reset the app_idx */
+            app->idx = 0;
+            opal_pointer_array_set_item(jptr->apps, 0, app);
+            ++jptr->num_apps;
+        }
+        /* define a state machine position
+         * that is fired when each job completes so we can then start
+         * the next job in our stack
+         */
+        if (ORTE_SUCCESS != (rc = orte_state.set_job_state_callback(ORTE_JOB_STATE_NOTIFY_COMPLETED, run_next_job))) {
+            ORTE_ERROR_LOG(rc);
+            ORTE_UPDATE_EXIT_STATUS(rc);
+            goto DONE;
+        }
+    }
+
     /* spawn the job and its daemons */
     rc = orte_plm.spawn(jdata);
 
@@ -974,6 +1055,7 @@ static int init_globals(void)
         orterun_globals.report_pid        = NULL;
         orterun_globals.report_uri        = NULL;
         orterun_globals.disable_recovery = false;
+        orterun_globals.staged = false;
     }
 
     /* Reset the other fields every time */
