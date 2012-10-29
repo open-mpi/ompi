@@ -227,7 +227,7 @@ static inline int a2a_sched_linear(int rank, int p, MPI_Aint sndext, MPI_Aint rc
 
   for(r=0;r<p;r++) {
     /* easy algorithm */
-    if ((r == rank)) { continue; }
+    if (r == rank) { continue; }
     rbuf = ((char *) recvbuf) + (r*recvcount*rcvext);
     res = NBC_Sched_recv(rbuf, false, recvcount, recvtype, r, schedule);
     if (NBC_OK != res) { printf("Error in NBC_Sched_recv() (%i)\n", res); return res; }
