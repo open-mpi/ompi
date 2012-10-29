@@ -673,6 +673,12 @@ void orte_state_base_check_all_complete(int fd, short args, void *cbdata)
                 /* release the proc once for the map entry */
                 OBJ_RELEASE(proc);
             }
+            /* set the node location to NULL */
+            opal_pointer_array_set_item(map->nodes, index, NULL);
+            /* maintain accounting */
+            OBJ_RELEASE(node);
+            /* flag that the node is no longer in a map */
+            node->mapped = false;
         }
         OBJ_RELEASE(map);
         jdata->map = NULL;

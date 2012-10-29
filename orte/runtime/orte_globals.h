@@ -441,6 +441,8 @@ typedef struct {
     /* max time for launch msg to be received */
     struct timeval max_launch_msg_recvd;
     orte_vpid_t num_local_procs;
+    /* file maps associates with this job */
+    opal_byte_object_t file_maps;
 #if OPAL_ENABLE_FT_CR == 1
     /* ckpt state */
     size_t ckpt_state;

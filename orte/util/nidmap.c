@@ -55,6 +55,7 @@
 #include "opal/datatype/opal_datatype.h"
 
 #include "orte/mca/db/db.h"
+#include "orte/mca/dfs/dfs.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/odls/base/odls_private.h"
 #include "orte/util/show_help.h"
@@ -521,6 +522,8 @@ int orte_util_encode_pidmap(opal_byte_object_t *boptr, bool update)
     int i, j, rc = ORTE_SUCCESS;
     orte_job_t *jdata;
     bool include_all;
+    uint8_t flag;
+    opal_byte_object_t *bptr;
 
     /* setup the working buffer */
     OBJ_CONSTRUCT(&buf, opal_buffer_t);
@@ -626,6 +629,10 @@ int orte_util_encode_pidmap(opal_byte_object_t *boptr, bool update)
                 ORTE_ERROR_LOG(rc);
                 goto cleanup_and_return;
             }
+             if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &proc->do_not_barrier, 1, OPAL_BOOL))) {
+                ORTE_ERROR_LOG(rc);
+                goto cleanup_and_return;
+            }
             if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &proc->restarts, 1, OPAL_INT32))) {
                 ORTE_ERROR_LOG(rc);
                 goto cleanup_and_return;
@@ -635,6 +642,25 @@ int orte_util_encode_pidmap(opal_byte_object_t *boptr, bool update)
         if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &ORTE_NAME_INVALID->vpid, 1, ORTE_VPID))) {
             ORTE_ERROR_LOG(rc);
             goto cleanup_and_return;
+        }
+        /* if there is a file map, then include it */
+        if (NULL != jdata->file_maps.bytes) {
+            flag = 1;
+            if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &flag, 1, OPAL_UINT8))) {
+                ORTE_ERROR_LOG(rc);
+                goto cleanup_and_return;
+            }
+            bptr = &jdata->file_maps;
+            if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &bptr, 1, OPAL_BYTE_OBJECT))) {
+                ORTE_ERROR_LOG(rc);
+                goto cleanup_and_return;
+            }
+        } else {
+            flag = 0;
+            if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &flag, 1, OPAL_UINT8))) {
+                ORTE_ERROR_LOG(rc);
+                goto cleanup_and_return;
+            }
         }
     }
     
@@ -669,6 +695,9 @@ int orte_util_decode_pidmap(opal_byte_object_t *bo)
     orte_namelist_t *nm;
     opal_list_t jobs;
     char *hostname;
+    uint8_t flag;
+    opal_byte_object_t *boptr;
+    bool barrier;
 
     /* xfer the byte object to a buffer for unpacking */
     OBJ_CONSTRUCT(&buf, opal_buffer_t);
@@ -788,6 +817,11 @@ int orte_util_decode_pidmap(opal_byte_object_t *bo)
                 goto cleanup;
             }
             n=1;
+            if (OPAL_SUCCESS != (rc = opal_dss.unpack(&buf, &barrier, &n, OPAL_BOOL))) {
+                ORTE_ERROR_LOG(rc);
+                goto cleanup;
+            }
+            n=1;
             if (OPAL_SUCCESS != (rc = opal_dss.unpack(&buf, &restarts, &n, OPAL_INT32))) {
                 ORTE_ERROR_LOG(rc);
                 goto cleanup;
@@ -831,6 +865,21 @@ int orte_util_decode_pidmap(opal_byte_object_t *bo)
                     ORTE_ERROR_LOG(rc);
                     goto cleanup;
                 }
+            }
+        }
+        n=1;
+        if (OPAL_SUCCESS != (rc = opal_dss.unpack(&buf, &flag, &n, OPAL_UINT8))) {
+            ORTE_ERROR_LOG(rc);
+            goto cleanup;
+        }
+        if (0 != flag) {
+            n=1;
+            if (OPAL_SUCCESS != (rc = opal_dss.unpack(&buf, &boptr, &n, OPAL_BYTE_OBJECT))) {
+                ORTE_ERROR_LOG(rc);
+                goto cleanup;
+            }
+            if (NULL != boptr->bytes) {
+                free(boptr->bytes);
             }
         }
         /* setup for next cycle */
@@ -914,11 +963,11 @@ int orte_util_decode_pidmap(opal_byte_object_t *bo)
                 locality = OPAL_PROC_NON_LOCAL;
             }
             /* store the locality */
-                OPAL_OUTPUT_VERBOSE((2, orte_nidmap_output,
-                                     "%s orte:util:decode:pidmap set proc %s locality to %s",
-                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                     ORTE_NAME_PRINT(&proc),
-                                     opal_hwloc_base_print_locality(locality)));
+            OPAL_OUTPUT_VERBOSE((2, orte_nidmap_output,
+                                 "%s orte:util:decode:pidmap set proc %s locality to %s",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 ORTE_NAME_PRINT(&proc),
+                                 opal_hwloc_base_print_locality(locality)));
             if (ORTE_SUCCESS != (rc = orte_db.store(&proc, ORTE_DB_LOCALITY, &locality, OPAL_HWLOC_LOCALITY_T))) {
                 ORTE_ERROR_LOG(rc);
                 goto cleanup;
@@ -930,6 +979,15 @@ int orte_util_decode_pidmap(opal_byte_object_t *bo)
  cleanup:
     OBJ_DESTRUCT(&buf);
     return rc;
+}
+
+static void fm_release(void *cbdata)
+{
+    opal_byte_object_t *boptr = (opal_byte_object_t*)cbdata;
+
+    if (NULL != boptr->bytes) {
+        free(boptr->bytes);
+    }
 }
 
 int orte_util_decode_daemon_pidmap(opal_byte_object_t *bo)
@@ -954,6 +1012,9 @@ int orte_util_decode_daemon_pidmap(opal_byte_object_t *bo)
     int32_t restarts;
     orte_job_map_t *map;
     bool found;
+    uint8_t flag;
+    opal_byte_object_t *boptr;
+    bool barrier;
 
     /* xfer the byte object to a buffer for unpacking */
     OBJ_CONSTRUCT(&buf, opal_buffer_t);
@@ -1045,6 +1106,11 @@ int orte_util_decode_daemon_pidmap(opal_byte_object_t *bo)
                 goto cleanup;
             }
             n=1;
+            if (OPAL_SUCCESS != (rc = opal_dss.unpack(&buf, &barrier, &n, OPAL_BOOL))) {
+                ORTE_ERROR_LOG(rc);
+                goto cleanup;
+            }
+            n=1;
             if (OPAL_SUCCESS != (rc = opal_dss.unpack(&buf, &restarts, &n, OPAL_INT32))) {
                 ORTE_ERROR_LOG(rc);
                 goto cleanup;
@@ -1128,12 +1194,34 @@ int orte_util_decode_daemon_pidmap(opal_byte_object_t *bo)
             proc->local_rank = local_rank;
             proc->node_rank = node_rank;
             proc->app_idx = app_idx;
+            proc->do_not_barrier = barrier;
             proc->restarts = restarts;
             proc->state = state;
 #if OPAL_HAVE_HWLOC
             proc->bind_idx = bind_idx;
             proc->cpu_bitmap = cpu_bitmap;
 #endif
+        }
+        /* see if we have a file map for this job */
+        n=1;
+        if (OPAL_SUCCESS != (rc = opal_dss.unpack(&buf, &flag, &n, OPAL_UINT8))) {
+            ORTE_ERROR_LOG(rc);
+            goto cleanup;
+        }
+        if (0 != flag) {
+            /* yep - retrieve and load it */
+            n=1;
+            if (OPAL_SUCCESS != (rc = opal_dss.unpack(&buf, &boptr, &n, OPAL_BYTE_OBJECT))) {
+                ORTE_ERROR_LOG(rc);
+                goto cleanup;
+            }
+            if (NULL != orte_dfs.load_file_maps) {
+                orte_dfs.load_file_maps(jdata->jobid, boptr, fm_release, boptr);
+            }
+            if (NULL != boptr->bytes) {
+                free(boptr->bytes);
+            }
+            free(boptr);
         }
         /* setup for next cycle */
         n = 1;

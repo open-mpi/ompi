@@ -733,6 +733,9 @@ static void orte_job_construct(orte_job_t* job)
     job->enable_recovery = false;
     job->num_local_procs = 0;
 
+    job->file_maps.bytes = NULL;
+    job->file_maps.size = 0;
+
 #if OPAL_ENABLE_FT_CR == 1
     job->ckpt_state = 0;
     job->ckpt_snapshot_ref = NULL;
@@ -778,6 +781,10 @@ static void orte_job_destruct(orte_job_t* job)
     }
     OBJ_RELEASE(job->procs);
     
+    if (NULL != job->file_maps.bytes) {
+        free(job->file_maps.bytes);
+    }
+
 #if OPAL_ENABLE_FT_CR == 1
     if (NULL != job->ckpt_snapshot_ref) {
         free(job->ckpt_snapshot_ref);
