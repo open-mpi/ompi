@@ -314,7 +314,11 @@ int ompi_info_get (ompi_info_t *info, char *key, int valuelen,
                strcpy(value, search->ie_value);
           } else {
                opal_strncpy(value, search->ie_value, valuelen);
-               value[valuelen-1] = 0;
+               if (MPI_MAX_INFO_VAL == valuelen) {
+                   value[valuelen-1] = 0;
+               } else {
+                   value[valuelen] = 0;
+               }
           }
     }
     OPAL_THREAD_UNLOCK(info->i_lock);
