@@ -31,7 +31,7 @@
 #include "orte/util/show_help.h"
 #include "ompi/mca/common/ofacm/base.h"
 #include "ompi/mca/common/ofacm/connect.h"
-#include "ompi/mca/common/ofautils/common_ofautils.h"
+#include "ompi/mca/common/verbs/common_verbs.h"
 
 /*
  * Public string showing the coll ompi_sm V2 component version number
