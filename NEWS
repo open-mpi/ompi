@@ -17,6 +17,8 @@ Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
 Copyright (c) 2010-2012 IBM Corporation.  All rights reserved.
 Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
 Copyright (c) 2012      Sandia National Laboratories.  All rights reserved.
+Copyright (c) 2012      University of Houston. All rights reserved.
+
 $COPYRIGHT$
 
 Additional copyrights may follow
@@ -89,6 +91,9 @@ included in the vX.Y.Z section and be denoted as:
 - Added new MCA parameter to provide protection against IO forwarding backlog
 - Added MPI Java bindings
 - Drop support for native Windows due to loss of maintainers :-(
+- Added a new parallel I/O component and multiple new frameworks to 
+  support parallel I/O operations.
+
 
 
 1.6.3
