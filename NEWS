@@ -17,6 +17,7 @@ Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
 Copyright (c) 2010-2012 IBM Corporation.  All rights reserved.
 Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
 Copyright (c) 2012      Sandia National Laboratories.  All rights reserved.
+Copyright (c) 2012      University of Houston. All rights reserved.
 $COPYRIGHT$
 
 Additional copyrights may follow
@@ -53,6 +54,8 @@ included in the vX.Y.Z section and be denoted as:
 Trunk (not on release branches yet)
 -----------------------------------
 
+- Adding a new parallel I/O component and multiple new frameworks to 
+  support parallel I/O operations.
 - ErrMgr framework redesigned to better support fault tolerance development
   activities. See the following RFC for details:
   http://www.open-mpi.org/community/lists/devel/2010/03/7589.php
