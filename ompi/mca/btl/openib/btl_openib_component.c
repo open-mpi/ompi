@@ -622,9 +622,11 @@ static int openib_dereg_mr(void *reg_data, mca_mpool_base_registration_t *reg)
 static inline int param_register_int(const char* param_name, int default_value)
 {
     int param_value = default_value;
-    int id = mca_base_param_register_int("btl", "openib", param_name, NULL,
-            default_value);
-    mca_base_param_lookup_int(id, &param_value);
+
+    (void) mca_base_param_reg_int (&mca_btl_openib_component.super.btl_version,
+                                   param_name, NULL, false, false, default_value,
+                                   &param_value);
+
     return param_value;
 }
 

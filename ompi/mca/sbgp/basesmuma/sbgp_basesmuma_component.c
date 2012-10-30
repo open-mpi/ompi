@@ -52,9 +52,12 @@ static int mca_sbgp_basesmuma_init_query(bool enable_progress_threads,
 static inline int mca_sbgp_basesmuma_param_register_int(
         const char* param_name, int default_value)
 {
-    int id = mca_base_param_register_int("sbgp","basesmuma",param_name,NULL,default_value);
     int param_value = default_value;
-    mca_base_param_lookup_int(id,&param_value);
+
+    (void) mca_base_param_reg_int (&mca_sbgp_basesmuma_component.super.sbgp_version,
+                                   param_name, NULL, false, false, default_value,
+                                   &param_value);
+
     return param_value;
 }
 

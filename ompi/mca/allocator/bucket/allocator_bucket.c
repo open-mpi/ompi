@@ -81,9 +81,8 @@ struct mca_allocator_base_module_t* mca_allocator_bucket_module_init(
 }
 
 int mca_allocator_bucket_module_open(void) {
-
-    int id = mca_base_param_register_int("allocator","bucket","num_buckets", NULL,30);
-    mca_base_param_lookup_int(id,&mca_allocator_num_buckets);
+    (void) mca_base_param_reg_int_name ("allocator", "bucket_num_buckets", NULL, false, false,
+                                        30, &mca_allocator_num_buckets);
     return(OMPI_SUCCESS);
 }
 

@@ -283,13 +283,13 @@ void orte_plm_base_setup_job(int fd, short args, void *cbdata)
 
     /* get collective ids for the std MPI operations */
     caddy->jdata->peer_modex = orte_grpcomm_base_get_coll_id();
-    modx_par = mca_base_param_environ_variable("orte", NULL, "peer_modex_id");
+    modx_par = mca_base_param_env_var ("orte_peer_modex_id");
     asprintf(&modx_val, "%d", caddy->jdata->peer_modex);
     caddy->jdata->peer_init_barrier = orte_grpcomm_base_get_coll_id();
-    bar1_par = mca_base_param_environ_variable("orte", NULL, "peer_init_barrier_id");
+    bar1_par = mca_base_param_env_var ("orte_peer_init_barrier_id");
     asprintf(&bar1_val, "%d", caddy->jdata->peer_init_barrier);
     caddy->jdata->peer_fini_barrier = orte_grpcomm_base_get_coll_id();
-    bar2_par = mca_base_param_environ_variable("orte", NULL, "peer_fini_barrier_id");
+    bar2_par = mca_base_param_env_var ("orte_peer_fini_barrier_id");
     asprintf(&bar2_val, "%d", caddy->jdata->peer_fini_barrier);
 
     /* if app recovery is not defined, set apps to defaults */
