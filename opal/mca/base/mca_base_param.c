@@ -412,52 +412,6 @@ int mca_base_param_reg_string_name(const char *type,
 
 
 /*
- * Register an integer MCA parameter 
- * (deprecated)
- */
-int mca_base_param_register_int(const char *type_name, 
-                                const char *component_name,
-                                const char *param_name, 
-                                const char *mca_param_name, 
-                                int default_value)
-{
-    int ret;
-    mca_base_param_storage_t storage;
-
-    storage.intval = default_value;
-    ret = param_register(type_name, component_name, param_name, mca_param_name,
-                         MCA_BASE_PARAM_TYPE_INT, false, false,
-                         &storage, NULL, NULL, NULL);
-    return ret;
-}
-
-
-/*
- * Register a string MCA parameter.
- * (deprecated)
- */
-int mca_base_param_register_string(const char *type_name, 
-                                   const char *component_name,
-                                   const char *param_name, 
-                                   const char *mca_param_name,
-                                   const char *default_value)
-{
-    int ret;
-    mca_base_param_storage_t storage;
-
-    if (NULL != default_value) {
-        storage.stringval = (char *) default_value;
-    } else {
-        storage.stringval = NULL;
-    }
-    ret = param_register(type_name, component_name, param_name, mca_param_name,
-                         MCA_BASE_PARAM_TYPE_STRING, false, false,
-                         &storage, NULL, NULL, NULL);
-    return ret;
-}
-
-
-/*
  * Register a synonym name for an existing MCA parameter
  */
 int mca_base_param_reg_syn(int index_orig,
@@ -611,56 +565,6 @@ char *mca_base_param_env_var(const char *param_name)
     asprintf(&name, "%s%s", mca_prefix, param_name);
 
     return name;
-}
-
-/*
- * Make a string suitable for the environment, setting an MCA param
- */
-char *mca_base_param_environ_variable(const char *type,
-                                      const char *component,
-                                      const char *param)
-{
-    size_t len;
-    int id;
-    char *ret = NULL, *name;
-    mca_base_param_t *array;
-
-    if (NULL == type) {
-        return NULL;
-    }
-
-    id = mca_base_param_find(type, component, param);
-    if (0 <= id) {
-        array = OPAL_VALUE_ARRAY_GET_BASE(&mca_base_params, mca_base_param_t);
-        ret = strdup(array[id].mbp_env_var_name);
-    } else {
-        len = strlen(mca_prefix) + strlen(type) + 16;
-        if (NULL != component) {
-            len += strlen(component);
-        }
-        if (NULL != param) {
-            len += strlen(param);
-        }
-        name = (char*)malloc(len);
-        if (NULL == name) {
-            return NULL;
-        }
-        name[0] = '\0';
-        snprintf(name, len, "%s%s", mca_prefix, type);
-        if (NULL != component) {
-            strcat(name, "_");
-            strcat(name, component);
-        }
-        if (NULL != param) {
-            strcat(name, "_");
-            strcat(name, param);
-        }
-        ret = name;
-    }
-
-    /* All done */
-
-    return ret;
 }
 
 

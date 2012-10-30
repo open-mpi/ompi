@@ -105,56 +105,56 @@ typedef struct {
 opal_restart_globals_t opal_restart_globals;
 
 opal_cmd_line_init_t cmd_line_opts[] = {
-    { NULL, NULL, NULL, 
+    { NULL,
       'h', NULL, "help", 
       0,
       &opal_restart_globals.help, OPAL_CMD_LINE_TYPE_BOOL,
       "This help message" },
 
-    { NULL, NULL, NULL, 
+    { NULL,
       'v', NULL, "verbose", 
       0,
       &opal_restart_globals.verbose, OPAL_CMD_LINE_TYPE_BOOL,
       "Be Verbose" },
 
-    { NULL, NULL, NULL,
+    { NULL,
       'l', NULL, "location",
       1,
       &opal_restart_globals.snapshot_loc, OPAL_CMD_LINE_TYPE_STRING,
       "Full path to the location of the local snapshot."},
 
-    { NULL, NULL, NULL,
+    { NULL,
       'm', NULL, "metadata",
       1,
       &opal_restart_globals.snapshot_metadata, OPAL_CMD_LINE_TYPE_STRING,
       "Relative path (with respect to --location) to the metadata file."},
 
-    { NULL, NULL, NULL,
+    { NULL,
       'r', NULL, "reference",
       1,
       &opal_restart_globals.snapshot_ref, OPAL_CMD_LINE_TYPE_STRING,
       "Local snapshot reference."},
 
-    { NULL, NULL, NULL,
+    { NULL,
       'c', NULL, "cache",
       1,
       &opal_restart_globals.snapshot_cache, OPAL_CMD_LINE_TYPE_STRING,
       "Possible local cache of the snapshot reference."},
 
-    { NULL, NULL, NULL,
+    { NULL,
       'd', NULL, "decompress",
       1,
       &opal_restart_globals.snapshot_compress, OPAL_CMD_LINE_TYPE_STRING,
       "Decompression component to use."},
 
-    { NULL, NULL, NULL,
+    { NULL,
       'p', NULL, "decompress_postfix",
       1,
       &opal_restart_globals.snapshot_compress_postfix, OPAL_CMD_LINE_TYPE_STRING,
       "Decompression component postfix."},
 
     /* End of list */
-    { NULL, NULL, NULL, 
+    { NULL,
       '\0', NULL, NULL, 
       0,
       NULL, OPAL_CMD_LINE_TYPE_NULL,

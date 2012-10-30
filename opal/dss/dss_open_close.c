@@ -170,7 +170,7 @@ OBJ_CLASS_INSTANCE(opal_node_stats_t, opal_object_t,
 int opal_dss_open(void)
 {
     char *enviro_val;
-    int id, rc;
+    int rc;
     opal_data_type_t tmp;
     int def_type;
 
@@ -193,22 +193,21 @@ int opal_dss_open(void)
     def_type = OPAL_DSS_BUFFER_NON_DESC;
 #endif
 
-    id = mca_base_param_register_int("dss", "buffer", "type",
-                                     "Set the default mode for OpenRTE buffers (0=non-described, 1=described)",
-                                     def_type);
-    mca_base_param_lookup_int(id, &rc);
+    (void) mca_base_param_reg_int_name ("dss", "buffer_type",
+					"Set the default mode for OpenRTE buffers (0=non-described, 1=described)",
+					false, false, def_type, &rc);
     default_buf_type = rc;
 
     /* setup the initial size of the buffer. */
-    id = mca_base_param_register_int("dss", "buffer_initial", "size", NULL, 
-                                     OPAL_DSS_DEFAULT_INITIAL_SIZE);
-    mca_base_param_lookup_int(id, &opal_dss_initial_size);
+    (void) mca_base_param_reg_int_name ("dss", "buffer_initial_size", NULL,
+					false, false, OPAL_DSS_DEFAULT_INITIAL_SIZE,
+					&opal_dss_initial_size);
 
     /* the threshold as to where to stop doubling the size of the buffer 
      * allocated memory and start doing additive increases */
-    id = mca_base_param_register_int("dss", "buffer_threshold", "size", NULL, 
-                                     OPAL_DSS_DEFAULT_THRESHOLD_SIZE);
-    mca_base_param_lookup_int(id, &opal_dss_threshold_size);
+    (void) mca_base_param_reg_int_name ("dss", "buffer_threshold_size", NULL,
+					false, false, OPAL_DSS_DEFAULT_THRESHOLD_SIZE,
+					&opal_dss_threshold_size);
 
     /* Setup the types array */
     OBJ_CONSTRUCT(&opal_dss_types, opal_pointer_array_t);
