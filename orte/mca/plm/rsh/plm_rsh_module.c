@@ -586,7 +586,7 @@ static int setup_launch(int *argcptr, char ***argvptr,
          * only if they aren't already present
          */
         for (i = 0; NULL != environ[i]; ++i) {
-            if (0 == strncmp("OMPI_", environ[i], 5)) {
+            if (0 == strncmp("OMPI_MCA", environ[i], 8)) {
                 /* check for duplicate in app->env - this
                  * would have been placed there by the
                  * cmd line processor. By convention, we
