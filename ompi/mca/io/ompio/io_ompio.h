@@ -42,7 +42,7 @@
 extern int mca_io_ompio_cycle_buffer_size;
 extern int mca_io_ompio_bytes_per_agg;
 extern int mca_io_ompio_record_offset_info;
-extern int mca_io_ompio_coll_timing_info;
+OMPI_DECLSPEC extern int mca_io_ompio_coll_timing_info;
 
 /*
  * Flags
@@ -82,6 +82,10 @@ extern int mca_io_ompio_coll_timing_info;
 #define OMPIO_MODE_APPEND            128
 #define OMPIO_MODE_SEQUENTIAL        256
 
+/* PRINT QUEUES*/
+#define WRITE_PRINT_QUEUE 1809
+#define READ_PRINT_QUEUE 2178
+/*---------------------------*/
 BEGIN_C_DECLS
 
 enum ompio_fs_type
@@ -210,8 +214,8 @@ struct mca_io_ompio_data_t {
 };
 typedef struct mca_io_ompio_data_t mca_io_ompio_data_t;
 
-extern print_queue *coll_write_time;
-extern print_queue *coll_read_time;
+OMPI_DECLSPEC extern print_queue *coll_write_time;
+OMPI_DECLSPEC extern print_queue *coll_read_time;
 
 
 OMPI_DECLSPEC int ompi_io_ompio_set_file_defaults (mca_io_ompio_file_t *fh);
@@ -373,21 +377,23 @@ OMPI_DECLSPEC int ompi_io_ompio_bcast_array (void *buff,
                                              int procs_per_group,
                                              ompi_communicator_t *comm);
 
-OMPI_DECLSPEC int ompi_io_ompio_register_print_entry (print_queue *q,
+OMPI_DECLSPEC int ompi_io_ompio_register_print_entry (int queue_type,
 						      print_entry x);
 
-OMPI_DECLSPEC int ompi_io_ompio_unregister_print_entry (print_queue *q, print_entry *x);
+OMPI_DECLSPEC int ompi_io_ompio_unregister_print_entry (int queue_type, print_entry *x);
 
-OMPI_DECLSPEC int ompi_io_ompio_empty_print_queue(print_queue *q);
+OMPI_DECLSPEC int ompi_io_ompio_empty_print_queue(int queue_type);
 
-OMPI_DECLSPEC int ompi_io_ompio_full_print_queue(print_queue *q);
+OMPI_DECLSPEC int ompi_io_ompio_full_print_queue(int queue_type);
 
 OMPI_DECLSPEC int ompi_io_ompio_initialize_print_queue(print_queue *q);
 
-OMPI_DECLSPEC int ompi_io_ompio_print_time_info(print_queue *q,
+OMPI_DECLSPEC int ompi_io_ompio_print_time_info(int queue_type,
 						char *name_operation,
 						mca_io_ompio_file_t *fh);
-						       
+int ompi_io_ompio_set_print_queue (print_queue **q, 
+				   int queue_type);
+	       
 
 /*
  * ******************************************************************
