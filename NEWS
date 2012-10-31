@@ -93,6 +93,10 @@ included in the vX.Y.Z section and be denoted as:
 - Drop support for native Windows due to loss of maintainers :-(
 - Added a new parallel I/O component and multiple new frameworks to 
   support parallel I/O operations.
+- Fix typo in orte_setup_haddop.m4. Thanks to Aleksej Saushev for
+  reporting it
+- Fix a very old error in opal_path_access. Thanks to Marco Atzeri
+  for chasing it down.
 
 
 
