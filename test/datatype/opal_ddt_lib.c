@@ -34,7 +34,7 @@ static int32_t opal_datatype_create_hindexed( int count, const int* pBlockLength
                                               const opal_datatype_t* oldType, opal_datatype_t** newType );
 static int32_t opal_datatype_create_struct( int count, const int* pBlockLength,
                                             const OPAL_PTRDIFF_TYPE* pDisp,
-                                            opal_datatype_t* const * pTypes, opal_datatype_t** newType );
+                                            opal_datatype_t** pTypes, opal_datatype_t** newType );
 static int32_t opal_datatype_create_vector( int count, int bLength, int stride,
                                             const opal_datatype_t* oldType, opal_datatype_t** newType );
 static int32_t opal_datatype_create_hvector( int count, int bLength, OPAL_PTRDIFF_TYPE stride,
@@ -135,7 +135,7 @@ opal_datatype_t* test_create_blacs_type2( opal_datatype_t* base_type )
 
 opal_datatype_t* test_struct( void )
 {
-    const opal_datatype_t* types[] = { (opal_datatype_t*)&opal_datatype_float4,
+    opal_datatype_t* types[] = { (opal_datatype_t*)&opal_datatype_float4,
                                  NULL,
                                  (opal_datatype_t*)&opal_datatype_int1 };
     int lengths[] = { 2, 1, 3 };
@@ -204,9 +204,7 @@ opal_datatype_t* create_strange_dt( void )
 {
     sdata_intern v[2];
     OPAL_PTRDIFF_TYPE displ[3];
-    sstrange t[2];
-    int pBlock[3] = {1, 10, 1}, dispi[3];
-    opal_datatype_t *pdt, *pdt1, *pdt2, *pdtTemp;
+    opal_datatype_t *pdt, *pdt1;
 
     opal_datatype_create_contiguous(0, &opal_datatype_empty, &pdt1);
     opal_datatype_add( pdt1, &opal_datatype_float8, 1, 0, -1 );
@@ -345,7 +343,7 @@ static int32_t opal_datatype_create_hindexed( int count, const int* pBlockLength
 
 
 static int32_t opal_datatype_create_struct( int count, const int* pBlockLength, const OPAL_PTRDIFF_TYPE* pDisp,
-                                            opal_datatype_t* const * pTypes, opal_datatype_t** newType )
+                                            opal_datatype_t** pTypes, opal_datatype_t** newType )
 {
     int i;
     OPAL_PTRDIFF_TYPE disp = 0, endto, lastExtent, lastDisp;
