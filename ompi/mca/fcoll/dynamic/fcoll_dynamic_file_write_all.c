@@ -97,12 +97,12 @@ mca_fcoll_dynamic_file_write_all (mca_io_ompio_file_t *fh,
     MPI_Request *send_req=NULL, *recv_req=NULL;
     int datatype_size, recv_req_count=0;
 
-
+#if TIME_BREAKDOWN
     double write_time = 0.0, start_write_time = 0.0, end_write_time = 0.0;
     double comm_time = 0.0, start_comm_time = 0.0, end_comm_time = 0.0;
     double exch_write = 0.0, start_exch = 0.0, end_exch = 0.0;
     print_entry nentry;
-    
+#endif
 
 
     if (opal_datatype_is_contiguous_memory_layout(&datatype->super,1)) {
@@ -375,9 +375,10 @@ mca_fcoll_dynamic_file_write_all (mca_io_ompio_file_t *fh,
 
 
 
-    if(mca_io_ompio_coll_timing_info)
-      start_exch = MPI_Wtime();
 
+#if TIME_BREAKDOWN
+      start_exch = MPI_Wtime();
+#endif
     
     for (index = 0; index < cycles; index++) {
 
@@ -722,8 +723,9 @@ mca_fcoll_dynamic_file_write_all (mca_io_ompio_file_t *fh,
 	printf("%d : global_count : %ld, bytes_sent : %d\n",
 	       fh->f_rank,global_count, bytes_sent);
 #endif
-	if (mca_io_ompio_coll_timing_info)
+#if TIME_BREAKDOWN
 	  start_comm_time = MPI_Wtime();
+#endif
 
 	
 	global_buf  = (char *) malloc (global_count);
@@ -878,10 +880,11 @@ mca_fcoll_dynamic_file_write_all (mca_io_ompio_file_t *fh,
 	}
     }
 
-    if (mca_io_ompio_coll_timing_info){
+#if TIME_BREAKDOWN
       end_comm_time = MPI_Wtime();
       comm_time += (end_comm_time - start_comm_time);
-    }
+#endif
+
 
     /**********************************************************
      **************** DONE GATHERING OF DATA ******************
@@ -893,9 +896,9 @@ mca_fcoll_dynamic_file_write_all (mca_io_ompio_file_t *fh,
 
 	if (fh->f_procs_in_group[fh->f_aggregator_index] == fh->f_rank) {
 
-	  if (mca_io_ompio_coll_timing_info){
+#if TIME_BREAKDOWN
 	    start_write_time = MPI_Wtime();
-	  }
+#endif
 	  
 	  fh->f_io_array = (mca_io_ompio_io_array_t *) malloc 
 	    (entries_per_aggregator * sizeof (mca_io_ompio_io_array_t));
@@ -954,10 +957,10 @@ mca_fcoll_dynamic_file_write_all (mca_io_ompio_file_t *fh,
 	      goto exit;
 	    }
 	  }
-	  if (mca_io_ompio_coll_timing_info){
-	    end_write_time = MPI_Wtime();
-	    write_time += end_write_time - start_write_time;
-	  }
+#if TIME_BREAKDOWN
+	  end_write_time = MPI_Wtime();
+	  write_time += end_write_time - start_write_time;
+#endif	  
 
 
 	}
@@ -992,7 +995,7 @@ mca_fcoll_dynamic_file_write_all (mca_io_ompio_file_t *fh,
 	
     }
 
-    if (mca_io_ompio_coll_timing_info){
+#if TIME_BREAKDOWN
       end_exch = MPI_Wtime();
       exch_write += end_exch - start_exch;
       nentry.time[0] = write_time;
@@ -1003,11 +1006,11 @@ mca_fcoll_dynamic_file_write_all (mca_io_ompio_file_t *fh,
       else
 	nentry.aggregator = 0;
       nentry.nprocs_for_coll = mca_fcoll_dynamic_num_io_procs;
-      if (!ompi_io_ompio_full_print_queue(coll_write_time)){
-	ompi_io_ompio_register_print_entry(coll_write_time,
+      if (!ompi_io_ompio_full_print_queue(WRITE_PRINT_QUEUE)){
+	ompi_io_ompio_register_print_entry(WRITE_PRINT_QUEUE,
 					   nentry);
       } 
-    }
+#endif
 
 
  exit :
