@@ -21,7 +21,7 @@ release=0
 # only requirement is that it must be entirely printable ASCII 
 # characters and have no white space.
 
-greek=rc4
+greek=rc5
 
 # If want_repo_rev=1, then the repo revision number will be included
 # in the overall Open MPI version number in some form.
