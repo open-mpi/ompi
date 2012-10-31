@@ -46,9 +46,6 @@
 #ifdef HAVE_SYS_STAT_H
 #include <sys/stat.h>
 #endif
-
-
-
 #include "io_ompio.h"
 
 print_queue *coll_write_time=NULL;
@@ -1998,71 +1995,121 @@ int ompi_io_ompio_scatter_data (mca_io_ompio_file_t *fh,
 /* Print queue related function implementations */
 
 
+int ompi_io_ompio_set_print_queue (print_queue **q, 
+				   int queue_type){
+
+    int  ret = OMPI_SUCCESS;
+
+    switch(queue_type) { 
+
+    case WRITE_PRINT_QUEUE: 
+	*q = coll_write_time; 
+	break;		 
+    case READ_PRINT_QUEUE: 
+	*q = coll_read_time; 
+	break; 
+    }	  
+
+    if (NULL == q){				
+	ret = OMPI_ERROR;				
+    } 						
+    return ret;
+
+} 
+
+
 int ompi_io_ompio_initialize_print_queue(print_queue *q){
 
+    int ret = OMPI_SUCCESS;
     q->first = 0;
     q->last = QUEUESIZE - 1;
     q->count = 0;
-
-    return OMPI_SUCCESS;
+    return ret;
 }
-int ompi_io_ompio_register_print_entry (print_queue *q,
+int ompi_io_ompio_register_print_entry (int queue_type,
 					print_entry x){
     
-    if (q->count >= QUEUESIZE){
-	return OMPI_ERROR;
-    }
-    else{
-	q->last = (q->last + 1) % QUEUESIZE;
-	q->entry[q->last] = x;
-	q->count = q->count + 1;
+    int ret = OMPI_SUCCESS;
+    print_queue *q=NULL;
 
+    ret = ompi_io_ompio_set_print_queue(&q, queue_type);
+
+    if (ret != OMPI_ERROR){
+	if (q->count >= QUEUESIZE){
+	    return OMPI_ERROR;
+	}
+	else{
+	    q->last = (q->last + 1) % QUEUESIZE;
+	    q->entry[q->last] = x;
+	    q->count = q->count + 1;
+	}
+    }
+    return ret;
+}
+
+int  ompi_io_ompio_unregister_print_entry (int queue_type, 
+					   print_entry *x){
+    
+    int ret = OMPI_SUCCESS;
+    print_queue *q=NULL;
+    ret = ompi_io_ompio_set_print_queue(&q, queue_type);
+    if (ret != OMPI_ERROR){
+	if (q->count <= 0){
+	    return OMPI_ERROR;
+	}
+	else{
+	    *x = q->entry[q->first];
+	    q->first = (q->first+1) % QUEUESIZE;
+	    q->count = q->count - 1;
+	}
     }
     return OMPI_SUCCESS;
 }
 
-int  ompi_io_ompio_unregister_print_entry (print_queue *q, print_entry *x){
-    
-    if (q->count <= 0){
-	return OMPI_ERROR;
-    }
-    else{
-	*x = q->entry[q->first];
-	q->first = (q->first+1) % QUEUESIZE;
-	q->count = q->count - 1;
-    }
-    return OMPI_SUCCESS;
-}
+int ompi_io_ompio_empty_print_queue(int queue_type){
 
-int ompi_io_ompio_empty_print_queue(print_queue *q){
+    int ret = OMPI_SUCCESS;
+    print_queue *q=NULL;
+    ret =  ompi_io_ompio_set_print_queue(&q, queue_type);
     
-    if (q->count <= 0){
-	return 1;
-    }
+    assert (ret != OMPI_ERROR);	
+    if (q->count == 0)
+	    return 1;
     else
 	return 0;
+
+    
 }
 
-int ompi_io_ompio_full_print_queue(print_queue *q){
+int ompi_io_ompio_full_print_queue(int queue_type){
     
+
+    int ret = OMPI_SUCCESS;
+    print_queue *q=NULL;
+    ret =  ompi_io_ompio_set_print_queue(&q, queue_type);
+    
+    assert ( ret != OMPI_ERROR);	
     if (q->count < QUEUESIZE)
-	return 0;
+	    return 0;
     else
 	return 1;
+    
 }
 
 
-int ompi_io_ompio_print_time_info(print_queue *q,
-				      char *name,
-				      mca_io_ompio_file_t *fh){
+int ompi_io_ompio_print_time_info(int queue_type,
+				  char *name,
+				  mca_io_ompio_file_t *fh){
     
     int i = 0, j=0, nprocs_for_coll = 0, ret = OMPI_SUCCESS, count = 0;
     double *time_details = NULL, *final_sum = NULL;
     double *final_max = NULL, *final_min = NULL;
     double *final_time_details=NULL;
-    
+    print_queue *q=NULL;
 	
-
+    ret =  ompi_io_ompio_set_print_queue(&q, queue_type);
+ 	
+    assert (ret != OMPI_ERROR); 	
     nprocs_for_coll = q->entry[0].nprocs_for_coll;
     time_details = (double *) malloc (4*sizeof(double));
     if ( NULL == time_details){

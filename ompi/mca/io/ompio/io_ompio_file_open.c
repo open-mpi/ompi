@@ -177,17 +177,18 @@ mca_io_ompio_file_close (ompi_file_t *fh)
 
     if(mca_io_ompio_coll_timing_info){
       strcpy (name, "WRITE");
-      if (!ompi_io_ompio_empty_print_queue(coll_write_time)){
-	ret = ompi_io_ompio_print_time_info(coll_write_time,
+      if (!ompi_io_ompio_empty_print_queue(WRITE_PRINT_QUEUE)){
+	ret = ompi_io_ompio_print_time_info(WRITE_PRINT_QUEUE,
 					    name,
 					    &data->ompio_fh);
 	if (OMPI_SUCCESS != ret){
 	  printf("Error in print_time_info ");
 	}
+	
       }
       strcpy (name, "READ");
-      if (!ompi_io_ompio_empty_print_queue(coll_read_time)){
-	ret = ompi_io_ompio_print_time_info(coll_read_time,
+      if (!ompi_io_ompio_empty_print_queue(READ_PRINT_QUEUE)){
+	ret = ompi_io_ompio_print_time_info(READ_PRINT_QUEUE,
 					    name,
 					    &data->ompio_fh);
 	if (OMPI_SUCCESS != ret){
