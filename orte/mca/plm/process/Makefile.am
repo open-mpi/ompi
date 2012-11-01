@@ -17,6 +17,8 @@
 # $HEADER$
 #
 
+dist_pkgdata_DATA = help-plm-process.txt
+
 EXTRA_DIST = .windows
 
 AM_CPPFLAGS = $(plm_process_CPPFLAGS)

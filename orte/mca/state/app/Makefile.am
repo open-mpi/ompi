@@ -8,6 +8,8 @@
 # $HEADER$
 #
 
+EXTRA_DIST = .windows
+
 sources = \
         state_app.h \
         state_app_component.c \
