@@ -98,12 +98,12 @@ OPAL_DECLSPEC int opal_event_init(void);
 /* thread support APIs */
 #if OPAL_EVENT_HAVE_THREAD_SUPPORT
 #ifdef WIN32
-#define opal_event_use_threads(x) evthread_use_windows_threads(x)
+#define opal_event_use_threads() evthread_use_windows_threads()
 #else
-#define opal_event_use_threads(x) evthread_use_pthreads(x)
+#define opal_event_use_threads() evthread_use_pthreads()
 #endif
 #else
-#define opal_event_use_threads(x)
+#define opal_event_use_threads()
 #endif
 
 /* Basic event APIs */
