@@ -29,8 +29,7 @@ mpi3_not_yet_in_trunk = \
         dist_graph_create_adjacent_f08.F90 \
         dist_graph_create_f08.F90 \
         dist_graph_neighbors_count_f08.F90 \
-        dist_graph_neighbors_f08.F90 \
-        reduce_scatter_block_f08.F90
+        dist_graph_neighbors_f08.F90
 
 mpi_api_files = \
         abort_f08.F90 \
@@ -344,8 +343,7 @@ pmpi3_not_yet_in_trunk = \
         profile/pdist_graph_create_adjacent_f08.F90 \
         profile/pdist_graph_create_f08.F90 \
         profile/pdist_graph_neighbors_count_f08.F90 \
-        profile/pdist_graph_neighbors_f08.F90 \
-        profile/preduce_scatter_block_f08.F90
+        profile/pdist_graph_neighbors_f08.F90
 
 pmpi_api_files = \
         profile/pabort_f08.F90 \
@@ -356,6 +354,7 @@ pmpi_api_files = \
         profile/pallgatherv_f08.F90 \
         profile/palloc_mem_f08.F90 \
         profile/pallreduce_f08.F90 \
+        profile/palltoall_f08.F90 \
         profile/palltoallv_f08.F90 \
         profile/palltoallw_f08.F90 \
         profile/pbarrier_f08.F90 \
@@ -501,6 +500,7 @@ pmpi_api_files = \
         profile/preduce_f08.F90 \
         profile/preduce_local_f08.F90 \
         profile/preduce_scatter_f08.F90 \
+        profile/preduce_scatter_block_f08.F90 \
         profile/prequest_free_f08.F90 \
         profile/prequest_get_status_f08.F90 \
         profile/prsend_f08.F90 \
