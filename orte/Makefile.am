@@ -55,7 +55,7 @@ nobase_orte_HEADERS = $(headers)
 endif
 
 # setup to catch extra files to be included in tarballs
-EXTRA_DIST = CMakeLists.txt
+EXTRA_DIST = CMakeLists.txt Doxyfile
 
 include runtime/Makefile.am
 include util/Makefile.am
