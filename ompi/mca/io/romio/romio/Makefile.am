@@ -24,7 +24,7 @@ include $(top_srcdir)/Makefile.options
 SUBDIRS = include adio mpi-io
 DIST_SUBDIRS = $(SUBDIRS) doc util
 
-EXTRA_DIST = README COPYRIGHT README_OMPI
+EXTRA_DIST = README COPYRIGHT README_OMPI autogen.sh
 
 noinst_LTLIBRARIES = libromio_dist.la 
 libromio_dist_la_SOURCES = 
