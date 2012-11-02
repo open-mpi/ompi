@@ -50,7 +50,6 @@
 #include "opal/util/argv.h"
 #include "opal/memoryhooks/memory.h"
 #include "opal/mca/base/mca_base_param.h"
-#include "ompi/mca/common/verbs/common_verbs.h"
 /* Define this before including hwloc.h so that we also get the hwloc
    verbs helper header file, too.  We have to do this level of
    indirection because the hwloc subsystem is a component -- we don't
