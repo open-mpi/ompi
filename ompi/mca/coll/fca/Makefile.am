@@ -37,10 +37,10 @@ endif
 mcacomponentdir = $(pkglibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_coll_fca_la_SOURCES = $(coll_fca_sources)
-mca_coll_fca_la_LIBADD = 
+mca_coll_fca_la_LIBADD = $(coll_fca_LIBS)
 mca_coll_fca_la_LDFLAGS = -module -avoid-version $(coll_fca_LDFLAGS)
 
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_coll_fca_la_SOURCES =$(coll_fca_sources)
-libmca_coll_fca_la_LIBADD = 
+libmca_coll_fca_la_LIBADD = $(coll_fca_LIBS) 
 libmca_coll_fca_la_LDFLAGS = -module -avoid-version $(coll_fca_LDFLAGS)

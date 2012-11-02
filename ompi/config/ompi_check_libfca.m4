@@ -40,7 +40,7 @@ AC_DEFUN([OMPI_CHECK_FCA],[
 				   [fca_api.h],
 				   [$ompi_check_fca_libs],
 				   [fca_get_version],
-				   [],
+				   [-l$ompi_check_fca_libs],
 				   [$ompi_check_fca_dir],
 				   [$ompi_check_fca_libdir],
 				   [ompi_check_fca_happy="yes"],
