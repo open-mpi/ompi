@@ -40,8 +40,11 @@
  * functionality.  It is intended to be used in performance-critical
  * code paths -- extra functionality would simply add latency.
  *
- * There is an opal_hotel_init() function to create a hotel, and a
- * corresponding opal_hotel_finalize() function to destroy a hotel.
+ * There is an opal_hotel_init() function to create a hotel, but no
+ * corresponding finalize; the destructor will handle all finalization
+ * issues.  Note that when a hotel is destroyed, it will delete all
+ * pending events from the event base (i.e., all pending eviction
+ * callbacks); no further eviction callbacks will be invoked.
  */
 
 #ifndef OPAL_HOTEL_H
