@@ -82,19 +82,6 @@ int opal_hotel_init(opal_hotel_t *h, int num_rooms,
     return OPAL_SUCCESS;
 }
 
-int opal_hotel_finalize(opal_hotel_t *hotel)
-{
-    int i;
-
-    /* Go through all occupied rooms and destroy their events */
-    for (i = 0; i < hotel->num_rooms; ++i) {
-        if (NULL != hotel->rooms[i].occupant) {
-            opal_event_del(&(hotel->rooms[i].eviction_timer_event));
-        }
-    }
-    return OPAL_SUCCESS;
-}
-
 static void constructor(opal_hotel_t *h)
 {
     h->num_rooms = 0;
@@ -109,6 +96,15 @@ static void constructor(opal_hotel_t *h)
 
 static void destructor(opal_hotel_t *h)
 {
+    int i;
+
+    /* Go through all occupied rooms and destroy their events */
+    for (i = 0; i < h->num_rooms; ++i) {
+        if (NULL != h->rooms[i].occupant) {
+            opal_event_del(&(h->rooms[i].eviction_timer_event));
+        }
+    }
+
     if (NULL != h->rooms) {
         free(h->rooms);
     }
