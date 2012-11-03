@@ -82,7 +82,7 @@ date="Unreleased developer copy"
 libmpi_so_version=1:6:0
 libmpi_cxx_so_version=1:1:0
 libmpi_f77_so_version=1:6:0
-libmpi_f90_so_version=4:0:1
+libmpi_f90_so_version=4:0:3
 libopen_rte_so_version=4:3:0
 libopen_pal_so_version=4:3:0
 
