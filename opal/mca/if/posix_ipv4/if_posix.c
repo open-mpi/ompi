@@ -160,15 +160,7 @@ static int if_posix_open(void)
         struct ifreq* ifr = (struct ifreq*) ptr;
         opal_if_t *intf;
         int length;
-            
-        intf = OBJ_NEW(opal_if_t);
-        if (NULL == intf) {
-            opal_output(0, "opal_ifinit: unable to allocated %lu bytes\n", (unsigned long)sizeof(opal_if_t));
-            free(ifconf.ifc_req);
-            close(sd);
-            return OPAL_ERR_OUT_OF_RESOURCE;
-        }
-            
+
         /* compute offset for entries */
 #ifdef HAVE_STRUCT_SOCKADDR_SA_LEN
         length = sizeof(struct sockaddr);
@@ -210,6 +202,14 @@ static int if_posix_open(void)
         }
 #endif
             
+        intf = OBJ_NEW(opal_if_t);
+        if (NULL == intf) {
+            opal_output(0, "opal_ifinit: unable to allocated %lu bytes\n", (unsigned long)sizeof(opal_if_t));
+            free(ifconf.ifc_req);
+            close(sd);
+            return OPAL_ERR_OUT_OF_RESOURCE;
+        }
+
         /* copy entry over into our data structure */
         strcpy(intf->if_name, ifr->ifr_name);
         intf->if_flags = ifr->ifr_flags;
@@ -223,6 +223,7 @@ static int if_posix_open(void)
 #else
         if (ioctl(sd, SIOCGIFINDEX, ifr) < 0) {
             opal_output(0,"opal_ifinit: ioctl(SIOCGIFINDEX) failed with errno=%d", errno);
+            OBJ_RELEASE(intf);
             continue;
         }
 #if defined(ifr_ifindex)
@@ -238,9 +239,11 @@ static int if_posix_open(void)
            instead */
         if (ioctl(sd, SIOCGIFADDR, ifr) < 0) {
             opal_output(0, "opal_ifinit: ioctl(SIOCGIFADDR) failed with errno=%d", errno);
+            OBJ_RELEASE(intf);
             break;
         }
         if (AF_INET != ifr->ifr_addr.sa_family) {
+            OBJ_RELEASE(intf);
             continue;
         }
             
@@ -249,6 +252,7 @@ static int if_posix_open(void)
             
         if (ioctl(sd, SIOCGIFNETMASK, ifr) < 0) {
             opal_output(0, "opal_ifinit: ioctl(SIOCGIFNETMASK) failed with errno=%d", errno);
+            OBJ_RELEASE(intf);
             continue;
         }
             
