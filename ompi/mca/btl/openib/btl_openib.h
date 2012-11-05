@@ -57,6 +57,7 @@ BEGIN_C_DECLS
 #define MCA_BTL_IB_LEAVE_PINNED 1
 #define IB_DEFAULT_GID_PREFIX 0xfe80000000000000ll
 #define MCA_BTL_IB_PKEY_MASK 0x7fff
+#define MCA_BTL_OPENIB_CQ_POLL_BATCH_DEFAULT (256)
 
 
 /*--------------------------------------------------------------------*/
@@ -278,6 +279,7 @@ struct mca_btl_openib_component_t {
     bool use_message_coalescing;
     uint32_t cq_poll_ratio;
     uint32_t cq_poll_progress;
+    uint32_t cq_poll_batch;
     uint32_t eager_rdma_poll_ratio;
 #ifdef HAVE_IBV_FORK_INIT
     /** Whether we want fork support or not */

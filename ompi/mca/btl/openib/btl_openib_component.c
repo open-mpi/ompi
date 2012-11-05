@@ -3461,12 +3461,13 @@ static int poll_device(mca_btl_openib_device_t* device, int count)
 {
     int ne = 0, cq;
     uint32_t hp_iter = 0;
-    struct ibv_wc wc;
+    struct ibv_wc wc[MCA_BTL_OPENIB_CQ_POLL_BATCH_DEFAULT];
+    int i;
 
     device->pollme = false;
     for(cq = 0; cq < 2 && hp_iter < mca_btl_openib_component.cq_poll_progress;)
     {
-        ne = ibv_poll_cq(device->ib_cq[cq], 1, &wc);
+        ne = ibv_poll_cq(device->ib_cq[cq], mca_btl_openib_component.cq_poll_batch, wc);
         if(0 == ne) {
             /* don't check low prio cq if there was something in high prio cq,
              * but for each cq_poll_ratio hp cq polls poll lp cq once */
@@ -3488,7 +3489,8 @@ static int poll_device(mca_btl_openib_device_t* device, int count)
             device->hp_cq_polls--;
         }
 
-        handle_wc(device, cq, &wc);
+        for (i = 0; i < ne; i++)
+            handle_wc(device, cq, &wc[i]);
     }
 
     return count;
