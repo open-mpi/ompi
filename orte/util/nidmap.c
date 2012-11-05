@@ -243,6 +243,7 @@ int orte_util_encode_nodemap(opal_byte_object_t *boptr, bool update)
 {
     orte_node_t *node;
     int32_t i;
+    size_t j;
     int rc;
     opal_buffer_t buf;
     char *ptr, *nodename;
@@ -292,8 +293,15 @@ int orte_util_encode_nodemap(opal_byte_object_t *boptr, bool update)
         /* pack the name of the node */
         if (!orte_keep_fqdn_hostnames) {
             nodename = strdup(node->name);
-            if (NULL != (ptr = strchr(nodename, '.'))) {
-                *ptr = '\0';
+            /* if the nodename is an IP address, do not mess with it! */
+            for (j=0; j < strlen(nodename)-1; j++) {
+                if (isalpha(nodename[j]) && '.' != nodename[j]) {
+                    /* not an IP address */
+                    if (NULL != (ptr = strchr(nodename, '.'))) {
+                        *ptr = '\0';
+                    }
+                    break;
+                }
             }
             if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &nodename, 1, OPAL_STRING))) {
                 ORTE_ERROR_LOG(rc);
