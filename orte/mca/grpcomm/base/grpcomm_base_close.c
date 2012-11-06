@@ -48,6 +48,10 @@ int orte_grpcomm_base_close(void)
   }
 #endif
 
+  /* Close the framework output */
+  opal_output_close (orte_grpcomm_base.output);
+  orte_grpcomm_base.output = -1;
+
   /* All done */
 
   return ORTE_SUCCESS;

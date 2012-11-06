@@ -149,6 +149,10 @@ ompi_mtl_base_close(void)
     mca_base_components_close(ompi_mtl_base_output, 
                               &ompi_mtl_base_components_opened, NULL);
 
+    /* Close the framework output */
+    opal_output_close (ompi_mtl_base_output);
+    ompi_mtl_base_output = -1;
+
     /* All done */
     return OMPI_SUCCESS;
 }

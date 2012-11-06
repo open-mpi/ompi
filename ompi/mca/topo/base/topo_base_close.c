@@ -43,8 +43,9 @@ int mca_topo_base_close(void)
         mca_topo_base_components_available_valid = false;
     }
 
-    /* Close the output stream for this framework */
+    /* Close the framework output */
     opal_output_close (mca_topo_base_output);
+    mca_topo_base_output = -1;
 
     /*
      * All done

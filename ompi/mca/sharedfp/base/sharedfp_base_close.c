@@ -48,8 +48,9 @@ int mca_sharedfp_base_close(void)
         mca_sharedfp_base_components_available_valid = false;
     }
 
-    /* Close the output stream for this framework */
+    /* Close the framework output */
     opal_output_close (mca_sharedfp_base_output);
+    mca_sharedfp_base_output = -1;
 
     /* All done */
 

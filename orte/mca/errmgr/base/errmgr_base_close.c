@@ -51,6 +51,10 @@ int orte_errmgr_base_close(void)
                               &orte_errmgr_base_components_available,
                               NULL);
 
+    /* Close the framework output */
+    opal_output_close (orte_errmgr_base.output);
+    orte_errmgr_base.output = -1;
+
     orte_errmgr_base.initialized = false;
     
     /* always leave a default set of fn pointers */

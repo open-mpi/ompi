@@ -56,5 +56,9 @@ ompi_osc_base_close(void)
     OBJ_DESTRUCT(&ompi_osc_base_open_components);
     OBJ_DESTRUCT(&ompi_osc_base_avail_components);
 
+    /* Close the framework output */
+    opal_output_close (ompi_osc_base_output);
+    ompi_osc_base_output = -1;
+
     return OMPI_SUCCESS;
 }

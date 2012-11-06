@@ -41,5 +41,9 @@ int orte_rmaps_base_close(void)
     mca_base_components_close(orte_rmaps_base.rmaps_output, 
                               &orte_rmaps_base.available_components, NULL);
 
+    /* Close the framework output */
+    opal_output_close (orte_rmaps_base.rmaps_output);
+    orte_rmaps_base.rmaps_output = -1;
+
     return ORTE_SUCCESS;
 }

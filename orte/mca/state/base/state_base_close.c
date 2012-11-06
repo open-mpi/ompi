@@ -38,6 +38,10 @@ int orte_state_base_close(void)
                               &orte_state_base_components_available,
                               NULL);
 
+    /* Close the framework output */
+    opal_output_close (orte_state_base_output);
+    orte_state_base_output = -1;
+
     orte_state_base.initialized = false;
     
     return ORTE_SUCCESS;

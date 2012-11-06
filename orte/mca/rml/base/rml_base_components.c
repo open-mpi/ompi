@@ -254,6 +254,10 @@ orte_rml_base_close(void)
     OBJ_DESTRUCT(&orte_rml_base_components);
     OBJ_DESTRUCT(&orte_rml_base_subscriptions);
 
+    /* Close the framework output */
+    opal_output_close (orte_rml_base_output);
+    orte_rml_base_output = -1;
+
     return ORTE_SUCCESS;
 }
 

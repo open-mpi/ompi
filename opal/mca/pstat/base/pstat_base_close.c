@@ -33,6 +33,10 @@ int opal_pstat_base_close(void)
     mca_base_components_close(opal_pstat_base_output,
                               &opal_pstat_base_components_opened, NULL);
     OBJ_DESTRUCT(&opal_pstat_base_components_opened);
+
+    /* Close the framework output */
+    opal_output_close (opal_pstat_base_output);
+    opal_pstat_base_output = -1;
     
     /* All done */
     

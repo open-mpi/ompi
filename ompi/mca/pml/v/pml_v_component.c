@@ -102,6 +102,9 @@ static int mca_pml_v_component_close(void)
     if (NULL != mca_vprotocol_base_include_list && !mca_vprotocol_base_include_list[0]) {
         return mca_pml_v_component_parasite_close();
     }
+
+    /* Make sure to close out output even if vprotocol isn't in use */
+    pml_v_output_close ();
         
     /* Mark that we have changed something */ 
     snprintf(mca_pml_base_selected_component.pmlm_version.mca_component_name, 

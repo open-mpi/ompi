@@ -53,4 +53,5 @@ int pml_v_output_open(char *output, int verbosity) {
 
 void pml_v_output_close(void) {
     opal_output_close(mca_pml_v.output);
+    mca_pml_v.output = -1;
 }

@@ -45,6 +45,10 @@ int mca_coll_base_close(void)
         mca_coll_base_components_available_valid = false;
     }
 
+    /* Close the framework output */
+    opal_output_close (mca_coll_base_output);
+    mca_coll_base_output = -1;
+
     /* All done */
 
     return OMPI_SUCCESS;

@@ -27,6 +27,10 @@ int mca_bcol_base_close(void)
     mca_base_components_close(mca_bcol_base_output,
                               &mca_bcol_base_components_opened, NULL);
 
+    /* Close the framework output */
+    opal_output_close (mca_bcol_base_output);
+    mca_bcol_base_output = -1;
+
     /* All done */
     return OMPI_SUCCESS;
 }

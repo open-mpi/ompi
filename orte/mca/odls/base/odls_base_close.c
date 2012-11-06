@@ -53,15 +53,14 @@ int orte_odls_base_close(void)
     }
     OBJ_RELEASE(orte_local_children);
 
-    /* if no components are available, then punt */
-    if (!orte_odls_base.components_available) {
-        return ORTE_SUCCESS;
-    }
-    
     /* Close all available components (only one in this case)  */
 
     mca_base_components_close(orte_odls_globals.output, 
                               &orte_odls_base.available_components, NULL);
+
+    /* Close the framework output */
+    opal_output_close (orte_odls_globals.output);
+    orte_odls_globals.output = -1;
 
     /* All done */
 

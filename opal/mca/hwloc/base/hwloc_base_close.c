@@ -40,6 +40,10 @@ int opal_hwloc_base_close(void)
             hwloc_bitmap_free(opal_hwloc_my_cpuset);
             opal_hwloc_my_cpuset = NULL;
         }
+
+        /* Close the framework output */
+        opal_output_close (opal_hwloc_base_output);
+        opal_hwloc_base_output = -1;
     }
 #endif
 
