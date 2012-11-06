@@ -212,6 +212,7 @@ static void check_sanity(char ***if_sanity_list, const char *dev_name, int port)
         if (0 == strcmp(list[i], compare)) {
             int count = opal_argv_count(list);
             opal_argv_delete(&count, &list, i, 1);
+            *if_sanity_list = list;
             --i;
         }
     }
