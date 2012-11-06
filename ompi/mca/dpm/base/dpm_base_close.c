@@ -36,5 +36,9 @@ int ompi_dpm_base_close(void)
                               &ompi_dpm_base_components_available,
                               NULL);
     
+    /* Close the framework output */
+    opal_output_close (ompi_dpm_base_output);
+    ompi_dpm_base_output = -1;
+
     return OMPI_SUCCESS;
 }

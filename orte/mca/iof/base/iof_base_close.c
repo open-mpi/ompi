@@ -42,6 +42,10 @@ int orte_iof_base_close(void)
     }
     OBJ_DESTRUCT(&orte_iof_base.iof_components_opened);
 
+    /* Close the framework output */
+    opal_output_close (orte_iof_base.iof_output);
+    orte_iof_base.iof_output = -1;
+
     return ORTE_SUCCESS;
 }
 

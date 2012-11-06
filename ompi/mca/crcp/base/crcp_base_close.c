@@ -36,5 +36,9 @@ int ompi_crcp_base_close(void)
                               &ompi_crcp_base_components_available,
                               NULL);
     
+    /* Close the framework output */
+    opal_output_close (ompi_crcp_base_output);
+    ompi_crcp_base_output = -1;
+
     return OMPI_SUCCESS;
 }

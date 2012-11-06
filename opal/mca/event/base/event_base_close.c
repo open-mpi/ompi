@@ -31,6 +31,10 @@ int opal_event_base_close(void)
     }
     OBJ_DESTRUCT(&opal_event_components);
 
+    /* Close the framework output */
+    opal_output_close (opal_event_base_output);
+    opal_event_base_output = -1;
+
     /* All done */
     return OPAL_SUCCESS;
 }

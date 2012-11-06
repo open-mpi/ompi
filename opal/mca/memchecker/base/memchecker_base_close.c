@@ -20,8 +20,13 @@ int opal_memchecker_base_close(void)
 {
     /* Close all components that are still open (this should only
        happen during laminfo). */
-    mca_base_components_close(0, &opal_memchecker_base_components_opened, NULL);
+    mca_base_components_close(opal_memchecker_base_output,
+                              &opal_memchecker_base_components_opened, NULL);
     OBJ_DESTRUCT(&opal_memchecker_base_components_opened);
+
+    /* Close the framework output */
+    opal_output_close (opal_memchecker_base_output);
+    opal_memchecker_base_output = -1;
 
     /* All done */
     return OPAL_SUCCESS;

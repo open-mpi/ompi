@@ -202,6 +202,10 @@ orte_routed_base_close(void)
     OBJ_DESTRUCT(&orte_routed_base_components);
     OBJ_DESTRUCT(&orte_routed_base_lock);
     OBJ_DESTRUCT(&orte_routed_base_cond);
+
+    /* Close the framework output */
+    opal_output_close (orte_routed_base_output);
+    orte_routed_base_output = -1;
     
     opened   = false;
     selected = false;

@@ -58,11 +58,13 @@ int mca_btl_base_close(void)
 
     /* Close all remaining opened components (may be one if this is a
        OMPI RTE program, or [possibly] multiple if this is ompi_info) */
-  
-    if (0 != opal_list_get_size(&mca_btl_base_components_opened)) {
-        mca_base_components_close(mca_btl_base_output, 
-                                  &mca_btl_base_components_opened, NULL);
-    }
+
+    mca_base_components_close(mca_btl_base_output,
+                              &mca_btl_base_components_opened, NULL);
+
+    /* Close the framework output */
+    opal_output_close (mca_btl_base_output);
+    mca_btl_base_output = -1;
 
     /* cleanup */
     if(NULL != mca_btl_base_include)

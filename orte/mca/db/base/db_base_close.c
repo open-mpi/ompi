@@ -33,7 +33,11 @@ orte_db_base_close(void)
                               &orte_db_base.available_components, NULL);
 
     OBJ_DESTRUCT(&orte_db_base.available_components);
-    opal_output_close(orte_db_base.output);
+
+    /* Close the framework output */
+    opal_output_close (orte_db_base.output);
+    orte_db_base.output = -1;
+
     return ORTE_SUCCESS;
 }
 

@@ -75,15 +75,6 @@ int mca_base_components_close(int output_id,
     opal_list_append(components_available, (opal_list_item_t *) skipped_pcli);
   }
 
-  /*
-   * If we are not the verbose output stream, and we shouldn't skip
-   * any components, close the output stream.  If there's a skip
-   * component, this is a 'choose one' framework and we're closing the
-   * unchoosen components, but will still be using the framework.
-   */
-  if (0 != output_id && NULL == skip) {
-      opal_output_close (output_id);
-  }
   /* All done */
   return OPAL_SUCCESS;
 }

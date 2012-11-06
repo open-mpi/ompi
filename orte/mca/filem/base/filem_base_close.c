@@ -38,6 +38,10 @@ int orte_filem_base_close(void)
     mca_base_components_close(orte_filem_base_output,
                               &orte_filem_base_components_available,
                               NULL);
+
+    /* Close the framework output */
+    opal_output_close (orte_filem_base_output);
+    orte_filem_base_output = -1;
     
     return ORTE_SUCCESS;
 }

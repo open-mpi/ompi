@@ -39,6 +39,10 @@ int opal_crs_base_close(void)
     mca_base_components_close(opal_crs_base_output,
                               &opal_crs_base_components_available,
                               NULL);
+
+    /* Close the framework output */
+    opal_output_close (opal_crs_base_output);
+    opal_crs_base_output = -1;
     
     return OPAL_SUCCESS;
 }

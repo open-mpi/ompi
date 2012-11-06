@@ -58,6 +58,10 @@ int mca_oob_base_close(void)
   OBJ_DESTRUCT(&mca_oob_base_modules);
   OBJ_DESTRUCT(&mca_oob_base_components);
 
+  /* Close the framework output */
+  opal_output_close (mca_oob_base_output);
+  mca_oob_base_output = -1;
+
   /* All done */
   orte_oob_base_already_opened = false;
 

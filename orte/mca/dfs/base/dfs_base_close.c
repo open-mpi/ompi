@@ -38,6 +38,10 @@ int orte_dfs_base_close(void)
                               &orte_dfs_base.components_available,
                               NULL);
 
+    /* Close the framework output */
+    opal_output_close (orte_dfs_base.output);
+    orte_dfs_base.output = -1;
+
     orte_dfs_base.initialized = false;
     
     return ORTE_SUCCESS;

@@ -64,6 +64,10 @@ int mca_mpool_base_close(void)
   mca_base_components_close(mca_mpool_base_output, 
                             &mca_mpool_base_components, NULL);
 
+  /* Close the framework output */
+  opal_output_close (mca_mpool_base_output);
+  mca_mpool_base_output = -1;
+
   /* deregister memory free callback */
   if( (modules_length > 0) && mca_mpool_base_used_mem_hooks && 
      0 != (OPAL_MEMORY_FREE_SUPPORT & opal_mem_hooks_support_level())) {

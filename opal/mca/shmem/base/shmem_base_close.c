@@ -48,6 +48,10 @@ opal_shmem_base_close(void)
         opal_shmem_base_components_opened_valid = false;
     }
 
+    /* Close the framework output */
+    opal_output_close (opal_shmem_base_output);
+    opal_shmem_base_output = -1;
+
     /* all done */
     return OPAL_SUCCESS;
 }

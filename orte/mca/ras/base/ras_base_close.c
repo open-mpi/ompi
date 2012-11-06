@@ -40,11 +40,15 @@ int orte_ras_base_finalize(void)
 
 int orte_ras_base_close(void)
 {
-        /* Close all remaining available components (may be one if this is a
-        Open RTE program, or [possibly] multiple if this is ompi_info) */
+    /* Close all remaining available components (may be one if this is a
+       Open RTE program, or [possibly] multiple if this is ompi_info) */
 
-        mca_base_components_close(orte_ras_base.ras_output, 
-                                  &orte_ras_base.ras_opened, NULL);
-  
+    mca_base_components_close(orte_ras_base.ras_output, 
+                              &orte_ras_base.ras_opened, NULL);
+
+    /* Close the framework output */
+    opal_output_close (orte_ras_base.ras_output);
+    orte_ras_base.ras_output = -1;
+
     return ORTE_SUCCESS;
 }

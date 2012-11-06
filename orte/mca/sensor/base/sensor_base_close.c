@@ -39,7 +39,11 @@ int orte_sensor_base_close(void)
     
     mca_base_components_close(orte_sensor_base.output, 
                               &mca_sensor_base_components_available, NULL);
-    
+
+    /* Close the framework output */
+    opal_output_close (orte_sensor_base.output);
+    orte_sensor_base.output = -1;
+
     /* All done */
     
     return ORTE_SUCCESS;

@@ -75,6 +75,10 @@ int mca_pml_base_close(void)
     mca_base_components_close(mca_pml_base_output, 
                               &mca_pml_base_components_available, NULL);
 
+    /* Close the framework output */
+    opal_output_close (mca_pml_base_output);
+    mca_pml_base_output = -1;
+
     /* All done */
 
     return OMPI_SUCCESS;

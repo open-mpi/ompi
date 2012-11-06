@@ -44,6 +44,10 @@ int orte_snapc_base_close(void)
     mca_base_components_close(orte_snapc_base_output,
                               &orte_snapc_base_components_available,
                               NULL);
-    
+
+    /* Close the framework output */
+    opal_output_close (orte_snapc_base_output);
+    orte_snapc_base_output = -1;
+
     return ORTE_SUCCESS;
 }

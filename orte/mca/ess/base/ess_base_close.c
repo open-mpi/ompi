@@ -42,6 +42,10 @@ orte_ess_base_close(void)
 			       NULL);
     OBJ_DESTRUCT(&orte_ess_base_components_available);
 
+    /* Close the framework output */
+    opal_output_close (orte_ess_base_output);
+    orte_ess_base_output = -1;
+
     return ORTE_SUCCESS;
 }
 

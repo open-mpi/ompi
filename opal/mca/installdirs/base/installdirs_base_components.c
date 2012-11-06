@@ -19,7 +19,6 @@
 #include "opal/mca/installdirs/base/base.h"
 #include "opal/mca/installdirs/base/static-components.h"
 
-int opal_installdirs_base_output;
 opal_install_dirs_t opal_install_dirs;
 opal_list_t opal_installdirs_components;
 

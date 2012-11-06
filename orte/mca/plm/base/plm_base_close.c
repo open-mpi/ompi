@@ -47,6 +47,10 @@ int orte_plm_base_finalize(void)
             return rc;
         }
     }
+
+    /* Close the framework output */
+    opal_output_close (orte_plm_globals.output);
+    orte_plm_globals.output = -1;
     
     return ORTE_SUCCESS;
 }
