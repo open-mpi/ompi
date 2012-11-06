@@ -108,32 +108,28 @@ AC_DEFUN([OMPI_contrib_vt_CONFIG],[
     if test "$contrib_vt_happy" = "1"; then
         contrib_vt_args="--disable-option-checking --with-openmpi-inside=1.7"
 
-        contrib_vt_skip=no
         eval "set x $ac_configure_args"; shift
         for contrib_vt_arg
         do
-            if test "$contrib_vt_skip" = "yes"; then
-                contrib_vt_skip=no
-            else
+            case $contrib_vt_arg in
+            -with-contrib-vt-flags | --with-contrib-vt-flags | -with-contrib-vt-flags=* | --with-contrib-vt-flags=*)
+                ;;
+            -with-platform=* | --with-platform=*)
+                ;;
+            -with-cuda | --with-cuda | -with-cuda=* | --with-cuda=*)
+                if test "x$with_cuda" != "xno" -a "x$with_cuda" != "x"; then
+                    contrib_vt_args="$contrib_vt_args '--with-cuda-dir=$with_cuda' '--with-cuda-libdir=$with_cuda_libdir'"
+                fi
+                ;;
+            -with-cuda-libdir | --with-cuda-libdir | -with-cuda-libdir=* | --with-cuda-libdir=*)
+                ;;
+            *)
                 case $contrib_vt_arg in
-                -with-contrib-vt-flags | --with-contrib-vt-flags)
-                    contrib_vt_skip=yes
-                    ;;
-                -with-contrib-vt-flags=* | --with-contrib-vt-flags=*)
-                    ;;
-                -with-platform | --with-platform)
-                    contrib_vt_skip=yes
-                    ;;
-                -with-platform=* | --with-platform=*)
-                    ;;
-                *)
-                    case $contrib_vt_arg in
-                    *\'*) contrib_vt_arg=`echo "$contrib_vt_arg" | sed "s/'/'\\\\\\\\''/g"` ;;
-                    esac
-                    contrib_vt_args="$contrib_vt_args '$contrib_vt_arg'"
-                    ;;
+                *\'*) contrib_vt_arg=`echo "$contrib_vt_arg" | sed "s/'/'\\\\\\\\''/g"` ;;
                 esac
-            fi
+                contrib_vt_args="$contrib_vt_args '$contrib_vt_arg'"
+                ;;
+            esac
         done
 
         contrib_vt_args="$contrib_vt_args $with_contrib_vt_flags"
