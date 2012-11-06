@@ -32,7 +32,6 @@ BEGIN_C_DECLS
 /*
  * local functions
  */
-static int finish_parsing(void) ;
 static int btl_wv_ini_yywrap(void);
 
 END_C_DECLS
@@ -45,7 +44,7 @@ bool btl_wv_ini_parse_done = false;
 char *btl_wv_ini_string = NULL;
 
 #define yyterminate() \
-  return finish_parsing()
+  return btl_wv_ini_yylex_destroy()
 
 %}
 
@@ -101,25 +100,6 @@ NAME_CHAR   [A-Za-z0-9_\-\.\\\/]
 .                   { return BTL_WV_INI_PARSE_ERROR; }
 
 %%
-
-
-/*
- * This cleans up at the end of the parse (since, in this case, we
- * always parse the entire file) and prevents a memory leak.
- */
-static int finish_parsing(void) 
-{
-    if (NULL != YY_CURRENT_BUFFER) {
-        yy_delete_buffer(YY_CURRENT_BUFFER); 
-#if defined(YY_CURRENT_BUFFER_LVALUE)
-        YY_CURRENT_BUFFER_LVALUE = NULL;
-#else
-        YY_CURRENT_BUFFER = NULL;
-#endif  /* YY_CURRENT_BUFFER_LVALUE */
-    }
-    return YY_NULL;
-}
-
 
 static int btl_wv_ini_yywrap(void)
 {
