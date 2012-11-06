@@ -86,7 +86,7 @@ static int mca_pml_v_component_open(void)
     V_OUTPUT_VERBOSE(500, "loaded");
 
     rc = mca_vprotocol_base_open(vprotocol_include_list);
-    if (NULL == vprotocol_include_list) {
+    if (NULL != vprotocol_include_list) {
         free (vprotocol_include_list);
     }
 
