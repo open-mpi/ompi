@@ -137,6 +137,7 @@ static void info_constructor(mca_base_param_info_t *p);
 static void info_destructor(mca_base_param_info_t *p);
 static void syn_info_constructor(syn_info_t *si);
 static void syn_info_destructor(syn_info_t *si);
+static mca_base_param_type_t param_type_from_index (size_t index);
 
 /*
  * Make the class instance for mca_base_param_t
@@ -514,11 +515,17 @@ int mca_base_param_set_string(int index, char *value)
 int mca_base_param_lookup_source(int index, mca_base_param_source_t *source, char **source_file)
 {
     mca_base_param_storage_t storage;
-  
-    if (param_lookup(index, &storage, source, source_file)) {
-        return OPAL_SUCCESS;
+    int rc;
+
+    storage.stringval = NULL;
+
+    rc = param_lookup(index, &storage, source, source_file);
+    if (MCA_BASE_PARAM_TYPE_STRING == param_type_from_index (index) &&
+        NULL != storage.stringval) {
+        free (storage.stringval);
     }
-    return OPAL_ERROR;
+
+    return rc ? OPAL_SUCCESS : OPAL_ERROR;
 }
 
 /*
@@ -1544,6 +1551,27 @@ static bool param_set_override(size_t index,
     return true;
 }
 
+/*
+ * Lookup the type of a parameter from an index
+ */
+static mca_base_param_type_t param_type_from_index (size_t index)
+{
+    mca_base_param_t *array;
+    size_t size;
+
+    /* Lookup the index and see if it's valid */
+
+    if (!initialized) {
+        return false;
+    }
+    size = opal_value_array_get_size(&mca_base_params);
+    if (index > size) {
+        return false;
+    }
+    array = OPAL_VALUE_ARRAY_GET_BASE(&mca_base_params, mca_base_param_t);
+
+    return array[index].mbp_type;
+}
 
 /*
  * Lookup a parameter in multiple places

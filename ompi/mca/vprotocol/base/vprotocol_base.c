@@ -27,11 +27,11 @@ mca_pml_v_t mca_pml_v = {-1, 0, 0};
 int mca_vprotocol_base_open(char *vprotocol_include_list)
 {
     OBJ_CONSTRUCT(&mca_vprotocol_base_components_available, opal_list_t);
-    mca_vprotocol_base_include_list = vprotocol_include_list;
-    if (NULL == mca_vprotocol_base_include_list ||
+    if (NULL == vprotocol_include_list ||
        mca_vprotocol_base_include_list[0] == 0) {
         return OMPI_SUCCESS;
     }
+    mca_vprotocol_base_include_list = strdup (vprotocol_include_list);
     return mca_base_components_open("vprotocol", 0, 
                                     mca_vprotocol_base_static_components, 
                                     &mca_vprotocol_base_components_available, 
