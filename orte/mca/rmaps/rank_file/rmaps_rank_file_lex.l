@@ -36,9 +36,6 @@ int orte_rmaps_rank_file_yywrap(void);
 
 END_C_DECLS
 
-#define yyterminate() \
-  return orte_rmaps_rank_file_yylex_destroy()
-
 /*
  * global variables
  */
