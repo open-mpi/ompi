@@ -72,12 +72,13 @@ buffer_cleanup(void *value)
 {
     int i;
     orte_print_args_buffers_t *ptr;
-    
+
     if (NULL != value) {
         ptr = (orte_print_args_buffers_t*)value;
         for (i=0; i < ORTE_PRINT_NAME_ARG_NUM_BUFS; i++) {
             free(ptr->buffers[i]);
         }
+        free (ptr);
     }
 }
 
