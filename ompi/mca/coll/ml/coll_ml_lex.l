@@ -26,9 +26,6 @@ int coll_ml_config_yynewlines = 1;
 bool coll_ml_config_parse_done = false;
 char *coll_ml_config_string = NULL;
 
-#define yyterminate() \
-  return coll_ml_config_yylex_destroy()
-
 %}
 
 WHITE       [\f\t\v ]

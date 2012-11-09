@@ -299,6 +299,7 @@ static int parse_file(char *filename)
     }
     save_section(&section);
     fclose(btl_wv_ini_yyin);
+    btl_wv_ini_yylex_destroy ();
 
 cleanup:
     reset_section(true, &section);
