@@ -43,9 +43,6 @@ int btl_wv_ini_yynewlines = 1;
 bool btl_wv_ini_parse_done = false;
 char *btl_wv_ini_string = NULL;
 
-#define yyterminate() \
-  return btl_wv_ini_yylex_destroy()
-
 %}
 
 WHITE       [\f\t\v ]

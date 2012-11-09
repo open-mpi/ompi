@@ -503,8 +503,8 @@ static int orte_rmaps_rank_file_parse(const char *rankfile)
         }
     }
     fclose(orte_rmaps_rank_file_in);
-    orte_rmaps_rank_file_in = NULL;
-    
+    orte_rmaps_rank_file_lex_destroy ();
+
 unlock:
     if (NULL != node_name) {
         free(node_name);

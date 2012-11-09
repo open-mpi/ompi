@@ -47,9 +47,6 @@ int opal_util_keyval_yynewlines = 1;
 bool opal_util_keyval_parse_done = false;
 char *opal_util_keyval_string = NULL;
 
-#define yyterminate() \
-  return opal_util_keyval_yylex_destroy()
-
 %}
 
 WHITE       [\f\t\v ]
