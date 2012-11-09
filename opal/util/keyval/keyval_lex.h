@@ -36,6 +36,7 @@
 
 int opal_util_keyval_yylex(void);
 int opal_util_keyval_init_buffer(FILE *file);
+int opal_util_keyval_yylex_destroy(void);
 
 extern FILE *opal_util_keyval_yyin;
 extern bool opal_util_keyval_parse_done;

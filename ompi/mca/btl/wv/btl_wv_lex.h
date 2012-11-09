@@ -42,6 +42,7 @@ BEGIN_C_DECLS
 
 int btl_wv_ini_yylex(void);
 int btl_wv_ini_init_buffer(FILE *file);
+int btl_wv_ini_yylex_destroy(void);
 
 extern bool btl_wv_ini_parse_done;
 extern int btl_wv_ini_yynewlines;
