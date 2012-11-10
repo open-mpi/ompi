@@ -137,6 +137,13 @@ OPAL_DECLSPEC char* opal_net_get_hostname(const struct sockaddr *addr);
  */
 OPAL_DECLSPEC int opal_net_get_port(const struct sockaddr *addr);
 
+/**
+ * Test if a string is actually an IP address
+ *
+ * Returns true if the string is of IPv4 or IPv6 address form
+ */
+OPAL_DECLSPEC bool opal_net_isaddr(const char *name);
+
 END_C_DECLS
 
 #endif /* OPAL_UTIL_NET_H */

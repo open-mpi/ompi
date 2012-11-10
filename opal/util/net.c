@@ -78,6 +78,37 @@
 #include "opal/threads/tsd.h"
 #include "opal/mca/base/mca_base_param.h"
 
+/* this function doesn't depend on sockaddr_h */
+bool opal_net_isaddr(const char *name)
+{
+    unsigned int groups[8];
+    int i;
+
+    if (4 != sscanf(name, "%u.%u.%u.%u",
+                    &groups[0], &groups[1], &groups[2], &groups[3])) {
+        /* this isn't an IPv4 address */
+        goto checkipv6;
+    }
+
+    for (i=0; i < 4; i++) {
+        if (255 < groups[i]) {
+            return false;
+        }
+    }
+    return true;
+
+ checkipv6:
+    /* TODO: deal with all the shorthand notations for IPv6! */
+    if (8 != sscanf(name, "%x:%x:%x:%x:%x:%x:%x:%x",
+                    &groups[0], &groups[1], &groups[2], &groups[3],
+                    &groups[4], &groups[5], &groups[6], &groups[7])) {
+        /* this isn't an IPv6 address */
+        return false;
+    }
+    /* there are no value limits on the individual groups */
+    return true;
+}
+
 #ifdef HAVE_STRUCT_SOCKADDR_IN
 
 typedef struct private_ipv4_t {
