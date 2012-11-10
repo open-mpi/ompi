@@ -137,6 +137,14 @@ EXTRA_DIST = \
 	platform/ibm/debug-ppc64-gcc \
 	platform/ibm/optimized-ppc32-gcc \
 	platform/ibm/optimized-ppc64-gcc \
+	platform/greenplum/bend/mac \
+	platform/greenplum/bend/mac.conf \
+	platform/greenplum/bend/linux \
+	platform/greenplum/bend/linux.conf \
+	platform/greenplum/bend/mac-optimized \
+	platform/greenplum/bend/mac-optimized.conf \
+	platform/greenplum/bend/linux-optimized \
+	platform/greenplum/bend/linux-optimized.conf
 	platform/greenplum/mrplus/mac \
 	platform/greenplum/mrplus/mac.conf \
 	platform/greenplum/mrplus/linux \
