@@ -301,6 +301,9 @@ int opal_dss_pack_node_stat(opal_buffer_t *buffer, const void *src,
 int opal_dss_pack_value(opal_buffer_t *buffer, const void *src,
                         int32_t num_vals, opal_data_type_t type);
 
+int opal_dss_pack_buffer_contents(opal_buffer_t *buffer, const void *src,
+                                  int32_t num_vals, opal_data_type_t type);
+
 /*
  * Internal unpack functions
  */
@@ -346,6 +349,9 @@ int opal_dss_unpack_node_stat(opal_buffer_t *buffer, void *dest,
 int opal_dss_unpack_value(opal_buffer_t *buffer, void *dest,
                           int32_t *num_vals, opal_data_type_t type);
 
+int opal_dss_unpack_buffer_contents(opal_buffer_t *buffer, void *dest,
+                                    int32_t *num_vals, opal_data_type_t type);
+
 /*
  * Internal copy functions
  */
@@ -367,6 +373,9 @@ int opal_dss_copy_node_stat(opal_node_stats_t **dest, opal_node_stats_t *src,
 
 int opal_dss_copy_value(opal_value_t **dest, opal_value_t *src,
                         opal_data_type_t type);
+
+int opal_dss_copy_buffer_contents(opal_buffer_t **dest, opal_buffer_t *src,
+                                  opal_data_type_t type);
 
 /*
  * Internal compare functions
@@ -409,6 +418,8 @@ int opal_dss_compare_node_stat(opal_node_stats_t *value1, opal_node_stats_t *val
 
 int opal_dss_compare_value(opal_value_t *value1, opal_value_t *value2, opal_data_type_t type);
 
+int opal_dss_compare_buffer_contents(opal_buffer_t *value1, opal_buffer_t *value2, opal_data_type_t type);
+
 /*
  * Internal print functions
  */
@@ -440,6 +451,7 @@ int opal_dss_print_byte_object(char **output, char *prefix, opal_byte_object_t *
 int opal_dss_print_pstat(char **output, char *prefix, opal_pstats_t *src, opal_data_type_t type);
 int opal_dss_print_node_stat(char **output, char *prefix, opal_node_stats_t *src, opal_data_type_t type);
 int opal_dss_print_value(char **output, char *prefix, opal_value_t *src, opal_data_type_t type);
+int opal_dss_print_buffer_contents(char **output, char *prefix, opal_buffer_t *src, opal_data_type_t type);
 
 
 /*

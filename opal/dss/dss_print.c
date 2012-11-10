@@ -478,3 +478,10 @@ int opal_dss_print_value(char **output, char *prefix, opal_value_t *src, opal_da
 {
     return OPAL_SUCCESS;
 }
+
+int opal_dss_print_buffer_contents(char **output, char *prefix,
+                                   opal_buffer_t *src, opal_data_type_t type)
+{
+    return OPAL_SUCCESS;
+}
+

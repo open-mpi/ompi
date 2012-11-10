@@ -260,3 +260,9 @@ int opal_dss_compare_value(opal_value_t *value1, opal_value_t *value2, opal_data
 {
     return OPAL_EQUAL;  /* eventually compare field to field */
 }
+
+/* OPAL_BUFFER */
+int opal_dss_compare_buffer_contents(opal_buffer_t *value1, opal_buffer_t *value2, opal_data_type_t type)
+{
+    return OPAL_EQUAL;  /* eventually compare bytes in buffers */
+}

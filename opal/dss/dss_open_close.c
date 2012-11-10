@@ -434,6 +434,16 @@ int opal_dss_open(void)
                                                      "OPAL_VALUE", &tmp))) {
         return rc;
     }
+    tmp = OPAL_BUFFER;
+    if (OPAL_SUCCESS != (rc = opal_dss.register_type(opal_dss_pack_buffer_contents,
+                                                     opal_dss_unpack_buffer_contents,
+                                                     (opal_dss_copy_fn_t)opal_dss_copy_buffer_contents,
+                                                     (opal_dss_compare_fn_t)opal_dss_compare_buffer_contents,
+                                                     (opal_dss_print_fn_t)opal_dss_print_buffer_contents,
+                                                     OPAL_DSS_STRUCTURED,
+                                                     "OPAL_BUFFER", &tmp))) {
+        return rc;
+    }
     /* All done */
 
     opal_dss_initialized = true;
