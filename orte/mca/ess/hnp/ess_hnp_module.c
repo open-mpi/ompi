@@ -721,12 +721,14 @@ static int rte_finalize(void)
     /* stop the local sensors */
     orte_sensor.stop(ORTE_PROC_MY_NAME->jobid);
 
-    /* remove my contact info file */
-    jobfam_dir = opal_dirname(orte_process_info.job_session_dir);
-    contact_path = opal_os_path(false, jobfam_dir, "contact.txt", NULL);
-    free(jobfam_dir);
-    unlink(contact_path);
-    free(contact_path);
+    /* remove my contact info file, if we have session directories */
+    if (NULL != orte_process_info.job_session_dir) {
+        jobfam_dir = opal_dirname(orte_process_info.job_session_dir);
+        contact_path = opal_os_path(false, jobfam_dir, "contact.txt", NULL);
+        free(jobfam_dir);
+        unlink(contact_path);
+        free(contact_path);
+    }
     
     /* output any lingering stdout/err data */
     orte_iof_base_close();
