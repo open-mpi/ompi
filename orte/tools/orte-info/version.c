@@ -80,7 +80,7 @@ void orte_info_do_version(bool want_all, opal_cmd_line_t *cmd_line)
     char *pos;
     int j;
     
-    orte_info_open_components();
+    orte_info_components_open();
     
     if (want_all) {
         orte_info_show_orte_version(orte_info_ver_full);
@@ -129,18 +129,19 @@ void orte_info_do_version(bool want_all, opal_cmd_line_t *cmd_line)
  */
 void orte_info_show_orte_version(const char *scope)
 {
-    char *tmp;
+    char *tmp, *tmp2;
 
     orte_info_out("Package", "package", OPAL_PACKAGE_STRING);
     
     asprintf(&tmp, "%s:version:full", orte_info_type_orte);
     orte_info_out("Open RTE", tmp,
-                  make_version_str(scope, 
+                  tmp2 = make_version_str(scope, 
                                    ORTE_MAJOR_VERSION, ORTE_MINOR_VERSION, 
                                    ORTE_RELEASE_VERSION, 
                                    ORTE_GREEK_VERSION,
                                    ORTE_WANT_REPO_REV, ORTE_REPO_REV));
     free(tmp);
+    free(tmp2);
     asprintf(&tmp, "%s:version:repo", orte_info_type_orte);
     orte_info_out("Open RTE repo revision", tmp, ORTE_REPO_REV);
     free(tmp);
@@ -150,12 +151,13 @@ void orte_info_show_orte_version(const char *scope)
     
     asprintf(&tmp, "%s:version:full", orte_info_type_opal);
     orte_info_out("OPAL", tmp,
-                  make_version_str(scope, 
+                  tmp2 = make_version_str(scope, 
                                    OPAL_MAJOR_VERSION, OPAL_MINOR_VERSION, 
                                    OPAL_RELEASE_VERSION, 
                                    OPAL_GREEK_VERSION,
                                    OPAL_WANT_REPO_REV, OPAL_REPO_REV));
     free(tmp);
+    free(tmp2);
     asprintf(&tmp, "%s:version:repo", orte_info_type_opal);
     orte_info_out("OPAL repo revision", tmp, OPAL_REPO_REV);
     free(tmp);
@@ -347,6 +349,10 @@ static void show_mca_version(const mca_base_component_t* component,
         }
         free(message);
     }
+
+    free (mca_version);
+    free (api_version);
+    free (component_version);
 }
 
 

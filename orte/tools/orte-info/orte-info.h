@@ -120,8 +120,8 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_info_component_map_t);
 
 extern opal_pointer_array_t component_map;
 
-void orte_info_open_components(void);
-void orte_info_close_components(void);
+void orte_info_components_open(void);
+void orte_info_components_close(void);
 
 END_C_DECLS
 

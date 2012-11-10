@@ -91,7 +91,7 @@ void orte_info_do_params(bool want_all_in, bool want_internal)
     bool want_all = false;
     opal_list_t *info;
     
-    orte_info_open_components();
+    orte_info_components_open();
     
     if (want_all_in) {
         want_all = true;
@@ -565,7 +565,6 @@ void orte_info_do_config(bool want_all)
     if (want_all) {
         
         orte_info_out("Thread support", "option:threads", threads);
-        free(threads);
         
         orte_info_out("Build CFLAGS", "option:build:cflags", OMPI_BUILD_CFLAGS);
         orte_info_out("Build CXXFLAGS", "option:build:cxxflags", OMPI_BUILD_CXXFLAGS);
@@ -581,6 +580,7 @@ void orte_info_do_config(bool want_all)
         orte_info_out("Wrapper extra LIBS", "option:wrapper:extra_libs",
                       WRAPPER_EXTRA_LIBS);
     }
+    free(threads);
     
     orte_info_out("Internal debug support", "option:debug", debug);
     orte_info_out("Memory profiling support", "option:mem-profile", memprofile);
