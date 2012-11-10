@@ -47,6 +47,7 @@
 
 #include "orte/constants.h"
 #include "orte/util/show_help.h"
+#include "orte/runtime/orte_info_support.h"
 #include "orte/runtime/orte_locks.h"
 
 #include "orte/tools/orte-info/orte-info.h"
@@ -283,7 +284,7 @@ int main(int argc, char *argv[])
         orte_info_do_arch();
         orte_info_do_hostname();
         orte_info_do_config(false);
-        orte_info_open_components();
+        orte_info_components_open();
         for (i = 0; i < mca_types.size; ++i) {
             if (NULL == (str = (char*)opal_pointer_array_get_item(&mca_types, i))) {
                 continue;
@@ -301,7 +302,7 @@ int main(int argc, char *argv[])
     if (NULL != global_env) {
         opal_argv_free(global_env);
     }
-    orte_info_close_components();
+    orte_info_components_close ();
     OBJ_RELEASE(orte_info_cmd_line);
     OBJ_DESTRUCT(&mca_types);
     mca_base_close();
