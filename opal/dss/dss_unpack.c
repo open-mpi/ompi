@@ -776,3 +776,46 @@ int opal_dss_unpack_value(opal_buffer_t *buffer, void *dest,
 
     return OPAL_SUCCESS;
 }
+
+/*
+ * OPAL_BUFFER
+ */
+int opal_dss_unpack_buffer_contents(opal_buffer_t *buffer, void *dest,
+                                    int32_t *num_vals, opal_data_type_t type)
+{
+    opal_buffer_t **ptr;
+    int32_t i, n, m;
+    int ret;
+    size_t nbytes;
+
+    ptr = (opal_buffer_t **) dest;
+    n = *num_vals;
+    
+    for (i = 0; i < n; ++i) {
+        /* allocate the new object */
+        ptr[i] = OBJ_NEW(opal_buffer_t);
+        if (NULL == ptr[i]) {
+            return OPAL_ERR_OUT_OF_RESOURCE;
+        }
+        /* unpack the number of bytes */
+        m=1;
+        if (OPAL_SUCCESS != (ret = opal_dss_unpack_sizet(buffer, &nbytes, &m, OPAL_SIZE))) {
+            return ret;
+        }
+        /* setup the buffer's data region */
+        if (0 < nbytes) {
+            ptr[i]->base_ptr = (char*)malloc(nbytes);
+        }
+        /* unpack the bytes */
+        m=nbytes;
+        if (OPAL_SUCCESS != (ret = opal_dss_unpack_byte(buffer, ptr[i]->base_ptr, &m, OPAL_BYTE))) {
+            return ret;
+        }
+        /* fill-in the metadata */
+        ptr[i]->pack_ptr = ptr[i]->base_ptr + m;
+        ptr[i]->unpack_ptr = ptr[i]->base_ptr;
+        ptr[i]->bytes_allocated = nbytes;
+        ptr[i]->bytes_used = m;
+    }
+    return OPAL_SUCCESS;
+}

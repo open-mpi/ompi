@@ -312,3 +312,10 @@ int opal_dss_copy_value(opal_value_t **dest, opal_value_t *src,
 
     return OPAL_SUCCESS;
 }
+
+int opal_dss_copy_buffer_contents(opal_buffer_t **dest, opal_buffer_t *src,
+                                  opal_data_type_t type)
+{
+    return OPAL_SUCCESS;
+}
+
