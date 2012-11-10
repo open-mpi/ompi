@@ -35,9 +35,13 @@
 
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param.h"
+#include "opal/util/net.h"
 #include "opal/util/output.h"
 
 #include "orte/util/proc_info.h"
+
+/* provide a connection to a reqd variable */
+extern bool orte_keep_fqdn_hostnames;
 
 #define ORTE_NAME_INVALID {ORTE_JOBID_INVALID, ORTE_VPID_INVALID}
 
@@ -142,13 +146,23 @@ int orte_proc_info(void)
     /* get the process id */
     orte_process_info.pid = getpid();
 
+    /* get the nodename */
+    gethostname(hostname, ORTE_MAX_HOSTNAME_SIZE);
+    if (!orte_keep_fqdn_hostnames) {
+        /* if the nodename is an IP address, do not mess with it! */
+        if (!opal_net_isaddr(hostname)) {
+            /* not an IP address, so remove any domain info */
+            if (NULL != (ptr = strchr(hostname, '.'))) {
+                *ptr = '\0';
+            }
+        }
+    }
+
     mca_base_param_reg_int_name("orte", "strip_prefix_from_node_names",
                                 "Whether to strip leading characters and zeroes from node names returned by daemons",
                                 false, false, (int)false, &tmp);
     orte_process_info.strip_prefix_from_node_names = OPAL_INT_TO_BOOL(tmp);
 
-    /* get the nodename */
-    gethostname(hostname, ORTE_MAX_HOSTNAME_SIZE);
     /* we have to strip node names here, if user directs, to ensure that
      * the names exchanged in the modex match the names found locally
      */
