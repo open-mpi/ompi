@@ -442,7 +442,7 @@ typedef struct {
     struct timeval max_launch_msg_recvd;
     orte_vpid_t num_local_procs;
     /* file maps associates with this job */
-    opal_byte_object_t file_maps;
+    opal_buffer_t *file_maps;
 #if OPAL_ENABLE_FT_CR == 1
     /* ckpt state */
     size_t ckpt_state;
@@ -639,7 +639,7 @@ ORTE_DECLSPEC extern bool orte_abnormal_term_ordered;
 ORTE_DECLSPEC extern bool orte_routing_is_enabled;
 ORTE_DECLSPEC extern bool orte_job_term_ordered;
 ORTE_DECLSPEC extern bool orte_orteds_term_ordered;
-
+ORTE_DECLSPEC extern bool orte_allowed_exit_without_sync;
 ORTE_DECLSPEC extern int orte_startup_timeout;
 
 ORTE_DECLSPEC extern int orte_timeout_usec_per_proc;
@@ -700,6 +700,7 @@ ORTE_DECLSPEC extern char *orte_forward_envars;
 
 /* map-reduce mode */
 ORTE_DECLSPEC extern bool orte_map_reduce;
+ORTE_DECLSPEC extern bool orte_staged_execution;
 
 /* map stddiag output to stderr so it isn't forwarded to mpirun */
 ORTE_DECLSPEC extern bool orte_map_stddiag_to_stderr;

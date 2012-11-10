@@ -20,6 +20,7 @@
 
 #include "opal/util/output.h"
 
+#include "orte/mca/dfs/dfs.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/iof/iof.h"
 #include "orte/mca/plm/base/base.h"
@@ -255,6 +256,11 @@ static void setup_job_complete(int fd, short args, void *cbdata)
         ORTE_SET_MAPPING_POLICY(jdata->map->mapping, ORTE_MAPPING_STAGED);
         ORTE_SET_MAPPING_DIRECTIVE(jdata->map->mapping, ORTE_MAPPING_NO_OVERSUBSCRIBE);
         jdata->map->display_map = orte_rmaps_base.display_map;
+    }
+
+    /* if there are any file_maps attached to this job, load them */
+    if (NULL != jdata->file_maps) {
+        orte_dfs.load_file_maps(jdata->jobid, jdata->file_maps, NULL, NULL);
     }
     orte_plm_base_setup_job_complete(0, 0, (void*)caddy);
 }

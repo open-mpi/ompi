@@ -518,6 +518,16 @@ int orte_register_params(void)
                                 false, false, (int)true, &value);
     orte_abort_non_zero_exit = OPAL_INT_TO_BOOL(value);
 
+    mca_base_param_reg_int_name("orte", "allowed_exit_without_sync",
+                                "Process exiting without calling finalize will not trigger job termination",
+                                false, false, (int)false, &value);
+    orte_allowed_exit_without_sync = OPAL_INT_TO_BOOL(value);
+
+    mca_base_param_reg_int_name("orte", "staged_execution",
+                                "Staged execution is being used",
+                                false, false, (int)false, &value);
+    orte_staged_execution = OPAL_INT_TO_BOOL(value);
+
     mca_base_param_reg_int_name("orte", "report_child_jobs_separately",
                                 "Return the exit status of the primary job only",
                                 false, false,

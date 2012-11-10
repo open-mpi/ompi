@@ -117,6 +117,7 @@ bool orte_abnormal_term_ordered = false;
 bool orte_routing_is_enabled = true;
 bool orte_job_term_ordered = false;
 bool orte_orteds_term_ordered = false;
+bool orte_allowed_exit_without_sync = false;
 
 int orte_startup_timeout;
 
@@ -182,6 +183,7 @@ char *orte_forward_envars = NULL;
 
 /* map-reduce mode */
 bool orte_map_reduce = false;
+bool orte_staged_execution = false;
 
 /* map stddiag output to stderr so it isn't forwarded to mpirun */
 bool orte_map_stddiag_to_stderr = false;
@@ -733,8 +735,7 @@ static void orte_job_construct(orte_job_t* job)
     job->enable_recovery = false;
     job->num_local_procs = 0;
 
-    job->file_maps.bytes = NULL;
-    job->file_maps.size = 0;
+    job->file_maps = NULL;
 
 #if OPAL_ENABLE_FT_CR == 1
     job->ckpt_state = 0;
@@ -781,8 +782,8 @@ static void orte_job_destruct(orte_job_t* job)
     }
     OBJ_RELEASE(job->procs);
     
-    if (NULL != job->file_maps.bytes) {
-        free(job->file_maps.bytes);
+    if (NULL != job->file_maps) {
+        OBJ_RELEASE(job->file_maps);
     }
 
 #if OPAL_ENABLE_FT_CR == 1

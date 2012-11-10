@@ -522,8 +522,8 @@ static opal_cmd_line_init_t cmd_line_init[] = {
       NULL, OPAL_CMD_LINE_TYPE_BOOL,
       "Execute without creating an allocation-spanning virtual machine (only start daemons on nodes hosting application procs)" },
 
-    { "state_staged_select", '\0', "staged", "staged", 0,
-      &orterun_globals.staged, OPAL_CMD_LINE_TYPE_BOOL,
+    { "orte_staged_execution", '\0', "staged", "staged", 0,
+      NULL, OPAL_CMD_LINE_TYPE_BOOL,
       "Used staged execution if inadequate resources are present (cannot support MPI jobs)" },
 
     /* End of list */
@@ -548,15 +548,13 @@ static int parse_appfile(orte_job_t *jdata, char *filename, char ***env);
 static void run_debugger(char *basename, opal_cmd_line_t *cmd_line,
                          int argc, char *argv[], int num_procs) __opal_attribute_noreturn__;
 
-static void spawn_next_job(opal_byte_object_t *bo, void *cbdata)
+static void spawn_next_job(opal_buffer_t *bptr, void *cbdata)
 {
     orte_job_t *jdata = (orte_job_t*)cbdata;
 
     /* add the data to the job's file map */
-    jdata->file_maps.bytes = bo->bytes;
-    jdata->file_maps.size = bo->size;
-    bo->bytes = NULL;
-    bo->size = 0;
+    jdata->file_maps = OBJ_NEW(opal_buffer_t);
+    opal_dss.copy_payload(jdata->file_maps, bptr);
 
     /* spawn the next job */
     orte_plm.spawn(jdata);
@@ -985,7 +983,7 @@ int orterun(int argc, char *argv[])
                              ORTE_SYS_PRI);
 #endif
 
-    if (orterun_globals.staged) {
+    if (orte_staged_execution) {
         /* staged execution is requested - each app_context
          * is treated as a separate job and executed in
          * sequence
@@ -1055,7 +1053,6 @@ static int init_globals(void)
         orterun_globals.report_pid        = NULL;
         orterun_globals.report_uri        = NULL;
         orterun_globals.disable_recovery = false;
-        orterun_globals.staged = false;
     }
 
     /* Reset the other fields every time */
