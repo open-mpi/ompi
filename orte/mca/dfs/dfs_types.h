@@ -13,6 +13,7 @@
 
 #include "orte_config.h"
 
+#include "opal/class/opal_list.h"
 #include "opal/dss/dss_types.h"
 
 BEGIN_C_DECLS
@@ -42,7 +43,7 @@ typedef struct {
     opal_list_item_t super;
     orte_vpid_t vpid;
     int num_entries;
-    opal_byte_object_t fm;
+    opal_buffer_t data;
 } orte_dfs_vpidfm_t;
 ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_dfs_vpidfm_t);
 
@@ -60,7 +61,7 @@ typedef void (*orte_dfs_read_callback_fn_t)(long status,
 
 typedef void (*orte_dfs_post_callback_fn_t)(void *cbdata);
 
-typedef void (*orte_dfs_fm_callback_fn_t)(opal_byte_object_t *bo, void *cbdata);
+typedef void (*orte_dfs_fm_callback_fn_t)(opal_buffer_t *fmaps, void *cbdata);
 
 typedef void (*orte_dfs_load_callback_fn_t)(void *cbdata);
 

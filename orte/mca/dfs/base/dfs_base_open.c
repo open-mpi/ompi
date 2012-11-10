@@ -111,6 +111,8 @@ static void req_const(orte_dfs_request_t *dfs)
     dfs->local_fd = -1;
     dfs->remote_fd = -1;
     dfs->read_length = -1;
+    dfs->bptr = NULL;
+    OBJ_CONSTRUCT(&dfs->bucket, opal_buffer_t);
     dfs->read_buffer = NULL;
     dfs->open_cbfunc = NULL;
     dfs->close_cbfunc = NULL;
@@ -128,6 +130,7 @@ static void req_dest(orte_dfs_request_t *dfs)
     if (NULL != dfs->uri) {
         free(dfs->uri);
     }
+    OBJ_DESTRUCT(&dfs->bucket);
 }
 OBJ_CLASS_INSTANCE(orte_dfs_request_t,
                    opal_list_item_t,
@@ -152,15 +155,12 @@ OBJ_CLASS_INSTANCE(orte_dfs_jobfm_t,
 
 static void vpidfm_const(orte_dfs_vpidfm_t *fm)
 {
-    fm->fm.bytes = NULL;
-    fm->fm.size = 0;
+    OBJ_CONSTRUCT(&fm->data, opal_buffer_t);
     fm->num_entries = 0;
 }
 static void vpidfm_dest(orte_dfs_vpidfm_t *fm)
 {
-    if (NULL != fm->fm.bytes) {
-        free(fm->fm.bytes);
-    }
+    OBJ_DESTRUCT(&fm->data);
 }
 OBJ_CLASS_INSTANCE(orte_dfs_vpidfm_t,
                    opal_list_item_t,

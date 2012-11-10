@@ -108,7 +108,7 @@ typedef void (*orte_dfs_base_module_read_fn_t)(int fd, uint8_t *buffer,
 
 
 /* Post a file map so others may access it */
-typedef void (*orte_dfs_base_module_post_file_map_fn_t)(opal_byte_object_t *bo,
+typedef void (*orte_dfs_base_module_post_file_map_fn_t)(opal_buffer_t *buf,
                                                         orte_dfs_post_callback_fn_t cbfunc,
                                                         void *cbdata);
 
@@ -128,7 +128,7 @@ typedef void (*orte_dfs_base_module_get_file_map_fn_t)(orte_process_name_t *targ
 /* Load file maps for a job
  */
 typedef void (*orte_dfs_base_module_load_file_maps_fn_t)(orte_jobid_t jobid,
-                                                         opal_byte_object_t *bo,
+                                                         opal_buffer_t *buf,
                                                          orte_dfs_load_callback_fn_t cbfunc,
                                                          void *cbdata);
 
@@ -142,9 +142,9 @@ typedef void (*orte_dfs_base_module_purge_file_maps_fn_t)(orte_jobid_t jobid,
  */
 struct orte_dfs_base_module_1_0_0_t {
     /** Initialization Function */
-    orte_dfs_base_module_init_fn_t           init;
+    orte_dfs_base_module_init_fn_t             init;
     /** Finalization Function */
-    orte_dfs_base_module_finalize_fn_t       finalize;
+    orte_dfs_base_module_finalize_fn_t         finalize;
 
     orte_dfs_base_module_open_fn_t             open;
     orte_dfs_base_module_close_fn_t            close;

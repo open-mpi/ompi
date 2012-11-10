@@ -57,17 +57,8 @@ orte_state_base_component_t mca_state_staged_hnp_component =
     },
 };
 
-static bool select_me = false;
-
 static int state_staged_hnp_open(void) 
 {
-    int tmp;
-
-    mca_base_param_reg_int_name("state", "staged_select",
-                                "Use this component",
-                                false, false, (int)false, &tmp);
-    select_me = OPAL_INT_TO_BOOL(tmp);
-
     return ORTE_SUCCESS;
 }
 
@@ -78,7 +69,7 @@ static int state_staged_hnp_close(void)
 
 static int state_staged_hnp_component_query(mca_base_module_t **module, int *priority)
 {
-    if (ORTE_PROC_IS_HNP && select_me) {
+    if (ORTE_PROC_IS_HNP && orte_staged_execution) {
         *priority = 1000;
         *module = (mca_base_module_t *)&orte_state_staged_hnp_module;
         return ORTE_SUCCESS;        

@@ -68,7 +68,8 @@ typedef struct {
     int remote_fd;
     uint8_t *read_buffer;
     long read_length;
-    opal_byte_object_t *bo;
+    opal_buffer_t *bptr;
+    opal_buffer_t bucket;
     orte_dfs_open_callback_fn_t  open_cbfunc;
     orte_dfs_close_callback_fn_t close_cbfunc;
     orte_dfs_size_callback_fn_t  size_cbfunc;

@@ -900,6 +900,17 @@ static int setup_child(orte_proc_t *child,
         free(param);
     }
     
+    /* if we are using staged execution, tell it */
+    if (orte_staged_execution) {
+        if (NULL == (param = mca_base_param_env_var ("orte_staged_execution"))) {
+            ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+            rc = ORTE_ERR_OUT_OF_RESOURCE;
+            return rc;
+        }
+        opal_setenv(param, "1", true, env);
+        free(param);
+    }
+
     /* if the proc isn't going to forward IO, then we need to flag that
      * it has "completed" iof termination as otherwise it will never fire
      */
@@ -1951,8 +1962,9 @@ void odls_base_default_wait_local_proc(pid_t pid, int status, void* cbdata)
         
         /* check to see if a sync was required and if it was received */
         if (proc->registered) {
-            if (proc->deregistered) {
-                /* if we did recv a finalize sync, then declare it normally terminated
+            if (proc->deregistered || orte_allowed_exit_without_sync) {
+                /* if we did recv a finalize sync, or one is not required,
+                 * then declare it normally terminated
                  * unless it returned with a non-zero status indicating the code
                  * felt it was non-normal
                  */
@@ -1989,9 +2001,10 @@ void odls_base_default_wait_local_proc(pid_t pid, int status, void* cbdata)
                 if (cptr->name.jobid != proc->name.jobid) {
                     continue;
                 }
-                if (cptr->registered) {
+                if (cptr->registered && !orte_allowed_exit_without_sync) {
                     /* someone has registered, and we didn't before
-                     * terminating - this is an abnormal termination
+                     * terminating - this is an abnormal termination unless
+                     * the allowed_exit_without_sync flag is set
                      */
                     if (0 != proc->exit_code) {
                         state = ORTE_PROC_STATE_TERM_NON_ZERO;

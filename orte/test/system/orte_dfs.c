@@ -63,25 +63,20 @@ static void dfs_seek_cbfunc(long offset, void *cbdata)
 
 static void dfs_post_cbfunc(void *cbdata)
 {
-    opal_byte_object_t *bo = (opal_byte_object_t*)cbdata;
+    opal_buffer_t *bo = (opal_buffer_t*)cbdata;
 
     opal_output(0, "GOT POST CALLBACK");
     active = false;
-    if (NULL != bo->bytes) {
-        free(bo->bytes);
-    }
+    OBJ_RELEASE(bo);
 }
 
-static void dfs_getfm_cbfunc(opal_byte_object_t *bo, void *cbdata)
+static void dfs_getfm_cbfunc(opal_buffer_t *bo, void *cbdata)
 {
-    opal_byte_object_t *bptr = (opal_byte_object_t*)cbdata;
+    opal_buffer_t *bptr = (opal_buffer_t*)cbdata;
 
     opal_output(0, "GOT GETFM CALLBACK");
     active = false;
-    bptr->bytes = bo->bytes;
-    bptr->size = bo->size;
-    bo->bytes = NULL;
-    bo->size = 0;
+    opal_dss.copy_payload(bptr, bo);
 }
 
 static void read_cbfunc(long status, uint8_t *buffer, void *cbdata)
@@ -111,11 +106,10 @@ int main(int argc, char* argv[])
     int fd;
     char *uri, *host, *path;
     uint8_t buffer[READ_SIZE];
-    opal_buffer_t buf, xfer, xfr2;
-    int i, cnt;
+    opal_buffer_t *buf, *xfer;
+    int i, k, cnt;
     int64_t i64, length, offset, partition;
-    opal_byte_object_t bo, *boptr;
-    int32_t n;
+    int32_t n, nvpids, nentries;
     orte_vpid_t vpid;
 
     if (0 != (rc = orte_init(&argc, &argv, ORTE_PROC_NON_MPI))) {
@@ -192,94 +186,91 @@ int main(int argc, char* argv[])
 
         /* construct a file map to pass to our successor */
         for (i=0; i < 10; i++) {
-            OBJ_CONSTRUCT(&buf, opal_buffer_t);
-            opal_dss.pack(&buf, &host, 1, OPAL_STRING);
-            opal_dss.pack(&buf, &argv[1], 1, OPAL_STRING);
+            buf = OBJ_NEW(opal_buffer_t);
+            opal_dss.pack(buf, &host, 1, OPAL_STRING);
+            opal_dss.pack(buf, &argv[1], 1, OPAL_STRING);
             i64 = 100; /* assign 100 bytes to this partition */
-            opal_dss.pack(&buf, &i64, 1, OPAL_INT64);
+            opal_dss.pack(buf, &i64, 1, OPAL_INT64);
             i64 = i * 100;  /* space things out */
-            opal_dss.pack(&buf, &i64, 1, OPAL_INT64);
+            opal_dss.pack(buf, &i64, 1, OPAL_INT64);
             i64 = i;  /* set the partition */
-            opal_dss.pack(&buf, &i64, 1, OPAL_INT64);
-            opal_dss.unload(&buf, (void**)&bo.bytes, &bo.size);
-            OBJ_DESTRUCT(&buf);
+            opal_dss.pack(buf, &i64, 1, OPAL_INT64);
             active = true;
-            orte_dfs.post_file_map(&bo, dfs_post_cbfunc, &bo);
+            orte_dfs.post_file_map(buf, dfs_post_cbfunc, buf);
             ORTE_WAIT_FOR_COMPLETION(active);
         }
     } else {
         opal_output(0, "PROC %s REPORTING IN", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
         /* retrieve any file maps from our predecessor */
         active = true;
-        orte_dfs.get_file_map(ORTE_NAME_WILDCARD, dfs_getfm_cbfunc, &bo);
+        buf = OBJ_NEW(opal_buffer_t);
+        orte_dfs.get_file_map(ORTE_PROC_MY_NAME, dfs_getfm_cbfunc, buf);
         ORTE_WAIT_FOR_COMPLETION(active);
 
         opal_output(0, "%s RECVD %d BYTES IN FILE MAPS",
-                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), bo.size);
+                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), (int)buf->bytes_used);
+
+        /* retrieve the number of vpids in the map */
+        cnt = 1;
+        if (OPAL_SUCCESS != (rc = opal_dss.unpack(buf, &nvpids, &cnt, OPAL_INT32))) {
+            ORTE_ERROR_LOG(rc);
+            return 1;
+        }
+
+        opal_output(0, "%s RECVD DATA FROM %d VPIDS",
+                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), nvpids);
 
         /* find a partition for us */
-        OBJ_CONSTRUCT(&buf, opal_buffer_t);
-        opal_dss.load(&buf, bo.bytes, bo.size);
-        bo.bytes = NULL;
-        bo.size = 0;
-
-        cnt = 1;
-        while (OPAL_SUCCESS == opal_dss.unpack(&buf, &vpid, &cnt, ORTE_VPID)) {
+        for (k=0; k < nvpids; k++) {
+            cnt = 1;
+            if (OPAL_SUCCESS != (rc = opal_dss.unpack(buf, &vpid, &cnt, ORTE_VPID))) {
+                ORTE_ERROR_LOG(rc);
+                break;
+            }
             opal_output(0, "CHECKING VPID %s", ORTE_VPID_PRINT(vpid));
             cnt = 1;
-            if (OPAL_SUCCESS != (rc = opal_dss.unpack(&buf, &n, &cnt, OPAL_INT32))) {
+            if (OPAL_SUCCESS != (rc = opal_dss.unpack(buf, &nentries, &cnt, OPAL_INT32))) {
                 ORTE_ERROR_LOG(rc);
                 break;
             }
             opal_output(0, "%s RECVD %d ENTRIES IN THIS MAP",
-                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), n);
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), nentries);
             cnt = 1;
-            if (OPAL_SUCCESS != (rc = opal_dss.unpack(&buf, &boptr, &cnt, OPAL_BYTE_OBJECT))) {
-                ORTE_ERROR_LOG(rc);
-                break;
-            }
-            opal_output(0, "%s FOUND %d BYTES IN MAP FOR THIS PROC",
-                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), boptr->size);
-            OBJ_CONSTRUCT(&xfr2, opal_buffer_t);
-            opal_dss.load(&xfr2, boptr->bytes, boptr->size);
-            cnt = 1;
-            for (i=0; i < n; i++) {
-                /* unpack the byte object for this entry */
+            for (i=0; i < nentries; i++) {
                 cnt = 1;
-                if (OPAL_SUCCESS != (rc = opal_dss.unpack(&xfr2, &boptr, &cnt, OPAL_BYTE_OBJECT))) {
-                    ORTE_ERROR_LOG(rc);
-                    break;
-                }
-                opal_output(0, "%s FOUND %d BYTES IN ENTRY %d FOR THIS PROC",
-                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), boptr->size, i);
-                OBJ_CONSTRUCT(&xfer, opal_buffer_t);
-                opal_dss.load(&xfer, boptr->bytes, boptr->size);
-                cnt = 1;
-                if (OPAL_SUCCESS != (rc = opal_dss.unpack(&xfer, &host, &cnt, OPAL_STRING))) {
+                if (OPAL_SUCCESS != (rc = opal_dss.unpack(buf, &xfer, &cnt, OPAL_BUFFER))) {
                     ORTE_ERROR_LOG(rc);
                     break;
                 }
                 cnt = 1;
-                if (OPAL_SUCCESS != (rc = opal_dss.unpack(&xfer, &path, &cnt, OPAL_STRING))) {
+                if (OPAL_SUCCESS != (rc = opal_dss.unpack(xfer, &host, &cnt, OPAL_STRING))) {
                     ORTE_ERROR_LOG(rc);
                     break;
                 }
                 cnt = 1;
-                if (OPAL_SUCCESS != (rc = opal_dss.unpack(&xfer, &length, &cnt, OPAL_INT64))) {
+                if (OPAL_SUCCESS != (rc = opal_dss.unpack(xfer, &path, &cnt, OPAL_STRING))) {
                     ORTE_ERROR_LOG(rc);
                     break;
                 }
                 cnt = 1;
-                if (OPAL_SUCCESS != (rc = opal_dss.unpack(&xfer, &offset, &cnt, OPAL_INT64))) {
+                if (OPAL_SUCCESS != (rc = opal_dss.unpack(xfer, &length, &cnt, OPAL_INT64))) {
                     ORTE_ERROR_LOG(rc);
                     break;
                 }
                 cnt = 1;
-                if (OPAL_SUCCESS != (rc = opal_dss.unpack(&xfer, &partition, &cnt, OPAL_INT64))) {
+                if (OPAL_SUCCESS != (rc = opal_dss.unpack(xfer, &offset, &cnt, OPAL_INT64))) {
                     ORTE_ERROR_LOG(rc);
                     break;
                 }
-                opal_output(0, "CHECKING PARTITION %d", (int)partition);
+                cnt = 1;
+                if (OPAL_SUCCESS != (rc = opal_dss.unpack(xfer, &partition, &cnt, OPAL_INT64))) {
+                    ORTE_ERROR_LOG(rc);
+                    break;
+                }
+                OBJ_RELEASE(xfer);
+                opal_output(0, "CHECKING PARTITION %d\n\thost %s\n\tpath %s\n\tlength: %d offset: %d",
+                            (int)partition, (NULL == host) ? "NULL" : host, path, (int)length, (int)offset);
+                continue;
                 /* if this is my partition, use the file data */
                 if (partition == (int64_t)ORTE_PROC_MY_NAME->vpid) {
                     /* open the file */
@@ -312,7 +303,6 @@ int main(int argc, char* argv[])
                     ORTE_WAIT_FOR_COMPLETION(active);
                     goto complete;
                 }
-                OBJ_DESTRUCT(&xfer);
             }
         }
     }

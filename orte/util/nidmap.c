@@ -50,6 +50,7 @@
 #include "opal/runtime/opal.h"
 #include "opal/class/opal_pointer_array.h"
 #include "opal/mca/hwloc/base/base.h"
+#include "opal/util/net.h"
 #include "opal/util/output.h"
 #include "opal/util/argv.h"
 #include "opal/datatype/opal_datatype.h"
@@ -243,7 +244,6 @@ int orte_util_encode_nodemap(opal_byte_object_t *boptr, bool update)
 {
     orte_node_t *node;
     int32_t i;
-    size_t j;
     int rc;
     opal_buffer_t buf;
     char *ptr, *nodename;
@@ -294,13 +294,10 @@ int orte_util_encode_nodemap(opal_byte_object_t *boptr, bool update)
         if (!orte_keep_fqdn_hostnames) {
             nodename = strdup(node->name);
             /* if the nodename is an IP address, do not mess with it! */
-            for (j=0; j < strlen(nodename)-1; j++) {
-                if (isalpha(nodename[j]) && '.' != nodename[j]) {
-                    /* not an IP address */
-                    if (NULL != (ptr = strchr(nodename, '.'))) {
-                        *ptr = '\0';
-                    }
-                    break;
+            if (!opal_net_isaddr(nodename)) {
+                /* not an IP address */
+                if (NULL != (ptr = strchr(nodename, '.'))) {
+                    *ptr = '\0';
                 }
             }
             if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &nodename, 1, OPAL_STRING))) {
@@ -531,7 +528,6 @@ int orte_util_encode_pidmap(opal_byte_object_t *boptr, bool update)
     orte_job_t *jdata;
     bool include_all;
     uint8_t flag;
-    opal_byte_object_t *bptr;
 
     /* setup the working buffer */
     OBJ_CONSTRUCT(&buf, opal_buffer_t);
@@ -652,14 +648,13 @@ int orte_util_encode_pidmap(opal_byte_object_t *boptr, bool update)
             goto cleanup_and_return;
         }
         /* if there is a file map, then include it */
-        if (NULL != jdata->file_maps.bytes) {
+        if (NULL != jdata->file_maps) {
             flag = 1;
             if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &flag, 1, OPAL_UINT8))) {
                 ORTE_ERROR_LOG(rc);
                 goto cleanup_and_return;
             }
-            bptr = &jdata->file_maps;
-            if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &bptr, 1, OPAL_BYTE_OBJECT))) {
+            if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &jdata->file_maps, 1, OPAL_BUFFER))) {
                 ORTE_ERROR_LOG(rc);
                 goto cleanup_and_return;
             }
@@ -704,7 +699,7 @@ int orte_util_decode_pidmap(opal_byte_object_t *bo)
     opal_list_t jobs;
     char *hostname;
     uint8_t flag;
-    opal_byte_object_t *boptr;
+    opal_buffer_t *bptr;
     bool barrier;
 
     /* xfer the byte object to a buffer for unpacking */
@@ -875,20 +870,20 @@ int orte_util_decode_pidmap(opal_byte_object_t *bo)
                 }
             }
         }
+        /* see if there is a file map */
         n=1;
         if (OPAL_SUCCESS != (rc = opal_dss.unpack(&buf, &flag, &n, OPAL_UINT8))) {
             ORTE_ERROR_LOG(rc);
             goto cleanup;
         }
         if (0 != flag) {
+            /* unpack it and discard */
             n=1;
-            if (OPAL_SUCCESS != (rc = opal_dss.unpack(&buf, &boptr, &n, OPAL_BYTE_OBJECT))) {
+            if (OPAL_SUCCESS != (rc = opal_dss.unpack(&buf, &bptr, &n, OPAL_BUFFER))) {
                 ORTE_ERROR_LOG(rc);
                 goto cleanup;
             }
-            if (NULL != boptr->bytes) {
-                free(boptr->bytes);
-            }
+            OBJ_RELEASE(bptr);
         }
         /* setup for next cycle */
         n = 1;
@@ -923,7 +918,16 @@ int orte_util_decode_pidmap(opal_byte_object_t *bo)
             /* recover the daemon for this proc */
             vptr = &daemon;
             if (ORTE_SUCCESS != (rc = orte_db.fetch(&proc, ORTE_DB_DAEMON_VPID, (void**)&vptr, ORTE_VPID))) {
+                if (orte_staged_execution) {
+                    /* when using staged execution, we will see processes that have not
+                     * yet been launched and thus do not have a daemon assigned to them.
+                     * This is not an error - we just need to ignore them
+                     */
+                    rc = ORTE_SUCCESS;
+                    continue;
+                }
                 ORTE_ERROR_LOG(rc);
+                opal_output(0, "%s\tNOT FOUND FOR PROC %s", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_NAME_PRINT(&proc));
                 goto cleanup;
             }
             if (daemon == ORTE_PROC_MY_DAEMON->vpid) {
@@ -991,11 +995,9 @@ int orte_util_decode_pidmap(opal_byte_object_t *bo)
 
 static void fm_release(void *cbdata)
 {
-    opal_byte_object_t *boptr = (opal_byte_object_t*)cbdata;
+    opal_buffer_t *bptr = (opal_buffer_t*)cbdata;
 
-    if (NULL != boptr->bytes) {
-        free(boptr->bytes);
-    }
+    OBJ_RELEASE(bptr);
 }
 
 int orte_util_decode_daemon_pidmap(opal_byte_object_t *bo)
@@ -1021,7 +1023,7 @@ int orte_util_decode_daemon_pidmap(opal_byte_object_t *bo)
     orte_job_map_t *map;
     bool found;
     uint8_t flag;
-    opal_byte_object_t *boptr;
+    opal_buffer_t *bptr;
     bool barrier;
 
     /* xfer the byte object to a buffer for unpacking */
@@ -1219,17 +1221,13 @@ int orte_util_decode_daemon_pidmap(opal_byte_object_t *bo)
         if (0 != flag) {
             /* yep - retrieve and load it */
             n=1;
-            if (OPAL_SUCCESS != (rc = opal_dss.unpack(&buf, &boptr, &n, OPAL_BYTE_OBJECT))) {
+            if (OPAL_SUCCESS != (rc = opal_dss.unpack(&buf, &bptr, &n, OPAL_BUFFER))) {
                 ORTE_ERROR_LOG(rc);
                 goto cleanup;
             }
             if (NULL != orte_dfs.load_file_maps) {
-                orte_dfs.load_file_maps(jdata->jobid, boptr, fm_release, boptr);
+                orte_dfs.load_file_maps(jdata->jobid, bptr, fm_release, bptr);
             }
-            if (NULL != boptr->bytes) {
-                free(boptr->bytes);
-            }
-            free(boptr);
         }
         /* setup for next cycle */
         n = 1;
