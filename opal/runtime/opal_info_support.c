@@ -696,7 +696,7 @@ void opal_info_do_params(bool want_all_in, bool want_internal,
 
 void opal_info_err_params(opal_pointer_array_t *component_map)
 {
-    opal_info_component_map_t *map, *mptr;
+    opal_info_component_map_t *map=NULL, *mptr;
     int i;
     opal_list_t *info=NULL;
 
@@ -708,6 +708,10 @@ void opal_info_err_params(opal_pointer_array_t *component_map)
             continue;
         }
         map = mptr;
+    }
+    if (NULL == map) {
+        fprintf(stderr, "opal_info_err_params: map not found\n");
+        return;
     }
     mca_base_param_dump(&info, true);
     opal_info_show_mca_params(info, map->type, opal_info_component_all, true);
