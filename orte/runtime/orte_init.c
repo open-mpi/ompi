@@ -149,7 +149,6 @@ int orte_init(int* pargc, char*** pargv, orte_proc_type_t flags)
         goto error;
     }
 
-    if (ORTE_PROC_IS_APP) {
 #if !ORTE_DISABLE_FULL_SUPPORT && ORTE_ENABLE_PROGRESS_THREADS
 #if OPAL_EVENT_HAVE_THREAD_SUPPORT
         /* get a separate orte event base */
@@ -160,18 +159,6 @@ int orte_init(int* pargc, char*** pargv, orte_proc_type_t flags)
          */
         opal_event_set(orte_event_base, &orte_finalize_event, -1, OPAL_EV_WRITE, ignore_callback, NULL);
         opal_event_set_priority(&orte_finalize_event, ORTE_ERROR_PRI);
-#if 0
-        {
-            /* seems strange, but wake us up once a second just so we can check for new events */
-            opal_event_t *ev;
-            struct timeval tv = {1,0};
-            ev = opal_event_alloc();
-            opal_event_evtimer_set(orte_event_base,
-                               ev, ignore_callback, ev);
-            opal_event_set_priority(ev, ORTE_INFO_PRI);
-            opal_event_evtimer_add(ev, &tv);
-        }
-#endif
         /* construct the thread object */
         OBJ_CONSTRUCT(&orte_progress_thread, opal_thread_t);
         /* fork off a thread to progress it */
@@ -189,10 +176,6 @@ int orte_init(int* pargc, char*** pargv, orte_proc_type_t flags)
         /* set the event base to the opal one */
         orte_event_base = opal_event_base;
 #endif
-    } else {
-        /* set the event base to the opal one */
-        orte_event_base = opal_event_base;
-    }
 
     /* initialize the RTE for this environment */
     if (ORTE_SUCCESS != (ret = orte_ess.init())) {
