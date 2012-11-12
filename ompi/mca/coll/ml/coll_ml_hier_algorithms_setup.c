@@ -22,7 +22,7 @@ int ml_coll_up_and_down_hier_setup(mca_coll_ml_module_t *ml_module,
                                    int collective)
 {
     /* local variables */
-    int i, j, cnt, value_to_set;
+    int i, j, cnt, value_to_set = -1;
     int ret = OMPI_SUCCESS, num_up_levels;
 
     int num_hierarchies = topo_info->n_levels;
@@ -326,7 +326,7 @@ int ml_coll_barrier_constant_group_data_setup(
                 mca_coll_ml_collective_operation_description_t  *schedule)
 {
     /* local variables */
-    int i, j, cnt, value_to_set, ret = OMPI_SUCCESS, num_up_levels,
+    int i, j, cnt, value_to_set = -1, ret = OMPI_SUCCESS, num_up_levels,
         num_hierarchies = topo_info->n_levels, n_functions = schedule->n_fns,
         global_high_hierarchy_index = topo_info->global_highest_hier_group_index;
 
