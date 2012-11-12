@@ -271,7 +271,7 @@ JNIEXPORT jobject JNICALL Java_mpi_Request_Waitany(JNIEnv *env, jclass jthis,
     int count=(*env)->GetArrayLength(env,array_of_request);
     MPI_Request *reqs=(MPI_Request*)calloc(count, sizeof(MPI_Request));
 
-    jobject req ;
+    jobject req = NULL;
 
     MPI_Status *status =
         (MPI_Status *)((*env)->GetLongField(env,stat,ompi_java.stathandleID));
@@ -519,7 +519,7 @@ JNIEXPORT jobjectArray JNICALL Java_mpi_Request_waitsome(JNIEnv *env, jclass jth
     int outcount;
 
     jclass status_class = (*env)->FindClass(env,"mpi/Status");
-    jobjectArray array_of_status;
+    jobjectArray array_of_status = NULL;
 
     jmethodID handleConstructorID = 
         (*env)->GetMethodID(env, status_class, "<init>", "()V");
@@ -601,7 +601,7 @@ JNIEXPORT jobjectArray JNICALL Java_mpi_Request_testsome(JNIEnv *env, jclass jth
     int outcount;
 
     jclass status_class = (*env)->FindClass(env,"mpi/Status");
-    jobjectArray array_of_status;
+    jobjectArray array_of_status = NULL;
 
     jmethodID handleConstructorID = 
         (*env)->GetMethodID(env, status_class, "<init>", "()V");
