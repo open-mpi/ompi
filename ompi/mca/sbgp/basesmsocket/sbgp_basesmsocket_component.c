@@ -267,7 +267,7 @@ static mca_sbgp_base_module_t *mca_sbgp_basesmsocket_select_procs(struct ompi_pr
     ompi_proc_t* my_proc;
     int *local_ranks_in_comm=NULL;
     int *socket_info=NULL, my_socket_info;
-    int  i_cnt, lp_cnt, my_local_index, comm_size=ompi_comm_size(comm);
+    int  i_cnt, lp_cnt, my_local_index = -1, comm_size=ompi_comm_size(comm);
 
     /* initialize data */
     output_data=NULL;
