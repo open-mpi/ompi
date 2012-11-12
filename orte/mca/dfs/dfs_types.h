@@ -21,15 +21,16 @@ BEGIN_C_DECLS
 typedef uint8_t orte_dfs_cmd_t;
 #define ORTE_DFS_CMD_T OPAL_UINT8
 
-#define ORTE_DFS_OPEN_CMD   1
-#define ORTE_DFS_CLOSE_CMD  2
-#define ORTE_DFS_SIZE_CMD   3
-#define ORTE_DFS_SEEK_CMD   4
-#define ORTE_DFS_READ_CMD   5
-#define ORTE_DFS_POST_CMD   6
-#define ORTE_DFS_GETFM_CMD  7
-#define ORTE_DFS_LOAD_CMD   8
-#define ORTE_DFS_PURGE_CMD  9
+#define ORTE_DFS_OPEN_CMD          1
+#define ORTE_DFS_CLOSE_CMD         2
+#define ORTE_DFS_SIZE_CMD          3
+#define ORTE_DFS_SEEK_CMD          4
+#define ORTE_DFS_READ_CMD          5
+#define ORTE_DFS_POST_CMD          6
+#define ORTE_DFS_GETFM_CMD         7
+#define ORTE_DFS_LOAD_CMD          8
+#define ORTE_DFS_PURGE_CMD         9
+#define ORTE_DFS_RELAY_POSTS_CMD  10
 
 /* file maps */
 typedef struct {

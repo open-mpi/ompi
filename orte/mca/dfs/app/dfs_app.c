@@ -214,7 +214,10 @@ static void recv_dfs(int status, orte_process_name_t* sender,
         trk->requestor.vpid = ORTE_PROC_MY_NAME->vpid;
         trk->host_daemon.jobid = sender->jobid;
         trk->host_daemon.vpid = sender->vpid;
-        trk->filename = strdup(dfs->uri);
+        trk->uri = strdup(dfs->uri);
+        /* break the uri down into scheme and filename */
+        trk->scheme = opal_uri_get_scheme(dfs->uri);
+        trk->filename = opal_filename_from_uri(dfs->uri, NULL);
         /* define the local fd */
         trk->local_fd = local_fd++;
         /* record the remote file descriptor */
@@ -472,6 +475,9 @@ static void open_local_file(orte_dfs_request_t *dfs)
     trk = OBJ_NEW(orte_dfs_tracker_t);
     trk->requestor.jobid = ORTE_PROC_MY_NAME->jobid;
     trk->requestor.vpid = ORTE_PROC_MY_NAME->vpid;
+    trk->uri = strdup(dfs->uri);
+    /* break the uri down into scheme and filename */
+    trk->scheme = opal_uri_get_scheme(dfs->uri);
     trk->filename = strdup(filename);
     /* define the local fd */
     trk->local_fd = local_fd++;
@@ -503,13 +509,11 @@ static void process_opens(int fd, short args, void *cbdata)
     bool found;
     orte_vpid_t v;
 
-    opal_output(0, "%s PROCESSING OPEN", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
     /* get the scheme to determine if we can process locally or not */
     if (NULL == (scheme = opal_uri_get_scheme(dfs->uri))) {
         ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
         goto complete;
     }
-    opal_output(0, "%s GOT SCHEME", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
 
     if (0 == strcmp(scheme, "nfs")) {
         open_local_file(dfs);
@@ -529,12 +533,10 @@ static void process_opens(int fd, short args, void *cbdata)
     if (NULL == (filename = opal_filename_from_uri(dfs->uri, &host))) {
         goto complete;
     }
-    opal_output(0, "%s GOT FILENAME %s", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), filename);
     if (NULL == host) {
         host = strdup(orte_process_info.nodename);
     }
 
-#if 0
     /* if the host is our own, then treat it as a local file */
     if (NULL == host ||
         0 == strcmp(host, orte_process_info.nodename) ||
@@ -549,7 +551,6 @@ static void process_opens(int fd, short args, void *cbdata)
         OBJ_RELEASE(dfs);
         return;
     }
-#endif
 
     /* ident the daemon on that host */
     daemon.jobid = ORTE_PROC_MY_DAEMON->jobid;
@@ -575,7 +576,7 @@ static void process_opens(int fd, short args, void *cbdata)
                         "%s file %s on host %s daemon %s",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                         filename, host, ORTE_NAME_PRINT(&daemon));
-#if 0
+
     /* double-check: if it is our local daemon, then we
      * treat this as local
      */
@@ -589,7 +590,7 @@ static void process_opens(int fd, short args, void *cbdata)
         OBJ_RELEASE(dfs);
         return;
     }
-#endif
+
     /* add this request to our local list so we can
      * match it with the returned response when it comes
      */
