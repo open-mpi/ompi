@@ -841,7 +841,7 @@ void orte_plm_base_daemon_failed(int st, orte_process_name_t* sender,
     int status, rc;
     int32_t n;
     orte_vpid_t vpid;
-    orte_proc_t *daemon;
+    orte_proc_t *daemon=NULL;
 
     /* get the daemon job, if necessary */
     if (NULL == jdatorted) {
@@ -875,6 +875,10 @@ void orte_plm_base_daemon_failed(int st, orte_process_name_t* sender,
     daemon->exit_code = status;
 
  finish:
+    if (NULL == daemon) {
+        ORTE_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
+        return;
+    }
     ORTE_ACTIVATE_PROC_STATE(&daemon->name, ORTE_PROC_STATE_FAILED_TO_START);
 }
 
