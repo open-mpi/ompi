@@ -274,9 +274,10 @@ static int bad_allgather(orte_grpcomm_collective_t *gather)
                 ORTE_ERROR_LOG(rc);
                 OBJ_RELEASE(buf);
                 opal_list_remove_item(&orte_grpcomm_base.active_colls, &gather->super);
+                return rc;
             }
         }
-        return rc;
+        return ORTE_SUCCESS;
     }
     
     OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base.output,
