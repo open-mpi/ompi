@@ -632,19 +632,17 @@ int opal_dss_pack_buffer_contents(opal_buffer_t *buffer, const void *src,
     opal_buffer_t **ptr;
     int32_t i;
     int ret;
-    size_t offset, bytes_to_pack;
 
     ptr = (opal_buffer_t **) src;
     
     for (i = 0; i < num_vals; ++i) {
         /* pack the number of bytes */
-        offset = ((char*)ptr[i]->unpack_ptr) - ((char*)ptr[i]->base_ptr);
-        bytes_to_pack = ptr[i]->bytes_used - offset;
-        if (OPAL_SUCCESS != (ret = opal_dss_pack_sizet(buffer, &bytes_to_pack, 1, OPAL_SIZE))) {
+        OPAL_OUTPUT((opal_dss_verbose, "opal_dss_pack_buffer_contents: bytes_used %u\n", (unsigned)ptr[i]->bytes_used));
+        if (OPAL_SUCCESS != (ret = opal_dss_pack_sizet(buffer, &ptr[i]->bytes_used, 1, OPAL_SIZE))) {
             return ret;
         }
         /* pack the bytes */
-        if (OPAL_SUCCESS != (ret = opal_dss_pack_byte(buffer, ptr[i]->unpack_ptr, bytes_to_pack, OPAL_BYTE))) {
+        if (OPAL_SUCCESS != (ret = opal_dss_pack_byte(buffer, ptr[i]->base_ptr, ptr[i]->bytes_used, OPAL_BYTE))) {
             return ret;
         }
     }
