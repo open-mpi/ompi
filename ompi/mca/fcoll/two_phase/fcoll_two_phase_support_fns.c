@@ -337,14 +337,14 @@ int mca_fcoll_two_phase_calc_my_requests (mca_io_ompio_file_t *fh,
 					  int *count_my_req_procs_ptr,
 					  int **count_my_req_per_proc_ptr,
 					  mca_io_ompio_access_array_t **my_req_ptr,
-					  int **buf_indices,
+					  size_t **buf_indices,
 					  int striping_unit,
 					  int num_aggregators,
 					  int *aggregator_list)
 {
     
     int *count_my_req_per_proc, count_my_req_procs;
-    int *buf_idx;
+    size_t *buf_idx = NULL;
     int i, l, proc;
     OMPI_MPI_OFFSET_TYPE fd_len, rem_len, curr_idx, off;
     mca_io_ompio_access_array_t *my_req;
@@ -362,7 +362,7 @@ int mca_fcoll_two_phase_calc_my_requests (mca_io_ompio_file_t *fh,
 	count_my_req_per_proc[i] = 0;
     }
         
-    buf_idx = (int *) malloc (fh->f_size * sizeof(int));
+    buf_idx = (size_t *) malloc (fh->f_size * sizeof(size_t));
     
     if ( NULL == buf_idx ){ 
 	return OMPI_ERR_OUT_OF_RESOURCE;
@@ -432,7 +432,7 @@ int mca_fcoll_two_phase_calc_my_requests (mca_io_ompio_file_t *fh,
 					     fd_size, fd_start, fd_end,
 					     striping_unit, num_aggregators,
 					     aggregator_list);
-	if (buf_idx[proc] == -1){
+	if (buf_idx[proc] == (size_t) -1){
 	    buf_idx[proc] = (int) curr_idx;
 	}
 	l = my_req[proc].count;
@@ -451,7 +451,7 @@ int mca_fcoll_two_phase_calc_my_requests (mca_io_ompio_file_t *fh,
 						       num_aggregators,
 						       aggregator_list);
 	    
-	    if (buf_idx[proc] == -1){
+	    if (buf_idx[proc] == (size_t) -1){
 		buf_idx[proc] = (int) curr_idx;
 	    }
 		    

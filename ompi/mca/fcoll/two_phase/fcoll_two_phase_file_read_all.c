@@ -53,7 +53,7 @@ static int two_phase_read_and_exch(mca_io_ompio_file_t *fh,
 				   OMPI_MPI_OFFSET_TYPE *fd_start,
 				   OMPI_MPI_OFFSET_TYPE *fd_end,
 				   Flatlist_node *flat_buf,
-				   int *buf_idx, int striping_unit,
+				   size_t *buf_idx, int striping_unit,
 				   int *aggregator_list);
 
 static int  two_phase_exchange_data(mca_io_ompio_file_t *fh,
@@ -71,7 +71,7 @@ static int  two_phase_exchange_data(mca_io_ompio_file_t *fh,
 				    Flatlist_node *flat_buf,
 				    mca_io_ompio_access_array_t *others_req,
 				    int iter,
-				    int *buf_idx, MPI_Aint buftype_extent,
+				    size_t *buf_idx, MPI_Aint buftype_extent,
 				    int striping_unit, int *aggregator_list);
 
 
@@ -120,7 +120,8 @@ mca_fcoll_two_phase_file_read_all (mca_io_ompio_file_t *fh,
   struct iovec *decoded_iov = NULL, *temp_iov = NULL, *iov = NULL;
   size_t max_data = 0, total_bytes = 0;
   int domain_size=0, *count_my_req_per_proc=NULL, count_my_req_procs = 0;
-  int count_other_req_procs, *buf_indices=NULL;
+  int count_other_req_procs;
+  size_t *buf_indices=NULL;
   int *aggregator_list = NULL, local_count = 0, local_size = 0;
   OMPI_MPI_OFFSET_TYPE start_offset = 0, end_offset = 0, fd_size = 0;
   OMPI_MPI_OFFSET_TYPE *start_offsets=NULL, *end_offsets=NULL;
@@ -507,7 +508,7 @@ static int two_phase_read_and_exch(mca_io_ompio_file_t *fh,
 				   OMPI_MPI_OFFSET_TYPE *fd_start,
 				   OMPI_MPI_OFFSET_TYPE *fd_end,
 				   Flatlist_node *flat_buf,
-				   int *buf_idx, int striping_unit,
+				   size_t *buf_idx, int striping_unit,
 				   int *aggregator_list){
 
 
@@ -817,7 +818,7 @@ static int two_phase_exchange_data(mca_io_ompio_file_t *fh,
 				   OMPI_MPI_OFFSET_TYPE *fd_end, 
 				   Flatlist_node *flat_buf,
 				   mca_io_ompio_access_array_t *others_req, 
-				   int iter, int *buf_idx, 
+				   int iter, size_t *buf_idx, 
 				   MPI_Aint buftype_extent, int striping_unit,
 				   int *aggregator_list)
 {
