@@ -71,7 +71,8 @@ mca_fcoll_static_file_write_all (mca_io_ompio_file_t *fh,
   int i=0,j=0,l=0, temp_index;
   int ret=OMPI_SUCCESS, cycles, local_cycles, *bytes_per_process=NULL;
   int index, *disp_index=NULL, **blocklen_per_process=NULL;
-  int *iovec_count_per_process=NULL, *displs=NULL, total_bytes_written=0;
+  int *iovec_count_per_process=NULL, *displs=NULL;
+  size_t total_bytes_written=0;
   MPI_Aint **displs_per_process=NULL, *memory_displacements=NULL;
   MPI_Aint bytes_to_write_in_cycle=0, global_iov_count=0, global_count=0;
 

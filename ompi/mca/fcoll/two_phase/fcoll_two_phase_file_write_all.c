@@ -61,7 +61,7 @@ static int two_phase_exch_and_write(mca_io_ompio_file_t *fh,
 				    OMPI_MPI_OFFSET_TYPE *fd_start,
 				    OMPI_MPI_OFFSET_TYPE *fd_end,
 				    Flatlist_node *flat_buf,
-				    int *buf_idx, int striping_unit,
+				    size_t *buf_idx, int striping_unit,
 				    int *aggregator_list);
 
 
@@ -84,7 +84,7 @@ static int  two_phase_exchage_data(mca_io_ompio_file_t *fh,
 				   mca_io_ompio_access_array_t *others_req,
 				   int *send_buf_idx, int *curr_to_proc,
 				   int *done_to_proc, int iter,
-				   int *buf_idx, MPI_Aint buftype_extent,
+				   size_t *buf_idx, MPI_Aint buftype_extent,
 				   int striping_unit, int *aggregator_list,
 				   int *hole);
 				   
@@ -148,7 +148,8 @@ mca_fcoll_two_phase_file_write_all (mca_io_ompio_file_t *fh,
   struct iovec *decoded_iov=NULL, *temp_iov=NULL;
   size_t max_data = 0, total_bytes = 0; 
   int domain_size=0, *count_my_req_per_proc=NULL, count_my_req_procs;
-  int count_other_req_procs, *buf_indices, ret=OMPI_SUCCESS;
+  int count_other_req_procs,  ret=OMPI_SUCCESS;
+  size_t *buf_indices=NULL;
   int local_count = 0, local_size=0,*aggregator_list = NULL;
   struct iovec *iov = NULL;
   
@@ -560,7 +561,7 @@ static int two_phase_exch_and_write(mca_io_ompio_file_t *fh,
 				    OMPI_MPI_OFFSET_TYPE *fd_start,
 				    OMPI_MPI_OFFSET_TYPE *fd_end,
 				    Flatlist_node *flat_buf,
-				    int *buf_idx, int striping_unit,
+				    size_t *buf_idx, int striping_unit,
 				    int *aggregator_list)
     
 {
@@ -907,7 +908,7 @@ static int two_phase_exchage_data(mca_io_ompio_file_t *fh,
 				  mca_io_ompio_access_array_t *others_req,
 				  int *send_buf_idx, int *curr_to_proc,
 				  int *done_to_proc, int iter,
-				  int *buf_idx,MPI_Aint buftype_extent,
+				  size_t *buf_idx,MPI_Aint buftype_extent,
 				  int striping_unit, int *aggregator_list,
 				  int *hole){
   
