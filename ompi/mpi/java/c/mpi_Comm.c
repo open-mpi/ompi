@@ -180,7 +180,7 @@ static void* getBufCritical(void** bufbase,
                             int baseType, int offset)
 {
     jboolean isCopy ;
-    void* bufptr ;
+    void* bufptr = NULL;
 
     *bufbase = (jbyte*) (*env)->GetPrimitiveArrayCritical(env,buf,&isCopy) ;
 

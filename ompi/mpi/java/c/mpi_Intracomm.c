@@ -232,7 +232,7 @@ JNIEXPORT void JNICALL Java_mpi_Intracomm_gather(JNIEnv *env, jobject jthis,
         ((*env)->GetLongField(env, recvtype, ompi_java.DatatypehandleID)) ;
 
     int sbaseType = (*env)->GetIntField(env, sendtype, ompi_java.DatatypebaseTypeID) ;
-    int rbaseType ;
+    int rbaseType = -1;
 
     void *sendptr, *recvptr = NULL;
     void *sbufbase, *rbufbase ;
@@ -358,7 +358,7 @@ JNIEXPORT void JNICALL Java_mpi_Intracomm_scatter(JNIEnv *env, jobject jthis,
         (MPI_Datatype)((*env)->GetLongField(env,recvtype,ompi_java.DatatypehandleID)) ;
 
 
-    int sbaseType ;
+    int sbaseType = -1;
     int rbaseType = (*env)->GetIntField(env, recvtype, ompi_java.DatatypebaseTypeID) ;
 
     void *sendptr = NULL, *recvptr ;
@@ -415,7 +415,7 @@ JNIEXPORT void JNICALL Java_mpi_Intracomm_scatterv(JNIEnv *env, jobject jthis,
         (MPI_Datatype)((*env)->GetLongField(env,recvtype,ompi_java.DatatypehandleID)) ;
     MPI_Datatype mpi_stype = mpi_rtype;
 
-    int sbaseType ;
+    int sbaseType = -1;
     int rbaseType = (*env)->GetIntField(env, recvtype, ompi_java.DatatypebaseTypeID) ;
 
     void *sendptr = NULL, *recvptr ;
