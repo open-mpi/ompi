@@ -92,11 +92,19 @@ static void trk_con(orte_dfs_tracker_t *trk)
 {
     trk->host_daemon.jobid = ORTE_JOBID_INVALID;
     trk->host_daemon.vpid = ORTE_VPID_INVALID;
+    trk->uri = NULL;
+    trk->scheme = NULL;
     trk->filename = NULL;
     trk->location = 0;
 }
 static void trk_des(orte_dfs_tracker_t *trk)
 {
+    if (NULL != trk->uri) {
+        free(trk->uri);
+    }
+    if (NULL != trk->scheme) {
+        free(trk->scheme);
+    }
     if (NULL != trk->filename) {
         free(trk->filename);
     }

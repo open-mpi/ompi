@@ -83,7 +83,6 @@ static void read_cbfunc(long status, uint8_t *buffer, void *cbdata)
 {
     int *check = (int*)cbdata;
 
-    opal_output(0, "GOT READ STATUS %d", (int)status);
     if (status < 0) {
         read_active = false;
         active = false;
@@ -158,7 +157,6 @@ int main(int argc, char* argv[])
         numread = 0;
         while (read_active) {
             i = READ_SIZE;
-            opal_output(0, "%s reading next %d bytes\n", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), i);
             active = true;
             orte_dfs.read(fd, buffer, READ_SIZE, read_cbfunc, &i);
             ORTE_WAIT_FOR_COMPLETION(active);

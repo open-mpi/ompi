@@ -49,7 +49,9 @@ typedef struct {
     opal_list_item_t super;
     orte_process_name_t requestor;
     orte_process_name_t host_daemon;
-    char *filename;  /* for debug purposes */
+    char *uri;
+    char *scheme;
+    char *filename;
     int local_fd;
     int remote_fd;
     size_t location;
