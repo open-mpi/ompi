@@ -799,9 +799,7 @@ int orte_daemon(int argc, char *argv[])
     }
 
     /* loop the event lib until an exit event is detected */
-    while (orte_event_base_active) {
-        opal_event_loop(orte_event_base, OPAL_EVLOOP_ONCE);
-    }
+    ORTE_WAIT_FOR_COMPLETION(orte_event_base_active);
 
     /* ensure all local procs are dead */
     orte_odls.kill_local_procs(NULL);
