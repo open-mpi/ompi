@@ -40,7 +40,6 @@
  * Global variables
  */
 opal_list_t mca_allocator_base_components;
-int mca_allocator_base_output = -1;
 
 /**
  * Function for finding and opening either all MCA components, or the one

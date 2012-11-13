@@ -23,6 +23,7 @@
 
 #include "ompi/mca/pubsub/pubsub.h"
 #include "ompi/mca/pubsub/base/base.h"
+#include "opal/util/output.h"
 
 int ompi_pubsub_base_close(void)
 {

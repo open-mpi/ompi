@@ -36,15 +36,9 @@ int mca_allocator_base_close(void)
   /* Close all remaining available modules (may be one if this is a
      OMPI RTE program, or [possibly] multiple if this is ompi_info) */
 
-  mca_base_components_close(mca_allocator_base_output,
-                            &mca_allocator_base_components, NULL);
-
-  /* Close the framework output */
-  opal_output_close (mca_allocator_base_output);
-  mca_allocator_base_output = -1;
+  mca_base_components_close(0, &mca_allocator_base_components, NULL);
 
   /* All done */
-
   return OMPI_SUCCESS;
 }
 

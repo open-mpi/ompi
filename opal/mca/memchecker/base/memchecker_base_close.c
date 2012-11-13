@@ -15,6 +15,7 @@
 #include "opal/mca/base/base.h"
 #include "opal/mca/memchecker/base/base.h"
 #include "opal/mca/memchecker/memchecker.h"
+#include "opal/util/output.h"
 
 int opal_memchecker_base_close(void)
 {

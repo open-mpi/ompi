@@ -25,7 +25,7 @@
 #include "ompi/constants.h"
 #include "ompi/mca/op/op.h"
 #include "ompi/mca/op/base/base.h"
-
+#include "opal/util/output.h"
 
 int ompi_op_base_close(void)
 {

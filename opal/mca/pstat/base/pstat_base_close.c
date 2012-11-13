@@ -24,6 +24,7 @@
 #include "opal/mca/base/base.h"
 #include "opal/mca/pstat/pstat.h"
 #include "opal/mca/pstat/base/base.h"
+#include "opal/util/output.h"
 
 int opal_pstat_base_close(void)
 {
