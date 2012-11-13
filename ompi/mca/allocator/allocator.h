@@ -151,11 +151,6 @@ typedef struct mca_allocator_base_component_2_0_0_t mca_allocator_base_component
   MCA_BASE_VERSION_2_0_0, \
   "allocator", 2, 0, 0
 
-/**
- * The output integer used for the mca base
- */
-OMPI_DECLSPEC extern int mca_allocator_base_output;
-
 END_C_DECLS
 
 #endif /* MCA_ALLOCATOR_H */
