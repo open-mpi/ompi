@@ -14,6 +14,7 @@
 #include "opal/mca/base/base.h"
 #include "opal/mca/hwloc/hwloc.h"
 #include "opal/mca/hwloc/base/base.h"
+#include "opal/util/output.h"
 
 int opal_hwloc_base_close(void)
 {

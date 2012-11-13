@@ -24,7 +24,7 @@
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 #include "ompi/mca/coll/base/base.h"
-
+#include "opal/util/output.h"
 
 int mca_coll_base_close(void)
 {

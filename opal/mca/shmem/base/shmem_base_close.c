@@ -26,6 +26,7 @@
 #include "opal/mca/base/base.h"
 #include "opal/mca/shmem/shmem.h"
 #include "opal/mca/shmem/base/base.h"
+#include "opal/util/output.h"
 
 /* ////////////////////////////////////////////////////////////////////////// */
 int
