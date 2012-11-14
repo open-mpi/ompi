@@ -105,7 +105,8 @@ AC_DEFUN([OPAL_SETUP_LIBLTDL],[
 
                    # Check for lt_dladvise_init; warn if we don't have
                    # it
-                   AC_CHECK_FUNC([lt_dladvise_init], [],
+                   AC_CHECK_FUNC([lt_dladvise_init],
+		       [OPAL_HAVE_LTDL_ADVISE=1],
                        [AC_MSG_WARN([*********************************************])
                         AC_MSG_WARN([Could not find lt_dladvise_init in the])
                         AC_MSG_WARN([external libltdl installation.])
