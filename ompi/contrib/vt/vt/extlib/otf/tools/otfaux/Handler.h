@@ -91,4 +91,39 @@ int handleEndFileOperation( void *firsthandlerarg, uint64_t time, uint32_t proce
     uint32_t fileid, uint64_t matchingId, uint64_t handleId, uint32_t operation,
     uint64_t bytes, uint32_t scltoken, OTF_KeyValueList *kvlist );
 
+int handleNoOp( void *firsthandlerarg, uint64_t time, uint32_t process,
+		OTF_KeyValueList* list );
+
+
+int handleEventComment( void *firsthandlerarg, uint64_t time, uint32_t process,
+		const char* comment, OTF_KeyValueList* list );
+
+
+int handleBeginProcess( void *firsthandlerarg, uint64_t time,
+		uint32_t process, OTF_KeyValueList* list );
+
+
+int handleEndProcess( void *firsthandlerarg, uint64_t time,
+		uint32_t process, OTF_KeyValueList* list );
+
+
+int handleRMAPut( void *firsthandlerarg, uint64_t time, uint32_t process,
+        uint32_t origin, uint32_t target, uint32_t communicator, uint32_t tag,
+        uint64_t bytes, uint32_t scltoken, OTF_KeyValueList* list );
+
+
+int handleRMAPutRemoteEnd( void *firsthandlerarg, uint64_t time,
+        uint32_t process, uint32_t origin, uint32_t target, uint32_t communicator,
+        uint32_t tag, uint64_t bytes, uint32_t scltoken, OTF_KeyValueList* list );
+
+
+int handleRMAGet( void *firsthandlerarg, uint64_t time, uint32_t process,
+        uint32_t origin, uint32_t target, uint32_t communicator, uint32_t tag,
+        uint64_t bytes, uint32_t scltoken, OTF_KeyValueList* list );
+
+
+int handleRMAEnd( void *firsthandlerarg, uint64_t time, uint32_t process, uint32_t remote,
+	uint32_t communicator, uint32_t tag, uint32_t scltoken, OTF_KeyValueList* list );
+
+
 #endif /* OTFTOVTF3_HANDLER_H */

@@ -56,10 +56,10 @@ AC_DEFUN([ACVT_CUPTI],
 		AS_IF([test x"$CUPTILIB" = x -a x"$cupti_error" = "xno"],
 		[
 			sav_LIBS=$LIBS
-			LIBS="$LIBS $CUPTILIBDIR -lcupti $CUDATKLIBDIR $CUDALIB"
+			LIBS="$LIBS $CUPTILIBDIR -lcupti $CUDATKLIBDIR $CUDALIB $CUDARTLIB"
 			AC_MSG_CHECKING([whether linking with -lcupti works])
 			AC_TRY_LINK([],[],
-			[AC_MSG_RESULT([yes]); CUPTILIB="-lcupti $CUDATKLIBDIR $CUDALIB"],[AC_MSG_RESULT([no])])
+			[AC_MSG_RESULT([yes]); CUPTILIB="-lcupti $CUDATKLIBDIR $CUDALIB $CUDARTLIB"],[AC_MSG_RESULT([no])])
 			LIBS=$sav_LIBS
 		])
 
@@ -108,8 +108,8 @@ AC_DEFUN([ACVT_CUPTI],
 		])
 	])
 
-dnl	if no CUPTI found, remove content of CUPTILIBDIR to prevent adding the
-dnl	'-LCUPTILIBDIR' linker flag by the VT compiler wrappers
+dnl	if no CUPTI found, remove content of CUPTILIBDIR to prevent adding them
+dnl	to the linker flags when using the VT compiler wrappers
 	AS_IF([test x"$have_cupti" = "xno"],
 	[CUPTILIBDIR=])
 

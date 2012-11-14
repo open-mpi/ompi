@@ -227,11 +227,11 @@ int handleDefProcessGroup( void* userData, uint32_t stream,
 			fprintf( c->outfile, "(#%llu) \tDefProcessGroup: stream %u, group %u, name \"%s\", procs ",
 				(long long unsigned) c->num, stream, group, name );
 
-			for( i= 0; i < (numberOfProcs - 1); ++i ) {
-				fprintf( c->outfile, "%u, ", procs[i] );
+			const char* sep= "";
+			for( i= 0; i < numberOfProcs; ++i ) {
+				fprintf( c->outfile, "%s%u", sep, procs[i] );
+				sep= ", ";
 			}
-			
-			fprintf( c->outfile, "%u", procs[i] );
 		
 			printKeyValueList(c, kvlist);
 		}

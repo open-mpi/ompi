@@ -30,7 +30,7 @@ AC_DEFUN([ACVT_RUN],
 
 	AS_IF([test x"$check_vtrun" = "xyes"],
 	[
-		AS_IF([test "$PLATFORM" = "bgl" -o "$PLATFORM" = "bgp"],
+		AS_IF([test "$PLATFORM" = "bgl" -o "$PLATFORM" = "bgp" -o "$PLATFORM" = "bgq"],
 		[
 			AC_MSG_NOTICE([error: application execution wrapper not supported on this platform])
 			vtrun_error="yes"

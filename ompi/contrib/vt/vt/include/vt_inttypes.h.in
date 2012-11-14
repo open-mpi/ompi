@@ -13,11 +13,13 @@
 #ifndef _VT_INTTYPES_H
 #define _VT_INTTYPES_H
 
-#ifndef _CONFIG_H
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#else /* HAVE_CONFIG_H */
 # define HAVE_STDINT_H   @HAVE_STDINT_H@
 # define HAVE_INTTYPES_H @HAVE_INTTYPES_H@
 # define SIZEOF_LONG     @SIZEOF_LONG@
-#endif /* _CONFIG_H */
+#endif /* HAVE_CONFIG_H */
 
 #if defined(HAVE_STDINT_H) && HAVE_STDINT_H && !defined(__sgi)
 # include <stdint.h>

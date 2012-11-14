@@ -72,8 +72,12 @@
   VT_MEMHOOKS_ON(); \
   VTTHRD_MPI_TRACING_ENABLED(VTThrdv[tid]) = env_mpitrace
 
-/* initialized once from environment variable */
+/* flag: MPI tracing enabled (env. VT_MPITRACE)? */
 static uint8_t env_mpitrace = 1;
+
+/* flag: trace MPI communication events although its corresponding functions
+   are filtered (env. VT_MPI_IGNORE_FILTER)? */
+static uint8_t env_mpi_ignore_filter = 0;
 
 /* dummy function 'user' entered */
 static uint8_t vt_enter_user_called = 0;
@@ -145,8 +149,12 @@ VT_MPI_INT MPI_Init(VT_MPI_INT* argc, char*** argv)
   /* get calling thread id */
   GET_THREAD_ID(tid);
 
-  /* shall I trace MPI events? */
+  /* MPI tracing enabled? */
   env_mpitrace = vt_env_mpitrace();
+
+  /* trace MPI communication events although its corresponding functions
+     are filtered? */
+  env_mpi_ignore_filter = vt_env_mpi_ignore_filter();
 
   if (IS_MPI_TRACE_ON(tid))
     {
@@ -221,8 +229,12 @@ VT_MPI_INT MPI_Init_thread(VT_MPI_INT* argc, char*** argv, VT_MPI_INT required,
   /* get calling thread id */
   GET_THREAD_ID(tid);
 
-  /* shall I trace MPI events? */
+  /* MPI tracing enabled? */
   env_mpitrace = vt_env_mpitrace();
+
+  /* trace MPI communication events although its corresponding functions
+     are filtered? */
+  env_mpi_ignore_filter = vt_env_mpi_ignore_filter();
 
   if (IS_MPI_TRACE_ON(tid))
     {
@@ -1559,7 +1571,7 @@ VT_MPI_INT MPI_Send(void* buf, VT_MPI_INT count, MPI_Datatype datatype,
       if (!is_mpi_multithreaded)
 #endif /* HAVE_MPI2_THREAD */
         {
-          if (dest != MPI_PROC_NULL && was_recorded)
+          if (dest != MPI_PROC_NULL && (was_recorded || env_mpi_ignore_filter))
             {
               VT_MPI_INT sz;
               PMPI_Type_size(datatype, &sz);
@@ -1613,7 +1625,7 @@ VT_MPI_INT MPI_Bsend(void* buf, VT_MPI_INT count, MPI_Datatype datatype,
       if (!is_mpi_multithreaded)
 #endif /* HAVE_MPI2_THREAD */
         {
-          if (dest != MPI_PROC_NULL && was_recorded)
+          if (dest != MPI_PROC_NULL && (was_recorded || env_mpi_ignore_filter))
             {
               VT_MPI_INT sz;
               PMPI_Type_size(datatype, &sz);
@@ -1667,7 +1679,7 @@ VT_MPI_INT MPI_Rsend(void* buf, VT_MPI_INT count, MPI_Datatype datatype,
       if (!is_mpi_multithreaded)
 #endif /* HAVE_MPI2_THREAD */
         {
-          if (dest != MPI_PROC_NULL && was_recorded)
+          if (dest != MPI_PROC_NULL && (was_recorded || env_mpi_ignore_filter))
             {
               VT_MPI_INT sz;
               PMPI_Type_size(datatype, &sz);
@@ -1721,7 +1733,7 @@ VT_MPI_INT MPI_Ssend(void* buf, VT_MPI_INT count, MPI_Datatype datatype,
       if (!is_mpi_multithreaded)
 #endif /* HAVE_MPI2_THREAD */
         {
-          if (dest != MPI_PROC_NULL && was_recorded)
+          if (dest != MPI_PROC_NULL && (was_recorded || env_mpi_ignore_filter))
             {
               VT_MPI_INT sz;
               PMPI_Type_size(datatype, &sz);
@@ -1792,7 +1804,8 @@ VT_MPI_INT MPI_Recv(void* buf, VT_MPI_INT count, MPI_Datatype datatype,
       if (!is_mpi_multithreaded)
 #endif /* HAVE_MPI2_THREAD */
         {
-          if (source != MPI_PROC_NULL && result == MPI_SUCCESS && was_recorded)
+          if (source != MPI_PROC_NULL && result == MPI_SUCCESS &&
+              (was_recorded || env_mpi_ignore_filter))
             {
               VT_MPI_INT sz;
               PMPI_Type_size(datatype, &sz);
@@ -1845,7 +1858,7 @@ VT_MPI_INT MPI_Sendrecv(void* sendbuf, VT_MPI_INT sendcount,
       if (!is_mpi_multithreaded)
 #endif /* HAVE_MPI2_THREAD */
         {
-          if (dest != MPI_PROC_NULL && was_recorded)
+          if (dest != MPI_PROC_NULL && (was_recorded || env_mpi_ignore_filter))
             {
               VT_MPI_INT sz;
               PMPI_Type_size(sendtype, &sz);
@@ -1876,7 +1889,8 @@ VT_MPI_INT MPI_Sendrecv(void* sendbuf, VT_MPI_INT sendcount,
       if (!is_mpi_multithreaded)
 #endif /* HAVE_MPI2_THREAD */
         {
-          if (source != MPI_PROC_NULL && result == MPI_SUCCESS && was_recorded)
+          if (source != MPI_PROC_NULL && result == MPI_SUCCESS &&
+              (was_recorded || env_mpi_ignore_filter))
             {
               VT_MPI_INT sz;
               PMPI_Type_size(recvtype, &sz);
@@ -1934,7 +1948,7 @@ VT_MPI_INT MPI_Sendrecv_replace(void* buf, VT_MPI_INT count,
 #endif /* HAVE_MPI2_THREAD */
         {
           PMPI_Type_size(datatype, &sz);
-          if (dest != MPI_PROC_NULL && was_recorded )
+          if (dest != MPI_PROC_NULL && (was_recorded || env_mpi_ignore_filter))
             {
               vt_mpi_send(tid, &time, VT_RANK_TO_PE(dest, comm),
                           VT_COMM_ID(comm), sendtag, count * sz);
@@ -2007,7 +2021,7 @@ VT_MPI_INT MPI_Isend(void* buf, VT_MPI_INT count, MPI_Datatype datatype,
       if (!is_mpi_multithreaded)
 #endif /* HAVE_MPI2_THREAD */
         {
-          if (dest != MPI_PROC_NULL && was_recorded)
+          if (dest != MPI_PROC_NULL && (was_recorded || env_mpi_ignore_filter))
             {
               VT_MPI_INT sz;
               PMPI_Type_size(datatype, &sz);
@@ -2133,7 +2147,7 @@ VT_MPI_INT MPI_Ibsend(void* buf, VT_MPI_INT count, MPI_Datatype datatype,
       if (!is_mpi_multithreaded)
 #endif /* HAVE_MPI2_THREAD */
         {
-          if (dest != MPI_PROC_NULL && was_recorded)
+          if (dest != MPI_PROC_NULL && (was_recorded || env_mpi_ignore_filter))
             {
               VT_MPI_INT sz;
               PMPI_Type_size(datatype, &sz);
@@ -2202,7 +2216,7 @@ VT_MPI_INT MPI_Issend(void* buf, VT_MPI_INT count, MPI_Datatype datatype,
       if (!is_mpi_multithreaded)
 #endif /* HAVE_MPI2_THREAD */
         {
-          if (dest != MPI_PROC_NULL && was_recorded)
+          if (dest != MPI_PROC_NULL && (was_recorded || env_mpi_ignore_filter))
             {
               VT_MPI_INT sz;
               PMPI_Type_size(datatype, &sz);
@@ -2271,7 +2285,7 @@ VT_MPI_INT MPI_Irsend(void* buf, VT_MPI_INT count, MPI_Datatype datatype,
       if (!is_mpi_multithreaded)
 #endif /* HAVE_MPI2_THREAD */
         {
-          if (dest != MPI_PROC_NULL && was_recorded)
+          if (dest != MPI_PROC_NULL && (was_recorded || env_mpi_ignore_filter))
             {
               VT_MPI_INT sz;
               PMPI_Type_size(datatype, &sz);
@@ -2359,7 +2373,8 @@ VT_MPI_INT MPI_Wait(MPI_Request* request, MPI_Status* status)
       if (!is_mpi_multithreaded)
 #endif /* HAVE_MPI2_THREAD */
         {
-          vt_check_request(tid, &time, orig_req, status, was_recorded);
+          vt_check_request(tid, &time, orig_req, status,
+                           (was_recorded || env_mpi_ignore_filter));
         }
 
       vt_exit(tid, &time);
@@ -2423,7 +2438,7 @@ VT_MPI_INT MPI_Waitall(VT_MPI_INT count, MPI_Request* requests,
           {
             orig_req = vt_saved_request_get(i);
             vt_check_request(tid, &time, orig_req, &(array_of_statuses[i]),
-                             was_recorded);
+                             (was_recorded || env_mpi_ignore_filter));
           }
       }
 
@@ -2485,7 +2500,8 @@ VT_MPI_INT MPI_Waitany(VT_MPI_INT count, MPI_Request* requests,
 #endif /* HAVE_MPI2_THREAD */
         {
           orig_req = vt_saved_request_get(*index);
-          vt_check_request(tid, &time, orig_req, status, was_recorded);
+          vt_check_request(tid, &time, orig_req, status,
+                           (was_recorded || env_mpi_ignore_filter));
         }
 
       vt_exit(tid, &time);
@@ -2553,7 +2569,7 @@ VT_MPI_INT MPI_Waitsome(VT_MPI_INT incount, MPI_Request* array_of_requests,
             {
               orig_req = vt_saved_request_get(array_of_indices[i]);
               vt_check_request(tid, &time, orig_req, &(array_of_statuses[i]),
-                               was_recorded);
+                               (was_recorded || env_mpi_ignore_filter));
             }
         }
 
@@ -2615,7 +2631,10 @@ VT_MPI_INT MPI_Test(MPI_Request* request, VT_MPI_INT* flag, MPI_Status* status)
 #endif /* HAVE_MPI2_THREAD */
         {
           if (*flag)
-            vt_check_request(tid, &time, orig_req, status, was_recorded);
+            {
+              vt_check_request(tid, &time, orig_req, status,
+                               (was_recorded || env_mpi_ignore_filter));
+            }
         }
 
       vt_exit(tid, &time);
@@ -2680,7 +2699,8 @@ VT_MPI_INT MPI_Testany(VT_MPI_INT count, MPI_Request* array_of_requests,
           if (*flag && *index != MPI_UNDEFINED)
             {
               orig_req = vt_saved_request_get(*index);
-              vt_check_request(tid, &time, orig_req, status, was_recorded);
+              vt_check_request(tid, &time, orig_req, status,
+                               (was_recorded || env_mpi_ignore_filter));
             }
         }
 
@@ -2749,7 +2769,8 @@ VT_MPI_INT MPI_Testall(VT_MPI_INT count, MPI_Request* array_of_requests,
                 {
                   orig_req = vt_saved_request_get(i);
                   vt_check_request(tid, &time, orig_req,
-                                   &(array_of_statuses[i]), was_recorded);
+                                   &(array_of_statuses[i]),
+                                   (was_recorded || env_mpi_ignore_filter));
                 }
             }
         }
@@ -2819,7 +2840,7 @@ VT_MPI_INT MPI_Testsome(VT_MPI_INT incount, MPI_Request* array_of_requests,
             {
               orig_req = vt_saved_request_get(array_of_indices[i]);
               vt_check_request(tid, &time, orig_req, &(array_of_statuses[i]),
-                               was_recorded);
+                               (was_recorded || env_mpi_ignore_filter));
             }
         }
 
@@ -3155,9 +3176,12 @@ VT_MPI_INT MPI_Start(MPI_Request* request)
                 {
                   req->flags |= ERF_IS_ACTIVE;
                   if ((req->flags & ERF_SEND) && (req->dest != MPI_PROC_NULL) &&
-                      (was_recorded))
-                    vt_mpi_send(tid, &time, VT_RANK_TO_PE(req->dest, req->comm),
-                                VT_COMM_ID(req->comm), req->tag,  req->bytes);
+                      (was_recorded || env_mpi_ignore_filter))
+                    {
+                      vt_mpi_send(tid, &time,
+                                  VT_RANK_TO_PE_BY_GROUP(req->dest, req->group),
+                                  req->cid, req->tag,  req->bytes);
+                    }
                 }
             }
         }
@@ -3220,11 +3244,13 @@ VT_MPI_INT MPI_Startall(VT_MPI_INT count, MPI_Request* array_of_requests)
                     {
                       req->flags |= ERF_IS_ACTIVE;
                       if ((req->flags & ERF_SEND) &&
-                          (req->dest != MPI_PROC_NULL) && (was_recorded))
-                        vt_mpi_send(tid, &time,
-                                    VT_RANK_TO_PE(req->dest, req->comm),
-                                    VT_COMM_ID(req->comm), req->tag,
-                                    req->bytes);
+                          (req->dest != MPI_PROC_NULL) &&
+                          (was_recorded || env_mpi_ignore_filter))
+                        {
+                          vt_mpi_send(tid, &time,
+                            VT_RANK_TO_PE_BY_GROUP(req->dest, req->group),
+                            req->cid, req->tag, req->bytes);
+                        }
                     }
                 }
             }
@@ -3398,7 +3424,7 @@ VT_MPI_INT MPI_Allreduce(void* sendbuf, void* recvbuf, VT_MPI_INT count,
       if (!is_mpi_multithreaded)
 #endif /* HAVE_MPI2_THREAD */
         {
-          if (was_recorded)
+          if (was_recorded || env_mpi_ignore_filter)
             {
               VT_MPI_INT sz;
               matchid = VTTHRD_MPICOLLOP_NEXT_MATCHINGID(VTThrdv[tid]);
@@ -3425,7 +3451,8 @@ VT_MPI_INT MPI_Allreduce(void* sendbuf, void* recvbuf, VT_MPI_INT count,
       if (!is_mpi_multithreaded)
 #endif /* HAVE_MPI2_THREAD */
         {
-          vt_mpi_collend(tid, &time, matchid, &comm, was_recorded);
+          vt_mpi_collend(tid, &time, matchid, &comm,
+                         (was_recorded || env_mpi_ignore_filter));
         }
 
       vt_exit(tid, &time);
@@ -3465,7 +3492,7 @@ VT_MPI_INT MPI_Barrier(MPI_Comm comm)
       if (!is_mpi_multithreaded)
 #endif /* HAVE_MPI2_THREAD */
         {
-          if (was_recorded)
+          if (was_recorded || env_mpi_ignore_filter)
             {
               matchid = VTTHRD_MPICOLLOP_NEXT_MATCHINGID(VTThrdv[tid]);
               vt_mpi_collbegin(tid, &time, vt_mpi_regid[VT__MPI_BARRIER],
@@ -3487,7 +3514,8 @@ VT_MPI_INT MPI_Barrier(MPI_Comm comm)
       if (!is_mpi_multithreaded)
 #endif /* HAVE_MPI2_THREAD */
         {
-          vt_mpi_collend(tid, &time, matchid, &comm, was_recorded);
+          vt_mpi_collend(tid, &time, matchid, &comm,
+                         (was_recorded || env_mpi_ignore_filter));
         }
 
       vt_exit(tid, &time);
@@ -3528,7 +3556,7 @@ VT_MPI_INT MPI_Bcast(void* buf, VT_MPI_INT count, MPI_Datatype datatype,
       if (!is_mpi_multithreaded)
 #endif /* HAVE_MPI2_THREAD */
         {
-          if (root != MPI_PROC_NULL && was_recorded)
+          if (root != MPI_PROC_NULL && (was_recorded || env_mpi_ignore_filter))
             {
               VT_MPI_INT me, sendcount, sz;
               uint8_t iam_root;
@@ -3576,7 +3604,8 @@ VT_MPI_INT MPI_Bcast(void* buf, VT_MPI_INT count, MPI_Datatype datatype,
 #endif /* HAVE_MPI2_THREAD */
         {
           vt_mpi_collend(tid, &time, matchid, &comm,
-                         (root != MPI_PROC_NULL && was_recorded));
+                         (root != MPI_PROC_NULL &&
+                          (was_recorded || env_mpi_ignore_filter)));
         }
 
       vt_exit(tid, &time);
@@ -3619,7 +3648,7 @@ VT_MPI_INT MPI_Gather(void* sendbuf, VT_MPI_INT sendcount,
       if (!is_mpi_multithreaded)
 #endif /* HAVE_MPI2_THREAD */
         {
-          if (root != MPI_PROC_NULL && was_recorded)
+          if (root != MPI_PROC_NULL && (was_recorded || env_mpi_ignore_filter))
             {
               VT_MPI_INT me, N, ssz, rsz;
               uint8_t iam_root;
@@ -3685,7 +3714,8 @@ VT_MPI_INT MPI_Gather(void* sendbuf, VT_MPI_INT sendcount,
 #endif /* HAVE_MPI2_THREAD */
         {
           vt_mpi_collend(tid, &time, matchid, &comm,
-                         (root != MPI_PROC_NULL && was_recorded));
+                         (root != MPI_PROC_NULL &&
+                          (was_recorded || env_mpi_ignore_filter)));
         }
 
       vt_exit(tid, &time);
@@ -3728,7 +3758,7 @@ VT_MPI_INT MPI_Reduce(void* sendbuf, void* recvbuf, VT_MPI_INT count,
       if (!is_mpi_multithreaded)
 #endif /* HAVE_MPI2_THREAD */
         {
-          if (root != MPI_PROC_NULL && was_recorded)
+          if (root != MPI_PROC_NULL && (was_recorded || env_mpi_ignore_filter))
             {
               VT_MPI_INT me, recvcount, sz;
               uint8_t iam_root;
@@ -3822,7 +3852,7 @@ VT_MPI_INT MPI_Gatherv(void* sendbuf, VT_MPI_INT sendcount,
       if (!is_mpi_multithreaded)
 #endif /* HAVE_MPI2_THREAD */
         {
-          if (root != MPI_PROC_NULL && was_recorded)
+          if (root != MPI_PROC_NULL && (was_recorded || env_mpi_ignore_filter))
             {
               VT_MPI_INT me, N, recvcount, sendsz, recvsz, i;
               uint8_t iam_root;
@@ -3886,7 +3916,8 @@ VT_MPI_INT MPI_Gatherv(void* sendbuf, VT_MPI_INT sendcount,
 #endif /* HAVE_MPI2_THREAD */
         {
           vt_mpi_collend(tid, &time, matchid, &comm,
-                         (root != MPI_PROC_NULL && was_recorded));
+                         (root != MPI_PROC_NULL &&
+                          (was_recorded || env_mpi_ignore_filter)));
         }
 
       vt_exit(tid, &time);
@@ -3930,7 +3961,7 @@ VT_MPI_INT MPI_Allgather(void* sendbuf, VT_MPI_INT sendcount,
       if (!is_mpi_multithreaded)
 #endif /* HAVE_MPI2_THREAD */
         {
-          if (was_recorded)
+          if (was_recorded || env_mpi_ignore_filter)
             {
               VT_MPI_INT N, sendsz, recvsz;
               matchid = VTTHRD_MPICOLLOP_NEXT_MATCHINGID(VTThrdv[tid]);
@@ -3970,7 +4001,8 @@ VT_MPI_INT MPI_Allgather(void* sendbuf, VT_MPI_INT sendcount,
       if (!is_mpi_multithreaded)
 #endif /* HAVE_MPI2_THREAD */
         {
-          vt_mpi_collend(tid, &time, matchid, &comm, was_recorded);
+          vt_mpi_collend(tid, &time, matchid, &comm,
+                         (was_recorded || env_mpi_ignore_filter));
         }
 
       vt_exit(tid, &time);
@@ -4014,7 +4046,7 @@ VT_MPI_INT MPI_Allgatherv(void* sendbuf, VT_MPI_INT sendcount,
       if (!is_mpi_multithreaded)
 #endif /* HAVE_MPI2_THREAD */
         {
-          if (was_recorded)
+          if (was_recorded || env_mpi_ignore_filter)
             {
               VT_MPI_INT N, recvcount, sendsz, recvsz, i;
 
@@ -4059,7 +4091,8 @@ VT_MPI_INT MPI_Allgatherv(void* sendbuf, VT_MPI_INT sendcount,
       if (!is_mpi_multithreaded)
 #endif /* HAVE_MPI2_THREAD */
         {
-          vt_mpi_collend(tid, &time, matchid, &comm, was_recorded);
+          vt_mpi_collend(tid, &time, matchid, &comm,
+                         (was_recorded || env_mpi_ignore_filter));
         }
 
       vt_exit(tid, &time);
@@ -4103,7 +4136,7 @@ VT_MPI_INT MPI_Alltoall(void* sendbuf, VT_MPI_INT sendcount,
       if (!is_mpi_multithreaded)
 #endif /* HAVE_MPI2_THREAD */
         {
-          if (was_recorded)
+          if (was_recorded || env_mpi_ignore_filter)
             {
               VT_MPI_INT N, sendsz, recvsz;
 
@@ -4136,7 +4169,8 @@ VT_MPI_INT MPI_Alltoall(void* sendbuf, VT_MPI_INT sendcount,
       if (!is_mpi_multithreaded)
 #endif /* HAVE_MPI2_THREAD */
         {
-          vt_mpi_collend(tid, &time, matchid, &comm, was_recorded);
+          vt_mpi_collend(tid, &time, matchid, &comm,
+                         (was_recorded || env_mpi_ignore_filter));
         }
 
       vt_exit(tid, &time);
@@ -4181,7 +4215,7 @@ VT_MPI_INT MPI_Alltoallv(void* sendbuf, VT_MPI_INT* sendcounts,
       if (!is_mpi_multithreaded)
 #endif /* HAVE_MPI2_THREAD */
         {
-          if (was_recorded)
+          if (was_recorded || env_mpi_ignore_filter)
             {
               VT_MPI_INT N, sendcount = 0, recvcount = 0, sendsz, recvsz, i;
               matchid = VTTHRD_MPICOLLOP_NEXT_MATCHINGID(VTThrdv[tid]);
@@ -4218,7 +4252,8 @@ VT_MPI_INT MPI_Alltoallv(void* sendbuf, VT_MPI_INT* sendcounts,
       if (!is_mpi_multithreaded)
 #endif /* HAVE_MPI2_THREAD */
         {
-          vt_mpi_collend(tid, &time, matchid, &comm, was_recorded);
+          vt_mpi_collend(tid, &time, matchid, &comm,
+                         (was_recorded || env_mpi_ignore_filter));
         }
 
       vt_exit(tid, &time);
@@ -4260,7 +4295,7 @@ VT_MPI_INT MPI_Scan(void* sendbuf, void* recvbuf, VT_MPI_INT count,
       if (!is_mpi_multithreaded)
 #endif /* HAVE_MPI2_THREAD */
         {
-          if (was_recorded)
+          if (was_recorded || env_mpi_ignore_filter)
             {
               VT_MPI_INT me, sz;
               matchid = VTTHRD_MPICOLLOP_NEXT_MATCHINGID(VTThrdv[tid]);
@@ -4290,7 +4325,8 @@ VT_MPI_INT MPI_Scan(void* sendbuf, void* recvbuf, VT_MPI_INT count,
       if (!is_mpi_multithreaded)
 #endif /* HAVE_MPI2_THREAD */
         {
-          vt_mpi_collend(tid, &time, matchid, &comm, was_recorded);
+          vt_mpi_collend(tid, &time, matchid, &comm,
+                         (was_recorded || env_mpi_ignore_filter));
         }
 
       vt_exit(tid, &time);
@@ -4333,7 +4369,7 @@ VT_MPI_INT MPI_Scatter(void* sendbuf, VT_MPI_INT sendcount,
       if (!is_mpi_multithreaded)
 #endif /* HAVE_MPI2_THREAD */
         {
-          if (root != MPI_PROC_NULL && was_recorded)
+          if (root != MPI_PROC_NULL && (was_recorded || env_mpi_ignore_filter))
             {
               VT_MPI_INT me, N, sendsz, recvsz;
               uint8_t iam_root;
@@ -4398,7 +4434,8 @@ VT_MPI_INT MPI_Scatter(void* sendbuf, VT_MPI_INT sendcount,
 #endif /* HAVE_MPI2_THREAD */
         {
           vt_mpi_collend(tid, &time, matchid, &comm,
-                         (root != MPI_PROC_NULL && was_recorded));
+                         (root != MPI_PROC_NULL &&
+                          (was_recorded || env_mpi_ignore_filter)));
         }
 
       vt_exit(tid, &time);
@@ -4443,7 +4480,7 @@ VT_MPI_INT MPI_Scatterv(void* sendbuf, VT_MPI_INT* sendcounts,
       if (!is_mpi_multithreaded)
 #endif /* HAVE_MPI2_THREAD */
         {
-          if (root != MPI_PROC_NULL && was_recorded)
+          if (root != MPI_PROC_NULL && (was_recorded || env_mpi_ignore_filter))
             {
               VT_MPI_INT me, N, sendcount, sendsz, recvsz, i;
               uint8_t iam_root;
@@ -4507,7 +4544,8 @@ VT_MPI_INT MPI_Scatterv(void* sendbuf, VT_MPI_INT* sendcounts,
 #endif /* HAVE_MPI2_THREAD */
         {
           vt_mpi_collend(tid, &time, matchid, &comm,
-                         (root != MPI_PROC_NULL && was_recorded));
+                         (root != MPI_PROC_NULL &&
+                          (was_recorded || env_mpi_ignore_filter)));
         }
 
       vt_exit(tid, &time);
@@ -4550,7 +4588,7 @@ VT_MPI_INT MPI_Reduce_scatter(void* sendbuf, void* recvbuf,
       if (!is_mpi_multithreaded)
 #endif /* HAVE_MPI2_THREAD */
         {
-          if (was_recorded)
+          if (was_recorded || env_mpi_ignore_filter)
             {
               VT_MPI_INT me, N, recvcount, sz, i;
               matchid = VTTHRD_MPICOLLOP_NEXT_MATCHINGID(VTThrdv[tid]);
@@ -4584,7 +4622,8 @@ VT_MPI_INT MPI_Reduce_scatter(void* sendbuf, void* recvbuf,
       if (!is_mpi_multithreaded)
 #endif /* HAVE_MPI2_THREAD */
         {
-          vt_mpi_collend(tid, &time, matchid, &comm, was_recorded);
+          vt_mpi_collend(tid, &time, matchid, &comm,
+                         (was_recorded || env_mpi_ignore_filter));
         }
 
       vt_exit(tid, &time);
@@ -4647,7 +4686,8 @@ VT_MPI_INT MPI_Put(void* origin_addr, VT_MPI_INT origin_count,
       if (!is_mpi_multithreaded)
 #endif /* HAVE_MPI2_THREAD */
         {
-          if (target_rank != MPI_PROC_NULL && was_recorded)
+          if (target_rank != MPI_PROC_NULL &&
+              (was_recorded || env_mpi_ignore_filter))
             {
               MPI_Comm comm;
               VT_MPI_INT sz;
@@ -4715,7 +4755,8 @@ VT_MPI_INT MPI_Get(void* origin_addr, VT_MPI_INT origin_count,
       if (!is_mpi_multithreaded)
 #endif /* HAVE_MPI2_THREAD */
         {
-          if (target_rank != MPI_PROC_NULL && was_recorded)
+          if (target_rank != MPI_PROC_NULL &&
+              (was_recorded || env_mpi_ignore_filter))
             {
               MPI_Comm comm;
               VT_MPI_INT sz;
@@ -4783,7 +4824,8 @@ VT_MPI_INT MPI_Accumulate(void* origin_addr, VT_MPI_INT origin_count,
       if (!is_mpi_multithreaded)
 #endif /* HAVE_MPI2_THREAD */
         {
-          if (target_rank != MPI_PROC_NULL && was_recorded)
+          if (target_rank != MPI_PROC_NULL &&
+              (was_recorded || env_mpi_ignore_filter))
             {
               MPI_Comm comm;
               VT_MPI_INT sz;
@@ -4848,7 +4890,7 @@ VT_MPI_INT MPI_Win_fence(VT_MPI_INT assert, MPI_Win win)
       if (!is_mpi_multithreaded)
 #endif /* HAVE_MPI2_THREAD */
         {
-          if (was_recorded)
+          if (was_recorded || env_mpi_ignore_filter)
             {
               MPI_Comm comm;
               uint32_t gid, wid;
@@ -4955,7 +4997,7 @@ VT_MPI_INT MPI_Win_complete(MPI_Win win)
 
           vt_win_id(win, &comm, &gid, &wid);
 
-          if (was_recorded)
+          if (was_recorded || env_mpi_ignore_filter)
             {
               vt_comment(tid, &time, "__RMASPECIALGROUP__");
               vt_mpi_rma_end(tid, &time, gid, wid);
@@ -5061,7 +5103,7 @@ VT_MPI_INT MPI_Win_wait(MPI_Win win)
 
           vt_win_id(win, &comm, &gid, &wid);
 
-          if (was_recorded)
+          if (was_recorded || env_mpi_ignore_filter)
             vt_mpi_rma_end(tid, &time, gid, wid);
 
           vt_win_set_gid(win, VT_COMM_ID(comm));
@@ -5119,7 +5161,7 @@ VT_MPI_INT MPI_Win_test(MPI_Win win, VT_MPI_INT* flag)
 
           vt_win_id(win, &comm, &gid, &wid);
 
-          if (*flag && was_recorded)
+          if (*flag && (was_recorded || env_mpi_ignore_filter))
             vt_mpi_rma_end(tid, &time, gid, wid);
 
           if (*flag)
@@ -5227,7 +5269,7 @@ VT_MPI_INT MPI_Win_unlock(VT_MPI_INT rank, MPI_Win win)
       if (!is_mpi_multithreaded)
 #endif /* HAVE_MPI2_THREAD */
         {
-          if (was_recorded)
+          if (was_recorded || env_mpi_ignore_filter)
             {
               MPI_Comm comm;
               uint32_t gid, wid;
@@ -5293,7 +5335,7 @@ VT_MPI_INT MPI_Alltoallw(void* sendbuf, VT_MPI_INT* sendcounts,
       if (!is_mpi_multithreaded)
 #endif /* HAVE_MPI2_THREAD */
         {
-          if (was_recorded)
+          if (was_recorded || env_mpi_ignore_filter)
             {
               VT_MPI_INT N, sendcount = 0, recvcount = 0, sendsz, recvsz, i;
               matchid = VTTHRD_MPICOLLOP_NEXT_MATCHINGID(VTThrdv[tid]);
@@ -5330,7 +5372,8 @@ VT_MPI_INT MPI_Alltoallw(void* sendbuf, VT_MPI_INT* sendcounts,
       if (!is_mpi_multithreaded)
 #endif /* HAVE_MPI2_THREAD */
         {
-          vt_mpi_collend(tid, &time, matchid, &comm, was_recorded);
+          vt_mpi_collend(tid, &time, matchid, &comm,
+                         (was_recorded || env_mpi_ignore_filter));
         }
 
       vt_exit(tid, &time);
@@ -5372,7 +5415,7 @@ VT_MPI_INT MPI_Exscan(void* sendbuf, void* recvbuf, VT_MPI_INT count,
       if (!is_mpi_multithreaded)
 #endif /* HAVE_MPI2_THREAD */
         {
-          if (was_recorded)
+          if (was_recorded || env_mpi_ignore_filter)
             {
               VT_MPI_INT me, sz;
 
@@ -5403,7 +5446,8 @@ VT_MPI_INT MPI_Exscan(void* sendbuf, void* recvbuf, VT_MPI_INT count,
       if (!is_mpi_multithreaded)
 #endif /* HAVE_MPI2_THREAD */
         {
-          vt_mpi_collend(tid, &time, matchid, &comm, was_recorded);
+          vt_mpi_collend(tid, &time, matchid, &comm,
+                         (was_recorded || env_mpi_ignore_filter));
         }
 
       vt_exit(tid, &time);

@@ -33,16 +33,16 @@
 
 #if (defined(HAVE_DL) && HAVE_DL) && (defined(HAVE_DECL_RTLD_DEFAULT) && HAVE_DECL_RTLD_DEFAULT)
 # include <dlfcn.h>
-# define GET_ADDR_OF_UNDEF_FUNC(func) \
-  DEREF_IA64_FUNC_PTR(dlsym(RTLD_DEFAULT, (func)))
+# define GET_SO_FUNC_ADDR(func) \
+  GET_IA64_FUNC_ADDR(dlsym(RTLD_DEFAULT, (func)))
 #else /* HAVE_DL && HAVE_DECL_RTLD_DEFAULT */
-# define GET_ADDR_OF_UNDEF_FUNC(func) 0
+# define GET_SO_FUNC_ADDR(func) 0
 #endif /* HAVE_DL && HAVE_DECL_RTLD_DEFAULT */
 
 #ifdef __ia64__
-# define DEREF_IA64_FUNC_PTR(ptr) ((ptr) ? *(void**)(ptr) : (ptr))
+# define GET_IA64_FUNC_ADDR(addr) (long)((addr) ? *(void**)(addr) : (addr))
 #else /* __ia64__ */
-# define DEREF_IA64_FUNC_PTR(ptr) (ptr)
+# define GET_IA64_FUNC_ADDR(addr) (long)(addr)
 #endif /* __ia64__ */
 
 #ifdef VT_COMPINST_CRAYCCE
@@ -198,7 +198,7 @@ static void get_symtab(void)
     char  delim[2] = " ";
     int   nc = 1;
 
-    long  addr = -1;
+    long  addr = 0;
     char* filename = NULL;
     char* funcname = NULL;
     unsigned int lno = VT_NO_LNO;
@@ -246,6 +246,14 @@ static void get_symtab(void)
     if ( line[strlen(line)-1] == '\n' )
       line[strlen(line)-1] = '\0';
 
+    /* ignore line if it is empty */
+    if ( *line == '\0' )
+      continue;
+
+    /* ignore nm input file name */
+    if ( line[strlen(line)-1] == ':' )
+      continue;
+
     /* split line to columns */
     col = strtok(line, delim);
     do
@@ -253,11 +261,11 @@ static void get_symtab(void)
       if ( nc == 1 ) /* column 1 (address) */
       {
         /* if there is no address in the first column the symbol could be
-           undefined; try get its address later (nc==3) */
+           defined within a shared object; try get its address later (nc==3) */
         if ( strlen(col) == 1 )
         {
           nc++; /* <- will be 3 in the next round */
-          strcpy(delim, "\t");
+          *delim = '\t';
         }
         /* otherwise, convert address string */
         else
@@ -273,22 +281,27 @@ static void get_symtab(void)
           parse_error = 1;
           break;
         }
-        strcpy(delim, "\t");
+
+        *delim = '\t';
       }
       else if ( nc == 3 ) /* column 3 (symbol) */
       {
-        funcname = col;
-        strcpy(delim, ":");
+        long soaddr;
 
-        /* try to get address of undefined function, if necessary */
-        if ( addr == -1 )
-          addr = (long)GET_ADDR_OF_UNDEF_FUNC(funcname);
+        funcname = col;
+
+        /* the symbol might be defined within a shared object; try to get
+           its real address */
+        if ( ( soaddr = GET_SO_FUNC_ADDR(funcname) ) != 0 )
+          addr = soaddr;
 
         /* ignore function, if its address could not be determined */
         if ( addr == 0 )
           break;
+
+        *delim = ':';
       }
-      else if( nc == 4 ) /* column 4 (filename) */
+      else if ( nc == 4 ) /* column 4 (filename) */
       {
         filename = col;
       }
@@ -458,11 +471,11 @@ void gnu_finalize()
  */
 
 void __cyg_profile_func_enter(void* func, void* callsite) {
-  void* funcptr;
+  long addr;
   uint64_t time;
   HashNode* hn;
 
-  funcptr = DEREF_IA64_FUNC_PTR(func);
+  addr = GET_IA64_FUNC_ADDR(func);
 
   /* -- if not yet initialized, initialize VampirTrace -- */
   if ( gnu_init ) {
@@ -482,7 +495,7 @@ void __cyg_profile_func_enter(void* func, void* callsite) {
   time = vt_pform_wtime();
 
   /* -- get region identifier -- */
-  if ( (hn = hash_get((long)funcptr))) {
+  if ( (hn = hash_get(addr)) ) {
     if ( hn->vtid == VT_NO_ID ) {
       /* -- region entered the first time, register region -- */
 #if (defined(VT_MT) || defined(VT_HYB))
@@ -508,10 +521,10 @@ void __cyg_profile_func_enter(void* func, void* callsite) {
  */
 
 void __cyg_profile_func_exit(void* func, void* callsite) {
-  void* funcptr;
+  long addr;
   uint64_t time;
 
-  funcptr = DEREF_IA64_FUNC_PTR(func);
+  addr = GET_IA64_FUNC_ADDR(func);
 
   /* -- if VampirTrace already finalized, return -- */
   if ( !vt_is_alive ) return;
@@ -521,7 +534,7 @@ void __cyg_profile_func_exit(void* func, void* callsite) {
   time = vt_pform_wtime();
 
   /* -- write exit record -- */
-  if ( hash_get((long)funcptr) ) {
+  if ( hash_get(addr) ) {
     vt_exit(VT_CURRENT_THREAD, &time);
   }
 

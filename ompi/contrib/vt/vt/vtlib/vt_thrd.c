@@ -209,10 +209,16 @@ uint32_t VTThrd_create(const char* tname, uint32_t ptid, uint8_t is_virtual)
 
 #if !defined(VT_DISABLE_RFG)
   /* initialize region filter and grouping management */
-  thrd->rfg_regions = RFG_Regions_init();
+  if( tid == 0 )
+    thrd->rfg_regions = RFG_Regions_init();
+  else
+    thrd->rfg_regions = RFG_Regions_dup( VTThrdv[0]->rfg_regions );
 
   if( thrd->rfg_regions == NULL )
     vt_error_msg("Could not initialize region filter and grouping management");
+
+  /* initialize call stack level where recursive filtering was enabled */
+  thrd->stack_level_at_recfilt_enabled = -1;
 #endif /* VT_DISABLE_RFG */
 
   /* enable tracing */

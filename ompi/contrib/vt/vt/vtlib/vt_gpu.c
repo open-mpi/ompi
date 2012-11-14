@@ -176,6 +176,14 @@ uint32_t vt_gpu_get_config(void)
       feature = strtok(NULL, sep);
     }
     
+    /* "memusage" requires "runtime" to be set */
+    if(vt_gpu_trace_memusage == 1 && 
+       (vt_gpu_config & VT_GPU_TRACE_RUNTIME_API) != VT_GPU_TRACE_RUNTIME_API){
+      vt_warning("[GPU] The option 'memusage' requires 'runtime' to be set! "
+                 "Setting option 'runtime'.");
+      vt_gpu_config |= VT_GPU_TRACE_RUNTIME_API;
+    }
+    
     /* environment variables for further refinement */
     if(vt_env_gputrace_kernel() > 1)
       vt_gpu_trace_kernels = (uint8_t)vt_env_gputrace_kernel();
@@ -407,14 +415,14 @@ char* vt_cuda_demangleKernel(const char* mangled)
 /***************************** hashing of strings *****************************/
 #include "util/hash.h"
 
-#define VT_GPU_HASHTABLE_SIZE 1021
+/* size of hash table (must be a power of two!) */
+#define VT_GPU_HASHTABLE_SIZE 1024
 
 static vt_gpu_hn_string_t* vt_gpu_string_htab[VT_GPU_HASHTABLE_SIZE];
 
 void* vt_gpu_stringHashPut(const char* n, uint32_t rid)
 {
-  uint32_t id = (uint32_t)vt_hash((uint8_t*)n, strlen(n), 0) 
-              % VT_GPU_HASHTABLE_SIZE;
+  uint32_t id = vt_hash(n, strlen(n), 0) & (VT_GPU_HASHTABLE_SIZE - 1);
   vt_gpu_hn_string_t *add = 
                 (vt_gpu_hn_string_t*)malloc(sizeof(vt_gpu_hn_string_t));
   
@@ -428,8 +436,7 @@ void* vt_gpu_stringHashPut(const char* n, uint32_t rid)
 
 void* vt_gpu_stringHashGet(const char* n)
 {
-  uint32_t id = (uint32_t)vt_hash((uint8_t*)n, strlen(n), 0) 
-              % VT_GPU_HASHTABLE_SIZE;
+  uint32_t id = vt_hash(n, strlen(n), 0) & (VT_GPU_HASHTABLE_SIZE - 1);
   vt_gpu_hn_string_t *curr = vt_gpu_string_htab[id];
   
   while ( curr ) {

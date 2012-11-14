@@ -35,6 +35,20 @@ typedef enum {
 
 } ClusterAlgorithm;
 
+/* *** dispersion modes *** */
+
+typedef enum {
+    DISPERSION_MODE_PERFUNCTION = 0,
+    DISPERSION_MODE_PERCALLPATH = 1
+} DispersionMode;
+
+/* *** dispersion options *** */
+
+typedef enum {
+    DISPERSION_OPT_INFO   = 0x1,
+    DISPERSION_OPT_MARKER = 0x2,
+    DISPERSION_OPT_FILTER = 0x4
+} DispersionOptions;
 
 /* *** program parameters *** */
 
@@ -48,7 +62,6 @@ struct Params {
     static const bool     DEFAULT_LOG_AXIS= true;
     static const uint8_t  DEFAULT_VERBOSE_LEVEL= 0;
     static const bool     DEFAULT_CREATE_CSV= false;
-    static const bool     DEFAULT_CREATE_MARKER= false;
     static const bool     DEFAULT_CREATE_TEX= true;
     static const bool     DEFAULT_CREATE_PDF= true;
     static const string   DEFAULT_OUTPUT_FILE_PREFIX() { return "result"; }
@@ -62,7 +75,6 @@ struct Params {
     bool     read_from_stats;
 
     bool     create_csv;
-    bool     create_marker;
     bool     create_tex;
     bool     create_pdf;
     string   input_file_prefix;
@@ -98,13 +110,30 @@ struct Params {
 
     } clustering;
 
+    struct Dispersion {
+
+        static const DispersionMode    DEFAULT_MODE= DISPERSION_MODE_PERFUNCTION;
+        static const DispersionOptions DEFAULT_OPTIONS= DISPERSION_OPT_INFO;
+        static const uint32_t          DEFAULT_REDUCTION= 15;
+
+        DispersionMode     mode;
+        bool               enabled;
+        uint32_t           options;
+        uint32_t           reduction;
+        std::string        filter_file_name;
+
+        Dispersion()
+           : mode(DEFAULT_MODE), enabled(false), options(DEFAULT_OPTIONS),
+             reduction(DEFAULT_REDUCTION) {}
+
+    } dispersion;
+
     Params()
         : max_file_handles(DEFAULT_MAX_FILE_HANDLES),
           buffer_size(DEFAULT_BUFFER_SIZE), max_groups(DEFAULT_MAX_GROUPS),
           logaxis(DEFAULT_LOG_AXIS),
           verbose_level(DEFAULT_VERBOSE_LEVEL), progress(false),
           read_from_stats(false), create_csv(DEFAULT_CREATE_CSV), 
-          create_marker(DEFAULT_CREATE_MARKER),
           create_tex(DEFAULT_CREATE_TEX), create_pdf(DEFAULT_CREATE_PDF),
           output_file_prefix(DEFAULT_OUTPUT_FILE_PREFIX()) {}
 
@@ -226,6 +255,38 @@ struct gtPair {
     }
 };
 
+/* *** pair of values as map key *** */
+
+struct PairCallpath {
+
+    uint64_t a;
+    string b;
+
+    PairCallpath() : a(0), b("") {}
+    PairCallpath( uint64_t aa, string bb ) : a(aa), b(bb) {}
+    ~PairCallpath() {}
+};
+
+struct ltPairCallpath {
+
+    bool operator()( const PairCallpath& p1, const PairCallpath& p2 ) const {
+
+        /* a is the major number for comparison, this gives a better
+        order when reducing the entries over the first argument */
+
+        if ( p1.a == p2.a ) {
+        	if(p1.b.compare(p2.b) < 0)
+        		return true;
+        	else
+        		return false;
+
+        } else {
+
+            return p1.a < p2.a;
+        }
+    }
+};
+
 /* *** triplett of values as map key *** */
 
 struct Triple {
@@ -265,6 +326,151 @@ struct ltTriple {
     }
 };
 
+struct TripleCallpath {
+
+    uint64_t a;
+    string b;
+    uint64_t c;
+
+    TripleCallpath() : a(0), b(""), c(0) {}
+    TripleCallpath( uint64_t aa, string bb, uint64_t cc ) : a(aa), b(bb), c(cc) {}
+    ~TripleCallpath() {}
+};
+
+struct gtTripleCallpathSortByCallpath {
+
+    bool operator()( const TripleCallpath& p1, const TripleCallpath& p2 ) const {
+
+        /* a is the major number for comparison, this gives a better
+        order when reducing the entries over the first argument */
+
+        if ( p1.c == p2.c ) {
+
+            if ( p1.a == p2.a ) {
+
+
+             if(p1.b.compare(p2.b) < 0)
+            	return true;
+            else
+            	return false;
+
+            } else {
+                return p1.a > p2.a;
+            }
+
+        } else {
+
+
+			return p1.c > p2.c;
+        }
+    }
+};
+
+struct gtTripleCallpathSortByDispersion {
+
+    bool operator()( const TripleCallpath& p1, const TripleCallpath& p2 ) const {
+
+        /* a is the major number for comparison, this gives a better
+        order when reducing the entries over the first argument */
+
+        if ( p1.a == p2.a ) {
+
+            if ( p1.b.compare(p2.b) == 0 ) {
+
+                return p1.c > p2.c;
+
+            } else {
+
+            	if(p1.b.compare(p2.b) < 0)
+            		return true;
+            	else
+            		return false;
+            }
+
+        } else {
+
+            return p1.a > p2.a;
+        }
+    }
+};
+
+struct ltTripleCallpath {
+
+    bool operator()( const TripleCallpath& p1, const TripleCallpath& p2 ) const {
+
+        /* a is the major number for comparison, this gives a better
+        order when reducing the entries over the first argument */
+
+        if ( p1.a == p2.a ) {
+
+            if ( p1.b.compare(p2.b) == 0 ) {
+
+                return p1.c < p2.c;
+
+            } else {
+
+            	if(p1.b.compare(p2.b) > 0)
+            		return true;
+            	else
+            		return false;
+            }
+
+        } else {
+
+            return p1.a < p2.a;
+        }
+    }
+};
+
+/* *** quartet of values as map key *** */
+struct Quadruple {
+
+    uint64_t a;
+    uint64_t b;
+    string c;
+    uint64_t d;
+
+    Quadruple() : a(0), b(0), c(""), d(0) {}
+    Quadruple( uint64_t aa, uint64_t bb, string cc, uint64_t dd ) : a(aa),
+              b(bb), c(cc), d(dd) {}
+    ~Quadruple() {}
+};
+
+
+struct ltQuadruple {
+
+    bool operator()( const Quadruple& p1, const Quadruple& p2 ) const {
+
+        /* a is the major number for comparison, this gives a better
+        order when reducing the entries over the first argument */
+
+        if ( p1.a == p2.a ) {
+
+            if ( p1.b == p2.b ) {
+
+            	if ( p1.d == p2.d ) {
+
+
+                	if(p1.c.compare(p2.c) > 0)
+                		return true;
+                	else
+                		return false;
+
+                } else {
+
+                return p1.d < p2.d;
+                }
+            } else {
+
+                return p1.b < p2.b;
+            }
+
+        } else {
+
+            return p1.a < p2.a;
+        }
+    }
+};
 
 struct Process {
 
@@ -301,7 +507,8 @@ public:
     type sum;
     uint64_t cnt;
 
-    min_max_avg( type a= (type) OTF_UINT64_MAX, type b= (type) 0, type s= (type) 0, uint64_t c= 0 ) : 
+    min_max_avg( type a= (type) OTF_UINT64_MAX,
+                 type b= (type) 0, type s= (type) 0, uint64_t c= 0 ) :
             min( a ), max( b ), sum( s ), cnt( c ) {}
     ~min_max_avg() {}
 
@@ -317,7 +524,8 @@ public:
         }
     }
 
-    /* add another min_max_avg object as if all their values were appended to on object */
+    /* add another min_max_avg object as if all their values were appended to
+       on object */
     void add( const min_max_avg<type>& other ) {
 
         min= ( other.min < min ) ? other.min : min;
@@ -344,7 +552,8 @@ public:
     min_max_Location( type a= (type) OTF_UINT64_MAX, type b= (type) 0, 
                      uint64_t p= 0, uint64_t q= 0,
                      uint64_t s= 0, uint64_t t= 0 ) : 
-    min( a ), max( b ), loc_min( p ), loc_max( q ), time_min( s ), time_max( t ) {}
+    min( a ), max( b ), loc_min( p ), loc_max( q ), time_min( s ),
+    time_max( t ) {}
     ~min_max_Location() {}
     
     /* append a single value with its location*/
@@ -365,7 +574,8 @@ public:
         }
     }
     
-    /* add another min_max_Location object as if all their values were appended to on object */
+    /* add another min_max_Location object as if all their values were appended
+       to on object */
     void add( const min_max_Location<type>& other ) {
         
         if ( other.min < min ) {
@@ -411,8 +621,8 @@ struct Grouping {
     /* insert process into a group, return true if succeeded */
     bool insert( uint64_t group, uint64_t process ) {
 
-        /* insert the new entry if and only if there was no process with this ID before, 
-        because every process can only be in one group */
+        /* insert the new entry if and only if there was no process with this ID
+        before, because every process can only be in one group */
 
         pair< map< uint64_t, uint64_t >::const_iterator, bool> ret= 
             processesToGroups.insert( pair< uint64_t, uint64_t >( process, group ) );
@@ -507,7 +717,8 @@ struct FunctionData {
     min_max_avg<uint64_t> count;
     min_max_avg<double> excl_time;
     min_max_avg<double> incl_time;
-
+    string callpath;
+    
     FunctionData( ) {}
     ~FunctionData( ) {}
 
@@ -518,10 +729,19 @@ struct FunctionData {
         incl_time.append( in );
     }
 
+    void add( uint64_t n= 0, double ex= 0.0,string  call=0, double in= 0.0 ) {
+
+        count.append( n );
+        excl_time.append( ex );
+        callpath = call;
+        incl_time.append( in );
+    }
+
     void add( const FunctionData& other ) {
 
         count.add( other.count );
         excl_time.add( other.excl_time );
+        callpath = other.callpath;
         incl_time.add( other.incl_time );
     }
 };
@@ -536,14 +756,22 @@ struct FunctionDispersionData {
     double excl_time_low_quartile;
     double excl_time_median;
     double excl_time_top_quartile;
+    double excl_time_95_percent;
     double excl_time_maximum;
+    int filterRule;
     
     FunctionDispersionData( uint64_t a= 0, double b=0.0, double c=0.0, 
                            double d=0.0, double e=0.0, double f=0.0, 
-                           double g=0.0 ) : 
+                           double g=0.0, double h=0.0 ) :
         count( a ), excl_time_sum( b ), excl_time_minimum( c ), 
         excl_time_low_quartile ( d ), excl_time_median( e ), 
-        excl_time_top_quartile( f ), excl_time_maximum( g ) {}
+        excl_time_top_quartile( f ),excl_time_95_percent(g), excl_time_maximum( h ), filterRule(1){}
+
+    void addFilterRule(int rule)
+    {
+    	filterRule = rule;
+    }
+
     ~FunctionDispersionData( ) {}
     
 };
@@ -750,10 +978,21 @@ struct AllData {
     be done */
     map< Pair, FunctionData, ltPair > functionMapPerRank;
 
+    /* store per-function statistics over the ranks, Triple is <rank,callpath,funcId>
+
+    in case of additional clustering, collect it to the master node such that
+    process clustering according to similar function call patterns can
+    be done */
+    map< TripleCallpath, FunctionData, ltTripleCallpath > functionCallpathMapPerRank;
+
     /* store per-function duration section information over the ranks, Triple is 
     <rank,funcId,bin> */
     map< Triple, FunctionData, ltTriple > functionDurationSectionMapPerRank;
    
+    /* store per-function duration section information over the ranks, Quadruple is
+    <rank,funcId,callpath,bin> */
+    map< Quadruple, FunctionData, ltQuadruple > functionDurationSectionCallpathMapPerRank;
+
     /* store per-counter statistics over the functions and ranks,
     Triple is <rank,funcId,counterId> */
     map< Triple, CounterData, ltTriple > counterMapPerFunctionRank;
@@ -782,10 +1021,17 @@ struct AllData {
     /* compact function statistics summed over all ranks */
     map< uint64_t, FunctionData > functionMapGlobal;
 
+    /* compact function statistics summed over all ranks */
+    map< PairCallpath, FunctionData, ltPairCallpath > functionCallpathMapGlobal;
+
     /* compact function duration section information over the functions and bins,
     Pair is <funcId,bin> */
     map< Pair, FunctionData, ltPair > functionDurationSectionMapGlobal;
-    
+
+    /* compact function duration section information over the functions and bins,
+    TripleCallpath is <funcId,callpath,bin> */
+    map< TripleCallpath, FunctionData, ltTripleCallpath > functionDurationSectionCallpathMapGlobal;
+
     /* store per-counter statistics over the functions and ranks, 
     Pair is <counterId,funcId> */
     map< Pair, CounterData, ltPair > counterMapGlobal;
@@ -810,11 +1056,21 @@ struct AllData {
 
     /* compact function location information over the functions */
     map< uint64_t, FunctionMinMaxLocationData > functionMinMaxLocationMap;
+
+    /* compact function location information over the callpathes */
+    map< string, FunctionMinMaxLocationData > functionMinMaxLocationCallpathMap;
     
     /* dispersion information over functions, Pair is < dispersion, funcId > */
     map< Pair, FunctionDispersionData, gtPair > functionDispersionMap;
-    
 
+    /* dispersion information over functions, TripleCallpath is < dispersion,  callpath, funcId > */
+    map< TripleCallpath, FunctionDispersionData, gtTripleCallpathSortByCallpath > functionDispersionCallpathMap;
+
+    /* Maximum number of chars to save a callpath*/
+    uint64_t maxCallpathLength;
+
+    /* Border where dispersion marker were set */
+    uint64_t dispersionMarkerBorder;
     AllData( uint32_t my_rank= 0, uint32_t num_ranks= 1 ) :
         myRank(my_rank), numRanks(num_ranks), myProcessesNum(0),
         myProcessesList(NULL), timerResolution(0), recvTimeKey(0) {

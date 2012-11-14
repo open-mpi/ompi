@@ -26,6 +26,12 @@
 
 /*#if (defined(VT_CUDARTWRAP))*/
 
+#if (defined(CUDART_VERSION) && (CUDART_VERSION < 5000))
+#define VT_CUDARTWRAP_COMPAT_PTR const char *
+#else
+#define VT_CUDARTWRAP_COMPAT_PTR const void *
+#endif
+
 /* library wrapper object */
 EXTERN VTLibwrap* vt_cudart_lw;
 

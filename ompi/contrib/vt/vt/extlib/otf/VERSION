@@ -6,8 +6,8 @@
 # <major>.<minor>.<sub>. If sub is zero, then it is omitted.
 
 major=1
-minor=11
-sub=3
+minor=12
+sub=1
 
 # string is used for alpha, beta, or release tags. If it is non-empty, it will
 # be appended to the version number.
@@ -24,7 +24,8 @@ sub=3
 # 1.8.*        sturgeon
 # 1.9.*        sawfish
 # 1.10.*       coelacanth
-# 1.11.*       goldfish 
+# 1.11.*       goldfish
+# 1.12.*       salmon
 #
 
 string=openmpi
@@ -49,5 +50,5 @@ string=openmpi
 #                      release, age must be incremented. Otherwise, reset age
 #                      to '0'.
 
-library=6:2:5
+library=6:3:5
 

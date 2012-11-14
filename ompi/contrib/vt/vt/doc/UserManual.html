@@ -67,7 +67,7 @@ BODY			{ font-family: sans-serif; }
 <P>
 
 <P>
-<B><BIG CLASS="XHUGE">VampirTrace 5.13&nbsp;User Manual</BIG></B>
+<B><BIG CLASS="XHUGE">VampirTrace 5.14&nbsp;User Manual</BIG></B>
 <BR>
 <BR>
 <BR>
@@ -98,226 +98,226 @@ Contents</A>
 <!--Table of Contents-->
 
 <UL CLASS="TofC">
-<LI><A NAME="tex2html127"
-  HREF="#SECTION00200000000000000000">Introduction</A>
 <LI><A NAME="tex2html128"
+  HREF="#SECTION00200000000000000000">Introduction</A>
+<LI><A NAME="tex2html129"
   HREF="#SECTION00300000000000000000">Instrumentation</A>
 <UL>
-<LI><A NAME="tex2html129"
-  HREF="#SECTION00310000000000000000">Compiler Wrappers</A>
 <LI><A NAME="tex2html130"
-  HREF="#SECTION00320000000000000000">Instrumentation Types</A>
+  HREF="#SECTION00310000000000000000">Compiler Wrappers</A>
 <LI><A NAME="tex2html131"
+  HREF="#SECTION00320000000000000000">Instrumentation Types</A>
+<LI><A NAME="tex2html132"
   HREF="#SECTION00330000000000000000">Automatic Instrumentation</A>
 <UL>
-<LI><A NAME="tex2html132"
-  HREF="#SECTION00331000000000000000">Supported Compilers</A>
 <LI><A NAME="tex2html133"
-  HREF="#SECTION00332000000000000000">Notes for Using the GNU, Intel, PathScale, or Open64 Compiler</A>
+  HREF="#SECTION00331000000000000000">Supported Compilers</A>
 <LI><A NAME="tex2html134"
-  HREF="#SECTION00333000000000000000">Notes on Instrumentation of Inline Functions</A>
+  HREF="#SECTION00332000000000000000">Notes for Using the GNU, Intel, PathScale, or Open64 Compiler</A>
 <LI><A NAME="tex2html135"
+  HREF="#SECTION00333000000000000000">Notes on Instrumentation of Inline Functions</A>
+<LI><A NAME="tex2html136"
   HREF="#SECTION00334000000000000000">Instrumentation of Loops with OpenUH Compiler</A>
 </UL>
-<LI><A NAME="tex2html136"
+<LI><A NAME="tex2html137"
   HREF="#SECTION00340000000000000000">Manual Instrumentation</A>
 <UL>
-<LI><A NAME="tex2html137"
-  HREF="#SECTION00341000000000000000">Using the VampirTrace API</A>
 <LI><A NAME="tex2html138"
+  HREF="#SECTION00341000000000000000">Using the VampirTrace API</A>
+<LI><A NAME="tex2html139"
   HREF="#SECTION00342000000000000000">Measurement Controls</A>
 </UL>
-<LI><A NAME="tex2html139"
-  HREF="#SECTION00350000000000000000">Source Instrumentation Using PDT/TAU</A>
 <LI><A NAME="tex2html140"
+  HREF="#SECTION00350000000000000000">Source Instrumentation Using PDT/TAU</A>
+<LI><A NAME="tex2html141"
   HREF="#SECTION00360000000000000000">Binary Instrumentation Using Dyninst</A>
 <UL>
-<LI><A NAME="tex2html141"
+<LI><A NAME="tex2html142"
   HREF="#SECTION00361000000000000000">Static Binary Instrumentation</A>
 </UL>
-<LI><A NAME="tex2html142"
-  HREF="#SECTION00370000000000000000">Runtime Instrumentation Using VTRun</A>
 <LI><A NAME="tex2html143"
-  HREF="#SECTION00380000000000000000">Tracing Java Applications Using JVMTI</A>
+  HREF="#SECTION00370000000000000000">Runtime Instrumentation Using VTRun</A>
 <LI><A NAME="tex2html144"
+  HREF="#SECTION00380000000000000000">Tracing Java Applications Using JVMTI</A>
+<LI><A NAME="tex2html145"
   HREF="#SECTION00390000000000000000">Tracing Calls to 3rd-Party Libraries</A>
 </UL>
 <BR>
-<LI><A NAME="tex2html145"
+<LI><A NAME="tex2html146"
   HREF="#SECTION00400000000000000000">Runtime Measurement</A>
 <UL>
-<LI><A NAME="tex2html146"
-  HREF="#SECTION00410000000000000000">Trace File Name and Location</A>
 <LI><A NAME="tex2html147"
-  HREF="#SECTION00420000000000000000">Environment Variables</A>
+  HREF="#SECTION00410000000000000000">Trace File Name and Location</A>
 <LI><A NAME="tex2html148"
-  HREF="#SECTION00430000000000000000">Influencing Trace Buffer Size</A>
+  HREF="#SECTION00420000000000000000">Environment Variables</A>
 <LI><A NAME="tex2html149"
-  HREF="#SECTION00440000000000000000">Profiling an Application</A>
+  HREF="#SECTION00430000000000000000">Influencing Trace Buffer Size</A>
 <LI><A NAME="tex2html150"
-  HREF="#SECTION00450000000000000000">Unification of Local Traces</A>
+  HREF="#SECTION00440000000000000000">Profiling an Application</A>
 <LI><A NAME="tex2html151"
-  HREF="#SECTION00460000000000000000">Synchronized Buffer Flush</A>
+  HREF="#SECTION00450000000000000000">Unification of Local Traces</A>
 <LI><A NAME="tex2html152"
-  HREF="#SECTION00470000000000000000">Enhanced Timer Synchronization</A>
+  HREF="#SECTION00460000000000000000">Synchronized Buffer Flush</A>
 <LI><A NAME="tex2html153"
+  HREF="#SECTION00470000000000000000">Enhanced Timer Synchronization</A>
+<LI><A NAME="tex2html154"
   HREF="#SECTION00480000000000000000">Environment Configuration Using VTSetup</A>
 </UL>
 <BR>
-<LI><A NAME="tex2html154"
+<LI><A NAME="tex2html155"
   HREF="#SECTION00500000000000000000">Recording Additional Events and Counters</A>
 <UL>
-<LI><A NAME="tex2html155"
-  HREF="#SECTION00510000000000000000">Hardware Performance Counters</A>
 <LI><A NAME="tex2html156"
-  HREF="#SECTION00520000000000000000">Resource Usage Counters</A>
+  HREF="#SECTION00510000000000000000">Hardware Performance Counters</A>
 <LI><A NAME="tex2html157"
-  HREF="#SECTION00530000000000000000">Memory Allocation Counter</A>
+  HREF="#SECTION00520000000000000000">Resource Usage Counters</A>
 <LI><A NAME="tex2html158"
-  HREF="#SECTION00540000000000000000">CPU ID Counter</A>
+  HREF="#SECTION00530000000000000000">Memory Allocation Counter</A>
 <LI><A NAME="tex2html159"
-  HREF="#SECTION00550000000000000000">NVIDIA CUDA</A>
+  HREF="#SECTION00540000000000000000">CPU ID Counter</A>
 <LI><A NAME="tex2html160"
-  HREF="#SECTION00560000000000000000">Pthread API Calls</A>
+  HREF="#SECTION00550000000000000000">NVIDIA CUDA</A>
 <LI><A NAME="tex2html161"
-  HREF="#SECTION00570000000000000000">Plugin Counter Metrics</A>
+  HREF="#SECTION00560000000000000000">Pthread API Calls</A>
 <LI><A NAME="tex2html162"
-  HREF="#SECTION00580000000000000000">I/O Calls</A>
+  HREF="#SECTION00570000000000000000">Plugin Counter Metrics</A>
 <LI><A NAME="tex2html163"
-  HREF="#SECTION00590000000000000000">fork/system/exec Calls</A>
+  HREF="#SECTION00580000000000000000">I/O Calls</A>
 <LI><A NAME="tex2html164"
-  HREF="#SECTION005100000000000000000">MPI Correctness Checking Using UniMCI</A>
+  HREF="#SECTION00590000000000000000">fork/system/exec Calls</A>
 <LI><A NAME="tex2html165"
-  HREF="#SECTION005110000000000000000">User-defined Counters</A>
+  HREF="#SECTION005100000000000000000">MPI Correctness Checking Using UniMCI</A>
 <LI><A NAME="tex2html166"
-  HREF="#SECTION005120000000000000000">User-defined Markers</A>
+  HREF="#SECTION005110000000000000000">User-defined Counters</A>
 <LI><A NAME="tex2html167"
+  HREF="#SECTION005120000000000000000">User-defined Markers</A>
+<LI><A NAME="tex2html168"
   HREF="#SECTION005130000000000000000">User-defined Communcation</A>
 </UL>
 <BR>
-<LI><A NAME="tex2html168"
+<LI><A NAME="tex2html169"
   HREF="#SECTION00600000000000000000">Filtering &amp; Grouping</A>
 <UL>
-<LI><A NAME="tex2html169"
-  HREF="#SECTION00610000000000000000">Function Filtering</A>
 <LI><A NAME="tex2html170"
-  HREF="#SECTION00620000000000000000">Java Specific Filtering</A>
+  HREF="#SECTION00610000000000000000">Function Filtering</A>
 <LI><A NAME="tex2html171"
+  HREF="#SECTION00620000000000000000">Java Specific Filtering</A>
+<LI><A NAME="tex2html172"
   HREF="#SECTION00630000000000000000">Function Grouping</A>
 </UL>
 <BR>
-<LI><A NAME="tex2html172"
+<LI><A NAME="tex2html173"
   HREF="#SECTION00700000000000000000">VampirTrace Installation</A>
 <UL>
-<LI><A NAME="tex2html173"
-  HREF="#SECTION00710000000000000000">Basics</A>
 <LI><A NAME="tex2html174"
-  HREF="#SECTION00720000000000000000">Configure Options</A>
+  HREF="#SECTION00710000000000000000">Basics</A>
 <LI><A NAME="tex2html175"
-  HREF="#SECTION00730000000000000000">Cross Compilation</A>
+  HREF="#SECTION00720000000000000000">Configure Options</A>
 <LI><A NAME="tex2html176"
-  HREF="#SECTION00740000000000000000">Environment Set-Up</A>
+  HREF="#SECTION00730000000000000000">Cross Compilation</A>
 <LI><A NAME="tex2html177"
+  HREF="#SECTION00740000000000000000">Environment Set-Up</A>
+<LI><A NAME="tex2html178"
   HREF="#SECTION00750000000000000000">Notes for Developers</A>
 </UL>
 <BR>
-<LI><A NAME="tex2html178"
+<LI><A NAME="tex2html179"
   HREF="#SECTION00800000000000000000">Command Reference</A>
 <UL>
-<LI><A NAME="tex2html179"
-  HREF="#SECTION00810000000000000000">Compiler Wrappers (vtcc,vtcxx,vtfort)</A>
 <LI><A NAME="tex2html180"
-  HREF="#SECTION00820000000000000000">Local Trace Unifier (vtunify)</A>
+  HREF="#SECTION00810000000000000000">Compiler Wrappers (vtcc,vtcxx,vtfort)</A>
 <LI><A NAME="tex2html181"
-  HREF="#SECTION00830000000000000000">Binary Instrumentor (vtdyn)</A>
+  HREF="#SECTION00820000000000000000">Local Trace Unifier (vtunify)</A>
 <LI><A NAME="tex2html182"
-  HREF="#SECTION00840000000000000000">Trace Filter Tool (vtfilter)</A>
+  HREF="#SECTION00830000000000000000">Binary Instrumentor (vtdyn)</A>
 <LI><A NAME="tex2html183"
-  HREF="#SECTION00850000000000000000">Library Wrapper Generator (vtlibwrapgen)</A>
+  HREF="#SECTION00840000000000000000">Trace Filter Tool (vtfilter)</A>
 <LI><A NAME="tex2html184"
-  HREF="#SECTION00860000000000000000">Application Execution Wrapper (vtrun)</A>
+  HREF="#SECTION00850000000000000000">Library Wrapper Generator (vtlibwrapgen)</A>
 <LI><A NAME="tex2html185"
-  HREF="#SECTION00870000000000000000">IOFSL server startup script (vtiofsl-start)</A>
+  HREF="#SECTION00860000000000000000">Application Execution Wrapper (vtrun)</A>
 <LI><A NAME="tex2html186"
+  HREF="#SECTION00870000000000000000">IOFSL server startup script (vtiofsl-start)</A>
+<LI><A NAME="tex2html187"
   HREF="#SECTION00880000000000000000">IOFSL server shutdown script (vtiofsl-stop)</A>
 </UL>
 <BR>
-<LI><A NAME="tex2html187"
+<LI><A NAME="tex2html188"
   HREF="#SECTION00900000000000000000">Counter Specifications</A>
 <UL>
-<LI><A NAME="tex2html188"
-  HREF="#SECTION00910000000000000000">PAPI</A>
 <LI><A NAME="tex2html189"
-  HREF="#SECTION00920000000000000000">CPC</A>
+  HREF="#SECTION00910000000000000000">PAPI</A>
 <LI><A NAME="tex2html190"
-  HREF="#SECTION00930000000000000000">NEC SX Hardware Performance Counter</A>
+  HREF="#SECTION00920000000000000000">CPC</A>
 <LI><A NAME="tex2html191"
+  HREF="#SECTION00930000000000000000">NEC SX Hardware Performance Counter</A>
+<LI><A NAME="tex2html192"
   HREF="#SECTION00940000000000000000">Resource Usage</A>
 </UL>
 <BR>
-<LI><A NAME="tex2html192"
+<LI><A NAME="tex2html193"
   HREF="#SECTION001000000000000000000">Using VampirTrace with IOFSL</A>
 <UL>
-<LI><A NAME="tex2html193"
-  HREF="#SECTION001010000000000000000">Introduction</A>
 <LI><A NAME="tex2html194"
+  HREF="#SECTION001010000000000000000">Introduction</A>
+<LI><A NAME="tex2html195"
   HREF="#SECTION001020000000000000000">Overview</A>
 <UL>
-<LI><A NAME="tex2html195"
-  HREF="#SECTION001021000000000000000">File handling in OTF</A>
 <LI><A NAME="tex2html196"
-  HREF="#SECTION001022000000000000000">I/O Forwarding Scalability Layer</A>
+  HREF="#SECTION001021000000000000000">File handling in OTF</A>
 <LI><A NAME="tex2html197"
+  HREF="#SECTION001022000000000000000">I/O Forwarding Scalability Layer</A>
+<LI><A NAME="tex2html198"
   HREF="#SECTION001023000000000000000">Architecture</A>
 </UL>
-<LI><A NAME="tex2html198"
+<LI><A NAME="tex2html199"
   HREF="#SECTION001030000000000000000">Installation</A>
 <UL>
-<LI><A NAME="tex2html199"
-  HREF="#SECTION001031000000000000000">Support Libraries</A>
 <LI><A NAME="tex2html200"
-  HREF="#SECTION001032000000000000000">Building IOFSL</A>
+  HREF="#SECTION001031000000000000000">Support Libraries</A>
 <LI><A NAME="tex2html201"
+  HREF="#SECTION001032000000000000000">Building IOFSL</A>
+<LI><A NAME="tex2html202"
   HREF="#SECTION001033000000000000000">Building VampirTrace &amp; OTF</A>
 </UL>
-<LI><A NAME="tex2html202"
+<LI><A NAME="tex2html203"
   HREF="#SECTION001040000000000000000">Usage Examples</A>
 <UL>
-<LI><A NAME="tex2html203"
-  HREF="#SECTION001041000000000000000">Using VampirTrace with IOFSL on Cray XK6 / with PBS</A>
 <LI><A NAME="tex2html204"
+  HREF="#SECTION001041000000000000000">Using VampirTrace with IOFSL on Cray XK6 / with PBS</A>
+<LI><A NAME="tex2html205"
   HREF="#SECTION001042000000000000000">Manual Usage</A>
 </UL>
 </UL>
 <BR>
-<LI><A NAME="tex2html205"
+<LI><A NAME="tex2html206"
   HREF="#SECTION001100000000000000000">FAQ</A>
 <UL>
-<LI><A NAME="tex2html206"
-  HREF="#SECTION001110000000000000000">Can I use different compilers for VampirTrace and my application?</A>
 <LI><A NAME="tex2html207"
-  HREF="#SECTION001120000000000000000">Why does my application need such a long time for starting?</A>
+  HREF="#SECTION001110000000000000000">Can I use different compilers for VampirTrace and my application?</A>
 <LI><A NAME="tex2html208"
-  HREF="#SECTION001130000000000000000">How can I limit compiler instrumentation?</A>
+  HREF="#SECTION001120000000000000000">Why does my application need such a long time for starting?</A>
 <LI><A NAME="tex2html209"
+  HREF="#SECTION001130000000000000000">How can I limit compiler instrumentation?</A>
+<LI><A NAME="tex2html210"
   HREF="#SECTION001140000000000000000">Why do I see multiple
 I/O operations for a single (un)formatted file read/write from my Fortran
 application?</A>
-<LI><A NAME="tex2html210"
-  HREF="#SECTION001150000000000000000">The application has run to completion, but there is no *.otf file. What can I do?</A>
 <LI><A NAME="tex2html211"
-  HREF="#SECTION001160000000000000000">What limitations are associated with "on/off" and buffer rewind?</A>
+  HREF="#SECTION001150000000000000000">The application has run to completion, but there is no *.otf file. What can I do?</A>
 <LI><A NAME="tex2html212"
-  HREF="#SECTION001170000000000000000">VampirTrace warns that it ``cannot lock file a.lock'', what's wrong?</A>
+  HREF="#SECTION001160000000000000000">What limitations are associated with "on/off" and buffer rewind?</A>
 <LI><A NAME="tex2html213"
-  HREF="#SECTION001180000000000000000">Can I relocate my VampirTrace installation without rebuilding from source?</A>
+  HREF="#SECTION001170000000000000000">VampirTrace warns that it ``cannot lock file a.lock'', what's wrong?</A>
 <LI><A NAME="tex2html214"
-  HREF="#SECTION001190000000000000000">What are the byte counts in collective communication records?</A>
+  HREF="#SECTION001180000000000000000">Can I relocate my VampirTrace installation without rebuilding from source?</A>
 <LI><A NAME="tex2html215"
-  HREF="#SECTION0011100000000000000000">I get ``error: unknown asm constraint letter''</A>
+  HREF="#SECTION001190000000000000000">What are the byte counts in collective communication records?</A>
 <LI><A NAME="tex2html216"
-  HREF="#SECTION0011110000000000000000">I have a question that is not answered in this document!</A>
+  HREF="#SECTION0011100000000000000000">I get ``error: unknown asm constraint letter''</A>
 <LI><A NAME="tex2html217"
+  HREF="#SECTION0011110000000000000000">I have a question that is not answered in this document!</A>
+<LI><A NAME="tex2html218"
   HREF="#SECTION0011120000000000000000">I need support for additional features so I can trace application xyz.</A>
 </UL></UL>
 <!--End of Table of Contents-->
@@ -355,20 +355,20 @@ OpenMP events, and performance counters.
 <P>
 After a successful tracing run, VampirTrace writes all collected data to a  
 trace file in the Open Trace Format (OTF)<A NAME="tex2html1"
-  HREF="#foot1549"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
+  HREF="#foot1569"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A>.
 As a result, the information is available for post-mortem analysis and 
 visualization by various tools. 
 Most notably, VampirTrace provides the input data for the Vampir analysis  
 and visualization tool<A NAME="tex2html2"
-  HREF="#foot1550"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
+  HREF="#foot1570"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A>. 
 
 <P>
 VampirTrace is included in OpenMPI&nbsp;1.3 and later versions.
 If not disabled explicitly, VampirTrace is built automatically when installing
 OpenMPI<A NAME="tex2html3"
-  HREF="#foot1551"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
+  HREF="#foot1571"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A>.
 
 <P>
@@ -1185,7 +1185,7 @@ in a single file, that
   The names in between may contain wildcards as ``?'', ``*', and ``#'', each entry gets a new line.
   The lists end with <TT>END[_FILE]_&lt;INCLUDE|EXCLUDE&gt;_LIST</TT>. For further information on selective 
   profiling have a look at the TAU documentation<A NAME="tex2html4"
-  HREF="#foot1575"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
+  HREF="#foot1595"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A>.
   To announce the file through the compiler wrapper use the option <TT>-vt:tau</TT>:
 <PRE>
@@ -1202,7 +1202,7 @@ Binary Instrumentation Using Dyninst
 The option <TT>-vt:inst dyninst</TT> is used with the compiler wrapper to 
 instrument the application during runtime (binary instrumentation), by using 
 Dyninst<A NAME="tex2html5"
-  HREF="#foot1576"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
+  HREF="#foot1596"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A>.
 Recompiling is not necessary for this kind of instrumentation,
 but relinking:
@@ -1353,7 +1353,7 @@ Tracing Calls to 3rd-Party Libraries
   VampirTrace is also capable to trace calls to third party libraries, which come with
   at least one C header file even without the library's source code. If VampirTrace was
   built with support for library tracing (the CTool library<A NAME="tex2html6"
-  HREF="#foot1577"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
+  HREF="#foot1597"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A>  is required), the tool <TT>vtlibwrapgen</TT> can be used to
   generate a wrapper library to intercept each call to the actual library functions.
   This wrapper library can be linked to the application or used in combination with the
@@ -1669,6 +1669,10 @@ of a VampirTrace instrumented executable:
 <TR><TD ALIGN="LEFT"><A NAME="VT_SETUP_VT_MPITRACE"></A><TT>VT_MPITRACE</TT></TD>
 <TD ALIGN="LEFT">Enable tracing of MPI events?</TD>
 <TD ALIGN="LEFT">yes</TD>
+</TR>
+<TR><TD ALIGN="LEFT"><A NAME="VT_SETUP_VT_MPI_IGNORE_FILTER"></A><TT>VT_MPI_IGNORE_FILTER</TT></TD>
+<TD ALIGN="LEFT">Enable tracing of MPI communication events although its corresponding functions are filtered?</TD>
+<TD ALIGN="LEFT">no</TD>
 </TR>
 <TR><TD ALIGN="LEFT"><A NAME="VT_SETUP_VT_OMPTRACE"></A><TT>VT_OMPTRACE</TT></TD>
 <TD ALIGN="LEFT">Enable tracing of OpenMP events instrumented by OPARI?</TD>
@@ -2025,7 +2029,7 @@ for the enhanced timer synchronization:
 
 <UL>
 <LI>CLAPACK <A NAME="tex2html7"
-  HREF="#foot1587"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
+  HREF="#foot1607"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A>
 </LI>
 <LI>AMD ACML
@@ -3244,6 +3248,9 @@ By default, all calls of instrumented functions will be traced, so that the
 or
 <BR>  <TT>&lt;groups&gt; - &lt;limit&gt; [S:&lt;[min-]max-stack-level&gt;] [R] G</TT>
 <BR>
+or
+<BR>  <TT>&lt;function-call-path&gt; - &lt;limit&gt; C</TT>
+<BR>
 <P>
 <BR>
 <TABLE CELLPADDING=3>
@@ -3259,17 +3266,29 @@ or
 <TR><TD ALIGN="LEFT">&nbsp;</TD>
 <TD ALIGN="LEFT">&nbsp;</TD>
 </TR>
+<TR><TD ALIGN="LEFT"><TT>function-call-path</TT></TD>
+<TD ALIGN="LEFT">Semicolon-separated list of</TD>
+</TR>
+<TR><TD ALIGN="LEFT">&nbsp;</TD>
+<TD ALIGN="LEFT">functions in a call path.</TD>
+</TR>
+<TR><TD ALIGN="LEFT">&nbsp;</TD>
+<TD ALIGN="LEFT">(MUST NOT contain wildcards)</TD>
+</TR>
+<TR><TD ALIGN="LEFT">&nbsp;</TD>
+<TD ALIGN="LEFT">&nbsp;</TD>
+</TR>
 <TR><TD ALIGN="LEFT"><TT>limit</TT></TD>
 <TD ALIGN="LEFT">call limit</TD>
 </TR>
 <TR><TD ALIGN="LEFT">&nbsp;</TD>
-<TD ALIGN="LEFT">Stop recording of function/group when</TD>
+<TD ALIGN="LEFT">Stop recording of functions/groups when</TD>
 </TR>
 <TR><TD ALIGN="LEFT">&nbsp;</TD>
 <TD ALIGN="LEFT">the specified call limit is reached.</TD>
 </TR>
 <TR><TD ALIGN="LEFT">&nbsp;</TD>
-<TD ALIGN="LEFT">(0 = don't record function/group,</TD>
+<TD ALIGN="LEFT">(0 = don't record functions/groups,</TD>
 </TR>
 <TR><TD ALIGN="LEFT">&nbsp;</TD>
 <TD ALIGN="LEFT">-1 record unlimited)</TD>
@@ -3277,6 +3296,12 @@ or
 <TR><TD ALIGN="LEFT">&nbsp;</TD>
 <TD ALIGN="LEFT">&nbsp;</TD>
 </TR>
+</TABLE>
+<BR>
+
+<P>
+<BR>
+<TABLE CELLPADDING=3>
 <TR><TD ALIGN="LEFT"><TT>S:&lt;[min-]max-stack-level&gt;</TT></TD>
 <TD ALIGN="LEFT">&nbsp;</TD>
 </TR>
@@ -3284,7 +3309,7 @@ or
 <TD ALIGN="LEFT">minimum/maximum call stack level</TD>
 </TR>
 <TR><TD ALIGN="LEFT">&nbsp;</TD>
-<TD ALIGN="LEFT">Don't record function/group called</TD>
+<TD ALIGN="LEFT">Don't record functions/groups called</TD>
 </TR>
 <TR><TD ALIGN="LEFT">&nbsp;</TD>
 <TD ALIGN="LEFT">beyond the specified stack level</TD>
@@ -3310,8 +3335,23 @@ or
 <TR><TD ALIGN="LEFT">&nbsp;</TD>
 <TD ALIGN="LEFT">function/group.</TD>
 </TR>
+<TR><TD ALIGN="LEFT">&nbsp;</TD>
+<TD ALIGN="LEFT">&nbsp;</TD>
+</TR>
 <TR><TD ALIGN="LEFT"><TT>G</TT></TD>
 <TD ALIGN="LEFT">Attribute for filtering function groups.</TD>
+</TR>
+<TR><TD ALIGN="LEFT">&nbsp;</TD>
+<TD ALIGN="LEFT">&nbsp;</TD>
+</TR>
+<TR><TD ALIGN="LEFT"><TT>C</TT></TD>
+<TD ALIGN="LEFT">Attribute for filtering function a call path.</TD>
+</TR>
+<TR><TD ALIGN="LEFT">&nbsp;</TD>
+<TD ALIGN="LEFT">(implies recursive filtering <TT>R</TT>)</TD>
+</TR>
+<TR><TD ALIGN="LEFT">&nbsp;</TD>
+<TD ALIGN="LEFT">&nbsp;</TD>
 </TR>
 </TABLE>
 <BR>
@@ -3338,6 +3378,33 @@ Besides creating filter files manually, you can also use the <TT>vtfilter</TT>
   tool to generate them automatically. This tool reads a provided trace
   and decides whether a function should be filtered or not, based on the evaluation of 
 <H2><A NAME="SECTION00611000000000000000">
+Call Path Specific Filtering</A>
+</H2>
+
+<P>
+The 'C' attribute indicates that the listed functions specify a call path
+  - a specific sequence of function calls. Recording of the last function in the
+  list will be stopped if the specified call limit is reached.
+  The call path must begin with the root function, typically main, and MUST NOT
+  contain wildcards.
+<BR>
+<P>
+Example:
+
+<P>
+<PRE>
+  main;foo;bar -- 0 C
+</PRE>
+
+<P>
+This filter directive causes that the function <TT>bar</TT> called from <TT>foo</TT> which
+  prior was called from <TT>main</TT> will never be recorded. Since call path filtering
+  impies recursiveness (see attribute <TT>R</TT>) all callee functions of this call
+  path will be excluded from recording as well.
+
+<P>
+
+<H2><A NAME="SECTION00612000000000000000">
 Rank Specific Filtering</A>
 </H2>
 
@@ -3364,7 +3431,7 @@ The example defines two limits for the ranks 4 - 10, 20 - 29, and 34. The first 
 
 <P>
 
-<H4><A NAME="SECTION00611010000000000000">
+<H4><A NAME="SECTION00612010000000000000">
 Attention:</A>
 </H4>
   The rank specific rules are activated later than usual at MPI_Init, because
@@ -3611,7 +3678,7 @@ default: automatically by configure.
 enable support for Dyninst instrumentation,
                               default: enable if found by configure.
                               <SPAN  CLASS="textbf">Note:</SPAN> Requires Dyninst<A NAME="tex2html8"
-  HREF="#foot1609"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
+  HREF="#foot1629"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A> version 6.1 or higher!
 
 <P>
@@ -3633,9 +3700,9 @@ enable support for automatic source code
                               instrumentation by using TAU, default: enable if
                               found by configure.
                               <SPAN  CLASS="textbf">Note:</SPAN> Requires PDToolkit<A NAME="tex2html9"
-  HREF="#foot1610"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
+  HREF="#foot1630"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A> or TAU<A NAME="tex2html10"
-  HREF="#foot1611"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
+  HREF="#foot1631"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A>!
 
 <P>
@@ -3939,6 +4006,13 @@ give the command for PDT Fortran source code parser, default: <TT>f95parse, f90p
 
 <P>
 </DD>
+<DT><STRONG><TT>-with-pdt-comment=PDTCOMMENT</TT></STRONG></DT>
+<DD>&nbsp;
+<BR>
+give the command for PDT comment parser, default: <TT>pdbcomment</TT>
+
+<P>
+</DD>
 <DT><STRONG><TT>-with-papi-dir=PAPIDIR</TT></STRONG></DT>
 <DD>&nbsp;
 <BR>
@@ -4204,7 +4278,7 @@ give the path for JVMTI-include files, default:
 
 <P>
 To enable support for generating wrapper for 3th-Party libraries the C code parser CTool<A NAME="tex2html11"
-  HREF="#foot1612"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
+  HREF="#foot1632"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A> is needed:
 
 <P>
@@ -4338,7 +4412,7 @@ are shown below:
 Examples:
 
 <P>
-BlueGene/P:
+BlueGene/P and BlueGene/Q:
 
 <P>
 <PRE>
@@ -4446,6 +4520,25 @@ options:
     tauinst           automatic source code instrumentation by
                       using PDT/TAU
 
+  -vt:inst-exclude-file-list &lt;file&gt;[,file,...]
+                      Set list of source files to be excluded
+                      from the automatic instrumentation by the
+                      compiler or PDT/TAU.
+                      (file names can contain wildcards)
+
+  -vt:inst-exclude-file &lt;file&gt;
+                      Set pathname of file containing a list of
+                      source files to be excluded from the
+                      automatic instrumentation by the compiler
+                      or PDT/TAU.
+                      (file names can contain wildcards, one file
+                       name per line)
+
+   Note when using an exclusion list for automatic compiler
+   instrumentation:
+   If a source file from the exclusion list is involved in a
+   compile step, the instrumentation is disabled for this step.
+
   -vt:opari &lt;!args&gt;   Set options for OPARI command. (see
                       share/vampirtrace/doc/opari/Readme.html)
 
@@ -4456,6 +4549,19 @@ options:
   -vt:opari-table &lt;file&gt;
                       Set pathname of the OPARI runtime table file.
                       (default: opari.tab.c)
+
+  -vt:opari-exclude-file-list &lt;file&gt;[,file,...]
+                      Set list of source files to be excluded from
+                      the instrumentation of OpenMP constructs by
+                      OPARI.
+                      (file names can contain wildcards)
+
+  -vt:opari-exclude-file &lt;file&gt;
+                      Set pathname of file containing a list of
+                      source files to be excluded from the
+                      instrumentation of OpenMP constructs by OPARI.
+                      (file names can contain wildcards, one file name
+                       per line)
 
   -vt:noopari         Disable instrumentation of OpenMP contructs
                       by OPARI.
@@ -5334,7 +5440,7 @@ Since IOFSL servers can handle multiple clients, an N:M mapping of clients to se
 
 <P>
 When using the IOFSL integration, all write requests in OTF are issued using the zoidfs API<A NAME="tex2html12"
-  HREF="#foot3199"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
+  HREF="#foot3235"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A>. Those writes are handled by the IOFSL forwarding servers and aggregated into a single file using the atomic append feature. The offset in the multifile is returned to OTF and stored in a second file, the so called index file, in order to maintain the mapping between written blocks and streams. For any block of a stream written into the multifile, the index file contains the ID of the stream, the start of the block, and its length. This allows for an efficient reading of blocks since only the index file has to be scanned for entries for a given stream ID. Additionally, a large number of logical files (streams) can be stored using only two physical files.
 
 <P>
@@ -5346,7 +5452,7 @@ Installation</A>
 <P>
 In order to use this setup, IOFSL and VampirTrace have to be compiled in order.
 In the following sections, the directory <TT>&lt;install_dir&gt;</TT> should be replaced with a - possibly user-local - directory used for installation, e.g. <TT>$HOME/local</TT><A NAME="tex2html13"
-  HREF="#foot3203"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
+  HREF="#foot3239"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A>.
 The installation procedure for IOFSL is described at https://trac.mcs.anl.gov/projects/iofsl/wiki/Building.
 Currently the <TT>iofsl_vampir</TT> git branch is required.
@@ -5525,7 +5631,7 @@ They will be launched on dedicated compute nodes that are part of the batch Job 
 PBS Options</A>
 </H4>
 It is important to reserve a sufficient number of processor cores. The number of cores requested must be large enough to contain the number of application cores plus the number of cores required for the IOFSL server instances. Each IOFSL server will run on a dedicated node<A NAME="tex2html14"
-  HREF="#foot3247"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
+  HREF="#foot3283"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A>.Thus N_allocated &#8805;((N_IOFSL * 16) + N_Application) must hold.
 <P>
 Example using 64 server instances:
@@ -5622,10 +5728,10 @@ Configuring the Server</A>
 The server is configured using a configuration file.
 At server start-up, this file is provided using the <TT>-config</TT> argument.
 The cray XK6 configuration file is provided in the package<A NAME="tex2html15"
-  HREF="#foot3387"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
+  HREF="#foot3423"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A>.
 For more information about the options available please refer to the IOFSL documentation<A NAME="tex2html16"
-  HREF="#foot3388"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
+  HREF="#foot3424"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A>.
 The most important option is the <TT>serverlist</TT> entry in the <TT>bmi</TT> section which takes a list of server addresses, e.g. :
 <PRE>
@@ -6031,99 +6137,99 @@ If you provide us with your additions afterwards we will consider merging them
 into the official VampirTrace package.
 <BR><HR><H4>Footnotes</H4>
 <DL>
-<DT><A NAME="foot1549">... (OTF)</A><A
+<DT><A NAME="foot1569">... (OTF)</A><A
  HREF="#tex2html1"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A></DT>
 <DD>http://www.tu-dresden.de/zih/otf
 
 </DD>
-<DT><A NAME="foot1550">... tool </A><A
+<DT><A NAME="foot1570">... tool </A><A
  HREF="#tex2html2"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A></DT>
 <DD>http://www.vampir.eu
 
 </DD>
-<DT><A NAME="foot1551">...
+<DT><A NAME="foot1571">...
 Open MPI </A><A
  HREF="#tex2html3"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A></DT>
 <DD>http://www.open-mpi.org/faq/?category=vampirtrace
 
 </DD>
-<DT><A NAME="foot1575">... documentation </A><A
+<DT><A NAME="foot1595">... documentation </A><A
  HREF="#tex2html4"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A></DT>
 <DD>http://www.cs.uoregon.edu/Research/tau/docs/newguide/bk05ch02.html#d0e3770
 
 </DD>
-<DT><A NAME="foot1576">...
+<DT><A NAME="foot1596">...
 Dyninst </A><A
  HREF="#tex2html5"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A></DT>
 <DD>http://www.dyninst.org
 
 </DD>
-<DT><A NAME="foot1577">... library </A><A
+<DT><A NAME="foot1597">... library </A><A
  HREF="#tex2html6"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A></DT>
 <DD>http://sourceforge.net/projects/ctool
 
 </DD>
-<DT><A NAME="foot1587">... CLAPACK</A><A
+<DT><A NAME="foot1607">... CLAPACK</A><A
  HREF="#tex2html7"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A></DT>
 <DD>www.netlib.org/clapack
 
 </DD>
-<DT><A NAME="foot1609">... Dyninst </A><A
+<DT><A NAME="foot1629">... Dyninst </A><A
  HREF="#tex2html8"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A></DT>
 <DD>http://www.dyninst.org
 
 </DD>
-<DT><A NAME="foot1610">... PDToolkit </A><A
+<DT><A NAME="foot1630">... PDToolkit </A><A
  HREF="#tex2html9"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A></DT>
 <DD>http://www.cs.uoregon.edu/research/pdt/home.php
 
 </DD>
-<DT><A NAME="foot1611">... TAU </A><A
+<DT><A NAME="foot1631">... TAU </A><A
  HREF="#tex2html10"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A></DT>
 <DD>http://tau.uoregon.edu
 
 </DD>
-<DT><A NAME="foot1612">... CTool </A><A
+<DT><A NAME="foot1632">... CTool </A><A
  HREF="#tex2html11"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A></DT>
 <DD>http://sourceforge.net/projects/ctool
 
 </DD>
-<DT><A NAME="foot3199">... API</A><A
+<DT><A NAME="foot3235">... API</A><A
  HREF="#tex2html12"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A></DT>
 <DD>The OTF master control file is written using POSIX I/O in any case.
 
 </DD>
-<DT><A NAME="foot3203">...$HOME/local</A><A
+<DT><A NAME="foot3239">...$HOME/local</A><A
  HREF="#tex2html13"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A></DT>
 <DD>The software packages can be installed in different directories.
 
 </DD>
-<DT><A NAME="foot3247">... node</A><A
+<DT><A NAME="foot3283">... node</A><A
  HREF="#tex2html14"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A></DT>
 <DD>The server makes use of all the nodes resources by multithreading and allocating large I/O buffers
 
 </DD>
-<DT><A NAME="foot3387">... package</A><A
+<DT><A NAME="foot3423">... package</A><A
  HREF="#tex2html15"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A></DT>
 <DD><TT>tools/vtiofsl/platform/crayxk6-iofwd.cf</TT>
 
 </DD>
-<DT><A NAME="foot3388">... documentation</A><A
+<DT><A NAME="foot3424">... documentation</A><A
  HREF="#tex2html16"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A></DT>
 <DD>https://trac.mcs.anl.gov/projects/iofsl/wiki/ConfigurationFile

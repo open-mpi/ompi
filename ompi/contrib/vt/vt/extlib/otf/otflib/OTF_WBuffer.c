@@ -81,6 +81,11 @@ int OTF_WBuffer_close( OTF_WBuffer* wbuffer ) {
 
 	int ret;
 
+	/*
+	 * Write a timestamp at the very end of a trace to avoid traces with a huge tail
+	 * of timestamp-less events (e.g. fake-KV-counters) that require
+	 * very inefficient (n^2) backwards search for searching the last timestamp.
+	 */
 	if( (uint32_t) -1 != wbuffer->process ) {
 
 		OTF_WBuffer_writeUint64( wbuffer, wbuffer->time );

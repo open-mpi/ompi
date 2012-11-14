@@ -48,17 +48,11 @@ namespace {
                        string::size_type ppos, bool* e, bool* f, bool asd) {
     unsigned s = preStmt.size();
     bool inComment = false;
+    bool inString = false;
 
     for (unsigned i=0; i<s; ++i) {
       string::size_type pos = 0;
       string& line = preStmt[i];
-
-      // shift bonded line-continuation '\' one position to right
-      if ( line[line.size()-1] == '\\'
-           && line.size() >= 2 && line[line.size()-2] != ' '
-           && line[line.size()-2] != '\t' ) {
-        line.insert(line.size()-1, " ");
-      }
 
       // "remove" comments
       while ( pos < line.size() ) {
@@ -67,8 +61,28 @@ namespace {
           if ( line[pos] == '*' && line[pos+1] == '/' ) {
             line[pos++] = ' ';
             inComment = false;
-          } 
+          }
           line[pos++] = ' ';
+        } else if ( inString || line[pos] == '\"' ) {
+          // character string constant
+          if ( line[pos] == '\"' ) {
+            pos++;
+          } else { // inString
+            inString = false;
+          }
+          while ( pos < line.size() ) {
+            if ( line[pos] == '\\' ) {
+              pos++;
+              if ( line[pos] == '\0' ) {
+                inString = true;
+                break;
+              }
+            } else if ( line[pos] == '\"' ) {
+              pos++;
+              break;
+            }
+            pos++;
+          }
         } else if ( line[pos] == '/' ) {
           pos++;
           if ( line[pos] == '/' ) {
@@ -85,6 +99,14 @@ namespace {
         } else {
           pos++;
         }
+      }
+
+      // shift bonded line-continuation '\' one position to right
+      if ( !inString &&
+           line[line.size()-1] == '\\'
+           && line.size() >= 2 && line[line.size()-2] != ' '
+           && line[line.size()-2] != '\t' ) {
+        line.insert(line.size()-1, " ");
       }
     }
 
@@ -208,7 +230,7 @@ void process_c_or_cxx(istream& is, const char* infile, ostream& os,
             os << line[pos++];
           }
 
-        } else if ( line[pos] == '/' ) {
+        } else if ( !inString && line[pos] == '/' ) {
           pos++;
           if ( line[pos] == '/' ) {
             // c++ comments
@@ -226,29 +248,29 @@ void process_c_or_cxx(istream& is, const char* infile, ostream& os,
 
         } else if ( inString || line[pos] == '\"' ) {
           // character string constant
-          if ( inString ) {
-	    inString = false;
-	    pos--;  // to make sure current character gets reprcessed
-	  } else {
-	    os << "\"";
-	  }
-          do {
+          if ( line[pos] == '\"' ) {
+            os << '\"';
             pos++;
+          } else { // inString
+            inString = false;
+          }
+
+          while( pos < line.size() ) {
             if ( line[pos] == '\\' ) {
               os << '\\';
               pos++;
               if ( line[pos] == '\0' ) {
-		inString = true;
-		break;
-	      } else if ( line[pos] == '\"' ) {
-                os << '\"';
-                pos++;
+                inString = true;
+                break;
               }
+            } else if ( line[pos] == '\"' ) {
+              os << '\"';
+              pos++;
+              break;
             }
             os << line[pos];
+            pos++;
           }
-          while ( line[pos] != '\"' );
-          pos++;
 
         } else if ( line[pos] == '\'' ) {
           // character constant

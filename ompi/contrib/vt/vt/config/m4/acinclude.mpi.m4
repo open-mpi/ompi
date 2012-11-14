@@ -183,6 +183,23 @@ AC_DEFUN([ACVT_MPI],
 		])
 	])
 
+	AC_ARG_WITH(mpibgq,
+		AC_HELP_STRING([--with-mpibgq], [set MPI-libs for IBM BG/Q]),
+	[
+		AS_IF([test x"$withval" = "xyes" -a x"$inside_openmpi" = "xno"],
+		[
+			MPILIB="-lmpich"
+			PMPILIB="-lmpich"
+			FMPILIB="-lfmpich"
+			MPICFLAGS="$MPICFLAGS -DMPICH_IGNORE_CXX_SEEK"
+			check_mpi2_thread="no"; have_mpi2_thread="yes"
+			check_mpi2_1sided="no"; have_mpi2_1sided="yes"
+			check_mpi2_extcoll="no"; have_mpi2_extcoll="yes"
+			ac_cv_have_decl_MPI_IN_PLACE="yes"
+			ac_cv_have_decl_MPI_ROOT="yes"
+		])
+	])
+
 	AC_ARG_WITH(mpich,
 		AC_HELP_STRING([--with-mpich], [set MPI-libs for MPICH]),
 	[
@@ -311,6 +328,7 @@ AC_DEFUN([ACVT_MPI],
 		ac_cv_func_MPI_Type_create_f90_integer="yes"
 		ac_cv_func_MPI_Type_create_f90_real="yes"
 		ac_cv_func_MPI_Type_create_struct="yes"
+		ac_cv_func_MPI_Type_dup="yes"
 		ac_cv_func_MPI_Type_match_size="yes"
 		ac_cv_func_PMPI_Win_test="yes"
 		ac_cv_func_PMPI_Win_lock="yes"
@@ -754,6 +772,7 @@ dnl			check for MPI-2 functions
                                         MPI_Type_create_f90_integer \
                                         MPI_Type_create_f90_real \
                                         MPI_Type_create_struct \
+                                        MPI_Type_dup \
                                         MPI_Type_match_size])
 			
 dnl			check for MPI-2 Thread support
@@ -965,76 +984,69 @@ EOF
 		fmpiwraplib_error="yes"
 	])
 
-	AS_IF([test x"$check_fc_conv" = "xyes" -a x"$fmpiwraplib_error" = "xno"],
+	AS_IF([test x"$fmpiwraplib_error" = "xno"],
 	[
 		sav_CC=$CC
 		sav_CPPFLAGS=$CPPFLAGS
-		sav_LIBS=$LIBS
 		CC=$MPICC
 		CPPFLAGS="$CPPFLAGS $MPICFLAGS $MPIINCDIR"
-		LIBS="$LIBS $MPILIBDIR $MPILIB"
 
-dnl		check for handle conversion: MPI_Comm
-		AC_CHECK_DECL([MPI_Comm_f2c],
-		 [AC_CHECK_DECL([MPI_Comm_c2f],
-		   [VT_MPIGEN_HAVE_FC_CONV_COMM=1], [], [#include "mpi.h"])],
-		 [], [#include "mpi.h"])
+		AS_IF([test x"$check_fc_conv" = "xyes"],
+		[
+dnl			check for MPI handle conversion functions
 
-dnl		check for handle conversion: MPI_Errhandler
-		AC_CHECK_DECL([MPI_Errhandler_f2c],
-		 [AC_CHECK_DECL([MPI_Errhandler_c2f],
-		   [VT_MPIGEN_HAVE_FC_CONV_ERRH=1], [], [#include "mpi.h"])],
-		 [], [#include "mpi.h"])
+			AC_CHECK_DECL([MPI_Comm_f2c],
+			 [AC_CHECK_DECL([MPI_Comm_c2f],
+			   [VT_MPIGEN_HAVE_FC_CONV_COMM=1], [], [#include "mpi.h"])],
+			 [], [#include "mpi.h"])
 
-dnl		check for handle conversion: MPI_File
-		AC_CHECK_DECL([MPI_File_f2c],
-		 [AC_CHECK_DECL([MPI_File_c2f],
-		   [VT_MPIGEN_HAVE_FC_CONV_FILE=1], [], [#include "mpi.h"])],
-		 [], [#include "mpi.h"])
+			AC_CHECK_DECL([MPI_Errhandler_f2c],
+			 [AC_CHECK_DECL([MPI_Errhandler_c2f],
+			   [VT_MPIGEN_HAVE_FC_CONV_ERRH=1], [], [#include "mpi.h"])],
+			 [], [#include "mpi.h"])
 
-dnl		check for handle conversion: MPI_Group
-		AC_CHECK_DECL([MPI_Group_f2c],
-		 [AC_CHECK_DECL([MPI_Group_c2f],
-		   [VT_MPIGEN_HAVE_FC_CONV_GROUP=1], [], [#include "mpi.h"])],
-		 [], [#include "mpi.h"])
+			AC_CHECK_DECL([MPI_File_f2c],
+			 [AC_CHECK_DECL([MPI_File_c2f],
+			   [VT_MPIGEN_HAVE_FC_CONV_FILE=1], [], [#include "mpi.h"])],
+			 [], [#include "mpi.h"])
 
-dnl		check for handle conversion: MPI_Info
-		AC_CHECK_DECL([MPI_Info_f2c],
-		 [AC_CHECK_DECL([MPI_Info_c2f],
-		   [VT_MPIGEN_HAVE_FC_CONV_INFO=1], [], [#include "mpi.h"])],
-		 [], [#include "mpi.h"])
+			AC_CHECK_DECL([MPI_Group_f2c],
+			 [AC_CHECK_DECL([MPI_Group_c2f],
+			   [VT_MPIGEN_HAVE_FC_CONV_GROUP=1], [], [#include "mpi.h"])],
+			 [], [#include "mpi.h"])
 
-dnl		check for handle conversion: MPI_Op
-		AC_CHECK_DECL([MPI_Op_f2c],
-		 [AC_CHECK_DECL([MPI_Op_c2f],
-		   [VT_MPIGEN_HAVE_FC_CONV_OP=1], [], [#include "mpi.h"])],
-		 [], [#include "mpi.h"])
+			AC_CHECK_DECL([MPI_Info_f2c],
+			 [AC_CHECK_DECL([MPI_Info_c2f],
+			   [VT_MPIGEN_HAVE_FC_CONV_INFO=1], [], [#include "mpi.h"])],
+			 [], [#include "mpi.h"])
 
-dnl		check for handle conversion: MPI_Request
-		AC_CHECK_DECL([MPI_Request_f2c],
-		 [AC_CHECK_DECL([MPI_Request_c2f],
-		   [VT_MPIGEN_HAVE_FC_CONV_REQUEST=1], [], [#include "mpi.h"])],
-		 [], [#include "mpi.h"])
+			AC_CHECK_DECL([MPI_Op_f2c],
+			 [AC_CHECK_DECL([MPI_Op_c2f],
+			   [VT_MPIGEN_HAVE_FC_CONV_OP=1], [], [#include "mpi.h"])],
+			 [], [#include "mpi.h"])
 
-dnl		check for handle conversion: MPI_Status
-		AC_CHECK_DECL([MPI_Status_f2c],
-		 [AC_CHECK_DECL([MPI_Status_c2f],
-		   [VT_MPIGEN_HAVE_FC_CONV_STATUS=1], [], [#include "mpi.h"])],
-		 [], [#include "mpi.h"])
+			AC_CHECK_DECL([MPI_Request_f2c],
+			 [AC_CHECK_DECL([MPI_Request_c2f],
+			   [VT_MPIGEN_HAVE_FC_CONV_REQUEST=1], [], [#include "mpi.h"])],
+			 [], [#include "mpi.h"])
 
-dnl		check for handle conversion: MPI_Datatype
-		AC_CHECK_DECL([MPI_Type_f2c],
-		 [AC_CHECK_DECL([MPI_Type_c2f],
-		   [VT_MPIGEN_HAVE_FC_CONV_TYPE=1], [], [#include "mpi.h"])],
-		 [], [#include "mpi.h"])
+			AC_CHECK_DECL([MPI_Status_f2c],
+			 [AC_CHECK_DECL([MPI_Status_c2f],
+			   [VT_MPIGEN_HAVE_FC_CONV_STATUS=1], [], [#include "mpi.h"])],
+			 [], [#include "mpi.h"])
 
-dnl		check for handle conversion: MPI_Win
-		AC_CHECK_DECL([MPI_Win_f2c],
-		 [AC_CHECK_DECL([MPI_Win_c2f],
-		   [VT_MPIGEN_HAVE_FC_CONV_WIN=1], [], [#include "mpi.h"])],
-		 [], [#include "mpi.h"])
+			AC_CHECK_DECL([MPI_Type_f2c],
+			 [AC_CHECK_DECL([MPI_Type_c2f],
+			   [VT_MPIGEN_HAVE_FC_CONV_TYPE=1], [], [#include "mpi.h"])],
+			 [], [#include "mpi.h"])
 
-dnl		check for MPI-2 constants
+			AC_CHECK_DECL([MPI_Win_f2c],
+			 [AC_CHECK_DECL([MPI_Win_c2f],
+			   [VT_MPIGEN_HAVE_FC_CONV_WIN=1], [], [#include "mpi.h"])],
+			 [], [#include "mpi.h"])
+		])
+
+dnl		check for MPI-2 constants to convert
 
 		AC_CHECK_DECLS([MPI_IN_PLACE],
 		 [VT_MPIGEN_HAVE_FC_CONV_MPI2CONST=1; have_mpi2_const="yes"], [], [#include "mpi.h"])
@@ -1044,7 +1056,6 @@ dnl		check for MPI_STATUS_SIZE
 
 		CC=$sav_CC
 		CPPFLAGS=$sav_CPPFLAGS
-		LIBS=$sav_LIBS
 	])
 
 	AC_SUBST(VT_MPIGEN_HAVE_FC_CONV_COMM)

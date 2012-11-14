@@ -16,18 +16,18 @@ RFG_Groups* RFG_Groups_init( void );
 int RFG_Groups_free( RFG_Groups* groups );
 
 /* sets group definition file name */
-int RFG_Groups_setDefFile( RFG_Groups* groups, const char* deffile );
+int RFG_Groups_setDefFile( RFG_Groups* groups, const char* fileName );
 
 /* reads group definition file */
 int RFG_Groups_readDefFile( RFG_Groups* groups );
 
 /* adds group assignment */
-int RFG_Groups_addAssign( RFG_Groups* groups, const char* gname,
+int RFG_Groups_addAssign( RFG_Groups* groups, const char* groupName,
 			  const char* pattern );
 
 /* gets group name by region name */
-int RFG_Groups_get( RFG_Groups* groups, const char* rname, 
-		    char** r_gname );
+int RFG_Groups_get( RFG_Groups* groups, const char* regionName,
+		    char** r_groupName );
 
 #ifdef __cplusplus
 }

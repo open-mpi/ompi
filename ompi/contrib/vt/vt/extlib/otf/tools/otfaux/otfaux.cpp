@@ -582,6 +582,11 @@ int main ( int argc, const char** argv ) {
         def_wstream= OTF_Writer_getStream( writer, 0 );
     }
 
+    /* increase buffer size for writing definitions (and markers), if necessary */
+    if ( 10240 > buffersize ) {
+        OTF_WStream_setBufferSizes( def_wstream, 10240 );
+    }
+
     OTF_HandlerArray_getCopyHandler_stream( handlers, def_wstream );
 
     Control* control= new Control( writer, def_wstream, verbose,
@@ -811,6 +816,64 @@ int main ( int argc, const char** argv ) {
     OTF_HandlerArray_setFirstHandlerArg( handlers, (void*) control, 
         OTF_ENDFILEOP_RECORD );
 	
+    OTF_HandlerArray_setHandler( handlers,
+        (OTF_FunctionPointer*) handleNoOp,
+        OTF_NOOP_RECORD );
+    OTF_HandlerArray_setFirstHandlerArg( handlers, (void*) control, 
+        OTF_NOOP_RECORD );
+
+
+    OTF_HandlerArray_setHandler( handlers,
+        (OTF_FunctionPointer*) handleEventComment,
+        OTF_EVENTCOMMENT_RECORD );
+    OTF_HandlerArray_setFirstHandlerArg( handlers, (void*) control, 
+        OTF_EVENTCOMMENT_RECORD );
+
+
+    OTF_HandlerArray_setHandler( handlers,
+        (OTF_FunctionPointer*) handleBeginProcess,
+        OTF_BEGINPROCESS_RECORD );
+    OTF_HandlerArray_setFirstHandlerArg( handlers, (void*) control, 
+        OTF_BEGINPROCESS_RECORD );
+
+
+    OTF_HandlerArray_setHandler( handlers,
+        (OTF_FunctionPointer*) handleEndProcess,
+        OTF_ENDPROCESS_RECORD );
+    OTF_HandlerArray_setFirstHandlerArg( handlers, (void*) control, 
+        OTF_ENDPROCESS_RECORD );
+
+
+    OTF_HandlerArray_setHandler( handlers,
+        (OTF_FunctionPointer*) handleRMAPut,
+        OTF_RMAPUT_RECORD );
+    OTF_HandlerArray_setFirstHandlerArg( handlers, (void*) control, 
+        OTF_RMAPUT_RECORD );
+
+
+
+    OTF_HandlerArray_setHandler( handlers,
+        (OTF_FunctionPointer*) handleRMAPutRemoteEnd,
+        OTF_RMAPUTRE_RECORD );
+    OTF_HandlerArray_setFirstHandlerArg( handlers, (void*) control, 
+        OTF_RMAPUTRE_RECORD );
+
+
+
+    OTF_HandlerArray_setHandler( handlers,
+        (OTF_FunctionPointer*) handleRMAGet,
+        OTF_RMAGET_RECORD );
+    OTF_HandlerArray_setFirstHandlerArg( handlers, (void*) control, 
+        OTF_RMAGET_RECORD );
+
+
+
+    OTF_HandlerArray_setHandler( handlers,
+        (OTF_FunctionPointer*) handleRMAEnd,
+        OTF_RMAEND_RECORD );
+    OTF_HandlerArray_setFirstHandlerArg( handlers, (void*) control, 
+        OTF_RMAEND_RECORD );
+
 	
 	if ( doThumbnail ) {
 		uint32_t i;
