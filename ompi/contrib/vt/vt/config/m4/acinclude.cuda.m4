@@ -127,9 +127,16 @@ See \`config.log' for more details.])
 	AS_IF([test x"$cuda_error" = "xno"],
 	[
 		have_cuda="yes"
+	],
+	[
+dnl		if no CUDA found, remove content of CUDATKLIBDIR to prevent adding them
+dnl		to the linker flags when using the VT compiler wrappers
+		CUDATKLIBDIR=
 	])
 
 	AC_SUBST(CUDATKDIR)
 	AC_SUBST(CUDATKINCDIR)
 	AC_SUBST(CUDATKLIBDIR)
+	AC_SUBST(CUDALIB)
+	AC_SUBST(CUDARTLIB)
 ])

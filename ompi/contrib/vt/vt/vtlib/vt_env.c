@@ -1227,6 +1227,28 @@ int vt_env_mpitrace()
   return mpitrace;
 }
 
+int vt_env_mpi_ignore_filter()
+{
+  static int mpi_ignore_filter = -1;
+  char* tmp;
+
+  if (mpi_ignore_filter == -1)
+    {
+      tmp = getenv("VT_MPI_IGNORE_FILTER");
+      if (tmp != NULL && strlen(tmp) > 0)
+        {
+          vt_cntl_msg(2, "VT_MPI_IGNORE_FILTER=%s", tmp);
+
+          mpi_ignore_filter = parse_bool(tmp);
+        }
+      else
+        {
+          mpi_ignore_filter = 0;
+        }
+    }
+  return mpi_ignore_filter;
+}
+
 int vt_env_mpicheck()
 {
   static int mpicheck = -1;
@@ -1927,7 +1949,7 @@ int vt_env_gputrace_kernel()
           /* perhaps user wrote 'yes' or 'true' */
           if(cudakernel == 0 && parse_bool(tmp) == 1) cudakernel = 1;
           
-          if(cudakernel > 0)
+          if(cudakernel == 1)
             vt_warning("VT_GPUTRACE_KERNEL is deprecated, "
                       "use option 'kernel' with VT_GPUTRACE instead!");
         }

@@ -64,12 +64,12 @@ uint64_t vt_plugin_cntr_get_synch_value(VTThrd * thrd, int nr, uint32_t * cid,
  * write all callback data for threadID, which occured between the
  * last call of this function and time
  */
-void vt_plugin_cntr_write_callback_data(uint64_t time, uint32_t tid);
+void vt_plugin_cntr_write_callback_data(uint64_t * time, uint32_t tid);
 
 /**
  * stores all collected asynch event plugins data
  */
-void vt_plugin_cntr_write_asynch_event_data(uint64_t time, uint32_t tid);
+void vt_plugin_cntr_write_asynch_event_data(uint64_t * time, uint32_t tid);
 
 /**
  * This should read the environment, and map the libraries

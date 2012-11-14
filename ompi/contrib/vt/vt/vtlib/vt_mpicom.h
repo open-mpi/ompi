@@ -22,12 +22,32 @@
 #include "config.h"
 
 #include "vt_inttypes.h"
+#include "vt_trc.h"
 
 #include "mpi.h"
+
+/* MPI communicator |-> VampirTrace communicator id */
+#define VT_COMM_ID(c) \
+  (((c)==MPI_COMM_WORLD) ? vt_mpi_comm_world_cid : \
+   ((c)==MPI_COMM_SELF)  ? vt_mpi_comm_self_cid  : \
+   vt_comm_id(c))
+
+/* Rank with respect to arbitrary communicator |-> global rank */
+#define VT_RANK_TO_PE(r,c) \
+  (((c)==MPI_COMM_WORLD) ? (uint32_t)r :  \
+   ((c)==MPI_COMM_SELF)  ? (uint32_t)vt_my_trace : \
+   vt_rank_to_pe(r,c))
+
+/* Rank with respect to arbitrary group |-> global rank */
+#define VT_RANK_TO_PE_BY_GROUP(r,g) \
+  (((g)==vt_mpi_comm_world_group) ? (uint32_t)r           : \
+   ((g)==vt_mpi_comm_self_group)  ? (uint32_t)vt_my_trace : \
+   vt_rank_to_pe_by_group(r,g))
 
 EXTERN void     vt_comm_init(void);
 EXTERN void     vt_comm_finalize(void);
 EXTERN uint32_t vt_rank_to_pe(VT_MPI_INT rank, MPI_Comm comm);
+EXTERN uint32_t vt_rank_to_pe_by_group(VT_MPI_INT rank, MPI_Group group);
 
 EXTERN void     vt_group_create(MPI_Group group);
 EXTERN void     vt_group_free(MPI_Group group);
@@ -44,10 +64,16 @@ EXTERN void     vt_win_id(MPI_Win win, MPI_Comm* comm, uint32_t* gid, uint32_t* 
 EXTERN void     vt_win_set_gid(MPI_Win win, uint32_t gid);
 #endif /* HAVE_MPI2_1SIDED */
 
-/* MPI communicator |-> VampirTrace communicator id */
-#define VT_COMM_ID(c) vt_comm_id(c)
+/* group of MPI_COMM_WORLD */
+EXTERN MPI_Group vt_mpi_comm_world_group;
 
-/* Rank with respect to arbitrary communicator |-> global rank */
-#define VT_RANK_TO_PE(r,c) (((c)==MPI_COMM_WORLD) ? (uint32_t)r : vt_rank_to_pe(r,c))
+/* group of MPI_COMM_SELF */
+EXTERN MPI_Group vt_mpi_comm_self_group;
+
+/* process group id of MPI_COMM_WORLD */
+EXTERN uint32_t  vt_mpi_comm_world_cid;
+
+/* process group id of MPI_COMM_SELF */
+EXTERN uint32_t  vt_mpi_comm_self_cid;
 
 #endif

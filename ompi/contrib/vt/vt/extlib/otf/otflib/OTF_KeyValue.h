@@ -231,9 +231,9 @@ struct OTF_KeyValueList_struct {
 	uint32_t key_count;             /* number of different keys in list --> user-relevant */
 	uint32_t count;                 /* total number of entries in list (treat byte arrays particular) --> internal use only */
 	uint32_t size;                  /* number of allocated entries --> internal */
-	OTF_KeyValuePairList *kvBegin;
-	OTF_KeyValuePairList *kvEnd;
-	OTF_KeyValuePairList *kvCurrent;
+	OTF_KeyValuePairList *kvBegin;   /* first element of the list */
+	OTF_KeyValuePairList *kvEnd;     /* last allocated element of the list, may be used or not */
+	OTF_KeyValuePairList *kvCurrent; /* first unused element in the list, insert new ones here */
 };
 
 /** @endcond */

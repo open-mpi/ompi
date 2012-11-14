@@ -228,6 +228,94 @@ static bool write_markerDispersion( AllData& alldata, OTF_WStream* writer ) {
     return true;
 }
 
+static bool write_markerDispersion_callpath( AllData& alldata, OTF_WStream* writer ) {
+
+
+    int i= 0;
+    uint64_t timerResolution= alldata.timerResolution;
+
+    map< TripleCallpath, FunctionDispersionData, gtTripleCallpathSortByDispersion >::const_iterator it= alldata.functionDispersionCallpathMap.begin();
+    map< TripleCallpath, FunctionDispersionData, gtTripleCallpathSortByDispersion >::const_iterator itend= alldata.functionDispersionCallpathMap.end();
+
+
+
+    while ( itend != it ) {
+
+
+        if ( it->second.count && it->first.b != "" && it->first.a > alldata.dispersionMarkerBorder) {
+
+            map< string, FunctionMinMaxLocationData>::const_iterator it_loc=
+            alldata.functionMinMaxLocationCallpathMap.find(it->first.b);
+            map< string, FunctionMinMaxLocationData>::const_iterator itend_loc=
+            alldata.functionMinMaxLocationCallpathMap.end();
+
+            if ( itend_loc != it_loc ) {
+                stringstream oss;
+
+                uint64_t time= it_loc->second.location.time_max;
+                uint64_t process= it_loc->second.location.loc_max;
+                string name= alldata.functionIdNameMap.find(it->first.c)->second;
+
+                if ( name.length() > 50) {
+                    name.replace(name.find_first_of(",") + 1, name.find_last_of(",")-name.find_first_of(",") - 1, " ... ");
+                }
+/*
+                cerr << "Irregularity function " << name <<
+                " id: " << it->first.b <<
+                " process: " << process <<
+                " tmin: " << it->second.excl_time_minimum <<
+                " t_25: " << it->second.excl_time_low_quartile <<
+                " tmed: " << it->second.excl_time_median <<
+                " t_75: " << it->second.excl_time_top_quartile <<
+                " tmax: " << it->second.excl_time_maximum <<
+                " tavg: " << it->second.excl_time_sum / it->second.count <<
+                " MinMaxLocationInformation: " <<
+                " min: " << it_loc->second.location.min <<
+                " max: " << it_loc->second.location.max <<
+                " lmin: " << it_loc->second.location.loc_min <<
+                " lmax: " << it_loc->second.location.loc_max <<
+                " tmin: " << it_loc->second.location.time_min <<
+                " tmax: " << it_loc->second.location.time_max <<
+                " tmin: " << (double) it_loc->second.location.time_min / timerResolution <<
+                " tmax: " << (double) it_loc->second.location.time_max / timerResolution << endl;
+*/
+
+                oss << "Irregularity weight: " << (double) it->first.a / timerResolution
+                    << " Function Name: " << name << " Dispersion values: "
+                    << " [ " << it->second.excl_time_minimum / timerResolution
+                    << " , " <<  it->second.excl_time_low_quartile / timerResolution
+                    << " , " << it->second.excl_time_median / timerResolution
+                    << " , " <<  it->second.excl_time_top_quartile / timerResolution
+                    << " , " << (it->second.excl_time_sum / it->second.count) / timerResolution
+                    << " , " << it->second.excl_time_maximum / timerResolution
+                    << " ] " << endl;
+
+                if ( 0 == OTF_WStream_writeMarker( writer, (uint64_t) time,
+                                                 (uint32_t) process, markerDispersionId,
+                                                 oss.str().c_str() ) ) {
+
+                    cout << "Error while writing Marker Spots " << endl ;
+
+                }
+                else {
+                    /*
+                    cout << i << ": "  << oss.str() << endl;
+                   */
+                            i++;
+                }
+
+                oss.flush();
+
+            }
+
+        }
+
+        it++;
+    }
+
+    return true;
+}
+
 bool CreateMarker( AllData& alldata ) {
 
     bool error= false;
@@ -279,6 +367,10 @@ bool CreateMarker( AllData& alldata ) {
             
             VerbosePrint( alldata, 1, true, "writing marker irregularity spots \n" );
             error= !write_markerDispersion(alldata, writer );
+            if(alldata.params.dispersion.mode == DISPERSION_MODE_PERCALLPATH)
+            {
+                error= !write_markerDispersion_callpath(alldata, writer );
+            }
         
         } while ( false );
 

@@ -13,6 +13,15 @@
 
 #include "datastructs.h"
 
+/* define the following macro to use exclusive (excl_time) or includive
+   (incl_time) time for dispersion computing */
+#define DISPERSION_OPTION excl_time
+
+/* max. number of regions in a call path */
+#define RFG_FILTER_MAX_CPATH_SIZE 0x80
+
+/* min. number of function calls on a specific call path to be filtered*/
+#define MIN_CPATH_COUNT 10
 
 /* print verbose message to stdout
    (- do print message only if current verbose level is >= level

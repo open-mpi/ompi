@@ -34,7 +34,10 @@
 
 #if PAPI_VER_CURRENT >= PAPI_VERSION_NUMBER(3,9,0,0)
 # define PAPIC
-#endif
+#endif /* PAPI_VER_CURRENT >= 3.9.0.0 */
+#if PAPI_VER_CURRENT >= PAPI_VERSION_NUMBER(5,0,0,0)
+# define PAPIV
+#endif /* PAPI_VER_CURRENT >= 5.0.0.0 */
 
 #ifndef TIMER_PAPI_REAL_CYC
 # define TIMER_PAPI_REAL_CYC 10
@@ -260,7 +263,11 @@ static void metric_error(int errcode, char *note)
 {
   char errstring[PAPI_MAX_STR_LEN];
 
+#ifdef PAPIV
+  PAPI_perror(errstring);
+#else
   PAPI_perror(errcode, errstring, PAPI_MAX_STR_LEN);
+#endif
   if (errcode == PAPI_ESYS) {
     strncat(errstring, ": ", PAPI_MAX_STR_LEN-strlen(errstring));
     strncat(errstring, strerror(errno), PAPI_MAX_STR_LEN-strlen(errstring));
@@ -274,7 +281,11 @@ static void metric_warning(int errcode, char *note)
 {
   char errstring[PAPI_MAX_STR_LEN];
 
+#ifdef PAPIV
+  PAPI_perror(errstring);
+#else
   PAPI_perror(errcode, errstring, PAPI_MAX_STR_LEN);
+#endif
   if (errcode == PAPI_ESYS) {
     strncat(errstring, ": ", PAPI_MAX_STR_LEN-strlen(errstring));
     strncat(errstring, strerror(errno), PAPI_MAX_STR_LEN-strlen(errstring));

@@ -16,7 +16,7 @@ AC_DEFUN([ACVT_JAVA],
 
 	AS_IF([test x"$check_java" = "xyes"],
 	[
-		AS_IF([test "$PLATFORM" = "bgp"],
+		AS_IF([test "$PLATFORM" = "bgp" -o "$PLATFORM" = "bgq"],
 		[
 			AC_MSG_NOTICE([error: Java tracing not supported on this platform])
 			java_error="yes"

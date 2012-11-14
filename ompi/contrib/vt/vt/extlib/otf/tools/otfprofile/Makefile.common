@@ -14,6 +14,7 @@ COMMONSOURCES = \
 	$(OTFPROFILESRCDIR)/create_csv.h \
 	$(OTFPROFILESRCDIR)/create_marker.h \
 	$(OTFPROFILESRCDIR)/create_latex.h \
+	$(OTFPROFILESRCDIR)/create_filter.h \
 	$(OTFPROFILESRCDIR)/datastructs.h \
 	$(OTFPROFILESRCDIR)/otfprofile.h \
 	$(OTFPROFILESRCDIR)/process_dispersion.h \
@@ -26,6 +27,7 @@ COMMONSOURCES = \
 	$(OTFPROFILESRCDIR)/create_csv.cpp \
 	$(OTFPROFILESRCDIR)/create_marker.cpp \
 	$(OTFPROFILESRCDIR)/create_latex.cpp \
+	$(OTFPROFILESRCDIR)/create_filter.cpp \
 	$(OTFPROFILESRCDIR)/otfprofile.cpp \
 	$(OTFPROFILESRCDIR)/process_dispersion.cpp \
 	$(OTFPROFILESRCDIR)/summarize_data.cpp \

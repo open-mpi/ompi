@@ -16,8 +16,6 @@
 #include "vt_error.h"
 #include "vt_pform.h"
 
-#include "util/hash.h"
-
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
@@ -79,16 +77,8 @@ void vt_pform_init() {
     vt_node_id = gethostid();
   }
   if (!vt_node_id)
-  {
     vt_error_msg("Maximum retries (%i) for gethostid exceeded!",
-		 VT_MAX_GETHOSTID_RETRIES);
-  }
-  else
-  {
-    char* nodename = vt_pform_node_name();
-    vt_node_id = (long)vt_hash((uint8_t*)nodename, strlen(nodename),
-			       (uint32_t)vt_node_id);
-  }
+                 VT_MAX_GETHOSTID_RETRIES);
 }
 
 /* directory of global file system  */

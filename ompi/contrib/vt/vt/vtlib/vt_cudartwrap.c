@@ -142,12 +142,12 @@ cudaError_t  cudaMemset2D(void *devPtr, size_t pitch, int value, size_t width, s
 
 /* -- cuda_runtime_api.h:cudaGetSymbolAddress -- */
 
-cudaError_t  cudaGetSymbolAddress(void **devPtr, const char *symbol)
+cudaError_t  cudaGetSymbolAddress(void **devPtr, VT_CUDARTWRAP_COMPAT_PTR symbol)
 {
   cudaError_t  ret;
 
   CUDARTWRAP_FUNC_INIT(vt_cudart_lw, vt_cudart_lw_attr, "cudaGetSymbolAddress",
-    cudaError_t , (void **, const char *),
+    cudaError_t , (void **, VT_CUDARTWRAP_COMPAT_PTR),
     NULL, 0);
 
   CUDARTWRAP_FUNC_START(vt_cudart_lw);
@@ -161,12 +161,12 @@ cudaError_t  cudaGetSymbolAddress(void **devPtr, const char *symbol)
 
 /* -- cuda_runtime_api.h:cudaGetSymbolSize -- */
 
-cudaError_t  cudaGetSymbolSize(size_t *size, const char *symbol)
+cudaError_t  cudaGetSymbolSize(size_t *size, VT_CUDARTWRAP_COMPAT_PTR symbol)
 {
   cudaError_t  ret;
 
   CUDARTWRAP_FUNC_INIT(vt_cudart_lw, vt_cudart_lw_attr, "cudaGetSymbolSize",
-    cudaError_t , (size_t *, const char *),
+    cudaError_t , (size_t *, VT_CUDARTWRAP_COMPAT_PTR),
     NULL, 0);
 
   CUDARTWRAP_FUNC_START(vt_cudart_lw);
@@ -389,12 +389,12 @@ cudaError_t  cudaGetTextureAlignmentOffset(size_t *offset, const struct textureR
 
 /* -- cuda_runtime_api.h:cudaGetTextureReference -- */
 
-cudaError_t  cudaGetTextureReference(const struct textureReference **texref, const char *symbol)
+cudaError_t  cudaGetTextureReference(const struct textureReference **texref, VT_CUDARTWRAP_COMPAT_PTR symbol)
 {
   cudaError_t  ret;
 
   CUDARTWRAP_FUNC_INIT(vt_cudart_lw, vt_cudart_lw_attr, "cudaGetTextureReference",
-    cudaError_t , (const struct textureReference **, const char *),
+    cudaError_t , (const struct textureReference **, VT_CUDARTWRAP_COMPAT_PTR),
     NULL, 0);
 
   CUDARTWRAP_FUNC_START(vt_cudart_lw);
@@ -498,12 +498,12 @@ cudaError_t  cudaSetupArgument(const void *arg, size_t size, size_t offset)
 }
 
 /* -- cuda_runtime_api.h:cudaFuncGetAttributes -- */
-cudaError_t  cudaFuncGetAttributes(struct cudaFuncAttributes *attr, const char *func)
+cudaError_t  cudaFuncGetAttributes(struct cudaFuncAttributes *attr, VT_CUDARTWRAP_COMPAT_PTR func)
 {
   cudaError_t  ret;
 
   CUDARTWRAP_FUNC_INIT(vt_cudart_lw, vt_cudart_lw_attr, "cudaFuncGetAttributes",
-    cudaError_t , (struct cudaFuncAttributes *, const char *),
+    cudaError_t , (struct cudaFuncAttributes *, VT_CUDARTWRAP_COMPAT_PTR),
     NULL, 0);
 
   CUDARTWRAP_FUNC_START(vt_cudart_lw);
@@ -794,12 +794,12 @@ cudaError_t  cudaMemGetInfo(size_t *free, size_t *total)
 }
 
 /* -- cuda_runtime_api.h:cudaFuncSetCacheConfig -- */
-cudaError_t  cudaFuncSetCacheConfig(const char *func, enum cudaFuncCache cacheConfig)
+cudaError_t  cudaFuncSetCacheConfig(VT_CUDARTWRAP_COMPAT_PTR func, enum cudaFuncCache cacheConfig)
 {
   cudaError_t  ret;
 
   CUDARTWRAP_FUNC_INIT(vt_cudart_lw, vt_cudart_lw_attr, "cudaFuncSetCacheConfig",
-    cudaError_t , (const char *, enum cudaFuncCache ),
+    cudaError_t , (VT_CUDARTWRAP_COMPAT_PTR, enum cudaFuncCache ),
     NULL, 0);
 
   CUDARTWRAP_FUNC_START(vt_cudart_lw);
@@ -966,12 +966,12 @@ cudaError_t  cudaGetSurfaceAlignmentOffset(size_t *offset, const struct surfaceR
 #endif
 
 /* -- cuda_runtime_api.h:cudaGetSurfaceReference -- */
-cudaError_t  cudaGetSurfaceReference(const struct surfaceReference **surfref, const char *symbol)
+cudaError_t  cudaGetSurfaceReference(const struct surfaceReference **surfref, VT_CUDARTWRAP_COMPAT_PTR symbol)
 {
   cudaError_t  ret;
 
   CUDARTWRAP_FUNC_INIT(vt_cudart_lw, vt_cudart_lw_attr, "cudaGetSurfaceReference",
-    cudaError_t , (const struct surfaceReference **, const char *),
+    cudaError_t , (const struct surfaceReference **, VT_CUDARTWRAP_COMPAT_PTR),
     NULL, 0);
 
   CUDARTWRAP_FUNC_START(vt_cudart_lw);
@@ -1562,12 +1562,12 @@ cudaError_t  cudaDeviceSetSharedMemConfig(enum cudaSharedMemConfig config)
 }
 
 /* -- cuda_runtime_api.h:cudaFuncSetSharedMemConfig -- */
-cudaError_t  cudaFuncSetSharedMemConfig(const char *func, enum cudaSharedMemConfig config)
+cudaError_t  cudaFuncSetSharedMemConfig(VT_CUDARTWRAP_COMPAT_PTR func, enum cudaSharedMemConfig config)
 {
   cudaError_t  ret;
 
   CUDARTWRAP_FUNC_INIT(vt_cudart_lw, vt_cudart_lw_attr, "cudaFuncSetSharedMemConfig",
-    cudaError_t , (const char *, enum cudaSharedMemConfig ),
+    cudaError_t , (VT_CUDARTWRAP_COMPAT_PTR, enum cudaSharedMemConfig ),
     NULL, 0);
 
   CUDARTWRAP_FUNC_START(vt_cudart_lw);

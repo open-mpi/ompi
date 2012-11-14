@@ -450,6 +450,12 @@ int main( int argc, char** argv ) {
 		OTF_Reader_eventBytesProgress( preader, &pminbytestmp, &pcurbytestmp, &pmaxbytestmp );
 		minbytes += pminbytestmp;
 		maxbytes += pmaxbytestmp;
+#else // VT_MPI
+		/* *** minbytes and maxbytes not used for vtfilter-mpi
+		       do the following to prevent "set but not used" warnings
+		       when building with the PGI compiler *** */
+		minbytes++;
+		maxbytes++;
 #endif // VT_MPI
 		
 		/* defs */

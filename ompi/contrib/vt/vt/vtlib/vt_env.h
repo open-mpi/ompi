@@ -62,6 +62,7 @@ EXTERN char*  vt_env_iolibpathname(void);
 EXTERN int    vt_env_libctrace(void);
 EXTERN int    vt_env_omptrace(void);
 EXTERN int    vt_env_mpitrace(void);
+EXTERN int    vt_env_mpi_ignore_filter(void);
 EXTERN int    vt_env_mpicheck(void);
 EXTERN int    vt_env_mpicheck_errexit(void);
 EXTERN char*  vt_env_rusage(void);

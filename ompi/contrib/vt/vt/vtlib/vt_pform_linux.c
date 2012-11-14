@@ -183,8 +183,8 @@ void vt_pform_init()
             /* printf("cylce_counter freq (t %d) at: %llu\n", loop, test_value); */
             diff = ( test_value>value ) ? test_value-value :
                                           value-test_value;
-            /* stable value is here defined as not more than 0.001% difference */
-            if( ((double) diff) < ((double) 0.00001 * value) )
+            /* stable value is here defined as not more than 0.01% difference */
+            if( ((double) diff) < ((double) 0.0001 * value) )
             {
                 /* printf("updating cylce_counter freq to: %llu\n", value); */
                 vt_ticks_per_sec = value;

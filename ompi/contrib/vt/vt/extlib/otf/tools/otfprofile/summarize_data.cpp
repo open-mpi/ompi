@@ -225,6 +225,28 @@ bool SummarizeData( AllData& alldata ) {
 
             alldata.functionMapPerRank.clear();
         }
+
+        if(alldata.params.dispersion.mode == DISPERSION_MODE_PERCALLPATH)
+        {
+            map< TripleCallpath, FunctionData, ltTripleCallpath >::const_iterator it= alldata.functionCallpathMapPerRank.begin();
+            map< TripleCallpath, FunctionData, ltTripleCallpath >::const_iterator itend= alldata.functionCallpathMapPerRank.end();
+            while ( itend != it ) {
+
+                const uint64_t& func= it->first.c;
+                const string callpath= it->first.b;
+
+                alldata.functionCallpathMapGlobal[ PairCallpath(func,callpath) ].add( it->second );
+                it++;
+            }
+
+            /* in case of additional clustering or producing CSV output do not
+            clear map ( rank x func ) because it is needed later */
+            if ( !alldata.params.clustering.enabled &&
+                 !alldata.params.create_csv ) {
+
+                alldata.functionCallpathMapPerRank.clear();
+            }
+        }
     }
   
     /* summarize map ( rank x func x counter ) to map ( counter x func ) */
@@ -400,12 +422,26 @@ bool SummarizeDataDispersion( AllData& alldata ) {
             it++;
         }
 
+        if(alldata.params.dispersion.mode == DISPERSION_MODE_PERCALLPATH)
+        {
+            map< Quadruple, FunctionData, ltQuadruple>::const_iterator itc= alldata.functionDurationSectionCallpathMapPerRank.begin();
+            map< Quadruple, FunctionData, ltQuadruple>::const_iterator itendc= alldata.functionDurationSectionCallpathMapPerRank.end();
+            while ( itendc != itc ) {
+
+                const uint64_t& func= itc->first.b;
+                const string callpath= itc->first.c;
+                const uint64_t& bin= itc->first.d;
+
+                alldata.functionDurationSectionCallpathMapGlobal[ TripleCallpath( func, callpath, bin ) ].add( itc->second );
+                itc++;
+            }
+        }
         /* in case of producing CSV output do not clear map ( rank x func x bin )
          because it is needed later */
         if ( !alldata.params.create_csv ) {    
             
             alldata.functionDurationSectionMapPerRank.clear();
-            
+            alldata.functionDurationSectionCallpathMapPerRank.clear();
         }
     }
 

@@ -390,20 +390,18 @@ OTFAUX_Process_writeThumbnail( OTFAUX_Process* process,
 
 int
 OTFAUX_Process_enqueueRecv( OTFAUX_Process* process,
-                                 uint64_t eventTime,
-                                 uint32_t receiverProcessId,
-                                 uint32_t comm,
-                                 uint32_t tag,
-                                 uint32_t length,
-                                 uint32_t scl )
+                            uint64_t eventTime,
+                            uint32_t receiverProcessId,
+                            uint32_t comm,
+                            uint32_t tag,
+                            uint32_t length,
+                            uint32_t scl )
 {
     OTFAUX_ReciveQueue* queue;
     OTFAUX_Message* recv;
 
     if ( !process )
         return 0;
-
-    cleanup_pending_sends( process, eventTime );
 
     queue = get_queue( process, receiverProcessId, comm, tag, 1 );
     if ( !queue )
@@ -429,17 +427,15 @@ OTFAUX_Process_enqueueRecv( OTFAUX_Process* process,
 
 int
 OTFAUX_Process_enterFunction( OTFAUX_Process* process,
-                                   uint64_t eventTime,
-                                   uint32_t function,
-                                   uint32_t scl,
-                                   void* eventData )
+                              uint64_t eventTime,
+                              uint32_t function,
+                              uint32_t scl,
+                              void* eventData )
 {
     OTFAUX_FunctionCall* call;
 
     if ( !process )
         return 0;
-
-    cleanup_pending_sends( process, eventTime );
 
     if ( !stack_empty( &process->sharedState->functionCalls ) )
     {
@@ -477,8 +473,6 @@ OTFAUX_Process_leaveFunction( OTFAUX_Process* process,
     if ( !process )
         return 0;
 
-    cleanup_pending_sends( process, eventTime );
-
     if ( stack_empty( &process->functionStack ) )
         return 0;
 
@@ -493,24 +487,22 @@ OTFAUX_Process_leaveFunction( OTFAUX_Process* process,
 
 int
 OTFAUX_Process_sendMessage( OTFAUX_Process* process,
-                                 uint64_t eventTime,
-                                 uint32_t receiverProcessId,
-                                 uint32_t comm,
-                                 uint32_t tag,
-                                 uint32_t length,
-                                 uint32_t scl,
-                                 uint64_t* recvTime,
-                                 uint32_t* recvLength,
-                                 uint32_t* recvScl,
-                                 void* eventData )
+                            uint64_t eventTime,
+                            uint32_t receiverProcessId,
+                            uint32_t comm,
+                            uint32_t tag,
+                            uint32_t length,
+                            uint32_t scl,
+                            uint64_t* recvTime,
+                            uint32_t* recvLength,
+                            uint32_t* recvScl,
+                            void* eventData )
 {
     OTFAUX_ReciveQueue* queue;
     OTFAUX_Message* msg;
 
     if ( !process )
         return 0;
-
-    cleanup_pending_sends( process, eventTime );
 
     /* MsgMatching */
     queue = get_queue( process, receiverProcessId, comm, tag, 0 );
@@ -529,7 +521,16 @@ OTFAUX_Process_sendMessage( OTFAUX_Process* process,
     *recvScl = msg->recvScl;
     msg->eventData = eventData;
 
-    stack_add( &process->pendingSends, &msg->e );
+    /* only maintain the pending messages, if we want to write snapshots */
+    if ( process->sharedState->writeSendSnapshot )
+    {
+        stack_add( &process->pendingSends, &msg->e );
+    }
+    else
+    {
+        release_event_data( process, msg->eventData );
+        free( msg );
+    }
 
     return 1;
 }
@@ -592,8 +593,6 @@ OTFAUX_Process_beginCollOp( OTFAUX_Process* process,
     if ( !process )
         return 0;
 
-    cleanup_pending_sends( process, eventTime );
-
     entry = stack_next( &process->pendingCollOps );
     while ( entry != &process->pendingCollOps )
     {
@@ -647,8 +646,6 @@ OTFAUX_Process_endCollOp( OTFAUX_Process* process,
     if ( !process )
         return 0;
 
-    cleanup_pending_sends( process, eventTime );
-
     entry = stack_next( &process->pendingCollOps );
     while ( entry != &process->pendingCollOps )
     {
@@ -671,19 +668,17 @@ OTFAUX_Process_endCollOp( OTFAUX_Process* process,
 
 int
 OTFAUX_Process_openFile( OTFAUX_Process* process,
-                              uint64_t eventTime,
-                              uint32_t fileId,
-                              uint64_t handleId,
-                              uint32_t scl,
-                              void* eventData )
+                         uint64_t eventTime,
+                         uint32_t fileId,
+                         uint64_t handleId,
+                         uint32_t scl,
+                         void* eventData )
 {
     OTFAUX_File* file;
     Stack *entry;
 
     if ( !process )
         return 0;
-
-    cleanup_pending_sends( process, eventTime );
 
     entry = stack_next( &process->openFiles );
     while ( entry != &process->openFiles )
@@ -735,8 +730,6 @@ OTFAUX_Process_closeFile( OTFAUX_Process* process,
     if ( !process )
         return 0;
 
-    cleanup_pending_sends( process, eventTime );
-
     entry = stack_next( &process->openFiles );
     while ( entry != &process->openFiles )
     {
@@ -769,8 +762,6 @@ OTFAUX_Process_beginFileOp( OTFAUX_Process* process,
 
     if ( !process )
         return 0;
-
-    cleanup_pending_sends( process, eventTime );
 
     entry = stack_next( &process->pendingFileOps );
     while ( entry != &process->pendingFileOps )
@@ -820,8 +811,6 @@ OTFAUX_Process_endFileOp( OTFAUX_Process* process,
 
     if ( !process )
         return 0;
-
-    cleanup_pending_sends( process, eventTime );
 
     entry = stack_next( &process->pendingFileOps );
     while ( entry != &process->pendingFileOps )
@@ -931,13 +920,13 @@ OTFAUX_Process_writeSends( OTFAUX_Process* process,
     int ret = 1;
     Stack* entry;
 
-    cleanup_pending_sends( process, snapshotTime );
-
     if ( !process )
         return 0;
 
     if ( !process->sharedState->writeSendSnapshot )
         return 1;
+
+    cleanup_pending_sends( process, snapshotTime );
 
     entry = stack_next( &process->pendingSends );
     while ( ret && entry != &process->pendingSends )

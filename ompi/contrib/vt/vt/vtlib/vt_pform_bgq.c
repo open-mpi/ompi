@@ -13,14 +13,11 @@
 #include "config.h"
 
 #include <stdio.h>
-#include <common/bgp_personality.h>
-#include <common/bgp_personality_inlines.h>
-#include <spi/kernel_interface.h>
+#include <firmware/include/personality.h>
+#include <hwi/include/common/uci.h>
 
 #include "vt_pform.h"
 #include "vt_defs.h"
-
-#define BGP_GROUP_ON_NODEBOARD
 
 #ifndef TIMER_PAPI_REAL_CYC
 #  define TIMER_PAPI_REAL_CYC 10
@@ -36,6 +33,7 @@
 #endif
 
 #if TIMER == TIMER_GET_TIMEBASE
+# include <hwi/include/bqc/A2_inlines.h>
   static uint64_t vt_ticks_per_sec = 1;
 #elif TIMER == TIMER_PAPI_REAL_CYC
   extern uint64_t vt_metric_clckrt(void);
@@ -45,16 +43,25 @@
   static uint64_t vt_time_base = 0;
 #endif
 
-static _BGP_Personality_t mybgp;
+static int torus_coord[6];
+
+static Personality_t mybgq;
 
 /* platform specific initialization */
 void vt_pform_init() {
-  Kernel_GetPersonality(&mybgp, sizeof(_BGP_Personality_t));
+  Kernel_GetPersonality(&mybgq, sizeof(Personality_t));
 #if TIMER == TIMER_GET_TIMEBASE
-  vt_ticks_per_sec = (uint64_t)BGP_Personality_clockMHz(&mybgp) * 1000000LL;
+  vt_ticks_per_sec = (uint64_t)mybgq.Kernel_Config.FreqMHz * 1000000LL;
 #elif TIMER == TIMER_PAPI_REAL_USEC
   vt_time_base = vt_metric_real_usec();
 #endif
+
+  torus_coord[0] = mybgq.Network_Config.Acoord;
+  torus_coord[1] = mybgq.Network_Config.Bcoord;
+  torus_coord[2] = mybgq.Network_Config.Ccoord;
+  torus_coord[3] = mybgq.Network_Config.Dcoord;
+  torus_coord[4] = mybgq.Network_Config.Ecoord;
+  torus_coord[5] = Kernel_ProcessorID();
 }
 
 /* directory of global file system  */
@@ -91,7 +98,7 @@ uint64_t vt_pform_clockres() {
 /* local or global wall-clock time in seconds */
 uint64_t vt_pform_wtime() {
 #if TIMER == TIMER_GET_TIMEBASE
-  return (uint64_t)_bgp_GetTimeBase();
+  return (uint64_t)GetTimeBase();
 #elif TIMER == TIMER_PAPI_REAL_CYC
   return vt_metric_real_cyc();
 #elif TIMER == TIMER_PAPI_REAL_USEC
@@ -101,63 +108,26 @@ uint64_t vt_pform_wtime() {
 
 /* unique numeric SMP-node identifier */
 long vt_pform_node_id() {
-#ifdef BGP_GROUP_ON_NODEBOARD
-  _BGP_UniversalComponentIdentifier uci;
-  uci.UCI = mybgp.Kernel_Config.UniversalComponentIdentifier;
-  /* use upper part of UCI (upto NodeCard, ignore lower 14bits)
-   * but only use the 13 bits (1FFF) that describe row,col,mp,nc */
-  return ((uci.UCI>>14)&0x1FFF);
-#else
-  return ( BGP_Personality_psetNum(&mybgp) *
-           BGP_Personality_psetSize(&mybgp) +
-           BGP_Personality_rankInPset(&mybgp)) * Kernel_ProcessCount()
-           + Kernel_PhysicalProcessorID();
-#endif
-}
-
-static void bgp_getNodeidString(const _BGP_Personality_t *p, char *buf) {
-   _BGP_UniversalComponentIdentifier uci;
-  uci.UCI = p->Kernel_Config.UniversalComponentIdentifier;
-
-  if ((uci.ComputeCard.Component == _BGP_UCI_Component_ComputeCard) ||
-      (uci.IOCard.Component == _BGP_UCI_Component_IOCard)) {
-
-    unsigned row = uci.ComputeCard.RackRow;
-    unsigned col = uci.ComputeCard.RackColumn;
-    unsigned mp  = uci.ComputeCard.Midplane;
-    unsigned nc  = uci.ComputeCard.NodeCard;
-    
-    if (row == 0xff)
-      sprintf(buf, "Rxx-Mx-N%x", nc);
-    else
-      sprintf(buf, "R%x%x-M%d-N%x", row, col, mp, nc);
-  } else {
-    sprintf(buf, "R?\?-M?-N?");
-  }
+  BG_UniversalComponentIdentifier uci = mybgq.Kernel_Config.UCI;
+  /* use upper part of UCI (26bit; upto ComputeCard; ignore lower 38bit)
+   * but only use the 20 bits (FFFFF) that describe row,col,mp,nb,cc */
+  return ((uci>>38)&0xFFFFF);
 }
 
 /* unique string SMP-node identifier */
 char* vt_pform_node_name() {
-#ifdef BGP_GROUP_ON_NODEBOARD
-  static char buf[BGPPERSONALITY_MAX_LOCATION];
-  bgp_getNodeidString(&mybgp, buf);
+  static char buf[48];
+  BG_UniversalComponentIdentifier uci = mybgq.Kernel_Config.UCI;
+  unsigned int row, col, mp, nb, cc;
+  bg_decodeComputeCardOnNodeBoardUCI(uci, &row, &col, &mp, &nb, &cc);
+  sprintf(buf, "R%x%x-M%d-N%02x-J%02x <%d,%d,%d,%d,%d>", row, col, mp, nb, cc,
+          torus_coord[0], torus_coord[1], torus_coord[2],
+          torus_coord[3], torus_coord[4]);
   return buf;
-#else
-  static char node[128];
-  unsigned x = BGP_Personality_xCoord(&mybgp);
-  unsigned y = BGP_Personality_yCoord(&mybgp);
-  unsigned z = BGP_Personality_zCoord(&mybgp);
-
-  sprintf(node, "node-%03d-%03d-%03d-%d", x, y, z, Kernel_PhysicalProcessorID());
-  return node;
-#endif
 }
 
 /* number of CPUs */
 int vt_pform_num_cpus() {
-#ifdef BGP_GROUP_ON_NODEBOARD
-  return 32 * Kernel_ProcessCount();
-#else
-  return 1;
-#endif
+  return 64;
 }
+

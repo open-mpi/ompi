@@ -99,6 +99,8 @@ AC_PROG_CPP
 AC_PROG_CXXCPP
 AM_PROG_AS
 
+AC_C_BIGENDIAN
+
 # Do we want to support Fortran
 check_fortran="yes"
 force_fortran="no"
@@ -203,11 +205,17 @@ AC_PROG_LIBTOOL
 SHREXT=$shrext_cmds
 AC_SUBST(SHREXT)
 
-# If building of shared libraries is desired on BlueGene/P, add '-Wl,-dy'
-# to linker flags on BlueGene/P platforms to lead libtool to believe that
-# dynamic linking is the default behaviour of the linker.
-AS_IF([test "$PLATFORM" = "bgp" -a x"$enable_shared" = "xyes"],
-[export LDFLAGS="$LDFLAGS $lt_prog_compiler_wl-dy"])
+# If building of shared libraries is desired on BlueGene/P/Q, add '-Wl,-dy'
+# to linker flags to lead libtool to believe that dynamic linking is the
+# default behaviour of the linker.
+AS_IF([test x"$enable_shared" = "xyes"],
+[
+	case $PLATFORM in
+		bgp | bgq)
+			export LDFLAGS="$LDFLAGS $lt_prog_compiler_wl-dy"
+			;;
+	esac
+])
 
 # Check for BSD compatible symbol lister command
 #AC_PROG_NM # already been checked by AC_PROG_LIBTOOL

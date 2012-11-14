@@ -123,7 +123,7 @@ bool ProcessClustering( AllData& alldata ) {
                     char cmd[1024];
 
                     snprintf( cmd, sizeof( cmd ) - 1,
-                        "otfshrink -i %s -o %s -f %s",
+                        "otfshrink -i %s -o %s -f %s -k",
                         alldata.params.input_file_prefix.c_str(),
                         alldata.params.clustering.shrink_output_prefix.c_str(),
                         alldata.params.clustering.map_file_name.c_str() );

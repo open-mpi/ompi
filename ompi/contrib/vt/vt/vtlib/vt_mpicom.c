@@ -92,18 +92,30 @@ struct VTWin
 
 /*
  *-----------------------------------------------------------------------------
+ * Global variables
+ *-----------------------------------------------------------------------------
+ */
+
+/* group of MPI_COMM_WORLD */
+MPI_Group vt_mpi_comm_world_group;
+
+/* group of MPI_COMM_SELF */
+MPI_Group vt_mpi_comm_self_group;
+
+/* process group id of MPI_COMM_WORLD */
+uint32_t vt_mpi_comm_world_cid = (uint32_t)-1;
+
+/* process group id of MPI_COMM_SELF */
+uint32_t vt_mpi_comm_self_cid = (uint32_t)-1;
+
+/*
+ *-----------------------------------------------------------------------------
  * Local variables
  *-----------------------------------------------------------------------------
  */
 
 /* MPI_COMM_WORLD definition */
 static struct VTWorld world;
-
-/* MPI_COMM_WORLD process group id */
-static uint32_t world_cid = (uint32_t)-1;
-
-/* MPI_COMM_SELF process group id */
-static uint32_t self_cid = (uint32_t)-1;
 
 /* index to group array */
 static uint32_t last_group = 0;
@@ -152,6 +164,19 @@ static uint8_t comm_initialized = 0;
  * Local functions
  *-----------------------------------------------------------------------------
  */
+
+static uint32_t comm_search(MPI_Comm comm)
+{
+  uint32_t i = 0;
+
+  while ((i < last_comm) && (comms[i].comm != comm))
+    i++;
+
+  if (i != last_comm)
+    return i;
+  else
+    return (uint32_t)-1;
+}
 
 static uint32_t group_search(MPI_Group group)
 {
@@ -234,7 +259,10 @@ void vt_comm_init()
       vt_error();
 #endif /* HAVE_MPI2_1SIDED */
 
-    PMPI_Comm_group(MPI_COMM_WORLD, &world.group);
+    PMPI_Comm_group(MPI_COMM_WORLD, &vt_mpi_comm_world_group);
+    PMPI_Comm_group(MPI_COMM_SELF, &vt_mpi_comm_self_group);
+
+    world.group = vt_mpi_comm_world_group;
     PMPI_Group_size(world.group, &world.size);
     world.size_grpv = world.size / 8 + (world.size % 8 ? 1 : 0);
 
@@ -290,6 +318,24 @@ uint32_t vt_rank_to_pe(VT_MPI_INT rank, MPI_Comm comm)
 
       PMPI_Group_translate_ranks(group, 1, &rank, world.group, &global_rank);
       PMPI_Group_free(&group);
+    }
+
+  return (uint32_t)global_rank;
+}
+
+uint32_t vt_rank_to_pe_by_group(VT_MPI_INT rank, MPI_Group group)
+{
+  VT_MPI_INT global_rank;
+
+#if defined(HAVE_DECL_MPI_ROOT) && HAVE_DECL_MPI_ROOT
+  if ( rank == MPI_ROOT )
+    {
+      global_rank = (VT_MPI_INT)vt_my_trace;
+    }
+  else
+#endif /* HAVE_DECL_MPI_ROOT */
+    {
+      PMPI_Group_translate_ranks(group, 1, &rank, world.group, &global_rank);
     }
 
   return (uint32_t)global_rank;
@@ -353,9 +399,9 @@ void vt_comm_create(MPI_Comm comm)
   VTTHRD_UNLOCK_IDS();
 #endif /* VT_MT || VT_HYB */
 
-  /* save communicator id for fast access in vt_comm_id */
-  if (comm == MPI_COMM_WORLD) world_cid = cid;
-  else if (comm == MPI_COMM_SELF) self_cid = cid;
+  /* save communicator id for fast access in VT_COMM_ID */
+  if (comm == MPI_COMM_WORLD) vt_mpi_comm_world_cid = cid;
+  else if (comm == MPI_COMM_SELF) vt_mpi_comm_self_cid = cid;
 
   /* enter comm in comms[] array */
   comms[last_comm].comm = comm;
@@ -376,15 +422,12 @@ void vt_comm_free(MPI_Comm comm)
   /* if more than one communicator exists, we need to search for the entry */
   else if (last_comm > 1)
     {
-      uint32_t i = 0;
+      uint32_t i;
 
-      while(i < last_comm && comms[i].comm != comm)
-        i++;
-
-      if (i < last_comm--)
+      if ((i = comm_search(comm)) != (uint32_t)-1)
         {
           /* swap deletion candidate with last entry in the list */
-          comms[i] = comms[last_comm];
+          comms[i] = comms[--last_comm];
         }
       else
         {
@@ -399,15 +442,9 @@ void vt_comm_free(MPI_Comm comm)
 
 uint32_t vt_comm_id(MPI_Comm comm)
 {
-  uint32_t i = 0;
+  uint32_t i;
 
-  if (comm == MPI_COMM_WORLD) return world_cid;
-  else if (comm == MPI_COMM_SELF) return self_cid;
-
-  while(i < last_comm && comms[i].comm != comm)
-    i++;
-
-  if (i != last_comm)
+  if ((i = comm_search(comm)) != (uint32_t)-1)
     {
       return comms[i].cid;
     }
@@ -498,12 +535,9 @@ void vt_group_free(MPI_Group group)
 
 uint32_t vt_group_id(MPI_Group group)
 {
-  uint32_t i = 0;
+  uint32_t i;
 
-  while ((i < last_group) && (groups[i].group != group))
-    i++;
-
-  if (i != last_group)
+  if ((i = group_search(group)) != (uint32_t)-1)
     {
       return groups[i].gid;
     }
