@@ -32,6 +32,9 @@ AC_DEFUN([OPAL_SETUP_CC],[
     AC_REQUIRE([_OMPI_PROG_CC])
     AC_REQUIRE([AM_PROG_CC_C_O])
 
+    # From Open MPI 1.7 on we require a C99 compiant compiler
+    AC_REQUIRE([AC_PROG_CC_C99])
+
     OMPI_C_COMPILER_VENDOR([ompi_c_vendor])
 
     # Check for standard headers, needed here because needed before
