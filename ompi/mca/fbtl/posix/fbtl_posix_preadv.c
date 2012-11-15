@@ -97,7 +97,7 @@ mca_fbtl_posix_preadv (mca_io_ompio_file_t *fh,
                 return OMPI_ERROR;
             }
             if (-1 == readv (fh->fd, iov, iov_count)) {
-                perror ("writev");
+                perror ("readv");
                 return OMPI_ERROR;
             }
             else {
@@ -143,7 +143,7 @@ mca_fbtl_posix_preadv (mca_io_ompio_file_t *fh,
                 return OMPI_ERROR;
             }
             if (-1 == readv (fh->fd, iov, iov_count)) {
-                perror ("writev");
+                perror ("readv");
                 return OMPI_ERROR;
             }
             else {
