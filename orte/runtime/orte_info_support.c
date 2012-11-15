@@ -28,6 +28,7 @@
 #include "opal/runtime/opal_info_support.h"
 
 #include "orte/mca/db/base/base.h"
+#include "orte/mca/dfs/base/base.h"
 #include "orte/mca/errmgr/base/base.h"
 #include "orte/mca/ess/base/base.h"
 #include "orte/mca/grpcomm/base/base.h"
@@ -59,6 +60,7 @@ void orte_info_register_types(opal_pointer_array_t *mca_types)
 {
     /* frameworks */
     opal_pointer_array_add(mca_types, "db");
+    opal_pointer_array_add(mca_types, "dfs");
     opal_pointer_array_add(mca_types, "errmgr");
     opal_pointer_array_add(mca_types, "ess");
     opal_pointer_array_add(mca_types, "filem");
@@ -140,6 +142,20 @@ int orte_info_register_components(opal_pointer_array_t *mca_types,
     opal_pointer_array_add(component_map, map);
     if (ORTE_ERR_BAD_PARAM == rc)  {
         str = "db";
+        goto breakout;
+    }
+
+    if (ORTE_SUCCESS != (rc = orte_dfs_base_open()) &&
+        ORTE_ERR_BAD_PARAM != rc) {
+        str = "dfs_base_open";
+        goto error;
+    }
+    map = OBJ_NEW(opal_info_component_map_t);
+    map->type = strdup("dfs");
+    map->components = &orte_dfs_base.components_available;
+    opal_pointer_array_add(component_map, map);
+    if (ORTE_ERR_BAD_PARAM == rc)  {
+        str = "dfs";
         goto breakout;
     }
 
