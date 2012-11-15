@@ -738,7 +738,7 @@ sub find_and_check {
 	# Matches a version string with 1 or more parts possibly prefixed with a letter (ex:
 	# v2.2) or followed by a letter (ex: 2.2.6b). This regex assumes there is a space
 	# before the version string and that the version is ok if there is no version.
-	if (!($version =~ m/\s\w?(\d[\d\.]*\w?)/m)) {
+	if (!($version =~ m/\s[vV]?(\d[\d\.]*\w?)/m)) {
 	    verbose "  WARNING: $_ does not appear to support --version. Assuming it is ok\n";
 
 	    return;
