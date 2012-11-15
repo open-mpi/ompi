@@ -67,6 +67,9 @@ ORTE_DECLSPEC extern bool orte_report_silent_errors;  /* instantiated in orte/ru
 ORTE_DECLSPEC extern opal_event_base_t *orte_event_base;  /* instantiated in orte/runtime/orte_init.c */
 ORTE_DECLSPEC extern bool orte_event_base_active; /* instantiated in orte/runtime/orte_init.c */
 ORTE_DECLSPEC extern bool orte_proc_is_bound;  /* instantiated in orte/runtime/orte_init.c */
+ORTE_DECLSPEC extern int orte_progress_thread_debug;  /* instantiated in orte/runtime/orte_init.c */
+
+
 #if OPAL_HAVE_HWLOC
 /**
  * Global indicating where this process was bound to at launch (will

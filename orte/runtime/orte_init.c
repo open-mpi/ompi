@@ -59,6 +59,7 @@ bool orte_create_session_dirs = true;
 opal_event_base_t *orte_event_base;
 bool orte_event_base_active = true;
 bool orte_proc_is_bound = false;
+int orte_progress_thread_debug = -1;
 #if OPAL_HAVE_HWLOC
 hwloc_cpuset_t orte_proc_applied_binding = NULL;
 #endif
