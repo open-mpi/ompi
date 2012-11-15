@@ -169,31 +169,37 @@ static void send_fms(opal_buffer_t *bptr, void *cbdata)
     int rc, i;
     orte_plm_cmd_flag_t cmd2;
 
-    opal_output(0, "%s SENDING FILE MAPS FOR %s OF SIZE %d",
-                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                ORTE_NAME_PRINT(&pdata->name), (int)bptr->bytes_used);
-    xfer = OBJ_NEW(opal_buffer_t);
-    if (OPAL_SUCCESS != (rc = opal_dss.pack(xfer, &cmd, 1, ORTE_DFS_CMD_T))) {
-        ORTE_ERROR_LOG(rc);
-        OBJ_RELEASE(xfer);
-        return;
-    }
-    if (OPAL_SUCCESS != (rc = opal_dss.pack(xfer, &pdata->name, 1, ORTE_NAME))) {
-        ORTE_ERROR_LOG(rc);
-        OBJ_RELEASE(xfer);
-        return;
-    }
-    if (OPAL_SUCCESS != (rc = opal_dss.pack(xfer, &bptr, 1, OPAL_BUFFER))) {
-        ORTE_ERROR_LOG(rc);
-        OBJ_RELEASE(xfer);
-        return;
-    }
-    if (0 > (rc = orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, xfer,
-                                          ORTE_RML_TAG_DFS_CMD, 0,
-                                          orte_rml_send_callback, NULL))) {
-        ORTE_ERROR_LOG(rc);
-        OBJ_RELEASE(xfer);
-        return;
+    /* we will get a NULL buffer if there are no maps, so check and
+     * ignore sending an update if that's the case
+     */
+    if (NULL != bptr) {
+        opal_output_verbose(1, orte_state_base_output,
+                            "%s SENDING FILE MAPS FOR %s OF SIZE %d",
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                            ORTE_NAME_PRINT(&pdata->name), (int)bptr->bytes_used);
+        xfer = OBJ_NEW(opal_buffer_t);
+        if (OPAL_SUCCESS != (rc = opal_dss.pack(xfer, &cmd, 1, ORTE_DFS_CMD_T))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_RELEASE(xfer);
+            return;
+        }
+        if (OPAL_SUCCESS != (rc = opal_dss.pack(xfer, &pdata->name, 1, ORTE_NAME))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_RELEASE(xfer);
+            return;
+        }
+        if (OPAL_SUCCESS != (rc = opal_dss.pack(xfer, &bptr, 1, OPAL_BUFFER))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_RELEASE(xfer);
+            return;
+        }
+        if (0 > (rc = orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, xfer,
+                                              ORTE_RML_TAG_DFS_CMD, 0,
+                                              orte_rml_send_callback, NULL))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_RELEASE(xfer);
+            return;
+        }
     }
 
     /* Clean up the session directory as if we were the process
