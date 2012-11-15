@@ -56,12 +56,14 @@ my $exclude_list;
 my $ompi_automake_version = "1.11.1";
 my $ompi_autoconf_version = "2.65";
 my $ompi_libtool_version = "2.2.6b";
+my $ompi_flex_version = "2.5.35";
 my $ompi_m4_version = "1.4.16";
 
 # Search paths
 my $ompi_autoconf_search = "autoconf";
 my $ompi_automake_search = "automake";
 my $ompi_libtoolize_search = "libtoolize;glibtoolize";
+my $ompi_flex_search = "flex";
 my $ompi_m4_search = "m4;gm4";
 
 # One-time setup
@@ -732,8 +734,18 @@ sub find_and_check {
             verbose "  $_ not found\n";
             next;
         }
-        $version =~ m/\s([\d\w\.]+)$/m;
-        $version = $1;
+
+	# Matches a version string with 1 or more parts possibly prefixed with a letter (ex:
+	# v2.2) or followed by a letter (ex: 2.2.6b). This regex assumes there is a space
+	# before the version string and that the version is ok if there is no version.
+	if (!($version =~ m/\s\w?(\d[\d\.]*\w?)/m)) {
+	    verbose "  WARNING: $_ does not appear to support --version. Assuming it is ok\n";
+
+	    return;
+	}
+
+	$version = $1;
+
         verbose "     Found $_ version $version; checking version...\n";
         push(@versions_found, $version);
 
@@ -794,12 +806,13 @@ I need at least $req_version, but only found the following versions:\n\n";
     print "\nI am gonna abort.  :-(
 
 Please make sure you are using at least the following versions of the
-GNU tools:
+tools:
 
     GNU Autoconf: $ompi_autoconf_version
     GNU Automake: $ompi_automake_version
     GNU Libtool: $ompi_libtool_version
-    GNU M4: $ompi_m4_version
+    GNU M4: $ompi_m4_version (BSD/Solaris M4 is ok)
+    Flex: $ompi_flex_version
 =================================================================\n";
     my_exit(1);
 }
@@ -1018,6 +1031,7 @@ $step. Checking tool versions\n\n";
 &find_and_check("autoconf", $ompi_autoconf_search, $ompi_autoconf_version);
 &find_and_check("libtool", $ompi_libtoolize_search, $ompi_libtool_version);
 &find_and_check("automake", $ompi_automake_search, $ompi_automake_version);
+&find_and_check("flex", $ompi_flex_search, $ompi_flex_version);
 &find_and_check("m4", $ompi_m4_search, $ompi_m4_version);
 
 #---------------------------------------------------------------------------
