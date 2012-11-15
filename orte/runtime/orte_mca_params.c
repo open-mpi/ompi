@@ -182,6 +182,14 @@ int orte_register_params(void)
         orte_debug_daemons_flag = true;
     }
 
+    mca_base_param_reg_int_name("orte", "progress_thread_debug",
+                                "Debug level for ORTE progress threads",
+                                false, false, -1, &value);
+    if (0 <= value) {
+        orte_progress_thread_debug = opal_output_open(NULL);
+        opal_output_set_verbosity(orte_progress_thread_debug, value);
+    }
+
     /* do we want session output left open? */
     mca_base_param_reg_int_name("orte", "leave_session_attached",
                                 "Whether applications and/or daemons should leave their sessions "
