@@ -504,10 +504,9 @@ static void process_opens(int fd, short args, void *cbdata)
     orte_dfs_request_t *dfs = (orte_dfs_request_t*)cbdata;
     int rc;
     opal_buffer_t *buffer;
-    char *scheme, *host, *filename, *hostname;
+    char *scheme, *host, *filename;
     orte_process_name_t daemon;
-    bool found;
-    orte_vpid_t v;
+    orte_vpid_t *v;
 
     /* get the scheme to determine if we can process locally or not */
     if (NULL == (scheme = opal_uri_get_scheme(dfs->uri))) {
@@ -538,8 +537,7 @@ static void process_opens(int fd, short args, void *cbdata)
     }
 
     /* if the host is our own, then treat it as a local file */
-    if (NULL == host ||
-        0 == strcmp(host, orte_process_info.nodename) ||
+    if (0 == strcmp(host, orte_process_info.nodename) ||
         0 == strcmp(host, "localhost") ||
         opal_ifislocal(host)) {
         opal_output_verbose(1, orte_dfs_base.output,
@@ -554,24 +552,16 @@ static void process_opens(int fd, short args, void *cbdata)
 
     /* ident the daemon on that host */
     daemon.jobid = ORTE_PROC_MY_DAEMON->jobid;
-    found = false;
-    for (v=0; v < orte_process_info.num_daemons; v++) {
-        daemon.vpid = v;
-        /* fetch the hostname where this daemon is located */
-        if (ORTE_SUCCESS != (rc = orte_db.fetch_pointer(&daemon, ORTE_DB_HOSTNAME, (void**)&hostname, OPAL_STRING))) {
-            ORTE_ERROR_LOG(rc);
-            goto complete;
-        }
-        opal_output(0, "%s GOT HOST %s HOSTNAME %s", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), host, hostname);
-        if (0 == strcmp(host, hostname)) {
-            found = true;
-            break;
-        }
-    }
-    if (!found) {
-        ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+    /* fetch the daemon for this hostname */
+    opal_output_verbose(1, orte_dfs_base.output,
+                        "%s looking for daemon on host %s",
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), host);
+    v = &daemon.vpid;
+    if (ORTE_SUCCESS != (rc = orte_db.fetch(ORTE_NAME_WILDCARD, host, (void**)&v, ORTE_VPID))) {
+        ORTE_ERROR_LOG(rc);
         goto complete;
     }
+
     opal_output_verbose(1, orte_dfs_base.output,
                         "%s file %s on host %s daemon %s",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),

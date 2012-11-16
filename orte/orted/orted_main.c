@@ -52,6 +52,7 @@
 #include "opal/mca/base/base.h"
 #include "opal/util/output.h"
 #include "opal/util/cmd_line.h"
+#include "opal/util/if.h"
 #include "opal/util/opal_environ.h"
 #include "opal/util/os_path.h"
 #include "opal/util/printf.h"
@@ -704,6 +705,27 @@ int orte_daemon(int argc, char *argv[])
         /* include our node name */
         opal_dss.pack(buffer, &orte_process_info.nodename, 1, OPAL_STRING);
         
+        /* if requested, include any non-loopback aliases for this node */
+        if (orte_retain_aliases) {
+            char **aliases=NULL;
+            uint8_t naliases, ni;
+            opal_ifgetaliases(&aliases);
+            naliases = opal_argv_count(aliases);
+            if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &naliases, 1, OPAL_UINT8))) {
+                ORTE_ERROR_LOG(ret);
+                OBJ_RELEASE(buffer);
+                goto DONE;
+            }
+            for (ni=0; ni < naliases; ni++) {
+                if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &aliases[ni], 1, OPAL_STRING))) {
+                    ORTE_ERROR_LOG(ret);
+                    OBJ_RELEASE(buffer);
+                    goto DONE;
+                }
+            }
+            opal_argv_free(aliases);
+        }
+
 #if OPAL_HAVE_HWLOC
         /* add the local topology */
         if (NULL != opal_hwloc_topology &&
