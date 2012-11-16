@@ -669,6 +669,9 @@ void opal_ifgetaliases(char ***aliases)
     struct sockaddr_in6 *addr6;
 #endif
 
+    /* set default answer */
+    *aliases = NULL;
+
     if (OPAL_SUCCESS != opal_if_base_open()) {
         return;
     }
@@ -793,6 +796,8 @@ int opal_ifmatches(int idx, char **nets)
 
 void opal_ifgetaliases(char ***aliases)
 {
+    /* set default answer */
+    *aliases = NULL;
 }
 
 #endif /* HAVE_STRUCT_SOCKADDR_IN */
