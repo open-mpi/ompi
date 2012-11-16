@@ -193,6 +193,11 @@ OPAL_DECLSPEC bool opal_ifisloopback(int if_index);
  */
 OPAL_DECLSPEC int opal_ifmatches(int idx, char **nets);
 
+/*
+ * Provide a list of strings that contain all known aliases for this node
+ */
+OPAL_DECLSPEC void opal_ifgetaliases(char ***aliases);
+
 END_C_DECLS
 
 #endif
