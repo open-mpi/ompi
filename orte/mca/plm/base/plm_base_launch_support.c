@@ -674,6 +674,15 @@ void orte_plm_base_daemon_callback(int status, orte_process_name_t* sender,
             orted_failed_launch = true;
             goto CLEANUP;
         }
+        if (!orte_have_fqdn_allocation) {
+            /* remove any domain info */
+            if (NULL != (ptr = strchr(nodename, '.'))) {
+                *ptr = '\0';
+                ptr = strdup(nodename);
+                free(nodename);
+                nodename = ptr;
+            }
+        }
         
         OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                              "%s plm:base:orted_report_launch from daemon %s on node %s",
@@ -682,15 +691,6 @@ void orte_plm_base_daemon_callback(int status, orte_process_name_t* sender,
         
         /* look this node up, if necessary */
         if (!orte_plm_globals.daemon_nodes_assigned_at_launch) {
-            if (!orte_have_fqdn_allocation) {
-                /* remove any domain info */
-                if (NULL != (ptr = strchr(nodename, '.'))) {
-                    *ptr = '\0';
-                    ptr = strdup(nodename);
-                    free(nodename);
-                    nodename = ptr;
-                }
-            }
             OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                                  "%s plm:base:orted_report_launch attempting to assign daemon %s to node %s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
@@ -732,7 +732,48 @@ void orte_plm_base_daemon_callback(int status, orte_process_name_t* sender,
                 }
             }
         }
+
+        node = daemon->node;
+        if (NULL == node) {
+            /* this shouldn't happen - it indicates an error in the
+             * prior node matching logic, so report it and error out
+             */
+            orte_show_help("help-plm-base.txt", "daemon-no-assigned-node", true,
+                           ORTE_NAME_PRINT(&daemon->name), nodename);
+            orted_failed_launch = true;
+            goto CLEANUP;
+        }
         
+        if (orte_retain_aliases) {
+            char *alias;
+            uint8_t naliases, ni;
+            /* first, store the nodename itself as an alias. We do
+             * this in case the nodename isn't the same as what we
+             * were given by the allocation. For example, a hostfile
+             * might contain an IP address instead of the value returned
+             * by gethostname, yet the daemon will have returned the latter
+             * and apps may refer to the host by that name
+             */
+            opal_argv_append_nosize(&node->alias, nodename);
+            /* unpack and store the provided aliases */
+            idx = 1;
+            if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &naliases, &idx, OPAL_UINT8))) {
+                ORTE_ERROR_LOG(rc);
+                orted_failed_launch = true;
+                goto CLEANUP;
+            }
+            for (ni=0; ni < naliases; ni++) {
+                idx = 1;
+                if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &alias, &idx, OPAL_STRING))) {
+                    ORTE_ERROR_LOG(rc);
+                    orted_failed_launch = true;
+                    goto CLEANUP;
+                }
+                opal_argv_append_nosize(&node->alias, alias);
+                free(alias);
+            }
+        }
+
 #if OPAL_HAVE_HWLOC
         /* store the local resources for that node */
         if (1 == dname.vpid || orte_hetero_nodes) {
@@ -741,16 +782,6 @@ void orte_plm_base_daemon_callback(int status, orte_process_name_t* sender,
             bool found;
             
             idx=1;
-            node = daemon->node;
-            if (NULL == node) {
-                /* this shouldn't happen - it indicates an error in the
-                 * prior node matching logic, so report it and error out
-                 */
-                orte_show_help("help-plm-base.txt", "daemon-no-assigned-node", true,
-                               ORTE_NAME_PRINT(&daemon->name), nodename);
-                orted_failed_launch = true;
-                goto CLEANUP;
-            }
             if (OPAL_SUCCESS != (rc = opal_dss.unpack(buffer, &topo, &idx, OPAL_HWLOC_TOPO))) {
                 ORTE_ERROR_LOG(rc);
                 orted_failed_launch = true;

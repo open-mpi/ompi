@@ -603,14 +603,21 @@ ORTE_DECLSPEC extern char *orte_oob_static_ports;
 ORTE_DECLSPEC extern bool orte_standalone_operation;
 ORTE_DECLSPEC extern bool orte_use_common_port;
 
+/* nodename flags */
 ORTE_DECLSPEC extern bool orte_keep_fqdn_hostnames;
 ORTE_DECLSPEC extern bool orte_have_fqdn_allocation;
 ORTE_DECLSPEC extern bool orte_show_resolved_nodenames;
+ORTE_DECLSPEC extern bool orte_retain_aliases;
+
+/* debug flags */
 ORTE_DECLSPEC extern int orted_debug_failure;
 ORTE_DECLSPEC extern int orted_debug_failure_delay;
+
+/* homegeneity flags */
 ORTE_DECLSPEC extern bool orte_homogeneous_nodes;
 ORTE_DECLSPEC extern bool orte_hetero_apps;
 ORTE_DECLSPEC extern bool orte_hetero_nodes;
+
 ORTE_DECLSPEC extern bool orte_never_launched;
 ORTE_DECLSPEC extern bool orte_devel_level_output;
 ORTE_DECLSPEC extern bool orte_display_topo_with_map;

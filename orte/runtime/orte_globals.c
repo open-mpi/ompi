@@ -80,6 +80,8 @@ bool orte_use_common_port = false;
 bool orte_keep_fqdn_hostnames = false;
 bool orte_have_fqdn_allocation = false;
 bool orte_show_resolved_nodenames;
+bool orte_retain_aliases;
+
 int orted_debug_failure;
 int orted_debug_failure_delay;
 bool orte_homogeneous_nodes = false;
