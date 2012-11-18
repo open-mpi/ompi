@@ -553,6 +553,8 @@ static int rte_init(void)
     /* if we are to retain aliases, get ours */
     if (orte_retain_aliases) {
         opal_ifgetaliases(&node->alias);
+        /* add our own local name to it */
+        opal_argv_append_nosize(&node->alias, orte_process_info.nodename);
     }
 
     /* record that the daemon job is running */

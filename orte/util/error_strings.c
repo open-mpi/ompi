@@ -184,6 +184,15 @@ int orte_err2str(int errnum, const char **errmsg)
     case ORTE_ERR_SENSOR_LIMIT_EXCEEDED:
         retval = "Sensor limit exceeded";
         break;
+    case ORTE_ERR_JOB_ENTRY_NOT_FOUND:
+        retval = "Job entry not found";
+        break;
+    case ORTE_ERR_PROC_ENTRY_NOT_FOUND:
+        retval = "Proc entry not found";
+        break;
+    case ORTE_ERR_DATA_VALUE_NOT_FOUND:
+        retval = "Data not found";
+        break;
     default:
         if (orte_report_silent_errors) {
             retval = "Unknown error";
