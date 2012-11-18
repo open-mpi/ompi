@@ -383,20 +383,20 @@ static int fetch(const orte_process_name_t *proc,
         /* eventually, we will fetch this data - but for now, this
          * is simply an error
          */
-        return ORTE_ERR_NOT_FOUND;
+        return ORTE_ERR_JOB_ENTRY_NOT_FOUND;
     }
 
     /* lookup the proc data object for this proc */
     if (NULL == (proc_data = lookup_orte_proc(jtable->data, proc->vpid))) {
         /* unrecoverable error */
-        return ORTE_ERR_OUT_OF_RESOURCE;
+        return ORTE_ERR_PROC_ENTRY_NOT_FOUND;
     }
 
     /* find the value */
     if (NULL == (kv = lookup_keyval(proc_data, key))) {
         /* again, we eventually will attempt to fetch the data - for
          * now, just report it as an error */
-        return ORTE_ERR_NOT_FOUND;
+        return ORTE_ERR_DATA_VALUE_NOT_FOUND;
     }
 
     /* do the copy and check the type */

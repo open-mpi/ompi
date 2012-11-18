@@ -383,6 +383,10 @@ int orte_util_decode_nodemap(opal_byte_object_t *bo)
             return rc;
         }
         /* now store a direct reference so we can quickly lookup the daemon from a hostname */
+        opal_output_verbose(2, orte_nidmap_output,
+                            "%s storing nodename %s for daemon %s",
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                            nodename, ORTE_VPID_PRINT(daemon.vpid));
         if (ORTE_SUCCESS != (rc = orte_db.store(ORTE_NAME_WILDCARD, nodename, &daemon.vpid, ORTE_VPID))) {
             ORTE_ERROR_LOG(rc);
             return rc;
@@ -421,6 +425,10 @@ int orte_util_decode_nodemap(opal_byte_object_t *bo)
                     return rc;
                 }
                 /* store a cross-reference to the daemon for this nodename */
+                opal_output_verbose(2, orte_nidmap_output,
+                                    "%s storing alias %s for daemon %s",
+                                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                    alias, ORTE_VPID_PRINT(daemon.vpid));
                 if (ORTE_SUCCESS != (rc = orte_db.store(ORTE_NAME_WILDCARD, alias, &daemon.vpid, ORTE_VPID))) {
                     ORTE_ERROR_LOG(rc);
                     return rc;
