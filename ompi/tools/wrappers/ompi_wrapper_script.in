@@ -29,7 +29,7 @@ if (exists($ENV{'OPAL_DESTDIR'})
     $libdir = catdir($ddir, $libdir);
 }
 
-my $CC = "@CC@";
+my $CC = "@WRAPPER_CC@";
 my $CXX = "@CXX@";
 my $FC = "@FC@";
 my $extra_includes = "@OMPI_WRAPPER_EXTRA_INCLUDES@";
