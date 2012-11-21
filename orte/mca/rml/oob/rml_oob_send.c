@@ -40,7 +40,7 @@ orte_rml_send_msg_callback(int status,
                            void* cbdata)
 {
     orte_rml_oob_msg_t *msg = (orte_rml_oob_msg_t*) cbdata;
-        orte_rml_oob_msg_header_t *hdr =
+    orte_rml_oob_msg_header_t *hdr =
             (orte_rml_oob_msg_header_t*) iov[0].iov_base;
 
     if (msg->msg_type == ORTE_RML_BLOCKING_SEND) {
