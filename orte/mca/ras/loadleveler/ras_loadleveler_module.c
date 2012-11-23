@@ -38,7 +38,7 @@
 /*
  * Local functions
  */
-static int orte_ras_loadleveler_allocate(opal_list_t *nodes);
+static int orte_ras_loadleveler_allocate(orte_job_t *jdata, opal_list_t *nodes);
 static int orte_ras_loadleveler_finalize(void);
 
 static int orte_ras_loadleveler_discover(opal_list_t *nodelist);
@@ -59,7 +59,7 @@ orte_ras_base_module_t orte_ras_loadleveler_module = {
  * Discover available (pre-allocated) nodes.  Allocate the
  * requested number of nodes/process slots to the job.
  */
-static int orte_ras_loadleveler_allocate(opal_list_t *nodes)
+static int orte_ras_loadleveler_allocate(orte_job_t *jdata, opal_list_t *nodes)
 {
     int ret = ORTE_SUCCESS;
 

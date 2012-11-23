@@ -41,7 +41,7 @@
 /*
  * Local functions
  */
-static int orte_ras_ccp_allocate(opal_list_t *nodes);
+static int orte_ras_ccp_allocate(orte_job_t *jdata, opal_list_t *nodes);
 static int orte_ras_ccp_finalize(void);
 static int discover(opal_list_t* nodelist, ICluster* pCluster);
 void ras_get_cluster_message(ICluster* pCluster);
@@ -60,7 +60,7 @@ orte_ras_base_module_t orte_ras_ccp_module = {
  * Discover available (pre-allocated) nodes.  Allocate the
  * requested number of nodes/process slots to the job.
  */
-static int orte_ras_ccp_allocate(opal_list_t *nodes)
+static int orte_ras_ccp_allocate(orte_job_t *jdata, opal_list_t *nodes)
 {
     int ret, i;
     size_t len;

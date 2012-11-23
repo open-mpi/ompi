@@ -28,7 +28,7 @@
 /*
  * Local functions
  */
-static int allocate(opal_list_t *nodes);
+static int allocate(orte_job_t *jdata, opal_list_t *nodes);
 static int finalize(void);
 
 
@@ -40,7 +40,7 @@ orte_ras_base_module_t orte_ras_sim_module = {
     finalize
 };
 
-static int allocate(opal_list_t *nodes)
+static int allocate(orte_job_t *jdata, opal_list_t *nodes)
 {
     int i, n, val, dig, num_nodes;
     orte_node_t *node;

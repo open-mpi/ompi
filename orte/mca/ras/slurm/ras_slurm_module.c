@@ -40,7 +40,7 @@
 /*
  * Local functions
  */
-static int orte_ras_slurm_allocate(opal_list_t *nodes);
+static int orte_ras_slurm_allocate(orte_job_t *jdata, opal_list_t *nodes);
 static int orte_ras_slurm_finalize(void);
 
 static int orte_ras_slurm_discover(char *regexp, char* tasks_per_node,
@@ -63,7 +63,7 @@ orte_ras_base_module_t orte_ras_slurm_module = {
  * requested number of nodes/process slots to the job.
  *  
  */
-static int orte_ras_slurm_allocate(opal_list_t *nodes)
+static int orte_ras_slurm_allocate(orte_job_t *jdata, opal_list_t *nodes)
 {
     int ret, cpus_per_task;
     char *slurm_node_str, *regexp;
