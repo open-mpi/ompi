@@ -141,7 +141,7 @@ void orte_ras_base_allocate(int fd, short args, void *cbdata)
      */
     if (NULL != orte_ras_base.active_module)  {
         /* read the allocation */
-        if (ORTE_SUCCESS != (rc = orte_ras_base.active_module->allocate(&nodes))) {
+        if (ORTE_SUCCESS != (rc = orte_ras_base.active_module->allocate(jdata, &nodes))) {
             if (ORTE_ERR_SYSTEM_WILL_BOOTSTRAP == rc) {
                 /* this module indicates that nodes will be discovered
                  * on a bootstrap basis, so all we do here is add our

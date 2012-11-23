@@ -49,7 +49,7 @@ typedef struct orte_ras_alps_sysconfig_t {
 } orte_ras_alps_sysconfig_t;
 
 /* /// Local Functions /// */
-static int orte_ras_alps_allocate(opal_list_t *nodes);
+static int orte_ras_alps_allocate(orte_job_t *jdata, opal_list_t *nodes);
 
 static int orte_ras_alps_finalize(void);
 
@@ -287,7 +287,7 @@ orte_ras_get_appinfo_path(void)
  * requested number of nodes/process slots to the job.
  */
 static int
-orte_ras_alps_allocate(opal_list_t *nodes)
+orte_ras_alps_allocate(orte_job_t *jdata, opal_list_t *nodes)
 {
     int ret;
     char *appinfo_path = NULL;

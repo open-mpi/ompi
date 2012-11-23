@@ -37,7 +37,7 @@
 /*
  * Local functions
  */
-static int orte_ras_gridengine_allocate(opal_list_t *nodes);
+static int orte_ras_gridengine_allocate(orte_job_t *jdata, opal_list_t *nodes);
 static int orte_ras_gridengine_finalize(void);
 #if 0
 static int get_slot_count(char* node_name, int* slot_cnt);
@@ -56,7 +56,7 @@ orte_ras_base_module_t orte_ras_gridengine_module = {
  *  requested number of nodes/process slots to the job.
  *  
  */
-static int orte_ras_gridengine_allocate(opal_list_t *nodelist)
+static int orte_ras_gridengine_allocate(orte_job_t *jdata, opal_list_t *nodelist)
 {
     char *pe_hostfile = getenv("PE_HOSTFILE");
     char *job_id = getenv("JOB_ID");
