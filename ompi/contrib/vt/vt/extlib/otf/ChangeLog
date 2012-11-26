@@ -1,3 +1,7 @@
+1.12.2openmpi
+	- replaced temporary workaround for handling bogus zlib sync. points
+	  by a more elaborated solution
+
 1.12.1openmpi
 	- implemented workaround to avoid setting otf_errno when a false
 	  error happens during OTF_RBuffer_Jump to a bogus zlib sync point

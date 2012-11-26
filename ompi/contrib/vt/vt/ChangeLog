@@ -1,3 +1,10 @@
+5.14.1openmpi
+	- updated version of internal OTF to 1.12.2openmpi
+	  (see extlib/otf/ChangeLog)
+	- append "/vampirtrace" to DATADIR, if configuring inside Open MPI and
+	  DATADIR doesn't points to the default (=DATAROOTDIR)
+	  (prevents conflicts with the libtool RPM)
+
 5.14openmpi
 	- updated version of internal OTF to 1.12.1openmpi
 	  (see extlib/otf/ChangeLog)

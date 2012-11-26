@@ -79,6 +79,51 @@ struct struct_OTF_File {
 
 	uint32_t zbuffersize;
 
+	/* This is for a workaround for zlib: At the time of the first implementation 
+	of 'OTF_File_seek()' the documentation of zlib's 'inflateSync' said it would 
+	jump to the next "full flush point", i.e. the point where zlib decompression 
+	can be safely resumed after an error or -- in our case a file seek. 
+	
+	It turned out it is only a "possible full flush point" -- this is what zlib's 
+	docu says now, after our inquiry with the zlib authors. It is also possible 
+	that it finds a fake flush point, i.e. the compressed data looks like a flush 
+	point but it is not. 
+	
+	Now this workaround relies on the likely case that resuming decompression at a 
+	fake flush point will cause a decompression error during the next
+	'OTF_File_read()' operation. Should the decompression error happen later or 
+	not at all, garbage data will be produced. Then, OTF is out of luck and will 
+	throw a parser error. One can resolve this by uncompressing the trace or the 
+	stream in question with the 'otfdecompress' command.
+	
+	But back to the likely case where zlib decompress (the 'inflate()' routine) 
+	produces an error. Then OTF can save the day like the following:
+	
+	1) Every time 'OTF_File_seek()' thinks it found a full flush point via 
+	'inflateSync()' it stores the following byte position in 'zbuffer_seek_further'
+	-- this is where it needs to continue to search for the next flush point later
+	in case it turns out that it was a fake flush point. If 'zbuffer_seek_further' 
+	is 0 it means there is no following position.
+	
+	2) In 'OTF_File_read()' the 'zbuffer' contents is decompressed with 'inflate()'. 
+	If this produces an error AND there is a valid following position in 
+	'zbuffer_seek_further', then call 'OTF_File_seek()' again with the position in
+	'zbuffer_seek_further' and try to read again from the newly found flush point. 
+	In this case 'OTF_File_read()' is called recursively until some data is read 
+	successfully or the end of the file is reached.
+	
+	3) Every time after a successful read or reaching the end of the file, the value 
+	or 'zbuffer_seek_further' is set to '0' such that the workaround is not activated 
+	for successive reads. Thus, the workaround can only by triggered by the first read
+	request after a seek operation. It the decompression error manifests itself later
+	than the first read operation, then the workaround cannot fix anything. However, by 
+	that time OTF should already have experienced parsing errors anyway.
+	
+	By Andreas Knuepfer, Thomas Ilsche, Matthias Jurenz. This was a fascinating puzzle! 
+	*/
+	uint64_t zbuffer_seek_further;
+
+
 #endif /* HAVE_ZLIB */
 
 	/** keep file pos when the real file is closed,

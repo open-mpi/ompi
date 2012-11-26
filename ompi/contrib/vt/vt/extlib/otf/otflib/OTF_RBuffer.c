@@ -660,9 +660,6 @@ int OTF_RBuffer_jump( OTF_RBuffer* rbuffer, uint64_t filepos ) {
 
 
 	int ret;
-#ifdef HAVE_ZLIB
-	int otf_errno_backup;
-#endif
 	size_t read;
 	/* uint64_t currentPos; */
 	uint32_t i;
@@ -679,43 +676,7 @@ int OTF_RBuffer_jump( OTF_RBuffer* rbuffer, uint64_t filepos ) {
 	}
 
 	rbuffer->pos= 0;
-#ifdef HAVE_ZLIB
-	/*
-	 * ooooooooooooo   .oooooo.   oooooooooo.     .oooooo.
-	 * 8'   888   `8  d8P'  `Y8b  `888'   `Y8b   d8P'  `Y8b
-	 *      888      888      888  888      888 888      888
-	 *      888      888      888  888      888 888      888
-	 *      888      888      888  888      888 888      888
-	 *      888      `88b    d88'  888     d88' `88b    d88'
-	 *     o888o      `Y8bood8P'  o888bood8P'    `Y8bood8P'
-	 *
-	 * BIG TODO / FIXME --- this is a temporary workaround, waiting to be
-	 * replaced by a better workaround.
-	 * When seeking in a zlib compressed file it is possible to find a sync
-	 * point marker that is not actually a sync point. Then the inflate will
-	 * fail with an error. Usually this happens in
-	 * OTF_RBuffer_getFileProperties, where it will just retry, so this is not
-	 * too bad. I have no idea what happens if this happens in
-	 * OTF_RBuffer_searchTime (a.k.a. partial loading)
-	 * Well, in any case - if the error code is set, vtunify will notice that
-	 * sooner or later and die thinking that something went wrong. We don't
-	 * want that to happen while there was no real error, so we reset the error
-	 * code.
-	 *
-	 * Also this is not threadsafe )-;
-	 *
-	 * [tilsche/juenz, 12.11.2012]
-	 */
-	otf_errno_backup= otf_errno;
-#endif
 	read= OTF_File_read( rbuffer->file, rbuffer->buffer, rbuffer->jumpsize );
-#ifdef HAVE_ZLIB
-	if ( otf_errno != otf_errno_backup ) {
-
-		otf_errno= otf_errno_backup;
-		return 0;
-	}
-#endif
 
 	rbuffer->end= (uint32_t) read;
 
