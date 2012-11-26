@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2011 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2012      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -469,15 +471,23 @@ int mca_base_param_set_int(int index, int value)
  */
 int mca_base_param_deregister(int index)
 {
+    mca_base_param_t *array;
     size_t size;
 
-    /* Lookup the index and see if it's valid */
+    /* Lookup the index and see if the index and parameter are valid */
     size = opal_value_array_get_size(&mca_base_params);
-    if (index < 0 || ((size_t) index) > size) {
+    array = OPAL_VALUE_ARRAY_GET_BASE(&mca_base_params, mca_base_param_t);
+    if (index < 0 || ((size_t) index) > size ||
+        MCA_BASE_PARAM_TYPE_MAX >= array[index].mbp_type) {
         return OPAL_ERROR;
     }
 
-    return opal_value_array_remove_item(&mca_base_params, index);
+    /* Do not remove this item from the array otherwise we will change
+       all the indices of parameters with a larger index. The destructor
+       will mark this parameter as invalid. */
+    OBJ_DESTRUCT(&array[index]);
+
+    return OPAL_SUCCESS;
 }
 
 /*
@@ -541,15 +551,13 @@ int mca_base_param_unset(int index)
     }
 
     len = opal_value_array_get_size(&mca_base_params);
-    if (index < 0 || ((size_t) index) > len) {
+    array = OPAL_VALUE_ARRAY_GET_BASE(&mca_base_params, mca_base_param_t);
+    if (index < 0 || ((size_t) index) > len ||
+        MCA_BASE_PARAM_TYPE_MAX <= array[index].mbp_type) {
         return OPAL_ERROR;
     }
 
-    /* We have a valid entry (remember that we never delete MCA
-       parameters, so if the index is >0 and <len, it must be good),
-       so save the internal flag */
-
-    array = OPAL_VALUE_ARRAY_GET_BASE(&mca_base_params, mca_base_param_t);
+    /* We have a valid entry so save the internal flag */
     if (array[index].mbp_override_value_set) {
         if (MCA_BASE_PARAM_TYPE_STRING == array[index].mbp_type &&
             NULL != array[index].mbp_override_value.stringval) {
@@ -671,7 +679,8 @@ int mca_base_param_dump(opal_list_t **info, bool internal)
     len = opal_value_array_get_size(&mca_base_params);
     array = OPAL_VALUE_ARRAY_GET_BASE(&mca_base_params, mca_base_param_t);
     for (i = 0; i < len; ++i) {
-        if (array[i].mbp_internal == internal || internal) {
+        if ((array[i].mbp_internal == internal || internal) &&
+            MCA_BASE_PARAM_TYPE_MAX > array[i].mbp_type) {
             p = OBJ_NEW(mca_base_param_info_t);
             if (NULL == p) {
                 return OPAL_ERR_OUT_OF_RESOURCE;
@@ -835,19 +844,19 @@ int mca_base_param_finalize(void)
     mca_base_param_t *array;
 
     if (initialized) {
+        int size, i;
 
-        /* This is slow, but effective :-) */
-
+        size = opal_value_array_get_size(&mca_base_params);
         array = OPAL_VALUE_ARRAY_GET_BASE(&mca_base_params, mca_base_param_t);
-        while (opal_value_array_get_size(&mca_base_params) > 0) {
-            OBJ_DESTRUCT(&array[0]);
-            opal_value_array_remove_item(&mca_base_params, 0);
+        for (i = 0 ; i < size ; ++i) {
+            if (MCA_BASE_PARAM_TYPE_MAX > array[i].mbp_type) {
+                OBJ_DESTRUCT(&array[i]);
+            }
         }
         OBJ_DESTRUCT(&mca_base_params);
 
-        for (item = opal_list_remove_first(&mca_base_param_file_values);
-             NULL != item;
-             item = opal_list_remove_first(&mca_base_param_file_values)) {
+        while (NULL !=
+               (item = opal_list_remove_first(&mca_base_param_file_values))) {
             OBJ_RELEASE(item);
         }
         OBJ_DESTRUCT(&mca_base_param_file_values);
@@ -1504,6 +1513,13 @@ static int syn_register(int index_orig, const char *syn_type_name,
     /* Find the param entry; add this syn_info to its list of
        synonyms */
     array = OPAL_VALUE_ARRAY_GET_BASE(&mca_base_params, mca_base_param_t);
+
+    /* Sanity check. Is this a valid parameter? */
+    if (MCA_BASE_PARAM_TYPE_MAX <= array[index_orig].mbp_type) {
+        OBJ_RELEASE(si);
+        return OPAL_ERROR;
+    }
+
     if (NULL == array[index_orig].mbp_synonyms) {
         array[index_orig].mbp_synonyms = OBJ_NEW(opal_list_t);
     }
@@ -1545,7 +1561,10 @@ static bool param_set_override(size_t index,
         } else {
             array[index].mbp_override_value.stringval = NULL;
         }
+    } else {
+        return false;
     }
+
     array[index].mbp_override_value_set = true;
 
     return true;
@@ -1994,6 +2013,9 @@ static void param_destructor(mca_base_param_t *p)
         }
         OBJ_RELEASE(p->mbp_synonyms);
     }
+
+    /* mark this parameter as invalid */
+    p->mbp_type = MCA_BASE_PARAM_TYPE_MAX;
 
 #if OPAL_ENABLE_DEBUG
     /* Cheap trick to reset everything to NULL */
