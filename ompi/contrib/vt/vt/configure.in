@@ -81,6 +81,8 @@ AS_IF([test x"$inside_openmpi" != "xno" -o "$includedir" = "\${prefix}/include"]
 [includedir="$includedir/vampirtrace"])
 AS_IF([test x"$inside_openmpi" != "xno" -o "$datarootdir" = "\${prefix}/share"],
 [datarootdir="$datarootdir/vampirtrace"])
+AS_IF([test x"$inside_openmpi" != "xno" -a "$datadir" != "\${datarootdir}"],
+[datadir="$datadir/vampirtrace"])
 AS_IF([test "$docdir" = "\${datarootdir}/doc/\${PACKAGE_TARNAME}"],
 [docdir="\${datarootdir}/doc"])
 
