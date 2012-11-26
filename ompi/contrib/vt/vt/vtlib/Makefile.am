@@ -482,6 +482,7 @@ EXTRA_DIST = \
 	vt_pform_altix.c \
 	vt_pform_bgl.c \
 	vt_pform_bgp.c \
+	vt_pform_bgq.c \
 	vt_pform_crayt3e.c \
 	vt_pform_crayx1.c \
 	vt_pform_crayxe.c \

@@ -1,12 +1,31 @@
-1.11.3openmpi
-	- otfaux: fixed build errors on Solaris and NetBSD
+1.12.2openmpi
+	- replaced temporary workaround for handling bogus zlib sync. points
+	  by a more elaborated solution
 
-1.11.2openmpi
+1.12.1openmpi
+	- implemented workaround to avoid setting otf_errno when a false
+	  error happens during OTF_RBuffer_Jump to a bogus zlib sync point
+
+1.12salmon
+	- OTF library:
+		- fixed potential segmentation fault when appending a new
+		  key-value pair to a list after removing another one
+	- OTFAUX library:
+		- 'OTFAUX_ThumbnailReader_read()' now correctly return success
+		  after reading the thumbnail
+	- otfprofile:
+		- create VampirTrace filter file from irregularity analysis
+	- otfaux:
+		- fixed build errors on Solaris and NetBSD
+		- fixed "time not increasing" error when generating inline
+		  snapshots
+
+1.11.2goldfish
 	- lib OTFAUX:
 		- speed-up messages matching, if no snapshots should
 		  be generated
 
-1.11.1openmpi
+1.11.1goldfish
 	- new 'OTF_MasterControl_clone()' function to simplify making a copy
 	  of a master control object
 	- otfaux:

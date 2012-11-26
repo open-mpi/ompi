@@ -26,7 +26,10 @@ AC_DEFUN([ACVT_MEMHOOKS],
 			  [])])])
 		])
 
-		AS_IF([test x"$memhooks_error" = "xno"], [have_memhooks="yes"])
+		AS_IF([test x"$memhooks_error" = "xno"],
+		[
+			have_memhooks="yes"
+		])
 	])
 ])
 

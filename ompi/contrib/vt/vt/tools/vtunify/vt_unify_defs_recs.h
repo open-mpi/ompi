@@ -310,9 +310,7 @@ struct DefRec_DefProcessGroupS : DefRec_BaseS
           ( type == TYPE_MPI_COMM_WORLD || type == TYPE_MPI_COMM_OTHER ||
             type == TYPE_MPI_GROUP ) )
       {
-         members_hash =
-            vt_hash( (unsigned char*)members,
-               nmembers * sizeof( uint32_t ), 0 );
+         members_hash = vt_hashword( members, nmembers, 0 );
       }
    }
    DefRec_DefProcessGroupS( const DefRec_DefProcessGroupS & a )

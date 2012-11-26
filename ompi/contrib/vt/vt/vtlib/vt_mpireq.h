@@ -39,7 +39,9 @@ struct VTRequest {
   int dest;
   int bytes;
   MPI_Datatype datatype;
-  MPI_Comm comm;
+  MPI_Group group;
+  uint32_t cid;
+
   uint64_t matchingid;
   uint64_t handleid;
   uint32_t fileid;

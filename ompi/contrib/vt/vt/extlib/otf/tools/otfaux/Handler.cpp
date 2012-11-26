@@ -561,3 +561,146 @@ int handleEndFileOperation( void *firsthandlerarg, uint64_t time, uint32_t proce
 
     return OTF_RETURN_OK;
 }
+
+
+int handleNoOp( void *firsthandlerarg, uint64_t time, uint32_t process,
+		OTF_KeyValueList* list ) {
+
+
+    Control* control= (Control*) firsthandlerarg;
+       
+    while ( control->checkTime( time ) )
+        ;
+  
+    if ( control->copyEvents )
+	return ( 0 == OTF_Writer_writeNoOpKV( control->writer, time,
+		process, list ) ) ? OTF_RETURN_ABORT : OTF_RETURN_OK;
+
+    return OTF_RETURN_OK;
+}
+
+
+int handleEventComment( void *firsthandlerarg, uint64_t time, uint32_t process,
+		const char* comment, OTF_KeyValueList* list ) {
+
+
+    Control* control= (Control*) firsthandlerarg;
+       
+    while ( control->checkTime( time ) )
+        ;
+  
+    if ( control->copyEvents )
+	return ( 0 == OTF_Writer_writeEventCommentKV( control->writer, time,
+		process, comment, list ) ) ? OTF_RETURN_ABORT : OTF_RETURN_OK;
+
+    return OTF_RETURN_OK;
+}
+
+
+int handleBeginProcess( void *firsthandlerarg, uint64_t time,
+		uint32_t process, OTF_KeyValueList* list ) {
+
+
+    Control* control= (Control*) firsthandlerarg;
+       
+    while ( control->checkTime( time ) )
+        ;
+  
+    if ( control->copyEvents )
+	return ( 0 == OTF_Writer_writeBeginProcessKV( control->writer, time,
+		process, list ) ) ? OTF_RETURN_ABORT : OTF_RETURN_OK;
+
+    return OTF_RETURN_OK;
+}
+
+
+int handleEndProcess( void *firsthandlerarg, uint64_t time,
+		uint32_t process, OTF_KeyValueList* list ) {
+
+
+    Control* control= (Control*) firsthandlerarg;
+       
+    while ( control->checkTime( time ) )
+        ;
+  
+    if ( control->copyEvents )
+	return ( 0 == OTF_Writer_writeEndProcessKV( control->writer, time,
+		process, list ) ) ? OTF_RETURN_ABORT : OTF_RETURN_OK;
+
+    return OTF_RETURN_OK;
+}
+
+
+int handleRMAPut( void *firsthandlerarg, uint64_t time, uint32_t process,
+        uint32_t origin, uint32_t target, uint32_t communicator, uint32_t tag,
+        uint64_t bytes, uint32_t scltoken, OTF_KeyValueList* list ) {
+
+
+    Control* control= (Control*) firsthandlerarg;
+       
+    while ( control->checkTime( time ) )
+        ;
+  
+    if ( control->copyEvents )
+        return ( 0 == OTF_Writer_writeRMAPutKV( control->writer, time,
+                process, origin, target, communicator, tag, bytes, scltoken, list )
+                 ) ? OTF_RETURN_ABORT : OTF_RETURN_OK;
+
+    return OTF_RETURN_OK;
+}
+
+
+int handleRMAPutRemoteEnd( void *firsthandlerarg, uint64_t time,
+        uint32_t process, uint32_t origin, uint32_t target, uint32_t communicator,
+        uint32_t tag, uint64_t bytes, uint32_t scltoken, OTF_KeyValueList* list ) {
+
+
+    Control* control= (Control*) firsthandlerarg;
+       
+    while ( control->checkTime( time ) )
+        ;
+  
+    if ( control->copyEvents )
+        return ( 0 == OTF_Writer_writeRMAPutRemoteEndKV( control->writer,
+                time, process, origin, target, communicator, tag, bytes, scltoken, list )
+                 ) ? OTF_RETURN_ABORT : OTF_RETURN_OK;
+
+    return OTF_RETURN_OK;
+}
+
+
+int handleRMAGet( void *firsthandlerarg, uint64_t time, uint32_t process,
+        uint32_t origin, uint32_t target, uint32_t communicator, uint32_t tag,
+        uint64_t bytes, uint32_t scltoken, OTF_KeyValueList* list ) {
+
+
+    Control* control= (Control*) firsthandlerarg;
+       
+    while ( control->checkTime( time ) )
+        ;
+  
+    if ( control->copyEvents )
+        return ( 0 == OTF_Writer_writeRMAGetKV( control->writer, time,
+                process, origin, target, communicator, tag, bytes, scltoken, list )
+                 ) ? OTF_RETURN_ABORT : OTF_RETURN_OK;
+
+    return OTF_RETURN_OK;
+}
+
+
+int handleRMAEnd( void *firsthandlerarg, uint64_t time, uint32_t process, uint32_t remote,
+	uint32_t communicator, uint32_t tag, uint32_t scltoken, OTF_KeyValueList* list ) {
+
+
+    Control* control= (Control*) firsthandlerarg;
+       
+    while ( control->checkTime( time ) )
+        ;
+  
+    if ( control->copyEvents )
+        return ( 0 == OTF_Writer_writeRMAEndKV( control->writer, time,
+                process, remote, communicator, tag, scltoken, list )
+                 ) ? OTF_RETURN_ABORT : OTF_RETURN_OK;
+
+    return OTF_RETURN_OK;
+}

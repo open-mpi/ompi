@@ -9,25 +9,36 @@
 #include <string.h>
 #include <unistd.h>
 
-#define MAX_LINE_LEN 0x20000 /* max file line length */
+#define MAX_LINE_LEN 0x20000 /* max. file line length */
 
 /* data structure for group assignments */
 
 typedef struct RFG_GroupsAssign_struct
 {
-  char*    group;             /* group name */
-  uint32_t npattern;          /* number of assigned pattern */
-  char**   pattern;           /* array of assigned pattern */
+  /* group name */
+  char* group_name;
+
+  /* number of assigned pattern */
+  uint32_t num_pattern;
+
+  /* array of assigned pattern */
+  char** pattern;
+
 } RFG_GroupsAssign;
 
 /* main data structure for RFG Groups */
 
 struct RFG_Groups_struct
 {
-  char* deffile;              /* name of group definition file */
+  /* name of group definition file */
+  char* file_name;
 
-  uint32_t          nassigns; /* number of group assignments */
-  RFG_GroupsAssign* assigns;  /* array of group assignments */
+  /* number of group assignments */
+  uint32_t num_assigns;
+
+  /* array of group assignments */
+  RFG_GroupsAssign* assigns;
+
 };
 
 RFG_Groups* RFG_Groups_init()
@@ -35,17 +46,7 @@ RFG_Groups* RFG_Groups_init()
   RFG_Groups* ret;
 
   /* allocate memory for RFG groups object */
-
-  ret = ( RFG_Groups* )malloc( sizeof( RFG_Groups ) );
-  if( ret == NULL )
-    return NULL;
-
-  /* some initializes of data structure elements */
-
-  ret->deffile = NULL;
-
-  ret->nassigns = 0;
-  ret->assigns = NULL;
+  ret = ( RFG_Groups* )calloc( 1, sizeof( RFG_Groups ) );
 
   return ret;
 }
@@ -55,21 +56,22 @@ int RFG_Groups_free( RFG_Groups* groups )
   uint32_t i;
   uint32_t j;
 
-  if( !groups ) return 0;
+  if( !groups )
+    return 0;
 
   /* free group definition file name */
 
-  if( groups->deffile )
-    free( groups->deffile );
+  if( groups->file_name )
+    free( groups->file_name );
 
   /* free array of group assignments */
 
-  for( i = 0; i < groups->nassigns; i++ )
+  for( i = 0; i < groups->num_assigns; i++ )
   {
-    for( j = 0; j < groups->assigns[i].npattern; j++ )
+    for( j = 0; j < groups->assigns[i].num_pattern; j++ )
       free( groups->assigns[i].pattern[j] );
 
-    free( groups->assigns[i].group );
+    free( groups->assigns[i].group_name );
     free( groups->assigns[i].pattern );
   }
 
@@ -83,18 +85,25 @@ int RFG_Groups_free( RFG_Groups* groups )
   return 1;
 }
 
-int RFG_Groups_setDefFile( RFG_Groups* groups, const char* deffile )
+int RFG_Groups_setDefFile( RFG_Groups* groups, const char* fileName )
 {
-  if( !groups ) return 0;
+  if( !groups )
+    return 0;
+
+  if( !fileName || *fileName == '\0' )
+  {
+    fprintf( stderr, "RFG_Groups_setDefFile(): Error: Empty file name\n" );
+    return 0;
+  }
 
   /* if a group definition file already set, then free this */
 
-  if( groups->deffile )
-    free( groups->deffile );
+  if( groups->file_name )
+    free( groups->file_name );
 
   /* set new group definition file */
 
-  groups->deffile = strdup( deffile );
+  groups->file_name = strdup( fileName );
 
   return 1;
 }
@@ -106,23 +115,25 @@ int RFG_Groups_readDefFile( RFG_Groups* groups )
   uint32_t lineno = 0;
   uint8_t  parse_err = 0;
 
-  if( !groups ) return 0;
+  if( !groups )
+    return 0;
 
-  if( !groups->deffile ) return 1;
+  if( !groups->file_name )
+    return 1;
 
   /* open group definition file */
 
-  f = fopen( groups->deffile, "r" );
+  f = fopen( groups->file_name, "r" );
   if( !f )
   {
     fprintf( stderr,
-	     "RFG_Groups_readDefFile(): Error: Could not open file '%s'\n",
-	     groups->deffile );
+      "RFG_Groups_readDefFile(): Error: Could not open file '%s'\n",
+      groups->file_name );
     return 0;
   }
 
   line = ( char* )malloc( MAX_LINE_LEN * sizeof( char ) );
-  if( line == NULL )
+  if( !line )
   {
     fclose( f );
     return 0;
@@ -148,7 +159,7 @@ int RFG_Groups_readDefFile( RFG_Groups* groups )
     /* cut possible comment from line */
 
     p = strchr( line, '#' );
-    if( p != NULL )
+    if( p )
       *p = '\0';
 
     /* continue if line is empty */
@@ -161,7 +172,7 @@ int RFG_Groups_readDefFile( RFG_Groups* groups )
     */
 
     p = strchr( line, '=' );
-    if( p == NULL )
+    if( !p )
     {
       parse_err = 1;
       break;
@@ -208,7 +219,7 @@ int RFG_Groups_readDefFile( RFG_Groups* groups )
   if( parse_err )
   {
     fprintf( stderr, "%s:%u: Could not be parsed\n",
-             groups->deffile, lineno );
+      groups->file_name, lineno );
   }
 
   free( line );
@@ -218,19 +229,32 @@ int RFG_Groups_readDefFile( RFG_Groups* groups )
   return parse_err ? 0 : 1;
 }
 
-int RFG_Groups_addAssign( RFG_Groups* groups, const char* gname,
+int RFG_Groups_addAssign( RFG_Groups* groups, const char* groupName,
 			  const char* pattern )
 {
   uint32_t i;
   RFG_GroupsAssign* entry = NULL;
 
-  if( !groups || !gname || !pattern ) return 0;
+  if( !groups )
+    return 0;
+
+  if( !groupName || *groupName == '\0' )
+  {
+    fprintf( stderr, "RFG_Groups_addAssign(): Error: Empty group name\n" );
+    return 0;
+  }
+
+  if( !pattern || *pattern == '\0' )
+  {
+    fprintf( stderr, "RFG_Groups_addAssign(): Error: Empty region pattern\n" );
+    return 0;
+  }
 
   /* search group assignment by group name */
 
-  for( i = 0; i < groups->nassigns; i++ )
+  for( i = 0; i < groups->num_assigns; i++ )
   {
-    if( strcmp( groups->assigns[i].group, gname ) == 0 )
+    if( strcmp( groups->assigns[i].group_name, groupName ) == 0 )
     {
       entry = &(groups->assigns[i]);
       break;
@@ -250,16 +274,15 @@ int RFG_Groups_addAssign( RFG_Groups* groups, const char* gname,
     {
       groups->assigns =
 	(RFG_GroupsAssign* )realloc( groups->assigns,
-				     ( groups->nassigns + 1 )
-				     * sizeof( RFG_GroupsAssign ) );
+	  ( groups->num_assigns + 1 ) * sizeof( RFG_GroupsAssign ) );
     }
 
-    if( groups->assigns == NULL )
+    if( !groups->assigns )
       return 0;
 
-    entry = &(groups->assigns[groups->nassigns++]);
-    entry->group = strdup( gname );
-    entry->npattern = 0;
+    entry = &(groups->assigns[groups->num_assigns++]);
+    entry->group_name = strdup( groupName );
+    entry->num_pattern = 0;
     entry->pattern = NULL;
   }
 
@@ -267,45 +290,51 @@ int RFG_Groups_addAssign( RFG_Groups* groups, const char* gname,
 
   if( !entry->pattern )
   {
-    entry->pattern = ( char** )malloc( sizeof( char * ) );
+    entry->pattern = ( char** )malloc( sizeof( char* ) );
   }
   else
   {
     entry->pattern = ( char** )realloc( entry->pattern,
-					( entry->npattern + 1 )
-					* sizeof( char * ) );
+      ( entry->num_pattern + 1 ) * sizeof( char* ) );
   }
-  if( entry->pattern == NULL )
+  if( !entry->pattern )
     return 0;
 
-  entry->pattern[entry->npattern++] = strdup( pattern );
+  entry->pattern[entry->num_pattern++] = strdup( pattern );
 
   return 1;
 }
 
-int RFG_Groups_get( RFG_Groups* groups, const char* rname, 
-		    char** r_gname )
+int RFG_Groups_get( RFG_Groups* groups, const char* regionName,
+		    char** r_groupName )
 {
   uint32_t i;
   uint32_t j;
 
-  if( !groups || !rname ) return 0;
+  if( !groups )
+    return 0;
+
+  if( !regionName || *regionName == '\0' )
+  {
+    fprintf( stderr, "RFG_Groups_get(): Error: Empty region name\n" );
+    return 0;
+  }
 
   /* search for matching pattern by region name */
 
-  for( i = 0; i < groups->nassigns; i++ )
+  for( i = 0; i < groups->num_assigns; i++ )
   {
-    for( j = 0; j < groups->assigns[i].npattern; j++ )
+    for( j = 0; j < groups->assigns[i].num_pattern; j++ )
     {
-      if( fnmatch( groups->assigns[i].pattern[j], rname, 0 ) == 0 )
+      if( fnmatch( groups->assigns[i].pattern[j], regionName, 0 ) == 0 )
       {
-	*r_gname = groups->assigns[i].group;
+	*r_groupName = groups->assigns[i].group_name;
 	return 1;
       }
     }
   }
 
-  *r_gname = NULL;
+  *r_groupName = NULL;
 
   return 1;
 }

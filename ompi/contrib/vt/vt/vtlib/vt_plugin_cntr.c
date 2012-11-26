@@ -699,7 +699,6 @@ static void maybe_register_new_thread(VTThrd * thrd, uint32_t tid) {
   vt_libassert(thrd!=NULL);
   /* "register" a thread */
   if (thrd->plugin_cntr_defines == NULL) {
-    uint32_t i;
     thrd->plugin_cntr_defines
         = calloc(1, sizeof(struct vt_plugin_cntr_defines));
     vt_libassert(thrd->plugin_cntr_defines!=NULL);
@@ -711,11 +710,6 @@ static void maybe_register_new_thread(VTThrd * thrd, uint32_t tid) {
     plugin_cntr_defines->size_of_counters = calloc(
         VT_PLUGIN_CNTR_SYNCH_TYPE_MAX, sizeof(uint32_t));
     /* single elements in vectors */
-    for (i = 0; i < VT_PLUGIN_CNTR_SYNCH_TYPE_MAX; i++) {
-      /* counters per type */
-      plugin_cntr_defines->counters[i] = calloc(VT_PLUGIN_COUNTERS_PER_THREAD,
-          sizeof(struct vt_plugin_single_counter));
-    }
   }
 }
 
@@ -728,8 +722,8 @@ static void add_events(struct vt_plugin current_plugin, VTThrd * thrd) {
   /* get the current counters for this thread and synch type*/
   current = plugin_cntr_defines->counters[current_plugin.info.synch];
   if (current == NULL) {
-    plugin_cntr_defines->counters = calloc(VT_PLUGIN_COUNTERS_PER_THREAD,
-        sizeof(struct vt_plugin_single_counter));
+    plugin_cntr_defines->counters[current_plugin.info.synch] =
+	 calloc(VT_PLUGIN_COUNTERS_PER_THREAD, sizeof(struct vt_plugin_single_counter));
     current = plugin_cntr_defines->counters[current_plugin.info.synch];
   }
   /* get the number of counters for this thread and synch type*/
@@ -864,21 +858,28 @@ void vt_plugin_cntr_thread_exit(VTThrd * thrd) {
   vt_plugin_cntr_thread_disable_counters(thrd);
   /* free per thread resources */
   if (defines->counters != NULL) {
-    for (i = 0; i < VT_PLUGIN_CNTR_SYNCH_TYPE_MAX; i++)
+    for (i = 0; i < VT_PLUGIN_CNTR_SYNCH_TYPE_MAX; i++) {
       if (defines->counters[i] != NULL) {
-        if (defines->size_of_counters != NULL)
+        if (defines->size_of_counters != NULL) {
           for (j = 0; j < defines->size_of_counters[i]; j++) {
-            if (defines->counters[i][j].callback_values != NULL)
-              free(defines->counters[i][j].callback_values);
 #if (defined(VT_MT) || defined (VT_HYB) || defined(VT_JAVA))
             if (defines->counters[i][j].callback_mutex!=NULL)
-            VTThrd_deleteMutex(
-                (VTThrdMutex **) &(defines->counters[i][j].callback_mutex)
-            );
-#endif  /* VT_MT || VT_HYB || VT_JAVA */
+              VTThrd_lock((VTThrdMutex **) &defines->counters[i][j].callback_mutex);
+            if (defines->counters[i][j].callback_values != NULL) {
+              free(defines->counters[i][j].callback_values);
+              defines->counters[i][j].callback_values = NULL;
+              vt_trace_off(thrd->tid, 0, 1);
+            }
+            if (defines->counters[i][j].callback_mutex != NULL) {
+              VTThrd_unlock((VTThrdMutex **) &defines->counters[i][j].callback_mutex);
+              VTThrd_deleteMutex((VTThrdMutex **) &(defines->counters[i][j].callback_mutex));
+            }
+#endif /* VT_MT || VT_HYB || VT_JAVA */
           }
+        }
         free(defines->counters[i]);
       }
+    }
     free(defines->counters);
   }
   if (defines->size_of_counters != NULL)
@@ -901,8 +902,7 @@ int32_t callback_function(void * ID, vt_plugin_cntr_timevalue tv) {
   if (defines == NULL)
     return -1;
 
-  timeList = defines->callback_values;
-  if (timeList == NULL)
+  if (defines->callback_values == NULL)
     return -1;
 
   if (defines->current_callback_write_position >= max_values_callback)
@@ -911,6 +911,14 @@ int32_t callback_function(void * ID, vt_plugin_cntr_timevalue tv) {
 #if (defined(VT_MT) || defined (VT_HYB) || defined(VT_JAVA))
   VTThrd_lock((VTThrdMutex **) &defines->callback_mutex);
 #endif  /* VT_MT || VT_HYB || VT_JAVA */
+
+  timeList = defines->callback_values;
+  if (timeList == NULL) {
+#if (defined(VT_MT) || defined (VT_HYB) || defined(VT_JAVA))  
+    VTThrd_unlock((VTThrdMutex **) &defines->callback_mutex);
+#endif  /* VT_MT || VT_HYB || VT_JAVA */
+    return -1;
+  }
 
   if (defines->current_callback_write_position >= max_values_callback) {
 #if (defined(VT_MT) || defined (VT_HYB) || defined(VT_JAVA))
@@ -939,29 +947,35 @@ int32_t callback_function(void * ID, vt_plugin_cntr_timevalue tv) {
  * This should be used when writing asynch data
  * counter is a struct singlecounter for the current plugin counter
  * timevalue is the timevalue to write
- * dummy_time could be the current wtime
+ * dummy_time could be a pointer to the current wtime
  */
 
+#define VTGEN_ALIGN_LENGTH(bytes)                                   \
+  ( ( (bytes) % SIZEOF_VOIDP ) ?                                    \
+    ( (bytes) / SIZEOF_VOIDP + 1 ) * SIZEOF_VOIDP : (bytes) )
+
 #define WRITE_ASYNCH_DATA(thrd, tid, counter, timevalue, dummy_time)    \
-	if (VTTHRD_TRACE_STATUS(thrd) == VT_TRACE_ON){                   \
-	if (timevalue.timestamp > 0){                                    \
-		vt_guarantee_buffer(tid, NULL, sizeof(VTBuf_Entry_KeyValue)  \
-                                 +sizeof(VTBuf_Entry_Counter));    \
-		vt_next_async_time(tid,                                \
-		    		counter.vt_asynch_key,                                 \
-		    		timevalue.timestamp);                                  \
-	    vt_count( tid,                                       \
-		        &dummy_time,                                           \
-		        counter.vt_counter_id,                                 \
-		        timevalue.value);                                      \
+	if (VTTHRD_TRACE_STATUS(thrd) == VT_TRACE_ON){                      \
+	if (timevalue.timestamp > 0){                                       \
+		vt_guarantee_buffer(tid, dummy_time,                           \
+				 VTGEN_ALIGN_LENGTH(sizeof(VTBuf_Entry_KeyValue))       \
+               + VTGEN_ALIGN_LENGTH(sizeof(VTBuf_Entry_Counter)));      \
+		vt_next_async_time(tid,                                         \
+		    		counter.vt_asynch_key,                              \
+		    		timevalue.timestamp);                               \
+	    vt_count( tid,                                                  \
+		        dummy_time,                                            \
+		        counter.vt_counter_id,                                  \
+		        timevalue.value);                                       \
 	}}
 
 /**
  * write collected callback data to otf
  * this has to be done in a mutex. currently the mutex is per thread,
  * later it might be done per counter of a thread?
+ * May possibly alter the provided time to accomodate a buffer flush
  */
-void vt_plugin_cntr_write_callback_data(uint64_t time, uint32_t tid) {
+void vt_plugin_cntr_write_callback_data(uint64_t *time, uint32_t tid) {
   uint32_t i, k;
   struct vt_plugin_single_counter * current_counter;
   vt_plugin_cntr_timevalue * values;
@@ -991,8 +1005,10 @@ void vt_plugin_cntr_write_callback_data(uint64_t time, uint32_t tid) {
   }
 }
 
-/* to be called per thread */
-void vt_plugin_cntr_write_asynch_event_data(uint64_t time, uint32_t tid) {
+/* to be called per thread
+ * May possibly alter the provided time to accomodate a buffer flush
+ */
+void vt_plugin_cntr_write_asynch_event_data(uint64_t *time, uint32_t tid) {
   uint32_t counter_index;
   vt_plugin_cntr_timevalue * time_values = NULL;
   uint32_t number_of_counters;
@@ -1078,7 +1094,7 @@ void vt_plugin_cntr_write_post_mortem(VTThrd * thrd) {
     if (time_values == NULL)
       return;
     for (i = 0; i < number_of_values; i++) {
-      WRITE_ASYNCH_DATA(thrd, tid, current_counter, time_values[i], dummy_time);
+      WRITE_ASYNCH_DATA(thrd, tid, current_counter, time_values[i], &dummy_time);
     }
     free(time_values);
   }

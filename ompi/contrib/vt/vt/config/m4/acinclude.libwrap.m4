@@ -59,10 +59,14 @@ AC_DEFUN([ACVT_LIBWRAP],
 
 	AS_IF([test x"$check_libwrap" != "xno"],
 	[
-		AS_IF([test "$PLATFORM" = "bgp" -a x"$enable_shared" = "xno"],
+		AS_IF([test x"$enable_shared" = "xno"],
 		[
-			AC_MSG_NOTICE([error: library tracing requires building of shared libraries on this platform; re-configure with \`--enable-shared'])
-			libwrap_error="yes"
+			case $PLATFORM in
+				bgp | bgq)
+					AC_MSG_NOTICE([error: library tracing requires building of shared libraries on this platform; re-configure with \`--enable-shared'])
+					libwrap_error="yes"
+					;;
+			esac
 		])
 
 		AS_IF([test x"$libwrap_error" = "xno"],

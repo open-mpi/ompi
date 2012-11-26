@@ -6,7 +6,6 @@ libvt_util_la_SOURCES = \
 	hash.h \
 	installdirs.h \
 	util.h \
-	hash.c \
 	installdirs.c \
 	util.c
 

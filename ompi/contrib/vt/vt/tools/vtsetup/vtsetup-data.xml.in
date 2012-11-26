@@ -469,6 +469,17 @@
     <since major="5" minor="0" patch="0" /><available>@VT_SETUP_MPI@</available>
     <anchor>VT_SETUP_VT_MPITRACE</anchor>
   </env>
+  <env isdeprecated="0" priority="101" descname="Ignore filter for MPI communication events" isadvanced="1" group="libtrace"
+    envname="VT_MPI_IGNORE_FILTER">
+    <desc>Enable / disable recording of MPI communication events although its corresponding functions are filterd.</desc>
+    <valuedesc>
+      <value type="bool">
+        <default>0</default>
+      </value>
+    </valuedesc>
+    <since major="5" minor="14" patch="0" /><available>@VT_SETUP_MPI@</available>
+    <anchor>VT_SETUP_VT_MPI_IGNORE_FILTER</anchor>
+  </env>
   <env isdeprecated="0" priority="200" descname="Profiling interval (for STAT mode in ms)" isadvanced="1" group="omode"
     envname="VT_STAT_INV">
     <desc>Length of interval for writing the next profiling record.</desc>

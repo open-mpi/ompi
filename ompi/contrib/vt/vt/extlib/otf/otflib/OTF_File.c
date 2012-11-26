@@ -88,6 +88,7 @@ void OTF_File_init( OTF_File* file ) {
 	file->z= NULL;
 	file->zbuffer= NULL;
 	file->zbuffersize= 1024*10;
+	file->zbuffer_seek_further= 0;
 #endif /* HAVE_ZLIB */
 	file->pos= 0;
 	file->mode= OTF_FILEMODE_NOTHING;
@@ -110,6 +111,7 @@ void OTF_File_finalize( OTF_File* file ) {
 	file->z= NULL;
 	file->zbuffer= NULL;
 	file->zbuffersize= 0;
+	file->zbuffer_seek_further= 0;
 #endif /* HAVE_ZLIB */
 	file->pos= 0;
 	file->mode= OTF_FILEMODE_NOTHING;
@@ -372,14 +374,28 @@ size_t OTF_File_read( OTF_File* file, void* ptr, size_t size ) {
 
 			status = inflate( OTF_FILE_Z(file), Z_SYNC_FLUSH );
 			if ( status != Z_OK ) {
-		
+
+				/* see declaration of 'zbuffer_seek_further' in struct_OTF_File in OTF_File.h */
+				if ( 0 != file->zbuffer_seek_further ) {
+
+					if ( 0 == OTF_File_seek( file, file->zbuffer_seek_further ) ) {
+
+						file->zbuffer_seek_further= 0;
+
+						return 0;
+					}
+
+					return OTF_File_read( file, ptr, size );
+				}
 				OTF_Error( "ERROR in function %s, file: %s, line: %i:\n "
 						"error in uncompressing, status %u.\n",
 						__FUNCTION__, __FILE__, __LINE__, status );
-				
+
 				return 0;
 			}
 		}
+
+		file->zbuffer_seek_further= 0;
 
 		return size - OTF_FILE_Z(file)->avail_out;
 
@@ -469,12 +485,19 @@ int OTF_File_seek( OTF_File* file, uint64_t pos ) {
 			if ( 0 != pos ) {
 
 				sync= inflateSync( OTF_FILE_Z(file) );
+				if ( Z_OK == sync ) {
+
+					/* see declaration of 'zbuffer_seek_further' in struct_OTF_File in OTF_File.h */
+					file->zbuffer_seek_further= pos + OTF_FILE_Z(file)->total_in;
+				}
 			}
 
 			if ( Z_OK == sync ) {
 
 				return ret;
 			}
+
+			pos += read;
 
 			if ( Z_BUF_ERROR == sync ) {
 			

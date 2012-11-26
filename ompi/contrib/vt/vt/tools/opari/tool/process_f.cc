@@ -115,11 +115,16 @@ namespace {
     label="";
     if (! (line.size()) ) return false;
 
-    // is there a 'do ' 
-    pstart = lowline.find("do ");
-    if(pstart==string::npos) return false;
+    // is there a 'do '
+    pstart = lowline.find("do");
+    if(pstart==string::npos ||
+       (lowline[pstart+2] != '\0' &&
+        lowline[pstart+2] != ' '  &&
+        lowline[pstart+2] != '\t')) {
+      return false;
+    }
 
-    
+
     pos = lowline.find_first_not_of(" \t");
     if(pos!=pstart) {
       // there is a DO_construct_name
@@ -131,8 +136,13 @@ namespace {
     }
 
     //check again, if pos now start of do, otherwise not a correct do statement
-    pstart = lowline.find("do ",pos);
-    if(pstart!=pos) return false; 
+    pstart = lowline.find("do",pos);
+    if(pstart!=pos ||
+       (lowline[pstart+2] != '\0' &&
+        lowline[pstart+2] != ' '  &&
+        lowline[pstart+2] != '\t')) {
+      return false;
+    }
 
     pos = lowline.find_first_not_of(" \t",pos+2);
     if(isdigit(lowline[pos])) {

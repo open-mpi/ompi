@@ -13,10 +13,14 @@ AC_DEFUN([ACVT_PLUGINCNTR],
 	
 	AS_IF([test x"$check_plugin_cntr" = "xyes"],
 	[
-		AS_IF([test "$PLATFORM" = "bgp" -a x"$enable_shared" = "xno"],
+		AS_IF([test x"$enable_shared" = "xno"],
 		[
-			AC_MSG_NOTICE([error: the plugin counter support requires building of shared libraries on this platform; re-configure with \`--enable-shared'])
-			plugin_cntr_error="yes"
+			case $PLATFORM in
+				bgp | bgq)
+					AC_MSG_NOTICE([error: the plugin counter support requires building of shared libraries on this platform; re-configure with \`--enable-shared'])
+					plugin_cntr_error="yes"
+					;;
+			esac
 		])
 
 		AS_IF([test x"$plugin_cntr_error" = "xno"],

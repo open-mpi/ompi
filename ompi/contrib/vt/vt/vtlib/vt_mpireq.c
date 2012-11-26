@@ -10,6 +10,8 @@
  * See the file COPYING in the package base directory for details
  **/
 
+#include "config.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -64,6 +66,10 @@ void vt_request_create(MPI_Request request,
 {
   struct VTRequestBlock *new_block;
 
+  MPI_Datatype type;
+  MPI_Group group;
+  VT_MPI_INT intercomm;
+
   lastidx++;
   if (lastidx >= VT_REQBLK_SIZE) 
     {
@@ -100,6 +106,22 @@ void vt_request_create(MPI_Request request,
     {
       lastreq++;
     }
+
+  /* ask for group of comm */
+  PMPI_Comm_test_inter(comm, &intercomm);
+  if (intercomm)
+    PMPI_Comm_remote_group(comm, &group);
+  else
+    PMPI_Comm_group(comm, &group);
+
+  /* duplicate data type due to it could be freed before the communication
+     is completed */
+#if defined(HAVE_MPI_TYPE_DUP) && HAVE_MPI_TYPE_DUP
+  PMPI_Type_dup(datatype, &type);
+#else /* HAVE_MPI_TYPE_DUP */
+  type = datatype;
+#endif /* HAVE_MPI_TYPE_DUP */
+
   /* store request information */
   lastreq->request  = request;
   lastreq->flags    = ERF_NONE;
@@ -107,8 +129,9 @@ void vt_request_create(MPI_Request request,
   lastreq->tag      = tag;
   lastreq->dest     = dest;
   lastreq->bytes    = bytes;
-  lastreq->datatype = datatype;
-  lastreq->comm     = comm;
+  lastreq->datatype = type;
+  lastreq->group    = group;
+  lastreq->cid      = VT_COMM_ID(comm);
 }
 
 void vt_iorequest_create( MPI_Request request,
@@ -120,6 +143,8 @@ void vt_iorequest_create( MPI_Request request,
 {
   struct VTRequestBlock *new_block;
 
+  MPI_Datatype type;
+
   lastidx++;
   if (lastidx >= VT_REQBLK_SIZE) 
     {
@@ -156,9 +181,18 @@ void vt_iorequest_create( MPI_Request request,
     {
       lastreq++;
     }
+
+  /* duplicate data type due to it could be freed before the I/O operation
+     is completed */
+#if defined(HAVE_MPI_TYPE_DUP) && HAVE_MPI_TYPE_DUP
+  PMPI_Type_dup(datatype, &type);
+#else /* HAVE_MPI_TYPE_DUP */
+  type = datatype;
+#endif /* HAVE_MPI_TYPE_DUP */
+
   /* store request information */
   lastreq->request  = request;
-  lastreq->datatype = datatype;
+  lastreq->datatype = type;
   lastreq->flags    = ERF_IO;
   lastreq->matchingid = matchingid;
   lastreq->handleid = handleid;
@@ -198,6 +232,11 @@ struct VTRequest* vt_request_get(MPI_Request request)
 
 void vt_request_free(struct VTRequest* req)
 {
+#if defined(HAVE_MPI_TYPE_DUP) && HAVE_MPI_TYPE_DUP
+  /* since the stored data type was duplicated on request creation, free them */
+  PMPI_Type_free(&(req->datatype));
+#endif /* HAVE_MPI_TYPE_DUP */
+
   /* delete request by copying last request in place of req */ 
   if (!lastreq) {
     vt_error_msg("INTERNAL ERROR in request handling - no last request");
@@ -248,8 +287,8 @@ void vt_check_request(uint32_t tid, uint64_t* time, struct VTRequest* req,
     PMPI_Type_size(req->datatype, &sz);
     PMPI_Get_count(status, req->datatype, &count);
     vt_mpi_recv(tid, time,
-                VT_RANK_TO_PE(status->MPI_SOURCE, req->comm),
-                VT_COMM_ID(req->comm), status->MPI_TAG, count * sz);
+                VT_RANK_TO_PE_BY_GROUP(status->MPI_SOURCE, req->group),
+                req->cid, status->MPI_TAG, count * sz);
   }
 
   if (record_event && (req->flags & ERF_IO))

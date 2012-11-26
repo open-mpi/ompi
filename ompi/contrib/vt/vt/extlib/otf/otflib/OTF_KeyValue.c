@@ -230,7 +230,7 @@ uint8_t OTF_KeyValueList_appendPair(OTF_KeyValueList* list, OTF_KeyValuePair pai
 
 	p->kvPair = pair;
 	list->kvCurrent = p->kvNext;
-    
+
 	list->count++;
 
 	return 0;
@@ -819,7 +819,13 @@ uint8_t OTF_KeyValueList_removeKey(OTF_KeyValueList *list, uint32_t key) {
 			if ( p->kvNext ) {
 				p->kvNext->kvPrev = p->kvPrev;
 			}
-			free(p);
+
+			/* move the deleted element after the end of the list */
+			p->kvPrev = list->kvEnd;
+			p->kvNext = NULL;
+			list->kvEnd->kvNext=p;
+			list->kvEnd= p;
+
 			list->count--;
 			return 0;
 		}

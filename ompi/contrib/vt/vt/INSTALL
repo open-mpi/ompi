@@ -225,6 +225,10 @@ How to install and configure VampirTrace
                               give the command for PDT Fortran source code parser,
                               default: f95parse, f90parse, or gfparse
 
+      --with-pdt-comment=PDTCOMMENT
+                              give the command for PDT comment parser,
+                              default: pdbcomment
+
       --with-papi-dir=PAPIDIR
                               give the path for PAPI, default: /usr
 
@@ -345,7 +349,7 @@ How to install and configure VampirTrace
         (e.g. RANLIB, AR, MPICC, CXXFLAGS).
 
     Examples:
-      BlueGene/P:
+      BlueGene/P and BlueGene/Q:
         % ./configure --host=powerpc64-ibm-linux-gnu
 
       Cray XK6:

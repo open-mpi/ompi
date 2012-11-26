@@ -1,3 +1,16 @@
+27. Fixed processing preprocessor directives
+    containing character string constants with C/C++ comment
+    indicators (/**/, //)
+
+26. Fixed processing C/C++ line-continuation
+    within character string constants
+    
+25. Fixed C/C++ parsing
+    character string constants containing successive quotes (e.g. "\"\"")
+
+24. Fixed Fortran parsing
+    for detecting unbounded DO loop beginnings
+
 23. Fixed parsing
     source files containing Carriage Returns
 

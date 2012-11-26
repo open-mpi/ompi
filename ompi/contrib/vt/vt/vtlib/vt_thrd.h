@@ -87,6 +87,8 @@ typedef struct
 #if !defined(VT_DISABLE_RFG)
 
   RFG_Regions* rfg_regions;         /**< RFG regions object */
+  int stack_level_at_recfilt_enabled; /**< call stack level at recursive
+                                           filtering enabled */
 
 #endif /* VT_DISABLE_RFG */
 
@@ -202,6 +204,14 @@ typedef struct
 
 /* RFG regions object */
 #define VTTHRD_RFGREGIONS(thrd)     (thrd->rfg_regions)
+
+/* flag: recursive filtering currently enabled? */
+#define VTTHRD_RECFILT_ENABLED(thrd) \
+                                    (thrd->stack_level_at_recfilt_enabled > -1)
+
+/* call stack level at recursive filtering enabled */
+#define VTTHRD_STACK_LEVEL_AT_RECFILT_ENABLED(thrd) \
+                                    (thrd->stack_level_at_recfilt_enabled)
 
 #endif /* VT_DISABLE_RFG */
 

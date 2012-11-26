@@ -748,8 +748,9 @@ static void vt_cuptiact_writeKernelRecord(CUpti_ActivityKernel *kernel,
   }else{
     char *knName = vt_cuda_demangleKernel(kernel->name);
     
-    if(knName == NULL) {
+    if(knName == NULL || *knName == '\0') {
       knName = (char *)kernel->name;
+      
       if(knName == NULL) knName = "unknownKernel";
     }
     

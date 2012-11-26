@@ -67,11 +67,11 @@ static uint32_t hash_get_region(const char* name, const char* file,
   HN_RegionT* curr;
 
   /* -- get hash index -- */
-  idx = (uint32_t)vt_hash((unsigned char*)name, strlen(name), 0);
+  idx = vt_hash(name, strlen(name), 0);
   if ( file )
   {
-    idx = (uint32_t)vt_hash((unsigned char*)file, strlen(file), idx);
-    idx = (uint32_t)vt_hash((unsigned char*)&lno, sizeof(uint32_t), idx);
+    idx = vt_hash(file, strlen(file), idx);
+    idx = vt_hashtriple(lno, 0, 0, idx);
   }
   idx &= (REGION_HASH_MAX - 1);
 
@@ -101,11 +101,11 @@ static void hash_put_region(const char* name, const char* file, int lno,
   HN_RegionT* add;
 
   /* -- get hash index -- */
-  idx = (uint32_t)vt_hash((unsigned char*)name, strlen(name), 0);
+  idx = vt_hash(name, strlen(name), 0);
   if ( file )
   {
-    idx = (uint32_t)vt_hash((unsigned char*)file, strlen(file), idx);
-    idx = (uint32_t)vt_hash((unsigned char*)&lno, sizeof(uint32_t), idx);
+    idx = vt_hash(file, strlen(file), idx);
+    idx = vt_hashtriple(lno, 0, 0, idx);
   }
   idx &= (REGION_HASH_MAX - 1);
 

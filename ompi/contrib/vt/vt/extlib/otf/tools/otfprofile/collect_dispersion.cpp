@@ -23,9 +23,10 @@ using namespace std;
 /* fence between statistics parts within the buffer for consistency checking */
 enum { FENCE= 0xDEADBEEF };
 
+/*store current callpath for each process  */
+map<uint32_t,string> callpath;
 
 static void prepare_progress( AllData& alldata, uint64_t max_bytes ) {
-
     Progress& progress= alldata.progress;
 
     progress.cur_bytes= 0;
@@ -280,6 +281,15 @@ static int handle_enter( void* fha, uint64_t time, uint32_t function,
     list<StackType>& stack= alldata->stackPerProcess[ process ];
     stack.push_back( StackType( function, time ) );
 
+    if(alldata->params.dispersion.mode == DISPERSION_MODE_PERCALLPATH)
+    {
+        /* create callpath */
+        /* add callpath step on enter event */
+        std::ostringstream os;
+        os << " " << function;
+        callpath[process] += os.str();
+    }
+
     return OTF_RETURN_OK;
 }
 
@@ -297,43 +307,68 @@ static int handle_leave( void* fha, uint64_t time, uint32_t function,
     list<StackType>::reverse_iterator parent_it= ++stack.rbegin();
 
     uint64_t func= top.fid;
-    uint64_t incl= time - top.timestamp;
-    uint64_t excl= incl - top.childDuration;
+    uint64_t incl_time= time - top.timestamp;
+    uint64_t excl_time= incl_time - top.childDuration;
    
     map< uint64_t, FunctionData>::const_iterator it= alldata->functionMapGlobal.find( func );
     assert ( alldata->functionMapGlobal.end() != it );
     FunctionData functionData= it->second;
-    
-    double time_excl_min = functionData.excl_time.min;
-    double time_excl_max = functionData.excl_time.max;
-    double time_excl= excl;
+
+    double time_min = functionData.DISPERSION_OPTION.min;
+    double time_max = functionData.DISPERSION_OPTION.max;
+    double time_max_c = 0;
+    double time_min_c = 0;
+    double time_a= DISPERSION_OPTION;
+
+    if(alldata->params.dispersion.mode == DISPERSION_MODE_PERCALLPATH)
+    {
+        /* get currentfunction from functionCallpathMapGlobal */
+        map< PairCallpath, FunctionData,ltPairCallpath>::const_iterator itc= alldata->functionCallpathMapGlobal.find( PairCallpath(func,callpath[process]) );
+
+        assert ( alldata->functionCallpathMapGlobal.end() != itc );
+        FunctionData functionCallpathData= itc->second;
+
+        time_min_c = functionCallpathData.DISPERSION_OPTION.min;
+        time_max_c = functionCallpathData.DISPERSION_OPTION.max;
+    }
 
     if ( parent_it != stack.rend() ) {
 
-        parent_it->childDuration += incl;
+        parent_it->childDuration += incl_time;
 
     }
 
     stack.pop_back();
 
-    if ( time_excl_max > time_excl_min) {
+    if ( time_max > time_min) {
    
-        uint64_t bin = (uint64_t) ( ( log(time_excl) - log(time_excl_min) ) /
-                                   ( log(time_excl_max) - log(time_excl_min) )
+        uint64_t bin = (uint64_t) ( ( log(time_a) - log(time_min) ) /
+                                   ( log(time_max) - log(time_min) )
                                    * 100 );
-/*        cerr << " func " << func << " @process " << process << " : " << " bin " << bin << " , excl " << excl << " ticks "<< endl; 
-*/        
-        alldata->functionDurationSectionMapPerRank[ Triple(process, func, bin ) ].add( 1, excl, incl );
-        
+        uint64_t bin_c = 0;
+        if(alldata->params.dispersion.mode == DISPERSION_MODE_PERCALLPATH)
+            bin_c = (uint64_t) ( ( log(time_a) - log(time_min_c) ) /
+                                   ( log(time_max_c) - log(time_min_c) )
+                                   * 100 );
+        alldata->functionDurationSectionMapPerRank[ Triple(process, func, bin )]
+                                                .add( 1, excl_time, incl_time );
+        if(alldata->params.dispersion.mode == DISPERSION_MODE_PERCALLPATH)
+            alldata->functionDurationSectionCallpathMapPerRank[ Quadruple(process, func,callpath[process], bin_c ) ].add( 1, excl_time,callpath[process], incl_time );
     }
     
-    if ( time_excl_max == time_excl || time_excl_min == time_excl ) {
-        alldata->functionMinMaxLocationMap [ func ].add( excl, process, (time-incl) );
-/*
-        cerr << " func " << func << " @process " << process << " : " << " time " << (time-incl) << " excl " << excl << endl;
-*/
+    if ( time_max == time_a || time_min == time_a ) {
+        alldata->functionMinMaxLocationMap [ func ].add( excl_time, process, (time-incl_time) );
     }
-       
+
+    if(alldata->params.dispersion.mode == DISPERSION_MODE_PERCALLPATH)
+    {
+        if ( time_max == time_a || time_min == time_a ) {
+            alldata->functionMinMaxLocationCallpathMap [ callpath[process] ].add( excl_time, process, (time-incl_time) );
+        }
+        /* go one step back on callpath, because of this leave */
+        callpath[process] = callpath[process].substr (0,callpath[process].find_last_of(" "));
+    }
+
     return OTF_RETURN_OK;
 }
 
@@ -357,9 +392,16 @@ static void share_profiledata( AllData& alldata ) {
 
         int s1, s2;
 
-        size= alldata.functionMapGlobal.size(); /* map< uint64_t, FunctionData > functionMapGlobal; */
         num_fences++;
-          
+        if(alldata.params.dispersion.mode == DISPERSION_MODE_PERCALLPATH)
+        {
+            size= alldata.functionCallpathMapGlobal.size(); /* map< PairCallpath, FunctionData, ltPairCallpath > functionCallpathMapGlobal; */
+            num_fences++;
+        }
+        else
+        {
+            size= alldata.functionMapGlobal.size(); /* map< uint64_t, FunctionData > functionMapGlobal; */
+        }
         /* get bytesize multiplying all pieces */
           
         MPI_Pack_size( num_fences, MPI_LONG_LONG_INT, MPI_COMM_WORLD, &s1 );
@@ -368,15 +410,34 @@ static void share_profiledata( AllData& alldata ) {
         MPI_Pack_size( 1 + size * 7, MPI_LONG_LONG_INT, MPI_COMM_WORLD, &s1 );
         MPI_Pack_size( size * 6, MPI_DOUBLE, MPI_COMM_WORLD, &s2 );
         buffer_size += s1 + s2;
- 
+
+        /* get bytesize multiplying all pieces */
+        MPI_Pack_size( 1 + size * 8, MPI_LONG_LONG_INT, MPI_COMM_WORLD, &s1 );
+        MPI_Pack_size( size * 6, MPI_DOUBLE, MPI_COMM_WORLD, &s2 );
+        buffer_size += s1 + s2;
+
+        if(alldata.params.dispersion.mode == DISPERSION_MODE_PERCALLPATH)
+        {
+        	map< PairCallpath, FunctionData, ltPairCallpath >::const_iterator it=    alldata.functionCallpathMapGlobal.begin();
+        	map< PairCallpath, FunctionData, ltPairCallpath >::const_iterator itend= alldata.functionCallpathMapGlobal.end();
+        	for ( ; it != itend; ++it ) {
+        		MPI_Pack_size( it->second.callpath.length(), MPI_CHAR, MPI_COMM_WORLD, &s1 );
+        		buffer_size += s1;
+        	}
+        }
+
     } 
-       
+
     /* broadcast buffer size */
     MPI_Bcast( &buffer_size, 1, MPI_INT, 0, MPI_COMM_WORLD );
 
     /* allocate buffer */
     buffer= new char[ buffer_size ];
     assert( buffer );
+
+    uint64_t callpath_length=0;
+    MPI_Allreduce(&(alldata.maxCallpathLength),&callpath_length,1,MPI_UNSIGNED_LONG_LONG,MPI_MAX,MPI_COMM_WORLD);
+    char* callpath = new char[callpath_length];
 
     if ( 0 == alldata.myRank ) {
        /* pack parts */
@@ -410,17 +471,50 @@ static void share_profiledata( AllData& alldata ) {
           MPI_Pack( (void*) &it->second.incl_time.sum, 1, MPI_DOUBLE,        buffer, buffer_size, &buffer_pos, MPI_COMM_WORLD );
           MPI_Pack( (void*) &it->second.incl_time.cnt, 1, MPI_LONG_LONG_INT, buffer, buffer_size, &buffer_pos, MPI_COMM_WORLD );
        }
-       
+
        /* extra check that doesn't cost too much */
        MPI_Pack( (void*) &fence, 1, MPI_LONG_LONG_INT, buffer, buffer_size, &buffer_pos, MPI_COMM_WORLD );
+
+       if(alldata.params.dispersion.mode == DISPERSION_MODE_PERCALLPATH)
+       {
+           /* pack size of functionCallpathMapGlobal */
+           func_map_global_size= alldata.functionCallpathMapGlobal.size();
+           MPI_Pack( &func_map_global_size, 1, MPI_LONG_LONG_INT, buffer, buffer_size, &buffer_pos, MPI_COMM_WORLD );
+
+           /* pack functionCallpathMapGlobal */
+           {
+               map< PairCallpath, FunctionData, ltPairCallpath >::const_iterator it=    alldata.functionCallpathMapGlobal.begin();
+               map< PairCallpath, FunctionData, ltPairCallpath >::const_iterator itend= alldata.functionCallpathMapGlobal.end();
+               uint64_t len;
+               for ( ; it != itend; ++it ) {
+                   len = it->first.b.length();
+                   MPI_Pack( (void*) &it->first.a,                1, MPI_LONG_LONG_INT, buffer, buffer_size, &buffer_pos, MPI_COMM_WORLD );
+                   MPI_Pack( (void*) &len,                1, MPI_LONG_LONG_INT, buffer, buffer_size, &buffer_pos, MPI_COMM_WORLD );
+                   MPI_Pack( (void*) &it->second.count.min,     1, MPI_LONG_LONG_INT, buffer, buffer_size, &buffer_pos, MPI_COMM_WORLD );
+                   MPI_Pack( (void*) &it->second.count.max,     1, MPI_LONG_LONG_INT, buffer, buffer_size, &buffer_pos, MPI_COMM_WORLD );
+                   MPI_Pack( (void*) &it->second.count.sum,     1, MPI_LONG_LONG_INT, buffer, buffer_size, &buffer_pos, MPI_COMM_WORLD );
+                   MPI_Pack( (void*) &it->second.count.cnt,     1, MPI_LONG_LONG_INT, buffer, buffer_size, &buffer_pos, MPI_COMM_WORLD );
+
+                   MPI_Pack( (void*) &it->second.excl_time.min, 1, MPI_DOUBLE,        buffer, buffer_size, &buffer_pos, MPI_COMM_WORLD );
+                   MPI_Pack( (void*) &it->second.excl_time.max, 1, MPI_DOUBLE,        buffer, buffer_size, &buffer_pos, MPI_COMM_WORLD );
+                   MPI_Pack( (void*) &it->second.excl_time.sum, 1, MPI_DOUBLE,        buffer, buffer_size, &buffer_pos, MPI_COMM_WORLD );
+                   MPI_Pack( (void*) &it->second.excl_time.cnt, 1, MPI_LONG_LONG_INT, buffer, buffer_size, &buffer_pos, MPI_COMM_WORLD );
+
+                   MPI_Pack( (void*) &it->second.incl_time.min, 1, MPI_DOUBLE,        buffer, buffer_size, &buffer_pos, MPI_COMM_WORLD );
+                   MPI_Pack( (void*) &it->second.incl_time.max, 1, MPI_DOUBLE,        buffer, buffer_size, &buffer_pos, MPI_COMM_WORLD );
+                   MPI_Pack( (void*) &it->second.incl_time.sum, 1, MPI_DOUBLE,        buffer, buffer_size, &buffer_pos, MPI_COMM_WORLD );
+                   MPI_Pack( (void*) &it->second.incl_time.cnt, 1, MPI_LONG_LONG_INT, buffer, buffer_size, &buffer_pos, MPI_COMM_WORLD );
+                   MPI_Pack( (void*) it->first.b.c_str(), len, MPI_CHAR, buffer, buffer_size, &buffer_pos, MPI_COMM_WORLD );
+               }
+           }
+                  /* extra check that doesn't cost too much */
+                  MPI_Pack( (void*) &fence, 1, MPI_LONG_LONG_INT, buffer, buffer_size, &buffer_pos, MPI_COMM_WORLD );
+       }
     }
-   
-   
+
     /* broadcast definitions buffer */
     MPI_Bcast( buffer, buffer_size, MPI_PACKED, 0, MPI_COMM_WORLD );
-
     /* unpack definitions from buffer */
-
     if ( 0 != alldata.myRank ) {
        
        /* unpack parts */
@@ -433,7 +527,7 @@ static void share_profiledata( AllData& alldata ) {
        /* unpack size of functionMapGlobal */
        uint64_t func_map_global_size= 0;
        MPI_Unpack( buffer, buffer_size, &buffer_pos, &func_map_global_size, 1, MPI_LONG_LONG_INT, MPI_COMM_WORLD );
-          
+
           /* unpack functionMapGlobal */
           for ( uint64_t i= 0; i < func_map_global_size; i++ ) {
              
@@ -459,14 +553,56 @@ static void share_profiledata( AllData& alldata ) {
              
              alldata.functionMapGlobal[ func ].add( tmp );
           }
-          
           /* extra check that doesn't cost too much */
           fence= 0;
           MPI_Unpack( buffer, buffer_size, &buffer_pos, &fence, 1, MPI_LONG_LONG_INT, MPI_COMM_WORLD );
           assert( FENCE == fence );
-    }
 
+          /* unpack size of functionMapGlobal */
+          func_map_global_size= 0;
+          MPI_Unpack( buffer, buffer_size, &buffer_pos, &func_map_global_size, 1, MPI_LONG_LONG_INT, MPI_COMM_WORLD );
+          if(alldata.params.dispersion.mode == DISPERSION_MODE_PERCALLPATH)
+          {
+              /* unpack functionMapCallpathGlobal */
+              for ( uint64_t i= 0; i < func_map_global_size; i++ ) {
+
+                  uint64_t func;
+                  FunctionData tmp;
+                  uint64_t len;
+
+                  MPI_Unpack( buffer, buffer_size, &buffer_pos, &func,              1, MPI_LONG_LONG_INT, MPI_COMM_WORLD );
+                  MPI_Unpack( buffer, buffer_size, &buffer_pos, &len,              1, MPI_LONG_LONG_INT, MPI_COMM_WORLD );
+
+                  MPI_Unpack( buffer, buffer_size, &buffer_pos, &tmp.count.min,     1, MPI_LONG_LONG_INT, MPI_COMM_WORLD );
+                  MPI_Unpack( buffer, buffer_size, &buffer_pos, &tmp.count.max,     1, MPI_LONG_LONG_INT, MPI_COMM_WORLD );
+                  MPI_Unpack( buffer, buffer_size, &buffer_pos, &tmp.count.sum,     1, MPI_LONG_LONG_INT, MPI_COMM_WORLD );
+                  MPI_Unpack( buffer, buffer_size, &buffer_pos, &tmp.count.cnt,     1, MPI_LONG_LONG_INT, MPI_COMM_WORLD );
+
+                  MPI_Unpack( buffer, buffer_size, &buffer_pos, &tmp.excl_time.min, 1, MPI_DOUBLE,        MPI_COMM_WORLD );
+                  MPI_Unpack( buffer, buffer_size, &buffer_pos, &tmp.excl_time.max, 1, MPI_DOUBLE,        MPI_COMM_WORLD );
+                  MPI_Unpack( buffer, buffer_size, &buffer_pos, &tmp.excl_time.sum, 1, MPI_DOUBLE,        MPI_COMM_WORLD );
+                  MPI_Unpack( buffer, buffer_size, &buffer_pos, &tmp.excl_time.cnt, 1, MPI_LONG_LONG_INT, MPI_COMM_WORLD );
+
+                  MPI_Unpack( buffer, buffer_size, &buffer_pos, &tmp.incl_time.min, 1, MPI_DOUBLE,        MPI_COMM_WORLD );
+                  MPI_Unpack( buffer, buffer_size, &buffer_pos, &tmp.incl_time.max, 1, MPI_DOUBLE,        MPI_COMM_WORLD );
+                  MPI_Unpack( buffer, buffer_size, &buffer_pos, &tmp.incl_time.sum, 1, MPI_DOUBLE,        MPI_COMM_WORLD );
+                  MPI_Unpack( buffer, buffer_size, &buffer_pos, &tmp.incl_time.cnt, 1, MPI_LONG_LONG_INT, MPI_COMM_WORLD );
+                  MPI_Unpack( buffer, buffer_size, &buffer_pos, callpath, len, MPI_CHAR, MPI_COMM_WORLD );
+
+                  tmp.callpath = callpath;
+                  tmp.callpath = tmp.callpath.substr (0,len);
+                  alldata.functionCallpathMapGlobal[ PairCallpath(func,tmp.callpath) ].add( tmp );
+              }
+
+              /* extra check that doesn't cost too much */
+              fence= 0;
+              MPI_Unpack( buffer, buffer_size, &buffer_pos, &fence, 1, MPI_LONG_LONG_INT, MPI_COMM_WORLD );
+              assert( FENCE == fence );
+          }
+    }
     delete[] buffer;
+    if(callpath_length > 0)
+        delete[] callpath;
 }
 #endif /* OTFPROFILE_MPI */
 
@@ -588,20 +724,16 @@ static bool read_events( AllData& alldata, OTF_Reader* reader ) {
 bool CollectDispersion( AllData& alldata ) {
 
     bool error= false;
-
     /* start runtime measurement for collecting dispersion information */
     StartMeasurement( alldata, 1, true, "collect dispersion information" );
 
     /* open OTF file manager and reader */
-
     OTF_FileManager* manager=
         OTF_FileManager_open( alldata.params.max_file_handles );
     assert( manager );
-
     OTF_Reader* reader=
         OTF_Reader_open( alldata.params.input_file_prefix.c_str(), manager );
     assert( reader );
-
     do {
 
 #ifdef OTFPROFILE_MPI
@@ -609,14 +741,12 @@ bool CollectDispersion( AllData& alldata ) {
         /* share definitions needed for reading events to workers */
 
         if ( 1 < alldata.numRanks ) {
-
             share_profiledata( alldata );
 
         }
 #endif /* OTFPROFILE_MPI */
 
         /* read data from events */
-
         if ( !alldata.params.read_from_stats ) {
             
             VerbosePrint( alldata, 1, true, "reading events for dispersion\n" );
@@ -638,18 +768,15 @@ bool CollectDispersion( AllData& alldata ) {
 #endif /* OTFPROFILE_MPI */
 
     } while( false );
-
     /* close OTF file manager and reader */
 
     OTF_Reader_close( reader );
     OTF_FileManager_close( manager );
-
     if ( !error ) {
 
         /* stop runtime measurement for collecting data */
         StopMeasurement( alldata, true, "collect dispersion information" );
 
     }
-
     return !error;
 }

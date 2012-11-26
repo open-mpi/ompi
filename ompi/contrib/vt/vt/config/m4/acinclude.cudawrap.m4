@@ -67,4 +67,13 @@ AC_DEFUN([ACVT_CUDAWRAP],
 			have_cudartwrap="yes"
 		])
 	])
+
+dnl	if CUPTI found, CUPTILIB already contains CUDATKLIBDIR and CUDARTLIB;
+dnl	remove content of CUDATKLIBDIR and CUDARTLIB to prevent double linking when
+dnl	using the VT compiler wrappers
+	AS_IF([test x"$have_cupti" = "xyes"],
+	[
+		CUDATKLIBDIR=
+		CUDARTLIB=
+	])
 ])

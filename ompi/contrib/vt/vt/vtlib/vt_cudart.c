@@ -454,6 +454,7 @@ typedef struct vtcudaDev_st
   buffer_t conf_stack;       /**< top of the kernel configure stack */
   VTCUDABufEvt *evtbuf;      /**< the preallocated cuda event list */
   VTCUDABufEvt *evtbuf_pos;  /**< current unused event space */
+  uint8_t reset;             /**< has the device been reset? */ 
   struct vtcudaDev_st *next; /**< pointer to next element in list */
 }VTCUDADevice;
 
@@ -466,7 +467,7 @@ static VTCUDADevice* cudaDevices = NULL;
  * function pointer.
  */
 typedef struct knSymbol_st {
-  const char* pointer;                 /**< the host function */
+  VT_CUDARTWRAP_COMPAT_PTR pointer;   /**< the host function */
   const char* knSymbolName;            /**< name of the CUDA kernel symbol */
   /*char *name[VTGPU_KERNEL_STRING_SIZE]; *< demangled name of the cuda kernel */
   uint32_t rid;                        /**< region id for this kernel */
@@ -511,7 +512,7 @@ static cudaError_t (*cudaPointerGetAttributes_ptr)(struct cudaPointerAttributes 
  */
 static void VTCUDAflush(VTCUDADevice*, uint32_t);
 static VTCUDADevice* VTCUDAgetDevice(uint32_t ptid);
-static VTCUDAkernelSymbol* getKernelByHostFunction(const char* hostFun);
+static VTCUDAkernelSymbol* getKernelByHostFunction(VT_CUDARTWRAP_COMPAT_PTR hostFun);
 
 /* 
  * Checks if a CUDA runtime API call returns successful and respectively prints
@@ -814,19 +815,19 @@ static void VTCUDAremoveDevice(VTCUDADevice *vtDev)
 }
 
 /*
- * Cleans up the structure of a VampirTrace CUDA device.
+ * Reset the structure of a VampirTrace CUDA device.
  *
  * @param ptid the VampirTrace thread, which executes this cleanup
  * @param vtDev pointer to VampirTrace CUDA device structure to be cleaned up
  * @param cleanEvents cleanup CUDA events? 1 - yes, 0 - no
  */
-static void VTCUDAcleanupDevice(uint32_t ptid, VTCUDADevice *vtDev,
-                                uint8_t cleanEvents)
+static void VTCUDAresetDevice(uint32_t ptid, VTCUDADevice *vtDev,
+                              uint8_t cleanEvents)
 {
   /* check if device already cleanup (e.g. with cudaThreadExit() call) */
-  if(vtDev == NULL) return;
+  if(vtDev == NULL || vtDev->reset == 1) return;
 
-  vt_cntl_msg(2, "[CUDART] Cleanup device %d (tid: %d)", vtDev->device, ptid);
+  vt_cntl_msg(2, "[CUDART] Reset device %d (tid: %d)", vtDev->device, ptid);
   
   /* do not call CUDA functions, if debugging mode */
   if(vt_gpu_debug) cleanEvents = 0;
@@ -871,18 +872,6 @@ static void VTCUDAcleanupDevice(uint32_t ptid, VTCUDADevice *vtDev,
   }
 #endif
 
-  /* write idle end time to CUDA stream 0 */
-  if(vt_gpu_trace_idle == 1){
-    uint64_t idle_end = vt_pform_wtime();
-    vt_exit(vtDev->strmList->tid, &idle_end);
-  }
-
-  /* cleanup stream list */
-  if(vtDev->strmList != NULL){
-    free(vtDev->strmList);
-    vtDev->strmList = NULL;
-  }
-
   if(trace_events){
     /* destroy CUDA events (cudaThreadExit() implicitly destroys events) */
     if(vtDev->evtbuf != NULL){
@@ -898,10 +887,8 @@ static void VTCUDAcleanupDevice(uint32_t ptid, VTCUDADevice *vtDev,
         VT_CUDART_CALL(ret, "cudaEventDestroy failed");
       }
 
-      /* free the event buffer */
-      free(vtDev->evtbuf);
-      vtDev->evtbuf = NULL;
-      vtDev->evtbuf_pos = NULL;
+      /* reset event buffer */
+      vtDev->evtbuf_pos = vtDev->evtbuf;
     }
 
     /* destroy synchronization events */
@@ -913,13 +900,20 @@ static void VTCUDAcleanupDevice(uint32_t ptid, VTCUDADevice *vtDev,
     }
 
     /* cleanup entry buffer */
-    if(vtDev->asyncbuf != NULL){
-      free(vtDev->asyncbuf);
-      vtDev->asyncbuf = NULL;
+    vtDev->buf_pos = vtDev->asyncbuf;
+    vtDev->conf_stack = vtDev->buf_size;
+  }
+  
+  /* reset stream list (set streams as destroyed to be reusable later on) */
+  {
+    VTCUDAStrm *tmpStrm = vtDev->strmList;
+    while(tmpStrm != NULL){
+      tmpStrm->destroyed = 1;    
+      tmpStrm = tmpStrm->next;
     }
   }
 
-  /* free cuda malloc entries, if application didn't do this yet */
+  /* free CUDA malloc entries, if application didn't do this yet */
   while(vtDev->mallocList != NULL){
     VTCUDAmalloc *tmpM =  vtDev->mallocList;
     
@@ -930,6 +924,44 @@ static void VTCUDAcleanupDevice(uint32_t ptid, VTCUDADevice *vtDev,
     free(tmpM);
     tmpM = NULL;
   }
+  vtDev->mallocList = NULL;
+
+  /* reset other device parameters */
+  vtDev->reset = 1;
+}
+
+/*
+ * Cleans up the structure of a VampirTrace CUDA device.
+ *
+ * @param ptid the VampirTrace thread, which executes this cleanup
+ * @param vtDev pointer to VampirTrace CUDA device structure to be cleaned up
+ * @param cleanEvents cleanup CUDA events? 1 - yes, 0 - no
+ */
+static void VTCUDAcleanupDevice(uint32_t ptid, VTCUDADevice *vtDev,
+                                uint8_t cleanEvents)
+{
+  /* check if device already cleanup (e.g. with cudaThreadExit() call) */
+  if(vtDev == NULL) return;
+  
+  VTCUDAresetDevice(ptid, vtDev, cleanEvents);
+
+  vt_cntl_msg(2, "[CUDART] Cleanup device %d (tid: %d)", vtDev->device, ptid);
+
+  /* write idle end time to CUDA stream 0 */
+  if(vt_gpu_trace_idle == 1){
+    uint64_t idle_end = vt_pform_wtime();
+    vt_exit(vtDev->strmList->tid, &idle_end);
+  }
+
+  /* cleanup stream list */
+  while(vtDev->strmList != NULL){
+    VTCUDAStrm *tmpStrm =  vtDev->strmList;
+    
+    vtDev->strmList = tmpStrm->next;
+    free(tmpStrm);
+    tmpStrm = NULL;
+  }
+  vtDev->strmList = NULL;
 
   /* free malloc of VTCUDADevice, set pointer to this VT device NULL */
   VTCUDAremoveDevice(vtDev);
@@ -1329,6 +1361,7 @@ static VTCUDADevice* VTCUDAcreateDevice(uint32_t ptid, int device)
   vtDev->evtbuf_pos = NULL;
   vtDev->strmList = NULL;
   vtDev->strmNum = 2;
+  vtDev->reset = 0;
   vtDev->next = NULL;
 
 #if (defined(CUDART_VERSION) && (CUDART_VERSION >= 3000))
@@ -1407,6 +1440,51 @@ static VTCUDADevice* VTCUDAcreateDevice(uint32_t ptid, int device)
 #endif
 
   return vtDev;
+}
+
+static void VTCUDAsetupDevice(VTCUDADevice* vtDev, int device)
+{
+  /* async buffer or events may not be used */
+  if(trace_events){
+    int cuDev_save = 0;
+    
+    /* set the device to be created, if it is not the current yet 
+       (needed for peer2peer copy only) */
+    VT_CUDART_CALL(cudaGetDevice_ptr(&cuDev_save),"cudaGetDevice()");
+    if(cuDev_save != device){
+      VT_CUDART_CALL(cudaSetDevice(device), "cudaSetDevice()");
+    }
+    
+    /* --- set VampirTrace - CUDA time synchronization --- */
+    VT_CUDART_CALL(cudaEventCreate_ptr(&(vtDev->sync.strtEvt)),
+                  "cudaEventCreate(syncStrtEvt) failed!");
+
+    VT_CUDART_CALL(cudaEventCreate_ptr(&(vtDev->sync.stopEvt)),
+                  "cudaEventCreate(syncStopEvt) failed!");
+
+    /* record init event for later synchronization with VampirTrace time */
+    vtDev->sync.strtTime = VTCUDAsynchronizeEvt(vtDev->sync.strtEvt);
+
+    /* set initial memory copy timestamp, if no memory copies are done */
+    vtDev->sync.lastTime = vtDev->sync.strtTime;
+
+    /*if(vt_gpu_debug < 2)*/
+    {/* create CUDA events */
+      size_t i;
+      cudaError_t ret = cudaSuccess;
+      for(i = 0; i < maxEvtNum; i++){
+        cudaEventCreate_ptr(&((vtDev->evtbuf[i]).strt));
+        ret = cudaEventCreate_ptr(&((vtDev->evtbuf[i]).stop));
+      }
+      VT_CUDART_CALL(ret, "cudaEventCreate failed");
+    }
+    
+    if(cuDev_save != device){
+      VT_CUDART_CALL(cudaSetDevice(cuDev_save), "cudaSetDevice()");
+    }
+  }
+  
+  vtDev->reset = 0;
 }
 
 /*
@@ -1522,6 +1600,9 @@ static VTCUDADevice* VTCUDAcheckThread(cudaStream_t cuStrm, uint32_t ptid,
           ptrLastStrm->next = VTCUDAcreateStream(vtDev, cuStrm);
           *vtStrm = ptrLastStrm->next;
         }
+        
+        if(vtDev->reset == 1)
+          VTCUDAsetupDevice(vtDev, device);
 
         time_check = vt_pform_wtime();
         vt_exit(ptid, &time_check);
@@ -1914,14 +1995,16 @@ static void insertKernelSymbol(const char* hostFun, const char* devFunc)
   kname = vt_cuda_demangleKernel(devFunc);
   
   /*check to see if demangling failed (name was not mangled). */
-  if(kname == NULL){
+  if(kname == NULL || *kname == '\0'){
     kname = (char *)devFunc;
+    if(kname == NULL) kname = "unknownKernel";
   }
 
   if(vt_cudart_filter){
     int32_t climit;
     
-    RFG_Filter_get(vt_cudart_filter, kname, NULL, &climit, NULL, NULL);
+    RFG_Filter_getRegionRules(vt_cudart_filter, kname, NULL, &climit,
+                               NULL, NULL);
 
     if(climit == 0){
       CUDARTWRAP_UNLOCK();
@@ -1953,7 +2036,7 @@ static void insertKernelSymbol(const char* hostFun, const char* devFunc)
  * @return the kernel or NULL, if nothing was found
  * @todo linear search could be replaced with hash
  */
-static VTCUDAkernelSymbol* getKernelByHostFunction(const char* hostFun)
+static VTCUDAkernelSymbol* getKernelByHostFunction(VT_CUDARTWRAP_COMPAT_PTR hostFun)
 {
   VTCUDAkernelSymbol *actual = NULL;
 
@@ -2291,12 +2374,12 @@ cudaError_t  cudaMemcpy2DArrayToArray(struct cudaArray *dst, size_t wOffsetDst, 
 }
 
 /* -- cuda_runtime_api.h:cudaMemcpyToSymbol -- */
-cudaError_t  cudaMemcpyToSymbol(const char *symbol, const void *src, size_t count, size_t offset, enum cudaMemcpyKind kind)
+cudaError_t  cudaMemcpyToSymbol(VT_CUDARTWRAP_COMPAT_PTR symbol, const void *src, size_t count, size_t offset, enum cudaMemcpyKind kind)
 {
   cudaError_t  ret;
 
   CUDARTWRAP_FUNC_INIT(vt_cudart_lw, vt_cudart_lw_attr, "cudaMemcpyToSymbol",
-    cudaError_t , (const char *, const void *, size_t , size_t , enum cudaMemcpyKind ),
+    cudaError_t , (VT_CUDARTWRAP_COMPAT_PTR, const void *, size_t , size_t , enum cudaMemcpyKind ),
     NULL, 0);
 
   VT_CUDART_MEMCPY(symbol, src, kind, count,
@@ -2307,12 +2390,12 @@ cudaError_t  cudaMemcpyToSymbol(const char *symbol, const void *src, size_t coun
 }
 
 /* -- cuda_runtime_api.h:cudaMemcpyFromSymbol -- */
-cudaError_t  cudaMemcpyFromSymbol(void *dst, const char *symbol, size_t count, size_t offset, enum cudaMemcpyKind kind)
+cudaError_t  cudaMemcpyFromSymbol(void *dst, VT_CUDARTWRAP_COMPAT_PTR symbol, size_t count, size_t offset, enum cudaMemcpyKind kind)
 {
   cudaError_t  ret;
 
   CUDARTWRAP_FUNC_INIT(vt_cudart_lw, vt_cudart_lw_attr, "cudaMemcpyFromSymbol",
-    cudaError_t , (void *, const char *, size_t , size_t , enum cudaMemcpyKind ),
+    cudaError_t , (void *, VT_CUDARTWRAP_COMPAT_PTR, size_t , size_t , enum cudaMemcpyKind ),
     NULL, 0);
 
   VT_CUDART_MEMCPY(dst, symbol, kind, count,
@@ -2420,12 +2503,12 @@ cudaError_t  cudaMemcpy2DFromArrayAsync(void *dst, size_t dpitch, const struct c
 }
 
 /* -- cuda_runtime_api.h:cudaMemcpyToSymbolAsync -- */
-cudaError_t  cudaMemcpyToSymbolAsync(const char *symbol, const void *src, size_t count, size_t offset, enum cudaMemcpyKind kind, cudaStream_t stream)
+cudaError_t  cudaMemcpyToSymbolAsync(VT_CUDARTWRAP_COMPAT_PTR symbol, const void *src, size_t count, size_t offset, enum cudaMemcpyKind kind, cudaStream_t stream)
 {
   cudaError_t  ret;
 
   CUDARTWRAP_FUNC_INIT(vt_cudart_lw, vt_cudart_lw_attr, "cudaMemcpyToSymbolAsync",
-    cudaError_t , (const char *, const void *, size_t , size_t , enum cudaMemcpyKind , cudaStream_t ),
+    cudaError_t , (VT_CUDARTWRAP_COMPAT_PTR, const void *, size_t , size_t , enum cudaMemcpyKind , cudaStream_t ),
     NULL, 0);
 
   CUDA_MEMCPY_ASYNC(kind, count, stream,
@@ -2436,12 +2519,12 @@ cudaError_t  cudaMemcpyToSymbolAsync(const char *symbol, const void *src, size_t
 }
 
 /* -- cuda_runtime_api.h:cudaMemcpyFromSymbolAsync -- */
-cudaError_t  cudaMemcpyFromSymbolAsync(void *dst, const char *symbol, size_t count, size_t offset, enum cudaMemcpyKind kind, cudaStream_t stream)
+cudaError_t  cudaMemcpyFromSymbolAsync(void *dst, VT_CUDARTWRAP_COMPAT_PTR symbol, size_t count, size_t offset, enum cudaMemcpyKind kind, cudaStream_t stream)
 {
   cudaError_t  ret;
 
   CUDARTWRAP_FUNC_INIT(vt_cudart_lw, vt_cudart_lw_attr, "cudaMemcpyFromSymbolAsync",
-    cudaError_t , (void *, const char *, size_t , size_t , enum cudaMemcpyKind , cudaStream_t ),
+    cudaError_t , (void *, VT_CUDARTWRAP_COMPAT_PTR, size_t , size_t , enum cudaMemcpyKind , cudaStream_t ),
     NULL, 0);
 
   CUDA_MEMCPY_ASYNC(kind, count, stream,
@@ -2531,7 +2614,7 @@ cudaError_t  cudaConfigureCall(dim3 gridDim, dim3 blockDim, size_t sharedMem, cu
 }
 
 /* -- cuda_runtime_api.h:cudaLaunch -- */
-cudaError_t  cudaLaunch(const char *entry)
+cudaError_t  cudaLaunch(VT_CUDARTWRAP_COMPAT_PTR entry)
 {
   cudaError_t  ret;
   VTCUDADevice *vtDev = NULL;
@@ -2546,7 +2629,7 @@ cudaError_t  cudaLaunch(const char *entry)
 #endif
 
   CUDARTWRAP_FUNC_INIT(vt_cudart_lw, vt_cudart_lw_attr, "cudaLaunch",
-    cudaError_t , (const char *), NULL, 0);
+    cudaError_t , (VT_CUDARTWRAP_COMPAT_PTR), NULL, 0);
 
   if(vt_cudart_trace_enabled){
     VT_CHECK_THREAD;
@@ -2930,7 +3013,7 @@ cudaError_t  cudaDeviceReset()
     vt_cntl_msg(2, "cudaDeviceReset called (thread; %d)", ptid);
     /* cleanup the CUDA device associated to this thread */
     CUDARTWRAP_LOCK();
-      VTCUDAcleanupDevice(ptid, vtDev, 1);
+      VTCUDAresetDevice(ptid, vtDev, 1);
     CUDARTWRAP_UNLOCK();
     VT_LIBWRAP_FUNC_START(vt_cudart_lw); /* no extra if(trace_enabled) */
   }

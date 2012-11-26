@@ -19,7 +19,10 @@ AC_DEFUN([ACVT_GETCPU],
 
 		AS_IF([test x"$getcpu_error" = "xno"],
 		[
+			sav_CPPFLAGS=$CPPFLAGS
+			CPPFLAGS="$CPPFLAGS -D_GNU_SOURCE"
 			AC_CHECK_FUNC([sched_getcpu], [], [getcpu_error="yes"])
+			CPPFLAGS=$sav_CPPFLAGS
 		])
 
 		AS_IF([test x"$getcpu_error" = "xno" -a x"$cross_compiling" = "xno"],
@@ -27,6 +30,7 @@ AC_DEFUN([ACVT_GETCPU],
 			AC_MSG_CHECKING([whether sched_getcpu works])
 			AC_TRY_RUN(
 [
+#define _GNU_SOURCE
 #include <sched.h>
 int main() { return (sched_getcpu() != -1) ? 0 : 1; }
 ],
