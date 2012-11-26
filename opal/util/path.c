@@ -82,7 +82,7 @@ char *opal_path_find(char *fname, char **pathv, int mode, char **envv)
 
     /* If absolute path is given, return it without searching. */
     if( opal_path_is_absolute(fname) ) {
-        return opal_path_access(fname, "", mode);
+        return opal_path_access(fname, NULL, mode);
     }
 
     /* Initialize. */
