@@ -174,6 +174,12 @@ int btl_openib_register_mca_params(void)
                   0, &ival, 0));
     mca_btl_openib_component.abort_not_enough_reg_mem = (0 != ival);
 
+    CHECK(reg_int("poll_cq_batch", NULL,
+                  "Retrieve up to poll_cq_batch completions from CQ",
+                  MCA_BTL_OPENIB_CQ_POLL_BATCH_DEFAULT, &ival, REGINT_GE_ONE));
+
+    mca_btl_openib_component.cq_poll_batch = (ival > MCA_BTL_OPENIB_CQ_POLL_BATCH_DEFAULT)? MCA_BTL_OPENIB_CQ_POLL_BATCH_DEFAULT : ival;
+
     if (OMPI_HAVE_IBV_FORK_INIT) {
         ival2 = -1;
     } else {
