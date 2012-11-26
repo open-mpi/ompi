@@ -43,6 +43,7 @@ AC_DEFUN([ORTE_CHECK_PMI],[
     # set defaults
     orte_check_pmi_$1_LDFLAGS=
     orte_check_pmi_$1_CPPFLAGS=
+    orte_check_pmi_$1_LIBS=
 
     AC_MSG_CHECKING([if user requested PMI support])
     AS_IF([test "$with_pmi" = "no"],
@@ -56,8 +57,10 @@ AC_DEFUN([ORTE_CHECK_PMI],[
            # work with slurm :-(
            AS_IF([test ! -z "$with_pmi" -a "$with_pmi" != "yes"],
                  [AS_IF([test -d "$with_pmi/lib64"],
-                        [orte_check_pmi_$1_LDFLAGS="-L$with_pmi/lib64"],
-                        [orte_check_pmi_$1_LDFLAGS="-L$with_pmi/lib"])
+                        [orte_check_pmi_$1_LDFLAGS="-L$with_pmi/lib64"
+                         orte_check_pmi_$1_LIBS="-lpmi -Wl,-rpath=$with_pmi/lib64"],
+                        [orte_check_pmi_$1_LDFLAGS="-L$with_pmi/lib"
+                         orte_check_pmi_$1_LIBS="-lpmi -Wl,-rpath=$with_pmi/lib"])
                   AS_IF([test -f "$with_pmi/include/pmi.h"],
                         [orte_check_pmi_$1_CPPFLAGS="-I$with_pmi/include"],
                         [AS_IF([test -f "$with_pmi/include/slurm/pmi.h"],
@@ -67,7 +70,7 @@ AC_DEFUN([ORTE_CHECK_PMI],[
 
            LDFLAGS="$LDFLAGS $orte_check_pmi_$1_LDFLAGS"
            CPPFLAGS="$CPPFLAGS $orte_check_pmi_$1_CPPFLAGS"
-           LIBS="$LIBS -lpmi"
+           LIBS="$LIBS $orte_check_pmi_$1_LIBS"
            orte_have_pmi_support=no
            AC_CHECK_HEADERS([pmi.h],
                             [AC_CHECK_LIB([pmi], [PMI_Init],
