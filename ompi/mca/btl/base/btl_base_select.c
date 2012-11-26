@@ -21,14 +21,18 @@
 
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
-#include "orte/util/show_help.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_component_repository.h"
-#include "ompi/mca/btl/btl.h"
-#include "ompi/mca/btl/base/base.h"
-#include "orte/mca/errmgr/errmgr.h"
 #include "opal/runtime/opal.h"
+
+#include "orte/util/show_help.h"
+#include "orte/mca/errmgr/errmgr.h"
+
+#include "ompi/mca/btl/btl.h"
+#include "ompi/mca/btl/base/btl_base_error.h"
+#include "ompi/mca/btl/base/base.h"
+
 
 OBJ_CLASS_INSTANCE( mca_btl_base_selected_module_t,
                     opal_list_item_t,
@@ -126,7 +130,7 @@ int mca_btl_base_select(bool enable_progress_threads,
                 opal_list_remove_item(&mca_btl_base_components_opened, item);
             } 
 
-            /* Otherwise, it initialized properly.  Save it. */
+            /* Otherwise, if it initialized properly, save it. */
 
             else {
                 opal_output_verbose(10, mca_btl_base_output,
@@ -134,6 +138,12 @@ int mca_btl_base_select(bool enable_progress_threads,
                                     component->btl_version.mca_component_name);
 
                 for (i = 0; i < num_btls; ++i) {
+                    /* If modules[i] is NULL, it's a developer error */
+                    if (NULL == modules[i]) {
+                        BTL_ERROR(("BTL module init of %s returned a NULL -- this should never happen, and is a developer error.  Contact the Open MPI developers.",
+                                   component->btl_version.mca_component_name));
+                        exit(1);
+                    }
                     sm = OBJ_NEW(mca_btl_base_selected_module_t);
                     if (NULL == sm) {
                         return OMPI_ERR_OUT_OF_RESOURCE;
