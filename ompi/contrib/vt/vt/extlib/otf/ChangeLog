@@ -1,6 +1,9 @@
 1.12.2openmpi
-	- replaced temporary workaround for handling bogus zlib sync. points
-	  by a more elaborated solution
+	- OTF library:
+		- replaced temporary workaround for handling bogus zlib
+		  sync. points by a more elaborated solution
+	- otfprofile:
+		- removed unnecessary '-k' option from otfshrink command
 
 1.12.1openmpi
 	- implemented workaround to avoid setting otf_errno when a false
