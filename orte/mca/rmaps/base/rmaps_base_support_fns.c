@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2011      Los Alamos National Security, LLC.
+ * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
  *                         All rights reserved. 
  * $COPYRIGHT$
  *
@@ -193,6 +193,10 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
                 OBJ_RETAIN(node);
                 opal_list_append(allocated_nodes, &node->super);
                 OBJ_DESTRUCT(&nodes);
+                if (initial_map) {
+                    /* mark the node as not in the map */
+                    node->mapped = false;
+                }
                 goto complete;
             }
         } else {
@@ -204,8 +208,13 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
             OBJ_RETAIN(node);
             opal_list_append(allocated_nodes, &node->super);
             OBJ_DESTRUCT(&nodes);
+            if (initial_map) {
+                /* mark the node as not in the map */
+                node->mapped = false;
+            }
             goto complete;
         }
+
         /** if we still don't have anything */
         if (0 == opal_list_get_size(&nodes)) {
             orte_show_help("help-orte-rmaps-base.txt",
@@ -225,25 +234,36 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
                     continue;
                 }
                 if (0 != strcmp(node->name, nptr->name)) {
+                    OPAL_OUTPUT_VERBOSE((10, orte_rmaps_base.rmaps_output,
+                                         "NODE %s DOESNT MATCH NODE %s",
+                                         node->name, nptr->name));
                     continue;
                 }
                 /* ignore nodes that are marked as do-not-use for this mapping */
                 if (ORTE_NODE_STATE_DO_NOT_USE == node->state) {
                     /* reset the state so it can be used another time */
+                    OPAL_OUTPUT_VERBOSE((10, orte_rmaps_base.rmaps_output,
+                                         "NODE %s IS MARKED NO_USE", node->name));
                     node->state = ORTE_NODE_STATE_UP;
                     continue;
                 }
                 if (ORTE_NODE_STATE_DOWN == node->state) {
+                    OPAL_OUTPUT_VERBOSE((10, orte_rmaps_base.rmaps_output,
+                                         "NODE %s IS DOWN", node->name));
                     continue;
                 }
                 if (ORTE_NODE_STATE_NOT_INCLUDED == node->state) {
                     /* not to be used */
+                    OPAL_OUTPUT_VERBOSE((10, orte_rmaps_base.rmaps_output,
+                                         "NODE %s IS MARKED NO_INCLUDE", node->name));
                     continue;
                 }
                 /* if this node wasn't included in the vm (e.g., by -host), ignore it,
                  * unless we are mapping prior to launching the vm
                  */
                 if (NULL == node->daemon && !novm) {
+                    OPAL_OUTPUT_VERBOSE((10, orte_rmaps_base.rmaps_output,
+                                         "NODE %s HAS NO DAEMON", node->name));
                     continue;
                 }
                 /* retain a copy for our use in case the item gets
@@ -292,6 +312,7 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
         /* now prune for usage and compute total slots */
         goto complete;
     }
+
 
     /* if the hnp was allocated, include it unless flagged not to */
     if (orte_hnp_is_allocated && !(ORTE_GET_MAPPING_DIRECTIVE(policy) & ORTE_MAPPING_NO_USE_LOCAL)) {
@@ -405,7 +426,7 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
     OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base.rmaps_output,
                          "%s Filtering thru apps",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-
+    
     if (ORTE_SUCCESS != (rc = orte_rmaps_base_filter_nodes(app, allocated_nodes, true))
         && ORTE_ERR_TAKE_NEXT_OPTION != rc) {
         ORTE_ERROR_LOG(rc);
@@ -430,24 +451,24 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
         node = (orte_node_t*)item;
         if (0 != node->slots_max && node->slots_inuse > node->slots_max) {
             OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base.rmaps_output,
-                                 "%s Removing node %s",
+                                 "%s Removing node %s: max %d inuse %d",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 node->name));
+                                 node->name, node->slots_max, node->slots_inuse));
             opal_list_remove_item(allocated_nodes, item);
             OBJ_RELEASE(item);  /* "un-retain" it */
-        } else if (node->slots_alloc <= node->slots_inuse &&
+        } else if (node->slots <= node->slots_inuse &&
                    (ORTE_MAPPING_NO_OVERSUBSCRIBE & ORTE_GET_MAPPING_DIRECTIVE(policy))) {
             /* remove the node as fully used */
             OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base.rmaps_output,
-                                 "%s Removing node %s",
+                                 "%s Removing node %s slots %d inuse %d",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 node->name));
+                                 node->name, node->slots, node->slots_inuse));
             opal_list_remove_item(allocated_nodes, item);
             OBJ_RELEASE(item);  /* "un-retain" it */
         } else {
-            if (node->slots_alloc > node->slots_inuse) {
+            if (node->slots > node->slots_inuse) {
                 /* add the available slots */
-                num_slots += node->slots_alloc - node->slots_inuse;
+                num_slots += node->slots - node->slots_inuse;
             } else {
                 /* always allocate at least one */
                 num_slots++;
@@ -499,7 +520,7 @@ orte_proc_t* orte_rmaps_base_setup_proc(orte_job_t *jdata,
     proc->node = node;
     proc->nodename = node->name;
     node->num_procs++;
-    if (node->slots_inuse < node->slots_alloc) {
+    if (node->slots_inuse < node->slots) {
         node->slots_inuse++;
     }
     if (0 > (rc = opal_pointer_array_add(node->procs, (void*)proc))) {
@@ -557,8 +578,8 @@ orte_node_t* orte_rmaps_base_get_starting_point(opal_list_t *node_list,
      */
     node = (orte_node_t*)cur_node_item;
     ndmin = node;
-    overload = ndmin->slots_inuse - ndmin->slots_alloc;
-    if (node->slots_inuse >= node->slots_alloc) {
+    overload = ndmin->slots_inuse - ndmin->slots;
+    if (node->slots_inuse >= node->slots) {
         /* work down the list - is there another node that
          * would not be oversubscribed?
          */
@@ -570,7 +591,7 @@ orte_node_t* orte_rmaps_base_get_starting_point(opal_list_t *node_list,
         nd1 = NULL;
         while (item != cur_node_item) {
             nd1 = (orte_node_t*)item;
-            if (nd1->slots_inuse < nd1->slots_alloc) {
+            if (nd1->slots_inuse < nd1->slots) {
                 /* this node is not oversubscribed! use it! */
                 cur_node_item = item;
                 goto process;
@@ -580,9 +601,9 @@ orte_node_t* orte_rmaps_base_get_starting_point(opal_list_t *node_list,
              * find anyone who isn't fully utilized, we will
              * start with the least used node
              */
-            if (overload >= (nd1->slots_inuse - nd1->slots_alloc)) {
+            if (overload >= (nd1->slots_inuse - nd1->slots)) {
                 ndmin = nd1;
-                overload = ndmin->slots_inuse - ndmin->slots_alloc;
+                overload = ndmin->slots_inuse - ndmin->slots;
             }
             if (item == opal_list_get_last(node_list)) {
                 item = opal_list_get_first(node_list);
@@ -596,7 +617,7 @@ orte_node_t* orte_rmaps_base_get_starting_point(opal_list_t *node_list,
          * what we already have
          */
         if (NULL != nd1 &&
-            (nd1->slots_inuse - nd1->slots_alloc) < (node->slots_inuse - node->slots_alloc)) {
+            (nd1->slots_inuse - nd1->slots) < (node->slots_inuse - node->slots)) {
             cur_node_item = (opal_list_item_t*)ndmin;
         }
     }
