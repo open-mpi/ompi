@@ -274,20 +274,20 @@ static int load_array(char ***array, const char *filename, const char *topic)
     if (OPAL_SUCCESS != (ret = open_file(filename, topic))) {
         return ret;
     }
-    if (OPAL_SUCCESS != (ret = find_topic(filename, topic))) {
-        fclose(opal_show_help_yyin);
-        return ret;
+    
+    ret = find_topic(filename, topic);
+    if (OPAL_SUCCESS == ret) {
+        ret = read_topic(array);
     }
 
-    ret = read_topic(array);
-    opal_show_help_finish_parsing();
     fclose(opal_show_help_yyin);
+    opal_show_help_yylex_destroy ();
+
     if (OPAL_SUCCESS != ret) {
         opal_argv_free(*array);
-        return ret;
     }
 
-    return OPAL_SUCCESS;
+    return ret;
 }
 
 char *opal_show_help_vstring(const char *filename, const char *topic, 

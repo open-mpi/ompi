@@ -95,7 +95,25 @@ NAME_CHAR   [A-Za-z0-9_\-\.\\\/]
 .                   { return COLL_ML_CONFIG_PARSE_ERROR; }
 %%
 
+/* Old flex (2.5.4a? and older) does not define a destroy function */
+#if !defined(YY_FLEX_SUBMINOR_VERSION)
+#define YY_FLEX_SUBMINOR_VERSION 0
+#endif
 
+#if (YY_FLEX_MAJOR_VERSION < 2) || (YY_FLEX_MAJOR_VERSION == 2 && (YY_FLEX_MINOR_VERSION < 5 || (YY_FLEX_MINOR_VERSION == 5 && YY_FLEX_SUBMINOR_VERSION < 5)))
+int coll_ml_config_yylex_destroy(void)
+{
+    if (NULL != YY_CURRENT_BUFFER) {
+        yy_delete_buffer(YY_CURRENT_BUFFER); 
+#if defined(YY_CURRENT_BUFFER_LVALUE)
+        YY_CURRENT_BUFFER_LVALUE = NULL;
+#else
+        YY_CURRENT_BUFFER = NULL;
+#endif  /* YY_CURRENT_BUFFER_LVALUE */
+    }
+    return YY_NULL;
+}
+#endif
 
 static int coll_ml_config_yywrap(void)
 {

@@ -171,17 +171,6 @@ OPAL_DECLSPEC char* opal_show_help_vstring(const char *filename,
  */
 OPAL_DECLSPEC int opal_show_help_add_dir(const char *directory);
 
-/** 
- * \internal
- *
- * Internal function to help clean up the flex parser.
- *
- * This function is called internally by the SHS to shut down the
- * flex parser since we may not hit the <<EOF>> rule and call this
- * function automatically.
- */
-OPAL_DECLSPEC int opal_show_help_finish_parsing(void);
-
 END_C_DECLS
 
 #endif
