@@ -62,8 +62,10 @@ orte_grpcomm_coll_id_t orte_grpcomm_base_get_coll_id(void)
 
 
 /***************  MODEX SECTION **************/
-int orte_grpcomm_base_modex(orte_grpcomm_collective_t *modex)
+void orte_grpcomm_base_modex(int fd, short args, void *cbdata)
 {
+    orte_grpcomm_caddy_t *caddy = (orte_grpcomm_caddy_t*)cbdata;
+    orte_grpcomm_collective_t *modex = caddy->op;
     int rc;
     orte_namelist_t *nm;
     opal_list_item_t *item;
@@ -76,7 +78,6 @@ int orte_grpcomm_base_modex(orte_grpcomm_collective_t *modex)
     
     if (0 == opal_list_get_size(&modex->participants)) {
         /* record the collective */
-        modex->active = true;
         modex->next_cbdata = modex;
         opal_list_append(&orte_grpcomm_base.active_colls, &modex->super);
 
@@ -138,7 +139,6 @@ int orte_grpcomm_base_modex(orte_grpcomm_collective_t *modex)
         /* now add the modex to the global list of active collectives */
         modex->next_cb = orte_grpcomm_base_store_peer_modex;
         modex->next_cbdata = modex;
-        modex->active = true;
         opal_list_append(&orte_grpcomm_base.active_colls, &modex->super);
 
         /* this is not amongst our peers, but rather between a select
@@ -215,10 +215,10 @@ int orte_grpcomm_base_modex(orte_grpcomm_collective_t *modex)
                          "%s grpcomm:base:modex: modex posted",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
-    return ORTE_SUCCESS;
+    return;
 
  cleanup:
-    return rc;
+    return;
 }
 
 void orte_grpcomm_base_store_peer_modex(opal_buffer_t *rbuf, void *cbdata)
