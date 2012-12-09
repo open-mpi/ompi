@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2011      Los Alamos National Security, LLC.
+ * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * $COPYRIGHT$
  *
@@ -138,3 +138,7 @@ OBJ_CLASS_INSTANCE(orte_grpcomm_collective_t,
                    opal_list_item_t,
                    collective_constructor,
                    collective_destructor);
+
+OBJ_CLASS_INSTANCE(orte_grpcomm_caddy_t,
+                   opal_object_t,
+                   NULL, NULL);
