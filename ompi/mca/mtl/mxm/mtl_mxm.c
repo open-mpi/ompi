@@ -84,6 +84,7 @@ static uint32_t ompi_mtl_mxm_get_job_id(void)
 
 int ompi_mtl_mxm_progress(void);
 
+#if MXM_API < MXM_VERSION(2, 0)
 static int ompi_mtl_mxm_get_ep_address(ompi_mtl_mxm_ep_conn_info_t *ep_info, mxm_ptl_id_t ptlid)
 {
     size_t addrlen;
@@ -91,15 +92,37 @@ static int ompi_mtl_mxm_get_ep_address(ompi_mtl_mxm_ep_conn_info_t *ep_info, mxm
 
     addrlen = sizeof(ep_info->ptl_addr[ptlid]);
     err = mxm_ep_address(ompi_mtl_mxm.ep, ptlid,
-    		(struct sockaddr *) &ep_info->ptl_addr[ptlid], &addrlen);
+                         (struct sockaddr *) &ep_info->ptl_addr[ptlid], &addrlen);
     if (MXM_OK != err) {
         orte_show_help("help-mtl-mxm.txt", "unable to extract endpoint address",
-        		true, (int)ptlid, mxm_error_string(err));
+                       true, (int)ptlid, mxm_error_string(err));
         return OMPI_ERROR;
     }
 
     return OMPI_SUCCESS;
 }
+#else
+static int ompi_mtl_mxm_get_ep_address(ompi_mtl_mxm_ep_conn_info_t *ep_info,
+                                       mxm_domain_id_t domain)
+{
+    size_t addrlen;
+    mxm_error_t err;
+
+    addrlen = sizeof(ep_info->dest_addr[domain]);
+    err = mxm_ep_address(ompi_mtl_mxm.ep, domain,
+                (struct sockaddr *) &ep_info->dest_addr[domain], &addrlen);
+    if (MXM_OK == err) {
+        ep_info->domain_bitmap |= MXM_BIT(domain);
+        return OMPI_SUCCESS;
+    } else if (MXM_ERR_UNREACHABLE == err) {
+        return OMPI_SUCCESS;
+    } else {
+        orte_show_help("help-mtl-mxm.txt", "unable to extract endpoint address",
+                        true, (int)domain, mxm_error_string(err));
+        return OMPI_ERROR;
+    }
+}
+#endif
 
 #define max(a,b) ((a)>(b)?(a):(b))
 
@@ -159,6 +182,17 @@ static mxm_error_t ompi_mtl_mxm_create_ep(mxm_h ctx, mxm_ep_h *ep, unsigned ptl_
     return err;
 }
 
+#if MXM_API >= MXM_VERSION(2,0)
+static void ompi_mtl_mxm_set_conn_req(mxm_conn_req_t *conn_req, ompi_mtl_mxm_ep_conn_info_t *ep_info,
+                                      mxm_domain_id_t domain)
+{
+    if (ep_info->domain_bitmap & MXM_BIT(domain)) {
+        conn_req->addr[domain] = (struct sockaddr *)&(ep_info->dest_addr[domain]);
+    } else {
+        conn_req->addr[domain] = NULL;
+    }
+}
+#endif
 
 int ompi_mtl_mxm_module_init(void)
 {
@@ -168,7 +202,7 @@ int ompi_mtl_mxm_module_init(void)
     uint32_t jobid;
     uint64_t mxlr;
     ompi_proc_t *mp, **procs;
-    unsigned    ptl_bitmap;
+    unsigned ptl_bitmap;
     size_t totps, proc;
     int lr, nlps;
 
@@ -210,8 +244,10 @@ int ompi_mtl_mxm_module_init(void)
     /* Setup the endpoint options and local addresses to bind to. */
 #if MXM_API < MXM_VERSION(1,5)
     ptl_bitmap = ompi_mtl_mxm.mxm_opts.ptl_bitmap;
-#else
+#elif MXM_API < MXM_VERSION(2,0)
     ptl_bitmap = ompi_mtl_mxm.mxm_opts->ptl_bitmap;
+#else
+    ptl_bitmap = 0;
 #endif
 
     /* Open MXM endpoint */
@@ -227,6 +263,7 @@ int ompi_mtl_mxm_module_init(void)
     /*
      * Get address for each PTL on this endpoint, and share it with other ranks.
      */
+#if MXM_API < MXM_VERSION(2,0)
     if ((ptl_bitmap & MXM_BIT(MXM_PTL_SELF)) &&
             OMPI_SUCCESS != ompi_mtl_mxm_get_ep_address(&ep_info, MXM_PTL_SELF)) {
     	return OMPI_ERROR;
@@ -239,6 +276,18 @@ int ompi_mtl_mxm_module_init(void)
             OMPI_SUCCESS != ompi_mtl_mxm_get_ep_address(&ep_info, MXM_PTL_SHM)) {
             return OMPI_ERROR;
     }
+#else
+    ep_info.domain_bitmap = 0;
+    if (OMPI_SUCCESS != ompi_mtl_mxm_get_ep_address(&ep_info, MXM_DOMAIN_SELF)) {
+        return OMPI_ERROR;
+    }
+    if (OMPI_SUCCESS != ompi_mtl_mxm_get_ep_address(&ep_info, MXM_DOMAIN_SHM)) {
+        return OMPI_ERROR;
+    }
+    if (OMPI_SUCCESS != ompi_mtl_mxm_get_ep_address(&ep_info, MXM_DOMAIN_IB)) {
+        return OMPI_ERROR;
+    }
+#endif
      
     /* 
      * send information using modex (in some case there is limitation on data size for example ess/pmi)
@@ -350,9 +399,15 @@ int ompi_mtl_mxm_add_procs(struct mca_mtl_base_module_t *mtl, size_t nprocs,
             free(modex_name);
         }
 
+#if MXM_API < MXM_VERSION(2,0)
         conn_reqs[i].ptl_addr[MXM_PTL_SELF] = (struct sockaddr *)&(ep_info[i].ptl_addr[MXM_PTL_SELF]);
         conn_reqs[i].ptl_addr[MXM_PTL_SHM] = (struct sockaddr *)&(ep_info[i].ptl_addr[MXM_PTL_SHM]);
         conn_reqs[i].ptl_addr[MXM_PTL_RDMA] = (struct sockaddr *)&(ep_info[i].ptl_addr[MXM_PTL_RDMA]);
+#else
+        ompi_mtl_mxm_set_conn_req(&conn_reqs[i], &ep_info[i], MXM_DOMAIN_SELF);
+        ompi_mtl_mxm_set_conn_req(&conn_reqs[i], &ep_info[i], MXM_DOMAIN_SHM);
+        ompi_mtl_mxm_set_conn_req(&conn_reqs[i], &ep_info[i], MXM_DOMAIN_IB);
+#endif
     }
 
     /* Connect to remote peers */
