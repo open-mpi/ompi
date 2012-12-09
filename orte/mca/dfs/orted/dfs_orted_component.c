@@ -24,6 +24,8 @@
 const char *orte_dfs_orted_component_version_string = 
     "ORTE DFS orted MCA component version " ORTE_VERSION;
 
+int orte_dfs_orted_num_worker_threads = 0;
+
 /*
  * Local functionality
  */
@@ -61,6 +63,11 @@ orte_dfs_base_component_t mca_dfs_orted_component =
 
 static int dfs_orted_open(void) 
 {
+    mca_base_component_t *c = &mca_dfs_orted_component.base_version;
+
+    mca_base_param_reg_int(c, "num_worker_threads",
+                           "Number of worker threads to use for processing file requests",
+                           false, false, 0, &orte_dfs_orted_num_worker_threads);
     return ORTE_SUCCESS;
 }
 
