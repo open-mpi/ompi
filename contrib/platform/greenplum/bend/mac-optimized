@@ -26,3 +26,4 @@ with_xgrid=no
 with_slurm=no
 with_jdk_bindir=/usr/bin
 with_jdk_headers=/System/Library/Frameworks/JavaVM.framework/Versions/Current/Headers
+with_mpi_param_check=no
