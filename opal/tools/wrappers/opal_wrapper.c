@@ -724,6 +724,13 @@ main(int argc, char *argv[])
                    0 == strcmp(user_argv[i], "-Wl,--static") ||
                    0 == strcmp(user_argv[i], "-Wl,-Bstatic")) {
             flags |= COMP_WANT_STATIC;
+        } else if (0 == strcmp(user_argv[i], "-dynamic") ||
+                   0 == strcmp(user_argv[i], "--dynamic") ||
+                   0 == strcmp(user_argv[i], "-Bdynamic") ||
+                   0 == strcmp(user_argv[i], "-Wl,-dynamic") ||
+                   0 == strcmp(user_argv[i], "-Wl,--dynamic") ||
+                   0 == strcmp(user_argv[i], "-Wl,-Bdynamic")) {
+            flags &= ~COMP_WANT_STATIC;
         } else if ('-' != user_argv[i][0]) {
             disable_flags = false;
             flags |= COMP_SHOW_ERROR;
