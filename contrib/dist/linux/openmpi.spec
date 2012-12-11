@@ -411,6 +411,10 @@ export CFLAGS CXXFLAGS F77FLAGS FCFLAGS
 %install
 %{__make} install DESTDIR=$RPM_BUILD_ROOT %{?mflags_install}
 
+# We've had cases of config.log being left in the installation tree.
+# We don't need that in an RPM.
+find $RPM_BUILD_ROOT -name config.log -exec rm -f {} \;
+
 # First, the [optional] modulefile
 
 %if %{install_modulefile}
@@ -511,20 +515,63 @@ EOF
 # barf.  So be super lame and dump the egrep through /bin/true -- this
 # always gives a 0 exit status.
 
-# Runtime files.  Note that the VT files are variable; if they're
-# there, then take them (e.g., VT build may have been disabled via a
-# configure option).  Do *not* include the VT wrapper compilers
+# First, find all the files
+rm -f all.files runtime.files remaining.files devel.files docs.files
 find $RPM_BUILD_ROOT -type f -o -type l | \
-   sed -e "s@$RPM_BUILD_ROOT@@" | \
-   egrep "lib.*.so|mca.*so|/vt*|/*otf*|/vampirtrace/|opari" | \
-   egrep -v '/vtcc*|/vtcxx*|/vtf77*|/vtf90*' \
-   > runtime.files | /bin/true
+   sed -e "s@$RPM_BUILD_ROOT@@" \
+   > all.files | /bin/true
 
-# Devel files, potentially including VT files
-find $RPM_BUILD_ROOT -type f -o -type l | \
-   sed -e "s@$RPM_BUILD_ROOT@@" | \
-   egrep "lib.*\.a|lib.*\.la|mpi.*mod|/vtcc*|/vtcxx*|/vtf77*|/vtf90*|*\.SPEC" \
+# Runtime files.  This should generally be library files and some
+# executables (no man pages, no doc files, no header files).  Do *not*
+# include wrapper compilers.  Note that the VT files are variable; if
+# they're there, then take them (e.g., VT build may have been disabled
+# via a configure option).
+cat all.files | egrep '/lib/|/lib64/|/lib32/|/bin/|/etc/|/help-' > tmp.files | /bin/true
+# Snip out a bunch of executables (e.g., wrapper compilers, pkgconfig
+# files, .la and .a files)
+egrep -vi 'mpic|mpif|ortec|vtc|vtfort|f77|f90|pkgconfig|\.la$|\.a$' tmp.files > runtime.files | /bin/true
+rm -f tmp.files
+
+# Now take the runtime files out of all.files so that we don't get
+# duplicates.
+grep -v -f runtime.files all.files > remaining.files
+
+# Devel files, potentially including VT files.  Basically -- just
+# exclude the man pages and doc files.
+cat remaining.files | \
+   egrep -v '/man/|/doc/' \
    > devel.files | /bin/true
+
+# Now take those files out of reaming.files so that we don't get
+# duplicates.
+grep -v -f devel.files remaining.files > docs.files
+
+#################################################
+
+# Now that we have a final list of files for each of the runtime,
+# devel, and docs RPMs, snip even a few more files out of those lists
+# because for directories that are wholly in only one RPM, we just
+# list that directory in the file lists below, and RPM will pick up
+# all files in that tree.  We therefore don't want to list any files
+# in those trees in our *.files file lists.  Additionally, the man
+# pages may get compressed by rpmbuild after this "install" step, so we
+# might not even have their final filenames, anyway.
+
+# runtime sub package
+%if !%{sysconfdir_in_prefix}
+grep -v %{_sysconfdir} runtime.files > tmp.files
+mv tmp.files runtime.files
+%endif
+grep -v %{_pkgdatadir} runtime.files > tmp.files
+mv tmp.files runtime.files
+
+# devel sub package
+grep -v %{_includedir} devel.files > tmp.files
+mv tmp.files devel.files
+
+# docs sub package
+grep -v %{_mandir} docs.files > tmp.files
+mv tmp.files docs.files
 
 %endif
 # End of build_all_in_one_rpm
@@ -649,32 +696,16 @@ test "x$RPM_BUILD_ROOT" != "x" && rm -rf $RPM_BUILD_ROOT
 %dir %{_libdir}/openmpi
 %doc README INSTALL LICENSE
 %{_pkgdatadir}
-%{_bindir}/mpirun
-%{_bindir}/mpiexec
-%{_bindir}/ompi_info
-%{_bindir}/orterun
-%{_bindir}/orted
-%{_bindir}/ompi-server
-%{_bindir}/orte-clean
-%{_bindir}/orte-iof
-%{_bindir}/orte-ps
 
 %files devel -f devel.files
 %defattr(-, root, root, -)
 %{_includedir}
-%{_bindir}/mpicc
-%{_bindir}/mpiCC
-%{_bindir}/mpic++
-%{_bindir}/mpicxx
-%{_bindir}/mpif77
-%{_bindir}/mpif90
-%{_bindir}/opal_wrapper
 
 # Note that we list the mandir specifically here, because we want all
 # files found in that tree, because rpmbuild may have compressed them
 # (e.g., foo.1.gz or foo.1.bz2) -- and we therefore don't know the
 # exact filenames.
-%files docs
+%files docs -f docs.files
 %defattr(-, root, root, -)
 %{_mandir}
 
@@ -687,6 +718,19 @@ test "x$RPM_BUILD_ROOT" != "x" && rm -rf $RPM_BUILD_ROOT
 #
 #############################################################################
 %changelog
+* Tue Dec 11 2012 Jeff Squyres <jsquyres@cisco.com>
+- Re-release 1.6.0-1.6.3 SRPMs (with new SRPM Release numbers) with
+  patch for VampirTrace's configure script to make it install the
+  private "libtool" script in the right location (the script is used
+  to build user VT applications).
+- Update the regexps/methodology used to generate the lists of files
+  in the multi-RPM sub-packages; it's been broken for a little while.
+- No longer explicitly list the bin dir executables in the multi-RPM
+  sub-packages
+- Per https://svn.open-mpi.org/trac/ompi/ticket/3382, remove all files
+  named "config.log" from the install tree so that we can use this
+  spec file to re-release all OMPI v1.6.x SRPMs.
+
 * Wed Jun 27 2012 Jeff Squyres <jsquyres@cisco.com>
 - Remove the "ofed" and "munge_build_into_install" options, because
   OFED no longer distributes MPI implementations.  Yay!
