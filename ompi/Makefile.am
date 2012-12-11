@@ -138,7 +138,7 @@ libmpi_la_LIBADD = \
         $(MCA_ompi_FRAMEWORK_LIBS) \
         $(OMPI_MPIEXT_C_LIBS) \
         $(OMPI_LIBMPI_EXTRA_LIBS) \
-        $(top_ompi_builddir)/orte/libopen-rte-lt.la
+        $(top_ompi_builddir)/orte/libopen-rte.la
 libmpi_la_DEPENDENCIES = $(libmpi_la_LIBADD)
 libmpi_la_LDFLAGS = \
        -version-info $(libmpi_so_version) \
