@@ -1,0 +1,12 @@
+--- openmpi-1.6.1/ompi/contrib/vt/vt/configure  2012-08-22 16:23:05.000000000 +0200
++++ openmpi-1.6.1-patched/ompi/contrib/vt/vt/configure  2012-11-27 13:40:02.641069147 +0100
+@@ -4669,6 +4669,9 @@
+ if test x"$inside_openmpi" != "xno" -o "$includedir" = "\${prefix}/include"; then :
+   includedir="$includedir/vampirtrace"
+ fi
++if test x"$inside_openmpi" != "xno" -a "$datadir" != "\${datarootdir}"; then :
++  datadir="$datadir/vampirtrace"
++fi
+ if test x"$inside_openmpi" != "xno" -o "$datarootdir" = "\${prefix}/share"; then :
+   datarootdir="$datarootdir/vampirtrace"
+ fi

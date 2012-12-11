@@ -3,7 +3,7 @@
 # Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
 #                         University Research and Technology
 #                         Corporation.  All rights reserved.
-# Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
 # 
 
 #
@@ -13,7 +13,7 @@
 #
 
 
-specfile="openmpi.spec"
+specfile=${specfile:-"openmpi.spec"}
 prefix=${prefix:-"/opt/openmpi"}
 rpmbuild_options=${rpmbuild_options:-"--define 'mflags -j4' --define '_source_filedigest_algorithm md5'  --define '_binary_filedigest_algorithm md5'"}
 configure_options=${configure_options:-""}
@@ -148,10 +148,14 @@ fi
 echo "--> Have write access to $rpmtopdir/SOURCES"
 
 #
-# move the tarball file to the rpm directory
+# copy the tarball file to the rpm directory
 #
 
 cp $tarball $rpmtopdir/SOURCES
+patches=`egrep -i 'patch[0-9]+:' $specfile | cut -d: -f2`
+for p in $patches; do
+    cp `dirname $tarball`/$p $rpmtopdir/SOURCES
+done
 
 #
 # Print out the compilers
@@ -278,7 +282,8 @@ cat <<EOF
 ====                FINISHED BUILDING Open MPI RPM                        ====
 ------------------------------------------------------------------------------
 A copy of the tarball is located in: $rpmtopdir/SOURCES/
-The completed rpms are located in:   $rpmtopdir/RPMS/i<something>86/
+The built rpms are located in:       $rpmtopdir/RPMS/i<something>86/ or
+                                     $rpmtopdir/RPMS/x86_64/ or
 The sources rpms are located in:     $rpmtopdir/SRPMS/
 The spec files are located in:       $rpmtopdir/SPECS/
 ------------------------------------------------------------------------------

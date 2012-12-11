@@ -225,11 +225,12 @@
 
 Summary: A powerful implementaion of MPI
 Name: %{?_name:%{_name}}%{!?_name:openmpi}
-Version: $VERSION
-Release: 1
+Version: 1.6
+Release: 3
 License: BSD
 Group: Development/Libraries
 Source: openmpi-%{version}.tar.$EXTENSION
+Patch1: vt-datadir-fix-1.6.0.diff
 Packager: %{?_packager:%{_packager}}%{!?_packager:%{_vendor}}
 Vendor: %{?_vendorinfo:%{_vendorinfo}}%{!?_vendorinfo:%{_vendor}}
 Distribution: %{?_distribution:%{_distribution}}%{!?_distribution:%{_vendor}}
@@ -340,6 +341,7 @@ This subpackage provides the documentation for Open MPI.
 rm -rf $RPM_BUILD_ROOT
 
 %setup -q -n openmpi-%{version}
+%patch1 -p1
 
 #############################################################################
 #

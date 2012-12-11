@@ -1,0 +1,12 @@
+--- openmpi-1.6/ompi/contrib/vt/vt/configure    2012-05-10 17:12:36.000000000 +0200
++++ openmpi-1.6-patched/ompi/contrib/vt/vt/configure    2012-11-27 11:05:07.274975903 +0100
+@@ -4719,6 +4719,9 @@
+ if test x"$inside_openmpi" = "xyes" -o "$includedir" = "\${prefix}/include"; then :
+   includedir="$includedir/vampirtrace"
+ fi
++if test x"$inside_openmpi" != "xno" -a "$datadir" != "\${datarootdir}"; then :
++  datadir="$datadir/vampirtrace"
++fi
+ if test x"$inside_openmpi" = "xyes" -o "$datarootdir" = "\${prefix}/share"; then :
+   datarootdir="$datarootdir/vampirtrace"
+ fi
