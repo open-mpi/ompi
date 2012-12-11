@@ -17,6 +17,13 @@ $HEADER$
 
 ===========================================================================
 
+Note that you probably want to download the latest release of the SRPM
+for any given Open MPI version.  The SRPM release number is the
+version after the dash in the SRPM filename.  For example,
+"openmpi-1.6.3-2.src.rpm" is the 2nd release of the SRPM for Open MPI
+v1.6.3.  Subsequent releases of SRPMs typically contain bug fixes for
+the RPM packaging, but not Open MPI itself.
+
 The buildrpm.sh script takes a single argument -- a filename pointing
 to an Open MPI tarball (may be either .gz or .bz2).  It will create
 one or more RPMs from this tarball:
