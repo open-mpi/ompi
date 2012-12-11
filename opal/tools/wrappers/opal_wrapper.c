@@ -79,9 +79,6 @@ struct options_data_t {
     char **comp_flags_prefix;
     char **link_flags;
     char **libs;
-    char **libs_static;
-    char *dyn_lib_file;
-    char *static_lib_file;
     char *req_file;
     char *path_includedir;
     char *path_libdir;
@@ -103,7 +100,6 @@ static int default_data_idx = -1;
 #define COMP_WANT_COMPILE  0x010
 #define COMP_WANT_LINK     0x020
 #define COMP_WANT_PMPI     0x040
-#define COMP_WANT_STATIC   0x080
 
 static void
 options_data_init(struct options_data_t *data)
@@ -128,10 +124,6 @@ options_data_init(struct options_data_t *data)
     data->link_flags[0] = NULL;
     data->libs = (char **) malloc(sizeof(char*));
     data->libs[0] = NULL;
-    data->libs_static = (char **) malloc(sizeof(char*));
-    data->libs_static[0] = NULL;
-    data->dyn_lib_file = NULL;
-    data->static_lib_file = NULL;
     data->req_file = NULL;
     data->path_includedir = NULL;
     data->path_libdir = NULL;
@@ -157,9 +149,6 @@ options_data_free(struct options_data_t *data)
     opal_argv_free(data->comp_flags_prefix);
     opal_argv_free(data->link_flags);
     opal_argv_free(data->libs);
-    opal_argv_free(data->libs_static);
-    if (NULL != data->dyn_lib_file) free(data->dyn_lib_file);
-    if (NULL != data->static_lib_file) free(data->static_lib_file);
     if (NULL != data->req_file) free(data->req_file);
     if (NULL != data->path_includedir) free(data->path_includedir);
     if (NULL != data->path_libdir) free(data->path_libdir);
@@ -334,16 +323,6 @@ data_callback(const char *key, const char *value)
                          opal_argv_count(options_data[parse_options_idx].libs),
                          values);
         opal_argv_free(values);
-    } else if (0 == strcmp(key, "libs_static")) {
-        char **values = opal_argv_split(value, ' ');
-        opal_argv_insert(&options_data[parse_options_idx].libs_static,
-                         opal_argv_count(options_data[parse_options_idx].libs_static),
-                         values);
-        opal_argv_free(values);
-    } else if (0 == strcmp(key, "dyn_lib_file")) {
-        if (NULL != value) options_data[parse_options_idx].dyn_lib_file = strdup(value);
-    } else if (0 == strcmp(key, "static_lib_file")) {
-        if (NULL != value) options_data[parse_options_idx].static_lib_file = strdup(value);
     } else if (0 == strcmp(key, "required_file")) {
         if (NULL != value) options_data[parse_options_idx].req_file = strdup(value);
     } else if (0 == strcmp(key, "project_short")) {
@@ -717,20 +696,6 @@ main(int argc, char *argv[])
             /* remove element from user_argv */
             opal_argv_delete(&user_argc, &user_argv, i, 1);
             --i;
-        } else if (0 == strcmp(user_argv[i], "-static") ||
-                   0 == strcmp(user_argv[i], "--static") ||
-                   0 == strcmp(user_argv[i], "-Bstatic") ||
-                   0 == strcmp(user_argv[i], "-Wl,-static") ||
-                   0 == strcmp(user_argv[i], "-Wl,--static") ||
-                   0 == strcmp(user_argv[i], "-Wl,-Bstatic")) {
-            flags |= COMP_WANT_STATIC;
-        } else if (0 == strcmp(user_argv[i], "-dynamic") ||
-                   0 == strcmp(user_argv[i], "--dynamic") ||
-                   0 == strcmp(user_argv[i], "-Bdynamic") ||
-                   0 == strcmp(user_argv[i], "-Wl,-dynamic") ||
-                   0 == strcmp(user_argv[i], "-Wl,--dynamic") ||
-                   0 == strcmp(user_argv[i], "-Wl,-Bdynamic")) {
-            flags &= ~COMP_WANT_STATIC;
         } else if ('-' != user_argv[i][0]) {
             disable_flags = false;
             flags |= COMP_SHOW_ERROR;
@@ -828,66 +793,10 @@ main(int argc, char *argv[])
 
     /* link flags and libs */
     if (flags & COMP_WANT_LINK) {
-        bool have_static_lib;
-        bool have_dyn_lib;
-        bool use_static_libs;
-        char *filename;
-        struct stat buf;
-
         opal_argv_insert(&exec_argv, exec_argc, options_data[user_data_idx].link_flags);
         exec_argc = opal_argv_count(exec_argv);
 
-        /* Are we linking statically?  If so, decide what libraries to
-           list.  It depends on two factors:
-
-           1. Was --static (etc.) specified?
-           2. Does OMPI have static, dynamic, or both libraries installed?
-
-           Here's a matrix showing what we'll do in all 6 cases:
-
-           What's installed    --static    no --static
-           ----------------    ----------  -----------
-           ompi .so libs       -lmpi       -lmpi
-           ompi .a libs        all         all
-           ompi both libs      all         -lmpi
-
-        */
-
-        filename = opal_os_path( false, options_data[user_data_idx].path_libdir, options_data[user_data_idx].static_lib_file, NULL );
-        if (0 == stat(filename, &buf)) {
-            have_static_lib = true;
-        } else {
-            have_static_lib = false;
-        }
-
-        filename = opal_os_path( false, options_data[user_data_idx].path_libdir, options_data[user_data_idx].dyn_lib_file, NULL );
-        if (0 == stat(filename, &buf)) {
-            have_dyn_lib = true;
-        } else {
-            have_dyn_lib = false;
-        }
-
-        /* Determine which set of libs to use: dynamic or static.  Be
-           pedantic to make the code easy to read. */
-        if (flags & COMP_WANT_STATIC) {
-            if (have_static_lib) {
-                use_static_libs = true;
-            } else {
-                use_static_libs = false;
-            }
-        } else {
-            if (have_dyn_lib) {
-                use_static_libs = false;
-            } else {
-                use_static_libs = true;
-            }
-        }
-
-        if (use_static_libs) {
-            opal_argv_insert(&exec_argv, exec_argc, options_data[user_data_idx].libs_static);
-        } else {
-            opal_argv_insert(&exec_argv, exec_argc, options_data[user_data_idx].libs);
-        }
+        opal_argv_insert(&exec_argv, exec_argc, options_data[user_data_idx].libs);
         exec_argc = opal_argv_count(exec_argv);
     }
 
