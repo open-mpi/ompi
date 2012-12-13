@@ -42,15 +42,15 @@ int mca_btl_vader_send (struct mca_btl_base_module_t *btl,
     mca_btl_vader_frag_t *frag = (mca_btl_vader_frag_t *) descriptor;
 
     if (frag->hdr->flags & MCA_BTL_VADER_FLAG_FBOX) {
-        mca_btl_vader_fbox_send (frag->segment.seg_addr.pval, tag, frag->segment.seg_len);
+        mca_btl_vader_fbox_send (frag->segments[0].seg_addr.pval, tag, frag->segments[0].seg_len);
 
         mca_btl_vader_frag_complete (frag);
 
         return 1;
     }
 
-    /* available header space */
-    frag->hdr->len = frag->segment.seg_len;
+    /* header (+ optional inline data) */
+    frag->hdr->len = frag->segments[0].seg_len;
     /* type of message, pt-2-pt, one-sided, etc */
     frag->hdr->tag = tag;
 

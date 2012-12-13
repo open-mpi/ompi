@@ -526,14 +526,14 @@ mca_btl_base_descriptor_t *mca_btl_vader_alloc(struct mca_btl_base_module_t *btl
     }
 
     if (OPAL_LIKELY(frag != NULL)) {
-        frag->segment.seg_len  = size;
+        frag->segments[0].seg_len  = size;
         frag->endpoint         = endpoint;
 
         frag->base.des_flags   = flags;
         frag->base.order       = order;
-        frag->base.des_src     = &frag->segment;
+        frag->base.des_src     = frag->segments;
         frag->base.des_src_cnt = 1;
-        frag->base.des_dst     = &frag->segment;
+        frag->base.des_dst     = frag->segments;
         frag->base.des_src_cnt = 1;
     }
 
@@ -570,10 +570,10 @@ struct mca_btl_base_descriptor_t *vader_prepare_dst(struct mca_btl_base_module_t
     
     opal_convertor_get_current_pointer (convertor, (void **) &data_ptr);
 
-    frag->segment.seg_addr.lval = (uint64_t)(uintptr_t) data_ptr;
-    frag->segment.seg_len       = *size;
+    frag->segments[0].seg_addr.lval = (uint64_t)(uintptr_t) data_ptr;
+    frag->segments[0].seg_len       = *size;
     
-    frag->base.des_dst     = &frag->segment;
+    frag->base.des_dst     = frag->segments;
     frag->base.des_dst_cnt = 1;
     frag->base.order       = order;
     frag->base.des_flags   = flags;
@@ -614,7 +614,7 @@ static struct mca_btl_base_descriptor_t *vader_prepare_src (struct mca_btl_base_
 
             iov.iov_len = *size;
             iov.iov_base =
-                (IOVBASE_TYPE *)(((uintptr_t)(frag->segment.seg_addr.pval)) +
+                (IOVBASE_TYPE *)(((uintptr_t)(frag->segments[0].seg_addr.pval)) +
                                  reserve);
 
             rc = opal_convertor_pack (convertor, &iov, &iov_count, size);
@@ -623,7 +623,8 @@ static struct mca_btl_base_descriptor_t *vader_prepare_src (struct mca_btl_base_
                 return NULL;
             }
 
-            frag->segment.seg_len = reserve + *size;
+            frag->segments[0].seg_len = reserve + *size;
+            frag->base.des_src_cnt = 1;
         } else {
             (void) MCA_BTL_VADER_FRAG_ALLOC_USER(frag);
             if (OPAL_UNLIKELY(NULL == frag)) {
@@ -632,15 +633,16 @@ static struct mca_btl_base_descriptor_t *vader_prepare_src (struct mca_btl_base_
 
             if ((*size + reserve) > (size_t) mca_btl_vader_max_inline_send) {
                 /* single copy send */
-                /* pack the iovec after the reserved memory */
-                lcl_mem = (struct iovec *) ((uintptr_t)frag->segment.seg_addr.pval + reserve);
-
                 frag->hdr->flags = MCA_BTL_VADER_FLAG_SINGLE_COPY;
 
-                lcl_mem->iov_base = data_ptr;
-                lcl_mem->iov_len  = *size;
+                /* set up single copy io vector */
+                frag->hdr->sc_iov.iov_base = data_ptr;
+                frag->hdr->sc_iov.iov_len  = *size;
 
-                frag->segment.seg_len = reserve;
+                frag->segments[0].seg_len = reserve;
+                frag->segments[1].seg_len = *size;
+                frag->segments[1].seg_addr.pval = data_ptr;
+                frag->base.des_src_cnt = 2;
             } else {
                 /* inline send */
 
@@ -649,13 +651,14 @@ static struct mca_btl_base_descriptor_t *vader_prepare_src (struct mca_btl_base_
 
                 if (fbox_ptr) {
                     frag->hdr->flags |= MCA_BTL_VADER_FLAG_FBOX;
-                    frag->segment.seg_addr.pval = fbox_ptr;
+                    frag->segments[0].seg_addr.pval = fbox_ptr;
                 }
 
                 /* NTH: the covertor adds some latency so we bypass it here */
-                vader_memmove ((void *)((uintptr_t)frag->segment.seg_addr.pval + reserve),
+                vader_memmove ((void *)((uintptr_t)frag->segments[0].seg_addr.pval + reserve),
                                data_ptr, *size);
-                frag->segment.seg_len = reserve + *size;
+                frag->segments[0].seg_len = reserve + *size;
+                frag->base.des_src_cnt = 1;
             }
         }
     } else {
@@ -665,12 +668,12 @@ static struct mca_btl_base_descriptor_t *vader_prepare_src (struct mca_btl_base_
             return NULL;
         }
 
-        frag->segment.seg_addr.lval = (uint64_t)(uintptr_t) data_ptr;
-        frag->segment.seg_len       = reserve + *size;
+        frag->segments[0].seg_addr.lval = (uint64_t)(uintptr_t) data_ptr;
+        frag->segments[0].seg_len       = reserve + *size;
+        frag->base.des_src_cnt = 1;
     }
 
-    frag->base.des_src     = &frag->segment;
-    frag->base.des_src_cnt = 1;
+    frag->base.des_src     = frag->segments;
     frag->base.order       = order;
     frag->base.des_flags   = flags;
 

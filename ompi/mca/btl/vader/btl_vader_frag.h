@@ -38,6 +38,7 @@ struct mca_btl_vader_hdr_t {
     int flags;              /* vader send flags */
     int my_smp_rank;        /* smp rank of owning process */
     size_t len;             /* length of data following this header */
+    struct iovec sc_iov;    /* io vector containing pointer to single-copy data */
 };
 typedef struct mca_btl_vader_hdr_t mca_btl_vader_hdr_t;
 
@@ -46,7 +47,7 @@ typedef struct mca_btl_vader_hdr_t mca_btl_vader_hdr_t;
  */
 struct mca_btl_vader_frag_t {
     mca_btl_base_descriptor_t base;
-    mca_btl_base_segment_t segment;
+    mca_btl_base_segment_t segments[2];
     struct mca_btl_base_endpoint_t *endpoint;
     mca_btl_vader_hdr_t *hdr; /* in the shared memory region */
     ompi_free_list_t *my_list;
@@ -65,7 +66,7 @@ static inline int mca_btl_vader_frag_alloc (mca_btl_vader_frag_t **frag, ompi_fr
     if (OPAL_LIKELY(NULL != item)) {
         (*frag)->hdr->complete = false;
         (*frag)->hdr->flags = MCA_BTL_VADER_FLAG_INLINE;
-        (*frag)->segment.seg_addr.pval = (char *)((*frag)->hdr + 1);
+        (*frag)->segments[0].seg_addr.pval = (char *)((*frag)->hdr + 1);
         (*frag)->my_list = list;
     }
 
