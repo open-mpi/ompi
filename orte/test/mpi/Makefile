@@ -11,13 +11,12 @@ hello_show_help: hello_show_help.c
 	$(CC) $(CFLAGS) $(CFLAGS_INTERNAL) $^ -o $@
 
 CC = mpicc
-CFLAGS = -g
+CFLAGS = -g --openmpi:linkall
 CFLAGS_INTERNAL = -I../../.. -I../../../orte/include -I../../../opal/include
-CXX = mpic++
+CXX = mpic++ --openmpi:linkall
 CXXFLAGS = -g
-F77 = mpif77
-FC = mpif90
-FFLAGS = -g
+FC = mpifort -openmpi:linkall
+FCFLAGS = -g
 
 clean:
 	rm -f $(PROGS) *~
