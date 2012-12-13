@@ -294,14 +294,13 @@ static int mca_btl_vader_component_progress (void)
     mca_btl_active_message_callback_t *reg;
     mca_btl_vader_frag_t frag;
     mca_btl_vader_hdr_t *hdr;
-    mca_btl_base_segment_t segments[2];
     mca_mpool_base_registration_t *xpmem_reg = NULL;
-
-    /* check for messages in fast boxes */
-    mca_btl_vader_check_fboxes ();
 
     /* check active sends for completion */
     mca_btl_vader_progress_sends ();
+
+    /* check for messages in fast boxes */
+    mca_btl_vader_check_fboxes ();
 
     /* poll the fifo once */
     hdr = vader_fifo_read (fifo);
@@ -310,19 +309,16 @@ static int mca_btl_vader_component_progress (void)
     }
 
     reg = mca_btl_base_active_message_trigger + hdr->tag;
-    frag.base.des_dst     = segments;
-
-    segments[0].seg_addr.pval = (void *) (hdr + 1);
-    segments[0].seg_len       = hdr->len;
+    frag.base.des_dst     = frag.segments;
+    frag.segments[0].seg_addr.pval = (void *) (hdr + 1);
+    frag.segments[0].seg_len       = hdr->len;
 
     if (OPAL_UNLIKELY(hdr->flags & MCA_BTL_VADER_FLAG_SINGLE_COPY)) {
-        struct iovec *rem_mem = (struct iovec *) ((uintptr_t)segments[0].seg_addr.pval + hdr->len);
+        xpmem_reg = vader_get_registation (hdr->my_smp_rank, hdr->sc_iov.iov_base,
+                                           hdr->sc_iov.iov_len, 0);
 
-        xpmem_reg = vader_get_registation (hdr->my_smp_rank, rem_mem->iov_base,
-                                           rem_mem->iov_len, 0);
-
-        segments[1].seg_addr.pval = vader_reg_to_ptr (xpmem_reg, rem_mem->iov_base);
-        segments[1].seg_len       = rem_mem->iov_len;
+        frag.segments[1].seg_addr.pval = vader_reg_to_ptr (xpmem_reg, hdr->sc_iov.iov_base);
+        frag.segments[1].seg_len       = hdr->sc_iov.iov_len;
 
         /* recv upcall */
         frag.base.des_dst_cnt = 2;
