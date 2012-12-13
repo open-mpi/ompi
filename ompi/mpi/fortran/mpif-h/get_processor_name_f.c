@@ -92,8 +92,8 @@ void ompi_get_processor_name_f(char *name, MPI_Fint *resultlen, MPI_Fint *ierr,
         if (OMPI_SUCCESS != (ret = ompi_fortran_string_c2f(c_name, name,
                                                            name_len))) {
             ierr_c = OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, ret, FUNC_NAME);
-            if (NULL != ierr) *ierr = OMPI_INT_2_FINT(ierr_c);
-            return;
         }
     }
+
+    if (NULL != ierr) *ierr = OMPI_INT_2_FINT(ierr_c);
 }
