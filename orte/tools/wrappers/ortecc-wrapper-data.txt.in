@@ -17,6 +17,10 @@ preprocessor_flags=@ORTE_WRAPPER_EXTRA_CPPFLAGS@
 compiler_flags_prefix=@ORTE_WRAPPER_EXTRA_CFLAGS_PREFIX@
 compiler_flags=@ORTE_WRAPPER_EXTRA_CFLAGS@
 linker_flags=@ORTE_WRAPPER_EXTRA_LDFLAGS@
+# Note that per https://svn.open-mpi.org/trac/ompi/ticket/3422, we
+# intentionally always link in open-pal and open-rte in
+# ortecc/ortec++ because we intend ORTE applications to use both the
+# ORTE and OPAL APIs.
 libs=-lopen-rte @ORTE_WRAPPER_EXTRA_LIBS@ -lopen-pal @OPAL_WRAPPER_EXTRA_LIBS@
 libs_static=-lopen-rte @ORTE_WRAPPER_EXTRA_LIBS@ -lopen-pal @OPAL_WRAPPER_EXTRA_LIBS@
 dyn_lib_file=libopen-rte.@OPAL_DYN_LIB_SUFFIX@

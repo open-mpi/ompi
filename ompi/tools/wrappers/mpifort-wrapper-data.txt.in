@@ -17,6 +17,10 @@ extra_includes=
 preprocessor_flags=
 compiler_flags=@OMPI_WRAPPER_EXTRA_FCFLAGS@ 
 linker_flags=@OMPI_WRAPPER_EXTRA_LDFLAGS@
+# Note that per https://svn.open-mpi.org/trac/ompi/ticket/3422, we
+# intentionally only link in the MPI libraries (ORTE, OPAL, etc. are
+# pulled in implicitly) because we intend MPI applications to only use
+# the MPI API.
 libs=@OMPI_FORTRAN_USEMPIF08_LIB@ @OMPI_FORTRAN_USEMPI_LIB@ -lmpi_mpifh -lmpi -lopen-rte -lopen-pal @OMPI_WRAPPER_EXTRA_LIBS@
 libs_static=@OMPI_FORTRAN_USEMPIF08_LIB@ @OMPI_FORTRAN_USEMPI_LIB@ -lmpi_mpifh -lmpi @OMPI_WRAPPER_EXTRA_LIBS@ -lopen-rte @ORTE_WRAPPER_EXTRA_LIBS@ -lopen-pal @OPAL_WRAPPER_EXTRA_LIBS@
 dyn_lib_file=libmpi.@OPAL_DYN_LIB_SUFFIX@
