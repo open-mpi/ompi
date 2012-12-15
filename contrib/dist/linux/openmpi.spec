@@ -742,7 +742,7 @@ test "x$RPM_BUILD_ROOT" != "x" && rm -rf $RPM_BUILD_ROOT
   RHEL 5.x.
 
 * Fri Feb 17 2012 Jeff Squyres <jsquyres@cisco.com>
-- Removed OSCAR define; that project is long gone.
+- Removed OSCAR define.
 - If use_mpi_selector==1, then also set install_shell_scripts to 1.
 - Change modules default RPM name and modulefiles path to the defaults
   on RHEL6.
