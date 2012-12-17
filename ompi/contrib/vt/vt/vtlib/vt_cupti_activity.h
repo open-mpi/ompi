@@ -19,6 +19,8 @@
 # define EXTERN extern
 #endif
 
+#include "vt_cupti_common.h"    /* CUPTI common structures, functions, etc. */
+
 /* 
  * Initialize the VampirTrace CUPTI Activity implementation.
  */
@@ -30,14 +32,15 @@ EXTERN void vt_cupti_activity_init(void);
 EXTERN void vt_cupti_activity_finalize(void);
 
 /*
- * Create and add a new context to list of contexts.
+ * Setup a the VampirTrace CUPTI activity context. Trigger initialization and 
+ * enqueuing of the CUPTI activity buffer for the given context.
  * 
- * @param cuCtx the CUDA context, specifying the queue
+ * @param vtCtx the VampirTrace CUPTI context
  */
-EXTERN void vt_cuptiact_addContext(CUcontext cuCtx, CUdevice cuDev);
+EXTERN void vt_cuptiact_setupActivityContext(vt_cupti_ctx_t *vtCtx);
 
 /*
- * Handle activities buffered by CUPTI. 
+ * Handle activities buffered by CUPTI. Lock a call to this routine!!!
  * 
  * NVIDIA:
  * "Global Queue: The global queue collects all activity records that
@@ -55,9 +58,10 @@ EXTERN void vt_cuptiact_addContext(CUcontext cuCtx, CUdevice cuDev);
  * activity records associated with the stream. A buffer is enqueued
  * in a stream queue by specifying a context and a non-zero stream ID."
  * 
- * @param cuCtx CUDA context, NULL to handle globally buffered activities
+ * @param vtCtx VampirTrace CUPTI context, NULL to handle globally buffered 
+ * activities
  */
-EXTERN void vt_cuptiact_flushCtxActivities(CUcontext cuCtx);
+EXTERN void vt_cuptiact_flushCtxActivities(vt_cupti_ctx_t *cuCtx);
 
 /*
  * Mark a CUDA stream as destroyed, so that it can be reused afterwards.
@@ -84,6 +88,15 @@ EXTERN void vt_cuptiact_writeFree(uint32_t ctxID, CUcontext cuCtx,
 EXTERN void vt_cuptiact_addCorrelation(uint32_t ctxID, uint32_t correlationID, 
                                        uint32_t ptid);
 
+#if (defined(CUPTI_API_VERSION) && (CUPTI_API_VERSION >= 3))
+/*
+ * Enable tracing of concurrent kernels. Disable normal kernel tracing, if 
+ * necessary.
+ * 
+ * @param vtCtx pointer to the VampirTrace CUPTI context.
+ */
+EXTERN void vt_cuptiact_enableConcurrentKernel(vt_cupti_ctx_t *vtCtx);
+#endif
 
 #endif	/* VT_CUPTI_ACTIVITY_H */
 

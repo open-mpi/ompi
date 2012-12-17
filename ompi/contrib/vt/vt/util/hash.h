@@ -32,9 +32,7 @@
 #ifndef _HASH_H
 #define _HASH_H
 
-#ifdef HAVE_CONFIG_H
-# include "config.h"                          /* defines WORDS_BIGENDIAN etc */
-#endif /* HAVE_CONFIG_H */
+#include "config.h"            /* defines WORDS_BIGENDIAN (and 'inline') etc */
 
 #include "vt_inttypes.h"                             /* defines uint32_t etc */
 

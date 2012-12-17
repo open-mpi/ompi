@@ -28,9 +28,9 @@
 #include "vt_iowrap.h"
 #include "vt_metric.h"
 
-#if !(defined(HAVE_DECL_LONG_LONG) && HAVE_DECL_LONG_LONG)
+#if !(defined(HAVE_LONG_LONG) && HAVE_LONG_LONG)
 # define long_long long long
-#endif /* HAVE_DECL_LONG_LONG */
+#endif /* HAVE_LONG_LONG */
 
 #if PAPI_VER_CURRENT >= PAPI_VERSION_NUMBER(3,9,0,0)
 # define PAPIC

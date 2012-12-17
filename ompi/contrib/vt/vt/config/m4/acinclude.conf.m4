@@ -288,10 +288,6 @@ AC_DEFUN([ACVT_CONF_SUMMARY],
 		[answer="yes"], [answer="no"])
 		echo "  Build Resource usage trace support:        $answer"
 
-		AS_IF([test x"$have_memhooks" = "xyes"],
-		[answer="yes"], [answer="no"])
-		echo "  Build GLIBC's memory alloc. trace support: $answer"
-
 		AS_IF([test x"$have_getcpu" = "xyes"],
 		[answer="yes"], [answer="no"])
 		echo "  Build GLIBC's CPU ID trace support:        $answer"
@@ -299,18 +295,22 @@ AC_DEFUN([ACVT_CONF_SUMMARY],
 		AS_IF([test x"$have_libwrap" = "xyes"],
 		[
 			answer=
-				AS_IF([test x"$have_libcwrap" = "xyes"],
+				AS_IF([test x"$have_execwrap" = "xyes"],
 				[AS_IF([test x"$answer" != x],
-				 [answer="$answer, LIBC"],
-				 [answer="LIBC"])])
+				 [answer="$answer, LIBC-EXEC"],
+				 [answer="LIBC-EXEC"])])
 				AS_IF([test x"$have_iowrap" = "xyes"],
 				[AS_IF([test x"$answer" != x],
 				 [answer="$answer, LIBC-I/O"],
 				 [answer="LIBC-I/O"])])
+				AS_IF([test x"$have_mallocwrap" = "xyes"],
+				[AS_IF([test x"$answer" != x],
+				 [answer="$answer, LIBC-MALLOC"],
+				 [answer="LIBC-MALLOC"])])
 				AS_IF([test x"$have_cudartwrap" = "xyes"],
 				[AS_IF([test x"$answer" != x],
-				 [answer="$answer, CUDA"],
-				 [answer="CUDA"])])
+				 [answer="$answer, CUDA-RT"],
+				 [answer="CUDA-RT"])])
 			answer="yes ($answer)"
 		], [answer="no"])
 		echo "  Build Library trace support:               $answer"

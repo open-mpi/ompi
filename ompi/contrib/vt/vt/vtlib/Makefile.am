@@ -152,18 +152,12 @@ LIBWRAPSOURCES =
 LIBWRAPCFLAGS =
 endif
 
-if AMBUILDLIBCWRAP
-LIBCWRAPSOURCES = vt_libcwrap.c
-LIBCWRAPCFLAGS = -DVT_LIBCWRAP
+if AMBUILDEXECWRAP
+EXECWRAPSOURCES = vt_execwrap.c
+EXECWRAPCFLAGS = -DVT_EXECWRAP
 else
-LIBCWRAPSOURCES =
-LIBCWRAPCFLAGS =
-endif
-
-if AMHAVEFORK
-FORKSOURCES = vt_fork.c
-else
-FORKSOURCES =
+EXECWRAPSOURCES =
+EXECWRAPCFLAGS =
 endif
 
 if AMBUILDIOWRAP
@@ -172,6 +166,14 @@ IOWRAPCFLAGS = -DVT_IOWRAP
 else
 IOWRAPSOURCES =
 IOWRAPCFLAGS =
+endif
+
+if AMBUILDMALLOCWRAP
+MALLOCWRAPSOURCES = vt_mallocwrap.c
+MALLOCWRAPCFLAGS = -DVT_MALLOCWRAP
+else
+MALLOCWRAPSOURCES =
+MALLOCWRAPCFLAGS =
 endif
 
 if AMHAVEGPU
@@ -202,8 +204,8 @@ endif
 endif
 
 if AMBUILDCUPTI
-GPUSOURCES += vt_cupti.c
-GPUHEADERS += vt_cupti.h
+GPUSOURCES += vt_cupti_common.c
+GPUHEADERS += vt_cupti_common.h vt_cupti.h
 GPULIBRARY += $(CUPTILIBDIR) $(CUPTILIB)
 GPUCFLAGS += -DVT_CUPTI $(CUPTIINCDIR)
 if AMHAVECUPTIEVENTS
@@ -228,14 +230,6 @@ GPUSOURCES =
 GPUHEADERS = 
 GPUCFLAGS = 
 GPULIBRARY =
-endif
-
-if AMHAVEMEMHOOKS
-MEMHOOKSOURCES = vt_memhook.c
-MEMHOOKCFLAGS = -DVT_MEMHOOK
-else
-MEMHOOKSOURCES =
-MEMHOOKCFLAGS =
 endif
 
 if AMHAVEGETCPU
@@ -320,8 +314,10 @@ endif
 
 if AMHAVEDYNINST
 DYNINSTSOURCES = vt_dyninst.c
+DYNINSTCFLAGS = -DVT_DYNINST
 else
 DYNINSTSOURCES =
+DYNINSTCFLAGS =
 endif
 
 if AMHAVEDL
@@ -343,9 +339,11 @@ VT_COMMON_SOURCES = \
 	$(GPUHEADERS) \
 	vt_defs.h \
 	vt_demangle.h \
+	vt_dyninst.h \
 	vt_env.h \
 	vt_error.h \
 	vt_esync.h \
+	vt_execwrap.h \
 	vt_fbindings.h \
 	vt_fork.h \
 	vt_getcpu.h \
@@ -353,8 +351,7 @@ VT_COMMON_SOURCES = \
 	vt_iowrap.h \
 	vt_iowrap_helper.h \
 	vt_java.h \
-	vt_libcwrap.h \
-	vt_memhook.h \
+	vt_mallocwrap.h \
 	vt_metric.h \
 	vt_mpicom.h \
 	vt_mpifile.h \
@@ -375,10 +372,10 @@ VT_COMMON_SOURCES = \
 	$(DYNINSTSOURCES) \
 	$(GETCPUSOURCES) \
 	$(GPUSOURCES) \
+	$(EXECWRAPSOURCES) \
 	$(IOWRAPSOURCES) \
 	$(LIBWRAPSOURCES) \
-	$(LIBCWRAPSOURCES) \
-	$(MEMHOOKSOURCES) \
+	$(MALLOCWRAPSOURCES) \
 	$(METRSOURCES) \
 	$(PLUGINCNTRSOURCES) \
 	$(RUSAGESOURCES) \
@@ -398,7 +395,7 @@ VT_COMMON_SOURCES = \
 	vt_user_region.c
 
 VT_SEQ_SOURCES = \
-	$(FORKSOURCES)
+	vt_fork.c
 
 VT_MPI_SOURCES = \
 	vt_mpicom.c \
@@ -438,7 +435,7 @@ VT_FMPI_SOURCES = \
 	$(FMPI2CONSTSOURCES)
 
 CC = $(MPICC)
-AM_CFLAGS = -I$(top_srcdir)/include -I$(top_builddir)/include -I$(top_srcdir)/rfg $(OTFCFLAGS) $(DLCFLAGS) $(COMPINSTCFLAGS) $(LIBWRAPCFLAGS) $(GPUCFLAGS) $(LIBCWRAPCFLAGS) $(IOWRAPCFLAGS) $(MEMHOOKCFLAGS) $(GETCPUCFLAGS) $(RUSAGECFLAGS) $(METRCFLAGS) $(PLUGINCNTRCFLAGS)
+AM_CFLAGS = -I$(top_srcdir)/include -I$(top_builddir)/include -I$(top_srcdir)/rfg $(OTFCFLAGS) $(DLCFLAGS) $(COMPINSTCFLAGS) $(DYNINSTCFLAGS) $(LIBWRAPCFLAGS) $(GPUCFLAGS) $(EXECWRAPCFLAGS) $(IOWRAPCFLAGS) $(MALLOCWRAPCFLAGS) $(GETCPUCFLAGS) $(RUSAGECFLAGS) $(METRCFLAGS) $(PLUGINCNTRCFLAGS)
 
 libvt_la_LIBADD = $(top_builddir)/util/libvt_util.la $(top_builddir)/rfg/libvt_rfg.la $(OTFLIBRARY) $(METRLIBRARY) $(GPULIBRARY) $(DLLIBRARY) $(MATHLIBRARY)
 libvt_la_DEPENDENCIES = $(top_builddir)/util/libvt_util.la $(top_builddir)/rfg/libvt_rfg.la $(OTFDEPENDENCIES)

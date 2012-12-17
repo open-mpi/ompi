@@ -3,6 +3,7 @@
 		- replaced temporary workaround for handling bogus zlib
 		  sync. points by a more elaborated solution
 	- otfprofile:
+		- fixed build error when using the IBM XL C++ compiler
 		- removed unnecessary '-k' option from otfshrink command
 
 1.12.1openmpi

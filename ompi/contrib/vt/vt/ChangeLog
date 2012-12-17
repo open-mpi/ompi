@@ -1,9 +1,20 @@
 5.14.1openmpi
 	- updated version of internal OTF to 1.12.2openmpi
 	  (see extlib/otf/ChangeLog)
+	- added support for recording concurrent CUDA kernels with CUPTI (CUDA 5.0)
 	- append "/vampirtrace" to DATADIR, if configuring inside Open MPI and
 	  DATADIR doesn't points to the default (=DATAROOTDIR)
 	  (prevents conflicts with the libtool RPM)
+	- fixed build issues when using the IBM XL compiler on AIX
+	- fixed build issues with Dyninst 8
+	- revised memory allocation tracing:
+		- intercept memory (de)allocation functions by library wrapping
+		  (replaces deprecated hook technique from the GNU C library)
+		- added support for multi-threaded applications
+	- changed default function group name for
+		- memory (de)allocation functions     : "MEM"  -> "LIBC-MALLOC"
+		- I/O functions                       : "I/O"  -> "LIBC-I/O"
+		- child process execution (e.g. execl): "LIBC" -> "LIBC-EXEC"
 
 5.14openmpi
 	- updated version of internal OTF to 1.12.1openmpi

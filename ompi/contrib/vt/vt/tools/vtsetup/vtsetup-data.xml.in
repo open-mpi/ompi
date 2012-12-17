@@ -350,18 +350,18 @@
     <available>@VT_SETUP_IOTRACE@</available>
     <anchor>VT_SETUP_VT_IOLIB_PATHNAME</anchor>
   </env>
-  <env isdeprecated="0" priority="290" descname="Enable libc tracing" isadvanced="1" group="libtrace"
-    envname="VT_LIBCTRACE">
-    <desc>Enable / disable event recording of fork/system/exec calls.</desc>
+  <env isdeprecated="0" priority="290" descname="Enable exec(3) function tracing" isadvanced="1" group="libtrace"
+    envname="VT_EXECTRACE">
+    <desc>Enable / disable the recording of functions for creating and controling child processes (e.g. execl).</desc>
     <valuedesc>
       <value type="bool">
         <default>1</default>
       </value>
     </valuedesc>
-    <since major="5" minor="0" patch="0" /><available>@VT_SETUP_LIBCTRACE@</available>
-    <anchor>VT_SETUP_VT_LIBCTRACE</anchor>
+    <since major="5" minor="0" patch="0" /><available>@VT_SETUP_EXECTRACE@</available>
+    <anchor>VT_SETUP_VT_EXECTRACE</anchor>
   </env>
-  <env isdeprecated="0" priority="100" descname="Enable memory usage counter" isadvanced="0" group="libtrace"
+  <env isdeprecated="0" priority="100" descname="Enable memory allocation tracing" isadvanced="0" group="libtrace"
     envname="VT_MEMTRACE">
     <desc>Enable / disable recording of memory allocation counter.</desc>
     <valuedesc>

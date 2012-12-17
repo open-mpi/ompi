@@ -82,7 +82,7 @@ See \`config.log' for more details.])
 	[
 		sav_CPPFLAGS=$CPPFLAGS
 		CPPFLAGS="$CPPFLAGS $PAPIINCDIR"
-		AC_CHECK_DECLS([long_long], [], [], [#include <papi.h>])
+		AC_CHECK_TYPES([long_long], [], [], [#include <papi.h>])
 		CPPFLAGS=$sav_CPPFLAGS
 	])
 

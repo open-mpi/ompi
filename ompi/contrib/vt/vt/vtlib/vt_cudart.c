@@ -20,7 +20,7 @@
 #include "vt_libwrap.h"     /* wrapping of CUDA Runtime API functions */
 #include "vt_cudartwrap.h"  /* CUDA wrapper functions for external use */
 #include "vt_gpu.h"         /* common for GPU */
-#include "vt_memhook.h"     /* Switch memory tracing on/off */
+#include "vt_mallocwrap.h"     /* Switch memory tracing on/off */
 
 #if (defined(VT_CUPTI_EVENTS))
 #include "vt_cupti_events.h"       /* Support for CUPTI events */
@@ -768,6 +768,9 @@ void vt_cudartwrap_init(void)
         vt_cudart_bufSize = sizeof(VTCUDAKernel) + sizeof(VTCUDAknconf);
         vt_cntl_msg(2, "[CUDART] Current CUDA buffer size: %d bytes", 
                        vt_cudart_bufSize);
+        
+        /* initialize the VampirTrace CUPTI events interface */
+        vt_cupti_events_init();
       }
     }
 #endif
@@ -861,10 +864,10 @@ static void VTCUDAresetDevice(uint32_t ptid, VTCUDADevice *vtDev,
   if(trace_cupti_events && cleanEvents){
     uint64_t time = vt_pform_wtime();
     VTCUDAStrm *curStrm = vtDev->strmList;
-    vt_cuptievt_ctx_t* vtcuptiCtx = vt_cuptievt_getCurrentContext(ptid);
+    vt_cupti_ctx_t* vtcuptiCtx = vt_cuptievt_getOrCreateCurrentCtx(ptid);
 
     while(curStrm != NULL){
-      vt_cuptievt_resetCounter(vtcuptiCtx, curStrm->tid, &time);
+      vt_cuptievt_resetCounter(vtcuptiCtx->events, curStrm->tid, &time);
       curStrm = curStrm->next;
     }
 
@@ -979,11 +982,13 @@ void vt_cudartwrap_finalize(void)
         uint32_t ptid;
 
         vt_cntl_msg(2, "[CUDART] Finalizing wrapper.");
-
-        vt_gpu_finalize();
-
+        
         VT_CHECK_THREAD;
         ptid = VT_MY_THREAD;
+        
+        VT_SUSPEND_MALLOC_TRACING(ptid);
+
+        vt_gpu_finalize();
 
         /* cleanup CUDA device list */
         while(cudaDevices != NULL){
@@ -1018,9 +1023,19 @@ void vt_cudartwrap_finalize(void)
           cudaDevices = NULL;
         }
         
+        /* free the global kernel element list */
+        while(NULL != kernelListHead){
+          VTCUDAkernelSymbol *knSym = kernelListHead;
+
+          kernelListHead = kernelListHead->next;
+          free(knSym);
+          knSym = NULL;
+        }
+        
         /* free filter for CUDA kernel filtering */
         RFG_Filter_free(vt_cudart_filter);
-
+        
+        VT_RESUME_MALLOC_TRACING(ptid);
       }
       finalized = 1;
       CUDARTWRAP_UNLOCK();
@@ -1147,17 +1162,21 @@ static void VTCUDAflush(VTCUDADevice *vtDev, uint32_t ptid)
         VTCUDAStrm *strm = bufEntry->strm;
         float diff_ms;
 
-        /* time between synchronize start event and kernel start event */
-        VT_CUDART_CALL(cudaEventElapsedTime_ptr(&diff_ms, strm->lastEvt, bufEntry->evt->strt),
-                      "cudaEventElapsedTime(diff, tmpStrtEvt, knStrtEvt) failed!");
+        /* time between last stream event and activity start event */
+        VT_CUDART_CALL(cudaEventElapsedTime_ptr(&diff_ms, strm->lastEvt, 
+                       bufEntry->evt->strt),
+                       "cudaEventElapsedTime(diff, lastEvt, strtEvt) failed!");
 
         /* convert CUDA kernel start event to VampirTrace timestamp */
         strttime = strm->lastVTTime + (uint64_t)((double)diff_ms * factorX);
 
-        /* check if kernel start time is before last synchronous CUDA call */
+        /* check if activity start time is before last synchronous CUDA call */
         if(strttime < sync->lastTime){
+          vt_warning("[CUDART] Set activity start time to last time in stream -"
+                     " truncate %.4lf%% (CUDA device %d, Thread ID: %d)", 
+                     (double)(sync->lastTime-strttime)/((double)diff_ms*factorX),
+                     vtDev->device, strm->tid);
           strttime = sync->lastTime;
-          vt_warning("[CUDART] event before last synchronous CUDA call measured!");
         }
 
         /* time between kernel start event and kernel stop event */
@@ -1167,12 +1186,21 @@ static void VTCUDAflush(VTCUDADevice *vtDev, uint32_t ptid)
         /* convert CUDA kernel stop event to VampirTrace timestamp */
         stoptime = strttime + (uint64_t)((double)diff_ms * factorX);
 
+        /* check if activity stop time is after sync point stop time */
         if(stoptime > syncStopTime){
-          stoptime = syncStopTime;
-          if(strttime > syncStopTime){
-            strttime = syncStopTime;
+          vt_warning("[CUDART] Activity stop time > sync-point time! "
+                     "(CUDA device %d, Thread ID: %d)", vtDev->device, strm->tid);
+          
+          /* if activity start time is before sync time activity can be truncated */
+          if(strttime < syncStopTime){
+            vt_warning("[CUDART] Set activity start time to last time in stream!"
+                       "truncate %.4lf%%", 
+                       (double)(stoptime-syncStopTime)/((double)diff_ms*factorX));
+            stoptime = syncStopTime;
+          }else{
+            vt_warning("[CUDART] Skipping activity ...");
+            continue;
           }
-          vt_warning("[CUDART] time measurement of kernel or memcpyAsync failed!");
         }
 
         /* set new synchronized CUDA start event and VampirTrace start timestamp,
@@ -1347,7 +1375,11 @@ static VTCUDAStrm* VTCUDAcreateStream(VTCUDADevice* vtDev, cudaStream_t cuStrm)
  */
 static VTCUDADevice* VTCUDAcreateDevice(uint32_t ptid, int device)
 {
-  VTCUDADevice *vtDev = (VTCUDADevice*)malloc(sizeof(VTCUDADevice));
+  VTCUDADevice *vtDev = NULL;
+  
+  VT_SUSPEND_MALLOC_TRACING(ptid);
+          
+  vtDev = (VTCUDADevice*)malloc(sizeof(VTCUDADevice));
   if(vtDev == NULL) vt_error_msg("Could not allocate memory for VTCUDADevice!");
   vtDev->device = device;
   vtDev->ptid = ptid;
@@ -1438,6 +1470,8 @@ static VTCUDADevice* VTCUDAcreateDevice(uint32_t ptid, int device)
     vtDev->conf_stack = vtDev->buf_size;
   }
 #endif
+  
+  VT_RESUME_MALLOC_TRACING(ptid);
 
   return vtDev;
 }
@@ -1502,6 +1536,9 @@ static VTCUDADevice* VTCUDAinitDevice(uint32_t ptid, int cudaDev,
   VTCUDADevice *vtDev = NULL;
   
   /*vt_cntl_msg(1, "Init CUDA device %d", cudaDev);*/
+  
+  /* suspend malloc tracing, due to CUDA device and stream creation */
+  VT_SUSPEND_MALLOC_TRACING(ptid);
 
   /* cuda device not found, create new cuda device node */
   time = vt_pform_wtime();
@@ -1520,6 +1557,8 @@ static VTCUDADevice* VTCUDAinitDevice(uint32_t ptid, int cudaDev,
     /* set the current stream (stream 0) */
     vtDev->strmList = VTCUDAcreateStream(vtDev, cuStrm);
   }
+  
+  VT_RESUME_MALLOC_TRACING(ptid);
 
   /* add thread and CUDA device to list */
   CUDARTWRAP_LOCK();
@@ -1595,9 +1634,11 @@ static VTCUDADevice* VTCUDAcheckThread(cudaStream_t cuStrm, uint32_t ptid,
           reusableStrm->stream = cuStrm;
           *vtStrm = reusableStrm;
         }else{
+          VT_SUSPEND_MALLOC_TRACING(ptid);
           /* append newly created stream (stream 0 is probably used most, will
              therefore always be the first element in the list */
           ptrLastStrm->next = VTCUDAcreateStream(vtDev, cuStrm);
+          VT_RESUME_MALLOC_TRACING(ptid);
           *vtStrm = ptrLastStrm->next;
         }
         
@@ -1888,10 +1929,15 @@ static void vtcudaMalloc(void *devPtr, size_t size)
   uint64_t vtTime;
   VTCUDADevice *vtDev = NULL;
   VTCUDAStrm *vtStrm = NULL;
-  VTCUDAmalloc *vtMalloc = (VTCUDAmalloc*)malloc(sizeof(VTCUDAmalloc));
+  VTCUDAmalloc *vtMalloc = NULL;
 
   VT_CHECK_THREAD;
   ptid = VT_MY_THREAD;
+  
+  VT_SUSPEND_MALLOC_TRACING(ptid);
+  vtMalloc = (VTCUDAmalloc*)malloc(sizeof(VTCUDAmalloc));
+  VT_RESUME_MALLOC_TRACING(ptid);
+  
   vtDev = VTCUDAcheckThread(NULL, ptid, &vtStrm);
 
   vtMalloc->memPtr = devPtr;
@@ -1953,7 +1999,9 @@ static void vtcudaFree(void *devPtr)
 
       /* free VT memory of cuda malloc */
       curMalloc->next = NULL;
+      VT_SUSPEND_MALLOC_TRACING(ptid);
       free(curMalloc);
+      VT_RESUME_MALLOC_TRACING(ptid);
       curMalloc = NULL;
 
       /* set mallocList to NULL, if last element freed */
@@ -1979,8 +2027,12 @@ static void vtcudaFree(void *devPtr)
  */
 static void insertKernelSymbol(const char* hostFun, const char* devFunc)
 {
-  VTCUDAkernelSymbol* e = (VTCUDAkernelSymbol*) malloc(sizeof(VTCUDAkernelSymbol));
+  VTCUDAkernelSymbol* e = NULL;
   char *kname = NULL;
+  
+  VT_SUSPEND_MALLOC_TRACING(VT_CURRENT_THREAD);
+  e = (VTCUDAkernelSymbol*) malloc(sizeof(VTCUDAkernelSymbol));
+  VT_RESUME_MALLOC_TRACING(VT_CURRENT_THREAD);
   
   /* store the host function (used to identify kernel in cudaLaunch) */
   e->pointer = hostFun;
@@ -2571,7 +2623,11 @@ cudaError_t  cudaConfigureCall(dim3 gridDim, dim3 blockDim, size_t sharedMem, cu
               size_t new_size = sizeof(VTCUDAKernel) + 16*sizeof(VTCUDAknconf);
               size_t conf_stack_size = 
                    vtDev->buf_size - (vtDev->conf_stack + sizeof(VTCUDAknconf));
-              buffer_t new_buf = (buffer_t)realloc(vtDev->asyncbuf, new_size);
+              buffer_t new_buf = NULL;
+              
+              VT_SUSPEND_MALLOC_TRACING(ptid);
+              new_buf = (buffer_t)realloc(vtDev->asyncbuf, new_size);
+              VT_RESUME_MALLOC_TRACING(ptid);
 
               /* copy stacked kernel configurations */
               memcpy(new_buf + new_size - conf_stack_size, 
@@ -2625,7 +2681,7 @@ cudaError_t  cudaLaunch(VT_CUDARTWRAP_COMPAT_PTR entry)
   uint64_t time;
 
 #if defined(VT_CUPTI_EVENTS)
-  vt_cuptievt_ctx_t* vtcuptiCtx = NULL;
+  vt_cupti_ctx_t* vtcuptiCtx = NULL;
 #endif
 
   CUDARTWRAP_FUNC_INIT(vt_cudart_lw, vt_cudart_lw_attr, "cudaLaunch",
@@ -2707,8 +2763,8 @@ cudaError_t  cudaLaunch(VT_CUDARTWRAP_COMPAT_PTR entry)
           vt_count(tid, &time, cid_threadsPerKernel,
                    kernel->threadsPerBlock * kernel->blocksPerGrid);
 
-          vtcuptiCtx = vt_cuptievt_getCurrentContext(ptid);
-          vt_cuptievt_resetCounter(vtcuptiCtx, tid, &time);
+          vtcuptiCtx = vt_cuptievt_getOrCreateCurrentCtx(ptid);
+          vt_cuptievt_resetCounter(vtcuptiCtx->events, tid, &time);
         }else
 #endif
           {
@@ -2750,7 +2806,7 @@ cudaError_t  cudaLaunch(VT_CUDARTWRAP_COMPAT_PTR entry)
           /* sampling of CUPTI counter values */
           do{
             time = vt_pform_wtime();
-            vt_cuptievt_writeCounter(vtcuptiCtx, tid, &time);
+            vt_cuptievt_writeCounter(vtcuptiCtx->events, tid, &time);
             /*ret = cudaEventQuery_ptr(kernel->evt->stop);*/
             ret = cudaStreamQuery_ptr(kernel->strm->stream);
           }while(ret != cudaSuccess);
@@ -2760,7 +2816,7 @@ cudaError_t  cudaLaunch(VT_CUDARTWRAP_COMPAT_PTR entry)
         }
 
         time = vt_pform_wtime();
-        vt_cuptievt_writeCounter(vtcuptiCtx, tid, &time);
+        vt_cuptievt_writeCounter(vtcuptiCtx->events, tid, &time);
         vt_exit(ptid, &time);
 
         /* write VT kernel stop events */
@@ -2844,9 +2900,12 @@ cudaError_t  cudaThreadExit()
 
     vt_cntl_msg(2, "cudaThreadExit called (thread; %d)", ptid);
     /* cleanup the CUDA device associated to this thread */
+    VT_SUSPEND_MALLOC_TRACING(ptid);
     CUDARTWRAP_LOCK();
       VTCUDAcleanupDevice(ptid, vtDev, 1);
     CUDARTWRAP_UNLOCK();
+    VT_RESUME_MALLOC_TRACING(ptid);
+    
     VT_LIBWRAP_FUNC_START(vt_cudart_lw); /* no extra if(trace_enabled) */
   }
 
@@ -3011,10 +3070,14 @@ cudaError_t  cudaDeviceReset()
     vtDev = VTCUDAgetDevice(ptid);
 
     vt_cntl_msg(2, "cudaDeviceReset called (thread; %d)", ptid);
+    
     /* cleanup the CUDA device associated to this thread */
+    VT_SUSPEND_MALLOC_TRACING(ptid);
     CUDARTWRAP_LOCK();
       VTCUDAresetDevice(ptid, vtDev, 1);
     CUDARTWRAP_UNLOCK();
+    VT_RESUME_MALLOC_TRACING(ptid);
+    
     VT_LIBWRAP_FUNC_START(vt_cudart_lw); /* no extra if(trace_enabled) */
   }
 

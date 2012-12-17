@@ -67,7 +67,7 @@ BODY			{ font-family: sans-serif; }
 <P>
 
 <P>
-<B><BIG CLASS="XHUGE">VampirTrace 5.14.1&nbsp;User Manual</BIG></B>
+<B><BIG CLASS="XHUGE">VampirTrace 5.15b&nbsp;User Manual</BIG></B>
 <BR>
 <BR>
 <BR>
@@ -184,7 +184,7 @@ Contents</A>
 <LI><A NAME="tex2html163"
   HREF="#SECTION00580000000000000000">I/O Calls</A>
 <LI><A NAME="tex2html164"
-  HREF="#SECTION00590000000000000000">fork/system/exec Calls</A>
+  HREF="#SECTION00590000000000000000">Child Process Execution Calls</A>
 <LI><A NAME="tex2html165"
   HREF="#SECTION005100000000000000000">MPI Correctness Checking Using UniMCI</A>
 <LI><A NAME="tex2html166"
@@ -355,20 +355,20 @@ OpenMP events, and performance counters.
 <P>
 After a successful tracing run, VampirTrace writes all collected data to a  
 trace file in the Open Trace Format (OTF)<A NAME="tex2html1"
-  HREF="#foot1569"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
+  HREF="#foot1601"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A>.
 As a result, the information is available for post-mortem analysis and 
 visualization by various tools. 
 Most notably, VampirTrace provides the input data for the Vampir analysis  
 and visualization tool<A NAME="tex2html2"
-  HREF="#foot1570"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
+  HREF="#foot1602"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A>. 
 
 <P>
 VampirTrace is included in OpenMPI&nbsp;1.3 and later versions.
 If not disabled explicitly, VampirTrace is built automatically when installing
 OpenMPI<A NAME="tex2html3"
-  HREF="#foot1571"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
+  HREF="#foot1603"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A>.
 
 <P>
@@ -507,12 +507,22 @@ Note that not all features are supported on all platforms.
 </UL> 
 
 <P>
- <SPAN  CLASS="textbf">Memory Tracing</SPAN>  &#8658; Section&nbsp;<A HREF="#sec:mem_alloc_counter">4.3</A>  <BR>
+ <SPAN  CLASS="textbf">CPU ID Tracing</SPAN>  &#8658; Section&nbsp;<A HREF="#sec:cpu_id_counter">4.4</A>  <BR>
 
 <UL>
-<LI>Trace GLIBC memory allocation and free functions
+<LI>Trace core ID of a CPU on which the calling thread is running
 </LI>
-<LI>Record size of currently allocated memory as counter
+<LI>Record core ID as counter
+</LI>
+</UL>
+
+<P>
+ <SPAN  CLASS="textbf">Child Process Execution Tracing</SPAN>  &#8658; Section&nbsp;<A HREF="#sec:exec_calls">4.9</A> <BR>
+
+<UL>
+<LI>Trace LIBC function calls for creating and controling child processes
+</LI>
+<LI>Add forked processes to the trace
 </LI>
 </UL>
 
@@ -527,22 +537,12 @@ Note that not all features are supported on all platforms.
 </UL>
 
 <P>
- <SPAN  CLASS="textbf">CPU ID Tracing</SPAN>  &#8658; Section&nbsp;<A HREF="#sec:cpu_id_counter">4.4</A>  <BR>
+ <SPAN  CLASS="textbf">Memory Allocation Tracing</SPAN>  &#8658; Section&nbsp;<A HREF="#sec:mem_alloc_counter">4.3</A>  <BR>
 
 <UL>
-<LI>Trace core ID of a CPU on which the calling thread is running
+<LI>Trace LIBC memory allocation and free functions
 </LI>
-<LI>Record core ID as counter
-</LI>
-</UL>
-
-<P>
- <SPAN  CLASS="textbf">Fork/System/Exec Tracing</SPAN>  &#8658; Section&nbsp;<A HREF="#sec:execfork">4.9</A> <BR>
-
-<UL>
-<LI>Trace applications calling LIBC's fork, system, or one of the exec functions
-</LI>
-<LI>Add forked processes to the trace
+<LI>Record size of currently allocated memory as counter
 </LI>
 </UL>
 
@@ -1185,7 +1185,7 @@ in a single file, that
   The names in between may contain wildcards as ``?'', ``*', and ``#'', each entry gets a new line.
   The lists end with <TT>END[_FILE]_&lt;INCLUDE|EXCLUDE&gt;_LIST</TT>. For further information on selective 
   profiling have a look at the TAU documentation<A NAME="tex2html4"
-  HREF="#foot1595"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
+  HREF="#foot1627"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A>.
   To announce the file through the compiler wrapper use the option <TT>-vt:tau</TT>:
 <PRE>
@@ -1202,7 +1202,7 @@ Binary Instrumentation Using Dyninst
 The option <TT>-vt:inst dyninst</TT> is used with the compiler wrapper to 
 instrument the application during runtime (binary instrumentation), by using 
 Dyninst<A NAME="tex2html5"
-  HREF="#foot1596"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
+  HREF="#foot1628"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A>.
 Recompiling is not necessary for this kind of instrumentation,
 but relinking:
@@ -1353,7 +1353,7 @@ Tracing Calls to 3rd-Party Libraries
   VampirTrace is also capable to trace calls to third party libraries, which come with
   at least one C header file even without the library's source code. If VampirTrace was
   built with support for library tracing (the CTool library<A NAME="tex2html6"
-  HREF="#foot1597"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
+  HREF="#foot1629"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A>  is required), the tool <TT>vtlibwrapgen</TT> can be used to
   generate a wrapper library to intercept each call to the actual library functions.
   This wrapper library can be linked to the application or used in combination with the
@@ -1640,10 +1640,10 @@ of a VampirTrace instrumented executable:
 	&#8658; Section&nbsp;<A HREF="#sec:io_calls">4.8</A></TD>
 <TD ALIGN="LEFT">no</TD>
 </TR>
-<TR><TD ALIGN="LEFT"><A NAME="VT_SETUP_VT_LIBCTRACE"></A><TT>VT_LIBCTRACE</TT></TD>
-<TD ALIGN="LEFT">Enable tracing of fork/system/exec calls?
+<TR><TD ALIGN="LEFT"><A NAME="VT_SETUP_VT_EXECTRACE"></A><TT>VT_EXECTRACE</TT></TD>
+<TD ALIGN="LEFT">Enable tracing of function calls for creating and controling child processes?
 	<BR>
-	&#8658; Section&nbsp;<A HREF="#sec:execfork">4.9</A> calls</TD>
+	&#8658; Section&nbsp;<A HREF="#sec:exec_calls">4.9</A></TD>
 <TD ALIGN="LEFT">yes</TD>
 </TR>
 <TR><TD ALIGN="LEFT"><A NAME="VT_SETUP_VT_MEMTRACE"></A><TT>VT_MEMTRACE</TT></TD>
@@ -2029,7 +2029,7 @@ for the enhanced timer synchronization:
 
 <UL>
 <LI>CLAPACK <A NAME="tex2html7"
-  HREF="#foot1607"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
+  HREF="#foot1639"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A>
 </LI>
 <LI>AMD ACML
@@ -2238,26 +2238,36 @@ Memory Allocation Counter
 </H1>
 
 <P>
-The GNU LIBC implementation provides a special hook mechanism that allows
-  intercepting all calls to memory allocation and free functions
-  (e.g.&nbsp;<TT>malloc</TT>, <TT>realloc</TT>, <TT>free</TT>).
-  This is independent from compilation or source code access, but relies on the
-  underlying system library.
+Calls to functions which reside in external libraries can be intercepted by
+  implementing identical functions and linking them before the external library.
+  Such ``wrapper functions'' can record the parameters and return values of the
+  library functions.
 
 <P>
-If VampirTrace has been built with memory-tracing support , VampirTrace is capable of recording memory allocation
-  information as part of the event records. To request the measurement of
-  the application's allocated memory, the user must set the environment variable
-  <TT>VT_MEMTRACE</TT> to <TT>yes</TT>.
+If VampirTrace has been built with memory allocation tracing support , it uses this technique for recording calls to
+  memory (de)allocation functions of the standard C library, which are executed by the application.
+  The following functions are intercepted by VampirTrace:
 
 <P>
+<TABLE CELLPADDING=3>
+<TR><TD ALIGN="LEFT" VALIGN="TOP" WIDTH=110><TT>malloc</TT></TD>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH=110><TT>memalign</TT></TD>
+</TR>
+<TR><TD ALIGN="LEFT" VALIGN="TOP" WIDTH=110><TT>calloc</TT></TD>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH=110><TT>posix_memalign</TT></TD>
+</TR>
+<TR><TD ALIGN="LEFT" VALIGN="TOP" WIDTH=110><TT>realloc</TT></TD>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH=110><TT>valloc</TT></TD>
+</TR>
+<TR><TD ALIGN="LEFT" VALIGN="TOP" WIDTH=110><TT>free</TT></TD>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH=110>&nbsp;</TD>
+</TR>
+</TABLE>
 
-<H4><A NAME="SECTION00530010000000000000">
-Note:</A>
-</H4>
-  This approach to get memory allocation information requires changing internal
-  function pointers in a non-thread-safe way, so VampirTrace currently does not support
-  memory tracing for thread-able programs, e.g., programs parallelized with OpenMP or Pthreads!
+<P>
+The gathered information will be saved as counter which indicates the current memory allocated
+  in bytes.  To request the measurement of the application's allocated memory, the user must set the
+  environment variable <TT>VT_MEMTRACE</TT> to <TT>yes</TT>.
 
 <P>
 
@@ -2334,6 +2344,9 @@ To enable a particular composition of CUDA measurement features the variable
 </TR>
 <TR><TD ALIGN="LEFT"><TT>kernel</TT></TD>
 <TD ALIGN="LEFT">CUDA kernels</TD>
+</TR>
+<TR><TD ALIGN="LEFT"><TT>concurrent</TT></TD>
+<TD ALIGN="LEFT">force recording of concurrent kernels with CUPTI</TD>
 </TR>
 <TR><TD ALIGN="LEFT"><TT>idle</TT></TD>
 <TD ALIGN="LEFT">GPU compute idle time</TD>
@@ -2424,7 +2437,7 @@ Example: <TT>VT_CUPTI_METRICS=local_store:local_load</TT>
 <P>
 </DD>
 <DT></DT>
-<DD><TT>VT_CUPTI_SAMPLING=[yes|<SPAN  CLASS="textbf">no</SPAN>]</TT> 
+<DD><TT>VT_CUPTI_EVENTS_SAMPLING=[yes|<SPAN  CLASS="textbf">no</SPAN>]</TT> 
 	    <SMALL CLASS="SCRIPTSIZE">(CUDA runtime API wrapper only) </SMALL>
 <BR>
 Poll for CUPTI counter values during kernel execution, if set to <TT>yes</TT>.
@@ -2519,22 +2532,15 @@ Several new region groups have been introduced:
 <H3><A NAME="SECTION00550100000000000000">
 Tracing CUDA Runtime API via CUPTI</A>
 </H3>
-  To enable CUDA runtime API tracing via CUPTI, the option <TT>cupti</TT> has to be 
-  added to <TT>VT_GPUTRACE</TT>. By default, the library wrapper will be used. 
-  If both tracing methods are configured during the VampirTrace build process, 
-  the CUDA runtime library should be preloaded to reduce tracing overhead 
+  If the VampirTrace CUDA runtime API wrapper and CUPTI are configured during 
+  the VampirTrace build process, the option <TT>cupti</TT> has to be added to 
+  <TT>VT_GPUTRACE</TT> to enable CUDA runtime API tracing via CUPTI. In that 
+  case the CUDA runtime library should be preloaded to reduce tracing overhead 
   (the dynamic linker can use  <TT>LD_PRELOAD=libcudart.so</TT>). Otherwise 
   the library wrapper intercepts every CUDA runtime API call and makes a short 
-  but unnecessary check, whether it is enabled. 
+  but unnecessary check, whether it is enabled. The CUPTI tracing method does 
+  not support recording of peer-to-peer memory copies. 
 <P></P>
-
-<P>
-CUPTI prior to version 1.0 (CUDA 4.0) has no native support for tracing of 
-  GPU activities, which therefore will be synchronized directly after their 
-  asynchronous call to retrieve their runtime. 
-  Filtered kernels will not be recorded and their execution time not marked as 
-  idle, if GPU idle time tracing is enabled. 
-  The CUPTI tracing method does not support peer-to-peer memory copies. 
 
 <P>
 
@@ -2549,12 +2555,11 @@ CUDA Runtime API Wrapper Particularities</A>
 <P></P>
 
 <P>
-Until CUDA Toolkit 4.1 and Developer Drivers for Linux 285.05.32 
-  the usage of CUDA events between asynchronous tasks serializes their on-device 
-  execution. This seems to be a bug, which has already been reported to NVIDIA. 
+Until CUDA Toolkit 4.2 the usage of CUDA events between 
+  asynchronous tasks serializes their on-device execution. 
   As VampirTrace uses CUDA events for time measurement and asynchronous tasks 
   may overlap (depends on the CUDA device capability), there might be a sensible 
-  impact on the program flow. 
+  impact on the program flow. CUDA 5 removes this restriction.
 
 <P>
 
@@ -2596,7 +2601,7 @@ CUDA Performance Counters via CUPTI Events
 <P>
 
 <H3><A NAME="SECTION00550500000000000000">
-Compile and Link CUDA applications</A>
+Compile and Link CUDA Applications</A>
 </H3>
   Use the VampirTrace compiler wrapper <TT>vtnvcc</TT> instead of <TT>nvcc</TT> 
   to compile the CUDA application, which does automatic source code instrumentation.
@@ -2672,20 +2677,22 @@ Tracing the NVIDIA CUDA SDK 3.x and 4.x</A>
   and hybrid programs, if necessary (e.g. the CUDA SDK example 
   <TT>simpleMultiGPU</TT> is a multi-threaded program, which needs to be linked 
   with a multi-threaded VampirTrace library). 
-  
-<P><P>
-<BR>
 
-<BR>
 <P>
 
 <H3><A NAME="SECTION00550700000000000000">
-Multi-threaded CUDA applications</A>
+Recording Concurrent Kernels (CUDA 5)</A>
 </H3>
-  If threads are used to invoke asynchronous CUDA tasks, make sure to call a 
-  synchronizing CUDA function to get the tasks flushed before the thread exits. 
-  Otherwise tasks may not be flushed and will be missing in the trace file.
-<P>
+  Since CUDA 5 it is possible to record concurrently executed kernels on the GPU. 
+  The VampirTrace CUDA runtime API wrapper uses CUDA events for GPU activity 
+  time measurement and is therefore by default enabled for recording concurrent 
+  kernels. The NVIDIA CUPTI library provides two possibilities for measuring 
+  kernels. If a CUDA application creates the second CUDA stream, the activity 
+  buffer will be flushed, the light-weight kernel recording disabled and 
+  concurrent kernel recording enabled. To force concurrent kernel support at 
+  VampirTrace CUDA initialization add the GPU tracing option <TT>concurrent</TT>.
+  
+<P><P>
 <BR>
 
 <BR>
@@ -2780,16 +2787,10 @@ I/O Calls
 </H1>
 
 <P>
-Calls to functions which reside in external libraries can be intercepted by
-  implementing identical functions and linking them before the external library.
-  Such ``wrapper functions'' can record the parameters and return values of the
-  library functions.
-
-<P>
-If VampirTrace has been built with I/O tracing support, it uses this technique
-  for recording calls to I/O functions of the standard C library, which are
-  executed by the application. The following functions
-  are intercepted by VampirTrace:
+If VampirTrace has been built with I/O tracing support , it uses the same technique as used to intercept
+  memory (de)allocation functions (&#8658; Section&nbsp;<A HREF="#sec:mem_alloc_counter">4.3</A>) for recording calls
+  to I/O functions of the standard C library, which are executed by the application. The following
+  functions are intercepted by VampirTrace:
 
 <P>
 <TABLE CELLPADDING=3>
@@ -2856,52 +2857,62 @@ If VampirTrace has been built with I/O tracing support, it uses this technique
 </TABLE>
 
 <P>
-The gathered information will be saved
-  as I/O event records in the trace file. This feature has to be activated for
-  each tracing run by setting the environment variable <TT>VT_IOTRACE</TT> to
+The gathered information will be saved as I/O event records in the trace file. This feature has
+  to be activated for each tracing run by setting the environment variable <TT>VT_IOTRACE</TT> to
   <TT>yes</TT>.
 
 <P>
-This works for both dynamically and statically linked executables.
-  Note that when linking statically, a warning like the following may be issued: Using 'dlopen' in statically linked applications requires at runtime the shared libraries from the glibc version used for linking.
-  This is ok as long as the mentioned libraries are available for running the application.
-
-<P>
-If you'd like to experiment with some other I/O library, set the environment variable <TT>VT_IOLIB_PATHNAME</TT> to the alternative one.
-  Beware that this library must provide all I/O functions mentioned above otherwise VampirTrace will abort.
-  Setting the environment variable <TT>VT_IOTRACE_EXTENDED</TT> to <TT>yes</TT> enables the collection of additional function arguments
-  for some of the I/O function mentioned above.
-  For example, this option stores offsets for <TT>pwrite</TT> and <TT>pread</TT> additionally to the I/O event record.
-  Enabling <TT>VT_IOTRACE_EXTENDED</TT> automatically enables <TT>VT_IOTRACE</TT>.
+If you'd like to experiment with some other I/O library, set the environment variable <TT>VT_IOLIB_PATHNAME</TT>
+  to the alternative one. Beware that this library must provide all I/O functions mentioned above
+  otherwise VampirTrace will abort. Setting the environment variable <TT>VT_IOTRACE_EXTENDED</TT> to <TT>yes</TT>
+  enables the collection of additional function arguments for some of the I/O function mentioned above.
+  For example, this option stores offsets for <TT>pwrite</TT> and <TT>pread</TT> additionally to the
+  I/O event record. Enabling <TT>VT_IOTRACE_EXTENDED</TT> automatically enables <TT>VT_IOTRACE</TT>.
 
 <P>
 
 <H1><A NAME="SECTION00590000000000000000"></A>
-<A NAME="sec:execfork"></A>
+<A NAME="sec:exec_calls"></A>
 <BR>
-fork/system/exec Calls
+Child Process Execution Calls
 </H1>
 
 <P>
-If VampirTrace has been built with LIBC trace support ,
-  it is capable of tracing programs which call functions from the LIBC <TT>exec</TT> family
-  (<TT>execl</TT>, <TT>execlp</TT>, <TT>execle</TT>, <TT>execv</TT>, <TT>execvp</TT>, <TT>execve</TT>),
-  <TT>system</TT>, and <TT>fork</TT>.
-  VampirTrace records the call of the LIBC function to the trace.
-  This feature works for sequential (i.e. no MPI or threaded parallelization) programs only.
-  It works for both dynamically and statically linked executables.
-  Note that when linking statically, a warning like the following may be issued: Using 'dlopen' in statically linked applications requires at
-  runtime the shared libraries from the glibc version used for linking.
-  This is ok as long as the mentioned libraries are available for running the application.
+In addition to the memory allocation tracing (&#8658; Section&nbsp;<A HREF="#sec:mem_alloc_counter">4.3</A>) and I/O tracing
+  (&#8658; Section&nbsp;<A HREF="#sec:io_calls">4.8</A>), VampirTrace uses the library wrapping technique also to intercept
+  functions of the standard C library for creating and controling child processes. These functions are:
 
 <P>
-When VampirTrace detects a call of an <TT>exec</TT> function,
-  the current trace file is closed before executing the new program.
-  If the executed program is also instrumented with VampirTrace, it will create a different trace file.
-  Note that VampirTrace aborts if the exec function returns unsuccessfully.
+<TABLE CELLPADDING=3>
+<TR><TD ALIGN="LEFT" VALIGN="TOP" WIDTH=110><TT>execl</TT></TD>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH=110><TT>execvp</TT></TD>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH=110><TT>fork</TT></TD>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH=110><TT>waitid</TT></TD>
+</TR>
+<TR><TD ALIGN="LEFT" VALIGN="TOP" WIDTH=110><TT>execlp</TT></TD>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH=110><TT>execve</TT></TD>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH=110><TT>system</TT></TD>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH=110><TT>wait3</TT></TD>
+</TR>
+<TR><TD ALIGN="LEFT" VALIGN="TOP" WIDTH=110><TT>execle</TT></TD>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH=110><TT>execvpe</TT></TD>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH=110><TT>wait</TT></TD>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH=110><TT>wait4</TT></TD>
+</TR>
+<TR><TD ALIGN="LEFT" VALIGN="TOP" WIDTH=110><TT>execv</TT></TD>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH=110><TT>fexecve</TT></TD>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH=110><TT>waitpid</TT></TD>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH=110>&nbsp;</TD>
+</TR>
+</TABLE>
 
 <P>
-Calling <TT>fork</TT> in an instrumented program creates an additional process in the same trace file.
+When VampirTrace detects a call of an <TT>exec</TT> function, the current trace file is closed before
+  executing the new program. If the executed program is also instrumented with VampirTrace, it will create
+  a different trace file. Note that VampirTrace aborts if the <TT>exec</TT> function returns unsuccessfully.
+  Calling <TT>fork</TT> in an instrumented program creates an additional process in the same trace file.
+  Using this feature requires building VampirTrace with support for tracing LIBC functions for creating and , and setting
+  the  environment variable <TT>VT_EXECTRACE</TT> to <TT>yes</TT>.
 
 <P>
 
@@ -3506,14 +3517,14 @@ VampirTrace allows assigning functions/regions to a group.
 <TR><TD ALIGN="LEFT"><TT>Pthreads</TT></TD>
 <TD ALIGN="LEFT">Pthread API function calls</TD>
 </TR>
-<TR><TD ALIGN="LEFT"><TT>MEM</TT></TD>
-<TD ALIGN="LEFT">Memory allocation functions (&#8658; Section&nbsp;<A HREF="#sec:mem_alloc_counter">4.3</A>)</TD>
+<TR><TD ALIGN="LEFT"><TT>LIBC-EXEC</TT></TD>
+<TD ALIGN="LEFT">LIBC function calls for creating and controling child processes (&#8658; Section&nbsp;<A HREF="#sec:exec_calls">4.9</A>)</TD>
 </TR>
-<TR><TD ALIGN="LEFT"><TT>I/O</TT></TD>
-<TD ALIGN="LEFT">I/O functions (&#8658; Section&nbsp;<A HREF="#sec:io_calls">4.8</A>)</TD>
+<TR><TD ALIGN="LEFT"><TT>LIBC-I/O</TT></TD>
+<TD ALIGN="LEFT">LIBC functions (&#8658; Section&nbsp;<A HREF="#sec:io_calls">4.8</A>)</TD>
 </TR>
-<TR><TD ALIGN="LEFT"><TT>LIBC</TT></TD>
-<TD ALIGN="LEFT">LIBC fork/system/exec functions (&#8658; Section&nbsp;<A HREF="#sec:execfork">4.9</A>)</TD>
+<TR><TD ALIGN="LEFT"><TT>LIBC-MALLOC</TT></TD>
+<TD ALIGN="LEFT">LIBC memory (de)allocation functions (&#8658; Section&nbsp;<A HREF="#sec:mem_alloc_counter">4.3</A>)</TD>
 </TR>
 <TR><TD ALIGN="LEFT"><TT>Application</TT></TD>
 <TD ALIGN="LEFT">remaining instrumented functions and source code regions</TD>
@@ -3678,7 +3689,7 @@ default: automatically by configure.
 enable support for Dyninst instrumentation,
                               default: enable if found by configure.
                               <SPAN  CLASS="textbf">Note:</SPAN> Requires Dyninst<A NAME="tex2html8"
-  HREF="#foot1629"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
+  HREF="#foot1667"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A> version 6.1 or higher!
 
 <P>
@@ -3700,18 +3711,10 @@ enable support for automatic source code
                               instrumentation by using TAU, default: enable if
                               found by configure.
                               <SPAN  CLASS="textbf">Note:</SPAN> Requires PDToolkit<A NAME="tex2html9"
-  HREF="#foot1630"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
+  HREF="#foot1668"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A> or TAU<A NAME="tex2html10"
-  HREF="#foot1631"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
+  HREF="#foot1669"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A>!
-
-<P>
-</DD>
-<DT><STRONG><TT>-enable-memtrace</TT></STRONG></DT>
-<DD>&nbsp;
-<BR>
-enable memory tracing support, default: enable if
-                              found by configure
 
 <P>
 </DD>
@@ -3726,8 +3729,46 @@ enable CPU ID tracing support, default: enable if
 <DT><STRONG><TT>-enable-libtrace=LIST</TT></STRONG></DT>
 <DD>&nbsp;
 <BR>
-enable library tracing support (gen,libc,io),
-                              default: automatically by configure
+enable library tracing support
+                              (gen,exec,io,malloc,cudart), default: automatically
+                              by configure
+
+<P>
+</DD>
+<DT><STRONG><TT>-enable-exectrace</TT></STRONG></DT>
+<DD>&nbsp;
+<BR>
+enable support for tracing LIBC functions for
+                              creating and controling child processes (e.g.
+                              execl,fork,system,wait) via library wrapping,
+                              default: enable
+
+<P>
+</DD>
+<DT><STRONG><TT>-enable-iotrace</TT></STRONG></DT>
+<DD>&nbsp;
+<BR>
+enable support for tracing LIBC I/O functions (e.g.
+                              fopen,fclose,fread,fwrite) via library wrapping,
+                              default: enable
+
+<P>
+</DD>
+<DT><STRONG><TT>-enable-memtrace</TT></STRONG></DT>
+<DD>&nbsp;
+<BR>
+enable support for tracing LIBC functions for memory
+                              de/allocation (e.g. malloc,realloc,free) via library
+                              wrapping, default: enable
+
+<P>
+</DD>
+<DT><STRONG><TT>-enable-cudartwrap</TT></STRONG></DT>
+<DD>&nbsp;
+<BR>
+enable support for tracing the CUDA runtime API via
+                              library wrapping, default: enable if no CUPTI
+                              present
 
 <P>
 </DD>
@@ -3852,14 +3893,6 @@ enable Java support, default: enable if JVMTI
 <BR>
 enable support for tracing CUDA via CUPTI, 
                               default: enable if found by configure
-
-<P>
-</DD>
-<DT><STRONG><TT>-enable-cudawrap</TT></STRONG></DT>
-<DD>&nbsp;
-<BR>
-enable support for tracing CUDA via library
-                              wrapping, default: enable if found by configure
 
 <P>
 </DD>
@@ -4278,7 +4311,7 @@ give the path for JVMTI-include files, default:
 
 <P>
 To enable support for generating wrapper for 3th-Party libraries the C code parser CTool<A NAME="tex2html11"
-  HREF="#foot1632"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
+  HREF="#foot1670"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A> is needed:
 
 <P>
@@ -5440,7 +5473,7 @@ Since IOFSL servers can handle multiple clients, an N:M mapping of clients to se
 
 <P>
 When using the IOFSL integration, all write requests in OTF are issued using the zoidfs API<A NAME="tex2html12"
-  HREF="#foot3235"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
+  HREF="#foot3277"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A>. Those writes are handled by the IOFSL forwarding servers and aggregated into a single file using the atomic append feature. The offset in the multifile is returned to OTF and stored in a second file, the so called index file, in order to maintain the mapping between written blocks and streams. For any block of a stream written into the multifile, the index file contains the ID of the stream, the start of the block, and its length. This allows for an efficient reading of blocks since only the index file has to be scanned for entries for a given stream ID. Additionally, a large number of logical files (streams) can be stored using only two physical files.
 
 <P>
@@ -5452,7 +5485,7 @@ Installation</A>
 <P>
 In order to use this setup, IOFSL and VampirTrace have to be compiled in order.
 In the following sections, the directory <TT>&lt;install_dir&gt;</TT> should be replaced with a - possibly user-local - directory used for installation, e.g. <TT>$HOME/local</TT><A NAME="tex2html13"
-  HREF="#foot3239"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
+  HREF="#foot3281"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A>.
 The installation procedure for IOFSL is described at https://trac.mcs.anl.gov/projects/iofsl/wiki/Building.
 Currently the <TT>iofsl_vampir</TT> git branch is required.
@@ -5631,7 +5664,7 @@ They will be launched on dedicated compute nodes that are part of the batch Job 
 PBS Options</A>
 </H4>
 It is important to reserve a sufficient number of processor cores. The number of cores requested must be large enough to contain the number of application cores plus the number of cores required for the IOFSL server instances. Each IOFSL server will run on a dedicated node<A NAME="tex2html14"
-  HREF="#foot3283"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
+  HREF="#foot3325"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A>.Thus N_allocated &#8805;((N_IOFSL * 16) + N_Application) must hold.
 <P>
 Example using 64 server instances:
@@ -5728,10 +5761,10 @@ Configuring the Server</A>
 The server is configured using a configuration file.
 At server start-up, this file is provided using the <TT>-config</TT> argument.
 The cray XK6 configuration file is provided in the package<A NAME="tex2html15"
-  HREF="#foot3423"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
+  HREF="#foot3465"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A>.
 For more information about the options available please refer to the IOFSL documentation<A NAME="tex2html16"
-  HREF="#foot3424"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
+  HREF="#foot3466"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A>.
 The most important option is the <TT>serverlist</TT> entry in the <TT>bmi</TT> section which takes a list of server addresses, e.g. :
 <PRE>
@@ -6137,99 +6170,99 @@ If you provide us with your additions afterwards we will consider merging them
 into the official VampirTrace package.
 <BR><HR><H4>Footnotes</H4>
 <DL>
-<DT><A NAME="foot1569">... (OTF)</A><A
+<DT><A NAME="foot1601">... (OTF)</A><A
  HREF="#tex2html1"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A></DT>
 <DD>http://www.tu-dresden.de/zih/otf
 
 </DD>
-<DT><A NAME="foot1570">... tool </A><A
+<DT><A NAME="foot1602">... tool </A><A
  HREF="#tex2html2"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A></DT>
 <DD>http://www.vampir.eu
 
 </DD>
-<DT><A NAME="foot1571">...
+<DT><A NAME="foot1603">...
 Open MPI </A><A
  HREF="#tex2html3"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A></DT>
 <DD>http://www.open-mpi.org/faq/?category=vampirtrace
 
 </DD>
-<DT><A NAME="foot1595">... documentation </A><A
+<DT><A NAME="foot1627">... documentation </A><A
  HREF="#tex2html4"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A></DT>
 <DD>http://www.cs.uoregon.edu/Research/tau/docs/newguide/bk05ch02.html#d0e3770
 
 </DD>
-<DT><A NAME="foot1596">...
+<DT><A NAME="foot1628">...
 Dyninst </A><A
  HREF="#tex2html5"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A></DT>
 <DD>http://www.dyninst.org
 
 </DD>
-<DT><A NAME="foot1597">... library </A><A
+<DT><A NAME="foot1629">... library </A><A
  HREF="#tex2html6"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A></DT>
 <DD>http://sourceforge.net/projects/ctool
 
 </DD>
-<DT><A NAME="foot1607">... CLAPACK</A><A
+<DT><A NAME="foot1639">... CLAPACK</A><A
  HREF="#tex2html7"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A></DT>
 <DD>www.netlib.org/clapack
 
 </DD>
-<DT><A NAME="foot1629">... Dyninst </A><A
+<DT><A NAME="foot1667">... Dyninst </A><A
  HREF="#tex2html8"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A></DT>
 <DD>http://www.dyninst.org
 
 </DD>
-<DT><A NAME="foot1630">... PDToolkit </A><A
+<DT><A NAME="foot1668">... PDToolkit </A><A
  HREF="#tex2html9"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A></DT>
 <DD>http://www.cs.uoregon.edu/research/pdt/home.php
 
 </DD>
-<DT><A NAME="foot1631">... TAU </A><A
+<DT><A NAME="foot1669">... TAU </A><A
  HREF="#tex2html10"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A></DT>
 <DD>http://tau.uoregon.edu
 
 </DD>
-<DT><A NAME="foot1632">... CTool </A><A
+<DT><A NAME="foot1670">... CTool </A><A
  HREF="#tex2html11"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A></DT>
 <DD>http://sourceforge.net/projects/ctool
 
 </DD>
-<DT><A NAME="foot3235">... API</A><A
+<DT><A NAME="foot3277">... API</A><A
  HREF="#tex2html12"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A></DT>
 <DD>The OTF master control file is written using POSIX I/O in any case.
 
 </DD>
-<DT><A NAME="foot3239">...$HOME/local</A><A
+<DT><A NAME="foot3281">...$HOME/local</A><A
  HREF="#tex2html13"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A></DT>
 <DD>The software packages can be installed in different directories.
 
 </DD>
-<DT><A NAME="foot3283">... node</A><A
+<DT><A NAME="foot3325">... node</A><A
  HREF="#tex2html14"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A></DT>
 <DD>The server makes use of all the nodes resources by multithreading and allocating large I/O buffers
 
 </DD>
-<DT><A NAME="foot3423">... package</A><A
+<DT><A NAME="foot3465">... package</A><A
  HREF="#tex2html15"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A></DT>
 <DD><TT>tools/vtiofsl/platform/crayxk6-iofwd.cf</TT>
 
 </DD>
-<DT><A NAME="foot3424">... documentation</A><A
+<DT><A NAME="foot3466">... documentation</A><A
  HREF="#tex2html16"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A></DT>
 <DD>https://trac.mcs.anl.gov/projects/iofsl/wiki/ConfigurationFile
