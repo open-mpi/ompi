@@ -17,7 +17,7 @@
 #include "vt_fork.h"
 #include "vt_inttypes.h"
 #include "vt_iowrap.h"
-#include "vt_libcwrap.h"
+#include "vt_execwrap.h"
 #include "vt_pform.h"
 #include "vt_trc.h"
 
@@ -163,7 +163,7 @@ void vt_fork_waitchilds()
 
   if ( nchilds == 0 ) return;
 
-  VT_SUSPEND_LIBC_TRACING();
+  VT_SUSPEND_EXEC_TRACING(VT_CURRENT_THREAD);
 
   /* wait until all child processes are terminated */
   for( i = 0; i < nchilds; i++ )
@@ -177,7 +177,7 @@ void vt_fork_waitchilds()
 		(int)childv[i], nchilds-i-1);
   }
 
-  VT_RESUME_LIBC_TRACING();
+  VT_RESUME_EXEC_TRACING(VT_CURRENT_THREAD);
 }
 
 uint32_t vt_fork_get_num_childs()

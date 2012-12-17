@@ -192,7 +192,7 @@ bool ProcessDispersion( AllData& alldata ) {
             uint64_t funcid = it->first.a;
             string callpath = it->second.callpath;
 
-            map<PairCallpath, FunctionData>::const_iterator
+            map<PairCallpath, FunctionData, ltPairCallpath>::const_iterator
                     iter_funcCallpathMapGlobal;
             iter_funcCallpathMapGlobal
                     = alldata.functionCallpathMapGlobal.find(PairCallpath(

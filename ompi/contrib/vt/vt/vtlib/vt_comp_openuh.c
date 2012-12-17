@@ -17,10 +17,18 @@
 #include "vt_comp.h"
 #include "vt_defs.h"
 #include "vt_error.h"
-#include "vt_memhook.h"
+#include "vt_mallocwrap.h"
 #include "vt_pform.h"
 #include "vt_thrd.h"
 #include "vt_trc.h"
+
+/*
+ * Macro for getting id of calling thread
+ */
+
+#define GET_THREAD_ID(tid) \
+  VT_CHECK_THREAD;         \
+  (tid) = VT_MY_THREAD
 
 /*
  * Subtypes for loops.
@@ -83,7 +91,8 @@ static struct data_list_struct* data_list = NULL;
  * Registers a new region.
  */
 
-static void register_region(struct profile_gen_struct* d, uint8_t rtype)
+static void register_region(uint32_t tid, struct profile_gen_struct* d,
+                            uint8_t rtype)
 {
   struct data_list_struct* data;
   char* rname = d->pu_name;
@@ -94,7 +103,7 @@ static void register_region(struct profile_gen_struct* d, uint8_t rtype)
   /* -- register file, if available -- */
   if ( d->file_name != NULL )
   {
-    fid = vt_def_scl_file(VT_CURRENT_THREAD, d->file_name);
+    fid = vt_def_scl_file(tid, d->file_name);
     begln = d->linenum;
     endln = d->endline;
   }
@@ -140,7 +149,7 @@ static void register_region(struct profile_gen_struct* d, uint8_t rtype)
   d->data = (uint32_t*)malloc(sizeof(uint32_t));
   if ( d->data == NULL ) vt_error();
   *((uint32_t*)(d->data)) =
-    vt_def_region(VT_CURRENT_THREAD, rname, fid, begln, endln, NULL, rtype);
+    vt_def_region(tid, rname, fid, begln, endln, NULL, rtype);
 
   /* -- free generated region name -- */
   if ( rtype == VT_LOOP )
@@ -195,11 +204,9 @@ VT_DECLDEF(void __profile_init(struct profile_init_struct* d))
 
   if ( openuh_init )
   {
-    VT_MEMHOOKS_OFF();
     openuh_init = 0;
     vt_open();
     vt_comp_finalize = &__profile_finish;
-    VT_MEMHOOKS_ON();
   }
 }
 
@@ -209,12 +216,16 @@ VT_DECLDEF(void __profile_init(struct profile_init_struct* d))
 
 VT_DECLDEF(void __profile_invoke(struct profile_gen_struct* d))
 {
+  uint32_t tid;
   uint64_t time;
 
   /* -- if VampirTrace already finalized, return -- */
   if ( !vt_is_alive ) return;
 
-  VT_MEMHOOKS_OFF();
+  /* -- get calling thread id -- */
+  GET_THREAD_ID(tid);
+
+  VT_SUSPEND_MALLOC_TRACING(tid);
 
   time = vt_pform_wtime();
 
@@ -225,17 +236,17 @@ VT_DECLDEF(void __profile_invoke(struct profile_gen_struct* d))
 #if (defined(VT_MT) || defined(VT_HYB))
     VTTHRD_LOCK_IDS();
     if ( d->data == NULL )
-      register_region(d, VT_FUNCTION);
+      register_region(tid, d, VT_FUNCTION);
     VTTHRD_UNLOCK_IDS();
 #else /* VT_MT || VT_HYB */
-      register_region(d, VT_FUNCTION);
+      register_region(tid, d, VT_FUNCTION);
 #endif /* VT_MT || VT_HYB */
   }
 
   /* -- write enter record -- */
-  vt_enter(VT_CURRENT_THREAD, &time, *((uint32_t*)(d->data)));
+  vt_enter(tid, &time, *((uint32_t*)(d->data)));
 
-  VT_MEMHOOKS_ON();
+  VT_RESUME_MALLOC_TRACING(tid);
 }
 
 /*
@@ -245,21 +256,25 @@ VT_DECLDEF(void __profile_invoke(struct profile_gen_struct* d))
 
 VT_DECLDEF(void __profile_invoke_exit(struct profile_gen_struct* d))
 {
+  uint32_t tid;
   uint64_t time;
 
   /* -- if VampirTrace already finalized, return -- */
   if ( !vt_is_alive ) return;
 
-  VT_MEMHOOKS_OFF();
+  /* -- get calling thread id -- */
+  GET_THREAD_ID(tid);
+
+  VT_SUSPEND_MALLOC_TRACING(tid);
 
   time = vt_pform_wtime();
 
   /* -- write exit record -- */
   if ( d->data != NULL ) {
-    vt_exit(VT_CURRENT_THREAD, &time);
+    vt_exit(tid, &time);
   }
 
-  VT_MEMHOOKS_ON();
+  VT_RESUME_MALLOC_TRACING(tid);
 }
 
 /*
@@ -279,12 +294,16 @@ VT_DECLDEF(void __profile_branch(struct profile_gen_struct* d))
 
 VT_DECLDEF(void __profile_loop(struct profile_gen_struct* d))
 {
+  uint32_t tid;
   uint64_t time;
 
   /* -- if VampirTrace already finalized, return -- */
   if ( !vt_is_alive ) return;
 
-  VT_MEMHOOKS_OFF();
+  /* -- get calling thread id -- */
+  GET_THREAD_ID(tid);
+
+  VT_SUSPEND_MALLOC_TRACING(tid);
 
   time = vt_pform_wtime();
 
@@ -295,17 +314,17 @@ VT_DECLDEF(void __profile_loop(struct profile_gen_struct* d))
 #if (defined(VT_MT) || defined(VT_HYB))
     VTTHRD_LOCK_IDS();
     if ( d->data == NULL )
-      register_region(d, VT_LOOP);
+      register_region(tid, d, VT_LOOP);
     VTTHRD_UNLOCK_IDS();
 #else /* VT_MT || VT_HYB */
-    register_region(d, VT_LOOP);
+    register_region(tid, d, VT_LOOP);
 #endif /* VT_MT || VT_HYB */
   }
 
   /* -- write enter record -- */
-  vt_enter(VT_CURRENT_THREAD, &time, *((uint32_t*)(d->data)));
+  vt_enter(tid, &time, *((uint32_t*)(d->data)));
 
-  VT_MEMHOOKS_ON();
+  VT_RESUME_MALLOC_TRACING(tid);
 }
 
 /*
@@ -324,21 +343,25 @@ VT_DECLDEF(void __profile_loop_iter(struct profile_gen_struct* d))
 
 VT_DECLDEF(void  __profile_loop_exit(struct profile_gen_struct* d))
 {
+  uint32_t tid;
   uint64_t time;
 
   /* -- if VampirTrace already finalized, return -- */
   if ( !vt_is_alive ) return;
 
-  VT_MEMHOOKS_OFF();
+  /* -- get calling thread id -- */
+  GET_THREAD_ID(tid);
+
+  VT_SUSPEND_MALLOC_TRACING(tid);
 
   time = vt_pform_wtime();
 
   /* -- write exit record -- */
   if ( d->data != NULL ) {
-    vt_exit(VT_CURRENT_THREAD, &time);
+    vt_exit(tid, &time);
   }
 
-  VT_MEMHOOKS_ON();
+  VT_RESUME_MALLOC_TRACING(tid);
 }
 
 /*

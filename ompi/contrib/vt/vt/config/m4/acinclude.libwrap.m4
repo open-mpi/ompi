@@ -1,14 +1,15 @@
 AC_DEFUN([ACVT_LIBWRAP],
 [
 	libwrap_error="no"
-	check_libwrap="gen libc io cuda"
+	check_libwrap="gen exec io malloc cudart"
 	force_libwrap="no"
 	have_libwrap="no"
 
 	force_libwrapgen="no"
 	build_libwrapgen="no"
-	force_libcwrap="no"
+	force_execwrap="no"
 	force_iowrap="no"
+	force_mallocwrap="no"
 	force_cudartwrap="no"
 
 	shlibc_pathname=
@@ -17,7 +18,7 @@ AC_DEFUN([ACVT_LIBWRAP],
 
 	AC_ARG_ENABLE(libtrace,
 		AC_HELP_STRING([--enable-libtrace=LIST],
-			[enable library tracing support (gen,libc,io,cuda), default: automatically by configure]),
+			[enable library tracing support (gen,exec,io,malloc,cudart), default: automatically by configure]),
 	[
 		AS_IF([test x"$enableval" = "xno"], [check_libwrap="no"])
 		AS_IF([test x"$enableval" = "xyes"], [force_libwrap="yes"])
@@ -30,17 +31,24 @@ AC_DEFUN([ACVT_LIBWRAP],
 					gen)
 						force_libwrapgen="yes"
 						;;
-					libc)
-						force_libcwrap="yes"
+					libc | exec)
+						check_execwrap="yes"
+						force_execwrap="yes"
 						;;
 					io)
+						check_iowrap="yes"
 						force_iowrap="yes"
 						;;
-					cuda)
+					malloc)
+						check_mallocwrap="yes"
+						force_mallocwrap="yes"
+						;;
+					cuda | cudart)
+						check_cudartwrap="yes"
 						force_cudartwrap="yes"
 						;;
 					*)
-						AC_MSG_ERROR([value of '--enable-libtrace' not properly set])
+						AC_MSG_ERROR([value of '--enable-libwrap' not properly set])
 						;;
 				esac
 			done
@@ -118,16 +126,23 @@ AC_DEFUN([ACVT_LIBWRAP],
 					[have_libwrap="yes"; build_libwrapgen="yes"],
 					[
 						AS_IF([test x"$force_libwrapgen" = "xyes"],
-						[libwrap_error="yes"; break])
+						[
+							libwrap_error="yes"
+							break
+						])
 					])
 					;;
-				libc)
-					ACVT_CONF_SUBTITLE([LIBC])
-					ACVT_LIBCWRAP
-					AS_IF([test x"$have_libcwrap" = "xyes"], [have_libwrap="yes"],
+				libc | exec)
+					ACVT_CONF_SUBTITLE([LIBC-EXEC])
+					ACVT_EXECWRAP
+					AS_IF([test x"$have_execwrap" = "xyes"], [have_execwrap="yes"],
 					[
-						AS_IF([test x"$force_libcwrap" = "xyes"],
-						[libwrap_error="yes"; break])
+						AS_IF([test x"$force_execwrap" = "xyes"],
+						[
+							force_libwrap="yes"
+							libwrap_error="yes"
+							break
+						])
 					])
 					;;
 				io)
@@ -136,16 +151,37 @@ AC_DEFUN([ACVT_LIBWRAP],
 					AS_IF([test x"$have_iowrap" = "xyes"], [have_libwrap="yes"],
 					[
 						AS_IF([test x"$force_iowrap" = "xyes"],
-						[libwrap_error="yes"; break])
+						[
+							force_libwrap="yes"
+							libwrap_error="yes"
+							break
+						])
 					])
 					;;
-				cuda)
-					ACVT_CONF_SUBTITLE([CUDAWRAP])
-					ACVT_CUDAWRAP
+				malloc)
+					ACVT_CONF_SUBTITLE([LIBC-MALLOC])
+					ACVT_MALLOCWRAP
+					AS_IF([test x"$have_mallocwrap" = "xyes"], [have_libwrap="yes"],
+					[
+						AS_IF([test x"$force_mallocwrap" = "xyes"],
+						[
+							force_libwrap="yes"
+							libwrap_error="yes"
+							break
+						])
+					])
+					;;
+				cuda | cudart)
+					ACVT_CONF_SUBTITLE([CUDA-RT])
+					ACVT_CUDARTWRAP
 					AS_IF([test x"$have_cudartwrap" = "xyes"], [have_libwrap="yes"],
 					[
 						AS_IF([test x"$force_cudartwrap" = "xyes"],
-						[libwrap_error="yes"; break])
+						[
+							force_libwrap="yes"
+							libwrap_error="yes"
+							break
+						])
 					])
 					;;
 				esac

@@ -106,14 +106,3 @@ void vt_cntl_msg(int level, const char* fmt, ...)
   }
 }
 
-void vt_debug_msg(int level, const char* fmt, ...)
-{
-  va_list ap;
-
-  if (vt_env_debug() >= level) {
-    va_start(ap, fmt);
-    vt_print_msg("DEBUG", fmt, ap);
-    va_end(ap);
-  }
-}
-

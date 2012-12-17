@@ -18,7 +18,7 @@
 #include "vt_error.h"
 #include "vt_fbindings.h"
 #include "vt_inttypes.h"
-#include "vt_memhook.h"
+#include "vt_mallocwrap.h"
 #include "vt_pform.h"
 #include "vt_thrd.h"
 #include "vt_trc.h"
@@ -31,10 +31,8 @@ static uint32_t def_gid = 0;   /* default counter group id */
 
 #define VT_INIT \
   if ( vt_init ) { \
-    VT_MEMHOOKS_OFF(); \
     vt_init = 0; \
     vt_open(); \
-    VT_MEMHOOKS_ON(); \
   }
 
 unsigned int VT_User_count_group_def__(const char* gname)
@@ -43,7 +41,7 @@ unsigned int VT_User_count_group_def__(const char* gname)
 
   VT_INIT;
 
-  VT_MEMHOOKS_OFF();
+  VT_SUSPEND_MALLOC_TRACING(VT_CURRENT_THREAD);
 
 #if (defined(VT_MT) || defined(VT_HYB))
   VTTHRD_LOCK_IDS();
@@ -53,7 +51,7 @@ unsigned int VT_User_count_group_def__(const char* gname)
   VTTHRD_UNLOCK_IDS();
 #endif
 
-  VT_MEMHOOKS_ON();
+  VT_RESUME_MALLOC_TRACING(VT_CURRENT_THREAD);
 
   return gid;
 }
@@ -66,7 +64,7 @@ unsigned int VT_User_count_def__(const char* cname, const char* cunit, int ctype
 
   VT_INIT;
 
-  VT_MEMHOOKS_OFF();
+  VT_SUSPEND_MALLOC_TRACING(VT_CURRENT_THREAD);
 
   if (gid == (uint32_t)VT_COUNT_DEFGROUP)
   {
@@ -116,9 +114,9 @@ unsigned int VT_User_count_def__(const char* cname, const char* cunit, int ctype
   VTTHRD_UNLOCK_IDS();
 #endif
 
-    VT_MEMHOOKS_ON();
+  VT_RESUME_MALLOC_TRACING(VT_CURRENT_THREAD);
 
-    return cid;
+  return cid;
 }
 
 void VT_User_count_signed_val__(unsigned int cid, long long val)
@@ -128,13 +126,13 @@ void VT_User_count_signed_val__(unsigned int cid, long long val)
 
   VT_INIT;
 
-  VT_MEMHOOKS_OFF();
+  VT_SUSPEND_MALLOC_TRACING(VT_CURRENT_THREAD);
 
   time = vt_pform_wtime();
   cval = OTF_Signed2Counter((int64_t)val);
   vt_count(VT_CURRENT_THREAD, &time, cid, cval);
 
-  VT_MEMHOOKS_ON();
+  VT_RESUME_MALLOC_TRACING(VT_CURRENT_THREAD);
 }
 
 void VT_User_count_unsigned_val__(unsigned int cid, unsigned long long val)
@@ -144,13 +142,13 @@ void VT_User_count_unsigned_val__(unsigned int cid, unsigned long long val)
 
   VT_INIT;
 
-  VT_MEMHOOKS_OFF();
+  VT_SUSPEND_MALLOC_TRACING(VT_CURRENT_THREAD);
 
   time = vt_pform_wtime();
   cval = OTF_Unsigned2Counter((uint64_t)val);
   vt_count(VT_CURRENT_THREAD, &time, cid, cval);
 
-  VT_MEMHOOKS_ON();
+  VT_RESUME_MALLOC_TRACING(VT_CURRENT_THREAD);
 }
 
 void VT_User_count_float_val__(unsigned int cid, float val)
@@ -160,13 +158,13 @@ void VT_User_count_float_val__(unsigned int cid, float val)
 
   VT_INIT;
 
-  VT_MEMHOOKS_OFF();
+  VT_SUSPEND_MALLOC_TRACING(VT_CURRENT_THREAD);
 
   time = vt_pform_wtime();
   cval = OTF_Float2Counter(val);
   vt_count(VT_CURRENT_THREAD, &time, cid, cval);
 
-  VT_MEMHOOKS_ON();
+  VT_RESUME_MALLOC_TRACING(VT_CURRENT_THREAD);
 }
 
 void VT_User_count_double_val__(unsigned int cid, double val)
@@ -176,13 +174,13 @@ void VT_User_count_double_val__(unsigned int cid, double val)
 
   VT_INIT;
 
-  VT_MEMHOOKS_OFF();
+  VT_SUSPEND_MALLOC_TRACING(VT_CURRENT_THREAD);
 
   time = vt_pform_wtime();
   cval = OTF_Double2Counter(val);
   vt_count(VT_CURRENT_THREAD, &time, cid, cval);
 
-  VT_MEMHOOKS_ON();
+  VT_RESUME_MALLOC_TRACING(VT_CURRENT_THREAD);
 }
 
 /*
@@ -238,13 +236,13 @@ VT_DECLDEF(void VT_User_count_integer_val___f(unsigned int* cid, int* val))
 
   VT_INIT;
 
-  VT_MEMHOOKS_OFF();
+  VT_SUSPEND_MALLOC_TRACING(VT_CURRENT_THREAD);
 
   time = vt_pform_wtime();
   cval = OTF_Signed2Counter((int64_t)(*val));
   vt_count(VT_CURRENT_THREAD, &time, *cid, cval);
 
-  VT_MEMHOOKS_ON();
+  VT_RESUME_MALLOC_TRACING(VT_CURRENT_THREAD);
 } VT_GENERATE_F77_BINDINGS(vt_user_count_integer_val__,
 			   VT_USER_COUNT_INTEGER_VAL__,
 			   VT_User_count_integer_val___f,
@@ -259,13 +257,13 @@ VT_DECLDEF(void VT_User_count_integer8_val___f(unsigned int* cid,
 
   VT_INIT;
 
-  VT_MEMHOOKS_OFF();
+  VT_SUSPEND_MALLOC_TRACING(VT_CURRENT_THREAD);
 
   time = vt_pform_wtime();
   cval = OTF_Signed2Counter((int64_t)(*val));
   vt_count(VT_CURRENT_THREAD, &time, *cid, cval);
 
-  VT_MEMHOOKS_ON();
+  VT_RESUME_MALLOC_TRACING(VT_CURRENT_THREAD);
 } VT_GENERATE_F77_BINDINGS(vt_user_count_integer8_val__,
 			   VT_USER_COUNT_INTEGER8_VAL__,
 			   VT_User_count_integer8_val___f,
@@ -279,13 +277,13 @@ VT_DECLDEF(void VT_User_count_real_val___f(unsigned int* cid, float* val))
 
   VT_INIT;
 
-  VT_MEMHOOKS_OFF();
+  VT_SUSPEND_MALLOC_TRACING(VT_CURRENT_THREAD);
 
   time = vt_pform_wtime();
   cval = OTF_Float2Counter(*val);
   vt_count(VT_CURRENT_THREAD, &time, *cid, cval);
 
-  VT_MEMHOOKS_ON();
+  VT_RESUME_MALLOC_TRACING(VT_CURRENT_THREAD);
 } VT_GENERATE_F77_BINDINGS(vt_user_count_real_val__,
 			   VT_USER_COUNT_real_VAL__,
 			   VT_User_count_real_val___f,
@@ -299,13 +297,13 @@ VT_DECLDEF(void VT_User_count_double_val___f(unsigned int* cid, double* val))
 
   VT_INIT;
 
-  VT_MEMHOOKS_OFF();
+  VT_SUSPEND_MALLOC_TRACING(VT_CURRENT_THREAD);
 
   time = vt_pform_wtime();
   cval = OTF_Double2Counter(*val);
   vt_count(VT_CURRENT_THREAD, &time, *cid, cval);
 
-  VT_MEMHOOKS_ON();
+  VT_RESUME_MALLOC_TRACING(VT_CURRENT_THREAD);
 } VT_GENERATE_F77_BINDINGS(vt_user_count_double_val__,
 			   VT_USER_COUNT_double_VAL__,
 			   VT_User_count_double_val___f,

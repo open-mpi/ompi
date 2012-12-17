@@ -26,29 +26,5 @@
 #endif /* __GNUC__ */
 #include "cupti.h"
 
-#define VT_CUPTI_CALL(_err, _msg)                        \
-  if(_err != CUPTI_SUCCESS){                             \
-    vt_cupti_handleError(_err, _msg,__FILE__, __LINE__); \
-  }
-
-/* CUPTI global CUDA kernel counter group ID */
-EXTERN uint32_t vt_cupti_cgid_cuda_kernel;
-
-/* global counter IDs for CUPTI callback and activity API */
-EXTERN uint32_t vt_cupti_cid_blocksPerGrid;
-EXTERN uint32_t vt_cupti_cid_threadsPerBlock;
-EXTERN uint32_t vt_cupti_cid_threadsPerKernel;
-
-/*
- * Handles errors returned from CUPTI function calls.
- * 
- * @param ecode the CUDA driver API error code
- * @param msg a message to get more detailed information about the error
- * @param the corresponding file
- * @param the line the error occurred
- */
-EXTERN void vt_cupti_handleError(CUptiResult err, const char* msg,
-                                 const char *file, const int line);
-
 #endif	/* VT_CUPTI_H */
 

@@ -21,7 +21,7 @@
 
 #include "config.h"
 
-#if (!defined (VT_MPI) && !defined (VT_MT) && !defined(VT_HYB) && !defined(VT_JAVA) && (defined(HAVE_FORK) && HAVE_FORK))
+#if (!defined (VT_MPI) && !defined (VT_MT) && !defined(VT_HYB) && !defined(VT_JAVA))
 
 #define VT_FORK
 
@@ -38,6 +38,6 @@ EXTERN uint32_t vt_fork_get_num_childs(void);
 EXTERN uint32_t vt_fork_get_num_childs_tot(void);
 EXTERN char*    vt_fork_get_trcid_filename(void);
 
-#endif /* !VT_MPI && !VT_MT && !VT_HYB && HAVE_FORK */
+#endif /* !VT_MPI && !VT_MT && !VT_HYB */
 
 #endif /* _VT_FORK_H */

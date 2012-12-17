@@ -27,6 +27,8 @@
 # include "vt_plugin_cntr_int.h"
 #endif /* VT_PLUGIN_CNTR */
 
+#define MAX_MUTEXES 16
+
 /* data structure which hold the actual Pthread mutex */
 struct VTThrdMutex_struct
 {
@@ -53,10 +55,13 @@ static pthread_key_t pthreadKey;
 static pthread_mutex_t threadReuseMutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_mutex_t mutexInitMutex = PTHREAD_MUTEX_INITIALIZER;
 
+static VTThrdMutex mutexes[MAX_MUTEXES];
+static uint32_t    mutexesNum = 0;
+
 static IdleThreadIdListT* idleThreadIds = NULL;
 
-static uint8_t  reuseThreadIds = 0;
-static uint8_t  masterThreadTerminated = 0;
+static uint8_t reuseThreadIds = 0;
+static uint8_t masterThreadTerminated = 0;
 
 static uint32_t idle_tid_list_size(uint32_t ptid)
 {
@@ -299,10 +304,17 @@ void VTThrd_createMutex(VTThrdMutex** mutex)
   pthread_mutex_lock(&mutexInitMutex);
   if (*mutex == NULL)
   {
-    *mutex = (VTThrdMutex*)malloc(sizeof(VTThrdMutex));
-    if (*mutex == NULL)
-      vt_error();
-    pthread_mutex_init(&((*mutex)->m), NULL);
+    if (mutexesNum + 1 >= MAX_MUTEXES)
+    {
+      vt_error_msg("Number of thread mutexes exceeds maximum of %d",
+                   MAX_MUTEXES);
+    }
+    else
+    {
+      *mutex = &(mutexes[mutexesNum++]);
+
+      pthread_mutex_init(&((*mutex)->m), NULL);
+    }
   }
   pthread_mutex_unlock(&mutexInitMutex);
 }
@@ -315,7 +327,6 @@ void VTThrd_deleteMutex(VTThrdMutex** mutex)
   if (*mutex != NULL )
   {
     pthread_mutex_destroy(&((*mutex)->m));
-    free(*mutex);
     *mutex = NULL;
   }
   pthread_mutex_unlock(&mutexInitMutex);

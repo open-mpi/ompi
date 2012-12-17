@@ -41,9 +41,6 @@ EXTERN void vt_warning(const char* fmt, ...);
 /* user control message without abort (printed only if VT_VERBOSE is set) */
 EXTERN void vt_cntl_msg(int level, const char* fmt, ...);
 
-/* debug messages without abort (printed only if VT_DEBUG is set) */
-EXTERN void vt_debug_msg(int level, const char* fmt, ...);
-
 #endif
 
 

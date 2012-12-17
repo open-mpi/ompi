@@ -966,16 +966,19 @@ GeneratorC::writeHead()
       << " *   functions. If 0 is specified, the addresses of the functions will be" << std::endl
       << " *   searched in the shared libraries linked to the application, in order," << std::endl
       << " *   starting after the VampirTrace library." << std::endl
-      << " * char* shlibs[VT_LIBWRAP_MAX_SEARCH_LIBS]:" << std::endl
+      << " * char* shlibs[VT_LIBWRAP_MAX_SHLIBS]:" << std::endl
       << " *   Array of pathnames to the shared libraries which will be searched for the" << std::endl
       << " *   actual library functions." << std::endl
       << " * char* func_group:" << std::endl
       << " *   Separate function group which will be assigned to all of the wrapped" << std::endl
       << " *   functions. If no group specified (NULL), each wrapped function will be" << std::endl
       << " *   assigned to the default group 'Application'." << std::endl
+      << " * char libc:" << std::endl
+      << " *   Do additional search actual library functions in the LIBC." << std::endl
+      << " *   (1=yes / 0=no)" << std::endl
       << " * char wait_for_init:" << std::endl
       << " *   Wait for initialization of VampirTrace before generating events by these" << std::endl
-      << " *   wrapper functions (1=yes / 0=no)" << std::endl
+      << " *   wrapper functions. (1=yes / 0=no)" << std::endl
       << " * VTLibwrapAttrInitFunc init_func:" << std::endl
       << " *   Pointer to a function which may be used to initialize the library wrapper" << std::endl
       << " *   attributes above. It is called at the first wrapper event, if it is not set" << std::endl
@@ -990,6 +993,7 @@ GeneratorC::writeHead()
       << " *      shlibs_num = 0" << std::endl
       << " *      shlibs = { NULL, ... } - no shared libraries" << std::endl
       << " *      func_group = NULL      - no separate function group" << std::endl
+      << " *      libc = 0               - do not search actual library functions in LIBC" << std::endl
       << " *      wait_for_init = 0      - do not wait for initialization of VampirTrace" << std::endl
       << " *" << std::endl
       << " * uncomment the following line to use the default attributes:" << std::endl
@@ -1009,6 +1013,7 @@ GeneratorC::writeHead()
       << "  attr->shlibs[1] = <shlib2>;" << std::endl
       << "  ..." << std::endl
       << "  attr->func_group = <groupname>;" << std::endl
+      << "  attr->libc = <0|1>;" << std::endl
       << "  attr->wait_for_init = <0|1>;" << std::endl
       << "}" << std::endl
       << "static VTLibwrapAttr lw_attr = VT_LIBWRAP_ATTR_INITIALIZER(libwrap_attr_init);" << std::endl
@@ -1043,7 +1048,8 @@ GeneratorC::writeHead()
     out << "  NULL,";
   out << " /* func_group */" << std::endl;
 
-  out << "  0 /* wait_for_init */" << std::endl
+  out << "  0, /* libc */" << std::endl
+      << "  0 /* wait_for_init */" << std::endl
       << "};" << std::endl
       << std::endl
       << std::endl

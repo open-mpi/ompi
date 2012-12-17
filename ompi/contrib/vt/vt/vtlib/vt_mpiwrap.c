@@ -27,7 +27,7 @@
 #include "vt_env.h"
 #include "vt_error.h"
 #include "vt_inttypes.h"
-#include "vt_memhook.h"
+#include "vt_mallocwrap.h"
 #include "vt_mpicom.h"
 #include "vt_mpireg.h"
 #include "vt_mpireq.h"
@@ -66,10 +66,10 @@
 
 /* temporary switch off MPI tracing */
 #define MPI_TRACE_OFF(tid) \
-  VT_MEMHOOKS_OFF(); \
+  VT_SUSPEND_MALLOC_TRACING(tid); \
   VTTHRD_MPI_TRACING_ENABLED(VTThrdv[tid]) = (env_mpitrace && MPI_TRACE_INSIDE)
 #define MPI_TRACE_ON(tid) \
-  VT_MEMHOOKS_ON(); \
+  VT_RESUME_MALLOC_TRACING(tid); \
   VTTHRD_MPI_TRACING_ENABLED(VTThrdv[tid]) = env_mpitrace
 
 /* flag: MPI tracing enabled (env. VT_MPITRACE)? */

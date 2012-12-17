@@ -16,7 +16,7 @@
 #include "vt_env.h"
 #include "vt_fbindings.h"
 #include "vt_inttypes.h"
-#include "vt_memhook.h"
+#include "vt_mallocwrap.h"
 #include "vt_pform.h"
 #include "vt_trc.h"
 #if ((defined(VT_MPI) || defined(VT_HYB)) \
@@ -33,10 +33,8 @@ static int vt_init = 1;        /* is initialization needed? */
 
 #define VT_INIT \
   if ( vt_init ) { \
-    VT_MEMHOOKS_OFF(); \
     vt_init = 0; \
     vt_open(); \
-    VT_MEMHOOKS_ON(); \
   }
 
 int VT_User_is_trace_on__()
@@ -45,11 +43,11 @@ int VT_User_is_trace_on__()
 
   VT_INIT;
 
-  VT_MEMHOOKS_OFF();
+  VT_SUSPEND_MALLOC_TRACING(VT_CURRENT_THREAD);
 
   ret = vt_is_trace_on(VT_CURRENT_THREAD);
 
-  VT_MEMHOOKS_ON();
+  VT_RESUME_MALLOC_TRACING(VT_CURRENT_THREAD);
 
   return ret;
 }
@@ -58,33 +56,33 @@ void VT_User_trace_on__()
 {
   VT_INIT;
 
-  VT_MEMHOOKS_OFF();
+  VT_SUSPEND_MALLOC_TRACING(VT_CURRENT_THREAD);
 
   vt_trace_on(VT_CURRENT_THREAD, 1);
 
-  VT_MEMHOOKS_ON();
+  VT_RESUME_MALLOC_TRACING(VT_CURRENT_THREAD);
 }
 
 void VT_User_trace_off__()
 {
   VT_INIT;
 
-  VT_MEMHOOKS_OFF();
+  VT_SUSPEND_MALLOC_TRACING(VT_CURRENT_THREAD);
 
   vt_trace_off(VT_CURRENT_THREAD, 1, 0);
 
-  VT_MEMHOOKS_ON();
+  VT_RESUME_MALLOC_TRACING(VT_CURRENT_THREAD);
 }
 
 void VT_User_buffer_flush__()
 {
   VT_INIT;
 
-  VT_MEMHOOKS_OFF();
+  VT_SUSPEND_MALLOC_TRACING(VT_CURRENT_THREAD);
 
   vt_buffer_flush(VT_CURRENT_THREAD);
 
-  VT_MEMHOOKS_ON();
+  VT_RESUME_MALLOC_TRACING(VT_CURRENT_THREAD);
 }
 
 void VT_User_timesync__()
@@ -93,12 +91,12 @@ void VT_User_timesync__()
     && defined(VT_ETIMESYNC) && TIMER_IS_GLOBAL == 0)
   VT_INIT;
 
-  VT_MEMHOOKS_OFF();
+  VT_SUSPEND_MALLOC_TRACING(VT_CURRENT_THREAD);
 
   if ( vt_num_traces > 1 && vt_env_etimesync() )
     vt_esync(MPI_COMM_WORLD);
 
-  VT_MEMHOOKS_ON();
+  VT_RESUME_MALLOC_TRACING(VT_CURRENT_THREAD);
 #endif /* (VT_MPI || VT_HYB) && VT_ETIMESYNC && TIMER_IS_GLOBAL */
 }
 
@@ -108,12 +106,12 @@ void VT_User_update_counter__()
 
   VT_INIT;
 
-  VT_MEMHOOKS_OFF();
+  VT_SUSPEND_MALLOC_TRACING(VT_CURRENT_THREAD);
 
   time = vt_pform_wtime();
   vt_update_counter(VT_CURRENT_THREAD, &time);
 
-  VT_MEMHOOKS_ON();
+  VT_RESUME_MALLOC_TRACING(VT_CURRENT_THREAD);
 }
 
 
@@ -123,12 +121,12 @@ void VT_User_set_rewind_mark__(void)
 
   VT_INIT;
 
-  VT_MEMHOOKS_OFF();
+  VT_SUSPEND_MALLOC_TRACING(VT_CURRENT_THREAD);
 
   time = vt_pform_wtime();
   vt_set_rewind_mark(VT_CURRENT_THREAD, &time);
 
-  VT_MEMHOOKS_ON();
+  VT_RESUME_MALLOC_TRACING(VT_CURRENT_THREAD);
 }
 
 void VT_User_rewind__(void)
@@ -137,12 +135,12 @@ void VT_User_rewind__(void)
 
   VT_INIT;
 
-  VT_MEMHOOKS_OFF();
+  VT_SUSPEND_MALLOC_TRACING(VT_CURRENT_THREAD);
 
   time = vt_pform_wtime();
   vt_rewind(VT_CURRENT_THREAD, &time);
 
-  VT_MEMHOOKS_ON();
+  VT_RESUME_MALLOC_TRACING(VT_CURRENT_THREAD);
 }
 
 

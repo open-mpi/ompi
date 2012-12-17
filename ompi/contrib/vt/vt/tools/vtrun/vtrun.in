@@ -360,13 +360,7 @@ if test $mpi -eq 1 -a $fortran -eq 1 -a x"$FMPILIB" != x; then
 fi
 
 if test $dyninst -eq 1; then
-  if test x"$DYNINSTAPI_RT_LIB" = x; then
-    error_msg "Error: Environment variable DYNINSTAPI_RT_LIB is not "\
-"defined. Aborting."
-    exit 1
-  fi
-
-  ld_preload="$DYNINSTAPI_RT_LIB:$libdir/$DYNATTLIB:$ld_preload"
+  ld_preload="$libdir/$DYNATTLIB:$ld_preload"
 fi
 
 if test x"$extra_libs" != x; then
