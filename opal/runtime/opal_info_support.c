@@ -272,7 +272,6 @@ int opal_info_register_components(opal_pointer_array_t *mca_types,
             /* can't manipulate it directly, so make a copy first */
             asprintf(&target, "%s=", env);
             putenv(target);
-            free(target);
         }
         free(env);
     }
