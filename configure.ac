@@ -976,7 +976,7 @@ m4_ifdef([project_orte], [OMPI_PS_FLAVOR_CHECK])
 # File system case sensitivity
 #
 
-m4_ifdef([project_opal], [OPAL_CASE_SENSITIVE_FS_SETUP])
+OPAL_CASE_SENSITIVE_FS_SETUP
 
 # AIX: FIONBIO in sys/ioctl.h
 # glibc: memcpy
@@ -1228,8 +1228,10 @@ fi
 # :-\
 
 m4_ifdef([opal_CONFIG_LOCAL], [opal_CONFIG_LOCAL])
-m4_ifdef([orte_CONFIG_LOCAL], [orte_CONFIG_LOCAL])
-m4_ifdef([ompi_CONFIG_LOCAL], [ompi_CONFIG_LOCAL])
+m4_ifdef([project_orte],
+         [m4_ifdef([orte_CONFIG_LOCAL], [orte_CONFIG_LOCAL])])
+m4_ifdef([project_ompi],
+         [m4_ifdef([ompi_CONFIG_LOCAL], [ompi_CONFIG_LOCAL])])
 
 ############################################################################
 # Party on
