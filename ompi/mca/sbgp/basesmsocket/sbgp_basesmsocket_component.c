@@ -422,6 +422,7 @@ static mca_sbgp_base_module_t *mca_sbgp_basesmsocket_select_procs(struct ompi_pr
 
         module->super.group_size=cnt;
 
+#if 0
     /*debug print*/
     
     {
@@ -433,6 +434,7 @@ static mca_sbgp_base_module_t *mca_sbgp_basesmsocket_select_procs(struct ompi_pr
         fprintf(stderr,"\n");
         fflush(stderr);
     }
+#endif
 
    /* end debug*/
 
