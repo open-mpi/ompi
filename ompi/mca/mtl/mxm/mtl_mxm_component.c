@@ -83,9 +83,23 @@ static int ompi_mtl_mxm_component_register(void)
 static int ompi_mtl_mxm_component_open(void)
 {
     mxm_error_t err;
+    unsigned long cur_ver;
 
     mca_mtl_mxm_output = opal_output_open(NULL);
     opal_output_set_verbosity(mca_mtl_mxm_output, ompi_mtl_mxm.verbose);
+    cur_ver = mxm_get_version();
+    if (cur_ver != MXM_API) {
+        char *str;
+        if (asprintf(&str, "OMPI was compiled with MXM version %d.%d but "
+                "version %ld.%ld detected.", MXM_VERNO_MAJOR,
+                MXM_VERNO_MINOR, (cur_ver >> MXM_MAJOR_BIT)& 0xff,
+                (cur_ver >> MXM_MINOR_BIT) & 0xff)>0) {
+                    orte_show_help("help-mtl-mxm.txt", "mxm init", true, str);
+
+                    free(str);
+                }
+        return OMPI_ERR_NOT_AVAILABLE;
+    }
 #if MXM_API < MXM_VERSION(1,5)
         mxm_fill_context_opts(&ompi_mtl_mxm.mxm_opts);
         err = mxm_init(&ompi_mtl_mxm.mxm_opts, &ompi_mtl_mxm.mxm_context);
@@ -139,12 +153,18 @@ static int ompi_mtl_mxm_component_open(void)
 
 static int ompi_mtl_mxm_component_close(void)
 {
-    mxm_cleanup(ompi_mtl_mxm.mxm_context);
-    ompi_mtl_mxm.mxm_context = NULL;
+    unsigned long cur_ver;
+
+    cur_ver = mxm_get_version();
+
+    if (cur_ver == MXM_API) {
+        mxm_cleanup(ompi_mtl_mxm.mxm_context);
+        ompi_mtl_mxm.mxm_context = NULL;
 
 #if MXM_API >= MXM_VERSION(1,5)
-    OBJ_DESTRUCT(&mca_mtl_mxm_component.mxm_messages);
+        OBJ_DESTRUCT(&mca_mtl_mxm_component.mxm_messages);
 #endif
+    }
 
     return OMPI_SUCCESS;
 }
