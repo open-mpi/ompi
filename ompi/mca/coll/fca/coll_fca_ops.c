@@ -328,7 +328,7 @@ orig_allreduce:
 /*
  * Prepare a send buffer for allgather/allgatherv, handle packing and MPI_IN_PLACE.
  */
-static size_t __setup_gather_sendbuf(void *sbuf, void *inplace_sbuf, int scount,
+static size_t __setup_gather_sendbuf(void *sbuf, int scount,
                                      struct ompi_datatype_t *sdtype,
                                      struct mca_coll_fca_convertor *sconv,
                                      void **real_sendbuf)
@@ -336,18 +336,31 @@ static size_t __setup_gather_sendbuf(void *sbuf, void *inplace_sbuf, int scount,
     size_t gap, ssize;
 
     if (mca_coll_fca_array_size(sdtype, scount, &gap, &ssize)) {
-        *real_sendbuf = (char*)((MPI_IN_PLACE == sbuf) ? inplace_sbuf : sbuf) + gap;
+        *real_sendbuf = (char*) sbuf + gap;
     } else {
         FCA_VERBOSE(5, "Packing send buffer");
-        if (MPI_IN_PLACE == sbuf) {
-            mca_coll_fca_convertor_create(sconv, sdtype, scount, inplace_sbuf,
-                                          MCA_COLL_FCA_CONV_SEND, real_sendbuf,
-                                          &ssize);
-        } else {
-            mca_coll_fca_convertor_create(sconv, sdtype, scount, sbuf,
-                                          MCA_COLL_FCA_CONV_SEND, real_sendbuf,
-                                          &ssize);
-        }
+        mca_coll_fca_convertor_create(sconv, sdtype, scount, sbuf,
+                                      MCA_COLL_FCA_CONV_SEND, real_sendbuf,
+                                      &ssize);
+        mca_coll_fca_convertor_process(sconv, 0);
+    }
+    return ssize;
+}
+
+static size_t __setup_gather_sendbuf_inplace(void *inplace_sbuf, int rcount,
+                                             struct ompi_datatype_t *rdtype,
+                                             struct mca_coll_fca_convertor *sconv,
+                                             void **real_sendbuf)
+{
+    size_t gap, ssize;
+
+    if (mca_coll_fca_array_size(rdtype, rcount, &gap, &ssize)) {
+        *real_sendbuf = (char*) inplace_sbuf + gap;
+    } else {
+        FCA_VERBOSE(5, "Packing send buffer");
+        mca_coll_fca_convertor_create(sconv, rdtype, rcount, inplace_sbuf,
+                                      MCA_COLL_FCA_CONV_SEND, real_sendbuf,
+                                      &ssize);
         mca_coll_fca_convertor_process(sconv, 0);
     }
     return ssize;
@@ -375,12 +388,15 @@ int mca_coll_fca_allgather(void *sbuf, int scount, struct ompi_datatype_t *sdtyp
     ssize_t total_rcount;
     int ret;
 
-    FCA_DT_EXTENT(rdtype, &rdtype_extent);
-
     /* Setup send buffer */
-    spec.size =
-            __setup_gather_sendbuf(sbuf, (char *)rbuf + rcount * fca_module->rank * rdtype_extent,
-                                   scount, sdtype, &sconv, &spec.sbuf);
+    if(sbuf == MPI_IN_PLACE ) {
+        FCA_DT_EXTENT(rdtype, &rdtype_extent);
+        spec.size = __setup_gather_sendbuf_inplace(
+                        (char *)rbuf + rcount * fca_module->rank * rdtype_extent,
+                        rcount, rdtype, &sconv, &spec.sbuf);
+    } else {
+        spec.size = __setup_gather_sendbuf(sbuf, scount, sdtype, &sconv, &spec.sbuf);
+    }
 
     /* Setup recv buffer */
     total_rcount = ompi_comm_size(comm) * rcount;
@@ -446,9 +462,13 @@ int mca_coll_fca_allgatherv(void *sbuf, int scount,
     FCA_DT_EXTENT(rdtype, &rdtype_extent);
 
     /* Setup send buffer */
-    spec.sendsize =
-            __setup_gather_sendbuf(sbuf, (char *)rbuf + disps[fca_module->rank] * rdtype_extent,
-                                   scount, sdtype, &sconv, &spec.sbuf);
+    if(sbuf == MPI_IN_PLACE ) {
+        spec.sendsize = __setup_gather_sendbuf_inplace(
+                                (char *)rbuf + disps[fca_module->rank] * rdtype_extent,
+                                rcounts[fca_module->rank], rdtype, &sconv, &spec.sbuf);
+    } else {
+        spec.sendsize = __setup_gather_sendbuf(sbuf, scount, sdtype, &sconv, &spec.sbuf);
+    }
 
     /* Allocate alternative recvsizes/displs on the stack, which will be in bytes */
     spec.recvsizes = alloca(sizeof *spec.recvsizes * comm_size);
