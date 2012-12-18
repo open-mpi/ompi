@@ -126,7 +126,7 @@ int bcol_ptpcoll_bcast_k_nomial_anyroot(bcol_function_args_t *input_args,
     int *group_list = ptpcoll_module->super.sbgp_partner_module->group_list;
     int radix = ptpcoll_module->k_nomial_radix;
     int root_radix_mask = ptpcoll_module->pow_knum;
-    int peer;
+    int peer = -1;
     uint64_t sequence_number = input_args->sequence_num;
     uint32_t buffer_index = input_args->buffer_index;
     int extra_root = -1;
@@ -603,7 +603,7 @@ int bcol_ptpcoll_bcast_k_nomial_known_root(bcol_function_args_t *input_args,
     int tag;
     int rc;
     int comm_root;
-    int data_src;
+    int data_src = -1;
     int group_root_index;
     int my_group_index = ptpcoll_module->super.sbgp_partner_module->my_index;
     int *group_list = ptpcoll_module->super.sbgp_partner_module->group_list;
