@@ -68,20 +68,6 @@ mca_coll_fca_component_t mca_coll_fca_component = {
 #define FCA_API_CLEAR_MICRO(__x) ((__x>>FCA_MINOR_BIT)<<FCA_MINOR_BIT)
 #define FCA_API_VER(__major,__minor) (__major<<FCA_MAJOR_BIT | __minor<<FCA_MINOR_BIT)
 
-#define GET_FCA_SYM(__name) \
-{ \
-	dlsym_quiet((void **)&mca_coll_fca_component.fca_ops.__name, "fca_" #__name);\
-	if (!mca_coll_fca_component.fca_ops.__name) { \
-	    FCA_ERROR("Symbol %s not found", "fca_" #__name); \
-	    return OMPI_ERROR; \
-    } \
-}
-
-static void dlsym_quiet(void **p, char *name)
-{
-    *p = dlsym(mca_coll_fca_component.fca_lib_handle, name);
-}
-
 /**
  * Called from FCA blocking functions to progress MPI
  */
@@ -99,8 +85,7 @@ static int mca_coll_fca_mpi_progress_cb(void)
     if (!mca_coll_fca_component.fca_context)
         return 0;
 
-    if (mca_coll_fca_component.fca_ops.progress)
-        mca_coll_fca_component.fca_ops.progress(mca_coll_fca_component.fca_context);
+    fca_progress(mca_coll_fca_component.fca_context);
 #endif
     return 0;
 }
@@ -131,23 +116,12 @@ int mca_coll_fca_get_fca_lib(struct ompi_communicator_t *comm)
     unsigned long fca_ver, major, minor, detected_ver;
     char x[3];
 
-    if (mca_coll_fca_component.fca_lib_handle)
-        return OMPI_SUCCESS;
-
-    mca_coll_fca_component.fca_lib_handle = dlopen(mca_coll_fca_component.fca_lib_path, RTLD_LAZY);
-    if (!mca_coll_fca_component.fca_lib_handle) {
-        FCA_ERROR("Failed to load FCA from %s: %s", mca_coll_fca_component.fca_lib_path, strerror(errno));
-        return OMPI_ERROR;
+    /* Make sure this is only run once */
+    if (mca_coll_fca_component.fca_context) {
+    	return OMPI_SUCCESS;
     }
 
-    memset(&mca_coll_fca_component.fca_ops, 0, sizeof(mca_coll_fca_component.fca_ops));
-
-    FCA_VERBOSE(1, "FCA Loaded from: %s", mca_coll_fca_component.fca_lib_path);
-    GET_FCA_SYM(get_version);
-    GET_FCA_SYM(get_version_string);
-
-
-    fca_ver = FCA_API_CLEAR_MICRO(mca_coll_fca_component.fca_ops.get_version());
+    fca_ver = FCA_API_CLEAR_MICRO(fca_get_version());
     major = (fca_ver>>FCA_MAJOR_BIT);
     minor = (fca_ver>>FCA_MINOR_BIT) & 0xf;
     sprintf(x, "%ld%ld", major, minor);
@@ -157,39 +131,12 @@ int mca_coll_fca_get_fca_lib(struct ompi_communicator_t *comm)
 
     if (detected_ver != OMPI_FCA_VERSION) {
         FCA_ERROR("Unsupported FCA version: %s, please update FCA to v%d, now v%ld",
-                  mca_coll_fca_component.fca_ops.get_version_string(),
+                  fca_get_version_string(),
                   OMPI_FCA_VERSION, fca_ver);
         return OMPI_ERROR;
     }
 
-    GET_FCA_SYM(init);
-    GET_FCA_SYM(cleanup);
-#ifdef OMPI_FCA_PROGRESS
-    GET_FCA_SYM(progress);
-#endif
-    GET_FCA_SYM(comm_new);
-    GET_FCA_SYM(comm_end);
-    GET_FCA_SYM(get_rank_info);
-    GET_FCA_SYM(free_rank_info);
-    GET_FCA_SYM(comm_init);
-    GET_FCA_SYM(comm_destroy);
-    GET_FCA_SYM(comm_get_caps);
-    GET_FCA_SYM(do_reduce);
-    GET_FCA_SYM(do_all_reduce);
-    GET_FCA_SYM(do_bcast);
-    GET_FCA_SYM(do_barrier);
-#if OMPI_FCA_ALLGATHER == 1
-    GET_FCA_SYM(do_allgather);
-    GET_FCA_SYM(do_allgatherv);
-#endif
-    GET_FCA_SYM(parse_spec_file);
-    GET_FCA_SYM(free_init_spec);
-    GET_FCA_SYM(translate_mpi_op);
-    GET_FCA_SYM(translate_mpi_dtype);
-    GET_FCA_SYM(get_dtype_size);
-    GET_FCA_SYM(strerror);
-
-    spec = mca_coll_fca_component.fca_ops.parse_spec_file(mca_coll_fca_component.fca_spec_file);
+    spec = fca_parse_spec_file(mca_coll_fca_component.fca_spec_file);
     if (!spec) {
         FCA_ERROR("Failed to parse FCA spec file `%s'", mca_coll_fca_component.fca_spec_file);
         return OMPI_ERROR;
@@ -199,13 +146,13 @@ int mca_coll_fca_get_fca_lib(struct ompi_communicator_t *comm)
     spec->rank_id = ompi_comm_rank(MPI_COMM_WORLD);
     spec->progress.func = mca_coll_fca_progress_cb;
     spec->progress.arg = NULL;
-    ret = mca_coll_fca_component.fca_ops.init(spec, &mca_coll_fca_component.fca_context);
+    ret = fca_init(spec, &mca_coll_fca_component.fca_context);
     if (ret < 0) {
-        FCA_ERROR("Failed to initialize FCA: %s", mca_coll_fca_component.fca_ops.strerror(ret));
+        FCA_ERROR("Failed to initialize FCA: %s", fca_strerror(ret));
         return OMPI_ERROR;
     }
 
-    mca_coll_fca_component.fca_ops.free_init_spec(spec);
+    fca_free_init_spec(spec);
     mca_coll_fca_init_fca_translations();
 
     opal_progress_register(mca_coll_fca_mpi_progress_cb);
@@ -215,10 +162,10 @@ int mca_coll_fca_get_fca_lib(struct ompi_communicator_t *comm)
 static void mca_coll_fca_close_fca_lib(void)
 {
     opal_progress_unregister(mca_coll_fca_mpi_progress_cb);
-    mca_coll_fca_component.fca_ops.cleanup(mca_coll_fca_component.fca_context);
-    mca_coll_fca_component.fca_context = NULL;
-    dlclose(mca_coll_fca_component.fca_lib_handle);
-    mca_coll_fca_component.fca_lib_handle = NULL;
+    if (mca_coll_fca_component.fca_context) {
+    	fca_cleanup(mca_coll_fca_component.fca_context);
+    	mca_coll_fca_component.fca_context = NULL;
+    }
 }
 
 static int fca_register(void)
@@ -252,12 +199,6 @@ static int fca_register(void)
                            false, false,
                            ""COLL_FCA_HOME"/etc/fca_mpi_spec.ini",
                            &mca_coll_fca_component.fca_spec_file);
-
-    mca_base_param_reg_string(c, "library_path",
-                           "FCA /path/to/libfca.so",
-                           false, false,
-                           ""COLL_FCA_HOME"/lib/libfca.so",
-                           &mca_coll_fca_component.fca_lib_path);
 
     mca_base_param_reg_int(c, "np",
                            "[integer] Minimal allowed job's NP to activate FCA",
@@ -346,11 +287,9 @@ static int fca_open(void)
 {
     FCA_VERBOSE(2, "==>");
 
-    /*const mca_base_component_t *c = &mca_coll_fca_component.super.collm_version;*/
-
     mca_coll_fca_output = opal_output_open(NULL);
     opal_output_set_verbosity(mca_coll_fca_output, mca_coll_fca_component.fca_verbose);
-    mca_coll_fca_component.fca_lib_handle = NULL;
+
     mca_coll_fca_component.fca_context = NULL;
     return OMPI_SUCCESS;
 }
@@ -359,7 +298,7 @@ static int fca_close(void)
 {
     FCA_VERBOSE(2, "==>");
 
-    if (!mca_coll_fca_component.fca_lib_handle || !mca_coll_fca_component.fca_context)
+    if (!mca_coll_fca_component.fca_context)
         return OMPI_SUCCESS;
 
     mca_coll_fca_close_fca_lib();

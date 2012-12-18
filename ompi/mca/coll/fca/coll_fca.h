@@ -122,9 +122,6 @@ struct mca_coll_fca_component_t {
     /** MCA parameter: Path to fca spec file */
     char* fca_spec_file;
 
-    /** MCA parameter: Path to libfca.so */
-    char* fca_lib_path;
-
     /** MCA parameter: FCA device */
     char* fca_dev;
     
@@ -171,8 +168,6 @@ struct mca_coll_fca_component_t {
     int   fca_np;
 
     /* FCA global stuff */
-    void *fca_lib_handle;                               /* FCA dynamic library */
-    mca_coll_fca_ops_t fca_ops;                         /* FCA operations */
     fca_t *fca_context;                                 /* FCA context handle */
     mca_coll_fca_dtype_info_t fca_dtypes[FCA_DT_MAX_PREDEFINED]; /* FCA dtype translation */
     mca_coll_fca_op_info_t fca_reduce_ops[FCA_MAX_OPS]; /* FCA op translation */
