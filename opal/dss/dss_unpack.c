@@ -464,7 +464,7 @@ static int opal_dss_unpack_float(opal_buffer_t *buffer, float *value)
         OPAL_ERROR_LOG(ret);
         return ret;
     }
-    *value = (float)tmp1 + (float)tmp2/100.0;
+    *value = (float)tmp1 + (float)tmp2/1000.0;
     return OPAL_SUCCESS;
 }
 
@@ -475,7 +475,8 @@ int opal_dss_unpack_pstat(opal_buffer_t *buffer, void *dest,
                           int32_t *num_vals, opal_data_type_t type)
 {
     opal_pstats_t **ptr;
-    int32_t i, n, m, tmp1, tmp2;
+    int32_t i, n, m;
+    int64_t tmp1, tmp2;
     int ret;
     char *cptr;
     
@@ -518,12 +519,12 @@ int opal_dss_unpack_pstat(opal_buffer_t *buffer, void *dest,
             return ret;
         }
         m=1;
-        if (OPAL_SUCCESS != (ret = opal_dss_unpack_buffer(buffer, &tmp1, &m, OPAL_INT32))) {
+        if (OPAL_SUCCESS != (ret = opal_dss_unpack_buffer(buffer, &tmp1, &m, OPAL_INT64))) {
             OPAL_ERROR_LOG(ret);
             return ret;
         }
         m=1;
-        if (OPAL_SUCCESS != (ret = opal_dss_unpack_buffer(buffer, &tmp2, &m, OPAL_INT32))) {
+        if (OPAL_SUCCESS != (ret = opal_dss_unpack_buffer(buffer, &tmp2, &m, OPAL_INT64))) {
             OPAL_ERROR_LOG(ret);
             return ret;
         }
@@ -558,12 +559,12 @@ int opal_dss_unpack_pstat(opal_buffer_t *buffer, void *dest,
             return ret;
         }
         m=1;
-        if (OPAL_SUCCESS != (ret = opal_dss_unpack_buffer(buffer, &tmp1, &m, OPAL_INT32))) {
+        if (OPAL_SUCCESS != (ret = opal_dss_unpack_buffer(buffer, &tmp1, &m, OPAL_INT64))) {
             OPAL_ERROR_LOG(ret);
             return ret;
         }
         m=1;
-        if (OPAL_SUCCESS != (ret = opal_dss_unpack_buffer(buffer, &tmp2, &m, OPAL_INT32))) {
+        if (OPAL_SUCCESS != (ret = opal_dss_unpack_buffer(buffer, &tmp2, &m, OPAL_INT64))) {
             OPAL_ERROR_LOG(ret);
             return ret;
         }

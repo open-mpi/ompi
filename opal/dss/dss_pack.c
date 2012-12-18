@@ -378,7 +378,7 @@ static int opal_dss_pack_float(opal_buffer_t *buffer, float val)
     if (OPAL_SUCCESS != (ret = opal_dss_pack_buffer(buffer, &tmp1, 1, OPAL_INT32))) {
         return ret;
     }
-    tmp2 = (int)(100.0 * (val - (int)val));
+    tmp2 = (int)(1000.0 * (val - (int)val));
     if (OPAL_SUCCESS != (ret = opal_dss_pack_buffer(buffer, &tmp2, 1, OPAL_INT32))) {
         return ret;
     }
@@ -392,7 +392,8 @@ int opal_dss_pack_pstat(opal_buffer_t *buffer, const void *src,
                         int32_t num_vals, opal_data_type_t type)
 {
     opal_pstats_t **ptr;
-    int32_t i, tmp;
+    int32_t i;
+    int64_t tmp;
     int ret;
     char *cptr;
     
@@ -417,11 +418,11 @@ int opal_dss_pack_pstat(opal_buffer_t *buffer, const void *src,
             return ret;
         }
         tmp = ptr[i]->time.tv_sec;
-        if (OPAL_SUCCESS != (ret = opal_dss_pack_buffer(buffer, &tmp, 1, OPAL_INT32))) {
+        if (OPAL_SUCCESS != (ret = opal_dss_pack_buffer(buffer, &tmp, 1, OPAL_INT64))) {
             return ret;
         }
         tmp = ptr[i]->time.tv_usec;
-        if (OPAL_SUCCESS != (ret = opal_dss_pack_buffer(buffer, &tmp, 1, OPAL_INT32))) {
+        if (OPAL_SUCCESS != (ret = opal_dss_pack_buffer(buffer, &tmp, 1, OPAL_INT64))) {
             return ret;
         }
         if (OPAL_SUCCESS != (ret = opal_dss_pack_buffer(buffer, &ptr[i]->priority, 1, OPAL_INT32))) {
@@ -443,11 +444,11 @@ int opal_dss_pack_pstat(opal_buffer_t *buffer, const void *src,
             return ret;
         }
         tmp = ptr[i]->sample_time.tv_sec;
-        if (OPAL_SUCCESS != (ret = opal_dss_pack_buffer(buffer, &tmp, 1, OPAL_INT32))) {
+        if (OPAL_SUCCESS != (ret = opal_dss_pack_buffer(buffer, &tmp, 1, OPAL_INT64))) {
             return ret;
         }
         tmp = ptr[i]->sample_time.tv_usec;
-        if (OPAL_SUCCESS != (ret = opal_dss_pack_buffer(buffer, &tmp, 1, OPAL_INT32))) {
+        if (OPAL_SUCCESS != (ret = opal_dss_pack_buffer(buffer, &tmp, 1, OPAL_INT64))) {
             return ret;
         }
     }
