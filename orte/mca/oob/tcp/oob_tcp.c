@@ -168,6 +168,7 @@ static int mca_oob_tcp_component_register(void)
 {
     int tmp;
     char *listen_type, *str = NULL;
+    bool ip4_ports_given = false;
 
     mca_base_param_reg_int(&mca_oob_tcp_component.super.oob_base,
                            "verbose",
@@ -301,6 +302,7 @@ static int mca_oob_tcp_component_register(void)
                               &str);
     /* if ports were provided, parse the provided range */
     if (NULL != str) {
+        ip4_ports_given = true;
         orte_static_ports = true;
         orte_util_parse_range_options(str, &mca_oob_tcp_component.tcp4_static_ports);
         if (0 == strcmp(mca_oob_tcp_component.tcp4_static_ports[0], "-1")) {
@@ -352,11 +354,19 @@ static int mca_oob_tcp_component_register(void)
         orte_static_ports = true;
         orte_util_parse_range_options(str, &mca_oob_tcp_component.tcp6_static_ports);
         if (0 == strcmp(mca_oob_tcp_component.tcp6_static_ports[0], "-1")) {
+            if (ip4_ports_given) {
+                opal_output(0, "OOB:TCP:Error: IP4 static ports given, but IPv6 is enabled and an incorrect static port range was provided for it");
+                return ORTE_ERR_FATAL;
+            }
             opal_argv_free(mca_oob_tcp_component.tcp6_static_ports);
             mca_oob_tcp_component.tcp6_static_ports = NULL;
             orte_static_ports = false;
         }
     } else {
+        if (ip4_ports_given) {
+            opal_output(0, "OOB:TCP:Error: IP4 static ports given, but IPv6 is enabled and no static ports provided for it");
+            return ORTE_ERR_FATAL;
+        }
         orte_static_ports = false;
         mca_oob_tcp_component.tcp6_static_ports = NULL;
     }
@@ -659,7 +669,8 @@ mca_oob_tcp_create_listen(int *target_sd, unsigned short *target_port, uint16_t 
             ptr++;
             opal_argv_append_nosize(&ports, ptr);
             free(portptr);
-        } else if (ORTE_PROC_IS_HNP || ORTE_PROC_IS_DAEMON) {
+        } else if (ORTE_PROC_IS_HNP || ORTE_PROC_IS_DAEMON ||
+                   ORTE_PROC_IS_CM || ORTE_PROC_IS_CMSLAVE) {
             if (NULL != mca_oob_tcp_component.tcp4_static_ports) {
                 /* if static ports were provided, the daemon takes the
                  * first entry in the list
@@ -722,7 +733,8 @@ mca_oob_tcp_create_listen(int *target_sd, unsigned short *target_port, uint16_t 
 
 #if OPAL_WANT_IPV6
     if (AF_INET6 == af_family) {
-        if (ORTE_PROC_IS_HNP || ORTE_PROC_IS_DAEMON) {
+        if (ORTE_PROC_IS_HNP || ORTE_PROC_IS_DAEMON ||
+            ORTE_PROC_IS_CM || ORTE_PROC_IS_CMSLAVE) {
             if (NULL != mca_oob_tcp_component.tcp6_static_ports) {
                 /* if static ports were provided, the daemon takes the
                  * first entry in the list
@@ -1671,18 +1683,15 @@ int mca_oob_tcp_resolve(mca_oob_tcp_peer_t* peer)
                             }
                             inaddr = ((struct sockaddr_in*)(&addr))->sin_addr;
                             haddr = inet_ntoa(inaddr);
-                            goto proceed;
+                            break;
                         }
                     }
+                } else {
+                    haddr = inet_ntoa(*(struct in_addr*)h->h_addr_list[0]);
                 }
-                opal_output(0, "%s COULD NOT COMPUTE CONTACT INFO FOR PROC %s on NODE %s",
-                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                            ORTE_NAME_PRINT(&peer->peer_name), host);
-                goto unlock;
             } else {
-                haddr = inet_ntoa(*(struct in_addr*)h->h_addr_list[0]);
+                goto unlock;
             }
-        proceed:
             /* we can't know which af_family we are using, so for now, let's
              * just look to see which static port family was provided
              */
@@ -1699,7 +1708,6 @@ int mca_oob_tcp_resolve(mca_oob_tcp_peer_t* peer)
                         /* this isn't an error - it just means we don't know
                          * how to compute a contact info for this proc
                          */
-                        opal_output(0, "COULD NOT GET NODE RANK");
                         rc = ORTE_ERR_ADDRESSEE_UNKNOWN;
                         goto unlock;
                     }
