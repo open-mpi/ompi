@@ -246,8 +246,6 @@ struct ConfigS
   std::string tauinst_args;          // TAU instrumentor arguments
   std::string tauinst_parsecmd;      // PDT source code parser command
   std::string tauinst_parseargs;     // PDT parser arguments
-  std::string tauinst_commentcmd;    // PDT comment parser command
-  std::string tauinst_commentargs;   // PDT comment parser arguments
 
   std::vector<ModFileS>
     mod_files;                       // source files to be modified by OPARI
@@ -352,7 +350,7 @@ readDataFile()
     std::string( vt_installdirs_get( VT_INSTALLDIR_DATADIR ) ) + "/" +
     std::string( ExeName ) + "-wrapper-data.txt";
 
-  const uint32_t keys_num = 33;
+  const uint32_t keys_num = 31;
   const std::string keys[] = {
     "version", "language", "compiler_env", "compiler_flags_env",
     "compiler", "compiler_flags", "linker_flags", "libs", "preprocessor",
@@ -360,9 +358,8 @@ readDataFile()
     "vtmtlib", "vthyblib", "vtpomplib", "vtdynattlib", "opari_bin",
     "opari_opts", "opari_tab_compiler", "opari_tab_compiler_flags",
     "compinst_compiler_flags", "dyninst_compiler_flags", "tauinst_bin",
-    "tauinst_opts", "tauinst_parse_bin", "tauinst_parse_opts",
-    "tauinst_comment_bin", "tauinst_comment_opts", "inst_avail", "inst_default",
-    "partype_default"
+    "tauinst_opts", "tauinst_parse_bin", "tauinst_parse_opts", "inst_avail",
+    "inst_default", "partype_default"
   };
 
   std::ifstream in( data_file.c_str() );
@@ -588,17 +585,7 @@ readDataFile()
         Config.tauinst_parseargs = value;
         break;
       }
-      case 29: // tauinst_comment_bin
-      {
-        Config.tauinst_commentcmd = value;
-        break;
-      }
-      case 30: // tauinst_comment_opts
-      {
-        Config.tauinst_commentargs = value;
-        break;
-      }
-      case 31: // inst_avail
+      case 29: // inst_avail
       {
         char cvalue[128];
         strncpy( cvalue, value.c_str(), sizeof( cvalue ) - 1 );
@@ -629,7 +616,7 @@ readDataFile()
 
         break;
       }
-      case 32: // inst_default
+      case 30: // inst_default
       {
         if( !Config.setInstType( value ) )
         {
@@ -641,7 +628,7 @@ readDataFile()
         }
         break;
       }
-      case 33: // partype_default
+      case 31: // partype_default
       {
         if( value.compare( "seq" ) == 0 )
         {
@@ -1709,22 +1696,6 @@ doWrap()
         // show/execute PDT parse command
         if( ( rc = showOrExecuteCommand( cmd ) ) != 0 )
           return rc;
-
-        // extend PDB file by comment information, if possible
-        //
-        if( Config.tauinst_commentcmd.length() > 0 )
-        {
-          // compose PDT comment parser command
-          //
-          cmd =
-            Config.tauinst_commentcmd + " " +
-            pdb_file + " -o " + pdb_file + " " +
-            Config.tauinst_commentargs;
-
-          // show/execute PDT comment parser command
-          if( ( rc = showOrExecuteCommand( cmd ) ) != 0 )
-            return rc;
-        }
       }
       else
       {

@@ -15,6 +15,9 @@
 		- memory (de)allocation functions     : "MEM"  -> "LIBC-MALLOC"
 		- I/O functions                       : "I/O"  -> "LIBC-I/O"
 		- child process execution (e.g. execl): "LIBC" -> "LIBC-EXEC"
+	- compiler wrappers:
+		- removed invocation of pdbcomment; it removes essential
+		  information from the PDB file for instrumenting functions
 
 5.14openmpi
 	- updated version of internal OTF to 1.12.1openmpi
