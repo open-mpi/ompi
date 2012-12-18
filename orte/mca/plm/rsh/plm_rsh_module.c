@@ -597,6 +597,7 @@ static int setup_launch(int *argcptr, char ***argvptr,
                 value = strchr(param, '=');
                 *value = '\0';
                 value++;
+                found = false;
                 /* see if this param exists on the cmd line */
                 for (j=0; NULL != argv[j]; j++) {
                     if (0 == strcmp(param, argv[j])) {
