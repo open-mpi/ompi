@@ -12,6 +12,8 @@ dnl Copyright (c) 2004-2006 The Regents of the University of California.
 dnl                         All rights reserved.
 dnl Copyright (c) 2007-2009 Sun Microsystems, Inc.  All rights reserved.
 dnl Copyright (c) 2008-2010 Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2012      Los Alamos National Security, LLC. All rights
+dnl                         reserved.
 dnl $COPYRIGHT$
 dnl 
 dnl Additional copyrights may follow
@@ -31,6 +33,20 @@ AC_DEFUN([OPAL_SETUP_CC],[
     AC_REQUIRE([_OMPI_START_SETUP_CC])
     AC_REQUIRE([_OMPI_PROG_CC])
     AC_REQUIRE([AM_PROG_CC_C_O])
+
+    # AC_PROG_CC_C99 changes CC (instead of CFLAGS) so save CC (without c99
+    # flags) for use in our wrappers.
+    WRAPPER_CC="$CC"
+    AC_SUBST([WRAPPER_CC])
+
+    # From Open MPI 1.7 on we require a C99 compiant compiler
+    AC_PROG_CC_C99
+    # The result of AC_PROG_CC_C99 is stored in ac_cv_prog_cc_c99
+    if test "x$ac_cv_prog_cc_c99" = xno ; then
+        AC_MSG_WARN([Open MPI requires a C99 compiler])
+        AC_MSG_ERROR([Aborting.])
+    fi
+
 
     OMPI_C_COMPILER_VENDOR([ompi_c_vendor])
 
