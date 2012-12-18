@@ -106,10 +106,10 @@ static inline void mca_btl_vader_check_fboxes (void)
 
             reg = mca_btl_base_active_message_trigger + tag;
 
-            frag.segment.seg_addr.pval = fbox + 2;
-            frag.segment.seg_len       = size;
+            frag.segments[0].seg_addr.pval = fbox + 2;
+            frag.segments[0].seg_len       = size;
 
-            frag.base.des_dst     = &frag.segment;
+            frag.base.des_dst     = frag.segments;
             frag.base.des_dst_cnt = 1;
             reg->cbfunc(&mca_btl_vader.super, tag, &(frag.base), reg->cbdata);
 
