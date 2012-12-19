@@ -112,20 +112,17 @@ AC_DEFUN([ACVT_OTF],
 			export MPICXX
 			AS_IF([test x"$force_mpi" = "xyes"],
 			[otf_conf_args="$otf_conf_args --with-mpi"])
-			AS_IF([test $MPICC = $CC],
-			[
-				AS_IF([test x"$MPIDIR" != x],
-				[otf_conf_args="$otf_conf_args --with-mpi-dir=$MPIDIR"])
-dnl				if we are inside Open MPI package MPIINCDIR contains multiple paths
-dnl				so it cannot be used for --with-mpi-inc-dir; use CPPFLAGS instead
-				AS_IF([test x"$MPIINCDIR" != x],
-				[CPPFLAGS="$CPPFLAGS $MPIINCDIR"])
-dnl				[otf_conf_args="$otf_conf_args --with-mpi-inc-dir=`echo $MPIINCDIR | sed s/-I//`"])
-				AS_IF([test x"$MPILIBDIR" != x],
-				[otf_conf_args="$otf_conf_args --with-mpi-lib-dir=`echo $MPILIBDIR | sed s/-L//`"])
-				AS_IF([test x"$MPILIB" != x],
-				[otf_conf_args="$otf_conf_args --with-mpi-lib=\"$MPILIB\""])
-			])
+			AS_IF([test x"$MPIDIR" != x],
+			[otf_conf_args="$otf_conf_args --with-mpi-dir=$MPIDIR"])
+dnl			if we are inside Open MPI package MPIINCDIR contains multiple paths
+dnl			so it cannot be used for --with-mpi-inc-dir; use CPPFLAGS instead
+			AS_IF([test x"$MPIINCDIR" != x],
+			[CPPFLAGS="$CPPFLAGS $MPIINCDIR"])
+dnl			[otf_conf_args="$otf_conf_args --with-mpi-inc-dir=`echo $MPIINCDIR | sed s/-I//`"])
+			AS_IF([test x"$MPILIBDIR" != x],
+			[otf_conf_args="$otf_conf_args --with-mpi-lib-dir=`echo $MPILIBDIR | sed s/-L//`"])
+			AS_IF([test x"$MPILIB" != x],
+			[otf_conf_args="$otf_conf_args --with-mpi-lib=\"$MPILIB\""])
 		],
 		[
 			otf_conf_args="$otf_conf_args --without-mpi"
