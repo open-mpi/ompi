@@ -4,7 +4,7 @@
 # Note that we use an interpreter value ("PERL") from configure
 # because even "#!/usr/bin/env perl" to all systems (e.g., NetBSD).
 #
-# Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
 # $COPYRIGHT$
 #
@@ -120,8 +120,12 @@ my @appargs = ();
 while (scalar(@args) > 0) {
     my $arg = shift(@args);
 
-    if ($arg eq "-showme") {
+    if ($arg eq "-showme" || $arg eq "--showme") {
         $dry_run = 1;
+    } elsif ($arg eq "--openmpi:linkall") {
+        # Nothing to do -- the orte wrapper script already links both
+        # the ORTE and OPAL libs.
+        next;
     } else {
         if ($arg eq "-c") {
             $want_link = 0;
