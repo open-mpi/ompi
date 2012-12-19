@@ -349,6 +349,47 @@ int opal_dss_print_int64(char **output, char *prefix,
     return OPAL_SUCCESS;
 }
 
+int opal_dss_print_float(char **output, char *prefix,
+                          float *src, opal_data_type_t type)
+{
+    char *prefx;
+
+    /* deal with NULL prefix */
+    if (NULL == prefix) asprintf(&prefx, " ");
+    else prefx = prefix;
+
+    /* if src is NULL, just print data type and return */
+    if (NULL == src) {
+        asprintf(output, "%sData type: OPAL_FLOAT\tValue: NULL pointer", prefx);
+        return OPAL_SUCCESS;
+    }
+
+    asprintf(output, "%sData type: OPAL_FLOAT\tValue: %f", prefx, *src);
+
+    return OPAL_SUCCESS;
+}
+
+int opal_dss_print_timeval(char **output, char *prefix,
+                          struct timeval *src, opal_data_type_t type)
+{
+    char *prefx;
+
+    /* deal with NULL prefix */
+    if (NULL == prefix) asprintf(&prefx, " ");
+    else prefx = prefix;
+
+    /* if src is NULL, just print data type and return */
+    if (NULL == src) {
+        asprintf(output, "%sData type: OPAL_TIMEVAL\tValue: NULL pointer", prefx);
+        return OPAL_SUCCESS;
+    }
+
+    asprintf(output, "%sData type: OPAL_TIMEVAL\tValue: %ld.%06ld", prefx,
+             (long)src->tv_sec, (long)src->tv_usec);
+
+    return OPAL_SUCCESS;
+}
+
 int opal_dss_print_null(char **output, char *prefix, void *src, opal_data_type_t type)
 {
     char *prefx;
@@ -430,8 +471,8 @@ int opal_dss_print_pstat(char **output, char *prefix, opal_pstats_t *src, opal_d
         asprintf(output, "%sData type: OPAL_PSTATS\tValue: NULL pointer", prefx);
         return OPAL_SUCCESS;
     }
-    asprintf(output, "%sOPAL_PSTATS SAMPLED AT: %ld.%ld\n%snode: %s rank: %d pid: %d cmd: %s state: %c pri: %d #threads: %d Processor: %d\n"
-             "%s\ttime: %ld.%ld cpu: %5.2f VMsize: %8.2f PeakVMSize: %8.2f RSS: %8.2f\n",
+    asprintf(output, "%sOPAL_PSTATS SAMPLED AT: %ld.%06ld\n%snode: %s rank: %d pid: %d cmd: %s state: %c pri: %d #threads: %d Processor: %d\n"
+             "%s\ttime: %ld.%06ld cpu: %5.2f VMsize: %8.2f PeakVMSize: %8.2f RSS: %8.2f\n",
              prefx, (long)src->sample_time.tv_sec, (long)src->sample_time.tv_usec,
              prefx, src->node, src->rank, src->pid, src->cmd, src->state[0], src->priority, src->num_threads, src->processor,
              prefx, (long)src->time.tv_sec, (long)src->time.tv_usec, src->percent_cpu, src->vsize, src->peak_vsize, src->rss);
@@ -455,7 +496,7 @@ int opal_dss_print_node_stat(char **output, char *prefix, opal_node_stats_t *src
         asprintf(output, "%sData type: OPAL_NODE_STATS\tValue: NULL pointer", prefx);
         return OPAL_SUCCESS;
     }
-    asprintf(output, "%sOPAL_NODE_STATS SAMPLED AT: %ld.%ld\n%sTotal Mem: %5.2f Free Mem: %5.2f Buffers: %5.2f Cached: %5.2f\n"
+    asprintf(output, "%sOPAL_NODE_STATS SAMPLED AT: %ld.%06ld\n%sTotal Mem: %5.2f Free Mem: %5.2f Buffers: %5.2f Cached: %5.2f\n"
                      "%sSwapCached: %5.2f SwapTotal: %5.2f SwapFree: %5.2f Mapped: %5.2f\n"
                      "%s\tla: %5.2f\tla5: %5.2f\tla15: %5.2f\n",
              prefx, (long)src->sample_time.tv_sec, (long)src->sample_time.tv_usec,

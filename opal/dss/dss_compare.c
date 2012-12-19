@@ -169,6 +169,15 @@ int opal_dss_compare_uint64(uint64_t *value1, uint64_t *value2, opal_data_type_t
     return OPAL_EQUAL;
 }
 
+int opal_dss_compare_float(float *value1, float *value2, opal_data_type_t type)
+{
+    if (*value1 > *value2) return OPAL_VALUE1_GREATER;
+
+    if (*value2 > *value1) return OPAL_VALUE2_GREATER;
+
+    return OPAL_EQUAL;
+}
+
 /*
  * NON-NUMERIC SYSTEM TYPES
  */
@@ -196,6 +205,19 @@ int opal_dss_compare_string(char *value1, char *value2, opal_data_type_t type)
     if (0 < strcmp(value1, value2)) return OPAL_VALUE2_GREATER;
 
     if (0 > strcmp(value1, value2)) return OPAL_VALUE1_GREATER;
+
+    return OPAL_EQUAL;
+}
+
+/* TIMEVAL */
+int opal_dss_compare_timeval(struct timeval *value1, struct timeval *value2, opal_data_type_t type)
+{
+    if (value1->tv_sec > value2->tv_sec) return OPAL_VALUE1_GREATER;
+    if (value2->tv_sec > value1->tv_sec) return OPAL_VALUE2_GREATER;
+
+    /* seconds were equal - check usec's */
+    if (value1->tv_usec > value2->tv_usec) return OPAL_VALUE1_GREATER;
+    if (value2->tv_usec > value1->tv_usec) return OPAL_VALUE2_GREATER;
 
     return OPAL_EQUAL;
 }

@@ -444,6 +444,26 @@ int opal_dss_open(void)
                                                      "OPAL_BUFFER", &tmp))) {
         return rc;
     }
+    tmp = OPAL_FLOAT;
+    if (OPAL_SUCCESS != (rc = opal_dss.register_type(opal_dss_pack_float,
+                                                     opal_dss_unpack_float,
+                                                     (opal_dss_copy_fn_t)opal_dss_std_copy,
+                                                     (opal_dss_compare_fn_t)opal_dss_compare_float,
+                                                     (opal_dss_print_fn_t)opal_dss_print_float,
+                                                     OPAL_DSS_UNSTRUCTURED,
+                                                     "OPAL_FLOAT", &tmp))) {
+        return rc;
+    }
+    tmp = OPAL_TIMEVAL;
+    if (OPAL_SUCCESS != (rc = opal_dss.register_type(opal_dss_pack_timeval,
+                                                     opal_dss_unpack_timeval,
+                                                     (opal_dss_copy_fn_t)opal_dss_std_copy,
+                                                     (opal_dss_compare_fn_t)opal_dss_compare_timeval,
+                                                     (opal_dss_print_fn_t)opal_dss_print_timeval,
+                                                     OPAL_DSS_UNSTRUCTURED,
+                                                     "OPAL_TIMEVAL", &tmp))) {
+        return rc;
+    }
     /* All done */
 
     opal_dss_initialized = true;
