@@ -97,7 +97,10 @@ int MPI_Type_create_f90_complex(int p, int r, MPI_Datatype *newtype)
         /* Make sure the user is not allowed to free this datatype as specified
          * in the MPI standard.
          */
-        datatype->super.flags |= OPAL_DATATYPE_FLAG_PREDEFINED;
+        datatype->super.flags |= OMPI_DATATYPE_FLAG_PREDEFINED;
+        /* Mark the datatype as a special F90 convenience type */
+        snprintf(datatype->name, MPI_MAX_OBJECT_NAME, "COMBINER %s",
+                 (*newtype)->name);
 
         a_i[0] = &r;
         a_i[1] = &p;
