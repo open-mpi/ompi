@@ -51,50 +51,58 @@ int opal_dss_std_copy(void **dest, void *src, opal_data_type_t type)
     uint8_t *val = NULL;
 
     switch(type) {
-        case OPAL_BOOL:
-            datasize = sizeof(bool);
-            break;
+    case OPAL_BOOL:
+        datasize = sizeof(bool);
+        break;
 
-        case OPAL_INT:
-        case OPAL_UINT:
-            datasize = sizeof(int);
-            break;
+    case OPAL_INT:
+    case OPAL_UINT:
+        datasize = sizeof(int);
+        break;
 
-        case OPAL_SIZE:
-            datasize = sizeof(size_t);
-            break;
+    case OPAL_SIZE:
+        datasize = sizeof(size_t);
+        break;
 
-        case OPAL_PID:
-            datasize = sizeof(pid_t);
-            break;
+    case OPAL_PID:
+        datasize = sizeof(pid_t);
+        break;
 
-        case OPAL_BYTE:
-        case OPAL_INT8:
-        case OPAL_UINT8:
-            datasize = 1;
-            break;
+    case OPAL_BYTE:
+    case OPAL_INT8:
+    case OPAL_UINT8:
+        datasize = 1;
+        break;
 
-        case OPAL_INT16:
-        case OPAL_UINT16:
-            datasize = 2;
-            break;
+    case OPAL_INT16:
+    case OPAL_UINT16:
+        datasize = 2;
+        break;
 
-        case OPAL_INT32:
-        case OPAL_UINT32:
-            datasize = 4;
-            break;
+    case OPAL_INT32:
+    case OPAL_UINT32:
+        datasize = 4;
+        break;
 
-        case OPAL_INT64:
-        case OPAL_UINT64:
-            datasize = 8;
-            break;
+    case OPAL_INT64:
+    case OPAL_UINT64:
+        datasize = 8;
+        break;
 
-        case OPAL_DATA_TYPE:
-            datasize = sizeof(opal_data_type_t);
-            break;
+    case OPAL_DATA_TYPE:
+        datasize = sizeof(opal_data_type_t);
+        break;
 
-        default:
-            return OPAL_ERR_UNKNOWN_DATA_TYPE;
+    case OPAL_FLOAT:
+        datasize = sizeof(float);
+        break;
+
+    case OPAL_TIMEVAL:
+        datasize = sizeof(struct timeval);
+        break;
+
+    default:
+        return OPAL_ERR_UNKNOWN_DATA_TYPE;
     }
 
     val = (uint8_t*)malloc(datasize);
