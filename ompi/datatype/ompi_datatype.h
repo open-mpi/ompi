@@ -188,6 +188,8 @@ ompi_datatype_duplicate( const ompi_datatype_t* oldType, ompi_datatype_t** newTy
     opal_datatype_clone( &oldType->super, &new_ompi_datatype->super);
     /* Strip the predefined flag at the OMPI level. */
     new_ompi_datatype->super.flags &= ~OMPI_DATATYPE_FLAG_PREDEFINED;
+    /* By default maintain the relationships related to the old data (such as ops) */
+    new_ompi_datatype->id = oldType->id;
 
     /* Set the keyhash to NULL -- copying attributes is *only* done at
        the top level (specifically, MPI_TYPE_DUP). */
