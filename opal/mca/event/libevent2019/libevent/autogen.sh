@@ -3,7 +3,7 @@
 # Open MPI change: add -I for our m4 directory so that we can
 # find OPAL_CHECK_VISIBILITY
 ###################################
-OMPI="-I ../../../../../opal/config"
+OMPI="-I .."
 if [ -x "`which autoreconf 2>/dev/null`" ] ; then
    ###################################
    # Open MPI change: add -I for our m4 directory
