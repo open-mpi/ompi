@@ -335,6 +335,12 @@ int orte_register_params(void)
                                 false, false, (int)false, &value);
     orte_keep_fqdn_hostnames = OPAL_INT_TO_BOOL(value);
     
+    /* whether or not to retain aliases of hostnames */
+    mca_base_param_reg_int_name("orte", "retain_aliases",
+                                "Whether or not to keep aliases for host names [default: no]",
+                                false, false, (int)false, &value);
+    orte_retain_aliases = OPAL_INT_TO_BOOL(value);
+
     /* whether to tag output */
     mca_base_param_reg_int_name("orte", "tag_output",
                                 "Tag all output with [job,rank] (default: false)",

@@ -543,6 +543,11 @@ static int rte_init(void)
     node->daemon_launched = true;
     node->state = ORTE_NODE_STATE_UP;
     
+    /* if we are to retain aliases, get ours */
+    if (orte_retain_aliases) {
+        opal_ifgetaliases(&node->alias);
+    }
+
     /* record that the daemon job is running */
     jdata->num_procs = 1;
     jdata->state = ORTE_JOB_STATE_RUNNING;

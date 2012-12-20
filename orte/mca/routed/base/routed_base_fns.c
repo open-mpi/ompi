@@ -290,6 +290,15 @@ int orte_routed_base_register_sync(bool setup)
     }
     if (NULL != rml_uri) free(rml_uri);
     
+    /* setup to receive the response */
+    sync_waiting = true;
+    rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_SYNC,
+                                 ORTE_RML_NON_PERSISTENT, report_sync, NULL);
+    if (rc != ORTE_SUCCESS && rc != ORTE_ERR_NOT_IMPLEMENTED) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+
     /* send the sync command to our daemon */
     if (0 > (rc = orte_rml.send_buffer_nb(ORTE_PROC_MY_DAEMON, buffer,
                                           ORTE_RML_TAG_DAEMON, 0,
@@ -298,28 +307,20 @@ int orte_routed_base_register_sync(bool setup)
         return rc;
     }
     
+    OPAL_OUTPUT_VERBOSE((5, orte_routed_base_output,
+                         "%s registering sync waiting for ack",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+
+    
     /* get the ack - need this to ensure that the sync communication
      * gets serviced by the event library on the orted prior to the
      * process exiting
      */
-    OPAL_OUTPUT_VERBOSE((5, orte_routed_base_output,
-                         "%s registering sync waiting for ack",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-    sync_waiting = true;
-    rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_SYNC,
-                                 ORTE_RML_NON_PERSISTENT, report_sync, NULL);
-    if (rc != ORTE_SUCCESS && rc != ORTE_ERR_NOT_IMPLEMENTED) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-    
-    /* it is okay to block here as we are -not- in an event */
     ORTE_WAIT_FOR_COMPLETION(sync_waiting);
-    
     OPAL_OUTPUT_VERBOSE((5, orte_routed_base_output,
                          "%s registering sync ack recvd",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-
+    
     return ORTE_SUCCESS;
 }
 

@@ -659,6 +659,44 @@ int opal_ifmatches(int idx, char **nets)
     return OPAL_ERR_NOT_FOUND;
 }
 
+void opal_ifgetaliases(char ***aliases)
+{
+    opal_if_t* intf;
+    char ipv4[INET_ADDRSTRLEN];
+    struct sockaddr_in *addr;
+#if OPAL_ENABLE_IPV6
+    char ipv6[INET6_ADDRSTRLEN];
+    struct sockaddr_in6 *addr6;
+#endif
+
+    /* set default answer */
+    *aliases = NULL;
+
+    if (OPAL_SUCCESS != opal_if_base_open()) {
+        return;
+    }
+
+    for (intf =  (opal_if_t*)opal_list_get_first(&opal_if_list);
+        intf != (opal_if_t*)opal_list_get_end(&opal_if_list);
+        intf =  (opal_if_t*)opal_list_get_next(intf)) {
+        addr = (struct sockaddr_in*) &intf->if_addr;
+        /* ignore purely loopback interfaces */
+        if ((intf->if_flags & IFF_LOOPBACK) != 0) {
+            continue;
+        }
+        if (addr->sin_family == AF_INET) {
+            inet_ntop(AF_INET, &(addr->sin_addr.s_addr), ipv4, INET_ADDRSTRLEN);
+            opal_argv_append_nosize(aliases, ipv4);
+        }
+#if OPAL_ENABLE_IPV6
+        else {
+            addr6 = (struct sockaddr_in6*) &intf->if_addr;
+            inet_ntop(AF_INET6, &(addr6->sin6_addr), ipv6, INET6_ADDRSTRLEN);
+            opal_argv_append_nosize(aliases, ipv6);
+        }
+#endif
+    }    
+}
 
 #else /* HAVE_STRUCT_SOCKADDR_IN */
 
@@ -754,6 +792,12 @@ opal_iftupletoaddr(char *inaddr, uint32_t *net, uint32_t *mask)
 int opal_ifmatches(int idx, char **nets)
 {
     return OPAL_ERR_NOT_SUPPORTED;
+}
+
+void opal_ifgetaliases(char ***aliases)
+{
+    /* set default answer */
+    *aliases = NULL;
 }
 
 #endif /* HAVE_STRUCT_SOCKADDR_IN */

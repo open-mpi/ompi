@@ -146,13 +146,23 @@ int orte_proc_info(void)
     /* get the process id */
     orte_process_info.pid = getpid();
 
+    /* get the nodename */
+    gethostname(hostname, ORTE_MAX_HOSTNAME_SIZE);
+    if (!orte_keep_fqdn_hostnames) {
+        /* if the nodename is an IP address, do not mess with it! */
+        if (!opal_net_isaddr(hostname)) {
+            /* not an IP address, so remove any domain info */
+            if (NULL != (ptr = strchr(hostname, '.'))) {
+                *ptr = '\0';
+            }
+        }
+    }
+
     mca_base_param_reg_int_name("orte", "strip_prefix_from_node_names",
                                 "Whether to strip leading characters and zeroes from node names returned by daemons",
                                 false, false, (int)false, &tmp);
     orte_process_info.strip_prefix_from_node_names = OPAL_INT_TO_BOOL(tmp);
 
-    /* get the nodename */
-    gethostname(hostname, ORTE_MAX_HOSTNAME_SIZE);
     if (!orte_keep_fqdn_hostnames) {
         /* if the nodename is an IP address, do not mess with it! */
         if (!opal_net_isaddr(hostname)) {
