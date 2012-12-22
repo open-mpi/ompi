@@ -31,22 +31,10 @@ AC_DEFUN([OMPI_FORTRAN_GET_HANDLE_MAX],[
         fortran_handle_max_var,
         [ # Find max fortran INTEGER value.  Set to sentinel value if we don't
          # have a Fortran compiler (e.g., if --disable-fortran was given). 
-         if test $OMPI_WANT_FORTRAN_BINDINGS -eq 0; then
+         if test $ompi_fortran_happy -eq 0; then
              ompi_fint_max=0
          else
-             # Calculate the number of f's that we need to append to the hex
-             # value.  Do one less than we really need becaue we assume the
-             # top nybble is 0x7 to avoid sign issues.
-             ompi_numf=`expr $OMPI_SIZEOF_FORTRAN_INTEGER \* 8 - 1`
-             ompi_fint_max=1
-             # Use string comparisons when comparing these values to
-             # 0, because $ompi_numf may be larger than "test -eq
-             # ..." can handle (e.g., if we compile Fortran with
-             # "ifort -i8").
-             while test "$ompi_numf" != "0"; do
-                 ompi_fint_max=`expr $ompi_fint_max \* 2`
-                 ompi_numf=`expr $ompi_numf - 1`
-             done
+             OPAL_COMPUTE_MAX_VALUE([$OMPI_SIZEOF_FORTRAN_INTEGER], [ompi_fint_max])
          fi
 
          # Get INT_MAX.  Compute a SWAG if we are cross compiling or something
@@ -62,14 +50,7 @@ fclose(fp);]])],
              [ompi_cint_max=`cat conftest.out`], 
              [ompi_cint_max=0],
              [ #cross compiling is fun.  compute INT_MAX same as INTEGER max
-              ompi_numf=`expr $ac_cv_sizeof_int \* 8 - 1`
-              ompi_cint_max=1
-              # Use string comparisons with "test"; see comment above
-              # for rationale.
-              while test "$ompi_numf" != "0" ; do
-                  ompi_cint_max=`expr $ompi_cint_max \* 2`
-                  ompi_numf=`expr $ompi_numf - 1`
-              done])
+              OPAL_COMPUTE_MAX_VALUE([$ac_cv_sizeof_int], [ompi_cint_max])])
 
          # Use string comparisons with "test"; see comment above for
          # rationale.
@@ -94,6 +75,10 @@ fclose(fp);]])],
           unset value])
 
     AS_VAR_COPY([ompi_fortran_handle_max], [fortran_handle_max_var])
+    # sanity check; OMPI gets very unhappy if this value is negative...
+    if test 0 -ne `expr $ompi_fortran_handle_max \< 0` ; then
+        AC_MSG_ERROR([Detected negative max handle size.])
+    fi
     AC_DEFINE_UNQUOTED([OMPI_FORTRAN_HANDLE_MAX],
         [$ompi_fortran_handle_max],
         [Max handle value for fortran MPI handles, effectively min(INT_MAX, max fortran INTEGER value)])

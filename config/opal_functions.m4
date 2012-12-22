@@ -449,3 +449,62 @@ AC_DEFUN([OPAL_WITH_OPTION_MIN_MAX_VALUE], [
     [OPAL_MAX_]m4_toupper($1)=$max_value
     AC_SUBST([OPAL_MAX_]m4_toupper($1))
 ])dnl
+
+dnl #######################################################################
+dnl #######################################################################
+dnl #######################################################################
+
+# Usage: OPAL_COMPUTE_MAX_VALUE(number_bytes, variable_to_set, action if overflow)
+# Compute maximum value of datatype of
+# number_bytes, setting the result in the second argument.  Assumes a
+# signed datatype.
+AC_DEFUN([OPAL_COMPUTE_MAX_VALUE], [
+    # This is more complicated than it really should be.  But some
+    # expr implementations (OpenBSD) have an expr with a max value of
+    # 2^31 - 1, and we sometimes want to compute the max value of a
+    # type as big or bigger than that...
+    ompi_num_bits=`expr $1 \* 8 - 1`
+    newval=1
+    value=1
+    overflow=0
+
+    while test $ompi_num_bits -ne 0 ; do
+        newval=`expr $value \* 2`
+        if test 0 -eq `expr $newval \< 0` ; then
+            # if the new value is not negative, next iteration...
+            value=$newval
+            ompi_num_bits=`expr $ompi_num_bits - 1`
+            # if this was the last iteration, subtract 1 (as signed
+            # max positive is 2^num_bits - 1).  Do this here instead
+            # of outside of the while loop because we might have
+            # already subtracted 1 by then if we're trying to find the
+            # max value of the same datatype expr uses as it's
+            # internal representation (ie, if we hit the else
+            # below...)
+            if test 0 -eq $ompi_num_bits ; then
+                value=`expr $value - 1`
+            fi
+        else
+            # if the new value is negative, we've over flowed.  First,
+            # try adding value - 1 instead of value (see if we can get
+            # to positive max of expr)
+            newval=`expr $value - 1 + $value`
+            if test 0 -eq `expr $newval \< 0` ; then
+                value=$newval
+                # Still positive, this is as high as we can go.  If
+                # ompi_num_bits is 1, we didn't actually overflow.
+                # Otherwise, we overflowed.
+                if test 1 -ne $ompi_num_bits ; then
+                    overflow=1
+                fi
+            else
+                # stil negative.  Time to give up.
+                overflow=1
+            fi
+            ompi_num_bits=0
+        fi
+    done
+
+    AS_VAR_SET([$2], [$value])
+    AS_IF([test $overflow -ne 0], [$3])
+])dnl
