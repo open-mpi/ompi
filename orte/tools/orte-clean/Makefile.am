@@ -40,7 +40,7 @@ dist_pkgdata_DATA = help-orte-clean.txt
 endif # OMPI_INSTALL_BINARIES
 
 orte_clean_SOURCES = orte-clean.c
-orte_clean_LDADD = $(top_builddir)/orte/libopen-rte.la
+orte_clean_LDADD = $(top_builddir)/orte/libopen-rte.la $(top_builddir)/orte/libopen-pal.la
 
 endif # !ORTE_DISABLE_FULL_SUPPORT
 
