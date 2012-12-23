@@ -235,11 +235,11 @@ void ompi_info_do_config(bool want_all)
     
     /* setup strings that require allocation */
     if (OMPI_BUILD_FORTRAN_MPIFH_BINDINGS) {
-        asprintf(&fortran_mpifh, "yes (%s)",
-                 (OPAL_HAVE_WEAK_SYMBOLS ? "all" :
-                  (OMPI_FORTRAN_CAPS ? "caps" :
-                   (OMPI_FORTRAN_PLAIN ? "lower case" :
-                    (OMPI_FORTRAN_SINGLE_UNDERSCORE ? "single underscore" : "double underscore")))));
+        (void)asprintf(&fortran_mpifh, "yes (%s)",
+                       (OPAL_HAVE_WEAK_SYMBOLS ? "all" :
+                        (OMPI_FORTRAN_CAPS ? "caps" :
+                         (OMPI_FORTRAN_PLAIN ? "lower case" :
+                          (OMPI_FORTRAN_SINGLE_UNDERSCORE ? "single underscore" : "double underscore")))));
     } else {
         fortran_mpifh = strdup("no");
     }
@@ -249,30 +249,30 @@ void ompi_info_do_config(bool want_all)
            didn't work consistently to put it in _STRINGIFY because
            sometimes the compiler would actually interpret the pragma
            in there before stringify-ing it. */
-        asprintf(&fortran_have_ignore_tkr, "yes (%s)",
-                 OMPI_FORTRAN_IGNORE_TKR_PREDECL);
+        (void)asprintf(&fortran_have_ignore_tkr, "yes (%s)",
+                       OMPI_FORTRAN_IGNORE_TKR_PREDECL);
     } else {
         fortran_have_ignore_tkr = strdup("no");
     }
 
     if (OPAL_HAVE_SOLARIS_THREADS || OPAL_HAVE_POSIX_THREADS) {        /* should just test OPAL_HAVE_THREADS */
-        asprintf(&threads, "%s (MPI_THREAD_MULTIPLE: %s, OPAL support: %s, OMPI progress: %s, ORTE progress: %s, Event lib: %s)",
-                 OPAL_HAVE_SOLARIS_THREADS ? "solaris" :
-                 (OPAL_HAVE_POSIX_THREADS ? "posix" : "type unknown"), /* "type unknown" can presumably never happen */
-                 OMPI_ENABLE_THREAD_MULTIPLE ? "yes" : "no",
-                 OPAL_ENABLE_MULTI_THREADS ? "yes" : "no",
-                 OMPI_ENABLE_PROGRESS_THREADS ? "yes" : "no",
-                 ORTE_ENABLE_PROGRESS_THREADS ? "yes" : "no",
-                 OPAL_EVENT_HAVE_THREAD_SUPPORT ? "yes" : "no");
+        (void)asprintf(&threads, "%s (MPI_THREAD_MULTIPLE: %s, OPAL support: %s, OMPI progress: %s, ORTE progress: %s, Event lib: %s)",
+                       OPAL_HAVE_SOLARIS_THREADS ? "solaris" :
+                       (OPAL_HAVE_POSIX_THREADS ? "posix" : "type unknown"), /* "type unknown" can presumably never happen */
+                       OMPI_ENABLE_THREAD_MULTIPLE ? "yes" : "no",
+                       OPAL_ENABLE_MULTI_THREADS ? "yes" : "no",
+                       OMPI_ENABLE_PROGRESS_THREADS ? "yes" : "no",
+                       ORTE_ENABLE_PROGRESS_THREADS ? "yes" : "no",
+                       OPAL_EVENT_HAVE_THREAD_SUPPORT ? "yes" : "no");
     } else {
         threads = strdup("no");
     }
     
-    asprintf(&ft_support, "%s (checkpoint thread: %s)", 
-             OPAL_ENABLE_FT ? "yes" : "no", OPAL_ENABLE_FT_THREAD ? "yes" : "no");;
+    (void)asprintf(&ft_support, "%s (checkpoint thread: %s)", 
+                   OPAL_ENABLE_FT ? "yes" : "no", OPAL_ENABLE_FT_THREAD ? "yes" : "no");
 
-    asprintf(&crdebug_support, "%s",
-             OPAL_ENABLE_CRDEBUG ? "yes" : "no");
+    (void)asprintf(&crdebug_support, "%s",
+                   OPAL_ENABLE_CRDEBUG ? "yes" : "no");
 
     /* output values */
     opal_info_out("Configured by", "config:user", OPAL_CONFIGURE_USER);
