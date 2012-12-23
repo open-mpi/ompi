@@ -43,7 +43,6 @@
 #endif  /* HAVE_SYS_STAT_H */
 
 #include "ompi/constants.h"
-#include "opal/mca/event/event.h"
 #include "opal/util/bit_ops.h"
 #include "opal/util/output.h"
 #include "orte/util/proc_info.h"
