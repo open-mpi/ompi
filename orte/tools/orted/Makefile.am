@@ -45,7 +45,7 @@ orted_SOURCES = orted.c
 #  nice for systems that don't have all the shared 
 #  libraries on the computes 
 orted_LDFLAGS =
-orted_LDADD = $(top_builddir)/orte/libopen-rte.la
+orted_LDADD = $(top_builddir)/orte/libopen-rte.la $(top_builddir)/orte/libopen-pal.la
 
 endif # !ORTE_DISABLE_FULL_SUPPORT
 
