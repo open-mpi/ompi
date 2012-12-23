@@ -41,7 +41,7 @@ endif # !ORTE_DISABLE_FULL_SUPPORT
 endif # OMPI_INSTALL_BINARIES
 
 ompi_server_SOURCES = ompi-server.c 
-ompi_server_LDADD = $(top_builddir)/ompi/libmpi.la
+ompi_server_LDADD = $(top_builddir)/ompi/libmpi.la $(top_builddir)/orte/libopen-rte.la $(top_builddir)/opal/libopen-pal.la
 
 distclean-local:
 	rm -f $(man_pages)

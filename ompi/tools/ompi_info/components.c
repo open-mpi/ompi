@@ -103,14 +103,14 @@ int ompi_info_register_components(opal_pointer_array_t *mca_types,
         if (NULL == (type = (char*)opal_pointer_array_get_item(mca_types, i))) {
             continue;
         }
-        asprintf(&env, "OMPI_MCA_%s", type);
+        (void)asprintf(&env, "OMPI_MCA_%s", type);
         if (NULL != (save = getenv(env))) {
             /* save this param so it can later be restored */
-            asprintf(&str, "%s=%s", env, save);
+            (void)asprintf(&str, "%s=%s", env, save);
             opal_argv_append_nosize(&env_save, str);
             free(str);
             /* can't manipulate it directly, so make a copy first */
-            asprintf(&target, "%s=", env);
+            (void)asprintf(&target, "%s=", env);
             putenv(target);
             free(target);
         }
