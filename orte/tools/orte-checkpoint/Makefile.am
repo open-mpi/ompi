@@ -42,7 +42,7 @@ dist_pkgdata_DATA = help-orte-checkpoint.txt
 endif # OMPI_INSTALL_BINARIES
 
 orte_checkpoint_SOURCES = orte-checkpoint.c
-orte_checkpoint_LDADD = $(top_builddir)/orte/libopen-rte.la
+orte_checkpoint_LDADD = $(top_builddir)/orte/libopen-rte.la $(top_builddir)/opal/libopen-pal.la
 
 endif # WANT_FT_CR
 endif # !ORTE_DISABLE_FULL_SUPPORT
