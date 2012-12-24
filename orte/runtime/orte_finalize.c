@@ -103,8 +103,10 @@ int orte_finalize(void)
     /* Close the general debug stream */
     opal_output_close(orte_debug_output);
     
+#if 0
     /* finalize the opal utilities */
     opal_finalize();
+#endif
     
     return ORTE_SUCCESS;
 }
