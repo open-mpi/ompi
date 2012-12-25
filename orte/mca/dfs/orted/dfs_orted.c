@@ -97,20 +97,12 @@ orte_dfs_base_module_t orte_dfs_orted_module = {
     dfs_purge_file_maps
 };
 
-static void finalize_thread(int fd, short args, void *cbdata)
-{
-    /* nothing to do here - we just need it to
-     * kick us out of the event_loop
-     */
-}
-
 static void* worker_thread_engine(opal_object_t *obj);
 
 typedef struct {
     opal_object_t super;
     int idx;
     opal_event_base_t *event_base;
-    opal_event_t fin_ev;
     bool active;
     opal_thread_t thread;
 } worker_thread_t;
@@ -118,8 +110,6 @@ static void wt_const(worker_thread_t *ptr)
 {
     /* create an event base for this thread */
     ptr->event_base = opal_event_base_create();
-    /* setup an event to finalize it */
-    opal_event_set(ptr->event_base, &ptr->fin_ev, -1, OPAL_EV_WRITE, finalize_thread, NULL);
     /* construct the thread object */
     OBJ_CONSTRUCT(&ptr->thread, opal_thread_t);
     /* fork off a thread to progress it */
@@ -132,8 +122,8 @@ static void wt_dest(worker_thread_t *ptr)
 {
     /* stop the thread */
     ptr->active = false;
-    /* trigger the finalize event */
-    opal_event_active(&ptr->fin_ev, OPAL_EV_WRITE, 1);
+    /* break the loop */
+    opal_event_base_loopbreak(ptr->event_base);
     /* wait for thread to exit */
     opal_thread_join(&ptr->thread, NULL);
     OBJ_DESTRUCT(&ptr->thread);

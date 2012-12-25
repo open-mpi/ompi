@@ -628,6 +628,9 @@ int orte_ess_base_orted_finalize(void)
         unlink(log_path);
     }
     
+    /* close the dfs so its threads can exit */
+    orte_dfs_base_close();
+
     /* make sure our local procs are dead */
     orte_odls.kill_local_procs(NULL);
     
