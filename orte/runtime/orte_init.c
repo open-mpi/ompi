@@ -68,7 +68,7 @@ orte_process_name_t orte_name_wildcard = {ORTE_JOBID_WILDCARD, ORTE_VPID_WILDCAR
 
 orte_process_name_t orte_name_invalid = {ORTE_JOBID_INVALID, ORTE_VPID_INVALID}; 
 
-#if !ORTE_DISABLE_FULL_SUPPORT && ORTE_ENABLE_PROGRESS_THREADS
+#if ORTE_ENABLE_PROGRESS_THREADS
 static void* orte_progress_thread_engine(opal_object_t *obj);
 #endif
 
@@ -78,19 +78,6 @@ static void* orte_progress_thread_engine(opal_object_t *obj);
 #ident ORTE_IDENT_STRING
 #endif
 const char orte_version_string[] = ORTE_IDENT_STRING;
-
-#if !ORTE_DISABLE_FULL_SUPPORT && ORTE_ENABLE_PROGRESS_THREADS
-static void ignore_callback(int fd, short args, void *cbdata)
-{
-    if (NULL == cbdata) {
-        /* nothing to do here */
-    } else {
-        opal_event_t *ev = (opal_event_t*)cbdata;
-        struct timeval tv = {1, 0};
-        opal_event_evtimer_add(ev, &tv);
-    }
-}
-#endif
 
 int orte_init(int* pargc, char*** pargv, orte_proc_type_t flags)
 {
@@ -150,24 +137,10 @@ int orte_init(int* pargc, char*** pargv, orte_proc_type_t flags)
         goto error;
     }
 
-#if !ORTE_DISABLE_FULL_SUPPORT && ORTE_ENABLE_PROGRESS_THREADS
+#if ORTE_ENABLE_PROGRESS_THREADS
 #if OPAL_EVENT_HAVE_THREAD_SUPPORT
         /* get a separate orte event base */
         orte_event_base = opal_event_base_create();
-        /* setup the finalize event - we'll need it
-         * to break the thread out of the event lib
-         * when we want to stop it
-         */
-        opal_event_set(orte_event_base, &orte_finalize_event, -1, OPAL_EV_WRITE, ignore_callback, NULL);
-        opal_event_set_priority(&orte_finalize_event, ORTE_ERROR_PRI);
-        /* construct the thread object */
-        OBJ_CONSTRUCT(&orte_progress_thread, opal_thread_t);
-        /* fork off a thread to progress it */
-        orte_progress_thread.t_run = orte_progress_thread_engine;
-        if (OPAL_SUCCESS != (ret = opal_thread_start(&orte_progress_thread))) {
-            error = "orte progress thread start";
-            goto error;
-        }
 #else
         error = "event thread support is not configured";
         ret = ORTE_ERROR;
@@ -184,6 +157,18 @@ int orte_init(int* pargc, char*** pargv, orte_proc_type_t flags)
         goto error;
     }
     
+    /* start the event thread, if required */
+#if ORTE_ENABLE_PROGRESS_THREADS
+       /* construct the thread object */
+        OBJ_CONSTRUCT(&orte_progress_thread, opal_thread_t);
+        /* fork off a thread to progress it */
+        orte_progress_thread.t_run = orte_progress_thread_engine;
+        if (OPAL_SUCCESS != (ret = opal_thread_start(&orte_progress_thread))) {
+            error = "orte progress thread start";
+            goto error;
+        }
+#endif
+
     /* All done */
     return ORTE_SUCCESS;
     
@@ -198,7 +183,7 @@ int orte_init(int* pargc, char*** pargv, orte_proc_type_t flags)
 }
 
 
-#if !ORTE_DISABLE_FULL_SUPPORT && ORTE_ENABLE_PROGRESS_THREADS
+#if ORTE_ENABLE_PROGRESS_THREADS
 static void* orte_progress_thread_engine(opal_object_t *obj)
 {
     while (orte_event_base_active) {
