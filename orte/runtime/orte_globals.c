@@ -196,7 +196,6 @@ int orte_max_vm_size = -1;
 /* progress thread */
 #if ORTE_ENABLE_PROGRESS_THREADS
 opal_thread_t orte_progress_thread;
-opal_event_t orte_finalize_event;
 #endif
 
 /* global nidmap/pidmap for daemons to give to apps */

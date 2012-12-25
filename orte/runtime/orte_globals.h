@@ -142,7 +142,6 @@ typedef struct orte_app_context_t orte_app_context_t;
 
 #if ORTE_ENABLE_PROGRESS_THREADS
 ORTE_DECLSPEC extern opal_thread_t orte_progress_thread;
-ORTE_DECLSPEC extern opal_event_t orte_finalize_event;
 #endif
 
 #define ORTE_GLOBAL_ARRAY_BLOCK_SIZE    64
