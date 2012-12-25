@@ -193,7 +193,6 @@ extern "C" {
 #define event_base_got_exit                                  opal_libevent2019_event_base_got_exit
 #define event_base_init_common_timeout                       opal_libevent2019_event_base_init_common_timeout
 #define event_base_loop                                      opal_libevent2019_event_base_loop
-#define event_base_loopbreak                                 opal_libevent2019_event_base_loopbreak
 #define event_base_loopexit                                  opal_libevent2019_event_base_loopexit
 #define event_base_new                                       opal_libevent2019_event_base_new
 #define event_base_new_with_config                           opal_libevent2019_event_base_new_with_config
