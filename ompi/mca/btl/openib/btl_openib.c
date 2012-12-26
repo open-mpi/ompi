@@ -1544,6 +1544,7 @@ int mca_btl_openib_sendi( struct mca_btl_base_module_t* btl,
     ompi_free_list_item_t* item = NULL;
     mca_btl_openib_frag_t *frag;
     mca_btl_openib_header_t *hdr;
+    int send_signaled;
 
     OPAL_THREAD_LOCK(&ep->endpoint_lock);
 
@@ -1644,12 +1645,22 @@ int mca_btl_openib_sendi( struct mca_btl_base_module_t* btl,
         hdr->cm_seen = cm_return;
     }
 
-    ib_rc = post_send(ep, to_send_frag(item), do_rdma);
+#if BTL_OPENIB_FAILOVER_ENABLED
+    send_signaled = 0;
+#else
+    send_signaled = qp_need_signal(ep, qp, payload_size + header_size, do_rdma);
+#endif
+    ib_rc = post_send(ep, to_send_frag(item), do_rdma, send_signaled);
 
     if(!ib_rc) {
+        if (0 == send_signaled) {
+            MCA_BTL_IB_FRAG_RETURN(frag);
+        }
 #if BTL_OPENIB_FAILOVER_ENABLED
-        /* Return up in case needed for failover */
-        *descriptor = (struct mca_btl_base_descriptor_t *) frag;
+        else {
+            /* Return up in case needed for failover */
+            *descriptor = (struct mca_btl_base_descriptor_t *) frag;
+        }
 #endif
         OPAL_THREAD_UNLOCK(&ep->endpoint_lock);
         return OMPI_SUCCESS;
@@ -1784,7 +1795,11 @@ int mca_btl_openib_put( mca_btl_base_module_t* btl,
     /* Setting opcode on a frag constructor isn't enough since prepare_src
      * may return send_frag instead of put_frag */
     frag->sr_desc.opcode = IBV_WR_RDMA_WRITE;
-    frag->sr_desc.send_flags = ib_send_flags(src_seg->base.seg_len, &(ep->qps[qp]));
+    frag->sr_desc.send_flags = ib_send_flags(src_seg->base.seg_len, &(ep->qps[qp]), 1);
+    
+    qp_inflight_wqe_to_frag(ep, qp, to_com_frag(frag));
+    qp_reset_signal_count(ep, qp);
+
     if(ibv_post_send(ep->qps[qp].qp->lcl_qp, &frag->sr_desc, &bad_wr))
         return OMPI_ERROR;
 
@@ -1863,6 +1878,10 @@ int mca_btl_openib_get(mca_btl_base_module_t* btl,
         frag->sr_desc.xrc_remote_srq_num=ep->rem_info.rem_srqs[qp].rem_srq_num;
 #endif
     descriptor->order = qp;
+
+    qp_inflight_wqe_to_frag(ep, qp, to_com_frag(frag));
+    qp_reset_signal_count(ep, qp);
+
     if(ibv_post_send(ep->qps[qp].qp->lcl_qp, &frag->sr_desc, &bad_wr))
         return OMPI_ERROR;
 

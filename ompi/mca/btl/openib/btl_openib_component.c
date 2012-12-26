@@ -3280,6 +3280,7 @@ static void handle_wc(mca_btl_openib_device_t* device, const uint32_t cq,
     mca_btl_openib_module_t *openib_btl = NULL;
     ompi_proc_t* remote_proc = NULL;
     int qp, btl_ownership;
+    int n;
 
     des = (mca_btl_base_descriptor_t*)(uintptr_t)wc->wr_id;
     frag = to_com_frag(des);
@@ -3343,8 +3344,11 @@ static void handle_wc(mca_btl_openib_device_t* device, const uint32_t cq,
             /* return send wqe */
             qp_put_wqe(endpoint, qp);
 
+            /* return wqes that were sent before this frag */
+            n = qp_frag_to_wqe(endpoint, qp, to_com_frag(des));
+
             if(IBV_WC_SEND == wc->opcode && !BTL_OPENIB_QP_TYPE_PP(qp)) {
-                OPAL_THREAD_ADD32(&openib_btl->qps[qp].u.srq_qp.sd_credits, 1);
+                OPAL_THREAD_ADD32(&openib_btl->qps[qp].u.srq_qp.sd_credits, 1+n);
 
                 /* new SRQ credit available. Try to progress pending frags*/
                 progress_pending_frags_srq(openib_btl, qp);
