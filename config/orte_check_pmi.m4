@@ -64,7 +64,12 @@ AC_DEFUN([ORTE_CHECK_PMI],[
                   AS_IF([test -f "$with_pmi/include/pmi.h"],
                         [orte_check_pmi_$1_CPPFLAGS="-I$with_pmi/include"],
                         [AS_IF([test -f "$with_pmi/include/slurm/pmi.h"],
-                               [orte_check_pmi_$1_CPPFLAGS="-I$with_pmi/include/slurm"])])],
+                               [orte_check_pmi_$1_CPPFLAGS="-I$with_pmi/include/slurm"],
+                               [AC_MSG_RESULT([not found])
+                                AC_MSG_WARN([PMI support requested (via --with-pmi) but pmi.h])
+                                AC_MSG_WARN([not found under specified location $with_pmi])
+                                AC_MSG_ERROR([Aborting])
+                                $3])])],
                  [AS_IF([test -f "/usr/include/slurm/pmi.h"],
                         [orte_check_pmi_$1_CPPFLAGS="-I/usr/include/slurm"])])
 
