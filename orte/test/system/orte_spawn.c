@@ -28,6 +28,7 @@ int main(int argc, char* argv[])
     orte_process_name_t name;
     struct iovec msg;
     orte_vpid_t i;
+
     
     if (0 > (rc = orte_init(&argc, &argv, ORTE_PROC_NON_MPI))) {
         fprintf(stderr, "couldn't init orte - error code %d\n", rc);
@@ -47,7 +48,12 @@ int main(int argc, char* argv[])
     getcwd(cwd, sizeof(cwd));
     app->cwd = strdup(cwd);
     app->user_specified_cwd = false;
-    
+    /*===================================*/
+    char *host_list[] = {"vm2", "vm3", "vm4", NULL};
+    app->dash_host = host_list;
+    jdata->dyn_alloc_enabled = 1;
+	/*==================================*/
+
     /* add the app to the job data */
     opal_pointer_array_add(jdata->apps, app);
     jdata->num_apps = 1;

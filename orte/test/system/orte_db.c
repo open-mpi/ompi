@@ -24,8 +24,8 @@ int main(int argc, char* argv[])
     int rc;
     char hostname[512];
     pid_t pid;
-    orte_proc_t proc;
-    
+    orte_proc_t *proc;
+
     if (0 > (rc = orte_init(&argc, &argv, ORTE_PROC_NON_MPI))) {
         fprintf(stderr, "orte_db: couldn't init orte - error code %d\n", rc);
         return rc;
@@ -34,20 +34,20 @@ int main(int argc, char* argv[])
     gethostname(hostname, 512);
     pid = getpid();
     
-    OBJ_CONSTRUCT(&proc, orte_proc_t);
-    if (ORTE_SUCCESS != (rc = orte_db.store("test-insert", &proc, ORTE_PROC))) {
+    proc = OBJ_NEW(orte_proc_t);
+    if (ORTE_SUCCESS != (rc = orte_db.store(ORTE_PROC_MY_NAME, "test-insert", proc, ORTE_PROC))) {
         ORTE_ERROR_LOG(rc);
     }
-    if (ORTE_SUCCESS != (rc = orte_db.fetch("test-insert", &proc, ORTE_PROC))) {
+    if (ORTE_SUCCESS != (rc = orte_db.fetch(ORTE_PROC_MY_NAME, "test-insert", (void**)&proc, ORTE_PROC))) {
         ORTE_ERROR_LOG(rc);
     }
-    if (ORTE_SUCCESS != (rc = orte_db.store("test-insert2", &proc, ORTE_PROC))) {
+    if (ORTE_SUCCESS != (rc = orte_db.store(ORTE_PROC_MY_NAME, "test-insert2", proc, ORTE_PROC))) {
         ORTE_ERROR_LOG(rc);
     }
-    if (ORTE_SUCCESS != (rc = orte_db.fetch("test-insert2", &proc, ORTE_PROC))) {
+    if (ORTE_SUCCESS != (rc = orte_db.fetch(ORTE_PROC_MY_NAME, "test-insert2", (void**)&proc, ORTE_PROC))) {
         ORTE_ERROR_LOG(rc);
     }
-    OBJ_DESTRUCT(&proc);
+    OBJ_RELEASE(proc);
 
     orte_finalize();
     return 0;
