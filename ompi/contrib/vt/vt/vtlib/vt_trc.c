@@ -62,6 +62,7 @@
 
 #if (defined(VT_MPI) || defined(VT_HYB))
 # include "vt_mpireg.h"
+# include "vt_mpiwrap.h"
 # include "vt_sync.h"
 # include "vt_unimci.h"
 # if defined(VT_MPIUNIFYLIB)
@@ -1375,6 +1376,9 @@ void vt_open()
 
 # endif /* VT_ETIMESYNC && !TIMER_IS_GLOBAL */
 
+  /* initialize the MPI wrappers */
+  vt_mpiwrap_init();
+
   /* register MPI routines */
   vt_mpi_register();
 
@@ -1639,6 +1643,9 @@ void vt_close()
 #endif /* VT_HYB */
     return;
   }
+
+  /* finalize the MPI wrappers */
+  vt_mpiwrap_finalize();
 #endif /* VT_MPI || VT_HYB */
 
   vt_close_called = 1;

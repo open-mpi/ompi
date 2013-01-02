@@ -153,7 +153,7 @@ else # AMHAVECROSSPREFIX
 CROSSPREFIXCLEANFILES =
 endif # AMHAVECROSSPREFIX
 
-INCLUDES = -I$(top_srcdir)/include -I$(top_builddir)/include -I$(top_srcdir)/util -I$(top_builddir)/util
+AM_CPPFLAGS = -I$(top_srcdir)/include -I$(top_builddir)/include -I$(top_srcdir)/util -I$(top_builddir)/util
 
 CC = $(CC_FOR_BUILD)
 CFLAGS = $(CFLAGS_FOR_BUILD)
