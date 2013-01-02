@@ -31,6 +31,7 @@
 #include "vt_mpicom.h"
 #include "vt_mpireg.h"
 #include "vt_mpireq.h"
+#include "vt_mpiwrap.h"
 #include "vt_pform.h"
 #include "vt_thrd.h"
 #include "vt_trc.h"
@@ -52,7 +53,7 @@
 # define GET_THREAD_ID(tid) \
     VT_CHECK_THREAD; \
     (tid) = VT_MY_THREAD; \
-    if (is_mpi_initialized && !CHECK_THREAD((tid))) \
+    if (mpi_init_called && !CHECK_THREAD((tid))) \
       vt_error_msg("%s called from a non-master thread. " \
                    "The provided MPI thread support level does not " \
                    "allow that.", __func__)
@@ -79,19 +80,22 @@ static uint8_t env_mpitrace = 1;
    are filtered (env. VT_MPI_IGNORE_FILTER)? */
 static uint8_t env_mpi_ignore_filter = 0;
 
-/* dummy function 'user' entered */
-static uint8_t vt_enter_user_called = 0;
+/* dummy main function ("user") entered */
+static uint8_t dummy_main_entered = 0;
 
-static MPI_Status* my_status_array = 0;
-static VT_MPI_INT my_status_array_size = 0;
+/* thread id where the dummy main function was entered */
+static uint32_t dummy_main_tid = 0;
 
-static uint8_t is_mpi_initialized = 0;
+/* flag: MPI_Init[_thread] called? */
+static uint8_t mpi_init_called = 0;
 
 #if defined(HAVE_MPI_FINALIZED) && HAVE_MPI_FINALIZED
-  static VT_MPI_INT is_mpi_finalized = 0;
+  /* flag: MPI_Finalize called? */
+  static uint8_t mpi_finalize_called = 0;
 #endif /* HAVE_MPI_FINALIZED */
 
 #if defined(HAVE_MPI2_THREAD) && HAVE_MPI2_THREAD
+  /* flag: MPI initialized with multithreading? */
   static uint8_t is_mpi_multithreaded = 0;
 #endif /* HAVE_MPI2_THREAD */
 
@@ -99,7 +103,10 @@ static uint8_t is_mpi_initialized = 0;
   static uint8_t is_rma_putre = 1;
 #endif /* HAVE_MPI2_1SIDED */
 
-static MPI_Status* vt_get_status_array(VT_MPI_INT size)
+static MPI_Status* my_status_array = 0;
+static VT_MPI_INT my_status_array_size = 0;
+
+static MPI_Status* get_status_array(VT_MPI_INT size)
 {
   if (my_status_array_size == 0)
     {
@@ -120,6 +127,26 @@ static MPI_Status* vt_get_status_array(VT_MPI_INT size)
   return my_status_array;
 }
 
+void vt_mpiwrap_init()
+{
+  /* MPI tracing enabled? */
+  env_mpitrace = vt_env_mpitrace();
+
+  /* trace MPI communication events although its corresponding functions
+     are filtered? */
+  env_mpi_ignore_filter = vt_env_mpi_ignore_filter();
+}
+
+void vt_mpiwrap_finalize()
+{
+  /* exit the dummy main function, if necessary */
+  if (dummy_main_entered)
+    {
+      uint64_t time = vt_pform_wtime();
+      vt_exit_user(dummy_main_tid, &time);
+    }
+}
+
 /*
  *-----------------------------------------------------------------------------
  *
@@ -136,25 +163,27 @@ VT_MPI_INT MPI_Init(VT_MPI_INT* argc, char*** argv)
   uint64_t time;
   uint32_t tid;
 
-  /* first event?
-     -> initialize VT and enter dummy function 'user' */
+  /* first event? */
   if (!vt_is_alive)
     {
+      /* initialize VT */
       vt_open();
+
+      /* get calling thread id */
+      GET_THREAD_ID(tid);
+
+      /* enter the dummy main function */
       time = vt_pform_wtime();
-      vt_enter_user(VT_CURRENT_THREAD, &time);
-      vt_enter_user_called = 1;
+      vt_enter_user(tid, &time);
+
+      dummy_main_entered = 1;
+      dummy_main_tid = tid;
     }
-
-  /* get calling thread id */
-  GET_THREAD_ID(tid);
-
-  /* MPI tracing enabled? */
-  env_mpitrace = vt_env_mpitrace();
-
-  /* trace MPI communication events although its corresponding functions
-     are filtered? */
-  env_mpi_ignore_filter = vt_env_mpi_ignore_filter();
+  else
+    {
+      /* get calling thread id */
+      GET_THREAD_ID(tid);
+    }
 
   if (IS_MPI_TRACE_ON(tid))
     {
@@ -185,7 +214,7 @@ VT_MPI_INT MPI_Init(VT_MPI_INT* argc, char*** argv)
       vt_mpifile_init();
 #endif /* HAVE_MPI2_IO */
 
-      is_mpi_initialized = 1;
+      mpi_init_called = 1;
 
       time = vt_pform_wtime();
       vt_exit(tid, &time);
@@ -199,7 +228,7 @@ VT_MPI_INT MPI_Init(VT_MPI_INT* argc, char*** argv)
       /* initialize mpi event handling */
       vt_mpi_init(0);
 
-      is_mpi_initialized = 1;
+      mpi_init_called = 1;
     }
 
   return result;
@@ -216,25 +245,27 @@ VT_MPI_INT MPI_Init_thread(VT_MPI_INT* argc, char*** argv, VT_MPI_INT required,
   uint64_t time;
   uint32_t tid;
 
-  /* first event?
-     -> initialize VT and enter dummy function 'user' */
+  /* first event? */
   if (!vt_is_alive)
     {
+      /* initialize VT */
       vt_open();
+
+      /* get calling thread id */
+      GET_THREAD_ID(tid);
+
+      /* enter the dummy main function */
       time = vt_pform_wtime();
-      vt_enter_user(VT_CURRENT_THREAD, &time);
-      vt_enter_user_called = 1;
+      vt_enter_user(tid, &time);
+
+      dummy_main_entered = 1;
+      dummy_main_tid = tid;
     }
-
-  /* get calling thread id */
-  GET_THREAD_ID(tid);
-
-  /* MPI tracing enabled? */
-  env_mpitrace = vt_env_mpitrace();
-
-  /* trace MPI communication events although its corresponding functions
-     are filtered? */
-  env_mpi_ignore_filter = vt_env_mpi_ignore_filter();
+  else
+    {
+      /* get calling thread id */
+      GET_THREAD_ID(tid);
+    }
 
   if (IS_MPI_TRACE_ON(tid))
     {
@@ -311,7 +342,7 @@ VT_MPI_INT MPI_Init_thread(VT_MPI_INT* argc, char*** argv, VT_MPI_INT required,
 #endif /* HAVE_MPI2_IO */
         }
 
-      is_mpi_initialized = 1;
+      mpi_init_called = 1;
 
       time = vt_pform_wtime();
       vt_exit(tid, &time);
@@ -325,13 +356,73 @@ VT_MPI_INT MPI_Init_thread(VT_MPI_INT* argc, char*** argv, VT_MPI_INT required,
       /* initialize mpi event handling */
       vt_mpi_init(0);
 
-      is_mpi_initialized = 1;
+      mpi_init_called = 1;
     }
 
   return result;
 }
 
 #endif /* HAVE_MPI2_THREAD */
+
+/* -- MPI_Initialized -- */
+
+VT_MPI_INT MPI_Initialized(VT_MPI_INT* flag)
+{
+  VT_MPI_INT result;
+  uint64_t time;
+  uint32_t tid;
+
+  /* first event? */
+  if (!vt_is_alive)
+    {
+      /* initialize VT */
+      vt_open();
+
+      /* get calling thread id */
+      GET_THREAD_ID(tid);
+
+      /* enter the dummy main function */
+      time = vt_pform_wtime();
+      vt_enter_user(tid, &time);
+
+      dummy_main_entered = 1;
+      dummy_main_tid = tid;
+    }
+  else
+    {
+      /* get calling thread id */
+      GET_THREAD_ID(tid);
+    }
+
+  if (IS_MPI_TRACE_ON(tid))
+    {
+      uint8_t was_recorded;
+
+      MPI_TRACE_OFF(tid);
+
+      time = vt_pform_wtime();
+      was_recorded = vt_enter(tid, &time, vt_mpi_regid[VT__MPI_INITIALIZED]);
+
+      VT_UNIMCI_CHECK_PRE(MPI_Initialized,
+        (flag, "", 0, 0), was_recorded, &time);
+
+      result = PMPI_Initialized(flag);
+
+      VT_UNIMCI_CHECK_POST(MPI_Initialized,
+        (flag, "", 0, 0), was_recorded, &time);
+
+      time = vt_pform_wtime();
+      vt_exit(tid, &time);
+
+      MPI_TRACE_ON(tid);
+    }
+  else
+    {
+      result = PMPI_Initialized(flag);
+    }
+
+  return result;
+}
 
 /* -- MPI_Finalize -- */
 
@@ -366,7 +457,7 @@ VT_MPI_INT MPI_Finalize(void)
       vt_mpi_finalize();
 
 #if defined(HAVE_MPI_FINALIZED) && HAVE_MPI_FINALIZED
-      is_mpi_finalized = 1;
+      mpi_finalize_called = 1;
 #endif /* HAVE_MPI_FINALIZED */
       result = MPI_SUCCESS;
 
@@ -381,17 +472,10 @@ VT_MPI_INT MPI_Finalize(void)
       vt_mpi_finalize();
 
 #if defined(HAVE_MPI_FINALIZED) && HAVE_MPI_FINALIZED
-      is_mpi_finalized = 1;
+      mpi_finalize_called = 1;
 #endif /* HAVE_MPI_FINALIZED */
 
       result = MPI_SUCCESS;
-    }
-
-  /* exit dummy function 'user', if necessary */
-  if (vt_enter_user_called)
-    {
-      time = vt_pform_wtime();
-      vt_exit_user(tid, &time);
     }
 
   /* close VampirTrace, if necessary */
@@ -407,7 +491,7 @@ VT_MPI_INT MPI_Finalize(void)
 
 VT_MPI_INT MPI_Finalized(VT_MPI_INT* flag)
 {
-  *flag = is_mpi_finalized;
+  *flag = (VT_MPI_INT)mpi_finalize_called;
 
   return MPI_SUCCESS;
 }
@@ -2414,7 +2498,7 @@ VT_MPI_INT MPI_Waitall(VT_MPI_INT count, MPI_Request* requests,
 #endif /* HAVE_MPI2_THREAD */
         {
           if (array_of_statuses == MPI_STATUSES_IGNORE)
-            array_of_statuses = vt_get_status_array(count);
+            array_of_statuses = get_status_array(count);
           vt_save_request_array(requests, count);
         }
 
@@ -2542,7 +2626,7 @@ VT_MPI_INT MPI_Waitsome(VT_MPI_INT incount, MPI_Request* array_of_requests,
 #endif /* HAVE_MPI2_THREAD */
         {
           if (array_of_statuses == MPI_STATUSES_IGNORE)
-            array_of_statuses = vt_get_status_array(incount);
+            array_of_statuses = get_status_array(incount);
           vt_save_request_array(array_of_requests, incount);
         }
 
@@ -2741,7 +2825,7 @@ VT_MPI_INT MPI_Testall(VT_MPI_INT count, MPI_Request* array_of_requests,
 #endif /* HAVE_MPI2_THREAD */
         {
           if (array_of_statuses == MPI_STATUSES_IGNORE)
-            array_of_statuses = vt_get_status_array(count);
+            array_of_statuses = get_status_array(count);
           vt_save_request_array(array_of_requests, count);
         }
 
@@ -2813,7 +2897,7 @@ VT_MPI_INT MPI_Testsome(VT_MPI_INT incount, MPI_Request* array_of_requests,
 #endif /* HAVE_MPI2_THREAD */
         {
           if (array_of_statuses == MPI_STATUSES_IGNORE)
-            array_of_statuses = vt_get_status_array(incount);
+            array_of_statuses = get_status_array(incount);
           vt_save_request_array(array_of_requests, incount);
         }
 

@@ -1,4 +1,4 @@
-INCLUDES = \
+AM_CPPFLAGS = \
 	-I$(top_builddir)/otflib -I$(top_srcdir)/otflib \
 	$(ZLIB_INCLUDE_LINE)
 

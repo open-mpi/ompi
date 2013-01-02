@@ -1,3 +1,9 @@
+5.14.2openmpi
+	- fixed assertion error occurred when MPI_Initialized is the very first
+	  event to be recorded
+	- fixed potential stack underflow when tracing only MPI events of a
+	  multithreaded program
+
 5.14.1openmpi
 	- updated version of internal OTF to 1.12.2openmpi
 	  (see extlib/otf/ChangeLog)
