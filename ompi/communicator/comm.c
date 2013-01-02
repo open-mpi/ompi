@@ -915,8 +915,7 @@ int ompi_comm_dup ( ompi_communicator_t * comm, ompi_communicator_t **newcomm )
                           NULL,                                   /* remote_procs */
                           comp->c_keyhash,                        /* attrs */
                           comp->error_handler,                    /* error handler */
-                          (mca_base_component_t *) comp->c_topo_component,                  
-                          /* topo component */
+                          (mca_base_component_t *) comp->c_topo_component,  /* topo component */
                           comp->c_local_group,                    /* local group */
                           comp ->c_remote_group );                /* remote group */
     if ( NULL == newcomp ) {

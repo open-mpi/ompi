@@ -237,6 +237,9 @@ int ompi_comm_nextcid ( ompi_communicator_t* newcomm,
         ret = (allredfnct)(&nextlocal_cid, &nextcid, 1, MPI_MAX, comm, bridgecomm,
                            local_leader, remote_leader, send_first );
         if( OMPI_SUCCESS != ret ) {
+            OPAL_THREAD_LOCK(&ompi_cid_lock);
+            ompi_comm_unregister_cid (comm->c_contextid);
+            OPAL_THREAD_UNLOCK(&ompi_cid_lock);
             return ret;
         }
         if (nextcid == nextlocal_cid) {
