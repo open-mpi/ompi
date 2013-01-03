@@ -252,7 +252,7 @@ int orte_register_params(void)
                                 false, false, 0, &orted_debug_failure_delay);
 
     mca_base_param_reg_int_name("orte", "startup_timeout",
-                                "Milliseconds/daemon to wait for startup before declaring failed_to_start (default: 0 => do not check)",
+                                "Seconds/daemon to wait for startup before declaring failed_to_start (default: 0 => do not check)",
                                 false, false, 0, &orte_startup_timeout);
  
     /* check for timing requests */
@@ -469,12 +469,6 @@ int orte_register_params(void)
                                 false, false,
                                 (int) false, &value);
     orte_report_launch_progress = OPAL_INT_TO_BOOL(value);
-    if (orte_report_launch_progress) {
-        /* ensure the startup timeout is set to something reasonable */
-        if (0 == orte_startup_timeout) {
-            orte_startup_timeout = 2000;  /* default to 2 seconds */
-        }
-    }
     
     /* cluster hardware info detected by orte only */
     mca_base_param_reg_string_name("orte", "cpu_type",
