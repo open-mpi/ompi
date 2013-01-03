@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2011-2012 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2011-2013 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2011      UT-Battelle, LLC. All rights reserved.
  * $COPYRIGHT$
@@ -56,10 +56,11 @@ typedef union mca_btl_ugni_frag_hdr_t {
 } mca_btl_ugni_frag_hdr_t;
 
 enum {
-    MCA_BTL_UGNI_FRAG_BUFFERED = 1, /* frag data is buffered */
-    MCA_BTL_UGNI_FRAG_COMPLETE = 2, /* smsg complete for frag */
-    MCA_BTL_UGNI_FRAG_EAGER    = 4, /* eager get frag */
-    MCA_BTL_UGNI_FRAG_IGNORE   = 8  /* ignore local smsg completion */
+    MCA_BTL_UGNI_FRAG_BUFFERED      = 1, /* frag data is buffered */
+    MCA_BTL_UGNI_FRAG_COMPLETE      = 2, /* smsg complete for frag */
+    MCA_BTL_UGNI_FRAG_EAGER         = 4, /* eager get frag */
+    MCA_BTL_UGNI_FRAG_IGNORE        = 8, /* ignore local smsg completion */
+    MCA_BTL_UGNI_FRAG_SMSG_COMPLETE = 16 /* SMSG has completed for this message */
 };
 
 struct mca_btl_ugni_base_frag_t;
@@ -68,15 +69,15 @@ typedef void (*frag_cb_t) (struct mca_btl_ugni_base_frag_t *, int);
 
 typedef struct mca_btl_ugni_base_frag_t {
     mca_btl_base_descriptor_t    base;
-    size_t                       hdr_size;
+    uint32_t                     msg_id;
+    uint16_t                     hdr_size;
+    uint16_t                     flags;
     mca_btl_ugni_frag_hdr_t      hdr;
     mca_btl_ugni_segment_t       segments[2];
     ompi_common_ugni_post_desc_t post_desc;
     mca_btl_base_endpoint_t     *endpoint;
     mca_btl_ugni_reg_t          *registration;
     ompi_free_list_t            *my_list;
-    uint32_t                     msg_id;
-    uint32_t                     flags;
     frag_cb_t                    cbfunc;
 } mca_btl_ugni_base_frag_t;
 
@@ -105,7 +106,6 @@ static inline int mca_btl_ugni_frag_alloc (mca_btl_base_endpoint_t *ep,
     if (OPAL_LIKELY(NULL != item)) {
         (*frag)->my_list  = list;
         (*frag)->endpoint = ep;
-        (*frag)->flags    = 0;
     }
 
     return rc;
@@ -118,6 +118,8 @@ static inline int mca_btl_ugni_frag_return (mca_btl_ugni_base_frag_t *frag)
                                                                &frag->registration->base);
         frag->registration = NULL;
     }
+
+    frag->flags = 0;
 
     OMPI_FREE_LIST_RETURN(frag->my_list, (ompi_free_list_item_t *) frag);
 
