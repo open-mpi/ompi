@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2011-2012 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2011-2013 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2011      UT-Battelle, LLC. All rights reserved.
  * $COPYRIGHT$
@@ -120,7 +120,12 @@ int mca_btl_ugni_smsg_process (mca_btl_base_endpoint_t *ep)
         case MCA_BTL_UGNI_TAG_RDMA_COMPLETE:
             frag.hdr.rdma = ((mca_btl_ugni_rdma_frag_hdr_t *) data_ptr)[0];
 
-            mca_btl_ugni_frag_complete (frag.hdr.rdma.ctx, OMPI_SUCCESS);
+            if (((mca_btl_ugni_base_frag_t *)frag.hdr.rdma.ctx)->flags & MCA_BTL_UGNI_FRAG_SMSG_COMPLETE) {
+                mca_btl_ugni_frag_complete (frag.hdr.rdma.ctx, OMPI_SUCCESS);
+            } else {
+                /* let the local smsg completion finish this frag */
+                ((mca_btl_ugni_base_frag_t *)frag.hdr.rdma.ctx)->flags &= ~MCA_BTL_UGNI_FRAG_IGNORE;
+            }
             break;
         case MCA_BTL_UGNI_TAG_DISCONNECT:
             /* remote endpoint has disconnected */
