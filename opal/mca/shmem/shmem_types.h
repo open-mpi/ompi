@@ -12,7 +12,7 @@
  * Copyright (c) 2007-2010 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2010      IBM Corporation.  All rights reserved.
- * Copyright (c) 2010-2011 Los Alamos National Security, LLC.
+ * Copyright (c) 2010-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * $COPYRIGHT$
  *
@@ -32,6 +32,13 @@
 #define OPAL_SHMEM_TYPES_H
 
 #include "opal_config.h"
+
+#ifdef HAVE_STDDEF_H
+#include <stddef.h>
+#endif /* HAVE_STDDEF_H */
+#ifdef HAVE_STRING_H
+#include <string.h>
+#endif /* HAVE_STRING_H */
 
 BEGIN_C_DECLS
 
@@ -92,7 +99,6 @@ do {                                                                           \
 #define OPAL_SHMEM_DS_IS_VALID(ds_buf)                                         \
     ( (ds_buf)->flags & OPAL_SHMEM_DS_FLAGS_VALID )
 
-/* ////////////////////////////////////////////////////////////////////////// */
 typedef uint8_t opal_shmem_ds_flag_t;
 
 /* shared memory segment header */
@@ -113,12 +119,34 @@ struct opal_shmem_ds_t {
     int seg_id;
     /* size of shared memory segment */
     size_t seg_size;
-    /* path to backing store */
-    char seg_name[OPAL_PATH_MAX];
     /* base address of shared memory segment */
     unsigned char *seg_base_addr;
+    /* path to backing store -- last element so we can easily calculate the
+     * "real" size of opal_shmem_ds_t. that is, the amount of the struct that
+     * is actually being used. for example: if seg_name is something like:
+     * "foo_baz" and OPAL_PATH_MAX is 4096, we want to know that only a very
+     * limited amount of the seg_name buffer is actually being used.
+     */
+    char seg_name[OPAL_PATH_MAX];
 };
 typedef struct opal_shmem_ds_t opal_shmem_ds_t;
+
+/* ////////////////////////////////////////////////////////////////////////// */
+/**
+ * Simply returns the amount of used space. For use when sending the entire
+ * opal_shmem_ds_t payload isn't viable -- due to the potential disparity
+ * between the reserved buffer space and what is actually in use.
+ */
+static inline size_t
+opal_shmem_sizeof_shmem_ds(const opal_shmem_ds_t *ds_bufp)
+{
+    char *name_base = NULL;
+    size_t name_buf_offset = offsetof(opal_shmem_ds_t, seg_name);
+
+    name_base = (char *)ds_bufp + name_buf_offset;
+
+    return name_buf_offset + strlen(name_base) + 1;
+}
 
 END_C_DECLS
 
