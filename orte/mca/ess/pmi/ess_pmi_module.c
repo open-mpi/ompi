@@ -49,6 +49,7 @@
 
 #include "orte/mca/db/db.h"
 #include "orte/mca/errmgr/errmgr.h"
+#include "orte/mca/rml/rml.h"
 #include "orte/util/proc_info.h"
 #include "orte/util/show_help.h"
 #include "orte/util/name_fns.h"
@@ -81,7 +82,7 @@ static int pmi_maxlen=0;
 static int rte_init(void)
 {
     int ret, i, j;
-    char *error = NULL, *localj;
+    char *error = NULL, *localj, *pmirte=NULL;
     int32_t jobfam, stepid;
     char *envar, *ev1, *ev2;
     uint64_t unique_key[2];
@@ -93,6 +94,7 @@ static int rte_init(void)
     orte_process_name_t proc;
     orte_local_rank_t local_rank;
     orte_node_rank_t node_rank;
+    char *rmluri;
 
     /* run the prolog */
     if (ORTE_SUCCESS != (ret = orte_ess_base_std_prolog())) {
@@ -236,6 +238,7 @@ static int rte_init(void)
 
         /* ensure we pick the correct critical components */
         putenv("OMPI_MCA_grpcomm=pmi");
+        putenv("OMPI_MCA_db=pmi");
         putenv("OMPI_MCA_routed=direct");
     
         /* now use the default procedure to finish my setup */
@@ -245,11 +248,6 @@ static int rte_init(void)
             goto error;
         }
 
-        /* store our info into the database */
-        if (ORTE_SUCCESS != (ret = orte_db.store(ORTE_PROC_MY_NAME, ORTE_DB_HOSTNAME, orte_process_info.nodename, OPAL_STRING))) {
-            error = "db store daemon vpid";
-            goto error;
-        }
         /* get our local proc info to find our local rank */
         if (PMI_SUCCESS != (ret = PMI_Get_clique_size(&i))) {
             ORTE_PMI_ERROR(ret, "PMI_Get_clique_size");
@@ -281,14 +279,6 @@ static int rte_init(void)
                 orte_process_info.my_local_rank = local_rank;
                 orte_process_info.my_node_rank = node_rank;
             }
-            if (ORTE_SUCCESS != (ret = orte_db.store(&proc, ORTE_DB_LOCALRANK, &local_rank, ORTE_LOCAL_RANK))) {
-                error = "db store local rank";
-                goto error;
-            }
-            if (ORTE_SUCCESS != (ret = orte_db.store(&proc, ORTE_DB_NODERANK, &node_rank, ORTE_NODE_RANK))) {
-                error = "db store node rank";
-                goto error;
-            }
         }
         free(ranks);
 
@@ -303,6 +293,19 @@ static int rte_init(void)
     if (orte_process_info.max_procs < orte_process_info.num_procs) {
         orte_process_info.max_procs = orte_process_info.num_procs;
     }
+
+    /* construct the PMI RTE string */
+    rmluri = orte_rml.get_contact_info();
+    asprintf(&pmirte, "%s,%s,%d,%d,%d,%d", rmluri, orte_process_info.nodename,
+             (int)orte_process_info.bind_level, (int)orte_process_info.bind_idx,
+             (int)orte_process_info.my_local_rank, (int)orte_process_info.my_node_rank);
+    free(rmluri);
+    /* store our info into the database */
+    if (ORTE_SUCCESS != (ret = orte_db.store(ORTE_PROC_MY_NAME, "RTE", pmirte, OPAL_STRING))) {
+        error = "db store RTE info";
+        goto error;
+    }
+    free(pmirte);
 
     /* flag that we completed init */
     app_init_complete = true;
