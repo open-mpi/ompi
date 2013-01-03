@@ -63,18 +63,6 @@ int orte_finalize(void)
     /* set the flag indicating we are finalizing */
     orte_finalizing = true;
 
-#if ORTE_ENABLE_PROGRESS_THREADS
-    /* stop the progress thread */
-    orte_event_base_active = false;
-    /* break the event loop */
-    opal_event_base_loopbreak(orte_event_base);
-    /* wait for thread to exit */
-    opal_thread_join(&orte_progress_thread, NULL);
-    OBJ_DESTRUCT(&orte_progress_thread);
-    /* release the event base */
-    opal_event_base_free(orte_event_base);
-#endif
-
     /* close the orte_show_help system */
     orte_show_help_finalize();
 
@@ -84,6 +72,18 @@ int orte_finalize(void)
     /* close the ess itself */
     orte_ess_base_close();
     
+#if ORTE_ENABLE_PROGRESS_THREADS
+    /* stop the progress thread */
+    orte_event_base_active = false;
+    /* break the event loop */
+    opal_event_base_loopbreak(orte_event_base);
+    /* wait for thread to exit */
+    opal_thread_join(&orte_progress_thread, NULL);
+    OBJ_DESTRUCT(&orte_progress_thread);
+    /* release the event base */
+/*    opal_event_base_free(orte_event_base); */
+#endif
+
     /* cleanup the process info */
     orte_proc_info_finalize();
 
