@@ -191,11 +191,6 @@ OMPI_DECLSPEC int ompi_modex_recv(const mca_base_component_t *dest_component,
                                   const ompi_proc_t *source_proc,
                                   void **buffer, size_t *size);
 
-
-OMPI_DECLSPEC int ompi_modex_recv_pointer(const mca_base_component_t *component,
-                                          const ompi_proc_t *proc,
-                                          void **buffer, opal_data_type_t type);
-
 /**
  * Receive a buffer from a given peer
  *

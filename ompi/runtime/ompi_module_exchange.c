@@ -90,28 +90,6 @@ ompi_modex_recv(const mca_base_component_t *component,
     return rc;
 }
 
-/* return a pointer to the data, but don't create a new copy of it */
-int ompi_modex_recv_pointer(const mca_base_component_t *component,
-                            const ompi_proc_t *proc,
-                            void **buffer, opal_data_type_t type)
-{
-    int rc;
-    char *name = mca_base_component_to_string(component);
-
-    /* set defaults */
-    *buffer = NULL;
-
-    if (NULL == name) {
-        return OMPI_ERR_OUT_OF_RESOURCE;
-    }
-    
-    /* the fetch_poointer API returns a pointer to the data */
-    rc = orte_db.fetch_pointer(&proc->proc_name, name, buffer, type);
-    free(name);
-
-    return rc;
-}
-
 int
 ompi_modex_send_string(const char* key,
                        const void *buffer, size_t size)
