@@ -123,6 +123,12 @@ static int kvs_get(const char *key, char *value, int valuelen)
 #endif
 }
 
+#if WANT_CRAY_PMI2_EXT
+static char escape_char = '$';
+static char *illegal = "/;=";
+static char *sub = "012";
+#endif
+
 static int init(void)
 {
     int rc;
@@ -159,7 +165,7 @@ static int store(const orte_process_name_t *proc,
                  const char *key, const void *data, opal_data_type_t type)
 {
     int i, rc;
-    char *pmidata, *str;
+    char *pmidata, *str, *localdata;
     int64_t i64;
     uint64_t ui64;
     opal_byte_object_t *bo;
@@ -178,7 +184,55 @@ static int store(const orte_process_name_t *proc,
 
     switch (type) {
     case OPAL_STRING:
-        str = (char*)data;
+#if WANT_CRAY_PMI2_EXT
+        {
+            /* the blasted Cray PMI implementation marked a number of common
+             * ASCII characters as "illegal", so if we are on one of those
+             * machines, then we have to replace those characters with something
+             * else
+             */
+            size_t n, k;
+            bool subbed;
+
+            str = (char*)data;
+            /* first, count how many characters need to be replaced - since Cray
+             * is the source of the trouble, we only make this slow for them!
+             */
+            ptr = str;
+            i=0;
+            for (n=0; n < strlen(illegal); n++) {
+                while (NULL != (tmp = strchr(ptr, illegal[n]))) {
+                    i++;
+                    ptr = tmp;
+                    ptr++;
+                }
+            }
+            /* stretch the string */
+            ptr = (char*)malloc(sizeof(char) * (1 + strlen(str) + 2*i));
+            /* now construct it */
+            k=0;
+            for (n=0; n < strlen(str); n++) {
+                subbed = false;
+                for (i=0; i < (int)strlen(illegal); i++) {
+                    if (str[n] == illegal[i]) {
+                        /* escape the character */
+                        ptr[k++] = escape_char;
+                        ptr[k++] = sub[i];
+                        subbed = true;
+                        break;
+                    }
+                }
+                if (!subbed) {
+                    ptr[k++] = str[i];
+                }
+            }
+            /* pass the result */
+            localdata = ptr;
+        }
+#else
+        localdata = strdup((char*)data);
+#endif
+        str = localdata;
         while (pmi_vallen_max < (int)(ORTE_PMI_PAD + strlen(str))) {
             /* the string is too long, so we need to break it into
              * multiple sections
@@ -192,6 +246,8 @@ static int store(const orte_process_name_t *proc,
         }
         /* put whatever remains on the stack */
         opal_argv_append_nosize(&strdata, str);
+        /* cleanup */
+        free(localdata);
         /* the first value we put uses the original key, but
          * the data is prepended with the number of sections
          * required to hold the entire string
@@ -369,6 +425,51 @@ static char* fetch_string(const char *key)
 
     /* cleanup */
     free(tmp_val);
+
+#if WANT_CRAY_PMI2_EXT
+        {
+            /* the blasted Cray PMI implementation marked a number of common
+             * ASCII characters as "illegal", so if we are on one of those
+             * machines, then replaced those characters with something
+             * else - now recover them
+             */
+            size_t n, k;
+            char *tmp;
+            char conv[2];
+
+            /* first, count how many characters were replaced - since Cray
+             * is the source of the trouble, we only make this slow for them!
+             */
+            ptr = data;
+            i=0;
+            while (NULL != (tmp = strchr(ptr, escape_char))) {
+                i++;
+                ptr = tmp;
+                ptr++;
+            }
+            /* shrink the string */
+            ptr = (char*)malloc(sizeof(char) * (1 + strlen(data) - i));
+            /* now construct it */
+            k=0;
+            conv[1] = '\0';
+            for (n=0; n < strlen(data); n++) {
+                if (escape_char == data[n]) {
+                    /* the next character tells us which character
+                     * was subbed out
+                     */
+                    n++;
+                    conv[0] = data[n];
+                    i = strtol(conv, NULL, 10);
+                    ptr[k++] = illegal[i];
+                } else {
+                    ptr[k++] = data[n];
+                }
+            }
+            /* pass the result */
+            free(data);
+            data = ptr;
+        }
+#endif
 
     return data;
 }
