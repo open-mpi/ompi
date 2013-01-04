@@ -192,11 +192,6 @@ static int store(const orte_process_name_t *proc,
     opal_value_t *kv;
     opal_byte_object_t *boptr;
 
-    OPAL_OUTPUT_VERBOSE((5, orte_db_base.output,
-                         "%s db:hash:store: storing key %s[%s] for proc %s",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         key, opal_dss.lookup_data_type(type), ORTE_NAME_PRINT(proc)));
-
     /* get the job data object for this proc */
     jtable = NULL;
     for (i=0; i < job_data.size; i++) {
@@ -218,13 +213,24 @@ static int store(const orte_process_name_t *proc,
     /* lookup the proc data object for this proc */
     if (NULL == (proc_data = lookup_orte_proc(jtable->data, proc->vpid))) {
         /* unrecoverable error */
+        OPAL_OUTPUT_VERBOSE((5, orte_db_base.output,
+                             "%s db:hash:store: storing key %s[%s] for proc %s unrecoverably failed",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             key, opal_dss.lookup_data_type(type), ORTE_NAME_PRINT(proc)));
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
 
     /* see if we already have this key in the data - means we are updating
      * a pre-existing value
      */
-    if (NULL != (kv = lookup_keyval(proc_data, key))) {
+    kv = lookup_keyval(proc_data, key);
+    OPAL_OUTPUT_VERBOSE((5, orte_db_base.output,
+                         "%s db:hash:store: %s key %s[%s] for proc %s",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         (NULL == kv ? "storing" : "updating"),
+                         key, opal_dss.lookup_data_type(type), ORTE_NAME_PRINT(proc)));
+
+    if (NULL != kv) {
         opal_list_remove_item(&proc_data->data, &kv->super);
         OBJ_RELEASE(kv);
     }
@@ -306,11 +312,6 @@ static int store_pointer(const orte_process_name_t *proc,
     proc_data_t *proc_data;
     opal_value_t *k2;
 
-    OPAL_OUTPUT_VERBOSE((5, orte_db_base.output,
-                         "%s db:hash:store: storing pointer of key %s for proc %s",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         kv->key, ORTE_NAME_PRINT(proc)));
-
     /* get the job data object for this proc */
     jtable = NULL;
     for (i=0; i < job_data.size; i++) {
@@ -332,13 +333,23 @@ static int store_pointer(const orte_process_name_t *proc,
     /* lookup the proc data object for this proc */
     if (NULL == (proc_data = lookup_orte_proc(jtable->data, proc->vpid))) {
         /* unrecoverable error */
+        OPAL_OUTPUT_VERBOSE((5, orte_db_base.output,
+                             "%s db:hash:store: storing key %s[%s] for proc %s unrecoverably failed",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             kv->key, opal_dss.lookup_data_type(kv->type), ORTE_NAME_PRINT(proc)));
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
 
     /* see if we already have this key in the data - means we are updating
      * a pre-existing value
      */
-    if (NULL != (k2 = lookup_keyval(proc_data, kv->key))) {
+    k2 = lookup_keyval(proc_data, kv->key);
+    OPAL_OUTPUT_VERBOSE((5, orte_db_base.output,
+                         "%s db:hash:store: %s pointer of key %s[%s] for proc %s",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         (NULL == k2 ? "storing" : "updating"),
+                         kv->key, opal_dss.lookup_data_type(kv->type), ORTE_NAME_PRINT(proc)));
+    if (NULL != k2) {
         opal_list_remove_item(&proc_data->data, &k2->super);
         OBJ_RELEASE(k2);
     }
