@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2010-2012 Los Alamos National Security, LLC.
+ * Copyright (c) 2010-2011 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * $COPYRIGHT$
  *
@@ -73,31 +73,18 @@ typedef struct mca_common_sm_module_t {
 OBJ_CLASS_DECLARATION(mca_common_sm_module_t);
 
 /**
- * This routine reorders procs array to have all the local procs at the
- * beginning and returns the number of local procs through out_num_local_procs.
- * The proc with the lowest name is at the beginning of the reordered procs
- * array.
- *
- * @returnvalue OMPI_SUCCESS on success, something else, otherwise.
- */
-OMPI_DECLSPEC extern int
-mca_common_sm_local_proc_reorder(ompi_proc_t **procs,
-                                 size_t num_procs,
-                                 size_t *out_num_local_procs);
-
-/**
- *  This routine is used to create and attach to a shared memory segment
- *  (whether it's an mmaped file or a SYSV IPC segment).  It is assumed that
+ *  This routine is used to create a shared memory segment (whether
+ *  it's an mmaped file or a SYSV IPC segment).  It is assumed that
  *  the shared memory segment does not exist before this call.
  *
  *  @returnvalue pointer to control structure at head of shared memory segment.
  *  Returns NULL if an error occurred.
  */
-OMPI_DECLSPEC extern mca_common_sm_module_t *
-mca_common_sm_module_create_and_attach(size_t size,
-                                       char *file_name,
-                                       size_t size_ctl_structure,
-                                       size_t data_seg_alignment);
+mca_common_sm_module_t *
+mca_common_sm_module_create(size_t size,
+                            char *file_name,
+                            size_t size_ctl_structure,
+                            size_t data_seg_alignment);
 
 /**
  *  This routine is used to attach to the shared memory segment associated with
@@ -109,21 +96,10 @@ mca_common_sm_module_create_and_attach(size_t size,
  *  @returnvalue pointer to control structure at head of shared memory segment.
  *  Returns NULL if an error occurred.
  */
-OMPI_DECLSPEC extern mca_common_sm_module_t *
+mca_common_sm_module_t *
 mca_common_sm_module_attach(opal_shmem_ds_t *seg_meta,
                             size_t size_ctl_structure,
                             size_t data_seg_alignment);
-
-/**
- * A thin wrapper around opal_shmem_unlink.
- *
- * @ modp points to an initialized mca_common_sm_module_t.
- *
- * @returnvalue OMPI_SUCCESS if the operation completed successfully,
- * OMPI_ERROR otherwise.
- */
-OMPI_DECLSPEC extern int
-mca_common_sm_module_unlink(mca_common_sm_module_t *modp);
 
 /**
  *  This routine is used to set up a shared memory segment (whether
@@ -188,7 +164,7 @@ mca_common_sm_init_group(ompi_group_t *group,
  */
 OMPI_DECLSPEC extern void *
 mca_common_sm_seg_alloc(struct mca_mpool_base_module_t *mpool,
-                        size_t *size,
+                        size_t* size,
                         mca_mpool_base_registration_t **registration);
 
 /**
@@ -213,3 +189,4 @@ OMPI_DECLSPEC extern mca_common_sm_module_t *mca_common_sm_module;
 END_C_DECLS
 
 #endif /* _COMMON_SM_H_ */
+

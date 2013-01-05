@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2007 Voltaire. All rights reserved.
  * Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2010-2013 Los Alamos National Security, LLC.  
+ * Copyright (c) 2010      Los Alamos National Security, LLC.  
  *                         All rights reserved. 
  * Copyright (c) 2010-2012 IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
@@ -42,8 +42,6 @@
 
 #include "opal/util/bit_ops.h"
 #include "opal/class/opal_free_list.h"
-#include "opal/mca/shmem/shmem.h"
-
 #include "ompi/mca/btl/btl.h"
 #include "ompi/mca/common/sm/common_sm.h"
 
@@ -85,10 +83,6 @@ BEGIN_C_DECLS
    line that should hopefully be good in most places. */
 #define SM_CACHE_LINE_PAD 128
 
-/* number of members in mca_btl_sm_modex_t */
-#define SM_MODEX_NUM_MEMBERS 3
-#define SM_MODEX_STR_PAD 32
-
 struct sm_fifo_t {
     /* This queue pointer is used only by the heads. */
     volatile void **queue;           
@@ -126,58 +120,6 @@ typedef struct sm_fifo_t sm_fifo_t;
 typedef struct mca_btl_sm_mem_node_t {
     mca_mpool_base_module_t* sm_mpool; /**< shared memory pool */
 } mca_btl_sm_mem_node_t;
-
-/**
- * Shared Memory (SM) BTL modex.
- * Please update SM_MODEX_NUM_MEMBERS if the number of members ever changes.
- */
-struct mca_btl_sm_modex_t {
-    /* 0 */
-    opal_shmem_ds_t sm_meta_buf;
-    /* 1 */
-    opal_shmem_ds_t sm_mpool_meta_buf;
-    /* 2 */
-    size_t mpool_res_size;
-};
-typedef struct mca_btl_sm_modex_t mca_btl_sm_modex_t;
-
-static inline int
-mca_btl_sm_get_modex_member_off_n_size(const mca_btl_sm_modex_t *bp,
-                                       int mid, size_t *out_off,
-                                       size_t *out_size) {
-    switch (mid) {
-        /* sm_meta_buf */
-        case 0:
-            if (NULL != out_off) {
-                *out_off = offsetof(mca_btl_sm_modex_t, sm_meta_buf);
-            }
-            if (NULL != out_size) {
-                *out_size = opal_shmem_sizeof_shmem_ds(&bp->sm_meta_buf);
-            }
-            break;
-        /* sm_mpool_meta_buf */
-        case 1:
-            if (NULL != out_off) {
-                *out_off = offsetof(mca_btl_sm_modex_t, sm_mpool_meta_buf);
-            }
-            if (NULL != out_size) {
-                *out_size = opal_shmem_sizeof_shmem_ds(&bp->sm_mpool_meta_buf);
-            }
-            break;
-        case 2:
-        /* mpool_res_size */
-            if (NULL != out_off) {
-                *out_off = offsetof(mca_btl_sm_modex_t, mpool_res_size);
-            }
-            if (NULL != out_size) {
-                *out_size = sizeof(bp->mpool_res_size);
-            }
-            break;
-        default:
-            return OMPI_ERR_VALUE_OUT_OF_BOUNDS;
-    }
-    return OMPI_SUCCESS;
-}
 
 /**
  * Shared Memory (SM) BTL module.
