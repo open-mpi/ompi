@@ -16,4 +16,5 @@ headers += \
 libmca_db_la_SOURCES += \
 	base/db_base_open.c \
 	base/db_base_close.c \
-	base/db_base_select.c
+	base/db_base_select.c \
+        base/db_base_fns.c

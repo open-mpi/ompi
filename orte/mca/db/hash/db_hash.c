@@ -56,7 +56,8 @@ orte_db_base_module_t orte_db_hash_module = {
     fetch,
     fetch_pointer,
     fetch_multiple,
-    remove_data
+    remove_data,
+    NULL
 };
 
 /* Local "globals" */

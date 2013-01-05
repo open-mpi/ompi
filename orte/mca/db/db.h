@@ -106,6 +106,13 @@ typedef int (*orte_db_base_module_fetch_multiple_fn_t)(const orte_process_name_t
 typedef int (*orte_db_base_module_remove_fn_t)(const orte_process_name_t *proc, const char *key);
 
 /*
+ * Log data
+ *
+ * Insert statistical, non-process oriented data into a logging system.
+ */
+typedef int (*orte_db_base_module_add_log_fn_t)(const char *table, const opal_value_t *kvs, int nkvs);
+
+/*
  * the standard module data structure
  */
 struct orte_db_base_module_1_0_0_t {
@@ -117,6 +124,7 @@ struct orte_db_base_module_1_0_0_t {
     orte_db_base_module_fetch_pointer_fn_t             fetch_pointer;
     orte_db_base_module_fetch_multiple_fn_t            fetch_multiple;
     orte_db_base_module_remove_fn_t                    remove;
+    orte_db_base_module_add_log_fn_t                   add_log;
 };
 typedef struct orte_db_base_module_1_0_0_t orte_db_base_module_1_0_0_t;
 typedef struct orte_db_base_module_1_0_0_t orte_db_base_module_t;
