@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007-2009 Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2008-2009 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2010-2012 Los Alamos National Security, LLC.  
+ * Copyright (c) 2010      Los Alamos National Security, LLC.  
  *                         All rights reserved. 
  * $COPYRIGHT$
  *
@@ -45,14 +45,10 @@
 /*
  * Local functions
  */
-static int
-mca_mpool_sm_open(void);
-
-static int
-mca_mpool_sm_close(void);
-
-static mca_mpool_base_module_t *
-mca_mpool_sm_init(struct mca_mpool_base_resources_t* resources);
+static int mca_mpool_sm_open(void);
+static int mca_mpool_sm_close( void );
+static mca_mpool_base_module_t* mca_mpool_sm_init(
+    struct mca_mpool_base_resources_t* resources);
 
 mca_mpool_sm_component_t mca_mpool_sm_component = {
     {
@@ -94,8 +90,8 @@ static int mca_mpool_sm_open(void)
     /* register SM component parameters */
     mca_base_param_reg_string(&mca_mpool_sm_component.super.mpool_version,
                               "allocator",
-                              "Name of allocator component "
-                              "to use with sm mpool", false, false,
+                              "Name of allocator component to use with sm mpool",
+                              false, false,
                               "bucket",
                               &mca_mpool_sm_component.sm_allocator_name);
 
@@ -104,18 +100,18 @@ static int mca_mpool_sm_open(void)
      * to be set up to 2GB-1 for 32 bit and much greater for 64 bit. */
     asprintf(&size_str, "%ld", default_min);
     mca_base_param_reg_string(&mca_mpool_sm_component.super.mpool_version,
-                              "min_size",
-                              "Minimum size of the sm mpool shared memory file",
-                              false, false, size_str, &min_size_param);
+                               "min_size",
+                               "Minimum size of the sm mpool shared memory file",
+                               false, false, size_str, &min_size_param);
     free(size_str);
     mca_base_param_reg_int(&mca_mpool_sm_component.super.mpool_version,
-                           "verbose",
-                           "Enable verbose output for mpool sm component",
-                           false, false, 0, &value);
+                               "verbose",
+                               "Enable verbose output for mpool sm component",
+                               false, false, 0, &value);
     if (value != 0) {
-        mca_mpool_sm_component.verbose = opal_output_open(NULL);
+            mca_mpool_sm_component.verbose = opal_output_open(NULL);
     } else {
-        mca_mpool_sm_component.verbose = -1;
+            mca_mpool_sm_component.verbose = -1;
     }
 
     return OMPI_SUCCESS;
@@ -132,44 +128,41 @@ static int mca_mpool_sm_close( void )
     return OMPI_SUCCESS;
 }
 
-static mca_mpool_base_module_t *
-mca_mpool_sm_init(struct mca_mpool_base_resources_t *resources)
+static mca_mpool_base_module_t* mca_mpool_sm_init(
+    struct mca_mpool_base_resources_t* resources)
 {
-    mca_mpool_sm_module_t *mpool_module;
+    char *file_name;
+    int len;
+    mca_mpool_sm_module_t* mpool_module;
     mca_allocator_base_component_t* allocator_component;
     long min_size;
     ompi_proc_t **procs;
     size_t num_all_procs, i, num_local_procs = 0;
 
     /* README: this needs to change if procs in different jobs (even
-     * spawned ones) are to talk using shared memory */
-    if (NULL == (procs = ompi_proc_world(&num_all_procs))) {
-        /* out of resources, so just bail */
-        return NULL;
-    }
+       spawned ones) are to talk using shared memory */
+    procs = ompi_proc_world(&num_all_procs);
     for (i = 0 ; i < num_all_procs ; ++i) {
         if (OPAL_PROC_ON_LOCAL_NODE(procs[i]->proc_flags)) {
             num_local_procs++;
         }
     }
+
     /* parse the min size and validate it */
-    /* if other parameters are added, absolutely
-     * necessary to reset errno each time */
+    /* if other parameters are added, absolutely necessary to reset errno each time */
     errno = 0;
     min_size  = strtol(min_size_param, (char **)NULL, 10);
     if (errno == ERANGE) {
-        opal_output(0, "mca_mpool_sm_init: min_size overflows! "
-                       "set to default (%ld)", default_min);
+        opal_output(0, "mca_mpool_sm_init: min_size overflows! set to default (%ld)", default_min);
         min_size = default_min;
     } else if (errno == EINVAL) {
-        opal_output(0, "mca_mpool_sm_init: invalid min_size entered. "
-                       "set it to (%ld)", default_min);
+        opal_output(0, "mca_mpool_sm_init: invalid min_size entered. set it to (%ld)", default_min);
         min_size = default_min;
     }
 
     /* Make a new mpool module */
     mpool_module = 
-        (mca_mpool_sm_module_t *)malloc(sizeof(mca_mpool_sm_module_t));
+        (mca_mpool_sm_module_t*)malloc(sizeof(mca_mpool_sm_module_t));
     mca_mpool_sm_module_init(mpool_module);
 
     /* set sm_size */
@@ -180,26 +173,23 @@ mca_mpool_sm_init(struct mca_mpool_base_resources_t *resources)
         mpool_module->sm_size = min_size;
     }
 
+    /* add something for the control structure */
+    mpool_module->sm_size += sizeof(mca_common_sm_module_t);
+
     allocator_component = mca_allocator_component_lookup(
         mca_mpool_sm_component.sm_allocator_name);
 
     /* if specified allocator cannot be loaded - look for an alternative */
-    if (NULL == allocator_component) {
-        if (opal_list_get_size(&mca_allocator_base_components) == 0) {
-            mca_base_component_list_item_t *item =
-                (mca_base_component_list_item_t *)
+    if(NULL == allocator_component) {
+        if(opal_list_get_size(&mca_allocator_base_components) == 0) {
+            mca_base_component_list_item_t* item = (mca_base_component_list_item_t*)
                 opal_list_get_first(&mca_allocator_base_components);
-            allocator_component =
-                (mca_allocator_base_component_t *)item->cli_component;
-            opal_output(
-                0, "mca_mpool_sm_init: "
-                "unable to locate allocator: %s - using %s\n",
-                mca_mpool_sm_component.sm_allocator_name,
-                allocator_component->allocator_version.mca_component_name);
+            allocator_component = (mca_allocator_base_component_t*)item->cli_component;
+            opal_output(0, "mca_mpool_sm_init: unable to locate allocator: %s - using %s\n",
+                mca_mpool_sm_component.sm_allocator_name, allocator_component->allocator_version.mca_component_name);
         } else {
-            opal_output(0, "mca_mpool_sm_init: "
-                        "unable to locate allocator: %s\n",
-                        mca_mpool_sm_component.sm_allocator_name);
+            opal_output(0, "mca_mpool_sm_init: unable to locate allocator: %s\n",
+                mca_mpool_sm_component.sm_allocator_name);
             free(procs);
             return NULL;
         }
@@ -207,28 +197,41 @@ mca_mpool_sm_init(struct mca_mpool_base_resources_t *resources)
 
     mpool_module->mem_node = resources->mem_node;
 
+    /* create initial shared memory mapping */
+    len = asprintf( &file_name, "%s"OPAL_PATH_SEP"shared_mem_pool.%s",
+                    orte_process_info.job_session_dir,
+                    orte_process_info.nodename );
+    if ( 0 > len ) {
+        free(mpool_module);
+        free(procs);
+        return NULL;
+    }
+    
     opal_output(mca_mpool_sm_component.verbose,
                 "mca_mpool_sm_init: shared memory size used: (%ld)",
                 mpool_module->sm_size);
 
-    if (NULL == (mpool_module->sm_common_module =
-        mca_common_sm_module_attach(&resources->bs_meta_buf,
+    if (NULL == (mpool_module->sm_common_module = 
+                 mca_common_sm_init(procs, num_all_procs,
+                                    mpool_module->sm_size,
+                                    file_name,
                                     sizeof(mca_common_sm_module_t), 8))) {
-        opal_output(mca_mpool_sm_component.verbose, "mca_mpool_sm_init: "
-                    "unable to create shared memory mapping (%s)",
-                    resources->bs_meta_buf.seg_name);
+        opal_output(mca_mpool_sm_component.verbose, 
+                    "mca_mpool_sm_init: unable to create shared memory mapping (%s)", file_name);
+        free(file_name);
         free(mpool_module);
         free(procs);
         return NULL;
     }
     free(procs);
+    free(file_name);
 
     /* setup allocator */
     mpool_module->sm_allocator = 
       allocator_component->allocator_init(true,
                                           mca_common_sm_seg_alloc, 
                                           NULL, &(mpool_module->super));
-    if (NULL == mpool_module->sm_allocator) {
+    if(NULL == mpool_module->sm_allocator) {
         opal_output(0, "mca_mpool_sm_init: unable to initialize allocator");
         free(mpool_module);
         return NULL;
