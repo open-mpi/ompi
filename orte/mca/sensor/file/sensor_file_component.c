@@ -58,10 +58,6 @@ static int orte_sensor_file_open(void)
     int tmp;
 
     /* lookup parameters */
-    mca_base_param_reg_int(c, "sample_rate",
-                           "Sample rate in seconds (default=10)",
-                           false, false, 10, &mca_sensor_file_component.sample_rate);
-    
     mca_base_param_reg_string(c, "filename",
                            "File to be monitored",
                            false, false, NULL, &mca_sensor_file_component.file);
@@ -90,10 +86,9 @@ static int orte_sensor_file_open(void)
 
 
 static int orte_sensor_file_query(mca_base_module_t **module, int *priority)
-{    
-    *priority = 0;  /* select only if specified */
+{
+    *priority = 20;  /* higher than heartbeat */
     *module = (mca_base_module_t *)&orte_sensor_file_module;
-    
     return ORTE_SUCCESS;
 }
 

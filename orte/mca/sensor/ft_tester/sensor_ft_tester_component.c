@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2010-2011 Cisco Systems, Inc.  All rights reserved. 
+ * Copyright (c) 2012      Los Alamos National Security, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -59,18 +60,9 @@ static int orte_sensor_ft_tester_open(void)
     char *str;
 
     /* lookup parameters */
-    mca_base_param_reg_int(c, "fail_rate",
-                           "Time between checks to decide if one or more procs shall be killed, expressed as sec",
-                           false, false, 0,  &tmp);
-    if (tmp < 0) {
-        opal_output(0, "Illegal value %d - must be >= 0", tmp);
-        return ORTE_ERR_FATAL;
-    }
-    mca_sensor_ft_tester_component.fail_rate = tmp;
-    
     mca_base_param_reg_string(c, "fail_prob",
                               "Probability of killing a single executable",
-                              false, false, "30.0",  &str);
+                              false, false, NULL,  &str);
     if (NULL != str) {
         mca_sensor_ft_tester_component.fail_prob = strtof(str, NULL);
         if (1.0 < mca_sensor_ft_tester_component.fail_prob) {
@@ -88,7 +80,7 @@ static int orte_sensor_ft_tester_open(void)
     
     mca_base_param_reg_string(c, "daemon_fail_prob",
                               "Probability of killing a daemon",
-                              false, false, "0.0", &str);
+                              false, false, NULL, &str);
     if (NULL != str) {
         mca_sensor_ft_tester_component.daemon_fail_prob = strtof(str, NULL);
         if (1.0 < mca_sensor_ft_tester_component.daemon_fail_prob) {
@@ -105,16 +97,16 @@ static int orte_sensor_ft_tester_open(void)
 
 static int orte_sensor_ft_tester_query(mca_base_module_t **module, int *priority)
 {
-    if (0 == mca_sensor_ft_tester_component.fail_rate) {
-        *priority = 0;
-        *module = NULL;
-        return ORTE_ERROR;
+    if (0.0 < mca_sensor_ft_tester_component.fail_prob ||
+        0.0 < mca_sensor_ft_tester_component.daemon_fail_prob) {
+        *priority = 1;  /* at the bottom */
+        *module = (mca_base_module_t *)&orte_sensor_ft_tester_module;
+        return ORTE_SUCCESS;
     }
+    *priority = 0;
+    *module = NULL;
+    return ORTE_ERROR;
 
-    *priority = 1;  /* at the bottom */
-    *module = (mca_base_module_t *)&orte_sensor_ft_tester_module;
-    
-    return ORTE_SUCCESS;
 }
 
 /**

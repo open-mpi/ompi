@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved. 
+ * Copyright (c) 2012      Los Alamos National Security, Inc. All rights reserved.
  *
  * $COPYRIGHT$
  * 
@@ -26,13 +27,7 @@
 #include "orte/mca/sensor/base/sensor_private.h"
 
 
-struct orte_sensor_base_select_module_t {
-    mca_base_component_t *component;
-    mca_base_module_t *module;
-    int priority;
-};
-typedef struct orte_sensor_base_select_module_t orte_sensor_base_select_module_t;
-
+static bool selected = false;
 
 /**
  * Function for weeding out sensor components that don't want to run.
@@ -47,14 +42,20 @@ int orte_sensor_base_select(void)
     mca_base_component_list_item_t *cli = NULL;
     mca_base_component_t *component = NULL;
     mca_base_module_t *module = NULL;
-    orte_sensor_base_module_t *i_module;
+    orte_sensor_active_module_t *i_module;
     opal_list_item_t *item;
     int priority = 0, i, j, low_i;
     int exit_status = OPAL_SUCCESS;
     opal_pointer_array_t tmp_array;
     bool none_found;
-    orte_sensor_base_select_module_t *tmp_module = NULL, *tmp_module_sw = NULL;
-    
+    orte_sensor_active_module_t *tmp_module = NULL, *tmp_module_sw = NULL;
+    orte_job_t *jdata;
+
+    if (selected) {
+        return ORTE_SUCCESS;
+    }
+    selected = true;
+
     OBJ_CONSTRUCT(&tmp_array, opal_pointer_array_t);
     
     opal_output_verbose(10, orte_sensor_base.output,
@@ -106,9 +107,9 @@ int orte_sensor_base_select(void)
         opal_output_verbose(5, orte_sensor_base.output,
                             "sensor:base:select Query of component [%s] set priority to %d", 
                             component->mca_component_name, priority);
-        tmp_module = (orte_sensor_base_select_module_t *)malloc(sizeof(orte_sensor_base_select_module_t));
+        tmp_module = OBJ_NEW(orte_sensor_active_module_t);
         tmp_module->component = component;
-        tmp_module->module    = module;
+        tmp_module->module    = (orte_sensor_base_module_t*)module;
         tmp_module->priority  = priority;
         
         opal_pointer_array_add(&tmp_array, (void*)tmp_module);
@@ -120,12 +121,28 @@ int orte_sensor_base_select(void)
         return ORTE_SUCCESS;
     }
     
+    /* ensure my_proc and my_node are available on the global arrays */
+    if (NULL == (jdata = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid))) {
+        orte_sensor_base.my_proc = OBJ_NEW(orte_proc_t);
+        orte_sensor_base.my_node = OBJ_NEW(orte_node_t);
+    } else {
+        if (NULL == (orte_sensor_base.my_proc = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, ORTE_PROC_MY_NAME->vpid))) {
+            return ORTE_ERR_NOT_FOUND;
+        }
+        if (NULL == (orte_sensor_base.my_node = orte_sensor_base.my_proc->node)) {
+            return ORTE_ERR_NOT_FOUND;
+        }
+        /* protect the objects */
+        OBJ_RETAIN(orte_sensor_base.my_proc);
+        OBJ_RETAIN(orte_sensor_base.my_node);
+    }
+
     /*
      * Sort the list by decending priority
      */
     priority = 0;
     for(j = 0; j < tmp_array.size; ++j) {
-        tmp_module_sw = (orte_sensor_base_select_module_t*)opal_pointer_array_get_item(&tmp_array, j);
+        tmp_module_sw = (orte_sensor_active_module_t*)opal_pointer_array_get_item(&tmp_array, j);
         if( NULL == tmp_module_sw ) {
             continue;
         }
@@ -134,7 +151,7 @@ int orte_sensor_base_select(void)
         priority = tmp_module_sw->priority;
         
         for(i = 0; i < tmp_array.size; ++i) {
-            tmp_module = (orte_sensor_base_select_module_t*)opal_pointer_array_get_item(&tmp_array, i);
+            tmp_module = (orte_sensor_active_module_t*)opal_pointer_array_get_item(&tmp_array, i);
             if( NULL == tmp_module ) {
                 continue;
             }
@@ -145,7 +162,7 @@ int orte_sensor_base_select(void)
         }
         
         if( low_i >= 0 ) {
-            tmp_module = (orte_sensor_base_select_module_t*)opal_pointer_array_get_item(&tmp_array, low_i);
+            tmp_module = (orte_sensor_active_module_t*)opal_pointer_array_get_item(&tmp_array, low_i);
             opal_pointer_array_set_item(&tmp_array, low_i, NULL);
             j--; /* Try this entry again, if it is not the lowest */
         } else {
@@ -155,8 +172,7 @@ int orte_sensor_base_select(void)
         opal_output_verbose(5, orte_sensor_base.output,
                             "sensor:base:select Add module with priority [%s] %d", 
                             tmp_module->component->mca_component_name, tmp_module->priority);
-        opal_pointer_array_add(&orte_sensor_base.modules, (void*)(tmp_module->module));
-        free(tmp_module);
+        opal_pointer_array_add(&orte_sensor_base.modules, tmp_module);
     }
     OBJ_DESTRUCT(&tmp_array);
     
@@ -165,12 +181,12 @@ int orte_sensor_base_select(void)
      * highest to lowest
      */
     for(i = 0; i < orte_sensor_base.modules.size; ++i) {
-        i_module = (orte_sensor_base_module_t*)opal_pointer_array_get_item(&orte_sensor_base.modules, i);
+        i_module = (orte_sensor_active_module_t*)opal_pointer_array_get_item(&orte_sensor_base.modules, i);
         if( NULL == i_module ) {
             continue;
         }
-        if( NULL != i_module->init ) {
-            if (ORTE_SUCCESS != i_module->init()) {
+        if( NULL != i_module->module->init ) {
+            if (ORTE_SUCCESS != i_module->module->init()) {
                 /* can't run after all */
                 opal_pointer_array_set_item(&orte_sensor_base.modules, i, NULL);
             }
