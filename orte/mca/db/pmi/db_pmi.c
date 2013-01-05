@@ -57,7 +57,8 @@ orte_db_base_module_t orte_db_pmi_module = {
     fetch,
     fetch_pointer,
     fetch_multiple,
-    remove_data
+    remove_data,
+    NULL
 };
 
 static int pmi_encode(char *outdata, const void *val, size_t vallen);

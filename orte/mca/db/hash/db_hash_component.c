@@ -60,8 +60,10 @@ static int db_hash_component_open(void)
 
 static int db_hash_component_query(mca_base_module_t **module, int *priority)
 {
-    /* this is the default module */    
-    *priority = 1;
+    /* we are the default - the ESS modules will set the db selection
+     * envar if they need someone else
+     */
+    *priority = 50;
     *module = (mca_base_module_t*)&orte_db_hash_module;
     return ORTE_SUCCESS;
 }

@@ -28,7 +28,17 @@
 
 #include "orte/mca/db/base/static-components.h"
 
-orte_db_base_module_t orte_db;
+orte_db_base_module_t orte_db = {
+    NULL,
+    NULL,
+    orte_db_base_store,
+    orte_db_base_store_pointer,
+    orte_db_base_fetch,
+    orte_db_base_fetch_pointer,
+    orte_db_base_fetch_multiple,
+    orte_db_base_remove_data,
+    orte_db_base_add_log
+};
 orte_db_base_t orte_db_base;
 
 int orte_db_base_open(void)
@@ -36,6 +46,7 @@ int orte_db_base_open(void)
     orte_db_base.output = opal_output_open(NULL);
     
     OBJ_CONSTRUCT(&orte_db_base.available_components, opal_list_t);
+    OBJ_CONSTRUCT(&orte_db_base.active_modules, opal_list_t);
 
     /* Open up all available components */
     if (ORTE_SUCCESS != 
@@ -47,3 +58,7 @@ int orte_db_base_open(void)
 
     return ORTE_SUCCESS;
 }
+
+OBJ_CLASS_INSTANCE(orte_db_active_module_t,
+                   opal_list_item_t,
+                   NULL, NULL);

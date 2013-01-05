@@ -1,0 +1,15 @@
+ -*- text -*-
+#
+# Copyright (c) 2012      Los Alamos National Security, Inc. All rights reserved.
+# $COPYRIGHT$
+#
+# Additional copyrights may follow
+#
+# $HEADER$
+#
+[file-not-found]
+WARNING: Could not find specified database file
+
+  File: %s
+
+Data logging into sqlite3 has been disabled.

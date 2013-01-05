@@ -62,14 +62,15 @@ static int db_pmi_component_open(void)
 
 static int db_pmi_component_query(mca_base_module_t **module, int *priority)
 {
-    /* only use PMI when direct launched */
-    if (NULL == orte_process_info.my_hnp_uri &&
-        ORTE_PROC_IS_MPI &&
-        mca_common_pmi_init()) {
-        *priority = 100;
+    /* only use PMI if available - the ESS pmi module
+     * will force our selection if we are direct-launched
+     */
+    if (mca_common_pmi_init()) {
+        *priority = 10;
         *module = (mca_base_module_t*)&orte_db_pmi_module;
         return ORTE_SUCCESS;
     }
+
     *priority = 0;
     *module = NULL;
     return ORTE_ERROR;
