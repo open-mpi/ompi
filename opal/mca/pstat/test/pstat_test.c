@@ -102,8 +102,8 @@ static int query(pid_t pid,
 
         /* convert to time in seconds */
         dtime = 12345.678;
-        stats->time.tv_sec = (int)dtime;
-        stats->time.tv_usec = (int)(1000000.0 * (dtime - stats->time.tv_sec));
+        stats->time.tv_sec = (long)dtime;
+        stats->time.tv_usec = (long)(1000000.0 * (dtime - stats->time.tv_sec));
         stats->priority = 2;
     }
 
