@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved. 
+ * Copyright (c) 2012      Los Alamos National Security, Inc. All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -34,23 +35,15 @@
 
 #include "orte/mca/sensor/base/static-components.h"
 
-#if !ORTE_DISABLE_FULL_SUPPORT
-
-/* base functions */
-static void start(orte_jobid_t jobid);
-static void stop(orte_jobid_t jobid);
-
 /*
  * Global variables
  */
 orte_sensor_base_t orte_sensor_base;
-orte_sensor_base_API_module_t orte_sensor = {
-    start,
-    stop
-};
 opal_list_t mca_sensor_base_components_available;
-
-#endif
+orte_sensor_base_API_module_t orte_sensor = {
+    orte_sensor_base_start,
+    orte_sensor_base_stop
+};
 
 /**
  * Function for finding and opening either all MCA components, or the one
@@ -58,7 +51,8 @@ opal_list_t mca_sensor_base_components_available;
  */
 int orte_sensor_base_open(void)
 {
-#if !ORTE_DISABLE_FULL_SUPPORT
+    int tmp;
+
     /* Debugging / verbose output.  Always have stream open, with
        verbose set by the mca open system... */
     orte_sensor_base.output = opal_output_open(NULL);
@@ -66,11 +60,25 @@ int orte_sensor_base_open(void)
     /* initialize pointers */
     orte_sensor_base.my_proc = NULL;
     orte_sensor_base.my_node = NULL;
+    orte_sensor_base.active = false;
 
     /* construct the array of modules */
     OBJ_CONSTRUCT(&orte_sensor_base.modules, opal_pointer_array_t);
     opal_pointer_array_init(&orte_sensor_base.modules, 3, INT_MAX, 1);
     
+    /* get the sample rate */
+    mca_base_param_reg_int_name("sensor", "sample_rate",
+                           "Sample rate in seconds",
+                           false, false, 0, &tmp);
+    orte_sensor_base.rate.tv_sec = tmp;
+    orte_sensor_base.rate.tv_usec = 0;
+
+    /* see if we want samples logged */
+    mca_base_param_reg_int_name("sensor", "log_samples",
+                           "Log samples to database",
+                           false, false, 0, &tmp);
+    orte_sensor_base.log_samples = OPAL_INT_TO_BOOL(tmp);
+
     /* Open up all available components */
 
     if (ORTE_SUCCESS !=
@@ -79,51 +87,12 @@ int orte_sensor_base_open(void)
                                  &mca_sensor_base_components_available, true)) {
         return ORTE_ERROR;
     }
-#endif
 
     /* All done */
 
     return ORTE_SUCCESS;
 }
 
-#if !ORTE_DISABLE_FULL_SUPPORT
-
-static void start(orte_jobid_t jobid)
-{
-    orte_sensor_base_module_t *i_module;
-    int i;
-    
-    /* call the start function of all modules in priority order from
-     * highest to lowest
-     */
-    for (i=0; i < orte_sensor_base.modules.size; i++) {
-        if (NULL == (i_module = (orte_sensor_base_module_t*)opal_pointer_array_get_item(&orte_sensor_base.modules, i))) {
-            continue;
-        }
-        if (NULL != i_module->start) {
-            i_module->start(jobid);
-        }
-    }
-    return;    
-}
-
-static void stop(orte_jobid_t jobid)
-{
-    orte_sensor_base_module_t *i_module;
-    int i;
-    
-    /* call the stop function of all modules in priority order from
-     * highest to lowest
-     */
-    for (i=0; i < orte_sensor_base.modules.size; i++) {
-        if (NULL == (i_module = (orte_sensor_base_module_t*)opal_pointer_array_get_item(&orte_sensor_base.modules, i))) {
-            continue;
-        }
-        if (NULL != i_module->stop) {
-            i_module->stop(jobid);
-        }
-    }
-    return;
-}
-
-#endif
+OBJ_CLASS_INSTANCE(orte_sensor_active_module_t,
+                   opal_object_t,
+                   NULL, NULL);

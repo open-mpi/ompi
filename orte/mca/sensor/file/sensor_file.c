@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2011      Los Alamos National Security, LLC.
+ * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
  *
  * $COPYRIGHT$
@@ -40,13 +40,10 @@
 
 #include "opal_stdint.h"
 #include "opal/util/output.h"
-#include "opal/mca/event/event.h"
 
 #include "orte/util/show_help.h"
 #include "orte/mca/errmgr/errmgr.h"
-#include "orte/mca/odls/odls_types.h"
 #include "orte/mca/state/state.h"
-#include "orte/runtime/orte_wait.h"
 #include "orte/util/name_fns.h"
 #include "orte/runtime/orte_globals.h"
 
@@ -57,15 +54,19 @@
 /* declare the API functions */
 static int init(void);
 static void finalize(void);
-static void start(orte_jobid_t jobid);
-static void stop(orte_jobid_t jobid);
+static void start(orte_jobid_t job);
+static void stop(orte_jobid_t job);
+static void file_sample(void);
+static void file_log(opal_buffer_t *sample);
 
 /* instantiate the module */
 orte_sensor_base_module_t orte_sensor_file_module = {
     init,
     finalize,
     start,
-    stop
+    stop,
+    file_sample,
+    file_log
 };
 
 /* define a tracking object */
@@ -102,12 +103,7 @@ OBJ_CLASS_INSTANCE(file_tracker_t,
                    opal_list_item_t,
                    ft_constructor, ft_destructor);
 
-/* declare the local functions */
-static void sample(int fd, short event, void *arg);
-
 /* local globals */
-static opal_event_t *sample_ev = NULL;
-static struct timeval sample_time;
 static opal_list_t jobs; 
 
 static int init(void)
@@ -120,10 +116,6 @@ static void finalize(void)
 {
     opal_list_item_t *item;
     
-    if (NULL != sample_ev) {
-        opal_event_del(sample_ev);
-        free(sample_ev);
-    }
     while (NULL != (item = opal_list_remove_first(&jobs))) {
         OBJ_RELEASE(item);
     }
@@ -234,18 +226,6 @@ static void start(orte_jobid_t jobid)
                          ft->file, ft->check_size ? "SIZE:" : " ",
                          ft->check_access ? "ACCESS TIME:" : " ",
                          ft->check_mod ? "MOD TIME" : " ", ft->limit));
-    
-    /* start sampling */
-    if (NULL == sample_ev && !opal_list_is_empty(&jobs)) {
-        /* startup a timer to wake us up periodically
-         * for a data sample
-         */
-        sample_ev =  (opal_event_t *) malloc(sizeof(opal_event_t));
-        opal_event_evtimer_set(orte_event_base, sample_ev, sample, sample_ev);
-        sample_time.tv_sec = mca_sensor_file_component.sample_rate;
-        sample_time.tv_usec = 0;
-        opal_event_evtimer_add(sample_ev, &sample_time);
-    }
     return;
 }
 
@@ -269,27 +249,16 @@ static void stop(orte_jobid_t jobid)
             OBJ_RELEASE(item);
         }
     }
-    /* if no jobs remain, stop the sampling */
-    if (opal_list_is_empty(&jobs) && NULL != sample_ev) {
-        opal_event_del(sample_ev);
-        free(sample_ev);
-        sample_ev = NULL;
-    }
     return;
 }
 
-static void sample(int fd, short event, void *arg)
+static void file_sample(void)
 {
     struct stat buf;
     opal_list_item_t *item;
     file_tracker_t *ft;
     orte_job_t *jdata;
 
-    /* if we are not sampling any more, then just return */
-    if (NULL == sample_ev) {
-        return;
-    }
-    
     OPAL_OUTPUT_VERBOSE((1, orte_sensor_base.output,
                          "%s sampling files",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
@@ -355,7 +324,8 @@ static void sample(int fd, short event, void *arg)
             ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_SENSOR_BOUND_EXCEEDED);
         }
     }
-        
-    /* restart the timer */
-        opal_event_evtimer_add(sample_ev, &sample_time);
+}
+
+static void file_log(opal_buffer_t *sample)
+{
 }

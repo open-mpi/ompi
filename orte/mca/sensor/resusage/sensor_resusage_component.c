@@ -77,6 +77,13 @@ static int orte_sensor_resusage_open(void)
                            false, false, 0,  &tmp);
     mca_sensor_resusage_component.proc_memory_limit = (float)tmp;
     
+    mca_base_param_reg_string(c, "node_stat_log",
+                           "Print the node stats to the indicated file (- => stdout, + => stderr)",
+                           false, false, NULL,  &mca_sensor_resusage_component.nstat_log);
+
+    mca_base_param_reg_string(c, "process_stat_log",
+                           "Print the process stats to the indicated file (- => stdout, + => stderr)",
+                           false, false, NULL,  &mca_sensor_resusage_component.pstat_log);
     return ORTE_SUCCESS;
 }
 
