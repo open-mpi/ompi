@@ -275,7 +275,7 @@ AC_DEFUN([OMPI_CHECK_OPENFABRICS_CM_ARGS],[
     # Per discussion with Ralph and Nathan, disable UDCM for now.
     # It's borked and needs some surgery to get back on its feet.
     enable_openib_udcm=no
-    
+
     #
     # Openfabrics RDMACM
     #
@@ -288,6 +288,15 @@ AC_DEFUN([OMPI_CHECK_OPENFABRICS_CM],[
     AC_REQUIRE([OMPI_CHECK_OPENFABRICS_CM_ARGS])
     $1_have_udcm=0
     $1_have_rdmacm=0
+
+    ompi_check_openib_$1_save_CPPFLAGS="$CPPFLAGS"
+    ompi_check_openib_$1_save_LDFLAGS="$LDFLAGS"
+    ompi_check_openib_$1_save_LIBS="$LIBS"
+
+    # add back in all the InfiniBand flags so that these tests might work...
+    CPPFLAGS="$CPPFLAGS $$1_CPPFLAGS"
+    LDFLAGS="$LDFLAGS $$1_LDFLAGS"
+    LIBS="$LIBS $$1_LIBS"
 
     AS_IF([test "$ompi_check_openib_happy" = "yes"],
           [# Do we have a recent enough RDMA CM?  Need to have the
@@ -320,6 +329,10 @@ AC_DEFUN([OMPI_CHECK_OPENFABRICS_CM],[
                $1_have_udcm=1
            fi
            ])
+
+    CPPFLAGS="$ompi_check_openib_$1_save_CPPFLAGS"
+    LDFLAGS="$ompi_check_openib_$1_save_LDFLAGS"
+    LIBS="$ompi_check_openib_$1_save_LIBS"
 
     AC_MSG_CHECKING([if UD CM is enabled])
     AC_DEFINE_UNQUOTED([OMPI_HAVE_UDCM], [$$1_have_udcm],
