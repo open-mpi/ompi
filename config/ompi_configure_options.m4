@@ -142,8 +142,8 @@ AC_SUBST(MPIF_H_PMPI_W_FUNCS)
 AC_MSG_CHECKING([if want C++ bindings])
 AC_ARG_ENABLE(mpi-cxx,
     AC_HELP_STRING([--enable-mpi-cxx],
-                   [enable C++ MPI bindings (default: enabled)]))
-if test "$enable_mpi_cxx" != "no"; then
+                   [enable C++ MPI bindings (default: disabled)]))
+if test "$enable_mpi_cxx" = "yes"; then
     AC_MSG_RESULT([yes])
     WANT_MPI_CXX_SUPPORT=1
 else
