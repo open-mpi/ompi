@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2011-2012 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2011-2013 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2011      UT-Battelle, LLC. All rights reserved.
  * $COPYRIGHT$
@@ -63,6 +63,8 @@ static inline int mca_btl_ugni_progress_local_smsg (mca_btl_ugni_module_t *ugni_
         assert (0);
         return OMPI_ERROR;
     }
+
+    frag->flags |= MCA_BTL_UGNI_FRAG_SMSG_COMPLETE;
 
     if (!(frag->flags & MCA_BTL_UGNI_FRAG_IGNORE)) {
         mca_btl_ugni_frag_complete (frag, OMPI_SUCCESS);
