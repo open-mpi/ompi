@@ -271,6 +271,14 @@ void vt_plugin_cntr_init() {
       group = all_group;
     }
 
+    if (info.init == NULL) {
+      vt_error_msg(
+          "Init not implemented in plugin %s\n",
+          current_plugin);
+      /* try loading next */
+      continue;
+    }
+
     if (info.add_counter == NULL) {
       vt_error_msg(
           "Add counter not implemented in plugin %s\n",

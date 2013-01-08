@@ -163,10 +163,6 @@ uint32_t VTThrd_create(const char* tname, uint32_t ptid, uint8_t is_virtual)
   /* set the virtual thread flag */
   thrd->is_virtual = is_virtual;
 
-#if (defined (VT_MPI) || defined (VT_HYB))
-  thrd->mpi_tracing_enabled = vt_env_mpitrace();
-#endif /* VT_MPI || VT_HYB */
-
 #if defined(VT_GETCPU)
   thrd->cpuid_val = (uint32_t)-1;
 #endif /* VT_GETCPU */
@@ -268,6 +264,8 @@ void VTThrd_open(uint32_t tid)
     return;
 
 #if (defined (VT_MPI) || defined (VT_HYB))
+  /* initialize actual mode of MPI tracing operation */
+  thrd->mpi_tracing_enabled = vt_env_mpitrace();
   /* initialize first matching ID for MPI collective ops. */
   thrd->mpicoll_next_matchingid = 1;
 #endif /* VT_MPI || VT_HYB */
@@ -284,6 +282,18 @@ void VTThrd_open(uint32_t tid)
     VT_ENABLE_IO_TRACING();
   }
 #endif /* VT_IOWRAP */
+
+#if defined(VT_EXECWRAP)
+  /* initialize actual mode of EXEC tracing operation */
+  thrd->exec_tracing_state = thrd->exec_tracing_enabled =
+    (uint8_t)vt_env_exectrace();
+#endif /* VT_EXECWRAP */
+
+#if defined(VT_MALLOCWRAP)
+  /* initialize actual mode of MALLOC tracing operation */
+  thrd->malloc_tracing_state = thrd->malloc_tracing_enabled =
+    (uint8_t)vt_env_memtrace();
+#endif /* VT_MALLOCWRAP */
 
 #if defined(VT_PLUGIN_CNTR)
   /* if we really use plugins */

@@ -9,7 +9,6 @@ AC_DEFUN([ACVT_TAUINST],
 	tauinst_cparse_cmd=
 	tauinst_cxxparse_cmd=
 	tauinst_fparse_cmd=
-	tauinst_comment_cmd=
 
 	AC_ARG_ENABLE(tauinst,
 		AC_HELP_STRING([--enable-tauinst],
@@ -52,15 +51,6 @@ AC_DEFUN([ACVT_TAUINST],
 		tauinst_fparse_cmd=$withval
 	])
 
-	AC_ARG_WITH(pdt-comment,
-		AC_HELP_STRING([--with-pdt-comment=PDTCOMMENT],
-		[give the command for PDT comment parser, default: pdbcomment]),
-	[
-		AS_IF([test x"$withval" = "xyes" -o x"$withval" = "xno"],
-		[AC_MSG_ERROR([value of '--with-pdt-comment' not properly set!])])
-		tauinst_comment_cmd=$withval
-	])
-
 	AS_IF([test "$check_tauinst" = "yes"],
 	[
 		AC_CHECK_PROG(tauinst_cmd, tau_instrumentor, tau_instrumentor)
@@ -87,9 +77,6 @@ AC_DEFUN([ACVT_TAUINST],
 			[
 				tauinst_fparse_cmd=
 			])
-			AC_CHECK_PROG(tauinst_comment_cmd, pdbcomment, pdbcomment)
-			AS_IF([test x"$tauinst_comment_cmd" = x],
-			[AC_MSG_WARN([no pdbcomment found; You might experience compile-time problems with comments if using TAU instrumentation])])
 
 			AS_IF([test x"$tauinst_cparse_cmd$tauinst_cxxparse_cmd$tauinst_fparse_cmd" = x],
 			[

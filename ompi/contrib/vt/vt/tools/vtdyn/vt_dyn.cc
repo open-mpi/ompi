@@ -13,7 +13,9 @@
 
 #include "vt_dyn.h"
 
+#include "BPatch_flowGraph.h"
 #include "BPatch_module.h"
+#include "BPatch_point.h"
 #include "BPatch_process.h"
 #include "BPatch_snippet.h"
 #include "BPatch_statement.h"
@@ -596,8 +598,8 @@ MutatorC::initialize()
       // search instrumentation functions to insert at entry/exit points
       //
 
-      if( !findFunction( "VT_Dyn_start", m_vtStartFunc ) ||
-          !findFunction( "VT_Dyn_end", m_vtEndFunc ) )
+      if( !findFunction( "vt_dyn_start", m_vtStartFunc ) ||
+          !findFunction( "vt_dyn_end", m_vtEndFunc ) )
       {
          std::cerr << ExeName << ": [" << ExePid << "]: "
                    << "Error: Could not find instrumentation functions. "
@@ -640,9 +642,9 @@ MutatorC::finalize( bool & error )
                // send mutatee process a signal to continue execution
                //
                if( Params.mutatee_pid != -1 )
-                  kill( Params.mutatee_pid, SIGUSR1 );
+                  kill( Params.mutatee_pid, VT_DYNINST_CONT_SIGNUM );
 
-               if( Params.mode == MODE_CREATE || !Params.detach )
+               if( !Params.detach )
                {
                   // continue execution of mutatee
                   app_process->continueExecution();
@@ -658,7 +660,7 @@ MutatorC::finalize( bool & error )
                   vPrint( 1, "End of process\n" );
                   vPrint( 1, "Done\n" );
                }
-               else // Params.mode == MODE_ATTACH && Params.detach
+               else
                {
                   // continue execution of mutatee and detach from its process
                   app_process->detach( true );

@@ -102,6 +102,7 @@ AC_PROG_CXXCPP
 AM_PROG_AS
 
 AC_C_BIGENDIAN
+AC_C_INLINE
 
 # Do we want to support Fortran
 check_fortran="yes"
@@ -373,14 +374,6 @@ AS_IF([test x"$enable_config_titles" = "xyes" -a x"$check_plugin_cntr" = "xno"],
 AS_IF([test x"$force_plugin_cntr" = "xyes" -a x"plugin_cntr_error" = "xyes"], [exit 1])
 AM_CONDITIONAL(AMHAVEPLUGINCNTR, test x"$have_plugin_cntr" = "xyes")
 
-# Check for memory tracing support
-ACVT_CONF_TITLE([GLIBC's memory allocation tracing])
-ACVT_MEMHOOKS
-AS_IF([test x"$enable_config_titles" = "xyes" -a x"$check_memhooks" = "xno"],
-[AC_MSG_NOTICE([disabled via command line switch])])
-AS_IF([test x"$force_memhooks" = "xyes" -a x"$memhooks_error" = "xyes"], [exit 1])
-AM_CONDITIONAL(AMHAVEMEMHOOKS, test x"$have_memhooks" = "xyes")
-
 # Check for CPU ID tracing support
 ACVT_CONF_TITLE([GLIBC's CPU ID tracing])
 ACVT_GETCPU
@@ -427,9 +420,9 @@ AS_IF([test x"$enable_config_titles" = "xyes" -a x"$check_libwrap" = "xno"],
 AM_CONDITIONAL(AMBUILDLIBWRAP, test x"$have_libwrap" = "xyes")
 AM_CONDITIONAL(AMBUILDLIBWRAPGEN, test x"$build_libwrapgen" = "xyes")
 AM_CONDITIONAL(AMHAVEDL, test x"$have_dl" = "xyes")
-AM_CONDITIONAL(AMBUILDLIBCWRAP, test x"$have_libcwrap" = "xyes")
-AM_CONDITIONAL(AMHAVEFORK, test x"$have_libcwrap" = "xyes" -a x"$have_fork" = "xyes")
+AM_CONDITIONAL(AMBUILDEXECWRAP, test x"$have_execwrap" = "xyes")
 AM_CONDITIONAL(AMBUILDIOWRAP, test x"$have_iowrap" = "xyes")
+AM_CONDITIONAL(AMBUILDMALLOCWRAP, test x"$have_mallocwrap" = "xyes")
 AM_CONDITIONAL(AMBUILDCUDARTWRAP, test x"$have_cudartwrap" = "xyes")
 
 cond_cuda=0

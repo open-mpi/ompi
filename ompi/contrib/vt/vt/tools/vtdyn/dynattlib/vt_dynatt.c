@@ -17,10 +17,12 @@
 # define INITROU _init
 #endif
 
-extern void VT_Dyn_attach(void);
+#include "vt_dyninst.h"
+
 void INITROU(void);
 
 void INITROU()
 {
-  VT_Dyn_attach();
+  vt_dyn_attach();
 }
+

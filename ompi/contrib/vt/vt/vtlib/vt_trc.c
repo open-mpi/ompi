@@ -30,9 +30,9 @@
 #include "vt_otf_gen.h"
 #include "vt_env.h"
 #include "vt_fork.h"
+#include "vt_execwrap.h"
 #include "vt_iowrap.h"
-#include "vt_libcwrap.h"
-#include "vt_memhook.h"
+#include "vt_mallocwrap.h"
 #include "vt_metric.h"
 #include "vt_pform.h"
 #include "vt_error.h"
@@ -539,7 +539,7 @@ static void write_def_header(void)
   }
 #endif /* VT_UNIMCI */
 
-#if defined(VT_MEMHOOK)
+#if defined(VT_MALLOCWRAP)
   /* VT_MEMTRACE */
   vt_def_comment(VT_MASTER_THREAD, VT_UNIFY_STRID_VT_COMMENT" VT_MEMTRACE: %s",
                  vt_env_memtrace() ? "yes" : "no");
@@ -551,7 +551,7 @@ static void write_def_header(void)
                    VT_UNIFY_STRID_VT_COMMENT" VT_MEMTRACE_MARKER: %s",
                    vt_env_memtrace_marker() ? "yes" : "no");
   }
-#endif /* VT_MEMHOOK */
+#endif /* VT_MALLOCWRAP */
 
 #if defined(VT_GETCPU)
   /* VT_CPUIDTRACE */
@@ -559,6 +559,12 @@ static void write_def_header(void)
                  VT_UNIFY_STRID_VT_COMMENT" VT_CPUIDTRACE: %s",
                  vt_env_cpuidtrace() ? "yes" : "no");
 #endif /* VT_GETCPU */
+
+#if defined(VT_EXECWRAP)
+  /* VT_EXECTRACE */
+  vt_def_comment(VT_MASTER_THREAD, VT_UNIFY_STRID_VT_COMMENT" VT_EXECTRACE: %s",
+                 vt_env_exectrace() ? "yes" : "no");
+#endif /* VT_EXECWRAP */
 
 #if defined(VT_IOWRAP)
   /* VT_IOTRACE */
@@ -737,13 +743,13 @@ static void write_uctl_file(void)
     2 +                         /* "*:" */
     VTThrdn * (8 + 1 + 1) + 1 + /* stream ids[!]:\n */
     4 * (16 + 1) + 1 + 1;       /* ltime0:offset0:ltime1:offset1:\n */
-#if (defined(VT_LIBCWRAP) && defined(VT_FORK))
-  if (vt_env_libctrace())
+#if (defined(VT_EXECWRAP) && defined(VT_FORK))
+  if (vt_env_exectrace())
   {
     /* additional stream ids of forked processes */
     uctl_data_size += vt_fork_get_num_childs_tot() * (8 + 1);
   }
-#endif /* VT_LIBCWRAP && VT_FORK */
+#endif /* VT_EXECWRAP && VT_FORK */
 
   if (vt_my_trace == 0)
   {
@@ -796,14 +802,14 @@ static void write_uctl_file(void)
             VT_PROCESS_ID(vt_my_trace, i), vt_my_trace_is_disabled ? "!" : "");
   }
 
-#if (defined(VT_LIBCWRAP) && defined(VT_FORK))
+#if (defined(VT_EXECWRAP) && defined(VT_FORK))
   /* add stream ids of forked child processes to uctl data, if necessary */
-  if (vt_env_libctrace())
+  if (vt_env_exectrace())
   {
     for (i = 1; i <= (int)vt_fork_get_num_childs_tot(); i++)
       sprintf(uctl_data + strlen(uctl_data), "%x:", vt_my_trace+1+i);
   }
-#endif /* VT_LIBCWRAP && VT_FORK */
+#endif /* VT_EXECWRAP && VT_FORK */
 
   strcat(uctl_data, "\n");
 
@@ -1304,35 +1310,36 @@ void vt_open()
   vt_misc_cgid = vt_def_counter_group(VT_MASTER_THREAD, "Miscellaneous");
 
 #if defined(VT_LIBWRAP)
+
   vt_libwrap_init();
+
 #endif /* VT_LIBWRAP */
 
-#if defined(VT_LIBCWRAP)
+#if defined(VT_EXECWRAP)
 
-  if (vt_env_libctrace())
+  if (vt_env_exectrace())
   {
-    vt_libcwrap_init();
-
+    vt_execwrap_init();
 #if defined(VT_FORK)
     vt_fork_init();
 #endif /* VT_FORK */
-
-    VT_ENABLE_LIBC_TRACING();
   }
 
-#endif /* VT_LIBCWRAP */
+#endif /* VT_EXECWRAP */
 
 #if defined(VT_IOWRAP)
-  if( vt_env_iotrace() )
-    vt_iowrap_reg();
-#endif
 
-#if defined(VT_MEMHOOK)
+  if (vt_env_iotrace())
+    vt_iowrap_reg();
+
+  #endif /* VT_IOWRAP */
+
+#if defined(VT_MALLOCWRAP)
 
   if (vt_env_memtrace())
-    vt_memhook_init();
+    vt_mallocwrap_init();
 
-#endif /* VT_MEMHOOK */
+#endif /* VT_MALLOCWRAP */
 
 #if defined(VT_GETCPU)
 
@@ -1475,14 +1482,6 @@ void vt_reset()
 
 #endif /* VT_PLUGIN_CNTR */
 
-#if defined(VT_MEMHOOK)
-
-  /* finalize memory hooks if enabled */
-  if (vt_env_memtrace())
-    vt_memhook_finalize();
-
-#endif /* VT_MEMHOOK */
-
 #if defined(VT_GETCPU)
 
   /* finalize cpu id tracing if enabled */
@@ -1502,21 +1501,26 @@ void vt_reset()
 
 #endif /* VT_IOWRAP */
 
-#if defined(VT_LIBCWRAP)
+#if defined(VT_EXECWRAP)
 
-  /* finalize LIBC wrapper if enabled */
-  if (vt_env_libctrace())
+  /* finalize EXEC wrapper if enabled */
+  if (vt_env_exectrace())
   {
-    VT_DISABLE_LIBC_TRACING();
-
 #if defined(VT_FORK)
     vt_fork_finalize();
 #endif /* VT_FORK */
-
-    vt_libcwrap_finalize();
+    vt_execwrap_finalize();
   }
 
-#endif /* VT_LIBCWRAP */
+#endif /* VT_EXECWRAP */
+
+#if defined(VT_MALLOCWRAP)
+
+  /* finalize memory allocation wrapper */
+  if (vt_env_memtrace())
+    vt_mallocwrap_finalize();
+
+#endif /* VT_MALLOCWRAP */
 
 #if defined(VT_LIBWRAP)
 
@@ -1604,10 +1608,13 @@ void vt_close()
   int tnum;
   int i;
 
+  /* return immediately, if VT isn't initialized */
+  if ( !vt_is_alive ) return;
+
   /* return immediately, if VT is aborted by a fatal error
      (i.e. vt_error_msg) */
   if ( vt_failure ) return;
-  
+
   /* catch vt_close called from child processes through atexit */
   if ( init_pid != getpid() ) return;
 
@@ -1653,6 +1660,8 @@ void vt_close()
 
 #endif /* VT_CUDARTWRAP */
   
+  vt_is_alive = 0;
+
   tnum = (int)VTThrdn;
 
   /* write node process group definition */
@@ -1661,7 +1670,6 @@ void vt_close()
     char tmp_char[128];
 
     /* get member array */
-
     grpv = (uint32_t*)malloc(tnum * sizeof(uint32_t));
     if ( grpv == NULL )
       vt_error();
@@ -1679,20 +1687,10 @@ void vt_close()
     free(grpv);
   }
 
-  vt_is_alive = 0;
-
-#if defined(VT_MEMHOOK)
-
-  /* finalize memory hooks if enabled */
-  if (vt_env_memtrace())
-    vt_memhook_finalize();
-
-#endif /* VT_MEMHOOK */
-
 #if defined(VT_GETCPU)
 
   /* finalize cpu id tracing if enabled */
-  if ( vt_env_cpuidtrace() )
+  if (vt_env_cpuidtrace())
     vt_getcpu_finalize();
 
 #endif /* VT_GETCPU */
@@ -1708,16 +1706,22 @@ void vt_close()
 
 #endif /* VT_IOWRAP */
 
-#if defined(VT_LIBCWRAP)
+#if defined(VT_EXECWRAP)
 
-  /* finalize LIBC wrapper if enabled */
-  if (vt_env_libctrace())
-  {
-    VT_DISABLE_LIBC_TRACING();
-    vt_libcwrap_finalize();
-  }
+  /* finalize EXEC wrapper if enabled */
+  if (vt_env_exectrace())
+    vt_execwrap_finalize();
 
-#endif /* VT_LIBCWRAP */
+#endif /* VT_EXECWRAP */
+
+
+#if defined(VT_MALLOCWRAP)
+
+  /* finalize memory allocation wrapper */
+  if (vt_env_memtrace())
+    vt_mallocwrap_finalize();
+
+#endif /* VT_MALLOCWRAP */
 
 #if defined(VT_LIBWRAP)
 
@@ -1746,20 +1750,20 @@ void vt_close()
   for (i = 0; i < tnum; i++)
     VTThrd_close(VTThrdv[i]);
 
-#if (defined(VT_LIBCWRAP) && defined(VT_FORK))
+#if (defined(VT_EXECWRAP) && defined(VT_FORK))
 
   /* wait until all child processes are terminated */
-  if (vt_env_libctrace())
+  if (vt_env_exectrace())
     vt_fork_waitchilds();
 
-#endif /* VT_LIBCWRAP && VT_FORK */
+#endif /* VT_EXECWRAP && VT_FORK */
 
   /* write unify control file */
   write_uctl_file();
 
-#if (defined(VT_LIBCWRAP) && defined(VT_FORK))
+#if (defined(VT_EXECWRAP) && defined(VT_FORK))
 
-  if (vt_env_libctrace())
+  if (vt_env_exectrace())
   {
     /* the master process removes the temp. trace-id file */
     if (vt_my_trace == 0)
@@ -1772,7 +1776,7 @@ void vt_close()
     vt_fork_finalize();
   }
 
-#endif /* VT_LIBCWRAP && VT_FORK */
+#endif /* VT_EXECWRAP && VT_FORK */
 
   /* free temporary file names */
   for (i = 0; i < tnum; i++)
@@ -2384,15 +2388,6 @@ uint32_t vt_def_region(uint32_t tid, const char* rname, uint32_t fid,
     {
       case VT_INTERNAL:
         rdesc = "VT_API";
-        break;
-      case VT_LIBC:
-        rdesc = "LIBC";
-        break;
-      case VT_LIBC_IO:
-        rdesc = "LIBC-I/O";
-        break;
-      case VT_MEMORY:
-        rdesc = "MEM";
         break;
       case VT_MPI_FUNCTION:
       case VT_MPI_COLL_ALL2ALL:

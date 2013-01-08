@@ -81,12 +81,12 @@
 #define VT_ENABLE_IO_TRACING() \
   VT_CHECK_THREAD; \
   VTTHRD_IO_TRACING_ENABLED(VTTHRD_MY_VTTHRD) = 1; \
-  vt_debug_msg( DBG_INIT, "ENABLED I/O tracing (susp=%hhu) at " __FILE__ ", %i", VTTHRD_IO_TRACING_SUSPEND_CNT(VTTHRD_MY_VTTHRD), __LINE__ )
+  vt_cntl_msg( DBG_INIT, "ENABLED I/O tracing (susp=%hhu) at " __FILE__ ", %i", VTTHRD_IO_TRACING_SUSPEND_CNT(VTTHRD_MY_VTTHRD), __LINE__ )
 
 #define VT_DISABLE_IO_TRACING() \
   VT_CHECK_THREAD; \
   VTTHRD_IO_TRACING_ENABLED(VTTHRD_MY_VTTHRD) = 0; \
-  vt_debug_msg( DBG_INIT, "DISABLED I/O tracing (susp=%hhu) at " __FILE__ ", %i", VTTHRD_IO_TRACING_SUSPEND_CNT(VTTHRD_MY_VTTHRD), __LINE__ )
+  vt_cntl_msg( DBG_INIT, "DISABLED I/O tracing (susp=%hhu) at " __FILE__ ", %i", VTTHRD_IO_TRACING_SUSPEND_CNT(VTTHRD_MY_VTTHRD), __LINE__ )
 
 #define VT_SUSPEND_IO_TRACING(tid) \
   { \
@@ -101,11 +101,11 @@
       VTTHRD_IO_TRACING_STATE(thrd) = VTTHRD_IO_TRACING_ENABLED(thrd); \
       VTTHRD_IO_TRACING_SUSPEND_CNT(thrd)++; \
       VTTHRD_IO_TRACING_ENABLED(thrd) = 0; \
-      vt_debug_msg( DBG_INIT, "SUSPENDED I/O tracing (%hhu) at " __FILE__ ", %i", VTTHRD_IO_TRACING_SUSPEND_CNT(thrd), __LINE__ ); \
+      vt_cntl_msg( DBG_INIT, "SUSPENDED I/O tracing (%hhu) at " __FILE__ ", %i", VTTHRD_IO_TRACING_SUSPEND_CNT(thrd), __LINE__ ); \
     } \
     else { \
       VTTHRD_IO_TRACING_SUSPEND_CNT(thrd)++; \
-      vt_debug_msg( DBG_INIT, "SUSPENDED I/O tracing (%hhu) at " __FILE__ ", %i", VTTHRD_IO_TRACING_SUSPEND_CNT(thrd), __LINE__ ); \
+      vt_cntl_msg( DBG_INIT, "SUSPENDED I/O tracing (%hhu) at " __FILE__ ", %i", VTTHRD_IO_TRACING_SUSPEND_CNT(thrd), __LINE__ ); \
     } \
   }
 
@@ -118,10 +118,10 @@
     } else { \
       thrd = VTThrdv[tid]; \
     } \
-    vt_debug_msg( DBG_INIT, "TRY RESUME I/O tracing (%hhu) at " __FILE__ ", %i", VTTHRD_IO_TRACING_SUSPEND_CNT(thrd), __LINE__ ); \
+    vt_cntl_msg( DBG_INIT, "TRY RESUME I/O tracing (%hhu) at " __FILE__ ", %i", VTTHRD_IO_TRACING_SUSPEND_CNT(thrd), __LINE__ ); \
     if( VTTHRD_IO_TRACING_SUSPEND_CNT(thrd) > 0 ) { \
       if( (--VTTHRD_IO_TRACING_SUSPEND_CNT(thrd)) == 0 ) { \
-        vt_debug_msg( DBG_INIT, "RESUMED I/O tracing (%hhu) at " __FILE__ ", %i", VTTHRD_IO_TRACING_SUSPEND_CNT(thrd), __LINE__ ); \
+        vt_cntl_msg( DBG_INIT, "RESUMED I/O tracing (%hhu) at " __FILE__ ", %i", VTTHRD_IO_TRACING_SUSPEND_CNT(thrd), __LINE__ ); \
         VTTHRD_IO_TRACING_ENABLED(thrd) = VTTHRD_IO_TRACING_STATE(thrd); \
       } \
     } \
@@ -306,10 +306,10 @@ EXTERN int(*libc_fprintf)(FILE *, const char *, ...);
 #define fdatasync_FUNCTYPE      VT_IOOP_SYNC
 
 /* #define IOWRAP_REGION_DESCR_LEN	256 */
-#define DBG_INIT	1
-#define DBG_IO		2
-#define DBG_VT_CALL	3
-#define DBG_TRACECHK    4
+#define DBG_INIT	10
+#define DBG_IO		11
+#define DBG_VT_CALL	12
+#define DBG_TRACECHK    13
 #define DBG_FULL        255
 
 /* modes for open/creat */
@@ -334,16 +334,16 @@ EXTERN int(*libc_fprintf)(FILE *, const char *, ...);
 #define VT_IOWRAP_INIT_FUNC(FUNC_NAME) \
 { \
 	if (!iofunctions[FUNC_IDX(FUNC_NAME)].lib_func.p) { \
-		vt_debug_msg(DBG_INIT, "init_func: dlsym(" stringify(FUNC_NAME) ") --> "); \
+		vt_cntl_msg(DBG_INIT, "init_func: dlsym(" stringify(FUNC_NAME) ") --> "); \
 		(void)dlerror(); \
 		iofunctions[FUNC_IDX(FUNC_NAME)].lib_func.p = \
 			dlsym( iolib_handle, stringify(FUNC_NAME) ); \
-		vt_debug_msg(DBG_INIT, "%p", iofunctions[FUNC_IDX(FUNC_NAME)].lib_func.p); \
+		vt_cntl_msg(DBG_INIT, "%p", iofunctions[FUNC_IDX(FUNC_NAME)].lib_func.p); \
 		if (!iofunctions[FUNC_IDX(FUNC_NAME)].lib_func.p) \
 			symload_fail( stringify(FUNC_NAME), dlerror() ); \
 	} \
 	else { \
-		vt_debug_msg(DBG_INIT, "init_func: " stringify(FUNC_NAME) " was already looked up: %p", \
+		vt_cntl_msg(DBG_INIT, "init_func: " stringify(FUNC_NAME) " was already looked up: %p", \
 			iofunctions[FUNC_IDX(FUNC_NAME)].lib_func.p); \
 	} \
 }
@@ -351,16 +351,17 @@ EXTERN int(*libc_fprintf)(FILE *, const char *, ...);
 /** Setup VT region and tracing specific settings
  * ... to be used in global initialization after RFG initialization
  */
+#define VT_IOWRAP_FUNCGRP "LIBC-I/O" /* group for I/O functions */
 #define VT_IOWRAP_REG_FUNC(FUNC_NAME) \
 { \
-        vt_debug_msg(DBG_INIT, "reg_func: vt_def_region(" stringify(FUNC_NAME) ")"); \
+        vt_cntl_msg(DBG_INIT, "reg_func: vt_def_region(" stringify(FUNC_NAME) ")"); \
         iofunctions[FUNC_IDX(FUNC_NAME)].vt_func_id = \
                 vt_def_region( VT_CURRENT_THREAD, stringify(FUNC_NAME), \
                                vt_fid, \
                                VT_NO_LNO, \
                                VT_NO_LNO, \
-                               NULL, \
-                               VT_LIBC_IO ); \
+                               VT_IOWRAP_FUNCGRP, \
+                               VT_FUNCTION ); \
         iofunctions[FUNC_IDX(FUNC_NAME)].traceme = 1; \
 }
 
@@ -474,10 +475,8 @@ EXTERN int(*libc_fprintf)(FILE *, const char *, ...);
         uint64_t matchingid = 0; \
         ssize_t num_bytes=0; \
         uint8_t was_recorded; \
-	uint8_t enable_memhooks=0; \
 { \
-	if( VT_MEMHOOKS_ENABLED() ) \
-		{ VT_MEMHOOKS_OFF(); enable_memhooks = 1; } \
+        VT_SUSPEND_MALLOC_TRACING(VT_CURRENT_THREAD); \
 	if (!iofunctions[FUNC_IDX(VT_IOWRAP_THISFUNCNAME)].lib_func.p) { \
 		get_iolib_handle(); \
 		(void)dlerror(); \
@@ -485,7 +484,7 @@ EXTERN int(*libc_fprintf)(FILE *, const char *, ...);
 			dlsym( iolib_handle, stringify(VT_IOWRAP_THISFUNCNAME) ); \
 		if (!iofunctions[FUNC_IDX(VT_IOWRAP_THISFUNCNAME)].lib_func.p) \
 			symload_fail( stringify(VT_IOWRAP_THISFUNCNAME), dlerror() ); \
-	        vt_debug_msg( DBG_INIT, "Macro VT_IOWRAP_INIT_IOFUNC(): " stringify(VT_IOWRAP_THISFUNCNAME) " --> %p", iofunctions[FUNC_IDX(VT_IOWRAP_THISFUNCNAME)].lib_func.p); \
+	        vt_cntl_msg( DBG_INIT, "Macro VT_IOWRAP_INIT_IOFUNC(): " stringify(VT_IOWRAP_THISFUNCNAME) " --> %p", iofunctions[FUNC_IDX(VT_IOWRAP_THISFUNCNAME)].lib_func.p); \
 	} \
 }
 
@@ -494,10 +493,8 @@ EXTERN int(*libc_fprintf)(FILE *, const char *, ...);
 #define VT_IOWRAP_INIT_IOFUNC_OPEN() \
         uint64_t matchingid = 0; \
         uint8_t was_recorded; \
-	uint8_t enable_memhooks=0; \
 { \
-	if( VT_MEMHOOKS_ENABLED() ) \
-		{ VT_MEMHOOKS_OFF(); enable_memhooks = 1; } \
+        VT_SUSPEND_MALLOC_TRACING(VT_CURRENT_THREAD); \
 	if (!iofunctions[FUNC_IDX(VT_IOWRAP_THISFUNCNAME)].lib_func.p) { \
                 get_iolib_handle(); \
                 (void)dlerror(); \
@@ -505,7 +502,7 @@ EXTERN int(*libc_fprintf)(FILE *, const char *, ...);
 			dlsym( iolib_handle, stringify(VT_IOWRAP_THISFUNCNAME) ); \
 		if (!iofunctions[FUNC_IDX(VT_IOWRAP_THISFUNCNAME)].lib_func.p) \
 			symload_fail( stringify(VT_IOWRAP_THISFUNCNAME), dlerror() ); \
-                vt_debug_msg( DBG_INIT, "Macro VT_IOWRAP_INIT_IOFUNC_OPEN(): " stringify(VT_IOWRAP_THISFUNCNAME) " --> %p", iofunctions[FUNC_IDX(VT_IOWRAP_THISFUNCNAME)].lib_func.p); \
+                vt_cntl_msg( DBG_INIT, "Macro VT_IOWRAP_INIT_IOFUNC_OPEN(): " stringify(VT_IOWRAP_THISFUNCNAME) " --> %p", iofunctions[FUNC_IDX(VT_IOWRAP_THISFUNCNAME)].lib_func.p); \
 	} \
 }
 
@@ -514,42 +511,47 @@ EXTERN int(*libc_fprintf)(FILE *, const char *, ...);
 #if 0
 #define VT_IOWRAP_CHECK_TRACING(RET, ...) \
 { \
-	vt_debug_msg( DBG_TRACECHK, "Macro VT_IOWRAP_CHECK_TRACING(), Function " stringify(VT_IOWRAP_THISFUNCNAME) ); \
+	vt_cntl_msg( DBG_TRACECHK, "Macro VT_IOWRAP_CHECK_TRACING(), Function " stringify(VT_IOWRAP_THISFUNCNAME) ); \
 	if( !DO_TRACE() ) { \
 		VT_IOWRAP_CALL_LIBFUNC(VT_IOWRAP_THISFUNCNAME, RET, __VA_ARGS__); \
+		VT_RESUME_MALLOC_TRACING(VT_CURRENT_THREAD); \
 		return RET; \
 	} \
 }
 #endif
 #define VT_IOWRAP_CHECK_TRACING1(RET, ARG1) \
 { \
-	vt_debug_msg( DBG_TRACECHK, "Macro VT_IOWRAP_CHECK_TRACING(), Function " stringify(VT_IOWRAP_THISFUNCNAME) ); \
+	vt_cntl_msg( DBG_TRACECHK, "Macro VT_IOWRAP_CHECK_TRACING(), Function " stringify(VT_IOWRAP_THISFUNCNAME) ); \
 	if( !DO_TRACE() ) { \
 		VT_IOWRAP_CALL_LIBFUNC1(VT_IOWRAP_THISFUNCNAME, RET, ARG1); \
+		VT_RESUME_MALLOC_TRACING(VT_CURRENT_THREAD); \
 		return RET; \
 	} \
 }
 #define VT_IOWRAP_CHECK_TRACING2(RET, ARG1, ARG2) \
 { \
-	vt_debug_msg( DBG_TRACECHK, "Macro VT_IOWRAP_CHECK_TRACING(), Function " stringify(VT_IOWRAP_THISFUNCNAME) ); \
+	vt_cntl_msg( DBG_TRACECHK, "Macro VT_IOWRAP_CHECK_TRACING(), Function " stringify(VT_IOWRAP_THISFUNCNAME) ); \
 	if( !DO_TRACE() ) { \
 		VT_IOWRAP_CALL_LIBFUNC2(VT_IOWRAP_THISFUNCNAME, RET, ARG1, ARG2); \
+		VT_RESUME_MALLOC_TRACING(VT_CURRENT_THREAD); \
 		return RET; \
 	} \
 }
 #define VT_IOWRAP_CHECK_TRACING3(RET, ARG1, ARG2, ARG3) \
 { \
-	vt_debug_msg( DBG_TRACECHK, "Macro VT_IOWRAP_CHECK_TRACING(), Function " stringify(VT_IOWRAP_THISFUNCNAME) ); \
+	vt_cntl_msg( DBG_TRACECHK, "Macro VT_IOWRAP_CHECK_TRACING(), Function " stringify(VT_IOWRAP_THISFUNCNAME) ); \
 	if( !DO_TRACE() ) { \
 		VT_IOWRAP_CALL_LIBFUNC3(VT_IOWRAP_THISFUNCNAME, RET, ARG1, ARG2, ARG3); \
+		VT_RESUME_MALLOC_TRACING(VT_CURRENT_THREAD); \
 		return RET; \
 	} \
 }
 #define VT_IOWRAP_CHECK_TRACING4(RET, ARG1, ARG2, ARG3, ARG4) \
 { \
-	vt_debug_msg( DBG_TRACECHK, "Macro VT_IOWRAP_CHECK_TRACING(), Function " stringify(VT_IOWRAP_THISFUNCNAME) ); \
+	vt_cntl_msg( DBG_TRACECHK, "Macro VT_IOWRAP_CHECK_TRACING(), Function " stringify(VT_IOWRAP_THISFUNCNAME) ); \
 	if( !DO_TRACE() ) { \
 		VT_IOWRAP_CALL_LIBFUNC4(VT_IOWRAP_THISFUNCNAME, RET, ARG1, ARG2, ARG3, ARG4); \
+		VT_RESUME_MALLOC_TRACING(VT_CURRENT_THREAD); \
 		return RET; \
 	} \
 }
@@ -557,50 +559,56 @@ EXTERN int(*libc_fprintf)(FILE *, const char *, ...);
 #if 0
 #define VT_IOWRAP_CHECK_TRACING_VOID(...) \
 { \
-	vt_debug_msg( DBG_TRACECHK, "Macro VT_IOWRAP_CHECK_TRACING_VOID(), Function " stringify(VT_IOWRAP_THISFUNCNAME) ); \
+	vt_cntl_msg( DBG_TRACECHK, "Macro VT_IOWRAP_CHECK_TRACING_VOID(), Function " stringify(VT_IOWRAP_THISFUNCNAME) ); \
 	if( !DO_TRACE() ) { \
 		VT_IOWRAP_CALL_LIBFUNC_VOID(VT_IOWRAP_THISFUNCNAME, __VA_ARGS__); \
+		VT_RESUME_MALLOC_TRACING(VT_CURRENT_THREAD); \
 		return; \
 	} \
 }
 #endif
 #define VT_IOWRAP_CHECK_TRACING_VOID0() \
 { \
-	vt_debug_msg( DBG_TRACECHK, "Macro VT_IOWRAP_CHECK_TRACING_VOID(), Function " stringify(VT_IOWRAP_THISFUNCNAME) ); \
+	vt_cntl_msg( DBG_TRACECHK, "Macro VT_IOWRAP_CHECK_TRACING_VOID(), Function " stringify(VT_IOWRAP_THISFUNCNAME) ); \
 	if( !DO_TRACE() ) { \
 		VT_IOWRAP_CALL_LIBFUNC_VOID0(VT_IOWRAP_THISFUNCNAME); \
+		VT_RESUME_MALLOC_TRACING(VT_CURRENT_THREAD); \
 		return; \
 	} \
 }
 #define VT_IOWRAP_CHECK_TRACING_VOID1(ARG1) \
 { \
-	vt_debug_msg( DBG_TRACECHK, "Macro VT_IOWRAP_CHECK_TRACING_VOID(), Function " stringify(VT_IOWRAP_THISFUNCNAME) ); \
+	vt_cntl_msg( DBG_TRACECHK, "Macro VT_IOWRAP_CHECK_TRACING_VOID(), Function " stringify(VT_IOWRAP_THISFUNCNAME) ); \
 	if( !DO_TRACE() ) { \
 		VT_IOWRAP_CALL_LIBFUNC_VOID1(VT_IOWRAP_THISFUNCNAME, ARG1); \
+		VT_RESUME_MALLOC_TRACING(VT_CURRENT_THREAD); \
 		return; \
 	} \
 }
 #define VT_IOWRAP_CHECK_TRACING_VOID2(ARG1, ARG2) \
 { \
-	vt_debug_msg( DBG_TRACECHK, "Macro VT_IOWRAP_CHECK_TRACING_VOID(), Function " stringify(VT_IOWRAP_THISFUNCNAME) ); \
+	vt_cntl_msg( DBG_TRACECHK, "Macro VT_IOWRAP_CHECK_TRACING_VOID(), Function " stringify(VT_IOWRAP_THISFUNCNAME) ); \
 	if( !DO_TRACE() ) { \
 		VT_IOWRAP_CALL_LIBFUNC_VOID2(VT_IOWRAP_THISFUNCNAME, ARG1, ARG2); \
+		VT_RESUME_MALLOC_TRACING(VT_CURRENT_THREAD); \
 		return; \
 	} \
 }
 #define VT_IOWRAP_CHECK_TRACING_VOID3(ARG1, ARG2, ARG3) \
 { \
-	vt_debug_msg( DBG_TRACECHK, "Macro VT_IOWRAP_CHECK_TRACING_VOID(), Function " stringify(VT_IOWRAP_THISFUNCNAME) ); \
+	vt_cntl_msg( DBG_TRACECHK, "Macro VT_IOWRAP_CHECK_TRACING_VOID(), Function " stringify(VT_IOWRAP_THISFUNCNAME) ); \
 	if( !DO_TRACE() ) { \
 		VT_IOWRAP_CALL_LIBFUNC_VOID3(VT_IOWRAP_THISFUNCNAME, ARG1, ARG2, ARG3); \
+		VT_RESUME_MALLOC_TRACING(VT_CURRENT_THREAD); \
 		return; \
 	} \
 }
 #define VT_IOWRAP_CHECK_TRACING_VOID4(ARG1, ARG2, ARG3, ARG4) \
 { \
-	vt_debug_msg( DBG_TRACECHK, "Macro VT_IOWRAP_CHECK_TRACING_VOID(), Function " stringify(VT_IOWRAP_THISFUNCNAME) ); \
+	vt_cntl_msg( DBG_TRACECHK, "Macro VT_IOWRAP_CHECK_TRACING_VOID(), Function " stringify(VT_IOWRAP_THISFUNCNAME) ); \
 	if( !DO_TRACE() ) { \
 		VT_IOWRAP_CALL_LIBFUNC_VOID4(VT_IOWRAP_THISFUNCNAME, ARG1, ARG2, ARG3, ARG4); \
+		VT_RESUME_MALLOC_TRACING(VT_CURRENT_THREAD); \
 		return; \
 	} \
 }
@@ -610,7 +618,7 @@ EXTERN int(*libc_fprintf)(FILE *, const char *, ...);
 #define VT_IOWRAP_ENTER_IOFUNC() \
 { \
 	enter_time = vt_pform_wtime(); \
-	vt_debug_msg(DBG_VT_CALL, "vt_enter(" stringify(VT_IOWRAP_THISFUNCNAME) "), stamp %llu", (unsigned long long)enter_time); \
+	vt_cntl_msg(DBG_VT_CALL, "vt_enter(" stringify(VT_IOWRAP_THISFUNCNAME) "), stamp %llu", (unsigned long long)enter_time); \
 	was_recorded = vt_enter( VT_CURRENT_THREAD, &enter_time, iofunctions[FUNC_IDX(VT_IOWRAP_THISFUNCNAME)].vt_func_id ); \
 	if( was_recorded ) { \
                 matchingid = VTTHRD_IO_NEXT_MATCHINGID(VTTHRD_MY_VTTHRD); \
@@ -626,7 +634,7 @@ EXTERN int(*libc_fprintf)(FILE *, const char *, ...);
 { \
 	int preserve_errno = errno; \
 	uint64_t time = vt_pform_wtime(); \
-	vt_debug_msg( DBG_INIT, "Macro VT_IOWRAP_LEAVE_IOFUNC(), Function " stringify(VT_IOWRAP_THISFUNCNAME) ); \
+	vt_cntl_msg( DBG_INIT, "Macro VT_IOWRAP_LEAVE_IOFUNC(), Function " stringify(VT_IOWRAP_THISFUNCNAME) ); \
 	if( was_recorded ) { \
                 uint32_t ioop = VT_IOWRAP_FUNCTYPE(VT_IOWRAP_THISFUNCNAME); \
                 uint32_t fid; \
@@ -644,11 +652,11 @@ EXTERN int(*libc_fprintf)(FILE *, const char *, ...);
                 if( ERROR_CONDITION ) { \
                         ioop |= VT_IOFLAG_IOFAILED; \
                 } \
-                vt_debug_msg(DBG_VT_CALL, "vt_ioend(" stringify(VT_IOWRAP_THISFUNCNAME) "), stamp %llu", (unsigned long long)time); \
+                vt_cntl_msg(DBG_VT_CALL, "vt_ioend(" stringify(VT_IOWRAP_THISFUNCNAME) "), stamp %llu", (unsigned long long)time); \
                 vt_ioend( VT_CURRENT_THREAD, &time, fid, matchingid, handle, ioop, (uint64_t)num_bytes ); \
         } \
         vt_exit( VT_CURRENT_THREAD, &time ); \
-	if( enable_memhooks ) VT_MEMHOOKS_ON(); \
+        VT_RESUME_MALLOC_TRACING(VT_CURRENT_THREAD); \
 	errno = preserve_errno; \
 }
 
@@ -657,17 +665,17 @@ EXTERN int(*libc_fprintf)(FILE *, const char *, ...);
 { \
 	int preserve_errno = errno; \
         uint64_t time = vt_pform_wtime(); \
-        vt_debug_msg( DBG_INIT, "Macro VT_IOWRAP_LEAVE_IOFUNC(), Function " stringify(VT_IOWRAP_THISFUNCNAME) ); \
+        vt_cntl_msg( DBG_INIT, "Macro VT_IOWRAP_LEAVE_IOFUNC(), Function " stringify(VT_IOWRAP_THISFUNCNAME) ); \
         if( was_recorded ) { \
                 uint32_t ioop = VT_IOWRAP_FUNCTYPE(VT_IOWRAP_THISFUNCNAME); \
                 if( ERROR_CONDITION ) { \
                         ioop |= VT_IOFLAG_IOFAILED; \
                 } \
-                vt_debug_msg(DBG_VT_CALL, "vt_ioend(" stringify(VT_IOWRAP_THISFUNCNAME) "), stamp %llu", (unsigned long long)time); \
+                vt_cntl_msg(DBG_VT_CALL, "vt_ioend(" stringify(VT_IOWRAP_THISFUNCNAME) "), stamp %llu", (unsigned long long)time); \
                 vt_ioend( VT_CURRENT_THREAD, &time, FID, matchingid, HANDLE, ioop, (uint64_t)num_bytes ); \
         } \
         vt_exit( VT_CURRENT_THREAD, &time ); \
-        if( enable_memhooks ) VT_MEMHOOKS_ON(); \
+        VT_RESUME_MALLOC_TRACING(VT_CURRENT_THREAD); \
 	errno = preserve_errno; \
 }
 
@@ -683,7 +691,7 @@ EXTERN int(*libc_fprintf)(FILE *, const char *, ...);
         uint32_t fid; \
         vampir_file_t* file; \
         uint64_t handle; \
-        vt_debug_msg( DBG_INIT, "Macro VT_IOWRAP_LEAVE_IOFUNC_OPEN(), Function " stringify(VT_IOWRAP_THISFUNCNAME) ); \
+        vt_cntl_msg( DBG_INIT, "Macro VT_IOWRAP_LEAVE_IOFUNC_OPEN(), Function " stringify(VT_IOWRAP_THISFUNCNAME) ); \
         if( ERROR_CONDITION ) { \
                 if( was_recorded ) { \
                         if( path && strlen(path) > 0 ) { \
@@ -705,12 +713,12 @@ EXTERN int(*libc_fprintf)(FILE *, const char *, ...);
                 } \
         } \
         if( was_recorded ) { \
-        	vt_debug_msg(DBG_VT_CALL, "vt_ioend(" stringify(VT_IOWRAP_THISFUNCNAME) "), stamp %llu", (unsigned long long)time); \
+        	vt_cntl_msg(DBG_VT_CALL, "vt_ioend(" stringify(VT_IOWRAP_THISFUNCNAME) "), stamp %llu", (unsigned long long)time); \
 			VT_IOWRAP_1_EXTENDED_ARGUMENT( key_type_mode, open_flags) \
         	vt_ioend( VT_CURRENT_THREAD, &time, fid, matchingid, handle, ioop, 0 ); \
         } \
         vt_exit( VT_CURRENT_THREAD, &time ); \
-        if( enable_memhooks ) VT_MEMHOOKS_ON(); \
+        VT_RESUME_MALLOC_TRACING(VT_CURRENT_THREAD); \
 	errno = preserve_errno; \
 }
 
@@ -725,7 +733,7 @@ EXTERN int(*libc_fprintf)(FILE *, const char *, ...);
         vampir_file_t* file; \
         uint32_t fid; \
         uint64_t handle; \
-        vt_debug_msg( DBG_INIT, "Macro VT_IOWRAP_LEAVE_IOFUNC_DUP(), Function " stringify(VT_IOWRAP_THISFUNCNAME) ); \
+        vt_cntl_msg( DBG_INIT, "Macro VT_IOWRAP_LEAVE_IOFUNC_DUP(), Function " stringify(VT_IOWRAP_THISFUNCNAME) ); \
         file = get_vampir_file( OLDFD ); \
         fid = file->vampir_file_id; \
         handle = file->handle; \
@@ -736,11 +744,11 @@ EXTERN int(*libc_fprintf)(FILE *, const char *, ...);
         	vt_iofile_dupfd( OLDFD, NEWFD ); \
         } \
         if( was_recorded ) { \
-                vt_debug_msg(DBG_VT_CALL, "vt_ioend(" stringify(VT_IOWRAP_THISFUNCNAME) "), stamp %llu", (unsigned long long)time); \
+                vt_cntl_msg(DBG_VT_CALL, "vt_ioend(" stringify(VT_IOWRAP_THISFUNCNAME) "), stamp %llu", (unsigned long long)time); \
                 vt_ioend( VT_CURRENT_THREAD, &time, fid, matchingid, handle, ioop, (uint64_t)num_bytes ); \
         } \
         vt_exit( VT_CURRENT_THREAD, &time ); \
-        if( enable_memhooks ) VT_MEMHOOKS_ON(); \
+        VT_RESUME_MALLOC_TRACING(VT_CURRENT_THREAD); \
 	errno = preserve_errno; \
 }
 
@@ -750,7 +758,7 @@ EXTERN int(*libc_fprintf)(FILE *, const char *, ...);
 { \
 	int preserve_errno = errno; \
         uint64_t time = vt_pform_wtime(); \
-        vt_debug_msg( DBG_INIT, "Macro VT_IOWRAP_LEAVE_IOFUNC_PATH(), Function " stringify(VT_IOWRAP_THISFUNCNAME) ); \
+        vt_cntl_msg( DBG_INIT, "Macro VT_IOWRAP_LEAVE_IOFUNC_PATH(), Function " stringify(VT_IOWRAP_THISFUNCNAME) ); \
         if( was_recorded ) { \
                 uint32_t ioop = VT_IOWRAP_FUNCTYPE(VT_IOWRAP_THISFUNCNAME); \
                 uint32_t fid; \
@@ -766,11 +774,11 @@ EXTERN int(*libc_fprintf)(FILE *, const char *, ...);
                 else { \
                         fid = vt_iofile_id(PATH); \
                 } \
-                vt_debug_msg(DBG_VT_CALL, "vt_ioend(" stringify(VT_IOWRAP_THISFUNCNAME) "), stamp %llu", (unsigned long long)time); \
+                vt_cntl_msg(DBG_VT_CALL, "vt_ioend(" stringify(VT_IOWRAP_THISFUNCNAME) "), stamp %llu", (unsigned long long)time); \
                 vt_ioend( VT_CURRENT_THREAD, &time, fid, matchingid, 0, ioop, 0 ); \
         } \
         vt_exit( VT_CURRENT_THREAD, &time ); \
-        if( enable_memhooks ) VT_MEMHOOKS_ON(); \
+        VT_RESUME_MALLOC_TRACING(VT_CURRENT_THREAD); \
 	errno = preserve_errno; \
 }
 

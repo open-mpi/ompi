@@ -14,7 +14,7 @@
 #include "vt_error.h"
 #include "vt_fbindings.h"
 #include "vt_inttypes.h"
-#include "vt_memhook.h"
+#include "vt_mallocwrap.h"
 #include "vt_pform.h"
 #include "vt_thrd.h"
 #include "vt_trc.h"
@@ -28,10 +28,8 @@ static int vt_init = 1;        /* is initialization needed? */
 
 #define VT_INIT \
   if ( vt_init ) { \
-    VT_MEMHOOKS_OFF(); \
     vt_init = 0; \
     vt_open(); \
-    VT_MEMHOOKS_ON(); \
   }
 
 unsigned int VT_User_marker_def__(const char* mname, int mtype)
@@ -41,7 +39,7 @@ unsigned int VT_User_marker_def__(const char* mname, int mtype)
 
   VT_INIT;
 
-  VT_MEMHOOKS_OFF();
+  VT_SUSPEND_MALLOC_TRACING(VT_CURRENT_THREAD);
 
   switch(mtype)
   {
@@ -75,7 +73,7 @@ unsigned int VT_User_marker_def__(const char* mname, int mtype)
   VTTHRD_UNLOCK_IDS();
 #endif
 
-  VT_MEMHOOKS_ON();
+  VT_RESUME_MALLOC_TRACING(VT_CURRENT_THREAD);
 
   return mid;
 }
@@ -86,12 +84,12 @@ void VT_User_marker__(unsigned int mid, const char* mtext)
 
   VT_INIT;
 
-  VT_MEMHOOKS_OFF();
+  VT_SUSPEND_MALLOC_TRACING(VT_CURRENT_THREAD);
 
   time = vt_pform_wtime();
   vt_marker(VT_CURRENT_THREAD, &time, mid, mtext);
 
-  VT_MEMHOOKS_ON();
+  VT_RESUME_MALLOC_TRACING(VT_CURRENT_THREAD);
 }
 
 /*

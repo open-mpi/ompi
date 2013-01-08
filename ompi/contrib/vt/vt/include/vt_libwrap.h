@@ -20,12 +20,24 @@
 #define VT_LIBWRAP_MAX_SHLIBS 10
 
 /* default library wrapper attributes */
-#define VT_LIBWRAP_ATTR_DEFAULT \
-  { 0, { NULL }, NULL, 0, NULL }
+#define VT_LIBWRAP_ATTR_DEFAULT {                                             \
+  0,        /* shlibs_num */                                                  \
+  { NULL }, /* shlibs */                                                      \
+  NULL,     /* func_group */                                                  \
+  0,        /* libc */                                                        \
+  0,        /* wait_for_init */                                               \
+  NULL      /* init_func */                                                   \
+}
 
 /* library wrapper attributes with a pointer to an initializer function */
-#define VT_LIBWRAP_ATTR_INITIALIZER(_init_func) \
-  { 0, { NULL }, NULL, 0, _init_func }
+#define VT_LIBWRAP_ATTR_INITIALIZER(_init_func) {                             \
+  0,         /* shlibs_num */                                                 \
+  { NULL },  /* shlibs */                                                     \
+  NULL,      /* func_group */                                                 \
+  0,         /* libc */                                                       \
+  0,         /* wait_for_init */                                              \
+  _init_func /* init_func */                                                  \
+}
 
 /* miscellaneous constants */
 #define VT_LIBWRAP_NULL NULL
@@ -47,20 +59,29 @@
      _line     = source code location (line) */
 #define VT_LIBWRAP_FUNC_INIT(_lw, _lwattr, _func, _rettype, _argtypes,        \
                              _file, _line)                                    \
-  static _rettype (*VT_LIBWRAP_FUNC_PTR)_argtypes = VT_LIBWRAP_NULL;          \
-  static int VT_LIBWRAP_FUNC_ID = VT_LIBWRAP_NOID;                            \
+  _VT_LIBWRAP_FUNC_INIT_DECL_VARS(_func, _rettype, _argtypes);                \
   if( _lw == VT_LIBWRAP_NULL ) {                                              \
     VTLibwrap_create(&_lw, &_lwattr);                                         \
   }                                                                           \
   if( VT_LIBWRAP_FUNC_PTR == VT_LIBWRAP_NULL ||                               \
       VT_LIBWRAP_FUNC_ID  == VT_LIBWRAP_NOID ) {                              \
-    VTLibwrap_func_init(_lw, _func, _file, _line,                             \
+    VTLibwrap_func_init(_lw, VT_LIBWRAP_FUNC_NAME, _file, _line,              \
                         (void**)(&VT_LIBWRAP_FUNC_PTR), &VT_LIBWRAP_FUNC_ID); \
   }
+
+/* internal macro used within VT_LIBWRAP_FUNC_INIT to declare variables for
+   storing the function name, the actual function pointer, and the unique
+   function identifier */
+#define _VT_LIBWRAP_FUNC_INIT_DECL_VARS(_func, _rettype, _argtypes)           \
+  static const char* VT_LIBWRAP_FUNC_NAME = _func;                            \
+  static _rettype (*VT_LIBWRAP_FUNC_PTR)_argtypes = VT_LIBWRAP_NULL;          \
+  static int VT_LIBWRAP_FUNC_ID = VT_LIBWRAP_NOID
 
 /* The following macros are only available inside a wrapper function after
    calling VT_LIBWRAP_FUNC_INIT. */
 
+/* variable name of function name */
+#define VT_LIBWRAP_FUNC_NAME _vtlw_funcname
 /* variable name of pointer to the real function */
 #define VT_LIBWRAP_FUNC_PTR _vtlw_funcptr
 /* variable name of function identifier */
@@ -110,8 +131,11 @@ struct VTLibwrapAttr_struct
      assigned to the default group 'Application'. */
   char* func_group;
 
-  /* Wait for initialization of VampirTrace before generating events by the
-     wrapper functions (1=yes / 0=no) */
+  /* Flag: Do additional search actual library functions in the LIBC. */
+  char  libc;
+
+  /* Flag: Wait for initialization of VampirTrace before generating events by
+     the wrapper functions. */
   char  wait_for_init;
 
   /* Pointer to a function which may be used to initialize the library wrapper
@@ -144,7 +168,7 @@ void VTLibwrap_create(VTLibwrap** lw, VTLibwrapAttr* lwattr);
 /* delete a library wrapper object
    arguments:
      lw       = library wrapper object */
-void VTLibwrap_delete(VTLibwrap** lw);
+void VTLibwrap_delete(VTLibwrap* lw);
 
 /* delete all library wrapper objects */
 void VTLibwrap_delete_all(void);

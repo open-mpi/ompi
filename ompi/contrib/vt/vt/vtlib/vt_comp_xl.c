@@ -16,10 +16,18 @@
 #include "vt_comp.h"
 #include "vt_defs.h"
 #include "vt_error.h"
-#include "vt_memhook.h"
+#include "vt_mallocwrap.h"
 #include "vt_pform.h"
 #include "vt_thrd.h"
 #include "vt_trc.h"
+
+/*
+ * Macro for getting id of calling thread
+ */
+
+#define GET_THREAD_ID(tid) \
+  VT_CHECK_THREAD;         \
+  (tid) = VT_MY_THREAD
 
 /*
  *-----------------------------------------------------------------------------
@@ -81,15 +89,15 @@ static HashNode *hash_get(long h) {
  * Register new region
  */
 
-static HashNode *register_region(char *func, char *file, int lno) {
+static HashNode *register_region(uint32_t tid, char *func, char *file,
+                                 int lno) {
   uint32_t rid;
   uint32_t fid;
   HashNode* nhn;
 
   /* -- register file and region and store region identifier -- */
-  fid = vt_def_scl_file(VT_CURRENT_THREAD, file);
-  rid = vt_def_region(VT_CURRENT_THREAD, func, fid, lno, VT_NO_LNO, NULL,
-                      VT_FUNCTION);
+  fid = vt_def_scl_file(tid, file);
+  rid = vt_def_region(tid, func, fid, lno, VT_NO_LNO, NULL, VT_FUNCTION);
   nhn = hash_put((long) func, rid);
   nhn->func = func;
   nhn->file = file;
@@ -139,6 +147,7 @@ void __func_trace_enter(char* name, char* fname, int lno)
 #endif /* __IBMC__ */
 {
   HashNode *hn;
+  uint32_t tid;
   uint64_t time;
 
   /* -- ignore IBM OMP runtime functions -- */
@@ -154,17 +163,18 @@ void __func_trace_enter(char* name, char* fname, int lno)
 
   /* -- if not yet initialized, initialize VampirTrace -- */
   if ( xl_init ) {
-    VT_MEMHOOKS_OFF();
     xl_init = 0;
     vt_open();
     vt_comp_finalize = &xl_finalize;
-    VT_MEMHOOKS_ON();
   }
 
   /* -- if VampirTrace already finalized, return -- */
   if ( !vt_is_alive ) return;
 
-  VT_MEMHOOKS_OFF();
+  /* -- get calling thread id -- */
+  GET_THREAD_ID(tid);
+
+  VT_SUSPEND_MALLOC_TRACING(tid);
 
   time = vt_pform_wtime();
 
@@ -179,14 +189,14 @@ void __func_trace_enter(char* name, char* fname, int lno)
 #if (defined(VT_MT) || defined(VT_HYB))
     VTTHRD_LOCK_IDS();
     if ( (hn = hash_get((long) name)) == 0 ) {
-      hn = register_region(name, fname, lno);
+      hn = register_region(tid, name, fname, lno);
 #     if __IBMC__ > 1100
       *ihn = hn;
 #     endif /* __IBMC__ */
     }
     VTTHRD_UNLOCK_IDS();
 #else /* VT_MT || VT_HYB */
-    hn = register_region(name, fname, lno);
+    hn = register_region(tid, name, fname, lno);
 #   if __IBMC__ > 1100
     *ihn = hn;
 #   endif /* __IBMC__ */
@@ -201,9 +211,9 @@ void __func_trace_enter(char* name, char* fname, int lno)
 #endif /* __IBMC__ */
 
   /* -- write enter record -- */
-  vt_enter(VT_CURRENT_THREAD, &time, hn->vtid);
+  vt_enter(tid, &time, hn->vtid);
 
-  VT_MEMHOOKS_ON();
+  VT_RESUME_MALLOC_TRACING(tid);
 }
 
 /*
@@ -221,6 +231,7 @@ void __func_trace_exit(char* name, char* fname, int lno)
 #endif
 {
   HashNode *hn;
+  uint32_t tid;
   uint64_t time;
 
   /* -- if VampirTrace already finalized, return -- */
@@ -242,12 +253,15 @@ void __func_trace_exit(char* name, char* fname, int lno)
   vt_libassert(hn != NULL);
 # endif /* __IBMC__ */
 
-  VT_MEMHOOKS_OFF();
+  /* -- get calling thread id -- */
+  GET_THREAD_ID(tid);
+
+  VT_SUSPEND_MALLOC_TRACING(tid);
 
   time = vt_pform_wtime();
 
   /* -- write exit record -- */
-  vt_exit(VT_CURRENT_THREAD, &time);
+  vt_exit(tid, &time);
 
-  VT_MEMHOOKS_ON();
+  VT_RESUME_MALLOC_TRACING(tid);
 }

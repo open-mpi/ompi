@@ -234,8 +234,8 @@ static bool write_markerDispersion_callpath( AllData& alldata, OTF_WStream* writ
     int i= 0;
     uint64_t timerResolution= alldata.timerResolution;
 
-    map< TripleCallpath, FunctionDispersionData, gtTripleCallpathSortByDispersion >::const_iterator it= alldata.functionDispersionCallpathMap.begin();
-    map< TripleCallpath, FunctionDispersionData, gtTripleCallpathSortByDispersion >::const_iterator itend= alldata.functionDispersionCallpathMap.end();
+    map< TripleCallpath, FunctionDispersionData, gtTripleCallpathSortByCallpath >::const_iterator it= alldata.functionDispersionCallpathMap.begin();
+    map< TripleCallpath, FunctionDispersionData, gtTripleCallpathSortByCallpath >::const_iterator itend= alldata.functionDispersionCallpathMap.end();
 
 
 

@@ -14,10 +14,18 @@
 #include <string.h>
 #include "vt_comp.h"
 #include "vt_defs.h"
-#include "vt_memhook.h"
+#include "vt_mallocwrap.h"
 #include "vt_pform.h"
 #include "vt_thrd.h"
 #include "vt_trc.h"
+
+/*
+ * Macro for getting id of calling thread
+ */
+
+#define GET_THREAD_ID(tid) \
+  VT_CHECK_THREAD;         \
+  (tid) = VT_MY_THREAD
 
 /*
  *-----------------------------------------------------------------------------
@@ -72,11 +80,11 @@ static uint32_t hash_get(long h) {
  * `str' is passed in from SUN compiler
  */
 
-static uint32_t register_region(char *str) {
+static uint32_t register_region(uint32_t tid, char *str) {
   uint32_t rid;
 
   /* -- register region and store region identifier -- */
-  rid = vt_def_region(VT_CURRENT_THREAD, str, VT_NO_ID, VT_NO_LNO, VT_NO_LNO,
+  rid = vt_def_region(tid, str, VT_NO_ID, VT_NO_LNO, VT_NO_LNO,
                       NULL, VT_FUNCTION);
   hash_put((long) str, rid);
   return rid;
@@ -110,15 +118,14 @@ void phat_finalize()
  */
 
 void phat_enter(char *str, int *id) {
+  uint32_t tid;
   uint64_t time;
 
   /* -- if not yet initialized, initialize VampirTrace -- */
   if ( phat_init ) {
-    VT_MEMHOOKS_OFF();
     phat_init = 0;
     vt_open();
     vt_comp_finalize = &phat_finalize;
-    VT_MEMHOOKS_ON();
   }
 
   /* -- if VampirTrace already finalized, return -- */
@@ -127,7 +134,10 @@ void phat_enter(char *str, int *id) {
   /* -- ignore SUN OMP runtime functions -- */
   if ( strchr(str, '$') != NULL ) return;
 
-  VT_MEMHOOKS_OFF();
+  /* -- get calling thread id -- */
+  GET_THREAD_ID(tid);
+
+  VT_SUSPEND_MALLOC_TRACING(tid);
 
   time = vt_pform_wtime();
 
@@ -137,17 +147,17 @@ void phat_enter(char *str, int *id) {
 #if (defined(VT_MT) || defined(VT_HYB))
      VTTHRD_LOCK_IDS();
      if ( (*id = hash_get((long) str)) == VT_NO_ID )
-       *id = register_region(str);
+       *id = register_region(tid, str);
      VTTHRD_UNLOCK_IDS();
 #else /* VT_MT || VT_HYB */
-     *id = register_region(str);
+     *id = register_region(tid, str);
 #endif /* VT_MT || VT_HYB */
   }
 
   /* -- write enter record -- */
-  vt_enter(VT_CURRENT_THREAD, &time, *id);
+  vt_enter(tid, &time, *id);
 
-  VT_MEMHOOKS_ON();
+  VT_RESUME_MALLOC_TRACING(tid);
 }
 
 
@@ -157,6 +167,7 @@ void phat_enter(char *str, int *id) {
  */
 
 void phat_exit(char *str, int *id) {
+  uint32_t tid;
   uint64_t time;
 
   /* -- if VampirTrace already finalized, return -- */
@@ -164,11 +175,14 @@ void phat_exit(char *str, int *id) {
 
   if ( *id == -1 ) return;
 
-  VT_MEMHOOKS_OFF();
+  /* -- get calling thread id -- */
+  GET_THREAD_ID(tid);
+
+  VT_SUSPEND_MALLOC_TRACING(tid);
 
   /* -- write exit record -- */
   time = vt_pform_wtime();
-  vt_exit(VT_CURRENT_THREAD, &time);
+  vt_exit(tid, &time);
 
-  VT_MEMHOOKS_ON();
+  VT_RESUME_MALLOC_TRACING(tid);
 }

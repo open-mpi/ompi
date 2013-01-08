@@ -26,21 +26,30 @@
 #include "vt_error.h"       /* VampirTrace warning and error messages */
 
 /* definition for the GPU tracing features/configuration */
-#define VT_GPU_TRACE_CUDA          (1 << 0)
-#define VT_GPU_TRACE_CUPTI         (1 << 1)
-#define VT_GPU_TRACE_OPENCL        (1 << 2)
-#define VT_GPU_TRACE_RUNTIME_API   (1 << 3)
-#define VT_GPU_TRACE_DRIVER_API    (1 << 4)
-#define VT_GPU_TRACE_KERNEL        (1 << 5)
-#define VT_GPU_TRACE_IDLE          (1 << 6)
-#define VT_GPU_TRACE_MEMCPY        (1 << 7)
-#define VT_GPU_TRACE_MEMUSAGE      (1 << 8)
-#define VT_GPU_TRACE_DEBUG         (1 << 9)
-#define VT_GPU_TRACE_ERROR         (1 << 10)
-#define VT_GPU_TRACE_STREAM_REUSE  (1 << 11)
-#define VT_GPU_TRACE_DEFAULT \
+#define VT_GPU_TRACE_CUDA               (1 << 0)
+#define VT_GPU_TRACE_CUPTI              (1 << 1)
+#define VT_GPU_TRACE_OPENCL             (1 << 2)
+#define VT_GPU_TRACE_RUNTIME_API        (1 << 3)
+#define VT_GPU_TRACE_DRIVER_API         (1 << 4)
+#define VT_GPU_TRACE_KERNEL             (1 << 5)
+#define VT_GPU_TRACE_CONCURRENT_KERNEL  (1 << 6)
+#define VT_GPU_TRACE_IDLE               (1 << 7)
+#define VT_GPU_TRACE_MEMCPY             (1 << 8)
+#define VT_GPU_TRACE_MEMUSAGE           (1 << 9)
+#define VT_GPU_TRACE_DEBUG              (1 << 10)
+#define VT_GPU_TRACE_ERROR              (1 << 11)
+#define VT_GPU_TRACE_STREAM_REUSE       (1 << 12)
+
+/* set the default tracing configuration */
+#if defined(VT_CUDARTWRAP)
+# define VT_GPU_TRACE_DEFAULT \
   (VT_GPU_TRACE_CUDA | VT_GPU_TRACE_RUNTIME_API | VT_GPU_TRACE_OPENCL | \
    VT_GPU_TRACE_KERNEL | VT_GPU_TRACE_MEMCPY)
+#else
+# define VT_GPU_TRACE_DEFAULT \
+  (VT_GPU_TRACE_CUPTI | VT_GPU_TRACE_RUNTIME_API | VT_GPU_TRACE_OPENCL | \
+   VT_GPU_TRACE_KERNEL | VT_GPU_TRACE_MEMCPY)
+#endif
 
 /* defines the maximum string length of a function/kernel executed on GPU */
 #define VTGPU_KERNEL_STRING_SIZE 256

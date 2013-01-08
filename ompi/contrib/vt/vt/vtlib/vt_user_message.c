@@ -14,7 +14,7 @@
 
 #include "vt_fbindings.h"
 #include "vt_inttypes.h"
-#include "vt_memhook.h"
+#include "vt_mallocwrap.h"
 #include "vt_pform.h"
 #include "vt_thrd.h"
 #include "vt_trc.h"
@@ -27,10 +27,8 @@ static uint32_t def_cid = 0;   /* default communicator id */
 
 #define VT_INIT \
   if ( vt_init ) { \
-    VT_MEMHOOKS_OFF(); \
     vt_init = 0; \
     vt_open(); \
-    VT_MEMHOOKS_ON(); \
   }
 
 unsigned int VT_User_msg_comm_def__(const char* cname)
@@ -39,7 +37,7 @@ unsigned int VT_User_msg_comm_def__(const char* cname)
 
   VT_INIT;
 
-  VT_MEMHOOKS_OFF();
+  VT_SUSPEND_MALLOC_TRACING(VT_CURRENT_THREAD);
 
 #if (defined(VT_MT) || defined(VT_HYB))
   VTTHRD_LOCK_IDS();
@@ -49,7 +47,7 @@ unsigned int VT_User_msg_comm_def__(const char* cname)
   VTTHRD_UNLOCK_IDS();
 #endif
 
-  VT_MEMHOOKS_ON();
+  VT_RESUME_MALLOC_TRACING(VT_CURRENT_THREAD);
 
   return cid;
 }
@@ -61,7 +59,7 @@ void VT_User_msg_send__(unsigned int cid, unsigned int tag,
 
   VT_INIT;
 
-  VT_MEMHOOKS_OFF();
+  VT_SUSPEND_MALLOC_TRACING(VT_CURRENT_THREAD);
 
   if (cid == (uint32_t)VT_MSG_DEFCOMM)
   {
@@ -74,7 +72,7 @@ void VT_User_msg_send__(unsigned int cid, unsigned int tag,
   time = vt_pform_wtime();
   vt_user_send(VT_CURRENT_THREAD, &time, cid, tag, sent);
 
-  VT_MEMHOOKS_ON();
+  VT_RESUME_MALLOC_TRACING(VT_CURRENT_THREAD);
 }
 
 void VT_User_msg_recv__(unsigned int cid, unsigned int tag,
@@ -84,7 +82,7 @@ void VT_User_msg_recv__(unsigned int cid, unsigned int tag,
 
   VT_INIT;
 
-  VT_MEMHOOKS_OFF();
+  VT_SUSPEND_MALLOC_TRACING(VT_CURRENT_THREAD);
 
   if (cid == (uint32_t)VT_MSG_DEFCOMM)
   {
@@ -97,7 +95,7 @@ void VT_User_msg_recv__(unsigned int cid, unsigned int tag,
   time = vt_pform_wtime();
   vt_user_recv(VT_CURRENT_THREAD, &time, cid, tag, recvd);
 
-  VT_MEMHOOKS_ON();
+  VT_RESUME_MALLOC_TRACING(VT_CURRENT_THREAD);
 }
 
 /*
