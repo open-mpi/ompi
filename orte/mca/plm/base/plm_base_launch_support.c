@@ -421,7 +421,7 @@ void orte_plm_base_launch_apps(int fd, short args, void *cbdata)
      * defined time, then we know things have failed
      */
     if (0 < orte_startup_timeout) {
-        ORTE_DETECT_TIMEOUT(orte_startup_timeout, 1000, 10000000, timer_cb, jdata);
+        ORTE_DETECT_TIMEOUT(orte_startup_timeout, 1000000, 0, timer_cb, jdata);
     }
 
     /* cleanup */
