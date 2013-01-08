@@ -97,7 +97,7 @@ static int __fca_comm_new(mca_coll_fca_module_t *fca_module)
 
     /* call fca_get_rank_info() on node managers only*/
     if (fca_module->local_proc_idx == 0) {
-        my_info = mca_coll_fca_component.fca_ops.get_rank_info(mca_coll_fca_component.fca_context,
+        my_info = fca_get_rank_info(mca_coll_fca_component.fca_context,
                                                                &info_size);
         if (!my_info) {
             FCA_ERROR("fca_get_rank_info returned NULL");
@@ -158,7 +158,7 @@ static int __fca_comm_new(mca_coll_fca_module_t *fca_module)
         FCA_MODULE_VERBOSE(fca_module, 1, "starting fca_comm_new(), rank_count: %d",
                            spec.rank_count);
 
-        ret = mca_coll_fca_component.fca_ops.comm_new(mca_coll_fca_component.fca_context,
+        ret = fca_comm_new(mca_coll_fca_component.fca_context,
                                                       &spec, &fca_module->fca_comm_desc);
         free(all_info);
     }
@@ -173,13 +173,13 @@ static int __fca_comm_new(mca_coll_fca_module_t *fca_module)
 
     /* Examine comm_new return value */
     if (ret < 0) {
-        FCA_ERROR("COMM_NEW failed: %s", mca_coll_fca_component.fca_ops.strerror(ret));
+        FCA_ERROR("COMM_NEW failed: %s", fca_strerror(ret));
         return OMPI_ERROR;
     }
 
     /* Release allocate rank_info on node managers */
     if (fca_module->local_proc_idx == 0) {
-        mca_coll_fca_component.fca_ops.free_rank_info(my_info);
+        fca_free_rank_info(my_info);
     }
 
     /* Pass fca_comm_desc to all ranks using MPI_Bcast */
@@ -211,21 +211,20 @@ static int __create_fca_comm(mca_coll_fca_module_t *fca_module)
                        fca_module->num_local_procs);
 
     comm_size = ompi_comm_size(fca_module->comm);
-    ret = mca_coll_fca_comm_init(&mca_coll_fca_component.fca_ops,
-                                 mca_coll_fca_component.fca_context,
+    ret = mca_coll_fca_comm_init(mca_coll_fca_component.fca_context,
                                  fca_module->rank, comm_size,
                                  fca_module->local_proc_idx, fca_module->num_local_procs,
                                  &fca_module->fca_comm_desc, &fca_module->fca_comm);
     if (ret < 0) {
-        FCA_ERROR("COMM_INIT failed: %s", mca_coll_fca_component.fca_ops.strerror(ret));
+        FCA_ERROR("COMM_INIT failed: %s", fca_strerror(ret));
         return OMPI_ERROR;
     }
 
     /* get communicator capabilities */
-    ret = mca_coll_fca_component.fca_ops.comm_get_caps(fca_module->fca_comm,
+    ret = fca_comm_get_caps(fca_module->fca_comm,
                                                        &fca_module->fca_comm_caps);
     if (ret < 0) {
-        FCA_ERROR("GET_COMM_CAPS failed: %s", mca_coll_fca_component.fca_ops.strerror(ret));
+        FCA_ERROR("GET_COMM_CAPS failed: %s", fca_strerror(ret));
         return OMPI_ERROR;
     }
 
@@ -239,12 +238,12 @@ static void __destroy_fca_comm(mca_coll_fca_module_t *fca_module)
 {
     int ret;
 
-    mca_coll_fca_component.fca_ops.comm_destroy(fca_module->fca_comm);
+    fca_comm_destroy(fca_module->fca_comm);
     if (fca_module->rank == 0) {
-        ret = mca_coll_fca_component.fca_ops.comm_end(mca_coll_fca_component.fca_context,
+        ret = fca_comm_end(mca_coll_fca_component.fca_context,
                                                       fca_module->fca_comm_desc.comm_id);
         if (ret < 0) {
-            FCA_ERROR("COMM_END failed: %s", mca_coll_fca_component.fca_ops.strerror(ret));
+            FCA_ERROR("COMM_END failed: %s", fca_strerror(ret));
         }
     }
 

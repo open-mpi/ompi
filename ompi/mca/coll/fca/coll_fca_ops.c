@@ -35,7 +35,7 @@ static mca_coll_fca_dtype_info_t* mca_coll_fca_get_dtype(ompi_datatype_t *dtype)
     /* assert we don't overwrite another datatype */
     assert(dtype_info->mpi_dtype == MPI_DATATYPE_NULL);
 
-    fca_dtype = mca_coll_fca_component.fca_ops.translate_mpi_dtype(dtype->name);
+    fca_dtype = fca_translate_mpi_dtype(dtype->name);
     if (fca_dtype < 0) {
         return NULL;
     }
@@ -44,7 +44,7 @@ static mca_coll_fca_dtype_info_t* mca_coll_fca_get_dtype(ompi_datatype_t *dtype)
     dtype_info->mpi_dtype = dtype;
     dtype_info->mpi_dtype_extent = extent;
     dtype_info->fca_dtype = fca_dtype;
-    dtype_info->fca_dtype_extent = mca_coll_fca_component.fca_ops.get_dtype_size(fca_dtype);
+    dtype_info->fca_dtype_extent = fca_get_dtype_size(fca_dtype);
     FCA_VERBOSE(2, "Added new dtype[%d]: %s fca id: %d, mpi size: %lu, fca size: %lu",
                 id, dtype->name, dtype_info->fca_dtype, dtype_info->mpi_dtype_extent,
                 dtype_info->fca_dtype_extent);
@@ -66,7 +66,7 @@ static mca_coll_fca_op_info_t *mca_coll_fca_get_op(ompi_op_t *op)
         if (op_info->mpi_op == op) {
             return op_info;
         } else if (op_info->mpi_op == MPI_OP_NULL) {
-            fca_op = mca_coll_fca_component.fca_ops.translate_mpi_op(op->o_name);
+            fca_op = fca_translate_mpi_op(op->o_name);
             if (fca_op < 0)
                 return NULL;
             op_info->mpi_op = op;
@@ -153,12 +153,12 @@ int mca_coll_fca_barrier(struct ompi_communicator_t *comm,
     int ret;
 
     FCA_VERBOSE(5,"Using FCA Barrier");
-    ret = mca_coll_fca_component.fca_ops.do_barrier(fca_module->fca_comm);
+    ret = fca_do_barrier(fca_module->fca_comm);
     if (ret < 0) {
         if (ret == -EUSEMPI) {
             goto orig_barrier;
         }
-        FCA_ERROR("Barrier failed: %s", mca_coll_fca_component.fca_ops.strerror(ret));
+        FCA_ERROR("Barrier failed: %s", fca_strerror(ret));
         return OMPI_ERROR;
     }
     return OMPI_SUCCESS;
@@ -216,7 +216,7 @@ int mca_coll_fca_bcast(void *buff, int count, struct ompi_datatype_t *datatype,
 
     /* Call FCA Bcast */
     FCA_VERBOSE(5, "Using FCA Bcast");
-    ret = mca_coll_fca_component.fca_ops.do_bcast(fca_module->fca_comm, &spec);
+    ret = fca_do_bcast(fca_module->fca_comm, &spec);
 
     /* Destroy convertor if operation failed */
     if (ret < 0) {
@@ -224,7 +224,7 @@ int mca_coll_fca_bcast(void *buff, int count, struct ompi_datatype_t *datatype,
         if (ret == -EUSEMPI) {
             goto orig_bcast;
         }
-        FCA_ERROR("Bcast failed: %s", mca_coll_fca_component.fca_ops.strerror(ret));
+        FCA_ERROR("Bcast failed: %s", fca_strerror(ret));
         return OMPI_ERROR;
     }
 
@@ -269,12 +269,12 @@ int mca_coll_fca_reduce(void *sbuf, void *rbuf, int count,
     }
 
     FCA_VERBOSE(5,"Using FCA Reduce");
-    ret = mca_coll_fca_component.fca_ops.do_reduce(fca_module->fca_comm, &spec);
+    ret = fca_do_reduce(fca_module->fca_comm, &spec);
     if (ret < 0) {
         if (ret == -EUSEMPI) {
             goto orig_reduce;
         }
-        FCA_ERROR("Reduce failed: %s", mca_coll_fca_component.fca_ops.strerror(ret));
+        FCA_ERROR("Reduce failed: %s", fca_strerror(ret));
         return OMPI_ERROR;
     }
     return OMPI_SUCCESS;
@@ -310,12 +310,12 @@ int mca_coll_fca_allreduce(void *sbuf, void *rbuf, int count,
     }
 
     FCA_VERBOSE(5,"Using FCA Allreduce");
-    ret = mca_coll_fca_component.fca_ops.do_all_reduce(fca_module->fca_comm, &spec);
+    ret = fca_do_all_reduce(fca_module->fca_comm, &spec);
     if (ret < 0) {
         if (ret == -EUSEMPI) {
             goto orig_allreduce;
         }
-        FCA_ERROR("Allreduce failed: %s", mca_coll_fca_component.fca_ops.strerror(ret));
+        FCA_ERROR("Allreduce failed: %s", fca_strerror(ret));
         return OMPI_ERROR;
     }
     return OMPI_SUCCESS;
@@ -410,7 +410,7 @@ int mca_coll_fca_allgather(void *sbuf, int scount, struct ompi_datatype_t *sdtyp
 
     /* Call FCA Allgather */
     FCA_VERBOSE(5,"Using FCA Allgather size");
-    ret = mca_coll_fca_component.fca_ops.do_allgather(fca_module->fca_comm, &spec);
+    ret = fca_do_allgather(fca_module->fca_comm, &spec);
 
     /* Destroy convertors if operation failed */
     if (ret < 0) {
@@ -419,7 +419,7 @@ int mca_coll_fca_allgather(void *sbuf, int scount, struct ompi_datatype_t *sdtyp
         if (ret == -EUSEMPI) {
             goto orig_allgather;
         }
-        FCA_ERROR("Allgather failed: %s", mca_coll_fca_component.fca_ops.strerror(ret));
+        FCA_ERROR("Allgather failed: %s", fca_strerror(ret));
         return OMPI_ERROR;
     }
 
@@ -509,7 +509,7 @@ int mca_coll_fca_allgatherv(void *sbuf, int scount,
 
     /* Call FCA AllgatherV */
     FCA_VERBOSE(5,"Using FCA Allgatherv");
-    ret = mca_coll_fca_component.fca_ops.do_allgatherv(fca_module->fca_comm, &spec);
+    ret = fca_do_allgatherv(fca_module->fca_comm, &spec);
 
     /* Destroy convertors if operation failed */
     if (ret < 0) {
@@ -518,7 +518,7 @@ int mca_coll_fca_allgatherv(void *sbuf, int scount,
         if (ret == -EUSEMPI) {
             goto orig_allgatherv;
         }
-        FCA_ERROR("Allgatherv failed: %s", mca_coll_fca_component.fca_ops.strerror(ret));
+        FCA_ERROR("Allgatherv failed: %s", fca_strerror(ret));
         return OMPI_ERROR;
     }
 
