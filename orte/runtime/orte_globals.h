@@ -461,6 +461,8 @@ struct orte_proc_t {
     opal_list_item_t super;
     /* process name */
     orte_process_name_t name;
+    /* the vpid of my parent */
+    orte_vpid_t parent;
     /* pid */
     pid_t pid;
     /* local rank amongst my peers on the node
