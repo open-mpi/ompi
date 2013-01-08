@@ -66,7 +66,6 @@ static int active = 0;
 
 static int init(void)
 {
-    char *dir;
     int i;
 
     /* initialize sqlite3 */
