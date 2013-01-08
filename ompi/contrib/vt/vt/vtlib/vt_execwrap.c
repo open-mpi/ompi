@@ -85,7 +85,7 @@
 /* check whether tracing of LIBC exec functions is currently enabled */
 #define EXECWRAP_DO_TRACE()                                                   \
   ( vt_is_alive && VT_MY_THREAD_IS_ALIVE &&                                   \
-    VTTHRD_MALLOC_TRACING_ENABLED(VTTHRD_MY_VTTHRD) )
+    VTTHRD_EXEC_TRACING_ENABLED(VTTHRD_MY_VTTHRD) )
 
 /* maximum number of variable arguments for the execl* functions */
 #define EXECWRAP_EXECL_MAX_ARGS 1024
@@ -118,8 +118,12 @@ static VTLibwrapAttr execwrap_lw_attr = {
 
 #ifdef EXECWRAP_EXEC_AND_FORK
 
+#if defined(HAVE_DECL_ENVIRON) && HAVE_DECL_ENVIRON
+
 /* pointer to global environ variable of external LIBC */
 static char*** execwrap_libc_environ = NULL;
+
+#endif /* HAVE_DECL_ENVIRON */
 
 /* function to convert variable arguments of the execl* functions to an array
    for calling the corresponding execv* function */
@@ -145,13 +149,14 @@ static void execwrap_execl_valist_to_argv(va_list ap, const char* last,
 
 void vt_execwrap_init()
 {
-#ifdef EXECWRAP_EXEC_AND_FORK
+#if defined(EXECWRAP_EXEC_AND_FORK) && \
+    defined(HAVE_DECL_ENVIRON) && HAVE_DECL_ENVIRON
   /* get pointer to global environ variable of external LIBC */
   void* libc_handle = vt_libwrap_get_libc_handle();
   vt_libassert(libc_handle);
   execwrap_libc_environ = (char***)dlsym(libc_handle, "environ");
   vt_libassert(execwrap_libc_environ);
-#endif /* EXECWRAP_EXEC_AND_FORK */
+#endif /* EXECWRAP_EXEC_AND_FORK && HAVE_DECL_ENVIRON */
 }
 
 void vt_execwrap_finalize()
@@ -354,8 +359,12 @@ int execv(const char* path, char* const argv[])
      succeeds */
   vt_close();
 
+#if defined(HAVE_DECL_ENVIRON) && HAVE_DECL_ENVIRON
+
   /* set environ of external LIBC */
   *execwrap_libc_environ = environ;
+
+#endif /* HAVE_DECL_ENVIRON */
 
   /* call the actual library function */
   ret = EXECWRAP_FUNC_CALL((path, argv));
@@ -406,8 +415,12 @@ int execvp(const char* file, char* const argv[])
      succeeds */
   vt_close();
 
+#if defined(HAVE_DECL_ENVIRON) && HAVE_DECL_ENVIRON
+
   /* set environ of external LIBC */
   *execwrap_libc_environ = environ;
+
+#endif /* HAVE_DECL_ENVIRON */
 
   /* call the actual library function */
   ret = EXECWRAP_FUNC_CALL((file, argv));
