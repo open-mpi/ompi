@@ -1,4 +1,6 @@
 5.14.2openmpi
+	- fixed build error occurred if VT is configured with exec tracing
+	  enabled, but with memory allocation tracing disabled
 	- fixed assertion error occurred when MPI_Initialized is the very first
 	  event to be recorded
 	- fixed potential stack underflow when tracing only MPI events of a

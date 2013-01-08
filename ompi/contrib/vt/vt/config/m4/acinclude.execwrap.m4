@@ -23,6 +23,7 @@ AC_DEFUN([ACVT_EXECWRAP],
 
 			sav_CPPFLAGS=$CPPFLAGS
 			CPPFLAGS="$CPPFLAGS -D_GNU_SOURCE -D_SVID_SOURCE -D_BSD_SOURCE"
+			AC_CHECK_DECLS([environ], [], [], [#include <unistd.h>])
 			AC_CHECK_FUNCS([execvpe fexecve waitid wait3 wait4])
 			CPPFLAGS=$sav_CPPFLAGS
 
