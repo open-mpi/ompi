@@ -150,7 +150,8 @@ int mca_btl_openib_endpoint_post_send(mca_btl_openib_endpoint_t *endpoint,
         hdr->cm_seen = cm_return;
     }
 
-    ib_rc = post_send(endpoint, frag, do_rdma);
+    qp_reset_signal_count(endpoint, qp);
+    ib_rc = post_send(endpoint, frag, do_rdma, 1);
 
     if(!ib_rc)
         return OMPI_SUCCESS;
@@ -285,8 +286,11 @@ static void endpoint_init_qp(mca_btl_base_endpoint_t *ep, const int qp)
             break;
         default:
             BTL_ERROR(("Wrong QP type"));
-            break;
+            return;
     }
+
+    ep_qp->qp->sd_wqe_inflight = 0;
+    ep_qp->qp->wqe_count = QP_TX_BATCH_COUNT;
 }
 
 void mca_btl_openib_endpoint_init(mca_btl_openib_module_t *btl,
@@ -811,7 +815,8 @@ void mca_btl_openib_endpoint_send_credits(mca_btl_openib_endpoint_t* endpoint,
     if(endpoint->nbo)
          BTL_OPENIB_RDMA_CREDITS_HEADER_HTON(*credits_hdr);
 
-    if((rc = post_send(endpoint, frag, do_rdma)) == 0)
+    qp_reset_signal_count(endpoint, qp);
+    if((rc = post_send(endpoint, frag, do_rdma, 1)) == 0)
         return;
 
     if(endpoint->nbo) {

@@ -302,6 +302,8 @@ typedef struct mca_btl_openib_com_frag_t {
     struct ibv_sge sg_entry;
     struct mca_btl_openib_reg_t *registration;
     struct mca_btl_base_endpoint_t *endpoint;
+    /* number of unsignaled frags sent before this frag. */
+    uint32_t n_wqes_inflight;
 } mca_btl_openib_com_frag_t;
 OBJ_CLASS_DECLARATION(mca_btl_openib_com_frag_t);
 

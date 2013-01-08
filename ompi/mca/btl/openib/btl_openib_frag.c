@@ -61,6 +61,7 @@ static void com_constructor(mca_btl_openib_com_frag_t *frag)
         frag->sg_entry.lkey = reg->mr->lkey;
         base_frag->segment.seg_key.key32[0] = reg->mr->lkey;
     }
+    frag->n_wqes_inflight = 0;
 }
 
 static void out_constructor(mca_btl_openib_out_frag_t *frag)
