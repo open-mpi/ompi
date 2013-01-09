@@ -1081,6 +1081,17 @@ MPI FUNCTIONALITY
   Note that disabling building the C++ bindings does *not* disable all
   C++ checks during configure.
 
+--enable-mpi-java
+  Enable building of an EXPERIMENTAL Java MPI interface (disabled by
+  default).  You may also need to specify --with-jdk-dir,
+  --with-jdk-bindir, and/or --with-jdk-headers.  See README.JAVA.txt
+  for details.
+
+  Note that this Java interface is INCOMPLETE (meaning: it does not
+  support all MPI functionality) and LIKELY TO CHANGE.  The Open MPI
+  developers would very much like to hear your feedback about this
+  interface.  See README.JAVA.txt for more details.
+
 --disable-mpi-fortran
   Disable building the Fortran MPI bindings.
 
