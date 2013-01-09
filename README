@@ -466,8 +466,8 @@ Collectives
            communication hierarchy
 
   Components:
-  * sbgp components     - Provides grouping functionality over a CPU socket(
-                          "basesocket"), shared memory ("basesmuma"), 
+  * sbgp components     - Provides grouping functionality over a CPU socket
+                          ("basesocket"), shared memory ("basesmuma"), 
                           Mellanox's ConnectX HCA ("ibnet"), and other 
                           interconnects supported by PML ("p2p")
 
@@ -476,7 +476,8 @@ Collectives
                           HCA ("iboffload"), and other interconnects supported 
                           by PML ("ptpcoll")
 
-  * "ofacm"             - Provides connection manager functionality for InfiniBand communications
+  * "ofacm"             - Provides connection manager functionality for
+                          InfiniBand communications
   * "verbs"             - Provides commonly used verbs utilities
   * "netpatterns"       - Provides an implementation of algorithm patterns 
   * "commpatterns"      - Provides collectives for bootstrap
