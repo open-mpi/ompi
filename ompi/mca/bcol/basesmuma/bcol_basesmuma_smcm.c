@@ -53,15 +53,11 @@ struct file_info_t {
 /* need to allocate space for the peer */
 static void bcol_basesmuma_smcm_proc_item_t_construct
    (bcol_basesmuma_smcm_proc_item_t * item) {
-   orte_namelist_t *peer=(orte_namelist_t *)
-       malloc(sizeof(orte_namelist_t));
-   item->peer=peer;
 }
 
 /* need to free the space for the peer */
 static void bcol_basesmuma_smcm_proc_item_t_destruct
     (bcol_basesmuma_smcm_proc_item_t * item) {
-    free(item->peer);
 }
 
 OBJ_CLASS_INSTANCE(bcol_basesmuma_smcm_proc_item_t,
@@ -206,7 +202,7 @@ int bcol_basesmuma_smcm_allgather_connection(
 
                 /* if the vpid/jobid/filename combination already exists in the list,
                    then do not map this peer's file --- because you already have */
-                if (rem_vpid == item_ptr->peer->name.vpid && rem_jobid == item_ptr->peer->name.jobid
+                if (rem_vpid == item_ptr->peer.vpid && rem_jobid == item_ptr->peer.jobid
                         && (strstr(item_ptr->sm_file.file_name,base_fname)) ){
 
                     /* record file data */
@@ -306,8 +302,8 @@ int bcol_basesmuma_smcm_allgather_connection(
 
             temp = OBJ_NEW(bcol_basesmuma_smcm_proc_item_t);
 
-            temp->peer->name.vpid = rem_vpid;
-            temp->peer->name.jobid = rem_jobid;
+            temp->peer.vpid = rem_vpid;
+            temp->peer.jobid = rem_jobid;
             temp->sm_file.file_name = (char *) malloc(len_other+1);
             if( !temp->sm_file.file_name) {
                 rc = ORTE_ERR_OUT_OF_RESOURCE;
@@ -381,7 +377,7 @@ int bcol_basesmuma_smcm_allgather_connection(
 
                     /* if the vpid/jobid/filename combination already exists in the list,
                        then do not map this peer's file --- because you already have */
-                    if (rem_vpid == item_ptr->peer->name.vpid && rem_jobid == item_ptr->peer->name.jobid
+                    if (rem_vpid == item_ptr->peer.vpid && rem_jobid == item_ptr->peer.jobid
                             && (0 == strcmp(rem_fname,item_ptr->sm_file.file_name)) ){
                         cnt++;
 
