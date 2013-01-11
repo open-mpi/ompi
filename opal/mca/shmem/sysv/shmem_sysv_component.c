@@ -163,6 +163,11 @@ sysv_runtime_query(mca_base_module_t **module, int *priority, const char *hint)
     }
 
     /* if we are here, then let the run-time test games begin */
+    OPAL_OUTPUT_VERBOSE(
+        (70, opal_shmem_base_output,
+         "shmem: sysv: runtime_query: NO HINT PROVIDED:"
+         "starting run-time test...\n")
+    );
 
     if (-1 == (shmid = shmget(IPC_PRIVATE, (size_t)(getpagesize()),
                               IPC_CREAT | IPC_EXCL | SHM_R | SHM_W))) {

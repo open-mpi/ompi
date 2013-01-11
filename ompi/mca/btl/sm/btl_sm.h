@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2007 Voltaire. All rights reserved.
  * Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2010      Los Alamos National Security, LLC.  
+ * Copyright (c) 2010-2013 Los Alamos National Security, LLC.  
  *                         All rights reserved. 
  * Copyright (c) 2010-2012 IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
@@ -42,6 +42,7 @@
 
 #include "opal/util/bit_ops.h"
 #include "opal/class/opal_free_list.h"
+
 #include "ompi/mca/btl/btl.h"
 #include "ompi/mca/common/sm/common_sm.h"
 
@@ -202,6 +203,12 @@ struct mca_btl_sm_component_t {
     /** MCA: should we be using CMA or not?
         0 = no, 1 = yes */
     int use_cma;
+
+    /* /// well-known file names for sm and sm mpool init /// */
+    char *sm_mpool_ctl_file_name;
+    char *sm_mpool_rndv_file_name;
+    char *sm_ctl_file_name;
+    char *sm_rndv_file_name;
 };
 typedef struct mca_btl_sm_component_t mca_btl_sm_component_t;
 OMPI_MODULE_DECLSPEC extern mca_btl_sm_component_t mca_btl_sm_component;
