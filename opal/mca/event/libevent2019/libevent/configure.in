@@ -7,12 +7,15 @@ dnl
 dnl Original version Dug Song <dugsong@monkey.org>
 
 AC_PREREQ(2.59c)
-AC_INIT(event.c)
+# Open MPI: changed to 4 arg AC INIT
+AC_INIT([libevent], [2.0.19-stable], [http://libevent.org], [libevent])
 
 AC_CONFIG_MACRO_DIR([m4])
 
-AM_INIT_AUTOMAKE(libevent,2.0.19-stable)
-AM_CONFIG_HEADER(config.h)
+# Open MPI: changed to one 1 arg AM INIT_AUTOMAKE
+AM_INIT_AUTOMAKE([foreign])
+# Open MPI: changed AM CONFIG_HEADER to AC CONFIG_HEADERS
+AC_CONFIG_HEADERS(config.h)
 AC_DEFINE(NUMERIC_VERSION, 0x02001300, [Numeric representation of the version])
 
 dnl Initialize prefix.
