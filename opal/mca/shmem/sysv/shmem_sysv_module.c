@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007-2010 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
- * Copyright (c) 2010-2011 Los Alamos National Security, LLC.
+ * Copyright (c) 2010-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
  *
  * $COPYRIGHT$
@@ -113,13 +113,12 @@ opal_shmem_sysv_module_t opal_shmem_sysv_module = {
 static inline void
 shmem_ds_reset(opal_shmem_ds_t *ds_buf)
 {
+    /* don't print ds_buf info here, as we may be printing garbage. */
     OPAL_OUTPUT_VERBOSE(
         (70, opal_shmem_base_output,
-         "%s: %s: shmem_ds_resetting "
-         "(id: %d, size: %lu, name: %s)\n",
+         "%s: %s: shmem_ds_resetting\n",
          mca_shmem_sysv_component.super.base_version.mca_type_name,
-         mca_shmem_sysv_component.super.base_version.mca_component_name,
-         ds_buf->seg_id, (unsigned long)ds_buf->seg_size, ds_buf->seg_name)
+         mca_shmem_sysv_component.super.base_version.mca_component_name)
     );
 
     ds_buf->seg_cpid = 0;
@@ -195,7 +194,7 @@ segment_create(opal_shmem_ds_t *ds_buf,
      * real_size here
      */
     if (-1 == (ds_buf->seg_id = shmget(IPC_PRIVATE, real_size,
-                                   IPC_CREAT | IPC_EXCL | SHM_R | SHM_W))) {
+                                       IPC_CREAT | IPC_EXCL | SHM_R | SHM_W))) {
         int err = errno;
         char hn[MAXHOSTNAMELEN];
         gethostname(hn, MAXHOSTNAMELEN - 1);

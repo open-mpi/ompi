@@ -166,6 +166,11 @@ posix_runtime_query(mca_base_module_t **module,
      * hint.  it's either up to us to figure it out, or the caller wants us to
      * re-run the runtime query.
      */
+    OPAL_OUTPUT_VERBOSE(
+        (70, opal_shmem_base_output,
+         "shmem: posix: runtime_query: NO HINT PROVIDED:"
+         "starting run-time test...\n")
+    );
     /* shmem_posix_shm_open successfully shm_opened - we can use posix sm! */
     if (-1 != (fd = shmem_posix_shm_open(tmp_buff,
                                          OPAL_SHMEM_POSIX_FILE_LEN_MAX -1))) {
