@@ -20,7 +20,8 @@
 AC_PREREQ(2.59)
 
 # if this blows up, it's because you forgot to run autoheader
-AC_INIT(adio/include/romioconf.h.in)
+# Open MPI: changed to 4 arg AC INIT
+AC_INIT([romio], [Open MPI 1.2.6], [http://www.mpich.org], [romio])
 # VERSION=1.2.6
 # AC_MSG_RESULT([Configuring ROMIO Version $VERSION])
 CONFIGURE_ARGS="$*"
@@ -207,7 +208,7 @@ AC_CONFIG_AUX_DIR(confdb)
 PAC_PROG_MAKE
 
 # Open MPI: Init automake
-AM_INIT_AUTOMAKE(io-romio, 1.2.6, 'no')
+AM_INIT_AUTOMAKE([foreign])
 
 # Open MPI: If Automake supports silent rules, enable them.
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
