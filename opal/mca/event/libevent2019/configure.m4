@@ -29,7 +29,6 @@ AC_DEFUN([MCA_opal_event_libevent2019_POST_CONFIG], [
            # end up including event-config.h).  The steps below were
            # copied from libevent's Makefile.am.
 
-echo =================happy
            AC_CONFIG_COMMANDS([opal/mca/event/libevent2019/libevent/include/event2/event-config.h],
                               [basedir="opal/mca/event/libevent2019"
                                file="$basedir/libevent/include/event2/event-config.h"
