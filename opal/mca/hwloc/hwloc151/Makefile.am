@@ -38,7 +38,6 @@ libmca_hwloc_hwloc151_la_DEPENDENCIES = \
 headers += \
         hwloc/include/hwloc.h \
         hwloc/include/hwloc/bitmap.h \
-        hwloc/include/hwloc/cpuset.h \
         hwloc/include/hwloc/helper.h \
         hwloc/include/hwloc/myriexpress.h \
         hwloc/include/hwloc/openfabrics-verbs.h \
