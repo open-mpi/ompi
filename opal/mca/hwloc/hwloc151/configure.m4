@@ -48,7 +48,7 @@ AC_DEFUN([MCA_opal_hwloc_hwloc151_POST_CONFIG],[
            file=$opal_hwloc_hwloc151_basedir/hwloc
            CPPFLAGS="$CPPFLAGS -I$OMPI_TOP_SRCDIR/$file/include"
            AS_IF([test "$OMPI_TOP_BUILDDIR" != "$OMPI_TOP_SRCDIR"],
-                 [$CPPFLAGS="$CPPFLAGS -I$OMPI_TOP_BUILDDIR/$file/include"])
+                 [CPPFLAGS="$CPPFLAGS -I$OMPI_TOP_BUILDDIR/$file/include"])
            unset file
 
            # Finally, add some flags to the wrapper compiler if we're
