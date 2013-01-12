@@ -1,6 +1,6 @@
 dnl -*- shell-script -*-
 dnl
-dnl Copyright (c) 2010-2012 Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2010-2013 Cisco Systems, Inc.  All rights reserved.
 dnl $COPYRIGHT$
 dnl 
 dnl Additional copyrights may follow
@@ -11,25 +11,14 @@ dnl
 # There will only be one component used in this framework, and it will
 # be selected at configure time by priority.  Components must set
 # their priorities in their configure.m4 files.  They must also set
-# the shell variable $opal_hwloc_<component>_include to a header file
+# the shell variable $opal_hwloc_base_include to a header file
 # name (relative to the top OMPI source directory) that will be
 # included in opal/mca/hwloc/hwloc.h.
 
-# Optionally, components may also set the following shell variables:
-#
-# opal_hwloc_<component>_ADD_CPPFLAGS
-# opal_hwloc_<component>_ADD_LDFLAGS
-# opal_hwloc_<component>_ADD_LIBS
-# opal_hwloc_<component>_ADD_WRAPPER_EXTRA_CPPFLAGS
-# opal_hwloc_<component>_ADD_WRAPPER_EXTRA_LDFLAGS
-# opal_hwloc_<component>_ADD_WRAPPER_EXTRA_LIBS
-#
-# The first 3 will be added to the over all CPPFLAGS/LDFLAGS/LIBS if
-# that component is chosen as the winning component.  Similarly, the
-# latter 3 will be added to WRAPPER_EXTRA_* if that component wins.
-
-dnl We only want one winning component.
-m4_define(MCA_opal_hwloc_CONFIGURE_MODE, STOP_AT_FIRST_PRIORITY)
+dnl We only want one winning component (vs. STOP_AT_FIRST_PRIORITY,
+dnl which will allow all components of the same priority who succeed to
+dnl win)
+m4_define(MCA_opal_hwloc_CONFIGURE_MODE, STOP_AT_FIRST)
 
 # Other components may depend on at least 1 hwloc component being
 # available.  As such, we may need to artificially force this
@@ -49,6 +38,7 @@ AC_DEFUN([MCA_opal_hwloc_CONFIG],[
 # See comments above for why this is a separate macro.
 
 AC_DEFUN([MCA_opal_hwloc_CONFIG_REQUIRE],[
+    opal_hwloc_base_include=
 
    # If this shell variable is not 1, then this m4 is being invoked
    # "early" via AC REQUIRE.  Therefore, since we like having fairly
@@ -113,9 +103,6 @@ AC_DEFUN([MCA_opal_hwloc_CONFIG_REQUIRE],[
     # Restore the --enable-pci flag
     enable_pci=$opal_hwloc_hwloc132_save_enable_pci
 
-    # Strip any leading/trailing spaces
-    opal_hwloc_winner=`echo $MCA_opal_hwloc_STATIC_COMPONENTS | sed -e 's/^[ ]+//' | sed -e 's/[ ]+$//'`
-
     # Give a blank line to separate these messages from the last
     # component's configure.m4 output.
     echo " "
@@ -128,14 +115,6 @@ AC_DEFUN([MCA_opal_hwloc_CONFIG_REQUIRE],[
         AS_IF([test "$MCA_opal_hwloc_STATIC_COMPONENTS" = ""],
               [AC_MSG_WARN([Did not find a suitable static opal hwloc component])
                AC_MSG_ERROR([Cannot continue])])
-
-        # If there's any spaces in the middle of the string, then we
-        # found more than 1 eligible static component.  That's no good
-        # (and should never happen, but let's be sure)!
-        AS_IF([test "`echo $opal_hwloc_winner | sed 's/ //'`" != "$opal_hwloc_winner"],
-              [AC_MSG_WARN([Found more than 1 eligible static opal hwloc component])
-               AC_MSG_WARN([This should never happen!])
-               AC_MSG_ERROR([Cannot continue])])
    ])
 
    # If we have a winning component, do some more logic
@@ -146,24 +125,14 @@ AC_DEFUN([MCA_opal_hwloc_CONFIG_REQUIRE],[
         # The winning component will have told us where their header file
         # is located
         AC_MSG_CHECKING([for winning hwloc component header file])
-        eval "opal_hwloc_base_include=\`echo \$opal_hwloc_${opal_hwloc_winner}_include\`"
         AS_IF([test "$opal_hwloc_base_include" = ""],
               [AC_MSG_RESULT([missing])
                AC_MSG_WARN([Missing implementation header])
                AC_MSG_ERROR([Cannot continue])])
         AC_MSG_RESULT([$opal_hwloc_base_include])
-
         AC_DEFINE_UNQUOTED([MCA_hwloc_IMPLEMENTATION_HEADER],
                            ["$opal_hwloc_base_include"],
                            [Header to include for hwloc implementation])
-
-        # See if they set any flags for us
-        _MCA_opal_hwloc_base_flags([CPPFLAGS], [CPPFLAGS])
-        _MCA_opal_hwloc_base_flags([LDFLAGS], [LDFLAGS])
-        _MCA_opal_hwloc_base_flags([LIBS], [LIBS])
-        _MCA_opal_hwloc_base_flags([wrapper CPPFLAGS], [WRAPPER_EXTRA_CPPFLAGS])
-        _MCA_opal_hwloc_base_flags([wrapper LDFLAGS], [WRAPPER_EXTRA_LDFLAGS])
-        _MCA_opal_hwloc_base_flags([wrapper LIBS], [WRAPPER_EXTRA_LIBS])
 
         # If we added any -L flags to ADD_LDFLAGS, then we (might)
         # need to add those directories to LD_LIBRARY_PATH.
@@ -203,16 +172,3 @@ AC_DEFUN([MCA_opal_hwloc_CONFIG_REQUIRE],[
           echo "<== We now return you to your regularly scheduled programming."
           echo " "]);
 ])
-
-
-dnl Helper function
-dnl $1 = message to display
-dnl $2 = output variable to set / input variable suffix
-AC_DEFUN([_MCA_opal_hwloc_base_flags],[
-        AC_MSG_CHECKING([for winning hwloc component additional $1])
-        eval "opal_hwloc_base_tmp=\`echo \$opal_hwloc_${opal_hwloc_winner}_ADD_$2\`"
-        AS_IF([test "$opal_hwloc_base_tmp" != ""],
-              [AC_MSG_RESULT([$opal_hwloc_base_tmp])
-               $2="[$]$2 $opal_hwloc_base_tmp"],
-              [AC_MSG_RESULT([none])])
-])dnl

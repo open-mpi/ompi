@@ -1,6 +1,6 @@
 # -*- shell-script -*-
 #
-# Copyright (c) 2009-2011 Cisco Systems, Inc.  All rights reserved. 
+# Copyright (c) 2009-2013 Cisco Systems, Inc.  All rights reserved. 
 #
 # $COPYRIGHT$
 # 
@@ -12,7 +12,7 @@
 #
 # Priority
 #
-AC_DEFUN([MCA_opal_hwloc_external_PRIORITY], [10])
+AC_DEFUN([MCA_opal_hwloc_external_PRIORITY], [90])
 
 #
 # Force this component to compile in static-only mode
@@ -27,7 +27,8 @@ AC_DEFUN([MCA_opal_hwloc_external_COMPILE_MODE], [
 # MCA_hwloc_external_POST_CONFIG()
 # ---------------------------------
 AC_DEFUN([MCA_opal_hwloc_external_POST_CONFIG],[
-    HWLOC_DO_AM_CONDITIONALS
+    AS_IF([test "$1" = "1"], 
+          [HWLOC_DO_AM_CONDITIONALS])
 ])dnl
 
 
