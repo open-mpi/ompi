@@ -90,9 +90,9 @@ mca_btl_sm_t mca_btl_sm = {
         mca_btl_sm_prepare_src,
 #if OMPI_BTL_SM_HAVE_KNEM || OMPI_BTL_SM_HAVE_CMA
         mca_btl_sm_prepare_dst,
-#else
+#else /* OMPI_BTL_SM_HAVE_KNEM || OMPI_BTL_SM_HAVE_CMA */
         NULL,
-#endif  /* OMPI_BTL_SM_HAVE_KNEM || OMPI_BTL_SM_HAVE_CMA */
+#endif /* OMPI_BTL_SM_HAVE_KNEM || OMPI_BTL_SM_HAVE_CMA */
         mca_btl_sm_send,
         mca_btl_sm_sendi,
         NULL,  /* put */
@@ -758,7 +758,7 @@ struct mca_btl_base_descriptor_t* mca_btl_sm_prepare_src(
 
     if( (0 != reserve) || ( OPAL_UNLIKELY(!mca_btl_sm_component.use_knem)
                             && OPAL_UNLIKELY(!mca_btl_sm_component.use_cma)) ) {
-#endif
+#endif /* OMPI_BTL_SM_HAVE_KNEM || OMPI_BTL_SM_HAVE_CMA */
         if ( reserve + max_data <= mca_btl_sm_component.eager_limit ) {
             MCA_BTL_SM_FRAG_ALLOC_EAGER(frag,rc);
         } else {
@@ -1078,7 +1078,7 @@ int mca_btl_sm_get_sync(struct mca_btl_base_module_t* btl,
 
         /* FIXME: what if icopy.current_status == KNEM_STATUS_FAILED? */
     }
-#endif
+#endif /* OMPI_BTL_SM_HAVE_KNEM */
 
 #if OMPI_BTL_SM_HAVE_CMA
     if (OPAL_LIKELY(mca_btl_sm_component.use_cma)) {
@@ -1131,9 +1131,8 @@ int mca_btl_sm_get_sync(struct mca_btl_base_module_t* btl,
 
 #endif /* OMPI_BTL_SM_HAVE_KNEM || OMPI_BTL_SM_HAVE_CMA */
 
-
-/* No support async_get for CMA yet */
 #if OMPI_BTL_SM_HAVE_KNEM
+/* No support async_get for CMA yet */
 
 /**
  * Initiate an asynchronous get.
