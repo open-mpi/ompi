@@ -235,7 +235,7 @@ static int sm_register(void)
         mca_btl_sm_component.use_cma = 0;
     }
 
-#endif
+#endif /* OMPI_BTL_SM_HAVE_KNEM || OMPI_BTL_SM_HAVE_CMA */
     mca_btl_sm.super.btl_seg_size = sizeof (mca_btl_sm_segment_t);
     mca_btl_sm.super.btl_bandwidth = 9000;  /* Mbs */
     mca_btl_sm.super.btl_latency   = 1;     /* Microsecs */
@@ -300,7 +300,7 @@ static int mca_btl_sm_component_close(void)
         close(mca_btl_sm.knem_fd);
         mca_btl_sm.knem_fd = -1;
     }
-#endif
+#endif /* OMPI_BTL_SM_HAVE_KNEM */
 
     OBJ_DESTRUCT(&mca_btl_sm_component.sm_lock);
     /**
@@ -711,7 +711,7 @@ mca_btl_sm_component_init(int *num_btls,
     orte_node_rank_t my_node_rank = ORTE_NODE_RANK_INVALID;
 #if OMPI_BTL_SM_HAVE_KNEM
     int rc;
-#endif
+#endif /* OMPI_BTL_SM_HAVE_KNEM */
 
     *num_btls = 0;
     /* lookup/create shared memory pool only when used */
@@ -933,7 +933,7 @@ mca_btl_sm_component_init(int *num_btls,
        was <0, in which case the fact that knem is not available is
        not an error. */
     return btls;
-#endif
+#endif /* OMPI_BTL_SM_HAVE_KNEM */
 }
 
 
@@ -1171,6 +1171,6 @@ int mca_btl_sm_component_progress(void)
             break;
         }
     }
-#endif
+#endif /* OMPI_BTL_SM_HAVE_KNEM */
     return nevents;
 }

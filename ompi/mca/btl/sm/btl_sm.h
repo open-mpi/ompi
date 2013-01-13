@@ -38,7 +38,7 @@
 #endif  /* HAVE_SCHED_H */
 #if OMPI_BTL_SM_HAVE_KNEM
 #include "knem_io.h"
-#endif  /* OMPI_BTL_SM_HAVE_KNEM */
+#endif /* OMPI_BTL_SM_HAVE_KNEM */
 
 #include "opal/util/bit_ops.h"
 #include "opal/class/opal_free_list.h"
@@ -182,7 +182,7 @@ struct mca_btl_sm_component_t {
 #if OMPI_BTL_SM_HAVE_KNEM
     /* Knem capabilities info */
     struct knem_cmd_info knem_info;
-#endif
+#endif /* OMPI_BTL_SM_HAVE_KNEM */
 
     /** MCA: should we be using knem or not?  neg=try but continue if
         not available, 0=don't try, 1=try and fail if not available */
@@ -241,7 +241,7 @@ struct mca_btl_sm_t {
 
     /* Number of status items currently in use */
     int knem_status_num_used;
-#endif
+#endif /* OMPI_BTL_SM_HAVE_KNEM */
 };
 typedef struct mca_btl_sm_t mca_btl_sm_t;
 OMPI_MODULE_DECLSPEC extern mca_btl_sm_t mca_btl_sm;
@@ -518,7 +518,7 @@ extern struct mca_btl_base_descriptor_t* mca_btl_sm_prepare_dst(
 		size_t reserve,
 		size_t* size,
 		uint32_t flags);
-#endif
+#endif /* OMPI_BTL_SM_HAVE_KNEM || OMPI_BTL_SM_HAVE_CMA */
 
 #if OMPI_BTL_SM_HAVE_KNEM
 /*
@@ -529,7 +529,7 @@ extern int mca_btl_sm_get_async(
                 struct mca_btl_base_endpoint_t* endpoint,
                 struct mca_btl_base_descriptor_t* des );
 
-#endif
+#endif /* OMPI_BTL_SM_HAVE_KNEM */
 
 extern void mca_btl_sm_dump(struct mca_btl_base_module_t* btl,
                             struct mca_btl_base_endpoint_t* endpoint,
