@@ -180,9 +180,19 @@ foreach $smfile (@smfiles) {
   $contents = Read($smfile);
   die("Couldn't Read $smfile!\n") if (!$contents);
   $contents =~ s/\/\*(.*?)\$HEADER\$\n \*\/\n//is;
+
   # Strip away KNEM as that is not in smcuda
-  $contents =~ s/#if OMPI_BTL_SM_HAVE_KNEM(.*?)((#else\n)|(#endif\n)|(#endif  \/\* OMPI_BTL_SM_HAVE_KNEM \*\/\n))//gis;
-  $contents =~ s/#endif  \/\* OMPI_BTL_SM_HAVE_KNEM \*\/\n//gis;
+  $contents =~ s/#if OMPI_BTL_SM_HAVE_KNEM \|\| OMPI_BTL_SM_HAVE_CMA(.*?)((#else \/\* OMPI_BTL_SM_HAVE_KNEM \|\| OMPI_BTL_SM_HAVE_CMA \*\/\n)|(#endif \/\* OMPI_BTL_SM_HAVE_KNEM \|\| OMPI_BTL_SM_HAVE_CMA \*\/\n))//gis;
+  $contents =~ s/#endif \/\* OMPI_BTL_SM_HAVE_KNEM \|\| OMPI_BTL_SM_HAVE_CMA \*\/\n//gis;
+
+  # Strip away KNEM as that is not in smcuda
+  $contents =~ s/#if OMPI_BTL_SM_HAVE_KNEM(.*?)((#else \/\* OMPI_BTL_SM_HAVE_KNEM \*\/\n)|(#endif \/\* OMPI_BTL_SM_HAVE_KNEM \*\/\n))//gis;
+  $contents =~ s/#endif \/\* OMPI_BTL_SM_HAVE_KNEM \*\/\n//gis;
+
+  # Strip away CMA as that is not in smcuda
+  $contents =~ s/#if OMPI_BTL_SM_HAVE_CMA(.*?)((#else \/\* OMPI_BTL_SM_HAVE_CMA \*\/\n)|(#endif \/\* OMPI_BTL_SM_HAVE_CMA \*\/\n))//gis;
+  $contents =~ s/#endif \/\* OMPI_BTL_SM_HAVE_CMA \*\/\n//gis;
+
   Write($smfile, $contents);
 }
 if ($verbose_arg) {
