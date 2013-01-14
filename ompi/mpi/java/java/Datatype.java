@@ -818,15 +818,6 @@ public class Datatype extends Freeable {
                         array_of_types) ;
   }
 
-    // Created by JMS -- add proper documentation later
-    // JMS Aint's are not ints!  :-( Need to fix that throughout the
-    // API...
-    public static Datatype Resized(Datatype oldtype,
-				   int lb,
-				   int extent) throws MPIException { 
-	return new Datatype_resized(oldtype) ;
-    }
-
   protected long handle;
   protected int baseType ;
   protected int baseSize ;  // or private
