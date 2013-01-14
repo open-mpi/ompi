@@ -58,9 +58,11 @@ AC_DEFUN([MCA_opal_hwloc_hwloc151_POST_CONFIG],[
                [OPAL_WRAPPER_EXTRA_CPPFLAGS="$OPAL_WRAPPER_EXTRA_CPPFLAGS "'-I${includedir}/openmpi/'"$opal_hwloc_hwloc151_basedir/hwloc/include"])
 
            OPAL_WRAPPER_EXTRA_LIBS="$OPAL_WRAPPER_EXTRA_LIBS $HWLOC_EMBEDDED_LIBS"
-           HWLOC_DO_AM_CONDITIONALS
           ])
     OPAL_VAR_SCOPE_POP
+
+    # This must be run unconditionally
+    HWLOC_DO_AM_CONDITIONALS
 ])dnl
 
 
