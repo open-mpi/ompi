@@ -43,7 +43,7 @@ struct mca_btl_base_endpoint_t {
     opal_list_t pending_sends; /**< pending data to send */
 
     /** lock for concurrent access to endpoint state */
-    opal_mutex_t                endpoint_lock;
+    opal_mutex_t endpoint_lock;
 
 };
 
