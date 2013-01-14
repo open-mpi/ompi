@@ -54,7 +54,7 @@ struct mca_btl_smcuda_segment_t {
     ompi_ptr_t memh_seg_addr;        
      /** Length in bytes of entire memory handle */
     uint32_t memh_seg_len;           
-#endif
+#endif /* OMPI_CUDA_SUPPORT */
 };
 typedef struct mca_btl_smcuda_segment_t mca_btl_smcuda_segment_t;
 
