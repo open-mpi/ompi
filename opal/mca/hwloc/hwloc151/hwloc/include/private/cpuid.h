@@ -51,28 +51,25 @@ static __hwloc_inline int hwloc_have_cpuid(void) { return 1; }
 
 static __hwloc_inline void hwloc_cpuid(unsigned *eax, unsigned *ebx, unsigned *ecx, unsigned *edx)
 {
+  /* Note: gcc might want to use bx or the stack for %1 addressing, so we can't
+   * use them :/ */
 #ifdef HWLOC_X86_64_ARCH
-  unsigned long sav_ebx;
+  unsigned long sav_rbx;
   asm(
-  /* Note: can't easily use stack since the compiler assumes we don't touch the redzone */
   "mov %%rbx,%2\n\t"
   "cpuid\n\t"
   "xchg %2,%%rbx\n\t"
   "movl %k2,%1\n\t"
-  : "+a" (*eax), "=m" (*ebx), "=&r"(sav_ebx),
+  : "+a" (*eax), "=m" (*ebx), "=&r"(sav_rbx),
     "+c" (*ecx), "=&d" (*edx));
 #elif defined(HWLOC_X86_32_ARCH)
+  unsigned long sav_ebx;
   asm(
-  /* Note: gcc might want to use ebx for %1 addressing :/ */
-  "push %%ebx\n\t"
+  "mov %%ebx,%2\n\t"
   "cpuid\n\t"
-  "push %%eax\n\t"
-  "mov %%ebx,%%eax\n\t"
-  "mov 4(%%esp),%%ebx\n\t"
-  "mov %%eax,%1\n\t"
-  "pop %%eax\n\t"
-  "add $4,%%esp\n\t"
-  : "+a" (*eax), "=m" (*ebx),
+  "xchg %2,%%ebx\n\t"
+  "movl %k2,%1\n\t"
+  : "+a" (*eax), "=m" (*ebx), "=&r"(sav_ebx),
     "+c" (*ecx), "=&d" (*edx));
 #else
 #error unknown architecture
