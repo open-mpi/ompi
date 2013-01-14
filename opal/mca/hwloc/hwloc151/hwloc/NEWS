@@ -17,6 +17,15 @@ bug fixes (and other actions) for each version of hwloc since version
 in v0.9.1).
 
 
+Version 1.5.2
+-------------
+* Fix some DIR descriptor leaks on Linux.
+* Fix I/O device lists when some were filtered out after a XML import.
+* Add missing Backend string info on Solaris in most cases.
+* Fix the removal of I/O objects when importing a I/O-enabled XML topology
+  without any I/O topology flag.
+
+
 Version 1.5.1
 -------------
 * Fix block OS device detection on Linux kernel 3.3 and later.

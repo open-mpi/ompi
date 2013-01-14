@@ -3642,6 +3642,7 @@ hwloc_linux_lookup_block_class(struct hwloc_topology *topology, struct hwloc_obj
 	  path[pathlen] = '\0';
 	}
       }
+      closedir(hostdir);
       /* restore parent path */
       pathlen -= 1+strlen(devicedirent->d_name);
       path[pathlen] = '\0';
@@ -3675,6 +3676,7 @@ hwloc_linux_lookup_block_class(struct hwloc_topology *topology, struct hwloc_obj
 	  path[pathlen] = '\0';
 	}
       }
+      closedir(hostdir);
       /* restore parent path */
       pathlen -= 1+strlen(devicedirent->d_name);
       path[pathlen] = '\0';
