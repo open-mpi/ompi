@@ -56,7 +56,8 @@ AC_DEFUN([MCA_opal_hwloc_CONFIG_REQUIRE],[
     # Whether to enable or disable PCI support in embedded hwloc
     # support.
     AC_ARG_ENABLE([hwloc-pci],
-        AC_HELP_STRING([When building the embedded hwloc, whether to enable or disable PCI device support.  Some operating system distros (e.g., SuSE 10) have a broken libpci.a that will cause Open MPI to fail to build due to relocation errors.  Normally, Open MPI's configure script will automatically choose whether to enable or disable PCI device support in hwloc, but this option can be used to override Open MPI's default decision.]))
+        AC_HELP_STRING([--enable-hwloc-pci],
+                       [When building the embedded hwloc, whether to enable or disable PCI device support.  Some operating system distros (e.g., SuSE 10) have a broken libpci.a that will cause Open MPI to fail to build due to relocation errors.  Normally, Open MPI's configure script will automatically choose whether to enable or disable PCI device support in hwloc, but this option can be used to override Open MPI's default decision.]))
 
     # This is terrible.  :-( Suse 10.1 has only libpci.a (no
     # libpci.so) for 64 bit, and it apparently isn't compiled with
