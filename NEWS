@@ -63,6 +63,7 @@ included in the vX.Y.Z section and be denoted as:
     - Non-blocking collectives
     - MPI_INFO_ENV support
     - Fortran '08 bindings (see below)
+- Dropped support for checkpoint/restart due to loss of maintainer :-(
 - Enabled compile-time warning of deprecated MPI functions by default
   (in supported compilers).
 - Revamped Fortran MPI bindings (see the README for details):
