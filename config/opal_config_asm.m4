@@ -636,58 +636,6 @@ return ret;]])],
     unset OPAL_C_GCC_INLINE_ASSEMBLY assembly asm_result
 ])dnl
 
-AC_DEFUN([OMPI_CHECK_INLINE_CXX_GCC],[
-    assembly="$1"
-    asm_result="unknown"
-
-    AC_LANG_PUSH([C++])
-    AC_MSG_CHECKING([if $CXX supports GCC inline assembly])
-
-    if test "$ompi_cv_c_compiler_vendor" = "portland group" ; then
-        # PGI seems to have some issues with our inline assembly.
-        # Disable for now.
-        asm_result="no (Portland Group)"
-    else
-        if test ! "$assembly" = "" ; then
-                AC_RUN_IFELSE([AC_LANG_PROGRAM([
-AC_INCLUDES_DEFAULT],
-[[int ret = 1;
-int negone = -1;
-__asm__ __volatile__ ($assembly);
-return ret;]])],
-                [asm_result="yes"], [asm_result="no"], 
-                [asm_result="unknown"])
-        else
-            assembly="test skipped - assuming no"
-        fi
-        # if we're cross compiling, just try to compile and figure good enough
-        if test "$asm_result" = "unknown" ; then
-            AC_LINK_IFELSE([AC_LANG_PROGRAM([
-AC_INCLUDES_DEFAULT],
-[[int ret = 1;
-int negone = -1;
-__asm__ __volatile__ ($assembly);
-return ret;]])],
-                [asm_result="yes"], [asm_result="no"])
-        fi
-    fi
-
-    AC_MSG_RESULT([$asm_result])
-
-    if test "$asm_result" = "yes" ; then
-        OMPI_CXX_GCC_INLINE_ASSEMBLY=1
-    else
-        OMPI_CXX_GCC_INLINE_ASSEMBLY=0
-    fi
-
-    AC_DEFINE_UNQUOTED([OMPI_CXX_GCC_INLINE_ASSEMBLY],
-                       [$OMPI_CXX_GCC_INLINE_ASSEMBLY],
-                       [Whether C++ compiler supports GCC style inline assembly])
-    AC_LANG_POP([C++])
-
-    unset OMPI_CXX_GCC_INLINE_ASSEMBLY assembly asm_result
-])dnl
-
 
 dnl #################################################################
 dnl
@@ -723,34 +671,6 @@ return 0;]])],
     unset OPAL_C_DEC_INLINE_ASSEMBLY asm_result
 ])dnl
 
-AC_DEFUN([OMPI_CHECK_INLINE_CXX_DEC],[
-
-    AC_LANG_PUSH([C++])
-    AC_MSG_CHECKING([if $CXX supports DEC inline assembly])
-
-    AC_LINK_IFELSE([AC_LANG_PROGRAM([
-AC_INCLUDES_DEFAULT
-#include <c_asm.h>],
-[[asm("");
-return 0;]])],
-        [asm_result="yes"], [asm_result="no"])
-
-    AC_MSG_RESULT([$asm_result])
-
-    if test "$asm_result" = "yes" ; then
-        OMPI_CXX_DEC_INLINE_ASSEMBLY=1
-    else
-        OMPI_CXX_DEC_INLINE_ASSEMBLY=0
-    fi
-
-    AC_DEFINE_UNQUOTED([OMPI_CXX_DEC_INLINE_ASSEMBLY],
-                       [$OMPI_CXX_DEC_INLINE_ASSEMBLY],
-                       [Whether C++ compiler supports DEC style inline assembly])
-    AC_LANG_POP([C++])
-
-    unset OMPI_CXX_DEC_INLINE_ASSEMBLY asm_result
-])dnl
-
 
 dnl #################################################################
 dnl
@@ -779,25 +699,6 @@ AC_DEFUN([OMPI_CHECK_INLINE_C_XLC],[
     unset OPAL_C_XLC_INLINE_ASSEMBLY
 ])dnl
 
-AC_DEFUN([OMPI_CHECK_INLINE_CXX_XLC],[
-
-    AC_MSG_CHECKING([if $CXX supports XLC inline assembly])
-
-    OMPI_CXX_XLC_INLINE_ASSEMBLY=0
-    asm_result="no"
-    if test "$CXX" = "xlC" -o "$CXX" = "xlc++" ; then
-        OMPI_CXX_XLC_INLINE_ASSEMBLY=1
-        asm_result="yes"
-    fi
-
-    AC_MSG_RESULT([$asm_result])
-    AC_DEFINE_UNQUOTED([OMPI_CXX_XLC_INLINE_ASSEMBLY],
-                       [$OMPI_CXX_XLC_INLINE_ASSEMBLY],
-                       [Whether C++ compiler supports XLC style inline assembly])
-
-    unset OMPI_CXX_XLC_INLINE_ASSEMBLY
-])dnl
-
 
 dnl #################################################################
 dnl
@@ -812,8 +713,6 @@ dnl
 dnl #################################################################
 AC_DEFUN([OPAL_CONFIG_ASM],[
     AC_REQUIRE([OPAL_SETUP_CC])
-    # Only require C++ if we're building the OMPI project
-    m4_ifdef([project_ompi], [AC_REQUIRE([OPAL_SETUP_CXX])])
     AC_REQUIRE([AM_PROG_AS])
 
     # OS X Leopard ld bus errors if you have "-g" or "-gX" in the link line
@@ -869,10 +768,6 @@ AC_DEFUN([OPAL_CONFIG_ASM],[
          [AC_MSG_ERROR([__sync builtin atomics requested but not found.])])
        AC_DEFINE([OPAL_C_GCC_INLINE_ASSEMBLY], [1],
          [Whether C compiler supports GCC style inline assembly])
-       m4_ifdef([project_ompi],
-                [AS_IF([test "$WANT_MPI_CXX_SUPPORT" = "1"],
-         [AC_DEFINE([OMPI_CXX_GCC_INLINE_ASSEMBLY], [1],
-           [Whether C++ compiler supports GCC style inline assembly])])])
     else
         OMPI_CHECK_ASM_PROC
         OMPI_CHECK_ASM_TEXT
@@ -1006,10 +901,6 @@ AC_MSG_ERROR([Can not continue.])
       if test "$ompi_cv_asm_arch" = "SYNC_BUILTIN" ; then
         AC_DEFINE([OPAL_C_GCC_INLINE_ASSEMBLY], [1],
           [Whether C compiler supports GCC style inline assembly])
-        m4_ifdef([project_ompi],
-                 [AS_IF([test "$WANT_MPI_CXX_SUPPORT" = "1"],
-          [AC_DEFINE([OMPI_CXX_GCC_INLINE_ASSEMBLY], [1],
-            [Whether C++ compiler supports GCC style inline assembly])])])
       else
         AC_DEFINE_UNQUOTED([OPAL_ASM_SUPPORT_64BIT],
             [$OPAL_ASM_SUPPORT_64BIT],
@@ -1032,13 +923,6 @@ AC_MSG_ERROR([Can not continue.])
          OMPI_CHECK_INLINE_C_GCC([$OMPI_GCC_INLINE_ASSIGN])
          OMPI_CHECK_INLINE_C_DEC
          OMPI_CHECK_INLINE_C_XLC
-         # Only check C++ if we're building the OMPI project and we
-         # want the C++ bindings
-         m4_ifdef([project_ompi],
-                  [AS_IF([test "$WANT_MPI_CXX_SUPPORT" = "1"],
-                         [OMPI_CHECK_INLINE_CXX_GCC([$OMPI_GCC_INLINE_ASSIGN])
-                          OMPI_CHECK_INLINE_CXX_DEC
-                          OMPI_CHECK_INLINE_CXX_XLC])])
 
          # format:
          #   config_file-text-global-label_suffix-gsym-lsym-type-size-align_log-ppc_r_reg-64_bit-gnu_stack
