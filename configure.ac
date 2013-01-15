@@ -576,13 +576,7 @@ OPAL_CONFIG_ASM
 # Fortran
 ##################################
 
-# OPAL uses opal_fortran_logical_t and OMPI_FORTRAN_HANDLE_MAX (long
-# story; yes, it's an intentional abstraction break).  So ensure to
-# define it to a valid C type if we're not building the OMPI project.
-m4_ifdef([project_ompi], [OMPI_SETUP_MPI_FORTRAN],
-         [AC_DEFINE([ompi_fortran_logical_t], [int], [Bogus type for OPAL])
-          AC_DEFINE([OMPI_FORTRAN_HANDLE_MAX], [128], [Bogus type for OPAL])
-])
+OMPI_SETUP_MPI_FORTRAN
 
 # checkpoint results
 AC_CACHE_SAVE

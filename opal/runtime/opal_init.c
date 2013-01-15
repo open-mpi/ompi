@@ -26,6 +26,7 @@
 #include "opal_config.h"
 
 #include "opal/util/malloc.h"
+#include "opal/util/arch.h"
 #include "opal/util/output.h"
 #include "opal/util/trace.h"
 #include "opal/util/show_help.h"
@@ -294,6 +295,12 @@ opal_init_util(int* pargc, char*** pargv)
 
     if (OPAL_SUCCESS != (ret = opal_util_init_sys_limits())) {
         error = "opal_util_init_sys_limits";
+        goto return_error;
+    }
+
+    /* initialize the arch string */
+    if (OPAL_SUCCESS != (ret = opal_arch_init ())) {
+        error = "opal_arch_init";
         goto return_error;
     }
 

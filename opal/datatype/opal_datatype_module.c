@@ -37,7 +37,6 @@ int opal_pack_debug = 0;
 int opal_position_debug = 0;
 int opal_copy_debug = 0;
 
-uint32_t opal_local_arch = 0xFFFFFFFF;
 
 /* Using this macro implies that at this point _all_ informations needed
  * to fill up the datatype are known.
@@ -165,8 +164,6 @@ int32_t opal_datatype_init( void )
 {
     const opal_datatype_t* datatype;
     int32_t i;
-
-    opal_arch_compute_local_id( &opal_local_arch );
 
     for( i = OPAL_DATATYPE_FIRST_TYPE; i < OPAL_DATATYPE_MAX_PREDEFINED; i++ ) {
         datatype = opal_datatype_basicDatatypes[i];
