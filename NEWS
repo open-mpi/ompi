@@ -57,45 +57,72 @@ included in the vX.Y.Z section and be denoted as:
 ---
 
 - Added MPI-3 functionality: 
-  - MPI_GET_LIBRARY_VERSION
-  - Matched probe
-  - MPI_TYPE_CREATE_HINDEXED_BLOCK
-  - Non-blocking collectives
-  - MPI_INFO_ENV support
+    - MPI_GET_LIBRARY_VERSION
+    - Matched probe
+    - MPI_TYPE_CREATE_HINDEXED_BLOCK
+    - Non-blocking collectives
+    - MPI_INFO_ENV support
+    - Fortran '08 bindings (see below)
 - Enabled compile-time warning of deprecated MPI functions by default
   (in supported compilers).
 - Revamped Fortran MPI bindings (see the README for details):
-  - mpifort wrapper compiler
-  - "use mpi_f08" bindings (for compilers that support it)
-  - Better "use mpi" support (for compilers that support it)
-  - Removed incorrect MPI_SCATTERV interface from "mpi" module that was
-    added in the 1.5.x series for ABI reasons.
-- Modified process affinity system to provide warning when bindings result in
-  being "bound to all", which is equivalent to "not bound"
+  - "mpifort" is now the preferred wrapper compiler for Fortran
+  - Added "use mpi_f08" bindings (for compilers that support it)
+  - Added better "use mpi" support (for compilers that support it)
+  - Removed incorrect MPI_SCATTERV interface from "mpi" module that
+    was added in the 1.5.x series for ABI reasons.
+- Modified process affinity system to provide warning when bindings
+  result in being "bound to all", which is equivalent to not being
+  bound.
 - Removed maffinity, paffinity, and carto frameworks (and associated
   MCA params).
+- Upgraded to hwloc v1.5.1.
+- Added performance improvements to the OpenIB (OpenFabrics) BTL.
+- Made malloc hooks more friendly to IO interprosers.  Thanks to the
+  bug report and suggested fix from Darshan maintainer Phil Carns.
 - Added support for the DMTCP checkpoint/restart system.
+- Added support for the Cray uGNI interconnect.
+- Fixed header file problems on OpenBSD.
+- Fixed issue with MPI_TYPE_CREATE_F90_REAL.
+- Wrapper compilers now explicitly list/link all Open MPI libraries if
+  they detect static linking CLI arguments.
+- Open MPI now requires a C99 compiler to build.  Please upgrade your
+  C compiler if you do not have a C99-compliant compiler.
+- Fix MPI_GET_PROCESSOR_NAME Fortran binding to set ierr properly.
+  Thanks to LANL for spotting the error.
+- Many MXM and FCA updates.
+- Fixed erroneous free of putenv'ed string that showed up in Valgrind
+  reports.
+- Fixed MPI_IN_PLACE case for MPI_ALLGATHER.
+- Fixed a bug that prevented MCA params from being forwarded to
+  daemons upon launch.
+- Fixed issues with VT and CUDA --with-cuda[-libdir] configuration CLI
+  parameters.
+- Entirely new implementation of many MPI collective routines focused
+  on better performance.
 - Revamped autogen / build system.
 - Add new sensor framework to ORTE that includes modules for detecting
   stalled applications and processes that consume too much memory.
 - Added new state machine framework to ORTE that converts ORTE into an
-  event-driven state machine using the event library
+  event-driven state machine using the event library.
 - Added a new MCA parameter (ess_base_stream_buffering) that allows the user
   to override the system default for buffering of stdout/stderr streams
-  (via setvbuf). Parameter is not visible via ompi_info
+  (via setvbuf). Parameter is not visible via ompi_info.
 - Revamped the launch system to allow consideration of node hardware
-  in assigning process locations and bindings
-- Added the -novm option to preserve the prior launch behavior
+  in assigning process locations and bindings.
+- Added the -novm option to preserve the prior launch behavior.
 - Revamped the process mapping system to utilize node hardware by adding
-  new map-by, rank-by, and bind-to cmd line options
-- Added new MCA parameter to provide protection against IO forwarding backlog
-- Added MPI Java bindings
-- Drop support for native Windows due to loss of maintainers :-(
+  new map-by, rank-by, and bind-to cmd line options.
+- Added new MCA parameter to provide protection against IO forwarding
+  backlog.
+- Added experimental MPI Java bindings.  SEE README.JAVA.txt BEFORE
+  USING THEM!
+- Dropped support for native Windows due to loss of maintainers. :-(
 - Added a new parallel I/O component and multiple new frameworks to 
   support parallel I/O operations.
-- Fix typo in orte_setup_haddop.m4. Thanks to Aleksej Saushev for
+- Fix typo in orte_setup_hadoop.m4. Thanks to Aleksej Saushev for
   reporting it
-- Fix a very old error in opal_path_access. Thanks to Marco Atzeri
+- Fix a very old error in opal_path_access(). Thanks to Marco Atzeri
   for chasing it down.
 
 
