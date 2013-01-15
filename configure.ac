@@ -238,7 +238,12 @@ AC_SUBST(top_ompi_builddir)
 
 OPAL_CONFIGURE_OPTIONS
 m4_ifdef([project_orte], [ORTE_CONFIGURE_OPTIONS])
-m4_ifdef([project_ompi], [OMPI_CONFIGURE_OPTIONS])
+# The Fortran tests are still run, even if there's no OMPI project.
+# So be sure to set a global variable (OMPI_WANT_FORTRAN_BINDINGS) to
+# 0 if we have no OMPI project, which will make all the Fortran tests
+# self-skip.
+m4_ifdef([project_ompi], [OMPI_CONFIGURE_OPTIONS],
+          [OMPI_WANT_FORTRAN_BINDINGS=0])
 
 if test "$enable_binaries" = "no" -a "$enable_dist" = "yes"; then
     AC_MSG_WARN([--disable-binaries is incompatible with --enable dist])
