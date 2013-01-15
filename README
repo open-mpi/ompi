@@ -97,7 +97,6 @@ General notes
   - SLURM
   - Cray XT-3, XT-4, and XT-5
   - Oracle Grid Engine (OGE) 6.1, 6.2 and open source Grid Engine
-  - Microsoft Windows CCP (Microsoft Windows server 2003 and 2008)
 
 - Systems that have been tested are:
   - Linux (various flavors/distros), 32 bit, with gcc, and Oracle
@@ -113,8 +112,6 @@ General notes
 
 - Other systems have been lightly (but not fully tested):
   - Other 64 bit platforms (e.g., Linux on PPC64)
-  - Microsoft Windows CCP (Microsoft Windows server 2003 and 2008);
-    see the README.WINDOWS file.
 
 Compiler Notes
 --------------
@@ -456,7 +453,6 @@ Network Support
     - TCP
     - SCTP
     - uDAPL
-    - Windows Verbs
 
   - "csum" is exactly the same as "ob1", except that it performs
     additional data integrity checks to ensure that the received data
@@ -586,9 +582,6 @@ Open MPI Extensions
   - affinity: Provides the OMPI_Affinity_str() routine on retrieving
     a string that contains what resources a process is bound to.  See
     its man page for more details.
-  - cr: Provides routines to access to checkpoint restart routines.
-    See ompi/mpiext/cr/mpiext_cr_c.h for a listing of availble
-    functions.
   - example: A non-functional extension; its only purpose is to
     provide an example for how to create other extensions.
 
@@ -869,36 +862,6 @@ RUN-TIME SYSTEM SUPPORT
   scheduler in HPC systems.
 
 MISCELLANEOUS SUPPORT LIBRARIES
-
---with-blcr=<directory>
-  Specify the directory where the Berkeley Labs Checkpoint / Restart
-  (BLCR) libraries and header files are located.  This option is
-  generally only necessary if the BLCR headers and libraries are not
-  in default compiler/linker search paths.
-
-  This option is only meaningful if the --with-ft option is also used
-  to active Open MPI's fault tolerance behavior.
-
---with-blcr-libdir=<directory>
-  Look in directory for the BLCR libraries.  By default, Open MPI will
-  look in <blcr directory>/lib and <blcr directory>/lib64, which
-  covers most cases.  This option is only needed for special
-  configurations.
-
---with-dmtcp=<directory>
-  Specify the directory where the Distributed MultiThreaded
-  Checkpointing (DMTCP) libraries and header files are located.  This
-  option is generally only necessary if the DMTCP headers and
-  libraries are not in default compiler/linker search paths.
-
-  This option is only meaningful if the --with-ft option is also used
-  to active Open MPI's fault tolerance behavior.
-
---with-dmtcp-libdir=<directory>
-  Look in directory for the DMTCP libraries.  By default, Open MPI
-  will look in <dmtcp directory>/lib and <dmtcp directory>/lib64,
-  which covers most cases.  This option is only needed for special
-  configurations.
 
 --with-esmtp=<directory>
   Specify the directory where the libESMTP libraries and header files are
