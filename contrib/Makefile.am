@@ -98,6 +98,10 @@ EXTRA_DIST = \
 	platform/ibm/debug-ppc64-gcc \
 	platform/ibm/optimized-ppc32-gcc \
 	platform/ibm/optimized-ppc64-gcc \
+	platform/ibm/optimized-power7-gcc \
+	platform/ibm/optimized-power6-gcc \
+	platform/ibm/debug-power7-gcc \
+	platform/ibm/debug-power6-gcc \
         platform/hadoop/linux \
         platform/hadoop/linux.conf \
         platform/hadoop/mac \
