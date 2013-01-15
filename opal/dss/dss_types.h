@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007-2011 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2012      Los Alamos National Security, Inc. All rights reserved.
+ * Copyright (c) 2012-2013 Los Alamos National Security, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -34,6 +34,7 @@
 #endif
 
 #include "opal/class/opal_object.h"
+#include "opal/class/opal_pointer_array.h"
 #include "opal/class/opal_list.h"
 
 BEGIN_C_DECLS
@@ -140,6 +141,31 @@ typedef struct {
 } opal_pstats_t;
 OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_pstats_t);
 typedef struct {
+    opal_list_item_t super;
+    char *disk;
+    unsigned long num_reads_completed;
+    unsigned long num_reads_merged;
+    unsigned long num_sectors_read;
+    unsigned long milliseconds_reading;
+    unsigned long num_writes_completed;
+    unsigned long num_writes_merged;
+    unsigned long num_sectors_written;
+    unsigned long milliseconds_writing;
+    unsigned long num_ios_in_progress;
+    unsigned long milliseconds_io;
+    unsigned long weighted_milliseconds_io;
+} opal_diskstats_t;
+OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_diskstats_t);
+typedef struct {
+    opal_list_item_t super;
+    char *interface;
+    unsigned long num_bytes_read;
+    unsigned long num_packets_read;
+    unsigned long num_bytes_sent;
+    unsigned long num_packets_sent;
+} opal_netstats_t;
+OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_netstats_t);
+typedef struct {
     opal_object_t super;
     /* node-level load averages */
     float la;
@@ -156,6 +182,11 @@ typedef struct {
     float mapped;       /* in MBytes */
     /* time at which sample was taken */
     struct timeval sample_time;
+    /* list of disk stats, one per disk */
+    opal_list_t diskstats;
+    /* list of net stats, one per interface */
+    opal_list_t netstats;
+
 } opal_node_stats_t;
 OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_node_stats_t);
 
