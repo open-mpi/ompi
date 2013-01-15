@@ -124,17 +124,36 @@ static void finalize(void)
     return;
 }
 
+static bool find_value(orte_app_context_t *app,
+                       char *pattern, char **value)
+{
+    int i;
+    char *ptr;
+
+    for (i=0; NULL != app->env[i]; i++) {
+        if (0 == strncmp(app->env[i], pattern, strlen(pattern))) {
+            ptr = strchr(app->env[i], '=');
+            ptr++;
+            if (NULL != value) {
+                *value = strdup(ptr);
+            }
+            return true;
+        }
+    }
+    return false;
+}
+
 /*
  * Start monitoring of local processes
  */
 static void start(orte_jobid_t jobid)
 {
-    mca_base_component_t *c = &mca_sensor_file_component.super.base_version;
     orte_job_t *jobdat;
     orte_app_context_t *app, *aptr;
-    int rc, tmp;
+    int i;
     char *filename;
     file_tracker_t *ft;
+    char *ptr;
 
     /* cannot monitor my own job */
     if (jobid == ORTE_PROC_MY_NAME->jobid && ORTE_JOBID_WILDCARD != jobid) {
@@ -154,8 +173,8 @@ static void start(orte_jobid_t jobid)
 
     /* must be at least one app_context, so use the first one found */
     app = NULL;
-    for (tmp=0; tmp < jobdat->apps->size; tmp++) {
-        if (NULL != (aptr = (orte_app_context_t*)opal_pointer_array_get_item(jobdat->apps, tmp))) {
+    for (i=0; i < jobdat->apps->size; i++) {
+        if (NULL != (aptr = (orte_app_context_t*)opal_pointer_array_get_item(jobdat->apps, i))) {
             app = aptr;
             break;
         }
@@ -167,7 +186,7 @@ static void start(orte_jobid_t jobid)
     }
             
     /* search the environ to get the filename */
-    if (ORTE_SUCCESS != (rc = mca_base_param_find_string(c, "filename", app->env, &filename))) {
+    if (!find_value(app, "OMPI_MCA_sensor_file_filename", &filename)) {
         /* was a default file given */
         if (NULL == mca_sensor_file_component.file) {
             /* can't do anything without a file */
@@ -186,38 +205,41 @@ static void start(orte_jobid_t jobid)
     ft->file = strdup(filename);
     
     /* search the environ to see what we are checking */
-    tmp = 0;
-    if (ORTE_SUCCESS != (rc = mca_base_param_find_int(c, "check_size", app->env, &tmp))) {
+    if (!find_value(app, "OMPI_MCA_sensor_file_check_size", &ptr)) {
         /* was a default value given */
         if (0 < mca_sensor_file_component.check_size) {
             ft->check_size = OPAL_INT_TO_BOOL(mca_sensor_file_component.check_size);
         }
     } else {
-        ft->check_size = OPAL_INT_TO_BOOL(tmp);
+        ft->check_size = OPAL_INT_TO_BOOL(strtol(ptr, NULL, 10));
+        free(ptr);
     }
-    tmp = 0;
-    if (ORTE_SUCCESS != (rc = mca_base_param_find_int(c, "check_access", app->env, &tmp))) {
+
+    if (!find_value(app, "OMPI_MCA_sensor_file_check_access", &ptr)) {
         /* was a default value given */
         if (0 < mca_sensor_file_component.check_access) {
             ft->check_access = OPAL_INT_TO_BOOL(mca_sensor_file_component.check_access);
         }
     } else {
-        ft->check_access = OPAL_INT_TO_BOOL(tmp);
+        ft->check_access = OPAL_INT_TO_BOOL(strtol(ptr, NULL, 10));
+        free(ptr);
     }
-    tmp = 0;
-    if (ORTE_SUCCESS != (rc = mca_base_param_find_int(c, "check_mod", app->env, &tmp))) {
+
+    if (!find_value(app, "OMPI_MCA_sensor_file_check_mod", &ptr)) {
         /* was a default value given */
         if (0 < mca_sensor_file_component.check_mod) {
             ft->check_mod = OPAL_INT_TO_BOOL(mca_sensor_file_component.check_mod);
         }
     } else {
-        ft->check_mod = OPAL_INT_TO_BOOL(tmp);
+        ft->check_mod = OPAL_INT_TO_BOOL(strtol(ptr, NULL, 10));
+        free(ptr);
     }
-    tmp = 0;
-    if (ORTE_SUCCESS != (rc = mca_base_param_find_int(c, "limit", app->env, &tmp))) {
+
+    if (!find_value(app, "OMPI_MCA_sensor_file_limit", &ptr)) {
         ft->limit = mca_sensor_file_component.limit;
     } else {
-        ft->limit = tmp;
+        ft->limit = strtol(ptr, NULL, 10);
+        free(ptr);
     }
     opal_list_append(&jobs, &ft->super);
     OPAL_OUTPUT_VERBOSE((1, orte_sensor_base.output,
