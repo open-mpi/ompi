@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2012      Los Alamos National Security, Inc.  All rights reserved. 
+ * Copyright (c) 2012-2013 Los Alamos National Security, Inc.  All rights reserved. 
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -146,6 +146,34 @@ OBJ_CLASS_INSTANCE(opal_pstats_t, opal_list_item_t,
                    opal_pstat_construct,
                    NULL);
 
+static void diskstat_cons(opal_diskstats_t *ptr)
+{
+    ptr->disk = NULL;
+}
+static void diskstat_dest(opal_diskstats_t *ptr)
+{
+    if (NULL != ptr->disk) {
+        free(ptr->disk);
+    }
+}
+OBJ_CLASS_INSTANCE(opal_diskstats_t,
+                   opal_list_item_t,
+                   diskstat_cons, diskstat_dest);
+
+static void netstat_cons(opal_netstats_t *ptr)
+{
+    ptr->interface = NULL;
+}
+static void netstat_dest(opal_netstats_t *ptr)
+{
+    if (NULL != ptr->interface) {
+        free(ptr->interface);
+    }
+}
+OBJ_CLASS_INSTANCE(opal_netstats_t,
+                   opal_list_item_t,
+                   netstat_cons, netstat_dest);
+
 static void opal_node_stats_construct(opal_node_stats_t *obj)
 {
     obj->la = 0.0;
@@ -161,10 +189,24 @@ static void opal_node_stats_construct(opal_node_stats_t *obj)
     obj->mapped = 0.0;
     obj->sample_time.tv_sec = 0;
     obj->sample_time.tv_usec = 0;
+    OBJ_CONSTRUCT(&obj->diskstats, opal_list_t);
+    OBJ_CONSTRUCT(&obj->netstats, opal_list_t);
+}
+static void opal_node_stats_destruct(opal_node_stats_t *obj)
+{
+    opal_list_item_t *item;
+    while (NULL != (item = opal_list_remove_first(&obj->diskstats))) {
+        OBJ_RELEASE(item);
+    }
+    OBJ_DESTRUCT(&obj->diskstats);
+    while (NULL != (item = opal_list_remove_first(&obj->netstats))) {
+        OBJ_RELEASE(item);
+    }
+    OBJ_DESTRUCT(&obj->netstats);
 }
 OBJ_CLASS_INSTANCE(opal_node_stats_t, opal_object_t,
                    opal_node_stats_construct,
-                   NULL);
+                   opal_node_stats_destruct);
 
 
 int opal_dss_open(void)

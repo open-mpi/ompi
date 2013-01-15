@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2007 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights reserved.
  *
  * $COPYRIGHT$
  * 
@@ -41,6 +42,7 @@
 
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/dss/dss_types.h"
+#include "opal/util/argv.h"
 #include "opal/util/printf.h"
 
 #include "pstat_linux.h"
@@ -64,12 +66,15 @@ const opal_pstat_base_module_t opal_pstat_linux_module = {
     linux_module_fini
 };
 
+#define OPAL_STAT_MAX_LENGTH   1024
+
 /* Local functions */
 static char *local_getline(FILE *fp);
 static char *local_stripper(char *data);
+static void local_getfields(char *data, char ***fields);
 
 /* Local data */
-static char input[256];
+static char input[OPAL_STAT_MAX_LENGTH];
 
 static int linux_module_init(void)
 {
@@ -129,6 +134,9 @@ static int query(pid_t pid,
     double dtime;
     FILE *fp;
     char *dptr, *value;
+    char **fields;
+    opal_diskstats_t *ds;
+    opal_netstats_t *ns;
 
     if (NULL != stats) {
         /* record the time of this sample */
@@ -310,7 +318,7 @@ static int query(pid_t pid,
             /* not an error if we don't find this one as it
              * isn't critical
              */
-            return OPAL_SUCCESS;
+            goto diskstats;
         }
     
         /* absorb all of the file's contents in one gulp - we'll process
@@ -331,7 +339,7 @@ static int query(pid_t pid,
         /* see if we can open the meminfo file */
         if (NULL == (fp = fopen("/proc/meminfo", "r"))) {
             /* ignore this */
-            return OPAL_SUCCESS;
+            goto diskstats;
         }
     
         /* read the file one line at a time */
@@ -359,19 +367,99 @@ static int query(pid_t pid,
             }
         }
         fclose(fp);
+
+    diskstats:
+        /* look for the diskstats file */
+        if (NULL == (fp = fopen("/proc/diskstats", "r"))) {
+            /* not an error if we don't find this one as it
+             * isn't critical
+             */
+            goto netstats;
+        }
+        /* read the file one line at a time */
+        while (NULL != (dptr = local_getline(fp))) {
+            /* look for the local disks */
+            if (NULL == strstr(dptr, "sd")) {
+                continue;
+            }
+            /* parse to extract the fields */
+            fields = NULL;
+            local_getfields(dptr, &fields);
+            if (NULL == fields || 14 < opal_argv_count(fields)) {
+                continue;
+            }
+            /* pack the ones of interest into the struct */
+            ds = OBJ_NEW(opal_diskstats_t);
+            ds->disk = strdup(fields[2]);
+            ds->num_reads_completed = strtoul(fields[3], NULL, 10);
+            ds->num_reads_merged = strtoul(fields[4], NULL, 10);
+            ds->num_sectors_read = strtoul(fields[5], NULL, 10);
+            ds->milliseconds_reading = strtoul(fields[6], NULL, 10);
+            ds->num_writes_completed = strtoul(fields[7], NULL, 10);
+            ds->num_writes_merged = strtoul(fields[8], NULL, 10);
+            ds->num_sectors_written = strtoul(fields[9], NULL, 10);
+            ds->milliseconds_writing = strtoul(fields[10], NULL, 10);
+            ds->num_ios_in_progress = strtoul(fields[11], NULL, 10);
+            ds->milliseconds_io = strtoul(fields[12], NULL, 10);
+            ds->weighted_milliseconds_io = strtoul(fields[13], NULL, 10);
+            opal_list_append(&nstats->diskstats, &ds->super);
+            opal_argv_free(fields);
+        }
+
+    netstats:
+        /* look for the netstats file */
+        if (NULL == (fp = fopen("/proc/net/dev", "r"))) {
+            /* not an error if we don't find this one as it
+             * isn't critical
+             */
+            goto complete;
+        }
+        /* skip the first two lines as they are headers */
+        local_getline(fp);
+        local_getline(fp);
+        /* read the file one line at a time */
+        while (NULL != (dptr = local_getline(fp))) {
+            /* the interface is at the start of the line */
+            if (NULL == (ptr = strchr(dptr, ':'))) {
+                continue;
+            }
+            *ptr = '\0';
+            ptr++;
+            /* parse to extract the fields */
+            fields = NULL;
+            local_getfields(ptr, &fields);
+            if (NULL == fields) {
+                continue;
+            }
+            /* pack the ones of interest into the struct */
+            ns = OBJ_NEW(opal_netstats_t);
+            ns->interface = strdup(dptr);
+            ns->num_bytes_read = strtoul(fields[0], NULL, 10);
+            ns->num_packets_read = strtoul(fields[1], NULL, 10);
+            ns->num_bytes_sent = strtoul(fields[8], NULL, 10);
+            ns->num_packets_sent = strtoul(fields[9], NULL, 10);
+            opal_list_append(&nstats->netstats, &ns->super);
+            opal_argv_free(fields);
+        }
     }
 
+ complete:
     return OPAL_SUCCESS;
 }
 
 static char *local_getline(FILE *fp)
 {
-    char *ret;
+    char *ret, *ptr;
     
-    ret = fgets(input, 256, fp);
+    ret = fgets(input, OPAL_STAT_MAX_LENGTH, fp);
     if (NULL != ret) {
         input[strlen(input)-1] = '\0';  /* remove newline */
-        return input;
+        /* strip leading white space */
+        ptr = input;
+        while (!isalnum(*ptr)) {
+            ptr++;
+        }
+        return ptr;
     }
     
     return NULL;
@@ -401,4 +489,54 @@ static char *local_stripper(char *data)
         ++ptr;
     }
     return ptr;
+}
+
+static void local_getfields(char *dptr, char ***fields)
+{
+    char *ptr, *end;
+
+    /* set default */
+    *fields = NULL;
+
+    /* find the beginning */
+    ptr = dptr;
+    while ('\0' != *ptr && !isalnum(*ptr)) {
+        ptr++;
+    }
+    if ('\0' == *ptr) {
+        return;
+    }
+
+    /* working from this point, find the end of each
+     * alpha-numeric field and store it on the stack.
+     * Then shift across the white space to the start
+     * of the next one
+     */
+    end = ptr;  /* ptr points to an alnum */
+    end++;  /* look at next character */
+    while ('\0' != *end) {
+        /* find the end of this alpha string */
+        while ('\0' != *end && isalnum(*end)) {
+            end++;
+        }
+        /* terminate it */
+        *end = '\0';
+        /* store it on the stack */
+        opal_argv_append_nosize(fields, ptr);
+        /* step across any white space */
+        end++;
+        while ('\0' != *end && !isalnum(*end)) {
+            end++;
+        }
+        if ('\0' == *end) {
+            ptr = NULL;
+            break;
+        }
+        ptr = end;
+        end++;
+    }
+    if (NULL != ptr) {
+        /* have a hanging field */
+        opal_argv_append_nosize(fields, ptr);
+    }
 }
