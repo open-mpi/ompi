@@ -159,10 +159,12 @@ OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_diskstats_t);
 typedef struct {
     opal_list_item_t super;
     char *interface;
-    unsigned long num_bytes_read;
-    unsigned long num_packets_read;
+    unsigned long num_bytes_recvd;
+    unsigned long num_packets_recvd;
+    unsigned long num_recv_errs;
     unsigned long num_bytes_sent;
     unsigned long num_packets_sent;
+    unsigned long num_send_errs;
 } opal_netstats_t;
 OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_netstats_t);
 typedef struct {

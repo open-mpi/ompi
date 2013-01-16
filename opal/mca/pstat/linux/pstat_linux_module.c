@@ -434,10 +434,12 @@ static int query(pid_t pid,
             /* pack the ones of interest into the struct */
             ns = OBJ_NEW(opal_netstats_t);
             ns->interface = strdup(dptr);
-            ns->num_bytes_read = strtoul(fields[0], NULL, 10);
-            ns->num_packets_read = strtoul(fields[1], NULL, 10);
+            ns->num_bytes_recvd = strtoul(fields[0], NULL, 10);
+            ns->num_packets_recvd = strtoul(fields[1], NULL, 10);
+            ns->num_recv_errs = strtoul(fields[2], NULL, 10);
             ns->num_bytes_sent = strtoul(fields[8], NULL, 10);
             ns->num_packets_sent = strtoul(fields[9], NULL, 10);
+            ns->num_send_errs = strtoul(fields[10], NULL, 10);
             opal_list_append(&nstats->netstats, &ns->super);
             opal_argv_free(fields);
         }
