@@ -470,6 +470,96 @@ int opal_dss_pack_pstat(opal_buffer_t *buffer, const void *src,
     return OPAL_SUCCESS;
 }
 
+static int pack_disk_stats(opal_buffer_t *buffer, opal_diskstats_t *dk)
+{
+    uint64_t i64;
+    int ret;
+
+    if (OPAL_SUCCESS != (ret = opal_dss_pack_buffer(buffer, &dk->disk, 1, OPAL_STRING))) {
+        return ret;
+    }
+    i64 = (uint64_t)dk->num_reads_completed;
+    if (OPAL_SUCCESS != (ret = opal_dss_pack_buffer(buffer, &i64, 1, OPAL_UINT64))) {
+        return ret;
+    }
+    i64 = (uint64_t)dk->num_reads_merged;
+    if (OPAL_SUCCESS != (ret = opal_dss_pack_buffer(buffer, &i64, 1, OPAL_UINT64))) {
+        return ret;
+    }
+    i64 = (uint64_t)dk->num_sectors_read;
+    if (OPAL_SUCCESS != (ret = opal_dss_pack_buffer(buffer, &i64, 1, OPAL_UINT64))) {
+        return ret;
+    }
+    i64 = (uint64_t)dk->milliseconds_reading;
+    if (OPAL_SUCCESS != (ret = opal_dss_pack_buffer(buffer, &i64, 1, OPAL_UINT64))) {
+        return ret;
+    }
+    i64 = (uint64_t)dk->num_writes_completed;
+    if (OPAL_SUCCESS != (ret = opal_dss_pack_buffer(buffer, &i64, 1, OPAL_UINT64))) {
+        return ret;
+    }
+    i64 = (uint64_t)dk->num_writes_merged;
+    if (OPAL_SUCCESS != (ret = opal_dss_pack_buffer(buffer, &i64, 1, OPAL_UINT64))) {
+        return ret;
+    }
+    i64 = (uint64_t)dk->num_sectors_written;
+    if (OPAL_SUCCESS != (ret = opal_dss_pack_buffer(buffer, &i64, 1, OPAL_UINT64))) {
+        return ret;
+    }
+    i64 = (uint64_t)dk->milliseconds_writing;
+    if (OPAL_SUCCESS != (ret = opal_dss_pack_buffer(buffer, &i64, 1, OPAL_UINT64))) {
+        return ret;
+    }
+    i64 = (uint64_t)dk->num_ios_in_progress;
+    if (OPAL_SUCCESS != (ret = opal_dss_pack_buffer(buffer, &i64, 1, OPAL_UINT64))) {
+        return ret;
+    }
+    i64 = (uint64_t)dk->milliseconds_io;
+    if (OPAL_SUCCESS != (ret = opal_dss_pack_buffer(buffer, &i64, 1, OPAL_UINT64))) {
+        return ret;
+    }
+    i64 = (uint64_t)dk->weighted_milliseconds_io;
+    if (OPAL_SUCCESS != (ret = opal_dss_pack_buffer(buffer, &i64, 1, OPAL_UINT64))) {
+        return ret;
+    }
+    return OPAL_SUCCESS;
+}
+
+static int pack_net_stats(opal_buffer_t *buffer, opal_netstats_t *ns)
+{
+    uint64_t i64;
+    int ret;
+
+    if (OPAL_SUCCESS != (ret = opal_dss_pack_buffer(buffer, &ns->interface, 1, OPAL_STRING))) {
+        return ret;
+    }
+    i64 = (uint64_t)ns->num_bytes_recvd;
+    if (OPAL_SUCCESS != (ret = opal_dss_pack_buffer(buffer, &i64, 1, OPAL_UINT64))) {
+        return ret;
+    }
+    i64 = (uint64_t)ns->num_packets_recvd;
+    if (OPAL_SUCCESS != (ret = opal_dss_pack_buffer(buffer, &i64, 1, OPAL_UINT64))) {
+        return ret;
+    }
+    i64 = (uint64_t)ns->num_recv_errs;
+    if (OPAL_SUCCESS != (ret = opal_dss_pack_buffer(buffer, &i64, 1, OPAL_UINT64))) {
+        return ret;
+    }
+    i64 = (uint64_t)ns->num_bytes_sent;
+    if (OPAL_SUCCESS != (ret = opal_dss_pack_buffer(buffer, &i64, 1, OPAL_UINT64))) {
+        return ret;
+    }
+    i64 = (uint64_t)ns->num_packets_sent;
+    if (OPAL_SUCCESS != (ret = opal_dss_pack_buffer(buffer, &i64, 1, OPAL_UINT64))) {
+        return ret;
+    }
+    i64 = (uint64_t)ns->num_send_errs;
+    if (OPAL_SUCCESS != (ret = opal_dss_pack_buffer(buffer, &i64, 1, OPAL_UINT64))) {
+        return ret;
+    }
+    return OPAL_SUCCESS;
+}
+
 /*
  * OPAL_NODE_STAT
  */
@@ -477,9 +567,12 @@ int opal_dss_pack_node_stat(opal_buffer_t *buffer, const void *src,
                             int32_t num_vals, opal_data_type_t type)
 {
     opal_node_stats_t **ptr;
-    int32_t i;
+    int32_t i, j;
     int ret;
-    
+    opal_list_item_t *item;
+    opal_diskstats_t *ds;
+    opal_netstats_t *ns;
+
     ptr = (opal_node_stats_t **) src;
     
     for (i = 0; i < num_vals; ++i) {
@@ -518,6 +611,34 @@ int opal_dss_pack_node_stat(opal_buffer_t *buffer, const void *src,
         }
         if (OPAL_SUCCESS != (ret = opal_dss_pack_buffer(buffer, &ptr[i]->sample_time, 1, OPAL_TIMEVAL))) {
             return ret;
+        }
+        /* pack the number of disk stat objects on the list */
+        j = opal_list_get_size(&ptr[i]->diskstats);
+        if (OPAL_SUCCESS != (ret = opal_dss_pack_buffer(buffer, &j, 1, OPAL_INT32))) {
+            return ret;
+        }
+        /* pack them */
+        for (item = opal_list_get_first(&ptr[i]->diskstats);
+             item != opal_list_get_end(&ptr[i]->diskstats);
+             item = opal_list_get_next(item)) {
+            ds = (opal_diskstats_t*)item;
+            if (OPAL_SUCCESS != (ret = pack_disk_stats(buffer, ds))) {
+                return ret;
+            }
+        }
+        /* pack the number of net stat objects on the list */
+        j = opal_list_get_size(&ptr[i]->netstats);
+        if (OPAL_SUCCESS != (ret = opal_dss_pack_buffer(buffer, &j, 1, OPAL_INT32))) {
+            return ret;
+        }
+        /* pack them */
+        for (item = opal_list_get_first(&ptr[i]->netstats);
+             item != opal_list_get_end(&ptr[i]->netstats);
+             item = opal_list_get_next(item)) {
+            ns = (opal_netstats_t*)item;
+            if (OPAL_SUCCESS != (ret = pack_net_stats(buffer, ns))) {
+                return ret;
+            }
         }
     }
 
