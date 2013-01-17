@@ -1608,7 +1608,7 @@ int mca_btl_openib_sendi( struct mca_btl_base_module_t* btl,
     }
 
 #if BTL_OPENIB_FAILOVER_ENABLED
-    send_signaled = 0;
+    send_signaled = 1;
 #else
     send_signaled = qp_need_signal(ep, qp, payload_size + header_size, do_rdma);
 #endif
