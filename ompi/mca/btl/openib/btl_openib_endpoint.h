@@ -303,7 +303,8 @@ static inline int qp_need_signal(mca_btl_openib_endpoint_t *ep, const int qp, si
 
     /* note that size here is payload only */
     if (ep->qps[qp].qp->sd_wqe <= 0  || 
-            size + sizeof(mca_btl_openib_header_t) + (rdma ? sizeof(mca_btl_openib_footer_t) : 0) > ep->qps[qp].ib_inline_max) {
+            size + sizeof(mca_btl_openib_header_t) + (rdma ? sizeof(mca_btl_openib_footer_t) : 0) > ep->qps[qp].ib_inline_max ||
+             !BTL_OPENIB_QP_TYPE_PP(qp) && ep->endpoint_btl->qps[qp].u.srq_qp.sd_credits <= 0) {
         ep->qps[qp].qp->wqe_count = QP_TX_BATCH_COUNT;
         return 1;
     }
