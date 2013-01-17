@@ -1328,6 +1328,15 @@ NOTE: Prior to v1.3.2, subtle and strange failures are almost
       run with another.  The Open MPI team strongly discourages making
       any ABI assumptions before v1.3.2.
 
+NOTE: ABI for the "use mpi" Fortran interface was inadvertantly broken
+      in the v1.6.3 release, and was restored in the v1.6.4 release.
+      Any Fortran applications that utilize the "use mpi" MPI
+      interface that were compiled and linked against the v1.6.3
+      release will not be link-time compatible with other releases in
+      the 1.5.x / 1.6.x series.  Such applications remain source
+      compatible, however, and can be recompiled/re-linked with other
+      Open MPI releases.
+
 Starting with v1.3.2, Open MPI provides forward ABI compatibility --
 with respect to the MPI API only -- in all versions of a given feature
 release series and its corresponding super stable series.  For
