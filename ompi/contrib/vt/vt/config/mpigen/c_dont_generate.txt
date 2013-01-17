@@ -49,6 +49,7 @@ MPI_Gatherv
 MPI_Graph_create
 MPI_Ibsend
 MPI_Init
+MPI_Initialized
 MPI_Init_thread
 MPI_Intercomm_create
 MPI_Intercomm_merge

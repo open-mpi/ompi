@@ -1,4 +1,4 @@
-INCLUDES = -I$(top_builddir)/otflib -I$(top_srcdir)/otflib
+AM_CPPFLAGS = -I$(top_builddir)/otflib -I$(top_srcdir)/otflib
 
 noinst_LTLIBRARIES = libjenkins_hash.la
 

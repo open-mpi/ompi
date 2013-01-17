@@ -9,7 +9,7 @@ endif
 OTFMERGESRCDIR = $(srcdir)
 include $(srcdir)/Makefile.common
 
-INCLUDES = $(COMMONINCLUDES)
+AM_CPPFLAGS = $(COMMONINCLUDES)
 
 otfmerge_CFLAGS = $(COMMONCFLAGS)
 otfmerge_LDADD = $(COMMONLDADD)

@@ -357,6 +357,7 @@ VT_COMMON_SOURCES = \
 	vt_mpifile.h \
 	vt_mpireg.h \
 	vt_mpireq.h \
+	vt_mpiwrap.h \
 	vt_ompreg.h \
 	vt_otf_gen.h \
 	vt_otf_sum.h \
