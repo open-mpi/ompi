@@ -332,6 +332,39 @@ mca_pml_ob1_frag_completion( mca_btl_base_module_t* btl,
     MCA_PML_OB1_PROGRESS_PENDING(bml_btl);
 }
 
+#if OMPI_CUDA_SUPPORT /* CUDA_ASYNC_SEND */
+/**
+ * This function is called when the copy of the frag from the GPU buffer
+ * to the internal buffer is complete.  Used to support asynchronous
+ * copies from GPU to host buffers. Now the data can be sent.
+ */
+static void
+mca_pml_ob1_copy_frag_completion( mca_btl_base_module_t* btl,
+                                  struct mca_btl_base_endpoint_t* ep,
+                                  struct mca_btl_base_descriptor_t* des,
+                                  int status )
+{
+    int rc;
+    mca_bml_base_btl_t* bml_btl = (mca_bml_base_btl_t*) des->des_context;
+
+    des->des_cbfunc = mca_pml_ob1_frag_completion;
+    /* Reset the BTL onwership flag as the BTL can free it after completion. */
+    des->des_flags |= MCA_BTL_DES_FLAGS_BTL_OWNERSHIP;
+    opal_output(-1, "copy_frag_completion FRAG frag=%p", (void *)des);
+    /* Currently, we cannot support a failure in the send.  In the blocking
+     * case, the counters tracking the fragments being sent are not adjusted
+     * until the function returns success, so it handles the error by leaving
+     * all the buffer counters intact.  In this case, it is too late so
+     * we just abort.  In theory, a new queue could be created to hold this
+     * fragment and then attempt to send it out on another BTL. */
+    rc = mca_bml_base_send(bml_btl, des, MCA_PML_OB1_HDR_TYPE_FRAG);
+    if(OPAL_UNLIKELY(rc < 0)) {
+        opal_output(0, "%s:%d FATAL", __FILE__, __LINE__);
+        orte_errmgr.abort(-1, NULL);
+    }
+}
+#endif /* OMPI_CUDA_SUPPORT */
+
 /**
  *  Buffer the entire message and mark as complete.
  */
@@ -1029,6 +1062,32 @@ cannot_pack:
          PERUSE_TRACE_COMM_OMPI_EVENT(PERUSE_COMM_REQ_XFER_CONTINUE,
                  &(sendreq->req_send.req_base), size, PERUSE_SEND);
 #endif  /* OMPI_WANT_PERUSE */
+
+#if OMPI_CUDA_SUPPORT /* CUDA_ASYNC_SEND */
+         /* At this point, check to see if the BTL is doing an asynchronous
+          * copy.  This would have been initiated in the mca_bml_base_prepare_src
+          * called above.  The flag is checked here as we let the hdr be
+          * set up prior to checking.
+          */
+        if (des->des_flags & MCA_BTL_DES_FLAGS_CUDA_COPY_ASYNC) {
+            opal_output(-1, "Initiating async copy on FRAG frag=%p", (void *)des);
+            /* Need to make sure BTL does not free frag after completion
+             * of asynchronous copy as we still need to send the fragment. */
+            des->des_flags &= ~MCA_BTL_DES_FLAGS_BTL_OWNERSHIP;
+            /* Unclear that this flag needs to be set but to be sure, set it */
+            des->des_flags |= MCA_BTL_DES_SEND_ALWAYS_CALLBACK;
+            des->des_cbfunc = mca_pml_ob1_copy_frag_completion;
+            range->range_btls[btl_idx].length -= size;
+            range->range_send_length -= size;
+            range->range_send_offset += size;
+            OPAL_THREAD_ADD_SIZE_T(&sendreq->req_pipeline_depth, 1);
+            if(range->range_send_length == 0) {
+                range = get_next_send_range(sendreq, range);
+                prev_bytes_remaining = 0;
+            }
+            continue;
+        }
+#endif /* OMPI_CUDA_SUPPORT */
 
         /* initiate send - note that this may complete before the call returns */
         rc = mca_bml_base_send(bml_btl, des, MCA_PML_OB1_HDR_TYPE_FRAG);

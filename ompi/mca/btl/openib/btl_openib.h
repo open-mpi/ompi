@@ -308,6 +308,10 @@ struct mca_btl_openib_component_t {
     size_t memalign_threshold;
     void* (*previous_malloc_hook)(size_t __size, const void*);
 #endif
+#if OMPI_CUDA_SUPPORT /* CUDA_ASYNC_SEND */
+    int cuda_async_send;
+    int cuda_async_recv;
+#endif /* OMPI_CUDA_SUPPORT */
 }; typedef struct mca_btl_openib_component_t mca_btl_openib_component_t;
 
 OMPI_MODULE_DECLSPEC extern mca_btl_openib_component_t mca_btl_openib_component;

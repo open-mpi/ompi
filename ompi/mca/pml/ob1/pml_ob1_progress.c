@@ -22,12 +22,21 @@
 #include "pml_ob1.h"
 #include "pml_ob1_sendreq.h"
 #include "ompi/mca/bml/base/base.h" 
+#if OMPI_CUDA_SUPPORT
+#include "ompi/mca/common/cuda/common_cuda.h"
+#include "pml_ob1_recvreq.h"
+static void mca_pml_ob1_process_pending_cuda_async_copies(void);
+#endif /* OMPI_CUDA_SUPPORT */
 
 int mca_pml_ob1_progress(void)
 {
     int i, queue_length = opal_list_get_size(&mca_pml_ob1.send_pending);
     int j, completed_requests = 0;
     bool send_succedded;
+
+#if OMPI_CUDA_SUPPORT
+    mca_pml_ob1_process_pending_cuda_async_copies();
+#endif /* OMPI_CUDA_SUPPORT */
 
     if( OPAL_LIKELY(0 == queue_length) )
         return 0;
@@ -77,3 +86,20 @@ int mca_pml_ob1_progress(void)
     return completed_requests;
 }
 
+#if OMPI_CUDA_SUPPORT
+static void mca_pml_ob1_process_pending_cuda_async_copies(void)
+{
+    mca_btl_base_descriptor_t *frag;
+    int progress;
+
+    do {
+        progress = progress_one_cuda_htod_event(&frag);
+        if (1 == progress) {
+            /* Call the finish function to make progress. */
+            mca_pml_ob1_recv_request_frag_copy_finished(NULL, NULL, frag, 0);
+        }
+    } while (progress > 0);
+    /* Consider progressing dtoh events here in future */
+
+}
+#endif /* OMPI_CUDA_SUPPORT */

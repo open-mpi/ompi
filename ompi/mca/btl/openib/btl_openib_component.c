@@ -103,6 +103,12 @@ static int btl_openib_component_open(void);
 static int btl_openib_component_close(void);
 static mca_btl_base_module_t **btl_openib_component_init(int*, bool, bool);
 static int btl_openib_component_progress(void);
+#if OMPI_CUDA_SUPPORT /* CUDA_ASYNC_RECV */
+static int btl_openib_handle_incoming_completion(mca_btl_base_module_t* btl,
+                                                 mca_btl_openib_endpoint_t *ep,
+                                                 mca_btl_base_descriptor_t* des,
+                                                 int status);
+#endif /* OMPI_CUDA_SUPPORT */
 /*
  * Local variables
  */
@@ -3060,8 +3066,24 @@ static int btl_openib_handle_incoming(mca_btl_openib_module_t *openib_btl,
     if(OPAL_LIKELY(!(is_credit_msg = is_credit_message(frag)))) {
         /* call registered callback */
         mca_btl_active_message_callback_t* reg;
+
+#if OMPI_CUDA_SUPPORT /* CUDA_ASYNC_RECV */
+        /* The COPY_ASYNC flag should not be set */
+        assert(0 == (des->des_flags & MCA_BTL_DES_FLAGS_CUDA_COPY_ASYNC));
+#endif /* OMPI_CUDA_SUPPORT */
         reg = mca_btl_base_active_message_trigger + hdr->tag;
         reg->cbfunc( &openib_btl->super, hdr->tag, des, reg->cbdata );
+#if OMPI_CUDA_SUPPORT /* CUDA_ASYNC_RECV */
+        if (des->des_flags & MCA_BTL_DES_FLAGS_CUDA_COPY_ASYNC) { 
+            /* Since ASYNC flag is set, we know this descriptor is being used 
+             * for asynchronous copy and cannot be freed yet. Therefore, set
+             * up callback for PML to call when complete, add argument into
+             * descriptor and return. */
+            des->des_cbfunc = btl_openib_handle_incoming_completion;
+            des->des_cbdata = (void *)ep;
+            return OMPI_SUCCESS;
+        }
+#endif /* OMPI_CUDA_SUPPORT */
         if(MCA_BTL_OPENIB_RDMA_FRAG(frag)) {
             cqp = (hdr->credits >> 11) & 0x0f;
             hdr->credits &= 0x87ff;
@@ -3151,6 +3173,85 @@ static int btl_openib_handle_incoming(mca_btl_openib_module_t *openib_btl,
 
     return OMPI_SUCCESS;
 }
+
+#if OMPI_CUDA_SUPPORT /* CUDA_ASYNC_RECV */
+/**
+ * Called by the PML when the copying of the data out of the fragment
+ * is complete.
+ */
+static int btl_openib_handle_incoming_completion(mca_btl_base_module_t* btl,
+                                                 mca_btl_base_endpoint_t *ep,
+                                                 mca_btl_base_descriptor_t* des,
+                                                 int status)
+{
+    mca_btl_openib_recv_frag_t *frag = (mca_btl_openib_recv_frag_t *)des;
+    mca_btl_openib_header_t *hdr = frag->hdr;
+    int rqp = to_base_frag(frag)->base.order, cqp;
+    uint16_t rcredits = 0, credits;
+    bool is_credit_msg;
+
+    OPAL_OUTPUT((-1, "handle_incoming_complete frag=%p", (void *)des));
+
+    if(MCA_BTL_OPENIB_RDMA_FRAG(frag)) {
+        cqp = (hdr->credits >> 11) & 0x0f;
+        hdr->credits &= 0x87ff;
+    } else {
+        cqp = rqp;
+    }
+    if(BTL_OPENIB_IS_RDMA_CREDITS(hdr->credits)) {
+        rcredits = BTL_OPENIB_CREDITS(hdr->credits);
+        hdr->credits = 0;
+    }
+
+    credits = hdr->credits;
+
+    if(hdr->cm_seen)
+         OPAL_THREAD_ADD32(&ep->qps[cqp].u.pp_qp.cm_sent, -hdr->cm_seen);
+
+    /* We should not be here with eager or control messages */
+    assert(openib_frag_type(frag) != MCA_BTL_OPENIB_FRAG_EAGER_RDMA);
+    assert(0 == is_cts_message(frag));
+    /* HACK - clear out flags.  Must be better way */
+    des->des_flags = 0;
+    /* Otherwise, FRAG_RETURN it and repost if necessary */
+    MCA_BTL_IB_FRAG_RETURN(frag);
+    if (BTL_OPENIB_QP_TYPE_PP(rqp)) {
+        if (OPAL_UNLIKELY(is_credit_msg)) {
+            OPAL_THREAD_ADD32(&ep->qps[cqp].u.pp_qp.cm_received, 1);
+        } else {
+            OPAL_THREAD_ADD32(&ep->qps[rqp].u.pp_qp.rd_posted, -1);
+        }
+        mca_btl_openib_endpoint_post_rr(ep, cqp);
+    } else {
+        mca_btl_openib_module_t *btl = ep->endpoint_btl;
+        OPAL_THREAD_ADD32(&btl->qps[rqp].u.srq_qp.rd_posted, -1);
+        mca_btl_openib_post_srr(btl, rqp);
+    }
+
+    assert((cqp != MCA_BTL_NO_ORDER && BTL_OPENIB_QP_TYPE_PP(cqp)) || !credits);
+
+    /* If we got any credits (RDMA or send), then try to progress all
+       the no_credits_pending_frags lists */
+    if (rcredits > 0) {
+        OPAL_THREAD_ADD32(&ep->eager_rdma_remote.tokens, rcredits);
+    }
+    if (credits > 0) {
+        OPAL_THREAD_ADD32(&ep->qps[cqp].u.pp_qp.sd_credits, credits);
+    }
+    if (rcredits + credits > 0) {
+        int rc;
+
+        if (OMPI_SUCCESS !=
+            (rc = progress_no_credits_pending_frags(ep))) {
+            return rc;
+        }
+    }
+
+    send_credits(ep, cqp);
+
+    return OMPI_SUCCESS;
+}
+#endif /* OMPI_CUDA_SUPPORT */
 
 static char* btl_openib_component_status_to_string(enum ibv_wc_status status)
 {
@@ -3631,6 +3732,27 @@ static int btl_openib_component_progress(void)
             (mca_btl_openib_device_t *) opal_pointer_array_get_item(&mca_btl_openib_component.devices, i);
         count += progress_one_device(device);
     }
+
+#if OMPI_CUDA_SUPPORT /* CUDA_ASYNC_SEND */
+    /* Check to see if there are any outstanding dtoh CUDA events that
+     * have completed.  If so, issue the PML callbacks on the fragments.
+     * The only thing that gets completed here are asynchronous copies
+     * so there is no need to free anything.
+     */
+    {   
+        int local_count = 0;
+        mca_btl_base_descriptor_t *frag;
+        while (local_count < 10 && (1 == progress_one_cuda_dtoh_event(&frag))) {
+            opal_output(-1, "btl_openib: event completed on frag=%p", (void *)frag);
+            frag->des_cbfunc(NULL, NULL, frag, OMPI_SUCCESS);
+            local_count++;
+        }
+        count += local_count;
+    }
+    if (count > 0) {
+        opal_output(-1, "btl_openib: DONE with openib progress, count=%d", count);
+    }
+#endif /* OMPI_CUDA_SUPPORT */
 
     return count;
 

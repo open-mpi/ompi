@@ -86,11 +86,41 @@ bool opal_cuda_check_bufs(char *dest, char *src)
 }
 
 /*
- * Need intermediate cuMemcpy function so we can check the return code
- * of the call.  If we see an error, abort as there is no recovery at
- * this point.
+ * With CUDA enabled, all contiguous copies will pass through this function.
+ * Therefore, the first check is to see if the convertor is a GPU buffer.
+ * Note that if there is an error with any of the CUDA calls, the program
+ * aborts as there is no recovering.
  */
-void *opal_cuda_memcpy(void *dest, void *src, size_t size)
+void *opal_cuda_memcpy(void *dest, const void *src, size_t size, opal_convertor_t* convertor)
+{
+    int res;
+
+    if (!(convertor->flags & CONVERTOR_CUDA)) {
+        return memcpy(dest, src, size);
+    }
+            
+    if (convertor->flags & CONVERTOR_CUDA_ASYNC) {
+        res = cuMemcpyAsync((CUdeviceptr)dest, (CUdeviceptr)src, size,
+                            (CUstream)convertor->stream);
+    } else {
+        res = cuMemcpy((CUdeviceptr)dest, (CUdeviceptr)src, size);
+    }
+
+    if (res != CUDA_SUCCESS) {
+        opal_output(0, "CUDA: Error in cuMemcpy: res=%d, dest=%p, src=%p, size=%d",
+                    res, dest, src, (int)size);
+        abort();
+    } else {
+        return dest;
+    }
+}
+
+/*
+ * This function is needed in cases where we do not have contiguous
+ * datatypes.  The current code has macros that cannot handle a convertor
+ * argument to the memcpy call.
+ */
+void *opal_cuda_memcpy_sync(void *dest, void *src, size_t size)
 {
     int res;
     res = cuMemcpy((CUdeviceptr)dest, (CUdeviceptr)src, size);
@@ -169,4 +199,14 @@ static void opal_cuda_support_init(void)
     }
 
     initialized = true;
+}
+
+/**
+ * Tell the convertor that copies will be asynchronous CUDA copies.  The
+ * flags are cleared when the convertor is reinitialized.
+ */
+void opal_cuda_set_copy_function_async(opal_convertor_t* convertor, void *stream)
+{
+    convertor->flags |= CONVERTOR_CUDA_ASYNC;
+    convertor->stream = stream;
 }

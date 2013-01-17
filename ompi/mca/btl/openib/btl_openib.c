@@ -55,6 +55,10 @@
 #include "ompi/mca/mpool/base/base.h"
 #include "ompi/mca/mpool/mpool.h"
 #include "ompi/mca/mpool/grdma/mpool_grdma.h"
+#if OMPI_CUDA_SUPPORT
+#include "opal/datatype/opal_datatype_cuda.h"
+#include "ompi/mca/common/cuda/common_cuda.h"
+#endif /* OMPI_CUDA_SUPPORT */
 #include "orte/util/proc_info.h"
 #include <errno.h>
 #include <sys/types.h>
@@ -1286,6 +1290,15 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_src(
     iov.iov_len = max_data;
     iov.iov_base = (IOVBASE_TYPE *) ( (unsigned char*) ptr + reserve );
     rc = opal_convertor_pack(convertor, &iov, &iov_count, &max_data);
+
+#if OMPI_CUDA_SUPPORT /* CUDA_ASYNC_SEND */
+    /* If the convertor is copying the data asynchronously, then record an event
+     * that will trigger the callback when it completes.  Mark descriptor as async.*/
+    if (convertor->flags & CONVERTOR_CUDA_ASYNC) {
+        mca_common_cuda_record_dtoh_event("btl_openib", (mca_btl_base_descriptor_t *)frag);
+        to_base_frag(frag)->base.des_flags = flags | MCA_BTL_DES_FLAGS_CUDA_COPY_ASYNC;
+    }
+#endif /* OMPI_CUDA_SUPPORT */
 
     *size = max_data;
 
