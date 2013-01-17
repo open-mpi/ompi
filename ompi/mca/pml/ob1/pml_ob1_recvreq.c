@@ -38,6 +38,10 @@
 #include "orte/mca/errmgr/errmgr.h"
 #include "opal/util/arch.h"
 #include "ompi/memchecker.h"
+#if OMPI_CUDA_SUPPORT
+#include "opal/datatype/opal_datatype_cuda.h"
+#include "ompi/mca/common/cuda/common_cuda.h"
+#endif /* OMPI_CUDA_SUPPORT */
 
 #if OMPI_CUDA_SUPPORT
 int mca_pml_ob1_cuda_need_buffers(mca_pml_ob1_recv_request_t* recvreq,
@@ -527,6 +531,85 @@ void mca_pml_ob1_recv_request_progress_frag( mca_pml_ob1_recv_request_t* recvreq
     }
 }
 
+#if OMPI_CUDA_SUPPORT /* CUDA_ASYNC_RECV */
+/**
+ * This function is basically the first half of the code in the
+ * mca_pml_ob1_recv_request_progress_frag function.  This fires off
+ * the asynchronous copy and returns.  Unused fields in the descriptor
+ * are used to pass extra information for when the asynchronous copy
+ * completes.  No memchecker support in this function as copies are 
+ * happening asynchronously.
+ */
+void mca_pml_ob1_recv_request_frag_copy_start( mca_pml_ob1_recv_request_t* recvreq,
+                                               mca_btl_base_module_t* btl,
+                                               mca_btl_base_segment_t* segments,
+                                               size_t num_segments,
+                                               mca_btl_base_descriptor_t* des)
+{
+    int result;
+    size_t bytes_received = 0, data_offset = 0;
+    size_t bytes_delivered __opal_attribute_unused__; /* is being set to zero in MCA_PML_OB1_RECV_REQUEST_UNPACK */
+    mca_pml_ob1_hdr_t* hdr = (mca_pml_ob1_hdr_t*)segments->seg_addr.pval;
+
+    OPAL_OUTPUT((-1, "start_frag_copy frag=%p", (void *)des));
+
+    bytes_received = mca_pml_ob1_compute_segment_length_base (segments, num_segments,
+                                                              sizeof(mca_pml_ob1_frag_hdr_t));
+    data_offset     = hdr->hdr_frag.hdr_frag_offset;
+
+    MCA_PML_OB1_RECV_REQUEST_UNPACK( recvreq,
+                                     segments,
+                                     num_segments,
+                                     sizeof(mca_pml_ob1_frag_hdr_t),
+                                     data_offset,
+                                     bytes_received,
+                                     bytes_delivered );
+    /* Store the receive request in unused context pointer. */
+    des->des_context = (void *)recvreq;
+    /* Store the amount of bytes in unused src count value */
+    des->des_src_cnt = bytes_delivered;
+    /* Then record an event that will get triggered by a PML progress call which
+     * checks the stream events.  If we get an error, abort.  Should get message
+     * from CUDA code about what went wrong. */
+    result = mca_common_cuda_record_htod_event("pml", des);
+    if (OMPI_SUCCESS != result) {
+        opal_output(0, "%s:%d FATAL", __FILE__, __LINE__);
+        orte_errmgr.abort(-1, NULL);
+    }
+}
+
+/**
+ * This function is basically the second half of the code in the
+ * mca_pml_ob1_recv_request_progress_frag function.  The number of
+ * bytes delivered is updated.  Then a call is made into the BTL so it
+ * can free the fragment that held that data.  This is currently
+ * called directly by the common CUDA code. No memchecker support
+ * in this function as copies are happening asynchronously.
+ */
+void mca_pml_ob1_recv_request_frag_copy_finished( mca_btl_base_module_t* btl,
+                                                  struct mca_btl_base_endpoint_t* ep,
+                                                  struct mca_btl_base_descriptor_t* des,
+                                                  int status )
+{
+    mca_pml_ob1_recv_request_t* recvreq = (mca_pml_ob1_recv_request_t*)des->des_context;
+    size_t bytes_received = des->des_src_cnt;
+
+    OPAL_OUTPUT((-1, "frag_copy_finished (delivered=%d), frag=%p", (int)bytes_received, (void *)des));
+    /* Call into the BTL so it can free the descriptor.  At this point, it is 
+     * known that the data has been copied out of the descriptor. */
+    des->des_cbfunc(NULL, (struct mca_btl_base_endpoint_t *)des->des_cbdata, des, 0);
+
+    OPAL_THREAD_ADD_SIZE_T(&recvreq->req_bytes_received, bytes_received);
+
+    /* check completion status */
+    if(recv_request_pml_complete_check(recvreq) == false &&
+            recvreq->req_rdma_offset < recvreq->req_send_offset) {
+        /* schedule additional rdma operations */
+        mca_pml_ob1_recv_request_schedule(recvreq, NULL);
+    }
+}
+#endif /* OMPI_CUDA_SUPPORT */
+
 /*
  * Update the recv request status to reflect the number of bytes
  * received and actually delivered to the application. 
@@ -701,6 +784,17 @@ void mca_pml_ob1_recv_request_progress_rndv( mca_pml_ob1_recv_request_t* recvreq
         /* schedule additional rdma operations */
         mca_pml_ob1_recv_request_schedule(recvreq, NULL);
     }
+
+#if OMPI_CUDA_SUPPORT /* CUDA_ASYNC_RECV */
+    /* If BTL supports it and this is a CUDA buffer being received into,
+     * have all subsequent FRAGS copied in asynchronously. */
+    if ((recvreq->req_recv.req_base.req_convertor.flags & CONVERTOR_CUDA) &&
+        (btl->btl_flags & MCA_BTL_FLAGS_CUDA_COPY_ASYNC_RECV)) {
+        void *strm = mca_common_cuda_get_htod_stream();
+        opal_cuda_set_copy_function_async(&recvreq->req_recv.req_base.req_convertor, strm);
+    }
+#endif
+    
 }
 
 /*
