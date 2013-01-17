@@ -734,15 +734,20 @@ static check_result_t check(const char *name)
 /* OMPI's init function */
 static void opal_memory_linux_malloc_init_hook(void)
 {
-    struct stat st;
-    check_result_t r1, r2, lp, lpp;
+    check_result_t r1, lp, lpp;
     bool want_rcache = false, found_driver = false;
 
     /* First, check for a FAKEROOT environment.  If we're in a
-       fakeroot, then stat() (and likely others) have been replaced
+       fakeroot, then access() (and likely others) have been replaced
        and are not safe to call here in this pre-main environment.  So
        check for the environment markers that we're in a FAKEROOT.
-       And if so, return immediately. */
+       And if so, return immediately.
+
+       Note that this check was inspired by a problem with Debian's
+       "fakeroot" build environment that allocates memory during
+       stat() (see http://bugs.debian.org/531522).  It may not be
+       necessary any more since we're using access(), not stat().  But
+       we'll leave the check, anyway. */
     if (getenv("FAKEROOTKEY") != NULL ||
         getenv("FAKED_MODE") != NULL) {
         return;
@@ -753,7 +758,7 @@ static void opal_memory_linux_malloc_init_hook(void)
        open/mmap on the device may fail during init, but if /dev/ummunotify
        exists, we assume that the user/administrator *wants* to use
        ummunotify. */
-    if (stat("/dev/ummunotify", &st) == 0) {
+    if (access("/dev/ummunotify", F_OK) == 0) {
         return;
     }
 
@@ -766,16 +771,9 @@ static void opal_memory_linux_malloc_init_hook(void)
     lp = check("OMPI_MCA_mpi_leave_pinned");
     lpp = check("OMPI_MCA_mpi_leave_pinned_pipeline");
 
-    /* See if we want to disable this component.  This check is
-       necessary for some environments -- for example, Debian's
-       "fakeroot" build environment allocates memory during stat(),
-       causing Badness (see http://bugs.debian.org/531522).
-       $FAKEROOTKEY is set by Debian's "fakeroot" build environment;
-       check for that explicitly. */
+    /* See if we want to disable this component.  */
     r1 = check("OMPI_MCA_memory_linux_disable");
-    r2 = check("FAKEROOTKEY");
-    if ((RESULT_NOT_FOUND != r1 && RESULT_NO != r1) ||
-        (RESULT_NOT_FOUND != r2 && RESULT_NO != r2)) {
+    if (RESULT_NOT_FOUND != r1 && RESULT_NO != r1) {
         return;
     }
 
@@ -789,19 +787,20 @@ static void opal_memory_linux_malloc_init_hook(void)
          someday.  So be conservative and check for /dev/open-mx.
        * MX will have one or more of /dev/myri[0-9].  Yuck.
      */
-    if (0 == stat("/sys/class/infiniband", &st) ||
-        0 == stat("/dev/open-mx", &st) ||
-        0 == stat("/dev/myri0", &st) ||
-        0 == stat("/dev/myri1", &st) ||
-        0 == stat("/dev/myri2", &st) ||
-        0 == stat("/dev/myri3", &st) ||
-        0 == stat("/dev/myri4", &st) ||
-        0 == stat("/dev/myri5", &st) ||
-        0 == stat("/dev/myri6", &st) ||
-        0 == stat("/dev/myri7", &st) ||
-        0 == stat("/dev/myri8", &st) ||
-        0 == stat("/dev/myri9", &st) ||
-        0 == stat("/dev/ipath", &st)) {
+    if (0 == access("/sys/class/infiniband", F_OK) ||
+        0 == access("/dev/open-mx", F_OK) ||
+        0 == access("/dev/myri0", F_OK) ||
+        0 == access("/dev/myri1", F_OK) ||
+        0 == access("/dev/myri2", F_OK) ||
+        0 == access("/dev/myri3", F_OK) ||
+        0 == access("/dev/myri4", F_OK) ||
+        0 == access("/dev/myri5", F_OK) ||
+        0 == access("/dev/myri6", F_OK) ||
+        0 == access("/dev/myri7", F_OK) ||
+        0 == access("/dev/myri8", F_OK) ||
+        0 == access("/dev/myri9", F_OK) ||
+        0 == access("/dev/ipath", F_OK) ||
+        0 == access("/dev/kgni0", F_OK)) {
         found_driver = true;
     }
     
