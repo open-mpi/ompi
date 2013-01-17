@@ -6,7 +6,7 @@ AC_INIT([VampirTrace], [m4_normalize(esyscmd([cat VERSION]))], [vampirsupport@zi
 AC_CONFIG_AUX_DIR(config)
 AC_CONFIG_MACRO_DIR(config/m4)
 AM_INIT_AUTOMAKE([foreign])
-AM_CONFIG_HEADER(config.h)
+AC_CONFIG_HEADERS(config.h)
 
 # If Automake supports silent rules, enable them.
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])

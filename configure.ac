@@ -10,7 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# * Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2006-2013 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2006-2008 Sun Microsystems, Inc.  All rights reserved.
 # Copyright (c) 2006-2011 Los Alamos National Security, LLC.  All rights
 #                         reserved.
@@ -124,7 +124,6 @@ m4_ifdef([project_ompi],
           AC_SUBST(libmpi_mpifh_so_version)
           AC_SUBST(libmpi_usempi_tkr_so_version)
           AC_SUBST(libmpi_usempi_ignore_tkr_so_version)
-          AC_SUBST(libmpi_java_so_version)
           # It's icky that we have to hard-code the names of the
           # common components here.  :-( This could probably be done
           # transparently by adding some intelligence in autogen.sh
@@ -162,11 +161,11 @@ AC_DEFINE_UNQUOTED([OMPI_ENABLE_PROGRESS_THREADS], [$OMPI_ENABLE_PROGRESS_THREAD
 
 # List header files to generate
 
-AM_CONFIG_HEADER([opal/include/opal_config.h])
+AC_CONFIG_HEADERS([opal/include/opal_config.h])
 m4_ifdef([project_orte],
-         [AM_CONFIG_HEADER([orte/include/orte_config.h])])
+         [AC_CONFIG_HEADERS([orte/include/orte_config.h])])
 m4_ifdef([project_ompi],
-         [AM_CONFIG_HEADER([ompi/include/ompi_config.h ompi/include/mpi.h])])
+         [AC_CONFIG_HEADERS([ompi/include/ompi_config.h ompi/include/mpi.h])])
 
 # override/fixup the version numbers set by AC_INIT, since on
 # developer builds, there's no good way to know what the version is
@@ -554,26 +553,6 @@ ompi_show_subtitle "Compiler characteristics"
 
 OPAL_CHECK_ATTRIBUTES
 OPAL_CHECK_COMPILER_VERSION_ID
-
-
-##################################
-# Java compiler characteristics
-##################################
-# Needed for ORTE - OMPI will AC_REQUIRE where needed
-m4_ifdef([project_orte], [ORTE_SETUP_JAVA])
-
-##################################
-# Java MPI Binding request
-##################################
-# Only needed for OMPI
-m4_ifdef([project_ompi], [OMPI_SETUP_JAVA_BINDINGS])
-
-##################################
-# Hadoop support
-##################################
-
-# We can't use Hadoop support unless we're building ORTE
-m4_ifdef([project_orte], [ORTE_SETUP_HADOOP])
 
 
 ##################################

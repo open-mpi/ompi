@@ -96,7 +96,6 @@ void ompi_info_do_config(bool want_all)
     char *fortran_have_asynchronous;
     char *fortran_have_procedure;
     char *fortran_08_using_wrappers_for_choice_buffer_functions;
-    char *java;
     char *heterogeneous;
     char *memprofile;
     char *memdebug;
@@ -212,7 +211,6 @@ void ompi_info_do_config(bool want_all)
         fortran_usempif08_compliance = strdup("The mpi_f08 module was not built");
     }
 
-    java = OMPI_WANT_JAVA_BINDINGS ? "yes" : "no";
     heterogeneous = OPAL_ENABLE_HETEROGENEOUS_SUPPORT ? "yes" : "no";
     memprofile = OPAL_ENABLE_MEM_PROFILE ? "yes" : "no";
     memdebug = OPAL_ENABLE_MEM_DEBUG ? "yes" : "no";
@@ -296,7 +294,6 @@ void ompi_info_do_config(bool want_all)
     }
     opal_info_out("Fort mpi_f08 subarrays", "bindings:use_mpi_f08:subarrays-supported", 
                   fortran_build_f08_subarrays);
-    opal_info_out("Java bindings", "bindings:java", java);
 
     opal_info_out("C compiler", "compiler:c:command", OPAL_CC);
     opal_info_out("C compiler absolute", "compiler:c:absolute", 

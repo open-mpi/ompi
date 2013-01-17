@@ -19,9 +19,9 @@
 #
 
 generated_man_pages = mpicc.1 mpic++.1 mpicxx.1 mpifort.1 mpif77.1 mpif90.1
-man_pages = $(generated_man_pages) mpijavac.1
+man_pages = $(generated_man_pages)
 
-EXTRA_DIST = mpijavac.1 mpif77.1in
+EXTRA_DIST = mpif77.1in
 
 if OPAL_WANT_SCRIPT_WRAPPER_COMPILERS
 
@@ -30,14 +30,12 @@ CLEANFILES += $(bin_SCRIPTS)
 
 install-exec-hook-always:
 	test -z "$(bindir)" || $(MKDIR_P) "$(DESTDIR)$(bindir)"
-	(cp mpijavac.pl $(DESTDIR)$(bindir))
 	(cd $(DESTDIR)$(bindir); rm -f mpicc; $(LN_S) ompi_wrapper_script mpicc)
 	(cd $(DESTDIR)$(bindir); rm -f mpic++; $(LN_S) ompi_wrapper_script mpic++)
 	(cd $(DESTDIR)$(bindir); rm -f mpicxx; $(LN_S) ompi_wrapper_script mpicxx)
 	(cd $(DESTDIR)$(bindir); rm -f mpifort; $(LN_S) ompi_wrapper_script mpifort)
 	(cd $(DESTDIR)$(bindir); rm -f mpif77; $(LN_S) mpifort mpif77)
 	(cd $(DESTDIR)$(bindir); rm -f mpif90; $(LN_S) mpifort mpif90)
-	(cd $(DESTDIR)$(bindir); chmod +x mpijavac.pl; rm -f mpijavac; $(LN_S) mpijavac.pl mpijavac)
 
 uninstall-local-always:
 	rm -f $(DESTDIR)$(bindir)/mpicc \
@@ -45,8 +43,7 @@ uninstall-local-always:
 	$(DESTDIR)$(bindir)/mpicxx \
 	$(DESTDIR)$(bindir)/mpifort \
 	$(DESTDIR)$(bindir)/mpif77 \
-	$(DESTDIR)$(bindir)/mpif90 \
-	$(DESTDIR)$(bindir)/mpijavac
+	$(DESTDIR)$(bindir)/mpif90
 
 if CASE_SENSITIVE_FS
 install-exec-hook: install-exec-hook-always
@@ -74,14 +71,12 @@ nodist_pkgdata_DATA = \
 
 install-exec-hook-always:
 	test -z "$(bindir)" || $(MKDIR_P) "$(DESTDIR)$(bindir)"
-	(cp mpijavac.pl $(DESTDIR)$(bindir))
 	(cd $(DESTDIR)$(bindir); rm -f mpicc$(EXEEXT); $(LN_S) opal_wrapper mpicc)
 	(cd $(DESTDIR)$(bindir); rm -f mpic++$(EXEEXT); $(LN_S) opal_wrapper mpic++)
 	(cd $(DESTDIR)$(bindir); rm -f mpicxx$(EXEEXT); $(LN_S) opal_wrapper mpicxx)
 	(cd $(DESTDIR)$(bindir); rm -f mpifort$(EXEEXT); $(LN_S) opal_wrapper mpifort)
 	(cd $(DESTDIR)$(bindir); rm -f mpif77$(EXEEXT); $(LN_S) mpifort mpif77)
 	(cd $(DESTDIR)$(bindir); rm -f mpif90$(EXEEXT); $(LN_S) mpifort mpif90)
-	(cd $(DESTDIR)$(bindir); chmod +x mpijavac.pl; rm -f mpijavac; $(LN_S) mpijavac.pl mpijavac)
 
 install-data-hook-always:
 	(cd $(DESTDIR)$(pkgdatadir); rm -f mpicxx-wrapper-data.txt; $(LN_S) mpic++-wrapper-data.txt mpicxx-wrapper-data.txt)
@@ -102,9 +97,7 @@ uninstall-local-always:
 	$(DESTDIR)$(pkgdatadir)/mpif90-wrapper-data.txt \
 	$(DESTDIR)$(pkgconfigdir)/ompi-f77.pc \
 	$(DESTDIR)$(pkgconfigdir)/ompi-f90.pc \
-	$(DESTDIR)$(pkgconfigdir)/ompi-fort.pc \
-	$(DESTDIR)$(bindir)/mpijavac \
-	$(DESTDIR)$(bindir)/mpijavac.pl
+	$(DESTDIR)$(pkgconfigdir)/ompi-fort.pc
 
 if CASE_SENSITIVE_FS
 install-exec-hook: install-exec-hook-always

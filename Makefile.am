@@ -20,7 +20,7 @@
 
 SUBDIRS = config contrib $(MCA_PROJECT_SUBDIRS) test
 EXTRA_DIST = README INSTALL VERSION Doxyfile LICENSE autogen.pl autogen.sh \
-             CMakeLists.txt README.JAVA.txt
+             CMakeLists.txt
 
 include examples/Makefile.include
 
