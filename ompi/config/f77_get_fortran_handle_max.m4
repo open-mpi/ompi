@@ -10,6 +10,7 @@ dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
+dnl Copyright (c) 2013      Cisco Systems, Inc.  All rights reserved.
 dnl $COPYRIGHT$
 dnl 
 dnl Additional copyrights may follow
@@ -30,15 +31,7 @@ AC_DEFUN([OMPI_F77_GET_FORTRAN_HANDLE_MAX],[
          if test "$OMPI_WANT_F77_BINDINGS" = "0" ; then
              ompi_fint_max=0
          else
-             # Calculate the number of f's that we need to append to the hex
-             # value.  Do one less than we really need becaue we assume the
-             # top nybble is 0x7 to avoid sign issues.
-             ompi_numf=`expr $OMPI_SIZEOF_FORTRAN_INTEGER \* 2 - 1`
-             ompi_fint_max=0x7
-             while test "$ompi_numf" -gt "0"; do
-                 ompi_fint_max=${ompi_fint_max}f
-                 ompi_numf=`expr $ompi_numf - 1`
-             done
+             OPAL_COMPUTE_MAX_VALUE([$OMPI_SIZEOF_FORTRAN_INTEGER], [ompi_fint_max])
          fi
 
          # Get INT_MAX.  Compute a SWAG if we are cross compiling or something
@@ -54,12 +47,7 @@ fclose(fp);]])],
              [ompi_cint_max=`cat conftest.out`], 
              [ompi_cint_max=0],
              [ #cross compiling is fun.  compute INT_MAX same as INTEGER max
-              ompi_numf=`expr $ac_cv_sizeof_int \* 2 - 1`
-              ompi_cint_max=0x7
-              while test "$ompi_numf" -gt "0" ; do
-                  ompi_cint_max=${ompi_cint_max}f
-                  ompi_numf=`expr $ompi_numf - 1`
-              done])
+              OPAL_COMPUTE_MAX_VALUE([$ac_cv_sizeof_int], [ompi_cint_max])])
 
          if test "$ompi_cint_max" = "0" ; then
              # wow - something went really wrong.  Be conservative
