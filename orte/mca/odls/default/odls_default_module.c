@@ -477,7 +477,8 @@ static int odls_default_fork_local_proc(orte_app_context_t* context,
                         if (0 > phys_core) {
                             ORTE_ODLS_IF_BIND_NOT_REQD("bind-to-core");
                             orte_show_help("help-odls-default.txt",
-                                           "odls-default:invalid-phys-cpu", true);
+                                           "odls-default:invalid-phys-cpu", true,
+                                           orte_process_info.nodename);
                             ORTE_ODLS_ERROR_OUT(ORTE_ERR_FATAL);
                         }
                         /* map this to a physical cpu on this node */
@@ -556,7 +557,8 @@ static int odls_default_fork_local_proc(orte_app_context_t* context,
                             } else if (0 > phys_cpu) {
                                 ORTE_ODLS_IF_BIND_NOT_REQD("bind-to-core");
                                 orte_show_help("help-odls-default.txt",
-                                               "odls-default:invalid-phys-cpu", true);
+                                               "odls-default:invalid-phys-cpu", true,
+                                               orte_process_info.nodename);
                                 ORTE_ODLS_ERROR_OUT(ORTE_ERR_FATAL);
                             }
                         }
@@ -749,14 +751,16 @@ static int odls_default_fork_local_proc(orte_app_context_t* context,
                     if (0 > phys_core) {
                         ORTE_ODLS_IF_BIND_NOT_REQD("bind-to-socket");
                         orte_show_help("help-odls-default.txt",
-                                       "odls-default:invalid-phys-cpu", true);
+                                       "odls-default:invalid-phys-cpu", true,
+                                       orte_process_info.nodename);
                         ORTE_ODLS_ERROR_OUT(ORTE_ERR_FATAL);
                     }
                     /* map this to a physical cpu on this node */
                     if (ORTE_SUCCESS != opal_paffinity_base_get_map_to_processor_id(target_socket, phys_core, &phys_cpu)) {
                         ORTE_ODLS_IF_BIND_NOT_REQD("bind-to-socket");
                         orte_show_help("help-odls-default.txt",
-                                       "odls-default:invalid-phys-cpu", true);
+                                       "odls-default:invalid-phys-cpu", true,
+                                       orte_process_info.nodename);
                         ORTE_ODLS_ERROR_OUT(ORTE_ERR_FATAL);
                     }
                     /* are we bound? */
