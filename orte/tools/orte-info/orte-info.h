@@ -36,8 +36,6 @@ extern bool orte_info_pretty;
 extern opal_cmd_line_t *orte_info_cmd_line;
 
 extern const char *orte_info_type_all;
-extern const char *orte_info_type_orte;
-extern const char *orte_info_type_orte;
 extern const char *orte_info_type_opal;
 extern const char *orte_info_type_base;
 
