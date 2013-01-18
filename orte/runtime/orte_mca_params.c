@@ -351,6 +351,11 @@ int orte_register_params(void)
                                 false, false, (int)false, &value);
     orte_retain_aliases = OPAL_INT_TO_BOOL(value);
 
+    /* which alias to use in MPIR_proctab */
+    mca_base_param_reg_int_name("orte", "hostname_alias_index",
+                                "If hostname aliases are being retained, which one to use for the debugger proc table [default: 1st alias]",
+                                false, false, 1, &orte_use_hostname_alias);
+
     /* whether to tag output */
     mca_base_param_reg_int_name("orte", "tag_output",
                                 "Tag all output with [job,rank] (default: false)",
