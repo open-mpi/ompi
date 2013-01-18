@@ -25,10 +25,10 @@
 
 #include "opal/version.h"
 #include "orte/version.h"
-#include "orte/version.h"
 #include "opal/mca/base/base.h"
 #include "opal/util/printf.h"
 
+#include "orte/runtime/orte_info_support.h"
 #include "orte/tools/orte-info/orte-info.h"
 
 /*

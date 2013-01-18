@@ -60,7 +60,6 @@ bool orte_info_pretty = true;
 opal_cmd_line_t *orte_info_cmd_line = NULL;
 
 const char *orte_info_type_all = "all";
-const char *orte_info_type_orte = "orte";
 const char *orte_info_type_opal = "opal";
 const char *orte_info_type_base = "base";
 
