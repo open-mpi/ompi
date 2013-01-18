@@ -194,6 +194,7 @@ static int store(const orte_process_name_t *proc,
              */
             size_t n, k;
             bool subbed;
+            char *ptr;
 
             str = (char*)data;
             /* first, count how many characters need to be replaced - since Cray
