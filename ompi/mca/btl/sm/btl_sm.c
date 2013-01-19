@@ -754,7 +754,7 @@ struct mca_btl_base_descriptor_t* mca_btl_sm_prepare_src(
     int rc;
 
 #if OMPI_BTL_SM_HAVE_KNEM || OMPI_BTL_SM_HAVE_CMA
-    mca_btl_sm_t* sm_btl = (mca_btl_sm_t*)btl;
+    mca_btl_sm_t* sm_btl = (mca_btl_sm_t*)btl; (void)sm_btl;
 
     if( (0 != reserve) || ( OPAL_UNLIKELY(!mca_btl_sm_component.use_knem)
                             && OPAL_UNLIKELY(!mca_btl_sm_component.use_cma)) ) {
@@ -1040,11 +1040,11 @@ int mca_btl_sm_get_sync(struct mca_btl_base_module_t* btl,
                         struct mca_btl_base_descriptor_t* des)
 {
     int btl_ownership;
-    mca_btl_sm_t* sm_btl = (mca_btl_sm_t*) btl;
     mca_btl_sm_frag_t* frag = (mca_btl_sm_frag_t*)des;
     mca_btl_sm_segment_t *src = (mca_btl_sm_segment_t*)des->des_src;
     mca_btl_sm_segment_t *dst = (mca_btl_sm_segment_t*)des->des_dst;
 #if OMPI_BTL_SM_HAVE_KNEM
+    mca_btl_sm_t* sm_btl = (mca_btl_sm_t*) btl;
     if (OPAL_LIKELY(mca_btl_sm_component.use_knem)) {
         struct knem_cmd_inline_copy icopy;
         struct knem_cmd_param_iovec recv_iovec;
