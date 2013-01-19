@@ -67,6 +67,7 @@ JAVA_H = \
 # A little verbosity magic; "make" will show the terse output.  "make
 # V=1" will show the actual commands used (just like the other
 # Automake-generated compilation/linker rules).
+V=0
 OMPI_V_JAVAC = $(ompi__v_JAVAC_$V)
 ompi__v_JAVAC_ = $(ompi__v_JAVAC_$AM_DEFAULT_VERBOSITY)
 ompi__v_JAVAC_0 = @echo "  JAVAC " `basename $@`;
