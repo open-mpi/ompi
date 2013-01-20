@@ -193,6 +193,9 @@ int orte_err2str(int errnum, const char **errmsg)
     case ORTE_ERR_DATA_VALUE_NOT_FOUND:
         retval = "Data not found";
         break;
+    case ORTE_ERR_ALLOCATION_PENDING:
+        retval = "Allocation pending";
+        break;
     default:
         if (orte_report_silent_errors) {
             retval = "Unknown error";
@@ -290,6 +293,8 @@ const char *orte_job_state_to_str(orte_job_state_t state)
         return "ERROR REPORTED ELSEWHERE";
     case ORTE_JOB_STATE_REPORT_PROGRESS:
         return "REPORT PROGRESS";
+    case ORTE_JOB_STATE_ALLOC_FAILED:
+        return "ALLOCATION FAILED";
     case ORTE_JOB_STATE_ANY:
         return "ANY";
     default:
