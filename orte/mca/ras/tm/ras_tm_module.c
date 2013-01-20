@@ -52,7 +52,9 @@ static char *filename;
  * Global variable
  */
 orte_ras_base_module_t orte_ras_tm_module = {
+    NULL,
     allocate,
+    NULL,
     finalize
 };
 

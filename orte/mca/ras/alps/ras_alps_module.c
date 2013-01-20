@@ -76,7 +76,9 @@ static const orte_ras_alps_sysconfig_t sysconfigs[] = {
 
 /* /// Global Variables /// */
 orte_ras_base_module_t orte_ras_alps_module = {
+    NULL,
     orte_ras_alps_allocate,
+    NULL,
     orte_ras_alps_finalize
 };
 

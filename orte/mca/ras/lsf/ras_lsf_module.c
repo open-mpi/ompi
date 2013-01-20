@@ -46,7 +46,9 @@ static int finalize(void);
  * Global variable
  */
 orte_ras_base_module_t orte_ras_lsf_module = {
+    NULL,
     allocate,
+    NULL,
     finalize
 };
 

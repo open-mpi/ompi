@@ -51,7 +51,9 @@ void ras_get_cluster_message(ICluster* pCluster);
  * Local variables
  */
 orte_ras_base_module_t orte_ras_ccp_module = {
+    NULL,
     orte_ras_ccp_allocate,
+    NULL,
     orte_ras_ccp_finalize
 };
 

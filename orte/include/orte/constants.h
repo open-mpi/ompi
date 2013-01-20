@@ -126,7 +126,8 @@ enum {
     ORTE_ERR_SENSOR_LIMIT_EXCEEDED          = (ORTE_ERR_BASE - 43),
     ORTE_ERR_JOB_ENTRY_NOT_FOUND            = (ORTE_ERR_BASE - 44),
     ORTE_ERR_PROC_ENTRY_NOT_FOUND           = (ORTE_ERR_BASE - 45),
-    ORTE_ERR_DATA_VALUE_NOT_FOUND           = (ORTE_ERR_BASE - 46)
+    ORTE_ERR_DATA_VALUE_NOT_FOUND           = (ORTE_ERR_BASE - 46),
+    ORTE_ERR_ALLOCATION_PENDING             = (ORTE_ERR_BASE - 47)
 };
 
 #define ORTE_ERR_MAX                      (ORTE_ERR_BASE - 100)

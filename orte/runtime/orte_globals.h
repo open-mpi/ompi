@@ -295,6 +295,10 @@ typedef struct {
     int32_t max_restarts;
     /* maximum number of procs/node for this app */
     orte_vpid_t max_procs_per_node;
+    /* flag if nodes requested in -host are "mandatory" vs "optional" */
+    bool mandatory;
+    /* min number of nodes required */
+    int64_t min_number_of_nodes;
 } orte_app_context_t;
 
 ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_app_context_t);

@@ -52,6 +52,9 @@ int orte_ras_base_select(void)
     /* Save the winner */
     /* No component saved */
     orte_ras_base.active_module = best_module;
+    if (NULL != orte_ras_base.active_module->init) {
+        return orte_ras_base.active_module->init();
+    }
 
     return ORTE_SUCCESS;
 }
