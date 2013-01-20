@@ -166,6 +166,7 @@ typedef int32_t orte_job_state_t;
 #define ORTE_JOB_STATE_SILENT_ABORT            (ORTE_JOB_STATE_ERROR + 16)  /* an error occurred and was reported elsewhere, so error out quietly */
 
 #define ORTE_JOB_STATE_REPORT_PROGRESS         (ORTE_JOB_STATE_ERROR + 17)  /* report launch progress - not an error */
+#define ORTE_JOB_STATE_ALLOC_FAILED            (ORTE_JOB_STATE_ERROR + 18)  /* job failed to obtain an allocation */
 
 /* Define a boundary so that external developers
  * have a starting point for defining their own
