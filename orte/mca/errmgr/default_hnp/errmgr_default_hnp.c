@@ -160,7 +160,8 @@ static void job_errors(int fd, short args, void *cbdata)
          */
         orte_abnormal_term_ordered = true;
     }
-    if (ORTE_JOB_STATE_NEVER_LAUNCHED == jobstate) {
+    if (ORTE_JOB_STATE_NEVER_LAUNCHED == jobstate ||
+        ORTE_JOB_STATE_ALLOC_FAILED == jobstate) {
         orte_never_launched = true;
         jdata->num_terminated = jdata->num_procs;
         ORTE_ACTIVATE_JOB_STATE(caddy->jdata, ORTE_JOB_STATE_TERMINATED);

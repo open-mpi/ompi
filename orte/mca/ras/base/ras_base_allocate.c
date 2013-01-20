@@ -142,12 +142,38 @@ void orte_ras_base_allocate(int fd, short args, void *cbdata)
     if (NULL != orte_ras_base.active_module)  {
         /* read the allocation */
         if (ORTE_SUCCESS != (rc = orte_ras_base.active_module->allocate(jdata, &nodes))) {
+            if (ORTE_ERR_ALLOCATION_PENDING == rc) {
+                /* an allocation request is underway, so just do nothing */
+                OBJ_DESTRUCT(&nodes);
+                OBJ_RELEASE(caddy);
+                return;
+            }
             if (ORTE_ERR_SYSTEM_WILL_BOOTSTRAP == rc) {
                 /* this module indicates that nodes will be discovered
                  * on a bootstrap basis, so all we do here is add our
                  * own node to the list
                  */
                 goto addlocal;
+            }
+            if (ORTE_ERR_TAKE_NEXT_OPTION == rc) {
+                /* we have an active module, but it is unable to
+                 * allocate anything for this job - this indicates
+                 * that it isn't a fatal error, but could be if
+                 * an allocation is required
+                 */
+                if (orte_allocation_required) {
+                    /* an allocation is required, so this is fatal */
+                    OBJ_DESTRUCT(&nodes);
+                    orte_show_help("help-ras-base.txt", "ras-base:no-allocation", true);
+                    ORTE_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
+                    OBJ_RELEASE(caddy);
+                    return;
+                } else {
+                    /* an allocation is not required, so we can just
+                     * run on the local node - go add it
+                     */
+                    goto addlocal;
+                }
             }
             ORTE_ERROR_LOG(rc);
             OBJ_DESTRUCT(&nodes);

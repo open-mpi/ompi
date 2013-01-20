@@ -50,7 +50,9 @@ static int ll_getline(FILE *fp, char *input);
  * Global variable
  */
 orte_ras_base_module_t orte_ras_loadleveler_module = {
+    NULL,
     orte_ras_loadleveler_allocate,
+    NULL,
     orte_ras_loadleveler_finalize
 };
 

@@ -73,11 +73,18 @@ ORTE_DECLSPEC extern opal_event_t orte_allocate_event;
  * but are defined here by convention
  */
 
+/* init the module */
+typedef int (*orte_ras_base_module_init_fn_t)(void);
+
 /**
  * Allocate resources to a job.
  */
 typedef int (*orte_ras_base_module_allocate_fn_t)(orte_job_t *jdata,
                                                   opal_list_t *nodes);
+
+/* deallocate resources */
+typedef void (*orte_ras_base_module_dealloc_fn_t)(orte_job_t *jdata,
+                                                  orte_app_context_t *app);
 
 /**
  * Cleanup module resources.
@@ -88,10 +95,13 @@ typedef int (*orte_ras_base_module_finalize_fn_t)(void);
  * ras module
  */
 struct orte_ras_base_module_2_0_0_t {
+    /** init */
+    orte_ras_base_module_init_fn_t          init;
     /** Allocation function pointer */
-    orte_ras_base_module_allocate_fn_t              allocate;
+    orte_ras_base_module_allocate_fn_t      allocate;
+    orte_ras_base_module_dealloc_fn_t       deallocate;
     /** Finalization function pointer */
-    orte_ras_base_module_finalize_fn_t              finalize;
+    orte_ras_base_module_finalize_fn_t      finalize;
 };
 /** Convenience typedef */
 typedef struct orte_ras_base_module_2_0_0_t orte_ras_base_module_2_0_0_t;

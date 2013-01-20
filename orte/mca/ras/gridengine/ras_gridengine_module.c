@@ -47,7 +47,9 @@ static int get_slot_count(char* node_name, int* slot_cnt);
  * Global variable
  */
 orte_ras_base_module_t orte_ras_gridengine_module = {
+    NULL,
     orte_ras_gridengine_allocate,
+    NULL,
     orte_ras_gridengine_finalize
 };
 

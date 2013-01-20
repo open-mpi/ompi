@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007-2011 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2009-2010 Oracle and/or its affiliates.  All rights reserved.
- * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
+ * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * $COPYRIGHT$
  * 
@@ -609,6 +609,8 @@ static void orte_app_context_construct(orte_app_context_t* app_context)
     app_context->recovery_defined = false;
     app_context->max_restarts = -1000;
     app_context->max_procs_per_node = 0;
+    app_context->mandatory = false;
+    app_context->min_number_of_nodes = -1;  /* no minimum */
 }
 
 static void orte_app_context_destructor(orte_app_context_t* app_context)
