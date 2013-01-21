@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2013 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -115,12 +115,14 @@ bool mca_btl_tcp_frag_send(mca_btl_tcp_frag_t* frag, int sd)
                 BTL_ERROR(("mca_btl_tcp_frag_send: writev error (%p, %lu)\n\t%s(%lu)\n",
                     frag->iov_ptr[0].iov_base, (unsigned long) frag->iov_ptr[0].iov_len,
                     strerror(opal_socket_errno), (unsigned long) frag->iov_cnt));
+                frag->endpoint->endpoint_state = MCA_BTL_TCP_FAILED;
                 mca_btl_tcp_endpoint_close(frag->endpoint);
                 return false;
             default:
                 BTL_ERROR(("mca_btl_tcp_frag_send: writev failed: %s (%d)", 
                            strerror(opal_socket_errno),
                            opal_socket_errno));
+                frag->endpoint->endpoint_state = MCA_BTL_TCP_FAILED;
                 mca_btl_tcp_endpoint_close(frag->endpoint);
                 return false;
             }
@@ -195,6 +197,7 @@ bool mca_btl_tcp_frag_recv(mca_btl_tcp_frag_t* frag, int sd)
         cnt = readv(sd, frag->iov_ptr, num_vecs);
 	if( 0 < cnt ) goto advance_iov_position;
 	if( cnt == 0 ) {
+            btl_endpoint->endpoint_state = MCA_BTL_TCP_FAILED;
 	    mca_btl_tcp_endpoint_close(btl_endpoint);
 	    return false;
 	}
@@ -207,12 +210,14 @@ bool mca_btl_tcp_frag_recv(mca_btl_tcp_frag_t* frag, int sd)
             BTL_ERROR(("mca_btl_tcp_frag_recv: readv error (%p, %lu)\n\t%s(%lu)\n",
                        frag->iov_ptr[0].iov_base, (unsigned long) frag->iov_ptr[0].iov_len,
                        strerror(opal_socket_errno), (unsigned long) frag->iov_cnt));
+            btl_endpoint->endpoint_state = MCA_BTL_TCP_FAILED;
 	    mca_btl_tcp_endpoint_close(btl_endpoint);
 	    return false;
 	default:
             BTL_ERROR(("mca_btl_tcp_frag_recv: readv failed: %s (%d)", 
                        strerror(opal_socket_errno),
                        opal_socket_errno));
+            btl_endpoint->endpoint_state = MCA_BTL_TCP_FAILED;
 	    mca_btl_tcp_endpoint_close(btl_endpoint);
 	    return false;
 	}
