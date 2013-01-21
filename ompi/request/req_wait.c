@@ -61,6 +61,9 @@ int ompi_request_default_wait(
     }
     if( req->req_persistent ) {
         if( req->req_state == OMPI_REQUEST_INACTIVE ) {
+            if (MPI_STATUS_IGNORE != status) {
+                *status = ompi_status_empty;
+            }
             return OMPI_SUCCESS;
         }
         req->req_state = OMPI_REQUEST_INACTIVE;
