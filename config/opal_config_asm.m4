@@ -811,6 +811,7 @@ AC_DEFUN([OPAL_CONFIG_ASM],[
             ompi_cv_asm_arch="ARM"
             OPAL_ASM_SUPPORT_64BIT=1
             OPAL_ASM_ARM_VERSION=7
+            cp -f "$top_ompi_builddir/opal/asm/base/ARMV7.asm" "$top_ompi_builddir/opal/asm/base/ARM.asm"
             AC_DEFINE_UNQUOTED([OPAL_ASM_ARM_VERSION], [$OPAL_ASM_ARM_VERSION],
                                [What ARM assembly version to use])
             OMPI_GCC_INLINE_ASSIGN='"mov %0, #0" : "=&r"(ret)'
@@ -820,6 +821,7 @@ AC_DEFUN([OPAL_CONFIG_ASM],[
             ompi_cv_asm_arch="ARM"
             OPAL_ASM_SUPPORT_64BIT=0
             OPAL_ASM_ARM_VERSION=6
+            cp -f "$top_ompi_builddir/opal/asm/base/ARMV6.asm" "$top_ompi_builddir/opal/asm/base/ARM.asm"
             AC_DEFINE_UNQUOTED([OPAL_ASM_ARM_VERSION], [$OPAL_ASM_ARM_VERSION],
                                [What ARM assembly version to use])
             OMPI_GCC_INLINE_ASSIGN='"mov %0, #0" : "=&r"(ret)'
@@ -830,6 +832,7 @@ AC_DEFUN([OPAL_CONFIG_ASM],[
             ompi_cv_asm_arch="ARM"
             OPAL_ASM_SUPPORT_64BIT=0
             OPAL_ASM_ARM_VERSION=5
+            cp -f "$top_ompi_builddir/opal/asm/base/ARMV5.asm" "$top_ompi_builddir/opal/asm/base/ARM.asm"
             AC_DEFINE_UNQUOTED([OPAL_ASM_ARM_VERSION], [$OPAL_ASM_ARM_VERSION],
                                [What ARM assembly version to use])
             OMPI_GCC_INLINE_ASSIGN='"mov %0, #0" : "=&r"(ret)'
