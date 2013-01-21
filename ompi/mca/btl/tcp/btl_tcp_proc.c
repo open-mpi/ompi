@@ -680,7 +680,7 @@ int mca_btl_tcp_proc_remove(mca_btl_tcp_proc_t* btl_proc, mca_btl_base_endpoint_
 {
     size_t i;
     OPAL_THREAD_LOCK(&btl_proc->proc_lock);
-    for(i=0; i<btl_proc->proc_endpoint_count; i++) {
+    for(i = 0; i < btl_proc->proc_endpoint_count; i++) {
         if(btl_proc->proc_endpoints[i] == btl_endpoint) {
             memmove(btl_proc->proc_endpoints+i, btl_proc->proc_endpoints+i+1,
                 (btl_proc->proc_endpoint_count-i-1)*sizeof(mca_btl_base_endpoint_t*));
