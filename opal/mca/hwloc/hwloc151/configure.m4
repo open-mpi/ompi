@@ -55,9 +55,7 @@ AC_DEFUN([MCA_opal_hwloc_hwloc151_POST_CONFIG],[
            # building with developer headers so that our headers can
            # be found.
            AS_IF([test "$with_devel_headers" = "yes"],
-               [OPAL_WRAPPER_EXTRA_CPPFLAGS="$OPAL_WRAPPER_EXTRA_CPPFLAGS "'-I${includedir}/openmpi/'"$opal_hwloc_hwloc151_basedir/hwloc/include"])
-
-           OPAL_WRAPPER_EXTRA_LIBS="$OPAL_WRAPPER_EXTRA_LIBS $HWLOC_EMBEDDED_LIBS"
+               [WRAPPER_EXTRA_CPPFLAGS="$WRAPPER_EXTRA_CPPFLAGS "'-I${includedir}/openmpi/'"$opal_hwloc_hwloc151_basedir/hwloc/include"])
           ])
     OPAL_VAR_SCOPE_POP
 
