@@ -80,7 +80,7 @@ EOF
            # building with developer headers so that our headers can
            # be found.
            if test "$with_devel_headers" = "yes" ; then
-               OPAL_WRAPPER_EXTRA_CPPFLAGS="$OPAL_WRAPPER_EXTRA_CPPFLAGS "'-I${includedir}/openmpi/opal/mca/event/libevent2019/libevent -I${includedir}/openmpi/opal/mca/event/libevent2019/libevent/include'
+               WRAPPER_EXTRA_CPPFLAGS="$WRAPPER_EXTRA_CPPFLAGS "'-I${includedir}/openmpi/opal/mca/event/libevent2019/libevent -I${includedir}/openmpi/opal/mca/event/libevent2019/libevent/include'
            fi
           ])
 ])
