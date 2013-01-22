@@ -37,7 +37,11 @@ BEGIN_C_DECLS
  * still in the cache and second, the tmpbuf used by the schedule must
  * be attached to the handle that uses this schedule !!!! 
  * I.E., THIS IS EXPERIMENTAL AND MIGHT NOT WORK */
-#define NBC_CACHE_SCHEDULE
+/* It also leaks memory because the schedule is never cleaned up when
+   the communicator is destroyed, so don't use it for now */
+#ifdef NBC_CACHE_SCHEDULE
+#undef NBC_CACHE_SCHEDULE
+#endif
 #define NBC_SCHED_DICT_UPPER 1024 /* max. number of dict entries */
 #define NBC_SCHED_DICT_LOWER 512  /* nuber of dict entries after wipe, if SCHED_DICT_UPPER is reached */
 

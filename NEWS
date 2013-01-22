@@ -79,12 +79,16 @@ included in the vX.Y.Z section and be denoted as:
   MCA params).
 - Upgraded to hwloc v1.5.1.
 - Added performance improvements to the OpenIB (OpenFabrics) BTL.
+  (** also to appear: 1.6.4)
 - Made malloc hooks more friendly to IO interprosers.  Thanks to the
   bug report and suggested fix from Darshan maintainer Phil Carns.
+  (** also to appear: 1.6.4)
 - Added support for the DMTCP checkpoint/restart system.
 - Added support for the Cray uGNI interconnect.
 - Fixed header file problems on OpenBSD.
+  (** also to appear: 1.6.4)
 - Fixed issue with MPI_TYPE_CREATE_F90_REAL.
+  (** also to appear: 1.6.4)
 - Wrapper compilers now explicitly list/link all Open MPI libraries if
   they detect static linking CLI arguments.
 - Open MPI now requires a C99 compiler to build.  Please upgrade your
@@ -95,6 +99,7 @@ included in the vX.Y.Z section and be denoted as:
 - Fixed erroneous free of putenv'ed string that showed up in Valgrind
   reports.
 - Fixed MPI_IN_PLACE case for MPI_ALLGATHER.
+  (** also to appear: 1.6.4)
 - Fixed a bug that prevented MCA params from being forwarded to
   daemons upon launch.
 - Fixed issues with VT and CUDA --with-cuda[-libdir] configuration CLI
@@ -123,7 +128,7 @@ included in the vX.Y.Z section and be denoted as:
   reporting it
 - Fix a very old error in opal_path_access(). Thanks to Marco Atzeri
   for chasing it down.
-
+  (** also to appear: 1.6.4)
 
 
 1.6.3
