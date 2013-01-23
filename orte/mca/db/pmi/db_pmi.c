@@ -682,6 +682,7 @@ static int fetch(const orte_process_name_t *proc,
         memcpy(*data, &uival, sizeof(unsigned int));
         break;
     case OPAL_BYTE_OBJECT:
+        sval = 0;
         boptr = (opal_byte_object_t*)malloc(sizeof(opal_byte_object_t));
         boptr->bytes = (uint8_t*)pmi_decode(tmp_val, &sval);
         boptr->size = sval;
@@ -900,6 +901,9 @@ static uint8_t* pmi_decode (char *data, size_t *retlen) {
     unsigned char *ret, *val;
     int out_len;
     size_t i;
+
+    /* default */
+    *retlen = 0;
 
     ret = calloc (1, 3 * input_len + 1);
     if (NULL == ret) {
