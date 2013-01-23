@@ -8,7 +8,7 @@ Copyright (c) 2004-2008 High Performance Computing Center Stuttgart,
                         University of Stuttgart.  All rights reserved.
 Copyright (c) 2004-2006 The Regents of the University of California.
                         All rights reserved.
-Copyright (c) 2006-2010 Cisco Systems, Inc.  All rights reserved.
+Copyright (c) 2006-2013 Cisco Systems, Inc.  All rights reserved.
 Copyright (c) 2006      Voltaire, Inc. All rights reserved.
 Copyright (c) 2006      Sun Microsystems, Inc.  All rights reserved.
                         Use is subject to license terms.
@@ -105,6 +105,35 @@ Trunk (not on release branches yet)
 - Added the -novm option to preserve the prior launch behavior
 - Added new MCA parameter to provide protection against IO forwarding backlog
 - Added MPI Java bindings
+
+
+1.6.4
+-----
+
+- Fixed memory leak in one-sided operations.  Thanks to Victor
+  Vysotskiy for letting us know about this one.
+- Added performance improvements to the OpenIB (OpenFabrics) BTL.
+- Improved error message when process affinity fails.
+- Fixed MPI_MINLOC on man pages for MPI_REDUCE(_LOCAL).  Thanks to Jed
+  Brown for noticing the problem and supplying a fix.
+- Made malloc hooks more friendly to IO interprosers.  Thanks to the
+  bug report and suggested fix from Darshan maintainer Phil Carns.
+- Restored ability to direct launch under SLURM without PMI support.
+- Fixed MPI datatype issues on OpenBSD.
+- Major VT update to 5.14.2.3.
+- Support FCA v3.0+.
+- Fixed header file problems on OpenBSD.
+- Fixed issue with MPI_TYPE_CREATE_F90_REAL.
+- Fix an issue with using external libltdl installations.  Thanks to
+  opolawski for identifying the problem.
+- Fixed MPI_IN_PLACE case for MPI_ALLGATHER for FCA.
+- Allow SLURM PMI support to look in lib64 directories.  Thanks to
+  Guillaume Papaure for the patch.
+- Restore "use mpi" ABI compatibility with the rest of the 1.5/1.6
+  series (except for v1.6.3, where it was accidentally broken).
+- Fix a very old error in opal_path_access(). Thanks to Marco Atzeri
+  for chasing it down.
+
 
 1.6.3
 -----
