@@ -125,51 +125,6 @@ void orte_info_do_version(bool want_all, opal_cmd_line_t *cmd_line)
 
 
 /*
- * Show the version of Open MPI
- */
-void orte_info_show_orte_version(const char *scope)
-{
-    char *tmp, *tmp2;
-
-    orte_info_out("Package", "package", OPAL_PACKAGE_STRING);
-    
-    asprintf(&tmp, "%s:version:full", orte_info_type_orte);
-    orte_info_out("Open RTE", tmp,
-                  tmp2 = make_version_str(scope, 
-                                   ORTE_MAJOR_VERSION, ORTE_MINOR_VERSION, 
-                                   ORTE_RELEASE_VERSION, 
-                                   ORTE_GREEK_VERSION,
-                                   ORTE_WANT_REPO_REV, ORTE_REPO_REV));
-    free(tmp);
-    free(tmp2);
-    asprintf(&tmp, "%s:version:repo", orte_info_type_orte);
-    orte_info_out("Open RTE repo revision", tmp, ORTE_REPO_REV);
-    free(tmp);
-    asprintf(&tmp, "%s:version:release_date", orte_info_type_orte);
-    orte_info_out("Open RTE release date", tmp, ORTE_RELEASE_DATE);
-    free(tmp);
-    
-    asprintf(&tmp, "%s:version:full", orte_info_type_opal);
-    orte_info_out("OPAL", tmp,
-                  tmp2 = make_version_str(scope, 
-                                   OPAL_MAJOR_VERSION, OPAL_MINOR_VERSION, 
-                                   OPAL_RELEASE_VERSION, 
-                                   OPAL_GREEK_VERSION,
-                                   OPAL_WANT_REPO_REV, OPAL_REPO_REV));
-    free(tmp);
-    free(tmp2);
-    asprintf(&tmp, "%s:version:repo", orte_info_type_opal);
-    orte_info_out("OPAL repo revision", tmp, OPAL_REPO_REV);
-    free(tmp);
-    asprintf(&tmp, "%s:version:release_date", orte_info_type_opal);
-    orte_info_out("OPAL release date", tmp, OPAL_RELEASE_DATE);
-    free(tmp);
-    
-    orte_info_out("Ident string", "ident", OPAL_IDENT_STRING);
-}
-
-
-/*
  * Show all the components of a specific type/component combo (component may be
  * a wildcard)
  */
