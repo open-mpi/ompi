@@ -168,7 +168,9 @@ static int mca_oob_tcp_component_register(void)
 {
     int tmp;
     char *listen_type, *str = NULL;
+#if ORTE_ENABLE_STATIC_PORTS
     bool ip4_ports_given = false;
+#endif
 
     mca_base_param_reg_int(&mca_oob_tcp_component.super.oob_base,
                            "verbose",
