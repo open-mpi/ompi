@@ -39,6 +39,16 @@
 # define MAX_HANDLES (VT_LIBWRAP_MAX_SHLIBS+1)
 #endif /* HAVE_DECL_RTLD_NEXT */
 
+/* Do not call dlerror, if the memory allocation wrappers are enabled.
+   dlerror calls realloc which would ends up in an infinite recursion. */
+#ifdef VT_MALLOCWRAP
+# define dlerror no_dlerror
+  static char* no_dlerror(void)
+  {
+    return "unknown";
+  }
+#endif /* VT_MALLOCWRAP */
+
 /* data structure for library wrapper object */
 struct VTLibwrap_struct
 {
