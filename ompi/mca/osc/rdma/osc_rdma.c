@@ -84,6 +84,9 @@ ompi_osc_rdma_module_free(ompi_win_t *win)
     if (NULL != module->m_sc_remote_active_ranks) {
         free(module->m_sc_remote_active_ranks);
     }
+    if (NULL != module->m_pending_buffers) {
+        free(module->m_pending_buffers);
+    }
     if (NULL != module->m_fence_coll_counts) {
         free(module->m_fence_coll_counts);
     }
