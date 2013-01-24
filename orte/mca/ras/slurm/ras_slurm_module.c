@@ -971,7 +971,7 @@ static int dyn_allocate(orte_job_t *jdata)
         free(tmp);
         /* if we were given a minimum number of nodes, pass it along */
         if (0 < app->min_number_of_nodes) {
-            asprintf(&tmp, "N=%ld", app->min_number_of_nodes);
+            asprintf(&tmp, "N=%ld", (long int)app->min_number_of_nodes);
             opal_argv_append_nosize(&cmd, tmp);
             free(tmp);
         }
