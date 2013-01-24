@@ -447,13 +447,6 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
         goto COMPLETE;
     }
 
-    /* if we are doing a timing test, store the time the msg was recvd */
-    if (orte_timing) {
-        jdata->launch_msg_recvd.tv_sec = orte_daemon_msg_recvd.tv_sec;
-        jdata->launch_msg_recvd.tv_usec = orte_daemon_msg_recvd.tv_usec;
-    }
-    
-    
     /* UNPACK JOB-SPECIFIC DATA */
     /* unpack the job state so we can know if this is a restart vs initial launch */
     cnt=1;

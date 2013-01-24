@@ -46,9 +46,6 @@ ORTE_DECLSPEC int orte_daemon_process_commands(orte_process_name_t* sender,
                                                opal_buffer_t *buffer,
                                                orte_rml_tag_t tag);
 
-/* a time flag that needs to be visible elsewhere */
-ORTE_DECLSPEC extern struct timeval orte_daemon_msg_recvd;
-
 END_C_DECLS
 
 /* Local function */
