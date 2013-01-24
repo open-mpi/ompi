@@ -38,10 +38,10 @@ EXTRA_SRC = $(EVENT2_EXPORT)
 ## the source header filename to derive the installed header filename.
 ## With nobase_ the installed path is $(includedir)/event2/ev*.h.
 
-if INSTALL_LIBEVENT
-nobase_include_HEADERS =	$(EVENT2_EXPORT)
-nobase_nodist_include_HEADERS = ./event2/event-config.h
-else
-noinst_HEADERS =		$(EVENT2_EXPORT)
-nodist_noinst_HEADERS =		./event2/event-config.h
-endif
+#if INSTALL_LIBEVENT
+#nobase_include_HEADERS =	$(EVENT2_EXPORT)
+#nobase_nodist_include_HEADERS = ./event2/event-config.h
+#else
+#noinst_HEADERS =		$(EVENT2_EXPORT)
+#nodist_noinst_HEADERS =		./event2/event-config.h
+#endif
