@@ -21,16 +21,15 @@
 
 if !ORTE_DISABLE_FULL_SUPPORT
 
-# always include the following in tarballs as the selection of
-# script vs binary wrapper compilers is a configure option
-bin_SCRIPTS = orte_wrapper_script
-CLEANFILES += $(bin_SCRIPTS)
-
 nodist_pkgdata_DATA = \
 	ortecc-wrapper-data.txt \
 	ortec++-wrapper-data.txt
 
 if OPAL_WANT_SCRIPT_WRAPPER_COMPILERS
+
+bin_SCRIPTS = orte_wrapper_script
+CLEANFILES += $(bin_SCRIPTS)
+
 install-exec-hook-always:
 	test -z "$(bindir)" || $(MKDIR_P) "$(DESTDIR)$(bindir)"
 	(cd $(DESTDIR)$(bindir); rm -f ortecc; $(LN_S) orte_wrapper_script ortecc)
