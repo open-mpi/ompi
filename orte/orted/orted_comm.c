@@ -84,9 +84,6 @@
  */
 static char *get_orted_comm_cmd_str(int command);
 
-/* instantiate this - it is shared via orted.h */
-struct timeval orte_daemon_msg_recvd;
-
 static opal_pointer_array_t *procs_prev_ordered_to_terminate = NULL;
 
 void orte_daemon_recv(int status, orte_process_name_t* sender,
