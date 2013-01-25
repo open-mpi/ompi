@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2012      Los Alamos National Security, LLC.
+ * Copyright (c) 2012-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * $COPYRIGHT$
  * 
@@ -941,7 +941,7 @@ static int socket_to_cpu_set(char *cpus,
     int lower_range, upper_range;
     int socket_id;
     hwloc_obj_t obj;
-    hwloc_bitmap_t avail, res;
+    hwloc_bitmap_t res;
 
     if ('*' == cpus[0]) {
         /* requesting cpumask for ALL sockets */
@@ -950,7 +950,7 @@ static int socket_to_cpu_set(char *cpus,
          * this specification equates to unbound
          */
         res = opal_hwloc_base_get_available_cpus(topo, obj);
-        hwloc_bitmap_copy(cpumask, res);
+        hwloc_bitmap_or(cpumask, cpumask, res);
         return OPAL_SUCCESS;
     }
 
@@ -962,25 +962,20 @@ static int socket_to_cpu_set(char *cpus,
         obj = opal_hwloc_base_get_obj_by_type(topo, HWLOC_OBJ_SOCKET, 0, socket_id, OPAL_HWLOC_LOGICAL);
         /* get the available logical cpus for this socket */
         res = opal_hwloc_base_get_available_cpus(topo, obj);
-        hwloc_bitmap_copy(cpumask, res);
+        hwloc_bitmap_or(cpumask, cpumask, res);
         break;
                 
     case 2:  /* range of sockets was given */
         lower_range = atoi(range[0]);
         upper_range = atoi(range[1]);
-        /* zero the bitmask */
-        hwloc_bitmap_zero(cpumask);
-        avail = hwloc_bitmap_alloc();
         /* cycle across the range of sockets */
         for (socket_id=lower_range; socket_id<=upper_range; socket_id++) {
             obj = opal_hwloc_base_get_obj_by_type(topo, HWLOC_OBJ_SOCKET, 0, socket_id, OPAL_HWLOC_LOGICAL);
             /* get the available logical cpus for this socket */
             res = opal_hwloc_base_get_available_cpus(topo, obj);
             /* set the corresponding bits in the bitmask */
-            hwloc_bitmap_or(avail, cpumask, res);
-            hwloc_bitmap_copy(cpumask, avail);
+            hwloc_bitmap_or(cpumask, cpumask, res);
         }
-        hwloc_bitmap_free(avail);
         break;
     default:
         opal_argv_free(range);
@@ -1002,7 +997,7 @@ static int socket_core_to_cpu_set(char *socket_core_list,
     int lower_range, upper_range;
     int socket_id, core_id;
     hwloc_obj_t socket, core;
-    hwloc_cpuset_t res, avail;
+    hwloc_cpuset_t res;
     unsigned int idx;
     hwloc_obj_type_t obj_type = HWLOC_OBJ_CORE;
 
@@ -1034,7 +1029,7 @@ static int socket_core_to_cpu_set(char *socket_core_list,
         if ('*' == corestr[0]) {
             /* set to all available logical cpus on this socket */
             res = opal_hwloc_base_get_available_cpus(topo, socket);
-            hwloc_bitmap_copy(cpumask, res);
+            hwloc_bitmap_or(cpumask, cpumask, res);
             /* we are done - already assigned all cores! */
             rc = OPAL_SUCCESS;
             break;
@@ -1054,14 +1049,15 @@ static int socket_core_to_cpu_set(char *socket_core_list,
                 }
                 /* get the cpus */
                 res = opal_hwloc_base_get_available_cpus(topo, core);
-                hwloc_bitmap_copy(cpumask, res);
+                hwloc_bitmap_or(cpumask, cpumask, res);
                 break;
                 
             case 2:  /* range of core id's was given */
+                opal_output_verbose(5, opal_hwloc_base_output,
+                                    "range of cores given: start %s stop %s",
+                                    range[0], range[1]);
                 lower_range = atoi(range[0]);
                 upper_range = atoi(range[1]);
-                hwloc_bitmap_zero(cpumask);
-                avail = hwloc_bitmap_alloc();
                 for (core_id=lower_range; core_id <= upper_range; core_id++) {
                     /* get that object */
                     idx = 0;
@@ -1073,10 +1069,8 @@ static int socket_core_to_cpu_set(char *socket_core_list,
                     /* get the cpus */
                     res = opal_hwloc_base_get_available_cpus(topo, core);
                     /* add them into the result */
-                    hwloc_bitmap_or(avail, cpumask, res);
-                    hwloc_bitmap_copy(cpumask, avail);
+                    hwloc_bitmap_or(cpumask, cpumask, res);
                 }
-                hwloc_bitmap_free(avail);
                 break;
                 
             default:
@@ -1117,12 +1111,15 @@ int opal_hwloc_base_slot_list_parse(const char *slot_str,
                         slot_str);
     
     /* split at ';' */
-    item = opal_argv_split (slot_str, ';');
+    item = opal_argv_split(slot_str, ';');
 
     /* start with a clean mask */
     hwloc_bitmap_zero(cpumask);
     /* loop across the items and accumulate the mask */
     for (i=0; NULL != item[i]; i++) {
+        opal_output_verbose(5, opal_hwloc_base_output,
+                            "working assignment %s",
+                            item[i]);
         /* if they specified "socket" by starting with an S/s,
          * or if they use socket:core notation, then parse the
          * socket/core info
@@ -1161,7 +1158,6 @@ int opal_hwloc_base_slot_list_parse(const char *slot_str,
             /* just a core specification - see if one or a range was given */
             range = opal_argv_split(item[i], '-');
             range_cnt = opal_argv_count(range);
-            hwloc_bitmap_zero(cpumask);
             /* see if a range was set or not */
             switch (range_cnt) {
             case 1:  /* only one core specified */
@@ -1175,13 +1171,12 @@ int opal_hwloc_base_slot_list_parse(const char *slot_str,
                 /* get the available cpus for that object */
                 pucpus = opal_hwloc_base_get_available_cpus(topo, pu);
                  /* set that in the mask */
-                hwloc_bitmap_copy(cpumask, pucpus);
+                hwloc_bitmap_or(cpumask, cpumask, pucpus);
                 break;
                     
             case 2:  /* range of core id's was given */
                 lower_range = atoi(range[0]);
                 upper_range = atoi(range[1]);
-                hwloc_bitmap_zero(cpumask);
                 for (core_id=lower_range; core_id <= upper_range; core_id++) {
                     /* find the specified logical available cpu */
                     if (NULL == (pu = get_pu(topo, core_id))) {

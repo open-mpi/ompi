@@ -1,6 +1,8 @@
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2011 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2013      Los Alamos National Security, LLC.
+#                         All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -27,30 +29,47 @@ Check to make sure the path and filename are correct.
 
 usage:  mpirun -mca rmaps_rankfile_path rankfile ./app
 
-example:  cat hostfile
+Examples of proper syntax include:
+  cat hostfile
     host1
     host2
     host3
     host4
-          cat rankfile
+  cat rankfile
     rank 1=host1 slot=1:0,1
     rank 0=host2 slot=0:*
     rank 2=host4 slot=1-2
-    rank 3=host3 slot=0:1,1:0-2
+    rank 3=host3 slot=0:1;1:0-2
 #
 [parse_error_string]
 Open RTE detected a parse error in the rankfile (%s)
 It occured on line number %d on token %d:
     %s
+Examples of proper syntax include:
+    rank 1=host1 slot=1:0,1
+    rank 0=host2 slot=0:*
+    rank 2=host4 slot=1-2
+    rank 3=host3 slot=0:1;1:0-2
 #
 [parse_error_int]
 Open RTE detected a parse error in the rankfile (%s)
 It occured on line number %d on token %d:
     %d
+Examples of proper syntax include:
+    rank 1=host1 slot=1:0,1
+    rank 0=host2 slot=0:*
+    rank 2=host4 slot=1-2
+    rank 3=host3 slot=0:1;1:0-2
 #
 [parse_error]
 Open RTE detected a parse error in the rankfile (%s)
-It occured on line number %d on token %d.
+It occured on line number %d on token %d. Examples of
+proper syntax include:
+    rank 1=host1 slot=1:0,1
+    rank 0=host2 slot=0:*
+    rank 2=host4 slot=1-2
+    rank 3=host3 slot=0:1;1:0-2
+
 #
 [not-all-mapped-alloc]
 Some of the requested ranks are not included in the current allocation.
@@ -89,7 +108,11 @@ Error, rank %d is already assigned to %s, check %s
 Error, invalid syntax in the rankfile (%s)
 syntax must be the fallowing
 rank i=host_i slot=string
-ex: rank 1=host1 slot=1:0,1
+Examples of proper syntax include:
+    rank 1=host1 slot=1:0,1
+    rank 0=host2 slot=0:*
+    rank 2=host4 slot=1-2
+    rank 3=host3 slot=0:1;1:0-2
 #
 [orte-rmaps-rf:multi-apps-and-zero-np]
 RMAPS found multiple applications to be launched, with
@@ -100,7 +123,7 @@ of each to launch via the -np argument.
 [missing-rank]
 A rank is missing its location specification:
 
-  Rank:         %d
+  Rank:        %d
   Rank file:   %s
 
 All processes must have their location specified in the rank file. Either
