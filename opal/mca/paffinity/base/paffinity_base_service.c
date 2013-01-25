@@ -493,7 +493,8 @@ static int opal_paffinity_base_socket_core_to_cpu_set(char **socket_core_list, i
                             if ( OPAL_SUCCESS != (rc = opal_paffinity_base_set(cpumask))) {
                                 return rc;
                             }
-                            
+                            break;
+                         
                         default:
                             opal_argv_free(range);
                             opal_argv_free(socket_core);
