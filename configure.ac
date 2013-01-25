@@ -10,7 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2006-2009 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2006-2013 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2006-2008 Sun Microsystems, Inc.  All rights reserved.
 # Copyright (c) 2006-2011 Los Alamos National Security, LLC.  All rights
 #                         reserved. 
@@ -136,11 +136,11 @@ AC_DEFINE_UNQUOTED([OPAL_ENABLE_PROGRESS_THREADS], [$OPAL_ENABLE_PROGRESS_THREAD
 
 # List header files to generate
 
-AM_CONFIG_HEADER([opal/include/opal_config.h])
+AC_CONFIG_HEADERS([opal/include/opal_config.h])
 m4_ifdef([project_orte],
-         [AM_CONFIG_HEADER([orte/include/orte_config.h])])
+         [AC_CONFIG_HEADERS([orte/include/orte_config.h])])
 m4_ifdef([project_ompi],
-         [AM_CONFIG_HEADER([ompi/include/ompi_config.h ompi/include/mpi.h ompi/include/mpi_portable_platform.h])])
+         [AC_CONFIG_HEADERS([ompi/include/ompi_config.h ompi/include/mpi.h ompi/include/mpi_portable_platform.h])])
 
 # override/fixup the version numbers set by AC_INIT, since on
 # developer builds, there's no good way to know what the version is
