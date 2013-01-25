@@ -50,6 +50,8 @@ included in the vX.Y.Z section and be denoted as:
 1.6.4
 -----
 
+- Fix slot_list behavior when multiple sockets are specified.  Thanks
+  to Siegmar Gross for reporting the problem.
 - Fixed memory leak in one-sided operations.  Thanks to Victor
   Vysotskiy for letting us know about this one.
 - Added performance improvements to the OpenIB (OpenFabrics) BTL.
