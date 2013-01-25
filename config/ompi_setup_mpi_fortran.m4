@@ -23,8 +23,6 @@
 #
 
 AC_DEFUN([OMPI_SETUP_MPI_FORTRAN],[
-    OPAL_VAR_SCOPE_PUSH([ompi_fortran_happy])
-
     # Default to building nothing
     OMPI_BUILD_FORTRAN_MPIFH_BINDINGS=0
     OMPI_BUILD_FORTRAN_USEMPI_BINDINGS=0
