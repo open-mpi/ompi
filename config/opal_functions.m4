@@ -49,6 +49,7 @@ ompi_show_title() {
 == ${1}
 ============================================================================
 EOF
+  OPAL_LOG_MSG([=== ${1}], 1)
 }
 
 
@@ -57,6 +58,7 @@ ompi_show_subtitle() {
 
 *** ${1}
 EOF
+  OPAL_LOG_MSG([*** ${1}], 1)
 }
 
 
@@ -65,6 +67,7 @@ ompi_show_subsubtitle() {
 
 +++ ${1}
 EOF
+  OPAL_LOG_MSG([+++ ${1}], 1)
 }
 
 ompi_show_subsubsubtitle() {
@@ -72,6 +75,7 @@ ompi_show_subsubsubtitle() {
 
 --- ${1}
 EOF
+  OPAL_LOG_MSG([--- ${1}], 1)
 }
 
 #
