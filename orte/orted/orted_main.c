@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007-2011 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2007-2012 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2007-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2009      Institut National de Recherche en Informatique
  *                         et Automatique. All rights reserved.
@@ -53,6 +53,7 @@
 #include "opal/util/output.h"
 #include "opal/util/cmd_line.h"
 #include "opal/util/if.h"
+#include "opal/util/net.h"
 #include "opal/util/opal_environ.h"
 #include "opal/util/os_path.h"
 #include "opal/util/printf.h"
@@ -695,11 +696,26 @@ int orte_daemon(int argc, char *argv[])
 
         /* include our node name */
         opal_dss.pack(buffer, &orte_process_info.nodename, 1, OPAL_STRING);
-        
+
         /* if requested, include any non-loopback aliases for this node */
         if (orte_retain_aliases) {
             char **aliases=NULL;
             uint8_t naliases, ni;
+            char hostname[ORTE_MAX_HOSTNAME_SIZE];
+            char *ptr;
+
+            /* if we stripped the prefix, include full hostname as an alias */
+            if (orte_process_info.strip_prefix_from_node_names) {
+                gethostname(hostname, ORTE_MAX_HOSTNAME_SIZE);
+                /* if the hostname is an IP address, leave it alone */
+                if (!opal_net_isaddr(hostname) && !orte_keep_fqdn_hostnames) {
+                    /* not an IP address, so remove any domain info */
+                    if (NULL != (ptr = strchr(hostname, '.'))) {
+                        *ptr = '\0';
+                    }
+                }
+                opal_argv_append_nosize(&aliases, hostname);
+            }
             opal_ifgetaliases(&aliases);
             naliases = opal_argv_count(aliases);
             if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &naliases, 1, OPAL_UINT8))) {

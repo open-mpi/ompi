@@ -2721,7 +2721,15 @@ void orte_debugger_init_after_spawn(int fd, short event, void *cbdata)
             continue;
         }
         
-        MPIR_proctable[i].host_name = strdup(proc->node->name);
+        /* take the indicated alias as the hostname, if aliases exist */
+        if (orte_retain_aliases &&
+            orte_use_hostname_alias <= opal_argv_count(proc->node->alias)) {
+            MPIR_proctable[i].host_name = strdup(proc->node->alias[orte_use_hostname_alias-1]);
+        } else {
+            /* just use the default name */
+            MPIR_proctable[i].host_name = strdup(proc->node->name);
+        }
+
         if ( 0 == strncmp(appctx->app, OPAL_PATH_SEP, 1 )) { 
             MPIR_proctable[i].executable_name = 
                 opal_os_path( false, appctx->app, NULL ); 
