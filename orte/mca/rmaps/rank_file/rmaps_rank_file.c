@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2011 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2011      Los Alamos National Security, LLC.
+ * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2008      Voltaire. All rights reserved
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
@@ -382,7 +382,10 @@ static int orte_rmaps_rank_file_parse(const char *rankfile)
         
         switch (token) {
             case ORTE_RANKFILE_ERROR:
-                opal_output(0, "Got an error!");
+                orte_show_help("help-rmaps_rank_file.txt", "bad-syntax", true, rankfile);
+                rc = ORTE_ERR_BAD_PARAM;
+                ORTE_ERROR_LOG(rc);
+                goto unlock;
                 break;
             case ORTE_RANKFILE_QUOTED_STRING:
                 orte_show_help("help-rmaps_rank_file.txt", "not-supported-rankfile", true, "QUOTED_STRING", rankfile);
