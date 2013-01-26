@@ -10,7 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2006-2013 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -18,9 +18,7 @@
 # $HEADER$
 #
 
-if OMPI_BUILD_FORTRAN_USEMPI_TKR_BINDINGS
-
-noinst_SCRIPTS = \
+fortran_scripts = \
      mpi-f90-interfaces.h.sh \
      mpi_accumulate_f90.f90.sh \
      mpi_address_f90.f90.sh \
@@ -123,6 +121,9 @@ noinst_SCRIPTS = \
      mpi_wtick_f90.f90.sh \
      mpi_wtime_f90.f90.sh
 
-EXTRA_DIST = $(noinst_SCRIPTS)
+EXTRA_DIST = $(fortran_scripts)
 
+if OMPI_BUILD_FORTRAN_USEMPI_TKR_BINDINGS
+noinst_SCRIPTS = $(fortran_scripts)
 endif
+
