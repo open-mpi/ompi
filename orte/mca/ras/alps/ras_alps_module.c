@@ -34,6 +34,10 @@
 #include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
+#ifdef HAVE_SYS_STAT_H
+#include <sys/stat.h>
+#endif
+
 #include <alps/apInfo.h>
 
 typedef int (*parser_fn_t)(char **val_if_found, FILE *fp,
@@ -85,6 +89,9 @@ static int
 parser_ini(char **val_if_found, FILE *fp, const char *var_name)
 {
     char *alps_config_str = NULL;
+
+    opal_output_verbose(1, orte_ras_base.ras_output,
+                        "ras:alps:allocate: parser_ini");
 
     /* invalid argument */
     if (NULL == val_if_found) {
@@ -154,6 +161,9 @@ parser_separated_columns(char **val_if_found, FILE *fp, const char *var_name)
     char *alps_config_str = NULL;
     int var_len = strlen(var_name);
     int i;
+
+    opal_output_verbose(1, orte_ras_base.ras_output,
+                        "ras:alps:allocate: parser_separated_columns");
 
     /* invalid argument */
     if (NULL == val_if_found) {
@@ -372,14 +382,20 @@ orte_ras_alps_read_appinfo_file(opal_list_t *nodes, char *filename,
     orte_node_t     *node = NULL, *n2;
     appInfoHdr_t    *apHdr;                 /* ALPS header structure          */
     appInfo_t       *apInfo;                /* ALPS table info structure      */
-    cmdDetail_t     *apDet;                 /* ALPS command details           */
+#if ALPS_APPINFO_VERSION==0
     placeList_t     *apSlots;               /* ALPS node specific info        */
+#else
+    placeNodeList_t *apNodes;
+#endif
     bool            added;
     opal_list_item_t *item;
 
     orte_ras_alps_get_appinfo_attempts(&max_appinfo_read_attempts);
     oNow=0;
     iTrips=0;
+    opal_output_verbose(1, orte_ras_base.ras_output,
+                        "ras:alps:allocate: begin processing appinfo file");
+
     while(!oNow) {                          /* Until appinfo read is complete */
         iTrips++;                           /* Increment trip count           */
 
@@ -389,7 +405,7 @@ orte_ras_alps_read_appinfo_file(opal_list_t *nodes, char *filename,
                                 "ras:alps:allocate: ALPS information open failure");
             usleep(iTrips*50000);           /* Increasing delays, .05 s/try   */
 
-/*          Fail only when number of attempts have been exhausted.            */
+            /*          Fail only when number of attempts have been exhausted.            */
             if( iTrips <= max_appinfo_read_attempts ) continue;
             ORTE_ERROR_LOG(ORTE_ERR_FILE_OPEN_FAILURE);
             return ORTE_ERR_FILE_OPEN_FAILURE;
@@ -407,73 +423,81 @@ orte_ras_alps_read_appinfo_file(opal_list_t *nodes, char *filename,
             return ORTE_ERR_OUT_OF_RESOURCE;
         }
 
-/*      Repeated attempts to read appinfo, with an increasing delay between   *
- *      successive attempts to allow scheduler I/O a chance to complete.      */
+        /*      Repeated attempts to read appinfo, with an increasing delay between   *
+         *      successive attempts to allow scheduler I/O a chance to complete.      */
         if( (oNow=read( iFd, cpBuf, szLen ))!=(off_t)szLen ) {
 
-/*          This is where apstat fails; we will record it and try again.      */
+            /*          This is where apstat fails; we will record it and try again.      */
             opal_output_verbose(1, orte_ras_base.ras_output,
-                         "ras:alps:allocate: ALPS information read failure: %ld bytes", oNow);
+                                "ras:alps:allocate: ALPS information read failure: %ld bytes", (long int)oNow);
 
             free(cpBuf);                    /* Free (old) buffer              */
             close(iFd);                     /* Close (old) descriptor         */
             oNow=0;                         /* Reset byte count               */
             usleep(iTrips*50000);           /* Increasing delays, .05 s/try   */
 
-/*          Fail only when number of attempts have been exhausted.            */
+            /*          Fail only when number of attempts have been exhausted.            */
             if( iTrips<=max_appinfo_read_attempts ) continue;
             ORTE_ERROR_LOG(ORTE_ERR_FILE_READ_FAILURE);
             return ORTE_ERR_FILE_READ_FAILURE;
         }
     }
     close(iFd);
+    opal_output_verbose(1, orte_ras_base.ras_output,
+                        "ras:alps:allocate: file %s read", filename);
 
-/*  Now that we have the scheduler information, we just have to parse it for  *
- *  the data that we seek.                                                    */
+    /*  Now that we have the scheduler information, we just have to parse it for  *
+     *  the data that we seek.                                                    */
     oNow=0;
     apHdr=(appInfoHdr_t *)cpBuf;
 
-/*  Header info (apHdr) tells us how many entries are in the file:            *
- *                                                                            *
- *      apHdr->apNum                                                          */
+    opal_output_verbose(1, orte_ras_base.ras_output,
+                        "ras:alps:allocate: %d entries in file", apHdr->apNum);
+
+    /*  Header info (apHdr) tells us how many entries are in the file:            *
+     *                                                                            *
+     *      apHdr->apNum                                                          */
 
     for( iq=0; iq<apHdr->apNum; iq++ ) {    /*  Parse all entries in file     */
 
-/*      Just at this level, a lot of information is available:                *
- *                                                                            *
- *          apInfo->apid         ... ALPS job ID                              *
- *          apInfo->resId        ... ALPS reservation ID                      *
- *          apInfo->numCmds      ... Number of executables                    *
- *          apInfo->numPlaces    ... Number of PEs                            */
+        /*      Just at this level, a lot of information is available:                *
+         *                                                                            *
+         *          apInfo->apid         ... ALPS job ID                              *
+         *          apInfo->resId        ... ALPS reservation ID                      *
+         *          apInfo->numCmds      ... Number of executables                    *
+         *          apInfo->numPlaces    ... Number of PEs                            */
         apInfo=(appInfo_t *)(cpBuf+oNow+oInfo);
 
-/*      Calculate the dependent offsets.                                      */
+        /*      Calculate the dependent offsets.                                      */
         oSlots=sizeof(cmdDetail_t)*apInfo->numCmds;
-        oEntry=sizeof(placeList_t)*apInfo->numPlaces;
 
-/*      Also, we can extract details of commands currently running on nodes:  *
- *                                                                            *
- *          apDet[].fixedPerNode ... PEs per node                             *
- *          apDet[].nodeCnt      ... number of nodes in use                   *
- *          apDet[].memory       ... MB/PE memory limit                       *
- *          apDet[].cmd          ... command being run                        */
-        apDet=(cmdDetail_t *)(cpBuf+oNow+oInfo+oDet);
+        opal_output_verbose(1, orte_ras_base.ras_output,
+                            "ras:alps:allocate: read data for resId %u - myId %u",
+                            apInfo->resId, *uMe);
 
-/*      Finally, we get to the actual node-specific information:              *
- *                                                                            *
- *          apSlots[ix].cmdIx    ... index of apDet[].cmd                     *
- *          apSlots[ix].nid      ... NodeID (NID)                             *
- *          apSlots[ix].procMask ... mask for processors... need 16-bit shift */
+
+#if ALPS_APPINFO_VERSION==0
+
+        /*      Finally, we get to the actual node-specific information:              *
+         *                                                                            *
+         *          apSlots[ix].cmdIx    ... index of apDet[].cmd                     *
+         *          apSlots[ix].nid      ... NodeID (NID)                             *
+         *          apSlots[ix].procMask ... mask for processors... need 16-bit shift */
         apSlots=(placeList_t *)(cpBuf+oNow+oInfo+oDet+oSlots);
+        oEntry=sizeof(placeList_t)*apInfo->numPlaces;
 
         oNow+=(oDet+oSlots+oEntry);         /* Target next slot               */
 
         if( apInfo->resId != *uMe ) continue; /* Filter to our reservation Id */
 
+        /* in this early version of alps, there is one entry for each PE in the
+         * allocation - so cycle across the numPlaces entries, assigning a slot
+         * for each time a node is named
+         */
         for( ix=0; ix<apInfo->numPlaces; ix++ ) {
 
             opal_output_verbose(5, orte_ras_base.ras_output,
-                             "ras:alps:read_appinfo: got NID %d", apSlots[ix].nid);
+                                "ras:alps:read_appinfo: got NID %d", apSlots[ix].nid);
 
             asprintf( &hostname, "%d", apSlots[ix].nid );
             if (NULL == hostname) {
@@ -481,7 +505,7 @@ orte_ras_alps_read_appinfo_file(opal_list_t *nodes, char *filename,
                 return ORTE_ERR_OUT_OF_RESOURCE;
             }
 
-/*          If this matches the prior nodename, just add to the slot count.   */
+            /*          If this matches the prior nodename, just add to the slot count.   */
             if( NULL!=node && !strcmp(node->name, hostname) ) {
 
                 free(hostname);             /* free hostname since not needed */
@@ -489,7 +513,7 @@ orte_ras_alps_read_appinfo_file(opal_list_t *nodes, char *filename,
             } else {                        /* must be new, so add to list    */
 
                 opal_output_verbose(1, orte_ras_base.ras_output,
-                             "ras:alps:read_appinfo: added NID %d to list", apSlots[ix].nid);
+                                    "ras:alps:read_appinfo: added NID %d to list", apSlots[ix].nid);
 
                 node = OBJ_NEW(orte_node_t);
                 node->name = hostname;
@@ -519,6 +543,56 @@ orte_ras_alps_read_appinfo_file(opal_list_t *nodes, char *filename,
                 sNodes++;                   /* Increment the node count       */
             }
         }
+#else
+        /* in newer versions of alps, there is one entry for each node in the
+         * allocation, and that struct directly carries the number of PEs
+         * allocated on that node to this job.
+         */
+        apNodes=(placeNodeList_t *)(cpBuf+oNow+oInfo+oDet+oSlots);
+        oEntry=sizeof(placeNodeList_t)*apInfo->numPlaces;
+
+        oNow+=(oDet+oSlots+oEntry);         /* Target next entry               */
+
+        if( apInfo->resId != *uMe ) continue; /* Filter to our reservation Id */
+
+        for( ix=0; ix<apInfo->numPlaces; ix++ ) {
+            opal_output_verbose(5, orte_ras_base.ras_output,
+                                "ras:alps:read_appinfo(modern): processing NID %d with %d slots",
+                                apNodes[ix].nid, apNodes[ix].numPEs);
+            asprintf( &hostname, "%d", apNodes[ix].nid );
+            if (NULL == hostname) {
+                ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+                return ORTE_ERR_OUT_OF_RESOURCE;
+            }
+
+            node = OBJ_NEW(orte_node_t);
+            node->name = hostname;
+            node->launch_id = apNodes[ix].nid;
+            node->slots_inuse = 0;
+            node->slots_max = 0;
+            node->slots = apNodes[ix].numPEs;
+            /* need to order these node ids so the regex generator
+             * can properly function
+             */
+            added = false;
+            for (item = opal_list_get_first(nodes);
+                 item != opal_list_get_end(nodes);
+                 item = opal_list_get_next(item)) {
+                n2 = (orte_node_t*)item;
+                if (node->launch_id < n2->launch_id) {
+                    /* insert the new node before this one */
+                    opal_list_insert_pos(nodes, item, &node->super);
+                    added = true;
+                    break;
+                }
+            }
+            if (!added) {
+                /* add it to the end */
+                opal_list_append(nodes, &node->super);
+            }
+            sNodes++;                   /* Increment the node count       */
+        }
+#endif
         break;                              /* Extended details ignored       */
     }
     free(cpBuf);                            /* Free the buffer                */
