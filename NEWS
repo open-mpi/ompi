@@ -110,6 +110,10 @@ Trunk (not on release branches yet)
 1.6.4
 -----
 
+- Automatically provide compiler flags that compile properly on some
+  types of ARM systems.
+- Fix slot_list behavior when multiple sockets are specified.  Thanks
+  to Siegmar Gross for reporting the problem.
 - Fixed memory leak in one-sided operations.  Thanks to Victor
   Vysotskiy for letting us know about this one.
 - Added performance improvements to the OpenIB (OpenFabrics) BTL.
