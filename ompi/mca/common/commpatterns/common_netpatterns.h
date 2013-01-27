@@ -12,8 +12,6 @@
 #define COMM_NETPATTERNS_H
 
 #include "ompi_config.h"
-#include "orte/include/orte/types.h"
-#include "orte/mca/rml/rml_types.h"
 
 BEGIN_C_DECLS
 

@@ -13,6 +13,8 @@
  * Copyright (c) 2007-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
+ * Copyright (c) 2012      Los Alamos National Security, LLC.
+ *                         All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -28,8 +30,6 @@
 #include "opal/mca/hwloc/base/base.h"
 
 #include "opal/dss/dss.h"
-#include "orte/util/name_fns.h"
-#include "orte/mca/rml/rml_types.h"
 
 #include "ompi/proc/proc.h"
 #include "opal/threads/mutex.h"
@@ -1251,7 +1251,7 @@ ompi_proc_t **ompi_comm_get_rprocs ( ompi_communicator_t *local_comm,
     int rc;
     int local_rank, local_size;
     ompi_proc_t **rprocs=NULL;
-    orte_std_cntr_t size_len;
+    int32_t size_len;
     int int_len, rlen;
     opal_buffer_t *sbuf=NULL, *rbuf=NULL;
     void *sendbuf;
@@ -1355,7 +1355,7 @@ ompi_proc_t **ompi_comm_get_rprocs ( ompi_communicator_t *local_comm,
         goto err_exit;
     }
     
-    if (ORTE_SUCCESS != (rc = opal_dss.load(rbuf, recvbuf, rlen))) {
+    if (OMPI_SUCCESS != (rc = opal_dss.load(rbuf, recvbuf, rlen))) {
         goto err_exit;
     }
     
@@ -1425,7 +1425,7 @@ int ompi_comm_determine_first ( ompi_communicator_t *intercomm, int high )
     int scount=0;
     int rc;
     ompi_proc_t *ourproc, *theirproc;
-    orte_ns_cmp_bitmask_t mask;
+    ompi_rte_cmp_bitmask_t mask;
 
     rank = ompi_comm_rank        (intercomm);
     rsize= ompi_comm_remote_size (intercomm);
@@ -1467,8 +1467,8 @@ int ompi_comm_determine_first ( ompi_communicator_t *intercomm, int high )
         ourproc   = ompi_group_peer_lookup(intercomm->c_local_group,0);
         theirproc = ompi_group_peer_lookup(intercomm->c_remote_group,0);
 
-        mask = ORTE_NS_CMP_JOBID | ORTE_NS_CMP_VPID;
-        rc = orte_util_compare_name_fields(mask, &(ourproc->proc_name), &(theirproc->proc_name));
+        mask = OMPI_RTE_CMP_JOBID | OMPI_RTE_CMP_VPID;
+        rc = ompi_rte_compare_name_fields(mask, &(ourproc->proc_name), &(theirproc->proc_name));
         if ( 0 > rc ) {
             flag = true;
         }

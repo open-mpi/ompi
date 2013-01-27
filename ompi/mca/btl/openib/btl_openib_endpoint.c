@@ -37,8 +37,6 @@
 #include "opal_stdint.h"
 #include "opal/util/output.h"
 
-#include "orte/util/show_help.h"
-
 #include "ompi/types.h"
 #include "ompi/class/ompi_free_list.h"
 
@@ -1048,9 +1046,9 @@ void *mca_btl_openib_endpoint_invoke_error(void *context)
 
     /* If we didn't find a BTL, then just bail :-( */
     if (NULL == btl || NULL == btl->error_cb) {
-        orte_show_help("help-mpi-btl-openib.txt",
+        ompi_show_help("help-mpi-btl-openib.txt",
                        "cannot raise btl error", true,
-                       orte_process_info.nodename,
+                       ompi_process_info.nodename,
                        __FILE__, __LINE__);
         exit(1);
     }

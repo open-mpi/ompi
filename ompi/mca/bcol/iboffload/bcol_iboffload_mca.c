@@ -18,8 +18,6 @@
 #include "bcol_iboffload.h"
 #include "bcol_iboffload_mca.h"
 
-#include "orte/util/show_help.h"
-
 #include "ompi/constants.h"
 #include "ompi/mca/common/ofacm/base.h"
 #include "ompi/communicator/communicator.h"
@@ -255,7 +253,7 @@ int mca_bcol_iboffload_register_params(void)
     free(msg);
 
     if (ival < IBV_MTU_1024 || ival > IBV_MTU_4096) {
-        orte_show_help("help-mpi-bcol-iboffload.txt", "invalid mca param value",
+        ompi_show_help("help-mpi-bcol-iboffload.txt", "invalid mca param value",
                        true, "invalid value for bcol_iboffload_ib_mtu",
                        "bcol_iboffload_ib_mtu reset to 1024");
         mca_bcol_iboffload_component.mtu = IBV_MTU_1024;
@@ -269,12 +267,12 @@ int mca_bcol_iboffload_register_params(void)
                   1 , &ival, 0));
 
     if (ival > 31) {
-        orte_show_help("help-mpi-bcol-iboffload.txt", "invalid mca param value",
+        ompi_show_help("help-mpi-bcol-iboffload.txt", "invalid mca param value",
                        true, "bcol_iboffload_ib_min_rnr_timer > 31",
                        "bcol_iboffload_ib_min_rnr_timer reset to 31");
         ival = 31;
     } else if (ival < 0){
-        orte_show_help("help-mpi-bcol-iboffload.txt", "invalid mca param value",
+        ompi_show_help("help-mpi-bcol-iboffload.txt", "invalid mca param value",
                    true, "bcol_iboffload_ib_min_rnr_timer < 0",
                    "bcol_iboffload_ib_min_rnr_timer reset to 0");
         ival = 0;
@@ -286,12 +284,12 @@ int mca_bcol_iboffload_register_params(void)
                   "(must be >= 0 and <= 31)",
                   20, &ival, 0));
     if (ival > 31) {
-        orte_show_help("help-mpi-bcol-iboffload.txt", "invalid mca param value",
+        ompi_show_help("help-mpi-bcol-iboffload.txt", "invalid mca param value",
                        true, "bcol_iboffload_ib_timeout > 31",
                        "bcol_iboffload_ib_timeout reset to 31");
         ival = 31;
     } else if (ival < 0) {
-        orte_show_help("help-mpi-bcol-iboffload.txt", "invalid mca param value",
+        ompi_show_help("help-mpi-bcol-iboffload.txt", "invalid mca param value",
                    true, "bcol_iboffload_ib_timeout < 0",
                    "bcol_iboffload_ib_timeout reset to 0");
         ival = 0;
@@ -303,12 +301,12 @@ int mca_bcol_iboffload_register_params(void)
                   "(must be >= 0 and <= 7)",
                   7, &ival, 0));
     if (ival > 7) {
-        orte_show_help("help-mpi-bcol-iboffload.txt", "invalid mca param value",
+        ompi_show_help("help-mpi-bcol-iboffload.txt", "invalid mca param value",
                        true, "bcol_iboffload_ib_retry_count > 7",
                        "bcol_iboffload_ib_retry_count reset to 7");
         ival = 7;
     } else if (ival < 0) {
-        orte_show_help("help-mpi-bcol-iboffload.txt", "invalid mca param value",
+        ompi_show_help("help-mpi-bcol-iboffload.txt", "invalid mca param value",
                    true, "bcol_iboffload_ib_retry_count < 0",
                    "bcol_iboffload_ib_retry_count reset to 0");
         ival = 0;
@@ -323,12 +321,12 @@ int mca_bcol_iboffload_register_params(void)
                   "(must be >= 0 and <= 7; 7 = \"infinite\")",
                   7, &ival, 0));
     if (ival > 7) {
-        orte_show_help("help-mpi-bcol-iboffload.txt", "invalid mca param value",
+        ompi_show_help("help-mpi-bcol-iboffload.txt", "invalid mca param value",
                        true, "bcol_iboffload_ib_rnr_retry > 7",
                        "bcol_iboffload_ib_rnr_retry reset to 7");
         ival = 7;
     } else if (ival < 0) {
-        orte_show_help("help-mpi-bcol-iboffload.txt", "invalid mca param value",
+        ompi_show_help("help-mpi-bcol-iboffload.txt", "invalid mca param value",
                    true, "bcol_iboffload_ib_rnr_retry < 0",
                    "bcol_iboffload_ib_rnr_retry reset to 0");
         ival = 0;
@@ -346,12 +344,12 @@ int mca_bcol_iboffload_register_params(void)
                   "(must be >= 0 and <= 15)",
                   0, &ival, 0));
     if (ival > 15) {
-        orte_show_help("help-mpi-bcol-iboffload.txt", "invalid mca param value",
+        ompi_show_help("help-mpi-bcol-iboffload.txt", "invalid mca param value",
                        true, "bcol_iboffload_ib_service_level > 15",
                        "bcol_iboffload_ib_service_level reset to 15");
         ival = 15;
     } else if (ival < 0) {
-        orte_show_help("help-mpi-bcol-iboffload.txt", "invalid mca param value",
+        ompi_show_help("help-mpi-bcol-iboffload.txt", "invalid mca param value",
                    true, "bcol_iboffload_ib_service_level < 0",
                    "bcol_iboffload_ib_service_level reset to 0");
         ival = 0;
@@ -382,8 +380,8 @@ int mca_bcol_iboffload_register_params(void)
                   "(must be > 0 and power of two)",
                   64, &ival, REGINT_GE_ZERO));
     if(ival <= 1 || (ival & (ival - 1))) {
-        orte_show_help("help-mpi-bcol-iboffload.txt", "wrong buffer alignment",
-                true, ival, orte_process_info.nodename, 64);
+        ompi_show_help("help-mpi-bcol-iboffload.txt", "wrong buffer alignment",
+                true, ival, ompi_process_info.nodename, 64);
         mca_bcol_iboffload_component.buffer_alignment = 64;
     } else {
         mca_bcol_iboffload_component.buffer_alignment = (uint32_t) ival;

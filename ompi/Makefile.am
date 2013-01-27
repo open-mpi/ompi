@@ -137,8 +137,13 @@ libmpi_la_LIBADD = \
         $(mpi_fortran_base_lib) \
         $(MCA_ompi_FRAMEWORK_LIBS) \
         $(OMPI_MPIEXT_C_LIBS) \
-        $(OMPI_LIBMPI_EXTRA_LIBS) \
+        $(OMPI_LIBMPI_EXTRA_LIBS)
+if OMPI_RTE_ORTE
+libmpi_la_LIBADD += \
         $(top_ompi_builddir)/orte/libopen-rte.la
+endif
+libmpi_la_LIBADD += \
+        $(top_ompi_builddir)/opal/libopen-pal.la
 libmpi_la_DEPENDENCIES = $(libmpi_la_LIBADD)
 libmpi_la_LDFLAGS = \
        -version-info $(libmpi_so_version) \

@@ -20,7 +20,6 @@
 #endif
 
 #include "ompi/constants.h"
-#include "orte/util/show_help.h"
 #include "opal/class/opal_list.h"
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
@@ -269,9 +268,9 @@ int ompi_common_ofacm_base_register(mca_base_component_t *base)
                 }
             }
             if (NULL == all[i]) {
-                orte_show_help("help-mpi-common-ofacm-cpc-base.txt",
+                ompi_show_help("help-mpi-common-ofacm-cpc-base.txt",
                                "cpc name not found", true,
-                               "include", orte_process_info.nodename,
+                               "include", ompi_process_info.nodename,
                                "include", cpc_include, temp[j], 
                                all_cpc_names);
                 opal_argv_free(temp);
@@ -295,9 +294,9 @@ int ompi_common_ofacm_base_register(mca_base_component_t *base)
                 }
             }
             if (NULL == all[i]) {
-                orte_show_help("help-mpi-common-ofacm-cpc-base.txt",
+                ompi_show_help("help-mpi-common-ofacm-cpc-base.txt",
                                "cpc name not found", true,
-                               "exclude", orte_process_info.nodename,
+                               "exclude", ompi_process_info.nodename,
                                "exclude", cpc_exclude, temp[j], 
                                all_cpc_names);
                 opal_argv_free(temp);
@@ -449,9 +448,9 @@ int ompi_common_ofacm_base_select_for_local_port(ompi_common_ofacm_base_dev_desc
 
     /* If we got an empty array, then no CPCs were eligible.  Doh! */
     if (0 == cpc_index) {
-        orte_show_help("help-mpi-common-ofacm-cpc-base.txt",
+        ompi_show_help("help-mpi-common-ofacm-cpc-base.txt",
                        "no cpcs for port", true,
-                       orte_process_info.nodename,
+                       ompi_process_info.nodename,
                        ibv_get_device_name(dev->ib_dev),
                        msg);
         free(tmp_cpcs);

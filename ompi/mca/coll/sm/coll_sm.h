@@ -26,7 +26,6 @@
 #include "mpi.h"
 #include "opal/mca/mca.h"
 #include "opal/datatype/opal_convertor.h"
-#include "orte/types.h"
 #include "ompi/mca/coll/coll.h"
 #include "ompi/mca/common/sm/common_sm.h"
 

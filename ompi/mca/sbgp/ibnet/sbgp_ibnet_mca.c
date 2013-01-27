@@ -19,9 +19,6 @@
 #include "ompi/communicator/communicator.h"
 #include "ompi/mca/bcol/bcol.h"
 #include "ompi/mca/bcol/base/base.h"
-#include "orte/mca/rml/rml.h"
-#include "orte/util/show_help.h"
-#include "orte/util/proc_info.h"
 #include "ompi/mca/common/ofacm/base.h"
 
 #include "sbgp_ibnet.h"
@@ -191,7 +188,7 @@ int mca_sbgp_ibnet_register_params(void)
     free(msg);
 
     if (ival < IBV_MTU_1024 || ival > IBV_MTU_4096) {
-        orte_show_help("help-mpi-bcol-iboffload.txt", "invalid mca param value",
+        ompi_show_help("help-mpi-bcol-iboffload.txt", "invalid mca param value",
                        true, "invalid value for btl_openib_ib_mtu",
                        "btl_openib_ib_mtu reset to 1024");
         mca_sbgp_ibnet_component.mtu = IBV_MTU_1024;

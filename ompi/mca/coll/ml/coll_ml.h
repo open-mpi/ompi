@@ -19,8 +19,6 @@
 #include "opal/datatype/opal_convertor.h"
 #include "opal/threads/mutex.h"
 
-#include "orte/runtime/orte_globals.h"
-
 #include "ompi/mca/coll/coll.h"
 #include "ompi/request/request.h"
 #include "ompi/mca/bcol/bcol.h"
@@ -908,8 +906,8 @@ void mca_coll_ml_allreduce_matrix_init(mca_coll_ml_module_t *ml_module,
 #define ML_ERROR(args)                                       \
 do {                                                     \
     mca_coll_ml_err("[%s]%s[%s:%d:%s] COLL-ML ",         \
-        orte_process_info.nodename,                      \
-        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),              \
+        ompi_process_info.nodename,                      \
+        OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),              \
         __FILE__, __LINE__, __func__);                   \
     mca_coll_ml_err args;                                \
     mca_coll_ml_err("\n");                               \
@@ -920,8 +918,8 @@ do {                                                     \
 do {                                                     \
     if(mca_coll_ml_component.verbose >= level) {         \
         mca_coll_ml_err("[%s]%s[%s:%d:%s] COLL-ML ",     \
-                orte_process_info.nodename,              \
-                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),      \
+                ompi_process_info.nodename,              \
+                OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),      \
                 __FILE__, __LINE__, __func__);           \
         mca_coll_ml_err args;                            \
         mca_coll_ml_err("\n");                           \

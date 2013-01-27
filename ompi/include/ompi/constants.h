@@ -19,9 +19,13 @@
 #ifndef OMPI_CONSTANTS_H
 #define OMPI_CONSTANTS_H
 
+#if defined(OMPI_RTE_ORTE) && OMPI_RTE_ORTE
 #include "orte/constants.h"
-
 #define OMPI_ERR_BASE   ORTE_ERR_MAX
+#else
+#include "opal/constants.h"
+#define OMPI_ERR_BASE   OPAL_ERR_MAX
+#endif
 
 /* error codes */
 enum {

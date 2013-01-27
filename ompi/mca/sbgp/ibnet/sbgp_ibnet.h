@@ -22,10 +22,6 @@
 #include "ompi/request/request.h"
 #include "ompi/proc/proc.h"
 #include "ompi/mca/common/ofacm/connect.h"
-#if OPAL_ENABLE_DEBUG
-#include "orte/util/name_fns.h"
-#include "orte/runtime/orte_globals.h"
-#endif
 
 BEGIN_C_DECLS
 
@@ -201,8 +197,8 @@ static inline int mca_sbgp_ibnet_err(const char* fmt, ...)
 #define IBNET_ERROR(args)                                       \
     do {                                                        \
         mca_sbgp_ibnet_err("[%s]%s[%s:%d:%s] IBNET ",           \
-            orte_process_info.nodename,                         \
-            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),                 \
+            ompi_process_info.nodename,                         \
+            OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),                 \
             __FILE__, __LINE__, __func__);                      \
         mca_sbgp_ibnet_err args;                                \
         mca_sbgp_ibnet_err("\n");                               \
@@ -213,8 +209,8 @@ static inline int mca_sbgp_ibnet_err(const char* fmt, ...)
     do {                                                        \
         if(mca_sbgp_ibnet_component.verbose >= level) {         \
             mca_sbgp_ibnet_err("[%s]%s[%s:%d:%s] IBNET ",       \
-                    orte_process_info.nodename,                 \
-                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),         \
+                    ompi_process_info.nodename,                 \
+                    OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),         \
                     __FILE__, __LINE__, __func__);              \
             mca_sbgp_ibnet_err args;                            \
             mca_sbgp_ibnet_err("\n");                           \

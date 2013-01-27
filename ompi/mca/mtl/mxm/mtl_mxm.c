@@ -10,14 +10,10 @@
 
 #include "ompi_config.h"
 
-#include "orte/util/show_help.h"
-#include "orte/util/proc_info.h"
 #include "ompi/mca/mtl/mtl.h"
 #include "ompi/runtime/ompi_module_exchange.h"
 #include "ompi/mca/mtl/base/mtl_base_datatype.h"
 #include "ompi/proc/proc.h"
-#include "orte/mca/ess/ess.h"
-#include "orte/runtime/orte_globals.h"
 #include "ompi/communicator/communicator.h"
 
 #include "mtl_mxm.h"
@@ -63,9 +59,9 @@ static uint32_t ompi_mtl_mxm_get_job_id(void)
     memset(uu, 0, sizeof(unique_job_key));
 
     if (!generated_key || (strlen(generated_key) != 33) || sscanf(generated_key, "%016llx-%016llx", &uu[0], &uu[1]) != 2) {
-        orte_show_help("help-mtl-mxm.txt", "no uuid present", true,
+        ompi_show_help("help-mtl-mxm.txt", "no uuid present", true,
                        generated_key ? "could not be parsed from" :
-                                       "not present in", orte_process_info.nodename);
+                                       "not present in", ompi_process_info.nodename);
         return 0;
     }
 
@@ -94,7 +90,7 @@ static int ompi_mtl_mxm_get_ep_address(ompi_mtl_mxm_ep_conn_info_t *ep_info, mxm
     err = mxm_ep_address(ompi_mtl_mxm.ep, ptlid,
                          (struct sockaddr *) &ep_info->ptl_addr[ptlid], &addrlen);
     if (MXM_OK != err) {
-        orte_show_help("help-mtl-mxm.txt", "unable to extract endpoint address",
+        ompi_show_help("help-mtl-mxm.txt", "unable to extract endpoint address",
                        true, (int)ptlid, mxm_error_string(err));
         return OMPI_ERROR;
     }
@@ -117,7 +113,7 @@ static int ompi_mtl_mxm_get_ep_address(ompi_mtl_mxm_ep_conn_info_t *ep_info,
     } else if (MXM_ERR_UNREACHABLE == err) {
         return OMPI_SUCCESS;
     } else {
-        orte_show_help("help-mtl-mxm.txt", "unable to extract endpoint address",
+        ompi_show_help("help-mtl-mxm.txt", "unable to extract endpoint address",
                         true, (int)domain, mxm_error_string(err));
         return OMPI_ERROR;
     }
@@ -229,11 +225,11 @@ int ompi_mtl_mxm_module_init(void)
     }
     MXM_VERBOSE(1, "MXM support enabled");
 
-    if (ORTE_NODE_RANK_INVALID == (lr = orte_process_info.my_node_rank)) {
+    if (ORTE_NODE_RANK_INVALID == (lr = ompi_process_info.my_node_rank)) {
         MXM_ERROR("Unable to obtain local node rank");
         return OMPI_ERROR;
     }
-    nlps = orte_process_info.num_local_peers + 1;
+    nlps = ompi_process_info.num_local_peers + 1;
 
     for (proc = 0; proc < totps; proc++) {
         if (OPAL_PROC_ON_LOCAL_NODE(procs[proc]->proc_flags)) {
@@ -255,7 +251,7 @@ int ompi_mtl_mxm_module_init(void)
             ptl_bitmap, lr, jobid, mxlr, nlps);
 
     if (MXM_OK != err) {
-        orte_show_help("help-mtl-mxm.txt", "unable to create endpoint", true,
+        ompi_show_help("help-mtl-mxm.txt", "unable to create endpoint", true,
         		mxm_error_string(err));
         return OMPI_ERROR;
     }
@@ -470,7 +466,7 @@ int ompi_mtl_mxm_add_comm(struct mca_mtl_base_module_t *mtl,
 
     err = mxm_mq_create(ompi_mtl_mxm.mxm_context, comm->c_contextid, &mq);
     if (MXM_OK != err) {
-        orte_show_help("help-mtl-mxm.txt", "mxm mq create", true, mxm_error_string(err));
+        ompi_show_help("help-mtl-mxm.txt", "mxm mq create", true, mxm_error_string(err));
         return OMPI_ERROR;
     }
 
@@ -494,7 +490,7 @@ int ompi_mtl_mxm_progress(void)
 
     err = mxm_progress(ompi_mtl_mxm.mxm_context);
     if ((MXM_OK != err) && (MXM_ERR_NO_PROGRESS != err) ) {
-        orte_show_help("help-mtl-mxm.txt", "errors during mxm_progress", true, mxm_error_string(err));
+        ompi_show_help("help-mtl-mxm.txt", "errors during mxm_progress", true, mxm_error_string(err));
     }
     return 1;
 }

@@ -1,6 +1,8 @@
 /*
  * Copyright (c) 2009-2012 Oak Ridge National Laboratory.  All rights reserved.
  * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
+ * Copyright (c) 2012      Los Alamos National Security, LLC.
+ *                         All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -12,11 +14,6 @@
 #define MCA_BCOL_BASESMUMA_UTILS_H
 
 #include "ompi_config.h"
-
-#include "orte/util/proc_info.h"
-#include "orte/util/name_fns.h"
-#include "orte/runtime/orte_globals.h"
-
 
 BEGIN_C_DECLS
 

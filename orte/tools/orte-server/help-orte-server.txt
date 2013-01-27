@@ -17,10 +17,10 @@
 # 
 # $HEADER$
 #
-# This is the US/English general help file for Open MPI's data server.
+# This is the US/English general help file for Open RTE's data server.
 #
-[ompiserver:usage]
-Start an Open MPI data server
+[orteserver:usage]
+Start an Open RTE data server
 
 Usage: %s [OPTIONS]
 

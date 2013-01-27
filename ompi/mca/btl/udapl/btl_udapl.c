@@ -812,7 +812,7 @@ static int mca_btl_udapl_assign_netmask(mca_btl_udapl_module_t* udapl_btl)
 
                 BTL_UDAPL_VERBOSE_HELP(VERBOSE_SHOW_HELP,
                     ("help-mpi-btl-udapl.txt", "interface not found",
-                        true, orte_process_info.nodename, btl_addr_string));
+                        true, ompi_process_info.nodename, btl_addr_string));
 
                 return OMPI_ERROR;
             }
@@ -826,7 +826,7 @@ static int mca_btl_udapl_assign_netmask(mca_btl_udapl_module_t* udapl_btl)
 
                 BTL_UDAPL_VERBOSE_HELP(VERBOSE_SHOW_HELP,
                     ("help-mpi-btl-udapl.txt", "netmask not found",
-                        true, orte_process_info.nodename, btl_addr_string));
+                        true, ompi_process_info.nodename, btl_addr_string));
 
                 return OMPI_ERROR;
             }
@@ -840,7 +840,7 @@ static int mca_btl_udapl_assign_netmask(mca_btl_udapl_module_t* udapl_btl)
             /* current uDAPL BTL does not support IPv6 */
             BTL_UDAPL_VERBOSE_HELP(VERBOSE_SHOW_HELP,
                 ("help-mpi-btl-udapl.txt", "IPv4 only",
-                    true, orte_process_info.nodename));
+                    true, ompi_process_info.nodename));
 
             return OMPI_ERROR;
         }

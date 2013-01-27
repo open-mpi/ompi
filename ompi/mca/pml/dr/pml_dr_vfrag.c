@@ -20,7 +20,6 @@
 #include "pml_dr_vfrag.h"
 #include "pml_dr_sendreq.h"
 #include "ompi/mca/bml/base/base.h"
-#include "orte/mca/errmgr/errmgr.h"
 
 static void mca_pml_dr_vfrag_wdog_timeout(int fd, short event, void* vfrag); 
 static void mca_pml_dr_vfrag_ack_timeout(int fd, short event, void* vfrag);
@@ -167,7 +166,7 @@ void mca_pml_dr_vfrag_reset(mca_pml_dr_vfrag_t* vfrag)
     if(mca_bml_base_btl_array_get_size(&sendreq->req_endpoint->bml_endpoint->btl_eager) == 0 ||
        mca_bml_base_btl_array_get_size(&sendreq->req_endpoint->bml_endpoint->btl_eager) == 0) {
         opal_output(0, "%s:%d:%s: no path to peer", __FILE__, __LINE__, __func__);
-        orte_errmgr.abort(-1, NULL);
+        ompi_rte_abort(-1, NULL);
     }
     if(vfrag->vf_offset == 0) {
         vfrag->bml_btl = mca_bml_base_btl_array_get_next(&sendreq->req_endpoint->bml_endpoint->btl_eager);

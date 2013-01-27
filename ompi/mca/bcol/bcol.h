@@ -155,7 +155,7 @@ enum ompi_op_type {
  * @param[in] enable_mpi_threads  True if the component needs to
  *                                support MPI_THREAD_MULTIPLE
  *
- * @retval ORTE_SUCCESS Component successfully initialized
+ * @retval OMPI_SUCCESS Component successfully initialized
  * @retval ORTE_ERROR   An unspecified error occurred
  */
 typedef int (*mca_bcol_base_component_init_query_fn_t)

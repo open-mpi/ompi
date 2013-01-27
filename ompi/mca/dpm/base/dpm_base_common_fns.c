@@ -237,7 +237,7 @@ void ompi_dpm_base_mark_dyncomm (ompi_communicator_t *comm)
     int i;
     int size, rsize;
     bool found=false;
-    orte_jobid_t thisjobid;
+    ompi_jobid_t thisjobid;
     ompi_group_t *grp=NULL;
     ompi_proc_t *proc = NULL;
 

@@ -22,8 +22,6 @@
 #include "opal/util/argv.h"
 #include "opal/util/if.h"
 
-#include "orte/util/show_help.h"
-
 #include "connect/connect.h"
 #endif
 /* Always want to include this file */
@@ -197,9 +195,9 @@ static int ipaddr_specified(struct sockaddr_in *ipaddr, uint32_t netmask)
 
             if (NULL == temp || NULL == temp[0] || NULL == temp[1] ||
                 NULL != temp[2]) {
-                orte_show_help("help-mpi-btl-openib.txt",
+                ompi_show_help("help-mpi-btl-openib.txt",
                                "invalid ipaddr_inexclude", true, "include",
-                               orte_process_info.nodename, list[i],
+                               ompi_process_info.nodename, list[i],
                                "Invalid specification (missing \"/\")");
                 if (NULL != temp) {
                     opal_argv_free(temp);
@@ -208,9 +206,9 @@ static int ipaddr_specified(struct sockaddr_in *ipaddr, uint32_t netmask)
             }
 
             if (1 != inet_pton(ipaddr->sin_family, temp[0], &ipae)) {
-                orte_show_help("help-mpi-btl-openib.txt",
+                ompi_show_help("help-mpi-btl-openib.txt",
                                "invalid ipaddr_inexclude", true, "include",
-                               orte_process_info.nodename, list[i],
+                               ompi_process_info.nodename, list[i],
                                "Invalid specification (inet_pton() failed)");
                 opal_argv_free(temp);
                 continue;
@@ -239,9 +237,9 @@ static int ipaddr_specified(struct sockaddr_in *ipaddr, uint32_t netmask)
 
             if (NULL == temp || NULL == temp[0] || NULL == temp[1] ||
                 NULL != temp[2]) {
-                orte_show_help("help-mpi-btl-openib.txt",
+                ompi_show_help("help-mpi-btl-openib.txt",
                                "invalid ipaddr_inexclude", true, "exclude",
-                               orte_process_info.nodename, list[i],
+                               ompi_process_info.nodename, list[i],
                                "Invalid specification (missing \"/\")");
                 if (NULL != temp) {
                     opal_argv_free(temp);
@@ -250,9 +248,9 @@ static int ipaddr_specified(struct sockaddr_in *ipaddr, uint32_t netmask)
             }
 
             if (1 != inet_pton(ipaddr->sin_family, temp[0], &ipae)) {
-                orte_show_help("help-mpi-btl-openib.txt",
+                ompi_show_help("help-mpi-btl-openib.txt",
                                "invalid ipaddr_inexclude", true, "exclude",
-                               orte_process_info.nodename, list[i],
+                               ompi_process_info.nodename, list[i],
                                "Invalid specification (inet_pton() failed)");
                 opal_argv_free(temp);
                 continue;

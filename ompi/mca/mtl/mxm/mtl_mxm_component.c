@@ -9,7 +9,6 @@
 
 #include "ompi_config.h"
 
-#include "orte/util/show_help.h"
 #include "opal/util/output.h"
 #include "opal/mca/base/mca_base_param.h"
 #include "ompi/proc/proc.h"
@@ -94,7 +93,7 @@ static int ompi_mtl_mxm_component_open(void)
                 "version %ld.%ld detected.", MXM_VERNO_MAJOR,
                 MXM_VERNO_MINOR, (cur_ver >> MXM_MAJOR_BIT)& 0xff,
                 (cur_ver >> MXM_MINOR_BIT) & 0xff)>0) {
-                    orte_show_help("help-mtl-mxm.txt", "mxm init", true, str);
+                    ompi_show_help("help-mtl-mxm.txt", "mxm init", true, str);
 
                     free(str);
                 }
@@ -120,7 +119,7 @@ static int ompi_mtl_mxm_component_open(void)
         if (MXM_ERR_NO_DEVICE == err) {
             MXM_VERBOSE(1, "No supported device found, disqualifying mxm");
         } else {
-            orte_show_help("help-mtl-mxm.txt", "mxm init", true,
+            ompi_show_help("help-mtl-mxm.txt", "mxm init", true,
                     mxm_error_string(err));
         }
         return OPAL_ERR_NOT_AVAILABLE;
@@ -141,7 +140,7 @@ static int ompi_mtl_mxm_component_open(void)
                                   32 /* free list inc */,
                                   NULL);
     if (OMPI_SUCCESS != rc) {
-        orte_show_help("help-mtl-mxm.txt", "mxm init", true,
+        ompi_show_help("help-mtl-mxm.txt", "mxm init", true,
                     mxm_error_string(err));
         return OPAL_ERR_NOT_AVAILABLE;
     }

@@ -23,11 +23,6 @@
 #include "ompi/constants.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/mca/sbgp/ibnet/sbgp_ibnet.h"
-#include "orte/mca/rml/rml.h"
-#include "orte/util/proc_info.h"
-#include "orte/mca/errmgr/errmgr.h"
-#include "orte/mca/grpcomm/grpcomm.h"
-#include "orte/include/orte/types.h"
 #include "ompi/mca/common/ofacm/base.h"
 #include "ompi/mca/common/ofacm/connect.h"
 #include "ompi/mca/common/commpatterns/common_coll_ops.h"
@@ -100,7 +95,7 @@ static int pack_gather_sbuff(char* sbuffer)
     char* pack_ptr = sbuffer;
 
     mca_sbgp_ibnet_device_t *device = NULL;
-    uint32_t my_rank = orte_process_info.my_name.vpid;
+    uint32_t my_rank = ompi_process_info.my_name.vpid;
     opal_list_t *devices = &mca_sbgp_ibnet_component.devices;
 
     /* Message format:
@@ -234,7 +229,7 @@ static int pack_gather_sbuff(char* sbuffer)
 }
 
 /* Translation vpid to ompi_proc */
-static int vpid_to_proc(orte_vpid_t vpid,
+static int vpid_to_proc(ompi_vpid_t vpid,
         struct ompi_proc_t ** procs, int n_procs_in, ompi_proc_t** out_proc)
 {
     int i;

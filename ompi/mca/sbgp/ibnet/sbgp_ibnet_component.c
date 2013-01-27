@@ -28,8 +28,6 @@
 #include "opal_stdint.h"
 #include "sbgp_ibnet.h"
 #include "sbgp_ibnet_mca.h"
-#include "orte/mca/rml/rml.h"
-#include "orte/util/show_help.h"
 #include "ompi/mca/common/ofacm/base.h"
 #include "ompi/mca/common/ofacm/connect.h"
 #include "ompi/mca/common/verbs/common_verbs.h"
@@ -521,7 +519,7 @@ static int ibnet_load_devices(void)
     if(0 == num_devs || NULL == ib_devs) {
         IBNET_VERBOSE(10, ("No ib devices found"));
         /* No hca error*/
-        orte_show_help("help-mpi-sbgp-ibnet.txt", "no-nics", true);
+        ompi_show_help("help-mpi-sbgp-ibnet.txt", "no-nics", true);
         return OMPI_ERROR;
     }
 

@@ -25,11 +25,7 @@
 #include "opal/mca/base/base.h"
 #include "opal/dss/dss.h"
 
-#include "orte/mca/db/db.h"
-
-#include "orte/util/name_fns.h"
-#include "orte/runtime/orte_globals.h"
-
+#include "ompi/mca/rte/rte.h"
 #include "ompi/proc/proc.h"
 #include "ompi/runtime/ompi_module_exchange.h"
 
@@ -50,7 +46,7 @@ int ompi_modex_send(const mca_base_component_t *source_component,
     bo.size = size;
 
     /* the store API makes a copy of the provided data */
-    rc = orte_db.store(ORTE_PROC_MY_NAME, key, &bo, OPAL_BYTE_OBJECT);
+    rc = ompi_rte_db_store(OMPI_PROC_MY_NAME, key, &bo, OPAL_BYTE_OBJECT);
     free(key);
     return rc;
 }
@@ -75,9 +71,9 @@ ompi_modex_recv(const mca_base_component_t *component,
     }
     
     /* the fetch API returns a pointer to the data */
-    rc = orte_db.fetch(&proc->proc_name, key, (void**)&boptr, OPAL_BYTE_OBJECT);
+    rc = ompi_rte_db_fetch(&proc->proc_name, key, (void**)&boptr, OPAL_BYTE_OBJECT);
 
-    if (ORTE_SUCCESS == rc) {
+    if (OMPI_SUCCESS == rc) {
         /* xfer the data - it was allocated in the call */
         *buffer = (void*)boptr->bytes;
         *size = boptr->size;
@@ -87,6 +83,28 @@ ompi_modex_recv(const mca_base_component_t *component,
      */
     free(boptr);
     free(key);
+    return rc;
+}
+
+/* return a pointer to the data, but don't create a new copy of it */
+int ompi_modex_recv_pointer(const mca_base_component_t *component,
+                            const ompi_proc_t *proc,
+                            void **buffer, opal_data_type_t type)
+{
+    int rc;
+    char *name = mca_base_component_to_string(component);
+
+    /* set defaults */
+    *buffer = NULL;
+
+    if (NULL == name) {
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+    
+    /* the fetch_poointer API returns a pointer to the data */
+    rc = ompi_rte_db_fetch_pointer(&proc->proc_name, name, buffer, type);
+    free(name);
+
     return rc;
 }
 
@@ -101,7 +119,7 @@ ompi_modex_send_string(const char* key,
     bo.size = size;
 
     /* the store API makes a copy of the provided data */
-    rc = orte_db.store(ORTE_PROC_MY_NAME, key, &bo, OPAL_BYTE_OBJECT);
+    rc = ompi_rte_db_store(OMPI_PROC_MY_NAME, key, &bo, OPAL_BYTE_OBJECT);
 
     return rc;
 }
@@ -120,9 +138,9 @@ ompi_modex_recv_string(const char* key,
     *size = 0;
 
     /* the fetch API returns a copy of the data */
-    rc = orte_db.fetch(&source_proc->proc_name, key, (void**)&boptr, OPAL_BYTE_OBJECT);
+    rc = ompi_rte_db_fetch(&source_proc->proc_name, key, (void**)&boptr, OPAL_BYTE_OBJECT);
 
-    if (ORTE_SUCCESS == rc) {
+    if (OMPI_SUCCESS == rc) {
         /* xfer the data for local use */
         *buffer = boptr->bytes;
         *size = boptr->size;
@@ -145,7 +163,7 @@ int ompi_modex_recv_string_pointer(const char* key,
     *buffer = NULL;
 
     /* the fetch_pointer API returns a pointer to the data */
-    rc = orte_db.fetch_pointer(&source_proc->proc_name, key, (void**)buffer, type);
+    rc = ompi_rte_db_fetch_pointer(&source_proc->proc_name, key, (void**)buffer, type);
 
     return rc;
 }
@@ -158,7 +176,7 @@ ompi_modex_send_key_value(const char* key,
     int rc;
 
     /* the store API makes a copy of the provided data */
-    rc = orte_db.store(ORTE_PROC_MY_NAME, key, value, dtype);
+    rc = ompi_rte_db_store(OMPI_PROC_MY_NAME, key, value, dtype);
     
     return rc;
 }
@@ -170,7 +188,7 @@ int ompi_modex_recv_key_value(const char* key,
     int rc;
 
     /* the fetch API returns the data */
-    rc = orte_db.fetch(&source_proc->proc_name, key, (void**)value, type);
+    rc = ompi_rte_db_fetch(&source_proc->proc_name, key, (void**)value, type);
 
     return rc;
 }

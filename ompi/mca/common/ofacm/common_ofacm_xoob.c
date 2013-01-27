@@ -1,7 +1,8 @@
 /*
  * Copyright (c) 2007-2012 Mellanox Technologies.  All rights reserved.
  * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
- *
+ * Copyright (c) 2012      Los Alamos National Security, LLC.
+ *                         All rights reserved.
  * Copyright (c) 2009-2012 Oak Ridge National Laboratory.  All rights reserved.
  * $COPYRIGHT$
  *
@@ -12,20 +13,17 @@
 
 #include "ompi_config.h"
 
+#include "opal/runtime/opal_progress.h"
 #include "opal/dss/dss.h"
 #include "opal/util/error.h"
 #include "opal/util/output.h"
-#include "orte/util/show_help.h"
-#include "orte/util/name_fns.h"
-#include "orte/mca/rml/rml.h"
-#include "orte/mca/rml/rml_types.h"
-#include "orte/mca/errmgr/errmgr.h"
-#include "ompi/mca/dpm/dpm.h"
+
+#include "ompi/mca/rte/rte.h"
 #include "common_ofacm_xoob.h"
-#include "orte/util/show_help.h"
 #include "opal/class/opal_hash_table.h"
 #include "base.h"
 #include "connect.h"
+#include "ompi/constants.h"
 
 #define SIZE_OF3(A, B, C) (sizeof(A) + sizeof(B) + sizeof(C))
 #define BASE_TO_XOOB(context)  (ompi_common_ofacm_xoob_local_connection_context_t *)context
@@ -155,7 +153,7 @@ static void xoob_ib_address_destructor(ib_address_t *ib_addr)
     OBJ_DESTRUCT(&ib_addr->pending_contexts);
 }
 
-static int xoob_ib_address_init(ib_address_t *ib_addr, uint16_t lid, uint64_t s_id, orte_jobid_t ep_jobid)
+static int xoob_ib_address_init(ib_address_t *ib_addr, uint16_t lid, uint64_t s_id, ompi_jobid_t ep_jobid)
 {
     ib_addr->key = malloc(SIZE_OF3(s_id, lid, ep_jobid));
     if (NULL == ib_addr->key) {
@@ -180,7 +178,7 @@ static int xoob_ib_address_init(ib_address_t *ib_addr, uint16_t lid, uint64_t s_
  * Before call to this function you need to protect with
  */
 static ib_address_t* xoob_ib_address_add_new (ompi_common_ofacm_xoob_module_t *xcpc,
-        uint16_t lid, uint64_t s_id, orte_jobid_t ep_jobid)
+        uint16_t lid, uint64_t s_id, ompi_jobid_t ep_jobid)
 {
     void *tmp;
     int ret;
@@ -320,9 +318,9 @@ static void xoob_report_error(ompi_common_ofacm_xoob_local_connection_context_t 
 {
     if (NULL == xcontext || NULL == (XOOB_TO_BASE(xcontext))->error_cb) {
         /* The context is undefined and we can not print specific error */
-        orte_show_help("help-mpi-common-ofacm-oob.txt",
+        ompi_show_help("help-mpi-common-ofacm-oob.txt",
                 "ofacm oob fatal error", true,
-                orte_process_info.nodename,
+                ompi_process_info.nodename,
                 __FILE__, __LINE__);
         exit(1);
     }
@@ -484,8 +482,8 @@ static int xoob_endpoint_finalize
  * Callback when we have finished RML sending the connect data to a
  * remote peer
  */
-static void xoob_rml_send_cb(int status, orte_process_name_t* context,
-                        opal_buffer_t* buffer, orte_rml_tag_t tag,
+static void xoob_rml_send_cb(int status, ompi_process_name_t* context,
+                        opal_buffer_t* buffer, ompi_rml_tag_t tag,
                         void* cbdata)
 {
     OBJ_RELEASE(buffer);
@@ -501,32 +499,32 @@ static int xoob_receive_connect_data(ompi_common_ofacm_base_remote_connection_co
     /* Recv standart header */
     OFACM_VERBOSE(("unpacking %d of %d\n", cnt, OPAL_UINT8));
     rc = opal_dss.unpack(buffer, message_type, &cnt, OPAL_UINT8);
-    if (ORTE_SUCCESS != rc) {
-        ORTE_ERROR_LOG(rc);
+    if (OMPI_SUCCESS != rc) {
+        OMPI_ERROR_LOG(rc);
         return OMPI_ERROR;
     }
     OFACM_VERBOSE(("Recv unpack Message type  = %d", *message_type));
 
     OFACM_VERBOSE(("unpacking %d of %d\n", cnt, OPAL_UINT64));
     rc = opal_dss.unpack(buffer, &info->rem_subnet_id, &cnt, OPAL_UINT64);
-    if (ORTE_SUCCESS != rc) {
-        ORTE_ERROR_LOG(rc);
+    if (OMPI_SUCCESS != rc) {
+        OMPI_ERROR_LOG(rc);
         return OMPI_ERROR;
     }
     OFACM_VERBOSE(("Recv unpack sid  = %d", info->rem_subnet_id));
 
     OFACM_VERBOSE(("unpacking %d of %d\n", cnt, OPAL_UINT16));
     rc = opal_dss.unpack(buffer, &info->rem_lid, &cnt, OPAL_UINT16);
-    if (ORTE_SUCCESS != rc) {
-        ORTE_ERROR_LOG(rc);
+    if (OMPI_SUCCESS != rc) {
+        OMPI_ERROR_LOG(rc);
         return OMPI_ERROR;
     }
     OFACM_VERBOSE(("Recv unpack lid  = %d", info->rem_lid));
 
     OFACM_VERBOSE(("unpacking %d of %d\n", cnt, OPAL_INT));
     rc = opal_dss.unpack(buffer, cpc_type, &cnt, OPAL_INT);
-    if (ORTE_SUCCESS != rc) {
-        ORTE_ERROR_LOG(rc);
+    if (OMPI_SUCCESS != rc) {
+        OMPI_ERROR_LOG(rc);
         return OMPI_ERROR;
     }
     OFACM_VERBOSE(("Recv unpack cpc_type  = %d", *cpc_type));
@@ -539,8 +537,8 @@ static int xoob_receive_connect_data(ompi_common_ofacm_base_remote_connection_co
         OFACM_VERBOSE(("unpacking %d of %d\n", cnt, OPAL_UINT32));
         rc = opal_dss.unpack(buffer, &info->rem_qps->rem_qp_num, &cnt,
                 OPAL_UINT32);
-        if (ORTE_SUCCESS != rc) {
-            ORTE_ERROR_LOG(rc);
+        if (OMPI_SUCCESS != rc) {
+            OMPI_ERROR_LOG(rc);
             return OMPI_ERROR;
         }
         OFACM_VERBOSE(("Recv unpack remote qp  = %x", info->rem_qps->rem_qp_num));
@@ -548,16 +546,16 @@ static int xoob_receive_connect_data(ompi_common_ofacm_base_remote_connection_co
         OFACM_VERBOSE(("unpacking %d of %d\n", cnt, OPAL_UINT32));
         rc = opal_dss.unpack(buffer, &info->rem_qps->rem_psn, &cnt,
                 OPAL_UINT32);
-        if (ORTE_SUCCESS != rc) {
-            ORTE_ERROR_LOG(rc);
+        if (OMPI_SUCCESS != rc) {
+            OMPI_ERROR_LOG(rc);
             return OMPI_ERROR;
         }
         OFACM_VERBOSE(("Recv unpack remote psn = %d", info->rem_qps->rem_psn));
 
         OFACM_VERBOSE(("unpacking %d of %d\n", cnt, OPAL_UINT32));
         rc = opal_dss.unpack(buffer, &info->rem_mtu, &cnt, OPAL_UINT32);
-        if (ORTE_SUCCESS != rc) {
-            ORTE_ERROR_LOG(rc);
+        if (OMPI_SUCCESS != rc) {
+            OMPI_ERROR_LOG(rc);
             return OMPI_ERROR;
         }
         OFACM_VERBOSE(("Recv unpack remote mtu = %d", info->rem_mtu));
@@ -568,8 +566,8 @@ static int xoob_receive_connect_data(ompi_common_ofacm_base_remote_connection_co
         /* unpack requested lid info */
         OFACM_VERBOSE(("unpacking %d of %d\n", cnt, OPAL_UINT16));
         rc = opal_dss.unpack(buffer, lid, &cnt, OPAL_UINT16);
-        if (ORTE_SUCCESS != rc) {
-            ORTE_ERROR_LOG(rc);
+        if (OMPI_SUCCESS != rc) {
+            OMPI_ERROR_LOG(rc);
             return OMPI_ERROR;
         }
         OFACM_VERBOSE(("Recv unpack requested lid = %d", *lid));
@@ -581,8 +579,8 @@ static int xoob_receive_connect_data(ompi_common_ofacm_base_remote_connection_co
         /* In XRC request case we will use rem_qp_num as container for requested qp number */
         rc = opal_dss.unpack(buffer, &info->rem_qps->rem_qp_num, &cnt,
                 OPAL_UINT32);
-        if (ORTE_SUCCESS != rc) {
-            ORTE_ERROR_LOG(rc);
+        if (OMPI_SUCCESS != rc) {
+            OMPI_ERROR_LOG(rc);
             return rc;
         }
         OFACM_VERBOSE(("Recv unpack requested qp = %x", info->rem_qps->rem_qp_num));
@@ -592,16 +590,16 @@ static int xoob_receive_connect_data(ompi_common_ofacm_base_remote_connection_co
             ENDPOINT_XOOB_CONNECT_XRC_RESPONSE == *message_type) {
         OFACM_VERBOSE(("unpacking %d of %d\n", cnt, OPAL_UINT32));
         rc = opal_dss.unpack(buffer, &info->rem_index, &cnt, OPAL_UINT32);
-        if (ORTE_SUCCESS != rc) {
-            ORTE_ERROR_LOG(rc);
+        if (OMPI_SUCCESS != rc) {
+            OMPI_ERROR_LOG(rc);
             return OMPI_ERROR;
         }
         OFACM_VERBOSE(("Recv unpack remote index = %d", info->rem_index));
 
         OFACM_VERBOSE(("unpacking %d of %d\n", cnt, OPAL_UINT8));
         rc = opal_dss.unpack(buffer, &num_srqs, &cnt, OPAL_UINT8);
-        if (ORTE_SUCCESS != rc) {
-            ORTE_ERROR_LOG(rc);
+        if (OMPI_SUCCESS != rc) {
+            OMPI_ERROR_LOG(rc);
             return OMPI_ERROR;
         }
         OFACM_VERBOSE(("Recv unpack remote num of srqs  = %d", num_srqs));
@@ -613,8 +611,8 @@ static int xoob_receive_connect_data(ompi_common_ofacm_base_remote_connection_co
         for (srq = 0; srq < num_srqs; srq++) {
             OFACM_VERBOSE(("unpacking %d of %d\n", cnt, OPAL_UINT8));
             rc = opal_dss.unpack(buffer, &info->rem_srqs[srq].rem_srq_num, &cnt, OPAL_UINT32);
-            if (ORTE_SUCCESS != rc) {
-                ORTE_ERROR_LOG(rc);
+            if (OMPI_SUCCESS != rc) {
+                OMPI_ERROR_LOG(rc);
                 return OMPI_ERROR;
             }
             OFACM_VERBOSE(("Recv unpack remote index srq num[%d]= %d", srq, info->rem_srqs[srq].rem_srq_num));
@@ -634,8 +632,8 @@ static int xoob_send_connect_data(ompi_common_ofacm_xoob_local_connection_contex
     ompi_common_ofacm_base_local_connection_context_t *context = XOOB_TO_BASE(xcontext);
 
     if (NULL == buffer) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        return ORTE_ERR_OUT_OF_RESOURCE;
+        OMPI_ERROR_LOG(OMPI_ERR_OUT_OF_RESOURCE);
+        return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
     /* Bulding standart header that we use in all messages:
@@ -647,32 +645,32 @@ static int xoob_send_connect_data(ompi_common_ofacm_xoob_local_connection_contex
     OFACM_VERBOSE(("Send pack Message type = %d", message_type));
     OFACM_VERBOSE(("packing %d of %d\n", 1, OPAL_UINT8));
     rc = opal_dss.pack(buffer, &message_type, 1, OPAL_UINT8);
-    if (ORTE_SUCCESS != rc) {
-        ORTE_ERROR_LOG(rc);
+    if (OMPI_SUCCESS != rc) {
+        OMPI_ERROR_LOG(rc);
         return rc;
     }
 
     OFACM_VERBOSE(("Send pack sid = %d", context->subnet_id));
     OFACM_VERBOSE(("packing %d of %d\n", 1, OPAL_UINT64));
     rc = opal_dss.pack(buffer, &context->subnet_id, 1, OPAL_UINT64);
-    if (ORTE_SUCCESS != rc) {
-        ORTE_ERROR_LOG(rc);
+    if (OMPI_SUCCESS != rc) {
+        OMPI_ERROR_LOG(rc);
         return rc;
     }
 
     OFACM_VERBOSE(("Send pack lid = %d", context->lid));
     OFACM_VERBOSE(("packing %d of %d\n", 1, OPAL_UINT16));
     rc = opal_dss.pack(buffer, &context->lid, 1, OPAL_UINT16);
-    if (ORTE_SUCCESS != rc) {
-        ORTE_ERROR_LOG(rc);
+    if (OMPI_SUCCESS != rc) {
+        OMPI_ERROR_LOG(rc);
         return rc;
     }
 
     OFACM_VERBOSE(("Send pack cpc type = %d", context->cpc_type));
     OFACM_VERBOSE(("packing %d of %d\n", 1, OPAL_INT));
     rc = opal_dss.pack(buffer, &context->cpc_type, 1, OPAL_INT);
-    if (ORTE_SUCCESS != rc) {
-        ORTE_ERROR_LOG(rc);
+    if (OMPI_SUCCESS != rc) {
+        OMPI_ERROR_LOG(rc);
         return rc;
     }
 
@@ -698,15 +696,15 @@ static int xoob_send_connect_data(ompi_common_ofacm_xoob_local_connection_contex
         OFACM_VERBOSE(("Send pack qp num = %x", qp_num));
         OFACM_VERBOSE(("packing %d of %d\n", 1, OPAL_UINT32));
         rc = opal_dss.pack(buffer, &qp_num, 1, OPAL_UINT32);
-        if (ORTE_SUCCESS != rc) {
-            ORTE_ERROR_LOG(rc);
+        if (OMPI_SUCCESS != rc) {
+            OMPI_ERROR_LOG(rc);
             return rc;
         }
         OFACM_VERBOSE(("Send pack lpsn = %d", psn));
         OFACM_VERBOSE(("packing %d of %d\n", 1, OPAL_UINT32));
         rc = opal_dss.pack(buffer, &psn, 1, OPAL_UINT32);
-        if (ORTE_SUCCESS != rc) {
-            ORTE_ERROR_LOG(rc);
+        if (OMPI_SUCCESS != rc) {
+            OMPI_ERROR_LOG(rc);
             return rc;
         }
 
@@ -714,8 +712,8 @@ static int xoob_send_connect_data(ompi_common_ofacm_xoob_local_connection_contex
         OFACM_VERBOSE(("packing %d of %d\n", 1, OPAL_UINT32));
         rc = opal_dss.pack(buffer, &context->attr[0].path_mtu, 1,
                 OPAL_UINT32);
-        if (ORTE_SUCCESS != rc) {
-            ORTE_ERROR_LOG(rc);
+        if (OMPI_SUCCESS != rc) {
+            OMPI_ERROR_LOG(rc);
             return rc;
         }
     }
@@ -731,8 +729,8 @@ static int xoob_send_connect_data(ompi_common_ofacm_xoob_local_connection_contex
         OFACM_VERBOSE(("Send pack remote lid = %d", context->rem_lid));
         OFACM_VERBOSE(("packing %d of %d\n", 1, OPAL_UINT16));
         rc = opal_dss.pack(buffer, &context->rem_lid, 1, OPAL_UINT16);
-        if (ORTE_SUCCESS != rc) {
-            ORTE_ERROR_LOG(rc);
+        if (OMPI_SUCCESS != rc) {
+            OMPI_ERROR_LOG(rc);
             return rc;
         }
     }
@@ -744,8 +742,8 @@ static int xoob_send_connect_data(ompi_common_ofacm_xoob_local_connection_contex
         OFACM_VERBOSE(("packing %d of %d\n", 1, OPAL_UINT32));
         rc = opal_dss.pack(buffer, &xcontext->addr->remote_xrc_rcv_qp_num,
                 1, OPAL_UINT32);
-        if (ORTE_SUCCESS != rc) {
-            ORTE_ERROR_LOG(rc);
+        if (OMPI_SUCCESS != rc) {
+            OMPI_ERROR_LOG(rc);
             return rc;
         }
     }
@@ -760,16 +758,16 @@ static int xoob_send_connect_data(ompi_common_ofacm_xoob_local_connection_contex
         OFACM_VERBOSE(("Send pack index = %d", context->index));
         OFACM_VERBOSE(("packing %d of %d\n", 1, OPAL_UINT32));
         rc = opal_dss.pack(buffer, &context->index, 1, OPAL_UINT32);
-        if (ORTE_SUCCESS != rc) {
-            ORTE_ERROR_LOG(rc);
+        if (OMPI_SUCCESS != rc) {
+            OMPI_ERROR_LOG(rc);
             return rc;
         }
 
         OFACM_VERBOSE(("Send pack number of srqs = %d", context->num_of_srqs));
         OFACM_VERBOSE(("packing %d of %d\n", 1, OPAL_UINT8));
         rc = opal_dss.pack(buffer, &context->num_of_srqs, 1, OPAL_UINT8);
-        if (ORTE_SUCCESS != rc) {
-            ORTE_ERROR_LOG(rc);
+        if (OMPI_SUCCESS != rc) {
+            OMPI_ERROR_LOG(rc);
             return rc;
         }
         /* on response we add all SRQ numbers */
@@ -778,19 +776,19 @@ static int xoob_send_connect_data(ompi_common_ofacm_xoob_local_connection_contex
             OFACM_VERBOSE(("packing %d of %d\n", 1, OPAL_UINT32));
             rc = opal_dss.pack(buffer, &context->srq_num[srq],
                     1, OPAL_UINT32);
-            if (ORTE_SUCCESS != rc) {
-                ORTE_ERROR_LOG(rc);
+            if (OMPI_SUCCESS != rc) {
+                OMPI_ERROR_LOG(rc);
                 return rc;
             }
         }
     }
 
     /* send to remote endpoint */
-    rc = orte_rml.send_buffer_nb(&context->proc->proc_ompi->proc_name,
+    rc = ompi_rte_send_buffer_nb(&context->proc->proc_ompi->proc_name,
             buffer, OMPI_RML_TAG_XOFACM, 0,
             xoob_rml_send_cb, NULL);
-    if (ORTE_SUCCESS != rc) {
-        ORTE_ERROR_LOG(rc);
+    if (OMPI_SUCCESS != rc) {
+        OMPI_ERROR_LOG(rc);
         return rc;
     }
 
@@ -827,8 +825,8 @@ static int xoob_send_qp_create
 
     if (init_attr.cap.max_inline_data < req_inline) {
         context->qps[0].ib_inline_max = init_attr.cap.max_inline_data;
-        orte_show_help("help-mpi-common-ofacm-cpc-base.txt",
-                       "inline truncated", true, orte_process_info.nodename,
+        ompi_show_help("help-mpi-common-ofacm-cpc-base.txt",
+                       "inline truncated", true, ompi_process_info.nodename,
                        req_inline, init_attr.cap.max_inline_data);
     } else {
         context->qps[0].ib_inline_max = req_inline;
@@ -1076,7 +1074,7 @@ static int xoob_reply_first_connect(ompi_common_ofacm_xoob_local_connection_cont
 
 /* Find context for specific subnet/lid/message/cpc type */
 static ompi_common_ofacm_xoob_local_connection_context_t* xoob_find_context
-                        (orte_process_name_t* process_name, uint64_t subnet_id, 
+                        (ompi_process_name_t* process_name, uint64_t subnet_id, 
                          uint16_t lid, uint8_t message_type, int cpc_type)
 {
     ompi_common_ofacm_xoob_local_connection_context_t *xcontext = NULL;
@@ -1092,7 +1090,7 @@ static ompi_common_ofacm_xoob_local_connection_context_t* xoob_find_context
     for (context_proc  = (ompi_common_ofacm_base_proc_t*)opal_list_get_first(all_procs);
          context_proc != (ompi_common_ofacm_base_proc_t*)opal_list_get_end(all_procs);
          context_proc  = (ompi_common_ofacm_base_proc_t*)opal_list_get_next(context_proc)) {
-        if (orte_util_compare_name_fields(ORTE_NS_CMP_ALL,
+        if (ompi_rte_compare_name_fields(OMPI_RTE_CMP_ALL,
                     &context_proc->proc_ompi->proc_name, process_name) == OPAL_EQUAL) {
             found = true;
             break;
@@ -1183,8 +1181,8 @@ static void xoob_restart_connect
  * and if this endpoint is trying to connect, reply with our QP info,
  * otherwise try to modify QP's and establish reliable connection
  */
-static void xoob_rml_recv_cb(int status, orte_process_name_t* process_name,
-                        opal_buffer_t* buffer, orte_rml_tag_t tag,
+static void xoob_rml_recv_cb(int status, ompi_process_name_t* process_name,
+                        opal_buffer_t* buffer, ompi_rml_tag_t tag,
                         void* cbdata)
 {
     int rc;
@@ -1397,12 +1395,12 @@ static int xoob_component_query(ompi_common_ofacm_base_dev_desc_t *dev,
        ensure to only post it *once*, because another btl may have
        come in before this and already posted it. */
     if (!rml_recv_posted) {
-        rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, 
+        rc = ompi_rte_recv_buffer_nb(OMPI_NAME_WILDCARD, 
                                      OMPI_RML_TAG_XOFACM,
-                                     ORTE_RML_PERSISTENT,
+                                     OMPI_RML_PERSISTENT,
                                      xoob_rml_recv_cb,
                                      NULL);
-        if (ORTE_SUCCESS != rc) {
+        if (OMPI_SUCCESS != rc) {
             OFACM_VERBOSE(("OFACM: xoob CPC system error %d (%s)",
                                 rc, opal_strerror(rc)));
             return rc;
@@ -1425,10 +1423,10 @@ static int xoob_component_query(ompi_common_ofacm_base_dev_desc_t *dev,
     /* Build our hash table for subnetid-lid */
     OBJ_CONSTRUCT(&xcpc->ib_addr_table, opal_hash_table_t);
 
-    assert(orte_process_info.num_procs > 1);
+    assert(ompi_process_info.num_procs > 1);
     if(NULL == xcpc->ib_addr_table.ht_table) {
         if(OPAL_SUCCESS != opal_hash_table_init(
-                    &xcpc->ib_addr_table, orte_process_info.num_procs)) {
+                    &xcpc->ib_addr_table, ompi_process_info.num_procs)) {
             OFACM_ERROR(("XRC internal error. Failed to allocate ib_table"));
             return OMPI_ERROR;
         }
@@ -1530,7 +1528,7 @@ static int xoob_module_start_connect
 static int xoob_component_finalize(void)
 {
     if (rml_recv_posted) {
-        orte_rml.recv_cancel(ORTE_NAME_WILDCARD, OMPI_RML_TAG_XOFACM);
+        ompi_rte_recv_cancel(OMPI_NAME_WILDCARD, OMPI_RML_TAG_XOFACM);
         rml_recv_posted = false;
     }
     return OMPI_SUCCESS;

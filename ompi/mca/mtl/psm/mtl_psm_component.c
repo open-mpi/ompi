@@ -21,8 +21,6 @@
 
 #include "ompi_config.h"
 
-#include "orte/util/show_help.h"
-#include "orte/util/proc_info.h"
 #include "opal/mca/event/event.h"
 #include "opal/util/output.h"
 #include "opal/mca/base/mca_base_param.h"
@@ -134,7 +132,7 @@ ompi_mtl_psm_component_register(void)
       if (!strcasecmp(path_res, "opp"))
 	ompi_mtl_psm.path_res_type = PSM_PATH_RES_OPP;
       else {
-	orte_show_help("help-mtl-psm.txt",
+	ompi_show_help("help-mtl-psm.txt",
 		       "path query mechanism unknown", true,
 		       path_res, "OfedPlus (opp) | Static Routes (none)");
 	return OMPI_ERR_NOT_FOUND;
@@ -181,7 +179,7 @@ get_num_local_procs(int *out_nlp)
 {
     /* num_local_peers does not include us in
      * its calculation, so adjust for that */
-    *out_nlp = (int)(1 + orte_process_info.num_local_peers);
+    *out_nlp = (int)(1 + ompi_process_info.num_local_peers);
     return OMPI_SUCCESS;
 }
 
@@ -193,7 +191,7 @@ get_local_rank(int *out_rank)
     *out_rank = 0;
 
     if (ORTE_NODE_RANK_INVALID == (my_node_rank =
-        orte_process_info.my_node_rank)) {
+        ompi_process_info.my_node_rank)) {
         return OMPI_ERROR;
     }
     *out_rank = (int)my_node_rank;
@@ -238,7 +236,7 @@ ompi_mtl_psm_component_init(bool enable_progress_threads,
 		     sizeof(unsigned));
     if (err) {
       /* Non fatal error. Can continue */
-      orte_show_help("help-mtl-psm.txt",
+      ompi_show_help("help-mtl-psm.txt",
 		     "psm init", false,
 		     psm_error_get_string(err));
     }
@@ -257,7 +255,7 @@ ompi_mtl_psm_component_init(bool enable_progress_threads,
     
     err = psm_init(&verno_major, &verno_minor);
     if (err) {
-      orte_show_help("help-mtl-psm.txt",
+      ompi_show_help("help-mtl-psm.txt",
 		     "psm init", true,
 		     psm_error_get_string(err));
       return NULL;

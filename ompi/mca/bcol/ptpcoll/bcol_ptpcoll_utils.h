@@ -1,6 +1,8 @@
 /*
  * Copyright (c) 2009-2012 Oak Ridge National Laboratory.  All rights reserved.
  * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
+ * Copyright (c) 2012      Los Alamos National Security, LLC.
+ *                         All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -12,9 +14,8 @@
 #define MCA_BCOL_PTPCOLL_UTILS_H
 
 #include "ompi_config.h"
-#include "orte/util/proc_info.h"
-#include "orte/util/name_fns.h"
-#include "orte/runtime/orte_globals.h"
+
+#include "ompi/mca/rte/rte.h"
 
 BEGIN_C_DECLS
 
@@ -51,8 +52,8 @@ static inline int mca_bcol_ptpcoll_err(const char* fmt, ...)
 #define PTPCOLL_ERROR(args)                                         \
     do {                                                            \
         mca_bcol_ptpcoll_err("[%s]%s[%s:%d:%s] PTPCOLL ",           \
-                orte_process_info.nodename,                         \
-                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),                 \
+                ompi_process_info.nodename,                         \
+                OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),                 \
                 __FILE__, __LINE__, __func__);                      \
         mca_bcol_ptpcoll_err args;                                  \
         mca_bcol_ptpcoll_err("\n");                                 \
@@ -63,8 +64,8 @@ static inline int mca_bcol_ptpcoll_err(const char* fmt, ...)
     do {                                                            \
         if (mca_bcol_ptpcoll_component.verbose >= level) {          \
             mca_bcol_ptpcoll_err("[%s]%s[%s:%d:%s] PTPCOLL ",       \
-                    orte_process_info.nodename,                     \
-                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),             \
+                    ompi_process_info.nodename,                     \
+                    OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),             \
                     __FILE__, __LINE__, __func__);                  \
             mca_bcol_ptpcoll_err args;                              \
             mca_bcol_ptpcoll_err("\n");                             \

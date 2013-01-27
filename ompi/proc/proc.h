@@ -37,7 +37,7 @@
 #include "opal/dss/dss_types.h"
 #include "opal/mca/hwloc/hwloc.h"
 
-#include "orte/types.h"
+#include "ompi/mca/rte/rte.h"
 
 
 BEGIN_C_DECLS
@@ -55,7 +55,7 @@ struct ompi_proc_t {
     /** allow proc to be placed on a list */
     opal_list_item_t                super;
     /** this process' name */
-    orte_process_name_t             proc_name;
+    ompi_process_name_t             proc_name;
     /** PML specific proc data */
     struct mca_pml_endpoint_t*      proc_pml;
     /** BML specific proc data */
@@ -221,7 +221,7 @@ static inline ompi_proc_t* ompi_proc_local(void)
  *
  * @return Pointer to the process instance for \c name
 */
-OMPI_DECLSPEC ompi_proc_t * ompi_proc_find ( const orte_process_name_t* name );
+OMPI_DECLSPEC ompi_proc_t * ompi_proc_find ( const ompi_process_name_t* name );
 
 /**
  * Pack proc list into portable buffer
@@ -236,7 +236,7 @@ OMPI_DECLSPEC ompi_proc_t * ompi_proc_find ( const orte_process_name_t* name );
  * 
  * @param[in] proclist     List of process pointers
  * @param[in] proclistsize Length of the proclist array
- * @param[in,out] buf      An orte_buffer containing the packed names.  
+ * @param[in,out] buf      An opal_buffer containing the packed names.  
  *                         The buffer must be constructed but empty when
  *                         passed to this function
  * @retval OMPI_SUCCESS    Success
@@ -271,7 +271,7 @@ OMPI_DECLSPEC int ompi_proc_pack(ompi_proc_t **proclist, int proclistsize,
  * provided for newproclist.  The user is responsible for freeing the
  * newproclist array.
  *
- * @param[in] buf          orte_buffer containing the packed names
+ * @param[in] buf          opal_buffer containing the packed names
  * @param[in] proclistsize number of expected proc-pointres
  * @param[out] proclist    list of process pointers
  * @param[out] newproclistsize Number of new procs added as a result

@@ -26,7 +26,7 @@ int mca_btl_ugni_send (struct mca_btl_base_module_t *btl,
     int rc;
 
     BTL_VERBOSE(("btl/ugni sending descriptor %p from %d -> %d. length = %" PRIu64, (void *)descriptor,
-                 ORTE_PROC_MY_NAME->vpid, endpoint->common->ep_rem_id, frag->segments[0].base.seg_len));
+                 OMPI_PROC_MY_NAME->vpid, endpoint->common->ep_rem_id, frag->segments[0].base.seg_len));
 
     /* tag and len are at the same location in eager and smsg frag hdrs */
     frag->hdr.send.lag = (tag << 24) | size;

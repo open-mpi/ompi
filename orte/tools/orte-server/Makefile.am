@@ -20,15 +20,15 @@
 
 include $(top_srcdir)/Makefile.man-page-rules
 
-man_pages = ompi-server.1
+man_pages = orte-server.1
 EXTRA_DIST = $(man_pages:.1=.1in) CMakeLists.txt
 
 if OMPI_INSTALL_BINARIES
 if !ORTE_DISABLE_FULL_SUPPORT
 
-bin_PROGRAMS = ompi-server
+bin_PROGRAMS = orte-server
 
-dist_pkgdata_DATA = help-ompi-server.txt
+dist_pkgdata_DATA = help-orte-server.txt
 
 nodist_man_MANS = $(man_pages)
 
@@ -40,8 +40,8 @@ $(nodist_man_MANS): $(top_builddir)/opal/include/opal_config.h
 endif # !ORTE_DISABLE_FULL_SUPPORT
 endif # OMPI_INSTALL_BINARIES
 
-ompi_server_SOURCES = ompi-server.c 
-ompi_server_LDADD = $(top_builddir)/ompi/libmpi.la $(top_builddir)/orte/libopen-rte.la $(top_builddir)/opal/libopen-pal.la
+orte_server_SOURCES = orte-server.c 
+orte_server_LDADD =  $(top_builddir)/orte/libopen-rte.la $(top_builddir)/opal/libopen-pal.la
 
 distclean-local:
 	rm -f $(man_pages)

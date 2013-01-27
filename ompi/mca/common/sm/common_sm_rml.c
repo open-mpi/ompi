@@ -25,15 +25,8 @@
 #include "opal/types.h"
 #include "opal/dss/dss.h"
 
-#include "orte/mca/rml/rml.h"
-#include "orte/util/proc_info.h"
-#include "orte/util/name_fns.h"
-#include "orte/util/show_help.h"
-#include "orte/runtime/orte_globals.h"
-#include "orte/mca/errmgr/errmgr.h"
-
 #include "ompi/constants.h"
-#include "ompi/mca/dpm/dpm.h"
+#include "ompi/mca/rte/rte.h"
 #include "ompi/mca/common/sm/common_sm_rml.h"
 
 /* only for debug purposes only */
@@ -73,7 +66,7 @@ mca_common_sm_rml_info_bcast(opal_shmem_ds_t *out_ds_buf,
          * note in common_sm.c for more details. */
         tmprc = opal_dss.pack(buffer, &msg_id_str, 1, OPAL_STRING);
         if (OPAL_SUCCESS != tmprc) {
-            ORTE_ERROR_LOG(ORTE_ERR_PACK_FAILURE);
+            OMPI_ERROR_LOG(OMPI_ERR_PACK_FAILURE);
             rc = OMPI_ERR_PACK_FAILURE;
             goto out;
         }
@@ -81,7 +74,7 @@ mca_common_sm_rml_info_bcast(opal_shmem_ds_t *out_ds_buf,
                               (int32_t)sizeof(opal_shmem_ds_t),
                               OPAL_BYTE);
         if (OPAL_SUCCESS != tmprc) {
-            ORTE_ERROR_LOG(ORTE_ERR_PACK_FAILURE);
+            OMPI_ERROR_LOG(OMPI_ERR_PACK_FAILURE);
             rc = OMPI_ERR_PACK_FAILURE;
             goto out;
         }
@@ -89,10 +82,10 @@ mca_common_sm_rml_info_bcast(opal_shmem_ds_t *out_ds_buf,
         /* first num_local_procs items should be local procs */
         for (p = 1; p < num_local_procs; ++p) {
             /* a potential future optimization: use non-blocking routines */
-            tmprc = orte_rml.send_buffer(&(procs[p]->proc_name), buffer, tag,
+            tmprc = ompi_rte_send_buffer(&(procs[p]->proc_name), buffer, tag,
                                          0);
             if (0 > tmprc) {
-                ORTE_ERROR_LOG(tmprc);
+                OMPI_ERROR_LOG(tmprc);
                 opal_progress_event_users_decrement();
                 rc = OMPI_ERROR;
                 goto out;
@@ -106,10 +99,10 @@ mca_common_sm_rml_info_bcast(opal_shmem_ds_t *out_ds_buf,
         /* bump up the libevent polling frequency while we're in this RML recv,
          * just to ensure we're checking libevent frequently. */
         opal_progress_event_users_increment();
-        tmprc = orte_rml.recv_buffer(&(procs[0]->proc_name), buffer, tag, 0);
+        tmprc = ompi_rte_recv_buffer(&(procs[0]->proc_name), buffer, tag, 0);
         opal_progress_event_users_decrement();
         if (0 > tmprc) {
-            ORTE_ERROR_LOG(tmprc);
+            OMPI_ERROR_LOG(tmprc);
             rc = OMPI_ERROR;
             goto out;
         }
@@ -118,14 +111,14 @@ mca_common_sm_rml_info_bcast(opal_shmem_ds_t *out_ds_buf,
         tmprc = opal_dss.unpack(buffer, &msg_id_str_to_tx, &num_vals,
                                 OPAL_STRING);
         if (0 > tmprc) {
-            ORTE_ERROR_LOG(ORTE_ERR_UNPACK_FAILURE);
+            OMPI_ERROR_LOG(OMPI_ERR_UNPACK_FAILURE);
             rc = OMPI_ERROR;
             goto out;
         }
         num_vals = (int32_t)sizeof(opal_shmem_ds_t);
         tmprc = opal_dss.unpack(buffer, out_ds_buf, &num_vals, OPAL_BYTE);
         if (0 > tmprc) {
-            ORTE_ERROR_LOG(ORTE_ERR_UNPACK_FAILURE);
+            OMPI_ERROR_LOG(OMPI_ERR_UNPACK_FAILURE);
             rc = OMPI_ERROR;
             goto out;
         }
@@ -134,8 +127,8 @@ mca_common_sm_rml_info_bcast(opal_shmem_ds_t *out_ds_buf,
          * outside of our current scope of assumptions. see "RML Messaging and
          * Our Assumptions" note in common_sm.c */
         if (0 != strcmp(msg_id_str_to_tx, msg_id_str)) {
-            orte_show_help("help-mpi-common-sm.txt", "unexpected message id",
-                           true, orte_process_info.nodename,
+            ompi_show_help("help-mpi-common-sm.txt", "unexpected message id",
+                           true, ompi_process_info.nodename,
                            msg_id_str, msg_id_str_to_tx);
             rc = OMPI_ERROR;
             /* here for extra debug info only */

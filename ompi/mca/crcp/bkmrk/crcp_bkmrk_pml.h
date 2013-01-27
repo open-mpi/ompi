@@ -234,7 +234,7 @@ BEGIN_C_DECLS
         opal_list_t msg_contents;
 
         /** Peer which we received from */
-        orte_process_name_t proc_name;
+        ompi_process_name_t proc_name;
 
         /**
          * Count of the number of completed PML messages that match this reference.
@@ -271,7 +271,7 @@ BEGIN_C_DECLS
         bool complete;
 
         /** Peer which we received from */
-        orte_process_name_t peer;
+        ompi_process_name_t peer;
     };
     typedef struct ompi_crcp_bkmrk_pml_drain_message_ack_ref_t ompi_crcp_bkmrk_pml_drain_message_ack_ref_t;
 
@@ -312,7 +312,7 @@ BEGIN_C_DECLS
         opal_list_t msg_contents;
 
         /** Peer which we received from */
-        orte_process_name_t proc_name;
+        ompi_process_name_t proc_name;
 
         /* Sample movement of values (mirrored for send):
          *                     Recv()   iRecv()  irecv_init()  start()  req_complete()
@@ -379,7 +379,7 @@ BEGIN_C_DECLS
         opal_list_item_t super;
 
         /** Name of peer */
-        orte_process_name_t proc_name;
+        ompi_process_name_t proc_name;
 
         /** List of messages sent to this peer */
         opal_list_t send_list;      /**< pml_send       */

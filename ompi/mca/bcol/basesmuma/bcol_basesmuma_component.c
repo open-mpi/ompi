@@ -22,9 +22,6 @@
 #include "ompi/mca/bcol/base/base.h"
 #include "ompi/mca/coll/ml/coll_ml.h"
 
-#include "orte/mca/rml/rml.h"
-#include "orte/util/proc_info.h"
-
 #include "bcol_basesmuma.h"
 /*
  * Public string showing the coll ompi_sm V2 component version number
@@ -371,7 +368,7 @@ int mca_bcol_basesmuma_allocate_sm_ctl_memory(mca_bcol_basesmuma_component_t *cs
         /* set the file name */
         name_length=asprintf(&name,
                 "%s"OPAL_PATH_SEP"%s""%0d",
-                orte_process_info.job_session_dir,
+                ompi_process_info.job_session_dir,
                 cs->clt_base_fname,
                 (int)getpid());
         if( 0 > name_length ) {
@@ -410,7 +407,7 @@ int mca_bcol_basesmuma_allocate_sm_ctl_memory(mca_bcol_basesmuma_component_t *cs
         	ctl_length,getpagesize(),name);
 	if( !cs->sm_ctl_structs) {
             fprintf(stderr," In mca_bcol_basesmuma_allocate_sm_ctl_memory failed to allocathe backing file %s \n",name);
-            ret=ORTE_ERR_OUT_OF_RESOURCE;
+            ret=OMPI_ERR_OUT_OF_RESOURCE;
             goto Error;
         }
 

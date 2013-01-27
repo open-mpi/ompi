@@ -172,8 +172,8 @@ static int vader_btl_first_time_init(mca_btl_vader_t *vader_btl, int n)
 
     /* set file name */
     if(asprintf(&vader_ctl_file, "%s"OPAL_PATH_SEP"vader_btl_module.%s",
-                orte_process_info.job_session_dir,
-                orte_process_info.nodename) < 0)
+                ompi_process_info.job_session_dir,
+                ompi_process_info.nodename) < 0)
         return OMPI_ERR_OUT_OF_RESOURCE;
 
     /* Pass in a data segment alignment of 0 to get no data

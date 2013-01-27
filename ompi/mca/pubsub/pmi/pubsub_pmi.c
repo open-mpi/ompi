@@ -18,11 +18,7 @@
 #endif
 
 #include "ompi/info/info.h"
-
-#include "orte/mca/errmgr/errmgr.h"
-#include "orte/util/name_fns.h"
-#include "orte/runtime/orte_globals.h"
-
+#include "ompi/mca/rte/rte.h"
 #include "ompi/mca/pubsub/base/base.h"
 #include "pubsub_pmi.h"
 
@@ -43,12 +39,12 @@ static int publish ( char *service_name, ompi_info_t *info, char *port_name )
 
 #if WANT_CRAY_PMI2_EXT
     if (PMI_SUCCESS != (rc = PMI2_Nameserv_publish(service_name, NULL, port_name))) {
-        ORTE_PMI_ERROR(rc, "PMI2_Nameserv_publish");
+        OMPI_ERROR_LOG(rc);
         return OMPI_ERROR;
     }
 #else
     if (PMI_SUCCESS != (rc = PMI_Publish_name(service_name, port_name))) {
-        ORTE_PMI_ERROR(rc, "PMI_KVS_Publish_name");
+        OMPI_ERROR_LOG(rc);
         return OMPI_ERROR;
     }
 #endif
@@ -63,13 +59,13 @@ static char* lookup ( char *service_name, ompi_info_t *info )
 #if WANT_CRAY_PMI2_EXT
     port = (char*)malloc(1024*sizeof(char));  /* arbitrary size */
     if (PMI_SUCCESS != (rc = PMI2_Nameserv_lookup(service_name, NULL, port, 1024))) {
-        ORTE_PMI_ERROR(rc, "PMI2_Nameserv_lookup");
+        OMPI_ERROR_LOG(rc);
         free(port);
         return NULL;
     }
 #else
     if (PMI_SUCCESS != (rc = PMI_Lookup_name(service_name, port))) {
-        ORTE_PMI_ERROR(rc, "PMI_Lookup_name");
+        OMPI_ERROR_LOG(rc);
         return NULL;
     }
 #endif
@@ -84,12 +80,12 @@ static int unpublish ( char *service_name, ompi_info_t *info )
 
 #if WANT_CRAY_PMI2_EXT
     if (PMI_SUCCESS != (rc = PMI2_Nameserv_unpublish(service_name, NULL))) {
-        ORTE_PMI_ERROR(rc, "PMI2_Nameserv_unpublish");
+        OMPI_ERROR_LOG(rc);
         return OMPI_ERROR;
     }
 #else
     if (PMI_SUCCESS != (rc = PMI_Unpublish_name(service_name))) {
-        ORTE_PMI_ERROR(rc, "PMI_Unpublish_name");
+        OMPI_ERROR_LOG(rc);
         return OMPI_ERROR;
     }
 #endif

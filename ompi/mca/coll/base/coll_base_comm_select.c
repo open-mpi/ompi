@@ -30,7 +30,6 @@
 #include "mpi.h"
 #include "ompi/communicator/communicator.h"
 #include "opal/util/output.h"
-#include "orte/util/show_help.h"
 #include "opal/class/opal_list.h"
 #include "opal/class/opal_object.h"
 #include "opal/mca/mca.h"
@@ -118,7 +117,7 @@ int mca_coll_base_comm_select(ompi_communicator_t * comm)
        collective modules available, then print error and return. */
     if (NULL == selectable) {
         /* There's no modules available */
-        orte_show_help("help-mca-coll-base",
+        ompi_show_help("help-mca-coll-base",
                        "comm-select:none-available", true);
         return OMPI_ERROR;
     }

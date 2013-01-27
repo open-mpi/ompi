@@ -11,6 +11,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2012      Los Alamos National Security, LLC.
+ *                         All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -26,13 +28,11 @@
 #include <unistd.h>
 #endif
 
-
-#include "orte/util/show_help.h"
-#include "orte/util/proc_info.h"
+#include "ompi/mca/rte/rte.h"
+#include "ompi/runtime/mpiruntime.h"
 
 #include "ompi/mca/mpool/base/mpool_base_mem_cb.h"
 #include "ompi/mca/mpool/base/base.h"
-#include "ompi/runtime/mpiruntime.h"
 
 
 static char msg[512];
@@ -72,16 +72,16 @@ void mca_mpool_base_mem_cb(void* base, size_t size, void* cbdata,
                 if (from_alloc) {
                     int len;
                     len = snprintf(msg, sizeof(msg), "[%s:%d] Attempt to free memory that is still in use by an ongoing MPI communication (buffer %p, size %lu).  MPI job will now abort.\n",
-                             orte_process_info.nodename,
+                             ompi_process_info.nodename,
                              getpid(),
                              base, (unsigned long) size);
                     msg[sizeof(msg) - 1] = '\0';
                     write(2, msg, len);
                 } else {
-                    orte_show_help("help-mpool-base.txt", 
+                    ompi_show_help("help-mpool-base.txt", 
                                    "cannot deregister in-use memory", true,
                                    current->mpool_component->mpool_version.mca_component_name,
-                                   orte_process_info.nodename,
+                                   ompi_process_info.nodename,
                                    base, (unsigned long) size);
                 }
 

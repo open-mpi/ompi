@@ -16,9 +16,6 @@
 #endif  /* HAVE_UNIST_H */
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
-#include "orte/util/show_help.h"
-
-#include "orte/util/show_help.h"
 
 #include "ompi/mca/sbgp/sbgp.h"
 #include "ompi/mca/sbgp/base/base.h"

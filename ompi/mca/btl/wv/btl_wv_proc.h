@@ -66,7 +66,7 @@ struct mca_btl_wv_proc_t {
     ompi_proc_t *proc_ompi;
 
     /** globally unique identifier for the process */
-    orte_process_name_t proc_guid;
+    ompi_process_name_t proc_guid;
 
     /** modex messages from this proc; one for each port in the peer */
     mca_btl_wv_proc_modex_t *proc_ports;

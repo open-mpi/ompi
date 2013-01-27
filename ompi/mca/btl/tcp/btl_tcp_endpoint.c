@@ -316,9 +316,9 @@ static int mca_btl_tcp_endpoint_send_connect_ack(mca_btl_base_endpoint_t* btl_en
 {
     /* send process identifier to remote endpoint */
     mca_btl_tcp_proc_t* btl_proc = mca_btl_tcp_proc_local();
-    orte_process_name_t guid = btl_proc->proc_ompi->proc_name;
+    ompi_process_name_t guid = btl_proc->proc_ompi->proc_name;
 
-    ORTE_PROCESS_NAME_HTON(guid);
+    OMPI_PROCESS_NAME_HTON(guid);
     if(mca_btl_tcp_endpoint_send_blocking(btl_endpoint, &guid, sizeof(guid)) != 
           sizeof(guid)) {
         return OMPI_ERR_UNREACH;
@@ -351,7 +351,7 @@ bool mca_btl_tcp_endpoint_accept(mca_btl_base_endpoint_t* btl_endpoint,
         return false;
     }
 
-    cmpval = orte_util_compare_name_fields(ORTE_NS_CMP_ALL, 
+    cmpval = ompi_rte_compare_name_fields(OMPI_RTE_CMP_ALL, 
                                     &endpoint_proc->proc_ompi->proc_name,
                                     &this_proc->proc_ompi->proc_name);
     if((btl_endpoint->endpoint_sd < 0) ||
@@ -492,19 +492,19 @@ static int mca_btl_tcp_endpoint_recv_blocking(mca_btl_base_endpoint_t* btl_endpo
  */
 static int mca_btl_tcp_endpoint_recv_connect_ack(mca_btl_base_endpoint_t* btl_endpoint)
 {
-    orte_process_name_t guid;
+    ompi_process_name_t guid;
     mca_btl_tcp_proc_t* btl_proc = btl_endpoint->endpoint_proc;
 
-    if((mca_btl_tcp_endpoint_recv_blocking(btl_endpoint, &guid, sizeof(orte_process_name_t))) != sizeof(orte_process_name_t)) {
+    if((mca_btl_tcp_endpoint_recv_blocking(btl_endpoint, &guid, sizeof(ompi_process_name_t))) != sizeof(ompi_process_name_t)) {
         return OMPI_ERR_UNREACH;
     }
-    ORTE_PROCESS_NAME_NTOH(guid);
+    OMPI_PROCESS_NAME_NTOH(guid);
     /* compare this to the expected values */
-    if (OPAL_EQUAL != orte_util_compare_name_fields(ORTE_NS_CMP_ALL,
+    if (OPAL_EQUAL != ompi_rte_compare_name_fields(OMPI_RTE_CMP_ALL,
                                                     &btl_proc->proc_ompi->proc_name,
                                                     &guid)) {
         BTL_ERROR(("received unexpected process identifier %s", 
-                   ORTE_NAME_PRINT(&guid)));
+                   OMPI_NAME_PRINT(&guid)));
         mca_btl_tcp_endpoint_close(btl_endpoint);
         return OMPI_ERR_UNREACH;
     }
@@ -591,7 +591,7 @@ static int mca_btl_tcp_endpoint_start_connect(mca_btl_base_endpoint_t* btl_endpo
 
     opal_output_verbose(20, mca_btl_base_output, 
                         "btl: tcp: attempting to connect() to %s address %s on port %d",
-                        ORTE_NAME_PRINT(&btl_endpoint->endpoint_proc->proc_ompi->proc_name),
+                        OMPI_NAME_PRINT(&btl_endpoint->endpoint_proc->proc_ompi->proc_name),
                         opal_net_get_hostname((struct sockaddr*) &endpoint_addr),
                         ntohs(btl_endpoint->endpoint_addr->addr_port));
 

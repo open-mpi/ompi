@@ -27,15 +27,10 @@
 
 #include "opal/class/opal_list.h"
 #include "opal/util/output.h"
-#include "orte/util/show_help.h"
 #include "opal/runtime/opal_progress.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 #include "opal/runtime/opal.h"
-
-#include "orte/mca/errmgr/errmgr.h"
-#include "orte/util/name_fns.h"
-#include "orte/runtime/orte_globals.h"
 
 #include "ompi/constants.h"
 #include "ompi/mca/pml/pml.h"
@@ -174,17 +169,17 @@ int mca_pml_base_select(bool enable_progress_threads,
     /* Finished querying all components.  Check for the bozo case. */
     
     if( NULL == best_component ) {
-        orte_show_help("help-mca-base.txt", "find-available:none-found", true, "pml");
+        ompi_show_help("help-mca-base.txt", "find-available:none-found", true, "pml");
         for( i = 0; i < opal_pointer_array_get_size(&mca_pml_base_pml); i++) { 
             char * tmp_val = NULL;
             tmp_val = (char *) opal_pointer_array_get_item(&mca_pml_base_pml, i);
             if( NULL == tmp_val) {
                 continue;
             }
-            orte_errmgr.abort(1, "PML %s cannot be selected", tmp_val);
+            ompi_rte_abort(1, "PML %s cannot be selected", tmp_val);
         }
         if(0 == i) { 
-            orte_errmgr.abort(2, "No pml component available.  This shouldn't happen.");
+            ompi_rte_abort(2, "No pml component available.  This shouldn't happen.");
         }
     } 
     
@@ -296,7 +291,7 @@ int mca_pml_base_select(bool enable_progress_threads,
     }
 
     /* register winner in the modex */
-    if (modex_reqd && 0 == ORTE_PROC_MY_NAME->vpid) {
+    if (modex_reqd && 0 == OMPI_PROC_MY_NAME->vpid) {
         mca_pml_base_pml_selected(best_component->pmlm_version.mca_component_name);
     }
 
@@ -343,7 +338,7 @@ mca_pml_base_pml_check_selected(const char *my_pml,
     }
     
     /* if we are rank=0, then we can also assume success */
-    if (0 == ORTE_PROC_MY_NAME->vpid) {
+    if (0 == OMPI_PROC_MY_NAME->vpid) {
         opal_output_verbose( 10, mca_pml_base_output,
                             "check:select: rank=0");
         return OMPI_SUCCESS;
@@ -380,14 +375,14 @@ mca_pml_base_pml_check_selected(const char *my_pml,
         (0 != strcmp(my_pml, remote_pml))) {
         if (procs[0]->proc_hostname) {
             opal_output(0, "%s selected pml %s, but peer %s on %s selected pml %s",
-                        ORTE_NAME_PRINT(&ompi_proc_local()->proc_name),
-                        my_pml, ORTE_NAME_PRINT(&procs[0]->proc_name),
+                        OMPI_NAME_PRINT(&ompi_proc_local()->proc_name),
+                        my_pml, OMPI_NAME_PRINT(&procs[0]->proc_name),
                         procs[0]->proc_hostname,
                         remote_pml);
         } else {
             opal_output(0, "%s selected pml %s, but peer %s selected pml %s",
-                        ORTE_NAME_PRINT(&ompi_proc_local()->proc_name),
-                        my_pml, ORTE_NAME_PRINT(&procs[0]->proc_name),
+                        OMPI_NAME_PRINT(&ompi_proc_local()->proc_name),
+                        my_pml, OMPI_NAME_PRINT(&procs[0]->proc_name),
                         remote_pml);
         }
         free(remote_pml); /* cleanup before returning */
