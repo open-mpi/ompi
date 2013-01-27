@@ -17,8 +17,6 @@
 #include "connect/base.h"
 #include "connect/btl_wv_connect_oob.h"
 
-
-#include "orte/util/show_help.h"
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
 
@@ -85,9 +83,9 @@ int ompi_btl_wv_connect_base_register(void)
                 }
             }
             if (NULL == all[i]) {
-                orte_show_help("help-mpi-btl-wv-cpc-base.txt",
+                ompi_show_help("help-mpi-btl-wv-cpc-base.txt",
                                "cpc name not found", true,
-                               "include", orte_process_info.nodename,
+                               "include", ompi_process_info.nodename,
                                "include", cpc_include, temp[j], 
                                all_cpc_names);
                 opal_argv_free(temp);
@@ -111,9 +109,9 @@ int ompi_btl_wv_connect_base_register(void)
                 }
             }
             if (NULL == all[i]) {
-                orte_show_help("help-mpi-btl-wv-cpc-base.txt",
+                ompi_show_help("help-mpi-btl-wv-cpc-base.txt",
                                "cpc name not found", true,
-                               "exclude", orte_process_info.nodename,
+                               "exclude", ompi_process_info.nodename,
                                "exclude", cpc_exclude, temp[j], 
                                all_cpc_names);
                 opal_argv_free(temp);
@@ -257,9 +255,9 @@ int ompi_btl_wv_connect_base_select_for_local_port(mca_btl_wv_module_t *btl)
 
     /* If we got an empty array, then no CPCs were eligible.  Doh! */
     if (0 == cpc_index) {
-        orte_show_help("help-mpi-btl-wv-cpc-base.txt",
+        ompi_show_help("help-mpi-btl-wv-cpc-base.txt",
                        "no cpcs for port", true,
-                       orte_process_info.nodename,
+                       ompi_process_info.nodename,
 					   btl->device->ib_dev->name,
                        btl->port_num, msg);
         free(cpcs);

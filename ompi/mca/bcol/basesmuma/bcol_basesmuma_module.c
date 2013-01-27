@@ -1,6 +1,8 @@
 /*
  * Copyright (c) 2009-2012 Oak Ridge National Laboratory.  All rights reserved.
  * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
+ * Copyright (c) 2012      Los Alamos National Security, LLC.
+ *                         All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -18,13 +20,7 @@
 #include "ompi/communicator/communicator.h"
 #include "ompi/mca/bcol/bcol.h"
 #include "ompi/mca/bcol/base/base.h"
-#include "ompi/mca/dpm/dpm.h"
 #include "ompi/mca/common/netpatterns/common_netpatterns.h"
-
-
-#include "orte/mca/grpcomm/grpcomm.h" 
-#include "orte/mca/rml/rml.h"
-#include "orte/util/proc_info.h"
 
 #include "opal/util/show_help.h"
 #include "opal/align.h"
@@ -428,7 +424,7 @@ mca_bcol_basesmuma_comm_query(mca_sbgp_base_module_t *module, int *num_modules)
 	    /* give the payload sm file a name */
 	    name_length=asprintf(&name,
 			    "%s"OPAL_PATH_SEP"0%s%0d",
-			    orte_process_info.job_session_dir,
+			    ompi_process_info.job_session_dir,
                             cs->payload_base_fname,
                             (int)getpid());
 	    if( 0 > name_length ) {

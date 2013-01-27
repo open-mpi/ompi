@@ -49,16 +49,6 @@
 #include "opal/runtime/opal.h"
 #include "opal/mca/event/event.h"
 
-#include "orte/util/proc_info.h"
-#include "orte/runtime/runtime.h"
-#include "orte/mca/grpcomm/grpcomm.h"
-#include "orte/runtime/orte_globals.h"
-#include "orte/util/show_help.h"
-#include "orte/mca/ess/ess.h"
-#include "orte/mca/odls/base/base.h"
-#include "orte/mca/errmgr/errmgr.h"
-#include "orte/util/name_fns.h"
-
 #include "ompi/constants.h"
 #include "ompi/mpi/fortran/base/constants.h"
 #include "ompi/runtime/mpiruntime.h"
@@ -85,6 +75,7 @@
 #include "ompi/mca/coll/base/base.h"
 #include "ompi/mca/io/io.h"
 #include "ompi/mca/io/base/base.h"
+#include "ompi/mca/rte/rte.h"
 #include "ompi/debuggers/debuggers.h"
 #include "ompi/proc/proc.h"
 #include "ompi/mca/pml/base/pml_base_bsend.h"
@@ -97,9 +88,6 @@
 #include "ompi/mca/crcp/base/base.h"
 #endif
 #include "ompi/runtime/ompi_cr.h"
-
-#include "orte/runtime/orte_globals.h"
-#include "orte/util/name_fns.h"
 
 /* This is required for the boundaries of the hash tables used to store
  * the F90 types returned by the MPI_Type_create_f90_XXX functions.
@@ -173,8 +161,8 @@ static bool atfork_called = false;
 static void warn_fork_cb(void)
 {
     if (ompi_mpi_initialized && !ompi_mpi_finalized && !fork_warning_issued) {
-        orte_show_help("help-mpi-runtime.txt", "mpi_init:warn-fork", true,
-                       orte_process_info.nodename, getpid(),
+        ompi_show_help("help-mpi-runtime.txt", "mpi_init:warn-fork", true,
+                       ompi_process_info.nodename, getpid(),
                        ompi_mpi_comm_world.comm.c_my_rank);
         fork_warning_issued = true;
     }
@@ -323,8 +311,8 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     int param, value;
     struct timeval ompistart, ompistop;
     char *event_val = NULL;
-    bool orte_setup = false;
-    orte_grpcomm_collective_t *coll;
+    bool rte_setup = false;
+    ompi_rte_collective_t *coll;
     char *cmd=NULL, *av=NULL;
 
     /* bitflag of the thread level support provided. To be used
@@ -356,7 +344,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
        pty's with the event engine, so it's ok to relax this
        constraint and let any fd-monitoring mechanism be used. */
     ret = mca_base_param_reg_string_name("opal", "event_include",
-                                         "Internal orted MCA param: tell opal_init() to use a specific mechanism in libevent",
+                                         "Internal opal MCA param: tell opal_init() to use a specific mechanism in libevent",
                                          false, false, "all", &event_val);
     if (ret >= 0) {
         /* We have to explicitly "set" the MCA param value here
@@ -370,7 +358,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
            the user desires. Note that we do *NOT* set this value as an
            environment variable, just so that it won't be inherited by
            any spawned processes and potentially cause unintented
-           side-effects with launching ORTE tools... */
+           side-effects with launching RTE tools... */
         if (0 == strcmp("all", event_val)) {
             mca_base_param_set_string(ret, "all");
         }
@@ -407,18 +395,18 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         putenv(av);
     }
 
-    /* Setup ORTE - note that we are an MPI process  */
-    if (ORTE_SUCCESS != (ret = orte_init(NULL, NULL, ORTE_PROC_MPI))) {
-        error = "ompi_mpi_init: orte_init failed";
+    /* Setup RTE - note that we are an MPI process  */
+    if (OMPI_SUCCESS != (ret = ompi_rte_init(NULL, NULL))) {
+        error = "ompi_mpi_init: ompi_rte_init failed";
         goto error;
     }
-    orte_setup = true;
+    rte_setup = true;
     
     /* check for timing request - get stop time and report elapsed time if so */
-    if (timing && 0 == ORTE_PROC_MY_NAME->vpid) {
+    if (timing && 0 == OMPI_PROC_MY_NAME->vpid) {
         gettimeofday(&ompistop, NULL);
-        opal_output(0, "ompi_mpi_init [%ld]: time from start to completion of orte_init %ld usec",
-                    (long)ORTE_PROC_MY_NAME->vpid,
+        opal_output(0, "ompi_mpi_init [%ld]: time from start to completion of rte_init %ld usec",
+                    (long)OMPI_PROC_MY_NAME->vpid,
                     (long int)((ompistop.tv_sec - ompistart.tv_sec)*1000000 +
                                (ompistop.tv_usec - ompistart.tv_usec)));
         gettimeofday(&ompistart, NULL);
@@ -436,10 +424,10 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     }
 #endif
 
-    /* Register errhandler callback with orte errmgr */
-    if (NULL != orte_errmgr.set_fault_callback) {
-        orte_errmgr.set_fault_callback(ompi_errhandler_runtime_callback);
-    }
+    /* Register errhandler callback - RTE will ignore if it
+     * doesn't support this capability
+     */
+    ompi_rte_set_fault_callback(ompi_errhandler_runtime_callback);
 
     /* Figure out the final MPI thread levels.  If we were not
        compiled for support for MPI threads, then don't allow
@@ -582,10 +570,10 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     }
 
     /* check for timing request - get stop time and report elapsed time if so */
-    if (timing && 0 == ORTE_PROC_MY_NAME->vpid) {
+    if (timing && 0 == OMPI_PROC_MY_NAME->vpid) {
         gettimeofday(&ompistop, NULL);
-        opal_output(0, "ompi_mpi_init[%ld]: time from completion of orte_init to modex %ld usec",
-                    (long)ORTE_PROC_MY_NAME->vpid,
+        opal_output(0, "ompi_mpi_init[%ld]: time from completion of rte_init to modex %ld usec",
+                    (long)OMPI_PROC_MY_NAME->vpid,
                     (long int)((ompistop.tv_sec - ompistart.tv_sec)*1000000 +
                                (ompistop.tv_usec - ompistart.tv_usec)));
         gettimeofday(&ompistart, NULL);
@@ -594,10 +582,10 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     /* exchange connection info - this function also acts as a barrier
      * as it will not return until the exchange is complete
      */
-    coll = OBJ_NEW(orte_grpcomm_collective_t);
-    coll->id = orte_process_info.peer_modex;
-    if (ORTE_SUCCESS != (ret = orte_grpcomm.modex(coll))) {
-        error = "orte_grpcomm_modex failed";
+    coll = OBJ_NEW(ompi_rte_collective_t);
+    coll->id = ompi_process_info.peer_modex;
+    if (OMPI_SUCCESS != (ret = ompi_rte_modex(coll))) {
+        error = "rte_modex failed";
         goto error;
     }
     /* wait for modex to complete - this may be moved anywhere in mpi_init
@@ -609,10 +597,10 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     }
     OBJ_RELEASE(coll);
 
-    if (timing && 0 == ORTE_PROC_MY_NAME->vpid) {
+    if (timing && 0 == OMPI_PROC_MY_NAME->vpid) {
         gettimeofday(&ompistop, NULL);
         opal_output(0, "ompi_mpi_init[%ld]: time to execute modex %ld usec",
-                    (long)ORTE_PROC_MY_NAME->vpid,
+                    (long)OMPI_PROC_MY_NAME->vpid,
                     (long int)((ompistop.tv_sec - ompistart.tv_sec)*1000000 +
                                (ompistop.tv_usec - ompistart.tv_usec)));
         gettimeofday(&ompistart, NULL);
@@ -748,7 +736,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
        Otherwise, if we got some other failure, fall through to print
        a generic message. */
     if (OMPI_ERR_UNREACH == ret) {
-        orte_show_help("help-mpi-runtime",
+        ompi_show_help("help-mpi-runtime",
                        "mpi_init:startup:pml-add-procs-fail", true);
         error = NULL;
         goto error;
@@ -766,28 +754,28 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     if (ompi_mpi_show_mca_params) {
         ompi_show_all_mca_params(ompi_mpi_comm_world.comm.c_my_rank, 
                                  nprocs, 
-                                 orte_process_info.nodename);
+                                 ompi_process_info.nodename);
     }
 
     /* Do we need to wait for a debugger? */
-    ompi_wait_for_debugger();
-    
+    ompi_rte_wait_for_debugger();
+
     /* check for timing request - get stop time and report elapsed
        time if so, then start the clock again */
-    if (timing && 0 == ORTE_PROC_MY_NAME->vpid) {
+    if (timing && 0 == OMPI_PROC_MY_NAME->vpid) {
         gettimeofday(&ompistop, NULL);
         opal_output(0, "ompi_mpi_init[%ld]: time from modex to first barrier %ld usec",
-                    (long)ORTE_PROC_MY_NAME->vpid,
+                    (long)OMPI_PROC_MY_NAME->vpid,
                     (long int)((ompistop.tv_sec - ompistart.tv_sec)*1000000 +
                                (ompistop.tv_usec - ompistart.tv_usec)));
         gettimeofday(&ompistart, NULL);
     }
-    
+
     /* wait for everyone to reach this point */
-    coll = OBJ_NEW(orte_grpcomm_collective_t);
-    coll->id = orte_process_info.peer_init_barrier;
-    if (ORTE_SUCCESS != (ret = orte_grpcomm.barrier(coll))) {
-        error = "orte_grpcomm_barrier failed";
+    coll = OBJ_NEW(ompi_rte_collective_t);
+    coll->id = ompi_process_info.peer_init_barrier;
+    if (OMPI_SUCCESS != (ret = ompi_rte_barrier(coll))) {
+        error = "rte_barrier failed";
         goto error;
     }
     /* wait for barrier to complete */
@@ -798,10 +786,10 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
 
     /* check for timing request - get stop time and report elapsed
        time if so, then start the clock again */
-    if (timing && 0 == ORTE_PROC_MY_NAME->vpid) {
+    if (timing && 0 == OMPI_PROC_MY_NAME->vpid) {
         gettimeofday(&ompistop, NULL);
         opal_output(0, "ompi_mpi_init[%ld]: time to execute barrier %ld usec",
-                    (long)ORTE_PROC_MY_NAME->vpid,
+                    (long)OMPI_PROC_MY_NAME->vpid,
                     (long int)((ompistop.tv_sec - ompistart.tv_sec)*1000000 +
                                (ompistop.tv_usec - ompistart.tv_usec)));
         gettimeofday(&ompistart, NULL);
@@ -812,7 +800,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
        block in the event library, so that communications don't take
        forever between procs in the dynamic code.  This will increase
        CPU utilization for the remainder of MPI_INIT when we are
-       blocking on ORTE-level events, but may greatly reduce non-TCP
+       blocking on RTE-level events, but may greatly reduce non-TCP
        latency. */
     opal_progress_set_event_flag(OPAL_EVLOOP_NONBLOCK);
 #endif
@@ -845,7 +833,6 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         error = "ompi_dpm_base_select() failed";
         goto error;
     }
-
 
     /* Determine the overall threadlevel support of all processes 
        in MPI_COMM_WORLD. This has to be done before calling 
@@ -897,7 +884,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
 
     /* Undo OPAL calling opal_progress_event_users_increment() during 
        opal_init, to get better latency when not using TCP.  Do 
-       this *after* dyn_init, as dyn init uses lots of ORTE 
+       this *after* dyn_init, as dyn init uses lots of RTE 
        communication and we don't want to hinder the performance of 
        that code. */ 
     opal_progress_event_users_decrement(); 
@@ -936,9 +923,9 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         /* Only print a message if one was not already printed */
         if (NULL != error) {
             const char *err_msg = opal_strerror(ret);
-            /* If ORTE was not setup yet, don't use orte_show_help */
-            if (orte_setup) {
-                orte_show_help("help-mpi-runtime",
+            /* If RTE was not setup yet, don't use ompi_show_help */
+            if (rte_setup) {
+                ompi_show_help("help-mpi-runtime",
                                "mpi_init:startup:internal-failure", true,
                                "MPI_INIT", "MPI_INIT", error, err_msg, ret);
             } else {
@@ -970,10 +957,10 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     ompi_mpi_initialized = true;
 
     /* check for timing request - get stop time and report elapsed time if so */
-    if (timing && 0 == ORTE_PROC_MY_NAME->vpid) {
+    if (timing && 0 == OMPI_PROC_MY_NAME->vpid) {
         gettimeofday(&ompistop, NULL);
         opal_output(0, "ompi_mpi_init[%ld]: time from barrier to complete mpi_init %ld usec",
-                    (long)ORTE_PROC_MY_NAME->vpid,
+                    (long)OMPI_PROC_MY_NAME->vpid,
                     (long int)((ompistop.tv_sec - ompistart.tv_sec)*1000000 +
                                (ompistop.tv_usec - ompistart.tv_usec)));
     }

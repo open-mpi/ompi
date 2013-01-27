@@ -36,8 +36,6 @@
 #include "pml_dr_recvreq.h"
 #include "pml_dr_sendreq.h"
 #include "pml_dr_hdr.h"
-#include "orte/mca/errmgr/errmgr.h"
-
 
     
 #define MCA_PML_DR_HDR_VALIDATE_ACK(do_csum, hdr, type)                                        \
@@ -207,7 +205,7 @@ void mca_pml_dr_recv_frag_callback(
                         return;
                     } else { 
                         OPAL_OUTPUT((0, "%s:%d: the world as we know it is bad\n", __FILE__, __LINE__));
-                        orte_errmgr.abort(-1, NULL);
+                        ompi_rte_abort(-1, NULL);
                     }
                 }
                 comm = (mca_pml_dr_comm_t*)ompi_comm->c_pml_comm;
@@ -240,7 +238,7 @@ void mca_pml_dr_recv_frag_callback(
                 ompi_comm = ompi_comm_lookup(hdr->hdr_common.hdr_ctx);
                 if(NULL == ompi_comm) { 
                     OPAL_OUTPUT((0, "%s:%d: the world as we know it is bad\n", __FILE__, __LINE__));
-                    orte_errmgr.abort(-1, NULL);
+                    ompi_rte_abort(-1, NULL);
                 }
                 comm = (mca_pml_dr_comm_t*)ompi_comm->c_pml_comm;
                 assert(hdr->hdr_common.hdr_src < opal_pointer_array_get_size(&comm->sparse_procs));
@@ -289,7 +287,7 @@ void mca_pml_dr_recv_frag_callback(
                 ompi_comm = ompi_comm_lookup(hdr->hdr_common.hdr_ctx);                                     
                 if(NULL == ompi_comm) { 
                     MCA_PML_DR_DEBUG(0,(0, "%s:%d: the world as we know it is bad\n", __FILE__, __LINE__));
-                    orte_errmgr.abort(-1, NULL);
+                    ompi_rte_abort(-1, NULL);
                 }
                 comm = (mca_pml_dr_comm_t*)ompi_comm->c_pml_comm;                                          
                 assert(hdr->hdr_common.hdr_src < opal_pointer_array_get_size(&comm->sparse_procs));        

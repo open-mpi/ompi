@@ -942,7 +942,7 @@ void mca_btl_sctp_component_accept(void)
  */
 static void mca_btl_sctp_component_recv_handler(int sd, short flags, void* user)
 {
-    orte_process_name_t guid;
+    ompi_process_name_t guid;
     struct sockaddr_in addr;
     int retval;
     mca_btl_sctp_proc_t* btl_proc;

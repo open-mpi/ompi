@@ -29,8 +29,6 @@
 #include "opal/mca/hwloc/base/base.h"
 #include "opal/runtime/opal.h"
 
-#include "orte/runtime/orte_globals.h"
-
 #include "ompi/communicator/communicator.h"
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/mpi/c/bindings.h"
@@ -98,7 +96,7 @@ static int get_rsrc_ompi_bound(char str[OMPI_AFFINITY_STRING_MAX])
     int ret;
 
     /* If OMPI did not bind, indicate that */
-    if (!orte_proc_is_bound) {
+    if (!ompi_rte_proc_is_bound) {
         const char tmp[] = "This process is not bound";
         strncpy(str, tmp, OMPI_AFFINITY_STRING_MAX - 1);
         return OMPI_SUCCESS;
@@ -278,7 +276,7 @@ static int get_layout_ompi_bound(char str[OMPI_AFFINITY_STRING_MAX])
     int ret;
 
     /* If OMPI did not bind, indicate that */
-    if (!orte_proc_is_bound) {
+    if (!ompi_rte_proc_is_bound) {
         const char tmp[] = "This process is not bound";
         strncpy(str, tmp, OMPI_AFFINITY_STRING_MAX - 1);
         return OMPI_SUCCESS;

@@ -12,6 +12,8 @@
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2007      Voltaire. All rights reserved.
  * Copyright (c) 2010      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2012      Los Alamos National Security, LLC.
+ *                         All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -26,10 +28,8 @@
 #include "ompi_config.h"
 
 #include "opal/mca/mca.h"
-#include "orte/util/show_help.h"
-#include "orte/util/name_fns.h"
-#include "orte/util/proc_info.h"
-#include "orte/runtime/orte_globals.h"
+
+#include "ompi/mca/rte/rte.h"
 #include "ompi/runtime/params.h"
 #include "ompi/class/ompi_free_list.h"
 #include "ompi/class/ompi_rb_tree.h"
@@ -178,16 +178,16 @@ void mca_mpool_base_tree_print(void)
 
     if (num_leaks <= ompi_debug_show_mpi_alloc_mem_leaks ||
         ompi_debug_show_mpi_alloc_mem_leaks < 0) {
-        orte_show_help("help-mpool-base.txt", "all mem leaks",
-                       true, ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                       orte_process_info.nodename,
-                       orte_process_info.pid, leak_msg);
+        ompi_show_help("help-mpool-base.txt", "all mem leaks",
+                       true, OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),
+                       ompi_process_info.nodename,
+                       ompi_process_info.pid, leak_msg);
     } else {
         int i = num_leaks - ompi_debug_show_mpi_alloc_mem_leaks;
-        orte_show_help("help-mpool-base.txt", "some mem leaks",
-                       true, ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                       orte_process_info.nodename, 
-                       orte_process_info.pid, leak_msg, i,
+        ompi_show_help("help-mpool-base.txt", "some mem leaks",
+                       true, OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),
+                       ompi_process_info.nodename, 
+                       ompi_process_info.pid, leak_msg, i,
                        (i > 1) ? "s were" : " was",
                        (i > 1) ? "are" : "is");
     }

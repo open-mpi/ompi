@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
  * Copyright (c) 2009-2012 Oak Ridge National Laboratory.  All rights reserved.
- * $COPYRIGHT$
+* $COPYRIGHT$
  *
  * Additional copyrights may follow
  *
@@ -21,6 +21,9 @@
 #include <assert.h>
 
 #include "ompi/constants.h"
+
+#include "ompi/mca/rte/rte.h"
+
 #include "common_netpatterns.h"
 
 /* setup recursive doubleing tree node */

@@ -123,7 +123,7 @@ static inline int mca_btl_ugni_wildcard_ep_post (mca_btl_ugni_module_t *ugni_mod
     memset (&ugni_module->wc_local_attr, 0, sizeof (ugni_module->wc_local_attr));
     rc = GNI_EpPostDataWId (ugni_module->wildcard_ep, &ugni_module->wc_local_attr, sizeof (ugni_module->wc_local_attr),
                             &ugni_module->wc_remote_attr, sizeof (ugni_module->wc_remote_attr),
-                            MCA_BTL_UGNI_CONNECT_WILDCARD_ID | ORTE_PROC_MY_NAME->vpid);
+                            MCA_BTL_UGNI_CONNECT_WILDCARD_ID | OMPI_PROC_MY_NAME->vpid);
 
     return ompi_common_rc_ugni_to_ompi (rc);
 }

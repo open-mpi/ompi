@@ -29,7 +29,6 @@
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/btl/btl.h"
 #include "ompi/class/ompi_seq_tracker.h"
-#include "orte/mca/errmgr/errmgr.h"
 #include "pml_dr.h"
 #include "pml_dr_hdr.h"
 #include "pml_dr_sendreq.h"
@@ -119,7 +118,7 @@ static void mca_pml_dr_error_completion(
             mca_bml.bml_del_btl(btl);
             break;
         default:
-            orte_errmgr.abort(-1, NULL);
+            ompi_rte_abort(-1, NULL);
             break;
     }
 

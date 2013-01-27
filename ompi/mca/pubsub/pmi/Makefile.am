@@ -30,8 +30,7 @@ mcacomponentdir = $(pkglibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_pubsub_pmi_la_SOURCES = $(local_sources)
 mca_pubsub_pmi_la_LDFLAGS = -module -avoid-version $(pubsub_pmi_LDFLAGS)
-mca_pubsub_pmi_la_LIBADD = $(pubsub_pmi_LIBS) \
-	$(top_ompi_builddir)/orte/mca/common/pmi/libmca_common_pmi.la
+mca_pubsub_pmi_la_LIBADD = $(pubsub_pmi_LIBS)
 
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_pubsub_pmi_la_SOURCES = $(local_sources)

@@ -45,7 +45,7 @@ int OMPI_CR_Checkpoint(char **handle, int *seq, MPI_Info *info)
 
     MPI_Comm_rank(comm, &my_rank);
     if( 0 == my_rank ) {
-        datum->leader = ORTE_PROC_MY_NAME->vpid;
+        datum->leader = OMPI_PROC_MY_NAME->vpid;
     } else {
         datum->leader = -1; /* Unknown from non-root ranks */
     }
@@ -70,7 +70,7 @@ int OMPI_CR_Checkpoint(char **handle, int *seq, MPI_Info *info)
     /*
      * Leader then sends out the commit message
      */
-    if( datum->leader == (int)ORTE_PROC_MY_NAME->vpid ) {
+    if( datum->leader == (int)OMPI_PROC_MY_NAME->vpid ) {
         *handle = strdup(datum->global_handle);
         *seq = datum->seq_num;
         state = 0;

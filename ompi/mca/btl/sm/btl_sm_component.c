@@ -48,10 +48,6 @@
 #include "opal/util/bit_ops.h"
 #include "opal/util/output.h"
 
-#include "orte/util/show_help.h"
-#include "orte/runtime/orte_globals.h"
-#include "orte/util/proc_info.h"
-
 #include "ompi/constants.h"
 #include "ompi/runtime/ompi_module_exchange.h"
 #include "ompi/mca/mpool/base/base.h"
@@ -165,9 +161,9 @@ static int sm_register(void)
         mca_btl_sm_component.use_knem = i;
     } else {
         if (i > 0) {
-            orte_show_help("help-mpi-btl-sm.txt",
+            ompi_show_help("help-mpi-btl-sm.txt",
                            "knem requested but not supported", true,
-                           orte_process_info.nodename);
+                           ompi_process_info.nodename);
             return OMPI_ERROR;
         }
         mca_btl_sm_component.use_knem = 0;
@@ -372,7 +368,7 @@ get_num_local_procs(void)
 {
     /* num_local_peers does not include us in
      * its calculation, so adjust for that */
-    return (int)(1 + orte_process_info.num_local_peers);
+    return (int)(1 + ompi_process_info.num_local_peers);
 }
 
 static void
@@ -523,29 +519,29 @@ set_uniq_paths_for_init_rndv(mca_btl_sm_component_t *comp_ptr)
 
     if (asprintf(&comp_ptr->sm_mpool_ctl_file_name,
                  "%s"OPAL_PATH_SEP"shared_mem_pool.%s",
-                 orte_process_info.job_session_dir,
-                 orte_process_info.nodename) < 0) {
+                 ompi_process_info.job_session_dir,
+                 ompi_process_info.nodename) < 0) {
         /* rc set */
         goto out;
     }
     if (asprintf(&comp_ptr->sm_mpool_rndv_file_name,
                  "%s"OPAL_PATH_SEP"shared_mem_pool_rndv.%s",
-                 orte_process_info.job_session_dir,
-                 orte_process_info.nodename) < 0) {
+                 ompi_process_info.job_session_dir,
+                 ompi_process_info.nodename) < 0) {
         /* rc set */
         goto out;
     }
     if (asprintf(&comp_ptr->sm_ctl_file_name,
                  "%s"OPAL_PATH_SEP"shared_mem_btl_module.%s",
-                 orte_process_info.job_session_dir,
-                 orte_process_info.nodename) < 0) {
+                 ompi_process_info.job_session_dir,
+                 ompi_process_info.nodename) < 0) {
         /* rc set */
         goto out;
     }
     if (asprintf(&comp_ptr->sm_rndv_file_name,
                  "%s"OPAL_PATH_SEP"shared_mem_btl_rndv.%s",
-                 orte_process_info.job_session_dir,
-                 orte_process_info.nodename) < 0) {
+                 ompi_process_info.job_session_dir,
+                 ompi_process_info.nodename) < 0) {
         /* rc set */
         goto out;
     }
@@ -637,7 +633,7 @@ create_rndv_file(mca_btl_sm_component_t *comp_ptr,
      * sizeof(opal_shmem_ds_t), so we know where the mpool_res_size starts. */
     if (-1 == (fd = open(fname, O_CREAT | O_RDWR, 0600))) {
         int err = errno;
-        orte_show_help("help-mpi-btl-sm.txt", "sys call fail", true,
+        ompi_show_help("help-mpi-btl-sm.txt", "sys call fail", true,
                        "open(2)", strerror(err), err);
         rc = OMPI_ERR_IN_ERRNO;
         goto out;
@@ -645,7 +641,7 @@ create_rndv_file(mca_btl_sm_component_t *comp_ptr,
     if ((ssize_t)sizeof(opal_shmem_ds_t) != write(fd, &(tmp_modp->shmem_ds),
                                                   sizeof(opal_shmem_ds_t))) {
         int err = errno;
-        orte_show_help("help-mpi-btl-sm.txt", "sys call fail", true,
+        ompi_show_help("help-mpi-btl-sm.txt", "sys call fail", true,
                        "write(2)", strerror(err), err);
         rc = OMPI_ERR_IN_ERRNO;
         goto out;
@@ -653,7 +649,7 @@ create_rndv_file(mca_btl_sm_component_t *comp_ptr,
     if (MCA_BTL_SM_RNDV_MOD_MPOOL == type) {
         if ((ssize_t)sizeof(size) != write(fd, &size, sizeof(size))) {
             int err = errno;
-            orte_show_help("help-mpi-btl-sm.txt", "sys call fail", true,
+            ompi_show_help("help-mpi-btl-sm.txt", "sys call fail", true,
                            "write(2)", strerror(err), err);
             rc = OMPI_ERR_IN_ERRNO;
             goto out;
@@ -674,7 +670,7 @@ out:
  */
 static int
 backing_store_init(mca_btl_sm_component_t *comp_ptr,
-                   orte_node_rank_t node_rank)
+                   ompi_node_rank_t node_rank)
 {
     int rc = OMPI_SUCCESS;
 
@@ -708,7 +704,7 @@ mca_btl_sm_component_init(int *num_btls,
 {
     int num_local_procs = 0;
     mca_btl_base_module_t **btls = NULL;
-    orte_node_rank_t my_node_rank = ORTE_NODE_RANK_INVALID;
+    ompi_node_rank_t my_node_rank = OMPI_NODE_RANK_INVALID;
 #if OMPI_BTL_SM_HAVE_KNEM
     int rc;
 #endif /* OMPI_BTL_SM_HAVE_KNEM */
@@ -719,17 +715,17 @@ mca_btl_sm_component_init(int *num_btls,
     mca_btl_sm_component.sm_mpool_base = NULL;
 
     /* if no session directory was created, then we cannot be used */
+    if (NULL == ompi_process_info.job_session_dir) {
     /* SKG - this isn't true anymore. Some backing facilities don't require a
      * file-backed store. Extend shmem to provide this info one day. Especially
      * when we use a proper modex for init. */
-    if (!orte_create_session_dirs) {
         return NULL;
     }
     /* if we don't have locality information, then we cannot be used because we
      * need to know who the respective node ranks for initialization. */
-    if (ORTE_NODE_RANK_INVALID ==
-        (my_node_rank = orte_process_info.my_node_rank)) {
-        orte_show_help("help-mpi-btl-sm.txt", "no locality", true);
+    if (OMPI_NODE_RANK_INVALID ==
+        (my_node_rank = ompi_process_info.my_node_rank)) {
+        ompi_show_help("help-mpi-btl-sm.txt", "no locality", true);
         return NULL;
     }
     /* no use trying to use sm with less than two procs, so just bail. */
@@ -751,13 +747,11 @@ mca_btl_sm_component_init(int *num_btls,
 
 #if OMPI_ENABLE_PROGRESS_THREADS == 1
     /* create a named pipe to receive events  */
-    sprintf(mca_btl_sm_component.sm_fifo_path,
-             "%s"OPAL_PATH_SEP"sm_fifo.%lu",
-             orte_process_info.job_session_dir,
-             (unsigned long)ORTE_PROC_MY_NAME->vpid);
-    if (mkfifo(mca_btl_sm_component.sm_fifo_path, 0660) < 0) {
-        opal_output(0, "mca_btl_sm_component_init: "
-                    "mkfifo failed with errno=%d\n",errno);
+    sprintf( mca_btl_sm_component.sm_fifo_path,
+             "%s"OPAL_PATH_SEP"sm_fifo.%lu", ompi_process_info.job_session_dir,
+             (unsigned long)OMPI_PROC_MY_NAME->vpid );
+    if(mkfifo(mca_btl_sm_component.sm_fifo_path, 0660) < 0) {
+        opal_output(0, "mca_btl_sm_component_init: mkfifo failed with errno=%d\n",errno);
         return NULL;
     }
     mca_btl_sm_component.sm_fifo_fd = open(mca_btl_sm_component.sm_fifo_path,
@@ -823,11 +817,11 @@ mca_btl_sm_component_init(int *num_btls,
                     if (0 != stat("/dev/knem", &sbuf)) {
                         sbuf.st_mode = 0;
                     }
-                    orte_show_help("help-mpi-btl-sm.txt", "knem permission denied",
-                                   true, orte_process_info.nodename, sbuf.st_mode);
+                    ompi_show_help("help-mpi-btl-sm.txt", "knem permission denied",
+                                   true, ompi_process_info.nodename, sbuf.st_mode);
                 } else {
-                    orte_show_help("help-mpi-btl-sm.txt", "knem fail open",
-                                   true, orte_process_info.nodename, errno,
+                    ompi_show_help("help-mpi-btl-sm.txt", "knem fail open",
+                                   true, ompi_process_info.nodename, errno,
                                    strerror(errno));
                 }
                 goto no_knem;
@@ -838,14 +832,14 @@ mca_btl_sm_component_init(int *num_btls,
             rc = ioctl(mca_btl_sm.knem_fd, KNEM_CMD_GET_INFO,
                        &mca_btl_sm_component.knem_info);
             if (rc < 0) {
-                orte_show_help("help-mpi-btl-sm.txt", "knem get ABI fail",
-                               true, orte_process_info.nodename, errno,
+                ompi_show_help("help-mpi-btl-sm.txt", "knem get ABI fail",
+                               true, ompi_process_info.nodename, errno,
                                strerror(errno));
                 goto no_knem;
             }
             if (KNEM_ABI_VERSION != mca_btl_sm_component.knem_info.abi) {
-                orte_show_help("help-mpi-btl-sm.txt", "knem ABI mismatch",
-                               true, orte_process_info.nodename, KNEM_ABI_VERSION,
+                ompi_show_help("help-mpi-btl-sm.txt", "knem ABI mismatch",
+                               true, ompi_process_info.nodename, KNEM_ABI_VERSION,
                                mca_btl_sm_component.knem_info.abi);
                 goto no_knem;
             }
@@ -866,8 +860,8 @@ mca_btl_sm_component_init(int *num_btls,
                                                     MAP_SHARED, mca_btl_sm.knem_fd,
                                                     KNEM_STATUS_ARRAY_FILE_OFFSET);
                 if (MAP_FAILED == mca_btl_sm.knem_status_array) {
-                    orte_show_help("help-mpi-btl-sm.txt", "knem mmap fail",
-                                   true, orte_process_info.nodename, errno,
+                    ompi_show_help("help-mpi-btl-sm.txt", "knem mmap fail",
+                                   true, ompi_process_info.nodename, errno,
                                    strerror(errno));
                     goto no_knem;
                 }
@@ -878,8 +872,8 @@ mca_btl_sm_component_init(int *num_btls,
                     malloc(sizeof(mca_btl_sm_frag_t *) *
                            mca_btl_sm_component.knem_max_simultaneous);
                 if (NULL == mca_btl_sm.knem_frag_array) {
-                    orte_show_help("help-mpi-btl-sm.txt", "knem init fail",
-                                   true, orte_process_info.nodename, "malloc",
+                    ompi_show_help("help-mpi-btl-sm.txt", "knem init fail",
+                                   true, ompi_process_info.nodename, "malloc",
                                    errno, strerror(errno));
                     goto no_knem;
                 }

@@ -1,6 +1,8 @@
 /*
  * Copyright (c) 2009-2012 Oak Ridge National Laboratory.  All rights reserved.
  * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
+ * Copyright (c) 2012      Los Alamos National Security, LLC.
+ *                         All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -19,13 +21,6 @@
 #include "ompi/mca/bcol/base/base.h"
 #include "ompi/mca/coll/ml/coll_ml.h"
 #include "ompi/mca/common/commpatterns/common_coll_ops.h"
-#include "ompi/mca/dpm/dpm.h"
-
-
-#include "orte/mca/rml/rml.h"
-#include "orte/mca/rml/rml_types.h"
-#include "orte/mca/grpcomm/grpcomm.h"
-#include "orte/mca/rml/rml.h"
 
 #include "opal/dss/dss.h"
 

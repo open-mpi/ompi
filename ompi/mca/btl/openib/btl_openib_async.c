@@ -20,8 +20,6 @@
 #include <unistd.h>
 #include <errno.h>
 
-#include "orte/util/show_help.h"
-
 #include "ompi/mca/btl/base/base.h"
 #include "btl_openib.h"
 #include "btl_openib_mca.h"
@@ -402,15 +400,15 @@ static int btl_openib_async_deviceh(struct mca_btl_openib_async_poll *devices_po
             case IBV_EVENT_QP_ACCESS_ERR:
             case IBV_EVENT_PATH_MIG_ERR:
             case IBV_EVENT_SRQ_ERR:
-                orte_show_help("help-mpi-btl-openib.txt", "of error event",
-                    true,orte_process_info.nodename, orte_process_info.pid,
+                ompi_show_help("help-mpi-btl-openib.txt", "of error event",
+                    true,ompi_process_info.nodename, ompi_process_info.pid,
                     event_type,
                     openib_event_to_str((enum ibv_event_type)event_type),
                     xrc_event ? "true" : "false");
                 break;
             case IBV_EVENT_PORT_ERR:
-                orte_show_help("help-mpi-btl-openib.txt", "of error event",
-                    true,orte_process_info.nodename, orte_process_info.pid,
+                ompi_show_help("help-mpi-btl-openib.txt", "of error event",
+                    true,ompi_process_info.nodename, ompi_process_info.pid,
                     event_type,
                     openib_event_to_str((enum ibv_event_type)event_type),
                     xrc_event ? "true" : "false");
@@ -439,8 +437,8 @@ static int btl_openib_async_deviceh(struct mca_btl_openib_async_poll *devices_po
 
                 break;
             default:
-                orte_show_help("help-mpi-btl-openib.txt", "of unknown event",
-                        true,orte_process_info.nodename, orte_process_info.pid,
+                ompi_show_help("help-mpi-btl-openib.txt", "of unknown event",
+                        true,ompi_process_info.nodename, ompi_process_info.pid,
                         event_type, xrc_event ? "true" : "false");
         }
         ibv_ack_async_event(&event);

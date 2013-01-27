@@ -1,6 +1,8 @@
 /*
  * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
  * Copyright (c) 2009-2012 Oak Ridge National Laboratory.  All rights reserved.
+ * Copyright (c) 2012      Los Alamos National Security, LLC.
+ *                         All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -12,6 +14,7 @@
 #define COMM_COLL_OP_TYPES_H
 
 #include "ompi_config.h"
+#include "ompi/communicator/communicator.h"
 #include "ompi/datatype/ompi_datatype.h"
 #include "ompi/proc/proc.h"
 

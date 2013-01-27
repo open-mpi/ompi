@@ -1,6 +1,8 @@
 /*
  * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
  * Copyright (c) 2009-2012 Oak Ridge National Laboratory.  All rights reserved.
+ * Copyright (c) 2012      Los Alamos National Security, LLC.
+ *                         All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -16,17 +18,18 @@
 #include "ompi/op/op.h"
 #include "ompi/datatype/ompi_datatype.h"
 #include "ompi/communicator/communicator.h"
+#include "ompi/mca/rte/rte.h"
 
-orte_rml_callback_fn_t send_completion(nt status, struct orte_process_name_t* peer, struct iovec* msg, 
-        int count, orte_rml_tag_t tag, void* cbdata)
+void send_completion(nt status, struct ompi_process_name_t* peer, struct iovec* msg, 
+                     int count, ompi_rml_tag_t tag, void* cbdata)
 {
     /* set send completion flag */
     *(int *)cbdata=1;
 }
 
 
-orte_rml_module_recv_nb_fn_t recv_completion(nt status, struct orte_process_name_t* peer, struct iovec* msg, 
-        int count, orte_rml_tag_t tag, void* cbdata)
+void recv_completion(nt status, struct ompi_process_name_t* peer, struct iovec* msg, 
+                     int count, ompi_rml_tag_t tag, void* cbdata)
 {
     /* set receive completion flag */
     MB();
@@ -190,7 +193,7 @@ comm_allreduce(void *sbuf, void *rbuf, int count, opal_datatype_t *dtype,
                 extra_rank=my_exchange_node.rank_extra_source;
                 recv_iov.iov_base=scratch_bufers[recv_buffer];
                 recv_iov.iov_len=count_this_stripe*dt_size;
-                rc = orte_rml.recv(&(proc_array[extra_rank]->proc_name), &recv_iov, 1,
+                rc = ompi_rte_recv(&(proc_array[extra_rank]->proc_name), &recv_iov, 1,
                         OMPI_RML_TAG_ALLREDUCE , 0);
                 if(OMPI_SUCCESS != rc ) {
                     goto  Error;
@@ -211,7 +214,7 @@ comm_allreduce(void *sbuf, void *rbuf, int count, opal_datatype_t *dtype,
                 extra_rank=my_exchange_node.rank_extra_source;
                 send_iov.iov_base=scratch_bufers[send_buffer];
                 send_iov.iov_len=count_this_stripe*dt_size;
-                rc = orte_rml.send(&(proc_array[extra_rank]->proc_name), &send_iov, 1,
+                rc = ompi_rte_send(&(proc_array[extra_rank]->proc_name), &send_iov, 1,
                         OMPI_RML_TAG_ALLREDUCE , 0);
                 if(OMPI_SUCCESS != rc ) {
                     goto  Error;
@@ -255,13 +258,13 @@ comm_allreduce(void *sbuf, void *rbuf, int count, opal_datatype_t *dtype,
             /* post non-blocking receive */
             recv_iov.iov_base=scratch_bufers[send_buffer];
             recv_iov.iov_len=count_this_stripe*dt_size;
-            rc = orte_rml.recv_nb(&(proc_array[extra_rank]->proc_name), recv_iov, 1,
+            rc = ompi_rte_recv_nb(&(proc_array[extra_rank]->proc_name), recv_iov, 1,
                         OMPI_RML_TAG_ALLREDUCE , 0, recv_completion, recv_done);
 
             /* post non-blocking send */
             send_iov.iov_base=scratch_bufers[send_buffer];
             send_iov.iov_len=count_this_stripe*dt_size;
-            rc = orte_rml.send_nb(&(proc_array[extra_rank]->proc_name), send_iov, 1,
+            rc = ompi_rte_send_nb(&(proc_array[extra_rank]->proc_name), send_iov, 1,
                         OMPI_RML_TAG_ALLREDUCE , 0, send_completion, send_done);
 
             /* wait on receive completion */
@@ -298,7 +301,7 @@ comm_allreduce(void *sbuf, void *rbuf, int count, opal_datatype_t *dtype,
 
                 recv_iov.iov_base=scratch_bufers[recv_buffer];
                 recv_iov.iov_len=count_this_stripe*dt_size;
-                rc = orte_rml.recv(&(proc_array[extra_rank]->proc_name), &recv_iov, 1,
+                rc = ompi_rte_recv(&(proc_array[extra_rank]->proc_name), &recv_iov, 1,
                         OMPI_RML_TAG_ALLREDUCE , 0);
                 if(OMPI_SUCCESS != rc ) {
                     goto  Error;
@@ -312,7 +315,7 @@ comm_allreduce(void *sbuf, void *rbuf, int count, opal_datatype_t *dtype,
                 extra_rank=my_exchange_node->rank_extra_source;
                 send_iov.iov_base=scratch_bufers[recv_buffer];
                 send_iov.iov_len=count_this_stripe*dt_size;
-                rc = orte_rml.recv(&(proc_array[extra_rank]->proc_name), &send_iov, 1,
+                rc = ompi_rte_recv(&(proc_array[extra_rank]->proc_name), &send_iov, 1,
                         OMPI_RML_TAG_ALLREDUCE , 0);
                 if(OMPI_SUCCESS != rc ) {
                     goto  Error;

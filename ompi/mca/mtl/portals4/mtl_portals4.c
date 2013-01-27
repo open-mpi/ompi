@@ -21,7 +21,6 @@
 
 #include <portals4.h>
 
-#include "orte/util/name_fns.h"
 #include "ompi/proc/proc.h"
 #include "ompi/mca/mtl/mtl.h"
 #include "opal/class/opal_list.h"
@@ -81,7 +80,7 @@ ompi_mtl_portals4_add_procs(struct mca_mtl_base_module_t *mtl,
                                 "Portals 4 MTL does not support heterogeneous operations.");
             opal_output_verbose(1, ompi_mtl_base_output,
                                 "Proc %s architecture %x, mine %x.",
-                                ORTE_NAME_PRINT(&procs[i]->proc_name), 
+                                OMPI_NAME_PRINT(&procs[i]->proc_name), 
                                 procs[i]->proc_arch, ompi_proc_local()->proc_arch);
             return OMPI_ERR_NOT_SUPPORTED;
         }

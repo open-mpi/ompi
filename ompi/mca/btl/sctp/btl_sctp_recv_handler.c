@@ -97,7 +97,7 @@ void mca_btl_sctp_recv_handler(int sd, short flags, void *user) {
     /* allocated this elsewhere only once per BTL to avoid repeatedly calling malloc */
     char *buf = sctp_recv_buf;
 
-    orte_process_name_t guid;
+    ompi_process_name_t guid;
     struct sockaddr_in their_addr;
     int retval;
     mca_btl_sctp_proc_t *btl_proc;

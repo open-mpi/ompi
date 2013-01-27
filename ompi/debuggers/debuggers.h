@@ -31,9 +31,10 @@
 BEGIN_C_DECLS
 
 /**
- * Wait for a debugger if asked.
+ * Setup the magic constants so that the debugger can find the DLL
+ * necessary for understanding the queues and other structures.
  */
-extern void ompi_wait_for_debugger(void);
+extern void ompi_debugger_setup_dlls(void);
 
 /**
  * Notify a debugger that we're about to abort
@@ -46,6 +47,21 @@ extern void ompi_debugger_notify_abort(char *string);
  * It should never conflict with this one
  */
 OMPI_DECLSPEC void* MPIR_Breakpoint(void);
+
+/**
+ * Flag debugger will set when an application may proceed past
+ * MPI_INIT.  This needs to live in ompi_debuggers.c so that it's
+ * compiled with -g, but is needed by the runtime framework for
+ * startup
+ */
+OMPI_DECLSPEC extern volatile int MPIR_debug_gate;
+
+/**
+ * Flag debugger will set if application is being debugged.  This
+ * needs to live in ompi_debuggers.c so that it's compiled with -g,
+ * but is needed by the runtime framework for startup.
+ */
+OMPI_DECLSPEC extern volatile int MPIR_being_debugged;
 
 END_C_DECLS
 

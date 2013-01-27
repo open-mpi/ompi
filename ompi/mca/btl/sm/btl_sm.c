@@ -45,8 +45,7 @@
 #include "opal/mca/hwloc/base/base.h"
 #include "opal/mca/shmem/base/base.h"
 #include "opal/mca/shmem/shmem.h"
-#include "orte/util/proc_info.h"
-#include "orte/util/show_help.h"
+
 #include "opal/datatype/opal_convertor.h"
 #include "ompi/class/ompi_free_list.h"
 #include "ompi/runtime/ompi_module_exchange.h"
@@ -140,7 +139,7 @@ setup_mpool_base_resources(mca_btl_sm_component_t *comp_ptr,
 
     if (-1 == (fd = open(comp_ptr->sm_mpool_rndv_file_name, O_RDONLY))) {
         int err = errno;
-        orte_show_help("help-mpi-btl-sm.txt", "sys call fail", true,
+        ompi_show_help("help-mpi-btl-sm.txt", "sys call fail", true,
                        "open(2)", strerror(err), err);
         rc = OMPI_ERR_IN_ERRNO;
         goto out;
@@ -184,7 +183,7 @@ sm_segment_attach(mca_btl_sm_component_t *comp_ptr)
     }
     if (-1 == (fd = open(comp_ptr->sm_rndv_file_name, O_RDONLY))) {
         int err = errno;
-        orte_show_help("help-mpi-btl-sm.txt", "sys call fail", true,
+        ompi_show_help("help-mpi-btl-sm.txt", "sys call fail", true,
                        "open(2)", strerror(err), err);
         rc = OMPI_ERR_IN_ERRNO;
         goto out;
@@ -320,6 +319,7 @@ sm_btl_first_time_init(mca_btl_sm_t *sm_btl,
         free(res);
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
+
     /* remember that node rank zero is already attached */
     if (0 != my_smp_rank) {
         if (OMPI_SUCCESS != (rc = sm_segment_attach(m))) {
@@ -443,7 +443,7 @@ create_sm_endpoint(int local_proc, struct ompi_proc_t *proc)
     OBJ_CONSTRUCT(&ep->endpoint_lock, opal_mutex_t);
 #if OMPI_ENABLE_PROGRESS_THREADS == 1
     sprintf(path, "%s"OPAL_PATH_SEP"sm_fifo.%lu",
-            orte_process_info.job_session_dir,
+            ompi_process_info.job_session_dir,
             (unsigned long)proc->proc_name.vpid);
     ep->fifo_fd = open(path, O_WRONLY);
     if(ep->fifo_fd < 0) {

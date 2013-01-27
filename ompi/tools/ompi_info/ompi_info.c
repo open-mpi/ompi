@@ -47,7 +47,9 @@
 #include "opal/runtime/opal_info_support.h"
 #include "opal/util/show_help.h"
 
+#if OMPI_RTE_ORTE
 #include "orte/runtime/orte_info_support.h"
+#endif
 
 #include "ompi/communicator/communicator.h"
 #include "ompi/tools/ompi_info/ompi_info.h"
@@ -102,8 +104,10 @@ int main(int argc, char *argv[])
     /* add in the opal frameworks */
     opal_info_register_types(&mca_types);
 
+#if OMPI_RTE_ORTE
     /* add in the orte frameworks */
     orte_info_register_types(&mca_types);
+#endif
 
     /* add in the ompi frameworks */
     opal_pointer_array_add(&mca_types, "allocator");
@@ -144,8 +148,9 @@ int main(int argc, char *argv[])
         exit(1);
     }
 
+#if OMPI_RTE_ORTE
     /* Register ORTE's params */
-    if (ORTE_SUCCESS != (ret = orte_info_register_components(&mca_types, &component_map))) {
+    if (OMPI_SUCCESS != (ret = orte_info_register_components(&mca_types, &component_map))) {
         if (OPAL_ERR_BAD_PARAM == ret) {
             /* output what we got */
             opal_info_do_params(true, opal_cmd_line_is_taken(ompi_info_cmd_line, "internal"),
@@ -153,6 +158,7 @@ int main(int argc, char *argv[])
         }
         exit(1);
     }
+#endif
 
     /* Register OMPI's params */
     if (OMPI_SUCCESS != (ret = ompi_info_register_components(&mca_types, &component_map))) {

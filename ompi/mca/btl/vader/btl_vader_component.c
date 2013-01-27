@@ -25,9 +25,6 @@
 
 #include "ompi/constants.h"
 #include "opal/util/output.h"
-#include "orte/util/proc_info.h"
-#include "orte/util/show_help.h"
-#include "orte/runtime/orte_globals.h"
 
 #include "opal/mca/base/mca_base_param.h"
 #include "ompi/mca/btl/base/btl_base_error.h"
@@ -229,7 +226,7 @@ static mca_btl_base_module_t **mca_btl_vader_component_init (int *num_btls,
 
     /* if no session directory was created, then we cannot be used */
     /* XXX LANL FIXME -- this is not the case. we can use an anonymous segment */
-    if (!orte_create_session_dirs) {
+    if (NULL == ompi_process_info.job_session_dir) {
         return NULL;
     }
     

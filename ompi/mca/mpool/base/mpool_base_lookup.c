@@ -12,6 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2007 Mellanox Technologies. All rights reserved.
  * Copyright (c) 2008-2009 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2012      Los Alamos National Security, LLC.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -30,12 +31,11 @@
 
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
-#include "orte/util/show_help.h"
-#include "orte/util/name_fns.h"
-#include "orte/util/proc_info.h"
-#include "orte/runtime/orte_globals.h"
-#include "ompi/mca/mpool/mpool.h"
+
+#include "ompi/mca/rte/rte.h"
 #include "ompi/runtime/params.h"
+
+#include "ompi/mca/mpool/mpool.h"
 #include "ompi/mca/mpool/base/base.h"
 #include "mpool_base_mem_cb.h"
 
@@ -115,9 +115,9 @@ mca_mpool_base_module_t* mca_mpool_base_module_create(
                  opal_mem_hooks_support_level())) {
                 opal_mem_hooks_register_release(mca_mpool_base_mem_cb, NULL);
             } else {
-                orte_show_help("help-mpool-base.txt", "leave pinned failed",
-                               true, name, ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                               orte_process_info.nodename);
+                ompi_show_help("help-mpool-base.txt", "leave pinned failed",
+                               true, name, OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),
+                               ompi_process_info.nodename);
                 return NULL;
             }
 

@@ -11,6 +11,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007-2011 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2012      Los Alamos National Security, LLC.
+ *                         All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -48,6 +50,7 @@
 #include "opal/util/argv.h"
 #include "opal/mca/installdirs/installdirs.h"
 #include "debuggers.h"
+#include "ompi/mca/rte/rte.h"
 /**
  * BEWARE: The following headers are required by optimized builds in order
  * to get access to the type information. Some compilers remove all type
@@ -71,10 +74,6 @@
 #include "opal/datatype/opal_datatype.h"
 #include "ompi/datatype/ompi_datatype.h"
 #include "ompi/include/mpi.h"
-
-#include "orte/mca/errmgr/errmgr.h"
-#include "orte/mca/rml/rml.h"
-#include "orte/runtime/orte_globals.h"
 
 #if defined(OMPI_MSGQ_DLL)
 /* This variable is old/deprecated -- the mpimsgq_dll_locations[]
@@ -161,47 +160,12 @@ static void check(char *dir, char *file, char **locations)
 }
 
 
-/*
- * Wait for a debugger if asked.  We support two ways of waiting for
- * attaching debuggers -- see big comment in
- * orte/tools/orterun/debuggers.c explaning the two scenarios.
- */
-void ompi_wait_for_debugger(void)
+extern void
+ompi_debugger_setup_dlls(void)
 {
-    int i, debugger;
+    int i;
     char *a, *b, **dirs, **tmp1 = NULL, **tmp2 = NULL;
-#if !ORTE_DISABLE_FULL_SUPPORT
-    opal_buffer_t buf;
-    int rc;
-#endif
 
-    /* See lengthy comment in orte/tools/orterun/debuggers.c about
-       orte_in_parallel_debugger */
-#if ORTE_DISABLE_FULL_SUPPORT
-    debugger = 0;
-#else
-    debugger = orte_in_parallel_debugger;
-#endif
-
-    /* Add in environment variables for other launchers, such as yod,
-       srun, ...etc. */
-    if (1 == MPIR_being_debugged) {
-        debugger = 1;
-    } else if (NULL != getenv("yod_you_are_being_debugged")) {
-        debugger = 1;
-    }
-    if (1 == MPIR_being_debugged) {
-        debugger = 1;
-    }
-    
-    if (!debugger) {
-        /* if not, just return */
-        return;
-    }
-    
-    /* if we are being debugged, then we need to find
-     * the correct plug-ins
-     */
     a = strdup(opal_install_dirs.pkglibdir);
     mca_base_param_reg_string_name("ompi",
                                    "debugger_dll_path",
@@ -224,47 +188,8 @@ void ompi_wait_for_debugger(void)
        non-NULL values only when the entire array is ready). */
     mpimsgq_dll_locations = tmp1;
     mpidbg_dll_locations = tmp2;
+}
 
-#if !ORTE_DISABLE_FULL_SUPPORT
-    if (orte_standalone_operation) {
-#endif
-        /* spin until debugger attaches and releases us */
-        while (MPIR_debug_gate == 0) {
-#if defined(__WINDOWS__)
-            Sleep(100);     /* milliseconds */
-#elif defined(HAVE_USLEEP)
-            usleep(100000); /* microseconds */
-#else
-            sleep(1);       /* seconds */
-#endif
-        }
-#if !ORTE_DISABLE_FULL_SUPPORT
-    } else {
-    
-        /* only the rank=0 proc waits for either a message from the
-         * HNP or for the debugger to attach - everyone else will just
-         * spin in * the grpcomm barrier in ompi_mpi_init until rank=0
-         * joins them.
-         */
-        if (0 != ORTE_PROC_MY_NAME->vpid) {
-            return;
-        }
-    
-        /* VPID 0 waits for a message from the HNP */
-        OBJ_CONSTRUCT(&buf, opal_buffer_t);
-        rc = orte_rml.recv_buffer(ORTE_NAME_WILDCARD, &buf, 
-                                  ORTE_RML_TAG_DEBUGGER_RELEASE, 0);
-        OBJ_DESTRUCT(&buf);  /* don't care about contents of message */
-        if (rc < 0) {
-            /* if it failed for some reason, then we are in trouble -
-             * for now, just report the problem and give up waiting
-             */
-            opal_output(0, "Debugger_attach[rank=%ld]: could not wait for debugger!",
-                        (long)ORTE_PROC_MY_NAME->vpid);
-        }
-    }
-#endif
-}    
 
 /*
  * Tell the debugger that we are about to abort

@@ -30,7 +30,6 @@
 #include <unistd.h>
 #endif
 
-#include "orte/util/show_help.h"
 #include "opal/mca/base/mca_base_param.h"
 
 #include "btl_wv.h"
@@ -241,7 +240,7 @@ static int parse_file(char *filename)
     ini_filename = filename;
     btl_wv_ini_yyin = fopen(filename, "r");
     if (NULL == btl_wv_ini_yyin) {
-        orte_show_help("help-mpi-btl-wv.txt", "ini file:file not found",
+        ompi_show_help("help-mpi-btl-wv.txt", "ini file:file not found",
                        true, filename);
         ret = OMPI_ERR_NOT_FOUND;
         goto cleanup;
@@ -419,7 +418,7 @@ static int parse_line(parsed_section_values_t *sv)
         /* Have no idea what this parameter is.  Not an error -- just
            ignore it */
         if (!showed_unknown_field_warning) {
-            orte_show_help("help-mpi-btl-wv.txt",
+            ompi_show_help("help-mpi-btl-wv.txt",
                            "ini file:unknown field", true,
                            ini_filename, btl_wv_ini_yynewlines,
                            key_buffer);
@@ -688,7 +687,7 @@ static inline void show_help(const char *topic)
     if (0 == strcmp("\n", btl_wv_ini_yytext)) {
         btl_wv_ini_yytext = "<end of line>";
     }
-    orte_show_help("help-mpi-btl-wv.txt", topic, true,
+    ompi_show_help("help-mpi-btl-wv.txt", topic, true,
                    ini_filename, btl_wv_ini_yynewlines,
                    btl_wv_ini_yytext);
     btl_wv_ini_yytext = save;

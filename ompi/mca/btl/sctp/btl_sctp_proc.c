@@ -67,7 +67,7 @@ void mca_btl_sctp_proc_destruct(mca_btl_sctp_proc_t* stcp_proc)
     /* remove from list of all proc instances */
     OPAL_THREAD_LOCK(&mca_btl_sctp_component.sctp_lock);
     opal_hash_table_remove_value_uint64(&mca_btl_sctp_component.sctp_procs, 
-                                        orte_util_hash_name(&stcp_proc->proc_ompi->proc_name));
+                                        ompi_rte_hash_name(&stcp_proc->proc_ompi->proc_name));
     OPAL_THREAD_UNLOCK(&mca_btl_sctp_component.sctp_lock);
 
     /* release resources */
@@ -113,7 +113,7 @@ mca_btl_sctp_proc_t* mca_btl_sctp_proc_create(ompi_proc_t* ompi_proc)
     int rc;
     size_t size;
     mca_btl_sctp_proc_t* btl_proc;
-    uint64_t hash = orte_util_hash_name(&ompi_proc->proc_name);
+    uint64_t hash = ompi_rte_hash_name(&ompi_proc->proc_name);
 
     OPAL_THREAD_LOCK(&mca_btl_sctp_component.sctp_lock);
     rc = opal_hash_table_get_value_uint64(&mca_btl_sctp_component.sctp_procs, 
@@ -334,12 +334,12 @@ int mca_btl_sctp_proc_remove(mca_btl_sctp_proc_t* btl_proc, mca_btl_base_endpoin
  * Look for an existing SCTP process instance based on the globally unique
  * process identifier.
  */
-mca_btl_sctp_proc_t* mca_btl_sctp_proc_lookup(const orte_process_name_t *name)
+mca_btl_sctp_proc_t* mca_btl_sctp_proc_lookup(const ompi_process_name_t *name)
 {
     mca_btl_sctp_proc_t* proc = NULL;
     OPAL_THREAD_LOCK(&mca_btl_sctp_component.sctp_lock);
     opal_hash_table_get_value_uint64(&mca_btl_sctp_component.sctp_procs,
-                                     orte_util_hash_name(name), (void**)&proc);
+                                     ompi_rte_hash_name(name), (void**)&proc);
     OPAL_THREAD_UNLOCK(&mca_btl_sctp_component.sctp_lock);
     return proc;
 }
@@ -373,11 +373,11 @@ bool mca_btl_sctp_proc_accept(mca_btl_sctp_proc_t* btl_proc, struct sockaddr_in*
  *
  *  TODO - change this to use a hash for constant time performance
  */
-static int mca_btl_sctp_proc_check(int is_vpid, sctp_assoc_t id, orte_vpid_t vpid, struct mca_btl_sctp_proc_table_node *table) {
+static int mca_btl_sctp_proc_check(int is_vpid, sctp_assoc_t id, ompi_vpid_t vpid, struct mca_btl_sctp_proc_table_node *table) {
 #if MCA_BTL_SCTP_DONT_USE_HASH
     int i;
     for(i = 0; i < MCA_BTL_SCTP_PROC_TABLE_SIZE; i++) {
-        /*  sender_proc_table uses orte_vpid_t.
+        /*  sender_proc_table uses ompi_vpid_t.
          *  recvr_proc_table uses sctp_assoc_id.
          *  Calls using this function use one or the other.
          */
@@ -403,7 +403,7 @@ static int mca_btl_sctp_proc_check(int is_vpid, sctp_assoc_t id, orte_vpid_t vpi
 #endif
 }
 
-int mca_btl_sctp_proc_check_vpid(orte_vpid_t vpid, struct mca_btl_sctp_proc_table_node *table) {
+int mca_btl_sctp_proc_check_vpid(ompi_vpid_t vpid, struct mca_btl_sctp_proc_table_node *table) {
     return mca_btl_sctp_proc_check(1, 0, vpid, table);
 }
 
@@ -421,7 +421,7 @@ int mca_btl_sctp_proc_check_assoc_id(sctp_assoc_t id, struct mca_btl_sctp_proc_t
  *  TODO change this to a hash table that can expand to eliminate
  *    MCA_BTL_SCTP_PROC_TABLE_SIZE limitation
  */
-static void mca_btl_sctp_proc_add(sctp_assoc_t id, orte_vpid_t vpid, struct mca_btl_sctp_proc_t *proc, struct mca_btl_sctp_proc_table_node *table) {
+static void mca_btl_sctp_proc_add(sctp_assoc_t id, ompi_vpid_t vpid, struct mca_btl_sctp_proc_t *proc, struct mca_btl_sctp_proc_table_node *table) {
 #if MCA_BTL_SCTP_DONT_USE_HASH
     int i;
     for(i = 0; i < MCA_BTL_SCTP_PROC_TABLE_SIZE; i++) {
@@ -440,7 +440,7 @@ static void mca_btl_sctp_proc_add(sctp_assoc_t id, orte_vpid_t vpid, struct mca_
 #endif    
 }
 
-void mca_btl_sctp_proc_add_vpid(orte_vpid_t vpid, struct mca_btl_sctp_proc_t *proc, struct mca_btl_sctp_proc_table_node *table) {
+void mca_btl_sctp_proc_add_vpid(ompi_vpid_t vpid, struct mca_btl_sctp_proc_t *proc, struct mca_btl_sctp_proc_table_node *table) {
     mca_btl_sctp_proc_add(0, vpid, proc, table);
 }
 

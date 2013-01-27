@@ -48,7 +48,6 @@
 
 #include "opal/util/output.h"
 #include "opal/util/error.h"
-#include "orte/util/show_help.h"
 
 #include "btl_openib_fd.h"
 #include "btl_openib_proc.h"
@@ -247,7 +246,7 @@ static void rdmacm_component_register(void)
     if (value >= 0 && value < 65536) {
         rdmacm_port = (uint16_t) value;
     } else {
-        orte_show_help("help-mpi-btl-openib-cpc-rdmacm.txt",
+        ompi_show_help("help-mpi-btl-openib-cpc-rdmacm.txt",
                        "illegal tcp port", true, value);
     }
 
@@ -258,7 +257,7 @@ static void rdmacm_component_register(void)
     if (value > 0) {
         rdmacm_resolve_timeout = value;
     } else {
-        orte_show_help("help-mpi-btl-openib-cpc-rdmacm.txt",
+        ompi_show_help("help-mpi-btl-openib-cpc-rdmacm.txt",
                        "illegal timeout", true, value);
     }
 
@@ -269,7 +268,7 @@ static void rdmacm_component_register(void)
     if (value > 0) {
         rdmacm_resolve_max_retry_count = value;
     } else {
-        orte_show_help("help-mpi-btl-openib-cpc-rdmacm.txt",
+        ompi_show_help("help-mpi-btl-openib-cpc-rdmacm.txt",
                        "illegal retry count", true, value);
     }
 
@@ -453,9 +452,9 @@ static int rdmacm_setup_qp(rdmacm_contents_t *contents,
     endpoint->qps[qpnum].credit_frag = NULL;
     if (attr.cap.max_inline_data < req_inline) {
         endpoint->qps[qpnum].ib_inline_max = attr.cap.max_inline_data;
-        orte_show_help("help-mpi-btl-openib-cpc-base.txt",
+        ompi_show_help("help-mpi-btl-openib-cpc-base.txt",
                        "inline truncated", true,
-                       orte_process_info.nodename,
+                       ompi_process_info.nodename,
                        ibv_get_device_name(contents->openib_btl->device->ib_dev),
                        contents->openib_btl->port_num,
                        req_inline, attr.cap.max_inline_data);
@@ -753,16 +752,16 @@ static void *show_help_cant_find_endpoint(void *context)
 
     if (NULL != c) {
         msg = stringify(c->peer_ip_addr);
-        orte_show_help("help-mpi-btl-openib-cpc-rdmacm.txt",
+        ompi_show_help("help-mpi-btl-openib-cpc-rdmacm.txt",
                        "could not find matching endpoint", true,
-                       orte_process_info.nodename,
+                       ompi_process_info.nodename,
                        c->device_name,
                        c->peer_tcp_port);
         free(msg);
     } else {
-        orte_show_help("help-mpi-btl-openib-cpc-rdmacm.txt",
+        ompi_show_help("help-mpi-btl-openib-cpc-rdmacm.txt",
                        "could not find matching endpoint", true,
-                       orte_process_info.nodename,
+                       ompi_process_info.nodename,
                        "<unknown>", "<unknown>", -1);
     }
     free(context);
@@ -1463,9 +1462,9 @@ static void *show_help_rdmacm_event_error(void *c)
     id_context_t *context = (id_context_t*) event->id->context;
 
     if (RDMA_CM_EVENT_DEVICE_REMOVAL == event->event) {
-        orte_show_help("help-mpi-btl-openib-cpc-rdmacm.txt",
+        ompi_show_help("help-mpi-btl-openib-cpc-rdmacm.txt",
                        "rdma cm device removal", true,
-                       orte_process_info.nodename,
+                       ompi_process_info.nodename,
                        ibv_get_device_name(event->id->verbs->device));
     } else {
         const char *device = "Unknown";
@@ -1474,9 +1473,9 @@ static void *show_help_rdmacm_event_error(void *c)
             NULL != event->id->verbs->device) {
             device = ibv_get_device_name(event->id->verbs->device);
         }
-        orte_show_help("help-mpi-btl-openib-cpc-rdmacm.txt",
+        ompi_show_help("help-mpi-btl-openib-cpc-rdmacm.txt",
                        "rdma cm event error", true,
-                       orte_process_info.nodename,
+                       ompi_process_info.nodename,
                        device,
                        rdma_event_str(event->event),
                        context->endpoint->endpoint_proc->proc_ompi->proc_hostname);

@@ -47,10 +47,6 @@
 #include "opal/util/bit_ops.h"
 #include "opal/util/output.h"
 
-#include "orte/util/show_help.h"
-#include "orte/runtime/orte_globals.h"
-#include "orte/util/proc_info.h"
-
 #include "ompi/constants.h"
 #include "ompi/runtime/ompi_module_exchange.h"
 #include "ompi/mca/mpool/base/base.h"
@@ -649,10 +645,10 @@ mca_btl_smcuda_component_init(int *num_btls,
     mca_btl_smcuda_component.sm_mpool_base = NULL;
 
     /* if no session directory was created, then we cannot be used */
+    if (NULL == ompi_process_info.job_session_dir) {
     /* SKG - this isn't true anymore. Some backing facilities don't require a
      * file-backed store. Extend shmem to provide this info one day. Especially
      * when we use a proper modex for init. */
-    if (!orte_create_session_dirs) {
         return NULL;
     }
     /* if we don't have locality information, then we cannot be used because we
@@ -681,13 +677,11 @@ mca_btl_smcuda_component_init(int *num_btls,
 
 #if OMPI_ENABLE_PROGRESS_THREADS == 1
     /* create a named pipe to receive events  */
-    sprintf(mca_btl_smcuda_component.sm_fifo_path,
-             "%s"OPAL_PATH_SEP"sm_fifo.%lu",
-             orte_process_info.job_session_dir,
-             (unsigned long)ORTE_PROC_MY_NAME->vpid);
-    if (mkfifo(mca_btl_smcuda_component.sm_fifo_path, 0660) < 0) {
-        opal_output(0, "mca_btl_smcuda_component_init: "
-                    "mkfifo failed with errno=%d\n",errno);
+    sprintf( mca_btl_smcuda_component.sm_fifo_path,
+             "%s"OPAL_PATH_SEP"sm_fifo.%lu", ompi_process_info.job_session_dir,
+             (unsigned long)OMPI_PROC_MY_NAME->vpid );
+    if(mkfifo(mca_btl_smcuda_component.sm_fifo_path, 0660) < 0) {
+        opal_output(0, "mca_btl_smcuda_component_init: mkfifo failed with errno=%d\n",errno);
         return NULL;
     }
     mca_btl_smcuda_component.sm_fifo_fd = open(mca_btl_smcuda_component.sm_fifo_path,

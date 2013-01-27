@@ -30,7 +30,6 @@
 #include <unistd.h>
 #endif
 
-#include "orte/util/show_help.h"
 #include "opal/mca/base/mca_base_param.h"
 
 #include "btl_openib.h"
@@ -247,7 +246,7 @@ static int parse_file(char *filename)
     ini_filename = filename;
     btl_openib_ini_yyin = fopen(filename, "r");
     if (NULL == btl_openib_ini_yyin) {
-        orte_show_help("help-mpi-btl-openib.txt", "ini file:file not found",
+        ompi_show_help("help-mpi-btl-openib.txt", "ini file:file not found",
                        true, filename);
         ret = OMPI_ERR_NOT_FOUND;
         goto cleanup;
@@ -425,7 +424,7 @@ static int parse_line(parsed_section_values_t *sv)
         /* Have no idea what this parameter is.  Not an error -- just
            ignore it */
         if (!showed_unknown_field_warning) {
-            orte_show_help("help-mpi-btl-openib.txt",
+            ompi_show_help("help-mpi-btl-openib.txt",
                            "ini file:unknown field", true,
                            ini_filename, btl_openib_ini_yynewlines,
                            key_buffer);
@@ -694,7 +693,7 @@ static inline void show_help(const char *topic)
     if (0 == strcmp("\n", btl_openib_ini_yytext)) {
         btl_openib_ini_yytext = "<end of line>";
     }
-    orte_show_help("help-mpi-btl-openib.txt", topic, true,
+    ompi_show_help("help-mpi-btl-openib.txt", topic, true,
                    ini_filename, btl_openib_ini_yynewlines,
                    btl_openib_ini_yytext);
     btl_openib_ini_yytext = save;

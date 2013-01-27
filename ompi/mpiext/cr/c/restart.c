@@ -43,7 +43,7 @@ int OMPI_CR_Restart(char *handle, int seq, MPI_Info *info)
     /*
      * Restart is not collective, so the caller is the leader
      */
-    datum->leader = ORTE_PROC_MY_NAME->vpid;
+    datum->leader = OMPI_PROC_MY_NAME->vpid;
     datum->seq_num = seq;
     datum->global_handle = strdup(handle);
 

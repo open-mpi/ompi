@@ -27,8 +27,6 @@
 #include "ompi/constants.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/mca/sbgp/basesmuma/sbgp_basesmuma.h"
-#include "orte/mca/rml/rml.h"
-#include "orte/util/proc_info.h"
 
 /*
  * Local functions

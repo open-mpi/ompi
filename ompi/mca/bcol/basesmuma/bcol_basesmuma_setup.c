@@ -1,6 +1,8 @@
 /*
  * Copyright (c) 2009-2012 Oak Ridge National Laboratory.  All rights reserved.
  * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
+ * Copyright (c) 2012      Los Alamos National Security, LLC.
+ *                         All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -20,13 +22,7 @@
 #include "ompi/mca/mpool/base/base.h"
 #include "ompi/mca/bcol/bcol.h"
 #include "ompi/mca/bcol/base/base.h"
-#include "ompi/mca/dpm/dpm.h"
 #include "ompi/mca/common/commpatterns/common_coll_ops.h"
-
-#include "orte/mca/rml/rml.h"
-#include "orte/mca/rml/rml_types.h"
-#include "orte/mca/grpcomm/grpcomm.h"
-#include "orte/mca/rml/rml.h"
 
 #include "opal/class/opal_object.h"
 #include "opal/dss/dss.h"
@@ -123,7 +119,7 @@ int base_bcol_basesmuma_exchange_offsets(
     int ret=OMPI_SUCCESS,i,dummy;
     int index_in_group, pcnt;
     opal_list_t peers;
-    orte_namelist_t *peer;
+    ompi_namelist_t *peer;
     ompi_proc_t *proc_temp, *my_id;
     opal_buffer_t *send_buffer = OBJ_NEW(opal_buffer_t);
     opal_buffer_t *recv_buffer = OBJ_NEW(opal_buffer_t);
@@ -139,10 +135,10 @@ int base_bcol_basesmuma_exchange_offsets(
         proc_temp = ompi_comm_peer_lookup(
                 sm_bcol_module->super.sbgp_partner_module->group_comm,
                 sm_bcol_module->super.sbgp_partner_module->group_list[i]);
-        peer = OBJ_NEW(orte_namelist_t);
+        peer = OBJ_NEW(ompi_namelist_t);
         peer->name.jobid = proc_temp->proc_name.jobid;
         peer->name.vpid = proc_temp->proc_name.vpid;
-        opal_list_append(&peers,&peer->super); /* this is with the new field called "super" in orte_namelist_t struct */
+        opal_list_append(&peers,&peer->super); /* this is with the new field called "super" in ompi_namelist_t struct */
     }
     /* pack up the data into the allgather send buffer */
         if (NULL == send_buffer || NULL == recv_buffer) {
@@ -159,7 +155,7 @@ int base_bcol_basesmuma_exchange_offsets(
     ret = opal_dss.pack(send_buffer,
         &(sm_bcol_module->super.sbgp_partner_module->my_index),1,OPAL_UINT32);
 
-    if (ORTE_SUCCESS != ret) {
+    if (OMPI_SUCCESS != ret) {
         goto ERROR;
 	fprintf(stderr,"ORTE error packing my_index!!\n");
 	fflush(stderr);
@@ -167,15 +163,15 @@ int base_bcol_basesmuma_exchange_offsets(
 
     /* pack the offset of the allocated region */
     ret = opal_dss.pack(send_buffer,&(mem_offset),1,OPAL_UINT64);
-    if (ORTE_SUCCESS != ret) {
+    if (OMPI_SUCCESS != ret) {
         goto ERROR;
     }
 
     /* get the offsets from all procs, so can setup the control data
      * structures.
      */
-    if (ORTE_SUCCESS != (ret = orte_grpcomm.allgather_list(&peers, send_buffer, recv_buffer))) {
-        fprintf(stderr,"orte_grpcomm.allgather_list returned error %d\n", ret);
+    if (OMPI_SUCCESS != (ret = ompi_rte_allgather_list(&peers, send_buffer, recv_buffer))) {
+        fprintf(stderr,"ompi_rte_allgather_list returned error %d\n", ret);
         fflush(stderr);
         goto ERROR;
     }
@@ -183,7 +179,7 @@ int base_bcol_basesmuma_exchange_offsets(
         /* unpack the dummy */
         pcnt=1;
         ret = opal_dss.unpack(recv_buffer,&dummy, &pcnt, OPAL_INT32);
-        if (ORTE_SUCCESS != ret) {
+        if (OMPI_SUCCESS != ret) {
                 fprintf(stderr,"unpack returned error %d for dummy \n",ret);
                 fflush(stderr);
                 goto ERROR;
@@ -199,7 +195,7 @@ int base_bcol_basesmuma_exchange_offsets(
         int array_id;
         pcnt=1;
         ret = opal_dss.unpack(recv_buffer,&index_in_group, &pcnt, OPAL_UINT32);
-        if (ORTE_SUCCESS != ret) {
+        if (OMPI_SUCCESS != ret) {
             fprintf(stderr,"unpack returned error %d for remote index_in_group \n",ret);
             fflush(stderr);
             goto ERROR;
@@ -208,7 +204,7 @@ int base_bcol_basesmuma_exchange_offsets(
         /* get the offset */
         pcnt=1;
         ret = opal_dss.unpack(recv_buffer,&rem_mem_offset, &pcnt, OPAL_UINT64);
-        if (ORTE_SUCCESS != ret) {
+        if (OMPI_SUCCESS != ret) {
             fprintf(stderr,"unpack returned error %d for remote memory offset \n",ret);
             fflush(stderr);
             goto ERROR;
@@ -220,10 +216,10 @@ int base_bcol_basesmuma_exchange_offsets(
     }
 
     /* clean up */
-    peer=(orte_namelist_t *)opal_list_remove_first(&peers);
+    peer=(ompi_namelist_t *)opal_list_remove_first(&peers);
     while( NULL !=peer) {
         OBJ_RELEASE(peer);
-        peer=(orte_namelist_t *)opal_list_remove_first(&peers);
+        peer=(ompi_namelist_t *)opal_list_remove_first(&peers);
     }
     OBJ_DESTRUCT(&peers);
     if( send_buffer ) {
@@ -238,10 +234,10 @@ int base_bcol_basesmuma_exchange_offsets(
 ERROR:
 
     /* free peer list */
-    peer=(orte_namelist_t *)opal_list_remove_first(&peers);
+    peer=(ompi_namelist_t *)opal_list_remove_first(&peers);
     while( NULL !=peer) {
         OBJ_RELEASE(peer);
-        peer=(orte_namelist_t *)opal_list_remove_first(&peers);
+        peer=(ompi_namelist_t *)opal_list_remove_first(&peers);
     }
     OBJ_DESTRUCT(&peers);
     if( send_buffer ) {

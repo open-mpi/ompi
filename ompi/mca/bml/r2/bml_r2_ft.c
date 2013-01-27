@@ -27,9 +27,6 @@
 
 #include "opal/runtime/opal_progress.h"
 
-#include "orte/mca/grpcomm/grpcomm.h"
-#include "orte/util/proc_info.h"
-
 #include "ompi/runtime/ompi_cr.h"
 #include "ompi/mca/bml/base/base.h"
 #include "ompi/mca/btl/base/base.h"
@@ -42,7 +39,7 @@
 
 int mca_bml_r2_ft_event(int state)
 {
-#if !ORTE_DISABLE_FULL_SUPPORT
+#if OPAL_ENABLE_FT_CR == 1
     static bool first_continue_pass = false;
     ompi_proc_t** procs = NULL;
     size_t num_procs;
@@ -51,7 +48,7 @@ int mca_bml_r2_ft_event(int state)
     int loc_state;
     int param_type = -1;
     char *param_list = NULL;
-    orte_grpcomm_collective_t coll;
+    ompi_rte_collective_t coll;
 
     if(OPAL_CRS_CHECKPOINT == state) {
         /* Do nothing for now */
@@ -158,10 +155,10 @@ int mca_bml_r2_ft_event(int state)
              * Barrier to make all processes have been successfully restarted before
              * we try to remove some restart only files.
              */
-            OBJ_CONSTRUCT(&coll, orte_grpcomm_collective_t);
-            coll.id = orte_process_info.peer_init_barrier;
-            if (OMPI_SUCCESS != (ret = orte_grpcomm.barrier(&coll))) {
-                opal_output(0, "bml:r2: ft_event(Restart): Failed in orte_grpcomm.barrier (%d)", ret);
+            OBJ_CONSTRUCT(&coll, ompi_rte_collective_t);
+            coll.id = ompi_process_info.peer_init_barrier;
+            if (OMPI_SUCCESS != (ret = ompi_rte_barrier(&coll))) {
+                opal_output(0, "bml:r2: ft_event(Restart): Failed in ompi_rte_barrier (%d)", ret);
                 return ret;
             }
             while (coll.active) {
@@ -236,10 +233,10 @@ int mca_bml_r2_ft_event(int state)
          * Barrier to make all processes have been successfully restarted before
          * we try to remove some restart only files.
          */
-        OBJ_CONSTRUCT(&coll, orte_grpcomm_collective_t);
-        coll.id = orte_process_info.peer_init_barrier;
-        if (OMPI_SUCCESS != (ret = orte_grpcomm.barrier(&coll))) {
-            opal_output(0, "bml:r2: ft_event(Restart): Failed in orte_grpcomm.barrier (%d)", ret);
+        OBJ_CONSTRUCT(&coll, ompi_rte_collective_t);
+        coll.id = ompi_process_info.peer_init_barrier;
+        if (OMPI_SUCCESS != (ret = ompi_rte_barrier(&coll))) {
+            opal_output(0, "bml:r2: ft_event(Restart): Failed in ompi_rte_barrier (%d)", ret);
             return ret;
         }
         while (coll.active) {

@@ -17,9 +17,6 @@
 #include <stdio.h>
 #include <stdarg.h>
 
-#include "orte/runtime/orte_globals.h"
-#include "orte/util/proc_info.h"
-#include "orte/util/name_fns.h"
 #include "connect.h"
 
 BEGIN_C_DECLS
@@ -45,8 +42,8 @@ static inline int ompi_common_ofacm_base_err(const char* fmt, ...)
 #define OFACM_ERROR(args)                                  \
     do {                                                   \
         ompi_common_ofacm_base_err("[%s]%s[%s:%d:%s] ",     \
-            orte_process_info.nodename,                     \
-            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),             \
+            ompi_process_info.nodename,                     \
+            OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),             \
             __FILE__, __LINE__, __func__);                  \
         ompi_common_ofacm_base_err args;                    \
         ompi_common_ofacm_base_err("\n");                   \
@@ -57,8 +54,8 @@ static inline int ompi_common_ofacm_base_err(const char* fmt, ...)
     do {                                                         \
         if(ompi_common_ofacm_base_verbose > 0) {                            \
             ompi_common_ofacm_base_err("[%s]%s[%s:%d:%s] ",                \
-                    orte_process_info.nodename,                   \
-                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),  \
+                    ompi_process_info.nodename,                   \
+                    OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),  \
                     __FILE__, __LINE__, __func__);               \
             ompi_common_ofacm_base_err args;                               \
             ompi_common_ofacm_base_err("\n");                              \

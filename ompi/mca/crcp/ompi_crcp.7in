@@ -75,7 +75,7 @@ error.
 .SS none CRCP Component
 .PP
 The \fInone\fP component simply selects no CRCP component. All of the CRCP
-function calls return immediately with ORTE_SUCCESS. 
+function calls return immediately with OMPI_SUCCESS. 
 .
 .PP
 This component is the last component to be selected by default. This means that if

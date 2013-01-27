@@ -2,6 +2,8 @@
  *
  * Copyright (c) 2009-2012 Oak Ridge National Laboratory.  All rights reserved.
  * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
+ * Copyright (c) 2012      Los Alamos National Security, LLC.
+ *                         All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -16,17 +18,8 @@
 #include <fcntl.h>
 #include <errno.h>
 
-#include "ompi/mca/dpm/dpm.h"
 #include "ompi/proc/proc.h"
 #include "ompi/mca/common/commpatterns/common_coll_ops.h"
-
-#include "orte/util/show_help.h"
-#include "orte/util/name_fns.h"
-#include "orte/mca/rml/rml.h"
-#include "orte/mca/rml/rml_types.h"
-#include "orte/mca/grpcomm/grpcomm.h"
-#include "orte/mca/errmgr/errmgr.h"
-#include "orte/util/show_help.h"
 
 #include "opal/dss/dss.h"
 #include "opal/util/error.h"
@@ -52,7 +45,7 @@ struct file_info_t {
 
 /* need to allocate space for the peer */
 static void bcol_basesmuma_smcm_proc_item_t_construct
-   (bcol_basesmuma_smcm_proc_item_t * item) {
+(bcol_basesmuma_smcm_proc_item_t * item) {
 }
 
 /* need to free the space for the peer */
@@ -306,13 +299,13 @@ int bcol_basesmuma_smcm_allgather_connection(
             temp->peer.jobid = rem_jobid;
             temp->sm_file.file_name = (char *) malloc(len_other+1);
             if( !temp->sm_file.file_name) {
-                rc = ORTE_ERR_OUT_OF_RESOURCE;
+                rc = OMPI_ERR_OUT_OF_RESOURCE;
                 goto Error;
             }
             cpy_ret=strncpy(temp->sm_file.file_name,&(all_files[i].file_name[0]),
                     len_other);
             if( !cpy_ret ) {
-                rc = ORTE_ERROR;
+                rc = OMPI_ERROR;
                 goto Error;
             }
             temp->sm_file.file_name[len_other]='\0';

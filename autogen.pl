@@ -978,11 +978,11 @@ if (! -e "orte") {
     debug "No orte subdirectory found - will not build ORTE\n";
 }
 
-if ($no_ompi_arg) {
+if ($no_ompi_arg == 1 && $no_orte_arg == 0) {
     $project_name_long = "Open MPI Run Time Environment";
     $project_name_short = "open-rte";
 } 
-if ($no_orte_arg) {
+if ($no_ompi_arg == 1 && $no_orte_arg == 1) {
     $project_name_long = "Open Portability Access Layer";
     $project_name_short = "open-pal";
 }
@@ -1140,7 +1140,7 @@ if (! (-f "VERSION" && -f "configure.ac" && -f $topdir_file)) {
 my $projects;
 push(@{$projects}, { name => "opal", dir => "opal", need_base => 1 });
 push(@{$projects}, { name => "orte", dir => "orte", need_base => 1 })
-    if (!$no_ompi_arg || !$no_orte_arg);
+    if (!$no_orte_arg);
 push(@{$projects}, { name => "ompi", dir => "ompi", need_base => 1 })
     if (!$no_ompi_arg);
 

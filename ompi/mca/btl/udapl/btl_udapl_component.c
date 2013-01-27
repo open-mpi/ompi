@@ -39,7 +39,6 @@
 #include "ompi/mca/btl/base/base.h" 
 #include "ompi/mca/btl/base/btl_base_error.h"
 #include "btl_udapl_endpoint.h"
-#include "orte/util/proc_info.h"
 #include "ompi/runtime/ompi_module_exchange.h"
 #include "ompi/runtime/mpiruntime.h"
 
@@ -417,7 +416,7 @@ static int mca_btl_udapl_modify_ia_list(DAT_COUNT *num_info_entries,
         char *str = opal_argv_join(mca_btl_udapl_component.if_list, ',');
         BTL_UDAPL_VERBOSE_HELP(VERBOSE_SHOW_HELP,
             ("help-mpi-btl-udapl.txt", "nonexistent entry",
-            true, orte_process_info.nodename,
+            true, ompi_process_info.nodename,
             ((NULL != mca_btl_udapl_component.if_include) ? 
             "in" : "ex"), str));
         free(str);

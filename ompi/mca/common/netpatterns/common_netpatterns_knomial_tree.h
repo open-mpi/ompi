@@ -1,6 +1,8 @@
 /*
  * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
  * Copyright (c) 2009-2012 Oak Ridge National Laboratory.  All rights reserved.
+ * Copyright (c) 2012      Los Alamos National Security, LLC.
+ *                         All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -12,7 +14,6 @@
 #define COMM_PATTERNS_KNOMIAL_TREE_H
 
 #include "ompi_config.h"
-#include "orte/runtime/orte_globals.h"
 
 BEGIN_C_DECLS
 

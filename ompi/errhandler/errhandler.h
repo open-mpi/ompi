@@ -35,8 +35,6 @@
 #include "ompi/errhandler/errhandler_predefined.h"
 #include "ompi/errhandler/errcode-internal.h"
 
-#include "orte/types.h"
-
 BEGIN_C_DECLS
 
 /*

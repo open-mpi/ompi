@@ -29,14 +29,12 @@
 #ifdef HAVE_INTTYPES_H
 #include <inttypes.h>
 #endif
-#include "orte/util/show_help.h"
-#include "orte/runtime/orte_globals.h"
-#include "orte/mca/errmgr/base/base.h"
 #include "opal/class/opal_bitmap.h"
 #include "opal/util/output.h"
 #include "opal/util/arch.h"
 #include "opal/include/opal_stdint.h"
 
+#include "ompi/mca/rte/rte.h"
 #include "ompi/mca/btl/btl.h"
 #include "ompi/mca/btl/base/btl_base_error.h"
 
@@ -55,11 +53,12 @@
 #include "ompi/mca/mpool/base/base.h"
 #include "ompi/mca/mpool/mpool.h"
 #include "ompi/mca/mpool/grdma/mpool_grdma.h"
+
 #if OMPI_CUDA_SUPPORT
 #include "opal/datatype/opal_datatype_cuda.h"
 #include "ompi/mca/common/cuda/common_cuda.h"
 #endif /* OMPI_CUDA_SUPPORT */
-#include "orte/util/proc_info.h"
+
 #include <errno.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -154,14 +153,14 @@ void mca_btl_openib_show_init_error(const char *file, int line,
         }
 #endif
 
-        orte_show_help("help-mpi-btl-openib.txt", "init-fail-no-mem",
-                       true, orte_process_info.nodename,
+        ompi_show_help("help-mpi-btl-openib.txt", "init-fail-no-mem",
+                       true, ompi_process_info.nodename,
                        file, line, func, dev, str_limit);
 
         if (NULL != str_limit) free(str_limit);
     } else {
-        orte_show_help("help-mpi-btl-openib.txt", "init-fail-create-q",
-                       true, orte_process_info.nodename,
+        ompi_show_help("help-mpi-btl-openib.txt", "init-fail-create-q",
+                       true, ompi_process_info.nodename,
                        file, line, func, strerror(errno), errno, dev);
     }
 }
@@ -486,9 +485,9 @@ static int mca_btl_openib_tune_endpoint(mca_btl_openib_module_t* openib_btl,
     ompi_btl_openib_ini_values_t values;
 
     if(mca_btl_openib_get_transport_type(openib_btl) != endpoint->rem_info.rem_transport_type) {
-        orte_show_help("help-mpi-btl-openib.txt",
+        ompi_show_help("help-mpi-btl-openib.txt",
                 "conflicting transport types", true,
-                orte_process_info.nodename,
+                ompi_process_info.nodename,
                         ibv_get_device_name(openib_btl->device->ib_dev),
                         (openib_btl->device->ib_dev_attr).vendor_id,
                         (openib_btl->device->ib_dev_attr).vendor_part_id,
@@ -507,9 +506,9 @@ static int mca_btl_openib_tune_endpoint(mca_btl_openib_module_t* openib_btl,
 
     if (OMPI_SUCCESS != ret &&
         OMPI_ERR_NOT_FOUND != ret) {
-        orte_show_help("help-mpi-btl-openib.txt",
+        ompi_show_help("help-mpi-btl-openib.txt",
                        "error in device init", true,
-                       orte_process_info.nodename,
+                       ompi_process_info.nodename,
                        ibv_get_device_name(openib_btl->device->ib_dev));
         return ret;
     }
@@ -548,9 +547,9 @@ static int mca_btl_openib_tune_endpoint(mca_btl_openib_module_t* openib_btl,
 
             if(0 != strcmp(mca_btl_openib_component.receive_queues,
                                                          recv_qps)) {
-                orte_show_help("help-mpi-btl-openib.txt",
+                ompi_show_help("help-mpi-btl-openib.txt",
                                "unsupported queues configuration", true,
-                               orte_process_info.nodename,
+                               ompi_process_info.nodename,
                                ibv_get_device_name(openib_btl->device->ib_dev),
                                (openib_btl->device->ib_dev_attr).vendor_id,
                                (openib_btl->device->ib_dev_attr).vendor_part_id,
@@ -570,9 +569,9 @@ static int mca_btl_openib_tune_endpoint(mca_btl_openib_module_t* openib_btl,
             if(NULL != values.receive_queues) {
                 if(0 != strcmp(mca_btl_openib_component.receive_queues,
                                                 values.receive_queues)) {
-                     orte_show_help("help-mpi-btl-openib.txt",
+                     ompi_show_help("help-mpi-btl-openib.txt",
                                "unsupported queues configuration", true,
-                               orte_process_info.nodename,
+                               ompi_process_info.nodename,
                                ibv_get_device_name(openib_btl->device->ib_dev),
                                (openib_btl->device->ib_dev_attr).vendor_id,
                                (openib_btl->device->ib_dev_attr).vendor_part_id,
@@ -671,11 +670,11 @@ static uint64_t calculate_max_reg (void)
         } else {
             action = "Your MPI job will continue, but may be behave poorly and/or hang.";
         }
-        orte_show_help("help-mpi-btl-openib.txt", "reg mem limit low", true,
-                       orte_process_info.nodename, (unsigned long)(max_reg >> 20),
+        ompi_show_help("help-mpi-btl-openib.txt", "reg mem limit low", true,
+                       ompi_process_info.nodename, (unsigned long)(max_reg >> 20),
                        (unsigned long)(mem_total >> 20), action);
         if (mca_btl_openib_component.abort_not_enough_reg_mem) {
-            orte_errmgr.abort(1, NULL);
+            ompi_rte_abort(1, NULL);
         }
     }
 
@@ -740,8 +739,8 @@ int mca_btl_openib_add_procs(
 
         /* OOB, XOOB, and RDMACM do not support SELF comunication, so
          * mark the prco as unreachable by openib btl  */
-        if (OPAL_EQUAL == orte_util_compare_name_fields
-                (ORTE_NS_CMP_ALL, ORTE_PROC_MY_NAME, &ompi_proc->proc_name)) {
+        if (OPAL_EQUAL == ompi_rte_compare_name_fields
+                (OMPI_RTE_CMP_ALL, OMPI_PROC_MY_NAME, &ompi_proc->proc_name)) {
             continue;
         }
 #if defined(HAVE_STRUCT_IBV_DEVICE_TRANSPORT_TYPE)

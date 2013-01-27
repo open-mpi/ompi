@@ -9,7 +9,6 @@
  */
 
 #include "btl_openib.h"
-#include "orte/util/show_help.h"
 
 #include "connect/btl_openib_connect_sl.h"
 #include <infiniband/iba/ib_types.h>
@@ -108,8 +107,8 @@ static int init_ud_qp(struct ibv_context *context_arg,
     cache->cq = ibv_create_cq(cache->context, 4, NULL, NULL, 0);
     if (NULL == cache->cq) {
         BTL_ERROR(("error creating cq, errno says %s", strerror(errno)));
-        orte_show_help("help-mpi-btl-openib.txt", "init-fail-create-q",
-                true, orte_process_info.nodename,
+        ompi_show_help("help-mpi-btl-openib.txt", "init-fail-create-q",
+                true, ompi_process_info.nodename,
                 __FILE__, __LINE__, "ibv_create_cq",
                 strerror(errno), errno,
                 ibv_get_device_name(context_arg->device));

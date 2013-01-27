@@ -33,11 +33,6 @@
 #include "opal/util/crc.h"
 #include "opal/util/output.h"
 
-#include "orte/runtime/orte_wait.h"
-#include "orte/mca/errmgr/errmgr.h"
-#include "orte/mca/grpcomm/grpcomm.h"
-#include "orte/util/show_help.h"
-
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/pml/base/base.h"
 #include "ompi/mca/btl/btl.h"
@@ -376,10 +371,10 @@ int mca_pml_csum_add_procs(ompi_proc_t** procs, size_t nprocs)
         mca_btl_base_selected_module_t *sm = 
             (mca_btl_base_selected_module_t*) item;
         if (sm->btl_module->btl_eager_limit < sizeof(mca_pml_csum_hdr_t)) {
-	    orte_show_help("help-mpi-pml-csum.txt", "eager_limit_too_small",
+	    ompi_show_help("help-mpi-pml-csum.txt", "eager_limit_too_small",
 			   true, 
 			   sm->btl_component->btl_version.mca_component_name,
-			   orte_process_info.nodename,
+			   ompi_process_info.nodename,
 			   sm->btl_component->btl_version.mca_component_name,
 			   sm->btl_module->btl_eager_limit,
 			   sm->btl_component->btl_version.mca_component_name,
@@ -532,7 +527,7 @@ int mca_pml_csum_send_fin( ompi_proc_t* proc,
     
     OPAL_OUTPUT_VERBOSE((1, mca_pml_base_output,
                          "%s: Sending \'FIN\' with header csum:0x%04x\n",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), hdr->hdr_common.hdr_csum));
+                         OMPI_NAME_PRINT(OMPI_PROC_MY_NAME), hdr->hdr_common.hdr_csum));
     
     csum_hdr_hton(hdr, MCA_PML_CSUM_HDR_TYPE_FIN, proc);
 
@@ -641,7 +636,7 @@ void mca_pml_csum_process_pending_rdma(void)
 void mca_pml_csum_error_handler(
         struct mca_btl_base_module_t* btl, int32_t flags,
         ompi_proc_t* errproc, char* btlinfo ) { 
-    orte_errmgr.abort(-1, NULL);
+    ompi_rte_abort(-1, NULL);
 }
 
 #if OPAL_ENABLE_FT_CR    == 0
@@ -655,14 +650,14 @@ int mca_pml_csum_ft_event( int state )
     ompi_proc_t** procs = NULL;
     size_t num_procs;
     int ret, p;
-    orte_grpcomm_collective_t *coll, *modex;
+    ompi_rte_collective_t *coll, *modex;
 
-    coll = OBJ_NEW(orte_grpcomm_collective_t);
-    coll->id = orte_process_info.peer_init_barrier;
+    coll = OBJ_NEW(ompi_rte_collective_t);
+    coll->id = ompi_process_info.peer_init_barrier;
     if(OPAL_CRS_CHECKPOINT == state) {
         if( opal_cr_timing_barrier_enabled ) {
             OPAL_CR_SET_TIMER(OPAL_CR_TIMER_CRCPBR1);
-            orte_grpcomm.barrier(coll);
+            ompi_rte_barrier(coll);
             ORTE_WAIT_FOR_COMPLETION(coll->active);
         }
 
@@ -674,7 +669,7 @@ int mca_pml_csum_ft_event( int state )
         if( !first_continue_pass ) { 
             if( opal_cr_timing_barrier_enabled ) {
                 OPAL_CR_SET_TIMER(OPAL_CR_TIMER_COREBR0);
-                orte_grpcomm.barrier(coll);
+                ompi_rte_barrier(coll);
                 ORTE_WAIT_FOR_COMPLETION(coll->active);
             }
             OPAL_CR_SET_TIMER(OPAL_CR_TIMER_P2P2);
@@ -724,7 +719,7 @@ int mca_pml_csum_ft_event( int state )
 
         /*
          * Clean out the modex information since it is invalid now.
-         *    orte_grpcomm.purge_proc_attrs();
+         *    ompi_rte_purge_proc_attrs();
          * This happens at the ORTE level, so doing it again here will cause
          * some issues with socket caching.
          */
@@ -770,14 +765,14 @@ int mca_pml_csum_ft_event( int state )
 
         if( opal_cr_timing_barrier_enabled ) {
             OPAL_CR_SET_TIMER(OPAL_CR_TIMER_P2PBR0);
-            /* JJH Cannot barrier here due to progress engine -- orte_grpcomm.barrier();*/
+            /* JJH Cannot barrier here due to progress engine -- ompi_rte_barrier();*/
         }
     }
     else if(OPAL_CRS_CONTINUE == state) {
         if( !first_continue_pass ) {
             if( opal_cr_timing_barrier_enabled ) {
                 OPAL_CR_SET_TIMER(OPAL_CR_TIMER_P2PBR1);
-                orte_grpcomm.barrier(coll);
+                ompi_rte_barrier(coll);
                 ORTE_WAIT_FOR_COMPLETION(coll->active);
             }
             OPAL_CR_SET_TIMER(OPAL_CR_TIMER_P2P3);
@@ -788,8 +783,8 @@ int mca_pml_csum_ft_event( int state )
              * Exchange the modex information once again.
              * BTLs will have republished their modex information.
              */
-            modex = OBJ_NEW(orte_grpcomm_collective_t);
-            modex->id = orte_process_info.peer_modex;
+            modex = OBJ_NEW(ompi_rte_collective_t);
+            modex->id = ompi_process_info.peer_modex;
             if (OMPI_SUCCESS != (ret = orte_grpcomm.modex(modex))) {
                 opal_output(0,
                             "pml:csum: ft_event(Restart): Failed orte_grpcomm.modex() = %d",
@@ -810,8 +805,8 @@ int mca_pml_csum_ft_event( int state )
             }
 
             /* Is this barrier necessary ? JJH */
-            if (OMPI_SUCCESS != (ret = orte_grpcomm.barrier(coll))) {
-                opal_output(0, "pml:csum: ft_event(Restart): Failed in orte_grpcomm.barrier (%d)", ret);
+            if (OMPI_SUCCESS != (ret = ompi_rte_barrier(coll))) {
+                opal_output(0, "pml:csum: ft_event(Restart): Failed in ompi_rte_barrier (%d)", ret);
                 goto clean;
             }
             ORTE_WAIT_FOR_COMPLETION(coll->active);
@@ -827,7 +822,7 @@ int mca_pml_csum_ft_event( int state )
         if( !first_continue_pass ) {
             if( opal_cr_timing_barrier_enabled ) {
                 OPAL_CR_SET_TIMER(OPAL_CR_TIMER_P2PBR2);
-                orte_grpcomm.barrier(coll);
+                ompi_rte_barrier(coll);
                 ORTE_WAIT_FOR_COMPLETION(coll->active);
             }
             OPAL_CR_SET_TIMER(OPAL_CR_TIMER_CRCP1);
@@ -841,8 +836,8 @@ int mca_pml_csum_ft_event( int state )
          * Exchange the modex information once again.
          * BTLs will have republished their modex information.
          */
-        modex = OBJ_NEW(orte_grpcomm_collective_t);
-        modex->id = orte_process_info.peer_modex;
+        modex = OBJ_NEW(ompi_rte_collective_t);
+        modex->id = ompi_process_info.peer_modex;
         if (OMPI_SUCCESS != (ret = orte_grpcomm.modex(NULL))) {
             opal_output(0,
                         "pml:csum: ft_event(Restart): Failed orte_grpcomm.modex() = %d",
@@ -863,8 +858,8 @@ int mca_pml_csum_ft_event( int state )
         }
 
         /* Is this barrier necessary ? JJH */
-        if (OMPI_SUCCESS != (ret = orte_grpcomm.barrier(coll))) {
-            opal_output(0, "pml:csum: ft_event(Restart): Failed in orte_grpcomm.barrier (%d)", ret);
+        if (OMPI_SUCCESS != (ret = ompi_rte_barrier(coll))) {
+            opal_output(0, "pml:csum: ft_event(Restart): Failed in ompi_rte_barrier (%d)", ret);
             goto clean;
         }
         ORTE_WAIT_FOR_COMPLETION(coll->active);

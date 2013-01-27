@@ -1,0 +1,226 @@
+/*
+ * Copyright (c) 2012      Los Alamos National Security, LLC.  All rights reserved.
+ *
+ * $COPYRIGHT$
+ * 
+ * Additional copyrights may follow
+ */
+
+/* This is the public RTE interface to the OMPI layer. Any RTE can be
+ * connected to the OMPI layer by creating a new static component in
+ * this framework, assigning it a priority and including a configure.m4
+ * to define when it should be built.
+ *
+ * Each component must provide a number of types and functions that mimic
+ * those provided by ORTE. These include (where flexibility exists, the
+ * ORTE data type is shown, but any compatible type is allowed. For example,
+ * the jobid field in ompi_process_name_t could be any type of integer, but
+ * cannot be a string):
+ *
+ * (a) Process name objects and operations
+ *     1. Definitions for integral types ompi_jobid_t and ompi_vpid_t.
+ *        The jobid must be unique for a given MPI_COMM_WORLD capable of
+ *        connecting to another OMPI_COMM_WORLD and the vpid will be the
+ *        process's rank in MPI_COMM_WORLD.
+ *     2. ompi_process_name_t - a struct that must contain at least two integer-typed fields:
+ *           a. ompi_jobid_t jobid
+ *           b. ompi_vpid_t vpid
+ *        Note that the structure can contain any number of fields beyond these
+ *        two, so the process name struct for any particular RTE can be whatever
+ *        is desired.
+ *     3. OMPI_NAME_PRINT - a macro that prints a process name when given
+ *        a pointer to ompi_process_name_t. The output format is to be
+ *        a single string representing the name.  This function should 
+ *        be thread-safe for multiple threads to call simultaneously.
+ *     4. OMPI_PROC_MY_NAME - a pointer to a global variable containing
+ *        the ompi_process_name_t for this process. Typically, this is
+ *        stored as a field in the ompi_process_info_t struct, but that
+ *        is not a requirement.
+ *     5. OMPI_NAME_WIlDCARD - a wildcard name.
+ *     6. ompi_rte_compare_name_fields - a function used to compare fields
+ *        in the ompi_process_name_t struct. The function prototype must be
+ *        of the form:
+ *        int ompi_rte_compare_name_fields(ompi_rte_cmp_bitmask_t mask,
+ *                                         ompi_process_name_t *name1,
+ *                                         ompi_process_name_t *name2);
+ *        The bitmask must be defined to indicate the fields to be used
+ *        in the comparison. Fields not included in the mask must be ignored.
+ *        Supported bitmask values must include:
+ *           b. OMPI_RTE_CMP_JOBID
+ *           c. OMPI_RTE_CMP_VPID
+ *           d. OMPI_RTE_CMP_ALL
+ *      7. uint64_t ompi_rte_hash_names(name) - return a string hash uniquely
+ *         representing the ompi_process_name passed in.
+ *      8. OMPI_NAME - an Opal DSS constant for a handler already registered 
+ *         to serialize/deserialize an ompi_process_name_t structure.
+ *
+ * (b) Collective objects and operations
+ *     1. ompi_rte_collective_t - an OPAL object used during RTE collective operations
+ *        such as modex and barrier. It must be an opal_list_item_t and contain the
+ *        following fields:
+ *           a. id (ORTE type: int32_t)
+ *           b. bool active
+ *              flag that user can poll on to know when collective 
+ *              has completed - set to false just prior to
+ *              calling user callback function, if provided
+ *     2. ompi_rte_modex - a function that performs an exchange of endpoint information
+ *        to wireup the MPI transports. The function prototype must be of the form:
+ *        int ompi_rte_modex(ompi_rte_collective_t *coll);
+ *        At the completion of the modex operation, the coll->active flag must be set
+ *        to false, and the endpoint information must be stored in the modex database.
+ *        This function must have barrier semantics across the MPI_COMM_WORLD of the
+ *        calling process.
+ *     3. ompi_rte_barrier - a function that performs a barrier operation within the
+ *        RTE. The function prototype must be of the form:
+ *        int ompi_rte_barrier(ompi_rte_collective_t *coll);
+ *        At the completion of the barrier operation, the coll->active flag must be set
+ *        to false
+ *
+ * (c) Process info struct
+ *     1. ompi_process_info_t - a struct containing info about the current process.
+ *        The struct must contain at least the following fields:
+ *           a. app_num -
+ *           b. pid -
+ *           c. num_procs -
+ *           d. my_node_rank -
+ *           e. my_hnp_uri -
+ *           f. peer_modex - a collective id for the modex operation
+ *           g. peer_init_barrier - a collective id for the barrier during MPI_Init
+ *           h. peer_fini_barrier - a collective id for the barrier during MPI_Finalize
+ *           i. job_session_dir - 
+ *           j. proc_session_dir -
+ *           k. nodename - a string representation for the name of the node this
+ *              process is on
+ *     2. ompi_rte_proc_is_bound - global boolean that will be true if the runtime bound 
+ *        the process to a particular core or set of cores and is false otherwise.
+ *
+ * (d) Error handling objects and operations
+ *     1. void ompi_rte_abort(int err_code, char *fmt, ...) - Abort the current 
+ *        process with the specified error code and message.
+ *     2. int ompi_rte_abort_peers(ompi_process_name_t *procs, size_t nprocs) - 
+ *        Abort the specified list of peers
+ *     3. OMPI_ERROR_LOG(rc) - print error message regarding the given return code
+ *     4. ompi_rte_set_fault_callback - register a callback function for the RTE
+ *        to report asynchronous errors to the caller
+ *
+ * (e) Init and finalize objects and operations
+ *     1. ompi_rte_init - a function to initialize the RTE. The function
+ *        prototype must be of the form:
+ *        int ompi_rte_init(int *argc, char ***argv);
+ *     2. ompi_rte_finalize - a function to finalize the RTE. The function
+ *        prototype must be of the form:
+ *        int ompi_rte_finalize(void);
+ *     3. void ompi_rte_wait_for_debugger(void) - Called during MPI_Init, this
+ *        function is used to wait for debuggers to do their pre-MPI attach.
+ *        If there is no attached debugger, this function will not block.
+ *
+ * (f) Support for pretty-print help messages
+ *     1. ompi_show_help - a function used to pretty-print help messages
+ *        based on the opal_show_help system. See the orte/util/show_help.h
+ *        file for a more detailed explanation of requirements for this
+ *        function. The function prototype must be of the form:
+ *        int ompi_show_help(const char *filename, const char *topic, 
+ *                           bool want_error_header, ...);
+ *     2. ompi_show_help_is_available - a function that returns true if
+ *        show_help support is available
+ *     3. ompi_help_want_aggregate - a boolean flag that indicates if
+ *        show_help messages will be aggregated by the show_help system.
+ *
+ * (g) Database operations
+ *     1. ompi_rte_db_store - a function to store modex and other data in
+ *        a local database. The function is primarily used for storing modex
+ *        data, but can be used for general purposes. The prototype must be
+ *        of the form:
+ *        int ompi_rte_db_store(const ompi_process_name_t *proc,
+ *                              const char *key, const void *data,
+ *                              opal_data_type_t type);
+ *        The implementation of this function must store a COPY of the data
+ *        provided - the data is NOT guaranteed to be valid after return
+ *        from the call.
+ *     3. ompi_rte_db_fetch -
+ *        int ompi_rte_db_fetch(const ompi_process_name_t *proc,
+ *                              const char *key,
+ *                              void **data, opal_data_type_t type);
+ *     4. ompi_rte_db_fetch_pointer
+ *        int ompi_rte_db_fetch_pointer(const ompi_process_name_t *proc,
+ *                                                      const char *key,
+ *                                                    void **data, opal_data_type_t type);
+ *     5. Pre-defined db keys (with associated values after rte_init)
+ *        a. OMPI_DB_HOSTNAME
+ *        b. OMPI_DB_LOCALITY
+ *
+ * (h) Communication support
+ *
+ */
+
+#ifndef OMPI_MCA_RTE_H
+#define OMPI_MCA_RTE_H
+
+#include "ompi_config.h"
+
+#include "opal/dss/dss_types.h"
+#include "opal/mca/mca.h"
+#include "opal/mca/base/base.h"
+
+BEGIN_C_DECLS
+
+/**
+ * Structure for rte components.
+ */
+struct ompi_rte_base_component_1_0_0_t {
+    /** MCA base component */
+    mca_base_component_t base_version;
+    /** MCA base data */
+    mca_base_component_data_t base_data;
+};
+
+/**
+ * Convenience typedef
+ */
+typedef struct ompi_rte_base_component_1_0_0_t ompi_rte_base_component_1_0_0_t;
+typedef struct ompi_rte_base_component_1_0_0_t ompi_rte_component_t;
+
+/**
+ * Macro for use in components that are of type rte
+ */
+#define OMPI_RTE_BASE_VERSION_1_0_0 \
+    MCA_BASE_VERSION_2_0_0, \
+    "rte", 2, 0, 0
+
+END_C_DECLS
+
+/* include implementation to call */
+#include MCA_rte_IMPLEMENTATION_HEADER
+
+BEGIN_C_DECLS
+
+/* Communication tags */
+#define OMPI_RML_TAG_UDAPL                          OMPI_RML_TAG_BASE+1
+#define OMPI_RML_TAG_OPENIB                         OMPI_RML_TAG_BASE+2
+#define OMPI_RML_TAG_XOPENIB                        OMPI_RML_TAG_BASE+3
+#define OMPI_RML_TAG_COMM_CID_INTRA                 OMPI_RML_TAG_BASE+4
+#define OMPI_RML_TAG_XOOB                           OMPI_RML_TAG_BASE+5
+#define OMPI_RML_TAG_SM_BACK_FILE_CREATED           OMPI_RML_TAG_BASE+6
+#define OMPI_CRCP_COORD_BOOKMARK_TAG                OMPI_RML_TAG_BASE+7
+#define OMPI_COMM_JOIN_TAG                          OMPI_RML_TAG_BASE+8
+
+/* support for shared memory collectives */
+#define OMPI_RML_TAG_COLL_SM2_BACK_FILE_CREATED     OMPI_RML_TAG_BASE+9
+/* common sm component query result index */
+#define OMPI_RML_TAG_COMMON_SM_COMP_INDEX           OMPI_RML_TAG_BASE+10
+
+/* OFACM RML TAGs */
+#define OMPI_RML_TAG_OFACM                          OMPI_RML_TAG_BASE+11
+#define OMPI_RML_TAG_XOFACM                         OMPI_RML_TAG_BASE+12
+
+#define OMPI_RML_TAG_DYNAMIC                        OMPI_RML_TAG_BASE+200
+
+typedef struct {
+    opal_list_item_t super;
+    ompi_process_name_t name;
+} ompi_namelist_t;
+OBJ_CLASS_DECLARATION(ompi_namelist_t);
+
+END_C_DECLS
+
+#endif /* OMPI_RTE_H_ */

@@ -28,14 +28,12 @@
 #include "opal/class/opal_bitmap.h"
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
-#include "orte/util/show_help.h"
 #include "ompi/mca/bml/bml.h"
 #include "ompi/mca/bml/base/base.h"
 #include "ompi/mca/btl/btl.h"
 #include "ompi/mca/btl/base/base.h"
 #include "ompi/mca/bml/base/bml_base_btl.h" 
 #include "bml_r2.h"
-#include "orte/util/name_fns.h"
 #include "ompi/proc/proc.h"
 
 extern mca_bml_base_component_t mca_bml_r2_component; 
@@ -405,13 +403,13 @@ static int mca_bml_r2_add_procs( size_t nprocs,
 
     if (mca_bml_r2.show_unreach_errors && 
         OMPI_ERR_UNREACH == ret) {
-        orte_show_help("help-mca-bml-r2.txt",
+        ompi_show_help("help-mca-bml-r2.txt",
                        "unreachable proc",
                        true, 
-                       ORTE_NAME_PRINT(&(ompi_proc_local_proc->proc_name)),
+                       OMPI_NAME_PRINT(&(ompi_proc_local_proc->proc_name)),
                        (ompi_proc_local_proc->proc_hostname ?
                         ompi_proc_local_proc->proc_hostname : "unknown!"),
-                       ORTE_NAME_PRINT(&(unreach_proc->proc_name)),
+                       OMPI_NAME_PRINT(&(unreach_proc->proc_name)),
                        (unreach_proc->proc_hostname ? 
                         unreach_proc->proc_hostname : "unknown!"),
                        btl_names);

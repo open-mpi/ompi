@@ -51,13 +51,11 @@
 #include "opal/mca/hwloc/base/base.h"
 #include "opal/util/os_path.h"
 
-#include "orte/util/proc_info.h"
-#include "orte/util/name_fns.h"
-
 #include "ompi/communicator/communicator.h"
 #include "ompi/group/group.h"
 #include "ompi/mca/coll/coll.h"
 #include "ompi/mca/coll/base/base.h"
+#include "ompi/mca/rte/rte.h"
 #include "ompi/proc/proc.h"
 #include "coll_sm.h"
 
@@ -129,7 +127,7 @@ int mca_coll_sm_init_query(bool enable_progress_threads,
                            bool enable_mpi_threads)
 {
     /* if no session directory was created, then we cannot be used */
-    if (!orte_create_session_dirs) {
+    if (NULL == ompi_process_info.job_session_dir) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
     /* Don't do much here because we don't really want to allocate any
@@ -514,7 +512,7 @@ static int bootstrap_comm(ompi_communicator_t *comm,
     int num_in_use = c->sm_comm_num_in_use_flags;
     int frag_size = c->sm_fragment_size;
     int control_size = c->sm_control_size;
-    orte_process_name_t *lowest_name = NULL;
+    ompi_process_name_t *lowest_name = NULL;
     size_t size;
     ompi_proc_t *proc;
 
@@ -526,21 +524,21 @@ static int bootstrap_comm(ompi_communicator_t *comm,
     lowest_name = &(proc->proc_name);
     for (i = 1; i < comm_size; ++i) {
         proc = ompi_group_peer_lookup(comm->c_local_group, i);
-        if (orte_util_compare_name_fields(ORTE_NS_CMP_ALL, 
+        if (ompi_rte_compare_name_fields(OMPI_RTE_CMP_ALL, 
                                           &(proc->proc_name),
                                           lowest_name) < 0) {
             lowest_name = &(proc->proc_name);
         }
     }
     asprintf(&shortpath, "coll-sm-cid-%d-name-%s.mmap", comm->c_contextid,
-             ORTE_NAME_PRINT(lowest_name));
+             OMPI_NAME_PRINT(lowest_name));
     if (NULL == shortpath) {
         opal_output_verbose(10, mca_coll_base_output,
                             "coll:sm:enable:bootstrap comm (%d/%s): asprintf failed", 
                             comm->c_contextid, comm->c_name);
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
-    fullpath = opal_os_path(false, orte_process_info.job_session_dir,
+    fullpath = opal_os_path(false, ompi_process_info.job_session_dir,
                             shortpath, NULL);
     free(shortpath);
     if (NULL == fullpath) {

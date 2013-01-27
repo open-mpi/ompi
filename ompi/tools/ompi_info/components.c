@@ -28,8 +28,10 @@
 #include "opal/util/argv.h"
 #include "opal/runtime/opal_info_support.h"
 
+#if OMPI_RTE_ORTE
 #include "orte/runtime/runtime.h"
 #include "orte/runtime/orte_info_support.h"
+#endif
 
 #include "ompi/mca/allocator/base/base.h"
 #include "ompi/mca/coll/base/base.h"
@@ -47,8 +49,6 @@
 #include "ompi/mca/topo/base/base.h"
 #include "ompi/mca/osc/osc.h"
 #include "ompi/mca/osc/base/base.h"
-#include "ompi/mca/pubsub/base/base.h"
-#include "ompi/mca/dpm/base/base.h"
 #include "ompi/mca/op/base/base.h"
 #include "ompi/mca/vprotocol/base/base.h"
 #include "ompi/mca/fbtl/fbtl.h"
@@ -190,20 +190,6 @@ int ompi_info_register_components(opal_pointer_array_t *mca_types,
     }
 #endif
     
-    if (OMPI_SUCCESS != (rc = ompi_dpm_base_open()) &&
-        OMPI_ERR_BAD_PARAM != rc) {
-        str = "dpm open";
-        goto error;
-    }
-    map = OBJ_NEW(opal_info_component_map_t);
-    map->type = strdup("dpm");
-    map->components = &ompi_dpm_base_components_available;
-    opal_pointer_array_add(component_map, map);
-    if (OMPI_ERR_BAD_PARAM == rc)  {
-        str = "dpm";
-        goto breakout;
-    }
-
     if (OMPI_SUCCESS != (rc = mca_fbtl_base_open()) &&
         OMPI_ERR_BAD_PARAM != rc) {
         str = "fbtl open";
@@ -338,20 +324,6 @@ int ompi_info_register_components(opal_pointer_array_t *mca_types,
     map->components = &mca_bml_base_components_available;
     opal_pointer_array_add(component_map, map);
     
-    if (OMPI_SUCCESS != (rc = ompi_pubsub_base_open()) &&
-        OMPI_ERR_BAD_PARAM != rc) {
-        str = "pubsub open";
-        goto error;
-    }
-    map = OBJ_NEW(opal_info_component_map_t);
-    map->type = strdup("pubsub");
-    map->components = &ompi_pubsub_base_components_available;
-    opal_pointer_array_add(component_map, map);
-    if (OMPI_ERR_BAD_PARAM == rc)  {
-        str = "pubsub";
-        goto breakout;
-    }
-
     if (OMPI_SUCCESS != (rc = mca_rcache_base_open()) &&
         OMPI_ERR_BAD_PARAM != rc) {
         str = "rcache open";
@@ -454,8 +426,6 @@ void ompi_info_close_components()
     (void) ompi_crcp_base_close();
 #endif
     (void) ompi_op_base_close();
-    (void) ompi_dpm_base_close();
-    (void) ompi_pubsub_base_close();
     (void) mca_topo_base_close();
     (void) mca_btl_base_close();
     (void) ompi_mtl_base_close();
@@ -471,6 +441,8 @@ void ompi_info_close_components()
     (void) mca_allocator_base_close();
     (void) ompi_osc_base_close();
 
+#if OMPI_RTE_ORTE
     /* close the ORTE components */
     (void) orte_info_close_components();
+#endif
 }

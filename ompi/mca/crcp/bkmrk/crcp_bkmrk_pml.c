@@ -5,6 +5,8 @@
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2010-2012 Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2012      Los Alamos National Security, LLC.
+ *                         All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -31,15 +33,8 @@
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param.h"
 
-#include "orte/runtime/orte_globals.h"
-#include "orte/runtime/orte_wait.h"
-#include "orte/util/name_fns.h"
-#include "orte/mca/grpcomm/grpcomm.h"
-#include "orte/mca/rml/rml.h"
-#include "orte/mca/ess/ess.h"
-
 #include "ompi/request/request.h"
-#include "ompi/mca/dpm/dpm.h"
+#include "ompi/mca/rte/rte.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/pml/base/base.h"
 #include "ompi/mca/pml/base/pml_base_request.h"
@@ -305,7 +300,7 @@ static int drain_message_copy_remove_persistent(ompi_crcp_bkmrk_pml_drain_messag
 /*
  * Peer List: Find the peer reference matching the ORTE process name
  */
-static ompi_crcp_bkmrk_pml_peer_ref_t* find_peer(orte_process_name_t proc);
+static ompi_crcp_bkmrk_pml_peer_ref_t* find_peer(ompi_process_name_t proc);
 
 /*
  * Peer List: Find the peer reference matching the index into the communicator
@@ -347,9 +342,9 @@ static int recv_bookmarks(int peer_idx);
  * Callback to receive the bookmarks from a peer
  */
 static void recv_bookmarks_cbfunc(int status,
-                                  orte_process_name_t* sender,
+                                  ompi_process_name_t* sender,
                                   opal_buffer_t *buffer,
-                                  orte_rml_tag_t tag,
+                                  ompi_rml_tag_t tag,
                                   void* cbdata);
 static int total_recv_bookmarks = 0;
 
@@ -420,9 +415,9 @@ static int ft_event_post_drain_acks(void);
  * Callback to service drain message acks.
  */
 static void drain_message_ack_cbfunc(int status,
-                                     orte_process_name_t* sender,
+                                     ompi_process_name_t* sender,
                                      opal_buffer_t *buffer,
-                                     orte_rml_tag_t tag,
+                                     ompi_rml_tag_t tag,
                                      void* cbdata);
 
 /*
@@ -1070,7 +1065,7 @@ do {                                             \
 
 #define UNPACK_BUFFER(buffer, var, count, type, error_msg)                     \
  {                                                                             \
-    orte_std_cntr_t n = count;                                                 \
+    int32_t n = count;                                                 \
     if (OPAL_SUCCESS != (ret = opal_dss.unpack(buffer, &(var), &n, type)) ) {  \
         opal_output(mca_crcp_bkmrk_component.super.output_handle,               \
                     "%s (Return %d)", error_msg, ret);                         \
@@ -1488,7 +1483,7 @@ ompi_crcp_base_pml_state_t* ompi_crcp_bkmrk_pml_del_procs(
         if(NULL == item) {
             opal_output(mca_crcp_bkmrk_component.super.output_handle,
                         "crcp:bkmrk: del_procs: Unable to find peer %s\n",
-                        ORTE_NAME_PRINT(&(procs[i]->proc_name)));
+                        OMPI_NAME_PRINT(&(procs[i]->proc_name)));
             exit_status = OMPI_ERROR;
             goto DONE;
         }
@@ -3016,12 +3011,12 @@ ompi_crcp_base_pml_state_t* ompi_crcp_bkmrk_pml_ft_event(
     static bool first_continue_pass = false;
     opal_list_item_t* item = NULL;
     int exit_status = OMPI_SUCCESS;
-    orte_grpcomm_collective_t coll;
+    ompi_rte_collective_t coll;
     int ret;
 
     ft_event_state = state;
-    OBJ_CONSTRUCT(&coll, orte_grpcomm_collective_t);
-    coll.id = orte_process_info.peer_init_barrier;
+    OBJ_CONSTRUCT(&coll, ompi_rte_collective_t);
+    coll.id = ompi_process_info.peer_init_barrier;
 
     if( step_to_return_to == 1 ) {
         goto STEP_1;
@@ -3040,7 +3035,7 @@ ompi_crcp_base_pml_state_t* ompi_crcp_bkmrk_pml_ft_event(
 
         if( opal_cr_timing_barrier_enabled ) {
             OPAL_CR_SET_TIMER(OPAL_CR_TIMER_CRCPBR0);
-            orte_grpcomm.barrier(&coll);
+            ompi_rte_barrier(&coll);
             ORTE_WAIT_FOR_COMPLETION(coll.active);
         }
         OPAL_CR_SET_TIMER(OPAL_CR_TIMER_CRCP0);
@@ -3056,7 +3051,7 @@ ompi_crcp_base_pml_state_t* ompi_crcp_bkmrk_pml_ft_event(
         if( OMPI_SUCCESS != (ret = ompi_crcp_bkmrk_pml_quiesce_start(QUIESCE_TAG_CKPT)) ) {
             opal_output(mca_crcp_bkmrk_component.super.output_handle,
                         "crcp:bkmrk: %s ft_event: Checkpoint Coordination Failed %d",
-                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                        OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),
                         ret);
             exit_status = ret;
             goto DONE;
@@ -3109,7 +3104,7 @@ ompi_crcp_base_pml_state_t* ompi_crcp_bkmrk_pml_ft_event(
 
         if( opal_cr_timing_barrier_enabled ) {
             OPAL_CR_SET_TIMER(OPAL_CR_TIMER_COREBR1);
-            orte_grpcomm.barrier(&coll);
+            ompi_rte_barrier(&coll);
             ORTE_WAIT_FOR_COMPLETION(coll.active);
         }
         OPAL_CR_SET_TIMER(OPAL_CR_TIMER_CORE2);
@@ -3133,7 +3128,7 @@ ompi_crcp_base_pml_state_t* ompi_crcp_bkmrk_pml_ft_event(
             cur_peer_ref = (ompi_crcp_bkmrk_pml_peer_ref_t*)item;
 
             /* JJH - Assuming only one global jobid at the moment */
-            cur_peer_ref->proc_name.jobid = ORTE_PROC_MY_NAME->jobid;
+            cur_peer_ref->proc_name.jobid = OMPI_PROC_MY_NAME->jobid;
         }
 
         /*
@@ -3402,7 +3397,7 @@ static int traffic_message_find_mark_persistent(ompi_crcp_bkmrk_pml_traffic_mess
         else if( loc_breq->req_sequence == breq->req_sequence ) {
             OPAL_OUTPUT_VERBOSE((25, mca_crcp_bkmrk_component.super.output_handle,
                                  "%s %8s Request [%d] (%s) %d : %d",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),
                                  (set_is_active ? "Start" : (NULL != c_ref ? "Drain" : "Complete")),
                                  (int)msg_ref->msg_id,
                                  (content_ref->active ? "T" : "F"),
@@ -3503,8 +3498,8 @@ static int traffic_message_create_drain_message(bool post_drain,
     OPAL_OUTPUT_VERBOSE((10, mca_crcp_bkmrk_component.super.output_handle,
                          "crcp:bkmrk: %s <-- %s "
                          " --> Create Drain Msg: %s %4d = min(%4d / %4d)",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_NAME_PRINT(&(peer_ref->proc_name)),
+                         OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),
+                         OMPI_NAME_PRINT(&(peer_ref->proc_name)),
                          (post_drain ? "Posting" : "Not Posting"),
                          m_total, (*posted_msg_ref)->active, max_post ));
 
@@ -3531,8 +3526,8 @@ static int traffic_message_create_drain_message(bool post_drain,
         OPAL_OUTPUT_VERBOSE((10, mca_crcp_bkmrk_component.super.output_handle,
                              "crcp:bkmrk: %s <-- %s "
                              " \t--> Find Content: %s (%4d of %4d)",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             ORTE_NAME_PRINT(&(peer_ref->proc_name)),
+                             OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),
+                             OMPI_NAME_PRINT(&(peer_ref->proc_name)),
                              (post_drain ? "Posting" : "Not Posting"),
                              m_iter, m_total));
 
@@ -3609,8 +3604,8 @@ static int traffic_message_create_drain_message(bool post_drain,
     OPAL_OUTPUT_VERBOSE((15, mca_crcp_bkmrk_component.super.output_handle,
                          "crcp:bkmrk: %s <-- %s "
                          "Added %d messages to the drained list (size = %d)",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_NAME_PRINT(&(peer_ref->proc_name)),
+                         OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),
+                         OMPI_NAME_PRINT(&(peer_ref->proc_name)),
                          (*num_posted),
                          (int)opal_list_get_size(&(peer_ref->drained_list)) ));
 
@@ -3927,7 +3922,7 @@ static int drain_message_find_any(size_t count, int tag, int peer,
                 continue;
             }
                 
-            if( OPAL_EQUAL != orte_util_compare_name_fields(ORTE_NS_CMP_ALL,
+            if( OPAL_EQUAL != ompi_rte_compare_name_fields(OMPI_RTE_CMP_ALL,
                                                             &(cur_peer_ref->proc_name),
                                                             &(comm->c_local_group->grp_proc_pointers[peer]->proc_name)) ) {
                 continue;
@@ -4146,10 +4141,10 @@ static int drain_message_copy_remove(ompi_crcp_bkmrk_pml_drain_message_ref_t *dr
 /************************************************
  * Peer List Utility Functions
  ************************************************/
-static ompi_crcp_bkmrk_pml_peer_ref_t * find_peer(orte_process_name_t proc)
+static ompi_crcp_bkmrk_pml_peer_ref_t * find_peer(ompi_process_name_t proc)
 {
     opal_list_item_t* item = NULL;
-    orte_ns_cmp_bitmask_t mask;
+    ompi_rte_cmp_bitmask_t mask;
 
     for(item  = opal_list_get_first(&ompi_crcp_bkmrk_pml_peer_refs);
         item != opal_list_get_end(&ompi_crcp_bkmrk_pml_peer_refs);
@@ -4157,9 +4152,9 @@ static ompi_crcp_bkmrk_pml_peer_ref_t * find_peer(orte_process_name_t proc)
         ompi_crcp_bkmrk_pml_peer_ref_t *cur_peer_ref;
         cur_peer_ref = (ompi_crcp_bkmrk_pml_peer_ref_t*)item;
 
-        mask = ORTE_NS_CMP_JOBID | ORTE_NS_CMP_VPID;
+        mask = OMPI_RTE_CMP_JOBID | OMPI_RTE_CMP_VPID;
 
-        if( OPAL_EQUAL == orte_util_compare_name_fields(mask,
+        if( OPAL_EQUAL == ompi_rte_compare_name_fields(mask,
                                                         &(cur_peer_ref->proc_name),
                                                         &proc) ) {
             return cur_peer_ref;
@@ -4261,7 +4256,7 @@ static int ft_event_coordinate_peers(void)
     if( stall_for_completion ) {
         OPAL_OUTPUT_VERBOSE((10, mca_crcp_bkmrk_component.super.output_handle,
                              "crcp:bkmrk: %s **** STALLING %s in PID %d ***",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),
                              (current_msg_type == COORD_MSG_TYPE_B_SEND ? "Send" : "Recv"),
                              getpid() ));
         step_to_return_to = 1;
@@ -4288,7 +4283,7 @@ static int ft_event_coordinate_peers(void)
 
     OPAL_OUTPUT_VERBOSE((5, mca_crcp_bkmrk_component.super.output_handle,
                         "crcp:bkmrk: %s Coordination Finished...\n",
-                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+                        OMPI_NAME_PRINT(OMPI_PROC_MY_NAME)));
 
     /*
      * Now that all our peer channels are marked as drained
@@ -4320,8 +4315,8 @@ static int ft_event_finalize_exchange(void)
         ompi_crcp_bkmrk_pml_peer_ref_t *peer_ref;
         peer_ref = (ompi_crcp_bkmrk_pml_peer_ref_t*)item;
 
-        if( OPAL_EQUAL != orte_util_compare_name_fields(ORTE_NS_CMP_ALL,
-                                                        (ORTE_PROC_MY_NAME),
+        if( OPAL_EQUAL != ompi_rte_compare_name_fields(OMPI_RTE_CMP_ALL,
+                                                        (OMPI_PROC_MY_NAME),
                                                         &(peer_ref->proc_name)) ) {
             TRAFFIC_MSG_DUMP_PEER(10, (peer_ref, "finalize_exchange", false));
         }
@@ -4428,7 +4423,7 @@ static int ft_event_finalize_exchange(void)
 static int ft_event_exchange_bookmarks(void)
 {
     int peer_idx  = 0;
-    int my_idx    = ORTE_PROC_MY_NAME->vpid;
+    int my_idx    = OMPI_PROC_MY_NAME->vpid;
     int iter      = 0;
     int num_peers = 0;
     
@@ -4471,15 +4466,15 @@ static int ft_event_check_bookmarks(void)
     int p_n_from_p_m = 0;
 
     if( 10 <= mca_crcp_bkmrk_component.super.verbose ) {
-        sleep(ORTE_PROC_MY_NAME->vpid);
+        sleep(OMPI_PROC_MY_NAME->vpid);
         OPAL_OUTPUT_VERBOSE((10, mca_crcp_bkmrk_component.super.output_handle,
                              "---------------------------------------------"));
         OPAL_OUTPUT_VERBOSE((10, mca_crcp_bkmrk_component.super.output_handle,
                              "Process %s Match Table",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+                             OMPI_NAME_PRINT(OMPI_PROC_MY_NAME)));
         OPAL_OUTPUT_VERBOSE((10, mca_crcp_bkmrk_component.super.output_handle,
                             "%s  %5s | %7s | %7s | %7s | %7s |",
-                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                            OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),
                             "Vpid", "T_Send", "M_Recv", "M_Send", "T_Recv"));
 
         for(item  = opal_list_get_first(&ompi_crcp_bkmrk_pml_peer_refs);
@@ -4497,7 +4492,7 @@ static int ft_event_check_bookmarks(void)
 
             OPAL_OUTPUT_VERBOSE((10, mca_crcp_bkmrk_component.super.output_handle,
                                 "%s  %5d | %7d | %7d | %7d | %7d |",
-                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),
                                 peer_ref->proc_name.vpid,
                                 t_send, m_recv, m_send, t_recv));
         }
@@ -4516,8 +4511,8 @@ static int ft_event_check_bookmarks(void)
         ompi_crcp_bkmrk_pml_peer_ref_t *peer_ref;
         peer_ref = (ompi_crcp_bkmrk_pml_peer_ref_t*)item;
 
-        if( OPAL_EQUAL == orte_util_compare_name_fields(ORTE_NS_CMP_ALL,
-                                                        (ORTE_PROC_MY_NAME),
+        if( OPAL_EQUAL == ompi_rte_compare_name_fields(OMPI_RTE_CMP_ALL,
+                                                        (OMPI_PROC_MY_NAME),
                                                         &(peer_ref->proc_name)) ) {
             continue;
         }
@@ -4525,7 +4520,7 @@ static int ft_event_check_bookmarks(void)
         TRAFFIC_MSG_DUMP_PEER(15, (peer_ref, "-- Bookmark Details --", false));
 
         /* Lowest Rank sends first */
-        if( ORTE_PROC_MY_NAME->vpid < peer_ref->proc_name.vpid ) {
+        if( OMPI_PROC_MY_NAME->vpid < peer_ref->proc_name.vpid ) {
             /********************
              * Check P_n --> P_m
              * Has the peer received all the messages that I have put on the wire?
@@ -4539,8 +4534,8 @@ static int ft_event_check_bookmarks(void)
                             "crcp:bkmrk: %s --> %s "
                             "Total Sent (%4d) = Matched Recv. (%4d) => Diff (%4d). "
                             " WARNING: Peer received more than was sent. :(\n",
-                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                            ORTE_NAME_PRINT(&(peer_ref->proc_name)),
+                            OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),
+                            OMPI_NAME_PRINT(&(peer_ref->proc_name)),
                             p_n_to_p_m,
                             p_n_from_p_m,
                             (p_n_to_p_m - p_n_from_p_m)
@@ -4553,8 +4548,8 @@ static int ft_event_check_bookmarks(void)
                 OPAL_OUTPUT_VERBOSE((10, mca_crcp_bkmrk_component.super.output_handle,
                                     "crcp:bkmrk: %s --> %s "
                                     "Total Sent (%4d) = Matched Recv. (%4d). Peer needs %4d.\n",
-                                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                    ORTE_NAME_PRINT(&(peer_ref->proc_name)),
+                                    OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),
+                                    OMPI_NAME_PRINT(&(peer_ref->proc_name)),
                                     p_n_to_p_m,
                                     p_n_from_p_m,
                                     (p_n_to_p_m - p_n_from_p_m)
@@ -4567,7 +4562,7 @@ static int ft_event_check_bookmarks(void)
                 if( OMPI_SUCCESS != (ret = send_msg_details(peer_ref, p_n_to_p_m, p_n_from_p_m) ) ) {
                     opal_output(mca_crcp_bkmrk_component.super.output_handle,
                                 "crcp:bkmrk: check_bookmarks: Unable to send message details to peer %s: Return %d\n",
-                                ORTE_NAME_PRINT(&peer_ref->proc_name),
+                                OMPI_NAME_PRINT(&peer_ref->proc_name),
                                 ret);
                     return ret;
                 }
@@ -4586,8 +4581,8 @@ static int ft_event_check_bookmarks(void)
                             "crcp:bkmrk: %s --> %s "
                             "Matched Sent (%4d) = Total Recv. (%4d) => Diff (%4d). "
                             " WARNING: I received more than the peer sent. :(\n",
-                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                            ORTE_NAME_PRINT(&(peer_ref->proc_name)),
+                            OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),
+                            OMPI_NAME_PRINT(&(peer_ref->proc_name)),
                             p_n_to_p_m,
                             p_n_from_p_m,
                             (p_n_to_p_m - p_n_from_p_m)
@@ -4600,8 +4595,8 @@ static int ft_event_check_bookmarks(void)
                 OPAL_OUTPUT_VERBOSE((10, mca_crcp_bkmrk_component.super.output_handle,
                                      "crcp:bkmrk: %s <-- %s "
                                      "Matched Sent (%4d) = Total Recv. (%4d). I need %4d.\n",
-                                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                    ORTE_NAME_PRINT(&(peer_ref->proc_name)),
+                                    OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),
+                                    OMPI_NAME_PRINT(&(peer_ref->proc_name)),
                                     p_n_to_p_m,
                                     p_n_from_p_m,
                                     (p_n_to_p_m - p_n_from_p_m)
@@ -4613,7 +4608,7 @@ static int ft_event_check_bookmarks(void)
                 if( OMPI_SUCCESS != (ret = recv_msg_details(peer_ref, p_n_to_p_m, p_n_from_p_m) ) ) {
                     opal_output(mca_crcp_bkmrk_component.super.output_handle,
                                 "crcp:bkmrk: check_bookmarks: Unable to recv message details from peer %s: Return %d\n",
-                                ORTE_NAME_PRINT(&peer_ref->proc_name),
+                                OMPI_NAME_PRINT(&peer_ref->proc_name),
                                 ret);
                     return ret;
                 }
@@ -4634,8 +4629,8 @@ static int ft_event_check_bookmarks(void)
                             "crcp:bkmrk: %s --> %s "
                             "Matched Sent (%4d) = Total Recv. (%4d) => Diff (%4d). "
                             " WARNING: I received more than the peer sent. :(\n",
-                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                            ORTE_NAME_PRINT(&(peer_ref->proc_name)),
+                            OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),
+                            OMPI_NAME_PRINT(&(peer_ref->proc_name)),
                             p_n_to_p_m,
                             p_n_from_p_m,
                             (p_n_to_p_m - p_n_from_p_m)
@@ -4648,8 +4643,8 @@ static int ft_event_check_bookmarks(void)
                 OPAL_OUTPUT_VERBOSE((10, mca_crcp_bkmrk_component.super.output_handle,
                                      "crcp:bkmrk: %s <-- %s "
                                      "Matched Sent (%4d) = Total Recv. (%4d). I need %4d.\n",
-                                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                    ORTE_NAME_PRINT(&(peer_ref->proc_name)),
+                                    OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),
+                                    OMPI_NAME_PRINT(&(peer_ref->proc_name)),
                                     p_n_to_p_m,
                                     p_n_from_p_m,
                                     (p_n_to_p_m - p_n_from_p_m)
@@ -4661,7 +4656,7 @@ static int ft_event_check_bookmarks(void)
                 if( OMPI_SUCCESS != (ret = recv_msg_details(peer_ref, p_n_to_p_m, p_n_from_p_m) ) ) {
                     opal_output(mca_crcp_bkmrk_component.super.output_handle,
                                 "crcp:bkmrk: check_bookmarks: Unable to recv message details from peer %s: Return %d\n",
-                                ORTE_NAME_PRINT(&peer_ref->proc_name),
+                                OMPI_NAME_PRINT(&peer_ref->proc_name),
                                 ret);
                     return ret;
                 }
@@ -4680,8 +4675,8 @@ static int ft_event_check_bookmarks(void)
                             "crcp:bkmrk: %s --> %s "
                             "Total Sent (%4d) = Matched Recv. (%4d) => Diff (%4d). "
                             " WARNING: Peer received more than was sent. :(\n",
-                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                            ORTE_NAME_PRINT(&(peer_ref->proc_name)),
+                            OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),
+                            OMPI_NAME_PRINT(&(peer_ref->proc_name)),
                             p_n_to_p_m,
                             p_n_from_p_m,
                             (p_n_to_p_m - p_n_from_p_m)
@@ -4694,8 +4689,8 @@ static int ft_event_check_bookmarks(void)
                 OPAL_OUTPUT_VERBOSE((10, mca_crcp_bkmrk_component.super.output_handle,
                                     "crcp:bkmrk: %s --> %s "
                                     "Total Sent (%4d) = Matched Recv. (%4d). Peer needs %4d.\n",
-                                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                    ORTE_NAME_PRINT(&(peer_ref->proc_name)),
+                                    OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),
+                                    OMPI_NAME_PRINT(&(peer_ref->proc_name)),
                                     p_n_to_p_m,
                                     p_n_from_p_m,
                                     (p_n_to_p_m - p_n_from_p_m)
@@ -4708,7 +4703,7 @@ static int ft_event_check_bookmarks(void)
                 if( OMPI_SUCCESS != (ret = send_msg_details(peer_ref, p_n_to_p_m, p_n_from_p_m) ) ) {
                     opal_output(mca_crcp_bkmrk_component.super.output_handle,
                                 "crcp:bkmrk: check_bookmarks: Unable to send message details to peer %s: Return %d\n",
-                                ORTE_NAME_PRINT(&peer_ref->proc_name),
+                                OMPI_NAME_PRINT(&peer_ref->proc_name),
                                 ret);
                     return ret;
                 }
@@ -4733,7 +4728,7 @@ static int ft_event_post_drain_acks(void)
 
     OPAL_OUTPUT_VERBOSE((10, mca_crcp_bkmrk_component.super.output_handle,
                         "crcp:bkmrk: %s Wait on %d Drain ACK Messages.\n",
-                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                        OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),
                         (int)req_size));
 
     /*
@@ -4746,15 +4741,15 @@ static int ft_event_post_drain_acks(void)
         drain_msg_ack = (ompi_crcp_bkmrk_pml_drain_message_ack_ref_t*)item;
 
         /* Post the receive */
-        if( ORTE_SUCCESS != (ret = orte_rml.recv_buffer_nb( &drain_msg_ack->peer,
+        if( OMPI_SUCCESS != (ret = ompi_rte_recv_buffer_nb( &drain_msg_ack->peer,
                                                             OMPI_CRCP_COORD_BOOKMARK_TAG,
                                                             0,
                                                             drain_message_ack_cbfunc,
                                                             NULL) ) ) {
             opal_output(mca_crcp_bkmrk_component.super.output_handle,
                         "crcp:bkmrk: %s <-- %s: Failed to post a RML receive to the peer\n",
-                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                        ORTE_NAME_PRINT(&(drain_msg_ack->peer)));
+                        OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),
+                        OMPI_NAME_PRINT(&(drain_msg_ack->peer)));
             return ret;
         }
     }
@@ -4763,9 +4758,9 @@ static int ft_event_post_drain_acks(void)
 }
 
 static void drain_message_ack_cbfunc(int status,
-                                     orte_process_name_t* sender,
+                                     ompi_process_name_t* sender,
                                      opal_buffer_t *buffer,
-                                     orte_rml_tag_t tag,
+                                     ompi_rml_tag_t tag,
                                      void* cbdata)
 {
     int ret, exit_status = OMPI_SUCCESS;
@@ -4789,15 +4784,15 @@ static void drain_message_ack_cbfunc(int status,
         /* If this ACK has not completed yet */
         if(!drain_msg_ack->complete) {
             /* If it is the correct peer */
-            if( OPAL_EQUAL == orte_util_compare_name_fields(ORTE_NS_CMP_ALL,
+            if( OPAL_EQUAL == ompi_rte_compare_name_fields(OMPI_RTE_CMP_ALL,
                                                             &(drain_msg_ack->peer),
                                                             sender) ) {
                 /* We found it! */
                 drain_msg_ack->complete = true;
                 OPAL_OUTPUT_VERBOSE((5, mca_crcp_bkmrk_component.super.output_handle,
                                     "crcp:bkmrk: %s --> %s Received ACK of FLUSH from peer\n",
-                                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                    ORTE_NAME_PRINT(sender) ));
+                                    OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),
+                                    OMPI_NAME_PRINT(sender) ));
                 return;
             }
         }
@@ -4805,8 +4800,8 @@ static void drain_message_ack_cbfunc(int status,
 
     opal_output(mca_crcp_bkmrk_component.super.output_handle,
                 "crcp:bkmrk: %s --> %s ERROR: Unable to match ACK to peer\n",
-                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                ORTE_NAME_PRINT(sender) );
+                OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),
+                OMPI_NAME_PRINT(sender) );
 
  cleanup:
     return;
@@ -4827,8 +4822,8 @@ static int ft_event_post_drained(void)
         item  = opal_list_get_next(item) ) {
         cur_peer_ref = (ompi_crcp_bkmrk_pml_peer_ref_t*)item;
 
-        if( OPAL_EQUAL == orte_util_compare_name_fields(ORTE_NS_CMP_ALL,
-                                                        (ORTE_PROC_MY_NAME),
+        if( OPAL_EQUAL == ompi_rte_compare_name_fields(OMPI_RTE_CMP_ALL,
+                                                        (OMPI_PROC_MY_NAME),
                                                         &(cur_peer_ref->proc_name)) ) {
             continue;
         }
@@ -4892,8 +4887,8 @@ static int ft_event_post_drained(void)
         cur_peer_ref = (ompi_crcp_bkmrk_pml_peer_ref_t*)item;
         peer_total = 0;
 
-        if( OPAL_EQUAL == orte_util_compare_name_fields(ORTE_NS_CMP_ALL,
-                                                        (ORTE_PROC_MY_NAME),
+        if( OPAL_EQUAL == ompi_rte_compare_name_fields(OMPI_RTE_CMP_ALL,
+                                                        (OMPI_PROC_MY_NAME),
                                                         &(cur_peer_ref->proc_name)) ) {
             continue;
         }
@@ -4939,8 +4934,8 @@ static int ft_event_post_drained(void)
         if( peer_total > 0 || stall_for_completion ) {
             OPAL_OUTPUT_VERBOSE((10, mca_crcp_bkmrk_component.super.output_handle,
                                  "crcp:bkmrk: %s <-- %s Will be draining %4d messages from this peer. Total %4d %s\n",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 ORTE_NAME_PRINT(&(cur_peer_ref->proc_name)),
+                                 OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),
+                                 OMPI_NAME_PRINT(&(cur_peer_ref->proc_name)),
                                  peer_total,
                                  quiesce_request_count,
                                  (stall_for_completion ? "(And Stalling)" : "") ));
@@ -4970,8 +4965,8 @@ static int ft_event_post_drain_message(ompi_crcp_bkmrk_pml_drain_message_ref_t  
     if( content_ref->already_posted ) {
         OPAL_OUTPUT_VERBOSE((15, mca_crcp_bkmrk_component.super.output_handle,
                              "crcp:bkmrk: %s <-- %s Found a message that we do not need to post.\n",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             ORTE_NAME_PRINT(&(drain_msg_ref->proc_name)) ));
+                             OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),
+                             OMPI_NAME_PRINT(&(drain_msg_ref->proc_name)) ));
         return OMPI_SUCCESS;
     }
 
@@ -4984,8 +4979,8 @@ static int ft_event_post_drain_message(ompi_crcp_bkmrk_pml_drain_message_ref_t  
      */
     OPAL_OUTPUT_VERBOSE((20, mca_crcp_bkmrk_component.super.output_handle,
                          "crcp:bkmrk: %s <-- %s Posting a message to be drained from rank %d.\n",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_NAME_PRINT(&(drain_msg_ref->proc_name)),
+                         OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),
+                         OMPI_NAME_PRINT(&(drain_msg_ref->proc_name)),
                          drain_msg_ref->rank));
     if( OMPI_SUCCESS != (ret = wrapped_pml_module->pml_irecv(content_ref->buffer, 
                                                              (drain_msg_ref->count * drain_msg_ref->ddt_size),
@@ -4996,8 +4991,8 @@ static int ft_event_post_drain_message(ompi_crcp_bkmrk_pml_drain_message_ref_t  
                                                              &(content_ref->request) ) ) ) {
         opal_output(mca_crcp_bkmrk_component.super.output_handle,
                     "crcp:bkmrk: %s <-- %s Failed to post the Draining PML iRecv\n",
-                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                    ORTE_NAME_PRINT(&(drain_msg_ref->proc_name)) );
+                    OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),
+                    OMPI_NAME_PRINT(&(drain_msg_ref->proc_name)) );
         return ret;
     }
 
@@ -5015,7 +5010,7 @@ static int ft_event_wait_quiesce(void)
     if( OMPI_SUCCESS != (ret = wait_quiesce_drained() ) ) {
         opal_output(mca_crcp_bkmrk_component.super.output_handle,
                     "crcp:bkmrk: wait_quiesce: %s Failed to quiesce drained messages\n",
-                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME) );
+                    OMPI_NAME_PRINT(OMPI_PROC_MY_NAME) );
         exit_status = ret;
         goto cleanup;
     }
@@ -5026,7 +5021,7 @@ static int ft_event_wait_quiesce(void)
     if( OMPI_SUCCESS != (ret = wait_quiesce_drain_ack() ) ) {
         opal_output(mca_crcp_bkmrk_component.super.output_handle,
                     "crcp:bkmrk: wait_quiesce: %s Failed to recv all drain ACKs\n",
-                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME) );
+                    OMPI_NAME_PRINT(OMPI_PROC_MY_NAME) );
         exit_status = ret;
         goto cleanup;
     }
@@ -5048,7 +5043,7 @@ static int wait_quiesce_drained(void)
 
     OPAL_OUTPUT_VERBOSE((5, mca_crcp_bkmrk_component.super.output_handle,
                          "crcp:bkmrk: %s Waiting on %d messages to drain\n",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),
                          (int)quiesce_request_count));
 
     /*
@@ -5077,8 +5072,8 @@ static int wait_quiesce_drained(void)
         item  = opal_list_get_next(item) ) {
         cur_peer_ref = (ompi_crcp_bkmrk_pml_peer_ref_t*)item;
 
-        if( OPAL_EQUAL == orte_util_compare_name_fields(ORTE_NS_CMP_ALL,
-                                                        (ORTE_PROC_MY_NAME),
+        if( OPAL_EQUAL == ompi_rte_compare_name_fields(OMPI_RTE_CMP_ALL,
+                                                        (OMPI_PROC_MY_NAME),
                                                         &(cur_peer_ref->proc_name)) ) {
             continue;
         }
@@ -5092,8 +5087,8 @@ static int wait_quiesce_drained(void)
 
             OPAL_OUTPUT_VERBOSE((5, mca_crcp_bkmrk_component.super.output_handle,
                                  "crcp:bkmrk: %s --> %s Send ACKs to Peer\n",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 ORTE_NAME_PRINT(&(cur_peer_ref->proc_name)) ));
+                                 OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),
+                                 OMPI_NAME_PRINT(&(cur_peer_ref->proc_name)) ));
             
             /* Send All Clear to Peer */
             if (NULL == (buffer = OBJ_NEW(opal_buffer_t))) {
@@ -5104,7 +5099,7 @@ static int wait_quiesce_drained(void)
             PACK_BUFFER(buffer, response, 1, OPAL_SIZE, "");
 
             /* JJH - Performance Optimization? - Why not post all isends, then wait? */
-            if ( 0 > ( ret = orte_rml.send_buffer(&(cur_peer_ref->proc_name), buffer, OMPI_CRCP_COORD_BOOKMARK_TAG, 0)) ) {
+            if ( 0 > ( ret = ompi_rte_send_buffer(&(cur_peer_ref->proc_name), buffer, OMPI_CRCP_COORD_BOOKMARK_TAG, 0)) ) {
                 exit_status = ret;
                 goto cleanup;
             }
@@ -5193,7 +5188,7 @@ static int coord_request_wait_all( size_t count,
 
         OPAL_OUTPUT_VERBOSE((15, mca_crcp_bkmrk_component.super.output_handle,
                             "crcp:bkmrk: %s Request Wait: Done with idx %d of %d\n",
-                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                            OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),
                             (int)i, (int)count));
     }
 
@@ -5232,7 +5227,7 @@ static int wait_quiesce_drain_ack(void)
 
     OPAL_OUTPUT_VERBOSE((10, mca_crcp_bkmrk_component.super.output_handle,
                         "crcp:bkmrk: %s Waiting on %d Drain ACK messages\n",
-                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                        OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),
                         num_outstanding));
 
     while(0 < num_outstanding) {
@@ -5265,7 +5260,7 @@ static int wait_quiesce_drain_ack(void)
 static int send_bookmarks(int peer_idx)
 {
     ompi_crcp_bkmrk_pml_peer_ref_t *peer_ref;
-    orte_process_name_t peer_name;
+    ompi_process_name_t peer_name;
     opal_buffer_t *buffer = NULL;
     int exit_status = OMPI_SUCCESS;
     int ret;
@@ -5274,7 +5269,7 @@ static int send_bookmarks(int peer_idx)
     /*
      * Find the peer structure for this peer
      */
-    peer_name.jobid  = ORTE_PROC_MY_NAME->jobid;
+    peer_name.jobid  = OMPI_PROC_MY_NAME->jobid;
     peer_name.vpid   = peer_idx;
 
     if( NULL == (peer_ref = find_peer(peer_name))) {
@@ -5287,8 +5282,8 @@ static int send_bookmarks(int peer_idx)
 
     OPAL_OUTPUT_VERBOSE((15, mca_crcp_bkmrk_component.super.output_handle,
                          "crcp:bkmrk: %s --> %s Sending bookmark  (S[%6d] R[%6d])\n",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_NAME_PRINT(&peer_name),
+                         OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),
+                         OMPI_NAME_PRINT(&peer_name),
                          peer_ref->total_msgs_sent,
                          peer_ref->total_msgs_recvd));
 
@@ -5305,10 +5300,10 @@ static int send_bookmarks(int peer_idx)
     PACK_BUFFER(buffer, (peer_ref->total_msgs_recvd),     1, OPAL_UINT32,
                 "crcp:bkmrk: send_bookmarks: Unable to pack total_msgs_recvd");
 
-    if ( 0 > ( ret = orte_rml.send_buffer(&peer_name, buffer, OMPI_CRCP_COORD_BOOKMARK_TAG, 0)) ) {
+    if ( 0 > ( ret = ompi_rte_send_buffer(&peer_name, buffer, OMPI_CRCP_COORD_BOOKMARK_TAG, 0)) ) {
         opal_output(mca_crcp_bkmrk_component.super.output_handle,
                     "crcp:bkmrk: send_bookmarks: Failed to send bookmark to peer %s: Return %d\n",
-                    ORTE_NAME_PRINT(&peer_name),
+                    OMPI_NAME_PRINT(&peer_name),
                     ret);
         exit_status = ret;
         goto cleanup;
@@ -5328,23 +5323,23 @@ static int send_bookmarks(int peer_idx)
 /* Paired with send_bookmarks */
 static int recv_bookmarks(int peer_idx)
 {
-    orte_process_name_t peer_name;
+    ompi_process_name_t peer_name;
     int exit_status = OMPI_SUCCESS;
     int ret;
 
     START_TIMER(CRCP_TIMER_CKPT_EX_PEER_R);
 
-    peer_name.jobid  = ORTE_PROC_MY_NAME->jobid;
+    peer_name.jobid  = OMPI_PROC_MY_NAME->jobid;
     peer_name.vpid   = peer_idx;
 
-    if ( 0 > (ret = orte_rml.recv_buffer_nb(&peer_name,
+    if ( 0 > (ret = ompi_rte_recv_buffer_nb(&peer_name,
                                             OMPI_CRCP_COORD_BOOKMARK_TAG,
                                             0,
                                             recv_bookmarks_cbfunc,
                                             NULL) ) ) {
         opal_output(mca_crcp_bkmrk_component.super.output_handle,
                     "crcp:bkmrk: recv_bookmarks: Failed to post receive bookmark from peer %s: Return %d\n",
-                    ORTE_NAME_PRINT(&peer_name),
+                    OMPI_NAME_PRINT(&peer_name),
                     ret);
         exit_status = ret;
         goto cleanup;
@@ -5361,15 +5356,15 @@ static int recv_bookmarks(int peer_idx)
 }
 
 static void recv_bookmarks_cbfunc(int status,
-                                  orte_process_name_t* sender,
+                                  ompi_process_name_t* sender,
                                   opal_buffer_t *buffer,
-                                  orte_rml_tag_t tag,
+                                  ompi_rml_tag_t tag,
                                   void* cbdata)
 {
     ompi_crcp_bkmrk_pml_peer_ref_t *peer_ref;
     int exit_status = OMPI_SUCCESS;
     int ret, tmp_int;
-    orte_vpid_t peer_idx;
+    ompi_vpid_t peer_idx;
 
     peer_idx = sender->vpid;
 
@@ -5394,8 +5389,8 @@ static void recv_bookmarks_cbfunc(int status,
 
     OPAL_OUTPUT_VERBOSE((15, mca_crcp_bkmrk_component.super.output_handle,
                          "crcp:bkmrk: %s <-- %s Received bookmark (S[%6d] R[%6d]) vs. (S[%6d] R[%6d])\n",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_NAME_PRINT(sender),
+                         OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),
+                         OMPI_NAME_PRINT(sender),
                          peer_ref->matched_msgs_sent,
                          peer_ref->matched_msgs_recvd,
                          peer_ref->total_msgs_sent,
@@ -5459,8 +5454,8 @@ static int send_msg_details(ompi_crcp_bkmrk_pml_peer_ref_t *peer_ref,
         if(OMPI_SUCCESS != (ret = do_send_msg_detail(peer_ref, msg_ref, &num_matches, &p_total_found, &finished)) ) {
             opal_output(mca_crcp_bkmrk_component.super.output_handle,
                         "crcp:bkmrk: send_msg_details: %s --> %s Failed to send message details to peer. Return %d\n",
-                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                        ORTE_NAME_PRINT(&(peer_ref->proc_name)),
+                        OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),
+                        OMPI_NAME_PRINT(&(peer_ref->proc_name)),
                         ret);
         }
 
@@ -5522,8 +5517,8 @@ static int send_msg_details(ompi_crcp_bkmrk_pml_peer_ref_t *peer_ref,
     opal_list_append(&drained_msg_ack_list, &(d_msg_ack->super));
     OPAL_OUTPUT_VERBOSE((10, mca_crcp_bkmrk_component.super.output_handle,
                         "crcp:bkmrk: %s <-> %s Message Inflight! Will wait on ACK from this peer.\n",
-                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                        ORTE_NAME_PRINT(&(peer_ref->proc_name))));
+                        OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),
+                        OMPI_NAME_PRINT(&(peer_ref->proc_name))));
 
     END_TIMER(CRCP_TIMER_CKPT_CHECK_PEER_S);
     DISPLAY_INDV_TIMER(CRCP_TIMER_CKPT_CHECK_PEER_S, peer_ref->proc_name.vpid, total_details_sent);
@@ -5596,11 +5591,11 @@ static int do_send_msg_detail(ompi_crcp_bkmrk_pml_peer_ref_t *peer_ref,
     /*
      * Do the send...
      */
-    if ( 0 > ( ret = orte_rml.send_buffer(&peer_ref->proc_name, buffer,
+    if ( 0 > ( ret = ompi_rte_send_buffer(&peer_ref->proc_name, buffer,
                                           OMPI_CRCP_COORD_BOOKMARK_TAG, 0)) ) {
         opal_output(mca_crcp_bkmrk_component.super.output_handle,
                     "crcp:bkmrk: do_send_msg_detail: Unable to send message details to peer %s: Return %d\n",
-                    ORTE_NAME_PRINT(&peer_ref->proc_name),
+                    OMPI_NAME_PRINT(&peer_ref->proc_name),
                     ret);
             
         exit_status = OMPI_ERROR;
@@ -5623,12 +5618,12 @@ static int do_send_msg_detail(ompi_crcp_bkmrk_pml_peer_ref_t *peer_ref,
     /*
      * Recv the ACK msg
      */
-    if ( 0 > (ret = orte_rml.recv_buffer(&peer_ref->proc_name, buffer,
+    if ( 0 > (ret = ompi_rte_recv_buffer(&peer_ref->proc_name, buffer,
                                          OMPI_CRCP_COORD_BOOKMARK_TAG, 0) ) ) {
         opal_output(mca_crcp_bkmrk_component.super.output_handle,
                     "crcp:bkmrk: do_send_msg_detail: %s --> %s Failed to receive ACK buffer from peer. Return %d\n",
-                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                    ORTE_NAME_PRINT(&(peer_ref->proc_name)),
+                    OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),
+                    OMPI_NAME_PRINT(&(peer_ref->proc_name)),
                     ret);
         exit_status = ret;
         goto cleanup;
@@ -5714,8 +5709,8 @@ static int recv_msg_details(ompi_crcp_bkmrk_pml_peer_ref_t *peer_ref,
             opal_output(mca_crcp_bkmrk_component.super.output_handle,
                         "crcp:bkmrk: recv_msg_details: %s <-- %s "
                         "Failed to receive message detail from peer. Return %d\n",
-                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                        ORTE_NAME_PRINT(&(peer_ref->proc_name)),
+                        OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),
+                        OMPI_NAME_PRINT(&(peer_ref->proc_name)),
                         ret);
             exit_status = ret;
             goto cleanup;
@@ -5735,8 +5730,8 @@ static int recv_msg_details(ompi_crcp_bkmrk_pml_peer_ref_t *peer_ref,
             opal_output(mca_crcp_bkmrk_component.super.output_handle,
                         "crcp:bkmrk: recv_msg_details: %s <-- %s "
                         "Failed to check message detail from peer. Return %d\n",
-                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                        ORTE_NAME_PRINT(&(peer_ref->proc_name)),
+                        OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),
+                        OMPI_NAME_PRINT(&(peer_ref->proc_name)),
                         ret);
             exit_status = ret;
             goto cleanup;
@@ -5747,8 +5742,8 @@ static int recv_msg_details(ompi_crcp_bkmrk_pml_peer_ref_t *peer_ref,
 
         OPAL_OUTPUT_VERBOSE((10, mca_crcp_bkmrk_component.super.output_handle,
                              "crcp:bkmrk: %s <-- %s Recv Detail: Stage --: [%3d / %3d] [%3d, %3d, %s]",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             ORTE_NAME_PRINT(&(peer_ref->proc_name)),
+                             OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),
+                             OMPI_NAME_PRINT(&(peer_ref->proc_name)),
                              need, found,
                              num_resolved, total_details_recv,
                              ( need <= found ? "T" : "F") ));
@@ -5765,8 +5760,8 @@ static int recv_msg_details(ompi_crcp_bkmrk_pml_peer_ref_t *peer_ref,
         if(OMPI_SUCCESS != (ret = do_recv_msg_detail_resp(peer_ref, response, num_resolved, found))) {
             opal_output(mca_crcp_bkmrk_component.super.output_handle,
                         "crcp:bkmrk: recv_msg_details: %s <-- %s Failed to respond to peer. Return %d\n",
-                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                        ORTE_NAME_PRINT(&(peer_ref->proc_name)),
+                        OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),
+                        OMPI_NAME_PRINT(&(peer_ref->proc_name)),
                         ret);
             exit_status = ret;
             goto cleanup;
@@ -5797,11 +5792,11 @@ static int do_recv_msg_detail(ompi_crcp_bkmrk_pml_peer_ref_t *peer_ref,
     /*
      * Recv the msg
      */
-    if ( 0 > (ret = orte_rml.recv_buffer(&peer_ref->proc_name, buffer, OMPI_CRCP_COORD_BOOKMARK_TAG, 0) ) ) {
+    if ( 0 > (ret = ompi_rte_recv_buffer(&peer_ref->proc_name, buffer, OMPI_CRCP_COORD_BOOKMARK_TAG, 0) ) ) {
         opal_output(mca_crcp_bkmrk_component.super.output_handle,
                     "crcp:bkmrk: do_recv_msg_detail: %s <-- %s Failed to receive buffer from peer. Return %d\n",
-                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                    ORTE_NAME_PRINT(&(peer_ref->proc_name)),
+                    OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),
+                    OMPI_NAME_PRINT(&(peer_ref->proc_name)),
                     ret);
         exit_status = ret;
         goto cleanup;
@@ -5860,8 +5855,8 @@ static int do_recv_msg_detail_check_drain(ompi_crcp_bkmrk_pml_peer_ref_t *peer_r
     OPAL_OUTPUT_VERBOSE((10, mca_crcp_bkmrk_component.super.output_handle,
                          "crcp:bkmrk: %s <-- %s "
                          "Stage 0: Ck.Drain: [TR %3d/MS %3d] sent %4d, unres %4d, res %4d",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_NAME_PRINT(&(peer_ref->proc_name)),
+                         OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),
+                         OMPI_NAME_PRINT(&(peer_ref->proc_name)),
                          peer_ref->total_msgs_recvd,
                          peer_ref->matched_msgs_sent,
                          p_num_sent,
@@ -5883,8 +5878,8 @@ static int do_recv_msg_detail_check_drain(ompi_crcp_bkmrk_pml_peer_ref_t *peer_r
         opal_output(mca_crcp_bkmrk_component.super.output_handle,
                     "crcp:bkmrk: recv_msg_detail_check: %s -- %s "
                     "Failed to determine if we have received this message. Return %d\n",
-                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                    ORTE_NAME_PRINT(&(peer_ref->proc_name)),
+                    OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),
+                    OMPI_NAME_PRINT(&(peer_ref->proc_name)),
                     ret);
         exit_status = ret;
         goto cleanup;
@@ -5933,8 +5928,8 @@ static int do_recv_msg_detail_check_drain(ompi_crcp_bkmrk_pml_peer_ref_t *peer_r
     OPAL_OUTPUT_VERBOSE((10, mca_crcp_bkmrk_component.super.output_handle,
                          "crcp:bkmrk: %s <-- %s "
                          "Stage 1: Ck.Drain: [TR %3d/MS %3d] sent %4d, unres %4d, res %4d",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_NAME_PRINT(&(peer_ref->proc_name)),
+                         OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),
+                         OMPI_NAME_PRINT(&(peer_ref->proc_name)),
                          peer_ref->total_msgs_recvd,
                          peer_ref->matched_msgs_sent,
                          p_num_sent,
@@ -6018,8 +6013,8 @@ static int do_recv_msg_detail_check_drain(ompi_crcp_bkmrk_pml_peer_ref_t *peer_r
     OPAL_OUTPUT_VERBOSE((10, mca_crcp_bkmrk_component.super.output_handle,
                          "crcp:bkmrk: %s <-- %s "
                          "Stage 2: Ck.Drain: [TR %3d/MS %3d] sent %4d, unres %4d, res %4d, active %4d",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_NAME_PRINT(&(peer_ref->proc_name)),
+                         OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),
+                         OMPI_NAME_PRINT(&(peer_ref->proc_name)),
                          peer_ref->total_msgs_recvd,
                          peer_ref->matched_msgs_sent,
                          p_num_sent,
@@ -6067,8 +6062,8 @@ static int do_recv_msg_detail_check_drain(ompi_crcp_bkmrk_pml_peer_ref_t *peer_r
                 OPAL_OUTPUT_VERBOSE((10, mca_crcp_bkmrk_component.super.output_handle,
                                      "crcp:bkmrk: %s <-- %s "
                                      "Recv Check: Found a message that is 'active'! Prepare to STALL.\n",
-                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                     ORTE_NAME_PRINT(&(peer_ref->proc_name)) ));
+                                     OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),
+                                     OMPI_NAME_PRINT(&(peer_ref->proc_name)) ));
                 stall_for_completion = true;
             }
             else {
@@ -6076,8 +6071,8 @@ static int do_recv_msg_detail_check_drain(ompi_crcp_bkmrk_pml_peer_ref_t *peer_r
                                      "crcp:bkmrk: %s <-- %s "
                                      "Recv Check: Found a message that is 'active', but is not the current recv! "
                                      "No stall required [%3d, %3d, %3d, %3d].\n",
-                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                     ORTE_NAME_PRINT(&(peer_ref->proc_name)),
+                                     OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),
+                                     OMPI_NAME_PRINT(&(peer_ref->proc_name)),
                                      (int)current_msg_id,
                                      (int)current_msg_type,
                                      (int)posted_recv_msg_ref->msg_id,
@@ -6135,8 +6130,8 @@ static int do_recv_msg_detail_check_drain(ompi_crcp_bkmrk_pml_peer_ref_t *peer_r
     OPAL_OUTPUT_VERBOSE((10, mca_crcp_bkmrk_component.super.output_handle,
                          "crcp:bkmrk: %s <-- %s "
                          "Stage 3: Ck.Drain: [TR %3d/MS %3d] sent %4d, unres %4d, res %4d, active %4d",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_NAME_PRINT(&(peer_ref->proc_name)),
+                         OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),
+                         OMPI_NAME_PRINT(&(peer_ref->proc_name)),
                          peer_ref->total_msgs_recvd,
                          peer_ref->matched_msgs_sent,
                          p_num_sent,
@@ -6172,8 +6167,8 @@ static int do_recv_msg_detail_check_drain(ompi_crcp_bkmrk_pml_peer_ref_t *peer_r
     OPAL_OUTPUT_VERBOSE((10, mca_crcp_bkmrk_component.super.output_handle,
                          "crcp:bkmrk: %s <-- %s "
                          "Stage 4: Ck.Drain: [TR %3d/MS %3d] sent %4d, unres %4d, res %4d, active %4d",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_NAME_PRINT(&(peer_ref->proc_name)),
+                         OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),
+                         OMPI_NAME_PRINT(&(peer_ref->proc_name)),
                          peer_ref->total_msgs_recvd,
                          peer_ref->matched_msgs_sent,
                          p_num_sent,
@@ -6206,10 +6201,10 @@ static int do_recv_msg_detail_resp(ompi_crcp_bkmrk_pml_peer_ref_t *peer_ref,
     PACK_BUFFER(buffer, total_found, 1, OPAL_UINT32,
                 "crcp:bkmrk: recv_msg_details: Unable to ask peer for more messages");
         
-    if ( 0 > ( ret = orte_rml.send_buffer(&peer_ref->proc_name, buffer, OMPI_CRCP_COORD_BOOKMARK_TAG, 0)) ) {
+    if ( 0 > ( ret = ompi_rte_send_buffer(&peer_ref->proc_name, buffer, OMPI_CRCP_COORD_BOOKMARK_TAG, 0)) ) {
         opal_output(mca_crcp_bkmrk_component.super.output_handle,
                     "crcp:bkmrk: recv_msg_detail_resp: Unable to send message detail response to peer %s: Return %d\n",
-                    ORTE_NAME_PRINT(&peer_ref->proc_name),
+                    OMPI_NAME_PRINT(&peer_ref->proc_name),
                     ret);
         exit_status = OMPI_ERROR;
         goto cleanup;
@@ -6266,17 +6261,17 @@ static void clear_timers(void) {
 static void display_all_timers(int state) {
     bool report_ready = false;
     double barrier_start, barrier_stop;
-    orte_grpcomm_collective_t coll;
+    ompi_rte_collective_t coll;
     int i;
 
-    OBJ_CONSTRUCT(&coll, orte_grpcomm_collective_t);
-    coll.id = orte_process_info.peer_init_barrier;
-    if( 0 != ORTE_PROC_MY_NAME->vpid ) {
+    OBJ_CONSTRUCT(&coll, ompi_rte_collective_t);
+    coll.id = ompi_process_info.peer_init_barrier;
+    if( 0 != OMPI_PROC_MY_NAME->vpid ) {
         if( 2 > timing_enabled ) {
             goto done;
         }
         else if( 2 == timing_enabled ) {
-            orte_grpcomm.barrier(&coll);
+            ompi_rte_barrier(&coll);
             ORTE_WAIT_FOR_COMPLETION(coll.active);
             goto done;
         }
@@ -6298,7 +6293,7 @@ static void display_all_timers(int state) {
 
     if( timing_enabled >= 2) {
         barrier_start = get_time();
-        orte_grpcomm.barrier(&coll);
+        ompi_rte_barrier(&coll);
         ORTE_WAIT_FOR_COMPLETION(coll.active);
         barrier_stop = get_time();
         opal_output(0,
@@ -6322,7 +6317,7 @@ static void display_indv_timer_core(int idx, int proc, int msgs, bool direct) {
     double diff = timer_end[idx] - timer_start[idx];
     char * str = NULL;
 
-    if( 0 != ORTE_PROC_MY_NAME->vpid && timing_enabled < 3 ) {
+    if( 0 != OMPI_PROC_MY_NAME->vpid && timing_enabled < 3 ) {
         return;
     }
 
@@ -6524,16 +6519,16 @@ static void traffic_message_dump_msg_list(opal_list_t *msg_list, bool is_drain)
 
 static void traffic_message_dump_peer(ompi_crcp_bkmrk_pml_peer_ref_t *peer_ref, char * msg, bool root_only)
 {
-    if( root_only && orte_process_info.my_name.vpid != 0 ) {
+    if( root_only && ompi_process_info.my_name.vpid != 0 ) {
         return;
     } else {
-        sleep(orte_process_info.my_name.vpid * 2);
+        sleep(ompi_process_info.my_name.vpid * 2);
     }
 
     opal_output(0, "------------- %s ---------------------------------", msg);
     opal_output(0, "%s <-> %s Totals Sent [ %3d / %3d ] Recv [ %3d / %3d ]",
-                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                ORTE_NAME_PRINT(&(peer_ref->proc_name)),
+                OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),
+                OMPI_NAME_PRINT(&(peer_ref->proc_name)),
                 peer_ref->total_msgs_sent,
                 peer_ref->matched_msgs_sent,
                 peer_ref->total_msgs_recvd,

@@ -27,7 +27,6 @@
 #include "ompi_config.h"
 
 #include "opal/dss/dss.h"
-#include "orte/types.h"
 #include "ompi/proc/proc.h" 
 #include "ompi/communicator/communicator.h"
 #include "ompi/op/op.h"
@@ -35,13 +34,11 @@
 #include "opal/class/opal_pointer_array.h"
 #include "opal/class/opal_list.h"
 #include "ompi/mca/pml/pml.h"
+#include "ompi/mca/rte/rte.h"
 #include "ompi/mca/coll/base/base.h"
 #include "ompi/request/request.h"
 #include "ompi/runtime/ompi_module_exchange.h" 
 #include "ompi/runtime/mpiruntime.h"
-#include "ompi/mca/dpm/dpm.h"
-
-#include "orte/mca/rml/rml.h"
 
 BEGIN_C_DECLS
 
@@ -783,11 +780,11 @@ static int ompi_comm_allreduce_intra_oob (int *inbuf, int *outbuf,
     int i;
     int rc;
     int local_leader, local_rank;
-    orte_process_name_t *remote_leader=NULL;
-    orte_std_cntr_t size_count;
+    ompi_process_name_t *remote_leader=NULL;
+    int32_t size_count;
 
     local_leader  = (*((int*)lleader));
-    remote_leader = (orte_process_name_t*)rleader;
+    remote_leader = (ompi_process_name_t*)rleader;
     size_count = count;
 
     if ( &ompi_mpi_op_sum.op != op && &ompi_mpi_op_prod.op != op &&
@@ -817,23 +814,23 @@ static int ompi_comm_allreduce_intra_oob (int *inbuf, int *outbuf,
         sbuf = OBJ_NEW(opal_buffer_t);
         rbuf = OBJ_NEW(opal_buffer_t);
         
-        if (OPAL_SUCCESS != (rc = opal_dss.pack(sbuf, tmpbuf, (orte_std_cntr_t)count, OPAL_INT))) {
+        if (OPAL_SUCCESS != (rc = opal_dss.pack(sbuf, tmpbuf, (int32_t)count, OPAL_INT))) {
             goto exit;
         }
 
         if ( send_first ) {
-            if (0 > (rc = orte_rml.send_buffer(remote_leader, sbuf, OMPI_RML_TAG_COMM_CID_INTRA, 0))) {
+            if (0 > (rc = ompi_rte_send_buffer(remote_leader, sbuf, OMPI_RML_TAG_COMM_CID_INTRA, 0))) {
                 goto exit;
             }
-            if (0 > (rc = orte_rml.recv_buffer(remote_leader, rbuf, OMPI_RML_TAG_COMM_CID_INTRA, 0))) {
+            if (0 > (rc = ompi_rte_recv_buffer(remote_leader, rbuf, OMPI_RML_TAG_COMM_CID_INTRA, 0))) {
                 goto exit;
             }
         }
         else {
-            if (0 > (rc = orte_rml.recv_buffer(remote_leader, rbuf, OMPI_RML_TAG_COMM_CID_INTRA, 0))) {
+            if (0 > (rc = ompi_rte_recv_buffer(remote_leader, rbuf, OMPI_RML_TAG_COMM_CID_INTRA, 0))) {
                 goto exit;
             }
-            if (0 > (rc = orte_rml.send_buffer(remote_leader, sbuf, OMPI_RML_TAG_COMM_CID_INTRA, 0))) {
+            if (0 > (rc = ompi_rte_send_buffer(remote_leader, sbuf, OMPI_RML_TAG_COMM_CID_INTRA, 0))) {
                 goto exit;
             }
         }

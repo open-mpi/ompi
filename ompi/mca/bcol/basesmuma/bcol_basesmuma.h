@@ -21,9 +21,6 @@
 #include "ompi/proc/proc.h"
 #include "ompi/mca/common/netpatterns/common_netpatterns.h"
 
-#include "orte/util/name_fns.h"
-#include "orte/util/proc_info.h"
-
 #include "opal/mca/mca.h"
 #include "opal/util/arch.h"
 #include "opal/util/argv.h"
@@ -258,8 +255,8 @@ static inline int mca_bcol_basesmuma_err(const char* fmt, ...)
 do {                                                     \
     if(mca_bcol_basesmuma_component.verbose >= level) {         \
         mca_bcol_basesmuma_err("[%s]%s[%s:%d:%s] BCOL-BASESMUMA ",     \
-                orte_process_info.nodename,              \
-                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),      \
+                ompi_process_info.nodename,              \
+                OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),      \
                 __FILE__, __LINE__, __func__);           \
         mca_bcol_basesmuma_err args;                            \
         mca_bcol_basesmuma_err("\n");                           \
