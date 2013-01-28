@@ -104,12 +104,17 @@ mca_fs_lustre_file_open (struct ompi_communicator_t *comm,
         fh->f_stripe_size = mca_fs_lustre_stripe_size;
     }
     else {
-        rc = llapi_file_get_stripe(filename, lump);
-        if (rc != 0) {
-            fprintf(stderr, "get_stripe failed: %d (%s)\n",errno, strerror(errno));
-            return -1;
-        }
-        fh->f_stripe_size = lump->lmm_stripe_size;
+      lump = (struct lov_user_md  *) malloc (sizeof(struct lov_user_md));
+      if (NULL == lump ){
+	fprintf(stderr,"Cannot Allocate Lump for extracting stripe size\n");
+	return OMPI_ERROR;
+      }
+      rc = llapi_file_get_stripe(filename, lump);
+      if (rc != 0) {
+	  fprintf(stderr, "get_stripe failed: %d (%s)\n",errno, strerror(errno));
+	  return -1;
+      }
+      fh->f_stripe_size = lump->lmm_stripe_size;
     }
     return OMPI_SUCCESS;
 }
