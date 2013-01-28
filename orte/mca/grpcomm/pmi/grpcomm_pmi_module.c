@@ -3,7 +3,7 @@
  * Copyright (c) 2007      The Trustees of Indiana University.
  *                         All rights reserved.
  * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2011-2012 Los Alamos National Security, LLC. All
+ * Copyright (c) 2011-2013 Los Alamos National Security, LLC. All
  *                         rights reserved.
  * $COPYRIGHT$
  *
@@ -25,6 +25,7 @@
 #include "opal/dss/dss.h"
 #include "opal/mca/hwloc/base/base.h"
 
+#include "orte/mca/common/pmi/common_pmi.h"
 #include "orte/mca/db/db.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/rml/rml.h"

@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010-2011 Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2011      Los Alamos National Security, LLC.
+ * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * $COPYRIGHT$
  *
@@ -151,17 +151,6 @@ OBJ_CLASS_DECLARATION(orte_errmgr_predicted_map_t);
 #define ORTE_ERROR_NAME(n)  opal_strerror(n)
 #define ORTE_ERROR_LOG(n)                       \
         orte_errmgr.log(n, __FILE__, __LINE__);
-
-#if WANT_PMI_SUPPORT
-#define ORTE_PMI_ERROR(pmi_err, pmi_func)                               \
-    do {                                                                \
-        opal_output(0, "%s[%s:%d:%s] %s: %s\n",                         \
-                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),                 \
-                    __FILE__, __LINE__, __func__,                       \
-                    pmi_func, orte_errmgr_base_pmi_error(pmi_err));     \
-    } while(0);
-OPAL_DECLSPEC char* orte_errmgr_base_pmi_error(int pmi_err);
-#endif
 
 /*
  * Framework Interfaces
