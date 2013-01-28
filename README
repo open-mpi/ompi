@@ -1078,7 +1078,7 @@ MPI FUNCTIONALITY
   Enable building the C++ MPI bindings.  The MPI C++ bindings were
   deprecated in MPI-2.2 and deleted in MPI-3.0.  Open MPI no longer
   builds its C++ bindings by default.  It is likely that the C++
-  binding will be removed from Open MPI at some point in the future.
+  bindings will be removed from Open MPI at some point in the future.
 
   Note that disabling building the C++ bindings does *not* disable all
   C++ checks during configure.
