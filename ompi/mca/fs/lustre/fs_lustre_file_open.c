@@ -48,12 +48,10 @@ mca_fs_lustre_file_open (struct ompi_communicator_t *comm,
                      mca_io_ompio_file_t *fh)
 {
     int amode;
-    /*    int *fp = NULL;
-          struct lov_user_md *lump;
-    */
     int old_mask, perm;
     int rc;
-    struct lov_user_md *lump;
+
+    struct lov_user_md *lump=NULL;
 
     if (fh->f_perm == OMPIO_PERM_NULL) {
         old_mask = umask(022);
