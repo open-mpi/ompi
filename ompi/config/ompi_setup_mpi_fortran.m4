@@ -10,7 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2006-2013 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2006-2008 Sun Microsystems, Inc.  All rights reserved.
 # Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
 #                         reserved. 
@@ -460,11 +460,15 @@ end type test_mpi_handle],
     AC_CONFIG_FILES([ompi/mpi/fortran/configure-fortran-output.h])
 
     # Values for wrapper compilers    
-    OMPI_FC="$FC"
+    OMPI_FC=$FC
     set dummy $OMPI_FC
     OMPI_FC_ARGV0=[$]2
-    BASEFC="`basename $OMPI_FC_ARGV0`"
-    OPAL_WHICH([$OMPI_FC_ARGV0], [OMPI_FC_ABSOLUTE])
+    AS_IF([test -n "$OMPI_FC_ARGV0"],
+          [BASEFC="`basename $OMPI_FC_ARGV0`"
+           OPAL_WHICH([$OMPI_FC_ARGV0], [OMPI_FC_ABSOLUTE])],
+          [OMPI_FC=none
+           BASEFC=none
+           OMPI_FC_ABSOLUTE=none])
 
     AC_SUBST(OMPI_FC)
     AC_SUBST(OMPI_FC_ABSOLUTE)
