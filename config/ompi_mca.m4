@@ -217,7 +217,12 @@ AC_DEFUN([OMPI_MCA],[
     # of the hard stuff is in here
     MCA_PROJECT_SUBDIRS=
     m4_foreach(mca_project, [mca_project_list], 
-               [MCA_PROJECT_SUBDIRS="$MCA_PROJECT_SUBDIRS mca_project"
+               [# BWB: Until projects have seperate configure scripts
+                # and can skip running all of ORTE, just avoid recursing
+                # into orte sub directory if orte disabled
+                if test "mca_project" != "orte" -o "$with_orte" != "no"; then
+                   MCA_PROJECT_SUBDIRS="$MCA_PROJECT_SUBDIRS mca_project"
+                fi
                 MCA_CONFIGURE_PROJECT(mca_project)])
 
     # BWB - fix me...  need to automate this somehow
