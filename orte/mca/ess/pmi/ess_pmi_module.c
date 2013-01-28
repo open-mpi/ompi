@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2012 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2012      Los Alamos National Security, LLC.
+ * Copyright (c) 2012-2013 Los Alamos National Security, LLC.
  *                         All rights reserved. 
  * $COPYRIGHT$
  * 
@@ -47,6 +47,7 @@
 #include "opal/mca/hwloc/base/base.h"
 #include "opal/util/printf.h"
 
+#include "orte/mca/common/pmi/common_pmi.h"
 #include "orte/mca/db/db.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/rml/rml.h"

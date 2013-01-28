@@ -25,6 +25,7 @@
 #include "orte/util/show_help.h"
 #include "orte/util/name_fns.h"
 #include "orte/mca/errmgr/errmgr.h"
+#include "orte/mca/common/pmi/common_pmi.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/runtime/orte_wait.h"
 
