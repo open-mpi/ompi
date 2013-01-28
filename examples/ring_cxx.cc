@@ -6,6 +6,13 @@
 //
 // Simple ring test program
 //
+// NOTE: The MPI C++ bindings were deprecated in MPI-2.2 and removed
+// from the standard in MPI-3.  Open MPI still provides C++ MPI
+// bindings, but they are no longer built by default (and may be
+// removed in a future version of Open MPI).  You must
+// --enable-mpi-cxx when configuring Open MPI to enable the MPI C++
+// bindings.
+//
 
 #include "mpi.h"
 #include <iostream>
