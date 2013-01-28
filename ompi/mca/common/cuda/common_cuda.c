@@ -35,6 +35,7 @@
 #include "opal/datatype/opal_datatype_cuda.h"
 #include "opal/util/output.h"
 #include "ompi/mca/mpool/base/base.h"
+#include "ompi/mca/rte/rte.h"
 #include "common_cuda.h"
 
 static bool common_cuda_initialized = false;

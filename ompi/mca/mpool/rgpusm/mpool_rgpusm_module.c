@@ -88,6 +88,7 @@
 #include "ompi/mca/mpool/base/base.h"
 #include "ompi/runtime/params.h"
 #include "ompi/mca/common/cuda/common_cuda.h"
+#include "ompi/mca/rte/rte.h"
 
 
 /* A hack so that page alignment is disabled in my instantiation of
