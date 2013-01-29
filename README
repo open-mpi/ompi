@@ -112,8 +112,8 @@ General notes
   (*) Be sure to read the Compiler Notes, below.
 
 - Other systems have been lightly (but not fully tested):
-  - ARM4, ARM5, ARM6, ARM7 (when using non-inline assembly; only ARM7
-    is fully supported when -DOMPI_DISABLE_INLINE_ASM is used).
+  - ARMv4, ARMv5, ARMv6, ARMv7 (when using non-inline assembly; only
+    ARMv7 is fully supported when -DOMPI_DISABLE_INLINE_ASM is used).
   - Other 64 bit platforms (e.g., Linux on PPC64)
   - Microsoft Windows CCP (Microsoft Windows server 2003 and 2008);
     see the README.WINDOWS file.
