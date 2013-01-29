@@ -863,7 +863,6 @@ hwloc_obj_t * rmaps_lama_find_nth_subtree_match(hwloc_topology_t hwloc_topo,
                                                 int nth,
                                                 rmaps_lama_level_type_t lama_key)
 {
-    int ret;
     hwloc_obj_t *cur_child = NULL;
     hwloc_obj_type_t hwloc_key;
     int depth;
@@ -883,13 +882,13 @@ hwloc_obj_t * rmaps_lama_find_nth_subtree_match(hwloc_topology_t hwloc_topo,
      * Decend tree looking for the n'th matching subtree
      */
     num_found = -1;
-    ret = rmaps_lama_find_nth_subtree_match_core(hwloc_topo,
-                                                 parent_obj,
-                                                 nth,
-                                                 &num_found,
-                                                 hwloc_key,
-                                                 depth,
-                                                 cur_child);
+    rmaps_lama_find_nth_subtree_match_core(hwloc_topo,
+                                           parent_obj,
+                                           nth,
+                                           &num_found,
+                                           hwloc_key,
+                                           depth,
+                                           cur_child);
 
     /*
      * Check to see if we found it
