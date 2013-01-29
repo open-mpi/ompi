@@ -30,9 +30,7 @@ AC_DEFUN([MCA_ompi_btl_mx_CONFIG],[
                      [btl_mx_happy="no"])
 
     AS_IF([test "$btl_mx_happy" = "yes"],
-          [btl_mx_WRAPPER_EXTRA_LDFLAGS="$btl_mx_LDFLAGS"
-           btl_mx_WRAPPER_EXTRA_LIBS="$btl_mx_LIBS"
-           $1],
+          [$1],
           [$2])
 
     # substitute in the things needed to build mx

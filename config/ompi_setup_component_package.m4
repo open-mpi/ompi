@@ -48,8 +48,6 @@
 #   the component, it's NOT a fatal error.
 # - Run OMPI_CHECK_PACKAGE (check for the specific presence of header
 #   files and/or libraries) to determine if the package is available
-# - Set <framework>_<component>_WRAPPER_EXTRA_LDFLAGS
-# - Set <framework>_<component>_WRAPPER_EXTRA_LIBS
 # - Set and AC_SUBST <framework>_<component>_CPPFLAGS
 # - Set and AC_SUBST <framework>_<component>_CFLAGS
 # - Set and AC_SUBST <framework>_<component>_LDFLAGS
@@ -88,9 +86,7 @@ AC_DEFUN([OPAL_SETUP_COMPONENT_PACKAGE],[
                               [$1_$2_happy="no"])])
 
     AS_IF([test "$$1_$2_happy" = "yes"],
-          [$1_$2_WRAPPER_EXTRA_LDFLAGS="$$1_$2_LDFLAGS"
-           $1_$2_WRAPPER_EXTRA_LIBS="$$1_$2_LIBS"
-           $10],
+          [$10],
           [$11])
 
     # sanity check
@@ -99,7 +95,6 @@ AC_DEFUN([OPAL_SETUP_COMPONENT_PACKAGE],[
                  [AC_MSG_WARN([$1:$2 requested but not found])
                   AC_MSG_ERROR([Cannot continue])])])
 
-    # substitute in the things needed to build libnuma
     AC_SUBST([$1_$2_CFLAGS])
     AC_SUBST([$1_$2_CPPFLAGS])
     AC_SUBST([$1_$2_LDFLAGS])

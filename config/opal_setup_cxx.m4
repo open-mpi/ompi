@@ -84,7 +84,7 @@ AC_DEFUN([_OPAL_SETUP_CXX_COMPILER_BACKEND],[
             AC_MSG_WARN([$OPAL_COVERAGE_FLAGS has been added to CFLAGS (--enable-coverage)])
             WANT_DEBUG=1
             CXXFLAGS="${CXXFLAGS} $OPAL_COVERAGE_FLAGS"
-            WRAPPER_EXTRA_CXXFLAGS="${WRAPPER_EXTRA_CXXFLAGS} $OPAL_COVERAGE_FLAGS"
+            OPAL_WRAPPER_FLAGS_ADD([CXXFLAGS], [$OPAL_COVERAGE_FLAGS])
         else
             AC_MSG_WARN([Code coverage functionality is currently available only with GCC suite])
             AC_MSG_ERROR([Configure: cannot continue])

@@ -30,9 +30,7 @@ AC_DEFUN([MCA_ompi_common_verbs_CONFIG],[
                            [common_verbs_happy="yes"])
 
     AS_IF([test "$common_verbs_happy" = "yes"],
-          [common_verbs_WRAPPER_EXTRA_LDFLAGS="$common_verbs_LDFLAGS"
-           common_verbs_WRAPPER_EXTRA_LIBS="$common_verbs_LIBS"
-           $1],
+          [$1],
           [$2])
 
     # substitute in the things needed to build openib

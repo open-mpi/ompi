@@ -31,9 +31,7 @@ AC_DEFUN([MCA_ompi_fs_lustre_CONFIG],[
                      [fs_lustre_happy="no"])
 
     AS_IF([test "$fs_lustre_happy" = "yes"],
-           [fs_lustre_WRAPPER_EXTRA_LDFLAGS="$fs_lustre_LDFLAGS"
-           fs_lustre_WRAPPER_EXTRA_LIBS="$fs_lustre_LIBS"
-           $1],
+          [$1],
           [$2])
 
 #    AC_CHECK_HEADERS([lustre/liblustreapi.h], [],

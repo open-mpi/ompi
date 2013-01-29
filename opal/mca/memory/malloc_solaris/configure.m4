@@ -93,9 +93,6 @@ AC_DEFUN([MCA_opal_memory_malloc_solaris_CONFIG],[
                                   [Whether to use the legacy Solaris munmap prototype or not])
                ])
 
-        AS_IF([test "$memory_malloc_solaris_happy" = "yes"],
-              [memory_malloc_solaris_WRAPPER_EXTRA_LIBS="$memory_malloc_solaris_LIBS"])
-
         AS_IF([test "$memory_malloc_solaris_happy" = "no" -a \
                 "$memory_malloc_solaris_should_use" = "1"],
               [AC_MSG_ERROR([malloc_solaris memory management requested but not available.  Aborting.])])

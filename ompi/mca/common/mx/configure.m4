@@ -30,9 +30,7 @@ AC_DEFUN([MCA_ompi_common_mx_CONFIG],[
                      [common_mx_happy="no"])
 
     AS_IF([test "$common_mx_happy" = "yes"],
-          [common_mx_WRAPPER_EXTRA_LDFLAGS="$common_mx_LDFLAGS"
-           common_mx_WRAPPER_EXTRA_LIBS="$common_mx_LIBS"
-           $1],
+          [$1],
           [$2])
 
     # substitute in the things needed to build mx

@@ -75,13 +75,6 @@ EOF
            AS_IF([test "$OMPI_TOP_BUILDDIR" != "$OMPI_TOP_SRCDIR"],
                  [CPPFLAGS="$CPPFLAGS -I$OMPI_TOP_BUILDDIR/$file/include"])
            unset file
-
-           # Finally, add some flags to the wrapper compiler if we're
-           # building with developer headers so that our headers can
-           # be found.
-           if test "$with_devel_headers" = "yes" ; then
-               WRAPPER_EXTRA_CPPFLAGS="$WRAPPER_EXTRA_CPPFLAGS "'-I${includedir}/openmpi/opal/mca/event/libevent2019/libevent -I${includedir}/openmpi/opal/mca/event/libevent2019/libevent/include'
-           fi
           ])
 ])
 
@@ -178,6 +171,11 @@ AC_DEFUN([MCA_opal_event_libevent2019_CONFIG],[
         AC_MSG_WARN([Event library failed to configure])
         AC_MSG_ERROR([Cannot continue])
     fi
+
+    # Finally, add some flags to the wrapper compiler if we're
+    # building with developer headers so that our headers can
+    # be found.
+    event_libevent2019_WRAPPER_EXTRA_CPPFLAGS='-I${includedir}/openmpi/opal/mca/event/libevent2019/libevent -I${includedir}/openmpi/opal/mca/event/libevent2019/libevent/include'
 
     CFLAGS="$CFLAGS_save"
     CPPFLAGS="$CPPFLAGS_save"
