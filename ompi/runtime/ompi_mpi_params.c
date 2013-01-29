@@ -12,6 +12,7 @@
  * Copyright (c) 2006-2009 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2007-2012 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
+ * Copyright (c) 2013      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -61,6 +62,7 @@ int ompi_mpi_leave_pinned = -1;
 bool ompi_mpi_leave_pinned_pipeline = false;
 bool ompi_have_sparse_group_storage = OPAL_INT_TO_BOOL(OMPI_GROUP_SPARSE);
 bool ompi_use_sparse_group_storage = OPAL_INT_TO_BOOL(OMPI_GROUP_SPARSE);
+bool ompi_mpi_cuda_support = OPAL_INT_TO_BOOL(OMPI_CUDA_SUPPORT);
 
 static bool show_default_mca_params = false;
 static bool show_file_mca_params = false;
@@ -284,6 +286,23 @@ int ompi_mpi_register_params(void)
                            "sparse groups enabled but compiled out",
                            true);
             ompi_use_sparse_group_storage = false;
+        }
+    }
+
+    mca_base_param_reg_int_name("mpi", "cuda_support", 
+                                "Whether CUDA GPU buffer support is enabled or not",
+                                false, false, OMPI_CUDA_SUPPORT, &value);
+    ompi_mpi_cuda_support = OPAL_INT_TO_BOOL(value);
+    if (ompi_mpi_cuda_support) {
+        value = 0;
+        if (OMPI_CUDA_SUPPORT) {
+            value = 1;
+        }
+        if (0 == value) {
+            ompi_show_help("help-mpi-runtime.txt", 
+                           "CUDA GPU buffer support requested but compiled out",
+                           true);
+            ompi_mpi_cuda_support = false;
         }
     }
 
