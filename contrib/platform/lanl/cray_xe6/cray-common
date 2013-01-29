@@ -1,0 +1,34 @@
+# (c) 2012-2013 Los Alamos National Security, LLC. All rights reserved.
+# Common Cray XE/XK-6 options (used by all builds)
+
+# do not use IB verbs
+with_verbs=no
+
+# enable XPMEM enhanced shared memory (needs for Vader BTL)
+with_xpmem=/opt/cray/xpmem/0.1-2.0400.30792.5.6.gem
+
+# enable Cray PMI support
+with_pmi=/opt/cray/pmi/2.1.4-1.0000.8596.8.9.gem
+with_cray_pmi2_ext=yes
+
+# enable ugni btl
+with_ugni=/opt/cray/ugni/2.3-1.0400.4127.5.20.gem
+with_ugni_includedir=/opt/cray/gni-headers/default/include
+
+if test -e /opt/cray/alps/default ; then
+   # use default location for CLE4
+   with_alps=yes
+else
+   # set resource manager to alps for CLE 4.1 (change if using a different CLE)
+   with_alps=/opt/cray/xe-sysroot/4.1.40/usr
+   # the above directory is missing the libraries on the login nodes so use
+   # the copies from /usr/lib
+   with_alps_libdir=/usr/lib/alps
+fi
+
+with_tm=no
+with_slurm=no
+
+# rpath alps, pmi, uGNI, and xpmem libraries
+LDFLAGS="$LDFLAGS -Wl,-rpath=/usr/lib64/alps -Wl,-rpath=$with_pmi/lib64 -Wl,-rpath=$with_ugni/lib64 -Wl,-rpath=$with_xpmem/lib64"
+with_wrapper_ldflags="-Wl,-rpath=/usr/lib64/alps -Wl,-rpath=$with_pmi/lib64 -Wl,-rpath=$with_ugni/lib64 -Wl,-rpath=$with_xpmem/lib64"
