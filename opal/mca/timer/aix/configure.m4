@@ -73,7 +73,6 @@ AC_DEFUN([MCA_opal_timer_aix_CONFIG],[
     AC_SUBST(timer_aix_LIBS)
 
     AS_IF([test "$timer_aix_happy" = "yes"], 
-          [timer_aix_WRAPPER_EXTRA_LIBS="$timer_aix_LIBS"
-           $1], 
+          [$1], 
           [$2])
 ])

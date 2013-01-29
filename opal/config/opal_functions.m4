@@ -324,6 +324,36 @@ dnl #######################################################################
 dnl #######################################################################
 dnl #######################################################################
 
+# OPAL_APPEND_UNIQ(variable, new_argument)
+# ----------------------------------------
+# Append new_argument to variable if not already in variable.  This assumes a
+# space seperated list.
+#
+# This could probably be made more efficient :(.
+AC_DEFUN([OPAL_APPEND_UNIQ], [
+for arg in $2; do
+    ompi_found=0;
+    for val in ${$1}; do
+        if test "x$val" = "x$arg" ; then
+            ompi_found=1
+            break
+        fi
+    done
+    if test "$ompi_found" = "0" ; then
+        if test -z "$$1"; then
+            $1="$arg"
+        else
+            $1="$$1 $arg"
+        fi
+    fi
+done
+unset ompi_found
+])
+
+dnl #######################################################################
+dnl #######################################################################
+dnl #######################################################################
+
 # Macro that serves as an alternative to using `which <prog>`. It is
 # preferable to simply using `which <prog>` because backticks (`) (aka
 # backquotes) invoke a sub-shell which may source a "noisy"

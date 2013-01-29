@@ -18,9 +18,7 @@ AC_DEFUN([MCA_ompi_mtl_mxm_CONFIG],[
                    [mtl_mxm_happy="no"])
 
     AS_IF([test "$mtl_mxm_happy" = "yes"],
-          [mtl_mxm_WRAPPER_EXTRA_LDFLAGS="$mtl_mxm_LDFLAGS"
-           mtl_mxm_WRAPPER_EXTRA_LIBS="$mtl_mxm_LIBS"
-           $1],
+          [$1],
           [$2])
 
     # substitute in the things needed to build mxm

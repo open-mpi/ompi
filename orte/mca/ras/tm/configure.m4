@@ -30,9 +30,7 @@ AC_DEFUN([MCA_orte_ras_tm_CONFIG],[
     # if check worked, set wrapper flags if so.  
     # Evaluate succeed / fail
     AS_IF([test "$ras_tm_good" = "1" -a "$orte_without_full_support" = 0],
-          [ras_tm_WRAPPER_EXTRA_LDFLAGS="$ras_tm_LDFLAGS"
-           ras_tm_WRAPPER_EXTRA_LIBS="$ras_tm_LIBS"
-           $1],
+          [$1],
           [$2])
 
     # set build flags to use in makefile

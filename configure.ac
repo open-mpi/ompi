@@ -271,9 +271,6 @@ AM_ENABLE_SHARED
 AM_DISABLE_STATIC
 
 OPAL_SETUP_WRAPPER_INIT
-# There is no [need for] ORTE_SETUP_WRAPPER_INIT; this is not an
-# accidental omission
-m4_ifdef([project_ompi], [OMPI_SETUP_WRAPPER_INIT])
 
 ##################################
 # Check for known incompatibility
@@ -920,17 +917,15 @@ m4_ifdef([project_ompi], [OMPI_CONFIG_THREADS])
 
 CFLAGS="$CFLAGS $THREAD_CFLAGS"
 CPPFLAGS="$CPPFLAGS $THREAD_CPPFLAGS"
-m4_ifdef([project_ompi],
-         [CXXFLAGS="$CXXFLAGS $THREAD_CXXFLAGS"
-          CXXCPPFLAGS="$CXXCPPFLAGS $THREAD_CXXCPPFLAGS"])
+CXXFLAGS="$CXXFLAGS $THREAD_CXXFLAGS"
+CXXCPPFLAGS="$CXXCPPFLAGS $THREAD_CXXCPPFLAGS"
 LDFLAGS="$LDFLAGS $THREAD_LDFLAGS"
 LIBS="$LIBS $THREAD_LIBS"
 
-WRAPPER_EXTRA_CFLAGS="$WRAPPER_EXTRA_CFLAGS $THREAD_CFLAGS"
-m4_ifdef([project_ompi],
-         [WRAPPER_EXTRA_CXXFLAGS="$WRAPPER_EXTRA_CXXFLAGS $THREAD_CXXFLAGS"
-          WRAPPER_EXTRA_FCFLAGS="$WRAPPER_EXTRA_FCFLAGS $THREAD_FCFLAGS"])
-WRAPPER_EXTRA_LDFLAGS="$WRAPPER_EXTRA_LDFLAGS $THREAD_LDFLAGS"
+OPAL_WRAPPER_FLAGS_ADD([CFLAGS], [$THREAD_CFLAGS])
+OPAL_WRAPPER_FLAGS_ADD([CXXFLAGS], [$THREAD_CXXFLAGS])
+OPAL_WRAPPER_FLAGS_ADD([FCFLAGS], [$THREAD_FCFLAGS])
+OPAL_WRAPPER_FLAGS_ADD([LDFLAGS], [$THREAD_LDFLAGS])
 # no need to update WRAPPER_EXTRA_LIBS - we'll get it from LT later
 
 #
@@ -1189,8 +1184,6 @@ ompi_show_subtitle "Wrapper compiler final setup"
 AC_PATH_PROG(PERL, perl, perl)
 
 OPAL_SETUP_WRAPPER_FINAL
-m4_ifdef([project_orte], [ORTE_SETUP_WRAPPER_FINAL])
-m4_ifdef([project_ompi], [OMPI_SETUP_WRAPPER_FINAL])
 
 # Recreate some defines prefixed with OMPI_ so that there are no bare
 # autoconf macro defines in mpi.h.  Since AC sometimes changes whether

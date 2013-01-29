@@ -30,9 +30,7 @@ AC_DEFUN([MCA_ompi_mtl_psm_CONFIG],[
                      [mtl_psm_happy="no"])
 
     AS_IF([test "$mtl_psm_happy" = "yes"],
-          [mtl_psm_WRAPPER_EXTRA_LDFLAGS="$mtl_psm_LDFLAGS"
-           mtl_psm_WRAPPER_EXTRA_LIBS="$mtl_psm_LIBS"
-           $1],
+          [$1],
           [$2])
 
     # substitute in the things needed to build psm
