@@ -65,9 +65,7 @@ EXTRA_DIST	= \
 	base/default.conf \
 	base/ALPHA.asm \
 	base/AMD64.asm \
-	base/ARMV5.asm \
-	base/ARMV6.asm \
-	base/ARMV7.asm \
+	base/ARM.asm \
 	base/IA32.asm \
 	base/IA64.asm \
 	base/MIPS.asm \
