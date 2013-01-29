@@ -29,4 +29,4 @@ with_slurm=no
 with_devel_headers=yes
 with_portals=no
 with_valgrind=no
-with_sqlite3=yes
+with_sqlite3=no
