@@ -1007,6 +1007,29 @@ AC_INCLUDES_DEFAULT
 # checkpoint results
 AC_CACHE_SAVE
 
+###########################################################
+#        Fault Tolerance
+#
+# The FT code in the OMPI trunk is currently broken. We don't
+# have an active maintainer for it at this time, and it isn't
+# clear if/when we will return to it. We have therefore removed
+# the configure options supporting it until such time as it
+# can be fixed.
+#
+# However, we recognize that there are researchers who use this
+# option on their independent branches. In such cases, simply
+# uncomment the line below to render the FT configure options
+# visible again
+#
+###########################################################
+#OPAL_SETUP_FT_OPTIONS
+###########################################################
+# The following line is always required as it contains the
+# AC_DEFINE and AM_CONDITIONAL calls that set variables used
+# throughout the build system. If the above line is commented
+# out, then those variables will be set to "off". Otherwise,
+# they are controlled by the options
+OPAL_SETUP_FT
 
 ##################################
 # MCA
