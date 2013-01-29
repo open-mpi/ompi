@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2011-2012 NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2011-2013 NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -36,6 +36,7 @@
 #include "opal/util/output.h"
 #include "ompi/mca/mpool/base/base.h"
 #include "ompi/mca/rte/rte.h"
+#include "ompi/runtime/params.h"
 #include "common_cuda.h"
 
 static bool common_cuda_initialized = false;
@@ -123,6 +124,10 @@ static int mca_common_cuda_init(void)
     CUresult res;
     CUcontext cuContext;
     common_cuda_mem_regs_t *mem_reg;
+
+    if (!ompi_mpi_cuda_support) {
+        return OMPI_ERROR;
+    }
 
     if (common_cuda_initialized) {
         return OMPI_SUCCESS;

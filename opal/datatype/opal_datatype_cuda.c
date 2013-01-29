@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2011-2013 NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -22,6 +22,7 @@
 
 static bool initialized = false;
 static int opal_cuda_verbose;
+static int opal_cuda_enabled = 0; /* Starts out disabled */
 static int opal_cuda_output = 0;
 static void opal_cuda_support_init(void);
 static int (*common_cuda_initialization_function)(void) = NULL;
@@ -41,6 +42,16 @@ void mca_cuda_convertor_init(opal_convertor_t* convertor, const void *pUserBuf)
     CUmemorytype memType;
     CUdeviceptr dbuf = (CUdeviceptr)pUserBuf;
 
+    /* Only do the initialization on the first GPU access */
+    if (!initialized) {
+        opal_cuda_support_init();
+    }
+
+    /* If not enabled, then nothing else to do */
+    if (!opal_cuda_enabled) {
+        return;
+    }
+
     res = cuPointerGetAttribute(&memType,
                                 CU_POINTER_ATTRIBUTE_MEMORY_TYPE, dbuf);
     if (res != CUDA_SUCCESS) {
@@ -53,11 +64,6 @@ void mca_cuda_convertor_init(opal_convertor_t* convertor, const void *pUserBuf)
     }
     /* Must be a device pointer */
     assert(memType == CU_MEMORYTYPE_DEVICE);
-
-    /* Only do the initialization on the first GPU access */
-    if (!initialized) {
-        opal_cuda_support_init();
-    }
 
     convertor->cbmemcpy = (memcpy_fct_t)&opal_cuda_memcpy;
     convertor->flags |= CONVERTOR_CUDA;
@@ -176,7 +182,13 @@ static void opal_cuda_support_init(void)
     /* Callback into the common cuda initialization routine. This is only
      * set if some work had been done already in the common cuda code.*/
     if (NULL != common_cuda_initialization_function) {
-        common_cuda_initialization_function();
+        if (0 == common_cuda_initialization_function()) {
+            opal_cuda_enabled = 1;
+        } else {
+            return; /* Initialization failed - no support */
+        }
+    } else {
+        return;  /* No initialization function - no support */
     }
 
     /* Set different levels of verbosity in the cuda related code. */
