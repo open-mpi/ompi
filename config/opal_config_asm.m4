@@ -820,6 +820,7 @@ AC_DEFUN([OPAL_CONFIG_ASM],[
             ompi_cv_asm_arch="ARM"
             OPAL_ASM_SUPPORT_64BIT=0
             OPAL_ASM_ARM_VERSION=6
+            CCASFLAGS="$CCASFLAGS -march=armv7-a"
             AC_DEFINE_UNQUOTED([OPAL_ASM_ARM_VERSION], [$OPAL_ASM_ARM_VERSION],
                                [What ARM assembly version to use])
             OMPI_GCC_INLINE_ASSIGN='"mov %0, #0" : "=&r"(ret)'
@@ -830,6 +831,7 @@ AC_DEFUN([OPAL_CONFIG_ASM],[
             ompi_cv_asm_arch="ARM"
             OPAL_ASM_SUPPORT_64BIT=0
             OPAL_ASM_ARM_VERSION=5
+            CCASFLAGS="$CCASFLAGS -march=armv7-a"
             AC_DEFINE_UNQUOTED([OPAL_ASM_ARM_VERSION], [$OPAL_ASM_ARM_VERSION],
                                [What ARM assembly version to use])
             OMPI_GCC_INLINE_ASSIGN='"mov %0, #0" : "=&r"(ret)'
