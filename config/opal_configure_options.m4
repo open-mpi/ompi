@@ -342,78 +342,12 @@ elif test "$with_cross" != "" ; then
     . "$with_cross"
 fi
 
-#
-# --with-ft=TYPE
-#  TYPE:
-#    - LAM (synonym for 'cr' currently)
-#    - cr
-#    - orcm
-#  /* General FT sections */
-#  #if OPAL_ENABLE_FT == 0 /* FT Disabled globaly */
-#  #if OPAL_ENABLE_FT == 1 /* FT Enabled globaly */
-#  /* CR Specific sections */
-#  #if OPAL_ENABLE_FT_CR == 0 /* FT Ckpt/Restart Disabled */
-#  #if OPAL_ENABLE_FT_CR == 1 /* FT Ckpt/Restart Enabled */
-#
-AC_MSG_CHECKING([if want fault tolerance])
-AC_ARG_WITH(ft,
-    [AC_HELP_STRING([--with-ft=TYPE],
-            [Specify the type of fault tolerance to enable. Options: LAM (LAM/MPI-like), cr (Checkpoint/Restart), orcm (OpenRCM) (default: disabled)])],
-        [opal_want_ft=1],
-        [opal_want_ft=0])
-if test "$with_ft" = "no" -o "$opal_want_ft" = "0"; then
-    opal_want_ft=0
-    opal_want_ft_cr=0
-    AC_MSG_RESULT([Disabled fault tolerance])
-else
-    opal_want_ft=1
-    opal_want_ft_cr=0
-    opal_want_ft_type=none
-
-    as_save_IFS=$IFS
-    IFS=","
-    for opt in $with_ft; do
-        IFS=$as_save_IFS
-
-        # Default value
-        if test "$opt" = "" -o "$opt" = "yes"; then
-            opal_want_ft_cr=1
-        elif test "$opt" = "LAM"; then
-            opal_want_ft_cr=1
-        elif test "$opt" = "lam"; then
-            opal_want_ft_cr=1
-        elif test "$opt" = "CR"; then
-            opal_want_ft_cr=1
-        elif test "$opt" = "cr"; then
-            opal_want_ft_cr=1
-        elif test "$opt" = "orcm"; then
-            opal_want_ft_orcm=1
-        elif test "$opt" = "ORCM"; then
-            opal_want_ft_orcm=1
-        else
-            AC_MSG_RESULT([Unrecognized FT TYPE: $opt])
-            AC_MSG_ERROR([Cannot continue])
-        fi
-    done
-    if test "$opal_want_ft_cr" = 1; then
-        opal_want_ft_type="cr"
-    elif test "$opal_want_ft_orcm" = 1; then
-        opal_want_ft_type="orcm"
-    fi
-
-    AC_MSG_RESULT([Enabled $opal_want_ft_type (Specified $with_ft)])
-    AC_MSG_WARN([**************************************************])
-    AC_MSG_WARN([*** Fault Tolerance Integration into Open MPI is *])
-    AC_MSG_WARN([*** a research quality implementation, and care  *])
-    AC_MSG_WARN([*** should be used when choosing to enable it.   *])
-    AC_MSG_WARN([**************************************************])
-fi
-AC_DEFINE_UNQUOTED([OPAL_ENABLE_FT], [$opal_want_ft],
+AC_DEFINE_UNQUOTED([OPAL_ENABLE_FT], [0],
                    [Enable fault tolerance general components and logic])
-AC_DEFINE_UNQUOTED([OPAL_ENABLE_FT_CR], [$opal_want_ft_cr],
+AC_DEFINE_UNQUOTED([OPAL_ENABLE_FT_CR], [0],
                    [Enable fault tolerance checkpoint/restart components and logic])
-AM_CONDITIONAL(WANT_FT, test "$opal_want_ft" = "1")
-AM_CONDITIONAL(WANT_FT_CR,  test "$opal_want_ft_cr" = "1")
+AM_CONDITIONAL(WANT_FT, 0)
+AM_CONDITIONAL(WANT_FT_CR, 0)
 
 #
 # Do we want to install binaries?
@@ -553,26 +487,7 @@ AC_ARG_WITH([libltdl],
     [AC_HELP_STRING([--with-libltdl(=DIR)],
          [Where to find libltdl (this option is ignored if --disable-dlopen is used).  DIR can take one of three values: "internal", "external", or a valid directory name.  "internal" (or no DIR value) forces Open MPI to use its internal copy of libltdl.  "external" forces Open MPI to use an external installation of libltdl.  Supplying a valid directory name also forces Open MPI to use an external installation of libltdl, and adds DIR/include, DIR/lib, and DIR/lib64 to the search path for headers and libraries.])])
 
-#
-# Checkpoint/restart enabled debugging
-#
-AC_MSG_CHECKING([if want checkpoint/restart enabled debugging option])
-AC_ARG_ENABLE([crdebug],
-    [AC_HELP_STRING([--enable-crdebug],
-            [enable checkpoint/restart debugging functionality (default: disabled)])])
- 
-if test "$ompi_want_ft" = "0"; then
-    ompi_want_prd=0
-    AC_MSG_RESULT([Disabled (fault tolerance disabled --without-ft)])
-elif test "$enable_crdebug" = "yes"; then
-    ompi_want_prd=1
-    AC_MSG_RESULT([Enabled])
-else
-    ompi_want_prd=0
-    AC_MSG_RESULT([Disabled])
-fi
- 
-AC_DEFINE_UNQUOTED([OPAL_ENABLE_CRDEBUG], [$ompi_want_prd],
+AC_DEFINE_UNQUOTED([OPAL_ENABLE_CRDEBUG], [0],
     [Whether we want checkpoint/restart enabled debugging functionality or not])
 
 #
