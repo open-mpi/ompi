@@ -1,0 +1,25 @@
+# (c) 2012-2013 Los Alamos National Security, LLC. All rights reserved.
+# Open MPI configuration for Cielo/Cielito v1.7.x/1.8.x GNU compiler,
+# Lustre
+
+if test "$CC" = "cc" ; then
+   echo "ERROR: Open MPI should not be compiled with Cray's wrapper compilers (cc/CC/ftn)"
+   exit 1
+fi
+
+source cray-common
+
+if test "$enable_debug" = "yes"; then
+   source debug-common
+else
+   source optimized-common
+fi
+
+if test "$CC" = "icc" ; then
+   source intel-common
+else
+   source gnu-common
+fi
+
+# enable and Lustre in romio
+with_io_romio_flags="--with-file-system=ufs+nfs+lustre CFLAGS=-I/opt/cray/lustre-cray_gem_s/default/include"
