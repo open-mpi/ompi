@@ -784,7 +784,7 @@ opal_ifislocal(const char *hostname)
 }
 
 int
-opal_iftupletoaddr(char *inaddr, uint32_t *net, uint32_t *mask)
+opal_iftupletoaddr(const char *inaddr, uint32_t *net, uint32_t *mask)
 {
     return 0;
 }
