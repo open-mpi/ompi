@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007-2009 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -62,12 +63,23 @@ opal_list_t mca_mpool_base_modules;
  */
 int mca_mpool_base_open(void)
 {
+    int value;
     /* Open up all available components - and populate the
        mca_mpool_base_components list */
-    
+
+    /* Verbose output */
+    mca_base_param_reg_int_name("mpool",
+                                "base_verbose",
+                                "Verbosity level for the mpool framework (0 = no verbosity)",
+                                 false, false,
+                                 0, &value);
+ 
+    mca_mpool_base_output = opal_output_open(NULL);
+    opal_output_set_verbosity(mca_mpool_base_output, value);
+
     if (OMPI_SUCCESS != 
-        mca_base_components_open("mpool", 0, mca_mpool_base_static_components, 
-                               &mca_mpool_base_components, true)) {
+        mca_base_components_open("mpool", mca_mpool_base_output, mca_mpool_base_static_components, 
+                                 &mca_mpool_base_components, true)) {
         return OMPI_ERROR;
     }
   
