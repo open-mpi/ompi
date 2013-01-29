@@ -16,15 +16,13 @@ sources = \
 
 # Conditionally install the header files
 if WANT_INSTALL_HEADERS
-headers += rte_orte.h
-
 ompidir = $(includedir)/openmpi/$(subdir)
 nobase_ompi_HEADERS = $(headers)
 endif
 
 # We only ever build this component statically
 noinst_LTLIBRARIES = libmca_rte_orte.la
-libmca_rte_orte_la_SOURCES =$(sources)
+libmca_rte_orte_la_SOURCES =$(sources) $(headers)
 libmca_rte_orte_la_LDFLAGS = -module -avoid-version
 libmca_rte_orte_la_LIBADD = $(top_builddir)/orte/libopen-rte.la
 
