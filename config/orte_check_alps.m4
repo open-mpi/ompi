@@ -71,18 +71,13 @@ AC_DEFUN([ORTE_CHECK_ALPS],[
                fi
            fi
 
-           if test "$using_cle5_install" = "yes" ; then
-                  AS_IF([test "$with_alps" = "yes"],
-                        [orte_check_alps_dir="/usr"],
-                        [orte_check_alps_dir="$with_alps"])
+           if test "$with_alps" = "yes" ; then
+               AS_IF([test "$using_cle5_install" = "yes"],
+                   [orte_check_alps_dir="/opt/cray/alps/default"],
+                   [orte_check_alps_dir="/usr"])
            else
-                  AS_IF([test "$with_alps" = "yes"],
-                        [orte_check_alps_dir="/opt/cray/alps/default"],
-                        [orte_check_alps_dir="$with_alps"])
+               orte_check_alps_dir="$with_alps"
            fi
-
-           $1_CPPFLAGS="-I$orte_check_alps_dir/include"
-           $1_LDFLAGS="-L$orte_check_alps_libdir"
 
            if test -z "$orte_check_alps_pmi_happy"; then
                # if pmi support is requested, then ORTE_CHECK_PMI
@@ -108,6 +103,9 @@ AC_DEFUN([ORTE_CHECK_ALPS],[
            fi
         fi
     fi
+
+    $1_CPPFLAGS="-I$orte_check_alps_dir/include"
+    $1_LDFLAGS="-L$orte_check_alps_libdir"
 
     AS_IF([test "$orte_check_alps_happy" = "yes"], 
           [$2], 
