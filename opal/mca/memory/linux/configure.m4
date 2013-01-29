@@ -144,8 +144,7 @@ AC_DEFUN([MCA_opal_memory_linux_CONFIG],[
 
     # If all is good, save the extra libs for the wrapper
     AS_IF([test "$memory_linux_ptmalloc2_happy" = yes],
-          [memory_linux_WRAPPER_EXTRA_LIBS="$memory_linux_LIBS"
-           value=1],
+          [value=1],
           [value=0])
     AC_DEFINE_UNQUOTED([MEMORY_LINUX_PTMALLOC2], [$value],
                        [Whether ptmalloc2 is supported on this system or not])

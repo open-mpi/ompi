@@ -132,7 +132,7 @@ AC_DEFUN([OMPI_SETUP_FC],[
   integer :: i
 end program]])],
                               [OMPI_FORTRAN_WRAPPER_FLAGS="-Wl,-commons,use_dylibs"
-                               WRAPPER_EXTRA_FCFLAGS="$WRAPPER_EXTRA_FCFLAGS $OMPI_FORTRAN_WRAPPER_FLAGS"],
+                               OPAL_WRAPPER_FLAGS_ADD([FCFLAGS], [$OMPI_FORTRAN_WRAPPER_FLAGS])],
                               [OMPI_FORTRAN_WRAPPER_FLAGS=none])
                AC_LANG_POP([Fortran])
                LDFLAGS=$LDFLAGS_save
@@ -207,7 +207,7 @@ I = 3]])],
     integer :: i
 end program]])],
                        [OMPI_FORTRAN_WRAPPER_FLAGS="-Wl,-commons,use_dylibs"
-                        WRAPPER_EXTRA_FCFLAGS="$WRAPPER_EXTRA_FCFLAGS $OMPI_FORTRAN_WRAPPER_FLAGS"],
+                        OPAL_WRAPPER_FLAGS_ADD([FCFLAGS], [$OMPI_FORTRAN_WRAPPER_FLAGS])],
                        [OMPI_FORTRAN_WRAPPER_FLAGS=none])
         AC_LANG_POP([Fortran])
         LDFLAGS=$LDFLAGS_save

@@ -30,9 +30,7 @@ AC_DEFUN([MCA_orte_plm_tm_CONFIG],[
     # if check worked, set wrapper flags if so.  
     # Evaluate succeed / fail
     AS_IF([test "$plm_tm_good" = "1" -a "$orte_without_full_support" = 0],
-          [plm_tm_WRAPPER_EXTRA_LDFLAGS="$plm_tm_LDFLAGS"
-           plm_tm_WRAPPER_EXTRA_LIBS="$plm_tm_LIBS"
-           $1],
+          [$1],
           [$2])
 
     # set build flags to use in makefile

@@ -72,11 +72,9 @@ AC_DEFUN([MCA_opal_hwloc_external_POST_CONFIG],[
            # Finally, add some flags to the wrapper compiler if we're
            # building with developer headers so that our headers can
            # be found.
-           AS_IF([test "$with_devel_headers" = "yes"],
-               [OPAL_WRAPPER_EXTRA_CPPFLAGS="$OPAL_WRAPPER_EXTRA_CPPFLAGS $opal_hwloc_external_CPPFLAGS"])
-
-           OPAL_WRAPPER_EXTRA_LDFLAGS="$OPAL_WRAPPER_EXTRA_LDFLAGS $opal_hwloc_external_LDFLAGS"
-           OPAL_WRAPPER_EXTRA_LIBS="$OPAL_WRAPPER_EXTRA_LIBS $opal_hwloc_external_LIBS"
+           hwloc_external_WRAPPER_EXTRA_CPPFLAGS="$opal_hwloc_external_CPPFLAGS"
+           hwloc_external_WRAPPER_EXTRA_LDFLAGS="$opal_hwloc_external_LDFLAGS"
+           hwloc_external_WRAPPER_EXTRA_LIBS="$opal_hwloc_external_LIBS"
           ])
     OPAL_VAR_SCOPE_POP
 ])dnl

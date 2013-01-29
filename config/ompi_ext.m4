@@ -635,17 +635,14 @@ EOF
     # now add the flags that were set in the environment variables
     # framework_component_FOO (for example, the flags set by
     # m4_configure components)
-    #
-    # Check for flags passed up from the component.  If we're
-    # compiling statically, then take all flags passed up from the
-    # component.
     m4_foreach(flags, [LDFLAGS, LIBS],
-        [[str="line=\$mpiext_${component}_WRAPPER_EXTRA_]flags["]
-          eval "$str"
-          if test -n "$line" ; then
-             $1[_WRAPPER_EXTRA_]flags[="$]$1[_WRAPPER_EXTRA_]flags[ $line"]
-          fi
-          ])dnl
+        [AS_IF([test "$mpiext_$1_WRAPPER_EXTRA_]flags[" = ""],
+                [OPAL_APPEND_UNIQ([ompi_mca_wrapper_extra_]m4_tolower(flags), [$mpiext_$1_]flags)],
+                [OPAL_APPEND_UNIQ([ompi_mca_wrapper_extra_]m4_tolower(flags), [$mpiext_$1_WRAPPER_EXTRA_]flags)])
+        ])
+
+    AS_IF([test "$mpiext_$1_WRAPPER_EXTRA_CPPFLAGS" != ""],
+        [OPAL_APPEND_UNIQ([ompi_mca_wrapper_extra_cppflags], [$mpiext_$1_WRAPPER_EXTRA_CPPFLAGS])])
 ])
 
 

@@ -31,9 +31,7 @@ AC_DEFUN([MCA_ompi_fs_pvfs2_CONFIG],[
                      [fs_pvfs2_happy="no"])
 
     AS_IF([test "$fs_pvfs2_happy" = "yes"],
-           [fs_pvfs2_WRAPPER_EXTRA_LDFLAGS="$fs_pvfs2_LDFLAGS"
-           fs_pvfs2_WRAPPER_EXTRA_LIBS="$fs_pvfs2_LIBS"
-           $1],
+          [$1],
           [$2])
 
 #    AC_CHECK_HEADERS([pvfs2.h], [],

@@ -21,11 +21,7 @@ AC_DEFUN([MCA_ompi_coll_fca_CONFIG],[
                      [coll_fca_happy="no"])
 
     AS_IF([test "$coll_fca_happy" = "yes"],
-          [coll_fca_WRAPPER_EXTRA_LDFLAGS="$coll_fca_LDFLAGS"
-           coll_fca_CPPFLAGS="$coll_fca_CPPFLAGS"
-           coll_fca_WRAPPER_EXTRA_CPPFLAGS="$coll_fca_CPPFLAGS"
-           coll_fca_WRAPPER_EXTRA_LIBS="$coll_fca_LIBS"
-           $1],
+          [$1],
           [$2])
 
     # substitute in the things needed to build fca

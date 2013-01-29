@@ -101,8 +101,7 @@ AC_DEFUN([ORTE_CHECK_ALPS],[
                          [AC_MSG_RESULT([not found])])
 
                    AS_IF([test "$orte_check_alps_pmi_happy" = "yes" -a "$orte_without_full_support" = 0],
-                         [WRAPPER_EXTRA_LDFLAGS="$WRAPPER_EXTRA_LDFLAGS -L$orte_check_alps_libdir"
-                          WRAPPER_EXTRA_LIBS="$WRAPPER_EXTRA_LIBS -lalpslli -lalpsutil"],
+                         [$1_LIBS="-lalpslli -lalpsutil"],
                          [AC_MSG_WARN([PMI support for Alps requested but not found])
                           AC_MSG_ERROR([Cannot continue])])
                fi

@@ -31,9 +31,7 @@ AC_DEFUN([MCA_orte_ess_lsf_CONFIG],[
     # if check worked, set wrapper flags if so.  
     # Evaluate succeed / fail
     AS_IF([test "$ess_lsf_good" = "1" -a "$orte_without_full_support" = 0],
-          [ess_lsf_WRAPPER_EXTRA_LDFLAGS="$ess_lsf_LDFLAGS"
-           ess_lsf_WRAPPER_EXTRA_LIBS="$ess_lsf_LIBS"
-           $1],
+          [$1],
           [$2])
 
     # set build flags to use in makefile
