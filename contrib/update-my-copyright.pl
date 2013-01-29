@@ -1,6 +1,6 @@
 #!/usr/bin/env perl
 #
-# Copyright (c) 2010-2012 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2010-2013 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 #
 
@@ -124,15 +124,22 @@ foreach my $f (@files) {
     # not edit any copyright notices that may appear below that.
 
     my $i = 0;
+    my $found_copyright = 0;
+    my $found_me = 0;
     my @lines;
     my $my_line_index;
     my $token_line_index;
     while (<FILE>) {
         push(@lines, $_);
-        $token_line_index = $i
-            if ($_ =~ /\$COPYRIGHT\$/);
-        $my_line_index = $i
-            if (!defined($token_line_index) && $_ =~ /$my_search_name/i);
+        if (!$found_copyright && $_ =~ /\$COPYRIGHT\$/) {
+            $token_line_index = $i;
+            $found_copyright = 1;
+        }
+        if (!$found_me &&
+            !defined($token_line_index) && $_ =~ /$my_search_name/i) {
+            $my_line_index = $i;
+            $found_me = 1;
+        }
         ++$i;
     }
     close(FILE);
@@ -194,7 +201,7 @@ foreach my $f (@files) {
     my $newf = "$f.new-copyright";
     unlink($newf);
     open(FILE, ">$newf") || die "Can't open file: $newf";
-    print FILE join(//, @lines);
+    print FILE join('', @lines);
     close(FILE);
 
     # Now replace the old one
