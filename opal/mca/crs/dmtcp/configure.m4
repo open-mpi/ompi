@@ -102,7 +102,7 @@ AC_DEFUN([MCA_opal_crs_dmtcp_CONFIG],[
                   AC_MSG_ERROR([Aborting.])])])
 
     #
-    # Now setup the additions to the wrapper compiler.  If '-lmtcp' or
+    # If '-lmtcp' or
     # '-I' or '-L' was needed to link to MTCP, then OMPI_CHECK_PACKAGE
     # sets the crs_mtcp_check_* variables, which we use below.
     #
@@ -112,26 +112,13 @@ AC_DEFUN([MCA_opal_crs_dmtcp_CONFIG],[
     crs_dmtcp_LDFLAGS="$LDFLAGS $crs_dmtcp_check_LDFLAGS"
     crs_dmtcp_LIBS="$crs_dmtcp_check_LIBS $LIBS"
 
-    #
-    # If DMTCP is working at this point, then add any options necessary to
-    # the wrapper compiler.
-    #
     AS_IF([test "$opal_check_crs_dmtcp_good" = "yes"],
-          [#
-           # Setup wrapper options for static builds
-           #
-           crs_dmtcp_WRAPPER_EXTRA_CPPFLAGS="$crs_dmtcp_CPPFLAGS"
-           crs_dmtcp_WRAPPER_EXTRA_LDFLAGS="$crs_dmtcp_LDFLAGS"
-           crs_dmtcp_WRAPPER_EXTRA_LIBS="$crs_dmtcp_LIBS"
-           $1])
+          [$1])
 
     CPPFLAGS=$opal_opal_check_crs_dmtcp_save_CPPFLAGS
     LDFLAGS="$crs_dmtcp_check_LDFLAGS $opal_opal_check_crs_dmtcp_save_LDFLAGS"
     LIBS="$crs_dmtcp_LIBS $opal_opal_check_crs_dmtcp_save_LIBS"
 
-    AC_SUBST([crs_dmtcp_WRAPPER_EXTRA_LDFLAGS])
-    AC_SUBST([crs_dmtcp_WRAPPER_EXTRA_LIBS])
-    AC_SUBST([crs_dmtcp_WRAPPER_EXTRA_CPPFLAGS])
     AC_SUBST([crs_dmtcp_CFLAGS])
     AC_SUBST([crs_dmtcp_CPPFLAGS])
     AC_SUBST([crs_dmtcp_LDFLAGS])

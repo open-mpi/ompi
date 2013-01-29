@@ -27,9 +27,7 @@ AC_DEFUN([MCA_ompi_bcol_iboffload_CONFIG],[
     OMPI_CHECK_MLNX_OPENFABRICS([bcol_iboffload], [bcol_mlnx_ofed_happy="yes"])
 
     AS_IF([test "$bcol_ofa_happy" = "yes" -a "$bcol_mlnx_ofed_happy" = "yes"],
-          [bcol_iboffload_WRAPPER_EXTRA_LDFLAGS="$bcol_iboffload_LDFLAGS"
-           bcol_iboffload_WRAPPER_EXTRA_LIBS="$bcol_iboffload_LIBS"
-           $1],
+          [$1],
           [$2])
 
     # substitute in the things needed to build iboffload

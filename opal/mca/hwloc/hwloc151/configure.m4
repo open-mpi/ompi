@@ -50,12 +50,6 @@ AC_DEFUN([MCA_opal_hwloc_hwloc151_POST_CONFIG],[
            AS_IF([test "$OMPI_TOP_BUILDDIR" != "$OMPI_TOP_SRCDIR"],
                  [CPPFLAGS="$CPPFLAGS -I$OMPI_TOP_BUILDDIR/$file/include"])
            unset file
-
-           # Finally, add some flags to the wrapper compiler if we're
-           # building with developer headers so that our headers can
-           # be found.
-           AS_IF([test "$with_devel_headers" = "yes"],
-               [WRAPPER_EXTRA_CPPFLAGS="$WRAPPER_EXTRA_CPPFLAGS "'-I${includedir}/openmpi/'"$opal_hwloc_hwloc151_basedir/hwloc/include"])
           ])
     OPAL_VAR_SCOPE_POP
 
@@ -143,6 +137,12 @@ AC_DEFUN([MCA_opal_hwloc_hwloc151_CONFIG],[
         AC_SUBST([opal_hwloc_hwloc151_CPPFLAGS])
         AC_SUBST([opal_hwloc_hwloc151_LDFLAGS])
         AC_SUBST([opal_hwloc_hwloc151_LIBS])
+
+        # Finally, add some flags to the wrapper compiler so that our
+        # headers can be found.
+        hwloc_hwloc151_WRAPPER_EXTRA_LDFLAGS="$HWLOC_EMBEDDED_LDFLAGS"
+        hwloc_hwloc151_WRAPPER_EXTRA_LIBS="$HWLOC_EMBEDDED_LIBS"
+        hwloc_hwloc151_WRAPPER_EXTRA_CPPFLAGS='-I${includedir}/openmpi/'"$opal_hwloc_hwloc151_basedir/hwloc/include"
     fi
 
     # Done!

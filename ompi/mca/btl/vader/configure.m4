@@ -66,9 +66,7 @@ AC_DEFUN([MCA_ompi_btl_vader_CONFIG],[
 
     # at this point, we can only build vader if we have XPMEM support
     AS_IF([test "$btl_vader_xpmem_happy" = "1"],
-          [btl_vader_WRAPPER_EXTRA_LDFLAGS="$btl_vader_LDFLAGS"
-           btl_vader_WRAPPER_EXTRA_LIBS="$btl_vader_LIBS"
-           $1],
+          [$1],
           [$2])
 
     # substitute in the things needed to build with XPMEM support

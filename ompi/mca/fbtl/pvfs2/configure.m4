@@ -31,9 +31,7 @@ AC_DEFUN([MCA_ompi_fbtl_pvfs2_CONFIG],[
                      [fbtl_pvfs2_happy="no"])
 
     AS_IF([test "$fbtl_pvfs2_happy" = "yes"],
-           [fbtl_pvfs2_WRAPPER_EXTRA_LDFLAGS="$fbtl_pvfs2_LDFLAGS"
-           fbtl_pvfs2_WRAPPER_EXTRA_LIBS="$fbtl_pvfs2_LIBS"
-           $1],
+          [$1],
           [$2])
 
 

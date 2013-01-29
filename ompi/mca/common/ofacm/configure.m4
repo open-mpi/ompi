@@ -41,9 +41,7 @@ AC_DEFUN([MCA_ompi_common_ofacm_CONFIG],[
                             OMPI_CHECK_OPENFABRICS_CM([common_ofacm])])
 
     AS_IF([test "$common_ofacm_happy" = "yes"],
-          [common_ofacm_WRAPPER_EXTRA_LDFLAGS="$common_ofacm_LDFLAGS"
-           common_ofacm_WRAPPER_EXTRA_LIBS="$common_ofacm_LIBS"
-           $1],
+          [$1],
           [$2])
 
     AS_IF([test "$common_ofacm_happy" = "yes"],

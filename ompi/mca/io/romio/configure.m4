@@ -100,7 +100,6 @@ AC_DEFUN([MCA_ompi_io_romio_CONFIG],[
                           LIBS="$io_romio_save_LIBS"
 
                           echo "ROMIO distribution configured successfully"
-                          io_romio_WRAPPER_EXTRA_LIBS="$io_romio_LIBS"
                           $1],
                          [AS_IF([test "$enable_io_romio" = "yes"],
                                 [AC_MSG_ERROR([ROMIO distribution did not configure successfully])],

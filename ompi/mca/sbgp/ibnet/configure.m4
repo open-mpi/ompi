@@ -27,9 +27,7 @@ AC_DEFUN([MCA_ompi_sbgp_ibnet_CONFIG],[
     OMPI_CHECK_MLNX_OPENFABRICS([sbgp_ibnet], [sbgp_mlnx_ofed_happy="yes"])
 
     AS_IF([test "$sbgp_ofa_happy" = "yes" -a "$sbgp_mlnx_ofed_happy" = "yes"],
-          [sbgp_ibnet_WRAPPER_EXTRA_LDFLAGS="$sbgp_ibnet_LDFLAGS"
-           sbgp_ibnet_WRAPPER_EXTRA_LIBS="$sbgp_ibnet_LIBS"
-           $1],
+          [$1],
           [$2])
 
     # substitute in the things needed to build iboffload

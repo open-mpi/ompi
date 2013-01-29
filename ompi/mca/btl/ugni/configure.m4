@@ -44,9 +44,7 @@ AC_DEFUN([MCA_ompi_btl_ugni_CONFIG],[
                      [btl_ugni_happy="no"])
 
     AS_IF([test "$btl_ugni_happy" = "yes"],
-          [btl_ugni_WRAPPER_EXTRA_LDFLAGS="$btl_ugni_LDFLAGS"
-           btl_ugni_WRAPPER_EXTRA_LIBS="$btl_ugni_LIBS"
-           $1],
+          [$1],
           [$2])
 
     # substitute in the things needed to build ugni

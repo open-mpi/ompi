@@ -136,11 +136,7 @@ AC_DEFUN([MCA_ompi_btl_sctp_CONFIG],[
                    [btl_sctp_happy="no"])
 
     AS_IF([test "$btl_sctp_happy" = "yes"],
-          [btl_sctp_WRAPPER_EXTRA_LDFLAGS="$btl_sctp_LDFLAGS"
-           btl_sctp_WRAPPER_EXTRA_LIBS="$btl_sctp_LIBS"
-           btl_sctp_WRAPPER_EXTRA_CPPFLAGS="$btl_sctp_CPPFLAGS"
-           btl_sctp_WRAPPER_EXTRA_CFLAGS="$btl_sctp_CFLAGS"
-           $1],
+          [$1],
           [$2])
 
 

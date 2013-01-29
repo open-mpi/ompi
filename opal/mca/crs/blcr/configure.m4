@@ -95,7 +95,6 @@ AC_DEFUN([MCA_opal_crs_blcr_CONFIG],[
     crs_blcr_LIBS="$LIBS $crs_blcr_check_LIBS"
 
     # Check to see if we found the BLCR libcr.h library
-    # If we did then add the arguments to the wrapper compiler
     AS_IF([test "$check_crs_blcr_good" != "yes"], [$2],
           [
            #
@@ -110,12 +109,6 @@ AC_DEFUN([MCA_opal_crs_blcr_CONFIG],[
            crs_blcr_CPPFLAGS="`echo $crs_blcr_CPPFLAGS | sed 's/-Wundef//g'`"
            crs_blcr_LDFLAGS="$crs_blcr_LDFLAGS"
            crs_blcr_LIBS="$crs_blcr_LIBS"
-           #
-           # Setup wrapper options for static builds
-           #
-           crs_blcr_WRAPPER_EXTRA_CPPFLAGS="$crs_blcr_CPPFLAGS"
-           crs_blcr_WRAPPER_EXTRA_LDFLAGS="$crs_blcr_LDFLAGS"
-           crs_blcr_WRAPPER_EXTRA_LIBS="$crs_blcr_LIBS"
            $1])
 
     #
@@ -195,10 +188,7 @@ AC_DEFUN([MCA_opal_crs_blcr_CONFIG],[
 
     #
     AS_IF([test "$check_crs_blcr_good" = "yes"],
-          [ AC_SUBST([crs_blcr_WRAPPER_EXTRA_LDFLAGS])
-            AC_SUBST([crs_blcr_WRAPPER_EXTRA_LIBS])
-            AC_SUBST([crs_blcr_WRAPPER_EXTRA_CPPFLAGS])
-            AC_SUBST([crs_blcr_CFLAGS])
+          [ AC_SUBST([crs_blcr_CFLAGS])
             AC_SUBST([crs_blcr_CPPFLAGS])
             AC_SUBST([crs_blcr_LDFLAGS])
             AC_SUBST([crs_blcr_LIBS])

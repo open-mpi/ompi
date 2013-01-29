@@ -31,9 +31,7 @@ AC_DEFUN([MCA_ompi_btl_udapl_CONFIG],[
                      [btl_udapl_happy="no"])
 
     AS_IF([test "$btl_udapl_happy" = "yes"],
-          [btl_udapl_WRAPPER_EXTRA_LDFLAGS="$btl_udapl_LDFLAGS"
-           btl_udapl_WRAPPER_EXTRA_LIBS="$btl_udapl_LIBS"
-           $1],
+          [$1],
           [$2])
 
     # Borrowed from MVAPI BTL - a data structure in the uDAPL headers

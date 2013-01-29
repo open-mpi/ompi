@@ -30,9 +30,7 @@ AC_DEFUN([MCA_orte_ras_loadleveler_CONFIG],[
     # if check worked, set wrapper flags if so.  
     # Evaluate succeed / fail
     AS_IF([test "$ras_loadleveler_good" = "1" -a "$orte_without_full_support" = 0],
-          [ras_loadleveler_WRAPPER_EXTRA_LDFLAGS="$ras_loadleveler_LDFLAGS"
-           ras_loadleveler_WRAPPER_EXTRA_LIBS="$ras_loadleveler_LIBS"
-           $1],
+          [$1],
           [$2])
 
     # set build flags to use in makefile

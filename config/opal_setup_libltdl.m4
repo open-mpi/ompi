@@ -42,7 +42,7 @@ AC_DEFUN([OPAL_SETUP_LIBLTDL],[
           [AC_MSG_WARN([libltdl support disabled (by --disable-dlopen)])
            LIBLTDL=
            LDTLINCL=
-           WRAPPER_EXTRA_LIBS="$WRAPPER_EXTRA_LIBS $LIBS"],
+           OPAL_WRAPPER_FLAGS_ADD(LIBS, "$LIBS")],
           [
            # Default to building the internal copy.  After this,
            # paffinity_hwloc_location is guaranteed to be set to one of:
@@ -182,7 +182,7 @@ AC_DEFUN([_OPAL_SETUP_LIBLTDL_INTERNAL],[
         OMPI_CHECK_LINKER_FLAGS([opal/libltdl/libtool], 
                                 [-export-dynamic $flags])
 
-        WRAPPER_EXTRA_LIBS="$WRAPPER_EXTRA_LIBS $extra_ldflags"
+        OPAL_WRAPPER_FLAGS_ADD([LIBS], [$extra_ldflags])
         LDFLAGS="-export-dynamic $LDFLAGS"
     else
         AC_MSG_WARN([Failed to build GNU libltdl.  This usually means that something])

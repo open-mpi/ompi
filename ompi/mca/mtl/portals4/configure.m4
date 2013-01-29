@@ -30,14 +30,13 @@ AC_DEFUN([MCA_ompi_mtl_portals4_CONFIG],[
                      [mtl_portals4_happy="no"])
 
     AS_IF([test "$mtl_portals4_happy" = "yes"],
-          [mtl_portals4_WRAPPER_EXTRA_LDFLAGS="$mtl_portals4_LDFLAGS"
-           mtl_portals4_WRAPPER_EXTRA_LIBS="$mtl_portals4_LIBS"
-           $1],
+          [$1],
           [$2])
 
     # need to propogate CPPFLAGS to all of OMPI
     AS_IF([test "$DIRECT_mtl" = "portals4"],
-          [CPPFLAGS="$CPPFLAGS $mtl_portals4_CPPFLAGS"])
+          [mtl_portals4_WRAPPER_EXTRA_CPPFLAGS="$mtl_portals4_CPPFLAGS"
+           CPPFLAGS="$CPPFLAGS $mtl_portals4_CPPFLAGS"])
 
     AC_ARG_ENABLE([mtl-portals4-flow-control],
        [AC_HELP_STRING([--enable-mtl-portals4-flow-control],

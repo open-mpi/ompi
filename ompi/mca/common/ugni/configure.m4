@@ -44,9 +44,7 @@ AC_DEFUN([MCA_ompi_common_ugni_CONFIG],[
         [common_ugni_happy="no"])
 
     AS_IF([test "$common_ugni_happy" = "yes"],
-        [common_ugni_WRAPPER_EXTRA_LDFLAGS="$common_ugni_LDFLAGS"
-	    common_ugni_WRAPPER_EXTRA_LIBS="$common_ugni_LIBS"
-	    $1],
+        [$1],
         [$2])
 
     # substitute in the things needed to build ugni
