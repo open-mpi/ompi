@@ -1,0 +1,11 @@
+# (c) 2012 Los Alamos National Security, LLC. All rights reserved.
+# Common GNU compiler optimization for Cray XE/XK-6 systems
+
+with_wrapper_cflags="$with_wrapper_cflags -march=native"
+with_wrapper_cxxflags="$with_wrapper_cxxflags -march=native"
+with_wrapper_fcflags="$with_wrapper_fcflags -march=native"
+with_wrapper_ffflags="$with_wrapper_ffflags -march=native"
+with_wrapper_casflags="$with_wrapper_casflags -march=native"
+
+# optimize this build of Open MPI
+CFLAGS="$CFLAGS -march=native -O2"

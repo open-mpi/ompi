@@ -1,0 +1,15 @@
+# (c) 2012 Los Alamos National Security, LLC. All rights reserved.
+# Common Intel compiler optimization for Cray XE/XK-6 systems
+
+with_wrapper_cflags="$with_wrapper_cflags -msse3"
+with_wrapper_cxxflags="$with_wrapper_cxxflags -msse3"
+with_wrapper_fcflags="$with_wrapper_fcflags -msse3"
+with_wrapper_ffflags="$with_wrapper_ffflags -msse3"
+with_wrapper_casflags="$with_wrapper_casflags -msse3"
+
+# optimize this build of Open MPI
+CFLAGS="$CFLAGS -msse3"
+CXXFLAGS="$CXXFLAGS -msse3"
+CC=icc
+CXX=icpc
+FTN=ifort
