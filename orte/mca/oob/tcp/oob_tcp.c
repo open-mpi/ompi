@@ -365,11 +365,12 @@ static int mca_oob_tcp_component_register(void)
             orte_static_ports = false;
         }
     } else {
-        if (ip4_ports_given) {
-            opal_output(0, "OOB:TCP:Error: IP4 static ports given, but IPv6 is enabled and no static ports provided for it");
-            return ORTE_ERR_FATAL;
+        if (!ip4_ports_given) {
+            opal_output_verbose(1, mca_oob_tcp_output_handle,
+                                "%s oob:tcp: Static ports are enabled and given for IPv4 - but not for IPv6",
+                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+            orte_static_ports = false;
         }
-        orte_static_ports = false;
         mca_oob_tcp_component.tcp6_static_ports = NULL;
     }
 #endif
