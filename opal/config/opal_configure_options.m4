@@ -347,7 +347,7 @@ AC_DEFINE_UNQUOTED([OPAL_ENABLE_FT], [0],
 AC_DEFINE_UNQUOTED([OPAL_ENABLE_FT_CR], [0],
                    [Enable fault tolerance checkpoint/restart components and logic])
 AM_CONDITIONAL(WANT_FT, 0)
-AM_CONDITIONAL(WANT_FT_CR,  0)
+AM_CONDITIONAL(WANT_FT_CR, 0)
 
 #
 # Do we want to install binaries?
@@ -487,26 +487,7 @@ AC_ARG_WITH([libltdl],
     [AC_HELP_STRING([--with-libltdl(=DIR)],
          [Where to find libltdl (this option is ignored if --disable-dlopen is used).  DIR can take one of three values: "internal", "external", or a valid directory name.  "internal" (or no DIR value) forces Open MPI to use its internal copy of libltdl.  "external" forces Open MPI to use an external installation of libltdl.  Supplying a valid directory name also forces Open MPI to use an external installation of libltdl, and adds DIR/include, DIR/lib, and DIR/lib64 to the search path for headers and libraries.])])
 
-#
-# Checkpoint/restart enabled debugging
-#
-AC_MSG_CHECKING([if want checkpoint/restart enabled debugging option])
-AC_ARG_ENABLE([crdebug],
-    [AC_HELP_STRING([--enable-crdebug],
-            [enable checkpoint/restart debugging functionality (default: disabled)])])
- 
-if test "$ompi_want_ft" = "0"; then
-    ompi_want_prd=0
-    AC_MSG_RESULT([Disabled (fault tolerance disabled --without-ft)])
-elif test "$enable_crdebug" = "yes"; then
-    ompi_want_prd=1
-    AC_MSG_RESULT([Enabled])
-else
-    ompi_want_prd=0
-    AC_MSG_RESULT([Disabled])
-fi
- 
-AC_DEFINE_UNQUOTED([OPAL_ENABLE_CRDEBUG], [$ompi_want_prd],
+AC_DEFINE_UNQUOTED([OPAL_ENABLE_CRDEBUG], [0],
     [Whether we want checkpoint/restart enabled debugging functionality or not])
 
 #
