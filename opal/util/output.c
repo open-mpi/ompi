@@ -113,7 +113,9 @@ static output_desc_t info[OPAL_OUTPUT_MAX_STREAMS];
 static char *temp_str = 0;
 static size_t temp_str_len = 0;
 static opal_mutex_t mutex;
+#if defined(HAVE_SYSLOG)
 static bool syslog_opened = false;
+#endif
 static char *redirect_syslog_ident = NULL;
 
 OBJ_CLASS_INSTANCE(opal_output_stream_t, opal_object_t, construct, NULL);
