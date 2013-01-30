@@ -16,7 +16,7 @@ dnl Copyright (c) 2009      IBM Corporation.  All rights reserved.
 dnl Copyright (c) 2009      Los Alamos National Security, LLC.  All rights
 dnl                         reserved.
 dnl Copyright (c) 2009-2011 Oak Ridge National Labs.  All rights reserved.
-dnl Copyright (c) 2011      NVIDIA Corporation.  All rights reserved.
+dnl Copyright (c) 2011-2013 NVIDIA Corporation.  All rights reserved.
 dnl
 dnl $COPYRIGHT$
 dnl 
@@ -557,10 +557,10 @@ AC_MSG_CHECKING([if have cuda support])
 if test "$opal_check_cuda_happy" = "yes"; then
     AC_MSG_RESULT([yes (-I$with_cuda/include -L$with_cuda_libdir -lcuda)])
     CUDA_SUPPORT=1
-    opal_datatype_CPPFLAGS="-I$with_cuda/include"
-    opal_datatype_LIBS="-L$with_cuda_libdir -lcuda"
-    AC_SUBST([opal_datatype_CPPFLAGS])
-    AC_SUBST([opal_datatype_LIBS])
+    opal_datatype_cuda_CPPFLAGS="-I$with_cuda/include"
+    opal_datatype_cuda_LIBS="-L$with_cuda_libdir -lcuda"
+    AC_SUBST([opal_datatype_cuda_CPPFLAGS])
+    AC_SUBST([opal_datatype_cuda_LIBS])
 else
     AC_MSG_RESULT([no])
     CUDA_SUPPORT=0

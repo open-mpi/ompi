@@ -25,6 +25,7 @@
 #if OMPI_CUDA_SUPPORT
 #include "ompi/mca/common/cuda/common_cuda.h"
 #include "pml_ob1_recvreq.h"
+#include "ompi/runtime/params.h"
 static void mca_pml_ob1_process_pending_cuda_async_copies(void);
 #endif /* OMPI_CUDA_SUPPORT */
 
@@ -91,6 +92,9 @@ static void mca_pml_ob1_process_pending_cuda_async_copies(void)
 {
     mca_btl_base_descriptor_t *frag;
     int progress;
+
+    if (!ompi_mpi_cuda_support)
+        return;
 
     do {
         progress = progress_one_cuda_htod_event(&frag);
