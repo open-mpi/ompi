@@ -2854,27 +2854,32 @@ btl_openib_component_init(int *num_btl_modules,
         ib_selected = (mca_btl_base_selected_module_t*)item;
         openib_btl = (mca_btl_openib_module_t*)ib_selected->btl_module;
         device = openib_btl->device;
+        OBJ_RELEASE(ib_selected);
 
         /* Search for a CPC that can handle this port */
         ret = ompi_btl_openib_connect_base_select_for_local_port(openib_btl);
-        /* If we get NOT_SUPPORTED, then no CPC was found for this
-           port.  But that's not a fatal error -- just keep going;
-           let's see if we find any usable openib modules or not. */
-        if (OMPI_ERR_NOT_SUPPORTED == ret) {
-            continue;
-        } else if (OMPI_SUCCESS != ret) {
-            /* All others *are* fatal.  Note that we already did a
-               show_help in the lower layer */
+        if ((OMPI_SUCCESS != ret) && (OMPI_ERR_NOT_SUPPORTED != ret)) {
+            /* All errors except NOT_SUPPORTED are fatal. Note that we already
+               did a show_help in the lower layer */
             goto no_btls;
         }
 
-        mca_btl_openib_component.openib_btls[i] = openib_btl;
-        OBJ_RELEASE(ib_selected);
-        btls[i] = &openib_btl->super;
+        /* Finish BTL initialization */
         if (finish_btl_init(openib_btl) != OMPI_SUCCESS) {
             goto no_btls;
         }
-        ++i;
+
+        /* If we get NOT_SUPPORTED, then no CPC was found for this
+            port.  But that's not a fatal error -- destroy this openib module
+            and keep going; let's see if we find any usable openib modules or not. */
+        if (OMPI_ERR_NOT_SUPPORTED == ret) {
+            mca_btl_openib_finalize(&openib_btl->super);
+            continue;
+        } else /* OMPI_SUCCESS == ret */ {
+            mca_btl_openib_component.openib_btls[i] = openib_btl;
+            btls[i] = &openib_btl->super;
+            ++i;
+        }
 
         /* For each btl module that we made - find every
            base device that doesn't have device->qps setup on it yet (remember
