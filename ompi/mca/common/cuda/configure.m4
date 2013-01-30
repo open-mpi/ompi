@@ -1,6 +1,6 @@
 # -*- shell-script -*-
 #
-# Copyright (c) 2011      NVIDIA Corporation.  All rights reserved.
+# Copyright (c) 2011-2013 NVIDIA Corporation.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -31,8 +31,8 @@ AC_DEFUN([MCA_ompi_common_cuda_CONFIG],[
                        [Whether we want support CUDA 4.1 features])
  
     # Copy over the includes and libs needed to build CUDA
-    common_cuda_CPPFLAGS=$opal_datatype_CPPFLAGS
-    common_cuda_LIBS=$opal_datatype_LIBS
+    common_cuda_CPPFLAGS=$opal_datatype_cuda_CPPFLAGS
+    common_cuda_LIBS=$opal_datatype_cuda_LIBS
     AC_SUBST([common_cuda_CPPFLAGS])
     AC_SUBST([common_cuda_LIBS])
 

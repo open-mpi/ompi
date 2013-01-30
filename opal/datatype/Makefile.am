@@ -13,8 +13,8 @@
 # Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
 #                         reserved.
 # Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
-# Copyright (c) 2010 Cisco Systems, Inc.  All rights reserved.
-# Copyright (c) 2011      NVIDIA Corporation.  All rights reserved.
+# Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2011-2013 NVIDIA Corporation.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -77,6 +77,4 @@ endif
 if OPAL_cuda_support
 libdatatype_la_SOURCES += opal_datatype_cuda.c
 headers += opal_datatype_cuda.h
-AM_CPPFLAGS = $(opal_datatype_CPPFLAGS)
-libdatatype_la_LIBADD += $(opal_datatype_LIBS)
 endif

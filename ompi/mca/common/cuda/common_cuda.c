@@ -51,6 +51,12 @@ static CUstream ipcStream;
 static CUstream dtohStream;
 static CUstream htodStream;
 
+/* Functions called by opal layer - plugged into opal function table */
+static int mca_common_cuda_is_gpu_buffer(const void*);
+static int mca_common_cuda_memmove(void*, void*, size_t);
+static int mca_common_cuda_cu_memcpy_async(void*, const void*, size_t, opal_convertor_t*);
+static int mca_common_cuda_cu_memcpy(void*, const void*, size_t);
+
 /* Structure to hold memory registrations that are delayed until first
  * call to send or receive a GPU pointer */
 struct common_cuda_mem_regs_t {
@@ -118,7 +124,7 @@ static void cuda_dump_memhandle(int, void *, char *) __opal_attribute_unused__ ;
 
 #endif /* OMPI_CUDA_SUPPORT_41 */
 
-static int mca_common_cuda_init(void)
+static int mca_common_cuda_init(opal_common_cuda_function_table_t *ftable)
 {
     int id, value, i, s;
     CUresult res;
@@ -132,6 +138,11 @@ static int mca_common_cuda_init(void)
     if (common_cuda_initialized) {
         return OMPI_SUCCESS;
     }
+
+    ftable->gpu_is_gpu_buffer = &mca_common_cuda_is_gpu_buffer;
+    ftable->gpu_cu_memcpy_async = &mca_common_cuda_cu_memcpy_async;
+    ftable->gpu_cu_memcpy = &mca_common_cuda_cu_memcpy;
+    ftable->gpu_memmove = &mca_common_cuda_memmove;
 
     /* Set different levels of verbosity in the cuda related code. */
     id = mca_base_param_reg_int_name("mpi", "common_cuda_verbose", 
@@ -1113,3 +1124,59 @@ static float mydifftime(struct timespec ts_start, struct timespec ts_end) {
 #endif /* CUDA_COMMON_TIMING */
 
 #endif /* OMPI_CUDA_SUPPORT_41 */
+
+/* Routines that get plugged into the opal datatype code */
+static int mca_common_cuda_is_gpu_buffer(const void *pUserBuf)
+{
+    int res;
+    CUmemorytype memType;
+    CUdeviceptr dbuf = (CUdeviceptr)pUserBuf;
+
+    res = cuPointerGetAttribute(&memType,
+                                CU_POINTER_ATTRIBUTE_MEMORY_TYPE, dbuf);
+    if (res != CUDA_SUCCESS) {
+        /* If we cannot determine it is device pointer,
+         * just assume it is not. */
+        return 0;
+    } else if (memType == CU_MEMORYTYPE_HOST) {
+        /* Host memory, nothing to do here */
+        return 0;
+    }
+    /* Must be a device pointer */
+    assert(memType == CU_MEMORYTYPE_DEVICE);
+    return 1;
+}
+
+static int mca_common_cuda_cu_memcpy_async(void *dest, const void *src, size_t size,
+                                         opal_convertor_t* convertor)
+{
+    return cuMemcpyAsync((CUdeviceptr)dest, (CUdeviceptr)src, size, 
+                         (CUstream)convertor->stream);
+}
+
+static int mca_common_cuda_cu_memcpy(void *dest, const void *src, size_t size)
+{
+    return cuMemcpy((CUdeviceptr)dest, (CUdeviceptr)src, size);
+}
+
+static int mca_common_cuda_memmove(void *dest, void *src, size_t size)
+{
+    CUdeviceptr tmp;
+    int res;
+
+    res = cuMemAlloc(&tmp,size);
+    res = cuMemcpy(tmp, (CUdeviceptr)src, size);
+    if(res != CUDA_SUCCESS){
+        opal_output(0, "CUDA: memmove-Error in cuMemcpy: res=%d, dest=%p, src=%p, size=%d",
+                    res, (void *)tmp, src, (int)size);
+        return res;
+    }
+    res = cuMemcpy((CUdeviceptr)dest, tmp, size);
+    if(res != CUDA_SUCCESS){
+        opal_output(0, "CUDA: memmove-Error in cuMemcpy: res=%d, dest=%p, src=%p, size=%d",
+                    res, dest, (void *)tmp, (int)size);
+        return res;
+    }
+    cuMemFree(tmp);
+    return 0;
+}
