@@ -184,11 +184,7 @@ static void opal_cuda_support_init(void)
     if (NULL != common_cuda_initialization_function) {
         if (0 == common_cuda_initialization_function()) {
             opal_cuda_enabled = 1;
-        } else {
-            return; /* Initialization failed - no support */
         }
-    } else {
-        return;  /* No initialization function - no support */
     }
 
     /* Set different levels of verbosity in the cuda related code. */
