@@ -2,9 +2,9 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="9.00"
-	Name="otfdump"
+	Name="otfprint"
 	ProjectGUID="{508A823C-8EAB-4C56-9DFE-4D85B0D24491}"
-	RootNamespace="otfdump"
+	RootNamespace="otfprint"
 	Keyword="Win32Proj"
 	TargetFrameworkVersion="131072"
 	>

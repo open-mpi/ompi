@@ -25,6 +25,16 @@ AC_ARG_WITH(openmpi-inside, [],
 	])
 ])
 
+# Correct install paths
+AS_IF([test "$inside_openmpi" = "yes" -o "$includedir" = "\${prefix}/include"],
+[includedir="$includedir/otf1"])
+AS_IF([test "$inside_openmpi" = "yes" -o "$libdir" = "\${exec_prefix}/lib" -o "$libdir" = "\${prefix}/lib"],
+[libdir="$libdir/otf1"])
+AS_IF([test "$inside_openmpi" = "yes" -o "$datarootdir" = "\${prefix}/share"],
+[datarootdir="$datarootdir/otf1"])
+AS_IF([test "$docdir" = "\${datarootdir}/doc/\${PACKAGE_TARNAME}"],
+[docdir="\${datarootdir}/doc"])
+
 # Get library version
 OTF_VERSION_LIBRARY=m4_normalize(esyscmd([config/otf_get_version.sh VERSION --library]))
 AC_SUBST([OTF_VERSION_LIBRARY])

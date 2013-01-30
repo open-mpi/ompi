@@ -26,10 +26,10 @@ using namespace std;
 
 static const char* Helptext[] = {
 "                                                                           \n",
-" otfdump - Convert an OTF trace or parts of it into a human readable, long \n",
-"           version.                                                        \n",
+" otfprint - Convert an OTF trace or parts of it into a human readable, long\n",
+"            version.                                                       \n",
 "                                                                           \n",
-" Syntax: otfdump [options] <input file name>                               \n",
+" Syntax: otfprint [options] <input file name>                              \n",
 "                                                                           \n",
 "   options:                                                                \n",
 "      -h, --help    show this help message                                 \n",
@@ -62,7 +62,7 @@ static const char* Helptext[] = {
 "                    record-type-numbers can be found in OTF_Definitions.h  \n",
 "                    (OTF_*_RECORD)                                         \n",
 "                                                                           \n",
-"      -s, --silent  do not display anything except the time otfdump        \n",
+"      -s, --silent  do not display anything except the time otfprint       \n",
 "                    needed to read the tracefile                           \n",
 "                                                                           \n",
 NULL };
