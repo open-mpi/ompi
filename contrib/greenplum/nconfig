@@ -1,0 +1,12 @@
+#!/bin/sh
+
+if [ $# -lt 1 ] ; then
+  echo "usage: gpconfig -vpath <prefix>"
+  exit 1
+fi
+
+if [ $1 = "-vpath" ] ; then
+  ../autogen.pl -no-ompi && ../configure --prefix=$1 --with-platform=../contrib/platform/greenplum/nmon/linux && rm -rf $1 && make clean > /dev/null && make -j6 all > /dev/null && make -j6 install > /dev/null
+else
+  ./autogen.pl -no-ompi && ./configure --prefix=$1 --with-platform=./contrib/platform/greenplum/nmon/linux && rm -rf $1 && make clean > /dev/null && make -j6 all > /dev/null && make -j6 install > /dev/null
+fi
