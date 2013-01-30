@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Voltaire All rights reserved.
+ * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -157,6 +159,101 @@ struct opal_list_t
  * List container type.
  */
 typedef struct opal_list_t opal_list_t;
+
+
+/**
+ * Loop over a list.
+ *
+ * @param[in] item Storage for each item
+ * @param[in] list List to iterate over
+ * @param[in] type Type of each list item
+ *
+ * This macro provides a simple way to loop over the items in an opal_list_t. It
+ * is not safe to call opal_list_remove_item from within the loop.
+ *
+ * Example Usage:
+ *
+ * class_foo_t *foo;
+ * opal_list_foreach(foo, list, class_foo_t) {
+ *    do something;
+ * }
+ */
+#define OPAL_LIST_FOREACH(item, list, type)                             \
+  for (item = (type *) (list)->opal_list_sentinel.opal_list_next ;      \
+       item != (type *) &(list)->opal_list_sentinel ;                   \
+       item = (type *) ((opal_list_item_t *) (item))->opal_list_next)
+
+/**
+ * Loop over a list in reverse.
+ *
+ * @param[in] item Storage for each item
+ * @param[in] list List to iterate over
+ * @param[in] type Type of each list item
+ *
+ * This macro provides a simple way to loop over the items in an opal_list_t. It
+ * is not safe to call opal_list_remove_item from within the loop.
+ *
+ * Example Usage:
+ *
+ * class_foo_t *foo;
+ * opal_list_foreach(foo, list, class_foo_t) {
+ *    do something;
+ * }
+ */
+#define OPAL_LIST_FOREACH_REV(item, list, type)                         \
+  for (item = (type *) (list)->opal_list_sentinel.opal_list_prev ;      \
+       item != (type *) &(list)->opal_list_sentinel ;                   \
+       item = (type *) ((opal_list_item_t *) (item))->opal_list_prev)
+
+/**
+ * Loop over a list in a *safe* way
+ *
+ * @param[in] item Storage for each item
+ * @param[in] next Storage for next item
+ * @param[in] list List to iterate over
+ * @param[in] type Type of each list item
+ *
+ * This macro provides a simple way to loop over the items in an opal_list_t. If
+ * is safe to call opal_list_remove_item(list, item) from within the loop.
+ *
+ * Example Usage:
+ *
+ * class_foo_t *foo, *next;
+ * opal_list_foreach_safe(foo, next, list, class_foo_t) {
+ *    do something;
+ *    opal_list_remove_item (list, (opal_list_item_t *) foo);
+ * }
+ */
+#define OPAL_LIST_FOREACH_SAFE(item, next, list, type)                  \
+  for (item = (type *) (list)->opal_list_sentinel.opal_list_next,       \
+         next = (type *) ((opal_list_item_t *) (item))->opal_list_next ;\
+       item != (type *) &(list)->opal_list_sentinel ;                   \
+       item = next, next = (type *) ((opal_list_item_t *) (item))->opal_list_next)
+
+/**
+ * Loop over a list in a *safe* way
+ *
+ * @param[in] item Storage for each item
+ * @param[in] next Storage for next item
+ * @param[in] list List to iterate over
+ * @param[in] type Type of each list item
+ *
+ * This macro provides a simple way to loop over the items in an opal_list_t. If
+ * is safe to call opal_list_remove_item(list, item) from within the loop.
+ *
+ * Example Usage:
+ *
+ * class_foo_t *foo, *next;
+ * opal_list_foreach_safe(foo, next, list, class_foo_t) {
+ *    do something;
+ *    opal_list_remove_item (list, (opal_list_item_t *) foo);
+ * }
+ */
+#define OPAL_LIST_FOREACH_SAFE_REV(item, prev, list, type)              \
+  for (item = (type *) (list)->opal_list_sentinel.opal_list_prev,       \
+         prev = (type *) ((opal_list_item_t *) (item))->opal_list_prev ;\
+       item != (type *) &(list)->opal_list_sentinel ;                   \
+       item = prev, prev = (type *) ((opal_list_item_t *) (item))->opal_list_prev)
 
 
 /**
