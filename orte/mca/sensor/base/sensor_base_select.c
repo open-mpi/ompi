@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved. 
- * Copyright (c) 2012      Los Alamos National Security, Inc. All rights reserved.
+ * Copyright (c) 2012-2013 Los Alamos National Security, Inc. All rights reserved.
  *
  * $COPYRIGHT$
  * 
@@ -23,6 +23,7 @@
 #include "opal/util/output.h"
 #include "opal/class/opal_pointer_array.h"
 
+#include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/sensor/base/base.h"
 #include "orte/mca/sensor/base/sensor_private.h"
 
@@ -45,7 +46,6 @@ int orte_sensor_base_select(void)
     orte_sensor_active_module_t *i_module;
     opal_list_item_t *item;
     int priority = 0, i, j, low_i;
-    int exit_status = OPAL_SUCCESS;
     opal_pointer_array_t tmp_array;
     bool none_found;
     orte_sensor_active_module_t *tmp_module = NULL, *tmp_module_sw = NULL;
@@ -127,9 +127,11 @@ int orte_sensor_base_select(void)
         orte_sensor_base.my_node = OBJ_NEW(orte_node_t);
     } else {
         if (NULL == (orte_sensor_base.my_proc = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, ORTE_PROC_MY_NAME->vpid))) {
+            ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
             return ORTE_ERR_NOT_FOUND;
         }
         if (NULL == (orte_sensor_base.my_node = orte_sensor_base.my_proc->node)) {
+            ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
             return ORTE_ERR_NOT_FOUND;
         }
         /* protect the objects */
@@ -193,5 +195,5 @@ int orte_sensor_base_select(void)
         }
     }
     
-    return exit_status;
+    return ORTE_SUCCESS;
 }
