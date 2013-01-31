@@ -217,6 +217,10 @@ struct mca_coll_fca_module_t {
     mca_coll_base_module_t *previous_gatherv_module;
     mca_coll_base_module_reduce_scatter_fn_t previous_reduce_scatter;
     mca_coll_base_module_t *previous_reduce_scatter_module;
+#if OMPI_FCA_VERSION >= 30
+    mca_coll_base_module_scatter_fn_t previous_scatter;
+    mca_coll_base_module_t *previous_scatter_module;
+#endif
 };
 typedef struct mca_coll_fca_module_t mca_coll_fca_module_t;
 
