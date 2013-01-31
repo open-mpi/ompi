@@ -849,8 +849,21 @@ LAUNCH_PROCS:
                 free(tmp);
             }
 
+            /* v1.6-specific comment: if OMPI is configured
+               --without-hwloc, the hwloc base function called below
+               will not exist (!).  Hence, we have to protect this
+               call with the OPAL_HAVE_HWLOC macro.  
+
+               That being said, I do not believe that this code path
+               will ever be called if there's no hwloc (i.e., we'll
+               fail earlier and this affinity-related block of code
+               won't be invoked).  But we still have to protect linker
+               semantics, lest this module fail because it can't find
+               a symbol at linker time. */
+#if OPAL_HAVE_HWLOC
             /* Also set the memory affininty policy */
             opal_hwloc_base_set_process_membind_policy();
+#endif
         }
 
         /* close all file descriptors w/ exception of
