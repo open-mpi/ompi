@@ -111,9 +111,15 @@ static int orte_ras_slurm_component_query(mca_base_module_t **module, int *prior
 {
     /* if I built, then slurm support is available. If
      * I am not in a Slurm allocation, and dynamic alloc
-     * is not enabled, then I'll deal with that by returning
-     * an appropriate status code upon allocation
+     * is not enabled, then disqualify myself
      */
+    if (NULL == getenv("SLURM_JOBID") &&
+        !mca_ras_slurm_component.dyn_alloc_enabled) {
+        /* disqualify ourselves */
+        *priority = 0;
+        *module = NULL;
+        return ORTE_ERROR;
+    }
 
     OPAL_OUTPUT_VERBOSE((2, orte_ras_base.ras_output,
                          "%s ras:slurm: available for selection",
