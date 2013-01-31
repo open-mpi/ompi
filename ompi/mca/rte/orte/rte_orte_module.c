@@ -12,9 +12,12 @@
 #include "opal/dss/dss.h"
 #include "opal/util/argv.h"
 #include "opal/util/opal_getcwd.h"
+#include "opal/util/show_help.h"
 
 #include "orte/mca/errmgr/errmgr.h"
+#include "orte/mca/ess/ess.h"
 #include "orte/mca/grpcomm/grpcomm.h"
+#include "orte/mca/odls/odls.h"
 #include "orte/mca/plm/plm.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/rml/rml_types.h"
@@ -24,6 +27,7 @@
 #include "orte/mca/rml/base/rml_contact.h"
 #include "orte/mca/routed/routed.h"
 #include "orte/util/name_fns.h"
+#include "orte/util/session_dir.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/runtime/orte_wait.h"
 #include "orte/runtime/orte_data_server.h"
@@ -34,14 +38,65 @@
 
 void ompi_rte_abort(int error_code, char *fmt, ...)
 {
-    /* pass thru to orte_errmgr.abort */
+    va_list arglist;
+    
+    /* If there was a message, output it */
+    va_start(arglist, fmt);
+    if( NULL != fmt ) {
+        char* buffer = NULL;
+        vasprintf( &buffer, fmt, arglist );
+        opal_output( 0, "%s", buffer );
+        free( buffer );
+    }
+    va_end(arglist);
+    
+    /* if I am a daemon or the HNP... */
+    if (ORTE_PROC_IS_HNP || ORTE_PROC_IS_DAEMON) {
+        /* whack my local procs */
+        orte_odls.kill_local_procs(NULL);
+        /* whack any session directories */
+        orte_session_dir_cleanup(ORTE_JOBID_WILDCARD);
+    } else {
+        /* cleanup my session directory */
+        orte_session_dir_finalize(ORTE_PROC_MY_NAME);
+    }
+
+    /* if a critical connection failed, or a sensor limit was exceeded, exit without dropping a core */
+    if (ORTE_ERR_CONNECTION_FAILED == error_code ||
+        ORTE_ERR_SENSOR_LIMIT_EXCEEDED == error_code) {
+        orte_ess.abort(error_code, false);
+    } else {
+        orte_ess.abort(error_code, true);
+    }
+
+    /*
+     * We must exit in orte_ess.abort; all implementations of orte_ess.abort
+     * contain __opal_attribute_noreturn__
+     */
+    /* No way to reach here */
 }
 
 int ompi_show_help(const char *filename, const char *topic, 
                    bool want_error_header, ...)
 {
-    /* pass this thru to orte_show_help */
-
+    va_list arglist;
+    char *output;
+    
+    if (orte_execute_quiet) {
+        return ORTE_SUCCESS;
+    }
+    
+    va_start(arglist, want_error_header);
+    output = opal_show_help_vstring(filename, topic, want_error_header, 
+                                    arglist);
+    va_end(arglist);
+    
+    /* If nothing came back, there's nothing to do */
+    if (NULL == output) {
+        return OMPI_SUCCESS;
+    }
+    
+    opal_output(0, "%s", output);
     return OMPI_SUCCESS;
 }
 
