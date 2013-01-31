@@ -66,7 +66,7 @@ opal_shmem_base_register_params(void)
                                    "is the name of the component that is "
                                    "available, selectable, and meets our "
                                    "run-time behavior requirements.",
-                                   true, true, NULL, NULL);
+                                   true, false, NULL, NULL);
     if (0 != value) {
         opal_shmem_base_output = opal_output_open(NULL);
     }
