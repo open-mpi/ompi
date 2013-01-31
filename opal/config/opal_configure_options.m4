@@ -10,7 +10,7 @@ dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
-dnl Copyright (c) 2006-2010 Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2006-2013 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
 dnl Copyright (c) 2009      IBM Corporation.  All rights reserved.
 dnl Copyright (c) 2009      Los Alamos National Security, LLC.  All rights
@@ -346,8 +346,8 @@ AC_DEFINE_UNQUOTED([OPAL_ENABLE_FT], [0],
                    [Enable fault tolerance general components and logic])
 AC_DEFINE_UNQUOTED([OPAL_ENABLE_FT_CR], [0],
                    [Enable fault tolerance checkpoint/restart components and logic])
-AM_CONDITIONAL(WANT_FT, 0)
-AM_CONDITIONAL(WANT_FT_CR, 0)
+AM_CONDITIONAL(WANT_FT, false)
+AM_CONDITIONAL(WANT_FT_CR, false)
 
 #
 # Do we want to install binaries?
