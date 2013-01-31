@@ -130,6 +130,9 @@ static void sample(void)
     /* if my HNP hasn't been defined yet, ignore - nobody listening yet */
     if (ORTE_JOBID_INVALID == ORTE_PROC_MY_HNP->jobid ||
         ORTE_VPID_INVALID == ORTE_PROC_MY_HNP->vpid) {
+        opal_output_verbose(1, orte_sensor_base.output,
+                            "%s sensor:heartbeat: HNP is not defined",
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
         return;
     }
 
@@ -226,6 +229,11 @@ static void recv_beats(int status, orte_process_name_t* sender,
     int rc, n;
     char *component=NULL;
     opal_buffer_t *buf;
+
+    opal_output_verbose(1, orte_sensor_base.output,
+                        "%s received beat from %s",
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                        ORTE_NAME_PRINT(sender));
 
     /* if we are aborting or shutting down, ignore this */
     if (orte_abnormal_term_ordered || orte_finalizing || !orte_initialized) {
