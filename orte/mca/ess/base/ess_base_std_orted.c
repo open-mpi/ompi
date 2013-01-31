@@ -498,6 +498,10 @@ int orte_ess_base_orted_setup(char **hosts)
     node->daemon_launched = true;
     node->state = ORTE_NODE_STATE_UP;
     
+    /* now point our proc node field to the node */
+    OBJ_RETAIN(node);   /* keep accounting straight */
+    proc->node = node;
+
     /* record that the daemon job is running */
     jdata->num_procs = 1;
     jdata->state = ORTE_JOB_STATE_RUNNING;
