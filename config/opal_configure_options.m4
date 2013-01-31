@@ -342,13 +342,6 @@ elif test "$with_cross" != "" ; then
     . "$with_cross"
 fi
 
-AC_DEFINE_UNQUOTED([OPAL_ENABLE_FT], [0],
-                   [Enable fault tolerance general components and logic])
-AC_DEFINE_UNQUOTED([OPAL_ENABLE_FT_CR], [0],
-                   [Enable fault tolerance checkpoint/restart components and logic])
-AM_CONDITIONAL(WANT_FT, /bin/false)
-AM_CONDITIONAL(WANT_FT_CR, /bin/false)
-
 #
 # Do we want to install binaries?
 #
