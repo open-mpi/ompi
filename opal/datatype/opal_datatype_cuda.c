@@ -93,7 +93,7 @@ void *opal_cuda_memcpy(void *dest, const void *src, size_t size, opal_convertor_
     }
             
     if (convertor->flags & CONVERTOR_CUDA_ASYNC) {
-        res = ftable.gpu_cu_memcpy_async(dest, (void *)src, size, convertor->stream);
+        res = ftable.gpu_cu_memcpy_async(dest, (void *)src, size, convertor);
     } else {
         res = ftable.gpu_cu_memcpy(dest, (void *)src, size);
     }
