@@ -95,13 +95,17 @@ AC_DEFUN([ORTE_CHECK_ALPS],[
                           orte_check_alps_pmi_happy=yes],
                          [AC_MSG_RESULT([not found])])
 
-                   AS_IF([test "$orte_check_alps_pmi_happy" = "yes" -a "$orte_without_full_support" = 0],
-                         [$1_LIBS="-lalpslli -lalpsutil"],
+                   AS_IF([test "$orte_check_alps_pmi_happy" = "yes" -a "$orte_without_full_support" = 0], [],
                          [AC_MSG_WARN([PMI support for Alps requested but not found])
                           AC_MSG_ERROR([Cannot continue])])
                fi
            fi
         fi
+    fi
+
+    # Set LIBS, CPPFLAGS, and LDFLAGS here so they always get set
+    if test "$orte_check_alps_happy" = "yes" -a "$orte_enable_pmi" = 1 ; then
+	$1_LIBS="-lalpslli -lalpsutil"
     fi
 
     $1_CPPFLAGS="-I$orte_check_alps_dir/include"
