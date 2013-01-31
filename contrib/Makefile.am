@@ -44,9 +44,12 @@ EXTRA_DIST = \
         platform/ornl/ornl_configure_self_contained \
         platform/lanl/macosx-dynamic \
         platform/lanl/macosx-dynamic.conf \
+        platform/lanl/cray_xe6/cray-common \
         platform/lanl/cray_xe6/debug-common \
         platform/lanl/cray_xe6/debug-lustre \
         platform/lanl/cray_xe6/debug-lustre.conf \
+        platform/lanl/cray_xe6/gnu-common \
+        platform/lanl/cray_xe6/intel-common \
         platform/lanl/cray_xe6/optimized-common \
         platform/lanl/cray_xe6/optimized-lustre \
         platform/lanl/cray_xe6/optimized-lustre.conf \
