@@ -58,7 +58,7 @@ AC_DEFUN([OMPI_CHECK_LUSTRE],[
     
     # Add correct -I and -L flags
     AS_IF([test -d "$with_lustre/include/lustre/"],
-        [check_lustre_CPPFLAGS="-I$with_lustre/include/lustre/"
+        [check_lustre_CPPFLAGS="-I$with_lustre/include/lustre -I$with_lustre/include"
             $1_CPPFLAGS="$check_lustre_CPPFLAGS"
             CPPFLAGS="$CPPFLAGS $check_lustre_CPPFLAGS"], 
 	[ompi_check_lustre_happy="no"])
