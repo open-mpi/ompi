@@ -26,8 +26,8 @@ struct orte_sensor_resusage_component_t {
     int sample_rate;
     float node_memory_limit;
     float proc_memory_limit;
-    char *nstat_log;
-    char *pstat_log;
+    bool log_node_stats;
+    bool log_process_stats;
 };
 typedef struct orte_sensor_resusage_component_t orte_sensor_resusage_component_t;
 

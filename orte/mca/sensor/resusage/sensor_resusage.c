@@ -61,49 +61,15 @@ orte_sensor_base_module_t orte_sensor_resusage_module = {
     res_log
 };
 
-#define ORTE_RESUSAGE_LENGTH  16
-static int line_count = 0;
 static bool log_enabled = true;
-static FILE *nstat_fp, *pstat_fp;
 
 static int init(void)
 {
-    if (NULL != mca_sensor_resusage_component.nstat_log) {
-        if (0 == strcmp(mca_sensor_resusage_component.nstat_log, "-")) {
-            nstat_fp = stdout;
-        } else if (0 == strcmp(mca_sensor_resusage_component.nstat_log, "+")) {
-            nstat_fp = stderr;
-        } else {
-            nstat_fp = fopen(mca_sensor_resusage_component.nstat_log, "w");
-        }
-    }
-
-    if (NULL != mca_sensor_resusage_component.pstat_log) {
-        if (0 == strcmp(mca_sensor_resusage_component.pstat_log, "-")) {
-            pstat_fp = stdout;
-        } else if (0 == strcmp(mca_sensor_resusage_component.pstat_log, "+")) {
-            pstat_fp = stderr;
-        } else {
-            pstat_fp = fopen(mca_sensor_resusage_component.pstat_log, "w");
-        }
-    }
-
     return ORTE_SUCCESS;
 }
 
 static void finalize(void)
 {
-    if (NULL != mca_sensor_resusage_component.nstat_log &&
-        0 != strcmp(mca_sensor_resusage_component.nstat_log, "-") &&
-        0 != strcmp(mca_sensor_resusage_component.nstat_log, "+")) {
-        fclose(nstat_fp);
-    }
-
-    if (NULL != mca_sensor_resusage_component.pstat_log &&
-        0 != strcmp(mca_sensor_resusage_component.pstat_log, "-") &&
-        0 != strcmp(mca_sensor_resusage_component.pstat_log, "+")) {
-        fclose(pstat_fp);
-    }
 }
 
 static void sample(void)
@@ -315,6 +281,12 @@ static void res_log(opal_buffer_t *sample)
     int rc, n, i;
     opal_value_t kv[14];
     char *node;
+    opal_diskstats_t *dk;
+    opal_netstats_t *ns;
+
+    if (!log_enabled) {
+        return;
+    }
 
     /* unpack the node name */
     n=1;
@@ -330,61 +302,66 @@ static void res_log(opal_buffer_t *sample)
         return;
     }
 
-    if (NULL != mca_sensor_resusage_component.nstat_log) {
-        if (0 == line_count) {
-            /* print the column headers */
-            fprintf(nstat_fp, "Node\tSampleTime\tTotMem\tLdAvg\tLdAvg5\tLdAvg15\tFreeMem\tBuffers\tCached\tSwapCached\tSwapTotal\tSwapFree\tMapped\n");
-        }
-        fprintf(nstat_fp, "%s\t%d.%06d\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\n",
-                node, (int)nst->sample_time.tv_sec, (int)nst->sample_time.tv_usec,
-                nst->total_mem, nst->la, nst->la5, nst->la15, nst->free_mem, nst->buffers,
-                nst->cached, nst->swap_cached, nst->swap_total, nst->swap_free, nst->mapped);
-    }
-
-    if (log_enabled) {
+    if (mca_sensor_resusage_component.log_node_stats) {
         /* convert this into an array of opal_value_t's - no clean way
          * to do this, so have to just manually map each field
          */
-        for (i=0; i < 12; i++) {
+        for (i=0; i < 13; i++) {
             OBJ_CONSTRUCT(&kv[i], opal_value_t);
         }
-        kv[0].key = strdup("la");
-        kv[0].type = OPAL_FLOAT;
-        kv[0].data.fval = nst->la;
-        kv[1].key = strdup("la5");
-        kv[1].type = OPAL_FLOAT;
-        kv[1].data.fval = nst->la5;
-        kv[2].key = strdup("la15");
-        kv[2].type = OPAL_FLOAT;
-        kv[2].data.fval = nst->la15;
-        kv[3].key = strdup("total_mem");
-        kv[3].type = OPAL_FLOAT;
-        kv[3].data.fval = nst->total_mem;
-        kv[4].key = strdup("free_mem");
-        kv[4].type = OPAL_FLOAT;
-        kv[4].data.fval = nst->free_mem;
-        kv[5].key = strdup("buffers");
-        kv[5].type = OPAL_FLOAT;
-        kv[5].data.fval = nst->buffers;
-        kv[6].key = strdup("cached");
-        kv[6].type = OPAL_FLOAT;
-        kv[6].data.fval = nst->cached;
-        kv[7].key = strdup("swap_cached");
-        kv[7].type = OPAL_FLOAT;
-        kv[7].data.fval = nst->swap_cached;
-        kv[8].key = strdup("swap_total");
-        kv[8].type = OPAL_FLOAT;
-        kv[8].data.fval = nst->swap_total;
-        kv[9].key = strdup("swap_free");
-        kv[9].type = OPAL_FLOAT;
-        kv[9].data.fval = nst->swap_free;
-        kv[10].key = strdup("mapped");
-        kv[10].type = OPAL_FLOAT;
-        kv[10].data.fval = nst->mapped;
-        kv[11].key = strdup("sample_time");
-        kv[11].type = OPAL_TIMEVAL;
-        kv[11].data.tv.tv_sec = nst->sample_time.tv_sec;
-        kv[11].data.tv.tv_usec = nst->sample_time.tv_usec;
+        i=0;
+        kv[i].key = strdup("ctime");
+        kv[i].type = OPAL_TIMEVAL;
+        kv[i].data.tv.tv_sec = nst->sample_time.tv_sec;
+        kv[i++].data.tv.tv_usec = nst->sample_time.tv_usec;
+
+        kv[i].key = "hostname";
+        kv[i].type = OPAL_STRING;
+        kv[i++].data.string = strdup(node);
+
+        kv[i].key = strdup("total_mem");
+        kv[i].type = OPAL_FLOAT;
+        kv[i++].data.fval = nst->total_mem;
+
+        kv[i].key = strdup("free_mem");
+        kv[i].type = OPAL_FLOAT;
+        kv[i++].data.fval = nst->free_mem;
+
+        kv[i].key = strdup("buffers");
+        kv[i].type = OPAL_FLOAT;
+        kv[i++].data.fval = nst->buffers;
+
+        kv[i].key = strdup("cached");
+        kv[i].type = OPAL_FLOAT;
+        kv[i++].data.fval = nst->cached;
+
+        kv[i].key = strdup("swap_total");
+        kv[i].type = OPAL_FLOAT;
+        kv[i++].data.fval = nst->swap_total;
+
+        kv[i].key = strdup("swap_free");
+        kv[i].type = OPAL_FLOAT;
+        kv[i++].data.fval = nst->swap_free;
+
+        kv[i].key = strdup("mapped");
+        kv[i].type = OPAL_FLOAT;
+        kv[i++].data.fval = nst->mapped;
+
+        kv[i].key = strdup("swap_cached");
+        kv[i].type = OPAL_FLOAT;
+        kv[i++].data.fval = nst->swap_cached;
+
+        kv[i].key = strdup("la");
+        kv[i].type = OPAL_FLOAT;
+        kv[i++].data.fval = nst->la;
+
+        kv[i].key = strdup("la5");
+        kv[i].type = OPAL_FLOAT;
+        kv[i++].data.fval = nst->la5;
+
+        kv[i].key = strdup("la15");
+        kv[i].type = OPAL_FLOAT;
+        kv[i++].data.fval = nst->la15;
 
         /* store it */
         if (ORTE_SUCCESS != (rc = orte_db.add_log("nodestats", kv, 12))) {
@@ -398,22 +375,10 @@ static void res_log(opal_buffer_t *sample)
 
     OBJ_RELEASE(nst);
 
-    /* unpack all process stats */
-    n=1;
-    while (OPAL_SUCCESS == (rc = opal_dss.unpack(sample, &st, &n, OPAL_PSTAT))) {
-        if (NULL != mca_sensor_resusage_component.pstat_log) {
-            if (0 == line_count) {
-                /* print the column headers */
-                fprintf(pstat_fp, "Node\tSampleTime\tRank\tPid\tCmd\tState\tTime\tCpu\tPri\tNumThreads\tProcessor\tVSIZE\tRSS\tPeakVSIZE\n");
-            }
-            fprintf(pstat_fp, "%s\t%d.%06d\t%lu\t%s\t%c\t%d.%06d\t%f\t%d\t%d\t%d\t%f\t%f\t%f\n",
-                    node, (int)st->sample_time.tv_sec, (int)st->sample_time.tv_usec,
-                    (unsigned long)st->pid, st->cmd, st->state[0],
-                    (int)st->time.tv_sec, (int)st->time.tv_usec, st->percent_cpu,
-                    st->priority, (int)st->num_threads, (int)st->processor,
-                    st->vsize, st->rss, st->peak_vsize);
-        }
-        if (log_enabled) {
+    if (mca_sensor_resusage_component.log_process_stats) {
+        /* unpack all process stats */
+        n=1;
+        while (OPAL_SUCCESS == (rc = opal_dss.unpack(sample, &st, &n, OPAL_PSTAT))) {
             for (i=0; i < 14; i++) {
                 OBJ_CONSTRUCT(&kv[i], opal_value_t);
             }
@@ -471,15 +436,11 @@ static void res_log(opal_buffer_t *sample)
             for (i=0; i < 14; i++) {
                 OBJ_DESTRUCT(&kv[i]);
             }
+            OBJ_RELEASE(st);
+            n=1;
         }
-        OBJ_RELEASE(st);
-        n=1;
-    }
-    if (OPAL_ERR_UNPACK_READ_PAST_END_OF_BUFFER != rc) {
-        ORTE_ERROR_LOG(rc);
-    }
-    line_count++;
-    if (30 == line_count) {
-        line_count = 0;
+        if (OPAL_ERR_UNPACK_READ_PAST_END_OF_BUFFER != rc) {
+            ORTE_ERROR_LOG(rc);
+        }
     }
 }
