@@ -714,6 +714,8 @@ int orte_show_help_norender(const char *filename, const char *topic,
             /* send it to the HNP */
             if (0 > (rc = orte_rml.send_buffer(ORTE_PROC_MY_HNP, &buf, ORTE_RML_TAG_SHOW_HELP, 0))) {
                 ORTE_ERROR_LOG(rc);
+            } else {
+                rc = ORTE_SUCCESS;
             }
             OBJ_DESTRUCT(&buf);
             am_inside = false;
