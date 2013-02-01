@@ -314,10 +314,12 @@ static int mca_btl_tcp_component_register(void)
                                ompi_process_info.nodename,
                                mca_btl_tcp_component.tcp_if_seq,
                                "Interface does not exist");
-                return OMPI_ERR_BAD_PARAM;
+                free(mca_btl_tcp_component.tcp_if_seq);
+                mca_btl_tcp_component.tcp_if_seq = NULL;
+            } else {
+                BTL_VERBOSE(("Node rank %d using TCP interface %s",
+                             node_rank, mca_btl_tcp_component.tcp_if_seq));
             }
-            BTL_VERBOSE(("Node rank %d using TCP interface %s",
-                         node_rank, mca_btl_tcp_component.tcp_if_seq));
         }
     }
 
