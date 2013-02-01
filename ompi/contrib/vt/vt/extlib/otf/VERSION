@@ -50,5 +50,5 @@ string=openmpi
 #                      release, age must be incremented. Otherwise, reset age
 #                      to '0'.
 
-library=0:0:0
+library=1:0:0
 
