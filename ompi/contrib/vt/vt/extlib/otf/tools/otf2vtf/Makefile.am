@@ -7,8 +7,8 @@ bin_PROGRAMS = \
 	otf2vtf
 endif
 
-otf2vtf_LDADD = $(top_builddir)/otflib/libotf.la $(VTF3_LIB_LINE)
-otf2vtf_DEPENDENCIES = $(top_builddir)/otflib/libotf.la
+otf2vtf_LDADD = $(top_builddir)/otflib/libopen-trace-format.la $(VTF3_LIB_LINE)
+otf2vtf_DEPENDENCIES = $(top_builddir)/otflib/libopen-trace-format.la
 otf2vtf_SOURCES = \
 	Handler.h \
 	Treehash.h \

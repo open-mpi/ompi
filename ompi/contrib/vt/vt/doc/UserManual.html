@@ -2628,7 +2628,7 @@ The CUDA runtime library 3.1 creates a conflict with <TT>zlib</TT>.
   -I$VT_INSTALL_PATH/include/vampirtrace
   -L$VT_INSTALL_PATH/lib 
   -Xcompiler=-g,-finstrument-functions,-pthread
-  -lvt -lotf -lcudart -lz -ldl -lm
+  -lvt -lopen-trace-format -lcudart -lz -ldl -lm
 </PRE>
   <SMALL CLASS="FOOTNOTESIZE"><TT>$VT_INSTALL_PATH</TT> is the path to the VampirTrace installation 
   directory. It is not necessary to specify the VampirTrace include and library 
@@ -3971,7 +3971,7 @@ pass FLAGS to the OTF distribution configuration
 <DT><STRONG><TT>-with-otf-lib=OTFLIB</TT></STRONG></DT>
 <DD>&nbsp;
 <BR>
-use given otf lib, default: <TT>-lotf -lz</TT>
+use given otf lib, default: <TT>-lopen-trace-format -lz</TT>
 
 <P>
 </DD>
@@ -3979,7 +3979,7 @@ use given otf lib, default: <TT>-lotf -lz</TT>
 
 <P>
 If the supplied OTF library was built without zlib support then OTFLIB will
-be set to <TT>-lotf</TT>.
+be set to <TT>-lopen-trace-format</TT>.
 
 <P>
 <DL>

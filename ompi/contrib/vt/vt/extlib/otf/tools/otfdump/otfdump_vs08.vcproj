@@ -2,9 +2,9 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="9.00"
-	Name="otfdump"
+	Name="otfprint"
 	ProjectGUID="{508A823C-8EAB-4C56-9DFE-4D85B0D24491}"
-	RootNamespace="otfdump"
+	RootNamespace="otfprint"
 	Keyword="Win32Proj"
 	TargetFrameworkVersion="131072"
 	>
@@ -65,7 +65,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="libotf.lib"
+				AdditionalDependencies="libopen-trace-format.lib"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="../../debug"
 				GenerateDebugInformation="true"
@@ -217,7 +217,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="libotf.lib"
+				AdditionalDependencies="libopen-trace-format.lib"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="../../release_static_32bit"
 				DelayLoadDLLs="$(NOINHERIT)"
@@ -297,7 +297,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="libotf.lib"
+				AdditionalDependencies="libopen-trace-format.lib"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="../../release_static_64bit"
 				DelayLoadDLLs="$(NOINHERIT)"

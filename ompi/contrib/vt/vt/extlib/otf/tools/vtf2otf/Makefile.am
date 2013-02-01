@@ -7,8 +7,8 @@ bin_PROGRAMS = \
 	vtf2otf
 endif
 
-vtf2otf_LDADD = $(top_builddir)/otflib/libotf.la $(VTF3_LIB_LINE)
-vtf2otf_DEPENDENCIES = $(top_builddir)/otflib/libotf.la
+vtf2otf_LDADD = $(top_builddir)/otflib/libopen-trace-format.la $(VTF3_LIB_LINE)
+vtf2otf_DEPENDENCIES = $(top_builddir)/otflib/libopen-trace-format.la
 vtf2otf_SOURCES = \
 	Handler.h \
 	Stack.h \
