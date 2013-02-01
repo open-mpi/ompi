@@ -7,8 +7,8 @@ check_PROGRAMS = otf_generic_streams_mpi
 
 otf_generic_streams_mpi_CFLAGS = $(MPICFLAGS)
 otf_generic_streams_mpi_SOURCES = generic_streams_mpi.c
-otf_generic_streams_mpi_DEPENDENCIES = $(top_builddir)/otflib/libotf.la
-otf_generic_streams_mpi_LDADD = $(top_builddir)/otflib/libotf.la \
+otf_generic_streams_mpi_DEPENDENCIES = $(top_builddir)/otflib/libopen-trace-format.la
+otf_generic_streams_mpi_LDADD = $(top_builddir)/otflib/libopen-trace-format.la \
 	$(CLOCK_GETTIME_LIB) \
 	$(MPI_LIB_LINE)
 otf_generic_streams_mpi_CPPFLAGS = $(AM_CPPFLAGS) \

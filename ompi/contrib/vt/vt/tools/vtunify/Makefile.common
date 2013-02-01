@@ -86,7 +86,7 @@ OTFLIBRARY = $(OTFLIBDIR) $(OTFLIB)
 OTFDEPENDENCIES =
 else
 OTFINCLUDE = -I$(top_srcdir)/extlib/otf/otflib -I$(top_builddir)/extlib/otf/otflib
-OTFLIBRARY = $(top_builddir)/extlib/otf/otflib/libotf.la
+OTFLIBRARY = $(top_builddir)/extlib/otf/otflib/libopen-trace-format.la
 OTFDEPENDENCIES = $(OTFLIBRARY)
 endif
 

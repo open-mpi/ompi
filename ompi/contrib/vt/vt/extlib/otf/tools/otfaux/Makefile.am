@@ -10,7 +10,7 @@ endif
 
 otfaux_DEPENDENCIES = \
 	$(top_builddir)/otfauxlib/libotfaux.la \
-	$(top_builddir)/otflib/libotf.la
+	$(top_builddir)/otflib/libopen-trace-format.la
 otfaux_LDADD = \
 	$(otfaux_DEPENDENCIES) \
 	$(MATHLIB)

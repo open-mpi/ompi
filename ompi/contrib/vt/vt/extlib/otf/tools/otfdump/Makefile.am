@@ -5,7 +5,7 @@ if AMBUILDBINARIES
 bin_PROGRAMS = otfprint
 endif
 
-otfprint_LDADD = $(top_builddir)/otflib/libotf.la
+otfprint_LDADD = $(top_builddir)/otflib/libopen-trace-format.la
 otfprint_DEPENDENCIES = $(otfprint_LDADD)
 otfprint_SOURCES = \
 	Makefile.am \

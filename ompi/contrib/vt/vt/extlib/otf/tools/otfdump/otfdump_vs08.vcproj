@@ -65,7 +65,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="libotf.lib"
+				AdditionalDependencies="libopen-trace-format.lib"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="../../debug"
 				GenerateDebugInformation="true"
@@ -217,7 +217,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="libotf.lib"
+				AdditionalDependencies="libopen-trace-format.lib"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="../../release_static_32bit"
 				DelayLoadDLLs="$(NOINHERIT)"
@@ -297,7 +297,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="libotf.lib"
+				AdditionalDependencies="libopen-trace-format.lib"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="../../release_static_64bit"
 				DelayLoadDLLs="$(NOINHERIT)"
