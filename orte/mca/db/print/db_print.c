@@ -26,6 +26,7 @@
 
 #include "opal/class/opal_pointer_array.h"
 #include "opal/util/argv.h"
+#include "opal_stdint.h"
 
 #include "orte/util/name_fns.h"
 #include "orte/util/proc_info.h"
@@ -95,7 +96,7 @@ static int add_log(const char *table,
 {
     char **cmdargs=NULL, *vstr;
     time_t nowtime;
-    struct tm *nowtm;
+    struct tm nowtm;
     char tbuf[1024];
     int i;
     bool found;
@@ -138,20 +139,52 @@ static int add_log(const char *table,
             snprintf(tbuf, sizeof(tbuf), "%s", kvs[i].data.string);
             opal_argv_append_nosize(&cmdargs, tbuf);
             break;
-        case OPAL_INT32:
-            snprintf(tbuf, sizeof(tbuf), "%d", kvs[i].data.int32);
+        case OPAL_SIZE:
+            snprintf(tbuf, sizeof(tbuf), "%" PRIsize_t "", kvs[i].data.size);
+            opal_argv_append_nosize(&cmdargs, tbuf);
+            break;
+        case OPAL_INT:
+            snprintf(tbuf, sizeof(tbuf), "%d", kvs[i].data.integer);
+            opal_argv_append_nosize(&cmdargs, tbuf);
+            break;
+        case OPAL_INT8:
+            snprintf(tbuf, sizeof(tbuf), "%" PRIi8 "", kvs[i].data.int8);
             opal_argv_append_nosize(&cmdargs, tbuf);
             break;
         case OPAL_INT16:
-            snprintf(tbuf, sizeof(tbuf), "%d", (int)kvs[i].data.int16);
+            snprintf(tbuf, sizeof(tbuf), "%" PRIi16 "", kvs[i].data.int16);
+            opal_argv_append_nosize(&cmdargs, tbuf);
+            break;
+        case OPAL_INT32:
+            snprintf(tbuf, sizeof(tbuf), "%" PRIi32 "", kvs[i].data.int32);
+            opal_argv_append_nosize(&cmdargs, tbuf);
+            break;
+        case OPAL_INT64:
+            snprintf(tbuf, sizeof(tbuf), "%" PRIi64 "", kvs[i].data.int64);
+            opal_argv_append_nosize(&cmdargs, tbuf);
+            break;
+        case OPAL_UINT:
+            snprintf(tbuf, sizeof(tbuf), "%u", kvs[i].data.uint);
+            opal_argv_append_nosize(&cmdargs, tbuf);
+            break;
+        case OPAL_UINT8:
+            snprintf(tbuf, sizeof(tbuf), "%" PRIu8 "", kvs[i].data.uint8);
+            opal_argv_append_nosize(&cmdargs, tbuf);
+            break;
+        case OPAL_UINT16:
+            snprintf(tbuf, sizeof(tbuf), "%" PRIu16 "", kvs[i].data.uint16);
+            opal_argv_append_nosize(&cmdargs, tbuf);
+            break;
+        case OPAL_UINT32:
+            snprintf(tbuf, sizeof(tbuf), "%" PRIu32 "", kvs[i].data.uint32);
+            opal_argv_append_nosize(&cmdargs, tbuf);
+            break;
+        case OPAL_UINT64:
+            snprintf(tbuf, sizeof(tbuf), "%" PRIu64 "", kvs[i].data.uint64);
             opal_argv_append_nosize(&cmdargs, tbuf);
             break;
         case OPAL_PID:
             snprintf(tbuf, sizeof(tbuf), "%lu", (unsigned long)kvs[i].data.pid);
-            opal_argv_append_nosize(&cmdargs, tbuf);
-            break;
-        case OPAL_INT64:
-            snprintf(tbuf, sizeof(tbuf), "%ld", (long int)kvs[i].data.int64);
             opal_argv_append_nosize(&cmdargs, tbuf);
             break;
         case OPAL_FLOAT:
@@ -161,8 +194,13 @@ static int add_log(const char *table,
         case OPAL_TIMEVAL:
             /* we only care about seconds */
             nowtime = kvs[i].data.tv.tv_sec;
-            nowtm = localtime(&nowtime);
-            strftime(tbuf, sizeof(tbuf), "%Y-%m-%d %H:%M:%S", nowtm);
+            (void)localtime_r(&nowtime, &nowtm);
+            strftime(tbuf, sizeof(tbuf), "%Y-%m-%d %H:%M:%S", &nowtm);
+            opal_argv_append_nosize(&cmdargs, tbuf);
+            break;
+        default:
+            snprintf(tbuf, sizeof(tbuf), "Unsupported type: %s",
+                     opal_dss.lookup_data_type(kvs[i].type));
             opal_argv_append_nosize(&cmdargs, tbuf);
             break;
         }
