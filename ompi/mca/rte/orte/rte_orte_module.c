@@ -81,14 +81,14 @@ int ompi_show_help(const char *filename, const char *topic,
 {
     va_list arglist;
     char *output;
-    
+    int rc;
+
     if (orte_execute_quiet) {
-        return ORTE_SUCCESS;
+        return OMPI_SUCCESS;
     }
     
     va_start(arglist, want_error_header);
-    output = opal_show_help_vstring(filename, topic, want_error_header, 
-                                    arglist);
+    output = opal_show_help_vstring(filename, topic, want_error_header, arglist);
     va_end(arglist);
     
     /* If nothing came back, there's nothing to do */
@@ -96,8 +96,9 @@ int ompi_show_help(const char *filename, const char *topic,
         return OMPI_SUCCESS;
     }
     
-    opal_output(0, "%s", output);
-    return OMPI_SUCCESS;
+    rc = orte_show_help_norender(filename, topic, want_error_header, output);
+    free(output);
+    return rc;
 }
 
 
