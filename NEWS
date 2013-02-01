@@ -112,6 +112,9 @@ Trunk (not on release branches yet)
 1.6.4
 -----
 
+- Updates for MXM 2.0.
+- Major VT update to 5.14.2.3.
+- Fixed F77 constants for Cygwin/Cmake build.
 - Fix a linker error when configuring --without-hwloc.
 - Automatically provide compiler flags that compile properly on some
   types of ARM systems.
