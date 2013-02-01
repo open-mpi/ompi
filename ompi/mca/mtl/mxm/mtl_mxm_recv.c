@@ -61,6 +61,9 @@ int ompi_mtl_mxm_irecv(struct mca_mtl_base_module_t* mtl,
 
     /* prepare a receive request embedded in the MTL request */
     mxm_recv_req = &mtl_mxm_request->mxm.recv;
+#if MXM_API >= MXM_VERSION(2,0)
+    mtl_mxm_request->is_send = 0;
+#endif
 
     mxm_recv_req->base.state               = MXM_REQ_NEW;
     ompi_mtl_mxm_set_recv_envelope(mxm_recv_req, comm, src, tag);

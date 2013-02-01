@@ -163,6 +163,9 @@ int ompi_mtl_mxm_isend(struct mca_mtl_base_module_t* mtl,
     }
 
     mxm_send_req = &mtl_mxm_request->mxm.send;
+#if MXM_API >= MXM_VERSION(2,0)
+    mtl_mxm_request->is_send = 1;
+#endif
 
     /* prepare a send request embedded in the MTL request */
     mxm_send_req->base.state               = MXM_REQ_NEW;
