@@ -32,7 +32,7 @@ AC_DEFUN([ACVT_OTF],
 	[AS_IF([test x"$OTFDIR" != x], [OTFLIBDIR="-L$OTFDIR"lib/])])
 
 	AC_ARG_WITH(otf-lib,
-		AC_HELP_STRING([--with-otf-lib=OTFLIB], [use given otf lib, default: -lotf ZLIBLIBDIR ZLIBLIB ZOIDFSLIBDIR ZOIDFSLIB BMILIBDIR BMILIB]),
+		AC_HELP_STRING([--with-otf-lib=OTFLIB], [use given otf lib, default: -lopen-trace-format ZLIBLIBDIR ZLIBLIB ZOIDFSLIBDIR ZOIDFSLIB BMILIBDIR BMILIB]),
 	[OTFLIB="$withval"])
 
 	AC_ARG_WITH(otf-flags,
@@ -52,16 +52,16 @@ AC_DEFUN([ACVT_OTF],
 		AS_IF([test x"$OTFLIB" = x -a "$otf_error" = "no"],
 		[
 			sav_LIBS=$LIBS
-			LIBS="$LIBS $OTFLIBDIR -lotf $ZLIBLIBDIR $ZLIBLIB $ZOIDFSLIBDIR $ZOIDFSLIB $BMILIBDIR $BMILIB"
-			AC_MSG_CHECKING([whether linking with -lotf $ZLIBLIBDIR $ZLIBLIB $ZOIDFSLIBDIR $ZOIDFSLIB $BMILIBDIR $BMILIB works])
+			LIBS="$LIBS $OTFLIBDIR -lopen-trace-format $ZLIBLIBDIR $ZLIBLIB $ZOIDFSLIBDIR $ZOIDFSLIB $BMILIBDIR $BMILIB"
+			AC_MSG_CHECKING([whether linking with -lopen-trace-format $ZLIBLIBDIR $ZLIBLIB $ZOIDFSLIBDIR $ZOIDFSLIB $BMILIBDIR $BMILIB works])
 			AC_TRY_LINK([],[],
-			[AC_MSG_RESULT([yes]); OTFLIB="-lotf $ZLIBLIBDIR $ZLIBLIB $ZOIDFSLIBDIR $ZOIDFSLIB $BMILIBDIR $BMILIB"],[AC_MSG_RESULT([no])])
+			[AC_MSG_RESULT([yes]); OTFLIB="-lopen-trace-format $ZLIBLIBDIR $ZLIBLIB $ZOIDFSLIBDIR $ZOIDFSLIB $BMILIBDIR $BMILIB"],[AC_MSG_RESULT([no])])
 			LIBS=$sav_LIBS
 		])
 
 		AS_IF([test x"$OTFLIB" = x -a "$otf_error" = "no"],
 		[
-			AC_MSG_NOTICE([error: no libotf found; check path for OTF package first...])
+			AC_MSG_NOTICE([error: no libopen-trace-format found; check path for OTF package first...])
 			otf_error="yes"
 		])
 	],
@@ -184,7 +184,7 @@ dnl			[otf_conf_args="$otf_conf_args --with-mpi-inc-dir=`echo $MPIINCDIR | sed s
 
 		OTFINCDIR=
 		OTFLIBDIR=
-		AS_IF([test x"$OTFLIB" = x], [OTFLIB="-lotf $ZLIBLIBDIR $ZLIBLIB $ZOIDFSLIBDIR $ZOIDFSLIB $BMILIBDIR $BMILIB"])
+		AS_IF([test x"$OTFLIB" = x], [OTFLIB="-lopen-trace-format $ZLIBLIBDIR $ZLIBLIB $ZOIDFSLIBDIR $ZOIDFSLIB $BMILIBDIR $BMILIB"])
 	])
 
 	AC_SUBST(OTFDIR)

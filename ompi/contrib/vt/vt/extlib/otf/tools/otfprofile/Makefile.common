@@ -4,8 +4,8 @@ COMMONINCLUDES = \
 	-I$(top_builddir)/otfauxlib -I$(top_srcdir)/otfauxlib
 
 COMMONCXXFLAGS =
-COMMONLDADD = $(top_builddir)/otflib/libotf.la $(MATHLIB)
-COMMONDEPENDENCIES = $(top_builddir)/otflib/libotf.la
+COMMONLDADD = $(top_builddir)/otflib/libopen-trace-format.la $(MATHLIB)
+COMMONDEPENDENCIES = $(top_builddir)/otflib/libopen-trace-format.la
 COMMONSOURCES = \
 	$(OTFPROFILESRCDIR)/clustering.h \
 	$(OTFPROFILESRCDIR)/collect_data.h \

@@ -27,11 +27,9 @@ AC_ARG_WITH(openmpi-inside, [],
 
 # Correct install paths
 AS_IF([test "$inside_openmpi" = "yes" -o "$includedir" = "\${prefix}/include"],
-[includedir="$includedir/otf1"])
-AS_IF([test "$inside_openmpi" = "yes" -o "$libdir" = "\${exec_prefix}/lib" -o "$libdir" = "\${prefix}/lib"],
-[libdir="$libdir/otf1"])
+[includedir="$includedir/open-trace-format"])
 AS_IF([test "$inside_openmpi" = "yes" -o "$datarootdir" = "\${prefix}/share"],
-[datarootdir="$datarootdir/otf1"])
+[datarootdir="$datarootdir/open-trace-format"])
 AS_IF([test "$docdir" = "\${datarootdir}/doc/\${PACKAGE_TARNAME}"],
 [docdir="\${datarootdir}/doc"])
 

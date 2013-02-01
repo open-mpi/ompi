@@ -1,7 +1,7 @@
 1.12.2openmpi
 	- fixed conflicts with OpenType Fonts:
-		- install header files to INCLUDEDIR/otf1
-		- install libraries to LIBDIR/otf1
+		- install header files to INCLUDEDIR/open-trace-format
+		- renamed OTF library to libopen-trace-format
 		- renamed otfdump to otfprint
 	- OTF library:
 		- replaced temporary workaround for handling bogus zlib

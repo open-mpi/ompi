@@ -2,9 +2,9 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="9.00"
-	Name="libotf"
+	Name="libopen-trace-format"
 	ProjectGUID="{6B9B49C9-75CD-400D-B736-5EACA04D0A82}"
-	RootNamespace="libotf"
+	RootNamespace="libopen-trace-format"
 	Keyword="Win32Proj"
 	TargetFrameworkVersion="131072"
 	>

@@ -5,7 +5,7 @@ bin_PROGRAMS = \
 	otfshrink
 endif
 
-otfshrink_LDADD = $(top_builddir)/otflib/libotf.la
+otfshrink_LDADD = $(top_builddir)/otflib/libopen-trace-format.la
 otfshrink_DEPENDENCIES = $(otfaux_LDADD)
 otfshrink_SOURCES = \
 	otfshrink.h \

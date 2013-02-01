@@ -437,6 +437,9 @@ AM_CONDITIONAL(AMHAVEGPU, test x"$have_cupti_callbacks" = "xyes" -o x"$have_cuda
 # Check path for node-local temporary directory
 ACVT_LTMPDIR
 
+# Setup compiler wrappers
+ACVT_COMPWRAP
+
 # Check for OTF
 ACVT_CONF_TITLE([Open Trace Format (OTF)])
 ACVT_OTF
@@ -460,9 +463,6 @@ AS_IF([test x"$force_vtrun" = "xyes" -a x"$vtrun_error" = "xyes"], [exit 1])
 AS_IF([test x"$enable_config_titles" = "xyes" -a x"$check_vtrun" = "xno"],
 [AC_MSG_NOTICE([disabled via command line switch])])
 AM_CONDITIONAL(AMBUILDVTRUN, test x"$build_vtrun" = "xyes")
-
-# Setup compiler wrappers
-ACVT_COMPWRAP
 
 # Output files
 AC_CONFIG_FILES([Makefile

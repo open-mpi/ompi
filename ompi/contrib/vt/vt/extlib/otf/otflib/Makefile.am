@@ -29,12 +29,12 @@ noinst_HEADERS = OTF_Handler.h \
 	         OTF_Platform.h \
 	         OTF_Platform_unix.h
 
-lib_LTLIBRARIES = libotf.la
+lib_LTLIBRARIES = libopen-trace-format.la
 
-libotf_la_CFLAGS = -prefer-pic
-libotf_la_LDFLAGS = -version-info @OTF_VERSION_LIBRARY@
-libotf_la_LIBADD = $(ZLIB_LIB_LINE) $(ZOIDFS_LIB_LINE)
-libotf_la_SOURCES = \
+libopen_trace_format_la_CFLAGS = -prefer-pic
+libopen_trace_format_la_LDFLAGS = -version-info @OTF_VERSION_LIBRARY@
+libopen_trace_format_la_LIBADD = $(ZLIB_LIB_LINE) $(ZOIDFS_LIB_LINE)
+libopen_trace_format_la_SOURCES = \
 	OTF_CopyHandler.c \
 	OTF_CopyHandler_stream.c \
 	OTF_Errno.c \

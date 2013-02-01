@@ -16,7 +16,7 @@ pkgpyexec_LTLIBRARIES = _otf.la
 nodist__otf_la_SOURCES = otf_wrap.c
 _otf_la_CPPFLAGS = $(AM_CPPFLAGS) $(SWIG_PYTHON_CFLAGS)
 _otf_la_LDFLAGS = -module
-_otf_la_LIBADD = $(top_builddir)/otflib/libotf.la
+_otf_la_LIBADD = $(top_builddir)/otflib/libopen-trace-format.la
 _otf_la_DEPENDENCIES = $(_otf_la_LDADD)
 
 otf_wrap.c : otf.i
