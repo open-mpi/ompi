@@ -52,6 +52,10 @@ static inline __opal_attribute_always_inline__ int
         return ret;
     }
 
+#if MXM_API >= MXM_VERSION(2,0)
+    mtl_mxm_request->is_send = 0;
+#endif
+
     mxm_recv_req->base.state               = MXM_REQ_NEW;
 
     mxm_recv_req->base.flags               = 0;

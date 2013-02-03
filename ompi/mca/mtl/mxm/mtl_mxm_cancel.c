@@ -17,7 +17,15 @@ int ompi_mtl_mxm_cancel(struct mca_mtl_base_module_t* mtl,
     mca_mtl_mxm_request_t *mtl_mxm_request = (mca_mtl_mxm_request_t*) mtl_request;
     mxm_error_t err;
 
+#if MXM_API >= MXM_VERSION(2,0)
+    if (mtl_mxm_request->is_send) {
+        err = mxm_req_cancel_send(&mtl_mxm_request->mxm.send);
+    } else {
+        err = mxm_req_cancel_recv(&mtl_mxm_request->mxm.recv);
+    }
+#else
     err = mxm_req_cancel(&mtl_mxm_request->mxm.base);
+#endif
     if ((err != MXM_OK) && (err != MXM_ERR_NO_PROGRESS)) {
         return OMPI_ERROR;
     }

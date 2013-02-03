@@ -84,6 +84,7 @@ static uint32_t ompi_mtl_mxm_get_job_id(void)
 
 int ompi_mtl_mxm_progress(void);
 
+#if MXM_API < MXM_VERSION(2, 0)
 static int ompi_mtl_mxm_get_ep_address(ompi_mtl_mxm_ep_conn_info_t *ep_info, mxm_ptl_id_t ptlid)
 {
     size_t addrlen;
@@ -91,20 +92,46 @@ static int ompi_mtl_mxm_get_ep_address(ompi_mtl_mxm_ep_conn_info_t *ep_info, mxm
 
     addrlen = sizeof(ep_info->ptl_addr[ptlid]);
     err = mxm_ep_address(ompi_mtl_mxm.ep, ptlid,
-    		(struct sockaddr *) &ep_info->ptl_addr[ptlid], &addrlen);
+                         (struct sockaddr *) &ep_info->ptl_addr[ptlid], &addrlen);
     if (MXM_OK != err) {
         orte_show_help("help-mtl-mxm.txt", "unable to extract endpoint address",
-        		true, (int)ptlid, mxm_error_string(err));
+                       true, (int)ptlid, mxm_error_string(err));
         return OMPI_ERROR;
     }
 
     return OMPI_SUCCESS;
 }
+#else
+static int ompi_mtl_mxm_get_ep_address(ompi_mtl_mxm_ep_conn_info_t *ep_info, int dest_rank,
+                                       mxm_domain_id_t domain)
+{
+    size_t addrlen;
+    mxm_error_t err;
+
+    addrlen = sizeof(ep_info->dest_addr[domain]);
+    err = mxm_ep_address(ompi_mtl_mxm.ep, domain, dest_rank,
+                (struct sockaddr *) &ep_info->dest_addr[domain], &addrlen);
+    if (MXM_OK == err) {
+        ep_info->domain_bitmap |= MXM_BIT(domain);
+        return OMPI_SUCCESS;
+    } else if (MXM_ERR_UNREACHABLE == err) {
+        return OMPI_SUCCESS;
+    } else {
+        orte_show_help("help-mtl-mxm.txt", "unable to extract endpoint address",
+                        true, (int)domain, mxm_error_string(err));
+        return OMPI_ERROR;
+    }
+}
+#endif
 
 #define max(a,b) ((a)>(b)?(a):(b))
 
 static mxm_error_t ompi_mtl_mxm_create_ep(mxm_h ctx, mxm_ep_h *ep, unsigned ptl_bitmap, int lr,
-                                          uint32_t jobid, uint64_t mxlr, int nlps) {
+                                          uint32_t jobid, uint64_t mxlr, int nlps
+#if MXM_API >= MXM_VERSION(2, 0)
+										  , int totps
+#endif
+                                          ) {
     mxm_error_t err;
 
 #if MXM_API < MXM_VERSION(1,5)
@@ -150,31 +177,129 @@ static mxm_error_t ompi_mtl_mxm_create_ep(mxm_h ctx, mxm_ep_h *ep, unsigned ptl_
         return err;
     }
 
+#if MXM_API >= MXM_VERSION(2, 0)
+    err = mxm_ep_create(ctx, ep_opts, ep, totps);
+#else
     ep_opts->job_id = jobid;
     ep_opts->local_rank = lr;
     ep_opts->num_local_procs = nlps;
     err = mxm_ep_create(ctx, ep_opts, ep);
+#endif
+
     mxm_config_free(ep_opts);
 #endif
     return err;
 }
 
+#if MXM_API >= MXM_VERSION(2,0)
+static void ompi_mtl_mxm_set_conn_req(mxm_conn_req_t *conn_req, ompi_mtl_mxm_ep_conn_info_t *ep_info,
+                                      mxm_domain_id_t domain)
+{
+    if (ep_info->domain_bitmap & MXM_BIT(domain)) {
+        conn_req->addr[domain] = (struct sockaddr *)&(ep_info->dest_addr[domain]);
+    } else {
+        conn_req->addr[domain] = NULL;
+    }
+}
+#endif
+
+#if MXM_API >= MXM_VERSION(2,0)
+#define MTL_MXM_MODEX_MAX_SIZE ((size_t)0x60)
+static int ompi_mtl_mxm_send_ep_address(ompi_mtl_mxm_ep_conn_info_t *ep_info, int totps)
+{
+    int rc, dest;
+
+    mca_mtl_base_component_2_0_0_t *cm = &mca_mtl_mxm_component.super;
+    char *modex_key, *mxm_version = mca_base_component_to_string(&cm->mtl_version);
+
+    /* Rough approximation of the next string length: mxm_version-dest_rank-portion_num */
+    modex_key = malloc(strlen(mxm_version) + 8 * sizeof(int) + 8 * sizeof(size_t) + 2);
+    if (NULL == modex_key) {
+        MXM_ERROR("Cannot allocate memory.");
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+
+    /* 
+     * Send information using modex (in some case there is limitation on data size for example ess/pmi)
+     * set size of data sent for once
+     */
+    for (dest = 0; dest < totps; ++dest) {
+        /*
+         * Get address for each PTL on this endpoint, and share it with other ranks.
+         */
+        int modex_name_id = 0;
+
+        size_t modex_cur_size, modex_buf_size = sizeof(*ep_info);
+        unsigned char *modex_buf_ptr = (unsigned char *) ep_info;
+
+        modex_cur_size = modex_buf_size < MTL_MXM_MODEX_MAX_SIZE ?
+                         modex_buf_size : MTL_MXM_MODEX_MAX_SIZE;
+
+        ep_info->domain_bitmap = 0;
+
+        rc = ompi_mtl_mxm_get_ep_address(ep_info, dest, MXM_DOMAIN_SELF);
+        if (OMPI_SUCCESS != rc) {
+            MXM_ERROR("Failed to get endpoint address: for domain SELF dest %d.", dest);
+            return OMPI_ERROR;
+        }
+
+        rc = ompi_mtl_mxm_get_ep_address(ep_info, dest, MXM_DOMAIN_SHM);
+        if (OMPI_SUCCESS != rc) {
+            MXM_ERROR("Failed to get endpoint address: for domain SHM dest %d.", dest);
+            return OMPI_ERROR;
+        }
+
+        rc = ompi_mtl_mxm_get_ep_address(ep_info, dest, MXM_DOMAIN_IB);
+        if (OMPI_SUCCESS != rc) {
+            MXM_ERROR("Failed to get endpoint address: for domain IB dest %d.", dest);
+            return OMPI_ERROR;
+        }
+     
+        while (modex_buf_size) {
+            /* Modex key looks as mtl.mxm.1.5-1-18 where mtl.mxm.1.5 is the component,
+               1 is a destination rank and 18 is a portion index */
+            sprintf(modex_key, "%s-%d-%d", mxm_version, dest, modex_name_id);
+
+            rc = ompi_modex_send_string((const char *) modex_key, modex_buf_ptr, modex_cur_size);
+            if (OMPI_SUCCESS != rc) {
+                MXM_ERROR("Open MPI couldn't distribute EP connection details");
+
+                free(modex_key);
+                free(mxm_version);
+
+                return OMPI_ERROR;
+            }
+
+            ++modex_name_id;
+
+            modex_buf_ptr += modex_cur_size;
+            modex_buf_size -= modex_cur_size;
+
+            modex_cur_size = modex_buf_size < MTL_MXM_MODEX_MAX_SIZE ?
+                             modex_buf_size : MTL_MXM_MODEX_MAX_SIZE;
+        }
+    }
+
+    free(modex_key);
+    free(mxm_version);
+
+    return OMPI_SUCCESS;
+}
+#endif
 
 int ompi_mtl_mxm_module_init(void)
 {
-
     ompi_mtl_mxm_ep_conn_info_t ep_info;
     mxm_error_t err;
     uint32_t jobid;
     uint64_t mxlr;
     ompi_proc_t *mp, **procs;
-    unsigned    ptl_bitmap;
+    unsigned ptl_bitmap;
     size_t totps, proc;
     int lr, nlps;
 
     mxlr = 0;
     lr = -1;
-    nlps = 0;
 
     mp = ompi_proc_local();
     jobid = ompi_mtl_mxm_get_job_id();
@@ -196,28 +321,34 @@ int ompi_mtl_mxm_module_init(void)
     }
     MXM_VERBOSE(1, "MXM support enabled");
 
-    if ((lr = orte_process_info.my_node_rank) == ORTE_NODE_RANK_INVALID) {
+    if (ORTE_NODE_RANK_INVALID == (lr = orte_process_info.my_node_rank)) {
         MXM_ERROR("Unable to obtain local node rank");
         return OMPI_ERROR;
     }
+    nlps = orte_process_info.num_local_peers + 1;
 
     for (proc = 0; proc < totps; proc++) {
         if (OPAL_PROC_ON_LOCAL_NODE(procs[proc]->proc_flags)) {
             mxlr = max(mxlr, procs[proc]->proc_name.vpid);
-            nlps++;
         }
     }
 
     /* Setup the endpoint options and local addresses to bind to. */
 #if MXM_API < MXM_VERSION(1,5)
     ptl_bitmap = ompi_mtl_mxm.mxm_opts.ptl_bitmap;
-#else
+#elif MXM_API < MXM_VERSION(2,0)
     ptl_bitmap = ompi_mtl_mxm.mxm_opts->ptl_bitmap;
+#else
+    ptl_bitmap = 0;
 #endif
 
     /* Open MXM endpoint */
     err = ompi_mtl_mxm_create_ep(ompi_mtl_mxm.mxm_context, &ompi_mtl_mxm.ep,
-            ptl_bitmap, lr, jobid, mxlr, nlps);
+            ptl_bitmap, lr, jobid, mxlr, nlps
+#if MXM_API >= MXM_VERSION(2, 0)
+            , totps
+#endif
+            );
 
     if (MXM_OK != err) {
         orte_show_help("help-mtl-mxm.txt", "unable to create endpoint", true,
@@ -228,6 +359,7 @@ int ompi_mtl_mxm_module_init(void)
     /*
      * Get address for each PTL on this endpoint, and share it with other ranks.
      */
+#if MXM_API < MXM_VERSION(2,0)
     if ((ptl_bitmap & MXM_BIT(MXM_PTL_SELF)) &&
             OMPI_SUCCESS != ompi_mtl_mxm_get_ep_address(&ep_info, MXM_PTL_SELF)) {
     	return OMPI_ERROR;
@@ -240,7 +372,7 @@ int ompi_mtl_mxm_module_init(void)
             OMPI_SUCCESS != ompi_mtl_mxm_get_ep_address(&ep_info, MXM_PTL_SHM)) {
             return OMPI_ERROR;
     }
-     
+
     /* 
      * send information using modex (in some case there is limitation on data size for example ess/pmi)
      * set size of data sent for once
@@ -259,10 +391,10 @@ int ompi_mtl_mxm_module_init(void)
             sprintf(modex_name, "%s-%d", modex_component_name, modex_name_id);     
       
             if (OMPI_SUCCESS != ompi_modex_send_string((const char *)modex_name, modex_buf_ptr, modex_cur_size)) {
-        MXM_ERROR("Open MPI couldn't distribute EP connection details");
+                MXM_ERROR("Open MPI couldn't distribute EP connection details");
                 free(modex_component_name);
                 free(modex_name);
-        return OMPI_ERROR;
+                return OMPI_ERROR;
             }
             modex_name_id++;
             modex_buf_ptr += modex_cur_size;
@@ -272,7 +404,17 @@ int ompi_mtl_mxm_module_init(void)
         free(modex_component_name);
         free(modex_name);
     }
-
+#else
+    {
+        int rc;
+        rc = ompi_mtl_mxm_send_ep_address(&ep_info, totps);
+        if (OMPI_SUCCESS != rc) {
+            MXM_ERROR("Modex session failed.");
+            return rc;
+        }
+    }
+#endif
+     
     /* Register the MXM progress function */
     opal_progress_register(ompi_mtl_mxm_progress);
     return OMPI_SUCCESS;
@@ -319,12 +461,20 @@ int ompi_mtl_mxm_add_procs(struct mca_mtl_base_module_t *mtl, size_t nprocs,
             size_t modex_buf_size = sizeof(ompi_mtl_mxm_ep_conn_info_t);
             size_t modex_cur_size = 0;
             char *modex_component_name = mca_base_component_to_string(&mca_mtl_mxm_component.super.mtl_version);
-            char *modex_name = malloc(strlen(modex_component_name) + 5);
             int modex_name_id = 0;
-
+#if MXM_API < MXM_VERSION(2,0)
+            char *modex_name = malloc(strlen(modex_component_name) + 5);
+#else
+            char *modex_name = malloc(strlen(modex_component_name) + 8 * sizeof(int) + 8 * sizeof(size_t) + 2);
+#endif
+ 
             while (modex_buf_size > 0) {
-                /* modex name looks as mtl.mxm.1.5-18 where mtl.mxm.1.5 is the component and 18 is portion index */
+                 /* modex name looks as mtl.mxm.1.5-18 where mtl.mxm.1.5 is the component and 18 is portion index */
+#if MXM_API < MXM_VERSION(2,0)
                 sprintf(modex_name, "%s-%d", modex_component_name, modex_name_id);
+#else
+                sprintf(modex_name, "%s-%d-%d", modex_component_name, orte_process_info.my_name.vpid, modex_name_id);
+#endif        
 
                 if (OMPI_SUCCESS != ompi_modex_recv_string((const char *)modex_name, procs[i], (void**)&modex_buf_ptr, &modex_cur_size)) {
                     MXM_ERROR("Open MPI couldn't distribute EP connection details");
@@ -351,9 +501,15 @@ int ompi_mtl_mxm_add_procs(struct mca_mtl_base_module_t *mtl, size_t nprocs,
             free(modex_name);
         }
 
+#if MXM_API < MXM_VERSION(2,0)
         conn_reqs[i].ptl_addr[MXM_PTL_SELF] = (struct sockaddr *)&(ep_info[i].ptl_addr[MXM_PTL_SELF]);
         conn_reqs[i].ptl_addr[MXM_PTL_SHM] = (struct sockaddr *)&(ep_info[i].ptl_addr[MXM_PTL_SHM]);
         conn_reqs[i].ptl_addr[MXM_PTL_RDMA] = (struct sockaddr *)&(ep_info[i].ptl_addr[MXM_PTL_RDMA]);
+#else
+        ompi_mtl_mxm_set_conn_req(&conn_reqs[i], &ep_info[i], MXM_DOMAIN_SELF);
+        ompi_mtl_mxm_set_conn_req(&conn_reqs[i], &ep_info[i], MXM_DOMAIN_SHM);
+        ompi_mtl_mxm_set_conn_req(&conn_reqs[i], &ep_info[i], MXM_DOMAIN_IB);
+#endif
     }
 
     /* Connect to remote peers */
