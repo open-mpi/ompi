@@ -241,6 +241,21 @@ AC_DEFUN([OPAL_SETUP_WRAPPER_FINAL],[
          AC_CONFIG_FILES([orte/tools/wrappers/orte_wrapper_script],
                          [chmod +x orte/tools/wrappers/orte_wrapper_script])
        fi
+
+       m4_ifdef([project_ompi], [], [
+          AC_DEFINE_UNQUOTED(WRAPPER_EXTRA_CFLAGS, "$ORTE_WRAPPER_EXTRA_CFLAGS",
+              [Additional CFLAGS to pass through the wrapper compilers])
+          AC_DEFINE_UNQUOTED(WRAPPER_EXTRA_CFLAGS_PREFIX, "$ORTE_WRAPPER_EXTRA_CFLAGS_PREFIX",
+              [Additional CFLAGS_PREFIX to pass through the wrapper compilers])
+          AC_DEFINE_UNQUOTED(WRAPPER_EXTRA_CXXFLAGS, "$ORTE_WRAPPER_EXTRA_CXXFLAGS",
+              [Additional CXXFLAGS to pass through the wrapper compilers])
+          AC_DEFINE_UNQUOTED(WRAPPER_EXTRA_CXXFLAGS_PREFIX, "$ORTE_WRAPPER_EXTRA_CXXFLAGS_PREFIX",
+              [Additional CXXFLAGS_PREFIX to pass through the wrapper compilers])
+          AC_DEFINE_UNQUOTED(WRAPPER_EXTRA_LDFLAGS, "$ORTE_WRAPPER_EXTRA_LDFLAGS",
+              [Additional LDFLAGS to pass through the wrapper compilers])
+          AC_DEFINE_UNQUOTED(WRAPPER_EXTRA_LIBS, "$ORTE_WRAPPER_EXTRA_LIBS",
+              [Additional LIBS to pass through the wrapper compilers])
+       ])
     ])
 
     m4_ifdef([project_ompi], [
