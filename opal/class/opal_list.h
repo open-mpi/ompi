@@ -160,6 +160,32 @@ struct opal_list_t
  */
 typedef struct opal_list_t opal_list_t;
 
+/** Cleanly destruct a list
+ *
+ * The opal_list_t destructor doesn't release the items on the
+ * list - so provide two convenience macros that do so and then
+ * destruct/release the list object itself
+ *
+ * @param[in] list List to destruct or release
+ */
+#define OPAL_LIST_DESTRUCT(list)                                \
+    do {                                                        \
+        opal_list_item_t *it;                                   \
+        while (NULL != (it = opal_list_remove_first(list))) {   \
+            OBJ_RELEASE(it);                                    \
+        }                                                       \
+        OBJ_DESTRUCT(list);                                     \
+    } while(0);
+
+#define OPAL_LIST_RELEASE(list)                                 \
+    do {                                                        \
+        opal_list_item_t *it;                                   \
+        while (NULL != (it = opal_list_remove_first(list))) {   \
+            OBJ_RELEASE(it);                                    \
+        }                                                       \
+        OBJ_RELEASE(list);                                      \
+    } while(0);
+
 
 /**
  * Loop over a list.
