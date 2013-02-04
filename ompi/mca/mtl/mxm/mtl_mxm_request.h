@@ -17,10 +17,13 @@
 struct mca_mtl_mxm_request_t {
     struct mca_mtl_request_t super;
     union {
-    	mxm_req_base_t base;
-    	mxm_send_req_t send;
-    	mxm_recv_req_t recv;
+        mxm_req_base_t base;
+        mxm_send_req_t send;
+        mxm_recv_req_t recv;
     } mxm;
+#if MXM_API >= MXM_VERSION(2,0)
+    int is_send;
+#endif
     /* mxm_segment_t mxm_segment[1]; */
     void *buf;
     size_t length;
