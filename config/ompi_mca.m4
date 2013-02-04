@@ -229,10 +229,6 @@ AC_DEFUN([OMPI_MCA],[
                 fi
                 MCA_CONFIGURE_PROJECT(mca_project)])
 
-    # BWB - fix me...  need to automate this somehow
-    MCA_SETUP_DIRECT_CALL(ompi, pml)
-    MCA_SETUP_DIRECT_CALL(ompi, mtl)
-
     AC_SUBST(MCA_PROJECT_SUBDIRS)
 
     m4_undefine([mca_component_configure_active])
