@@ -20,14 +20,14 @@
 #include <stdlib.h>
 
 #include "ompi/constants.h"
-#include "common_netpatterns.h"
+#include "netpatterns.h"
 
 
 /* setup an multi-nomial tree - for each node in the tree
  *  this returns it's parent, and it's children */
 
-OMPI_DECLSPEC int mca_common_netpatterns_setup_multinomial_tree(int tree_order, int num_nodes,
-        mca_common_netpatterns_tree_node_t *tree_nodes)
+OMPI_DECLSPEC int netpatterns_setup_multinomial_tree(int tree_order, int num_nodes,
+        netpatterns_tree_node_t *tree_nodes)
 {
     /* local variables */
     int i,result;

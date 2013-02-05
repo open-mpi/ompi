@@ -51,9 +51,7 @@ mcacomponent_LTLIBRARIES = $(component_install)
 mca_bcol_basesmuma_la_SOURCES = $(sources)
 mca_bcol_basesmuma_la_LDFLAGS = -module -avoid-version $(btl_portals_LDFLAGS)
 mca_bcol_basesmuma_la_LIBADD = \
-    	$(btl_portals_LIBS) \
-        $(top_ompi_builddir)/ompi/mca/common/netpatterns/libmca_common_netpatterns.la \
-        $(top_ompi_builddir)/ompi/mca/common/commpatterns/libmca_common_commpatterns.la 
+    	$(btl_portals_LIBS)
 
 
 noinst_LTLIBRARIES = $(component_noinst)

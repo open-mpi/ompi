@@ -22,7 +22,7 @@
 #include "ompi/mca/mpool/base/base.h"
 #include "ompi/mca/bcol/bcol.h"
 #include "ompi/mca/bcol/base/base.h"
-#include "ompi/mca/common/commpatterns/common_coll_ops.h"
+#include "ompi/patterns/comm/coll_ops.h"
 
 #include "opal/class/opal_object.h"
 #include "opal/dss/dss.h"

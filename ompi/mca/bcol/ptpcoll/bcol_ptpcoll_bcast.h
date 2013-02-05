@@ -756,9 +756,9 @@ int bcol_ptpcoll_bcast_narray_knomial_gather(mca_bcol_ptpcoll_module_t *ptpcoll_
     ompi_communicator_t* comm = ptpcoll_module->super.sbgp_partner_module->group_comm;
     ompi_request_t **requests = 
         ptpcoll_module->ml_mem.ml_buf_desc[buffer_index].requests;
-    mca_common_netpatterns_narray_knomial_tree_node_t *narray_node =
+    netpatterns_narray_knomial_tree_node_t *narray_node =
         &ptpcoll_module->narray_knomial_node[relative_group_index];
-    mca_common_netpatterns_k_exchange_node_t *k_node =
+    netpatterns_k_exchange_node_t *k_node =
         &narray_node->k_node;
     mca_bcol_ptpcoll_component_t *cm =
         &mca_bcol_ptpcoll_component;

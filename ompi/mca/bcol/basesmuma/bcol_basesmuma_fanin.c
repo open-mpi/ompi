@@ -14,7 +14,7 @@
 #include "ompi/constants.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/mca/bcol/bcol.h"
-#include "ompi/mca/common/netpatterns/common_netpatterns.h"
+#include "ompi/patterns/net/netpatterns.h"
 
 #include "opal/sys/atomic.h"
 
@@ -52,7 +52,7 @@ static int bcol_basesmuma_fanin_new(bcol_function_args_t *input_args,
     volatile mca_bcol_basesmuma_header_t *child_ctl;
 
 
-    mca_common_netpatterns_tree_node_t *my_tree_node = &(bcol_module->fanin_node);
+    netpatterns_tree_node_t *my_tree_node = &(bcol_module->fanin_node);
 
     /* Figure out - what instance of the basesmuma bcol I am */
     sequence_number = input_args->sequence_num;
@@ -134,7 +134,7 @@ static int bcol_basesmuma_fanin_new_progress(bcol_function_args_t *input_args,
     volatile mca_bcol_basesmuma_header_t *child_ctl;
 
 
-    mca_common_netpatterns_tree_node_t *my_tree_node = &(bcol_module->fanin_node);
+    netpatterns_tree_node_t *my_tree_node = &(bcol_module->fanin_node);
 
     sequence_number = input_args->sequence_num;
 

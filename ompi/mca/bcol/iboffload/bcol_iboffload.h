@@ -364,16 +364,16 @@ struct mca_bcol_iboffload_module_t {
     opal_list_t collfrag_pending;
 
     /* recursive-doubling tree node */
-    mca_common_netpatterns_pair_exchange_node_t recursive_doubling_tree;
+    netpatterns_pair_exchange_node_t recursive_doubling_tree;
 
     /* N exchange tree */
-    mca_common_netpatterns_pair_exchange_node_t n_exchange_tree;
+    netpatterns_pair_exchange_node_t n_exchange_tree;
 
     /* Knomial exchange tree */
-    mca_common_netpatterns_k_exchange_node_t knomial_exchange_tree;
+    netpatterns_k_exchange_node_t knomial_exchange_tree;
 
     /* Knomial exchange tree */
-    mca_common_netpatterns_k_exchange_node_t knomial_allgather_tree;
+    netpatterns_k_exchange_node_t knomial_allgather_tree;
 
     /* The array will keep pre-calculated task consumption per
      * algorithm

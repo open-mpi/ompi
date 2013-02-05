@@ -141,7 +141,7 @@ int bcol_ptpcoll_bcast_k_nomial_anyroot(bcol_function_args_t *input_args,
     int count = input_args->count * input_args->dtype->super.size;
     int *active_requests =
         &(ptpcoll_module->ml_mem.ml_buf_desc[buffer_index].active_requests);
-    mca_common_netpatter_knomial_step_info_t step_info = {0, 0, 0};
+    netpatterns_knomial_step_info_t step_info = {0, 0, 0};
 
     PTPCOLL_VERBOSE(3, ("BCAST Anyroot, index_this_type %d, num_of_this_type %d",
                     const_args->index_of_this_type_in_collective + 1,
@@ -529,7 +529,7 @@ int bcol_ptpcoll_bcast_k_nomial_known_root_progress(bcol_function_args_t *input_
         /* No data was received. Waiting for data */
         if (0 == (*active_requests)) {
             int extra_root = -1;
-            mca_common_netpatter_knomial_step_info_t step_info;
+            netpatterns_knomial_step_info_t step_info;
             /* We can not block. So run couple of test for data arrival */
             if (0 == mca_bcol_ptpcoll_test_for_match(recv_request, &rc)) {
                 PTPCOLL_VERBOSE(10, ("Test was not matched (active request %d)",
@@ -624,7 +624,7 @@ int bcol_ptpcoll_bcast_k_nomial_known_root(bcol_function_args_t *input_args,
     int matched = 0;
     int k_level, logk_level;
     int extra_root = -1;
-    mca_common_netpatter_knomial_step_info_t step_info;
+    netpatterns_knomial_step_info_t step_info;
 
     PTPCOLL_VERBOSE(3, ("BCAST Know root, index_this_type %d, num_of_this_type %d",
                     const_args->index_of_this_type_in_collective + 1,
@@ -694,7 +694,7 @@ int bcol_ptpcoll_bcast_k_nomial_known_root(bcol_function_args_t *input_args,
         }
     }
 
-    data_src = mca_common_netpatterns_get_knomial_data_source(
+    data_src = netpatterns_get_knomial_data_source(
                 my_group_index, group_root_index, radix, ptpcoll_module->pow_knum,
                 &k_level, &logk_level);
 
@@ -1709,8 +1709,8 @@ static int bcol_ptpcoll_bcast_narray_knomial_scatter_gatther_known_root(bcol_fun
     int group_size = ptpcoll_module->full_narray_tree_size;
     int completed = 0;
     int virtual_root;
-    mca_common_netpatterns_narray_knomial_tree_node_t *narray_knomial_node = NULL;
-    mca_common_netpatterns_narray_knomial_tree_node_t *narray_node = NULL;
+    netpatterns_narray_knomial_tree_node_t *narray_knomial_node = NULL;
+    netpatterns_narray_knomial_tree_node_t *narray_node = NULL;
 
     PTPCOLL_VERBOSE(3, ("BCAST Anyroot, index_this_type %d, num_of_this_type %d",
                     const_args->index_of_this_type_in_collective + 1,
@@ -2032,7 +2032,7 @@ static int bcol_ptpcoll_bcast_narray_progress(bcol_function_args_t *input_args,
     int matched = true;
     int my_group_index = ptpcoll_module->super.sbgp_partner_module->my_index;
     int relative_group_index = 0;
-    mca_common_netpatterns_tree_node_t *narray_node = NULL;
+    netpatterns_tree_node_t *narray_node = NULL;
 
     PTPCOLL_VERBOSE(3, ("Bcast, Narray tree Progress"));
 
@@ -2119,7 +2119,7 @@ static int bcol_ptpcoll_bcast_narray(bcol_function_args_t *input_args,
     int my_group_index = ptpcoll_module->super.sbgp_partner_module->my_index;
     int group_root_index;
     int relative_group_index = 0;
-    mca_common_netpatterns_tree_node_t *narray_node = NULL;
+    netpatterns_tree_node_t *narray_node = NULL;
 
     PTPCOLL_VERBOSE(3, ("Bcast, Narray tree"));
 

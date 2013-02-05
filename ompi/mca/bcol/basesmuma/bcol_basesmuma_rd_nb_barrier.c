@@ -17,7 +17,7 @@
 #include "ompi/mca/bcol/bcol.h"
 #include "bcol_basesmuma.h"
 #include "opal/sys/atomic.h"
-#include "ompi/mca/common/netpatterns/common_netpatterns.h"
+#include "ompi/patterns/net/netpatterns.h"
 
 /*
  * Initialize nonblocking barrier.  This is code specific for handling
@@ -35,7 +35,7 @@ int bcol_basesmuma_rd_nb_barrier_init_admin(
     int ret=OMPI_SUCCESS, idx, leading_dim, loop_cnt, exchange;
     int pair_rank;
     mca_bcol_basesmuma_ctl_struct_t **ctl_structs;
-    mca_common_netpatterns_pair_exchange_node_t *my_exchange_node;
+    netpatterns_pair_exchange_node_t *my_exchange_node;
     int extra_rank, my_rank, pow_2;
     mca_bcol_basesmuma_ctl_struct_t volatile *partner_ctl;
     mca_bcol_basesmuma_ctl_struct_t volatile *my_ctl;
@@ -205,7 +205,7 @@ int bcol_basesmuma_rd_nb_barrier_progress_admin(
     int ret=OMPI_SUCCESS, idx, leading_dim, loop_cnt, exchange;
     int pair_rank, start_index, restart_phase;
     mca_bcol_basesmuma_ctl_struct_t **ctl_structs;
-    mca_common_netpatterns_pair_exchange_node_t *my_exchange_node;
+    netpatterns_pair_exchange_node_t *my_exchange_node;
     int extra_rank, my_rank, pow_2;
     mca_bcol_basesmuma_ctl_struct_t volatile *partner_ctl;
     mca_bcol_basesmuma_ctl_struct_t volatile *my_ctl;
