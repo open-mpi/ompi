@@ -316,7 +316,7 @@ void opal_atomic_unlock(opal_atomic_lock_t *lock);
 #if OPAL_HAVE_ATOMIC_SPINLOCKS == 0
 #undef OPAL_HAVE_ATOMIC_SPINLOCKS
 #define OPAL_HAVE_ATOMIC_SPINLOCKS (OPAL_HAVE_ATOMIC_CMPSET_32 || OPAL_HAVE_ATOMIC_CMPSET_64)
-#define OPAL_NEED_INLINE_ATOMIC_SPINLOCKS
+#define OPAL_NEED_INLINE_ATOMIC_SPINLOCKS 1
 #endif
 
 #endif /* OPAL_HAVE_ATOMIC_SPINLOCKS */
@@ -382,24 +382,20 @@ int opal_atomic_cmpset_rel_64(volatile int64_t *addr, int64_t oldval,
   #define OPAL_HAVE_ATOMIC_MATH_32 0
 #endif
 
-#if defined(DOXYGEN) ||  OPAL_HAVE_ATOMIC_MATH_32 || OPAL_HAVE_ATOMIC_CMPSET_32
+#if defined(DOXYGEN) || OPAL_HAVE_ATOMIC_MATH_32 || OPAL_HAVE_ATOMIC_CMPSET_32
 
 /* OPAL_HAVE_INLINE_ATOMIC_*_32 will be 1 if <arch>/atomic.h provides
-   a static inline version of it (in assembly).  If it's 0 but
-   OPAL_HAVE_ATOMIC_CMPSET_32 is 1, then atomic_impl.h (below) will
-   define a static inline version of it (in C, using
-   atomic_cmpset_32()).  */
-#if OPAL_HAVE_INLINE_ATOMIC_ADD_32 || OPAL_HAVE_ATOMIC_CMPSET_32
+   a static inline version of it (in assembly).  If we have to fall
+   back on cmpset 32, that too will be inline. */
+#if OPAL_HAVE_INLINE_ATOMIC_ADD_32 || (!defined(OPAL_HAVE_ATOMIC_ADD_32) && OPAL_HAVE_ATOMIC_CMPSET_32)
 static inline
 #endif
 int32_t opal_atomic_add_32(volatile int32_t *addr, int delta);
 
 /* OPAL_HAVE_INLINE_ATOMIC_*_32 will be 1 if <arch>/atomic.h provides
-   a static inline version of it (in assembly).  If it's 0 but
-   OPAL_HAVE_ATOMIC_CMPSET_32 is 1, then atomic_impl.h (below) will
-   define a static inline version of it (in C, using
-   atomic_cmpset_32()).  */
-#if OPAL_HAVE_INLINE_ATOMIC_SUB_32 || OPAL_HAVE_ATOMIC_CMPSET_32
+   a static inline version of it (in assembly).  If we have to fall
+   back to cmpset 32, that too will be inline. */
+#if OPAL_HAVE_INLINE_ATOMIC_SUB_32 || (!defined(OPAL_HAVE_ATOMIC_ADD_32) && OPAL_HAVE_ATOMIC_CMPSET_32)
 static inline
 #endif
 int32_t opal_atomic_sub_32(volatile int32_t *addr, int delta);
@@ -420,21 +416,17 @@ int32_t opal_atomic_sub_32(volatile int32_t *addr, int delta);
 #if defined(DOXYGEN) || OPAL_HAVE_ATOMIC_MATH_64 || OPAL_HAVE_ATOMIC_CMPSET_64
 
 /* OPAL_HAVE_INLINE_ATOMIC_*_64 will be 1 if <arch>/atomic.h provides
-   a static inline version of it (in assembly).  If it's 0 but
-   OPAL_HAVE_ATOMIC_CMPSET_64 is 1, then atomic_impl.h (below) will
-   define a static inline version of it (in C, using
-   atomic_cmpset_64()).  */
-#if OPAL_HAVE_INLINE_ATOMIC_ADD_64 || OPAL_HAVE_ATOMIC_CMPSET_64
+   a static inline version of it (in assembly).  If we have to fall
+   back to cmpset 64, that too will be inline */
+#if OPAL_HAVE_INLINE_ATOMIC_ADD_64 || (!defined(OPAL_HAVE_ATOMIC_ADD_64) && OPAL_HAVE_ATOMIC_CMPSET_64)
 static inline
 #endif
 int64_t opal_atomic_add_64(volatile int64_t *addr, int64_t delta);
 
 /* OPAL_HAVE_INLINE_ATOMIC_*_64 will be 1 if <arch>/atomic.h provides
-   a static inline version of it (in assembly).  If it's 0 but
-   OPAL_HAVE_ATOMIC_CMPSET_64 is 1, then atomic_impl.h (below) will
-   define a static inline version of it (in C, using
-   atomic_cmpset_64()).  */
-#if OPAL_HAVE_INLINE_ATOMIC_SUB_64 || OPAL_HAVE_ATOMIC_CMPSET_64
+   a static inline version of it (in assembly).  If we have to fall
+   back to cmpset 64, that too will be inline */
+#if OPAL_HAVE_INLINE_ATOMIC_SUB_64 || (!defined(OPAL_HAVE_ATOMIC_ADD_64) && OPAL_HAVE_ATOMIC_CMPSET_64)
 static inline
 #endif
 int64_t opal_atomic_sub_64(volatile int64_t *addr, int64_t delta);
@@ -610,12 +602,10 @@ static inline int64_t opal_atomic_sub_ptr( volatile void* addr, void* delta );
 #endif /* OPAL_HAVE_ATOMIC_MATH_32 || OPAL_HAVE_ATOMIC_MATH_64 */
 
 
-/**********************************************************************
- *
- * Include system specific inline asm definitions. Otherwise
- * the definitions are in system specific .s files in src/util.
- *
- *********************************************************************/
+/*
+ * Include inline implementations of everything not defined directly
+ * in assembly
+ */
 #include "opal/sys/atomic_impl.h"
 
 END_C_DECLS
