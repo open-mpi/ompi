@@ -54,7 +54,7 @@ int mca_bcol_iboffload_barrier_intra_recursive_doubling(
     mca_bcol_iboffload_frag_t *send_fragment = NULL,
                               *preposted_recv_frag = NULL;
 
-    mca_common_netpatterns_pair_exchange_node_t *my_exchange_node =
+    netpatterns_pair_exchange_node_t *my_exchange_node =
                                           &iboffload->recursive_doubling_tree;
 
     IBOFFLOAD_VERBOSE(10, ("Calling for mca_bcol_iboffload_barrier_intra_recursive_doubling.\n"));
@@ -364,7 +364,7 @@ int mca_bcol_iboffload_nb_memory_service_barrier_intra(bcol_function_args_t *inp
 /* Recursive K - ing*/
 static int recursive_knomial_start_connections(struct mca_bcol_iboffload_module_t *iboffload)
 {
-    mca_common_netpatterns_k_exchange_node_t *my_exchange_node =
+    netpatterns_k_exchange_node_t *my_exchange_node =
         &iboffload->knomial_exchange_tree;
     int k, i, n_exchanges = my_exchange_node->n_exchanges,
         **exchanges = my_exchange_node->rank_exchanges,
@@ -442,7 +442,7 @@ static int mca_bcol_iboffload_barrier_intra_recursive_knomial(
     mca_bcol_iboffload_frag_t *send_fragment = NULL,
                               *preposted_recv_frag = NULL;
 
-    mca_common_netpatterns_k_exchange_node_t *my_exchange_node =
+    netpatterns_k_exchange_node_t *my_exchange_node =
         &iboffload->knomial_exchange_tree;
     IBOFFLOAD_VERBOSE(10, ("Calling for mca_bcol_iboffload_barrier_intra_recursive_knomial. Node type %d\n", my_exchange_node->node_type));
 
@@ -706,7 +706,7 @@ int mca_bcol_iboffload_barrier_intra_recursive_knomial_start(
 
 int mca_bcol_iboffload_rec_doubling_start_connections(mca_bcol_iboffload_module_t *iboffload)
 {
-    mca_common_netpatterns_pair_exchange_node_t *my_exchange_node =
+    netpatterns_pair_exchange_node_t *my_exchange_node =
                                           &iboffload->recursive_doubling_tree;
 
     int i, n_exchanges = my_exchange_node->n_exchanges,

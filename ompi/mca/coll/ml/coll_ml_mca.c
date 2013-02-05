@@ -22,7 +22,7 @@
 #include "coll_ml_inlines.h"
 #include "coll_ml_mca.h"
 #include "coll_ml_lmngr.h"
-#include "ompi/mca/common/netpatterns/common_netpatterns.h"
+#include "ompi/patterns/net/netpatterns.h"
 #include "opal/mca/installdirs/installdirs.h"
 
 /*

@@ -18,9 +18,9 @@
 #include "ompi/datatype/ompi_datatype.h"
 #include "ompi/communicator/communicator.h"
 #include "opal/include/opal/sys/atomic.h"
-#include "common_coll_ops.h"
-#include "ompi/mca/common/netpatterns/common_netpatterns.h"
 #include "ompi/mca/pml/pml.h"
+#include "ompi/patterns/net/netpatterns.h"
+#include "coll_ops.h"
 
 /**
  * Bcast - subgroup in communicator
@@ -35,7 +35,7 @@ OMPI_DECLSPEC int comm_bcast_pml(void *buffer, int root, int count,
     int rc=OMPI_SUCCESS,msg_cnt,i;
     ompi_request_t *requests[2];
     int node_rank, peer_rank;
-    mca_common_netpatterns_tree_node_t node_data;
+    netpatterns_tree_node_t node_data;
 
     /*
      * shift rank to root==0 tree
@@ -45,7 +45,7 @@ OMPI_DECLSPEC int comm_bcast_pml(void *buffer, int root, int count,
     /*
      * compute my communication pattern - binary tree
      */
-    rc=mca_common_netpatterns_setup_narray_tree(2, node_rank, n_peers,
+    rc=netpatterns_setup_narray_tree(2, node_rank, n_peers,
             &node_data);
     if( OMPI_SUCCESS != rc ) {
         goto Error;

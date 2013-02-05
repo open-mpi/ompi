@@ -34,7 +34,7 @@ static int bcol_ptpcoll_barrier_recurs_knomial_new(
     mca_bcol_ptpcoll_module_t *ptpcoll_module =
                         (mca_bcol_ptpcoll_module_t *) const_args->bcol_module;
 
-    mca_common_netpatterns_k_exchange_node_t *my_exchange_node =
+    netpatterns_k_exchange_node_t *my_exchange_node =
                                        &ptpcoll_module->knomial_exchange_tree;
 
     int rc, k, pair_comm_rank, exchange, completed,
@@ -223,7 +223,7 @@ static int bcol_ptpcoll_barrier_recurs_knomial_new_progress(
     mca_bcol_ptpcoll_module_t *ptpcoll_module =
                         (mca_bcol_ptpcoll_module_t *) const_args->bcol_module;
 
-    mca_common_netpatterns_k_exchange_node_t *my_exchange_node =
+    netpatterns_k_exchange_node_t *my_exchange_node =
                                        &ptpcoll_module->knomial_exchange_tree;
 
     int rc, k, tag, pair_comm_rank, exchange,
@@ -371,7 +371,7 @@ static int bcol_ptpcoll_barrier_recurs_knomial_extra_new(
     mca_bcol_ptpcoll_module_t *ptpcoll_module =
                     (mca_bcol_ptpcoll_module_t *) const_args->bcol_module;
 
-    mca_common_netpatterns_k_exchange_node_t *my_exchange_node =
+    netpatterns_k_exchange_node_t *my_exchange_node =
                                    &ptpcoll_module->knomial_exchange_tree;
 
     ompi_communicator_t *comm =
@@ -862,7 +862,7 @@ static int bcol_ptpcoll_barrier_extra_node_progress(
 
 static int mca_bcol_ptpcoll_barrier_setup(mca_bcol_base_module_t *super, int bcoll_type)
 {
-    mca_common_netpatterns_k_exchange_node_t *my_exchange_node;
+    netpatterns_k_exchange_node_t *my_exchange_node;
     mca_bcol_ptpcoll_module_t * ptpcoll_module =
                            (mca_bcol_ptpcoll_module_t *) super;
 

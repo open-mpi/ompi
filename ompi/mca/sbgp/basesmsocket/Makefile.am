@@ -35,8 +35,7 @@ mcacomponentdir = $(pkglibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_sbgp_basesmsocket_la_SOURCES = $(sources)
 mca_sbgp_basesmsocket_la_LDFLAGS = -module -avoid-version
-mca_sbgp_basesmsocket_la_LIBADD = \
-                                 $(top_ompi_builddir)/ompi/mca/common/commpatterns/libmca_common_commpatterns.la 
+mca_sbgp_basesmsocket_la_LIBADD = 
 
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_sbgp_basesmsocket_la_SOURCES =$(sources)

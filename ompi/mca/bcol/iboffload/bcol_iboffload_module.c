@@ -178,8 +178,8 @@ mca_bcol_iboffload_module_destruct(mca_bcol_iboffload_module_t *module)
         free(module->endpoints);
     }
 
-    mca_common_netpatterns_free_recursive_doubling_tree_node(&module->n_exchange_tree);
-    mca_common_netpatterns_free_recursive_doubling_tree_node(&module->recursive_doubling_tree);
+    netpatterns_free_recursive_doubling_tree_node(&module->n_exchange_tree);
+    netpatterns_free_recursive_doubling_tree_node(&module->recursive_doubling_tree);
 
     OBJ_RELEASE(module->device->net_context);
     OBJ_RELEASE(module->device);
@@ -745,7 +745,7 @@ int mca_bcol_iboffload_setup_knomial_tree(mca_bcol_base_module_t *super)
 {
     int rc;
     mca_bcol_iboffload_module_t *ib_module = (mca_bcol_iboffload_module_t *) super;
-    rc = mca_common_netpatterns_setup_recursive_knomial_allgather_tree_node(
+    rc = netpatterns_setup_recursive_knomial_allgather_tree_node(
             ib_module->super.sbgp_partner_module->group_size,
             ib_module->super.sbgp_partner_module->my_index,
             mca_bcol_iboffload_component.k_nomial_radix,
@@ -1090,7 +1090,7 @@ mca_bcol_iboffload_comm_query(mca_sbgp_base_module_t *sbgp, int *num_modules)
         /* Barrier initialization - recuresive doubling */
 #if 1
         if (OMPI_SUCCESS !=
-                    mca_common_netpatterns_setup_recursive_doubling_tree_node(
+                    netpatterns_setup_recursive_doubling_tree_node(
                                 iboffload_module->group_size, my_rank,
                                 &iboffload_module->recursive_doubling_tree)) {
             IBOFFLOAD_ERROR(("Failed to setup recursive doubling tree,"
@@ -1101,7 +1101,7 @@ mca_bcol_iboffload_comm_query(mca_sbgp_base_module_t *sbgp, int *num_modules)
 
         /* Barrier initialization - N exchange tree */
         if (OMPI_SUCCESS !=
-                mca_common_netpatterns_setup_recursive_doubling_n_tree_node(
+                netpatterns_setup_recursive_doubling_n_tree_node(
                                 iboffload_module->group_size, my_rank,
                                 cm->exchange_tree_order,
                                 &iboffload_module->n_exchange_tree)) {
@@ -1113,7 +1113,7 @@ mca_bcol_iboffload_comm_query(mca_sbgp_base_module_t *sbgp, int *num_modules)
 
         /* Recursive K-ing initialization - Knomial exchange tree */
         if (OMPI_SUCCESS !=
-                mca_common_netpatterns_setup_recursive_knomial_tree_node(
+                netpatterns_setup_recursive_knomial_tree_node(
                                 iboffload_module->group_size, my_rank,
                                 cm->knomial_tree_order,
                                 &iboffload_module->knomial_exchange_tree)) {
@@ -1156,7 +1156,7 @@ mca_bcol_iboffload_comm_query(mca_sbgp_base_module_t *sbgp, int *num_modules)
         }
         /* that should take care of that */
         if (OMPI_SUCCESS !=
-                mca_common_netpatterns_setup_recursive_knomial_allgather_tree_node(
+                netpatterns_setup_recursive_knomial_allgather_tree_node(
                                 iboffload_module->group_size, sbgp->group_list[my_rank],
                                 cm->k_nomial_radix, iboffload_module->super.list_n_connected,
                                 &iboffload_module->knomial_allgather_tree)) {

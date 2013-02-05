@@ -83,7 +83,7 @@ comm_allreduce(void *sbuf, void *rbuf, int count, opal_datatype_t *dtype,
     int rc=OMPI_SUCCESS,n_dts_per_buffer,n_data_segments,stripe_number;
     int pair_rank,exchange,extra_rank;
     int index_read,index_write;
-    mca_common_netpatterns_pair_exchange_node_t my_exchange_node;
+    netpatterns_pair_exchange_node_t my_exchange_node;
     int my_rank,count_processed,count_this_stripe;
     size_t n_peers,message_extent,len_data_buffer;
     size_t dt_size;
@@ -152,7 +152,7 @@ comm_allreduce(void *sbuf, void *rbuf, int count, opal_datatype_t *dtype,
     }
 
     /* get my reduction communication pattern */
-    ret=mca_common_netpatterns_setup_recursive_doubling_tree_node(n_peers,my_rank,&my_exchange_node);
+    ret=netpatterns_setup_recursive_doubling_tree_node(n_peers,my_rank,&my_exchange_node);
     if(OMPI_SUCCESS != ret){
         return ret;
     }

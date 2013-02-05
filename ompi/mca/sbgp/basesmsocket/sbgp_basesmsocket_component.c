@@ -35,7 +35,7 @@
 #include "ompi/communicator/communicator.h"
 #include "sbgp_basesmsocket.h"
 
-#include "ompi/mca/common/commpatterns/common_coll_ops.h"
+#include "ompi/patterns/comm/coll_ops.h"
 
 
 /*

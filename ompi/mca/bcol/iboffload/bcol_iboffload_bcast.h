@@ -364,7 +364,7 @@ int bcol_iboffload_binomial_root_to_src(int group_root, int my_rank,
 
 static inline void bcol_iboffload_setup_binomial_connection(mca_bcol_iboffload_module_t *iboffload)
 {
-    mca_common_netpatterns_pair_exchange_node_t *my_exchange_node =
+    netpatterns_pair_exchange_node_t *my_exchange_node =
                                           &iboffload->recursive_doubling_tree;
 
     int i, n_exchanges = my_exchange_node->n_exchanges,

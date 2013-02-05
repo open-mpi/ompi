@@ -18,9 +18,9 @@
 #include "ompi/datatype/ompi_datatype.h"
 #include "ompi/communicator/communicator.h"
 #include "opal/include/opal/sys/atomic.h"
-#include "common_coll_ops.h"
-#include "ompi/mca/common/netpatterns/common_netpatterns.h"
 #include "ompi/mca/pml/pml.h"
+#include "ompi/patterns/net/netpatterns.h"
+#include "coll_ops.h"
 
 /**
  * All-reduce - subgroup in communicator
@@ -35,7 +35,7 @@ OMPI_DECLSPEC int comm_allgather_pml(void *src_buf, void *dest_buf, int count,
     int proc_block,extra_start,extra_end,iovec_len;
     int remote_data_start_rank,remote_data_end_rank;
     int local_data_start_rank;
-    mca_common_netpatterns_pair_exchange_node_t my_exchange_node;
+    netpatterns_pair_exchange_node_t my_exchange_node;
     size_t message_extent,current_data_extent,current_data_count;
     size_t dt_size;
     OPAL_PTRDIFF_TYPE dt_extent;
@@ -73,7 +73,7 @@ OMPI_DECLSPEC int comm_allgather_pml(void *src_buf, void *dest_buf, int count,
     }
 
     /* get my reduction communication pattern */
-    rc = mca_common_netpatterns_setup_recursive_doubling_tree_node(n_peers, 
+    rc = netpatterns_setup_recursive_doubling_tree_node(n_peers, 
             my_rank_in_group, &my_exchange_node);
     if(OMPI_SUCCESS != rc){
         return rc;

@@ -203,7 +203,7 @@ int mca_bcol_iboffload_small_msg_bcast_progress(
 static int mca_bcol_iboffload_small_msg_bcast_exec(mca_bcol_iboffload_module_t *iboffload_module,
                                                    mca_bcol_iboffload_collreq_t *coll_request)
 {
-    mca_common_netpatterns_pair_exchange_node_t *recursive_doubling_tree =
+    netpatterns_pair_exchange_node_t *recursive_doubling_tree =
         &iboffload_module->recursive_doubling_tree;
 
     int rc,
@@ -396,7 +396,7 @@ int mca_bcol_iboffload_small_msg_bcast_intra(bcol_function_args_t *fn_arguments,
 static int mca_bcol_iboffload_small_msg_bcast_extra_exec(mca_bcol_iboffload_module_t *iboffload_module,
                                                    mca_bcol_iboffload_collreq_t *coll_request)
 {
-    mca_common_netpatterns_pair_exchange_node_t *recursive_doubling_tree =
+    netpatterns_pair_exchange_node_t *recursive_doubling_tree =
         &iboffload_module->recursive_doubling_tree;
 
     int rc,
@@ -617,7 +617,7 @@ do {                                                                            
 static int mca_bcol_iboffload_bcast_scatter_allgather_exec(mca_bcol_iboffload_module_t *iboffload_module,
         mca_bcol_iboffload_collreq_t *coll_request)
 {
-    mca_common_netpatterns_pair_exchange_node_t *recursive_doubling_tree =
+    netpatterns_pair_exchange_node_t *recursive_doubling_tree =
         &iboffload_module->recursive_doubling_tree;
 
     int rc,
@@ -857,7 +857,7 @@ int mca_bcol_iboffload_bcast_scatter_allgather_intra(bcol_function_args_t *fn_ar
 static int mca_bcol_iboffload_bcast_scatter_allgather_extra_exec(mca_bcol_iboffload_module_t *iboffload_module,
         mca_bcol_iboffload_collreq_t *coll_request)
 {
-    mca_common_netpatterns_pair_exchange_node_t *recursive_doubling_tree =
+    netpatterns_pair_exchange_node_t *recursive_doubling_tree =
         &iboffload_module->recursive_doubling_tree;
 
     int rc, dst;
