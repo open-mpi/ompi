@@ -149,7 +149,7 @@ EXTRA_DIST = \
 	platform/greenplum/bend/mac-optimized \
 	platform/greenplum/bend/mac-optimized.conf \
 	platform/greenplum/bend/linux-optimized \
-	platform/greenplum/bend/linux-optimized.conf
+	platform/greenplum/bend/linux-optimized.conf \
 	platform/greenplum/mrplus/mac \
 	platform/greenplum/mrplus/mac.conf \
 	platform/greenplum/mrplus/linux \
