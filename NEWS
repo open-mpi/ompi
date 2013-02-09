@@ -50,6 +50,8 @@ included in the vX.Y.Z section and be denoted as:
 1.6.4
 -----
 
+- Fix process binding issue on Solaris.  Thanks to Siegmar Gross for
+  reporting the problem.
 - Updates for MXM 2.0.
 - Major VT update to 5.14.2.3.
 - Fixed F77 constants for Cygwin/Cmake build.
