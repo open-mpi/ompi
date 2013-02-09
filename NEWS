@@ -50,6 +50,9 @@ included in the vX.Y.Z section and be denoted as:
 1.6.4
 -----
 
+- Fix to obtaining the correct available nodes when a rankfile is
+  providing the allocation.  Thanks to Siegmar Gross for reporting the
+  problem.
 - Fix process binding issue on Solaris.  Thanks to Siegmar Gross for
   reporting the problem.
 - Updates for MXM 2.0.

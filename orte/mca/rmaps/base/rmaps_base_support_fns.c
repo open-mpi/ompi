@@ -83,6 +83,24 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
                 ORTE_ERROR_LOG(rc);
                 return rc;
             }
+        } else if (NULL != orte_rankfile) {
+            /* use the rankfile, if provided */
+            OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base.rmaps_output,
+                                 "%s using rankfile %s",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 orte_rankfile));
+            if (ORTE_SUCCESS != (rc = orte_util_add_hostfile_nodes(&nodes, &ignore,
+                                                                   orte_rankfile))) {
+                ORTE_ERROR_LOG(rc);
+                return rc;
+            }
+            if (0 == opal_list_get_size(&nodes)) {
+                OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base.rmaps_output,
+                                     "%s nothing found in given rankfile",
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+                OBJ_DESTRUCT(&nodes);
+                return ORTE_ERR_BAD_PARAM;
+            }
         } else if (NULL != orte_default_hostfile) {
             /* fall back to the default hostfile, if provided */
             OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base.rmaps_output,
