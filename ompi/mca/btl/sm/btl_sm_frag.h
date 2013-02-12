@@ -11,8 +11,6 @@
  *                         All rights reserved.
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2012      Mellanox Technologies, Inc.
- *                         All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -44,20 +42,13 @@ struct mca_btl_sm_hdr_t {
     size_t len;
     int my_smp_rank;
     mca_btl_base_tag_t tag;
-#if OSHMEM_ENABLED
-    void *dst_addr;
-    void *src_addr;
-#endif /* OSHMEM_ENABLED */
 };
 typedef struct mca_btl_sm_hdr_t mca_btl_sm_hdr_t;
 
 struct mca_btl_sm_segment_t {
     mca_btl_base_segment_t base;
-#if OMPI_BTL_SM_HAVE_KNEM || OMPI_BTL_SM_HAVE_CMA 
+#if OMPI_BTL_SM_HAVE_KNEM || OMPI_BTL_SM_HAVE_CMA
     uint64_t key;
-#if OSHMEM_ENABLED
-    uint32_t lkey;
-#endif /* OSHMEM_ENABLED */
 #endif /* OMPI_BTL_SM_HAVE_KNEM || OMPI_BTL_SM_HAVE_CMA */
 };
 typedef struct mca_btl_sm_segment_t mca_btl_sm_segment_t;

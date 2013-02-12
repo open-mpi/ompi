@@ -25,6 +25,7 @@
 #include "ompi/mca/sbgp/ibnet/sbgp_ibnet.h"
 #include "ompi/mca/common/ofacm/base.h"
 #include "ompi/mca/common/ofacm/connect.h"
+#include "ompi/patterns/comm/coll_ops.h"
 /*
  * Unused
 static int ibnet_module_enable(mca_sbgp_base_module_t *module,

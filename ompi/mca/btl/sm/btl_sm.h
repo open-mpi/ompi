@@ -14,8 +14,6 @@
  * Copyright (c) 2010-2013 Los Alamos National Security, LLC.  
  *                         All rights reserved. 
  * Copyright (c) 2010-2012 IBM Corporation.  All rights reserved.
- * Copyright (c) 2012      Mellanox Technologies, Inc.
- *                         All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -184,9 +182,6 @@ struct mca_btl_sm_component_t {
 #if OMPI_BTL_SM_HAVE_KNEM
     /* Knem capabilities info */
     struct knem_cmd_info knem_info;
-#if OSHMEM_ENABLED
-    unsigned int knem_threshold;
-#endif /* OSHMEM_ENABLED */
 #endif /* OMPI_BTL_SM_HAVE_KNEM */
 
     /** MCA: should we be using knem or not?  neg=try but continue if
@@ -513,12 +508,6 @@ extern int mca_btl_sm_get_sync(
 		struct mca_btl_base_module_t* btl,
 		struct mca_btl_base_endpoint_t* endpoint,
 		struct mca_btl_base_descriptor_t* des );
-#if OSHMEM_ENABLED
-extern int mca_btl_sm_put_async(
-        struct mca_btl_base_module_t* btl,
-        struct mca_btl_base_endpoint_t* endpoint,
-        struct mca_btl_base_descriptor_t* des );
-#endif /* OSHMEM_ENABLED */
 
 extern struct mca_btl_base_descriptor_t* mca_btl_sm_prepare_dst(
 		struct mca_btl_base_module_t* btl,

@@ -15,8 +15,6 @@
  *                         All rights reserved.
  * Copyright (c) 2011      NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2010-2012 IBM Corporation.  All rights reserved.
- * Copyright (c) 2012      Mellanox Technologies, Inc.
- *                         All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -170,25 +168,6 @@ static int sm_register(void)
         }
         mca_btl_sm_component.use_knem = 0;
     }
-	
-#if OSHMEM_ENABLED
-#if OMPI_BTL_SM_HAVE_KNEM 
-    mca_btl_sm.knem_fd = -1;
-    mca_base_param_reg_int(&mca_btl_sm_component.super.btl_version,
-            "knem_threshold", "Messages of the size greater than this value are sent via KNEM others go through SM Send",
-            false, false, 12228, &i);
-
-    if (i < 0)
-    {
-        opal_output(0,"Error: knem threshold has to be positive value or zero; using default value: 12228 bytes");
-        i = 12228;
-    }
-    mca_btl_sm_component.knem_threshold = (unsigned int)i;
-    mca_base_param_reg_int(&mca_btl_sm_component.super.btl_version,
-            "component_use_knem_value", NULL,
-           true, false, mca_btl_sm_component.use_knem, NULL);
-#endif /* OMPI_BTL_SM_HAVE_KNEM */
-#endif /* OSHMEM_ENABLED */
     /* Currently disabling DMA mode by default; it's not clear that
        this is useful in all applications and architectures. */
     mca_base_param_reg_int(&mca_btl_sm_component.super.btl_version,
@@ -200,7 +179,7 @@ static int sm_register(void)
     mca_base_param_reg_int(&mca_btl_sm_component.super.btl_version,
                            "knem_max_simultaneous",
                            "Max number of simultaneous ongoing knem operations to support (0 = do everything synchronously, which probably gives the best large message latency; >0 means to do all operations asynchronously, which supports better overlap for simultaneous large message sends)",
-                           false, false, 100,
+                           false, false, 0,
                            &mca_btl_sm_component.knem_max_simultaneous);
 
     /* CMA parameters */
@@ -244,9 +223,6 @@ static int sm_register(void)
 #if OMPI_BTL_SM_HAVE_KNEM || OMPI_BTL_SM_HAVE_CMA
     if (mca_btl_sm_component.use_knem || mca_btl_sm_component.use_cma) {
         mca_btl_sm.super.btl_flags |= MCA_BTL_FLAGS_GET;
-#if OSHMEM_ENABLED
-        mca_btl_sm.super.btl_flags |= MCA_BTL_FLAGS_PUT;
-#endif /* OSHMEM_ENABLED */
     }
 
     if (mca_btl_sm_component.use_knem && mca_btl_sm_component.use_cma) {
@@ -275,9 +251,6 @@ static int sm_register(void)
 static int mca_btl_sm_component_open(void)
 {
     mca_btl_sm_component.sm_max_btls = 1;
-#if OSHMEM_ENABLED
-    OBJ_CONSTRUCT(&mca_btl_sm_component.sm_lock, opal_mutex_t);
-#endif /* OSHMEM_ENABLED */ 
 
     /* make sure the number of fifos is a power of 2 */
     mca_btl_sm_component.nfifos = opal_next_poweroftwo_inclusive (mca_btl_sm_component.nfifos);
@@ -292,9 +265,7 @@ static int mca_btl_sm_component_open(void)
     mca_btl_sm_component.eager_limit = mca_btl_sm.super.btl_eager_limit;
 
     /* initialize objects */
-#if !OSHMEM_ENABLED
     OBJ_CONSTRUCT(&mca_btl_sm_component.sm_lock, opal_mutex_t);
-#endif /* !OSHMEM_ENABLED */
     OBJ_CONSTRUCT(&mca_btl_sm_component.sm_frags_eager, ompi_free_list_t);
     OBJ_CONSTRUCT(&mca_btl_sm_component.sm_frags_max, ompi_free_list_t);
     OBJ_CONSTRUCT(&mca_btl_sm_component.sm_frags_user, ompi_free_list_t);
@@ -736,12 +707,6 @@ mca_btl_sm_component_init(int *num_btls,
     ompi_node_rank_t my_node_rank = OMPI_NODE_RANK_INVALID;
 #if OMPI_BTL_SM_HAVE_KNEM
     int rc;
-#if OSHMEM_ENABLED
-    if (mca_btl_sm_component.use_knem == 0)
-    {
-       opal_output_verbose(1, mca_btl_base_output, "SM BTL will operate without KNEM kernel module");
-    }
-#endif /* OSHMEM_ENABLED */
 #endif /* OMPI_BTL_SM_HAVE_KNEM */
 
     *num_btls = 0;
@@ -914,11 +879,6 @@ mca_btl_sm_component_init(int *num_btls,
                 }
             }
         }
-#if OSHMEM_ENABLED
-		/*always use sync get and sync put according to shmem logic*/
-		mca_btl_sm.super.btl_get = mca_btl_sm_get_sync;
-		mca_btl_sm.super.btl_put =  mca_btl_sm_put_async;
-#else
         /* Set the BTL get function pointer if we're supporting KNEM;
            choose between synchronous and asynchronous. */
         if (mca_btl_sm_component.knem_max_simultaneous > 0) {
@@ -926,7 +886,6 @@ mca_btl_sm_component_init(int *num_btls,
         } else {
             mca_btl_sm.super.btl_get = mca_btl_sm_get_sync;
         }
-#endif /* OSHMEM_ENABLED */
     }
 #endif /* OMPI_BTL_SM_HAVE_KNEM */
 
@@ -961,9 +920,6 @@ mca_btl_sm_component_init(int *num_btls,
     /* If "use_knem" is positive, then it's an error if knem support
        is not available -- deactivate the sm btl. */
     if (mca_btl_sm_component.use_knem > 0) {
-#if OSHMEM_ENABLED
-        opal_output(0,"Error: SM BTL was explicitly requested to operate with KNEM support but KNEM module is not available! SM BTL will be deactivated");
-#endif
         return NULL;
     }
 
@@ -1095,27 +1051,8 @@ int mca_btl_sm_component_progress(void)
                 seg.seg_len = hdr->len;
                 Frag.base.des_dst_cnt = 1;
                 Frag.base.des_dst = &seg;
-#if OSHMEM_ENABLED
-				/*
-				 * This ugly hack is done to support following configuration as:
-				 * OSHMEM + SM => put/get for small messages using send()
-				 */
-				if (hdr->tag == (MCA_BTL_TAG_USR + 0xA))
-				{
-					memcpy(hdr->dst_addr, seg.seg_addr.pval, hdr->len);
-				}
-				else if (hdr->tag == (MCA_BTL_TAG_USR + 0xB))
-				{
-					memcpy(seg.seg_addr.pval, hdr->src_addr, hdr->len);
-				}
-				else{
-					reg->cbfunc(&mca_btl_sm.super, hdr->tag, &(Frag.base),
-							reg->cbdata);
-				}
-#else
                 reg->cbfunc(&mca_btl_sm.super, hdr->tag, &(Frag.base),
                             reg->cbdata);
-#endif /* OSHMEM_ENABLED */
                 /* return the fragment */
                 MCA_BTL_SM_FIFO_WRITE(
                         mca_btl_sm_component.sm_peers[peer_smp_rank],

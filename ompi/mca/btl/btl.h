@@ -14,8 +14,6 @@
  *                         reserved. 
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2012      NVIDIA Corporation.  All rights reserved.
- * Copyright (c) 2012      Mellanox Technologies, Inc.
- *                         All rights reserved
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -310,13 +308,6 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_btl_base_descriptor_t);
  */
 #define MCA_BTL_DES_FLAGS_PUT               0x0010
 #define MCA_BTL_DES_FLAGS_GET               0x0020
-
-#ifdef OSHMEM_ENABLED
-#define MCA_BTL_DES_FLAGS_SHMEM_REQUEST     0x0030
-
-#define BTL_SM_HDR_TYPE_PUT_AS_SEND         (MCA_BTL_TAG_USR + 0x0A)
-#define BTL_SM_HDR_TYPE_GET_AS_SEND         (MCA_BTL_TAG_USR + 0x0B)
-#endif /* OSHMEM_ENABLED */ 
 
 /**
  * Maximum number of allowed segments in src/dst fields of a descriptor.

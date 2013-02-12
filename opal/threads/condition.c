@@ -9,8 +9,6 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2012      Mellanox Technologies, Inc.
- *                         All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -29,11 +27,6 @@ static void opal_condition_construct(opal_condition_t *c)
     c->c_signaled = 0;
 #if OPAL_HAVE_POSIX_THREADS
     pthread_cond_init(&c->c_cond, NULL);
-#endif
-#ifdef OSHMEM_WAIT_COMPLETION_DEBUG
-    c->my_pe = -1;
-    c->puts_counter_sm = 0;
-    c->puts_counter_openib = 0;
 #endif
     c->name = NULL;
 }
