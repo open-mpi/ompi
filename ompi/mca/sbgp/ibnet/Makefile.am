@@ -41,7 +41,6 @@ mcacomponent_LTLIBRARIES = $(component_install)
 mca_sbgp_ibnet_la_SOURCES = $(sources)
 mca_sbgp_ibnet_la_LDFLAGS = -module -avoid-version $(sbgp_ibnet_LDFLAGS) $(btl_openib_LDFLAGS) 
 mca_sbgp_ibnet_la_LIBADD = $(sbgp_ibnet_LIBS) $(btl_openib_LIBS) \
-    $(top_ompi_builddir)/ompi/mca/common/commpatterns/libmca_common_commpatterns.la \
     $(top_ompi_builddir)/ompi/mca/common/verbs/libmca_common_verbs.la \
     $(top_ompi_builddir)/ompi/mca/common/ofacm/libmca_common_ofacm.la
 
@@ -54,8 +53,5 @@ $(top_ompi_builddir)/ompi/mca/common/ofacm/libmca_common_ofacm.la: foo.c
 
 $(top_ompi_builddir)/ompi/mca/common/ofautils/libmca_common_ofautils.la: foo.c
 	cd $(top_ompi_builddir)/ompi/mca/common/ofautils && $(MAKE)
-
-$(top_ompi_builddir)/ompi/mca/common/commpatterns/libmca_common_commpatterns.la: foo.c
-	cd $(top_ompi_builddir)/ompi/mca/common/commpatterns && $(MAKE)
 
 foo.c:

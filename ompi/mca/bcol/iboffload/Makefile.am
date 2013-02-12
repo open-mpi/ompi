@@ -59,8 +59,7 @@ mca_bcol_iboffload_la_SOURCES = $(sources)
 mca_bcol_iboffload_la_LDFLAGS = -module -avoid-version $(btl_openib_LDFLAGS) $(bcol_iboffload_LDFLAGS)
 mca_bcol_iboffload_la_LIBADD = $(btl_openib_LIBS) $(bcol_iboffload_LIBS) \
         $(top_ompi_builddir)/ompi/mca/common/ofacm/libmca_common_ofacm.la \
-        $(top_ompi_builddir)/ompi/mca/common/verbs/libmca_common_verbs.la \
-        $(top_ompi_builddir)/ompi/mca/common/netpatterns/libmca_common_netpatterns.la
+        $(top_ompi_builddir)/ompi/mca/common/verbs/libmca_common_verbs.la
 
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_bcol_iboffload_la_SOURCES =$(sources)
