@@ -13,6 +13,8 @@
  * Copyright (c) 2011-2012 University of Houston. All rights reserved.
  * Copyright (c) 2010-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
+ * Copyright (c) 2012      Mellanox Technologies, Inc.
+ *                         All rights reserved
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -115,6 +117,16 @@ int main(int argc, char *argv[])
     opal_pointer_array_add(&mca_types, "btl");
     opal_pointer_array_add(&mca_types, "coll");
     opal_pointer_array_add(&mca_types, "common");
+#if OSHMEM_ENABLED
+    opal_pointer_array_add(&mca_types, "scoll");
+    opal_pointer_array_add(&mca_types, "scoll_basic");
+    opal_pointer_array_add(&mca_types, "scoll_fca");
+    opal_pointer_array_add(&mca_types, "spml");
+    opal_pointer_array_add(&mca_types, "memheap");
+    opal_pointer_array_add(&mca_types, "shmalloc");
+    opal_pointer_array_add(&mca_types, "atomic");
+    opal_pointer_array_add(&mca_types, "shmem");
+#endif
 #if OPAL_ENABLE_FT_CR == 1
     opal_pointer_array_add(&mca_types, "crcp");
 #endif

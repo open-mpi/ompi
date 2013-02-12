@@ -1,6 +1,8 @@
 #
 # Copyright (c) 2007-2011 High Performance Computing Center Stuttgart, 
 #                         University of Stuttgart.  All rights reserved.
+# Copyright (c) 2012      Mellanox Technologies, Inc.
+#                         All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -68,6 +70,8 @@ INCLUDE_DIRECTORIES (
   ${OpenMPI_SOURCE_DIR}/opal/include
   ${OpenMPI_SOURCE_DIR}/ompi
   ${OpenMPI_SOURCE_DIR}/ompi/include
+  ${OpenMPI_SOURCE_DIR}/oshmem
+  ${OpenMPI_SOURCE_DIR}/oshmem/include
   ${OpenMPI_SOURCE_DIR}/orte
   ${OpenMPI_SOURCE_DIR}/orte/include
   ${OpenMPI_BINARY_DIR}/
@@ -75,6 +79,8 @@ INCLUDE_DIRECTORIES (
   ${OpenMPI_BINARY_DIR}/opal/include
   ${OpenMPI_BINARY_DIR}/ompi
   ${OpenMPI_BINARY_DIR}/ompi/include
+  ${OpenMPI_BINARY_DIR}/oshmem
+  ${OpenMPI_BINARY_DIR}/oshmem/include
   ${OpenMPI_BINARY_DIR}/orte
   ${OpenMPI_BINARY_DIR}/orte/include
 )
@@ -107,6 +113,7 @@ ADD_SUBDIRECTORY(opal)
 # set up the libevent and hwloc include dirs
 INCLUDE_DIRECTORIES (${LIBEVENT_INCLUDE_DIRS} ${HWLOC_PATH}/hwloc/include)
 ADD_SUBDIRECTORY(ompi)
+ADD_SUBDIRECTORY(oshmem)
 ADD_SUBDIRECTORY(orte)
 ADD_SUBDIRECTORY(contrib/platform/win32/examples)
 

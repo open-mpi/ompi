@@ -1,6 +1,8 @@
 #
 # Copyright (c) 2007-2012 High Performance Computing Center Stuttgart, 
 #                         University of Stuttgart.  All rights reserved.
+# Copyright (c) 2012      Mellanox Technologies, Inc.
+#                         All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -106,6 +108,15 @@ OMPI_DEF(OMPI_MAJOR_VERSION ${MAJOR_VERSION} "Major release number of Open MPI."
 OMPI_DEF(OMPI_MINOR_VERSION ${MINOR_VERSION} "Minor release number of Open MPI." 0 1)
 OMPI_DEF(OMPI_RELEASE_VERSION ${RELEASE_VERSION} "Release number of Open MPI." 0 1)
 OMPI_DEF(OMPI_VERSION ${VERSION_STRING} "Complete release number of Open MPI." 1 1)
+
+# Set OSHMEM versions
+OMPI_DEF(OSHMEM_WANT_REPO_REV ${WANT_REPO_REV} "SVN verstion of OSHMEM" 1 1)
+OMPI_DEF(OSHMEM_REPO_REV "${SVN_VERSION}" "SVN verstion of OSHMEM" 1 1)
+OMPI_DEF(OSHMEM_GREEK_VERSION "${GREEK_VERSION}" "Greek - alpha, beta, etc - release number of Open Portable Access Layer." 1 1)
+OMPI_DEF(OSHMEM_MAJOR_VERSION ${MAJOR_VERSION} "Major release number of OSHMEM." 0 1)
+OMPI_DEF(OSHMEM_MINOR_VERSION ${MINOR_VERSION} "Minor release number of OSHMEM." 0 1)
+OMPI_DEF(OSHMEM_RELEASE_VERSION ${RELEASE_VERSION} "Release number of OSHMEM." 0 1)
+OMPI_DEF(OSHMEM_VERSION ${VERSION_STRING} "Complete release number of OSHMEM." 1 1)
 
 # Set ORTE versions
 OMPI_DEF(ORTE_WANT_REPO_REV ${WANT_REPO_REV} "SVN verstion of ORTE" 1 1)

@@ -10,6 +10,9 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2012      Mellanox Technologies, Inc.
+#                         All rights reserved
+#
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -22,9 +25,18 @@
 EXTRA_DIST += tools/win_makefile tools/CMakeLists.txt
 
 SUBDIRS += \
-	tools/ompi_info \
 	tools/wrappers
 
 DIST_SUBDIRS += \
-	tools/ompi_info \
 	tools/wrappers
+
+# Don`t build this tool during OMPI build
+# it is built as part of OSHMEM build
+if OSHMEM_SUPPORT
+else
+   SUBDIRS += \
+	tools/ompi_info
+   DIST_SUBDIRS += \
+	tools/ompi_info
+endif
+

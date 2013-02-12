@@ -28,6 +28,22 @@ EXTRA_DIST = $(orte_config_files)
 # (http://www.open-mpi.org/community/lists/devel/2008/06/4080.php) for
 # details why the mkdir is in install-data-local.
 
+module_file=$(DESTDIR)$(sysconfdir)/shmem_modulefile
+module_file_text="\#%Module\n\
+\n\
+\# NOTE: This is an automatically-generated file!  Any changes\n\
+\# made here will be lost a) if the RPM is uninstalled, or\n\
+\# if the RPM is upgraded or uninstalled.\n\
+\n\
+proc ModulesHelp { } {\n\
+puts stderr \"This module adds Mellanox ScalableSHMEM to various paths\"\n\
+}\n\
+\n\
+module-whatis   \"Sets up Mellanox ScalableSHMEM in your enviornment\"\n\
+\n\
+prepend-path PATH \"$(bindir)\"\n\
+prepend-path LD_LIBRARY_PATH \"$(libdir)\""
+
 install-data-local:
 	$(MKDIR_P) $(DESTDIR)$(sysconfdir)
 	@ p="$(orte_config_files)"; \
@@ -44,6 +60,9 @@ install-data-local:
 	    $(INSTALL_DATA) $$d$$file $(DESTDIR)$(sysconfdir)/$$f; \
 	  fi; \
 	done
+if OSHMEM_SUPPORT
+	echo -e $(module_file_text)>$(module_file)
+endif
 
 # Only remove if exactly the same as what in our tree
 # NOTE TO READER: Bourne shell if ... fi evaluates the body if 
@@ -60,3 +79,6 @@ uninstall-local:
 	    fi ; \
 	  fi ; \
 	done
+if OSHMEM_SUPPORT
+	rm $(module_file)
+endif

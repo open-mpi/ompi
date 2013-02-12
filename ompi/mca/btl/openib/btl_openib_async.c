@@ -1,8 +1,9 @@
 /*
- * Copyright (c) 2008-2009 Mellanox Technologies. All rights reserved.
  * Copyright (c) 2007-2009 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2006-2007 Voltaire All rights reserved.
  * Copyright (c) 2009-2010 Oracle and/or its affiliates.  All rights reserved
+ * Copyright (c) 2012      Mellanox Technologies, Inc.
+ *                         All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -531,7 +532,7 @@ void* btl_openib_async_thread(void * async)
 
 int btl_openib_async_command_done(int exp)
 {
-    int comp;
+    int comp = 0;
     if (read(mca_btl_openib_component.async_comp_pipe[0], &comp,
                 sizeof(int)) < 0){
         BTL_ERROR(("Failed to read from pipe"));

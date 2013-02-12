@@ -13,6 +13,8 @@
 # Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
 # Copyright (c) 2012      Los Alamos National Security, LLC.
 #                         All rights reserved.
+# Copyright (c) 2012      Mellanox Technologies, Inc.
+#                         All rights reserved
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -62,8 +64,11 @@ ompi_info_SOURCES = \
         param.c \
         components.c \
         version.c
-
+if OSHMEM_SUPPORT
+ompi_info_LDADD = $(top_builddir)/oshmem/libshmem.la
+else
 ompi_info_LDADD = $(top_builddir)/ompi/libmpi.la
+endif
 if OMPI_RTE_ORTE
 ompi_info_LDADD +=  $(top_builddir)/orte/libopen-rte.la
 endif

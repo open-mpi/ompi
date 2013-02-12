@@ -10,11 +10,12 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2007 Mellanox Technologies. All rights reserved.
  * Copyright (c) 2010      Cisco Systems, Inc. All rights reserved.
  * Copyright (c) 2011      NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2012      Mellanox Technologies, Inc.
+ *                         All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -194,6 +195,7 @@ int ompi_free_list_grow(ompi_free_list_t* flist, size_t num_elements)
 
     if(NULL == alloc_ptr)
         return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
+    memset(alloc_ptr,0,alloc_size);
 
     if (0 != flist->fl_payload_buffer_size) {
         elem_size = OPAL_ALIGN(flist->fl_payload_buffer_size, 

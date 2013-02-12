@@ -15,6 +15,8 @@
  *                         All rights reserved. 
  * Copyright (c) 2010-2012 IBM Corporation.  All rights reserved.
  * Copyright (c) 2012      Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2012      Mellanox Technologies, Inc.
+ *                         All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -785,6 +787,9 @@ struct mca_btl_base_descriptor_t* mca_btl_sm_prepare_src(
     } else {
 #if OMPI_BTL_SM_HAVE_KNEM
         struct knem_cmd_create_region knem_cr;
+#if OSHMEM_ENABLED
+		memset(&knem_cr,0,sizeof(struct knem_cmd_create_region));
+#endif /* OSHMEM_ENABLED */
         struct knem_cmd_param_iovec knem_iov;
 #endif /* OMPI_BTL_SM_HAVE_KNEM */
         MCA_BTL_SM_FRAG_ALLOC_USER(frag, rc);
@@ -807,8 +812,13 @@ struct mca_btl_base_descriptor_t* mca_btl_sm_prepare_src(
             knem_iov.len = max_data;
             knem_cr.iovec_array = (uintptr_t)&knem_iov;
             knem_cr.iovec_nr = iov_count;
+#if OSHMEM_ENABLED        
+			knem_cr.protection = PROT_READ | PROT_WRITE;
+			knem_cr.flags = 0;
+#else
             knem_cr.protection = PROT_READ;
             knem_cr.flags = KNEM_FLAG_SINGLEUSE;
+#endif /* OSHMEM_ENABLED */
             if (OPAL_UNLIKELY(ioctl(sm_btl->knem_fd, KNEM_CMD_CREATE_REGION, &knem_cr) < 0)) {
                 return NULL;
             }
@@ -974,7 +984,20 @@ int mca_btl_sm_send( struct mca_btl_base_module_t* btl,
     frag->hdr->len = frag->segment.base.seg_len;
     /* type of message, pt-2-pt, one-sided, etc */
     frag->hdr->tag = tag;
-
+#if OSHMEM_ENABLED
+    /*
+     * This ugly hack is done to support following configuration as:
+     * OSHMEM + SM => put/get for small messages using send()
+     */
+    if (frag->hdr->tag == BTL_SM_HDR_TYPE_GET_AS_SEND) /*this is shmem_get request */
+    {
+        frag->hdr->src_addr = (void *)descriptor->des_src->seg_addr.lval; /*from where to take the data for get operation*/
+    }
+    else if (frag->hdr->tag == BTL_SM_HDR_TYPE_PUT_AS_SEND)/*this is shmem_put operation*/
+    {
+        frag->hdr->dst_addr = descriptor->des_dst->seg_addr.pval;
+    }
+#endif /* OSHMEM_ENABLED */
     MCA_BTL_SM_TOUCH_DATA_TILL_CACHELINE_BOUNDARY(frag);
 
     frag->endpoint = endpoint;
@@ -1057,6 +1080,12 @@ int mca_btl_sm_get_sync(struct mca_btl_base_module_t* btl,
         icopy.local_iovec_nr = 1;
         icopy.remote_cookie = src->key;
         icopy.remote_offset = 0;
+#if OSHMEM_ENABLED
+		if (des->des_flags & MCA_BTL_DES_FLAGS_SHMEM_REQUEST) 
+		{  
+			icopy.remote_offset = dst->key;
+		}
+#endif
         icopy.write = 0;
 
         /* Use the DMA flag if knem supports it *and* the segment length
@@ -1076,6 +1105,13 @@ int mca_btl_sm_get_sync(struct mca_btl_base_module_t* btl,
             return OMPI_ERROR;
         }
 
+#if OSHMEM_ENABLED
+		if ( icopy.current_status == KNEM_STATUS_FAILED)
+		{
+			opal_output(0,"KNEM FAILED\n");
+			return OMPI_ERROR;
+		}
+#endif /* OSHMEM_ENABLED */
         /* FIXME: what if icopy.current_status == KNEM_STATUS_FAILED? */
     }
 #endif /* OMPI_BTL_SM_HAVE_KNEM */
@@ -1133,6 +1169,84 @@ int mca_btl_sm_get_sync(struct mca_btl_base_module_t* btl,
 
 #if OMPI_BTL_SM_HAVE_KNEM
 /* No support async_get for CMA yet */
+
+#if OSHMEM_ENABLED
+int mca_btl_sm_put_async(struct mca_btl_base_module_t* btl,
+        struct mca_btl_base_endpoint_t* endpoint,
+        struct mca_btl_base_descriptor_t* des)
+{
+    int btl_ownership;
+    mca_btl_sm_t* sm_btl = (mca_btl_sm_t*) btl;
+    mca_btl_sm_frag_t* frag = (mca_btl_sm_frag_t*)des;
+    mca_btl_sm_segment_t *src = (mca_btl_sm_segment_t*)des->des_src;
+    mca_btl_sm_segment_t *dst = (mca_btl_sm_segment_t*)des->des_dst;
+    struct knem_cmd_inline_copy icopy;
+    struct knem_cmd_param_iovec recv_iovec;
+    /* If we have no knem slots available, return
+       TEMP_OUT_OF_RESOURCE */
+#ifndef OSHMEM_SM_PUT_SYNC_MODE
+    if (sm_btl->knem_status_num_used >=
+            mca_btl_sm_component.knem_max_simultaneous) {
+        return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
+    }
+#endif /* OSHMEM_SM_PUT_SYNC_MODE */ 
+    /* We have a slot, so fill in the data fields.  Bump the
+       first_avail and num_used counters. */
+    recv_iovec.base = (uintptr_t) src->base.seg_addr.pval;
+    recv_iovec.len =  src->base.seg_len;
+    icopy.local_iovec_array = (uintptr_t)&recv_iovec;
+    icopy.local_iovec_nr = 1;
+    icopy.write = 1;
+    icopy.remote_cookie = dst->key;
+    icopy.remote_offset = src->key;
+#ifndef OSHMEM_SM_PUT_SYNC_MODE
+    icopy.async_status_index = sm_btl->knem_status_first_avail++;
+    if (sm_btl->knem_status_first_avail >= 
+            mca_btl_sm_component.knem_max_simultaneous) {
+        sm_btl->knem_status_first_avail = 0;
+    }
+    ++sm_btl->knem_status_num_used;
+   /* Use the DMA flag if knem supports it *and* the segment length
+       is greater than the cutoff */
+    sm_btl->knem_frag_array[icopy.async_status_index] = frag;
+    icopy.flags = KNEM_FLAG_ASYNCDMACOMPLETE;
+#else
+    icopy.flags = 0;
+#endif /* OSHMEM_SM_PUT_SYNC_MODE */
+    if (mca_btl_sm_component.knem_dma_min <= dst->base.seg_len) {
+        icopy.flags = mca_btl_sm_component.knem_dma_flag;
+    }
+    if (OPAL_LIKELY(0 == ioctl(sm_btl->knem_fd, 
+                    KNEM_CMD_INLINE_COPY, &icopy))) {
+#ifndef OSHMEM_SM_PUT_SYNC_MODE
+        if (icopy.current_status != KNEM_STATUS_PENDING) {
+            /* request completed synchronously */
+            /* FIXME: what if icopy.current_status == KNEM_STATUS_FAILED? */
+#endif /* OSHMEM_SM_PUT_SYNC_MODE */
+            btl_ownership = (frag->base.des_flags & MCA_BTL_DES_FLAGS_BTL_OWNERSHIP);
+            if (0 != (MCA_BTL_DES_SEND_ALWAYS_CALLBACK & frag->base.des_flags)) {
+                frag->base.des_cbfunc(&mca_btl_sm.super, 
+                        frag->endpoint, &frag->base, 
+                        OMPI_SUCCESS);
+            }
+            if (btl_ownership) {
+                MCA_BTL_SM_FRAG_RETURN(frag);
+            }
+#ifndef OSHMEM_SM_PUT_SYNC_MODE
+            --sm_btl->knem_status_num_used;
+            ++sm_btl->knem_status_first_used;
+            if (sm_btl->knem_status_first_used >=
+                    mca_btl_sm_component.knem_max_simultaneous) {
+                sm_btl->knem_status_first_used = 0;
+            }
+        }
+#endif /* OSHMEM_SM_PUT_SYNC_MODE */
+        return OMPI_SUCCESS;
+    } else {
+        return OMPI_ERROR;
+    }
+}
+#endif /* OSHMEM_ENABLED */
 
 /**
  * Initiate an asynchronous get.

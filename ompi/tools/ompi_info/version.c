@@ -13,6 +13,8 @@
  * Copyright (c) 2008-2011 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, LLC.
  *                         All rights reserved.
+ * Copyright (c) 2012      Mellanox Technologies, Inc.
+ *                         All rights reserved
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -26,6 +28,10 @@
 #include <string.h>
 
 #include "mpi.h"
+
+#if OSHMEM_ENABLED
+#include "shmem.h"
+#endif
 
 #include "opal/version.h"
 #if OMPI_RTE_ORTE
@@ -129,19 +135,36 @@ void ompi_info_show_ompi_version(const char *scope)
 
     opal_info_out("Package", "package", OPAL_PACKAGE_STRING);
     (void)asprintf(&tmp, "%s:version:full", ompi_info_type_ompi);
+#if OSHMEM_ENABLED
+    tmp2 = opal_info_make_version_str(scope,
+                                      OSHMEM_MAJOR_VERSION, OSHMEM_MINOR_VERSION,
+                                      OSHMEM_RELEASE_VERSION,
+                                      OSHMEM_GREEK_VERSION,
+                                      OSHMEM_WANT_REPO_REV, OSHMEM_REPO_REV);
+    opal_info_out("Open SHMEM", tmp, tmp2);
+#else
     tmp2 = opal_info_make_version_str(scope, 
                                       OMPI_MAJOR_VERSION, OMPI_MINOR_VERSION, 
                                       OMPI_RELEASE_VERSION, 
                                       OMPI_GREEK_VERSION,
                                       OMPI_WANT_REPO_REV, OMPI_REPO_REV);
     opal_info_out("Open MPI", tmp, tmp2);
+#endif
     free(tmp);
     free(tmp2);
     (void)asprintf(&tmp, "%s:version:repo", ompi_info_type_ompi);
+#if OSHMEM_ENABLED
+    opal_info_out("Open SHMEM repo revision", tmp, OSHMEM_REPO_REV);
+#else
     opal_info_out("Open MPI repo revision", tmp, OMPI_REPO_REV);
+#endif
     free(tmp);
     (void)asprintf(&tmp, "%s:version:release_date", ompi_info_type_ompi);
+#if OSHMEM_ENABLED
+    opal_info_out("Open SHMEM release date", tmp, OSHMEM_RELEASE_DATE);
+#else
     opal_info_out("Open MPI release date", tmp, OMPI_RELEASE_DATE);
+#endif
     free(tmp);
     
 #if OMPI_RTE_ORTE
@@ -151,11 +174,18 @@ void ompi_info_show_ompi_version(const char *scope)
 
     /* show the opal version */
     opal_info_show_opal_version(scope);
-    
+
+#if OSHMEM_ENABLED
+    tmp2 = opal_info_make_version_str(scope,
+            SHMEM_VERSION, SHMEM_SUBVERSION,
+            0, "", 0, "");
+    opal_info_out("SHMEM API", "shmem-api:version:full", tmp2);
+#else
     tmp2 = opal_info_make_version_str(scope, 
                                       MPI_VERSION, MPI_SUBVERSION, 
                                       0, "", 0, "");
     opal_info_out("MPI API", "mpi-api:version:full", tmp2);
+#endif
     free(tmp2);
 
     opal_info_out("Ident string", "ident", OPAL_IDENT_STRING);
