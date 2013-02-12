@@ -20,7 +20,6 @@
 
 #include "opal/util/error.h"
 #include "opal/util/output.h"
-#include "opal/util/show_help.h"
 #include "ompi/constants.h"
 #include "ompi/mca/rte/rte.h"
 
@@ -66,19 +65,4 @@ void
 ompi_rte_set_fault_callback(void (*callback)(opal_pointer_array_t*))
 {
     /* This is intentionally a no-op.  We don't get async errors from PMI. */
-}
-
-
-int
-ompi_show_help(const char *filename, const char *topic, 
-               bool want_error_header, ...)
-{
-    va_list ap;
-    int ret;
-
-    va_start(ap, want_error_header);
-    ret = opal_show_vhelp(filename, topic, want_error_header, ap);
-    va_end(ap);
-
-    return ret;
 }

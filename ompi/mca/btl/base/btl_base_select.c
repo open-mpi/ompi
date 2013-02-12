@@ -23,6 +23,7 @@
 
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
+#include "opal/util/show_help.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_component_repository.h"
@@ -163,7 +164,7 @@ int mca_btl_base_select(bool enable_progress_threads,
     /* Finished querying all components.  Check for the bozo case. */
 
     if (0 == opal_list_get_size(&mca_btl_base_modules_initialized)) {
-        ompi_show_help("help-mca-base.txt", "find-available:none-found", true,
+        opal_show_help("help-mca-base.txt", "find-available:none-found", true,
                        "btl");
         ompi_rte_abort(1, NULL);
     }

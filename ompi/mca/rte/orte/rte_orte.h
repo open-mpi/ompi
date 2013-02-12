@@ -32,7 +32,6 @@
 #include "orte/runtime/runtime.h"
 #include "orte/util/name_fns.h"
 #include "orte/util/proc_info.h"
-#include "orte/util/show_help.h"
 
 BEGIN_C_DECLS
 
@@ -76,12 +75,6 @@ OMPI_DECLSPEC void ompi_rte_abort(int error_code, char *fmt, ...);
 #define ompi_rte_init(a, b) orte_init(a, b, ORTE_PROC_MPI)
 #define ompi_rte_finalize() orte_finalize()
 OMPI_DECLSPEC void ompi_rte_wait_for_debugger(void);
-
-/* Show-help support */
-OMPI_DECLSPEC int ompi_show_help(const char *filename, const char *topic, 
-                                 bool want_error_header, ...);
-#define ompi_show_help_is_available() orte_show_help_is_available()
-#define ompi_help_want_aggregate orte_help_want_aggregate
 
 /* Database operations */
 #define ompi_rte_db_store(a, b, c, d) orte_db.store(a, b, c, d)

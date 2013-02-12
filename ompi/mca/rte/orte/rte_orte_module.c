@@ -12,7 +12,6 @@
 #include "opal/dss/dss.h"
 #include "opal/util/argv.h"
 #include "opal/util/opal_getcwd.h"
-#include "opal/util/show_help.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/ess/ess.h"
@@ -75,32 +74,6 @@ void ompi_rte_abort(int error_code, char *fmt, ...)
      */
     /* No way to reach here */
 }
-
-int ompi_show_help(const char *filename, const char *topic, 
-                   bool want_error_header, ...)
-{
-    va_list arglist;
-    char *output;
-    int rc;
-
-    if (orte_execute_quiet) {
-        return OMPI_SUCCESS;
-    }
-    
-    va_start(arglist, want_error_header);
-    output = opal_show_help_vstring(filename, topic, want_error_header, arglist);
-    va_end(arglist);
-    
-    /* If nothing came back, there's nothing to do */
-    if (NULL == output) {
-        return OMPI_SUCCESS;
-    }
-    
-    rc = orte_show_help_norender(filename, topic, want_error_header, output);
-    free(output);
-    return rc;
-}
-
 
 
 /*

@@ -142,7 +142,7 @@ setup_mpool_base_resources(mca_btl_smcuda_component_t *comp_ptr,
 
     if (-1 == (fd = open(comp_ptr->sm_mpool_rndv_file_name, O_RDONLY))) {
         int err = errno;
-        orte_show_help("help-mpi-btl-smcuda.txt", "sys call fail", true,
+        opal_show_help("help-mpi-btl-smcuda.txt", "sys call fail", true,
                        "open(2)", strerror(err), err);
         rc = OMPI_ERR_IN_ERRNO;
         goto out;
@@ -186,7 +186,7 @@ sm_segment_attach(mca_btl_smcuda_component_t *comp_ptr)
     }
     if (-1 == (fd = open(comp_ptr->sm_rndv_file_name, O_RDONLY))) {
         int err = errno;
-        orte_show_help("help-mpi-btl-sm.txt", "sys call fail", true,
+        opal_show_help("help-mpi-btl-sm.txt", "sys call fail", true,
                        "open(2)", strerror(err), err);
         rc = OMPI_ERR_IN_ERRNO;
         goto out;

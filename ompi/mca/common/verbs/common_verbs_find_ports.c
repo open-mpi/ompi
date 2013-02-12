@@ -288,7 +288,7 @@ opal_list_t *ompi_common_verbs_find_ports(const char *if_include,
         opal_output_verbose(5, stream, "examining verbs interface: %s",
                             ibv_get_device_name(device));
         if (NULL == device_context) {
-            ompi_show_help("help-ompi-common-verbs.txt",
+            opal_show_help("help-ompi-common-verbs.txt",
                            "ibv_open_device fail", true,
                            ompi_process_info.nodename,
                            ibv_get_device_name(device),
@@ -297,7 +297,7 @@ opal_list_t *ompi_common_verbs_find_ports(const char *if_include,
         }
 
         if (ibv_query_device(device_context, &device_attr)){
-            ompi_show_help("help-ompi-common-verbs.txt",
+            opal_show_help("help-ompi-common-verbs.txt",
                            "ibv_query_device fail", true,
                            ompi_process_info.nodename,
                            ibv_get_device_name(device),
@@ -382,7 +382,7 @@ opal_list_t *ompi_common_verbs_find_ports(const char *if_include,
 
             /* Query the port */
             if (ibv_query_port(device_context, (uint8_t) j, &port_attr)) {
-                ompi_show_help("help-ompi-common-verbs.txt",
+                opal_show_help("help-ompi-common-verbs.txt",
                                "ibv_query_port fail", true,
                                ompi_process_info.nodename,
                                ibv_get_device_name(device),
@@ -469,7 +469,7 @@ opal_list_t *ompi_common_verbs_find_ports(const char *if_include,
     if (0 != opal_argv_count(if_sanity_list)) {
         if (ompi_common_verbs_warn_nonexistent_if) {
             char *str = opal_argv_join(if_sanity_list, ',');
-            ompi_show_help("help-ompi-common-verbs.txt", "nonexistent port",
+            opal_show_help("help-ompi-common-verbs.txt", "nonexistent port",
                            true, ompi_process_info.nodename,
                            ((NULL != if_include) ? "in" : "ex"), str);
             free(str);

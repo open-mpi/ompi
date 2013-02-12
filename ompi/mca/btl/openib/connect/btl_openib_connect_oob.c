@@ -480,7 +480,7 @@ static int qp_create_one(mca_btl_base_endpoint_t* endpoint, int qp,
     my_qp = ibv_create_qp(openib_btl->device->ib_pd, &init_attr);
 
     if (NULL == my_qp) {
-        ompi_show_help("help-mpi-btl-openib-cpc-base.txt",
+        opal_show_help("help-mpi-btl-openib-cpc-base.txt",
                        "ibv_create_qp failed", true,
                        ompi_process_info.nodename,
                        ibv_get_device_name(openib_btl->device->ib_dev),
@@ -491,7 +491,7 @@ static int qp_create_one(mca_btl_base_endpoint_t* endpoint, int qp,
 
     if (init_attr.cap.max_inline_data < req_inline) {
         endpoint->qps[qp].ib_inline_max = init_attr.cap.max_inline_data;
-        ompi_show_help("help-mpi-btl-openib-cpc-base.txt",
+        opal_show_help("help-mpi-btl-openib-cpc-base.txt",
                        "inline truncated", true, ompi_process_info.nodename,
                        ibv_get_device_name(openib_btl->device->ib_dev),
                        openib_btl->port_num,

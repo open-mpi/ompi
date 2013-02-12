@@ -566,7 +566,7 @@ create_rndv_file(mca_btl_smcuda_component_t *comp_ptr,
      * sizeof(opal_shmem_ds_t), so we know where the mpool_res_size starts. */
     if (-1 == (fd = open(fname, O_CREAT | O_RDWR, 0600))) {
         int err = errno;
-        orte_show_help("help-mpi-btl-sm.txt", "sys call fail", true,
+        opal_show_help("help-mpi-btl-sm.txt", "sys call fail", true,
                        "open(2)", strerror(err), err);
         rc = OMPI_ERR_IN_ERRNO;
         goto out;
@@ -574,7 +574,7 @@ create_rndv_file(mca_btl_smcuda_component_t *comp_ptr,
     if ((ssize_t)sizeof(opal_shmem_ds_t) != write(fd, &(tmp_modp->shmem_ds),
                                                   sizeof(opal_shmem_ds_t))) {
         int err = errno;
-        orte_show_help("help-mpi-btl-sm.txt", "sys call fail", true,
+        opal_show_help("help-mpi-btl-sm.txt", "sys call fail", true,
                        "write(2)", strerror(err), err);
         rc = OMPI_ERR_IN_ERRNO;
         goto out;
@@ -582,7 +582,7 @@ create_rndv_file(mca_btl_smcuda_component_t *comp_ptr,
     if (MCA_BTL_SM_RNDV_MOD_MPOOL == type) {
         if ((ssize_t)sizeof(size) != write(fd, &size, sizeof(size))) {
             int err = errno;
-            orte_show_help("help-mpi-btl-sm.txt", "sys call fail", true,
+            opal_show_help("help-mpi-btl-sm.txt", "sys call fail", true,
                            "write(2)", strerror(err), err);
             rc = OMPI_ERR_IN_ERRNO;
             goto out;
@@ -655,7 +655,7 @@ mca_btl_smcuda_component_init(int *num_btls,
      * need to know who the respective node ranks for initialization. */
     if (ORTE_NODE_RANK_INVALID ==
         (my_node_rank = orte_process_info.my_node_rank)) {
-        orte_show_help("help-mpi-btl-sm.txt", "no locality", true);
+        opal_show_help("help-mpi-btl-sm.txt", "no locality", true);
         return NULL;
     }
     /* no use trying to use sm with less than two procs, so just bail. */

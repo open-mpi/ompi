@@ -28,6 +28,7 @@
 #include "ompi_config.h"
 
 #include "opal/mca/mca.h"
+#include "opal/util/show_help.h"
 
 #include "ompi/mca/rte/rte.h"
 #include "ompi/runtime/params.h"
@@ -178,13 +179,13 @@ void mca_mpool_base_tree_print(void)
 
     if (num_leaks <= ompi_debug_show_mpi_alloc_mem_leaks ||
         ompi_debug_show_mpi_alloc_mem_leaks < 0) {
-        ompi_show_help("help-mpool-base.txt", "all mem leaks",
+        opal_show_help("help-mpool-base.txt", "all mem leaks",
                        true, OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),
                        ompi_process_info.nodename,
                        ompi_process_info.pid, leak_msg);
     } else {
         int i = num_leaks - ompi_debug_show_mpi_alloc_mem_leaks;
-        ompi_show_help("help-mpool-base.txt", "some mem leaks",
+        opal_show_help("help-mpool-base.txt", "some mem leaks",
                        true, OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),
                        ompi_process_info.nodename, 
                        ompi_process_info.pid, leak_msg, i,

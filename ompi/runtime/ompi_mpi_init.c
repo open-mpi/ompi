@@ -161,7 +161,7 @@ static bool atfork_called = false;
 static void warn_fork_cb(void)
 {
     if (ompi_mpi_initialized && !ompi_mpi_finalized && !fork_warning_issued) {
-        ompi_show_help("help-mpi-runtime.txt", "mpi_init:warn-fork", true,
+        opal_show_help("help-mpi-runtime.txt", "mpi_init:warn-fork", true,
                        ompi_process_info.nodename, getpid(),
                        ompi_mpi_comm_world.comm.c_my_rank);
         fork_warning_issued = true;
@@ -736,7 +736,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
        Otherwise, if we got some other failure, fall through to print
        a generic message. */
     if (OMPI_ERR_UNREACH == ret) {
-        ompi_show_help("help-mpi-runtime",
+        opal_show_help("help-mpi-runtime",
                        "mpi_init:startup:pml-add-procs-fail", true);
         error = NULL;
         goto error;
@@ -923,9 +923,9 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         /* Only print a message if one was not already printed */
         if (NULL != error) {
             const char *err_msg = opal_strerror(ret);
-            /* If RTE was not setup yet, don't use ompi_show_help */
+            /* If RTE was not setup yet, don't use opal_show_help */
             if (rte_setup) {
-                ompi_show_help("help-mpi-runtime",
+                opal_show_help("help-mpi-runtime",
                                "mpi_init:startup:internal-failure", true,
                                "MPI_INIT", "MPI_INIT", error, err_msg, ret);
             } else {

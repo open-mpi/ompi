@@ -120,7 +120,7 @@ int ompi_btl_openib_connect_base_register(void)
                 }
             }
             if (NULL == all[i]) {
-                ompi_show_help("help-mpi-btl-openib-cpc-base.txt",
+                opal_show_help("help-mpi-btl-openib-cpc-base.txt",
                                "cpc name not found", true,
                                "include", ompi_process_info.nodename,
                                "include", cpc_include, temp[j],
@@ -146,7 +146,7 @@ int ompi_btl_openib_connect_base_register(void)
                 }
             }
             if (NULL == all[i]) {
-                ompi_show_help("help-mpi-btl-openib-cpc-base.txt",
+                opal_show_help("help-mpi-btl-openib-cpc-base.txt",
                                "cpc name not found", true,
                                "exclude", ompi_process_info.nodename,
                                "exclude", cpc_exclude, temp[j],
@@ -291,7 +291,7 @@ int ompi_btl_openib_connect_base_select_for_local_port(mca_btl_openib_module_t *
 
     /* If we got an empty array, then no CPCs were eligible.  Doh! */
     if (0 == cpc_index) {
-        ompi_show_help("help-mpi-btl-openib-cpc-base.txt",
+        opal_show_help("help-mpi-btl-openib-cpc-base.txt",
                        "no cpcs for port", true,
                        ompi_process_info.nodename,
                        ibv_get_device_name(btl->device->ib_dev),

@@ -55,6 +55,7 @@
 #include "opal/util/output.h"
 #include "opal/util/argv.h"
 #include "opal/util/net.h"
+#include "opal/util/show_help.h"
 #include "opal/mca/base/mca_base_param.h"
 
 #include "ompi/constants.h"
@@ -217,7 +218,7 @@ static int mca_btl_tcp_component_register(void)
         mca_btl_tcp_param_register_int( "port_min_v4",
             "The minimum port where the TCP BTL will try to bind (default 1024)", 1024 );
     if( mca_btl_tcp_component.tcp_port_min > USHRT_MAX ) {
-        ompi_show_help("help-mpi-btl-tcp.txt", "invalid minimum port",
+        opal_show_help("help-mpi-btl-tcp.txt", "invalid minimum port",
                        true, "v4", ompi_process_info.nodename,
                        mca_btl_tcp_component.tcp_port_min );
         mca_btl_tcp_component.tcp_port_min = 1024;
@@ -236,7 +237,7 @@ static int mca_btl_tcp_component_register(void)
         mca_btl_tcp_param_register_int( "port_min_v6",
             "The minimum port where the TCP BTL will try to bind (default 1024)", 1024 );
     if( mca_btl_tcp_component.tcp6_port_min > USHRT_MAX ) {
-        ompi_show_help("help-mpi-btl-tcp.txt", "invalid minimum port",
+        opal_show_help("help-mpi-btl-tcp.txt", "invalid minimum port",
                        true, "v6", ompi_process_info.nodename,
                        mca_btl_tcp_component.tcp6_port_min );
         mca_btl_tcp_component.tcp6_port_min = 1024;
@@ -308,7 +309,7 @@ static int mca_btl_tcp_component_register(void)
                 }
             }
             if (if_index < 0) {
-                ompi_show_help("help-mpi-btl-tcp.txt", 
+                opal_show_help("help-mpi-btl-tcp.txt", 
                                "invalid if_inexclude",
                                true, "if_seq",
                                ompi_process_info.nodename,
@@ -524,7 +525,7 @@ static char **split_and_resolve(char **orig_str, char *name)
         tmp = strdup(argv[i]);
         str = strchr(argv[i], '/');
         if (NULL == str) {
-            ompi_show_help("help-mpi-btl-tcp.txt", "invalid if_inexclude",
+            opal_show_help("help-mpi-btl-tcp.txt", "invalid if_inexclude",
                            true, name, ompi_process_info.nodename, 
                            tmp, "Invalid specification (missing \"/\")");
             free(argv[i]);
@@ -541,7 +542,7 @@ static char **split_and_resolve(char **orig_str, char *name)
         free(argv[i]);
 
         if (1 != ret) {
-            ompi_show_help("help-mpi-btl-tcp.txt", "invalid if_inexclude",
+            opal_show_help("help-mpi-btl-tcp.txt", "invalid if_inexclude",
                            true, name, ompi_process_info.nodename, tmp,
                            "Invalid specification (inet_pton() failed)");
             free(tmp);
@@ -568,7 +569,7 @@ static char **split_and_resolve(char **orig_str, char *name)
         
         /* If we didn't find a match, keep trying */
         if (if_index < 0) {
-            ompi_show_help("help-mpi-btl-tcp.txt", "invalid if_inexclude",
+            opal_show_help("help-mpi-btl-tcp.txt", "invalid if_inexclude",
                            true, name, ompi_process_info.nodename, tmp,
                            "Did not find interface matching this subnet");
             free(tmp);

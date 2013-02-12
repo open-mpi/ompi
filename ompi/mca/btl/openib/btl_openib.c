@@ -153,13 +153,13 @@ void mca_btl_openib_show_init_error(const char *file, int line,
         }
 #endif
 
-        ompi_show_help("help-mpi-btl-openib.txt", "init-fail-no-mem",
+        opal_show_help("help-mpi-btl-openib.txt", "init-fail-no-mem",
                        true, ompi_process_info.nodename,
                        file, line, func, dev, str_limit);
 
         if (NULL != str_limit) free(str_limit);
     } else {
-        ompi_show_help("help-mpi-btl-openib.txt", "init-fail-create-q",
+        opal_show_help("help-mpi-btl-openib.txt", "init-fail-create-q",
                        true, ompi_process_info.nodename,
                        file, line, func, strerror(errno), errno, dev);
     }
@@ -485,7 +485,7 @@ static int mca_btl_openib_tune_endpoint(mca_btl_openib_module_t* openib_btl,
     ompi_btl_openib_ini_values_t values;
 
     if(mca_btl_openib_get_transport_type(openib_btl) != endpoint->rem_info.rem_transport_type) {
-        ompi_show_help("help-mpi-btl-openib.txt",
+        opal_show_help("help-mpi-btl-openib.txt",
                 "conflicting transport types", true,
                 ompi_process_info.nodename,
                         ibv_get_device_name(openib_btl->device->ib_dev),
@@ -506,7 +506,7 @@ static int mca_btl_openib_tune_endpoint(mca_btl_openib_module_t* openib_btl,
 
     if (OMPI_SUCCESS != ret &&
         OMPI_ERR_NOT_FOUND != ret) {
-        ompi_show_help("help-mpi-btl-openib.txt",
+        opal_show_help("help-mpi-btl-openib.txt",
                        "error in device init", true,
                        ompi_process_info.nodename,
                        ibv_get_device_name(openib_btl->device->ib_dev));
@@ -547,7 +547,7 @@ static int mca_btl_openib_tune_endpoint(mca_btl_openib_module_t* openib_btl,
 
             if(0 != strcmp(mca_btl_openib_component.receive_queues,
                                                          recv_qps)) {
-                ompi_show_help("help-mpi-btl-openib.txt",
+                opal_show_help("help-mpi-btl-openib.txt",
                                "unsupported queues configuration", true,
                                ompi_process_info.nodename,
                                ibv_get_device_name(openib_btl->device->ib_dev),
@@ -569,7 +569,7 @@ static int mca_btl_openib_tune_endpoint(mca_btl_openib_module_t* openib_btl,
             if(NULL != values.receive_queues) {
                 if(0 != strcmp(mca_btl_openib_component.receive_queues,
                                                 values.receive_queues)) {
-                     ompi_show_help("help-mpi-btl-openib.txt",
+                     opal_show_help("help-mpi-btl-openib.txt",
                                "unsupported queues configuration", true,
                                ompi_process_info.nodename,
                                ibv_get_device_name(openib_btl->device->ib_dev),
@@ -670,7 +670,7 @@ static uint64_t calculate_max_reg (void)
         } else {
             action = "Your MPI job will continue, but may be behave poorly and/or hang.";
         }
-        ompi_show_help("help-mpi-btl-openib.txt", "reg mem limit low", true,
+        opal_show_help("help-mpi-btl-openib.txt", "reg mem limit low", true,
                        ompi_process_info.nodename, (unsigned long)(max_reg >> 20),
                        (unsigned long)(mem_total >> 20), action);
         if (mca_btl_openib_component.abort_not_enough_reg_mem) {

@@ -32,6 +32,7 @@
 #include <sys/param.h>
 #endif
 
+#include "opal/util/show_help.h"
 #include "ompi/mca/rte/rte.h"
 #include "ompi/errhandler/errhandler_predefined.h"
 #include "ompi/errhandler/errcode.h"
@@ -163,7 +164,7 @@ static void out(char *str, char *arg)
 }
 
 /*
- * Use ompi_show_help() to aggregate the error messages (i.e., show it
+ * Use opal_show_help() to aggregate the error messages (i.e., show it
  * once rather than N times).  
  *
  * Note that this function will only be invoked for errors during the
@@ -197,14 +198,14 @@ static void backend_fatal_aggregate(char *type,
     }
 
     if (NULL != name) {
-        ompi_show_help("help-mpi-errors.txt", 
+        opal_show_help("help-mpi-errors.txt", 
                        "mpi_errors_are_fatal", false,
                        prefix, (NULL == arg) ? "" : "in",
                        (NULL == arg) ? "" : arg,
                        prefix, OMPI_PROC_MY_NAME->jobid, OMPI_PROC_MY_NAME->vpid,
                        prefix, type, name, prefix, err_msg, prefix, type, prefix);
     } else {
-        ompi_show_help("help-mpi-errors.txt", 
+        opal_show_help("help-mpi-errors.txt", 
                        "mpi_errors_are_fatal unknown handle", false,
                        prefix, (NULL == arg) ? "" : "in",
                        (NULL == arg) ? "" : arg,

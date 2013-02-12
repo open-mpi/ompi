@@ -27,6 +27,7 @@
 
 #include "opal/class/opal_bitmap.h"
 #include "opal/util/argv.h"
+#include "opal/util/show_help.h"
 #include "opal/util/output.h"
 #include "ompi/mca/bml/bml.h"
 #include "ompi/mca/bml/base/base.h"
@@ -403,7 +404,7 @@ static int mca_bml_r2_add_procs( size_t nprocs,
 
     if (mca_bml_r2.show_unreach_errors && 
         OMPI_ERR_UNREACH == ret) {
-        ompi_show_help("help-mca-bml-r2.txt",
+        opal_show_help("help-mca-bml-r2.txt",
                        "unreachable proc",
                        true, 
                        OMPI_NAME_PRINT(&(ompi_proc_local_proc->proc_name)),

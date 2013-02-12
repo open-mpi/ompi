@@ -1149,7 +1149,7 @@ static int udcm_qp_create_one(udcm_module_t *m, mca_btl_base_endpoint_t* lcl_ep,
     }
 
     if (NULL == lcl_ep->qps[qp].qp->lcl_qp) {
-        ompi_show_help("help-mpi-btl-openib-cpc-base.txt",
+        opal_show_help("help-mpi-btl-openib-cpc-base.txt",
                        "ibv_create_qp failed", true, ompi_process_info.nodename,
                        ibv_get_device_name(m->btl->device->ib_dev),
 		       "Reliable connected (RC)");
@@ -1159,7 +1159,7 @@ static int udcm_qp_create_one(udcm_module_t *m, mca_btl_base_endpoint_t* lcl_ep,
 
     if (init_attr.cap.max_inline_data < req_inline) {
         lcl_ep->qps[qp].ib_inline_max = init_attr.cap.max_inline_data;
-        ompi_show_help("help-mpi-btl-openib-cpc-base.txt",
+        opal_show_help("help-mpi-btl-openib-cpc-base.txt",
                        "inline truncated", true, ompi_process_info.nodename,
                        ibv_get_device_name(m->btl->device->ib_dev),
                        m->btl->port_num, req_inline,

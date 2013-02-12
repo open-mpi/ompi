@@ -409,7 +409,7 @@ static int xoob_send_qp_create (mca_btl_base_endpoint_t* endpoint)
     qp_init_attr.xrc_domain = openib_btl->device->xrc_domain;
     *qp = ibv_create_qp(openib_btl->device->ib_pd, &qp_init_attr);
     if (NULL == *qp) {
-	ompi_show_help("help-mpi-btl-openib-cpc-base.txt",
+	opal_show_help("help-mpi-btl-openib-cpc-base.txt",
 		       "ibv_create_qp failed", true,
 		       ompi_process_info.nodename,
 		       ibv_get_device_name(openib_btl->device->ib_dev),
@@ -419,7 +419,7 @@ static int xoob_send_qp_create (mca_btl_base_endpoint_t* endpoint)
 
     if (qp_init_attr.cap.max_inline_data < req_inline) {
         endpoint->qps[0].ib_inline_max = qp_init_attr.cap.max_inline_data;
-        ompi_show_help("help-mpi-btl-openib-cpc-base.txt",
+        opal_show_help("help-mpi-btl-openib-cpc-base.txt",
                        "inline truncated", ompi_process_info.nodename,
                        ibv_get_device_name(openib_btl->device->ib_dev),
                        openib_btl->port_num,

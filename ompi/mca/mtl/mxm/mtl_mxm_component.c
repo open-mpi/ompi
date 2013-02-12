@@ -93,7 +93,7 @@ static int ompi_mtl_mxm_component_open(void)
                 "version %ld.%ld detected.", MXM_VERNO_MAJOR,
                 MXM_VERNO_MINOR, (cur_ver >> MXM_MAJOR_BIT)& 0xff,
                 (cur_ver >> MXM_MINOR_BIT) & 0xff)>0) {
-                    ompi_show_help("help-mtl-mxm.txt", "mxm init", true, str);
+                    opal_show_help("help-mtl-mxm.txt", "mxm init", true, str);
 
                     free(str);
                 }
@@ -119,7 +119,7 @@ static int ompi_mtl_mxm_component_open(void)
         if (MXM_ERR_NO_DEVICE == err) {
             MXM_VERBOSE(1, "No supported device found, disqualifying mxm");
         } else {
-            ompi_show_help("help-mtl-mxm.txt", "mxm init", true,
+            opal_show_help("help-mtl-mxm.txt", "mxm init", true,
                     mxm_error_string(err));
         }
         return OPAL_ERR_NOT_AVAILABLE;
@@ -140,7 +140,7 @@ static int ompi_mtl_mxm_component_open(void)
                                   32 /* free list inc */,
                                   NULL);
     if (OMPI_SUCCESS != rc) {
-        ompi_show_help("help-mtl-mxm.txt", "mxm init", true,
+        opal_show_help("help-mtl-mxm.txt", "mxm init", true,
                     mxm_error_string(err));
         return OPAL_ERR_NOT_AVAILABLE;
     }

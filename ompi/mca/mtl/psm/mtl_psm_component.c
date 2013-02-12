@@ -132,7 +132,7 @@ ompi_mtl_psm_component_register(void)
       if (!strcasecmp(path_res, "opp"))
 	ompi_mtl_psm.path_res_type = PSM_PATH_RES_OPP;
       else {
-	ompi_show_help("help-mtl-psm.txt",
+	opal_show_help("help-mtl-psm.txt",
 		       "path query mechanism unknown", true,
 		       path_res, "OfedPlus (opp) | Static Routes (none)");
 	return OMPI_ERR_NOT_FOUND;
@@ -236,7 +236,7 @@ ompi_mtl_psm_component_init(bool enable_progress_threads,
 		     sizeof(unsigned));
     if (err) {
       /* Non fatal error. Can continue */
-      ompi_show_help("help-mtl-psm.txt",
+      opal_show_help("help-mtl-psm.txt",
 		     "psm init", false,
 		     psm_error_get_string(err));
     }
@@ -255,7 +255,7 @@ ompi_mtl_psm_component_init(bool enable_progress_threads,
     
     err = psm_init(&verno_major, &verno_minor);
     if (err) {
-      ompi_show_help("help-mtl-psm.txt",
+      opal_show_help("help-mtl-psm.txt",
 		     "psm init", true,
 		     psm_error_get_string(err));
       return NULL;

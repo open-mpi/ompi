@@ -42,6 +42,7 @@
 
 #include "opal/align.h"
 #include "opal/util/argv.h"
+#include "opal/util/show_help.h"
 #include "opal/mca/shmem/shmem.h"
 #if OPAL_ENABLE_FT_CR == 1
 #include "opal/runtime/opal_cr.h"
@@ -114,7 +115,7 @@ attach_and_init(opal_shmem_ds_t *shmem_bufp,
         addr = OPAL_ALIGN_PTR(addr, data_seg_alignment, unsigned char *);
         /* is addr past end of the shared memory segment? */
         if ((unsigned char *)seg + shmem_bufp->seg_size < addr) {
-            ompi_show_help("help-mpi-common-sm.txt", "mmap too small", 1,
+            opal_show_help("help-mpi-common-sm.txt", "mmap too small", 1,
                            ompi_process_info.nodename,
                            (unsigned long)shmem_bufp->seg_size,
                            (unsigned long)size_ctl_structure,

@@ -125,7 +125,7 @@ int ompi_mtl_mxm_send(struct mca_mtl_base_module_t* mtl,
     /* post-send */
     err = mxm_req_send(&mxm_send_req);
     if (MXM_OK != err) {
-        ompi_show_help("help-mtl-mxm.txt", "error posting send", true, 0, mxm_error_string(err));
+        opal_show_help("help-mtl-mxm.txt", "error posting send", true, 0, mxm_error_string(err));
         return OMPI_ERROR;
     }
 
@@ -192,7 +192,7 @@ int ompi_mtl_mxm_isend(struct mca_mtl_base_module_t* mtl,
     /* post-send */
     err = mxm_req_send(mxm_send_req);
     if (MXM_OK != err) {
-        ompi_show_help("help-mtl-mxm.txt", "error posting send", true, 1, mxm_error_string(err));
+        opal_show_help("help-mtl-mxm.txt", "error posting send", true, 1, mxm_error_string(err));
         return OMPI_ERROR;
     }
 

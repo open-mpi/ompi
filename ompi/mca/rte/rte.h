@@ -114,19 +114,7 @@
  *        function is used to wait for debuggers to do their pre-MPI attach.
  *        If there is no attached debugger, this function will not block.
  *
- * (f) Support for pretty-print help messages
- *     1. ompi_show_help - a function used to pretty-print help messages
- *        based on the opal_show_help system. See the orte/util/show_help.h
- *        file for a more detailed explanation of requirements for this
- *        function. The function prototype must be of the form:
- *        int ompi_show_help(const char *filename, const char *topic, 
- *                           bool want_error_header, ...);
- *     2. ompi_show_help_is_available - a function that returns true if
- *        show_help support is available
- *     3. ompi_help_want_aggregate - a boolean flag that indicates if
- *        show_help messages will be aggregated by the show_help system.
- *
- * (g) Database operations
+ * (f) Database operations
  *     1. ompi_rte_db_store - a function to store modex and other data in
  *        a local database. The function is primarily used for storing modex
  *        data, but can be used for general purposes. The prototype must be
@@ -149,7 +137,7 @@
  *        a. OMPI_DB_HOSTNAME
  *        b. OMPI_DB_LOCALITY
  *
- * (h) Communication support
+ * (g) Communication support
  *
  */
 

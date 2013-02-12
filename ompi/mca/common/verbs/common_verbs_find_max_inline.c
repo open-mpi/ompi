@@ -66,7 +66,7 @@ int ompi_common_verbs_find_max_inline(struct ibv_device *device,
     cq = ibv_create_cq(context, 1, NULL, NULL, 0);
 #endif
     if (NULL == cq) {
-        ompi_show_help("help-mpi-btl-openib.txt", "init-fail-create-q",
+        opal_show_help("help-mpi-btl-openib.txt", "init-fail-create-q",
                        true, ompi_process_info.nodename,
                        __FILE__, __LINE__, "ibv_create_cq",
                        strerror(errno), errno,

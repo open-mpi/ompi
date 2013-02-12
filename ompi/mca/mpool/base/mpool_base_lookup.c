@@ -31,6 +31,7 @@
 
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
+#include "opal/util/show_help.h"
 
 #include "ompi/mca/rte/rte.h"
 #include "ompi/runtime/params.h"
@@ -115,7 +116,7 @@ mca_mpool_base_module_t* mca_mpool_base_module_create(
                  opal_mem_hooks_support_level())) {
                 opal_mem_hooks_register_release(mca_mpool_base_mem_cb, NULL);
             } else {
-                ompi_show_help("help-mpool-base.txt", "leave pinned failed",
+                opal_show_help("help-mpool-base.txt", "leave pinned failed",
                                true, name, OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),
                                ompi_process_info.nodename);
                 return NULL;

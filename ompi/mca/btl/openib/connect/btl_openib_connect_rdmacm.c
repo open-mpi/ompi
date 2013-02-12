@@ -246,7 +246,7 @@ static void rdmacm_component_register(void)
     if (value >= 0 && value < 65536) {
         rdmacm_port = (uint16_t) value;
     } else {
-        ompi_show_help("help-mpi-btl-openib-cpc-rdmacm.txt",
+        opal_show_help("help-mpi-btl-openib-cpc-rdmacm.txt",
                        "illegal tcp port", true, value);
     }
 
@@ -257,7 +257,7 @@ static void rdmacm_component_register(void)
     if (value > 0) {
         rdmacm_resolve_timeout = value;
     } else {
-        ompi_show_help("help-mpi-btl-openib-cpc-rdmacm.txt",
+        opal_show_help("help-mpi-btl-openib-cpc-rdmacm.txt",
                        "illegal timeout", true, value);
     }
 
@@ -268,7 +268,7 @@ static void rdmacm_component_register(void)
     if (value > 0) {
         rdmacm_resolve_max_retry_count = value;
     } else {
-        ompi_show_help("help-mpi-btl-openib-cpc-rdmacm.txt",
+        opal_show_help("help-mpi-btl-openib-cpc-rdmacm.txt",
                        "illegal retry count", true, value);
     }
 
@@ -452,7 +452,7 @@ static int rdmacm_setup_qp(rdmacm_contents_t *contents,
     endpoint->qps[qpnum].credit_frag = NULL;
     if (attr.cap.max_inline_data < req_inline) {
         endpoint->qps[qpnum].ib_inline_max = attr.cap.max_inline_data;
-        ompi_show_help("help-mpi-btl-openib-cpc-base.txt",
+        opal_show_help("help-mpi-btl-openib-cpc-base.txt",
                        "inline truncated", true,
                        ompi_process_info.nodename,
                        ibv_get_device_name(contents->openib_btl->device->ib_dev),
@@ -752,14 +752,14 @@ static void *show_help_cant_find_endpoint(void *context)
 
     if (NULL != c) {
         msg = stringify(c->peer_ip_addr);
-        ompi_show_help("help-mpi-btl-openib-cpc-rdmacm.txt",
+        opal_show_help("help-mpi-btl-openib-cpc-rdmacm.txt",
                        "could not find matching endpoint", true,
                        ompi_process_info.nodename,
                        c->device_name,
                        c->peer_tcp_port);
         free(msg);
     } else {
-        ompi_show_help("help-mpi-btl-openib-cpc-rdmacm.txt",
+        opal_show_help("help-mpi-btl-openib-cpc-rdmacm.txt",
                        "could not find matching endpoint", true,
                        ompi_process_info.nodename,
                        "<unknown>", "<unknown>", -1);
@@ -1462,7 +1462,7 @@ static void *show_help_rdmacm_event_error(void *c)
     id_context_t *context = (id_context_t*) event->id->context;
 
     if (RDMA_CM_EVENT_DEVICE_REMOVAL == event->event) {
-        ompi_show_help("help-mpi-btl-openib-cpc-rdmacm.txt",
+        opal_show_help("help-mpi-btl-openib-cpc-rdmacm.txt",
                        "rdma cm device removal", true,
                        ompi_process_info.nodename,
                        ibv_get_device_name(event->id->verbs->device));
@@ -1473,7 +1473,7 @@ static void *show_help_rdmacm_event_error(void *c)
             NULL != event->id->verbs->device) {
             device = ibv_get_device_name(event->id->verbs->device);
         }
-        ompi_show_help("help-mpi-btl-openib-cpc-rdmacm.txt",
+        opal_show_help("help-mpi-btl-openib-cpc-rdmacm.txt",
                        "rdma cm event error", true,
                        ompi_process_info.nodename,
                        device,

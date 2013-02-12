@@ -24,6 +24,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 
+#include "opal/util/show_help.h"
 #include "ompi/mca/rte/rte.h"
 
 #include "base.h"
@@ -63,7 +64,7 @@ void mca_btl_base_error_no_nics(const char* transport,
         /* print out no-nic warning if user told us to */
         asprintf(&procid, "%s", OMPI_NAME_PRINT(OMPI_PROC_MY_NAME));
 
-        ompi_show_help("help-mpi-btl-base.txt", "btl:no-nics",
+        opal_show_help("help-mpi-btl-base.txt", "btl:no-nics",
                        true, procid, transport, ompi_process_info.nodename,
                        nic_name);
         free(procid);

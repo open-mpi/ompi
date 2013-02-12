@@ -59,7 +59,7 @@ static uint32_t ompi_mtl_mxm_get_job_id(void)
     memset(uu, 0, sizeof(unique_job_key));
 
     if (!generated_key || (strlen(generated_key) != 33) || sscanf(generated_key, "%016llx-%016llx", &uu[0], &uu[1]) != 2) {
-        ompi_show_help("help-mtl-mxm.txt", "no uuid present", true,
+        opal_show_help("help-mtl-mxm.txt", "no uuid present", true,
                        generated_key ? "could not be parsed from" :
                                        "not present in", ompi_process_info.nodename);
         return 0;
@@ -90,7 +90,7 @@ static int ompi_mtl_mxm_get_ep_address(ompi_mtl_mxm_ep_conn_info_t *ep_info, mxm
     err = mxm_ep_address(ompi_mtl_mxm.ep, ptlid,
                          (struct sockaddr *) &ep_info->ptl_addr[ptlid], &addrlen);
     if (MXM_OK != err) {
-        ompi_show_help("help-mtl-mxm.txt", "unable to extract endpoint address",
+        opal_show_help("help-mtl-mxm.txt", "unable to extract endpoint address",
                        true, (int)ptlid, mxm_error_string(err));
         return OMPI_ERROR;
     }
@@ -113,7 +113,7 @@ static int ompi_mtl_mxm_get_ep_address(ompi_mtl_mxm_ep_conn_info_t *ep_info, int
     } else if (MXM_ERR_UNREACHABLE == err) {
         return OMPI_SUCCESS;
     } else {
-        ompi_show_help("help-mtl-mxm.txt", "unable to extract endpoint address",
+        opal_show_help("help-mtl-mxm.txt", "unable to extract endpoint address",
                         true, (int)domain, mxm_error_string(err));
         return OMPI_ERROR;
     }
@@ -347,7 +347,7 @@ int ompi_mtl_mxm_module_init(void)
             );
 
     if (MXM_OK != err) {
-        ompi_show_help("help-mtl-mxm.txt", "unable to create endpoint", true,
+        opal_show_help("help-mtl-mxm.txt", "unable to create endpoint", true,
         		mxm_error_string(err));
         return OMPI_ERROR;
     }
@@ -568,7 +568,7 @@ int ompi_mtl_mxm_add_comm(struct mca_mtl_base_module_t *mtl,
 
     err = mxm_mq_create(ompi_mtl_mxm.mxm_context, comm->c_contextid, &mq);
     if (MXM_OK != err) {
-        ompi_show_help("help-mtl-mxm.txt", "mxm mq create", true, mxm_error_string(err));
+        opal_show_help("help-mtl-mxm.txt", "mxm mq create", true, mxm_error_string(err));
         return OMPI_ERROR;
     }
 
@@ -592,7 +592,7 @@ int ompi_mtl_mxm_progress(void)
 
     err = mxm_progress(ompi_mtl_mxm.mxm_context);
     if ((MXM_OK != err) && (MXM_ERR_NO_PROGRESS != err) ) {
-        ompi_show_help("help-mtl-mxm.txt", "errors during mxm_progress", true, mxm_error_string(err));
+        opal_show_help("help-mtl-mxm.txt", "errors during mxm_progress", true, mxm_error_string(err));
     }
     return 1;
 }

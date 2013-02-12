@@ -28,6 +28,7 @@
 #include <unistd.h>
 #endif
 
+#include "opal/util/show_help.h"
 #include "ompi/mca/rte/rte.h"
 #include "ompi/runtime/mpiruntime.h"
 
@@ -78,7 +79,7 @@ void mca_mpool_base_mem_cb(void* base, size_t size, void* cbdata,
                     msg[sizeof(msg) - 1] = '\0';
                     write(2, msg, len);
                 } else {
-                    ompi_show_help("help-mpool-base.txt", 
+                    opal_show_help("help-mpool-base.txt", 
                                    "cannot deregister in-use memory", true,
                                    current->mpool_component->mpool_version.mca_component_name,
                                    ompi_process_info.nodename,
