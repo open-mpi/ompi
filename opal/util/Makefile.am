@@ -27,6 +27,8 @@ LEX_OUTPUT_ROOT = lex.opal_show_help_yy
 
 noinst_LTLIBRARIES = libopalutil.la
 
+AM_CPPFLAGS = $(LTDLINCL)
+
 # Source code files
 
 headers = \
