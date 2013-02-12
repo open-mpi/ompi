@@ -318,7 +318,7 @@ static void xoob_report_error(ompi_common_ofacm_xoob_local_connection_context_t 
 {
     if (NULL == xcontext || NULL == (XOOB_TO_BASE(xcontext))->error_cb) {
         /* The context is undefined and we can not print specific error */
-        ompi_show_help("help-mpi-common-ofacm-oob.txt",
+        opal_show_help("help-mpi-common-ofacm-oob.txt",
                 "ofacm oob fatal error", true,
                 ompi_process_info.nodename,
                 __FILE__, __LINE__);
@@ -825,7 +825,7 @@ static int xoob_send_qp_create
 
     if (init_attr.cap.max_inline_data < req_inline) {
         context->qps[0].ib_inline_max = init_attr.cap.max_inline_data;
-        ompi_show_help("help-mpi-common-ofacm-cpc-base.txt",
+        opal_show_help("help-mpi-common-ofacm-cpc-base.txt",
                        "inline truncated", true, ompi_process_info.nodename,
                        req_inline, init_attr.cap.max_inline_data);
     } else {

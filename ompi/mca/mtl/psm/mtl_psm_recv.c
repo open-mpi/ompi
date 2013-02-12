@@ -68,7 +68,7 @@ ompi_mtl_psm_irecv(struct mca_mtl_base_module_t* mtl,
 		       &mtl_psm_request->psm_request);
     
     if (err) {
-      ompi_show_help("help-mtl-psm.txt",
+      opal_show_help("help-mtl-psm.txt",
 		     "error posting receive", true,
 		     psm_error_get_string(err),
 		     mtl_psm_request->buf, length);

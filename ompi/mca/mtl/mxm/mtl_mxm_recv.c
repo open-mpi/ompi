@@ -95,7 +95,7 @@ int ompi_mtl_mxm_irecv(struct mca_mtl_base_module_t* mtl,
     /* post-recv */
     err = mxm_req_recv(mxm_recv_req);
     if (OPAL_UNLIKELY(MXM_OK != err)) {
-        ompi_show_help("help-mtl-mxm.txt", "error posting receive", true,
+        opal_show_help("help-mtl-mxm.txt", "error posting receive", true,
                        mxm_error_string(err), mtl_mxm_request->buf, mtl_mxm_request->length);
         return OMPI_ERROR;
     }
@@ -133,7 +133,7 @@ int ompi_mtl_mxm_imrecv(struct mca_mtl_base_module_t* mtl,
 
     err = mxm_message_recv(mxm_recv_req, msgp->mxm_msg);
     if (OPAL_UNLIKELY(MXM_OK != err)) {
-        ompi_show_help("help-mtl-mxm.txt", "error posting message receive", true,
+        opal_show_help("help-mtl-mxm.txt", "error posting message receive", true,
                        mxm_error_string(err), mtl_mxm_request->buf, mtl_mxm_request->length);
         return OMPI_ERROR;
     }

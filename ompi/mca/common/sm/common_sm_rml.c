@@ -24,6 +24,7 @@
 
 #include "opal/types.h"
 #include "opal/dss/dss.h"
+#include "opal/util/show_help.h"
 
 #include "ompi/constants.h"
 #include "ompi/mca/rte/rte.h"
@@ -127,7 +128,7 @@ mca_common_sm_rml_info_bcast(opal_shmem_ds_t *out_ds_buf,
          * outside of our current scope of assumptions. see "RML Messaging and
          * Our Assumptions" note in common_sm.c */
         if (0 != strcmp(msg_id_str_to_tx, msg_id_str)) {
-            ompi_show_help("help-mpi-common-sm.txt", "unexpected message id",
+            opal_show_help("help-mpi-common-sm.txt", "unexpected message id",
                            true, ompi_process_info.nodename,
                            msg_id_str, msg_id_str_to_tx);
             rc = OMPI_ERROR;

@@ -26,6 +26,7 @@
 #include <string.h>
 
 #include "mpi.h"
+#include "opal/util/show_help.h"
 #include "ompi/constants.h"
 #include "opal/class/opal_list.h"
 #include "opal/util/output.h"
@@ -133,7 +134,7 @@ int mca_coll_base_find_available(bool enable_progress_threads,
         mca_coll_base_components_available_valid = false;
         opal_output_verbose(10, mca_coll_base_output,
                             "coll:find_available: no coll components available!");
-        ompi_show_help("help-mca-base", "find-available:none-found", true,
+        opal_show_help("help-mca-base", "find-available:none-found", true,
                        "coll");
         return OMPI_ERROR;
     }

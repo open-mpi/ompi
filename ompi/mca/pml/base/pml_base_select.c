@@ -27,6 +27,7 @@
 
 #include "opal/class/opal_list.h"
 #include "opal/util/output.h"
+#include "opal/util/show_help.h"
 #include "opal/runtime/opal_progress.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
@@ -169,7 +170,7 @@ int mca_pml_base_select(bool enable_progress_threads,
     /* Finished querying all components.  Check for the bozo case. */
     
     if( NULL == best_component ) {
-        ompi_show_help("help-mca-base.txt", "find-available:none-found", true, "pml");
+        opal_show_help("help-mca-base.txt", "find-available:none-found", true, "pml");
         for( i = 0; i < opal_pointer_array_get_size(&mca_pml_base_pml); i++) { 
             char * tmp_val = NULL;
             tmp_val = (char *) opal_pointer_array_get_item(&mca_pml_base_pml, i);

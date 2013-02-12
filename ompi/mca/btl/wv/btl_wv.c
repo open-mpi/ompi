@@ -112,13 +112,13 @@ void mca_btl_wv_show_init_error(const char *file, int line,
 {
     if (ENOMEM == errno) {char *str_limit = NULL;
 
-        ompi_show_help("help-mpi-btl-wv.txt", "init-fail-no-mem",
+        opal_show_help("help-mpi-btl-wv.txt", "init-fail-no-mem",
                        true, ompi_process_info.nodename,
                        file, line, func, dev, str_limit);
 
         if (NULL != str_limit) free(str_limit);
     } else {
-        ompi_show_help("help-mpi-btl-wv.txt", "init-fail-create-q",
+        opal_show_help("help-mpi-btl-wv.txt", "init-fail-create-q",
                        true, ompi_process_info.nodename,
                        file, line, func, strerror(errno), errno, dev);
     }
@@ -285,7 +285,7 @@ static int mca_btl_wv_tune_endpoint(mca_btl_wv_module_t* wv_btl,
     ompi_btl_wv_ini_values_t values;
 
     if(mca_btl_wv_get_transport_type(wv_btl) != endpoint->rem_info.rem_transport_type) {
-        ompi_show_help("help-mpi-btl-wv.txt",
+        opal_show_help("help-mpi-btl-wv.txt",
                 "conflicting transport types", true,
                 ompi_process_info.nodename,
                         wv_btl->device->ib_dev->name,
@@ -306,7 +306,7 @@ static int mca_btl_wv_tune_endpoint(mca_btl_wv_module_t* wv_btl,
 
     if (OMPI_SUCCESS != ret &&
         OMPI_ERR_NOT_FOUND != ret) {
-        ompi_show_help("help-mpi-btl-wv.txt",
+        opal_show_help("help-mpi-btl-wv.txt",
                        "error in device init", true,
                        ompi_process_info.nodename,
                        wv_btl->device->ib_dev->name);
@@ -347,7 +347,7 @@ static int mca_btl_wv_tune_endpoint(mca_btl_wv_module_t* wv_btl,
 
             if(0 != strcmp(mca_btl_wv_component.receive_queues,
                                                          recv_qps)) {
-                ompi_show_help("help-mpi-btl-wv.txt",
+                opal_show_help("help-mpi-btl-wv.txt",
                                "unsupported queues configuration", true,
                                ompi_process_info.nodename,
                                wv_btl->device->ib_dev->name,
@@ -369,7 +369,7 @@ static int mca_btl_wv_tune_endpoint(mca_btl_wv_module_t* wv_btl,
             if(NULL != values.receive_queues) {
                 if(0 != strcmp(mca_btl_wv_component.receive_queues,
                                                 values.receive_queues)) {
-                     ompi_show_help("help-mpi-btl-wv.txt",
+                     opal_show_help("help-mpi-btl-wv.txt",
                                "unsupported queues configuration", true,
                                ompi_process_info.nodename,
                                wv_btl->device->ib_dev->name,

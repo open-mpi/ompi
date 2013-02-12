@@ -107,7 +107,7 @@ static int init_ud_qp(struct ibv_context *context_arg,
     cache->cq = ibv_create_cq(cache->context, 4, NULL, NULL, 0);
     if (NULL == cache->cq) {
         BTL_ERROR(("error creating cq, errno says %s", strerror(errno)));
-        ompi_show_help("help-mpi-btl-openib.txt", "init-fail-create-q",
+        opal_show_help("help-mpi-btl-openib.txt", "init-fail-create-q",
                 true, ompi_process_info.nodename,
                 __FILE__, __LINE__, "ibv_create_cq",
                 strerror(errno), errno,

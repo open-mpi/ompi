@@ -45,6 +45,7 @@
 #include "opal/mca/base/base.h"
 #include "opal/sys/atomic.h"
 #include "opal/runtime/opal.h"
+#include "opal/util/show_help.h"
 
 #include "mpi.h"
 #include "ompi/constants.h"
@@ -103,7 +104,7 @@ int ompi_mpi_finalize(void)
         pid_t pid = getpid();
         gethostname(hostname, sizeof(hostname));
 
-        ompi_show_help("help-mpi-runtime.txt",
+        opal_show_help("help-mpi-runtime.txt",
                        "mpi_finalize:invoked_multiple_times",
                        true, hostname, pid);
         return MPI_ERR_OTHER;

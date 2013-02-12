@@ -38,6 +38,7 @@
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
+#include "opal/util/show_help.h"
 
 /*
  * Global variables
@@ -86,7 +87,7 @@ int ompi_mpi_register_params(void)
             value = 1;
         }
         if (0 == value) {
-            ompi_show_help("help-mpi-runtime.txt", 
+            opal_show_help("help-mpi-runtime.txt", 
                            "mpi-param-check-enabled-but-compiled-out",
                            true);
             ompi_mpi_param_check = false;
@@ -256,7 +257,7 @@ int ompi_mpi_register_params(void)
     
     if (ompi_mpi_leave_pinned && ompi_mpi_leave_pinned_pipeline) {
         ompi_mpi_leave_pinned_pipeline = 0;
-        ompi_show_help("help-mpi-runtime.txt", 
+        opal_show_help("help-mpi-runtime.txt", 
                        "mpi-params:leave-pinned-and-pipeline-selected",
                        true);
     }
@@ -282,7 +283,7 @@ int ompi_mpi_register_params(void)
             value = 1;
         }
         if (0 == value) {
-            ompi_show_help("help-mpi-runtime.txt", 
+            opal_show_help("help-mpi-runtime.txt", 
                            "sparse groups enabled but compiled out",
                            true);
             ompi_use_sparse_group_storage = false;
@@ -299,7 +300,7 @@ int ompi_mpi_register_params(void)
             value = 1;
         }
         if (0 == value) {
-            ompi_show_help("help-mpi-runtime.txt", 
+            opal_show_help("help-mpi-runtime.txt", 
                            "CUDA GPU buffer support requested but compiled out",
                            true);
             ompi_mpi_cuda_support = false;

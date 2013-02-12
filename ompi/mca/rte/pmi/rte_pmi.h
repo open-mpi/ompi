@@ -110,12 +110,6 @@ OMPI_DECLSPEC int ompi_rte_init(int *argc, char ***argv);
 OMPI_DECLSPEC int ompi_rte_finalize(void);
 OMPI_DECLSPEC void ompi_rte_wait_for_debugger(void);
 
-/* Show-help support */
-OMPI_DECLSPEC int ompi_show_help(const char *filename, const char *topic, 
-                                 bool want_error_header, ...);
-#define ompi_show_help_is_available() true
-#define ompi_help_want_aggregate false
-
 /* Database operations */
 struct opal_buffer_t;
 

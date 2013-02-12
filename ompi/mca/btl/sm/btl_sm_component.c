@@ -47,6 +47,7 @@
 #include "opal/mca/shmem/shmem.h"
 #include "opal/util/bit_ops.h"
 #include "opal/util/output.h"
+#include "opal/util/show_help.h"
 
 #include "ompi/constants.h"
 #include "ompi/runtime/ompi_module_exchange.h"
@@ -161,7 +162,7 @@ static int sm_register(void)
         mca_btl_sm_component.use_knem = i;
     } else {
         if (i > 0) {
-            ompi_show_help("help-mpi-btl-sm.txt",
+            opal_show_help("help-mpi-btl-sm.txt",
                            "knem requested but not supported", true,
                            ompi_process_info.nodename);
             return OMPI_ERROR;
@@ -633,7 +634,7 @@ create_rndv_file(mca_btl_sm_component_t *comp_ptr,
      * sizeof(opal_shmem_ds_t), so we know where the mpool_res_size starts. */
     if (-1 == (fd = open(fname, O_CREAT | O_RDWR, 0600))) {
         int err = errno;
-        ompi_show_help("help-mpi-btl-sm.txt", "sys call fail", true,
+        opal_show_help("help-mpi-btl-sm.txt", "sys call fail", true,
                        "open(2)", strerror(err), err);
         rc = OMPI_ERR_IN_ERRNO;
         goto out;
@@ -641,7 +642,7 @@ create_rndv_file(mca_btl_sm_component_t *comp_ptr,
     if ((ssize_t)sizeof(opal_shmem_ds_t) != write(fd, &(tmp_modp->shmem_ds),
                                                   sizeof(opal_shmem_ds_t))) {
         int err = errno;
-        ompi_show_help("help-mpi-btl-sm.txt", "sys call fail", true,
+        opal_show_help("help-mpi-btl-sm.txt", "sys call fail", true,
                        "write(2)", strerror(err), err);
         rc = OMPI_ERR_IN_ERRNO;
         goto out;
@@ -649,7 +650,7 @@ create_rndv_file(mca_btl_sm_component_t *comp_ptr,
     if (MCA_BTL_SM_RNDV_MOD_MPOOL == type) {
         if ((ssize_t)sizeof(size) != write(fd, &size, sizeof(size))) {
             int err = errno;
-            ompi_show_help("help-mpi-btl-sm.txt", "sys call fail", true,
+            opal_show_help("help-mpi-btl-sm.txt", "sys call fail", true,
                            "write(2)", strerror(err), err);
             rc = OMPI_ERR_IN_ERRNO;
             goto out;
@@ -725,7 +726,7 @@ mca_btl_sm_component_init(int *num_btls,
      * need to know who the respective node ranks for initialization. */
     if (OMPI_NODE_RANK_INVALID ==
         (my_node_rank = ompi_process_info.my_node_rank)) {
-        ompi_show_help("help-mpi-btl-sm.txt", "no locality", true);
+        opal_show_help("help-mpi-btl-sm.txt", "no locality", true);
         return NULL;
     }
     /* no use trying to use sm with less than two procs, so just bail. */
@@ -817,10 +818,10 @@ mca_btl_sm_component_init(int *num_btls,
                     if (0 != stat("/dev/knem", &sbuf)) {
                         sbuf.st_mode = 0;
                     }
-                    ompi_show_help("help-mpi-btl-sm.txt", "knem permission denied",
+                    opal_show_help("help-mpi-btl-sm.txt", "knem permission denied",
                                    true, ompi_process_info.nodename, sbuf.st_mode);
                 } else {
-                    ompi_show_help("help-mpi-btl-sm.txt", "knem fail open",
+                    opal_show_help("help-mpi-btl-sm.txt", "knem fail open",
                                    true, ompi_process_info.nodename, errno,
                                    strerror(errno));
                 }
@@ -832,13 +833,13 @@ mca_btl_sm_component_init(int *num_btls,
             rc = ioctl(mca_btl_sm.knem_fd, KNEM_CMD_GET_INFO,
                        &mca_btl_sm_component.knem_info);
             if (rc < 0) {
-                ompi_show_help("help-mpi-btl-sm.txt", "knem get ABI fail",
+                opal_show_help("help-mpi-btl-sm.txt", "knem get ABI fail",
                                true, ompi_process_info.nodename, errno,
                                strerror(errno));
                 goto no_knem;
             }
             if (KNEM_ABI_VERSION != mca_btl_sm_component.knem_info.abi) {
-                ompi_show_help("help-mpi-btl-sm.txt", "knem ABI mismatch",
+                opal_show_help("help-mpi-btl-sm.txt", "knem ABI mismatch",
                                true, ompi_process_info.nodename, KNEM_ABI_VERSION,
                                mca_btl_sm_component.knem_info.abi);
                 goto no_knem;
@@ -860,7 +861,7 @@ mca_btl_sm_component_init(int *num_btls,
                                                     MAP_SHARED, mca_btl_sm.knem_fd,
                                                     KNEM_STATUS_ARRAY_FILE_OFFSET);
                 if (MAP_FAILED == mca_btl_sm.knem_status_array) {
-                    ompi_show_help("help-mpi-btl-sm.txt", "knem mmap fail",
+                    opal_show_help("help-mpi-btl-sm.txt", "knem mmap fail",
                                    true, ompi_process_info.nodename, errno,
                                    strerror(errno));
                     goto no_knem;
@@ -872,7 +873,7 @@ mca_btl_sm_component_init(int *num_btls,
                     malloc(sizeof(mca_btl_sm_frag_t *) *
                            mca_btl_sm_component.knem_max_simultaneous);
                 if (NULL == mca_btl_sm.knem_frag_array) {
-                    ompi_show_help("help-mpi-btl-sm.txt", "knem init fail",
+                    opal_show_help("help-mpi-btl-sm.txt", "knem init fail",
                                    true, ompi_process_info.nodename, "malloc",
                                    errno, strerror(errno));
                     goto no_knem;

@@ -41,6 +41,7 @@
 #include "opal/sys/atomic.h"
 #include "opal/class/opal_bitmap.h"
 #include "opal/util/output.h"
+#include "opal/util/show_help.h"
 #include "opal/util/printf.h"
 #include "opal/mca/hwloc/base/base.h"
 #include "opal/mca/shmem/base/base.h"
@@ -139,7 +140,7 @@ setup_mpool_base_resources(mca_btl_sm_component_t *comp_ptr,
 
     if (-1 == (fd = open(comp_ptr->sm_mpool_rndv_file_name, O_RDONLY))) {
         int err = errno;
-        ompi_show_help("help-mpi-btl-sm.txt", "sys call fail", true,
+        opal_show_help("help-mpi-btl-sm.txt", "sys call fail", true,
                        "open(2)", strerror(err), err);
         rc = OMPI_ERR_IN_ERRNO;
         goto out;
@@ -183,7 +184,7 @@ sm_segment_attach(mca_btl_sm_component_t *comp_ptr)
     }
     if (-1 == (fd = open(comp_ptr->sm_rndv_file_name, O_RDONLY))) {
         int err = errno;
-        ompi_show_help("help-mpi-btl-sm.txt", "sys call fail", true,
+        opal_show_help("help-mpi-btl-sm.txt", "sys call fail", true,
                        "open(2)", strerror(err), err);
         rc = OMPI_ERR_IN_ERRNO;
         goto out;

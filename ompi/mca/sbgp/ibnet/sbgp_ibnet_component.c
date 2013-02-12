@@ -519,7 +519,7 @@ static int ibnet_load_devices(void)
     if(0 == num_devs || NULL == ib_devs) {
         IBNET_VERBOSE(10, ("No ib devices found"));
         /* No hca error*/
-        ompi_show_help("help-mpi-sbgp-ibnet.txt", "no-nics", true);
+        opal_show_help("help-mpi-sbgp-ibnet.txt", "no-nics", true);
         return OMPI_ERROR;
     }
 

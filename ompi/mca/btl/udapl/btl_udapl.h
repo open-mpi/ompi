@@ -231,7 +231,7 @@ do {                                                                \
 #define BTL_UDAPL_VERBOSE_HELP(verbose_level, args)                 \
 do {                                                                \
     if (verbose_level <= mca_btl_udapl_component.udapl_verbosity) { \
-        ompi_show_help args;                                        \
+        opal_show_help args;                                        \
     }                                                               \
 } while(0);
 

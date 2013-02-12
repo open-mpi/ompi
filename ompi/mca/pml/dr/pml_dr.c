@@ -25,6 +25,7 @@
 #include <string.h>
 
 #include "opal/class/opal_bitmap.h"
+#include "opal/util/show_help.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/btl/btl.h"
 #include "ompi/mca/btl/base/base.h"
@@ -216,7 +217,7 @@ int mca_pml_dr_add_procs(ompi_proc_t** procs, size_t nprocs)
         mca_btl_base_selected_module_t *sm = 
             (mca_btl_base_selected_module_t*) item;
         if (sm->btl_module->btl_eager_limit < sizeof(mca_pml_dr_hdr_t)) {
-	    ompi_show_help("help-mpi-pml-dr.txt", "eager_limit_too_small",
+	    opal_show_help("help-mpi-pml-dr.txt", "eager_limit_too_small",
 			   true, 
 			   sm->btl_component->btl_version.mca_component_name,
 			   ompi_process_info.nodename,

@@ -188,7 +188,7 @@ int mca_sbgp_ibnet_register_params(void)
     free(msg);
 
     if (ival < IBV_MTU_1024 || ival > IBV_MTU_4096) {
-        ompi_show_help("help-mpi-bcol-iboffload.txt", "invalid mca param value",
+        opal_show_help("help-mpi-bcol-iboffload.txt", "invalid mca param value",
                        true, "invalid value for btl_openib_ib_mtu",
                        "btl_openib_ib_mtu reset to 1024");
         mca_sbgp_ibnet_component.mtu = IBV_MTU_1024;

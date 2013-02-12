@@ -321,7 +321,7 @@ static int iboffload_load_devices(void)
     if (0 == num_devs || NULL == cm->ib_devs) {
         IBOFFLOAD_ERROR(("No IB devices found"));
         /* No hca error*/
-        ompi_show_help("help-mpi-btl-openib.txt", "no-nics", true);
+        opal_show_help("help-mpi-btl-openib.txt", "no-nics", true);
         return OMPI_ERROR;
     }
 
@@ -545,7 +545,7 @@ static int setup_qps(void)
 
     queues = opal_argv_split(mca_bcol_iboffload_component.receive_queues, ':');
     if (0 == opal_argv_count(queues)) {
-        ompi_show_help("help-mpi-btl-openib.txt",
+        opal_show_help("help-mpi-btl-openib.txt",
                        "no qps in receive_queues", true,
                        ompi_process_info.nodename,
                        mca_bcol_iboffload_component.receive_queues);
@@ -564,14 +564,14 @@ static int setup_qps(void)
 #if HAVE_XRC
         type = MCA_BCOL_IBOFFLOAD_XRC_QP;
 #else
-            ompi_show_help("help-mpi-btl-openib.txt", "No XRC support", true,
+            opal_show_help("help-mpi-btl-openib.txt", "No XRC support", true,
                            ompi_process_info.nodename,
                            mca_bcol_iboffload_component.receive_queues);
             ret = OMPI_ERR_NOT_AVAILABLE;
             goto exit;
 #endif
         } else {
-            ompi_show_help("help-mpi-btl-openib.txt",
+            opal_show_help("help-mpi-btl-openib.txt",
                            "invalid qp type in receive_queues", true,
                            ompi_process_info.nodename,
                            mca_bcol_iboffload_component.receive_queues,
@@ -597,7 +597,7 @@ static int setup_qps(void)
 
         if ('P' == params[0][0]) {
             if (count < 3 || count > 6) {
-                ompi_show_help("help-mpi-btl-openib.txt",
+                opal_show_help("help-mpi-btl-openib.txt",
                                "invalid pp qp specification", true,
                                ompi_process_info.nodename, queues[qp]);
 
@@ -617,12 +617,12 @@ static int setup_qps(void)
 
 
             if ((rd_num - rd_low) > rd_win) {
-                ompi_show_help("help-mpi-btl-openib.txt", "non optimal rd_win",
+                opal_show_help("help-mpi-btl-openib.txt", "non optimal rd_win",
                         true, rd_win, rd_num - rd_low);
             }
         } else {
             if (count < 3 || count > 5) {
-                ompi_show_help("help-mpi-btl-openib.txt",
+                opal_show_help("help-mpi-btl-openib.txt",
                                "invalid srq specification", true,
                                ompi_process_info.nodename, queues[qp]);
 
@@ -644,7 +644,7 @@ static int setup_qps(void)
         }
 
         if (rd_num <= rd_low) {
-            ompi_show_help("help-mpi-btl-openib.txt", "rd_num must be > rd_low",
+            opal_show_help("help-mpi-btl-openib.txt", "rd_num must be > rd_low",
                     true, ompi_process_info.nodename, queues[qp]);
             ret = OMPI_ERR_BAD_PARAM;
 

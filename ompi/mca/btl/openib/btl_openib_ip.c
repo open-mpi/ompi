@@ -195,7 +195,7 @@ static int ipaddr_specified(struct sockaddr_in *ipaddr, uint32_t netmask)
 
             if (NULL == temp || NULL == temp[0] || NULL == temp[1] ||
                 NULL != temp[2]) {
-                ompi_show_help("help-mpi-btl-openib.txt",
+                opal_show_help("help-mpi-btl-openib.txt",
                                "invalid ipaddr_inexclude", true, "include",
                                ompi_process_info.nodename, list[i],
                                "Invalid specification (missing \"/\")");
@@ -206,7 +206,7 @@ static int ipaddr_specified(struct sockaddr_in *ipaddr, uint32_t netmask)
             }
 
             if (1 != inet_pton(ipaddr->sin_family, temp[0], &ipae)) {
-                ompi_show_help("help-mpi-btl-openib.txt",
+                opal_show_help("help-mpi-btl-openib.txt",
                                "invalid ipaddr_inexclude", true, "include",
                                ompi_process_info.nodename, list[i],
                                "Invalid specification (inet_pton() failed)");
@@ -237,7 +237,7 @@ static int ipaddr_specified(struct sockaddr_in *ipaddr, uint32_t netmask)
 
             if (NULL == temp || NULL == temp[0] || NULL == temp[1] ||
                 NULL != temp[2]) {
-                ompi_show_help("help-mpi-btl-openib.txt",
+                opal_show_help("help-mpi-btl-openib.txt",
                                "invalid ipaddr_inexclude", true, "exclude",
                                ompi_process_info.nodename, list[i],
                                "Invalid specification (missing \"/\")");
@@ -248,7 +248,7 @@ static int ipaddr_specified(struct sockaddr_in *ipaddr, uint32_t netmask)
             }
 
             if (1 != inet_pton(ipaddr->sin_family, temp[0], &ipae)) {
-                ompi_show_help("help-mpi-btl-openib.txt",
+                opal_show_help("help-mpi-btl-openib.txt",
                                "invalid ipaddr_inexclude", true, "exclude",
                                ompi_process_info.nodename, list[i],
                                "Invalid specification (inet_pton() failed)");

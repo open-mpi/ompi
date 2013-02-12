@@ -1015,7 +1015,7 @@ static int init_ud_qp(struct wv_context *context_arg,
     cache->cq->cqe = (uint32_t) entries;
     if (NULL == cache->cq) {
         BTL_ERROR(("error creating cq, errno says %s", strerror(errno)));
-        ompi_show_help("help-mpi-btl-wv.txt", "init-fail-create-q",
+        opal_show_help("help-mpi-btl-wv.txt", "init-fail-create-q",
                 true, ompi_process_info.nodename,
                 __FILE__, __LINE__, "create_cq",
                 strerror(errno), errno,

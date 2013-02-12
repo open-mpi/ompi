@@ -928,7 +928,7 @@ void *mca_btl_wv_endpoint_invoke_error(void *context)
 
     /* If we didn't find a BTL, then just bail :-( */
     if (NULL == btl || NULL == btl->error_cb) {
-        ompi_show_help("help-mpi-btl-wv.txt",
+        opal_show_help("help-mpi-btl-wv.txt",
                        "cannot raise btl error", true,
                        ompi_process_info.nodename,
                        __FILE__, __LINE__);

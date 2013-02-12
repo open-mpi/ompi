@@ -1046,7 +1046,7 @@ void *mca_btl_openib_endpoint_invoke_error(void *context)
 
     /* If we didn't find a BTL, then just bail :-( */
     if (NULL == btl || NULL == btl->error_cb) {
-        ompi_show_help("help-mpi-btl-openib.txt",
+        opal_show_help("help-mpi-btl-openib.txt",
                        "cannot raise btl error", true,
                        ompi_process_info.nodename,
                        __FILE__, __LINE__);

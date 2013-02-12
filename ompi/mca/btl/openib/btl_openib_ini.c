@@ -246,7 +246,7 @@ static int parse_file(char *filename)
     ini_filename = filename;
     btl_openib_ini_yyin = fopen(filename, "r");
     if (NULL == btl_openib_ini_yyin) {
-        ompi_show_help("help-mpi-btl-openib.txt", "ini file:file not found",
+        opal_show_help("help-mpi-btl-openib.txt", "ini file:file not found",
                        true, filename);
         ret = OMPI_ERR_NOT_FOUND;
         goto cleanup;
@@ -424,7 +424,7 @@ static int parse_line(parsed_section_values_t *sv)
         /* Have no idea what this parameter is.  Not an error -- just
            ignore it */
         if (!showed_unknown_field_warning) {
-            ompi_show_help("help-mpi-btl-openib.txt",
+            opal_show_help("help-mpi-btl-openib.txt",
                            "ini file:unknown field", true,
                            ini_filename, btl_openib_ini_yynewlines,
                            key_buffer);
@@ -693,7 +693,7 @@ static inline void show_help(const char *topic)
     if (0 == strcmp("\n", btl_openib_ini_yytext)) {
         btl_openib_ini_yytext = "<end of line>";
     }
-    ompi_show_help("help-mpi-btl-openib.txt", topic, true,
+    opal_show_help("help-mpi-btl-openib.txt", topic, true,
                    ini_filename, btl_openib_ini_yynewlines,
                    btl_openib_ini_yytext);
     btl_openib_ini_yytext = save;
