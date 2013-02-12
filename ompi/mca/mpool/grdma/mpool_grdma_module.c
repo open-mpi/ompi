@@ -12,11 +12,10 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2009 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2006      Voltaire. All rights reserved.
+ * Copyright (c) 2007      Mellanox Technologies. All rights reserved.
  * Copyright (c) 2010      IBM Corporation.  All rights reserved.
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2012      Mellanox Technologies, Inc.
- *                         All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -141,13 +140,13 @@ void* mca_mpool_grdma_alloc(mca_mpool_base_module_t *mpool, size_t size,
 #ifdef HAVE_POSIX_MEMALIGN
     if((errno = posix_memalign(&base_addr, align, size)) != 0)
         return NULL;
-    memset(base_addr,0,size);
+
     addr = base_addr;
 #else
     base_addr = malloc(size + align);
     if(NULL == base_addr)
         return NULL;
-    memset(base_addr,0,size + align);
+
     addr = (void*)OPAL_ALIGN((uintptr_t)base_addr, align, uintptr_t);
 #endif
 

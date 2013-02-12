@@ -12,9 +12,6 @@
 # Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2010      IBM Corporation.  All rights reserved.
 # Copyright (c) 2010-2011 Oak Ridge National Labs.  All rights reserved.
-# Copyright (c) 2012      Mellanox Technologies, Inc.
-#                         All rights reserved.
-#
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -163,10 +160,3 @@ EXTRA_DIST = \
 	platform/greenplum/mrplus/linux-optimized.conf
 
 dist_pkgdata_DATA = openmpi-valgrind.supp
-
-if OSHMEM_SUPPORT
-dist_pkgdata_DATA += \
-						tau/shmem_wiki_tau.sh \
-						tau/tau_openshmem.patch \
-						tau/readme
-endif 

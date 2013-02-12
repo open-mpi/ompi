@@ -14,10 +14,9 @@
  * Copyright (c) 2006-2012 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2006-2007 Voltaire All rights reserved.
+ * Copyright (c) 2006-2009 Mellanox Technologies, Inc.  All rights reserved.
  * Copyright (c) 2010-2011 IBM Corporation.  All rights reserved.
  * Copyright (c) 2010-2011 Oracle and/or its affiliates.  All rights reserved
- * Copyright (c) 2012      Mellanox Technologies, Inc.
- *                         All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -346,11 +345,6 @@ static void mca_btl_openib_endpoint_construct(mca_btl_base_endpoint_t* endpoint)
                     sizeof(mca_btl_openib_rem_qp_info_t));
         endpoint->rem_info.rem_srqs = NULL;
     }
-
-#ifdef OSHMEM_ENABLED
-    endpoint->rdma_qp = mca_btl_openib_component.rdma_qp;
-#endif /* OSHMEM_ENABLED */
-
 
     endpoint->ib_addr = NULL;
     endpoint->xrc_recv_qp_num = 0;

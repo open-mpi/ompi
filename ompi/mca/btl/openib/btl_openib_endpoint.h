@@ -13,9 +13,8 @@
  * Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2006-2007 Voltaire All rights reserved.
+ * Copyright (c) 2007-2009 Mellanox Technologies.  All rights reserved.
  * Copyright (c) 2010-2012 Oracle and/or its affiliates.  All rights reserved.
- * Copyright (c) 2012      Mellanox Technologies, Inc.
- *                         All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -258,9 +257,6 @@ struct mca_btl_base_endpoint_t {
     /** Whether we've send out CTS to the peer or not (only used in
         CTS protocol) */
     bool endpoint_cts_sent;
-#ifdef OSHMEM_ENABLED
-    int rdma_qp;
-#endif /* OSHMEM_ENABLED */
 };
 
 typedef struct mca_btl_base_endpoint_t mca_btl_base_endpoint_t;
@@ -512,18 +508,6 @@ static inline int check_endpoint_state(mca_btl_openib_endpoint_t *ep,
 
     return rc;
 }
-
-#if OSHMEM_ENABLED
-/* hack, since there is no clean way to find inline limits */
-#include "ompi/mca/bml/bml.h"
-static inline int
-mca_btl_openib_rdma_inline_size(mca_bml_base_btl_t *bml_btl)
-{
-    mca_btl_base_endpoint_t *ep = bml_btl->btl_endpoint;
-
-    return ep->qps[ep->rdma_qp].ib_inline_max;
-}
-#endif /* OSHMEM_ENABLED */
 
 static inline __opal_attribute_always_inline__ int
 ib_send_flags(uint32_t size, mca_btl_openib_endpoint_qp_t *qp, int do_signal)
