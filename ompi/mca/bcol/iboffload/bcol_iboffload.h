@@ -39,7 +39,6 @@
 #include "ompi/request/request.h"
 
 #include "ompi/mca/common/ofacm/connect.h"
-#include "ompi/mca/common/netpatterns/common_netpatterns.h"
 
 #include "bcol_iboffload_qp_info.h"
 
