@@ -13,6 +13,8 @@
  * Copyright (c) 2010-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2011-2012 University of Houston. All rights reserved.
+ * Copyright (c) 2012      Mellanox Technologies, Inc.
+ *                         All rights reserved
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -61,10 +63,22 @@
 #include "ompi/mca/sharedfp/base/base.h"
 #include "ompi/runtime/params.h"
 
+#if OSHMEM_ENABLED
+#include "oshmem/runtime/runtime.h"
+#endif
+
 #if OPAL_ENABLE_FT_CR == 1
 #include "ompi/mca/crcp/crcp.h"
 #include "ompi/mca/crcp/base/base.h"
 #endif
+
+#if OSHMEM_ENABLED
+#include "oshmem/mca/scoll/base/base.h"
+#include "oshmem/mca/spml/base/base.h"
+#include "oshmem/mca/memheap/base/base.h"
+#include "oshmem/mca/atomic/base/base.h"
+#endif
+
 
 
 #include "ompi/tools/ompi_info/ompi_info.h"
@@ -125,7 +139,14 @@ int ompi_info_register_components(opal_pointer_array_t *mca_types,
         }
         goto error;
     }
-    
+   
+#if OSHMEM_ENABLED
+    if (OMPI_SUCCESS != oshmem_shmem_register_params()) {
+        str = "oshmem_shmem_Register_params failed";
+        goto error;
+    }
+#endif
+            
     /* Find / open all components */
     map = OBJ_NEW(opal_info_component_map_t);
     map->type = strdup("base");
@@ -159,6 +180,32 @@ int ompi_info_register_components(opal_pointer_array_t *mca_types,
         str = "btl";
         goto breakout;
     }
+
+#if OSHMEM_ENABLED
+    if (OMPI_SUCCESS != mca_scoll_base_open()) {
+        goto error;
+    }
+    map = OBJ_NEW(opal_info_component_map_t);
+    map->type = strdup("scoll");
+    map->components = &mca_scoll_base_components_opened;
+    opal_pointer_array_add(component_map, map);
+
+    if (OMPI_SUCCESS != mca_memheap_base_open()) {
+        goto error;
+    }
+    map = OBJ_NEW(opal_info_component_map_t);
+    map->type = strdup("memheap");
+    map->components = &mca_memheap_base_components_opened;
+    opal_pointer_array_add(component_map, map);
+
+    if (OMPI_SUCCESS != mca_atomic_base_open()) {
+        goto error;
+    }
+    map = OBJ_NEW(opal_info_component_map_t);
+    map->type = strdup("atomic");
+    map->components = &mca_atomic_base_components_opened;
+    opal_pointer_array_add(component_map, map);
+#endif
 
     if (OMPI_SUCCESS != (rc = mca_coll_base_open()) &&
         OMPI_ERR_BAD_PARAM != rc) {
@@ -315,6 +362,16 @@ int ompi_info_register_components(opal_pointer_array_t *mca_types,
         str = "pml";
         goto breakout;
     }
+
+#if OSHMEM_ENABLED
+    if (OMPI_SUCCESS != mca_spml_base_open()) {
+        goto error;
+    }
+    map = OBJ_NEW(opal_info_component_map_t);
+    map->type = strdup("spml");
+    map->components = &mca_spml_base_components_available;
+    opal_pointer_array_add(component_map, map);
+#endif
 
     /* No need to call the bml_base_open() because the ob1 pml calls it.
      * mca_bml_base_open();

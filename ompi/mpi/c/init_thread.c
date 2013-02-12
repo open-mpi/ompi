@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2010      Oak Ridge National Labs.  All rights reserved.
+ * Copyright (c) 2012      Mellanox Technologies, Inc.
+ *                         All rights reserved
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -25,6 +27,14 @@
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/constants.h"
 
+#if OSHMEM_ENABLED
+    /* start_pes() is called instead of MPI_Init_thread() in case OpenSHMEM usage
+     * Do nothing because SHMEM has made MPI ready
+     */
+    #pragma weak MPI_Init_thread
+#else
+
+
 #if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Init_thread = PMPI_Init_thread
 #endif
@@ -32,6 +42,7 @@
 #if OMPI_PROFILING_DEFINES
 #include "ompi/mpi/c/profile/defines.h"
 #endif
+#endif /* OSHMEM_ENABLED */
 
 static const char FUNC_NAME[] = "MPI_Init_thread";
 

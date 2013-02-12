@@ -2,7 +2,8 @@
 #
 # Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
-#
+# Copyright (c) 2012      Mellanox Technologies, Inc.
+#                         All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -41,6 +42,7 @@ my @subdirs;
 # Command line parameters
 my $no_ompi_arg = 0;
 my $no_orte_arg = 0;
+my $no_oshmem_arg = 0;
 my $quiet_arg = 0;
 my $debug_arg = 0;
 my $help_arg = 0;
@@ -935,6 +937,7 @@ sub patch_autotools_output {
 
 my $ok = Getopt::Long::GetOptions("no-ompi" => \$no_ompi_arg,
                                   "no-orte" => \$no_orte_arg,
+                                  "no-oshmem" => \$no_oshmem_arg,
                                   "quiet|q" => \$quiet_arg,
                                   "debug|d" => \$debug_arg,
                                   "help|h" => \$help_arg,
@@ -949,6 +952,7 @@ if (!$ok || $help_arg) {
     print "Options:
   --no-ompi | -no-ompi          Do not build the Open MPI layer
   --no-orte | -no-orte          Do not build the ORTE layer
+  --no-oshmem | -no-oshmem      Do not build the OSHMEM layer
   --quiet | -q                  Do not display normal verbose output
   --debug | -d                  Output lots of debug information
   --help | -h                   This help list
@@ -976,6 +980,10 @@ if (! -e "ompi") {
 if (! -e "orte") {
     $no_orte_arg = 1;
     debug "No orte subdirectory found - will not build ORTE\n";
+}
+if (! -e "oshmem") {
+    $no_oshmem_arg = 1;
+    debug "No oshmem subdirectory found - will not build OSHMEM\n";
 }
 
 if ($no_ompi_arg == 1 && $no_orte_arg == 0) {
@@ -1143,6 +1151,9 @@ push(@{$projects}, { name => "orte", dir => "orte", need_base => 1 })
     if (!$no_orte_arg);
 push(@{$projects}, { name => "ompi", dir => "ompi", need_base => 1 })
     if (!$no_ompi_arg);
+push(@{$projects}, { name => "oshmem", dir => "oshmem", need_base => 1 })
+    if (!$no_ompi_arg && !$no_orte_arg && !$no_oshmem_arg);
+
 
 # Save the list of projects in the m4 file
 my $str;

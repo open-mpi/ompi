@@ -1,0 +1,147 @@
+/**
+ * Copyright (c) 2012      Mellanox Technologies, Inc.
+ *                         All rights reserved.
+ * $COPYRIGHT$
+ * 
+ * Additional copyrights may follow
+ * 
+ * $HEADER$
+ */
+
+#ifndef MCA_MEMHEAP_H
+#define MCA_MEMHEAP_H
+#include "opal/mca/mca.h"
+#include "oshmem/constants.h"
+#include "oshmem/proc/proc.h"
+#include "oshmem/mca/spml/spml.h"
+
+#define DEFAULT_SYMMETRIC_HEAP_SIZE      256
+#define SIZE_IN_MEGA_BYTES(size_in_mb)  size_in_mb * 1024 * 1024
+
+BEGIN_C_DECLS
+struct mca_memheap_base_module_t;
+
+
+typedef struct memheap_context
+{
+    void*   user_base_addr;
+    void*   private_base_addr;
+    size_t  user_size;
+    size_t  private_size;
+} memheap_context_t;
+
+
+/**
+ * Component initialize
+ */
+typedef struct mca_memheap_base_module_t* (*mca_memheap_base_component_init_fn_t)(memheap_context_t *, int *priority);
+
+/*
+ * Symmetric heap allocation. Malloc like interface
+ */
+typedef int (*mca_memheap_base_module_alloc_fn_t)(size_t, void**);
+
+typedef int (*mca_memheap_base_module_memalign_fn_t)(size_t align, size_t size, void**);
+
+typedef int (*mca_memheap_base_module_realloc_fn_t)(size_t newsize, void *, void **);
+
+/*
+ * Symmetric heap free.
+ */
+typedef int (*mca_memheap_base_module_free_fn_t)(void*); 
+
+/**
+ * Service functions
+ */
+typedef uint64_t (*mca_memheap_base_module_find_offset_fn_t)(int pe, int tr_id, unsigned long va, uint64_t rva);
+
+
+/**
+ * @return mkey suitable to access pe via given transport id. rva is set to virtual address mapping of (va)
+ * on remote pe. 
+ */ 
+typedef mca_spml_mkey_t * (*mca_memheap_base_module_get_cached_mkey_fn_t)(int pe, unsigned long va, int transport_id, uint64_t *rva);
+typedef mca_spml_mkey_t * (*mca_memheap_base_module_get_local_mkey_fn_t)(unsigned long va, int transport_id);
+
+/*
+ * Symmetric heap destructor.
+ */
+typedef int (*mca_memheap_base_module_finalize_fn_t)(void);
+
+typedef int (*mca_memheap_base_is_memheap_addr_fn_t)(unsigned long va);
+
+/* get mkeys from all ranks */
+typedef void (*mca_memheap_base_mkey_exchange_fn_t)(void);
+
+/* 
+ * memheap component descriptor. Contains component version, information and 
+ * init functions 
+ */ 
+struct mca_memheap_base_component_2_0_0_t{ 
+    mca_base_component_t memheap_version;              /**< version */ 
+    mca_base_component_data_t memheap_data;            /**< metadata */ 
+    mca_memheap_base_component_init_fn_t memheap_init; /**<init function */ 
+}; 
+typedef struct mca_memheap_base_component_2_0_0_t mca_memheap_base_component_2_0_0_t; 
+typedef struct mca_memheap_base_component_2_0_0_t mca_memheap_base_component_t; 
+
+/**
+ * memheap module descriptor
+ */ 
+struct mca_memheap_base_module_t {
+    mca_memheap_base_component_t                   *memheap_component;  /** Memory Heap Management Componenet */ 
+    mca_memheap_base_module_finalize_fn_t           memheap_finalize; 
+    mca_memheap_base_module_alloc_fn_t              memheap_alloc;
+    mca_memheap_base_module_memalign_fn_t           memheap_memalign;
+    mca_memheap_base_module_realloc_fn_t            memheap_realloc;
+    mca_memheap_base_module_free_fn_t               memheap_free;
+
+    /* 
+     * alloc/free that should be used for internal allocation. 
+     * Internal memory does not count towards
+     *  symmetric heap memory 
+     */
+    mca_memheap_base_module_alloc_fn_t              memheap_private_alloc;
+    mca_memheap_base_module_free_fn_t               memheap_private_free;
+
+    mca_memheap_base_module_get_cached_mkey_fn_t    memheap_get_cached_mkey;
+    mca_memheap_base_module_get_local_mkey_fn_t     memheap_get_local_mkey;
+    mca_memheap_base_module_find_offset_fn_t        memheap_find_offset;
+    mca_memheap_base_is_memheap_addr_fn_t           memheap_is_symmetric_addr;
+    mca_memheap_base_mkey_exchange_fn_t             memheap_get_all_mkeys;
+
+    /*  
+     * Total size of user available memheap 
+     */
+    long                                            memheap_size;
+};
+
+typedef struct mca_memheap_base_module_t mca_memheap_base_module_t;
+
+/*
+ * Macro for use in components that are of type rcache
+ */
+#define MCA_MEMHEAP_BASE_VERSION_2_0_0 \
+    MCA_BASE_VERSION_2_0_0, \
+"memheap", 2, 0, 0
+
+#if 0
+/* TODO: what is direct call ??? */
+#if MCA_oshmem_memheap_DIRECT_CALL
+
+#include MCA_oshmem_memheap_DIRECT_CALL_HEADER
+
+#define MCA_MEMHEAP_CALL_STAMP(a, b) mca_memheap_ ## a ## _ ## b
+#define MCA_MEMHEAP_CALL_EXPANDER(a, b) MCA_MEMHEAP_CALL_STAMP(a,b)
+#define MCA_MEMHEAP_CALL(a) MCA_MEMHEAP_CALL_EXPANDER(MCA_oshmem_memheap_DIRECT_CALL_COMPONENT, a)
+
+#else
+#endif
+#endif
+#define MCA_MEMHEAP_CALL(a) mca_memheap.memheap_ ## a
+
+OSHMEM_DECLSPEC extern mca_memheap_base_module_t mca_memheap;
+
+END_C_DECLS
+
+#endif /* MCA_MEMHEAP_H */

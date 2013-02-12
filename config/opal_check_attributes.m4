@@ -12,6 +12,8 @@
 #                         All rights reserved.
 # Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
 # Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2012      Mellanox Technologies, Inc.
+#                         All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -215,6 +217,7 @@ AC_DEFUN([OPAL_CHECK_ATTRIBUTES], [
     opal_cv___attribute__visibility=0
     opal_cv___attribute__warn_unused_result=0
     opal_cv___attribute__weak_alias=0
+    opal_cv___attribute__destructor=0
   else
     AC_MSG_RESULT([yes])
 
@@ -533,6 +536,13 @@ AC_DEFUN([OPAL_CHECK_ATTRIBUTES], [
         [],
         [])
 
+    _OPAL_CHECK_SPECIFIC_ATTRIBUTE([destructor],
+        [
+        void foo(void) __attribute__ ((__destructor__));
+        void foo(void) { return ; }
+        ],
+        [],
+        [])
   fi
 
   # Now that all the values are set, define them
@@ -581,4 +591,6 @@ AC_DEFUN([OPAL_CHECK_ATTRIBUTES], [
                      [Whether your compiler has __attribute__ warn unused result or not])
   AC_DEFINE_UNQUOTED(OPAL_HAVE_ATTRIBUTE_WEAK_ALIAS, [$opal_cv___attribute__weak_alias],
                      [Whether your compiler has __attribute__ weak alias or not])
+  AC_DEFINE_UNQUOTED(OPAL_HAVE_ATTRIBUTE_DESTRUCTOR, [$opal_cv___attribute__destructor],
+                     [Whether your compiler has __attribute__ destructor or not])
 ])

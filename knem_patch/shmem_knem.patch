@@ -1,0 +1,88 @@
+# Copyright (c) 2012      Mellanox Technologies, Inc.
+#                         All rights reserved.
+diff -cr knem-0.9.7/driver/linux/knem_main.c knem-fixed/driver/linux/knem_main.c
+*** knem-0.9.7/driver/linux/knem_main.c	2011-07-28 20:06:58.000000000 +0300
+--- knem-fixed/driver/linux/knem_main.c	2011-10-04 13:25:12.000000000 +0200
+***************
+*** 1145,1150 ****
+--- 1145,1195 ----
+   * Copying between pinned iovecs
+   */
+  
++ #define KNEM_FOR_SHMEM 1
++ 
++ #if KNEM_FOR_SHMEM
++ static void perform_copy(void *dst, void *src, unsigned long length)
++ {
++     int i;
++     int num64 = length / sizeof(uint64_t);
++     int num32 = (length % sizeof(uint64_t))/sizeof(uint32_t);
++     int num16 = (length % sizeof(uint32_t))/sizeof(uint16_t);
++     int num8 = (length % sizeof(uint16_t))/sizeof(uint8_t);
++     uint64_t *dst64 = (uint64_t*)dst;
++     uint64_t *src64 = (uint64_t*)src;
++     uint32_t *dst32;
++     uint32_t *src32;
++     uint16_t *src16;
++     uint16_t *dst16;
++     uint8_t  *dst8;
++     uint8_t  *src8;
++ 
++     for (i=0; i<num64; i++)
++     {
++         *dst64++ = *src64++;
++     }
++     dst32 = (uint32_t *)dst64;
++     src32 = (uint32_t *)src64;
++     for (i=0; i<num32; i++)
++     {
++         *dst32++ = *src32++;
++     }
++     dst16 = (uint16_t *)dst32;
++     src16 = (uint16_t *)src32;
++     for (i=0; i<num16; i++)
++     {
++         *dst16++ = *src16++;
++     }
++     dst8 = (uint8_t *)dst16;
++     src8 = (uint8_t *)src16;
++     for (i=0; i<num8; i++)
++     {
++         *dst8++ = *src8++;
++     }
++ 
++ //    printk(KERN_ERR "MEMCPY IS DONE IN KNEM, dst = %p. src = %p, len = %lu\n",(void *)dst,(void *)src,length);
++ }
++ #endif
+  static void
+  knem_memcpy_pinned(struct page * const * dst_page, unsigned dst_first_page_offset,
+  		   struct page * const * src_page, unsigned src_first_page_offset,
+***************
+*** 1159,1169 ****
+  			chunk = PAGE_SIZE - src_first_page_offset;
+  		if (likely(dst_first_page_offset + chunk > PAGE_SIZE))
+  			chunk = PAGE_SIZE - dst_first_page_offset;
+! 
+  		memcpy(dst_addr + dst_first_page_offset,
+  		       src_addr + src_first_page_offset,
+  		       chunk);
+! 
+  		remaining -= chunk;
+  		if (unlikely(!remaining))
+  			break;
+--- 1204,1218 ----
+  			chunk = PAGE_SIZE - src_first_page_offset;
+  		if (likely(dst_first_page_offset + chunk > PAGE_SIZE))
+  			chunk = PAGE_SIZE - dst_first_page_offset;
+! #if (!KNEM_FOR_SHMEM)
+  		memcpy(dst_addr + dst_first_page_offset,
+  		       src_addr + src_first_page_offset,
+  		       chunk);
+! #else
+!         perform_copy(dst_addr + dst_first_page_offset,
+!                 src_addr + src_first_page_offset,
+!                 chunk);
+! #endif
+  		remaining -= chunk;
+  		if (unlikely(!remaining))
+  			break;

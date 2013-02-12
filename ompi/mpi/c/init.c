@@ -11,6 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2007-2008 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2012      Mellanox Technologies, Inc.
+ *                         All rights reserved
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -27,6 +29,13 @@
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/constants.h"
 
+#if OSHMEM_ENABLED
+    /* start_pes() is called instead of MPI_Init() in case OpenSHMEM usage
+     * Do nothing because SHMEM has made MPI ready
+     */
+    #pragma weak MPI_Init
+#else
+
 #if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Init = PMPI_Init
 #endif
@@ -34,6 +43,7 @@
 #if OMPI_PROFILING_DEFINES
 #include "ompi/mpi/c/profile/defines.h"
 #endif
+#endif /* OSHMEM_ENABLED */
 
 static const char FUNC_NAME[] = "MPI_Init";
 

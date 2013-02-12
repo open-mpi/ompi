@@ -14,6 +14,8 @@
  *                         reserved.
  * Copyright (c) 2006-2007 Voltaire All rights reserved.
  * Copyright (c) 2010-2012 Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2012      Mellanox Technologies, Inc.
+ *                         All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -287,6 +289,9 @@ typedef enum mca_btl_openib_frag_type_t mca_btl_openib_frag_type_t;
 typedef struct mca_btl_openib_segment_t {
     mca_btl_base_segment_t base;
     uint32_t key;
+#if OSHMEM_ENABLED
+    uint32_t lkey;
+#endif
 } mca_btl_openib_segment_t;
 
 /* base openib frag */

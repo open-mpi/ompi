@@ -1,0 +1,178 @@
+Copyright (c) 2012      Mellanox Technologies, Inc.
+                        All rights reserved.
+22 May 2012
+
+Description
+===========
+
+Using TAU with OpenSHMEM
+========================
+
+
+Building PDT
+=============
+
+Download, configure and build PDT:
+
+-----
+wget -nc http://tau.uoregon.edu/pdt_releases/pdtoolkit-3.17.tar.gz
+tar -xzf pdtoolkit-3.17.tar.gz
+cd pdtoolkit-*
+PDT_INST=$PWD
+./configure
+make install
+cd ..
+-----
+
+
+Building TAU
+============
+
+Download:
+
+-----
+wget -nc http://www.cs.uoregon.edu/research/paracomp/tau/tauprofile/dist/tau_latest.tar.gztar -xzf pdtoolkit-3.17.tar.gz
+tar -xzf tau_latest.tar.gz
+cd tau-*
+-----
+
+Accept patch:
+
+-----
+patch -p1 -i tau_openshmem.patch
+-----
+
+Note: 
+Patch is needed to define profiling API that is not part of official openshmem.org standard.
+
+Configure and build:
+
+-----
+TAU_INST=$PWD/inst-tau-shmem
+./configure -prefix=$TAU_INST -shmem -tag=oshmem -cc=gcc -pdt=$PDT_INST -PROFILEPARAM -useropt="-I$OSHMEM_INST/include/mpp" -shmemlib=$OSHMEM_INST/lib -shmemlibrary=-lshmem#-lpmi
+make install
+cd ..
+-----
+
+Note: 
+-useropt : specifies additional user options such as -g or -I. For multiple options, the options list should be enclosed in a single quote.
+-lpmi : SLURM support
+-shmeminc : is not set due to bug in TAU (http://nic.uoregon.edu/pipermail/tau-users/2011-December/000599.html)
+TAU documentation link http://www.cs.uoregon.edu/Research/tau/docs/old/bk04ch01.html
+
+
+Building Application
+====================
+
+Add OpenSHMEM installation location to the PATH environment:
+
+-----
+export PATH=$OSHMEM_INST/bin:$PATH
+-----
+
+Set TAU environmemnt variables:
+
+-----
+export PATH=$TAU_INST/x86_64/bin:$PATH
+export TAU_MAKEFILE=$TAU_INST/x86_64/lib/Makefile.tau-oshmem-param-shmem-pdt
+export TAU_OPTIONS=
+-----
+
+Note:
+TAU provides shell scripts tau_cxx.sh, tau_f90.sh and tau_cc.sh for C++,F90 and C compilers. These are typically installed in <taudir>/<arch>/bin >directory. You may replace the compiler in your Makefiles with these scripts. These scripts may also be used on the command line. Each configuration of TAU has a stub makefile associated with it. For instance,
+inst-tau-shmem/x86_64/lib/Makefile.tau-oshmem-param-shmem-pdt
+This makefile specifies the measurement components that have been configured with it. In this case it shows that TAU's MPI/SHMEM wrapper interposition library and PDT have been configured. You need to set the environment variable:
+TAU_MAKEFILE
+to point to this stub makefile. You can also pass arguments to the four stages of compilation using the environment variable
+TAU_OPTIONS
+
+Build and run example:
+
+-----
+tau_cc.sh $TAU_INST/../examples/shmem/c/simple.c -o simple-tau.out
+env LD_LIBRARY_PATH=$OSHMEM_INST/lib:$LD_LIBRARY_PATH srun -n 2 simple-tau.out
+-----
+
+After job completes, view simple report:
+
+-----
+pprof
+paraprof --pack example_shmem_tau.ppk
+-----
+
+Output example
+==============
+
+-----
+$pprof
+Reading Profile files in profile.*
+
+NODE 0;CONTEXT 0;THREAD 0:
+---------------------------------------------------------------------------------------
+%Time    Exclusive    Inclusive       #Call      #Subrs  Inclusive Name
+              msec   total msec                          usec/call
+---------------------------------------------------------------------------------------
+100.0        0.102       10,479           1           5   10479786 int main(int, char **) C
+100.0       10,479       10,479           1           0   10479221 void start_pes(int) C
+  0.0        0.423        0.423           1           0        423 void shmem_barrier_all(void) C
+  0.0         0.04         0.04           1           0         40 void shmem_long_put(long *, const long *, size_t, int) C
+  0.0         0.04         0.04           1           0         40 void shmem_long_put(long *, const long *, size_t, int) C [ <message size> = <80> ]
+  0.0            0            0           2           0          0 int shmem_my_pe(void) C
+---------------------------------------------------------------------------------------
+
+USER EVENTS Profile :NODE 0, CONTEXT 0, THREAD 0
+---------------------------------------------------------------------------------------
+NumSamples   MaxValue   MinValue  MeanValue  Std. Dev.  Event Name
+---------------------------------------------------------------------------------------
+         1         80         80         80          0  Message size sent to all nodes
+---------------------------------------------------------------------------------------
+
+NODE 1;CONTEXT 0;THREAD 0:
+---------------------------------------------------------------------------------------
+%Time    Exclusive    Inclusive       #Call      #Subrs  Inclusive Name
+              msec   total msec                          usec/call
+---------------------------------------------------------------------------------------
+100.0        0.042        9,270           1           4    9270413 int main(int, char **) C
+100.0        9,270        9,270           1           0    9270317 void start_pes(int) C
+  0.0        0.053        0.053           1           0         53 void shmem_barrier_all(void) C
+  0.0        0.001        0.001           2           0          0 int shmem_my_pe(void) C
+
+FUNCTION SUMMARY (total):
+---------------------------------------------------------------------------------------
+%Time    Exclusive    Inclusive       #Call      #Subrs  Inclusive Name
+              msec   total msec                          usec/call
+---------------------------------------------------------------------------------------
+100.0        0.144       19,750           2           9    9875100 int main(int, char **) C
+100.0       19,749       19,749           2           0    9874769 void start_pes(int) C
+  0.0        0.476        0.476           2           0        238 void shmem_barrier_all(void) C
+  0.0         0.04         0.04           1           0         40 void shmem_long_put(long *, const long *, size_t, int) C
+  0.0         0.04         0.04           1           0         40 void shmem_long_put(long *, const long *, size_t, int) C [ <message size> = <80> ]
+  0.0        0.001        0.001           4           0          0 int shmem_my_pe(void) C
+
+FUNCTION SUMMARY (mean):
+---------------------------------------------------------------------------------------
+%Time    Exclusive    Inclusive       #Call      #Subrs  Inclusive Name
+              msec   total msec                          usec/call
+---------------------------------------------------------------------------------------
+100.0        0.072        9,875           1         4.5    9875100 int main(int, char **) C
+100.0        9,874        9,874           1           0    9874769 void start_pes(int) C
+  0.0        0.238        0.238           1           0        238 void shmem_barrier_all(void) C
+  0.0         0.02         0.02         0.5           0         40 void shmem_long_put(long *, const long *, size_t, int) C
+  0.0         0.02         0.02         0.5           0         40 void shmem_long_put(long *, const long *, size_t, int) C [ <message size> = <80> ]
+  0.0       0.0005       0.0005           2           0          0 int shmem_my_pe(void) C
+-----
+
+
+A sample session
+=========== =====
+
+Following shell script can be launched to play with OpenSHMEM and TAU as shmem_wiki_tau.sh
+This script download, configure and install all needed tools, compile simple open shmem application, run one using SLURM and show the result using pprof and prepares result to view using paraprof also.
+
+ParaProf - User's Manual: http://www.cs.uoregon.edu/Research/tau/docs/paraprof/index.html
+
+-----
+./shmem_wiki_tau.sh <path to openshmem installation>
+-----
+
+Enjoy.

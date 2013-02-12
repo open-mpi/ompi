@@ -11,12 +11,13 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007-2012 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2006-2009 Mellanox Technologies. All rights reserved.
  * Copyright (c) 2006-2012 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2006-2007 Voltaire All rights reserved.
  * Copyright (c) 2008-2012 Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2009      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2012      Mellanox Technologies, Inc.
+ *                         All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -1347,11 +1348,12 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_dst(
         return NULL;
     }
 
+#if OSHMEM_ENABLED
+#else
     /* max_msg_sz is the maximum message size of the HCA (hw limitation)
        set the minimum between local max_msg_sz and the remote */
     max_msg_sz = MIN(openib_btl->ib_port_attr.max_msg_sz,
                      endpoint->endpoint_btl->ib_port_attr.max_msg_sz);
-
     /* check if user has explicitly limited the max message size */
     if (openib_component->max_hw_msg_size > 0 &&
         max_msg_sz > (size_t)openib_component->max_hw_msg_size) {
@@ -1363,7 +1365,7 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_dst(
         *size = (size_t)max_msg_sz;
         BTL_VERBOSE(("message size limited to %" PRIsize_t "\n", *size));
     }
-
+#endif /* OSHMEM_ENABLED */
     opal_convertor_get_current_pointer(convertor, &buffer);
 
     if(NULL == registration){
@@ -1388,6 +1390,12 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_dst(
     to_base_frag(frag)->segment.base.seg_addr.lval = (uint64_t)(uintptr_t) buffer;
     to_base_frag(frag)->segment.base.seg_len = *size;
     to_base_frag(frag)->segment.key = openib_reg->mr->rkey;
+	
+#if OSHMEM_ENABLED
+    /** Keep lkey of pre-registered user buffer */
+    to_base_frag(frag)->segment.lkey = frag->sg_entry.lkey;
+#endif /* OSHMEM_ENABLED */
+
     to_base_frag(frag)->base.order = order;
     to_base_frag(frag)->base.des_flags = flags;
 
@@ -1797,6 +1805,12 @@ int mca_btl_openib_put( mca_btl_base_module_t* btl,
 
     to_com_frag(frag)->sg_entry.addr = src_seg->base.seg_addr.lval;
     to_com_frag(frag)->sg_entry.length = src_seg->base.seg_len;
+	
+#if OSHMEM_ENABLED
+    /** Keep lkey of pre-registered user buffer */
+    to_com_frag(frag)->sg_entry.lkey = src_seg->key;
+#endif /* OSHMEM_ENABLED */
+
     to_com_frag(frag)->endpoint = ep;
 #if HAVE_XRC
     if (MCA_BTL_XRC_ENABLED && BTL_OPENIB_QP_TYPE_XRC(qp))
@@ -1834,7 +1848,9 @@ int mca_btl_openib_get(mca_btl_base_module_t* btl,
     uint64_t rem_addr = src_seg->base.seg_addr.lval;
     uint32_t rkey = src_seg->key;
 
+#if OSHMEM_ENABLED == 0
     assert(openib_frag_type(frag) == MCA_BTL_OPENIB_FRAG_RECV_USER);
+#endif /* OSHMEM_ENABLED */
 
     descriptor->des_flags |= MCA_BTL_DES_SEND_ALWAYS_CALLBACK;
 
@@ -1883,6 +1899,12 @@ int mca_btl_openib_get(mca_btl_base_module_t* btl,
 
     to_com_frag(frag)->sg_entry.addr = dst_seg->base.seg_addr.lval;
     to_com_frag(frag)->sg_entry.length = dst_seg->base.seg_len;
+	
+#if OSHMEM_ENABLED
+    /** Keep lkey of pre-registered user buffer */
+    to_com_frag(frag)->sg_entry.lkey = dst_seg->lkey;
+#endif /* OSHMEM_ENABLED */
+
     to_com_frag(frag)->endpoint = ep;
 
 #if HAVE_XRC
@@ -1893,6 +1915,11 @@ int mca_btl_openib_get(mca_btl_base_module_t* btl,
 
     qp_inflight_wqe_to_frag(ep, qp, to_com_frag(frag));
     qp_reset_signal_count(ep, qp);
+	
+#if OSHMEM_ENABLED
+    frag->sr_desc.opcode = IBV_WR_RDMA_READ;  
+    frag->sr_desc.send_flags = IBV_SEND_SIGNALED;
+#endif /* OSHMEM_ENABLED */
 
     if(ibv_post_send(ep->qps[qp].qp->lcl_qp, &frag->sr_desc, &bad_wr))
         return OMPI_ERROR;

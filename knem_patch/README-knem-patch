@@ -1,0 +1,16 @@
+#Copyright (c) 2012      Mellanox Technologies, Inc.
+#                         All rights reserved.
+#$COPYRIGHT$
+# 
+#Additional copyrights may follow
+#
+#$HEADER$
+#
+
+File shmem_knem.patch contains the modification to the Knem kernel module version 0.9.7 that is required for the correct work of SM BTL within SHMEM which is based on Knem.
+
+Install:
+1. Get the Knem-0.9.7 source tarball from http://runtime.bordeaux.inria.fr/knem/download/knem-0.9.7.tar.gz
+2. Untar the archive and cope shmem_knem.patch to the top directory of the Knem source tree
+3. patch -p1 -i shmem_knem.patch
+4. Build and install Knem kernel module as usual.

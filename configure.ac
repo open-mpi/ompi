@@ -17,6 +17,8 @@
 # Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
 # Copyright (c) 2011      NVIDIA Corporation.  All rights reserved.
 # Copyright (c) 2012      Oracle and/or its affiliates.  All rights reserved.
+# Copyright (c) 2012      Mellanox Technologies, Inc.
+#                         All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -99,6 +101,8 @@ AC_SUBST([CONFIGURE_DEPENDENCIES], ['$(top_srcdir)/VERSION'])
 # Set up project specific AM_CONDITIONALs
 AM_CONDITIONAL([PROJECT_OMPI], m4_ifdef([project_ompi], [true], [false]))
 AM_CONDITIONAL([PROJECT_ORTE], m4_ifdef([project_orte], [true], [false]))
+AM_CONDITIONAL([PROJECT_OSHMEM], m4_ifdef([project_oshmem], [true], [false]))
+
 
 ompi_show_subtitle "Checking versions"
 
@@ -112,6 +116,11 @@ m4_ifdef([project_orte],
          [OPAL_SAVE_VERSION([ORTE], [Open MPI Run-Time Environment], 
                             [$srcdir/VERSION],
                             [orte/include/orte/version.h])])
+
+m4_ifdef([project_oshmem],
+         [OPAL_SAVE_VERSION([OSHMEM], [Open SHMEM],
+                            [$srcdir/VERSION],
+                            [oshmem/include/oshmem/version.h])])
 
 OPAL_SAVE_VERSION([OPAL], [Open Portable Access Layer], [$srcdir/VERSION],
                   [opal/include/opal/version.h])
@@ -137,6 +146,8 @@ m4_ifdef([project_ompi],
           AC_SUBST(libmca_common_portals_so_version)])
 m4_ifdef([project_orte],
          [AC_SUBST(libopen_rte_so_version)])
+m4_ifdef([project_oshmem],
+         [AC_SUBST(libshmem_so_version)])
 AC_SUBST(libmca_opal_common_hwloc_so_version)
 AC_SUBST(libopen_pal_so_version)
 
@@ -160,6 +171,8 @@ m4_ifdef([project_orte],
          [AC_CONFIG_HEADERS([orte/include/orte_config.h])])
 m4_ifdef([project_ompi],
          [AC_CONFIG_HEADERS([ompi/include/ompi_config.h ompi/include/mpi.h])])
+m4_ifdef([project_oshmem],
+         [AC_CONFIG_HEADER([oshmem/include/oshmem_config.h oshmem/include/shmem.h oshmem/include/shmem_portable_platform.h])])
 
 # override/fixup the version numbers set by AC_INIT, since on
 # developer builds, there's no good way to know what the version is
@@ -239,6 +252,7 @@ AC_SUBST(top_ompi_builddir)
 OPAL_CONFIGURE_OPTIONS
 m4_ifdef([project_orte], [ORTE_CONFIGURE_OPTIONS])
 m4_ifdef([project_ompi], [OMPI_CONFIGURE_OPTIONS])
+m4_ifdef([project_oshmem], [OSHMEM_CONFIGURE_OPTIONS])
 
 if test "$enable_binaries" = "no" -a "$enable_dist" = "yes"; then
     AC_MSG_WARN([--disable-binaries is incompatible with --enable dist])
@@ -671,6 +685,7 @@ ompi_show_title "Type tests"
 
 # Size of pid_t
 AC_CHECK_SIZEOF(pid_t)
+AC_CHECK_SIZEOF(long)
 
 AC_CHECK_TYPES([socklen_t, struct sockaddr_in, struct sockaddr_in6,
                 struct sockaddr_storage],
@@ -844,6 +859,12 @@ fi
 AC_DEFINE_UNQUOTED(OMPI_MPI_OFFSET_TYPE, $MPI_OFFSET_TYPE, [Type of MPI_Offset -- has to be defined here and typedef'ed later because mpi.h does not get AC SUBST's])
 AC_DEFINE_UNQUOTED(OMPI_MPI_OFFSET_SIZE, $MPI_OFFSET_SIZE, [Size of the MPI_Offset])
 AC_DEFINE_UNQUOTED(OMPI_OFFSET_DATATYPE, $MPI_OFFSET_DATATYPE, [MPI datatype corresponding to MPI_Offset])
+
+AC_DEFINE_UNQUOTED(OSHMEM_SHMEM_OFFSET_TYPE, $MPI_OFFSET_TYPE, [Type of SHMEM_Offset -- has to be defined here and typedef'ed later because shmem.h does not get AC SUBST's])
+AC_DEFINE_UNQUOTED(OSHMEM_SHMEM_OFFSET_SIZE, $MPI_OFFSET_SIZE, [Size of the SHMEM_Offset])
+AC_DEFINE_UNQUOTED(OSHMEM_OFFSET_DATATYPE, $MPI_OFFSET_DATATYPE, [SHMEM datatype corresponding to SHMEM_Offset])
+
+AC_DEFINE_UNQUOTED(OPAL_SIZEOF_LONG, $ac_cv_sizeof_long, "Size of 'long' type")
 
 #
 # Check for MPI_Aint type.  Yes, there are platforms where
@@ -1172,7 +1193,7 @@ if test "$OMPI_TOP_BUILDDIR" != "$OMPI_TOP_SRCDIR"; then
     # rather than have successive assignments to these shell
     # variables, lest the $(foo) names try to get evaluated here.
     # Yuck!
-    CPPFLAGS='-I$(top_srcdir) -I$(top_builddir) -I$(top_srcdir)/opal/include m4_ifdef([project_orte], [-I$(top_srcdir)/orte/include]) m4_ifdef([project_ompi], [-I$(top_srcdir)/ompi/include])'" $CPPFLAGS"
+    CPPFLAGS='-I$(top_srcdir) -I$(top_builddir) -I$(top_srcdir)/opal/include m4_ifdef([project_orte], [-I$(top_srcdir)/orte/include]) m4_ifdef([project_ompi], [-I$(top_srcdir)/ompi/include]) m4_ifdef([project_oshmem], [-I$(top_srcdir)/oshmem/include])'" $CPPFLAGS"
     # C++ is only relevant if we're building OMPI
     m4_ifdef([project_ompi], [CXXCPPFLAGS='-I$(top_srcdir) -I$(top_builddir) -I$(top_srcdir)/opal/include -I$(top_srcdir)/orte/include -I$(top_srcdir)/ompi/include'" $CXXCPPFLAGS"])
 else
@@ -1186,6 +1207,7 @@ fi
 
 m4_ifdef([project_orte], [ORTE_SETUP_DEBUGGER_FLAGS],
          [m4_ifdef([project_ompi], [ORTE_SETUP_DEBUGGER_FLAGS])])
+m4_ifdef([project_oshmem], [OSHMEM_SETUP_CFLAGS])
 
 #
 # Delayed the substitution of CFLAGS and CXXFLAGS until now because
@@ -1292,5 +1314,6 @@ AC_CONFIG_FILES([
 OPAL_CONFIG_FILES
 m4_ifdef([project_orte], [ORTE_CONFIG_FILES])
 m4_ifdef([project_ompi], [OMPI_CONFIG_FILES])
+m4_ifdef([project_oshmem], [OSHMEM_CONFIG_FILES])
 
 AC_OUTPUT

@@ -11,6 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
+ * Copyright (c) 2012      Mellanox Technologies, Inc.
+ *                         All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -55,9 +57,37 @@ struct opal_condition_t {
 #elif OPAL_HAVE_SOLARIS_THREADS
     cond_t c_cond;
 #endif
+#ifdef OSHMEM_WAIT_COMPLETION_DEBUG
+    int my_pe;
+    int *pe_dest;
+    int *msg_length;
+    char **btl_name;
+    char **op_name;
+   int puts_counter_sm;
+    int puts_counter_openib;
+    uint64_t *src;
+    uint64_t *dst;
+#endif
     char *name;
 };
 typedef struct opal_condition_t opal_condition_t;
+
+#ifdef OSHMEM_WAIT_COMPLETION_DEBUG
+static void print_oshmem_wait_condition_dbg_info(opal_condition_t *c)
+{
+    char output[10000];
+    int i;
+    int stride=0;
+    stride += sprintf(&(output[stride]),"rank=%i, puts_count_sm=%i, puts_count_openib=%i:\n",c->my_pe,c->puts_counter_sm,c->puts_counter_openib);
+    for (i=OSHMEM_WAIT_COMPLETION_DEBUG-1; i>=0; i--)
+    {
+        stride += sprintf(&(output[stride]),"\t%i: %s, pe_dst=%i, btl=%s, msg_length=%i, src=%p, dst=%p\n",OSHMEM_WAIT_COMPLETION_DEBUG-1-i,
+                c->op_name[i],c->pe_dest[i],c->btl_name[i],c->msg_length[i],(void *)(uintptr_t)c->src[i],(void *)(uintptr_t)c->dst[i]);
+    }
+    fprintf(stderr,"%s",output);
+    fflush(stderr);
+}
+#endif
 
 OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_condition_t);
 
@@ -96,7 +126,19 @@ static inline int opal_condition_wait(opal_condition_t *c, opal_mutex_t *m)
         }
 #endif
     } else {
+#ifdef OSHMEM_WAIT_COMPLETION_DEBUG
+        time_t wait_time = time(NULL);
+        time_t show_dbg_info_timeout = 60*5; //wait for 5 minutes
+#endif
         while (c->c_signaled == 0) {
+#ifdef OSHMEM_WAIT_COMPLETION_DEBUG
+            if (wait_time && (time(NULL)-wait_time > show_dbg_info_timeout) && (c->my_pe >= 0))
+            {
+                wait_time = 0;
+                print_oshmem_wait_condition_dbg_info(c);
+            }
+#endif
+
             opal_progress();
             OPAL_CR_TEST_CHECKPOINT_READY_STALL();
         }

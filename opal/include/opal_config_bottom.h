@@ -11,6 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2009-2011 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2012      Mellanox Technologies, Inc.
+ *                         All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -218,6 +220,12 @@
 #    define __opal_attribute_weak_alias__(a) __attribute__((__weak__, __alias__(a)))
 #else
 #    define __opal_attribute_weak_alias__(a)
+#endif
+
+#if OPAL_HAVE_ATTRIBUTE_DESTRUCTOR
+#    define __opal_attribute_destructor__    __attribute__((__destructor__))
+#else
+#    define __opal_attribute_destructor__
 #endif
 
 /***********************************************************************
