@@ -12,7 +12,6 @@ language=C++
 compiler_env=CXX
 compiler_flags_env=CXXFLAGS
 compiler=@CXX@
-extra_includes=@OMPI_WRAPPER_EXTRA_INCLUDES@
 preprocessor_flags=@OMPI_WRAPPER_EXTRA_CPPFLAGS@
 compiler_flags_prefix=@OMPI_WRAPPER_EXTRA_CXXFLAGS_PREFIX@
 compiler_flags=@OMPI_WRAPPER_EXTRA_CXXFLAGS@

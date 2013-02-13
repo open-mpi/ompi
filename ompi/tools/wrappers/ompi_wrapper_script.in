@@ -6,6 +6,7 @@
 #
 # Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
+# Copyright (c) 2013      Sandia National Laboratories.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -32,18 +33,19 @@ if (exists($ENV{'OPAL_DESTDIR'})
 my $CC = "@WRAPPER_CC@";
 my $CXX = "@CXX@";
 my $FC = "@FC@";
-my $extra_includes = "@OMPI_WRAPPER_EXTRA_INCLUDES@";
 my $extra_cppflags = "@OMPI_WRAPPER_EXTRA_CPPFLAGS@";
 my $extra_cflags = "@OMPI_WRAPPER_EXTRA_CFLAGS@";
-my $extra_cflags_prefix = "@ORTE_WRAPPER_EXTRA_CFLAGS_PREFIX@";
+my $extra_cflags_prefix = "@OMPI_WRAPPER_EXTRA_CFLAGS_PREFIX@";
 my $extra_cxxflags = "@OMPI_WRAPPER_EXTRA_CXXFLAGS@";
-my $extra_cxxflags_prefix = "@ORTE_WRAPPER_EXTRA_CXXFLAGS_PREFIX@";
+my $extra_cxxflags_prefix = "@OMPI_WRAPPER_EXTRA_CXXFLAGS_PREFIX@";
 my $extra_fcflags = "@OMPI_WRAPPER_EXTRA_FCFLAGS@";
 my $extra_fcflags_prefix = "@OMPI_WRAPPER_EXTRA_FCFLAGS_PREFIX@";
 my $extra_ldflags = "@OMPI_WRAPPER_EXTRA_LDFLAGS@";
 my $extra_libs = "@OMPI_WRAPPER_EXTRA_LIBS@";
 my $cxx_lib = "@OMPI_WRAPPER_CXX_LIB@";
 my $fc_module_flag = "@OMPI_FC_MODULE_FLAG@";
+my $dynamic_lib_suffix = "@OPAL_DYN_LIB_SUFFIX@";
+my $fortran_libs = "@OMPI_FORTRAN_USEMPIF08_LIB@ @OMPI_FORTRAN_USEMPI_LIB@";
 
 # Someone might want to fix for windows
 my $include_flag = "-I";
@@ -60,7 +62,27 @@ my $linker_flags = $libdir_flag . $libdir . " " . $extra_ldflags;
 # pulled in implicitly) because we intend MPI applications to only use
 # the MPI API.
 my $libs = "-lmpi " . $extra_libs;
+my $libs_static = "-lmpi -lopen-rte -lopen-pal " . $extra_libs;
 
+my $have_dynamic = 0;
+if (-e $libdir . "/libmpi." . $dynamic_lib_suffix) {
+    $have_dynamic = 1;
+}
+my $have_static = 0;
+if (-e $libdir . "/libmpi.a") {
+    $have_static = 1;
+}
+
+# run flags through regex to fix directories...
+$extra_cppflags =~ s/\$\{includedir\}/$includedir/g;
+$extra_cflags =~ s/\$\{includedir\}/$includedir/g;
+$extra_cflags_prefix =~ s/\$\{includedir\}/$includedir/g;
+$extra_cxxflags =~ s/\$\{includedir\}/$includedir/g;
+$extra_cxxflags_prefix =~ s/\$\{includedir\}/$includedir/g;
+$extra_fcflags =~ s/\$\{includedir\}/$includedir/g;
+$extra_fcflags_prefix =~ s/\$\{includedir\}/$includedir/g;
+$extra_ldflags =~ s/\$\{libdir\}/$libdir/g;
+$extra_libs =~ s/\$\{libdir\}/$libdir/g;
 
 sub check_env {
     my $envvar = shift;
@@ -77,28 +99,18 @@ sub check_env {
     return $str;
 }
 
-sub add_extra_includes {
-    my $str = "";
-    my @includes = split(' ', $extra_includes);
-    for my $include (@includes) {
-        $str .= $include_flag . catdir($includedir, $include) . " ";
-    }
-
-    return $str;
-}
-
 
 if (basename($0) eq "mpicc") {
     $lang = "C";
     $comp = check_env("CC", $CC);
-    $preproc_flags .= " " . add_extra_includes();
+    $preproc_flags .= " " . $extra_cppflags;
     $comp_flags = $extra_cflags;
     $comp_flags_prefix = $extra_cflags_prefix;
     # no special libs for C
 } elsif (basename($0) eq "mpic++" || basename($0) eq "mpiCC" || basename($0) eq "mpicxx") {
     $lang = "C++";
     $comp = check_env("CXX", $CXX);
-    $preproc_flags .= " " . add_extra_includes();
+    $preproc_flags .= " " . $extra_cppflags;
     $comp_flags = $extra_cxxflags;
     $comp_flags_prefix = $extra_cxxflags_prefix;
     $libs = $cxx_lib . " " . $libs;
@@ -111,7 +123,7 @@ elsif (basename($0) eq "mpifort" ||
     # no extra includes for Fortran.
     $comp_flags = $extra_fcflags;
     $comp_flags_prefix = $extra_fcflags_prefix;
-    $libs = "-lmpi_mpifh " . $libs;
+    $libs = $fortran_libs . " -lmpi_mpifh " . $libs;
 }
 
 if ($lang eq "none") {
@@ -134,6 +146,7 @@ my $dry_run = 0;
 my $disable_flags = 1;
 my $real_flag = 0;
 my @appargs = ();
+my $want_static = 0;
 
 while (scalar(@args) > 0) {
     my $arg = shift(@args);
@@ -143,7 +156,7 @@ while (scalar(@args) > 0) {
     } elsif ($arg eq "-lpmpi") {
         $want_pmpi = 1;
     } elsif ($arg eq "--openmpi:linkall") {
-        $libs = "-lmpi -lopen-rte -lopen-pal" . $extra_libs;
+        $libs = $libs_static;
     } else {
         if ($arg eq "-c") {
             $want_link = 0;
@@ -154,6 +167,22 @@ while (scalar(@args) > 0) {
             $real_flag = 1;
         } elsif ($arg eq "-S") {
             $want_link = 0;
+            $real_flag = 1;
+        } elsif ($arg eq "-static" ||
+                  $arg eq "--static" ||
+                  $arg eq "-Bstatic" ||
+                  $arg eq "-Wl,-static" ||
+                  $arg eq "-Wl,--static" ||
+                  $arg eq "-Wl,-Bstatic") {
+            $want_static = 1;
+            $real_flag = 1;
+        } elsif ($arg eq "-dynamic" ||
+                  $arg eq "--dynamic" ||
+                  $arg eq "-Bdynamic" ||
+                  $arg eq "-Wl,-dynamic" ||
+                  $arg eq "-Wl,--dynamic" ||
+                  $arg eq "-Wl,-Bdynamic") {
+            $want_static = 0;
             $real_flag = 1;
         } elsif ($arg =~ /^-.*/) {
             $real_flag = 1;
@@ -167,6 +196,10 @@ while (scalar(@args) > 0) {
 
 if ($disable_flags == 1 && !($dry_run == 1 && $real_flag == 0)) {
     $want_preproc = $want_compile = $want_link = 0;
+}
+
+if ($want_static == 1 || $have_dynamic == 0) {
+    $libs = $libs_static;
 }
 
 my @exec_argv = ();

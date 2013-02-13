@@ -128,7 +128,10 @@ AC_DEFUN([OPAL_SETUP_WRAPPER_INIT],[
 AC_DEFUN([OPAL_SETUP_WRAPPER_FINAL],[
     m4_ifdef([project_opal], [
        AC_MSG_CHECKING([for OPAL CPPFLAGS])
-       OPAL_WRAPPER_EXTRA_CPPFLAGS="$opal_mca_wrapper_extra_cppflags $wrapper_extra_cppflags $with_wrapper_cppflags"
+       if test "$WANT_INSTALL_HEADERS" = "1" ; then
+           OPAL_WRAPPER_EXTRA_CPPFLAGS='-I${includedir}/openmpi'
+       fi
+       OPAL_WRAPPER_EXTRA_CPPFLAGS="$OPAL_WRAPPER_EXTRA_CPPFLAGS $opal_mca_wrapper_extra_cppflags $wrapper_extra_cppflags $with_wrapper_cppflags"
        AC_SUBST([OPAL_WRAPPER_EXTRA_CPPFLAGS])
        AC_MSG_RESULT([$OPAL_WRAPPER_EXTRA_CPPFLAGS])
 
@@ -168,20 +171,14 @@ AC_DEFUN([OPAL_SETUP_WRAPPER_FINAL],[
        OPAL_WRAPPER_EXTRA_LIBS="$OPAL_WRAPPER_EXTRA_LIBS $with_wrapper_libs"
        AC_SUBST([OPAL_WRAPPER_EXTRA_LIBS])
        AC_MSG_RESULT([$OPAL_WRAPPER_EXTRA_LIBS])
-
-       AC_MSG_CHECKING([for OPAL extra include dirs])
-       if test "$WANT_INSTALL_HEADERS" = "1" ; then
-           OPAL_WRAPPER_EXTRA_INCLUDES="openmpi"
-       else
-           OPAL_WRAPPER_EXTRA_INCLUDES=
-       fi
-       AC_SUBST([OPAL_WRAPPER_EXTRA_INCLUDES])
-       AC_MSG_RESULT([$OPAL_WRAPPER_EXTRA_INCLUDES])
     ])
 
     m4_ifdef([project_orte], [
        AC_MSG_CHECKING([for ORTE CPPFLAGS])
-       ORTE_WRAPPER_EXTRA_CPPFLAGS="$orte_mca_wrapper_extra_cppflags $wrapper_extra_cppflags $with_wrapper_cppflags"
+       if test "$WANT_INSTALL_HEADERS" = "1" ; then
+           ORTE_WRAPPER_EXTRA_CPPFLAGS='-I${includedir}/openmpi'
+       fi
+       ORTE_WRAPPER_EXTRA_CPPFLAGS="$ORTE_WRAPPER_EXTRA_CPPFLAGS $orte_mca_wrapper_extra_cppflags $wrapper_extra_cppflags $with_wrapper_cppflags"
        AC_SUBST([ORTE_WRAPPER_EXTRA_CPPFLAGS])
        AC_MSG_RESULT([$ORTE_WRAPPER_EXTRA_CPPFLAGS])
 
@@ -217,32 +214,8 @@ AC_DEFUN([OPAL_SETUP_WRAPPER_FINAL],[
        AC_SUBST([ORTE_WRAPPER_EXTRA_LIBS])
        AC_MSG_RESULT([$ORTE_WRAPPER_EXTRA_LIBS])
 
-       AC_MSG_CHECKING([for ORTE extra include dirs])
-       if test "$WANT_INSTALL_HEADERS" = "1" ; then
-           ORTE_WRAPPER_EXTRA_INCLUDES="openmpi"
-       else
-           ORTE_WRAPPER_EXTRA_INCLUDES=
-       fi
-       AC_SUBST([ORTE_WRAPPER_EXTRA_INCLUDES])
-       AC_MSG_RESULT([$ORTE_WRAPPER_EXTRA_INCLUDES])
-
-       # For script-based wrappers that don't do relocatable binaries.
-       # Don't use if you don't have to.
-       exec_prefix_save="${exec_prefix}"
-       test "x$exec_prefix" = xNONE && exec_prefix="${prefix}"
-       eval "ORTE_WRAPPER_INCLUDEDIR=\"${includedir}\""
-       eval "ORTE_WRAPPER_LIBDIR=\"${libdir}\""
-       exec_prefix="${exec_prefix_save}"
-       AC_SUBST([ORTE_WRAPPER_INCLUDEDIR])
-       AC_SUBST([ORTE_WRAPPER_LIBDIR])
-
-       # if wrapper compilers were requested, set the orte one up
-       if test "$WANT_SCRIPT_WRAPPER_COMPILERS" = "1" ; then
-         AC_CONFIG_FILES([orte/tools/wrappers/orte_wrapper_script],
-                         [chmod +x orte/tools/wrappers/orte_wrapper_script])
-       fi
-
        m4_ifdef([project_ompi], [], [
+          # these are used by orte_info/ompi_info (yes, they are named poorly)
           AC_DEFINE_UNQUOTED(WRAPPER_EXTRA_CFLAGS, "$ORTE_WRAPPER_EXTRA_CFLAGS",
               [Additional CFLAGS to pass through the wrapper compilers])
           AC_DEFINE_UNQUOTED(WRAPPER_EXTRA_CFLAGS_PREFIX, "$ORTE_WRAPPER_EXTRA_CFLAGS_PREFIX",
@@ -260,7 +233,10 @@ AC_DEFUN([OPAL_SETUP_WRAPPER_FINAL],[
 
     m4_ifdef([project_ompi], [
        AC_MSG_CHECKING([for OMPI CPPFLAGS])
-       OMPI_WRAPPER_EXTRA_CPPFLAGS="$ompi_mca_wrapper_extra_cppflags $wrapper_extra_cppflags $with_wrapper_cppflags"
+       if test "$WANT_INSTALL_HEADERS" = "1" ; then
+           OMPI_WRAPPER_EXTRA_CPPFLAGS='-I${includedir}/openmpi'
+       fi
+       OMPI_WRAPPER_EXTRA_CPPFLAGS="$OMPI_WRAPPER_EXTRA_CPPFLAGS $ompi_mca_wrapper_extra_cppflags $wrapper_extra_cppflags $with_wrapper_cppflags"
        AC_SUBST([OMPI_WRAPPER_EXTRA_CPPFLAGS])
        AC_MSG_RESULT([$OMPI_WRAPPER_EXTRA_CPPFLAGS])
 
@@ -286,6 +262,9 @@ AC_DEFUN([OPAL_SETUP_WRAPPER_FINAL],[
 
        AC_MSG_CHECKING([for OMPI FCFLAGS])
        OMPI_WRAPPER_EXTRA_FCFLAGS="$wrapper_extra_fcflags $with_wrapper_fcflags"
+       if test "$OMPI_FC_MODULE_FLAG" != "" ; then
+           OMPI_WRAPPER_EXTRA_FCFLAGS="$OMPI_WRAPPER_EXTRA_FCFLAGS $OMPI_FC_MODULE_FLAG"'${libdir}'
+       fi
        AC_SUBST([OMPI_WRAPPER_EXTRA_FCFLAGS])
        AC_MSG_RESULT([$OMPI_WRAPPER_EXTRA_FCFLAGS])
 
@@ -305,15 +284,6 @@ AC_DEFUN([OPAL_SETUP_WRAPPER_FINAL],[
        OMPI_WRAPPER_EXTRA_LIBS="$OMPI_WRAPPER_EXTRA_LIBS $with_wrapper_libs"
        AC_SUBST([OMPI_WRAPPER_EXTRA_LIBS])
        AC_MSG_RESULT([$OMPI_WRAPPER_EXTRA_LIBS])
-
-       AC_MSG_CHECKING([for OMPI extra include dirs])
-       if test "$WANT_INSTALL_HEADERS" = "1" ; then
-           OMPI_WRAPPER_EXTRA_INCLUDES="openmpi"
-       else
-           OMPI_WRAPPER_EXTRA_INCLUDES=
-       fi
-       AC_SUBST([OMPI_WRAPPER_EXTRA_INCLUDES])
-       AC_MSG_RESULT([$OMPI_WRAPPER_EXTRA_INCLUDES])
 
       # language binding support.  C++ is a bit different, as the
       # compiler should work even if there is no MPI C++ bindings

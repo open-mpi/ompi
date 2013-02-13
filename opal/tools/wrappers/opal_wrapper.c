@@ -73,7 +73,6 @@ struct options_data_t {
     char *compiler_env;
     char *compiler_flags_env;
     char *compiler;
-    char *module_option;
     char **preproc_flags;
     char **comp_flags;
     char **comp_flags_prefix;
@@ -85,7 +84,6 @@ struct options_data_t {
     char *req_file;
     char *path_includedir;
     char *path_libdir;
-    char *extra_includes;
 };
 
 static struct options_data_t *options_data = NULL;
@@ -118,7 +116,6 @@ options_data_init(struct options_data_t *data)
     data->version = NULL;
     data->compiler_env = NULL;
     data->compiler_flags_env = NULL;
-    data->module_option = NULL;
     data->preproc_flags = (char **) malloc(sizeof(char*));
     data->preproc_flags[0] = NULL;
     data->comp_flags = (char **) malloc(sizeof(char*));
@@ -136,7 +133,6 @@ options_data_init(struct options_data_t *data)
     data->req_file = NULL;
     data->path_includedir = NULL;
     data->path_libdir = NULL;
-    data->extra_includes = NULL;
 }
 
 static void
@@ -152,7 +148,6 @@ options_data_free(struct options_data_t *data)
     if (NULL != data->version) free(data->version);
     if (NULL != data->compiler_env) free(data->compiler_env);
     if (NULL != data->compiler_flags_env) free(data->compiler_flags_env);
-    if (NULL != data->module_option) free(data->module_option);
     opal_argv_free(data->preproc_flags);
     opal_argv_free(data->comp_flags);
     opal_argv_free(data->comp_flags_prefix);
@@ -164,7 +159,6 @@ options_data_free(struct options_data_t *data)
     if (NULL != data->req_file) free(data->req_file);
     if (NULL != data->path_includedir) free(data->path_includedir);
     if (NULL != data->path_libdir) free(data->path_libdir);
-    if (NULL != data->extra_includes) free(data->extra_includes);
 }
 
 static void
@@ -234,30 +228,6 @@ find_options_index(const char *arg)
 
 
 static void
-add_extra_includes(const char *includes, const char* includedir)
-{
-    int i;
-    char **values = opal_argv_split(includes, ' ');
-
-    for (i = 0 ; i < opal_argv_count(values) ; ++i) {
-        char *line, *include_directory;
-
-        include_directory = opal_os_path(false, includedir, values[i], NULL);
-
-#if defined(__WINDOWS__)
-        asprintf(&line, OPAL_INCLUDE_FLAG"\"%s\"", include_directory);
-#else
-        asprintf(&line, OPAL_INCLUDE_FLAG"%s", include_directory);
-#endif  /* defined(__WINDOWS__) */
-
-        opal_argv_append_nosize(&options_data[parse_options_idx].preproc_flags, line);
-        free(include_directory);
-        free(line);
-    }
-}
-
-
-static void
 expand_flags(char **argv)
 {
     int i;
@@ -292,15 +262,6 @@ data_callback(const char *key, const char *value)
         if (NULL != value) options_data[parse_options_idx].project = strdup(value);
     } else if (0 == strcmp(key, "version")) {
         if (NULL != value) options_data[parse_options_idx].version = strdup(value);
-    } else if (0 == strcmp(key, "module_option")) {
-        if (NULL != value) options_data[parse_options_idx].module_option = strdup(value);
-    } else if (0 == strcmp(key, "extra_includes")) {
-        if (NULL != value) options_data[parse_options_idx].extra_includes = strdup(value);
-        if (NULL != value && NULL != options_data[parse_options_idx].path_includedir) {
-            /* includedir already found -- we now have both pieces of information, and the
-               includedir code didn't do this because it didn't have the extra includes */
-            add_extra_includes(value, options_data[parse_options_idx].path_includedir);
-        }
     } else if (0 == strcmp(key, "preprocessor_flags")) {
         char **values = opal_argv_split(value, ' ');
         opal_argv_insert(&options_data[parse_options_idx].preproc_flags, 
@@ -369,12 +330,6 @@ data_callback(const char *key, const char *value)
 #endif  /* defined(__WINDOWS__) */
                 opal_argv_append_nosize(&options_data[parse_options_idx].preproc_flags, line);
                 free(line);
-            }
-            /* Now that we have an include dir, see if we already have
-               the extra includes, so that we can post them as well */
-            if (NULL != options_data[parse_options_idx].extra_includes) {
-                add_extra_includes(options_data[parse_options_idx].extra_includes,
-                                   options_data[parse_options_idx].path_includedir);
             }
         }
     } else if (0 == strcmp(key, "libdir")) {
@@ -839,14 +794,6 @@ main(int argc, char *argv[])
     /* compiler flags */
     if (flags & COMP_WANT_COMPILE) {
         opal_argv_insert(&exec_argv, exec_argc, options_data[user_data_idx].comp_flags);
-        /* Deal with languages like Fortran 90 that have special
-           places and flags for modules or whatever */
-        if (options_data[user_data_idx].module_option != NULL) {
-            char *line;
-            asprintf(&line, "%s%s", options_data[user_data_idx].module_option, options_data[user_data_idx].path_libdir);
-            opal_argv_append_nosize(&exec_argv, line);
-            free(line);
-        }
         exec_argc = opal_argv_count(exec_argv);
     }
 
