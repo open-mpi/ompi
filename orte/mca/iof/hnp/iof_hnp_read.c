@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007-2012 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2011-2012 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * $COPYRIGHT$
  * 
@@ -100,8 +100,6 @@ void orte_iof_hnp_read_local_handler(int fd, short event, void *cbdata)
     int rc;
     orte_ns_cmp_bitmask_t mask;
     
-    OPAL_THREAD_LOCK(&mca_iof_hnp_component.lock);
-    
     /* read up to the fragment size */
 #if !defined(__WINDOWS__)
     numbytes = read(fd, data, sizeof(data));
@@ -120,7 +118,6 @@ void orte_iof_hnp_read_local_handler(int fd, short event, void *cbdata)
         /* non-blocking, retry */
         if (EAGAIN == errno || EINTR == errno) {
             opal_event_add(rev->ev, 0);
-            OPAL_THREAD_UNLOCK(&mca_iof_hnp_component.lock);
             return;
         } 
 
@@ -146,7 +143,6 @@ void orte_iof_hnp_read_local_handler(int fd, short event, void *cbdata)
          */
         if (orte_job_term_ordered) {
             OBJ_RELEASE(mca_iof_hnp_component.stdinev);
-            OPAL_THREAD_UNLOCK(&mca_iof_hnp_component.lock);
             return;
         }
         /* cycle through our list of sinks */
@@ -178,7 +174,6 @@ void orte_iof_hnp_read_local_handler(int fd, short event, void *cbdata)
 
                         OPAL_OUTPUT_VERBOSE((1, orte_iof_base.iof_output,
                                              "buffer backed up - holding"));
-                        OPAL_THREAD_UNLOCK(&mca_iof_hnp_component.lock);
                         return;
                     }
                 }
@@ -223,7 +218,6 @@ void orte_iof_hnp_read_local_handler(int fd, short event, void *cbdata)
             }
         }
         /* nothing more to do */
-        OPAL_THREAD_UNLOCK(&mca_iof_hnp_component.lock);
         return;
     }
     
@@ -295,7 +289,6 @@ void orte_iof_hnp_read_local_handler(int fd, short event, void *cbdata)
                 break;
             }
         }
-        OPAL_THREAD_UNLOCK(&mca_iof_hnp_component.lock);
         return;
     }
     
@@ -336,6 +329,5 @@ void orte_iof_hnp_read_local_handler(int fd, short event, void *cbdata)
     /* re-add the event */
     opal_event_add(rev->ev, 0);
 
-    OPAL_THREAD_UNLOCK(&mca_iof_hnp_component.lock);
     return;
 }

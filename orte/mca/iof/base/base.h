@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2012      Los Alamos National Security, LLC.
+ * Copyright (c) 2012-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * $COPYRIGHT$
  * 
@@ -126,7 +126,6 @@ struct orte_iof_base_t {
     size_t                  output_limit;
     char                    *input_files;
     opal_list_t             iof_components_opened;
-    opal_mutex_t            iof_write_output_lock;
     orte_iof_sink_t         *iof_write_stdout;
     orte_iof_sink_t         *iof_write_stderr;
 };

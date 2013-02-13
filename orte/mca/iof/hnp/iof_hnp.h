@@ -64,7 +64,6 @@ struct orte_iof_hnp_component_t {
     opal_list_t procs;
     orte_iof_read_event_t *stdinev;
     opal_event_t stdinsig;
-    opal_mutex_t lock;
 };
 typedef struct orte_iof_hnp_component_t orte_iof_hnp_component_t;
 

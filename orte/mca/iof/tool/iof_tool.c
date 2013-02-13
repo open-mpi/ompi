@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2011-2012 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * $COPYRIGHT$
  * 
@@ -84,7 +84,6 @@ static int init(void)
         
     }
     
-    OBJ_CONSTRUCT(&mca_iof_tool_component.lock, opal_mutex_t);
     mca_iof_tool_component.closed = false;
     
     return ORTE_SUCCESS;
@@ -232,9 +231,6 @@ static int finalize(void)
     int num_written;
     bool dump;
     
-    OPAL_THREAD_LOCK(&mca_iof_tool_component.lock);
-
-    OPAL_THREAD_LOCK(&orte_iof_base.iof_write_output_lock);
     /* check if anything is still trying to be written out */
     wev = orte_iof_base.iof_write_stdout->wev;
     if (!opal_list_is_empty(&wev->outputs)) {
@@ -273,12 +269,9 @@ static int finalize(void)
         }
         OBJ_RELEASE(orte_iof_base.iof_write_stderr);
     }
-    OPAL_THREAD_UNLOCK(&orte_iof_base.iof_write_output_lock);
     
     /* Cancel the RML receive */
     rc = orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_IOF_PROXY);
-    OPAL_THREAD_UNLOCK(&mca_iof_tool_component.lock);
-    OBJ_DESTRUCT(&mca_iof_tool_component.lock);
     
     return rc;
 }
