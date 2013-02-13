@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2007-2009 Sun Microsystems, Inc. All rights reserved.
- * Copyright (c) 2007-2012 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2007-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * $COPYRIGHT$
  *
@@ -1051,7 +1051,6 @@ static int init_globals(void)
 {
     /* Only CONSTRUCT things once */
     if (!globals_init) {
-        OBJ_CONSTRUCT(&orterun_globals.lock, opal_mutex_t);
         orterun_globals.env_val =     NULL;
         orterun_globals.appfile =     NULL;
         orterun_globals.wdir =        NULL;

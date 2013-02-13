@@ -204,7 +204,6 @@ int orte_iof_base_open(void)
     
     /* Initialize globals */
     OBJ_CONSTRUCT(&orte_iof_base.iof_components_opened, opal_list_t);
-    OBJ_CONSTRUCT(&orte_iof_base.iof_write_output_lock, opal_mutex_t);
     orte_iof_base.output_limit = UINT_MAX;
 
     /* did the user request we print output to files? */

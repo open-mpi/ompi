@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2011-2012 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * $COPYRIGHT$
  * 
@@ -66,8 +66,6 @@ void orte_iof_orted_read_handler(int fd, short event, void *cbdata)
     opal_list_item_t *item;
     orte_iof_proc_t *proct;
     orte_ns_cmp_bitmask_t mask;
-
-    OPAL_THREAD_LOCK(&mca_iof_orted_component.lock);
     
     /* read up to the fragment size */
 #if !defined(__WINDOWS__)
@@ -92,7 +90,6 @@ void orte_iof_orted_read_handler(int fd, short event, void *cbdata)
             if (EAGAIN == errno || EINTR == errno) {
                 /* non-blocking, retry */
                 opal_event_add(rev->ev, 0);
-                OPAL_THREAD_UNLOCK(&mca_iof_orted_component.lock);
                 return;
             } 
 
@@ -169,7 +166,6 @@ void orte_iof_orted_read_handler(int fd, short event, void *cbdata)
     /* re-add the event */
     opal_event_add(rev->ev, 0);
 
-    OPAL_THREAD_UNLOCK(&mca_iof_orted_component.lock);
     return;
    
  CLEAN_RETURN:
@@ -214,6 +210,5 @@ void orte_iof_orted_read_handler(int fd, short event, void *cbdata)
     if (NULL != buf) {
         OBJ_RELEASE(buf);
     }
-    OPAL_THREAD_UNLOCK(&mca_iof_orted_component.lock);
     return;
 }

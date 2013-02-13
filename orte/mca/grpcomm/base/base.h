@@ -30,8 +30,6 @@
 
 #include "opal/class/opal_list.h"
 #include "opal/mca/mca.h"
-#include "opal/threads/mutex.h"
-#include "opal/threads/condition.h"
 #include "opal/mca/hwloc/hwloc.h"
 
 #include "orte/mca/odls/odls_types.h"

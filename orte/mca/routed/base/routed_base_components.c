@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007      Los Alamos National Security, LLC.
+ * Copyright (c) 2007-2013 Los Alamos National Security, LLC.
  *                         All rights reserved. 
  * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2004-2010 The Trustees of Indiana University.
@@ -79,8 +79,6 @@ OBJ_CLASS_INSTANCE(orte_routed_jobfam_t, opal_object_t,
 int orte_routed_base_output = -1;
 orte_routed_module_t orte_routed = {0};
 opal_list_t orte_routed_base_components;
-opal_mutex_t orte_routed_base_lock;
-opal_condition_t orte_routed_base_cond;
 bool orte_routed_base_wait_sync;
 opal_pointer_array_t orte_routed_jobfams;
 
@@ -102,8 +100,6 @@ orte_routed_base_open(void)
     
     /* setup the output stream */
     orte_routed_base_output = opal_output_open(NULL);
-    OBJ_CONSTRUCT(&orte_routed_base_lock, opal_mutex_t);
-    OBJ_CONSTRUCT(&orte_routed_base_cond, opal_condition_t);
     orte_routed_base_wait_sync = false;
     
     /* Initialize globals */
@@ -200,8 +196,6 @@ orte_routed_base_close(void)
     OBJ_DESTRUCT(&orte_routed_jobfams);
 
     OBJ_DESTRUCT(&orte_routed_base_components);
-    OBJ_DESTRUCT(&orte_routed_base_lock);
-    OBJ_DESTRUCT(&orte_routed_base_cond);
 
     /* Close the framework output */
     opal_output_close (orte_routed_base_output);

@@ -14,7 +14,6 @@
 #include "orte_config.h"
 #include "orte/constants.h"
 
-#include "opal/threads/condition.h"
 #include "opal/dss/dss_types.h"
 #include "opal/util/output.h"
 
@@ -71,17 +70,8 @@ orte_routed_module_t orte_routed_direct_module = {
 #endif
 };
 
-/* local globals */
-static opal_condition_t         cond;
-static opal_mutex_t             lock;
-
-
 static int init(void)
 {
-    /* setup the global condition and lock */
-    OBJ_CONSTRUCT(&cond, opal_condition_t);
-    OBJ_CONSTRUCT(&lock, opal_mutex_t);
-
     return ORTE_SUCCESS;
 }
 
@@ -96,10 +86,6 @@ static int finalize(void)
         }
     }
     
-    /* destruct the global condition and lock */
-    OBJ_DESTRUCT(&cond);
-    OBJ_DESTRUCT(&lock);
-
     return ORTE_SUCCESS;
 }
 

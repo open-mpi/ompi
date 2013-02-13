@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2011-2012 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * $COPYRIGHT$
  * 
@@ -113,7 +113,6 @@ static int init(void)
         return rc;
     }
     
-    OBJ_CONSTRUCT(&mca_iof_hnp_component.lock, opal_mutex_t);
     OBJ_CONSTRUCT(&mca_iof_hnp_component.sinks, opal_list_t);
     OBJ_CONSTRUCT(&mca_iof_hnp_component.procs, opal_list_t);
     mca_iof_hnp_component.stdinev = NULL;
@@ -474,6 +473,9 @@ int hnp_ft_event(int state) {
 }
 
 
+/* this function is called by the event library and thus
+ * can access information global to the state machine
+ */
 static void stdin_write_handler(int fd, short event, void *cbdata)
 {
     orte_iof_sink_t *sink = (orte_iof_sink_t*)cbdata;
@@ -487,8 +489,6 @@ static void stdin_write_handler(int fd, short event, void *cbdata)
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          wev->fd));
     
-    /* lock us up to protect global operations */
-    OPAL_THREAD_LOCK(&mca_iof_hnp_component.lock);
     wev->pending = false;
     
     while (NULL != (item = opal_list_remove_first(&wev->outputs))) {
@@ -512,7 +512,7 @@ static void stdin_write_handler(int fd, short event, void *cbdata)
             /* just leave - we don't want to restart the
              * read event!
              */
-            goto DEPART;
+            return;
         }
         num_written = write(wev->fd, output->data, output->numbytes);
         OPAL_OUTPUT_VERBOSE((1, orte_iof_base.iof_output,
@@ -539,7 +539,7 @@ static void stdin_write_handler(int fd, short event, void *cbdata)
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), wev->fd));
             OBJ_RELEASE(wev);
             sink->wev = NULL;
-            goto DEPART;
+            return;
         } else if (num_written < output->numbytes) {
             OPAL_OUTPUT_VERBOSE((1, orte_iof_base.iof_output,
                                  "%s hnp:stdin:write:handler incomplete write %d - adjusting data",
@@ -582,10 +582,6 @@ CHECK:
             opal_event_add(mca_iof_hnp_component.stdinev->ev, 0);
         }
     }
-
-DEPART:
-    /* unlock and go */
-    OPAL_THREAD_UNLOCK(&mca_iof_hnp_component.lock);
 }
 
 /**
