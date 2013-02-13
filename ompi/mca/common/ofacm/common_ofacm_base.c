@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007-2009 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2007-2012 Mellanox Technologies.  All rights reserved.
  *
  * Copyright (c) 2009-2012 Oak Ridge National Laboratory.  All rights reserved.
@@ -23,6 +23,7 @@
 #include "opal/class/opal_list.h"
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
+#include "opal/util/show_help.h"
 #include "infiniband/verbs.h"
 
 /* Global variables */

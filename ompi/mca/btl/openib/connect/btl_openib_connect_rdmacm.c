@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007-2009 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2007-2008 Chelsio, Inc. All rights reserved.
  * Copyright (c) 2008      Mellanox Technologies. All rights reserved.
  * Copyright (c) 2009      Sandia National Laboratories. All rights reserved.
@@ -48,6 +48,7 @@
 
 #include "opal/util/output.h"
 #include "opal/util/error.h"
+#include "opal/util/show_help.h"
 
 #include "btl_openib_fd.h"
 #include "btl_openib_proc.h"

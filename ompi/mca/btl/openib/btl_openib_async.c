@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2008-2009 Mellanox Technologies. All rights reserved.
- * Copyright (c) 2007-2009 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2006-2007 Voltaire All rights reserved.
  * Copyright (c) 2009-2010 Oracle and/or its affiliates.  All rights reserved
  * $COPYRIGHT$
@@ -20,6 +20,7 @@
 #include <unistd.h>
 #include <errno.h>
 
+#include "opal/util/show_help.h"
 #include "ompi/mca/btl/base/base.h"
 #include "btl_openib.h"
 #include "btl_openib_mca.h"
