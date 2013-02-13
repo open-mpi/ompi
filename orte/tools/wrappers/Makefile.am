@@ -20,37 +20,12 @@
 #man_pages = ortecc.1 ortec++.1
 
 if !ORTE_DISABLE_FULL_SUPPORT
+if !OPAL_WANT_SCRIPT_WRAPPER_COMPILERS
+if OMPI_INSTALL_BINARIES
 
 nodist_pkgdata_DATA = \
 	ortecc-wrapper-data.txt \
 	ortec++-wrapper-data.txt
-
-if OPAL_WANT_SCRIPT_WRAPPER_COMPILERS
-
-bin_SCRIPTS = orte_wrapper_script
-CLEANFILES += $(bin_SCRIPTS)
-
-install-exec-hook-always:
-	test -z "$(bindir)" || $(MKDIR_P) "$(DESTDIR)$(bindir)"
-	(cd $(DESTDIR)$(bindir); rm -f ortecc; $(LN_S) orte_wrapper_script ortecc)
-	(cd $(DESTDIR)$(bindir); rm -f ortec++; $(LN_S) orte_wrapper_script ortec++)
-
-uninstall-local-always:
-	rm -f $(DESTDIR)$(bindir)/ortecc \
-	$(DESTDIR)$(bindir)/ortec++
-if CASE_SENSITIVE_FS
-install-exec-hook: install-exec-hook-always
-	(cd $(DESTDIR)$(bindir); rm -f orteCC; $(LN_S) orte_wrapper_script orteCC)
-uninstall-local: uninstall-local-always
-	rm -f $(DESTDIR)$(bindir)/orteCC
-else # CASE_SENSITIVE_FS
-install-exec-hook: install-exec-hook-always
-uninstall-local: uninstall-local-always
-endif # CASE_SENSITIVE_FS
-
-else # OPAL_WANT_SCRIPT_WRAPPER_COMPILERS
-
-if OMPI_INSTALL_BINARIES
 
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = orte.pc

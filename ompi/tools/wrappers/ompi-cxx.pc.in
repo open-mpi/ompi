@@ -17,8 +17,4 @@ libdir=@libdir@
 Libs: -L${libdir} @OMPI_WRAPPER_EXTRA_LDFLAGS@ @OMPI_WRAPPER_CXX_LIB@ -lmpi
 Libs.private: @OMPI_WRAPPER_EXTRA_LIBS@
 #
-# It is safe to hard-wire the -I before the EXTRA_INCLUDES because we
-# will not be installing this .pc file unless --enable-devel-headers is
-# selected, meaning that there will definitely be a value in EXTRA_INCLUDES.
-#
-Cflags: -I${includedir} -I${includedir}/@OMPI_WRAPPER_EXTRA_INCLUDES@ @OMPI_WRAPPER_EXTRA_CPPFLAGS@ @OMPI_WRAPPER_EXTRA_CXXFLAGS@
+Cflags: -I${includedir} @OMPI_WRAPPER_EXTRA_CPPFLAGS@ @OMPI_WRAPPER_EXTRA_CXXFLAGS@

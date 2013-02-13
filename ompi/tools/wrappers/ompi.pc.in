@@ -17,9 +17,4 @@ libdir=@libdir@
 Libs: -L${libdir} @OMPI_WRAPPER_EXTRA_LDFLAGS@ -lmpi
 Libs.private: @OMPI_WRAPPER_EXTRA_LIBS@
 #
-# It is safe to hard-wire the -I before the EXTRA_INCLUDES because it
-# will either contain "openmpi" or be blank.  Hence, it'll either
-# resolve to ${includedir} or ${includedir}/something.  The former is
-# redundant (ick), but safe.
-#
-Cflags: -I${includedir} -I${includedir}/@OMPI_WRAPPER_EXTRA_INCLUDES@ @OMPI_WRAPPER_EXTRA_CPPFLAGS@ @OMPI_WRAPPER_EXTRA_CFLAGS@
+Cflags: -I${includedir} @OMPI_WRAPPER_EXTRA_CPPFLAGS@ @OMPI_WRAPPER_EXTRA_CFLAGS@
