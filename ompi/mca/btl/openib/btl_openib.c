@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2006-2009 Mellanox Technologies. All rights reserved.
  * Copyright (c) 2006-2012 Los Alamos National Security, LLC.  All rights
  *                         reserved.
@@ -33,6 +33,7 @@
 #include "opal/util/output.h"
 #include "opal/util/arch.h"
 #include "opal/include/opal_stdint.h"
+#include "opal/util/show_help.h"
 
 #include "ompi/mca/rte/rte.h"
 #include "ompi/mca/btl/btl.h"

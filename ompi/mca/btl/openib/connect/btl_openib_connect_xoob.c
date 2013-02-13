@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2007-2011 Mellanox Technologies.  All rights reserved.
- * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2009-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2009      IBM Corporation.  All rights reserved.
  * Copyright (c) 2010-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
@@ -21,6 +21,7 @@
 #include "opal/dss/dss.h"
 #include "opal/util/error.h"
 #include "opal/util/output.h"
+#include "opal/util/show_help.h"
 
 #include "ompi/mca/rte/rte.h"
 

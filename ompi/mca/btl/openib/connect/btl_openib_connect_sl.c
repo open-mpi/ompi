@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2011      Mellanox Technologies.  All rights reserved.
  *
+ * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -10,6 +11,7 @@
 
 #include "btl_openib.h"
 
+#include "opal/util/show_help.h"
 #include "connect/btl_openib_connect_sl.h"
 #include <infiniband/iba/ib_types.h>
 

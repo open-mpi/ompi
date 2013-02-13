@@ -21,6 +21,7 @@
 
 #include "opal/util/argv.h"
 #include "opal/util/if.h"
+#include "opal/util/show_help.h"
 
 #include "connect/connect.h"
 #endif
