@@ -1072,6 +1072,15 @@ if test "x$ompi_cv_c_compiler_vendor" = "xsun"; then
     solaris_use_stlport4="yes"
 fi
 
+# Due to this thread:
+# http://www.open-mpi.org/community/lists/users/2013/02/21356.php and
+# a helpful tip from Dave Goodell, set the precious variables for
+# compilers to "no" that we don't want.  Libtool's m4 configry will
+# interpret this as "I won't be using this language; don't bother
+# setting it up."
+AS_IF([test "$OMPI_WANT_FORTRAN_BINDINGS" != "1"],[F77=no FC=no])
+AS_IF([test "$WANT_MPI_CXX_SUPPORT" != "1"],[CXX=no])
+
 dnl Not all versions of LT set the PACKAGE_VERSION
 m4_ifdef([LT_PACKAGE_VERSION], [], [m4_define([LT_PACKAGE_VERSION], [1.5.22])])
 
