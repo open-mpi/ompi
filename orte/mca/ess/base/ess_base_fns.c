@@ -261,22 +261,22 @@ int orte_ess_base_proc_binding(void)
     opal_hwloc_base_get_local_cpuset();
     /* report bindings, if requested */
     if (opal_hwloc_report_bindings) {
-        char bindings[64];
-        hwloc_obj_t root;
-        hwloc_cpuset_t cpus;
-        /* get the root object for this node */
-        root = hwloc_get_root_obj(opal_hwloc_topology);
-        cpus = opal_hwloc_base_get_available_cpus(opal_hwloc_topology, root);
-        /* we are not bound if this equals our cpuset */
-        if (0 == hwloc_bitmap_compare(cpus, opal_hwloc_my_cpuset)) {
-            opal_output(0, "%s is not bound",
-                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+        char tmp1[1024], tmp2[1024];
+        hwloc_cpuset_t mycpus;
+        /* get the cpus we are bound to */
+        mycpus = hwloc_bitmap_alloc();
+        if (hwloc_get_cpubind(opal_hwloc_topology, 
+                              mycpus, 
+                              HWLOC_CPUBIND_PROCESS) < 0) {
+            opal_output(0, "MCW rank %d is not bound",
+                        ORTE_PROC_MY_NAME->vpid);
         } else {
-            hwloc_bitmap_list_snprintf(bindings, 64, opal_hwloc_my_cpuset);
-            opal_output(0, "%s is bound to cpus %s",
-                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                        bindings);
+            opal_hwloc_base_cset2str(tmp1, sizeof(tmp1), mycpus);
+            opal_hwloc_base_cset2mapstr(tmp2, sizeof(tmp2), mycpus);
+            opal_output(0, "MCW rank %d bound to %s: %s",
+                        ORTE_PROC_MY_NAME->vpid, tmp1, tmp2);
         }
+        hwloc_bitmap_free(mycpus);
     }
 
     return ORTE_SUCCESS;
