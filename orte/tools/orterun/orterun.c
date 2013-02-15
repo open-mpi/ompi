@@ -216,6 +216,11 @@ static opal_cmd_line_init_t cmd_line_init[] = {
       &orterun_globals.stdin_target, OPAL_CMD_LINE_TYPE_STRING,
       "Specify procs to receive stdin [rank, all, none] (default: 0, indicating rank 0)" },
     
+    /* request that argv[0] be indexed */
+    { NULL, '\0', "index-argv-by-rank", "index-argv-by-rank", 0,
+      &orterun_globals.index_argv, OPAL_CMD_LINE_TYPE_BOOL,
+      "Uniquely index argv[0] for each process using its rank" },
+
     /* Specify the launch agent to be used */
     { "orte_launch_agent", '\0', "launch-agent", "launch-agent", 1,
       NULL, OPAL_CMD_LINE_TYPE_STRING,
@@ -770,6 +775,11 @@ int orterun(int argc, char *argv[])
         jdata->stdin_target = strtoul(orterun_globals.stdin_target, NULL, 10);
     }
     
+    /* if we want the argv's indexed, indicate that */
+    if (orterun_globals.index_argv) {
+        jdata->controls |= ORTE_JOB_CONTROL_INDEX_ARGV;
+    }
+
     /* Parse each app, adding it to the job object */
     parse_locals(jdata, argc, argv);
     
@@ -1062,6 +1072,7 @@ static int init_globals(void)
         orterun_globals.report_pid        = NULL;
         orterun_globals.report_uri        = NULL;
         orterun_globals.disable_recovery = false;
+        orterun_globals.index_argv = false;
     }
 
     /* Reset the other fields every time */
