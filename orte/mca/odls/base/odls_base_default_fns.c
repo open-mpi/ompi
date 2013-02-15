@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007-2011 Oracle and/or its affiliates.  All rights reserved. 
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
+ * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
@@ -961,7 +961,6 @@ static int setup_child(orte_proc_t *child,
         opal_setenv("OMPI_MCA_initial_wdir", param, true, env);
     }
     free(param);
-
     return ORTE_SUCCESS;
 }
 
@@ -1505,6 +1504,14 @@ void orte_odls_base_default_launch_local(int fd, short sd, void *cbdata)
                 }
             }
 #endif
+            /* if we are indexing the argv by rank, do so now */
+            if (ORTE_JOB_CONTROL_INDEX_ARGV & jobdat->controls) {
+                char *param;
+                asprintf(&param, "%s-%d", app->argv[0], (int)child->name.vpid);
+                free(app->argv[0]);
+                app->argv[0] = param;
+            }
+
             if (5 < opal_output_get_verbosity(orte_odls_globals.output)) {
                 opal_output(orte_odls_globals.output, "%s odls:launch: spawning child %s",
                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
@@ -1517,6 +1524,15 @@ void orte_odls_base_default_launch_local(int fd, short sd, void *cbdata)
             }
             
             rc = fork_local(app, child, app->env, jobdat);
+            /* if we indexed the argv, we need to restore it to
+             * its original form
+             */
+            if (ORTE_JOB_CONTROL_INDEX_ARGV & jobdat->controls) {
+                /* restore the argv[0] */
+                char *param;
+                param = strrchr(app->argv[0], '-');
+                *param = '\0';
+            }
             if (ORTE_SUCCESS != rc) {
                 /* do NOT ERROR_LOG this error - it generates
                  * a message/node as most errors will be common
