@@ -9,7 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2007-2010 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2007-2013 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -58,9 +58,9 @@ libdebuggers_la_SOURCES = \
         $(headers) \
         ompi_debuggers.c
 libdebuggers_la_CPPFLAGS = \
-        -DOMPI_MSGQ_DLL=\"$(pkglibdir)/libompi_dbg_msgq.so\" \
-        -DOMPI_MSGQ_DLL_PREFIX=\"libompi_dbg_msgq\" \
-        -DOMPI_MPIHANDLES_DLL_PREFIX=\"libompi_dbg_mpihandles\"
+        -DOMPI_MSGQ_DLL=\"$(pkglibdir)/$(OPAL_DYN_LIB_PREFIX)ompi_dbg_msgq.$(OPAL_DYN_LIB_SUFFIX)\" \
+        -DOMPI_MSGQ_DLL_PREFIX=\"$(OPAL_DYN_LIB_PREFIX)ompi_dbg_msgq\" \
+        -DOMPI_MPIHANDLES_DLL_PREFIX=\"$(OPAL_DYN_LIB_PREFIX)ompi_dbg_mpihandles\"
 
 libompi_debugger_canary_la_SOURCES = \
         ompi_debugger_canary.c
