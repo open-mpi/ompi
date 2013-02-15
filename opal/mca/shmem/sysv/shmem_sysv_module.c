@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2010 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2010-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
@@ -42,6 +42,9 @@
 #if HAVE_SYS_SHM_H
 #include <sys/shm.h>
 #endif /* HAVE_SYS_SHM_H */
+#if HAVE_SYS_STAT_H
+#include <sys/stat.h>
+#endif /* HAVE_SYS_STAT_H */
 #ifdef HAVE_STRING_H
 #include <string.h>
 #endif /* HAVE_STRING_H */
@@ -194,7 +197,7 @@ segment_create(opal_shmem_ds_t *ds_buf,
      * real_size here
      */
     if (-1 == (ds_buf->seg_id = shmget(IPC_PRIVATE, real_size,
-                                       IPC_CREAT | IPC_EXCL | SHM_R | SHM_W))) {
+                                       IPC_CREAT | IPC_EXCL | S_IRWXU))) {
         int err = errno;
         char hn[MAXHOSTNAMELEN];
         gethostname(hn, MAXHOSTNAMELEN - 1);
