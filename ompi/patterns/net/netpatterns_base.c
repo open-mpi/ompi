@@ -8,6 +8,8 @@
  * 
  * $HEADER$
  */
+#include <stdarg.h>
+
 #include "opal/mca/base/mca_base_param.h"
 #include "ompi/include/ompi/constants.h"
 #include "netpatterns.h"

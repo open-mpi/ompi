@@ -509,8 +509,8 @@ static int mca_btl_tcp_endpoint_recv_connect_ack(mca_btl_base_endpoint_t* btl_en
             return OMPI_ERROR;
         }
         opal_show_help("help-mpi-btl-tcp.txt", "client handshake fail",
-                       true, orte_process_info.nodename,
-                       orte_process_info.pid, 
+                       true, ompi_process_info.nodename,
+                       ompi_process_info.pid, 
                        "did not receive entire connect ACK from peer");
         return OMPI_ERR_UNREACH;
     }
