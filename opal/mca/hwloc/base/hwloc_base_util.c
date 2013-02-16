@@ -1020,7 +1020,7 @@ static int socket_core_to_cpu_set(char *socket_core_list,
         obj_type = HWLOC_OBJ_PU;
     }
 
-    for (i=0; NULL != socket_core[i]; i++) {
+    for (i=1; NULL != socket_core[i]; i++) {
         if ('C' == socket_core[i][0] ||
             'c' == socket_core[i][0]) {
             corestr = &socket_core[i][1];

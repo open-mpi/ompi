@@ -497,10 +497,25 @@ static int do_child(orte_app_context_t* context,
                 }
                 if (0 == rc && opal_hwloc_report_bindings) {
                     char tmp1[1024], tmp2[1024];
-                    opal_hwloc_base_cset2str(tmp1, sizeof(tmp1), cpuset);
-                    opal_hwloc_base_cset2mapstr(tmp2, sizeof(tmp2), cpuset);
-                    opal_output(0, "MCW rank %d bound to %s: %s",
-                                child->name.vpid, tmp1, tmp2);
+                    hwloc_cpuset_t mycpus;
+                    /* get the cpus we are bound to */
+                    mycpus = hwloc_bitmap_alloc();
+                    if (hwloc_get_cpubind(opal_hwloc_topology, 
+                                          mycpus, 
+                                          HWLOC_CPUBIND_PROCESS) < 0) {
+                        opal_output(0, "MCW rank %d is not bound",
+                                    child->name.vpid);
+                    } else {
+                        opal_hwloc_base_cset2str(tmp1, sizeof(tmp1), mycpus);
+                        opal_hwloc_base_cset2mapstr(tmp2, sizeof(tmp2), mycpus);
+                        opal_output(0, "MCW rank %d bound to %s: %s",
+                                    child->name.vpid, tmp1, tmp2);
+                    }
+                    hwloc_bitmap_free(mycpus);
+                    /* avoid reporting it twice */
+                    param = mca_base_param_env_var ("hwloc_base_report_bindings");
+                    opal_unsetenv(param, &environ_copy);
+                    free(param);
                 }
                 /* set memory affinity policy */
                 if (ORTE_SUCCESS != opal_hwloc_base_set_process_membind_policy()) {
