@@ -900,29 +900,61 @@ For example, you could have
 .
 .SS Rankfiles
 .
-Rankfiles provide a means for specifying detailed information about
-how process ranks should be mapped to nodes and how they should be bound.
-Consider the following:
+Rankfiles are text files that specify detailed information about how
+individual processes should be mapped to nodes, and to which
+processor(s) they should be bound.  Each line of a rankfile specifies
+the location of one process (for MPI jobs, the process' "rank" refers
+to its rank in MPI_COMM_WORLD).  The general form of each line in the
+rankfile is:
 .
 
-    cat myrankfile
+    rank <N>=<hostname> slot=<slot list>
+.
+.PP
+For example:
+.
+
+    $ cat myrankfile
     rank 0=aa slot=1:0-2
     rank 1=bb slot=0:0,1
     rank 2=cc slot=1-2
-    mpirun -H aa,bb,cc,dd -rf myrankfile ./a.out
+    $ mpirun -H aa,bb,cc,dd -rf myrankfile ./a.out
 .
 .PP
-So that
+Means that
 .
+
   Rank 0 runs on node aa, bound to socket 1, cores 0-2.
   Rank 1 runs on node bb, bound to socket 0, cores 0 and 1.
   Rank 2 runs on node cc, bound to cores 1 and 2.
 .
 .PP
-Note that all slot locations are to be specified as
+The hostnames listed above are "absolute," meaning that actual
+resolveable hostnames are specified.  However, hostnames can also be
+specified as "relative," meaning that they are specified in relation
+to an externally-specified list of hostnames (e.g., by mpirun's --host
+argument, a hostfile, or a job scheduler).
+.
+.PP
+The "relative" specification is of the form "+n<X>", where X is an
+integer specifying the Xth hostname in the set of all available
+hostnames, indexed from 0.  For example:
+.
+
+    $ cat myrankfile
+    rank 0=+n0 slot=1:0-2
+    rank 1=+n1 slot=0:0,1
+    rank 2=+n2 slot=1-2
+    $ mpirun -H aa,bb,cc,dd -rf myrankfile ./a.out
+.
+.PP
+Starting with Open MPI v1.7, all socket/core slot locations are be
+specified as
+.I logical
+indexes (the Open MPI v1.6 series used 
 .I physical
-indexes.  You can use tools such as HWLOC's "lstopo -v" to find the
-physical indexes of socket and cores.
+indexes).  You can use tools such as HWLOC's "lstopo" to find the
+logical indexes of socket and cores.
 .
 .
 .SS Application Context or Executable Program?
