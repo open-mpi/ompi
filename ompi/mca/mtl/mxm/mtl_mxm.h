@@ -22,6 +22,8 @@
 #include "ompi/mca/mtl/base/base.h"
 #include "ompi/class/ompi_free_list.h"
 
+#include "opal/util/output.h"
+#include "opal/util/show_help.h"
 #include "opal/datatype/opal_convertor.h"
 
 #include "mtl_mxm_debug.h"
