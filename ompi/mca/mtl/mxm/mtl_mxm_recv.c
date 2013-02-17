@@ -56,7 +56,9 @@ static inline __opal_attribute_always_inline__ int
 
     mxm_recv_req->base.state               = MXM_REQ_NEW;
 
+#if MXM_API < MXM_VERSION(2,0)
     mxm_recv_req->base.flags               = 0;
+#endif
     mxm_recv_req->base.data_type           = MXM_REQ_DATA_BUFFER;
     mxm_recv_req->base.data.buffer.ptr     = mtl_mxm_request->buf;
     mxm_recv_req->base.data.buffer.length  = mtl_mxm_request->length;
