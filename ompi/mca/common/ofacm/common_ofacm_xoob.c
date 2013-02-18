@@ -17,6 +17,7 @@
 #include "opal/dss/dss.h"
 #include "opal/util/error.h"
 #include "opal/util/output.h"
+#include "opal/util/show_help.h"
 
 #include "ompi/mca/rte/rte.h"
 #include "common_ofacm_xoob.h"
