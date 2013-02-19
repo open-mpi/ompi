@@ -71,18 +71,13 @@ AC_DEFUN([ORTE_CHECK_ALPS],[
                fi
            fi
 
-           if test "$using_cle5_install" = "yes" ; then
-                  AS_IF([test "$with_alps" = "yes"],
-                        [orte_check_alps_dir="/usr"],
-                        [orte_check_alps_dir="$with_alps"])
+           if test "$with_alps" = "yes" ; then
+               AS_IF([test "$using_cle5_install" = "yes"],
+                   [orte_check_alps_dir="/opt/cray/alps/default"],
+                   [orte_check_alps_dir="/usr"])
            else
-                  AS_IF([test "$with_alps" = "yes"],
-                        [orte_check_alps_dir="/opt/cray/alps/default"],
-                        [orte_check_alps_dir="$with_alps"])
+               orte_check_alps_dir="$with_alps"
            fi
-
-           $1_CPPFLAGS="-I$orte_check_alps_dir/include"
-           $1_LDFLAGS="-L$orte_check_alps_libdir"
 
            if test -z "$orte_check_alps_pmi_happy"; then
                # if pmi support is requested, then ORTE_CHECK_PMI
@@ -100,14 +95,21 @@ AC_DEFUN([ORTE_CHECK_ALPS],[
                           orte_check_alps_pmi_happy=yes],
                          [AC_MSG_RESULT([not found])])
 
-                   AS_IF([test "$orte_check_alps_pmi_happy" = "yes" -a "$orte_without_full_support" = 0],
-                         [$1_LIBS="-lalpslli -lalpsutil"],
+                   AS_IF([test "$orte_check_alps_pmi_happy" = "yes" -a "$orte_without_full_support" = 0], [],
                          [AC_MSG_WARN([PMI support for Alps requested but not found])
                           AC_MSG_ERROR([Cannot continue])])
                fi
            fi
         fi
     fi
+
+    # Set LIBS, CPPFLAGS, and LDFLAGS here so they always get set
+    if test "$orte_check_alps_happy" = "yes" -a "$orte_enable_pmi" = 1 ; then
+	$1_LIBS="-lalpslli -lalpsutil"
+    fi
+
+    $1_CPPFLAGS="-I$orte_check_alps_dir/include"
+    $1_LDFLAGS="-L$orte_check_alps_libdir"
 
     AS_IF([test "$orte_check_alps_happy" = "yes"], 
           [$2], 

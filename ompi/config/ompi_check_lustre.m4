@@ -44,67 +44,24 @@ AC_DEFUN([OMPI_CHECK_LUSTRE],[
              [Build Lustre support, optionally adding DIR/include, DIR/lib, and DIR/lib64 to the search path for headers and libraries])])
     OMPI_CHECK_WITHDIR([lustre], [$with_lustre], [include/lustre/liblustreapi.h])
 
-    AC_ARG_WITH([lustre-libs], 
-        [AC_HELP_STRING([--with-lustre-libs=LIBS],
-                       [Libraries to link with for lustre])])
-
-    temp_with_lustre="$with_lustre"
     AS_IF([test -z "$with_lustre"],
-          [with_lustre="/usr/"])
+          [ompi_check_lustre_dir="/usr"],
+          [ompi_check_lustre_dir="$with_lustre"])
 
-    temp_with_lustre_libs="$with_lustre_libs"
-    AS_IF([test -z "$with_lustre_libs"],
-	[with_lustre_libs="lustre lustreapi"])
-    
+    if test -e "$ompi_check_lustre_dir/lib64" ; then
+        ompi_check_lustre_libdir="$ompi_check_lustre_dir/lib64"
+    else
+        ompi_check_lustre_libdir="$ompi_check_lustre_dir/lib"
+    fi
+
     # Add correct -I and -L flags
-    AS_IF([test -d "$with_lustre/include/lustre/"],
-        [check_lustre_CPPFLAGS="-I$with_lustre/include/lustre/"
-            $1_CPPFLAGS="$check_lustre_CPPFLAGS"
-            CPPFLAGS="$CPPFLAGS $check_lustre_CPPFLAGS"], 
-	[ompi_check_lustre_happy="no"])
-    
-    AS_IF([test "$ompi_check_lustre_happy" = "yes"],
-	[AS_IF([test -d "$with_lustre/lib64"],
-		[check_lustre_LDFLAGS="-L$with_lustre/lib64"
-		    $1_LDFLAGS="$check_lustre_LDFLAGS"
-		    LDFLAGS="$LDFLAGS $check_lustre_LDFLAGS"],
-		[ompi_check_lustre_happy="no"]) 
-    ],[])
-	    
-    # Try to find all the lustre libraries
-    AS_IF([test "$ompi_check_lustre_happy" = "yes"],
-	[ AS_IF([test -n "$with_lustre_libs"]
-		[for lib in $with_lustre_libs ; do
-		    check_lustre_LIBS="$check_lustre_LIBS -l$lib"
-		    done]) 
-		
-	    $1_LIBS="$check_lustre_LIBS"
-	    LIBS="$LIBS $check_lustre_LIBS"
-
-            # check for lustre
-	    AC_CHECK_HEADERS([liblustreapi.h],
-		[AC_MSG_CHECKING([if possible to link LUSTRE])
-		    AC_LINK_IFELSE([AC_LANG_PROGRAM(
-				[[#include <stdio.h>
-                                  #include <liblustreapi.h>]], 
-				[[llapi_file_create(NULL,0,-1,0, 0);]])],
-			[AC_MSG_RESULT([yes])
-			    ompi_check_lustre_happy="yes"],
-			[AC_MSG_RESULT([no])
-			    ompi_check_lustre_happy="no"])],
-		[ompi_check_lustre_happy="no"])
-    ])
-
-    LDFLAGS="$check_lustre_save_LDFLAGS"
-    CPPFLAGS="$check_lustre_save_CPPFLAGS"
-    LIBS="$check_lustre_save_LIBS"
+    OMPI_CHECK_PACKAGE([$1], [lustre/liblustreapi.h], [lustreapi], [llapi_file_create], [],
+                       [$ompi_check_lustre_dir], [$ompi_check_lustre_libdir], [ompi_check_lustre_happy="yes"],
+                       [ompi_check_lustre_happy="no"])
 
     AS_IF([test "$ompi_check_lustre_happy" = "yes"],
           [$2],
           [AS_IF([test ! -z "$with_lustre" -a "$with_lustre" != "no"],
                   [echo LUSTRE support not found])
               $3])
-
-    with_lustre="$temp_with_lustre"
-    with_lustre_libs="$temp_with_lustre_libs"
 ])
