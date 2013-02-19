@@ -44,8 +44,7 @@ mcacomponentdir = $(pkglibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_bcol_ptpcoll_la_SOURCES = $(sources)
 mca_bcol_ptpcoll_la_LDFLAGS = -module -avoid-version
-mca_bcol_ptpcoll_la_LIBADD = \
-                             $(top_ompi_builddir)/ompi/mca/common/netpatterns/libmca_common_netpatterns.la
+mca_bcol_ptpcoll_la_LIBADD = 
 
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_bcol_ptpcoll_la_SOURCES =$(sources)

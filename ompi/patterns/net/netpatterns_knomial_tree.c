@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
  * Copyright (c) 2009-2012 Oak Ridge National Laboratory.  All rights reserved.
- * $COPYRIGHT$
+* $COPYRIGHT$
  *
  * Additional copyrights may follow
  *
@@ -21,13 +21,13 @@
 #include <assert.h>
 
 #include "ompi/constants.h"
-#include "common_netpatterns.h"
+#include "netpatterns.h"
 
 /* setup recursive doubleing tree node */
 
-OMPI_DECLSPEC int mca_common_netpatterns_setup_recursive_knomial_allgather_tree_node(
+OMPI_DECLSPEC int netpatterns_setup_recursive_knomial_allgather_tree_node(
         int num_nodes, int node_rank, int tree_order, int *hier_ranks,
-        mca_common_netpatterns_k_exchange_node_t *exchange_node)
+        netpatterns_k_exchange_node_t *exchange_node)
 {
     /* local variables */
     int i, j, cnt, i_temp;
@@ -44,7 +44,7 @@ OMPI_DECLSPEC int mca_common_netpatterns_setup_recursive_knomial_allgather_tree_
 
 
     NETPATTERNS_VERBOSE(
-            ("Enter mca_common_netpatterns_setup_recursive_knomial_tree_node(num_nodes=%d, node_rank=%d, tree_order=%d)",
+            ("Enter netpatterns_setup_recursive_knomial_tree_node(num_nodes=%d, node_rank=%d, tree_order=%d)",
                 num_nodes, node_rank, tree_order));
 
     assert(num_nodes > 1);
@@ -192,13 +192,13 @@ OMPI_DECLSPEC int mca_common_netpatterns_setup_recursive_knomial_allgather_tree_
     }
 
 
-    exchange_node->payload_info = (mca_common_netpatterns_payload_t **) malloc(sizeof(mca_common_netpatterns_payload_t *)*pow_k);
+    exchange_node->payload_info = (netpatterns_payload_t **) malloc(sizeof(netpatterns_payload_t *)*pow_k);
     if( NULL == exchange_node->payload_info) {
         goto Error;
     }
 
     for(i = 0; i < pow_k; i++){
-        exchange_node->payload_info[i] = (mca_common_netpatterns_payload_t *) malloc(sizeof(mca_common_netpatterns_payload_t)*(tree_order-1));
+        exchange_node->payload_info[i] = (netpatterns_payload_t *) malloc(sizeof(netpatterns_payload_t)*(tree_order-1));
         if( NULL == exchange_node->payload_info[i]) {
             goto Error;
         }
@@ -497,9 +497,9 @@ Error:
 }
 
 
-OMPI_DECLSPEC int mca_common_netpatterns_setup_recursive_knomial_tree_node(
+OMPI_DECLSPEC int netpatterns_setup_recursive_knomial_tree_node(
         int num_nodes, int node_rank, int tree_order,
-        mca_common_netpatterns_k_exchange_node_t *exchange_node)
+        netpatterns_k_exchange_node_t *exchange_node)
 {
     /* local variables */
     int i, j, tmp, cnt;
@@ -507,7 +507,7 @@ OMPI_DECLSPEC int mca_common_netpatterns_setup_recursive_knomial_tree_node(
     int k_base, kpow_num, peer; 
 
     NETPATTERNS_VERBOSE(
-            ("Enter mca_common_netpatterns_setup_recursive_knomial_tree_node(num_nodes=%d, node_rank=%d, tree_order=%d)",
+            ("Enter netpatterns_setup_recursive_knomial_tree_node(num_nodes=%d, node_rank=%d, tree_order=%d)",
                 num_nodes, node_rank, tree_order));
 
     assert(num_nodes > 1);
@@ -653,15 +653,15 @@ Error:
 }
 
 #if 1 
-OMPI_DECLSPEC int mca_common_netpatterns_setup_recursive_doubling_n_tree_node(int num_nodes, int node_rank, int tree_order,
-        mca_common_netpatterns_pair_exchange_node_t *exchange_node)
+OMPI_DECLSPEC int netpatterns_setup_recursive_doubling_n_tree_node(int num_nodes, int node_rank, int tree_order,
+        netpatterns_pair_exchange_node_t *exchange_node)
 {
     /* local variables */
     int i, tmp, cnt;
     int n_levels;
     int shift, mask;
 
-    NETPATTERNS_VERBOSE(("Enter mca_common_netpatterns_setup_recursive_doubling_n_tree_node(num_nodes=%d, node_rank=%d, tree_order=%d)", num_nodes, node_rank, tree_order));
+    NETPATTERNS_VERBOSE(("Enter netpatterns_setup_recursive_doubling_n_tree_node(num_nodes=%d, node_rank=%d, tree_order=%d)", num_nodes, node_rank, tree_order));
 
     assert(num_nodes > 1);
     while (tree_order > num_nodes) {
@@ -794,8 +794,8 @@ Error:
     return OMPI_ERROR;
 }
 
-OMPI_DECLSPEC void mca_common_netpatterns_free_recursive_doubling_tree_node(
-    mca_common_netpatterns_pair_exchange_node_t *exchange_node)
+OMPI_DECLSPEC void netpatterns_free_recursive_doubling_tree_node(
+    netpatterns_pair_exchange_node_t *exchange_node)
 {
     NETPATTERNS_VERBOSE(("About to release rank_extra_sources_array and rank_exchanges"));
     if (exchange_node->rank_extra_sources_array != NULL) {
@@ -808,16 +808,16 @@ OMPI_DECLSPEC void mca_common_netpatterns_free_recursive_doubling_tree_node(
 }
 #endif
 
-OMPI_DECLSPEC int mca_common_netpatterns_setup_recursive_doubling_tree_node(int num_nodes, int node_rank,
-        mca_common_netpatterns_pair_exchange_node_t *exchange_node)
+OMPI_DECLSPEC int netpatterns_setup_recursive_doubling_tree_node(int num_nodes, int node_rank,
+        netpatterns_pair_exchange_node_t *exchange_node)
 {
-    return mca_common_netpatterns_setup_recursive_doubling_n_tree_node(num_nodes, node_rank, 2, exchange_node);
+    return netpatterns_setup_recursive_doubling_n_tree_node(num_nodes, node_rank, 2, exchange_node);
 }
 
 #if 0 
-/*OMPI_DECLSPEC int old_mca_common_netpatterns_setup_recursive_doubling_tree_node(int num_nodes, int node_rank,*/
-OMPI_DECLSPEC int mca_common_netpatterns_setup_recursive_doubling_n_tree_node(int num_nodes, int node_rank,int tree_order,
-        mca_common_netpatterns_pair_exchange_node_t *exchange_node)
+/*OMPI_DECLSPEC int old_netpatterns_setup_recursive_doubling_tree_node(int num_nodes, int node_rank,*/
+OMPI_DECLSPEC int netpatterns_setup_recursive_doubling_n_tree_node(int num_nodes, int node_rank,int tree_order,
+        netpatterns_pair_exchange_node_t *exchange_node)
 {
     /* local variables */
     /*int tree_order;*/

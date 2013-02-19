@@ -55,7 +55,7 @@ int bcol_basesmuma_k_nomial_barrier_init(bcol_function_args_t *input_args,
     int flag_offset = 0;
     volatile int8_t ready_flag;
     mca_bcol_basesmuma_module_t *bcol_module = (mca_bcol_basesmuma_module_t *) const_args->bcol_module;
-    mca_common_netpatterns_k_exchange_node_t *exchange_node = &bcol_module->knomial_allgather_tree;
+    netpatterns_k_exchange_node_t *exchange_node = &bcol_module->knomial_allgather_tree;
     mca_bcol_basesmuma_component_t *cm = &mca_bcol_basesmuma_component;
     uint32_t buffer_index = input_args->buffer_index;
     int *active_requests =
@@ -244,7 +244,7 @@ int bcol_basesmuma_k_nomial_barrier_progress(bcol_function_args_t *input_args,
     int flag_offset;
     volatile int8_t ready_flag;
     mca_bcol_basesmuma_module_t *bcol_module = (mca_bcol_basesmuma_module_t *) const_args->bcol_module;
-    mca_common_netpatterns_k_exchange_node_t *exchange_node = &bcol_module->knomial_allgather_tree;
+    netpatterns_k_exchange_node_t *exchange_node = &bcol_module->knomial_allgather_tree;
     mca_bcol_basesmuma_component_t *cm = &mca_bcol_basesmuma_component;
     uint32_t buffer_index = input_args->buffer_index;
     int *active_requests =

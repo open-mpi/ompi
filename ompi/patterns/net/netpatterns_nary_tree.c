@@ -19,9 +19,10 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 #include "ompi/constants.h"
-#include "common_netpatterns.h"
+#include "netpatterns.h"
 
 /*
  * Create mmaped shared file
@@ -29,8 +30,8 @@
 
 /* setup an n-array tree */
 
-int mca_common_netpatterns_setup_narray_tree(int tree_order, int my_rank, int num_nodes,
-        mca_common_netpatterns_tree_node_t *my_node)
+int netpatterns_setup_narray_tree(int tree_order, int my_rank, int num_nodes,
+        netpatterns_tree_node_t *my_node)
 {
     /* local variables */
     int n_levels, result;
@@ -156,9 +157,9 @@ Error:
     return OMPI_ERROR;
 }
 
-int mca_common_netpatterns_setup_narray_knomial_tree(
+int netpatterns_setup_narray_knomial_tree(
         int tree_order, int my_rank, int num_nodes,
-        mca_common_netpatterns_narray_knomial_tree_node_t *my_node)
+        netpatterns_narray_knomial_tree_node_t *my_node)
 {
     /* local variables */
     int n_levels, result;
@@ -216,7 +217,7 @@ int mca_common_netpatterns_setup_narray_knomial_tree(
             my_rank-cum_cnt;
         my_node->level_size = cnt;
 
-        rc = mca_common_netpatterns_setup_recursive_knomial_tree_node(
+        rc = netpatterns_setup_recursive_knomial_tree_node(
                 my_node->level_size, my_node->rank_on_level, 
                 tree_order, &my_node->k_node);
         if (OMPI_SUCCESS != rc) {
@@ -325,7 +326,7 @@ OMPI_DECLSPEC int roundup_to_power_radix ( int radix, int size, int *n_lvls )
 }
 
 static int fill_in_node_data(int tree_order, int num_nodes, int my_node,
-        mca_common_netpatterns_tree_node_t *nodes_data)
+        netpatterns_tree_node_t *nodes_data)
 {
     /* local variables */
     int rc, num_ranks_per_child, num_children, n_extra;
@@ -415,16 +416,16 @@ error:
  * ranks may be rotated based on who the actual root is, to obtain the
  * appropriate communication pattern for such roots.
  */
-OMPI_DECLSPEC int mca_common_netpatterns_setup_narray_tree_contigous_ranks(
+OMPI_DECLSPEC int netpatterns_setup_narray_tree_contigous_ranks(
         int tree_order, int num_nodes, 
-        mca_common_netpatterns_tree_node_t **tree_nodes)
+        netpatterns_tree_node_t **tree_nodes)
 {
     /* local variables */
     int num_descendent_ranks=num_nodes-1;
     int rc=OMPI_SUCCESS;
 
-    *tree_nodes=(mca_common_netpatterns_tree_node_t *)malloc(
-            sizeof(mca_common_netpatterns_tree_node_t)*
+    *tree_nodes=(netpatterns_tree_node_t *)malloc(
+            sizeof(netpatterns_tree_node_t)*
             num_nodes);
     if(!(*tree_nodes) ) {
         fprintf(stderr, "Cannot allocate memory for tree_nodes.\n");

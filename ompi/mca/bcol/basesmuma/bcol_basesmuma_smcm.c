@@ -18,7 +18,7 @@
 
 #include "ompi/mca/dpm/dpm.h"
 #include "ompi/proc/proc.h"
-#include "ompi/mca/common/commpatterns/common_coll_ops.h"
+#include "ompi/patterns/comm/coll_ops.h"
 
 #include "orte/util/show_help.h"
 #include "orte/util/name_fns.h"

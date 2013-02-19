@@ -135,7 +135,7 @@ int bcol_basesmuma_bcast(bcol_function_args_t *input_args,
     volatile char* parent_data_pointer;
     mca_bcol_basesmuma_header_t *my_ctl_pointer;
     volatile mca_bcol_basesmuma_header_t *parent_ctl_pointer;
-    mca_common_netpatterns_tree_node_t* my_fanout_read_tree;
+    netpatterns_tree_node_t* my_fanout_read_tree;
     size_t pack_len = 0, dt_size;
 
     void *data_addr = (void *)((unsigned char *)input_args->src_desc->data_addr );
@@ -268,7 +268,7 @@ int bcol_basesmuma_hdl_zerocopy_bcast(bcol_function_args_t *input_args,
     mca_bcol_basesmuma_module_t* bcol_module=
         (mca_bcol_basesmuma_module_t *)c_input_args->bcol_module;
 
-    mca_common_netpatterns_tree_node_t* my_fanout_read_tree;
+    netpatterns_tree_node_t* my_fanout_read_tree;
     size_t pack_len = 0, dt_size;
 
     void *data_addr = (void *)((unsigned char *)input_args->src_desc->data_addr);

@@ -20,7 +20,7 @@
 #include "ompi/datatype/ompi_datatype.h"
 #include "ompi/op/op.h"
 #include "ompi/include/ompi/constants.h"
-#include "ompi/mca/common/netpatterns/common_netpatterns_knomial_tree.h"
+#include "ompi/patterns/net/netpatterns_knomial_tree.h"
 
 #include <limits.h>
 

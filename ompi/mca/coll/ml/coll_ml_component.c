@@ -36,7 +36,7 @@
 #include "coll_ml.h"
 #include "coll_ml_inlines.h"
 
-#include "ompi/mca/common/netpatterns/common_netpatterns.h"
+#include "ompi/patterns/net/netpatterns.h"
 #include "coll_ml_mca.h"
 #include "coll_ml_custom_utils.h"
 
@@ -460,7 +460,7 @@ static int ml_open(void)
     OBJ_CONSTRUCT(&(cs->sequential_collectives_mutex), opal_mutex_t);
     OBJ_CONSTRUCT(&(cs->sequential_collectives), opal_list_t);
 
-    rc = ompi_common_netpatterns_init();
+    rc = netpatterns_init();
     if (OMPI_SUCCESS != rc) {
         return rc;
     }

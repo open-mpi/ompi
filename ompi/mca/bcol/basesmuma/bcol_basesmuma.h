@@ -19,7 +19,7 @@
 #include "ompi/mca/coll/ml/coll_ml_allocation.h"
 #include "ompi/request/request.h"
 #include "ompi/proc/proc.h"
-#include "ompi/mca/common/netpatterns/common_netpatterns.h"
+#include "ompi/patterns/net/netpatterns.h"
 
 #include "orte/util/name_fns.h"
 #include "orte/util/proc_info.h"
@@ -777,16 +777,16 @@ struct mca_bcol_basesmuma_module_t {
     sm_buffer_mgmt colls_with_user_data;
 
     /* recursive-doubling tree node */
-    mca_common_netpatterns_pair_exchange_node_t recursive_doubling_tree;
+    netpatterns_pair_exchange_node_t recursive_doubling_tree;
 
     /* k-nomial gather/allgather tree */
-    mca_common_netpatterns_k_exchange_node_t knomial_allgather_tree;
+    netpatterns_k_exchange_node_t knomial_allgather_tree;
 
     /* fanin tree node - root is rank 0 */
-    mca_common_netpatterns_tree_node_t fanin_node;
+    netpatterns_tree_node_t fanin_node;
 
     /* fanout tree node - root is rank 0 */
-    mca_common_netpatterns_tree_node_t fanout_node;
+    netpatterns_tree_node_t fanout_node;
 
     /* index of blocking barrier memory region to use */
     int index_blocking_barrier_memory_bank;
@@ -795,18 +795,18 @@ struct mca_bcol_basesmuma_module_t {
     int *comm_to_sm_map;
 
     /* reduction fanout tree */
-    mca_common_netpatterns_tree_node_t* reduction_tree;
+    netpatterns_tree_node_t* reduction_tree;
 
     /* broadcast fanout tree */
-    mca_common_netpatterns_tree_node_t* fanout_read_tree;
+    netpatterns_tree_node_t* fanout_read_tree;
 
     /* scatter - k-ary tree */
     int scatter_kary_radix;
-    mca_common_netpatterns_tree_node_t *scatter_kary_tree;
+    netpatterns_tree_node_t *scatter_kary_tree;
 
 	/* Knomial exchange tree */
 	/* Currently used for only large message reduce */
-	mca_common_netpatterns_k_exchange_node_t knomial_exchange_tree;
+	netpatterns_k_exchange_node_t knomial_exchange_tree;
 
     /* sequence number offset - want to make sure that we start
      *   id'ing collectives with id 0, so we can have simple

@@ -68,18 +68,9 @@ mcacomponentdir = $(pkglibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_coll_ml_la_SOURCES = $(sources)
 mca_coll_ml_la_LDFLAGS = -module -avoid-version
-mca_coll_ml_la_LIBADD = \
-    $(top_ompi_builddir)/ompi/mca/common/commpatterns/libmca_common_commpatterns.la \
-    $(top_ompi_builddir)/ompi/mca/common/netpatterns/libmca_common_netpatterns.la
+mca_coll_ml_la_LIBADD =
 
 
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_coll_ml_la_SOURCES =$(sources)
 libmca_coll_ml_la_LDFLAGS = -module -avoid-version
-
-$(top_ompi_builddir)/ompi/mca/common/commpatterns/libmca_common_commpatterns.la: foo.c
-	cd $(top_ompi_builddir)/ompi/mca/common/commpatterns && $(MAKE)
-$(top_ompi_builddir)/ompi/mca/common/netpatterns/libmca_common_netpatterns.la: foo.c
-	cd $(top_ompi_builddir)/ompi/mca/common/netpatterns && $(MAKE)
-
-foo.c:

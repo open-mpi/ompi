@@ -19,7 +19,7 @@
 #include "ompi/mca/bcol/bcol.h"
 #include "ompi/mca/bcol/base/base.h"
 #include "ompi/mca/dpm/dpm.h"
-#include "ompi/mca/common/netpatterns/common_netpatterns.h"
+#include "ompi/patterns/net/netpatterns.h"
 
 
 #include "orte/mca/grpcomm/grpcomm.h" 
@@ -221,7 +221,7 @@ static int load_recursive_knomial_info(mca_bcol_basesmuma_module_t
 				*sm_module)
 {
 	    int rc = OMPI_SUCCESS;
-	    rc = mca_common_netpatterns_setup_recursive_knomial_tree_node(
+	    rc = netpatterns_setup_recursive_knomial_tree_node(
 						                    sm_module->super.sbgp_partner_module->group_size,
    			              					sm_module->super.sbgp_partner_module->my_index,
             		     					mca_bcol_basesmuma_component.k_nomial_radix,
@@ -234,7 +234,7 @@ int bcol_basesmuma_setup_knomial_tree(mca_bcol_base_module_t *super)
 {
     mca_bcol_basesmuma_module_t *sm_module = (mca_bcol_basesmuma_module_t *) super;
     
-    return mca_common_netpatterns_setup_recursive_knomial_allgather_tree_node(
+    return netpatterns_setup_recursive_knomial_allgather_tree_node(
             sm_module->super.sbgp_partner_module->group_size,
             sm_module->super.sbgp_partner_module->my_index,
             mca_bcol_basesmuma_component.k_nomial_radix,
@@ -294,7 +294,7 @@ mca_bcol_basesmuma_comm_query(mca_sbgp_base_module_t *module, int *num_modules)
     sm_module->reduction_tree = NULL;
     sm_module->fanout_read_tree = NULL;
 
-    ret=mca_common_netpatterns_setup_recursive_doubling_tree_node(
+    ret=netpatterns_setup_recursive_doubling_tree_node(
         module->group_size,module->my_index,
         &(sm_module->recursive_doubling_tree));
     if(OMPI_SUCCESS != ret) {
@@ -306,7 +306,7 @@ mca_bcol_basesmuma_comm_query(mca_sbgp_base_module_t *module, int *num_modules)
     /* setup the fanin tree - this is used only as part of a hierarchical
      *   barrier, so will set this up with rank 0 as the root */
     my_rank=module->my_index;
-    ret=mca_common_netpatterns_setup_narray_tree(cs->radix_fanin,
+    ret=netpatterns_setup_narray_tree(cs->radix_fanin,
         my_rank,module->group_size,&(sm_module->fanin_node));
     if(OMPI_SUCCESS != ret) {
 	    fprintf(stderr,"Error setting up fanin tree \n");
@@ -316,7 +316,7 @@ mca_bcol_basesmuma_comm_query(mca_sbgp_base_module_t *module, int *num_modules)
 
     /* setup the fanout tree - this is used only as part of a hierarchical
      *   barrier, so will set this up with rank 0 as the root */
-    ret=mca_common_netpatterns_setup_narray_tree(cs->radix_fanout,
+    ret=netpatterns_setup_narray_tree(cs->radix_fanout,
         my_rank,module->group_size,&(sm_module->fanout_node));
     if(OMPI_SUCCESS != ret) {
 	    fprintf(stderr,"Error setting up fanout tree \n");
@@ -333,14 +333,14 @@ mca_bcol_basesmuma_comm_query(mca_sbgp_base_module_t *module, int *num_modules)
       bcast_radix = cs->radix_read_tree;
 
        /* initialize fan-out read tree */
-       sm_module->fanout_read_tree=(mca_common_netpatterns_tree_node_t*) malloc(
-               sizeof(mca_common_netpatterns_tree_node_t)*module->group_size);
+       sm_module->fanout_read_tree=(netpatterns_tree_node_t*) malloc(
+               sizeof(netpatterns_tree_node_t)*module->group_size);
        if( NULL == sm_module->fanout_read_tree ) {
            goto Error;
        }
 
        for(i = 0; i < module->group_size; i++){
-          ret = mca_common_netpatterns_setup_narray_tree(bcast_radix,
+          ret = netpatterns_setup_narray_tree(bcast_radix,
                   i, module->group_size, &(sm_module->fanout_read_tree[i]));
           if(OMPI_SUCCESS != ret) {
               goto Error;
@@ -363,13 +363,13 @@ mca_bcol_basesmuma_comm_query(mca_sbgp_base_module_t *module, int *num_modules)
     */
 
     /* initialize reduction tree */
-    sm_module->reduction_tree=(mca_common_netpatterns_tree_node_t *) malloc(
-            sizeof(mca_common_netpatterns_tree_node_t )*module->group_size);
+    sm_module->reduction_tree=(netpatterns_tree_node_t *) malloc(
+            sizeof(netpatterns_tree_node_t )*module->group_size);
     if( NULL == sm_module->reduction_tree ) { 
         goto Error;
     }
         
-    ret=mca_common_netpatterns_setup_multinomial_tree(
+    ret=netpatterns_setup_multinomial_tree(
             cs->order_reduction_tree,module->group_size,
             sm_module->reduction_tree);
     if( MPI_SUCCESS != ret ) {
@@ -393,7 +393,7 @@ mca_bcol_basesmuma_comm_query(mca_sbgp_base_module_t *module, int *num_modules)
      */
     sm_module->scatter_kary_radix=cs->scatter_kary_radix;
     sm_module->scatter_kary_tree=NULL;
-    ret=mca_common_netpatterns_setup_narray_tree_contigous_ranks(
+    ret=netpatterns_setup_narray_tree_contigous_ranks(
             sm_module->scatter_kary_radix,
             sm_module->super.sbgp_partner_module->group_size,
             &(sm_module->scatter_kary_tree));

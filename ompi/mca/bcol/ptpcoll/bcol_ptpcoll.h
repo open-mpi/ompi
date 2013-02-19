@@ -20,7 +20,7 @@
 #include "ompi/request/request.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/coll/ml/coll_ml_allocation.h"
-#include "ompi/mca/common/netpatterns/common_netpatterns.h"
+#include "ompi/patterns/net/netpatterns.h"
 
 BEGIN_C_DECLS
 
@@ -297,7 +297,7 @@ struct mca_bcol_ptpcoll_module_t {
     int full_narray_tree_num_leafs;
 
     /* Nary tree info */
-    mca_common_netpatterns_tree_node_t *narray_node;
+    netpatterns_tree_node_t *narray_node;
 
     /* if the rank in group, it keeps the extra peer. 
        if the rank is extra, it keeps the proxy peer.
@@ -328,13 +328,13 @@ struct mca_bcol_ptpcoll_module_t {
     /* number of extra peers , maximum k - 1*/
     int narray_knomial_proxy_num; 
     /* Narray-Knomial node information array */
-    mca_common_netpatterns_narray_knomial_tree_node_t *narray_knomial_node;
+    netpatterns_narray_knomial_tree_node_t *narray_knomial_node;
     /* Knomial exchange tree */ 
-    mca_common_netpatterns_k_exchange_node_t knomial_exchange_tree;
+    netpatterns_k_exchange_node_t knomial_exchange_tree;
     /* knomial allgather tree --- Do not disable, we need both 
        different algorithms define recursive k - ing differently
      */
-    mca_common_netpatterns_k_exchange_node_t knomial_allgather_tree;
+    netpatterns_k_exchange_node_t knomial_allgather_tree;
 
 	/* Knomial allgather offsets */
 	int **allgather_offsets;

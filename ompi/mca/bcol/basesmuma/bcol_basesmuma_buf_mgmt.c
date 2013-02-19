@@ -18,7 +18,7 @@
 #include "ompi/mca/bcol/bcol.h"
 #include "ompi/mca/bcol/base/base.h"
 #include "ompi/mca/coll/ml/coll_ml.h"
-#include "ompi/mca/common/commpatterns/common_coll_ops.h"
+#include "ompi/patterns/comm/coll_ops.h"
 #include "ompi/mca/dpm/dpm.h"
 
 

@@ -1,6 +1,8 @@
 /*
  * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
  * Copyright (c) 2009-2012 Oak Ridge National Laboratory.  All rights reserved.
+ * Copyright (c) 2012      Los Alamos National Security, LLC.
+ *                         All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -12,7 +14,6 @@
 #define COMM_PATTERNS_KNOMIAL_TREE_H
 
 #include "ompi_config.h"
-#include "orte/runtime/orte_globals.h"
 
 BEGIN_C_DECLS
 
@@ -27,7 +28,7 @@ enum {
     EXTRA_NODE
 };
 
-struct mca_common_netpatterns_pair_exchange_node_t {
+struct netpatterns_pair_exchange_node_t {
 
     /* Order of a node in the tree - usually 2 */
     int tree_order;
@@ -61,17 +62,17 @@ struct mca_common_netpatterns_pair_exchange_node_t {
     int node_type;
 
 };
-typedef struct mca_common_netpatterns_pair_exchange_node_t mca_common_netpatterns_pair_exchange_node_t;
+typedef struct netpatterns_pair_exchange_node_t netpatterns_pair_exchange_node_t;
 
-struct mca_common_netpatterns_payload_t {
+struct netpatterns_payload_t {
     int s_len;
     int r_len;
     int s_offset;
     int r_offset;
 };
-typedef struct mca_common_netpatterns_payload_t mca_common_netpatterns_payload_t;
+typedef struct netpatterns_payload_t netpatterns_payload_t;
 
-struct mca_common_netpatterns_k_exchange_node_t {
+struct netpatterns_k_exchange_node_t {
     /* Order of a node in the tree - usually 2 */
     int tree_order;
     /* number of nodes this node will exchange data with */
@@ -102,27 +103,27 @@ struct mca_common_netpatterns_k_exchange_node_t {
     /* reindexed node_rank */
     int reindex_myid;
     /* 2-d array that hold payload info for each level of recursive k-ing */
-    mca_common_netpatterns_payload_t **payload_info;
+    netpatterns_payload_t **payload_info;
 };
-typedef struct mca_common_netpatterns_k_exchange_node_t
-               mca_common_netpatterns_k_exchange_node_t;
+typedef struct netpatterns_k_exchange_node_t
+               netpatterns_k_exchange_node_t;
 
-OMPI_DECLSPEC int mca_common_netpatterns_setup_recursive_doubling_n_tree_node(int num_nodes, int node_rank, int tree_order,
-    mca_common_netpatterns_pair_exchange_node_t *exchange_node);
+OMPI_DECLSPEC int netpatterns_setup_recursive_doubling_n_tree_node(int num_nodes, int node_rank, int tree_order,
+    netpatterns_pair_exchange_node_t *exchange_node);
 
-OMPI_DECLSPEC void mca_common_netpatterns_free_recursive_doubling_tree_node(
-    mca_common_netpatterns_pair_exchange_node_t *exchange_node);
+OMPI_DECLSPEC void netpatterns_free_recursive_doubling_tree_node(
+    netpatterns_pair_exchange_node_t *exchange_node);
 
-OMPI_DECLSPEC int mca_common_netpatterns_setup_recursive_doubling_tree_node(int num_nodes, int node_rank,
-    mca_common_netpatterns_pair_exchange_node_t *exchange_node);
+OMPI_DECLSPEC int netpatterns_setup_recursive_doubling_tree_node(int num_nodes, int node_rank,
+    netpatterns_pair_exchange_node_t *exchange_node);
 
-OMPI_DECLSPEC int mca_common_netpatterns_setup_recursive_knomial_tree_node(
+OMPI_DECLSPEC int netpatterns_setup_recursive_knomial_tree_node(
    int num_nodes, int node_rank, int tree_order,
-   mca_common_netpatterns_k_exchange_node_t *exchange_node);
+   netpatterns_k_exchange_node_t *exchange_node);
 
-OMPI_DECLSPEC int mca_common_netpatterns_setup_recursive_knomial_allgather_tree_node(
+OMPI_DECLSPEC int netpatterns_setup_recursive_knomial_allgather_tree_node(
         int num_nodes, int node_rank, int tree_order, int *hier_ranks,
-        mca_common_netpatterns_k_exchange_node_t *exchange_node);
+        netpatterns_k_exchange_node_t *exchange_node);
 
 
 /* Input: k_exchange_node structure 
@@ -136,7 +137,7 @@ OMPI_DECLSPEC int mca_common_netpatterns_setup_recursive_knomial_allgather_tree_
 */
 
 static inline __opal_attribute_always_inline__ 
-int mca_common_netpatterns_get_knomial_level(
+int netpatterns_get_knomial_level(
     int my_rank, int src_rank, 
     int radix,   int size,
     int *k_level)
@@ -168,7 +169,7 @@ int mca_common_netpatterns_get_knomial_level(
  * Output: source of the data, offset in power of K
  */
 static inline __opal_attribute_always_inline__ 
-int mca_common_netpatterns_get_knomial_data_source(
+int netpatterns_get_knomial_data_source(
     int my_rank, int root, int radix, int size,
     int *k_level, int *logk_level)
 {
@@ -188,11 +189,11 @@ int mca_common_netpatterns_get_knomial_data_source(
 }
 
 /* Input: my_rank, radix,
- *        k_level - that you get from mca_common_netpatterns_get_knomial_data_source
+ *        k_level - that you get from netpatterns_get_knomial_data_source
  *        k_step - some integer
  * Output: peer - next children in the tree
  * Usage: 
- *         src = mca_common_netpatterns_get_knomial_data_source(
+ *         src = netpatterns_get_knomial_data_source(
  *                  my_rank, root, radix, size,
  *                  &k_level, &logk_level)
  *         recv_from(src......);
@@ -205,11 +206,11 @@ int mca_common_netpatterns_get_knomial_data_source(
  * for more example please grep in ptpcoll bcol bcast files
  */
 
-typedef struct mca_common_netpatter_knomial_step_info_t {
+typedef struct netpatterns_knomial_step_info_t {
     int k_step;
     int k_level;
     int k_tmp_peer;
-} mca_common_netpatter_knomial_step_info_t;
+} netpatterns_knomial_step_info_t;
 
 #define MCA_COMMON_NETPATTERNS_GET_NEXT_KNOMIAL_UPDATE_LEVEL_FOR_BCAST(step_info, radix)\
 do {                                                                                    \

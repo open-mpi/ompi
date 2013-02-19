@@ -1,7 +1,9 @@
 /*
  * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
  * Copyright (c) 2009-2012 Oak Ridge National Laboratory.  All rights reserved.
- * $COPYRIGHT$
+ * Copyright (c) 2012      Los Alamos National Security, LLC.
+ *                         All rights reserved.
+  * $COPYRIGHT$
  *
  * Additional copyrights may follow
  *
@@ -12,26 +14,29 @@
 #define COMM_PATTERNS_H
 
 #include "ompi_config.h"
+#include "orte/util/proc_info.h"
 #include "orte/runtime/orte_globals.h"
-#include "common_netpatterns_knomial_tree.h"
+#include "orte/util/name_fns.h"
+
+#include "netpatterns_knomial_tree.h"
 
 BEGIN_C_DECLS
 
-int ompi_common_netpatterns_base_err(const char* fmt, ...);
-int ompi_common_netpatterns_register_mca_params(void);
+int netpatterns_base_err(const char* fmt, ...);
+int netpatterns_register_mca_params(void);
 
 #if OPAL_ENABLE_DEBUG
-extern int ompi_common_netpatterns_base_verbose; /* disabled by default */
-OMPI_DECLSPEC extern int ompi_common_netpatterns_base_err(const char*, ...) __opal_attribute_format__(__printf__, 1, 2);
+extern int netpatterns_base_verbose; /* disabled by default */
+OMPI_DECLSPEC extern int netpatterns_base_err(const char*, ...) __opal_attribute_format__(__printf__, 1, 2);
 #define NETPATTERNS_VERBOSE(args)                                \
     do {                                                         \
-        if(ompi_common_netpatterns_base_verbose > 0) {           \
-            ompi_common_netpatterns_base_err("[%s]%s[%s:%d:%s] ",\
+        if(netpatterns_base_verbose > 0) {           \
+            netpatterns_base_err("[%s]%s[%s:%d:%s] ",\
                     orte_process_info.nodename,                  \
                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),          \
                     __FILE__, __LINE__, __func__);               \
-            ompi_common_netpatterns_base_err args;               \
-            ompi_common_netpatterns_base_err("\n");              \
+            netpatterns_base_err args;               \
+            netpatterns_base_err("\n");              \
         }                                                        \
     } while(0); 
 #else
@@ -69,7 +74,7 @@ enum {
 /*
  * N-order tree node description
  */
-struct mca_common_netpatterns_tree_node_t {
+struct netpatterns_tree_node_t {
     /* my rank within the group */
     int my_rank;
     /* my node type - root, leaf, or interior */
@@ -85,13 +90,13 @@ struct mca_common_netpatterns_tree_node_t {
     /* chidren ranks within the group */
     int *children_ranks;
 };
-typedef struct mca_common_netpatterns_tree_node_t mca_common_netpatterns_tree_node_t;
+typedef struct netpatterns_tree_node_t netpatterns_tree_node_t;
 
-struct mca_common_netpatterns_k_exchange_node_t;
+struct netpatterns_k_exchange_node_t;
 /*
  * N-order + knominal tree node description
  */
-struct mca_common_netpatterns_narray_knomial_tree_node_t {
+struct netpatterns_narray_knomial_tree_node_t {
     /* my rank within the group */
     int my_rank;
     /* my node type - root, leaf, or interior */
@@ -111,30 +116,30 @@ struct mca_common_netpatterns_narray_knomial_tree_node_t {
     /* Rank on this node inside of level */
     int rank_on_level;
     /* Knomial recursive gather information */
-    struct mca_common_netpatterns_k_exchange_node_t k_node;
+    struct netpatterns_k_exchange_node_t k_node;
 };
-typedef struct mca_common_netpatterns_narray_knomial_tree_node_t 
-mca_common_netpatterns_narray_knomial_tree_node_t;
+typedef struct netpatterns_narray_knomial_tree_node_t 
+netpatterns_narray_knomial_tree_node_t;
 
 
 /* Init code for common_netpatterns */
-OMPI_DECLSPEC int ompi_common_netpatterns_init(void);
+OMPI_DECLSPEC int netpatterns_init(void);
 
 /* setup an n-array tree */
-OMPI_DECLSPEC int mca_common_netpatterns_setup_narray_tree(int tree_order, int my_rank, int num_nodes,
-        mca_common_netpatterns_tree_node_t *my_node);
+OMPI_DECLSPEC int netpatterns_setup_narray_tree(int tree_order, int my_rank, int num_nodes,
+        netpatterns_tree_node_t *my_node);
 /* setup an n-array tree with k-nomial levels */
-OMPI_DECLSPEC int mca_common_netpatterns_setup_narray_knomial_tree( int tree_order, int my_rank, int num_nodes,
-        mca_common_netpatterns_narray_knomial_tree_node_t *my_node);
+OMPI_DECLSPEC int netpatterns_setup_narray_knomial_tree( int tree_order, int my_rank, int num_nodes,
+        netpatterns_narray_knomial_tree_node_t *my_node);
 
 /* setup an multi-nomial tree - for each node in the tree
  *  this returns it's parent, and it's children 
  */
-OMPI_DECLSPEC int mca_common_netpatterns_setup_multinomial_tree(int tree_order, int num_nodes,
-        mca_common_netpatterns_tree_node_t *tree_nodes);
+OMPI_DECLSPEC int netpatterns_setup_multinomial_tree(int tree_order, int num_nodes,
+        netpatterns_tree_node_t *tree_nodes);
 
-OMPI_DECLSPEC int mca_common_netpatterns_setup_narray_tree_contigous_ranks(int tree_order,
-        int num_nodes, mca_common_netpatterns_tree_node_t **tree_nodes);
+OMPI_DECLSPEC int netpatterns_setup_narray_tree_contigous_ranks(int tree_order,
+        int num_nodes, netpatterns_tree_node_t **tree_nodes);
 
 /* calculate the nearest power of radix that is equal to or greater
  * than size, with the specified radix.  The resulting tree is of

@@ -265,7 +265,7 @@ int mca_bcol_ptpcoll_setup_knomial_tree(mca_bcol_base_module_t *super)
 {
    mca_bcol_ptpcoll_module_t *p2p_module = (mca_bcol_ptpcoll_module_t *) super;
    int rc = 0; 
-   rc = mca_common_netpatterns_setup_recursive_knomial_allgather_tree_node(
+   rc = netpatterns_setup_recursive_knomial_allgather_tree_node(
                 p2p_module->super.sbgp_partner_module->group_size,
                 p2p_module->super.sbgp_partner_module->my_index,
                 mca_bcol_ptpcoll_component.k_nomial_radix,
@@ -315,7 +315,7 @@ static int load_narray_knomial_tree (mca_bcol_ptpcoll_module_t *ptpcoll_module)
 
     ptpcoll_module->narray_knomial_node = calloc(
             ptpcoll_module->full_narray_tree_size,
-            sizeof(mca_common_netpatterns_narray_knomial_tree_node_t));
+            sizeof(netpatterns_narray_knomial_tree_node_t));
     if(NULL == ptpcoll_module->narray_knomial_node) {
         goto Error;
     }
@@ -346,7 +346,7 @@ static int load_narray_knomial_tree (mca_bcol_ptpcoll_module_t *ptpcoll_module)
         }
         /* Setting node info */
         for(i = 0; i < ptpcoll_module->full_narray_tree_size; i++) {
-            rc = mca_common_netpatterns_setup_narray_knomial_tree(
+            rc = netpatterns_setup_narray_knomial_tree(
                     cm->narray_knomial_radix,
                     i,
                     ptpcoll_module->full_narray_tree_size,
@@ -382,13 +382,13 @@ static int load_narray_tree(mca_bcol_ptpcoll_module_t *ptpcoll_module)
     mca_bcol_ptpcoll_component_t *cm = &mca_bcol_ptpcoll_component;
 
     ptpcoll_module->narray_node = calloc(ptpcoll_module->group_size,
-            sizeof(mca_common_netpatterns_tree_node_t));
+            sizeof(netpatterns_tree_node_t));
     if(NULL == ptpcoll_module->narray_node ) {
         goto Error;
     }
 
     for(i = 0; i < ptpcoll_module->group_size; i++) {
-        rc = mca_common_netpatterns_setup_narray_tree(
+        rc = netpatterns_setup_narray_tree(
                 cm->narray_radix,
                 i,
                 ptpcoll_module->group_size,
@@ -510,7 +510,7 @@ static int load_binomial_info(mca_bcol_ptpcoll_module_t *ptpcoll_module)
 static int load_recursive_knomial_info(mca_bcol_ptpcoll_module_t *ptpcoll_module)
 {
     int rc = OMPI_SUCCESS;
-    rc = mca_common_netpatterns_setup_recursive_knomial_tree_node(
+    rc = netpatterns_setup_recursive_knomial_tree_node(
                     ptpcoll_module->group_size,
                     ptpcoll_module->super.sbgp_partner_module->my_index,
                     mca_bcol_ptpcoll_component.k_nomial_radix,

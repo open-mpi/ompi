@@ -1,6 +1,8 @@
 /*
  * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
  * Copyright (c) 2009-2012 Oak Ridge National Laboratory.  All rights reserved.
+ * Copyright (c) 2012      Los Alamos National Security, LLC.
+ *                         All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -15,14 +17,11 @@
 #include "ompi/op/op.h"
 #include "ompi/datatype/ompi_datatype.h"
 #include "ompi/communicator/communicator.h"
-#include "orte/mca/rml/rml.h"
 #include "opal/include/opal/sys/atomic.h"
-#include "ompi/mca/common/commpatterns/common_netpatterns.h"
-#include "common_coll_ops.h"
-#include "ompi/mca/common/netpatterns/common_netpatterns.h"
-#include "ompi/mca/dpm/dpm.h"
-#include "orte/util/proc_info.h"
 #include "ompi/mca/pml/pml.h"
+#include "ompi/patterns/net/netpatterns.h"
+#include "coll_ops.h"
+#include "commpatterns.h"
 
 /**
  * All-reduce for contigous primitive types
@@ -35,7 +34,7 @@ OMPI_DECLSPEC int comm_allreduce_pml(void *sbuf, void *rbuf, int count,
     /* local variables */
     int rc=OMPI_SUCCESS,n_dts_per_buffer,n_data_segments,stripe_number;
     int pair_rank,exchange,extra_rank;
-    mca_common_netpatterns_pair_exchange_node_t my_exchange_node;
+    netpatterns_pair_exchange_node_t my_exchange_node;
     int count_processed,count_this_stripe;
     size_t dt_size,dt_extent;
     char scratch_bufers[2][MAX_TMP_BUFFER];
@@ -77,7 +76,7 @@ OMPI_DECLSPEC int comm_allreduce_pml(void *sbuf, void *rbuf, int count,
     n_data_segments=(count+n_dts_per_buffer -1 ) / n_dts_per_buffer ;
 
     /* get my reduction communication pattern */
-    rc = mca_common_netpatterns_setup_recursive_doubling_tree_node(n_peers,
+    rc = netpatterns_setup_recursive_doubling_tree_node(n_peers,
             my_rank_in_group, &my_exchange_node);
     if(OMPI_SUCCESS != rc){
         return rc;
