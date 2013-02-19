@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007-2008 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -49,10 +50,11 @@
 #endif  /* HAVE_TIME_H */
 
 #include "opal/mca/event/event.h"
+#include "opal/util/net.h"
+#include "opal/util/show_help.h"
 
 #include "ompi/types.h"
 #include "ompi/mca/btl/base/btl_base_error.h"
-#include "opal/util/net.h"
 
 #include "btl_tcp.h"
 #include "btl_tcp_endpoint.h" 
@@ -445,7 +447,7 @@ static int mca_btl_tcp_endpoint_recv_blocking(mca_btl_base_endpoint_t* btl_endpo
         /* remote closed connection */
         if(retval == 0) {
             mca_btl_tcp_endpoint_close(btl_endpoint);
-            return -1;
+            return cnt;
         }
 
         /* socket is non-blocking so handle errors */
@@ -472,9 +474,23 @@ static int mca_btl_tcp_endpoint_recv_blocking(mca_btl_base_endpoint_t* btl_endpo
 static int mca_btl_tcp_endpoint_recv_connect_ack(mca_btl_base_endpoint_t* btl_endpoint)
 {
     orte_process_name_t guid;
+    size_t s;
     mca_btl_tcp_proc_t* btl_proc = btl_endpoint->endpoint_proc;
 
-    if((mca_btl_tcp_endpoint_recv_blocking(btl_endpoint, &guid, sizeof(orte_process_name_t))) != sizeof(orte_process_name_t)) {
+    s = mca_btl_tcp_endpoint_recv_blocking(btl_endpoint,
+                                           &guid, sizeof(orte_process_name_t));
+    if (s != sizeof(orte_process_name_t)) {
+        if (0 == s) {
+            /* If we get zero bytes, the peer closed the socket. This
+               can happen when the two peers started the connection
+               protocol simultaneously. Just report the problem
+               upstream. */
+            return OMPI_ERROR;
+        }
+	opal_show_help("help-mpi-btl-tcp.txt", "client handshake fail",
+                       true, orte_process_info.nodename,
+                       orte_process_info.pid, 
+                       "did not receive entire connect ACK from peer");
         return OMPI_ERR_UNREACH;
     }
     ORTE_PROCESS_NAME_NTOH(guid);
