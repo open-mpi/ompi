@@ -74,6 +74,10 @@ AC_DEFUN([MCA_opal_hwloc_CONFIG_REQUIRE],[
     # broken, and will disable it by default.  I hate making tests
     # based on specific version numbers, but I'm out of ideas here.
     # :-(
+    #
+    # hwloc currently links against libpci, which is GPL (not LGPL),
+    # so disable it by default for now.  This needs to be revisited at
+    # some point.
     AC_MSG_CHECKING([whether to enable hwloc PCI device support])
     AS_IF([test "$enable_hwloc_pci" = "yes"],
           [AC_MSG_RESULT([yes (--enable-hwloc-pci specified)])
@@ -85,8 +89,8 @@ AC_DEFUN([MCA_opal_hwloc_CONFIG_REQUIRE],[
                   AS_IF([test "$hwloc_base_pci" != "" -a "$ac_cv_sizeof_void_p" = "8"],
                         [AC_MSG_RESULT([no (SuSE 10/64 bit)])
                          enable_pci=no],
-                        [AC_MSG_RESULT([defer (default)])
-                         enable_pci=])
+                        [AC_MSG_RESULT([no (default)])
+                         enable_pci=no])
                  ])
           ])
 
