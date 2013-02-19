@@ -13,7 +13,7 @@
  * Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010-2012 Los Alamos National Security, LLC.  
  *                         All rights reserved. 
- * Copyright (c) 2012      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2012-2013 NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2012      Oracle and/or its affiliates.  All rights reserved.
  * $COPYRIGHT$
  *
@@ -42,6 +42,7 @@
 #include "opal/class/opal_bitmap.h"
 #include "opal/util/output.h"
 #include "opal/util/printf.h"
+#include "opal/util/show_help.h"
 #include "opal/mca/hwloc/base/base.h"
 #include "opal/mca/shmem/base/base.h"
 #include "opal/mca/shmem/shmem.h"

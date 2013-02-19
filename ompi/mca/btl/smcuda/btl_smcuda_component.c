@@ -13,7 +13,7 @@
  * Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010-2011 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2011-2012 NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2011-2013 NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -46,6 +46,7 @@
 #include "opal/mca/shmem/shmem.h"
 #include "opal/util/bit_ops.h"
 #include "opal/util/output.h"
+#include "opal/util/show_help.h"
 
 #include "ompi/constants.h"
 #include "ompi/runtime/ompi_module_exchange.h"
