@@ -34,6 +34,7 @@
 #include "opal/datatype/opal_convertor.h"
 #include "opal/datatype/opal_datatype_cuda.h"
 #include "opal/util/output.h"
+#include "opal/util/show_help.h"
 #include "ompi/mca/mpool/base/base.h"
 #include "ompi/mca/rte/rte.h"
 #include "ompi/runtime/params.h"
