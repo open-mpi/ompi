@@ -55,14 +55,28 @@
  *
  *   ...
  * }
+ *
+ * Per
+ * http://docs.oracle.com/javase/tutorial/java/nutsandbolts/datatypes.html,
+ * the sizes of Java types are fixed.  So we just assign them to their
+ * corresponding MPI fixed-size datatypes.
  */
 
-
-MPI_Datatype Dts[] = { MPI_DATATYPE_NULL, MPI_BYTE,  MPI_SHORT, 
-                       MPI_SHORT,         MPI_BYTE,  MPI_INT, 
-                       MPI_LONG_INT,      MPI_FLOAT, MPI_DOUBLE,
-                       MPI_PACKED,        MPI_LB,    MPI_UB, 
-                       MPI_BYTE };
+MPI_Datatype Dts[] = { MPI_DATATYPE_NULL,  /* NULL */
+                       MPI_UINT8_T,  /* BYTE */
+                       MPI_UINT8_T,  /* CHAR */
+                       MPI_INT16_T,  /* SHORT */
+                       MPI_UINT8_T,  /* BOOLEAN (let's hope Java is
+                                        one byte..) */
+                       MPI_INT32_T,  /* INT */
+                       MPI_INT64_T,  /* LONG */
+                       MPI_FLOAT,    /* FLOAT (let's hope it's the same!) */
+                       MPI_DOUBLE,   /* DOUBLE (let's hoe it's the same!) */
+                       MPI_PACKED,   /* PACKED */
+                       MPI_LB,       /* LB */
+                       MPI_UB,       /* UB */
+                       MPI_BYTE      /* JMS This one needs to go... */
+};
 
 void ompi_java_init_native_Datatype(void)
 {
