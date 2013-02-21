@@ -675,14 +675,11 @@ backing_store_init(mca_btl_sm_component_t *comp_ptr,
 {
     int rc = OMPI_SUCCESS;
 
-    opal_output(0, "hi from: %d\n", (int)local_rank);
-
     if (OMPI_SUCCESS != (rc = set_uniq_paths_for_init_rndv(comp_ptr))) {
         goto out;
     }
     /* only let the lowest rank setup the metadata */
     if (0 == local_rank) {
-        opal_output(0, "%d creating metadata!!!!\n", (int)local_rank);
         /* === sm mpool === */
         if (OMPI_SUCCESS != (rc =
             create_rndv_file(comp_ptr, MCA_BTL_SM_RNDV_MOD_MPOOL))) {
