@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012      Los Alamos National Security, LLC.
+ * Copyright (c) 2012-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2013      Sandia National Laboratories. All rights reserved.
  *
@@ -92,6 +92,7 @@ struct ompi_process_info_t {
 };
 typedef struct ompi_process_info_t ompi_process_info_t;
 #define OMPI_NODE_RANK_INVALID (-1)
+#define OMPI_LOCAL_RANK_INVALID (-1)
 
 
 OMPI_DECLSPEC extern ompi_process_info_t ompi_process_info;

@@ -671,14 +671,18 @@ out:
  */
 static int
 backing_store_init(mca_btl_sm_component_t *comp_ptr,
-                   ompi_node_rank_t node_rank)
+                   orte_local_rank_t local_rank)
 {
     int rc = OMPI_SUCCESS;
+
+    opal_output(0, "hi from: %d\n", (int)local_rank);
 
     if (OMPI_SUCCESS != (rc = set_uniq_paths_for_init_rndv(comp_ptr))) {
         goto out;
     }
-    if (0 == node_rank) {
+    /* only let the lowest rank setup the metadata */
+    if (0 == local_rank) {
+        opal_output(0, "%d creating metadata!!!!\n", (int)local_rank);
         /* === sm mpool === */
         if (OMPI_SUCCESS != (rc =
             create_rndv_file(comp_ptr, MCA_BTL_SM_RNDV_MOD_MPOOL))) {
@@ -705,7 +709,7 @@ mca_btl_sm_component_init(int *num_btls,
 {
     int num_local_procs = 0;
     mca_btl_base_module_t **btls = NULL;
-    ompi_node_rank_t my_node_rank = OMPI_NODE_RANK_INVALID;
+    orte_local_rank_t my_local_rank = OMPI_NODE_RANK_INVALID;
 #if OMPI_BTL_SM_HAVE_KNEM
     int rc;
 #endif /* OMPI_BTL_SM_HAVE_KNEM */
@@ -723,9 +727,13 @@ mca_btl_sm_component_init(int *num_btls,
         return NULL;
     }
     /* if we don't have locality information, then we cannot be used because we
-     * need to know who the respective node ranks for initialization. */
-    if (OMPI_NODE_RANK_INVALID ==
-        (my_node_rank = ompi_process_info.my_node_rank)) {
+     * need to know who the respective node ranks for initialization. note the
+     * use of my_local_rank here. we use this instead of my_node_rank because in
+     * the spawn case we need to designate a metadata creator rank within the
+     * set of processes that are initializing the btl, and my_local_rank seems
+     * to provide that for us. */
+    if (OMPI_LOCAL_RANK_INVALID ==
+        (my_local_rank = ompi_process_info.my_local_rank)) {
         opal_show_help("help-mpi-btl-sm.txt", "no locality", true);
         return NULL;
     }
@@ -742,7 +750,7 @@ mca_btl_sm_component_init(int *num_btls,
      * other local procs can read from it during add_procs. The rest will just
      * stash the known paths for use later in init. */
     if (OMPI_SUCCESS != backing_store_init(&mca_btl_sm_component,
-                                           my_node_rank)) {
+                                           my_local_rank)) {
         return NULL;
     }
 
