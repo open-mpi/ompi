@@ -706,7 +706,7 @@ mca_btl_sm_component_init(int *num_btls,
 {
     int num_local_procs = 0;
     mca_btl_base_module_t **btls = NULL;
-    orte_local_rank_t my_local_rank = OMPI_NODE_RANK_INVALID;
+    orte_local_rank_t my_local_rank = OMPI_LOCAL_RANK_INVALID;
 #if OMPI_BTL_SM_HAVE_KNEM
     int rc;
 #endif /* OMPI_BTL_SM_HAVE_KNEM */
