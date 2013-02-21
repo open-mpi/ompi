@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012      Los Alamos National Security, LLC.
+ * Copyright (c) 2012-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  *
  * $COPYRIGHT$
@@ -45,6 +45,7 @@ typedef orte_ns_cmp_bitmask_t ompi_rte_cmp_bitmask_t;
 #define ompi_rte_compare_name_fields(a, b, c) orte_util_compare_name_fields(a, b, c)
 #define OMPI_NAME_WILDCARD  ORTE_NAME_WILDCARD
 #define OMPI_NODE_RANK_INVALID ORTE_NODE_RANK_INVALID
+#define OMPI_LOCAL_RANK_INVALID ORTE_LOCAL_RANK_INVALID
 #define OMPI_RTE_CMP_JOBID  ORTE_NS_CMP_JOBID
 #define OMPI_RTE_CMP_VPID   ORTE_NS_CMP_VPID
 #define OMPI_RTE_CMP_ALL    ORTE_NS_CMP_ALL
