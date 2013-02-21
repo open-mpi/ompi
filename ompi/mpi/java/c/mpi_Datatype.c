@@ -64,7 +64,7 @@
 
 MPI_Datatype Dts[] = { MPI_DATATYPE_NULL,  /* NULL */
                        MPI_UINT8_T,  /* BYTE */
-                       MPI_UINT8_T,  /* CHAR */
+                       MPI_UINT16_T, /* CHAR */
                        MPI_INT16_T,  /* SHORT */
                        MPI_UINT8_T,  /* BOOLEAN (let's hope Java is
                                         one byte..) */
