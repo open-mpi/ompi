@@ -63,6 +63,7 @@ typedef orte_grpcomm_coll_id_t ompi_rte_collective_id_t;
 
 /* Process info struct and values */
 typedef orte_node_rank_t ompi_node_rank_t;
+typedef orte_local_rank_t ompi_local_rank_t;
 #define ompi_process_info orte_process_info
 #define ompi_rte_proc_is_bound orte_proc_is_bound
 
