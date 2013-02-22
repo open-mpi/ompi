@@ -54,6 +54,7 @@
 #include "ompi/mca/mpool/base/base.h"
 #include "ompi/mca/common/sm/common_sm.h"
 #include "ompi/mca/btl/base/btl_base_error.h"
+#include "ompi/mca/rte/rte.h"
 
 #if OPAL_ENABLE_FT_CR    == 1
 #include "opal/runtime/opal_cr.h"
@@ -671,7 +672,7 @@ out:
  */
 static int
 backing_store_init(mca_btl_sm_component_t *comp_ptr,
-                   orte_local_rank_t local_rank)
+                   ompi_local_rank_t local_rank)
 {
     int rc = OMPI_SUCCESS;
 
@@ -706,7 +707,7 @@ mca_btl_sm_component_init(int *num_btls,
 {
     int num_local_procs = 0;
     mca_btl_base_module_t **btls = NULL;
-    orte_local_rank_t my_local_rank = OMPI_LOCAL_RANK_INVALID;
+    ompi_local_rank_t my_local_rank = OMPI_LOCAL_RANK_INVALID;
 #if OMPI_BTL_SM_HAVE_KNEM
     int rc;
 #endif /* OMPI_BTL_SM_HAVE_KNEM */
