@@ -1,6 +1,6 @@
 ! -*- f90 -*-
 !
-! Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
+! Copyright (c) 2009-2013 Cisco Systems, Inc.  All rights reserved.
 ! Copyright (c) 2009-2012 Los Alamos National Security, LLC.
 !                         All rights reserved.
 ! Copyright (c) 2012      The University of Tennessee and The University
@@ -1873,6 +1873,8 @@ subroutine pompi_error_string_f(errorcode,string,resultlen,ierror,str_len) &
    INTEGER, VALUE, INTENT(IN) :: str_len
 end subroutine pompi_error_string_f
 
+#if OMPI_PROVIDE_MPI_FILE_INTERFACE
+
 subroutine pompi_file_call_errhandler_f(fh,errorcode,ierror) &
    BIND(C, name="pompi_file_call_errhandler_f")
    implicit none
@@ -1905,6 +1907,8 @@ subroutine pompi_file_set_errhandler_f(file,errhandler,ierror) &
    INTEGER, INTENT(IN) :: errhandler
    INTEGER, INTENT(OUT) :: ierror
 end subroutine pompi_file_set_errhandler_f
+
+#endif ! OMPI_PROVIDE_MPI_FILE_INTERFACE
 
 subroutine pompi_finalize_f(ierror) &
    BIND(C, name="pompi_finalize_f")
@@ -2412,6 +2416,8 @@ subroutine pompi_status_set_elements_f(status,datatype,count,ierror) &
    INTEGER, INTENT(IN) :: count
    INTEGER, INTENT(OUT) :: ierror
 end subroutine pompi_status_set_elements_f
+
+#if OMPI_PROVIDE_MPI_FILE_INTERFACE
 
 subroutine pompi_file_close_f(fh,ierror) &
    BIND(C, name="pompi_file_close_f")
@@ -2953,6 +2959,8 @@ subroutine pompi_file_write_shared_f(fh,buf,count,datatype,status,ierror) &
    TYPE(MPI_Status), INTENT(OUT) :: status
    INTEGER, INTENT(OUT) :: ierror
 end subroutine pompi_file_write_shared_f
+
+#endif ! OMPI_PROVIDE_MPI_FILE_INTERFACE
 
 subroutine pompi_register_datarep_f(datarep,read_conversion_fn, &
                                    write_conversion_fn,dtype_file_extent_fn, &
