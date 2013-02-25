@@ -297,7 +297,8 @@ $constants->{MPI_ERR_SERVICE} = 48;
 $constants->{MPI_ERR_SIZE} = 49;
 $constants->{MPI_ERR_SPAWN} = 50;
 $constants->{MPI_ERR_UNSUPPORTED_DATAREP} = 51;
-$constants->{MPI_ERR_UNSUPPORTED_OPERATION} = 53;
+$constants->{MPI_ERR_UNSUPPORTED_OPERATION} = 52;
+$constants->{MPI_ERR_WIN} = 53;
 $constants->{MPI_ERR_LASTCODE} = 54;
 
 $constants->{MPI_ERR_SYSRESOURCE} = -2;
