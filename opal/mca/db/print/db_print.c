@@ -26,6 +26,7 @@
 
 #include "opal/class/opal_pointer_array.h"
 #include "opal/util/argv.h"
+#include "opal/util/output.h"
 #include "opal_stdint.h"
 
 #include "opal/mca/db/base/base.h"
