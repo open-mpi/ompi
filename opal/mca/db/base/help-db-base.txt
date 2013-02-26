@@ -1,0 +1,19 @@
+ -*- text -*-
+#
+# Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved. 
+#
+# $COPYRIGHT$
+#
+# Additional copyrights may follow
+#
+# $HEADER$
+#
+# This is the US/English general help file for OPAL Errmgr HNP module.
+#
+[errmgr-hnp:unknown-job-error]
+An error has occurred in an unknown job. This generally should not happen
+except due to an internal OPAL error.
+
+Job state: %s
+
+This information should probably be repopald to the OMPI developers.

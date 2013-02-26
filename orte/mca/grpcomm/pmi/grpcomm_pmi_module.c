@@ -24,9 +24,9 @@
 
 #include "opal/dss/dss.h"
 #include "opal/mca/hwloc/base/base.h"
+#include "opal/mca/common/pmi/common_pmi.h"
+#include "opal/mca/db/db.h"
 
-#include "orte/mca/common/pmi/common_pmi.h"
-#include "orte/mca/db/db.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/util/name_fns.h"
@@ -70,7 +70,7 @@ static int init(void)
     max_length = 1024;
 #else
     if (PMI_SUCCESS != (rc = PMI_KVS_Get_name_length_max(&max_length))) {
-        ORTE_PMI_ERROR(rc, "PMI_KVS_Get_name_length_max");
+        OPAL_PMI_ERROR(rc, "PMI_KVS_Get_name_length_max");
         return ORTE_ERROR;
     }
 #endif
@@ -85,7 +85,7 @@ static int init(void)
     rc = PMI_KVS_Get_my_name(pmi_kvs_name,max_length);
 #endif
     if (PMI_SUCCESS != rc) {
-        ORTE_PMI_ERROR(rc, "PMI_KVS_Get_my_name");
+        OPAL_PMI_ERROR(rc, "PMI_KVS_Get_my_name");
         return ORTE_ERROR;
     }
     return ORTE_SUCCESS;
@@ -139,13 +139,13 @@ static int pmi_barrier(orte_grpcomm_collective_t *coll)
 #if WANT_CRAY_PMI2_EXT
     /* Cray doesn't provide a barrier, so use the Fence function here */
     if (PMI_SUCCESS != (rc = PMI2_KVS_Fence())) {
-        ORTE_PMI_ERROR(rc, "PMI2_KVS_Fence");
+        OPAL_PMI_ERROR(rc, "PMI2_KVS_Fence");
         return ORTE_ERROR;
     }
 #else
     /* use the PMI barrier function */
     if (PMI_SUCCESS != (rc = PMI_Barrier())) {
-        ORTE_PMI_ERROR(rc, "PMI_Barrier");
+        OPAL_PMI_ERROR(rc, "PMI_Barrier");
         return ORTE_ERROR;
     }
 #endif
@@ -171,14 +171,22 @@ static int pmi_allgather(orte_grpcomm_collective_t *coll)
 /***   MODEX SECTION ***/
 static int modex(orte_grpcomm_collective_t *coll)
 {
-    char *rml_uri;
+    char *cptr, **fields;
     orte_vpid_t v;
     orte_process_name_t name;
     int rc;
+    opal_identifier_t *id;
+    opal_hwloc_level_t bind_level;
+    opal_hwloc_locality_t locality;
+    unsigned int bind_idx;
+    orte_local_rank_t local_rank;
+    orte_node_rank_t node_rank;
 
      OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base.output,
                          "%s grpcomm:pmi: modex entered",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+
+     /* our RTE data was constructed and pushed in the ESS pmi component */
 
     /* commit our modex info */
 #if WANT_CRAY_PMI2_EXT
@@ -188,7 +196,7 @@ static int modex(orte_grpcomm_collective_t *coll)
         int rc;
         
         if (PMI_SUCCESS != (rc = PMI_KVS_Commit(pmi_kvs_name))) {
-            ORTE_PMI_ERROR(rc, "PMI_KVS_Commit");
+            OPAL_PMI_ERROR(rc, "PMI_KVS_Commit");
             return ORTE_ERR_FATAL;
         }
         /* Barrier here to ensure all other procs have committed */
@@ -196,29 +204,106 @@ static int modex(orte_grpcomm_collective_t *coll)
     }
 #endif
 
-    /* cycle thru all my peers and collect their contact info in
-     * case I need to send an RML message to them
-     */
+    /* cycle thru all my peers and collect their RTE info */
     name.jobid = ORTE_PROC_MY_NAME->jobid;
+    id = (opal_identifier_t*)&name;
+    fields = NULL;
     for (v=0; v < orte_process_info.num_procs; v++) {
         if (v == ORTE_PROC_MY_NAME->vpid) {
             continue;
         }
         name.vpid = v;
-	if (ORTE_SUCCESS != (rc = orte_db.fetch(&name, ORTE_DB_RMLURI, (void **)&rml_uri, OPAL_STRING))) {
+        /* fetch the RTE data for this proc */
+	if (ORTE_SUCCESS != (rc = opal_db.fetch((*id), "RTE", (void **)&cptr, OPAL_STRING))) {
             ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        /* split on commas */
+        fields = opal_argv_split(cptr, ',');
+        free(cptr);
+        /* sanity check */
+        if (6 != opal_argv_count(fields)) {
+            ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
+            opal_argv_free(fields);
+            return ORTE_ERR_BAD_PARAM;
+        }
+        
+        /* store the composite parts */
+        /* first field is the URI */
+        if (ORTE_SUCCESS != (rc = opal_db.store((*id), OPAL_DB_INTERNAL, ORTE_DB_RMLURI, fields[0], OPAL_STRING))) {
+            ORTE_ERROR_LOG(rc);
+            opal_argv_free(fields);
             return rc;
         }
         OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base.output,
                              "%s grpcomm:pmi: proc %s oob endpoint %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             ORTE_NAME_PRINT(&name), rml_uri));
+                             ORTE_NAME_PRINT(&name), fields[0]));
         /* set the contact info into the hash table */
-        if (ORTE_SUCCESS != (rc = orte_rml.set_contact_info(rml_uri))) {
-            free(rml_uri);
+        if (ORTE_SUCCESS != (rc = orte_rml.set_contact_info(fields[0]))) {
+            opal_argv_free(fields);
             return rc;
         }
-        free(rml_uri);
+        /* next is the hostname */
+        if (ORTE_SUCCESS != (rc = opal_db.store((*id), OPAL_DB_INTERNAL, ORTE_DB_HOSTNAME, fields[1], OPAL_STRING))) {
+            ORTE_ERROR_LOG(rc);
+            opal_argv_free(fields);
+            return rc;
+        }
+        /* next is the bind level */
+        bind_level = strtoul(fields[2], NULL, 10);
+        if (ORTE_SUCCESS != (rc = opal_db.store((*id), OPAL_DB_INTERNAL, ORTE_DB_BIND_LEVEL, &bind_level, OPAL_HWLOC_LEVEL_T))) {
+            ORTE_ERROR_LOG(rc);
+            opal_argv_free(fields);
+            return rc;
+        }
+        /* next is the bind index */
+        bind_idx = strtoul(fields[3], NULL, 10);
+        if (ORTE_SUCCESS != (rc = opal_db.store((*id), OPAL_DB_INTERNAL, ORTE_DB_BIND_INDEX, &bind_idx, OPAL_UINT))) {
+            ORTE_ERROR_LOG(rc);
+            opal_argv_free(fields);
+            return rc;
+        }
+        /* local rank */
+        local_rank = strtoul(fields[4], NULL, 10);
+        if (ORTE_SUCCESS != (rc = opal_db.store((*id), OPAL_DB_INTERNAL, ORTE_DB_LOCALRANK, &local_rank, ORTE_LOCAL_RANK))) {
+            ORTE_ERROR_LOG(rc);
+            opal_argv_free(fields);
+            return rc;
+        }
+        /* node rank */
+        node_rank = strtoul(fields[5], NULL, 10);
+        if (ORTE_SUCCESS != (rc = opal_db.store((*id), OPAL_DB_INTERNAL, ORTE_DB_NODERANK, &node_rank, ORTE_NODE_RANK))) {
+            ORTE_ERROR_LOG(rc);
+            opal_argv_free(fields);
+            return rc;
+        }
+
+        /* compute and store the locality as it isn't something that gets pushed to PMI */
+        if (0 != strcmp(fields[1], orte_process_info.nodename)) {
+            /* this is on a different node, then mark as non-local */
+            locality = OPAL_PROC_NON_LOCAL;
+        } else if (OPAL_HWLOC_NODE_LEVEL == bind_level) {
+            /* if we share a node, but we don't know anything more, then
+             * mark us as on the node as this is all we know
+             */
+            locality = OPAL_PROC_ON_NODE;
+        } else {
+            /* determine relative location on our node */
+            locality = opal_hwloc_base_get_relative_locality(opal_hwloc_topology,
+                                                             orte_process_info.bind_level,
+                                                             orte_process_info.bind_idx,
+                                                             bind_level, bind_idx);
+        }
+        if (ORTE_SUCCESS != (rc = opal_db.store((*id), OPAL_DB_INTERNAL, ORTE_DB_LOCALITY, &locality, OPAL_HWLOC_LOCALITY_T))) {
+            ORTE_ERROR_LOG(rc);
+            opal_argv_free(fields);
+            return rc;
+        }
+
+        /* cleanup */
+        opal_argv_free(fields);
+        fields = NULL;
     }
 
     /* execute the callback */
@@ -226,5 +311,5 @@ static int modex(orte_grpcomm_collective_t *coll)
     if (NULL != coll->cbfunc) {
         coll->cbfunc(NULL, coll->cbdata);
     }
-    return ORTE_SUCCESS;
+    return rc;
 }

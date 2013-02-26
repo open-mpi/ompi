@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2010-2012 Los Alamos National Security, LLC.
+ * Copyright (c) 2010-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2011-2012 University of Houston. All rights reserved.
  * $COPYRIGHT$
@@ -27,7 +27,6 @@
 #include "opal/class/opal_pointer_array.h"
 #include "opal/runtime/opal_info_support.h"
 
-#include "orte/mca/db/base/base.h"
 #include "orte/mca/dfs/base/base.h"
 #include "orte/mca/errmgr/base/base.h"
 #include "orte/mca/ess/base/base.h"
@@ -59,7 +58,6 @@ const char *orte_info_type_orte = "orte";
 void orte_info_register_types(opal_pointer_array_t *mca_types)
 {
     /* frameworks */
-    opal_pointer_array_add(mca_types, "db");
     opal_pointer_array_add(mca_types, "dfs");
     opal_pointer_array_add(mca_types, "errmgr");
     opal_pointer_array_add(mca_types, "ess");
@@ -131,20 +129,6 @@ int orte_info_register_components(opal_pointer_array_t *mca_types,
         goto error;
     }
     
-    if (ORTE_SUCCESS != (rc = orte_db_base_open()) &&
-        ORTE_ERR_BAD_PARAM != rc) {
-        str = "db_base_open";
-        goto error;
-    }
-    map = OBJ_NEW(opal_info_component_map_t);
-    map->type = strdup("db");
-    map->components = &orte_db_base.available_components;
-    opal_pointer_array_add(component_map, map);
-    if (ORTE_ERR_BAD_PARAM == rc)  {
-        str = "db";
-        goto breakout;
-    }
-
     if (ORTE_SUCCESS != (rc = orte_dfs_base_open()) &&
         ORTE_ERR_BAD_PARAM != rc) {
         str = "dfs_base_open";
@@ -413,7 +397,6 @@ int orte_info_register_components(opal_pointer_array_t *mca_types,
 
 void orte_info_close_components(void)
 {
-    (void) orte_db_base_close();
     (void) orte_errmgr_base_close();
     (void) orte_ess_base_close();
     (void) orte_filem_base_close();

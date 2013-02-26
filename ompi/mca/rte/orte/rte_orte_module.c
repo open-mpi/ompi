@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012      Los Alamos National Security, LLC.
+ * Copyright (c) 2012-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  */
 #include "ompi_config.h"
@@ -12,6 +12,7 @@
 #include "opal/dss/dss.h"
 #include "opal/util/argv.h"
 #include "opal/util/opal_getcwd.h"
+#include "opal/mca/db/db.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/ess/ess.h"
@@ -139,3 +140,52 @@ void ompi_rte_wait_for_debugger(void)
         }
     }
 }    
+
+int ompi_rte_db_store(const orte_process_name_t *nm, const char* key,
+                      const void *data, opal_data_type_t type)
+{
+    opal_identifier_t *id;
+
+    id = (opal_identifier_t*)nm;
+    return opal_db.store((*id), OPAL_DB_GLOBAL, key, data, type);
+}
+
+int ompi_rte_db_fetch(const orte_process_name_t *nm,
+                      const char *key,
+                      void **data, opal_data_type_t type)
+{
+    opal_identifier_t *id;
+
+    id = (opal_identifier_t*)nm;
+    return opal_db.fetch((*id), key, data, type);
+}
+
+int ompi_rte_db_fetch_pointer(const orte_process_name_t *nm,
+                              const char *key,
+                              void **data, opal_data_type_t type)
+{
+    opal_identifier_t *id;
+
+    id = (opal_identifier_t*)nm;
+    return opal_db.fetch_pointer((*id), key, data, type);
+}
+
+int ompi_rte_db_fetch_multiple(const orte_process_name_t *nm,
+                               const char *key,
+                               opal_list_t *kvs)
+{
+    opal_identifier_t *id;
+
+    id = (opal_identifier_t*)nm;
+    return opal_db.fetch_multiple((*id), key, kvs);
+}
+
+int ompi_rte_db_remove(const orte_process_name_t *nm,
+                       const char *key)
+{
+    opal_identifier_t *id;
+
+    id = (opal_identifier_t*)nm;
+    return opal_db.remove((*id), key);
+}
+

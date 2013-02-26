@@ -75,6 +75,11 @@ enum {
     ORTE_ERR_MULTIPLE_AFFINITIES            = OPAL_ERR_MULTIPLE_AFFINITIES,
     ORTE_ERR_SLOT_LIST_RANGE                = OPAL_ERR_SLOT_LIST_RANGE,
     ORTE_ERR_SILENT                         = OPAL_ERR_SILENT,
+    ORTE_ERR_NOT_INITIALIZED                = OPAL_ERR_NOT_INITIALIZED,
+    ORTE_ERR_NOT_BOUND                      = OPAL_ERR_NOT_BOUND,
+    ORTE_ERR_TAKE_NEXT_OPTION               = OPAL_ERR_TAKE_NEXT_OPTION,
+    ORTE_ERR_PROC_ENTRY_NOT_FOUND           = OPAL_ERR_PROC_ENTRY_NOT_FOUND,
+    ORTE_ERR_DATA_VALUE_NOT_FOUND           = OPAL_ERR_DATA_VALUE_NOT_FOUND,
 
 /* error codes specific to ORTE - don't forget to update
     orte/util/error_strings.c when adding new error codes!!
@@ -122,12 +127,8 @@ enum {
     ORTE_ERR_NO_EXE_SPECIFIED               = (ORTE_ERR_BASE - 39),
     ORTE_ERR_COMM_DISABLED                  = (ORTE_ERR_BASE - 40),
     ORTE_ERR_FAILED_TO_MAP                  = (ORTE_ERR_BASE - 41),
-    ORTE_ERR_TAKE_NEXT_OPTION               = (ORTE_ERR_BASE - 42),
-    ORTE_ERR_SENSOR_LIMIT_EXCEEDED          = (ORTE_ERR_BASE - 43),
-    ORTE_ERR_JOB_ENTRY_NOT_FOUND            = (ORTE_ERR_BASE - 44),
-    ORTE_ERR_PROC_ENTRY_NOT_FOUND           = (ORTE_ERR_BASE - 45),
-    ORTE_ERR_DATA_VALUE_NOT_FOUND           = (ORTE_ERR_BASE - 46),
-    ORTE_ERR_ALLOCATION_PENDING             = (ORTE_ERR_BASE - 47)
+    ORTE_ERR_SENSOR_LIMIT_EXCEEDED          = (ORTE_ERR_BASE - 42),
+    ORTE_ERR_ALLOCATION_PENDING             = (ORTE_ERR_BASE - 44)
 };
 
 #define ORTE_ERR_MAX                      (ORTE_ERR_BASE - 100)

@@ -215,6 +215,15 @@ opal_err2str(int errnum, const char **errmsg)
     case OPAL_ERR_NOT_BOUND:
         retval = "Not bound";
         break;
+    case OPAL_ERR_TAKE_NEXT_OPTION:
+        retval = "Take next option";
+        break;
+    case OPAL_ERR_PROC_ENTRY_NOT_FOUND:
+        retval = "Database entry not found";
+        break;
+    case OPAL_ERR_DATA_VALUE_NOT_FOUND:
+        retval = "Data for specified key not found";
+        break;
     default:
         retval = NULL;
     }

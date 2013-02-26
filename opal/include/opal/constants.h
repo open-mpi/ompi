@@ -71,7 +71,10 @@ enum {
     OPAL_ERR_NETWORK_NOT_PARSEABLE          = (OPAL_ERR_BASE - 42),
     OPAL_ERR_SILENT                         = (OPAL_ERR_BASE - 43),
     OPAL_ERR_NOT_INITIALIZED                = (OPAL_ERR_BASE - 44),
-    OPAL_ERR_NOT_BOUND                      = (OPAL_ERR_BASE - 45)
+    OPAL_ERR_NOT_BOUND                      = (OPAL_ERR_BASE - 45),
+    OPAL_ERR_TAKE_NEXT_OPTION               = (OPAL_ERR_BASE - 46),
+    OPAL_ERR_PROC_ENTRY_NOT_FOUND           = (OPAL_ERR_BASE - 47),
+    OPAL_ERR_DATA_VALUE_NOT_FOUND           = (OPAL_ERR_BASE - 48)
 };
 
 #define OPAL_ERR_MAX                (OPAL_ERR_BASE - 100)

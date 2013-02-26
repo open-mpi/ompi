@@ -12,7 +12,7 @@
  * Copyright (c) 2009      Institut National de Recherche en Informatique
  *                         et Automatique. All rights reserved.
  * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2011-2012 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * $COPYRIGHT$
  * 
@@ -37,6 +37,7 @@
 #include "opal/mca/event/event.h"
 #include "opal/runtime/opal.h"
 #include "opal/runtime/opal_cr.h"
+#include "opal/mca/db/base/base.h"
 #include "opal/mca/hwloc/base/base.h"
 #include "opal/mca/pstat/base/base.h"
 #include "opal/util/os_path.h"
@@ -44,7 +45,6 @@
 #include "orte/mca/rml/base/base.h"
 #include "orte/mca/routed/base/base.h"
 #include "orte/mca/routed/routed.h"
-#include "orte/mca/db/base/base.h"
 #include "orte/mca/dfs/base/base.h"
 #include "orte/mca/grpcomm/grpcomm.h"
 #include "orte/mca/grpcomm/base/base.h"
@@ -272,12 +272,12 @@ int orte_ess_base_orted_setup(char **hosts)
     }
     
     /* database */
-    if (ORTE_SUCCESS != (ret = orte_db_base_open())) {
+    if (ORTE_SUCCESS != (ret = opal_db_base_open())) {
         ORTE_ERROR_LOG(ret);
         error = "orte_db_base_open";
         goto error;
     }
-    if (ORTE_SUCCESS != (ret = orte_db_base_select())) {
+    if (ORTE_SUCCESS != (ret = opal_db_base_select())) {
         ORTE_ERROR_LOG(ret);
         error = "orte_db_base_select";
         goto error;

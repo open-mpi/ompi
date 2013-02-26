@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2010-2011 Cisco Systems, Inc.  All rights reserved. 
- * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
+ * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * $COPYRIGHT$
  *
@@ -183,9 +183,6 @@ int orte_err2str(int errnum, const char **errmsg)
         break;
     case ORTE_ERR_SENSOR_LIMIT_EXCEEDED:
         retval = "Sensor limit exceeded";
-        break;
-    case ORTE_ERR_JOB_ENTRY_NOT_FOUND:
-        retval = "Job entry not found";
         break;
     case ORTE_ERR_PROC_ENTRY_NOT_FOUND:
         retval = "Proc entry not found";

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012      Los Alamos National Security, LLC.
+ * Copyright (c) 2012-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * $COPYRIGHT$
  * 
@@ -26,12 +26,12 @@
 #include "opal/util/output.h"
 #include "opal/util/uri.h"
 #include "opal/dss/dss.h"
+#include "opal/mca/db/db.h"
 
 #include "orte/util/error_strings.h"
 #include "orte/util/name_fns.h"
 #include "orte/util/show_help.h"
 #include "orte/runtime/orte_globals.h"
-#include "orte/mca/db/db.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/rml/rml.h"
 
@@ -507,6 +507,7 @@ static void process_opens(int fd, short args, void *cbdata)
     char *scheme, *host, *filename;
     orte_process_name_t daemon;
     orte_vpid_t *v;
+    opal_identifier_t *id;
 
     /* get the scheme to determine if we can process locally or not */
     if (NULL == (scheme = opal_uri_get_scheme(dfs->uri))) {
@@ -557,7 +558,8 @@ static void process_opens(int fd, short args, void *cbdata)
                         "%s looking for daemon on host %s",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), host);
     v = &daemon.vpid;
-    if (ORTE_SUCCESS != (rc = orte_db.fetch(ORTE_NAME_WILDCARD, host, (void**)&v, ORTE_VPID))) {
+    id = (opal_identifier_t*)ORTE_NAME_WILDCARD;
+    if (ORTE_SUCCESS != (rc = opal_db.fetch((*id), host, (void**)&v, ORTE_VPID))) {
         ORTE_ERROR_LOG(rc);
         goto complete;
     }

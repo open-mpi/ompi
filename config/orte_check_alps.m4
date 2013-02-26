@@ -24,7 +24,7 @@ AC_DEFUN([ORTE_CHECK_ALPS],[
     if test -z "$orte_check_alps_happy"; then
         # require that we check for pmi support request first so
         # we can get the static library ordering correct
-        AC_REQUIRE([ORTE_CHECK_PMI])
+        AC_REQUIRE([OPAL_CHECK_PMI])
 
         AC_ARG_WITH([alps],
                     [AC_HELP_STRING([--with-alps(=DIR|yes|no)],
