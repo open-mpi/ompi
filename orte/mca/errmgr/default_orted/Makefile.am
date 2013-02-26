@@ -7,8 +7,6 @@
 # $HEADER$
 #
 
-EXTRA_DIST = .windows
-
 sources = \
         errmgr_default_orted.h \
         errmgr_default_orted_component.c \

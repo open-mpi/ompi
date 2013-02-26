@@ -11,8 +11,6 @@
 # $HEADER$
 #
 
-EXTRA_DIST = .windows
-
 AM_CPPFLAGS = \
     $(LTDLINCL)
 

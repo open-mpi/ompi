@@ -15,8 +15,6 @@
 # $HEADER$
 #
 
-EXTRA_DIST = .windows
-
 pt2pt_sources = \
 	osc_pt2pt.h \
 	osc_pt2pt.c \

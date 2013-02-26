@@ -10,7 +10,7 @@
 # $HEADER$
 #
 
-EXTRA_DIST = .windows opal_check_visibility.m4
+EXTRA_DIST = opal_check_visibility.m4
 
 AM_CPPFLAGS = -I$(srcdir)/libevent -I$(srcdir)/libevent/include -I$(builddir)/libevent/include -I$(srcdir)/libevent/compat
 

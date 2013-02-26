@@ -18,8 +18,6 @@
 # $HEADER$
 #
 
-EXTRA_DIST = .windows
-
 sources = \
         coll_basic.h \
         coll_basic_allgather.c \

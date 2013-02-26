@@ -12,6 +12,7 @@
 # Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2010      IBM Corporation.  All rights reserved.
 # Copyright (c) 2010-2011 Oak Ridge National Labs.  All rights reserved.
+# Copyright (c) 2013      Los Alamos National Security, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -95,45 +96,6 @@ EXTRA_DIST = \
         platform/lanl/tlcc2/optimized-panasas.conf \
 	platform/snl/portals4-m5 \
 	platform/snl/portals4-orte \
-        platform/win32/CMakeModules/check_bool.cmake \
-        platform/win32/CMakeModules/check_c_inline.cmake \
-        platform/win32/CMakeModules/check_c_type_exists.cmake \
-        platform/win32/CMakeModules/check_mca_subdirs.cmake \
-        platform/win32/CMakeModules/ompi_base_checks.cmake \
-        platform/win32/CMakeModules/ompi_define.cmake \
-        platform/win32/CMakeModules/ompi_ext_config.cmake \
-        platform/win32/CMakeModules/find_ccp.cmake \
-        platform/win32/CMakeModules/find_flex.cmake \
-        platform/win32/CMakeModules/find_libltdl.cmake \
-        platform/win32/CMakeModules/find_ofed_sdk.cmake \
-        platform/win32/CMakeModules/find_winverbs.cmake \
-        platform/win32/CMakeModules/generate_version_file.cmake \
-        platform/win32/CMakeModules/get_c_alignment.cmake \
-        platform/win32/CMakeModules/list_subdirs.cmake \
-        platform/win32/CMakeModules/ompi_check_Microsoft.cmake \
-        platform/win32/CMakeModules/ompi_check_MinGW.cmake \
-        platform/win32/CMakeModules/ompi_configure.cmake \
-        platform/win32/CMakeModules/ompi_find_type.cmake \
-        platform/win32/CMakeModules/opal_event_config.cmake \
-        platform/win32/CMakeModules/opal_get_version.cmake \
-        platform/win32/CMakeModules/opal_functions.cmake \
-        platform/win32/ConfigFiles/revision.in \
-        platform/win32/CMakeModules/fortran_get_value_true.cmake \
-        platform/win32/CMakeModules/fortran_check.cmake \
-        platform/win32/CMakeModules/fortran_get_alignment.cmake \
-        platform/win32/CMakeModules/fortran_check_type.cmake \
-        platform/win32/CMakeModules/fortran_find_ext_symbol_convention.cmake \
-        platform/win32/CMakeModules/fortran_get_fortran_handle_max.cmake \
-        platform/win32/CMakeModules/fortran_get_sizeof.cmake \
-        platform/win32/CMakeModules/setup_fortran.cmake \
-        platform/win32/CMakeModules/fortran_check_real16_c_equiv.cmake \
-        platform/win32/CMakeModules/opal_hwloc_config.cmake \
-        platform/win32/include/hwloc/autogen/config.h \
-        platform/win32/include/private/autogen/config.h \
-        platform/win32/examples/CMakeLists.txt \
-        platform/win32/examples/chello/CMakeLists.txt \
-        platform/win32/examples/chello/chello.vcxproj \
-        platform/win32/examples/chello/chello.c \
 	platform/cisco/macosx-dynamic \
 	platform/cisco/macosx-dynamic.conf \
 	platform/cisco/linux \

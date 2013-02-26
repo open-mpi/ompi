@@ -16,8 +16,6 @@
 # $HEADER$
 #
 
-EXTRA_DIST = .windows
-
 noinst_LTLIBRARIES = libmca_backtrace_none.la
 
 libmca_backtrace_none_la_SOURCES = \

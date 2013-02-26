@@ -8,8 +8,6 @@
 # $HEADER$
 #
 
-EXTRA_DIST = .windows
-
 sources = \
         state_hnp.h \
         state_hnp_component.c \

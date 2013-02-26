@@ -11,8 +11,6 @@
 # $HEADER$
 #
 
-EXTRA_DIST = .windows
-
 dist_pkgdata_DATA = help-ompi-pubsub-orte.txt
 
 # Make the output library in this directory, and name it either

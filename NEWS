@@ -12,7 +12,7 @@ Copyright (c) 2006-2013 Cisco Systems, Inc.  All rights reserved.
 Copyright (c) 2006      Voltaire, Inc. All rights reserved.
 Copyright (c) 2006      Sun Microsystems, Inc.  All rights reserved.
                         Use is subject to license terms.
-Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
+Copyright (c) 2006-2013 Los Alamos National Security, LLC.  All rights
                         reserved.
 Copyright (c) 2010-2012 IBM Corporation.  All rights reserved.
 Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
@@ -70,6 +70,9 @@ Trunk (not on release branches yet)
 - Extended filem framework to support scalable pre-positioning of
   files for use by applications, adding new "raw" component that
   transmits files across the daemon network
+- Native Windows support has been removed. A cygwin package is
+  available from that group for Windows-based use.
+- Added MPI Java bindings
 
 
 1.7
@@ -106,7 +109,6 @@ Trunk (not on release branches yet)
   in assigning process locations and bindings
 - Added the -novm option to preserve the prior launch behavior
 - Added new MCA parameter to provide protection against IO forwarding backlog
-- Added MPI Java bindings
 
 
 1.6.4

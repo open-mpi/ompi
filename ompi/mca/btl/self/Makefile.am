@@ -17,8 +17,6 @@
 # $HEADER$
 #
 
-EXTRA_DIST = .windows
-
 libmca_btl_self_la_sources = \
     btl_self.c \
     btl_self.h \

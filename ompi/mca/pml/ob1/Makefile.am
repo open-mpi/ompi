@@ -22,7 +22,7 @@
 dist_pkgdata_DATA = \
 	help-mpi-pml-ob1.txt
 
-EXTRA_DIST = post_configure.sh .windows
+EXTRA_DIST = post_configure.sh
 
 ob1_sources  = \
 	pml_ob1.c \

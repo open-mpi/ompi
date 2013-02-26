@@ -17,8 +17,6 @@
 # $HEADER$
 #
 
-EXTRA_DIST = .windows
-
 sources = \
         grpcomm_bad.h \
 	grpcomm_bad_module.c \

@@ -7,8 +7,6 @@
 # $HEADER$
 #
 
-EXTRA_DIST = .windows
-
 sources = \
         errmgr_default_hnp.h \
         errmgr_default_hnp_component.c \
