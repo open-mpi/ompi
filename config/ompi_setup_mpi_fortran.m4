@@ -339,6 +339,20 @@ AC_DEFUN([OMPI_SETUP_MPI_FORTRAN],[
                [OMPI_FORTRAN_HAVE_BIND_C=0
                 OMPI_BUILD_FORTRAN_USEMPIF08_BINDINGS=0])])
 
+    # Check whether BIND(C) can be used with default LOGICAL
+    # parameters (per https://svn.open-mpi.org/trac/ompi/ticket/3523
+    # and http://lists.mpi-forum.org/mpi-comments/2013/02/0076.php).
+    # For the moment (Feb 2013), MPI-3 says we have to use LOGICAL
+    # (not LOGICAL(BIND=C_BOOL)).  So if the compiler doesn't allow
+    # this behavior, then disable the F08 bindings.
+    OMPI_FORTRAN_BINDC_LIKES_LOGICAL=0
+    AS_IF([test $OMPI_WANT_FORTRAN_USEMPIF08_BINDINGS -eq 1 -a \
+           $OMPI_BUILD_FORTRAN_USEMPIF08_BINDINGS -eq 1],
+          [OMPI_FORTRAN_CHECK_BIND_C_LOGICAL(
+               [OMPI_FORTRAN_BIND_C_LIKES_LOGICAL=1],
+               [OMPI_FORTRAN_BIND_C_LIKES_LOGICAL=0
+                OMPI_BUILD_FORTRAN_USEMPIF08_BINDINGS=0])])
+
     OMPI_FORTRAN_HAVE_OPTIONAL_ARGS=0
     AS_IF([test $OMPI_WANT_FORTRAN_USEMPIF08_BINDINGS -eq 1 -a \
            $OMPI_BUILD_FORTRAN_USEMPIF08_BINDINGS -eq 1],
