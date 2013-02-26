@@ -1,5 +1,7 @@
 #
 # Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2013      Los Alamos National Security, LLC.  All rights
+#                         reserved. 
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -31,7 +33,7 @@ mcacomponent_LTLIBRARIES = $(component_install)
 mca_grpcomm_pmi_la_SOURCES = $(sources)
 mca_grpcomm_pmi_la_LDFLAGS = -module -avoid-version $(grpcomm_pmi_LDFLAGS)
 mca_grpcomm_pmi_la_LIBADD = $(grpcomm_pmi_LIBS) \
-	$(top_ompi_builddir)/orte/mca/common/pmi/libmca_common_pmi.la
+	$(top_ompi_builddir)/opal/mca/common/pmi/libmca_common_pmi.la
 
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_grpcomm_pmi_la_SOURCES =$(sources)

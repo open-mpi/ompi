@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
+ * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * $COPYRIGHT$
  *
@@ -34,10 +34,10 @@
 #include "opal/util/output.h"
 #include "opal/class/opal_hash_table.h"
 #include "opal/dss/dss.h"
+#include "opal/mca/db/db.h"
 #include "opal/mca/hwloc/base/base.h"
 
 #include "orte/util/proc_info.h"
-#include "orte/mca/db/db.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/ess/ess.h"
 #include "orte/runtime/orte_globals.h"
@@ -224,7 +224,8 @@ void orte_grpcomm_base_modex(int fd, short args, void *cbdata)
 void orte_grpcomm_base_store_peer_modex(opal_buffer_t *rbuf, void *cbdata)
 {
     int rc, cnt;
-    orte_process_name_t proc_name;
+    orte_process_name_t pname;
+    opal_identifier_t *id;
     char *hostname;
     orte_vpid_t daemon;
     orte_node_rank_t node_rank;
@@ -238,14 +239,15 @@ void orte_grpcomm_base_store_peer_modex(opal_buffer_t *rbuf, void *cbdata)
 
     /* unpack the process name */
     cnt=1;
-    while (ORTE_SUCCESS == (rc = opal_dss.unpack(rbuf, &proc_name, &cnt, ORTE_NAME))) {
+    while (ORTE_SUCCESS == (rc = opal_dss.unpack(rbuf, &pname, &cnt, ORTE_NAME))) {
+        id = (opal_identifier_t*)&pname;
         /* unpack and store the hostname */
         cnt = 1;
         if (ORTE_SUCCESS != (rc = opal_dss.unpack(rbuf, &hostname, &cnt, OPAL_STRING))) {
             ORTE_ERROR_LOG(rc);
             goto cleanup;
         }
-        if (ORTE_SUCCESS != (rc = orte_db.store(&proc_name, ORTE_DB_HOSTNAME, hostname, OPAL_STRING))) {
+        if (ORTE_SUCCESS != (rc = opal_db.store((*id), OPAL_DB_INTERNAL, ORTE_DB_HOSTNAME, hostname, OPAL_STRING))) {
             ORTE_ERROR_LOG(rc);
             goto cleanup;
         }
@@ -256,7 +258,7 @@ void orte_grpcomm_base_store_peer_modex(opal_buffer_t *rbuf, void *cbdata)
             ORTE_ERROR_LOG(rc);
             goto cleanup;
         }
-        if (ORTE_SUCCESS != (rc = orte_db.store(&proc_name, ORTE_DB_DAEMON_VPID, &daemon, ORTE_VPID))) {
+        if (ORTE_SUCCESS != (rc = opal_db.store((*id), OPAL_DB_INTERNAL, ORTE_DB_DAEMON_VPID, &daemon, OPAL_UINT32))) {
             ORTE_ERROR_LOG(rc);
             goto cleanup;
         }
@@ -267,7 +269,7 @@ void orte_grpcomm_base_store_peer_modex(opal_buffer_t *rbuf, void *cbdata)
             ORTE_ERROR_LOG(rc);
             goto cleanup;
         }
-        if (ORTE_SUCCESS != (rc = orte_db.store(&proc_name, ORTE_DB_NODERANK, &node_rank, ORTE_NODE_RANK))) {
+        if (ORTE_SUCCESS != (rc = opal_db.store((*id), OPAL_DB_INTERNAL, ORTE_DB_NODERANK, &node_rank, ORTE_NODE_RANK))) {
             ORTE_ERROR_LOG(rc);
             goto cleanup;
         }
@@ -278,7 +280,7 @@ void orte_grpcomm_base_store_peer_modex(opal_buffer_t *rbuf, void *cbdata)
             ORTE_ERROR_LOG(rc);
             goto cleanup;
         }
-        if (ORTE_SUCCESS != (rc = orte_db.store(&proc_name, ORTE_DB_LOCALRANK, &local_rank, ORTE_LOCAL_RANK))) {
+        if (ORTE_SUCCESS != (rc = opal_db.store((*id), OPAL_DB_INTERNAL, ORTE_DB_LOCALRANK, &local_rank, ORTE_LOCAL_RANK))) {
             ORTE_ERROR_LOG(rc);
             goto cleanup;
         }
@@ -295,7 +297,7 @@ void orte_grpcomm_base_store_peer_modex(opal_buffer_t *rbuf, void *cbdata)
                 ORTE_ERROR_LOG(rc);
                 goto cleanup;
             }
-            if (ORTE_SUCCESS != (rc = orte_db.store(&proc_name, ORTE_DB_BIND_LEVEL, &bind_level, OPAL_HWLOC_LEVEL_T))) {
+            if (ORTE_SUCCESS != (rc = opal_db.store((*id), OPAL_DB_INTERNAL, ORTE_DB_BIND_LEVEL, &bind_level, OPAL_HWLOC_LEVEL_T))) {
                 ORTE_ERROR_LOG(rc);
                 goto cleanup;
             }
@@ -304,29 +306,29 @@ void orte_grpcomm_base_store_peer_modex(opal_buffer_t *rbuf, void *cbdata)
                 ORTE_ERROR_LOG(rc);
                 goto cleanup;
             }
-            if (ORTE_SUCCESS != (rc = orte_db.store(&proc_name, ORTE_DB_BIND_INDEX, &bind_idx, OPAL_UINT))) {
+            if (ORTE_SUCCESS != (rc = opal_db.store((*id), OPAL_DB_INTERNAL, ORTE_DB_BIND_INDEX, &bind_idx, OPAL_UINT))) {
                 ORTE_ERROR_LOG(rc);
                 goto cleanup;
             }
             OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base.output,
                                  "%s store:peer:modex setting proc %s level %s idx %u",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 ORTE_NAME_PRINT(&proc_name),
+                                 ORTE_NAME_PRINT(&pname),
                                  opal_hwloc_base_print_level(bind_level), bind_idx));
 
-            if (OPAL_EQUAL == orte_util_compare_name_fields(ORTE_NS_CMP_ALL, &proc_name, ORTE_PROC_MY_NAME)) {
+            if (OPAL_EQUAL == orte_util_compare_name_fields(ORTE_NS_CMP_ALL, &pname, ORTE_PROC_MY_NAME)) {
                 /* if this data is from myself, then set locality to all */
                 OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base.output,
                                      "%s store:peer:modex setting proc %s locale ALL",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                     ORTE_NAME_PRINT(&proc_name)));
+                                     ORTE_NAME_PRINT(&pname)));
                 locality = OPAL_PROC_ALL_LOCAL;
             } else if (daemon != ORTE_PROC_MY_DAEMON->vpid) {
                 /* this is on a different node, then mark as non-local */
                 OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base.output,
                                      "%s store:peer:modex setting proc %s locale NONLOCAL",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                     ORTE_NAME_PRINT(&proc_name)));
+                                     ORTE_NAME_PRINT(&pname)));
                 locality = OPAL_PROC_NON_LOCAL;
             } else if (OPAL_HWLOC_NODE_LEVEL == orte_process_info.bind_level ||
                        OPAL_HWLOC_NODE_LEVEL == bind_level) {
@@ -343,31 +345,31 @@ void orte_grpcomm_base_store_peer_modex(opal_buffer_t *rbuf, void *cbdata)
                 OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base.output,
                                      "%s store:peer:modex setting proc %s locale %s",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                     ORTE_NAME_PRINT(&proc_name),
+                                     ORTE_NAME_PRINT(&pname),
                                      opal_hwloc_base_print_locality(locality)));
             }
         }
 #else
-        if (OPAL_EQUAL == orte_util_compare_name_fields(ORTE_NS_CMP_ALL, &proc_name, ORTE_PROC_MY_NAME)) {
+        if (OPAL_EQUAL == orte_util_compare_name_fields(ORTE_NS_CMP_ALL, &pname, ORTE_PROC_MY_NAME)) {
             /* if this data is from myself, then set locality to all */
             OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base.output,
                                  "%s grpcomm:base:modex setting proc %s locale ALL",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 ORTE_NAME_PRINT(&proc_name)));
+                                 ORTE_NAME_PRINT(&pname)));
             locality = OPAL_PROC_ALL_LOCAL;
         } else if (daemon != ORTE_PROC_MY_DAEMON->vpid) {
             /* this is on a different node, then mark as non-local */
             OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base.output,
                                  "%s store:peer:modex setting proc %s locale NONLOCAL",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 ORTE_NAME_PRINT(&proc_name)));
+                                 ORTE_NAME_PRINT(&pname)));
             locality = OPAL_PROC_NON_LOCAL;
         } else {
             /* must be on our node */
             locality = OPAL_PROC_ON_NODE;
         }
 #endif
-        if (ORTE_SUCCESS != (rc = orte_db.store(&proc_name, ORTE_DB_LOCALITY, &locality, OPAL_HWLOC_LOCALITY_T))) {
+        if (ORTE_SUCCESS != (rc = opal_db.store((*id), OPAL_DB_INTERNAL, ORTE_DB_LOCALITY, &locality, OPAL_HWLOC_LOCALITY_T))) {
             ORTE_ERROR_LOG(rc);
             goto cleanup;
         }
@@ -375,17 +377,17 @@ void orte_grpcomm_base_store_peer_modex(opal_buffer_t *rbuf, void *cbdata)
         OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base.output,
                              "%s store:peer:modex: adding modex entry for proc %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             ORTE_NAME_PRINT(&proc_name)));
+                             ORTE_NAME_PRINT(&pname)));
         
         /* update the modex database */
-        if (ORTE_SUCCESS != (rc = orte_grpcomm_base_update_modex_entries(&proc_name, rbuf))) {
+        if (ORTE_SUCCESS != (rc = orte_grpcomm_base_update_modex_entries(&pname, rbuf))) {
             ORTE_ERROR_LOG(rc);
             goto cleanup;
         }            
         OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base.output,
                              "%s store:peer:modex: completed modex entry for proc %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             ORTE_NAME_PRINT(&proc_name)));
+                             ORTE_NAME_PRINT(&pname)));
     }    
 
  cleanup:
@@ -461,6 +463,7 @@ int orte_grpcomm_base_update_modex_entries(orte_process_name_t *proc_name,
     int32_t num_recvd_entries;
     orte_std_cntr_t cnt;
     orte_std_cntr_t j;
+    opal_identifier_t *id;
 
     /* unpack the number of entries for this proc */
     cnt=1;
@@ -474,6 +477,8 @@ int orte_grpcomm_base_update_modex_entries(orte_process_name_t *proc_name,
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), num_recvd_entries,
                          ORTE_NAME_PRINT(proc_name)));
     
+    id = (opal_identifier_t*)proc_name;
+
     /*
      * Extract the attribute names and values
      */
@@ -490,7 +495,7 @@ int orte_grpcomm_base_update_modex_entries(orte_process_name_t *proc_name,
             OBJ_RELEASE(kv);
         } else {
             /* store it in the database */
-            if (ORTE_SUCCESS != (rc = orte_db.store_pointer(proc_name, kv))) {
+            if (ORTE_SUCCESS != (rc = opal_db.store_pointer((*id), OPAL_DB_INTERNAL, kv))) {
                 ORTE_ERROR_LOG(rc);
                 goto cleanup;
             }
@@ -509,10 +514,12 @@ int orte_grpcomm_base_pack_modex_entries(opal_buffer_t *buf)
     opal_value_t *kv;
     opal_list_t data;
     opal_list_item_t *item, *next;
+    opal_identifier_t *id;
 
     /* fetch our data */
     OBJ_CONSTRUCT(&data, opal_list_t);
-    if (ORTE_SUCCESS != (rc = orte_db.fetch_multiple(ORTE_PROC_MY_NAME, NULL, &data))) {
+    id = (opal_identifier_t*)ORTE_PROC_MY_NAME;
+    if (ORTE_SUCCESS != (rc = opal_db.fetch_multiple((*id), NULL, &data))) {
         ORTE_ERROR_LOG(rc);
         goto cleanup;
     }

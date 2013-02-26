@@ -22,7 +22,6 @@
 #include "ompi/info/info.h"
 
 #include "orte/types.h"
-#include "orte/mca/db/db.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/grpcomm/grpcomm.h"
 #include "orte/mca/rml/base/rml_contact.h"
@@ -79,11 +78,19 @@ OMPI_DECLSPEC void ompi_rte_abort(int error_code, char *fmt, ...);
 OMPI_DECLSPEC void ompi_rte_wait_for_debugger(void);
 
 /* Database operations */
-#define ompi_rte_db_store(a, b, c, d) orte_db.store(a, b, c, d)
-#define ompi_rte_db_fetch(a, b, c, d) orte_db.fetch(a, b, c, d)
-#define ompi_rte_db_fetch_pointer(a, b, c, d) orte_db.fetch_pointer(a, b, c, d)
-#define ompi_rte_db_fetch_multiple(a, b, c) orte_db.fetch_multiple(a, b, c)
-#define ompi_rte_db_remove(a, b) orte_db.remove(a, b)
+OMPI_DECLSPEC int ompi_rte_db_store(const ompi_process_name_t *nm, const char* key,
+                                    const void *data, opal_data_type_t type);
+OMPI_DECLSPEC int ompi_rte_db_fetch(const ompi_process_name_t *nm,
+                                    const char *key,
+                                    void **data, opal_data_type_t type);
+OMPI_DECLSPEC int ompi_rte_db_fetch_pointer(const ompi_process_name_t *nm,
+                                            const char *key,
+                                            void **data, opal_data_type_t type);
+OMPI_DECLSPEC int ompi_rte_db_fetch_multiple(const ompi_process_name_t *nm,
+                                             const char *key,
+                                             opal_list_t *kvs);
+OMPI_DECLSPEC int ompi_rte_db_remove(const ompi_process_name_t *nm,
+                                     const char *key);
 #define OMPI_DB_HOSTNAME ORTE_DB_HOSTNAME
 #define OMPI_DB_LOCALITY ORTE_DB_LOCALITY
 

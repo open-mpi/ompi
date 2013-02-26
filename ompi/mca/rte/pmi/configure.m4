@@ -29,7 +29,7 @@ AC_DEFUN([MCA_ompi_rte_pmi_POST_CONFIG],[
 AC_DEFUN([MCA_ompi_rte_pmi_CONFIG], [
     AC_CONFIG_FILES([ompi/mca/rte/pmi/Makefile])
          
-    ORTE_CHECK_PMI([rte_pmi], [rte_pmi_good=1], [rte_pmi_good=0])
+    OPAL_CHECK_PMI([rte_pmi], [rte_pmi_good=1], [rte_pmi_good=0])
          
     # Evaluate succeed / fail
     AS_IF([test "$rte_pmi_good" = 1],

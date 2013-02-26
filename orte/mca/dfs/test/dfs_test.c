@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012      Los Alamos National Security, LLC.
+ * Copyright (c) 2012-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * $COPYRIGHT$
  * 
@@ -26,12 +26,12 @@
 #include "opal/util/output.h"
 #include "opal/util/uri.h"
 #include "opal/dss/dss.h"
+#include "opal/mca/db/db.h"
 
 #include "orte/util/error_strings.h"
 #include "orte/util/name_fns.h"
 #include "orte/util/show_help.h"
 #include "orte/runtime/orte_globals.h"
-#include "orte/mca/db/db.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/rml/rml.h"
 
@@ -451,6 +451,7 @@ static void process_opens(int fd, short args, void *cbdata)
     orte_process_name_t daemon;
     bool found;
     orte_vpid_t v;
+    opal_identifier_t *id;
 
     opal_output(0, "%s PROCESSING OPEN", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
     /* get the scheme to determine if we can process locally or not */
@@ -479,10 +480,11 @@ static void process_opens(int fd, short args, void *cbdata)
     /* ident the daemon on that host */
     daemon.jobid = ORTE_PROC_MY_DAEMON->jobid;
     found = false;
+    id = (opal_identifier_t*)&daemon;
     for (v=0; v < orte_process_info.num_daemons; v++) {
         daemon.vpid = v;
         /* fetch the hostname where this daemon is located */
-        if (ORTE_SUCCESS != (rc = orte_db.fetch_pointer(&daemon, ORTE_DB_HOSTNAME, (void**)&hostname, OPAL_STRING))) {
+        if (ORTE_SUCCESS != (rc = opal_db.fetch_pointer((*id), ORTE_DB_HOSTNAME, (void**)&hostname, OPAL_STRING))) {
             ORTE_ERROR_LOG(rc);
             goto complete;
         }

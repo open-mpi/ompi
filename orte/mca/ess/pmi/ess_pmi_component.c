@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2011-2012 Los Alamos National Security, LLC. All
+ * Copyright (c) 2011-2013 Los Alamos National Security, LLC. All
  *                         rights reserved.
  * $COPYRIGHT$
  * 
@@ -23,12 +23,12 @@
 #include <pmi2.h>
 #endif
 
+#include "opal/mca/common/pmi/common_pmi.h"
+
 #include "orte/util/proc_info.h"
 
 #include "orte/mca/ess/ess.h"
 #include "orte/mca/ess/pmi/ess_pmi.h"
-
-#include "orte/mca/common/pmi/common_pmi.h"
 
 extern orte_ess_base_module_t orte_ess_pmi_module;
 
