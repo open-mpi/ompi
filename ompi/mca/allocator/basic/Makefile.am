@@ -17,8 +17,6 @@
 # $HEADER$
 #
 
-EXTRA_DIST = .windows
-
 sources = \
         allocator_basic.c \
         allocator_basic.h 

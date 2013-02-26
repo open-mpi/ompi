@@ -7,8 +7,6 @@
 # $HEADER$
 #
 
-EXTRA_DIST = base/.windows
-
 dist_pkgdata_DATA = base/help-opal-hwloc-base.txt
 
 headers += \

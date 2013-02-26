@@ -13,8 +13,6 @@
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la
 # (for static builds).
 
-EXTRA_DIST = .windows
-
 local_sources = \
         pml_v.h \
         pml_v_component.c \

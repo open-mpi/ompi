@@ -17,8 +17,6 @@
 # $HEADER$
 #
 
-EXTRA_DIST = .windows
-
 sources = \
         allocator_bucket.c \
         allocator_bucket_alloc.c \

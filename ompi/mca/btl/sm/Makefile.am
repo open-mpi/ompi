@@ -17,8 +17,6 @@
 # $HEADER$
 #
 
-EXTRA_DIST = .windows
-
 dist_pkgdata_DATA = help-mpi-btl-sm.txt
 
 libmca_btl_sm_la_sources = \

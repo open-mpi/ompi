@@ -19,8 +19,6 @@
 
 dist_pkgdata_DATA = help-oob-tcp.txt
 
-EXTRA_DIST = .windows
-
 sources = \
     oob_tcp.c \
     oob_tcp.h \

@@ -15,7 +15,7 @@
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la
 # (for static builds).
 
-EXTRA_DIST = post_configure.sh .windows
+EXTRA_DIST = post_configure.sh
 
 if MCA_BUILD_ompi_pml_cm_DSO
 component_noinst =

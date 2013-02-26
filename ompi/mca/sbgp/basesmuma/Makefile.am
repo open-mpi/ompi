@@ -7,7 +7,6 @@
 #
 # $HEADER$
 #
-EXTRA_DIST = .windows
 not_used_yet = 
 
 sources = \

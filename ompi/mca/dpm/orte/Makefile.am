@@ -12,8 +12,6 @@
 #
 
 
-EXTRA_DIST = .windows
-
 dist_pkgdata_DATA = help-ompi-dpm-orte.txt
 
 # Make the output library in this directory, and name it either

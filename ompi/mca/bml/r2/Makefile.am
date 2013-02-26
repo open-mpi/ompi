@@ -15,8 +15,6 @@
 # $HEADER$
 #
 
-EXTRA_DIST = .windows
-
 r2_sources  = \
 	bml_r2.c \
 	bml_r2.h \

@@ -18,8 +18,6 @@
 # $HEADER$
 #
 
-EXTRA_DIST = .windows
-
 sources = \
 	mpool_sm.h \
 	mpool_sm_module.c \

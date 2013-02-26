@@ -17,8 +17,6 @@
 # $HEADER$
 #
 
-EXTRA_DIST = .windows
-
 sources = \
     topo_unity.h \
     topo_unity_cart_map.c \
