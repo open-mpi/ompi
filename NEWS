@@ -131,6 +131,49 @@ included in the vX.Y.Z section and be denoted as:
   (** also to appear: 1.6.4)
 
 
+1.6.4
+-----
+
+- Fix Cygwin shared memory and debugger plugin support.  Thanks to
+  Marco Atzeri for reporting the issue and providing initial patches.
+- Fix to obtaining the correct available nodes when a rankfile is
+  providing the allocation.  Thanks to Siegmar Gross for reporting the
+  problem.
+- Fix process binding issue on Solaris.  Thanks to Siegmar Gross for
+  reporting the problem.
+- Updates for MXM 2.0.
+- Major VT update to 5.14.2.3.
+- Fixed F77 constants for Cygwin/Cmake build.
+- Fix a linker error when configuring --without-hwloc.
+- Automatically provide compiler flags that compile properly on some
+  types of ARM systems.
+- Fix slot_list behavior when multiple sockets are specified.  Thanks
+  to Siegmar Gross for reporting the problem.
+- Fixed memory leak in one-sided operations.  Thanks to Victor
+  Vysotskiy for letting us know about this one.
+- Added performance improvements to the OpenIB (OpenFabrics) BTL.
+- Improved error message when process affinity fails.
+- Fixed MPI_MINLOC on man pages for MPI_REDUCE(_LOCAL).  Thanks to Jed
+  Brown for noticing the problem and supplying a fix.
+- Made malloc hooks more friendly to IO interprosers.  Thanks to the
+  bug report and suggested fix from Darshan maintainer Phil Carns.
+- Restored ability to direct launch under SLURM without PMI support.
+- Fixed MPI datatype issues on OpenBSD.
+- Major VT update to 5.14.2.3.
+- Support FCA v3.0+.
+- Fixed header file problems on OpenBSD.
+- Fixed issue with MPI_TYPE_CREATE_F90_REAL.
+- Fix an issue with using external libltdl installations.  Thanks to
+  opolawski for identifying the problem.
+- Fixed MPI_IN_PLACE case for MPI_ALLGATHER for FCA.
+- Allow SLURM PMI support to look in lib64 directories.  Thanks to
+  Guillaume Papaure for the patch.
+- Restore "use mpi" ABI compatibility with the rest of the 1.5/1.6
+  series (except for v1.6.3, where it was accidentally broken).
+- Fix a very old error in opal_path_access(). Thanks to Marco Atzeri
+  for chasing it down.
+
+
 1.6.3
 -----
 
