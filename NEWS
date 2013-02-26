@@ -112,6 +112,13 @@ Trunk (not on release branches yet)
 1.6.4
 -----
 
+- Fix Cygwin shared memory and debugger plugin support.  Thanks to
+  Marco Atzeri for reporting the issue and providing initial patches.
+- Fix to obtaining the correct available nodes when a rankfile is
+  providing the allocation.  Thanks to Siegmar Gross for reporting the
+  problem.
+- Fix process binding issue on Solaris.  Thanks to Siegmar Gross for
+  reporting the problem.
 - Updates for MXM 2.0.
 - Major VT update to 5.14.2.3.
 - Fixed F77 constants for Cygwin/Cmake build.
