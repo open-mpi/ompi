@@ -123,7 +123,7 @@ static int test_upper( unsigned int length )
  *  - and one using 2 convertors created from different data-types.
  *
  */
-static int local_copy_ddt_count( opal_datatype_t* pdt, int count )
+static int local_copy_ddt_count( const opal_datatype_t const* pdt, int count )
 {
     OPAL_PTRDIFF_TYPE extent;
     void *pdst, *psrc;
@@ -159,8 +159,8 @@ static int local_copy_ddt_count( opal_datatype_t* pdt, int count )
 }
 
 static int
-local_copy_with_convertor_2datatypes( opal_datatype_t* send_type, int send_count,
-                                      opal_datatype_t* recv_type, int recv_count,
+local_copy_with_convertor_2datatypes( const opal_datatype_t const * send_type, int send_count,
+                                      const opal_datatype_t const * recv_type, int recv_count,
                                       int chunk )
 {
     OPAL_PTRDIFF_TYPE send_extent, recv_extent;
@@ -247,7 +247,7 @@ local_copy_with_convertor_2datatypes( opal_datatype_t* send_type, int send_count
 }
 
 
-static int local_copy_with_convertor( opal_datatype_t* pdt, int count, int chunk )
+static int local_copy_with_convertor( const opal_datatype_t const* pdt, int count, int chunk )
 {
     OPAL_PTRDIFF_TYPE extent;
     void *pdst = NULL, *psrc = NULL, *ptemp = NULL;
@@ -428,11 +428,11 @@ int main( int argc, char* argv[] )
 
     printf( ">>--------------------------------------------<<\n" );
     printf( " Contiguous data-type (opal_datatype_float8)\n" );
-    pdt = &opal_datatype_float8;
     if( outputFlags & CHECK_PACK_UNPACK ) {
-        local_copy_ddt_count(pdt, 4500);
-        local_copy_with_convertor( pdt, 4500, 12 );
-        local_copy_with_convertor_2datatypes( pdt, 4500, pdt, 4500, 12 );
+        const opal_datatype_t const* ddt = &opal_datatype_float8;
+        local_copy_ddt_count( ddt, 4500);
+        local_copy_with_convertor( ddt, 4500, 12 );
+        local_copy_with_convertor_2datatypes( ddt, 4500, ddt, 4500, 12 );
     }
     printf( ">>--------------------------------------------<<\n" );
     

@@ -56,7 +56,7 @@ void cache_trash( void )
 /**
  * Data-type functions.
  */
-ompi_datatype_t* create_inversed_vector( ompi_datatype_t* type, int length )
+ompi_datatype_t* create_inversed_vector( const ompi_datatype_t const* type, int length )
 {
    ompi_datatype_t* type1;
 
@@ -517,7 +517,7 @@ ompi_datatype_t* test_create_blacs_type( void )
     return pdt;
 }
 
-ompi_datatype_t* test_create_blacs_type1( ompi_datatype_t* base_type )
+ompi_datatype_t* test_create_blacs_type1( const ompi_datatype_t const * base_type )
 {
     ompi_datatype_t *pdt;
 
@@ -529,7 +529,7 @@ ompi_datatype_t* test_create_blacs_type1( ompi_datatype_t* base_type )
     return pdt;
 }
 
-ompi_datatype_t* test_create_blacs_type2( ompi_datatype_t* base_type )
+ompi_datatype_t* test_create_blacs_type2( const ompi_datatype_t const* base_type )
 {
     ompi_datatype_t *pdt;
 

@@ -29,8 +29,8 @@
 extern uint32_t outputFlags;
 
 extern void cache_trash( void );
-extern opal_datatype_t* create_contiguous_type( const opal_datatype_t* type, int length );
-extern opal_datatype_t* create_vector_type( const opal_datatype_t* data, int count, int length, int stride );
+extern opal_datatype_t* create_contiguous_type( const opal_datatype_t const* type, int length );
+extern opal_datatype_t* create_vector_type( const opal_datatype_t const* data, int count, int length, int stride );
 extern opal_datatype_t* create_strange_dt( void );
 extern opal_datatype_t* upper_matrix( unsigned int mat_size );
 extern opal_datatype_t* lower_matrix( unsigned int mat_size );
@@ -42,8 +42,8 @@ extern opal_datatype_t* test_struct_char_double( void );
 extern opal_datatype_t* test_create_twice_two_doubles( void );
 extern opal_datatype_t* test_struct( void );
 extern opal_datatype_t* test_create_blacs_type( void );
-extern opal_datatype_t* test_create_blacs_type1( opal_datatype_t* base_type );
-extern opal_datatype_t* test_create_blacs_type2( opal_datatype_t* base_type );
+extern opal_datatype_t* test_create_blacs_type1( const opal_datatype_t const* base_type );
+extern opal_datatype_t* test_create_blacs_type2( const opal_datatype_t const* base_type );
 
 extern int mpich_typeub( void );
 extern int mpich_typeub2( void );
