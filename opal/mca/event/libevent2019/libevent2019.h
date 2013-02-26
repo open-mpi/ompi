@@ -92,6 +92,8 @@ OPAL_DECLSPEC int opal_event_init(void);
 
 #define opal_event_base_loopbreak(b) event_base_loopbreak(b)
 
+#define opal_event_base_loopexit(b) event_base_loopexit(b, NULL)
+
 /* Event priority APIs */
 #define opal_event_base_priority_init(b, n) event_base_priority_init((b), (n))
 
