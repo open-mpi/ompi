@@ -108,7 +108,7 @@ opal_datatype_t* test_create_blacs_type( void )
     return pdt;
 }
 
-opal_datatype_t* test_create_blacs_type1( opal_datatype_t* base_type )
+opal_datatype_t* test_create_blacs_type1( const opal_datatype_t const* base_type )
 {
     opal_datatype_t *pdt;
 
@@ -120,7 +120,7 @@ opal_datatype_t* test_create_blacs_type1( opal_datatype_t* base_type )
     return pdt;
 }
 
-opal_datatype_t* test_create_blacs_type2( opal_datatype_t* base_type )
+opal_datatype_t* test_create_blacs_type2( const opal_datatype_t const* base_type )
 {
     opal_datatype_t *pdt;
 

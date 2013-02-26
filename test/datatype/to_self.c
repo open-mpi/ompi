@@ -45,7 +45,7 @@ create_indexed_constant_gap_ddt( int number,  /* number of repetitions */
         bLength[i] = contig_size;
         displ[i] = displ[i-1] + sizeof(double) * (contig_size + gap_size);
     }
-    MPI_Type_struct( number, bLength, displ, types, &dt );
+    MPI_Type_create_struct( number, bLength, displ, types, &dt );
     MPI_DDT_DUMP( dt );
     free(types);
     free(bLength);
@@ -86,23 +86,23 @@ create_indexed_gap_ddt( void )
     MPI_Datatype types[2] = { MPI_INT, MPI_FLOAT };
     MPI_Aint displ[2];
 
-    MPI_Address( &(dt[0].is[0].i[0]), &(displ[0]) );
-    MPI_Address( &(dt[0].is[0].f), &(displ[1]) );
+    MPI_Get_address( &(dt[0].is[0].i[0]), &(displ[0]) );
+    MPI_Get_address( &(dt[0].is[0].f), &(displ[1]) );
     displ[1] -= displ[0];
     displ[0] -= displ[0];
-    MPI_Type_struct( 2, bLength, displ, types, &dt1 );
+    MPI_Type_create_struct( 2, bLength, displ, types, &dt1 );
     /*MPI_DDT_DUMP( dt1 );*/
     MPI_Type_contiguous( 3, dt1, &dt2 );
     /*MPI_DDT_DUMP( dt2 );*/
     bLength[0] = 1;
     bLength[1] = 1;
-    MPI_Address( &(dt[0].v1), &(displ[0]) );
-    MPI_Address( &(dt[0].is[0]), &(displ[1]) );
+    MPI_Get_address( &(dt[0].v1), &(displ[0]) );
+    MPI_Get_address( &(dt[0].is[0]), &(displ[1]) );
     displ[1] -= displ[0];
     displ[0] -= displ[0];
     types[0] = MPI_INT;
     types[1] = dt2;
-    MPI_Type_struct( 2, bLength, displ, types, &dt3 );
+    MPI_Type_create_struct( 2, bLength, displ, types, &dt3 );
     /*MPI_DDT_DUMP( dt3 );*/
     MPI_Type_free( &dt1 );
     MPI_Type_free( &dt2 );
@@ -136,7 +136,7 @@ create_indexed_gap_optimized_ddt( void )
     displ[1] = 8;
     displ[2] = 44 * 9 + 8;
    
-    MPI_Type_struct( 3, bLength, displ, types, &dt3 );
+    MPI_Type_create_struct( 3, bLength, displ, types, &dt3 );
    
     MPI_Type_free( &dt1 );
     MPI_Type_free( &dt2 );
@@ -301,10 +301,10 @@ static int irecv_isend_wait( int cycles,
 static int do_test_for_ddt( MPI_Datatype sddt, MPI_Datatype rddt, int length )
 {
     int i;
-    MPI_Aint extent;
+    MPI_Aint lb, extent;
     char *sbuf, *rbuf;
 
-    MPI_Type_extent( sddt, &extent );
+    MPI_Type_get_extent( sddt, &lb, &extent );
     sbuf = (char*)malloc( length );
     rbuf = (char*)malloc( length );
     printf( "# Isend recv\n" );
