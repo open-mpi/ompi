@@ -9,7 +9,6 @@
 # 
 # $HEADER$
 #
-AC_DEFUN([MCA_orte_ess_pmi_PRIORITY], [10])
 
 # MCA_ess_pmi_CONFIG([action-if-found], [action-if-not-found])
 # -----------------------------------------------------------
@@ -20,7 +19,7 @@ AC_DEFUN([MCA_orte_ess_pmi_CONFIG],[
     OPAL_CHECK_PMI([ess_pmi], [ess_pmi_good=1], [ess_pmi_good=0])
          
     # Evaluate succeed / fail
-    AS_IF([test "$ess_pmi_good" = "1" -a "$orte_without_full_support" = 0],
+    AS_IF([test "$ess_pmi_good" = "1"],
           [$1],
           [$2])
 
