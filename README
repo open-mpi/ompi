@@ -99,19 +99,19 @@ General notes
   - Oracle Grid Engine (OGE) 6.1, 6.2 and open source Grid Engine
 
 - Systems that have been tested are:
-  - Linux (various flavors/distros), 32 bit, with gcc, and Oracle
-    Solaris Studio 12
+  - Linux (various flavors/distros), 32 bit, with gcc
   - Linux (various flavors/distros), 64 bit (x86), with gcc, Absoft,
     Intel, Portland, and Oracle Solaris Studio 12.3 compilers (*)
   - OS X (10.5, 10.6, 10.7), 32 and 64 bit (x86_64), with gcc and
     Absoft compilers (*)
-  - Oracle Solaris 10 and 11, 32 and 64 bit (SPARC, i386, x86_64),
+  - Oracle Solaris 10 and 11, 64 bit (SPARC, i386, x86_64),
     with Oracle Solaris Studio 12.2 and 12.3
 
   (*) Be sure to read the Compiler Notes, below.
 
 - Other systems have been lightly (but not fully tested):
   - Other 64 bit platforms (e.g., Linux on PPC64)
+  - 32-bit Solaris
 
 Compiler Notes
 --------------
@@ -331,16 +331,13 @@ General Run-Time Support Notes
     "mpirun --mca btl_tcp_if_exclude lo,eth1 ..."
 
 - Running on nodes with different endian and/or different datatype
-  sizes within a single parallel job is supported in this release.
-  However, Open MPI does not resize data when datatypes differ in size
-  (for example, sending a 4 byte MPI_DOUBLE and receiving an 8 byte
-  MPI_DOUBLE will fail).
+  sizes within a single parallel job is currently broken in this release.
 
 
 MPI Functionality and Features
 ------------------------------
 
-- All MPI-2.1 functionality is supported.
+- All MPI-2.1 and most MPI-3 functionality is supported.
 
 - When using MPI deprecated functions, some compilers will emit
   warnings.  For example:
@@ -804,6 +801,22 @@ RUN-TIME SYSTEM SUPPORT
   path names.  --enable-orterun-prefix-by-default is a synonym for
   this option.
 
+--enable-sensors
+  Enable internal sensors (default: disabled)
+
+--enable-heartbeat
+  Enable heartbeat monitoring of daemons (default: disabled)
+
+--enable-orte-progress-threads
+  Enable orte progress thread - allows async progress of
+  RTE messages. Requires both enable-event-thread-support
+  and enable-opal-multi-thread-support. The latter imposes
+  an MPI performance penalty, so this shouldn't normally be
+  used. (default: disabled)
+
+--enable-orte-static-ports
+   Enable orte static ports for tcp oob. (default: enabled)
+
 --with-alps
   Force the building of for the Cray Alps run-time environment.  If
   Alps support cannot be found, configure will abort.
@@ -863,24 +876,22 @@ RUN-TIME SYSTEM SUPPORT
 
 MISCELLANEOUS SUPPORT LIBRARIES
 
---with-esmtp=<directory>
-  Specify the directory where the libESMTP libraries and header files are
-  located.  This option is generally only necessary of the libESMTP
-  headers and libraries are not included in the default
-  compiler/linker search paths.
+--enable-event-rtsig
+  Enable support for real time signals (experimental)
 
-  libESMTP is a support library for sending e-mail.
-
---with-ftb=<directory>
-  Specify the directory where the Fault Tolerant Backplane (FTB)
-  libraries and header files are located.  This option is generally
-  only necessary if the BLCR headers and libraries are not in default
-  compiler/linker search paths.
-
---with-ftb-libdir=<directory>
-  Look in directory for the FTB libraries.  By default, Open MPI will
-  look in <ftb directory>/lib and <ftb directory>/lib64, which covers
-  most cases.  This option is only needed for special configurations.
+--disable-event-select
+--disable-event-poll
+--disable-event-devpoll
+--disable-event-kqueue
+--disable-event-epoll
+--enable-event-evport
+--disable-event-signal
+--enable-event-debug
+--enable-event-thread-support
+  Configure a variety of capabilities within the internal libevent
+  system. These will almost never be necessary, with the exception
+  of thread support, which must be enabled if orte-progress-threads
+  are enabled.
 
 --with-hwloc=<location>
   Build hwloc support.  If <location> is "internal", Open MPI's
@@ -991,17 +1002,6 @@ MPI FUNCTIONALITY
   disable the C++ checks during configure; some of Open MPI's tools
   are written in C++ and therefore require a C++ compiler to be built.
 
---enable-mpi-java
-  Enable building of an EXPERIMENTAL Java MPI interface (disabled by
-  default).  You may also need to specify --with-jdk-dir,
-  --with-jdk-bindir, and/or --with-jdk-headers.  See README.JAVA.txt
-  for details.
-
-  Note that this Java interface is INCOMPLETE (meaning: it does not
-  support all MPI functionality) and LIKELY TO CHANGE.  The Open MPI
-  developers would very much like to hear your feedback about this
-  interface.  See README.JAVA.txt for more details.
-
 --disable-mpi-fortran
   Disable building the Fortran MPI bindings.
 
@@ -1032,11 +1032,6 @@ MPI FUNCTIONALITY
   However, it may be necessary to disable the memory manager in order
   to build Open MPI statically.
 
---with-ft=TYPE
-  Specify the type of fault tolerance to enable.  Options: LAM
-  (LAM/MPI-like), cr (Checkpoint/Restart).  Fault tolerance support is
-  disabled unless this option is specified.
-
 --enable-peruse 
   Enable the PERUSE MPI data analysis interface.
 
@@ -1044,6 +1039,7 @@ MPI FUNCTIONALITY
   Enable support for running on heterogeneous clusters (e.g., machines
   with different endian representations).  Heterogeneous support is
   disabled by default because it imposes a minor performance penalty.
+  *** CURRENTLY BROKEN - DO NOT USE ***
 
 --with-wrapper-cflags=<cflags>
 --with-wrapper-cxxflags=<cxxflags>
@@ -1656,10 +1652,11 @@ Back-end run-time environment (RTE) component frameworks:
 
 errmgr    - RTE error manager
 ess       - RTE environment-specfic services
+db        - database interface
+dfs       - distributed file system
 filem     - Remote file management
 grpcomm   - RTE group communications
 iof       - I/O forwarding
-notifier  - System/network administrator noficiation system
 odls      - OpenRTE daemon local launch subsystem
 oob       - Out of band messaging
 plm       - Process lifecycle management
