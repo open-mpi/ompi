@@ -16,12 +16,12 @@
 #include "mtl_mxm_request.h"
 #include "ompi/mca/mtl/base/mtl_base_datatype.h"
 
-static size_t ompi_mtl_mxm_stream_send(void *buffer, size_t length, size_t offset, void *context)
+static inline  __opal_attribute_always_inline__ 
+              size_t ompi_mtl_mxm_stream_pack(opal_convertor_t *convertor, void *buffer,
+                                              size_t length, size_t offset)
 {
     struct iovec iov;
     uint32_t iov_count = 1;
-
-    opal_convertor_t *convertor = (opal_convertor_t *) context;
 
     iov.iov_len = length;
     iov.iov_base = buffer;
@@ -32,9 +32,25 @@ static size_t ompi_mtl_mxm_stream_send(void *buffer, size_t length, size_t offse
     return length;
 }
 
+static size_t ompi_mtl_mxm_stream_isend(void *buffer, size_t length, size_t offset, void *context)
+{
+    mca_mtl_mxm_request_t *mtl_mxm_request = (mca_mtl_mxm_request_t *) context;
+    opal_convertor_t *convertor = mtl_mxm_request->convertor;
+
+    return ompi_mtl_mxm_stream_pack(convertor, buffer, length, offset);
+}
+
+static size_t ompi_mtl_mxm_stream_send(void *buffer, size_t length, size_t offset, void *context)
+{
+    opal_convertor_t *convertor = (opal_convertor_t *) context;
+
+    return ompi_mtl_mxm_stream_pack(convertor, buffer, length, offset);
+}
+
 static inline __opal_attribute_always_inline__ int
                ompi_mtl_mxm_choose_send_datatype(mxm_send_req_t *mxm_send_req,
-                                           opal_convertor_t *convertor)
+                                                 opal_convertor_t *convertor,
+                                                 mxm_stream_cb_t stream_cb)
 {
     struct iovec iov;
     uint32_t iov_count = 1;
@@ -50,10 +66,9 @@ static inline __opal_attribute_always_inline__ int
     }
 
     if (opal_convertor_need_buffers(convertor)) {
-        mxm_send_req->base.context = convertor;
         mxm_send_req->base.data_type = MXM_REQ_DATA_STREAM;
         mxm_send_req->base.data.stream.length = *buffer_len;
-        mxm_send_req->base.data.stream.cb = ompi_mtl_mxm_stream_send;
+        mxm_send_req->base.data.stream.cb = stream_cb;
 
         return OMPI_SUCCESS;
     }
@@ -72,10 +87,6 @@ static inline __opal_attribute_always_inline__ int
 static void ompi_mtl_mxm_send_completion_cb(void *context)
 {
     mca_mtl_mxm_request_t *mtl_mxm_request = context;
-
-    if (mtl_mxm_request->free_after) {
-        free(mtl_mxm_request->buf);
-    }
 
     ompi_mtl_mxm_to_mpi_status(mtl_mxm_request->mxm.base.error,
                                &mtl_mxm_request->super.ompi_req->req_status);
@@ -101,10 +112,11 @@ int ompi_mtl_mxm_send(struct mca_mtl_base_module_t* mtl,
     mxm_send_req.base.state         = MXM_REQ_NEW;
     mxm_send_req.base.mq            = ompi_mtl_mxm_mq_lookup(comm);
     mxm_send_req.base.conn          = ompi_mtl_mxm_conn_lookup(comm, dest);
-    mxm_send_req.base.context       = NULL;
+    mxm_send_req.base.context       = convertor;
     mxm_send_req.base.completed_cb  = NULL;
 
-    ret = ompi_mtl_mxm_choose_send_datatype(&mxm_send_req, convertor);
+    ret = ompi_mtl_mxm_choose_send_datatype(&mxm_send_req, convertor,
+                                            ompi_mtl_mxm_stream_send);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
         return ret;
     }
@@ -154,7 +166,7 @@ int ompi_mtl_mxm_isend(struct mca_mtl_base_module_t* mtl,
                        mca_pml_base_send_mode_t mode, bool blocking,
                        mca_mtl_request_t * mtl_request)
 {
-    mca_mtl_mxm_request_t *mtl_mxm_request = (mca_mtl_mxm_request_t *)mtl_request;
+    mca_mtl_mxm_request_t *mtl_mxm_request = (mca_mtl_mxm_request_t *) mtl_request;
     mxm_send_req_t *mxm_send_req;
     mxm_error_t err;
     int ret;
@@ -162,13 +174,6 @@ int ompi_mtl_mxm_isend(struct mca_mtl_base_module_t* mtl,
     assert(mtl == &ompi_mtl_mxm.super);
 
     mtl_mxm_request->convertor = convertor;
-    ret = ompi_mtl_datatype_pack(mtl_mxm_request->convertor,
-                                 &mtl_mxm_request->buf,
-                                 &mtl_mxm_request->length,
-                                 &mtl_mxm_request->free_after);
-    if (OMPI_SUCCESS != ret) {
-        return ret;
-    }
 
     mxm_send_req = &mtl_mxm_request->mxm.send;
 #if MXM_API >= MXM_VERSION(2,0)
@@ -179,9 +184,16 @@ int ompi_mtl_mxm_isend(struct mca_mtl_base_module_t* mtl,
     mxm_send_req->base.state               = MXM_REQ_NEW;
     mxm_send_req->base.mq                  = ompi_mtl_mxm_mq_lookup(comm);
     mxm_send_req->base.conn                = ompi_mtl_mxm_conn_lookup(comm, dest);
-    mxm_send_req->base.data_type           = MXM_REQ_DATA_BUFFER;
-    mxm_send_req->base.data.buffer.ptr     = mtl_mxm_request->buf;
-    mxm_send_req->base.data.buffer.length  = mtl_mxm_request->length;
+
+    ret = ompi_mtl_mxm_choose_send_datatype(mxm_send_req, convertor,
+                                            ompi_mtl_mxm_stream_isend);
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
+        return ret;
+    }
+
+    mtl_mxm_request->buf    = mxm_send_req->base.data.buffer.ptr;
+    mtl_mxm_request->length = mxm_send_req->base.data.buffer.length;
+
 #if MXM_API < MXM_VERSION(1,5)
     mxm_send_req->base.data.buffer.mkey    = MXM_MKEY_NONE;
 #else
@@ -195,7 +207,6 @@ int ompi_mtl_mxm_isend(struct mca_mtl_base_module_t* mtl,
     mxm_send_req->opcode                   = MXM_REQ_OP_SEND;
     if (mode == MCA_PML_BASE_SEND_SYNCHRONOUS) {
         mxm_send_req->base.flags           |= MXM_REQ_FLAG_SEND_SYNC;
-    } else {
     } 
 #else
     mxm_send_req->flags                    = 0;

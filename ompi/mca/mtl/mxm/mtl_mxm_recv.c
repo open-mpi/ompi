@@ -30,10 +30,64 @@ static void ompi_mtl_mxm_recv_completion_cb(void *context)
     ompi_req->req_status.MPI_SOURCE = mxm_recv_req->completion.sender_imm;
     ompi_req->req_status._ucount    = mxm_recv_req->completion.actual_len;
 
-    /* Copy data and free the buffer */
-    ompi_mtl_datatype_unpack(req->convertor, req->buf,
-                             mxm_recv_req->completion.actual_len);
     req->super.completion_callback(&req->super);
+}
+
+static size_t ompi_mtl_mxm_stream_unpack(void *buffer, size_t length,
+                                         size_t offset, void *context)
+{
+    struct iovec iov;
+    uint32_t iov_count = 1;
+
+    mca_mtl_mxm_request_t *mtl_mxm_request = (mca_mtl_mxm_request_t *) context;
+    opal_convertor_t *convertor = mtl_mxm_request->convertor;
+
+    iov.iov_len = length;
+    iov.iov_base = buffer;
+
+    opal_convertor_set_position(convertor, &offset);
+    opal_convertor_unpack(convertor, &iov, &iov_count, &length);
+
+    return length;
+}
+
+static inline __opal_attribute_always_inline__ int
+               ompi_mtl_mxm_choose_recv_datatype(mca_mtl_mxm_request_t *mtl_mxm_request)
+{
+    void **buffer = &mtl_mxm_request->buf;
+    size_t *buffer_len = &mtl_mxm_request->length;
+
+    mxm_recv_req_t *mxm_recv_req = &mtl_mxm_request->mxm.recv;
+    opal_convertor_t *convertor = mtl_mxm_request->convertor;
+
+    opal_convertor_get_packed_size(convertor, buffer_len);
+
+    if (0 == *buffer_len) {
+        *buffer = NULL;
+        *buffer_len = 0;
+
+        mxm_recv_req->base.data_type = MXM_REQ_DATA_BUFFER;
+
+        return OMPI_SUCCESS;
+    }
+
+    if (opal_convertor_need_buffers(convertor)) {
+        mxm_recv_req->base.data_type = MXM_REQ_DATA_STREAM;
+        mxm_recv_req->base.data.stream.length = *buffer_len;
+        mxm_recv_req->base.data.stream.cb = ompi_mtl_mxm_stream_unpack;
+
+        return OMPI_SUCCESS;
+    }
+
+    mxm_recv_req->base.data_type = MXM_REQ_DATA_BUFFER;
+
+    *buffer = convertor->pBaseBuf +
+            convertor->use_desc->desc[convertor->use_desc->used].end_loop.first_elem_disp;
+
+    mxm_recv_req->base.data.buffer.ptr     = *buffer;
+    mxm_recv_req->base.data.buffer.length  = *buffer_len;
+
+    return OMPI_SUCCESS;
 }
 
 static inline __opal_attribute_always_inline__ int
@@ -44,10 +98,7 @@ static inline __opal_attribute_always_inline__ int
     int ret;
 
     mtl_mxm_request->convertor = convertor;
-    ret = ompi_mtl_datatype_recv_buf(convertor,
-                                     &mtl_mxm_request->buf,
-                                     &mtl_mxm_request->length,
-                                     &mtl_mxm_request->free_after);
+    ret = ompi_mtl_mxm_choose_recv_datatype(mtl_mxm_request);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
         return ret;
     }
@@ -61,14 +112,13 @@ static inline __opal_attribute_always_inline__ int
 #if MXM_API < MXM_VERSION(2,0)
     mxm_recv_req->base.flags               = 0;
 #endif
-    mxm_recv_req->base.data_type           = MXM_REQ_DATA_BUFFER;
-    mxm_recv_req->base.data.buffer.ptr     = mtl_mxm_request->buf;
-    mxm_recv_req->base.data.buffer.length  = mtl_mxm_request->length;
+
 #if MXM_API < MXM_VERSION(1,5)
     mxm_recv_req->base.data.buffer.mkey    = MXM_MKEY_NONE;
 #else
     mxm_recv_req->base.data.buffer.memh    = MXM_INVALID_MEM_HANDLE;
 #endif
+
     mxm_recv_req->base.context             = mtl_mxm_request;
     mxm_recv_req->base.completed_cb        = ompi_mtl_mxm_recv_completion_cb;
 
@@ -83,7 +133,7 @@ int ompi_mtl_mxm_irecv(struct mca_mtl_base_module_t* mtl,
     int ret;
     mxm_error_t err;
     mxm_recv_req_t *mxm_recv_req;
-    mca_mtl_mxm_request_t * mtl_mxm_request;
+    mca_mtl_mxm_request_t *mtl_mxm_request;
 
     mtl_mxm_request = (mca_mtl_mxm_request_t*) mtl_request;
     mxm_recv_req = &mtl_mxm_request->mxm.recv;
