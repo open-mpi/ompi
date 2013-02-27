@@ -1099,8 +1099,13 @@ LT_INIT([dlopen win32-dll])
 # platforms, there didn't seem to be any harm in leaving in some of
 # them, alhtough I did remove some that we have never/will never
 # support, like OS/2).
+OPAL_DYN_LIB_PREFIX=lib
 case $host_os in
-cygwin* | mingw* | pw32* | cegcc*)
+cygwin*)
+    OPAL_DYN_LIB_PREFIX=cyg
+    OPAL_DYN_LIB_SUFFIX=dll
+    ;;
+mingw* | pw32* | cegcc*)
     OPAL_DYN_LIB_SUFFIX=dll
     ;;
 darwin* | rhapsody*)
@@ -1120,6 +1125,7 @@ hpux9* | hpux10* | hpux11*)
    OPAL_DYN_LIB_SUFFIX=so
    ;;
 esac
+AC_SUBST(OPAL_DYN_LIB_PREFIX)
 AC_SUBST(OPAL_DYN_LIB_SUFFIX)
 
 OPAL_SETUP_LIBLTDL

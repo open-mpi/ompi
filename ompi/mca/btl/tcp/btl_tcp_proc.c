@@ -218,15 +218,15 @@ static void visit(int k, int level, int siz, int *a)
 }
 
 
-static void mca_btl_tcp_initialise_interface(mca_btl_tcp_interface_t* interface,
+static void mca_btl_tcp_initialise_interface(mca_btl_tcp_interface_t* tcp_interface,
         int ifk_index, int index)
 {
-    interface->kernel_index = ifk_index;
-    interface->peer_interface = -1;
-    interface->ipv4_address = NULL;
-    interface->ipv6_address =  NULL;
-    interface->index = index;
-    interface->inuse = 0;
+    tcp_interface->kernel_index = ifk_index;
+    tcp_interface->peer_interface = -1;
+    tcp_interface->ipv4_address = NULL;
+    tcp_interface->ipv6_address =  NULL;
+    tcp_interface->index = index;
+    tcp_interface->inuse = 0;
 }
 
 static mca_btl_tcp_interface_t** mca_btl_tcp_retrieve_local_interfaces(void)

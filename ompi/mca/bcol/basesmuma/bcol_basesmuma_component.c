@@ -142,7 +142,7 @@ static int basesmuma_open(void)
         roundup_to_power_radix(2,cs->basesmuma_num_mem_banks, &dummy);
     if ( 0 == cs->basesmuma_num_mem_banks ) {
         ret=OMPI_ERROR;
-        goto ERROR;
+        goto exit_ERROR;
     }
     
     /*
@@ -152,7 +152,7 @@ static int basesmuma_open(void)
         roundup_to_power_radix(2,cs->basesmuma_num_regions_per_bank, &dummy);
     if ( 0 == cs->basesmuma_num_regions_per_bank ) {
         ret=OMPI_ERROR;
-        goto ERROR;
+        goto exit_ERROR;
     }
 
     /* Number of groups supported */
@@ -243,7 +243,7 @@ static int basesmuma_open(void)
 
     return ret;
 
-ERROR:
+exit_ERROR:
     return ret;
 }
 

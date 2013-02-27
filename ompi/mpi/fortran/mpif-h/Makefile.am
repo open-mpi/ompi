@@ -49,7 +49,7 @@ AM_CPPFLAGS = -DOMPI_PROFILE_LAYER=0 -DOMPI_COMPILING_FORTRAN_WRAPPERS=1
 #
 
 lib_LTLIBRARIES =
-libmpi_mpifh_la_LIBADD = $(OMPI_MPIEXT_MPIFH_LIBS)
+libmpi_mpifh_la_LIBADD = $(top_builddir)/ompi/libmpi.la $(OMPI_MPIEXT_MPIFH_LIBS)
 libmpi_mpifh_la_LDFLAGS = -version-info $(libmpi_mpifh_so_version)
 
 # Are we building the mpif.h bindings at all?

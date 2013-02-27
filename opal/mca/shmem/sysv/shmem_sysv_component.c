@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2010 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010-2011 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2011      NVIDIA Corporation.  All rights reserved.
@@ -44,6 +44,9 @@
 #if HAVE_SYS_SHM_H
 #include <sys/shm.h>
 #endif /* HAVE_SYS_SHM_H */
+#if HAVE_SYS_STAT_H
+#include <sys/stat.h>
+#endif /* HAVE_SYS_STAT_H */
 
 #include "opal/constants.h"
 #include "opal/util/show_help.h"
@@ -165,7 +168,7 @@ sysv_runtime_query(mca_base_module_t **module, int *priority, const char *hint)
     /* if we are here, then let the run-time test games begin */
 
     if (-1 == (shmid = shmget(IPC_PRIVATE, (size_t)(getpagesize()),
-                              IPC_CREAT | IPC_EXCL | SHM_R | SHM_W))) {
+                              IPC_CREAT | IPC_EXCL | S_IRWXU ))) {
         goto out;
     }
     else if ((void *)-1 == (addr = shmat(shmid, NULL, 0))) {

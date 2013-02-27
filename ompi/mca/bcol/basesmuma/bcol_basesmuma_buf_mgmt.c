@@ -213,7 +213,7 @@ int bcol_basesmuma_bank_init(struct mca_coll_ml_module_t *ml_module,
 	pload_mgmt->data_buffs = malloc(malloc_size);
 	if( !pload_mgmt->data_buffs) {
 		ret = OMPI_ERR_OUT_OF_RESOURCE;
-		goto ERROR;
+		goto exit_ERROR;
 	}
 
 	/* setup the input file for the shared memory connection manager */
@@ -234,7 +234,7 @@ int bcol_basesmuma_bank_init(struct mca_coll_ml_module_t *ml_module,
 			input_file,
 			false);
 	if( OMPI_SUCCESS != ret ) {
-		goto ERROR;
+		goto exit_ERROR;
 	}
 
 	/* now we exchange offset info - don't assume symmetric virtual memory
@@ -247,7 +247,7 @@ int bcol_basesmuma_bank_init(struct mca_coll_ml_module_t *ml_module,
 		       (void **)pload_mgmt->data_buffs, mem_offset, 0,
 		       pload_mgmt->size_of_group);
     	if( OMPI_SUCCESS != ret ) {
-	    	goto ERROR;
+	    	goto exit_ERROR;
        	}
 	
 	/* convert memory offset to virtual address in current rank */
@@ -285,7 +285,7 @@ int bcol_basesmuma_bank_init(struct mca_coll_ml_module_t *ml_module,
 
     return OMPI_SUCCESS;
 
-ERROR:
+exit_ERROR:
     return ret;
 }
 #endif
@@ -387,7 +387,7 @@ int bcol_basesmuma_bank_init_opti(struct mca_coll_ml_module_t *ml_module,
 	pload_mgmt->data_buffs = (mca_bcol_basesmuma_payload_t *) malloc(malloc_size);
 	if( !pload_mgmt->data_buffs) {
 		ret = OMPI_ERR_OUT_OF_RESOURCE;
-		goto ERROR;
+		goto exit_ERROR;
 	}
 
     /* allocate some memory to hold the offsets */
@@ -411,7 +411,7 @@ int bcol_basesmuma_bank_init_opti(struct mca_coll_ml_module_t *ml_module,
 			input_file,cs->payload_base_fname,
 			false);
 	if( OMPI_SUCCESS != ret ) {
-		goto ERROR;
+		goto exit_ERROR;
 	}
 
 
@@ -429,7 +429,7 @@ int bcol_basesmuma_bank_init_opti(struct mca_coll_ml_module_t *ml_module,
                 sm_bcol_module->super.sbgp_partner_module->group_list,
                 sm_bcol_module->super.sbgp_partner_module->group_comm);
         if( OMPI_SUCCESS != ret ) {
-            goto ERROR;
+            goto exit_ERROR;
         }
 
 	/* convert memory offset to virtual address in current rank */
@@ -525,7 +525,7 @@ int bcol_basesmuma_bank_init_opti(struct mca_coll_ml_module_t *ml_module,
 
 	return OMPI_SUCCESS;
 
-ERROR:
+exit_ERROR:
 	return ret;
 }
 

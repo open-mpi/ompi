@@ -52,7 +52,7 @@ static int reduce_no_order(void *sbuf, void* rbuf, int count,
 /*
  * Useful utility routine
  */
-#if !defined(__WINDOWS__)
+#if !defined(__WINDOWS__) && !defined(__CYGWIN__)
 static inline int min(int a, int b)
 {
     return (a < b) ? a : b;

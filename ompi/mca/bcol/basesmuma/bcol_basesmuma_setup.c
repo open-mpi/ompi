@@ -76,7 +76,7 @@ int base_bcol_basesmuma_exchange_offsets(
             sm_bcol_module->super.sbgp_partner_module->group_list,
             sm_bcol_module->super.sbgp_partner_module->group_comm);
     if( OMPI_SUCCESS != ret ) {
-        goto ERROR;
+        goto exit_ERROR;
     }
 
     /* get the control stucture offsets within the shared memory
@@ -98,7 +98,7 @@ int base_bcol_basesmuma_exchange_offsets(
 
     }
 
-ERROR:
+exit_ERROR:
     /* clean up */
     if( NULL != send_buff ) {
         free(send_buff);
@@ -149,7 +149,7 @@ int base_bcol_basesmuma_exchange_offsets(
             fprintf(stderr,"Cannot allocate memory for sbuffer or rbuffer \n");
             fflush(stderr);
             ret = OMPI_ERROR;
-            goto ERROR;
+            goto exit_ERROR;
         }
 
     /* get my proc information */
@@ -160,7 +160,7 @@ int base_bcol_basesmuma_exchange_offsets(
         &(sm_bcol_module->super.sbgp_partner_module->my_index),1,OPAL_UINT32);
 
     if (ORTE_SUCCESS != ret) {
-        goto ERROR;
+        goto exit_ERROR;
 	fprintf(stderr,"ORTE error packing my_index!!\n");
 	fflush(stderr);
     }
@@ -168,7 +168,7 @@ int base_bcol_basesmuma_exchange_offsets(
     /* pack the offset of the allocated region */
     ret = opal_dss.pack(send_buffer,&(mem_offset),1,OPAL_UINT64);
     if (ORTE_SUCCESS != ret) {
-        goto ERROR;
+        goto exit_ERROR;
     }
 
     /* get the offsets from all procs, so can setup the control data
@@ -177,7 +177,7 @@ int base_bcol_basesmuma_exchange_offsets(
     if (ORTE_SUCCESS != (ret = orte_grpcomm.allgather_list(&peers, send_buffer, recv_buffer))) {
         fprintf(stderr,"orte_grpcomm.allgather_list returned error %d\n", ret);
         fflush(stderr);
-        goto ERROR;
+        goto exit_ERROR;
     }
 
         /* unpack the dummy */
@@ -186,7 +186,7 @@ int base_bcol_basesmuma_exchange_offsets(
         if (ORTE_SUCCESS != ret) {
                 fprintf(stderr,"unpack returned error %d for dummy \n",ret);
                 fflush(stderr);
-                goto ERROR;
+                goto exit_ERROR;
         }
 
     /* get the control stucture offsets within the shared memory
@@ -202,7 +202,7 @@ int base_bcol_basesmuma_exchange_offsets(
         if (ORTE_SUCCESS != ret) {
             fprintf(stderr,"unpack returned error %d for remote index_in_group \n",ret);
             fflush(stderr);
-            goto ERROR;
+            goto exit_ERROR;
         }
 
         /* get the offset */
@@ -211,7 +211,7 @@ int base_bcol_basesmuma_exchange_offsets(
         if (ORTE_SUCCESS != ret) {
             fprintf(stderr,"unpack returned error %d for remote memory offset \n",ret);
             fflush(stderr);
-            goto ERROR;
+            goto exit_ERROR;
         }
 
         array_id=SM_ARRAY_INDEX(leading_dim,0,index_in_group);
@@ -235,7 +235,7 @@ int base_bcol_basesmuma_exchange_offsets(
 
     return ret;
 
-ERROR:
+exit_ERROR:
 
     /* free peer list */
     peer=(orte_namelist_t *)opal_list_remove_first(&peers);
@@ -280,14 +280,14 @@ static int base_bcol_basesmuma_exchange_ctl_params(
             sm_bcol_module->super.sbgp_partner_module->group_list,
             sm_bcol_module->super.sbgp_partner_module->group_comm);
     if( OMPI_SUCCESS != ret ) {
-        goto ERROR;
+        goto exit_ERROR;
     }
 
 #if 0
     ret=base_bcol_basesmuma_exchange_offsets( sm_bcol_module, 
             (void **)ctl_mgmt->ctl_buffs, mem_offset, loop_limit, leading_dim);
     if( OMPI_SUCCESS != ret ) {
-        goto ERROR;
+        goto exit_ERROR;
     }
 #endif
 
@@ -329,7 +329,7 @@ static int base_bcol_basesmuma_exchange_ctl_params(
 
     return ret;
 
-ERROR:
+exit_ERROR:
 
     return ret;
 }
@@ -381,7 +381,7 @@ int base_bcol_basesmuma_setup_ctl_struct(
     ctl_mgmt->ctl_buffs= malloc(malloc_size);
     if( !ctl_mgmt->ctl_buffs ) {
         ret=OMPI_ERR_OUT_OF_RESOURCE;
-        goto ERROR;
+        goto exit_ERROR;
     }
 
     /* exchange remote addressing information  */
@@ -407,7 +407,7 @@ int base_bcol_basesmuma_setup_ctl_struct(
         fprintf(stderr,"Cannot allocate memory for shared_memory_scratch_space. \n");
         fflush(stderr);
         ret = OMPI_ERR_OUT_OF_RESOURCE;
-        goto ERROR;
+        goto exit_ERROR;
     }
     for(i=0 ; i < sm_bcol_module->super.sbgp_partner_module->group_size ; i++ )
         {
@@ -434,7 +434,7 @@ int base_bcol_basesmuma_setup_ctl_struct(
         fprintf(stderr,"Cannot allocate memory for ctl_buffs_mgmt. ret = %d \n",ret);
         fflush(stderr);
         ret = OMPI_ERROR;
-        goto ERROR;
+        goto exit_ERROR;
     }
 
     /* initialize each individual element */
@@ -468,7 +468,7 @@ int base_bcol_basesmuma_setup_ctl_struct(
 
     return ret;
 
-ERROR:
+exit_ERROR:
 
     return ret;
 }
@@ -526,7 +526,7 @@ int base_bcol_basesmuma_setup_library_buffers(
             list_data_t *item=OBJ_NEW(list_data_t);
             if( !item ) {
                 ret=OMPI_ERR_OUT_OF_RESOURCE;
-                goto ERROR;
+                goto exit_ERROR;
             }
             item->data=(void *)data_ptr;
             opal_list_append(&(cs->ctl_structures),(opal_list_item_t *)item);
@@ -549,12 +549,12 @@ int base_bcol_basesmuma_setup_library_buffers(
         opal_list_remove_last(&(cs->ctl_structures));
     if( !sm_bcol_module->no_userdata_ctl) {
         ret=OMPI_ERR_OUT_OF_RESOURCE;
-        goto ERROR;
+        goto exit_ERROR;
     }
     ret=base_bcol_basesmuma_setup_ctl_struct(
             sm_bcol_module, cs, &(sm_bcol_module->colls_no_user_data));
     if( OMPI_SUCCESS != ret ) {
-        goto ERROR;
+        goto exit_ERROR;
     }
 
     /* intialize userdata_ctl */
@@ -562,13 +562,13 @@ int base_bcol_basesmuma_setup_library_buffers(
         opal_list_remove_last(&(cs->ctl_structures));
     if( !sm_bcol_module->userdata_ctl) {
         ret=OMPI_ERR_OUT_OF_RESOURCE;
-        goto ERROR;
+        goto exit_ERROR;
     }
 
     ret=base_bcol_basesmuma_setup_ctl_struct(
             sm_bcol_module, cs, &(sm_bcol_module->colls_with_user_data));
     if( OMPI_SUCCESS != ret ) {
-        goto ERROR;
+        goto exit_ERROR;
     }
 
     /* used for blocking recursive doubling barrier */
@@ -581,18 +581,18 @@ int base_bcol_basesmuma_setup_library_buffers(
     ret= base_bcol_basesmuma_exchange_ctl_params(sm_bcol_module, cs,
         &(sm_bcol_module->colls_no_user_data),sm_bcol_module->no_userdata_ctl);
     if( OMPI_SUCCESS != ret ) {
-        goto ERROR;
+        goto exit_ERROR;
     }
 
     ret= base_bcol_basesmuma_exchange_ctl_params(sm_bcol_module, cs,
         &(sm_bcol_module->colls_with_user_data),sm_bcol_module->userdata_ctl);
     if( OMPI_SUCCESS != ret ) {
-        goto ERROR;
+        goto exit_ERROR;
     }
 
     return ret;
 
-ERROR:
+exit_ERROR:
 
     return ret;
 }

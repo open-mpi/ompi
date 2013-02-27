@@ -67,7 +67,7 @@ extern "C" {
 #include <netdb.h>
 #endif
 
-#ifdef WIN32
+#if defined(WIN32) && !defined(__CYGWIN__)
 #include <winsock2.h>
 #else
 #include <sys/socket.h>
