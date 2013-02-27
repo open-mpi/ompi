@@ -48,6 +48,7 @@ struct ompi_mtl_portals4_isend_request_t {
     ompi_mtl_portals4_base_request_t super;
     void *buffer_ptr;
     ptl_handle_me_t me_h;
+    ptl_handle_md_t md_h;
     uint64_t opcount;
 #if OMPI_MTL_PORTALS4_FLOW_CONTROL
     struct ompi_mtl_portals4_pending_request_t *pending;
