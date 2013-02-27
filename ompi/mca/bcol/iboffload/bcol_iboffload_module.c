@@ -34,7 +34,7 @@
 #include "ompi/communicator/communicator.h"
 #include "ompi/mca/mpool/grdma/mpool_grdma.h"
 #include "ompi/mca/coll/ml/coll_ml_allocation.h"
-#include "ompi/mca/common/netpatterns/common_netpatterns.h"
+#include "ompi/patterns/net/netpatterns.h"
 
 #include "bcol_iboffload.h"
 #include "bcol_iboffload_frag.h"
