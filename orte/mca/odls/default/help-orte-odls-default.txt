@@ -22,13 +22,15 @@
 #
 [execve error]
 Open MPI tried to fork a new process via the "execve" system call but
-failed.  This is an unusual error because Open MPI checks many things
-before attempting to launch a child process.  This error may be
-indicative of another problem on the target host.  Your job will now
+failed.  Open MPI checks many things before attempting to launch a
+child process, but nothing is perfect. This error may be indicative
+of another problem on the target host, or even something as silly as
+having specified a directory for your application. Your job will now
 abort.
 
   Local host:        %s
   Application name:  %s
+  Error:             %s
 #
 [binding not supported]
 Open MPI tried to bind a new process, but process binding is not

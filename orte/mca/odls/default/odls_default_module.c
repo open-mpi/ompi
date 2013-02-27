@@ -626,7 +626,7 @@ static int do_child(orte_app_context_t* context,
     execve(context->app, context->argv, environ_copy);
     send_error_show_help(write_fd, 1, 
                          "help-orte-odls-default.txt", "execve error",
-                         context->app, strerror(errno));
+                         orte_process_info.nodename, context->app, strerror(errno));
     /* Does not return */
 }
 
