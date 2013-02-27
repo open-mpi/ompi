@@ -32,6 +32,9 @@
 
 BEGIN_C_DECLS
 
+#define MEMORY_MAX_SIZE   ((long int)1<<48)
+#define EXTENDED_ADDR     (0xffff000000000000)
+
 struct mca_mtl_portals4_send_request_t;
 
 struct mca_mtl_portals4_module_t {
@@ -70,8 +73,9 @@ struct mca_mtl_portals4_module_t {
     /** MD handle for sending ACKS */
     ptl_handle_md_t zero_md_h;
 
-    /** MD handle covering all of memory for sending normal messages */
-    ptl_handle_md_t md_h;
+    /** Fixed MD handles covering all of memory for sending normal messages */
+    ptl_handle_md_t *fixed_md_h;
+    uint64_t fixed_md_distance;
 
     /** long message receive overflow ME.  Persistent ME, first in
         overflow list on the recv_idx portal table. */
