@@ -1389,6 +1389,7 @@ void orte_odls_base_default_launch_local(int fd, short sd, void *cbdata)
                 if (opal_sys_limits.num_files < limit) {
                     if (2 < caddy->retries) {
                         /* tried enough - give up */
+                        child->exit_code = ORTE_PROC_STATE_FAILED_TO_LAUNCH;
                         ORTE_ACTIVATE_PROC_STATE(&child->name, ORTE_PROC_STATE_FAILED_TO_LAUNCH);
                         continue;
                     }
@@ -1478,6 +1479,7 @@ void orte_odls_base_default_launch_local(int fd, short sd, void *cbdata)
              */
             if (ORTE_SUCCESS != (rc = setup_child(child, jobdat, app))) {
                 ORTE_ERROR_LOG(rc);
+                child->exit_code = rc;
                 ORTE_ACTIVATE_PROC_STATE(&child->name, ORTE_PROC_STATE_FAILED_TO_LAUNCH);
                 continue;
             }
@@ -1499,6 +1501,7 @@ void orte_odls_base_default_launch_local(int fd, short sd, void *cbdata)
                                                                  &(app->argv),
                                                                  &(app->env) ) ) ) {
                     ORTE_ERROR_LOG(rc);
+                    child->exit_code = ORTE_PROC_STATE_FAILED_TO_LAUNCH;
                     ORTE_ACTIVATE_PROC_STATE(&child->name, ORTE_PROC_STATE_FAILED_TO_LAUNCH);
                     continue;
                 }
@@ -1539,6 +1542,7 @@ void orte_odls_base_default_launch_local(int fd, short sd, void *cbdata)
                  * across the entire cluster. Instead, we let orterun
                  * output a consolidated error message for us
                  */
+                child->exit_code = ORTE_ERR_SILENT; /* error message already output */
                 ORTE_ACTIVATE_PROC_STATE(&child->name, ORTE_PROC_STATE_FAILED_TO_START);
                 continue;
             } else {
