@@ -19,7 +19,6 @@
 
 #man_pages = ortecc.1 ortec++.1
 
-if !ORTE_DISABLE_FULL_SUPPORT
 if !OPAL_WANT_SCRIPT_WRAPPER_COMPILERS
 if OMPI_INSTALL_BINARIES
 
@@ -77,5 +76,3 @@ distclean-local:
 #ortec++.1: $(top_builddir)/opal/tools/wrappers/generic_wrapper.1
 #	rm -f ortec++.1
 #	sed -e 's/#COMMAND#/ortec++/g' -e 's/#PROJECT#/OpenRTE/g' -e 's/#PROJECT_SHORT#/ORTE/g' -e 's/#LANGUAGE#/C++/g' < $(top_builddir)/opal/tools/wrappers/generic_wrapper.1 > ortec++.1
-
-endif # !ORTE_DISABLE_FULL_SUPPORT

@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
+ * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * $COPYRIGHT$
  *
@@ -141,7 +141,6 @@ int orte_dt_pack_vpid(opal_buffer_t *buffer, const void *src,
     return ret;
 }
 
-#if !ORTE_DISABLE_FULL_SUPPORT
 /*
  * JOB
  * NOTE: We do not pack all of the job object's fields as many of them have no
@@ -862,4 +861,3 @@ int orte_dt_pack_iof_tag(opal_buffer_t *buffer, const void *src, int32_t num_val
     
     return ret;
 }
-#endif

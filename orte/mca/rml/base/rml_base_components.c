@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2011      Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * $COPYRIGHT$
  * 
@@ -23,11 +23,6 @@
 
 #include "orte/mca/rml/rml.h"
 #include "orte/util/name_fns.h"
-
-#if !ORTE_DISABLE_FULL_SUPPORT
-
-
-#endif
 
 #include "orte/mca/rml/base/base.h"
 

@@ -10,7 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2011      Los Alamos National Security, LLC.
+# Copyright (c) 2011-2013 Los Alamos National Security, LLC.
 #                         All rights reserved.
 # Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
@@ -27,5 +27,5 @@ AC_DEFUN([MCA_orte_plm_rsh_CONFIG],[
 
     AC_CHECK_FUNC([fork], [plm_rsh_happy="yes"], [plm_rsh_happy="no"])
 
-    AS_IF([test "$plm_rsh_happy" = "yes" -a "$orte_without_full_support" = 0], [$1], [$2])
+    AS_IF([test "$plm_rsh_happy" = "yes"], [$1], [$2])
 ])dnl

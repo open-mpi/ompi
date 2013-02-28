@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
+ * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * $COPYRIGHT$
  *
@@ -137,7 +137,6 @@ int orte_dt_std_print(char **output, char *prefix, void *src, opal_data_type_t t
                      ORTE_JOBID_PRINT(*(orte_jobid_t*)src));
             break;
             
-#if !ORTE_DISABLE_FULL_SUPPORT
         case ORTE_PROC_STATE:
             orte_dt_quick_print(output, "ORTE_PROC_STATE", prefix, src, ORTE_PROC_STATE_T);
             break;
@@ -165,7 +164,6 @@ int orte_dt_std_print(char **output, char *prefix, void *src, opal_data_type_t t
         case ORTE_IOF_TAG:
             orte_dt_quick_print(output, "ORTE_IOF_TAG", prefix, src, ORTE_IOF_TAG_T);
             break;
-#endif
             
         default:
             ORTE_ERROR_LOG(ORTE_ERR_UNKNOWN_DATA_TYPE);
@@ -193,8 +191,6 @@ int orte_dt_print_name(char **output, char *prefix, orte_process_name_t *name, o
     
     return ORTE_SUCCESS;
 }
-
-#if !ORTE_DISABLE_FULL_SUPPORT
 
 /*
  * JOB
@@ -728,4 +724,3 @@ int orte_dt_print_map(char **output, char *prefix, orte_job_map_t *src, opal_dat
     free(pfx);
     return ORTE_SUCCESS;
 }
-#endif

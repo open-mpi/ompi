@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
+ * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * $COPYRIGHT$
  *
@@ -105,8 +105,6 @@ int orte_dt_copy_vpid(orte_vpid_t **dest, orte_vpid_t *src, opal_data_type_t typ
     
     return ORTE_SUCCESS;
 }
-
-#if !ORTE_DISABLE_FULL_SUPPORT
 
 /**
  * JOB
@@ -369,5 +367,3 @@ int orte_dt_copy_iof_tag(orte_iof_tag_t **dest, orte_iof_tag_t *src, opal_data_t
     
     return ORTE_SUCCESS;
 }
-
-#endif

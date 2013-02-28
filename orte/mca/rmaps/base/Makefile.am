@@ -20,19 +20,11 @@
 #
 
 headers += \
-        base/base.h
-
-libmca_rmaps_la_SOURCES += \
-        base/rmaps_base_open.c
-
-if !ORTE_DISABLE_FULL_SUPPORT
-
-dist_pkgdata_DATA = base/help-orte-rmaps-base.txt
-
-headers += \
+        base/base.h \
         base/rmaps_private.h
 
 libmca_rmaps_la_SOURCES += \
+        base/rmaps_base_open.c \
         base/rmaps_base_close.c \
         base/rmaps_base_select.c \
         base/rmaps_base_map_job.c \
@@ -40,9 +32,9 @@ libmca_rmaps_la_SOURCES += \
         base/rmaps_base_ranking.c \
         base/rmaps_base_print_fns.c
 
+dist_pkgdata_DATA = base/help-orte-rmaps-base.txt
+
 if OPAL_HAVE_HWLOC
 libmca_rmaps_la_SOURCES += \
         base/rmaps_base_binding.c
-endif
-
 endif

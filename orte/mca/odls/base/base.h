@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -39,8 +40,6 @@ BEGIN_C_DECLS
  * Open the odls framework
  */
 ORTE_DECLSPEC int orte_odls_base_open(void);
-
-#if !ORTE_DISABLE_FULL_SUPPORT
 
 /**
  * Struct to hold globals for the odls framework
@@ -75,8 +74,6 @@ ORTE_DECLSPEC int orte_odls_base_select(void);
  */
 ORTE_DECLSPEC int orte_odls_base_finalize(void);
 ORTE_DECLSPEC int orte_odls_base_close(void);
-
-#endif /* ORTE_DISABLE_FULL_SUPPORT */
 
 END_C_DECLS
 #endif

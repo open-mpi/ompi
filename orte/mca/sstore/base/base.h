@@ -2,6 +2,7 @@
  * Copyright (c)      2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
+ * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -13,9 +14,7 @@
 
 #include "orte_config.h"
 
-#if !ORTE_DISABLE_FULL_SUPPORT
 #include "orte/mca/rml/rml.h"
-#endif
 
 #include "orte/mca/sstore/sstore.h"
 
@@ -35,7 +34,6 @@ BEGIN_C_DECLS
  */
 ORTE_DECLSPEC int orte_sstore_base_open(void);
 
-#if !ORTE_DISABLE_FULL_SUPPORT
     /**
      * Select an available component.
      *
@@ -139,8 +137,6 @@ ORTE_DECLSPEC int orte_sstore_base_tool_request_restart_handle(orte_sstore_base_
                                                                char *basedir, char *ref, int seq,
                                                                orte_sstore_base_global_snapshot_info_t *snapshot);
 ORTE_DECLSPEC int orte_sstore_base_tool_get_attr(orte_sstore_base_handle_t handle, orte_sstore_base_key_t key, char **value);
-
-#endif /* ORTE_DISABLE_FULL_SUPPORT */
 
 END_C_DECLS
 

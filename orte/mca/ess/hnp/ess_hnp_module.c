@@ -412,7 +412,6 @@ static int rte_init(void)
     /* we are also officially a daemon, so better update that field too */
     orte_process_info.my_daemon_uri = orte_rml.get_contact_info();
     
-#if !ORTE_DISABLE_FULL_SUPPORT
     /* setup the orte_show_help system to recv remote output */
     ret = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_SHOW_HELP,
                                  ORTE_RML_PERSISTENT, orte_show_help_recv, NULL);
@@ -421,7 +420,6 @@ static int rte_init(void)
         error = "setup receive for orte_show_help";
         goto error;
     }
-#endif
 
     /* setup my session directory */
     if (orte_create_session_dirs) {

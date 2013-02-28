@@ -24,7 +24,6 @@ include $(top_srcdir)/Makefile.man-page-rules
 man_pages = orte-checkpoint.1
 EXTRA_DIST = orte-checkpoint.1in CMakeLists.txt
 
-if !ORTE_DISABLE_FULL_SUPPORT
 if WANT_FT_CR
 if OMPI_INSTALL_BINARIES
 
@@ -45,7 +44,6 @@ orte_checkpoint_SOURCES = orte-checkpoint.c
 orte_checkpoint_LDADD = $(top_builddir)/orte/libopen-rte.la $(top_builddir)/opal/libopen-pal.la
 
 endif # WANT_FT_CR
-endif # !ORTE_DISABLE_FULL_SUPPORT
 
 distclean-local:
 	rm -f $(man_pages)

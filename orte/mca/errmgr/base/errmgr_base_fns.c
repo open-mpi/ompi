@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved. 
  * Copyright (c) 2010-2011 Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
+ * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * $COPYRIGHT$
  * 
@@ -211,7 +211,6 @@ void orte_errmgr_base_abort(int error_code, char *fmt, ...)
     }
     va_end(arglist);
     
-#if !ORTE_DISABLE_FULL_SUPPORT
     /* if I am a daemon or the HNP... */
     if (ORTE_PROC_IS_HNP || ORTE_PROC_IS_DAEMON) {
         /* whack my local procs */
@@ -222,9 +221,6 @@ void orte_errmgr_base_abort(int error_code, char *fmt, ...)
         /* cleanup my session directory */
         orte_session_dir_finalize(ORTE_PROC_MY_NAME);
     }
-#else
-    orte_session_dir_finalize(ORTE_PROC_MY_NAME);
-#endif
 
     /* if a critical connection failed, or a sensor limit was exceeded, exit without dropping a core */
     if (ORTE_ERR_CONNECTION_FAILED == error_code ||

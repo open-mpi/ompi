@@ -9,8 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2011 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2011      Los Alamos National Security, LLC.
+ * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * $COPYRIGHT$
  * 
@@ -45,7 +45,6 @@ BEGIN_C_DECLS
  */
 ORTE_DECLSPEC int orte_rmaps_base_open(void);
 
-#if !ORTE_DISABLE_FULL_SUPPORT
 
 /*
  * Global functions for MCA overall collective open and close
@@ -122,8 +121,6 @@ ORTE_DECLSPEC int orte_rmaps_base_prep_topology(hwloc_topology_t topo);
 ORTE_DECLSPEC int orte_rmaps_base_filter_nodes(orte_app_context_t *app,
                                                opal_list_t *nodes,
                                                bool remove);
-
-#endif /* ORTE_DISABLE_FULL_SUPPORT */
 
 END_C_DECLS
 

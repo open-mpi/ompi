@@ -56,8 +56,6 @@ BEGIN_C_DECLS
 
 ORTE_DECLSPEC int orte_iof_base_open(void);
 
-#if !ORTE_DISABLE_FULL_SUPPORT
-
 /* track xon/xoff of processes */
 typedef struct {
     opal_object_t super;
@@ -199,8 +197,6 @@ ORTE_DECLSPEC int orte_iof_base_write_output(orte_process_name_t *name, orte_iof
                                              unsigned char *data, int numbytes,
                                              orte_iof_write_event_t *channel);
 ORTE_DECLSPEC void orte_iof_base_write_handler(int fd, short event, void *cbdata);
-
-#endif /* ORTE_DISABLE_FULL_SUPPORT */
 
 END_C_DECLS
 

@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -38,8 +39,6 @@ BEGIN_C_DECLS
  * Open the plm framework
  */
 ORTE_DECLSPEC int orte_plm_base_open(void);
-
-#if !ORTE_DISABLE_FULL_SUPPORT
 
 /**
  * Struct to hold data for public access
@@ -93,8 +92,6 @@ ORTE_DECLSPEC void orte_plm_base_mapping_complete(int fd, short args, void *cbda
 ORTE_DECLSPEC void orte_plm_base_launch_apps(int fd, short args, void *cbdata);
 ORTE_DECLSPEC void orte_plm_base_post_launch(int fd, short args, void *cbdata);
 ORTE_DECLSPEC void orte_plm_base_registered(int fd, short args, void *cbdata);
-
-#endif /* ORTE_DISABLE_FULL_SUPPORT */
 
 END_C_DECLS
 

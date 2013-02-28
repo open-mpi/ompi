@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved. 
+ * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -41,12 +42,6 @@ ORTE_DECLSPEC    int orte_sensor_base_close(void);
  */
 
 ORTE_DECLSPEC extern opal_list_t mca_sensor_base_components_available;
-
-#if !ORTE_DISABLE_FULL_SUPPORT
-
-/* no base functions to protect at this time */
-
-#endif /* ORTE_DISABLE_FULL_SUPPORT */
 
 END_C_DECLS
 #endif

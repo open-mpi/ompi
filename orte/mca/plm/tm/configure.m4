@@ -10,7 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2011      Los Alamos National Security, LLC.
+# Copyright (c) 2011-2013 Los Alamos National Security, LLC.
 #                         All rights reserved.
 # Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
@@ -29,7 +29,7 @@ AC_DEFUN([MCA_orte_plm_tm_CONFIG],[
          
     # if check worked, set wrapper flags if so.  
     # Evaluate succeed / fail
-    AS_IF([test "$plm_tm_good" = "1" -a "$orte_without_full_support" = 0],
+    AS_IF([test "$plm_tm_good" = "1"],
           [$1],
           [$2])
 

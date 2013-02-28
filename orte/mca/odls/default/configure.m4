@@ -27,7 +27,7 @@ AC_DEFUN([MCA_orte_odls_default_CONFIG],[
 
     AC_CHECK_FUNC([fork], [odls_default_happy="yes"], [odls_default_happy="no"])
 
-    AS_IF([test "$odls_default_happy" = "yes" -a "$orte_without_full_support" = 0], [$1], [$2])
+    AS_IF([test "$odls_default_happy" = "yes"], [$1], [$2])
 
 ])dnl
 

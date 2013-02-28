@@ -1,7 +1,7 @@
 # -*- shell-script -*-
 #
 # Copyright (c) 2010      Cisco Systems, Inc. All rights reserved.
-# Copyright (c) 2011      Los Alamos National Security, LLC.
+# Copyright (c) 2011-2013 Los Alamos National Security, LLC.
 #                         All rights reserved.
 # $COPYRIGHT$
 # 
@@ -17,7 +17,7 @@ AC_DEFUN([MCA_orte_sensor_file_CONFIG], [
 
     # if we don't want sensors, don't compile
     # this component
-    AS_IF([test "$orte_want_sensors" = "1" -a "$orte_without_full_support" = 0],
+    AS_IF([test "$orte_want_sensors" = "1"],
         [$1], [$2])
 ])dnl
 

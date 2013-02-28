@@ -8,6 +8,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Evergrid, Inc. All rights reserved.
+ * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights reserved.
  *
  * $COPYRIGHT$
  * 
@@ -42,18 +43,6 @@
 #include "orte/mca/snapc/base/base.h"
 
 #include "orte/mca/snapc/base/static-components.h"
-
-#if ORTE_DISABLE_FULL_SUPPORT
-/* have to include a bogus function here so that
- * the build system sees at least one function
- * in the library
- */
-int orte_snapc_base_open(void)
-{
-    return ORTE_SUCCESS;
-}
-
-#else
 
 /*
  * Globals
@@ -142,5 +131,3 @@ int orte_snapc_base_open(void)
 
     return ORTE_SUCCESS;
 }
-
-#endif /* ORTE_DISABLE_FULL_SUPPORT */

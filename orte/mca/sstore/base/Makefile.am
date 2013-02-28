@@ -13,14 +13,9 @@ headers += \
         base/base.h
 
 libmca_sstore_la_SOURCES += \
-        base/sstore_base_open.c
-
-if !ORTE_DISABLE_FULL_SUPPORT
-
-dist_pkgdata_DATA = base/help-orte-sstore-base.txt
-
-libmca_sstore_la_SOURCES += \
+        base/sstore_base_open.c \
         base/sstore_base_close.c \
         base/sstore_base_select.c \
         base/sstore_base_fns.c
-endif
+
+dist_pkgdata_DATA = base/help-orte-sstore-base.txt

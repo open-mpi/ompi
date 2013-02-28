@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2011 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2011      Los Alamos National Security, LLC.
+ * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * $COPYRIGHT$
  * 
@@ -26,8 +26,6 @@
 #include <string.h>
 #endif
 
-#if !ORTE_DISABLE_FULL_SUPPORT
-
 #include "opal/mca/mca.h"
 #include "opal/util/output.h"
 #include "opal/mca/base/base.h"
@@ -37,9 +35,6 @@
 #include "orte/util/show_help.h"
 
 #include "orte/mca/rmaps/base/rmaps_private.h"
-
-#endif
-
 #include "orte/mca/rmaps/base/base.h"
 
 
@@ -50,18 +45,6 @@
  */
 
 #include "orte/mca/rmaps/base/static-components.h"
-
-#if ORTE_DISABLE_FULL_SUPPORT
-/* have to include a bogus function here so that
- * the build system sees at least one function
- * in the library
- */
-int orte_rmaps_base_open(void)
-{
-    return ORTE_SUCCESS;
-}
-
-#else
 
 /*
  * Global variables
@@ -410,5 +393,3 @@ int orte_rmaps_base_open(void)
 OBJ_CLASS_INSTANCE(orte_rmaps_base_selected_module_t,
                    opal_list_item_t,
                    NULL, NULL);
-
-#endif /* ORTE_DISABLE_FULL_SUPPORT */

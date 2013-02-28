@@ -25,8 +25,6 @@ BEGIN_C_DECLS
 
 ORTE_DECLSPEC int orte_routed_base_open(void);
 
-#if !ORTE_DISABLE_FULL_SUPPORT
-
 /*
  * Global functions for the ROUTED
  */
@@ -50,8 +48,6 @@ ORTE_DECLSPEC int orte_routed_base_register_sync(bool setup);
 ORTE_DECLSPEC int orte_routed_base_process_callback(orte_jobid_t job,
                                                     opal_buffer_t *buffer);
 ORTE_DECLSPEC void orte_routed_base_update_hnps(opal_buffer_t *buf);
-
-#endif /* ORTE_DISABLE_FULL_SUPPORT */
 
 END_C_DECLS
 

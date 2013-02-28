@@ -11,6 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
+ * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -64,8 +65,6 @@ ORTE_DECLSPEC extern int orte_ess_base_std_buffering;
 
 ORTE_DECLSPEC extern opal_list_t orte_ess_base_components_available;
 
-#if !ORTE_DISABLE_FULL_SUPPORT
-
 /*
  * Internal helper functions used by components
  */
@@ -94,8 +93,6 @@ ORTE_DECLSPEC int orte_ess_base_proc_binding(void);
 ORTE_DECLSPEC int orte_ess_env_put(orte_std_cntr_t num_procs,
                                    orte_std_cntr_t num_local_procs,
                                    char ***env);
-
-#endif /* ORTE_DISABLE_FULL_SUPPORT */
 
 END_C_DECLS
 
