@@ -445,7 +445,7 @@ static int show_help(const char *filename, const char *topic,
             fflush(orte_xml_fp);
             free(tmp);
         } else {
-            fprintf(stderr, "%s", output);
+            opal_output(orte_clean_output, "%s", output);
         }
         if (!show_help_timer_set) {
             show_help_time_last_displayed = now;
@@ -627,7 +627,7 @@ int orte_show_help_norender(const char *filename, const char *topic,
      * is process this locally
      */
     if (ORTE_PROC_IS_HNP ||
-        NULL == orte_rml.send_buffer ||
+        NULL == orte_rml.send_buffer_nb ||
         NULL == orte_routed.get_route ||
         NULL == orte_process_info.my_hnp_uri) {
         rc = show_help(filename, topic, output, ORTE_PROC_MY_NAME);
@@ -637,7 +637,7 @@ int orte_show_help_norender(const char *filename, const char *topic,
      * the HNP for processing
      */
     else {
-        opal_buffer_t buf;
+        opal_buffer_t *buf;
         static bool am_inside = false;
 
         /* JMS Note that we *may* have a recursion situation here where
@@ -650,22 +650,24 @@ int orte_show_help_norender(const char *filename, const char *topic,
             am_inside = true;
         
             /* build the message to the HNP */
-            OBJ_CONSTRUCT(&buf, opal_buffer_t);
+            buf = OBJ_NEW(opal_buffer_t);
             /* pack the filename of the show_help text file */
-            opal_dss.pack(&buf, &filename, 1, OPAL_STRING);
+            opal_dss.pack(buf, &filename, 1, OPAL_STRING);
             /* pack the topic tag */
-            opal_dss.pack(&buf, &topic, 1, OPAL_STRING);
+            opal_dss.pack(buf, &topic, 1, OPAL_STRING);
             /* pack the flag that we have a string */
-            opal_dss.pack(&buf, &have_output, 1, OPAL_INT8);
+            opal_dss.pack(buf, &have_output, 1, OPAL_INT8);
             /* pack the resulting string */
-            opal_dss.pack(&buf, &output, 1, OPAL_STRING);
+            opal_dss.pack(buf, &output, 1, OPAL_STRING);
             /* send it to the HNP */
-            if (0 > (rc = orte_rml.send_buffer(ORTE_PROC_MY_HNP, &buf, ORTE_RML_TAG_SHOW_HELP, 0))) {
+            if (0 > (rc = orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, buf,
+                                                  ORTE_RML_TAG_SHOW_HELP, 0,
+                                                  orte_rml_send_callback, NULL))) {
                 ORTE_ERROR_LOG(rc);
+                OBJ_RELEASE(buf);
             } else {
                 rc = ORTE_SUCCESS;
             }
-            OBJ_DESTRUCT(&buf);
             am_inside = false;
         }
     }
@@ -693,7 +695,7 @@ int orte_show_help_suppress(const char *filename, const char *topic)
        has not been setup, or we weren't given an HNP, then all we can
        do is process this locally. */
     if (ORTE_PROC_IS_HNP ||
-        NULL == orte_rml.send_buffer ||
+        NULL == orte_rml.send_buffer_nb ||
         NULL == orte_routed.get_route ||
         NULL == orte_process_info.my_hnp_uri) {
         rc = show_help(filename, topic, NULL, ORTE_PROC_MY_NAME);
@@ -703,7 +705,7 @@ int orte_show_help_suppress(const char *filename, const char *topic)
      * the HNP for processing
      */
     else {
-        opal_buffer_t buf;
+        opal_buffer_t *buf;
         static bool am_inside = false;
 
         /* JMS Note that we *may* have a recursion situation here where
@@ -716,18 +718,20 @@ int orte_show_help_suppress(const char *filename, const char *topic)
             am_inside = true;
         
             /* build the message to the HNP */
-            OBJ_CONSTRUCT(&buf, opal_buffer_t);
+            buf = OBJ_NEW(opal_buffer_t);
             /* pack the filename of the show_help text file */
-            opal_dss.pack(&buf, &filename, 1, OPAL_STRING);
+            opal_dss.pack(buf, &filename, 1, OPAL_STRING);
             /* pack the topic tag */
-            opal_dss.pack(&buf, &topic, 1, OPAL_STRING);
+            opal_dss.pack(buf, &topic, 1, OPAL_STRING);
             /* pack the flag that we DO NOT have a string */
-            opal_dss.pack(&buf, &have_output, 1, OPAL_INT8);
+            opal_dss.pack(buf, &have_output, 1, OPAL_INT8);
             /* send it to the HNP */
-            if (0 > (rc = orte_rml.send_buffer(ORTE_PROC_MY_HNP, &buf, ORTE_RML_TAG_SHOW_HELP, 0))) {
+            if (0 > (rc = orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, buf,
+                                                  ORTE_RML_TAG_SHOW_HELP, 0,
+                                                  orte_rml_send_callback, NULL))) {
                 ORTE_ERROR_LOG(rc);
+                OBJ_RELEASE(buf);
             }
-            OBJ_DESTRUCT(&buf);
             am_inside = false;
         }
     }
