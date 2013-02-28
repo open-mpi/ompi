@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2012 Los Alamos National Security, LLC. 
+ * Copyright (c) 2006-2013 Los Alamos National Security, LLC. 
  *                         All rights reserved.
  * Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
@@ -18,11 +18,6 @@
  * Additional copyrights may follow
  *
  * $HEADER$
- *
- * In windows, many of the socket functions return an EWOULDBLOCK
- * instead of things like EAGAIN, EINPROGRESS, etc. It has been
- * verified that this will not conflict with other error codes that
- * are returned by these functions under UNIX/Linux environments 
  */
 
 #include "orte_config.h"
@@ -408,14 +403,6 @@ static int mca_oob_tcp_component_register(void)
  */
 static int mca_oob_tcp_component_open(void)
 {
-#ifdef __WINDOWS__
-    WSADATA win_sock_data;
-    if (WSAStartup(MAKEWORD(2,2), &win_sock_data) != 0) {
-        opal_output (0, "mca_oob_tcp_component_init: failed to initialise windows sockets: error %d\n", WSAGetLastError());
-        return ORTE_ERROR;
-    }
-#endif
-
     mca_oob_tcp_output_handle = opal_output_open(NULL);
     opal_output_set_verbosity(mca_oob_tcp_output_handle, verbose_value);
 
@@ -476,10 +463,6 @@ static int mca_oob_tcp_component_open(void)
 static int mca_oob_tcp_component_close(void)
 {
     opal_list_item_t *item;
-
-#if defined(__WINDOWS__)
-    WSACleanup();
-#endif  /* defined(__WINDOWS__) */
 
     /* cleanup resources */
     while (NULL != (item = opal_list_remove_first(&mca_oob_tcp_component.tcp_available_devices))) {
@@ -1775,11 +1758,7 @@ int mca_oob_tcp_init(void)
     if (0 == randval) randval = 10; 
 
     /* random delay to stagger connections back to seed */
-#if defined(__WINDOWS__)
-    if(1 == mca_oob_tcp_component.connect_sleep) {
-        Sleep((ORTE_PROC_MY_NAME->vpid % randval % 1000) * 100);
-    }
-#elif defined(HAVE_USLEEP)
+#if defined(HAVE_USLEEP)
     if(1 == mca_oob_tcp_component.connect_sleep) {
         usleep((ORTE_PROC_MY_NAME->vpid % randval % 1000) * 1000);
     }

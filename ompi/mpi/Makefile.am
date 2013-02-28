@@ -17,8 +17,7 @@
 # $HEADER$
 #
 
-EXTRA_DIST += \
-        mpi/CMakeLists.txt \
+EXTRA_DIST = \
         mpi/fortran/configure-fortran-output-bottom.h
 
 dist_pkgdata_DATA += mpi/help-mpi-api.txt

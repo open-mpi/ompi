@@ -194,11 +194,7 @@ int opal_ifaddrtoname(const char* if_addr, char* if_name, int length)
     int error;
     struct addrinfo hints, *res = NULL, *r;
 #else
-#ifndef __WINDOWS__
     in_addr_t inaddr;
-#else 
-    unsigned long inaddr;
-#endif
     struct hostent *h;
 #endif
 
@@ -397,8 +393,6 @@ int opal_ifindextomask(int if_index, uint32_t* if_mask, int length)
 /* 
  *  Lookup the interface by opal_list index and return the 
  *  flags assigned to the interface.
- *
- *  Bug: Make return type portable (compatible with Windows)
  */
 
 int opal_ifindextoflags(int if_index, uint32_t* if_flags)

@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2012 Los Alamos National Security, LLC. 
+ * Copyright (c) 2006-2013 Los Alamos National Security, LLC. 
  *                         All rights reserved.
  * Copyright (c) 2010-2011 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
@@ -258,18 +258,11 @@ ORTE_MODULE_DECLSPEC extern mca_oob_tcp_component_t mca_oob_tcp_component;
 
 extern int mca_oob_tcp_output_handle;
 
-#if defined(__WINDOWS__)
-#define CLOSE_THE_SOCKET(socket)    closesocket(socket)
-#else
-
 #define CLOSE_THE_SOCKET(socket)    \
     do {                            \
         shutdown(socket, 2);        \
         close(socket);              \
     } while(0)
-
-#endif  /* defined(__WINDOWS__) */
-
 
 struct mca_oob_tcp_pending_connection_t {
     opal_free_list_item_t super;

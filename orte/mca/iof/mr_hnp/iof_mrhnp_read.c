@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012      Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2012-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * $COPYRIGHT$
  * 
@@ -58,13 +58,11 @@ static void restart_stdin(int fd, short event, void *cbdata)
 /* return true if we should read stdin from fd, false otherwise */
 bool orte_iof_mrhnp_stdin_check(int fd)
 {
-#if !defined(__WINDOWS__) && defined(HAVE_TCGETPGRP)
+#if defined(HAVE_TCGETPGRP)
     if( isatty(fd) && (getpgrp() != tcgetpgrp(fd)) ) {
         return false;
     }
-#elif defined(__WINDOWS__)
-    return false;
-#endif  /* !defined(__WINDOWS__) */
+#endif
     return true;
 }
 
@@ -100,17 +98,8 @@ void orte_iof_mrhnp_read_local_handler(int fd, short event, void *cbdata)
     bool write_out=false;
 
     /* read up to the fragment size */
-#if !defined(__WINDOWS__)
     numbytes = read(fd, data, sizeof(data));
-#else
-    {
-        DWORD readed;
-        HANDLE handle = (HANDLE)_get_osfhandle(fd);
-        ReadFile(handle, data, sizeof(data), &readed, NULL);
-        numbytes = (int)readed;
-    }
-#endif  /* !defined(__WINDOWS__) */
-    
+
     OPAL_OUTPUT_VERBOSE((1, orte_iof_base.iof_output,
                          "%s iof:mrhnp:read handler read %d bytes from %s:%d",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), numbytes,

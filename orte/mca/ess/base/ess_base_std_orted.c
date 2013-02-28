@@ -80,10 +80,8 @@ static bool signals_set=false;
 static opal_event_t term_handler;
 static opal_event_t int_handler;
 static opal_event_t epipe_handler;
-#ifndef __WINDOWS__
 static opal_event_t sigusr1_handler;
 static opal_event_t sigusr2_handler;
-#endif  /* __WINDOWS__ */
 char *log_path = NULL;
 static void shutdown_signal(int fd, short flags, void *arg);
 static void signal_callback(int fd, short flags, void *arg);
@@ -111,7 +109,6 @@ int orte_ess_base_orted_setup(char **hosts)
     orte_app_context_t *app;
     orte_node_t *node;
 
-#ifndef __WINDOWS__
     /* setup callback for SIGPIPE */
     setup_sighandler(SIGPIPE, &epipe_handler, epipe_signal_callback);
     /* Set signal handlers to catch kill signals so we can properly clean up
@@ -123,7 +120,6 @@ int orte_ess_base_orted_setup(char **hosts)
     /** setup callbacks for signals we should ignore */
     setup_sighandler(SIGUSR1, &sigusr1_handler, signal_callback);
     setup_sighandler(SIGUSR2, &sigusr2_handler, signal_callback);
-#endif  /* __WINDOWS__ */
     
     signals_set = true;
     
@@ -621,10 +617,8 @@ int orte_ess_base_orted_finalize(void)
         opal_event_del(&epipe_handler);
         opal_event_del(&term_handler);
         opal_event_del(&int_handler);
-#ifndef __WINDOWS__
         opal_event_signal_del(&sigusr1_handler);
         opal_event_signal_del(&sigusr2_handler);
-#endif  /* __WINDOWS__ */
     }
     
     /* cleanup */

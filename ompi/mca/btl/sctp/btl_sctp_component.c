@@ -17,10 +17,6 @@
  * 
  * $HEADER$
  *
- * In windows, many of the socket functions return an EWOULDBLOCK
- * instead of \ things like EAGAIN, EINPROGRESS, etc. It has been
- * verified that this will \ not conflict with other error codes that
- * are returned by these functions \ under UNIX/Linux environments 
  */
 
 #include "ompi_config.h"
@@ -232,14 +228,6 @@ static int mca_btl_sctp_component_register(void)
 
 static int mca_btl_sctp_component_open(void)
 {
-#ifdef __WINDOWS__
-    WSADATA win_sock_data;
-    if (WSAStartup(MAKEWORD(2,2), &win_sock_data) != 0) {
-        BTL_ERROR(("failed to initialise windows sockets:%d", WSAGetLastError()));
-        return OMPI_ERROR;
-    }
-#endif
-
     /* initialize state */
     mca_btl_sctp_component.sctp_listen_sd = -1;
     /* TODO different sd for ipv6 */
@@ -346,10 +334,6 @@ int mca_btl_sctp_component_close(void)
     OBJ_DESTRUCT(&mca_btl_sctp_component.sctp_frag_max);
     OBJ_DESTRUCT(&mca_btl_sctp_component.sctp_frag_user);
     OBJ_DESTRUCT(&mca_btl_sctp_component.sctp_lock);
-
-#ifdef __WINDOWS__
-    WSACleanup();
-#endif
 
     return OMPI_SUCCESS;
 }

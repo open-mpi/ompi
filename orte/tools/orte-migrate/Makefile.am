@@ -14,7 +14,7 @@
 include $(top_srcdir)/Makefile.man-page-rules
 
 man_pages = orte-migrate.1
-EXTRA_DIST = orte-migrate.1in CMakeLists.txt
+EXTRA_DIST = orte-migrate.1in
 
 if WANT_FT_CR
 if OMPI_INSTALL_BINARIES

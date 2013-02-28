@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012      Los Alamos National Security, LLC.
+ * Copyright (c) 2012-2013 Los Alamos National Security, LLC.
  *                         All rights reserved
  * $COPYRIGHT$
  * 
@@ -290,9 +290,6 @@ static int raw_preposition_files(orte_job_t *jdata,
                                  orte_filem_completion_cbfunc_t cbfunc,
                                  void *cbdata)
 {
-#ifdef __WINDOWS__
-    return ORTE_ERR_NOT_SUPPORTED;
-#else
     orte_app_context_t *app;
     opal_list_item_t *item, *itm, *itm2;
     orte_filem_base_file_set_t *fs;
@@ -611,7 +608,6 @@ static int raw_preposition_files(orte_job_t *jdata,
     }
 
     return ORTE_SUCCESS;
-#endif
 }
 
 static int create_link(char *my_dir, char *path,
@@ -660,9 +656,6 @@ static int create_link(char *my_dir, char *path,
 static int raw_link_local_files(orte_job_t *jdata,
                                 orte_app_context_t *app)
 {
-#ifdef __WINDOWS__
-    return ORTE_ERR_NOT_SUPPORTED;
-#else
     char *my_dir, *path=NULL;
     orte_proc_t *proc;
     char *prefix;
@@ -802,7 +795,6 @@ static int raw_link_local_files(orte_job_t *jdata,
     }
     free(my_dir);
     return ORTE_SUCCESS;
-#endif
 }
 
 static void send_chunk(int fd, short argc, void *cbdata)

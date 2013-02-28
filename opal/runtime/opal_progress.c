@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2006-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  *
  * $COPYRIGHT$
@@ -207,20 +207,16 @@ opal_progress(void)
         events += (callbacks[i])();
     }
 
-#if defined(__WINDOWS__) || defined(HAVE_SCHED_YIELD)
+#if defined(HAVE_SCHED_YIELD)
     if (call_yield && events <= 0) {
         /* If there is nothing to do - yield the processor - otherwise
          * we could consume the processor for the entire time slice. If
          * the processor is oversubscribed - this will result in a best-case
          * latency equivalent to the time-slice.
          */
-#if defined(__WINDOWS__)
-        SwitchToThread();
-#else
         sched_yield();
-#endif  /* defined(__WINDOWS__) */
     }
-#endif  /* defined(__WINDOWS__) || defined(HAVE_SCHED_YIELD) */
+#endif  /* defined(HAVE_SCHED_YIELD) */
 #if OPAL_ENABLE_MULTI_THREADS
     opal_atomic_add(&opal_progress_recursion_depth_counter, -1);
 #else

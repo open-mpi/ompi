@@ -3,7 +3,7 @@
  * Copyright (c) 2007-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2008-2009 Mellanox Technologies. All rights reserved.
  * Copyright (c) 2009      IBM Corporation.  All rights reserved.
- * Copyright (c) 2011      Los Alamos National Security, LLC.  All
+ * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All
  *                         rights reserved.
  *
  * $COPYRIGHT$
@@ -706,9 +706,7 @@ static int udcm_module_finalize(mca_btl_openib_module_t *btl,
     ompi_btl_openib_fd_unmonitor(m->cm_channel->fd, udcm_unmonitor, (void *)&barrier);
 
     while (0 == barrier) {
-#ifndef __WINDOWS__
 	sched_yield();
-#endif
     }
 
     /* destroy the listen queue pair. this will cause ibv_get_cq_event to

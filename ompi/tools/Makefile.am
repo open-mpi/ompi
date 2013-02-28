@@ -19,8 +19,6 @@
 
 # This makefile.am does not stand on its own - it is included from ompi/Makefile.am
 
-EXTRA_DIST += tools/win_makefile tools/CMakeLists.txt
-
 SUBDIRS += \
 	tools/ompi_info \
 	tools/wrappers

@@ -21,7 +21,7 @@
 DEFS="-DEXEEXT=\"$(EXEEXT)\""
 
 real_man_pages = generic_wrapper.1 opal_wrapper.1
-EXTRA_DIST = $(real_man_pages:.1=.1in) CMakeLists.txt
+EXTRA_DIST = $(real_man_pages:.1=.1in)
 
 include $(top_srcdir)/Makefile.man-page-rules
 

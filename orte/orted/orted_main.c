@@ -320,12 +320,12 @@ int orte_daemon(int argc, char *argv[])
         free(args);
         return 1;
     }
-#if defined(HAVE_SETSID) && !defined(__WINDOWS__)
+#if defined(HAVE_SETSID)
     /* see if we were directed to separate from current session */
     if (orted_globals.set_sid) {
         setsid();
     }
-#endif  /* !defined(__WINDOWS__) */
+#endif
     /* see if they want us to spin until they can connect a debugger to us */
     i=0;
     while (orted_spin_flag) {
@@ -593,11 +593,7 @@ int orte_daemon(int argc, char *argv[])
 	free(sysinfo);
 
         /* pass that info to the singleton */
-#ifndef __WINDOWS__
         write(orted_globals.uri_pipe, tmp, strlen(tmp)+1); /* need to add 1 to get the NULL */
-#else
-        send(orted_globals.uri_pipe, tmp, strlen(tmp)+1, 0); /* need to add 1 to get the NULL */
-#endif
 
         /* cleanup */
         free(tmp);

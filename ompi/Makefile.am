@@ -19,8 +19,6 @@
 # $HEADER$
 #
 
-EXTRA_DIST = CMakeLists.txt
-
 # We always have C bindings, but do we have profiling?
 
 if BUILD_MPI_BINDINGS_LAYER

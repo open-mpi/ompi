@@ -17,7 +17,4 @@
 # $HEADER$
 #
 
-
-EXTRA_DIST = CMakeLists.txt
-
 SUBDIRS = environment

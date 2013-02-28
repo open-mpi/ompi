@@ -122,11 +122,7 @@ struct mca_btl_tcp_module_t {
 typedef struct mca_btl_tcp_module_t mca_btl_tcp_module_t;
 extern mca_btl_tcp_module_t mca_btl_tcp_module;
 
-#if defined(__WINDOWS__)
-#define CLOSE_THE_SOCKET(socket)   closesocket(socket)
-#else
 #define CLOSE_THE_SOCKET(socket)   close(socket)
-#endif  /* defined(__WINDOWS__) */
 
 /**
  * TCP component initialization.

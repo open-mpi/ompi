@@ -17,8 +17,6 @@
 # $HEADER$
 #
 
-EXTRA_DIST = CMakeLists.txt
-
 AM_LDFLAGS = -lpthread
 
 noinst_PROGRAMS = chello

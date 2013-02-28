@@ -27,7 +27,7 @@ nodist_headers = opal_config.h
 
 include opal/Makefile.am
 
-EXTRA_DIST = CMakeLists.txt $(headers)
+EXTRA_DIST = $(headers)
 
 if WANT_INSTALL_HEADERS 
 opaldir = $(includedir)/openmpi

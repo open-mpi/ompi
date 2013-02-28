@@ -28,35 +28,6 @@
 
 #define ORTE_IDENT_STRING OPAL_IDENT_STRING
 
-#if defined(__WINDOWS__)
-
-#  if defined(_USRDLL)    /* building shared libraries (.DLL) */
-#    if defined(ORTE_EXPORTS)
-#      define ORTE_DECLSPEC         __declspec(dllexport)
-#      define ORTE_MODULE_DECLSPEC
-#    else
-#      if defined(ORTE_IMPORTS)
-#        define ORTE_DECLSPEC       __declspec(dllimport)
-#      else
-#        define ORTE_DECLSPEC
-#      endif  /*defined(ORTE_IMPORTS)*/
-#      if defined(ORTE_MODULE_EXPORTS)
-#        define ORTE_MODULE_DECLSPEC __declspec(dllexport)
-#      else
-#        define ORTE_MODULE_DECLSPEC __declspec(dllimport)
-#      endif  /* defined(ORTE_MODULE_EXPORTS) */
-#    endif  /* defined(ORTE_EXPORTS) */
-#  else          /* building static library or external includes */
-#    if defined(ORTE_IMPORTS)
-#      define ORTE_DECLSPEC        __declspec(dllimport)
-#    else
-#      define ORTE_DECLSPEC
-#    endif  /* defined(ORTE_IMPORTS) */
-#    define ORTE_MODULE_DECLSPEC
-#  endif
-
-#else
-
 #  if OPAL_C_HAVE_VISIBILITY
 #    define ORTE_DECLSPEC           __opal_attribute_visibility__("default")
 #    define ORTE_MODULE_DECLSPEC    __opal_attribute_visibility__("default")
@@ -64,6 +35,5 @@
 #    define ORTE_DECLSPEC
 #    define ORTE_MODULE_DECLSPEC
 #  endif
-#endif  /* defined(__WINDOWS__) */
 
 #endif

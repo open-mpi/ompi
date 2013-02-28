@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012      Los Alamos National Security, LLC.
+ * Copyright (c) 2012-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  *
  * $COPYRIGHT$
@@ -56,16 +56,7 @@ void orte_iof_mrorted_read_handler(int fd, short event, void *cbdata)
     orte_proc_t *daemon;
 
     /* read up to the fragment size */
-#if !defined(__WINDOWS__)
     numbytes = read(fd, data, sizeof(data));
-#else
-    {
-        DWORD readed;
-        HANDLE handle = (HANDLE)_get_osfhandle(fd);
-        ReadFile(handle, data, sizeof(data), &readed, NULL);
-        numbytes = (int)readed;
-    }
-#endif  /* !defined(__WINDOWS__) */
     
     OPAL_OUTPUT_VERBOSE((1, orte_iof_base.iof_output,
                          "%s iof:mrorted:read handler read %d bytes from %s, fd %d",

@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2009 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2007-2012 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2007-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2013      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
@@ -215,14 +215,14 @@ int ompi_mpi_register_params(void)
                                 /* If we do not have stack trace
                                    capability, make this a read-only
                                    MCA param */
-#if OPAL_WANT_PRETTY_PRINT_STACKTRACE && ! defined(__WINDOWS__) && defined(HAVE_BACKTRACE)
+#if OPAL_WANT_PRETTY_PRINT_STACKTRACE && defined(HAVE_BACKTRACE)
                                 false, 
 #else
                                 true,
 #endif
                                 (int) ompi_mpi_abort_print_stack,
                                 &value);
-#if OPAL_WANT_PRETTY_PRINT_STACKTRACE && ! defined(__WINDOWS__) && defined(HAVE_BACKTRACE)
+#if OPAL_WANT_PRETTY_PRINT_STACKTRACE && defined(HAVE_BACKTRACE)
     /* Only take the value if we have stack trace capability */
     ompi_mpi_abort_print_stack = OPAL_INT_TO_BOOL(value);
 #else

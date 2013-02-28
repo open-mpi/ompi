@@ -72,11 +72,7 @@ int mca_base_open(void)
     mca_base_system_default_path = strdup(opal_install_dirs.pkglibdir);
     asprintf(&mca_base_user_default_path, "%s"OPAL_PATH_SEP".openmpi"OPAL_PATH_SEP"components", opal_home_directory());
 #else
-# if defined(__WINDOWS__) && defined(_DEBUG)
-    asprintf(&mca_base_system_default_path, "%s/debug", opal_install_dirs.pkglibdir); 
-# else
     asprintf(&mca_base_system_default_path, "%s", opal_install_dirs.pkglibdir); 
-# endif
 #endif
 
     /* see if the user wants to override the defaults */
@@ -133,9 +129,7 @@ static void set_defaults(opal_output_stream_t *lds)
     /* Load up defaults */
 
     OBJ_CONSTRUCT(lds, opal_output_stream_t);
-#ifndef __WINDOWS__
     lds->lds_syslog_priority = LOG_INFO;
-#endif
     lds->lds_syslog_ident = "ompi";
     lds->lds_want_stderr = true;
 }
@@ -146,85 +140,83 @@ static void set_defaults(opal_output_stream_t *lds)
  */
 static void parse_verbose(char *e, opal_output_stream_t *lds)
 {
-  char *edup;
-  char *ptr, *next;
-  bool have_output = false;
+    char *edup;
+    char *ptr, *next;
+    bool have_output = false;
 
-  if (NULL == e) {
-    return;
-  }
-
-  edup = strdup(e);
-  ptr = edup;
-
-  /* Now parse the environment variable */
-
-  while (NULL != ptr && strlen(ptr) > 0) {
-    next = strchr(ptr, ',');
-    if (NULL != next) {
-      *next = '\0';
+    if (NULL == e) {
+        return;
     }
 
-    if (0 == strcasecmp(ptr, "syslog")) {
-#ifndef __WINDOWS__  /* there is no syslog */
-		lds->lds_want_syslog = true;
-      have_output = true;
+    edup = strdup(e);
+    ptr = edup;
+
+    /* Now parse the environment variable */
+
+    while (NULL != ptr && strlen(ptr) > 0) {
+        next = strchr(ptr, ',');
+        if (NULL != next) {
+            *next = '\0';
+        }
+
+        if (0 == strcasecmp(ptr, "syslog")) {
+            lds->lds_want_syslog = true;
+            have_output = true;
+        }
+        else if (strncasecmp(ptr, "syslogpri:", 10) == 0) {
+            lds->lds_want_syslog = true;
+            have_output = true;
+            if (strcasecmp(ptr + 10, "notice") == 0)
+                lds->lds_syslog_priority = LOG_NOTICE;
+            else if (strcasecmp(ptr + 10, "INFO") == 0)
+                lds->lds_syslog_priority = LOG_INFO;
+            else if (strcasecmp(ptr + 10, "DEBUG") == 0)
+                lds->lds_syslog_priority = LOG_DEBUG;
+        } else if (strncasecmp(ptr, "syslogid:", 9) == 0) {
+            lds->lds_want_syslog = true;
+            lds->lds_syslog_ident = ptr + 9;
+        }
+
+        else if (strcasecmp(ptr, "stdout") == 0) {
+            lds->lds_want_stdout = true;
+            have_output = true;
+        } else if (strcasecmp(ptr, "stderr") == 0) {
+            lds->lds_want_stderr = true;
+            have_output = true;
+        }
+
+        else if (strcasecmp(ptr, "file") == 0) {
+            lds->lds_want_file = true;
+            have_output = true;
+        } else if (strncasecmp(ptr, "file:", 5) == 0) {
+            lds->lds_want_file = true;
+            lds->lds_file_suffix = ptr + 5;
+            have_output = true;
+        } else if (strcasecmp(ptr, "fileappend") == 0) {
+            lds->lds_want_file = true;
+            lds->lds_want_file_append = 1;
+            have_output = true;
+        } 
+
+        else if (strncasecmp(ptr, "level", 5) == 0) {
+            lds->lds_verbose_level = 0;
+            if (ptr[5] == OPAL_ENV_SEP)
+                lds->lds_verbose_level = atoi(ptr + 6);
+        }
+
+        if (NULL == next) {
+            break;
+        }
+        ptr = next + 1;
     }
-    else if (strncasecmp(ptr, "syslogpri:", 10) == 0) {
-      lds->lds_want_syslog = true;
-      have_output = true;
-      if (strcasecmp(ptr + 10, "notice") == 0)
-	lds->lds_syslog_priority = LOG_NOTICE;
-      else if (strcasecmp(ptr + 10, "INFO") == 0)
-	lds->lds_syslog_priority = LOG_INFO;
-      else if (strcasecmp(ptr + 10, "DEBUG") == 0)
-	lds->lds_syslog_priority = LOG_DEBUG;
-    } else if (strncasecmp(ptr, "syslogid:", 9) == 0) {
-      lds->lds_want_syslog = true;
-      lds->lds_syslog_ident = ptr + 9;
-#endif
+
+    /* If we didn't get an output, default to stderr */
+
+    if (!have_output) {
+        lds->lds_want_stderr = true;
     }
 
-    else if (strcasecmp(ptr, "stdout") == 0) {
-      lds->lds_want_stdout = true;
-      have_output = true;
-    } else if (strcasecmp(ptr, "stderr") == 0) {
-      lds->lds_want_stderr = true;
-      have_output = true;
-    }
+    /* All done */
 
-    else if (strcasecmp(ptr, "file") == 0) {
-      lds->lds_want_file = true;
-      have_output = true;
-    } else if (strncasecmp(ptr, "file:", 5) == 0) {
-      lds->lds_want_file = true;
-      lds->lds_file_suffix = ptr + 5;
-      have_output = true;
-    } else if (strcasecmp(ptr, "fileappend") == 0) {
-      lds->lds_want_file = true;
-      lds->lds_want_file_append = 1;
-      have_output = true;
-    } 
-
-    else if (strncasecmp(ptr, "level", 5) == 0) {
-      lds->lds_verbose_level = 0;
-      if (ptr[5] == OPAL_ENV_SEP)
-        lds->lds_verbose_level = atoi(ptr + 6);
-    }
-
-    if (NULL == next) {
-      break;
-    }
-    ptr = next + 1;
-  }
-
-  /* If we didn't get an output, default to stderr */
-
-  if (!have_output) {
-    lds->lds_want_stderr = true;
-  }
-
-  /* All done */
-
-  free(edup);
+    free(edup);
 }

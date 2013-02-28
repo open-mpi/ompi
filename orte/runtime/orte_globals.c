@@ -151,9 +151,6 @@ bool orte_report_launch_progress = false;
 char *orte_default_hostfile = NULL;
 bool orte_default_hostfile_given = false;
 char *orte_rankfile = NULL;
-#ifdef __WINDOWS__
-char *orte_ccp_headnode;
-#endif
 int orte_num_allocated_nodes = 0;
 char *orte_node_regex = NULL;
 

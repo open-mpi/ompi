@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2007-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * $COPYRIGHT$
  * 
@@ -20,7 +20,7 @@
 
 #include "opal/threads/tsd.h"
 
-#if !OPAL_HAVE_POSIX_THREADS && !OPAL_HAVE_SOLARIS_THREADS && !defined(__WINDOWS__)
+#if !OPAL_HAVE_POSIX_THREADS && !OPAL_HAVE_SOLARIS_THREADS
 
 #define TSD_ENTRIES 32
 

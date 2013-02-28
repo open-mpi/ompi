@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2007-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2012 Cisco Systems, Inc.  All rights reserved.
@@ -310,7 +310,6 @@ int opal_cr_init(void )
                         (MPIR_debug_with_checkpoint ? "True": "False"));
 #endif
 
-#ifndef __WINDOWS__
     mca_base_param_reg_int_name("opal_cr", "signal",
                                 "Checkpoint/Restart signal used to initialize an OPAL Only checkpoint of a program",
                                 false, false,
@@ -347,10 +346,6 @@ int opal_cr_init(void )
         }
     }
 #endif
-
-#else
-    opal_cr_is_tool = true;  /* no support for CR on Windows yet */ 
-#endif  /* __WINDOWS__ */
 
 #if OPAL_ENABLE_CRDEBUG == 1
     opal_cr_debug_num_free_threads = 3;
@@ -1413,9 +1408,7 @@ void *MPIR_checkpoint_debugger_breakpoint(void)
 {
     /* spin until debugger attaches and releases us */
     while (MPIR_checkpoint_debug_gate == 0) {
-#if defined(__WINDOWS__)
-        Sleep(100);     /* milliseconds */
-#elif defined(HAVE_USLEEP)
+#if defined(HAVE_USLEEP)
         usleep(100000); /* microseconds */
 #else
         sleep(1);       /* seconds */

@@ -66,7 +66,7 @@ static char *unable_to_print_msg = "Unable to print stack trace!\n";
  *
  * FIXME: Should distinguish for systems, which don't have siginfo...
  */
-#if OPAL_WANT_PRETTY_PRINT_STACKTRACE && ! defined(__WINDOWS__)
+#if OPAL_WANT_PRETTY_PRINT_STACKTRACE
 static void show_stackframe (int signo, siginfo_t * info, void * p)
 {   
     char print_buffer[1024];
@@ -379,7 +379,7 @@ static void show_stackframe (int signo, siginfo_t * info, void * p)
     fflush(stderr);
 }
 
-#endif /* OPAL_WANT_PRETTY_PRINT_STACKTRACE && ! defined(__WINDOWS__) */
+#endif /* OPAL_WANT_PRETTY_PRINT_STACKTRACE */
 
 
 #if OPAL_WANT_PRETTY_PRINT_STACKTRACE
@@ -453,7 +453,7 @@ char *opal_stackframe_output_string(void)
  */
 int opal_util_register_stackhandlers (void)
 {
-#if OPAL_WANT_PRETTY_PRINT_STACKTRACE && ! defined(__WINDOWS__)
+#if OPAL_WANT_PRETTY_PRINT_STACKTRACE
     struct sigaction act, old;
     char * string_value;
     char * tmp;
@@ -535,7 +535,7 @@ int opal_util_register_stackhandlers (void)
       }
     }
     free(string_value);
-#endif /* OPAL_WANT_PRETTY_PRINT_STACKTRACE && ! defined(__WINDOWS__) */
+#endif /* OPAL_WANT_PRETTY_PRINT_STACKTRACE */
 
     return OPAL_SUCCESS;
 }

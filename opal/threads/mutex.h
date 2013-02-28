@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2007-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2007      Voltaire. All rights reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
@@ -110,11 +110,7 @@ static inline void opal_mutex_atomic_unlock(opal_mutex_t *mutex);
 
 END_C_DECLS
 
-#ifdef __WINDOWS__
-#include "mutex_windows.h"
-#else
 #include "mutex_unix.h"
-#endif
 
 BEGIN_C_DECLS
 

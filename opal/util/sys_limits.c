@@ -56,9 +56,7 @@ OPAL_DECLSPEC opal_sys_limits_t opal_sys_limits = {
 
 int opal_util_init_sys_limits(void)
 {
-#ifndef __WINDOWS__    
     struct rlimit rlim, rlim_set;
-#endif
     int value;
     bool set_lims;
 
@@ -67,9 +65,6 @@ int opal_util_init_sys_limits(void)
                                 false, false, (int)false, &value);
     set_lims = OPAL_INT_TO_BOOL(value);
 
-#ifdef __WINDOWS__
-    /* George: please insert whatever is needed here someday */
-#else
     /* get/set the system limits on number of files we can have open */
     if (0 <= getrlimit (RLIMIT_NOFILE, &rlim)) {
         if (set_lims) {
@@ -110,7 +105,6 @@ int opal_util_init_sys_limits(void)
     
     /* indicate we initialized the limits structure */
     opal_sys_limits.initialized = true;
-#endif
 
   return OPAL_SUCCESS;
 }

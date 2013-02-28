@@ -4,7 +4,7 @@
  * Copyright (c) 2008      Mellanox Technologies. All rights reserved.
  * Copyright (c) 2009      Sandia National Laboratories. All rights reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
- * Copyright (c) 2012      Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2012-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  *
  * $COPYRIGHT$
@@ -1051,10 +1051,8 @@ static int rdmacm_endpoint_finalize(struct mca_btl_base_endpoint_t *endpoint)
                 OPAL_OUTPUT((-1, "MAIN Main thread calling disconnect on ID %p",
                              (void*) ((id_context_t*) item2)->id));
                 ++num_to_wait_for;
-#ifndef __WINDOWS__
                 ompi_btl_openib_fd_run_in_service(call_disconnect_callback,
                                                   item2);
-#endif
             }
 	    /* remove_item returns the item before the item removed,
 	       meaning that the for list is still safe */
@@ -1070,10 +1068,8 @@ static int rdmacm_endpoint_finalize(struct mca_btl_base_endpoint_t *endpoint)
 
     /* Now wait for all the disconnect callbacks to occur */
     while (num_to_wait_for != disconnect_callbacks) {
-#ifndef __WINDOWS__
         ompi_btl_openib_fd_main_thread_drain();
         sched_yield();
-#endif
     }
 
     OPAL_OUTPUT((-1, "MAIN Endpoint finished finalizing"));
@@ -1968,10 +1964,8 @@ static int rdmacm_component_finalize(void)
     }
 
     if (NULL != event_channel) {
-#ifndef __WINDOWS__
         rc = ompi_btl_openib_fd_unmonitor(event_channel->fd,
                                           rdmacm_unmonitor, (void*) &barrier);
-#endif
         if (OMPI_SUCCESS != rc) {
             BTL_ERROR(("Error disabling fd monitor"));
         }
@@ -1979,9 +1973,7 @@ static int rdmacm_component_finalize(void)
         /* Wait for the service thread to stop monitoring the fd */
         OPAL_OUTPUT((-1, "MAIN rdmacm_component_finalize: waiting for thread to finish"));
         while (0 == barrier) {
-#ifndef __WINDOWS__
             sched_yield();
-#endif
         }
         OPAL_OUTPUT((-1, "MAIN rdmacm_component_finalize: thread finished"));
     }
@@ -2041,11 +2033,9 @@ static int rdmacm_component_init(void)
         return OMPI_ERR_UNREACH;
     }
 
-#ifndef __WINDOWS__
     /* Start monitoring the fd associated with the cm_device */
     ompi_btl_openib_fd_monitor(event_channel->fd, OPAL_EV_READ,
                                rdmacm_event_dispatch, NULL);
-#endif
 
     rdmacm_component_initialized = true;
     return OMPI_SUCCESS;
