@@ -327,7 +327,7 @@ data_callback(const char *key, const char *value)
                                opal_install_dirs_expand(value);
         if (0 != strcmp(options_data[parse_options_idx].path_libdir, "/usr/lib")) {
             char *line;
-            asprintf(&line, OPAL_LIBDIR_FLAG"\"%s/../bin\"", 
+            asprintf(&line, OPAL_LIBDIR_FLAG"%s", 
                      options_data[parse_options_idx].path_libdir);
             opal_argv_append_nosize(&options_data[parse_options_idx].link_flags, line);
             free(line);
