@@ -107,12 +107,10 @@ static bool forcibly_die=false;
 static opal_event_t term_handler;
 static opal_event_t epipe_handler;
 static int term_pipe[2];
-#ifndef __WINDOWS__
 static opal_event_t sigusr1_handler;
 static opal_event_t sigusr2_handler;
 static opal_event_t sigtstp_handler;
 static opal_event_t sigcont_handler;
-#endif  /* __WINDOWS__ */
 
 static void abort_signal_callback(int signal);
 static void clean_abort(int fd, short flags, void *arg);
@@ -144,7 +142,6 @@ static int rte_init(void)
         goto error;
     }
 
-#ifndef __WINDOWS__
     /* setup callback for SIGPIPE */
     setup_sighandler(SIGPIPE, &epipe_handler, epipe_signal_callback);
     /** setup callbacks for abort signals - from this point
@@ -171,7 +168,6 @@ static int rte_init(void)
     setup_sighandler(SIGUSR2, &sigusr2_handler, signal_forward_callback);
     setup_sighandler(SIGTSTP, &sigtstp_handler, signal_forward_callback);
     setup_sighandler(SIGCONT, &sigcont_handler, signal_forward_callback);
-#endif  /* __WINDOWS__ */
     signals_set = true;
 
 #if OPAL_HAVE_HWLOC
@@ -706,7 +702,6 @@ static int rte_finalize(void)
     if (signals_set) {
         /* Remove the epipe handler */
         opal_event_signal_del(&epipe_handler);
-#ifndef __WINDOWS__
         /* remove the term handler */
         opal_event_del(&term_handler);
         /** Remove the USR signal handlers */
@@ -716,7 +711,6 @@ static int rte_finalize(void)
             opal_event_signal_del(&sigtstp_handler);
             opal_event_signal_del(&sigcont_handler);
         }
-#endif  /* __WINDOWS__ */
         signals_set = false;
     }
 

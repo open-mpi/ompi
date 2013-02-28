@@ -322,14 +322,6 @@ int orte_register_params(void)
         orte_default_hostfile_given = true;
     }
     
-#ifdef __WINDOWS__
-    mca_base_param_reg_string_name("orte", "ccp_headnode",
-                                   "Name of the cluster head node. (For Windows CCP only.)",
-                                   false, false,
-                                   NULL, &orte_ccp_headnode);
-#endif
-    
-
     /* regex of nodes in system */
     mca_base_param_reg_string_name("orte", "node_regex",
                                    "Regular expression defining nodes in the system",

@@ -846,9 +846,6 @@ static int snapc_full_app_notify_reopen_files(void)
 #ifndef HAVE_MKFIFO
     return ret;
 #else
-#ifdef __WINDOWS__
-    return ret;
-#else
     /*
      * Open up the read pipe
      */
@@ -900,7 +897,6 @@ static int snapc_full_app_notify_reopen_files(void)
     }
     
     return ORTE_SUCCESS;
-#endif  /* __WINDOWS__ */
 #endif  /* HAVE_MKFIFO */
 }
 

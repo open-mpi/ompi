@@ -17,8 +17,6 @@
 # $HEADER$
 #
 
-EXTRA_DIST += tools/CMakeLists.txt
-
 # This makefile.am does not stand on its own - it is included from
 # opal/Makefile.am
 

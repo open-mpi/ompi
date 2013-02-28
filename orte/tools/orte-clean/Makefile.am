@@ -21,7 +21,7 @@
 include $(top_srcdir)/Makefile.man-page-rules
 
 man_pages = orte-clean.1
-EXTRA_DIST = $(man_pages:.1=.1in) CMakeLists.txt
+EXTRA_DIST = $(man_pages:.1=.1in)
 
 if OMPI_INSTALL_BINARIES
 

@@ -18,8 +18,6 @@
 # $HEADER$
 #
 
-EXTRA_DIST = CMakeLists.txt
-
 # support needs to be first for dependencies
 SUBDIRS = support asm class threads datatype util
 DIST_SUBDIRS = event $(SUBDIRS)

@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2006-2009 Mellanox Technologies. All rights reserved.
- * Copyright (c) 2006-2012 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2006-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2006-2007 Voltaire All rights reserved.
  * Copyright (c) 2008-2012 Oracle and/or its affiliates.  All rights reserved.
@@ -134,9 +134,7 @@ void mca_btl_openib_show_init_error(const char *file, int line,
 {
     if (ENOMEM == errno) {
         int ret;
-#ifndef __WINDOWS__
         struct rlimit limit;
-#endif
         char *str_limit = NULL;
 
 #if HAVE_DECL_RLIMIT_MEMLOCK
@@ -144,7 +142,6 @@ void mca_btl_openib_show_init_error(const char *file, int line,
 #else
         ret = -1;
 #endif
-#ifndef __WINDOWS__
         if (0 != ret) {
             asprintf(&str_limit, "Unknown");
         } else if (limit.rlim_cur == RLIM_INFINITY) {
@@ -152,7 +149,6 @@ void mca_btl_openib_show_init_error(const char *file, int line,
         } else {
             asprintf(&str_limit, "%ld", (long)limit.rlim_cur);
         }
-#endif
 
         opal_show_help("help-mpi-btl-openib.txt", "init-fail-no-mem",
                        true, ompi_process_info.nodename,

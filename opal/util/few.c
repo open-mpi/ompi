@@ -36,7 +36,6 @@
 
 int opal_few(char *argv[], int *status)
 {
-#ifndef __WINDOWS__
 #if defined(HAVE_FORK) && defined(HAVE_EXECVE) && defined(HAVE_WAITPID)
     pid_t pid, ret;
 
@@ -80,48 +79,5 @@ int opal_few(char *argv[], int *status)
     return OPAL_SUCCESS;
 #else
     return OPAL_ERR_NOT_SUPPORTED;
-#endif
-
-#else
-
-    STARTUPINFO si;
-    PROCESS_INFORMATION pi;
-    DWORD process_stat;
-    char* command  = argv[0];
-    char* exec_command;
-
-    ZeroMemory (&si, sizeof(si));
-    ZeroMemory (&pi, sizeof(pi));
-
-    _flushall();  /* Push all output */
-
-    GetStartupInfo (&si);
-    argv[0] = opal_basename( command );
-    exec_command = opal_argv_join( argv, ' ' );
-    free( argv[0] );
-    argv[0] = command;
-    if (!CreateProcess (argv[0],
-                        (LPSTR)exec_command,
-                        NULL,
-                        NULL,
-                        TRUE,
-                        0,
-                        NULL,
-                        NULL,
-                        &si,
-                        &pi)){
-        *status = (int)GetLastError();
-        return OPAL_ERROR;
-    }
-
-    /* wait for child to die */
-    WaitForSingleObject(pi.hProcess, INFINITE);
-    if( 0 == GetExitCodeProcess(pi.hProcess, &process_stat) ) {
-        *status = (int)GetLastError();
-        return OPAL_ERROR;
-    }
-    *status = (int)process_stat;
-
-    return OPAL_SUCCESS;
 #endif
 }

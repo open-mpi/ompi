@@ -64,13 +64,11 @@ static void restart_stdin(int fd, short event, void *cbdata)
 /* return true if we should read stdin from fd, false otherwise */
 bool orte_iof_hnp_stdin_check(int fd)
 {
-#if !defined(__WINDOWS__) && defined(HAVE_TCGETPGRP)
+#if defined(HAVE_TCGETPGRP)
     if( isatty(fd) && (getpgrp() != tcgetpgrp(fd)) ) {
         return false;
     }
-#elif defined(__WINDOWS__)
-    return false;
-#endif  /* !defined(__WINDOWS__) */
+#endif
     return true;
 }
 
@@ -101,16 +99,7 @@ void orte_iof_hnp_read_local_handler(int fd, short event, void *cbdata)
     orte_ns_cmp_bitmask_t mask;
     
     /* read up to the fragment size */
-#if !defined(__WINDOWS__)
     numbytes = read(fd, data, sizeof(data));
-#else
-    {
-        DWORD readed;
-        HANDLE handle = (HANDLE)_get_osfhandle(fd);
-        ReadFile(handle, data, sizeof(data), &readed, NULL);
-        numbytes = (int)readed;
-    }
-#endif  /* !defined(__WINDOWS__) */
     
     if (numbytes < 0) {
         /* either we have a connection error or it was a non-blocking read */

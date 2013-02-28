@@ -10,18 +10,13 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2010 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2012      Los Alamos National Security, LLC. 
+ * Copyright (c) 2012-2013 Los Alamos National Security, LLC. 
  *                         All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
  * 
  * $HEADER$
- *
- * In windows, many of the socket functions return an EWOULDBLOCK
- * instead of \ things like EAGAIN, EINPROGRESS, etc. It has been
- * verified that this will \ not conflict with other error codes that
- * are returned by these functions \ under UNIX/Linux environments 
  */
 
 #include "orte_config.h"
@@ -52,9 +47,7 @@
 #ifdef HAVE_NETINET_TCP_H
 #include <netinet/tcp.h>
 #endif
-#ifndef __WINDOWS__
 #include <signal.h>
-#endif
 
 #include "opal/mca/event/event.h"
 #include "opal/opal_socket_errno.h"
@@ -88,9 +81,7 @@ mca_oob_tcp_ping(const orte_process_name_t* name,
     mca_oob_tcp_hdr_t hdr;
     struct timeval tv;
     struct iovec iov;
-#ifndef __WINDOWS__
     opal_event_t *sigpipe_handler;
-#endif
     socklen_t addrlen;
 
     /* parse uri string */
@@ -186,25 +177,20 @@ mca_oob_tcp_ping(const orte_process_name_t* name,
     hdr.msg_type = MCA_OOB_TCP_PROBE;
     MCA_OOB_TCP_HDR_HTON(&hdr);
 
-#ifndef __WINDOWS__
     /* Ignore SIGPIPE in the write -- determine success or failure in
        the ping by looking at the return code from write() */
     sigpipe_handler = opal_event_alloc();
     opal_event_signal_set(orte_event_base, sigpipe_handler, SIGPIPE,
                           noop, sigpipe_handler);
     opal_event_signal_add(sigpipe_handler, NULL);
-#endif
-    /* Do the write and see what happens. Use the writev version just to
-     * make Windows happy as there the write function is limitted to
-     * file operations.
-     */
+
+    /* Do the write and see what happens */
     iov.iov_base = (IOVBASE_TYPE*)&hdr;
     iov.iov_len  = sizeof(hdr);
     rc = writev(sd, &iov, 1 );
-#ifndef __WINDOWS__
     /* Now de-register the handler */
     opal_event_free(sigpipe_handler);
-#endif
+
     if (rc != sizeof(hdr)) {
         CLOSE_THE_SOCKET(sd);
         return ORTE_ERR_UNREACH;

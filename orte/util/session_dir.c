@@ -131,20 +131,13 @@ orte_session_dir_get_name(char **fulldirpath,
     bool prefix_provided = false;
     int exit_status = ORTE_SUCCESS;
     size_t len;
-#ifndef __WINDOWS__
     int uid;
-	struct passwd *pwdent;
-#else
-#define INFO_BUF_SIZE 256
-    TCHAR info_buf[INFO_BUF_SIZE];
-    DWORD info_buf_length = INFO_BUF_SIZE;
-#endif
+    struct passwd *pwdent;
     
     /* Ensure that system info is set */
     orte_proc_info();
 
      /* get the name of the user */
-#ifndef __WINDOWS__
     uid = getuid();
 #ifdef HAVE_GETPWUID
     pwdent = getpwuid(uid);
@@ -158,13 +151,6 @@ orte_session_dir_get_name(char **fulldirpath,
             return ORTE_ERR_OUT_OF_RESOURCE;
         }
     }
-#else 
-    if (!GetUserName(info_buf, &info_buf_length)) {
-        user = strdup("unknown");
-    } else {
-        user = strdup(info_buf);
-    }
-#endif
     
     /*
      * set the 'hostname'

@@ -35,11 +35,7 @@
 #include "opal/util/os_path.h"
 #include "opal/util/os_dirpath.h"
 
-#ifdef __WINDOWS__
-#define PATH_SEP "\\"
-#else
 #define PATH_SEP "/"
-#endif
 
 static const char *path_sep = PATH_SEP;
 

@@ -29,14 +29,7 @@ typedef struct vprotocol_pessimist_sender_based_t
 #ifdef SB_USE_CONVERTOR_METHOD
     uintptr_t sb_conv_to_pessimist_offset; /* end of request from req_conv */
 #endif
-    
-#if defined __WINDOWS__
-    HANDLE sb_fd;           /*  file handle of mapped file */
-    HANDLE sb_map;          /*  view handle of mapped file */
-#else
-    int sb_fd;              /* file descriptor of mapped file */
-#endif
-    
+    int sb_fd;              /* file descriptor of mapped file */    
     off_t sb_offset;        /* offset in mmaped file          */
     uintptr_t sb_addr;      /* base address of mmaped segment */
     size_t sb_length;       /* length of mmaped segment */

@@ -108,9 +108,7 @@ void ompi_rte_wait_for_debugger(void)
     if (orte_standalone_operation) {
         /* spin until debugger attaches and releases us */
         while (MPIR_debug_gate == 0) {
-#if defined(__WINDOWS__)
-            Sleep(100);     /* milliseconds */
-#elif defined(HAVE_USLEEP)
+#if defined(HAVE_USLEEP)
             usleep(100000); /* microseconds */
 #else
             sleep(1);       /* seconds */

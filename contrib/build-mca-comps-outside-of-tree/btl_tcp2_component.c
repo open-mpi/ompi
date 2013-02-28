@@ -172,13 +172,6 @@ static void mca_btl_tcp2_component_accept_handler(int, short, void*);
 int mca_btl_tcp2_component_open(void)
 {
     char* message;
-#ifdef __WINDOWS__
-    WSADATA win_sock_data;
-    if( WSAStartup(MAKEWORD(2,2), &win_sock_data) != 0 ) {
-        BTL_ERROR(("failed to initialise windows sockets:%d", WSAGetLastError()));
-        return OMPI_ERROR;
-    }
-#endif
 
     /* initialize state */
     mca_btl_tcp2_component.tcp_listen_sd = -1;
@@ -339,10 +332,6 @@ int mca_btl_tcp2_component_close(void)
     OBJ_DESTRUCT(&mca_btl_tcp2_component.tcp_frag_max);
     OBJ_DESTRUCT(&mca_btl_tcp2_component.tcp_frag_user);
     OBJ_DESTRUCT(&mca_btl_tcp2_component.tcp_lock);
-
-#ifdef __WINDOWS__
-    WSACleanup();
-#endif
 
     return OMPI_SUCCESS;
 }

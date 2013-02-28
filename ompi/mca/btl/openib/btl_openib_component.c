@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2006-2009 Mellanox Technologies. All rights reserved.
- * Copyright (c) 2006-2012 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2006-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2006-2007 Voltaire All rights reserved.
  * Copyright (c) 2009-2012 Oracle and/or its affiliates.  All rights reserved.
@@ -252,9 +252,7 @@ static int btl_openib_component_close(void)
 #endif
 
     ompi_btl_openib_connect_base_finalize();
-#ifndef __WINDOWS__
     ompi_btl_openib_fd_finalize();
-#endif
     ompi_btl_openib_ini_finalize();
     if (NULL != mca_btl_openib_component.receive_queues) {
         free(mca_btl_openib_component.receive_queues);
@@ -2478,24 +2476,20 @@ btl_openib_component_init(int *num_btl_modules,
         goto no_btls;
     }
 
-#ifndef __WINDOWS__
     seedv[0] = OMPI_PROC_MY_NAME->vpid;
     seedv[1] = opal_timer_base_get_cycles();
     seedv[2] = opal_timer_base_get_cycles();
     seed48(seedv);
-#endif
 
     /* Read in INI files with device-specific parameters */
     if (OMPI_SUCCESS != (ret = ompi_btl_openib_ini_init())) {
         goto no_btls;
     }
 
-#ifndef __WINDOWS__
     /* Initialize FD listening */
     if (OMPI_SUCCESS != ompi_btl_openib_fd_init()) {
         goto no_btls;
     }
-#endif
 
     /* Init CPC components */
     if (OMPI_SUCCESS != (ret = ompi_btl_openib_connect_base_init())) {
@@ -2916,10 +2910,8 @@ btl_openib_component_init(int *num_btl_modules,
     /* If we fail early enough in the setup, we just modex around that
        there are no openib BTL's in this process and return NULL. */
 
-#ifndef __WINDOWS__
     /* Be sure to shut down the fd listener */
     ompi_btl_openib_fd_finalize();
-#endif
 
     mca_btl_openib_component.ib_num_btls = 0;
     btl_openib_modex_send();

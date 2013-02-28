@@ -18,8 +18,6 @@
 # $HEADER$
 #
 
-EXTRA_DIST = CMakeLists.txt
-
 # Need the first so that we can get the path names correct inside the
 # MPI C++ library.  The second is necessary so that mpi.h doesn't
 # include mpicxx.h through the incorrect pathname in any of the C++

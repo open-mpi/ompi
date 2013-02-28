@@ -93,8 +93,6 @@ BEGIN_C_DECLS
 #include "opal/sys/sparcv9/timer.h"
 #elif OPAL_ASSEMBLY_ARCH == OMPI_SPARCV9_64
 #include "opal/sys/sparcv9/timer.h"
-#elif OPAL_ASSEMBLY_ARCH == OMPI_WINDOWS
-#include "opal/sys/win32/timer.h"
 #elif OPAL_ASSEMBLY_ARCH == OMPI_MIPS
 #include "opal/sys/mips/timer.h"
 #endif

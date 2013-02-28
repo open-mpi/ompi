@@ -131,11 +131,7 @@ static bool try_dlopen(const char *dir, const char *fw, const char *comp,
 {
     char component_name[BUFSIZ];
     char file_name[BUFSIZ];
-#ifdef __WINDOWS__
-    char dirsep = '\\';
-#else
     char dirsep = '/';
-#endif
 
     component_name[BUFSIZ - 1] = '\0';
     snprintf(component_name, BUFSIZ - 1, "mca_%s_%s_component", fw, comp);
@@ -185,11 +181,7 @@ static char *dir_concat(const char *a, const char *b)
     name[0] = '\0';
     if (NULL != a) {
         strcat(name, a);
-#ifdef __WINDOWS__
-        strcat(name, "\\");
-#else
         strcat(name, "/");
-#endif        
     }
     if (NULL != b) {
         strcat(name, b);

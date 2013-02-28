@@ -28,8 +28,6 @@ BEGIN_C_DECLS
 #ifdef HAVE_SCHED_YIELD
 #  include <sched.h>
 #  define SPIN sched_yield()
-#elif defined(__WINDOWS__)
-#  define SPIN SwitchToThread()
 #else  /* no switch available */
 #  define SPIN
 #endif

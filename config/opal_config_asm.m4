@@ -761,9 +761,7 @@ AC_DEFUN([OPAL_CONFIG_ASM],[
       [AC_HELP_STRING([--enable-builtin-atomics],
          [Enable use of __sync builtin atomics (default: disabled)])])
 
-    if test "$ompi_cv_c_compiler_vendor" = "microsoft" ; then
-        ompi_cv_asm_arch="WINDOWS"
-    elif test "$enable_builtin_atomics" = "yes" ; then
+    if test "$enable_builtin_atomics" = "yes" ; then
        OPAL_CHECK_SYNC_BUILTINS([ompi_cv_asm_arch="SYNC_BUILTIN"],
          [AC_MSG_ERROR([__sync builtin atomics requested but not found.])])
        AC_DEFINE([OPAL_C_GCC_INLINE_ASSEMBLY], [1],

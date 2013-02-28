@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007-2008 Sun Microsystems, Inc.  All rights reserved.
- * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2007-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
@@ -74,9 +74,7 @@
  * Local Functions
  ******************/
 static int parse_args(int argc, char *argv[]);
-#if !defined(__WINDOWS__)
 static void kill_procs(void);
-#endif  /* !defined(__WINDOWS__) */
 
 /*****************************************
  * Global Vars for Command line Arguments
@@ -176,9 +174,7 @@ main(int argc, char *argv[])
     opal_os_dirpath_destroy(orte_process_info.top_session_dir, true, NULL);
     
     /* now kill any lingering procs, if we can */
-#if !defined(__WINDOWS__)
     kill_procs();
-#endif  /* !defined(__WINDOWS__) */
 
     orte_finalize();
 
@@ -234,7 +230,6 @@ static int parse_args(int argc, char *argv[]) {
     return ORTE_SUCCESS;
 }
 
-#if !defined(__WINDOWS__)
 static char *orte_getline(FILE *fp)
 {
     char *ret, *buff;
@@ -436,4 +431,3 @@ void kill_procs(void) {
     free(this_user);
     return;
 }
-#endif  /* !defined(__WINDOWS__) */

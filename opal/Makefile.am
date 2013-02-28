@@ -17,8 +17,6 @@
 # $HEADER$
 #
 
-EXTRA_DIST = CMakeLists.txt
-
 SUBDIRS = \
 	include \
         $(LIBLTDL_SUBDIR) \
@@ -83,6 +81,5 @@ include memoryhooks/Makefile.am
 include runtime/Makefile.am
 include threads/Makefile.am
 include mca/Makefile.am
-include win32/Makefile.am
 include tools/Makefile.am
 include dss/Makefile.am

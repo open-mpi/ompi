@@ -12,7 +12,7 @@
  * Copyright (c) 2007-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2009      Oak Ridge National Laboratory
- * Copyright (c) 2012      Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2012-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * $COPYRIGHT$
  * 
@@ -189,11 +189,7 @@ static int mca_btl_tcp_component_register(void)
         mca_btl_tcp_param_register_string("if_include", "Comma-delimited list of devices and/or CIDR notation of networks to use for MPI communication (e.g., \"eth0,192.168.0.0/16\").  Mutually exclusive with btl_tcp_if_exclude.", "");
     mca_btl_tcp_component.tcp_if_exclude =
         mca_btl_tcp_param_register_string("if_exclude", "Comma-delimited list of devices and/or CIDR notation of networks to NOT use for MPI communication -- all devices not matching these specifications will be used (e.g., \"eth0,192.168.0.0/16\").  If set to a non-default value, it is mutually exclusive with btl_tcp_if_include.", 
-#ifndef __WINDOWS__
         "127.0.0.1/8,sppp"
-#else
-        ""
-#endif
         );
 
     mca_btl_tcp_component.tcp_free_list_num =
@@ -329,14 +325,6 @@ static int mca_btl_tcp_component_register(void)
 
 static int mca_btl_tcp_component_open(void)
 {
-#ifdef __WINDOWS__
-    WSADATA win_sock_data;
-    if( WSAStartup(MAKEWORD(2,2), &win_sock_data) != 0 ) {
-        BTL_ERROR(("failed to initialise windows sockets:%d", WSAGetLastError()));
-        return OMPI_ERROR;
-    }
-#endif
-
     /* initialize state */
     mca_btl_tcp_component.tcp_listen_sd = -1;
 #if OPAL_WANT_IPV6
@@ -429,10 +417,6 @@ static int mca_btl_tcp_component_close(void)
     OBJ_DESTRUCT(&mca_btl_tcp_component.tcp_frag_max);
     OBJ_DESTRUCT(&mca_btl_tcp_component.tcp_frag_user);
     OBJ_DESTRUCT(&mca_btl_tcp_component.tcp_lock);
-
-#ifdef __WINDOWS__
-    WSACleanup();
-#endif
 
     return OMPI_SUCCESS;
 }

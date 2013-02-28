@@ -108,17 +108,6 @@ int opal_openpty(int *amaster, int *aslave, char *name,
     return -1;
 }
 
-#elif defined(__WINDOWS__)
-
-/* yeah, let's assume for the moment that ptys don't work on windows */
-
-int opal_openpty(int *amaster, int *aslave, char *name, 
-                 struct termios *termp, struct winsize *winp)
-{
-    return -1;
-}
-
-
 #elif defined(HAVE_OPENPTY)
 
 int opal_openpty(int *amaster, int *aslave, char *name, 

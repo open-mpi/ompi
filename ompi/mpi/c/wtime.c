@@ -43,12 +43,7 @@ double MPI_Wtime(void)
     double wtime;
 
 #if OPAL_TIMER_USEC_NATIVE
-    /* We may or may not have native usec precision on Windows, so put
-       this #if before the #ifdef checking for Windows. */
     wtime = ((double) opal_timer_base_get_usec()) / 1000000.0;
-#elif defined(__WINDOWS__)
-    wtime = ((double) opal_timer_base_get_cycles()) /
-        ((double) opal_timer_base_get_freq());
 #else
     /* Fall back to gettimeofday() if we have nothing else */
     struct timeval tv;

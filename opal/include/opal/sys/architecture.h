@@ -26,7 +26,6 @@
 
 /* Architectures */
 #define OMPI_UNSUPPORTED    0000
-#define OMPI_WINDOWS        0001
 #define OMPI_IA32           0010
 #define OMPI_IA64           0020
 #define OMPI_AMD64          0030

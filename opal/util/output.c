@@ -60,11 +60,7 @@ typedef struct {
     bool ldi_syslog;
     int ldi_syslog_priority;
 
-#ifndef __WINDOWS__
     char *ldi_syslog_ident;
-#else
-    HANDLE ldi_syslog_ident;
-#endif
     char *ldi_prefix;
     int ldi_prefix_len;
 
@@ -94,7 +90,7 @@ static int output(int output_id, const char *format, va_list arglist);
 
 
 #define OPAL_OUTPUT_MAX_STREAMS 64
-#if defined(__WINDOWS__) || defined(HAVE_SYSLOG)
+#if defined(HAVE_SYSLOG)
 #define USE_SYSLOG 1
 #else
 #define USE_SYSLOG 0
@@ -164,12 +160,6 @@ bool opal_output_init(void)
     }
 
     OBJ_CONSTRUCT(&verbose, opal_output_stream_t);
-#if defined(__WINDOWS__)
-    {
-        WSADATA wsaData;
-        WSAStartup( MAKEWORD(2,2), &wsaData );
-    }
-#endif  /* defined(__WINDOWS__) */
     if (opal_output_redirected_to_syslog) {
         verbose.lds_want_syslog = true;
         verbose.lds_syslog_priority = opal_output_redirected_syslog_pri;
@@ -350,10 +340,6 @@ void opal_output_close(int output_id)
         if (i >= OPAL_OUTPUT_MAX_STREAMS && syslog_opened) {
             closelog();
         }
-#elif defined(__WINDOWS__)
-        if(info[output_id].ldi_syslog_ident != NULL) {
-            DeregisterEventSource(info[output_id].ldi_syslog_ident);
-        }
 #endif
     }
 
@@ -508,9 +494,6 @@ void opal_output_finalize(void)
         OBJ_DESTRUCT(&verbose);
         OBJ_DESTRUCT(&mutex);
     }
-#if defined(__WINDOWS__)
-    WSACleanup();
-#endif  /* defined(__WINDOWS__) */
 }
 
 /************************************************************************/
@@ -625,12 +608,6 @@ static int do_open(int output_id, opal_output_stream_t * lds)
             } else {
                 info[i].ldi_syslog_ident = NULL;
                 openlog("opal", LOG_PID, LOG_USER);
-            }
-#elif defined(__WINDOWS__)
-            if (NULL == (info[i].ldi_syslog_ident =
-                         RegisterEventSource(NULL, TEXT("opal: ")))) {
-                /* handle the error */
-                return OPAL_ERROR;
             }
 #endif
             syslog_opened = true;
@@ -777,13 +754,9 @@ static int open_file(int i)
 
         /* Make the file be close-on-exec to prevent child inheritance
          * problems */
-
-#ifndef __WINDOWS__
-        /* TODO: Need to find out the equivalent in windows */
         if (-1 == fcntl(info[i].ldi_fd, F_SETFD, 1)) {
            return OPAL_ERR_IN_ERRNO;
         }
-#endif
 
     }
 
@@ -827,12 +800,10 @@ static void free_descriptor(int output_id)
 	}
 	ldi->ldi_file_suffix = NULL;
 
-#ifndef __WINDOWS__
 	if (NULL != ldi->ldi_syslog_ident) {
 	    free(ldi->ldi_syslog_ident);
 	}
 	ldi->ldi_syslog_ident = NULL;
-#endif
     }
 }
 

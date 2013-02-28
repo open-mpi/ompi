@@ -26,17 +26,6 @@
 
 static int sb_mmap_file_open(const char *path)
 {
-#if defined(__WINDOWS__)
-    sb.sb_fd = CreateFile(path, GENERIC_READ | GENERIC_WRITE, 0, NULL, 
-                          CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
-    if(INVALID_HANDLE_VALUE == sb.sb_fd) 
-    { 
-        V_OUTPUT_ERR("pml_v: vprotocol_pessimist: sender_based_init: open (%s): %s", 
-                     path, GetLastError());
-        return OPAL_ERR_FILE_OPEN_FAILURE;
-    }
-    return OPAL_SUCCESS;
-#else    
     sb.sb_fd = open(path, O_CREAT | O_TRUNC | O_RDWR, 0600);
     if(-1 == sb.sb_fd)
     {
@@ -45,44 +34,18 @@ static int sb_mmap_file_open(const char *path)
         return OPAL_ERR_FILE_OPEN_FAILURE;
     }
     return OPAL_SUCCESS;
-#endif
 }
 
 static void sb_mmap_file_close(void)
 {
-#if defined(__WINDOWS__)    
-    CloseHandle(sb.sb_fd);
-#else
     int ret = close(sb.sb_fd);
     if(-1 == ret)
         V_OUTPUT_ERR("pml_v: protocol_pessimist: sender_based_finalize: close (%d): %s", 
                      sb.sb_fd, strerror(errno));
-#endif
 }
     
 static void sb_mmap_alloc(void)
 {
-#if defined(__WINDOWS__)
-    sb.sb_map = CreateFileMapping(sb.sb_fd, NULL, PAGE_READWRITE, 0, 
-                                  (DWORD)sb.sb_offset + sb.sb_length,  NULL); 
-    if(NULL == sb.sb_map) 
-    {
-        V_OUTPUT_ERR("pml_v: vprotocol_pessimist: sender_based_alloc: CreateFileMapping : %s", 
-                     GetLastError());
-        ompi_mpi_abort(MPI_COMM_NULL, MPI_ERR_NO_SPACE, false);
-    }
-    
-    sb.sb_addr = (uintptr_t) MapViewOfFile(sb.sb_map, FILE_MAP_ALL_ACCESS, 0, 
-                                           sb.sb_offset, sb.sb_length); 
-    if(NULL == (void*)sb.sb_addr) 
-    {
-        V_OUTPUT_ERR("pml_v: vprotocol_pessimist: sender_based_alloc: mmap: %s", 
-                     GetLastError());
-        CloseHandle(sb.sb_map);
-        CloseHandle(sb.sb_fd);
-        ompi_mpi_abort(MPI_COMM_NULL, MPI_ERR_NO_SPACE, false);    
-    }
-#else    
 #ifndef MAP_NOCACHE
 #   define MAP_NOCACHE 0
 #endif
@@ -104,20 +67,14 @@ static void sb_mmap_alloc(void)
         close(sb.sb_fd);
         ompi_mpi_abort(MPI_COMM_NULL, MPI_ERR_NO_SPACE, false);
     }
-#endif
 }
 
 static void sb_mmap_free(void)
 {
-#if    defined(__WINDOWS__)
-    UnmapViewOfFile( (LPCVOID)sb.sb_addr);
-    CloseHandle(sb.sb_map);
-#else
     int ret = munmap((void *) sb.sb_addr, sb.sb_length);
     if(-1 == ret)
         V_OUTPUT_ERR("pml_v: protocol_pessimsit: sender_based_finalize: munmap (%p): %s", 
                      (void *) sb.sb_addr, strerror(errno));
-#endif
 }
 
 int vprotocol_pessimist_sender_based_init(const char *mmapfile, size_t size) 

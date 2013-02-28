@@ -126,7 +126,7 @@ typedef struct orte_process_name_t orte_process_name_t;
  * handle differences in iovec
  */
 
-#if defined(__APPLE__) || defined(__WINDOWS__)
+#if defined(__APPLE__)
 typedef char* orte_iov_base_ptr_t;
 #else
 typedef void* orte_iov_base_ptr_t;

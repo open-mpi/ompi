@@ -684,9 +684,6 @@ ORTE_DECLSPEC extern bool orte_report_launch_progress;
 ORTE_DECLSPEC extern char *orte_default_hostfile;
 ORTE_DECLSPEC extern bool orte_default_hostfile_given;
 ORTE_DECLSPEC extern char *orte_rankfile;
-#ifdef __WINDOWS__
-ORTE_DECLSPEC extern char *orte_ccp_headnode;
-#endif 
 ORTE_DECLSPEC extern int orte_num_allocated_nodes;
 ORTE_DECLSPEC extern char *orte_node_regex;
 

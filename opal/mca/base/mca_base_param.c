@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2011 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2012      Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2012-2013 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  * 
@@ -95,9 +95,6 @@ static char * force_agg_path = NULL;
 /*
  * local functions
  */
-#if defined(__WINDOWS__)
-static int read_keys_from_registry(HKEY hKey, char *sub_key, char *current_name);
-#endif  /* defined(__WINDOWS__) */
 static int fixup_files(char **file_list, char * path, bool rel_path_search);
 static int read_files(char *file_list);
 static int param_register(const char *type_name,
@@ -270,11 +267,6 @@ int mca_base_param_recache_files(bool rel_path_search)
     }
     
     read_files(new_files);
-#if defined(__WINDOWS__)
-    read_keys_from_registry(HKEY_LOCAL_MACHINE, "SOFTWARE\\Open MPI", NULL);
-    read_keys_from_registry(HKEY_CURRENT_USER, "SOFTWARE\\Open MPI", NULL);
-#endif  /* defined(__WINDOWS__) */
-    
     free(files);
     free(new_files);
     if( NULL != new_agg_files ) {
@@ -995,131 +987,6 @@ static int read_files(char *file_list)
 
     return OPAL_SUCCESS;
 }
-
-/**
- *
- */
-#if defined(__WINDOWS__)
-#define MAX_KEY_LENGTH 255
-#define MAX_VALUE_NAME 16383
-
-static int read_keys_from_registry(HKEY hKey, char *sub_key, char *current_name)
-{       
-    TCHAR   achKey[MAX_KEY_LENGTH];        /* buffer for subkey name */
-    DWORD   cbName;                        /* size of name string */
-    TCHAR   achClass[MAX_PATH] = TEXT(""); /* buffer for class name */
-    DWORD   cchClassName = MAX_PATH;       /* size of class string */
-    DWORD   cSubKeys=0;                    /* number of subkeys */
-    DWORD   cbMaxSubKey;                   /* longest subkey size */
-    DWORD   cchMaxClass;                   /* longest class string */
-    DWORD   cValues;                       /* number of values for key */
-    DWORD   cchMaxValue;                   /* longest value name */
-    DWORD   cbMaxValueData;                /* longest value data */
-    DWORD   cbSecurityDescriptor;          /* size of security descriptor */
-
-    LPDWORD lpType;
-    LPDWORD word_lpData;
-    TCHAR   str_lpData[MAX_VALUE_NAME];
-    TCHAR   *str_key_name, *type_name, *next_name;
-    DWORD   dwSize, i, retCode, type_len, param_type;
-    TCHAR achValue[MAX_VALUE_NAME];
-    DWORD cchValue = MAX_VALUE_NAME;
-    HKEY hTestKey; 
-    char *sub_sub_key;
-    mca_base_param_storage_t storage, override, lookup;
-      
-    if( !RegOpenKeyEx( hKey, sub_key, 0, KEY_READ, &hTestKey) == ERROR_SUCCESS )
-        return OPAL_ERROR;
-
-    /* Get the class name and the value count. */
-    retCode = RegQueryInfoKey( hTestKey,                /* key handle */
-                               achClass,                /* buffer for class name */
-                               &cchClassName,           /* size of class string */
-                               NULL,                    /* reserved */
-                               &cSubKeys,               /* number of subkeys */
-                               &cbMaxSubKey,            /* longest subkey size */
-                               &cchMaxClass,            /* longest class string */
-                               &cValues,                /* number of values for this key */
-                               &cchMaxValue,            /* longest value name */
-                               &cbMaxValueData,         /* longest value data */
-                               &cbSecurityDescriptor,   /* security descriptor */
-                               NULL );
-
-    /* Enumerate the subkeys, until RegEnumKeyEx fails. */
-    for (i = 0; i < cSubKeys; i++) { 
-        cbName = MAX_KEY_LENGTH;
-        retCode = RegEnumKeyEx(hTestKey, i, achKey, &cbName, NULL, NULL, NULL, NULL); 
-        if (retCode != ERROR_SUCCESS) continue;
-        asprintf(&sub_sub_key, "%s\\%s", sub_key, achKey);
-        if( NULL != current_name ) {
-            asprintf(&next_name, "%s_%s", current_name, achKey);
-        } else {
-            asprintf(&next_name, "%s", achKey);
-        }
-        read_keys_from_registry(hKey, sub_sub_key, next_name);
-        free(next_name);
-        free(sub_sub_key);
-    }
-    
-    /* Enumerate the key values. */
-    for( i = 0; i < cValues; i++ ) { 
-        cchValue = MAX_VALUE_NAME; 
-        achValue[0] = '\0'; 
-        retCode = RegEnumValue(hTestKey, i, achValue, &cchValue, NULL, NULL, NULL, NULL);
-        if (retCode != ERROR_SUCCESS ) continue; 
-       
-        /* lpType - get the type of the value
-         * dwSize - get the size of the buffer to hold the value
-         */
-        retCode = RegQueryValueEx(hTestKey, achValue, NULL, (LPDWORD)&lpType, NULL, &dwSize);
-
-        if (strcmp(achValue,"")) {
-            if (current_name!=NULL)
-                asprintf(&type_name, "%s_%s", current_name, achValue);
-            else
-                asprintf(&type_name, "%s", achValue);
-        } else {
-            if (current_name!=NULL)
-                asprintf(&type_name, "%s", current_name);
-            else
-                asprintf(&type_name, "%s", achValue);
-        } 
-        
-        type_len = strcspn(type_name, "_");
-        str_key_name = type_name + type_len + 1;
-        if( type_len == strlen(type_name) )
-            str_key_name = NULL;
-        type_name[type_len] = '\0';
-
-        retCode = 1;
-        if( lpType == (LPDWORD)REG_SZ ) { /* REG_SZ = 1 */
-            retCode = RegQueryValueEx(hTestKey, achValue, NULL, NULL, (LPBYTE)&str_lpData, &dwSize);
-            storage.stringval = (char*)str_lpData;
-            override.stringval = (char*)str_lpData;
-            param_type = MCA_BASE_PARAM_TYPE_STRING;
-        } else if( lpType == (LPDWORD)REG_DWORD ) { /* REG_DWORD = 4 */
-            retCode = RegQueryValueEx(hTestKey, achValue, NULL, NULL, (LPBYTE)&word_lpData, &dwSize);
-            storage.intval  = (int)word_lpData;
-            override.intval = (int)word_lpData;
-            param_type = MCA_BASE_PARAM_TYPE_INT;
-        }
-        if( !retCode ) {
-            (void)param_register( type_name, NULL, str_key_name, NULL, 
-                                  param_type, false, false,
-                                  &storage, NULL, &override, &lookup );
-        } else {
-            opal_output( 0, "error reading value of param_name: %s with %d error.\n",
-                         str_key_name, retCode);
-        }
-        
-        free(type_name);
-    }
-
-    RegCloseKey( hKey );
-
-    return OPAL_SUCCESS;
-}
-#endif  /* defined(__WINDOWS__) */
 
 /******************************************************************************/
 

@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010      IBM Corporation.  All rights reserved.
- * Copyright (c) 2012      Los Alamos National Security, LLC.
+ * Copyright (c) 2012-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * $COPYRIGHT$
  * 
@@ -60,15 +60,9 @@ static char *list_env_get(char *var, char **list);
 
 bool opal_path_is_absolute( const char *path )
 {
-#if defined(__WINDOWS__)
-    /* On Windows an absolute path always start with [a-z]:\ or with \\ */
-    if( (isalpha(path[0]) && (':' == path[1])) ||
-        ('\\' == path[0]) && ('\\' == path[1]) ) return true;
-#else
     if( OPAL_PATH_SEP[0] == *path ) {
         return true;
     }
-#endif  /* defined(__WINDOWS__) */
     return false;
 }
 
@@ -367,13 +361,7 @@ char* opal_find_absolute_path( char* app_name )
     
     if( NULL != abs_app_name ) {
         char* resolved_path = (char*)malloc(OPAL_PATH_MAX);
-#if !defined(__WINDOWS__)
         realpath( abs_app_name, resolved_path );
-#else
-#ifdef HAVE_SHLWAPI_H
-		PathCanonicalize(resolved_path, abs_app_name);
-#endif
-#endif  /* !defined(__WINDOWS__) */
         if( abs_app_name != app_name ) free(abs_app_name);
         return resolved_path;
     }
@@ -419,10 +407,6 @@ char* opal_find_absolute_path( char* app_name )
  *   statfs(const char *path, struct statfs *buf);
  *          with f_fstypename, contains a string of length MFSTYPENAMELEN
  *          return 0 success, -1 on failure with errno set.
- * Windows (interix):
- *      statvfs(const char *path, struct statvfs *buf);
- *          with unsigned long f_fsid
- *          return 0 success, -1 on failure with errno set.
  */
 #ifndef LL_SUPER_MAGIC
 #define LL_SUPER_MAGIC                    0x0BD00BD0     /* Lustre magic number */
@@ -442,7 +426,6 @@ char* opal_find_absolute_path( char* app_name )
 
 bool opal_path_nfs(char *fname)
 {
-#if !defined(__WINDOWS__)
     int i;
     int rc;
     int trials;
@@ -530,17 +513,12 @@ found:
     return true;
 
 #undef FS_TYPES_NUM
-
-#else
-    return false;
-#endif /* __WINDOWS__ */
 }
 
 int
 opal_path_df(const char *path,
              uint64_t *out_avail)
 {
-#if !defined(__WINDOWS__)
     int rc = -1;
     int trials = 5;
     int err = 0;
@@ -582,27 +560,4 @@ opal_path_df(const char *path,
                          path, *out_avail));
 
     return OPAL_SUCCESS;
-
-#else /* defined __WINDOWS__ */
-    *out_avail = 0;
-    if (!GetDiskFreeSpaceEx(NULL, (PULARGE_INTEGER)out_avail, NULL, NULL)) {
-        DWORD dwSectorsPerCluster = 0, dwBytesPerSector = 0;
-        DWORD dwFreeClusters = 0, dwTotalClusters = 0;
-
-        if (!GetDiskFreeSpaceA(NULL, &dwSectorsPerCluster,
-            &dwBytesPerSector, &dwFreeClusters, &dwTotalClusters)) {
-            OPAL_OUTPUT_VERBOSE((10, 2, "opal_path_df: GetDiskFreeSpaceA on "
-                        "path: %s failed with errno: %d (%s)\n",
-                        path, err, strerror(err)));
-            return OPAL_ERROR;
-        }
-        *out_avail = dwFreeClusters * dwSectorsPerCluster * dwBytesPerSector;
-    }
-
-    OPAL_OUTPUT_VERBOSE((10, 2, "opal_path_df: stat(v)fs states "
-                        "path: %s has %"PRIu64 " B of free space.",
-                        path, *out_avail));
-
-    return OPAL_SUCCESS;
-#endif /* !defined(__WINDOWS__) */
 }

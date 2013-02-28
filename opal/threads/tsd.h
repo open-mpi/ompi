@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2007-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
@@ -193,46 +193,6 @@ static inline int
 opal_tsd_getspecific(opal_tsd_key_t key, void **valuep)
 {
     return thr_getspecific(key, valuep);
-}
-
-#elif defined(__WINDOWS__)
-
-/* BWB - FIX ME - this is still not quite right -- we also need to
-   implement support for running the destructors when a thread exits,
-   but I'm not sure we have a framework for doing that just yet. */
-
-typedef DWORD opal_tsd_key_t;
-
-static inline int
-opal_tsd_key_create(opal_tsd_key_t *key,
-                    opal_tsd_destructor_t destructor)
-{
-    *key = TlsAlloc();
-
-    return (*key == TLS_OUT_OF_INDEXES) ? OPAL_ERROR : OPAL_SUCCESS;
-}
-
-static inline int
-opal_tsd_key_delete(opal_tsd_key_t key)
-{
-    key = TlsFree(key);
-
-    return (key == 0) ? OPAL_ERROR : OPAL_SUCCESS;
-}
-
-static inline int
-opal_tsd_setspecific(opal_tsd_key_t key, void *value)
-{
-    BOOL ret = TlsSetValue(key, (LPVOID) value);
-
-    return (ret) ? OPAL_SUCCESS : OPAL_ERROR;
-}
-
-static inline int
-opal_tsd_getspecific(opal_tsd_key_t key, void **valuep)
-{
-    *valuep = TlsGetValue(key);
-    return OPAL_SUCCESS;
 }
 
 #else

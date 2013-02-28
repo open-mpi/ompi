@@ -52,7 +52,7 @@
 /*
  * Flex is trying to include the unistd.h file. As there is no configure
  * option or this, the flex generated files will try to include the file
- * even on platforms without unistd.h (such as Windows). Therefore, if we
+ * even on platforms without unistd.h. Therefore, if we
  * know this file is not available, we can prevent flex from including it.
  */
 #ifndef HAVE_UNISTD_H
@@ -220,45 +220,6 @@
 #    define __opal_attribute_weak_alias__(a)
 #endif
 
-/***********************************************************************
- *
- * Windows library interface declaration code
- *
- **********************************************************************/
-#if !defined(__WINDOWS__)
-#  if defined(_WIN32) || defined(WIN32) || defined(WIN64)
-#    define __WINDOWS__
-#  endif
-#endif  /* !defined(__WINDOWS__) */
-
-#if defined(__WINDOWS__)
-
-#  if defined(_USRDLL)    /* building shared libraries (.DLL) */
-#    if defined(OPAL_EXPORTS)
-#      define OPAL_DECLSPEC        __declspec(dllexport)
-#      define OPAL_MODULE_DECLSPEC
-#    else
-#      if defined(OPAL_IMPORTS)
-#        define OPAL_DECLSPEC      __declspec(dllimport)
-#      else
-#        define OPAL_DECLSPEC
-#      endif  /*defined(OPAL_IMPORTS)*/
-#      if defined(OPAL_MODULE_EXPORTS)
-#        define OPAL_MODULE_DECLSPEC __declspec(dllexport)
-#      else
-#        define OPAL_MODULE_DECLSPEC __declspec(dllimport)
-#      endif  /* defined(OPAL_MODULE_EXPORTS) */
-#    endif  /* defined(OPAL_EXPORTS) */
-#  else          /* building static library */
-#    if defined(OPAL_IMPORTS)
-#      define OPAL_DECLSPEC        __declspec(dllimport)
-#    else
-#      define OPAL_DECLSPEC
-#    endif  /* defined(OPAL_IMPORTS) */
-#    define OPAL_MODULE_DECLSPEC
-#  endif  /* defined(_USRDLL) */
-#  include "opal/win32/win_compat.h"
-#else
 #  if OPAL_C_HAVE_VISIBILITY
 #    define OPAL_DECLSPEC           __opal_attribute_visibility__("default")
 #    define OPAL_MODULE_DECLSPEC    __opal_attribute_visibility__("default")
@@ -266,7 +227,6 @@
 #    define OPAL_DECLSPEC
 #    define OPAL_MODULE_DECLSPEC
 #  endif
-#endif  /* defined(__WINDOWS__) */
 
 /*
  * Do we have <stdint.h>?
@@ -370,13 +330,8 @@ typedef unsigned char bool;
 /*
  * Set the compile-time path-separator on this system and variable separator
  */
-#ifdef __WINDOWS__
-#define OPAL_PATH_SEP "\\"
-#define OPAL_ENV_SEP  ';'
-#else
 #define OPAL_PATH_SEP "/"
 #define OPAL_ENV_SEP  ':'
-#endif
 
 
 /*
@@ -478,9 +433,9 @@ typedef unsigned char bool;
  * are no htonl and friends.  If that's the case, provide stubs.  I
  * would hope we never find a platform that doesn't have these macros
  * and would want to talk to the outside world... On other platforms
- * (like Windows) we fail to detect them correctly.
+ * we fail to detect them correctly.
  */
-#if !defined(__WINDOWS__) && !defined(HAVE_UNIX_BYTESWAP)
+#if !defined(HAVE_UNIX_BYTESWAP)
 static inline uint32_t htonl(uint32_t hostvar) { return hostvar; }
 static inline uint32_t ntohl(uint32_t netvar) { return netvar; }
 static inline uint16_t htons(uint16_t hostvar) { return hostvar; }
@@ -498,35 +453,13 @@ static inline uint16_t ntohs(uint16_t netvar) { return netvar; }
 #define __func__ __FILE__
 #endif
 
-/**
- * Because of the way we're using the opal_object inside Open MPI (i.e.
- * dynamic resolution at run-time to derive all objects from the basic
- * type), on Windows we have to build everything on C++ mode, simply
- * because the C mode does not support dynamic resolution in DLL. Therefore,
- * no automatic conversion is allowed. All types have to be explicitly casted
- * or the compiler generate an error. This is true even for the void* type. As
- * we use void* to silence others compilers in the resolution of the addr member
- * of the iovec structure, we have now to find a way around. The simplest solution
- * is to define a special type for this field (just for casting). It can be
- * set to void* on all platforms with the exception of windows where it has to be
- * char*.
- */
-#if defined(__WINDOWS__)
-#define IOVBASE_TYPE  char
-#else
 #define IOVBASE_TYPE  void
-#endif  /* defined(__WINDOWS__) */
 
 /**
  * If we generate our own bool type, we need a special way to cast the result
- * in such a way to keep the compilers silent. Right now, th only compiler who
- * complain about int to bool conversions is the Microsoft compiler.
+ * in such a way to keep the compilers silent.
  */
-#if defined(__WINDOWS__)
-#  define OPAL_INT_TO_BOOL(VALUE)  ((VALUE) != 0 ? true : false)
-#else
 #  define OPAL_INT_TO_BOOL(VALUE)  (bool)(VALUE)
-#endif  /* defined(__WINDOWS__) */
 
 /**
  * Top level define to check 2 things: a) if we want ipv6 support, and
