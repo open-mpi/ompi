@@ -57,8 +57,6 @@ opal_list_t orte_proc_states;
 /* a clean output channel without prefix */
 int orte_clean_output = -1;
 
-#if !ORTE_DISABLE_FULL_SUPPORT
-
 /* globals used by RTE */
 bool orte_timing;
 FILE *orte_timing_output = NULL;
@@ -205,8 +203,6 @@ opal_byte_object_t orte_pidmap;
 
 char *orte_selected_oob_component = NULL;
 
-#endif /* !ORTE_DISABLE_FULL_RTE */
-
 int orte_debug_output = -1;
 bool orte_debug_daemons_flag = false;
 bool orte_xml_output = false;
@@ -286,7 +282,6 @@ int orte_dt_init(void)
         return rc;
     }
 
-#if !ORTE_DISABLE_FULL_SUPPORT
     tmp = ORTE_JOB;
     if (ORTE_SUCCESS != (rc = opal_dss.register_type(orte_dt_pack_job,
                                                      orte_dt_unpack_job,
@@ -430,12 +425,9 @@ int orte_dt_init(void)
         ORTE_ERROR_LOG(rc);
         return rc;
     }
-#endif /* !ORTE_DISABLE_FULL_SUPPORT */
     
     return ORTE_SUCCESS;    
 }
-
-#if !ORTE_DISABLE_FULL_SUPPORT
 
 orte_job_t* orte_get_job_data_object(orte_jobid_t job)
 {
@@ -1057,4 +1049,3 @@ OBJ_CLASS_INSTANCE(orte_job_map_t,
                    opal_object_t,
                    orte_job_map_construct,
                    orte_job_map_destruct);
-#endif

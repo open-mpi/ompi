@@ -24,7 +24,6 @@ man_pages = orte-server.1
 EXTRA_DIST = $(man_pages:.1=.1in) CMakeLists.txt
 
 if OMPI_INSTALL_BINARIES
-if !ORTE_DISABLE_FULL_SUPPORT
 
 bin_PROGRAMS = orte-server
 
@@ -37,7 +36,6 @@ nodist_man_MANS = $(man_pages)
 # therefore the release date or version may have changed)
 $(nodist_man_MANS): $(top_builddir)/opal/include/opal_config.h
 
-endif # !ORTE_DISABLE_FULL_SUPPORT
 endif # OMPI_INSTALL_BINARIES
 
 orte_server_SOURCES = orte-server.c 

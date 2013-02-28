@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007-2012 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2010      Los Alamos National Security, LLC.
+ * Copyright (c) 2010-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * $COPYRIGHT$
  * 
@@ -219,7 +219,6 @@ int main(int argc, char *argv[])
     opal_pointer_array_add(&mca_types, "if");
     opal_pointer_array_add(&mca_types, "event");
     
-#if !ORTE_DISABLE_FULL_SUPPORT
     opal_pointer_array_add(&mca_types, "iof");
     opal_pointer_array_add(&mca_types, "oob");
     opal_pointer_array_add(&mca_types, "odls");
@@ -233,8 +232,6 @@ int main(int argc, char *argv[])
 #endif
     opal_pointer_array_add(&mca_types, "sensor");
     opal_pointer_array_add(&mca_types, "filem");
-#endif
-    /* these are always included */
     opal_pointer_array_add(&mca_types, "state");
     opal_pointer_array_add(&mca_types, "errmgr");
     opal_pointer_array_add(&mca_types, "ess");

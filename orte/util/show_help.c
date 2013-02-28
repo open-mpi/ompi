@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2011 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -57,59 +58,6 @@ bool orte_show_help_is_available(void)
 
     return ready;
 }
-
-/************************************************************************/
-
-/* Section for systems without RML and/or HNP support (e.g., Cray) --
-   just output directly; don't do any fancy RML sending to the HNP. */
-#if ORTE_DISABLE_FULL_SUPPORT
-
-int orte_show_help_init(void)
-{
-    ready = true;
-    return ORTE_SUCCESS;
-}
-
-void orte_show_help_finalize(void)
-{
-    ready = false;
-    return;
-}
-
-int orte_show_help(const char *filename, const char *topic, 
-                   bool want_error_header, ...)
-{
-    va_list arglist;
-    char *output;
-    
-    if (orte_execute_quiet) {
-        return ORTE_SUCCESS;
-    }
-    
-    va_start(arglist, want_error_header);
-    output = opal_show_help_vstring(filename, topic, want_error_header, 
-                                    arglist);
-    va_end(arglist);
-    
-    /* If nothing came back, there's nothing to do */
-    if (NULL == output) {
-        return ORTE_SUCCESS;
-    }
-    
-    opal_output(0, "%s", output);
-    return ORTE_SUCCESS;
-}
-
-int orte_show_help_suppress(const char *filename, const char *topic)
-{
-    return ORTE_ERR_NOT_SUPPORTED;
-}
-
-#else
-
-/************************************************************************/
-
-/* Section for systems that have full RML/HNP support */
 
 /* List items for holding (filename, topic) tuples */
 typedef struct {
@@ -786,6 +734,3 @@ int orte_show_help_suppress(const char *filename, const char *topic)
     
     return ORTE_SUCCESS;
 }
-
-#endif /* ORTE_DISABLE_FULL_SUPPORT */
-

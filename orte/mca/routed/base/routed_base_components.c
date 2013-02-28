@@ -37,18 +37,6 @@
  * component's public mca_base_component_t struct. */
 #include "orte/mca/routed/base/static-components.h"
 
-#if ORTE_DISABLE_FULL_SUPPORT
-/* have to include a bogus function here so that
- * the build system sees at least one function
- * in the library
- */
-int orte_routed_base_open(void)
-{
-    return ORTE_SUCCESS;
-}
-
-#else
-
 static void construct(orte_routed_tree_t *rt)
 {
     rt->vpid = ORTE_VPID_INVALID;
@@ -254,5 +242,3 @@ void orte_routed_base_update_hnps(opal_buffer_t *buf)
         n=1;
     }
 }
-
-#endif /* ORTE_DISABLE_FULL_SUPPORT */

@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -36,18 +37,6 @@
  */
 
 #include "orte/mca/oob/base/static-components.h"
-
-#if ORTE_DISABLE_FULL_SUPPORT
-/* have to include a bogus function here so that
- * the build system sees at least one function
- * in the library
- */
-int mca_oob_base_open(void)
-{
-    return ORTE_SUCCESS;
-}
-
-#else
 
 /*
  * Global variables
@@ -93,6 +82,4 @@ int mca_oob_base_open(void)
     
     return ORTE_SUCCESS;
 }
-
-#endif /* ORTE_DISABLE_FULL_SUPPORT */
 

@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2011 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -100,13 +101,9 @@ ORTE_DECLSPEC int orte_show_help_norender(const char *filename,
 ORTE_DECLSPEC int orte_show_help_suppress(const char *filename, 
                                           const char *topic);
 
-#if !ORTE_DISABLE_FULL_SUPPORT
-
 ORTE_DECLSPEC void orte_show_help_recv(int status, orte_process_name_t* sender,
                                        opal_buffer_t *buffer, orte_rml_tag_t tag,
                                        void* cbdata);
-
-#endif /* ORTE_DISABLE_FULL_SUPPORT */
 
 END_C_DECLS
 #endif

@@ -13,7 +13,7 @@ dnl                         All rights reserved.
 dnl Copyright (c) 2006-2010 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
 dnl Copyright (c) 2009      IBM Corporation.  All rights reserved.
-dnl Copyright (c) 2009-2012 Los Alamos National Security, LLC.  All rights
+dnl Copyright (c) 2009-2013 Los Alamos National Security, LLC.  All rights
 dnl                         reserved.
 dnl Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
 dnl
@@ -27,31 +27,6 @@ dnl
 
 AC_DEFUN([ORTE_CONFIGURE_OPTIONS],[
 ompi_show_subtitle "ORTE Configuration options"
-
-#
-# Minimal RTE support
-#
-AC_MSG_CHECKING([if want full RTE support])
-AC_ARG_WITH([rte-support],
-    [AC_HELP_STRING([--without-rte-support],
-                    [Build without RTE support for systems that do not require it (default: full RTE support built)])])
-if test "$with_rte_support" = "no"; then
-    AC_MSG_RESULT([no])
-    orte_without_full_support=1
-    list_of_frameworks="db,errmgr,ess-singleton,ess-hnp,ess-tool,ess-env,filem,grpcomm-basic,grpcomm-bad,iof,odls,oob,plm,ras,rmaps,rml,routed,snapc,btl-sm,coll-sm,common-sm,mpool-sm,dpm-orte,pubsub-orte,rmcast,routed"
-    if test -z $enable_mca_no_build ; then
-      enable_mca_no_build="$list_of_frameworks"
-    else
-      enable_mca_no_build="$enable_mca_no_build,$list_of_frameworks"
-    fi
-else
-    AC_MSG_RESULT([yes])
-    orte_without_full_support=0
-fi
-AC_DEFINE_UNQUOTED([ORTE_DISABLE_FULL_SUPPORT], [$orte_without_full_support],
-                   [Build full RTE support])
-AM_CONDITIONAL(ORTE_DISABLE_FULL_SUPPORT, test "$with_rte_support" = "no")
-
 
 #
 # Do we want orterun's --prefix behavior to be enabled by default?

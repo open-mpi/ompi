@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2007      Los Alamos National Security, LLC.
+# Copyright (c) 2007-2013 Los Alamos National Security, LLC.
 #                         All rights reserved. 
 # $COPYRIGHT$
 # 
@@ -12,10 +12,5 @@ headers += \
 	base/base.h
 
 libmca_routed_la_SOURCES += \
-	base/routed_base_components.c
-
-if !ORTE_DISABLE_FULL_SUPPORT
-
-libmca_routed_la_SOURCES += \
+	base/routed_base_components.c \
 	base/routed_base_fns.c
-endif

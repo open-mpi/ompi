@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -49,18 +50,6 @@
 
 orte_iof_base_module_t orte_iof = {0};
 
-
-#if ORTE_DISABLE_FULL_SUPPORT
-/* have to include a bogus function here so that
- * the build system sees at least one function
- * in the library
- */
-int orte_iof_base_open(void)
-{
-    return ORTE_SUCCESS;
-}
-
-#else
 
 /* class instances */
 static void orte_iof_job_construct(orte_iof_job_t *ptr)
@@ -288,4 +277,3 @@ int orte_iof_base_open(void)
     /* All done */
     return ORTE_SUCCESS;
 }
-#endif

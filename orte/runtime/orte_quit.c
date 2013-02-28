@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2011 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2007-2009 Sun Microsystems, Inc. All rights reserved.
- * Copyright (c) 2007-2012 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2007-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
  * $COPYRIGHT$
@@ -65,7 +65,6 @@
 /*
  * Globals
  */
-#if !ORTE_DISABLE_FULL_SUPPORT
 static int num_aborted = 0;
 static int num_killed = 0;
 static int num_failed_start = 0;
@@ -389,4 +388,3 @@ static void dump_aborted_procs(void)
         }
     }
 }
-#endif

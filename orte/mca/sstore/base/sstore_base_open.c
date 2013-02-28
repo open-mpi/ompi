@@ -3,6 +3,7 @@
  *                         All rights reserved.
  * Copyright (c) 2012      The University of Wisconsin-La Crosse. All rights
  *                         reserved.
+ * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -24,18 +25,6 @@
 #include "orte/mca/sstore/base/base.h"
 
 #include "orte/mca/sstore/base/static-components.h"
-
-#if ORTE_DISABLE_FULL_SUPPORT
-/* have to include a bogus function here so that
- * the build system sees at least one function
- * in the library
- */
-int orte_sstore_base_open(void)
-{
-    return ORTE_SUCCESS;
-}
-
-#else
 
 /*
  * Globals
@@ -232,5 +221,3 @@ int orte_sstore_base_determine_context(void)
 
     return ORTE_SUCCESS;
 }
-
-#endif

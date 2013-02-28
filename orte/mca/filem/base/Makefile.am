@@ -20,15 +20,10 @@ headers += \
         base/base.h
 
 libmca_filem_la_SOURCES += \
-        base/filem_base_open.c
-
-if !ORTE_DISABLE_FULL_SUPPORT
-
-dist_pkgdata_DATA = base/help-orte-filem-base.txt
-
-libmca_filem_la_SOURCES += \
+        base/filem_base_open.c \
         base/filem_base_close.c \
         base/filem_base_select.c \
         base/filem_base_receive.c \
         base/filem_base_fns.c
-endif
+
+dist_pkgdata_DATA = base/help-orte-filem-base.txt

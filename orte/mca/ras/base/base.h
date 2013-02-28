@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2011-2012 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * $COPYRIGHT$
  * 
@@ -37,7 +37,6 @@ BEGIN_C_DECLS
 
 ORTE_DECLSPEC int orte_ras_base_open(void);
 
-#if !ORTE_DISABLE_FULL_SUPPORT
 /*
  * globals that might be needed
  */
@@ -63,8 +62,6 @@ ORTE_DECLSPEC void orte_ras_base_display_alloc(void);
 ORTE_DECLSPEC void orte_ras_base_allocate(int fd, short args, void *cbdata);
 
 ORTE_DECLSPEC int orte_ras_base_add_hosts(orte_job_t *jdata);
-
-#endif /* ORTE_DISABLE_FULL_SUPPORT */
 
 END_C_DECLS
 

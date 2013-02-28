@@ -27,8 +27,6 @@
 #include "orte/mca/state/base/base.h"
 #include "orte/mca/state/base/state_private.h"
 
-#if !ORTE_DISABLE_FULL_SUPPORT
-
 void orte_state_base_activate_job_state(orte_job_t *jdata,
                                         orte_job_state_t state)
 {
@@ -213,7 +211,7 @@ void orte_state_base_print_job_state_machine(void)
                     (NULL == st->cbfunc) ? "NULL" : "DEFINED");
     }
 }
-#endif
+
 
 /****    PROC STATE MACHINE    ****/
 void orte_state_base_activate_proc_state(orte_process_name_t *proc,

@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2011-2012 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * $COPYRIGHT$
  * 
@@ -22,17 +22,12 @@
 #include "orte_config.h"
 #include "orte/constants.h"
 
-#if !ORTE_DISABLE_FULL_SUPPORT
-
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/mca/event/event.h"
 
 #include "orte/mca/ras/base/ras_private.h"
-
-#endif
-
 #include "orte/mca/ras/base/base.h"
 
 
@@ -48,18 +43,6 @@
  */
 
 #include "orte/mca/ras/base/static-components.h"
-
-#if ORTE_DISABLE_FULL_SUPPORT
-/* have to include a bogus function here so that
- * the build system sees at least one function
- * in the library
- */
-int orte_ras_base_open(void)
-{
-    return ORTE_SUCCESS;
-}
-
-#else
 
 /*
  * Global variables
@@ -92,5 +75,3 @@ int orte_ras_base_open(void)
     /* All done */
     return ORTE_SUCCESS;
 }
-
-#endif /* ORTE_DISABLE_FULL_SUPPORT */

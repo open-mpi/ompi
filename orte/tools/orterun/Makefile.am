@@ -32,7 +32,6 @@ include $(top_srcdir)/Makefile.man-page-rules
 man_pages = orterun.1
 EXTRA_DIST = $(man_pages:.1=.1in) CMakeLists.txt
 
-if !ORTE_DISABLE_FULL_SUPPORT
 if OMPI_INSTALL_BINARIES
 
 bin_PROGRAMS = orterun
@@ -54,8 +53,6 @@ orterun_SOURCES = \
         orterun.h
 
 orterun_LDADD = $(top_builddir)/orte/libopen-rte.la $(top_builddir)/opal/libopen-pal.la
-
-endif # !ORTE_DISABLE_FULL_SUPPORT
 
 distclean-local:
 	rm -f $(man_pages)

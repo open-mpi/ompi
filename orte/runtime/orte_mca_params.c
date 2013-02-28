@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007-2011 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2009-2010 Oracle and/or its affiliates.  All rights reserved. 
- * Copyright (c) 2012      Los Alamos National Security, LLC.
+ * Copyright (c) 2012-2013 Los Alamos National Security, LLC.
  *                         All rights reserved
  * $COPYRIGHT$
  * 
@@ -55,7 +55,6 @@ int orte_register_params(void)
     }
     passed_thru = true;
     
-#if !ORTE_DISABLE_FULL_SUPPORT
     /* get a clean output channel too - need to do this here because
      * we use it below, and orterun and some other tools call this
      * function prior to calling orte_init
@@ -67,7 +66,6 @@ int orte_register_params(void)
         orte_clean_output = opal_output_open(&lds);
         OBJ_DESTRUCT(&lds);
     }
-#endif /* !ORTE_DISABLE_FULL_SUPPORT */
 
     mca_base_param_reg_int_name("orte", "base_help_aggregate",
                                 "If orte_base_help_aggregate is true, duplicate help messages will be aggregated rather than displayed individually.  This can be helpful for parallel jobs that experience multiple identical failures; rather than print out the same help/failure message N times, display it once with a count of how many processes sent the same message.",
@@ -156,8 +154,6 @@ int orte_register_params(void)
                                 false, false, (int) false, &value);
     orte_report_silent_errors = OPAL_INT_TO_BOOL(value);
 
-#if !ORTE_DISABLE_FULL_SUPPORT
-    
     mca_base_param_reg_int_name("orte", "debug",
                                 "Top-level ORTE debug switch (default verbosity: 1)",
                                 false, false, (int)false, &value);
@@ -606,8 +602,6 @@ int orte_register_params(void)
                                 "Treat -host directives as desired, but not required",
                                 false, false, (int)false, &value);
     orte_soft_locations = OPAL_INT_TO_BOOL(value);
-
-#endif /* ORTE_DISABLE_FULL_SUPPORT */
     
     return ORTE_SUCCESS;
 }

@@ -12,7 +12,7 @@
 #                         All rights reserved.
 # Copyright (c) 2008      UT-Battelle, LLC
 # Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved.
-# Copyright (c) 2011      Los Alamos National Security, LLC.
+# Copyright (c) 2011-2013 Los Alamos National Security, LLC.
 #                         All rights reserved.
 # $COPYRIGHT$
 # 
@@ -42,5 +42,5 @@ AC_DEFUN([MCA_orte_ras_alps_CONFIG],[
 
     AC_SUBST([ras_alps_CPPFLAGS])
 
-    AS_IF([test "$ras_alps_happy" = "yes" -a "$orte_without_full_support" = 0], [$1], [$2])
+    AS_IF([test "$ras_alps_happy" = "yes"], [$1], [$2])
 ])dnl

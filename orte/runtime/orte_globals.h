@@ -136,24 +136,6 @@ ORTE_DECLSPEC extern opal_list_t orte_proc_states;
 /* a clean output channel without prefix */
 ORTE_DECLSPEC extern int orte_clean_output;
 
-#if ORTE_DISABLE_FULL_SUPPORT
-
-/* These types are used in interface functions that should never be
-   used or implemented in the non-full interface, but need to be
-   declared for various reasons.  So have a dummy type to keep things
-   simple (and throw an error if someone does try to use them) */
-struct orte_job_t;
-struct orte_proc_t;
-struct orte_node_t;
-struct orte_app_context_t;
-
-typedef struct orte_job_t orte_job_t;
-typedef struct orte_proc_t orte_proc_t;
-typedef struct orte_node_t orte_node_t;
-typedef struct orte_app_context_t orte_app_context_t;
-
-#else
-
 #if ORTE_ENABLE_PROGRESS_THREADS
 ORTE_DECLSPEC extern opal_thread_t orte_progress_thread;
 #endif
@@ -745,8 +727,6 @@ ORTE_DECLSPEC extern char *orte_selected_oob_component;
 /* global nidmap/pidmap for daemons to give to apps */
 ORTE_DECLSPEC extern opal_byte_object_t orte_nidmap;
 ORTE_DECLSPEC extern opal_byte_object_t orte_pidmap;
-
-#endif /* ORTE_DISABLE_FULL_SUPPORT */
 
 END_C_DECLS
 
