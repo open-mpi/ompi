@@ -544,12 +544,20 @@ static void construct(opal_object_t *obj)
 static int do_open(int output_id, opal_output_stream_t * lds)
 {
     int i;
+    bool redirect_to_file = false;
+    char *str, *sfx;
 
     /* Setup */
 
     if (!initialized) {
         opal_output_init();
     }
+
+    str = getenv("OPAL_OUTPUT_REDIRECT");
+    if (NULL != str && 0 == strcasecmp(str, "file")) {
+        redirect_to_file = true;
+    }
+    sfx = getenv("OPAL_OUTPUT_SUFFIX");
 
     /* If output_id == -1, find an available stream, or return
      * OPAL_ERROR */
@@ -662,16 +670,26 @@ static int do_open(int output_id, opal_output_stream_t * lds)
         info[i].ldi_file = false;
         info[i].ldi_fd = -1;
     } else {
-        /* since we aren't redirecting, use what was
+        /* since we aren't redirecting to syslog, use what was
          * given to us
          */
-        info[i].ldi_stdout = lds->lds_want_stdout;
-        info[i].ldi_stderr = lds->lds_want_stderr;
+        if (NULL != str && redirect_to_file) {
+            info[i].ldi_stdout = false;
+            info[i].ldi_stderr = false;
+            info[i].ldi_file = true;
+        } else {
+            info[i].ldi_stdout = lds->lds_want_stdout;
+            info[i].ldi_stderr = lds->lds_want_stderr;
 
-        info[i].ldi_fd = -1;
-        info[i].ldi_file = lds->lds_want_file;
-        info[i].ldi_file_suffix = (NULL == lds->lds_file_suffix) ? NULL :
-            strdup(lds->lds_file_suffix);
+            info[i].ldi_fd = -1;
+            info[i].ldi_file = lds->lds_want_file;
+        }
+        if (NULL != sfx) {
+            info[i].ldi_file_suffix = strdup(sfx);
+        } else {
+            info[i].ldi_file_suffix = (NULL == lds->lds_file_suffix) ? NULL :
+                strdup(lds->lds_file_suffix);
+        }
         info[i].ldi_file_want_append = lds->lds_want_file_append;
         info[i].ldi_file_num_lines_lost = 0;
     }
@@ -687,6 +705,42 @@ static int open_file(int i)
 {
     int flags;
     char *filename;
+    int n;
+
+    /* first check to see if this file is already open
+     * on someone else's stream - if so, we don't want
+     * to open it twice
+     */
+    for (n=0; n < OPAL_OUTPUT_MAX_STREAMS; n++) {
+        if (i == n) {
+            continue;
+        }
+        if (!info[n].ldi_used) {
+            continue;
+        }
+        if (!info[n].ldi_file) {
+            continue;
+        }
+        if (NULL != info[i].ldi_file_suffix &&
+            NULL != info[n].ldi_file_suffix) {
+            if (0 != strcmp(info[i].ldi_file_suffix, info[n].ldi_file_suffix)) {
+                break;
+            }
+        }
+        if (NULL == info[i].ldi_file_suffix &&
+            NULL != info[n].ldi_file_suffix) {
+            break;
+        }
+        if (NULL != info[i].ldi_file_suffix &&
+            NULL == info[n].ldi_file_suffix) {
+            break;
+        }
+        if (info[n].ldi_fd < 0) {
+            break;
+        }
+        info[i].ldi_fd = info[n].ldi_fd;
+        return OPAL_SUCCESS;
+    }
 
     /* Setup the filename and open flags */
 
