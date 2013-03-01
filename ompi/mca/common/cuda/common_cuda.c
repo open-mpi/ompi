@@ -99,7 +99,7 @@ static int mca_common_cuda_verbose;
 static int mca_common_cuda_output = 0;
 static bool mca_common_cuda_enabled = false;
 static bool mca_common_cuda_register_memory = true;
-static bool mca_common_cuda_warning = true;
+static bool mca_common_cuda_warning = false;
 static opal_list_t common_cuda_memory_registrations;
 static CUstream ipcStream;
 static CUstream dtohStream;
@@ -286,6 +286,14 @@ static int mca_common_cuda_init(opal_common_cuda_function_table_t *ftable)
                             "CUDA: cuCtxGetCurrent succeeded");
     }
 
+    /* No need to go on at this point.  If we cannot create a context and we are at
+     * the point where we are making MPI calls, it is time to fully disable
+     * CUDA support.
+     */
+    if (false == mca_common_cuda_enabled) {
+        return OMPI_ERROR;
+    }
+
 #if OMPI_CUDA_SUPPORT_41
     if (true == mca_common_cuda_enabled) {
         /* Set up an array to store outstanding IPC async copy events */
@@ -459,7 +467,7 @@ static int mca_common_cuda_load_libcuda(void)
 {
     opal_lt_dladvise advise;
     int retval;
-	int advise_support = 1;
+    int advise_support = 1;
 
     if (0 != (retval = opal_lt_dlinit())) {
         if (OPAL_ERR_NOT_SUPPORTED == retval) {
@@ -475,98 +483,98 @@ static int mca_common_cuda_load_libcuda(void)
      * proceed without the support.  Things should still work.  */
     if (0 != (retval = opal_lt_dladvise_init(&advise))) {
         if (OPAL_ERR_NOT_SUPPORTED == retval) {
-			advise_support = 0;
+            advise_support = 0;
         } else {
-    		opal_show_help("help-mpi-common-cuda.txt", "unknown ltdl error", true,
-	    				   "opal_lt_dladvise_init", retval, opal_lt_dlerror());
+            opal_show_help("help-mpi-common-cuda.txt", "unknown ltdl error", true,
+                           "opal_lt_dladvise_init", retval, opal_lt_dlerror());
             return 1;
-		}
+        }
     }
 
-	if (advise_support) {
-		if (0 != (retval = opal_lt_dladvise_global(&advise))) {
-			opal_show_help("help-mpi-common-cuda.txt", "unknown ltdl error", true,
-						   "opal_lt_dladvise_global", retval, opal_lt_dlerror());
-			opal_lt_dladvise_destroy(&advise);
-			return 1;
-		}
+    if (advise_support) {
+        if (0 != (retval = opal_lt_dladvise_global(&advise))) {
+            opal_show_help("help-mpi-common-cuda.txt", "unknown ltdl error", true,
+                           "opal_lt_dladvise_global", retval, opal_lt_dlerror());
+            opal_lt_dladvise_destroy(&advise);
+            return 1;
+        }
 
-		/* 
-		 * Try and open libcuda.so and libcuda.so.1.  Note that we are not using
-		 * opal_lt_dladvise_ext() as we do not need ltdl to add any suffixes to
-		 * the library names being handed in.
-		 */
-		libcuda_handle = opal_lt_dlopenadvise("libcuda.so", advise);
+        /* 
+         * Try and open libcuda.so and libcuda.so.1.  Note that we are not using
+         * opal_lt_dladvise_ext() as we do not need ltdl to add any suffixes to
+         * the library names being handed in.
+         */
+        libcuda_handle = opal_lt_dlopenadvise("libcuda.so", advise);
 
-		/* If the first open fails, save the error message so that it can be printed
-		 * out of the second open fails as well.  If the second open succeeds, then 
-		 * we do not caer that the first open failed. */
-		if (NULL == libcuda_handle) {
-			char *err1;
-			const char *str1 = opal_lt_dlerror();
-			if (NULL != str1) {
-				err1 = strdup(str1);
-			} else {
-				err1 = strdup("lt_dlerror() returned NULL.");
-			}
-			libcuda_handle = opal_lt_dlopenadvise("libcuda.so.1", advise);
-			if (NULL == libcuda_handle) {
-				char *err2;
-				const char *str2 = opal_lt_dlerror();
-				if (NULL != str2) {
-					err2 = strdup(str2);
-				} else {
-					err2 = strdup("lt_dlerror() returned NULL.");
-				}
-				opal_show_help("help-mpi-common-cuda.txt", "dlopen failed", true,
-							   "libcuda.so", err1, "libcuda.so.1", err2);
-				free(err1);
-				free(err2);
-				opal_lt_dladvise_destroy(&advise);
-				return 1;
-			}
-			free(err1);
-		}
+        /* If the first open fails, save the error message so that it can be printed
+         * out of the second open fails as well.  If the second open succeeds, then 
+         * we do not caer that the first open failed. */
+        if (NULL == libcuda_handle) {
+            char *err1;
+            const char *str1 = opal_lt_dlerror();
+            if (NULL != str1) {
+                err1 = strdup(str1);
+            } else {
+                err1 = strdup("lt_dlerror() returned NULL.");
+            }
+            libcuda_handle = opal_lt_dlopenadvise("libcuda.so.1", advise);
+            if (NULL == libcuda_handle) {
+                char *err2;
+                const char *str2 = opal_lt_dlerror();
+                if (NULL != str2) {
+                    err2 = strdup(str2);
+                } else {
+                    err2 = strdup("lt_dlerror() returned NULL.");
+                }
+                opal_show_help("help-mpi-common-cuda.txt", "dlopen failed", true,
+                               "libcuda.so", err1, "libcuda.so.1", err2);
+                free(err1);
+                free(err2);
+                opal_lt_dladvise_destroy(&advise);
+                return 1;
+            }
+            free(err1);
+        }
 
-		opal_lt_dladvise_destroy(&advise);
-	} else {
-		/* No lt_dladvise support.  This should rarely happen. */
-		/* 
-		 * Try and open libcuda.so and libcuda.so.1.  Note that we are not using
-		 * opal_lt_dladvise_ext() as we do not need ltdl to add any suffixes to
-		 * the library names being handed in.
-		 */
-		libcuda_handle = opal_lt_dlopen("libcuda.so");
+        opal_lt_dladvise_destroy(&advise);
+    } else {
+        /* No lt_dladvise support.  This should rarely happen. */
+        /* 
+         * Try and open libcuda.so and libcuda.so.1.  Note that we are not using
+         * opal_lt_dladvise_ext() as we do not need ltdl to add any suffixes to
+         * the library names being handed in.
+         */
+        libcuda_handle = opal_lt_dlopen("libcuda.so");
 
-		/* If the first open fails, save the error message so that it can be printed
-		 * out of the second open fails as well.  If the second open succeeds, then 
-		 * we do not caer that the first open failed. */
-		if (NULL == libcuda_handle) {
-			char *err1;
-			const char *str1 = opal_lt_dlerror();
-			if (NULL != str1) {
-				err1 = strdup(str1);
-			} else {
-				err1 = strdup("lt_dlerror() returned NULL.");
-			}
-			libcuda_handle = opal_lt_dlopen("libcuda.so.1");
-			if (NULL == libcuda_handle) {
-				char *err2;
-				const char *str2 = opal_lt_dlerror();
-				if (NULL != str2) {
-					err2 = strdup(str2);
-				} else {
-					err2 = strdup("lt_dlerror() returned NULL.");
-				}
-				opal_show_help("help-mpi-common-cuda.txt", "dlopen failed", true,
-							   "libcuda.so", err1, "libcuda.so.1", err2);
-				free(err1);
-				free(err2);
-				return 1;
-			}
-			free(err1);
-		}
-	}
+        /* If the first open fails, save the error message so that it can be printed
+         * out of the second open fails as well.  If the second open succeeds, then 
+         * we do not caer that the first open failed. */
+        if (NULL == libcuda_handle) {
+            char *err1;
+            const char *str1 = opal_lt_dlerror();
+            if (NULL != str1) {
+                err1 = strdup(str1);
+            } else {
+                err1 = strdup("lt_dlerror() returned NULL.");
+            }
+            libcuda_handle = opal_lt_dlopen("libcuda.so.1");
+            if (NULL == libcuda_handle) {
+                char *err2;
+                const char *str2 = opal_lt_dlerror();
+                if (NULL != str2) {
+                    err2 = strdup(str2);
+                } else {
+                    err2 = strdup("lt_dlerror() returned NULL.");
+                }
+                opal_show_help("help-mpi-common-cuda.txt", "dlopen failed", true,
+                               "libcuda.so", err1, "libcuda.so.1", err2);
+                free(err1);
+                free(err2);
+                return 1;
+            }
+            free(err1);
+        }
+    }
 
     /* Map in the functions that we need */
     OMPI_CUDA_DLSYM(libcuda_handle, cuStreamCreate);
