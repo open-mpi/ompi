@@ -488,7 +488,7 @@ AC_DEFINE_UNQUOTED([OPAL_ENABLE_CRDEBUG], [0],
 #
 AC_ARG_WITH([cuda],
             [AC_HELP_STRING([--with-cuda(=DIR)],
-            [Build cuda support, optionally adding DIR/include, DIR/lib, and DIR/lib64])])
+            [Build cuda support, optionally adding DIR/include])])
 AC_MSG_CHECKING([if --with-cuda is set])
 
 # CUDA support is off by default.  User has to request it.
@@ -514,32 +514,6 @@ AS_IF([test "$with_cuda" = "no" -o "x$with_cuda" = "x"],
                            [opal_check_cuda_happy="yes"
                             AC_MSG_RESULT([found ($with_cuda/include/cuda.h)])])])])])
 
-# Check for optional libdir setting
-AC_ARG_WITH([cuda-libdir],
-            [AC_HELP_STRING([--with-cuda-libdir=DIR],
-            [Search for cuda libraries in DIR])])
-AC_MSG_CHECKING([if --with-cuda-libdir is set])
-
-# Only check for the extra cuda libdir if we have passed the --with-cuda tests.
-AS_IF([test "$opal_check_cuda_happy" = "yes"],
-      [AS_IF([test "$with_cuda_libdir" != "yes" -a "$with_cuda_libdir" != "no" -a "x$with_cuda_libdir" != "x"],
-             [AS_IF([test ! -d "$with_cuda_libdir"],
-                    [AC_MSG_RESULT([not found])
-                     AC_MSG_WARN([Directory $with_cuda_libdir not found])
-                     AC_MSG_ERROR([Cannot continue])],
-                    [AS_IF([test "x`ls $with_cuda_libdir/libcuda.* 2> /dev/null`" = "x"],
-                           [AC_MSG_RESULT([not found])
-                            AC_MSG_WARN([Expected file $with_cuda_libdir/libcuda.* not found])
-                            AC_MSG_ERROR([Cannot continue])],
-                           [AC_MSG_RESULT([ok - found directory ($with_cuda_libdir)])])])],
-             [with_cuda_libdir=/usr/lib64
-              AS_IF([test "x`ls $with_cuda_libdir/libcuda.* 2> /dev/null`" = "x"],
-                    [AC_MSG_RESULT([not found])
-                     AC_MSG_WARN([Expected file $with_cuda_libdir/libcuda.* not found])
-                     AC_MSG_ERROR([Cannot continue])],
-                    [AC_MSG_RESULT([ok - found directory ($with_cuda_libdir)])])])],
-      [AC_MSG_RESULT([not applicable since --with-cuda is not set])])
-
 # If we have CUDA support, check to see if we have CUDA 4.1 support
 AS_IF([test "$opal_check_cuda_happy"="yes"],
     AC_CHECK_MEMBER([struct CUipcMemHandle_st.reserved], [CUDA_SUPPORT_41=1], [CUDA_SUPPORT_41=0],
@@ -548,10 +522,9 @@ AS_IF([test "$opal_check_cuda_happy"="yes"],
 
 AC_MSG_CHECKING([if have cuda support])
 if test "$opal_check_cuda_happy" = "yes"; then
-    AC_MSG_RESULT([yes (-I$with_cuda/include -L$with_cuda_libdir -lcuda)])
+    AC_MSG_RESULT([yes (-I$with_cuda/include)])
     CUDA_SUPPORT=1
     opal_datatype_cuda_CPPFLAGS="-I$with_cuda/include"
-    opal_datatype_cuda_LIBS="-L$with_cuda_libdir -lcuda"
     AC_SUBST([opal_datatype_cuda_CPPFLAGS])
     AC_SUBST([opal_datatype_cuda_LIBS])
 else

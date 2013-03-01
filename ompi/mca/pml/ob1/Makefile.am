@@ -66,6 +66,10 @@ mcacomponentdir = $(pkglibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_pml_ob1_la_SOURCES = $(ob1_sources)
 mca_pml_ob1_la_LDFLAGS = -module -avoid-version
+#if MCA_ompi_cuda_support
+#mca_pml_ob1_la_LIBADD = \
+#    $(top_ompi_builddir)/ompi/mca/common/cuda/libmca_common_cuda.la
+#endif
 
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_pml_ob1_la_SOURCES = $(ob1_sources)
