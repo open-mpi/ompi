@@ -167,7 +167,12 @@ static int smcuda_register(void)
         mca_btl_smcuda_param_register_int("sm_extra_procs", 0);
 
 #if OMPI_CUDA_SUPPORT
-    mca_btl_smcuda.super.btl_exclusivity = MCA_BTL_EXCLUSIVITY_HIGH;
+    /* Lower priority when CUDA support is not requested */
+    if (ompi_mpi_cuda_support) {
+        mca_btl_smcuda.super.btl_exclusivity = MCA_BTL_EXCLUSIVITY_HIGH;
+    } else {
+        mca_btl_smcuda.super.btl_exclusivity = MCA_BTL_EXCLUSIVITY_LOW;
+    }
 #else /* OMPI_CUDA_SUPPORT */
     mca_btl_smcuda.super.btl_exclusivity = MCA_BTL_EXCLUSIVITY_HIGH-1;
 #endif /* OMPI_CUDA_SUPPORT */

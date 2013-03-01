@@ -300,8 +300,7 @@ int ompi_mpi_register_params(void)
             value = 1;
         }
         if (0 == value) {
-            opal_show_help("help-mpi-runtime.txt", 
-                           "CUDA GPU buffer support requested but compiled out",
+            opal_show_help("help-mpi-runtime.txt", "no cuda support",
                            true);
             ompi_mpi_cuda_support = false;
         }
