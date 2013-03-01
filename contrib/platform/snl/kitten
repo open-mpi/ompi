@@ -1,0 +1,62 @@
+enable_static=yes
+enable_shared=no
+enable_dlopen=no
+enable_mca_no_build=if,compress,crs,pml-bfo,pml-crcpw,pml-csum,pml-dr,pml-v,vprotocol,btl-tcp
+enable_contrib_no_build=vt
+enable_heterogeneous=no
+enable_pty_support=no
+enable_mem_debug=no
+enable_mem_profile=no
+enable_binaries=no
+enable_script_wrapper_compilers=yes
+with_orte=no
+
+enable_event_rtsig=no
+enable_event_select=no
+enable_event_poll=no
+enable_event_devpoll=no
+enable_event_kqueue=no
+enable_event_epoll=no
+enable_event_evport=no
+
+ac_cv_func_cpuset_setaffinity=${ac_cv_func_cpuset_setaffinity=no}
+ac_cv_func_dlopen=${ac_cv_func_dlopen=no}
+ac_cv_func_dlsym=${ac_cv_func_dlsym=no}
+ac_cv_func_execve=${ac_cv_func_execve=no}
+ac_cv_func_fork=${ac_cv_func_fork=no}
+ac_cv_func_gethrtime=${ac_cv_func_gethrtime=no}
+ac_cv_func_getpagesize=${ac_cv_func_getpagesize=no}
+ac_cv_func_getpwuid=${ac_cv_func_getpwuid=no}
+ac_cv_func_htonl=${ac_cv_func_htonl=yes}
+ac_cv_func_isatty=${ac_cv_func_isatty=no}
+ac_cv_func_mkfifo=${ac_cv_func_mkfifo=no}
+ac_cv_func_mmap=${ac_cv_func_mmap=no}
+ac_cv_func_openat=${ac_cv_func_openat=no}
+ac_cv_func_openpty=${ac_cv_func_openpty=no}
+ac_cv_func_pipe=${ac_cv_func_pipe=no}
+ac_cv_func_ptsname=${ac_cv_func_ptsname=no}
+ac_cv_func_sched_setaffinity=${ac_cv_func_sched_setaffinity=no}
+ac_cv_func_sched_yield=${ac_cv_func_sched_yield=no}
+ac_cv_func_setpgid=${ac_cv_func_setpgid=no}
+ac_cv_func_setsid=${ac_cv_func_setsid=no}
+ac_cv_func_shl_load=${ac_cv_func_shl_load=no}
+ac_cv_func_shmget=${ac_cv_func_shmget=no}
+ac_cv_func_socket=${ac_cv_func_socket=no}
+ac_cv_func_socketpair=${ac_cv_func_socketpair=no}
+ac_cv_func_strsignal=${ac_cv_func_strsignal=yes}
+ac_cv_func_sysconf=${ac_cv_func_sysconf=no}
+ac_cv_func_syslog=${ac_cv_func_syslog=no}
+ac_cv_func_tcgetpgrp=${ac_cv_func_tcgetpgrp=no}
+ac_cv_func_time_base_to_time=${ac_cv_func_time_base_to_time=no}
+ac_cv_func_uname=${ac_cv_func_uname=no}
+ac_cv_func_usleep=${ac_cv_func_usleep=no}
+ac_cv_func_vm_read_overwrite=${ac_cv_func_vm_read_overwrite=no}
+ac_cv_func_waitpid=${ac_cv_func_waitpid=no}
+
+if test "with_verbs" != "no" ; then
+    enable_mca_direct=pml-ob1
+    enable_mca_no_built="$enable_mca_no_build,btl-sm"
+elif test "with_portals" != "no" ; then
+    enable_mca_no_build="$enable_mca_no_build,pml-ob1,btl,bml,mpool,rcache"
+    enable_mca_direct=pml-cm,mtl-portals4
+fi
