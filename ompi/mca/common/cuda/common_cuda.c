@@ -463,11 +463,15 @@ static int mca_common_cuda_init(opal_common_cuda_function_table_t *ftable)
  * This function will open and load the symbols needed from the CUDA driver
  * library.  Any failure will result in a message and we will return 1.
  */
+#define NUMLIBS 2
 static int mca_common_cuda_load_libcuda(void)
 {
     opal_lt_dladvise advise;
-    int retval;
+    int retval, i;
     int advise_support = 1;
+    bool loaded = true;
+    char *errs[NUMLIBS] = {NULL, NULL};
+    char *cudalibs[NUMLIBS] = {"libcuda.so", "libcuda.so.1"};
 
     if (0 != (retval = opal_lt_dlinit())) {
         if (OPAL_ERR_NOT_SUPPORTED == retval) {
@@ -491,6 +495,14 @@ static int mca_common_cuda_load_libcuda(void)
         }
     }
 
+    /* Make sure we check in lib64 also in the case where there are both
+     * 32 and 64 bit libraries installed.  Otherwise, we may fail trying to
+     * load the 32 bit library. */
+    opal_lt_dladdsearchdir("/usr/lib64");
+
+    /* Now walk through all the potential names libcuda and find one
+     * that works.  If it does, all is good.  If not, print out all
+     * the messages about why things failed. */
     if (advise_support) {
         if (0 != (retval = opal_lt_dladvise_global(&advise))) {
             opal_show_help("help-mpi-common-cuda.txt", "unknown ltdl error", true,
@@ -498,82 +510,58 @@ static int mca_common_cuda_load_libcuda(void)
             opal_lt_dladvise_destroy(&advise);
             return 1;
         }
-
-        /* 
-         * Try and open libcuda.so and libcuda.so.1.  Note that we are not using
-         * opal_lt_dladvise_ext() as we do not need ltdl to add any suffixes to
-         * the library names being handed in.
-         */
-        libcuda_handle = opal_lt_dlopenadvise("libcuda.so", advise);
-
-        /* If the first open fails, save the error message so that it can be printed
-         * out of the second open fails as well.  If the second open succeeds, then 
-         * we do not caer that the first open failed. */
-        if (NULL == libcuda_handle) {
-            char *err1;
-            const char *str1 = opal_lt_dlerror();
-            if (NULL != str1) {
-                err1 = strdup(str1);
-            } else {
-                err1 = strdup("lt_dlerror() returned NULL.");
-            }
-            libcuda_handle = opal_lt_dlopenadvise("libcuda.so.1", advise);
+        for (i = 0; i < NUMLIBS; i++) {
+            const char *str;
+            libcuda_handle = opal_lt_dlopenadvise(cudalibs[i], advise);
             if (NULL == libcuda_handle) {
-                char *err2;
-                const char *str2 = opal_lt_dlerror();
-                if (NULL != str2) {
-                    err2 = strdup(str2);
+                str = opal_lt_dlerror();
+                if (NULL != str) {
+                    errs[i] = strdup(str);
                 } else {
-                    err2 = strdup("lt_dlerror() returned NULL.");
+                    errs[i] = strdup("lt_dlerror() returned NULL.");
                 }
-                opal_show_help("help-mpi-common-cuda.txt", "dlopen failed", true,
-                               "libcuda.so", err1, "libcuda.so.1", err2);
-                free(err1);
-                free(err2);
-                opal_lt_dladvise_destroy(&advise);
-                return 1;
+                opal_output_verbose(10, mca_common_cuda_output,
+                                    "CUDA: Library open error: %s",
+                                    errs[i]);
+            } else {
+                loaded = true;
+                break;
             }
-            free(err1);
         }
-
         opal_lt_dladvise_destroy(&advise);
     } else {
         /* No lt_dladvise support.  This should rarely happen. */
-        /* 
-         * Try and open libcuda.so and libcuda.so.1.  Note that we are not using
-         * opal_lt_dladvise_ext() as we do not need ltdl to add any suffixes to
-         * the library names being handed in.
-         */
-        libcuda_handle = opal_lt_dlopen("libcuda.so");
-
-        /* If the first open fails, save the error message so that it can be printed
-         * out of the second open fails as well.  If the second open succeeds, then 
-         * we do not caer that the first open failed. */
-        if (NULL == libcuda_handle) {
-            char *err1;
-            const char *str1 = opal_lt_dlerror();
-            if (NULL != str1) {
-                err1 = strdup(str1);
-            } else {
-                err1 = strdup("lt_dlerror() returned NULL.");
-            }
-            libcuda_handle = opal_lt_dlopen("libcuda.so.1");
+        for (i = 0; i < NUMLIBS; i++) {
+            const char *str;
+            libcuda_handle = opal_lt_dlopen(cudalibs[i]);
             if (NULL == libcuda_handle) {
-                char *err2;
-                const char *str2 = opal_lt_dlerror();
-                if (NULL != str2) {
-                    err2 = strdup(str2);
+                str = opal_lt_dlerror();
+                if (NULL != str) {
+                    errs[i] = strdup(str);
                 } else {
-                    err2 = strdup("lt_dlerror() returned NULL.");
+                    errs[i] = strdup("lt_dlerror() returned NULL.");
                 }
-                opal_show_help("help-mpi-common-cuda.txt", "dlopen failed", true,
-                               "libcuda.so", err1, "libcuda.so.1", err2);
-                free(err1);
-                free(err2);
-                return 1;
+            } else {
+                loaded = true;
+                break;
             }
-            free(err1);
         }
+    }
+
+    if (loaded != true) {
+        opal_show_help("help-mpi-common-cuda.txt", "dlopen failed", true,
+                       cudalibs[0], errs[0], cudalibs[1], errs[1]);
+    }
+    
+    /* Cleanup error messages.  Need to do this after printing them. */
+    for (i = 0; i < NUMLIBS; i++) {
+        if (NULL != errs[i]) {
+            free(errs[i]);
+        }
+    }
+
+    if (loaded != true) {
+        return 1;
     }
 
     /* Map in the functions that we need */
