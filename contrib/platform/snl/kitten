@@ -56,7 +56,7 @@ ac_cv_func_waitpid=${ac_cv_func_waitpid=no}
 if test "with_verbs" != "no" ; then
     enable_mca_direct=pml-ob1
     enable_mca_no_built="$enable_mca_no_build,btl-sm"
-elif test "with_portals" != "no" ; then
+elif test "with_portals4" != "no" ; then
     enable_mca_no_build="$enable_mca_no_build,pml-ob1,btl,bml,mpool,rcache"
     enable_mca_direct=pml-cm,mtl-portals4
 fi
