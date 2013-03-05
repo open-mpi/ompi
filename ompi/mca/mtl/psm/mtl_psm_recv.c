@@ -22,6 +22,7 @@
 #include "ompi/communicator/communicator.h"
 #include "opal/datatype/opal_convertor.h"
 #include "ompi/mca/mtl/base/mtl_base_datatype.h"
+#include "opal/util/show_help.h"
 
 #include "mtl_psm.h"
 #include "mtl_psm_types.h"
