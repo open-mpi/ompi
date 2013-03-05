@@ -22,6 +22,7 @@
 #include "ompi/mca/mtl/mtl.h"
 #include "ompi/runtime/ompi_module_exchange.h"
 #include "ompi/mca/mtl/base/mtl_base_datatype.h"
+#include "opal/util/show_help.h"
 #include "ompi/proc/proc.h"
 
 #include "mtl_psm.h"
