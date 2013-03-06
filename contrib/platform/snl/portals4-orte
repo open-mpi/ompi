@@ -4,6 +4,6 @@ enable_contrib_no_build=libnbc,vt
 enable_heterogeneous=no
 enable_mem_debug=no
 enable_mem_profile=no
-with_openib=no
+with_verbs=no
 with_gm=no
 with_mx=no
