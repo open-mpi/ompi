@@ -127,6 +127,7 @@ ompi_rte_init(int *argc, char ***argv)
     ompi_process_info.peer_init_barrier = 0;
     ompi_process_info.peer_fini_barrier = 0;
     ompi_process_info.my_node_rank = OMPI_NODE_RANK_INVALID; /* BWB: FIX ME */
+    ompi_process_info.my_local_rank = OMPI_LOCAL_RANK_INVALID; /* BWB: FIX ME */
     ompi_process_info.num_local_peers = 0; /* BWB: FIX ME */
     ompi_process_info.job_session_dir = NULL; /* BWB: FIX ME */
     ompi_process_info.proc_session_dir = NULL; /* BWB: FIX ME */

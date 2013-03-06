@@ -76,11 +76,13 @@ OMPI_DECLSPEC int ompi_rte_barrier(ompi_rte_collective_t *coll);
 
 /* Process info struct and values */
 typedef int ompi_node_rank_t;
+typedef int ompi_local_rank_t;
 struct ompi_process_info_t {
     int app_num;
     pid_t pid;
     ompi_vpid_t num_procs;
     ompi_node_rank_t my_node_rank;
+    ompi_local_rank_t my_local_rank;
     ompi_node_rank_t num_local_peers;
     char *my_hnp_uri;
     int peer_modex;
