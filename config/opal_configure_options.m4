@@ -33,7 +33,7 @@ ompi_show_subtitle "OPAL Configuration options"
 # Is this a developer copy?
 #
 
-if test -d .svn -o -d .hg; then
+if test -d .svn -o -d .hg -o -d .git; then
     OMPI_DEVEL=1
 else
     OMPI_DEVEL=0
