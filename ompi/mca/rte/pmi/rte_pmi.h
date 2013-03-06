@@ -81,7 +81,6 @@ struct ompi_process_info_t {
     int app_num;
     pid_t pid;
     ompi_vpid_t num_procs;
-    ompi_node_rank_t my_node_rank;
     ompi_local_rank_t my_local_rank;
     ompi_node_rank_t num_local_peers;
     char *my_hnp_uri;
@@ -93,7 +92,6 @@ struct ompi_process_info_t {
     char nodename[100]; /* BWB: FIX ME: This really needs to be a rational constant */
 };
 typedef struct ompi_process_info_t ompi_process_info_t;
-#define OMPI_NODE_RANK_INVALID (-1)
 #define OMPI_LOCAL_RANK_INVALID (-1)
 
 
