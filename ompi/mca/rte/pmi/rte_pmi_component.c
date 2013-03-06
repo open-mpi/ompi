@@ -116,9 +116,10 @@ ompi_rte_init(int *argc, char ***argv)
     node_ranks = malloc(tmp * sizeof(int));
     if (NULL == node_ranks)  return OMPI_ERROR;
     PMI_Get_clique_ranks(node_ranks, tmp);
-    for (i = 0 ; i < tmp ; ++i) {
+    ompi_process_info.num_local_peers = tmp;
+    for (i = 0 ; i < ompi_process_info.num_local_peers ; ++i) {
         if (rank == node_ranks[i]) {
-            ompi_process_info.my_node_rank = i;
+            ompi_process_info.my_local_rank = i;
             break;
         }
     }
@@ -126,9 +127,6 @@ ompi_rte_init(int *argc, char ***argv)
     ompi_process_info.peer_modex = 0;
     ompi_process_info.peer_init_barrier = 0;
     ompi_process_info.peer_fini_barrier = 0;
-    ompi_process_info.my_node_rank = OMPI_NODE_RANK_INVALID; /* BWB: FIX ME */
-    ompi_process_info.my_local_rank = OMPI_LOCAL_RANK_INVALID; /* BWB: FIX ME */
-    ompi_process_info.num_local_peers = 0; /* BWB: FIX ME */
     ompi_process_info.job_session_dir = NULL; /* BWB: FIX ME */
     ompi_process_info.proc_session_dir = NULL; /* BWB: FIX ME */
     gethostname(ompi_process_info.nodename, sizeof(ompi_process_info.nodename));
@@ -180,7 +178,7 @@ ompi_rte_init(int *argc, char ***argv)
 
     asprintf(&node_info, "%s,%d", 
              ompi_process_info.nodename,
-             ompi_process_info.my_node_rank);
+             ompi_process_info.my_local_rank);
     ret = ompi_rte_db_store(OMPI_PROC_MY_NAME, OMPI_DB_RTE_INFO, node_info, OPAL_STRING);
     if (OMPI_SUCCESS != ret) return ret;
     free(node_info);
