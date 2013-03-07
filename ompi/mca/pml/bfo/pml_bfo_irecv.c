@@ -142,11 +142,21 @@ mca_pml_bfo_imrecv( void *buf,
     seq = recvreq->req_recv.req_base.req_sequence;
 
     /* make the request a recv request again */
+    /* The old request kept pointers to comm and the char datatype.
+       We're about to release those, but need to make sure comm
+       doesn't go out of scope (we don't care about the char datatype
+       anymore).  So retain comm, then release the frag, then reinit
+       the frag (which will retain comm), then release comm (but the
+       frag still has it's ref, so it'll stay in scope).  Make
+       sense? */
+    OBJ_RETAIN(comm);
+    MCA_PML_BASE_RECV_REQUEST_FINI(&recvreq->req_recv);
     recvreq->req_recv.req_base.req_type = MCA_PML_REQUEST_RECV;
     MCA_PML_BFO_RECV_REQUEST_INIT(recvreq,
                                   buf,
                                   count, datatype, 
                                   src, tag, comm, false);
+    OBJ_RELEASE(comm);
 
     PERUSE_TRACE_COMM_EVENT (PERUSE_COMM_REQ_ACTIVATE,
                              &((recvreq)->req_recv.req_base),
@@ -170,7 +180,7 @@ mca_pml_bfo_imrecv( void *buf,
     recvreq->req_recv.req_base.req_proc = proc->ompi_proc;
     prepare_recv_req_converter(recvreq);
 
-    /* we can't go throught he match, since we already have the match.
+    /* we can't go through the match, since we already have the match.
        Cheat and do what REQUEST_START does, but without the frag
        search */
     hdr = (mca_pml_bfo_hdr_t*)frag->segments->seg_addr.pval;
@@ -227,11 +237,21 @@ mca_pml_bfo_mrecv( void *buf,
     bfo_comm = recvreq->req_recv.req_base.req_comm->c_pml_comm;
 
     /* make the request a recv request again */
+    /* The old request kept pointers to comm and the char datatype.
+       We're about to release those, but need to make sure comm
+       doesn't go out of scope (we don't care about the char datatype
+       anymore).  So retain comm, then release the frag, then reinit
+       the frag (which will retain comm), then release comm (but the
+       frag still has it's ref, so it'll stay in scope).  Make
+       sense? */
+    OBJ_RETAIN(comm);
+    MCA_PML_BASE_RECV_REQUEST_FINI(&recvreq->req_recv);
     recvreq->req_recv.req_base.req_type = MCA_PML_REQUEST_RECV;
     MCA_PML_BFO_RECV_REQUEST_INIT(recvreq,
                                   buf,
                                   count, datatype, 
                                   src, tag, comm, false);
+    OBJ_RELEASE(comm);
 
     PERUSE_TRACE_COMM_EVENT (PERUSE_COMM_REQ_ACTIVATE,
                              &((recvreq)->req_recv.req_base),
@@ -254,7 +274,7 @@ mca_pml_bfo_mrecv( void *buf,
     recvreq->req_recv.req_base.req_proc = proc->ompi_proc;
     prepare_recv_req_converter(recvreq);
 
-    /* we can't go throught he match, since we already have the match.
+    /* we can't go through the match, since we already have the match.
        Cheat and do what REQUEST_START does, but without the frag
        search */
     hdr = (mca_pml_bfo_hdr_t*)frag->segments->seg_addr.pval;
