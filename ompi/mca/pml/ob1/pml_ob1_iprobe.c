@@ -91,9 +91,14 @@ mca_pml_ob1_improbe(int src,
     int rc = OMPI_SUCCESS;
     mca_pml_ob1_recv_request_t *recvreq;
 
+    *message = ompi_message_alloc();
+    if (NULL == *message) return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
+
     MCA_PML_OB1_RECV_REQUEST_ALLOC(recvreq, rc);
-    if (NULL == recvreq)
+    if (NULL == recvreq) {
+        ompi_message_return(*message);
         return rc;
+    }
     recvreq->req_recv.req_base.req_type = MCA_PML_REQUEST_IMPROBE;
 
     /* initialize the request enough to probe and get the status */
@@ -107,20 +112,21 @@ mca_pml_ob1_improbe(int src,
         }
         *matched = 1;
 
-        *message = ompi_message_alloc();
         (*message)->comm = comm;
         (*message)->req_ptr = recvreq;
         (*message)->peer = recvreq->req_recv.req_base.req_ompi.req_status.MPI_SOURCE;
         (*message)->count = recvreq->req_recv.req_base.req_ompi.req_status._ucount;
 
-        rc = OMPI_SUCCESS;
+        rc = recvreq->req_recv.req_base.req_ompi.req_status.MPI_ERROR;
     } else {
         *matched = 0;
 
         /* we only free if we didn't match, because we're going to
            translate the request into a receive request later on if it
            was matched */
-        ompi_request_free((ompi_request_t**)&recvreq);
+        MCA_PML_OB1_RECV_REQUEST_RETURN( recvreq );
+        ompi_message_return(*message);
+        *message = MPI_MESSAGE_NULL;
         
         opal_progress();
     }
@@ -139,9 +145,14 @@ mca_pml_ob1_mprobe(int src,
     int rc = OMPI_SUCCESS;
     mca_pml_ob1_recv_request_t *recvreq;
 
+    *message = ompi_message_alloc();
+    if (NULL == *message) return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
+
     MCA_PML_OB1_RECV_REQUEST_ALLOC(recvreq, rc);
-    if (NULL == recvreq)
+    if (NULL == recvreq) {
+        ompi_message_return(*message);
         return rc;
+    }
     recvreq->req_recv.req_base.req_type = MCA_PML_REQUEST_MPROBE;
 
     /* initialize the request enough to probe and get the status */
@@ -150,15 +161,16 @@ mca_pml_ob1_mprobe(int src,
     MCA_PML_OB1_RECV_REQUEST_START(recvreq);
 
     ompi_request_wait_completion(&recvreq->req_recv.req_base.req_ompi);
+    rc = recvreq->req_recv.req_base.req_ompi.req_status.MPI_ERROR;
 
     if( NULL != status ) {
         *status = recvreq->req_recv.req_base.req_ompi.req_status;
     }
 
-    *message = ompi_message_alloc();
     (*message)->comm = comm;
     (*message)->req_ptr = recvreq;
+    (*message)->peer = recvreq->req_recv.req_base.req_ompi.req_status.MPI_SOURCE;
     (*message)->count = recvreq->req_recv.req_base.req_ompi.req_status._ucount;
 
-    return OMPI_SUCCESS;
+    return rc;
 }
