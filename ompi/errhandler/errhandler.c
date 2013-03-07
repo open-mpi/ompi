@@ -68,15 +68,6 @@ ompi_predefined_errhandler_t ompi_mpi_errors_throw_exceptions;
 ompi_predefined_errhandler_t *ompi_mpi_errors_throw_exceptions_addr = 
     &ompi_mpi_errors_throw_exceptions;
 
-/*
- * Local state to know when the three intrinsics have been freed; see
- * the errhandler destructor for more info.
- */
-static bool null_freed = false;
-static bool fatal_freed = false;
-static bool return_freed = false;
-static bool throw_freed = false;
-
 
 /*
  * Initialize OMPI errhandler infrastructure
@@ -159,39 +150,16 @@ int ompi_errhandler_init(void)
  */
 int ompi_errhandler_finalize(void)
 {
-    /* Forcibly release the intrinsic error handlers because in order
-       to be safe, we increase the refcount on error handlers in
-       MPI_*_GET_ERRHANDLER and MPI_ERRHANDLER_GET.  If these handles
-       are never ERRHANDLER_FREEd, then the refcount will not be
-       decremented and they will not naturally get to 0 during
-       FINALIZE.  Hence, we RELEASE on the intrinsics until they are
-       freed. */
+    OBJ_DESTRUCT(&ompi_mpi_errhandler_null.eh);
+    OBJ_DESTRUCT(&ompi_mpi_errors_return.eh);
+    OBJ_DESTRUCT(&ompi_mpi_errors_throw_exceptions.eh);
+    OBJ_DESTRUCT(&ompi_mpi_errors_are_fatal.eh);
 
-    while (!null_freed) {
-        OBJ_DESTRUCT(&ompi_mpi_errhandler_null.eh);
-    }
-    while (!fatal_freed) {
-        OBJ_DESTRUCT(&ompi_mpi_errors_are_fatal.eh);
-    }
-    while (!return_freed) {
-        OBJ_DESTRUCT(&ompi_mpi_errors_return.eh);
-    }
-    while (!throw_freed) {
-        OBJ_DESTRUCT(&ompi_mpi_errors_throw_exceptions.eh);
-    }
-  
     /* JMS Add stuff here checking for unreleased errorhandlers,
        similar to communicators, info handles, etc. */
 
     /* Remove errhandler F2C table */
 
-  /* Forcibly release the intrinsic error handlers because in order to
-     be safe, we increase the refcount on error handlers in
-     MPI_*_GET_ERRHANDLER and MPI_ERRHANDLER_GET.  If these handles
-     are never ERRHANDLER_FREEd, then the refcount will not be
-     decremented and they will not naturally get to 0 during FINALIZE.
-     Hence, we RELEASE on the intrinsics until they are freed. */
-  
     OBJ_DESTRUCT(&ompi_errhandler_f_to_c_table);
 
     /* All done */
@@ -296,18 +264,5 @@ static void ompi_errhandler_destruct(ompi_errhandler_t *errhandler)
                                         errhandler->eh_f_to_c_index)) {
     opal_pointer_array_set_item(&ompi_errhandler_f_to_c_table,
                                 errhandler->eh_f_to_c_index, NULL);
-  }
-
-  /* Reset the static state if we're releasing one of the
-     intrinsics */
-
-  if (&ompi_mpi_errhandler_null.eh == errhandler) {
-      null_freed = true;
-  } else if (&ompi_mpi_errors_are_fatal.eh == errhandler) {
-      fatal_freed = true;
-  } else if (&ompi_mpi_errors_return.eh == errhandler) {
-      return_freed = true;
-  } else if (&ompi_mpi_errors_throw_exceptions.eh == errhandler) {
-      throw_freed = true;
   }
 }
