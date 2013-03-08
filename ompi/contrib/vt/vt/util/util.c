@@ -15,7 +15,7 @@
  *
  * Copyright (c) 2007,      Cisco Systems, Inc.
  *
- * Copyright (c) 2005-2012, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2013, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich, Juelich Supercomputing
  *                          Centre, Federal Republic of Germany
@@ -171,6 +171,12 @@ static int guess_strlen(const char* fmt, va_list ap)
   return len;
 }
 
+
+void vt_assert_fail(const char* expr, const char* file, int line)
+{
+  fprintf(stderr, "%s:%d: Assertion `%s' failed.", file, line, expr);
+  abort();
+}
 
 int vt_asprintf(char** ptr, const char* fmt, ...)
 {

@@ -2,7 +2,7 @@
  * VampirTrace
  * http://www.tu-dresden.de/zih/vampirtrace
  *
- * Copyright (c) 2005-2012, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2013, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich, Juelich Supercomputing
  *                          Centre, Federal Republic of Germany
@@ -461,14 +461,21 @@ void vt_cuptiact_markStreamAsDestroyed(CUcontext cuCtx, uint32_t strmID)
 
   VT_CUPTI_LOCK();
   
-  if(vtCtx == NULL){
-    vt_warning("[CUPTI Activity] No context given in "
+  if(cuCtx == NULL){
+    vt_warning("[CUPTI Activity] No CUDA context given in "
                "vt_cuptiact_markStreamAsDestroyed()!");
     VT_CUPTI_UNLOCK();
     return;
   }
   
   vtCtx = vt_cupti_getCtxNoLock(cuCtx);
+  
+  if(vtCtx == NULL){
+    vt_warning("[CUPTI Activity] No context found in "
+               "vt_cuptiact_markStreamAsDestroyed()!");
+    VT_CUPTI_UNLOCK();
+    return;
+  }
   
   currStrm = vtCtx->activity->strmList;
   while(currStrm != NULL){

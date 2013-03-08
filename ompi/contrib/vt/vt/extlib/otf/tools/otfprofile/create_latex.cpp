@@ -1,5 +1,5 @@
 /*
- This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2012.
+ This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2013.
  Authors: Andreas Knuepfer, Robert Dietrich, Matthias Jurenz
  */
 
@@ -1924,25 +1924,40 @@ template<class type> static void write_ybarPlotHead(fstream& tex,
 
     if (cclassType == OTF_COLLECTIVE_TYPE_UNKNOWN) {
         title = "P2P";
+        switch (metricType) {
+        case INVOCATIONS:
+            title += " Number of Messages";
+            metric = "";
+            break;
+        case DURATION:
+            title += " Accumulated Message Transfer Time";
+            metric = "Seconds";
+            break;
+        case MSGLENGTH:
+            title += " Aggregated Message Volume";
+            metric = "Bytes";
+            break;
+        default:
+            break;
+        }
     } else {
         collectiveId2String(cclassType, title);
-    }
-
-    switch (metricType) {
-    case INVOCATIONS:
-        title += " Invocations";
-        metric = "";
-        break;
-    case DURATION:
-        title += " Duration";
-        metric = "sec";
-        break;
-    case MSGLENGTH:
-        title += " Message Length";
-        metric = "byte";
-        break;
-    default:
-        break;
+        switch (metricType) {
+        case INVOCATIONS:
+            title += " Number of Invocations";
+            metric = "";
+            break;
+        case DURATION:
+            title += " Accumulated Duration";
+            metric = "Seconds";
+            break;
+        case MSGLENGTH:
+            title += " Aggregated Data Volume";
+            metric = "Bytes";
+            break;
+        default:
+            break;
+        }
     }
 
     tex << "title=" << title;
@@ -2493,7 +2508,7 @@ static void write_p2pMsgRateMatrix(fstream& tex, struct AllData& alldata) {
         return;
     }
 
-    tex << "\\center{\\Large \\bf P2P - Message Rate (average)}" << endl;
+    tex << "\\center{\\Large \\bf P2P - Message Data Rate (average)}" << endl;
     tex << "\\bigskip" << endl << endl;
 
     tex << "\\begin{center}" << endl;
@@ -2561,7 +2576,7 @@ static void write_p2pMsgRateMatrix(fstream& tex, struct AllData& alldata) {
     char quant = ' ';
     uint64_t div = getScaleQuantifierLog2(minDataRate, maxDataRate, quant);
     string unit = string(&quant, 1);
-    unit.append("Byte/s");
+    unit.append("Bytes/sec");
     maxDataRate /= div;
     minDataRate /= div;
 
@@ -2575,8 +2590,8 @@ static void write_p2pMsgRateMatrix(fstream& tex, struct AllData& alldata) {
     while (it != itend) {
         if (it->second.bytes_send.cnt && it->second.duration_send.cnt
                 && (it->second.duration_send.sum > 0)) {
-            uint64_t x = rankToPos.find(it->first.a)->second; //pos for rank
-            uint64_t y = gridDim - 1 - rankToPos.find(it->first.b)->second; //pos for receiving peer
+            uint64_t x = rankToPos.find(it->first.b)->second; //pos for receiver
+            uint64_t y = gridDim - 1 - rankToPos.find(it->first.a)->second; //pos for sender
             float r, g, b;
 
             /* @DEBUG
@@ -3138,7 +3153,7 @@ static void write_p2pMsgRateHist(fstream& tex, struct AllData& alldata) {
     if (it == itend)
         return;
 
-    tex << "\\center{\\Large \\bf P2P - Message Rate Histogram}" << endl;
+    tex << "\\center{\\Large \\bf P2P - Message Data Rate Histogram}" << endl;
     tex << "\\bigskip" << endl << endl;
 
     tex << "\\begin{center}" << endl;
@@ -3253,11 +3268,11 @@ static void write_p2pMsgRateHist(fstream& tex, struct AllData& alldata) {
 
     // draw y axis description
     tex << "\\node[rotate=90] at (-2," << (maxMsgRate - minMsgRate) / 2.0
-            << ") {rate [byte/sec]};" << endl;
+            << ") {Average Data Rate [Bytes/sec]};" << endl;
 
     // draw x axis description
     tex << "\\node at (" << (maxMsgLen - minMsgLen + 1) / xTileFac / 2.0
-            << ", -1.5) {message length [byte]};" << endl;
+            << ", -1.5) {Message Volume [Bytes]};" << endl;
 
     tex << "\\end{tikzpicture}\\bigskip" << endl << endl;
     tex << "\\begin{tikzpicture} [step=1cm,scale=" << scale
@@ -3274,7 +3289,7 @@ static void write_p2pMsgRateHist(fstream& tex, struct AllData& alldata) {
     std::locale prev = tex.imbue(std::locale(std::locale(), &facet));
 
     tex << "\\node at (" << colorsteps / 2.0 + 1
-            << ", 0) {Number of Invocations};" << endl;
+            << ", 0) {Number of Messages};" << endl;
 
     //cout << "maxCount: " << maxCount << " colorsteps: " << colorsteps << endl;
 
@@ -3436,7 +3451,7 @@ bool CreateTex(AllData& alldata) {
 
                 cerr << "ERROR: Could not create PDF file from '"
                 << tex_file_name << "'. "
-                << PDFTEX << "returned with exit code "
+                << PDFTEX << " returned with exit code "
                 << es << "." << endl;
                 error= true;
                 break;

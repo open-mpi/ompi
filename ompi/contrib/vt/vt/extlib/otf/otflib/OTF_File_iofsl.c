@@ -1,5 +1,5 @@
 /*
- This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2012.
+ This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2013.
  Authors: Joseph Schuchart, Thomas Ilsche
  strongly based on OTF_File.c by Authors:
  Andreas Knuepfer, Holger Brunst, Ronny Brendel, Thomas Kriebitzsch
@@ -704,7 +704,14 @@ int OTF_File_iofsl_close( OTF_File* file ) {
 			}
 
 			status = deflate( OTF_FILE_Z(file), Z_FULL_FLUSH );
-			assert( status != Z_STREAM_ERROR );
+			if ( status == Z_STREAM_ERROR ) {
+
+				OTF_Error( "ERROR in function %s, file %s, line %i\n"
+					"deflate() failed.\n",
+					__FUNCTION__, __FILE__, __LINE__ );
+				return 0;
+			}
+
 			towrite = file->zbuffersize - OTF_FILE_Z(file)->avail_out;
 			byteswritten = 0;
 

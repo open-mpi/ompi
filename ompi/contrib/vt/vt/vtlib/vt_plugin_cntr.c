@@ -2,7 +2,7 @@
  * VampirTrace
  * http://www.tu-dresden.de/zih/vampirtrace
  *
- * Copyright (c) 2005-2012, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2013, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich, Juelich Supercomputing
  *                          Centre, Federal Republic of Germany
@@ -40,7 +40,7 @@ struct vt_plugin {
   char ** selected_events;
   /* vt counter ids */
   uint32_t * vt_counter_ids;
-  /* the asynch key value id assigned by vt */
+  /* the asynch key value ids assigned by vt */
   uint32_t * vt_asynch_keys;
 };
 
@@ -99,6 +99,8 @@ struct vt_plugin_cntr_defines {
 static void maybe_register_new_thread(VTThrd * thrd, uint32_t tid);
 /* called when activating events */
 static void add_events(struct vt_plugin current_plugin, VTThrd * thrd);
+
+static uint32_t post_mortem_asynch_key(void);
 
 /* called by watchdog thread in a plugin */
 int callback_function(void * ID, vt_plugin_cntr_timevalue tv);
@@ -503,11 +505,22 @@ void vt_plugin_cntr_init() {
                   current->selected_events[current->num_selected_events - 1],
                   unit, otf_prop, current->counter_group, group);
 
-          if (current->info.synch != VT_PLUGIN_CNTR_SYNCH) {
-            char buffer[512];
-            sprintf(buffer, "%s_%s", current_plugin, current_event_info->name);
-            current->vt_asynch_keys[current->num_selected_events - 1]
-                = vt_def_async_source(VT_MY_THREAD, buffer);
+          switch (current->info.synch) {
+          case VT_PLUGIN_CNTR_SYNCH:
+          	/* no asynch_keys at all */
+        	  break;
+          case VT_PLUGIN_CNTR_ASYNCH_POST_MORTEM:
+        	  /* One asynch_key for all */
+              current->vt_asynch_keys[current->num_selected_events - 1] = post_mortem_asynch_key();
+        	  break;
+          default:
+            {
+              char buffer[512];
+              sprintf(buffer, "%s_%s", current_plugin, current_event_info->name);
+              current->vt_asynch_keys[current->num_selected_events - 1]
+                 = vt_def_async_source(VT_MY_THREAD, buffer);
+            }
+            break;
           }
           /* enable plugin counters */
           vt_plugin_cntr_used = 1;
@@ -700,6 +713,14 @@ void vt_plugin_cntr_finalize(uint32_t tnum) {
     free(nr_plugins);
 
   vt_cntl_msg(3, "Process %i exits plugins done", vt_my_ptrace);
+}
+
+static uint32_t post_mortem_asynch_key(void) {
+  static uint32_t post_mortem_asynch_key = (uint32_t)-1;
+  if (post_mortem_asynch_key == (uint32_t)-1) {
+    post_mortem_asynch_key = vt_def_async_source(VT_MY_THREAD, "plugin_post_mortem_all");
+  }
+  return post_mortem_asynch_key;
 }
 
 static void maybe_register_new_thread(VTThrd * thrd, uint32_t tid) {
@@ -962,19 +983,19 @@ int32_t callback_function(void * ID, vt_plugin_cntr_timevalue tv) {
   ( ( (bytes) % SIZEOF_VOIDP ) ?                                    \
     ( (bytes) / SIZEOF_VOIDP + 1 ) * SIZEOF_VOIDP : (bytes) )
 
-#define WRITE_ASYNCH_DATA(thrd, tid, counter, timevalue, dummy_time)    \
-	if (VTTHRD_TRACE_STATUS(thrd) == VT_TRACE_ON){                      \
-	if (timevalue.timestamp > 0){                                       \
-		vt_guarantee_buffer(tid, dummy_time,                           \
-				 VTGEN_ALIGN_LENGTH(sizeof(VTBuf_Entry_KeyValue))       \
-               + VTGEN_ALIGN_LENGTH(sizeof(VTBuf_Entry_Counter)));      \
-		vt_next_async_time(tid,                                         \
-		    		counter.vt_asynch_key,                              \
-		    		timevalue.timestamp);                               \
-	    vt_count( tid,                                                  \
-		        dummy_time,                                            \
-		        counter.vt_counter_id,                                  \
-		        timevalue.value);                                       \
+#define WRITE_ASYNCH_DATA(thrd, tid, counter, timevalue, dummy_time)   \
+	if (VTTHRD_TRACE_STATUS(thrd) == VT_TRACE_ON){                     \
+	if ((timevalue).timestamp > 0){                                    \
+		vt_guarantee_buffer((tid), (dummy_time),                       \
+				 VTGEN_ALIGN_LENGTH(sizeof(VTBuf_Entry_KeyValue))      \
+               + VTGEN_ALIGN_LENGTH(sizeof(VTBuf_Entry_Counter)));     \
+		vt_next_async_time((tid),                                      \
+		    		(counter).vt_asynch_key,                           \
+		    		(timevalue).timestamp);                            \
+	    vt_count( (tid),                                               \
+		        (dummy_time),                                          \
+		        (counter).vt_counter_id,                               \
+		        (timevalue).value);                                    \
 	}}
 
 /**
@@ -1056,10 +1077,10 @@ void vt_plugin_cntr_write_asynch_event_data(uint64_t *time, uint32_t tid) {
 /* may be called per thread */
 void vt_plugin_cntr_write_post_mortem(VTThrd * thrd) {
   uint32_t counter_index;
-  vt_plugin_cntr_timevalue * time_values = NULL;
+  uint64_t * counter_current_indices;
+  vt_plugin_cntr_timevalue ** time_values_by_counter = NULL;
   uint32_t number_of_counters;
-  uint64_t number_of_values = 0;
-  uint64_t i;
+  uint64_t * number_of_values_by_counter;
   uint64_t dummy_time;
   uint32_t tid;
   struct vt_plugin_single_counter current_counter;
@@ -1090,22 +1111,58 @@ void vt_plugin_cntr_write_post_mortem(VTThrd * thrd) {
   /* we assume that for each counter (not plugin),
    * the data is monotonically increasing */
   /* for all counters of this thread */
+
+  time_values_by_counter = calloc(number_of_counters, sizeof(*time_values_by_counter));
+  vt_libassert(time_values_by_counter);
+  number_of_values_by_counter = calloc(number_of_counters, sizeof(*number_of_values_by_counter));
+  vt_libassert(number_of_values_by_counter);
   for (counter_index = 0;
        counter_index < number_of_counters;
        counter_index++) {
     current_counter
-        = plugin_cntr_defines->counters[VT_PLUGIN_CNTR_ASYNCH_POST_MORTEM]
-                                       [counter_index];
+        = plugin_cntr_defines->counters[VT_PLUGIN_CNTR_ASYNCH_POST_MORTEM][counter_index];
     /* get data */
-    number_of_values = current_counter.getAllValues(
-        current_counter.from_plugin_id, &time_values);
-    if (time_values == NULL)
+    number_of_values_by_counter[counter_index] = current_counter.getAllValues(
+        current_counter.from_plugin_id, &(time_values_by_counter[counter_index]));
+    if (time_values_by_counter[counter_index] == NULL)
       return;
-    for (i = 0; i < number_of_values; i++) {
-      WRITE_ASYNCH_DATA(thrd, tid, current_counter, time_values[i], &dummy_time);
-    }
-    free(time_values);
   }
+  /* initialized with 0! */
+  counter_current_indices = calloc(number_of_counters, sizeof(*counter_current_indices));
+  vt_libassert(counter_current_indices);
+  while (1) {
+	vt_plugin_cntr_timevalue *min_tvp = NULL;
+	uint32_t min_counter;
+    for (counter_index = 0;
+	     counter_index < number_of_counters;
+	     counter_index++)
+    {
+      /*
+       * TODO optimize for "nice" plugins by looking if the "next" counter has the
+       * _same_ timestamp (so there cannot be anyone else with a smaller one
+       */
+	  vt_plugin_cntr_timevalue *tvp;
+	  if (counter_current_indices[counter_index] >= number_of_values_by_counter[counter_index]) {
+		continue;
+	  }
+	  tvp = &(time_values_by_counter[counter_index][counter_current_indices[counter_index]]);
+      if (!min_tvp || tvp->timestamp < min_tvp->timestamp) {
+        min_tvp = tvp;
+        min_counter = counter_index;
+      }
+	}
+    if (min_tvp == NULL) {
+      /* we are done */
+      break;
+    }
+    current_counter
+        = plugin_cntr_defines->counters[VT_PLUGIN_CNTR_ASYNCH_POST_MORTEM][min_counter];
+    WRITE_ASYNCH_DATA(thrd, tid, current_counter, *min_tvp, &dummy_time);
+    counter_current_indices[min_counter]++;
+  }
+  free(time_values_by_counter);
+  free(counter_current_indices);
+  free(number_of_values_by_counter);
   /* unset flag for writing post mortem counters */
   thrd->plugin_cntr_writing_post_mortem = 0;
 }

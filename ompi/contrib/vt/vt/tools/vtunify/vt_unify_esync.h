@@ -2,7 +2,7 @@
  * VampirTrace
  * http://www.tu-dresden.de/zih/vampirtrace
  *
- * Copyright (c) 2005-2012, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2013, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich, Juelich Supercomputing
  *                          Centre, Federal Republic of Germany
@@ -13,12 +13,12 @@
 #ifndef _VT_UNIFY_ESYNC_H_
 #define _VT_UNIFY_ESYNC_H_
 
+#include "vt_unify_config.h"
+
 #include "vt_inttypes.h"
 
 #include <map>
 #include <vector>
-
-#include <assert.h>
 
 //
 // ETimeSyncC class

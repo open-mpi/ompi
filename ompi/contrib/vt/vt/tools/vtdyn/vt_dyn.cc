@@ -2,7 +2,7 @@
  * VampirTrace
  * http://www.tu-dresden.de/zih/vampirtrace
  *
- * Copyright (c) 2005-2012, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2013, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich, Juelich Supercomputing
  *                          Centre, Federal Republic of Germany
@@ -13,7 +13,6 @@
 
 #include "vt_dyn.h"
 
-#include "BPatch_flowGraph.h"
 #include "BPatch_module.h"
 #include "BPatch_point.h"
 #include "BPatch_process.h"
@@ -23,7 +22,6 @@
 #include <fstream>
 #include <map>
 #include <sstream>
-#include <assert.h>
 #include <ctype.h>
 #include <signal.h>
 #include <stdarg.h>
@@ -597,9 +595,9 @@ MutatorC::initialize()
 
       // search instrumentation functions to insert at entry/exit points
       //
-
-      if( !findFunction( "vt_dyn_start", m_vtStartFunc ) ||
-          !findFunction( "vt_dyn_end", m_vtEndFunc ) )
+      m_vtStartFunc = findFunction( "vt_dyn_start" );
+      m_vtEndFunc = findFunction( "vt_dyn_end" );
+      if( !m_vtStartFunc || !m_vtEndFunc )
       {
          std::cerr << ExeName << ": [" << ExePid << "]: "
                    << "Error: Could not find instrumentation functions. "
@@ -807,7 +805,7 @@ MutatorC::getFunctions( std::vector<FunctionS*> & funcRegions ) const
 
             FunctionS::InstPointsS function_inst_points;
 
-            function_inst_points.entries = function->findPoint( BPatch_entry );
+            function_inst_points.entries = findPoint( function, BPatch_entry );
             if( !function_inst_points.entries ||
                 function_inst_points.entries->empty() )
             {
@@ -817,7 +815,7 @@ MutatorC::getFunctions( std::vector<FunctionS*> & funcRegions ) const
                continue;
             }
 
-            function_inst_points.exits = function->findPoint( BPatch_exit );
+            function_inst_points.exits = findPoint( function, BPatch_exit );
             if( !function_inst_points.exits ||
                 function_inst_points.exits->empty() )
             {
@@ -928,8 +926,7 @@ MutatorC::getFunctions( std::vector<FunctionS*> & funcRegions ) const
                   LoopS::InstPointsS loop_inst_points;
 
                   loop_inst_points.entries =
-                     function_cfg->findLoopInstPoints( BPatch_locLoopEntry,
-                        loop );
+                     findPoint( function_cfg, BPatch_locLoopEntry, loop );
                   if( !loop_inst_points.entries ||
                       loop_inst_points.entries->empty() )
                   {
@@ -940,8 +937,7 @@ MutatorC::getFunctions( std::vector<FunctionS*> & funcRegions ) const
                   }
 
                   loop_inst_points.exits =
-                     function_cfg->findLoopInstPoints( BPatch_locLoopExit,
-                        loop );
+                     findPoint( function_cfg, BPatch_locLoopExit, loop );
                   if( !loop_inst_points.exits ||
                       loop_inst_points.exits->empty() )
                   {
@@ -1034,8 +1030,8 @@ MutatorC::getFunctions( std::vector<FunctionS*> & funcRegions ) const
                         LoopS::IterationT::InstPointsS loop_iter_inst_points;
 
                         loop_iter_inst_points.entries =
-                           function_cfg->findLoopInstPoints(
-                              BPatch_locLoopStartIter, loop );
+                           findPoint( function_cfg, BPatch_locLoopStartIter,
+                              loop );
                         if( !loop_iter_inst_points.entries ||
                             loop_iter_inst_points.entries->empty() )
                         {
@@ -1048,8 +1044,8 @@ MutatorC::getFunctions( std::vector<FunctionS*> & funcRegions ) const
                         }
 
                         loop_iter_inst_points.exits =
-                           function_cfg->findLoopInstPoints(
-                              BPatch_locLoopEndIter, loop );
+                           findPoint( function_cfg, BPatch_locLoopEndIter,
+                              loop );
                         if( !loop_iter_inst_points.exits ||
                             loop_iter_inst_points.exits->empty() )
                         {
@@ -1386,35 +1382,58 @@ MutatorC::isMPI() const
    static int is_mpi = -1;
 
    if( is_mpi == -1 )
-   {
-      BPatch_function * func = 0;
-      if( findFunction( "MPI_Init", func ) )
-         is_mpi = 1;
-      else
-         is_mpi = 0;
-   }
+      is_mpi = ( findFunction( "MPI_Init" ) != 0 ) ? 1 : 0;
 
-   return is_mpi == 1 ? true : false;
+   return is_mpi;
 }
 
-bool
-MutatorC::findFunction( const std::string & name,
-   BPatch_function *& func ) const
+BPatch_function *
+MutatorC::findFunction( const std::string & name ) const
 {
-   BPatch_Vector<BPatch_function*> found_funcs;
+   BPatch_Vector<BPatch_function*> functions;
 
-   m_appImage->findFunction( name.c_str(), found_funcs, false );
+   m_appImage->findFunction( name.c_str(), functions, false );
 
-   if( !found_funcs.empty() )
+   if( !functions.empty() )
+      return functions[0];
+   else
+      return 0;
+}
+
+BPatch_Vector<BPatch_point*> *
+MutatorC::findPoint( void * where, BPatch_procedureLocation loc,
+   BPatch_basicBlockLoop * loop ) const
+{
+   BPatch_Vector<BPatch_point*> * points;
+
+   // search for instrumentation point in given...
+   //
+   // ... function
+   if( !loop )
    {
-      func = found_funcs[0];
-      return true;
+      points = static_cast<BPatch_function*>(where)->findPoint( loc );
    }
+   // ... or loop
    else
    {
-      func = 0;
-      return false;
+      points =
+         static_cast<BPatch_flowGraph*>(where)->findLoopInstPoints( loc, loop );
    }
+
+#ifdef NOTRAPS
+
+   // check whether inserting instrumentation at found point(s) requires using
+   // a trap
+   //
+   for( uint32_t i = 0; points && i < points->size(); i++ )
+   {
+     if( (*points)[i]->usesTrap_NP() )
+        points = 0;
+   }
+
+#endif // NOTRAPS
+
+   return points;
 }
 
 //////////////////// struct MutatorC::RegionS ////////////////////
