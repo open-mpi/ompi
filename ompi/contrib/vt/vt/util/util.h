@@ -15,7 +15,7 @@
  *
  * Copyright (c) 2007,      Cisco Systems, Inc.
  *
- * Copyright (c) 2005-2012, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2013, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich, Juelich Supercomputing
  *                          Centre, Federal Republic of Germany
@@ -42,5 +42,9 @@ EXTERN int vt_vsnprintf(char* str, size_t size, const char* fmt, va_list ap);
 EXTERN char* vt_strdup(const char* s);
 EXTERN char* vt_strtrim(char* s);
 EXTERN void* vt_memmove(void* dest, const void* src, size_t n);
+
+/* own implementation of assert() which isn't affected by NDEBUG */
+#define vt_assert(expr) if( !(expr) ) vt_assert_fail(#expr, __FILE__, __LINE__)
+EXTERN void vt_assert_fail(const char* expr, const char* file, int line);
 
 #endif /* _UTIL_H */

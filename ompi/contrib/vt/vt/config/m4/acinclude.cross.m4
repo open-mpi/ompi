@@ -103,16 +103,16 @@ See \`config.log' for more details.])])
 	])
 
 	# Check prefix for cross-tool's executables
-	cross_prefix="cross-"
 	AC_ARG_WITH(cross-prefix,
 		AC_HELP_STRING([--with-cross-prefix=PREFIX],
 		[prefix for cross-tool's executables (e.g. PREFIXvtcc, PREFIXvtfort), default: cross-]),
 	[
-		AS_IF([test x"$withval" = "xno"], [cross_prefix=],
-		[AS_IF([test x"$withval" != "xyes"], [cross_prefix=$withval])])
+		AS_IF([test x"$cross_compiling" = "xyes" -a x"$comp_for_build_given" = "xyes"],
+		[
+			AS_IF([test x"$withval" = "xyes"], [CROSS_PREFIX="cross-"],
+			[AS_IF([test x"$withval" != "xno"], [CROSS_PREFIX="$withval"])])
+		])
 	])
-	AS_IF([test x"$cross_compiling" = "xyes" -a x"$comp_for_build_given" = "xyes"],
-	[CROSS_PREFIX=$cross_prefix], [CROSS_PREFIX=])
 
 	AC_SUBST(CROSS_PREFIX)
 ])

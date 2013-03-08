@@ -24,6 +24,7 @@ OLDCXXFLAGS = -DVT_FILTER_OLD
 COMMONSOURCES = \
 	$(VTFILTERSRCDIR)/vt_filter.h \
 	$(VTFILTERSRCDIR)/vt_filter_common.h \
+	$(VTFILTERSRCDIR)/vt_filter_config.h \
 	$(VTFILTERSRCDIR)/vt_filter_gen.h \
 	$(VTFILTERSRCDIR)/vt_filter_trc.h \
 	$(VTFILTERSRCDIR)/vt_filter_trc_hdlr.h \

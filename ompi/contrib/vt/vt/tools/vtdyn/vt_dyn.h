@@ -2,7 +2,7 @@
  * VampirTrace
  * http://www.tu-dresden.de/zih/vampirtrace
  *
- * Copyright (c) 2005-2012, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2013, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich, Juelich Supercomputing
  *                          Centre, Federal Republic of Germany
@@ -22,6 +22,7 @@
 
 #include "BPatch.h"
 #include "BPatch_addressSpace.h"
+#include "BPatch_flowGraph.h"
 #include "BPatch_function.h"
 #include "BPatch_image.h"
 
@@ -30,6 +31,13 @@
 #include <vector>
 
 #define STRBUFSIZE 1024
+
+// define the following macro to exclude regions from instrumentation which
+// require using a trap
+// (see description of BPatch_addressSpace::allowTraps and
+//  BPatch_point::usesTrap_NP in the Dyninst Programmer's Guide for more
+//  details)
+#define NOTRAPS
 
 //
 // mutation modes
@@ -240,9 +248,16 @@ private:
    // check whether mutatee uses MPI
    inline bool isMPI() const;
 
-   // find certain function in mutatee
-   inline bool findFunction( const std::string & name,
-                  BPatch_function *& func ) const;
+   // find function in mutatee
+   inline BPatch_function * findFunction( const std::string & name ) const;
+
+   // find instrumentation point(s) in a function (where=BPatch_function*)
+   // or in a loop (where=BPatch_flowGraph*)
+   // If NOTRAPS is defined, this function returns NULL, if inserting
+   // instrumentation at found point(s) requires using a trap.
+   inline BPatch_Vector<BPatch_point*> * findPoint( void * where,
+                  BPatch_procedureLocation loc,
+                  BPatch_basicBlockLoop * loop = 0 ) const;
 
    // entire Dyninst library object
    BPatch m_bpatch;
