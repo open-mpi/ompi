@@ -16,6 +16,8 @@
 #include "opal/mca/mca.h"
 #include "ompi/communicator/communicator.h"
 
+#include "opal/util/show_help.h"
+
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
