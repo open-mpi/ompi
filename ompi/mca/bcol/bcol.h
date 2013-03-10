@@ -22,6 +22,8 @@
 #include "ompi/include/ompi/constants.h"
 #include "ompi/patterns/net/netpatterns_knomial_tree.h"
 
+#include "opal/util/show_help.h"
+
 #include <limits.h>
 
 #if defined(c_plusplus) || defined(__cplusplus)
