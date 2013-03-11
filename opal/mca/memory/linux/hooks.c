@@ -732,7 +732,7 @@ static check_result_t check(const char *name)
 }
 
 /* OMPI's init function */
-static void opal_memory_linux_malloc_init_hook(void)
+void opal_memory_linux_malloc_init_hook(void)
 {
     check_result_t r1, lp, lpp;
     bool want_rcache = false, found_driver = false;
