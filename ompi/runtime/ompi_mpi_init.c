@@ -100,6 +100,16 @@
 #include "orte/runtime/orte_globals.h"
 #include "orte/util/name_fns.h"
 
+#if defined(MEMORY_LINUX_PTMALLOC2) && MEMORY_LINUX_PTMALLOC2
+#include "opal/mca/memory/linux/memory_linux.h"
+/* So this sucks, but with OPAL in its own library that is brought in
+   implicity from libmpi, there are times when the malloc initialize
+   hook in the memory component doesn't work.  So we have to do it
+   from here, since any MPI code is going to call MPI_Init... */
+void (*__malloc_initialize_hook) (void) = 
+    opal_memory_linux_malloc_init_hook;
+#endif
+
 /* This is required for the boundaries of the hash tables used to store
  * the F90 types returned by the MPI_Type_create_f90_XXX functions.
  */
