@@ -361,8 +361,6 @@ MPI Functionality and Features
   when simultaneously used by multiple threads.
   - tcp
   - sm
-  - mx
-  - elan
   - self
 
   Note that Open MPI's thread support is in a fairly early stage; the
