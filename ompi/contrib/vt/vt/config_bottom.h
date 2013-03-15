@@ -43,6 +43,8 @@
 # define vt_fnmatch(_pattern, _string, __flags) strcmp(_string, _pattern)
 #endif /* HAVE_FNMATCH_H */
 
+#define assert(expr) vt_assert((expr))
+
 #if defined(HAVE_SYS_PARAM_H) && HAVE_SYS_PARAM_H
 # include <sys/param.h>
 #endif

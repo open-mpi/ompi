@@ -94,6 +94,7 @@ AM_CPPFLAGS = -I$(VTUNIFYSRCDIR) $(OTFINCLUDE) $(HOOKSINCLUDE) $(ETIMESYNCINCLUD
 
 COMMONSOURCES = \
 	$(VTUNIFYSRCDIR)/vt_unify.h \
+	$(VTUNIFYSRCDIR)/vt_unify_config.h \
 	$(VTUNIFYSRCDIR)/vt_unify_defs.h \
 	$(VTUNIFYSRCDIR)/vt_unify_defs_recs.h \
 	$(VTUNIFYSRCDIR)/vt_unify_esync.h \

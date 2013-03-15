@@ -2,7 +2,7 @@
  * VampirTrace
  * http://www.tu-dresden.de/zih/vampirtrace
  *
- * Copyright (c) 2005-2012, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2013, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich, Juelich Supercomputing
  *                          Centre, Federal Republic of Germany
@@ -1099,34 +1099,38 @@ void vt_cupticb_resource(CUpti_CallbackId cbid,
     
     case CUPTI_CBID_RESOURCE_STREAM_DESTROY_STARTING: {
       if(vt_gpu_stream_reuse){
-        uint32_t ptid, strmID;
-        uint64_t time;
-  
-        VT_CHECK_THREAD;
-        ptid = VT_MY_THREAD;
-        
-        time = vt_pform_wtime();
-        vt_enter(ptid, &time, vt_cupticb_rid_sync);
+        uint32_t strmID;
 
-/*#if (defined(CUDA_VERSION) && (CUDA_VERSION < 5000))*/
+#if (defined(CUDA_VERSION) && (CUDA_VERSION < 5000))
         /* implicitly flush context activities via cuCtxSynchronize() */
-        if(vt_cupticb_trace_driverAPI){
-          cuptiEnableDomain(0, vt_cupticb_subscriber, CUPTI_CB_DOMAIN_DRIVER_API);
-          CHECK_CU_ERROR(cuCtxSynchronize(), NULL);
-          cuptiEnableDomain(1, vt_cupticb_subscriber, CUPTI_CB_DOMAIN_DRIVER_API);
-        }else{
-          CHECK_CU_ERROR(cuCtxSynchronize(), NULL);
+        {
+          uint32_t ptid;
+          uint64_t time;
+          
+          VT_CHECK_THREAD;
+          ptid = VT_MY_THREAD;
+
+          time = vt_pform_wtime();
+          vt_enter(ptid, &time, vt_cupticb_rid_sync);
+
+          if(vt_cupticb_trace_driverAPI){
+            cuptiEnableDomain(0, vt_cupticb_subscriber, CUPTI_CB_DOMAIN_DRIVER_API);
+            CHECK_CU_ERROR(cuCtxSynchronize(), NULL);
+            cuptiEnableDomain(1, vt_cupticb_subscriber, CUPTI_CB_DOMAIN_DRIVER_API);
+          }else{
+            CHECK_CU_ERROR(cuCtxSynchronize(), NULL);
+          }
+
+          time = vt_pform_wtime();
+          vt_exit(ptid, &time);
         }
-/*#else*/
-        /* TODO: NVIDIA bug??? *
-        * cuCtxSynchronize() runs into a lock here, therefore just flush *
+#else
+        /* TODO: NVIDIA bug??? */
+        /* cuCtxSynchronize() runs into a lock here, therefore just flush */
         VT_CUPTI_LOCK();
         vt_cuptiact_flushCtxActivities(vt_cupti_getCtx(resData->context));
-        VT_CUPTI_UNLOCK();*
-*#endif*/
-        
-        time = vt_pform_wtime();
-        vt_exit(ptid, &time);
+        VT_CUPTI_UNLOCK();
+#endif
         
         /* get the stream id from stream type */
         VT_CUPTI_CALL(cuptiGetStreamId(resData->context, 

@@ -1,5 +1,5 @@
 /*
- This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2012.
+ This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2013.
  Authors: Andreas Knuepfer, Robert Dietrich, Matthias Jurenz
 */
 
@@ -29,8 +29,7 @@ static void get_grouping( AllData& alldata ) {
 
         for ( uint32_t i= 0; i < n; i++ ) {
 
-            bool inserted= alldata.grouping.insert( c+1, pos->process );
-            assert( inserted );
+            alldata.grouping.insert( c+1, pos->process );
 
             pos++;
             r_processes--;
@@ -154,8 +153,7 @@ static void share_grouping( AllData& alldata ) {
                 MPI_Unpack( buffer, buffer_size, &buffer_pos, &process, 1,
                             MPI_LONG_LONG_INT, MPI_COMM_WORLD );
 
-                bool inserted= alldata.grouping.insert( group, process );
-                assert( inserted );
+                alldata.grouping.insert( group, process );
 
             }
 

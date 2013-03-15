@@ -1,3 +1,17 @@
+5.14.3openmpi
+	- updated version of internal OTF to 1.12.3openmpi
+	  (see extlib/otf/ChangeLog)
+	- fixed build error when using the Intel MPI compiler wrappers
+	- prepend cross-prefix to the compiler wrappers *only* if
+	  '--with-cross-prefix[=PREFIX]' is given
+	- fixed a potential minor bug in CUPTI activity stream handling
+	- workaround for CUDA 5.0 bug: do not call cuDeviceSynchronize(), if
+	  stream reuse is enabled and a CUDA stream is about to be destroyed
+	- vtdyn: do not instrument regions where using a trap is required
+	- plugin counters: Merge a set of post-mortem counters and write them
+	  under a single async key. This speeds up the unification.
+	- vtsetup: fixed availability state of the exec tracing feature
+
 5.14.2openmpi
 	- fixed build error occurred if VT is configured with exec tracing
 	  enabled, but with memory allocation tracing disabled

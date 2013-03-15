@@ -2,7 +2,7 @@
  * VampirTrace
  * http://www.tu-dresden.de/zih/vampirtrace
  *
- * Copyright (c) 2005-2012, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2013, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich, Juelich Supercomputing
  *                          Centre, Federal Republic of Germany
@@ -33,7 +33,8 @@
 #define DEFAULT_FILTER_FILE "${sysconfdir}/vt-java-default-filter.spec"
 #define MAX_FILTER_LINE_LEN 131072
 #define MAX_METHOD_NAME_LEN 300
-#define MAX_METHOD_ID_HKEY  10069
+ /* size of the method ID hash table (must be a power of two!) */
+#define MAX_METHOD_ID_HKEY  10024
 
 /* Enum for filter class types */
 typedef enum
@@ -303,7 +304,7 @@ static uint8_t check_filter(FilterClassT fclass, const char* name)
 
 static MethodIDMapT* get_methodid_map(jmethodID mid)
 {
-  size_t        hkey = (size_t)mid % MAX_METHOD_ID_HKEY;
+  size_t        hkey = (size_t)mid & (MAX_METHOD_ID_HKEY - 1);
   MethodIDMapT* curr = methodid_map[hkey];
 
   while ( curr )
@@ -318,7 +319,7 @@ static MethodIDMapT* get_methodid_map(jmethodID mid)
 
 static MethodIDMapT* add_methodid_map(jmethodID mid, uint32_t rid)
 {
-  size_t        hkey = (size_t)mid % MAX_METHOD_ID_HKEY;
+  size_t        hkey = (size_t)mid & (MAX_METHOD_ID_HKEY - 1);
   MethodIDMapT* add = (MethodIDMapT*)malloc(sizeof(MethodIDMapT));
   if ( add == NULL ) vt_error();
 
@@ -443,7 +444,8 @@ static void get_method_info(jvmtiEnv* jvmti, jmethodID method,
     (*jvmti)->Deallocate(jvmti, (void*)lines);
 }
 
-static MethodIDMapT* register_method(jvmtiEnv* jvmti, jmethodID method)
+static MethodIDMapT* register_method(uint32_t threadid, jvmtiEnv* jvmti,
+                                     jmethodID method)
 {
   MethodIDMapT*    methodid_map;
   MethodInfoT      method_info;
@@ -464,12 +466,12 @@ static MethodIDMapT* register_method(jvmtiEnv* jvmti, jmethodID method)
 
     if ( method_info.source_filename != NULL && method_info.line_number != 0 )
     {
-      fid = vt_def_scl_file(VT_CURRENT_THREAD, method_info.source_filename);
+      fid = vt_def_scl_file(threadid, method_info.source_filename);
       lno = method_info.line_number;
     }
 
     /* register method and store region identifier */
-    rid = vt_def_region(VT_CURRENT_THREAD,
+    rid = vt_def_region(threadid,
                         method_info.long_name,
                         fid, lno, VT_NO_LNO,
                         (vt_env_java_group_classes()) ? method_info.class_name : NULL,
@@ -687,13 +689,13 @@ static void JNICALL cbMethodEntry(jvmtiEnv* jvmti, JNIEnv* env,
 
     VTTHRD_LOCK_IDS();
     if ( (methodid_map = get_methodid_map(method)) == NULL )
-      methodid_map = register_method(jvmti, method);
+      methodid_map = register_method(*threadid, jvmti, method);
     VTTHRD_UNLOCK_IDS();
   }
 
   /* write enter record, if method isn't excluded */
   if ( methodid_map->rid != VT_NO_ID )
-    vt_enter(VT_CURRENT_THREAD, &time, methodid_map->rid);
+    vt_enter(*threadid, &time, methodid_map->rid);
 }
 
 /* Callback for JVMTI_EVENT_METHOD_EXIT */
@@ -723,7 +725,7 @@ static void JNICALL cbMethodExit(jvmtiEnv* jvmti, JNIEnv* env,
 
   /* write exit record, if method was entered and isn't excluded */
   if ( methodid_map != NULL && methodid_map->rid != VT_NO_ID )
-    vt_exit(VT_CURRENT_THREAD, &time);
+    vt_exit(*threadid, &time);
 }
 
 /* Load the VM Agent */
