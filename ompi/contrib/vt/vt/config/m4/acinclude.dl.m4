@@ -38,15 +38,18 @@ AC_DEFUN([ACVT_DL],
 		AC_MSG_NOTICE([error: dynamic linking library (libdl) isn't suitable on this platform])
 		dl_error="yes"
 	])
-	AS_IF([test "$PLATFORM" = "bgp"],
+	AS_IF([test "$PLATFORM" = "bgp" -o "$PLATFORM" = "bgq"],
 	[
-dnl		RTLD_NEXT available but not working on BG/P platforms
-		ac_cv_have_decl_RTLD_NEXT="no"
+		AS_IF([test x"$enable_shared" = "xno"],
+		[
+			ac_cv_have_decl_RTLD_DEFAULT="no"
+			ac_cv_have_decl_RTLD_NEXT="no"
+		])
 	])
 	AS_IF([test "$PLATFORM" = "crayxt" -o "$PLATFORM" = "crayxe"],
 	[
-dnl		RTLD_DEFAULT available but not working on CrayX? platforms
 		ac_cv_have_decl_RTLD_DEFAULT="no"
+		ac_cv_have_decl_RTLD_NEXT="no"
 	])
 
 	AS_IF([test x"$dl_error" = "xno"],

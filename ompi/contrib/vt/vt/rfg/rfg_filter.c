@@ -4,6 +4,8 @@
 
 #include "vt_inttypes.h"
 
+#include "util/hash.h"
+
 #include <ctype.h>
 #include <errno.h>
 #include <stdio.h>
@@ -11,73 +13,128 @@
 #include <string.h>
 #include <unistd.h>
 
-#define MAX_LINE_LEN 0x20000 /* max file line length */
+#define MAX_LINE_LEN           0x20000 /* max. file line length */
 
-/* data structure for filter assignments */
+#define CPATH_RULES_HASH_MAX   0x400   /* size of hash table for call-path
+                                          filter rules */
+#define CPATH_REGIONS_HASH_MAX 0x400   /* size of hash table for call-path
+                                          region names/ids */
 
-typedef struct RFG_FilterAssigns_struct
+/* data structure for region filter rules */
+
+typedef struct RFG_FilterRegionRules_struct
 {
-  int32_t  climit;               /* call limit */
-  uint32_t sbounds[2];           /* stack level bounds */
-  uint8_t  flags;                /* flags bitmask (group, recursiveness) */
-  char*    pattern;              /* pattern */
-} RFG_FilterAssigns;
+  /* call limit */
+  int32_t call_limit;
+
+  /* stack level bounds */
+  uint32_t stack_bounds[2];
+
+  /* flags bitmask (group, recursiveness) */
+  uint8_t flags;
+
+  /* region pattern */
+  char* pattern;
+
+} RFG_FilterRegionRules;
+
+/* hash node data structure for call-path filter rules */
+
+typedef struct RFG_FilterCallPathRulesHN_struct
+{
+  RFG_FilterCallPathRules rules;
+  struct RFG_FilterCallPathRulesHN_struct* next;
+
+} RFG_FilterCallPathRulesHN;
+
+/* hash node data structure for mapping call-path region names to ids */
+
+typedef struct RFG_FilterCallPathRegionHN_struct
+{
+  char*    name; /* region name */
+  uint32_t id;   /* assigned id */
+  struct RFG_FilterCallPathRegionHN_struct* next;
+
+} RFG_FilterCallPathRegionHN;
+
+/* main data structure for RFG Filter */
 
 struct RFG_Filter_struct
 {
-  char*   deffile_name;         /* name of filter definition file */
-  char*   deffile_content;      /* content of filter file */
-  size_t  deffile_content_size; /* buffer size of filter file content */
+  /* name of filter definition file */
+  char* file_name;
 
-  int32_t default_call_limit;   /* default call limit */
+  /* content of filter file */
+  char* file_content;
 
-  uint32_t           nassigns;  /* number of filter assignments */
-  RFG_FilterAssigns* assigns;   /* array of filter assignments */
+  /* buffer size of filter file content */
+  size_t file_content_size;
+
+  /* number of region filter rules */
+  uint32_t num_region_rules;
+
+  /* array of region filter rules */
+  RFG_FilterRegionRules* region_rules;
+
+  /* pointer to external function for generating region ids */
+  uint32_t (*cpath_get_region_id)(void);
+
+  /* region id counter
+     (only used if we have no external function for generating) */
+  uint32_t cpath_region_id_cnt;
+
+  /* number of call-path filter rules */
+  uint32_t num_cpath_rules;
+
+  /* hash table for call-path filter rules */
+  RFG_FilterCallPathRulesHN* cpath_rules[CPATH_RULES_HASH_MAX];
+
+  /* hash table for mapping call-path region names to ids */
+  RFG_FilterCallPathRegionHN* cpath_regions[CPATH_REGIONS_HASH_MAX];
+
 };
 
-static int get_deffile_content( RFG_Filter* filter )
+static int get_file_content( RFG_Filter* filter )
 {
   FILE* f;
   size_t i;
   uint8_t err = 0;
   const size_t bsize = 1024;
 
-  if( !filter ) return 0;
-
-  if( !filter->deffile_name ) return 0;
+  if( !filter || !filter->file_name || *(filter->file_name) == '\0' )
+    return 0;
 
   /* open filter definition file */
 
-  f = fopen( filter->deffile_name, "r" );
-  if( !f ) return 0;
+  f = fopen( filter->file_name, "r" );
+  if( !f )
+    return 0;
 
-  filter->deffile_content = (char*)malloc( bsize * sizeof( char ) );
-  if( filter->deffile_content == NULL ) err = 1;
-  else filter->deffile_content_size = bsize;
+  filter->file_content = (char*)malloc( bsize * sizeof( char ) );
+  if( !filter->file_content ) err = 1;
+  else filter->file_content_size = bsize;
 
   i = 0;
-  while( !err &&
-         ( ( filter->deffile_content[i++] = fgetc( f ) ) != (char)EOF ) )
+  while( !err && ( ( filter->file_content[i++] = fgetc( f ) ) != (char)EOF ) )
   {
     /* enlarge buffer, if necessary */
 
-    if( i == filter->deffile_content_size )
+    if( i == filter->file_content_size )
     {
-      filter->deffile_content =
-        (char*)realloc( filter->deffile_content,
-                        ( filter->deffile_content_size + bsize ) *
-                          sizeof( char ) );
-      if( filter->deffile_content == NULL )
+      filter->file_content =
+        (char*)realloc( filter->file_content,
+          ( filter->file_content_size + bsize ) * sizeof( char ) );
+      if( !filter->file_content )
       {
         err = 1;
         break;
       }
-      filter->deffile_content_size += bsize;
+      filter->file_content_size += bsize;
     }
   }
 
   /* append '\0' to buffer */
-  if( !err) filter->deffile_content[i-1] = '\0';
+  if( !err) filter->file_content[i-1] = '\0';
 
   /* close filter definition file */
   fclose( f );
@@ -85,23 +142,23 @@ static int get_deffile_content( RFG_Filter* filter )
   return (int)!err;
 }
 
-static int get_deffile_content_line( RFG_Filter* filter, char* buf,
-                                     size_t bufsize, size_t* pos )
+static int get_file_content_line( RFG_Filter* filter, char* buf,
+                                  size_t bufsize, size_t* pos )
 {
   size_t content_size;
   size_t i;
 
-  if( !filter ) return 0;
+  if( !filter || !filter->file_content )
+    return 0;
 
-  if( !filter->deffile_content ) return 0;
+  content_size = strlen( filter->file_content );
 
-  content_size = strlen( filter->deffile_content );
-
-  if( *pos >= content_size ) return 0;
+  if( *pos >= content_size )
+    return 0;
 
   for( i = 0; i < bufsize && *pos < content_size; i++ )
   {
-    buf[i] = filter->deffile_content[(*pos)++];
+    buf[i] = filter->file_content[(*pos)++];
     if( buf[i] == '\n' )
     {
       buf[i+1] = '\0';
@@ -112,44 +169,174 @@ static int get_deffile_content_line( RFG_Filter* filter, char* buf,
   return 1;
 }
 
+static void cpath_rules_hash_put(
+  RFG_FilterCallPathRulesHN** htab, uint32_t hash, uint32_t size,
+  const uint32_t* regionIds, int32_t callLimit )
+{
+  uint32_t idx = hash & ( CPATH_RULES_HASH_MAX - 1 );
+
+  RFG_FilterCallPathRulesHN* add =
+    ( RFG_FilterCallPathRulesHN* )malloc( sizeof( RFG_FilterCallPathRulesHN ) );
+
+  add->rules.hash      = hash;
+  add->rules.size      = size;
+  memcpy( add->rules.regionIds, regionIds, size * sizeof( uint32_t ) );
+  add->rules.callLimit = callLimit;
+  add->next            = htab[idx];
+  htab[idx]            = add;
+}
+
+static RFG_FilterCallPathRulesHN* cpath_rules_hash_get(
+  RFG_FilterCallPathRulesHN** htab, uint32_t hash, uint32_t size,
+  const uint32_t* rids )
+{
+  uint32_t id = hash & ( CPATH_RULES_HASH_MAX - 1 );
+
+  RFG_FilterCallPathRulesHN* curr = htab[id];
+  while( curr )
+  {
+    if( curr->rules.hash == hash && curr->rules.size == size &&
+        memcmp( curr->rules.regionIds, rids, size * sizeof( uint32_t ) ) == 0 )
+    {
+      return curr;
+    }
+    curr = curr->next;
+  }
+
+  return NULL;
+}
+
+static void cpath_rules_hash_free( RFG_FilterCallPathRulesHN** htab )
+{
+  uint32_t i;
+
+  for( i = 0; i < CPATH_RULES_HASH_MAX; i++ )
+  {
+    while( htab[i] )
+    {
+      RFG_FilterCallPathRulesHN* tmp = htab[i]->next;
+      free( htab[i] );
+      htab[i] = tmp;
+    }
+  }
+}
+
+static void cpath_regions_hash_put( RFG_FilterCallPathRegionHN** htab,
+  const char* name, uint32_t id )
+{
+  uint32_t idx =
+    vt_hash( name, strlen( name ), 0 ) & ( CPATH_REGIONS_HASH_MAX - 1 );
+
+  RFG_FilterCallPathRegionHN* add =
+    (RFG_FilterCallPathRegionHN*)malloc(
+      sizeof( RFG_FilterCallPathRegionHN ) );
+
+  add->name = strdup( name );
+  add->id   = id;
+  add->next = htab[idx];
+  htab[idx] = add;
+}
+
+static RFG_FilterCallPathRegionHN* cpath_regions_hash_get(
+  RFG_FilterCallPathRegionHN** htab, const char* name )
+{
+  uint32_t idx =
+    vt_hash( name, strlen( name ), 0 ) & ( CPATH_REGIONS_HASH_MAX - 1 );
+
+  RFG_FilterCallPathRegionHN* curr = htab[idx];
+  while( curr )
+  {
+    if( strcmp( curr->name , name ) == 0 )
+      return curr;
+    curr = curr->next;
+  }
+
+  return NULL;
+}
+
+static void cpath_regions_hash_free( RFG_FilterCallPathRegionHN** htab )
+{
+  uint32_t i;
+
+  for( i = 0; i < CPATH_REGIONS_HASH_MAX; i++ )
+  {
+    while( htab[i] )
+    {
+      RFG_FilterCallPathRegionHN* tmp = htab[i]->next;
+      free( htab[i]->name );
+      free( htab[i] );
+      htab[i] = tmp;
+    }
+  }
+}
+
+static uint32_t cpath_get_region_id( RFG_Filter* filter, const char* name )
+{
+  uint32_t id;
+
+  RFG_FilterCallPathRegionHN* cpath_region;
+
+  if( !filter || !name || *name == '\0' )
+    return 0;
+
+  /* look for already generated region id */
+  cpath_region = cpath_regions_hash_get( filter->cpath_regions, name );
+
+  /* return them, if found */
+  if( cpath_region )
+  {
+    id = cpath_region->id;
+  }
+  /* otherwise, generate a new one */
+  else
+  {
+    if( filter->cpath_get_region_id )
+      id = filter->cpath_get_region_id();
+    else
+      id = filter->cpath_region_id_cnt++;
+
+    cpath_regions_hash_put( filter->cpath_regions, name, id );
+  }
+
+  return id;
+}
+
 RFG_Filter* RFG_Filter_init()
 {
   RFG_Filter* ret;
 
   /* allocate memory for RFG filter object */
 
-  ret = ( RFG_Filter* )malloc( sizeof( RFG_Filter ) );
-  if( ret == NULL )
+  if( !( ret = ( RFG_Filter* )calloc( 1, sizeof( RFG_Filter ) ) ) )
     return NULL;
 
-  /* some initializes of data structure elements */
-
-  ret->deffile_name = NULL;
-  ret->deffile_content = NULL;
-  ret->deffile_content_size = 0;
-  ret->default_call_limit = -1;
-  ret->nassigns = 0;
-  ret->assigns = NULL;
+  /* initialize region id counter */
+  ret->cpath_region_id_cnt = 1;
 
   return ret;
 }
 
 int RFG_Filter_free( RFG_Filter* filter )
 {
-  if( !filter ) return 0;
+  if( !filter )
+    return 0;
 
-  /* reset filter assignments */
-  if( !RFG_Filter_reset( filter ) ) return 0;
+  /* reset filter rules */
+  if( !RFG_Filter_reset( filter ) )
+    return 0;
 
   /* free filter definition file name */
 
-  if( filter->deffile_name )
-    free( filter->deffile_name );
+  if( filter->file_name )
+    free( filter->file_name );
 
   /* free filter file content buffer */
 
-  if( filter->deffile_content )
-    free( filter->deffile_content );
+  if( filter->file_content )
+    free( filter->file_content );
+
+  /* free hash table for call-path regions/ids */
+  cpath_regions_hash_free( filter->cpath_regions );
 
   /* free self */
 
@@ -161,84 +348,115 @@ int RFG_Filter_free( RFG_Filter* filter )
 
 int RFG_Filter_reset( RFG_Filter* filter )
 {
-  if( !filter ) return 0;
+  uint32_t i;
 
-  if( filter->nassigns > 0 )
+  if( !filter )
+    return 0;
+
+  if( filter->num_region_rules > 0 )
   {
-    uint32_t i;
+    /* free array of region filter rules */
 
-    /* free array of call limit assignments */
+    for( i = 0; i < filter->num_region_rules; i++ )
+      free( filter->region_rules[i].pattern );
+    free( filter->region_rules );
 
-    for( i = 0; i < filter->nassigns; i++ )
-      free( filter->assigns[i].pattern );
-    free( filter->assigns );
-
-    filter->assigns = NULL;
-    filter->nassigns = 0;
+    filter->region_rules = NULL;
+    filter->num_region_rules = 0;
   }
 
-  return 1;
-}
+  /* free hash table for call-path filter rules */
 
-int RFG_Filter_setDefFile( RFG_Filter* filter, const char* deffile )
-{
-  if( !filter ) return 0;
-
-  /* if a filter definition file already set, then free this */
-
-  if( filter->deffile_name )
-    free( filter->deffile_name );
-
-  /* set new filter definition file */
-
-  filter->deffile_name = strdup( deffile );
+  cpath_rules_hash_free( filter->cpath_rules );
+  filter->num_cpath_rules = 0;
 
   return 1;
 }
 
-int RFG_Filter_setDefaultCallLimit( RFG_Filter* filter, int32_t limit )
+int RFG_Filter_setRegionIdGenFunc( RFG_Filter* filter, uint32_t (*func)(void) )
 {
-  if( !filter ) return 0;
+  if( !filter )
+    return 0;
 
-  if( limit == 0 || limit < -1 )
+  if( !func )
   {
     fprintf( stderr,
-	     "RFG_Filter_setDefaultCallLimit(): Error: Default call limit must be greater than 0 or -1\n" );
+      "RFG_Filter_setRegionIdGenFunc(): Error: Invalid function pointer\n" );
     return 0;
   }
 
-  /* set new default call limit */
-
-  filter->default_call_limit = limit == -1 ? limit : limit+1;
+  filter->cpath_get_region_id = func;
 
   return 1;
 }
 
-int RFG_Filter_readDefFile( RFG_Filter* filter, int rank, uint8_t* rank_off )
+uint32_t RFG_Filter_getRegionId( RFG_Filter* filter, const char* regionName )
+{
+  RFG_FilterCallPathRegionHN* cpath_region;
+
+  if( !filter )
+    return 0;
+
+  if( !regionName || *regionName == '\0' )
+  {
+    fprintf( stderr, "RFG_Filter_getRegionId(): Error: Empty region name\n" );
+    return 0;
+  }
+
+  cpath_region = cpath_regions_hash_get( filter->cpath_regions, regionName );
+  if( cpath_region )
+    return cpath_region->id;
+
+  return 0;
+}
+
+int RFG_Filter_setDefFile( RFG_Filter* filter, const char* fileName )
+{
+  if( !filter )
+    return 0;
+
+  if( !fileName || *fileName == '\0' )
+  {
+    fprintf( stderr, "RFG_Filter_setDefFile(): Error: Empty file name\n" );
+    return 0;
+  }
+
+  /* if a filter definition file already set, then free this */
+
+  if( filter->file_name )
+    free( filter->file_name );
+
+  /* set new filter definition file */
+  filter->file_name = strdup( fileName );
+
+  return 1;
+}
+
+int RFG_Filter_readDefFile( RFG_Filter* filter, int rank, uint8_t* r_isRankOff )
 {
   char*    line;
   uint32_t lineno = 0;
   size_t   pos = 0;
   uint8_t  parse_err = 0;
-  uint8_t  l_rank_off = 0;
+  uint8_t  l_is_rank_off = 0;
   uint8_t  includes_current_rank = 1;
 
-  if( !filter ) return 0;
+  if( !filter || !filter->file_name )
+    return 0;
 
-  if( !filter->deffile_name ) return 0;
-
-  /* reset filter assignments */
-  if( !RFG_Filter_reset( filter ) ) return 0;
+  /* reset filter rules */
+  if( !RFG_Filter_reset( filter ) )
+    return 0;
 
   /* get filter file content, if necessary */
 
-  if( !filter->deffile_content )
+  if( !filter->file_content )
   {
-    if( !get_deffile_content( filter ) )
+    if( !get_file_content( filter ) )
     {
       fprintf( stderr,
                "RFG_Filter_readDefFile(): Error: Could not read file '%s'\n",
-               filter->deffile_name );
+               filter->file_name );
       return 0;
     }
   }
@@ -246,11 +464,11 @@ int RFG_Filter_readDefFile( RFG_Filter* filter, int rank, uint8_t* rank_off )
   /* allocate memory for line */
 
   line = ( char* )malloc( MAX_LINE_LEN * sizeof( char ) );
-  if( line == NULL ) return 0;
+  if( !line ) return 0;
 
   /* read lines */
-  while( !l_rank_off && !parse_err &&
-         get_deffile_content_line( filter, line, MAX_LINE_LEN, &pos ) )
+  while( !l_is_rank_off && !parse_err &&
+         get_file_content_line( filter, line, MAX_LINE_LEN, &pos ) )
   {
     char* p;
     char* q;
@@ -268,8 +486,7 @@ int RFG_Filter_readDefFile( RFG_Filter* filter, int rank, uint8_t* rank_off )
     /* cut possible comment from line */
 
     p = strchr( line, '#' );
-    if( p != NULL )
-      *p = '\0';
+    if( p ) *p = '\0';
 
     /* continue if line is empty */
     if( strlen( line ) == 0 )
@@ -362,7 +579,7 @@ int RFG_Filter_readDefFile( RFG_Filter* filter, int rank, uint8_t* rank_off )
             includes_current_rank = 1;
             if( is_rank_off_rule )
             {
-              l_rank_off = 1; /* deactivate this rank completely */
+              l_is_rank_off = 1; /* deactivate this rank completely */
               break;
             }
           }
@@ -379,7 +596,7 @@ int RFG_Filter_readDefFile( RFG_Filter* filter, int rank, uint8_t* rank_off )
           {
             includes_current_rank = 1;
             if( is_rank_off_rule )
-              l_rank_off = 1; /* deactivate this rank completely */
+              l_is_rank_off = 1; /* deactivate this rank completely */
           }
           else if( is_rank_off_rule )
           {
@@ -400,14 +617,16 @@ int RFG_Filter_readDefFile( RFG_Filter* filter, int rank, uint8_t* rank_off )
       int32_t  climit;
       uint32_t sbounds[2] = { 1, (uint32_t)-1 };
       uint8_t  flags = 0;
+      uint8_t  is_cpath_rule = 0;
+      uint32_t num_cpath_regions = 0;
+      char*    cpath_regions[RFG_FILTER_MAX_CPATH_SIZE];
 
       /* search for '--'
          e.g. "func1;func2;func3 -- 1000 S:5-10 R"
                                  p
       */
 
-      p = strstr( line, "--" );
-      if( p == NULL )
+      if( !( p = strstr( line, "--" ) ) )
       {
         parse_err = 1;
         break;
@@ -422,8 +641,7 @@ int RFG_Filter_readDefFile( RFG_Filter* filter, int rank, uint8_t* rank_off )
       /* split remaining line at ' ' to get call limit, stack level bounds,
          and flags */
 
-      p = strtok( p+2, " " );
-      if( p == NULL )
+      if( !( p = strtok( p+2, " " ) ) )
       {
         parse_err = 1;
         break;
@@ -504,21 +722,33 @@ int RFG_Filter_readDefFile( RFG_Filter* filter, int rank, uint8_t* rank_off )
         {
           flags |= RFG_FILTER_FLAG_RECURSIVE;
         }
+        /* call-path flag */
+        else if( strlen( p ) == 1 && tolower( *p ) == 'c' )
+        {
+          is_cpath_rule = 1;
+        }
         else
         {
           parse_err = 1;
           break;
         }
       }
+
+      /* call-path flag must not be mixed with other flags
+         (except recursiveness) or stack level bounds */
+      parse_err = ( parse_err || ( is_cpath_rule &&
+        ( ( flags != 0 && flags != RFG_FILTER_FLAG_RECURSIVE ) ||
+          sbounds[0] != 1 || sbounds[1] != (uint32_t)-1 ) ) );
+
       if( parse_err )
         break;
 
-      /* split line at ';' to get pattern */
+      /* split line at ';' to get pattern/region names */
 
       p = strtok( line, ";" );
       do
       {
-        char* pattern;
+        char* pattern_or_rname;
 
         if( !p )
         {
@@ -526,16 +756,54 @@ int RFG_Filter_readDefFile( RFG_Filter* filter, int rank, uint8_t* rank_off )
           break;
         }
 
-        pattern = strdup( p );
-        vt_strtrim( pattern );
+        pattern_or_rname = strdup( p );
+        vt_strtrim( pattern_or_rname );
 
-        /* add call limit assignment */
-        if( strlen( pattern ) > 0 && includes_current_rank )
-          RFG_Filter_add( filter, pattern, climit, sbounds, flags );
+        if( *pattern_or_rname != '\0' && includes_current_rank )
+        {
+          if( is_cpath_rule )
+          {
+             /* max. number of regions in a call path exceeded? */
+             if( num_cpath_regions + 1 > RFG_FILTER_MAX_CPATH_SIZE )
+             {
+                free( pattern_or_rname );
+                parse_err = 1;
+                break;
+             }
+             /* add region to array of call-path region names */
+             cpath_regions[num_cpath_regions++] = pattern_or_rname;
+          }
+          else
+          {
+            /* add region filter rules */
+            RFG_Filter_addRegionRules( filter, pattern_or_rname, climit,
+                                       sbounds, flags );
 
-        free( pattern );
+            free( pattern_or_rname );
+          }
+        }
+        else
+        {
+          free( pattern_or_rname );
+        }
 
       } while( ( p = strtok( 0, ";" ) ) );
+
+      if( is_cpath_rule )
+      {
+        if( !parse_err )
+        {
+          /* add call-path filter rules */
+          RFG_Filter_addCallPathRules( filter, num_cpath_regions,
+                                       (const char**)cpath_regions, climit,
+                                       NULL, NULL );
+        }
+
+        /* free array of call-path region names */
+
+        do free( cpath_regions[--num_cpath_regions] );
+        while( num_cpath_regions > 0 );
+      }
     }
   }
 
@@ -544,93 +812,255 @@ int RFG_Filter_readDefFile( RFG_Filter* filter, int rank, uint8_t* rank_off )
   if( parse_err )
   {
     fprintf( stderr, "%s:%u: Could not be parsed\n",
-             filter->deffile_name, lineno );
+      filter->file_name, lineno );
     return 0;
   }
 
-  if( rank_off )
-    *rank_off = l_rank_off;
+  if( r_isRankOff )
+    *r_isRankOff = l_is_rank_off;
 
   return 1;
 }
 
-int RFG_Filter_add( RFG_Filter* filter, const char* pattern, int32_t climit,
-                    uint32_t* sbounds, uint8_t flags )
+int RFG_Filter_addRegionRules( RFG_Filter* filter, const char* pattern,
+                               int32_t callLimit, uint32_t* stackBounds,
+                               uint8_t flags )
 {
-  if( !filter || !pattern ) return 0;
-
-  /* enlarge array of filter assignments */
-
-  filter->assigns =
-    (RFG_FilterAssigns*)realloc( filter->assigns,
-                                 ( filter->nassigns + 1 )
-                                 * sizeof( RFG_FilterAssigns ) );
-
-  if( filter->assigns == NULL )
+  if( !filter )
     return 0;
 
-  /* add new filter assignment */
-
-  filter->assigns[filter->nassigns].climit = climit;
-  filter->assigns[filter->nassigns].sbounds[0] = 1;
-  filter->assigns[filter->nassigns].sbounds[1] = (uint32_t)-1;
-  if( sbounds )
+  if( !pattern || *pattern == '\0' )
   {
-     filter->assigns[filter->nassigns].sbounds[0] = sbounds[0];
-     filter->assigns[filter->nassigns].sbounds[1] = sbounds[1];
+    fprintf( stderr,
+      "RFG_Filter_addRegionRules(): Error: Empty region/group pattern\n" );
+    return 0;
   }
-  filter->assigns[filter->nassigns].flags = flags;
-  filter->assigns[filter->nassigns].pattern = strdup( pattern );
-  filter->nassigns++;
+
+  /* enlarge array of filter region filter rules */
+
+  filter->region_rules =
+    (RFG_FilterRegionRules*)realloc( filter->region_rules,
+      ( filter->num_region_rules + 1 ) * sizeof( RFG_FilterRegionRules ) );
+  if( !filter->region_rules )
+    return 0;
+
+  /* add new region filter rules */
+
+  filter->region_rules[filter->num_region_rules].call_limit = callLimit;
+  filter->region_rules[filter->num_region_rules].stack_bounds[0] = 1;
+  filter->region_rules[filter->num_region_rules].stack_bounds[1] = (uint32_t)-1;
+  if( stackBounds )
+  {
+     filter->region_rules[filter->num_region_rules].stack_bounds[0] =
+       stackBounds[0];
+     filter->region_rules[filter->num_region_rules].stack_bounds[1] =
+       stackBounds[1];
+  }
+  filter->region_rules[filter->num_region_rules].flags = flags;
+  filter->region_rules[filter->num_region_rules].pattern = strdup( pattern );
+  filter->num_region_rules++;
 
   return 1;
 }
 
-int RFG_Filter_get( RFG_Filter* filter, const char* rname, const char* gname,
-                    int32_t* r_climit, uint32_t* r_sbounds, uint8_t* r_flags )
+int RFG_Filter_getRegionRules( RFG_Filter* filter, const char* regionName,
+                               const char* groupName, int32_t* r_callLimit,
+                               uint32_t* r_stackBounds, uint8_t* r_flags )
 {
   uint32_t i;
 
-  if( !filter || ( !rname && !gname ) )
+  if( !filter )
     return 0;
 
-  /* initialize return parameters by defaults */
-  if( r_climit != NULL )
-    *r_climit = filter->default_call_limit;
-  if( r_sbounds != NULL )
+  if( !regionName && !groupName )
   {
-    r_sbounds[0] = 1;
-    r_sbounds[1] = (uint32_t)-1;
+    fprintf( stderr,
+      "RFG_Filter_getRegionRules(): Error: Empty region and group name\n" );
+    return 0;
   }
-  if( r_flags != NULL )
+
+  /* initialize return parameters by defaults */
+
+  if( r_callLimit )
+  {
+    *r_callLimit = -1;
+  }
+  if( r_stackBounds )
+  {
+    r_stackBounds[0] = 1;
+    r_stackBounds[1] = (uint32_t)-1;
+  }
+  if( r_flags )
+  {
     *r_flags = 0;
+  }
 
   /* search for matching filter rule either by ... */
-  for( i = 0; i < filter->nassigns; i++ )
+  for( i = 0; i < filter->num_region_rules; i++ )
   {
     const uint8_t is_group_rule =
-      (filter->assigns[i].flags & RFG_FILTER_FLAG_GROUP) != 0;
+      (filter->region_rules[i].flags & RFG_FILTER_FLAG_GROUP) != 0;
 
     if( /* ... region group name */
-        ( is_group_rule && gname &&
-          fnmatch( filter->assigns[i].pattern, gname, 0 ) == 0 ) ||
+        ( is_group_rule && groupName &&
+          fnmatch( filter->region_rules[i].pattern, groupName, 0 ) == 0 ) ||
         /* ... or by region name */
-        ( !is_group_rule && rname &&
-          fnmatch( filter->assigns[i].pattern, rname, 0 ) == 0 ) )
+        ( !is_group_rule && regionName &&
+          fnmatch( filter->region_rules[i].pattern, regionName, 0 ) == 0 ) )
     {
       /* set return parameters regarding to found filter rules */
-      if( r_climit != NULL )
-        *r_climit = filter->assigns[i].climit;
-      if( r_sbounds != NULL )
+      if( r_callLimit )
       {
-        r_sbounds[0] = filter->assigns[i].sbounds[0];
-        r_sbounds[1] = filter->assigns[i].sbounds[1];
+        *r_callLimit = filter->region_rules[i].call_limit;
       }
-      if( r_flags != NULL )
-        *r_flags = filter->assigns[i].flags;
+      if( r_stackBounds )
+      {
+        r_stackBounds[0] = filter->region_rules[i].stack_bounds[0];
+        r_stackBounds[1] = filter->region_rules[i].stack_bounds[1];
+      }
+      if( r_flags )
+      {
+        *r_flags = filter->region_rules[i].flags;
+      }
 
       /* abort searching on first matching filter rule */
       break;
+    }
+  }
+
+  return 1;
+}
+
+int RFG_Filter_addCallPathRules( RFG_Filter* filter, uint32_t size,
+                                 const char** regionNames, int32_t callLimit,
+                                 uint32_t* r_hash, uint32_t** r_regionIds )
+{
+  uint32_t l_hash;
+  uint32_t l_region_ids[RFG_FILTER_MAX_CPATH_SIZE];
+  uint32_t i;
+
+  if( !filter )
+    return 0;
+
+  if( size == 0 || size > RFG_FILTER_MAX_CPATH_SIZE )
+  {
+    fprintf( stderr,
+      "RFG_Filter_addCallPathRules(): Error: Invalid call path size\n" );
+    return 0;
+  }
+
+  if( !regionNames )
+  {
+    fprintf( stderr,
+      "RFG_Filter_addCallPathRules(): Error: Empty region name array\n" );
+    return 0;
+  }
+
+  /* translate given region names to ids and generate a hash value for them */
+
+  for( i = 0, l_hash = 0; i < size; i++ )
+  {
+    if( !regionNames[i] || *(regionNames[i]) == '\0' )
+    {
+      fprintf( stderr,
+        "RFG_Filter_addCallPathRules(): Error: Empty region name\n" );
+      return 0;
+    }
+    l_region_ids[i] = cpath_get_region_id( filter, regionNames[i] );
+    l_hash = vt_hashtriple( l_region_ids[i], 0, 0, l_hash );
+  }
+
+  /* add call-path filter rules (only once) */
+
+  if( !cpath_rules_hash_get( filter->cpath_rules, l_hash, size, l_region_ids ) )
+  {
+    cpath_rules_hash_put( filter->cpath_rules, l_hash, size, l_region_ids,
+      callLimit );
+    filter->num_cpath_rules++;
+  }
+
+  if( r_hash )
+    *r_hash = l_hash;
+  if( r_regionIds )
+    memcpy( *r_regionIds, l_region_ids, size * sizeof( uint32_t ) );
+
+  return 1;
+}
+
+int RFG_Filter_getCallPathRules( RFG_Filter* filter, uint32_t hash,
+                                 uint32_t size, const uint32_t* regionIds,
+                                 int32_t* r_callLimit )
+{
+  RFG_FilterCallPathRulesHN* cpath_rules_hn;
+
+  if( !filter && !r_callLimit )
+     return 0;
+
+  if( size == 0 || size > RFG_FILTER_MAX_CPATH_SIZE )
+  {
+    fprintf( stderr,
+      "RFG_Filter_getCallPathRules(): Error: Invalid call path size\n" );
+    return 0;
+  }
+
+  if( !regionIds )
+  {
+    fprintf( stderr,
+      "RFG_Filter_getCallPathRules(): Error: Empty region id array\n" );
+    return 0;
+  }
+
+  cpath_rules_hn =
+    cpath_rules_hash_get( filter->cpath_rules, hash, size, regionIds );
+  if( !cpath_rules_hn )
+    return 0;
+
+  *r_callLimit = cpath_rules_hn->rules.callLimit;
+
+  return 1;
+}
+
+int RFG_Filter_getAllCallPathRules( RFG_Filter* filter,
+                                    uint32_t* r_numRules,
+                                    RFG_FilterCallPathRules** r_rules )
+{
+  uint32_t i;
+
+  if( !filter || !r_numRules || !r_rules )
+    return 0;
+
+  *r_numRules = filter->num_cpath_rules;
+  *r_rules = NULL;
+
+  if( *r_numRules > 0 )
+  {
+    uint32_t j;
+
+    /* allocate memory for the array of call-path filter rules to be returned */
+
+    *r_rules =
+      (RFG_FilterCallPathRules*)malloc(
+        *r_numRules * sizeof( RFG_FilterCallPathRules ) );
+    if( !*r_rules )
+      return 0;
+
+    /* get call-path filter rules from hash table and store them in the array */
+
+    for( i = 0, j = 0; i < CPATH_RULES_HASH_MAX; i++ )
+    {
+      RFG_FilterCallPathRulesHN* curr = filter->cpath_rules[i];
+      while( curr )
+      {
+        (*r_rules)[j].hash      = curr->rules.hash;
+        (*r_rules)[j].size      = curr->rules.size;
+        memcpy( (*r_rules)[j].regionIds, curr->rules.regionIds,
+          curr->rules.size * sizeof( uint32_t ) );
+        (*r_rules)[j].callLimit = curr->rules.callLimit;
+
+        j++;
+
+        curr = curr->next;
+      }
     }
   }
 

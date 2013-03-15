@@ -44,6 +44,9 @@
 #endif
 
 #if TIMER == TIMER_CYCLE_COUNTER
+# ifdef _CRAYC
+#   include <intrinsics.h>
+# endif 
   static uint64_t vt_ticks_per_sec = 1;
 #elif TIMER == TIMER_CLOCK_GETTIME || TIMER == TIMER_GETTIMEOFDAY
 # include <time.h>
@@ -179,12 +182,16 @@ uint64_t vt_pform_clockres() {
 /* local or global wall-clock time */
 uint64_t vt_pform_wtime() {
 #if TIMER == TIMER_CYCLE_COUNTER
-  uint64_t clock_value;
-  uint32_t low = 0;
-  uint32_t high = 0;
-  asm volatile ("rdtsc" : "=a" (low), "=d" (high));
-  clock_value = ((uint64_t)high << 32) | (uint64_t)low;
-  return clock_value;
+# ifdef _CRAYC
+    return (uint64_t)_rtc();
+# else
+    uint64_t clock_value;
+    uint32_t low = 0;
+    uint32_t high = 0;
+    asm volatile ("rdtsc" : "=a" (low), "=d" (high));
+    clock_value = ((uint64_t)high << 32) | (uint64_t)low;
+    return clock_value;
+# endif
 #elif TIMER == TIMER_CLOCK_GETTIME
   struct timespec tp;
   clock_gettime(CLOCK_REALTIME, &tp);

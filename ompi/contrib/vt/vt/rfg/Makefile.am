@@ -1,6 +1,6 @@
 noinst_LTLIBRARIES = libvt_rfg.la
 
-INCLUDES = -I$(top_srcdir)/include -I$(top_builddir)/include
+INCLUDES = -I$(top_srcdir)/include -I$(top_builddir)/include -I$(top_srcdir)/util -I$(top_builddir)/util
 
 libvt_rfg_la_CFLAGS = -static -prefer-pic
 libvt_rfg_la_LDFLAGS = -static

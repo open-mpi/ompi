@@ -235,13 +235,14 @@ OTFAUX_ThumbnailReader_read( OTFAUX_ThumbnailReader* tn_reader,
     status = 1;
     for (i = 0; i < tn_reader->nprocs; i++)
     {
+        char comma;
         status = fscanf( tn_reader->file, "%llx:", &process );
         if (1 != status)
             goto out;
         for (j = 0; j < tn_reader->width; ++j)
         {
-            status = fscanf( tn_reader->file, "%x,", &functions[j] );
-            if (1 != status)
+            status = fscanf( tn_reader->file, "%x%c", &functions[j], &comma );
+            if ( 2 != status || comma != ',' )
                 goto out;
         }
         if (handler)
@@ -249,10 +250,15 @@ OTFAUX_ThumbnailReader_read( OTFAUX_ThumbnailReader* tn_reader,
             handler( data, process, functions );
         }
 
-        if ( fgetc( tn_reader->file ) != '\n' && !feof( tn_reader->file ) )
+        if ( fgetc( tn_reader->file ) != '\n' )
         {
-            break;
+            goto out;
         }
+    }
+
+    if ( fgetc( tn_reader->file ) != EOF )
+    {
+        return 0;
     }
 
 out:

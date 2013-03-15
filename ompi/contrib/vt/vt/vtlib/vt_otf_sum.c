@@ -372,11 +372,7 @@ static void hash_put_msg(VTSum* sum, uint32_t peer, uint32_t cid, uint32_t tag,
   uint32_t id;
   VTSum_msgHashNode* add;
 
-  id = 0;
-  if ( peer > 0 ) id = vt_hash((uint8_t*)&peer, sizeof(uint32_t), id);
-  if ( cid > 0 )  id = vt_hash((uint8_t*)&cid,  sizeof(uint32_t), id);
-  if ( tag > 0 )  id = vt_hash((uint8_t*)&tag,  sizeof(uint32_t), id);
-  id &= (VTSUM_HASH_MAX - 1);
+  id = vt_hashtriple(peer, cid, tag, 0) & (VTSUM_HASH_MAX - 1);
 
   add = (VTSum_msgHashNode*)malloc(sizeof(VTSum_msgHashNode));
   add->peer     = peer;
@@ -395,11 +391,7 @@ static VTSum_msgHashNode* hash_get_msg(VTSum* sum, uint32_t peer, uint32_t cid,
   uint32_t id;
   VTSum_msgHashNode* curr;
 
-  id = 0;
-  if ( peer > 0 ) id = vt_hash((uint8_t*)&peer, sizeof(uint32_t), id);
-  if ( cid > 0 )  id = vt_hash((uint8_t*)&cid,  sizeof(uint32_t), id);
-  if ( tag > 0 )  id = vt_hash((uint8_t*)&tag,  sizeof(uint32_t), id);
-  id &= (VTSUM_HASH_MAX - 1);
+  id = vt_hashtriple(peer, cid, tag, 0) & (VTSUM_HASH_MAX - 1);
 
   curr = sum->msg_stat_htab[id];
   while ( curr ) {
@@ -442,10 +434,7 @@ static void hash_put_collop(VTSum* sum, uint32_t rid, uint32_t cid,
   uint32_t id;
   VTSum_collopHashNode* add;
 
-  id = 0;
-  if ( rid > 0 ) id = vt_hash((uint8_t*)&rid, sizeof(uint32_t), id);
-  if ( cid > 0 ) id = vt_hash((uint8_t*)&cid, sizeof(uint32_t), id);
-  id &= (VTSUM_HASH_MAX - 1);
+  id = vt_hashtriple(rid, cid, 0, 0) & (VTSUM_HASH_MAX - 1);
 
   add = (VTSum_collopHashNode*)malloc(sizeof(VTSum_collopHashNode));
   add->rid        = rid;
@@ -463,10 +452,7 @@ static VTSum_collopHashNode* hash_get_collop(VTSum* sum, uint32_t rid,
   uint32_t id;
   VTSum_collopHashNode* curr;
 
-  id = 0;
-  if ( rid > 0 ) id = vt_hash((uint8_t*)&rid, sizeof(uint32_t), id);
-  if ( cid > 0 ) id = vt_hash((uint8_t*)&cid, sizeof(uint32_t), id);
-  id &= (VTSUM_HASH_MAX - 1);
+  id = vt_hashtriple(rid, cid, 0, 0) & (VTSUM_HASH_MAX - 1);
 
   curr = sum->collop_stat_htab[id];
   while ( curr ) {

@@ -26,24 +26,28 @@
 #include "vt_error.h"
 #include "vt_inttypes.h"
 #include "vt_iowrap.h"
-#include "vt_memhook.h"
+#include "vt_mallocwrap.h"
 #include "vt_pform.h"
 #include "vt_trc.h"
 #include "vt_thrd.h"
 
 #if (defined(HAVE_DL) && HAVE_DL) && (defined(HAVE_DECL_RTLD_DEFAULT) && HAVE_DECL_RTLD_DEFAULT)
 # include <dlfcn.h>
-# define GET_ADDR_OF_UNDEF_FUNC(func) \
-  DEREF_IA64_FUNC_PTR(dlsym(RTLD_DEFAULT, (func)))
+# define GET_SO_FUNC_ADDR(func) \
+  GET_IA64_FUNC_ADDR(dlsym(RTLD_DEFAULT, (func)))
 #else /* HAVE_DL && HAVE_DECL_RTLD_DEFAULT */
-# define GET_ADDR_OF_UNDEF_FUNC(func) 0
+# define GET_SO_FUNC_ADDR(func) 0
 #endif /* HAVE_DL && HAVE_DECL_RTLD_DEFAULT */
 
 #ifdef __ia64__
-# define DEREF_IA64_FUNC_PTR(ptr) ((ptr) ? *(void**)(ptr) : (ptr))
+# define GET_IA64_FUNC_ADDR(addr) (long)((addr) ? *(void**)(addr) : (addr))
 #else /* __ia64__ */
-# define DEREF_IA64_FUNC_PTR(ptr) (ptr)
+# define GET_IA64_FUNC_ADDR(addr) (long)(addr)
 #endif /* __ia64__ */
+
+#define GET_THREAD_ID(tid) \
+  VT_CHECK_THREAD;         \
+  (tid) = VT_MY_THREAD
 
 #ifdef VT_COMPINST_CRAYCCE
 # define __cyg_profile_func_enter __pat_tp_func_entry
@@ -125,6 +129,7 @@ static void get_symtab(void)
 
   uint8_t parse_error = 0;
 
+  VT_SUSPEND_MALLOC_TRACING(VT_CURRENT_THREAD);
   VT_SUSPEND_IO_TRACING(VT_CURRENT_THREAD);
 
   /* open nm-file, if given */
@@ -198,7 +203,7 @@ static void get_symtab(void)
     char  delim[2] = " ";
     int   nc = 1;
 
-    long  addr = -1;
+    long  addr = 0;
     char* filename = NULL;
     char* funcname = NULL;
     unsigned int lno = VT_NO_LNO;
@@ -246,6 +251,14 @@ static void get_symtab(void)
     if ( line[strlen(line)-1] == '\n' )
       line[strlen(line)-1] = '\0';
 
+    /* ignore line if it is empty */
+    if ( *line == '\0' )
+      continue;
+
+    /* ignore nm input file name */
+    if ( line[strlen(line)-1] == ':' )
+      continue;
+
     /* split line to columns */
     col = strtok(line, delim);
     do
@@ -253,11 +266,11 @@ static void get_symtab(void)
       if ( nc == 1 ) /* column 1 (address) */
       {
         /* if there is no address in the first column the symbol could be
-           undefined; try get its address later (nc==3) */
+           defined within a shared object; try get its address later (nc==3) */
         if ( strlen(col) == 1 )
         {
           nc++; /* <- will be 3 in the next round */
-          strcpy(delim, "\t");
+          *delim = '\t';
         }
         /* otherwise, convert address string */
         else
@@ -273,22 +286,27 @@ static void get_symtab(void)
           parse_error = 1;
           break;
         }
-        strcpy(delim, "\t");
+
+        *delim = '\t';
       }
       else if ( nc == 3 ) /* column 3 (symbol) */
       {
-        funcname = col;
-        strcpy(delim, ":");
+        long soaddr;
 
-        /* try to get address of undefined function, if necessary */
-        if ( addr == -1 )
-          addr = (long)GET_ADDR_OF_UNDEF_FUNC(funcname);
+        funcname = col;
+
+        /* the symbol might be defined within a shared object; try to get
+           its real address */
+        if ( ( soaddr = GET_SO_FUNC_ADDR(funcname) ) != 0 )
+          addr = soaddr;
 
         /* ignore function, if its address could not be determined */
         if ( addr == 0 )
           break;
+
+        *delim = ':';
       }
-      else if( nc == 4 ) /* column 4 (filename) */
+      else if ( nc == 4 ) /* column 4 (filename) */
       {
         filename = col;
       }
@@ -374,25 +392,26 @@ static void get_symtab(void)
   free(line);
 
   VT_RESUME_IO_TRACING(VT_CURRENT_THREAD);
+  VT_RESUME_MALLOC_TRACING(VT_CURRENT_THREAD);
 }
 
 /*
  * Register new region
  */
 
-static void register_region(HashNode* hn) {
+static void register_region(uint32_t tid, HashNode* hn) {
   uint32_t fid = VT_NO_ID;
   uint32_t lno = VT_NO_LNO;
 
   /* -- register file if available -- */
   if (hn->fname != NULL)
   {
-    fid = vt_def_scl_file(VT_CURRENT_THREAD, hn->fname);
+    fid = vt_def_scl_file(tid, hn->fname);
     lno = hn->lno;
   }
 
   /* -- register region and store region identifier -- */
-  hn->vtid = vt_def_region(VT_CURRENT_THREAD, hn->name, fid, lno, VT_NO_LNO,
+  hn->vtid = vt_def_region(tid, hn->name, fid, lno, VT_NO_LNO,
                            NULL, VT_FUNCTION);
 }
 
@@ -458,48 +477,50 @@ void gnu_finalize()
  */
 
 void __cyg_profile_func_enter(void* func, void* callsite) {
-  void* funcptr;
+  long addr;
+  uint32_t tid;
   uint64_t time;
   HashNode* hn;
 
-  funcptr = DEREF_IA64_FUNC_PTR(func);
+  addr = GET_IA64_FUNC_ADDR(func);
 
   /* -- if not yet initialized, initialize VampirTrace -- */
   if ( gnu_init ) {
-    VT_MEMHOOKS_OFF();
     gnu_init = 0;
     vt_open();
     vt_comp_finalize = gnu_finalize;
     get_symtab();
-    VT_MEMHOOKS_ON();
   }
 
   /* -- if VampirTrace already finalized, return -- */
   if ( !vt_is_alive ) return;
 
-  VT_MEMHOOKS_OFF();
+  /* -- get calling thread id -- */
+  GET_THREAD_ID(tid);
+
+  VT_SUSPEND_MALLOC_TRACING(tid);
 
   time = vt_pform_wtime();
 
   /* -- get region identifier -- */
-  if ( (hn = hash_get((long)funcptr))) {
+  if ( (hn = hash_get(addr)) ) {
     if ( hn->vtid == VT_NO_ID ) {
       /* -- region entered the first time, register region -- */
 #if (defined(VT_MT) || defined(VT_HYB))
       VTTHRD_LOCK_IDS();
       if( hn->vtid == VT_NO_ID )
-        register_region(hn);
+        register_region(tid, hn);
       VTTHRD_UNLOCK_IDS();
 #else /* VT_MT || VT_HYB */
-      register_region(hn);
+      register_region(tid, hn);
 #endif /* VT_MT || VT_HYB */
     }
 
     /* -- write enter record -- */
-    vt_enter(VT_CURRENT_THREAD, &time, hn->vtid);
+    vt_enter(tid, &time, hn->vtid);
   }
 
-  VT_MEMHOOKS_ON();
+  VT_RESUME_MALLOC_TRACING(tid);
 }
 
 /*
@@ -508,22 +529,26 @@ void __cyg_profile_func_enter(void* func, void* callsite) {
  */
 
 void __cyg_profile_func_exit(void* func, void* callsite) {
-  void* funcptr;
+  long addr;
+  uint32_t tid;
   uint64_t time;
 
-  funcptr = DEREF_IA64_FUNC_PTR(func);
+  addr = GET_IA64_FUNC_ADDR(func);
 
   /* -- if VampirTrace already finalized, return -- */
   if ( !vt_is_alive ) return;
 
-  VT_MEMHOOKS_OFF();
+  /* -- get calling thread id -- */
+  GET_THREAD_ID(tid);
+
+  VT_SUSPEND_MALLOC_TRACING(tid);
 
   time = vt_pform_wtime();
 
   /* -- write exit record -- */
-  if ( hash_get((long)funcptr) ) {
-    vt_exit(VT_CURRENT_THREAD, &time);
+  if ( hash_get(addr) ) {
+    vt_exit(tid, &time);
   }
 
-  VT_MEMHOOKS_ON();
+  VT_RESUME_MALLOC_TRACING(tid);
 }

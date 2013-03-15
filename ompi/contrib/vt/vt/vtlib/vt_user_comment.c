@@ -15,7 +15,7 @@
 #include "vt_defs.h"
 #include "vt_fbindings.h"
 #include "vt_inttypes.h"
-#include "vt_memhook.h"
+#include "vt_mallocwrap.h"
 #include "vt_pform.h"
 #include "vt_trc.h"
 #define VTRACE
@@ -26,21 +26,19 @@ static int vt_init = 1;        /* is initialization needed? */
 
 #define VT_INIT \
   if ( vt_init ) { \
-    VT_MEMHOOKS_OFF(); \
     vt_init = 0; \
     vt_open(); \
-    VT_MEMHOOKS_ON(); \
   }
 
 void VT_User_comment_def__(const char* comment)
 {
   VT_INIT;
 
-  VT_MEMHOOKS_OFF();
+  VT_SUSPEND_MALLOC_TRACING(VT_CURRENT_THREAD);
 
   vt_def_comment(VT_CURRENT_THREAD, comment);
 
-  VT_MEMHOOKS_ON();
+  VT_RESUME_MALLOC_TRACING(VT_CURRENT_THREAD);
 }
 
 void VT_User_comment__(const char* comment)
@@ -49,12 +47,12 @@ void VT_User_comment__(const char* comment)
 
   VT_INIT;
 
-  VT_MEMHOOKS_OFF();
+  VT_SUSPEND_MALLOC_TRACING(VT_CURRENT_THREAD);
 
   time = vt_pform_wtime();
   vt_comment(VT_CURRENT_THREAD, &time, comment);
 
-  VT_MEMHOOKS_ON();
+  VT_RESUME_MALLOC_TRACING(VT_CURRENT_THREAD);
 }
 
 /*

@@ -15,7 +15,7 @@
 #include "vt_defs.h"
 #include "vt_error.h"
 #include "vt_fbindings.h"
-#include "vt_memhook.h"
+#include "vt_mallocwrap.h"
 #include "vt_pform.h"
 #include "vt_thrd.h"
 #include "vt_trc.h"
@@ -32,10 +32,8 @@ static int vt_init = 1;        /* is initialization needed? */
 
 #define VT_INIT \
   if ( vt_init ) { \
-    VT_MEMHOOKS_OFF(); \
     vt_init = 0; \
     vt_open(); \
-    VT_MEMHOOKS_ON(); \
   }
 
 #define REGION_HASH_MAX 1024
@@ -67,11 +65,11 @@ static uint32_t hash_get_region(const char* name, const char* file,
   HN_RegionT* curr;
 
   /* -- get hash index -- */
-  idx = (uint32_t)vt_hash((unsigned char*)name, strlen(name), 0);
+  idx = vt_hash(name, strlen(name), 0);
   if ( file )
   {
-    idx = (uint32_t)vt_hash((unsigned char*)file, strlen(file), idx);
-    idx = (uint32_t)vt_hash((unsigned char*)&lno, sizeof(uint32_t), idx);
+    idx = vt_hash(file, strlen(file), idx);
+    idx = vt_hashtriple(lno, 0, 0, idx);
   }
   idx &= (REGION_HASH_MAX - 1);
 
@@ -101,11 +99,11 @@ static void hash_put_region(const char* name, const char* file, int lno,
   HN_RegionT* add;
 
   /* -- get hash index -- */
-  idx = (uint32_t)vt_hash((unsigned char*)name, strlen(name), 0);
+  idx = vt_hash(name, strlen(name), 0);
   if ( file )
   {
-    idx = (uint32_t)vt_hash((unsigned char*)file, strlen(file), idx);
-    idx = (uint32_t)vt_hash((unsigned char*)&lno, sizeof(uint32_t), idx);
+    idx = vt_hash(file, strlen(file), idx);
+    idx = vt_hashtriple(lno, 0, 0, idx);
   }
   idx &= (REGION_HASH_MAX - 1);
 
@@ -197,7 +195,7 @@ void VT_User_start__(const char* name, const char* file, int lno)
 
   VT_INIT;
 
-  VT_MEMHOOKS_OFF();
+  VT_SUSPEND_MALLOC_TRACING(VT_CURRENT_THREAD);
 
   time = vt_pform_wtime();
 
@@ -218,7 +216,7 @@ void VT_User_start__(const char* name, const char* file, int lno)
   /* -- write enter record -- */
   vt_enter(VT_CURRENT_THREAD, &time, rid);
 
-  VT_MEMHOOKS_ON();
+  VT_RESUME_MALLOC_TRACING(VT_CURRENT_THREAD);
 }
 
 void VT_User_end__(const char* name)
@@ -227,13 +225,13 @@ void VT_User_end__(const char* name)
 
   (void)name;
 
-  VT_MEMHOOKS_OFF();
+  VT_SUSPEND_MALLOC_TRACING(VT_CURRENT_THREAD);
 
   /* -- write exit record -- */
   time = vt_pform_wtime();
   vt_exit(VT_CURRENT_THREAD, &time);
 
-  VT_MEMHOOKS_ON();
+  VT_RESUME_MALLOC_TRACING(VT_CURRENT_THREAD);
 }
 
 unsigned int VT_User_def__(const char* name, const char* file, int lno)
@@ -242,7 +240,7 @@ unsigned int VT_User_def__(const char* name, const char* file, int lno)
 
   VT_INIT;
 
-  VT_MEMHOOKS_OFF();
+  VT_SUSPEND_MALLOC_TRACING(VT_CURRENT_THREAD);
 
   /* -- get region identifier by name, file, and line number -- */
   if ( (rid = hash_get_region(name, file, lno)) == VT_NO_ID )
@@ -258,7 +256,7 @@ unsigned int VT_User_def__(const char* name, const char* file, int lno)
 #endif /* VT_MT || VT_HYB */
   }
 
-  VT_MEMHOOKS_ON();
+  VT_RESUME_MALLOC_TRACING(VT_CURRENT_THREAD);
 
   return rid;
 }
@@ -267,13 +265,13 @@ void VT_User_start_id__(unsigned int rid)
 {
   uint64_t time;
 
-  VT_MEMHOOKS_OFF();
+  VT_SUSPEND_MALLOC_TRACING(VT_CURRENT_THREAD);
 
   /* -- write enter record -- */
   time = vt_pform_wtime();
   vt_enter(VT_CURRENT_THREAD, &time, rid);
 
-  VT_MEMHOOKS_ON();
+  VT_RESUME_MALLOC_TRACING(VT_CURRENT_THREAD);
 }
 
 void VT_User_end_id__(unsigned int rid)
@@ -282,13 +280,13 @@ void VT_User_end_id__(unsigned int rid)
 
   (void)rid;
 
-  VT_MEMHOOKS_OFF();
+  VT_SUSPEND_MALLOC_TRACING(VT_CURRENT_THREAD);
 
   /* -- write exit record -- */
   time = vt_pform_wtime();
   vt_exit(VT_CURRENT_THREAD, &time);
 
-  VT_MEMHOOKS_ON();
+  VT_RESUME_MALLOC_TRACING(VT_CURRENT_THREAD);
 }
 
 /*
@@ -308,7 +306,7 @@ VT_DECLDEF(void VT_User_start___f(const char* name, const char* file, int* lno,
 
   VT_INIT;
 
-  VT_MEMHOOKS_OFF();
+  VT_SUSPEND_MALLOC_TRACING(VT_CURRENT_THREAD);
 
   time = vt_pform_wtime();
 
@@ -337,7 +335,7 @@ VT_DECLDEF(void VT_User_start___f(const char* name, const char* file, int* lno,
   /* -- write enter record -- */
   vt_enter(VT_CURRENT_THREAD, &time, rid);
 
-  VT_MEMHOOKS_ON();
+  VT_RESUME_MALLOC_TRACING(VT_CURRENT_THREAD);
 } VT_GENERATE_F77_BINDINGS(vt_user_start__, VT_USER_START__,
                            VT_User_start___f,
                            (const char* name, const char* file, int* lno,
@@ -349,13 +347,13 @@ VT_DECLDEF(void VT_User_end___f(const char* name, int nl))
 {
   uint64_t time;
 
-  VT_MEMHOOKS_OFF();
+  VT_SUSPEND_MALLOC_TRACING(VT_CURRENT_THREAD);
 
   /* -- write exit record -- */
   time = vt_pform_wtime();
   vt_exit(VT_CURRENT_THREAD, &time);
 
-  VT_MEMHOOKS_ON();
+  VT_RESUME_MALLOC_TRACING(VT_CURRENT_THREAD);
 } VT_GENERATE_F77_BINDINGS(vt_user_end__, VT_USER_END__,
                            VT_User_end___f,
                            (const char *name, int nl),
@@ -389,13 +387,13 @@ VT_DECLDEF(void VT_User_start_id___f(unsigned int* rid))
 {
   uint64_t time;
 
-  VT_MEMHOOKS_OFF();
+  VT_SUSPEND_MALLOC_TRACING(VT_CURRENT_THREAD);
 
   /* -- write enter record -- */
   time = vt_pform_wtime();
   vt_enter(VT_CURRENT_THREAD, &time, *rid);
 
-  VT_MEMHOOKS_ON();
+  VT_RESUME_MALLOC_TRACING(VT_CURRENT_THREAD);
 } VT_GENERATE_F77_BINDINGS(vt_user_start_id__, VT_USER_START_ID__,
                            VT_User_start_id___f,
                            (unsigned int* rid),
@@ -407,13 +405,13 @@ VT_DECLDEF(void VT_User_end_id___f(unsigned int* rid))
 
   (void)rid;
 
-  VT_MEMHOOKS_OFF();
+  VT_SUSPEND_MALLOC_TRACING(VT_CURRENT_THREAD);
 
   /* -- write exit record -- */
   time = vt_pform_wtime();
   vt_exit(VT_CURRENT_THREAD, &time);
 
-  VT_MEMHOOKS_ON();
+  VT_RESUME_MALLOC_TRACING(VT_CURRENT_THREAD);
 } VT_GENERATE_F77_BINDINGS(vt_user_end_id__, VT_USER_END_ID__,
                            VT_User_end_id___f,
                            (unsigned int* rid),

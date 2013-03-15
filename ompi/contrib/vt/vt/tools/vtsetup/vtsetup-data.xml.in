@@ -350,18 +350,18 @@
     <available>@VT_SETUP_IOTRACE@</available>
     <anchor>VT_SETUP_VT_IOLIB_PATHNAME</anchor>
   </env>
-  <env isdeprecated="0" priority="290" descname="Enable libc tracing" isadvanced="1" group="libtrace"
-    envname="VT_LIBCTRACE">
-    <desc>Enable / disable event recording of fork/system/exec calls.</desc>
+  <env isdeprecated="0" priority="290" descname="Enable exec(3) function tracing" isadvanced="1" group="libtrace"
+    envname="VT_EXECTRACE">
+    <desc>Enable / disable the recording of functions for creating and controling child processes (e.g. execl).</desc>
     <valuedesc>
       <value type="bool">
         <default>1</default>
       </value>
     </valuedesc>
-    <since major="5" minor="0" patch="0" /><available>@VT_SETUP_LIBCTRACE@</available>
-    <anchor>VT_SETUP_VT_LIBCTRACE</anchor>
+    <since major="5" minor="0" patch="0" /><available>@VT_SETUP_EXECTRACE@</available>
+    <anchor>VT_SETUP_VT_EXECTRACE</anchor>
   </env>
-  <env isdeprecated="0" priority="100" descname="Enable memory usage counter" isadvanced="0" group="libtrace"
+  <env isdeprecated="0" priority="100" descname="Enable memory allocation tracing" isadvanced="0" group="libtrace"
     envname="VT_MEMTRACE">
     <desc>Enable / disable recording of memory allocation counter.</desc>
     <valuedesc>
@@ -468,6 +468,17 @@
     </valuedesc>
     <since major="5" minor="0" patch="0" /><available>@VT_SETUP_MPI@</available>
     <anchor>VT_SETUP_VT_MPITRACE</anchor>
+  </env>
+  <env isdeprecated="0" priority="101" descname="Ignore filter for MPI communication events" isadvanced="1" group="libtrace"
+    envname="VT_MPI_IGNORE_FILTER">
+    <desc>Enable / disable recording of MPI communication events although its corresponding functions are filterd.</desc>
+    <valuedesc>
+      <value type="bool">
+        <default>0</default>
+      </value>
+    </valuedesc>
+    <since major="5" minor="14" patch="0" /><available>@VT_SETUP_MPI@</available>
+    <anchor>VT_SETUP_VT_MPI_IGNORE_FILTER</anchor>
   </env>
   <env isdeprecated="0" priority="200" descname="Profiling interval (for STAT mode in ms)" isadvanced="1" group="omode"
     envname="VT_STAT_INV">

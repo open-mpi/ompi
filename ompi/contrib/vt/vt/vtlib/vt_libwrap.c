@@ -18,7 +18,7 @@
 #include "vt_error.h"
 #include "vt_inttypes.h"
 #include "vt_libwrap.h"
-#include "vt_memhook.h"
+#include "vt_mallocwrap.h"
 #include "vt_pform.h"
 #include "vt_thrd.h"
 #include "vt_trc.h"
@@ -29,14 +29,14 @@
 #include <string.h>
 
 /* maximum number of library wrapper objects */
-#define MAX_LW 16
+#define MAX_LWS 16
 
 /* maximum number of handles for shared libraries
-   =VT_LIBWRAP_MAX_SHLIBS [+1 for RTLD_NEXT] */
+   =VT_LIBWRAP_MAX_SHLIBS +1(LIBC's handle) [+1(RTLD_NEXT)] */
 #if defined(HAVE_DECL_RTLD_NEXT) && HAVE_DECL_RTLD_NEXT
-# define MAX_HANDLES (VT_LIBWRAP_MAX_SHLIBS+1)
+# define MAX_HANDLES (VT_LIBWRAP_MAX_SHLIBS+1+1)
 #else /* HAVE_DECL_RTLD_NEXT */
-# define MAX_HANDLES VT_LIBWRAP_MAX_SHLIBS
+# define MAX_HANDLES (VT_LIBWRAP_MAX_SHLIBS+1)
 #endif /* HAVE_DECL_RTLD_NEXT */
 
 /* data structure for library wrapper object */
@@ -47,8 +47,8 @@ struct VTLibwrap_struct
   uint32_t       handlen;              /* number of handles */
 };
 
-static VTLibwrap* lwv[MAX_LW]; /* vector of library wrapper objects */
-static uint32_t   lwn = 0;     /* number of library wrapper objects */
+static VTLibwrap lwv[MAX_LWS]; /* vector of library wrapper objects */
+static uint32_t  lwn = 0;      /* number of library wrapper objects */
 
 /* default library wrapper attributes */
 static VTLibwrapAttr default_attr = VT_LIBWRAP_ATTR_DEFAULT;
@@ -194,7 +194,7 @@ void VTLibwrap_create(VTLibwrap** lw, VTLibwrapAttr* lwattr)
   uint8_t error = 0;
   char error_msg[1024] = "";
 
-  VT_MEMHOOKS_OFF();
+  VT_SUSPEND_MALLOC_TRACING(VT_CURRENT_THREAD);
 
 #if (defined(VT_MT) || defined(VT_HYB) || defined(VT_JAVA))
   VTThrd_lock(&lw_create_mutex);
@@ -210,23 +210,16 @@ void VTLibwrap_create(VTLibwrap** lw, VTLibwrapAttr* lwattr)
     }
 
     /* maximum number of library wrapper objects reached ? */
-    if( lwn + 1 > MAX_LW )
+    if( lwn + 1 >= MAX_LWS )
     {
       error = 1;
       snprintf(error_msg, sizeof(error_msg) - 1,
-               "Cannot create more than %d library wrapper objects", MAX_LW);
+               "Cannot create more than %d library wrapper objects", MAX_LWS);
       break;
     }
 
-    /* allocate new library wrapper object */
-    *lw = (VTLibwrap*)calloc(1, sizeof(VTLibwrap));
-    if( *lw == NULL )
-    {
-      error = 1;
-      snprintf(error_msg, sizeof(error_msg) - 1,
-               "Cannot allocate memory for library wrapper object");
-      break;
-    }
+    /* get next unused library wrapper object from vector */
+    *lw = &(lwv[lwn++]);
 
     /* if not attributes given, use the default attributes */
     (*lw)->attr = lwattr ? lwattr : &default_attr;
@@ -234,6 +227,8 @@ void VTLibwrap_create(VTLibwrap** lw, VTLibwrapAttr* lwattr)
     /* call attributes initializer function, if necessary */
     if( (*lw)->attr->init_func )
       (*lw)->attr->init_func((*lw)->attr);
+
+    (*lw)->handlen = 0;
 
     /* shared libraries specified ? */
     if( (*lw)->attr->shlibs_num > 0 )
@@ -274,10 +269,15 @@ void VTLibwrap_create(VTLibwrap** lw, VTLibwrapAttr* lwattr)
       if( error ) break;
     }
 
+    /* append LIBC's handle to the vector of handles, if desired */
+    if( (*lw)->attr->libc )
+      (*lw)->handlev[(*lw)->handlen++] = vt_libwrap_get_libc_handle();
+
     /* append 'RTLD_NEXT' to the vector of handles, if possible */
 #if defined(HAVE_DECL_RTLD_NEXT) && HAVE_DECL_RTLD_NEXT
     (*lw)->handlev[(*lw)->handlen++] = RTLD_NEXT;
-#else /* HAVE_DECL_RTLD_NEXT */
+#endif /* HAVE_DECL_RTLD_NEXT */
+
     if( (*lw)->handlen == 0 )
     {
       error = 1;
@@ -286,10 +286,6 @@ void VTLibwrap_create(VTLibwrap** lw, VTLibwrapAttr* lwattr)
                "specified");
       break;
     }
-#endif /* HAVE_DECL_RTLD_NEXT */
-
-    /* store new library wrapper object */
-    lwv[lwn++] = *lw;
   } while(0);
 
 #if (defined(VT_MT) || defined(VT_HYB) || defined(VT_JAVA))
@@ -307,35 +303,32 @@ void VTLibwrap_create(VTLibwrap** lw, VTLibwrapAttr* lwattr)
     /* initialize VampirTrace, if necessary */
     if( !(*lw)->attr->wait_for_init && !vt_is_alive )
       vt_open();
+    else
+      VT_RESUME_MALLOC_TRACING(VT_CURRENT_THREAD);
   }
-
-  VT_MEMHOOKS_ON();
 }
 
-void VTLibwrap_delete(VTLibwrap** lw)
+void VTLibwrap_delete(VTLibwrap* lw)
 {
   uint32_t i;
 
-  vt_libassert(*lw);
+  vt_libassert(lw);
 
   /* close all opened handles */
-  for( i = 0; i < (*lw)->handlen; i++ )
+  for( i = 0; i < lw->handlen; i++ )
   {
 #if defined(HAVE_DECL_RTLD_NEXT) && HAVE_DECL_RTLD_NEXT
-    if( (*lw)->handlev[i] != RTLD_NEXT )
+    if( lw->handlev[i] != RTLD_NEXT )
     {
 #endif /* HAVE_DECL_RTLD_NEXT */
     (void)dlerror();
-    if( dlclose((*lw)->handlev[i]) != 0 )
+    if( dlclose(lw->handlev[i]) != 0 )
       vt_error_msg("dlclose(\"%s\") failed: %s",
-                   (*lw)->attr->shlibs[i], dlerror());
+                   lw->attr->shlibs[i], dlerror());
 #if defined(HAVE_DECL_RTLD_NEXT) && HAVE_DECL_RTLD_NEXT
     }
 #endif /* HAVE_DECL_RTLD_NEXT */
   }
-
-  free(*lw);
-  *lw = VT_LIBWRAP_NULL;
 }
 
 void VTLibwrap_delete_all()
@@ -344,7 +337,7 @@ void VTLibwrap_delete_all()
 
   /* delete all library wrapper objects */
   for( i = 0; i < lwn; i++ )
-    if( lwv[i] != VT_LIBWRAP_NULL ) VTLibwrap_delete(&(lwv[i]));
+    VTLibwrap_delete(&(lwv[i]));
 }
 
 void VTLibwrap_func_init(const VTLibwrap* lw, const char* func,
@@ -355,9 +348,9 @@ void VTLibwrap_func_init(const VTLibwrap* lw, const char* func,
 
   vt_libassert(lw);
 
-  VT_MEMHOOKS_OFF();
+  VT_SUSPEND_MALLOC_TRACING(VT_CURRENT_THREAD);
 
-  if( !(*funcptr) )
+  if( funcptr && !(*funcptr) )
   {
     /* array for dlsym error messages */
     char dlsym_errors[MAX_HANDLES][256];
@@ -365,6 +358,7 @@ void VTLibwrap_func_init(const VTLibwrap* lw, const char* func,
     /* search all handles for function */
     for( i = 0; i < lw->handlen && !(*funcptr); i++ )
     {
+      /* get pointer to actual library function */
       (void)dlerror();
       *funcptr = dlsym(lw->handlev[i], func);
 
@@ -416,35 +410,32 @@ void VTLibwrap_func_init(const VTLibwrap* lw, const char* func,
   }
 
   /* get function identifier, if necessary */
-  if( vt_is_alive )
+  if( funcid && *funcid == VT_LIBWRAP_NOID && vt_is_alive )
   {
+#if (defined(VT_MT) || defined(VT_HYB) || defined(VT_JAVA))
+    VTTHRD_LOCK_IDS();
     if( *funcid == VT_LIBWRAP_NOID )
     {
-#if (defined(VT_MT) || defined(VT_HYB) || defined(VT_JAVA))
-      VTTHRD_LOCK_IDS();
-      if( *funcid == VT_LIBWRAP_NOID )
-      {
 #endif /* VT_MT || VT_HYB || VT_JAVA */
-      uint32_t fid = VT_NO_ID;
-      uint32_t lno = VT_NO_LNO;
+    uint32_t fid = VT_NO_ID;
+    uint32_t lno = VT_NO_LNO;
 
-      /* register source file, if available */
-      if( file != NULL && line > 0 )
-      {
-        fid = vt_def_scl_file(VT_CURRENT_THREAD, file);
-        lno = line;
-      }
-      /* register function */
-      *funcid = vt_def_region(VT_CURRENT_THREAD, func, fid, lno, VT_NO_LNO,
-                              lw->attr->func_group, VT_FUNCTION);
-#if (defined(VT_MT) || defined(VT_HYB) || defined(VT_JAVA))
-      }
-      VTTHRD_UNLOCK_IDS();
-#endif /* VT_MT || VT_HYB || VT_JAVA */
+    /* register source file, if available */
+    if( file != NULL && line > 0 )
+    {
+      fid = vt_def_scl_file(VT_CURRENT_THREAD, file);
+      lno = line;
     }
+    /* register function */
+    *funcid = vt_def_region(VT_CURRENT_THREAD, func, fid, lno, VT_NO_LNO,
+                            lw->attr->func_group, VT_FUNCTION);
+#if (defined(VT_MT) || defined(VT_HYB) || defined(VT_JAVA))
+    }
+    VTTHRD_UNLOCK_IDS();
+#endif /* VT_MT || VT_HYB || VT_JAVA */
   }
 
-  VT_MEMHOOKS_ON();
+  VT_RESUME_MALLOC_TRACING(VT_CURRENT_THREAD);
 }
 
 void VTLibwrap_func_start(const VTLibwrap* lw, const int funcid)
@@ -455,7 +446,7 @@ void VTLibwrap_func_start(const VTLibwrap* lw, const int funcid)
 
   if( !vt_is_alive ) return;
 
-  VT_MEMHOOKS_OFF();
+  VT_SUSPEND_MALLOC_TRACING(VT_CURRENT_THREAD);
 
   vt_libassert(funcid != VT_LIBWRAP_NOID);
 
@@ -463,7 +454,7 @@ void VTLibwrap_func_start(const VTLibwrap* lw, const int funcid)
 
   (void)vt_enter(VT_CURRENT_THREAD, &time, funcid);
 
-  VT_MEMHOOKS_ON();
+  VT_RESUME_MALLOC_TRACING(VT_CURRENT_THREAD);
 }
 
 void VTLibwrap_func_end(const VTLibwrap* lw, const int funcid)
@@ -474,7 +465,7 @@ void VTLibwrap_func_end(const VTLibwrap* lw, const int funcid)
 
   if( !vt_is_alive ) return;
 
-  VT_MEMHOOKS_OFF();
+  VT_SUSPEND_MALLOC_TRACING(VT_CURRENT_THREAD);
 
   vt_libassert(funcid != VT_LIBWRAP_NOID);
 
@@ -482,5 +473,5 @@ void VTLibwrap_func_end(const VTLibwrap* lw, const int funcid)
 
   vt_exit(VT_CURRENT_THREAD, &time);
 
-  VT_MEMHOOKS_ON();
+  VT_RESUME_MALLOC_TRACING(VT_CURRENT_THREAD);
 }

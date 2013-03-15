@@ -146,11 +146,6 @@ typedef unsigned char* buffer_t;
 #define VT_LOOP                  3
 #define VT_USER_REGION           4
 
-#define VT_LIBC                  5
-#define VT_LIBC_IO               6
-
-#define VT_MEMORY                7
-
 #define VT_MPI_FUNCTION          8
 #define VT_MPI_COLL_BARRIER      9
 #define VT_MPI_COLL_ONE2ALL     10
@@ -327,5 +322,8 @@ typedef unsigned char* buffer_t;
  */
 
 #define VT_MAX_GETHOSTID_RETRIES  10
+
+#define VT_DYNINST_CONT_SIGNUM    SIGUSR1
+#define VT_DYNINST_ERROR_SIGNUM   SIGUSR2
 
 #endif /* _VT_DEFS_H */

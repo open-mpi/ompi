@@ -19,10 +19,12 @@
 #include <fstream>
 #include <sstream>
 #include <map>
+#include <queue>
 #include <string>
 #include <vector>
 
 #include <assert.h>
+#include <fnmatch.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -65,7 +67,33 @@ enum
 };
 
 //
-// data structure to store wrapper configuration
+// data structure for source files to be modified by OPARI and/or TAU
+//
+struct ModFileS
+{
+  ModFileS( const std::string& _src_file, const std::string& _obj_file,
+            const int _action_flags )
+    : src_file( _src_file ), obj_file( _obj_file ),
+      action_flags( _action_flags ) {}
+
+  //
+  // flags for modification actions to perform on source file
+  //
+  enum
+  {
+    MOD_ACTION_FLAG_OPARI   = 0x1, // OPARI instrumentation
+    MOD_ACTION_FLAG_TAUINST = 0x2  // TAU instrumentation
+  };
+
+  std::string src_file; // source file name
+  std::string obj_file; // object file name
+
+  int action_flags;     // modification action flags
+
+};
+
+//
+// data structure for wrapper configuration
 //
 struct ConfigS
 {
@@ -139,6 +167,14 @@ struct ConfigS
   // is instrumentation type available?
   inline bool isInstAvail( const InstTypeT type ) const;
 
+  // is source file excluded from instrumentation?
+  inline bool isFileExcluded( const std::vector<std::string>& excls,
+                const std::string& file ) const;
+
+  // read exclusion file and store its content in 'excls'
+  bool readExclFile( const std::string& file,
+         std::vector<std::string>& excls ) const;
+
   static const std::string DEFAULT_OPARI_RCFILE() { return "opari.rc"; }
   static const std::pair<std::string, std::string> DEFAULT_OPARI_TABFILE()
     { return std::make_pair( "opari.tab.c", "opari.tab.o" ); }
@@ -146,6 +182,10 @@ struct ConfigS
   LangTypeT   lang_type;             // language type
   InstTypeT   inst_type;             // instrumentation type
                                      // (e.g. compinst, manual, ...)
+  std::vector<std::string>
+    inst_excl_files;                 // source files to be excluded from
+                                     // automatic instrumentation by the
+                                     // compiler or PDT/TAU
 
   int         inst_avail;            // bitmask for available instr.-types
   int         showme_flags;          // bitmask for showme flags
@@ -194,6 +234,9 @@ struct ConfigS
   std::string opari_tab_compcmd;     // compiler command for OPARI's table file
   std::string opari_tab_compflags;   // compiler flags for OPARI's table file
   bool        opari_keep_rcfile;     // Flag: don't delete OPARI's rc file?
+  std::vector<std::string>
+    opari_excl_files;                // source files to be excluded from OPARI
+                                     // instrumentation
 
   std::string compinst_flags;        // compiler flags to enable instrumentation
   std::string dyninst_flags;         // compiler flags to produce debugging
@@ -204,9 +247,9 @@ struct ConfigS
   std::string tauinst_parsecmd;      // PDT source code parser command
   std::string tauinst_parseargs;     // PDT parser arguments
 
-  std::vector<std::pair<std::string, std::string> >
-    mod_files;                       // source/object files to be modified by
-                                     // OPARI and/or TAU
+  std::vector<ModFileS>
+    mod_files;                       // source files to be modified by OPARI
+                                     // and/or TAU
 
 };
 
@@ -816,6 +859,47 @@ parseCommandLine( int argc, char** argv )
         return false;
       }
     }
+    // -vt:inst-exclude-file-list
+    //
+    else if( arg.compare( "-vt:inst-exclude-file-list" ) == 0 )
+    {
+      if( i == args.size() - 1 )
+      {
+        std::cerr << ExeName << ": <file> expected -- "
+                  << "-vt:inst-exclude-file-list" << std::endl;
+        return false;
+      }
+
+      size_t excl_file_list_len = args[++i].length()+1;
+      char* excl_file_list = new char[excl_file_list_len];
+      strncpy( excl_file_list, args[i].c_str(), excl_file_list_len - 1 );
+      excl_file_list[excl_file_list_len - 1] = '\0';
+
+      char* token = strtok( excl_file_list, "," );
+      do
+      {
+        std::string file = token;
+        trimString( file );
+        if( file.length() > 0 )
+          Config.inst_excl_files.push_back( file );
+      } while( ( token = strtok( 0, "," ) ) );
+
+      delete [] excl_file_list;
+    }
+    // -vt:inst-exclude-file
+    //
+    else if( arg.compare( "-vt:inst-exclude-file" ) == 0 )
+    {
+      if( i == args.size() - 1 )
+      {
+        std::cerr << ExeName << ": <file> expected -- "
+                  << "-vt:inst-exclude-file" << std::endl;
+        return false;
+      }
+
+      if( !Config.readExclFile( args[++i], Config.inst_excl_files ) )
+        return false;
+    }
     // -vt:opari <args>
     //
     else if( arg.compare( "-vt:opari" ) == 0 )
@@ -902,6 +986,47 @@ parseCommandLine( int argc, char** argv )
       }
 
       Config.setOpariTabFile( args[++i] );
+    }
+    // -vt:opari-exclude-file-list
+    //
+    else if( arg.compare( "-vt:opari-exclude-file-list" ) == 0 )
+    {
+      if( i == args.size() - 1 )
+      {
+        std::cerr << ExeName << ": <file> expected -- "
+                  << "-vt:opari-exclude-file-list" << std::endl;
+        return false;
+      }
+
+      size_t excl_file_list_len = args[++i].length()+1;
+      char* excl_file_list = new char[excl_file_list_len];
+      strncpy( excl_file_list, args[i].c_str(), excl_file_list_len - 1 );
+      excl_file_list[excl_file_list_len - 1] = '\0';
+
+      char* token = strtok( excl_file_list, "," );
+      do
+      {
+        std::string file = token;
+        trimString( file );
+        if( file.length() > 0 )
+          Config.opari_excl_files.push_back( file );
+      } while( ( token = strtok( 0, "," ) ) );
+
+      delete [] excl_file_list;
+    }
+    // -vt:opari-exclude-file
+    //
+    else if( arg.compare( "-vt:opari-exclude-file" ) == 0 )
+    {
+      if( i == args.size() - 1 )
+      {
+        std::cerr << ExeName << ": <file> expected -- "
+                  << "-vt:opari-exclude-file" << std::endl;
+        return false;
+      }
+
+      if( !Config.readExclFile( args[++i], Config.opari_excl_files ) )
+        return false;
     }
     // -vt:noopari
     //
@@ -1017,7 +1142,8 @@ parseCommandLine( int argc, char** argv )
              arg.compare( "-fopenmp" ) == 0 ||
              arg.compare( "-Popenmp" ) == 0 ||
              arg.compare( "-xopenmp" ) == 0 ||
-             arg.compare( "-mp" ) == 0 )
+             arg.compare( "-mp" ) == 0 ||
+             arg.compare( "-homp" ) == 0 )
     {
       Config.setUsesThreads( true );
       Config.setUsesOpenMP( true );
@@ -1038,6 +1164,13 @@ parseCommandLine( int argc, char** argv )
           break;
         }
       } while( ( token = strtok( 0, ":" ) ) );
+    }
+    else if( arg.compare( "-h" ) == 0 && i < args.size() - 1 &&
+             args[i+1].compare( "omp" ) == 0 )
+    {
+      Config.setUsesThreads( true );
+      Config.setUsesOpenMP( true );
+      i++;
     }
     // nvcc's pthread/openmp flag
     //
@@ -1094,14 +1227,18 @@ parseCommandLine( int argc, char** argv )
     {
       // do nothing
     }
-    else if( arg.compare("-vt:inst") == 0 ||
-             arg.compare("-vt:opari") == 0 ||
-             arg.compare("-vt:opari-rcfile") == 0 ||
-             arg.compare("-vt:opari-table") == 0 ||
-             arg.compare("-vt:tau") == 0 ||
-             arg.compare("-vt:pdt") == 0 ||
-             arg.compare("-vt:cpp") == 0 ||
-             arg.compare("-vt:cppflags") == 0 )
+    else if( arg.compare( "-vt:inst" ) == 0 ||
+             arg.compare( "-vt:inst-exclude-file-list" ) == 0 ||
+             arg.compare( "-vt:inst-exclude-file" ) == 0 ||
+             arg.compare( "-vt:opari" ) == 0 ||
+             arg.compare( "-vt:opari-rcfile" ) == 0 ||
+             arg.compare( "-vt:opari-table" ) == 0 ||
+             arg.compare( "-vt:opari-exclude-file-list" ) == 0 ||
+             arg.compare( "-vt:opari-exclude-file" ) == 0 ||
+             arg.compare( "-vt:tau" ) == 0 ||
+             arg.compare( "-vt:pdt" ) == 0 ||
+             arg.compare( "-vt:cpp" ) == 0 ||
+             arg.compare( "-vt:cppflags" ) == 0 )
     {
       // skip next argument, if necessary
       i++;
@@ -1173,15 +1310,64 @@ parseCommandLine( int argc, char** argv )
              ( arg.length() >= 3 &&
                arg.compare( arg.length() - 3, 3, ".cu" ) == 0 ) )
     {
-      if( ( Config.showme_flags == 0 ||
-            Config.showme_flags == SHOWME_FLAG_ALL ) &&
-          ( Config.inst_type == INST_TYPE_TAUINST || Config.uses_openmp ) )
+      static bool implicit_exclusion_warn = false;
+      static std::queue<std::string> implicit_excluded_files;
+
+      const std::string& file = arg;
+
+      // source file excluded from instrumentation ?
+      if( Config.isFileExcluded( Config.inst_excl_files, file ) )
       {
-        Config.addModSrcFile( arg );
+        // disable compiler instrumentation by switching to manual
+        if( Config.inst_type == INST_TYPE_COMPINST )
+        {
+          Config.setInstType( INST_TYPE_MANUAL );
+
+          // source files involved in the compile step but not are in the
+          // exclusion list will be implicitly excluded from the compiler
+          // instrumentation; set indicator for printing a warning message
+          // when this happens
+          implicit_exclusion_warn = true;
+        }
+
+        // add source file to the compiler arguments
+        Config.addCompilerArg( file );
       }
       else
       {
-        Config.addCompilerArg( arg );
+        if( Config.showme_flags == 0 ||
+            Config.showme_flags == SHOWME_FLAG_ALL )
+        {
+          // add source file to be modified by OPARI and/or TAU ...
+          if( Config.inst_type == INST_TYPE_TAUINST || Config.uses_openmp )
+            Config.addModSrcFile( file );
+          // ... or add it as it is to the compiler arguments
+          else
+            Config.addCompilerArg( file );
+
+          // the source file might be implicitly excluded from the compiler
+          // instrumentation; store its name for a warning message
+          if( !Config.inst_excl_files.empty() )
+            implicit_excluded_files.push( file );
+        }
+        else
+        {
+          Config.addCompilerArg( file );
+        }
+      }
+
+      // warn about implicitly excluded source files from compiler
+      // instrumentation
+      //
+      if( implicit_exclusion_warn && !implicit_excluded_files.empty() )
+      {
+        while( !implicit_excluded_files.empty() )
+        {
+          std::cerr << "Warning: Implicitly excluded "
+                    << implicit_excluded_files.front()
+                    << " from compiler instrumentation." << std::endl;
+          implicit_excluded_files.pop();
+        }
       }
     }
     // -<I|D>*
@@ -1330,13 +1516,9 @@ doWrap()
   //
   for( i = 0; i < Config.mod_files.size(); i++ )
   {
-    std::string src_file = Config.mod_files[i].first;
+    const ModFileS& mod_file = Config.mod_files[i];
 
-    // skip *.cu source files for TAU instrumentation
-    //
-    const bool skip_tauinst =
-      ( Config.inst_type == INST_TYPE_TAUINST && isCuFile( src_file ) );
-    assert( !skip_tauinst || Config.uses_openmp );
+    std::string src_file = mod_file.src_file;
 
     std::string::size_type si;
 
@@ -1355,31 +1537,42 @@ doWrap()
 
       // add path to empty omp.h and macro definition '_OPENMP' to preprocessor
       // flags, if OpenMP is enabled
-      if( Config.uses_openmp )
+      if( Config.uses_openmp &&
+          i == 0 /* only once! */ )
       {
         Config.addPrepFlag( std::string( "-I" ) +
           vt_installdirs_get( VT_INSTALLDIR_DATADIR ) +
           " -D_OPENMP" );
       }
 
-      // compose C preprocessor command
+      // run preprocessor or reuse existing output file
       //
-      cmd =
-        Config.prep_cmd + " " +
-        Config.prep_flags + " " +
-        src_file + " " +
-        " -o " + cpp_file;
+      if( !Config.reuse_files || access( cpp_file.c_str(), R_OK ) != 0 )
+      {
+        // compose C preprocessor command
+        //
+        cmd =
+          Config.prep_cmd + " " +
+          Config.prep_flags + " " +
+          src_file + " " +
+          " -o " + cpp_file;
 
-      // show/execute C preprocessor command
-      if( ( rc = showOrExecuteCommand( cmd ) ) != 0 )
-        return rc;
-
+        // show/execute C preprocessor command
+        if( ( rc = showOrExecuteCommand( cmd ) ) != 0 )
+          return rc;
+      }
+      else
+      {
+        if( Config.be_verbose )
+          std::cout << "+++ reuse existing " << cpp_file << std::endl;
+      }
+      
       src_file = cpp_file;
     }
 
     // run OPARI command on source file
     //
-    if( Config.uses_openmp )
+    if( ( mod_file.action_flags & ModFileS::MOD_ACTION_FLAG_OPARI ) != 0 )
     {
       // create output file name of OPARI
       //
@@ -1438,7 +1631,7 @@ doWrap()
 
     // run PDT parser and TAU instrumentor command on source file
     //
-    if( Config.inst_type == INST_TYPE_TAUINST && !skip_tauinst )
+    if( ( mod_file.action_flags & ModFileS::MOD_ACTION_FLAG_TAUINST ) != 0 )
     {
       // create output file name of the PDT parser
       //
@@ -1552,7 +1745,7 @@ doWrap()
       assert( si != std::string::npos );
       obj_file = obj_file.substr( 0, si ) + ".o";
 
-      obj_files_to_rename[obj_file] = Config.mod_files[i].second;
+      obj_files_to_rename[obj_file] = mod_file.obj_file;
     }
   }
 
@@ -1617,7 +1810,8 @@ doWrap()
   {
     std::string vtlib;
 
-    if( Config.uses_openmp )
+    if( Config.uses_openmp &&
+        access( Config.opari_tabfile.first.c_str(), R_OK ) == 0 )
     {
       // compose command for compiling OPARI table file
       //
@@ -1826,6 +2020,22 @@ showUsage()
             << std::endl
             << "      default: " << Config.getInstTypeName() << std::endl
             << std::endl
+            << "     -vt:inst-exclude-file-list <file>[,file,...]" << std::endl
+            << "                         Set list of source files to be excluded from the" << std::endl
+            << "                         automatic instrumentation by the compiler or PDT/TAU." << std::endl
+            << "                         (file names can contain wildcards)" << std::endl
+            << std::endl
+            << "     -vt:inst-exclude-file <file>" << std::endl
+            << "                         Set pathname of file containing a list of source files" << std::endl
+            << "                         to be excluded from the automatic instrumentation by" << std::endl
+            << "                         the compiler or PDT/TAU." << std::endl
+            << "                         (file names can contain wildcards, one file name per" << std::endl
+            << "                          line)" << std::endl
+            << std::endl
+            << "      Note when using an exclusion list for automatic compiler instrumentation:" << std::endl
+            << "      If a source file from the exclusion list is involved in a compile step," << std::endl
+            << "      the instrumentation is disabled for this step." << std::endl
+            << std::endl
             << "     -vt:opari <[!]args> Set/add options for the OPARI command." << std::endl
             << "                         (see " << vt_installdirs_get(VT_INSTALLDIR_DATADIR) << "/doc/opari/Readme.html for more information, default: " << Config.opari_args << ")" << std::endl
             << std::endl
@@ -1836,6 +2046,18 @@ showUsage()
             << "     -vt:opari-table <file>" << std::endl
             << "                         Set pathname of the OPARI runtime table file." << std::endl
             << "                         (default: " << ConfigS::DEFAULT_OPARI_TABFILE().first << ")" << std::endl
+            << std::endl
+            << "     -vt:opari-exclude-file-list <file>[,file,...]" << std::endl
+            << "                         Set list of source files to be excluded from the" << std::endl
+            << "                         instrumentation of OpenMP constructs by OPARI." << std::endl
+            << "                         (file names can contain wildcards)" << std::endl
+            << std::endl
+            << "     -vt:opari-exclude-file <file>" << std::endl
+            << "                         Set pathname of file containing a list of source files" << std::endl
+            << "                         to be excluded from the instrumentation of OpenMP" << std::endl
+            << "                         constructs by OPARI." << std::endl
+            << "                         (file names can contain wildcards, one file name per" << std::endl
+            << "                          line)" << std::endl
             << std::endl
             << "     -vt:noopari         Disable instrumentation of OpenMP contructs by OPARI." << std::endl
             << std::endl
@@ -2120,70 +2342,87 @@ ConfigS::addCompilerLib( const std::string& lib )
 void
 ConfigS::addModSrcFile( const std::string& file )
 {
-  // skip *.cu source files for TAU instrumentation
-  //
-  const bool skip_tauinst =
-    ( Config.inst_type == INST_TYPE_TAUINST && isCuFile( file ) );
-  if( skip_tauinst )
-  {
-    std::cerr << "Warning: Skip " << file << " for instrumenting with "
-              << "PDT/TAU - not yet supported." << std::endl;
+  int mod_action_flags = 0;
 
-    // just add unmodified source file name to compiler arguments, if there
-    // is also nothing to do for OPARI
+  // perform OPARI instrumentation?
+  //
+  if( uses_openmp && !isFileExcluded( opari_excl_files, file ) )
+    mod_action_flags |= ModFileS::MOD_ACTION_FLAG_OPARI;
+
+  // perform TAU instrumentation?
+  //
+  if( Config.inst_type == INST_TYPE_TAUINST )
+  {
+    // skip CUDA (*.cu) source files for now
     //
-    if( !uses_openmp )
+    if( isCuFile( file ) )
     {
-      addCompilerArg( file );
-      return;
+      std::cerr << "Warning: Skip " << file << " for instrumenting with "
+                << "PDT/TAU - not yet supported." << std::endl;
+    }
+    else
+    {
+      mod_action_flags |= ModFileS::MOD_ACTION_FLAG_TAUINST;
     }
   }
 
-  std::string file_base;
-  std::string file_obj;
-  std::string::size_type si;
-
-  // get base name of source file
+  // add unmodified source file name to compiler arguments, if there
+  // is nothing to do for OPARI and TAU
   //
-  file_base = file;
-  si = file.rfind( '/' );
-  if( si != std::string::npos )
-    file_base = file.substr( si+1 );
-
-  // create object file name of source file
+  if( !mod_action_flags )
+  {
+    addCompilerArg( file );
+  }
+  // otherwise, register source file for processing by OPARI and/or TAU
   //
-  si = file_base.rfind( '.' );
-  assert( si != std::string::npos );
-  file_obj = file_base.substr( 0, si ) + ".o";
+  else
+  {
+    std::string file_base;
+    std::string file_obj;
+    std::string::size_type si;
 
-  // store source/object file name for later processing by OPARI and/or TAU
-  mod_files.push_back( std::make_pair( file, file_obj ) );
+    // get base name of source file
+    //
+    file_base = file;
+    si = file.rfind( '/' );
+    if( si != std::string::npos )
+      file_base = file.substr( si+1 );
 
-  // add modified source file name to compiler arguments
-  //
+    // create object file name of source file
+    //
+    si = file_base.rfind( '.' );
+    assert( si != std::string::npos );
+    file_obj = file_base.substr( 0, si ) + ".o";
 
-  si = file.rfind( '.' );
-  assert( si != std::string::npos );
+    // store source/object file and modification action flags
+    mod_files.push_back( ModFileS( file, file_obj, mod_action_flags ) );
 
-  std::string base = file.substr( 0, si );
-  std::string suffix = file.substr( si );
-  std::string mod_file = base;
+    // add modified source file name to compiler arguments
+    //
 
-  if( preprocess )
-    mod_file += ".cpp";
-  if( uses_openmp )
-    mod_file += ".pomp";
-  if( inst_type == INST_TYPE_TAUINST && !skip_tauinst )
-    mod_file += ".tau";
+    si = file.rfind( '.' );
+    assert( si != std::string::npos );
 
-  // convert Fortran source file suffix to upper case, in order to
-  // invoke the C preprocessor before compiling
-  if( fortran() && suffix.compare( 0, 2, ".f" ) == 0 )
-    suffix.replace( 0, 2, ".F" );
+    std::string base = file.substr( 0, si );
+    std::string suffix = file.substr( si );
+    std::string mod_file = base;
 
-  mod_file += suffix;
+    if( preprocess )
+      mod_file += ".cpp";
+    if( ( mod_action_flags & ModFileS::MOD_ACTION_FLAG_OPARI ) != 0 )
+      mod_file += ".pomp";
+    if( ( mod_action_flags & ModFileS::MOD_ACTION_FLAG_TAUINST ) != 0 )
+      mod_file += ".tau";
 
-  addCompilerArg( mod_file );
+    // convert Fortran source file suffix to upper case, in order to
+    // invoke the C preprocessor before compiling
+    if( fortran() && suffix.compare( 0, 2, ".f" ) == 0 )
+      suffix.replace( 0, 2, ".F" );
+
+    mod_file += suffix;
+
+    addCompilerArg( mod_file );
+  }
 }
 
 void
@@ -2406,4 +2645,45 @@ bool
 ConfigS::isInstAvail( const InstTypeT type ) const
 {
   return ( inst_avail & type );
+}
+
+bool
+ConfigS::isFileExcluded( const std::vector<std::string>& excls,
+  const std::string& file ) const
+{
+  for( std::vector<std::string>::const_iterator it = excls.begin();
+       it != excls.end(); ++it )
+  {
+    if( fnmatch( it->c_str(), file.c_str(), 0 ) == 0 )
+      return true;
+  }
+
+  return false;
+}
+
+bool
+ConfigS::readExclFile( const std::string& file,
+  std::vector<std::string>& excls ) const
+{
+  std::ifstream in( file.c_str() );
+  if( !in )
+  {
+    std::cerr << ExeName << ": Error: Could not open exclusion file "
+              << file << ". Aborting." << std::endl;
+    return false;
+  }
+
+  char buffer[1024];
+
+  while( in.getline( buffer, sizeof( buffer ) ) )
+  {
+    std::string line = buffer;
+    trimString( line );
+    if( line.length() > 0 )
+      excls.push_back( line );
+  }
+
+  in.close();
+
+  return true;
 }

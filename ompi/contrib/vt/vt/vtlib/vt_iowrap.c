@@ -40,7 +40,7 @@
 #include "vt_env.h"
 #include "vt_error.h"
 #include "vt_libwrap.h"
-#include "vt_memhook.h"
+#include "vt_mallocwrap.h"
 #include "vt_pform.h"
 #include "vt_trc.h"
 #include "vt_thrd.h"
@@ -174,7 +174,7 @@ void vt_iowrap_init()
 {
 	static int lib_inited = 0;
 
-	vt_debug_msg(DBG_INIT, "iowrap_init: init check");
+	vt_cntl_msg(DBG_INIT, "iowrap_init: init check");
 	if (lib_inited)
 		return;
 	lib_inited = 1;
@@ -296,7 +296,7 @@ void vt_iowrap_init()
 
 void vt_iowrap_reg()
 {
-	vt_debug_msg(DBG_INIT, "iowrap_reg: vt_def_scl_file()");
+	vt_cntl_msg(DBG_INIT, "iowrap_reg: vt_def_scl_file()");
 	vt_fid = vt_def_scl_file( VT_CURRENT_THREAD, "I/O" );
 
 	VT_IOWRAP_REG_FUNC(open);
@@ -431,11 +431,11 @@ int open(const char *path, int flags, ...)
 	   if not, executes the I/O function and returns */
 	VT_IOWRAP_CHECK_TRACING3(ret, path, flags, mode);
 
-	vt_debug_msg(DBG_IO, stringify(VT_IOWRAP_THISFUNCNAME) ": %s, %i", path, mode);
+	vt_cntl_msg(DBG_IO, stringify(VT_IOWRAP_THISFUNCNAME) ": %s, %i", path, mode);
 
 	VT_IOWRAP_ENTER_IOFUNC();
 
-	vt_debug_msg(DBG_IO, "real_" stringify(VT_IOWRAP_THISFUNCNAME));
+	vt_cntl_msg(DBG_IO, "real_" stringify(VT_IOWRAP_THISFUNCNAME));
 	VT_IOWRAP_CALL_LIBFUNC3(VT_IOWRAP_THISFUNCNAME, ret, path, flags, mode);
 
 	VT_IOWRAP_MAP_OPENFLAGSEXT( flags, mode);
@@ -472,11 +472,11 @@ int open64(const char *path, int flags, ...)
 
 	VT_IOWRAP_CHECK_TRACING3(ret, path, flags, mode);
 
-	vt_debug_msg(DBG_IO, stringify(VT_IOWRAP_THISFUNCNAME) ": %s", path);
+	vt_cntl_msg(DBG_IO, stringify(VT_IOWRAP_THISFUNCNAME) ": %s", path);
 
 	VT_IOWRAP_ENTER_IOFUNC();
 
-	vt_debug_msg(DBG_IO, "real_" stringify(VT_IOWRAP_THISFUNCNAME));
+	vt_cntl_msg(DBG_IO, "real_" stringify(VT_IOWRAP_THISFUNCNAME));
 	VT_IOWRAP_CALL_LIBFUNC3(VT_IOWRAP_THISFUNCNAME, ret, path, flags, mode);
 
 	VT_IOWRAP_MAP_OPENFLAGSEXT( flags, mode);
@@ -500,11 +500,11 @@ int creat(const char *path, mode_t mode)
 
 	VT_IOWRAP_CHECK_TRACING2(ret, path, mode);
 
-	vt_debug_msg(DBG_IO, stringify(VT_IOWRAP_THISFUNCNAME) ": %s", path);
+	vt_cntl_msg(DBG_IO, stringify(VT_IOWRAP_THISFUNCNAME) ": %s", path);
 
 	VT_IOWRAP_ENTER_IOFUNC();
 
-	vt_debug_msg(DBG_IO, "real_" stringify(VT_IOWRAP_THISFUNCNAME));
+	vt_cntl_msg(DBG_IO, "real_" stringify(VT_IOWRAP_THISFUNCNAME));
 	VT_IOWRAP_CALL_LIBFUNC2(VT_IOWRAP_THISFUNCNAME, ret, path, mode);
 
 	VT_IOWRAP_MAP_OPENFLAGSEXT( dummy, mode);
@@ -528,11 +528,11 @@ int creat64(const char *path, mode_t mode)
 
 	VT_IOWRAP_CHECK_TRACING2(ret, path, mode);
 
-	vt_debug_msg(DBG_IO, stringify(VT_IOWRAP_THISFUNCNAME) ": %s", path);
+	vt_cntl_msg(DBG_IO, stringify(VT_IOWRAP_THISFUNCNAME) ": %s", path);
 
 	VT_IOWRAP_ENTER_IOFUNC();
 
-	vt_debug_msg(DBG_IO, "real_" stringify(VT_IOWRAP_THISFUNCNAME));
+	vt_cntl_msg(DBG_IO, "real_" stringify(VT_IOWRAP_THISFUNCNAME));
 	VT_IOWRAP_CALL_LIBFUNC2(VT_IOWRAP_THISFUNCNAME, ret, path, mode);
 
 	VT_IOWRAP_MAP_OPENFLAGSEXT( dummy, mode);
@@ -554,11 +554,11 @@ int dup(int oldfd)
 
 	VT_IOWRAP_CHECK_TRACING1(ret, oldfd);
 
-	vt_debug_msg(DBG_IO, stringify(VT_IOWRAP_THISFUNCNAME) ": %i", oldfd);
+	vt_cntl_msg(DBG_IO, stringify(VT_IOWRAP_THISFUNCNAME) ": %i", oldfd);
 
 	VT_IOWRAP_ENTER_IOFUNC();
 
-	vt_debug_msg(DBG_IO, "real_" stringify(VT_IOWRAP_THISFUNCNAME));
+	vt_cntl_msg(DBG_IO, "real_" stringify(VT_IOWRAP_THISFUNCNAME));
 	VT_IOWRAP_CALL_LIBFUNC1(VT_IOWRAP_THISFUNCNAME, ret, oldfd);
 
 	VT_IOWRAP_LEAVE_IOFUNC_DUP( ret==-1, oldfd, ret);
@@ -578,11 +578,11 @@ int dup2(int oldfd, int newfd)
 
 	VT_IOWRAP_CHECK_TRACING2(ret, oldfd, newfd);
 
-	vt_debug_msg(DBG_IO, stringify(VT_IOWRAP_THISFUNCNAME) ": %i, %i", oldfd, newfd);
+	vt_cntl_msg(DBG_IO, stringify(VT_IOWRAP_THISFUNCNAME) ": %i, %i", oldfd, newfd);
 
 	VT_IOWRAP_ENTER_IOFUNC();
 
-	vt_debug_msg(DBG_IO, "real_" stringify(VT_IOWRAP_THISFUNCNAME));
+	vt_cntl_msg(DBG_IO, "real_" stringify(VT_IOWRAP_THISFUNCNAME));
 	VT_IOWRAP_CALL_LIBFUNC2(VT_IOWRAP_THISFUNCNAME, ret, oldfd, newfd);
 
 	VT_IOWRAP_LEAVE_IOFUNC_DUP( ret!=newfd, oldfd, ret);
@@ -602,11 +602,11 @@ int close(int fd)
 
 	VT_IOWRAP_CHECK_TRACING1(ret, fd);
 
-	vt_debug_msg(DBG_IO, stringify(VT_IOWRAP_THISFUNCNAME) ": %i", fd);
+	vt_cntl_msg(DBG_IO, stringify(VT_IOWRAP_THISFUNCNAME) ": %i", fd);
 
 	VT_IOWRAP_ENTER_IOFUNC();
 
-	vt_debug_msg(DBG_IO, "real_" stringify(VT_IOWRAP_THISFUNCNAME));
+	vt_cntl_msg(DBG_IO, "real_" stringify(VT_IOWRAP_THISFUNCNAME));
 	VT_IOWRAP_CALL_LIBFUNC1(VT_IOWRAP_THISFUNCNAME, ret, fd);
 
 	VT_IOWRAP_LEAVE_IOFUNC( ret==-1, fd);
@@ -626,11 +626,11 @@ off_t lseek(int fd, off_t offset, int whence)
 
 	VT_IOWRAP_CHECK_TRACING3(ret, fd, offset, whence);
 
-	vt_debug_msg(DBG_IO, stringify(VT_IOWRAP_THISFUNCNAME) ": %i, " OFF_T_STRARG ", %i", fd, offset, whence);
+	vt_cntl_msg(DBG_IO, stringify(VT_IOWRAP_THISFUNCNAME) ": %i, " OFF_T_STRARG ", %i", fd, offset, whence);
 
 	VT_IOWRAP_ENTER_IOFUNC();
 
-	vt_debug_msg(DBG_IO, "real_" stringify(VT_IOWRAP_THISFUNCNAME));
+	vt_cntl_msg(DBG_IO, "real_" stringify(VT_IOWRAP_THISFUNCNAME));
 	VT_IOWRAP_CALL_LIBFUNC3(VT_IOWRAP_THISFUNCNAME, ret, fd, offset, whence);
 
 	VT_IOWRAP_2_EXTENDED_ARGUMENTS( key_type_offset, offset, key_type_whence, whence);
@@ -652,11 +652,11 @@ off64_t lseek64(int fd, off64_t offset, int whence)
 
 	VT_IOWRAP_CHECK_TRACING3(ret, fd, offset, whence);
 
-	vt_debug_msg(DBG_IO, stringify(VT_IOWRAP_THISFUNCNAME) ": %i, %lli, %i", fd, (long long)offset, whence);
+	vt_cntl_msg(DBG_IO, stringify(VT_IOWRAP_THISFUNCNAME) ": %i, %lli, %i", fd, (long long)offset, whence);
 
 	VT_IOWRAP_ENTER_IOFUNC();
 
-	vt_debug_msg(DBG_IO, "real_" stringify(VT_IOWRAP_THISFUNCNAME));
+	vt_cntl_msg(DBG_IO, "real_" stringify(VT_IOWRAP_THISFUNCNAME));
 	VT_IOWRAP_CALL_LIBFUNC3(VT_IOWRAP_THISFUNCNAME, ret, fd, offset, whence);
 
 	VT_IOWRAP_2_EXTENDED_ARGUMENTS( key_type_offset, offset, key_type_whence, whence);
@@ -678,11 +678,11 @@ ssize_t read(int fd, void *buf, size_t count)
 
 	VT_IOWRAP_CHECK_TRACING3(ret, fd, buf, count);
 
-	vt_debug_msg(DBG_IO, stringify(VT_IOWRAP_THISFUNCNAME) ": %i, %zu", fd, count);
+	vt_cntl_msg(DBG_IO, stringify(VT_IOWRAP_THISFUNCNAME) ": %i, %zu", fd, count);
 
 	VT_IOWRAP_ENTER_IOFUNC();
 
-	vt_debug_msg(DBG_IO, "real_" stringify(VT_IOWRAP_THISFUNCNAME));
+	vt_cntl_msg(DBG_IO, "real_" stringify(VT_IOWRAP_THISFUNCNAME));
 	VT_IOWRAP_CALL_LIBFUNC3(VT_IOWRAP_THISFUNCNAME, ret, fd, buf, count);
 	num_bytes = ret;
 
@@ -703,11 +703,11 @@ ssize_t write(int fd, const void *buf, size_t count)
 
 	VT_IOWRAP_CHECK_TRACING3(ret, fd, buf, count);
 
-	vt_debug_msg(DBG_IO, stringify(VT_IOWRAP_THISFUNCNAME) ": %i, %zu", fd, count);
+	vt_cntl_msg(DBG_IO, stringify(VT_IOWRAP_THISFUNCNAME) ": %i, %zu", fd, count);
 
 	VT_IOWRAP_ENTER_IOFUNC();
 
-	vt_debug_msg(DBG_IO, "real_" stringify(VT_IOWRAP_THISFUNCNAME));
+	vt_cntl_msg(DBG_IO, "real_" stringify(VT_IOWRAP_THISFUNCNAME));
 	VT_IOWRAP_CALL_LIBFUNC3(VT_IOWRAP_THISFUNCNAME, ret, fd, buf, count);
 	num_bytes = ret;
 
@@ -728,11 +728,11 @@ ssize_t readv(int fd, const struct iovec *iov, int count)
 
 	VT_IOWRAP_CHECK_TRACING3(ret, fd, iov, count);
 
-	vt_debug_msg(DBG_IO, stringify(VT_IOWRAP_THISFUNCNAME) ": %i, %i iovecs", fd, count);
+	vt_cntl_msg(DBG_IO, stringify(VT_IOWRAP_THISFUNCNAME) ": %i, %i iovecs", fd, count);
 
 	VT_IOWRAP_ENTER_IOFUNC();
 
-	vt_debug_msg(DBG_IO, "real_" stringify(VT_IOWRAP_THISFUNCNAME));
+	vt_cntl_msg(DBG_IO, "real_" stringify(VT_IOWRAP_THISFUNCNAME));
 	VT_IOWRAP_CALL_LIBFUNC3(VT_IOWRAP_THISFUNCNAME, ret, fd, iov, count);
 	num_bytes = ret;
 
@@ -753,11 +753,11 @@ ssize_t writev(int fd, const struct iovec *iov, int count)
 
 	VT_IOWRAP_CHECK_TRACING3(ret, fd, iov, count);
 
-	vt_debug_msg(DBG_IO, stringify(VT_IOWRAP_THISFUNCNAME) ": %i, %i iovecs", fd, count);
+	vt_cntl_msg(DBG_IO, stringify(VT_IOWRAP_THISFUNCNAME) ": %i, %i iovecs", fd, count);
 
 	VT_IOWRAP_ENTER_IOFUNC();
 
-	vt_debug_msg(DBG_IO, "real_" stringify(VT_IOWRAP_THISFUNCNAME));
+	vt_cntl_msg(DBG_IO, "real_" stringify(VT_IOWRAP_THISFUNCNAME));
 	VT_IOWRAP_CALL_LIBFUNC3(VT_IOWRAP_THISFUNCNAME, ret, fd, iov, count);
 	num_bytes = ret;
 
@@ -778,11 +778,11 @@ ssize_t pread(int fd, void *buf, size_t count, off_t offset)
 
 	VT_IOWRAP_CHECK_TRACING4(ret, fd, buf, count, offset);
 
-	vt_debug_msg(DBG_IO, stringify(VT_IOWRAP_THISFUNCNAME) ": %i, %zu, " OFF_T_STRARG, fd, count, offset);
+	vt_cntl_msg(DBG_IO, stringify(VT_IOWRAP_THISFUNCNAME) ": %i, %zu, " OFF_T_STRARG, fd, count, offset);
 
 	VT_IOWRAP_ENTER_IOFUNC();
 
-	vt_debug_msg(DBG_IO, "real_" stringify(VT_IOWRAP_THISFUNCNAME));
+	vt_cntl_msg(DBG_IO, "real_" stringify(VT_IOWRAP_THISFUNCNAME));
 	VT_IOWRAP_CALL_LIBFUNC4(VT_IOWRAP_THISFUNCNAME, ret, fd, buf, count, offset);
 	num_bytes = ret;
 
@@ -804,11 +804,11 @@ ssize_t pwrite(int fd, const void *buf, size_t count, off_t offset)
 
 	VT_IOWRAP_CHECK_TRACING4(ret, fd, buf, count, offset);
 
-	vt_debug_msg(DBG_IO, stringify(VT_IOWRAP_THISFUNCNAME) ": %i, %zu, " OFF_T_STRARG, fd, count, offset);
+	vt_cntl_msg(DBG_IO, stringify(VT_IOWRAP_THISFUNCNAME) ": %i, %zu, " OFF_T_STRARG, fd, count, offset);
 
 	VT_IOWRAP_ENTER_IOFUNC();
 
-	vt_debug_msg(DBG_IO, "real_" stringify(VT_IOWRAP_THISFUNCNAME));
+	vt_cntl_msg(DBG_IO, "real_" stringify(VT_IOWRAP_THISFUNCNAME));
 	VT_IOWRAP_CALL_LIBFUNC4(VT_IOWRAP_THISFUNCNAME, ret, fd, buf, count, offset);
 	num_bytes = ret;
 
@@ -831,11 +831,11 @@ ssize_t pread64(int fd, void *buf, size_t count, off64_t offset)
 
 	VT_IOWRAP_CHECK_TRACING4(ret, fd, buf, count, offset);
 
-	vt_debug_msg(DBG_IO, stringify(VT_IOWRAP_THISFUNCNAME) ": %i, %zu, %lli", fd, count, (long long)offset);
+	vt_cntl_msg(DBG_IO, stringify(VT_IOWRAP_THISFUNCNAME) ": %i, %zu, %lli", fd, count, (long long)offset);
 
 	VT_IOWRAP_ENTER_IOFUNC();
 
-	vt_debug_msg(DBG_IO, "real_" stringify(VT_IOWRAP_THISFUNCNAME));
+	vt_cntl_msg(DBG_IO, "real_" stringify(VT_IOWRAP_THISFUNCNAME));
 	VT_IOWRAP_CALL_LIBFUNC4(VT_IOWRAP_THISFUNCNAME, ret, fd, buf, count, offset);
 	num_bytes = ret;
 
@@ -859,11 +859,11 @@ ssize_t pwrite64(int fd, const void *buf, size_t count, off64_t offset)
 
 	VT_IOWRAP_CHECK_TRACING4(ret, fd, buf, count, offset);
 
-	vt_debug_msg(DBG_IO, stringify(VT_IOWRAP_THISFUNCNAME) ": %i, %zu, %lli", fd, count, (long long)offset);
+	vt_cntl_msg(DBG_IO, stringify(VT_IOWRAP_THISFUNCNAME) ": %i, %zu, %lli", fd, count, (long long)offset);
 
 	VT_IOWRAP_ENTER_IOFUNC();
 
-	vt_debug_msg(DBG_IO, "real_" stringify(VT_IOWRAP_THISFUNCNAME));
+	vt_cntl_msg(DBG_IO, "real_" stringify(VT_IOWRAP_THISFUNCNAME));
 	VT_IOWRAP_CALL_LIBFUNC4(VT_IOWRAP_THISFUNCNAME, ret, fd, buf, count, offset);
 	num_bytes = ret;
 
@@ -888,11 +888,11 @@ FILE *fopen(const char *path, const char *mode)
 
 	VT_IOWRAP_CHECK_TRACING2(ret, path, mode);
 
-	vt_debug_msg(DBG_IO, stringify(VT_IOWRAP_THISFUNCNAME) ": %s, %s", path, mode);
+	vt_cntl_msg(DBG_IO, stringify(VT_IOWRAP_THISFUNCNAME) ": %s, %s", path, mode);
 
 	VT_IOWRAP_ENTER_IOFUNC();
 
-	vt_debug_msg(DBG_IO, "real_" stringify(VT_IOWRAP_THISFUNCNAME));
+	vt_cntl_msg(DBG_IO, "real_" stringify(VT_IOWRAP_THISFUNCNAME));
 	VT_IOWRAP_CALL_LIBFUNC2(VT_IOWRAP_THISFUNCNAME, ret, path, mode);
         tmp=(ret!=NULL) ? fileno(ret): 0;
 
@@ -917,11 +917,11 @@ FILE *fopen64(const char *path, const char *mode)
 
 	VT_IOWRAP_CHECK_TRACING2(ret, path, mode);
 
-	vt_debug_msg(DBG_IO, stringify(VT_IOWRAP_THISFUNCNAME) ": %s, %s", path, mode);
+	vt_cntl_msg(DBG_IO, stringify(VT_IOWRAP_THISFUNCNAME) ": %s, %s", path, mode);
 
 	VT_IOWRAP_ENTER_IOFUNC();
 
-	vt_debug_msg(DBG_IO, "real_" stringify(VT_IOWRAP_THISFUNCNAME));
+	vt_cntl_msg(DBG_IO, "real_" stringify(VT_IOWRAP_THISFUNCNAME));
 	VT_IOWRAP_CALL_LIBFUNC2(VT_IOWRAP_THISFUNCNAME, ret, path, mode);
         tmp=(ret!=NULL) ? fileno(ret): 0;
 
@@ -944,11 +944,11 @@ FILE *fdopen(int fd, const char *mode)
 
 	VT_IOWRAP_CHECK_TRACING2(ret, fd, mode);
 
-	vt_debug_msg(DBG_IO, stringify(VT_IOWRAP_THISFUNCNAME) ": %i, %s", fd, mode);
+	vt_cntl_msg(DBG_IO, stringify(VT_IOWRAP_THISFUNCNAME) ": %i, %s", fd, mode);
 
 	VT_IOWRAP_ENTER_IOFUNC();
 
-	vt_debug_msg(DBG_IO, "real_" stringify(VT_IOWRAP_THISFUNCNAME));
+	vt_cntl_msg(DBG_IO, "real_" stringify(VT_IOWRAP_THISFUNCNAME));
 	VT_IOWRAP_CALL_LIBFUNC2(VT_IOWRAP_THISFUNCNAME, ret, fd, mode);
 
 	VT_IOWRAP_LEAVE_IOFUNC( ret==NULL, fd );
@@ -969,13 +969,13 @@ int fclose(FILE *stream)
 
 	VT_IOWRAP_CHECK_TRACING1(ret, stream);
 
-	vt_debug_msg(DBG_IO, stringify(VT_IOWRAP_THISFUNCNAME) ": %i",
+	vt_cntl_msg(DBG_IO, stringify(VT_IOWRAP_THISFUNCNAME) ": %i",
 		stream != NULL ? fileno(stream) : -1);
 
 	VT_IOWRAP_ENTER_IOFUNC();
 
         tmp = (stream!=NULL) ? fileno(stream) : 0;
-	vt_debug_msg(DBG_IO, "real_" stringify(VT_IOWRAP_THISFUNCNAME));
+	vt_cntl_msg(DBG_IO, "real_" stringify(VT_IOWRAP_THISFUNCNAME));
 	VT_IOWRAP_CALL_LIBFUNC1(VT_IOWRAP_THISFUNCNAME, ret, stream);
 
 	VT_IOWRAP_LEAVE_IOFUNC( ret!=0, tmp );
@@ -996,13 +996,13 @@ int fseek(FILE *stream, long offset, int whence)
 
 	VT_IOWRAP_CHECK_TRACING3(ret, stream, offset, whence);
 
-	vt_debug_msg(DBG_IO, stringify(VT_IOWRAP_THISFUNCNAME) ": %i, %li, %i",
+	vt_cntl_msg(DBG_IO, stringify(VT_IOWRAP_THISFUNCNAME) ": %i, %li, %i",
 	 	stream != NULL ? fileno(stream) : -1,
 	 	offset, whence);
 
 	VT_IOWRAP_ENTER_IOFUNC();
 
-	vt_debug_msg(DBG_IO, "real_" stringify(VT_IOWRAP_THISFUNCNAME));
+	vt_cntl_msg(DBG_IO, "real_" stringify(VT_IOWRAP_THISFUNCNAME));
 	VT_IOWRAP_CALL_LIBFUNC3(VT_IOWRAP_THISFUNCNAME, ret, stream, offset, whence);
         tmp=(stream!=NULL) ? fileno(stream): 0;
 
@@ -1026,13 +1026,13 @@ int fseeko(FILE *stream, off_t offset, int whence)
 
 	VT_IOWRAP_CHECK_TRACING3(ret, stream, offset, whence);
 
-	vt_debug_msg(DBG_IO, stringify(VT_IOWRAP_THISFUNCNAME) ": %i, " OFF_T_STRARG ", %i",
+	vt_cntl_msg(DBG_IO, stringify(VT_IOWRAP_THISFUNCNAME) ": %i, " OFF_T_STRARG ", %i",
 	 	stream != NULL ? fileno(stream) : -1,
 	 	offset, whence);
 
 	VT_IOWRAP_ENTER_IOFUNC();
 
-	vt_debug_msg(DBG_IO, "real_" stringify(VT_IOWRAP_THISFUNCNAME));
+	vt_cntl_msg(DBG_IO, "real_" stringify(VT_IOWRAP_THISFUNCNAME));
 	VT_IOWRAP_CALL_LIBFUNC3(VT_IOWRAP_THISFUNCNAME, ret, stream, offset, whence);
         tmp=(stream!=NULL) ? fileno(stream): 0;
 
@@ -1057,13 +1057,13 @@ int fseeko64(FILE *stream, off64_t offset, int whence)
 
 	VT_IOWRAP_CHECK_TRACING3(ret, stream, offset, whence);
 
-	vt_debug_msg(DBG_IO, stringify(VT_IOWRAP_THISFUNCNAME) ": %i, %lli, %i",
+	vt_cntl_msg(DBG_IO, stringify(VT_IOWRAP_THISFUNCNAME) ": %i, %lli, %i",
 	 	stream != NULL ? fileno(stream) : -1,
 	 	(long long)offset, whence);
 
 	VT_IOWRAP_ENTER_IOFUNC();
 
-	vt_debug_msg(DBG_IO, "real_" stringify(VT_IOWRAP_THISFUNCNAME));
+	vt_cntl_msg(DBG_IO, "real_" stringify(VT_IOWRAP_THISFUNCNAME));
 	VT_IOWRAP_CALL_LIBFUNC3(VT_IOWRAP_THISFUNCNAME, ret, stream, offset, whence);
         tmp=(stream!=NULL) ? fileno(stream): 0;
 
@@ -1086,12 +1086,12 @@ void rewind(FILE *stream)
 
 	VT_IOWRAP_CHECK_TRACING_VOID1(stream);
 
-	vt_debug_msg(DBG_IO, stringify(VT_IOWRAP_THISFUNCNAME) ": %i",
+	vt_cntl_msg(DBG_IO, stringify(VT_IOWRAP_THISFUNCNAME) ": %i",
 	 	stream != NULL ? fileno(stream) : -1 );
 
 	VT_IOWRAP_ENTER_IOFUNC();
 
-	vt_debug_msg(DBG_IO, "real_" stringify(VT_IOWRAP_THISFUNCNAME));
+	vt_cntl_msg(DBG_IO, "real_" stringify(VT_IOWRAP_THISFUNCNAME));
 	VT_IOWRAP_CALL_LIBFUNC_VOID1(VT_IOWRAP_THISFUNCNAME, stream);
         tmp=(stream!=NULL) ? fileno(stream): 0;
 
@@ -1110,12 +1110,12 @@ int fsetpos(FILE *stream, const fpos_t *pos) {
 
 	VT_IOWRAP_CHECK_TRACING2(ret, stream, pos);
 
-	vt_debug_msg(DBG_IO, stringify(VT_IOWRAP_THISFUNCNAME) ": %i",
+	vt_cntl_msg(DBG_IO, stringify(VT_IOWRAP_THISFUNCNAME) ": %i",
 	 	stream != NULL ? fileno(stream) : -1);
 
 	VT_IOWRAP_ENTER_IOFUNC();
 
-	vt_debug_msg(DBG_IO, "real_" stringify(VT_IOWRAP_THISFUNCNAME));
+	vt_cntl_msg(DBG_IO, "real_" stringify(VT_IOWRAP_THISFUNCNAME));
 	VT_IOWRAP_CALL_LIBFUNC2(VT_IOWRAP_THISFUNCNAME, ret, stream, pos);
         tmp=(stream!=NULL) ? fileno(stream): 0;
 
@@ -1137,12 +1137,12 @@ int fsetpos64(FILE *stream, const fpos64_t *pos) {
 
 	VT_IOWRAP_CHECK_TRACING2(ret, stream, pos);
 
-	vt_debug_msg(DBG_IO, stringify(VT_IOWRAP_THISFUNCNAME) ": %i",
+	vt_cntl_msg(DBG_IO, stringify(VT_IOWRAP_THISFUNCNAME) ": %i",
 	 	stream != NULL ? fileno(stream) : -1);
 
 	VT_IOWRAP_ENTER_IOFUNC();
 
-	vt_debug_msg(DBG_IO, "real_" stringify(VT_IOWRAP_THISFUNCNAME));
+	vt_cntl_msg(DBG_IO, "real_" stringify(VT_IOWRAP_THISFUNCNAME));
 	VT_IOWRAP_CALL_LIBFUNC2(VT_IOWRAP_THISFUNCNAME, ret, stream, pos);
         tmp=(stream!=NULL) ? fileno(stream): 0;
 
@@ -1164,13 +1164,13 @@ size_t fread(void *buf, size_t size, size_t nmemb, FILE *stream)
 
 	VT_IOWRAP_CHECK_TRACING4(ret, buf, size, nmemb, stream);
 
-	vt_debug_msg(DBG_IO, stringify(VT_IOWRAP_THISFUNCNAME) ": %i, %zu x %zu", 
+	vt_cntl_msg(DBG_IO, stringify(VT_IOWRAP_THISFUNCNAME) ": %i, %zu x %zu",
 		stream != NULL ? fileno(stream) : -1,
 		nmemb, size);
 
 	VT_IOWRAP_ENTER_IOFUNC();
 
-	vt_debug_msg(DBG_IO, "real_" stringify(VT_IOWRAP_THISFUNCNAME));
+	vt_cntl_msg(DBG_IO, "real_" stringify(VT_IOWRAP_THISFUNCNAME));
 	VT_IOWRAP_CALL_LIBFUNC4(VT_IOWRAP_THISFUNCNAME, ret, buf, size, nmemb, stream);
         num_bytes = (ssize_t)(size*ret);
         tmp=(stream!=NULL) ? fileno(stream): 0;
@@ -1194,13 +1194,13 @@ size_t fwrite( const void *buf, size_t size, size_t nmemb, FILE *stream)
 
 	VT_IOWRAP_CHECK_TRACING4(ret, buf, size, nmemb, stream);
 
-	vt_debug_msg(DBG_IO, stringify(VT_IOWRAP_THISFUNCNAME) ": %i, %zu x %zu", 
+	vt_cntl_msg(DBG_IO, stringify(VT_IOWRAP_THISFUNCNAME) ": %i, %zu x %zu",
 		stream != NULL ? fileno(stream) : -1,
 		nmemb, size);
 
 	VT_IOWRAP_ENTER_IOFUNC();
 
-	vt_debug_msg(DBG_IO, "real_" stringify(VT_IOWRAP_THISFUNCNAME));
+	vt_cntl_msg(DBG_IO, "real_" stringify(VT_IOWRAP_THISFUNCNAME));
 	VT_IOWRAP_CALL_LIBFUNC4(VT_IOWRAP_THISFUNCNAME, ret, buf, size, nmemb, stream);
         num_bytes = (ssize_t)(size*ret);
         tmp=(stream!=NULL) ? fileno(stream): 0;
@@ -1224,12 +1224,12 @@ int fgetc(FILE *stream)
 
 	VT_IOWRAP_CHECK_TRACING1(ret, stream);
 
-	vt_debug_msg(DBG_IO, stringify(VT_IOWRAP_THISFUNCNAME) ": %i", 
+	vt_cntl_msg(DBG_IO, stringify(VT_IOWRAP_THISFUNCNAME) ": %i",
 		stream != NULL ? fileno(stream) : -1);
 
 	VT_IOWRAP_ENTER_IOFUNC();
 
-	vt_debug_msg(DBG_IO, "real_" stringify(VT_IOWRAP_THISFUNCNAME));
+	vt_cntl_msg(DBG_IO, "real_" stringify(VT_IOWRAP_THISFUNCNAME));
 	VT_IOWRAP_CALL_LIBFUNC1(VT_IOWRAP_THISFUNCNAME, ret, stream);
         num_bytes=1;
         tmp=(stream!=NULL) ? fileno(stream): 0;
@@ -1256,12 +1256,12 @@ int getc(FILE *stream)
 
 	VT_IOWRAP_CHECK_TRACING1(ret, stream);
 
-	vt_debug_msg(DBG_IO, stringify(VT_IOWRAP_THISFUNCNAME) ": %i", 
+	vt_cntl_msg(DBG_IO, stringify(VT_IOWRAP_THISFUNCNAME) ": %i",
 		stream != NULL ? fileno(stream) : -1);
 
 	VT_IOWRAP_ENTER_IOFUNC();
 
-	vt_debug_msg(DBG_IO, "real_" stringify(VT_IOWRAP_THISFUNCNAME));
+	vt_cntl_msg(DBG_IO, "real_" stringify(VT_IOWRAP_THISFUNCNAME));
 	VT_IOWRAP_CALL_LIBFUNC1(VT_IOWRAP_THISFUNCNAME, ret, stream);
         num_bytes=1;
         tmp=(stream!=NULL) ? fileno(stream): 0;
@@ -1284,12 +1284,12 @@ char *fgets(char *s, int size, FILE *stream)
 
 	VT_IOWRAP_CHECK_TRACING3(ret, s, size, stream);
 
-	vt_debug_msg(DBG_IO, stringify(VT_IOWRAP_THISFUNCNAME) ": %i, %i bytes max, @%p", 
+	vt_cntl_msg(DBG_IO, stringify(VT_IOWRAP_THISFUNCNAME) ": %i, %i bytes max, @%p",
 		stream != NULL ? fileno(stream) : -1, size, s);
 
 	VT_IOWRAP_ENTER_IOFUNC();
 
-	vt_debug_msg(DBG_IO, "real_" stringify(VT_IOWRAP_THISFUNCNAME));
+	vt_cntl_msg(DBG_IO, "real_" stringify(VT_IOWRAP_THISFUNCNAME));
 	VT_IOWRAP_CALL_LIBFUNC3(VT_IOWRAP_THISFUNCNAME, ret, s, size, stream);
         num_bytes=strlen(s);
         tmp=(ret!=NULL) ? fileno(stream): 0;
@@ -1311,11 +1311,11 @@ char *gets(char *s)
 
 	VT_IOWRAP_CHECK_TRACING1(ret, s);
 
-	vt_debug_msg(DBG_IO, stringify(VT_IOWRAP_THISFUNCNAME) ": @%p", s);
+	vt_cntl_msg(DBG_IO, stringify(VT_IOWRAP_THISFUNCNAME) ": @%p", s);
 
 	VT_IOWRAP_ENTER_IOFUNC();
 
-	vt_debug_msg(DBG_IO, "real_" stringify(VT_IOWRAP_THISFUNCNAME));
+	vt_cntl_msg(DBG_IO, "real_" stringify(VT_IOWRAP_THISFUNCNAME));
 	VT_IOWRAP_CALL_LIBFUNC1(VT_IOWRAP_THISFUNCNAME, ret, s);
         num_bytes = (ssize_t)strlen(s);
 
@@ -1337,12 +1337,12 @@ int fputc(int c, FILE *stream)
 
 	VT_IOWRAP_CHECK_TRACING2(ret, c, stream);
 
-	vt_debug_msg(DBG_IO, stringify(VT_IOWRAP_THISFUNCNAME) ": %i", 
+	vt_cntl_msg(DBG_IO, stringify(VT_IOWRAP_THISFUNCNAME) ": %i",
 		stream != NULL ? fileno(stream) : -1);
 
 	VT_IOWRAP_ENTER_IOFUNC();
 
-	vt_debug_msg(DBG_IO, "real_" stringify(VT_IOWRAP_THISFUNCNAME));
+	vt_cntl_msg(DBG_IO, "real_" stringify(VT_IOWRAP_THISFUNCNAME));
 	VT_IOWRAP_CALL_LIBFUNC2(VT_IOWRAP_THISFUNCNAME, ret, c, stream);
         num_bytes=1;
         tmp=(stream!=NULL) ? fileno(stream): 0;
@@ -1369,12 +1369,12 @@ int putc(int c, FILE *stream)
 
 	VT_IOWRAP_CHECK_TRACING2(ret, c, stream);
 
-	vt_debug_msg(DBG_IO, stringify(VT_IOWRAP_THISFUNCNAME) ": %i", 
+	vt_cntl_msg(DBG_IO, stringify(VT_IOWRAP_THISFUNCNAME) ": %i",
 		stream != NULL ? fileno(stream) : -1);
 
 	VT_IOWRAP_ENTER_IOFUNC();
 
-	vt_debug_msg(DBG_IO, "real_" stringify(VT_IOWRAP_THISFUNCNAME));
+	vt_cntl_msg(DBG_IO, "real_" stringify(VT_IOWRAP_THISFUNCNAME));
 	VT_IOWRAP_CALL_LIBFUNC2(VT_IOWRAP_THISFUNCNAME, ret, c, stream);
         num_bytes=1;
         tmp=(stream!=NULL) ? fileno(stream): 0;
@@ -1397,12 +1397,12 @@ int fputs(const char *s, FILE *stream)
 
 	VT_IOWRAP_CHECK_TRACING2(ret, s, stream);
 
-	vt_debug_msg(DBG_IO, stringify(VT_IOWRAP_THISFUNCNAME) ": %i, %p", 
+	vt_cntl_msg(DBG_IO, stringify(VT_IOWRAP_THISFUNCNAME) ": %i, %p",
 		stream != NULL ? fileno(stream) : -1, s);
 
 	VT_IOWRAP_ENTER_IOFUNC();
 
-	vt_debug_msg(DBG_IO, "real_" stringify(VT_IOWRAP_THISFUNCNAME));
+	vt_cntl_msg(DBG_IO, "real_" stringify(VT_IOWRAP_THISFUNCNAME));
 	VT_IOWRAP_CALL_LIBFUNC2(VT_IOWRAP_THISFUNCNAME, ret, s, stream);
 	num_bytes = (ssize_t)strlen(s);
         tmp=(stream!=NULL) ? fileno(stream): 0;
@@ -1424,11 +1424,11 @@ int puts(const char *s)
 
 	VT_IOWRAP_CHECK_TRACING1(ret, s);
 
-	vt_debug_msg(DBG_IO, stringify(VT_IOWRAP_THISFUNCNAME) ": %p", s);
+	vt_cntl_msg(DBG_IO, stringify(VT_IOWRAP_THISFUNCNAME) ": %p", s);
 
 	VT_IOWRAP_ENTER_IOFUNC();
 
-	vt_debug_msg(DBG_IO, "real_" stringify(VT_IOWRAP_THISFUNCNAME));
+	vt_cntl_msg(DBG_IO, "real_" stringify(VT_IOWRAP_THISFUNCNAME));
 	VT_IOWRAP_CALL_LIBFUNC1(VT_IOWRAP_THISFUNCNAME, ret, s);
 	num_bytes = (ssize_t)strlen(s);
 
@@ -1450,12 +1450,12 @@ int fscanf(FILE *stream, const char *format, ...)
 	VT_IOWRAP_INIT_IOFUNC();
 
 	if( DO_TRACE() ) {
-		vt_debug_msg(DBG_IO, stringify(VT_IOWRAP_THISFUNCNAME) ": %i, %s", 
+		vt_cntl_msg(DBG_IO, stringify(VT_IOWRAP_THISFUNCNAME) ": %i, %s",
 			stream != NULL ? fileno(stream) : -1, format);
 	
 		VT_IOWRAP_ENTER_IOFUNC();
 	
-		vt_debug_msg(DBG_IO, "vfscanf");
+		vt_cntl_msg(DBG_IO, "vfscanf");
 		va_start (arg, format);
 		ret = vfscanf(stream, format, arg);
 		va_end (arg);
@@ -1495,12 +1495,12 @@ int fprintf(FILE *stream, const char *format, ...)
 	VT_IOWRAP_INIT_IOFUNC();
 
 	if( DO_TRACE() ) {
-		vt_debug_msg(DBG_IO, stringify(VT_IOWRAP_THISFUNCNAME) ": %i, %s", 
+		vt_cntl_msg(DBG_IO, stringify(VT_IOWRAP_THISFUNCNAME) ": %i, %s",
 			stream != NULL ? fileno(stream) : -1, format);
 	
 		VT_IOWRAP_ENTER_IOFUNC();
 	
-		vt_debug_msg(DBG_IO, "vfprintf");
+		vt_cntl_msg(DBG_IO, "vfprintf");
 		va_start (arg, format);
 #if defined(HAVE___FPRINTF_CHK) && HAVE___FPRINTF_CHK
 		ret = __vfprintf_chk(stream, flag, format, arg);
@@ -1542,11 +1542,11 @@ int unlink(const char *path)
 
 	VT_IOWRAP_CHECK_TRACING1(ret, path);
 
-	vt_debug_msg(DBG_IO, stringify(VT_IOWRAP_THISFUNCNAME) ": %s\n", path);
+	vt_cntl_msg(DBG_IO, stringify(VT_IOWRAP_THISFUNCNAME) ": %s\n", path);
 	  
 	VT_IOWRAP_ENTER_IOFUNC();
 
-	vt_debug_msg(DBG_IO, "real_" stringify(VT_IOWRAP_THISFUNCNAME) "\n");
+	vt_cntl_msg(DBG_IO, "real_" stringify(VT_IOWRAP_THISFUNCNAME) "\n");
 	VT_IOWRAP_CALL_LIBFUNC1(VT_IOWRAP_THISFUNCNAME, ret, path);
 
 	VT_IOWRAP_LEAVE_IOFUNC_PATH(ret, path);
@@ -1569,12 +1569,12 @@ void flockfile(FILE *stream)
 
         VT_IOWRAP_CHECK_TRACING_VOID1(stream);
 
-        vt_debug_msg(DBG_IO, stringify(VT_IOWRAP_THISFUNCNAME) ": %i", 
+        vt_cntl_msg(DBG_IO, stringify(VT_IOWRAP_THISFUNCNAME) ": %i",
                 stream != NULL ? fileno(stream) : -1);
 
         VT_IOWRAP_ENTER_IOFUNC();
 
-        vt_debug_msg(DBG_IO, "real_" stringify(VT_IOWRAP_THISFUNCNAME));
+        vt_cntl_msg(DBG_IO, "real_" stringify(VT_IOWRAP_THISFUNCNAME));
         VT_IOWRAP_CALL_LIBFUNC_VOID1(VT_IOWRAP_THISFUNCNAME, stream);
         tmp=(stream!=NULL) ? fileno(stream): 0;
 
@@ -1599,12 +1599,12 @@ int ftrylockfile(FILE *stream)
 
         VT_IOWRAP_CHECK_TRACING1(ret, stream);
 
-        vt_debug_msg(DBG_IO, stringify(VT_IOWRAP_THISFUNCNAME) ": %i", 
+        vt_cntl_msg(DBG_IO, stringify(VT_IOWRAP_THISFUNCNAME) ": %i",
                 stream != NULL ? fileno(stream) : -1);
 
         VT_IOWRAP_ENTER_IOFUNC();
 
-        vt_debug_msg(DBG_IO, "real_" stringify(VT_IOWRAP_THISFUNCNAME));
+        vt_cntl_msg(DBG_IO, "real_" stringify(VT_IOWRAP_THISFUNCNAME));
         VT_IOWRAP_CALL_LIBFUNC1(VT_IOWRAP_THISFUNCNAME, ret, stream);
         tmp=(stream!=NULL) ? fileno(stream): 0;
 
@@ -1630,12 +1630,12 @@ void funlockfile(FILE *stream)
 
         VT_IOWRAP_CHECK_TRACING_VOID1(stream);
 
-        vt_debug_msg(DBG_IO, stringify(VT_IOWRAP_THISFUNCNAME) ": %i", 
+        vt_cntl_msg(DBG_IO, stringify(VT_IOWRAP_THISFUNCNAME) ": %i",
                 stream != NULL ? fileno(stream) : -1);
 
         VT_IOWRAP_ENTER_IOFUNC();
 
-        vt_debug_msg(DBG_IO, "real_" stringify(VT_IOWRAP_THISFUNCNAME));
+        vt_cntl_msg(DBG_IO, "real_" stringify(VT_IOWRAP_THISFUNCNAME));
         VT_IOWRAP_CALL_LIBFUNC_VOID1(VT_IOWRAP_THISFUNCNAME, stream);
         tmp=(stream!=NULL) ? fileno(stream): 0;
 
@@ -1658,12 +1658,12 @@ int lockf(int fd, int function, off_t size)
         (void)num_bytes;
 
         VT_IOWRAP_CHECK_TRACING3(ret, fd, function, size);
-        vt_debug_msg(DBG_IO, stringify(VT_IOWRAP_THISFUNCNAME) ": %i, %i, %llu", fd, function, (unsigned long long)size);
+        vt_cntl_msg(DBG_IO, stringify(VT_IOWRAP_THISFUNCNAME) ": %i, %i, %llu", fd, function, (unsigned long long)size);
 
         if( function == F_TEST )
         {
                 /* Do not record lock tests */
-                if( enable_memhooks ) VT_MEMHOOKS_ON();
+                VT_RESUME_MALLOC_TRACING(VT_CURRENT_THREAD);
                 VT_IOWRAP_CALL_LIBFUNC3(VT_IOWRAP_THISFUNCNAME, ret, fd, function, size);
                 return ret;
         }
@@ -1674,7 +1674,7 @@ int lockf(int fd, int function, off_t size)
 
                 VT_IOWRAP_ENTER_IOFUNC();
 
-                vt_debug_msg(DBG_IO, "real_" stringify(VT_IOWRAP_THISFUNCNAME));
+                vt_cntl_msg(DBG_IO, "real_" stringify(VT_IOWRAP_THISFUNCNAME));
                 VT_IOWRAP_CALL_LIBFUNC3(VT_IOWRAP_THISFUNCNAME, ret, fd, function, size);
 
                 switch( function ) {
@@ -1690,13 +1690,13 @@ int lockf(int fd, int function, off_t size)
                                 break;
                 }
                 time = vt_pform_wtime();
-                vt_debug_msg( DBG_INIT, "Macro VT_IOWRAP_LEAVE_IOFUNC(), Function " stringify(VT_IOWRAP_THISFUNCNAME) );
+                vt_cntl_msg( DBG_INIT, "Macro VT_IOWRAP_LEAVE_IOFUNC(), Function " stringify(VT_IOWRAP_THISFUNCNAME) );
                 if( was_recorded ) {
                         vampir_file_t* file = get_vampir_file( fd );
                         uint32_t fid = file->vampir_file_id;
                         if( fid ) {
                                 if( ret != 0 ) {
-                                        vt_debug_msg(DBG_VT_CALL, "vt_ioend(" stringify(VT_IOWRAP_THISFUNCNAME) "), stamp %llu", (unsigned long long)time);
+                                        vt_cntl_msg(DBG_VT_CALL, "vt_ioend(" stringify(VT_IOWRAP_THISFUNCNAME) "), stamp %llu", (unsigned long long)time);
                                         vt_ioend( VT_CURRENT_THREAD, &time, fid, (uint64_t)(fd)+1, matchingid, ioop | VT_IOFLAG_IOFAILED, (uint64_t)num_bytes );
                                 } else {
                                         vt_ioend( VT_CURRENT_THREAD, &time, fid, (uint64_t)(fd)+1, matchingid, ioop, (uint64_t)num_bytes );
@@ -1704,7 +1704,7 @@ int lockf(int fd, int function, off_t size)
                         }
                 }
                 vt_exit( VT_CURRENT_THREAD, &time );
-                if( enable_memhooks ) VT_MEMHOOKS_ON();
+                VT_RESUME_MALLOC_TRACING(VT_CURRENT_THREAD);
 
                 return ret;
         }
@@ -1736,7 +1736,7 @@ int fcntl(int fd, int cmd, ...)
         va_end(ap);
 
         VT_IOWRAP_CHECK_TRACING3(ret, fd, cmd, arg);
-        vt_debug_msg(DBG_IO, stringify(VT_IOWRAP_THISFUNCNAME) ": %i, %i, %p", fd, cmd, arg);
+        vt_cntl_msg(DBG_IO, stringify(VT_IOWRAP_THISFUNCNAME) ": %i, %i, %p", fd, cmd, arg);
 
         switch(cmd)
         {
@@ -1764,7 +1764,7 @@ int fcntl(int fd, int cmd, ...)
                 /* Linux specific operations */
                 default:
                         /* Operations other than locking are not traced */
-                        if( enable_memhooks ) VT_MEMHOOKS_ON();
+                        VT_RESUME_MALLOC_TRACING(VT_CURRENT_THREAD);
                         VT_IOWRAP_CALL_LIBFUNC3(VT_IOWRAP_THISFUNCNAME, ret, fd, cmd, arg);
                         return ret;
         }
@@ -1789,17 +1789,17 @@ int fcntl(int fd, int cmd, ...)
                         break;
         }
 
-        vt_debug_msg(DBG_IO, "real_" stringify(VT_IOWRAP_THISFUNCNAME));
+        vt_cntl_msg(DBG_IO, "real_" stringify(VT_IOWRAP_THISFUNCNAME));
         VT_IOWRAP_CALL_LIBFUNC3(VT_IOWRAP_THISFUNCNAME, ret, fd, cmd, arg);
 
         time = vt_pform_wtime();
-        vt_debug_msg( DBG_INIT, "Macro VT_IOWRAP_LEAVE_IOFUNC(), Function " stringify(VT_IOWRAP_THISFUNCNAME) );
+        vt_cntl_msg( DBG_INIT, "Macro VT_IOWRAP_LEAVE_IOFUNC(), Function " stringify(VT_IOWRAP_THISFUNCNAME) );
         if( was_recorded ) {
                 vampir_file_t* file = get_vampir_file( fd );
                 uint32_t fid = file->vampir_file_id;
                 if( fid ) {
                         if( ret == -1 ) {
-                                vt_debug_msg(DBG_VT_CALL, "vt_ioend(" stringify(VT_IOWRAP_THISFUNCNAME) "), stamp %llu", (unsigned long long)time);
+                                vt_cntl_msg(DBG_VT_CALL, "vt_ioend(" stringify(VT_IOWRAP_THISFUNCNAME) "), stamp %llu", (unsigned long long)time);
                                 vt_ioend( &time, fid, matchingid, file->handle, ioop | VT_IOFLAG_IOFAILED, (uint64_t)num_bytes );
                         }
                         else {
@@ -1808,7 +1808,7 @@ int fcntl(int fd, int cmd, ...)
                 }
         }
         vt_exit( &time );
-        if( enable_memhooks ) VT_MEMHOOKS_ON();
+        VT_RESUME_MALLOC_TRACING(VT_CURRENT_THREAD);
 
         return ret;
 #undef VT_IOWRAP_THISFUNCNAME
@@ -1826,11 +1826,11 @@ void sync(void)
 
         VT_IOWRAP_CHECK_TRACING_VOID0();
 
-        vt_debug_msg(DBG_IO, stringify(VT_IOWRAP_THISFUNCNAME));
+        vt_cntl_msg(DBG_IO, stringify(VT_IOWRAP_THISFUNCNAME));
 
         VT_IOWRAP_ENTER_IOFUNC();
 
-        vt_debug_msg(DBG_IO, "real_" stringify(VT_IOWRAP_THISFUNCNAME));
+        vt_cntl_msg(DBG_IO, "real_" stringify(VT_IOWRAP_THISFUNCNAME));
         VT_IOWRAP_CALL_LIBFUNC_VOID0(VT_IOWRAP_THISFUNCNAME);
 
         VT_IOWRAP_LEAVE_IOFUNC_CUSTOM(0, all_files_fid, 0);
@@ -1851,12 +1851,12 @@ int fflush(FILE *stream)
 
         VT_IOWRAP_CHECK_TRACING1(ret, stream);
 
-        vt_debug_msg(DBG_IO, stringify(VT_IOWRAP_THISFUNCNAME) ": %i",
+        vt_cntl_msg(DBG_IO, stringify(VT_IOWRAP_THISFUNCNAME) ": %i",
                 stream != NULL ? fileno(stream) : -1);
 
         VT_IOWRAP_ENTER_IOFUNC();
 
-        vt_debug_msg(DBG_IO, "real_" stringify(VT_IOWRAP_THISFUNCNAME));
+        vt_cntl_msg(DBG_IO, "real_" stringify(VT_IOWRAP_THISFUNCNAME));
         VT_IOWRAP_CALL_LIBFUNC1(VT_IOWRAP_THISFUNCNAME, ret, stream);
         if (stream == NULL) {
                 VT_IOWRAP_LEAVE_IOFUNC_CUSTOM(ret!=0, all_files_fid, 0);
@@ -1881,11 +1881,11 @@ int fsync(int fd)
 
         VT_IOWRAP_CHECK_TRACING1(ret, fd);
 
-        vt_debug_msg(DBG_IO, stringify(VT_IOWRAP_THISFUNCNAME) ": %i", fd);
+        vt_cntl_msg(DBG_IO, stringify(VT_IOWRAP_THISFUNCNAME) ": %i", fd);
 
         VT_IOWRAP_ENTER_IOFUNC();
 
-        vt_debug_msg(DBG_IO, "real_" stringify(VT_IOWRAP_THISFUNCNAME));
+        vt_cntl_msg(DBG_IO, "real_" stringify(VT_IOWRAP_THISFUNCNAME));
         VT_IOWRAP_CALL_LIBFUNC1(VT_IOWRAP_THISFUNCNAME, ret, fd);
 
         VT_IOWRAP_LEAVE_IOFUNC( ret==-1, fd);
@@ -1906,11 +1906,11 @@ int fdatasync(int fd)
 
         VT_IOWRAP_CHECK_TRACING1(ret, fd);
 
-        vt_debug_msg(DBG_IO, stringify(VT_IOWRAP_THISFUNCNAME) ": %i", fd);
+        vt_cntl_msg(DBG_IO, stringify(VT_IOWRAP_THISFUNCNAME) ": %i", fd);
 
         VT_IOWRAP_ENTER_IOFUNC();
 
-        vt_debug_msg(DBG_IO, "real_" stringify(VT_IOWRAP_THISFUNCNAME));
+        vt_cntl_msg(DBG_IO, "real_" stringify(VT_IOWRAP_THISFUNCNAME));
         VT_IOWRAP_CALL_LIBFUNC1(VT_IOWRAP_THISFUNCNAME, ret, fd);
 
         VT_IOWRAP_LEAVE_IOFUNC( ret==-1, fd);

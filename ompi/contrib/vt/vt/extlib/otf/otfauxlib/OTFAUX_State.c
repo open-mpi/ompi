@@ -673,14 +673,14 @@ OTFAUX_State_writeSnapshot( OTFAUX_State* auxState,
                                                     snapshotTime,
                                                     userData );
             ret = ret && OTFAUX_Process_writeSends( process,
-                                       snapshotTime,
-                                       userData );
+                                                    snapshotTime,
+                                                    userData );
             ret = ret && OTFAUX_Process_writeOpenFiles( process,
-                                           snapshotTime,
-                                           userData );
+                                                        snapshotTime,
+                                                        userData );
             ret = ret && OTFAUX_Process_writeCollOps( process,
-                                         snapshotTime,
-                                         userData );
+                                                      snapshotTime,
+                                                      userData );
             ret = ret && OTFAUX_Process_writeFileOps( process,
                                                       snapshotTime,
                                                       userData );

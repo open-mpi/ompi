@@ -58,9 +58,9 @@ AC_DEFUN([ACVT_TIMER],
 		AC_DEFINE([TIMER_RTS_GET_TIMEBASE], [1], [Use `rts_get_timebase' function])
 		timer=TIMER_RTS_GET_TIMEBASE
 		;;
-	bgp)
-		AC_DEFINE([TIMER_BGP_GET_TIMEBASE], [1], [Use `_bgp_GetTimeBase' function])
-		timer=TIMER_BGP_GET_TIMEBASE
+	bgp | bgq)
+		AC_DEFINE([TIMER_GET_TIMEBASE], [1], [Use `GetTimeBase' function])
+		timer=TIMER_GET_TIMEBASE
 		;;
 	ibm)
 		AC_DEFINE([TIMER_POWER_REALTIME], [1], [IBM Power family Real-Time-Clock])
@@ -89,10 +89,6 @@ AC_DEFUN([ACVT_TIMER],
 		AC_DEFINE([TIMER_CYCLE_COUNTER], [2], [Cycle counter (e.g. TSC)])
 		AC_DEFINE([TIMER_GETTIMEOFDAY], [3], [Use `gettimeofday' function])
 		timer=TIMER_CYCLE_COUNTER
-
-		case `$CC -V 2>&1` in
-			*Cray*)	timer=TIMER_GETTIMEOFDAY ;;
-		esac
 
 		AS_IF([test $PLATFORM = "crayxt"],
 		[
@@ -128,7 +124,7 @@ AC_DEFUN([ACVT_TIMER],
 	AC_MSG_NOTICE([selected timer: $timer])
 
 	case $timer in
-		TIMER_RTS_GET_TIMEBASE | TIMER_BGP_GET_TIMEBASE | TIMER_SYSSX_HGTIME | TIMER_GETTIMEOFDAY)
+		TIMER_RTS_GET_TIMEBASE | TIMER_GET_TIMEBASE | TIMER_SYSSX_HGTIME | TIMER_GETTIMEOFDAY)
 			timer_is_global=yes
 			timer_is_global_def=1
 			;;

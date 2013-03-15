@@ -29,13 +29,13 @@
 #  define TIMER_PAPI_REAL_USEC 11
 #endif
 
-#if TIMER != TIMER_BGP_GET_TIMEBASE && \
+#if TIMER != TIMER_GET_TIMEBASE && \
     TIMER != TIMER_PAPI_REAL_CYC && \
     TIMER != TIMER_PAPI_REAL_USEC
 # error Unknown timer specified! Check the timer configuration in 'config.h'.
 #endif
 
-#if TIMER == TIMER_BGP_GET_TIMEBASE
+#if TIMER == TIMER_GET_TIMEBASE
   static uint64_t vt_ticks_per_sec = 1;
 #elif TIMER == TIMER_PAPI_REAL_CYC
   extern uint64_t vt_metric_clckrt(void);
@@ -50,7 +50,7 @@ static _BGP_Personality_t mybgp;
 /* platform specific initialization */
 void vt_pform_init() {
   Kernel_GetPersonality(&mybgp, sizeof(_BGP_Personality_t));
-#if TIMER == TIMER_BGP_GET_TIMEBASE
+#if TIMER == TIMER_GET_TIMEBASE
   vt_ticks_per_sec = (uint64_t)BGP_Personality_clockMHz(&mybgp) * 1000000LL;
 #elif TIMER == TIMER_PAPI_REAL_USEC
   vt_time_base = vt_metric_real_usec();
@@ -79,7 +79,7 @@ char* vt_pform_exec()
 
 /* clock resolution */
 uint64_t vt_pform_clockres() {
-#if TIMER == TIMER_BGP_GET_TIMEBASE
+#if TIMER == TIMER_GET_TIMEBASE
   return vt_ticks_per_sec;
 #elif TIMER == TIMER_PAPI_REAL_CYC
   return vt_metric_clckrt();
@@ -90,7 +90,7 @@ uint64_t vt_pform_clockres() {
 
 /* local or global wall-clock time in seconds */
 uint64_t vt_pform_wtime() {
-#if TIMER == TIMER_BGP_GET_TIMEBASE
+#if TIMER == TIMER_GET_TIMEBASE
   return (uint64_t)_bgp_GetTimeBase();
 #elif TIMER == TIMER_PAPI_REAL_CYC
   return vt_metric_real_cyc();

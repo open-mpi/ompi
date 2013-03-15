@@ -10,6 +10,8 @@
  * See the file COPYING in the package base directory for details
  **/
 
+#define _GNU_SOURCE
+
 #include "config.h"
 
 #include <errno.h>

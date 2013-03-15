@@ -1,21 +1,27 @@
-AC_DEFUN([ACVT_CUDAWRAP],
+AC_DEFUN([ACVT_CUDARTWRAP],
 [
-	check_cudart="yes"
-	force_cudart="no"
+	cudartwrap_error="no"
+	check_cudartwrap="yes"
 	have_cudartwrap="no"
 
 	cudartshlib_pathname=
 
-	AC_ARG_ENABLE(cudawrap,
-		AC_HELP_STRING([--enable-cudawrap],
-		[enable support for tracing CUDA via library wrapping, default: enable if found by configure]),
-	[AS_IF([test x"$enableval" = "xyes"], [force_cudart="yes"], [check_cudart="no"])])
+	AC_REQUIRE([ACVT_CUPTI])
 
-	AS_IF([test "$check_cudart" = "yes"],
+	AC_ARG_ENABLE(cudartwrap,
+		AC_HELP_STRING([--enable-cudartwrap],
+		[enable support for tracing the CUDA runtime API via library wrapping, default: enable if no CUPTI present]),
+	[AS_IF([test x"$enableval" = "xyes"], [force_cudartwrap="yes"], [check_cudartwrap="no"])],
+	[AS_IF([test x"$force_cudartwrap" = "xno" -a x"$have_cupti" = "xyes"], [check_cudartwrap="no"])])
+
+	AS_IF([test "$check_cudartwrap" = "yes"],
 	[
 		AC_REQUIRE([ACVT_CUDA])
 
-		AS_IF([test x"$cudart_error" = "xno"],
+		AS_IF([test x"$have_cuda" != "xyes" -o x"$have_cudart" != "xyes"],
+		[cudartwrap_error="yes"])
+
+		AS_IF([test x"$cudartwrap_error" = "xno"],
 		[
 			AC_ARG_WITH(cudart-shlib,
 				AC_HELP_STRING([--with-cudart-shlib=CUDARTSHLIB], [give the pathname for the shared CUDA runtime library, default: automatically by configure]),
@@ -26,7 +32,7 @@ AC_DEFUN([ACVT_CUDAWRAP],
 			])
 		])
 
-		AS_IF([test x"$cudart_error" = "xno"],
+		AS_IF([test x"$cudartwrap_error" = "xno"],
 		[
 			AC_MSG_CHECKING([for pathname of shared CUDA runtime library])
 
@@ -48,7 +54,7 @@ AC_DEFUN([ACVT_CUDAWRAP],
 					[
 						AC_MSG_RESULT([unknown])
 						AC_MSG_NOTICE([error: could not determine pathname of shared CUDA runtime library])
-						cudart_error="yes"
+						cudartwrap_error="yes"
 					],
 					[
 						AC_MSG_RESULT([$cudartshlib_pathname])
@@ -57,7 +63,7 @@ AC_DEFUN([ACVT_CUDAWRAP],
 			])
 		])
 
-		AS_IF([test x"$cudart_error" = "xno"],
+		AS_IF([test x"$cudartwrap_error" = "xno"],
 		[
 			AS_IF([test x"$cudartshlib_pathname" != x],
 			[
@@ -66,5 +72,14 @@ AC_DEFUN([ACVT_CUDAWRAP],
 			])
 			have_cudartwrap="yes"
 		])
+	])
+
+dnl	if CUPTI found, CUPTILIB already contains CUDATKLIBDIR and CUDARTLIB;
+dnl	remove content of CUDATKLIBDIR and CUDARTLIB to prevent double linking when
+dnl	using the VT compiler wrappers
+	AS_IF([test x"$have_cupti" = "xyes"],
+	[
+		CUDATKLIBDIR=
+		CUDARTLIB=
 	])
 ])

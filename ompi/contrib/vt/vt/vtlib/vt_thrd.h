@@ -87,6 +87,8 @@ typedef struct
 #if !defined(VT_DISABLE_RFG)
 
   RFG_Regions* rfg_regions;         /**< RFG regions object */
+  int stack_level_at_recfilt_enabled; /**< call stack level at recursive
+                                           filtering enabled */
 
 #endif /* VT_DISABLE_RFG */
 
@@ -116,6 +118,27 @@ typedef struct
 
 #endif
 
+#if defined(VT_EXECWRAP)
+
+  uint8_t exec_tracing_state;       /**< save value of enabled flag during
+                                         suspend */
+  uint8_t exec_tracing_suspend_cnt; /**< save how often suspend was called */
+  uint8_t exec_tracing_enabled;     /**< actual mode of EXEC tracing
+                                         operation */
+
+#endif /* VT_EXECWRAP */
+
+#if defined(VT_MALLOCWRAP)
+
+  uint8_t  malloc_tracing_state;       /**< save value of enabled flag during
+                                            suspend */
+  uint8_t  malloc_tracing_suspend_cnt; /**< save how often suspend was called */
+  uint8_t  malloc_tracing_enabled;     /**< actual mode of memory allocation
+                                            tracing operation */
+  uint64_t malloc_tracing_counter_val; /**< memory allocation counter value */
+
+#endif /* VT_MALLOCWRAP */
+
 #if defined(VT_GETCPU)
 
   uint32_t cpuid_val;               /**< cpu id counter value */
@@ -143,7 +166,7 @@ typedef struct
 
 #if defined(VT_PLUGIN_CNTR)
 
-  void* plugin_cntr_defines;        /**< plugin cntr handle */
+  void* plugin_cntr_defines;               /**< plugin cntr handle */
 
   uint8_t plugin_cntr_writing_post_mortem; /**< flag: writing post mortem
                                                 counter? */
@@ -203,6 +226,14 @@ typedef struct
 /* RFG regions object */
 #define VTTHRD_RFGREGIONS(thrd)     (thrd->rfg_regions)
 
+/* flag: recursive filtering currently enabled? */
+#define VTTHRD_RECFILT_ENABLED(thrd) \
+                                    (thrd->stack_level_at_recfilt_enabled > -1)
+
+/* call stack level at recursive filtering enabled */
+#define VTTHRD_STACK_LEVEL_AT_RECFILT_ENABLED(thrd) \
+                                    (thrd->stack_level_at_recfilt_enabled)
+
 #endif /* VT_DISABLE_RFG */
 
 #if (defined (VT_MPI) || defined (VT_HYB))
@@ -240,9 +271,46 @@ typedef struct
                                     (thrd->io_next_matchingid++)
 
 /* increment handle id counter for I/O operations */
-#define VTTHRD_IO_NEXT_HANDLE(thrd) (thrd->io_next_handle++)
+#define VTTHRD_IO_NEXT_HANDLE(thrd) \
+                                    (thrd->io_next_handle++)
 
 #endif /* VT_IOWRAP || (HAVE_MPI2_IO && HAVE_MPI2_IO) */
+
+#if (defined (VT_EXECWRAP))
+
+/* save value of enabled flag during suspend */
+#define VTTHRD_EXEC_TRACING_STATE(thrd) \
+                                    (thrd->exec_tracing_state)
+
+/* save how often suspend was called */
+#define VTTHRD_EXEC_TRACING_SUSPEND_CNT(thrd) \
+                                    (thrd->exec_tracing_suspend_cnt)
+
+/* actual mode of EXEC tracing operation */
+#define VTTHRD_EXEC_TRACING_ENABLED(thrd) \
+                                    (thrd->exec_tracing_enabled)
+
+#endif /* VT_EXECWRAP */
+
+#if (defined (VT_MALLOCWRAP))
+
+/* save value of enabled flag during suspend */
+#define VTTHRD_MALLOC_TRACING_STATE(thrd) \
+                                    (thrd->malloc_tracing_state)
+
+/* save how often suspend was called */
+#define VTTHRD_MALLOC_TRACING_SUSPEND_CNT(thrd) \
+                                    (thrd->malloc_tracing_suspend_cnt)
+
+/* actual mode of memory allocation tracing operation */
+#define VTTHRD_MALLOC_TRACING_ENABLED(thrd) \
+                                    (thrd->malloc_tracing_enabled)
+
+/* memory allocation counter value */
+#define VTTHRD_MALLOC_TRACING_COUNTER_VAL(thrd) \
+                                    (thrd->malloc_tracing_counter_val)
+
+#endif /* VT_MALLOCWRAP */
 
 #if (defined (VT_GETCPU))
 

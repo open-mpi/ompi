@@ -960,29 +960,6 @@ int vt_env_verbose()
   return verbose;
 }
 
-int vt_env_debug()
-{
-  static int debug = -1;
-  char* tmp;
-
-  if (debug == -1)
-    {
-      tmp = getenv("VT_DEBUG");
-      if (tmp != NULL && strlen(tmp) > 0)
-        {
-          debug = atoi(tmp);
-          if (debug < 0) debug = 0;
-
-          vt_cntl_msg(2, "VT_DEBUG=%s", tmp);
-        }
-      else
-        {
-          debug = 0;
-        }
-    }
-  return debug;
-}
-
 int vt_env_do_unify()
 {
   static int do_unify = -1;
@@ -1025,50 +1002,6 @@ int vt_env_do_clean()
         }
     }
   return do_clean;
-}
-
-int vt_env_memtrace()
-{
-  static int memtrace = -1;
-  char* tmp;
-
-  if (memtrace == -1)
-    {
-      tmp = getenv("VT_MEMTRACE");
-      if (tmp != NULL && strlen(tmp) > 0)
-        {
-          vt_cntl_msg(2, "VT_MEMTRACE=%s", tmp);
-
-          memtrace = parse_bool(tmp);
-        }
-      else
-        {
-          memtrace = 0;
-        }
-    }
-  return memtrace;
-}
-
-int vt_env_memtrace_marker()
-{
-  static int memtrace_marker = -1;
-  char* tmp;
-
-  if (memtrace_marker == -1)
-    {
-      tmp = getenv("VT_MEMTRACE_MARKER");
-      if (tmp != NULL && strlen(tmp) > 0)
-        {
-          vt_cntl_msg(2, "VT_MEMTRACE_MARKER=%s", tmp);
-
-          memtrace_marker = parse_bool(tmp);
-        }
-      else
-        {
-          memtrace_marker = 0;
-        }
-    }
-  return memtrace_marker;
 }
 
 int vt_env_cpuidtrace()
@@ -1161,26 +1094,80 @@ char* vt_env_iolibpathname()
   return pathname;
 }
 
-int vt_env_libctrace()
+int vt_env_exectrace()
 {
-  static int libctrace = -1;
+  static int exectrace = -1;
   char* tmp;
 
-  if (libctrace == -1)
+  if (exectrace == -1)
     {
-      tmp = getenv("VT_LIBCTRACE");
+      tmp = getenv("VT_EXECTRACE");
       if (tmp != NULL && strlen(tmp) > 0)
         {
-          vt_cntl_msg(2, "VT_LIBCTRACE=%s", tmp);
+          vt_cntl_msg(2, "VT_EXECTRACE=%s", tmp);
 
-          libctrace = parse_bool(tmp);
+          exectrace = parse_bool(tmp);
         }
       else
         {
-          libctrace = 1;
+          tmp = getenv("VT_LIBCTRACE");
+          if (tmp != NULL && strlen(tmp) > 0)
+            {
+              exectrace = parse_bool(tmp);
+
+              vt_warning("VT_LIBCTRACE is deprecated, use VT_EXECTRACE instead!");
+            }
+          else
+            {
+              exectrace = 1;
+            }
         }
     }
-  return libctrace;
+  return exectrace;
+}
+
+int vt_env_memtrace()
+{
+  static int memtrace = -1;
+  char* tmp;
+
+  if (memtrace == -1)
+    {
+      tmp = getenv("VT_MEMTRACE");
+      if (tmp != NULL && strlen(tmp) > 0)
+        {
+          vt_cntl_msg(2, "VT_MEMTRACE=%s", tmp);
+
+          memtrace = parse_bool(tmp);
+        }
+      else
+        {
+          memtrace = 0;
+        }
+    }
+  return memtrace;
+}
+
+int vt_env_memtrace_marker()
+{
+  static int memtrace_marker = -1;
+  char* tmp;
+
+  if (memtrace_marker == -1)
+    {
+      tmp = getenv("VT_MEMTRACE_MARKER");
+      if (tmp != NULL && strlen(tmp) > 0)
+        {
+          vt_cntl_msg(2, "VT_MEMTRACE_MARKER=%s", tmp);
+
+          memtrace_marker = parse_bool(tmp);
+        }
+      else
+        {
+          memtrace_marker = 0;
+        }
+    }
+  return memtrace_marker;
 }
 
 int vt_env_omptrace()
@@ -1225,6 +1212,28 @@ int vt_env_mpitrace()
         }
     }
   return mpitrace;
+}
+
+int vt_env_mpi_ignore_filter()
+{
+  static int mpi_ignore_filter = -1;
+  char* tmp;
+
+  if (mpi_ignore_filter == -1)
+    {
+      tmp = getenv("VT_MPI_IGNORE_FILTER");
+      if (tmp != NULL && strlen(tmp) > 0)
+        {
+          vt_cntl_msg(2, "VT_MPI_IGNORE_FILTER=%s", tmp);
+
+          mpi_ignore_filter = parse_bool(tmp);
+        }
+      else
+        {
+          mpi_ignore_filter = 0;
+        }
+    }
+  return mpi_ignore_filter;
 }
 
 int vt_env_mpicheck()
@@ -1788,18 +1797,18 @@ void vt_env_cudatrace()
       char* error_msg[3] = {
         "VT_CUDATRACE has been replaced by VT_GPUTRACE!\n"
         "Usage: export VT_GPUTRACE=option1,option2,option2,...\n"
-        "The following CUDA measurement options are available:\n",
-        
-        " cuda    : enable CUDA (needed to use CUDA runtime API wrapper)\n"
-        " cupti   : use the CUPTI interface instead of the library wrapper\n"
-        " runtime : CUDA runtime API\n"
-        " driver  : CUDA driver API\n"
-        " kernel  : CUDA kernels\n"
-        " idle    : GPU compute idle time\n"
-        " memcpy  : CUDA memory copies\n"
-        " memusage: CUDA memory allocation\n"
-        " debug   : CUDA tracing debug mode\n"
-        " error   : CUDA errors will exit the program\n"
+        "The following CUDA measurement options are available:\n"
+        " cuda      : enable CUDA (needed to use CUDA runtime API wrapper)\n"
+        " cupti     : use the CUPTI interface instead of the library wrapper\n",
+        " runtime   : CUDA runtime API\n"
+        " driver    : CUDA driver API\n"
+        " kernel    : CUDA kernels\n"
+        " concurrent: enable concurrent kernel tracing at initialization time\n"
+        " idle      : GPU compute idle time\n"
+        " memcpy    : CUDA memory copies\n"
+        " memusage  : CUDA memory allocation\n"
+        " debug     : CUDA tracing debug mode\n"
+        " error     : CUDA errors will exit the program\n"
         " yes|default: same as 'cuda,runtime,kernel,memcpy'\n"
         " no: disable CUDA measurement\n",
         
@@ -1877,10 +1886,10 @@ int vt_env_cupti_sampling()
 
   if (cuptisampling == -1)
     {
-      char* tmp = getenv("VT_CUPTI_SAMPLING");
+      char* tmp = getenv("VT_CUPTI_EVENTS_SAMPLING");
       if (tmp != NULL && strlen(tmp) > 0)
         {
-          vt_cntl_msg(2, "VT_CUPTI_SAMPLING=%s", tmp);
+          vt_cntl_msg(2, "VT_CUPTI_EVENTS_SAMPLING=%s", tmp);
 
           cuptisampling = parse_bool(tmp);
         }
@@ -1927,7 +1936,7 @@ int vt_env_gputrace_kernel()
           /* perhaps user wrote 'yes' or 'true' */
           if(cudakernel == 0 && parse_bool(tmp) == 1) cudakernel = 1;
           
-          if(cudakernel > 0)
+          if(cudakernel == 1)
             vt_warning("VT_GPUTRACE_KERNEL is deprecated, "
                       "use option 'kernel' with VT_GPUTRACE instead!");
         }

@@ -13,6 +13,7 @@
 #include "vt_gpu.h"
 #include "vt_env.h"         /* get environment variables */
 #include "vt_pform.h"       /* VampirTrace time measurement */
+#include "vt_mallocwrap.h"  /* wrapping of malloc and free */
 
 #include <string.h> /* needed for hashing and manual CUDA kernel demangling */
 
@@ -55,8 +56,11 @@ static void vt_gpu_createGroups(void);
 void vt_gpu_init(void)
 {
   if(!vt_gpu_initialized){
+    
     /* create group property list for threads */
+    VT_SUSPEND_MALLOC_TRACING(VT_CURRENT_THREAD);
     vt_gpu_prop = (uint8_t*)calloc(VTThrdMaxNum, sizeof(uint8_t));
+    VT_RESUME_MALLOC_TRACING(VT_CURRENT_THREAD);
 
     /* get a communicator id for GPU communication */
     vt_gpu_commCID = vt_get_curid();
@@ -151,6 +155,9 @@ uint32_t vt_gpu_get_config(void)
       }else if(strcmp(feature, "kernel") == 0){
         vt_gpu_config |= VT_GPU_TRACE_KERNEL;
         vt_gpu_trace_kernels = 1;
+      }else if(strcmp(feature, "concurrent") == 0){
+        vt_gpu_config |= VT_GPU_TRACE_CONCURRENT_KERNEL;
+        vt_gpu_trace_kernels = 1;
       }else if(strcmp(feature, "idle") == 0){
         vt_gpu_config |= VT_GPU_TRACE_IDLE;
         vt_gpu_trace_idle = 1;
@@ -174,6 +181,14 @@ uint32_t vt_gpu_get_config(void)
       }
       
       feature = strtok(NULL, sep);
+    }
+    
+    /* "memusage" requires "runtime" to be set */
+    if(vt_gpu_trace_memusage == 1 && 
+       (vt_gpu_config & VT_GPU_TRACE_RUNTIME_API) != VT_GPU_TRACE_RUNTIME_API){
+      vt_warning("[GPU] The option 'memusage' requires 'runtime' to be set! "
+                 "Setting option 'runtime'.");
+      vt_gpu_config |= VT_GPU_TRACE_RUNTIME_API;
     }
     
     /* environment variables for further refinement */
@@ -407,29 +422,32 @@ char* vt_cuda_demangleKernel(const char* mangled)
 /***************************** hashing of strings *****************************/
 #include "util/hash.h"
 
-#define VT_GPU_HASHTABLE_SIZE 1021
+/* size of hash table (must be a power of two!) */
+#define VT_GPU_HASHTABLE_SIZE 1024
 
 static vt_gpu_hn_string_t* vt_gpu_string_htab[VT_GPU_HASHTABLE_SIZE];
 
 void* vt_gpu_stringHashPut(const char* n, uint32_t rid)
 {
-  uint32_t id = (uint32_t)vt_hash((uint8_t*)n, strlen(n), 0) 
-              % VT_GPU_HASHTABLE_SIZE;
-  vt_gpu_hn_string_t *add = 
-                (vt_gpu_hn_string_t*)malloc(sizeof(vt_gpu_hn_string_t));
+  uint32_t id = vt_hash(n, strlen(n), 0) & (VT_GPU_HASHTABLE_SIZE - 1);
+  vt_gpu_hn_string_t *add = NULL;
   
-  add->sname = strdup(n);
+  VT_SUSPEND_MALLOC_TRACING(VT_CURRENT_THREAD);
+  
+  add = (vt_gpu_hn_string_t*)malloc(sizeof(vt_gpu_hn_string_t));
+  add->sname = strdup(n);  
   add->rid = rid;
   add->next = vt_gpu_string_htab[id];
   vt_gpu_string_htab[id] = add;
+  
+  VT_RESUME_MALLOC_TRACING(VT_CURRENT_THREAD);
   
   return add;
 }
 
 void* vt_gpu_stringHashGet(const char* n)
 {
-  uint32_t id = (uint32_t)vt_hash((uint8_t*)n, strlen(n), 0) 
-              % VT_GPU_HASHTABLE_SIZE;
+  uint32_t id = vt_hash(n, strlen(n), 0) & (VT_GPU_HASHTABLE_SIZE - 1);
   vt_gpu_hn_string_t *curr = vt_gpu_string_htab[id];
   
   while ( curr ) {
@@ -446,6 +464,8 @@ void vt_gpu_stringhashClear()
 {
   int i;
   vt_gpu_hn_string_t* tmp_node;
+  
+  VT_SUSPEND_MALLOC_TRACING(VT_CURRENT_THREAD);
 
   for ( i = 0; i < VT_GPU_HASHTABLE_SIZE; i++ )
   {
@@ -457,4 +477,6 @@ void vt_gpu_stringhashClear()
       vt_gpu_string_htab[i] = tmp_node;
     }
   }
+  
+  VT_RESUME_MALLOC_TRACING(VT_CURRENT_THREAD);
 }

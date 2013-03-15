@@ -12,15 +12,16 @@
 
 #include "config.h"         /* snprintf */
 
-#include "vt_defs.h"        /* global definitions */
 #include "vt_env.h"         /* get environment variables */
 #include "vt_pform.h"       /* VampirTrace time measurement */
 #include "vt_defs.h"        /* VampirTrace constants */
 #include "vt_error.h"       /* VampirTrace warning and error messages */
+#include "vt_mallocwrap.h"  /* wrapping of malloc and free */
 #include "vt_gpu.h"         /* common for GPU */
 #include "util/hash.h"
 
-#include "vt_cupti.h"           /* Support for CUPTI */
+#include "vt_cupti.h"           /* CUPTI header */
+#include "vt_cupti_common.h"    /* CUPTI common structures, functions, etc. */
 
 #include "vt_cupti_callback.h"
 #if defined(VT_CUPTI_EVENTS)
@@ -33,17 +34,6 @@
 
 #include <stdio.h>
 #include <string.h>
-
-
-/* mutex for locking global CUPTI callback lists */
-#if (defined(VT_MT) || defined(VT_HYB))
-static VTThrdMutex* VTThrdMutexCuptiCB = NULL;
-# define CUPTI_CB_LOCK() VTThrd_lock(&VTThrdMutexCuptiCB)
-# define CUPTI_CB_UNLOCK() VTThrd_unlock(&VTThrdMutexCuptiCB)
-#else /* VT_MT || VT_HYB */
-# define CUPTI_CB_LOCK()
-# define CUPTI_CB_UNLOCK()
-#endif /* VT_MT || VT_HYB */
 
 #define DISABLE_CUDART_CALLBACK(_cbid)                                         \
   {                                                                            \
@@ -80,58 +70,6 @@ static VTThrdMutex* VTThrdMutexCuptiCB = NULL;
 #define SUSPEND_CALLBACKS(_vtCtx) _vtCtx->callbacks_enabled = 0;
 #define RESUME_CALLBACKS(_vtCtx) _vtCtx->callbacks_enabled = 1;
 
-/* 
- * structure of a VampirTrace CUPTI CUDA stream
- */
-typedef struct vt_cupticb_strm_st
-{
-  CUstream stream;             /**< the CUDA stream */
-  uint32_t tid;                /**< VT thread id for this stream (unique) */
-  struct vt_cupticb_strm_st *next;
-}vt_cupticb_strm_t;
-
-/* 
- * structure of a VampirTrace CUPTI CUDA runtime kernel
- */
-typedef struct vt_cupticb_kernel_st
-{
-  cudaStream_t stream;        /**< the CUDA stream */
-  uint32_t blocksPerGrid;     /**< number of blocks per grid */
-  uint32_t threadsPerBlock;   /**< number of threads per block */
-  struct vt_cupticb_kernel_st *prev;
-}vt_cupticb_kernel_t;
-
-/* 
- * structure of a VampirTrace CUDA malloc (initiated with cudaMalloc*() 
- */
-typedef struct vt_cupticb_gpumem_st
-{
-  void *memPtr;                 /**< pointer value to allocated memory */
-  size_t size;                  /**< number of bytes allocated */
-  uint32_t tid;                 /**< thread id used with this malloc */
-  struct vt_cupticb_gpumem_st *next;
-}vt_cupticb_gpumem_t;
-
-/*
- * VampirTrace CUDA context element
- *  - used in single linked list
- */
-typedef struct vt_cupticb_ctx_st
-{
-  uint64_t ctxUID;       /**< unique CUDA context ID (available in callback) */
-  /*CUcontext cuCtx;        *< the CUDA context */
-  CUdevice dev;           /**< the CUDA device */
-  vt_cupticb_gpumem_t *gpuMemList;    /**< list of allocated GPU memory fields */
-  size_t gpuMemAllocated;          /**< memory allocated on CUDA device */
-  vt_cupticb_strm_t *strmList; /**< CUDA stream list */
-  uint32_t strmNum;          /**< Number of streams created for this device */
-  vt_cupticb_kernel_t *kernelData;  /**< pointer to top of CUDA runtime kernel 
-                                         configuration stack */
-  uint8_t stack_size;               /**< number of params on the stack */
-  uint8_t callbacks_enabled; /**< execute callback function? */
-  struct vt_cupticb_ctx_st *next;
-}vt_cupticb_ctx_t;
-
 /* global subscriber handles */
 static CUpti_SubscriberHandle vt_cupticb_subscriber;
 
@@ -149,14 +87,6 @@ static uint8_t vt_cupticb_trace_events = 1;
 static uint8_t vt_cupticb_event_sampling = 0;
 #endif
 
-/* CUPTI global CUDA kernel counter group ID */
-uint32_t vt_cupti_cgid_cuda_kernel = VT_NO_ID;
-
-/* global kernel counter IDs */
-uint32_t vt_cupti_cid_blocksPerGrid = VT_NO_ID;
-uint32_t vt_cupti_cid_threadsPerBlock = VT_NO_ID;
-uint32_t vt_cupti_cid_threadsPerKernel = VT_NO_ID;
-
 /* initialization and finalization flags */
 static uint8_t vt_cupticb_initialized = 0;
 static uint8_t vt_cupticb_finalized = 0;
@@ -165,9 +95,6 @@ static uint8_t vt_cupticb_finalized = 0;
 static uint32_t vt_cupticb_rid_sync = VT_NO_ID;
 
 #if !defined(VT_CUPTI_ACTIVITY)
-
-/* list of VampirTrace CUDA contexts */
-static vt_cupticb_ctx_t* vt_cupticb_ctxList = NULL;
 
 /* 
  * Synchronization Level:
@@ -217,8 +144,8 @@ static void vt_cupticb_handle_cudart_memcpy(const CUpti_CallbackData *,
 static void vt_cupticb_handle_cudart_mcpyAsync(const CUpti_CallbackData *cbInfo,
                  enum cudaMemcpyKind kind, uint64_t bytes, cudaStream_t cuStrm);
 
-static void vt_cupticb_handle_malloc(uint64_t, void *, size_t);
-static void vt_cupticb_handle_free(uint64_t ctxUID, void *devPtr);
+static void vt_cupticb_handle_malloc(uint64_t, CUcontext, void *, size_t);
+static void vt_cupticb_handle_free(uint64_t ctxUID, CUcontext, void *devPtr);
 /******************************************************************************/
 #endif /* VT_CUPTI_ACTIVITY */
 
@@ -317,6 +244,41 @@ static void vt_cupti_set_callback(CUpti_CallbackFunc callback,
   }
 }
 
+
+
+# if (defined(CUPTI_API_VERSION) && (CUPTI_API_VERSION >= 3))
+/*
+ * Creates a VampirTrace CUPTI callbacks context.
+ * 
+ * @param cuDev the CUDA device
+ * 
+ * @return the VampirTrace CUPTI callbacks context
+ */
+static vt_cupti_callbacks_t* vt_cupticb_createCbCtx(CUdevice cuDev)
+{
+  vt_cupti_callbacks_t *vtCbCtx = NULL;
+  int concurrentKernels = 0;
+  
+  /* create new context, as it is not listed */
+  VT_SUSPEND_MALLOC_TRACING(VT_CURRENT_THREAD);
+  vtCbCtx = (vt_cupti_callbacks_t *)malloc(sizeof(vt_cupti_callbacks_t));
+  if(vtCbCtx == NULL) 
+    vt_error_msg("[CUPTI Callbacks] Could not allocate memory for callbacks context!");
+  VT_RESUME_MALLOC_TRACING(VT_CURRENT_THREAD);
+  
+  vtCbCtx->streamsCreated = 0;
+  
+  /* check for concurrent kernel support */
+  CHECK_CU_ERROR(cuDeviceGetAttribute(&concurrentKernels, 
+                 CU_DEVICE_ATTRIBUTE_CONCURRENT_KERNELS, cuDev), 
+                 "cuDeviceGetAttribute");
+  
+  vtCbCtx->concurrentKernels = concurrentKernels;
+  
+  return vtCbCtx;
+}
+# endif
+
 #if !defined(VT_CUPTI_ACTIVITY)
 /*
  * Creates a VampirTrace CUPTI stream object and returns it.
@@ -328,23 +290,26 @@ static void vt_cupti_set_callback(CUpti_CallbackFunc callback,
  */
 static vt_cupticb_strm_t* vt_cupticb_createStream(uint32_t ptid, 
                                                   CUstream cuStrm,
-                                                  vt_cupticb_ctx_t *vtCtx)
+                                                  vt_cupti_ctx_t *vtCtx)
 {
+  vt_cupti_callbacks_t *vtcuptiCallbacks = vtCtx->callbacks;
   uint32_t gpu_tid = 0;
   char thread_name[16];
   vt_cupticb_strm_t *vtStrm;
   uint32_t strmNum = 0;
 
   if(vtCtx == NULL){
-    vt_warning("[CUPTI CALLBACKS] Create stream without VampirTrace context");
+    vt_warning("[CUPTI Callbacks] Create stream without VampirTrace context");
     return NULL;
   }
   
-  strmNum = vtCtx->strmNum;
+  strmNum = vtcuptiCallbacks->strmNum;
 
   /* allocate memory for stream */
   vtStrm = (vt_cupticb_strm_t *)malloc(sizeof(vt_cupticb_strm_t));
-  if(vtStrm == NULL) vt_error_msg("malloc(sizeof(vt_cupti_strm_t)) failed!");
+  if(vtStrm == NULL) 
+    vt_error_msg("[CUPTI Callbacks] malloc(sizeof(vt_cupti_strm_t)) failed!");
+  
   vtStrm->next = NULL;
   vtStrm->stream = cuStrm;
   
@@ -352,11 +317,11 @@ static vt_cupticb_strm_t* vt_cupticb_createStream(uint32_t ptid,
   if(cuStrm == NULL){
     strmNum = 1;
   }else{
-    vtCtx->strmNum++;
+    vtcuptiCallbacks->strmNum++;
   }
 
   /* create VT-User-Thread with name and parent id and get its id */
-  if(-1 == snprintf(thread_name, 15, "CUDA[%d:%d]", (uint32_t)vtCtx->dev, strmNum))
+  if(-1 == snprintf(thread_name, 15, "CUDA[%d:%d]", (uint32_t)vtCtx->devID, strmNum))
     vt_cntl_msg(1, "Could not create thread name for CUDA thread!");
   
   vt_gpu_registerThread(thread_name, ptid, &gpu_tid);
@@ -372,7 +337,7 @@ static vt_cupticb_strm_t* vt_cupticb_createStream(uint32_t ptid,
     vt_count(gpu_tid, &vt_gpu_init_time, vt_cupti_cid_threadsPerKernel, 0);
   }
   
-  if(vtCtx->strmList == NULL){
+  if(vtcuptiCallbacks->strmList == NULL){
     /* write enter event for GPU_IDLE on first stream */
     if(vt_gpu_trace_idle)
       vt_enter(gpu_tid, &vt_gpu_init_time, vt_gpu_rid_idle);
@@ -386,103 +351,56 @@ static vt_cupticb_strm_t* vt_cupticb_createStream(uint32_t ptid,
 }
 
 /*
- * Retrieve the VampirTrace CUPTI context by its ID or NULL if not available.
- * 
- * @param cuCtxID ID of the CUDA context
- * 
- * @return the VampirTrace CUPTI context object
- */
-static vt_cupticb_ctx_t* vt_cupticb_getCtx(uint64_t cuCtxUID)
-{
-  vt_cupticb_ctx_t *vtCtx = NULL;
-  
-  /*** search CUDA context in list ***/
-  CUPTI_CB_LOCK();
-  vtCtx = vt_cupticb_ctxList;
-  while(vtCtx != NULL){
-    if(vtCtx->ctxUID == cuCtxUID){
-      CUPTI_CB_UNLOCK();
-      return vtCtx;
-    }
-    vtCtx = vtCtx->next;
-  }     
-  CUPTI_CB_UNLOCK();
-  
-  return NULL;
-}
-
-/*
  * Creates new VampirTrace CUPTI callback context.
  * 
  * @param cuCtxID ID of the CUDA context
  * 
  * @return the VampirTrace CUPTI context object
  */
-static vt_cupticb_ctx_t* vt_cupticb_createCtx(uint64_t cuCtxUID, CUstream cuStrm)
+static vt_cupti_callbacks_t* vt_cupticb_createCbCtx(vt_cupti_ctx_t *vtCtx, 
+                                                    CUstream cuStrm)
 {
-  vt_cupticb_ctx_t *vtCtx = (vt_cupticb_ctx_t*)malloc(sizeof(vt_cupticb_ctx_t));
-  if(vtCtx == NULL) 
-    vt_error_msg("Could not allocate memory for vt_cupticb_ctx_t!");
-  
-  vtCtx->ctxUID = cuCtxUID;
+  vt_cupti_callbacks_t *vtCbCtx = 
+          (vt_cupti_callbacks_t*)malloc(sizeof(vt_cupti_callbacks_t));
+  if(vtCbCtx == NULL) 
+    vt_error_msg("[CUPTI Callbacks] Could not allocate memory for vt_cupti_callbacks_t!");
   
   /* enable handling of callbacks */
-  vtCtx->callbacks_enabled = 1;
-  
-  CHECK_CU_ERROR(cuCtxGetDevice(&vtCtx->dev), NULL);
+  vtCbCtx->callbacks_enabled = 1;
   
   /* initialize GPU memory allocation parameter */
-  vtCtx->gpuMemList = NULL;
-  vtCtx->gpuMemAllocated = 0;
+  vtCbCtx->gpuMemList = NULL;
+  vtCbCtx->gpuMemAllocated = 0;
   
   
   /* create first empty CUDA stream */
   VT_CHECK_THREAD;
-  vtCtx->strmNum = 2;
-  vtCtx->strmList = NULL;
-  vtCtx->strmList = vt_cupticb_createStream(VT_MY_THREAD, cuStrm, vtCtx);
+  vtCbCtx->strmNum = 2;
+  vtCbCtx->strmList = NULL;
+  vtCbCtx->strmList = vt_cupticb_createStream(vtCtx->ptid, cuStrm, vtCtx);
   
   /* initialize CUDA kernel configure stack */
   {
-    vt_cupticb_kernel_t *vtKn = NULL;
+    vt_cupti_kernel_t *vtKn = NULL;
     
-    vtKn = (vt_cupticb_kernel_t*)malloc(sizeof(vt_cupticb_kernel_t));
+    vtKn = (vt_cupti_kernel_t*)malloc(sizeof(vt_cupti_kernel_t));
     if(vtKn == NULL) 
       vt_error_msg("Could not allocate memory for vt_cupti_kernel_t!");
     
     vtKn->prev = NULL;
-    vtCtx->kernelData = vtKn;
-    vtCtx->stack_size = 0;
+    vtCbCtx->kernelData = vtKn;
+    vtCbCtx->stack_size = 0;
   }
   
-  return vtCtx;
+  return vtCbCtx;
 }
 
-/*
- * Lookup a VampirTrace CUPTI callback context by its ID and if not available,
- * create a new one.
- * 
- * @param cuCtxID ID of the CUDA context
- * 
- * @return the VampirTrace CUPTI context object
- */
-static vt_cupticb_ctx_t* vt_cupticb_checkCtx(uint64_t cuCtxUID, CUstream cuStrm)
+static vt_cupti_ctx_t* vt_cupticb_checkCtx(CUcontext cuCtx, cudaStream_t cuStrm)
 {
-  vt_cupticb_ctx_t *vtCtx = NULL;
+  vt_cupti_ctx_t* vtCtx = vt_cupti_getCreateCtx(cuCtx);
   
-  /* search for existing CUPTI context */
-  vtCtx = vt_cupticb_getCtx(cuCtxUID);
-  
-  if(vtCtx == NULL){
-    /* create new CUPTI callback context */
-    vtCtx = vt_cupticb_createCtx(cuCtxUID, cuStrm);
-
-    /* prepend CUDA context to global list */
-    CUPTI_CB_LOCK();
-      vtCtx->next = vt_cupticb_ctxList;
-      vt_cupticb_ctxList = vtCtx;
-    CUPTI_CB_UNLOCK();
-  }
+  if(vtCtx->callbacks == NULL) 
+    vtCtx->callbacks = vt_cupticb_createCbCtx(vtCtx, cuStrm);
   
   return vtCtx;
 }
@@ -498,7 +416,7 @@ static vt_cupticb_ctx_t* vt_cupticb_checkCtx(uint64_t cuCtxUID, CUstream cuStrm)
  * @return a VampirTrace stream object
  */
 static vt_cupticb_strm_t* vt_cupticb_checkStream(uint32_t ptid, 
-                                                 vt_cupticb_ctx_t *vtCtx, 
+                                                 vt_cupti_ctx_t *vtCtx, 
                                                  CUstream cuStrm)
 {
   vt_cupticb_strm_t *currStrm = NULL;
@@ -509,7 +427,7 @@ static vt_cupticb_strm_t* vt_cupticb_checkStream(uint32_t ptid,
     return NULL;
   }
   
-  currStrm = vtCtx->strmList;
+  currStrm = vtCtx->callbacks->strmList;
  
   /* this should never happen */
   if(currStrm == NULL) return NULL;
@@ -613,7 +531,8 @@ void CUPTIAPI vt_cupticb_cudart(void *userdata,
         vt_cuptiact_writeMalloc((uint32_t)cbInfo->contextUid, cbInfo->context, 
                                 *(params->devPtr), params->size);
 #else
-        vt_cupticb_handle_malloc(cbInfo->contextUid, *(params->devPtr), 
+        vt_cupticb_handle_malloc(cbInfo->contextUid, cbInfo->context,
+                                 *(params->devPtr), 
                                  params->size);
 #endif
       }
@@ -630,8 +549,9 @@ void CUPTIAPI vt_cupticb_cudart(void *userdata,
                                 *(params->devPtr), 
                                 params->height * (*(params->pitch)));
 #else
-        vt_cupticb_handle_malloc(cbInfo->contextUid, *(params->devPtr), 
-                                params->height * (*(params->pitch)));
+        vt_cupticb_handle_malloc(cbInfo->contextUid, cbInfo->context, 
+                                 *(params->devPtr), 
+                                 params->height * (*(params->pitch)));
 #endif
       }
       
@@ -647,8 +567,9 @@ void CUPTIAPI vt_cupticb_cudart(void *userdata,
                                 *(params->array), 
                                 params->height * params->width);
 #else
-        vt_cupticb_handle_malloc(cbInfo->contextUid, *(params->array), 
-                                params->height * params->width);
+        vt_cupticb_handle_malloc(cbInfo->contextUid, cbInfo->context,
+                                 *(params->array), 
+                                 params->height * params->width);
 #endif
       }
       
@@ -664,7 +585,8 @@ void CUPTIAPI vt_cupticb_cudart(void *userdata,
                                 params->pitchedDevPtr->ptr, 
    params->pitchedDevPtr->pitch * params->extent.height * params->extent.depth);
 #else
-        vt_cupticb_handle_malloc(cbInfo->contextUid, params->pitchedDevPtr->ptr, 
+        vt_cupticb_handle_malloc(cbInfo->contextUid, cbInfo->context,
+                                 params->pitchedDevPtr->ptr, 
    params->pitchedDevPtr->pitch * params->extent.height * params->extent.depth);
 #endif
       }
@@ -681,7 +603,8 @@ void CUPTIAPI vt_cupticb_cudart(void *userdata,
                                 *(params->array), 
           params->extent.width * params->extent.height * params->extent.depth);
 #else
-        vt_cupticb_handle_malloc(cbInfo->contextUid, *(params->array), 
+        vt_cupticb_handle_malloc(cbInfo->contextUid, cbInfo->context,
+                                 *(params->array), 
           params->extent.width * params->extent.height * params->extent.depth);
 #endif
       }
@@ -695,7 +618,7 @@ void CUPTIAPI vt_cupticb_cudart(void *userdata,
         vt_cuptiact_writeFree((uint32_t)cbInfo->contextUid, cbInfo->context,
                      ((cudaFree_v3020_params *)cbInfo->functionParams)->devPtr);
 #else
-        vt_cupticb_handle_free(cbInfo->contextUid, 
+        vt_cupticb_handle_free(cbInfo->contextUid, cbInfo->context,
                     ((cudaFree_v3020_params *)cbInfo->functionParams)->devPtr);
 #endif
       }
@@ -709,7 +632,7 @@ void CUPTIAPI vt_cupticb_cudart(void *userdata,
         vt_cuptiact_writeFree((uint32_t)cbInfo->contextUid, cbInfo->context,
                  ((cudaFreeArray_v3020_params *)cbInfo->functionParams)->array);
 #else
-        vt_cupticb_handle_free(cbInfo->contextUid, 
+        vt_cupticb_handle_free(cbInfo->contextUid, cbInfo->context,
                  ((cudaFreeArray_v3020_params *)cbInfo->functionParams)->array);
 #endif
       }
@@ -1063,18 +986,16 @@ void CUPTIAPI vt_cupticb_driverAPI(CUpti_CallbackId cbid,
 void vt_cupticb_sync(CUpti_CallbackId cbid, 
                      const CUpti_SynchronizeData *syncData)
 {
-  if(CUPTI_CBID_SYNCHRONIZE_CONTEXT_SYNCHRONIZED == cbid){    
+  if(CUPTI_CBID_SYNCHRONIZE_CONTEXT_SYNCHRONIZED == cbid){
     vt_cntl_msg(2, "[CUPTI Callbacks] Synchronize called");
     
-    vt_cuptiact_flushCtxActivities(syncData->context);
+    VT_CUPTI_LOCK();
+    vt_cuptiact_flushCtxActivities(vt_cupti_getCtxNoLock(syncData->context));
+    VT_CUPTI_UNLOCK();
   }
   
   /*if(CUPTI_CBID_SYNCHRONIZE_STREAM_SYNCHRONIZED == cbid){    
-    vt_cntl_msg(2, "[CUPTI Callbacks] Synchronize called");
-    
-    vt_cuptiact_handleCtxActivities(syncData->context);
-    syncData->stream;
-    cuptiGetStreamId(syncData->context, syncData->stream, &streamId);
+    vt_cntl_msg(2, "[CUPTI Callbacks] Stream synchronize called");
   }*/
 }
 
@@ -1090,32 +1011,58 @@ void vt_cupticb_resource(CUpti_CallbackId cbid,
   switch(cbid){
   /********************** CUDA memory allocation ******************************/
     case CUPTI_CBID_RESOURCE_CONTEXT_CREATED: {
-      vt_cntl_msg(2, "[CUPTI Callbacks] Creating context %d", resData->context);
+      vt_cupti_ctx_t *vtCtx = NULL;
+      CUcontext cuCtx = resData->context;
       
+      /*vt_cntl_msg(2, "[CUPTI Callbacks] Creating context %d", cuCtx);*/
+      
+      
+      vtCtx = vt_cupti_getCreateCtx(cuCtx);
+      
+      /* 
+       * Create the VampirTrace CUPTI callbacks context for CUPTI >3
+       * (needed for concurrent kernel tracing)
+       */
+#if (defined(CUPTI_API_VERSION) && (CUPTI_API_VERSION >= 3))
+      if(vtCtx->callbacks == NULL)
+        vtCtx->callbacks = vt_cupticb_createCbCtx(vtCtx->cuDev);
+#endif
+      
+      /* CUdevice is always '0' (try simpleP2P example)
+      {
+        CUdevice cuDev;
+        if(CUDA_SUCCESS != cuCtxGetDevice(&cuDev)){
+          vt_warning("could not get CUdevice from context");
+        }
+        vt_cntl_msg(1, "CUcontext %d, CUdevice %d", cuCtx, cuDev);
+      }*/
+
       /* add the context without tracing CUDA driver API calls, if enabled */
       if(vt_cupticb_trace_driverAPI){
         cuptiEnableDomain(0, vt_cupticb_subscriber, CUPTI_CB_DOMAIN_DRIVER_API);
-        vt_cuptiact_addContext(resData->context, (CUdevice)-1);
+        vt_cuptiact_setupActivityContext(vtCtx);
         cuptiEnableDomain(1, vt_cupticb_subscriber, CUPTI_CB_DOMAIN_DRIVER_API);
       }else{
-        vt_cuptiact_addContext(resData->context, (CUdevice)-1);
+        vt_cuptiact_setupActivityContext(vtCtx);
       }
       
       break;
     }
     
     case CUPTI_CBID_RESOURCE_CONTEXT_DESTROY_STARTING: {
-      vt_cntl_msg(2, "[CUPTI Callbacks] Destroying context");
+      vt_cntl_msg(2, "[CUPTI Callbacks] Destroying context ...");
 
       /* Only flush the activities of the context. The user code has to ensure, 
          that the context is synchronized */
-      vt_cuptiact_flushCtxActivities(resData->context);
+      VT_CUPTI_LOCK();
+      vt_cuptiact_flushCtxActivities(vt_cupti_getCtxNoLock(resData->context));
+      VT_CUPTI_UNLOCK();
       
       break;
     }
     
     case CUPTI_CBID_RESOURCE_STREAM_CREATED: {
-      if(vt_gpu_stream_reuse){
+      /*if(vt_gpu_stream_reuse){
         uint32_t strmID;
         
         VT_CUPTI_CALL(cuptiGetStreamId(resData->context, 
@@ -1125,12 +1072,32 @@ void vt_cupticb_resource(CUpti_CallbackId cbid,
         
         vt_cntl_msg(2, "[CUPTI Callbacks] Creating stream %d (context %d)", 
                        strmID, resData->context);
-      }
+      }*/
+      
+#if (defined(CUPTI_API_VERSION) && (CUPTI_API_VERSION >= 3))
+        if(vt_gpu_trace_kernels > 0){
+          vt_cupti_ctx_t *vtCtx = vt_cupti_getCreateCtx(resData->context);
+          
+          /* if the device is capable of concurrent kernels */
+          if(vtCtx->callbacks->concurrentKernels){
+            
+            vtCtx->callbacks->streamsCreated++;
+
+            vt_cntl_msg(2, "[CUPTI Callbacks] Creating stream %d (context %d)", 
+                          vtCtx->callbacks->streamsCreated, resData->context);
+
+            if(vtCtx->callbacks->streamsCreated < 1)
+              vtCtx->callbacks->streamsCreated++;
+            else
+              vt_cuptiact_enableConcurrentKernel(vtCtx);
+          }
+        }
+#endif
       
       break;
     }
     
-    case CUPTI_CBID_RESOURCE_STREAM_DESTROY_STARTING: {      
+    case CUPTI_CBID_RESOURCE_STREAM_DESTROY_STARTING: {
       if(vt_gpu_stream_reuse){
         uint32_t ptid, strmID;
         uint64_t time;
@@ -1141,6 +1108,7 @@ void vt_cupticb_resource(CUpti_CallbackId cbid,
         time = vt_pform_wtime();
         vt_enter(ptid, &time, vt_cupticb_rid_sync);
 
+/*#if (defined(CUDA_VERSION) && (CUDA_VERSION < 5000))*/
         /* implicitly flush context activities via cuCtxSynchronize() */
         if(vt_cupticb_trace_driverAPI){
           cuptiEnableDomain(0, vt_cupticb_subscriber, CUPTI_CB_DOMAIN_DRIVER_API);
@@ -1149,6 +1117,13 @@ void vt_cupticb_resource(CUpti_CallbackId cbid,
         }else{
           CHECK_CU_ERROR(cuCtxSynchronize(), NULL);
         }
+/*#else*/
+        /* TODO: NVIDIA bug??? *
+        * cuCtxSynchronize() runs into a lock here, therefore just flush *
+        VT_CUPTI_LOCK();
+        vt_cuptiact_flushCtxActivities(vt_cupti_getCtx(resData->context));
+        VT_CUPTI_UNLOCK();*
+*#endif*/
         
         time = vt_pform_wtime();
         vt_exit(ptid, &time);
@@ -1183,11 +1158,12 @@ void vt_cupticb_resource(CUpti_CallbackId cbid,
  * @param devPtr pointer to the allocated memory (needed for vtcudaFree())
  * @param size the number of bytes allocated
  */
-static void vt_cupticb_handle_malloc(uint64_t ctxUID, void *devPtr, size_t size)
+static void vt_cupticb_handle_malloc(uint64_t ctxID, CUcontext cuCtx, 
+                                     void *devPtr, size_t size)
 {
   uint64_t vtTime;
-  vt_cupticb_ctx_t *vtCtx = vt_cupticb_checkCtx(ctxUID, NULL);
-  vt_cupticb_gpumem_t *vtMalloc = (vt_cupticb_gpumem_t*)malloc(sizeof(vt_cupticb_gpumem_t));
+  vt_cupti_callbacks_t *vtCtx = vt_cupticb_checkCtx(cuCtx, NULL);
+  vt_cupti_gpumem_t *vtMalloc = (vt_cupti_gpumem_t*)malloc(sizeof(vt_cupti_gpumem_t));
   
   vtMalloc->memPtr = devPtr;
   vtMalloc->size = size;
@@ -1217,12 +1193,13 @@ static void vt_cupticb_handle_malloc(uint64_t ctxUID, void *devPtr, size_t size)
  * @param ctxUID CUDA context identifier (@see CUPTI callback info)
  * @param devPtr pointer to the allocated memory
  */
-static void vt_cupticb_handle_free(uint64_t ctxUID, void *devPtr)
+static void vt_cupticb_handle_free(uint64_t ctxUID, CUcontext cuCtx, 
+                                   void *devPtr)
 {
   uint64_t vtTime;
-  vt_cupticb_ctx_t *vtCtx = vt_cupticb_checkCtx(ctxUID, NULL);
-  vt_cupticb_gpumem_t *curMalloc = NULL;
-  vt_cupticb_gpumem_t *lastMalloc = NULL;
+  vt_cupti_callbacks_t *vtCtx = vt_cupticb_checkCtx(cuCtx, NULL)->callbacks;
+  vt_cupti_gpumem_t *curMalloc = NULL;
+  vt_cupti_gpumem_t *lastMalloc = NULL;
 
   if(devPtr == NULL) return;
 
@@ -1277,30 +1254,30 @@ static void vt_cupticb_handle_cudart_knconf(const CUpti_CallbackData *cbInfo)
   /* configure call parameter have to be saved for kernel launch on a per 
    * thread basis. */
   if(cbInfo->callbackSite == CUPTI_API_EXIT){
-    vt_cupticb_kernel_t *vtParams = NULL;
+    vt_cupti_kernel_t *vtParams = NULL;
     cudaConfigureCall_v3020_params *params = 
            (cudaConfigureCall_v3020_params *) cbInfo->functionParams;
-    vt_cupticb_ctx_t *vtCtx = 
-            vt_cupticb_checkCtx(cbInfo->contextUid, params->stream);
+    vt_cupti_callbacks_t *vtCbCtx = 
+            vt_cupticb_checkCtx(cbInfo->contextUid, params->stream)->callbacks;
 
     /* Is another kernel already configured? */
-    if(vtCtx->stack_size > 0){
+    if(vtCbCtx->stack_size > 0){
       /* memory already allocated */
-      if(vtCtx->kernelData->prev == NULL){
-        vtParams = (vt_cupticb_kernel_t*)malloc(sizeof(vt_cupticb_kernel_t));
+      if(vtCbCtx->kernelData->prev == NULL){
+        vtParams = (vt_cupti_kernel_t*)malloc(sizeof(vt_cupti_kernel_t));
         if(vtParams == NULL)
           vt_error_msg("Could not allocate memory for vt_cupti_kernel_t!");
 
         vtParams->prev = NULL;
       }else{
-        vtParams = vtCtx->kernelData->prev;
+        vtParams = vtCbCtx->kernelData->prev;
       }
 
       /* add to kernel configure call parameter stack */
-      vtParams->prev = vtCtx->kernelData;
-      vtCtx->kernelData = vtParams;
+      vtParams->prev = vtCbCtx->kernelData;
+      vtCbCtx->kernelData = vtParams;
     }else{
-      vtParams = vtCtx->kernelData;
+      vtParams = vtCbCtx->kernelData;
     }
 
     vtParams->blocksPerGrid = params->gridDim.x * params->gridDim.y
@@ -1310,7 +1287,7 @@ static void vt_cupticb_handle_cudart_knconf(const CUpti_CallbackData *cbInfo)
 
     vtParams->stream = params->stream;
 
-    (vtCtx->stack_size)++;
+    (vtCbCtx->stack_size)++;
   }
 }
 
@@ -1330,7 +1307,8 @@ static void vt_cupticb_handle_cudart_kernel(const CUpti_CallbackData *cbInfo)
     const char *symName = cbInfo->symbolName;
     vt_cupticb_strm_t *vtStrm = NULL;
     vt_gpu_hn_string_t *hn = NULL;
-    vt_cupticb_ctx_t *vtCtx = NULL;
+    vt_cupti_ctx_t *vtCtx = NULL;
+    vt_cupti_callbacks_t *vtCbCtx = NULL;
     uint32_t ptid;
       
     VT_CHECK_THREAD;
@@ -1346,25 +1324,24 @@ static void vt_cupticb_handle_cudart_kernel(const CUpti_CallbackData *cbInfo)
     }else{
       char *knName = NULL;
       
-      CUPTI_CB_LOCK();
+      VT_CUPTI_LOCK();
       knName = vt_cuda_demangleKernel(symName);
       knRID = vt_def_region(VT_MASTER_THREAD, knName, VT_NO_ID,
                             VT_NO_LNO, VT_NO_LNO, "CUDA_KERNEL", VT_FUNCTION);
-      CUPTI_CB_UNLOCK();
+      VT_CUPTI_UNLOCK();
 
       hn = vt_gpu_stringHashPut(symName, knRID);
       /*hn->fname = knName;*/
     }
 
     /* get the VampirTrace thread ID the kernel is running on */      
-    {
-      vtCtx = vt_cupticb_checkCtx(cbInfo->contextUid, NULL);
+    vtCtx = vt_cupticb_checkCtx(cbInfo->contextUid, NULL);
+    vtCbCtx = vtCtx->callbacks;
 
-      vtStrm = vt_cupticb_checkStream(ptid, vtCtx, vtCtx->kernelData->stream);
+    vtStrm = vt_cupticb_checkStream(ptid, vtCtx, vtCtx->callbacks->kernelData->stream);
 
-      /* save address into 64 Bit correlation value for exit callback */
-      *cbInfo->correlationData = (uint64_t)vtStrm;
-    }
+    /* save address into 64 Bit correlation value for exit callback */
+    *cbInfo->correlationData = (uint64_t)vtStrm;
 
     /* write the event records */
     CHECK_CU_ERROR(cuCtxSynchronize(), NULL);
@@ -1372,37 +1349,37 @@ static void vt_cupticb_handle_cudart_kernel(const CUpti_CallbackData *cbInfo)
     /* write VT kernel start events */
     time = vt_pform_wtime();
     
-    if(vt_gpu_trace_idle) vt_exit(vtCtx->strmList->tid, &time);
+    if(vt_gpu_trace_idle) vt_exit(vtCbCtx->strmList->tid, &time);
     vt_enter(vtStrm->tid, &time, knRID);
 
     if(vt_gpu_trace_kernels > 1){
       vt_count(vtStrm->tid, &time, vt_cupti_cid_blocksPerGrid, 
-               vtCtx->kernelData->blocksPerGrid);
+               vtCbCtx->kernelData->blocksPerGrid);
       vt_count(vtStrm->tid, &time, vt_cupti_cid_threadsPerBlock, 
-               vtCtx->kernelData->threadsPerBlock);
+               vtCbCtx->kernelData->threadsPerBlock);
       vt_count(vtStrm->tid, &time, vt_cupti_cid_threadsPerKernel,
-               vtCtx->kernelData->threadsPerBlock * 
-               vtCtx->kernelData->blocksPerGrid);
+               vtCbCtx->kernelData->threadsPerBlock * 
+               vtCbCtx->kernelData->blocksPerGrid);
     }
     
 #if defined(VT_CUPTI_EVENTS)
     if(vt_cupticb_trace_events){
-      vt_cuptievt_ctx_t *vtcuptiCtx = vt_cuptievt_getCurrentContext(ptid);
-      vt_cuptievt_resetCounter(vtcuptiCtx, vtStrm->tid, &time);
+      vtCtx = vt_cuptievt_getOrCreateCurrentCtx(ptid);
+      vt_cuptievt_resetCounter(vtCtx->events, vtStrm->tid, &time);
     }
 #endif
     
     /* take the configure parameters from stack */
-    (vtCtx->stack_size)--;
-    if(vtCtx->stack_size > 0){
-      vtCtx->kernelData = vtCtx->kernelData->prev;
+    (vtCbCtx->stack_size)--;
+    if(vtCbCtx->stack_size > 0){
+      vtCbCtx->kernelData = vtCbCtx->kernelData->prev;
     }
   }
 
   if(cbInfo->callbackSite == CUPTI_API_EXIT){
     vt_cupticb_strm_t *vtStrm = (vt_cupticb_strm_t *)(*cbInfo->correlationData);
     uint32_t tid = vtStrm->tid;
-    vt_cupticb_ctx_t *vtCtx = vt_cupticb_checkCtx(cbInfo->contextUid, NULL);
+    vt_cupti_ctx_t *vtCtx = vt_cupticb_checkCtx(cbInfo->contextUid, NULL);
     uint32_t ptid;
 
     VT_CHECK_THREAD;
@@ -1410,8 +1387,6 @@ static void vt_cupticb_handle_cudart_kernel(const CUpti_CallbackData *cbInfo)
     
 #if defined(VT_CUPTI_EVENTS)
     if(vt_cupticb_trace_events){
-      vt_cuptievt_ctx_t *vtcuptiCtx = vt_cuptievt_getCurrentContext(ptid);
-
       time = vt_pform_wtime();
       vt_enter(ptid, &time, vt_cupticb_rid_sync);
 
@@ -1420,7 +1395,7 @@ static void vt_cupticb_handle_cudart_kernel(const CUpti_CallbackData *cbInfo)
         /* sampling of CUPTI counter values */
         do{
           time = vt_pform_wtime();
-          vt_cuptievt_writeCounter(vtcuptiCtx, tid, &time);
+          vt_cuptievt_writeCounter(vtCtx->events, tid, &time);
           ret = cuStreamQuery(vtStrm->stream);
         }while(ret != CUDA_SUCCESS);
       }else{
@@ -1428,7 +1403,7 @@ static void vt_cupticb_handle_cudart_kernel(const CUpti_CallbackData *cbInfo)
       }
 
       time = vt_pform_wtime();
-      vt_cuptievt_writeCounter(vtcuptiCtx, tid, &time);
+      vt_cuptievt_writeCounter(vtCtx->events, tid, &time);
       vt_exit(ptid, &time);
     }else
 #endif /* VT_CUPTI_EVENTS */
@@ -1454,7 +1429,7 @@ static void vt_cupticb_handle_cudart_kernel(const CUpti_CallbackData *cbInfo)
     vt_exit(tid, &time);
 
     if(vt_gpu_trace_idle){
-      vt_enter(vtCtx->strmList->tid, &time, vt_gpu_rid_idle);
+      vt_enter(vtCtx->callbacks->strmList->tid, &time, vt_gpu_rid_idle);
     }
   }
 }
@@ -1481,7 +1456,7 @@ static void vt_cupticb_handle_cudart_memcpy(
   if(cbInfo->callbackSite == CUPTI_API_ENTER){
     /* get the VampirTrace thread ID the kernel is running on */
     {
-      vt_cupticb_ctx_t *vtCtx = 
+      vt_cupti_ctx_t *vtCtx = 
               vt_cupticb_checkCtx(cbInfo->contextUid, NULL);
       vt_cupticb_strm_t *vtStrm = 
               vtStrm = vt_cupticb_checkStream(ptid, vtCtx, NULL);
@@ -1507,10 +1482,10 @@ static void vt_cupticb_handle_cudart_memcpy(
       */
     }
 
-    CUPTI_CB_LOCK();
+    VT_CUPTI_LOCK();
     if(kind != cudaMemcpyDeviceToDevice) vt_gpu_prop[ptid] |= VTGPU_GPU_COMM;
     vt_gpu_prop[strmID] |= VTGPU_GPU_COMM;
-    CUPTI_CB_UNLOCK();
+    VT_CUPTI_UNLOCK();
 
     /*time = vt_pform_wtime();*/
     if(kind == cudaMemcpyHostToDevice){
@@ -1562,7 +1537,7 @@ static void vt_cupticb_handle_cudart_mcpyAsync(const CUpti_CallbackData *cbInfo,
   if(cbInfo->callbackSite == CUPTI_API_ENTER){
     /* get the VampirTrace thread ID the kernel is running on */
     {
-      vt_cupticb_ctx_t *vtCtx = vt_cupticb_checkCtx(cbInfo->contextUid, cuStrm);
+      vt_cupti_ctx_t *vtCtx = vt_cupticb_checkCtx(cbInfo->contextUid, cuStrm);
       vt_cupticb_strm_t *vtStrm = vt_cupticb_checkStream(ptid, vtCtx, cuStrm);
 
       strmID = vtStrm->tid;
@@ -1571,10 +1546,10 @@ static void vt_cupticb_handle_cudart_mcpyAsync(const CUpti_CallbackData *cbInfo,
       *cbInfo->correlationData = (uint64_t)vtStrm;
     }
 
-    CUPTI_CB_LOCK();
+    VT_CUPTI_LOCK();
     if(kind != cudaMemcpyDeviceToDevice) vt_gpu_prop[ptid] |= VTGPU_GPU_COMM;
     vt_gpu_prop[strmID] |= VTGPU_GPU_COMM;
-    CUPTI_CB_UNLOCK();
+    VT_CUPTI_UNLOCK();
 
     time = vt_pform_wtime();
     if(kind == cudaMemcpyHostToDevice){
@@ -1610,7 +1585,7 @@ static void vt_cupticb_handle_cudart_mcpyAsync(const CUpti_CallbackData *cbInfo,
   }
 }
 
-static void vt_cupti_callback_finalizeContext(vt_cupticb_ctx_t *vtCtx)
+static void vt_cupti_callback_finalizeContext(vt_cupti_ctx_t *vtCtx)
 {
   uint32_t ptid;
   
@@ -1620,8 +1595,8 @@ static void vt_cupti_callback_finalizeContext(vt_cupticb_ctx_t *vtCtx)
 #if defined(VT_CUPTI_EVENTS)
   if(vt_cupticb_trace_events && vt_gpu_debug == 0){
     uint64_t time = vt_pform_wtime();
-    vt_cupticb_strm_t *curStrm = vtCtx->strmList;
-    vt_cuptievt_ctx_t* vtcuptiCtx = vt_cuptievt_getCurrentContext(ptid);
+    vt_cupticb_strm_t *curStrm = vtCtx->callbacks->strmList;
+    vt_cupti_ctx_t* vtcuptiCtx = vt_cuptievt_getOrCreateCurrentCtx(ptid);
 
     while(curStrm != NULL){
       vt_cuptievt_resetCounter(vtcuptiCtx, curStrm->tid, &time);
@@ -1636,14 +1611,14 @@ static void vt_cupti_callback_finalizeContext(vt_cupticb_ctx_t *vtCtx)
   /* write idle end time to CUDA stream 0 */
   if(vt_gpu_trace_idle){
     uint64_t idle_end = vt_pform_wtime();
-    vt_exit(vtCtx->strmList->tid, &idle_end);
+    vt_exit(vtCtx->callbacks->strmList->tid, &idle_end);
   }
 #endif /* !VT_CUPTI_ACTIVITY */
   
   /* cleanup stream list */
-  if(vtCtx->strmList != NULL){
-    free(vtCtx->strmList);
-    vtCtx->strmList = NULL;
+  if(vtCtx->callbacks->strmList != NULL){
+    free(vtCtx->callbacks->strmList);
+    vtCtx->callbacks->strmList = NULL;
   }
 }
 #endif /* !VT_CUPTI_ACTIVITY */
@@ -1657,10 +1632,8 @@ static void vt_cupti_callback_finalizeContext(vt_cupticb_ctx_t *vtCtx)
 void vt_cupti_callback_init()
 {
   if(!vt_cupticb_initialized){
-#if (defined(VT_MT) || defined(VT_HYB))
-    VTThrd_createMutex(&VTThrdMutexCuptiCB);
-#endif
-    CUPTI_CB_LOCK();
+    vt_cupti_init();
+    VT_CUPTI_LOCK();
     if(!vt_cupticb_initialized){
       
       vt_cntl_msg(2, "[CUPTI Callbacks] Initializing ... ");
@@ -1774,6 +1747,8 @@ void vt_cupti_callback_init()
           vt_cupticb_trace_events = 1;
           vt_cupticb_event_sampling = (uint8_t)vt_env_cupti_sampling();
           
+          vt_cupti_events_init();
+          
           /* TODO: check exit handler problems with CUPTI events */
           vt_gpu_debug = 1;
         }else{
@@ -1791,7 +1766,7 @@ void vt_cupti_callback_init()
 
       vt_cupticb_initialized = 1;        
     } /* !vt_cupticb_initialized */
-    CUPTI_CB_UNLOCK();
+    VT_CUPTI_UNLOCK();
   } /* !vt_cupticb_initialized */
 }
 
@@ -1801,18 +1776,20 @@ void vt_cupti_callback_init()
 void vt_cupti_callback_finalize()
 {
   if(!vt_cupticb_finalized && vt_cupticb_initialized){
+    VT_SUSPEND_MALLOC_TRACING(VT_CURRENT_THREAD);
+    
+    /* finalize CUPTI activities outside the lock, as it uses the same lock */
+#if defined(VT_CUPTI_ACTIVITY)
+    if(vt_gpu_trace_kernels > 0 || vt_gpu_trace_mcpy  || 
+         vt_gpu_trace_memusage > 0){
+      vt_cupti_activity_finalize();
+    }
+#endif
 
-    CUPTI_CB_LOCK();
+    VT_CUPTI_LOCK();
     if(!vt_cupticb_finalized && vt_cupticb_initialized){
 
       vt_cntl_msg(2, "[CUPTI Callbacks] Finalizing ... ");
-      
-#if defined(VT_CUPTI_ACTIVITY)
-      if(vt_gpu_trace_kernels > 0 || vt_gpu_trace_mcpy  || 
-           vt_gpu_trace_memusage > 0){
-        vt_cupti_activity_finalize();
-      }
-#endif
       
       if(vt_cupticb_trace_runtimeAPI || vt_cupticb_trace_driverAPI ||
          vt_gpu_trace_kernels > 0 || vt_gpu_trace_mcpy || 
@@ -1822,15 +1799,16 @@ void vt_cupti_callback_finalize()
       }
       
 #if !defined(VT_CUPTI_ACTIVITY)
-      /* clean up the VampirTrace CUDA context list */
-      while(vt_cupticb_ctxList != NULL){
-        vt_cupticb_ctx_t *vtCtx = vt_cupticb_ctxList;
+      /* clean up the VampirTrace CUPTI context list */
+      while(vt_cupti_ctxList != NULL){
+        vt_cupti_ctx_t *vtCtx = vt_cupti_ctxList;
 
-        vt_cupticb_ctxList = vt_cupticb_ctxList->next;
+        vt_cupti_ctxList = vt_cupti_ctxList->next;
 
         vt_cupti_callback_finalizeContext(vtCtx);
 
         free(vtCtx);
+        vtCtx = NULL;
       }
 #endif
 
@@ -1838,14 +1816,15 @@ void vt_cupti_callback_finalize()
 
       vt_gpu_finalize();
       
+      if(vt_gpu_trace_kernels > 0)
+        vt_gpu_stringhashClear();
+      
       vt_cupticb_finalized = 1;
-      CUPTI_CB_UNLOCK();
-
-#if (defined(VT_MT) || defined (VT_HYB))
-      VTTHRD_LOCK_ENV();
-      VTThrd_deleteMutex(&VTThrdMutexCuptiCB);
-      VTTHRD_UNLOCK_ENV();
-#endif /* VT_MT || VT_HYB */
+      VT_CUPTI_UNLOCK();
+      
+      vt_cupti_finalize();
     }
+    
+    VT_RESUME_MALLOC_TRACING(VT_CURRENT_THREAD);
   }
 }

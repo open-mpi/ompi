@@ -18,7 +18,8 @@
 
 
 using namespace std;
-
+/*store current callpath for each process  */
+map<uint32_t,string> callpathMap;
 
 static void prepare_progress( AllData& alldata, uint64_t max_bytes ) {
 
@@ -442,6 +443,17 @@ static int handle_enter( void* fha, uint64_t time, uint32_t function,
     list<StackType>& stack= alldata->stackPerProcess[ process ];
     stack.push_back( StackType( function, time ) );
 
+    if (alldata->params.dispersion.mode == DISPERSION_MODE_PERCALLPATH)
+    {
+        /* store current callpath */
+        std::ostringstream os;
+        os << " "<<function;
+        callpathMap[process] += os.str();
+        /* save maximum length, for buffer allocation in reduce_data.cpp*/
+        if(alldata->maxCallpathLength < callpathMap[process].length())
+            alldata->maxCallpathLength = callpathMap[process].length();
+    }
+    
     return OTF_RETURN_OK;
 }
 
@@ -500,11 +512,16 @@ static int handle_leave( void* fha, uint64_t time, uint32_t function,
 
     stack.pop_back();
 
-    /*
-    cerr << " func " << func << " @ process " << process << ": " << 
-        "excl " << excl << " ticks, incl " << incl << " ticks" << endl;
-    */
     alldata->functionMapPerRank[ Pair( process, func ) ].add( 1, excl, incl );
+
+    if(alldata->params.dispersion.mode == DISPERSION_MODE_PERCALLPATH)
+    {
+        /* store function by process, callpath and functionId*/
+        alldata->functionCallpathMapPerRank[ TripleCallpath( process, callpathMap[process],func ) ].add( 1, excl, incl );
+        alldata->functionCallpathMapPerRank[ TripleCallpath( process, callpathMap[process],func ) ].callpath = callpathMap[process];
+        /* reduce callpath step at leave */
+        callpathMap[process] = callpathMap[process].substr (0,callpathMap[process].find_last_of(" "));
+    }
 
     return OTF_RETURN_OK;
 }
@@ -1481,7 +1498,7 @@ static bool read_statistics( AllData& alldata, OTF_Reader* reader ) {
 
 
 bool CollectData( AllData& alldata ) {
-
+	alldata.maxCallpathLength = 0;
     bool error= false;
 
     /* start runtime measurement for collecting data */

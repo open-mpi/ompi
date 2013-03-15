@@ -22,6 +22,7 @@ EXTRA_DIST = \
 	VERSION \
 	config/defaults/bgl \
 	config/defaults/bgp \
+	config/defaults/bgq \
 	config/defaults/crayxt \
 	config/defaults/crayxe \
 	config/defaults/ibm \
