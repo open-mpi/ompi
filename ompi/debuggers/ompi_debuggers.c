@@ -180,6 +180,7 @@ ompi_debugger_setup_dlls(void)
             check(dirs[i], OMPI_MPIHANDLES_DLL_PREFIX, tmp1);
             check(dirs[i], OMPI_MSGQ_DLL_PREFIX, tmp2);
         }
+        opal_argv_free(dirs);
     }
 
     /* Now that we have a full list of directories, assign the argv
