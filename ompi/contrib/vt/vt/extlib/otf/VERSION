@@ -31,7 +31,7 @@ sub=2
 string=openmpi
 
 # library is used for the library versioning. These three numbers will be added
-# to the name of the library (e.g. libotf.so.1.2.3).
+# to the name of the library (e.g. libopen-trace-format.so.1.2.3).
 # The meaning of these numbers is as follows (from left to right):
 #
 #   current            The number of the current API exported by the library.
@@ -50,5 +50,5 @@ string=openmpi
 #                      release, age must be incremented. Otherwise, reset age
 #                      to '0'.
 
-library=6:4:5
+library=1:0:0
 
