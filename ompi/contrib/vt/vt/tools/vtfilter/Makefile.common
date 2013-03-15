@@ -8,7 +8,7 @@ OTFLIBRARY = $(top_builddir)/extlib/otf/otflib/libotf.la
 OTFDEPENDENCIES = $(OTFLIBRARY)
 endif
 
-INCLUDES = -I$(VTFILTERSRCDIR) $(OTFINCLUDE) -I$(top_srcdir)/include -I$(top_builddir)/include -I$(top_srcdir)/rfg -I$(top_srcdir)/vtlib
+AM_CPPFLAGS = -I$(VTFILTERSRCDIR) $(OTFINCLUDE) -I$(top_srcdir)/include -I$(top_builddir)/include -I$(top_srcdir)/rfg -I$(top_srcdir)/vtlib
 
 OLDSOURCES = \
 	$(VTFILTERSRCDIR)/old/vt_filterc.h \

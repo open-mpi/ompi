@@ -1,6 +1,6 @@
 EXTRA_DIST = otf.i
 
-INCLUDES = \
+AM_CPPFLAGS = \
 	$(ZLIB_INCLUDE_LINE) \
 	-I$(top_builddir)/otflib -I$(top_srcdir)/otflib
 

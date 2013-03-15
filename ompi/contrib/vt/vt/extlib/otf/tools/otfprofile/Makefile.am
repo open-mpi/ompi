@@ -9,7 +9,7 @@ endif
 OTFPROFILESRCDIR = $(srcdir)
 include $(srcdir)/Makefile.common
 
-INCLUDES = $(COMMONINCLUDES)
+AM_CPPFLAGS = $(COMMONINCLUDES)
 
 otfprofile_CXXFLAGS = $(COMMONCXXFLAGS)
 otfprofile_LDADD = $(COMMONLDADD)

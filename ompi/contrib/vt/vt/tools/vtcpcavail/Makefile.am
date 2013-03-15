@@ -2,7 +2,7 @@ if AMBUILDBINARIES
 bin_PROGRAMS = vtcpcavail
 endif
 
-INCLUDES = $(CPCINCDIR)
+AM_CPPFLAGS = $(CPCINCDIR)
 
 vtcpcavail_SOURCES = \
 	vt_cpcavail.c
