@@ -385,7 +385,11 @@ static int query(pid_t pid,
             /* parse to extract the fields */
             fields = NULL;
             local_getfields(dptr, &fields);
-            if (NULL == fields || 14 < opal_argv_count(fields)) {
+            if (NULL == fields) {
+                continue;
+            }
+            if (14 < opal_argv_count(fields)) {
+                opal_argv_free(fields);
                 continue;
             }
             /* pack the ones of interest into the struct */
