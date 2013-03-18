@@ -1,6 +1,6 @@
 /*
  * Copyright © 2009      CNRS
- * Copyright © 2009-2011 inria.  All rights reserved.
+ * Copyright © 2009-2013 Inria.  All rights reserved.
  * Copyright © 2009-2012 Université Bordeaux 1
  * Copyright © 2009-2011 Cisco Systems, Inc.  All rights reserved.
  *
@@ -228,7 +228,7 @@ extern void hwloc_set_hpux_hooks(struct hwloc_topology *topology);
 
 extern void hwloc_look_x86(struct hwloc_topology *topology, unsigned nbprocs);
 
-#ifdef HWLOC_HAVE_LIBPCI
+#if (defined HWLOC_HAVE_LIBPCI) || (defined HWLOC_HAVE_LIBPCIACCESS)
 extern void hwloc_look_libpci(struct hwloc_topology *topology);
 #endif /* HWLOC_HAVE_LIBPCI */
 

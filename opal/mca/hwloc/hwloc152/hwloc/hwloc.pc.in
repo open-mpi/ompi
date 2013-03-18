@@ -9,4 +9,4 @@ Version: @VERSION@
 Requires.private: @HWLOC_REQUIRES@
 Cflags: -I${includedir}
 Libs: -L${libdir} -lhwloc
-Libs.private: @LIBS@
+Libs.private: @HWLOC_LIBS@

@@ -12,8 +12,8 @@
  * this header represents the public interface to this static component.
  */
 
-#ifndef MCA_OPAL_HWLOC_HWLOC151_H
-#define MCA_OPAL_HWLOC_HWLOC151_H
+#ifndef MCA_OPAL_HWLOC_HWLOC152_H
+#define MCA_OPAL_HWLOC_HWLOC152_H
 
 BEGIN_C_DECLS
 
@@ -41,4 +41,4 @@ BEGIN_C_DECLS
 
 END_C_DECLS
 
-#endif /* MCA_OPAL_HWLOC_HWLOC151_H */
+#endif /* MCA_OPAL_HWLOC_HWLOC152_H */

@@ -531,6 +531,11 @@ extern "C" {
 #define hwloc_clear_object_distances_one HWLOC_NAME(clear_object_distances_one)
 #define hwloc_group_by_distances HWLOC_NAME(group_by_distances)
 
+/* private/solaris-chiptype.h */
+
+#define hwloc_solaris_get_chip_type HWLOC_NAME(solaris_get_chip_type)
+#define hwloc_solaris_get_chip_model HWLOC_NAME(solaris_get_chip_model)
+
 #endif /* HWLOC_SYM_TRANSFORM */
 
 

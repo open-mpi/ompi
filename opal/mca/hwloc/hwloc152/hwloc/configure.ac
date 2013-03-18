@@ -1,7 +1,7 @@
 # -*- shell-script -*-
 #
 # Copyright © 2009      CNRS
-# Copyright © 2009-2010 inria.  All rights reserved.
+# Copyright © 2009-2013 Inria.  All rights reserved.
 # Copyright © 2009, 2011-2012      Université Bordeaux 1
 # Copyright © 2009-2010 Cisco Systems, Inc.  All rights reserved.
 #
@@ -179,6 +179,16 @@ append_env() {
           [new_value="[$]2]")
     eval "[$]1=\"$new_value\""
 }
+
+# Warn about PCI support
+if test x$hwloc_warn_may_use_libpci = xyes; then
+  echo
+  echo "**********************************************************************"
+  echo "PCI support could not be enable because libpciaccess is not available."
+  echo "libpci could be used instead but hwloc may be tainted by the GPL"
+  echo "license of pciutils. Add --enable-libpci to enable it."
+  echo "**********************************************************************"
+fi
 
 # Show which optional support we'll be building
 hwloc_xml_status=basic

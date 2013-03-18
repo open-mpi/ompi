@@ -1,6 +1,6 @@
 /*
  * Copyright © 2009 CNRS
- * Copyright © 2009-2012 inria.  All rights reserved.
+ * Copyright © 2009-2013 Inria.  All rights reserved.
  * Copyright © 2009-2012 Université Bordeaux 1
  * Copyright © 2009-2011 Cisco Systems, Inc.  All rights reserved.
  * See COPYING in top-level directory.
@@ -2369,7 +2369,7 @@ hwloc_discover(struct hwloc_topology *topology)
 #endif
 	  )) {
     hwloc_debug("%s", "\nLooking for PCI devices\n");
-#ifdef HWLOC_HAVE_LIBPCI
+#if (defined HWLOC_HAVE_LIBPCI) || (defined HWLOC_HAVE_LIBPCIACCESS)
     if (topology->is_thissystem) {
       hwloc_look_libpci(topology);
       print_objects(topology, 0, topology->levels[0][0]);

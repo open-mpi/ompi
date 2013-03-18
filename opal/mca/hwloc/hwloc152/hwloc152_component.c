@@ -18,20 +18,20 @@
 #include "opal/constants.h"
 
 #include "opal/mca/hwloc/hwloc.h"
-#include "hwloc151.h"
+#include "hwloc152.h"
 
 /*
  * Public string showing the sysinfo ompi_linux component version number
  */
-const char *opal_hwloc_hwloc151_component_version_string =
-    "OPAL hwloc151 hwloc MCA component version " OPAL_VERSION;
+const char *opal_hwloc_hwloc152_component_version_string =
+    "OPAL hwloc152 hwloc MCA component version " OPAL_VERSION;
 
 /*
  * Instantiate the public struct with all of our public information
  * and pointers to our public functions in it
  */
 
-const opal_hwloc_component_t mca_hwloc_hwloc151_component = {
+const opal_hwloc_component_t mca_hwloc_hwloc152_component = {
 
     /* First, the mca_component_t struct containing meta information
        about the component itself */
@@ -40,7 +40,7 @@ const opal_hwloc_component_t mca_hwloc_hwloc151_component = {
         OPAL_HWLOC_BASE_VERSION_2_0_0,
 
         /* Component name and version */
-        "hwloc151",
+        "hwloc152",
         OPAL_MAJOR_VERSION,
         OPAL_MINOR_VERSION,
         OPAL_RELEASE_VERSION,

@@ -9,7 +9,7 @@ dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
 dnl Copyright (c) 2004-2008 High Performance Computing Center Stuttgart, 
 dnl                         University of Stuttgart.  All rights reserved.
-dnl Copyright ©  2010 inria.  All rights reserved.
+dnl Copyright © 2010-2013 Inria.  All rights reserved.
 dnl Copyright © 2006-2011 Cisco Systems, Inc.  All rights reserved.
 dnl
 dnl See COPYING in top-level directory.
@@ -63,7 +63,10 @@ AC_DEFUN([HWLOC_DEFINE_ARGS],[
     # PCI?
     AC_ARG_ENABLE([pci],
                   AS_HELP_STRING([--disable-pci],
-                                 [Disable the PCI device discovery using libpci]))
+                                 [Disable the PCI device discovery]))
+    AC_ARG_ENABLE([libpci],
+		  AS_HELP_STRING([--enable-libpci],
+				 [Use libpci for PCI support. Note that hwloc may be tainted by the pciutils GPL license.]))
 
     # Linux libnuma
     AC_ARG_ENABLE([libnuma],
