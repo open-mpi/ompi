@@ -221,7 +221,7 @@ bool mca_btl_tcp_frag_recv(mca_btl_tcp_frag_t* frag, int sd)
 	    mca_btl_tcp_endpoint_close(btl_endpoint);
 	    return false;
 	}
-    };
+    }
 
  advance_iov_position:
     /* if the read didn't complete - update the iovec state */
