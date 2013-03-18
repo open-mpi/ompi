@@ -431,6 +431,9 @@
 /* Define to 1 if you have the `libpci' library. */
 #undef HWLOC_HAVE_LIBPCI
 
+/* Define to 1 if you have the `libpciaccess' library. */
+#undef HWLOC_HAVE_LIBPCIACCESS
+
 /* Define to 1 if you have a library providing the termcap interface */
 #undef HWLOC_HAVE_LIBTERMCAP
 

@@ -104,12 +104,31 @@ package can be found in "lstopo" when hwloc is configured and build.
 
 The hwloc core may also benefit from the following development packages:
 
-  * pciutils (libpci) for I/O discovery.
   * libnuma for memory binding and migration support on Linux.
   * libxml2 for full XML import/export support (otherwise, the internal
  minimalistic parser will only be able to import XML files that were
  exported by the same hwloc release). See Importing and exporting topologies
  from/to XML files for details.
+  * hwloc can use one of two different libraries for I/O device discovery:
+  1. libpciaccess (BSD).
+  2. libpci, from the pciutils package (GPL).
+
+Note that because of the possibility of GPL taint (remember that hwloc is
+BSD-licensed), hwloc's configure script will prefer libpciaccess to the
+pciutils package. Indeed, if libpciaccess is not found, hwloc will not use
+pciutils unless it is specifically requested via the --enable-libpci flag is
+provided.
+
+Also note that if you install supplemental libraries in non-standard locations,
+hwloc's configure script may not be able to find them without some help. You
+may need to specify additional CPPFLAGS, LDFLAGS, or PKG_CONFIG_PATH values on
+the configure command line.
+
+For example, if libpciaccess was installed into /opt/pciaccess, hwloc's
+configure script may not find it be default. Try adding PKG_CONFIG_PATH to the
+./configure command line, like this:
+
+./configure PKG_CONFIG_PATH=/opt/pciaccess/lib/pkgconfig ...
 
 CLI Examples
 
@@ -674,5 +693,5 @@ Make sure to have had a look at those too!
 
 -------------------------------------------------------------------------------
 
-Generated on Wed Oct 17 2012 17:42:10 for Hardware Locality (hwloc) by   
-doxygen 1.8.1.2
+Generated on Sun Feb 24 2013 16:45:27 for Hardware Locality (hwloc) by   
+doxygen 1.8.3.1

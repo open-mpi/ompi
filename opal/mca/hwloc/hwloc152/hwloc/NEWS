@@ -17,13 +17,24 @@ bug fixes (and other actions) for each version of hwloc since version
 in v0.9.1).
 
 
-Version 1.5.2
+Version 1.5.2 (some of these changes are in v1.6.2 but not in v1.6)
 -------------
+* Use libpciaccess instead of pciutils/libpci by default for I/O discovery.
+  pciutils/libpci is only used if --enable-libpci is given to configure
+  because its GPL license may taint hwloc. See the Installation section
+  in the documentation for details.
+* Fix get_cpubind on Solaris when bound to a single PU with
+  processor_bind(). Thanks to Eugene Loh for reporting the problem
+  and providing a patch.
 * Fix some DIR descriptor leaks on Linux.
 * Fix I/O device lists when some were filtered out after a XML import.
 * Add missing Backend string info on Solaris in most cases.
 * Fix the removal of I/O objects when importing a I/O-enabled XML topology
   without any I/O topology flag.
+* Fix the output of hwloc-calc -H --hierarchical when using logical
+  indexes in the output.
+* Fix the pkg-config output with --libs --static.
+  Thanks to Erik Schnetter for reporting one of the problems.
 
 
 Version 1.5.1
