@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, LLC. 
  *                         All rights reserved.
- * Copyright (c) 2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2012-2013 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -534,6 +534,7 @@ char *opal_cmd_line_get_usage_msg(opal_cmd_line_t *cmd)
     sorted = (cmd_line_option_t**)malloc(sizeof(cmd_line_option_t *) * 
                                          opal_list_get_size(&cmd->lcl_options));
     if (NULL == sorted) {
+        opal_mutex_unlock(&cmd->lcl_mutex);
         return NULL;
     }
     for (i = 0, item = opal_list_get_first(&cmd->lcl_options); 
@@ -623,6 +624,7 @@ char *opal_cmd_line_get_usage_msg(opal_cmd_line_t *cmd)
             desc = strdup(option->clo_description);
             if (NULL == desc) {
                 free(sorted);
+                opal_mutex_unlock(&cmd->lcl_mutex);
                 return strdup("");
             }
             start = desc;
