@@ -206,7 +206,7 @@ sm_segment_attach(mca_btl_sm_component_t *comp_ptr)
          * itself on failure. */
         opal_output(0, "sm_segment_attach: "
                     "mca_common_sm_module_attach failure!\n");
-        return OMPI_ERROR;
+        rc = OMPI_ERROR;
     }
 
 out:
