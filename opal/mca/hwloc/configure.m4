@@ -67,7 +67,7 @@ AC_DEFUN([MCA_opal_hwloc_CONFIG_REQUIRE],[
                  [AC_MSG_RESULT([no (--disable-hwloc-pci specified)])
                   enable_pci=no],
                  [AC_MSG_RESULT([yes (default)])
-                  enable_pci=yes])
+                  enable_pci=])
           ])
 
     # set defaults of not having any support
