@@ -793,11 +793,6 @@ static int remote_spawn(opal_buffer_t *launch)
         goto cleanup;
     }
     
-    /* ensure the system knows we are not using common ports since we are
-     * doing a tree spawn
-     */
-    orte_use_common_port = false;
-
     /* setup the launch */
     if (ORTE_SUCCESS != (rc = setup_launch(&argc, &argv, orte_process_info.nodename, &node_name_index1,
                                            &proc_vpid_index, prefix))) {
@@ -1090,11 +1085,6 @@ static void launch_daemons(int fd, short args, void *cbdata)
         opal_byte_object_t bo, *boptr;
         orte_job_t *jdatorted;
         
-        /* ensure all systems know we are not using a common port since we
-         * are doing a tree spawn
-         */
-        orte_use_common_port = false;
-
         /* get the tree spawn buffer */
         orte_tree_launch_cmd = OBJ_NEW(opal_buffer_t);
         /* insert the tree_spawn cmd */

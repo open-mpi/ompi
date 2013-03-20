@@ -319,13 +319,13 @@ int orte_ess_base_orted_setup(char **hosts)
         goto error;
     }
 #if ORTE_ENABLE_STATIC_PORTS
-    /* if we are using static ports or a common port, then we need to setup
+    /* if we are using static ports, then we need to setup
      * the daemon info so the RML can function properly
      * without requiring a wireup stage. This must be done
      * after we enable_comm as that function determines our
      * own port, which we need in order to construct the nidmap
      */
-    if (orte_static_ports || orte_use_common_port) {
+    if (orte_static_ports) {
         /* define the routing tree so we know the pattern
          * if we are trying to setup common or static ports
          */
