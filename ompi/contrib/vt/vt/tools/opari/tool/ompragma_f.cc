@@ -89,7 +89,7 @@ namespace {
         if ( line >= outer->lines.size() ) return;
         pos = outer->lines[line].find(sentinel) + slen;
         pos = outer->lines[line].find_first_not_of(" \t", pos);
-        if ( outer->lines[line][pos] == '&' ) ++pos;
+        if ( pos != string::npos && outer->lines[line][pos] == '&' ) ++pos;
         optr = &(outer->lines[line][pos]);
         iptr = &(inner->lines[line][pos]);
       }

@@ -242,7 +242,7 @@ VTGen* VTGen_open(const char* tname, const char* tnamesuffix,
 
 void VTGen_guarantee(VTGen* gen, uint64_t* time, size_t size)
 {
-  if (time)
+  if (!time)
   {
     VTGEN_ALLOC(gen, VTGEN_ALIGN_LENGTH(size));
   }
