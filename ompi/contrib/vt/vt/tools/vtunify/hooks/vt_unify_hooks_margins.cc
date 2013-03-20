@@ -18,7 +18,7 @@
 //
 
 HooksProcessMarginsC::HooksProcessMarginsC() : HooksBaseC(),
-   m_maxThreads( 1 )
+   m_maxThreads( 1 ), m_threadContexts( 0 )
 {
    // Empty
 }

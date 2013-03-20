@@ -7,6 +7,8 @@
 	- fixed a potential minor bug in CUPTI activity stream handling
 	- workaround for CUDA 5.0 bug: do not call cuDeviceSynchronize(), if
 	  stream reuse is enabled and a CUDA stream is about to be destroyed
+	- fixed segmentation fault when writing intermediate statistics
+	  (VT_STAT_INTV != 0)
 	- vtdyn: do not instrument regions where using a trap is required
 	- plugin counters: Merge a set of post-mortem counters and write them
 	  under a single async key. This speeds up the unification.

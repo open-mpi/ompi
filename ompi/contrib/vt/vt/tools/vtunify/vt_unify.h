@@ -13,7 +13,7 @@
 #ifndef _VT_UNIFY_H_
 #define _VT_UNIFY_H_
 
-#include "config.h"
+#include "vt_unify_config.h"
 
 #ifdef VT_MPI
 #  include "vt_unify_mpi.h"

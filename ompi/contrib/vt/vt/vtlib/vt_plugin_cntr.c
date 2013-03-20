@@ -98,7 +98,7 @@ struct vt_plugin_cntr_defines {
 /* called when activating events */
 static void maybe_register_new_thread(VTThrd * thrd, uint32_t tid);
 /* called when activating events */
-static void add_events(struct vt_plugin current_plugin, VTThrd * thrd);
+static void add_events(const struct vt_plugin * current_plugin, VTThrd * thrd);
 
 static uint32_t post_mortem_asynch_key(void);
 
@@ -571,7 +571,7 @@ void vt_plugin_cntr_thread_init(VTThrd * thrd, uint32_t tid) {
       maybe_register_new_thread(thrd, tid);
 
       /* now, that the thread is registered, register the counters */
-      add_events(vt_plugin_handles[i][j], thrd);
+      add_events(&(vt_plugin_handles[i][j]), thrd);
     }
   }
 
@@ -742,64 +742,64 @@ static void maybe_register_new_thread(VTThrd * thrd, uint32_t tid) {
   }
 }
 
-static void add_events(struct vt_plugin current_plugin, VTThrd * thrd) {
+static void add_events(const struct vt_plugin * current_plugin, VTThrd * thrd) {
   int j;
   struct vt_plugin_single_counter * current;
   uint32_t * current_size;
   struct vt_plugin_cntr_defines * plugin_cntr_defines =
       (struct vt_plugin_cntr_defines *) thrd->plugin_cntr_defines;
   /* get the current counters for this thread and synch type*/
-  current = plugin_cntr_defines->counters[current_plugin.info.synch];
+  current = plugin_cntr_defines->counters[current_plugin->info.synch];
   if (current == NULL) {
-    plugin_cntr_defines->counters[current_plugin.info.synch] =
+    plugin_cntr_defines->counters[current_plugin->info.synch] =
 	 calloc(VT_PLUGIN_COUNTERS_PER_THREAD, sizeof(struct vt_plugin_single_counter));
-    current = plugin_cntr_defines->counters[current_plugin.info.synch];
+    current = plugin_cntr_defines->counters[current_plugin->info.synch];
   }
   /* get the number of counters for this thread and synch type*/
   current_size
-      = &(plugin_cntr_defines->size_of_counters[current_plugin.info.synch]);
+      = &(plugin_cntr_defines->size_of_counters[current_plugin->info.synch]);
 
   vt_cntl_msg(3, "Process %i Thread %s-%s adds own plugin metrics",
       vt_my_ptrace, thrd->name, thrd->name_suffix);
 
-  for (j = 0; j < current_plugin.num_selected_events; j++) {
+  for (j = 0; j < current_plugin->num_selected_events; j++) {
     if (*current_size >= VT_PLUGIN_COUNTERS_PER_THREAD) {
       vt_error_msg("You're about to add more then %i plugin counters,"
         "which is impossible\n", VT_PLUGIN_COUNTERS_PER_THREAD);
       continue;
     }
-    if (current_plugin.info.synch == VT_PLUGIN_CNTR_ASYNCH_CALLBACK) {
+    if (current_plugin->info.synch == VT_PLUGIN_CNTR_ASYNCH_CALLBACK) {
       if (*current_size == 0) {
       }
     }
     /* add counter */
-    current[*current_size].from_plugin_id = current_plugin.info.add_counter(
-        current_plugin.selected_events[j]);
+    current[*current_size].from_plugin_id = current_plugin->info.add_counter(
+        current_plugin->selected_events[j]);
 
     /* add successfully? */
     if (current[*current_size].from_plugin_id < 0) {
       vt_error_msg(
           "Error while adding plugin counter \"%s\" to thread \"%s%s\"\n",
-          current_plugin.selected_events[j], thrd->name, thrd->name_suffix);
+          current_plugin->selected_events[j], thrd->name, thrd->name_suffix);
       continue;
     }
     /* get the vampir trace id for the counter */
-    current[*current_size].vt_counter_id = current_plugin.vt_counter_ids[j];
-    current[*current_size].vt_asynch_key = current_plugin.vt_asynch_keys[j];
-    current[*current_size].enable_counter = current_plugin.info.enable_counter;
+    current[*current_size].vt_counter_id = current_plugin->vt_counter_ids[j];
+    current[*current_size].vt_asynch_key = current_plugin->vt_asynch_keys[j];
+    current[*current_size].enable_counter = current_plugin->info.enable_counter;
     current[*current_size].disable_counter
-        = current_plugin.info.disable_counter;
+        = current_plugin->info.disable_counter;
 
     /* per type stuff */
-    if (current_plugin.info.synch == VT_PLUGIN_CNTR_SYNCH)
+    if (current_plugin->info.synch == VT_PLUGIN_CNTR_SYNCH)
       /* synch counters have to implement getValue */
-      current[*current_size].getValue = current_plugin.info.get_current_value;
-    if ((current_plugin.info.synch == VT_PLUGIN_CNTR_ASYNCH_EVENT)
-        || (current_plugin.info.synch == VT_PLUGIN_CNTR_ASYNCH_POST_MORTEM)) {
+      current[*current_size].getValue = current_plugin->info.get_current_value;
+    if ((current_plugin->info.synch == VT_PLUGIN_CNTR_ASYNCH_EVENT)
+        || (current_plugin->info.synch == VT_PLUGIN_CNTR_ASYNCH_POST_MORTEM)) {
       /* these have to implement getAllValues */
-      current[*current_size].getAllValues = current_plugin.info.get_all_values;
+      current[*current_size].getAllValues = current_plugin->info.get_all_values;
     }
-    if (current_plugin.info.synch == VT_PLUGIN_CNTR_ASYNCH_CALLBACK) {
+    if (current_plugin->info.synch == VT_PLUGIN_CNTR_ASYNCH_CALLBACK) {
       /* callback should set the callback function */
       /* allocate resources */
 #if (defined(VT_MT) || defined (VT_HYB) || defined(VT_JAVA))
@@ -807,11 +807,11 @@ static void add_events(struct vt_plugin current_plugin, VTThrd * thrd) {
           (VTThrdMutex **) &(current[*current_size].callback_mutex)
       );
       /* try to set callback function */
-      if (current_plugin.info.set_callback_function(&current[*current_size],
+      if (current_plugin->info.set_callback_function(&current[*current_size],
           current[*current_size].from_plugin_id, callback_function)) {
         vt_error_msg("Asynchronous callback plugin %s failed "
-          "to set callback function for counter %s.\n", current_plugin.name,
-            current_plugin.selected_events[j]);
+          "to set callback function for counter %s.\n", current_plugin->name,
+            current_plugin->selected_events[j]);
       }
 
       current[*current_size].callback_values = malloc(
@@ -828,18 +828,18 @@ static void add_events(struct vt_plugin current_plugin, VTThrd * thrd) {
     }
 
     current[*current_size].tid = VT_MY_THREAD;/*
-    switch (current_plugin.info.run_per) {
+    switch (current_plugin->info.run_per) {
     case VT_PLUGIN_CNTR_PER_PROCESS:
       if (thread_group != INVALID_GROUP_NUMBER)
         current[*current_size].tid = thread_group;
       break;
     case VT_PLUGIN_CNTR_PER_HOST:
-      if (current_plugin.info.run_per == VT_PLUGIN_CNTR_PER_HOST)
+      if (current_plugin->info.run_per == VT_PLUGIN_CNTR_PER_HOST)
         if (host_group != INVALID_GROUP_NUMBER)
           current[*current_size].tid = host_group;
       break;
     case VT_PLUGIN_CNTR_ONCE:
-      if (current_plugin.info.run_per == VT_PLUGIN_CNTR_ONCE)
+      if (current_plugin->info.run_per == VT_PLUGIN_CNTR_ONCE)
         if (all_group != INVALID_GROUP_NUMBER)
           current[*current_size].tid = all_group;
       break;
@@ -1012,9 +1012,10 @@ void vt_plugin_cntr_write_callback_data(uint64_t *time, uint32_t tid) {
       (struct vt_plugin_cntr_defines *) VTThrdv[tid]->plugin_cntr_defines;
 
   if (plugin_cntr_defines == NULL)
-    if (plugin_cntr_defines->size_of_counters[VT_PLUGIN_CNTR_ASYNCH_CALLBACK]
-        == 0)
-      return;
+    return;
+  if (plugin_cntr_defines->size_of_counters[VT_PLUGIN_CNTR_ASYNCH_CALLBACK]
+      == 0)
+    return;
   for (i = 0;
     i < plugin_cntr_defines->size_of_counters[VT_PLUGIN_CNTR_ASYNCH_CALLBACK];
     i++) {
@@ -1124,8 +1125,11 @@ void vt_plugin_cntr_write_post_mortem(VTThrd * thrd) {
     /* get data */
     number_of_values_by_counter[counter_index] = current_counter.getAllValues(
         current_counter.from_plugin_id, &(time_values_by_counter[counter_index]));
-    if (time_values_by_counter[counter_index] == NULL)
+    if (time_values_by_counter[counter_index] == NULL) {
+      free(time_values_by_counter);
+      free(number_of_values_by_counter);
       return;
+    }
   }
   /* initialized with 0! */
   counter_current_indices = calloc(number_of_counters, sizeof(*counter_current_indices));

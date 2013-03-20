@@ -628,6 +628,7 @@ readDataFile()
         break;
       }
       case 31: // partype_default
+      default:
       {
         if( value.compare( "seq" ) == 0 )
         {
@@ -653,14 +654,6 @@ readDataFile()
                     << value << "'" << std::endl;
           error = true;
         }
-        break;
-      }
-      default:
-      {
-        std::cerr << ExeName << ": "
-                  << data_file << ":" << line_no << ": "
-                  << "could not be parsed" << std::endl;
-        error = true;
         break;
       }
     }
