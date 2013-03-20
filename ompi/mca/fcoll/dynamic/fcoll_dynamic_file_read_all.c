@@ -600,7 +600,8 @@
 	    (entries_per_aggregator * sizeof (mca_io_ompio_io_array_t));
 	  if (NULL == fh->f_io_array) {
 	    opal_output(1, "OUT OF MEMORY\n");
-	    return OMPI_ERR_OUT_OF_RESOURCE;
+	    ret = OMPI_ERR_OUT_OF_RESOURCE;
+	    goto exit;
 	  }
 
 	 fh->f_num_of_io_entries = 0;
@@ -637,7 +638,8 @@
 	 if (fh->f_num_of_io_entries) {
 	   if (OMPI_SUCCESS != fh->f_fbtl->fbtl_preadv (fh, NULL)) {
 	     opal_output (1, "READ FAILED\n");
-	     return OMPI_ERROR;
+	     ret = OMPI_ERROR;
+	     goto exit;
 	   }
 	 }
 
@@ -652,7 +654,8 @@
 	 temp_disp_index = (int *)calloc (1, fh->f_procs_per_group * sizeof (int));
 	 if (NULL == temp_disp_index) {
 	   opal_output (1, "OUT OF MEMORY\n");
-	   return OMPI_ERR_OUT_OF_RESOURCE;
+	   ret = OMPI_ERR_OUT_OF_RESOURCE;
+	   goto exit;
 	 }
 	 for (i=0; i<entries_per_aggregator; i++){
 	   temp_index = 
@@ -721,7 +724,8 @@
 	 receive_buf = malloc (bytes_received);
 	 if (NULL == receive_buf) {
 	   opal_output (1, "OUT OF MEMORY\n");
-	   return OMPI_ERR_OUT_OF_RESOURCE;
+	   ret = OMPI_ERR_OUT_OF_RESOURCE;
+	   goto exit;
 	 }
        }
 
@@ -897,25 +901,29 @@
 	 disp_index = NULL;
        }
        
-       for(l=0;l<fh->f_procs_per_group;l++){
-	 if (NULL != blocklen_per_process[l]){
-	   free(blocklen_per_process[l]);
-	   blocklen_per_process[l] = NULL;
+       if ( NULL != blocklen_per_process){
+	 for(l=0;l<fh->f_procs_per_group;l++){
+	   if (NULL != blocklen_per_process[l]){
+	     free(blocklen_per_process[l]);
+	     blocklen_per_process[l] = NULL;
+	   }
 	 }
-	 if (NULL != displs_per_process[l]){
-	   free(displs_per_process[l]);
-	   displs_per_process[l] = NULL;
-	 }
-       }
-       if (NULL != blocklen_per_process){
+	 
 	 free(blocklen_per_process);
 	 blocklen_per_process = NULL;
        }
+       
        if (NULL != displs_per_process){
+	 for (l=0; i<fh->f_procs_per_group; l++){
+	   if (NULL != displs_per_process[l]){
+	     free(displs_per_process[l]);
+	     displs_per_process[l] = NULL;
+	   }
+	 }
 	 free(displs_per_process);
 	 displs_per_process = NULL;
        }
-
+       
      }
      return ret;
  }
