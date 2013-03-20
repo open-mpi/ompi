@@ -555,15 +555,6 @@ int orte_register_params(void)
                                 "Maximum size of virtual machine - used to subdivide allocation",
                                 false, false, -1, &orte_max_vm_size);
 
-#if ORTE_ENABLE_STATIC_PORTS
-    mca_base_param_reg_int_name("orte", "use_common_port",
-                                "Daemons use same port as HNP",
-                                false, false, (int)false, &value);
-    orte_use_common_port = OPAL_INT_TO_BOOL(value);
-#else
-    orte_use_common_port = false;
-#endif
-
     mca_base_param_reg_string_name("orte", "set_default_slots",
                                    "Set the number of slots on nodes that lack such info to the number of specified objects [a number, \"cores\", \"numas\", \"sockets\", or \"hwthreads\"]",
                                    false, false, NULL, &orte_set_slots);

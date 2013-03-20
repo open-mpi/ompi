@@ -73,7 +73,6 @@ char *orte_basename = NULL;
 bool orte_static_ports = false;
 char *orte_oob_static_ports = NULL;
 bool orte_standalone_operation = false;
-bool orte_use_common_port = false;
 
 bool orte_keep_fqdn_hostnames = false;
 bool orte_have_fqdn_allocation = false;
