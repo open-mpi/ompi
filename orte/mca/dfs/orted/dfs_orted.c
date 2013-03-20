@@ -261,7 +261,6 @@ static void open_local_file(orte_dfs_request_t *dfs)
         if (NULL != dfs->open_cbfunc) {
             dfs->open_cbfunc(-1, dfs->cbdata);
         }
-        OBJ_RELEASE(dfs);
         return;
     }
     opal_output_verbose(1, orte_dfs_base.output,
@@ -274,7 +273,6 @@ static void open_local_file(orte_dfs_request_t *dfs)
         if (NULL != dfs->open_cbfunc) {
             dfs->open_cbfunc(dfs->remote_fd, dfs->cbdata);
         }
-        OBJ_RELEASE(dfs);
         return;
     }
     /* otherwise, create a tracker for this file */
