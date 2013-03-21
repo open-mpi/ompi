@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2011-2013 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -748,10 +748,12 @@ int opal_dss_pack_value(opal_buffer_t *buffer, const void *src,
             if (OPAL_SUCCESS != (ret = opal_dss_pack_buffer(buffer, &ptr[i]->data.fval, 1, OPAL_FLOAT))) {
                 return ret;
             }
+            break;
         case OPAL_TIMEVAL:
             if (OPAL_SUCCESS != (ret = opal_dss_pack_buffer(buffer, &ptr[i]->data.tv, 1, OPAL_TIMEVAL))) {
                 return ret;
             }
+            break;
         default:
             opal_output(0, "PACK-OPAL-VALUE: UNSUPPORTED TYPE %d", (int)ptr[i]->type);
             return OPAL_ERROR;
