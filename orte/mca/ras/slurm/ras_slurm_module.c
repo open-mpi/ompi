@@ -35,6 +35,7 @@
 #endif
 #include <fcntl.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "opal/util/argv.h"
 #include "opal/util/net.h"
@@ -751,7 +752,8 @@ static void recv_data(int fd, short args, void *cbdata)
     /* read the data from the socket and put it in the
      * nodes field of op
      */
-    nbytes = read(fd, recv_msg, 8192);
+    memset(recv_msg, 0, sizeof(recv_msg));
+    nbytes = read(fd, recv_msg, sizeof(recv_msg) - 1);
 
     opal_output_verbose(2, orte_ras_base.ras_output,
                         "%s ras:slurm: dynamic allocation msg: %s",
@@ -763,7 +765,7 @@ static void recv_data(int fd, short args, void *cbdata)
          * message
          */
         orte_show_help("help-ras-slurm.txt", "slurm-dyn-alloc-failed", true,
-                       (NULL == recv_msg) ? "NO MSG" : recv_msg);
+                       (0 == strlen(recv_msg)) ? "NO MSG" : recv_msg);
         ORTE_ACTIVATE_JOB_STATE(NULL, ORTE_JOB_STATE_ALLOC_FAILED);
         return;
     }
@@ -789,6 +791,7 @@ static void recv_data(int fd, short args, void *cbdata)
     if (NULL == jtrk) {
         orte_show_help("help-ras-slurm.txt", "slurm-dyn-alloc-failed", true, "NO JOB TRACKER");
         ORTE_ACTIVATE_JOB_STATE(NULL, ORTE_JOB_STATE_ALLOC_FAILED);
+        opal_argv_free(alloc);
         return;
     }
 
@@ -809,6 +812,7 @@ static void recv_data(int fd, short args, void *cbdata)
         if (idx < 0 || NULL == (app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, idx))) {
             orte_show_help("help-ras-slurm.txt", "slurm-dyn-alloc-failed", true, jtrk->cmd);
             ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_ALLOC_FAILED);
+            opal_argv_free(alloc);
             return;
         }
         /* track the Slurm jobid */
@@ -824,6 +828,7 @@ static void recv_data(int fd, short args, void *cbdata)
         if (ORTE_SUCCESS != (rc = orte_ras_slurm_discover(nodelist, tpn, &ndtmp))) {
             ORTE_ERROR_LOG(rc);
             ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_ALLOC_FAILED);
+            opal_argv_free(alloc);
             return;
         }
         /* transfer the discovered nodes to our node list, and construct
