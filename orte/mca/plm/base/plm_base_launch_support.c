@@ -983,8 +983,8 @@ int orte_plm_base_orted_append_basic_args(int *argc, char ***argv,
     opal_argv_append(argc, argv, param);
     free(param);
 
-    /* if given and we have static ports or are using a common port, pass the node list */
-    if ((orte_static_ports || orte_use_common_port) && NULL != nodes) {
+    /* if we have static ports, pass the node list */
+    if (orte_static_ports && NULL != nodes) {
         /* convert the nodes to a regex */
         if (ORTE_SUCCESS != (rc = orte_regex_create(nodes, &param))) {
             ORTE_ERROR_LOG(rc);
@@ -996,15 +996,6 @@ int orte_plm_base_orted_append_basic_args(int *argc, char ***argv,
         free(param);
     }
     
-    if (orte_use_common_port) {
-        /* tell the daemon to use the common port */
-        opal_argv_append(argc, argv, "--use-common-port");
-    } else {
-        opal_argv_append(argc, argv, "-mca");
-        opal_argv_append(argc, argv, "orte_use_common_port");
-        opal_argv_append(argc, argv, "0");
-    }
-
     /* warn the daemons if we are using a tree spawn pattern so they
      * know they shouldn't do a rollup on their callback
      */

@@ -581,7 +581,6 @@ ORTE_DECLSPEC extern char *orte_basename;
 ORTE_DECLSPEC extern bool orte_static_ports;
 ORTE_DECLSPEC extern char *orte_oob_static_ports;
 ORTE_DECLSPEC extern bool orte_standalone_operation;
-ORTE_DECLSPEC extern bool orte_use_common_port;
 
 /* nodename flags */
 ORTE_DECLSPEC extern bool orte_keep_fqdn_hostnames;

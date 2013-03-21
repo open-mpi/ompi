@@ -651,15 +651,7 @@ mca_oob_tcp_create_listen(int *target_sd, unsigned short *target_port, uint16_t 
        port in the range.  Otherwise, tcp_port_min will be 0, which
        means "pick any port" */
     if (AF_INET == af_family) {
-        if (ORTE_PROC_IS_DAEMON && orte_use_common_port) {
-            /* use the same port as the HNP */
-            char *ptr, *portptr;
-            portptr = strdup(orte_process_info.my_hnp_uri);
-            ptr = strrchr(portptr, ':');
-            ptr++;
-            opal_argv_append_nosize(&ports, ptr);
-            free(portptr);
-        } else if (ORTE_PROC_IS_HNP || ORTE_PROC_IS_DAEMON) {
+        if (ORTE_PROC_IS_HNP || ORTE_PROC_IS_DAEMON) {
             if (NULL != mca_oob_tcp_component.tcp4_static_ports) {
                 /* if static ports were provided, the daemon takes the
                  * first entry in the list
