@@ -11,6 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
+ * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -311,16 +312,10 @@ static int orte_ras_slurm_allocate(orte_job_t *jdata, opal_list_t *nodes)
 
     /* All done */
 
-    if (ORTE_SUCCESS == ret) {
-        OPAL_OUTPUT_VERBOSE((1, orte_ras_base.ras_output,
-                             "%s ras:slurm:allocate: success",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-    } else {
-        OPAL_OUTPUT_VERBOSE((1, orte_ras_base.ras_output,
-                             "%s ras:slurm:allocate: failure (base_allocate_nodes=%d)",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ret));
-    }
-    return ret;
+    OPAL_OUTPUT_VERBOSE((1, orte_ras_base.ras_output,
+                         "%s ras:slurm:allocate: success",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+    return ORTE_SUCCESS;
 }
 
 static void deallocate(orte_job_t *jdata,
