@@ -724,8 +724,6 @@ int orte_util_filter_hostfile_nodes(opal_list_t *nodes,
                  * our local name, and yet still be intended to match,
                  * we have to check for local interfaces
                  */
-                opal_output(0, "HOSTFILE: CHECKING FILE NODE %s VS LIST NODE %s",
-                            node_from_file->name, node_from_list->name);
                 if (0 == strcmp(node_from_file->name, node_from_list->name) ||
                     (opal_ifislocal(node_from_list->name) &&
                      opal_ifislocal(node_from_file->name))) {
