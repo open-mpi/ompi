@@ -71,6 +71,7 @@ public:
     std::vector<CTree<std::string>*> children;
     double timeFilt;
     CTree() {
+        parent = NULL;
         timeFilt = 0;
         rule = 1;
         n = 0;

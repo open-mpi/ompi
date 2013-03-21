@@ -164,11 +164,11 @@ int parse_replacement_file( const char* filename ) {
     return 0;
 }
 int parse_token(char* token,set<uint32_t>& tMap) {
+    if (!token) return 0;
     if( false == checkString(token) ) {
       cout << "Error: '" << token << "' includes (a) letter(s)" << endl;
       return 1;
     }
-    if (!token) return 0;
     const char* delim="-";
     char* tok;
     uint32_t start=0;
