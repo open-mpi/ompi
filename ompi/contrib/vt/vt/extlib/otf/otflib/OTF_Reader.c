@@ -1033,6 +1033,8 @@ int OTF_Reader_init( OTF_Reader* reader ) {
 	reader->statisticsHeap= NULL;
 	reader->markerHeap= NULL;
 
+	reader->mc= NULL;
+
 	reader->minTime= 0;
 	reader->maxTime= (uint64_t) -1;
 
