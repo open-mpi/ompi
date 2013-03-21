@@ -95,7 +95,7 @@
    implicity from libmpi, there are times when the malloc initialize
    hook in the memory component doesn't work.  So we have to do it
    from here, since any MPI code is going to call MPI_Init... */
-void (*__malloc_initialize_hook) (void) = 
+OPAL_DECLSPEC void (*__malloc_initialize_hook) (void) = 
     opal_memory_linux_malloc_init_hook;
 #endif
 
