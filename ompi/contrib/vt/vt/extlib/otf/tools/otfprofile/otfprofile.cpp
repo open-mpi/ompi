@@ -342,8 +342,7 @@ static int parse_command_line(int argc, char** argv, AllData& alldata) {
 
             }
 
-            ret = 1;
-            break;
+            return 1;
 
             /* -V */
         } else if (0 == strcmp("-V", argv[i])) {
@@ -355,8 +354,7 @@ static int parse_command_line(int argc, char** argv, AllData& alldata) {
 
             }
 
-            ret = 1;
-            break;
+            return 1;
 
             /* -v */
         } else if (0 == strcmp("-v", argv[i])) {
@@ -631,6 +629,8 @@ static int parse_command_line(int argc, char** argv, AllData& alldata) {
 
                 } while ((tok = strtok( NULL, ",")));
 
+		free( arg );
+
                 if (ERR_ARG_INVALID == parse_error)
                     break;
 
@@ -764,10 +764,6 @@ static int parse_command_line(int argc, char** argv, AllData& alldata) {
 
                 cerr << "ERROR: Invalid argument for option '" << argv[i]
                         << "'." << endl;
-                break;
-
-            default:
-
                 break;
 
             }
