@@ -892,11 +892,6 @@ void opal_memory_linux_hook_pull(bool *want_hooks)
 
 
 
-/* OMPI change: This is the symbol to override to make the above
-   function get fired during malloc initialization time. */
-void (*__malloc_initialize_hook) (void) = 
-    opal_memory_linux_malloc_init_hook;
-
 /*
  * Local variables:
  * c-basic-offset: 4

@@ -462,8 +462,11 @@ ptmalloc_init __MALLOC_P((void))
     if(s[0]) mALLOPt(M_CHECK_ACTION, (int)(s[0] - '0'));
     __malloc_check_init();
   }
+#if 0
+  /* OMPI Change: Don't call the initialize hook; it was us. */
   if(__malloc_initialize_hook != NULL)
     (*__malloc_initialize_hook)();
+#endif
 
   __malloc_initialized = 1;
 }
