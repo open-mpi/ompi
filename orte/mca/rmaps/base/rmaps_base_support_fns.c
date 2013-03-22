@@ -255,18 +255,27 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
                     continue;
                 }
                 if (0 != strcmp(node->name, nptr->name)) {
+                    OPAL_OUTPUT_VERBOSE((10, orte_rmaps_base.rmaps_output,
+                                         "NODE %s DOESNT MATCH NODE %s",
+                                         node->name, nptr->name));
                     continue;
                 }
                 /* ignore nodes that are marked as do-not-use for this mapping */
                 if (ORTE_NODE_STATE_DO_NOT_USE == node->state) {
+                    OPAL_OUTPUT_VERBOSE((10, orte_rmaps_base.rmaps_output,
+                                         "NODE %s IS MARKED NO_USE", node->name));
                     /* reset the state so it can be used another time */
                     node->state = ORTE_NODE_STATE_UP;
                     continue;
                 }
                 if (ORTE_NODE_STATE_DOWN == node->state) {
+                    OPAL_OUTPUT_VERBOSE((10, orte_rmaps_base.rmaps_output,
+                                         "NODE %s IS DOWN", node->name));
                     continue;
                 }
                 if (ORTE_NODE_STATE_NOT_INCLUDED == node->state) {
+                    OPAL_OUTPUT_VERBOSE((10, orte_rmaps_base.rmaps_output,
+                                         "NODE %s IS MARKED NO_INCLUDE", node->name));
                     /* not to be used */
                     continue;
                 }
@@ -274,6 +283,8 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
                  * unless we are mapping prior to launching the vm
                  */
                 if (NULL == node->daemon && !novm) {
+                    OPAL_OUTPUT_VERBOSE((10, orte_rmaps_base.rmaps_output,
+                                         "NODE %s HAS NO DAEMON", node->name));
                     continue;
                 }
                 /* retain a copy for our use in case the item gets
@@ -327,6 +338,8 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
     if (orte_hnp_is_allocated && !(ORTE_GET_MAPPING_DIRECTIVE(policy) & ORTE_MAPPING_NO_USE_LOCAL)) {
         if (NULL != (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, 0))) {
             if (ORTE_NODE_STATE_DO_NOT_USE == node->state) {
+                OPAL_OUTPUT_VERBOSE((10, orte_rmaps_base.rmaps_output,
+                                     "HNP IS MARKED NO_USE"));
                 /* clear this for future use, but don't include it */
                 node->state = ORTE_NODE_STATE_UP;
             } else if (ORTE_NODE_STATE_NOT_INCLUDED != node->state) {
@@ -359,14 +372,20 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
         if (NULL != (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, i))) {
             /* ignore nodes that are marked as do-not-use for this mapping */
             if (ORTE_NODE_STATE_DO_NOT_USE == node->state) {
+                OPAL_OUTPUT_VERBOSE((10, orte_rmaps_base.rmaps_output,
+                                     "NODE %s IS MARKED NO_USE", node->name));
                 /* reset the state so it can be used another time */
                 node->state = ORTE_NODE_STATE_UP;
                 continue;
             }
             if (ORTE_NODE_STATE_DOWN == node->state) {
+                OPAL_OUTPUT_VERBOSE((10, orte_rmaps_base.rmaps_output,
+                                     "NODE %s IS MARKED DOWN", node->name));
                 continue;
             }
             if (ORTE_NODE_STATE_NOT_INCLUDED == node->state) {
+                OPAL_OUTPUT_VERBOSE((10, orte_rmaps_base.rmaps_output,
+                                     "NODE %s IS MARKED NO_INCLUDE", node->name));
                 /* not to be used */
                 continue;
             }
@@ -374,6 +393,8 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
              * unless we are mapping prior to launching the vm
              */
             if (NULL == node->daemon && !novm) {
+                OPAL_OUTPUT_VERBOSE((10, orte_rmaps_base.rmaps_output,
+                                     "NODE %s HAS NO DAEMON", node->name));
                 continue;
             }
             /* retain a copy for our use in case the item gets

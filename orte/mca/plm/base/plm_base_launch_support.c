@@ -1246,14 +1246,20 @@ int orte_plm_base_setup_virtual_machine(orte_job_t *jdata)
             }
             /* ignore nodes that are marked as do-not-use for this mapping */
             if (ORTE_NODE_STATE_DO_NOT_USE == node->state) {
+                OPAL_OUTPUT_VERBOSE((10, orte_plm_globals.output,
+                                     "NODE %s IS MARKED NO_USE", node->name));
                 /* reset the state so it can be used another time */
                 node->state = ORTE_NODE_STATE_UP;
                 continue;
             }
             if (ORTE_NODE_STATE_DOWN == node->state) {
+                OPAL_OUTPUT_VERBOSE((10, orte_plm_globals.output,
+                                     "NODE %s IS MARKED DOWN", node->name));
                 continue;
             }
             if (ORTE_NODE_STATE_NOT_INCLUDED == node->state) {
+                OPAL_OUTPUT_VERBOSE((10, orte_plm_globals.output,
+                                     "NODE %s IS MARKED NO_INCLUDE", node->name));
                 /* not to be used */
                 continue;
             }
@@ -1388,14 +1394,20 @@ int orte_plm_base_setup_virtual_machine(orte_job_t *jdata)
                 /* have a match - now see if we want this node */
                 /* ignore nodes that are marked as do-not-use for this mapping */
                 if (ORTE_NODE_STATE_DO_NOT_USE == node->state) {
+                    OPAL_OUTPUT_VERBOSE((10, orte_plm_globals.output,
+                                         "NODE %s IS MARKED NO_USE", node->name));
                     /* reset the state so it can be used another time */
                     node->state = ORTE_NODE_STATE_UP;
                     break;
                 }
                 if (ORTE_NODE_STATE_DOWN == node->state) {
+                    OPAL_OUTPUT_VERBOSE((10, orte_plm_globals.output,
+                                         "NODE %s IS MARKED DOWN", node->name));
                     break;
                 }
                 if (ORTE_NODE_STATE_NOT_INCLUDED == node->state) {
+                    OPAL_OUTPUT_VERBOSE((10, orte_plm_globals.output,
+                                         "NODE %s IS MARKED NO_INCLUDE", node->name));
                     break;
                 }
                 /* if this node is us, ignore it */
@@ -1430,21 +1442,25 @@ int orte_plm_base_setup_virtual_machine(orte_job_t *jdata)
         goto process;
     }
 
-    /* construct a list of available nodes - don't need ours as
-     * we already exist
-     */
+    /* construct a list of available nodes */
     for (i=1; i < orte_node_pool->size; i++) {
         if (NULL != (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, i))) {
             /* ignore nodes that are marked as do-not-use for this mapping */
             if (ORTE_NODE_STATE_DO_NOT_USE == node->state) {
+                OPAL_OUTPUT_VERBOSE((10, orte_plm_globals.output,
+                                     "NODE %s IS MARKED NO_USE", node->name));
                 /* reset the state so it can be used another time */
                 node->state = ORTE_NODE_STATE_UP;
                 continue;
             }
             if (ORTE_NODE_STATE_DOWN == node->state) {
+                OPAL_OUTPUT_VERBOSE((10, orte_plm_globals.output,
+                                     "NODE %s IS MARKED DOWN", node->name));
                 continue;
             }
             if (ORTE_NODE_STATE_NOT_INCLUDED == node->state) {
+                OPAL_OUTPUT_VERBOSE((10, orte_plm_globals.output,
+                                     "NODE %s IS MARKED NO_INCLUDE", node->name));
                 /* not to be used */
                 continue;
             }
@@ -1461,13 +1477,14 @@ int orte_plm_base_setup_virtual_machine(orte_job_t *jdata)
     }
 
     /* if we didn't get anything, then we are the only node in the
-     * allocation - so there is nothing else to do as no other
+     * system - so there is nothing else to do as no other
      * daemons are to be launched
      */
     if (0 == opal_list_get_size(&nodes)) {
         OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                              "%s plm:base:setup_vm only HNP in allocation",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+        /* cleanup */
         OBJ_DESTRUCT(&nodes);
         /* mark that the daemons have reported so we can proceed */
         daemons->state = ORTE_JOB_STATE_DAEMONS_REPORTED;
@@ -1475,7 +1492,17 @@ int orte_plm_base_setup_virtual_machine(orte_job_t *jdata)
         return ORTE_SUCCESS;
     }
 
-    /* filter across the union of all app_context specs */
+    /* filter across the union of all app_context specs - if the HNP
+     * was allocated, then we have to include
+     * ourselves in case someone has specified a -host or hostfile
+     * that includes the head node. We will remove ourselves later
+     * as we clearly already exist
+     */
+    if (orte_hnp_is_allocated) {
+        node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, 0);
+        OBJ_RETAIN(node);
+        opal_list_append(&nodes, &node->super);
+    }
     for (i=0; i < jdata->apps->size; i++) {
         if (NULL == (app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, i))) {
             continue;
@@ -1504,6 +1531,18 @@ int orte_plm_base_setup_virtual_machine(orte_job_t *jdata)
                 OBJ_RELEASE(item);
             }
             item = next;
+        }
+    }
+
+    /* ensure we are not on the list */
+    for (item = opal_list_get_first(&nodes);
+         item != opal_list_get_end(&nodes);
+         item = opal_list_get_next(item)) {
+        node = (orte_node_t*)item;
+        if (0 == node->index) {
+            opal_list_remove_item(&nodes, item);
+            OBJ_RELEASE(item);
+            break;
         }
     }
 
