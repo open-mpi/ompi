@@ -157,10 +157,8 @@ int opal_hwloc_base_open(void)
             /* mark that no binding policy was specified */
             opal_hwloc_binding_policy &= ~OPAL_BIND_GIVEN;
         } else if (0 == strncasecmp(str_value, "none", strlen("none"))) {
-            opal_hwloc_binding_policy = OPAL_BIND_TO_NONE;
-            opal_hwloc_binding_policy |= OPAL_BIND_GIVEN;
+            OPAL_SET_BINDING_POLICY(opal_hwloc_binding_policy, OPAL_BIND_TO_NONE);
         } else {
-            opal_hwloc_binding_policy |= OPAL_BIND_GIVEN;
             tmpvals = opal_argv_split(str_value, ':');
             if (1 < opal_argv_count(tmpvals)) {
                 quals = opal_argv_split(tmpvals[1], ',');
@@ -217,7 +215,6 @@ int opal_hwloc_base_open(void)
                 return OPAL_ERR_BAD_PARAM;
             }
             OPAL_SET_BINDING_POLICY(opal_hwloc_binding_policy, OPAL_BIND_TO_CORE);
-            opal_hwloc_binding_policy |= OPAL_BIND_GIVEN;
         }
 
         mca_base_param_reg_int_name("hwloc", "base_bind_to_socket",
@@ -233,7 +230,6 @@ int opal_hwloc_base_open(void)
                 return OPAL_ERR_SILENT;
             }
             OPAL_SET_BINDING_POLICY(opal_hwloc_binding_policy, OPAL_BIND_TO_SOCKET);
-            opal_hwloc_binding_policy |= OPAL_BIND_GIVEN;
         }
 
         mca_base_param_reg_int_name("hwloc", "base_report_bindings",
@@ -253,7 +249,6 @@ int opal_hwloc_base_open(void)
                 return OPAL_ERR_SILENT;
             }
             OPAL_SET_BINDING_POLICY(opal_hwloc_binding_policy, OPAL_BIND_TO_CPUSET);
-            opal_hwloc_binding_policy |= OPAL_BIND_GIVEN;
         }
 
         /* cpu allocation specification */
@@ -267,7 +262,6 @@ int opal_hwloc_base_open(void)
                  * ignored if someone didn't also specify a binding policy
                  */
                 OPAL_SET_BINDING_POLICY(opal_hwloc_binding_policy, OPAL_BIND_TO_CPUSET);
-                opal_hwloc_binding_policy |= OPAL_BIND_GIVEN;
             }
         }
 
