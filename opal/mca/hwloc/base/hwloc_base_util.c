@@ -1693,7 +1693,12 @@ static int build_map(int *num_sockets_arg, int *num_cores_arg,
        to look this up every time) */
     if (num_sockets < 0) {
         num_sockets = hwloc_get_nbobjs_by_type(opal_hwloc_topology, HWLOC_OBJ_SOCKET);
-
+        /* some systems (like the iMac) only have one
+         * socket and so don't report a socket
+         */
+        if (0 == num_sockets) {
+            num_sockets = 1;
+        }
         /* Lazy: take the total number of cores that we have in the
            topology; that'll be more than the max number of cores
            under any given socket */
