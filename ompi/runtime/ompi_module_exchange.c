@@ -77,11 +77,11 @@ ompi_modex_recv(const mca_base_component_t *component,
         /* xfer the data - it was allocated in the call */
         *buffer = (void*)boptr->bytes;
         *size = boptr->size;
+        /* we no longer require the struct itself since all we
+         * wanted was the data inside it
+         */
+        free(boptr);
     }
-    /* we no longer require the struct itself since all we
-     * wanted was the data inside it
-     */
-    free(boptr);
     free(key);
     return rc;
 }
