@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2009-2010 Oracle and/or its affiliates.  All rights reserved. 
  *
+ * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -10,6 +11,7 @@
 
 #include <private/autogen/config.h>
 #include <private/solaris-chiptype.h>
+#include <hwloc.h>
 #include <stdlib.h>
 #include <strings.h>
 
