@@ -51,6 +51,7 @@ int orte_ess_base_proc_binding(void)
     char *map;
     int ret;
     char *error;
+    hwloc_cpuset_t mycpus;
 
     /* Determine if we were pre-bound or not */
     if (NULL != getenv("OMPI_MCA_orte_bound_at_launch")) {
@@ -253,25 +254,37 @@ int orte_ess_base_proc_binding(void)
      * times, so it's more efficient to keep a global copy
      */
     opal_hwloc_base_get_local_cpuset();
-    /* report bindings, if requested */
-    if (opal_hwloc_report_bindings) {
-        char tmp1[1024], tmp2[1024];
-        hwloc_cpuset_t mycpus;
-        /* get the cpus we are bound to */
-        mycpus = hwloc_bitmap_alloc();
-        if (hwloc_get_cpubind(opal_hwloc_topology, 
-                              mycpus, 
-                              HWLOC_CPUBIND_PROCESS) < 0) {
+
+    /* get the cpus we are bound to */
+    mycpus = hwloc_bitmap_alloc();
+    if (hwloc_get_cpubind(opal_hwloc_topology, 
+                          mycpus, 
+                          HWLOC_CPUBIND_PROCESS) < 0) {
+        if (NULL != orte_process_info.cpuset) {
+            free(orte_process_info.cpuset);
+            orte_process_info.cpuset = NULL;
+        }
+        if (opal_hwloc_report_bindings) {
             opal_output(0, "MCW rank %d is not bound",
                         ORTE_PROC_MY_NAME->vpid);
-        } else {
+        }
+    } else {
+        /* store/update the string representation of our local binding */
+        if (NULL != orte_process_info.cpuset) {
+            free(orte_process_info.cpuset);
+            orte_process_info.cpuset = NULL;
+        }
+        hwloc_bitmap_list_asprintf(&orte_process_info.cpuset, mycpus);
+        /* report the binding, if requested */
+        if (opal_hwloc_report_bindings) {
+            char tmp1[1024], tmp2[1024];
             opal_hwloc_base_cset2str(tmp1, sizeof(tmp1), mycpus);
             opal_hwloc_base_cset2mapstr(tmp2, sizeof(tmp2), mycpus);
             opal_output(0, "MCW rank %d bound to %s: %s",
                         ORTE_PROC_MY_NAME->vpid, tmp1, tmp2);
         }
-        hwloc_bitmap_free(mycpus);
     }
+    hwloc_bitmap_free(mycpus);
 
     return ORTE_SUCCESS;
 
