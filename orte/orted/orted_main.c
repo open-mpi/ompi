@@ -538,9 +538,6 @@ int orte_daemon(int argc, char *argv[])
         proc->alive = true;
         proc->app_idx = 0;
         proc->local_proc = true;
-#if OPAL_HAVE_HWLOC
-        proc->bind_idx = 0;
-#endif
 
         /* create the collectives for its modex/barriers */
         jdata->peer_modex = orte_grpcomm_base_get_coll_id();

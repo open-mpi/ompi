@@ -122,8 +122,7 @@ struct orte_proc_info_t {
     char *sock_stdout;                  /**< Path name to temp file for stdout. */
     char *sock_stderr;                  /**< Path name to temp file for stderr. */
 #if OPAL_HAVE_HWLOC
-    opal_hwloc_level_t bind_level;
-    unsigned int bind_idx;
+    char *cpuset;                       /**< String-representation of bitmap where we are bound */
 #endif
     int32_t app_rank;                       /**< rank within my app_context */
     orte_grpcomm_coll_id_t peer_modex;   /**< modex collective id */

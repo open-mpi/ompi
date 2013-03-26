@@ -93,6 +93,12 @@ OPAL_DECLSPEC extern char *opal_hwloc_base_slot_list;
 OPAL_DECLSPEC extern char *opal_hwloc_base_cpu_set;
 OPAL_DECLSPEC extern hwloc_cpuset_t opal_hwloc_base_given_cpus;
 
+typedef struct {
+    opal_list_item_t super;
+    hwloc_obj_t obj;
+} opal_hwloc_obj_list_item_t;
+OBJ_CLASS_DECLARATION(opal_hwloc_obj_list_item_t);
+
 /* convenience macro for debugging */
 #define OPAL_HWLOC_SHOW_BINDING(n, v)                                   \
     do {                                                                \
@@ -114,10 +120,7 @@ OPAL_DECLSPEC extern hwloc_cpuset_t opal_hwloc_base_given_cpus;
     } while(0);
 
 OPAL_DECLSPEC opal_hwloc_locality_t opal_hwloc_base_get_relative_locality(hwloc_topology_t topo,
-                                                                              opal_hwloc_level_t level1,
-                                                                              unsigned int peer1,
-                                                                              opal_hwloc_level_t level2,
-                                                                              unsigned int peer2);
+                                                                          char *cpuset1, char *cpuset2);
 
 /**
  * Loads opal_hwloc_my_cpuset (global variable in

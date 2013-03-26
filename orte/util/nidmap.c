@@ -662,13 +662,6 @@ int orte_util_encode_pidmap(opal_byte_object_t *boptr, bool update)
             ORTE_ERROR_LOG(rc);
             goto cleanup_and_return;
         }
-#if OPAL_HAVE_HWLOC
-        /* pack the bind level */
-        if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &(jdata->map->bind_level), 1, OPAL_HWLOC_LEVEL_T))) {
-            ORTE_ERROR_LOG(rc);
-            goto cleanup_and_return;
-        }
-#endif
 
         /* cycle thru the job's procs, including only those that have
          * been updated so we minimize the amount of info being sent
@@ -698,10 +691,6 @@ int orte_util_encode_pidmap(opal_byte_object_t *boptr, bool update)
                 goto cleanup_and_return;
             }
 #if OPAL_HAVE_HWLOC
-            if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &proc->bind_idx, 1, OPAL_UINT))) {
-                ORTE_ERROR_LOG(rc);
-                goto cleanup_and_return;
-            }
             if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &proc->cpu_bitmap, 1, OPAL_STRING))) {
                 ORTE_ERROR_LOG(rc);
                 goto cleanup_and_return;
@@ -765,8 +754,6 @@ int orte_util_decode_pidmap(opal_byte_object_t *bo)
     orte_local_rank_t local_rank;
     orte_node_rank_t node_rank;
 #if OPAL_HAVE_HWLOC
-    opal_hwloc_level_t bind_level = OPAL_HWLOC_NODE_LEVEL, pbind, *lvptr;
-    unsigned int bind_idx, pbidx, *uiptr;
     char *cpu_bitmap;
 #endif
     opal_hwloc_locality_t locality;
@@ -821,31 +808,6 @@ int orte_util_decode_pidmap(opal_byte_object_t *bo)
             goto cleanup;
         }
 
-#if OPAL_HAVE_HWLOC
-        /* unpack and store the binding level */
-        n=1;
-        if (ORTE_SUCCESS != (rc = opal_dss.unpack(&buf, &bind_level, &n, OPAL_HWLOC_LEVEL_T))) {
-            ORTE_ERROR_LOG(rc);
-            goto cleanup;
-        }
-        /* store it */
-        proc.vpid = ORTE_VPID_INVALID;
-        if (ORTE_SUCCESS != (rc = opal_db.store((*id), OPAL_DB_INTERNAL, ORTE_DB_BIND_LEVEL, &bind_level, OPAL_HWLOC_LEVEL_T))) {
-            ORTE_ERROR_LOG(rc);
-            goto cleanup;
-        }
-        /* set mine */
-        if (proc.jobid == ORTE_PROC_MY_NAME->jobid) {
-            orte_process_info.bind_level = bind_level;
-        }
-
-        OPAL_OUTPUT_VERBOSE((2, orte_nidmap_output,
-                             "%s orte:util:decode:pidmap nprocs %s bind level %s",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             ORTE_VPID_PRINT(num_procs),
-                             opal_hwloc_base_print_level(bind_level)));
-#endif
-
         /* cycle thru the data until we hit an INVALID vpid indicating
          * all data for this job has been read
          */
@@ -871,11 +833,6 @@ int orte_util_decode_pidmap(opal_byte_object_t *bo)
             }
 #if OPAL_HAVE_HWLOC
             n=1;
-            if (ORTE_SUCCESS != (rc = opal_dss.unpack(&buf, &bind_idx, &n, OPAL_UINT))) {
-                ORTE_ERROR_LOG(rc);
-                goto cleanup;
-            }
-            n=1;
             if (ORTE_SUCCESS != (rc = opal_dss.unpack(&buf, &cpu_bitmap, &n, OPAL_STRING))) {
                 ORTE_ERROR_LOG(rc);
                 goto cleanup;
@@ -886,9 +843,6 @@ int orte_util_decode_pidmap(opal_byte_object_t *bo)
                 /* set mine */
                 orte_process_info.my_local_rank = local_rank;
                 orte_process_info.my_node_rank = node_rank;
-#if OPAL_HAVE_HWLOC
-                orte_process_info.bind_idx = bind_idx;
-#endif
             }
             /* apps don't need the rest of the data in the buffer for this proc,
              * but we have to unpack it anyway to stay in sync
@@ -923,11 +877,7 @@ int orte_util_decode_pidmap(opal_byte_object_t *bo)
                 goto cleanup;
             }
 #if OPAL_HAVE_HWLOC
-            if (ORTE_SUCCESS != (rc = opal_db.store((*id), OPAL_DB_INTERNAL, ORTE_DB_BIND_INDEX, &bind_idx, OPAL_UINT))) {
-                ORTE_ERROR_LOG(rc);
-                goto cleanup;
-            }
-            if (ORTE_SUCCESS != (rc = opal_db.store((*id), OPAL_DB_INTERNAL, ORTE_DB_BIND_BITMAP, cpu_bitmap, OPAL_STRING))) {
+            if (ORTE_SUCCESS != (rc = opal_db.store((*id), OPAL_DB_INTERNAL, ORTE_DB_CPUSET, cpu_bitmap, OPAL_STRING))) {
                 ORTE_ERROR_LOG(rc);
                 goto cleanup;
             }
@@ -1027,27 +977,15 @@ int orte_util_decode_pidmap(opal_byte_object_t *bo)
                  */
                 orte_process_info.num_local_peers++;
 #if OPAL_HAVE_HWLOC
-                /* retrieve the bind level for the other proc's job */
-                lvptr = &pbind;
-                proc.vpid = ORTE_VPID_INVALID;
-                if (ORTE_SUCCESS != (rc = opal_db.fetch((*id), ORTE_DB_BIND_LEVEL, (void**)&lvptr, OPAL_HWLOC_LEVEL_T))) {
+                /* retrieve the binding for the other proc */
+                if (ORTE_SUCCESS != (rc = opal_db.fetch((*id), ORTE_DB_CPUSET, (void**)&cpu_bitmap, OPAL_STRING))) {
                     ORTE_ERROR_LOG(rc);
                     goto cleanup;
                 }
-
-                /* retrieve the other's proc's bind idx */
-                uiptr = &pbidx;
-                proc.vpid = i;
-                if (ORTE_SUCCESS != (rc = opal_db.fetch((*id), ORTE_DB_BIND_INDEX, (void**)&uiptr, OPAL_UINT))) {
-                    ORTE_ERROR_LOG(rc);
-                    goto cleanup;
-                }
-
                 /* we share a node - see what else we share */
                 locality = opal_hwloc_base_get_relative_locality(opal_hwloc_topology,
-                                                                 orte_process_info.bind_level,
-                                                                 orte_process_info.bind_idx,
-                                                                 pbind, pbidx);
+                                                                 orte_process_info.cpuset,
+                                                                 cpu_bitmap);
 #else
                 locality = OPAL_PROC_ON_NODE;
 #endif
@@ -1095,7 +1033,6 @@ int orte_util_decode_daemon_pidmap(opal_byte_object_t *bo)
     orte_node_rank_t node_rank;
 #if OPAL_HAVE_HWLOC
     opal_hwloc_level_t bind_level = OPAL_HWLOC_NODE_LEVEL;
-    unsigned int bind_idx;
     char *cpu_bitmap;
 #endif
     orte_std_cntr_t n;
@@ -1148,15 +1085,6 @@ int orte_util_decode_daemon_pidmap(opal_byte_object_t *bo)
         }
         jdata->num_procs = num_procs;
 
-#if OPAL_HAVE_HWLOC
-        /* unpack the binding level */
-        n=1;
-        if (ORTE_SUCCESS != (rc = opal_dss.unpack(&buf, &bind_level, &n, OPAL_HWLOC_LEVEL_T))) {
-            ORTE_ERROR_LOG(rc);
-            goto cleanup;
-        }
-        jdata->map->bind_level = bind_level;
-#endif
         /* cycle thru the data until we hit an INVALID vpid indicating
          * all data for this job has been read
          */
@@ -1181,11 +1109,6 @@ int orte_util_decode_daemon_pidmap(opal_byte_object_t *bo)
                 goto cleanup;
             }
 #if OPAL_HAVE_HWLOC
-            n=1;
-            if (ORTE_SUCCESS != (rc = opal_dss.unpack(&buf, &bind_idx, &n, OPAL_UINT))) {
-                ORTE_ERROR_LOG(rc);
-                goto cleanup;
-            }
             n=1;
             if (ORTE_SUCCESS != (rc = opal_dss.unpack(&buf, &cpu_bitmap, &n, OPAL_STRING))) {
                 ORTE_ERROR_LOG(rc);
@@ -1295,7 +1218,6 @@ int orte_util_decode_daemon_pidmap(opal_byte_object_t *bo)
             proc->restarts = restarts;
             proc->state = state;
 #if OPAL_HAVE_HWLOC
-            proc->bind_idx = bind_idx;
             proc->cpu_bitmap = cpu_bitmap;
 #endif
         }

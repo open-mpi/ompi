@@ -176,11 +176,10 @@ static int modex(orte_grpcomm_collective_t *coll)
     orte_process_name_t name;
     int rc;
     opal_identifier_t *id;
-    opal_hwloc_level_t bind_level;
     opal_hwloc_locality_t locality;
-    unsigned int bind_idx;
     orte_local_rank_t local_rank;
     orte_node_rank_t node_rank;
+    bool bound;
 
      OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base.output,
                          "%s grpcomm:pmi: modex entered",
@@ -250,40 +249,47 @@ static int modex(orte_grpcomm_collective_t *coll)
             opal_argv_free(fields);
             return rc;
         }
-        /* next is the bind level */
-        bind_level = strtoul(fields[2], NULL, 10);
-        if (ORTE_SUCCESS != (rc = opal_db.store((*id), OPAL_DB_INTERNAL, ORTE_DB_BIND_LEVEL, &bind_level, OPAL_HWLOC_LEVEL_T))) {
-            ORTE_ERROR_LOG(rc);
-            opal_argv_free(fields);
-            return rc;
-        }
-        /* next is the bind index */
-        bind_idx = strtoul(fields[3], NULL, 10);
-        if (ORTE_SUCCESS != (rc = opal_db.store((*id), OPAL_DB_INTERNAL, ORTE_DB_BIND_INDEX, &bind_idx, OPAL_UINT))) {
-            ORTE_ERROR_LOG(rc);
-            opal_argv_free(fields);
-            return rc;
-        }
         /* local rank */
-        local_rank = strtoul(fields[4], NULL, 10);
+        local_rank = strtoul(fields[2], NULL, 10);
         if (ORTE_SUCCESS != (rc = opal_db.store((*id), OPAL_DB_INTERNAL, ORTE_DB_LOCALRANK, &local_rank, ORTE_LOCAL_RANK))) {
             ORTE_ERROR_LOG(rc);
             opal_argv_free(fields);
             return rc;
         }
         /* node rank */
-        node_rank = strtoul(fields[5], NULL, 10);
+        node_rank = strtoul(fields[3], NULL, 10);
         if (ORTE_SUCCESS != (rc = opal_db.store((*id), OPAL_DB_INTERNAL, ORTE_DB_NODERANK, &node_rank, ORTE_NODE_RANK))) {
             ORTE_ERROR_LOG(rc);
             opal_argv_free(fields);
             return rc;
+        }
+        /* if the process was bound, then there will be another field
+         * that contains its cpuset
+         */
+        if (5 == opal_argv_count(fields)) {
+            if (ORTE_SUCCESS != (rc = opal_db.store((*id), OPAL_DB_INTERNAL, ORTE_DB_CPUSET, fields[4], OPAL_STRING))) {
+                ORTE_ERROR_LOG(rc);
+                opal_argv_free(fields);
+                return rc;
+            }
+            bound = true;
+        } else {
+            /* store a placeholder so we know that this value was retrieved,
+             * but the proc wasn't bound
+             */
+            if (ORTE_SUCCESS != (rc = opal_db.store((*id), OPAL_DB_INTERNAL, ORTE_DB_CPUSET, NULL, OPAL_STRING))) {
+                ORTE_ERROR_LOG(rc);
+                opal_argv_free(fields);
+                return rc;
+            }
+            bound = false;
         }
 
         /* compute and store the locality as it isn't something that gets pushed to PMI */
         if (0 != strcmp(fields[1], orte_process_info.nodename)) {
             /* this is on a different node, then mark as non-local */
             locality = OPAL_PROC_NON_LOCAL;
-        } else if (OPAL_HWLOC_NODE_LEVEL == bind_level) {
+        } else if (!bound) {
             /* if we share a node, but we don't know anything more, then
              * mark us as on the node as this is all we know
              */
@@ -291,9 +297,8 @@ static int modex(orte_grpcomm_collective_t *coll)
         } else {
             /* determine relative location on our node */
             locality = opal_hwloc_base_get_relative_locality(opal_hwloc_topology,
-                                                             orte_process_info.bind_level,
-                                                             orte_process_info.bind_idx,
-                                                             bind_level, bind_idx);
+                                                             orte_process_info.cpuset,
+                                                             fields[4]);
         }
         if (ORTE_SUCCESS != (rc = opal_db.store((*id), OPAL_DB_INTERNAL, ORTE_DB_LOCALITY, &locality, OPAL_HWLOC_LOCALITY_T))) {
             ORTE_ERROR_LOG(rc);

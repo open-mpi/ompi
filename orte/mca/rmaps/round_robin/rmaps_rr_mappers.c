@@ -56,7 +56,7 @@ int orte_rmaps_rr_byslot(orte_job_t *jdata,
                         ORTE_JOBID_PRINT(jdata->jobid), (int)num_slots, (unsigned long)num_procs);
 
     /* check to see if we can map all the procs */
-    if (num_slots < (int)app->num_procs) {
+    if (num_slots < ((int)app->num_procs * orte_rmaps_base.cpus_per_rank)) {
         if (ORTE_MAPPING_NO_OVERSUBSCRIBE & ORTE_GET_MAPPING_DIRECTIVE(jdata->map->mapping)) {
             orte_show_help("help-orte-rmaps-base.txt", "orte-rmaps-base:alloc-error",
                            true, app->num_procs, app->app);
@@ -77,7 +77,7 @@ int orte_rmaps_rr_byslot(orte_job_t *jdata,
                             node->name);
 #if OPAL_HAVE_HWLOC
         /* get the root object as we are not assigning
-         * locale except at the node level
+         * locale here except at the node level
          */
         if (NULL != node->topology) {
             obj = hwloc_get_root_obj(node->topology);
@@ -89,7 +89,11 @@ int orte_rmaps_rr_byslot(orte_job_t *jdata,
                                 node->name);
             continue;
         }
-        num_procs_to_assign = node->slots - node->slots_inuse;
+        /* assign a number of procs equal to the number of available
+         * slots divided by the number of cpus/rank the user
+         * requested
+         */
+        num_procs_to_assign = (node->slots - node->slots_inuse) / orte_rmaps_base.cpus_per_rank;
         opal_output_verbose(2, orte_rmaps_base.rmaps_output,
                             "mca:rmaps:rr:slot assigning %d procs to node %s",
                             (int)num_procs_to_assign, node->name);
@@ -173,7 +177,7 @@ int orte_rmaps_rr_byslot(orte_job_t *jdata,
                 --nxtra_nodes;
             }
         }
-        num_procs_to_assign = (node->slots - node->slots_inuse) + extra_procs_to_assign;
+        num_procs_to_assign = ((node->slots - node->slots_inuse)/orte_rmaps_base.cpus_per_rank) + extra_procs_to_assign;
         opal_output_verbose(2, orte_rmaps_base.rmaps_output,
                             "mca:rmaps:rr:slot adding up to %d procs to node %s",
                             num_procs_to_assign, node->name);
@@ -224,7 +228,7 @@ int orte_rmaps_rr_bynode(orte_job_t *jdata,
                         (int)num_slots, (unsigned long)num_procs);
 
     /* quick check to see if we can map all the procs */
-    if (num_slots < (int)app->num_procs) {
+    if (num_slots < ((int)app->num_procs * orte_rmaps_base.cpus_per_rank)) {
         if (ORTE_MAPPING_NO_OVERSUBSCRIBE & ORTE_GET_MAPPING_DIRECTIVE(jdata->map->mapping)) {
             orte_show_help("help-orte-rmaps-base.txt", "orte-rmaps-base:alloc-error",
                            true, app->num_procs, app->app);
@@ -323,23 +327,25 @@ int orte_rmaps_rr_bynode(orte_job_t *jdata,
                 /* update how many we are lagging behind */
                 lag += navg;
             } else {
-                /* if slots < avg, then take all */
-                if ((node->slots - node->slots_inuse) < navg) {
-                    num_procs_to_assign = (node->slots - node->slots_inuse) + extra_procs_to_assign;
+                /* if slots < avg (adjusted for cpus/proc), then take all */
+                if ((node->slots - node->slots_inuse) < (navg * orte_rmaps_base.cpus_per_rank)) {
+                    num_procs_to_assign = (node->slots - node->slots_inuse)/orte_rmaps_base.cpus_per_rank;
                     /* update how many we are lagging behind */
-                    lag += navg - (node->slots - node->slots_inuse);
+                    lag += navg - num_procs_to_assign;
                 } else {
                     /* take the avg plus as much of the "lag" as we can */
                     delta = 0;
                     if (0 < lag) {
-                        delta = (node->slots - node->slots_inuse) - navg;
+                        delta = ((node->slots - node->slots_inuse)/orte_rmaps_base.cpus_per_rank) - navg;
                         if (lag < delta) {
                             delta = lag;
                         }
                         lag -= delta;
                     }
-                    num_procs_to_assign = navg + delta + extra_procs_to_assign;
+                    num_procs_to_assign = navg;
                 }
+                /* add in the extras */
+                num_procs_to_assign += extra_procs_to_assign;
             }
         }
         for (j=0; j < num_procs_to_assign && nprocs_mapped < app->num_procs; j++) {
@@ -354,7 +360,7 @@ int orte_rmaps_rr_bynode(orte_job_t *jdata,
         /* not all nodes are equal, so only set oversubscribed for
          * this node if it is in that state
          */
-        if (node->slots < (int)node->num_procs) {
+        if (node->slots < ((int)node->num_procs * orte_rmaps_base.cpus_per_rank)) {
             /* flag the node as oversubscribed so that sched-yield gets
              * properly set
              */
@@ -384,7 +390,7 @@ int orte_rmaps_rr_bynode(orte_job_t *jdata,
         /* not all nodes are equal, so only set oversubscribed for
          * this node if it is in that state
          */
-        if (node->slots < (int)node->num_procs) {
+        if (node->slots < ((int)node->num_procs * orte_rmaps_base.cpus_per_rank)) {
             /* flag the node as oversubscribed so that sched-yield gets
              * properly set
              */

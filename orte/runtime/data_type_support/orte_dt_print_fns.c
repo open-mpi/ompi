@@ -495,10 +495,10 @@ int orte_dt_print_proc(char **output, char *prefix, orte_proc_t *src, opal_data_
         if (NULL != src->locale) {
             hwloc_bitmap_list_asprintf(&locale, src->locale->cpuset);
         }
-        asprintf(&tmp2, "%s\n%s\tState: %s\tRestarts: %d\tApp_context: %ld\tLocale: %s\tBinding: %s[%u]", tmp, pfx2,
+        asprintf(&tmp2, "%s\n%s\tState: %s\tRestarts: %d\tApp_context: %ld\tLocale: %s\tBinding: %s", tmp, pfx2,
                  orte_proc_state_to_str(src->state), src->restarts, (long)src->app_idx,
                  (NULL == locale) ? "UNKNOWN" : locale,
-                 (NULL == src->cpu_bitmap) ? "NULL" : src->cpu_bitmap, src->bind_idx);
+                 (NULL == src->cpu_bitmap) ? "NULL" : src->cpu_bitmap);
         if (NULL != locale) {
             free(locale);
         }

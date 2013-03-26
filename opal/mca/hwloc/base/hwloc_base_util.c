@@ -1202,50 +1202,17 @@ int opal_hwloc_base_slot_list_parse(const char *slot_str,
     return OPAL_SUCCESS;
 }
 
-static opal_hwloc_locality_t get_locality(opal_hwloc_level_t level)
-{
-    opal_hwloc_locality_t lvl = OPAL_PROC_LOCALITY_UNKNOWN;
-
-    switch(level) {
-    case OPAL_HWLOC_NODE_LEVEL:
-        lvl = OPAL_PROC_ON_NODE;
-        break;
-    case OPAL_HWLOC_NUMA_LEVEL:
-        lvl = OPAL_PROC_ON_NUMA;
-        break;
-    case OPAL_HWLOC_SOCKET_LEVEL:
-        lvl = OPAL_PROC_ON_SOCKET;
-        break;
-    case OPAL_HWLOC_L3CACHE_LEVEL:
-        lvl = OPAL_PROC_ON_L3CACHE;
-        break;
-    case OPAL_HWLOC_L2CACHE_LEVEL:
-        lvl = OPAL_PROC_ON_L2CACHE;
-        break;
-    case OPAL_HWLOC_L1CACHE_LEVEL:
-        lvl = OPAL_PROC_ON_L1CACHE;
-        break;
-    case OPAL_HWLOC_CORE_LEVEL:
-        lvl = OPAL_PROC_ON_CORE;
-        break;
-    case OPAL_HWLOC_HWTHREAD_LEVEL:
-        lvl = OPAL_PROC_ON_HWTHREAD;
-        break;
-    }
-
-    return lvl;
-}
-
 opal_hwloc_locality_t opal_hwloc_base_get_relative_locality(hwloc_topology_t topo,
-                                                            opal_hwloc_level_t level1,
-                                                            unsigned int peer1,
-                                                            opal_hwloc_level_t level2,
-                                                            unsigned int peer2)
+                                                            char *cpuset1, char *cpuset2)
 {
     opal_hwloc_locality_t locality;
-    hwloc_obj_t obj1, obj2;
-    unsigned cache_level=0;
-    opal_hwloc_level_t i, lvl;
+    hwloc_obj_t obj;
+    unsigned depth, d, width, w;
+    hwloc_cpuset_t avail;
+    bool shared;
+    hwloc_obj_type_t type;
+    int sect1, sect2;
+    hwloc_cpuset_t loc1, loc2;
 
     /* start with what we know - they share a node on a cluster
      * NOTE: we may alter that latter part as hwloc's ability to
@@ -1253,100 +1220,88 @@ opal_hwloc_locality_t opal_hwloc_base_get_relative_locality(hwloc_topology_t top
      */
     locality = OPAL_PROC_ON_CLUSTER | OPAL_PROC_ON_CU | OPAL_PROC_ON_NODE | OPAL_PROC_ON_BOARD;
 
-    /* TBD: handle procs bound at different levels - means they
-     * are from different jobs
-     */
-    if (level1 != level2) {
+    /* if either cpuset is NULL, then that isn't bound */
+    if (NULL == cpuset1 || NULL == cpuset2) {
         return locality;
     }
 
-    /* if the binding level is NODE, then there is nothing to do */
-    if (OPAL_HWLOC_NODE_LEVEL == level1) {
-        return locality;
-    }
+    /* get the max depth of the topology */
+    depth = hwloc_topology_get_depth(topo);
 
-    lvl = level1;
+    /* convert the strings to cpusets */
+    loc1 = hwloc_bitmap_alloc();
+    hwloc_bitmap_list_sscanf(loc1, cpuset1);
+    loc2 = hwloc_bitmap_alloc();
+    hwloc_bitmap_list_sscanf(loc2, cpuset2);
 
-    /* we know that the objects are bound to the same level, so
-     * if the two objects are the index, then they share
-     * all levels down to and including their own
-     */
-    if (peer1 == peer2) {
-        for (i=lvl; 0 < i; i--) {
-            opal_output_verbose(5, opal_hwloc_base_output,
-                                "equal level - computing locality: %s",
-                                opal_hwloc_base_print_level(i));
-            locality |= get_locality(i);
+    /* start at the first depth below the top machine level */
+    for (d=1; d < depth; d++) {
+        shared = false;
+        /* get the object type at this depth */
+        type = hwloc_get_depth_type(topo, d);
+        /* if it isn't one of interest, then ignore it */
+        if (HWLOC_OBJ_NODE != type &&
+            HWLOC_OBJ_SOCKET != type &&
+            HWLOC_OBJ_CACHE != type &&
+            HWLOC_OBJ_CORE != type &&
+            HWLOC_OBJ_PU != type) {
+            continue;
         }
-        goto checkpu;
-    }
-
-    /* get cache level if required */
-    if (OPAL_HWLOC_L3CACHE_LEVEL == lvl) {
-        cache_level = 3;
-    } else if (OPAL_HWLOC_L2CACHE_LEVEL == lvl) {
-        cache_level = 2;
-    } else if (OPAL_HWLOC_L1CACHE_LEVEL == lvl) {
-        cache_level = 1;
-    }
-
-    /* get the objects for these peers */
-    opal_output_verbose(5, opal_hwloc_base_output,
-                        "computing locality - getting object at level %s, index %u",
-                        opal_hwloc_base_print_level(lvl), peer1);
-    obj1 = opal_hwloc_base_get_obj_by_type(topo, opal_hwloc_levels[lvl],
-                                           cache_level, peer1, OPAL_HWLOC_AVAILABLE);
-    opal_output_verbose(5, opal_hwloc_base_output,
-                        "computing locality - getting object at level %s, index %u",
-                        opal_hwloc_base_print_level(lvl), peer2);
-    obj2 = opal_hwloc_base_get_obj_by_type(topo, opal_hwloc_levels[lvl],
-                                           cache_level, peer2, OPAL_HWLOC_AVAILABLE);
-
-    /* climb the levels
-     * NOTE: for now, we will just assume that the two objects
-     * have a common topology above them - i.e., that each
-     * object has the same levels above them. In cases where
-     * nodes have heterogeneous sockets, this won't be true - but
-     * leave that problem for another day
-     */
-    --lvl;
-    while (OPAL_HWLOC_NODE_LEVEL < lvl &&
-           NULL != obj1 && NULL != obj2 && obj1 != obj2) {
-        opal_output_verbose(5, opal_hwloc_base_output,
-                            "computing locality - shifting up from %s",
-                            opal_hwloc_base_print_level(lvl));
-        obj1 = obj1->parent;
-        obj2 = obj2->parent;
-        --lvl;
-    }
-
-    /* set the locality */
-    for (i=lvl; 0 < i; i--) {
-        opal_output_verbose(5, opal_hwloc_base_output,
-                            "computing locality - filling level %s",
-                            opal_hwloc_base_print_level(i));
-        locality |= get_locality(i);
-    }
-
- checkpu:
-    /* NOTE: hwloc isn't able to find cores on all platforms.  Example:
-       PPC64 running RHEL 5.4 (linux kernel 2.6.18) only reports NUMA
-       nodes and PU's.  Fine.  
-
-       However, note that hwloc_get_obj_by_type() will return NULL in
-       2 (effectively) different cases:
-
-       - no objects of the requested type were found
-       - the Nth object of the requested type was not found
-
-       So see if we can find *any* cores by looking for the 0th core.
-    */
-    if (NULL == hwloc_get_obj_by_type(topo, HWLOC_OBJ_CORE, 0)) {
-        /* nope - so if the two peer's share a HWTHREAD, also
-         * declare them as sharing a core
+        /* get the width of the topology at this depth */
+        width = hwloc_get_nbobjs_by_depth(topo, d);
+        /* scan all objects at this depth to see if
+         * our locations overlap with them
          */
-        if (OPAL_PROC_ON_LOCAL_HWTHREAD(locality)) {
-            locality |= OPAL_PROC_ON_CORE;
+        for (w=0; w < width; w++) {
+            /* get the object at this depth/index */
+            obj = hwloc_get_obj_by_depth(topo, d, w);
+            /* get the available cpuset for this obj */
+            avail = opal_hwloc_base_get_available_cpus(topo, obj);
+            /* see if our locations intersect with it */
+            sect1 = hwloc_bitmap_intersects(avail, loc1);
+            sect2 = hwloc_bitmap_intersects(avail, loc2);
+            /* if both intersect, then we share this level */
+            if (sect1 && sect2) {
+                shared = true;
+                switch(obj->type) {
+                case HWLOC_OBJ_NODE:
+                    locality |= OPAL_PROC_ON_NUMA;
+                    break;
+                case HWLOC_OBJ_SOCKET:
+                    locality |= OPAL_PROC_ON_SOCKET;
+                    break;
+                case HWLOC_OBJ_CACHE:
+                    if (3 == obj->attr->cache.depth) {
+                        locality |= OPAL_PROC_ON_L3CACHE;
+                    } else if (2 == obj->attr->cache.depth) {
+                        locality |= OPAL_PROC_ON_L2CACHE;
+                    } else {
+                        locality |= OPAL_PROC_ON_L1CACHE;
+                    }
+                    break;
+                case HWLOC_OBJ_CORE:
+                    locality |= OPAL_PROC_ON_CORE;
+                    break;
+                case HWLOC_OBJ_PU:
+                    locality |= OPAL_PROC_ON_HWTHREAD;
+                    break;
+                default:
+                    /* just ignore it */
+                    break;
+                }
+                break;
+            }
+            /* otherwise, we don't share this
+             * object - but we still might share another object
+             * on this level, so we have to keep searching
+             */
+        }
+        /* if we spanned the entire width without finding
+         * a point of intersection, then no need to go
+         * deeper
+         */
+        if (!shared) {
+            break;
         }
     }
 
