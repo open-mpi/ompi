@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2012 The University of Tennessee and The University
+ * Copyright (c) 2004-2013 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2006 High Performance Computing Center Stuttgart,
@@ -101,7 +101,6 @@ int32_t opal_datatype_copy_content_same_ddt( const opal_datatype_t* datatype, in
                                              char* destination_base, char* source_base )
 {
     OPAL_PTRDIFF_TYPE extent;
-    size_t iov_len_local;
     int32_t (*fct)( const opal_datatype_t*, int32_t, char*, char*);
 
 #if OPAL_CUDA_SUPPORT
@@ -116,7 +115,6 @@ int32_t opal_datatype_copy_content_same_ddt( const opal_datatype_t* datatype, in
      */
     if( 0 == count ) return 1;
 
-    iov_len_local = count * datatype->size;
     /**
      * see discussion in coll_basic_reduce.c for the computation of extent when
      * count != 1. Short version of the story:

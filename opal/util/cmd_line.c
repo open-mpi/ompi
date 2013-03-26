@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2013 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -240,7 +240,6 @@ int opal_cmd_line_parse(opal_cmd_line_t *cmd, bool ignore_unknown,
     bool is_unknown_option;
     bool is_unknown_token;
     bool is_option;
-    bool has_unknowns;
     char **shortsv;
     int shortsc;
     int num_args_used;
@@ -279,7 +278,6 @@ int opal_cmd_line_parse(opal_cmd_line_t *cmd, bool ignore_unknown,
 
     param = NULL;
     option = NULL;
-    has_unknowns = false;
     for (i = 1; i < cmd->lcl_argc; ) {
         is_unknown_option = false;
         is_unknown_token = false;
@@ -470,7 +468,6 @@ int opal_cmd_line_parse(opal_cmd_line_t *cmd, bool ignore_unknown,
            into the tail.  If we're not ignoring unknowns, then print
            an error and return. */
         if (is_unknown_option || is_unknown_token) {
-            has_unknowns = true;
             if (!ignore_unknown || is_unknown_option) {
                 fprintf(stderr, "%s: Error: unknown option \"%s\"\n", 
                         cmd->lcl_argv[0], cmd->lcl_argv[i]);

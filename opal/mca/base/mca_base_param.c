@@ -182,6 +182,7 @@ int mca_base_param_recache_files(bool rel_path_search)
     char *files, *new_files = NULL, *new_agg_files = NULL;
     char * new_agg_path = NULL, *agg_default_path = NULL;
 
+    (void)id;  /* prevent "set but not used" compiler complaints */
     /* We may need this later */
     home = (char*)opal_home_directory();
     
