@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2008 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2012 The University of Tennessee and The University
+ * Copyright (c) 2004-2013 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -356,7 +356,7 @@ static int open_components(const char *type_name, int output_id,
     const mca_base_component_t *component;
     mca_base_component_list_item_t *cli;
     bool called_open;
-    bool opened, registered;
+    bool opened;
     
     /* Announce */
     
@@ -373,14 +373,13 @@ static int open_components(const char *type_name, int output_id,
         cli = (mca_base_component_list_item_t *) item;
         component = cli->cli_component;
         
-        registered = opened = called_open = false;
+        opened = called_open = false;
         opal_output_verbose(10, output_id, 
                             "mca: base: components_open: found loaded component %s",
                             component->mca_component_name);
 
         /* Call the component's MCA parameter registration function */
         if (NULL == component->mca_register_component_params) {
-            registered = true;
             opal_output_verbose(10, output_id, 
                                 "mca: base: components_open: "
                                 "component %s has no register function",
@@ -388,7 +387,6 @@ static int open_components(const char *type_name, int output_id,
         } else {
             ret = component->mca_register_component_params();
             if (OPAL_SUCCESS == ret) {
-                registered = true;
                 opal_output_verbose(10, output_id, 
                                     "mca: base: components_open: "
                                     "component %s register function successful",

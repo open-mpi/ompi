@@ -61,6 +61,7 @@ ompi_message_alloc(void)
     OPAL_FREE_LIST_GET(&ompi_message_free_list,
                        tmp,
                        rc);
+    (void)rc;  /* prevent "set but not used" compiler complaints */
     return (ompi_message_t*) tmp;
 }
 
