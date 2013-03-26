@@ -90,6 +90,7 @@ struct ompi_process_info_t {
     char *job_session_dir;
     char *proc_session_dir;
     char nodename[100]; /* BWB: FIX ME: This really needs to be a rational constant */
+    char *cpuset;
 };
 typedef struct ompi_process_info_t ompi_process_info_t;
 #define OMPI_LOCAL_RANK_INVALID (-1)

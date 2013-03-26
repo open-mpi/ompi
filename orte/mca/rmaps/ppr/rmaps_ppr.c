@@ -37,6 +37,26 @@ orte_rmaps_base_module_t orte_rmaps_ppr_module = {
     ppr_mapper
 };
 
+/* RHC: will eventually remove this
+ * definition as it is no longer reqd
+ * in the rest of OMPI system.
+ *
+ * Define a hierarchical level value that
+ * helps resolve the hwloc behavior of
+ * treating caches as a single type of
+ * entity - must always be available
+ */
+typedef enum {
+    OPAL_HWLOC_NODE_LEVEL=0,
+    OPAL_HWLOC_NUMA_LEVEL,
+    OPAL_HWLOC_SOCKET_LEVEL,
+    OPAL_HWLOC_L3CACHE_LEVEL,
+    OPAL_HWLOC_L2CACHE_LEVEL,
+    OPAL_HWLOC_L1CACHE_LEVEL,
+    OPAL_HWLOC_CORE_LEVEL,
+    OPAL_HWLOC_HWTHREAD_LEVEL
+} opal_hwloc_level_t;
+
 #if OPAL_HAVE_HWLOC
 static void prune(orte_jobid_t jobid,
                   orte_app_idx_t app_idx,

@@ -130,6 +130,7 @@ ompi_rte_init(int *argc, char ***argv)
     ompi_process_info.job_session_dir = NULL; /* BWB: FIX ME */
     ompi_process_info.proc_session_dir = NULL; /* BWB: FIX ME */
     gethostname(ompi_process_info.nodename, sizeof(ompi_process_info.nodename));
+    ompi_process_info.cpuset = NULL;
 
     /* setup hwloc */
     if (NULL == opal_hwloc_topology) {
@@ -149,6 +150,7 @@ ompi_rte_init(int *argc, char ***argv)
         if (0 != hwloc_bitmap_compare(boundset, rootset) ||
             opal_hwloc_base_single_cpu(rootset) ||
             opal_hwloc_base_single_cpu(boundset)) {
+            hwloc_bitmap_list_asprintf(&ompi_process_info.cpuset, boundset);
             ompi_rte_proc_is_bound = true;
         }
     }
