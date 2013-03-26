@@ -662,7 +662,6 @@ int orte_util_encode_pidmap(opal_byte_object_t *boptr, bool update)
             ORTE_ERROR_LOG(rc);
             goto cleanup_and_return;
         }
-
         /* cycle thru the job's procs, including only those that have
          * been updated so we minimize the amount of info being sent
          */
@@ -843,6 +842,11 @@ int orte_util_decode_pidmap(opal_byte_object_t *bo)
                 /* set mine */
                 orte_process_info.my_local_rank = local_rank;
                 orte_process_info.my_node_rank = node_rank;
+#if OPAL_HAVE_HWLOC
+                if (NULL != cpu_bitmap) {
+                    orte_process_info.cpuset = strdup(cpu_bitmap);
+                }
+#endif
             }
             /* apps don't need the rest of the data in the buffer for this proc,
              * but we have to unpack it anyway to stay in sync
@@ -880,6 +884,9 @@ int orte_util_decode_pidmap(opal_byte_object_t *bo)
             if (ORTE_SUCCESS != (rc = opal_db.store((*id), OPAL_DB_INTERNAL, ORTE_DB_CPUSET, cpu_bitmap, OPAL_STRING))) {
                 ORTE_ERROR_LOG(rc);
                 goto cleanup;
+            }
+            if (NULL != cpu_bitmap) {
+                free(cpu_bitmap);
             }
 #endif
             /* we don't need to store the rest of the values
@@ -1032,7 +1039,6 @@ int orte_util_decode_daemon_pidmap(opal_byte_object_t *bo)
     orte_local_rank_t local_rank;
     orte_node_rank_t node_rank;
 #if OPAL_HAVE_HWLOC
-    opal_hwloc_level_t bind_level = OPAL_HWLOC_NODE_LEVEL;
     char *cpu_bitmap;
 #endif
     orte_std_cntr_t n;
