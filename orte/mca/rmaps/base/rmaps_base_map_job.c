@@ -256,12 +256,11 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
                         if (NULL != proc->locale) {
                             hwloc_bitmap_list_snprintf(locale, 64, proc->locale->cpuset);
                         }
-                        opal_output(orte_clean_output, "\t\t<process rank=%s app_idx=%ld local_rank=%lu node_rank=%lu locale=%s binding=%s[%s:%u]>",
+                        opal_output(orte_clean_output, "\t\t<process rank=%s app_idx=%ld local_rank=%lu node_rank=%lu locale=%s binding=%s>",
                                     ORTE_VPID_PRINT(proc->name.vpid),  (long)proc->app_idx,
                                     (unsigned long)proc->local_rank,
                                     (unsigned long)proc->node_rank, locale,
-                                    (NULL == proc->cpu_bitmap) ? "NULL" : proc->cpu_bitmap,
-                                    opal_hwloc_base_print_level(jdata->map->bind_level), proc->bind_idx);
+                                    (NULL == proc->cpu_bitmap) ? "NULL" : proc->cpu_bitmap);
                     }
 #else
                     opal_output(orte_clean_output, "\t\t<process rank=%s app_idx=%ld local_rank=%lu node_rank=%lu>",
@@ -288,15 +287,12 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
                         continue;
                     }
                     locality = opal_hwloc_base_get_relative_locality(node->topology,
-                                                                     jdata->map->bind_level,
-                                                                     p0->bind_idx,
-                                                                     jdata->map->bind_level,
-                                                                     proc->bind_idx);
-                    opal_output(orte_clean_output, "\t\t<bind_level=%s rank=%s bind_idx=%u rank=%s bind_idx=%u locality=%s>",
-                                opal_hwloc_base_print_level(jdata->map->bind_level),
+                                                                     p0->cpu_bitmap,
+                                                                     proc->cpu_bitmap);
+                    opal_output(orte_clean_output, "\t\t<rank=%s rank=%s locality=%s>",
                                 ORTE_VPID_PRINT(p0->name.vpid),
-                                p0->bind_idx, ORTE_VPID_PRINT(proc->name.vpid),
-                                proc->bind_idx, opal_hwloc_base_print_locality(locality));
+                                ORTE_VPID_PRINT(proc->name.vpid),
+                                opal_hwloc_base_print_locality(locality));
                 }
                 opal_output(orte_clean_output, "\t</locality>\n</map>");
                 fflush(stderr);

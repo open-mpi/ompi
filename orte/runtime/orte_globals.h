@@ -120,13 +120,11 @@ ORTE_DECLSPEC extern int orte_exit_status;
 #define ORTE_DB_DAEMON_VPID  "orte.daemon.vpid"
 #define ORTE_DB_NODERANK     "orte.node.rank"
 #define ORTE_DB_LOCALRANK    "orte.local.rank"
-#define ORTE_DB_BIND_LEVEL   "orte.bind.level"
-#define ORTE_DB_BIND_INDEX   "orte.bind.index"
 #define ORTE_DB_LOCALITY     "orte.locality"
 #define ORTE_DB_ARCH         "orte.arch"
 #define ORTE_DB_NPROCS       "orte.nprocs"
 #define ORTE_DB_RMLURI       "orte.rmluri"
-#define ORTE_DB_BIND_BITMAP  "orte.bind.bitmap"
+#define ORTE_DB_CPUSET       "orte.cpuset"
 
 
 /* State Machine lists */
@@ -505,8 +503,6 @@ struct orte_proc_t {
 #if OPAL_HAVE_HWLOC
     /* hwloc object to which this process was mapped */
     hwloc_obj_t locale;
-    /* where the proc was bound */
-    unsigned int bind_idx;
     /* string representation of cpu bindings */
     char *cpu_bitmap;
 #endif

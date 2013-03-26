@@ -120,7 +120,6 @@ static int orte_rmaps_ppr_open(void)
             /* this implies binding to the sockets, unless otherwise directed */
             if (!OPAL_BINDING_POLICY_IS_SET(opal_hwloc_binding_policy)) {
                 OPAL_SET_BINDING_POLICY(opal_hwloc_binding_policy, OPAL_BIND_TO_SOCKET);
-                opal_hwloc_binding_policy |= OPAL_BIND_GIVEN;
             }
             asprintf(&orte_rmaps_base.ppr, "%d:socket", value);
             ORTE_SET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping, ORTE_MAPPING_GIVEN);

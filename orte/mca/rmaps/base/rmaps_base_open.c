@@ -281,7 +281,6 @@ int orte_rmaps_base_open(void)
         ORTE_SET_RANKING_DIRECTIVE(orte_rmaps_base.ranking, ORTE_RANKING_GIVEN);
     }
 
-#if 0
     /* #cpus/rank to use */
     param = mca_base_param_reg_int_name("rmaps", "base_cpus_per_proc",
                                         "Number of cpus to use for each rank [1-2**15 (default=1)]",
@@ -294,9 +293,12 @@ int orte_rmaps_base_open(void)
      */
     if (1 < orte_rmaps_base.cpus_per_rank &&
         !OPAL_BINDING_POLICY_IS_SET(opal_hwloc_binding_policy)) {
-        opal_hwloc_binding_policy |= OPAL_BIND_TO_CORE;
+        if (opal_hwloc_use_hwthreads_as_cpus) {
+            OPAL_SET_BINDING_POLICY(opal_hwloc_binding_policy, OPAL_BIND_TO_HWTHREAD);
+        } else {
+            OPAL_SET_BINDING_POLICY(opal_hwloc_binding_policy, OPAL_BIND_TO_CORE);
+        }
     }
-#endif
 
     /* Should we schedule on the local node or not? */
     mca_base_param_reg_int_name("rmaps", "base_no_schedule_local",
