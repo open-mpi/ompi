@@ -3,7 +3,7 @@
  * Copyright © 2009-2012 Inria.  All rights reserved.
  * Copyright © 2009-2011 Université Bordeaux 1
  * Copyright © 2011 Cisco Systems, Inc.  All rights reserved.
- * Copyright © 2011      Oracle and/or its affiliates.  All rights reserved.
+ * Copyright © 2011-2013 Oracle and/or its affiliates.  All rights reserved.
  * See COPYING in top-level directory.
  */
 
@@ -144,6 +144,7 @@ hwloc_solaris_get_sth_cpubind(hwloc_topology_t topology, idtype_t idtype, id_t i
   int depth = hwloc_get_type_depth(topology, HWLOC_OBJ_NODE);
   int n;
   int i;
+  processorid_t binding;
 
   if (depth < 0) {
     errno = ENOSYS;
@@ -220,6 +221,15 @@ hwloc_solaris_set_sth_membind(hwloc_topology_t topology, idtype_t idtype, id_t i
     return -1;
   }
   n = hwloc_get_nbobjs_by_depth(topology, depth);
+
+  /* first check if processor_bind() was used to bind to a single processor rather than to an lgroup */
+
+  if ( processor_bind(idtype, id, PBIND_QUERY, &binding) == 0 && binding != PBIND_NONE ) {
+    hwloc_bitmap_only(hwloc_set, binding);
+    return 0;
+  }
+
+  /* if not, check lgroups */
 
   for (i = 0; i < n; i++) {
     hwloc_obj_t obj = hwloc_get_obj_by_depth(topology, depth, i);
