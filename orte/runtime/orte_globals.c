@@ -1002,7 +1002,6 @@ static void orte_job_map_construct(orte_job_map_t* map)
     map->ranking = 0;
 #if OPAL_HAVE_HWLOC
     map->binding = 0;
-    map->bind_level = OPAL_HWLOC_NODE_LEVEL;
 #endif
     map->ppr = NULL;
     map->cpus_per_rank = 1;

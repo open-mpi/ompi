@@ -660,13 +660,12 @@ int orte_dt_print_map(char **output, char *prefix, orte_job_map_t *src, opal_dat
     
     if (orte_devel_level_output) {
 #if OPAL_HAVE_HWLOC
-        asprintf(&tmp, "\n%sMapper requested: %s  Last mapper: %s  Mapping policy: %s  Ranking policy: %s  Binding policy: %s[%s]  Cpu set: %s  PPR: %s",
+        asprintf(&tmp, "\n%sMapper requested: %s  Last mapper: %s  Mapping policy: %s  Ranking policy: %s  Binding policy: %s  Cpu set: %s  PPR: %s",
                  pfx2, (NULL == src->req_mapper) ? "NULL" : src->req_mapper,
                  (NULL == src->last_mapper) ? "NULL" : src->last_mapper,
                  orte_rmaps_base_print_mapping(src->mapping),
                  orte_rmaps_base_print_ranking(src->ranking),
                  opal_hwloc_base_print_binding(src->binding),
-                 opal_hwloc_base_print_level(src->bind_level),
                  (NULL == opal_hwloc_base_cpu_set) ? "NULL" : opal_hwloc_base_cpu_set,
                  (NULL == src->ppr) ? "NULL" : src->ppr);
 #else

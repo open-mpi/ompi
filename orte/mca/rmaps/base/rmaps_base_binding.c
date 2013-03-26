@@ -617,8 +617,6 @@ int orte_rmaps_base_compute_bindings(orte_job_t *jdata)
      */
     if (OPAL_BIND_TO_HWTHREAD == OPAL_GET_BINDING_POLICY(jdata->map->binding)) {
         int rc;
-        /* record the level for locality purposes */
-        jdata->map->bind_level = OPAL_HWLOC_HWTHREAD_LEVEL;
         if (ORTE_MAPPING_BYHWTHREAD == ORTE_GET_MAPPING_POLICY(jdata->map->mapping)) {
             opal_output_verbose(5, orte_rmaps_base.rmaps_output,
                                 "mca:rmaps: bindings for job %s - hwthread to hwthread",
@@ -637,8 +635,6 @@ int orte_rmaps_base_compute_bindings(orte_job_t *jdata)
         return rc;
     } else if (OPAL_BIND_TO_CORE == OPAL_GET_BINDING_POLICY(jdata->map->binding)) {
         int rc;
-        /* record the level for locality purposes */
-        jdata->map->bind_level = OPAL_HWLOC_CORE_LEVEL;
         if (ORTE_MAPPING_BYCORE == ORTE_GET_MAPPING_POLICY(jdata->map->mapping)) {
             opal_output_verbose(5, orte_rmaps_base.rmaps_output,
                                 "mca:rmaps: bindings for job %s - core to core",
@@ -668,8 +664,6 @@ int orte_rmaps_base_compute_bindings(orte_job_t *jdata)
         return rc;
     } else if (OPAL_BIND_TO_L1CACHE == OPAL_GET_BINDING_POLICY(jdata->map->binding)) {
         int rc;
-        /* record the level for locality purposes */
-        jdata->map->bind_level = OPAL_HWLOC_L1CACHE_LEVEL;
         if (ORTE_MAPPING_BYL1CACHE == ORTE_GET_MAPPING_POLICY(jdata->map->mapping)) {
             opal_output_verbose(5, orte_rmaps_base.rmaps_output,
                                 "mca:rmaps: bindings for job %s - L1cache to L1cache",
@@ -694,8 +688,6 @@ int orte_rmaps_base_compute_bindings(orte_job_t *jdata)
         return rc;
     } else if (OPAL_BIND_TO_L2CACHE == OPAL_GET_BINDING_POLICY(jdata->map->binding)) {
         int rc;
-        /* record the level for locality purposes */
-        jdata->map->bind_level = OPAL_HWLOC_L2CACHE_LEVEL;
         if (ORTE_MAPPING_BYL2CACHE == ORTE_GET_MAPPING_POLICY(jdata->map->mapping)) {
             opal_output_verbose(5, orte_rmaps_base.rmaps_output,
                                 "mca:rmaps: bindings for job %s - L2cache to L2cache",
@@ -720,8 +712,6 @@ int orte_rmaps_base_compute_bindings(orte_job_t *jdata)
         return rc;
     } else if (OPAL_BIND_TO_L3CACHE == OPAL_GET_BINDING_POLICY(jdata->map->binding)) {
         int rc;
-        /* record the level for locality purposes */
-        jdata->map->bind_level = OPAL_HWLOC_L3CACHE_LEVEL;
         if (ORTE_MAPPING_BYL3CACHE == ORTE_GET_MAPPING_POLICY(jdata->map->mapping)) {
             opal_output_verbose(5, orte_rmaps_base.rmaps_output,
                                 "mca:rmaps: bindings for job %s - L3cache to L3cache",
@@ -746,8 +736,6 @@ int orte_rmaps_base_compute_bindings(orte_job_t *jdata)
         return rc;
     } else if (OPAL_BIND_TO_SOCKET == OPAL_GET_BINDING_POLICY(jdata->map->binding)) {
         int rc;
-        /* record the level for locality purposes */
-        jdata->map->bind_level = OPAL_HWLOC_SOCKET_LEVEL;
         if (ORTE_MAPPING_BYSOCKET == ORTE_GET_MAPPING_POLICY(jdata->map->mapping)) {
             opal_output_verbose(5, orte_rmaps_base.rmaps_output,
                                 "mca:rmaps: bindings for job %s - socket to socket",
@@ -772,8 +760,6 @@ int orte_rmaps_base_compute_bindings(orte_job_t *jdata)
         return rc;
     } else if (OPAL_BIND_TO_NUMA == OPAL_GET_BINDING_POLICY(jdata->map->binding)) {
         int rc;
-        /* record the level for locality purposes */
-        jdata->map->bind_level = OPAL_HWLOC_NUMA_LEVEL;
         if (ORTE_MAPPING_BYNUMA == ORTE_GET_MAPPING_POLICY(jdata->map->mapping)) {
             opal_output_verbose(5, orte_rmaps_base.rmaps_output,
                                 "mca:rmaps: bindings for job %s - numa to numa",

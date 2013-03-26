@@ -246,8 +246,10 @@ smcuda_btl_first_time_init(mca_btl_smcuda_t *smcuda_btl,
 
         /* If we find >0 NUMA nodes, then investigate further */
         if (i > 0) {
-            opal_hwloc_level_t bind_level;
-            unsigned int bind_index;
+            int numa, w;
+            unsigned n_bound=0;
+            hwloc_cpuset_t avail;
+            hwloc_obj_t obj;
 
             /* JMS This tells me how many numa nodes are *available*,
                but it's not how many are being used *by this job*.
@@ -255,29 +257,32 @@ smcuda_btl_first_time_init(mca_btl_smcuda_t *smcuda_btl,
                the previous carto-based implementation), but it really
                should be improved to be how many NUMA nodes are being
                used *in this job*. */
-            mca_btl_smcuda_component.num_mem_nodes = num_mem_nodes = i;
+            mca_btl_sm_component.num_mem_nodes = num_mem_nodes = i;
 
-            /* Fill opal_hwloc_my_cpuset and find out to what level
-               this process is bound (if at all) */
-            opal_hwloc_base_get_local_cpuset();
-            opal_hwloc_base_get_level_and_index(opal_hwloc_my_cpuset,
-                                                &bind_level, &bind_index);
-            if (OPAL_HWLOC_NODE_LEVEL != bind_level) {
-                /* We are bound to *something* (i.e., our binding
-                   level is less than "node", meaning the entire
-                   machine), so discover which NUMA node this process
-                   is bound */
-                if (OPAL_HWLOC_NUMA_LEVEL == bind_level) {
-                    mca_btl_smcuda_component.mem_node = my_mem_node = (int) bind_index;
-                } else {
-                    if (OPAL_SUCCESS == 
-                        opal_hwloc_base_get_local_index(HWLOC_OBJ_NODE, 0, &bind_index)) {
-                        mca_btl_smcuda_component.mem_node = my_mem_node = (int) bind_index;
-                    } else {
-                        /* Weird.  We can't figure out what NUMA node
-                           we're on. :-( */
-                        mca_btl_smcuda_component.mem_node = my_mem_node = -1;
+            /* if we are not bound, then there is nothing further to do */
+            if (NULL != ompi_process_info.cpuset) {
+                /* count the number of NUMA nodes to which we are bound */
+                for (w=0; w < i; w++) {
+                    if (NULL == (obj = opal_hwloc_base_get_obj_by_type(opal_hwloc_topology,
+                                                                       HWLOC_OBJ_NODE, 0, w,
+                                                                       OPAL_HWLOC_AVAILABLE))) {
+                        continue;
                     }
+                    /* get that NUMA node's available cpus */
+                    avail = opal_hwloc_base_get_available_cpus(opal_hwloc_topology, obj);
+                    /* see if we intersect */
+                    if (hwloc_bitmap_intersects(avail, opal_hwloc_my_cpuset)) {
+                        n_bound++;
+                        numa = w;
+                    }
+                }
+                /* if we are located on more than one NUMA, or we didn't find
+                 * a NUMA we are on, then not much we can do
+                 */
+                if (1 == n_bound) {
+                    mca_btl_sm_component.mem_node = my_mem_node = numa;
+                } else {
+                    mca_btl_sm_component.mem_node = my_mem_node = -1;
                 }
             }
         }

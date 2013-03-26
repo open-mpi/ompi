@@ -55,7 +55,6 @@ struct orte_job_map_t {
     orte_ranking_policy_t ranking;
 #if OPAL_HAVE_HWLOC
     opal_binding_policy_t binding;
-    opal_hwloc_level_t bind_level;
 #endif
     /* mapping options */
     char *ppr;
