@@ -223,8 +223,8 @@ int ompi_comm_nextcid ( ompi_communicator_t* newcomm,
         OPAL_THREAD_UNLOCK(&ompi_cid_lock);
 
         for (i=start; i < mca_pml.pml_max_contextid ; i++) {
-            flag=opal_pointer_array_test_and_set_item(&ompi_mpi_communicators, 
-                                                      i, comm);
+            flag = opal_pointer_array_test_and_set_item(&ompi_mpi_communicators, 
+                                                        i, comm);
             if (true == flag) {
                 nextlocal_cid = i;
                 break;
@@ -234,10 +234,8 @@ int ompi_comm_nextcid ( ompi_communicator_t* newcomm,
         ret = (allredfnct)(&nextlocal_cid, &nextcid, 1, MPI_MAX, comm, bridgecomm,
                            local_leader, remote_leader, send_first );
         if( OMPI_SUCCESS != ret ) {
-            OPAL_THREAD_LOCK(&ompi_cid_lock);
-            ompi_comm_unregister_cid (comm->c_contextid);
-            OPAL_THREAD_UNLOCK(&ompi_cid_lock);
-            return ret;
+            opal_pointer_array_set_item(&ompi_mpi_communicators, nextlocal_cid, NULL);
+            goto release_and_return;
         }
         if (nextcid == nextlocal_cid) {
             response = 1; /* fine with me */
@@ -259,7 +257,8 @@ int ompi_comm_nextcid ( ompi_communicator_t* newcomm,
         ret = (allredfnct)(&response, &glresponse, 1, MPI_MIN, comm, bridgecomm,
                            local_leader, remote_leader, send_first );
         if( OMPI_SUCCESS != ret ) {
-            return ret;
+            opal_pointer_array_set_item(&ompi_mpi_communicators, nextcid, NULL);
+            goto release_and_return;
         }
         if (1 == glresponse) {
             done = 1;             /* we are done */
@@ -280,11 +279,12 @@ int ompi_comm_nextcid ( ompi_communicator_t* newcomm,
     newcomm->c_f_to_c_index = newcomm->c_contextid;
     opal_pointer_array_set_item (&ompi_mpi_communicators, nextcid, newcomm);
 
+ release_and_return:
     OPAL_THREAD_LOCK(&ompi_cid_lock);
     ompi_comm_unregister_cid (comm->c_contextid);
     OPAL_THREAD_UNLOCK(&ompi_cid_lock);
 
-    return (MPI_SUCCESS);
+    return ret;
 }
 
 /**************************************************************************/
