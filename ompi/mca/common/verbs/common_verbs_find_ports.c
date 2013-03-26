@@ -338,13 +338,13 @@ opal_list_t *ompi_common_verbs_find_ports(const char *if_include,
             if (OMPI_ERR_TYPE_MISMATCH == rc) {
                 want = false;
                 opal_output_verbose(5, stream, 
-                                    "verbs interface %s:%d: made an RC QP! we don't want RC-capable devices",
-                                    ibv_get_device_name(device), j);
+                                    "verbs interface %s: made an RC QP! we don't want RC-capable devices",
+                                    ibv_get_device_name(device));
             } else if (OMPI_SUCCESS != rc) {
                 want = false;
                 opal_output_verbose(5, stream, 
-                                    "verbs interface %s:%d: failed to make %s QP",
-                                    ibv_get_device_name(device), j,
+                                    "verbs interface %s: failed to make %s QP",
+                                    ibv_get_device_name(device),
                                     ((flags & (OMPI_COMMON_VERBS_FLAGS_RC |
                                                OMPI_COMMON_VERBS_FLAGS_UD)) ==
                                      (OMPI_COMMON_VERBS_FLAGS_RC |
