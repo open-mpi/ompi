@@ -64,6 +64,7 @@
 #include "opal/class/opal_list.h"
 #include "opal/class/opal_value_array.h"
 #include "opal/mca/base/mca_base_var_enum.h"
+#include "opal/mca/base/mca_base_framework.h"
 #include "opal/mca/mca.h"
 
 /**
@@ -169,7 +170,10 @@ typedef enum {
     /** Variable has been overridden */
     MCA_BASE_VAR_FLAG_OVERRIDE     = 0x0010,
     /** Variable may not be set from a file */
-    MCA_BASE_VAR_FLAG_ENVIRONMENT_ONLY = 0x0020
+    MCA_BASE_VAR_FLAG_ENVIRONMENT_ONLY = 0x0020,
+    /** Variable should be deregistered when the group
+        is deregistered */
+    MCA_BASE_VAR_FLAG_DWG          = 0x0040
 } mca_base_var_flag_t;
 
 
@@ -513,6 +517,20 @@ OPAL_DECLSPEC int mca_base_component_var_register (const mca_base_component_t *c
                                                    int bind, mca_base_var_flag_t flags,
                                                    mca_base_var_info_lvl_t info_lvl,
                                                    mca_base_var_scope_t scope, void *storage);
+
+/**
+ * Convinience function for registering a variable associated with a framework. This
+ * function is equivalent to mca_base_var_register with component_name = "base" and
+ * with the MCA_BASE_VAR_FLAG_DWG set. See mca_base_var_register().
+ */
+OPAL_DECLSPEC int mca_base_framework_var_register (const mca_base_framework_t *framework,
+                                     const char *variable_name,
+                                     const char *help_msg, mca_base_var_type_t type,
+                                     mca_base_var_enum_t *enumerator, int bind,
+                                     mca_base_var_flag_t flags,
+                                     mca_base_var_info_lvl_t info_level,
+                                     mca_base_var_scope_t scope, void *storage);
+
 
 /**
  * Register a synonym name for an MCA variable.

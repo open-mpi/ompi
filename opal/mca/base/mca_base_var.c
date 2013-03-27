@@ -526,6 +526,13 @@ int mca_base_var_group_deregister (int group_index)
     params = OPAL_VALUE_ARRAY_GET_BASE(&group->group_vars, int);
 
     for (i = 0 ; i < size ; ++i) {
+        mca_base_var_t *var;
+
+        ret = var_get(params[i], &var, false);
+        if (OPAL_SUCCESS != ret || !(var->mbv_flags & MCA_BASE_VAR_FLAG_DWG)) {
+            continue;
+        }
+
         (void) mca_base_var_deregister (params[i]);
     }
     OBJ_DESTRUCT(&group->group_vars);
@@ -1536,7 +1543,21 @@ int mca_base_component_var_register (const mca_base_component_t *component,
     return mca_base_var_register (NULL, component->mca_type_name,
                                   component->mca_component_name,
                                   variable_name, description, type, enumerator,
-                                  bind, flags, info_lvl, scope, storage);
+                                  bind, flags | MCA_BASE_VAR_FLAG_DWG,
+                                  info_lvl, scope, storage);
+}
+
+int mca_base_framework_var_register (const mca_base_framework_t *framework,
+                                     const char *variable_name,
+                                     const char *help_msg, mca_base_var_type_t type,
+                                     mca_base_var_enum_t *enumerator, int bind,
+                                     mca_base_var_flag_t flags,
+                                     mca_base_var_info_lvl_t info_level,
+                                     mca_base_var_scope_t scope, void *storage)
+{
+    return mca_base_var_register (framework->framework_project, framework->framework_name,
+                                  "base", variable_name, help_msg, type, enumerator, bind,
+                                  flags | MCA_BASE_VAR_FLAG_DWG, info_level, scope, storage);
 }
 
 int mca_base_var_register_synonym (int synonym_for, const char *project_name,

@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -130,9 +131,27 @@ static char **found_filenames = NULL;
 static char *last_path_to_use = NULL;
 #endif /* OPAL_WANT_LIBLTDL */
 
+static int component_find_check (const char *framework_name, char **requested_component_names, opal_list_t *components);
+
+/*
+ * Dummy structure for casting for open_only logic
+ */
+struct mca_base_open_only_dummy_component_t {
+    /** MCA base component */
+    mca_base_component_t version;
+    /** MCA base data */
+    mca_base_component_data_t data;
+};
+typedef struct mca_base_open_only_dummy_component_t mca_base_open_only_dummy_component_t;
+
+static char negate[] = "^";
+
 static bool use_component(const bool include_mode,
                           const char **requested_component_names,
                           const char *component_name);
+
+static int parse_requested (const char *requested, bool *include_mode,
+                            char ***requested_component_names);
 
 
 /*
@@ -146,14 +165,20 @@ static bool use_component(const bool include_mode,
  */
 int mca_base_component_find(const char *directory, const char *type, 
                             const mca_base_component_t *static_components[], 
-                            char **requested_component_names,
-                            bool include_mode,
+                            const char *requested_components,
                             opal_list_t *found_components,
                             bool open_dso_components)
 {
-    int i;
-    opal_list_item_t *item;
+    char **requested_component_names = NULL;
     mca_base_component_list_item_t *cli;
+    bool include_mode;
+    int i, ret;
+
+    ret = parse_requested (requested_components, &include_mode,
+                           &requested_component_names);
+    if (OPAL_SUCCESS != ret) {
+        return ret;
+    }
 
     /* Find all the components that were statically linked in */
     OBJ_CONSTRUCT(found_components, opal_list_t);
@@ -164,7 +189,8 @@ int mca_base_component_find(const char *directory, const char *type,
                            static_components[i]->mca_component_name) ) {
             cli = OBJ_NEW(mca_base_component_list_item_t);
             if (NULL == cli) {
-                return OPAL_ERR_OUT_OF_RESOURCE;
+                ret = OPAL_ERR_OUT_OF_RESOURCE;
+                goto component_find_out;
             }
             cli->cli_component = static_components[i];
             opal_list_append(found_components, (opal_list_item_t *) cli);
@@ -184,33 +210,24 @@ int mca_base_component_find(const char *directory, const char *type,
     }
 #endif
 
-    /* Ensure that *all* requested components exist.  Print a warning
-       and abort if they do not. */
-    for (i = 0; include_mode && NULL != requested_component_names && 
-             NULL != requested_component_names[i]; ++i) {
-        for (item = opal_list_get_first(found_components);
-             opal_list_get_end(found_components) != item; 
-             item = opal_list_get_next(item)) {
-            cli = (mca_base_component_list_item_t*) item;
-            if (0 == strcmp(requested_component_names[i], 
-                            cli->cli_component->mca_component_name)) {
-                break;
-            }
-        }
+    if (include_mode) {
+        ret = component_find_check (type, requested_component_names, found_components);
+    } else {
+        ret = OPAL_SUCCESS;
+    }
 
-        if (opal_list_get_end(found_components) == item) {
-            char h[MAXHOSTNAMELEN];
-            gethostname(h, sizeof(h));
-            opal_show_help("help-mca-base.txt", 
-                           "find-available:not-valid", true,
-                           h, type, requested_component_names[i]);
-            return OPAL_ERR_NOT_FOUND;
-        }
+
+    ret = OPAL_SUCCESS;
+
+component_find_out:
+
+    if (NULL != requested_component_names) {
+        opal_argv_free(requested_component_names);
     }
 
     /* All done */
 
-    return OPAL_SUCCESS;
+    return ret;
 }
 
 int mca_base_component_find_finalize(void)
@@ -226,6 +243,71 @@ int mca_base_component_find_finalize(void)
     }
 #endif
     return OPAL_SUCCESS;
+}
+
+int mca_base_components_filter (const char *framework_name, opal_list_t *components, int output_id,
+                                const char *filter_names, uint32_t filter_flags)
+{
+    mca_base_component_list_item_t *cli, *next;
+    char **requested_component_names = NULL;
+    bool include_mode, can_use;
+    int ret;
+
+    assert (NULL != components);
+
+    if (0 == filter_flags && NULL == filter_names) {
+        return OPAL_SUCCESS;
+    }
+
+    ret = parse_requested (filter_names, &include_mode,
+                           &requested_component_names);
+    if (OPAL_SUCCESS != ret) {
+        return ret;
+    }
+
+    OPAL_LIST_FOREACH_SAFE(cli, next, components, mca_base_component_list_item_t) {
+        const mca_base_component_t *component = cli->cli_component;
+        mca_base_open_only_dummy_component_t *dummy =
+            (mca_base_open_only_dummy_component_t *) cli->cli_component;
+
+        can_use = use_component (include_mode, (const char **) requested_component_names,
+                                 cli->cli_component->mca_component_name);
+
+        if (!can_use || (filter_flags & dummy->data.param_field) != filter_flags) {
+            if (can_use && (filter_flags & MCA_BASE_METADATA_PARAM_CHECKPOINT) &&
+                !(MCA_BASE_METADATA_PARAM_CHECKPOINT & dummy->data.param_field)) {
+                opal_output_verbose(10, output_id,
+                                    "mca: base: components_filter: "
+                                    "(%s) Component %s is *NOT* Checkpointable - Disabled",
+                                    component->reserved,
+                                    component->mca_component_name);
+            }
+
+            opal_list_remove_item (components, &cli->super);
+
+            mca_base_component_close (component, output_id);
+
+            OBJ_RELEASE(cli);
+        } else if (filter_flags & MCA_BASE_METADATA_PARAM_CHECKPOINT) {
+            opal_output_verbose(10, output_id,
+                                "mca: base: components_filter: "
+                                "(%s) Component %s is Checkpointable",
+                                component->reserved,
+                                component->mca_component_name);
+        }
+    }
+
+    if (include_mode) {
+        ret = component_find_check (framework_name, requested_component_names, components);
+    } else {
+        ret = OPAL_SUCCESS;
+    }
+
+    if (NULL != requested_component_names) {
+        opal_argv_free (requested_component_names);
+    }
+
+    return ret;
 }
 
 #if OPAL_WANT_LIBLTDL
@@ -246,7 +328,7 @@ static void find_dyn_components(const char *path, const char *type_name,
                                 opal_list_t *found_components)
 {
     int i, len;
-    char *path_to_use, *dir, *end;
+    char *path_to_use = NULL, *dir, *end;
     component_file_item_t *file;
     opal_list_item_t *cur;
     char prefix[32 + MCA_BASE_MAX_TYPE_NAME_LEN], *basename;
@@ -257,7 +339,7 @@ static void find_dyn_components(const char *path, const char *type_name,
   
     if (NULL == path) {
         if (NULL != mca_base_component_path) {
-            path_to_use = strdup(mca_base_component_path);
+            path_to_use = strdup (mca_base_component_path);
         } else {
             /* If there's no path, then there's nothing to search -- we're
                done */
@@ -443,6 +525,7 @@ static int open_component(component_file_item_t *target_file,
   opal_output_verbose(40, 0, "mca: base: component_find: examining dyanmic %s MCA component \"%s\"",
                      target_file->type, target_file->name);
   opal_output_verbose(40, 0, "mca: base: component_find: %s", target_file->filename);
+
   vl = mca_base_component_show_load_errors ? 0 : 40;
 
   /* Was this component already loaded (e.g., via dependency)? */
@@ -903,11 +986,72 @@ static bool use_component(const bool include_mode,
      * As xor is a binary operator let's implement it manually before
      * a compiler screws it up.
      */
-    if ( (include_mode && found) || !(include_mode || found) ) {
-        return true;
-    } else {    
-        return false;
-    }
+
+    return (include_mode && found) || !(include_mode || found);
 }
 
+/* Ensure that *all* requested components exist.  Print a warning
+   and abort if they do not. */
+static int component_find_check (const char *framework_name, char **requested_component_names, opal_list_t *components)
+{
+    mca_base_component_list_item_t *cli;
+    int i;
 
+    for (i = 0; NULL != requested_component_names && 
+             NULL != requested_component_names[i]; ++i) {
+        bool found = false;
+
+        OPAL_LIST_FOREACH(cli, components, mca_base_component_list_item_t) {
+            if (0 == strcmp(requested_component_names[i], 
+                            cli->cli_component->mca_component_name)) {
+                found = true;
+                break;
+            }
+        }
+
+        if (!found) {
+            char h[MAXHOSTNAMELEN];
+            gethostname(h, sizeof(h));
+            opal_show_help("help-mca-base.txt", 
+                           "find-available:not-valid", true,
+                           h, framework_name, requested_component_names[i]);
+            return OPAL_ERR_NOT_FOUND;
+        }
+    }
+
+    return OPAL_SUCCESS;
+}
+
+static int parse_requested (const char *requested, bool *include_mode,
+                            char ***requested_component_names)
+{
+    const char *requested_orig = requested;
+
+    *requested_component_names = NULL;
+    *include_mode = true;
+
+    /* See if the user requested anything */
+    if (NULL == requested || 0 == strlen (requested)) {
+        return OPAL_SUCCESS;
+    }
+
+    /* Are we including or excluding?  We only allow the negate
+       character to be the *first* character of the value (but be nice
+       and allow any number of negate characters in the beginning). */
+    requested += strspn (requested, negate);
+
+    /* Double check to ensure that the user did not specify the negate
+       character anywhere else in the value. */
+    if (NULL != strstr (requested, negate)) {
+        opal_show_help("help-mca-base.txt", 
+                       "framework-param:too-many-negates",
+                       true, requested_orig);
+        return OPAL_ERROR;
+    }
+
+    /* Split up the value into individual component names */
+    *requested_component_names = opal_argv_split(requested, ',');
+
+    /* All done */
+    return OPAL_SUCCESS;
+}
