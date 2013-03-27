@@ -24,6 +24,10 @@
 #ifndef MCA_BTL_VADER_ENDPOINT_H
 #define MCA_BTL_VADER_ENDPOINT_H
 
+#include <xpmem.h>
+
+struct vader_fifo_t;
+
 /**
  *  An abstraction that represents a connection to a endpoint process.
  *  An instance of mca_ptl_base_endpoint_t is associated w/ each process
@@ -31,10 +35,16 @@
  */
 
 struct mca_btl_base_endpoint_t {
-    int my_smp_rank;    /**< My SMP process rank.  Used for accessing
-                         *   SMP specfic data structures. */
     int peer_smp_rank;  /**< My peer's SMP process rank.  Used for accessing
                          *   SMP specfic data structures. */
+    char         *segment_base;
+    struct vader_fifo_t *fifo;
+    xpmem_apid_t  apid;
+    char         *fbox_out;
+    char         *fbox_in;
+    int           next_fbox_out;
+    int           next_fbox_in;
+    struct mca_rcache_base_module_t *rcache;
 };
 
 #endif /* MCA_BTL_VADER_ENDPOINT_H */

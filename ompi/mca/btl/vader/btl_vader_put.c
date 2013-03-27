@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2010-2011 Los Alamos National Security, LLC.  
+ * Copyright (c) 2010-2013 Los Alamos National Security, LLC.  
  *                         All rights reserved. 
  * $COPYRIGHT$
  *
@@ -33,8 +33,7 @@ int mca_btl_vader_put (struct mca_btl_base_module_t *btl,
     mca_mpool_base_registration_t *reg;
     void *rem_ptr;
 
-    reg = vader_get_registation (endpoint->peer_smp_rank,
-                                 (void *)(uintptr_t) dst->seg_addr.lval,
+    reg = vader_get_registation (endpoint, (void *)(uintptr_t) dst->seg_addr.lval,
                                  dst->seg_len, 0);
     if (OPAL_UNLIKELY(NULL == reg)) {
         return OMPI_ERROR;
@@ -44,7 +43,7 @@ int mca_btl_vader_put (struct mca_btl_base_module_t *btl,
 
     vader_memmove (rem_ptr, (void *)(uintptr_t) src->seg_addr.lval, size);
 
-    vader_return_registration (reg, endpoint->peer_smp_rank);
+    vader_return_registration (reg, endpoint);
 
     /* always call the callback function */
     frag->base.des_flags |= MCA_BTL_DES_SEND_ALWAYS_CALLBACK;

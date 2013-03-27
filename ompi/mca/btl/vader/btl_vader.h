@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2007 Voltaire. All rights reserved.
  * Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2010-2012 Los Alamos National Security, LLC.  
+ * Copyright (c) 2010-2013 Los Alamos National Security, LLC.  
  *                         All rights reserved. 
  * $COPYRIGHT$
  *
@@ -45,43 +45,38 @@
 /* xpmem is required by vader atm */
 #include <xpmem.h>
 
-#include "opal/include/opal/align.h"
 #include "opal/class/opal_free_list.h"
 #include "opal/sys/atomic.h"
 #include "ompi/mca/btl/btl.h"
 
 #include "ompi/mca/mpool/mpool.h"
 #include "ompi/mca/mpool/base/base.h"
-#include "ompi/mca/mpool/sm/mpool_sm.h"
-#include "ompi/mca/common/sm/common_sm.h"
+#include "ompi/mca/btl/base/base.h"
+
+#include "ompi/runtime/ompi_module_exchange.h"
 
 #include "ompi/mca/rcache/rcache.h"
 #include "ompi/mca/rcache/base/base.h"
 
+#include "btl_vader_endpoint.h"
 
 BEGIN_C_DECLS
 
 #define min(a,b) ((a) < (b) ? (a) : (b))
-
-extern int mca_btl_vader_memcpy_limit;
-extern int mca_btl_vader_log_align;
-extern int mca_btl_vader_max_inline_send;
-
-/* We can't use opal_cache_line_size here because we need a
-   compile-time constant for padding the struct.  We can't really have
-   a compile-time constant that is portable, either (e.g., compile on
-   one machine and run on another).  So just use a big enough cache
-   line that should hopefully be good in most places. */
-#define VADER_CACHE_LINE_PAD 128
-
-/* largest address we can attach to using xpmem */
-#define VADER_MAX_ADDRESS ((uintptr_t)0x7ffffffff000)
 
 /*
  * Shared Memory resource managment
  */
 
 struct vader_fifo_t;
+
+/*
+ * Modex data
+ */
+struct vader_modex_t {
+    xpmem_segid_t seg_id;
+    void *segment_base;
+};
 
 /**
  * Shared Memory (VADER) BTL module.
@@ -92,20 +87,10 @@ struct mca_btl_vader_component_t {
     int vader_free_list_max;                /**< maximum size of free lists */
     int vader_free_list_inc;                /**< number of elements to alloc
                                              * when growing free lists */
-    mca_mpool_base_module_t *vader_mpool;   /**< mpool on local node */
-    void *vader_mpool_base;                 /**< base address of shared memory pool */
-    size_t eager_limit;                     /**< send fragment size */
-    mca_common_sm_module_t *vader_seg;      /**< description of shared memory segment */
-    volatile struct vader_fifo_t **shm_fifo;/**< pointer to fifo 2D array in
-                                             * shared memory */
-    char **shm_bases;                       /**< pointer to base pointers in
-                                             * shared memory */
     xpmem_segid_t my_seg_id;                /* this rank's xpmem segment id */
-    xpmem_segid_t *shm_seg_ids;             /* xpmem segment ids */
-    struct vader_fifo_t **fifo;             /**< cached copy of the pointer to
-                                             * the 2D fifo array. */
-    struct mca_rcache_base_module_t **xpmem_rcaches;
-    xpmem_apid_t *apids;                    /* xpmem apids */
+    char *my_segment;                       /* this rank's base pointer */
+    size_t segment_size;                    /* size of my_segment */
+    size_t segment_offset;                  /* start of unused portion of my_segment */
     int32_t num_smp_procs;                  /**< current number of smp procs on this host */
     int32_t my_smp_rank;                    /**< My SMP process rank.  Used for accessing
                                              * SMP specfic data structures. */
@@ -114,13 +99,11 @@ struct mca_btl_vader_component_t {
 
     opal_list_t active_sends;               /**< list of outstanding fragments */
 
-    unsigned char **vader_fboxes_in;        /**< incomming fast boxes (memory belongs to this process) */
-    unsigned char **vader_fboxes_out;       /**< outgoing fast boxes (memory belongs to remote peers) */
+    int memcpy_limit;                       /** Limit where we switch from memmove to memcpy */
+    int log_attach_align;                   /** Log of the alignment for xpmem segments */
+    int max_inline_send;                    /** Limit for copy-in-copy-out fragments */
 
-    unsigned char *vader_next_fbox_in;      /**< indices of fast boxes to poll */
-    unsigned char *vader_next_fbox_out;     /**< indices of fast boxes to write */
-
-    struct mca_btl_base_endpoint_t **vader_peers;
+    struct mca_btl_base_endpoint_t *endpoints;
 };
 typedef struct mca_btl_vader_component_t mca_btl_vader_component_t;
 OMPI_MODULE_DECLSPEC extern mca_btl_vader_component_t mca_btl_vader_component;
@@ -144,116 +127,37 @@ OMPI_MODULE_DECLSPEC extern mca_btl_vader_t mca_btl_vader;
  * we define macros to translate between relative addresses and
  * virtual addresses.
  */
-#define VIRTUAL2RELATIVE(VADDR ) ((intptr_t)(VADDR)  - (intptr_t)mca_btl_vader_component.shm_bases[mca_btl_vader_component.my_smp_rank])
-#define RELATIVE2VIRTUAL(OFFSET) ((intptr_t)(OFFSET) + (intptr_t)mca_btl_vader_component.shm_bases[mca_btl_vader_component.my_smp_rank])
 
-/* look up the remote pointer in the peer rcache and attach if
- * necessary */
-static inline mca_mpool_base_registration_t *vader_get_registation (int peer_smp_rank, void *rem_ptr,
-                                                                    size_t size, int flags)
+/* This only works for finding the relative address for a pointer within my_segment */
+static inline int64_t virtual2relative (char *addr)
 {
-    struct mca_rcache_base_module_t *rcache = mca_btl_vader_component.xpmem_rcaches[peer_smp_rank];
-    mca_mpool_base_registration_t *regs[10], *reg = NULL;
-    struct xpmem_addr xpmem_addr;
-    uintptr_t base, bound;
-    int rc, i;
-
-    if (OPAL_UNLIKELY(peer_smp_rank == mca_btl_vader_component.my_smp_rank)) {
-        return rem_ptr;
-    }
-
-    base = (uintptr_t) down_align_addr(rem_ptr, mca_btl_vader_log_align);
-    bound = (uintptr_t) up_align_addr((void *)((uintptr_t) rem_ptr + size - 1),
-                                      mca_btl_vader_log_align) + 1;
-    if (OPAL_UNLIKELY(bound > VADER_MAX_ADDRESS)) {
-        bound = VADER_MAX_ADDRESS;
-    }
-
-    /* several segments may match the base pointer */
-    rc = rcache->rcache_find_all (rcache, (void *) base, bound - base, regs, 10);
-    for (i = 0 ; i < rc ; ++i) {
-        if (bound <= (uintptr_t)regs[i]->bound && base  >= (uintptr_t)regs[i]->base) {
-            opal_atomic_add (&regs[i]->ref_count, 1);
-            return regs[i];
-        }
-
-        if (regs[i]->flags & MCA_MPOOL_FLAGS_PERSIST) {
-            continue;
-        }
-
-        /* remove this pointer from the rcache and decrement its reference count
-           (so it is detached later) */
-        rc = rcache->rcache_delete (rcache, regs[i]);
-        if (OPAL_UNLIKELY(0 != rc)) {
-            /* someone beat us to it? */
-            break;
-        }
-
-        /* start the new segment from the lower of the two bases */
-        base = (uintptr_t) regs[i]->base < base ? (uintptr_t) regs[i]->base : base;                        
-
-        opal_atomic_add (&regs[i]->ref_count, -1);
-
-        if (OPAL_LIKELY(0 == regs[i]->ref_count)) {
-            /* this pointer is not in use */
-            (void) xpmem_detach (regs[i]->alloc_base);
-            OBJ_RELEASE(regs[i]);
-        }
-
-        break;
-    }
-
-    reg = OBJ_NEW(mca_mpool_base_registration_t);
-    if (OPAL_LIKELY(NULL != reg)) {
-        /* stick around for awhile */
-        reg->ref_count = 2;
-        reg->base  = (unsigned char *) base;
-        reg->bound = (unsigned char *) bound;
-        reg->flags = flags;
-        
-        xpmem_addr.apid   = mca_btl_vader_component.apids[peer_smp_rank];
-        xpmem_addr.offset = base;
-
-        reg->alloc_base = xpmem_attach (xpmem_addr, bound - base, NULL);
-        if (OPAL_UNLIKELY((void *)-1 == reg->alloc_base)) {
-            OBJ_RELEASE(reg);
-            reg = NULL;
-        } else {
-            rcache->rcache_insert (rcache, reg, 0);
-        }
-    }
-
-    return reg;
+    return (int64_t)(uintptr_t) (addr - mca_btl_vader_component.my_segment) | ((int64_t)mca_btl_vader_component.my_smp_rank << 32);
 }
 
-static inline void vader_return_registration (mca_mpool_base_registration_t *reg, int peer_smp_rank)
+static inline void *relative2virtual (int64_t offset)
 {
-    struct mca_rcache_base_module_t *rcache = mca_btl_vader_component.xpmem_rcaches[peer_smp_rank];
-
-    opal_atomic_add (&reg->ref_count, -1);
-    if (OPAL_UNLIKELY(0 == reg->ref_count && !(reg->flags & MCA_MPOOL_FLAGS_PERSIST))) {
-        rcache->rcache_delete (rcache, reg);
-        (void)xpmem_detach (reg->alloc_base);
-        OBJ_RELEASE (reg);
-    }
-}
-
-static inline void *vader_reg_to_ptr (mca_mpool_base_registration_t *reg, void *rem_ptr)
-{
-    return (void *) ((uintptr_t) reg->alloc_base +
-                     (ptrdiff_t)((uintptr_t) rem_ptr - (uintptr_t) reg->base));
+    return (void *)(uintptr_t)((offset & 0xffffffffull) + mca_btl_vader_component.endpoints[offset >> 32].segment_base);
 }
 
 /* memcpy is faster at larger sizes but is undefined if the
    pointers are aliased (TODO -- readd alias check) */
 static inline void vader_memmove (void *dst, void *src, size_t size)
 {
-    if (size >= (size_t) mca_btl_vader_memcpy_limit) {
+    if (size >= (size_t) mca_btl_vader_component.memcpy_limit) {
         memcpy (dst, src, size);
     } else {
         memmove (dst, src, size);
     }
 }
+
+/* look up the remote pointer in the peer rcache and attach if
+ * necessary */
+mca_mpool_base_registration_t *vader_get_registation (struct mca_btl_base_endpoint_t *endpoint, void *rem_ptr,
+						      size_t size, int flags);
+
+void vader_return_registration (mca_mpool_base_registration_t *reg, struct mca_btl_base_endpoint_t *endpoint);
+
+void *vader_reg_to_ptr (mca_mpool_base_registration_t *reg, void *rem_ptr);
 
 /**
  * Initiate a send to the peer.
