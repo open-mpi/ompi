@@ -162,7 +162,7 @@ BEGIN_C_DECLS
      * invoked internally (by mca_base_open()) and is only documented
      * here for completeness.
      */
-    OPAL_DECLSPEC int mca_base_param_init(void) __opal_attribute_deprecated__;
+    OPAL_DECLSPEC int mca_base_param_init(void);
 
     /**
      * Recache the MCA param files
@@ -853,7 +853,7 @@ OPAL_DECLSPEC int mca_base_param_check_exclusive_string(const char *type_a,
      * when the process is shutting down (e.g., during MPI_FINALIZE).  It
      * is only documented here for completeness.
      */
-    OPAL_DECLSPEC int mca_base_param_finalize(void) __opal_attribute_deprecated__;
+    OPAL_DECLSPEC int mca_base_param_finalize(void);
 
 END_C_DECLS
 
