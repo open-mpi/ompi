@@ -41,5 +41,5 @@ static int mca_io_base_open(mca_base_open_flag_t flags)
     return mca_io_base_find_available(OMPI_ENABLE_PROGRESS_THREADS, OMPI_ENABLE_THREAD_MULTIPLE);
 }
 
-MCA_BASE_FRAMEWORK_DECLARE(ompi, io, NULL, mca_io_base_open, NULL, NULL,
+MCA_BASE_FRAMEWORK_DECLARE(ompi, io, "I/O", NULL, mca_io_base_open, NULL,
                            mca_io_base_static_components, 0);
