@@ -826,6 +826,8 @@ static bool assign_procs(AllData& alldata) {
             cerr << "ERROR: Unable to open file '"
                     << alldata.params.input_file_prefix << ".otf' for reading."
                     << endl;
+            OTF_MasterControl_close(master);
+            OTF_FileManager_close(manager);
             error = true;
         }
     }
