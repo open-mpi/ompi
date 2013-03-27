@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2008-2009 Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2009-2012 Oak Rigde National Laboratory.  All rights reserved.
  * Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
@@ -562,7 +562,10 @@ enum {
 #define MPI_ERR_UNSUPPORTED_DATAREP   51
 #define MPI_ERR_UNSUPPORTED_OPERATION 52
 #define MPI_ERR_WIN                   53
-#define MPI_ERR_LASTCODE              54
+/* Per MPI-3 p349 47, MPI_ERR_LASTCODE must be >= the last predefined
+   MPI_ERR_<foo> code.  So just set it equal to the last code --
+   MPI_ERR_WIN, in this case. */
+#define MPI_ERR_LASTCODE              MPI_ERR_WIN
 
 #define MPI_ERR_SYSRESOURCE          -2
 
