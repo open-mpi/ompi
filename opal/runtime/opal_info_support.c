@@ -25,6 +25,10 @@
 #include <string.h>
 #include <ctype.h>
 
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
+
 #include "opal/class/opal_list.h"
 #include "opal/class/opal_pointer_array.h"
 
@@ -35,6 +39,8 @@
 #include "opal/util/show_help.h"
 #include "opal/runtime/opal.h"
 #include "opal/dss/dss.h"
+
+#include "opal/include/opal/frameworks.h"
 
 #include "opal/mca/installdirs/installdirs.h"
 #include "opal/mca/event/base/base.h"

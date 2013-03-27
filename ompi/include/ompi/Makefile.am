@@ -25,7 +25,8 @@ headers += \
 	ompi/constants.h \
 	ompi/types.h \
 	ompi/memchecker.h \
-	ompi/totalview.h
+	ompi/totalview.h \
+	ompi/frameworks.h
 
 nodist_headers += \
 	ompi/version.h
