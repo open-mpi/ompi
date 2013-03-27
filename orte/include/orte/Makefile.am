@@ -21,7 +21,8 @@
 
 headers += \
 	orte/constants.h \
-	orte/types.h
+	orte/types.h \
+	orte/frameworks.h
 
 nodist_headers += \
 	orte/version.h
