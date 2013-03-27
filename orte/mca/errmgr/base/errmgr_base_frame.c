@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2010-2011 Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2011      Los Alamos National Security, LLC.
+ * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * $COPYRIGHT$
  * 
@@ -50,12 +50,6 @@
 /*
  * Globals
  */
-opal_list_t orte_errmgr_base_components_available;
-
-orte_errmgr_base_t orte_errmgr_base;
-
-orte_errmgr_base_component_t orte_errmgr_base_selected_component;
-
 orte_errmgr_fault_callback_t *fault_cbfunc;
 
 /* Public module provides a wrapper around previous functions */
@@ -86,37 +80,33 @@ orte_errmgr_base_module_t orte_errmgr = {
     NULL
 };
 
-/**
- * Function for finding and opening either all MCA components, or the one
- * that was specifically requested via a MCA parameter.
- */
-int orte_errmgr_base_open(void)
+static int orte_errmgr_base_close(void)
 {
-    OPAL_TRACE(5);
-
-    /* Only pass this way once */
-    if( orte_errmgr_base.initialized ) {
-        return ORTE_SUCCESS;
+    /* Close selected component */
+    if (NULL != orte_errmgr.finalize) {
+        orte_errmgr.finalize();
     }
 
-    orte_errmgr_base.output = opal_output_open(NULL);
+    /* always leave a default set of fn pointers */
+    orte_errmgr = orte_errmgr_default_fns;
 
+    return mca_base_framework_components_close(&orte_errmgr_base_framework, NULL);
+}
+
+/**
+ *  * Function for finding and opening either all MCA components, or the one
+ *   * that was specifically requested via a MCA parameter.
+ *    */
+static int orte_errmgr_base_open(mca_base_open_flag_t flags)
+{
     /* load the default fns */
     orte_errmgr = orte_errmgr_default_fns;
 
-    /*
-     * Open up all available components
-     */
-    if (ORTE_SUCCESS != 
-        mca_base_components_open("errmgr",
-                                 orte_errmgr_base.output,
-                                 mca_errmgr_base_static_components, 
-                                 &orte_errmgr_base_components_available,
-                                 true)) {
-        return ORTE_ERROR;
-    }
-    
-    orte_errmgr_base.initialized = true;
-    
-    return ORTE_SUCCESS;
+    /* Open up all available components */
+    return mca_base_framework_components_open(&orte_errmgr_base_framework, flags);
 }
+
+MCA_BASE_FRAMEWORK_DECLARE(orte, errmgr, "ORTE Error Manager", NULL,
+                           orte_errmgr_base_open, orte_errmgr_base_close,
+                           mca_errmgr_base_static_components, 0);
+

@@ -7,7 +7,7 @@
  * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2011      Los Alamos National Security, LLC.
+ * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * $COPYRIGHT$
  * 
@@ -90,7 +90,7 @@ static void proc_errors(int fd, short args, void *cbdata)
     orte_state_caddy_t *caddy = (orte_state_caddy_t*)cbdata;
     orte_ns_cmp_bitmask_t mask;
 
-    OPAL_OUTPUT_VERBOSE((1, orte_errmgr_base.output,
+    OPAL_OUTPUT_VERBOSE((1, orte_errmgr_base_framework.framework_output,
                          "%s errmgr:default_app: proc %s state %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(&caddy->name),
@@ -127,7 +127,7 @@ static void proc_errors(int fd, short args, void *cbdata)
 static int abort_peers(orte_process_name_t *procs, orte_std_cntr_t num_procs)
 {
     /* just abort */
-    if (0 < opal_output_get_verbosity(orte_errmgr_base.output)) {
+    if (0 < opal_output_get_verbosity(orte_errmgr_base_framework.framework_output)) {
         orte_errmgr_base_abort(ORTE_ERROR_DEFAULT_EXIT_CODE, "%s called abort_peers",
                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
     } else {

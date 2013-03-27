@@ -58,7 +58,7 @@ int orte_sensor_base_select(void)
 
     OBJ_CONSTRUCT(&tmp_array, opal_pointer_array_t);
     
-    opal_output_verbose(10, orte_sensor_base.output,
+    opal_output_verbose(10, orte_sensor_base_framework.framework_output,
                         "sensor:base:select: Auto-selecting components");
     
     /*
@@ -66,8 +66,8 @@ int orte_sensor_base_select(void)
      * For each call their 'query' functions to determine relative priority.
      */
     none_found = true;
-    for (item  = opal_list_get_first(&mca_sensor_base_components_available);
-         item != opal_list_get_end(&mca_sensor_base_components_available);
+    for (item  = opal_list_get_first(&orte_sensor_base_framework.framework_components);
+         item != opal_list_get_end(&orte_sensor_base_framework.framework_components);
          item  = opal_list_get_next(item) ) {
         cli = (mca_base_component_list_item_t *) item;
         component = (mca_base_component_t *) cli->cli_component;
@@ -76,7 +76,7 @@ int orte_sensor_base_select(void)
          * If there is a query function then use it.
          */
         if (NULL == component->mca_query_component) {
-            opal_output_verbose(5, orte_sensor_base.output,
+            opal_output_verbose(5, orte_sensor_base_framework.framework_output,
                                 "sensor:base:select Skipping component [%s]. It does not implement a query function",
                                 component->mca_component_name );
             continue;
@@ -85,7 +85,7 @@ int orte_sensor_base_select(void)
         /*
          * Query this component for the module and priority
          */
-        opal_output_verbose(5, orte_sensor_base.output,
+        opal_output_verbose(5, orte_sensor_base_framework.framework_output,
                             "sensor:base:select Querying component [%s]",
                             component->mca_component_name);
         
@@ -95,7 +95,7 @@ int orte_sensor_base_select(void)
          * If no module was returned or negative priority, then skip component
          */
         if (NULL == module || priority < 0) {
-            opal_output_verbose(5, orte_sensor_base.output,
+            opal_output_verbose(5, orte_sensor_base_framework.framework_output,
                                 "sensor:base:select Skipping component [%s]. Query failed to return a module",
                                 component->mca_component_name );
             continue;
@@ -104,7 +104,7 @@ int orte_sensor_base_select(void)
         /*
          * Append them to the temporary list, we will sort later
          */
-        opal_output_verbose(5, orte_sensor_base.output,
+        opal_output_verbose(5, orte_sensor_base_framework.framework_output,
                             "sensor:base:select Query of component [%s] set priority to %d", 
                             component->mca_component_name, priority);
         tmp_module = OBJ_NEW(orte_sensor_active_module_t);
@@ -171,7 +171,7 @@ int orte_sensor_base_select(void)
             tmp_module = tmp_module_sw;
             opal_pointer_array_set_item(&tmp_array, j, NULL);
         }
-        opal_output_verbose(5, orte_sensor_base.output,
+        opal_output_verbose(5, orte_sensor_base_framework.framework_output,
                             "sensor:base:select Add module with priority [%s] %d", 
                             tmp_module->component->mca_component_name, tmp_module->priority);
         opal_pointer_array_add(&orte_sensor_base.modules, tmp_module);

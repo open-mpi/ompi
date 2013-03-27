@@ -57,21 +57,21 @@ static void sample(void)
     orte_proc_t *child;
     int i;
 
-    OPAL_OUTPUT_VERBOSE((1, orte_sensor_base.output,
+    OPAL_OUTPUT_VERBOSE((1, orte_sensor_base_framework.framework_output,
                          "%s sample:ft_tester considering killing something",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
     /* are we including ourselves? */
     if ((ORTE_PROC_IS_DAEMON || ORTE_PROC_IS_CMSLAVE) &&
         0 < mca_sensor_ft_tester_component.daemon_fail_prob) {
-        OPAL_OUTPUT_VERBOSE((1, orte_sensor_base.output,
+        OPAL_OUTPUT_VERBOSE((1, orte_sensor_base_framework.framework_output,
                              "%s sample:ft_tester considering killing me!",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
         /* roll the dice */
         prob = (double)random() / (double)INT32_MAX;
         if (prob < mca_sensor_ft_tester_component.daemon_fail_prob) {
             /* commit suicide */
-            OPAL_OUTPUT_VERBOSE((1, orte_sensor_base.output,
+            OPAL_OUTPUT_VERBOSE((1, orte_sensor_base_framework.framework_output,
                                  "%s sample:ft_tester committing suicide",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
             orte_errmgr.abort(1, NULL);
@@ -87,7 +87,7 @@ static void sample(void)
             }
             if (!child->alive || 0 == child->pid ||
                 ORTE_PROC_STATE_UNTERMINATED < child->state) {
-                OPAL_OUTPUT_VERBOSE((1, orte_sensor_base.output,
+                OPAL_OUTPUT_VERBOSE((1, orte_sensor_base_framework.framework_output,
                                      "%s sample:ft_tester ignoring child: %s alive %s pid %lu state %s",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                      ORTE_NAME_PRINT(&child->name),
@@ -97,14 +97,14 @@ static void sample(void)
             }
             /* roll the dice */
             prob = (double)random() / (double)INT32_MAX;
-            OPAL_OUTPUT_VERBOSE((1, orte_sensor_base.output,
+            OPAL_OUTPUT_VERBOSE((1, orte_sensor_base_framework.framework_output,
                                  "%s sample:ft_tester child: %s dice: %f prob %f",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  ORTE_NAME_PRINT(&child->name),
                                  prob, mca_sensor_ft_tester_component.fail_prob));
             if (prob < mca_sensor_ft_tester_component.fail_prob) {
                 /* you shall die... */
-                OPAL_OUTPUT_VERBOSE((1, orte_sensor_base.output,
+                OPAL_OUTPUT_VERBOSE((1, orte_sensor_base_framework.framework_output,
                                      "%s sample:ft_tester killing %s",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                      ORTE_NAME_PRINT(&child->name)));

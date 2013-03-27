@@ -113,7 +113,7 @@ static int init(void)
                                                        orte_quit, ORTE_ERROR_PRI))) {
         ORTE_ERROR_LOG(rc);
     }
-    if (5 < opal_output_get_verbosity(orte_state_base_output)) {
+    if (5 < opal_output_get_verbosity(orte_state_base_framework.framework_output)) {
         orte_state_base_print_job_state_machine();
     }
 
@@ -128,7 +128,7 @@ static int init(void)
             ORTE_ERROR_LOG(rc);
         }
     }
-    if (5 < opal_output_get_verbosity(orte_state_base_output)) {
+    if (5 < opal_output_get_verbosity(orte_state_base_framework.framework_output)) {
 	orte_state_base_print_proc_state_machine();
     }
     return ORTE_SUCCESS;
@@ -173,7 +173,7 @@ static void send_fms(opal_buffer_t *bptr, void *cbdata)
      * ignore sending an update if that's the case
      */
     if (NULL != bptr) {
-        opal_output_verbose(1, orte_state_base_output,
+        opal_output_verbose(1, orte_state_base_framework.framework_output,
                             "%s SENDING FILE MAPS FOR %s OF SIZE %d",
                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                             ORTE_NAME_PRINT(&pdata->name), (int)bptr->bytes_used);
@@ -225,7 +225,7 @@ static void send_fms(opal_buffer_t *bptr, void *cbdata)
         ORTE_ERROR_LOG(rc);
     }
     /* send it */
-    OPAL_OUTPUT_VERBOSE((5, orte_state_base_output,
+    OPAL_OUTPUT_VERBOSE((5, orte_state_base_framework.framework_output,
                          "%s SENDING TERMINATION UPDATE FOR PROC %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(&pdata->name)));
@@ -258,7 +258,7 @@ static void track_procs(int fd, short argc, void *cbdata)
     orte_job_t *jdata;
     orte_proc_t *pdata;
 
-    OPAL_OUTPUT_VERBOSE((5, orte_state_base_output,
+    OPAL_OUTPUT_VERBOSE((5, orte_state_base_framework.framework_output,
                          "%s state:staged_orted:track_procs called for proc %s state %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(proc),

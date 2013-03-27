@@ -156,7 +156,7 @@ static int init(void)
                                          &slurm_host, &port)) {
             return ORTE_ERR_SILENT;
         }
-        OPAL_OUTPUT_VERBOSE((2, orte_ras_base.ras_output,
+        OPAL_OUTPUT_VERBOSE((2, orte_ras_base_framework.framework_output,
                              "ras:slurm got [ ip = %s, port = %u ] from %s\n",
                              slurm_host, port, mca_ras_slurm_component.config_file));
 
@@ -235,7 +235,7 @@ static int orte_ras_slurm_allocate(orte_job_t *jdata, opal_list_t *nodes)
          */
         if (!mca_ras_slurm_component.dyn_alloc_enabled) {
             /* nope - nothing we can do */
-            opal_output_verbose(2, orte_ras_base.ras_output,
+            opal_output_verbose(2, orte_ras_base_framework.framework_output,
                                 "%s ras:slurm: no prior allocation and dynamic alloc disabled",
                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
             return ORTE_ERR_TAKE_NEXT_OPTION;
@@ -303,7 +303,7 @@ static int orte_ras_slurm_allocate(orte_job_t *jdata, opal_list_t *nodes)
     free(regexp);
     free(node_tasks);
     if (ORTE_SUCCESS != ret) {
-        OPAL_OUTPUT_VERBOSE((1, orte_ras_base.ras_output,
+        OPAL_OUTPUT_VERBOSE((1, orte_ras_base_framework.framework_output,
                              "%s ras:slurm:allocate: discover failed!",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
         return ret;
@@ -313,7 +313,7 @@ static int orte_ras_slurm_allocate(orte_job_t *jdata, opal_list_t *nodes)
 
     /* All done */
 
-    OPAL_OUTPUT_VERBOSE((1, orte_ras_base.ras_output,
+    OPAL_OUTPUT_VERBOSE((1, orte_ras_base_framework.framework_output,
                          "%s ras:slurm:allocate: success",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     return ORTE_SUCCESS;
@@ -374,7 +374,7 @@ static int orte_ras_slurm_discover(char *regexp, char *tasks_per_node,
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
     
-    OPAL_OUTPUT_VERBOSE((1, orte_ras_base.ras_output,
+    OPAL_OUTPUT_VERBOSE((1, orte_ras_base_framework.framework_output,
                          "%s ras:slurm:allocate:discover: checking nodelist: %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          regexp));
@@ -446,7 +446,7 @@ static int orte_ras_slurm_discover(char *regexp, char *tasks_per_node,
         } else {
             /* If we didn't find a range, just add the node */
             
-            OPAL_OUTPUT_VERBOSE((1, orte_ras_base.ras_output,
+            OPAL_OUTPUT_VERBOSE((1, orte_ras_base_framework.framework_output,
                                  "%s ras:slurm:allocate:discover: found node %s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  base));
@@ -530,7 +530,7 @@ static int orte_ras_slurm_discover(char *regexp, char *tasks_per_node,
     for (i = 0; NULL != names && NULL != names[i]; ++i) {
         orte_node_t *node;
         
-        OPAL_OUTPUT_VERBOSE((1, orte_ras_base.ras_output,
+        OPAL_OUTPUT_VERBOSE((1, orte_ras_base_framework.framework_output,
                              "%s ras:slurm:allocate:discover: adding node %s (%d slot%s)",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              names[i], slots[i], (1 == slots[i]) ? "" : "s"));
@@ -588,7 +588,7 @@ static int orte_ras_slurm_parse_ranges(char *base, char *ranges, char ***names)
 
     if (start < orig + len) {
         
-        OPAL_OUTPUT_VERBOSE((1, orte_ras_base.ras_output,
+        OPAL_OUTPUT_VERBOSE((1, orte_ras_base_framework.framework_output,
                              "%s ras:slurm:allocate:discover: parse range %s (2)",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              start));
@@ -721,7 +721,7 @@ static void timeout(int fd, short args, void *cbdata)
     orte_job_t *jdata;
 
     orte_show_help("help-ras-slurm.txt", "slurm-dyn-alloc-timeout", true);
-    opal_output_verbose(2, orte_ras_base.ras_output,
+    opal_output_verbose(2, orte_ras_base_framework.framework_output,
                         "%s Timed out on dynamic allocation",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
     /* indicate that we failed to receive an allocation */
@@ -745,7 +745,7 @@ static void recv_data(int fd, short args, void *cbdata)
     orte_jobid_t jobid;
     orte_job_t *jdata;
 
-    opal_output_verbose(2, orte_ras_base.ras_output,
+    opal_output_verbose(2, orte_ras_base_framework.framework_output,
                         "%s ras:slurm: dynamic allocation - data recvd",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
 
@@ -755,7 +755,7 @@ static void recv_data(int fd, short args, void *cbdata)
     memset(recv_msg, 0, sizeof(recv_msg));
     nbytes = read(fd, recv_msg, sizeof(recv_msg) - 1);
 
-    opal_output_verbose(2, orte_ras_base.ras_output,
+    opal_output_verbose(2, orte_ras_base_framework.framework_output,
                         "%s ras:slurm: dynamic allocation msg: %s",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), recv_msg);
 
@@ -1006,7 +1006,7 @@ static int dyn_allocate(orte_job_t *jdata)
     tv.tv_usec = 0;
     opal_event_evtimer_add(&jtrk->timeout_ev, &tv);
 
-    opal_output_verbose(2, orte_ras_base.ras_output,
+    opal_output_verbose(2, orte_ras_base_framework.framework_output,
                         "%s slurm:dynalloc cmd_str = %s",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                         cmd_str);

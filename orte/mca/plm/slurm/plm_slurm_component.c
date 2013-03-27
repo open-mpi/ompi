@@ -112,7 +112,7 @@ static int orte_plm_slurm_component_query(mca_base_module_t **module, int *prior
     if (NULL != getenv("SLURM_JOBID")) {
         *priority = 75;
 
-        OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+        OPAL_OUTPUT_VERBOSE((1, orte_plm_base_framework.framework_output,
                              "%s plm:slurm: available for selection", 
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 

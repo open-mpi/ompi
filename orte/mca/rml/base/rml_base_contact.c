@@ -84,7 +84,7 @@ int orte_rml_base_update_contact_info(opal_buffer_t* data)
     cnt = 1;
     while (ORTE_SUCCESS == (rc = opal_dss.unpack(data, &rml_uri, &cnt, OPAL_STRING))) {
         
-        OPAL_OUTPUT_VERBOSE((5, orte_rml_base_output,
+        OPAL_OUTPUT_VERBOSE((5, orte_rml_base_framework.framework_output,
                              "%s rml:base:update:contact:info got uri %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              NULL == rml_uri ? "NULL" : rml_uri));

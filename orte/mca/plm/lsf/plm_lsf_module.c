@@ -196,7 +196,7 @@ static void launch_daemons(int fd, short args, void *cbdata)
         return;
     }
 
-    OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+    OPAL_OUTPUT_VERBOSE((1, orte_plm_base_framework.framework_output,
                          "%s plm:lsf: launching vm",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
@@ -214,7 +214,7 @@ static void launch_daemons(int fd, short args, void *cbdata)
          * will trigger the daemons_reported event and cause the
          * job to move to the following step
          */
-        OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+        OPAL_OUTPUT_VERBOSE((1, orte_plm_base_framework.framework_output,
                              "%s plm:lsf: no new daemons to launch",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
         state->jdata->state = ORTE_JOB_STATE_DAEMONS_LAUNCHED;
@@ -279,7 +279,7 @@ static void launch_daemons(int fd, short args, void *cbdata)
     argv[proc_vpid_index] = strdup(vpid_string);
     free(vpid_string);
 
-    if (0 < opal_output_get_verbosity(orte_plm_globals.output)) {
+    if (0 < opal_output_get_verbosity(orte_plm_base_framework.framework_output)) {
         param = opal_argv_join(argv, ' ');
         if (NULL != param) {
             opal_output(0, "plm:lsf: final top-level argv:");
@@ -316,7 +316,7 @@ static void launch_daemons(int fd, short args, void *cbdata)
                same anyway */
             if (NULL == cur_prefix) {
                 cur_prefix = strdup(app_prefix_dir);
-                OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+                OPAL_OUTPUT_VERBOSE((1, orte_plm_base_framework.framework_output,
                                      "%s plm:lsf: Set prefix:%s",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), cur_prefix));
             }

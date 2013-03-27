@@ -70,7 +70,7 @@ int orte_finalize(void)
     orte_ess.finalize();
     
     /* close the ess itself */
-    orte_ess_base_close();
+    (void) mca_base_framework_close(&orte_ess_base_framework);
     
 #if ORTE_ENABLE_PROGRESS_THREADS
     /* stop the progress thread */

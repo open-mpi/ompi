@@ -67,7 +67,7 @@ int orte_ess_base_proc_binding(void)
 
     /* see if we were bound when launched */
     if (!orte_proc_is_bound) {
-        OPAL_OUTPUT_VERBOSE((5, orte_ess_base_output,
+        OPAL_OUTPUT_VERBOSE((5, orte_ess_base_framework.framework_output,
                              "%s Not bound at launch",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
         /* we were not bound at launch */
@@ -83,7 +83,7 @@ int orte_ess_base_proc_binding(void)
                  * environment does not support it
                  */
                 hwloc_bitmap_free(cpus);
-                OPAL_OUTPUT_VERBOSE((5, orte_ess_base_output,
+                OPAL_OUTPUT_VERBOSE((5, orte_ess_base_framework.framework_output,
                                      "%s Binding not supported",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
                 goto MOVEON;
@@ -100,7 +100,7 @@ int orte_ess_base_proc_binding(void)
                 orte_proc_is_bound = true;
                 hwloc_bitmap_list_asprintf(&orte_process_info.cpuset, cpus);
                 hwloc_bitmap_free(cpus);
-                OPAL_OUTPUT_VERBOSE((5, orte_ess_base_output,
+                OPAL_OUTPUT_VERBOSE((5, orte_ess_base_framework.framework_output,
                                      "%s Process was externally bound",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
             } else if (support->cpubind->set_thisproc_cpubind &&
@@ -125,7 +125,7 @@ int orte_ess_base_proc_binding(void)
                     hwloc_bitmap_list_asprintf(&orte_process_info.cpuset, cpus);
                     hwloc_bitmap_free(cpus);
                     orte_proc_is_bound = true;
-                    OPAL_OUTPUT_VERBOSE((5, orte_ess_base_output,
+                    OPAL_OUTPUT_VERBOSE((5, orte_ess_base_framework.framework_output,
                                          "%s Process bound according to slot_list",
                                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
                 } else {
@@ -137,7 +137,7 @@ int orte_ess_base_proc_binding(void)
                          * direct launched - so just ignore and leave
                          * us unbound
                          */
-                        OPAL_OUTPUT_VERBOSE((5, orte_ess_base_output,
+                        OPAL_OUTPUT_VERBOSE((5, orte_ess_base_framework.framework_output,
                                              "%s Process not bound - no node rank available",
                                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
                         goto MOVEON;
@@ -160,7 +160,7 @@ int orte_ess_base_proc_binding(void)
                         }
                         hwloc_bitmap_list_asprintf(&orte_process_info.cpuset, cpus);
                         hwloc_bitmap_free(cpus);
-                        OPAL_OUTPUT_VERBOSE((5, orte_ess_base_output,
+                        OPAL_OUTPUT_VERBOSE((5, orte_ess_base_framework.framework_output,
                                              "%s Process bound to hwthread",
                                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
                     } else if (OPAL_BIND_TO_CORE == OPAL_GET_BINDING_POLICY(opal_hwloc_binding_policy)) {
@@ -181,7 +181,7 @@ int orte_ess_base_proc_binding(void)
                         }
                         hwloc_bitmap_list_asprintf(&orte_process_info.cpuset, cpus);
                         hwloc_bitmap_free(cpus);
-                        OPAL_OUTPUT_VERBOSE((5, orte_ess_base_output,
+                        OPAL_OUTPUT_VERBOSE((5, orte_ess_base_framework.framework_output,
                                              "%s Process bound to core",
                                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
                     } else {
@@ -227,7 +227,7 @@ int orte_ess_base_proc_binding(void)
                                 hwloc_bitmap_list_asprintf(&orte_process_info.cpuset, cpus);
                                 hwloc_bitmap_free(cpus);
                                 orte_proc_is_bound = true;
-                                OPAL_OUTPUT_VERBOSE((5, orte_ess_base_output,
+                                OPAL_OUTPUT_VERBOSE((5, orte_ess_base_framework.framework_output,
                                                      "%s Process bound to %s",
                                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                                      hwloc_obj_type_string(target)));
@@ -244,7 +244,7 @@ int orte_ess_base_proc_binding(void)
             }
         }
     } else {
-        OPAL_OUTPUT_VERBOSE((5, orte_ess_base_output,
+        OPAL_OUTPUT_VERBOSE((5, orte_ess_base_framework.framework_output,
                              "%s Process bound at launch",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     }

@@ -7,6 +7,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -32,36 +33,6 @@
 #include "orte/mca/snapc/snapc.h"
 #include "orte/mca/snapc/base/base.h"
 
-
-static orte_snapc_base_component_t none_component = {
-    /* Handle the general mca_component_t struct containing 
-     *  meta information about the component itself
-     */
-    {
-        ORTE_SNAPC_BASE_VERSION_2_0_0,
-        /* Component name and version */
-        "none",
-        ORTE_MAJOR_VERSION,
-        ORTE_MINOR_VERSION,
-        ORTE_RELEASE_VERSION,
-        
-        /* Component open and close functions */
-        orte_snapc_base_none_open,
-        orte_snapc_base_none_close,
-        orte_snapc_base_none_query
-    },
-    {
-        /* The component is checkpoint ready */
-        MCA_BASE_METADATA_PARAM_CHECKPOINT
-    },
-
-    /* Verbosity level */
-    0,
-    /* opal_output handler */
-    -1,
-    /* Default priority */
-    1
-};
 
 static orte_snapc_base_module_t none_module = {
     /** Initialization Function */
@@ -92,14 +63,13 @@ int orte_snapc_base_select(bool seed, bool app)
 
     if(NULL != include_list && NULL != include_list[0] &&
        0 == strncmp(include_list[0], "none", strlen("none")) ){ 
-        opal_output_verbose(10, orte_snapc_base_output,
+        opal_output_verbose(10, orte_snapc_base_framework.framework_output,
                             "snapc:select: Using %s component",
                             include_list[0]);
-        best_component = &none_component;
         best_module    = &none_module;
         /* Close all components since none will be used */
         mca_base_components_close(0, /* Pass 0 to keep this from closing the output handle */
-                                  &orte_snapc_base_components_available,
+                                  &orte_snapc_base_framework.framework_components,
                                   NULL);
         /* JJH: Todo: Check if none is in the list */
         goto skip_select;
@@ -108,8 +78,8 @@ int orte_snapc_base_select(bool seed, bool app)
     /*
      * Select the best component
      */
-    if( OPAL_SUCCESS != mca_base_select("snapc", orte_snapc_base_output,
-                                        &orte_snapc_base_components_available,
+    if( OPAL_SUCCESS != mca_base_select("snapc", orte_snapc_base_framework.framework_output,
+                                        &orte_snapc_base_framework.framework_components,
                                         (mca_base_module_t **) &best_module,
                                         (mca_base_component_t **) &best_component) ) {
         /* This will only happen if no component was selected */
@@ -119,7 +89,6 @@ int orte_snapc_base_select(bool seed, bool app)
 
  skip_select:
     /* Save the winner */
-    orte_snapc_base_selected_component = *best_component;
     orte_snapc = *best_module;
 
     /* Initialize the winner */
@@ -129,11 +98,6 @@ int orte_snapc_base_select(bool seed, bool app)
             goto cleanup;
         }
     }
-
-    /*
-     * Select on the SStore framework
-     */
-    orte_sstore_base_select();
 
  cleanup:
 

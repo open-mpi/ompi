@@ -13,8 +13,7 @@ headers += \
         base/base.h
 
 libmca_sstore_la_SOURCES += \
-        base/sstore_base_open.c \
-        base/sstore_base_close.c \
+        base/sstore_base_frame.c \
         base/sstore_base_select.c \
         base/sstore_base_fns.c
 

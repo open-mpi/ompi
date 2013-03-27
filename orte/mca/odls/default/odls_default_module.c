@@ -13,7 +13,7 @@
  * Copyright (c) 2007      Evergrid, Inc. All rights reserved.
  * Copyright (c) 2008-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010      IBM Corporation.  All rights reserved.
- * Copyright (c) 2011-2012 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  *
  * $COPYRIGHT$
@@ -200,7 +200,7 @@ static bool odls_default_child_died(orte_proc_t *child)
     do {
         ret = waitpid(child->pid, &child->exit_code, WNOHANG);
         if (child->pid == ret) {
-            OPAL_OUTPUT_VERBOSE((2, orte_odls_globals.output,
+            OPAL_OUTPUT_VERBOSE((2, orte_odls_base_framework.framework_output,
                                  "%s odls:default:WAITPID INDICATES PROC %d IS DEAD",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), (int)(child->pid)));
             /* It died -- return success */
@@ -225,7 +225,7 @@ static bool odls_default_child_died(orte_proc_t *child)
         } else if (-1 == ret && ECHILD == errno) {
             /* The pid no longer exists, so we'll call this "good
                enough for government work" */
-            OPAL_OUTPUT_VERBOSE((2, orte_odls_globals.output,
+            OPAL_OUTPUT_VERBOSE((2, orte_odls_base_framework.framework_output,
                                  "%s odls:default:WAITPID INDICATES PID %d NO LONGER EXISTS",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), (int)(child->pid)));
             return true;
@@ -252,13 +252,13 @@ static int odls_default_kill_local(pid_t pid, int signum)
     }
     if (0 != kill(pid, signum)) {
         if (ESRCH != errno) {
-            OPAL_OUTPUT_VERBOSE((2, orte_odls_globals.output,
+            OPAL_OUTPUT_VERBOSE((2, orte_odls_base_framework.framework_output,
                                  "%s odls:default:SENT KILL %d TO PID %d GOT ERRNO %d",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), signum, (int)pid, errno));
             return errno;
         }
     }
-    OPAL_OUTPUT_VERBOSE((2, orte_odls_globals.output,
+    OPAL_OUTPUT_VERBOSE((2, orte_odls_base_framework.framework_output,
                          "%s odls:default:SENT KILL %d TO PID %d SUCCESS",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), signum, (int)pid));
     return 0;
@@ -613,7 +613,7 @@ static int do_child(orte_app_context_t* context,
     
     /* Exec the new executable */
     
-    if (10 < opal_output_get_verbosity(orte_odls_globals.output)) {
+    if (10 < opal_output_get_verbosity(orte_odls_base_framework.framework_output)) {
         int jout;
         opal_output(0, "%s STARTING %s", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), context->app);
         for (jout=0; NULL != context->argv[jout]; jout++) {
@@ -851,7 +851,7 @@ int orte_odls_default_launch_local_procs(opal_buffer_t *data)
 
     /* construct the list of children we are to launch */
     if (ORTE_SUCCESS != (rc = orte_odls_base_default_construct_child_list(data, &job))) {
-        OPAL_OUTPUT_VERBOSE((2, orte_odls_globals.output,
+        OPAL_OUTPUT_VERBOSE((2, orte_odls_base_framework.framework_output,
                              "%s odls:default:launch:local failed to construct child list on error %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_ERROR_NAME(rc)));
         return rc;
@@ -872,7 +872,7 @@ static int send_signal(pid_t pid, int signal)
 {
     int rc = ORTE_SUCCESS;
     
-    OPAL_OUTPUT_VERBOSE((1, orte_odls_globals.output,
+    OPAL_OUTPUT_VERBOSE((1, orte_odls_base_framework.framework_output,
                          "%s sending signal %d to pid %ld",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          signal, (long)pid));
@@ -922,7 +922,7 @@ static int orte_odls_default_restart_proc(orte_proc_t *child)
     
     /* restart the local proc */
     if (ORTE_SUCCESS != (rc = orte_odls_base_default_restart_proc(child, odls_default_fork_local_proc))) {
-        OPAL_OUTPUT_VERBOSE((2, orte_odls_globals.output,
+        OPAL_OUTPUT_VERBOSE((2, orte_odls_base_framework.framework_output,
                              "%s odls:default:restart_proc failed to launch on error %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_ERROR_NAME(rc)));
     }

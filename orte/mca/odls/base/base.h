@@ -29,51 +29,20 @@
 #include "orte_config.h"
 
 #include "opal/mca/mca.h"
-#include "opal/class/opal_list.h"
 
 #include "orte/mca/odls/odls.h"
 
 
 BEGIN_C_DECLS
 
-/**
- * Open the odls framework
- */
-ORTE_DECLSPEC int orte_odls_base_open(void);
-
-/**
- * Struct to hold globals for the odls framework
- */
-typedef struct orte_odls_base_t {
-    /* components are available */
-    bool components_available;
-    /* component has been selected */
-    bool selected;
-    /** List of opened components */
-    opal_list_t available_components;
-    /** selected component */
-    orte_odls_base_component_t selected_component;
-} orte_odls_base_t;
-
-/**
- * Global instance of odls-wide framework data
- */
-ORTE_DECLSPEC extern orte_odls_base_t orte_odls_base;
-
 /*
- * Global functions for MCA overall collective open and close
+ * MCA framework
  */
-
-/**
- * Select an odls module
+ORTE_DECLSPEC extern mca_base_framework_t orte_odls_base_framework;
+/*
+ * Select an available component.
  */
 ORTE_DECLSPEC int orte_odls_base_select(void);
-
-/**
- * Close the odls framework
- */
-ORTE_DECLSPEC int orte_odls_base_finalize(void);
-ORTE_DECLSPEC int orte_odls_base_close(void);
 
 END_C_DECLS
 #endif

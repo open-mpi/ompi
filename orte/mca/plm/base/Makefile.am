@@ -22,8 +22,7 @@ headers += \
         base/plm_private.h
 
 libmca_plm_la_SOURCES += \
-        base/plm_base_open.c \
-        base/plm_base_close.c \
+        base/plm_base_frame.c \
         base/plm_base_select.c \
         base/plm_base_receive.c \
 	base/plm_base_launch_support.c \

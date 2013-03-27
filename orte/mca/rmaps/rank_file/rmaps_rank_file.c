@@ -82,7 +82,7 @@ static int orte_rmaps_rf_map(orte_job_t *jdata)
 
     /* only handle initial launch of rf job */
     if (ORTE_JOB_CONTROL_RESTART & jdata->controls) {
-        opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+        opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                             "mca:rmaps:rf: job %s being restarted - rank_file cannot map",
                             ORTE_JOBID_PRINT(jdata->jobid));
         return ORTE_ERR_TAKE_NEXT_OPTION;
@@ -90,7 +90,7 @@ static int orte_rmaps_rf_map(orte_job_t *jdata)
     if (NULL != jdata->map->req_mapper &&
         0 != strcasecmp(jdata->map->req_mapper, c->mca_component_name)) {
         /* a mapper has been specified, and it isn't me */
-        opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+        opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                             "mca:rmaps:rf: job %s not using rank_file mapper",
                             ORTE_JOBID_PRINT(jdata->jobid));
         return ORTE_ERR_TAKE_NEXT_OPTION;
@@ -99,7 +99,7 @@ static int orte_rmaps_rf_map(orte_job_t *jdata)
         /* NOT FOR US */
         return ORTE_ERR_TAKE_NEXT_OPTION;
     }
-    opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+    opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                         "mca:rmaps:rank_file: mapping job %s",
                         ORTE_JOBID_PRINT(jdata->jobid));
  

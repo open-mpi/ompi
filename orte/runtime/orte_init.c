@@ -128,7 +128,8 @@ int orte_init(int* pargc, char*** pargv, orte_proc_type_t flags)
     }
 
     /* open the ESS and select the correct module for this environment */
-    if (ORTE_SUCCESS != (ret = orte_ess_base_open())) {
+    if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_ess_base_framework, 0))) {
+        ORTE_ERROR_LOG(ret);
         error = "orte_ess_base_open";
         goto error;
     }

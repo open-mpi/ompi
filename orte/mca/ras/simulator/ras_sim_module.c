@@ -194,7 +194,7 @@ static int allocate(orte_job_t *jdata, opal_list_t *nodes)
 #if OPAL_HAVE_HWLOC
             node->topology = topo;
 #endif
-            opal_output_verbose(1, orte_ras_base.ras_output,
+            opal_output_verbose(1, orte_ras_base_framework.framework_output,
                                 "Created Node <%10s> [%3d : %3d]",
                                 node->name, node->slots, node->slots_max);
             opal_list_append(nodes, &node->super);

@@ -53,11 +53,11 @@
 
 BEGIN_C_DECLS
 
-/* while unusual, we need to make the state framework's verbosity
- * available here so that we can use it in the state machine
- * macros
+/*
+ * MCA Framework - put here to access the opal_output channel
+ * in the macros
  */
-ORTE_DECLSPEC extern int orte_state_base_output;
+ORTE_DECLSPEC extern mca_base_framework_t orte_state_base_framework;
 
 /* For ease in debugging the state machine, it is STRONGLY recommended
  * that the functions be accessed using the following macros
@@ -71,7 +71,7 @@ ORTE_DECLSPEC extern int orte_state_base_output;
 #define ORTE_ACTIVATE_JOB_STATE(j, s)                                   \
     do {                                                                \
         orte_job_t *shadow=(j);                                         \
-        opal_output_verbose(1, orte_state_base_output,			\
+        opal_output_verbose(1, orte_state_base_framework.framework_output,			\
                             "%s ACTIVATE JOB %s STATE %s AT %s:%d",	\
                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),         \
                             (NULL == shadow) ? "NULL" :                 \
@@ -84,7 +84,7 @@ ORTE_DECLSPEC extern int orte_state_base_output;
 #define ORTE_ACTIVATE_PROC_STATE(p, s)                                  \
     do {                                                                \
         orte_process_name_t *shadow=(p);                                \
-	opal_output_verbose(1, orte_state_base_output,			\
+	opal_output_verbose(1, orte_state_base_framework.framework_output,			\
 			     "%s ACTIVATE PROC %s STATE %s AT %s:%d",	\
 			     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),	\
 			     (NULL == shadow) ? "NULL" :		\

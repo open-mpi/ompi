@@ -208,7 +208,7 @@ static int rte_init(void)
             }
         }
 
-        if (4 < opal_output_get_verbosity(orte_ess_base_output)) {
+        if (4 < opal_output_get_verbosity(orte_ess_base_framework.framework_output)) {
             opal_output(0, "%s Topology Info:", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
             opal_dss.dump(0, opal_hwloc_topology, OPAL_HWLOC_TOPO);
         }
@@ -242,7 +242,7 @@ static int rte_init(void)
     }
   
     /* open and setup the state machine */
-    if (ORTE_SUCCESS != (ret = orte_state_base_open())) {
+    if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_state_base_framework, 0))) {
         ORTE_ERROR_LOG(ret);
         error = "orte_state_base_open";
         goto error;
@@ -253,7 +253,9 @@ static int rte_init(void)
         goto error;
     }
 
-    if (ORTE_SUCCESS != (ret = orte_errmgr_base_open())) {
+    /* open the errmgr */
+    if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_errmgr_base_framework, 0))) {
+        ORTE_ERROR_LOG(ret);
         error = "orte_errmgr_base_open";
         goto error;
     }
@@ -263,7 +265,7 @@ static int rte_init(void)
      * respective environment - hence, we have to open the PLM
      * first and select that component.
      */
-    if (ORTE_SUCCESS != (ret = orte_plm_base_open())) {
+    if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_plm_base_framework, 0))) {
         ORTE_ERROR_LOG(ret);
         error = "orte_plm_base_open";
         goto error;
@@ -285,7 +287,7 @@ static int rte_init(void)
     /*
      * Runtime Messaging Layer
      */
-    if (ORTE_SUCCESS != (ret = orte_rml_base_open())) {
+    if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_rml_base_framework, 0))) {
         ORTE_ERROR_LOG(ret);
         error = "orte_rml_base_open";
         goto error;
@@ -305,9 +307,9 @@ static int rte_init(void)
     /*
      * Routed system
      */
-    if (ORTE_SUCCESS != (ret = orte_routed_base_open())) {
+    if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_routed_base_framework, 0))) {
         ORTE_ERROR_LOG(ret);
-        error = "orte_routed_base_open";
+        error = "orte_rml_base_open";
         goto error;
     }
     if (ORTE_SUCCESS != (ret = orte_routed_base_select())) {
@@ -331,7 +333,7 @@ static int rte_init(void)
     /*
      * Group communications
      */
-    if (ORTE_SUCCESS != (ret = orte_grpcomm_base_open())) {
+    if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_grpcomm_base_framework, 0))) {
         ORTE_ERROR_LOG(ret);
         error = "orte_grpcomm_base_open";
         goto error;
@@ -359,24 +361,22 @@ static int rte_init(void)
      * and daemons do not open these frameworks as they only use
      * the hnp proxy support in the PLM framework.
      */
-    if (ORTE_SUCCESS != (ret = orte_ras_base_open())) {
+    if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_ras_base_framework, 0))) {
         ORTE_ERROR_LOG(ret);
         error = "orte_ras_base_open";
         goto error;
-    }
-    
+    }    
     if (ORTE_SUCCESS != (ret = orte_ras_base_select())) {
         ORTE_ERROR_LOG(ret);
         error = "orte_ras_base_find_available";
         goto error;
     }
     
-    if (ORTE_SUCCESS != (ret = orte_rmaps_base_open())) {
+    if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_rmaps_base_framework, 0))) {
         ORTE_ERROR_LOG(ret);
         error = "orte_rmaps_base_open";
         goto error;
-    }
-    
+    }    
     if (ORTE_SUCCESS != (ret = orte_rmaps_base_select())) {
         ORTE_ERROR_LOG(ret);
         error = "orte_rmaps_base_find_available";
@@ -384,7 +384,7 @@ static int rte_init(void)
     }
     
     /* Open/select the odls */
-    if (ORTE_SUCCESS != (ret = orte_odls_base_open())) {
+    if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_odls_base_framework, 0))) {
         ORTE_ERROR_LOG(ret);
         error = "orte_odls_base_open";
         goto error;
@@ -567,7 +567,7 @@ static int rte_init(void)
     }
     
     /* setup I/O forwarding system - must come after we init routes */
-    if (ORTE_SUCCESS != (ret = orte_iof_base_open())) {
+    if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_iof_base_framework, 0))) {
         ORTE_ERROR_LOG(ret);
         error = "orte_iof_base_open";
         goto error;
@@ -579,12 +579,11 @@ static int rte_init(void)
     }
     
     /* setup the FileM */
-    if (ORTE_SUCCESS != (ret = orte_filem_base_open())) {
+    if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_filem_base_framework, 0))) {
         ORTE_ERROR_LOG(ret);
         error = "orte_filem_base_open";
         goto error;
     }
-    
     if (ORTE_SUCCESS != (ret = orte_filem_base_select())) {
         ORTE_ERROR_LOG(ret);
         error = "orte_filem_base_select";
@@ -595,15 +594,24 @@ static int rte_init(void)
     /*
      * Setup the SnapC
      */
-    if (ORTE_SUCCESS != (ret = orte_snapc_base_open())) {
+    if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_snapc_base_framework, 0))) {
         ORTE_ERROR_LOG(ret);
         error = "orte_snapc_base_open";
         goto error;
     }
-
+    if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_sstore_base_framework, 0))) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_sstore_base_open";
+        goto error;
+    }
     if (ORTE_SUCCESS != (ret = orte_snapc_base_select(ORTE_PROC_IS_HNP, !ORTE_PROC_IS_DAEMON))) {
         ORTE_ERROR_LOG(ret);
         error = "orte_snapc_base_select";
+        goto error;
+    }
+    if (ORTE_SUCCESS != (ret = orte_sstore_base_select())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_sstore_base_select";
         goto error;
     }
 
@@ -625,9 +633,9 @@ static int rte_init(void)
     }
     
     /* setup the SENSOR framework */
-    if (ORTE_SUCCESS != (ret = orte_sensor_base_open())) {
+    if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_sensor_base_framework, 0))) {
         ORTE_ERROR_LOG(ret);
-        error = "orte_sensor_open";
+        error = "orte_sensor_base_open";
         goto error;
     }
     if (ORTE_SUCCESS != (ret = orte_sensor_base_select())) {
@@ -639,9 +647,9 @@ static int rte_init(void)
     orte_sensor.start(ORTE_PROC_MY_NAME->jobid);
     
     /* setup the dfs framework */
-    if (ORTE_SUCCESS != (ret = orte_dfs_base_open())) {
+    if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_dfs_base_framework, 0))) {
         ORTE_ERROR_LOG(ret);
-        error = "orte_dfs_open";
+        error = "orte_dfs_base_open";
         goto error;
     }
     if (ORTE_SUCCESS != (ret = orte_dfs_base_select())) {
@@ -714,11 +722,25 @@ static int rte_finalize(void)
         signals_set = false;
     }
 
-    /* close the dfs */
-    orte_dfs_base_close();
-
     /* stop the local sensors */
     orte_sensor.stop(ORTE_PROC_MY_NAME->jobid);
+    (void) mca_base_framework_close(&orte_sensor_base_framework);
+
+    /* close the dfs */
+    (void) mca_base_framework_close(&orte_dfs_base_framework);
+    (void) mca_base_framework_close(&orte_filem_base_framework);
+    (void) mca_base_framework_close(&orte_grpcomm_base_framework);
+    /* output any lingering stdout/err data */
+    fflush(stdout);
+    fflush(stderr);
+    (void) mca_base_framework_close(&orte_iof_base_framework);
+    (void) mca_base_framework_close(&orte_ras_base_framework);
+    (void) mca_base_framework_close(&orte_rmaps_base_framework);
+    (void) mca_base_framework_close(&orte_plm_base_framework);
+    (void) mca_base_framework_close(&orte_errmgr_base_framework);
+    (void) mca_base_framework_close(&orte_routed_base_framework);
+    (void) mca_base_framework_close(&orte_rml_base_framework);
+    (void) mca_base_framework_close(&orte_state_base_framework);
 
     /* remove my contact info file, if we have session directories */
     if (NULL != orte_process_info.job_session_dir) {
@@ -728,11 +750,6 @@ static int rte_finalize(void)
         unlink(contact_path);
         free(contact_path);
     }
-    
-    /* output any lingering stdout/err data */
-    orte_iof_base_close();
-    fflush(stdout);
-    fflush(stderr);
 
     /* ensure we scrub the session directory tree */
     orte_session_dir_cleanup(ORTE_JOBID_WILDCARD);

@@ -151,7 +151,7 @@ int orte_errmgr_base_migrate_update(int status)
      * If this is an invalid state, then return an error
      */
     if( ORTE_ERRMGR_MIGRATE_MAX < status ) {
-        opal_output(orte_errmgr_base.output,
+        opal_output(orte_errmgr_base_framework.framework_output,
                     "errmgr:base:tool:update() Error: Invalid state %d < (Max %d)",
                     status, ORTE_ERRMGR_MIGRATE_MAX);
         return ORTE_ERR_BAD_PARAM;
@@ -185,12 +185,12 @@ int orte_errmgr_base_migrate_update(int status)
      * Do not send to self, as that is silly.
      */
     if( OPAL_EQUAL == orte_util_compare_name_fields(ORTE_NS_CMP_ALL, ORTE_PROC_MY_HNP, &errmgr_cmdline_sender) ) {
-        OPAL_OUTPUT_VERBOSE((10, orte_errmgr_base.output,
+        OPAL_OUTPUT_VERBOSE((10, orte_errmgr_base_framework.framework_output,
                              "errmgr:base:tool:update() Warning: Do not send to self!\n"));
         return ORTE_SUCCESS;
     }
 
-    OPAL_OUTPUT_VERBOSE((10, orte_errmgr_base.output,
+    OPAL_OUTPUT_VERBOSE((10, orte_errmgr_base_framework.framework_output,
                          "errmgr:base:tool:update() Sending update command <status %d>\n",
                          status));
 
@@ -204,7 +204,7 @@ int orte_errmgr_base_migrate_update(int status)
     }
 
     if (ORTE_SUCCESS != (ret = opal_dss.pack(loc_buffer, &command, 1, ORTE_ERRMGR_MIGRATE_TOOL_CMD)) ) {
-        opal_output(orte_errmgr_base.output,
+        opal_output(orte_errmgr_base_framework.framework_output,
                     "errmgr:base:tool:update() Error: DSS Pack (cmd) Failure (ret = %d)\n",
                     ret);
         ORTE_ERROR_LOG(ret);
@@ -213,7 +213,7 @@ int orte_errmgr_base_migrate_update(int status)
     }
 
     if (ORTE_SUCCESS != (ret = opal_dss.pack(loc_buffer, &status, 1, OPAL_INT))) {
-        opal_output(orte_errmgr_base.output,
+        opal_output(orte_errmgr_base_framework.framework_output,
                     "errmgr:base:tool:update() Error: DSS Pack (status) Failure (ret = %d)\n",
                     ret);
         ORTE_ERROR_LOG(ret);
@@ -222,7 +222,7 @@ int orte_errmgr_base_migrate_update(int status)
     }
 
     if (0 > (ret = orte_rml.send_buffer(&errmgr_cmdline_sender, loc_buffer, ORTE_RML_TAG_MIGRATE, 0))) {
-        opal_output(orte_errmgr_base.output,
+        opal_output(orte_errmgr_base_framework.framework_output,
                     "errmgr:base:tool:update() Error: Send (status) Failure (ret = %d)\n",
                     ret);
         ORTE_ERROR_LOG(ret);
@@ -254,7 +254,7 @@ static int errmgr_base_tool_start_cmdline_listener(void)
         return ORTE_SUCCESS;
     }
 
-    OPAL_OUTPUT_VERBOSE((5, orte_errmgr_base.output,
+    OPAL_OUTPUT_VERBOSE((5, orte_errmgr_base_framework.framework_output,
                          "errmgr:base:tool: Startup Command Line Channel"));
 
     /*
@@ -287,7 +287,7 @@ static int errmgr_base_tool_stop_cmdline_listener(void)
         return ORTE_SUCCESS;
     }
     
-    OPAL_OUTPUT_VERBOSE((5, orte_errmgr_base.output,
+    OPAL_OUTPUT_VERBOSE((5, orte_errmgr_base_framework.framework_output,
                          "errmgr:base:tool: Shutdown Command Line Channel"));
     
     if (ORTE_SUCCESS != (ret = orte_rml.recv_cancel(ORTE_NAME_WILDCARD,
@@ -332,14 +332,14 @@ static void errmgr_base_tool_cmdline_recv(int status,
 
 
     if( ORTE_RML_TAG_MIGRATE != tag ) {
-        opal_output(orte_errmgr_base.output,
+        opal_output(orte_errmgr_base_framework.framework_output,
                     "errmgr:base:tool:recv() Error: Unknown tag: Received a command message from %s (tag = %d).",
                     ORTE_NAME_PRINT(sender), tag);
         ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
         return;
     }
 
-    OPAL_OUTPUT_VERBOSE((10, orte_errmgr_base.output,
+    OPAL_OUTPUT_VERBOSE((10, orte_errmgr_base_framework.framework_output,
                          "errmgr:base:tool:recv() Command Line: Start a migration operation [Sender = %s]",
                          ORTE_NAME_PRINT(sender)));
 
@@ -375,7 +375,7 @@ static void errmgr_base_tool_cmdline_recv(int status,
      * orte-migrate has requested that a checkpoint be taken
      */
     if (ORTE_ERRMGR_MIGRATE_TOOL_INIT_CMD == command) {
-        OPAL_OUTPUT_VERBOSE((10, orte_errmgr_base.output,
+        OPAL_OUTPUT_VERBOSE((10, orte_errmgr_base_framework.framework_output,
                              "errmgr:base:tool:recv() Command line requested process migration [command %d]\n",
                              command));
 
@@ -444,7 +444,7 @@ static void errmgr_base_tool_cmdline_recv(int status,
      * Unknown command
      */
     else {
-        OPAL_OUTPUT_VERBOSE((10, orte_errmgr_base.output,
+        OPAL_OUTPUT_VERBOSE((10, orte_errmgr_base_framework.framework_output,
                              "errmgr:base:tool:recv() Command line sent an unknown command (command %d)\n",
                              command));
         ORTE_ERROR_LOG(ORTE_ERR_NOT_SUPPORTED);

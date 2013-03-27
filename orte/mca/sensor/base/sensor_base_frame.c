@@ -38,19 +38,18 @@
 /*
  * Global variables
  */
-orte_sensor_base_t orte_sensor_base;
-opal_list_t mca_sensor_base_components_available;
 orte_sensor_base_API_module_t orte_sensor = {
     orte_sensor_base_start,
     orte_sensor_base_stop
 };
+orte_sensor_base_t orte_sensor_base;
 
 /*
  * Local variables
  */
 static int orte_sensor_base_sample_rate = 0;
 
-static int orte_sensor_base_register(int flags)
+static int orte_sensor_base_register(mca_base_register_flag_t flags)
 {
     int var_id;
 
@@ -78,18 +77,31 @@ static int orte_sensor_base_register(int flags)
     return ORTE_SUCCESS;
 }
 
+static int orte_sensor_base_close(void)
+{
+    orte_sensor_base_module_t *i_module;
+    int i;
+    
+    for (i=0; i < orte_sensor_base.modules.size; i++) {
+        if (NULL == (i_module = (orte_sensor_base_module_t*)opal_pointer_array_get_item(&orte_sensor_base.modules, i))) {
+            continue;
+        }
+        if (NULL != i_module->finalize) {
+            i_module->finalize();
+        }
+    }
+    OBJ_DESTRUCT(&orte_sensor_base.modules);
+    
+    /* Close all remaining available components */
+    return mca_base_framework_components_close(&orte_sensor_base_framework, NULL);
+}
+
 /**
  * Function for finding and opening either all MCA components, or the one
  * that was specifically requested via a MCA parameter.
  */
-int orte_sensor_base_open(void)
+static int orte_sensor_base_open(mca_base_open_flag_t flags)
 {
-    (void) orte_sensor_base_register(0);
-
-    /* Debugging / verbose output.  Always have stream open, with
-       verbose set by the mca open system... */
-    orte_sensor_base.output = opal_output_open(NULL);
-
     /* initialize pointers */
     orte_sensor_base.my_proc = NULL;
     orte_sensor_base.my_node = NULL;
@@ -104,18 +116,13 @@ int orte_sensor_base_open(void)
     orte_sensor_base.rate.tv_usec = 0;
 
     /* Open up all available components */
-
-    if (ORTE_SUCCESS !=
-        mca_base_components_open("sensor", orte_sensor_base.output,
-                                 mca_sensor_base_static_components,
-                                 &mca_sensor_base_components_available, true)) {
-        return ORTE_ERROR;
-    }
-
-    /* All done */
-
-    return ORTE_SUCCESS;
+    return mca_base_framework_components_open(&orte_sensor_base_framework, flags);
 }
+
+MCA_BASE_FRAMEWORK_DECLARE(orte, sensor, "ORTE Monitoring Sensors",
+                           orte_sensor_base_register,
+                           orte_sensor_base_open, orte_sensor_base_close,
+                           mca_sensor_base_static_components, 0);
 
 OBJ_CLASS_INSTANCE(orte_sensor_active_module_t,
                    opal_object_t,

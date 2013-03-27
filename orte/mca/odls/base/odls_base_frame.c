@@ -64,10 +64,9 @@ orte_odls_base_module_t orte_odls;
 /*
  * Framework global variables
  */
-orte_odls_base_t orte_odls_base;
 orte_odls_globals_t orte_odls_globals;
 
-static int orte_odls_base_register(int flags)
+static int orte_odls_base_register(mca_base_register_flag_t flags)
 {
     orte_odls_globals.timeout_before_sigkill = 1;
     (void) mca_base_var_register("orte", "odls", "base", "sigkill_timeout",
@@ -80,22 +79,39 @@ static int orte_odls_base_register(int flags)
     return ORTE_SUCCESS;
 }
 
+static int orte_odls_base_close(void)
+{
+    int i;
+    orte_proc_t *proc;
+    opal_list_item_t *item;
+
+    /* cleanup ODLS globals */
+    while (NULL != (item = opal_list_remove_first(&orte_odls_globals.xterm_ranks))) {
+        OBJ_RELEASE(item);
+    }
+    OBJ_DESTRUCT(&orte_odls_globals.xterm_ranks);
+    
+    /* cleanup the global list of local children and job data */
+    for (i=0; i < orte_local_children->size; i++) {
+        if (NULL != (proc = (orte_proc_t*)opal_pointer_array_get_item(orte_local_children, i))) {
+            OBJ_RELEASE(proc);
+        }
+    }
+    OBJ_RELEASE(orte_local_children);
+
+    return mca_base_framework_components_close(&orte_odls_base_framework, NULL);
+}
+
 /**
  * Function for finding and opening either all MCA components, or the one
  * that was specifically requested via a MCA parameter.
  */
-int orte_odls_base_open(void)
+static int orte_odls_base_open(mca_base_open_flag_t flags)
 {
     char **ranks=NULL, *tmp;
     int rc, i, rank;
     orte_namelist_t *nm;
     bool xterm_hold;
-
-    (void) orte_odls_base_register(0);
-    
-    /* Debugging / verbose output.  Always have stream open, with
-       verbose set by the mca open system... */
-    orte_odls_globals.output = opal_output_open(NULL);
 
     /* initialize the global array of local children */
     orte_local_children = OBJ_NEW(opal_pointer_array_t);
@@ -158,26 +174,13 @@ int orte_odls_base_open(void)
         opal_argv_append_nosize(&orte_odls_globals.xtermcmd, "-e");
     }
     
-    /* Open up all available components */
-    if (ORTE_SUCCESS != 
-        mca_base_components_open("odls", orte_odls_globals.output,
-                                 mca_odls_base_static_components, 
-                                 &orte_odls_base.available_components, true)) {
-        return ORTE_ERROR;
-    }
-
-    /* are there components available for use ?  - 
-     * orte_odls_base.available_components is always initialized */
-    if(0 < opal_list_get_size(&(orte_odls_base.available_components))) {
-        orte_odls_base.components_available = true;
-    } else {
-        orte_odls_base.components_available = false;
-    }
-    
-    /* All done */
-    
-    return ORTE_SUCCESS;
+     /* Open up all available components */
+    return mca_base_framework_components_open(&orte_odls_base_framework, flags);
 }
+
+MCA_BASE_FRAMEWORK_DECLARE(orte, odls, "ORTE Daemon Launch Subsystem",
+                           orte_odls_base_register, orte_odls_base_open, orte_odls_base_close,
+                           mca_odls_base_static_components, 0);
 
 static void launch_local_const(orte_odls_launch_local_t *ptr)
 {

@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
+ * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * $COPYRIGHT$
  *
@@ -44,11 +44,27 @@ orte_grpcomm_base_t orte_grpcomm_base;
 
 orte_grpcomm_base_module_t orte_grpcomm = {0};
 
+static int orte_grpcomm_base_close(void)
+{
+    /* Close the selected component */
+    if( NULL != orte_grpcomm.finalize ) {
+        orte_grpcomm.finalize();
+    }
+
+#if OPAL_HAVE_HWLOC
+  if (NULL != orte_grpcomm_base.working_cpuset) {
+      hwloc_bitmap_free(orte_grpcomm_base.working_cpuset);
+      orte_grpcomm_base.working_cpuset = NULL;
+  }
+#endif
+    return mca_base_framework_components_close(&orte_grpcomm_base_framework, NULL);
+}
+
 /**
  * Function for finding and opening either all MCA components, or the one
  * that was specifically requested via a MCA parameter.
  */
-int orte_grpcomm_base_open(void)
+int orte_grpcomm_base_open(mca_base_open_flag_t flags)
 {
     /* Debugging / verbose output.  Always have stream open, with
        verbose set by the mca open system... */
@@ -62,19 +78,12 @@ int orte_grpcomm_base_open(void)
     orte_grpcomm_base.working_cpuset = NULL;
 #endif
 
-    /* Open up all available components */
-
-    if (ORTE_SUCCESS !=
-        mca_base_components_open("grpcomm", orte_grpcomm_base.output,
-                                 mca_grpcomm_base_static_components,
-                                 &orte_grpcomm_base.components_available, true)) {
-        return ORTE_ERROR;
-    }
-
-    /* All done */
-
-    return ORTE_SUCCESS;
+    return mca_base_framework_components_open(&orte_grpcomm_base_framework, flags);
 }
+
+MCA_BASE_FRAMEWORK_DECLARE(orte, grpcomm, NULL, NULL, orte_grpcomm_base_open, orte_grpcomm_base_close,
+                           mca_grpcomm_base_static_components, 0);
+
 
 orte_grpcomm_collective_t* orte_grpcomm_base_setup_collective(orte_grpcomm_coll_id_t id)
 {

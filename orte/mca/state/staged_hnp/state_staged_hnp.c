@@ -168,7 +168,7 @@ static int init(void)
                                                        orte_state_base_report_progress, ORTE_ERROR_PRI))) {
         ORTE_ERROR_LOG(rc);
     }
-    if (5 < opal_output_get_verbosity(orte_state_base_output)) {
+    if (5 < opal_output_get_verbosity(orte_state_base_framework.framework_output)) {
         orte_state_base_print_job_state_machine();
     }
 
@@ -183,7 +183,7 @@ static int init(void)
             ORTE_ERROR_LOG(rc);
         }
     }
-    if (5 < opal_output_get_verbosity(orte_state_base_output)) {
+    if (5 < opal_output_get_verbosity(orte_state_base_framework.framework_output)) {
         orte_state_base_print_proc_state_machine();
     }
 
@@ -276,7 +276,7 @@ static void cleanup_node(orte_proc_t *proc)
     }
     node->num_procs--;
     node->slots_inuse--;
-    OPAL_OUTPUT_VERBOSE((5, orte_state_base_output,
+    OPAL_OUTPUT_VERBOSE((5, orte_state_base_framework.framework_output,
                          "%s state:staged_hnp:track_procs proc %s termed node %s has %d slots, %d slots inuse",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(&proc->name), node->name,
@@ -302,7 +302,7 @@ static void track_procs(int fd, short args, void *cbdata)
     orte_job_t *jdata;
     orte_proc_t *pdata;
 
-    opal_output_verbose(2, orte_state_base_output,
+    opal_output_verbose(2, orte_state_base_framework.framework_output,
                         "%s state:staged_hnp:track_procs called for proc %s state %s",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                         ORTE_NAME_PRINT(proc),

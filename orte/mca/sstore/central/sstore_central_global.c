@@ -1085,7 +1085,7 @@ static int metadata_open(orte_sstore_central_global_snapshot_info_t * handle_inf
     }
 
     if (NULL == (handle_info->metadata = fopen(handle_info->metadata_filename, "a")) ) {
-        opal_output(orte_sstore_base_output,
+        opal_output(orte_sstore_base_framework.framework_output,
                     "sstore:central:(global):init_dir() Unable to open the file (%s)\n",
                     handle_info->metadata_filename);
         ORTE_ERROR_LOG(ORTE_ERROR);

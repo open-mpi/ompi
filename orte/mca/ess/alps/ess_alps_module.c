@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2011      Los Alamos National Security, LLC.
+ * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * $COPYRIGHT$
  *
@@ -93,7 +93,7 @@ static int rte_init(void)
                                  strlen(hosts[i]))) {
                     /* correct our vpid */
                     ORTE_PROC_MY_NAME->vpid = starting_vpid + i;
-                    OPAL_OUTPUT_VERBOSE((1, orte_ess_base_output,
+                    OPAL_OUTPUT_VERBOSE((1, orte_ess_base_framework.framework_output,
                                          "ess:alps reset name to %s",
                                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
                     break;
@@ -184,7 +184,7 @@ static int alps_set_name(void)
     int rc;
     orte_jobid_t jobid;
 
-    OPAL_OUTPUT_VERBOSE((1, orte_ess_base_output,
+    OPAL_OUTPUT_VERBOSE((1, orte_ess_base_framework.framework_output,
                          "ess:alps setting name"));
 
     if (NULL == orte_ess_base_jobid) {
@@ -209,7 +209,7 @@ static int alps_set_name(void)
     ORTE_PROC_MY_NAME->jobid = jobid;
     ORTE_PROC_MY_NAME->vpid = (orte_vpid_t)cnos_get_rank() + starting_vpid;
 
-    OPAL_OUTPUT_VERBOSE((1, orte_ess_base_output,
+    OPAL_OUTPUT_VERBOSE((1, orte_ess_base_framework.framework_output,
                          "ess:alps set name to %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 

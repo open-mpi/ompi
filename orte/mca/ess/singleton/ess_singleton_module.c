@@ -147,7 +147,7 @@ static int rte_init(void)
         
         bias = (uint32_t)orte_process_info.pid;
         
-        OPAL_OUTPUT_VERBOSE((5, orte_ess_base_output,
+        OPAL_OUTPUT_VERBOSE((5, orte_ess_base_framework.framework_output,
                              "ess:singleton: initial bias %ld nodename hash %lu",
                              (long)bias, (unsigned long)hash32));
         
@@ -157,7 +157,7 @@ static int rte_init(void)
         /* now compress to 16-bits */
         jobfam = (uint16_t)(((0x0000ffff & (0xffff0000 & hash32) >> 16)) ^ (0x0000ffff & hash32));
         
-        OPAL_OUTPUT_VERBOSE((5, orte_ess_base_output,
+        OPAL_OUTPUT_VERBOSE((5, orte_ess_base_framework.framework_output,
                              "ess:singleton:: final jobfam %lu",
                              (unsigned long)jobfam));
         

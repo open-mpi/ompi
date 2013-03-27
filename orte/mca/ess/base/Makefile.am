@@ -9,6 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2013      Los Alamos National Security, LLC.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -22,8 +23,7 @@ headers += \
         base/base.h
 
 libmca_ess_la_SOURCES += \
-        base/ess_base_close.c \
-        base/ess_base_open.c \
+        base/ess_base_frame.c \
         base/ess_base_select.c \
 	base/ess_base_get.c \
 	base/ess_base_put.c \

@@ -154,7 +154,7 @@ static int hnp_push(const orte_process_name_t* dst_name, orte_iof_tag_t src_tag,
         return ORTE_SUCCESS;
     }
     
-    OPAL_OUTPUT_VERBOSE((1, orte_iof_base.iof_output,
+    OPAL_OUTPUT_VERBOSE((1, orte_iof_base_framework.framework_output,
                          "%s iof:hnp pushing fd %d for process %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          fd, ORTE_NAME_PRINT(dst_name)));
@@ -164,7 +164,7 @@ static int hnp_push(const orte_process_name_t* dst_name, orte_iof_tag_t src_tag,
          * and activate the read event in case it fires right away
          */
         if((flags = fcntl(fd, F_GETFL, 0)) < 0) {
-            opal_output(orte_iof_base.iof_output, "[%s:%d]: fcntl(F_GETFL) failed with errno=%d\n", 
+            opal_output(orte_iof_base_framework.framework_output, "[%s:%d]: fcntl(F_GETFL) failed with errno=%d\n", 
                         __FILE__, __LINE__, errno);
         } else {
             flags |= O_NONBLOCK;
@@ -290,7 +290,7 @@ static int hnp_push(const orte_process_name_t* dst_name, orte_iof_tag_t src_tag,
          */
         if (0 != fd) {
             if((flags = fcntl(fd, F_GETFL, 0)) < 0) {
-                opal_output(orte_iof_base.iof_output, "[%s:%d]: fcntl(F_GETFL) failed with errno=%d\n", 
+                opal_output(orte_iof_base_framework.framework_output, "[%s:%d]: fcntl(F_GETFL) failed with errno=%d\n", 
                             __FILE__, __LINE__, errno);
             } else {
                 flags |= O_NONBLOCK;
@@ -356,7 +356,7 @@ static int hnp_pull(const orte_process_name_t* dst_name,
         return ORTE_ERR_NOT_SUPPORTED;
     }
     
-    OPAL_OUTPUT_VERBOSE((1, orte_iof_base.iof_output,
+    OPAL_OUTPUT_VERBOSE((1, orte_iof_base_framework.framework_output,
                          "%s iof:hnp pulling fd %d for process %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          fd, ORTE_NAME_PRINT(dst_name)));
@@ -365,7 +365,7 @@ static int hnp_pull(const orte_process_name_t* dst_name,
      * the sink in case it fires right away
      */
     if((flags = fcntl(fd, F_GETFL, 0)) < 0) {
-        opal_output(orte_iof_base.iof_output, "[%s:%d]: fcntl(F_GETFL) failed with errno=%d\n", 
+        opal_output(orte_iof_base_framework.framework_output, "[%s:%d]: fcntl(F_GETFL) failed with errno=%d\n", 
                     __FILE__, __LINE__, errno);
     } else {
         flags |= O_NONBLOCK;
@@ -484,7 +484,7 @@ static void stdin_write_handler(int fd, short event, void *cbdata)
     orte_iof_write_output_t *output;
     int num_written;
     
-    OPAL_OUTPUT_VERBOSE((1, orte_iof_base.iof_output,
+    OPAL_OUTPUT_VERBOSE((1, orte_iof_base_framework.framework_output,
                          "%s hnp:stdin:write:handler writing data to %d",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          wev->fd));
@@ -504,7 +504,7 @@ static void stdin_write_handler(int fd, short event, void *cbdata)
             /* this indicates we are to close the fd - there is
              * nothing to write
              */
-            OPAL_OUTPUT_VERBOSE((20, orte_iof_base.iof_output,
+            OPAL_OUTPUT_VERBOSE((20, orte_iof_base_framework.framework_output,
                                  "%s iof:hnp closing fd %d on write event due to zero bytes output",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), wev->fd));
             OBJ_RELEASE(wev);
@@ -515,7 +515,7 @@ static void stdin_write_handler(int fd, short event, void *cbdata)
             return;
         }
         num_written = write(wev->fd, output->data, output->numbytes);
-        OPAL_OUTPUT_VERBOSE((1, orte_iof_base.iof_output,
+        OPAL_OUTPUT_VERBOSE((1, orte_iof_base_framework.framework_output,
                              "%s hnp:stdin:write:handler wrote %d bytes",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              num_written));
@@ -534,14 +534,14 @@ static void stdin_write_handler(int fd, short event, void *cbdata)
              * error and abort
              */
             OBJ_RELEASE(output);
-            OPAL_OUTPUT_VERBOSE((20, orte_iof_base.iof_output,
+            OPAL_OUTPUT_VERBOSE((20, orte_iof_base_framework.framework_output,
                                  "%s iof:hnp closing fd %d on write event due to negative bytes written",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), wev->fd));
             OBJ_RELEASE(wev);
             sink->wev = NULL;
             return;
         } else if (num_written < output->numbytes) {
-            OPAL_OUTPUT_VERBOSE((1, orte_iof_base.iof_output,
+            OPAL_OUTPUT_VERBOSE((1, orte_iof_base_framework.framework_output,
                                  "%s hnp:stdin:write:handler incomplete write %d - adjusting data",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), num_written));
             /* incomplete write - adjust data to avoid duplicate output */
@@ -562,7 +562,7 @@ CHECK:
     if (NULL != mca_iof_hnp_component.stdinev &&
         !orte_abnormal_term_ordered &&
         !mca_iof_hnp_component.stdinev->active) {
-        OPAL_OUTPUT_VERBOSE((1, orte_iof_base.iof_output,
+        OPAL_OUTPUT_VERBOSE((1, orte_iof_base_framework.framework_output,
                             "read event is off - checking if okay to restart"));
         /* if we have turned off the read event, check to
          * see if the output list has shrunk enough to
@@ -576,7 +576,7 @@ CHECK:
          */
         if (opal_list_get_size(&wev->outputs) < ORTE_IOF_MAX_INPUT_BUFFERS) {
             /* restart the read */
-            OPAL_OUTPUT_VERBOSE((1, orte_iof_base.iof_output,
+            OPAL_OUTPUT_VERBOSE((1, orte_iof_base_framework.framework_output,
                                  "restarting read event"));
             mca_iof_hnp_component.stdinev->active = true;
             opal_event_add(mca_iof_hnp_component.stdinev->ev, 0);
@@ -593,7 +593,7 @@ orte_iof_hnp_exception_handler(const orte_process_name_t* peer, orte_rml_excepti
 {
 #if 0
     orte_iof_base_endpoint_t *endpoint;
-    opal_output_verbose(1, orte_iof_base.iof_output, 
+    opal_output_verbose(1, orte_iof_base_framework.framework_output, 
                         "iof svc exception handler! %s\n",
                         ORTE_NAME_PRINT((orte_process_name_t*)peer));
     
@@ -603,7 +603,7 @@ orte_iof_hnp_exception_handler(const orte_process_name_t* peer, orte_rml_excepti
      are recoverable events (no need to abort). */
     orte_iof_hnp_sub_delete_all(peer);
     orte_iof_hnp_pub_delete_all(peer);
-    opal_output_verbose(1, orte_iof_base.iof_output, "deleted all pubs and subs\n");
+    opal_output_verbose(1, orte_iof_base_framework.framework_output, "deleted all pubs and subs\n");
     
     /* Find any streams on any endpoints for this peer and close them */
     while (NULL != 
@@ -615,5 +615,5 @@ orte_iof_hnp_exception_handler(const orte_process_name_t* peer, orte_rml_excepti
         orte_iof_base_endpoint_delete(peer, ORTE_NS_CMP_ALL, ORTE_IOF_ANY);
     }
 #endif
-    opal_output_verbose(1, orte_iof_base.iof_output, "done with exception handler\n");
+    opal_output_verbose(1, orte_iof_base_framework.framework_output, "done with exception handler\n");
 }

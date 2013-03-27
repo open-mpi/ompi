@@ -233,7 +233,7 @@ static int env_set_name(void)
     ORTE_PROC_MY_NAME->jobid = jobid;
     ORTE_PROC_MY_NAME->vpid = vpid;
     
-    OPAL_OUTPUT_VERBOSE((1, orte_ess_base_output,
+    OPAL_OUTPUT_VERBOSE((1, orte_ess_base_framework.framework_output,
                          "ess:env set name to %s", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
     /* get the non-name common environmental variables */
@@ -286,7 +286,7 @@ static int rte_ft_event(int state)
     }
     /******** Continue Recovery ********/
     else if (OPAL_CRS_CONTINUE == state ) {
-        OPAL_OUTPUT_VERBOSE((1, orte_ess_base_output,
+        OPAL_OUTPUT_VERBOSE((1, orte_ess_base_framework.framework_output,
                              "ess:env ft_event(%2d) - %s is Continuing",
                              state, ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
@@ -331,7 +331,7 @@ static int rte_ft_event(int state)
             ORTE_WAIT_FOR_COMPLETION(coll.active);
 
             if( orte_cr_flush_restart_files ) {
-                OPAL_OUTPUT_VERBOSE((1, orte_ess_base_output,
+                OPAL_OUTPUT_VERBOSE((1, orte_ess_base_framework.framework_output,
                                      "ess:env ft_event(%2d): %s "
                                      "Cleanup restart files...",
                                      state, ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
@@ -341,7 +341,7 @@ static int rte_ft_event(int state)
     }
     /******** Restart Recovery ********/
     else if (OPAL_CRS_RESTART == state ) {
-        OPAL_OUTPUT_VERBOSE((1, orte_ess_base_output,
+        OPAL_OUTPUT_VERBOSE((1, orte_ess_base_framework.framework_output,
                              "ess:env ft_event(%2d) - %s is Restarting",
                              state, ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
@@ -456,7 +456,7 @@ static int rte_ft_event(int state)
 	ORTE_WAIT_FOR_COMPLETION(coll.active);
 
         if( orte_cr_flush_restart_files ) {
-            OPAL_OUTPUT_VERBOSE((1, orte_ess_base_output,
+            OPAL_OUTPUT_VERBOSE((1, orte_ess_base_framework.framework_output,
                                  "ess:env ft_event(%2d): %s "
                                  "Cleanup restart files...",
                                  state, ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));

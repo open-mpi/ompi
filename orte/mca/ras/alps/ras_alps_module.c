@@ -92,7 +92,7 @@ parser_ini(char **val_if_found, FILE *fp, const char *var_name)
 {
     char *alps_config_str = NULL;
 
-    opal_output_verbose(1, orte_ras_base.ras_output,
+    opal_output_verbose(1, orte_ras_base_framework.framework_output,
                         "ras:alps:allocate: parser_ini");
 
     /* invalid argument */
@@ -164,7 +164,7 @@ parser_separated_columns(char **val_if_found, FILE *fp, const char *var_name)
     int var_len = strlen(var_name);
     int i;
 
-    opal_output_verbose(1, orte_ras_base.ras_output,
+    opal_output_verbose(1, orte_ras_base_framework.framework_output,
                         "ras:alps:allocate: parser_separated_columns");
 
     /* invalid argument */
@@ -240,13 +240,13 @@ orte_ras_get_appinfo_path(void)
      * until we either fail or find what we are looking for.
      */
     for (i = 0; NULL != sysconfigs[i].path; ++i) {
-        opal_output_verbose(1, orte_ras_base.ras_output,
+        opal_output_verbose(1, orte_ras_base_framework.framework_output,
                             "ras:alps:allocate: Trying ALPS configuration "
                             "file: \"%s\"",
                             sysconfigs[i].path);
         if (NULL == (fp = fopen(sysconfigs[i].path, "r"))) {
             int err = errno;
-            opal_output_verbose(1, orte_ras_base.ras_output,
+            opal_output_verbose(1, orte_ras_base_framework.framework_output,
                                 "ras:alps:allocate: Skipping ALPS "
                                 "configuration file: \"%s\" (%s).",
                                 sysconfigs[i].path, strerror(err));
@@ -269,7 +269,7 @@ orte_ras_get_appinfo_path(void)
         }
         /* Failure */
         else {
-            opal_output_verbose(1, orte_ras_base.ras_output,
+            opal_output_verbose(1, orte_ras_base_framework.framework_output,
                                  "ras:alps:allocate: failure "
                                  "(get_appinfo_dir_path = %d)", rc);
             return NULL;
@@ -277,14 +277,14 @@ orte_ras_get_appinfo_path(void)
     }
     /* Were we successful? */
     if (NULL != sysconfigs[i].path) {
-        opal_output_verbose(1, orte_ras_base.ras_output,
+        opal_output_verbose(1, orte_ras_base_framework.framework_output,
                             "ras:alps:allocate: Located ALPS scheduler file: "
                             "\"%s\"", appinfo_path);
         return appinfo_path;
     }
     /* Nope */
     else {
-        opal_output_verbose(1, orte_ras_base.ras_output,
+        opal_output_verbose(1, orte_ras_base_framework.framework_output,
                             "ras:alps:allocate: Could not locate ALPS "
                             "scheduler file.");
         return NULL;
@@ -329,11 +329,11 @@ cleanup:
         free(appinfo_path);
     }
     if (ORTE_SUCCESS == ret) {
-        opal_output_verbose(1, orte_ras_base.ras_output,
+        opal_output_verbose(1, orte_ras_base_framework.framework_output,
                             "ras:alps:allocate: success");
     }
     else {
-        opal_output_verbose(1, orte_ras_base.ras_output,
+        opal_output_verbose(1, orte_ras_base_framework.framework_output,
                             "ras:alps:allocate: failure "
                             "(base_allocate_nodes = %d)", ret);
     }
@@ -395,7 +395,7 @@ orte_ras_alps_read_appinfo_file(opal_list_t *nodes, char *filename,
     orte_ras_alps_get_appinfo_attempts(&max_appinfo_read_attempts);
     oNow=0;
     iTrips=0;
-    opal_output_verbose(1, orte_ras_base.ras_output,
+    opal_output_verbose(1, orte_ras_base_framework.framework_output,
                         "ras:alps:allocate: begin processing appinfo file");
 
     while(!oNow) {                          /* Until appinfo read is complete */
@@ -403,7 +403,7 @@ orte_ras_alps_read_appinfo_file(opal_list_t *nodes, char *filename,
 
         iFd=open( filename, O_RDONLY );
         if( iFd==-1 ) {                     /* If file absent, ALPS is down   */
-            opal_output_verbose(1, orte_ras_base.ras_output,
+            opal_output_verbose(1, orte_ras_base_framework.framework_output,
                                 "ras:alps:allocate: ALPS information open failure");
             usleep(iTrips*50000);           /* Increasing delays, .05 s/try   */
 
@@ -430,7 +430,7 @@ orte_ras_alps_read_appinfo_file(opal_list_t *nodes, char *filename,
         if( (oNow=read( iFd, cpBuf, szLen ))!=(off_t)szLen ) {
 
             /*          This is where apstat fails; we will record it and try again.      */
-            opal_output_verbose(1, orte_ras_base.ras_output,
+            opal_output_verbose(1, orte_ras_base_framework.framework_output,
                                 "ras:alps:allocate: ALPS information read failure: %ld bytes", (long int)oNow);
 
             free(cpBuf);                    /* Free (old) buffer              */
@@ -445,7 +445,7 @@ orte_ras_alps_read_appinfo_file(opal_list_t *nodes, char *filename,
         }
     }
     close(iFd);
-    opal_output_verbose(1, orte_ras_base.ras_output,
+    opal_output_verbose(1, orte_ras_base_framework.framework_output,
                         "ras:alps:allocate: file %s read", filename);
 
     /*  Now that we have the scheduler information, we just have to parse it for  *
@@ -453,7 +453,7 @@ orte_ras_alps_read_appinfo_file(opal_list_t *nodes, char *filename,
     oNow=0;
     apHdr=(appInfoHdr_t *)cpBuf;
 
-    opal_output_verbose(1, orte_ras_base.ras_output,
+    opal_output_verbose(1, orte_ras_base_framework.framework_output,
                         "ras:alps:allocate: %d entries in file", apHdr->apNum);
 
     /*  Header info (apHdr) tells us how many entries are in the file:            *
@@ -473,7 +473,7 @@ orte_ras_alps_read_appinfo_file(opal_list_t *nodes, char *filename,
         /*      Calculate the dependent offsets.                                      */
         oSlots=sizeof(cmdDetail_t)*apInfo->numCmds;
 
-        opal_output_verbose(1, orte_ras_base.ras_output,
+        opal_output_verbose(1, orte_ras_base_framework.framework_output,
                             "ras:alps:allocate: read data for resId %u - myId %u",
                             apInfo->resId, *uMe);
 
@@ -498,7 +498,7 @@ orte_ras_alps_read_appinfo_file(opal_list_t *nodes, char *filename,
          */
         for( ix=0; ix<apInfo->numPlaces; ix++ ) {
 
-            opal_output_verbose(5, orte_ras_base.ras_output,
+            opal_output_verbose(5, orte_ras_base_framework.framework_output,
                                 "ras:alps:read_appinfo: got NID %d", apSlots[ix].nid);
 
             asprintf( &hostname, "%d", apSlots[ix].nid );
@@ -514,7 +514,7 @@ orte_ras_alps_read_appinfo_file(opal_list_t *nodes, char *filename,
                 ++node->slots;
             } else {                        /* must be new, so add to list    */
 
-                opal_output_verbose(1, orte_ras_base.ras_output,
+                opal_output_verbose(1, orte_ras_base_framework.framework_output,
                                     "ras:alps:read_appinfo: added NID %d to list", apSlots[ix].nid);
 
                 node = OBJ_NEW(orte_node_t);
@@ -558,7 +558,7 @@ orte_ras_alps_read_appinfo_file(opal_list_t *nodes, char *filename,
         if( apInfo->resId != *uMe ) continue; /* Filter to our reservation Id */
 
         for( ix=0; ix<apInfo->numPlaces; ix++ ) {
-            opal_output_verbose(5, orte_ras_base.ras_output,
+            opal_output_verbose(5, orte_ras_base_framework.framework_output,
                                 "ras:alps:read_appinfo(modern): processing NID %d with %d slots",
                                 apNodes[ix].nid, apNodes[ix].numPEs);
             asprintf( &hostname, "%d", apNodes[ix].nid );
@@ -606,7 +606,7 @@ orte_ras_alps_read_appinfo_file(opal_list_t *nodes, char *filename,
 static int
 orte_ras_alps_finalize(void)
 {
-    opal_output_verbose(1, orte_ras_base.ras_output,
+    opal_output_verbose(1, orte_ras_base_framework.framework_output,
                          "ras:alps:finalize: success (nothing to do)");
     return ORTE_SUCCESS;
 }

@@ -50,32 +50,32 @@ int orte_rmaps_base_select(void)
     selected = true;
     
     /* Query all available components and ask if they have a module */
-    for (item = opal_list_get_first(&orte_rmaps_base.available_components);
-         opal_list_get_end(&orte_rmaps_base.available_components) != item;
+    for (item = opal_list_get_first(&orte_rmaps_base_framework.framework_components);
+         opal_list_get_end(&orte_rmaps_base_framework.framework_components) != item;
          item = opal_list_get_next(item)) {
         cli = (mca_base_component_list_item_t *) item;
         component = (mca_base_component_t *) cli->cli_component;
 
-        opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+        opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                             "mca:rmaps:select: checking available component %s", component->mca_component_name);
 
         /* If there's no query function, skip it */
         if (NULL == component->mca_query_component) {
-            opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+            opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                                 "mca:rmaps:select: Skipping component [%s]. It does not implement a query function",
                                 component->mca_component_name );
             continue;
         }
 
         /* Query the component */
-        opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+        opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                             "mca:rmaps:select: Querying component [%s]",
                             component->mca_component_name);
         rc = component->mca_query_component(&module, &priority);
 
         /* If no module was returned, then skip component */
         if (ORTE_SUCCESS != rc || NULL == module) {
-            opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+            opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                                 "mca:rmaps:select: Skipping component [%s]. Query failed to return a module",
                                 component->mca_component_name );
             continue;
@@ -108,7 +108,7 @@ int orte_rmaps_base_select(void)
         }
     }
 
-    if (4 < opal_output_get_verbosity(orte_rmaps_base.rmaps_output)) {
+    if (4 < opal_output_get_verbosity(orte_rmaps_base_framework.framework_output)) {
         opal_output(0, "%s: Final mapper priorities", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
         /* show the prioritized list */
         for (itm2 = opal_list_get_first(&orte_rmaps_base.selected_modules);

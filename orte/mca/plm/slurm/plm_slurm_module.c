@@ -190,7 +190,7 @@ static void launch_daemons(int fd, short args, void *cbdata)
     orte_job_t *daemons;
     orte_state_caddy_t *state = (orte_state_caddy_t*)cbdata;
 
-    OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+    OPAL_OUTPUT_VERBOSE((1, orte_plm_base_framework.framework_output,
                          "%s plm:slurm: LAUNCH DAEMONS CALLED",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
@@ -238,7 +238,7 @@ static void launch_daemons(int fd, short args, void *cbdata)
          * will trigger the daemons_reported event and cause the
          * job to move to the following step
          */
-        OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+        OPAL_OUTPUT_VERBOSE((1, orte_plm_base_framework.framework_output,
                              "%s plm:slurm: no new daemons to launch",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
         state->jdata->state = ORTE_JOB_STATE_DAEMONS_LAUNCHED;
@@ -323,7 +323,7 @@ static void launch_daemons(int fd, short args, void *cbdata)
     opal_argv_append(&argc, &argv, tmp);
     free(tmp);
 
-    OPAL_OUTPUT_VERBOSE((2, orte_plm_globals.output,
+    OPAL_OUTPUT_VERBOSE((2, orte_plm_base_framework.framework_output,
                          "%s plm:slurm: launching on nodes %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), nodelist_flat));
     
@@ -381,7 +381,7 @@ static void launch_daemons(int fd, short args, void *cbdata)
              */
             if (NULL == cur_prefix) {
                 cur_prefix = strdup(app_prefix_dir);
-                OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+                OPAL_OUTPUT_VERBOSE((1, orte_plm_base_framework.framework_output,
                                      "%s plm:slurm: Set prefix:%s",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                      cur_prefix));
@@ -392,9 +392,9 @@ static void launch_daemons(int fd, short args, void *cbdata)
     /* setup environment */
     env = opal_argv_copy(orte_launch_environ);
 
-    if (0 < opal_output_get_verbosity(orte_plm_globals.output)) {
+    if (0 < opal_output_get_verbosity(orte_plm_base_framework.framework_output)) {
         param = opal_argv_join(argv, ' ');
-        OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+        OPAL_OUTPUT_VERBOSE((1, orte_plm_base_framework.framework_output,
                              "%s plm:slurm: final top-level argv:\n\t%s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              (NULL == param) ? "NULL" : param));
@@ -457,7 +457,7 @@ static int plm_slurm_terminate_orteds(void)
             ORTE_ERROR_LOG(rc);
         }
     } else {
-        OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+        OPAL_OUTPUT_VERBOSE((1, orte_plm_base_framework.framework_output,
                              "%s plm:slurm: primary daemons complete!",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
         jdata = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid);
@@ -527,7 +527,7 @@ static void srun_wait_cb(pid_t pid, int status, void* cbdata){
     /* if we are in the launch phase, then any termination is bad */
     if (launching_daemons) {
         /* report that one or more daemons failed to launch so we can exit */
-        OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+        OPAL_OUTPUT_VERBOSE((1, orte_plm_base_framework.framework_output,
                              "%s plm:slurm: daemon failed during launch",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
         ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_FAILED_TO_START);
@@ -539,7 +539,7 @@ static void srun_wait_cb(pid_t pid, int status, void* cbdata){
             /* an orted must have died unexpectedly after launch - report
              * that the daemon has failed so we exit
              */
-            OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+            OPAL_OUTPUT_VERBOSE((1, orte_plm_base_framework.framework_output,
                                  "%s plm:slurm: daemon failed while running",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
             ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_ABORTED);
@@ -549,7 +549,7 @@ static void srun_wait_cb(pid_t pid, int status, void* cbdata){
             /* in this case, we just want to fire the proper trigger so
              * mpirun can exit
              */
-            OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+            OPAL_OUTPUT_VERBOSE((1, orte_plm_base_framework.framework_output,
                                  "%s plm:slurm: primary daemons complete!",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
             /* need to set the #terminated value to avoid an incorrect error msg */
@@ -602,7 +602,7 @@ static int plm_slurm_start_proc(int argc, char **argv, char **env,
                 asprintf(&newenv, "%s/%s", prefix, bin_base);
             }
             opal_setenv("PATH", newenv, true, &env);
-            OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+            OPAL_OUTPUT_VERBOSE((1, orte_plm_base_framework.framework_output,
                                  "%s plm:slurm: reset PATH: %s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  newenv));
@@ -616,7 +616,7 @@ static int plm_slurm_start_proc(int argc, char **argv, char **env,
                 asprintf(&newenv, "%s/%s", prefix, lib_base);
             }
             opal_setenv("LD_LIBRARY_PATH", newenv, true, &env);
-            OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+            OPAL_OUTPUT_VERBOSE((1, orte_plm_base_framework.framework_output,
                                  "%s plm:slurm: reset LD_LIBRARY_PATH: %s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  newenv));
@@ -632,7 +632,7 @@ static int plm_slurm_start_proc(int argc, char **argv, char **env,
          * tie stdout/stderr to dev null so we don't see messages from orted
          * EXCEPT if the user has requested that we leave sessions attached
          */
-        if (0 >= opal_output_get_verbosity(orte_plm_globals.output) &&
+        if (0 >= opal_output_get_verbosity(orte_plm_base_framework.framework_output) &&
             !orte_debug_daemons_flag && !orte_leave_session_attached) {
             if (fd >= 0) {
                 if (fd != 1) {

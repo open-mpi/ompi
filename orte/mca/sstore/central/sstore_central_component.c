@@ -96,7 +96,7 @@ static int sstore_central_open(void)
         opal_output_set_verbosity(mca_sstore_central_component.super.output_handle,
                                   mca_sstore_central_component.super.verbose);
     } else {
-        mca_sstore_central_component.super.output_handle = orte_sstore_base_output;
+        mca_sstore_central_component.super.output_handle = orte_sstore_base_framework.framework_output;
     }
     
     /*

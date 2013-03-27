@@ -64,35 +64,16 @@ static void jfamdest(orte_routed_jobfam_t *ptr)
 OBJ_CLASS_INSTANCE(orte_routed_jobfam_t, opal_object_t,
                    jfamconst, jfamdest);
 
-int orte_routed_base_output = -1;
 orte_routed_module_t orte_routed = {0};
-opal_list_t orte_routed_base_components;
 bool orte_routed_base_wait_sync;
 opal_pointer_array_t orte_routed_jobfams;
 
-static orte_routed_component_t *active_component = NULL;
-static bool component_open_called = false;
-static bool opened = false;
-static bool selected = false;
-
-int
-orte_routed_base_open(void)
+static int orte_routed_base_open(mca_base_open_flag_t flags)
 {
-    int ret;
     orte_routed_jobfam_t *jfam;
 
-    if (opened) {
-        return ORTE_SUCCESS;
-    }
-    opened = true;
-    
-    /* setup the output stream */
-    orte_routed_base_output = opal_output_open(NULL);
     orte_routed_base_wait_sync = false;
     
-    /* Initialize globals */
-    OBJ_CONSTRUCT(&orte_routed_base_components, opal_list_t);
-   
     /* Initialize storage of remote hnp uris */
     OBJ_CONSTRUCT(&orte_routed_jobfams, opal_pointer_array_t);
     opal_pointer_array_init(&orte_routed_jobfams, 8, INT_MAX, 8);
@@ -107,60 +88,10 @@ orte_routed_base_open(void)
     opal_pointer_array_add(&orte_routed_jobfams, jfam);
 
     /* Open up all available components */
-    ret = mca_base_components_open("routed",
-                                   orte_routed_base_output,
-                                   mca_routed_base_static_components, 
-                                   &orte_routed_base_components,
-                                   true);
-    component_open_called = true;
-
-    return ret;
+    return mca_base_framework_components_open(&orte_routed_base_framework, flags);
 }
 
-int
-orte_routed_base_select(void)
-{
-    int ret, exit_status = OPAL_SUCCESS;
-    orte_routed_component_t *best_component = NULL;
-    orte_routed_module_t *best_module = NULL;
-
-    if (selected) {
-        return ORTE_SUCCESS;
-    }
-    selected = true;
-    
-    /*
-     * Select the best component
-     */
-    if( OPAL_SUCCESS != mca_base_select("routed", orte_routed_base_output,
-                                        &orte_routed_base_components,
-                                        (mca_base_module_t **) &best_module,
-                                        (mca_base_component_t **) &best_component) ) {
-        /* This will only happen if no component was selected */
-        exit_status = ORTE_ERR_NOT_FOUND;
-        goto cleanup;
-    }
-
-    /* Save the winner */
-    orte_routed = *best_module;
-    active_component = best_component;
-
-    /* initialize the selected component */
-    opal_output_verbose(10, orte_routed_base_output,
-                        "orte_routed_base_select: initializing selected component %s",
-                        best_component->base_version.mca_component_name);
-    if (ORTE_SUCCESS != (ret = orte_routed.initialize()) ) {
-        exit_status = ret;
-        goto cleanup;
-    }
-
- cleanup:
-    return exit_status;
-}
-
-
-int
-orte_routed_base_close(void)
+static int orte_routed_base_close(void)
 {
     int i;
     orte_routed_jobfam_t *jfam;
@@ -170,12 +101,6 @@ orte_routed_base_close(void)
         orte_routed.finalize();
     }
     
-    /* shutdown any remaining opened components */
-    if (component_open_called) {
-        mca_base_components_close(orte_routed_base_output, 
-                                  &orte_routed_base_components, NULL);
-    }
-
     for (i=0; i < orte_routed_jobfams.size; i++) {
         if (NULL != (jfam = (orte_routed_jobfam_t*)opal_pointer_array_get_item(&orte_routed_jobfams, i))) {
             OBJ_RELEASE(jfam);
@@ -183,16 +108,46 @@ orte_routed_base_close(void)
     }
     OBJ_DESTRUCT(&orte_routed_jobfams);
 
-    OBJ_DESTRUCT(&orte_routed_base_components);
+    return mca_base_framework_components_close(&orte_routed_base_framework, NULL);
+}
 
-    /* Close the framework output */
-    opal_output_close (orte_routed_base_output);
-    orte_routed_base_output = -1;
-    
-    opened   = false;
-    selected = false;
+MCA_BASE_FRAMEWORK_DECLARE(orte, routed, "ORTE Message Routing Subsystem", NULL,
+                           orte_routed_base_open, orte_routed_base_close,
+                           mca_routed_base_static_components, 0);
 
-    return ORTE_SUCCESS;
+
+int orte_routed_base_select(void)
+{
+    int ret, exit_status = OPAL_SUCCESS;
+    orte_routed_component_t *best_component = NULL;
+    orte_routed_module_t *best_module = NULL;
+
+    /*
+     * Select the best component
+     */
+    if( OPAL_SUCCESS != mca_base_select("routed", orte_routed_base_framework.framework_output,
+                                        &orte_routed_base_framework.framework_components,
+                                        (mca_base_module_t **) &best_module,
+                                        (mca_base_component_t **) &best_component) ) {
+        /* This will only happen if no component was selected */
+        exit_status = ORTE_ERR_NOT_FOUND;
+        goto cleanup;
+    }
+
+    /* Save the winner */
+    orte_routed = *best_module;
+
+    /* initialize the selected component */
+    opal_output_verbose(10, orte_routed_base_framework.framework_output,
+                        "orte_routed_base_select: initializing selected component %s",
+                        best_component->base_version.mca_component_name);
+    if (ORTE_SUCCESS != (ret = orte_routed.initialize()) ) {
+        exit_status = ret;
+        goto cleanup;
+    }
+
+ cleanup:
+    return exit_status;
 }
 
 void orte_routed_base_update_hnps(opal_buffer_t *buf)
@@ -224,7 +179,7 @@ void orte_routed_base_update_hnps(opal_buffer_t *buf)
                     free(jfam->hnp_uri);
                 }
                 jfam->hnp_uri = strdup(uri);
-                OPAL_OUTPUT_VERBOSE((10, orte_routed_base_output,
+                OPAL_OUTPUT_VERBOSE((10, orte_routed_base_framework.framework_output,
                                      "%s adding remote HNP %s\n\t%s",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                      ORTE_NAME_PRINT(&name), uri));

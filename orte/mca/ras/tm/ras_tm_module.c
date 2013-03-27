@@ -102,7 +102,7 @@ static int allocate(orte_job_t *jdata, opal_list_t *nodes)
  */
 static int finalize(void)
 {
-    OPAL_OUTPUT_VERBOSE((1, orte_ras_base.ras_output,
+    OPAL_OUTPUT_VERBOSE((1, orte_ras_base_framework.framework_output,
                          "%s ras:tm:finalize: success (nothing to do)",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     return ORTE_SUCCESS;
@@ -154,7 +154,7 @@ static int discover(opal_list_t* nodelist, char *pbs_jobid)
     nodeid=0;
     while (NULL != (hostname = tm_getline(fp))) {
 
-        OPAL_OUTPUT_VERBOSE((1, orte_ras_base.ras_output,
+        OPAL_OUTPUT_VERBOSE((1, orte_ras_base_framework.framework_output,
                              "%s ras:tm:allocate:discover: got hostname %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), hostname));
 
@@ -168,7 +168,7 @@ static int discover(opal_list_t* nodelist, char *pbs_jobid)
             if (0 == strcmp(node->name, hostname)) {
                 ++node->slots;
 
-                OPAL_OUTPUT_VERBOSE((1, orte_ras_base.ras_output,
+                OPAL_OUTPUT_VERBOSE((1, orte_ras_base_framework.framework_output,
                                      "%s ras:tm:allocate:discover: found -- bumped slots to %d",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), node->slots));
                 
@@ -182,7 +182,7 @@ static int discover(opal_list_t* nodelist, char *pbs_jobid)
 
             /* Nope -- didn't find it, so add a new item to the list */
             
-            OPAL_OUTPUT_VERBOSE((1, orte_ras_base.ras_output,
+            OPAL_OUTPUT_VERBOSE((1, orte_ras_base_framework.framework_output,
                                  "%s ras:tm:allocate:discover: not found -- added to list",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
             

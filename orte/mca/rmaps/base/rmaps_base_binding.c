@@ -68,7 +68,7 @@ static int bind_upwards(orte_job_t *jdata,
     struct hwloc_topology_support *support;
     opal_hwloc_obj_data_t *data;
 
-    opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+    opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                         "mca:rmaps: bind upwards for job %s with bindings %s",
                         ORTE_JOBID_PRINT(jdata->jobid),
                         opal_hwloc_base_print_binding(jdata->map->binding));
@@ -175,7 +175,7 @@ static int bind_upwards(orte_job_t *jdata,
                     /* bind it here */
                     cpus = opal_hwloc_base_get_available_cpus(node->topology, obj);
                     hwloc_bitmap_list_asprintf(&proc->cpu_bitmap, cpus);
-                    opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+                    opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                                         "%s BOUND PROC %s TO %s[%s:%u] on node %s",
                                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                         ORTE_NAME_PRINT(&proc->name),
@@ -215,7 +215,7 @@ static int bind_downwards(orte_job_t *jdata,
     int total_cpus;
     hwloc_cpuset_t totalcpuset;
 
-    opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+    opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                         "mca:rmaps: bind downward for job %s with bindings %s",
                         ORTE_JOBID_PRINT(jdata->jobid),
                         opal_hwloc_base_print_binding(jdata->map->binding));
@@ -312,7 +312,7 @@ static int bind_downwards(orte_job_t *jdata,
                 trg_obj = nxt_obj;
                 /* get the number of cpus under this location */
                 ncpus = opal_hwloc_base_get_npus(node->topology, trg_obj);
-                opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+                opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                                     "%s GOT %d CPUS",
                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ncpus);
                 /* track the number bound */
@@ -335,11 +335,11 @@ static int bind_downwards(orte_job_t *jdata,
                 nxt_obj = trg_obj->next_cousin;
             } while (total_cpus < orte_rmaps_base.cpus_per_rank);
             hwloc_bitmap_list_asprintf(&proc->cpu_bitmap, totalcpuset);
-            if (4 < opal_output_get_verbosity(orte_rmaps_base.rmaps_output)) {
+            if (4 < opal_output_get_verbosity(orte_rmaps_base_framework.framework_output)) {
                 char tmp1[1024], tmp2[1024];
                 opal_hwloc_base_cset2str(tmp1, sizeof(tmp1), totalcpuset);
                 opal_hwloc_base_cset2mapstr(tmp2, sizeof(tmp2), totalcpuset);
-                opal_output(orte_rmaps_base.rmaps_output,
+                opal_output(orte_rmaps_base_framework.framework_output,
                             "%s BOUND PROC %s[%s] TO %s: %s",
                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                             ORTE_NAME_PRINT(&proc->name), node->name,
@@ -369,7 +369,7 @@ static int bind_in_place(orte_job_t *jdata,
     struct hwloc_topology_support *support;
     opal_hwloc_obj_data_t *data;
 
-    opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+    opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                         "mca:rmaps: bind in place for job %s with bindings %s",
                         ORTE_JOBID_PRINT(jdata->jobid),
                         opal_hwloc_base_print_binding(jdata->map->binding));
@@ -443,7 +443,7 @@ static int bind_in_place(orte_job_t *jdata,
             /* track the number bound */
             data = (opal_hwloc_obj_data_t*)proc->locale->userdata;
             data->num_bound++;
-             opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+             opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                                 "BINDING PROC %s TO %s NUMBER %u",
                                 ORTE_NAME_PRINT(&proc->name),
                                 hwloc_obj_type_string(proc->locale->type), idx);
@@ -463,7 +463,7 @@ static int bind_in_place(orte_job_t *jdata,
             /* bind the proc here */
             cpus = opal_hwloc_base_get_available_cpus(node->topology, proc->locale);
             hwloc_bitmap_list_asprintf(&proc->cpu_bitmap, cpus);
-            opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+            opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                                 "%s BOUND PROC %s TO %s[%s:%u] on node %s",
                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                 ORTE_NAME_PRINT(&proc->name),
@@ -487,7 +487,7 @@ static int bind_to_cpuset(orte_job_t *jdata)
     opal_hwloc_topo_data_t *sum;
     hwloc_obj_t root;
 
-    opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+    opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                         "mca:rmaps: bind job %s to cpuset %s",
                         ORTE_JOBID_PRINT(jdata->jobid),
                         opal_hwloc_base_cpu_set);
@@ -569,7 +569,7 @@ static int bind_to_cpuset(orte_job_t *jdata)
 
 int orte_rmaps_base_compute_bindings(orte_job_t *jdata)
 {
-    opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+    opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                         "mca:rmaps: compute bindings for job %s with policy %s",
                         ORTE_JOBID_PRINT(jdata->jobid),
                         opal_hwloc_base_print_binding(jdata->map->binding));
@@ -617,7 +617,7 @@ int orte_rmaps_base_compute_bindings(orte_job_t *jdata)
     if (OPAL_BIND_TO_HWTHREAD == OPAL_GET_BINDING_POLICY(jdata->map->binding)) {
         int rc;
         if (ORTE_MAPPING_BYHWTHREAD == ORTE_GET_MAPPING_POLICY(jdata->map->mapping)) {
-            opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+            opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                                 "mca:rmaps: bindings for job %s - hwthread to hwthread",
                                 ORTE_JOBID_PRINT(jdata->jobid));
             if (ORTE_SUCCESS != (rc = bind_in_place(jdata, HWLOC_OBJ_PU, 0))) {
@@ -635,7 +635,7 @@ int orte_rmaps_base_compute_bindings(orte_job_t *jdata)
     } else if (OPAL_BIND_TO_CORE == OPAL_GET_BINDING_POLICY(jdata->map->binding)) {
         int rc;
         if (ORTE_MAPPING_BYCORE == ORTE_GET_MAPPING_POLICY(jdata->map->mapping)) {
-            opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+            opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                                 "mca:rmaps: bindings for job %s - core to core",
                                 ORTE_JOBID_PRINT(jdata->jobid));
             if (ORTE_SUCCESS != (rc = bind_in_place(jdata, HWLOC_OBJ_CORE, 0))) {
@@ -664,7 +664,7 @@ int orte_rmaps_base_compute_bindings(orte_job_t *jdata)
     } else if (OPAL_BIND_TO_L1CACHE == OPAL_GET_BINDING_POLICY(jdata->map->binding)) {
         int rc;
         if (ORTE_MAPPING_BYL1CACHE == ORTE_GET_MAPPING_POLICY(jdata->map->mapping)) {
-            opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+            opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                                 "mca:rmaps: bindings for job %s - L1cache to L1cache",
                                 ORTE_JOBID_PRINT(jdata->jobid));
             if (ORTE_SUCCESS != (rc = bind_in_place(jdata, HWLOC_OBJ_CACHE, 1))) {
@@ -688,7 +688,7 @@ int orte_rmaps_base_compute_bindings(orte_job_t *jdata)
     } else if (OPAL_BIND_TO_L2CACHE == OPAL_GET_BINDING_POLICY(jdata->map->binding)) {
         int rc;
         if (ORTE_MAPPING_BYL2CACHE == ORTE_GET_MAPPING_POLICY(jdata->map->mapping)) {
-            opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+            opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                                 "mca:rmaps: bindings for job %s - L2cache to L2cache",
                                 ORTE_JOBID_PRINT(jdata->jobid));
             if (ORTE_SUCCESS != (rc = bind_in_place(jdata, HWLOC_OBJ_CACHE, 2))) {
@@ -712,7 +712,7 @@ int orte_rmaps_base_compute_bindings(orte_job_t *jdata)
     } else if (OPAL_BIND_TO_L3CACHE == OPAL_GET_BINDING_POLICY(jdata->map->binding)) {
         int rc;
         if (ORTE_MAPPING_BYL3CACHE == ORTE_GET_MAPPING_POLICY(jdata->map->mapping)) {
-            opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+            opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                                 "mca:rmaps: bindings for job %s - L3cache to L3cache",
                                 ORTE_JOBID_PRINT(jdata->jobid));
             if (ORTE_SUCCESS != (rc = bind_in_place(jdata, HWLOC_OBJ_CACHE, 3))) {
@@ -736,7 +736,7 @@ int orte_rmaps_base_compute_bindings(orte_job_t *jdata)
     } else if (OPAL_BIND_TO_SOCKET == OPAL_GET_BINDING_POLICY(jdata->map->binding)) {
         int rc;
         if (ORTE_MAPPING_BYSOCKET == ORTE_GET_MAPPING_POLICY(jdata->map->mapping)) {
-            opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+            opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                                 "mca:rmaps: bindings for job %s - socket to socket",
                                 ORTE_JOBID_PRINT(jdata->jobid));
             if (ORTE_SUCCESS != (rc = bind_in_place(jdata, HWLOC_OBJ_SOCKET, 0))) {
@@ -760,7 +760,7 @@ int orte_rmaps_base_compute_bindings(orte_job_t *jdata)
     } else if (OPAL_BIND_TO_NUMA == OPAL_GET_BINDING_POLICY(jdata->map->binding)) {
         int rc;
         if (ORTE_MAPPING_BYNUMA == ORTE_GET_MAPPING_POLICY(jdata->map->mapping)) {
-            opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+            opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                                 "mca:rmaps: bindings for job %s - numa to numa",
                                 ORTE_JOBID_PRINT(jdata->jobid));
             if (ORTE_SUCCESS != (rc = bind_in_place(jdata, HWLOC_OBJ_NODE, 0))) {

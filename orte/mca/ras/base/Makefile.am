@@ -23,8 +23,7 @@ headers += \
         base/ras_private.h
 
 libmca_ras_la_SOURCES += \
-        base/ras_base_open.c \
-        base/ras_base_close.c \
+        base/ras_base_frame.c \
         base/ras_base_select.c \
         base/ras_base_allocate.c \
         base/ras_base_node.c

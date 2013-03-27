@@ -94,7 +94,7 @@ static int ppr_mapper(orte_job_t *jdata)
      * or NPERxxx jobs - allow restarting of failed apps
      */
     if (ORTE_JOB_CONTROL_RESTART & jdata->controls) {
-        opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+        opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                             "mca:rmaps:ppr: job %s being restarted - ppr cannot map",
                             ORTE_JOBID_PRINT(jdata->jobid));
         return ORTE_ERR_TAKE_NEXT_OPTION;
@@ -102,7 +102,7 @@ static int ppr_mapper(orte_job_t *jdata)
     if (NULL != jdata->map->req_mapper &&
         0 != strcasecmp(jdata->map->req_mapper, c->mca_component_name)) {
         /* a mapper has been specified, and it isn't me */
-        opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+        opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                             "mca:rmaps:ppr: job %s not using ppr mapper",
                             ORTE_JOBID_PRINT(jdata->jobid));
         return ORTE_ERR_TAKE_NEXT_OPTION;
@@ -110,13 +110,13 @@ static int ppr_mapper(orte_job_t *jdata)
     if (NULL == jdata->map->ppr ||
         !(ORTE_MAPPING_PPR & ORTE_GET_MAPPING_DIRECTIVE(jdata->map->mapping))) {
         /* not for us */
-        opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+        opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                             "mca:rmaps:ppr: job %s not using ppr mapper",
                             ORTE_JOBID_PRINT(jdata->jobid));
         return ORTE_ERR_TAKE_NEXT_OPTION;
     }
 
-    opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+    opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                         "mca:rmaps:ppr: mapping job %s with ppr %s",
                         ORTE_JOBID_PRINT(jdata->jobid), jdata->map->ppr);
  
@@ -222,7 +222,7 @@ static int ppr_mapper(orte_job_t *jdata)
         pruning_reqd = true;
     }
 
-    opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+    opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                         "mca:rmaps:ppr: job %s assigned policy %s",
                         ORTE_JOBID_PRINT(jdata->jobid),
                         orte_rmaps_base_print_mapping(jdata->map->mapping));
@@ -445,7 +445,7 @@ static void prune(orte_jobid_t jobid,
     opal_hwloc_level_t ll;
     char dang[64];
 
-    opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+    opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                         "mca:rmaps:ppr: pruning level %d",
                         *level);
 
@@ -509,7 +509,7 @@ static void prune(orte_jobid_t jobid,
                 nprocs++;
             }
         }
-        opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+        opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                             "mca:rmaps:ppr: found %d procs limit %d",
                             nprocs, limit);
 
@@ -532,7 +532,7 @@ static void prune(orte_jobid_t jobid,
              */
             top = find_split(node->topology, obj);
             hwloc_obj_type_snprintf(dang, 64, top, 1);
-            opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+            opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                                 "mca:rmaps:ppr: SPLIT AT LEVEL %s", dang);
 
             /* cycle across the children of this object */
@@ -564,7 +564,7 @@ static void prune(orte_jobid_t jobid,
                     }
                 }
                 if (nmax < nunder) {
-                    opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+                    opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                                         "mca:rmaps:ppr: PROCS UNDER CHILD %d %d MAX %d",
                                         k, nunder, nmax);
                     nmax = nunder;
@@ -577,7 +577,7 @@ static void prune(orte_jobid_t jobid,
                 goto error;
             }
             /* remove it */
-            opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+            opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                                 "mca:rmaps:ppr: removing proc at posn %d",
                                 idxmax);
             opal_pointer_array_set_item(node->procs, idxmax, NULL);

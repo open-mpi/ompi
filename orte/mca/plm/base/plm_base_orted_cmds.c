@@ -58,7 +58,7 @@ static void failed_cmd(int fd, short event, void *cbdata)
     /* we get called if an abnormal term
      * don't complete in time - just force exit
      */
-    OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+    OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
                          "%s plm:base:orted_cmd command timed out",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     OBJ_RELEASE(tm);
@@ -73,7 +73,7 @@ int orte_plm_base_orted_exit(orte_daemon_cmd_flag_t command)
     int rc;
     opal_buffer_t *cmd;
     
-    OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+    OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
                          "%s plm:base:orted_cmd sending orted_exit commands",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
@@ -111,7 +111,7 @@ int orte_plm_base_orted_terminate_job(orte_jobid_t jobid)
     orte_proc_t proc;
     int rc;
     
-    OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+    OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
                          "%s plm:base:orted_terminate job %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_JOBID_PRINT(jobid)));
@@ -138,7 +138,7 @@ int orte_plm_base_orted_kill_local_procs(opal_pointer_array_t *procs)
     int v;
     orte_proc_t *proc;
     
-    OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+    OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
                          "%s plm:base:orted_cmd sending kill_local_procs cmds",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
@@ -179,7 +179,7 @@ int orte_plm_base_orted_signal_local_procs(orte_jobid_t job, int32_t signal)
     opal_buffer_t cmd;
     orte_daemon_cmd_flag_t command=ORTE_DAEMON_SIGNAL_LOCAL_PROCS;
     
-    OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+    OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
                          "%s plm:base:orted_cmd sending signal_local_procs cmds",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     

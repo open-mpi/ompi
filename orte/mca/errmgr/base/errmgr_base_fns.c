@@ -656,7 +656,7 @@ int orte_errmgr_base_migrate_job(orte_jobid_t jobid, orte_snapc_base_request_op_
 orte_errmgr_fault_callback_t *orte_errmgr_base_set_fault_callback(orte_errmgr_fault_callback_t *cbfunc) {
     orte_errmgr_fault_callback_t *temp_cbfunc = fault_cbfunc;
 
-    OPAL_OUTPUT_VERBOSE((10, orte_errmgr_base.output, 
+    OPAL_OUTPUT_VERBOSE((10, orte_errmgr_base_framework.framework_output, 
                 "%s errmgr:base Called set_fault_callback", 
                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 

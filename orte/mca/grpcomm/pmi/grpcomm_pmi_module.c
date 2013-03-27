@@ -120,13 +120,13 @@ static int pmi_barrier(orte_grpcomm_collective_t *coll)
 {
     int rc;
     
-    OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base.output,
+    OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_framework.framework_output,
                          "%s grpcomm:pmi entering barrier",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
     /* if I am alone, just execute the callback */
     if (1 == orte_process_info.num_procs) {
-        OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base.output,
+        OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_framework.framework_output,
                              "%s grpcomm:pmi:barrier only one proc",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
         coll->active = false;
@@ -150,7 +150,7 @@ static int pmi_barrier(orte_grpcomm_collective_t *coll)
     }
 #endif
 
-    OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base.output,
+    OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base_framework.framework_output,
                          "%s grpcomm:pmi barrier complete",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     /* execute the callback */
@@ -181,7 +181,7 @@ static int modex(orte_grpcomm_collective_t *coll)
     orte_node_rank_t node_rank;
     bool bound;
 
-     OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base.output,
+     OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_framework.framework_output,
                          "%s grpcomm:pmi: modex entered",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
@@ -234,7 +234,7 @@ static int modex(orte_grpcomm_collective_t *coll)
             opal_argv_free(fields);
             return rc;
         }
-        OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base.output,
+        OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base_framework.framework_output,
                              "%s grpcomm:pmi: proc %s oob endpoint %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_NAME_PRINT(&name), fields[0]));

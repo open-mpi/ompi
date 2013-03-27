@@ -74,7 +74,7 @@ static int orte_rmaps_seq_map(orte_job_t *jdata)
     orte_proc_t *proc;
     mca_base_component_t *c = &mca_rmaps_seq_component.base_version;
 
-    OPAL_OUTPUT_VERBOSE((1, orte_rmaps_base.rmaps_output,
+    OPAL_OUTPUT_VERBOSE((1, orte_rmaps_base_framework.framework_output,
                          "%s rmaps:seq mapping job %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_JOBID_PRINT(jdata->jobid)));
@@ -84,7 +84,7 @@ static int orte_rmaps_seq_map(orte_job_t *jdata)
      * restarting of failed apps
      */
     if (ORTE_JOB_CONTROL_RESTART & jdata->controls) {
-        opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+        opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                             "mca:rmaps:seq: job %s is being restarted - seq cannot map",
                             ORTE_JOBID_PRINT(jdata->jobid));
         return ORTE_ERR_TAKE_NEXT_OPTION;
@@ -92,20 +92,20 @@ static int orte_rmaps_seq_map(orte_job_t *jdata)
     if (NULL != jdata->map->req_mapper &&
         0 != strcasecmp(jdata->map->req_mapper, c->mca_component_name)) {
         /* a mapper has been specified, and it isn't me */
-        opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+        opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                             "mca:rmaps:seq: job %s not using sequential mapper",
                             ORTE_JOBID_PRINT(jdata->jobid));
         return ORTE_ERR_TAKE_NEXT_OPTION;
     }
     if (ORTE_MAPPING_SEQ != ORTE_GET_MAPPING_POLICY(jdata->map->mapping)) {
         /* I don't know how to do these - defer */
-        opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+        opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                             "mca:rmaps:seq: job %s not using seq mapper",
                             ORTE_JOBID_PRINT(jdata->jobid));
         return ORTE_ERR_TAKE_NEXT_OPTION;
     }
 
-    opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+    opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                         "mca:rmaps:seq: mapping job %s",
                         ORTE_JOBID_PRINT(jdata->jobid));
 

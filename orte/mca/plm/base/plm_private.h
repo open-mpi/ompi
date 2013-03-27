@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2011      Los Alamos National Security, LLC.
+ * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved. 
  * $COPYRIGHT$
  * 
@@ -46,10 +46,10 @@
 
 BEGIN_C_DECLS
 
+ORTE_DECLSPEC extern mca_base_framework_t orte_plm_base_framework;
+
 /* globals for use solely within PLM framework */
 typedef struct {
-    /** Verbose/debug output stream */
-    int output;
     /* next jobid */
     uint16_t next_jobid;
     /* time when daemons started launch */

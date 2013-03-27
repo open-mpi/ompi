@@ -197,7 +197,7 @@ static int lsf_set_name(void)
         return(rc);
     }
     lsf_nodeid = atoi(getenv("LSF_PM_TASKID"));
-    opal_output_verbose(1, orte_ess_base_output,
+    opal_output_verbose(1, orte_ess_base_framework.framework_output,
                         "ess:lsf found LSF_PM_TASKID set to %d",
                         lsf_nodeid);
     ORTE_PROC_MY_NAME->vpid = vpid + lsf_nodeid - 1;
