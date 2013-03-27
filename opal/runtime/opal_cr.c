@@ -326,7 +326,6 @@ int opal_cr_init(void )
 {
     int ret, exit_status = OPAL_SUCCESS;
     opal_cr_coord_callback_fn_t prev_coord_func;
-    int val;
 
     if( ++opal_cr_initalized != 1 ) {
         if( opal_cr_initalized < 1 ) {
@@ -344,12 +343,12 @@ int opal_cr_init(void )
 
     if(0 != opal_cr_verbose) {
         opal_cr_output = opal_output_open(NULL);
-        opal_output_set_verbosity(opal_cr_output, val);
+        opal_output_set_verbosity(opal_cr_output, opal_cr_verbose);
     }
 
     opal_output_verbose(10, opal_cr_output,
                         "opal_cr: init: Verbose Level: %d",
-                        val);
+                        opal_cr_verbose);
 
 
     opal_output_verbose(10, opal_cr_output,
@@ -363,7 +362,7 @@ int opal_cr_init(void )
 
     opal_output_verbose(10, opal_cr_output,
                         "opal_cr: init: Debug SIGPIPE: %d (%s)",
-                        val, (opal_cr_debug_sigpipe ? "True" : "False"));
+                        opal_cr_verbose, (opal_cr_debug_sigpipe ? "True" : "False"));
 
     opal_output_verbose(10, opal_cr_output,
                         "opal_cr: init: Checkpoint Signal: %d",
