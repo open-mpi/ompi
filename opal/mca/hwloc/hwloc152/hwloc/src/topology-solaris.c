@@ -144,7 +144,6 @@ hwloc_solaris_get_sth_cpubind(hwloc_topology_t topology, idtype_t idtype, id_t i
   int depth = hwloc_get_type_depth(topology, HWLOC_OBJ_NODE);
   int n;
   int i;
-  processorid_t binding;
 
   if (depth < 0) {
     errno = ENOSYS;
