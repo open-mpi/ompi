@@ -1,6 +1,7 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved. 
- * Copyright (c) 2012      Los Alamos National Security, Inc. All rights reserved.
+ * Copyright (c) 2012-2013 Los Alamos National Security, Inc. All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -17,7 +18,6 @@
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
 #include "opal/mca/base/base.h"
-#include "opal/mca/base/mca_base_param.h"
 #include "opal/class/opal_pointer_array.h"
 
 #ifdef HAVE_STRING_H
@@ -45,13 +45,46 @@ orte_sensor_base_API_module_t orte_sensor = {
     orte_sensor_base_stop
 };
 
+/*
+ * Local variables
+ */
+static int orte_sensor_base_sample_rate = 0;
+
+static int orte_sensor_base_register(int flags)
+{
+    int var_id;
+
+    orte_sensor_base_sample_rate = 0;
+    var_id = mca_base_var_register("orte", "sensor", "base", "sample_rate",
+                                   "Sample rate in seconds",
+                                   MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                   OPAL_INFO_LVL_9,
+                                   MCA_BASE_VAR_SCOPE_READONLY,
+                                   &orte_sensor_base_sample_rate);
+    mca_base_var_register_synonym(var_id, "orte", "sensor", NULL, "sample_rate",
+                                  MCA_BASE_VAR_SYN_FLAG_DEPRECATED);
+  
+    /* see if we want samples logged */
+    orte_sensor_base.log_samples = false;
+    var_id = mca_base_var_register("orte", "sensor", "base", "log_samples",
+                                   "Log samples to database",
+                                   MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                   OPAL_INFO_LVL_9,
+                                   MCA_BASE_VAR_SCOPE_READONLY,
+                                   &orte_sensor_base.log_samples);
+    mca_base_var_register_synonym(var_id, "orte", "sensor", NULL, "log_samples",
+                                  MCA_BASE_VAR_SYN_FLAG_DEPRECATED);
+
+    return ORTE_SUCCESS;
+}
+
 /**
  * Function for finding and opening either all MCA components, or the one
  * that was specifically requested via a MCA parameter.
  */
 int orte_sensor_base_open(void)
 {
-    int tmp;
+    (void) orte_sensor_base_register(0);
 
     /* Debugging / verbose output.  Always have stream open, with
        verbose set by the mca open system... */
@@ -67,17 +100,8 @@ int orte_sensor_base_open(void)
     opal_pointer_array_init(&orte_sensor_base.modules, 3, INT_MAX, 1);
     
     /* get the sample rate */
-    mca_base_param_reg_int_name("sensor", "sample_rate",
-                           "Sample rate in seconds",
-                           false, false, 0, &tmp);
-    orte_sensor_base.rate.tv_sec = tmp;
+    orte_sensor_base.rate.tv_sec = orte_sensor_base_sample_rate;
     orte_sensor_base.rate.tv_usec = 0;
-
-    /* see if we want samples logged */
-    mca_base_param_reg_int_name("sensor", "log_samples",
-                           "Log samples to database",
-                           false, false, 0, &tmp);
-    orte_sensor_base.log_samples = OPAL_INT_TO_BOOL(tmp);
 
     /* Open up all available components */
 

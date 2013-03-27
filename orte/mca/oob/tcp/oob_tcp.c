@@ -117,6 +117,26 @@ OBJ_CLASS_INSTANCE(mca_oob_tcp_device_t, opal_list_item_t, NULL, NULL);
 
 int mca_oob_tcp_output_handle = -1;
 static int verbose_value = 0;
+static mca_base_var_enum_value_t tcp_listen_mode_values[] = {
+    {OOB_TCP_EVENT, "event"},
+    {OOB_TCP_LISTEN_THREAD, "listen_thread"},
+    {0, NULL}
+};
+
+static mca_base_var_enum_value_t disable_family_values[] = {
+    {0, "none"},
+    {4, "IPv4"},
+    {6, "IPv6"},
+    {0, NULL}
+};
+
+static int tcp_listen_thread_wait_time = 10;
+static char *mca_oob_tcp_ipv4_static_ports = NULL;
+static char *mca_oob_tcp_ipv4_dynamic_ports = NULL;
+#if OPAL_WANT_IPV6
+static char *mca_oob_tcp_ipv6_static_ports = NULL;
+static char *mca_oob_tcp_ipv6_dynamic_ports = NULL;
+#endif
 
 /*
  * Struct of function pointers and all that to let us be initialized
@@ -161,147 +181,144 @@ mca_oob_t mca_oob_tcp = {
 
 static int mca_oob_tcp_component_register(void)
 {
-    int tmp;
-    char *listen_type, *str = NULL;
+    mca_base_component_t *component = &mca_oob_tcp_component.super.oob_base;
+    mca_base_var_enum_t *new_enum;
+    int var_id;
 #if ORTE_ENABLE_STATIC_PORTS
     bool ip4_ports_given = false;
 #endif
 
-    mca_base_param_reg_int(&mca_oob_tcp_component.super.oob_base,
-                           "verbose",
-                           "Verbose level for the OOB tcp component",
-                           false, false,
-                           0,
-                           &verbose_value);
+    verbose_value = 0;
+    (void) mca_base_component_var_register (component, "verbose",
+                                            "Verbose level for the OOB tcp component",
+                                            MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                            OPAL_INFO_LVL_9,
+                                            MCA_BASE_VAR_SCOPE_LOCAL,
+                                            &verbose_value);
 
-    /* register oob module parameters */
-    mca_base_param_reg_int(&mca_oob_tcp_component.super.oob_base,
-                           "peer_limit",
-                           "Maximum number of peer connections to simultaneously maintain (-1 = infinite)",
-                           false, false, -1,
-                           &mca_oob_tcp_component.tcp_peer_limit);
+    /* register oob module variables */
+    mca_oob_tcp_component.tcp_peer_limit = -1;
+    (void) mca_base_component_var_register (component, "peer_limit",
+                                            "Maximum number of peer connections to simultaneously maintain (-1 = infinite)",
+                                            MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                            OPAL_INFO_LVL_9,
+                                            MCA_BASE_VAR_SCOPE_LOCAL,
+                                            &mca_oob_tcp_component.tcp_peer_limit);
 
-    mca_base_param_reg_int(&mca_oob_tcp_component.super.oob_base,
-                           "peer_retries",
-                           "Number of times to try shutting down a connection before giving up",
-                           false, false, 60,
-                           &mca_oob_tcp_component.tcp_peer_retries);
+    mca_oob_tcp_component.tcp_peer_retries = 60;
+    (void) mca_base_component_var_register (component, "peer_retries",
+                                            "Number of times to try shutting down a connection before giving up",
+                                            MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                            OPAL_INFO_LVL_9,
+                                            MCA_BASE_VAR_SCOPE_LOCAL,
+                                            &mca_oob_tcp_component.tcp_peer_retries);
 
-    mca_base_param_reg_int(&mca_oob_tcp_component.super.oob_base,
-                           "debug",
-                           "Enable (1) / disable (0) debugging output for this component",
-                           false, false, 0,
-                           &mca_oob_tcp_component.tcp_debug);
+    mca_oob_tcp_component.tcp_debug = 0;
+    (void) mca_base_component_var_register (component, "debug",
+                                            "Enable (1) / disable (0) debugging output for this component",
+                                            MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                            OPAL_INFO_LVL_9,
+                                            MCA_BASE_VAR_SCOPE_LOCAL,
+                                            &mca_oob_tcp_component.tcp_debug);
 
-    mca_base_param_reg_int(&mca_oob_tcp_component.super.oob_base,
-                           "sndbuf",
-                           "TCP socket send buffering size (in bytes)",
-                           false, false, 128 * 1024,
-                           &mca_oob_tcp_component.tcp_sndbuf);
+    mca_oob_tcp_component.tcp_sndbuf = 128 * 1024;
+    (void) mca_base_component_var_register (component, "sndbuf",
+                                            "TCP socket send buffering size (in bytes)",
+                                            MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                            OPAL_INFO_LVL_9,
+                                            MCA_BASE_VAR_SCOPE_LOCAL,
+                                            &mca_oob_tcp_component.tcp_sndbuf);
 
-    mca_base_param_reg_int(&mca_oob_tcp_component.super.oob_base,
-                           "rcvbuf",
-                           "TCP socket receive buffering size (in bytes)",
-                           false, false, 128 * 1024,
-                           &mca_oob_tcp_component.tcp_rcvbuf);
+    mca_oob_tcp_component.tcp_rcvbuf = 128 * 1024;
+    (void) mca_base_component_var_register (component, "rcvbuf",
+                                            "TCP socket receive buffering size (in bytes)",
+                                            MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                            OPAL_INFO_LVL_9,
+                                            MCA_BASE_VAR_SCOPE_LOCAL,
+                                            &mca_oob_tcp_component.tcp_rcvbuf);
 
-    mca_base_param_reg_string(&mca_oob_tcp_component.super.oob_base,
-                              "if_include",
-                              "Comma-delimited list of devices and/or CIDR notation of networks to use for Open MPI bootstrap communication (e.g., \"eth0,192.168.0.0/16\").  Mutually exclusive with oob_tcp_if_exclude.",
-                              false, false, NULL, 
-                              &mca_oob_tcp_component.tcp_include);
-    mca_base_param_reg_string(&mca_oob_tcp_component.super.oob_base,
-                              "include",
-                              "Obsolete synonym for oob_tcp_if_include",
-                              true, false, NULL, &str);
-    if (NULL != str) {
-        if (NULL == mca_oob_tcp_component.tcp_include) {
-            mca_oob_tcp_component.tcp_include = str;
-        } else {
-            free(str);
-            str = NULL;  /* reset to NULL so we can use it again later */
-        }
-    }
+    mca_oob_tcp_component.tcp_include = NULL;
+    var_id = mca_base_component_var_register (component, "if_include",
+                                              "Comma-delimited list of devices and/or CIDR notation of networks to use for Open MPI bootstrap communication (e.g., \"eth0,192.168.0.0/16\").  Mutually exclusive with oob_tcp_if_exclude.",
+                                              MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
+                                              OPAL_INFO_LVL_9,
+                                              MCA_BASE_VAR_SCOPE_LOCAL,
+                                              &mca_oob_tcp_component.tcp_include);
+    (void) mca_base_var_register_synonym (var_id, "orte", "oob", "tcp", "include",
+                                          MCA_BASE_VAR_SYN_FLAG_DEPRECATED | MCA_BASE_VAR_SYN_FLAG_INTERNAL);
 
-    mca_base_param_reg_string(&mca_oob_tcp_component.super.oob_base,
-                              "if_exclude",
-                              "Comma-delimited list of devices and/or CIDR notation of networks to NOT use for Open MPI bootstrap communication -- all devices not matching these specifications will be used (e.g., \"eth0,192.168.0.0/16\").  If set to a non-default value, it is mutually exclusive with oob_tcp_if_include.",
-                              false, false, NULL, 
-                              &mca_oob_tcp_component.tcp_exclude);
-    mca_base_param_reg_string(&mca_oob_tcp_component.super.oob_base,
-                              "exclude",
-                              "Obsolete synonym for oob_tcp_if_exclude",
-                              true, false, NULL, &str);
-    if (NULL != str) {
-        if (NULL == mca_oob_tcp_component.tcp_exclude) {
-            mca_oob_tcp_component.tcp_exclude = str;
-        } else {
-            free(str);
-            str = NULL;  /* reset to NULL so we can use it again later */
-        }
-    }
+    mca_oob_tcp_component.tcp_exclude = NULL;
+    var_id = mca_base_component_var_register (component, "if_exclude",
+                                              "Comma-delimited list of devices and/or CIDR notation of networks to NOT use for Open MPI bootstrap communication -- all devices not matching these specifications will be used (e.g., \"eth0,192.168.0.0/16\").  If set to a non-default value, it is mutually exclusive with oob_tcp_if_include.",
+                                              MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
+                                              OPAL_INFO_LVL_9,
+                                              MCA_BASE_VAR_SCOPE_LOCAL,
+                                              &mca_oob_tcp_component.tcp_exclude);
+    (void) mca_base_var_register_synonym (var_id, "orte", "oob", "tcp", "exclude",
+                                          MCA_BASE_VAR_SYN_FLAG_DEPRECATED | MCA_BASE_VAR_SYN_FLAG_INTERNAL);
 
-    mca_base_param_reg_int(&mca_oob_tcp_component.super.oob_base,
-                           "connect_sleep",
-                           "Enable (1) / disable (0) random sleep for "
-                           "connection wireup.",
-                           false,
-                           false,
-                           1,
-                           &mca_oob_tcp_component.connect_sleep);
+    mca_oob_tcp_component.connect_sleep = 1;
+    (void) mca_base_component_var_register (component, "connect_sleep",
+                                            "Enable (1) / disable (0) random sleep for "
+                                            "connection wireup.",
+                                            MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                            OPAL_INFO_LVL_9,
+                                            MCA_BASE_VAR_SCOPE_LOCAL,
+                                            &mca_oob_tcp_component.connect_sleep);
 
-    mca_base_param_reg_string(&mca_oob_tcp_component.super.oob_base,
-                              "listen_mode",
-                              "Mode for HNP to accept incoming connections: "
-                              "event, listen_thread.",
-                              false,
-                              false,
-                              "event",
-                              &listen_type);
-    
-    if (0 == strcmp(listen_type, "event")) {
-        mca_oob_tcp_component.tcp_listen_type = OOB_TCP_EVENT;
-    } else if (0 == strcmp(listen_type, "listen_thread")) {
-        mca_oob_tcp_component.tcp_listen_type = OOB_TCP_LISTEN_THREAD;
-    } else {
-        opal_output(0, "Invalid value for oob_tcp_listen_mode parameter: %s",
-                    listen_type);
+    mca_oob_tcp_component.tcp_listen_type = OOB_TCP_EVENT;
+    (void) mca_base_var_enum_create ("listen modes", tcp_listen_mode_values, &new_enum);
+    var_id = mca_base_component_var_register (component, "listen_mode",
+                                              "Mode for HNP to accept incoming connections: "
+                                              "event, listen_thread.",
+                                              MCA_BASE_VAR_TYPE_INT, new_enum, 0, 0,
+                                              OPAL_INFO_LVL_9,
+                                              MCA_BASE_VAR_SCOPE_LOCAL,
+                                              &mca_oob_tcp_component.tcp_listen_type);
+    OBJ_RELEASE(new_enum);
+    if (0 > var_id) {
+        /* the variable system will print out a bad value error */
         return ORTE_ERROR;
     }
-    free(listen_type);
 
-    mca_base_param_reg_int(&mca_oob_tcp_component.super.oob_base,
-                           "listen_thread_max_queue",
-                           "High water mark for queued accepted socket "
-                           "list size.  Used only when listen_mode is "
-                           "listen_thread.",
-                           false,
-                           false,
-                           10,
-                           &mca_oob_tcp_component.tcp_copy_max_size);
-    mca_base_param_reg_int(&mca_oob_tcp_component.super.oob_base,
-                           "listen_thread_wait_time",
-                           "Time in milliseconds to wait before "
-                           "actively checking for new connections when "
-                           "listen_mode is listen_thread.",
-                           false,
-                           false,
-                           10,
-                           &tmp);
-    mca_oob_tcp_component.tcp_listen_thread_tv.tv_sec = tmp / (1000);
-    mca_oob_tcp_component.tcp_listen_thread_tv.tv_usec = (tmp % 1000) * 1000; 
+    mca_oob_tcp_component.tcp_copy_max_size = 10;
+    (void) mca_base_component_var_register (component, "listen_thread_max_queue",
+                                            "High water mark for queued accepted socket "
+                                            "list size.  Used only when listen_mode is "
+                                            "listen_thread.",
+                                            MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                            OPAL_INFO_LVL_9,
+                                            MCA_BASE_VAR_SCOPE_LOCAL,
+                                            &mca_oob_tcp_component.tcp_copy_max_size);
+
+    tcp_listen_thread_wait_time = 10;
+    (void) mca_base_component_var_register (component, "listen_thread_wait_time",
+                                            "Time in milliseconds to wait before "
+                                            "actively checking for new connections when "
+                                            "listen_mode is listen_thread.",
+                                            MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                            OPAL_INFO_LVL_9,
+                                            MCA_BASE_VAR_SCOPE_LOCAL,
+                                            &tcp_listen_thread_wait_time);
+    /* duplicated in open in case the above variable becomes settable */
+    mca_oob_tcp_component.tcp_listen_thread_tv.tv_sec = tcp_listen_thread_wait_time / (1000);
+    mca_oob_tcp_component.tcp_listen_thread_tv.tv_usec = (tcp_listen_thread_wait_time % 1000) * 1000; 
 
 #if ORTE_ENABLE_STATIC_PORTS
-    mca_base_param_reg_string(&mca_oob_tcp_component.super.oob_base,
-                              "static_ports", "Static ports for daemons and procs (IPv4)",
-                              false, false,
-                              orte_oob_static_ports,
-                              &str);
+    mca_oob_tcp_ipv4_static_ports = orte_oob_static_ports;
+    (void) mca_base_component_var_register (component, "static_ports", 
+                                            "Static ports for daemons and procs (IPv4)",
+                                            MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
+                                            OPAL_INFO_LVL_9,
+                                            MCA_BASE_VAR_SCOPE_READONLY,
+                                            &mca_oob_tcp_ipv4_static_ports);
+
     /* if ports were provided, parse the provided range */
-    if (NULL != str) {
+    if (NULL != mca_oob_tcp_ipv4_static_ports) {
         ip4_ports_given = true;
         orte_static_ports = true;
-        orte_util_parse_range_options(str, &mca_oob_tcp_component.tcp4_static_ports);
+        orte_util_parse_range_options(mca_oob_tcp_ipv4_static_ports,
+                                      &mca_oob_tcp_component.tcp4_static_ports);
         if (0 == strcmp(mca_oob_tcp_component.tcp4_static_ports[0], "-1")) {
             opal_argv_free(mca_oob_tcp_component.tcp4_static_ports);
             mca_oob_tcp_component.tcp4_static_ports = NULL;
@@ -312,21 +329,24 @@ static int mca_oob_tcp_component_register(void)
         mca_oob_tcp_component.tcp4_static_ports = NULL;
     }
 #endif
-    
-    mca_base_param_reg_string(&mca_oob_tcp_component.super.oob_base,
-                              "dynamic_ports", "Range of ports to be dynamically used by daemons and procs (IPv4)",
-                              false, false,
-                              NULL,
-                              &str);
+    mca_oob_tcp_ipv4_dynamic_ports = NULL;
+    (void) mca_base_component_var_register (component, "dynamic_ports",
+                                            "Range of ports to be dynamically used by daemons and procs (IPv4)",
+                                            MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
+                                            OPAL_INFO_LVL_9,
+                                            MCA_BASE_VAR_SCOPE_READONLY,
+                                            &mca_oob_tcp_ipv4_dynamic_ports);
+
     /* if ports were provided, parse the provided range */
-    if (NULL != str) {
+    if (NULL != mca_oob_tcp_ipv4_dynamic_ports) {
         /* can't have both static and dynamic ports! */
         if (orte_static_ports) {
             opal_show_help("help-oob-tcp.txt", "static-and-dynamic", true,
-                           mca_oob_tcp_component.tcp4_static_ports, str);
+                           mca_oob_tcp_component.tcp4_static_ports, mca_oob_tcp_ipv4_dynamic_ports);
             return ORTE_ERROR;
         }
-        orte_util_parse_range_options(str, &mca_oob_tcp_component.tcp4_dyn_ports);
+        orte_util_parse_range_options(mca_oob_tcp_ipv4_dynamic_ports,
+                                      &mca_oob_tcp_component.tcp4_dyn_ports);
         if (0 == strcmp(mca_oob_tcp_component.tcp4_dyn_ports[0], "-1")) {
             opal_argv_free(mca_oob_tcp_component.tcp4_dyn_ports);
             mca_oob_tcp_component.tcp4_dyn_ports = NULL;
@@ -334,22 +354,30 @@ static int mca_oob_tcp_component_register(void)
     } else {
         mca_oob_tcp_component.tcp4_dyn_ports = NULL;
     }
-    
-    mca_base_param_reg_int(&mca_oob_tcp_component.super.oob_base,
-                           "disable_family", "Disable IPv4 (4) or IPv6 (6)",
-                           false, false,
-                           0,
-                           &mca_oob_tcp_component.disable_family);
+
+    mca_oob_tcp_component.disable_family = 0;
+    mca_base_var_enum_create("disable family", disable_family_values, &new_enum);
+    (void) mca_base_component_var_register (component, "disable_family", "Disable IPv4 (4) or IPv6 (6)",
+                                            MCA_BASE_VAR_TYPE_INT, new_enum, 0, 0,
+                                            OPAL_INFO_LVL_9,
+                                            MCA_BASE_VAR_SCOPE_READONLY,
+                                            &mca_oob_tcp_component.disable_family);
+    OBJ_RELEASE(new_enum);
+
 #if OPAL_WANT_IPV6
 #if ORTE_ENABLE_STATIC_PORTS
-    mca_base_param_reg_string(&mca_oob_tcp_component.super.oob_base,
-                              "static_ports_v6", "Static ports for daemons and procs (IPv6)",
-                              false, false,
-                              orte_oob_static_ports,
-                              &str);
-    if (NULL != str) {
+    mca_oob_tcp_ipv6_static_ports = orte_oob_static_ports;
+    (void) mca_base_component_var_register (component, "static_ports_v6",
+                                            "Static ports for daemons and procs (IPv6)",
+                                            MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
+                                            OPAL_INFO_LVL_9,
+                                            MCA_BASE_VAR_SCOPE_READONLY,
+                                            &mca_oob_tcp_ipv6_static_ports);
+
+    if (NULL != mca_oob_tcp_ipv6_static_ports) {
         orte_static_ports = true;
-        orte_util_parse_range_options(str, &mca_oob_tcp_component.tcp6_static_ports);
+        orte_util_parse_range_options(mca_oob_tcp_ipv6_static_ports,
+                                      &mca_oob_tcp_component.tcp6_static_ports);
         if (0 == strcmp(mca_oob_tcp_component.tcp6_static_ports[0], "-1")) {
             if (ip4_ports_given) {
                 opal_output(0, "OOB:TCP:Error: IP4 static ports given, but IPv6 is enabled and an incorrect static port range was provided for it");
@@ -370,20 +398,25 @@ static int mca_oob_tcp_component_register(void)
     }
 #endif
 
-    mca_base_param_reg_string(&mca_oob_tcp_component.super.oob_base,
-                              "dynamic_ports_v6", "Range of ports to be dynamically used by daemons and procs (IPv4)",
-                              false, false,
-                              NULL,
-                              &str);
+    mca_oob_tcp_ipv6_dynamic_ports = NULL;
+    (void) mca_base_component_var_register (component, "dynamic_ports_v6",
+                                            "Range of ports to be dynamically used by daemons and procs (IPv4)",
+                                            MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
+                                            OPAL_INFO_LVL_9,
+                                            MCA_BASE_VAR_SCOPE_READONLY,
+                                            &mca_oob_tcp_ipv6_dynamic_ports);
+
     /* if ports were provided, parse the provided range */
-    if (NULL != str) {
+    if (NULL != mca_oob_tcp_ipv6_dynamic_ports) {
         /* can't have both static and dynamic ports! */
         if (orte_static_ports) {
             opal_show_help("help-oob-tcp.txt", "static-and-dynamic", true,
-                           mca_oob_tcp_component.tcp6_static_ports, str);
+                           mca_oob_tcp_component.tcp6_static_ports,
+                           mca_oob_tcp_ipv6_dynamic_ports);
             return ORTE_ERROR;
         }
-        orte_util_parse_range_options(str, &mca_oob_tcp_component.tcp6_dyn_ports);
+        orte_util_parse_range_options(mca_oob_tcp_ipv6_dynamic_ports,
+                                      &mca_oob_tcp_component.tcp6_dyn_ports);
         if (0 == strcmp(mca_oob_tcp_component.tcp6_dyn_ports[0], "-1")) {
             opal_argv_free(mca_oob_tcp_component.tcp6_dyn_ports);
             mca_oob_tcp_component.tcp6_dyn_ports = NULL;
@@ -403,6 +436,9 @@ static int mca_oob_tcp_component_register(void)
  */
 static int mca_oob_tcp_component_open(void)
 {
+    mca_oob_tcp_component.tcp_listen_thread_tv.tv_sec = tcp_listen_thread_wait_time / (1000);
+    mca_oob_tcp_component.tcp_listen_thread_tv.tv_usec = (tcp_listen_thread_wait_time % 1000) * 1000; 
+
     mca_oob_tcp_output_handle = opal_output_open(NULL);
     opal_output_set_verbosity(mca_oob_tcp_output_handle, verbose_value);
 
@@ -441,13 +477,14 @@ static int mca_oob_tcp_component_open(void)
 
     /* if_include and if_exclude need to be mutually exclusive */
     if (OPAL_SUCCESS != 
-        mca_base_param_check_exclusive_string(
+        mca_base_var_check_exclusive("orte",
         mca_oob_tcp_component.super.oob_base.mca_type_name,
         mca_oob_tcp_component.super.oob_base.mca_component_name,
         "if_include",
         mca_oob_tcp_component.super.oob_base.mca_type_name,
         mca_oob_tcp_component.super.oob_base.mca_component_name,
         "if_exclude")) {
+        fprintf (stderr, "WTF\n");
         /* Return ERR_NOT_AVAILABLE so that a warning message about
            "open" failing is not printed */
         return ORTE_ERR_NOT_AVAILABLE;

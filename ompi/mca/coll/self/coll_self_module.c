@@ -23,7 +23,6 @@
 
 #include "mpi.h"
 #include "ompi/communicator/communicator.h"
-#include "opal/mca/base/mca_base_param.h"
 #include "ompi/mca/coll/coll.h"
 #include "ompi/mca/coll/base/base.h"
 #include "coll_self.h"
@@ -56,11 +55,7 @@ mca_coll_self_comm_query(struct ompi_communicator_t *comm,
     /* We only work on intracommunicators of size 1 */
 
     if (!OMPI_COMM_IS_INTER(comm) && 1 == ompi_comm_size(comm)) {
-        if (OMPI_SUCCESS != 
-            mca_base_param_lookup_int(mca_coll_self_priority_param,
-                                      priority)) {
-            return NULL;
-        }
+        *priority = ompi_coll_self_priority;
 
         module = OBJ_NEW(mca_coll_self_module_t);
         if (NULL == module) return NULL;

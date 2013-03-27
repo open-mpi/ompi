@@ -32,7 +32,6 @@
 #include "opal/util/show_help.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
-#include "opal/mca/base/mca_base_param.h"
 #include "opal/mca/crs/crs.h"
 #include "opal/mca/crs/base/base.h"
 
@@ -1993,8 +1992,8 @@ static void snapc_full_process_job_update_cmd(orte_process_name_t* sender,
 
 static int snapc_full_establish_snapshot_dir(bool empty_metadata)
 {
+    const char **value = NULL;
     int idx = 0;
-    char *value = NULL;
 
     /*********************
      * Contact the Stable Storage Framework to setup the storage directory
@@ -2013,23 +2012,21 @@ static int snapc_full_establish_snapshot_dir(bool empty_metadata)
     /*
      * Save the AMCA parameter used into the metadata file
      */
-    if( 0 > (idx = mca_base_param_find("mca", NULL, "base_param_file_prefix")) ) {
+    if( 0 > (idx = mca_base_var_find("opal", "mca", "base", "param_file_prefix")) ) {
         opal_show_help("help-orte-restart.txt", "amca_param_not_found", true);
     }
     if( 0 < idx ) {
-        mca_base_param_lookup_string(idx, &value);
-        orte_sstore.set_attr(global_snapshot.ss_handle,
-                             SSTORE_METADATA_GLOBAL_AMCA_PARAM,
-                             value);
+        mca_base_var_get_value (idx, &value, sizeof (value), NULL, NULL);
 
-        OPAL_OUTPUT_VERBOSE((10, mca_snapc_full_component.super.output_handle,
-                             "Global) AMCA Parameter Preserved: %s",
-                             value));
-    }
+        if (*value) {
+            orte_sstore.set_attr(global_snapshot.ss_handle,
+                                 SSTORE_METADATA_GLOBAL_AMCA_PARAM,
+                                 *value);
 
-    if( NULL != value ) {
-        free(value);
-        value = NULL;
+            OPAL_OUTPUT_VERBOSE((10, mca_snapc_full_component.super.output_handle,
+                                 "Global) AMCA Parameter Preserved: %s",
+                                 *value));
+        }
     }
 
     return ORTE_SUCCESS;

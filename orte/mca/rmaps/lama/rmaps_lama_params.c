@@ -18,7 +18,6 @@
 
 #include <ctype.h>
 
-
 /*********************************
  * Local Functions
  *********************************/
@@ -38,7 +37,6 @@ static char * rmaps_lama_covert_ppr(char * given_ppr);
 int rmaps_lama_process_alias_params(orte_job_t *jdata)
 {
     int exit_status = ORTE_SUCCESS;
-    int param_tmp, param_value;
 
     /*
      * Mapping options
@@ -199,55 +197,30 @@ int rmaps_lama_process_alias_params(orte_job_t *jdata)
             /*
              * -pernode => -mppr 1:n
              */
-            if( NULL == rmaps_lama_cmd_mppr ) {
-                param_tmp = mca_base_param_reg_int_name("rmaps", "ppr_pernode",
-                                                        "Launch one ppn as directed",
-                                                        false, false, (int)false, NULL);
-                mca_base_param_reg_syn_name(param_tmp, "rmaps", "base_pernode", false);
-                mca_base_param_lookup_int(param_tmp, &param_value);
-                if( param_value ) {
-                    rmaps_lama_cmd_mppr = strdup("1:n");
-                }
+            if( NULL == rmaps_lama_cmd_mppr && orte_rmaps_base_pernode ) {
+                rmaps_lama_cmd_mppr = strdup("1:n");
             }
 
             /*
              * -npernode X  => -mppr X:n
              */
-            if( NULL == rmaps_lama_cmd_mppr ) {
-                param_tmp = mca_base_param_reg_int_name("rmaps", "ppr_n_pernode",
-                                                        "Launch n procs/node",
-                                                        false, false, (int)false, NULL);
-                mca_base_param_reg_syn_name(param_tmp, "rmaps", "base_n_pernode", false);
-                mca_base_param_lookup_int(param_tmp, &param_value);
-                if( param_value ) {
-                    asprintf(&rmaps_lama_cmd_mppr, "%d:n", param_value);
-                }
+            if( NULL == rmaps_lama_cmd_mppr && orte_rmaps_base_n_pernode > 0) {
+                asprintf(&rmaps_lama_cmd_mppr, "%d:n", orte_rmaps_base_n_pernode);
             }
 
             /*
              * -npersocket X  => -mppr X:s
              */
-            if( NULL == rmaps_lama_cmd_mppr ) {
-                param_tmp = mca_base_param_reg_int_name("rmaps", "ppr_n_persocket",
-                                                        "Launch n procs/socket",
-                                                        false, false, (int)false, NULL);
-                mca_base_param_reg_syn_name(param_tmp, "rmaps", "base_n_persocket", false);
-                mca_base_param_lookup_int(param_tmp, &param_value);
-                if( param_value ) {
-                    asprintf(&rmaps_lama_cmd_mppr, "%d:s", param_value);
-                }
+            if( NULL == rmaps_lama_cmd_mppr && orte_rmaps_base_n_persocket > 0) {
+                asprintf(&rmaps_lama_cmd_mppr, "%d:s", orte_rmaps_base_n_persocket);
             }
 
             /*
              * -ppr  => ~ -mppr
              */
-            if( NULL == rmaps_lama_cmd_mppr ) {
-                mca_base_param_reg_string_name("rmaps", "ppr_pattern",
-                                               "Comma-separated list of number of processes on a given resource type [default: none]",
-                                               false, false, NULL, &(jdata->map->ppr));
-                if( NULL != jdata->map->ppr ) {
-                    rmaps_lama_cmd_mppr = rmaps_lama_covert_ppr(jdata->map->ppr);
-                }
+            if( NULL == rmaps_lama_cmd_mppr && NULL != orte_rmaps_base_pattern ) {
+                jdata->map->ppr = strdup (orte_rmaps_base_pattern);
+                rmaps_lama_cmd_mppr = rmaps_lama_covert_ppr(jdata->map->ppr);
             }
         }
     }

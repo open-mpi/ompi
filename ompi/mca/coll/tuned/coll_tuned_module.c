@@ -24,7 +24,6 @@
 
 #include "mpi.h"
 #include "ompi/communicator/communicator.h"
-#include "opal/mca/base/mca_base_param.h"
 #include "ompi/mca/coll/coll.h"
 #include "ompi/mca/coll/base/base.h"
 #include "coll_tuned.h"
@@ -121,6 +120,7 @@ ompi_coll_tuned_forced_getvalues( enum COLLTYPE type,
                                   coll_tuned_force_algorithm_params_t *forced_values )
 {
     coll_tuned_force_algorithm_mca_param_indices_t* mca_params;
+    const int *tmp;
 
     mca_params = &(ompi_coll_tuned_forced_params[type]);
 
@@ -129,13 +129,18 @@ ompi_coll_tuned_forced_getvalues( enum COLLTYPE type,
      * to see if it was setted explicitly (if we suppose that setting it to 0 enable the
      * default behavior) or not.
      */
-    forced_values->algorithm = 0;
-    mca_base_param_lookup_int (mca_params->algorithm_param_index,    &(forced_values->algorithm));
+    mca_base_var_get_value(mca_params->algorithm_param_index, &tmp, NULL, NULL);
+    forced_values->algorithm = tmp ? tmp[0] : 0;
+
     if( BARRIER != type ) {
-        mca_base_param_lookup_int (mca_params->segsize_param_index,      &(forced_values->segsize));
-        mca_base_param_lookup_int (mca_params->tree_fanout_param_index,  &(forced_values->tree_fanout));
-        mca_base_param_lookup_int (mca_params->chain_fanout_param_index, &(forced_values->chain_fanout));
-        mca_base_param_lookup_int (mca_params->max_requests_param_index, &(forced_values->max_requests));
+        mca_base_var_get_value(mca_params->segsize_param_index, &tmp, NULL, NULL);
+        if (tmp) forced_values->segsize = tmp[0];
+        mca_base_var_get_value(mca_params->tree_fanout_param_index, &tmp, NULL, NULL);
+        if (tmp) forced_values->tree_fanout = tmp[0];
+        mca_base_var_get_value(mca_params->chain_fanout_param_index, &tmp, NULL, NULL);
+        if (tmp) forced_values->chain_fanout = tmp[0];
+        mca_base_var_get_value(mca_params->max_requests_param_index, &tmp, NULL, NULL);
+        if (tmp) forced_values->max_requests = tmp[0];
     }
     return (MPI_SUCCESS);
 }
@@ -159,7 +164,7 @@ ompi_coll_tuned_forced_getvalues( enum COLLTYPE type,
         }                                                               \
         if( 1 == need_dynamic_decision ) {                              \
             OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned: enable dynamic selection for "#TYPE)); \
-            ompi_coll_tuned_use_dynamic_rules = 1;                      \
+            ompi_coll_tuned_use_dynamic_rules = true;                   \
             EXECUTE;                                                    \
         }                                                               \
     }
@@ -219,7 +224,7 @@ tuned_module_enable( mca_coll_base_module_t *module,
         /**
          * Reset it to 0, it will be enabled again if we discover any need for dynamic decisions.
          */
-        ompi_coll_tuned_use_dynamic_rules = 0;
+        ompi_coll_tuned_use_dynamic_rules = false;
 
         /**
          * next dynamic state, recheck all forced rules as well
@@ -258,7 +263,7 @@ tuned_module_enable( mca_coll_base_module_t *module,
         COLL_TUNED_EXECUTE_IF_DYNAMIC(data, SCATTERV,
                                       tuned_module->super.coll_scatterv   = NULL);
 
-        if( 0 == ompi_coll_tuned_use_dynamic_rules ) {
+        if( false == ompi_coll_tuned_use_dynamic_rules ) {
             /* no real need for dynamic decisions */
             OPAL_OUTPUT((ompi_coll_tuned_stream, "coll:tuned:module_enable switch back to fixed"
                          " decision by lack of dynamic rules"));

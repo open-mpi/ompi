@@ -122,12 +122,13 @@ static int
 libnbc_register(void)
 {
     /* Use a low priority, but allow other components to be lower */
-
-    mca_base_param_reg_int(&mca_coll_libnbc_component.super.collm_version,
-                           "priority",
-                           "Priority of the libnbc coll component",
-                           false, false, libnbc_priority,
-                           &libnbc_priority);
+    libnbc_priority = 10;
+    (void) mca_base_component_var_register(&mca_coll_libnbc_component.super.collm_version,
+                                           "priority", "Priority of the libnbc coll component",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &libnbc_priority);
 
     return OMPI_SUCCESS;
 }

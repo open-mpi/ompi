@@ -18,6 +18,9 @@
  */
 
 /** @file 
+ * \deprecated The entire mca_base_param system has been deprectated for
+ * 1.7 (removed in 1.9). Please use the mca_base_var system instead.
+ *
  * This file presents the MCA parameter interface.
  *
  * Note that there are two scopes for MCA parameters: "normal" and
@@ -108,13 +111,13 @@ struct mca_base_param_info_t {
     mca_base_param_type_t mbpp_type;
 
     /** String name of the type of this component */
-    char *mbpp_type_name;
+    const char *mbpp_type_name;
     /** String name of the component of the parameter */
-    char *mbpp_component_name;
+    const char *mbpp_component_name;
     /** String name of the parameter of the parameter */
-    char *mbpp_param_name;
+    const char *mbpp_param_name;
     /** Full, assembled parameter name */
-    char *mbpp_full_name;
+    const char *mbpp_full_name;
 
     /** Is this parameter deprecated? */
     bool mbpp_deprecated;
@@ -132,7 +135,7 @@ struct mca_base_param_info_t {
     /** Is this parameter changable? */
     bool mbpp_read_only;
     /** Help message associated with this parameter */
-    char *mbpp_help_msg;
+    const char *mbpp_help_msg;
 };
 /**
  * Convenience typedef
@@ -159,7 +162,7 @@ BEGIN_C_DECLS
      * invoked internally (by mca_base_open()) and is only documented
      * here for completeness.
      */
-    OPAL_DECLSPEC int mca_base_param_init(void);
+    OPAL_DECLSPEC int mca_base_param_init(void) __opal_attribute_deprecated__;
 
     /**
      * Recache the MCA param files
@@ -169,7 +172,7 @@ BEGIN_C_DECLS
      * @retval OPAL_SUCCESS
      *
      */
-    OPAL_DECLSPEC int mca_base_param_recache_files(bool rel_path_search);
+    OPAL_DECLSPEC int mca_base_param_recache_files(bool rel_path_search) __opal_attribute_deprecated__;
 
     /**
      * Register an integer MCA parameter.
@@ -229,7 +232,7 @@ BEGIN_C_DECLS
                                              bool internal,
                                              bool read_only,
                                              int default_value,
-                                             int *current_value);
+                                             int *current_value) __opal_attribute_deprecated__;
 
     /**
      * Register an integer MCA parameter that is not associated with a
@@ -291,7 +294,7 @@ BEGIN_C_DECLS
                                                   bool internal,
                                                   bool read_only,
                                                   int default_value,
-                                                  int *current_value);
+                                                  int *current_value) __opal_attribute_deprecated__;
     
     /**
      * Register a string MCA parameter.
@@ -335,7 +338,7 @@ BEGIN_C_DECLS
                                                 bool internal,
                                                 bool read_only,
                                                 const char *default_value,
-                                                char **current_value);
+                                                char **current_value) __opal_attribute_deprecated__;
 
 
     /**
@@ -402,7 +405,7 @@ BEGIN_C_DECLS
                                                      bool internal,
                                                      bool read_only,
                                                      const char *default_value,
-                                                     char **current_value);
+                                                     char **current_value) __opal_attribute_deprecated__;
 
     /**
      * Register a synonym name for an MCA parameter.
@@ -441,7 +444,7 @@ BEGIN_C_DECLS
     OPAL_DECLSPEC int mca_base_param_reg_syn(int orignal_index, 
                                              const mca_base_component_t *syn_component,
                                              const char *syn_param_name, 
-                                             bool deprecated);
+                                             bool deprecated) __opal_attribute_deprecated__;
 
     /**
      * Register an MCA parameter synonym that is not associated with a
@@ -467,7 +470,7 @@ BEGIN_C_DECLS
     OPAL_DECLSPEC int mca_base_param_reg_syn_name(int orignal_index, 
                                                   const char *syn_type,
                                                   const char *syn_param_name, 
-                                                  bool deprecated);
+                                                  bool deprecated) __opal_attribute_deprecated__;
 
     /**
      * Deregister a MCA parameter
@@ -475,7 +478,7 @@ BEGIN_C_DECLS
      * @param index Index returned from mca_base_param_register_init()
      *
      */
-    OPAL_DECLSPEC int mca_base_param_deregister(int index);
+    OPAL_DECLSPEC int mca_base_param_deregister(int index) __opal_attribute_deprecated__;
 
     /**
      * Look up an integer MCA parameter.
@@ -493,7 +496,7 @@ BEGIN_C_DECLS
      * The value of a specific MCA parameter can be looked up using the
      * return value from mca_base_param_reg_int().
      */
-    OPAL_DECLSPEC int mca_base_param_lookup_int(int index, int *value);
+OPAL_DECLSPEC int mca_base_param_lookup_int(int index, int *value) __opal_attribute_deprecated__;
     
     /**
      * Look up a string MCA parameter.
@@ -518,7 +521,7 @@ BEGIN_C_DECLS
      * The value of a specific MCA parameter can be looked up using the
      * return value from mca_base_param_reg_string().
      */
-    OPAL_DECLSPEC int mca_base_param_lookup_string(int index, char **value);
+OPAL_DECLSPEC int mca_base_param_lookup_string(int index, char **value) __opal_attribute_deprecated__;
 
     /**
      * Lookup the source of an MCA parameter's value
@@ -538,7 +541,7 @@ BEGIN_C_DECLS
      */
     OPAL_DECLSPEC int mca_base_param_lookup_source(int index, 
                                                    mca_base_param_source_t *source,
-                                                   char **source_file);
+                                                   const char **source_file) __opal_attribute_deprecated__;
 
     /**
      * Sets an "override" value for an integer MCA parameter.
@@ -558,7 +561,7 @@ BEGIN_C_DECLS
      * This function may be invoked multiple times; each time, the
      * last "set" value is replaced with the newest value.
      */
-    OPAL_DECLSPEC int mca_base_param_set_int(int index, int value);
+    OPAL_DECLSPEC int mca_base_param_set_int(int index, int value) __opal_attribute_deprecated__;
 
     /**
      * Sets an "override" value for an string MCA parameter.
@@ -582,7 +585,7 @@ BEGIN_C_DECLS
      * last "set" value is replaced with the newest value (the old
      * value is discarded).
      */
-    OPAL_DECLSPEC int mca_base_param_set_string(int index, char *value);
+    OPAL_DECLSPEC int mca_base_param_set_string(int index, char *value) __opal_attribute_deprecated__;
 
     /**
      * Unset a parameter that was previously set by
@@ -596,7 +599,7 @@ BEGIN_C_DECLS
      * Resets previous value that was set (if any) on the given MCA
      * parameter.
      */
-    OPAL_DECLSPEC int mca_base_param_unset(int index);
+    OPAL_DECLSPEC int mca_base_param_unset(int index) __opal_attribute_deprecated__;
 
     /**
      * Get the string name corresponding to the MCA parameter
@@ -611,7 +614,7 @@ BEGIN_C_DECLS
      * The string that is returned is owned by the caller; if
      * appropriate, it must be eventually freed by the caller.
      */
-    OPAL_DECLSPEC char *mca_base_param_env_var(const char *param_name);
+    OPAL_DECLSPEC char *mca_base_param_env_var(const char *param_name) __opal_attribute_deprecated__;
 
     /**
      * Find the index for an MCA parameter based on its names.
@@ -633,7 +636,7 @@ BEGIN_C_DECLS
      */
     OPAL_DECLSPEC int mca_base_param_find(const char *type, 
                                           const char *component, 
-                                          const char *param);
+                                          const char *param) __opal_attribute_deprecated__;
 
 /**
  * Find an MCA parameter in an env array based on its names.
@@ -652,7 +655,7 @@ BEGIN_C_DECLS
 OPAL_DECLSPEC int mca_base_param_find_int(const mca_base_component_t *component,
                                           const char *param_name,
                                           char **env,
-                                          int *current_value);
+                                          int *current_value) __opal_attribute_deprecated__;
 
 /**
  * Find an MCA parameter (in an env array) that is not associated with a
@@ -673,7 +676,7 @@ OPAL_DECLSPEC int mca_base_param_find_int(const mca_base_component_t *component,
 OPAL_DECLSPEC int mca_base_param_find_int_name(const char *type,
                                                const char *param_name,
                                                char **env,
-                                               int *current_value);
+                                               int *current_value) __opal_attribute_deprecated__;
 /**
  * Find a string MCA parameter in an env array based on its names.
  *
@@ -691,7 +694,7 @@ OPAL_DECLSPEC int mca_base_param_find_int_name(const char *type,
 OPAL_DECLSPEC int mca_base_param_find_string(const mca_base_component_t *component,
                                              const char *param_name,
                                              char **env,
-                                             char **current_value);
+                                             char **current_value) __opal_attribute_deprecated__;
 
 /**
  * Find a string MCA parameter (in an env array) that is not associated with a
@@ -712,7 +715,7 @@ OPAL_DECLSPEC int mca_base_param_find_string(const mca_base_component_t *compone
 OPAL_DECLSPEC int mca_base_param_find_string_name(const char *type,
                                                   const char *param_name,
                                                   char **env,
-                                                  char **current_value);
+                                                  char **current_value) __opal_attribute_deprecated__;
 
 /**
  * Check that two MCA parameters were not both set to non-default
@@ -747,7 +750,7 @@ OPAL_DECLSPEC int mca_base_param_check_exclusive_string(const char *type_a,
                                           const char *param_a,
                                           const char *type_b,
                                           const char *component_b,
-                                          const char *param_b);
+                                          const char *param_b) __opal_attribute_deprecated__;
 
     /**
      * Set the "internal" flag on an MCA parameter to true or false.
@@ -768,7 +771,7 @@ OPAL_DECLSPEC int mca_base_param_check_exclusive_string(const char *type_a,
      * MPI_INIT (at least, they're not displayed by default), thus
      * keeping them away from prying user eyes.
      */
-    OPAL_DECLSPEC int mca_base_param_set_internal(int index, bool internal);
+    OPAL_DECLSPEC int mca_base_param_set_internal(int index, bool internal) __opal_attribute_deprecated__;
 
     /**
      * Obtain a list of all the MCA parameters currently defined as
@@ -794,7 +797,7 @@ OPAL_DECLSPEC int mca_base_param_check_exclusive_string(const char *type_a,
      * mca_base_param_dump_release() when finished with the returned
      * info list to release all associated memory.
      */
-    OPAL_DECLSPEC int mca_base_param_dump(opal_list_t **info, bool internal);
+    OPAL_DECLSPEC int mca_base_param_dump(opal_list_t **info, bool internal) __opal_attribute_deprecated__;
 
     /**
      * Obtain a list of all the MCA parameters currently defined as
@@ -815,7 +818,7 @@ OPAL_DECLSPEC int mca_base_param_check_exclusive_string(const char *type_a,
      * strings, suitable for using in an environment.
      */
     OPAL_DECLSPEC int mca_base_param_build_env(char ***env, int *num_env,
-                                               bool internal);
+                                               bool internal) __opal_attribute_deprecated__;
 
     /**
      * Release the memory associated with the info list returned from
@@ -834,7 +837,7 @@ OPAL_DECLSPEC int mca_base_param_check_exclusive_string(const char *type_a,
      * the caller is finished with the info list, invoke this
      * function and all memory associated with the list will be freed.
      */
-    OPAL_DECLSPEC int mca_base_param_dump_release(opal_list_t *info);
+    OPAL_DECLSPEC int mca_base_param_dump_release(opal_list_t *info) __opal_attribute_deprecated__;
 
     /**
      * Shut down the MCA parameter system (normally only invoked by the
@@ -850,7 +853,7 @@ OPAL_DECLSPEC int mca_base_param_check_exclusive_string(const char *type_a,
      * when the process is shutting down (e.g., during MPI_FINALIZE).  It
      * is only documented here for completeness.
      */
-    OPAL_DECLSPEC int mca_base_param_finalize(void);
+    OPAL_DECLSPEC int mca_base_param_finalize(void) __opal_attribute_deprecated__;
 
 END_C_DECLS
 

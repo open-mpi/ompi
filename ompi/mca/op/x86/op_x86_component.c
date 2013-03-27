@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008-2009 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2008-2013 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -27,8 +27,8 @@
 
 #include "ompi_config.h"
 
-#include "opal/mca/base/mca_base_param.h"
 #include "opal/util/output.h"
+#include "opal/mca/base/mca_base_var.h"
 
 #include "ompi/constants.h"
 #include "ompi/op/op.h"
@@ -123,6 +123,12 @@ static void hardware_probe(void)
     /* ... JMS fill in here ... */
 }
 
+static bool x86_mmx_available;
+static bool x86_mmx2_available;
+static bool x86_sse_available;
+static bool x86_sse2_available;
+static bool x86_sse3_available;
+
 /*
  * Register MCA params.
  */
@@ -135,36 +141,50 @@ static int x86_component_register(void)
     /* Probe the hardware and see what we have */
     hardware_probe();
 
-    val = (0 != (mca_op_x86_component.oxc_hw_flags & OP_X86_HW_FLAGS_MMX));
-    mca_base_param_reg_int(&mca_op_x86_component.super.opc_version,
-                           "mmx_available", 
-                           "Whether the hardware supports MMX or not",
-                           false, false, val, NULL);
+    x86_mmx_available = (0 != (mca_op_x86_component.oxc_hw_flags & OP_X86_HW_FLAGS_MMX));
+    (void) mca_base_component_var_register(&mca_op_x86_component.super.opc_version,
+                                           "mmx_available", "Whether the hardware supports MMX or not",
+                                           MCA_BASE_VAR_TYPE_BOOL, NULL, 0,
+                                           MCA_BASE_VAR_FLAG_DEFAULT_ONLY,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &x86_mmx_available);
 
-    val = (0 != (mca_op_x86_component.oxc_hw_flags & OP_X86_HW_FLAGS_MMX2));
-    mca_base_param_reg_int(&mca_op_x86_component.super.opc_version,
-                           "mmx2_available", 
-                           "Whether the hardware supports MMX2 or not",
-                           false, false, val, NULL);
-    
-    val = (0 != (mca_op_x86_component.oxc_hw_flags & OP_X86_HW_FLAGS_SSE));
-    mca_base_param_reg_int(&mca_op_x86_component.super.opc_version,
-                           "sse_available", 
-                           "Whether the hardware supports SSE or not",
-                           false, false, val, NULL);
-    
-    val = (0 != (mca_op_x86_component.oxc_hw_flags & OP_X86_HW_FLAGS_SSE2));
-    mca_base_param_reg_int(&mca_op_x86_component.super.opc_version,
-                           "sse2_available", 
-                           "Whether the hardware supports SSE2 or not",
-                           false, false, val, NULL);
-    
-    val = (0 != (mca_op_x86_component.oxc_hw_flags & OP_X86_HW_FLAGS_SSE3));
-    mca_base_param_reg_int(&mca_op_x86_component.super.opc_version,
-                           "sse3_available", 
-                           "Whether the hardware supports SSE3 or not",
-                           false, false, val, NULL);
-    
+    x86_mmx2_available = (0 != (mca_op_x86_component.oxc_hw_flags & OP_X86_HW_FLAGS_MMX2));
+    (void) mca_base_component_var_register(&mca_op_x86_component.super.opc_version,
+                                           "mmx2_available", "Whether the hardware supports MMX2 or not",
+                                           MCA_BASE_VAR_TYPE_BOOL, NULL, 0,
+                                           MCA_BASE_VAR_FLAG_DEFAULT_ONLY,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &x86_mmx2_available);
+
+    x86_sse_available = (0 != (mca_op_x86_component.oxc_hw_flags & OP_X86_HW_FLAGS_SSE));
+    (void) mca_base_component_var_register(&mca_op_x86_component.super.opc_version,
+                                           "sse_available", "Whether the hardware supports SSE or not",
+                                           MCA_BASE_VAR_TYPE_BOOL, NULL, 0,
+                                           MCA_BASE_VAR_FLAG_DEFAULT_ONLY,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &x86_sse_available);
+
+    x86_sse2_available = (0 != (mca_op_x86_component.oxc_hw_flags & OP_X86_HW_FLAGS_SSE2));
+    (void) mca_base_component_var_register(&mca_op_x86_component.super.opc_version,
+                                           "sse2_available", "Whether the hardware supports SSE2 or not",
+                                           MCA_BASE_VAR_TYPE_BOOL, NULL, 0,
+                                           MCA_BASE_VAR_FLAG_DEFAULT_ONLY,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &x86_sse2_available);
+
+    x86_sse3_available = (0 != (mca_op_x86_component.oxc_hw_flags & OP_X86_HW_FLAGS_SSE3));
+    (void) mca_base_component_var_register(&mca_op_x86_component.super.opc_version,
+                                           "sse3_available", "Whether the hardware supports SSE3 or not",
+                                           MCA_BASE_VAR_TYPE_BOOL, NULL, 0,
+                                           MCA_BASE_VAR_FLAG_DEFAULT_ONLY,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &x86_sse3_available);    
 
     return OMPI_SUCCESS;
 }

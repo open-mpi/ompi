@@ -513,7 +513,7 @@ static int do_child(orte_app_context_t* context,
                     }
                     hwloc_bitmap_free(mycpus);
                     /* avoid reporting it twice */
-                    param = mca_base_param_env_var ("hwloc_base_report_bindings");
+                    (void) mca_base_var_env_name ("hwloc_base_report_bindings", &param);
                     opal_unsetenv(param, &environ_copy);
                     free(param);
                 }
@@ -544,12 +544,12 @@ static int do_child(orte_app_context_t* context,
                 /* Set an info MCA param that tells
                    the launched processes that it was bound by us (e.g., so that
                    MPI_INIT doesn't try to bind itself) */
-                param = mca_base_param_env_var ("orte_bound_at_launch");
+                (void) mca_base_var_env_name ("orte_bound_at_launch", &param);
                 opal_setenv(param, "1", true, &environ_copy);
                 free(param);
                 /* ...and provide a nice string representation of what we
                    bound to */
-                param = mca_base_param_env_var ("orte_base_applied_binding");
+                (void) mca_base_var_env_name ("orte_base_applied_binding", &param);
                 opal_setenv(param, child->cpu_bitmap, true, &environ_copy);
                 free (param);
             }

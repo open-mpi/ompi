@@ -38,7 +38,7 @@
 #endif
 
 #include "opal/constants.h"
-#include "opal/mca/base/mca_base_param.h"
+#include "opal/runtime/opal_params.h"
 
 #include "opal/util/sys_limits.h"
 #include "opal/util/output.h"
@@ -57,17 +57,10 @@ OPAL_DECLSPEC opal_sys_limits_t opal_sys_limits = {
 int opal_util_init_sys_limits(void)
 {
     struct rlimit rlim, rlim_set;
-    int value;
-    bool set_lims;
-
-    mca_base_param_reg_int_name("opal", "set_max_sys_limits", 
-                                "Set to non-zero to automatically set any system-imposed limits to the maximum allowed",
-                                false, false, (int)false, &value);
-    set_lims = OPAL_INT_TO_BOOL(value);
 
     /* get/set the system limits on number of files we can have open */
     if (0 <= getrlimit (RLIMIT_NOFILE, &rlim)) {
-        if (set_lims) {
+        if (opal_set_max_sys_limits) {
             rlim_set.rlim_cur = rlim.rlim_max;
             rlim_set.rlim_max = rlim.rlim_max;
             if (0 <= setrlimit (RLIMIT_NOFILE, &rlim_set)) {
@@ -80,7 +73,7 @@ int opal_util_init_sys_limits(void)
 #if HAVE_DECL_RLIMIT_NPROC
     /* get/set the system limits on number of child procs we can have open */
     if (0 <= getrlimit (RLIMIT_NPROC, &rlim)) {
-        if (set_lims) {
+        if (opal_set_max_sys_limits) {
             rlim_set.rlim_cur = rlim.rlim_max;
             rlim_set.rlim_max = rlim.rlim_max;
             if (0 <= setrlimit (RLIMIT_NPROC, &rlim_set)) {
@@ -93,7 +86,7 @@ int opal_util_init_sys_limits(void)
     
     /* get/set the system limits on max file size we can create */
     if (0 <= getrlimit (RLIMIT_FSIZE, &rlim)) {
-        if (set_lims) {
+        if (opal_set_max_sys_limits) {
             rlim_set.rlim_cur = rlim.rlim_max;
             rlim_set.rlim_max = rlim.rlim_max;
             if (0 <= setrlimit (RLIMIT_FSIZE, &rlim_set)) {

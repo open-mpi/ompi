@@ -42,7 +42,6 @@
 
 #include "opal/mca/mca.h"
 #include "opal/util/output.h"
-#include "opal/mca/base/mca_base_param.h"
 
 #include "opal/dss/dss.h"
 #include "orte/constants.h"

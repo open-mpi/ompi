@@ -27,7 +27,6 @@
 
 #include "opal/mca/base/base.h"
 #include "opal/util/output.h"
-#include "opal/mca/base/mca_base_param.h"
 
 #include "orte/runtime/orte_globals.h"
 #include "orte/util/name_fns.h"
@@ -39,10 +38,12 @@
  * Local functions
  */
 
+static int orte_ras_gridengine_register(void);
 static int orte_ras_gridengine_open(void);
 static int orte_ras_gridengine_close(void);
 static int orte_ras_gridengine_component_query(mca_base_module_t **module, int *priority);
 
+static int orte_ras_gridengine_verbose;
 
 orte_ras_gridengine_component_t mca_ras_gridengine_component = {
     {
@@ -57,7 +58,8 @@ orte_ras_gridengine_component_t mca_ras_gridengine_component = {
         ORTE_RELEASE_VERSION,        /* MCA component release version */
         orte_ras_gridengine_open,    /* component open  */
         orte_ras_gridengine_close,    /* component close */
-        orte_ras_gridengine_component_query
+        orte_ras_gridengine_component_query,
+        orte_ras_gridengine_register
       },
       {
           /* The component is checkpoint ready */
@@ -66,32 +68,40 @@ orte_ras_gridengine_component_t mca_ras_gridengine_component = {
     }
 };
 
+static int orte_ras_gridengine_register(void)
+{
+    mca_base_component_t *c = &mca_ras_gridengine_component.super.base_version;
+
+    mca_ras_gridengine_component.priority = 100;
+    (void) mca_base_component_var_register (c, "priority", "Priority of the gridengine ras component",
+                                            MCA_BASE_VAR_TYPE_INT, NULL, 0, 0, OPAL_INFO_LVL_9,
+                                            MCA_BASE_VAR_SCOPE_READONLY, &mca_ras_gridengine_component.priority);
+
+    orte_ras_gridengine_verbose = 0;
+    (void) mca_base_component_var_register (c, "verbose", 
+                                            "Enable verbose output for the gridengine ras component",
+                                            MCA_BASE_VAR_TYPE_INT, NULL, 0, 0, OPAL_INFO_LVL_9,
+                                            MCA_BASE_VAR_SCOPE_LOCAL, &orte_ras_gridengine_verbose);
+
+    mca_ras_gridengine_component.show_jobid = false;
+    (void) mca_base_component_var_register (c, "show_jobid", "Show the JOB_ID of the Grid Engine job",
+                                            MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0, OPAL_INFO_LVL_9,
+                                            MCA_BASE_VAR_SCOPE_READONLY, &mca_ras_gridengine_component.show_jobid);
+
+    return ORTE_SUCCESS;
+}
+
 /**
   * component open/close/init function
   */
 static int orte_ras_gridengine_open(void)
 {
-    int value;
-    mca_base_component_t *c = &mca_ras_gridengine_component.super.base_version;
-
-    mca_base_param_reg_int(c, "debug",
-        "Enable debugging output for the gridengine ras component",
-        false, false, 0, &mca_ras_gridengine_component.debug);
-    mca_base_param_reg_int(c, "priority",
-        "Priority of the gridengine ras component",
-        false , false, 100, &mca_ras_gridengine_component.priority);
-    mca_base_param_reg_int(c, "verbose",
-        "Enable verbose output for the gridengine ras component",
-        false, false, 0, &value);
-    mca_base_param_reg_int(c, "show_jobid",
-        "Show the JOB_ID of the Grid Engine job",
-        false, false, 0, &mca_ras_gridengine_component.show_jobid);
-
-    if (value != 0) {
+    if (orte_ras_gridengine_verbose != 0) {
         mca_ras_gridengine_component.verbose = opal_output_open(NULL);
     } else {
         mca_ras_gridengine_component.verbose = -1;
     }
+
     return ORTE_SUCCESS;
 }
 

@@ -46,7 +46,6 @@
 #include "opal/util/argv.h"
 #include "ompi/mca/btl/btl.h"
 
-#include "opal/mca/base/mca_base_param.h"
 #include "ompi/runtime/ompi_module_exchange.h"
 #include "ompi/runtime/mpiruntime.h"
 #include "ompi/mca/mpool/base/base.h" 
@@ -104,27 +103,29 @@ struct mca_btl_sctp_proc_table_node *sender_proc_table;
  */
 
 static inline char* mca_btl_sctp_param_register_string(
-                                                     const char* param_name, 
-                                                     const char* default_value)
+        const char* param_name, 
+        const char* default_value,
+        char **storage)
 {
-    char *param_value;
-    char *help_string = NULL;    
-    mca_base_param_reg_string(&mca_btl_sctp_component.super.btl_version,
-                              param_name, help_string, false, false,
-                              default_value, &param_value);   
-    return param_value;
+    *storage = default_value;
+    (void) mca_base_component_var_register(&mca_btl_sctp_component.super.btl_version,
+                                           param_name, NULL, MCA_BASE_VAR_TYPE_STRING,
+                                           NULL, 0, 0, OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY, storage);
+    return *storage;
 }
 
 static inline int mca_btl_sctp_param_register_int(
         const char* param_name, 
-        int default_value)
+        int default_value,
+        int *storage)
 {
-    int param_value;
-    char *help_string = NULL;
-    mca_base_param_reg_int(&mca_btl_sctp_component.super.btl_version,
-                           param_name, help_string, false, false, 
-                           default_value, &param_value);
-    return param_value;
+    *storage = default_value;
+    (void) mca_base_component_var_register(&mca_btl_sctp_component.super.btl_version,
+                                           param_name, NULL, MCA_BASE_VAR_TYPE_INT,
+                                           NULL, 0, 0, OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY, storage);
+    return *storage;
 }
 
 
@@ -166,39 +167,38 @@ OBJ_CLASS_INSTANCE(
 static void mca_btl_sctp_component_recv_handler(int, short, void*); /* for 1-1 */
 /* mca_btl_sctp_recv_handler(int, short, void*) for 1-many is in btl_sctp_recv_handler.h */
 
+static bool use_nagle = false;
 
 static int mca_btl_sctp_component_register(void)
 {
     /* register SCTP component parameters */
     /* num links */
-    mca_btl_sctp_component.sctp_if_include =
-        mca_btl_sctp_param_register_string("if_include", "");
-    mca_btl_sctp_component.sctp_if_exclude =
-        mca_btl_sctp_param_register_string("if_exclude", "lo");
-    mca_btl_sctp_component.sctp_free_list_num =
-        mca_btl_sctp_param_register_int ("free_list_num", 8);
-    mca_btl_sctp_component.sctp_free_list_max =
-        mca_btl_sctp_param_register_int ("free_list_max", -1);
-    mca_btl_sctp_component.sctp_free_list_inc =
-        mca_btl_sctp_param_register_int ("free_list_inc", 32);
-    mca_btl_sctp_component.sctp_sndbuf =
-        mca_btl_sctp_param_register_int ("sndbuf", 128*1024);
-    mca_btl_sctp_component.sctp_rcvbuf =
-        mca_btl_sctp_param_register_int ("rcvbuf", 128*1024);
-    mca_btl_sctp_component.sctp_endpoint_cache =
-        mca_btl_sctp_param_register_int ("endpoint_cache", 30*1024);
-    mca_btl_sctp_component.sctp_use_nodelay =
-        !mca_btl_sctp_param_register_int ("use_nagle", 0);
+    mca_btl_sctp_param_register_string("if_include", "", &mca_btl_sctp_component.sctp_if_include);
+    mca_btl_sctp_param_register_string("if_exclude", "lo", &mca_btl_sctp_component.sctp_if_exclude);
+    mca_btl_sctp_param_register_int("free_list_num", 8, &mca_btl_sctp_component.sctp_free_list_num);
+    mca_btl_sctp_param_register_int("free_list_max", -1, &mca_btl_sctp_component.sctp_free_list_max);
+    mca_btl_sctp_param_register_int("free_list_inc", 32, &mca_btl_sctp_component.sctp_free_list_inc);
+    mca_btl_sctp_param_register_int("sndbuf", 128*1024, &mca_btl_sctp_component.sctp_sndbuf);
+    mca_btl_sctp_param_register_int("rcvbuf", 128*1024, &mca_btl_sctp_component.sctp_rcvbuf);
+    mca_btl_sctp_param_register_int("endpoint_cache", 30*1024, &mca_btl_sctp_component.sctp_endpoint_cache);
+
+    (void) mca_base_component_var_register(&mca_btl_sctp_component.super.btl_version,
+                                           "use_nagle", NULL, MCA_BASE_VAR_TYPE_BOOL,
+                                           NULL, 0, 0, OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY, &use_nagle);
+
     /* port_min */
     /* port_range */
     /* use a single one-to-many socket by default except in Solaris (see
      *  the configure.m4 file)
      */
-    mca_base_param_reg_int(&mca_btl_sctp_component.super.btl_version,
-                           "if_11", "If 0, have one SCTP BTL module and let SCTP do multilink scheduling. If non-zero, have an SCTP BTL module per link and let the PML do the scheduling.",
-                           false, false,
-                           OMPI_MCA_BTL_SCTP_USE_ONE_TO_ONE_SOCKET,
-                           &mca_btl_sctp_component.sctp_if_11);
+    mca_btl_sctp_component.sctp_if_11 = OMPI_MCA_BTL_SCTP_USE_ONE_TO_ONE_SOCKET;
+    (void) mca_base_component_var_register(&mca_btl_sctp_component.super.btl_version,
+                                           "if_11", "If 0, have one SCTP BTL module and let SCTP do multilink scheduling. If non-zero, have an SCTP BTL module per link and let the PML do the scheduling.",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &mca_btl_sctp_component.sctp_if_11);
 
     /* have lower exclusivity than tcp */
     mca_btl_sctp_module.super.btl_exclusivity = MCA_BTL_EXCLUSIVITY_LOW;
@@ -234,6 +234,8 @@ static int mca_btl_sctp_component_open(void)
     mca_btl_sctp_component.sctp_num_btls=0;
     /* addr_count */
     mca_btl_sctp_component.sctp_btls=NULL;
+
+    mca_btl_sctp_component.sctp_use_nodelay = !use_nagle;
     
     /* initialize objects */ 
     OBJ_CONSTRUCT(&mca_btl_sctp_component.sctp_lock, opal_mutex_t);
@@ -257,7 +259,7 @@ static int mca_btl_sctp_component_open(void)
 
     /* if_include and if_exclude need to be mutually exclusive */
     if (OPAL_SUCCESS != 
-        mca_base_param_check_exclusive_string(
+        mca_base_var_check_exclusive("ompi",
         mca_btl_sctp_component.super.btl_version.mca_type_name,
         mca_btl_sctp_component.super.btl_version.mca_component_name,
         "if_include",
@@ -374,11 +376,11 @@ static int mca_btl_sctp_create(int if_index, const char* if_name)
 
         /* allow user to specify interface bandwidth */
         sprintf(param, "bandwidth_%s", if_name);
-        btl->super.btl_bandwidth = mca_btl_sctp_param_register_int(param, 0);
+        mca_btl_sctp_param_register_int(param, 0, &btl->super.btl_bandwidth);
 
         /* allow user to override/specify latency ranking */
         sprintf(param, "latency_%s", if_name);
-        btl->super.btl_latency = mca_btl_sctp_param_register_int(param, 0);
+        mca_btl_sctp_param_register_int(param, 0, &btl->super.btl_latency);
 
 #if 0 && OPAL_ENABLE_DEBUG
         BTL_OUTPUT(("interface: %s bandwidth %d latency %d",
@@ -420,11 +422,11 @@ static int mca_btl_sctp_create(int if_index, const char* if_name)
 
             /* allow user to specify interface bandwidth */
             sprintf(param, "bandwidth_%s", if_name);
-            btl->super.btl_bandwidth = mca_btl_sctp_param_register_int(param, 0);
+            mca_btl_sctp_param_register_int(param, 0, &btl->super.btl_bandwidth);
 
             /* allow user to override/specify latency ranking */
             sprintf(param, "latency_%s", if_name);
-            btl->super.btl_latency = mca_btl_sctp_param_register_int(param, 0);
+            mca_btl_sctp_param_register_int(param, 0, &btl->super.btl_latency);
 
 #if 0 && OPAL_ENABLE_DEBUG
             BTL_OUTPUT(("interface: %s bandwidth %d latency %d",

@@ -499,7 +499,7 @@ struct mca_coll_ml_component_t {
     int verbose;
 
     /** max of communicators available to run ML */
-    uint32_t max_comm;
+    unsigned int max_comm;
 
     /** min size of comm to be available to run ML */
     int min_comm_size;
@@ -547,7 +547,7 @@ struct mca_coll_ml_component_t {
     int n_payload_buffs_per_bank;
 
     /* size of payload buffer */
-    size_t payload_buffer_size;
+    unsigned long long payload_buffer_size;
 
     /* pipeline depth for msg fragmentation */
     int pipeline_depth;
@@ -579,10 +579,10 @@ struct mca_coll_ml_component_t {
     bool progress_is_busy;
 
     /* Temporary hack for IMB test - not all bcols have allgather */
-    int disable_allgather;
+    bool disable_allgather;
 
     /* Temporary hack for IMB test - not all bcols have alltoall */
-    int disable_alltoall;
+    bool disable_alltoall;
 
     /* Brucks alltoall mca and other params */
     int use_brucks_smsg_alltoall;

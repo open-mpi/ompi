@@ -29,7 +29,6 @@
 #include "opal/util/bit_ops.h"
 #include "opal/mca/installdirs/installdirs.h"
 #include "opal/util/output.h"
-#include "opal/mca/base/mca_base_param.h"
 #include "opal/util/show_help.h"
 #include "btl_openib.h"
 #include "btl_openib_mca.h"
@@ -61,6 +60,31 @@ enum {
     REGSTR_MAX = 0x88
 };
 
+static mca_base_var_enum_value_t ib_mtu_values[] = {
+    {IBV_MTU_256, "256B"},
+    {IBV_MTU_512, "512B"},
+    {IBV_MTU_1024, "1k"},
+    {IBV_MTU_2048, "2k"},
+    {IBV_MTU_4096, "4k"},
+    {0, NULL}
+};
+
+static mca_base_var_enum_value_t device_type_values[] = {
+    {BTL_OPENIB_DT_IB,    "infiniband"},
+    {BTL_OPENIB_DT_IB,    "ib"},
+    {BTL_OPENIB_DT_IWARP, "iwarp"},
+    {BTL_OPENIB_DT_IWARP, "iw"},
+    {BTL_OPENIB_DT_ALL,   "all"},
+    {0, NULL}
+};
+
+static int btl_openib_cq_size;
+static bool btl_openib_have_fork_support = OMPI_HAVE_IBV_FORK_INIT;
+
+#if BTL_OPENIB_FAILOVER_ENABLED
+static int btl_openib_verbose_failover;
+static bool btl_openib_failover_enabled = true;
+#endif
 
 /*
  * utility routine for string parameter registration
@@ -68,26 +92,29 @@ enum {
 static int reg_string(const char* param_name,
                       const char* deprecated_param_name,
                       const char* param_desc,
-                      const char* default_value, char **out_value,
+                      const char* default_value, char **storage,
                       int flags)
 {
     int index;
-    char *value;
-    index = mca_base_param_reg_string(&mca_btl_openib_component.super.btl_version,
-                                      param_name, param_desc, false, false,
-                                      default_value, &value);
+
+    /* The MCA variable system will not change this pointer */
+    *storage = (char *) default_value;
+    index = mca_base_component_var_register(&mca_btl_openib_component.super.btl_version,
+                                            param_name, param_desc, MCA_BASE_VAR_TYPE_STRING,
+                                            NULL, 0, 0, OPAL_INFO_LVL_9,
+                                            MCA_BASE_VAR_SCOPE_READONLY, storage);
     if (NULL != deprecated_param_name) {
-        mca_base_param_reg_syn(index,
-                               &mca_btl_openib_component.super.btl_version,
-                               deprecated_param_name, true);
+        (void) mca_base_var_register_synonym(index, "ompi", "btl", "openib",
+                                             deprecated_param_name,
+                                             MCA_BASE_VAR_SYN_FLAG_DEPRECATED);
     }
 
-    if (0 != (flags & REGSTR_EMPTY_OK) && 0 == strlen(value)) {
+    if (0 != (flags & REGSTR_EMPTY_OK) && (NULL == storage || 0 == strlen(*storage))) {
         opal_output(0, "Bad parameter value for parameter \"%s\"",
                 param_name);
         return OMPI_ERR_BAD_PARAM;
     }
-    *out_value = value;
+
     return OMPI_SUCCESS;
 }
 
@@ -98,31 +125,89 @@ static int reg_string(const char* param_name,
 static int reg_int(const char* param_name,
                    const char* deprecated_param_name,
                    const char* param_desc,
-                   int default_value, int *out_value, int flags)
+                   int default_value, int *storage, int flags)
 {
-    int index, value;
-    index = mca_base_param_reg_int(&mca_btl_openib_component.super.btl_version,
-                                   param_name, param_desc, false, false,
-                                   default_value, NULL);
-    if (NULL != deprecated_param_name) {
-        mca_base_param_reg_syn(index,
-                               &mca_btl_openib_component.super.btl_version,
-                               deprecated_param_name, true);
-    }
-    mca_base_param_lookup_int(index, &value);
+    int index;
 
-    if (0 != (flags & REGINT_NEG_ONE_OK) && -1 == value) {
-        *out_value = value;
+    *storage = default_value;
+    index = mca_base_component_var_register(&mca_btl_openib_component.super.btl_version,
+                                            param_name, param_desc, MCA_BASE_VAR_TYPE_INT,
+                                            NULL, 0, 0, OPAL_INFO_LVL_9,
+                                            MCA_BASE_VAR_SCOPE_READONLY, storage);
+    if (NULL != deprecated_param_name) {
+        (void) mca_base_var_register_synonym(index, "ompi", "btl", "openib",
+                                             deprecated_param_name,
+                                             MCA_BASE_VAR_SYN_FLAG_DEPRECATED);
+    }
+
+    if (0 != (flags & REGINT_NEG_ONE_OK) && -1 == *storage) {
         return OMPI_SUCCESS;
     }
-    if ((0 != (flags & REGINT_GE_ZERO) && value < 0) ||
-        (0 != (flags & REGINT_GE_ONE) && value < 1) ||
-        (0 != (flags & REGINT_NONZERO) && 0 == value)) {
+
+    if ((0 != (flags & REGINT_GE_ZERO) && *storage < 0) ||
+        (0 != (flags & REGINT_GE_ONE) && *storage < 1) ||
+        (0 != (flags & REGINT_NONZERO) && 0 == *storage)) {
         opal_output(0, "Bad parameter value for parameter \"%s\"",
                 param_name);
         return OMPI_ERR_BAD_PARAM;
     }
-    *out_value = value;
+
+    return OMPI_SUCCESS;
+}
+
+/*
+ * utility routine for integer parameter registration
+ */
+static int reg_uint(const char* param_name,
+                    const char* deprecated_param_name,
+                    const char* param_desc,
+                    unsigned int default_value, unsigned int *storage,
+                    int flags)
+{
+    int index;
+
+    *storage = default_value;
+    index = mca_base_component_var_register(&mca_btl_openib_component.super.btl_version,
+                                            param_name, param_desc, MCA_BASE_VAR_TYPE_UNSIGNED_INT,
+                                            NULL, 0, 0, OPAL_INFO_LVL_9,
+                                            MCA_BASE_VAR_SCOPE_READONLY, storage);
+    if (NULL != deprecated_param_name) {
+        (void) mca_base_var_register_synonym(index, "ompi", "btl", "openib",
+                                             deprecated_param_name,
+                                             MCA_BASE_VAR_SYN_FLAG_DEPRECATED);
+    }
+
+    if ((0 != (flags & REGINT_GE_ONE) && *storage < 1) ||
+        (0 != (flags & REGINT_NONZERO) && 0 == *storage)) {
+        opal_output(0, "Bad parameter value for parameter \"%s\"",
+                param_name);
+        return OMPI_ERR_BAD_PARAM;
+    }
+
+    return OMPI_SUCCESS;
+}
+
+/*
+ * utility routine for integer parameter registration
+ */
+static int reg_bool(const char* param_name,
+                    const char* deprecated_param_name,
+                    const char* param_desc,
+                    bool default_value, bool *storage)
+{
+    int index;
+
+    *storage = default_value;
+    index = mca_base_component_var_register(&mca_btl_openib_component.super.btl_version,
+                                            param_name, param_desc, MCA_BASE_VAR_TYPE_BOOL,
+                                            NULL, 0, 0, OPAL_INFO_LVL_9,
+                                            MCA_BASE_VAR_SCOPE_READONLY, storage);
+    if (NULL != deprecated_param_name) {
+        (void) mca_base_var_register_synonym(index, "ompi", "btl", "openib",
+                                             deprecated_param_name,
+                                             MCA_BASE_VAR_SYN_FLAG_DEPRECATED);
+    }
+
     return OMPI_SUCCESS;
 }
 
@@ -131,10 +216,11 @@ static int reg_int(const char* param_name,
  */
 int btl_openib_register_mca_params(void)
 {
+    mca_base_var_enum_t *new_enum;
     char default_qps[100];
     uint32_t mid_qp_size;
-    char *msg, *str, *pkey;
-    int ival, ival2, ret, tmp;
+    char *msg, *str;
+    int ret, tmp;
 
     ret = OMPI_SUCCESS;
 #define CHECK(expr) do {\
@@ -143,61 +229,43 @@ int btl_openib_register_mca_params(void)
      } while (0)
 
     /* register openib component parameters */
-    CHECK(reg_int("verbose", NULL,
+    CHECK(reg_bool("verbose", NULL,
                   "Output some verbose OpenIB BTL information "
-                  "(0 = no output, nonzero = output)", 0, &ival, 0));
-    mca_btl_openib_component.verbose = (0 != ival);
+                  "(0 = no output, nonzero = output)", false,
+                   &mca_btl_openib_component.verbose));
 
-    CHECK(reg_int("warn_no_device_params_found",
+    CHECK(reg_bool("warn_no_device_params_found",
                   "warn_no_hca_params_found",
                   "Warn when no device-specific parameters are found in the INI file specified by the btl_openib_device_param_files MCA parameter "
                   "(0 = do not warn; any other value = warn)",
-                  1, &ival, 0));
-    mca_btl_openib_component.warn_no_device_params_found = (0 != ival);
-    CHECK(reg_int("warn_default_gid_prefix", NULL,
+                  true, &mca_btl_openib_component.warn_no_device_params_found));
+
+    CHECK(reg_bool("warn_default_gid_prefix", NULL,
                   "Warn when there is more than one active ports and at least one of them connected to the network with only default GID prefix configured "
                   "(0 = do not warn; any other value = warn)",
-                  1, &ival, 0));
-    mca_btl_openib_component.warn_default_gid_prefix = (0 != ival);
-    CHECK(reg_int("warn_nonexistent_if", NULL,
+                  true, &mca_btl_openib_component.warn_default_gid_prefix));
+
+    CHECK(reg_bool("warn_nonexistent_if", NULL,
                   "Warn if non-existent devices and/or ports are specified in the btl_openib_if_[in|ex]clude MCA parameters "
                   "(0 = do not warn; any other value = warn)",
-                  1, &ival, 0));
-    mca_btl_openib_component.warn_nonexistent_if = (0 != ival);
+                  true, &mca_btl_openib_component.warn_nonexistent_if));
 
     /* If we print a warning about not having enough registered memory
        available, do we want to abort? */
-    CHECK(reg_int("abort_not_enough_reg_mem", NULL,
+    CHECK(reg_bool("abort_not_enough_reg_mem", NULL,
                   "If there is not enough registered memory available on the system for Open MPI to function properly, Open MPI will issue a warning.  If this MCA parameter is set to true, then Open MPI will also abort all MPI jobs "
                   "(0 = warn, but do not abort; any other value = warn and abort)",
-                  0, &ival, 0));
-    mca_btl_openib_component.abort_not_enough_reg_mem = (0 != ival);
+                  false, &mca_btl_openib_component.abort_not_enough_reg_mem));
 
-    CHECK(reg_int("poll_cq_batch", NULL,
-                  "Retrieve up to poll_cq_batch completions from CQ",
-                  MCA_BTL_OPENIB_CQ_POLL_BATCH_DEFAULT, &ival, REGINT_GE_ONE));
+    CHECK(reg_uint("poll_cq_batch", NULL,
+                   "Retrieve up to poll_cq_batch completions from CQ",
+                   MCA_BTL_OPENIB_CQ_POLL_BATCH_DEFAULT, &mca_btl_openib_component.cq_poll_batch,
+                   REGINT_GE_ONE));
 
-    mca_btl_openib_component.cq_poll_batch = (ival > MCA_BTL_OPENIB_CQ_POLL_BATCH_DEFAULT)? MCA_BTL_OPENIB_CQ_POLL_BATCH_DEFAULT : ival;
-
-    if (OMPI_HAVE_IBV_FORK_INIT) {
-        ival2 = -1;
-    } else {
-        ival2 = 0;
-    }
     CHECK(reg_int("want_fork_support", NULL,
                   "Whether fork support is desired or not "
                   "(negative = try to enable fork support, but continue even if it is not available, 0 = do not enable fork support, positive = try to enable fork support and fail if it is not available)",
-                  ival2, &ival, 0));
-#ifdef HAVE_IBV_FORK_INIT
-    mca_btl_openib_component.want_fork_support = ival;
-#else
-    if (0 != ival) {
-        opal_show_help("help-mpi-btl-openib.txt",
-                       "ibv_fork requested but not supported", true,
-                       ompi_process_info.nodename);
-        return OMPI_ERR_BAD_PARAM;
-    }
-#endif
+                  OMPI_HAVE_IBV_FORK_INIT ? -1 : 0, &mca_btl_openib_component.want_fork_support, 0));
 
     asprintf(&str, "%s/mca-btl-openib-device-params.ini",
              opal_install_dirs.pkgdatadir);
@@ -210,25 +278,18 @@ int btl_openib_register_mca_params(void)
                      0));
     free(str);
 
-    CHECK(reg_string("device_type", NULL,
-                     "Specify to only use IB or iWARP network adapters "
-                     "(infiniband = only use InfiniBand HCAs; iwarp = only use iWARP NICs; all = use any available adapters)",
-                     "all", &str, 0));
-    if (0 == strcasecmp(str, "ib") ||
-        0 == strcasecmp(str, "infiniband")) {
-        mca_btl_openib_component.device_type = BTL_OPENIB_DT_IB;
-    } else if (0 == strcasecmp(str, "iw") ||
-               0 == strcasecmp(str, "iwarp")) {
-        mca_btl_openib_component.device_type = BTL_OPENIB_DT_IWARP;
-    } else if (0 == strcasecmp(str, "all")) {
-        mca_btl_openib_component.device_type = BTL_OPENIB_DT_ALL;
-    } else {
-        opal_show_help("help-mpi-btl-openib.txt",
-                       "ibv_fork requested but not supported", true,
-                       ompi_process_info.nodename);
-        return OMPI_ERR_BAD_PARAM;
-    }
-    free(str);
+    (void)mca_base_var_enum_create("btl_openib_device_types", device_type_values, &new_enum);
+    mca_btl_openib_component.device_type = BTL_OPENIB_DT_ALL;
+    tmp = mca_base_component_var_register(&mca_btl_openib_component.super.btl_version,
+                                          "device_type", "Specify to only use IB or iWARP "
+                                          "network adapters (infiniband = only use InfiniBand "
+                                          "HCAs; iwarp = only use iWARP NICs; all = use any "
+                                          "available adapters)", MCA_BASE_VAR_TYPE_INT, new_enum,
+                                          0, 0, OPAL_INFO_LVL_9,
+                                          MCA_BASE_VAR_SCOPE_READONLY,
+                                          &mca_btl_openib_component.device_type);
+    if (0 > tmp) ret = tmp;
+    OBJ_RELEASE(new_enum);
 
     CHECK(reg_int("max_btls", NULL,
                   "Maximum number of device ports to use "
@@ -265,38 +326,33 @@ int btl_openib_register_mca_params(void)
                   "(CQs are automatically sized based on the number "
                   "of peer MPI processes; this value determines the "
                   "*minimum* size of all CQs)",
-                  8192, &ival, REGINT_GE_ONE));
+                  8192, &btl_openib_cq_size, REGINT_GE_ONE));
     mca_btl_openib_component.ib_cq_size[BTL_OPENIB_LP_CQ] =
-        mca_btl_openib_component.ib_cq_size[BTL_OPENIB_HP_CQ] = (uint32_t) ival;
+        mca_btl_openib_component.ib_cq_size[BTL_OPENIB_HP_CQ] = (uint32_t) btl_openib_cq_size;
 
     CHECK(reg_int("max_inline_data", "ib_max_inline_data",
                   "Maximum size of inline data segment "
                   "(-1 = run-time probe to discover max value, otherwise must be >= 0). "
                   "If not explicitly set, use max_inline_data from "
                   "the INI file containing device-specific parameters",
-                  -1, &ival, REGINT_NEG_ONE_OK | REGINT_GE_ZERO));
-    mca_btl_openib_component.ib_max_inline_data = (int32_t) ival;
+                  -1, &mca_btl_openib_component.ib_max_inline_data,
+                  REGINT_NEG_ONE_OK | REGINT_GE_ZERO));
 
-    CHECK(reg_string("pkey", "ib_pkey_val",
-                     "OpenFabrics partition key (pkey) value. "
-                     "Unsigned integer decimal or hex values are allowed (e.g., \"3\" or \"0x3f\") and will be masked against the maximum allowable IB partition key value (0x7fff)",
-                     "0", &pkey, 0));
-    mca_btl_openib_component.ib_pkey_val =
-        ompi_btl_openib_ini_intify(pkey) & MCA_BTL_IB_PKEY_MASK;
-    free(pkey);
+    CHECK(reg_uint("pkey", "ib_pkey_val",
+                   "OpenFabrics partition key (pkey) value. "
+                   "Unsigned integer decimal or hex values are allowed (e.g., \"3\" or \"0x3f\") and will be masked against the maximum allowable IB partition key value (0x7fff)",
+                   0, &mca_btl_openib_component.ib_pkey_val, 0));
 
-    CHECK(reg_int("psn", "ib_psn",
+    CHECK(reg_uint("psn", "ib_psn",
                   "OpenFabrics packet sequence starting number "
                   "(must be >= 0)",
-                  0, &ival, REGINT_GE_ZERO));
-    mca_btl_openib_component.ib_psn = (uint32_t) ival;
+                  0, &mca_btl_openib_component.ib_psn, 0));
 
-    CHECK(reg_int("ib_qp_ous_rd_atom", NULL,
-                  "InfiniBand outstanding atomic reads "
-                  "(must be >= 0)",
-                  4, &ival, REGINT_GE_ZERO));
-    mca_btl_openib_component.ib_qp_ous_rd_atom = (uint32_t) ival;
-
+    CHECK(reg_uint("ib_qp_ous_rd_atom", NULL,
+                   "InfiniBand outstanding atomic reads "
+                   "(must be >= 0)",
+                   4, &mca_btl_openib_component.ib_qp_ous_rd_atom, 0));
+    
     asprintf(&msg, "OpenFabrics MTU, in bytes (if not specified in INI files).  Valid values are: %d=256 bytes, %d=512 bytes, %d=1024 bytes, %d=2048 bytes, %d=4096 bytes",
              IBV_MTU_256,
              IBV_MTU_512,
@@ -307,244 +363,175 @@ int btl_openib_register_mca_params(void)
         /* Don't try to recover from this */
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
-    CHECK(reg_int("mtu", "ib_mtu", msg, IBV_MTU_1024, &ival, 0));
-    free(msg);
-    if (ival < IBV_MTU_1024 || ival > IBV_MTU_4096) {
-        opal_show_help("help-mpi-btl-openib.txt", "invalid mca param value",
-                       true, "invalid value for btl_openib_ib_mtu",
-                       "btl_openib_ib_mtu reset to 1024");
-        mca_btl_openib_component.ib_mtu = IBV_MTU_1024;
+    mca_btl_openib_component.ib_mtu = IBV_MTU_1024;
+    (void) mca_base_var_enum_create("btl_openib_mtus", ib_mtu_values, &new_enum);
+    tmp = mca_base_component_var_register(&mca_btl_openib_component.super.btl_version,
+                                          "mtu", msg, MCA_BASE_VAR_TYPE_INT, new_enum,
+                                          0, 0, OPAL_INFO_LVL_9,
+                                          MCA_BASE_VAR_SCOPE_READONLY,
+                                          &mca_btl_openib_component.ib_mtu);
+    if (0 <= tmp) {
+        (void) mca_base_var_register_synonym(tmp, "ompi", "btl", "openib", "ib_mtu",
+                                             MCA_BASE_VAR_SYN_FLAG_DEPRECATED);
     } else {
-        mca_btl_openib_component.ib_mtu = (uint32_t) ival;
+        ret = tmp;
     }
 
-    CHECK(reg_int("ib_min_rnr_timer", NULL, "InfiniBand minimum "
-                  "\"receiver not ready\" timer, in seconds "
-                  "(must be >= 0 and <= 31)",
-                  25, &ival, 0));
-    if (ival > 31) {
-        opal_show_help("help-mpi-btl-openib.txt", "invalid mca param value",
-                       true, "btl_openib_ib_min_rnr_timer > 31",
-                       "btl_openib_ib_min_rnr_timer reset to 31");
-        ival = 31;
-    } else if (ival < 0){
-        opal_show_help("help-mpi-btl-openib.txt", "invalid mca param value",
-                   true, "btl_openib_ib_min_rnr_timer < 0",
-                   "btl_openib_ib_min_rnr_timer reset to 0");
-        ival = 0;
-    }
-    mca_btl_openib_component.ib_min_rnr_timer = (uint32_t) ival;
+    OBJ_RELEASE(new_enum);
+    free(msg);
 
-    CHECK(reg_int("ib_timeout", NULL,
+    CHECK(reg_uint("ib_min_rnr_timer", NULL, "InfiniBand minimum "
+                   "\"receiver not ready\" timer, in seconds "
+                   "(must be >= 0 and <= 31)",
+                   25, &mca_btl_openib_component.ib_min_rnr_timer, 0));
+
+    CHECK(reg_uint("ib_timeout", NULL,
                   "InfiniBand transmit timeout, plugged into formula: 4.096 microseconds * (2^btl_openib_ib_timeout) "
                   "(must be >= 0 and <= 31)",
-                  20, &ival, 0));
-    if (ival > 31) {
-        opal_show_help("help-mpi-btl-openib.txt", "invalid mca param value",
-                       true, "btl_openib_ib_timeout > 31",
-                       "btl_openib_ib_timeout reset to 31");
-        ival = 31;
-    } else if (ival < 0) {
-        opal_show_help("help-mpi-btl-openib.txt", "invalid mca param value",
-                   true, "btl_openib_ib_timeout < 0",
-                   "btl_openib_ib_timeout reset to 0");
-        ival = 0;
-    }
-    mca_btl_openib_component.ib_timeout = (uint32_t) ival;
-
-    CHECK(reg_int("ib_retry_count", NULL,
+                  20, &mca_btl_openib_component.ib_timeout, 0));
+    
+    CHECK(reg_uint("ib_retry_count", NULL,
                   "InfiniBand transmit retry count "
                   "(must be >= 0 and <= 7)",
-                  7, &ival, 0));
-    if (ival > 7) {
-        opal_show_help("help-mpi-btl-openib.txt", "invalid mca param value",
-                       true, "btl_openib_ib_retry_count > 7",
-                       "btl_openib_ib_retry_count reset to 7");
-        ival = 7;
-    } else if (ival < 0) {
-        opal_show_help("help-mpi-btl-openib.txt", "invalid mca param value",
-                   true, "btl_openib_ib_retry_count < 0",
-                   "btl_openib_ib_retry_count reset to 0");
-        ival = 0;
-    }
-    mca_btl_openib_component.ib_retry_count = (uint32_t) ival;
+                  7, &mca_btl_openib_component.ib_retry_count, 0));
 
-    CHECK(reg_int("ib_rnr_retry", NULL,
-                  "InfiniBand \"receiver not ready\" "
-                  "retry count; applies *only* to SRQ/XRC queues.  PP queues "
-                  "use RNR retry values of 0 because Open MPI performs "
-                  "software flow control to guarantee that RNRs never occur "
-                  "(must be >= 0 and <= 7; 7 = \"infinite\")",
-                  7, &ival, 0));
-    if (ival > 7) {
-        opal_show_help("help-mpi-btl-openib.txt", "invalid mca param value",
-                       true, "btl_openib_ib_rnr_retry > 7",
-                       "btl_openib_ib_rnr_retry reset to 7");
-        ival = 7;
-    } else if (ival < 0) {
-        opal_show_help("help-mpi-btl-openib.txt", "invalid mca param value",
-                   true, "btl_openib_ib_rnr_retry < 0",
-                   "btl_openib_ib_rnr_retry reset to 0");
-        ival = 0;
-    }
-    mca_btl_openib_component.ib_rnr_retry = (uint32_t) ival;
+    CHECK(reg_uint("ib_rnr_retry", NULL,
+                   "InfiniBand \"receiver not ready\" "
+                   "retry count; applies *only* to SRQ/XRC queues.  PP queues "
+                   "use RNR retry values of 0 because Open MPI performs "
+                   "software flow control to guarantee that RNRs never occur "
+                   "(must be >= 0 and <= 7; 7 = \"infinite\")",
+                   7, &mca_btl_openib_component.ib_rnr_retry, 0));
 
-    CHECK(reg_int("ib_max_rdma_dst_ops", NULL, "InfiniBand maximum pending RDMA "
+    CHECK(reg_uint("ib_max_rdma_dst_ops", NULL, "InfiniBand maximum pending RDMA "
                   "destination operations "
                   "(must be >= 0)",
-                  4, &ival, REGINT_GE_ZERO));
-    mca_btl_openib_component.ib_max_rdma_dst_ops = (uint32_t) ival;
+                  4, &mca_btl_openib_component.ib_max_rdma_dst_ops, 0));
 
-    CHECK(reg_int("ib_service_level", NULL, "InfiniBand service level "
-                  "(must be >= 0 and <= 15)",
-                  0, &ival, 0));
-    if (ival > 15) {
-        opal_show_help("help-mpi-btl-openib.txt", "invalid mca param value",
-                       true, "btl_openib_ib_service_level > 15",
-                       "btl_openib_ib_service_level reset to 15");
-        ival = 15;
-    } else if (ival < 0) {
-        opal_show_help("help-mpi-btl-openib.txt", "invalid mca param value",
-                   true, "btl_openib_ib_service_level < 0",
-                   "btl_openib_ib_service_level reset to 0");
-        ival = 0;
-    }
-    mca_btl_openib_component.ib_service_level = (uint32_t) ival;
+    CHECK(reg_uint("ib_service_level", NULL, "InfiniBand service level "
+                   "(must be >= 0 and <= 15)",
+                   0, &mca_btl_openib_component.ib_service_level, 0));
 
 #if (ENABLE_DYNAMIC_SL)
-    CHECK(reg_int("ib_path_record_service_level", NULL,
-                  "Enable getting InfiniBand service level from PathRecord "
-                  "(must be >= 0, 0 = disabled, positive = try to get the "
-                  "service level from PathRecord)",
-                  0, &ival, REGINT_GE_ZERO));
-    mca_btl_openib_component.ib_path_record_service_level = (uint32_t) ival;
+    CHECK(reg_uint("ib_path_record_service_level", NULL,
+                   "Enable getting InfiniBand service level from PathRecord "
+                   "(must be >= 0, 0 = disabled, positive = try to get the "
+                   "service level from PathRecord)",
+                   0, &mca_btl_openib_component.ib_path_record_service_level, 0));
 #endif
 
     CHECK(reg_int("use_eager_rdma", NULL, "Use RDMA for eager messages "
                   "(-1 = use device default, 0 = do not use eager RDMA, "
                   "1 = use eager RDMA)",
-                  -1, &ival, 0));
-    mca_btl_openib_component.use_eager_rdma = (int32_t) ival;
+                  -1, &mca_btl_openib_component.use_eager_rdma, 0));
 
     CHECK(reg_int("eager_rdma_threshold", NULL,
                   "Use RDMA for short messages after this number of "
                   "messages are received from a given peer "
                   "(must be >= 1)",
-                  16, &ival, REGINT_GE_ONE));
-    mca_btl_openib_component.eager_rdma_threshold = (int32_t) ival;
+                  16, &mca_btl_openib_component.eager_rdma_threshold, REGINT_GE_ONE));
 
     CHECK(reg_int("max_eager_rdma", NULL, "Maximum number of peers allowed to use "
                   "RDMA for short messages (RDMA is used for all long "
                   "messages, except if explicitly disabled, such as "
                   "with the \"dr\" pml) "
                   "(must be >= 0)",
-                  16, &ival, REGINT_GE_ZERO));
-    mca_btl_openib_component.max_eager_rdma = (int32_t) ival;
+                  16, &mca_btl_openib_component.max_eager_rdma, REGINT_GE_ZERO));
 
     CHECK(reg_int("eager_rdma_num", NULL, "Number of RDMA buffers to allocate "
                   "for small messages "
                   "(must be >= 1)",
-                  16, &ival, REGINT_GE_ONE));
-    mca_btl_openib_component.eager_rdma_num = (int32_t) (ival + 1);
+                  16, &mca_btl_openib_component.eager_rdma_num, REGINT_GE_ONE));
+    mca_btl_openib_component.eager_rdma_num++;
 
-    CHECK(reg_int("btls_per_lid", NULL, "Number of BTLs to create for each "
+    CHECK(reg_uint("btls_per_lid", NULL, "Number of BTLs to create for each "
                   "InfiniBand LID "
                   "(must be >= 1)",
-                  1, &ival, REGINT_GE_ONE));
-    mca_btl_openib_component.btls_per_lid = (uint32_t) ival;
+                  1, &mca_btl_openib_component.btls_per_lid, REGINT_GE_ONE));
 
-    CHECK(reg_int("max_lmc", NULL, "Maximum number of LIDs to use for each device port "
-                  "(must be >= 0, where 0 = use all available)",
-                  0, &ival, REGINT_GE_ZERO));
-    mca_btl_openib_component.max_lmc = (uint32_t) ival;
+    CHECK(reg_uint("max_lmc", NULL, "Maximum number of LIDs to use for each device port "
+                   "(must be >= 0, where 0 = use all available)",
+                   0, &mca_btl_openib_component.max_lmc, 0));
 
 #if OPAL_HAVE_THREADS
     CHECK(reg_int("enable_apm_over_lmc", NULL, "Maximum number of alternative paths for each device port "
                   "(must be >= -1, where 0 = disable apm, -1 = all available alternative paths )",
-                  0, &ival, REGINT_NEG_ONE_OK|REGINT_GE_ZERO));
-    mca_btl_openib_component.apm_lmc = (uint32_t) ival;
+                  0, &mca_btl_openib_component.apm_lmc, REGINT_NEG_ONE_OK|REGINT_GE_ZERO));
+
     CHECK(reg_int("enable_apm_over_ports", NULL, "Enable alternative path migration (APM) over different ports of the same device "
                   "(must be >= 0, where 0 = disable APM over ports, 1 = enable APM over ports of the same device)",
-                  0, &ival, REGINT_GE_ZERO));
-    mca_btl_openib_component.apm_ports = (uint32_t) ival;
+                  0, &mca_btl_openib_component.apm_ports, REGINT_GE_ZERO));
 
-    CHECK(reg_int("use_async_event_thread", NULL,
-                "If nonzero, use the thread that will handle InfiniBand asynchronous events",
-                1, &ival, 0));
-    mca_btl_openib_component.use_async_event_thread = (0 != ival);
+    CHECK(reg_bool("use_async_event_thread", NULL,
+                   "If nonzero, use the thread that will handle InfiniBand asynchronous events",
+                   true, &mca_btl_openib_component.use_async_event_thread));
 
 #if BTL_OPENIB_FAILOVER_ENABLED
     /* failover specific output */
     CHECK(reg_int("verbose_failover", NULL,
                   "Output some verbose OpenIB BTL failover information "
-                  "(0 = no output, nonzero = output)", 0, &ival, 0));
+                  "(0 = no output, nonzero = output)", 0, &btl_openib_verbose_failover, 0));
     mca_btl_openib_component.verbose_failover = opal_output_open(NULL);
-    opal_output_set_verbosity(mca_btl_openib_component.verbose_failover, ival);
+    opal_output_set_verbosity(mca_btl_openib_component.verbose_failover, );
 
-    CHECK(reg_int("port_error_failover", NULL,
-                  "If nonzero, asynchronous port errors will trigger failover",
-                  0, &ival, 0));
-    mca_btl_openib_component.port_error_failover = (0 != ival);
+    CHECK(reg_bool("port_error_failover", NULL,
+                   "If nonzero, asynchronous port errors will trigger failover",
+                   0, &mca_btl_openib_component.port_error_failover));
 
     /* Make non writeable parameter that indicates failover is configured in. */
-    tmp = mca_base_param_reg_int(&mca_btl_openib_component.super.btl_version,
-                                 "failover_enabled",
-                                 "openib failover is configured: run with bfo PML to support failover between openib BTLs",
-                                 false, true,
-                                 1, NULL);
+    tmp = mca_base_component_var_register(&mca_btl_openib_component.super.btl_version,
+                                          "failover_enabled",
+                                          "openib failover is configured: run with bfo PML to support failover between openib BTLs",
+                                          MCA_BASE_VAR_TYPE_BOOL, NULL, 0,
+                                          MCA_BASE_VAR_FLAG_DEFAULT_ONLY,
+                                          OPAL_INFO_LVL_9,
+                                          MCA_BASE_VAR_SCOPE_CONSTANT,
+                                          &btl_openib_failover_enabled);
+    if (0 > tmp) ret = tmp;
 #endif
-
-    CHECK(reg_int("enable_srq_resize", NULL,
-                  "Enable/Disable on demand SRQ resize. "
-                  "(0 = without resizing, nonzero = with resizing)", 1, &ival, 0));
-    mca_btl_openib_component.enable_srq_resize = (0 != ival);
+    
+    CHECK(reg_bool("enable_srq_resize", NULL,
+                   "Enable/Disable on demand SRQ resize. "
+                   "(0 = without resizing, nonzero = with resizing)", 1,
+                   &mca_btl_openib_component.enable_srq_resize));
 #else
-    mca_btl_openib_component.enable_srq_resize = 0;
+    mca_btl_openib_component.enable_srq_resize = false;
 #endif
 
-    CHECK(reg_int("buffer_alignment", NULL,
-                  "Preferred communication buffer alignment, in bytes "
-                  "(must be > 0 and power of two)",
-                  64, &ival, REGINT_GE_ZERO));
-    if(ival <= 1 || (ival & (ival - 1))) {
-        opal_show_help("help-mpi-btl-openib.txt", "wrong buffer alignment",
-                true, ival, ompi_process_info.nodename, 64);
-        mca_btl_openib_component.buffer_alignment = 64;
-    } else {
-        mca_btl_openib_component.buffer_alignment = (uint32_t) ival;
-    }
+    CHECK(reg_uint("buffer_alignment", NULL,
+                   "Preferred communication buffer alignment, in bytes "
+                   "(must be > 0 and power of two)",
+                   64, &mca_btl_openib_component.buffer_alignment, 0));
 
-    CHECK(reg_int("use_message_coalescing", NULL,
-                  "If nonzero, use message coalescing", 1, &ival, 0));
-    mca_btl_openib_component.use_message_coalescing = (0 != ival);
+    CHECK(reg_bool("use_message_coalescing", NULL,
+                   "If nonzero, use message coalescing", true,
+                   &mca_btl_openib_component.use_message_coalescing));
 
-    CHECK(reg_int("cq_poll_ratio", NULL,
-                  "How often to poll high priority CQ versus low priority CQ",
-                  100, &ival, REGINT_GE_ONE));
-    mca_btl_openib_component.cq_poll_ratio = (uint32_t)ival;
-    CHECK(reg_int("eager_rdma_poll_ratio", NULL,
-                  "How often to poll eager RDMA channel versus CQ",
-                  100, &ival, REGINT_GE_ONE));
-    mca_btl_openib_component.eager_rdma_poll_ratio = (uint32_t)ival;
-    CHECK(reg_int("hp_cq_poll_per_progress", NULL,
+    CHECK(reg_uint("cq_poll_ratio", NULL,
+                   "How often to poll high priority CQ versus low priority CQ",
+                   100, &mca_btl_openib_component.cq_poll_ratio, REGINT_GE_ONE));
+    CHECK(reg_uint("eager_rdma_poll_ratio", NULL,
+                   "How often to poll eager RDMA channel versus CQ",
+                   100, &mca_btl_openib_component.eager_rdma_poll_ratio, REGINT_GE_ONE));
+    CHECK(reg_uint("hp_cq_poll_per_progress", NULL,
                   "Max number of completion events to process for each call "
                   "of BTL progress engine",
-                  10, &ival, REGINT_GE_ONE));
-    mca_btl_openib_component.cq_poll_progress = (uint32_t)ival;
+                  10, &mca_btl_openib_component.cq_poll_progress, REGINT_GE_ONE));
 
-    CHECK(reg_int("max_hw_msg_size", NULL,
-                  "Maximum size (in bytes) of a single fragment of a long message when using the RDMA protocols (must be > 0 and <= hw capabilities).",
-                  0, &ival, REGINT_GE_ZERO));
-    mca_btl_openib_component.max_hw_msg_size = (uint32_t)ival;
+    CHECK(reg_uint("max_hw_msg_size", NULL,
+                   "Maximum size (in bytes) of a single fragment of a long message when using the RDMA protocols (must be > 0 and <= hw capabilities).",
+                   0, &mca_btl_openib_component.max_hw_msg_size, 0));
 
     /* Info only */
-    mca_base_param_reg_int(&mca_btl_openib_component.super.btl_version,
-                           "have_fork_support",
-                           "Whether the OpenFabrics stack supports applications that invoke the \"fork()\" system call or not (0 = no, 1 = yes). "
-                           "Note that this value does NOT indicate whether the system being run on supports \"fork()\" with OpenFabrics applications or not.",
-                           false, true,
-                           OMPI_HAVE_IBV_FORK_INIT ? 1 : 0,
-                           NULL);
+    tmp = mca_base_component_var_register(&mca_btl_openib_component.super.btl_version,
+                                          "have_fork_support",
+                                          "Whether the OpenFabrics stack supports applications that invoke the \"fork()\" system call or not (0 = no, 1 = yes). "
+                                          "Note that this value does NOT indicate whether the system being run on supports \"fork()\" with OpenFabrics applications or not.",
+                                          MCA_BASE_VAR_TYPE_BOOL, NULL, 0,
+                                          MCA_BASE_VAR_FLAG_DEFAULT_ONLY,
+                                          OPAL_INFO_LVL_9,
+                                          MCA_BASE_VAR_SCOPE_CONSTANT,
+                                          &btl_openib_have_fork_support);
 
     mca_btl_openib_module.super.btl_exclusivity = MCA_BTL_EXCLUSIVITY_DEFAULT;
 
@@ -568,23 +555,16 @@ int btl_openib_register_mca_params(void)
 
 #if OMPI_CUDA_SUPPORT /* CUDA_ASYNC_RECV */
     /* Default is enabling CUDA asynchronous send copies */
-    CHECK(reg_int("cuda_async_send", NULL,
-                  "Enable or disable CUDA async send copies "
-                  "(1 = async; 0 = sync)",
-                  1, &ival, 0));
-    mca_btl_openib_component.cuda_async_send = (0 != ival);
-    if (mca_btl_openib_component.cuda_async_send) {
-        mca_btl_openib_module.super.btl_flags |= MCA_BTL_FLAGS_CUDA_COPY_ASYNC_SEND;
-    }
+    CHECK(reg_bool("cuda_async_send", NULL,
+                   "Enable or disable CUDA async send copies "
+                   "(true = async; false = sync)",
+                   true, &mca_btl_openib_component.cuda_async_send));
+
     /* Default is enabling CUDA asynchronous receive copies */
-    CHECK(reg_int("cuda_async_recv", NULL,
-                  "Enable or disable CUDA async recv copies "
-                  "(1 = async; 0 = sync)",
-                 1, &ival, 0));
-    mca_btl_openib_component.cuda_async_recv = (0 != ival);
-    if (mca_btl_openib_component.cuda_async_recv) {
-        mca_btl_openib_module.super.btl_flags |= MCA_BTL_FLAGS_CUDA_COPY_ASYNC_RECV;
-    }
+    CHECK(reg_bool("cuda_async_recv", NULL,
+                   "Enable or disable CUDA async recv copies "
+                   "(true = async; false = sync)",
+                   true, &mca_btl_openib_component.cuda_async_recv));
     /* Also make the max send size larger for better GPU buffer performance */
    mca_btl_openib_module.super.btl_max_send_size = 128 * 1024;
    /* Turn of message coalescing - not sure if it works with GPU buffers */
@@ -652,7 +632,101 @@ int btl_openib_register_mca_params(void)
                   "alignment for all malloc calls if btl openib is used.",
                   32, &mca_btl_openib_component.use_memalign,
                   REGINT_GE_ZERO));
-    
+
+    mca_btl_openib_component.memalign_threshold = mca_btl_openib_component.eager_limit;
+    tmp = mca_base_component_var_register(&mca_btl_openib_component.super.btl_version,
+                                          "memalign_threshold",
+                                          "Allocating memory more than btl_openib_memalign_threshhold"
+                                          "bytes will automatically be algined to the value of btl_openib_memalign bytes."
+                                          "memalign_threshhold defaults to the same value as mca_btl_openib_eager_limit.",
+                                          MCA_BASE_VAR_TYPE_SIZE_T, NULL, 0, 0,
+                                          OPAL_INFO_LVL_9,
+                                          MCA_BASE_VAR_SCOPE_READONLY,
+                                          &mca_btl_openib_component.memalign_threshold);
+    if (0 > tmp) ret = tmp;
+#endif
+
+    /* Register any MCA params for the connect pseudo-components */
+    if (OMPI_SUCCESS == ret) {
+        ret = ompi_btl_openib_connect_base_register();
+    }
+
+    return btl_openib_verify_mca_params();
+}
+
+int btl_openib_verify_mca_params (void)
+{
+    if (mca_btl_openib_component.cq_poll_batch > MCA_BTL_OPENIB_CQ_POLL_BATCH_DEFAULT) {
+        mca_btl_openib_component.cq_poll_batch = MCA_BTL_OPENIB_CQ_POLL_BATCH_DEFAULT;
+    }
+
+#if !HAVE_IBV_FORK_INIT
+    if (0 != mca_btl_openib_component.want_fork_support) {
+        opal_show_help("help-mpi-btl-openib.txt",
+                       "ibv_fork requested but not supported", true,
+                       ompi_process_info.nodename);
+        return OMPI_ERR_BAD_PARAM;
+    }
+#endif
+
+    mca_btl_openib_component.ib_pkey_val &= MCA_BTL_IB_PKEY_MASK;
+
+    if (mca_btl_openib_component.ib_min_rnr_timer > 31) {
+        opal_show_help("help-mpi-btl-openib.txt", "invalid mca param value",
+                       true, "btl_openib_ib_min_rnr_timer > 31",
+                       "btl_openib_ib_min_rnr_timer reset to 31");
+        mca_btl_openib_component.ib_min_rnr_timer = 31;
+    }
+
+    if (mca_btl_openib_component.ib_timeout > 31) {
+        opal_show_help("help-mpi-btl-openib.txt", "invalid mca param value",
+                       true, "btl_openib_ib_timeout > 31",
+                       "btl_openib_ib_timeout reset to 31");
+        mca_btl_openib_component.ib_timeout = 31;
+    }
+
+    if (mca_btl_openib_component.ib_retry_count > 7) {
+        opal_show_help("help-mpi-btl-openib.txt", "invalid mca param value",
+                       true, "btl_openib_ib_retry_count > 7",
+                       "btl_openib_ib_retry_count reset to 7");
+        mca_btl_openib_component.ib_retry_count = 7;
+    }
+
+    if (mca_btl_openib_component.ib_rnr_retry > 7) {
+        opal_show_help("help-mpi-btl-openib.txt", "invalid mca param value",
+                       true, "btl_openib_ib_rnr_retry > 7",
+                       "btl_openib_ib_rnr_retry reset to 7");
+        mca_btl_openib_component.ib_rnr_retry = 7;
+    }
+
+    if (mca_btl_openib_component.ib_service_level > 15) {
+        opal_show_help("help-mpi-btl-openib.txt", "invalid mca param value",
+                       true, "btl_openib_ib_service_level > 15",
+                       "btl_openib_ib_service_level reset to 15");
+        mca_btl_openib_component.ib_service_level = 15;
+    }
+
+    if(mca_btl_openib_component.buffer_alignment <= 1 ||
+       (mca_btl_openib_component.buffer_alignment & (mca_btl_openib_component.buffer_alignment - 1))) {
+        opal_show_help("help-mpi-btl-openib.txt", "wrong buffer alignment",
+                true, mca_btl_openib_component.buffer_alignment, ompi_process_info.nodename, 64);
+        mca_btl_openib_component.buffer_alignment = 64;
+    }
+
+#if OMPI_CUDA_SUPPORT /* CUDA_ASYNC_RECV */
+    if (mca_btl_openib_component.cuda_async_send) {
+        mca_btl_openib_module.super.btl_flags |= MCA_BTL_FLAGS_CUDA_COPY_ASYNC_SEND;
+    } else {
+        mca_btl_openib_module.super.btl_flags &= ~MCA_BTL_FLAGS_CUDA_COPY_ASYNC_SEND;
+    }
+
+    if (mca_btl_openib_component.cuda_async_recv) {
+        mca_btl_openib_module.super.btl_flags |= MCA_BTL_FLAGS_CUDA_COPY_ASYNC_RECV;
+    } else {
+        mca_btl_openib_module.super.btl_flags &= ~MCA_BTL_FLAGS_CUDA_COPY_ASYNC_RECV;
+    }
+#endif
+
     if (mca_btl_openib_component.use_memalign != 32  
         && mca_btl_openib_component.use_memalign != 64
         && mca_btl_openib_component.use_memalign != 0){ 
@@ -661,27 +735,6 @@ int btl_openib_register_mca_params(void)
                        "btl_openib_memalign is reset to 32");
         mca_btl_openib_component.use_memalign = 32; 
     }
-    reg_int("memalign_threshold", NULL,
-            "Allocating memory more than btl_openib_memalign_threshhold"
-            "bytes will automatically be algined to the value of btl_openib_memalign bytes."
-            "memalign_threshhold defaults to the same value as mca_btl_openib_eager_limit.",
-            mca_btl_openib_component.eager_limit,
-            &ival,
-            REGINT_GE_ZERO);
-    if (ival < 0){
-        opal_show_help("help-mpi-btl-openib.txt", "invalid mca param value",
-                       true, "btl_openib_memalign_threshold must be positive",
-                       "btl_openib_memalign_threshold is reset to btl_openib_eager_limit");
-        ival = mca_btl_openib_component.eager_limit;
-    }
-    mca_btl_openib_component.memalign_threshold = (size_t)ival;
-#endif
 
-    /* Register any MCA params for the connect pseudo-components */
-    if (OMPI_SUCCESS == ret) {
-        ret = ompi_btl_openib_connect_base_register();
-    }
-
-    return ret;
+    return OMPI_SUCCESS;
 }
-

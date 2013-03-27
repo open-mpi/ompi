@@ -20,8 +20,6 @@
 #include "opal/util/output.h"
 #include "opal/mca/base/base.h"
 
-#include "opal/mca/base/mca_base_param.h"
-
 #include "ompi/mca/crcp/crcp.h"
 #include "ompi/mca/crcp/base/base.h"
 
@@ -122,17 +120,27 @@ int ompi_crcp_base_select(void)
     int ret, exit_status = OMPI_SUCCESS;
     ompi_crcp_base_component_t *best_component = NULL;
     ompi_crcp_base_module_t *best_module = NULL;
-    char *include_list = NULL;
+    const char *include_list = NULL;
+    const char **selection_value;
+    int var_id;
 
     /*
      * Register the framework MCA param and look up include list
      */
-    mca_base_param_reg_string_name("crcp", NULL,
-                                   "Which CRCP component to use (empty = auto-select)",
-                                   false, false,
-                                   strdup("none"), &include_list);
+    var_id = mca_base_var_find("ompi", "crcp", NULL, NULL);
 
-    if(NULL != include_list && 0 == strncmp(include_list, "none", strlen("none")) ){ 
+    /* NTH: The old parameter code here set the selection to none if no file value
+       or environment value was set. This effectively means include_list is never NULL. */
+    selection_value = NULL;
+    (void) mca_base_var_get_value(var_id, &selection_value, NULL, NULL);
+    if (NULL == selection_value || NULL == selection_value[0]) {
+        (void) mca_base_var_set_value(var_id, "none", 5, MCA_BASE_VAR_SOURCE_DEFAULT, NULL);
+        include_list = "none";
+    } else {
+        include_list = selection_value[0];
+    }
+
+    if(0 == strncmp(include_list, "none", strlen("none")) ){ 
         opal_output_verbose(10, ompi_crcp_base_output,
                             "crcp:select: Using %s component",
                             include_list);
@@ -172,10 +180,6 @@ int ompi_crcp_base_select(void)
     }
 
  cleanup:
-    if( NULL != include_list ) {
-        free(include_list);
-        include_list = NULL;
-    }
 
     return exit_status;
 }

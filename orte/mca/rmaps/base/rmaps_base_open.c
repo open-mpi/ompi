@@ -29,14 +29,12 @@
 #include "opal/mca/mca.h"
 #include "opal/util/output.h"
 #include "opal/mca/base/base.h"
-#include "opal/mca/base/mca_base_param.h"
 
 #include "orte/runtime/orte_globals.h"
 #include "orte/util/show_help.h"
 
 #include "orte/mca/rmaps/base/rmaps_private.h"
 #include "orte/mca/rmaps/base/base.h"
-
 
 /*
  * The following file was created by configure.  It contains extern
@@ -50,6 +48,162 @@
  * Global variables
  */
 orte_rmaps_base_t orte_rmaps_base;
+bool orte_rmaps_base_pernode = false;
+int orte_rmaps_base_n_pernode = 0;
+int orte_rmaps_base_n_persocket = 0;
+char *orte_rmaps_base_pattern = NULL;
+
+/*
+ * Local variables
+ */
+static char *rmaps_base_mapping_policy = NULL;
+static char *rmaps_base_ranking_policy = NULL;
+static bool rmaps_base_byslot = false;
+static bool rmaps_base_bynode = false;
+static bool rmaps_base_no_schedule_local = false;
+static bool rmaps_base_no_oversubscribe = false;
+static bool rmaps_base_oversubscribe = false;
+static bool rmaps_base_display_devel_map = false;
+static bool rmaps_base_display_diffable_map = false;
+
+static int orte_rmaps_base_register(void)
+{
+    int var_id;
+
+    orte_rmaps_base_pernode = false;
+    (void) mca_base_var_register("orte", "rmaps", "base", "pernode",
+                                 "Launch one ppn as directed",
+                                 MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                 OPAL_INFO_LVL_9,
+                                 MCA_BASE_VAR_SCOPE_READONLY,
+                                 &orte_rmaps_base_pernode);
+
+    orte_rmaps_base_n_pernode = 0;
+    (void) mca_base_var_register("orte", "rmaps", "base", "n_pernode",
+                                 "Launch n procs/node", MCA_BASE_VAR_TYPE_INT,
+                                 NULL, 0, 0, OPAL_INFO_LVL_9,
+                                 MCA_BASE_VAR_SCOPE_READONLY, &orte_rmaps_base_n_pernode);
+
+    orte_rmaps_base_n_persocket = 0;
+    (void) mca_base_var_register("orte", "rmaps", "base", "n_persocket",
+                                 "Launch n procs/socket", MCA_BASE_VAR_TYPE_INT,
+                                 NULL, 0, 0, OPAL_INFO_LVL_9,
+                                 MCA_BASE_VAR_SCOPE_READONLY, &orte_rmaps_base_n_persocket);
+
+    orte_rmaps_base_pattern = NULL;
+    (void) mca_base_var_register("orte", "rmaps", "base", "pattern",
+                                 "Comma-separated list of number of processes on a given resource type [default: none]",
+                                 MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0, OPAL_INFO_LVL_9,
+                                 MCA_BASE_VAR_SCOPE_READONLY, &orte_rmaps_base_pattern);
+
+    /* define default mapping policy */
+    rmaps_base_mapping_policy = NULL;
+    var_id = mca_base_var_register("orte", "rmaps", "base", "mapping_policy",
+#if OPAL_HAVE_HWLOC
+                                   "Mapping Policy [slot (default) | hwthread | core | l1cache | l2cache | l3cache | socket | numa | board | node | seq], with allowed modifiers :SPAN,OVERSUBSCRIBE,NOOVERSUBSCRIBE",
+#else
+                                   "Mapping Policy [slot (default) | node], with allowed modifiers :SPAN,OVERSUBSCRIBE,NOOVERSUBSCRIBE",
+#endif
+                                   MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
+                                   OPAL_INFO_LVL_9,
+                                   MCA_BASE_VAR_SCOPE_READONLY,
+                                   &rmaps_base_mapping_policy);
+    (void) mca_base_var_register_synonym(var_id, "orte", "rmaps", "base", "schedule_policy",
+                                         MCA_BASE_VAR_SYN_FLAG_DEPRECATED);
+
+    /* define default ranking policy */
+    rmaps_base_ranking_policy = NULL;
+    (void) mca_base_var_register("orte", "rmaps", "base", "ranking_policy",
+#if OPAL_HAVE_HWLOC
+                                           "Ranking Policy [slot (default) | hwthread | core | l1cache | l2cache | l3cache | socket | numa | board | node], with modifier :SPAN or :FILL",
+#else
+                                           "Ranking Policy [slot (default) | node]",
+#endif
+                                MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
+                                OPAL_INFO_LVL_9,
+                                MCA_BASE_VAR_SCOPE_READONLY,
+                                &rmaps_base_ranking_policy);
+
+    /* backward compatibility */
+    rmaps_base_byslot = false;
+    (void) mca_base_var_register("orte", "rmaps", "base", "byslot",
+                                 "Whether to map and rank processes round-robin by slot",
+                                 MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                 OPAL_INFO_LVL_9,
+                                 MCA_BASE_VAR_SCOPE_READONLY, &rmaps_base_byslot);
+
+    rmaps_base_bynode = false;
+    (void) mca_base_var_register("orte", "rmaps", "base", "bynode",
+                                 "Whether to map and rank processes round-robin by node",
+                                 MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                 OPAL_INFO_LVL_9,
+                                 MCA_BASE_VAR_SCOPE_READONLY, &rmaps_base_bynode);
+
+    /* #cpus/rank to use */
+    orte_rmaps_base.cpus_per_rank = 1;
+#if OPAL_HAVE_HWLOC
+    var_id = mca_base_var_register("orte", "rmaps", "base", "cpus_per_proc",
+                                   "Number of cpus to use for each rank [1-2**15 (default=1)]",
+                                   MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                   OPAL_INFO_LVL_9,
+                                   MCA_BASE_VAR_SCOPE_READONLY, &orte_rmaps_base.cpus_per_rank);
+    mca_base_var_register_synonym(var_id, "orte", "rmaps", "base", "cpus_per_rank", 0);
+#endif
+
+    rmaps_base_no_schedule_local = false;
+    (void) mca_base_var_register("orte", "rmaps", "base", "no_schedule_local",
+                                 "If false, allow scheduling MPI applications on the same node as mpirun (default).  If true, do not schedule any MPI applications on the same node as mpirun",
+                                 MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                 OPAL_INFO_LVL_9,
+                                 MCA_BASE_VAR_SCOPE_READONLY, &rmaps_base_no_schedule_local);
+
+    /** default condition that allows oversubscription */
+    rmaps_base_no_oversubscribe = false;
+    (void) mca_base_var_register("orte", "rmaps", "base", "no_oversubscribe",
+                                 "If true, then do not allow oversubscription of nodes - mpirun will return an error if there aren't enough nodes to launch all processes without oversubscribing",
+                                 MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                 OPAL_INFO_LVL_9,
+                                 MCA_BASE_VAR_SCOPE_READONLY, &rmaps_base_no_oversubscribe);
+
+    rmaps_base_oversubscribe = false;
+    (void) mca_base_var_register("orte", "rmaps", "base", "oversubscribe",
+                                 "If true, then allow oversubscription of nodes",
+                                 MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                 OPAL_INFO_LVL_9,
+                                 MCA_BASE_VAR_SCOPE_READONLY, &rmaps_base_oversubscribe);
+
+    /* should we display the map after determining it? */
+    orte_rmaps_base.display_map = false;
+    (void) mca_base_var_register("orte", "rmaps", "base", "display_map",
+                                 "Whether to display the process map after it is computed",
+                                 MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                 OPAL_INFO_LVL_9,
+                                 MCA_BASE_VAR_SCOPE_READONLY, &orte_rmaps_base.display_map);
+
+    rmaps_base_display_devel_map = false;
+    (void) mca_base_var_register("orte", "rmaps", "base", "display_devel_map",
+                                 "Whether to display a developer-detail process map after it is computed",
+                                 MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                 OPAL_INFO_LVL_9,
+                                 MCA_BASE_VAR_SCOPE_READONLY, &rmaps_base_display_devel_map);
+
+    /* should we display the topology along with the map? */
+    orte_display_topo_with_map = false;
+    (void) mca_base_var_register("orte", "rmaps", "base", "display_topo_with_map",
+                                 "Whether to display the topology with the map",
+                                 MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                 OPAL_INFO_LVL_9,
+                                 MCA_BASE_VAR_SCOPE_READONLY, &orte_display_topo_with_map);
+
+    rmaps_base_display_diffable_map = false;
+    (void) mca_base_var_register("orte", "rmaps", "base", "display_diffable_map",
+                                 "Whether to display a diffable process map after it is computed",
+                                 MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                 OPAL_INFO_LVL_9,
+                                 MCA_BASE_VAR_SCOPE_READONLY, &rmaps_base_display_diffable_map);
+
+    return ORTE_SUCCESS;
+}
 
 /**
  * Function for finding and opening either all MCA components, or the one
@@ -57,19 +211,18 @@ orte_rmaps_base_t orte_rmaps_base;
  */
 int orte_rmaps_base_open(void)
 {
-    int param, value, i;
-    char *policy;
-    bool btmp;
+    int i;
     orte_mapping_policy_t tmp=0;
     orte_ranking_policy_t rtmp=0;
     char **ck, **ck2;
     size_t len;
 
+    /* register our mca variables */
+    (void) orte_rmaps_base_register ();
+
     /* init the globals */
     OBJ_CONSTRUCT(&orte_rmaps_base.selected_modules, opal_list_t);
     orte_rmaps_base.ppr = NULL;
-    orte_rmaps_base.cpus_per_rank = 1;
-    orte_rmaps_base.display_map = false;
     orte_rmaps_base.slot_list = NULL;
     orte_rmaps_base.mapping = 0;
     orte_rmaps_base.ranking = 0;
@@ -78,24 +231,15 @@ int orte_rmaps_base_open(void)
        verbose set by the mca open system... */
     orte_rmaps_base.rmaps_output = opal_output_open(NULL);
 
-    /* define default mapping policy */
-    param = mca_base_param_reg_string_name("rmaps", "base_mapping_policy",
-#if OPAL_HAVE_HWLOC
-                                           "Mapping Policy [slot (default) | hwthread | core | l1cache | l2cache | l3cache | socket | numa | board | node | seq], with allowed modifiers :SPAN,OVERSUBSCRIBE,NOOVERSUBSCRIBE",
-#else
-                                           "Mapping Policy [slot (default) | node], with allowed modifiers :SPAN,OVERSUBSCRIBE,NOOVERSUBSCRIBE",
-#endif
-                                           false, false, NULL, &policy);
-    mca_base_param_reg_syn_name(param, "rmaps", "base_schedule_policy", true);
 
-    if (NULL == policy) {
+    if (NULL == rmaps_base_mapping_policy) {
         ORTE_SET_MAPPING_POLICY(orte_rmaps_base.mapping, ORTE_MAPPING_BYSLOT);
         ORTE_UNSET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping, ORTE_MAPPING_GIVEN);
     } else {
-        ck = opal_argv_split(policy, ':');
+        ck = opal_argv_split(rmaps_base_mapping_policy, ':');
         if (2 < opal_argv_count(ck)) {
             /* incorrect format */
-            orte_show_help("help-orte-rmaps-base.txt", "unrecognized-policy", true, "mapping", policy);
+            orte_show_help("help-orte-rmaps-base.txt", "unrecognized-policy", true, "mapping", rmaps_base_mapping_policy);
             opal_argv_free(ck);
             return ORTE_ERR_SILENT;
         }
@@ -160,7 +304,7 @@ int orte_rmaps_base_open(void)
             opal_hwloc_use_hwthreads_as_cpus = true;
 #endif
         } else {
-            orte_show_help("help-orte-rmaps-base.txt", "unrecognized-policy", true, "mapping", policy);
+            orte_show_help("help-orte-rmaps-base.txt", "unrecognized-policy", true, "mapping", rmaps_base_mapping_policy);
             opal_argv_free(ck);
             return ORTE_ERR_SILENT;
         }
@@ -169,21 +313,13 @@ int orte_rmaps_base_open(void)
         opal_argv_free(ck);
     }
 
-    /* define default ranking policy */
-    param = mca_base_param_reg_string_name("rmaps", "base_ranking_policy",
-#if OPAL_HAVE_HWLOC
-                                           "Ranking Policy [slot (default) | hwthread | core | l1cache | l2cache | l3cache | socket | numa | board | node], with modifier :SPAN or :FILL",
-#else
-                                           "Ranking Policy [slot (default) | node]",
-#endif
-                                           false, false, NULL, &policy);
-    if (NULL == policy) {
+    if (NULL == rmaps_base_ranking_policy) {
         ORTE_SET_RANKING_POLICY(orte_rmaps_base.ranking, ORTE_RANK_BY_SLOT);
     } else {
-        ck = opal_argv_split(policy, ':');
+        ck = opal_argv_split(rmaps_base_ranking_policy, ':');
         if (2 < opal_argv_count(ck)) {
             /* incorrect format */
-            orte_show_help("help-orte-rmaps-base.txt", "unrecognized-policy", true, "ranking", policy);
+            orte_show_help("help-orte-rmaps-base.txt", "unrecognized-policy", true, "ranking", rmaps_base_ranking_policy);
             opal_argv_free(ck);
             return ORTE_ERR_SILENT;
         }
@@ -223,18 +359,14 @@ int orte_rmaps_base_open(void)
             rtmp = ORTE_RANK_BY_BOARD;
 #endif
         } else {
-            orte_show_help("help-orte-rmaps-base.txt", "unrecognized-policy", true, "ranking", policy);
+            orte_show_help("help-orte-rmaps-base.txt", "unrecognized-policy", true, "ranking", rmaps_base_ranking_policy);
             return ORTE_ERR_SILENT;
         }
         ORTE_SET_RANKING_POLICY(orte_rmaps_base.ranking, rtmp);
         ORTE_SET_RANKING_DIRECTIVE(orte_rmaps_base.ranking, ORTE_RANKING_GIVEN);
     }
 
-    /* backward compatibility */
-    mca_base_param_reg_int_name("rmaps", "base_byslot",
-                                "Whether to map and rank processes round-robin by slot",
-                                false, false, (int)false, &value);
-    if (value) {
+    if (rmaps_base_byslot) {
         /* set mapping policy to byslot - error if something else already set */
         if ((ORTE_MAPPING_GIVEN & ORTE_GET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping)) &&
             ORTE_GET_MAPPING_POLICY(orte_rmaps_base.mapping) != ORTE_MAPPING_BYSLOT) {
@@ -256,10 +388,8 @@ int orte_rmaps_base_open(void)
         ORTE_SET_RANKING_POLICY(orte_rmaps_base.ranking, ORTE_RANK_BY_SLOT);
         ORTE_SET_RANKING_DIRECTIVE(orte_rmaps_base.ranking, ORTE_RANKING_GIVEN);
     }
-    mca_base_param_reg_int_name("rmaps", "base_bynode",
-                                "Whether to map and rank processes round-robin by node",
-                                false, false, (int)false, &value);
-    if (value) {
+
+    if (rmaps_base_bynode) {
         /* set mapping policy to bynode - error if something else already set */
         if ((ORTE_MAPPING_GIVEN & ORTE_GET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping)) &&
             ORTE_GET_MAPPING_POLICY(orte_rmaps_base.mapping) != ORTE_MAPPING_BYNODE) {
@@ -282,13 +412,6 @@ int orte_rmaps_base_open(void)
     }
 
 #if OPAL_HAVE_HWLOC
-    /* #cpus/rank to use */
-    param = mca_base_param_reg_int_name("rmaps", "base_cpus_per_proc",
-                                        "Number of cpus to use for each rank [1-2**15 (default=1)]",
-                                        false, false, 1, NULL);
-    mca_base_param_reg_syn_name(param, "rmaps", "base_cpus_per_rank", false);
-    mca_base_param_lookup_int(param, &value);
-    orte_rmaps_base.cpus_per_rank = value;
     /* if the cpus/rank > 1, then we have to bind to cores UNLESS the binding has
      * already been set to something else
      */
@@ -300,24 +423,15 @@ int orte_rmaps_base_open(void)
             OPAL_SET_BINDING_POLICY(opal_hwloc_binding_policy, OPAL_BIND_TO_CORE);
         }
     }
-#else
-    orte_rmaps_base.cpus_per_rank = 1;
 #endif
 
     /* Should we schedule on the local node or not? */
-    mca_base_param_reg_int_name("rmaps", "base_no_schedule_local",
-                                "If false, allow scheduling MPI applications on the same node as mpirun (default).  If true, do not schedule any MPI applications on the same node as mpirun",
-                                false, false, (int)false, &value);
-    if (value) {
+    if (rmaps_base_no_schedule_local) {
         orte_rmaps_base.mapping |= ORTE_MAPPING_NO_USE_LOCAL;
     }
 
     /* Should we oversubscribe or not? */
-    /** default condition that allows oversubscription */
-    mca_base_param_reg_int_name("rmaps", "base_no_oversubscribe",
-                                "If true, then do not allow oversubscription of nodes - mpirun will return an error if there aren't enough nodes to launch all processes without oversubscribing",
-                                false, false, (int)false, &value);
-    if (value) {
+    if (rmaps_base_no_oversubscribe) {
         if ((ORTE_MAPPING_SUBSCRIBE_GIVEN & ORTE_GET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping)) &&
             !(ORTE_MAPPING_NO_OVERSUBSCRIBE & ORTE_GET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping))) {
             /* error - cannot redefine the default mapping policy */
@@ -330,10 +444,7 @@ int orte_rmaps_base_open(void)
     }
 
     /** force oversubscription permission */
-    mca_base_param_reg_int_name("rmaps", "base_oversubscribe",
-                                "If true, then =allow oversubscription of nodes",
-                                false, false, (int)false, &value);
-    if (value) {
+    if (rmaps_base_oversubscribe) {
         if ((ORTE_MAPPING_SUBSCRIBE_GIVEN & ORTE_GET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping)) &&
             (ORTE_MAPPING_NO_OVERSUBSCRIBE & ORTE_GET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping))) {
             /* error - cannot redefine the default mapping policy */
@@ -345,33 +456,14 @@ int orte_rmaps_base_open(void)
         ORTE_SET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping, ORTE_MAPPING_SUBSCRIBE_GIVEN);
     }
 
-    /* should we display the map after determining it? */
-    mca_base_param_reg_int_name("rmaps", "base_display_map",
-                                "Whether to display the process map after it is computed",
-                                false, false, (int)false, &value);
-    orte_rmaps_base.display_map = OPAL_INT_TO_BOOL(value);
-    
     /* should we display a detailed (developer-quality) version of the map after determining it? */
-    mca_base_param_reg_int_name("rmaps", "base_display_devel_map",
-                                "Whether to display a developer-detail process map after it is computed",
-                                false, false, (int)false, &value);
-    btmp = OPAL_INT_TO_BOOL(value);
-    if (btmp) {
+    if (rmaps_base_display_devel_map) {
         orte_rmaps_base.display_map = true;
         orte_devel_level_output = true;
     }
-    /* should we display the topology along with the map? */
-    mca_base_param_reg_int_name("rmaps", "base_display_topo_with_map",
-                                "Whether to display the topology with the map",
-                                false, false, (int)false, &value);
-    orte_display_topo_with_map = OPAL_INT_TO_BOOL(value);
    
     /* should we display a diffable report of proc locations after determining it? */
-    mca_base_param_reg_int_name("rmaps", "base_display_diffable_map",
-                                "Whether to display a diffable process map after it is computed",
-                                false, false, (int)false, &value);
-    btmp = OPAL_INT_TO_BOOL(value);
-    if (btmp) {
+    if (rmaps_base_display_diffable_map) {
         orte_rmaps_base.display_map = true;
         orte_display_diffable_output = true;
     }

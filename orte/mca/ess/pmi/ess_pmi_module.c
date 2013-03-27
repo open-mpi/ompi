@@ -41,7 +41,6 @@
 
 #include "opal/util/opal_environ.h"
 #include "opal/util/output.h"
-#include "opal/mca/base/mca_base_param.h"
 #include "opal/util/argv.h"
 #include "opal/class/opal_pointer_array.h"
 #include "opal/mca/hwloc/base/base.h"
@@ -117,19 +116,16 @@ static int rte_init(void)
 
     if (ORTE_PROC_IS_DAEMON) {  /* I am a daemon, launched by mpirun */
         /* we had to be given a jobid */
-        mca_base_param_reg_string_name("orte", "ess_jobid", "Process jobid",
-                                       true, false, NULL, &tmp);
-        if (NULL == tmp) {
+        if (NULL == orte_ess_base_jobid) {
             error = "missing jobid";
             ret = ORTE_ERR_FATAL;
             goto error;
         }
-        if (ORTE_SUCCESS != (ret = orte_util_convert_string_to_jobid(&jobid, tmp))) {
+        if (ORTE_SUCCESS != (ret = orte_util_convert_string_to_jobid(&jobid, orte_ess_base_jobid))) {
             ORTE_ERROR_LOG(ret);
             error = "convert jobid";
             goto error;
         }
-        free(tmp);
         ORTE_PROC_MY_NAME->jobid = jobid;
         /* get our rank from PMI */
         if (PMI_SUCCESS != (ret = PMI_Get_rank(&i))) {
@@ -218,7 +214,7 @@ static int rte_init(void)
             ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
             return ORTE_ERR_OUT_OF_RESOURCE;
         }
-        if (NULL == (cs_env = mca_base_param_env_var ("orte_precondition_transports"))) {
+        if (OPAL_SUCCESS != mca_base_var_env_name ("orte_precondition_transports", &cs_env)) {
             ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
             return ORTE_ERR_OUT_OF_RESOURCE;
         }

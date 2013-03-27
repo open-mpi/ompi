@@ -83,6 +83,48 @@ mca_pml_base_module_t mca_pml = {
 opal_list_t mca_pml_base_components_available;
 mca_pml_base_component_t mca_pml_base_selected_component;
 opal_pointer_array_t mca_pml_base_pml;
+char *ompi_pml_base_bsend_allocator_name;
+
+static int ompi_pml_base_verbose = 0;
+
+#if !MCA_ompi_pml_DIRECT_CALL && OPAL_ENABLE_FT_CR == 1
+static char *ompi_pml_base_wrapper = NULL;
+#endif
+
+static int pml_base_register(int flags)
+{
+#if !MCA_ompi_pml_DIRECT_CALL && OPAL_ENABLE_FT_CR == 1
+    int var_id;
+#endif
+
+    ompi_pml_base_bsend_allocator_name = "basic";
+    (void) mca_base_var_register("ompi", "pml", "base", "bsend_allocator", NULL,
+                                 MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
+                                 OPAL_INFO_LVL_9,
+                                 MCA_BASE_VAR_SCOPE_READONLY,
+                                 &ompi_pml_base_bsend_allocator_name);
+
+    ompi_pml_base_verbose = 0;
+    (void) mca_base_var_register("ompi", "pml", "base", "verbose",
+                                 "Verbosity level of the PML framework",
+                                 MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                 OPAL_INFO_LVL_9,
+                                 MCA_BASE_VAR_SCOPE_READONLY,
+                                 &ompi_pml_base_verbose);
+
+#if !MCA_ompi_pml_DIRECT_CALL && OPAL_ENABLE_FT_CR == 1
+    ompi_pml_base_wrapper = NULL;
+    var_id = mca_base_var_register("ompi", "pml", "base", "wrapper",
+                                   "Use a Wrapper component around the selected PML component",
+                                   MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
+                                   OPAL_INFO_LVL_9,
+                                   MCA_BASE_VAR_SCOPE_READONLY,
+                                   &ompi_pml_base_wrapper);
+    (void) mca_base_var_register_synonym(var_id, "ompi", "pml", NULL, "wrapper", 0);
+#endif
+
+    return OMPI_SUCCESS;
+}
 
 /**
  * Function for finding and opening either all MCA components, or the one
@@ -90,23 +132,19 @@ opal_pointer_array_t mca_pml_base_pml;
  */
 int mca_pml_base_open(void)
 {
-    int value;
 #if OPAL_ENABLE_FT_CR == 1
     char* wrapper_pml = NULL;
 #endif
+
+    (void) pml_base_register(0);
 
     /*
      * Register some MCA parameters
      */
      /* Debugging/Verbose output */
-     mca_base_param_reg_int_name("pml",
-                                 "base_verbose",
-                                 "Verbosity level of the PML framework",
-                                 false, false,
-                                 0, &value);
  
      mca_pml_base_output = opal_output_open(NULL);
-     opal_output_set_verbosity(mca_pml_base_output, value);
+     opal_output_set_verbosity(mca_pml_base_output, ompi_pml_base_verbose);
 
     /**
      * Construct the send and receive request queues. There are 2 reasons to do it
@@ -147,20 +185,19 @@ int mca_pml_base_open(void)
                            strdup(stringify(MCA_ompi_pml_DIRECT_CALL_COMPONENT)));
 #else
     {
-        char* default_pml = NULL;
+        const char **default_pml = NULL;
+        int var_id;
 
-        mca_base_param_reg_string_name("pml", NULL,
-                                       "Specify a specific PML to use",
-                                       false, false, "", &default_pml);
+        var_id = mca_base_var_find("ompi", "pml", NULL, NULL);
+        mca_base_var_get_value(var_id, &default_pml, NULL, NULL);
 
-        if( (0 == strlen(default_pml)) || (default_pml[0] == '^') ) {
+        if( (NULL == default_pml || NULL == default_pml[0] ||
+             0 == strlen(default_pml[0])) || (default_pml[0][0] == '^') ) {
             opal_pointer_array_add(&mca_pml_base_pml, strdup("ob1")); 
             opal_pointer_array_add(&mca_pml_base_pml, strdup("cm"));
         } else {
-            opal_pointer_array_add(&mca_pml_base_pml, strdup(default_pml));
+            opal_pointer_array_add(&mca_pml_base_pml, strdup(default_pml[0]));
         }
-
-        free (default_pml);
     }
 #if OPAL_ENABLE_FT_CR == 1
     /* 
@@ -168,12 +205,8 @@ int mca_pml_base_open(void)
      *  - NULL or "" = No wrapper
      *  - ow. select that specific wrapper component
      */
-    mca_base_param_reg_string_name("pml", "wrapper",
-                                   "Use a Wrapper component around the selected PML component",
-                                   false, false,
-                                   NULL, &wrapper_pml);
-    if( NULL != wrapper_pml ) {
-        opal_pointer_array_add(&mca_pml_base_pml, wrapper_pml);
+    if( NULL != ompi_pml_base_wrapper) {
+        opal_pointer_array_add(&mca_pml_base_pml, ompi_pml_base_wrapper);
     }
 #endif
 

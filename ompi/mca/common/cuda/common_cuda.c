@@ -30,7 +30,6 @@
 #include <cuda.h>
 
 #include "opal/align.h"
-#include "opal/mca/base/mca_base_param.h"
 #include "opal/datatype/opal_convertor.h"
 #include "opal/datatype/opal_datatype_cuda.h"
 #include "opal/util/output.h"
@@ -182,6 +181,69 @@ static void cuda_dump_memhandle(int, void *, char *) __opal_attribute_unused__ ;
 
 #endif /* OMPI_CUDA_SUPPORT_41 */
 
+int mca_common_cuda_register_mca_variables(void)
+{
+    static bool registered = false;
+
+    if (registered) {
+        return OMPI_SUCCESS;
+    }
+
+    registered = true;
+
+    /* Set different levels of verbosity in the cuda related code. */
+    mca_common_cuda_verbose = 0;
+    (void) mca_base_var_register("ompi", "mpi", "common_cuda", "verbose",
+                                 "Set level of common cuda verbosity",
+                                 MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                 OPAL_INFO_LVL_9,
+                                 MCA_BASE_VAR_SCOPE_READONLY,
+                                 &mca_common_cuda_verbose);
+
+    /* Control whether system buffers get CUDA pinned or not.  Allows for 
+     * performance analysis. */
+    mca_common_cuda_register_memory = true;
+    (void) mca_base_var_register("ompi", "mpi", "common_cuda", "register_memory",
+                                 "Whether to cuMemHostRegister preallocated BTL buffers",
+                                 MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                 OPAL_INFO_LVL_9,
+                                 MCA_BASE_VAR_SCOPE_READONLY,
+                                 &mca_common_cuda_register_memory);
+
+    /* Control whether we see warnings when CUDA memory registration fails.  This is
+     * useful when CUDA support is configured in, but we are running a regular MPI
+     * application without CUDA. */
+    mca_common_cuda_warning = true;
+    (void) mca_base_var_register("ompi", "mpi", "common_cuda", "warning",
+                                 "Whether to print warnings when CUDA registration fails",
+                                 MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                 OPAL_INFO_LVL_9,
+                                 MCA_BASE_VAR_SCOPE_READONLY,
+                                 &mca_common_cuda_warning);
+
+#if OMPI_CUDA_SUPPORT_41
+    /* Use this flag to test async vs sync copies */
+    mca_common_cuda_async = 1;
+    (void) mca_base_var_register("ompi", "mpi", "common_cuda", "memcpy_async",
+                                 "Set to 0 to force CUDA sync copy instead of async",
+                                 MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                 OPAL_INFO_LVL_9,
+                                 MCA_BASE_VAR_SCOPE_READONLY,
+                                 &mca_common_cuda_async);
+
+    /* Use this parameter to increase the number of outstanding events allows */
+    cuda_event_max = 200;
+    (void) mca_base_var_register("ompi", "mpi", "common_cuda", "event_max",
+                                 "Set number of oustanding CUDA events",
+                                 MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                 OPAL_INFO_LVL_9,
+                                 MCA_BASE_VAR_SCOPE_READONLY,
+                                 &cuda_event_max);
+#endif /* OMPI_CUDA_SUPPORT_41 */
+
+    return OMPI_SUCCESS;
+}
+
 /**
  * This function is registered with the OPAL CUDA support.  In that way,
  * we will complete initialization when OPAL detects the first GPU memory
@@ -203,34 +265,16 @@ static int mca_common_cuda_init(opal_common_cuda_function_table_t *ftable)
         return OMPI_SUCCESS;
     }
 
+    /* Make sure this component's variables are registered */
+    mca_common_cuda_register_mca_variables();
+
     ftable->gpu_is_gpu_buffer = &mca_common_cuda_is_gpu_buffer;
     ftable->gpu_cu_memcpy_async = &mca_common_cuda_cu_memcpy_async;
     ftable->gpu_cu_memcpy = &mca_common_cuda_cu_memcpy;
     ftable->gpu_memmove = &mca_common_cuda_memmove;
 
-    /* Set different levels of verbosity in the cuda related code. */
-    id = mca_base_param_reg_int_name("mpi", "common_cuda_verbose", 
-                                     "Set level of common cuda verbosity",
-                                     false, false, 0, &mca_common_cuda_verbose);
     mca_common_cuda_output = opal_output_open(NULL);
     opal_output_set_verbosity(mca_common_cuda_output, mca_common_cuda_verbose);
-
-    /* Control whether system buffers get CUDA pinned or not.  Allows for 
-     * performance analysis. */
-    id = mca_base_param_reg_int_name("mpi", "common_cuda_register_memory",
-                                     "Whether to cuMemHostRegister preallocated BTL buffers",
-                                     false, false, 
-                                     (int) mca_common_cuda_register_memory, &value);
-    mca_common_cuda_register_memory = OPAL_INT_TO_BOOL(value);
-
-    /* Control whether we see warnings when CUDA memory registration fails.  This is
-     * useful when CUDA support is configured in, but we are running a regular MPI
-     * application without CUDA. */
-    id = mca_base_param_reg_int_name("mpi", "common_cuda_warning",
-                                     "Whether to print warnings when CUDA registration fails",
-                                     false, false, 
-                                     (int) mca_common_cuda_warning, &value);
-    mca_common_cuda_warning = OPAL_INT_TO_BOOL(value);
 
     /* If we cannot load the libary, then disable support */
     if (0 != mca_common_cuda_load_libcuda()) {
@@ -238,20 +282,6 @@ static int mca_common_cuda_init(opal_common_cuda_function_table_t *ftable)
         ompi_mpi_cuda_support = 0;
         return OMPI_ERROR;
     }
-
-#if OMPI_CUDA_SUPPORT_41
-    /* Use this flag to test async vs sync copies */
-    id = mca_base_param_reg_int_name("mpi", "common_cuda_memcpy_async",
-                                     "Set to 0 to force CUDA sync copy instead of async",
-                                     false, false, mca_common_cuda_async, &i);
-    mca_common_cuda_async = i;
-
-    /* Use this parameter to increase the number of outstanding events allows */
-    id = mca_base_param_reg_int_name("mpi", "common_cuda_event_max",
-                                     "Set number of oustanding CUDA events",
-                                     false, false, cuda_event_max, &i);
-    cuda_event_max = i;
-#endif /* OMPI_CUDA_SUPPORT_41 */
 
     /* Check to see if this process is running in a CUDA context.  If
      * so, all is good.  If not, then disable registration of memory. */

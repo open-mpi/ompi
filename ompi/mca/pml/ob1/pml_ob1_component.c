@@ -24,7 +24,6 @@
 #include "mpi.h"
 #include "ompi/runtime/params.h"
 #include "ompi/mca/pml/pml.h"
-#include "opal/mca/base/mca_base_param.h"
 #include "ompi/mca/pml/base/pml_base_bsend.h"
 #include "pml_ob1.h"
 #include "pml_ob1_hdr.h"
@@ -41,6 +40,7 @@ OBJ_CLASS_INSTANCE( mca_pml_ob1_pckt_pending_t,
                     NULL,
                     NULL );
 
+static int mca_pml_ob1_component_register(void);
 static int mca_pml_ob1_component_open(void);
 static int mca_pml_ob1_component_close(void);
 static mca_pml_base_module_t*
@@ -48,6 +48,7 @@ mca_pml_ob1_component_init( int* priority, bool enable_progress_threads,
                             bool enable_mpi_threads );
 static int mca_pml_ob1_component_fini(void);
 int mca_pml_ob1_output = 0;
+static int mca_pml_ob1_verbose = 0;
 
 mca_pml_base_component_2_0_0_t mca_pml_ob1_component = {
 
@@ -62,7 +63,9 @@ mca_pml_base_component_2_0_0_t mca_pml_ob1_component = {
       OMPI_MINOR_VERSION,  /* MCA component minor version */
       OMPI_RELEASE_VERSION,  /* MCA component release version */
       mca_pml_ob1_component_open,  /* component open */
-      mca_pml_ob1_component_close  /* component close */
+      mca_pml_ob1_component_close, /* component close */
+      NULL,
+      mca_pml_ob1_component_register
     },
     {
         /* The component is checkpoint ready */
@@ -83,59 +86,82 @@ void mca_pml_ob1_seg_free( struct mca_mpool_base_module_t* mpool,
 
 static inline int mca_pml_ob1_param_register_int(
     const char* param_name,
-    int default_value)
+    int default_value,
+    int *storage)
 {
-    int param_value = default_value;
-
-    (void) mca_base_param_reg_int (&mca_pml_ob1_component.pmlm_version, param_name,
-                                   NULL, false, false, default_value, &param_value);
-
-    return param_value;
+    *storage = default_value;
+    (void) mca_base_component_var_register(&mca_pml_ob1_component.pmlm_version, param_name,
+                                           NULL, MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY, storage);
+    return *storage;
 }
 
-static int mca_pml_ob1_component_open(void)
+static inline unsigned int mca_pml_ob1_param_register_uint(
+    const char* param_name,
+    unsigned int default_value,
+    unsigned int *storage)
 {
-    int value;
-    mca_allocator_base_component_t* allocator_component;
+    *storage = default_value;
+    (void) mca_base_component_var_register(&mca_pml_ob1_component.pmlm_version, param_name,
+                                           NULL, MCA_BASE_VAR_TYPE_UNSIGNED_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY, storage);
+    return *storage;
+}
 
-    value = mca_pml_ob1_param_register_int("verbose", 0);
-    mca_pml_ob1_output = opal_output_open(NULL);
-    opal_output_set_verbosity(mca_pml_ob1_output, value);
+static inline size_t mca_pml_ob1_param_register_sizet(
+    const char* param_name,
+    size_t default_value,
+    size_t *storage)
+{
+    *storage = default_value;
+    (void) mca_base_component_var_register(&mca_pml_ob1_component.pmlm_version, param_name,
+                                           NULL, MCA_BASE_VAR_TYPE_SIZE_T, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY, storage);
+    return *storage;
+}
 
-    mca_pml_ob1.free_list_num =
-        mca_pml_ob1_param_register_int("free_list_num", 4);
-    mca_pml_ob1.free_list_max =
-        mca_pml_ob1_param_register_int("free_list_max", -1);
-    mca_pml_ob1.free_list_inc =
-        mca_pml_ob1_param_register_int("free_list_inc", 64);
-    mca_pml_ob1.priority =
-        mca_pml_ob1_param_register_int("priority", 20);
-    mca_pml_ob1.send_pipeline_depth =
-        mca_pml_ob1_param_register_int("send_pipeline_depth", 3);
-    mca_pml_ob1.recv_pipeline_depth =
-        mca_pml_ob1_param_register_int("recv_pipeline_depth", 4);
+static int mca_pml_ob1_component_register(void)
+{
+    mca_pml_ob1_param_register_int("verbose", 0, &mca_pml_ob1_verbose);
+
+    mca_pml_ob1_param_register_int("free_list_num", 4, &mca_pml_ob1.free_list_num);
+    mca_pml_ob1_param_register_int("free_list_max", -1, &mca_pml_ob1.free_list_max);
+    mca_pml_ob1_param_register_int("free_list_inc", 64, &mca_pml_ob1.free_list_inc);
+    mca_pml_ob1_param_register_int("priority", 20, &mca_pml_ob1.priority);
+    mca_pml_ob1_param_register_sizet("send_pipeline_depth", 3, &mca_pml_ob1.send_pipeline_depth);
+    mca_pml_ob1_param_register_sizet("recv_pipeline_depth", 4, &mca_pml_ob1.recv_pipeline_depth);
 
     /* NTH: we can get into a live-lock situation in the RDMA failure path so disable
        RDMA retries for now. Falling back to send may suck but it is better than
        hanging */
     mca_pml_ob1.rdma_retries_limit = 0;
-/*     mca_pml_ob1.rdma_retries_limit = */
-/*         mca_pml_ob1_param_register_int("rdma_retries_limit", 5); */
+    /*     mca_pml_ob1_param_register_sizet("rdma_retries_limit", 5, &mca_pml_ob1.rdma_retries_limit); */
 
-    mca_pml_ob1.max_rdma_per_request =
-        mca_pml_ob1_param_register_int("max_rdma_per_request", 4);
-    mca_pml_ob1.max_send_per_range =
-        mca_pml_ob1_param_register_int("max_send_per_range", 4);
+    mca_pml_ob1_param_register_int("max_rdma_per_request", 4, &mca_pml_ob1.max_rdma_per_request);
+    mca_pml_ob1_param_register_int("max_send_per_range", 4, &mca_pml_ob1.max_send_per_range);
 
-    mca_pml_ob1.unexpected_limit =
-        mca_pml_ob1_param_register_int("unexpected_limit", 128);
+    mca_pml_ob1_param_register_uint("unexpected_limit", 128, &mca_pml_ob1.unexpected_limit);
  
-    mca_base_param_reg_string(&mca_pml_ob1_component.pmlm_version,
-                              "allocator",
-                              "Name of allocator component for unexpected messages",
-                              false, false,
-                              "bucket",
-                              &mca_pml_ob1.allocator_name);
+    mca_pml_ob1.allocator_name = "bucket";
+    (void) mca_base_component_var_register(&mca_pml_ob1_component.pmlm_version, "allocator",
+                                           "Name of allocator component for unexpected messages",
+                                           MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &mca_pml_ob1.allocator_name);
+
+    return OMPI_SUCCESS;
+}
+
+static int mca_pml_ob1_component_open(void)
+{
+    mca_allocator_base_component_t* allocator_component;
+
+    mca_pml_ob1_output = opal_output_open(NULL);
+    opal_output_set_verbosity(mca_pml_ob1_output, mca_pml_ob1_verbose);
 
     allocator_component = mca_allocator_component_lookup( mca_pml_ob1.allocator_name );
     if(NULL == allocator_component) {
@@ -162,9 +188,6 @@ static int mca_pml_ob1_component_close(void)
 
     if (OMPI_SUCCESS != (rc = mca_bml_base_close())) {
          return rc;
-    }
-    if (NULL != mca_pml_ob1.allocator_name) {
-        free(mca_pml_ob1.allocator_name);
     }
     opal_output_close(mca_pml_ob1_output);
 

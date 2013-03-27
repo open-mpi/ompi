@@ -130,7 +130,7 @@ struct mca_btl_sm_component_t {
     int sm_free_list_num;              /**< initial size of free lists */
     int sm_free_list_max;              /**< maximum size of free lists */
     int sm_free_list_inc;              /**< number of elements to alloc when growing free lists */
-    int32_t sm_max_procs;              /**< upper limit on the number of processes using the shared memory pool */
+    int sm_max_procs;                  /**< upper limit on the number of processes using the shared memory pool */
     int sm_extra_procs;                /**< number of extra procs to allow */
     char* sm_mpool_name;               /**< name of shared memory pool module */
     mca_mpool_base_module_t **sm_mpools; /**< shared memory pools (one for each memory node) */
@@ -149,8 +149,8 @@ struct mca_btl_sm_component_t {
                                           but this one, in process private memory, is
                                           a real virtual address */
     uint16_t *mem_nodes;               /**< cached copy of mem nodes of each local rank */
-    size_t fifo_size;                  /**< number of FIFO queue entries */
-    size_t fifo_lazy_free;             /**< number of reads before lazy fifo free is triggered */
+    unsigned int fifo_size;            /**< number of FIFO queue entries */
+    unsigned int fifo_lazy_free;       /**< number of reads before lazy fifo free is triggered */
     int nfifos;                        /**< number of FIFOs per receiver */
     int32_t num_smp_procs;             /**< current number of smp procs on this host */
     int32_t my_smp_rank;               /**< My SMP process rank.  Used for accessing
@@ -190,7 +190,7 @@ struct mca_btl_sm_component_t {
 
     /** MCA: minimal message size (bytes) to offload on DMA engine
         when using knem */
-    uint32_t knem_dma_min;
+    unsigned int knem_dma_min;
 
     /** MCA: how many simultaneous ongoing knem operations to
         support */

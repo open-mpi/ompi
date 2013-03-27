@@ -105,14 +105,8 @@ struct mca_bcol_basesmuma_component_t {
 
     /* management data for collectives with no user data */
 
-    /** MCA parameter: control region size (bytes), per proc */
-    size_t basesmuma_ctl_size_per_proc;
-
-    /** MCA parameter: control region alignment */
-    size_t basesmuma_ctl_alignment;
-
     /** MCA parameter: number of memory banks */
-    size_t basesmuma_num_mem_banks;
+    int basesmuma_num_mem_banks;
 
     /** MCA parameter: number of regions per memory bank */
     int basesmuma_num_regions_per_bank;

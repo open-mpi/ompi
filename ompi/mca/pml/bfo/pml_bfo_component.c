@@ -24,7 +24,6 @@
 #include "mpi.h"
 #include "ompi/runtime/params.h"
 #include "ompi/mca/pml/pml.h"
-#include "opal/mca/base/mca_base_param.h"
 #include "ompi/mca/pml/base/pml_base_bsend.h"
 #include "pml_bfo.h"
 #include "pml_bfo_hdr.h"
@@ -41,6 +40,7 @@ OBJ_CLASS_INSTANCE( mca_pml_bfo_pckt_pending_t,
                     NULL,
                     NULL );
 
+static int mca_pml_bfo_component_register(void);
 static int mca_pml_bfo_component_open(void);
 static int mca_pml_bfo_component_close(void);
 static mca_pml_base_module_t*
@@ -48,6 +48,7 @@ mca_pml_bfo_component_init( int* priority, bool enable_progress_threads,
                             bool enable_mpi_threads );
 static int mca_pml_bfo_component_fini(void);
 int mca_pml_bfo_output = 0;
+static int mca_pml_bfo_verbose = 0;
 
 mca_pml_base_component_2_0_0_t mca_pml_bfo_component = {
 
@@ -62,7 +63,9 @@ mca_pml_base_component_2_0_0_t mca_pml_bfo_component = {
       OMPI_MINOR_VERSION,  /* MCA component minor version */
       OMPI_RELEASE_VERSION,  /* MCA component release version */
       mca_pml_bfo_component_open,  /* component open */
-      mca_pml_bfo_component_close  /* component close */
+      mca_pml_bfo_component_close, /* component close */
+      NULL,
+      mca_pml_bfo_component_register
     },
     {
         /* The component is checkpoint ready */
@@ -83,57 +86,73 @@ void mca_pml_bfo_seg_free( struct mca_mpool_base_module_t* mpool,
 
 static inline int mca_pml_bfo_param_register_int(
     const char* param_name,
-    int default_value)
+    int default_value,
+    int *storage)
 {
-    int param_value = default_value;
+    *storage = default_value;
+    (void) mca_base_component_var_register(&mca_pml_bfo_component.pmlm_version, param_name,
+                                           NULL, MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY, storage);
 
-    (void) mca_base_param_reg_int (&mca_pml_bfo_component.pmlm_version, param_name,
-                                   NULL, false, false, default_value, &param_value);
+    return *storage;
+}
 
-    return param_value;
+static inline unsigned int mca_pml_bfo_param_register_uint(
+    const char* param_name,
+    unsigned int default_value,
+    unsigned int *storage)
+{
+    *storage = default_value;
+    (void) mca_base_component_var_register(&mca_pml_bfo_component.pmlm_version, param_name,
+                                           NULL, MCA_BASE_VAR_TYPE_UNSIGNED_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY, storage);
+
+    return *storage;
+}
+
+static int mca_pml_bfo_component_register(void)
+{
+    int default_priority;
+
+#if PML_BFO
+    default_priority = 5;
+#else /* PML_BFO */
+    default_priority = 20;
+        mca_pml_bfo_param_register_int("priority", 20);
+#endif /* PML_BFO */
+
+    (void) mca_pml_bfo_param_register_int("verbose", 0, &mca_pml_bfo_verbose);
+    (void) mca_pml_bfo_param_register_int("free_list_num", 4, &mca_pml_bfo.free_list_num);
+    (void) mca_pml_bfo_param_register_int("free_list_max", -1, &mca_pml_bfo.free_list_max);
+    (void) mca_pml_bfo_param_register_int("free_list_inc", 64, &mca_pml_bfo.free_list_inc);
+    (void) mca_pml_bfo_param_register_int("priority", default_priority, &mca_pml_bfo.priority);
+    (void) mca_pml_bfo_param_register_uint("send_pipeline_depth", 3, &mca_pml_bfo.send_pipeline_depth);
+    (void) mca_pml_bfo_param_register_uint("recv_pipeline_depth", 4, &mca_pml_bfo.recv_pipeline_depth);
+    (void) mca_pml_bfo_param_register_uint("rdma_put_retries_limit", 5, &mca_pml_bfo.rdma_put_retries_limit);
+    (void) mca_pml_bfo_param_register_int("max_rdma_per_request", 4, &mca_pml_bfo.max_rdma_per_request);
+    (void) mca_pml_bfo_param_register_int("max_send_per_range", 4, &mca_pml_bfo.max_send_per_range);
+    (void) mca_pml_bfo_param_register_uint("unexpected_limit", 128, &mca_pml_bfo.unexpected_limit);
+
+    mca_pml_bfo.allocator_name = "bucket";
+    (void) mca_base_component_var_register(&mca_pml_bfo_component.pmlm_version,
+                                           "allocator",
+                                           "Name of allocator component for unexpected messages",
+                                           MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &mca_pml_bfo.allocator_name);
+
+    return OMPI_SUCCESS;
 }
 
 static int mca_pml_bfo_component_open(void)
 {
-    int value;
     mca_allocator_base_component_t* allocator_component;
 
-    value = mca_pml_bfo_param_register_int("verbose", 0);
     mca_pml_bfo_output = opal_output_open(NULL);
-    opal_output_set_verbosity(mca_pml_bfo_output, value);
-
-    mca_pml_bfo.free_list_num =
-        mca_pml_bfo_param_register_int("free_list_num", 4);
-    mca_pml_bfo.free_list_max =
-        mca_pml_bfo_param_register_int("free_list_max", -1);
-    mca_pml_bfo.free_list_inc =
-        mca_pml_bfo_param_register_int("free_list_inc", 64);
-    mca_pml_bfo.priority =
-#if PML_BFO
-        mca_pml_bfo_param_register_int("priority", 5);
-#else /* PML_BFO */
-        mca_pml_bfo_param_register_int("priority", 20);
-#endif /* PML_BFO */
-    mca_pml_bfo.send_pipeline_depth =
-        mca_pml_bfo_param_register_int("send_pipeline_depth", 3);
-    mca_pml_bfo.recv_pipeline_depth =
-        mca_pml_bfo_param_register_int("recv_pipeline_depth", 4);
-    mca_pml_bfo.rdma_put_retries_limit =
-        mca_pml_bfo_param_register_int("rdma_put_retries_limit", 5);
-    mca_pml_bfo.max_rdma_per_request =
-        mca_pml_bfo_param_register_int("max_rdma_per_request", 4);
-    mca_pml_bfo.max_send_per_range =
-        mca_pml_bfo_param_register_int("max_send_per_range", 4);
-
-    mca_pml_bfo.unexpected_limit =
-        mca_pml_bfo_param_register_int("unexpected_limit", 128);
- 
-    mca_base_param_reg_string(&mca_pml_bfo_component.pmlm_version,
-                              "allocator",
-                              "Name of allocator component for unexpected messages",
-                              false, false,
-                              "bucket",
-                              &mca_pml_bfo.allocator_name);
+    opal_output_set_verbosity(mca_pml_bfo_output, mca_pml_bfo_verbose);
 
     allocator_component = mca_allocator_component_lookup( mca_pml_bfo.allocator_name );
     if(NULL == allocator_component) {
@@ -160,9 +179,6 @@ static int mca_pml_bfo_component_close(void)
 
     if (OMPI_SUCCESS != (rc = mca_bml_base_close())) {
          return rc;
-    }
-    if (NULL != mca_pml_bfo.allocator_name) {
-        free(mca_pml_bfo.allocator_name);
     }
     opal_output_close(mca_pml_bfo_output);
 

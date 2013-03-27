@@ -768,7 +768,7 @@ static inline struct ibv_cq *ibv_create_cq_compat(struct ibv_context *context,
 int mca_bcol_iboffload_adjust_cq(mca_bcol_iboffload_device_t *device,
                                                    struct ibv_cq **ib_cq)
 {
-    uint32_t cq_size = mca_bcol_iboffload_component.cq_size;
+    uint32_t cq_size = (uint32_t) mca_bcol_iboffload_component.cq_size;
 
     if (NULL == *ib_cq) {
         *ib_cq = ibv_create_cq_compat(device->dev.ib_dev_context, cq_size,
@@ -1070,8 +1070,8 @@ mca_bcol_iboffload_comm_query(mca_sbgp_base_module_t *sbgp, int *num_modules)
         }
 
         memset(&mqe_attr, 0, sizeof(mqe_attr));
-        mqe_attr.max_mqe_tasks = mca_bcol_iboffload_component.max_mqe_tasks;
-        mqe_attr.max_mq_size = mca_bcol_iboffload_component.max_mq_size;
+        mqe_attr.max_mqe_tasks = (uint32_t)mca_bcol_iboffload_component.max_mqe_tasks;
+        mqe_attr.max_mq_size = (uint32_t)mca_bcol_iboffload_component.max_mq_size;
         mqe_attr.cq = iboffload_module->device->ib_mq_cq;
 
         /* ALL MQs have the same configuration */

@@ -26,7 +26,7 @@
 #include "opal/util/opal_environ.h"
 
 #include "opal/constants.h"
-#include "opal/mca/base/mca_base_param.h"
+#include "opal/mca/base/mca_base_var.h"
 
 #include "opal/mca/crs/crs.h"
 #include "opal/mca/crs/base/base.h"
@@ -176,7 +176,7 @@ int opal_crs_none_prelaunch(int32_t rank,
 {
     char * tmp_env_var = NULL;
 
-    tmp_env_var = mca_base_param_env_var("opal_cr_is_tool");
+    (void) mca_base_var_env_name("opal_cr_is_tool", &tmp_env_var);
     opal_setenv(tmp_env_var,
                 "0", true, env);
     free(tmp_env_var);

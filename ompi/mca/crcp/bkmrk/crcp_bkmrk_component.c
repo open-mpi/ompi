@@ -28,11 +28,12 @@
 const char *ompi_crcp_bkmrk_component_version_string = 
 "OMPI CRCP bkmrk MCA component version " OMPI_VERSION;
 
-int timing_enabled = 0;
+bool timing_enabled;
 
 /*
  * Local functionality
  */
+static int crcp_bkmrk_register(void);
 static int crcp_bkmrk_open(void);
 static int crcp_bkmrk_close(void);
 
@@ -57,7 +58,8 @@ ompi_crcp_bkmrk_component_t mca_crcp_bkmrk_component = {
             /* Component open and close functions */
             crcp_bkmrk_open,
             crcp_bkmrk_close,
-            ompi_crcp_bkmrk_component_query
+            ompi_crcp_bkmrk_component_query,
+            crcp_bkmrk_register
         },
         {
             /* The component is checkpoint ready */
@@ -73,27 +75,43 @@ ompi_crcp_bkmrk_component_t mca_crcp_bkmrk_component = {
     }
 };
 
-static int crcp_bkmrk_open(void) 
+static int crcp_bkmrk_register(void)
 {
-    int val;
-
     /*
      * This should be the last componet to ever get used since
      * it doesn't do anything.
      */
-    mca_base_param_reg_int(&mca_crcp_bkmrk_component.super.base_version,
-                           "priority",
-                           "Priority of the CRCP bkmrk component",
-                           false, false,
-                           mca_crcp_bkmrk_component.super.priority,
-                           &mca_crcp_bkmrk_component.super.priority);
-    
-    mca_base_param_reg_int(&mca_crcp_bkmrk_component.super.base_version,
-                           "verbose",
-                           "Verbose level for the CRCP bkmrk component",
-                           false, false,
-                           mca_crcp_bkmrk_component.super.verbose, 
-                           &mca_crcp_bkmrk_component.super.verbose);
+    mca_crcp_bkmrk_component.super.priority = 20;
+    (void) mca_base_component_var_register(&mca_crcp_bkmrk_component.super.base_version,
+                                           "priority",
+                                           "Priority of the CRCP bkmrk component",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &mca_crcp_bkmrk_component.super.priority);
+
+    mca_crcp_bkmrk_component.super.verbose = 0;
+    (void) mca_base_component_var_register(&mca_crcp_bkmrk_component.super.base_version,
+                                           "verbose",
+                                           "Verbose level for the CRCP bkmrk component",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &mca_crcp_bkmrk_component.super.verbose);
+
+    timing_enabled = false;
+    (void) mca_base_component_var_register(&mca_crcp_bkmrk_component.super.base_version,
+                                           "timing", "Enable Performance timing",
+                                           MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &timing_enabled);
+
+    return OMPI_SUCCESS;
+}
+
+static int crcp_bkmrk_open(void)
+{ 
     /* If there is a custom verbose level for this component than use it
      * otherwise take our parents level and output channel
      */
@@ -104,14 +122,6 @@ static int crcp_bkmrk_open(void)
     } else {
         mca_crcp_bkmrk_component.super.output_handle = ompi_crcp_base_output;
     }
-
-    mca_base_param_reg_int(&mca_crcp_bkmrk_component.super.base_version,
-                           "timing",
-                           "Enable Performance timing",
-                           false, false,
-                           0,
-                           &val);
-    timing_enabled = val;
 
     /*
      * Debug Output

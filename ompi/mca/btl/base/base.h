@@ -63,6 +63,7 @@ OMPI_DECLSPEC  void mca_btl_base_dump(
     int verbose);
 OMPI_DECLSPEC  int mca_btl_base_param_register(mca_base_component_t *version,
         mca_btl_base_module_t *module);
+OMPI_DECLSPEC  int mca_btl_base_param_verify(mca_btl_base_module_t *module);
 
 /*
  * Globals

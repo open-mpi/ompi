@@ -96,13 +96,22 @@ static int db_pmi_component_register(void)
 {
     mca_base_component_t *c = &mca_db_pmi_component.base_version;
 
-    mca_base_param_reg_int(c, "store_priority",
-                           "Priority dictating order in which store commands will given to database components",
-                           false, false, my_store_priority, &my_store_priority);
+    my_store_priority = 0;
+    (void) mca_base_component_var_register(c, "store_priority",
+                                           "Priority dictating order in which store commands will given to database components",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &my_store_priority);
 
-    mca_base_param_reg_int(c, "fetch_priority",
-                           "Priority dictating order in which fetch commands will given to database components",
-                           false, false, my_fetch_priority, &my_fetch_priority);
+    my_fetch_priority = 1;
+    (void) mca_base_component_var_register(c, "fetch_priority",
+                                           "Priority dictating order in which fetch commands will given to database components",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &my_fetch_priority);
+
     return OPAL_SUCCESS;
 }
 

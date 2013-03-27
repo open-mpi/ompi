@@ -25,7 +25,6 @@
 #include "opal/util/opal_environ.h"
 #include "ompi/constants.h"
 
-#include "opal/mca/base/mca_base_param.h"
 #include "ompi/runtime/ompi_module_exchange.h"
 #include "ompi/mca/btl/base/btl_base_error.h"
 #include "ompi/mca/common/mx/common_mx.h"
@@ -72,30 +71,8 @@ mca_btl_mx_component_t mca_btl_mx_component = {
     }
 };
 
-
-static int mca_btl_mx_component_register(void)
+static int mca_btl_mx_component_verify(void)
 {
-    mca_base_param_reg_int( (mca_base_component_t*)&mca_btl_mx_component, "max_btls",
-                            "Maximum number of accepted Myrinet cards",
-                            false, false, 8, &mca_btl_mx_component.mx_max_btls );
-    mca_base_param_reg_int( (mca_base_component_t*)&mca_btl_mx_component, "timeout",
-                            "Timeout for connections",
-                            false, false, MX_INFINITE, &mca_btl_mx_component.mx_timeout );
-    mca_base_param_reg_int( (mca_base_component_t*)&mca_btl_mx_component, "retries",
-                            "Number of retries for each new connection before considering the peer as unreacheable",
-                            false, false, 20, &mca_btl_mx_component.mx_connection_retries );
-    mca_base_param_reg_int( (mca_base_component_t*)&mca_btl_mx_component, "filter",
-                            "Unique ID for the application (used to connect to the peers)",
-                            false, false, 0xdeadbeef, &mca_btl_mx_component.mx_filter );
-    mca_base_param_reg_int( (mca_base_component_t*)&mca_btl_mx_component, "self",
-                            "Enable the MX support for self communications",
-                            false, false, 0, &mca_btl_mx_component.mx_support_self );
-    mca_base_param_reg_int( (mca_base_component_t*)&mca_btl_mx_component, "shared_mem",
-                            "Enable the MX support for shared memory",
-                            false, false, 0, &mca_btl_mx_component.mx_support_sharedmem );
-    mca_base_param_reg_int( (mca_base_component_t*)&mca_btl_mx_component, "bonding",
-                            "Integrate MX library bonding. Less than 0 is system default, everything else will set the MX_BONDING to the value.",
-                            false, false, 1, &mca_btl_mx_component.mx_bonding );
     if( 0 >= mca_btl_mx_component.mx_bonding ) {
         char* value = getenv("MX_BONDING");
         if( NULL == value ) {
@@ -110,34 +87,117 @@ static int mca_btl_mx_component_register(void)
         snprintf( value, 8, "%d\n", mca_btl_mx_component.mx_bonding );
         opal_setenv( "MX_BONDING", value, true, &environ );
     }
-#ifdef HAVE_MX_REGISTER_UNEXP_HANDLER
-    mca_base_param_reg_int( (mca_base_component_t*)&mca_btl_mx_component, "register_unexp",
-                            "Enable the MX support for the unexpected request handler (Open MPI matching)",
-			    false, false, 0, &mca_btl_mx_component.mx_use_unexpected );
-#endif  /* HAVE_MX_REGISTER_UNEXP_HANDLER */
-    mca_base_param_reg_int( (mca_base_component_t*)&mca_btl_mx_component, "free_list_num",
-                            "Number of allocated default request",
-                            false, false, 8, &mca_btl_mx_component.mx_free_list_num );
-    mca_base_param_reg_int( (mca_base_component_t*)&mca_btl_mx_component, "free_list_inc",
-                            "Number of request we allocate each time we miss some",
-                            false, false, 32, &mca_btl_mx_component.mx_free_list_inc );
-    mca_base_param_reg_int( (mca_base_component_t*)&mca_btl_mx_component, "free_list_max",
-                            "Maximum number of request this device is allowed to allocate",
-                            false, false, 1024, &mca_btl_mx_component.mx_free_list_max );
 
-    mca_base_param_reg_int( (mca_base_component_t*)&mca_btl_mx_component, "max_posted_recv",
-                            "Number of received posted in advance. Increasing this number for"
-			    " communication bound application can lead to visible improvement"
-			    " in performances",
-                            false, false, 16, &mca_btl_mx_component.mx_max_posted_recv );
+    return mca_btl_base_param_verify(&mca_btl_mx_module.super);
+}
+
+static int mca_btl_mx_component_register(void)
+{
+    mca_btl_mx_component.mx_max_btls = 8;
+    (void) mca_base_component_var_register(&mca_btl_mx_component.btl_version, "max_btls",
+                                           "Maximum number of accepted Myrinet cards",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &mca_btl_mx_component.mx_max_btls);
+    mca_btl_mx_component.mx_timeout = MX_INFINITE;
+    (void) mca_base_component_var_register(&mca_btl_mx_component.btl_version, "timeout",
+                                           "Timeout for connections",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &mca_btl_mx_component.mx_timeout);
+    mca_btl_mx_component.mx_connection_retries = 20;
+    (void) mca_base_component_var_register(&mca_btl_mx_component.btl_version, "retries",
+                                           "Number of retries for each new connection before considering the peer as unreacheable",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &mca_btl_mx_component.mx_connection_retries);
+    mca_btl_mx_component.mx_filter = 0xdeadbeef;
+    (void) mca_base_component_var_register(&mca_btl_mx_component.btl_version, "filter",
+                                           "Unique ID for the application (used to connect to the peers)",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &mca_btl_mx_component.mx_filter);
+    mca_btl_mx_component.mx_support_self = 0;
+    (void) mca_base_component_var_register(&mca_btl_mx_component.btl_version, "self",
+                                           "Enable the MX support for self communications",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &mca_btl_mx_component.mx_support_self);
+    mca_btl_mx_component.mx_support_sharedmem = 0;
+    (void) mca_base_component_var_register(&mca_btl_mx_component.btl_version, "shared_mem",
+                                           "Enable the MX support for shared memory",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &mca_btl_mx_component.mx_support_sharedmem);
+    mca_btl_mx_component.mx_bonding = 1;
+    (void) mca_base_component_var_register(&mca_btl_mx_component.btl_version, "bonding",
+                                           "Integrate MX library bonding. Less than 0 is system default, everything else will set the MX_BONDING to the value.",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &mca_btl_mx_component.mx_bonding);
+
+#ifdef HAVE_MX_REGISTER_UNEXP_HANDLER
+    mca_btl_mx_component.mx_use_unexpected = 0;
+    (void) mca_base_component_var_register(&mca_btl_mx_component.btl_version, "register_unexp",
+                                           "Enable the MX support for the unexpected request handler (Open MPI matching)",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &mca_btl_mx_component.mx_use_unexpected);
+#endif  /* HAVE_MX_REGISTER_UNEXP_HANDLER */
+    mca_btl_mx_component.mx_free_list_num = 8;
+    (void) mca_base_component_var_register(&mca_btl_mx_component.btl_version, "free_list_num",
+                                           "Number of allocated default request",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &mca_btl_mx_component.mx_free_list_num);
+    mca_btl_mx_component.mx_free_list_inc = 32;
+    (void) mca_base_component_var_register(&mca_btl_mx_component.btl_version, "free_list_inc",
+                                           "Number of request we allocate each time we miss some",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &mca_btl_mx_component.mx_free_list_inc);
+    mca_btl_mx_component.mx_free_list_max = 1024;
+    (void) mca_base_component_var_register(&mca_btl_mx_component.btl_version, "free_list_max",
+                                           "Maximum number of request this device is allowed to allocate",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &mca_btl_mx_component.mx_free_list_max);
+
+    mca_btl_mx_component.mx_max_posted_recv = 16;
+    (void) mca_base_component_var_register(&mca_btl_mx_component.btl_version, "max_posted_recv",
+                                           "Number of received posted in advance. Increasing this number for communication "
+                                           "bound application can lead to visible improvement in performances",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &mca_btl_mx_component.mx_max_posted_recv);
 
 #if MX_HAVE_MAPPER_STATE
-    mca_base_param_reg_string( (mca_base_component_t*)&mca_btl_mx_component, "if_include",
-			       "Myrinet card to use (last 6 digits from the mapper MAC)",
-			       false, false, NULL, &mca_btl_mx_component.mx_if_include );
-    mca_base_param_reg_string( (mca_base_component_t*)&mca_btl_mx_component, "if_exclude",
-			       "Myrinet card to avoid (last 6 digits from the mapper MAC)",
-			       false, false, NULL, &mca_btl_mx_component.mx_if_exclude );
+    mca_btl_mx_component.mx_if_include = NULL;
+    (void) mca_base_component_var_register(&mca_btl_mx_component.btl_version, "if_include",
+                                           "Myrinet card to use (last 6 digits from the mapper MAC)",
+                                           MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &mca_btl_mx_component.mx_if_include);
+    mca_btl_mx_component.mx_if_exclude = NULL;
+    (void) mca_base_component_var_register(&mca_btl_mx_component.btl_version, "if_exclude",
+                                           "Myrinet card to avoid (last 6 digits from the mapper MAC)",
+                                           MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &mca_btl_mx_component.mx_if_exclude);
 #endif  /* MX_HAVE_MAPPER_STATE */
 
     mca_btl_mx_module.super.btl_exclusivity = MCA_BTL_EXCLUSIVITY_DEFAULT;
@@ -159,10 +219,11 @@ static int mca_btl_mx_component_register(void)
     mca_btl_mx_module.super.btl_seg_size  = sizeof (mca_btl_mx_segment_t);
     mca_btl_mx_module.super.btl_bandwidth = 2000;
     mca_btl_mx_module.super.btl_latency = 5;
+
     mca_btl_base_param_register(&mca_btl_mx_component.super.btl_version,
                                 &mca_btl_mx_module.super);
 
-    return OMPI_SUCCESS;
+    return mca_btl_mx_component_verify();
 }
 
 
@@ -173,10 +234,17 @@ static int mca_btl_mx_component_register(void)
 
 static int mca_btl_mx_component_open(void)
 {
+    int ret;
+
     /* initialize state */
     mca_btl_mx_component.mx_num_btls = 0;
     mca_btl_mx_component.mx_btls = NULL;
     mca_btl_mx_component.mx_use_unexpected = 0;
+
+    ret = mca_btl_mx_component_verify();
+    if (OMPI_SUCCESS != ret) {
+        return ret;
+    }
 
     /* initialize objects */ 
     OBJ_CONSTRUCT(&mca_btl_mx_component.mx_procs, opal_list_t);

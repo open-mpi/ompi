@@ -28,7 +28,6 @@
 #include "opal_config.h"
 
 #include "opal/mca/mca.h"
-#include "opal/mca/base/mca_base_param.h"
 #include "opal/mca/memory/memory.h"
 #include "opal/util/show_help.h"
 #include "opal/constants.h"
@@ -43,6 +42,8 @@
 #include <sys/stat.h>  /* for stat */
 #endif  /* HAVE_SYS_STAT_H */
 
+/* Defined in memory_linux_component.c */
+extern bool opal_memory_linux_disable;
 
 /* What to do if the standard debugging hooks are in place and a
    corrupt pointer is detected: do nothing (0), print an error message
@@ -856,8 +857,6 @@ void opal_memory_linux_hook_pull(bool *want_hooks);
    glibc, ....etc.). */
 void opal_memory_linux_hook_pull(bool *want_hooks)
 {
-    int val;
-
     /* Make this slightly less than a dummy function -- register the
        MCA parameter here (that way we keep the name of this MCA
        parameter here within this one, single file).  Register solely
@@ -866,28 +865,7 @@ void opal_memory_linux_hook_pull(bool *want_hooks)
        whatever value was set via normal MCA mechanisms likely won't
        be see if it wasn't already see by the getenv() in the
        _malloc_init_hook(). */
-    mca_base_param_source_t source;
-    char *file;
-    int p = mca_base_param_reg_int(&mca_memory_linux_component.super.memoryc_version,
-                                   "disable",
-                                   "If this MCA parameter is set to 1 **VIA ENVIRONMENT VARIABLE ONLY*** (this MCA parameter *CANNOT* be set in a file or on the mpirun command line!), this component will be disabled and will not attempt to use either ummunotify or memory hook support",
-                                   false, false, 0, &val);
-
-    /* We can at least warn if someone tried to set this in a file */
-    if (p >= 0) {
-        if (OPAL_SUCCESS == mca_base_param_lookup_source(p, &source, &file) &&
-            (MCA_BASE_PARAM_SOURCE_DEFAULT != source &&
-             MCA_BASE_PARAM_SOURCE_ENV != source)) {
-            opal_show_help("help-opal-memory-linux.txt",
-                           "disable incorrectly set", true,
-                           "opal_linux_disable",
-                           "opal_linux_disable", val,
-                           MCA_BASE_PARAM_SOURCE_FILE == source ?
-                           file : "override");
-        } else {
-            *want_hooks = OPAL_INT_TO_BOOL(!val);
-        }
-    }
+    *want_hooks = !opal_memory_linux_disable; 
 }
 
 

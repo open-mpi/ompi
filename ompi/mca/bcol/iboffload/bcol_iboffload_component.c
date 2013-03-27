@@ -98,7 +98,8 @@ mca_bcol_iboffload_component_t mca_bcol_iboffload_component = {
 
             iboffload_open,
             iboffload_close,
-            NULL, /* mca_register_component_params() */
+            NULL, /* query */
+            mca_bcol_iboffload_register_params
             NULL, /* reserved */
         },
 
@@ -110,41 +111,36 @@ mca_bcol_iboffload_component_t mca_bcol_iboffload_component = {
         true, /* collective calls with iboffload should to be ordered */
     },
     /* iboffload-component specifc information */
-    0, /* verbose */
-    0, /* number of qps to use */
-    false, /* warn_default_gid_prefix */
-    false, /* warn_nonexistent_if */
-    0, /* free_list_num */
-    0, /* free_list_max */
-    0, /* free_list_inc */
-    NULL, /* mpool_name */
-    0, /* cq_size */
-    0, /* max_inline_data */
-    0, /* pkey_val */
-    0, /* qp_ous_rd_atom */
-    0, /* mtu */
-    0, /* min_rnr_timer */
-    0, /* timeout */
-    0, /* retry_count */
-    0, /* rnr_retry */
-    0, /* max_rdma_dst_ops */
-    0, /* service_level */
-    0, /* bcols_per_lid */
-    0, /* max_lmc */
-    0, /* max_bcols */
-    0, /* use_async_event_thread */
-    0, /* buffer_alignment */
-    0, /* max_mqe_tasks */
-    0, /* max_mq_size */
-    0, /* frag_size */
-    NULL, /* if_include */
-    NULL, /* if_include_list */
-    NULL, /* if_exclude */
-    NULL, /* if_exclude_list */
-    NULL, /* if_list */
-    NULL, /* ib_devs */
-    0, /* num_devs */
-    NULL, /* receive_queues */
+    .verbose = 0, /* verbose */
+    .num_qps = 0, /* number of qps to use */
+    .warn_default_gid_prefix = false, /* warn_default_gid_prefix */
+    .warn_nonexistent_if = false, /* warn_nonexistent_if */
+    .free_list_num = 0, /* free_list_num */
+    .free_list_max = 0, /* free_list_max */
+    .free_list_inc = 0, /* free_list_inc */
+    .mpool_name = NULL, /* mpool_name */
+    .cq_size = 0, /* cq_size */
+    .max_inline_data = 0, /* max_inline_data */
+    .pkey_val = 0, /* pkey_val */
+    .qp_ous_rd_atom = 0, /* qp_ous_rd_atom */
+    .mtu = 0, /* mtu */
+    .min_rnr_timer = 0, /* min_rnr_timer */
+    .timeout = 0, /* timeout */
+    .retry_count = 0, /* retry_count */
+    .rnr_retry = 0, /* rnr_retry */
+    .max_rdma_dst_ops = 0, /* max_rdma_dst_ops */
+    .service_level = 0, /* service_level */
+    .buffer_alignment = 0, /* buffer_alignment */
+    .max_mqe_tasks = 0, /* max_mqe_tasks */
+    .max_mq_size = 0, /* max_mq_size */
+    .if_include = NULL, /* if_include */
+    .if_include_list = NULL, /* if_include_list */
+    .if_exclude = NULL, /* if_exclude */
+    .if_exclude_list = NULL, /* if_exclude_list */
+    .if_list = NULL, /* if_list */
+    .ib_devs = NULL, /* ib_devs */
+    .num_devs = 0, /* num_devs */
+    .receive_queues = NULL, /* receive_queues */
 };
 
 static int mca_bcol_iboffload_dummy_init_query(
@@ -403,6 +399,8 @@ static int iboffload_open(void)
 
     IBOFFLOAD_VERBOSE(10, ("Open Iboffload component.\n"));
 
+    (void) mca_bcol_iboffload_verify_params();
+
     cm->super.priority = 100;
     cm->super.n_net_contexts = 0;
     cm->super.network_contexts = NULL;
@@ -416,9 +414,20 @@ static int iboffload_open(void)
         goto close_device;
     }
 
-    /* load mca parametres */
-    rc = mca_bcol_iboffload_register_params();
-    if (OMPI_SUCCESS != rc) {
+    /* Check MCA parameters */
+    if (0 == (ival & (ival - 1))) {
+        mca_bcol_iboffload_component.exchange_tree_order = ival;
+    } else {
+        IBOFFLOAD_ERROR(("Warning: ibcol_iboffload_exchange_tree_order is %d which is not a power of 2, setting it to 2", ival));
+        mca_bcol_iboffload_component.exchange_tree_order = 2;
+    }
+
+    /* Pasha: Since we do not have max inline check like in openib,
+       I will put some dummy check here. All mlnx devices support at least 512b */
+    if (mca_bcol_iboffload_component.max_inline_data > 512) {
+        IBOFFLOAD_ERROR(("Warning the inline %d, is to big and unsupported",
+                    mca_bcol_iboffload_component.max_inline_data));
+        rc = OMPI_ERROR;
         goto close_device;
     }
 

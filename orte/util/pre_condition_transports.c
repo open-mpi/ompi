@@ -38,7 +38,7 @@
 #include <time.h>
 #endif
 
-#include "opal/mca/base/mca_base_param.h"
+#include "opal/mca/base/mca_base_var.h"
 #include "opal/util/opal_environ.h"
 
 #include "orte/constants.h"
@@ -150,7 +150,7 @@ int orte_pre_condition_transports(orte_job_t *jdata)
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
 
-    if (NULL == (cs_env = mca_base_param_env_var ("orte_precondition_transports"))) {
+    if (OPAL_SUCCESS != mca_base_var_env_name ("orte_precondition_transports", &cs_env)) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }

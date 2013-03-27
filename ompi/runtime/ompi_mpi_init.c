@@ -310,6 +310,30 @@ opal_hash_table_t ompi_mpi_f90_complex_hashtable;
  */
 opal_list_t ompi_registered_datareps;
 
+bool ompi_enable_timing;
+extern bool ompi_mpi_yield_when_idle;
+extern int ompi_mpi_event_tick_rate;
+
+static int ompi_register_mca_variables(void)
+{
+    int ret;
+
+    /* Register MPI variables */
+    if (OMPI_SUCCESS != (ret = ompi_mpi_register_params())) {
+        return ret;
+    }
+
+    /* check to see if we want timing information */
+    ompi_enable_timing = false;
+    (void) mca_base_var_register("ompi", "ompi", NULL, "timing",
+                                 "Request that critical timing loops be measured",
+                                 MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                 OPAL_INFO_LVL_9,
+                                 MCA_BASE_VAR_SCOPE_READONLY,
+                                 &ompi_enable_timing);
+
+    return OMPI_SUCCESS;
+}
 
 int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
 {
@@ -317,8 +341,6 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     ompi_proc_t** procs;
     size_t nprocs;
     char *error = NULL;
-    bool timing = false;
-    int param, value;
     struct timeval ompistart, ompistop;
     char *event_val = NULL;
     bool rte_setup = false;
@@ -338,6 +360,12 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
 
     if (OPAL_SUCCESS != (ret = opal_init_util(&argc, &argv))) {
         error = "ompi_mpi_init: opal_init_util failed";
+        goto error;
+    }
+
+    /* Register MCA variables */
+    if (OPAL_SUCCESS != (ret = ompi_register_mca_variables())) {
+        error = "ompi_mpi_init: ompi_register_mca_variables failed";
         goto error;
     }
 
@@ -379,15 +407,10 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         event_val = NULL;
     }
 
-    /* check to see if we want timing information */
-    param = mca_base_param_reg_int_name("ompi", "timing",
-                                        "Request that critical timing loops be measured",
-                                        false, false, 0, &value);
-    if (value != 0) {
-        timing = true;
+    if (ompi_enable_timing && 0 == OMPI_PROC_MY_NAME->vpid) {
         gettimeofday(&ompistart, NULL);
     }
-    
+
     /* if we were not externally started, then we need to setup
      * some envars so the MPI_INFO_ENV can get the cmd name
      * and argv (but only if the user supplied a non-NULL argv!), and
@@ -413,7 +436,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     rte_setup = true;
     
     /* check for timing request - get stop time and report elapsed time if so */
-    if (timing && 0 == OMPI_PROC_MY_NAME->vpid) {
+    if (ompi_enable_timing && 0 == OMPI_PROC_MY_NAME->vpid) {
         gettimeofday(&ompistop, NULL);
         opal_output(0, "ompi_mpi_init [%ld]: time from start to completion of rte_init %ld usec",
                     (long)OMPI_PROC_MY_NAME->vpid,
@@ -477,14 +500,6 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     /* add this bitflag to the modex */
     if ( OMPI_SUCCESS != (ret = ompi_modex_send_string("MPI_THREAD_LEVEL", &threadlevel_bf, sizeof(uint8_t)))) {
         error = "ompi_mpi_init: modex send thread level";
-        goto error;
-    }
-
-    /* Once we've joined the RTE, see if any MCA parameters were
-       passed to the MPI level */
-
-    if (OMPI_SUCCESS != (ret = ompi_mpi_register_params())) {
-        error = "mca_mpi_register_params() failed";
         goto error;
     }
 
@@ -580,7 +595,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     }
 
     /* check for timing request - get stop time and report elapsed time if so */
-    if (timing && 0 == OMPI_PROC_MY_NAME->vpid) {
+    if (ompi_enable_timing && 0 == OMPI_PROC_MY_NAME->vpid) {
         gettimeofday(&ompistop, NULL);
         opal_output(0, "ompi_mpi_init[%ld]: time from completion of rte_init to modex %ld usec",
                     (long)OMPI_PROC_MY_NAME->vpid,
@@ -607,7 +622,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     }
     OBJ_RELEASE(coll);
 
-    if (timing && 0 == OMPI_PROC_MY_NAME->vpid) {
+    if (ompi_enable_timing && 0 == OMPI_PROC_MY_NAME->vpid) {
         gettimeofday(&ompistop, NULL);
         opal_output(0, "ompi_mpi_init[%ld]: time to execute modex %ld usec",
                     (long)OMPI_PROC_MY_NAME->vpid,
@@ -772,7 +787,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
 
     /* check for timing request - get stop time and report elapsed
        time if so, then start the clock again */
-    if (timing && 0 == OMPI_PROC_MY_NAME->vpid) {
+    if (ompi_enable_timing && 0 == OMPI_PROC_MY_NAME->vpid) {
         gettimeofday(&ompistop, NULL);
         opal_output(0, "ompi_mpi_init[%ld]: time from modex to first barrier %ld usec",
                     (long)OMPI_PROC_MY_NAME->vpid,
@@ -796,7 +811,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
 
     /* check for timing request - get stop time and report elapsed
        time if so, then start the clock again */
-    if (timing && 0 == OMPI_PROC_MY_NAME->vpid) {
+    if (ompi_enable_timing && 0 == OMPI_PROC_MY_NAME->vpid) {
         gettimeofday(&ompistop, NULL);
         opal_output(0, "ompi_mpi_init[%ld]: time to execute barrier %ld usec",
                     (long)OMPI_PROC_MY_NAME->vpid,
@@ -900,21 +915,11 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     opal_progress_event_users_decrement(); 
 
     /* see if yield_when_idle was specified - if so, use it */
-    param = mca_base_param_find("mpi", NULL, "yield_when_idle");
-    mca_base_param_lookup_int(param, &value);
-    if (value < 0) {
-        /* if no info is provided, just default to conservative */
-        opal_progress_set_yield_when_idle(true);
-    } else {
-        /* info was provided, so set idle accordingly */
-        opal_progress_set_yield_when_idle(value == 0 ? false : true);
-    }
+    opal_progress_set_yield_when_idle(ompi_mpi_yield_when_idle);
     
-    param = mca_base_param_find("mpi", NULL, "event_tick_rate");
-    mca_base_param_lookup_int(param, &value);
     /* negative value means use default - just don't do anything */
-    if (value >= 0) {
-        opal_progress_set_event_poll_rate(value);
+    if (ompi_mpi_event_tick_rate >= 0) {
+        opal_progress_set_event_poll_rate(ompi_mpi_event_tick_rate);
     }
 
     /* At this point, we are fully configured and in MPI mode.  Any
@@ -967,7 +972,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     ompi_mpi_initialized = true;
 
     /* check for timing request - get stop time and report elapsed time if so */
-    if (timing && 0 == OMPI_PROC_MY_NAME->vpid) {
+    if (ompi_enable_timing && 0 == OMPI_PROC_MY_NAME->vpid) {
         gettimeofday(&ompistop, NULL);
         opal_output(0, "ompi_mpi_init[%ld]: time from barrier to complete mpi_init %ld usec",
                     (long)OMPI_PROC_MY_NAME->vpid,

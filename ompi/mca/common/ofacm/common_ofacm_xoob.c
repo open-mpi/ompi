@@ -1378,6 +1378,12 @@ static int xoob_component_query(ompi_common_ofacm_base_dev_desc_t *dev,
     ompi_common_ofacm_xoob_module_t *xcpc; /* xoob cpc module */
     ompi_common_ofacm_base_module_t *bcpc; /* base cpc module */
 
+    if (xoob_priority > 100) {
+        xoob_priority = 100;
+    } else if (xoob_priority < -1) {
+        xoob_priority = -1;
+    }
+
     if (!(dev->capabilities & OMPI_COMMON_OFACM_XRC_ONLY)) {
         OFACM_VERBOSE(("openib BTL: xoob CPC only supported with XRC receive queues; skipped on device %s",
                             ibv_get_device_name(dev->ib_dev)));
@@ -1444,16 +1450,12 @@ static int xoob_component_query(ompi_common_ofacm_base_dev_desc_t *dev,
 /* Open - this functions sets up any xoob specific commandline params */
 static void xoob_component_register(void)
 {
-    mca_base_param_reg_int_name("common",
-            "ofacm_connect_xoob_priority",
-            "The selection method priority for xoob",
-            false, false, xoob_priority, &xoob_priority);
-
-    if (xoob_priority > 100) {
-        xoob_priority = 100;
-    } else if (xoob_priority < -1) {
-        xoob_priority = -1;
-    }
+    xoob_priority = 60;
+    (void) mca_base_var_register("ompi", "common", "ofacm", "connect_xoob_priority",
+                                 "The selection method priority for xoob",
+                                 MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                 OPAL_INFO_LVL_9,
+                                 MCA_BASE_VAR_SCOPE_READONLY, &xoob_priority);
 }
 
 /*

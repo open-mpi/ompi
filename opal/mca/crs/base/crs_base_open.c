@@ -50,6 +50,43 @@ opal_crs_base_module_t opal_crs = {
 opal_list_t opal_crs_base_components_available;
 opal_crs_base_component_t opal_crs_base_selected_component;
 
+bool crs_base_do_not_select = false;
+
+static int crs_base_verbose = 0;
+
+static int opal_crs_base_register(int flags)
+{
+    /*
+     * Note: If we are a tool, then we will manually run the selection routine 
+     *       for the checkpointer.  The tool will set the MCA parameter 
+     *       'crs_base_do_not_select' before opal_init and then reset it after to 
+     *       disable the selection logic.
+     *       This is useful for opal_restart because it reads the metadata file
+     *       that indicates the checkpointer to be used after calling opal_init.
+     *       Therefore it would need to select a specific module, but it doesn't
+     *       know which one until later. It will set the MCA parameter 'crs' 
+     *       before calling this function.
+     */
+    crs_base_do_not_select = false;
+    (void) mca_base_var_register("opal", "crs", "base", "do_not_select",
+                                 "Do not do the selection of the CRS component",
+                                 MCA_BASE_VAR_TYPE_BOOL, NULL, 0, MCA_BASE_VAR_FLAG_INTERNAL,
+                                 OPAL_INFO_LVL_9,
+                                 MCA_BASE_VAR_SCOPE_READONLY, &crs_base_do_not_select);
+
+
+    /* Debugging/Verbose output */
+    crs_base_verbose = 0;
+    (void) mca_base_var_register("opal", "crs", "base", "verbose",
+                                 "Verbosity level of the CRS framework",
+                                 MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                 OPAL_INFO_LVL_9,
+                                 MCA_BASE_VAR_SCOPE_READONLY,
+                                 &crs_base_verbose);
+
+    return OPAL_SUCCESS;
+}
+
 /**
  * Function for finding and opening either all MCA components,
  * or the one that was specifically requested via a MCA parameter.
@@ -57,32 +94,15 @@ opal_crs_base_component_t opal_crs_base_selected_component;
 int opal_crs_base_open(void)
 {
     int ret, exit_status = OPAL_SUCCESS;
-    int value;
-    char *str_value = NULL;
 
-    /* Debugging/Verbose output */
-    mca_base_param_reg_int_name("crs",
-                                "base_verbose",
-                                "Verbosity level of the CRS framework",
-                                false, false,
-                                0, &value);
-    if(0 != value) {
+    (void) opal_crs_base_register(0);
+
+    if(0 != crs_base_verbose) {
         opal_crs_base_output = opal_output_open(NULL);
     } else {
         opal_crs_base_output = -1;
     }
-    opal_output_set_verbosity(opal_crs_base_output, value);
-
-    /* 
-     * Which CRS component to open
-     *  - NULL or "" = auto-select
-     *  - "none" = Empty component
-     *  - ow. select that specific component
-     */
-    mca_base_param_reg_string_name("crs", NULL,
-                                   "Which CRS component to use (empty = auto-select)",
-                                   false, false,
-                                   NULL, &str_value);
+    opal_output_set_verbosity(opal_crs_base_output, crs_base_verbose);
 
     if( !opal_cr_is_enabled ) {
         opal_output_verbose(10, opal_crs_base_output,
@@ -96,17 +116,17 @@ int opal_crs_base_open(void)
                                                         mca_crs_base_static_components,
                                                         &opal_crs_base_components_available,
                                                         true)) ) {
-        if( OPAL_ERR_NOT_FOUND == ret &&
-            NULL != str_value &&
-            0 == strncmp(str_value, "none", strlen("none")) ) {
-            exit_status = OPAL_SUCCESS;
-        } else {
-            exit_status = OPAL_ERROR;
-        }
-    }
+        exit_status = OPAL_ERROR;
+        if( OPAL_ERR_NOT_FOUND == ret) {
+            const char **str_value = NULL;
 
-    if( NULL != str_value ) {
-        free(str_value);
+            ret = mca_base_var_find("opal", "crs", NULL, NULL);
+            mca_base_var_get_value(ret, &str_value, NULL, NULL);
+            if (NULL != str_value && NULL != str_value[0] &&
+                0 == strncmp(str_value[0], "none", strlen("none"))) {
+                exit_status = OPAL_SUCCESS;
+            }
+        }
     }
 
     return exit_status;

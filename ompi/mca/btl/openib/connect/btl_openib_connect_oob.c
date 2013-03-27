@@ -98,10 +98,14 @@ ompi_btl_openib_connect_base_component_t ompi_btl_openib_connect_oob = {
 /* Open - this functions sets up any oob specific commandline params */
 static void oob_component_register(void)
 {
-    mca_base_param_reg_int(&mca_btl_openib_component.super.btl_version,
-                           "connect_oob_priority",
-                           "The selection method priority for oob",
-                           false, false, oob_priority, &oob_priority);
+    oob_priority = 50;
+    (void) mca_base_component_var_register(&mca_btl_openib_component.super.btl_version,
+                                           "connect_oob_priority",
+                                           "The selection method priority for oob",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &oob_priority);
 
     if (oob_priority > 100) {
         oob_priority = 100;
@@ -166,6 +170,13 @@ static int oob_component_query(mca_btl_openib_module_t *btl,
                             "openib BTL: oob CPC system error (malloc failed)");
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
+
+    if (oob_priority > 100) {
+        oob_priority = 100;
+    } else if (oob_priority < -1) {
+        oob_priority = -1;
+    }
+
     (*cpc)->data.cbm_component = &ompi_btl_openib_connect_oob;
     (*cpc)->data.cbm_priority = oob_priority;
     (*cpc)->data.cbm_modex_message = NULL;

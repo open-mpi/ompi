@@ -31,8 +31,6 @@
 #include <string.h>
 #endif  /* HAVE_STRING_H */
 
-#include "opal/mca/base/mca_base_param.h"
-
 #include "orte/util/show_help.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/util/error_strings.h"

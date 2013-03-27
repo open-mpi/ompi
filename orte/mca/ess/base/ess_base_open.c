@@ -45,17 +45,67 @@ orte_ess_base_module_t orte_ess = {
 };
 int orte_ess_base_output;
 int orte_ess_base_std_buffering = -1;
+int orte_ess_base_num_procs = -1;
+char *orte_ess_base_jobid = NULL;
+char *orte_ess_base_vpid = NULL;
+
+static mca_base_var_enum_value_t stream_buffering_values[] = {
+  {-1, "default"},
+  {0, "unbuffered"},
+  {1, "line_buffered"},
+  {2, "fully_buffered"},
+  {0, NULL}
+};
+
+static int
+orte_ess_base_register(void)
+{
+    mca_base_var_enum_t *new_enum;
+    int ret;
+
+    orte_ess_base_std_buffering = -1;
+    (void) mca_base_var_enum_create("ess_base_stream_buffering", stream_buffering_values, &new_enum);
+    (void) mca_base_var_register("orte", "ess", "base", "stream_buffering",
+                                 "Adjust buffering for stdout/stderr "
+                                "[-1 system default] [0 unbuffered] [1 line buffered] [2 fully buffered] "
+                                 "(Default: -1)",
+                                 MCA_BASE_VAR_TYPE_INT, new_enum, 0, 0,
+                                 OPAL_INFO_LVL_9,
+                                 MCA_BASE_VAR_SCOPE_READONLY, &orte_ess_base_std_buffering);
+    OBJ_RELEASE(new_enum);
+
+    orte_ess_base_jobid = NULL;
+    ret = mca_base_var_register("orte", "ess", "base", "jobid", "Process jobid",
+                                MCA_BASE_VAR_TYPE_STRING, NULL, 0,
+                                MCA_BASE_VAR_FLAG_INTERNAL,
+                                OPAL_INFO_LVL_9,
+                                MCA_BASE_VAR_SCOPE_READONLY, &orte_ess_base_jobid);
+    mca_base_var_register_synonym(ret, "orte", "orte", "ess", "jobid", 0);
+
+    orte_ess_base_vpid = NULL;
+    ret = mca_base_var_register("orte", "ess", "base", "vpid", "Process vpid",
+                                MCA_BASE_VAR_TYPE_STRING, NULL, 0,
+                                MCA_BASE_VAR_FLAG_INTERNAL,
+                                OPAL_INFO_LVL_9,
+                                MCA_BASE_VAR_SCOPE_READONLY, &orte_ess_base_vpid);
+    mca_base_var_register_synonym(ret, "orte", "orte", "ess", "vpid", 0);
+
+    orte_ess_base_num_procs = -1;
+    ret = mca_base_var_register("orte", "ess", "base", "num_procs",
+                                "Used to discover the number of procs in the job",
+                                MCA_BASE_VAR_TYPE_INT, NULL, 0,
+                                MCA_BASE_VAR_FLAG_INTERNAL,
+                                OPAL_INFO_LVL_9,
+                                MCA_BASE_VAR_SCOPE_READONLY, &orte_ess_base_num_procs);
+    mca_base_var_register_synonym(ret, "orte", "orte", "ess", "num_procs", 0);
+
+    return ORTE_SUCCESS;
+}
 
 int
 orte_ess_base_open(void)
 {
-    mca_base_param_reg_int_name("ess_base",
-                                "stream_buffering",
-                                "Adjust buffering for stdout/stderr "
-                                "[-1 system default] [0 unbuffered] [1 line buffered] [2 fully buffered] "
-                                "(Default: -1)",
-                                false, false,
-                                -1, &orte_ess_base_std_buffering);
+    (void) orte_ess_base_register();
 
     orte_ess_base_output = opal_output_open(NULL);
     

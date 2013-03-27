@@ -34,12 +34,12 @@
 #endif
 
 #include "opal/util/stacktrace.h"
-#include "opal/mca/base/mca_base_param.h"
 #include "opal/mca/backtrace/backtrace.h"
 #include "opal/constants.h"
 #include "opal/util/output.h"
 #include "opal/util/show_help.h"
 #include "opal/util/argv.h"
+#include "opal/runtime/opal_params.h"
 
 #ifndef _NSIG
 #define _NSIG 32
@@ -455,10 +455,9 @@ int opal_util_register_stackhandlers (void)
 {
 #if OPAL_WANT_PRETTY_PRINT_STACKTRACE
     struct sigaction act, old;
-    char * string_value;
     char * tmp;
     char * next;
-    int param, i;
+    int i;
     bool complain, showed_help = false;
 
     gethostname(stacktrace_hostname, sizeof(stacktrace_hostname));
@@ -471,9 +470,6 @@ int opal_util_register_stackhandlers (void)
         }
     }
 
-    param = mca_base_param_find ("opal", NULL, "signal");
-    mca_base_param_lookup_string (param, &string_value);
-
     memset(&act, 0, sizeof(act));
     act.sa_sigaction = show_stackframe;
     act.sa_flags = SA_SIGINFO;
@@ -483,7 +479,7 @@ int opal_util_register_stackhandlers (void)
     act.sa_flags |= SA_RESETHAND;
 #endif
 
-    for (tmp = next = string_value ; 
+    for (tmp = next = opal_signal_string ; 
 	 next != NULL && *next != '\0'; 
 	 tmp = next + 1)
     {
@@ -525,7 +521,7 @@ int opal_util_register_stackhandlers (void)
                  every single MPI process... */
               opal_show_help("help-opal-util.txt",
                              "stacktrace signal override",
-                             true, sig, sig, sig, string_value);
+                             true, sig, sig, sig, opal_signal_string);
               showed_help = true;
           }
       }
@@ -537,7 +533,7 @@ int opal_util_register_stackhandlers (void)
           }
       }
     }
-    free(string_value);
+
 #endif /* OPAL_WANT_PRETTY_PRINT_STACKTRACE */
 
     return OPAL_SUCCESS;

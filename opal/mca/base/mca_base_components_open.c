@@ -459,49 +459,18 @@ static int open_components(const char *type_name, int output_id,
         /* If it didn't open, close it out and get rid of it */
         
         if (!opened) {
-            char *name;
-            if (called_open) {
-                if (NULL != component->mca_close_component) {
-                    component->mca_close_component();
-                }
-                opal_output_verbose(10, output_id, 
-                                    "mca: base: components_open: component %s closed",
-                                    component->mca_component_name);
-                called_open = false;
-            }
-            name = strdup(component->mca_component_name);
-            mca_base_component_repository_release(component);
-            opal_output_verbose(10, output_id, 
-                                "mca: base: components_open: component %s unloaded", 
-                                name);
-            free(name);
+            mca_base_component_release (output_id, component, called_open);
+            continue;
         }
-        
-        /* If it did open, register its "priority" MCA parameter (if
-           it doesn't already have one) and save it in the
-           opened_components list */
-        
-        else {
-            if (0 > mca_base_param_find(type_name, 
-                                        component->mca_component_name,
-                                        "priority")) {
-                char *tmp_name;
-                asprintf (&tmp_name, "%s_priority", component->mca_component_name);
 
-                if (NULL != tmp_name) {
-                    (void) mca_base_param_reg_int_name (type_name, tmp_name, NULL,
-                                                        false, false, 0, NULL);
-                    free (tmp_name);
-                }
-            }
+        /* Not all components register a priority. Do not register one here. */
             
-            cli = OBJ_NEW(mca_base_component_list_item_t);
-            if (NULL == cli) {
-                return OPAL_ERR_OUT_OF_RESOURCE;
-            }
-            cli->cli_component = component;
-            opal_list_append(dest, (opal_list_item_t *) cli);
+        cli = OBJ_NEW(mca_base_component_list_item_t);
+        if (NULL == cli) {
+            return OPAL_ERR_OUT_OF_RESOURCE;
         }
+        cli->cli_component = component;
+        opal_list_append(dest, (opal_list_item_t *) cli);
     }
     
     /* All done */

@@ -177,39 +177,34 @@ static int rte_finalize(void)
     return ret;
 }
 
+static char *orte_ess_alps_jobid = NULL;
+
 static int alps_set_name(void)
 {
     int rc;
     orte_jobid_t jobid;
-    char *tmp;
 
     OPAL_OUTPUT_VERBOSE((1, orte_ess_base_output,
                          "ess:alps setting name"));
 
-    mca_base_param_reg_string_name("orte", "ess_jobid", "Process jobid",
-                                   true, false, NULL, &tmp);
-    if (NULL == tmp) {
+    if (NULL == orte_ess_base_jobid) {
         ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
         return ORTE_ERR_NOT_FOUND;
     }
-    if (ORTE_SUCCESS != (rc = orte_util_convert_string_to_jobid(&jobid, tmp))) {
+    if (ORTE_SUCCESS != (rc = orte_util_convert_string_to_jobid(&jobid, orte_ess_base_jobid))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
-    free(tmp);
 
-    mca_base_param_reg_string_name("orte", "ess_vpid", "Process vpid",
-                                   true, false, NULL, &tmp);
-    if (NULL == tmp) {
+    if (NULL == orte_ess_base_vpid) {
         ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
         return ORTE_ERR_NOT_FOUND;
     }
     if (ORTE_SUCCESS != (rc = orte_util_convert_string_to_vpid(&starting_vpid,
-                                                               tmp))) {
+                                                               orte_ess_base_vpid))) {
         ORTE_ERROR_LOG(rc);
         return(rc);
     }
-    free(tmp);
 
     ORTE_PROC_MY_NAME->jobid = jobid;
     ORTE_PROC_MY_NAME->vpid = (orte_vpid_t)cnos_get_rank() + starting_vpid;

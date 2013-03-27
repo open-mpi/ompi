@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006      Voltaire. All rights reserved.
  * Copyright (c) 2007-2009 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2012      Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2012-2013 Los Alamos National Security, LLC. All rights
  *                         reserved.
  *
  * $COPYRIGHT$
@@ -25,7 +25,6 @@
 #define OPAL_DISABLE_ENABLE_MEM_DEBUG 1
 #include "ompi_config.h"
 #include "opal/mca/base/base.h"
-#include "opal/mca/base/mca_base_param.h"
 #include "ompi/runtime/params.h"
 #include "mpool_grdma.h"
 #ifdef HAVE_UNISTD_H
@@ -85,26 +84,22 @@ static int grdma_open(void)
 
 static int grdma_register(void)
 {
-    int val;
+    mca_mpool_grdma_component.rcache_name = "vma";
+    (void) mca_base_component_var_register(&mca_mpool_grdma_component.super.mpool_version,
+                                           "rcache_name",
+                                           "The name of the registration cache the mpool should use",
+                                           MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &mca_mpool_grdma_component.rcache_name);
 
-    mca_base_param_reg_string(&mca_mpool_grdma_component.super.mpool_version,
-            "rcache_name",
-            "The name of the registration cache the mpool should use",
-            false, false, "vma", &mca_mpool_grdma_component.rcache_name);
-
-    mca_base_param_reg_int(&mca_mpool_grdma_component.super.mpool_version,
-            "rcache_size_limit",
-            "the maximum size of registration cache in bytes. "
-            "0 is unlimited (default 0)", false, false, 0, &val);
-
-    mca_mpool_grdma_component.rcache_size_limit = (size_t)val;
-
-    mca_base_param_reg_int(&mca_mpool_grdma_component.super.mpool_version,
-            "print_stats",
-            "print pool usage statistics at the end of the run",
-            false, false, 0, &val);
-
-    mca_mpool_grdma_component.print_stats = val?true:false;
+    mca_mpool_grdma_component.print_stats = false;
+    (void) mca_base_component_var_register(&mca_mpool_grdma_component.super.mpool_version,
+                                           "print_stats", "print pool usage statistics at the end of the run",
+                                           MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &mca_mpool_grdma_component.print_stats);
 
     return OMPI_SUCCESS;
 }
@@ -113,10 +108,6 @@ static int grdma_register(void)
 static int grdma_close(void)
 {
     OBJ_DESTRUCT(&mca_mpool_grdma_component.pools);
-
-    if (NULL != mca_mpool_grdma_component.rcache_name) {
-        free(mca_mpool_grdma_component.rcache_name);
-    }
 
     return OMPI_SUCCESS;
 }

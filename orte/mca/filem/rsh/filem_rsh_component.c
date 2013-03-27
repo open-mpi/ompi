@@ -33,6 +33,7 @@ const char *orte_filem_rsh_component_version_string =
 /*
  * Local functionality
  */
+static int filem_rsh_register(void);
 static int filem_rsh_open(void);
 static int filem_rsh_close(void);
 
@@ -61,7 +62,8 @@ orte_filem_rsh_component_t mca_filem_rsh_component = {
             /* Component open and close functions */
             filem_rsh_open,
             filem_rsh_close,
-            orte_filem_rsh_component_query
+            orte_filem_rsh_component_query,
+            filem_rsh_register
         },
         {
             /* The component is checkpoint ready */
@@ -79,55 +81,71 @@ orte_filem_rsh_component_t mca_filem_rsh_component = {
     NULL
 };
 
+static int filem_rsh_register(void)
+{
+    mca_base_component_t *component = &mca_filem_rsh_component.super.base_version;
+    mca_filem_rsh_component.cp_command = "scp";
+    (void) mca_base_component_var_register(component, "rcp",
+                                           "The rsh cp command for the FILEM rsh component",
+                                           MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &mca_filem_rsh_component.cp_command);
+
+    mca_filem_rsh_component.cp_local_command = "cp";
+    (void) mca_base_component_var_register(component, "cp",
+                                           "The Unix cp command for the FILEM rsh component",
+                                           MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &mca_filem_rsh_component.cp_local_command);
+
+    mca_filem_rsh_component.remote_sh_command = "ssh";
+    (void) mca_base_component_var_register(component, "rsh",
+                                           "The remote shell command for the FILEM rsh component",
+                                           MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &mca_filem_rsh_component.remote_sh_command);
+
+    orte_filem_rsh_max_incomming = 10;
+    (void) mca_base_component_var_register(component, "max_incomming",
+                                           "Maximum number of incomming connections (0 = any)",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &orte_filem_rsh_max_incomming);
+
+    orte_filem_rsh_max_outgoing = 10;
+    (void) mca_base_component_var_register(component, "max_outgoing",
+                                           "Maximum number of out going connections (0 = any)",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &orte_filem_rsh_max_outgoing);
+
+    orte_filem_rsh_progress_meter = 0;
+    (void) mca_base_component_var_register(component, "progress_meter",
+                                           "Display Progress every X percentage done. [Default = 0/off]",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &orte_filem_rsh_progress_meter);
+
+    return ORTE_SUCCESS;
+}
+
 static int filem_rsh_open(void) 
 {
-    mca_base_param_reg_string(&mca_filem_rsh_component.super.base_version,
-                              "rcp",
-                              "The rsh cp command for the FILEM rsh component",
-                              false, false,
-                              "scp",
-                              &mca_filem_rsh_component.cp_command);
-    mca_base_param_reg_string(&mca_filem_rsh_component.super.base_version,
-                              "cp",
-                              "The Unix cp command for the FILEM rsh component",
-                              false, false,
-                              "cp",
-                              &mca_filem_rsh_component.cp_local_command);
-    mca_base_param_reg_string(&mca_filem_rsh_component.super.base_version,
-                              "rsh",
-                              "The remote shell command for the FILEM rsh component",
-                              false, false,
-                              "ssh",
-                              &mca_filem_rsh_component.remote_sh_command);
-
-    mca_base_param_reg_int(&mca_filem_rsh_component.super.base_version,
-                           "max_incomming",
-                           "Maximum number of incomming connections (0 = any)",
-                           false, false,
-                           orte_filem_rsh_max_incomming,
-                           &orte_filem_rsh_max_incomming);
 
     if( orte_filem_rsh_max_incomming < 0 ) {
         orte_filem_rsh_max_incomming = 1;
     }
 
-    mca_base_param_reg_int(&mca_filem_rsh_component.super.base_version,
-                           "max_outgoing",
-                           "Maximum number of out going connections (0 = any)",
-                           false, false,
-                           orte_filem_rsh_max_outgoing,
-                           &orte_filem_rsh_max_outgoing);
-
     if( orte_filem_rsh_max_outgoing < 0 ) {
         orte_filem_rsh_max_outgoing = 1;
     }
 
-    mca_base_param_reg_int(&mca_filem_rsh_component.super.base_version,
-                           "progress_meter",
-                           "Display Progress every X percentage done. [Default = 0/off]",
-                           false, false,
-                           0,
-                           &orte_filem_rsh_progress_meter);
     orte_filem_rsh_progress_meter = (orte_filem_rsh_progress_meter % 101);
 
     /*

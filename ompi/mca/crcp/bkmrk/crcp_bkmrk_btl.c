@@ -24,7 +24,6 @@
 #include "opal/class/opal_bitmap.h"
 #include "opal/mca/event/event.h"
 #include "opal/util/opal_environ.h"
-#include "opal/mca/base/mca_base_param.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 

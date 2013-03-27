@@ -42,7 +42,6 @@
 #include "opal/util/output.h"
 #include "opal/util/argv.h"
 #include "opal/util/path.h"
-#include "opal/mca/base/mca_base_param.h"
 
 #include "orte/util/name_fns.h"
 #include "orte/runtime/orte_globals.h"
@@ -60,10 +59,14 @@ const char *mca_plm_rsh_component_version_string =
   "Open MPI rsh plm MCA component version " ORTE_VERSION;
 
 
+static int rsh_component_register(void);
 static int rsh_component_open(void);
 static int rsh_component_query(mca_base_module_t **module, int *priority);
 static int rsh_component_close(void);
 static int rsh_launch_agent_lookup(const char *agent_list, char *path);
+
+/* Local variables */
+static char *mca_plm_rsh_delay_string = NULL;
 
 /*
  * Instantiate the public struct with all of our public information
@@ -87,7 +90,8 @@ orte_plm_rsh_component_t mca_plm_rsh_component = {
         /* Component open and close functions */
         rsh_component_open,
         rsh_component_close,
-        rsh_component_query
+        rsh_component_query,
+        rsh_component_register
     },
     {
         /* The component is checkpoint ready */
@@ -96,99 +100,136 @@ orte_plm_rsh_component_t mca_plm_rsh_component = {
     }
 };
 
+static int rsh_component_register(void)
+{
+    mca_base_component_t *c = &mca_plm_rsh_component.super.base_version;
+    int var_id;
 
+    mca_plm_rsh_component.num_concurrent = 128;
+    (void) mca_base_component_var_register (c, "num_concurrent",
+                                            "How many plm_rsh_agent instances to invoke concurrently (must be > 0)",
+                                            MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                            OPAL_INFO_LVL_9,
+                                            MCA_BASE_VAR_SCOPE_READONLY,
+                                            &mca_plm_rsh_component.num_concurrent);
+
+    mca_plm_rsh_component.force_rsh = false;
+    (void) mca_base_component_var_register (c, "force_rsh", "Force the launcher to always use rsh",
+                                            MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                            OPAL_INFO_LVL_9,
+                                            MCA_BASE_VAR_SCOPE_READONLY,
+                                            &mca_plm_rsh_component.force_rsh);
+    mca_plm_rsh_component.disable_qrsh = false;
+    (void) mca_base_component_var_register (c, "disable_qrsh",
+                                            "Disable the launcher to use qrsh when under the Grid Engine parallel environment",
+                                            MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                            OPAL_INFO_LVL_9,
+                                            MCA_BASE_VAR_SCOPE_READONLY,
+                                            &mca_plm_rsh_component.disable_qrsh);
+
+    mca_plm_rsh_component.daemonize_qrsh = false;
+    (void) mca_base_component_var_register (c, "daemonize_qrsh",
+                                            "Daemonize the orted under the Grid Engine parallel environment",
+                                            MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                            OPAL_INFO_LVL_9,
+                                            MCA_BASE_VAR_SCOPE_READONLY,
+                                            &mca_plm_rsh_component.daemonize_qrsh);
+
+    mca_plm_rsh_component.disable_llspawn = false;
+    (void) mca_base_component_var_register (c, "disable_llspawn",
+                                            "Disable the use of llspawn when under the LoadLeveler environment",
+                                            MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                            OPAL_INFO_LVL_9,
+                                            MCA_BASE_VAR_SCOPE_READONLY,
+                                            &mca_plm_rsh_component.disable_llspawn);
+
+    mca_plm_rsh_component.daemonize_llspawn = false;
+    (void) mca_base_component_var_register (c, "daemonize_llspawn",
+                                            "Daemonize the orted when under the LoadLeveler environment",
+                                            MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                            OPAL_INFO_LVL_9,
+                                            MCA_BASE_VAR_SCOPE_READONLY,
+                                            &mca_plm_rsh_component.daemonize_llspawn);
+
+    mca_plm_rsh_component.priority = 10;
+    (void) mca_base_component_var_register (c, "priority", "Priority of the rsh plm component",
+                                            MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                            OPAL_INFO_LVL_9,
+                                            MCA_BASE_VAR_SCOPE_READONLY,
+                                            &mca_plm_rsh_component.priority);
+
+    mca_plm_rsh_delay_string = NULL;
+    (void) mca_base_component_var_register (c, "delay",
+                                            "Delay between invocations of the remote agent (sec[:usec])",
+                                            MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
+                                            OPAL_INFO_LVL_9,
+                                            MCA_BASE_VAR_SCOPE_READONLY,
+                                            &mca_plm_rsh_delay_string);
+
+    mca_plm_rsh_component.tree_spawn = false;
+    (void) mca_base_component_var_register (c, "no_tree_spawn",
+                                            "If set to true, do not launch via a tree-based topology",
+                                            MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                            OPAL_INFO_LVL_9,
+                                            MCA_BASE_VAR_SCOPE_READONLY,
+                                            &mca_plm_rsh_component.tree_spawn);
+
+    /* local rsh/ssh launch agent */
+    mca_plm_rsh_component.agent = strdup ("ssh : rsh");
+    var_id = mca_base_component_var_register (c, "agent",
+                                              "The command used to launch executables on remote nodes (typically either \"ssh\" or \"rsh\")",
+                                              MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
+                                              OPAL_INFO_LVL_9,
+                                              MCA_BASE_VAR_SCOPE_READONLY,
+                                              &mca_plm_rsh_component.agent);
+    (void) mca_base_var_register_synonym (var_id, "orte", "pls", NULL, "rsh_agent", MCA_BASE_VAR_SYN_FLAG_DEPRECATED);
+    (void) mca_base_var_register_synonym (var_id, "orte", "orte", NULL, "rsh_agent", MCA_BASE_VAR_SYN_FLAG_DEPRECATED);
+
+    mca_plm_rsh_component.assume_same_shell = true;
+    var_id = mca_base_component_var_register (c, "assume_same_shell",
+                                              "If set to true, assume that the shell on the remote node is the same as the shell on the local node.  Otherwise, probe for what the remote shell [default: 1]",
+                                              MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                              OPAL_INFO_LVL_9,
+                                              MCA_BASE_VAR_SCOPE_READONLY,
+                                              &mca_plm_rsh_component.assume_same_shell);
+    /* XXX -- var_conversion -- Why does this component register orte_assume_same_shell? Components should ONLY register THEIR OWN variables. */
+    (void) mca_base_var_register_synonym (var_id, "orte", "orte", NULL, "assume_same_shell", 0);
+
+    mca_plm_rsh_component.pass_environ_mca_params = true;
+    (void) mca_base_component_var_register (c, "pass_environ_mca_params",
+                                            "If set to false, do not include mca params from the environment on the orted cmd line",
+                                            MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                            OPAL_INFO_LVL_9,
+                                            MCA_BASE_VAR_SCOPE_READONLY,
+                                            &mca_plm_rsh_component.pass_environ_mca_params);
+
+    return ORTE_SUCCESS;
+}
 
 static int rsh_component_open(void)
 {
-    int tmp, value;
-    mca_base_component_t *c = &mca_plm_rsh_component.super.base_version;
-    char *ctmp, **cargv;
+    char *ctmp;
 
     /* initialize globals */
     mca_plm_rsh_component.using_qrsh = false;
     mca_plm_rsh_component.using_llspawn = false;
 
     /* lookup parameters */
-    mca_base_param_reg_int(c, "num_concurrent",
-                           "How many plm_rsh_agent instances to invoke concurrently (must be > 0)",
-                           false, false, 128, &tmp);
-    if (tmp <= 0) {
+    if (mca_plm_rsh_component.num_concurrent <= 0) {
         orte_show_help("help-plm-rsh.txt", "concurrency-less-than-zero",
-                       true, tmp);
-        tmp = 1;
+                       true, mca_plm_rsh_component.num_concurrent);
+        mca_plm_rsh_component.num_concurrent = 1;
     }
-    mca_plm_rsh_component.num_concurrent = tmp;
 
-    mca_base_param_reg_int(c, "force_rsh",
-                           "Force the launcher to always use rsh",
-                           false, false, false, &tmp);
-    mca_plm_rsh_component.force_rsh = OPAL_INT_TO_BOOL(tmp);
-    mca_base_param_reg_int(c, "disable_qrsh",
-                           "Disable the launcher to use qrsh when under the Grid Engine parallel environment",
-                           false, false, false, &tmp);
-    mca_plm_rsh_component.disable_qrsh = OPAL_INT_TO_BOOL(tmp);
-
-    mca_base_param_reg_int(c, "daemonize_qrsh",
-                           "Daemonize the orted under the Grid Engine parallel environment",
-                           false, false, false, &tmp);
-    mca_plm_rsh_component.daemonize_qrsh = OPAL_INT_TO_BOOL(tmp);
-    
-    mca_base_param_reg_int(c, "disable_llspawn",
-                           "Disable the use of llspawn when under the LoadLeveler environment",
-                           false, false, false, &tmp);
-    mca_plm_rsh_component.disable_llspawn = OPAL_INT_TO_BOOL(tmp);
-
-    mca_base_param_reg_int(c, "daemonize_llspawn",
-                           "Daemonize the orted when under the LoadLeveler environment",
-                           false, false, false, &tmp);
-    mca_plm_rsh_component.daemonize_llspawn = OPAL_INT_TO_BOOL(tmp);
-    
-    mca_base_param_reg_int(c, "priority",
-                           "Priority of the rsh plm component",
-                           false, false, 10,
-                           &mca_plm_rsh_component.priority);
-    mca_base_param_reg_string(c, "delay",
-                              "Delay between invocations of the remote agent (sec[:usec])",
-                              false, false, NULL,
-                              &ctmp);
-    if (NULL != ctmp) {
-        cargv = opal_argv_split(ctmp, ':');
-        mca_plm_rsh_component.delay.tv_sec = strtol(cargv[0], NULL, 10);
-        if (1 < opal_argv_count(cargv)) {
-            mca_plm_rsh_component.delay.tv_nsec = 1000 * strtol(cargv[1], NULL, 10);
+    if (NULL != mca_plm_rsh_delay_string) {
+        mca_plm_rsh_component.delay.tv_sec = strtol(mca_plm_rsh_delay_string, &ctmp, 10);
+        if (ctmp == mca_plm_rsh_delay_string) {
+            mca_plm_rsh_component.delay.tv_sec = 0;
         }
-        opal_argv_free(cargv);
-        free(ctmp);
+        if (':' == ctmp[0]) {
+            mca_plm_rsh_component.delay.tv_nsec = 1000 * strtol (ctmp + 1, NULL, 10);
+        }
     }
-
-    mca_base_param_reg_int(c, "no_tree_spawn",
-                           "If set to 1, do not launch via a tree-based topology",
-                           false, false, 0, &tmp);
-    if (0 == tmp) {
-        mca_plm_rsh_component.tree_spawn = true;
-    } else {
-        mca_plm_rsh_component.tree_spawn = false;
-    }
-
-    /* local rsh/ssh launch agent */
-    tmp = mca_base_param_reg_string(c, "agent",
-                                    "The command used to launch executables on remote nodes (typically either \"ssh\" or \"rsh\")",
-                                    false, false, "ssh : rsh", NULL);
-    mca_base_param_reg_syn_name(tmp, "pls", "rsh_agent", true);
-    mca_base_param_reg_syn_name(tmp, "orte", "rsh_agent", true);
-    mca_base_param_lookup_string(tmp, &mca_plm_rsh_component.agent);
-
-    tmp = mca_base_param_reg_int_name("orte", "assume_same_shell",
-                                      "If set to 1, assume that the shell on the remote node is the same as the shell on the local node.  Otherwise, probe for what the remote shell [default: 1]",
-                                      false, false, 1, NULL);
-    mca_base_param_reg_syn_name(tmp, "plm", "rsh_assume_same_shell", true);
-    mca_base_param_lookup_int(tmp, &value);
-    mca_plm_rsh_component.assume_same_shell = OPAL_INT_TO_BOOL(value);
-    
-    mca_base_param_reg_int(c, "pass_environ_mca_params",
-                           "If set to 0, do not include mca params from the environment on the orted cmd line",
-                           false, false, 1, &tmp);
-    mca_plm_rsh_component.pass_environ_mca_params = OPAL_INT_TO_BOOL(tmp);
 
     return ORTE_SUCCESS;
 }

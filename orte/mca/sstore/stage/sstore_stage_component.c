@@ -25,6 +25,7 @@ const char *orte_sstore_stage_component_version_string =
 /*
  * Local functionality
  */
+static int sstore_stage_register (void);
 static int sstore_stage_open(void);
 static int sstore_stage_close(void);
 
@@ -49,7 +50,8 @@ orte_sstore_stage_component_t mca_sstore_stage_component = {
             /* Component open and close functions */
             sstore_stage_open,
             sstore_stage_close,
-            orte_sstore_stage_component_query
+            orte_sstore_stage_component_query,
+            sstore_stage_register
         },
         {
             /* The component is checkpoint ready */
@@ -59,9 +61,7 @@ orte_sstore_stage_component_t mca_sstore_stage_component = {
         /* Verbosity level */
         0,
         /* opal_output handler */
-        -1,
-        /* Default priority */
-        10
+        -1
     },
 };
 
@@ -73,115 +73,116 @@ bool   orte_sstore_stage_enabled_compression = false;
 int    orte_sstore_stage_compress_delay = 0;
 int    orte_sstore_stage_progress_meter = 0;
 
-static int sstore_stage_open(void) 
+static int sstore_stage_select (void)
 {
-    int mca_index, value;
+    mca_base_component_t *component = &mca_sstore_stage_component.super.base_version;
+    int mca_index;
 
     /*
      * The local directory to use when staging checkpoints back to central storage
      */
-    mca_index = mca_base_param_reg_string(&mca_sstore_stage_component.super.base_version,
-                                          "local_snapshot_dir",
-                                          "The temporary base directory to use when storing local snapshots before they are moved.",
-                                          true, false,
-                                          opal_tmp_directory(),
-                                          &orte_sstore_stage_local_snapshot_dir);
-    mca_base_param_reg_syn_name(mca_index, "crs", "base_snapshot_dir", true);
+    orte_sstore_stage_local_snapshot_dir = strdup (opal_tmp_directory());
+    mca_index = mca_base_component_var_register (component, "local_snapshot_dir",
+                                                 "The temporary base directory to use when storing local snapshots before they are moved.",
+                                                 MCA_BASE_VAR_TYPE_STRING, NULL, 0, MCA_BASE_VAR_FLAG_INTERNAL,
+                                                 OPAL_INFO_LVL_9,
+                                                 MCA_BASE_VAR_SCOPE_READONLY,
+                                                 &orte_sstore_stage_local_snapshot_dir);
+    (void) mca_base_var_register_synonym (mca_index, "orte", "crs", "base", "snapshot_dir", MCA_BASE_VAR_SYN_FLAG_DEPRECATED);
 
     /*
      * If the global storage is just on a different file system, then we pass
      * this hint on to FileM.
      */
-    mca_index = mca_base_param_reg_int(&mca_sstore_stage_component.super.base_version,
-                                       "global_is_shared",
-                                       "If the global_snapshot_dir is on a shared file system all nodes can access, "
-                                       "then the checkpoint files can be copied more efficiently when FileM is used."
-                                       " [Default = disabled]",
-                                       false, false,
-                                       0,
-                                       &value);
-    mca_base_param_reg_syn_name(mca_index, "snapc", "base_global_shared", true);
-
-    orte_sstore_stage_global_is_shared = OPAL_INT_TO_BOOL(value);
+    orte_sstore_stage_global_is_shared = false;
+    mca_index = mca_base_component_var_register (component, "global_is_shared",
+                                                 "If the global_snapshot_dir is on a shared file system all nodes can access, "
+                                                 "then the checkpoint files can be copied more efficiently when FileM is used."
+                                                 " [Default = disabled]", MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                                 OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
+                                                 &orte_sstore_stage_global_is_shared);
+    (void) mca_base_var_register_synonym (mca_index, "orte", "snapc", "base", "global_shared", MCA_BASE_VAR_SYN_FLAG_DEPRECATED);
 
     /*
      * Debugging option to skip the filem step
      * Warning: Will not produce a usable global snapshot
      */
-    mca_index = mca_base_param_reg_int(&mca_sstore_stage_component.super.base_version,
-                                       "skip_filem",
-                                       "Not for general use! For debugging only! Pretend to move files. [Default = disabled]",
-                                       false, false,
-                                       0,
-                                       &value);
-    mca_base_param_reg_syn_name(mca_index, "snapc", "base_skip_filem", true);
-
-    orte_sstore_stage_skip_filem = OPAL_INT_TO_BOOL(value);
+    orte_sstore_stage_skip_filem = false;
+    mca_index = mca_base_component_var_register (component, "skip_filem",
+                                                 "Not for general use! For debugging only! Pretend to move files. [Default = disabled]",
+                                                 MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                                 OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
+                                                 &orte_sstore_stage_skip_filem);
+    (void) mca_base_var_register_synonym (mca_index, "orte", "snapc", "base", "skip_filem", MCA_BASE_VAR_SYN_FLAG_DEPRECATED);
 
     /*
      * Maintain a local cache of checkpoints taken, so that automatic recovery
      * does not require a transfer from central storage.
      */
-    mca_index = mca_base_param_reg_int(&mca_sstore_stage_component.super.base_version,
-                                       "caching",
-                                       "Maintain a node local cache of last checkpoint. [Default = disabled]",
-                                       false, false,
-                                       0,
-                                       &value);
-    orte_sstore_stage_enabled_caching = OPAL_INT_TO_BOOL(value);
+    orte_sstore_stage_enabled_caching = false;
+    mca_index = mca_base_component_var_register (component, "caching",
+                                                 "Maintain a node local cache of last checkpoint. [Default = disabled]",
+                                                 MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                                 OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
+                                                 &orte_sstore_stage_enabled_caching);
 
     /*
      * Compress checkpoints before/after transfer
      */
-    mca_index = mca_base_param_reg_int(&mca_sstore_stage_component.super.base_version,
-                                       "compress",
-                                       "Compress local snapshots. [Default = disabled]",
-                                       false, false,
-                                       0,
-                                       &value);
-    orte_sstore_stage_enabled_compression = OPAL_INT_TO_BOOL(value);
+    orte_sstore_stage_enabled_compression = false;
+    (void) mca_base_component_var_register (component, "compress",
+                                            "Compress local snapshots. [Default = disabled]",
+                                            MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                            OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
+                                            &orte_sstore_stage_enabled_compression);
 
     /*
      * Number of seconds to delay the start of compression when sync'ing
      */
-    mca_index = mca_base_param_reg_int(&mca_sstore_stage_component.super.base_version,
-                                       "compress_delay",
-                                       "Seconds to delay the start of compression on sync() "
-                                       " [Default = 0]",
-                                       false, false,
-                                       0,
-                                       &value);
-    orte_sstore_stage_compress_delay = value;
+    orte_sstore_stage_compress_delay = 0;
+    (void) mca_base_component_var_register (component, "compress_delay",
+                                            "Seconds to delay the start of compression on sync() "
+                                            " [Default = 0]",
+                                            MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                            OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
+                                            &orte_sstore_stage_compress_delay);
 
     /*
      * A progress meter
      */
-    mca_index = mca_base_param_reg_int(&mca_sstore_stage_component.super.base_version,
-                                       "progress_meter",
-                                       "Display Progress every X percentage done. [Default = 0/off]",
-                                       false, false,
-                                       0,
-                                       &value);
-    orte_sstore_stage_progress_meter = (value % 101);
+    orte_sstore_stage_progress_meter = 0;
+    (void) mca_base_component_var_register (component, "progress_meter",
+                                            "Display Progress every X percentage done. [Default = 0/off]",
+                                            MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                            OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
+                                            &orte_sstore_stage_progress_meter);
+    orte_sstore_stage_progress_meter = (orte_sstore_stage_progress_meter % 101);
 
     /*
      * Priority
      */
-    mca_base_param_reg_int(&mca_sstore_stage_component.super.base_version,
-                           "priority",
-                           "Priority of the SSTORE stage component",
-                           false, false,
-                           mca_sstore_stage_component.super.priority,
-                           &mca_sstore_stage_component.super.priority);
+    mca_sstore_stage_component.super.priority = 10;
+    (void) mca_base_component_var_register (component, "priority", "Priority of the SSTORE stage component",
+                                            MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                            OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
+                                            &mca_sstore_stage_component.super.priority);
+
     /*
      * Verbose Level
      */
-    mca_base_param_reg_int(&mca_sstore_stage_component.super.base_version,
-                           "verbose",
-                           "Verbose level for the SSTORE stage component",
-                           false, false,
-                           mca_sstore_stage_component.super.verbose, 
-                           &mca_sstore_stage_component.super.verbose);
+    (void) mca_base_component_var_register (component, "verbose",
+                                            "Verbose level for the SSTORE stage component",
+                                            MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                            OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
+                                            &mca_sstore_stage_component.super.verbose);
+
+    return ORTE_SUCCESS;
+}
+
+static int sstore_stage_open(void) 
+{
+    int mca_index, value;
+
     /* If there is a custom verbose level for this component than use it
      * otherwise take our parents level and output channel
      */

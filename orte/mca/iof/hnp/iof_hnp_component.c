@@ -21,7 +21,6 @@
 
 #include "opal/mca/base/base.h"
 #include "opal/util/output.h"
-#include "opal/mca/base/mca_base_param.h"
 #include "opal/mca/event/event.h"
 
 #include "orte/util/proc_info.h"

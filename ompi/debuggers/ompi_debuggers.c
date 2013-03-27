@@ -128,6 +128,8 @@ OMPI_DECLSPEC volatile int MPIR_being_debugged = 0;
 OMPI_DECLSPEC volatile int MPIR_debug_state = 0;
 OMPI_DECLSPEC char *MPIR_debug_abort_string = "";
 
+static char *ompi_debugger_dll_path = NULL;
+
 /* Check for a file in few direct ways for portability */
 static void check(char *dir, char *file, char **locations) 
 {
@@ -164,18 +166,19 @@ extern void
 ompi_debugger_setup_dlls(void)
 {
     int i;
-    char *a, *b, **dirs, **tmp1 = NULL, **tmp2 = NULL;
+    char **dirs, **tmp1 = NULL, **tmp2 = NULL;
 
-    a = strdup(opal_install_dirs.pkglibdir);
-    mca_base_param_reg_string_name("ompi",
-                                   "debugger_dll_path",
-                                   "List of directories where MPI_INIT should search for debugger plugins",
-                                   false, false, a, &b);
-    free(a);
+    ompi_debugger_dll_path = opal_install_dirs.pkglibdir;
+    (void) mca_base_var_register("ompi", "ompi", "debugger", "dll_path",
+                                 "List of directories where MPI_INIT should search for debugger plugins",
+                                 MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
+                                 OPAL_INFO_LVL_9,
+                                 MCA_BASE_VAR_SCOPE_READONLY,
+                                 &ompi_debugger_dll_path);
     
     /* Search the directory for MPI debugger DLLs */
-    if (NULL != b) {
-        dirs = opal_argv_split(b, ':');
+    if (NULL != ompi_debugger_dll_path) {
+        dirs = opal_argv_split(ompi_debugger_dll_path, ':');
         for (i = 0; dirs[i] != NULL; ++i) {
             check(dirs[i], OMPI_MPIHANDLES_DLL_PREFIX, tmp1);
             check(dirs[i], OMPI_MSGQ_DLL_PREFIX, tmp2);

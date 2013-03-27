@@ -54,13 +54,13 @@ struct mca_btl_udapl_component_t {
     int32_t udapl_verbosity; /**< report out level, see
                                 "Report Out from uDAPL BTL" below for details. */
     size_t  udapl_num_btls; /**< number of hcas available to the uDAPL component */
-    size_t  udapl_max_btls; /**< maximum number of supported hcas */
+    unsigned int udapl_max_btls; /**< maximum number of supported hcas */
     struct  mca_btl_udapl_module_t **udapl_btls; /**< array of available BTL modules */
     int32_t udapl_num_recvs;    /**< number of recv buffers to keep posted */
     int32_t udapl_num_sends;    /**< number of sends to post on endpoint */
     int32_t udapl_sr_win;       /**< number of fragments recieved before
                                    returning credits to sender */
-    uint32_t udapl_timeout;      /**< connection timeout, in microseconds */
+    unsigned int udapl_timeout;      /**< connection timeout, in microseconds */
     size_t udapl_eager_frag_size;
     size_t udapl_max_frag_size;
     size_t udapl_eager_rdma_frag_size; /* size of the rdma fragement including data

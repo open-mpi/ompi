@@ -14,7 +14,6 @@
 #include "opal/util/output.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
-#include "opal/mca/base/mca_base_param.h"
 
 #include "opal/mca/event/event.h"
 #include "opal/mca/event/base/base.h"
@@ -36,20 +35,36 @@ opal_list_t opal_event_components;
 opal_event_base_t *opal_event_base=NULL;
 int opal_event_base_inited = 0;
 
+/*
+ * Locals
+ */
+static int opal_event_base_verbose = 0;
+
+static int opal_event_base_register(int flags)
+{
+    /* Debugging / verbose output */
+    opal_event_base_verbose = 0;
+    (void) mca_base_var_register("opal", "event", "base", "verbose",
+                                 "Verbosity level of the event framework",
+                                 MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                 OPAL_INFO_LVL_9,
+                                 MCA_BASE_VAR_SCOPE_READONLY,
+                                 &opal_event_base_verbose);
+
+    return OPAL_SUCCESS;
+}
+
 int opal_event_base_open(void)
 {
-    int value, rc = OPAL_SUCCESS;
+    int rc;
 
     if( opal_event_base_inited++ < 0 ) {
         return OPAL_SUCCESS;
     }
 
-    /* Debugging / verbose output */
-    mca_base_param_reg_int_name("event", "base_verbose", 
-                                "Verbosity level of the event framework",
-                                false, false,
-                                0, &value);
-    if (0 != value) {
+    (void) opal_event_base_register(0);
+
+    if (0 != opal_event_base_verbose) {
         opal_event_base_output = opal_output_open(NULL);
     } else {
         opal_event_base_output = -1;

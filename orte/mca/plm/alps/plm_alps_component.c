@@ -25,7 +25,7 @@
 #include "orte_config.h"
 #include "orte/constants.h"
 
-#include "opal/mca/base/mca_base_param.h"
+#include "opal/mca/base/mca_base_var.h"
 
 #include "orte/runtime/orte_globals.h"
 
@@ -45,6 +45,7 @@ const char *mca_plm_alps_component_version_string =
 /*
  * Local functions
  */
+static int plm_alps_register(void);
 static int plm_alps_open(void);
 static int plm_alps_close(void);
 static int orte_plm_alps_component_query(mca_base_module_t **module, int *priority);
@@ -73,7 +74,8 @@ orte_plm_alps_component_t mca_plm_alps_component = {
             /* Component open and close functions */
             plm_alps_open,
             plm_alps_close,
-            orte_plm_alps_component_query
+            orte_plm_alps_component_query,
+            plm_alps_register
         },
         {
             /* The component is checkpoint ready */
@@ -86,32 +88,47 @@ orte_plm_alps_component_t mca_plm_alps_component = {
 };
 
 
-static int plm_alps_open(void)
+static int plm_alps_register(void)
 {
     mca_base_component_t *comp = &mca_plm_alps_component.super.base_version;
 
-    mca_base_param_reg_int(comp, "debug", "Enable debugging of alps plm",
-                           false, false, 0, 
-                           &mca_plm_alps_component.debug);
+    mca_plm_alps_component.debug = false;
+    (void) mca_base_component_var_register (comp, "debug", "Enable debugging of alps plm",
+                                            MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                            OPAL_INFO_LVL_9,
+                                            MCA_BASE_VAR_SCOPE_READONLY,
+                                            &mca_plm_alps_component.debug);
+
     if (mca_plm_alps_component.debug == 0) {
         mca_plm_alps_component.debug = orte_debug_flag;
     }
 
-    mca_base_param_reg_int(comp, "priority", "Default selection priority",
-                           false, false, 75, 
-                           &mca_plm_alps_component.priority);
+    mca_plm_alps_component.priority = 75;
+    (void) mca_base_component_var_register (comp, "priority", "Default selection priority",
+                                            MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                            OPAL_INFO_LVL_9,
+                                            MCA_BASE_VAR_SCOPE_READONLY,
+                                            &mca_plm_alps_component.priority);
 
+    mca_plm_alps_component.aprun_cmd = strdup ("aprun");
+    (void) mca_base_component_var_register (comp, "aprun", "Command to run instead of aprun",
+                                            MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
+                                            OPAL_INFO_LVL_9,
+                                            MCA_BASE_VAR_SCOPE_READONLY,
+                                            &mca_plm_alps_component.aprun_cmd);
+
+    mca_plm_alps_component.custom_args = NULL;
+    (void) mca_base_component_var_register (comp, "args", "Custom arguments to aprun",
+                                            MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
+                                            OPAL_INFO_LVL_9,
+                                            MCA_BASE_VAR_SCOPE_READONLY,
+                                            &mca_plm_alps_component.custom_args);
+    return ORTE_SUCCESS;
+}
+
+static int plm_alps_open(void)
+{
     mca_plm_alps_component.timing = orte_timing;
-
-    mca_base_param_reg_string(comp, "aprun",
-                              "Command to run instead of aprun",
-                              false, false, "aprun",
-                              &mca_plm_alps_component.aprun_cmd);
-
-    mca_base_param_reg_string(comp, "args",
-                              "Custom arguments to aprun",
-                              false, false, NULL,
-                              &mca_plm_alps_component.custom_args);
 
     return ORTE_SUCCESS;
 }
@@ -127,9 +144,5 @@ static int orte_plm_alps_component_query(mca_base_module_t **module, int *priori
 
 static int plm_alps_close(void)
 {
-    if (NULL != mca_plm_alps_component.custom_args) {
-        free(mca_plm_alps_component.custom_args);
-    }
-
     return ORTE_SUCCESS;
 }

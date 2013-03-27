@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -16,13 +17,15 @@
 
 #include "opal/mca/event/event.h"
 #include "pml_example.h"
-#include "opal/mca/base/mca_base_param.h"
 
+static int mca_pml_example_component_register(void);
 static int mca_pml_example_component_open(void);
 static int mca_pml_example_component_close(void);
 static mca_pml_base_module_t* mca_pml_example_component_init( int* priority,
                             bool *allow_multi_user_threads, bool *have_hidden_threads );
 static int mca_pml_example_component_fini(void);
+
+static int mca_pml_example_priority = 0;
 
 mca_pml_base_component_2_0_0_t mca_pml_example_component = {
 
@@ -37,7 +40,9 @@ mca_pml_base_component_2_0_0_t mca_pml_example_component = {
          OMPI_MINOR_VERSION,  /* MCA component minor version */
          OMPI_RELEASE_VERSION,  /* MCA component release version */
          mca_pml_example_component_open,  /* component open */
-         mca_pml_example_component_close  /* component close */
+         mca_pml_example_component_close, /* component close */
+         NULL,
+         mca_pml_example_component_register
      },
      {
          /* The component is checkpoint ready */
@@ -48,15 +53,17 @@ mca_pml_base_component_2_0_0_t mca_pml_example_component = {
      mca_pml_example_component_fini   /* component finalize */
 };
 
-static inline int mca_pml_example_param_register_int( const char* param_name,
-                                                  int default_value )
+static int mca_pml_example_component_register(void)
 {
-    int param_value = default_value;
+    mca_pml_example_priority = 0;
+    (void) mca_base_component_var_register(&mca_pml_example_component.pmlm_version,
+                                           "priority", "Priority of the pml example component",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &mca_pml_example_priority);
 
-    (void) mca_base_param_reg_int (&mca_pml_example_component.pmlm_version, param_name,
-                                   NULL, false, false, default_value, &param_value);
-
-    return param_value;
+    return OMPI_SUCCESS;
 }
 
 static int mca_pml_example_component_open(void)
@@ -74,7 +81,7 @@ mca_pml_example_component_init( int* priority,
                             bool *allow_multi_user_threads,
                             bool *have_hidden_threads )
 {
-    *priority = mca_pml_example_param_register_int( "priority", 0 );
+    *priority = mca_pml_example_priority;
     *have_hidden_threads = false;
     *allow_multi_user_threads &= true;
     return &mca_pml_example.super;

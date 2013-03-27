@@ -74,8 +74,7 @@ OPAL_DECLSPEC void opal_info_show_path(const char *type, const char *value);
 
 OPAL_DECLSPEC void opal_info_do_path(bool want_all, opal_cmd_line_t *cmd_line);
 
-OPAL_DECLSPEC void opal_info_show_mca_params(opal_list_t *info,
-                                             const char *type,
+OPAL_DECLSPEC void opal_info_show_mca_params(const char *type,
                                              const char *component, 
                                              bool want_internal);
 

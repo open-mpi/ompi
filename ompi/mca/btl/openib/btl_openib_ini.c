@@ -30,7 +30,6 @@
 #include <unistd.h>
 #endif
 
-#include "opal/mca/base/mca_base_param.h"
 #include "opal/util/show_help.h"
 
 #include "btl_openib.h"

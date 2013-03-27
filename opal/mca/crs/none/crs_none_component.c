@@ -24,6 +24,7 @@ const char *opal_crs_none_component_version_string =
 /*
  * Local functionality
  */
+static int crs_none_register (void);
 static int crs_none_open(void);
 static int crs_none_close(void);
 
@@ -49,7 +50,8 @@ opal_crs_none_component_t mca_crs_none_component = {
             /* Component open and close functions */
             crs_none_open,
             crs_none_close,
-            opal_crs_none_component_query
+            opal_crs_none_component_query,
+            crs_none_register
         },
         {
             /* The component is checkpoint ready */
@@ -94,19 +96,31 @@ static opal_crs_base_module_t loc_module = {
 
 bool opal_crs_none_select_warning = false;
 
+static int crs_none_register (void) 
+{
+    int ret;
+
+    (void) mca_base_component_var_register (&mca_crs_none_component.super.base_version,
+                                            "priority", "Priority of the crs none "
+                                            "component", MCA_BASE_VAR_TYPE_INT, NULL,
+                                            0, MCA_BASE_VAR_FLAG_DEFAULT_ONLY,
+                                            OPAL_INFO_LVL_3,
+                                            MCA_BASE_VAR_SCOPE_CONSTANT,
+                                            &mca_crs_none_component.super.priority);
+
+    opal_crs_none_select_warning = false;
+    ret = mca_base_component_var_register (&mca_crs_none_component.super.base_version,
+                                           "select_warning",
+                                           "Enable warning when the 'none' component is selected when checkpoint/restart functionality is requested."
+                                           "[Default = disabled/no-warning]",
+                                           MCA_BASE_VAR_TYPE_BOOL, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
+                                           OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_ALL,
+                                           &opal_crs_none_select_warning);
+    return (0 > ret) ? ret : OPAL_SUCCESS;
+}
+
 static int crs_none_open(void) 
 {
-    int value = 0;
-
-    mca_base_param_reg_int(&mca_crs_none_component.super.base_version,
-                           "select_warning",
-                           "Enable warning when the 'none' component is selected when checkpoint/restart functionality is requested."
-                           "[Default = disabled/no-warning]",
-                           false, false,
-                           0, /* Disabled */
-                           &value);
-    opal_crs_none_select_warning = OPAL_INT_TO_BOOL(value);
-
     return OPAL_SUCCESS;
 }
 

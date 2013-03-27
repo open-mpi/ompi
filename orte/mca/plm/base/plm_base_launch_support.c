@@ -35,7 +35,6 @@
 #include "opal/util/argv.h"
 #include "opal/class/opal_pointer_array.h"
 #include "opal/dss/dss.h"
-#include "opal/mca/base/mca_base_param.h"
 #include "opal/mca/hwloc/hwloc.h"
 
 #include "orte/util/dash_host/dash_host.h"
@@ -283,13 +282,13 @@ void orte_plm_base_setup_job(int fd, short args, void *cbdata)
 
     /* get collective ids for the std MPI operations */
     caddy->jdata->peer_modex = orte_grpcomm_base_get_coll_id();
-    modx_par = mca_base_param_env_var ("orte_peer_modex_id");
+    (void) mca_base_var_env_name ("orte_peer_modex_id", &modx_par);
     asprintf(&modx_val, "%d", caddy->jdata->peer_modex);
     caddy->jdata->peer_init_barrier = orte_grpcomm_base_get_coll_id();
-    bar1_par = mca_base_param_env_var ("orte_peer_init_barrier_id");
+    (void) mca_base_var_env_name ("orte_peer_init_barrier_id", &bar1_par);
     asprintf(&bar1_val, "%d", caddy->jdata->peer_init_barrier);
     caddy->jdata->peer_fini_barrier = orte_grpcomm_base_get_coll_id();
-    bar2_par = mca_base_param_env_var ("orte_peer_fini_barrier_id");
+    (void) mca_base_var_env_name ("orte_peer_fini_barrier_id", &bar2_par);
     asprintf(&bar2_val, "%d", caddy->jdata->peer_fini_barrier);
 
     /* if app recovery is not defined, set apps to defaults */
@@ -945,9 +944,8 @@ int orte_plm_base_orted_append_basic_args(int *argc, char ***argv,
                                           char *nodes)
 {
     char *param = NULL;
+    const char **tmp_value;
     int loc_id;
-    char * amca_param_path = NULL;
-    char * amca_param_prefix = NULL;
     char * tmp_force = NULL;
     int i, j, cnt, rc;
     orte_job_t *jdata;
@@ -1097,50 +1095,46 @@ int orte_plm_base_orted_append_basic_args(int *argc, char ***argv,
      * Pass along the Aggregate MCA Parameter Sets
      */
     /* Add the 'prefix' param */
-    loc_id = mca_base_param_find("mca", NULL, "base_param_file_prefix");
-    mca_base_param_lookup_string(loc_id, &amca_param_prefix);
-    if( NULL != amca_param_prefix ) {
+    tmp_value = NULL;
+    loc_id = mca_base_var_find("opal", "mca", "base", "param_file_prefix");
+    mca_base_var_get_value(loc_id, &tmp_value, NULL, NULL);
+    if( NULL != tmp_value && NULL != tmp_value[0] ) {
         /* Could also use the short version '-am'
          * but being verbose has some value
          */
         opal_argv_append(argc, argv, "-mca");
         opal_argv_append(argc, argv, "mca_base_param_file_prefix");
-        opal_argv_append(argc, argv, amca_param_prefix);
+        opal_argv_append(argc, argv, tmp_value[0]);
     
         /* Add the 'path' param */
-        loc_id = mca_base_param_find("mca", NULL, "base_param_file_path");
-        mca_base_param_lookup_string(loc_id, &amca_param_path);
-        if( NULL != amca_param_path ) {
+        tmp_value = NULL;
+        loc_id = mca_base_var_find("opal", "mca", "base", "param_file_path");
+        mca_base_var_get_value(loc_id, &tmp_value, NULL, NULL);
+        if( NULL != tmp_value && NULL != tmp_value[0] ) {
             opal_argv_append(argc, argv, "-mca");
             opal_argv_append(argc, argv, "mca_base_param_file_path");
-            opal_argv_append(argc, argv, amca_param_path);
+            opal_argv_append(argc, argv, tmp_value[0]);
         }
     
         /* Add the 'path' param */
-        loc_id = mca_base_param_find("mca", NULL, "base_param_file_path_force");
-        mca_base_param_lookup_string(loc_id, &tmp_force);
-        if( NULL == tmp_force ) {
+        opal_argv_append(argc, argv, "-mca");
+        opal_argv_append(argc, argv, "mca_base_param_file_path_force");
+
+        tmp_value = NULL;
+        loc_id = mca_base_var_find("opal", "mca", "base", "param_file_path_force");
+        mca_base_var_get_value(loc_id, &tmp_value, NULL, NULL);
+        if( NULL == tmp_value || NULL == tmp_value[0] ) {
             /* Get the current working directory */
             tmp_force = (char *) malloc(sizeof(char) * OPAL_PATH_MAX);
             if (NULL == getcwd(tmp_force, OPAL_PATH_MAX)) {
                 free(tmp_force);
                 tmp_force = strdup("");
             }
-        }
-        opal_argv_append(argc, argv, "-mca");
-        opal_argv_append(argc, argv, "mca_base_param_file_path_force");
-        opal_argv_append(argc, argv, tmp_force);
-    
-        free(tmp_force);
-    
-        if( NULL != amca_param_path ) {
-            free(amca_param_path);
-            amca_param_path = NULL;
-        }
 
-        if( NULL != amca_param_prefix ) {
-            free(amca_param_prefix);
-            amca_param_prefix = NULL;
+            opal_argv_append(argc, argv, tmp_force);
+            free(tmp_force);
+        } else {
+            opal_argv_append(argc, argv, tmp_value[0]);
         }
     }
 

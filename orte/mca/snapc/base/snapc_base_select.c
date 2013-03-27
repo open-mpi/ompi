@@ -26,7 +26,6 @@
 #include "opal/util/output.h"
 #include "opal/mca/base/base.h"
 
-#include "opal/mca/base/mca_base_param.h"
 #include "orte/mca/sstore/sstore.h"
 #include "orte/mca/sstore/base/base.h"
 
@@ -81,19 +80,21 @@ int orte_snapc_base_select(bool seed, bool app)
     int exit_status = OPAL_SUCCESS;
     orte_snapc_base_component_t *best_component = NULL;
     orte_snapc_base_module_t *best_module = NULL;
-    char *include_list = NULL;
+    const char **include_list = NULL;
+    int var_id;
 
     /*
      * Register the framework MCA param and look up include list
      */
-    mca_base_param_reg_string_name("snapc", NULL,
-                                   "Which SNAPC component to use (empty = auto-select)",
-                                   false, false,
-                                   strdup("none"), &include_list);
-    if(NULL != include_list && 0 == strncmp(include_list, "none", strlen("none")) ){ 
+    /* XXX -- TODO -- framework_subsytem -- this shouldn't be necessary once the framework system is in place */
+    var_id = mca_base_var_find(NULL, "snapc", NULL, NULL);
+    mca_base_var_get_value(var_id, &include_list, NULL, NULL);
+
+    if(NULL != include_list && NULL != include_list[0] &&
+       0 == strncmp(include_list[0], "none", strlen("none")) ){ 
         opal_output_verbose(10, orte_snapc_base_output,
                             "snapc:select: Using %s component",
-                            include_list);
+                            include_list[0]);
         best_component = &none_component;
         best_module    = &none_module;
         /* Close all components since none will be used */
@@ -135,10 +136,6 @@ int orte_snapc_base_select(bool seed, bool app)
     orte_sstore_base_select();
 
  cleanup:
-    if( NULL != include_list ) {
-        free(include_list);
-        include_list = NULL;
-    }
 
     return exit_status;
 }

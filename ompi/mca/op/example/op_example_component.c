@@ -27,8 +27,6 @@
 
 #include "ompi_config.h"
 
-#include "opal/mca/base/mca_base_param.h"
-
 #include "ompi/constants.h"
 #include "ompi/op/op.h"
 #include "ompi/mca/op/op.h"
@@ -113,6 +111,7 @@ static int example_component_close(void)
     return OMPI_SUCCESS;
 }
 
+static char *example_component_version;
 
 /*
  * Register MCA params.
@@ -136,10 +135,16 @@ static int example_component_register(void)
              OP_EXAMPLE_LIBFOO_VERSION_MAJOR,
              OP_EXAMPLE_LIBFOO_VERSION_MINOR,
              OP_EXAMPLE_LIBFOO_VERSION_RELEASE);
-    mca_base_param_reg_string(&mca_op_example_component.super.opc_version,
-                              "libfoo_version", 
-                              "Version of the libfoo support library that this component was built against.",
-                              false, true, str, NULL);
+    example_component_version = str;
+    (void) mca_base_component_var_register(&mca_op_example_component.super.opc_version,
+                                           "libfoo_version",
+                                           "Version of the libfoo support library that this component was built against.",
+                                           MCA_BASE_VAR_TYPE_STRING, NULL, 0,
+                                           MCA_BASE_VAR_FLAG_DEFAULT_ONLY,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_CONSTANT,
+                                           &example_component_version);
+    /* The variable system duplicated the string. */
     free(str);
 
     /* Additionally, since this component is simulating hardware,
@@ -148,17 +153,23 @@ static int example_component_register(void)
        types are supported.  This allows you to change the behavior of
        this component at run-time (by setting these MCA params at
        run-time), simulating different kinds of hardware. */
-    mca_base_param_reg_int(&mca_op_example_component.super.opc_version,
-                           "hardware_available", 
-                           "Whether the hardware is available or not",
-                           false, false, 1, &val);
-    mca_op_example_component.hardware_available = OPAL_INT_TO_BOOL(val);
+    mca_op_example_component.hardware_available = false;
+    (void) mca_base_component_var_register(&mca_op_example_component.super.opc_version,
+                                           "hardware_available",
+                                           "Whether the hardware is available or not",
+                                           MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &mca_op_example_component.hardware_available);
 
-    mca_base_param_reg_int(&mca_op_example_component.super.opc_version,
-                           "double_supported", 
-                           "Whether the double precision data types are supported or not",
-                           false, false, 1, &val);
-    mca_op_example_component.double_supported = OPAL_INT_TO_BOOL(val);
+    mca_op_example_component.double_supported = true;
+    (void) mca_base_component_var_register(&mca_op_example_component.super.opc_version,
+                                           "double_supported",
+                                           "Whether the double precision data types are supported or not",
+                                           MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &mca_op_example_component.double_supported);
 
     return OMPI_SUCCESS;
 }

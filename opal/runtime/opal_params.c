@@ -32,17 +32,28 @@
 #include "opal/constants.h"
 #include "opal/runtime/opal.h"
 #include "opal/datatype/opal_datatype.h"
-#include "opal/mca/base/mca_base_param.h"
+#include "opal/mca/base/mca_base_var.h"
 #include "opal/threads/mutex.h"
 #include "opal/threads/threads.h"
-#include "opal/mca/shmem/base/base.h" 
+#include "opal/mca/shmem/base/base.h"
+#include "opal/mca/base/mca_base_var.h"
+#include "opal/runtime/opal_params.h"
+#include "opal/dss/dss.h"
+
+char *opal_signal_string = NULL;
+char *opal_net_private_ipv4 = NULL;
+bool opal_set_max_sys_limits = false;
 
 int opal_register_params(void)
 {
+    static bool opal_register_done = false;
     int ret;
-#if OPAL_ENABLE_DEBUG
-    int value;
-#endif /* OPAL_ENABLE_DEBUG */
+
+    if (opal_register_done) {
+        return OPAL_SUCCESS;
+    }
+
+    opal_register_done = true;
 
     /*
      * This string is going to be used in opal/util/stacktrace.c
@@ -76,34 +87,81 @@ int opal_register_params(void)
             }
         }
 
-        mca_base_param_reg_string_name("opal", "signal", 
-                                       "Comma-delimited list of integer signal numbers to Open MPI to attempt to intercept.  Upon receipt of the intercepted signal, Open MPI will display a stack trace and abort.  Open MPI will *not* replace signals if handlers are already installed by the time MPI_INIT is invoked.  Optionally append \":complain\" to any signal number in the comma-delimited list to make Open MPI complain if it detects another signal handler (and therefore does not insert its own).",
-                                       false, false, string, NULL);
-        free(string);
+	opal_signal_string = string;
+	ret = mca_base_var_register ("opal", "opal", NULL, "signal",
+				     "Comma-delimited list of integer signal numbers to Open MPI to attempt to intercept.  Upon receipt of the intercepted signal, Open MPI will display a stack trace and abort.  Open MPI will *not* replace signals if handlers are already installed by the time MPI_INIT is invoked.  Optionally append \":complain\" to any signal number in the comma-delimited list to make Open MPI complain if it detects another signal handler (and therefore does not insert its own).",
+				     MCA_BASE_VAR_TYPE_STRING, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
+				     OPAL_INFO_LVL_3, MCA_BASE_VAR_SCOPE_LOCAL,
+				     &opal_signal_string);
+        free (string);
+	if (0 > ret) {
+	    return ret;
+	}
     }
 
 #if OPAL_ENABLE_DEBUG
+    opal_progress_debug = false;
+    ret = mca_base_var_register ("opal", "opal", "progress", "debug",
+				 "Set to non-zero to debug progress engine features",
+				 MCA_BASE_VAR_TYPE_BOOL, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
+				 OPAL_INFO_LVL_8, MCA_BASE_VAR_SCOPE_LOCAL,
+				 &opal_progress_debug);
+    if (0 > ret) {
+	return ret;
+    }
 
+    opal_mutex_check_locks = false;
+    ret = mca_base_var_register ("opal", "opal", "debug", "locks",
+				 "Debug mutex usage within Open MPI.  On a "
+				 "non-threaded build, this enables integer counters and "
+				 "warning messages when double-locks are detected.",
+				 MCA_BASE_VAR_TYPE_BOOL, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
+				 OPAL_INFO_LVL_8, MCA_BASE_VAR_SCOPE_LOCAL,
+				 &opal_mutex_check_locks);
+    if (0 > ret) {
+	return ret;
+    }
 
-    mca_base_param_reg_int_name("opal", "progress_debug", 
-                                "Set to non-zero to debug progress engine features",
-                                false, false, 0, NULL);
-
-    {
-        mca_base_param_reg_int_name("opal", "debug_locks",
-                                    "Debug mutex usage within Open MPI.  On a "
-                                    "non-threaded build, this enables integer counters and "
-                                    "warning messages when double-locks are detected.",
-                                    false, false, 0, &value);
-        if (value) opal_mutex_check_locks = true;
-
-        mca_base_param_reg_int_name("opal", "debug_threads",
-                                    "Debug thread usage within OPAL. Reports out "
-                                    "when threads are acquired and released.",
-                                    false, false, 0, &value);
-        if (value) opal_debug_threads = true;
+    opal_debug_threads = false;
+    ret = mca_base_var_register ("opal", "opal", "debug", "threads",
+				 "Debug thread usage within OPAL. Reports out "
+				 "when threads are acquired and released.",
+				 MCA_BASE_VAR_TYPE_BOOL, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
+				 OPAL_INFO_LVL_8, MCA_BASE_VAR_SCOPE_LOCAL,
+				 &opal_debug_threads);
+    if (0 > ret) {
+	return ret;
     }
 #endif
+
+    /* RFC1918 defines
+       - 10.0.0./8
+       - 172.16.0.0/12
+       - 192.168.0.0/16
+       
+       RFC3330 also mentiones
+       - 169.254.0.0/16 for DHCP onlink iff there's no DHCP server
+    */
+    opal_net_private_ipv4 = "10.0.0.0/8;172.16.0.0/12;192.168.0.0/16;169.254.0.0/16";
+    ret = mca_base_var_register ("opal", "opal", "net", "private_ipv4",
+				 "Semicolon-delimited list of CIDR notation entries specifying what networks are considered \"private\" (default value based on RFC1918 and RFC3330)",
+				 MCA_BASE_VAR_TYPE_STRING, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
+				 OPAL_INFO_LVL_3, MCA_BASE_VAR_SCOPE_ALL_EQ,
+				 &opal_net_private_ipv4);
+    if (0 > ret) {
+	return ret;
+    }
+
+    opal_set_max_sys_limits = false;
+    ret = mca_base_var_register ("opal", "opal", NULL, "set_max_sys_limits",
+				 "Set to non-zero to automatically set any system-imposed limits to the maximum allowed",
+				 MCA_BASE_VAR_TYPE_BOOL, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
+				 OPAL_INFO_LVL_3, MCA_BASE_VAR_SCOPE_ALL_EQ,
+				 &opal_set_max_sys_limits);
+    if (0 > ret) {
+	return ret;
+    }
+
     /* The ddt engine has a few parameters */
     ret = opal_datatype_register_params();
     if (OPAL_SUCCESS != ret) {
@@ -112,6 +170,12 @@ int opal_register_params(void)
 
     /* shmem base also has a few parameters */ 
     ret = opal_shmem_base_register_params(); 
+    if (OPAL_SUCCESS != ret) { 
+        return ret; 
+    }
+
+    /* dss has parameters */
+    ret = opal_dss_register_vars ();
     if (OPAL_SUCCESS != ret) { 
         return ret; 
     }

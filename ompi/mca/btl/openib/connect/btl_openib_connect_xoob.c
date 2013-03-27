@@ -1038,6 +1038,12 @@ static int xoob_component_query(mca_btl_openib_module_t *openib_btl,
         rml_recv_posted = true;
     }
 
+    if (xoob_priority > 100) {
+        xoob_priority = 100;
+    } else if (xoob_priority < -1) {
+        xoob_priority = -1;
+    }
+
     (*cpc)->data.cbm_component = &ompi_btl_openib_connect_xoob;
     (*cpc)->data.cbm_priority = xoob_priority;
     (*cpc)->data.cbm_modex_message = NULL;
@@ -1059,10 +1065,14 @@ static int xoob_component_query(mca_btl_openib_module_t *openib_btl,
 /* Open - this functions sets up any xoob specific commandline params */
 static void xoob_component_register(void)
 {
-    mca_base_param_reg_int(&mca_btl_openib_component.super.btl_version,
-                           "connect_xoob_priority",
-                           "The selection method priority for xoob",
-                           false, false, xoob_priority, &xoob_priority);
+    xoob_priority = 60;
+    (void) mca_base_component_var_register(&mca_btl_openib_component.super.btl_version,
+                                           "connect_xoob_priority",
+                                           "The selection method priority for xoob",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &xoob_priority);
 
     if (xoob_priority > 100) {
         xoob_priority = 100;

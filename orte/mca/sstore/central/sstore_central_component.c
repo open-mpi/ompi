@@ -25,6 +25,7 @@ const char *orte_sstore_central_component_version_string =
 /*
  * Local functionality
  */
+static int sstore_central_register (void);
 static int sstore_central_open(void);
 static int sstore_central_close(void);
 
@@ -49,7 +50,8 @@ orte_sstore_central_component_t mca_sstore_central_component = {
             /* Component open and close functions */
             sstore_central_open,
             sstore_central_close,
-            orte_sstore_central_component_query
+            orte_sstore_central_component_query,
+            sstore_central_register
         },
         {
             /* The component is checkpoint ready */
@@ -59,27 +61,33 @@ orte_sstore_central_component_t mca_sstore_central_component = {
         /* Verbosity level */
         0,
         /* opal_output handler */
-        -1,
-        /* Default priority */
-        20
+        -1
     },
 };
 
+static int sstore_central_register (void)
+{
+    (void) mca_base_var_register (&mca_sstore_central_component.super.base_version,
+                                  "verbose", "Verbose level for the SSTORE central component",
+                                  MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                  OPAL_INFO_LVL_9,
+                                  MCA_BASE_VAR_SCOPE_LOCAL,
+                                  &mca_sstore_central_component.super.verbose);
+
+    /* Default priority */
+    mca_sstore_central_component.super.priority = 20;
+    (void) mca_base_var_register (&mca_sstore_central_component.super.base_version,
+                                  "priority", "Priority of the SSTORE central component",
+                                  MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                  OPAL_INFO_LVL_9,
+                                  MCA_BASE_VAR_SCOPE_READONLY,
+                                  &mca_sstore_central_component.super.priority);
+
+    return ORTE_SUCCESS;
+}
+
 static int sstore_central_open(void) 
 {
-    mca_base_param_reg_int(&mca_sstore_central_component.super.base_version,
-                           "priority",
-                           "Priority of the SSTORE central component",
-                           false, false,
-                           mca_sstore_central_component.super.priority,
-                           &mca_sstore_central_component.super.priority);
-    
-    mca_base_param_reg_int(&mca_sstore_central_component.super.base_version,
-                           "verbose",
-                           "Verbose level for the SSTORE central component",
-                           false, false,
-                           mca_sstore_central_component.super.verbose, 
-                           &mca_sstore_central_component.super.verbose);
     /* If there is a custom verbose level for this component than use it
      * otherwise take our parents level and output channel
      */

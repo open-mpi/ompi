@@ -23,7 +23,6 @@
 #include "opal/constants.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
-#include "opal/mca/base/mca_base_param.h"
 #include "opal/mca/pstat/pstat.h"
 #include "opal/mca/pstat/base/base.h"
 

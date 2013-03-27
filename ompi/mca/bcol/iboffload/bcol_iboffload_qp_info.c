@@ -232,7 +232,7 @@ static void mca_bcol_iboffload_fillin_qp_attr(int qp_index,
            Todo: copy max_inline_size() from ofacm to
            common area.
          */
-        init_attr->cap.max_inline_data = cm->max_inline_data;
+        init_attr->cap.max_inline_data = (int32_t) cm->max_inline_data;
 
         /* We allocate SG list for some algorithms (Bruck's alltoall) */
         max_sge = ep->iboffload_module->group_size / 2 +
@@ -248,8 +248,8 @@ static void mca_bcol_iboffload_fillin_qp_attr(int qp_index,
         init_attr->cap.max_recv_sge = max_sge; 
 /* Vasily: the value will be changed later */
 /* TODO Pasha: this is real crap */
-        init_attr->cap.max_recv_wr  = cm->cq_size;
-        init_attr->cap.max_send_wr  = cm->cq_size;
+        init_attr->cap.max_recv_wr  = (uint32_t) cm->cq_size;
+        init_attr->cap.max_send_wr  = (uint32_t) cm->cq_size;
 
         /* Set attributes */
 
@@ -257,13 +257,13 @@ static void mca_bcol_iboffload_fillin_qp_attr(int qp_index,
 
         attr->port_num = ep->iboffload_module->port;
 /* Vasily: the value will be changed later */
-        attr->path_mtu = cm->mtu;
+        attr->path_mtu = (uint32_t)cm->mtu;
 
         attr->max_dest_rd_atomic = cm->max_rdma_dst_ops;
-        attr->min_rnr_timer = cm->min_rnr_timer;
+        attr->min_rnr_timer = (uint32_t)cm->min_rnr_timer;
 
         attr->ah_attr.is_global = 0;
-        attr->ah_attr.sl = cm->service_level;
+        attr->ah_attr.sl = (uint32_t)cm->service_level;
 /* Vasily: from struct mca_bcol_iboffload_port_t ????? */
 /*
         attr->ah_attr.src_path_bits = iboffload_module->src_path_bits;
@@ -272,10 +272,10 @@ static void mca_bcol_iboffload_fillin_qp_attr(int qp_index,
         /* JMS to be filled in later dynamically */
         attr->ah_attr.static_rate = 0;
         /* RTS params */
-        attr->timeout        = cm->timeout;
-        attr->retry_cnt      = cm->retry_count;
-        attr->rnr_retry      = cm->rnr_retry;
-        attr->max_rd_atomic  = cm->max_rdma_dst_ops;
+        attr->timeout        = (uint32_t)cm->timeout;
+        attr->retry_cnt      = (uint32_t)cm->retry_count;
+        attr->rnr_retry      = (uint32_t)cm->rnr_retry;
+        attr->max_rd_atomic  = (uint32_t)cm->max_rdma_dst_ops;
 
         /* Init for local mca_bcol_iboffload_endpoint_qp_t qps structure
          * that caches the qp information on endpoint */

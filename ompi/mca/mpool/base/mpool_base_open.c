@@ -57,25 +57,36 @@ uint32_t mca_mpool_base_page_size_log;
 opal_list_t mca_mpool_base_components;
 opal_list_t mca_mpool_base_modules;
 
+static int ompi_mpool_base_verbose = 0;
+
+static int mca_mpool_base_register(int flags)
+{
+    /* Verbose output */
+    ompi_mpool_base_verbose = 0;
+    mca_base_var_register("ompi", "mpool", "base", "verbose",
+                          "Verbosity level for the mpool framework (0 = no verbosity)",
+                          MCA_BASE_VAR_TYPE_INT, NULL, 0,
+                          MCA_BASE_VAR_FLAG_SETTABLE,
+                          OPAL_INFO_LVL_9,
+                          MCA_BASE_VAR_SCOPE_LOCAL,
+                          &ompi_mpool_base_verbose);
+
+    return OMPI_SUCCESS;
+}
+
 /**
  * Function for finding and opening either all MCA components, or the one
  * that was specifically requested via a MCA parameter.
  */
 int mca_mpool_base_open(void)
 {
-    int value;
     /* Open up all available components - and populate the
        mca_mpool_base_components list */
 
-    /* Verbose output */
-    mca_base_param_reg_int_name("mpool",
-                                "base_verbose",
-                                "Verbosity level for the mpool framework (0 = no verbosity)",
-                                 false, false,
-                                 0, &value);
- 
+    (void) mca_mpool_base_register(0);
+
     mca_mpool_base_output = opal_output_open(NULL);
-    opal_output_set_verbosity(mca_mpool_base_output, value);
+    opal_output_set_verbosity(mca_mpool_base_output, ompi_mpool_base_verbose);
 
     if (OMPI_SUCCESS != 
         mca_base_components_open("mpool", mca_mpool_base_output, mca_mpool_base_static_components, 

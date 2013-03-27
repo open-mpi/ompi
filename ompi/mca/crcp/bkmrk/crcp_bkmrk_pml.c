@@ -31,7 +31,6 @@
 #include "opal/util/opal_environ.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
-#include "opal/mca/base/mca_base_param.h"
 
 #include "ompi/request/request.h"
 #include "ompi/mca/rte/rte.h"

@@ -30,6 +30,7 @@
  */
 #include "opal/mca/mca.h"
 #include "opal/mca/base/mca_base_param.h"
+#include "opal/mca/base/mca_base_var.h"
 #include "opal/util/cmd_line.h"
 
 BEGIN_C_DECLS
@@ -59,9 +60,12 @@ OPAL_DECLSPEC OBJ_CLASS_DECLARATION(mca_base_component_priority_list_item_t);
 /*
  * Public variables
  */
-OPAL_DECLSPEC extern int mca_base_param_component_path;
+OPAL_DECLSPEC extern char *mca_base_component_path;
+OPAL_DECLSPEC extern bool mca_base_opened;
 OPAL_DECLSPEC extern char *mca_base_system_default_path;
 OPAL_DECLSPEC extern char *mca_base_user_default_path;
+OPAL_DECLSPEC extern bool mca_base_component_show_load_errors;
+OPAL_DECLSPEC extern bool mca_base_component_disable_dlopen;
 
 /*
  * Public functions
@@ -159,6 +163,9 @@ OPAL_DECLSPEC int mca_base_components_open(const char *type_name, int output_id,
                                            bool open_dso_components);
 
 /* mca_base_components_close.c */
+
+int mca_base_component_release (int output_id, const mca_base_component_t *component,
+                                bool opened);
 
 OPAL_DECLSPEC int mca_base_components_close(int output_id, opal_list_t *components_available, 
                                             const mca_base_component_t *skip);
