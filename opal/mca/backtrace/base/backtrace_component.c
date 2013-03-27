@@ -9,6 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -19,12 +21,7 @@
 
 #include "opal_config.h"
 
-#include "opal/constants.h"
-#include "opal/mca/mca.h"
-#include "opal/mca/base/base.h"
-#include "opal/mca/backtrace/backtrace.h"
 #include "opal/mca/backtrace/base/base.h"
-
 
 /*
  * The following file was created by configure.  It contains extern
@@ -37,35 +34,7 @@
 /*
  * Globals
  */
-opal_list_t opal_backtrace_base_components_opened;
 
-
-int
-opal_backtrace_base_open(void)
-{
-    /* Open up all available components */
-    if (OPAL_SUCCESS !=
-        mca_base_components_open("backtrace", 0,
-                                 mca_backtrace_base_static_components,
-                                 &opal_backtrace_base_components_opened, 
-                                 true)) {
-        return OPAL_ERROR;
-    }
-
-    /* All done */
-    return OPAL_SUCCESS;
-}
-
-
-int
-opal_backtrace_base_close(void)
-{
-    /* Close all components that are still open */
-    mca_base_components_close(0, 
-                              &opal_backtrace_base_components_opened, 
-                              NULL);
-    OBJ_DESTRUCT(&opal_backtrace_base_components_opened);
-
-    /* All done */
-    return OPAL_SUCCESS;
-}
+/* Uses default register/open/close functions */
+MCA_BASE_FRAMEWORK_DECLARE(opal, backtrace, NULL, NULL, NULL, NULL,
+			   mca_backtrace_base_static_components, 0);

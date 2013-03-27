@@ -11,6 +11,5 @@ headers += \
         base/base.h
 
 libmca_event_la_SOURCES += \
-        base/event_base_close.c \
         base/event_base_open.c
 

@@ -168,12 +168,6 @@ int opal_register_params(void)
         return ret;
     }
 
-    /* shmem base also has a few parameters */ 
-    ret = opal_shmem_base_register_params(); 
-    if (OPAL_SUCCESS != ret) { 
-        return ret; 
-    }
-
     /* dss has parameters */
     ret = opal_dss_register_vars ();
     if (OPAL_SUCCESS != ret) { 

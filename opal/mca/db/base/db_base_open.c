@@ -41,24 +41,20 @@ opal_db_base_module_t opal_db = {
 };
 opal_db_base_t opal_db_base;
 
-int opal_db_base_open(void)
+/* Declared in opal_db_close.c */
+int opal_db_base_close(void);
+
+static int opal_db_base_open(mca_base_open_flag_t flags)
 {
-    opal_db_base.output = opal_output_open(NULL);
-    
-    OBJ_CONSTRUCT(&opal_db_base.available_components, opal_list_t);
     OBJ_CONSTRUCT(&opal_db_base.fetch_order, opal_list_t);
     OBJ_CONSTRUCT(&opal_db_base.store_order, opal_list_t);
 
     /* Open up all available components */
-    if (OPAL_SUCCESS != 
-        mca_base_components_open("db", opal_db_base.output, mca_db_base_static_components, 
-                                 &opal_db_base.available_components,
-                                 true)) {
-        return OPAL_ERROR;
-    }
-
-    return OPAL_SUCCESS;
+    return mca_base_framework_components_open(&opal_db_base_framework, flags);
 }
+
+MCA_BASE_FRAMEWORK_DECLARE(opal, db, NULL, NULL, opal_db_base_open, opal_db_base_close,
+                           mca_db_base_static_components, 0);
 
 OBJ_CLASS_INSTANCE(opal_db_active_module_t,
                    opal_list_item_t,

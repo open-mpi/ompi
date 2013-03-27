@@ -29,25 +29,6 @@
 /*
  * Globals
  */
-opal_list_t opal_memcpy_base_components_opened;
-
-/*
- * Function for finding and opening either all MCA components, or the one
- * that was specifically requested via a MCA parameter.
- */
-int opal_memcpy_base_open(void)
-{
-    OBJ_CONSTRUCT( &opal_memcpy_base_components_opened, opal_list_t );
-
-    /* Open up all available components */
-    if (OPAL_SUCCESS !=
-        mca_base_components_open("memcpy", 0,
-                                 mca_memcpy_base_static_components,
-                                 &opal_memcpy_base_components_opened, 
-                                 true)) {
-        return OPAL_ERROR;
-    }
-
-    /* All done */
-    return OPAL_SUCCESS;
-}
+/* Use default register/open/close functions */
+MCA_BASE_FRAMEWORK_DECLARE(opal, memcpy, NULL, NULL, NULL, NULL,
+                           mca_memcpy_base_static_components, 0);

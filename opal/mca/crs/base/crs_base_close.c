@@ -25,7 +25,7 @@
 int opal_crs_base_close(void)
 {
     if( !opal_cr_is_enabled ) {
-        opal_output_verbose(10, opal_crs_base_output,
+        opal_output_verbose(10, opal_crs_base_framework.framework_output,
                             "crs:close: FT is not enabled, skipping!");
         return OPAL_SUCCESS;
     }
@@ -36,13 +36,6 @@ int opal_crs_base_close(void)
     }
 
     /* Close all available modules that are open */
-    mca_base_components_close(opal_crs_base_output,
-                              &opal_crs_base_components_available,
-                              NULL);
-
-    /* Close the framework output */
-    opal_output_close (opal_crs_base_output);
-    opal_crs_base_output = -1;
-    
-    return OPAL_SUCCESS;
+    return mca_base_framework_components_close (&opal_crs_base_framework,
+						NULL);
 }

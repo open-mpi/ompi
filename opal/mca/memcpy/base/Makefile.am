@@ -14,5 +14,4 @@ headers += \
         base/memcpy_base_default.h
 
 libmca_memcpy_la_SOURCES += \
-        base/memcpy_base_close.c \
         base/memcpy_base_open.c

@@ -108,7 +108,7 @@ int opal_crs_none_restart(opal_crs_base_snapshot_t *base_snapshot, bool spawn_ch
     opal_crs_base_metadata_read_token(base_snapshot->metadata, CRS_METADATA_CONTEXT, &tmp_argv);
 
     if( NULL == tmp_argv ) {
-        opal_output(opal_crs_base_output,
+        opal_output(opal_crs_base_framework.framework_output,
                     "crs:none: none_restart: Error: Failed to read the %s token from the local checkpoint in %s",
                     CRS_METADATA_CONTEXT, base_snapshot->metadata_filename);
         exit_status = OPAL_ERROR;
@@ -116,7 +116,7 @@ int opal_crs_none_restart(opal_crs_base_snapshot_t *base_snapshot, bool spawn_ch
     }
 
     if( opal_argv_count(tmp_argv) <= 0 ) {
-        opal_output_verbose(10, opal_crs_base_output,
+        opal_output_verbose(10, opal_crs_base_framework.framework_output,
                             "crs:none: none_restart: No command line to exec, so just returning");
         exit_status = OPAL_SUCCESS;
         goto cleanup;
@@ -128,7 +128,7 @@ int opal_crs_none_restart(opal_crs_base_snapshot_t *base_snapshot, bool spawn_ch
     }
 
     if( !spawn_child ) {
-        opal_output_verbose(10, opal_crs_base_output,
+        opal_output_verbose(10, opal_crs_base_framework.framework_output,
                             "crs:none: none_restart: exec :(%s, %s):",
                             strdup(cr_argv[0]),
                             opal_argv_join(cr_argv, ' '));
@@ -136,15 +136,15 @@ int opal_crs_none_restart(opal_crs_base_snapshot_t *base_snapshot, bool spawn_ch
         status = execvp(strdup(cr_argv[0]), cr_argv);
 
         if(status < 0) {
-            opal_output(opal_crs_base_output,
+            opal_output(opal_crs_base_framework.framework_output,
                         "crs:none: none_restart: Child failed to execute :(%d):", status);
         }
-        opal_output(opal_crs_base_output,
+        opal_output(opal_crs_base_framework.framework_output,
                     "crs:none: none_restart: execvp returned %d", status);
         exit_status = status;
         goto cleanup;
     } else {
-        opal_output(opal_crs_base_output,
+        opal_output(opal_crs_base_framework.framework_output,
                    "crs:none: none_restart: Spawn not implemented");
         exit_status = OPAL_ERR_NOT_IMPLEMENTED;
         goto cleanup;

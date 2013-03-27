@@ -30,7 +30,7 @@ int opal_compress_base_select(void)
 
     /* Compression currently only used with C/R */
     if( !opal_cr_is_enabled ) {
-        opal_output_verbose(10, opal_compress_base_output,
+        opal_output_verbose(10, opal_compress_base_framework.framework_output,
                             "compress:open: FT is not enabled, skipping!");
         return OPAL_SUCCESS;
     }
@@ -38,8 +38,8 @@ int opal_compress_base_select(void)
     /*
      * Select the best component
      */
-    if( OPAL_SUCCESS != mca_base_select("compress", opal_compress_base_output,
-                                        &opal_compress_base_components_available,
+    if( OPAL_SUCCESS != mca_base_select("compress", opal_compress_base_framework.framework_output,
+                                        &opal_compress_base_framework.framework_components,
                                         (mca_base_module_t **) &best_module,
                                         (mca_base_component_t **) &best_component) ) {
         /* This will only happen if no component was selected */

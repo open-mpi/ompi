@@ -16,6 +16,8 @@
 #include "opal/mca/hwloc/base/base.h"
 #include "opal/util/output.h"
 
+int opal_hwloc_base_close(void);
+
 int opal_hwloc_base_close(void)
 {
     if (!opal_hwloc_base_inited) {
@@ -24,27 +26,21 @@ int opal_hwloc_base_close(void)
 
 #if OPAL_HAVE_HWLOC
     {
-        opal_list_item_t *item;
+        int ret;
 
         /* no need to close the component as it was statically opened */
 
         /* for support of tools such as ompi_info */
-        for (item = opal_list_remove_first(&opal_hwloc_base_components);
-             NULL != item; 
-             item = opal_list_remove_first(&opal_hwloc_base_components)) {
-            OBJ_RELEASE(item);
+        ret = mca_base_framework_components_close (&opal_hwloc_base_framework, NULL);
+        if (OPAL_SUCCESS != ret) {
+            return ret;
         }
-        OBJ_DESTRUCT(&opal_hwloc_base_components);
 
         /* free memory */
         if (NULL != opal_hwloc_my_cpuset) {
             hwloc_bitmap_free(opal_hwloc_my_cpuset);
             opal_hwloc_my_cpuset = NULL;
         }
-
-        /* Close the framework output */
-        opal_output_close (opal_hwloc_base_output);
-        opal_hwloc_base_output = -1;
     }
 #endif
 

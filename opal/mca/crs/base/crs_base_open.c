@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2010 The Trustees of Indiana University.
  *                         All rights reserved.
@@ -8,7 +9,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Evergrid, Inc. All rights reserved.
- * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
+ * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  *
  * $COPYRIGHT$
@@ -36,7 +37,6 @@
 /*
  * Globals
  */
-int  opal_crs_base_output  = -1;
 opal_crs_base_module_t opal_crs = {
     NULL, /* crs_init               */
     NULL, /* crs_finalize           */
@@ -47,15 +47,20 @@ opal_crs_base_module_t opal_crs = {
     NULL, /* crs_prelaunch          */
     NULL  /* crs_reg_thread         */
 };
-opal_list_t opal_crs_base_components_available;
+
 opal_crs_base_component_t opal_crs_base_selected_component;
 
-bool crs_base_do_not_select = false;
+extern bool opal_crs_base_do_not_select;
+static int opal_crs_base_register (mca_base_register_flag_t flags);
 
-static int crs_base_verbose = 0;
+/* Use default select */
+MCA_BASE_FRAMEWORK_DECLARE(opal, crs, "Checkpoint and Restart Service (CRS)",
+                           opal_crs_base_register, opal_crs_base_open,
+                           opal_crs_base_close, mca_crs_base_static_components, 0);
 
-static int opal_crs_base_register(int flags)
+static int opal_crs_base_register (mca_base_register_flag_t flags)
 {
+    int ret;
     /*
      * Note: If we are a tool, then we will manually run the selection routine 
      *       for the checkpointer.  The tool will set the MCA parameter 
@@ -65,69 +70,28 @@ static int opal_crs_base_register(int flags)
      *       that indicates the checkpointer to be used after calling opal_init.
      *       Therefore it would need to select a specific module, but it doesn't
      *       know which one until later. It will set the MCA parameter 'crs' 
-     *       before calling this function.
+     *       before calling select.
      */
-    crs_base_do_not_select = false;
-    (void) mca_base_var_register("opal", "crs", "base", "do_not_select",
-                                 "Do not do the selection of the CRS component",
-                                 MCA_BASE_VAR_TYPE_BOOL, NULL, 0, MCA_BASE_VAR_FLAG_INTERNAL,
-                                 OPAL_INFO_LVL_9,
-                                 MCA_BASE_VAR_SCOPE_READONLY, &crs_base_do_not_select);
+    ret = mca_base_framework_var_register (&opal_crs_base_framework, "do_not_select",
+                                           "Do not do the selection of the CRS component",
+                                           MCA_BASE_VAR_TYPE_BOOL, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE |
+                                           MCA_BASE_VAR_FLAG_INTERNAL, OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_ALL_EQ, &opal_crs_base_do_not_select);
 
-
-    /* Debugging/Verbose output */
-    crs_base_verbose = 0;
-    (void) mca_base_var_register("opal", "crs", "base", "verbose",
-                                 "Verbosity level of the CRS framework",
-                                 MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
-                                 OPAL_INFO_LVL_9,
-                                 MCA_BASE_VAR_SCOPE_READONLY,
-                                 &crs_base_verbose);
-
-    return OPAL_SUCCESS;
+    return (0 > ret) ? ret : OPAL_SUCCESS;
 }
 
 /**
  * Function for finding and opening either all MCA components,
  * or the one that was specifically requested via a MCA parameter.
  */
-int opal_crs_base_open(void)
+int opal_crs_base_open(mca_base_open_flag_t flags)
 {
-    int ret, exit_status = OPAL_SUCCESS;
-
-    (void) opal_crs_base_register(0);
-
-    if(0 != crs_base_verbose) {
-        opal_crs_base_output = opal_output_open(NULL);
-    } else {
-        opal_crs_base_output = -1;
-    }
-    opal_output_set_verbosity(opal_crs_base_output, crs_base_verbose);
-
     if( !opal_cr_is_enabled ) {
-        opal_output_verbose(10, opal_crs_base_output,
+        opal_output_verbose(10, opal_crs_base_framework.framework_output,
                             "crs:open: FT is not enabled, skipping!");
-        return OPAL_SUCCESS;
+        return OPAL_ERR_NOT_AVAILABLE;;
     }
 
-    /* Open up all available components */
-    if (OPAL_SUCCESS != (ret = mca_base_components_open("crs", 
-                                                        opal_crs_base_output, 
-                                                        mca_crs_base_static_components,
-                                                        &opal_crs_base_components_available,
-                                                        true)) ) {
-        exit_status = OPAL_ERROR;
-        if( OPAL_ERR_NOT_FOUND == ret) {
-            const char **str_value = NULL;
-
-            ret = mca_base_var_find("opal", "crs", NULL, NULL);
-            mca_base_var_get_value(ret, &str_value, NULL, NULL);
-            if (NULL != str_value && NULL != str_value[0] &&
-                0 == strncmp(str_value[0], "none", strlen("none"))) {
-                exit_status = OPAL_SUCCESS;
-            }
-        }
-    }
-
-    return exit_status;
+    return mca_base_framework_components_open (&opal_crs_base_framework, flags);
 }

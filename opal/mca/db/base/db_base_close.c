@@ -23,21 +23,15 @@
 extern opal_list_t opal_db_base_components_available;
 
 int
+opal_db_base_close(void);
+
+int
 opal_db_base_close(void)
 {
     if (NULL != opal_db.finalize) {
         opal_db.finalize();
     }
-    
-    mca_base_components_close(opal_db_base.output, 
-                              &opal_db_base.available_components, NULL);
 
-    OBJ_DESTRUCT(&opal_db_base.available_components);
-
-    /* Close the framework output */
-    opal_output_close (opal_db_base.output);
-    opal_db_base.output = -1;
-
-    return OPAL_SUCCESS;
+    return mca_base_framework_components_close(&opal_db_base_framework, NULL);
 }
 

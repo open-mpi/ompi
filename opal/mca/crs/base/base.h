@@ -21,6 +21,7 @@
 #define OPAL_CRS_BASE_H
 
 #include "opal_config.h"
+#include "opal/mca/base/base.h"
 #include "opal/mca/crs/crs.h"
 #include "opal/util/opal_environ.h"
 #include "opal/runtime/opal_cr.h"
@@ -47,7 +48,7 @@ BEGIN_C_DECLS
      * 
      * This function is invoked during opal_init();
      */
-    OPAL_DECLSPEC int opal_crs_base_open(void);
+    OPAL_DECLSPEC int opal_crs_base_open(mca_base_open_flag_t flags);
     
     /**
      * Select an available component.
@@ -72,8 +73,7 @@ BEGIN_C_DECLS
     /**
      * Globals
      */
-    OPAL_DECLSPEC extern int  opal_crs_base_output;
-    OPAL_DECLSPEC extern opal_list_t opal_crs_base_components_available;
+    OPAL_DECLSPEC extern mca_base_framework_t opal_crs_base_framework;
     OPAL_DECLSPEC extern opal_crs_base_component_t opal_crs_base_selected_component;
     OPAL_DECLSPEC extern opal_crs_base_module_t opal_crs;
 

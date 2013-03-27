@@ -156,7 +156,7 @@ sysv_runtime_query(mca_base_module_t **module, int *priority, const char *hint)
      */
     if (NULL != hint) {
         OPAL_OUTPUT_VERBOSE(
-            (70, opal_shmem_base_output,
+            (70, opal_shmem_base_framework.framework_output,
              "shmem: sysv: runtime_query: "
              "attempting to use runtime hint (%s)\n", hint)
         );
@@ -178,7 +178,7 @@ sysv_runtime_query(mca_base_module_t **module, int *priority, const char *hint)
 
     /* if we are here, then let the run-time test games begin */
     OPAL_OUTPUT_VERBOSE(
-        (70, opal_shmem_base_output,
+        (70, opal_shmem_base_framework.framework_output,
          "shmem: sysv: runtime_query: NO HINT PROVIDED:"
          "starting run-time test...\n")
     );

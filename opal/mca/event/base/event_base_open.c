@@ -26,60 +26,45 @@
  */
 #include "opal/mca/event/base/static-components.h"
 
+/**
+ * Initialize the event MCA framework
+ *
+ * @retval OPAL_SUCCESS Upon success
+ * @retval OPAL_ERROR Upon failure
+ *
+ * This must be the first function invoked in the event MCA
+ * framework.  It initializes the event MCA framework, finds
+ * and opens event components, etc.
+ *
+ * This function is invoked during opal_init().
+ * 
+ * This function fills in the internal global variable
+ * opal_event_base_components_opened, which is a list of all
+ * event components that were successfully opened.  This
+ * variable should \em only be used by other event base
+ * functions -- it is not considered a public interface member --
+ * and is only mentioned here for completeness.
+ */
+static int opal_event_base_open(mca_base_open_flag_t flags);
 
+/* Use default register and close function */
+MCA_BASE_FRAMEWORK_DECLARE(opal, event, NULL, NULL, opal_event_base_open,
+			   NULL, mca_event_base_static_components,
+			   0);
+			   
 /*
  * Globals
  */
-int opal_event_base_output = -1;
-opal_list_t opal_event_components;
 opal_event_base_t *opal_event_base=NULL;
-int opal_event_base_inited = 0;
 
-/*
- * Locals
- */
-static int opal_event_base_verbose = 0;
-
-static int opal_event_base_register(int flags)
+static int opal_event_base_open(mca_base_open_flag_t flags)
 {
-    /* Debugging / verbose output */
-    opal_event_base_verbose = 0;
-    (void) mca_base_var_register("opal", "event", "base", "verbose",
-                                 "Verbosity level of the event framework",
-                                 MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
-                                 OPAL_INFO_LVL_9,
-                                 MCA_BASE_VAR_SCOPE_READONLY,
-                                 &opal_event_base_verbose);
+    int rc = OPAL_SUCCESS;
 
-    return OPAL_SUCCESS;
-}
+    /* Silence compiler warning */
+    (void) flags;
 
-int opal_event_base_open(void)
-{
-    int rc;
-
-    if( opal_event_base_inited++ < 0 ) {
-        return OPAL_SUCCESS;
-    }
-
-    (void) opal_event_base_register(0);
-
-    if (0 != opal_event_base_verbose) {
-        opal_event_base_output = opal_output_open(NULL);
-    } else {
-        opal_event_base_output = -1;
-    }
-
-    /* to support tools such as ompi_info, add the components
-     * to a list
-     */
-    OBJ_CONSTRUCT(&opal_event_components, opal_list_t);
-    if (OPAL_SUCCESS !=
-        mca_base_components_open("event", opal_event_base_output,
-                                 mca_event_base_static_components,
-                                 &opal_event_components, true)) {
-        return OPAL_ERROR;
-    }
+    /* no need to open the components since we only use one */
 
     /* init the lib */
     if (OPAL_SUCCESS != (rc = opal_event_init())) {

@@ -13,21 +13,16 @@
 
 #include "opal_config.h"
 
+#include "opal/mca/base/mca_base_framework.h"
+
 #include "opal/mca/if/if.h"
 
-/*
- * Global functions for MCA overall if open and close
- */
 BEGIN_C_DECLS
 
-OPAL_DECLSPEC int opal_if_base_open(void);
-OPAL_DECLSPEC int opal_if_base_close(void);
-
 /*
- * Globals
+ * Framework declaration
  */
-OPAL_DECLSPEC extern opal_list_t opal_if_components;
-OPAL_DECLSPEC extern int opal_if_base_output;
+OPAL_DECLSPEC extern mca_base_framework_t opal_if_base_framework;
 
 END_C_DECLS
 

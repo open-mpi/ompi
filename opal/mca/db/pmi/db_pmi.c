@@ -141,7 +141,7 @@ static int store(opal_identifier_t proc,
         return OPAL_ERR_TAKE_NEXT_OPTION;
     }
 
-    OPAL_OUTPUT_VERBOSE((5, opal_db_base.output,
+    OPAL_OUTPUT_VERBOSE((5, opal_db_base_framework.framework_output,
                          "db:pmi:store: storing key %s[%s] for proc %" PRIu64 "",
                          key, opal_dss.lookup_data_type(type), proc));
 
@@ -222,7 +222,7 @@ static int store(opal_identifier_t proc,
          * required to hold the entire string
          */
         asprintf(&pmidata, "%d:%s", opal_argv_count(strdata), strdata[0]);
-        OPAL_OUTPUT_VERBOSE((5, opal_db_base.output,
+        OPAL_OUTPUT_VERBOSE((5, opal_db_base_framework.framework_output,
                              "db:pmi:store: storing key %s data %s",
                              pmikey, pmidata));
 
@@ -237,7 +237,7 @@ static int store(opal_identifier_t proc,
         /* for each remaining segment, augment the key with the index */
         for (i=1; NULL != strdata[i]; i++) {
             asprintf(&tmpkey, "%s:%d", pmikey, i);
-            OPAL_OUTPUT_VERBOSE((5, opal_db_base.output,
+            OPAL_OUTPUT_VERBOSE((5, opal_db_base_framework.framework_output,
                                  "db:pmi:store: storing key %s data %s",
                                  pmikey, strdata[i]));
 
@@ -298,7 +298,7 @@ static int store(opal_identifier_t proc,
         return OPAL_ERR_NOT_SUPPORTED;
     }
 
-    OPAL_OUTPUT_VERBOSE((10, opal_db_base.output,
+    OPAL_OUTPUT_VERBOSE((10, opal_db_base_framework.framework_output,
                          "PUTTING KEY %s DATA %s",
                          pmikey, pmidata));
 
@@ -323,7 +323,7 @@ static int store_pointer(opal_identifier_t proc,
         return OPAL_ERR_TAKE_NEXT_OPTION;
     }
 
-    OPAL_OUTPUT_VERBOSE((5, opal_db_base.output,
+    OPAL_OUTPUT_VERBOSE((5, opal_db_base_framework.framework_output,
                          "db:pmi:store: storing pointer of key %s for proc %" PRIu64 "",
                          kv->key, proc));
 
@@ -350,7 +350,7 @@ static char* fetch_string(const char *key)
         return NULL;
     }
 
-    OPAL_OUTPUT_VERBOSE((5, opal_db_base.output,
+    OPAL_OUTPUT_VERBOSE((5, opal_db_base_framework.framework_output,
                          "db:pmi:fetch_string: received key %s DATA %s",
                          key, tmp_val));
 
@@ -376,7 +376,7 @@ static char* fetch_string(const char *key)
             free(data);
             return NULL;
         }
-        OPAL_OUTPUT_VERBOSE((5, opal_db_base.output,
+        OPAL_OUTPUT_VERBOSE((5, opal_db_base_framework.framework_output,
                              "db:pmi:fetch_string: received key %s DATA %s",
                              tmpkey, tmp_val));
 
@@ -451,7 +451,7 @@ static int fetch(const opal_identifier_t proc,
     char tmp_val[1024];
     size_t sval;
 
-    OPAL_OUTPUT_VERBOSE((5, opal_db_base.output,
+    OPAL_OUTPUT_VERBOSE((5, opal_db_base_framework.framework_output,
                          "db:pmi:fetch: searching for key %s[%s] on proc %" PRIu64 "",
                          (NULL == key) ? "NULL" : key,
                          opal_dss.lookup_data_type(type), proc));
@@ -538,7 +538,7 @@ static int fetch_multiple(opal_identifier_t proc,
                           opal_list_t *kvs)
 {
 
-    OPAL_OUTPUT_VERBOSE((5, opal_db_base.output,
+    OPAL_OUTPUT_VERBOSE((5, opal_db_base_framework.framework_output,
                          "db:pmi:fetch_multiple: searching for key %s on proc %" PRIu64 "",
                          (NULL == key) ? "NULL" : key, proc));
 

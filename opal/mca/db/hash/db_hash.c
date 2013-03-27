@@ -164,14 +164,14 @@ static int store(const opal_identifier_t id,
     /* we are at the bottom of the store priorities, so
      * if this fell to us, we store it
      */
-    opal_output_verbose(1, opal_db_base.output,
+    opal_output_verbose(1, opal_db_base_framework.framework_output,
                         "db:hash:store storing data for proc %" PRIu64 " at locality %d",
                         id, (int)locality);
 
     /* lookup the proc data object for this proc */
     if (NULL == (proc_data = lookup_opal_proc(&hash_data, id))) {
         /* unrecoverable error */
-        OPAL_OUTPUT_VERBOSE((5, opal_db_base.output,
+        OPAL_OUTPUT_VERBOSE((5, opal_db_base_framework.framework_output,
                              "db:hash:store: storing key %s[%s] for proc %" PRIu64 " unrecoverably failed",
                              key, opal_dss.lookup_data_type(type), id));
         return OPAL_ERR_OUT_OF_RESOURCE;
@@ -181,7 +181,7 @@ static int store(const opal_identifier_t id,
      * a pre-existing value
      */
     kv = lookup_keyval(proc_data, key);
-    OPAL_OUTPUT_VERBOSE((5, opal_db_base.output,
+    OPAL_OUTPUT_VERBOSE((5, opal_db_base_framework.framework_output,
                          "db:hash:store: %s key %s[%s] for proc %" PRIu64 "",
                          (NULL == kv ? "storing" : "updating"),
                          key, opal_dss.lookup_data_type(type), id));
@@ -269,14 +269,14 @@ static int store_pointer(opal_identifier_t id,
     /* we are at the bottom of the store priorities, so
      * if this fell to us, we store it
      */
-    opal_output_verbose(1, opal_db_base.output,
+    opal_output_verbose(1, opal_db_base_framework.framework_output,
                         "db:hash:store storing data for proc %" PRIu64 " at locality %d",
                         id, (int)locality);
 
     /* lookup the proc data object for this proc */
     if (NULL == (proc_data = lookup_opal_proc(&hash_data, id))) {
         /* unrecoverable error */
-        OPAL_OUTPUT_VERBOSE((5, opal_db_base.output,
+        OPAL_OUTPUT_VERBOSE((5, opal_db_base_framework.framework_output,
                              "db:hash:store: storing key %s[%s] for proc %" PRIu64 " unrecoverably failed",
                              kv->key, opal_dss.lookup_data_type(kv->type), id));
         return OPAL_ERR_OUT_OF_RESOURCE;
@@ -286,7 +286,7 @@ static int store_pointer(opal_identifier_t id,
      * a pre-existing value
      */
     k2 = lookup_keyval(proc_data, kv->key);
-    OPAL_OUTPUT_VERBOSE((5, opal_db_base.output,
+    OPAL_OUTPUT_VERBOSE((5, opal_db_base_framework.framework_output,
                          "db:hash:store: %s pointer of key %s[%s] for proc %" PRIu64 "",
                          (NULL == k2 ? "storing" : "updating"),
                          kv->key, opal_dss.lookup_data_type(kv->type), id));
@@ -305,7 +305,7 @@ static int fetch(opal_identifier_t id,
     opal_value_t *kv;
     opal_byte_object_t *boptr;
 
-    OPAL_OUTPUT_VERBOSE((5, opal_db_base.output,
+    OPAL_OUTPUT_VERBOSE((5, opal_db_base_framework.framework_output,
                          "db:hash:fetch: searching for key %s[%s] on proc %" PRIu64 "",
                          (NULL == key) ? "NULL" : key,
                          opal_dss.lookup_data_type(type), id));
@@ -394,7 +394,7 @@ static int fetch_pointer(opal_identifier_t id,
     proc_data_t *proc_data;
     opal_value_t *kv;
 
-    OPAL_OUTPUT_VERBOSE((5, opal_db_base.output,
+    OPAL_OUTPUT_VERBOSE((5, opal_db_base_framework.framework_output,
                          "db:hash:fetch_pointer: searching for key %s on proc %" PRIu64 "",
                          (NULL == key) ? "NULL" : key, id));
 
@@ -471,7 +471,7 @@ static int fetch_multiple(opal_identifier_t id,
     char *srchkey, *ptr;
     size_t len = 0;
 
-    OPAL_OUTPUT_VERBOSE((5, opal_db_base.output,
+    OPAL_OUTPUT_VERBOSE((5, opal_db_base_framework.framework_output,
                          "db:hash:fetch_multiple: searching for key %s on proc %" PRIu64 "",
                          (NULL == key) ? "NULL" : key, id));
 

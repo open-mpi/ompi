@@ -98,7 +98,7 @@ static int add_log(const char *table,
     int i;
     bool found;
 
-    opal_output_verbose(2, opal_db_base.output,
+    opal_output_verbose(2, opal_db_base_framework.framework_output,
                         "Logging data for table %s", table);
 
     found = false;

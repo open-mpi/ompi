@@ -23,7 +23,7 @@
 #define OPAL_SHMEM_BASE_H
 
 #include "opal_config.h"
-
+#include "opal/mca/base/mca_base_framework.h"
 #include "opal/mca/shmem/shmem.h"
 
 BEGIN_C_DECLS
@@ -56,17 +56,6 @@ opal_shmem_unlink(opal_shmem_ds_t *ds_buf);
  * Global functions for MCA overall shmem open and close
  */
 
-/** 
- * Register MCA params for the shmem base. 
- *
- * @retval OPAL_SUCCESS Upon success 
- *
- * This function is invoked by opal_shmem_base_register_params().  It registers 
- * some shmem-wide MCA parameters. 
- */
-OPAL_DECLSPEC int 
-opal_shmem_base_register_params(void); 
-
 /**
  * Performs a run-time query across all available shmem components.  Similar to
  * mca_base_select, but take into consideration environment hints provided by
@@ -88,28 +77,6 @@ opal_shmem_base_runtime_query(mca_base_module_t **best_module,
  */
 OPAL_DECLSPEC char *
 opal_shmem_base_best_runnable_component_name(void);
-
-/**
- * Initialize the shmem MCA framework
- *
- * @retval OPAL_SUCCESS Upon success
- * @retval OPAL_ERROR Upon failure
- *
- * This must be the first function invoked in the shmem MCA
- * framework.  It initializes the shmem MCA framework, finds
- * and opens shmem components, etc.
- *
- * This function is invoked during opal_init().
- *
- * This function fills in the internal global variable
- * opal_shmem_base_components_opened, which is a list of all
- * shmem components that were successfully opened.  This
- * variable should \em only be used by other shmem base
- * functions -- it is not considered a public interface member --
- * and is only mentioned here for completeness.
- */
-OPAL_DECLSPEC int
-opal_shmem_base_open(void);
 
 /**
  * Select an available component.
@@ -178,22 +145,14 @@ OPAL_DECLSPEC extern const opal_shmem_base_module_2_0_0_t
 *opal_shmem_base_module;
 
 /**
- * Indicator as to whether the list of opened shmem components
- * is valid or not.
+ * Runtime hint
  */
-OPAL_DECLSPEC extern bool opal_shmem_base_components_opened_valid;
+OPAL_DECLSPEC extern char *opal_shmem_base_RUNTIME_QUERY_hint;
 
 /**
- * List of all opened components; created when the shmem
- * framework is initialized and destroyed when we reduce the list
- * to all available shmem components.
+ * Framework structure declaration
  */
-OPAL_DECLSPEC extern opal_list_t opal_shmem_base_components_opened;
-
-/**
- * Debugging output stream
- */
-OPAL_DECLSPEC extern int opal_shmem_base_output;
+OPAL_DECLSPEC extern mca_base_framework_t opal_shmem_base_framework;
 
 END_C_DECLS
 

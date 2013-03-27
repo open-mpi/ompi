@@ -123,7 +123,7 @@ shmem_ds_reset(opal_shmem_ds_t *ds_buf)
 {
     /* don't print ds_buf info here, as we may be printing garbage. */
     OPAL_OUTPUT_VERBOSE(
-        (70, opal_shmem_base_output,
+        (70, opal_shmem_base_framework.framework_output,
          "%s: %s: shmem_ds_resetting\n",
          mca_shmem_mmap_component.super.base_version.mca_type_name,
          mca_shmem_mmap_component.super.base_version.mca_component_name)
@@ -163,7 +163,7 @@ enough_space(const char *filename,
     /* now check space availability */
     if (OPAL_SUCCESS != (rc = opal_path_df(target_dir, &avail))) {
         OPAL_OUTPUT_VERBOSE(
-            (70, opal_shmem_base_output,
+            (70, opal_shmem_base_framework.framework_output,
              "WARNING: opal_path_df failure!")
         );
         goto out;
@@ -174,7 +174,7 @@ enough_space(const char *filename,
     }
     else {
         OPAL_OUTPUT_VERBOSE(
-            (70, opal_shmem_base_output,
+            (70, opal_shmem_base_framework.framework_output,
              "WARNING: not enough space on %s to meet request!"
              "available: %"PRIu64 "requested: %lu", target_dir,
              avail, (unsigned long)space_req + fluff)
@@ -214,7 +214,7 @@ ds_copy(const opal_shmem_ds_t *from,
     memcpy(to, from, sizeof(opal_shmem_ds_t));
 
     OPAL_OUTPUT_VERBOSE(
-        (70, opal_shmem_base_output,
+        (70, opal_shmem_base_framework.framework_output,
          "%s: %s: ds_copy complete "
          "from: (id: %d, size: %lu, "
          "name: %s flags: 0x%02x) "
@@ -354,7 +354,7 @@ segment_create(opal_shmem_ds_t *ds_buf,
     }
 
     OPAL_OUTPUT_VERBOSE(
-        (70, opal_shmem_base_output,
+        (70, opal_shmem_base_framework.framework_output,
          "%s: %s: backing store base directory: %s\n",
          mca_shmem_mmap_component.super.base_version.mca_type_name,
          mca_shmem_mmap_component.super.base_version.mca_component_name,
@@ -449,7 +449,7 @@ segment_create(opal_shmem_ds_t *ds_buf,
         OPAL_SHMEM_DS_SET_VALID(ds_buf);
 
         OPAL_OUTPUT_VERBOSE(
-            (70, opal_shmem_base_output,
+            (70, opal_shmem_base_framework.framework_output,
              "%s: %s: create successful "
              "(id: %d, size: %lu, name: %s)\n",
              mca_shmem_mmap_component.super.base_version.mca_type_name,
@@ -543,7 +543,7 @@ segment_attach(opal_shmem_ds_t *ds_buf)
      */
 
     OPAL_OUTPUT_VERBOSE(
-        (70, opal_shmem_base_output,
+        (70, opal_shmem_base_framework.framework_output,
          "%s: %s: attach successful "
          "(id: %d, size: %lu, name: %s)\n",
          mca_shmem_mmap_component.super.base_version.mca_type_name,
@@ -562,7 +562,7 @@ segment_detach(opal_shmem_ds_t *ds_buf)
     int rc = OPAL_SUCCESS;
 
     OPAL_OUTPUT_VERBOSE(
-        (70, opal_shmem_base_output,
+        (70, opal_shmem_base_framework.framework_output,
          "%s: %s: detaching "
          "(id: %d, size: %lu, name: %s)\n",
          mca_shmem_mmap_component.super.base_version.mca_type_name,
@@ -591,7 +591,7 @@ static int
 segment_unlink(opal_shmem_ds_t *ds_buf)
 {
     OPAL_OUTPUT_VERBOSE(
-        (70, opal_shmem_base_output,
+        (70, opal_shmem_base_framework.framework_output,
          "%s: %s: unlinking"
          "(id: %d, size: %lu, name: %s)\n",
          mca_shmem_mmap_component.super.base_version.mca_type_name,

@@ -118,7 +118,7 @@ static int compress_gzip_open(void)
         opal_output_set_verbosity(mca_compress_gzip_component.super.output_handle, 
                                   mca_compress_gzip_component.super.verbose);
     } else {
-        mca_compress_gzip_component.super.output_handle = opal_compress_base_output;
+        mca_compress_gzip_component.super.output_handle = opal_compress_base_framework.framework_output;
     }
 
     /*

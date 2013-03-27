@@ -142,7 +142,7 @@ int orte_ess_base_app_setup(void)
     }
     
     /* database */
-    if (ORTE_SUCCESS != (ret = opal_db_base_open())) {
+    if (ORTE_SUCCESS != (ret = mca_base_framework_open(&opal_db_base_framework, 0))) {
         ORTE_ERROR_LOG(ret);
         error = "orte_db_base_open";
         goto error;
@@ -312,7 +312,7 @@ int orte_ess_base_app_finalize(void)
 
     /* now can close the rml and its friendly group comm */
     orte_grpcomm_base_close();
-    opal_db_base_close();
+    (void) mca_base_framework_close(&opal_db_base_framework);
     orte_routed_base_close();
     orte_rml_base_close();
     
