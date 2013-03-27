@@ -46,13 +46,13 @@ void orte_state_base_activate_job_state(orte_job_t *jdata,
             error = itm;
         }
         if (s->job_state == state) {
-            OPAL_OUTPUT_VERBOSE((1, orte_state_base_output,
+            OPAL_OUTPUT_VERBOSE((1, orte_state_base_framework.framework_output,
                                  "%s ACTIVATING JOB %s STATE %s PRI %d",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  (NULL == jdata) ? "NULL" : ORTE_JOBID_PRINT(jdata->jobid),
                                  orte_job_state_to_str(state), s->priority));
             if (NULL == s->cbfunc) {
-                OPAL_OUTPUT_VERBOSE((1, orte_state_base_output,
+                OPAL_OUTPUT_VERBOSE((1, orte_state_base_framework.framework_output,
                                      "%s NULL CBFUNC FOR JOB %s STATE %s",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                      (NULL == jdata) ? "ALL" : ORTE_JOBID_PRINT(jdata->jobid),
@@ -79,12 +79,12 @@ void orte_state_base_activate_job_state(orte_job_t *jdata,
     } else if (NULL != any) {
         s = (orte_state_t*)any;
     } else {
-        OPAL_OUTPUT_VERBOSE((1, orte_state_base_output,
+        OPAL_OUTPUT_VERBOSE((1, orte_state_base_framework.framework_output,
                              "ACTIVATE: ANY STATE NOT FOUND"));
         return;
     }
     if (NULL == s->cbfunc) {
-        OPAL_OUTPUT_VERBOSE((1, orte_state_base_output,
+        OPAL_OUTPUT_VERBOSE((1, orte_state_base_framework.framework_output,
                              "ACTIVATE: ANY STATE HANDLER NOT DEFINED"));
         return;
     }
@@ -94,7 +94,7 @@ void orte_state_base_activate_job_state(orte_job_t *jdata,
         caddy->job_state = state;
         OBJ_RETAIN(jdata);
     }
-            OPAL_OUTPUT_VERBOSE((1, orte_state_base_output,
+            OPAL_OUTPUT_VERBOSE((1, orte_state_base_framework.framework_output,
                                  "%s ACTIVATING JOB %s STATE %s PRI %d",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  (NULL == jdata) ? "NULL" : ORTE_JOBID_PRINT(jdata->jobid),
@@ -118,7 +118,7 @@ int orte_state_base_add_job_state(orte_job_state_t state,
          item = opal_list_get_next(item)) {
         st = (orte_state_t*)item;
         if (st->job_state == state) {
-            OPAL_OUTPUT_VERBOSE((1, orte_state_base_output,
+            OPAL_OUTPUT_VERBOSE((1, orte_state_base_framework.framework_output,
                                  "DUPLICATE STATE DEFINED: %s",
                                  orte_job_state_to_str(state)));
             return ORTE_ERR_BAD_PARAM;
@@ -233,13 +233,13 @@ void orte_state_base_activate_proc_state(orte_process_name_t *proc,
             error = itm;
         }
         if (s->proc_state == state) {
-            OPAL_OUTPUT_VERBOSE((1, orte_state_base_output,
+            OPAL_OUTPUT_VERBOSE((1, orte_state_base_framework.framework_output,
                                  "%s ACTIVATING PROC %s STATE %s PRI %d",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  ORTE_NAME_PRINT(proc),
                                  orte_proc_state_to_str(state), s->priority));
             if (NULL == s->cbfunc) {
-                OPAL_OUTPUT_VERBOSE((1, orte_state_base_output,
+                OPAL_OUTPUT_VERBOSE((1, orte_state_base_framework.framework_output,
                                      "%s NULL CBFUNC FOR PROC %s STATE %s",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                      ORTE_NAME_PRINT(proc),
@@ -263,19 +263,19 @@ void orte_state_base_activate_proc_state(orte_process_name_t *proc,
     } else if (NULL != any) {
         s = (orte_state_t*)any;
     } else {
-        OPAL_OUTPUT_VERBOSE((1, orte_state_base_output,
+        OPAL_OUTPUT_VERBOSE((1, orte_state_base_framework.framework_output,
                              "INCREMENT: ANY STATE NOT FOUND"));
         return;
     }
     if (NULL == s->cbfunc) {
-        OPAL_OUTPUT_VERBOSE((1, orte_state_base_output,
+        OPAL_OUTPUT_VERBOSE((1, orte_state_base_framework.framework_output,
                              "ACTIVATE: ANY STATE HANDLER NOT DEFINED"));
         return;
     }
     caddy = OBJ_NEW(orte_state_caddy_t);
     caddy->name = *proc;
     caddy->proc_state = state;
-            OPAL_OUTPUT_VERBOSE((1, orte_state_base_output,
+            OPAL_OUTPUT_VERBOSE((1, orte_state_base_framework.framework_output,
                                  "%s ACTIVATING PROC %s STATE %s PRI %d",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  ORTE_NAME_PRINT(proc),
@@ -298,7 +298,7 @@ int orte_state_base_add_proc_state(orte_proc_state_t state,
          item = opal_list_get_next(item)) {
         st = (orte_state_t*)item;
         if (st->proc_state == state) {
-            OPAL_OUTPUT_VERBOSE((1, orte_state_base_output,
+            OPAL_OUTPUT_VERBOSE((1, orte_state_base_framework.framework_output,
                                  "DUPLICATE STATE DEFINED: %s",
                                  orte_proc_state_to_str(state)));
             return ORTE_ERR_BAD_PARAM;
@@ -427,7 +427,7 @@ void orte_state_base_cleanup_job(int fd, short argc, void *cbdata)
     orte_state_caddy_t *caddy = (orte_state_caddy_t*)cbdata;
     orte_job_t *jdata = caddy->jdata;
 
-    OPAL_OUTPUT_VERBOSE((2, orte_state_base_output,
+    OPAL_OUTPUT_VERBOSE((2, orte_state_base_framework.framework_output,
                          "%s state:base:cleanup on job %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          (NULL == jdata) ? "NULL" : ORTE_JOBID_PRINT(jdata->jobid)));
@@ -458,7 +458,7 @@ void orte_state_base_track_procs(int fd, short argc, void *cbdata)
     orte_job_t *jdata;
     orte_proc_t *pdata;
 
-    opal_output_verbose(5, orte_state_base_output,
+    opal_output_verbose(5, orte_state_base_framework.framework_output,
                         "%s state:base:track_procs called for proc %s state %s",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                         ORTE_NAME_PRINT(proc),
@@ -546,14 +546,14 @@ void orte_state_base_check_all_complete(int fd, short args, void *cbdata)
     bool one_still_alive;
     orte_vpid_t lowest=0;
 
-    opal_output_verbose(2, orte_state_base_output,
+    opal_output_verbose(2, orte_state_base_framework.framework_output,
                         "%s state:base:check_job_complete on job %s",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                         (NULL == jdata) ? "NULL" : ORTE_JOBID_PRINT(jdata->jobid));
 
     if (NULL == jdata || jdata->jobid == ORTE_PROC_MY_NAME->jobid) {
         /* just check to see if the daemons are complete */
-        OPAL_OUTPUT_VERBOSE((2, orte_state_base_output,
+        OPAL_OUTPUT_VERBOSE((2, orte_state_base_framework.framework_output,
                              "%s state:base:check_job_complete - received NULL job, checking daemons",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
         goto CHECK_DAEMONS;
@@ -592,7 +592,7 @@ void orte_state_base_check_all_complete(int fd, short args, void *cbdata)
                     "processes returned\nnon-zero exit codes.");
     }
 
-    OPAL_OUTPUT_VERBOSE((2, orte_state_base_output,
+    OPAL_OUTPUT_VERBOSE((2, orte_state_base_framework.framework_output,
                          "%s state:base:check_job_completed declared job %s normally terminated - checking all jobs",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_JOBID_PRINT(jdata->jobid)));
@@ -620,7 +620,7 @@ void orte_state_base_check_all_complete(int fd, short args, void *cbdata)
     if (jdata == NULL || jdata->jobid == ORTE_PROC_MY_NAME->jobid) {
         if (0 == orte_routed.num_routes()) {
             /* orteds are done! */
-            OPAL_OUTPUT_VERBOSE((2, orte_state_base_output,
+            OPAL_OUTPUT_VERBOSE((2, orte_state_base_framework.framework_output,
                                  "%s orteds complete - exiting",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
             if (NULL == jdata) {
@@ -648,7 +648,7 @@ void orte_state_base_check_all_complete(int fd, short args, void *cbdata)
             if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(map->nodes, index))) {
                 continue;
             }
-            OPAL_OUTPUT_VERBOSE((2, orte_state_base_output,
+            OPAL_OUTPUT_VERBOSE((2, orte_state_base_framework.framework_output,
                                  "%s releasing procs from node %s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  node->name));
@@ -662,7 +662,7 @@ void orte_state_base_check_all_complete(int fd, short args, void *cbdata)
                 }
                 node->slots_inuse--;
                 node->num_procs--;
-                OPAL_OUTPUT_VERBOSE((2, orte_state_base_output,
+                OPAL_OUTPUT_VERBOSE((2, orte_state_base_framework.framework_output,
                                      "%s releasing proc %s from node %s",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                      ORTE_NAME_PRINT(&proc->name), node->name));
@@ -708,14 +708,14 @@ void orte_state_base_check_all_complete(int fd, short args, void *cbdata)
          */
         if (NULL != jdata && job->jobid == jdata->jobid) {
             if (jdata->state == ORTE_JOB_STATE_TERMINATED) {
-                OPAL_OUTPUT_VERBOSE((2, orte_state_base_output,
+                OPAL_OUTPUT_VERBOSE((2, orte_state_base_framework.framework_output,
                                      "%s state:base:check_job_completed state is terminated - activating notify",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
                 ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_NOTIFY_COMPLETED);
                 one_still_alive = true;
             } else if (jdata->state == ORTE_JOB_STATE_KILLED_BY_CMD ||
                        jdata->state == ORTE_JOB_STATE_NOTIFIED) {
-                OPAL_OUTPUT_VERBOSE((2, orte_state_base_output,
+                OPAL_OUTPUT_VERBOSE((2, orte_state_base_framework.framework_output,
                                      "%s state:base:check_job_completed state is killed or notified - cleaning up",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
                 /* release this object, ensuring that the
@@ -741,7 +741,7 @@ void orte_state_base_check_all_complete(int fd, short args, void *cbdata)
              * just return, though, as we need to ensure we cleanout the
              * job data for the job that just completed
              */
-            OPAL_OUTPUT_VERBOSE((2, orte_state_base_output,
+            OPAL_OUTPUT_VERBOSE((2, orte_state_base_framework.framework_output,
                                  "%s state:base:check_job_completed job %s is not terminated (%d:%d)",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  ORTE_JOBID_PRINT(job->jobid),
@@ -749,7 +749,7 @@ void orte_state_base_check_all_complete(int fd, short args, void *cbdata)
             one_still_alive = true;
         }
         else {
-            OPAL_OUTPUT_VERBOSE((2, orte_state_base_output,
+            OPAL_OUTPUT_VERBOSE((2, orte_state_base_framework.framework_output,
                                  "%s state:base:check_job_completed job %s is terminated (%d vs %d [%s])",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  ORTE_JOBID_PRINT(job->jobid),
@@ -759,14 +759,14 @@ void orte_state_base_check_all_complete(int fd, short args, void *cbdata)
     }
     /* if a job is still alive, we just return */
     if (one_still_alive) {
-        OPAL_OUTPUT_VERBOSE((2, orte_state_base_output,
+        OPAL_OUTPUT_VERBOSE((2, orte_state_base_framework.framework_output,
                              "%s state:base:check_job_completed at least one job is not terminated",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
         OBJ_RELEASE(caddy);
         return;
     }
     /* if we get here, then all jobs are done, so terminate */
-    OPAL_OUTPUT_VERBOSE((2, orte_state_base_output,
+    OPAL_OUTPUT_VERBOSE((2, orte_state_base_framework.framework_output,
                          "%s state:base:check_job_completed all jobs terminated",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     /* set the exit status to 0 - this will only happen if it

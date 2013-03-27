@@ -57,7 +57,7 @@ int orte_iof_base_write_output(orte_process_name_t *name, orte_iof_tag_t stream,
     bool endtagged;
     char qprint[10];
 
-    OPAL_OUTPUT_VERBOSE((1, orte_iof_base.iof_output,
+    OPAL_OUTPUT_VERBOSE((1, orte_iof_base_framework.framework_output,
                          "%s write:output setting up to write %d bytes to %s for %s on fd %d",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), numbytes,
                          (ORTE_IOF_STDIN & stream) ? "stdin" : ((ORTE_IOF_STDOUT & stream) ? "stdout" : ((ORTE_IOF_STDERR & stream) ? "stderr" : "stddiag")),
@@ -91,7 +91,7 @@ int orte_iof_base_write_output(orte_process_name_t *name, orte_iof_tag_t stream,
     } else {
         /* error - this should never happen */
         ORTE_ERROR_LOG(ORTE_ERR_VALUE_OUT_OF_BOUNDS);
-        OPAL_OUTPUT_VERBOSE((1, orte_iof_base.iof_output,
+        OPAL_OUTPUT_VERBOSE((1, orte_iof_base_framework.framework_output,
                              "%s stream %0x", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), stream));
         return ORTE_ERR_VALUE_OUT_OF_BOUNDS;
     }
@@ -262,7 +262,7 @@ process:
     /* is the write event issued? */
     if (!channel->pending) {
         /* issue it */
-        OPAL_OUTPUT_VERBOSE((1, orte_iof_base.iof_output,
+        OPAL_OUTPUT_VERBOSE((1, orte_iof_base_framework.framework_output,
                              "%s write:output adding write event",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
         opal_event_add(channel->ev, 0);
@@ -280,7 +280,7 @@ void orte_iof_base_write_handler(int fd, short event, void *cbdata)
     orte_iof_write_output_t *output;
     int num_written;
     
-    OPAL_OUTPUT_VERBOSE((1, orte_iof_base.iof_output,
+    OPAL_OUTPUT_VERBOSE((1, orte_iof_base_framework.framework_output,
                          "%s write:handler writing data to %d",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          wev->fd));

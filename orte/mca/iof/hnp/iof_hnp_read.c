@@ -110,7 +110,7 @@ void orte_iof_hnp_read_local_handler(int fd, short event, void *cbdata)
             return;
         } 
 
-        OPAL_OUTPUT_VERBOSE((1, orte_iof_base.iof_output,
+        OPAL_OUTPUT_VERBOSE((1, orte_iof_base_framework.framework_output,
                              "%s iof:hnp:read handler %s Error on connection:%d",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_NAME_PRINT(&rev->name), fd));
@@ -149,7 +149,7 @@ void orte_iof_hnp_read_local_handler(int fd, short event, void *cbdata)
 
             /* if the daemon is me, then this is a local sink */
             if (OPAL_EQUAL == orte_util_compare_name_fields(mask, ORTE_PROC_MY_NAME, &sink->daemon)) {
-                OPAL_OUTPUT_VERBOSE((1, orte_iof_base.iof_output,
+                OPAL_OUTPUT_VERBOSE((1, orte_iof_base_framework.framework_output,
                                      "%s read %d bytes from stdin - writing to %s",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), numbytes,
                                      ORTE_NAME_PRINT(&rev->name)));
@@ -161,13 +161,13 @@ void orte_iof_hnp_read_local_handler(int fd, short event, void *cbdata)
                     if (ORTE_IOF_MAX_INPUT_BUFFERS < orte_iof_base_write_output(&rev->name, rev->tag, data, numbytes, sink->wev)) {
                         /* getting too backed up - stop the read event for now if it is still active */
 
-                        OPAL_OUTPUT_VERBOSE((1, orte_iof_base.iof_output,
+                        OPAL_OUTPUT_VERBOSE((1, orte_iof_base_framework.framework_output,
                                              "buffer backed up - holding"));
                         return;
                     }
                 }
             } else {
-                OPAL_OUTPUT_VERBOSE((1, orte_iof_base.iof_output,
+                OPAL_OUTPUT_VERBOSE((1, orte_iof_base_framework.framework_output,
                                      "%s sending %d bytes from stdin to daemon %s",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), numbytes,
                                      ORTE_NAME_PRINT(&sink->daemon)));
@@ -230,7 +230,7 @@ void orte_iof_hnp_read_local_handler(int fd, short event, void *cbdata)
              * In this case, we pass rev->name to indicate who the
              * data came from.
              */
-            OPAL_OUTPUT_VERBOSE((1, orte_iof_base.iof_output,
+            OPAL_OUTPUT_VERBOSE((1, orte_iof_base_framework.framework_output,
                                  "%s sending data to tool %s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  ORTE_NAME_PRINT(&sink->daemon)));
@@ -238,7 +238,7 @@ void orte_iof_hnp_read_local_handler(int fd, short event, void *cbdata)
         }
     }
 
-    OPAL_OUTPUT_VERBOSE((1, orte_iof_base.iof_output,
+    OPAL_OUTPUT_VERBOSE((1, orte_iof_base_framework.framework_output,
                          "%s read %d bytes from %s of %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), numbytes,
                          (ORTE_IOF_STDOUT & rev->tag) ? "stdout" : ((ORTE_IOF_STDERR & rev->tag) ? "stderr" : "stddiag"),

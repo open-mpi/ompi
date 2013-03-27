@@ -57,13 +57,13 @@ static int staged_mapper(orte_job_t *jdata)
         0 != strcasecmp(jdata->map->req_mapper, c->mca_component_name) ||
         !(ORTE_MAPPING_STAGED & ORTE_GET_MAPPING_POLICY(jdata->map->mapping))) {
         /* I wasn't specified */
-        opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+        opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                             "mca:rmaps:staged: job %s not using staged mapper",
                             ORTE_JOBID_PRINT(jdata->jobid));
         return ORTE_ERR_TAKE_NEXT_OPTION;
     }
 
-    opal_output_verbose(2, orte_rmaps_base.rmaps_output,
+    opal_output_verbose(2, orte_rmaps_base_framework.framework_output,
                         "%s mca:rmaps:staged: mapping job %s with %d procs",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                         ORTE_JOBID_PRINT(jdata->jobid), (int)jdata->num_procs);
@@ -95,7 +95,7 @@ static int staged_mapper(orte_job_t *jdata)
         if (ORTE_APP_STATE_ALL_MAPPED <= app->state) {
             continue;
         }
-        opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+        opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                             "%s mca:rmaps:staged: working app %s",
                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), app->app);
 
@@ -128,7 +128,7 @@ static int staged_mapper(orte_job_t *jdata)
                     OBJ_DESTRUCT(&node_list);
                     goto complete;
                 }
-                opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+                opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                                     "%s mca:rmaps:staged: all nodes for this app are currently busy",
                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
                 OBJ_DESTRUCT(&node_list);
@@ -189,7 +189,7 @@ static int staged_mapper(orte_job_t *jdata)
                              0 == strcmp(node->name, orte_process_info.nodename))) {
                             opal_list_remove_item(&node_list, item);
                             opal_list_append(&desired, item);
-                            opal_output_verbose(10, orte_rmaps_base.rmaps_output,
+                            opal_output_verbose(10, orte_rmaps_base_framework.framework_output,
                                                 "%s mca:rmaps:staged: placing node %s on desired list",
                                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                                 node->name);
@@ -220,7 +220,7 @@ static int staged_mapper(orte_job_t *jdata)
                 }
                 if (ORTE_PROC_STATE_UNDEF != proc->state) {
                     /* this proc has already been mapped or executed */
-                    opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+                    opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                                         "%s mca:rmaps:staged: proc %s has already been mapped",
                                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                         ORTE_NAME_PRINT(&proc->name));
@@ -263,7 +263,7 @@ static int staged_mapper(orte_job_t *jdata)
                 /* track number of procs on node and number of slots used */
                 node->num_procs++;
                 node->slots_inuse++;
-                opal_output_verbose(10, orte_rmaps_base.rmaps_output,
+                opal_output_verbose(10, orte_rmaps_base_framework.framework_output,
                                     "%s Proc %s on node %s: slots %d inuse %d",
                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                     ORTE_NAME_PRINT(&proc->name), node->name,
@@ -313,7 +313,7 @@ static int staged_mapper(orte_job_t *jdata)
             }
             if (ORTE_PROC_STATE_UNDEF != proc->state) {
                 /* this proc has already been mapped or executed */
-	        opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+	        opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
 				    "%s mca:rmaps:staged: proc %s has already been mapped",
 				    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
 				    ORTE_NAME_PRINT(&proc->name));
@@ -339,7 +339,7 @@ static int staged_mapper(orte_job_t *jdata)
             jdata->num_mapped++;
             /* map this proc to the first available slot */
             OBJ_RETAIN(node);  /* maintain accounting on object */    
-	    opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+	    opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
 				"%s mca:rmaps:staged: assigning proc %s to node %s",
 				ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
 				ORTE_NAME_PRINT(&proc->name), node->name);
@@ -361,7 +361,7 @@ static int staged_mapper(orte_job_t *jdata)
 	    /* track number of procs on node and number of slots used */
             node->num_procs++;
             node->slots_inuse++;
-            opal_output_verbose(10, orte_rmaps_base.rmaps_output,
+            opal_output_verbose(10, orte_rmaps_base_framework.framework_output,
                                 "%s Proc %s on node %s: slots %d inuse %d",
                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                 ORTE_NAME_PRINT(&proc->name), node->name,
@@ -422,7 +422,7 @@ static int staged_mapper(orte_job_t *jdata)
      * then this job is capable of supporting MPI procs
      */
     if (first_pass && jdata->num_mapped == jdata->num_procs) {
-        opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+        opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                             "%s mca:rmaps:staged: job %s is MPI-capable",
                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                             ORTE_JOBID_PRINT(jdata->jobid));

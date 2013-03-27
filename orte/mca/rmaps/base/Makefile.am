@@ -24,8 +24,7 @@ headers += \
         base/rmaps_private.h
 
 libmca_rmaps_la_SOURCES += \
-        base/rmaps_base_open.c \
-        base/rmaps_base_close.c \
+        base/rmaps_base_frame.c \
         base/rmaps_base_select.c \
         base/rmaps_base_map_job.c \
         base/rmaps_base_support_fns.c \

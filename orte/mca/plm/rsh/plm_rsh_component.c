@@ -51,7 +51,6 @@
 #include "orte/mca/plm/base/plm_private.h"
 #include "orte/mca/plm/rsh/plm_rsh.h"
 
-
 /*
  * Public string showing the plm ompi_rsh component version number
  */
@@ -249,7 +248,7 @@ static int rsh_component_query(mca_base_module_t **module, int *priority)
         /* see if the agent is available */
         if (ORTE_SUCCESS != rsh_launch_agent_lookup("qrsh", tmp)) {
             /* can't be SGE */
-             opal_output_verbose(1, orte_plm_globals.output,
+             opal_output_verbose(1, orte_plm_base_framework.framework_output,
                                 "%s plm:rsh: unable to be used: SGE indicated but cannot find path "
                                 "or execution permissions not set for launching agent qrsh", 
                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
@@ -267,7 +266,7 @@ static int rsh_component_query(mca_base_module_t **module, int *priority)
 	/* We are running  as a LOADLEVELER job.
 	   Search for llspawn in the users PATH */
         if (ORTE_SUCCESS != rsh_launch_agent_lookup("llspawn", NULL)) {
-             opal_output_verbose(1, orte_plm_globals.output,
+             opal_output_verbose(1, orte_plm_base_framework.framework_output,
                                 "%s plm:rsh: unable to be used: LoadLeveler "
                                 "indicated but cannot find path or execution "
                                 "permissions not set for launching agent llspawn",
@@ -284,7 +283,7 @@ static int rsh_component_query(mca_base_module_t **module, int *priority)
     
     if (ORTE_SUCCESS != rsh_launch_agent_lookup(NULL, NULL)) {
         /* this isn't an error - we just cannot be selected */
-        OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+        OPAL_OUTPUT_VERBOSE((1, orte_plm_base_framework.framework_output,
                              "%s plm:rsh: unable to be used: cannot find path "
                              "for launching agent \"%s\"\n", 
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
@@ -366,7 +365,7 @@ static int rsh_launch_agent_lookup(const char *agent_list, char *path)
 {
     char **tmp;
 
-    OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+    OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
                          "%s plm:rsh_lookup on agent %s path %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          (NULL == agent_list) ? mca_plm_rsh_component.agent : agent_list,

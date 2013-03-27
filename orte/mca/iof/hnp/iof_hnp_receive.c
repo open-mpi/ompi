@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2011-2012 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * $COPYRIGHT$
  * 
@@ -96,7 +96,7 @@ void orte_iof_hnp_recv(int status, orte_process_name_t* sender,
     
     /* check to see if a tool has requested something */
     if (ORTE_IOF_PULL & stream) {
-        OPAL_OUTPUT_VERBOSE((1, orte_iof_base.iof_output,
+        OPAL_OUTPUT_VERBOSE((1, orte_iof_base_framework.framework_output,
                              "%s received pull cmd from remote tool %s for proc %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_NAME_PRINT(sender),
@@ -126,7 +126,7 @@ void orte_iof_hnp_recv(int status, orte_process_name_t* sender,
     }
     
     if (ORTE_IOF_CLOSE & stream) {
-        OPAL_OUTPUT_VERBOSE((1, orte_iof_base.iof_output,
+        OPAL_OUTPUT_VERBOSE((1, orte_iof_base_framework.framework_output,
                              "%s received close cmd from remote tool %s for proc %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_NAME_PRINT(sender),
@@ -168,7 +168,7 @@ void orte_iof_hnp_recv(int status, orte_process_name_t* sender,
     }
     /* numbytes will contain the actual #bytes that were sent */
     
-    OPAL_OUTPUT_VERBOSE((1, orte_iof_base.iof_output,
+    OPAL_OUTPUT_VERBOSE((1, orte_iof_base_framework.framework_output,
                          "%s unpacked %d bytes from remote proc %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), numbytes,
                          ORTE_NAME_PRINT(&origin)));

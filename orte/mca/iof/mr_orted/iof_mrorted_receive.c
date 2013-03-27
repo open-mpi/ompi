@@ -61,7 +61,7 @@ void orte_iof_mrorted_send_xonxoff(orte_process_name_t *name, orte_iof_tag_t tag
         return;
     }
 
-    OPAL_OUTPUT_VERBOSE((1, orte_iof_base.iof_output,
+    OPAL_OUTPUT_VERBOSE((1, orte_iof_base_framework.framework_output,
                          "%s sending %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          (ORTE_IOF_XON == tag) ? "xon" : "xoff"));
@@ -120,7 +120,7 @@ void orte_iof_mrorted_recv(int status, orte_process_name_t* sender,
     }
     /* numbytes will contain the actual #bytes that were sent */
     
-    OPAL_OUTPUT_VERBOSE((1, orte_iof_base.iof_output,
+    OPAL_OUTPUT_VERBOSE((1, orte_iof_base_framework.framework_output,
                          "%s unpacked %d bytes for local job %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), numbytes,
                          ORTE_JOBID_PRINT(jobid)));
@@ -133,7 +133,7 @@ void orte_iof_mrorted_recv(int status, orte_process_name_t* sender,
         
         /* is this intended for this jobid? */
         if (jobid == sink->name.jobid) {
-            OPAL_OUTPUT_VERBOSE((1, orte_iof_base.iof_output,
+            OPAL_OUTPUT_VERBOSE((1, orte_iof_base_framework.framework_output,
                                  "%s writing data to local proc %s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  ORTE_NAME_PRINT(&sink->name)));

@@ -126,11 +126,11 @@ int rmaps_lama_build_max_tree(orte_job_t *jdata, opal_list_t *node_list,
     hwloc_topology_t topo, *last_topo = NULL;
     orte_node_t *cur_node = NULL;
 
-    opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+    opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                         "mca:rmaps:lama: ---------------------------------");
-    opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+    opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                         "mca:rmaps:lama: ----- Building the Max Tree...");
-    opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+    opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                         "mca:rmaps:lama: ---------------------------------");
 
     /*
@@ -146,11 +146,11 @@ int rmaps_lama_build_max_tree(orte_job_t *jdata, opal_list_t *node_list,
         cur_node != (orte_node_t*)opal_list_get_end(node_list);
         cur_node  = (orte_node_t*)opal_list_get_next(cur_node) ) {
         if (NULL == (topo = cur_node->topology)) {
-            opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+            opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                                 "mca:rmaps:lama: ----- No Tree Available: %s (skipping)", cur_node->name);
         }
 
-        opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+        opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                             "mca:rmaps:lama: ----- Converting Remote Tree: %s", cur_node->name);
 
         /*
@@ -158,7 +158,7 @@ int rmaps_lama_build_max_tree(orte_job_t *jdata, opal_list_t *node_list,
          */
         tmp_tree = rmaps_lama_create_empty_max_tree();
         rmaps_lama_convert_hwloc_tree_to_opal_tree(tmp_tree, &topo);
-        if( 11 <= opal_output_get_verbosity(orte_rmaps_base.rmaps_output) ) {
+        if( 11 <= opal_output_get_verbosity(orte_rmaps_base_framework.framework_output) ) {
             rmaps_lama_max_tree_pretty_print_tree(tmp_tree);
         }
 
@@ -180,17 +180,17 @@ int rmaps_lama_build_max_tree(orte_job_t *jdata, opal_list_t *node_list,
          * Prune the input tree so that is only contains levels that the user
          * asked for.
          */
-        if( 11 <= opal_output_get_verbosity(orte_rmaps_base.rmaps_output) ) {
-            opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+        if( 11 <= opal_output_get_verbosity(orte_rmaps_base_framework.framework_output) ) {
+            opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                                 "mca:rmaps:lama: ---------------------------------");
-            opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+            opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                                 "mca:rmaps:lama: ----- Pruning input Tree...");
         }
         if( ORTE_SUCCESS != (ret = rmaps_lama_prune_max_tree(tmp_tree, opal_tree_get_root(tmp_tree))) ) {
             return ret;
         }
-        if( 11 <= opal_output_get_verbosity(orte_rmaps_base.rmaps_output) ) {
-            opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+        if( 11 <= opal_output_get_verbosity(orte_rmaps_base_framework.framework_output) ) {
+            opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                                 "mca:rmaps:lama: ----- Input Tree... - Post Prune");
             rmaps_lama_max_tree_pretty_print_tree(tmp_tree);
         }
@@ -241,13 +241,13 @@ int rmaps_lama_build_max_tree(orte_job_t *jdata, opal_list_t *node_list,
     /*
      * Display the final Max Tree
      */
-    opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+    opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                         "mca:rmaps:lama: ----- Final Max Tree... - %s system",
                         (*is_homogeneous ? "Homogeneous" : "Heterogeneous") );
-    if( 11 <= opal_output_get_verbosity(orte_rmaps_base.rmaps_output) ) {
+    if( 11 <= opal_output_get_verbosity(orte_rmaps_base_framework.framework_output) ) {
         rmaps_lama_max_tree_pretty_print_tree(max_tree);
     }
-    opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+    opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                         "mca:rmaps:lama: ---------------------------------");
 
     return ORTE_SUCCESS;
@@ -257,8 +257,8 @@ static int rmaps_lama_convert_hwloc_tree_to_opal_tree(opal_tree_t *opal_tree, hw
 {
     hwloc_obj_t topo_root;
 
-    if( 15 <= opal_output_get_verbosity(orte_rmaps_base.rmaps_output) ) {
-        opal_output_verbose(15, orte_rmaps_base.rmaps_output,
+    if( 15 <= opal_output_get_verbosity(orte_rmaps_base_framework.framework_output) ) {
+        opal_output_verbose(15, orte_rmaps_base_framework.framework_output,
                             "mca:rmaps:lama: ----- Converting Topology:");
         /* opal_dss.dump(0, opal_hwloc_topology, OPAL_HWLOC_TOPO); */
         opal_dss.dump(0, *hwloc_topo, OPAL_HWLOC_TOPO);
@@ -302,7 +302,7 @@ static int rmaps_lama_convert_hwloc_subtree(hwloc_obj_t obj,
             obj->parent->attr->cache.depth == obj->attr->cache.depth ) {
             key_child_str  = lama_type_enum_to_str(max_tree_item->type);
             key_parent_str = lama_type_enum_to_str(((rmaps_lama_max_tree_item_t*)parent_item)->type);
-            opal_output_verbose(10, orte_rmaps_base.rmaps_output,
+            opal_output_verbose(10, orte_rmaps_base_framework.framework_output,
                                 "mca:rmaps:lama: Warning: Identical level detected: "
                                 "Child [%s] vs Parent [%s]",
                                 key_child_str, key_parent_str);
@@ -589,8 +589,8 @@ static int rmaps_lama_merge_trees(opal_tree_t *src_tree, opal_tree_t *max_tree,
     key_src_str = lama_type_enum_to_str(*key_src);
     key_max_str = lama_type_enum_to_str(*key_max);
 
-    if( 15 <= opal_output_get_verbosity(orte_rmaps_base.rmaps_output) ) {
-        opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+    if( 15 <= opal_output_get_verbosity(orte_rmaps_base_framework.framework_output) ) {
+        opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                             "mca:rmaps:lama: CHECK: Merge Trees: Keys Src (%2d - %s) vs Max (%2d - %s)",
                             *key_src, key_src_str, *key_max, key_max_str);
     }
@@ -611,7 +611,7 @@ static int rmaps_lama_merge_trees(opal_tree_t *src_tree, opal_tree_t *max_tree,
             LAMA_LEVEL_CACHE_L2 == *key_src ||
             LAMA_LEVEL_CACHE_L1 == *key_src ||
             LAMA_LEVEL_NUMA     == *key_src ) {
-            opal_output_verbose(10, orte_rmaps_base.rmaps_output,
+            opal_output_verbose(10, orte_rmaps_base_framework.framework_output,
                                 "mca:rmaps:lama: Warning: Merge Trees: "
                                 "Src with Conflicting Memory Hierarchy [Src (%2d - %s) vs Max (%2d - %s)]",
                                 *key_src, key_src_str, *key_max, key_max_str);
@@ -645,7 +645,7 @@ static int rmaps_lama_merge_trees(opal_tree_t *src_tree, opal_tree_t *max_tree,
             for(i = 0; i < (num_src - num_max); ++i ) {
 #if 1
                 str = rmaps_lama_max_tree_pretty_print_subtree_element_get(max_tree, max_parent, 0);
-                opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+                opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                                     "mca:rmaps:lama: Merge: Appending child %s - post prune",
                                     str);
                 free(str);
@@ -683,7 +683,7 @@ static int rmaps_lama_merge_trees(opal_tree_t *src_tree, opal_tree_t *max_tree,
                  LAMA_LEVEL_CACHE_L2 == *key_max ||
                  LAMA_LEVEL_CACHE_L1 == *key_max ||
                  LAMA_LEVEL_NUMA     == *key_max ) {
-            opal_output_verbose(10, orte_rmaps_base.rmaps_output,
+            opal_output_verbose(10, orte_rmaps_base_framework.framework_output,
                                 "mca:rmaps:lama: Warning: Merge Trees: "
                                 "Max with Conflicting Memory Hierarchy [Src (%2d - %s) vs Max (%2d - %s)]",
                                 *key_src, key_src_str, *key_max, key_max_str);
@@ -743,7 +743,7 @@ static int rmaps_lama_merge_trees(opal_tree_t *src_tree, opal_tree_t *max_tree,
             if(i >= num_max ) {
 #if 1
                 str = rmaps_lama_max_tree_pretty_print_subtree_element_get(src_tree, child_item, 0);
-                opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+                opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                                     "mca:rmaps:lama: Merge: Appending child %s",
                                     str);
                 free(str);
@@ -840,9 +840,9 @@ static int rmaps_lama_prune_max_tree(opal_tree_t *max_tree, opal_tree_item_t *pa
     }
 
     if( !found ) {
-        if( 15 <= opal_output_get_verbosity(orte_rmaps_base.rmaps_output) ) {
+        if( 15 <= opal_output_get_verbosity(orte_rmaps_base_framework.framework_output) ) {
             tmp_str = lama_type_enum_to_str(*key_max);
-            opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+            opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                                 "mca:rmaps:lama: ----- Before pruning %s",
                                 tmp_str);
             free(tmp_str);
@@ -1167,7 +1167,7 @@ static void pretty_print_subtree_element(opal_tree_t *tree, opal_tree_item_t *pa
 
     element_str = rmaps_lama_max_tree_pretty_print_subtree_element_get(tree, parent, level);
 
-    opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+    opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                         "mca:rmaps:lama: Tree Element: %s",
                         element_str);
 

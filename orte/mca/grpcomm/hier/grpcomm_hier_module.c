@@ -136,7 +136,7 @@ static int xcast(orte_jobid_t job,
     int rc = ORTE_SUCCESS;
     opal_buffer_t buf;
     
-    OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base.output,
+    OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_framework.framework_output,
                          "%s grpcomm:xcast sent to job %s tag %ld",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_JOBID_PRINT(job), (long)tag));
@@ -185,7 +185,7 @@ static int hier_barrier(void)
     opal_buffer_t buf1, buf2;
     int rc;
     
-    OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base.output,
+    OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_framework.framework_output,
                          "%s grpcomm:hier entering barrier",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
@@ -198,7 +198,7 @@ static int hier_barrier(void)
     OBJ_DESTRUCT(&buf1);
     OBJ_DESTRUCT(&buf2);
     
-    OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base.output,
+    OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_framework.framework_output,
                          "%s grpcomm:hier barrier complete",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
@@ -239,7 +239,7 @@ static int hier_allgather(opal_buffer_t *sbuf, opal_buffer_t *rbuf)
     orte_namelist_t *nm;
     opal_buffer_t tmp_buf;
 
-    OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base.output,
+    OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_framework.framework_output,
                          "%s grpcomm:hier entering allgather",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
@@ -395,7 +395,7 @@ static int hier_allgather(opal_buffer_t *sbuf, opal_buffer_t *rbuf)
         }
     }
 
-    OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base.output,
+    OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_framework.framework_output,
                          "%s grpcomm:hier allgather completed",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     

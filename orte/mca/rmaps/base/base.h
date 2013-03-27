@@ -40,11 +40,12 @@
 
 BEGIN_C_DECLS
 
-/**
- * Open the rmaps framework
+/*
+ * MCA Framework
  */
-ORTE_DECLSPEC int orte_rmaps_base_open(void);
-
+ORTE_DECLSPEC extern mca_base_framework_t orte_rmaps_base_framework;
+/* select a component */
+ORTE_DECLSPEC    int orte_rmaps_base_select(void);
 
 /*
  * Global functions for MCA overall collective open and close
@@ -54,10 +55,6 @@ ORTE_DECLSPEC int orte_rmaps_base_open(void);
  * Struct to hold data global to the rmaps framework
  */
 typedef struct {
-    /** Verbose/debug output stream */
-    int rmaps_output;
-    /** List of available components */
-    opal_list_t available_components;
     /* list of selected modules */
     opal_list_t selected_modules;
     /* default ppr */
@@ -97,8 +94,6 @@ typedef struct {
 } orte_rmaps_base_selected_module_t;
 OBJ_CLASS_DECLARATION(orte_rmaps_base_selected_module_t);
 
-ORTE_DECLSPEC int orte_rmaps_base_select(void);
-
 /*
  * Map a job
  */
@@ -116,11 +111,6 @@ ORTE_DECLSPEC int orte_rmaps_base_set_vpid_range(orte_jobid_t jobid,
 /* pretty-print functions */
 ORTE_DECLSPEC char* orte_rmaps_base_print_mapping(orte_mapping_policy_t mapping);
 ORTE_DECLSPEC char* orte_rmaps_base_print_ranking(orte_ranking_policy_t ranking);
-
-/**
- * Close down the rmaps framework
- */
-ORTE_DECLSPEC int orte_rmaps_base_close(void);
 
 #if OPAL_HAVE_HWLOC
 ORTE_DECLSPEC int orte_rmaps_base_prep_topology(hwloc_topology_t topo);

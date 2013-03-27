@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012      Los Alamos National Security, Inc.  All rights reserved. 
+ * Copyright (c) 2012-2013 Los Alamos National Security, Inc.  All rights reserved. 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -37,10 +37,6 @@
 /*
  * Globals
  */
-opal_list_t orte_dfs_base_components_available;
-
-orte_dfs_base_t orte_dfs_base;
-
 orte_dfs_base_module_t orte_dfs = {
     NULL,
     NULL,
@@ -55,35 +51,29 @@ orte_dfs_base_module_t orte_dfs = {
     NULL
 };
 
+static int orte_dfs_base_close(void)
+{
+    /* Close selected component */
+    if (NULL != orte_dfs.finalize) {
+        orte_dfs.finalize();
+    }
+
+    return mca_base_framework_components_close(&orte_dfs_base_framework, NULL);
+}
+
 /**
  * Function for finding and opening either all MCA components, or the one
  * that was specifically requested via a MCA parameter.
  */
-int orte_dfs_base_open(void)
+static int orte_dfs_base_open(mca_base_open_flag_t flags)
 {
-    /* Only pass this way once */
-    if( orte_dfs_base.initialized ) {
-        return ORTE_SUCCESS;
-    }
-
-    orte_dfs_base.output = opal_output_open(NULL);
-
-    /*
-     * Open up all available components
-     */
-    if (ORTE_SUCCESS != 
-        mca_base_components_open("dfs",
-                                 orte_dfs_base.output,
-                                 mca_dfs_base_static_components, 
-                                 &orte_dfs_base.components_available,
-                                 true)) {
-        return ORTE_ERROR;
-    }
-    
-    orte_dfs_base.initialized = true;
-    
-    return ORTE_SUCCESS;
+    /* Open up all available components */
+    return mca_base_framework_components_open(&orte_dfs_base_framework, flags);
 }
+
+MCA_BASE_FRAMEWORK_DECLARE(orte, dfs, "ORTE Distributed File System",
+                           NULL, orte_dfs_base_open, orte_dfs_base_close,
+                           mca_dfs_base_static_components, 0);
 
 
 /* instantiate classes */

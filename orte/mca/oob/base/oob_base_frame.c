@@ -41,44 +41,25 @@
  * Global variables
  */
 mca_oob_t mca_oob;
-int mca_oob_base_output = -1;
-opal_list_t mca_oob_base_components;
-opal_list_t mca_oob_base_modules;
 
-bool orte_oob_base_already_opened = false;
-
-
-/**
- * Function for finding and opening either all MCA components, or the one
- * that was specifically requested via a MCA parameter.
- */
-int mca_oob_base_open(void)
+static int orte_oob_base_close(void)
 {
-    /* Sanity check.  This may be able to be removed when the rml/oob
-       interface is re-worked (the current infrastructure may invoke
-       this function twice: once as a standalone, and once via the rml
-       oob component). */
-    if (orte_oob_base_already_opened) {
-        return ORTE_SUCCESS;
+    if (NULL != mca_oob.oob_fini) {
+        mca_oob.oob_fini();
     }
 
-    /* register parameters */
-    mca_oob_base_output = opal_output_open(NULL);
-    
-    /* Open up all available components */
-    OBJ_CONSTRUCT(&mca_oob_base_components, opal_list_t);
-    OBJ_CONSTRUCT(&mca_oob_base_modules, opal_list_t);
-    
-    if (ORTE_SUCCESS != 
-        mca_base_components_open("oob", mca_oob_base_output,
-                                 mca_oob_base_static_components, 
-                                 &mca_oob_base_components, true)) {
-        return ORTE_ERROR;
-    }
-    
-    /* All done */
-    orte_oob_base_already_opened = true;
-    
-    return ORTE_SUCCESS;
+    return mca_base_framework_components_close(&orte_oob_base_framework, NULL);
 }
 
+/**
+ * Function for finding and opening either all MCA components,
+ * or the one that was specifically requested via a MCA parameter.
+ */
+static int orte_oob_base_open(mca_base_open_flag_t flags)
+{
+     /* Open up all available components */
+    return mca_base_framework_components_open(&orte_oob_base_framework, flags);
+}
+
+MCA_BASE_FRAMEWORK_DECLARE(orte, oob, NULL, NULL, orte_oob_base_open, orte_oob_base_close,
+                           mca_oob_base_static_components, 0);

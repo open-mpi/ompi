@@ -58,7 +58,7 @@ void orte_iof_mrorted_read_handler(int fd, short event, void *cbdata)
     /* read up to the fragment size */
     numbytes = read(fd, data, sizeof(data));
     
-    OPAL_OUTPUT_VERBOSE((1, orte_iof_base.iof_output,
+    OPAL_OUTPUT_VERBOSE((1, orte_iof_base_framework.framework_output,
                          "%s iof:mrorted:read handler read %d bytes from %s, fd %d",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          numbytes, ORTE_NAME_PRINT(&rev->name), fd));
@@ -72,7 +72,7 @@ void orte_iof_mrorted_read_handler(int fd, short event, void *cbdata)
                 return;
             } 
 
-            OPAL_OUTPUT_VERBOSE((1, orte_iof_base.iof_output,
+            OPAL_OUTPUT_VERBOSE((1, orte_iof_base_framework.framework_output,
                                  "%s iof:mrorted:read handler %s Error on connection:%d",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  ORTE_NAME_PRINT(&rev->name), fd));
@@ -142,7 +142,7 @@ void orte_iof_mrorted_read_handler(int fd, short event, void *cbdata)
                     }
                 }
             } else {
-                OPAL_OUTPUT_VERBOSE((1, orte_iof_base.iof_output,
+                OPAL_OUTPUT_VERBOSE((1, orte_iof_base_framework.framework_output,
                                      "%s sending %d bytes from stdout of %s to daemon %s",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), numbytes,
                                      ORTE_NAME_PRINT(&rev->name),
@@ -182,7 +182,7 @@ void orte_iof_mrorted_read_handler(int fd, short event, void *cbdata)
         }
 
         /* start non-blocking RML call to forward received data */
-        OPAL_OUTPUT_VERBOSE((1, orte_iof_base.iof_output,
+        OPAL_OUTPUT_VERBOSE((1, orte_iof_base_framework.framework_output,
                              "%s iof:mrorted:read handler sending %d bytes to HNP",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), numbytes));
     

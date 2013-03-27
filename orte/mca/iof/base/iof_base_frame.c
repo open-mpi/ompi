@@ -102,7 +102,7 @@ static void orte_iof_base_sink_construct(orte_iof_sink_t* ptr)
 }
 static void orte_iof_base_sink_destruct(orte_iof_sink_t* ptr)
 {
-    OPAL_OUTPUT_VERBOSE((20, orte_iof_base.iof_output,
+    OPAL_OUTPUT_VERBOSE((20, orte_iof_base_framework.framework_output,
                          "%s iof: closing sink for process %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(&ptr->name)));
@@ -126,7 +126,7 @@ static void orte_iof_base_read_event_destruct(orte_iof_read_event_t* rev)
 {
     opal_event_free(rev->ev);
     if (0 <= rev->fd) {
-        OPAL_OUTPUT_VERBOSE((20, orte_iof_base.iof_output,
+        OPAL_OUTPUT_VERBOSE((20, orte_iof_base_framework.framework_output,
                              "%s iof: closing fd %d for process %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              rev->fd, ORTE_NAME_PRINT(&rev->name)));
@@ -159,7 +159,7 @@ static void orte_iof_base_write_event_destruct(orte_iof_write_event_t* wev)
     }
     
     if (2 < wev->fd) {
-        OPAL_OUTPUT_VERBOSE((20, orte_iof_base.iof_output,
+        OPAL_OUTPUT_VERBOSE((20, orte_iof_base_framework.framework_output,
                              "%s iof: closing fd %d for write event",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), wev->fd));
         close(wev->fd);
@@ -181,7 +181,7 @@ OBJ_CLASS_INSTANCE(orte_iof_write_output_t,
 
 orte_iof_base_t orte_iof_base;
 
-static int orte_iof_base_register(int flags)
+static int orte_iof_base_register(mca_base_register_flag_t flags)
 {
     /* check for maximum number of pending output messages */
   orte_iof_base.output_limit = (size_t)-1;
@@ -204,19 +204,26 @@ static int orte_iof_base_register(int flags)
     return ORTE_SUCCESS;
 }
 
+static int orte_iof_base_close(void)
+{
+    /* Close the selected component */
+    if (NULL != orte_iof.finalize) {
+        orte_iof.finalize();
+    }
+
+    return mca_base_framework_components_close(&orte_iof_base_framework, NULL);
+}
+
+
 /**
  * Function for finding and opening either all MCA components, or the one
  * that was specifically requested via a MCA parameter.
  */
-int orte_iof_base_open(void)
+static int orte_iof_base_open(mca_base_open_flag_t flags)
 {
     int rc, xmlfd;
 
-    (void) orte_iof_base_register(0);
-    
     /* Initialize globals */
-    OBJ_CONSTRUCT(&orte_iof_base.iof_components_opened, opal_list_t);
-
     if (0 > orte_iof_base.output_limit) {
         orte_iof_base.output_limit = INT_MAX;
     }
@@ -275,18 +282,12 @@ int orte_iof_base_open(void)
          * unix text utils). 
          */        
     }
-    
-    orte_iof_base.iof_output = opal_output_open(NULL);
-    
+
     /* Open up all available components */
-    if (ORTE_SUCCESS != 
-        mca_base_components_open("iof", orte_iof_base.iof_output,
-                                 mca_iof_base_static_components, 
-                                 &orte_iof_base.iof_components_opened,
-                                 true)) {
-        return ORTE_ERROR;
-    }
-  
-    /* All done */
-    return ORTE_SUCCESS;
+    return mca_base_framework_components_open(&orte_iof_base_framework, flags);
 }
+
+MCA_BASE_FRAMEWORK_DECLARE(orte, iof, "ORTE I/O Forwarding",
+                           orte_iof_base_register, orte_iof_base_open, orte_iof_base_close,
+                           mca_iof_base_static_components, 0);
+

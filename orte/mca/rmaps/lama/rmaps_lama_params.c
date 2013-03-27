@@ -238,18 +238,18 @@ int rmaps_lama_process_alias_params(orte_job_t *jdata)
     /*
      * Display revised values
      */
-    opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+    opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                         "mca:rmaps:lama: Revised Parameters -----");
-    opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+    opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                         "mca:rmaps:lama: Map   : %s",
                         rmaps_lama_cmd_map);
-    opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+    opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                         "mca:rmaps:lama: Bind  : %s",
                         rmaps_lama_cmd_bind);
-    opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+    opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                         "mca:rmaps:lama: MPPR  : %s",
                         rmaps_lama_cmd_mppr);
-    opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+    opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                         "mca:rmaps:lama: Order : %s",
                         rmaps_lama_cmd_ordering);
 

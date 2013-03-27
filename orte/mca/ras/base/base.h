@@ -35,27 +35,23 @@
 
 BEGIN_C_DECLS
 
-ORTE_DECLSPEC int orte_ras_base_open(void);
+/*
+ * MCA Framework
+ */
+ORTE_DECLSPEC extern mca_base_framework_t orte_ras_base_framework;
+/* select a component */
+ORTE_DECLSPEC    int orte_ras_base_select(void);
 
 /*
  * globals that might be needed
  */
 typedef struct orte_ras_base_t {
-    int ras_output;
-    opal_list_t ras_opened;
     bool allocation_read;
     orte_ras_base_module_t *active_module;
     int total_slots_alloc;
 } orte_ras_base_t;
 
 ORTE_DECLSPEC extern orte_ras_base_t orte_ras_base;
-
-/*
- * function definitions
- */
-ORTE_DECLSPEC int orte_ras_base_select(void);
-ORTE_DECLSPEC int orte_ras_base_finalize(void);
-ORTE_DECLSPEC int orte_ras_base_close(void);
 
 ORTE_DECLSPEC void orte_ras_base_display_alloc(void);
 

@@ -12,5 +12,5 @@ headers += \
 	base/base.h
 
 libmca_routed_la_SOURCES += \
-	base/routed_base_components.c \
+	base/routed_base_frame.c \
 	base/routed_base_fns.c

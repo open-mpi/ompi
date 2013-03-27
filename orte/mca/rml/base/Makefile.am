@@ -21,7 +21,7 @@ headers += \
 	base/rml_contact.h
 
 libmca_rml_la_SOURCES += \
-	base/rml_base_components.c \
+	base/rml_base_frame.c \
         base/rml_base_null_fns.c \
 	base/rml_base_receive.c \
 	base/rml_base_contact.c

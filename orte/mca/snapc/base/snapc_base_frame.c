@@ -48,7 +48,6 @@
 /*
  * Globals
  */
-int  orte_snapc_base_output  = -1;
 bool orte_snapc_base_is_tool = false;
 orte_snapc_base_module_t orte_snapc = {
     NULL, /* snapc_init      */
@@ -57,14 +56,12 @@ orte_snapc_base_module_t orte_snapc = {
     NULL  /* release_job     */
 };
 
-opal_list_t orte_snapc_base_components_available;
-orte_snapc_base_component_t orte_snapc_base_selected_component;
 orte_snapc_coord_type_t orte_snapc_coord_type = ORTE_SNAPC_UNASSIGN_TYPE;
 
 bool orte_snapc_base_store_only_one_seq = false;
 bool   orte_snapc_base_has_recovered = false;
 
-static int orte_snapc_base_register(int flags)
+static int orte_snapc_base_register(mca_base_register_flag_t flags)
 {
     /*
      * Reuse sequence numbers
@@ -82,41 +79,30 @@ static int orte_snapc_base_register(int flags)
     return ORTE_SUCCESS;
 }
 
+static int orte_snapc_base_close(void)
+{
+    /* Close the selected component */
+    if( NULL != orte_snapc.snapc_finalize ) {
+        orte_snapc.snapc_finalize();
+    }
+
+    return mca_base_framework_components_close(&orte_snapc_base_framework, NULL);
+}
+
 /**
  * Function for finding and opening either all MCA components,
  * or the one that was specifically requested via a MCA parameter.
  */
-int orte_snapc_base_open(void)
+static int orte_snapc_base_open(mca_base_open_flag_t flags)
 {
-    (void) orte_snapc_base_register(0);
-
-    OPAL_OUTPUT_VERBOSE((10, orte_snapc_base_output,
-                         "snapc:base: open()"));
-
-    orte_snapc_base_output = opal_output_open(NULL);
-
-    OPAL_OUTPUT_VERBOSE((20, orte_snapc_base_output,
-                         "snapc:base: open: base_only_one_seq    = %d",
-                         orte_snapc_base_store_only_one_seq));
-
-
     /* Init the sequence (interval) number */
     orte_snapc_base_snapshot_seq_number = 0;
 
     /* Open up all available components */
-    if (OPAL_SUCCESS !=
-        mca_base_components_open("snapc", 
-                                 orte_snapc_base_output, 
-                                 mca_snapc_base_static_components,
-                                 &orte_snapc_base_components_available,
-                                 true)) {
-        return ORTE_ERROR;
-    }
-
-    /*
-     * Open up the SStore framework
-     */
-    orte_sstore_base_open();
-
-    return ORTE_SUCCESS;
+    return mca_base_framework_components_open(&orte_snapc_base_framework, flags);
 }
+
+MCA_BASE_FRAMEWORK_DECLARE(orte, snapc, "ORTE Snapc", orte_snapc_base_register,
+                           orte_snapc_base_open, orte_snapc_base_close,
+                           mca_snapc_base_static_components, 0);
+

@@ -160,7 +160,7 @@ static void start(orte_jobid_t jobid)
         return;
     }
     
-    OPAL_OUTPUT_VERBOSE((1, orte_sensor_base.output,
+    OPAL_OUTPUT_VERBOSE((1, orte_sensor_base_framework.framework_output,
                          "%s starting file monitoring for job %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_JOBID_PRINT(jobid)));
@@ -190,7 +190,7 @@ static void start(orte_jobid_t jobid)
         /* was a default file given */
         if (NULL == mca_sensor_file_component.file) {
             /* can't do anything without a file */
-            OPAL_OUTPUT_VERBOSE((1, orte_sensor_base.output,
+            OPAL_OUTPUT_VERBOSE((1, orte_sensor_base_framework.framework_output,
                                  "%s sensor:file no file for job %s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  ORTE_JOBID_PRINT(jobid)));
@@ -242,7 +242,7 @@ static void start(orte_jobid_t jobid)
         free(ptr);
     }
     opal_list_append(&jobs, &ft->super);
-    OPAL_OUTPUT_VERBOSE((1, orte_sensor_base.output,
+    OPAL_OUTPUT_VERBOSE((1, orte_sensor_base_framework.framework_output,
                          "%s file %s monitored for %s%s%s with limit %d",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ft->file, ft->check_size ? "SIZE:" : " ",
@@ -281,7 +281,7 @@ static void file_sample(void)
     file_tracker_t *ft;
     orte_job_t *jdata;
 
-    OPAL_OUTPUT_VERBOSE((1, orte_sensor_base.output,
+    OPAL_OUTPUT_VERBOSE((1, orte_sensor_base_framework.framework_output,
                          "%s sampling files",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
@@ -293,14 +293,14 @@ static void file_sample(void)
         /* stat the file and get its size */
         if (0 > stat(ft->file, &buf)) {
             /* cannot stat file */
-            OPAL_OUTPUT_VERBOSE((1, orte_sensor_base.output,
+            OPAL_OUTPUT_VERBOSE((1, orte_sensor_base_framework.framework_output,
                                  "%s could not stat %s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  ft->file));
             continue;
         }
         
-        OPAL_OUTPUT_VERBOSE((1, orte_sensor_base.output,
+        OPAL_OUTPUT_VERBOSE((1, orte_sensor_base_framework.framework_output,
                              "%s size %lu access %s\tmod %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              (unsigned long)buf.st_size, ctime(&buf.st_atime), ctime(&buf.st_mtime)));
@@ -334,7 +334,7 @@ static void file_sample(void)
         }
         
     CHECK:
-        OPAL_OUTPUT_VERBOSE((1, orte_sensor_base.output,
+        OPAL_OUTPUT_VERBOSE((1, orte_sensor_base_framework.framework_output,
                              "%s sampled file %s tick %d",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ft->file, ft->tick));

@@ -26,7 +26,7 @@ void orte_sensor_base_start(orte_jobid_t job)
     orte_sensor_active_module_t *i_module;
     int i;
 
-    opal_output_verbose(5, orte_sensor_base.output,
+    opal_output_verbose(5, orte_sensor_base_framework.framework_output,
                         "%s sensor:base: starting sensors",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
 
@@ -64,7 +64,7 @@ void orte_sensor_base_stop(orte_jobid_t job)
         return;
     }
 
-    opal_output_verbose(5, orte_sensor_base.output,
+    opal_output_verbose(5, orte_sensor_base_framework.framework_output,
                         "%s sensor:base: stopping sensors",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
 
@@ -100,7 +100,7 @@ void orte_sensor_base_sample(int fd, short args, void *cbdata)
         return;
     }
 
-    opal_output_verbose(5, orte_sensor_base.output,
+    opal_output_verbose(5, orte_sensor_base_framework.framework_output,
                         "%s sensor:base: sampling sensors",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
 
@@ -113,7 +113,7 @@ void orte_sensor_base_sample(int fd, short args, void *cbdata)
             continue;
         }
         if (NULL != i_module->module->sample) {
-            opal_output_verbose(5, orte_sensor_base.output,
+            opal_output_verbose(5, orte_sensor_base_framework.framework_output,
                                 "%s sensor:base: sampling component %s",
                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                 i_module->component->mca_component_name);
@@ -137,7 +137,7 @@ void orte_sensor_base_log(char *comp, opal_buffer_t *data)
         return;
     }
 
-    opal_output_verbose(5, orte_sensor_base.output,
+    opal_output_verbose(5, orte_sensor_base_framework.framework_output,
                         "%s sensor:base: logging sensor %s",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), comp);
 

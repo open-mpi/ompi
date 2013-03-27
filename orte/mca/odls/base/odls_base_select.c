@@ -36,17 +36,11 @@ int orte_odls_base_select(void)
     orte_odls_base_component_t *best_component = NULL;
     orte_odls_base_module_t *best_module = NULL;
 
-    orte_odls_base.selected = false;
-
-    if (!orte_odls_base.components_available) {
-        return ORTE_SUCCESS;
-    }
-
     /*
      * Select the best component
      */
-    if( OPAL_SUCCESS != mca_base_select("odls", orte_odls_globals.output,
-                                        &orte_odls_base.available_components,
+    if( OPAL_SUCCESS != mca_base_select("odls", orte_odls_base_framework.framework_output,
+                                        &orte_odls_base_framework.framework_components,
                                         (mca_base_module_t **) &best_module,
                                         (mca_base_component_t **) &best_component) ) {
         /* This will only happen if no component was selected */
@@ -55,8 +49,6 @@ int orte_odls_base_select(void)
 
     /* Save the winner */
     orte_odls = *best_module;
-    orte_odls_base.selected_component = *best_component;
-    orte_odls_base.selected = true;
 
     return ORTE_SUCCESS;
 }

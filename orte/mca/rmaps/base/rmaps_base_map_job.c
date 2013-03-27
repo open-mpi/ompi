@@ -63,7 +63,7 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
      * DO SO, AND ALL PLM COMMANDS ARE RELAYED TO HNP
      */
     
-    opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+    opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                         "mca:rmaps: mapping job %s",
                         ORTE_JOBID_PRINT(jdata->jobid));
 
@@ -76,7 +76,7 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
      * DIDN'T SET IT
      */        
     if (NULL == jdata->map) {
-        opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+        opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                             "mca:rmaps: creating new map for job %s",
                             ORTE_JOBID_PRINT(jdata->jobid));
         /* create a map object where we will store the results */
@@ -101,7 +101,7 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
         /* assign the map object to this job */
         jdata->map = map;
     } else {
-        opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+        opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                             "mca:rmaps: setting mapping policies for job %s",
                             ORTE_JOBID_PRINT(jdata->jobid));
 

@@ -140,7 +140,7 @@ static int tool_pull(const orte_process_name_t* src_name,
     orte_process_name_t hnp;
     int rc;
     
-    OPAL_OUTPUT_VERBOSE((1, orte_iof_base.iof_output,
+    OPAL_OUTPUT_VERBOSE((1, orte_iof_base_framework.framework_output,
                          "%s pulling output for proc %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(src_name)));
@@ -186,7 +186,7 @@ static int tool_close(const orte_process_name_t* src_name,
     orte_process_name_t hnp;
     int rc;
     
-    OPAL_OUTPUT_VERBOSE((1, orte_iof_base.iof_output,
+    OPAL_OUTPUT_VERBOSE((1, orte_iof_base_framework.framework_output,
                          "%s closing output for proc %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(src_name)));

@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
+ * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * $COPYRIGHT$
  *
@@ -43,20 +43,19 @@
 BEGIN_C_DECLS
 
 /*
- * function definitions
+ * MCA framework
  */
-ORTE_DECLSPEC    int orte_grpcomm_base_open(void);
-ORTE_DECLSPEC    int orte_grpcomm_base_select(void);
-ORTE_DECLSPEC    int orte_grpcomm_base_close(void);
+ORTE_DECLSPEC extern mca_base_framework_t orte_grpcomm_base_framework;
+/*
+ * Select an available component.
+ */
+ORTE_DECLSPEC int orte_grpcomm_base_select(void);
 
 /*
  * globals that might be needed
  */
 typedef struct {
     int output;
-    bool selected;
-    opal_list_t components_available;
-    orte_grpcomm_base_component_t selected_component;
     orte_grpcomm_coll_id_t coll_id;
     opal_list_t active_colls;
 #if OPAL_HAVE_HWLOC

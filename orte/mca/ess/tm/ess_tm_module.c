@@ -177,7 +177,7 @@ static int tm_set_name(void)
     orte_jobid_t jobid;
     orte_vpid_t vpid;
     
-    OPAL_OUTPUT_VERBOSE((1, orte_ess_base_output,
+    OPAL_OUTPUT_VERBOSE((1, orte_ess_base_framework.framework_output,
                          "ess:tm setting name"));
     if (NULL == orte_ess_base_jobid) {
         ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
@@ -200,7 +200,7 @@ static int tm_set_name(void)
     ORTE_PROC_MY_NAME->jobid = jobid;
     ORTE_PROC_MY_NAME->vpid = vpid;
 
-    OPAL_OUTPUT_VERBOSE((1, orte_ess_base_output,
+    OPAL_OUTPUT_VERBOSE((1, orte_ess_base_framework.framework_output,
                          "ess:tm set name to %s", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
     /* get the non-name common environmental variables */

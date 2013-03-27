@@ -250,7 +250,7 @@ static void recv_ack(int status, orte_process_name_t* sender,
         return;
     }
 
-    OPAL_OUTPUT_VERBOSE((1, orte_filem_base_output,
+    OPAL_OUTPUT_VERBOSE((1, orte_filem_base_framework.framework_output,
                          "%s filem:raw: recvd ack from %s for file %s status %d",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(sender), file, st));
@@ -273,7 +273,7 @@ static void recv_ack(int status, orte_process_name_t* sender,
                 xfer->nrecvd++;
                 /* if all daemons have responded, then this is complete */
                 if (xfer->nrecvd == orte_process_info.num_procs) {
-                    OPAL_OUTPUT_VERBOSE((1, orte_filem_base_output,
+                    OPAL_OUTPUT_VERBOSE((1, orte_filem_base_framework.framework_output,
                                          "%s filem:raw: xfer complete for file %s status %d",
                                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                          file, xfer->status));
@@ -302,7 +302,7 @@ static int raw_preposition_files(orte_job_t *jdata,
     opal_list_t fsets;
     bool already_sent;
 
-    OPAL_OUTPUT_VERBOSE((1, orte_filem_base_output,
+    OPAL_OUTPUT_VERBOSE((1, orte_filem_base_framework.framework_output,
                          "%s filem:raw: preposition files for job %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_JOBID_PRINT(jdata->jobid)));
@@ -317,7 +317,7 @@ static int raw_preposition_files(orte_job_t *jdata,
         }
         if (app->preload_binary) {
             /* add the executable to our list */
-            OPAL_OUTPUT_VERBOSE((1, orte_filem_base_output,
+            OPAL_OUTPUT_VERBOSE((1, orte_filem_base_framework.framework_output,
                                  "%s filem:raw: preload executable %s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  app->app));
@@ -344,19 +344,19 @@ static int raw_preposition_files(orte_job_t *jdata,
                 /* check any suffix for file type */
                 if (NULL != (cptr = strchr(files[j], '.'))) {
                     if (0 == strncmp(cptr, ".tar", 4)) {
-                        OPAL_OUTPUT_VERBOSE((1, orte_filem_base_output,
+                        OPAL_OUTPUT_VERBOSE((1, orte_filem_base_framework.framework_output,
                                              "%s filem:raw: marking file %s as TAR",
                                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                              files[j]));
                         fs->target_flag = ORTE_FILEM_TYPE_TAR;
                     } else if (0 == strncmp(cptr, ".bz", 3)) {
-                        OPAL_OUTPUT_VERBOSE((1, orte_filem_base_output,
+                        OPAL_OUTPUT_VERBOSE((1, orte_filem_base_framework.framework_output,
                                              "%s filem:raw: marking file %s as BZIP",
                                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                              files[j]));
                         fs->target_flag = ORTE_FILEM_TYPE_BZIP;
                     } else if (0 == strncmp(cptr, ".gz", 3)) {
-                        OPAL_OUTPUT_VERBOSE((1, orte_filem_base_output,
+                        OPAL_OUTPUT_VERBOSE((1, orte_filem_base_framework.framework_output,
                                              "%s filem:raw: marking file %s as GZIP",
                                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                              files[j]));
@@ -436,7 +436,7 @@ static int raw_preposition_files(orte_job_t *jdata,
     }
     if (0 == opal_list_get_size(&fsets)) {
         /* nothing to preposition */
-        OPAL_OUTPUT_VERBOSE((1, orte_filem_base_output,
+        OPAL_OUTPUT_VERBOSE((1, orte_filem_base_framework.framework_output,
                              "%s filem:raw: nothing to preposition",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
         if (NULL != cbfunc) {
@@ -446,7 +446,7 @@ static int raw_preposition_files(orte_job_t *jdata,
         return ORTE_SUCCESS;
     }
 
-    OPAL_OUTPUT_VERBOSE((1, orte_filem_base_output,
+    OPAL_OUTPUT_VERBOSE((1, orte_filem_base_framework.framework_output,
                          "%s filem:raw: found %d files to position",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          (int)opal_list_get_size(&fsets)));
@@ -463,7 +463,7 @@ static int raw_preposition_files(orte_job_t *jdata,
      */
     while (NULL != (item = opal_list_remove_first(&fsets))) {
         fs = (orte_filem_base_file_set_t*)item;
-        OPAL_OUTPUT_VERBOSE((1, orte_filem_base_output,
+        OPAL_OUTPUT_VERBOSE((1, orte_filem_base_framework.framework_output,
                              "%s filem:raw: checking prepositioning of file %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              fs->local_target));
@@ -480,7 +480,7 @@ static int raw_preposition_files(orte_job_t *jdata,
         }
         if (already_sent) {
             /* no need to send it again */
-            OPAL_OUTPUT_VERBOSE((3, orte_filem_base_output,
+            OPAL_OUTPUT_VERBOSE((3, orte_filem_base_framework.framework_output,
                                  "%s filem:raw: file %s is already in position - ignoring",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), fs->local_target));
             OBJ_RELEASE(item);
@@ -505,7 +505,7 @@ static int raw_preposition_files(orte_job_t *jdata,
         }
         if (already_sent) {
             /* no need to send it again */
-            OPAL_OUTPUT_VERBOSE((3, orte_filem_base_output,
+            OPAL_OUTPUT_VERBOSE((3, orte_filem_base_framework.framework_output,
                                  "%s filem:raw: file %s is already queued for output - ignoring",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), fs->local_target));
             OBJ_RELEASE(item);
@@ -522,13 +522,13 @@ static int raw_preposition_files(orte_job_t *jdata,
         }
         /* set the flags to non-blocking */
         if ((flags = fcntl(fd, F_GETFL, 0)) < 0) {
-            opal_output(orte_filem_base_output, "[%s:%d]: fcntl(F_GETFL) failed with errno=%d\n", 
+            opal_output(orte_filem_base_framework.framework_output, "[%s:%d]: fcntl(F_GETFL) failed with errno=%d\n", 
                         __FILE__, __LINE__, errno);
         } else {
             flags |= O_NONBLOCK;
             fcntl(fd, F_SETFL, flags);
         }            
-        OPAL_OUTPUT_VERBOSE((1, orte_filem_base_output,
+        OPAL_OUTPUT_VERBOSE((1, orte_filem_base_framework.framework_output,
                              "%s filem:raw: setting up to position file %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), fs->local_target));
         xfer = OBJ_NEW(orte_filem_raw_xfer_t);
@@ -586,7 +586,7 @@ static int raw_preposition_files(orte_job_t *jdata,
      * is a duplicate, then the list will be empty
      */
     if (0 == opal_list_get_size(&outbound->xfers)) {
-        OPAL_OUTPUT_VERBOSE((1, orte_filem_base_output,
+        OPAL_OUTPUT_VERBOSE((1, orte_filem_base_framework.framework_output,
                              "%s filem:raw: all duplicate files - no positioning reqd",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
         opal_list_remove_item(&outbound_files, &outbound->super);
@@ -597,7 +597,7 @@ static int raw_preposition_files(orte_job_t *jdata,
         return ORTE_SUCCESS;
     }
 
-    if (0 < opal_output_get_verbosity(orte_filem_base_output)) {
+    if (0 < opal_output_get_verbosity(orte_filem_base_framework.framework_output)) {
         opal_output(0, "%s Files to be positioned:", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
         for (itm2 = opal_list_get_first(&outbound->xfers);
              itm2 != opal_list_get_end(&outbound->xfers);
@@ -625,7 +625,7 @@ static int create_link(char *my_dir, char *path,
      * same directory, so check for existence first
      */
     if (0 != stat(fullname, &buf)) {
-        OPAL_OUTPUT_VERBOSE((1, orte_filem_base_output,
+        OPAL_OUTPUT_VERBOSE((1, orte_filem_base_framework.framework_output,
                              "%s filem:raw: creating symlink to %s\n\tmypath: %s\n\tlink: %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), link_pt,
                              mypath, fullname));
@@ -701,12 +701,12 @@ static int raw_link_local_files(orte_job_t *jdata,
         if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(orte_local_children, i))) {
             continue;
         }
-        OPAL_OUTPUT_VERBOSE((10, orte_filem_base_output,
+        OPAL_OUTPUT_VERBOSE((10, orte_filem_base_framework.framework_output,
                              "%s filem:raw: working symlinks for proc %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_NAME_PRINT(&proc->name)));
         if (proc->name.jobid != jdata->jobid) {
-            OPAL_OUTPUT_VERBOSE((10, orte_filem_base_output,
+            OPAL_OUTPUT_VERBOSE((10, orte_filem_base_framework.framework_output,
                                  "%s filem:raw: proc %s not part of job %s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  ORTE_NAME_PRINT(&proc->name),
@@ -714,7 +714,7 @@ static int raw_link_local_files(orte_job_t *jdata,
             continue;
         }
         if (proc->app_idx != app->idx) {
-            OPAL_OUTPUT_VERBOSE((10, orte_filem_base_output,
+            OPAL_OUTPUT_VERBOSE((10, orte_filem_base_framework.framework_output,
                                  "%s filem:raw: proc %s not part of app_idx %d",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  ORTE_NAME_PRINT(&proc->name),
@@ -728,7 +728,7 @@ static int raw_link_local_files(orte_job_t *jdata,
             continue;
         }
 
-        OPAL_OUTPUT_VERBOSE((1, orte_filem_base_output,
+        OPAL_OUTPUT_VERBOSE((1, orte_filem_base_framework.framework_output,
                              "%s filem:raw: creating symlinks for %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_NAME_PRINT(&proc->name)));
@@ -753,7 +753,7 @@ static int raw_link_local_files(orte_job_t *jdata,
              item != opal_list_get_end(&incoming_files);
              item = opal_list_get_next(item)) {
             inbnd = (orte_filem_raw_incoming_t*)item;
-            OPAL_OUTPUT_VERBOSE((1, orte_filem_base_output,
+            OPAL_OUTPUT_VERBOSE((1, orte_filem_base_framework.framework_output,
                                  "%s filem:raw: checking file %s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), inbnd->file));
 
@@ -762,7 +762,7 @@ static int raw_link_local_files(orte_job_t *jdata,
                 if (0 == strcmp(inbnd->file, files[j])) {
                     /* this must be one of the files we are to link against */
                     if (NULL != inbnd->link_pts) {
-                        OPAL_OUTPUT_VERBOSE((10, orte_filem_base_output,
+                        OPAL_OUTPUT_VERBOSE((10, orte_filem_base_framework.framework_output,
                                              "%s filem:raw: creating links for file %s",
                                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                              inbnd->file));
@@ -776,7 +776,7 @@ static int raw_link_local_files(orte_job_t *jdata,
                             }
                         }
                     } else {
-                        OPAL_OUTPUT_VERBOSE((10, orte_filem_base_output,
+                        OPAL_OUTPUT_VERBOSE((10, orte_filem_base_framework.framework_output,
                                              "%s filem:raw: file %s has no link points",
                                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                              inbnd->file));
@@ -820,7 +820,7 @@ static void send_chunk(int fd, short argc, void *cbdata)
             return;
         } 
 
-        OPAL_OUTPUT_VERBOSE((1, orte_filem_base_output,
+        OPAL_OUTPUT_VERBOSE((1, orte_filem_base_framework.framework_output,
                              "%s filem:raw:read error on file %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), rev->file));
 
@@ -839,7 +839,7 @@ static void send_chunk(int fd, short argc, void *cbdata)
         return;
     }
 
-    OPAL_OUTPUT_VERBOSE((1, orte_filem_base_output,
+    OPAL_OUTPUT_VERBOSE((1, orte_filem_base_framework.framework_output,
                          "%s filem:raw:read handler sending chunk %d of %d bytes for file %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          rev->nchunk, numbytes, rev->file));
@@ -927,7 +927,7 @@ static int link_archive(orte_filem_raw_incoming_t *inbnd)
     char *cmd;
     char path[MAXPATHLEN];
 
-    OPAL_OUTPUT_VERBOSE((1, orte_filem_base_output,
+    OPAL_OUTPUT_VERBOSE((1, orte_filem_base_framework.framework_output,
                          "%s filem:raw: identifying links for archive %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          inbnd->fullpath));
@@ -944,7 +944,7 @@ static int link_archive(orte_filem_raw_incoming_t *inbnd)
      * have to link to each individual file
      */
     while (fgets(path, sizeof(path), fp) != NULL) {
-        OPAL_OUTPUT_VERBOSE((10, orte_filem_base_output,
+        OPAL_OUTPUT_VERBOSE((10, orte_filem_base_framework.framework_output,
                              "%s filem:raw: path %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              path));
@@ -952,7 +952,7 @@ static int link_archive(orte_filem_raw_incoming_t *inbnd)
         path[strlen(path)-1] = '\0';
         /* ignore directories */
         if ('/' == path[strlen(path)-1]) {
-            OPAL_OUTPUT_VERBOSE((10, orte_filem_base_output,
+            OPAL_OUTPUT_VERBOSE((10, orte_filem_base_framework.framework_output,
                                  "%s filem:raw: path %s is a directory - ignoring it",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  path));
@@ -960,13 +960,13 @@ static int link_archive(orte_filem_raw_incoming_t *inbnd)
         }
         /* ignore specific useless directory trees */
         if (NULL != strstr(path, ".deps")) {
-            OPAL_OUTPUT_VERBOSE((10, orte_filem_base_output,
+            OPAL_OUTPUT_VERBOSE((10, orte_filem_base_framework.framework_output,
                                  "%s filem:raw: path %s includes .deps - ignoring it",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  path));
             continue;
         }
-        OPAL_OUTPUT_VERBOSE((10, orte_filem_base_output,
+        OPAL_OUTPUT_VERBOSE((10, orte_filem_base_framework.framework_output,
                              "%s filem:raw: adding path %s to link points",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              path));
@@ -1029,7 +1029,7 @@ static void recv_files(int status, orte_process_name_t* sender,
         }
     }
 
-    OPAL_OUTPUT_VERBOSE((1, orte_filem_base_output,
+    OPAL_OUTPUT_VERBOSE((1, orte_filem_base_framework.framework_output,
                          "%s filem:raw: received chunk %d for file %s containing %d bytes",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          nchunk, file, nbytes));
@@ -1047,7 +1047,7 @@ static void recv_files(int status, orte_process_name_t* sender,
     }
     if (NULL == incoming) {
         /* nope - add it */
-        OPAL_OUTPUT_VERBOSE((1, orte_filem_base_output,
+        OPAL_OUTPUT_VERBOSE((1, orte_filem_base_framework.framework_output,
                              "%s filem:raw: adding file %s to incoming list",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), file));
         incoming = OBJ_NEW(orte_filem_raw_incoming_t);
@@ -1071,7 +1071,7 @@ static void recv_files(int status, orte_process_name_t* sender,
         incoming->fullpath = opal_os_path(false, jobfam_dir, file, NULL);
         free(jobfam_dir);
 
-        OPAL_OUTPUT_VERBOSE((1, orte_filem_base_output,
+        OPAL_OUTPUT_VERBOSE((1, orte_filem_base_framework.framework_output,
                              "%s filem:raw: opening target file %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), incoming->fullpath));
         /* create the path to the target, if not already existing */
@@ -1142,7 +1142,7 @@ static void write_handler(int fd, short event, void *cbdata)
     char homedir[MAXPATHLEN];
     int rc;
 
-    OPAL_OUTPUT_VERBOSE((1, orte_filem_base_output,
+    OPAL_OUTPUT_VERBOSE((1, orte_filem_base_framework.framework_output,
                          "%s write:handler writing data to %d",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          sink->fd));
@@ -1154,7 +1154,7 @@ static void write_handler(int fd, short event, void *cbdata)
         output = (orte_filem_raw_output_t*)item;
         if (0 == output->numbytes) {
             /* indicates we are to close this stream */
-            OPAL_OUTPUT_VERBOSE((1, orte_filem_base_output,
+            OPAL_OUTPUT_VERBOSE((1, orte_filem_base_framework.framework_output,
                                  "%s write:handler zero bytes - reporting complete for file %s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  sink->file));
@@ -1180,7 +1180,7 @@ static void write_handler(int fd, short event, void *cbdata)
                 getcwd(homedir, sizeof(homedir));
                 dirname = opal_dirname(sink->fullpath);
                 chdir(dirname);
-                OPAL_OUTPUT_VERBOSE((1, orte_filem_base_output,
+                OPAL_OUTPUT_VERBOSE((1, orte_filem_base_framework.framework_output,
                                      "%s write:handler unarchiving file %s with cmd: %s",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                      sink->file, cmd));
@@ -1199,7 +1199,7 @@ static void write_handler(int fd, short event, void *cbdata)
             return;
         }
         num_written = write(sink->fd, output->data, output->numbytes);
-        OPAL_OUTPUT_VERBOSE((1, orte_filem_base_output,
+        OPAL_OUTPUT_VERBOSE((1, orte_filem_base_framework.framework_output,
                              "%s write:handler wrote %d bytes to file %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              num_written, sink->file));
@@ -1217,7 +1217,7 @@ static void write_handler(int fd, short event, void *cbdata)
             /* otherwise, something bad happened so all we can do is abort
              * this attempt
              */
-            OPAL_OUTPUT_VERBOSE((1, orte_filem_base_output,
+            OPAL_OUTPUT_VERBOSE((1, orte_filem_base_framework.framework_output,
                                  "%s write:handler error on write for file %s: %s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  sink->file, strerror(errno)));

@@ -153,7 +153,7 @@ static void recv_dfs(int status, orte_process_name_t* sender,
         return;
     }
 
-    opal_output_verbose(1, orte_dfs_base.output,
+    opal_output_verbose(1, orte_dfs_base_framework.framework_output,
                         "%s recvd cmd %d from sender %s",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), (int)cmd,
                         ORTE_NAME_PRINT(sender));
@@ -186,7 +186,7 @@ static void recv_dfs(int status, orte_process_name_t* sender,
             }
         }
         if (NULL == dfs) {
-            opal_output_verbose(1, orte_dfs_base.output,
+            opal_output_verbose(1, orte_dfs_base_framework.framework_output,
                                 "%s recvd open file - no corresponding request found for local fd %d",
                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), local_fd);
             ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
@@ -197,7 +197,7 @@ static void recv_dfs(int status, orte_process_name_t* sender,
          * the error value to the caller
          */
         if (remote_fd < 0) {
-            opal_output_verbose(1, orte_dfs_base.output,
+            opal_output_verbose(1, orte_dfs_base_framework.framework_output,
                                 "%s recvd open file response error file %s [error: %d]",
                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                 dfs->uri, remote_fd);
@@ -227,7 +227,7 @@ static void recv_dfs(int status, orte_process_name_t* sender,
         /* return the local_fd to the caller for
          * subsequent operations
          */
-        opal_output_verbose(1, orte_dfs_base.output,
+        opal_output_verbose(1, orte_dfs_base_framework.framework_output,
                             "%s recvd open file completed for file %s [local fd: %d remote fd: %d]",
                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                             dfs->uri, trk->local_fd, remote_fd);
@@ -259,7 +259,7 @@ static void recv_dfs(int status, orte_process_name_t* sender,
             }
         }
         if (NULL == dfs) {
-            opal_output_verbose(1, orte_dfs_base.output,
+            opal_output_verbose(1, orte_dfs_base_framework.framework_output,
                                 "%s recvd size - no corresponding request found for local fd %d",
                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), local_fd);
             ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
@@ -301,7 +301,7 @@ static void recv_dfs(int status, orte_process_name_t* sender,
             }
         }
         if (NULL == dfs) {
-            opal_output_verbose(1, orte_dfs_base.output,
+            opal_output_verbose(1, orte_dfs_base_framework.framework_output,
                                 "%s recvd seek - no corresponding request found for local fd %d",
                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), local_fd);
             ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
@@ -343,7 +343,7 @@ static void recv_dfs(int status, orte_process_name_t* sender,
             }
         }
         if (NULL == dfs) {
-            opal_output_verbose(1, orte_dfs_base.output,
+            opal_output_verbose(1, orte_dfs_base_framework.framework_output,
                                 "%s recvd read - no corresponding request found for local fd %d",
                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), local_fd);
             ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
@@ -393,7 +393,7 @@ static void recv_dfs(int status, orte_process_name_t* sender,
             }
         }
         if (NULL == dfs) {
-            opal_output_verbose(1, orte_dfs_base.output,
+            opal_output_verbose(1, orte_dfs_base_framework.framework_output,
                                 "%s recvd post - no corresponding request found",
                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
             ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
@@ -426,7 +426,7 @@ static void recv_dfs(int status, orte_process_name_t* sender,
             }
         }
         if (NULL == dfs) {
-            opal_output_verbose(1, orte_dfs_base.output,
+            opal_output_verbose(1, orte_dfs_base_framework.framework_output,
                                 "%s recvd getfm - no corresponding request found",
                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
             ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
@@ -459,7 +459,7 @@ static void open_local_file(orte_dfs_request_t *dfs)
         OBJ_RELEASE(dfs);
         return;
     }
-    opal_output_verbose(1, orte_dfs_base.output,
+    opal_output_verbose(1, orte_dfs_base_framework.framework_output,
                         "%s opening local file %s",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                         filename);
@@ -488,7 +488,7 @@ static void open_local_file(orte_dfs_request_t *dfs)
     /* the file is locally hosted */
     trk->host_daemon.jobid = ORTE_PROC_MY_DAEMON->jobid;
     trk->host_daemon.vpid = ORTE_PROC_MY_DAEMON->vpid;
-    opal_output_verbose(1, orte_dfs_base.output,
+    opal_output_verbose(1, orte_dfs_base_framework.framework_output,
                         "%s local file %s mapped localfd %d to remotefd %d",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                         filename, trk->local_fd, trk->remote_fd);
@@ -541,7 +541,7 @@ static void process_opens(int fd, short args, void *cbdata)
     if (0 == strcmp(host, orte_process_info.nodename) ||
         0 == strcmp(host, "localhost") ||
         opal_ifislocal(host)) {
-        opal_output_verbose(1, orte_dfs_base.output,
+        opal_output_verbose(1, orte_dfs_base_framework.framework_output,
                             "%s file %s on local host",
                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                             filename);
@@ -554,7 +554,7 @@ static void process_opens(int fd, short args, void *cbdata)
     /* ident the daemon on that host */
     daemon.jobid = ORTE_PROC_MY_DAEMON->jobid;
     /* fetch the daemon for this hostname */
-    opal_output_verbose(1, orte_dfs_base.output,
+    opal_output_verbose(1, orte_dfs_base_framework.framework_output,
                         "%s looking for daemon on host %s",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), host);
     v = &daemon.vpid;
@@ -564,7 +564,7 @@ static void process_opens(int fd, short args, void *cbdata)
         goto complete;
     }
 
-    opal_output_verbose(1, orte_dfs_base.output,
+    opal_output_verbose(1, orte_dfs_base_framework.framework_output,
                         "%s file %s on host %s daemon %s",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                         filename, host, ORTE_NAME_PRINT(&daemon));
@@ -573,7 +573,7 @@ static void process_opens(int fd, short args, void *cbdata)
      * treat this as local
      */
     if (daemon.vpid == ORTE_PROC_MY_DAEMON->vpid) {
-        opal_output_verbose(1, orte_dfs_base.output,
+        opal_output_verbose(1, orte_dfs_base_framework.framework_output,
                             "%s local file %s on same daemon",
                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                             filename);
@@ -610,7 +610,7 @@ static void process_opens(int fd, short args, void *cbdata)
         goto complete;
     }
     
-    opal_output_verbose(1, orte_dfs_base.output,
+    opal_output_verbose(1, orte_dfs_base_framework.framework_output,
                         "%s sending open file request to %s file %s",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                         ORTE_NAME_PRINT(&daemon),
@@ -649,7 +649,7 @@ static void dfs_open(char *uri,
 {
     orte_dfs_request_t *dfs;
 
-    opal_output_verbose(1, orte_dfs_base.output,
+    opal_output_verbose(1, orte_dfs_base_framework.framework_output,
                         "%s opening file %s",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), uri);
 
@@ -672,7 +672,7 @@ static void process_close(int fd, short args, void *cbdata)
     opal_buffer_t *buffer;
     int rc;
 
-    opal_output_verbose(1, orte_dfs_base.output,
+    opal_output_verbose(1, orte_dfs_base_framework.framework_output,
                         "%s closing fd %d",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                         close_dfs->local_fd);
@@ -716,7 +716,7 @@ static void process_close(int fd, short args, void *cbdata)
         goto complete;
     }
     
-    opal_output_verbose(1, orte_dfs_base.output,
+    opal_output_verbose(1, orte_dfs_base_framework.framework_output,
                         "%s sending close file request to %s for fd %d",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                         ORTE_NAME_PRINT(&trk->host_daemon),
@@ -745,7 +745,7 @@ static void dfs_close(int fd,
 {
     orte_dfs_request_t *dfs;
 
-    opal_output_verbose(1, orte_dfs_base.output,
+    opal_output_verbose(1, orte_dfs_base_framework.framework_output,
                         "%s close called on fd %d",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), fd);
 
@@ -768,7 +768,7 @@ static void process_sizes(int fd, short args, void *cbdata)
     int rc;
     struct stat buf;
 
-    opal_output_verbose(1, orte_dfs_base.output,
+    opal_output_verbose(1, orte_dfs_base_framework.framework_output,
                         "%s processing get_size on fd %d",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                         size_dfs->local_fd);
@@ -797,7 +797,7 @@ static void process_sizes(int fd, short args, void *cbdata)
         /* stat the file and get its size */
         if (0 > stat(trk->filename, &buf)) {
             /* cannot stat file */
-            opal_output_verbose(1, orte_dfs_base.output,
+            opal_output_verbose(1, orte_dfs_base_framework.framework_output,
                                 "%s could not stat %s",
                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                 trk->filename);
@@ -838,7 +838,7 @@ static void process_sizes(int fd, short args, void *cbdata)
         goto complete;
     }
 
-    opal_output_verbose(1, orte_dfs_base.output,
+    opal_output_verbose(1, orte_dfs_base_framework.framework_output,
                         "%s sending get_size request to %s for fd %d",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                         ORTE_NAME_PRINT(&trk->host_daemon),
@@ -868,7 +868,7 @@ static void dfs_get_file_size(int fd,
 {
     orte_dfs_request_t *dfs;
 
-    opal_output_verbose(1, orte_dfs_base.output,
+    opal_output_verbose(1, orte_dfs_base_framework.framework_output,
                         "%s get_size called on fd %d",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), fd);
 
@@ -893,7 +893,7 @@ static void process_seeks(int fd, short args, void *cbdata)
     int rc;
     struct stat buf;
 
-    opal_output_verbose(1, orte_dfs_base.output,
+    opal_output_verbose(1, orte_dfs_base_framework.framework_output,
                         "%s processing seek on fd %d",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                         seek_dfs->local_fd);
@@ -919,14 +919,14 @@ static void process_seeks(int fd, short args, void *cbdata)
      * stuck the "whence" value in the remote_fd
      */
     if (trk->host_daemon.vpid == ORTE_PROC_MY_DAEMON->vpid) {
-        opal_output_verbose(1, orte_dfs_base.output,
+        opal_output_verbose(1, orte_dfs_base_framework.framework_output,
                             "%s local seek on fd %d",
                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                             seek_dfs->local_fd);
         /* stat the file and get its size */
         if (0 > stat(trk->filename, &buf)) {
             /* cannot stat file */
-            opal_output_verbose(1, orte_dfs_base.output,
+            opal_output_verbose(1, orte_dfs_base_framework.framework_output,
                                 "%s could not stat %s",
                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                 trk->filename);
@@ -992,7 +992,7 @@ static void process_seeks(int fd, short args, void *cbdata)
         goto complete;
     }
 
-    opal_output_verbose(1, orte_dfs_base.output,
+    opal_output_verbose(1, orte_dfs_base_framework.framework_output,
                         "%s sending seek file request to %s for fd %d",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                         ORTE_NAME_PRINT(&trk->host_daemon),
@@ -1019,7 +1019,7 @@ static void dfs_seek(int fd, long offset, int whence,
 {
     orte_dfs_request_t *dfs;
 
-    opal_output_verbose(1, orte_dfs_base.output,
+    opal_output_verbose(1, orte_dfs_base_framework.framework_output,
                         "%s seek called on fd %d",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), fd);
 
@@ -1104,7 +1104,7 @@ static void process_reads(int fd, short args, void *cbdata)
         goto complete;
     }
     
-    opal_output_verbose(1, orte_dfs_base.output,
+    opal_output_verbose(1, orte_dfs_base_framework.framework_output,
                         "%s sending read file request to %s for fd %d",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                         ORTE_NAME_PRINT(&trk->host_daemon),

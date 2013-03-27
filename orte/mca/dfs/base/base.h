@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012      Los Alamos National Security, Inc.  All rights reserved. 
+ * Copyright (c) 2012-2013 Los Alamos National Security, Inc.  All rights reserved. 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -29,20 +29,11 @@
 BEGIN_C_DECLS
 
 /*
- * MCA Framework functions
+ * MCA Framework
  */
-ORTE_DECLSPEC    int orte_dfs_base_open(void);
+ORTE_DECLSPEC extern mca_base_framework_t orte_dfs_base_framework;
+/* select a component */
 ORTE_DECLSPEC    int orte_dfs_base_select(void);
-ORTE_DECLSPEC    int orte_dfs_base_close(void);
-
-/* define a struct to hold framework-global values */
-typedef struct {
-    int output;
-    bool initialized;
-    opal_list_t components_available;
-} orte_dfs_base_t;
-
-ORTE_DECLSPEC extern orte_dfs_base_t orte_dfs_base;
 
 /* tracker for active files */
 typedef struct {

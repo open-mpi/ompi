@@ -41,8 +41,8 @@ int orte_filem_base_select(void)
     /*
      * Select the best component
      */
-    if( OPAL_SUCCESS != mca_base_select("filem", orte_filem_base_output,
-                                        &orte_filem_base_components_available,
+    if( OPAL_SUCCESS != mca_base_select("filem", orte_filem_base_framework.framework_output,
+                                        &orte_filem_base_framework.framework_components,
                                         (mca_base_module_t **) &best_module,
                                         (mca_base_component_t **) &best_component) ) {
         /* It is okay to not select anything - we'll just retain
@@ -52,7 +52,6 @@ int orte_filem_base_select(void)
     }
 
     /* Save the winner */
-    orte_filem_base_selected_component = *best_component;
     orte_filem = *best_module;
 
     /* Initialize the winner */

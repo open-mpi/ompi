@@ -111,7 +111,7 @@ static int init(void)
                                                        orte_quit, ORTE_ERROR_PRI))) {
         ORTE_ERROR_LOG(rc);
     }
-    if (5 < opal_output_get_verbosity(orte_state_base_output)) {
+    if (5 < opal_output_get_verbosity(orte_state_base_framework.framework_output)) {
         orte_state_base_print_job_state_machine();
     }
 
@@ -126,7 +126,7 @@ static int init(void)
             ORTE_ERROR_LOG(rc);
         }
     }
-    if (5 < opal_output_get_verbosity(orte_state_base_output)) {
+    if (5 < opal_output_get_verbosity(orte_state_base_framework.framework_output)) {
 	orte_state_base_print_proc_state_machine();
     }
     return ORTE_SUCCESS;
@@ -157,7 +157,7 @@ static void track_jobs(int fd, short argc, void *cbdata)
     int rc;
 
     if (ORTE_JOB_STATE_LOCAL_LAUNCH_COMPLETE == caddy->job_state) {
-        OPAL_OUTPUT_VERBOSE((5, orte_state_base_output,
+        OPAL_OUTPUT_VERBOSE((5, orte_state_base_framework.framework_output,
                              "%s state:orted:track_jobs sending local launch complete for job %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_JOBID_PRINT(caddy->jdata->jobid)));
@@ -202,7 +202,7 @@ static void track_procs(int fd, short argc, void *cbdata)
     orte_vpid_t null=ORTE_VPID_INVALID;
     int8_t flag;
 
-    OPAL_OUTPUT_VERBOSE((5, orte_state_base_output,
+    OPAL_OUTPUT_VERBOSE((5, orte_state_base_framework.framework_output,
                          "%s state:orted:track_procs called for proc %s state %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(proc),
@@ -230,7 +230,7 @@ static void track_procs(int fd, short argc, void *cbdata)
              * else that needs it
              */
 
-            OPAL_OUTPUT_VERBOSE((5, orte_state_base_output,
+            OPAL_OUTPUT_VERBOSE((5, orte_state_base_framework.framework_output,
                                  "%s state:orted: sending contact info to HNP",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
@@ -317,7 +317,7 @@ static void track_procs(int fd, short argc, void *cbdata)
                     ORTE_ERROR_LOG(rc);
                 }
                 /* send it */
-                OPAL_OUTPUT_VERBOSE((5, orte_state_base_output,
+                OPAL_OUTPUT_VERBOSE((5, orte_state_base_framework.framework_output,
                                      "%s SENDING PROC TERMINATION UPDATE FOR JOB %s",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                      ORTE_JOBID_PRINT(jdata->jobid)));
@@ -368,7 +368,7 @@ static void track_procs(int fd, short argc, void *cbdata)
                     ORTE_ERROR_LOG(rc);
                 }
                 /* send it */
-                OPAL_OUTPUT_VERBOSE((5, orte_state_base_output,
+                OPAL_OUTPUT_VERBOSE((5, orte_state_base_framework.framework_output,
                                      "%s SENDING PROC TERMINATION UPDATE FOR JOB %s",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                      ORTE_JOBID_PRINT(jdata->jobid)));

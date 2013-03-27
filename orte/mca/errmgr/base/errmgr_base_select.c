@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved. 
+ * Copyright (c) 2012-2013 Los Alamos National Security, Inc.  All rights reserved. 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -41,8 +42,8 @@ int orte_errmgr_base_select(void)
     /*
      * Select the best component
      */
-    if( OPAL_SUCCESS != mca_base_select("errmgr", orte_errmgr_base.output,
-                                        &orte_errmgr_base_components_available,
+    if( OPAL_SUCCESS != mca_base_select("errmgr", orte_errmgr_base_framework.framework_output,
+                                        &orte_errmgr_base_framework.framework_components,
                                         (mca_base_module_t **) &best_module,
                                         (mca_base_component_t **) &best_component) ) {
         /* This will only happen if no component was selected */
@@ -51,7 +52,6 @@ int orte_errmgr_base_select(void)
     }
 
     /* Save the winner */
-    orte_errmgr_base_selected_component = *best_component;
     orte_errmgr = *best_module;
 
     /* Initialize the winner */

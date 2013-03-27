@@ -164,7 +164,7 @@ static int slurm_set_name(void)
     orte_vpid_t vpid;
     char *tmp;
     
-    OPAL_OUTPUT_VERBOSE((1, orte_ess_base_output,
+    OPAL_OUTPUT_VERBOSE((1, orte_ess_base_framework.framework_output,
                          "ess:slurm setting name"));
     
     if (NULL == orte_ess_base_jobid) {
@@ -191,7 +191,7 @@ static int slurm_set_name(void)
     slurm_nodeid = atoi(getenv("SLURM_NODEID"));
     ORTE_PROC_MY_NAME->vpid = vpid + slurm_nodeid;
 
-    OPAL_OUTPUT_VERBOSE((1, orte_ess_base_output,
+    OPAL_OUTPUT_VERBOSE((1, orte_ess_base_framework.framework_output,
                          "ess:slurm set name to %s", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
     /* fix up the system info nodename to match exactly what slurm returned */
@@ -205,7 +205,7 @@ static int slurm_set_name(void)
     orte_process_info.nodename = strdup(tmp);
 
     
-    OPAL_OUTPUT_VERBOSE((1, orte_ess_base_output,
+    OPAL_OUTPUT_VERBOSE((1, orte_ess_base_framework.framework_output,
                          "ess:slurm set nodename to %s",
                          (NULL == orte_process_info.nodename) ? "NULL" : orte_process_info.nodename));
     

@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2007-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * $COPYRIGHT$
  * 
@@ -45,49 +45,12 @@
 BEGIN_C_DECLS
 
 
-/* ******************************************************************** */
-
-
-/**
- * Open the RML framework
- *
- * Open the RML framework.  Loads all available RML components and
- * runs their open functions.
- *
- * @retval ORTE_SUCCESS Components successfully loaded
- * @retval ORTE_ERROR   An unknown error occurred
+/*
+ * MCA Framework
  */
-ORTE_DECLSPEC int orte_rml_base_open(void);
-
-/**
- * Select an active RML component
- *
- * Select an RML component from the list of frameworks that were
- * opened during orte_rml_base_open().  The orte_rml_base_select()
- * function will fill in the orte_rml structure so that all functions
- * in the interface exist.  Note that there are still calling
- * restrictions at that point (see the documentation for
- * orte_rml_component_init_fn_t).
- *
- * All components that are not selected will be closed during this
- * call.
- *
- * @retval ORTE_SUCCESS Components successfully selected
- * @retval ORTE_ERROR   An unknown error occurred
- */
+ORTE_DECLSPEC extern mca_base_framework_t orte_rml_base_framework;
+/* select a component */
 ORTE_DECLSPEC int orte_rml_base_select(void);
-
-
-/**
- * Close the RML framework
- *
- * Close the RML framework, releasing all resources associated with
- * the framework interface.  Also closes the active component used
- * during the application.
- *
- * @retval ORTE_SUCCESS Framework successfully shut down
- */
-ORTE_DECLSPEC int orte_rml_base_close(void);
 
 /**
  * Post receive to get updates regarding contact information
@@ -113,29 +76,6 @@ ORTE_DECLSPEC int orte_rml_base_comm_start(void);
  * @retval ORTE_SUCCESS Receive succesffully cancelled.
  */
 ORTE_DECLSPEC int orte_rml_base_comm_stop(void);
-
-
-/**
- * Output stream for RML debugging
- *
- * Output stream for the opal_output() code intended for RML output.
- * It will be have its verbosity set according to the MCA parameter
- * rml_base_verbose.  Useable between call to orte_rml_base_open() and
- * orte_rml_base_close().
- */
-ORTE_DECLSPEC extern int orte_rml_base_output;
-
-
-/**
- * List of components that are available to the RML
- *
- * List of components that are currently available to the RML
- * framework.  Useable between calls to orte_rml_base_open() and
- * orte_rml_base_close().
- *
- * @note This list should not be used by code outside the RML base.
- */
-ORTE_DECLSPEC extern opal_list_t orte_rml_base_components;
 
 
 /**

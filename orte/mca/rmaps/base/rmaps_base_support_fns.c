@@ -150,7 +150,7 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
          * them as requested or "soft" locations, then use those nodes
          */
         if (!orte_soft_locations && NULL != app->dash_host) {
-            OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base.rmaps_output,
+            OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base_framework.framework_output,
                                  "%s using dash_host",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
             if (ORTE_SUCCESS != (rc = orte_util_add_dash_host_nodes(&nodes,
@@ -160,7 +160,7 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
             }
         } else if (NULL != app->hostfile) {
             /* otherwise, if the app provided a hostfile, then use that */
-            OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base.rmaps_output,
+            OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base_framework.framework_output,
                                  "%s using hostfile %s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  app->hostfile));
@@ -171,7 +171,7 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
             }
         } else if (NULL != orte_rankfile) {
             /* use the rankfile, if provided */
-            OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base.rmaps_output,
+            OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base_framework.framework_output,
                                  "%s using rankfile %s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  orte_rankfile));
@@ -181,7 +181,7 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
                 return rc;
             }
             if (0 == opal_list_get_size(&nodes)) {
-                OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base.rmaps_output,
+                OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base_framework.framework_output,
                                      "%s nothing found in given rankfile",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
                 OBJ_DESTRUCT(&nodes);
@@ -189,7 +189,7 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
             }
         } else if (NULL != orte_default_hostfile) {
             /* fall back to the default hostfile, if provided */
-            OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base.rmaps_output,
+            OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base_framework.framework_output,
                                  "%s using default hostfile %s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  orte_default_hostfile));
@@ -205,7 +205,7 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
              * to use the local host
              */
             if (0 == opal_list_get_size(&nodes)) {
-                OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base.rmaps_output,
+                OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base_framework.framework_output,
                                      "%s nothing in default hostfile - using local host",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
                 node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, 0);
@@ -220,7 +220,7 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
             }
         } else {
             /* if nothing else was available, then use the local host */
-            OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base.rmaps_output,
+            OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base_framework.framework_output,
                                  "%s using local host",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
             node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, 0);
@@ -254,26 +254,26 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
                     continue;
                 }
                 if (0 != strcmp(node->name, nptr->name)) {
-                    OPAL_OUTPUT_VERBOSE((10, orte_rmaps_base.rmaps_output,
+                    OPAL_OUTPUT_VERBOSE((10, orte_rmaps_base_framework.framework_output,
                                          "NODE %s DOESNT MATCH NODE %s",
                                          node->name, nptr->name));
                     continue;
                 }
                 /* ignore nodes that are marked as do-not-use for this mapping */
                 if (ORTE_NODE_STATE_DO_NOT_USE == node->state) {
-                    OPAL_OUTPUT_VERBOSE((10, orte_rmaps_base.rmaps_output,
+                    OPAL_OUTPUT_VERBOSE((10, orte_rmaps_base_framework.framework_output,
                                          "NODE %s IS MARKED NO_USE", node->name));
                     /* reset the state so it can be used another time */
                     node->state = ORTE_NODE_STATE_UP;
                     continue;
                 }
                 if (ORTE_NODE_STATE_DOWN == node->state) {
-                    OPAL_OUTPUT_VERBOSE((10, orte_rmaps_base.rmaps_output,
+                    OPAL_OUTPUT_VERBOSE((10, orte_rmaps_base_framework.framework_output,
                                          "NODE %s IS DOWN", node->name));
                     continue;
                 }
                 if (ORTE_NODE_STATE_NOT_INCLUDED == node->state) {
-                    OPAL_OUTPUT_VERBOSE((10, orte_rmaps_base.rmaps_output,
+                    OPAL_OUTPUT_VERBOSE((10, orte_rmaps_base_framework.framework_output,
                                          "NODE %s IS MARKED NO_INCLUDE", node->name));
                     /* not to be used */
                     continue;
@@ -282,7 +282,7 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
                  * unless we are mapping prior to launching the vm
                  */
                 if (NULL == node->daemon && !novm) {
-                    OPAL_OUTPUT_VERBOSE((10, orte_rmaps_base.rmaps_output,
+                    OPAL_OUTPUT_VERBOSE((10, orte_rmaps_base_framework.framework_output,
                                          "NODE %s HAS NO DAEMON", node->name));
                     continue;
                 }
@@ -337,7 +337,7 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
     if (orte_hnp_is_allocated && !(ORTE_GET_MAPPING_DIRECTIVE(policy) & ORTE_MAPPING_NO_USE_LOCAL)) {
         if (NULL != (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, 0))) {
             if (ORTE_NODE_STATE_DO_NOT_USE == node->state) {
-                OPAL_OUTPUT_VERBOSE((10, orte_rmaps_base.rmaps_output,
+                OPAL_OUTPUT_VERBOSE((10, orte_rmaps_base_framework.framework_output,
                                      "HNP IS MARKED NO_USE"));
                 /* clear this for future use, but don't include it */
                 node->state = ORTE_NODE_STATE_UP;
@@ -371,19 +371,19 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
         if (NULL != (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, i))) {
             /* ignore nodes that are marked as do-not-use for this mapping */
             if (ORTE_NODE_STATE_DO_NOT_USE == node->state) {
-                OPAL_OUTPUT_VERBOSE((10, orte_rmaps_base.rmaps_output,
+                OPAL_OUTPUT_VERBOSE((10, orte_rmaps_base_framework.framework_output,
                                      "NODE %s IS MARKED NO_USE", node->name));
                 /* reset the state so it can be used another time */
                 node->state = ORTE_NODE_STATE_UP;
                 continue;
             }
             if (ORTE_NODE_STATE_DOWN == node->state) {
-                OPAL_OUTPUT_VERBOSE((10, orte_rmaps_base.rmaps_output,
+                OPAL_OUTPUT_VERBOSE((10, orte_rmaps_base_framework.framework_output,
                                      "NODE %s IS MARKED DOWN", node->name));
                 continue;
             }
             if (ORTE_NODE_STATE_NOT_INCLUDED == node->state) {
-                OPAL_OUTPUT_VERBOSE((10, orte_rmaps_base.rmaps_output,
+                OPAL_OUTPUT_VERBOSE((10, orte_rmaps_base_framework.framework_output,
                                      "NODE %s IS MARKED NO_INCLUDE", node->name));
                 /* not to be used */
                 continue;
@@ -392,7 +392,7 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
              * unless we are mapping prior to launching the vm
              */
             if (NULL == node->daemon && !novm) {
-                OPAL_OUTPUT_VERBOSE((10, orte_rmaps_base.rmaps_output,
+                OPAL_OUTPUT_VERBOSE((10, orte_rmaps_base_framework.framework_output,
                                      "NODE %s HAS NO DAEMON", node->name));
                 continue;
             }
@@ -438,7 +438,7 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
         }
     }
 
-    OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base.rmaps_output,
+    OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base_framework.framework_output,
                          "%s Starting with %d nodes in list",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          (int)opal_list_get_size(allocated_nodes)));
@@ -454,7 +454,7 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
     }
     
     /* filter the nodes thru any hostfile and dash-host options */
-    OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base.rmaps_output,
+    OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base_framework.framework_output,
                          "%s Filtering thru apps",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
@@ -463,7 +463,7 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
         ORTE_ERROR_LOG(rc);
         return rc;
     }
-    OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base.rmaps_output,
+    OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base_framework.framework_output,
                          "%s Retained %d nodes in list",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          (int)opal_list_get_size(allocated_nodes)));
@@ -481,7 +481,7 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
         /** check to see if this node is fully used - remove if so */
         node = (orte_node_t*)item;
         if (0 != node->slots_max && node->slots_inuse > node->slots_max) {
-            OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base.rmaps_output,
+            OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base_framework.framework_output,
                                  "%s Removing node %s: max %d inuse %d",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  node->name, node->slots_max, node->slots_inuse));
@@ -490,7 +490,7 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
         } else if (node->slots <= node->slots_inuse &&
                    (ORTE_MAPPING_NO_OVERSUBSCRIBE & ORTE_GET_MAPPING_DIRECTIVE(policy))) {
             /* remove the node as fully used */
-            OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base.rmaps_output,
+            OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base_framework.framework_output,
                                  "%s Removing node %s slots %d inuse %d",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  node->name, node->slots, node->slots_inuse));
@@ -526,7 +526,7 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
     
     *total_num_slots = num_slots;
     
-    if (4 < opal_output_get_verbosity(orte_rmaps_base.rmaps_output)) {
+    if (4 < opal_output_get_verbosity(orte_rmaps_base_framework.framework_output)) {
         opal_output(0, "AVAILABLE NODES FOR MAPPING:");
         for (item = opal_list_get_first(allocated_nodes);
              item != opal_list_get_end(allocated_nodes);
@@ -605,7 +605,7 @@ orte_node_t* orte_rmaps_base_get_starting_point(opal_list_t *node_list,
         cur_node_item = opal_list_get_first(node_list);
     }
     
-    OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base.rmaps_output,
+    OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base_framework.framework_output,
                          "%s Starting bookmark at node %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ((orte_node_t*)cur_node_item)->name));
@@ -661,7 +661,7 @@ orte_node_t* orte_rmaps_base_get_starting_point(opal_list_t *node_list,
     }
 
  process:
-    OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base.rmaps_output,
+    OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base_framework.framework_output,
                          "%s Starting at node %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ((orte_node_t*)cur_node_item)->name));

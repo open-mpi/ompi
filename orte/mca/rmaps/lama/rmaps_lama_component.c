@@ -118,20 +118,20 @@ static int orte_rmaps_lama_register(void)
     var_id = mca_base_var_find("orte", "rmaps", "base", "pattern");
     (void) mca_base_var_register_synonym(var_id, "orte", "rmaps", "lama", "pattern", 0);
 
-    opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+    opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                         "mca:rmaps:lama: Priority %3d",
                         module_priority);
 
-    opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+    opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                         "mca:rmaps:lama: Map   : %s",
                         rmaps_lama_cmd_map);
-    opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+    opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                         "mca:rmaps:lama: Bind  : %s",
                         rmaps_lama_cmd_bind);
-    opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+    opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                         "mca:rmaps:lama: MPPR  : %s",
                         rmaps_lama_cmd_mppr);
-    opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+    opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                         "mca:rmaps:lama: Order : %s",
                         rmaps_lama_cmd_ordering);
 

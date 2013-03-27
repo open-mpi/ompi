@@ -247,7 +247,7 @@ void orte_plm_base_setup_job(int fd, short args, void *cbdata)
     char *bar1_par, *bar1_val;
     char *bar2_par, *bar2_val;
 
-    OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+    OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
                          "%s plm:base:setup_job",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
@@ -447,7 +447,7 @@ void orte_plm_base_launch_apps(int fd, short args, void *cbdata)
     /* update job state */
     caddy->jdata->state = caddy->job_state;
 
-    OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+    OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
                          "%s plm:base:launch_apps for job %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_JOBID_PRINT(jdata->jobid)));
@@ -518,7 +518,7 @@ void orte_plm_base_post_launch(int fd, short args, void *cbdata)
     caddy->jdata->state = caddy->job_state;
 
     /* complete wiring up the iof */
-    OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+    OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
                          "%s plm:base:launch wiring up iof for job %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_JOBID_PRINT(jdata->jobid)));
@@ -552,12 +552,12 @@ void orte_plm_base_registered(int fd, short args, void *cbdata)
     /* convenience */
     jdata = caddy->jdata;
 
-    OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+    OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
                          "%s plm:base:launch registered event",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
     if (ORTE_JOB_STATE_REGISTERED != caddy->job_state) {
-        OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+        OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
                              "%s plm:base:launch job %s not registered - state %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_JOBID_PRINT(jdata->jobid),
@@ -571,7 +571,7 @@ void orte_plm_base_registered(int fd, short args, void *cbdata)
 
     /* if this isn't a dynamic spawn, just cleanup */
     if (ORTE_JOBID_INVALID == jdata->originator.jobid) {
-        OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+        OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
                              "%s plm:base:launch job %s is not a dynamic spawn",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_JOBID_PRINT(jdata->jobid)));
@@ -592,7 +592,7 @@ void orte_plm_base_registered(int fd, short args, void *cbdata)
         OBJ_RELEASE(caddy);
         return;
     }
-    OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+    OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
                          "%s plm:base:launch sending dyn release of job %s to %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_JOBID_PRINT(jdata->jobid),
@@ -652,7 +652,7 @@ void orte_plm_base_daemon_callback(int status, orte_process_name_t* sender,
             goto CLEANUP;
         }
 
-        OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+        OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
                              "%s plm:base:orted_report_launch from daemon %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_NAME_PRINT(&dname)));
@@ -683,14 +683,14 @@ void orte_plm_base_daemon_callback(int status, orte_process_name_t* sender,
             }
         }
         
-        OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+        OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
                              "%s plm:base:orted_report_launch from daemon %s on node %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_NAME_PRINT(&dname), nodename));
         
         /* look this node up, if necessary */
         if (!orte_plm_globals.daemon_nodes_assigned_at_launch) {
-            OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+            OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
                                  "%s plm:base:orted_report_launch attempting to assign daemon %s to node %s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  ORTE_NAME_PRINT(&dname), nodename));
@@ -723,7 +723,7 @@ void orte_plm_base_daemon_callback(int status, orte_process_name_t* sender,
                     daemon->node = node;
                     daemon->nodename = node->name;
                     OBJ_RETAIN(node);
-                    OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+                    OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
                                          "%s plm:base:orted_report_launch assigning daemon %s to node %s",
                                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                          ORTE_NAME_PRINT(&daemon->name), node->name));
@@ -786,10 +786,10 @@ void orte_plm_base_daemon_callback(int status, orte_process_name_t* sender,
                 orted_failed_launch = true;
                 goto CLEANUP;
             }
-            OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+            OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
                                  "%s RECEIVED TOPOLOGY FROM NODE %s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), nodename));
-            if (10 < opal_output_get_verbosity(orte_plm_globals.output)) {
+            if (10 < opal_output_get_verbosity(orte_plm_base_framework.framework_output)) {
                 opal_dss.dump(0, topo, OPAL_HWLOC_TOPO);
             }
             /* do we already have this topology from some other node? */
@@ -800,7 +800,7 @@ void orte_plm_base_daemon_callback(int status, orte_process_name_t* sender,
                 }
                 if (OPAL_EQUAL == opal_dss.compare(topo, t, OPAL_HWLOC_TOPO)) {
                     /* yes - just point to it */
-                    OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+                    OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
                                          "%s TOPOLOGY MATCHES - DISCARDING",
                                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
                     found = true;
@@ -811,7 +811,7 @@ void orte_plm_base_daemon_callback(int status, orte_process_name_t* sender,
             }
             if (!found) {
                 /* nope - add it */
-                OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+                OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
                                      "%s NEW TOPOLOGY - ADDING",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
                     
@@ -822,7 +822,7 @@ void orte_plm_base_daemon_callback(int status, orte_process_name_t* sender,
 #endif
         
     CLEANUP:
-        OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+        OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
                              "%s plm:base:orted_report_launch %s for daemon %s at contact %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              orted_failed_launch ? "failed" : "completed",
@@ -1206,7 +1206,7 @@ int orte_plm_base_setup_virtual_machine(orte_job_t *jdata)
     int num_nodes;
     bool default_hostfile_used;
 
-    OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+    OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
                          "%s plm:base:setup_vm",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
@@ -1222,7 +1222,7 @@ int orte_plm_base_setup_virtual_machine(orte_job_t *jdata)
     if (ORTE_JOB_CONTROL_NO_VM & daemons->controls) {
         OBJ_CONSTRUCT(&nodes, opal_list_t);
         if (NULL == daemons->map) {
-            OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+            OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
                                  "%s plm:base:setup_vm creating map",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
             /* this is the first time thru, so the vm is just getting
@@ -1240,19 +1240,19 @@ int orte_plm_base_setup_virtual_machine(orte_job_t *jdata)
             }
             /* ignore nodes that are marked as do-not-use for this mapping */
             if (ORTE_NODE_STATE_DO_NOT_USE == node->state) {
-                OPAL_OUTPUT_VERBOSE((10, orte_plm_globals.output,
+                OPAL_OUTPUT_VERBOSE((10, orte_plm_base_framework.framework_output,
                                      "NODE %s IS MARKED NO_USE", node->name));
                 /* reset the state so it can be used another time */
                 node->state = ORTE_NODE_STATE_UP;
                 continue;
             }
             if (ORTE_NODE_STATE_DOWN == node->state) {
-                OPAL_OUTPUT_VERBOSE((10, orte_plm_globals.output,
+                OPAL_OUTPUT_VERBOSE((10, orte_plm_base_framework.framework_output,
                                      "NODE %s IS MARKED DOWN", node->name));
                 continue;
             }
             if (ORTE_NODE_STATE_NOT_INCLUDED == node->state) {
-                OPAL_OUTPUT_VERBOSE((10, orte_plm_globals.output,
+                OPAL_OUTPUT_VERBOSE((10, orte_plm_base_framework.framework_output,
                                      "NODE %s IS MARKED NO_INCLUDE", node->name));
                 /* not to be used */
                 continue;
@@ -1270,7 +1270,7 @@ int orte_plm_base_setup_virtual_machine(orte_job_t *jdata)
             /* if the HNP has some procs, then we are still good */
             node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, 0);
             if (0 < node->num_procs) {
-                OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+                OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
                                      "%s plm:base:setup_vm only HNP in use",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
                 OBJ_DESTRUCT(&nodes);
@@ -1288,7 +1288,7 @@ int orte_plm_base_setup_virtual_machine(orte_job_t *jdata)
     }
 
     if (NULL == daemons->map) {
-        OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+        OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
                              "%s plm:base:setup_vm creating map",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
         /* this is the first time thru, so the vm is just getting
@@ -1319,7 +1319,7 @@ int orte_plm_base_setup_virtual_machine(orte_job_t *jdata)
      * available nodes and "filter" them
      */
     if (!orte_managed_allocation) {
-        OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+        OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
                              "%s setup:vm: working unmanaged allocation",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
         default_hostfile_used = false;
@@ -1332,7 +1332,7 @@ int orte_plm_base_setup_virtual_machine(orte_job_t *jdata)
              * them as requested or "soft" locations, then use those nodes
              */
             if (!orte_soft_locations && NULL != app->dash_host) {
-                OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+                OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
                                      "%s using dash_host",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
                 if (ORTE_SUCCESS != (rc = orte_util_add_dash_host_nodes(&tnodes,
@@ -1342,7 +1342,7 @@ int orte_plm_base_setup_virtual_machine(orte_job_t *jdata)
                 }
             } else if (NULL != app->hostfile) {
                 /* otherwise, if the app provided a hostfile, then use that */
-                OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+                OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
                                      "%s using hostfile %s",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                      app->hostfile));
@@ -1354,7 +1354,7 @@ int orte_plm_base_setup_virtual_machine(orte_job_t *jdata)
             } else if (NULL != orte_default_hostfile) {
                 if (!default_hostfile_used) {
                     /* fall back to the default hostfile, if provided */
-                    OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+                    OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
                                          "%s using default hostfile %s",
                                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                          orte_default_hostfile));
@@ -1374,7 +1374,7 @@ int orte_plm_base_setup_virtual_machine(orte_job_t *jdata)
          */
         while (NULL != (item = opal_list_remove_first(&tnodes))) {
             nptr = (orte_node_t*)item;
-            OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+            OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
                                  "%s checking node %s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  nptr->name));
@@ -1388,25 +1388,25 @@ int orte_plm_base_setup_virtual_machine(orte_job_t *jdata)
                 /* have a match - now see if we want this node */
                 /* ignore nodes that are marked as do-not-use for this mapping */
                 if (ORTE_NODE_STATE_DO_NOT_USE == node->state) {
-                    OPAL_OUTPUT_VERBOSE((10, orte_plm_globals.output,
+                    OPAL_OUTPUT_VERBOSE((10, orte_plm_base_framework.framework_output,
                                          "NODE %s IS MARKED NO_USE", node->name));
                     /* reset the state so it can be used another time */
                     node->state = ORTE_NODE_STATE_UP;
                     break;
                 }
                 if (ORTE_NODE_STATE_DOWN == node->state) {
-                    OPAL_OUTPUT_VERBOSE((10, orte_plm_globals.output,
+                    OPAL_OUTPUT_VERBOSE((10, orte_plm_base_framework.framework_output,
                                          "NODE %s IS MARKED DOWN", node->name));
                     break;
                 }
                 if (ORTE_NODE_STATE_NOT_INCLUDED == node->state) {
-                    OPAL_OUTPUT_VERBOSE((10, orte_plm_globals.output,
+                    OPAL_OUTPUT_VERBOSE((10, orte_plm_base_framework.framework_output,
                                          "NODE %s IS MARKED NO_INCLUDE", node->name));
                     break;
                 }
                 /* if this node is us, ignore it */
                 if (0 == node->index) {
-                    OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+                    OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
                                          "%s ignoring myself",
                                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
                     break;
@@ -1423,7 +1423,7 @@ int orte_plm_base_setup_virtual_machine(orte_job_t *jdata)
          * daemons are to be launched
          */
         if (0 == opal_list_get_size(&nodes)) {
-            OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+            OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
                                  "%s plm:base:setup_vm only HNP in allocation",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
             OBJ_DESTRUCT(&nodes);
@@ -1441,19 +1441,19 @@ int orte_plm_base_setup_virtual_machine(orte_job_t *jdata)
         if (NULL != (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, i))) {
             /* ignore nodes that are marked as do-not-use for this mapping */
             if (ORTE_NODE_STATE_DO_NOT_USE == node->state) {
-                OPAL_OUTPUT_VERBOSE((10, orte_plm_globals.output,
+                OPAL_OUTPUT_VERBOSE((10, orte_plm_base_framework.framework_output,
                                      "NODE %s IS MARKED NO_USE", node->name));
                 /* reset the state so it can be used another time */
                 node->state = ORTE_NODE_STATE_UP;
                 continue;
             }
             if (ORTE_NODE_STATE_DOWN == node->state) {
-                OPAL_OUTPUT_VERBOSE((10, orte_plm_globals.output,
+                OPAL_OUTPUT_VERBOSE((10, orte_plm_base_framework.framework_output,
                                      "NODE %s IS MARKED DOWN", node->name));
                 continue;
             }
             if (ORTE_NODE_STATE_NOT_INCLUDED == node->state) {
-                OPAL_OUTPUT_VERBOSE((10, orte_plm_globals.output,
+                OPAL_OUTPUT_VERBOSE((10, orte_plm_base_framework.framework_output,
                                      "NODE %s IS MARKED NO_INCLUDE", node->name));
                 /* not to be used */
                 continue;
@@ -1475,7 +1475,7 @@ int orte_plm_base_setup_virtual_machine(orte_job_t *jdata)
      * daemons are to be launched
      */
     if (0 == opal_list_get_size(&nodes)) {
-        OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+        OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
                              "%s plm:base:setup_vm only HNP in allocation",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
         /* cleanup */
@@ -1545,7 +1545,7 @@ int orte_plm_base_setup_virtual_machine(orte_job_t *jdata)
      * daemons are to be launched
      */
     if (0 == opal_list_get_size(&nodes)) {
-        OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+        OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
                              "%s plm:base:setup_vm only HNP left",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
         OBJ_DESTRUCT(&nodes);
@@ -1600,7 +1600,7 @@ int orte_plm_base_setup_virtual_machine(orte_job_t *jdata)
             return ORTE_ERR_OUT_OF_RESOURCE;
         }
         proc->name.vpid = daemons->num_procs;  /* take the next available vpid */
-        OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+        OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
                              "%s plm:base:setup_vm add new daemon %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_NAME_PRINT(&proc->name)));
@@ -1610,7 +1610,7 @@ int orte_plm_base_setup_virtual_machine(orte_job_t *jdata)
             return rc;
         }
         ++daemons->num_procs;
-        OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+        OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
                              "%s plm:base:setup_vm assigning new daemon %s to node %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_NAME_PRINT(&proc->name),

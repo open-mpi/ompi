@@ -151,15 +151,15 @@ static int filem_rsh_open(void)
     /*
      * Debug Output
      */
-    opal_output_verbose(10, orte_filem_base_output,
+    opal_output_verbose(10, orte_filem_base_framework.framework_output,
                         "filem:rsh: open()");
-    opal_output_verbose(20, orte_filem_base_output,
+    opal_output_verbose(20, orte_filem_base_framework.framework_output,
                         "filem:rsh: open: cp command  = %s", 
                         mca_filem_rsh_component.cp_command);
-    opal_output_verbose(20, orte_filem_base_output,
+    opal_output_verbose(20, orte_filem_base_framework.framework_output,
                         "filem:rsh: open: cp local command  = %s", 
                         mca_filem_rsh_component.cp_local_command);
-    opal_output_verbose(20, orte_filem_base_output,
+    opal_output_verbose(20, orte_filem_base_framework.framework_output,
                         "filem:rsh: open: rsh command  = %s", 
                         mca_filem_rsh_component.remote_sh_command);
 
@@ -168,7 +168,7 @@ static int filem_rsh_open(void)
 
 static int filem_rsh_close(void)
 {
-    opal_output_verbose(10, orte_filem_base_output,
+    opal_output_verbose(10, orte_filem_base_framework.framework_output,
                         "filem:rsh: close()");
 
     return ORTE_SUCCESS;

@@ -40,42 +40,32 @@
 /*
  * Globals
  */
-opal_list_t orte_state_base_components_available;
-orte_state_base_t orte_state_base;
-orte_state_base_component_t orte_state_base_selected_component;
-int orte_state_base_output;
-
 orte_state_base_module_t orte_state;
 
-/**
- * Function for finding and opening either all MCA components, or the one
- * that was specifically requested via a MCA parameter.
- */
-int orte_state_base_open(void)
+static int orte_state_base_close(void)
 {
-    /* Only pass this way once */
-    if( orte_state_base.initialized ) {
-        return ORTE_SUCCESS;
+    /* Close selected component */
+    if (NULL != orte_state.finalize) {
+        orte_state.finalize();
     }
 
-    orte_state_base_output = opal_output_open(NULL);
-
-    /*
-     * Open up all available components
-     */
-    if (ORTE_SUCCESS != 
-        mca_base_components_open("state",
-                                 orte_state_base_output,
-                                 mca_state_base_static_components, 
-                                 &orte_state_base_components_available,
-                                 true)) {
-        return ORTE_ERROR;
-    }
-    
-    orte_state_base.initialized = true;
-    
-    return ORTE_SUCCESS;
+    return mca_base_framework_components_close(&orte_state_base_framework, NULL);
 }
+
+/**
+ *  * Function for finding and opening either all MCA components, or the one
+ *   * that was specifically requested via a MCA parameter.
+ *    */
+static int orte_state_base_open(mca_base_open_flag_t flags)
+{
+    /* Open up all available components */
+    return mca_base_framework_components_open(&orte_state_base_framework, flags);
+}
+
+MCA_BASE_FRAMEWORK_DECLARE(orte, state, "ORTE State Machine", NULL,
+                           orte_state_base_open, orte_state_base_close,
+                           mca_state_base_static_components, 0);
+
 
 static void orte_state_construct(orte_state_t *state)
 {

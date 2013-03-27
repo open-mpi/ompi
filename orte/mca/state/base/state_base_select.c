@@ -32,8 +32,8 @@ int orte_state_base_select(void)
     /*
      * Select the best component
      */
-    if( OPAL_SUCCESS != mca_base_select("state", orte_state_base_output,
-                                        &orte_state_base_components_available,
+    if( OPAL_SUCCESS != mca_base_select("state", orte_state_base_framework.framework_output,
+                                        &orte_state_base_framework.framework_components,
                                         (mca_base_module_t **) &best_module,
                                         (mca_base_component_t **) &best_component) ) {
         /* This will only happen if no component was selected */
@@ -42,7 +42,6 @@ int orte_state_base_select(void)
     }
 
     /* Save the winner */
-    orte_state_base_selected_component = *best_component;
     orte_state = *best_module;
 
     /* Initialize the winner */

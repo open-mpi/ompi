@@ -20,5 +20,4 @@ headers += \
         base/base.h 
 
 libmca_allocator_la_SOURCES += \
-        base/allocator_base_open.c \
-        base/allocator_base_close.c 
+        base/allocator_base_frame.c 

@@ -147,7 +147,7 @@ static int delete_route(orte_process_name_t *proc)
         return ORTE_SUCCESS;
     }
     
-    OPAL_OUTPUT_VERBOSE((1, orte_routed_base_output,
+    OPAL_OUTPUT_VERBOSE((1, orte_routed_base_framework.framework_output,
                          "%s routed_debruijn_delete_route for %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(proc)));
@@ -174,7 +174,7 @@ static int delete_route(orte_process_name_t *proc)
                 continue;
             }
             if (jfam->job_family == jfamily) {
-                OPAL_OUTPUT_VERBOSE((2, orte_routed_base_output,
+                OPAL_OUTPUT_VERBOSE((2, orte_routed_base_framework.framework_output,
                                      "%s routed_debruijn: deleting route to %s",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                      ORTE_JOB_FAMILY_PRINT(proc->jobid)));
@@ -214,7 +214,7 @@ static int update_route(orte_process_name_t *target,
         return ORTE_SUCCESS;
     }
 
-    OPAL_OUTPUT_VERBOSE((1, orte_routed_base_output,
+    OPAL_OUTPUT_VERBOSE((1, orte_routed_base_framework.framework_output,
                          "%s routed_debruijn_update: %s --> %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(target), 
@@ -244,7 +244,7 @@ static int update_route(orte_process_name_t *target,
             return ORTE_SUCCESS;
         }
         
-        OPAL_OUTPUT_VERBOSE((1, orte_routed_base_output,
+        OPAL_OUTPUT_VERBOSE((1, orte_routed_base_framework.framework_output,
                              "%s routed_debruijn_update: diff job family routing job %s --> %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_JOBID_PRINT(target->jobid), 
@@ -257,7 +257,7 @@ static int update_route(orte_process_name_t *target,
                 continue;
             }
             if (jfam->job_family == jfamily) {
-                OPAL_OUTPUT_VERBOSE((2, orte_routed_base_output,
+                OPAL_OUTPUT_VERBOSE((2, orte_routed_base_framework.framework_output,
                                      "%s routed_debruijn: updating route to %s via %s",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                      ORTE_JOB_FAMILY_PRINT(target->jobid),
@@ -269,7 +269,7 @@ static int update_route(orte_process_name_t *target,
         }
 
         /* not there, so add the route FOR THE JOB FAMILY*/
-        OPAL_OUTPUT_VERBOSE((2, orte_routed_base_output,
+        OPAL_OUTPUT_VERBOSE((2, orte_routed_base_framework.framework_output,
                              "%s routed_debruijn: adding route to %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_JOB_FAMILY_PRINT(target->jobid)));
@@ -386,13 +386,13 @@ static orte_process_name_t get_route(orte_process_name_t *target)
 
         if (OPAL_EQUAL == orte_util_compare_name_fields(ORTE_NS_CMP_ALL, ORTE_PROC_MY_HNP, target)) {
             if (!hnp_direct || orte_static_ports) {
-                OPAL_OUTPUT_VERBOSE((2, orte_routed_base_output,
+                OPAL_OUTPUT_VERBOSE((2, orte_routed_base_framework.framework_output,
                                      "%s routing to the HNP through my parent %s",
                                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_PARENT)));
                 ret = *ORTE_PROC_MY_PARENT;
             } else {
-                OPAL_OUTPUT_VERBOSE((2, orte_routed_base_output,
+                OPAL_OUTPUT_VERBOSE((2, orte_routed_base_framework.framework_output,
                                      "%s routing direct to the HNP",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
                 ret = *ORTE_PROC_MY_HNP;
@@ -419,7 +419,7 @@ static orte_process_name_t get_route(orte_process_name_t *target)
         ret.vpid = debruijn_next_hop (ret.vpid);
     } while (0);
     
-    OPAL_OUTPUT_VERBOSE((1, orte_routed_base_output,
+    OPAL_OUTPUT_VERBOSE((1, orte_routed_base_framework.framework_output,
                          "%s routed_debruijn_get(%s) --> %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(target), 
@@ -461,7 +461,7 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndat)
      */
     if (ORTE_PROC_IS_DAEMON) {
         
-        OPAL_OUTPUT_VERBOSE((1, orte_routed_base_output,
+        OPAL_OUTPUT_VERBOSE((1, orte_routed_base_framework.framework_output,
                              "%s routed_debruijn: init routes for daemon job %s\n\thnp_uri %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_JOBID_PRINT(job),
@@ -511,7 +511,7 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndat)
                 return rc;
             }
 
-        OPAL_OUTPUT_VERBOSE((2, orte_routed_base_output,
+        OPAL_OUTPUT_VERBOSE((2, orte_routed_base_framework.framework_output,
                              "%s routed_debruijn: completed init routes",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
         
@@ -521,7 +521,7 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndat)
 
     if (ORTE_PROC_IS_HNP) {
         
-        OPAL_OUTPUT_VERBOSE((1, orte_routed_base_output,
+        OPAL_OUTPUT_VERBOSE((1, orte_routed_base_framework.framework_output,
                              "%s routed_debruijn: init routes for HNP job %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_JOBID_PRINT(job)));
@@ -566,7 +566,7 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndat)
             opal_buffer_t xfer;
             orte_rml_cmd_flag_t cmd=ORTE_RML_UPDATE_CMD;
             
-            OPAL_OUTPUT_VERBOSE((1, orte_routed_base_output,
+            OPAL_OUTPUT_VERBOSE((1, orte_routed_base_framework.framework_output,
                                  "%s routed_debruijn: init routes w/non-NULL data",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
             
@@ -575,7 +575,7 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndat)
                  * to minimize connection counts to entities such as ompi-server, so
                  * start by sending the contact info to the HNP for update
                  */
-                OPAL_OUTPUT_VERBOSE((1, orte_routed_base_output,
+                OPAL_OUTPUT_VERBOSE((1, orte_routed_base_framework.framework_output,
                                      "%s routed_debruijn_init_routes: diff job family - sending update to %s",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_HNP)));
@@ -604,7 +604,7 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndat)
                                              ORTE_RML_NON_PERSISTENT, recv_ack, NULL);
                 
                 
-                OPAL_OUTPUT_VERBOSE((1, orte_routed_base_output,
+                OPAL_OUTPUT_VERBOSE((1, orte_routed_base_framework.framework_output,
                                      "%s routed_debruijn_init_routes: ack recvd",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
                 
@@ -619,7 +619,7 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndat)
          * case, we need to setup a few critical pieces of info
          */
         
-        OPAL_OUTPUT_VERBOSE((1, orte_routed_base_output,
+        OPAL_OUTPUT_VERBOSE((1, orte_routed_base_framework.framework_output,
                              "%s routed_debruijn: init routes for proc job %s\n\thnp_uri %s\n\tdaemon uri %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_JOBID_PRINT(job),
                              (NULL == orte_process_info.my_hnp_uri) ? "NULL" : orte_process_info.my_hnp_uri,
@@ -701,7 +701,7 @@ static int route_lost(const orte_process_name_t *route)
     uint16_t jfamily;
     int i;
 
-    OPAL_OUTPUT_VERBOSE((2, orte_routed_base_output,
+    OPAL_OUTPUT_VERBOSE((2, orte_routed_base_framework.framework_output,
                          "%s route to %s lost",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(route)));
@@ -715,7 +715,7 @@ static int route_lost(const orte_process_name_t *route)
                 continue;
             }
             if (jfam->job_family == jfamily) {
-                OPAL_OUTPUT_VERBOSE((2, orte_routed_base_output,
+                OPAL_OUTPUT_VERBOSE((2, orte_routed_base_framework.framework_output,
                                      "%s routed_debruijn: route to %s lost",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                      ORTE_JOB_FAMILY_PRINT(route->jobid)));
@@ -734,7 +734,7 @@ static int route_lost(const orte_process_name_t *route)
     if (!orte_finalizing &&
         NULL != lifeline &&
         OPAL_EQUAL == orte_util_compare_name_fields(ORTE_NS_CMP_ALL, route, lifeline)) {
-        OPAL_OUTPUT_VERBOSE((2, orte_routed_base_output,
+        OPAL_OUTPUT_VERBOSE((2, orte_routed_base_framework.framework_output,
                              "%s routed:debruijn: Connection to lifeline %s lost",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_NAME_PRINT(lifeline)));
@@ -777,7 +777,7 @@ static bool route_is_defined(const orte_process_name_t *target)
                     continue;
                 }
                 if (jfam->job_family == jfamily) {
-                    OPAL_OUTPUT_VERBOSE((2, orte_routed_base_output,
+                    OPAL_OUTPUT_VERBOSE((2, orte_routed_base_framework.framework_output,
                                          "%s routed_debruijn: route to %s is defined",
                                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                          ORTE_JOB_FAMILY_PRINT(target->jobid)));

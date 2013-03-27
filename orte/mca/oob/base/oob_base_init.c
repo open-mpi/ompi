@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2012      Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2012-2013 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  * 
@@ -41,13 +41,6 @@ OBJ_CLASS_INSTANCE(
     NULL
 );
 
-OBJ_CLASS_INSTANCE(
-    mca_oob_base_info_t,
-    opal_list_item_t,
-    NULL,
-    NULL
-);
-
 
 /**
  * Function for selecting one module from all those that are
@@ -59,71 +52,51 @@ int mca_oob_base_init(void)
 {
     opal_list_item_t *item;
     mca_base_component_list_item_t *cli;
-    mca_oob_base_component_t *component, *s_component = NULL;
+    mca_oob_base_component_t *component, *s_component;
     mca_oob_t *module;
     mca_oob_t *s_module = NULL;
     int  s_priority = -1;
 
     /* Traverse the list of available modules; call their init functions. */
-    for (item = opal_list_get_first(&mca_oob_base_components);
-        item != opal_list_get_end(&mca_oob_base_components);
-        item = opal_list_get_next(item)) {
-        mca_oob_base_info_t *inited;
-
+    for (item = opal_list_get_first(&orte_oob_base_framework.framework_components);
+         item != opal_list_get_end(&orte_oob_base_framework.framework_components);
+         item = opal_list_get_next(item)) {
         cli = (mca_base_component_list_item_t *) item;
         component = (mca_oob_base_component_t *) cli->cli_component;
 
         if (NULL == component->oob_init) {
-            opal_output_verbose(10, mca_oob_base_output, "mca_oob_base_init: no init function; ignoring component");
+            opal_output_verbose(10, orte_oob_base_framework.framework_output,
+                                "mca_oob_base_init: no init function; ignoring component");
         } else {
             int priority = -1;
             module = component->oob_init(&priority);
             if (NULL != module) {
-                inited = OBJ_NEW(mca_oob_base_info_t);
-                inited->oob_component = component;
-                inited->oob_module = module;
-                opal_list_append(&mca_oob_base_modules, &inited->super);
-
-                /* setup highest priority oob channel */
-                if(priority > s_priority) {
-                    s_priority = priority;
+                if (priority > s_priority) {
                     s_module = module;
+                    s_priority = priority;
                     s_component = component;
+                } else {
+                    if (NULL != module->oob_fini) {
+                        module->oob_fini();
+                    }
                 }
             }
         }
     }
     /* set the global variable to point to the first initialize module */
     if (s_module == NULL) {
-        opal_output_verbose(10, mca_oob_base_output, "mca_oob_base_init: no OOB modules available\n");
+        opal_output_verbose(10, orte_oob_base_framework.framework_output,
+                            "mca_oob_base_init: no OOB modules available\n");
         /* the oob modules will have printed out an error msg - so be silent here */
         return ORTE_ERR_SILENT;
     }
 
-   mca_oob = *s_module;
+    mca_oob = *s_module;
 
-   /* record the name of the selected component */
-   orte_selected_oob_component = strdup(s_component->oob_base.mca_component_name);
-   opal_output_verbose(10, mca_oob_base_output, "mca_oob_base_init: %s module selected\n", orte_selected_oob_component);
-   return ORTE_SUCCESS;
+    orte_selected_oob_component = strdup(s_component->oob_base.mca_component_name);
+    opal_output_verbose(10, orte_oob_base_framework.framework_output,
+                        "mca_oob_base_init: %s module selected\n",
+                        s_component->oob_base.mca_component_name);
+    return ORTE_SUCCESS;
 }
 
-
-/**
- * Called to request the selected oob components to
- * initialize their connections to the HNP (if not an HNP), or
- * to setup a listener for incoming connections (if an HNP)
- */
-int mca_oob_base_module_init(void)
-{
-  opal_list_item_t* item;
-
-  for (item =  opal_list_get_first(&mca_oob_base_modules);
-       item != opal_list_get_end(&mca_oob_base_modules);
-       item =  opal_list_get_next(item)) {
-    mca_oob_base_info_t* base = (mca_oob_base_info_t *) item;
-    if (NULL != base->oob_module->oob_init)
-        base->oob_module->oob_init();
-  }
-  return ORTE_SUCCESS;
-}

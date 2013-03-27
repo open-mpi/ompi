@@ -30,8 +30,8 @@ int orte_dfs_base_select(void)
     /*
      * Select the best component
      */
-    if (OPAL_SUCCESS != mca_base_select("dfs", orte_dfs_base.output,
-                                        &orte_dfs_base.components_available,
+    if (OPAL_SUCCESS != mca_base_select("dfs", orte_dfs_base_framework.framework_output,
+                                        &orte_dfs_base_framework.framework_components,
                                         (mca_base_module_t **) &best_module,
                                         (mca_base_component_t **) &best_component)) {
         /* This will only happen if no component was selected, which

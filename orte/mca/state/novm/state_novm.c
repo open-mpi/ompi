@@ -157,7 +157,7 @@ static int init(void)
                                                        orte_state_base_report_progress, ORTE_ERROR_PRI))) {
         ORTE_ERROR_LOG(rc);
     }
-    if (5 < opal_output_get_verbosity(orte_state_base_output)) {
+    if (5 < opal_output_get_verbosity(orte_state_base_framework.framework_output)) {
         orte_state_base_print_job_state_machine();
     }
 
@@ -172,7 +172,7 @@ static int init(void)
             ORTE_ERROR_LOG(rc);
         }
     }
-    if (5 < opal_output_get_verbosity(orte_state_base_output)) {
+    if (5 < opal_output_get_verbosity(orte_state_base_framework.framework_output)) {
         orte_state_base_print_proc_state_machine();
     }
 

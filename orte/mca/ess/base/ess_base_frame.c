@@ -36,14 +36,12 @@
 
 #include "orte/mca/ess/base/static-components.h"
 
-opal_list_t orte_ess_base_components_available;
 orte_ess_base_module_t orte_ess = {
     NULL,  /* init */
     NULL,  /* finalize */
     NULL,  /* abort */
     NULL   /* ft_event */
 };
-int orte_ess_base_output;
 int orte_ess_base_std_buffering = -1;
 int orte_ess_base_num_procs = -1;
 char *orte_ess_base_jobid = NULL;
@@ -57,8 +55,7 @@ static mca_base_var_enum_value_t stream_buffering_values[] = {
   {0, NULL}
 };
 
-static int
-orte_ess_base_register(void)
+static int orte_ess_base_register(mca_base_register_flag_t flags)
 {
     mca_base_var_enum_t *new_enum;
     int ret;
@@ -102,23 +99,18 @@ orte_ess_base_register(void)
     return ORTE_SUCCESS;
 }
 
-int
-orte_ess_base_open(void)
+static int orte_ess_base_close(void)
 {
-    (void) orte_ess_base_register();
-
-    orte_ess_base_output = opal_output_open(NULL);
-    
-    OBJ_CONSTRUCT(&orte_ess_base_components_available, opal_list_t);
-
-    /* Open up all available components */
-    if (ORTE_SUCCESS != 
-        mca_base_components_open("ess", orte_ess_base_output, mca_ess_base_static_components, 
-                                 &orte_ess_base_components_available,
-                                 true)) {
-        /* error message emitted by fn above */
-        return ORTE_ERR_SILENT;
-    }
-
-    return ORTE_SUCCESS;
+    return mca_base_framework_components_close(&orte_ess_base_framework, NULL);
 }
+
+static int orte_ess_base_open(mca_base_open_flag_t flags)
+{
+    return mca_base_framework_components_open(&orte_ess_base_framework, flags);
+}
+
+MCA_BASE_FRAMEWORK_DECLARE(orte, ess, "ORTE Environmenal System Setup",
+                           orte_ess_base_register, orte_ess_base_open, orte_ess_base_close,
+                           mca_ess_base_static_components, 0);
+
+

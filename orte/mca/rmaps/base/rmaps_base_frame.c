@@ -66,7 +66,7 @@ static bool rmaps_base_oversubscribe = false;
 static bool rmaps_base_display_devel_map = false;
 static bool rmaps_base_display_diffable_map = false;
 
-static int orte_rmaps_base_register(void)
+static int orte_rmaps_base_register(mca_base_register_flag_t flags)
 {
     int var_id;
 
@@ -205,20 +205,30 @@ static int orte_rmaps_base_register(void)
     return ORTE_SUCCESS;
 }
 
+static int orte_rmaps_base_close(void)
+{
+    opal_list_item_t *item;
+
+    /* cleanup globals */
+    while (NULL != (item = opal_list_remove_first(&orte_rmaps_base.selected_modules))) {
+        OBJ_RELEASE(item);
+    }
+    OBJ_DESTRUCT(&orte_rmaps_base.selected_modules);
+
+    return mca_base_framework_components_close(&orte_rmaps_base_framework, NULL);
+}
+
 /**
  * Function for finding and opening either all MCA components, or the one
  * that was specifically requested via a MCA parameter.
  */
-int orte_rmaps_base_open(void)
+static int orte_rmaps_base_open(mca_base_open_flag_t flags)
 {
-    int i;
+    int i, rc;
     orte_mapping_policy_t tmp=0;
     orte_ranking_policy_t rtmp=0;
     char **ck, **ck2;
     size_t len;
-
-    /* register our mca variables */
-    (void) orte_rmaps_base_register ();
 
     /* init the globals */
     OBJ_CONSTRUCT(&orte_rmaps_base.selected_modules, opal_list_t);
@@ -229,7 +239,7 @@ int orte_rmaps_base_open(void)
 
     /* Debugging / verbose output.  Always have stream open, with
        verbose set by the mca open system... */
-    orte_rmaps_base.rmaps_output = opal_output_open(NULL);
+    orte_rmaps_base_framework.framework_output = opal_output_open(NULL);
 
 
     if (NULL == rmaps_base_mapping_policy) {
@@ -468,13 +478,8 @@ int orte_rmaps_base_open(void)
         orte_display_diffable_output = true;
     }
 
-    /* Open up all the components that we can find */
-    if (ORTE_SUCCESS != 
-        mca_base_components_open("rmaps", orte_rmaps_base.rmaps_output,
-                                 mca_rmaps_base_static_components, 
-                                 &orte_rmaps_base.available_components, true)) {
-        return ORTE_ERROR;
-    }
+    /* Open up all available components */
+    rc = mca_base_framework_components_open(&orte_rmaps_base_framework, flags);
 
     /* check to see if any component indicated a problem */
     if (ORTE_MAPPING_CONFLICTED & ORTE_GET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping)) {
@@ -485,8 +490,12 @@ int orte_rmaps_base_open(void)
     }
 
     /* All done */
-    return ORTE_SUCCESS;
+    return rc;
 }
+
+MCA_BASE_FRAMEWORK_DECLARE(orte, rmaps, "ORTE Mapping Subsystem",
+                           orte_rmaps_base_register, orte_rmaps_base_open, orte_rmaps_base_close,
+                           mca_rmaps_base_static_components, 0);
 
 OBJ_CLASS_INSTANCE(orte_rmaps_base_selected_module_t,
                    opal_list_item_t,

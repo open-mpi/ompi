@@ -35,43 +35,14 @@
 
 BEGIN_C_DECLS
 
-/**
- * Open the plm framework
- */
-ORTE_DECLSPEC int orte_plm_base_open(void);
-
-/**
- * Struct to hold data for public access
- */
-typedef struct orte_plm_base_t {
-    /** List of opened components */
-    opal_list_t available_components;
-    /** indicate a component has been selected */
-    bool selected;
-    /** selected component */
-    orte_plm_base_component_t selected_component;
-} orte_plm_base_t;
-
-/**
- * Global instance of publicly-accessible PLM framework data
- */
-ORTE_DECLSPEC extern orte_plm_base_t orte_plm_base;
-
 /*
- * Global functions for MCA overall collective open and close
+ * MCA framework
  */
-
-/**
- * Select a plm module
+ORTE_DECLSPEC extern mca_base_framework_t orte_plm_base_framework;
+/*
+ * Select an available component.
  */
 ORTE_DECLSPEC int orte_plm_base_select(void);
-
-/**
- * Close the plm framework
- */
-ORTE_DECLSPEC int orte_plm_base_finalize(void);
-ORTE_DECLSPEC int orte_plm_base_close(void);
-
 
 /**
  * Functions that other frameworks may need to call directly

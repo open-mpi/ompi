@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011      Los Alamos National Security, LLC.
+ * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * $COPYRIGHT$
  * 
@@ -29,17 +29,7 @@
 
 #include "orte/mca/state/state.h"
 
-/*
- * Functions for use solely within the ERRMGR framework
- */
 BEGIN_C_DECLS
-
-/* define a struct to hold framework-global values */
-typedef struct {
-    bool initialized;
-} orte_state_base_t;
-
-ORTE_DECLSPEC extern orte_state_base_t orte_state_base;
 
 /*
  * Base functions

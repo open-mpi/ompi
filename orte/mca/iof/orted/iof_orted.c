@@ -130,7 +130,7 @@ static int orted_push(const orte_process_name_t* dst_name, orte_iof_tag_t src_ta
     int np, numdigs;
     orte_ns_cmp_bitmask_t mask;
 
-    OPAL_OUTPUT_VERBOSE((1, orte_iof_base.iof_output,
+    OPAL_OUTPUT_VERBOSE((1, orte_iof_base_framework.framework_output,
                          "%s iof:orted pushing fd %d for process %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          fd, ORTE_NAME_PRINT(dst_name)));
@@ -139,7 +139,7 @@ static int orted_push(const orte_process_name_t* dst_name, orte_iof_tag_t src_ta
      * and activate the read event in case it fires right away
      */
     if((flags = fcntl(fd, F_GETFL, 0)) < 0) {
-        opal_output(orte_iof_base.iof_output, "[%s:%d]: fcntl(F_GETFL) failed with errno=%d\n", 
+        opal_output(orte_iof_base_framework.framework_output, "[%s:%d]: fcntl(F_GETFL) failed with errno=%d\n", 
                     __FILE__, __LINE__, errno);
     } else {
         flags |= O_NONBLOCK;
@@ -246,7 +246,7 @@ static int orted_pull(const orte_process_name_t* dst_name,
         return ORTE_ERR_NOT_SUPPORTED;
     }
     
-    OPAL_OUTPUT_VERBOSE((1, orte_iof_base.iof_output,
+    OPAL_OUTPUT_VERBOSE((1, orte_iof_base_framework.framework_output,
                          "%s iof:orted pulling fd %d for process %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          fd, ORTE_NAME_PRINT(dst_name)));
@@ -255,7 +255,7 @@ static int orted_pull(const orte_process_name_t* dst_name,
      * the sink in case it fires right away
      */
     if((flags = fcntl(fd, F_GETFL, 0)) < 0) {
-        opal_output(orte_iof_base.iof_output, "[%s:%d]: fcntl(F_GETFL) failed with errno=%d\n", 
+        opal_output(orte_iof_base_framework.framework_output, "[%s:%d]: fcntl(F_GETFL) failed with errno=%d\n", 
                     __FILE__, __LINE__, errno);
     } else {
         flags |= O_NONBLOCK;
@@ -341,7 +341,7 @@ static void stdin_write_handler(int fd, short event, void *cbdata)
     orte_iof_write_output_t *output;
     int num_written;
     
-    OPAL_OUTPUT_VERBOSE((1, orte_iof_base.iof_output,
+    OPAL_OUTPUT_VERBOSE((1, orte_iof_base_framework.framework_output,
                          "%s orted:stdin:write:handler writing data to %d",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          wev->fd));
@@ -354,7 +354,7 @@ static void stdin_write_handler(int fd, short event, void *cbdata)
             /* this indicates we are to close the fd - there is
              * nothing to write
              */
-            OPAL_OUTPUT_VERBOSE((20, orte_iof_base.iof_output,
+            OPAL_OUTPUT_VERBOSE((20, orte_iof_base_framework.framework_output,
                                  "%s iof:orted closing fd %d on write event due to zero bytes output",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), wev->fd));
             OBJ_RELEASE(wev);
@@ -362,7 +362,7 @@ static void stdin_write_handler(int fd, short event, void *cbdata)
             return;
         }
         num_written = write(wev->fd, output->data, output->numbytes);
-        OPAL_OUTPUT_VERBOSE((1, orte_iof_base.iof_output,
+        OPAL_OUTPUT_VERBOSE((1, orte_iof_base_framework.framework_output,
                              "%s orted:stdin:write:handler wrote %d bytes",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              num_written));
@@ -381,7 +381,7 @@ static void stdin_write_handler(int fd, short event, void *cbdata)
              * error and abort
              */
             OBJ_RELEASE(output);
-            OPAL_OUTPUT_VERBOSE((20, orte_iof_base.iof_output,
+            OPAL_OUTPUT_VERBOSE((20, orte_iof_base_framework.framework_output,
                                  "%s iof:orted closing fd %d on write event due to negative bytes written",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), wev->fd));
             OBJ_RELEASE(wev);
@@ -393,7 +393,7 @@ static void stdin_write_handler(int fd, short event, void *cbdata)
             }
             return;
         } else if (num_written < output->numbytes) {
-            OPAL_OUTPUT_VERBOSE((1, orte_iof_base.iof_output,
+            OPAL_OUTPUT_VERBOSE((1, orte_iof_base_framework.framework_output,
                                  "%s orted:stdin:write:handler incomplete write %d - adjusting data",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), num_written));
             /* incomplete write - adjust data to avoid duplicate output */

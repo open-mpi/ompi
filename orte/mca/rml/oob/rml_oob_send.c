@@ -129,7 +129,7 @@ orte_rml_oob_send(orte_process_name_t* peer,
         real_tag = ORTE_RML_TAG_RML_ROUTE;
     }
 
-    OPAL_OUTPUT_VERBOSE((1, orte_rml_base_output,
+    OPAL_OUTPUT_VERBOSE((1, orte_rml_base_framework.framework_output,
                          "rml_send %s -> %s (router %s, tag %d, %d)",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(peer),
@@ -220,7 +220,7 @@ orte_rml_oob_send_nb(orte_process_name_t* peer,
         real_tag = ORTE_RML_TAG_RML_ROUTE;
     }
 
-    OPAL_OUTPUT_VERBOSE((1, orte_rml_base_output,
+    OPAL_OUTPUT_VERBOSE((1, orte_rml_base_framework.framework_output,
                          "rml_send_nb %s -> %s (router %s, tag %d, %d)",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(peer),
@@ -342,7 +342,7 @@ orte_rml_oob_send_buffer_nb(orte_process_name_t* peer,
 
     OBJ_RETAIN(buffer);
 
-    OPAL_OUTPUT_VERBOSE((1, orte_rml_base_output,
+    OPAL_OUTPUT_VERBOSE((1, orte_rml_base_framework.framework_output,
                          "rml_send_buffer_nb %s -> %s (router %s, tag %d, %d)",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(peer),

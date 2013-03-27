@@ -144,7 +144,7 @@ static int snapc_full_open(void)
         opal_output_set_verbosity(mca_snapc_full_component.super.output_handle,
                                   mca_snapc_full_component.super.verbose);
     } else {
-        mca_snapc_full_component.super.output_handle = orte_snapc_base_output;
+        mca_snapc_full_component.super.output_handle = orte_snapc_base_framework.framework_output;
     }
 
     /* recheck the progress meter (it may have changed between register and open) */

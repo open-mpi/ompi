@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2011      Los Alamos National Security, LLC.
+ * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * $COPYRIGHT$
  * 
@@ -119,9 +119,8 @@ rml_oob_open(void)
 {
     int rc;
 
-    if (ORTE_SUCCESS != (rc = mca_oob_base_open())) {
+    if (ORTE_SUCCESS != (rc = mca_base_framework_open(&orte_oob_base_framework, 0))) {
         ORTE_ERROR_LOG(rc);
-        return rc;
     }
 
     return rc;
@@ -131,13 +130,7 @@ rml_oob_open(void)
 static int
 rml_oob_close(void)
 {
-    int rc;
-
-    if (ORTE_SUCCESS != (rc = mca_oob_base_close())) {
-        return rc;
-    }
-
-    return rc;
+    return mca_base_framework_close(&orte_oob_base_framework);
 }
 
 static orte_rml_module_t*
@@ -262,13 +255,9 @@ orte_rml_oob_ft_event(int state) {
         ;
     }
     else if(OPAL_CRS_RESTART == state) {
-        if( ORTE_SUCCESS != (ret = mca_oob_base_close())) {
-            ORTE_ERROR_LOG(ret);
-            exit_status = ret;
-            goto cleanup;
-        }
+        (void) mca_base_framework_close(&orte_oob_base_framework);
 
-        if( ORTE_SUCCESS != (ret = mca_oob_base_open())) {
+        if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_oob_base_framework, 0))) {
             ORTE_ERROR_LOG(ret);
             exit_status = ret;
             goto cleanup;
@@ -391,7 +380,7 @@ rml_oob_queued_progress(int fd, short event, void *arg)
             real_tag = ORTE_RML_TAG_RML_ROUTE;
         }
 
-        OPAL_OUTPUT_VERBOSE((1, orte_rml_base_output,
+        OPAL_OUTPUT_VERBOSE((1, orte_rml_base_framework.framework_output,
                              "%s routing message from %s for %s to %s (tag: %d)",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_NAME_PRINT(&hdr->origin),
@@ -500,7 +489,7 @@ rml_oob_recv_route_callback(int status,
         real_tag = ORTE_RML_TAG_RML_ROUTE;
     }
 
-    OPAL_OUTPUT_VERBOSE((1, orte_rml_base_output,
+    OPAL_OUTPUT_VERBOSE((1, orte_rml_base_framework.framework_output,
                          "%s routing message from %s for %s to %s (tag: %d)",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(&hdr->origin),
@@ -534,7 +523,7 @@ rml_oob_recv_route_callback(int status,
         if (ORTE_ERR_ADDRESSEE_UNKNOWN == ret) {
             /* no route -- queue and hope we find a route */
             orte_rml_oob_queued_msg_t *qmsg = OBJ_NEW(orte_rml_oob_queued_msg_t);
-            OPAL_OUTPUT_VERBOSE((1, orte_rml_base_output,
+            OPAL_OUTPUT_VERBOSE((1, orte_rml_base_framework.framework_output,
                                  "%s: no OOB information for %s.  Queuing for later.",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  ORTE_NAME_PRINT(&next)));

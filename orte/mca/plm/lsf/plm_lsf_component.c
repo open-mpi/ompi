@@ -105,7 +105,7 @@ static int orte_plm_lsf_component_query(mca_base_module_t **module, int *priorit
     /* check if lsf is running here */
     if (NULL == getenv("LSB_JOBID") || lsb_init("ORTE launcher") < 0) {
         /* nope, not here */
-        opal_output_verbose(10, orte_plm_globals.output,
+        opal_output_verbose(10, orte_plm_base_framework.framework_output,
                             "plm:lsf: NOT available for selection");
         *module = NULL;
         return ORTE_ERROR;

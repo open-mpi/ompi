@@ -45,7 +45,7 @@ int orte_plm_proxy_spawn(orte_job_t *jdata)
     int rc;
     int32_t retval;
     
-    OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+    OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
                          "%s plm:base:proxy spawn child job",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
@@ -76,7 +76,7 @@ int orte_plm_proxy_spawn(orte_job_t *jdata)
     }
     
     
-    OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+    OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
                          "%s plm:base:proxy waiting for response",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     

@@ -48,29 +48,31 @@
  */
 orte_ras_base_t orte_ras_base;
 
+static int orte_ras_base_close(void)
+{
+    /* Close selected component */
+    if (NULL != orte_ras_base.active_module) {
+        orte_ras_base.active_module->finalize();
+    }
+
+    return mca_base_framework_components_close(&orte_ras_base_framework, NULL);
+}
+
 /**
- * Function for finding and opening either all MCA components, or the one
- * that was specifically requested via a MCA parameter.
- */
-int orte_ras_base_open(void)
+ *  * Function for finding and opening either all MCA components, or the one
+ *   * that was specifically requested via a MCA parameter.
+ *    */
+static int orte_ras_base_open(mca_base_open_flag_t flags)
 {
     /* set default flags */
     orte_ras_base.active_module = NULL;
     orte_ras_base.allocation_read = false;
     orte_ras_base.total_slots_alloc = 0;
 
-    /* Debugging / verbose output.  Always have stream open, with
-        verbose set by the mca open system... */
-    orte_ras_base.ras_output = opal_output_open(NULL);
-    
     /* Open up all available components */
-    if (ORTE_SUCCESS != 
-        mca_base_components_open("ras", orte_ras_base.ras_output,
-                                 mca_ras_base_static_components, 
-                                 &orte_ras_base.ras_opened, true)) {
-        return ORTE_ERROR;
-    }
-
-    /* All done */
-    return ORTE_SUCCESS;
+    return mca_base_framework_components_open(&orte_ras_base_framework, flags);
 }
+
+MCA_BASE_FRAMEWORK_DECLARE(orte, ras, "ORTE Resource Allocation Subsystem",
+                           NULL, orte_ras_base_open, orte_ras_base_close,
+                           mca_ras_base_static_components, 0);
