@@ -69,7 +69,7 @@ static int info_register_framework (mca_base_framework_t *framework, opal_pointe
 
 int orte_info_register_framework_params(opal_pointer_array_t *component_map)
 {
-    char *str;
+    char *str=NULL;
     int i, rc;
 
     /* Register the ORTE layer's MCA parameters */
@@ -89,7 +89,8 @@ int orte_info_register_framework_params(opal_pointer_array_t *component_map)
     }
 
     if (ORTE_ERR_BAD_PARAM == rc) {
-        fprintf(stderr, "\nA \"bad parameter\" error was encountered when opening the ORTE %s framework\n", str);
+        fprintf(stderr, "\nA \"bad parameter\" error was encountered when opening the ORTE %s framework\n",
+                (NULL == str) ? "NULL" : str);
         fprintf(stderr, "The output received from that framework includes the following parameters:\n\n");
     }
 
