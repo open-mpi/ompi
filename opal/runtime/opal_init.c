@@ -326,6 +326,11 @@ opal_init_util(int* pargc, char*** pargv)
         goto return_error;
     }
 
+    if (OPAL_SUCCESS != (ret = mca_base_framework_register(&opal_event_base_framework, 0))) {
+        error = "opal_event_register";
+        goto return_error;
+    }
+
     return OPAL_SUCCESS;
 
  return_error:

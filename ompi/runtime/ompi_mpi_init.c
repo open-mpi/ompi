@@ -342,7 +342,6 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     size_t nprocs;
     char *error = NULL;
     struct timeval ompistart, ompistop;
-    char *event_val = NULL;
     bool rte_setup = false;
     ompi_rte_collective_t *coll;
     char *cmd=NULL, *av=NULL;
@@ -381,10 +380,10 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
        select/poll -- but we know that MPI processes won't be using
        pty's with the event engine, so it's ok to relax this
        constraint and let any fd-monitoring mechanism be used. */
-    ret = mca_base_param_reg_string_name("opal", "event_include",
-                                         "Internal opal MCA param: tell opal_init() to use a specific mechanism in libevent",
-                                         false, false, "all", &event_val);
+
+    ret = mca_base_var_find("opal", "event", "*", "event_include");
     if (ret >= 0) {
+        char *allvalue = "all";
         /* We have to explicitly "set" the MCA param value here
            because libevent initialization will re-register the MCA
            param and therefore override the default. Setting the value
@@ -397,14 +396,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
            environment variable, just so that it won't be inherited by
            any spawned processes and potentially cause unintented
            side-effects with launching RTE tools... */
-        if (0 == strcmp("all", event_val)) {
-            mca_base_param_set_string(ret, "all");
-        }
-    }
-
-    if( NULL != event_val ) {
-        free(event_val);
-        event_val = NULL;
+        mca_base_var_set_value(ret, allvalue, 4, MCA_BASE_VAR_SOURCE_DEFAULT, NULL);
     }
 
     if (ompi_enable_timing && 0 == OMPI_PROC_MY_NAME->vpid) {

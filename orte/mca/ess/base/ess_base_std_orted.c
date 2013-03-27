@@ -103,11 +103,13 @@ int orte_ess_base_orted_setup(char **hosts)
     char log_file[PATH_MAX];
     char *jobidstring;
     char *error = NULL;
-    char *plm_to_use;
     orte_job_t *jdata;
     orte_proc_t *proc;
     orte_app_context_t *app;
     orte_node_t *node;
+    char *param;
+
+    plm_in_use = false;
 
     /* setup callback for SIGPIPE */
     setup_sighandler(SIGPIPE, &epipe_handler, epipe_signal_callback);
@@ -211,16 +213,13 @@ int orte_ess_base_orted_setup(char **hosts)
      * open and select something -only- if we are given
      * a specific module to use
      */
-    mca_base_param_reg_string_name("plm", NULL,
-                                   "Which plm component to use (empty = none)",
-                                   false, false,
-                                   NULL, &plm_to_use);
+    (void) mca_base_var_env_name("plm", &param);
     
-    if (NULL == plm_to_use) {
-        plm_in_use = false;
-    } else {
-        plm_in_use = true;
-        
+    plm_in_use = !!(getenv(param));
+    free (param);
+
+    if (plm_in_use)  {
+
         if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_plm_base_framework, 0))) {
             ORTE_ERROR_LOG(ret);
             error = "orte_plm_base_open";
