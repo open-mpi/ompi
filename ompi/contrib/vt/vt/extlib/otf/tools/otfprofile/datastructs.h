@@ -167,7 +167,17 @@ struct Progress {
 #endif /* OTFPROFILE_MPI */
 
     Progress()
-        : cur_bytes(0), max_bytes(0) {}
+        : cur_bytes(0), max_bytes(0) {
+#ifdef OTFPROFILE_MPI
+        send_request   = MPI_REQUEST_NULL;
+        recv_buffers   = NULL;
+        recv_requests  = NULL;
+        recv_statuses  = NULL;
+        recv_indices   = NULL;
+        rank_cur_bytes = NULL;
+        ranks_left     = 0;
+#endif /* OTFPROFILE_MPI */
+    }
 };
 
 
