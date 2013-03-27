@@ -64,7 +64,7 @@ static int orte_grpcomm_base_close(void)
  * Function for finding and opening either all MCA components, or the one
  * that was specifically requested via a MCA parameter.
  */
-int orte_grpcomm_base_open(mca_base_open_flag_t flags)
+static int orte_grpcomm_base_open(mca_base_open_flag_t flags)
 {
     /* Debugging / verbose output.  Always have stream open, with
        verbose set by the mca open system... */
