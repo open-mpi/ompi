@@ -105,7 +105,7 @@ static int if_bsdx_ipv6_open(void)
     struct ifaddrs *cur_ifaddrs;
     struct sockaddr_in6* sin_addr;
 
-    opal_output_verbose(1, opal_if_base_output,
+    opal_output_verbose(1, opal_if_base_framework.framework_output,
                         "searching for IPv6 interfaces");
 
     /* 
@@ -130,7 +130,7 @@ static int if_bsdx_ipv6_open(void)
 
         /* skip non-ipv6 interface addresses */
         if (AF_INET6 != cur_ifaddrs->ifa_addr->sa_family) {
-            opal_output_verbose(1, opal_if_base_output,
+            opal_output_verbose(1, opal_if_base_framework.framework_output,
                                 "skipping non-ipv6 interface %s[%d].\n",
                                 cur_ifaddrs->ifa_name, (int)cur_ifaddrs->ifa_addr->sa_family);
             continue;
@@ -138,7 +138,7 @@ static int if_bsdx_ipv6_open(void)
 
         /* skip interface if it is down (IFF_UP not set) */
         if (0 == (cur_ifaddrs->ifa_flags & IFF_UP)) {
-            opal_output_verbose(1, opal_if_base_output,
+            opal_output_verbose(1, opal_if_base_framework.framework_output,
                                 "skipping non-up interface %s.\n", cur_ifaddrs->ifa_name);
             continue;
         }
@@ -151,7 +151,7 @@ static int if_bsdx_ipv6_open(void)
         /* or if it is a point-to-point interface */
         /* TODO: do we really skip p2p? */
         if (0!= (cur_ifaddrs->ifa_flags & IFF_POINTOPOINT)) {
-            opal_output_verbose(1, opal_if_base_output,
+            opal_output_verbose(1, opal_if_base_framework.framework_output,
                                 "skipping loopback interface %s.\n", cur_ifaddrs->ifa_name);
             continue;
         }
@@ -177,14 +177,14 @@ static int if_bsdx_ipv6_open(void)
          */
 
         if ((IN6_IS_ADDR_LINKLOCAL (&sin_addr->sin6_addr))) {
-            opal_output_verbose(1, opal_if_base_output,
+            opal_output_verbose(1, opal_if_base_framework.framework_output,
                                 "skipping link-local ipv6 address on interface "
                                 "%s with scope %d.\n", 
                                 cur_ifaddrs->ifa_name, sin_addr->sin6_scope_id);
             continue;
         }
 
-        if (0 < opal_output_get_verbosity(opal_if_base_output)) {
+        if (0 < opal_output_get_verbosity(opal_if_base_framework.framework_output)) {
             char *addr_name = (char *) malloc(48*sizeof(char));
             inet_ntop(AF_INET6, &sin_addr->sin6_addr, addr_name, 48*sizeof(char));
             opal_output(0, "ipv6 capable interface %s discovered, address %s.\n", 
