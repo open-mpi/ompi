@@ -44,6 +44,7 @@ void mca_btl_vader_frag_init (ompi_free_list_item_t *item, void *ctx)
 
     if (mca_btl_vader_component.segment_size < mca_btl_vader_component.segment_offset + frag_size) {
         item->ptr = NULL;
+        return;
     }
 
     item->ptr = mca_btl_vader_component.my_segment + mca_btl_vader_component.segment_offset;
