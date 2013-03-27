@@ -16,29 +16,30 @@
  * $HEADER$
  */
 
+
 #include "ompi_config.h"
 
-#include <stdio.h>
+#include "ompi/mca/io/base/base.h"
 
-#include "ompi/constants.h"
-#include "opal/mca/mca.h"
-#include "opal/mca/base/base.h"
-#include "ompi/mca/allocator/allocator.h"
-#include "ompi/mca/allocator/base/base.h"
 
-/**
- * Closes all the remaining modules.
- *
- * @retval OMPI_SUCCESS
+/*
+ * The following file was created by configure.  It contains extern
+ * statements and the definition of an array of pointers to each
+ * component's public mca_base_component_t struct.
  */
-int mca_allocator_base_close(void)
+#include "ompi/mca/io/base/static-components.h"
+
+static int mca_io_base_open(mca_base_open_flag_t flags)
 {
-  /* Close all remaining available modules (may be one if this is a
-     OMPI RTE program, or [possibly] multiple if this is ompi_info) */
+    int ret;
 
-  mca_base_components_close(0, &mca_allocator_base_components, NULL);
+    if (OPAL_SUCCESS !=
+        (ret = mca_base_framework_components_open(&ompi_io_base_framework, flags))) {
+        return ret;
+    }
 
-  /* All done */
-  return OMPI_SUCCESS;
+    return mca_io_base_find_available(OMPI_ENABLE_PROGRESS_THREADS, OMPI_ENABLE_THREAD_MULTIPLE);
 }
 
+MCA_BASE_FRAMEWORK_DECLARE(ompi, io, NULL, mca_io_base_open, NULL, NULL,
+                           mca_io_base_static_components, 0);

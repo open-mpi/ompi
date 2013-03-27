@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012      Los Alamos National Security, LLC.
+ * Copyright (c) 2012-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
 * $COPYRIGHT$
  * 
@@ -60,8 +60,7 @@ OPAL_DECLSPEC void opal_info_finalize(void);
 
 OPAL_DECLSPEC void opal_info_register_types(opal_pointer_array_t *mca_types);
 
-OPAL_DECLSPEC int opal_info_register_components(opal_pointer_array_t *mca_types,
-                                                opal_pointer_array_t *component_map);
+OPAL_DECLSPEC int opal_info_register_framework_params(opal_pointer_array_t *component_map);
 
 OPAL_DECLSPEC void opal_info_close_components(void);
 OPAL_DECLSPEC void opal_info_err_params(opal_pointer_array_t *component_map);

@@ -59,7 +59,7 @@ ompi_mtl_portals4_flowctl_init(void)
                      REQ_FLOWCTL_TABLE_ID,
                      &ompi_mtl_portals4.flowctl_idx);
     if (OPAL_UNLIKELY(PTL_OK != ret)) {
-        opal_output_verbose(1, ompi_mtl_base_output,
+        opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                             "%s:%d: PtlPTAlloc failed: %d\n",
                             __FILE__, __LINE__, ret);
         goto error;
@@ -68,7 +68,7 @@ ompi_mtl_portals4_flowctl_init(void)
     ret = PtlCTAlloc(ompi_mtl_portals4.ni_h,
                      &ompi_mtl_portals4.flowctl.trigger_ct_h);
     if (OPAL_UNLIKELY(PTL_OK != ret)) {
-        opal_output_verbose(1, ompi_mtl_base_output,
+        opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                             "%s:%d: PtlCTAlloc failed: %d\n",
                             __FILE__, __LINE__, ret);
         goto error;
@@ -99,7 +99,7 @@ ompi_mtl_portals4_flowctl_init(void)
                       NULL,
                       &ompi_mtl_portals4.flowctl.trigger_me_h);
     if (OPAL_UNLIKELY(PTL_OK != ret)) {
-        opal_output_verbose(1, ompi_mtl_base_output,
+        opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                             "%s:%d: PtlMEAppend failed: %d\n",
                             __FILE__, __LINE__, ret);
         goto error;
@@ -111,7 +111,7 @@ ompi_mtl_portals4_flowctl_init(void)
     ret = PtlCTAlloc(ompi_mtl_portals4.ni_h,
                      &ompi_mtl_portals4.flowctl.alert_ct_h);
     if (OPAL_UNLIKELY(PTL_OK != ret)) {
-        opal_output_verbose(1, ompi_mtl_base_output,
+        opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                             "%s:%d: PtlCTAlloc failed: %d\n",
                             __FILE__, __LINE__, ret);
         goto error;
@@ -130,7 +130,7 @@ ompi_mtl_portals4_flowctl_init(void)
                       &ompi_mtl_portals4.flowctl.alert_req,
                       &ompi_mtl_portals4.flowctl.alert_me_h);
     if (OPAL_UNLIKELY(PTL_OK != ret)) {
-        opal_output_verbose(1, ompi_mtl_base_output,
+        opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                             "%s:%d: PtlMEAppend failed: %d\n",
                             __FILE__, __LINE__, ret);
         goto error;
@@ -140,7 +140,7 @@ ompi_mtl_portals4_flowctl_init(void)
     ret = PtlCTAlloc(ompi_mtl_portals4.ni_h,
                      &ompi_mtl_portals4.flowctl.fanin_ct_h);
     if (OPAL_UNLIKELY(PTL_OK != ret)) {
-        opal_output_verbose(1, ompi_mtl_base_output,
+        opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                             "%s:%d: PtlCTAlloc failed: %d\n",
                             __FILE__, __LINE__, ret);
         goto error;
@@ -160,7 +160,7 @@ ompi_mtl_portals4_flowctl_init(void)
                       NULL,
                       &ompi_mtl_portals4.flowctl.fanin_me_h);
     if (OPAL_UNLIKELY(PTL_OK != ret)) {
-        opal_output_verbose(1, ompi_mtl_base_output,
+        opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                             "%s:%d: PtlMEAppend failed: %d\n",
                             __FILE__, __LINE__, ret);
         goto error;
@@ -170,7 +170,7 @@ ompi_mtl_portals4_flowctl_init(void)
     ret = PtlCTAlloc(ompi_mtl_portals4.ni_h,
                      &ompi_mtl_portals4.flowctl.fanout_ct_h);
     if (OPAL_UNLIKELY(PTL_OK != ret)) {
-        opal_output_verbose(1, ompi_mtl_base_output,
+        opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                             "%s:%d: PtlCTAlloc failed: %d\n",
                             __FILE__, __LINE__, ret);
         goto error;
@@ -189,7 +189,7 @@ ompi_mtl_portals4_flowctl_init(void)
                       &ompi_mtl_portals4.flowctl.fanout_req,
                       &ompi_mtl_portals4.flowctl.fanout_me_h);
     if (OPAL_UNLIKELY(PTL_OK != ret)) {
-        opal_output_verbose(1, ompi_mtl_base_output,
+        opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                             "%s:%d: PtlMEAppend failed: %d\n",
                             __FILE__, __LINE__, ret);
         goto error;
@@ -281,7 +281,7 @@ ompi_mtl_portals4_flowctl_trigger(void)
                      NULL,
                      0);
         if (OPAL_UNLIKELY(PTL_OK != ret)) {
-            opal_output_verbose(1, ompi_mtl_base_output,
+            opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                                 "%s:%d: PtlPut failed: %d\n",
                                 __FILE__, __LINE__, ret);
             return ret;
@@ -317,14 +317,14 @@ start_recover(void)
     ompi_mtl_portals4.flowctl.flowctl_active = true;
     ompi_mtl_portals4.flowctl.epoch_counter++;
 
-    opal_output_verbose(1, ompi_mtl_base_output,
+    opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                          "Entering flowctl_start_recover %d",
                          ompi_mtl_portals4.flowctl.epoch_counter);
 
     /* re-arm trigger/alarm for next time */
     ret = setup_alarm(ompi_mtl_portals4.flowctl.epoch_counter);
     if (OMPI_SUCCESS != ret) {
-        opal_output_verbose(1, ompi_mtl_base_output,
+        opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                             "%s:%d setup_alarm failed: %d\n",
                             __FILE__, __LINE__, ret);
         return ret;
@@ -333,7 +333,7 @@ start_recover(void)
     /* setup barrier tree for getting us out of flow control */
     ret = setup_barrier(ompi_mtl_portals4.flowctl.epoch_counter);
     if (OMPI_SUCCESS != ret) {
-        opal_output_verbose(1, ompi_mtl_base_output,
+        opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                             "%s:%d setup_barrier failed: %d\n",
                             __FILE__, __LINE__, ret);
         return ret;
@@ -351,7 +351,7 @@ start_recover(void)
     /* check short block active count */
     ret = ompi_mtl_portals4_recv_short_link(1);
     if (OMPI_SUCCESS != ret) {
-        opal_output_verbose(1, ompi_mtl_base_output,
+        opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                             "%s:%d: recv_short_link failed: %d",
                             __FILE__, __LINE__, ret);
     }
@@ -359,7 +359,7 @@ start_recover(void)
     /* reorder the pending sends by operation count */
     ret = opal_list_sort(&ompi_mtl_portals4.flowctl.pending_sends, seqnum_compare);
     if (OMPI_SUCCESS != ret) {
-        opal_output_verbose(1, ompi_mtl_base_output,
+        opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                             "%s:%d opal_list_sort failed: %d\n",
                             __FILE__, __LINE__, ret);
         return ret;
@@ -380,7 +380,7 @@ start_recover(void)
                  NULL,
                  0);
     if (OPAL_UNLIKELY(PTL_OK != ret)) {
-        opal_output_verbose(1, ompi_mtl_base_output,
+        opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                             "%s:%d: PtlPut failed: %d\n",
                             __FILE__, __LINE__, ret);
         goto error;
@@ -391,7 +391,7 @@ start_recover(void)
     ret = OMPI_SUCCESS;
 
  error:
-    OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_output,
+    OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_framework.framework_output,
                          "Exiting flowctl_start_recover %d",
                          ompi_mtl_portals4.flowctl.epoch_counter));
 
@@ -420,7 +420,7 @@ setup_alarm(uint32_t epoch)
                               ompi_mtl_portals4.flowctl.trigger_ct_h,
                               (epoch * ompi_mtl_portals4.flowctl.num_procs) + 1);
         if (OPAL_UNLIKELY(PTL_OK != ret)) {
-            opal_output_verbose(1, ompi_mtl_base_output,
+            opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                                 "%s:%d: PtlTriggeredPut failed: %d\n",
                                 __FILE__, __LINE__, ret);
             goto cleanup;
@@ -442,7 +442,7 @@ setup_alarm(uint32_t epoch)
                               ompi_mtl_portals4.flowctl.alert_ct_h,
                               epoch + 1);
         if (OPAL_UNLIKELY(PTL_OK != ret)) {
-            opal_output_verbose(1, ompi_mtl_base_output,
+            opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                                 "%s:%d: PtlTriggeredPut failed: %d\n",
                                 __FILE__, __LINE__, ret);
             goto cleanup;
@@ -470,7 +470,7 @@ setup_barrier(uint32_t epoch)
                                 ompi_mtl_portals4.flowctl.fanin_ct_h,
                                 epoch * (ompi_mtl_portals4.flowctl.num_children + 1));
         if (OPAL_UNLIKELY(PTL_OK != ret)) {
-            opal_output_verbose(1, ompi_mtl_base_output,
+            opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                                 "%s:%d: PtlTriggeredCTSet failed: %d\n",
                                 __FILE__, __LINE__, ret);
             goto cleanup;
@@ -489,7 +489,7 @@ setup_barrier(uint32_t epoch)
                               ompi_mtl_portals4.flowctl.fanin_ct_h,
                               epoch * (ompi_mtl_portals4.flowctl.num_children + 1));
         if (OPAL_UNLIKELY(PTL_OK != ret)) {
-            opal_output_verbose(1, ompi_mtl_base_output,
+            opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                                 "%s:%d: PtlTriggeredPut failed: %d\n",
                                 __FILE__, __LINE__, ret);
             goto cleanup;
@@ -508,7 +508,7 @@ setup_barrier(uint32_t epoch)
                               ompi_mtl_portals4.flowctl.fanin_ct_h,
                               epoch * (ompi_mtl_portals4.flowctl.num_children + 1));
         if (OPAL_UNLIKELY(PTL_OK != ret)) {
-            opal_output_verbose(1, ompi_mtl_base_output,
+            opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                                 "%s:%d: PtlTriggeredPut failed: %d\n",
                                 __FILE__, __LINE__, ret);
             goto cleanup;
@@ -529,7 +529,7 @@ setup_barrier(uint32_t epoch)
                               ompi_mtl_portals4.flowctl.fanout_ct_h,
                               epoch);
         if (OPAL_UNLIKELY(PTL_OK != ret)) {
-            opal_output_verbose(1, ompi_mtl_base_output,
+            opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                                 "%s:%d: PtlTriggeredPut failed: %d\n",
                                 __FILE__, __LINE__, ret);
             return ret;
@@ -559,7 +559,7 @@ flowctl_fanout_callback(ptl_event_t *ev,
     ompi_mtl_portals4.flowctl.flowctl_active = false;
     ret = PtlPTEnable(ompi_mtl_portals4.ni_h, ompi_mtl_portals4.recv_idx);
     if (OPAL_UNLIKELY(PTL_OK != ret)) {
-        opal_output_verbose(1, ompi_mtl_base_output,
+        opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                             "%s:%d: PtlPTEnabled failed: %d\n",
                             __FILE__, __LINE__, ret);
         return ret;
@@ -577,7 +577,7 @@ flowctl_fanout_callback(ptl_event_t *ev,
          
     ompi_mtl_portals4_pending_list_progress();
 
-    OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_output,
+    OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_framework.framework_output,
                          "Exiting flowctl_fanout_callback %d",
                          ompi_mtl_portals4.flowctl.epoch_counter));
 

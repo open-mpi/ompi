@@ -76,9 +76,9 @@ ompi_mtl_portals4_add_procs(struct mca_mtl_base_module_t *mtl,
         }
 
         if (procs[i]->proc_arch != ompi_proc_local()->proc_arch) {
-            opal_output_verbose(1, ompi_mtl_base_output,
+            opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                                 "Portals 4 MTL does not support heterogeneous operations.");
-            opal_output_verbose(1, ompi_mtl_base_output,
+            opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                                 "Proc %s architecture %x, mine %x.",
                                 OMPI_NAME_PRINT(&procs[i]->proc_name), 
                                 procs[i]->proc_arch, ompi_proc_local()->proc_arch);
@@ -87,7 +87,7 @@ ompi_mtl_portals4_add_procs(struct mca_mtl_base_module_t *mtl,
 
         mtl_peer_data[i] = malloc(sizeof(struct mca_mtl_base_endpoint_t));
         if (NULL == mtl_peer_data[i]) {
-            opal_output_verbose(1, ompi_mtl_base_output,
+            opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                                 "%s:%d: malloc failed: %d\n",
                                 __FILE__, __LINE__, ret);
             return OMPI_ERR_OUT_OF_RESOURCE;
@@ -96,12 +96,12 @@ ompi_mtl_portals4_add_procs(struct mca_mtl_base_module_t *mtl,
         ret = ompi_modex_recv(&mca_mtl_portals4_component.mtl_version,
                               procs[i], (void**) &id, &size);
         if (OMPI_SUCCESS != ret) {
-            opal_output_verbose(1, ompi_mtl_base_output,
+            opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                                 "%s:%d: ompi_modex_recv failed: %d\n",
                                 __FILE__, __LINE__, ret);
             return ret;
         } else if (sizeof(ptl_process_t) != size) {
-            opal_output_verbose(1, ompi_mtl_base_output,
+            opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                                 "%s:%d: ompi_modex_recv failed: %d\n",
                                 __FILE__, __LINE__, ret);
             return OMPI_ERR_BAD_PARAM;
@@ -113,7 +113,7 @@ ompi_mtl_portals4_add_procs(struct mca_mtl_base_module_t *mtl,
 #if OMPI_MTL_PORTALS4_FLOW_CONTROL
     ret = ompi_mtl_portals4_flowctl_add_procs(me, nprocs, mtl_peer_data);
     if (OMPI_SUCCESS != ret) {
-        opal_output_verbose(1, ompi_mtl_base_output,
+        opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                             "%s:%d: flowctl_add_procs failed: %d\n",
                             __FILE__, __LINE__, ret);
         return ret;

@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2010-2012 Los Alamos National Security, LLC.
+ * Copyright (c) 2010-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2011-2012 University of Houston. All rights reserved.
  * $COPYRIGHT$
@@ -33,8 +33,7 @@ ORTE_DECLSPEC extern const char *orte_info_type_orte;
 
 ORTE_DECLSPEC void orte_info_register_types(opal_pointer_array_t *mca_types);
 
-ORTE_DECLSPEC int orte_info_register_components(opal_pointer_array_t *mca_types,
-                                                opal_pointer_array_t *component_map);
+ORTE_DECLSPEC int orte_info_register_framework_params(opal_pointer_array_t *component_map);
 
 ORTE_DECLSPEC void orte_info_close_components(void);
 

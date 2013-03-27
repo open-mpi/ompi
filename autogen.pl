@@ -371,7 +371,6 @@ sub mca_generate_framework_header(\$\@) {
         # There is no common framework object
         if ($framework ne "common") {
             my $framework_name = "${project}_${framework}_base_framework";
-
             $framework_array_output .= "    &$framework_name,\n";
             $framework_decl_output .= "extern mca_base_framework_t $framework_name;\n";
         }

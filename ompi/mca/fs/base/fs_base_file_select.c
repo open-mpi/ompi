@@ -67,23 +67,14 @@ int mca_fs_base_file_select (struct mca_io_ompio_file_t *file,
 {
     int priority; 
     int best_priority; 
-    opal_list_item_t *item; 
-    opal_list_item_t *next_item; 
-    mca_base_component_priority_list_item_t *selectable_item;
-    char **name_array;
-    int num_names;
-    mca_base_component_priority_list_item_t *cpli;
+    opal_list_item_t *item;
+    mca_base_component_list_item_t *cli;
     mca_fs_base_component_t *component; 
     mca_fs_base_component_t *best_component;
     mca_fs_base_module_t *module; 
     opal_list_t queried;
     queried_module_t *om;
-    opal_list_t *selectable;
-    char *str;
     int err = MPI_SUCCESS;
-    int i;
-    bool was_selectable_constructed = false;
-    const char **names_value, *names;
 
     /* Check and see if a preferred component was provided. If it was
      provided then it should be used (if possible) */
@@ -92,12 +83,9 @@ int mca_fs_base_file_select (struct mca_io_ompio_file_t *file,
          
         /* We have a preferred component. Check if it is available
            and if so, whether it wants to run */
-         
-         str = &(preferred->mca_component_name[0]);
-         
-         opal_output_verbose(10, mca_fs_base_output,
+         opal_output_verbose(10, ompi_fs_base_framework.framework_output,
                              "fs:base:file_select: Checking preferred component: %s",
-                             str);
+                             preferred->mca_component_name);
          
          /* query the component for its priority and get its module 
             structure. This is necessary to proceed */
@@ -136,83 +124,13 @@ int mca_fs_base_file_select (struct mca_io_ompio_file_t *file,
      * use that for this file
      */ 
 
-    /* Check if anything was requested by means on the name parameters */
-    names_value = NULL;
-    mca_base_var_get_value(mca_fs_base_param, &names_value, NULL, NULL);
-    names = names_value ? names_value[0] : NULL;
-
-    if (NULL != names && 0 < strlen(names)) {
-        name_array = opal_argv_split (names, ',');
-        num_names = opal_argv_count (name_array);
-
-        opal_output_verbose(10, mca_fs_base_output,
-                            "fs:base:file_Select: Checking all available module");
-
-        /* since there are somethings which the mca requested through the 
-           if the intersection is NULL, then we barf saying that the requested
-           modules are not being available */
-
-        selectable = OBJ_NEW(opal_list_t);
-        was_selectable_constructed = true;
-        
-        /* go through the compoents_available list and check against the names
-         * to see whether this can be added or not */
-
-        for (item = opal_list_get_first(&mca_fs_base_components_available);
-            item != opal_list_get_end(&mca_fs_base_components_available);
-            item = opal_list_get_next(item)) {
-            /* convert the opal_list_item_t returned into the proper type */
-            cpli = (mca_base_component_priority_list_item_t *) item;
-            component = (mca_fs_base_component_t *) cpli->super.cli_component;
-            opal_output_verbose(10, mca_fs_base_output,
-                                "select: initialising %s component %s",
-                                component->fsm_version.mca_type_name,
-                                component->fsm_version.mca_component_name);
-
-            /* check if this name is present in the mca_base_var */
-            for (i=0; i < num_names; i++) {
-                if (0 == strcmp(name_array[i], component->fsm_version.mca_component_name)) {
-                    /* this is present, and should be added o the selectable list */
-
-                    /* We need to create a seperate object to initialise this list with
-                     * since we cannot have the same item in 2 lists */
-
-                    selectable_item = OBJ_NEW (mca_base_component_priority_list_item_t);
-                    *selectable_item = *cpli;
-                    opal_list_append (selectable, (opal_list_item_t *)selectable_item);
-                    break;
-                }
-            }
-        }
-        
-        /* check for a NULL intersection between the available list and the 
-         * list which was asked for */
-
-        if (0 == opal_list_get_size(selectable)) {
-            was_selectable_constructed = true;
-            OBJ_RELEASE (selectable);
-            opal_output_verbose (10, mca_fs_base_output,
-                                 "fs:base:file_select: preferred modules were not available");
-            return OMPI_ERROR;
-        }
-    } else { /* if there was no name_array, then we need to simply initialize 
-                selectable to mca_fs_base_components_available */
-        selectable = &mca_fs_base_components_available;
-    }
-
     best_component = NULL;
     best_priority = -1;
     OBJ_CONSTRUCT(&queried, opal_list_t);
 
-    for (item = opal_list_get_first(selectable);
-         item != opal_list_get_end(selectable);
-         item = opal_list_get_next(item)) {
-       /*
-        * convert the opal_list_item_t returned into the proper type
-        */
-       cpli = (mca_base_component_priority_list_item_t *) item;
-       component = (mca_fs_base_component_t *) cpli->super.cli_component;
-       opal_output_verbose(10, mca_fs_base_output,
+    OPAL_LIST_FOREACH(cli, &ompi_fs_base_framework.framework_components, mca_base_component_list_item_t) {
+       component = (mca_fs_base_component_t *) cli->cli_component;
+       opal_output_verbose(10, ompi_fs_base_framework.framework_output,
                            "select: initialising %s component %s",
                            component->fsm_version.mca_type_name,
                            component->fsm_version.mca_component_name);
@@ -221,7 +139,7 @@ int mca_fs_base_file_select (struct mca_io_ompio_file_t *file,
         * we can call the query function only if there is a function :-)
         */
        if (NULL == component->fsm_file_query) {
-          opal_output_verbose(10, mca_fs_base_output,
+          opal_output_verbose(10, ompi_fs_base_framework.framework_output,
                              "select: no query, ignoring the component");
        } else {
            /*
@@ -234,10 +152,10 @@ int mca_fs_base_file_select (struct mca_io_ompio_file_t *file,
                /*
                 * query did not return any action which can be used
                 */ 
-               opal_output_verbose(10, mca_fs_base_output,
+               opal_output_verbose(10, ompi_fs_base_framework.framework_output,
                                   "select: query returned failure");
            } else {
-               opal_output_verbose(10, mca_fs_base_output,
+               opal_output_verbose(10, ompi_fs_base_framework.framework_output,
                                   "select: query returned priority %d",
                                   priority);
                /* 
@@ -263,25 +181,6 @@ int mca_fs_base_file_select (struct mca_io_ompio_file_t *file,
        } /* end else of if (NULL == component->fsm_init) */
     } /* end for ... end of traversal */
 
-    /* We have to remove empty out the selectable list if the selectable 
-     * list was constructed as a duplicate and not as a pointer to the
-     * mca_base_components_available list. So, check and destroy */
-
-    if (was_selectable_constructed) {
-
-        /* remove all the items first */
-        for (item = opal_list_get_first(&mca_fs_base_components_available);
-             item != opal_list_get_end(&mca_fs_base_components_available);
-             item = next_item) {
-             next_item = opal_list_get_next(item);
-             OBJ_RELEASE (item);
-        }
-                
-        /* release the list itself */
-        OBJ_RELEASE (selectable);
-        was_selectable_constructed = false;
-    }
-
     /*
      * Now we have alist of components which successfully returned
      * their module struct.  One of these components has the best
@@ -304,9 +203,7 @@ int mca_fs_base_file_select (struct mca_io_ompio_file_t *file,
      * unquery() those components which have not been selected and
      * init() the component which was selected
      */ 
-    for (item = opal_list_remove_first(&queried);
-         NULL != item;
-         item = opal_list_remove_first(&queried)) {
+    while (NULL != (item = opal_list_remove_first(&queried))) {
         om = (queried_module_t *) item;
         if (om->om_component == best_component) {
            /*
@@ -339,7 +236,7 @@ int mca_fs_base_file_select (struct mca_io_ompio_file_t *file,
                  * unquery. Hence this check is necessary
                  */
                  (void) om->om_component->fsm_file_unquery(file);
-                 opal_output_verbose(10, mca_fs_base_output,
+                 opal_output_verbose(10, ompi_fs_base_framework.framework_output,
                                      "select: component %s is not selected",
                                      om->om_component->fsm_version.mca_component_name);
                } /* end if */
@@ -347,7 +244,7 @@ int mca_fs_base_file_select (struct mca_io_ompio_file_t *file,
           OBJ_RELEASE(om);
     } /* traversing through the entire list */
     
-    opal_output_verbose(10, mca_fs_base_output,
+    opal_output_verbose(10, ompi_fs_base_framework.framework_output,
                        "select: component %s selected",
                         best_component->fsm_version.mca_component_name);
 

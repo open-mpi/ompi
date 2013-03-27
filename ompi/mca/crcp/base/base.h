@@ -20,6 +20,7 @@
 
 #include "ompi_config.h"
 
+#include "opal/mca/base/base.h"
 #include "ompi/constants.h"
 
 #include "ompi/mca/crcp/crcp.h"
@@ -31,16 +32,6 @@
 BEGIN_C_DECLS
 
     /**
-     * Initialize the CRCP MCA framework
-     *
-     * @retval OMPI_SUCCESS Upon success
-     * @retval OMPI_ERROR   Upon failures
-     * 
-     * This function is invoked during ompi_init();
-     */
-    OMPI_DECLSPEC int ompi_crcp_base_open(void);
-    
-    /**
      * Select an available component.
      *
      * @retval OMPI_SUCCESS Upon Success
@@ -50,16 +41,6 @@ BEGIN_C_DECLS
      */
     OMPI_DECLSPEC int ompi_crcp_base_select(void);
     
-    /**
-     * Finalize the CRCP MCA framework
-     *
-     * @retval OMPI_SUCCESS Upon success
-     * @retval OMPI_ERROR   Upon failures
-     * 
-     * This function is invoked during ompi_finalize();
-     */
-    OMPI_DECLSPEC int ompi_crcp_base_close(void);
-
     /**
      * Quiesce Interface (For MPI Ext.)
      */
@@ -208,10 +189,7 @@ BEGIN_C_DECLS
     ompi_crcp_base_none_btl_ft_event(int state,
                                      ompi_crcp_base_btl_state_t*);
 
-    /* Utility Functions */
-
-    OMPI_DECLSPEC extern int  ompi_crcp_base_output;
-    OMPI_DECLSPEC extern opal_list_t ompi_crcp_base_components_available;
+    OMPI_DECLSPEC extern mca_base_framework_t ompi_crcp_base_framework;
     OMPI_DECLSPEC extern ompi_crcp_base_component_t ompi_crcp_base_selected_component;
     OMPI_DECLSPEC extern ompi_crcp_base_module_t ompi_crcp;
 

@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2009-2012 Oak Ridge National Laboratory.  All rights reserved.
  * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
+ * Copyright (c) 2012-2013 Los Alamos National Security, Inc.  All rights reserved. 
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -33,13 +34,9 @@
 /*
 **  * Global variables
 **   */
-int mca_sbgp_base_output = 0;
-opal_list_t mca_sbgp_base_components_opened;
 opal_list_t mca_sbgp_base_components_in_use;
 int mca_sbgp_base_components_in_use_inited=0;
 OMPI_DECLSPEC char *ompi_sbgp_subgroups_string;
-
-static int ompi_sbgp_base_verbose;
 
 static void mca_sbgp_base_destruct (mca_sbgp_base_module_t *module)
 {
@@ -133,7 +130,7 @@ static int ompi_sbgp_set_components_to_use(opal_list_t *sbgp_components_avail,
                 sbgp_component = sbgp_string[0];
                 break;
             default:
-                opal_output(mca_sbgp_base_output,
+                opal_output(ompi_sbgp_base_framework.framework_output,
                         "Requested SBGP configuration is illegal %s",
                         subgoups_requested[i]);
                 RELEASE_LIST_OF_STRINGS(sbgp_string);
@@ -200,18 +197,8 @@ error:
     return rc;
 }
 
-static int mca_sbgp_base_register(int flags)
+static int mca_sbgp_base_register(mca_base_register_flag_t flags)
 {
-    /* Debugging/Verbose output */
-    ompi_sbgp_base_verbose = 0;
-    (void) mca_base_var_register("ompi", "sbgp", "base", "verbose",
-                                 "Verbosity level of SBGP framework",
-                                 MCA_BASE_VAR_TYPE_INT, NULL, 0,
-                                 MCA_BASE_VAR_FLAG_SETTABLE,
-                                 OPAL_INFO_LVL_9,
-                                 MCA_BASE_VAR_SCOPE_LOCAL,
-                                 &ompi_sbgp_base_verbose);
-
     /* get list of sub-grouping functions to use */
     ompi_sbgp_subgroups_string = "basesmsocket,basesmuma,ibnet,p2p";
     (void) mca_base_var_register("ompi", "sbgp", "base", "subgroups_string",
@@ -224,35 +211,30 @@ static int mca_sbgp_base_register(int flags)
     return OMPI_SUCCESS;
 }
 
+static int mca_sbgp_base_close(void)
+{
+    return mca_base_framework_components_close(&ompi_sbgp_base_framework, NULL);
+}
+
 /**
  * Function for finding and opening either all MCA components, or the one
  * that was specifically requested via a MCA parameter.
  */
-int mca_sbgp_base_open(void)
+static int mca_sbgp_base_open(mca_base_open_flag_t flags)
 {
-    int ret = OMPI_SUCCESS;
+    int ret;
 
-    /*_sbgp_base_components_available
-     * Register some MCA parameters
-     */
-
-    (void) mca_sbgp_base_register(0);
-
-     /* get fraemwork id    */
-     mca_sbgp_base_output = opal_output_open(NULL);
-     opal_output_set_verbosity(mca_sbgp_base_output, ompi_sbgp_base_verbose);
-
-    /* Open up all available components */
-    ret = mca_base_components_open("sbgp", mca_sbgp_base_output, mca_sbgp_base_static_components,
-                             &mca_sbgp_base_components_opened,
-                             true);
-    if (OMPI_SUCCESS != ret) {
-        return OMPI_ERROR;
+    if (OMPI_SUCCESS != (ret = mca_base_framework_components_open(&ompi_sbgp_base_framework, flags))) {
+        return ret;
     }
 
-    ret = ompi_sbgp_set_components_to_use(&mca_sbgp_base_components_opened,
+    ret = ompi_sbgp_set_components_to_use(&ompi_sbgp_base_framework.framework_components,
             &mca_sbgp_base_components_in_use);
 
     return ret;
 }
+
+MCA_BASE_FRAMEWORK_DECLARE(ompi, sbgp, "OMPI Subgroup Subsystem", mca_sbgp_base_register,
+                           mca_sbgp_base_open, mca_sbgp_base_close,
+                           mca_sbgp_base_static_components, 0);
 

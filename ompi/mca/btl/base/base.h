@@ -54,9 +54,7 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_btl_base_selected_module_t);
  * Global functions for MCA: overall BTL open and close
  */
 
-OMPI_DECLSPEC  int mca_btl_base_open(void);
 OMPI_DECLSPEC  int mca_btl_base_select(bool enable_progress_threads, bool enable_mpi_threads);
-OMPI_DECLSPEC  int mca_btl_base_close(void);
 OMPI_DECLSPEC  void mca_btl_base_dump(
     struct mca_btl_base_module_t*,
     struct mca_btl_base_endpoint_t*,
@@ -68,14 +66,14 @@ OMPI_DECLSPEC  int mca_btl_base_param_verify(mca_btl_base_module_t *module);
 /*
  * Globals
  */
-OMPI_DECLSPEC extern int mca_btl_base_output;
 extern char* mca_btl_base_include;
 extern char* mca_btl_base_exclude;
 extern int mca_btl_base_warn_component_unused;
 extern int mca_btl_base_already_opened;
-OMPI_DECLSPEC extern opal_list_t mca_btl_base_components_opened;
 OMPI_DECLSPEC extern opal_list_t mca_btl_base_modules_initialized;
 OMPI_DECLSPEC extern bool mca_btl_base_thread_multiple_override;
+
+OMPI_DECLSPEC extern mca_base_framework_t ompi_btl_base_framework;
 
 END_C_DECLS
     

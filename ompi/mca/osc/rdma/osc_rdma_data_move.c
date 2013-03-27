@@ -262,7 +262,7 @@ ompi_osc_rdma_sendreq_send_long_cb(ompi_request_t *request)
     ompi_osc_rdma_sendreq_t *sendreq = longreq->req_basereq.req_sendreq;
     int32_t count;
 
-    OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_output,
+    OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
                          "%d completed long sendreq to %d",
                          ompi_comm_rank(sendreq->req_module->m_comm),
                          sendreq->req_target_rank));
@@ -339,7 +339,7 @@ ompi_osc_rdma_sendreq_send_cb(struct mca_btl_base_module_t* btl,
                 
                 longreq->req_basereq.req_sendreq = sendreq;
 
-                OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_output,
+                OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
                                      "%d starting long sendreq to %d (%d)",
                                      ompi_comm_rank(sendreq->req_module->m_comm),
                                      sendreq->req_target_rank,
@@ -386,7 +386,7 @@ ompi_osc_rdma_sendreq_send_cb(struct mca_btl_base_module_t* btl,
         int ret, i, len;
 
         len = opal_list_get_size(&module->m_queued_sendreqs);
-        OPAL_OUTPUT_VERBOSE((40, ompi_osc_base_output,
+        OPAL_OUTPUT_VERBOSE((40, ompi_osc_base_framework.framework_output,
                              "%d items in restart queue",
                              len));
         for (i = 0 ; i < len ; ++i) {
@@ -618,7 +618,7 @@ ompi_osc_rdma_sendreq_send(ompi_osc_rdma_module_t *module,
 #endif
 
         /* send fragment */
-        OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_output,
+        OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
                              "%d sending sendreq to %d",
                              ompi_comm_rank(sendreq->req_module->m_comm),
                              sendreq->req_target_rank));
@@ -827,7 +827,7 @@ ompi_osc_rdma_sendreq_recv_put_long_cb(ompi_request_t *request)
 
     OBJ_RELEASE(longreq->req_datatype);
     
-    OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_output,
+    OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
                          "%d finished receiving long put message",
                          ompi_comm_rank(longreq->req_module->m_comm))); 
 
@@ -853,7 +853,7 @@ ompi_osc_rdma_sendreq_recv_put(ompi_osc_rdma_module_t *module,
         ompi_osc_base_datatype_create(proc, inbuf);
 
     if (NULL == datatype) {
-        opal_output(ompi_osc_base_output,
+        opal_output(ompi_osc_base_framework.framework_output,
                     "Error recreating datatype.  Aborting.");
         ompi_mpi_abort(module->m_comm, 1, false);
     }
@@ -894,7 +894,7 @@ ompi_osc_rdma_sendreq_recv_put(ompi_osc_rdma_module_t *module,
         inmsg_mark_complete(module);
         *inbuf = ((char*) *inbuf) + header->hdr_msg_length;
 
-        OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_output,
+        OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
                              "%d received put message from %d",
                              ompi_comm_rank(module->m_comm),
                              header->hdr_origin));
@@ -915,7 +915,7 @@ ompi_osc_rdma_sendreq_recv_put(ompi_osc_rdma_module_t *module,
                                       ompi_osc_rdma_sendreq_recv_put_long_cb,
                                       longreq);
 
-        OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_output,
+        OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
                              "%d started long recv put message from %d (%d)",
                              ompi_comm_rank(module->m_comm),
                              header->hdr_origin,
@@ -997,7 +997,7 @@ ompi_osc_rdma_sendreq_recv_accum_long_cb(ompi_request_t *request)
     /* unlock the window for accumulates */
     OPAL_THREAD_UNLOCK(&longreq->req_module->m_acc_lock);
     
-    OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_output,
+    OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
                          "%d finished receiving long accum message from %d",
                          ompi_comm_rank(longreq->req_module->m_comm), 
                          header->hdr_origin));
@@ -1031,7 +1031,7 @@ ompi_osc_rdma_sendreq_recv_accum(ompi_osc_rdma_module_t *module,
         ompi_osc_base_datatype_create(proc, payload);
 
     if (NULL == datatype) {
-        opal_output(ompi_osc_base_output,
+        opal_output(ompi_osc_base_framework.framework_output,
                     "Error recreating datatype.  Aborting.");
         ompi_mpi_abort(module->m_comm, 1, false);
     }
@@ -1153,7 +1153,7 @@ ompi_osc_rdma_sendreq_recv_accum(ompi_osc_rdma_module_t *module,
 
         inmsg_mark_complete(module);
 
-        OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_output,
+        OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
                              "%d received accum message from %d",
                              ompi_comm_rank(module->m_comm),
                              header->hdr_origin));
@@ -1199,7 +1199,7 @@ ompi_osc_rdma_sendreq_recv_accum(ompi_osc_rdma_module_t *module,
                                       ompi_osc_rdma_sendreq_recv_accum_long_cb,
                                       longreq);
 
-        OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_output,
+        OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
                              "%d started long recv accum message from %d (%d)",
                              ompi_comm_rank(module->m_comm),
                              header->hdr_origin,

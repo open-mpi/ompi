@@ -9,6 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2013      Los Alamos National Security, LLC.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -26,8 +27,7 @@ headers += \
 
 libmca_pml_la_SOURCES += \
         base/pml_base_bsend.c \
-        base/pml_base_close.c \
-        base/pml_base_open.c \
+        base/pml_base_frame.c \
         base/pml_base_recvreq.c \
         base/pml_base_request.c \
         base/pml_base_select.c \

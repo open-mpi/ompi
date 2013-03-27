@@ -9,6 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2012-2013 Los Alamos National Security, LLC.
+ *                         All rights reserved
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -35,15 +37,9 @@ BEGIN_C_DECLS
 OMPI_DECLSPEC mca_rcache_base_module_t* mca_rcache_base_module_create(const char* name); 
 
 /*
- * opens all rcache components
- */ 
-OMPI_DECLSPEC int mca_rcache_base_open(void); 
-
-/* 
- * close all rcache components and call finalize on any open modules 
- */ 
-OMPI_DECLSPEC int mca_rcache_base_close(void); 
-
+ * MCA framework
+ */
+OMPI_DECLSPEC extern mca_base_framework_t ompi_rcache_base_framework;
 
 struct mca_rcache_base_selected_module_t {
     opal_list_item_t super;
@@ -60,8 +56,6 @@ OMPI_DECLSPEC mca_rcache_base_module_t* mca_rcache_base_module_lookup(const char
 /*
  * Globals
  */
-OMPI_DECLSPEC extern int mca_rcache_base_output;
-OMPI_DECLSPEC extern opal_list_t mca_rcache_base_components;
 OMPI_DECLSPEC extern opal_list_t mca_rcache_base_modules;
 
 END_C_DECLS

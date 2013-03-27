@@ -39,41 +39,6 @@
  * Global variables; most of which are loaded by back-ends of MCA
  * variables
  */
-int mca_fcoll_base_param = -1;
-int mca_fcoll_base_output = -1;
 
-opal_list_t mca_fcoll_base_components_opened;
-opal_list_t mca_fcoll_base_components_available;
-
-bool mca_fcoll_base_components_available_valid = false;
-bool mca_fcoll_base_components_opened_valid = false;
-
-mca_fcoll_base_component_t mca_fcoll_base_selected_component;
-mca_fcoll_base_module_t mca_fcoll;
-
-/*
- * Function for finding and opening either all MCA components, or the one
- * that was specifically requested via a MCA parameter.
- */
-int mca_fcoll_base_open(void)
-{
-    /* Open an output stream for this framework */
-
-    mca_fcoll_base_output = opal_output_open(NULL);
-
-     /* Open up all available components */
-
-    if (OMPI_SUCCESS != 
-        mca_base_components_open("fcoll", mca_fcoll_base_output,
-                                 mca_fcoll_base_static_components, 
-                                 &mca_fcoll_base_components_opened, true)) {
-        return OMPI_ERROR;
-    }
-    mca_fcoll_base_components_opened_valid = true;
-
-    /* Find the index of the MCA "fcoll" param for selection */
-    
-    mca_fcoll_base_param = mca_base_var_find("ompi", "fcoll", NULL, NULL);
-
-    return OMPI_SUCCESS;
-}
+MCA_BASE_FRAMEWORK_DECLARE(ompi, fcoll, NULL, NULL, NULL, NULL,
+                           mca_fcoll_base_static_components, 0);

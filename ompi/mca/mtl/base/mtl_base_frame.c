@@ -35,40 +35,8 @@
 
 #include "ompi/mca/mtl/base/static-components.h"
 
-
-int ompi_mtl_base_output = 0;
-opal_list_t ompi_mtl_base_components_opened;
 mca_mtl_base_component_t *ompi_mtl_base_selected_component = NULL;
-mca_mtl_base_module_t *ompi_mtl;
-
-
-/*
- * Function for finding and opening either all MCA components, or the one
- * that was specifically requested via a MCA parameter.
- */
-int
-ompi_mtl_base_open(void)
-{
-    /* setup the output stream */
-    ompi_mtl_base_output = opal_output_open(NULL);
-
-    /* Open up all available components */
-    if (OMPI_SUCCESS != 
-        mca_base_components_open("mtl", ompi_mtl_base_output,
-                                 mca_mtl_base_static_components, 
-                                 &ompi_mtl_base_components_opened,
-                                 !MCA_ompi_mtl_DIRECT_CALL)) {
-        return OMPI_ERROR;
-    }
-
-
-    /* Set a sentinel in case we don't select any components (e.g.,
-       ompi_info) */
-    ompi_mtl = NULL;
-
-    return OMPI_SUCCESS;
-}
-
+mca_mtl_base_module_t *ompi_mtl = NULL;
 
 /*
  * Function for selecting one component from all those that are
@@ -88,31 +56,31 @@ ompi_mtl_base_select(bool enable_progress_threads,
 
     /* Traverse the list of available components; call their init
        functions. */
-    for (item = opal_list_get_first(&ompi_mtl_base_components_opened);
-         opal_list_get_end(&ompi_mtl_base_components_opened) != item;
+    for (item = opal_list_get_first(&ompi_mtl_base_framework.framework_components);
+         opal_list_get_end(&ompi_mtl_base_framework.framework_components) != item;
          item = opal_list_get_next(item) ) {
         cli = (mca_base_component_list_item_t *) item;
         component = (mca_mtl_base_component_t *) cli->cli_component;
 
         if (NULL == component->mtl_init) {
-            opal_output_verbose( 10, ompi_mtl_base_output,
+            opal_output_verbose( 10, ompi_mtl_base_framework.framework_output,
                                  "select: no init function; ignoring component %s",
                                  component->mtl_version.mca_component_name );
             continue;
         }
-        opal_output_verbose( 10, ompi_mtl_base_output, 
+        opal_output_verbose( 10, ompi_mtl_base_framework.framework_output, 
                              "select: initializing %s component %s",
                              component->mtl_version.mca_type_name,
                              component->mtl_version.mca_component_name );
         module = component->mtl_init(enable_progress_threads,
                                      enable_mpi_threads);
         if (NULL == module) {
-            opal_output_verbose( 10, ompi_mtl_base_output,
+            opal_output_verbose( 10, ompi_mtl_base_framework.framework_output,
                                  "select: init returned failure for component %s",
                                  component->mtl_version.mca_component_name );
             continue;
         }
-        opal_output_verbose( 10, ompi_mtl_base_output,
+        opal_output_verbose( 10, ompi_mtl_base_framework.framework_output,
                              "select: init returned success");
 
         ompi_mtl_base_selected_component = component;
@@ -122,17 +90,18 @@ ompi_mtl_base_select(bool enable_progress_threads,
     /* This base function closes, unloads, and removes from the
        available list all unselected components.  The available list will
        contain only the selected component. */
-    mca_base_components_close(ompi_mtl_base_output, 
-                              &ompi_mtl_base_components_opened, 
-                              (mca_base_component_t *) ompi_mtl_base_selected_component);
+    if (ompi_mtl_base_selected_component) {
+        (void) mca_base_framework_components_close(&ompi_mtl_base_framework,
+                                                   (mca_base_component_t *) ompi_mtl_base_selected_component);
+    }
 
     /* All done */
     if (NULL == module) {
-        opal_output_verbose( 10, ompi_mtl_base_output, 
+        opal_output_verbose( 10, ompi_mtl_base_framework.framework_output, 
                              "select: no component selected");
         return OMPI_ERR_NOT_FOUND;
     } else {
-        opal_output_verbose( 10, ompi_mtl_base_output, 
+        opal_output_verbose( 10, ompi_mtl_base_framework.framework_output, 
                              "select: component %s selected",
                              ompi_mtl_base_selected_component->
                              mtl_version.mca_component_name );
@@ -141,18 +110,16 @@ ompi_mtl_base_select(bool enable_progress_threads,
 }
 
 
-int
+static int
 ompi_mtl_base_close(void)
 {
+    /* NTH: Should we be freeing the mtl module here? */
+    ompi_mtl = NULL;
+
     /* Close all remaining available modules (may be one if this is a
        OMPI RTE program, or [possibly] multiple if this is ompi_info) */
-    mca_base_components_close(ompi_mtl_base_output, 
-                              &ompi_mtl_base_components_opened, NULL);
-
-    /* Close the framework output */
-    opal_output_close (ompi_mtl_base_output);
-    ompi_mtl_base_output = -1;
-
-    /* All done */
-    return OMPI_SUCCESS;
+    return mca_base_framework_components_close(&ompi_mtl_base_framework, NULL);
 }
+
+MCA_BASE_FRAMEWORK_DECLARE(ompi, mtl, NULL, NULL, NULL, ompi_mtl_base_close,
+                           mca_mtl_base_static_components, 0);

@@ -52,13 +52,13 @@ ompi_mtl_portals4_callback(ptl_event_t *ev,
         ompi_mtl_portals4_pending_request_t *pending = 
             ptl_request->pending;
 
-        OPAL_OUTPUT_VERBOSE((10, ompi_mtl_base_output,
+        OPAL_OUTPUT_VERBOSE((10, ompi_mtl_base_framework.framework_output,
                              "send %lu hit flow control (%d)",
                              ptl_request->opcount, ev->type));
 
         /* BWB: FIX ME: this is a hack.. */
         if (pending->fc_notified) {
-            return;
+            return OMPI_SUCCESS;
         }
         pending->fc_notified = 1;
 
@@ -67,7 +67,7 @@ ompi_mtl_portals4_callback(ptl_event_t *ev,
         if (!PtlHandleIsEqual(ptl_request->me_h, PTL_INVALID_HANDLE)) {
             ret = PtlMEUnlink(ptl_request->me_h);
             if (PTL_OK != ret) {
-                opal_output_verbose(1, ompi_mtl_base_output,
+                opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                                     "%s:%d: send callback PtlMEUnlink returned %d",
                                     __FILE__, __LINE__, ret);
             }
@@ -83,14 +83,14 @@ ompi_mtl_portals4_callback(ptl_event_t *ev,
 #endif
 
     if (OPAL_UNLIKELY(ev->ni_fail_type != PTL_NI_OK)) {
-        opal_output_verbose(1, ompi_mtl_base_output,
+        opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                             "%s:%d: send callback ni_fail_type: %d",
                             __FILE__, __LINE__, ev->ni_fail_type);
         *complete = true;
         return OMPI_ERROR;
     }
 
-    OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_output,
+    OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_framework.framework_output,
                          "send %lu got event of type %d",
                          ptl_request->opcount, ev->type));
 
@@ -106,7 +106,7 @@ ompi_mtl_portals4_callback(ptl_event_t *ev,
            1, so they don't need to enter this path) */
         ret = PtlMEUnlink(ptl_request->me_h);
         if (PTL_OK != ret) {
-            opal_output_verbose(1, ompi_mtl_base_output,
+            opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                                 "%s:%d: send callback PtlMEUnlink returned %d",
                                 __FILE__, __LINE__, ret);
         }
@@ -123,14 +123,14 @@ ompi_mtl_portals4_callback(ptl_event_t *ev,
         if (PTL_INVALID_HANDLE != ptl_request->md_h) {
             ret = PtlMDRelease(ptl_request->md_h);
             if (PTL_OK != ret) {
-                opal_output_verbose(1, ompi_mtl_base_output,
+                opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                                     "%s:%d: send callback PtlMDRelease returned %d",
                                     __FILE__, __LINE__, ret);
                 retval = OMPI_ERROR;
             }
         }
 
-        OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_output, "send %lu completed",
+        OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_framework.framework_output, "send %lu completed",
                              ptl_request->opcount));
 
         *complete = true;
@@ -230,20 +230,20 @@ ompi_mtl_portals4_short_isend(mca_pml_base_send_mode_t mode,
                           ptl_request,
                           &ptl_request->me_h);
         if (OPAL_UNLIKELY(PTL_OK != ret)) {
-            opal_output_verbose(1, ompi_mtl_base_output,
+            opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                                 "%s:%d: PtlMEAppend failed: %d",
                                 __FILE__, __LINE__, ret);
             return ompi_mtl_portals4_get_error(ret);
         }
 
-        OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_output,
+        OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_framework.framework_output,
                              "Send %lu short sync send with hdr_data 0x%lx (0x%lx)",
                              ptl_request->opcount, hdr_data, match_bits));
     } else {
         ptl_request->event_count = 1;
         ptl_request->me_h = PTL_INVALID_HANDLE;
 
-        OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_output,
+        OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_framework.framework_output,
                              "Send %lu short send with hdr_data 0x%lx (0x%lx)",
                              ptl_request->opcount, hdr_data, match_bits));
     }
@@ -264,7 +264,7 @@ ompi_mtl_portals4_short_isend(mca_pml_base_send_mode_t mode,
                  ptl_request,
 		 hdr_data);
     if (OPAL_UNLIKELY(PTL_OK != ret)) {
-        opal_output_verbose(1, ompi_mtl_base_output,
+        opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                             "%s:%d: PtlPut failed: %d",
                             __FILE__, __LINE__, ret);
         if (MCA_PML_BASE_SEND_SYNCHRONOUS == mode) {
@@ -317,13 +317,13 @@ ompi_mtl_portals4_long_isend(void *start, int length, int contextid, int tag,
                       ptl_request,
                       &ptl_request->me_h);
     if (OPAL_UNLIKELY(PTL_OK != ret)) {
-        opal_output_verbose(1, ompi_mtl_base_output,
+        opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                             "%s:%d: PtlMEAppend failed: %d",
                             __FILE__, __LINE__, ret);
         return ompi_mtl_portals4_get_error(ret);
     }
 
-    OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_output,
+    OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_framework.framework_output,
                          "Send %lu long send with hdr_data 0x%lx (0x%lx)",
                          ptl_request->opcount, hdr_data, match_bits));
 
@@ -346,7 +346,7 @@ ompi_mtl_portals4_long_isend(void *start, int length, int contextid, int tag,
                  ptl_request,
                  hdr_data);
     if (OPAL_UNLIKELY(PTL_OK != ret)) {
-        opal_output_verbose(1, ompi_mtl_base_output,
+        opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                             "%s:%d: PtlPut failed: %d",
                             __FILE__, __LINE__, ret);
 	PtlMEUnlink(ptl_request->me_h);
@@ -437,7 +437,7 @@ ompi_mtl_portals4_send_start(struct mca_mtl_base_module_t* mtl,
     ptl_request->buffer_ptr = (free_after) ? start : NULL;
     ptl_request->event_count = 0;
 
-    OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_output,
+    OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_framework.framework_output,
                          "Send %lu to %x,%x of length %d\n",
                          ptl_request->opcount,
                          endpoint->ptl_proc.phys.nid, 
@@ -583,9 +583,9 @@ ompi_mtl_portals4_try_to_use_fixed_md(void *start,
     /* If fixed_md_distance is defined for MD and if the memory buffer is strictly contained in one of them, then use one */
     if ((0 != ompi_mtl_portals4.fixed_md_distance) &&
         (((addr % ompi_mtl_portals4.fixed_md_distance) + length) < ompi_mtl_portals4.fixed_md_distance)) {
-		if (0 == length) OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_output, "          Memory  : [ %16lx -   (len = 0)      ] is in fixed MD number: %d\n\n",
+		if (0 == length) OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_framework.framework_output, "          Memory  : [ %16lx -   (len = 0)      ] is in fixed MD number: %d\n\n",
                            start, addr / ompi_mtl_portals4.fixed_md_distance));
-                else OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_output, "          Memory  : [ %16lx - %16lx ] is in fixed MD number: %d\n\n",
+                else OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_framework.framework_output, "          Memory  : [ %16lx - %16lx ] is in fixed MD number: %d\n\n",
                            start, (long int)start + length - 1, addr / ompi_mtl_portals4.fixed_md_distance));
                 /* Use the fixed MD */
                 *md_h = ompi_mtl_portals4.fixed_md_h[addr / ompi_mtl_portals4.fixed_md_distance];
@@ -594,8 +594,8 @@ ompi_mtl_portals4_try_to_use_fixed_md(void *start,
     }
     else {
         if (0 == ompi_mtl_portals4.fixed_md_distance)
-             OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_output, "\nWARNING: Memory cannot be connected to a fixed MD\n"));
-        else OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_output, "\nWARNING: Memory outside the scope of the fixed MD %x\n\n", addr / ompi_mtl_portals4.fixed_md_distance));
+             OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_framework.framework_output, "\nWARNING: Memory cannot be connected to a fixed MD\n"));
+        else OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_framework.framework_output, "\nWARNING: Memory outside the scope of the fixed MD %x\n\n", addr / ompi_mtl_portals4.fixed_md_distance));
 
         /* Bind the MD (and unbind it where necessary) */
         md.start     = start;
@@ -608,7 +608,7 @@ ompi_mtl_portals4_try_to_use_fixed_md(void *start,
                         &md,
                         &ptl_request->md_h); 
         if (OPAL_UNLIKELY(PTL_OK != ret)) {
-            opal_output_verbose(1, ompi_mtl_base_output,
+            opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                                 "%s:%d: PtlMDBind failed: %d\n",
                                 __FILE__, __LINE__, ret);
             if (unlink_me) {

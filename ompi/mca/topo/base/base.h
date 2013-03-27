@@ -11,6 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
+ * Copyright (c) 2012-2013 Los Alamos National Security, Inc.  All rights reserved. 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -36,10 +37,11 @@
 BEGIN_C_DECLS
 
 
-OMPI_DECLSPEC    int mca_topo_base_open(void);
-    
-OMPI_DECLSPEC    int mca_topo_base_close(void);
-    
+/*
+ * MCA Framework
+ */
+OMPI_DECLSPEC extern mca_base_framework_t ompi_topo_base_framework;
+/* select a component */
 int mca_topo_base_comm_select(ompi_communicator_t *comm,
                               mca_base_component_t *preferred);
 
@@ -125,18 +127,6 @@ OMPI_DECLSPEC    int mca_topo_base_graph_neighbors_count (ompi_communicator_t *c
                                              int rank,
                                              int *nneighbors);
 
-
-/*
- * Globals
- */
-OMPI_DECLSPEC extern int mca_topo_base_output;
-extern int mca_topo_base_param;
-
-OMPI_DECLSPEC extern opal_list_t mca_topo_base_components_available;
-OMPI_DECLSPEC extern opal_list_t mca_topo_base_components_opened;
-
-extern bool mca_topo_base_components_opened_valid;
-extern bool mca_topo_base_components_available_valid;
 
 END_C_DECLS
 

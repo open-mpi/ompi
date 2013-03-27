@@ -39,20 +39,8 @@
 /*
  * Global variables
  */
-opal_list_t mca_allocator_base_components;
-
-/**
- * Function for finding and opening either all MCA components, or the one
- * that was specifically requested via a MCA parameter.
- */
-int mca_allocator_base_open(void)
-{
-  /* Open up all available components */
-
-  return mca_base_components_open("allocator", 0, 
-                                  mca_allocator_base_static_components, 
-                                  &mca_allocator_base_components, true);
-}
+MCA_BASE_FRAMEWORK_DECLARE(ompi, allocator, NULL, NULL, NULL, NULL,
+                           mca_allocator_base_static_components, 0);
 
 /**
  * Traverses through the list of available components, calling their init
@@ -66,11 +54,8 @@ int mca_allocator_base_open(void)
 mca_allocator_base_component_t* mca_allocator_component_lookup(const char* name)
 {
     /* Traverse the list of available components; call their init functions. */
-    opal_list_item_t* item;
-    for (item = opal_list_get_first(&mca_allocator_base_components);
-         item != opal_list_get_end(&mca_allocator_base_components);
-         item = opal_list_get_next(item)) {
-         mca_base_component_list_item_t *cli = (mca_base_component_list_item_t *) item;
+    mca_base_component_list_item_t *cli;
+    OPAL_LIST_FOREACH(cli, &ompi_allocator_base_framework.framework_components, mca_base_component_list_item_t) {
          mca_allocator_base_component_t* component = (mca_allocator_base_component_t *) cli->cli_component;
          if(strcmp(component->allocator_version.mca_component_name,
                    name) == 0) {

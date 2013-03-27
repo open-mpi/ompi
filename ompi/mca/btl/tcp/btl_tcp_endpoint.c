@@ -605,7 +605,7 @@ static int mca_btl_tcp_endpoint_start_connect(mca_btl_base_endpoint_t* btl_endpo
     /* start the connect - will likely fail with EINPROGRESS */
     mca_btl_tcp_proc_tosocks(btl_endpoint->endpoint_addr, &endpoint_addr);
 
-    opal_output_verbose(20, mca_btl_base_output, 
+    opal_output_verbose(20, ompi_btl_base_framework.framework_output, 
                         "btl: tcp: attempting to connect() to %s address %s on port %d",
                         OMPI_NAME_PRINT(&btl_endpoint->endpoint_proc->proc_ompi->proc_name),
                         opal_net_get_hostname((struct sockaddr*) &endpoint_addr),

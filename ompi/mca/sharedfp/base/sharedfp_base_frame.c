@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2011 University of Houston. All rights reserved.
+ * Copyright (c) 2012-2013 Los Alamos National Security, Inc.  All rights reserved. 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -24,6 +25,7 @@
 #include "ompi/class/ompi_free_list.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
+#include "opal/mca/base/mca_base_framework.h"
 
 #include "ompi/mca/sharedfp/sharedfp.h"
 #include "ompi/mca/sharedfp/base/base.h"
@@ -37,44 +39,26 @@
 #include "ompi/mca/sharedfp/base/static-components.h"
 
 /*
- * Global variables; most of which are loaded by back-ends of MCA
- * variables
+ * Global variables
  */
-int mca_sharedfp_base_param = -1;
-int mca_sharedfp_base_output = -1;
-
-opal_list_t mca_sharedfp_base_components_opened;
-opal_list_t mca_sharedfp_base_components_available;
-
-bool mca_sharedfp_base_components_available_valid = false;
-bool mca_sharedfp_base_components_opened_valid = false;
-
-mca_sharedfp_base_component_t mca_sharedfp_base_selected_component;
 mca_sharedfp_base_module_t mca_sharedfp;
+
+static int mca_sharedfp_base_close(void)
+{
+    return mca_base_framework_components_close(&ompi_sharedfp_base_framework, NULL);
+}
 
 /*
  * Function for finding and opening either all MCA components, or the one
  * that was specifically requested via a MCA parameter.
  */
-int mca_sharedfp_base_open(void)
+static int mca_sharedfp_base_open(mca_base_open_flag_t flags)
 {
-    /* Open an output stream for this framework */
-
-    mca_sharedfp_base_output = opal_output_open(NULL);
-
-     /* Open up all available components */
-
-    if (OMPI_SUCCESS != 
-        mca_base_components_open("sharedfp", mca_sharedfp_base_output,
-                                 mca_sharedfp_base_static_components, 
-                                 &mca_sharedfp_base_components_opened, true)) {
-        return OMPI_ERROR;
-    }
-    mca_sharedfp_base_components_opened_valid = true;
-
-    /* Find the index of the MCA "sharedfp" param for selection */
-
-    mca_sharedfp_base_param = mca_base_var_find("ompi", "sharedfp", NULL, NULL);
-
-    return OMPI_SUCCESS;
+    /* Open up all available components */
+    return mca_base_framework_components_open(&ompi_sharedfp_base_framework, flags);
 }
+
+MCA_BASE_FRAMEWORK_DECLARE(ompi, sharedfp, "OMPI Shared Files", NULL,
+                           mca_sharedfp_base_open, mca_sharedfp_base_close,
+                           mca_sharedfp_base_static_components, 0);
+

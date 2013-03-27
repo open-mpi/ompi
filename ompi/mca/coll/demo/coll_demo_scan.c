@@ -40,7 +40,7 @@ int mca_coll_demo_scan_intra(void *sbuf, void *rbuf, int count,
                              mca_coll_base_module_t *module)
 {
     mca_coll_demo_module_t *demo_module = (mca_coll_demo_module_t*) module;
-    opal_output_verbose(10, mca_coll_base_output, "In demo scan_intra");
+    opal_output_verbose(10, ompi_coll_base_framework.framework_output, "In demo scan_intra");
     return demo_module->underlying.coll_scan(sbuf, rbuf, count,
                                              dtype, op, comm,
                                              demo_module->underlying.coll_scan_module);

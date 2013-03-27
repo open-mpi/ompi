@@ -24,15 +24,10 @@
 
 BEGIN_C_DECLS
 
-OMPI_DECLSPEC extern opal_list_t mca_bcol_base_components_opened;
 OMPI_DECLSPEC extern opal_list_t mca_bcol_base_components_in_use;
-OMPI_DECLSPEC extern int mca_bcol_base_output;
 OMPI_DECLSPEC extern char *ompi_bcol_bcols_string;
 
-
-OMPI_DECLSPEC int mca_bcol_base_open(void);
-
-OMPI_DECLSPEC int mca_bcol_base_close(void);
+OMPI_DECLSPEC extern mca_base_framework_t ompi_bcol_base_framework;
 
 OMPI_DECLSPEC int mca_bcol_base_init(bool enable_progress_threads, bool enable_mpi_threads);
 

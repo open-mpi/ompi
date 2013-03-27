@@ -33,7 +33,7 @@ mca_io_base_register_datarep(char *datarep,
                              MPI_Datarep_extent_function* extent_fn,
                              void* state)
 {
-    opal_list_item_t *p;
+    mca_base_component_list_item_t *cli;
     const mca_base_component_t *component;
     const mca_io_base_component_2_0_0_t *v200;
     int tmp, ret = OMPI_SUCCESS;
@@ -41,11 +41,8 @@ mca_io_base_register_datarep(char *datarep,
     /* Find the maximum additional number of bytes required by all io
        components for requests and make that the request size */
 
-    for (p = opal_list_get_first(&mca_io_base_components_available); 
-         p != opal_list_get_end(&mca_io_base_components_available); 
-         p = opal_list_get_next(p)) {
-        component = ((mca_base_component_priority_list_item_t *) 
-                     p)->super.cli_component;
+    OPAL_LIST_FOREACH(cli, &ompi_io_base_framework.framework_components, mca_base_component_list_item_t) {
+        component = cli->cli_component;
 
         /* Only know how to handle v2.0.0 components for now */
         if (component->mca_type_major_version == 2 &&

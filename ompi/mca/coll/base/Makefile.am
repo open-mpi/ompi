@@ -23,8 +23,7 @@ headers += \
         base/coll_tags.h
 
 libmca_coll_la_SOURCES += \
-        base/coll_base_close.c \
         base/coll_base_comm_select.c \
         base/coll_base_comm_unselect.c \
         base/coll_base_find_available.c \
-        base/coll_base_open.c
+        base/coll_base_frame.c

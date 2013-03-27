@@ -401,11 +401,11 @@ static int ml_open(void)
     /* Init memory structures (no real memory is allocated) */
     OBJ_CONSTRUCT(&cs->memory_manager, mca_coll_ml_lmngr_t);
 
-    if (OMPI_SUCCESS != (rc = mca_sbgp_base_open())) {
+    if (OMPI_SUCCESS != (rc = mca_base_framework_open(&ompi_sbgp_base_framework, 0))) {
         fprintf(stderr," failure in open mca_sbgp_base_open \n");
         return rc;
     }
-    if (OMPI_SUCCESS != (rc = mca_bcol_base_open())) {
+    if (OMPI_SUCCESS != (rc = mca_base_framework_open(&ompi_bcol_base_framework, 0))) {
         fprintf(stderr," failure in open mca_bcol_base_open \n");
         return rc;
     }

@@ -26,12 +26,12 @@ int mca_sbgp_base_close(void)
 
     /* Close all remaining available modules */
 
-    mca_base_components_close(mca_sbgp_base_output,
+    mca_base_components_close(ompi_sbgp_base_framework.framework_output,
                               &mca_sbgp_base_components_opened, NULL);
 
     /* Close the framework output */
-    opal_output_close (mca_sbgp_base_output);
-    mca_sbgp_base_output = -1;
+    opal_output_close (ompi_sbgp_base_framework.framework_output);
+    ompi_sbgp_base_framework.framework_output = -1;
 
     /* All done */
 

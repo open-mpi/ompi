@@ -30,16 +30,10 @@
 #include "ompi_config.h"
 
 #include "mpi.h"
-#include "opal/class/opal_list.h"
+#include "opal/mca/base/base.h"
 #include "ompi/mca/fcoll/fcoll.h"
-#include "opal/mca/mca.h"
-
 
 BEGIN_C_DECLS
-
-OMPI_DECLSPEC int mca_fcoll_base_open(void);
-
-OMPI_DECLSPEC int mca_fcoll_base_close(void);
 
 OMPI_DECLSPEC int mca_fcoll_base_file_select(struct mca_io_ompio_file_t *file,
                                              mca_base_component_t *preferred);
@@ -56,15 +50,7 @@ OMPI_DECLSPEC int mca_fcoll_base_get_param (struct mca_io_ompio_file_t *file, in
 /*
  * Globals
  */
-
-OMPI_DECLSPEC extern int mca_fcoll_base_param;
-OMPI_DECLSPEC extern int mca_fcoll_base_output;
-
-OMPI_DECLSPEC extern bool mca_fcoll_base_components_opened_valid;
-OMPI_DECLSPEC extern bool mca_fcoll_base_components_available_valid;
-
-OMPI_DECLSPEC extern opal_list_t mca_fcoll_base_components_opened;
-OMPI_DECLSPEC extern opal_list_t mca_fcoll_base_components_available;
+OMPI_DECLSPEC extern mca_base_framework_t ompi_fcoll_base_framework;
 
 END_C_DECLS
 

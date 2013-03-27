@@ -22,8 +22,7 @@ headers += \
 	base/mpool_base_mem_cb.h \
 	base/mpool_base_tree.h
 libmca_mpool_la_SOURCES += \
-        base/mpool_base_open.c \
-        base/mpool_base_close.c \
+        base/mpool_base_frame.c \
         base/mpool_base_init.c \
         base/mpool_base_lookup.c \
         base/mpool_base_alloc.c \

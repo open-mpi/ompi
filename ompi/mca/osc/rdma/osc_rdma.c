@@ -36,7 +36,7 @@ ompi_osc_rdma_module_free(ompi_win_t *win)
     int i;
     ompi_osc_rdma_module_t *module = GET_MODULE(win);
 
-    opal_output_verbose(1, ompi_osc_base_output,
+    opal_output_verbose(1, ompi_osc_base_framework.framework_output,
                         "rdma component destroying window with id %d",
                         ompi_comm_get_cid(module->m_comm));
 

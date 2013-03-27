@@ -19,7 +19,6 @@ headers += \
 	base/osc_base_obj_convert.h
 
 libmca_osc_la_SOURCES += \
-        base/osc_base_close.c \
-        base/osc_base_open.c \
+        base/osc_base_frame.c \
         base/osc_base_init.c \
 	base/osc_base_obj_convert.c

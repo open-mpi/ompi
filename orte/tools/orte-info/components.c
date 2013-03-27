@@ -65,13 +65,6 @@ opal_pointer_array_t component_map;
 static bool opened_components = false;
 
 
-/*
- * Open all MCA components so that they can register their MCA
- * parameters.  Take a shotgun approach here and indiscriminately open
- * all components -- don't be selective.  To this end, we need to clear
- * out the environment of all OMPI_MCA_<type> variables to ensure
- * that the open algorithms don't try to only open one component.
- */
 void orte_info_components_open(void)
 {
     if (opened_components) {
@@ -84,8 +77,8 @@ void orte_info_components_open(void)
     OBJ_CONSTRUCT(&component_map, opal_pointer_array_t);
     opal_pointer_array_init(&component_map, 256, INT_MAX, 128);
 
-    opal_info_register_components (&mca_types, &component_map);
-    orte_info_register_components (&mca_types, &component_map);
+    opal_info_register_framework_params(&component_map);
+    orte_info_register_framework_params(&component_map);
 }
 
 /* 

@@ -38,16 +38,6 @@ struct ompi_dpm_base_disconnect_obj {
 typedef struct ompi_dpm_base_disconnect_obj ompi_dpm_base_disconnect_obj;
 
 /**
- * Initialize the DPM MCA framework
- *
- * @retval OMPI_SUCCESS Upon success
- * @retval OMPI_ERROR   Upon failures
- * 
- * This function is invoked during ompi_init();
- */
-OMPI_DECLSPEC int ompi_dpm_base_open(void);
-
-/**
  * Select an available component.
  *
  * @retval OMPI_SUCCESS Upon Success
@@ -56,16 +46,6 @@ OMPI_DECLSPEC int ompi_dpm_base_open(void);
  *
  */
 OMPI_DECLSPEC int ompi_dpm_base_select(void);
-
-/**
- * Finalize the DPM MCA framework
- *
- * @retval OMPI_SUCCESS Upon success
- * @retval OMPI_ERROR   Upon failures
- * 
- * This function is invoked during ompi_finalize();
- */
-OMPI_DECLSPEC int ompi_dpm_base_close(void);
 
 /* Internal support functions */
 OMPI_DECLSPEC char* ompi_dpm_base_dyn_init (void);
@@ -94,10 +74,10 @@ int ompi_dpm_base_null_route_to_port(char *rml_uri, ompi_process_name_t *rproc);
 int ompi_dpm_base_null_close_port(char *port_name);
 
 /* useful globals */
-OMPI_DECLSPEC extern int  ompi_dpm_base_output;
-OMPI_DECLSPEC extern opal_list_t ompi_dpm_base_components_available;
 OMPI_DECLSPEC extern ompi_dpm_base_component_t ompi_dpm_base_selected_component;
 OMPI_DECLSPEC extern ompi_dpm_base_module_t ompi_dpm;
+
+OMPI_DECLSPEC extern mca_base_framework_t ompi_dpm_base_framework;
 
 END_C_DECLS
 

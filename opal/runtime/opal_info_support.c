@@ -218,8 +218,8 @@ static int info_register_framework (mca_base_framework_t *framework, opal_pointe
     opal_info_component_map_t *map;
     int rc;
 
-    if ((OPAL_SUCCESS != (rc = mca_base_framework_register(framework, MCA_BASE_REGISTER_ALL))) ||
-        OPAL_ERR_BAD_PARAM != rc) {
+    rc = mca_base_framework_register(framework, MCA_BASE_REGISTER_ALL);
+    if (OPAL_SUCCESS != rc && OPAL_ERR_BAD_PARAM != rc) {
         return rc;
     }
 
@@ -233,177 +233,39 @@ static int info_register_framework (mca_base_framework_t *framework, opal_pointe
 
 void opal_info_register_types(opal_pointer_array_t *mca_types)
 {
-    opal_pointer_array_add(mca_types, "backtrace");
-    opal_pointer_array_add(mca_types, "db");
-#if OPAL_ENABLE_FT_CR == 1
-    opal_cr_set_enabled(true);
-    opal_pointer_array_add(mca_types, "compress");
-    opal_pointer_array_add(mca_types, "crs");
-#endif
-    opal_pointer_array_add(mca_types, "event");
-    opal_pointer_array_add(mca_types, "filter");
-    opal_pointer_array_add(mca_types, "hwloc");
-    opal_pointer_array_add(mca_types, "if");
-    opal_pointer_array_add(mca_types, "installdirs");
-    opal_pointer_array_add(mca_types, "mca");
-    opal_pointer_array_add(mca_types, "memchecker");
-    opal_pointer_array_add(mca_types, "memory");
-    opal_pointer_array_add(mca_types, "memcpy");
-    opal_pointer_array_add(mca_types, "opal");
-    opal_pointer_array_add(mca_types, "shmem");
-    opal_pointer_array_add(mca_types, "timer");
+    int i;
 
+    /* add the top-level types */
+    opal_pointer_array_add(mca_types, "mca");
+    opal_pointer_array_add(mca_types, "opal");
+
+    /* push all the types found by autogen */
+    for (i=0; NULL != opal_frameworks[i]; i++) {
+        opal_pointer_array_add(mca_types, opal_frameworks[i]->framework_name);
+    }
 }
 
-int opal_info_register_components(opal_pointer_array_t *mca_types,
-                                  opal_pointer_array_t *component_map)
+int opal_info_register_framework_params(opal_pointer_array_t *component_map)
 {
-    opal_info_component_map_t *map;
-    char *env, *str;
     int i, rc;
-    char *target, *save, *type;
-    char **env_save=NULL;
+    char *str;
 
-    /* Clear out the environment.  Use strdup() to orphan the resulting
-     * strings because items are placed in the environment by reference,
-     * not by value.
-     */
-    for (i = 0; i < mca_types->size; ++i) {
-        if (NULL == (type = (char*)opal_pointer_array_get_item(mca_types, i))) {
-            continue;
-        }
-        asprintf(&env, "OMPI_MCA_%s", type);
-        if (NULL != (save = getenv(env))) {
-            /* save this param so it can later be restored */
-            asprintf(&str, "%s=%s", env, save);
-            opal_argv_append_nosize(&env_save, str);
-            free(str);
-            /* can't manipulate it directly, so make a copy first */
-            asprintf(&target, "%s=", env);
-            putenv(target);
-        }
-        free(env);
-    }
-
-    /* some components require the event library be active, so activate it */
-    if (OPAL_SUCCESS != (rc = mca_base_framework_open(&opal_event_base_framework, 0))) {
-        str = "event open";
-        goto breakout;
-    }
-
-    map = OBJ_NEW(opal_info_component_map_t);
-    map->type = strdup(opal_event_base_framework.framework_name);
-    map->components = &opal_event_base_framework.framework_components;
-    opal_pointer_array_add(component_map, map);
-    
-    /* Open the DSS */
-    if (OPAL_SUCCESS != (rc = opal_dss_open())) {
-        if (OPAL_ERR_BAD_PARAM == rc)  {
-            str = "opal_dss";
-            goto breakout;
-        }
-        str = "dss_open";
-        goto error;
-    }
-    
     /* Register the OPAL layer's MCA parameters */
     if (OPAL_SUCCESS != (rc = opal_register_params())) {
         str = "opal_register_params";
-        if (OPAL_ERR_BAD_PARAM == rc)  {
-            goto breakout;
-        }
         goto error;
     }
 
     /* OPAL frameworks */
-
-    if (OPAL_SUCCESS != (rc = info_register_framework (&opal_backtrace_base_framework, component_map))) {
-        fprintf (stderr, "rc = %d\n", rc);
-        str = "backtrace register";
-        goto breakout;
-    }
-
-    if (OPAL_SUCCESS != (rc = info_register_framework (&opal_db_base_framework, component_map))) {
-        str = "db open";
-        goto breakout;
-    }
-
-#if OPAL_ENABLE_FT_CR == 1
-    if (OPAL_SUCCESS != (rc = info_register_framework (&opal_compress_base_framework, component_map))) {
-        str = "compress register";
-        goto breakout;
-    }
-
-    if (OPAL_SUCCESS != (rc = info_register_framework (&opal_crs_base_framework, component_map))) {
-        str = "crs open";
-        goto breakout;
-    }
-#endif
-
-#if OPAL_HAVE_HWLOC
-    if (OPAL_SUCCESS != (rc = info_register_framework (&opal_hwloc_base_framework, component_map))) {
-        str = "hwloc open";
-        goto breakout;
-    }
-#endif
-
-    if (OPAL_SUCCESS != (rc = info_register_framework (&opal_if_base_framework, component_map))) {
-        str = "if open";
-        goto breakout;
-    }
-
-    /* OPAL's installdirs base open has already been called as part of
-     * opal_init_util() back in main().
-     */
-    map = OBJ_NEW(opal_info_component_map_t);
-    map->type = strdup(opal_installdirs_base_framework.framework_name);
-    map->components = &opal_installdirs_base_framework.framework_components;
-    opal_pointer_array_add(component_map, map);
-
-    if (OPAL_SUCCESS != (rc = info_register_framework (&opal_memory_base_framework, component_map))) {
-        str = "memory";
-        goto breakout;
-    }
-
-    if (OPAL_SUCCESS != (rc = info_register_framework (&opal_memcpy_base_framework, component_map))) {
-        str = "memcpy";
-        goto breakout;
-    }
-
-    if (OPAL_SUCCESS != (rc = info_register_framework (&opal_memchecker_base_framework, component_map))) {
-        str = "memchecker open";
-        goto breakout;
-    }
-
-    if (OPAL_SUCCESS != (rc = info_register_framework (&opal_shmem_base_framework, component_map))) {
-        str = "shmem";
-        goto breakout;
-    }
-
-    if (OPAL_SUCCESS != (rc = info_register_framework (&opal_timer_base_framework, component_map))) {
-        str = "timer";
-    }
-
- breakout:
-    if (OPAL_ERR_BAD_PARAM == rc || OPAL_SUCCESS == rc) {
-        /* Restore the environment to what it was before we started so that
-         * if users setenv OMPI_MCA_<framework name> to some value, they'll
-         * see that value when it is shown via --param output.
-         */
-    
-        if (NULL != env_save) {
-            for (i = 0; i < opal_argv_count(env_save); ++i) {
-                putenv(env_save[i]);
-            }
+    for (i=0; NULL != opal_frameworks[i]; i++) {
+        if (OPAL_SUCCESS != (rc = info_register_framework(opal_frameworks[i], component_map))) {
+            fprintf (stderr, "rc = %d\n", rc);
+            str = opal_frameworks[i]->framework_name;
+            goto error;
         }
-    
-        if (OPAL_ERR_BAD_PARAM == rc) {
-            fprintf(stderr, "\nA \"bad parameter\" error was encountered when opening the OPAL %s framework.\n", str);
-            fprintf(stderr, "The output received from that framework includes the following parameters:\n\n");
-        }
-
-        return rc;
     }
+
+    return OPAL_SUCCESS;
 
  error:
     fprintf(stderr, "opal_info_register: %s failed\n", str);
@@ -413,23 +275,11 @@ int opal_info_register_components(opal_pointer_array_t *mca_types,
 
 void opal_info_close_components(void)
 {
-    (void) mca_base_framework_close(&opal_backtrace_base_framework);
-    (void) mca_base_framework_close(&opal_memcpy_base_framework);
-    (void) mca_base_framework_close(&opal_memory_base_framework);
-    (void) mca_base_framework_close(&opal_memchecker_base_framework);
-    (void) mca_base_framework_close(&opal_timer_base_framework);
-#if OPAL_HAVE_HWLOC
-    (void) mca_base_framework_close(&opal_hwloc_base_framework);
-#endif
-#if OPAL_ENABLE_FT_CR == 1
-    (void) mca_base_framework_close(&opal_crs_base_framework);
-#endif
-    (void) opal_dss_close();
-    (void) mca_base_framework_close(&opal_event_base_framework);
-        
-    /* Do not call OPAL's installdirs close; it will be handled in
-     * opal_finalize_util().  Ditto for opal_if.
-     */
+    int i;
+
+    for (i=0; NULL != opal_frameworks[i]; i++) {
+        (void) mca_base_framework_close(opal_frameworks[i]);
+    }
 }
 
 

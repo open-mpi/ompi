@@ -178,7 +178,7 @@ static int mca_pml_ob1_component_open(void)
     }
 
     mca_pml_ob1.enabled = false; 
-    return mca_bml_base_open(); 
+    return mca_base_framework_open(&ompi_bml_base_framework, 0);
 }
 
 
@@ -186,7 +186,7 @@ static int mca_pml_ob1_component_close(void)
 {
     int rc;
 
-    if (OMPI_SUCCESS != (rc = mca_bml_base_close())) {
+    if (OMPI_SUCCESS != (rc = mca_base_framework_close(&ompi_bml_base_framework))) {
          return rc;
     }
     opal_output_close(mca_pml_ob1_output);

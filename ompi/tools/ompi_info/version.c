@@ -51,7 +51,6 @@
  * Private functions
  */
 
-
 /*
  * do_version
  *

@@ -17,27 +17,34 @@
 #include "ompi_config.h"
 
 #include "opal/mca/mca.h"
+#include "opal/util/output.h"
 #include "opal/mca/base/base.h"
 
-#include "ompi/mca/pubsub/pubsub.h"
-#include "ompi/mca/pubsub/base/base.h"
-#include "opal/util/output.h"
+#include "ompi/mca/crcp/crcp.h"
+#include "ompi/mca/crcp/base/base.h"
 
-int ompi_pubsub_base_close(void)
+#include "ompi/mca/crcp/base/static-components.h"
+
+/*
+ * Globals
+ */
+OMPI_DECLSPEC ompi_crcp_base_module_t ompi_crcp = {
+    NULL, /* crcp_init               */
+    NULL  /* crcp_finalize           */
+};
+
+ompi_crcp_base_component_t ompi_crcp_base_selected_component;
+
+static int ompi_crcp_base_close(void)
 {
     /* Close the selected component */
-    if( NULL != ompi_pubsub.finalize ) {
-        ompi_pubsub.finalize();
+    if( NULL != ompi_crcp.crcp_finalize ) {
+        ompi_crcp.crcp_finalize();
     }
 
     /* Close all available modules that are open */
-    mca_base_components_close(ompi_pubsub_base_output,
-                              &ompi_pubsub_base_components_available,
-                              NULL);
-    
-    /* Close the framework output */
-    opal_output_close (ompi_pubsub_base_output);
-    ompi_pubsub_base_output = -1;
-
-    return OMPI_SUCCESS;
+    return mca_base_framework_components_close(&ompi_crcp_base_framework, NULL);
 }
+
+MCA_BASE_FRAMEWORK_DECLARE(ompi, crcp, NULL, NULL, NULL, ompi_crcp_base_close,
+                           mca_crcp_base_static_components, 0);

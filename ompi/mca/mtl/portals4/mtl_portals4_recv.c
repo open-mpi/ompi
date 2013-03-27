@@ -50,11 +50,11 @@ ompi_mtl_portals4_recv_progress(ptl_event_t *ev,
 
     switch (ev->type) {
     case PTL_EVENT_PUT:
-        OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_output, "Recv %lu (0x%lx) got put event",
+        OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_framework.framework_output, "Recv %lu (0x%lx) got put event",
                              ptl_request->opcount, ev->hdr_data));
 
         if (ev->ni_fail_type != PTL_NI_OK) {
-            opal_output_verbose(1, ompi_mtl_base_output,
+            opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                                 "%s:%d: PTL_EVENT_PUT with ni_fail_type: %d",
                                 __FILE__, __LINE__, ev->ni_fail_type);
             goto callback_error;
@@ -68,7 +68,7 @@ ompi_mtl_portals4_recv_progress(ptl_event_t *ev,
         ptl_request->super.super.ompi_req->req_status.MPI_TAG = 
             MTL_PORTALS4_GET_TAG(ev->match_bits);
         if (OPAL_UNLIKELY(msg_length > ptl_request->delivery_len)) {
-            opal_output_verbose(1, ompi_mtl_base_output, "truncate expected: %ld %ld", 
+            opal_output_verbose(1, ompi_mtl_base_framework.framework_output, "truncate expected: %ld %ld", 
                                 msg_length, ptl_request->delivery_len);
             ptl_request->super.super.ompi_req->req_status.MPI_ERROR = MPI_ERR_TRUNCATE;
         }
@@ -92,7 +92,7 @@ ompi_mtl_portals4_recv_progress(ptl_event_t *ev,
                             &ptl_request->md_h);
             if (OPAL_UNLIKELY(PTL_OK != ret)) {
                 if (NULL != ptl_request->buffer_ptr) free(ptl_request->buffer_ptr);
-                opal_output_verbose(1, ompi_mtl_base_output,
+                opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                                     "%s:%d: PtlMDBind failed: %d",
                                     __FILE__, __LINE__, ret);
                 goto callback_error;
@@ -107,7 +107,7 @@ ompi_mtl_portals4_recv_progress(ptl_event_t *ev,
                          ompi_mtl_portals4.eager_limit,
                          ptl_request);
             if (OPAL_UNLIKELY(PTL_OK != ret)) {
-                opal_output_verbose(1, ompi_mtl_base_output,
+                opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                                     "%s:%d: PtlGet failed: %d",
                                     __FILE__, __LINE__, ret);
                 PtlMDRelease(ptl_request->md_h);
@@ -121,25 +121,25 @@ ompi_mtl_portals4_recv_progress(ptl_event_t *ev,
                                            ev->start,
                                            ev->mlength);
             if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
-                opal_output_verbose(1, ompi_mtl_base_output,
+                opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                                     "%s:%d: ompi_mtl_datatype_unpack failed: %d",
                                     __FILE__, __LINE__, ret);
                 ptl_request->super.super.ompi_req->req_status.MPI_ERROR = ret;
             }
             ptl_request->super.super.ompi_req->req_status._ucount = ev->mlength;
 
-            OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_output, "Recv %lu (0x%lx) completed, expected",
+            OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_framework.framework_output, "Recv %lu (0x%lx) completed, expected",
                                  ptl_request->opcount, ptl_request->hdr_data));
             ptl_request->super.super.completion_callback(&ptl_request->super.super);
         }
         break;
 
     case PTL_EVENT_REPLY:
-        OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_output, "Recv %lu (0x%lx) got reply event",
+        OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_framework.framework_output, "Recv %lu (0x%lx) got reply event",
                              ptl_request->opcount, ptl_request->hdr_data));
 
         if (OPAL_UNLIKELY(ev->ni_fail_type != PTL_NI_OK)) {
-            opal_output_verbose(1, ompi_mtl_base_output,
+            opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                                 "%s:%d: PTL_EVENT_REPLY with ni_fail_type: %d",
                                 __FILE__, __LINE__, ev->ni_fail_type);
             PtlMDRelease(ptl_request->md_h);
@@ -162,24 +162,24 @@ ompi_mtl_portals4_recv_progress(ptl_event_t *ev,
                                        ptl_request->delivery_ptr, 
                                        ptl_request->super.super.ompi_req->req_status._ucount);
         if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
-            opal_output_verbose(1, ompi_mtl_base_output,
+            opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                                 "%s:%d: ompi_mtl_datatype_unpack failed: %d",
                                 __FILE__, __LINE__, ret);
             ptl_request->super.super.ompi_req->req_status.MPI_ERROR = ret;
         }
         PtlMDRelease(ptl_request->md_h);
 
-        OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_output, "Recv %lu (0x%lx) completed, reply",
+        OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_framework.framework_output, "Recv %lu (0x%lx) completed, reply",
                              ptl_request->opcount, ptl_request->hdr_data));
         ptl_request->super.super.completion_callback(&ptl_request->super.super);
         break;
 
     case PTL_EVENT_PUT_OVERFLOW:
-        OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_output, "Recv %lu (0x%lx) got put_overflow event",
+        OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_framework.framework_output, "Recv %lu (0x%lx) got put_overflow event",
                              ptl_request->opcount, ev->hdr_data));
 
         if (OPAL_UNLIKELY(ev->ni_fail_type != PTL_NI_OK)) {
-            opal_output_verbose(1, ompi_mtl_base_output,
+            opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                                 "%s:%d: PTL_EVENT_PUT_OVERFLOW with ni_fail_type: %d",
                                 __FILE__, __LINE__, ev->ni_fail_type);
             goto callback_error;
@@ -193,7 +193,7 @@ ompi_mtl_portals4_recv_progress(ptl_event_t *ev,
         ptl_request->super.super.ompi_req->req_status.MPI_TAG = 
             MTL_PORTALS4_GET_TAG(ev->match_bits);
         if (OPAL_UNLIKELY(msg_length > ptl_request->delivery_len)) {
-            opal_output_verbose(1, ompi_mtl_base_output, "truncate unexpected: %ld %ld %d", 
+            opal_output_verbose(1, ompi_mtl_base_framework.framework_output, "truncate unexpected: %ld %ld %d", 
                                 msg_length, ptl_request->delivery_len, MTL_PORTALS4_IS_SHORT_MSG(ev->match_bits));
             ptl_request->super.super.ompi_req->req_status.MPI_ERROR = MPI_ERR_TRUNCATE;
         }
@@ -219,7 +219,7 @@ ompi_mtl_portals4_recv_progress(ptl_event_t *ev,
                                             &max_data );
                 if (NULL != ptl_request->buffer_ptr) free(ptl_request->buffer_ptr);
                 if (OPAL_UNLIKELY(ret < 0)) {
-                    opal_output_verbose(1, ompi_mtl_base_output,
+                    opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                                         "%s:%d: opal_convertor_unpack failed: %d",
                                         __FILE__, __LINE__, ret);
                     goto callback_error;
@@ -227,7 +227,7 @@ ompi_mtl_portals4_recv_progress(ptl_event_t *ev,
             }
             /* if it's a sync, send the ack */
             if (MTL_PORTALS4_IS_SYNC_MSG(ev->hdr_data)) {
-                OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_output, 
+                OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_framework.framework_output, 
                                      "Recv %lu (0x%lx) sending sync ack",
                                      ptl_request->opcount, ptl_request->hdr_data));
                 ret = PtlPut(ompi_mtl_portals4.zero_md_h,
@@ -241,14 +241,14 @@ ompi_mtl_portals4_recv_progress(ptl_event_t *ev,
                              NULL,
                              0);
                 if (OPAL_UNLIKELY(PTL_OK != ret)) {
-                    opal_output_verbose(1, ompi_mtl_base_output,
+                    opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                                         "%s:%d: PtlPut failed: %d",
                                         __FILE__, __LINE__, ret);
                     goto callback_error;
                 }
             }
 
-            OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_output, 
+            OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_framework.framework_output, 
                                  "Recv %lu (0x%lx) completed, unexpected short (0x%lx)",
                                  ptl_request->opcount, ptl_request->hdr_data, (long) ev->start));
             ptl_request->super.super.completion_callback(&ptl_request->super.super);
@@ -273,13 +273,13 @@ ompi_mtl_portals4_recv_progress(ptl_event_t *ev,
                             &ptl_request->md_h);
             if (OPAL_UNLIKELY(PTL_OK != ret)) {
                 if (NULL != ptl_request->buffer_ptr) free(ptl_request->buffer_ptr);
-                opal_output_verbose(1, ompi_mtl_base_output,
+                opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                                     "%s:%d: PtlMDBind failed: %d",
                                     __FILE__, __LINE__, ret);
                 goto callback_error;
             }
 
-            OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_output, "Recv %lu (0x%lx) getting long data",
+            OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_framework.framework_output, "Recv %lu (0x%lx) getting long data",
                                  ptl_request->opcount, ptl_request->hdr_data));
             ret = PtlGet(ptl_request->md_h,
                          0,
@@ -290,7 +290,7 @@ ompi_mtl_portals4_recv_progress(ptl_event_t *ev,
                          ev->mlength,
                          ptl_request);
             if (OPAL_UNLIKELY(PTL_OK != ret)) {
-                opal_output_verbose(1, ompi_mtl_base_output,
+                opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                                     "%s:%d: PtlGet failed: %d",
                                     __FILE__, __LINE__, ret);
                 if (NULL != ptl_request->buffer_ptr) free(ptl_request->buffer_ptr);
@@ -305,7 +305,7 @@ ompi_mtl_portals4_recv_progress(ptl_event_t *ev,
         break;
 
     default:
-        opal_output_verbose(1, ompi_mtl_base_output,
+        opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                             "Unhandled receive callback with event type %d",
                             ev->type);
         return OMPI_ERROR;
@@ -370,7 +370,7 @@ ompi_mtl_portals4_irecv(struct mca_mtl_base_module_t* mtl,
     ptl_request->req_started = false;
     ptl_request->super.super.ompi_req->req_status.MPI_ERROR = OMPI_SUCCESS;
 
-    OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_output,
+    OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_framework.framework_output,
                          "Recv %lu from %x,%x of length %d (0x%lx, 0x%lx, 0x%lx)\n",
                          ptl_request->opcount,
                          remote_proc.phys.nid, remote_proc.phys.pid, 
@@ -400,7 +400,7 @@ ompi_mtl_portals4_irecv(struct mca_mtl_base_module_t* mtl,
                       &ptl_request->me_h);
     if (OPAL_UNLIKELY(PTL_OK != ret)) {
         if (NULL != ptl_request->buffer_ptr) free(ptl_request->buffer_ptr);
-        opal_output_verbose(1, ompi_mtl_base_output,
+        opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                             "%s:%d: PtlMEAppend failed: %d",
                             __FILE__, __LINE__, ret);
         return ompi_mtl_portals4_get_error(ret);
@@ -451,7 +451,7 @@ ompi_mtl_portals4_imrecv(struct mca_mtl_base_module_t* mtl,
     ptl_request->delivery_len = length;
     ptl_request->super.super.ompi_req->req_status.MPI_ERROR = OMPI_SUCCESS;
 
-    OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_output,
+    OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_framework.framework_output,
                          "Mrecv %lu of length %d (0x%lx)\n",
                          ptl_request->opcount,
                          (int)length, (unsigned long) ptl_request));

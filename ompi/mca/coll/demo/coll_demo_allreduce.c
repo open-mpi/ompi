@@ -40,7 +40,7 @@ int mca_coll_demo_allreduce_intra(void *sbuf, void *rbuf, int count,
                                   mca_coll_base_module_t *module)
 {
     mca_coll_demo_module_t *demo_module = (mca_coll_demo_module_t*) module;
-    opal_output_verbose(10, mca_coll_base_output, "In demo allreduce_intra");
+    opal_output_verbose(10, ompi_coll_base_framework.framework_output, "In demo allreduce_intra");
     return demo_module->underlying.coll_allreduce(sbuf, rbuf, count, dtype,
                                                   op, comm,
                                                   demo_module->underlying.coll_allreduce_module);
@@ -61,7 +61,7 @@ int mca_coll_demo_allreduce_inter(void *sbuf, void *rbuf, int count,
                                   mca_coll_base_module_t *module)
 {
     mca_coll_demo_module_t *demo_module = (mca_coll_demo_module_t*) module;
-    opal_output_verbose(10, mca_coll_base_output, "In demo allreduce_inter");
+    opal_output_verbose(10, ompi_coll_base_framework.framework_output, "In demo allreduce_inter");
     return demo_module->underlying.coll_allreduce(sbuf, rbuf, count, dtype,
                                                   op, comm,
                                                   demo_module->underlying.coll_allreduce_module);

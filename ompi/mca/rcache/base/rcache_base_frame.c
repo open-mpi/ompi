@@ -9,6 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2012-2013 Los Alamos National Security, LLC.
+ *                         All rights reserved
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -16,18 +18,34 @@
  * $HEADER$
  */
 
-#include "ompi_config.h"
 
+#include "ompi_config.h"
 #include <stdio.h>
 
-#include "ompi/constants.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 #include "ompi/mca/rcache/rcache.h"
 #include "ompi/mca/rcache/base/base.h"
+#include "ompi/constants.h"
+
+/*
+ * The following file was created by configure.  It contains extern
+ * statements and the definition of an array of pointers to each
+ * component's public mca_base_component_t struct.
+ */
+
+#include "ompi/mca/rcache/base/static-components.h"
 
 
-int mca_rcache_base_close(void)
+/*
+ * Global variables
+ */
+opal_list_t mca_rcache_base_modules;
+
+
+OBJ_CLASS_INSTANCE(mca_rcache_base_selected_module_t, opal_list_item_t, NULL, NULL);
+
+static int mca_rcache_base_close(void)
 {
   opal_list_item_t *item;
   mca_rcache_base_selected_module_t *sm;
@@ -50,17 +68,26 @@ int mca_rcache_base_close(void)
     OBJ_RELEASE(sm);
   }
 
-  /* Close all remaining available components (may be one if this is a
-     OMPI RTE program, or [possibly] multiple if this is the ompi_info-tool) */
-
-  mca_base_components_close(mca_rcache_base_output, 
-                            &mca_rcache_base_components, NULL);
-
-  /* Close the framework output */
-  opal_output_close (mca_rcache_base_output);
-  mca_rcache_base_output = -1;
-
-  /* All done */
-
-  return OMPI_SUCCESS;
+  /* Close all remaining available components */
+    return mca_base_framework_components_close(&ompi_rcache_base_framework, NULL);
 }
+
+/**
+ * Function for finding and opening either all MCA components, or the one
+ * that was specifically requested via a MCA parameter.
+ */
+static int mca_rcache_base_open(mca_base_open_flag_t flags)
+{
+  /* Initialize the list so that in mca_rcache_base_close(), we can
+     iterate over it (even if it's empty, as in the case of the ompi_info-tool) */
+
+  OBJ_CONSTRUCT(&mca_rcache_base_modules, opal_list_t);
+
+     /* Open up all available components */
+    return mca_base_framework_components_open(&ompi_rcache_base_framework, flags);
+}
+
+MCA_BASE_FRAMEWORK_DECLARE(ompi, rcache, "OMPI Rcache", NULL,
+                           mca_rcache_base_open, mca_rcache_base_close,
+                           mca_rcache_base_static_components, 0);
+

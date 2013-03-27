@@ -33,7 +33,6 @@ libmca_topo_la_SOURCES += \
         base/topo_base_graph_get.c \
         base/topo_base_graph_neighbors.c \
         base/topo_base_graph_neighbors_count.c \
-        base/topo_base_open.c \
-        base/topo_base_close.c \
+        base/topo_base_frame.c \
         base/topo_base_comm_select.c \
         base/topo_base_comm_unselect.c

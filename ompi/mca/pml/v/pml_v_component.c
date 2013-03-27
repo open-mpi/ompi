@@ -79,8 +79,7 @@ static int mca_pml_v_component_register(void)
     (void) mca_base_component_var_register(&mca_pml_v_component.pmlm_version,
                                            "verbose", "Verbosity of the pml v component",
                                            MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
-                                           OPAL_INFO_LVL_9,
-                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
                                            &ompi_pml_v_verbose);
 
     ompi_pml_vprotocol_include_list = "";
@@ -88,8 +87,7 @@ static int mca_pml_v_component_register(void)
     var_id = mca_base_component_var_register(&mca_pml_v_component.pmlm_version,
                                              "vprotocol", "Specify a specific vprotocol to use", 
                                              MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
-                                             OPAL_INFO_LVL_9,
-                                             MCA_BASE_VAR_SCOPE_READONLY,
+                                             OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
                                              &ompi_pml_vprotocol_include_list);
     (void) mca_base_var_register_synonym(var_id, "ompi", "vprotocol", NULL, NULL, 0);
 
@@ -98,15 +96,13 @@ static int mca_pml_v_component_register(void)
 
 static int mca_pml_v_component_open(void)
 {
-    int rc;
-
     pml_v_output_open(ompi_pml_v_output, ompi_pml_v_verbose);
             
     V_OUTPUT_VERBOSE(500, "loaded");
 
-    rc = mca_vprotocol_base_open(ompi_pml_vprotocol_include_list);
+    mca_vprotocol_base_set_include_list(ompi_pml_vprotocol_include_list);
 
-    return rc;
+    return mca_base_framework_open(&ompi_vprotocol_base_framework, 0);
 }
  
 static int mca_pml_v_component_close(void)
@@ -154,7 +150,7 @@ static int mca_pml_v_component_parasite_finalize(void)
         mca_pml_v_component_parasite_close;
     cli = OBJ_NEW(mca_base_component_list_item_t);
     cli->cli_component = (mca_base_component_t *) &mca_pml_v_component;
-    opal_list_prepend(&mca_pml_base_components_available, 
+    opal_list_prepend(&ompi_pml_base_framework.framework_components,
                       (opal_list_item_t *) cli);
     
     /* finalize vprotocol component */
@@ -173,7 +169,7 @@ static int mca_pml_v_component_parasite_close(void)
                           mca_pml_v.host_pml_component.pmlm_version.mca_component_name);
     mca_pml_base_selected_component = mca_pml_v.host_pml_component;
 
-    mca_vprotocol_base_close();    
+    (void) mca_base_framework_close(&ompi_vprotocol_base_framework);
     pml_v_output_close();
 
     mca_pml.pml_enable = mca_pml_v.host_pml.pml_enable;

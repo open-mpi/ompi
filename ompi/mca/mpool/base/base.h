@@ -24,8 +24,7 @@
 
 #include "ompi_config.h"
 
-#include "opal/class/opal_list.h"
-#include "opal/mca/mca.h"
+#include "opal/mca/base/base.h"
 #include "ompi/mca/mpool/mpool.h"
 
 BEGIN_C_DECLS
@@ -65,9 +64,7 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_mpool_base_selected_module_t);
  * Global functions for MCA: overall mpool open and close
  */
 
-OMPI_DECLSPEC int mca_mpool_base_open(void);
 OMPI_DECLSPEC int mca_mpool_base_init(bool enable_progress_threads, bool enable_mpi_threads);
-OMPI_DECLSPEC int mca_mpool_base_close(void);
 OMPI_DECLSPEC mca_mpool_base_component_t* mca_mpool_base_component_lookup(const char* name);
 OMPI_DECLSPEC mca_mpool_base_module_t* mca_mpool_base_module_create(
     const char* name, 
@@ -79,14 +76,14 @@ OMPI_DECLSPEC int mca_mpool_base_module_destroy(mca_mpool_base_module_t *module)
 /*
  * Globals
  */
-OMPI_DECLSPEC extern int mca_mpool_base_output;
-OMPI_DECLSPEC extern opal_list_t mca_mpool_base_components;
 extern opal_list_t mca_mpool_base_modules;
 OMPI_DECLSPEC extern uint32_t mca_mpool_base_page_size;
 OMPI_DECLSPEC extern uint32_t mca_mpool_base_page_size_log;
 
 /* only used within base -- no need to DECLSPEC */
 extern int mca_mpool_base_used_mem_hooks;
+
+OMPI_DECLSPEC extern mca_base_framework_t ompi_mpool_base_framework;
     
 END_C_DECLS
 

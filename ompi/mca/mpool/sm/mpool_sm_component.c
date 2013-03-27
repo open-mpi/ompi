@@ -175,10 +175,10 @@ mca_mpool_sm_init(struct mca_mpool_base_resources_t *resources)
 
     /* if specified allocator cannot be loaded - look for an alternative */
     if (NULL == allocator_component) {
-        if (opal_list_get_size(&mca_allocator_base_components) == 0) {
+        if (opal_list_get_size(&ompi_allocator_base_framework.framework_components) == 0) {
             mca_base_component_list_item_t *item =
                 (mca_base_component_list_item_t *)
-                opal_list_get_first(&mca_allocator_base_components);
+                opal_list_get_first(&ompi_allocator_base_framework.framework_components);
             allocator_component =
                 (mca_allocator_base_component_t *)item->cli_component;
             opal_output(

@@ -38,24 +38,14 @@
 #include "ompi/mca/coll/coll.h"
 #include "ompi/mca/coll/base/base.h"
 
-
-/*
- * Global variables
- */
-bool mca_coll_base_components_available_valid = false;
-opal_list_t mca_coll_base_components_available;
-
-
 /*
  * Private functions
  */
 static int init_query(const mca_base_component_t * ls,
-                      mca_base_component_priority_list_item_t * entry,
                       bool enable_progress_threads,
                       bool enable_mpi_threads);
 static int init_query_2_0_0(const mca_base_component_t * ls,
-                            mca_base_component_priority_list_item_t *
-                            entry, bool enable_progress_threads,
+                            bool enable_progress_threads,
                             bool enable_mpi_threads);
 
 /*
@@ -74,65 +64,33 @@ static int init_query_2_0_0(const mca_base_component_t * ls,
 int mca_coll_base_find_available(bool enable_progress_threads,
                                  bool enable_mpi_threads)
 {
-    bool found = false;
-    mca_base_component_priority_list_item_t *entry;
-    opal_list_item_t *p;
+    mca_base_component_list_item_t *cli, *next;
     const mca_base_component_t *component;
-
-    /* Initialize the list */
-
-    OBJ_CONSTRUCT(&mca_coll_base_components_available, opal_list_t);
-    mca_coll_base_components_available_valid = true;
 
     /* The list of components that we should check has already been
        established in mca_coll_base_open. */
 
-    for (found = false,
-         p = opal_list_remove_first(&mca_coll_base_components_opened);
-         p != NULL;
-         p = opal_list_remove_first(&mca_coll_base_components_opened)) {
-        component = ((mca_base_component_list_item_t *) p)->cli_component;
+    OPAL_LIST_FOREACH_SAFE(cli, next, &ompi_coll_base_framework.framework_components, mca_base_component_list_item_t) {
+        component = cli->cli_component;
 
         /* Call a subroutine to do the work, because the component may
            represent different versions of the coll MCA. */
 
-        entry = OBJ_NEW(mca_base_component_priority_list_item_t);
-        entry->super.cli_component = component;
-        entry->cpli_priority = 0;
-        if (OMPI_SUCCESS == init_query(component, entry,
-                                       enable_progress_threads,
+        if (OMPI_SUCCESS != init_query(component, enable_progress_threads,
                                        enable_mpi_threads)) {
-            opal_list_append(&mca_coll_base_components_available,
-                             (opal_list_item_t *) entry);
-            found = true;
-        } else {
-
             /* If the component doesn't want to run, then close it.
-               It's already had its close() method invoked; now close
-               it out of the DSO repository (if it's there). */
-
-            mca_base_component_repository_release(component);
-            OBJ_RELEASE(entry);
+               Now close it out and release it from the DSO repository (if it's there). */
+            opal_list_remove_item(&ompi_coll_base_framework.framework_components, &cli->super);
+            mca_base_component_close(component, ompi_coll_base_framework.framework_output);
+            OBJ_RELEASE(cli);
         }
-
-        /* Free the entry from the "opened" list */
-
-        OBJ_RELEASE(p);
     }
-
-    /* The opened list is now no longer useful and we can free it */
-
-    OBJ_DESTRUCT(&mca_coll_base_components_opened);
-    mca_coll_base_components_opened_valid = false;
 
     /* If we have no collective components available, it's an error.
        Thanks for playing! */
 
-    if (!found) {
-        /* Need to free all items in the list */
-        OBJ_DESTRUCT(&mca_coll_base_components_available);
-        mca_coll_base_components_available_valid = false;
-        opal_output_verbose(10, mca_coll_base_output,
+    if (opal_list_get_size(&ompi_coll_base_framework.framework_components) == 0) {
+        opal_output_verbose(10, ompi_coll_base_framework.framework_output,
                             "coll:find_available: no coll components available!");
         opal_show_help("help-mca-base", "find-available:none-found", true,
                        "coll");
@@ -150,12 +108,11 @@ int mca_coll_base_find_available(bool enable_progress_threads,
  * some information.  If it doesn't, close it.
  */
 static int init_query(const mca_base_component_t * component,
-                      mca_base_component_priority_list_item_t * entry,
                       bool enable_progress_threads, bool enable_mpi_threads)
 {
     int ret;
 
-    opal_output_verbose(10, mca_coll_base_output,
+    opal_output_verbose(10, ompi_coll_base_framework.framework_output,
                         "coll:find_available: querying coll component %s",
                         component->mca_component_name);
 
@@ -165,12 +122,12 @@ static int init_query(const mca_base_component_t * component,
     if (2 == component->mca_type_major_version &&
         0 == component->mca_type_minor_version &&
         0 == component->mca_type_release_version) {
-        ret = init_query_2_0_0(component, entry, enable_progress_threads,
+        ret = init_query_2_0_0(component, enable_progress_threads,
                                enable_mpi_threads);
     } else {
         /* Unrecognized coll API version */
 
-        opal_output_verbose(10, mca_coll_base_output,
+        opal_output_verbose(10, ompi_coll_base_framework.framework_output,
                             "coll:find_available: unrecognized coll API version (%d.%d.%d, ignored)",
                             component->mca_type_major_version,
                             component->mca_type_minor_version,
@@ -181,14 +138,11 @@ static int init_query(const mca_base_component_t * component,
     /* Query done -- look at the return value to see what happened */
 
     if (OMPI_SUCCESS != ret) {
-        opal_output_verbose(10, mca_coll_base_output,
+        opal_output_verbose(10, ompi_coll_base_framework.framework_output,
                             "coll:find_available: coll component %s is not available",
                             component->mca_component_name);
-        if (NULL != component->mca_close_component) {
-            component->mca_close_component();
-        }
     } else {
-        opal_output_verbose(10, mca_coll_base_output,
+        opal_output_verbose(10, ompi_coll_base_framework.framework_output,
                             "coll:find_available: coll component %s is available",
                             component->mca_component_name);
     }
@@ -203,7 +157,6 @@ static int init_query(const mca_base_component_t * component,
  * Query a specific component, coll v2.0.0
  */
 static int init_query_2_0_0(const mca_base_component_t * component,
-                            mca_base_component_priority_list_item_t * entry,
                             bool enable_progress_threads, 
                             bool enable_mpi_threads)
 {

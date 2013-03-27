@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2012      Los Alamos National Security, LLC.
+ * Copyright (c) 2012-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * $COPYRIGHT$
  * 
@@ -24,28 +24,10 @@
 
 BEGIN_C_DECLS
 
-extern int ompi_rte_base_inited;
-
-/**
- * Initialize the rte MCA framework
- *
- * @retval OMPI_SUCCESS Upon success
- * @retval OMPI_ERROR Upon failure
- *
- * This must be the first function invoked in the rte MCA
- * framework.  It initializes the rte MCA framework, finds
- * and opens rte components, etc.
- *
- * This function is invoked during ompi_init().
- * 
- * This function fills in the internal global variable
- * ompi_rte_base_components_opened, which is a list of all
- * rte components that were successfully opened.  This
- * variable should \em only be used by other rte base
- * functions -- it is not considered a public interface member --
- * and is only mentioned here for completeness.
+/*
+ * MCA Framework
  */
-OMPI_DECLSPEC int ompi_rte_base_open(void);
+OMPI_DECLSPEC extern mca_base_framework_t ompi_rte_base_framework;
 
 /**
  * Select an available component.
@@ -79,25 +61,6 @@ OMPI_DECLSPEC int ompi_rte_base_open(void);
  * of the rte wrapper functions will return an error.
  */
 OMPI_DECLSPEC int ompi_rte_base_select(void);
-
-/**
- * Shut down the rte MCA framework.
- *
- * @retval OMPI_SUCCESS Always
- *
- * This function shuts down everything in the rte MCA
- * framework, and is called during ompi_finalize().
- *
- * It must be the last function invoked on the rte MCA
- * framework.
- */
-OMPI_DECLSPEC int ompi_rte_base_close(void);
-
-/**
- * Debugging output stream
- */
-OMPI_DECLSPEC extern int ompi_rte_base_output;
-OMPI_DECLSPEC extern opal_list_t ompi_rte_components;
 
 END_C_DECLS
 

@@ -33,6 +33,7 @@
 #include "opal/mca/base/base.h"
 #include "opal/memoryhooks/memory.h"
 #include "ompi/mca/mpool/base/base.h"
+#include "mpool_base_mem_cb.h"
 #include "ompi/constants.h"
 
 /*
@@ -46,7 +47,6 @@
 /*
  * Global variables
  */
-int mca_mpool_base_output = -1;
 
 /* whether we actually used the mem hooks or not */
 int mca_mpool_base_used_mem_hooks = 0;
@@ -54,43 +54,18 @@ int mca_mpool_base_used_mem_hooks = 0;
 uint32_t mca_mpool_base_page_size; 
 uint32_t mca_mpool_base_page_size_log;
 
-opal_list_t mca_mpool_base_components;
 opal_list_t mca_mpool_base_modules;
-
-static int ompi_mpool_base_verbose = 0;
-
-static int mca_mpool_base_register(int flags)
-{
-    /* Verbose output */
-    ompi_mpool_base_verbose = 0;
-    mca_base_var_register("ompi", "mpool", "base", "verbose",
-                          "Verbosity level for the mpool framework (0 = no verbosity)",
-                          MCA_BASE_VAR_TYPE_INT, NULL, 0,
-                          MCA_BASE_VAR_FLAG_SETTABLE,
-                          OPAL_INFO_LVL_9,
-                          MCA_BASE_VAR_SCOPE_LOCAL,
-                          &ompi_mpool_base_verbose);
-
-    return OMPI_SUCCESS;
-}
 
 /**
  * Function for finding and opening either all MCA components, or the one
  * that was specifically requested via a MCA parameter.
  */
-int mca_mpool_base_open(void)
+static int mca_mpool_base_open(mca_base_open_flag_t flags)
 {
     /* Open up all available components - and populate the
-       mca_mpool_base_components list */
-
-    (void) mca_mpool_base_register(0);
-
-    mca_mpool_base_output = opal_output_open(NULL);
-    opal_output_set_verbosity(mca_mpool_base_output, ompi_mpool_base_verbose);
-
+       ompi_mpool_base_framework.framework_components list */
     if (OMPI_SUCCESS != 
-        mca_base_components_open("mpool", mca_mpool_base_output, mca_mpool_base_static_components, 
-                                 &mca_mpool_base_components, true)) {
+        mca_base_framework_components_open(&ompi_mpool_base_framework, flags)) {
         return OMPI_ERROR;
     }
   
@@ -109,3 +84,46 @@ int mca_mpool_base_open(void)
     return OMPI_SUCCESS;
 }
 
+static int mca_mpool_base_close(void)
+{
+  opal_list_item_t *item;
+  mca_mpool_base_selected_module_t *sm;
+  int32_t modules_length;
+
+  /* Need the initial length in order to know if some of the initializations
+   * are done in the open function.
+   */
+  modules_length = opal_list_get_size(&mca_mpool_base_modules);
+
+  /* Finalize all the mpool components and free their list items */
+
+  while(NULL != (item = opal_list_remove_first(&mca_mpool_base_modules))) {
+    sm = (mca_mpool_base_selected_module_t *) item;
+
+    /* Blatently ignore the return code (what would we do to recover,
+       anyway?  This component is going away, so errors don't matter
+       anymore).  Note that it's legal for the module to have NULL for
+       the finalize function. */
+
+    if (NULL != sm->mpool_module->mpool_finalize) {
+        sm->mpool_module->mpool_finalize(sm->mpool_module);
+    }
+    OBJ_RELEASE(sm);
+  }
+
+  /* Close all remaining available components (may be one if this is a
+     OMPI RTE program, or [possibly] multiple if this is ompi_info) */
+  (void) mca_base_framework_components_close(&ompi_mpool_base_framework, NULL);
+
+  /* deregister memory free callback */
+  if( (modules_length > 0) && mca_mpool_base_used_mem_hooks && 
+     0 != (OPAL_MEMORY_FREE_SUPPORT & opal_mem_hooks_support_level())) {
+      opal_mem_hooks_unregister_release(mca_mpool_base_mem_cb);
+  }
+  /* All done */
+
+  return OMPI_SUCCESS;
+}
+
+MCA_BASE_FRAMEWORK_DECLARE(ompi, mpool, NULL, NULL, mca_mpool_base_open,
+                           mca_mpool_base_close, mca_mpool_base_static_components, 0);
