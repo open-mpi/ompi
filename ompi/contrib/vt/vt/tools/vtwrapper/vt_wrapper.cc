@@ -1450,10 +1450,12 @@ parseCommandLine( int argc, char** argv )
     else if( arg.compare( 0, 5, "-lmpi" ) == 0 ||
              arg.compare( 0, 7, "-lmtmpi" ) == 0 ||
              arg.compare( 0, 7, "-lhpmpi" ) == 0 ||
+             arg.compare( 0, 7, "-lpcmpi" ) == 0 ||
              arg.compare( 0, 7, "-lscmpi" ) == 0 ||
              arg.find( "libmpi" ) != std::string::npos ||
              arg.find( "libmtmpi" ) != std::string::npos ||
              arg.find( "libhpmpi" ) != std::string::npos ||
+             arg.find( "libpcmpi" ) != std::string::npos ||
              arg.find( "libscmpi" ) != std::string::npos )
     {
       Config.setUsesMpi( true );
