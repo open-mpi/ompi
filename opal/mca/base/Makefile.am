@@ -36,7 +36,8 @@ headers = \
 	mca_base_var_enum.h \
         mca_base_vari.h \
         mca_base_param.h \
-        mca_base_param_internal.h
+        mca_base_param_internal.h \
+	mca_base_framework.h
 
 # Library
 
@@ -56,7 +57,8 @@ libmca_base_la_SOURCES = \
         mca_base_var.c \
 	mca_base_var_enum.c \
         mca_base_parse_paramfile.c \
-	mca_base_components_register.c
+	mca_base_components_register.c \
+	mca_base_framework.c
 
 # Conditionally install the header files
 

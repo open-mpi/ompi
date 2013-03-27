@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2008 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -10,6 +11,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -31,6 +34,7 @@
 #include "opal/mca/mca.h"
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/mca/base/mca_base_var.h"
+#include "opal/mca/base/mca_base_framework.h"
 #include "opal/util/cmd_line.h"
 
 BEGIN_C_DECLS
@@ -61,11 +65,10 @@ OPAL_DECLSPEC OBJ_CLASS_DECLARATION(mca_base_component_priority_list_item_t);
  * Public variables
  */
 OPAL_DECLSPEC extern char *mca_base_component_path;
-OPAL_DECLSPEC extern bool mca_base_opened;
-OPAL_DECLSPEC extern char *mca_base_system_default_path;
-OPAL_DECLSPEC extern char *mca_base_user_default_path;
 OPAL_DECLSPEC extern bool mca_base_component_show_load_errors;
 OPAL_DECLSPEC extern bool mca_base_component_disable_dlopen;
+OPAL_DECLSPEC extern char *mca_base_system_default_path;
+OPAL_DECLSPEC extern char *mca_base_user_default_path;
 
 /*
  * Public functions
@@ -145,17 +148,45 @@ OPAL_DECLSPEC char * mca_base_component_to_string(const mca_base_component_t *a)
 
 OPAL_DECLSPEC int mca_base_component_find(const char *directory, const char *type,
                                           const mca_base_component_t *static_components[],
-                                          char **requested_component_names,
-                                          bool include_mode,
+					  const char *requested_components,
                                           opal_list_t *found_components,
                                           bool open_dso_components);
+
+/**
+ * Filter a list of components based on a comma-delimted list of names and/or
+ * a set of meta-data flags.
+ *
+ * @param[in,out] components List of components to filter
+ * @param[in] output_id Output id to write to for error/warning/debug messages
+ * @param[in] filter_names Comma delimited list of components to use. Negate with ^.
+ * May be NULL.
+ * @param[in] filter_flags Metadata flags components are required to have set (CR ready)
+ *
+ * @returns OPAL_SUCCESS On success
+ * @returns OPAL_ERR_NOT_FOUND If some component in {filter_names} is not found in
+ * {components}. Does not apply to negated filters.
+ * @returns opal error code On other error.
+ *
+ * This function closes and releases any components that do not match the filter_name and
+ * filter flags.
+ */
+OPAL_DECLSPEC int mca_base_components_filter (const char *framework_name, opal_list_t *components, int output_id,
+					      const char *filter_names, uint32_t filter_flags);
+
+
 
 /* Safely release some memory allocated by mca_base_component_find()
    (i.e., is safe to call even if you never called
    mca_base_component_find()). */
 OPAL_DECLSPEC int mca_base_component_find_finalize(void);
 
+/* mca_base_components_register.c */
+OPAL_DECLSPEC int mca_base_framework_components_register (struct mca_base_framework_t *framework,
+                                                          mca_base_register_flag_t flags);
+
 /* mca_base_components_open.c */
+OPAL_DECLSPEC int mca_base_framework_components_open (struct mca_base_framework_t *framework,
+                                                      mca_base_open_flag_t flags);
 
 OPAL_DECLSPEC int mca_base_components_open(const char *type_name, int output_id,
                                            const mca_base_component_t **static_components,
@@ -163,12 +194,21 @@ OPAL_DECLSPEC int mca_base_components_open(const char *type_name, int output_id,
                                            bool open_dso_components);
 
 /* mca_base_components_close.c */
-
-int mca_base_component_release (int output_id, const mca_base_component_t *component,
-                                bool opened);
+/**
+ * Close and release a component.
+ *
+ * @param[in] component Component to close
+ * @param[in] output_id Output id for debugging output
+ *
+ * After calling this function the component may no longer be used.
+ */
+OPAL_DECLSPEC void mca_base_component_close (const mca_base_component_t *component, int output_id);
 
 OPAL_DECLSPEC int mca_base_components_close(int output_id, opal_list_t *components_available, 
                                             const mca_base_component_t *skip);
+
+OPAL_DECLSPEC int mca_base_framework_components_close (struct mca_base_framework_t *framework,
+						       const mca_base_component_t *skip);
 
 END_C_DECLS
 

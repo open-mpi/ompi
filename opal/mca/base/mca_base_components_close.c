@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -9,6 +10,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -25,13 +28,12 @@
 #include "opal/mca/base/mca_base_component_repository.h"
 #include "opal/constants.h"
 
-int mca_base_component_release (int output_id, const mca_base_component_t *component,
-                                bool opened)
+void mca_base_component_close (const mca_base_component_t *component, int output_id)
 {
-    int group_id;
+    int ret;
 
     /* Close */
-    if (opened && NULL != component->mca_close_component) {
+    if (NULL != component->mca_close_component) {
         component->mca_close_component();
         opal_output_verbose(10, output_id, 
                             "mca: base: close: component %s closed",
@@ -39,54 +41,49 @@ int mca_base_component_release (int output_id, const mca_base_component_t *compo
     }
 
     /* Unload */
-
-    /* Deregister this group before the component goes away */
-    group_id = mca_base_var_group_find (NULL, component->mca_type_name,
-                                        component->mca_component_name);
-    mca_base_var_group_deregister (group_id);
-
     opal_output_verbose(10, output_id, 
                         "mca: base: close: unloading component %s",
                         component->mca_component_name);
-    mca_base_component_repository_release((mca_base_component_t *) component);
 
-    return OPAL_SUCCESS;
+    /* XXX -- TODO -- Replace reserved by mca_project_name for 1.9 */
+    ret = mca_base_var_group_find (component->reserved, component->mca_type_name,
+                                   component->mca_component_name);
+    if (0 <= ret) {
+        mca_base_var_group_deregister (ret);
+    }
+
+    mca_base_component_repository_release((mca_base_component_t *) component);
 }
 
-int mca_base_components_close(int output_id, 
-                              opal_list_t *components_available, 
+int mca_base_framework_components_close (mca_base_framework_t *framework,
+                                         const mca_base_component_t *skip)
+{
+    return mca_base_components_close (framework->framework_output,
+                                      &framework->framework_components,
+                                      skip);
+}
+
+int mca_base_components_close(int output_id, opal_list_t *components, 
                               const mca_base_component_t *skip)
 {
-  opal_list_item_t *item;
-  mca_base_component_priority_list_item_t *pcli, *skipped_pcli = NULL;
-  const mca_base_component_t *component;
+    mca_base_component_list_item_t *cli, *next;
 
-  /* Close and unload all components in the available list, except the
-     "skip" item.  This is handy to close out all non-selected
-     components.  It's easier to simply remove the entire list and
-     then simply re-add the skip entry when done. */
+    /* Close and unload all components in the available list, except the
+       "skip" item.  This is handy to close out all non-selected
+       components.  It's easier to simply remove the entire list and
+       then simply re-add the skip entry when done. */
 
-  for (item = opal_list_remove_first(components_available);
-       NULL != item; 
-       item = opal_list_remove_first(components_available)) {
-    pcli = (mca_base_component_priority_list_item_t *) item;
-    component = pcli->super.cli_component;
+    OPAL_LIST_FOREACH_SAFE(cli, next, components, mca_base_component_list_item_t) {
+        if (skip == cli->cli_component) {
+            continue;
+        }
 
-    if (component != skip) {
-        mca_base_component_release (output_id, component, true);
-        free(pcli);
-    } else {
-        skipped_pcli = pcli;
+        mca_base_component_close (cli->cli_component, output_id);
+        opal_list_remove_item (components, &cli->super);
+
+        OBJ_RELEASE(cli);
     }
-  }
 
-  /* If we found it, re-add the skipped component to the available
-     list (see above comment) */
-
-  if (NULL != skipped_pcli) {
-    opal_list_append(components_available, (opal_list_item_t *) skipped_pcli);
-  }
-
-  /* All done */
-  return OPAL_SUCCESS;
+    /* All done */
+    return OPAL_SUCCESS;
 }
