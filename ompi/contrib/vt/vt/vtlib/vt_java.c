@@ -349,25 +349,25 @@ static void get_method_info(jvmtiEnv* jvmti, jmethodID method,
 
   /* check whether method is native */
   error = (*jvmti)->IsMethodNative(jvmti, method, &is_native);
-  vt_java_check_error(jvmti, error, "IsMethodNative");
+  VT_JAVA_CHECK_ERROR(jvmti, error, "IsMethodNative");
   methodInfo->is_native = (is_native) ? 1 : 0;
 
   /* check whether method is synthetic */
   error = (*jvmti)->IsMethodSynthetic(jvmti, method, &is_synthetic);
-  vt_java_check_error(jvmti, error, "IsMethodSynthetic");
+  VT_JAVA_CHECK_ERROR(jvmti, error, "IsMethodSynthetic");
   methodInfo->is_synthetic = (is_synthetic) ? 1 : 0;
 
   /* get method name */
   error = (*jvmti)->GetMethodName(jvmti, method, &method_name, NULL, NULL);
-  vt_java_check_error(jvmti, error, "GetMethodName");
+  VT_JAVA_CHECK_ERROR(jvmti, error, "GetMethodName");
 
   /* get class object that declaring method */
   error = (*jvmti)->GetMethodDeclaringClass(jvmti, method, &class);
-  vt_java_check_error(jvmti, error, "GetMethodDeclaringClass");
+  VT_JAVA_CHECK_ERROR(jvmti, error, "GetMethodDeclaringClass");
 
   /* get class signature */
   error = (*jvmti)->GetClassSignature(jvmti, class, &class_signature, NULL);
-  vt_java_check_error(jvmti, error, "GetClassSignature");
+  VT_JAVA_CHECK_ERROR(jvmti, error, "GetClassSignature");
 
   /* "demangle" class signature, if available */
 
@@ -494,7 +494,7 @@ static void lock_agent(jvmtiEnv* jvmti)
   jvmtiError error;
 
   error = (*jvmti)->RawMonitorEnter(jvmti, vt_jvmti_agent->lock);
-  vt_java_check_error(jvmti, error, "RawMonitorEnter");
+  VT_JAVA_CHECK_ERROR(jvmti, error, "RawMonitorEnter");
 }
 
 static void unlock_agent(jvmtiEnv *jvmti)
@@ -502,7 +502,7 @@ static void unlock_agent(jvmtiEnv *jvmti)
   jvmtiError error;
 
   error = (*jvmti)->RawMonitorExit(jvmti, vt_jvmti_agent->lock);
-  vt_java_check_error(jvmti, error, "RawMonitorExit");
+  VT_JAVA_CHECK_ERROR(jvmti, error, "RawMonitorExit");
 }
 
 /* Callback for JVMTI_EVENT_VM_START */
@@ -536,22 +536,22 @@ static void JNICALL cbVMInit(jvmtiEnv* jvmti, JNIEnv* env, jthread thread)
     error =
       (*jvmti)->SetEventNotificationMode(jvmti, JVMTI_ENABLE,
                                          JVMTI_EVENT_THREAD_START, NULL);
-    vt_java_check_error(jvmti, error,
+    VT_JAVA_CHECK_ERROR(jvmti, error,
                         "SetEventNotificationMode[JVMTI_EVENT_THREAD_START]");
     error =
       (*jvmti)->SetEventNotificationMode(jvmti, JVMTI_ENABLE,
                                          JVMTI_EVENT_THREAD_END, NULL);
-    vt_java_check_error(jvmti, error,
+    VT_JAVA_CHECK_ERROR(jvmti, error,
                         "SetEventNotificationMode[JVMTI_EVENT_THREAD_END]");
     error =
       (*jvmti)->SetEventNotificationMode(jvmti, JVMTI_ENABLE,
                                          JVMTI_EVENT_METHOD_ENTRY, NULL);
-    vt_java_check_error(jvmti, error,
+    VT_JAVA_CHECK_ERROR(jvmti, error,
                         "SetEventNotificationMode[JVMTI_EVENT_METHOD_ENTRY]");
     error =
       (*jvmti)->SetEventNotificationMode(jvmti, JVMTI_ENABLE,
                                          JVMTI_EVENT_METHOD_EXIT, NULL);
-    vt_java_check_error(jvmti, error,
+    VT_JAVA_CHECK_ERROR(jvmti, error,
                         "SetEventNotificationMode[JVMTI_EVENT_METHOD_EXIT]");
 
     /* read filter specifications for threads and methods */
@@ -677,7 +677,7 @@ static void JNICALL cbMethodEntry(jvmtiEnv* jvmti, JNIEnv* env,
 
   /* get thread identifier */
   error = (*jvmti)->GetThreadLocalStorage(jvmti, thread, (void**)&threadid);
-  vt_java_check_error(jvmti, error, "GetThreadLocalStorage");
+  VT_JAVA_CHECK_ERROR(jvmti, error, "GetThreadLocalStorage");
 
   /* return immediately, if thread is excluded (no thread ID assigned) */
   if ( threadid == NULL ) return;
@@ -715,7 +715,7 @@ static void JNICALL cbMethodExit(jvmtiEnv* jvmti, JNIEnv* env,
 
   /* get thread identifier */
   error = (*jvmti)->GetThreadLocalStorage(jvmti, thread, (void**)&threadid);
-  vt_java_check_error(jvmti, error, "GetThreadLocalStorage");
+  VT_JAVA_CHECK_ERROR(jvmti, error, "GetThreadLocalStorage");
 
   /* return immediately, if thread is excluded (no thread ID assigned) */
   if ( threadid == NULL ) return;
@@ -739,9 +739,6 @@ JNIEXPORT jint JNICALL Agent_OnLoad(JavaVM *vm, char *options, void *reserved)
   jvmtiCapabilities   capabilities;
   jvmtiEventCallbacks callbacks;
 
-  /* not used */
-  (void)options; (void)reserved;
-
   memset((void*)&agent, 0, sizeof(agent));
   vt_jvmti_agent = &agent;
 
@@ -758,7 +755,7 @@ JNIEXPORT jint JNICALL Agent_OnLoad(JavaVM *vm, char *options, void *reserved)
 
   /* get JVMTI's version number */
   error = (*jvmti)->GetVersionNumber(jvmti, &version);
-  vt_java_check_error(jvmti, error, "GetVersionNumber");
+  VT_JAVA_CHECK_ERROR(jvmti, error, "GetVersionNumber");
   agent.jvmti_version = version;
 
   /* set capabilities */
@@ -771,7 +768,7 @@ JNIEXPORT jint JNICALL Agent_OnLoad(JavaVM *vm, char *options, void *reserved)
   capabilities.can_get_synthetic_attribute      = 1;
 
   error = (*jvmti)->AddCapabilities(jvmti, &capabilities);
-  vt_java_check_error(jvmti, error, "AddCapabilities");
+  VT_JAVA_CHECK_ERROR(jvmti, error, "AddCapabilities");
 
   /* set event callbacks */
 
@@ -786,26 +783,26 @@ JNIEXPORT jint JNICALL Agent_OnLoad(JavaVM *vm, char *options, void *reserved)
 
   error = (*jvmti)->SetEventCallbacks(jvmti, &callbacks,
           (jint)sizeof(callbacks));
-  vt_java_check_error(jvmti, error, "SetEventCallbacks");
+  VT_JAVA_CHECK_ERROR(jvmti, error, "SetEventCallbacks");
 
   /* set event notification modes */
 
   error = (*jvmti)->SetEventNotificationMode(jvmti, JVMTI_ENABLE,
                                              JVMTI_EVENT_VM_START, NULL);
-  vt_java_check_error(jvmti, error,
+  VT_JAVA_CHECK_ERROR(jvmti, error,
                       "SetEventNotificationMode[JVMTI_EVENT_VM_START]");
   error = (*jvmti)->SetEventNotificationMode(jvmti, JVMTI_ENABLE,
                                              JVMTI_EVENT_VM_INIT, NULL);
-  vt_java_check_error(jvmti, error,
+  VT_JAVA_CHECK_ERROR(jvmti, error,
                       "SetEventNotificationMode[JVMTI_EVENT_VM_INIT]");
   error = (*jvmti)->SetEventNotificationMode(jvmti, JVMTI_ENABLE,
                                              JVMTI_EVENT_VM_DEATH, NULL);
-  vt_java_check_error(jvmti, error,
+  VT_JAVA_CHECK_ERROR(jvmti, error,
                       "SetEventNotificationMode[JVMTI_EVENT_VM_DEATH]");
 
   /* create raw monitor for this agent to protect critical sections of code */
   error = (*jvmti)->CreateRawMonitor(jvmti, "agent", &(vt_jvmti_agent->lock));
-  vt_java_check_error(jvmti, error, "CreateRawMonitor[agent]");
+  VT_JAVA_CHECK_ERROR(jvmti, error, "CreateRawMonitor[agent]");
 
   vt_cntl_msg(2, "JVMTI: VM agent loaded");
 
@@ -838,7 +835,7 @@ void vt_java_get_thread_name(jvmtiEnv* jvmti, jthread thread,
   /* get thread information */
   memset(&thread_info,0, sizeof(thread_info));
   error = (*jvmti)->GetThreadInfo(jvmti, thread, &thread_info);
-  vt_java_check_error(jvmti, error, "GetThreadInfo");
+  VT_JAVA_CHECK_ERROR(jvmti, error, "GetThreadInfo");
 
   /* copy thread name into tname, if possible */
   if ( thread_info.name != NULL ) {
@@ -850,19 +847,20 @@ void vt_java_get_thread_name(jvmtiEnv* jvmti, jthread thread,
   }
 }
 
-void vt_java_check_error(jvmtiEnv* jvmti, jvmtiError error, const char* str)
+void vt_java_error(jvmtiEnv* jvmti, jvmtiError error, const char* prefix)
 {
-  if ( jvmti == NULL ) jvmti = vt_jvmti_agent->jvmti;
-  vt_libassert(jvmti != NULL);
+  char* error_str = NULL;
 
-  if ( error != JVMTI_ERROR_NONE )
-  {
-    char* error_str = NULL;
-    (*jvmti)->GetErrorName(jvmti, error, &error_str);
-    vt_error_msg("JVMTI: %s%s%d(%s)",
-                 (str == NULL ? "" : str),
-                 (str == NULL ? " " : ": "),
-                 error,
-                 (error_str == NULL ? "Unknown" : error_str));
-  }
+  if ( jvmti == NULL )
+    jvmti = vt_jvmti_agent->jvmti;
+
+  vt_libassert(jvmti != NULL);
+  vt_libassert(error != JVMTI_ERROR_NONE);
+
+  (*jvmti)->GetErrorName(jvmti, error, &error_str);
+  vt_error_msg("JVMTI: %s%s%d(%s)",
+               (prefix == NULL ? "" : prefix),
+               (prefix == NULL ? " " : ": "),
+               error,
+               (error_str == NULL ? "Unknown" : error_str));
 }

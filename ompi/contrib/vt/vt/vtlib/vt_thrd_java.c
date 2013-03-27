@@ -52,12 +52,12 @@ void VTThrd_initJava()
 
     /* put thread-ID to thread-specific data */
     error = (*jvmti)->SetThreadLocalStorage(jvmti, NULL, (void*)tid);
-    vt_java_check_error(jvmti, error, "SetThreadLocalStorage");
+    VT_JAVA_CHECK_ERROR(jvmti, error, "SetThreadLocalStorage");
 
     /* create raw monitor for mutex init */
     error = (*jvmti)->CreateRawMonitor(jvmti, "mutex init",
                                        &mutexInitMutex);
-    vt_java_check_error(jvmti, error, "CreateRawMonitor[mutex init]");
+    VT_JAVA_CHECK_ERROR(jvmti, error, "CreateRawMonitor[mutex init]");
 
 #if defined(VT_METR)
 /*    if (vt_metric_num() > 0)
@@ -80,7 +80,7 @@ void VTThrd_registerThread(jthread thread, const char* tname)
 
   /* check whether an ID is already created for this thread */
   error = (*jvmti)->GetThreadLocalStorage(jvmti, thread, (void**)&tid);
-  vt_java_check_error(jvmti, error, "GetThreadLocalStorage");
+  VT_JAVA_CHECK_ERROR(jvmti, error, "GetThreadLocalStorage");
   if (tid == NULL)
   {
     /* create new thread-ID */
@@ -90,7 +90,7 @@ void VTThrd_registerThread(jthread thread, const char* tname)
 
     /* put new thread-ID to thread-specific data */
     error = (*jvmti)->SetThreadLocalStorage(jvmti, thread, (void*)tid);
-    vt_java_check_error(jvmti, error, "SetThreadLocalStorage");
+    VT_JAVA_CHECK_ERROR(jvmti, error, "SetThreadLocalStorage");
 
     /* open thread associated trace file */
     VTThrd_open(*tid);
@@ -104,7 +104,7 @@ uint8_t VTThrd_isAlive()
 
   /* get thread-ID from thread-specific data */
   error = (*jvmti)->GetThreadLocalStorage(jvmti, NULL, (void**)&tid);
-  vt_java_check_error(jvmti, error, "GetThreadLocalStorage");
+  VT_JAVA_CHECK_ERROR(jvmti, error, "GetThreadLocalStorage");
 
   if (tid || vt_jvmti_agent->vm_is_dead)
     return 1;
@@ -119,7 +119,7 @@ uint32_t VTThrd_getThreadId()
 
   /* get thread-ID from thread-specific data */
   error = (*jvmti)->GetThreadLocalStorage(jvmti, NULL, (void**)&tid);
-  vt_java_check_error(jvmti, error, "GetThreadLocalStorage");
+  VT_JAVA_CHECK_ERROR(jvmti, error, "GetThreadLocalStorage");
 
   if (tid == NULL && vt_jvmti_agent->vm_is_dead)
     return 0;
@@ -136,7 +136,7 @@ void VTThrd_createMutex(VTThrdMutex** mutex)
   vt_libassert(mutexInitMutex != NULL);
 
   error = (*jvmti)->RawMonitorEnter(jvmti, mutexInitMutex);
-  vt_java_check_error(jvmti, error, "RawMonitorEnter");
+  VT_JAVA_CHECK_ERROR(jvmti, error, "RawMonitorEnter");
   if (*mutex == NULL)
   {
     static uint8_t rawmon_id = 0;
@@ -150,10 +150,10 @@ void VTThrd_createMutex(VTThrdMutex** mutex)
 
     error = (*jvmti)->CreateRawMonitor(jvmti, rawmon_name,
                                        &((*mutex)->m));
-    vt_java_check_error(jvmti, error, "CreateRawMonitor");
+    VT_JAVA_CHECK_ERROR(jvmti, error, "CreateRawMonitor");
   }
   error = (*jvmti)->RawMonitorExit(jvmti, mutexInitMutex);
-  vt_java_check_error(jvmti, error, "RawMonitorExit");
+  VT_JAVA_CHECK_ERROR(jvmti, error, "RawMonitorExit");
 }
 
 void VTThrd_deleteMutex(VTThrdMutex** mutex)
@@ -163,16 +163,16 @@ void VTThrd_deleteMutex(VTThrdMutex** mutex)
   if (*mutex == NULL) return;
 
   error = (*jvmti)->RawMonitorEnter(jvmti, mutexInitMutex);
-  vt_java_check_error(jvmti, error, "RawMonitorEnter");
+  VT_JAVA_CHECK_ERROR(jvmti, error, "RawMonitorEnter");
   if (*mutex != NULL )
   {
     error = (*jvmti)->DestroyRawMonitor(jvmti, (*mutex)->m);
-    vt_java_check_error(jvmti, error, "DestroyRawMonitor");
+    VT_JAVA_CHECK_ERROR(jvmti, error, "DestroyRawMonitor");
     free(*mutex);
     *mutex = NULL;
   }
   error = (*jvmti)->RawMonitorExit(jvmti, mutexInitMutex);
-  vt_java_check_error(jvmti, error, "RawMonitorExit");
+  VT_JAVA_CHECK_ERROR(jvmti, error, "RawMonitorExit");
 }
 
 void VTThrd_lock(VTThrdMutex** mutex)
@@ -183,7 +183,7 @@ void VTThrd_lock(VTThrdMutex** mutex)
     VTThrd_createMutex(mutex);
 
   error = (*jvmti)->RawMonitorEnter(jvmti, (*mutex)->m);
-  vt_java_check_error(jvmti, error, "RawMonitorEnter");
+  VT_JAVA_CHECK_ERROR(jvmti, error, "RawMonitorEnter");
 }
 
 void VTThrd_unlock(VTThrdMutex** mutex)
@@ -193,5 +193,5 @@ void VTThrd_unlock(VTThrdMutex** mutex)
   vt_libassert(*mutex != NULL);
 
   error = (*jvmti)->RawMonitorExit(jvmti, (*mutex)->m);
-  vt_java_check_error(jvmti, error, "RawMonitorExit");
+  VT_JAVA_CHECK_ERROR(jvmti, error, "RawMonitorExit");
 }

@@ -23,6 +23,12 @@ MPI_Win_set_errhandler
 # conflicting argument types with SGI-MPT (noticed on version 1.26)
 MPI_Grequest_complete
 
+# conflicting argument types with Platform MPI (noticed on version 7.1)
+MPI_Info_delete
+MPI_Info_get
+MPI_Info_get_valuelen
+MPI_Info_set
+
 # implemented MPI functions
 MPI_Allgather
 MPI_Allgatherv

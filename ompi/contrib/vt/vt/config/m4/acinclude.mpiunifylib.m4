@@ -24,6 +24,20 @@ AC_DEFUN([ACVT_MPIUNIFYLIB],
 			mpiunifylib_error="yes"
 		])
 
+		AS_IF([test x"$mpiunifylib_error" = "xno" -a x"$inside_openmpi" = "xno"],
+		[
+			bad_mpi="no"
+			AC_CHECK_DECL([PLATFORM_MPI], [bad_mpi="yes"],
+			[AC_CHECK_DECL([HP_MPI], [bad_mpi="yes"], [], [#include "mpi.h"])],
+			[], [#include "mpi.h"])
+
+			AS_IF([test "$bad_mpi" = "yes"],
+			[
+				AC_MSG_NOTICE([error: The MPI trace unification library cannot be built with HP/Platform MPI])
+				mpiunifylib_error="yes"
+			])
+		])
+
 		AS_IF([test x"$mpiunifylib_error" = "xno"],
 		[
 			AS_IF([test x"$have_unimci" = "xyes" -a x"$unimci_checker_name" = "xMARMOT"],
