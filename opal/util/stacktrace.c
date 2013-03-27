@@ -496,7 +496,7 @@ int opal_util_register_stackhandlers (void)
       if (((0 == sig) && (tmp == next)) || (0 > sig) || (_NSIG <= sig)) {
           opal_show_help("help-opal-util.txt",
                          "stacktrace bad signal", true,
-                         string_value, tmp);
+                         opal_signal_string, tmp);
           return OPAL_ERR_SILENT;
       } else if (next == NULL) {
 	 return OPAL_ERR_BAD_PARAM;

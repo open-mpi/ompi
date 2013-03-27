@@ -521,7 +521,7 @@ int opal_crs_blcr_restart(opal_crs_base_snapshot_t *base_snapshot, bool spawn_ch
      * along very well.
      */
     opal_progress_finalize();
-    opal_event_base_close();
+    (void) mca_base_framework_close(&opal_event_base_framework);
 
     if (!spawn_child) {
         cr_full_cmd = opal_argv_join(cr_argv, ' ');
@@ -705,7 +705,7 @@ static int opal_crs_blcr_restart_cmd(char *fname, char **cmd)
                         "crs:blcr: restart_cmd(%s, ---)", fname);
 
     if (NULL == fname) {
-        opal_output_verbose(10, opal_crs_base_output, 
+        opal_output_verbose(10, opal_crs_base_framework.framework_output, 
                             "crs:blcr: restart_cmd: Error: filename is NULL!");
         return OPAL_CRS_ERROR;
     }

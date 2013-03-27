@@ -43,8 +43,6 @@ static int opal_pstat_base_unsupported_finalize(void);
 /*
  * Globals
  */
-int opal_pstat_base_output = -1;
-opal_list_t opal_pstat_base_components_opened;
 opal_pstat_base_component_t *opal_pstat_base_component = NULL;
 opal_pstat_base_module_t opal_pstat = {
     opal_pstat_base_unsupported_init,
@@ -52,30 +50,9 @@ opal_pstat_base_module_t opal_pstat = {
     opal_pstat_base_unsupported_finalize
 };
 
-
-/*
- * Function for finding and opening either all MCA components, or the one
- * that was specifically requested via a MCA parameter.
- */
-int opal_pstat_base_open(void)
-{
-    opal_pstat_base_output = opal_output_open(NULL);
-
-    /* Open up all available components */
-    OBJ_CONSTRUCT( &opal_pstat_base_components_opened, opal_list_t );
-
-    if (OPAL_SUCCESS !=
-        mca_base_components_open("pstat", opal_pstat_base_output,
-                                 mca_pstat_base_static_components,
-                                 &opal_pstat_base_components_opened, 
-                                 true)) {
-        return OPAL_ERROR;
-    }
-
-    /* All done */
-
-    return OPAL_SUCCESS;
-}
+/* Use default register/open/close functions */
+MCA_BASE_FRAMEWORK_DECLARE(opal, pstat, "process statistics", NULL, NULL, NULL,
+                           mca_pstat_base_static_components, 0);
 
 static int opal_pstat_base_unsupported_init(void)
 {

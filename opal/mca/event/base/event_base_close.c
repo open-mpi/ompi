@@ -17,24 +17,9 @@
 
 int opal_event_base_close(void)
 {
-    opal_list_item_t *item;
-
     opal_event_base_inited--;
 
-    /* no need to close the component as it was statically opened */
-
-    /* for support of tools such as ompi_info */
-    for (item = opal_list_remove_first(&opal_event_components);
-         NULL != item; 
-         item = opal_list_remove_first(&opal_event_components)) {
-        OBJ_RELEASE(item);
-    }
-    OBJ_DESTRUCT(&opal_event_components);
-
-    /* Close the framework output */
-    opal_output_close (opal_event_base_output);
-    opal_event_base_output = -1;
-
-    /* All done */
-    return OPAL_SUCCESS;
+    /* cleanup components even though they are statically opened */
+    return mca_base_framework_components_close (&opal_event_base_framework,
+						NULL);
 }

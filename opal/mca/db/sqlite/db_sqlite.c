@@ -119,7 +119,7 @@ static int add_log(const char *table,
     char *sql, **cmd = NULL, *tmp;
     sqlite3_stmt *stmt;
 
-    opal_output_verbose(2, opal_db_base.output,
+    opal_output_verbose(2, opal_db_base_framework.framework_output,
                         "%s Logging data for table %s",
                         OPAL_NAME_PRINT(OPAL_PROC_MY_NAME), table);
 

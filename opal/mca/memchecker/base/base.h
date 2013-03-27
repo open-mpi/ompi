@@ -13,7 +13,7 @@
 #define OPAL_MEMCHECKER_BASE_H
 
 #include "opal_config.h"
-
+#include "opal/mca/base/mca_base_framework.h"
 #include "opal/mca/memchecker/memchecker.h"
 
 /*
@@ -21,28 +21,6 @@
  */
 
 BEGIN_C_DECLS
-
-/**
- * Initialize the memchecker MCA framework
- *
- * @retval OPAL_SUCCESS Upon success
- * @retval OPAL_ERROR Upon failure
- *
- * This must be the first function invoked in the memchecker MCA
- * framework.  It initializes the memchecker MCA framework, finds
- * and opens memchecker components, etc.
- *
- * This function is invoked during opal_init() and during the
- * initialization of the special case of the laminfo command.
- *
- * This function fills in the internal global variable
- * opal_memchecker_base_components_opened, which is a list of all
- * memchecker components that were successfully opened.  This
- * variable should \em only be used by other memchecker base
- * functions -- it is not considered a public interface member --
- * and is only mentioned here for completeness.
- */
-OPAL_DECLSPEC int opal_memchecker_base_open(void);
 
 /**
  * Select one available component.
@@ -55,24 +33,9 @@ OPAL_DECLSPEC int opal_memchecker_base_open(void);
 OPAL_DECLSPEC int opal_memchecker_base_select(void);
 
 /**
- * Shut down the memchecker MCA framework.
- *
- * @retval OPAL_SUCCESS Always
- *
- * This function shuts down everything in the memchecker MCA
- * framework, and is called during opal_finalize() and the
- * special case of the laminfo command.
- *
- * It must be the last function invoked on the memchecker MCA framework.
+ * Framework structure for memchecker
  */
-OPAL_DECLSPEC int opal_memchecker_base_close(void);
-
-/**
- * List of all opened components; created when the memchecker
- * framework is initialized and destroyed, when we reduce the list
- * to all available memchecker components (actually one).
- */
-OPAL_DECLSPEC extern opal_list_t opal_memchecker_base_components_opened;
+OPAL_DECLSPEC extern mca_base_framework_t opal_memchecker_base_framework;
 
 /**
  * Indication of whether one component was successfully selected
@@ -90,11 +53,6 @@ OPAL_DECLSPEC extern const opal_memchecker_base_component_2_0_0_t
  */
 OPAL_DECLSPEC extern const opal_memchecker_base_module_1_0_0_t
     *opal_memchecker_base_module;
-
-/**
- * Debugging output stream
- */
-extern int opal_memchecker_base_output;
 
 /**
  * Check if we are running under the memory debugger.

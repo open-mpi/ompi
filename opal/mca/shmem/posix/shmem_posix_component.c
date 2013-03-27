@@ -156,7 +156,7 @@ posix_runtime_query(mca_base_module_t **module,
      */
     if (NULL != hint) {
         OPAL_OUTPUT_VERBOSE(
-            (70, opal_shmem_base_output,
+            (70, opal_shmem_base_framework.framework_output,
              "shmem: posix: runtime_query: "
              "attempting to use runtime hint (%s)\n", hint)
         );
@@ -180,7 +180,7 @@ posix_runtime_query(mca_base_module_t **module,
      * re-run the runtime query.
      */
     OPAL_OUTPUT_VERBOSE(
-        (70, opal_shmem_base_output,
+        (70, opal_shmem_base_framework.framework_output,
          "shmem: posix: runtime_query: NO HINT PROVIDED:"
          "starting run-time test...\n")
     );

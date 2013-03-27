@@ -17,6 +17,7 @@
 #include "opal/types.h"
 
 #include "opal/mca/mca.h"
+#include "opal/mca/base/mca_base_framework.h"
 #include "opal/class/opal_list.h"
 #include "opal/dss/dss.h"
 
@@ -24,20 +25,12 @@
 
 BEGIN_C_DECLS
 
-/**
- * Open the db framework
- */
-OPAL_DECLSPEC int opal_db_base_open(void);
+OPAL_DECLSPEC extern mca_base_framework_t opal_db_base_framework;
 
 /**
  * Select a db module
  */
 OPAL_DECLSPEC int opal_db_base_select(void);
-
-/**
- * Close the db framework
- */
-OPAL_DECLSPEC int opal_db_base_close(void);
 
 typedef struct {
     opal_list_item_t super;
@@ -48,8 +41,6 @@ typedef struct {
 OBJ_CLASS_DECLARATION(opal_db_active_module_t);
 
 typedef struct {
-    int output;
-    opal_list_t available_components;
     opal_list_t store_order;
     opal_list_t fetch_order;
 } opal_db_base_t;

@@ -433,7 +433,7 @@ int opal_cr_init(void )
     /*
      * Open the checkpoint / restart service components
      */
-    if (OPAL_SUCCESS != (ret = opal_crs_base_open())) {
+    if (OPAL_SUCCESS != (ret = mca_base_framework_open(&opal_crs_base_framework, 0))) {
         opal_show_help( "help-opal-runtime.txt",
                         "opal_cr_init:no-crs", true,
                         "opal_crs_base_open", ret );
@@ -540,7 +540,7 @@ int opal_cr_finalize(void)
     /*
      * Close the checkpoint / restart service components
      */
-    opal_crs_base_close();
+    (void) mca_base_framework_close(&opal_crs_base_framework);
 #endif
 
     return exit_status;
@@ -817,7 +817,7 @@ int opal_cr_coord(int state)
         /*
          * Flush if() functionality, since it caches system specific info.
          */
-        opal_if_base_close();
+        (void) mca_base_framework_close(&opal_if_base_framework);
         /* Since opal_ifinit() is not exposed, the necessary
          * functions will call it when needed. Just make sure we
          * finalized this code so we don't get old socket addrs.

@@ -38,22 +38,7 @@ opal_shmem_base_close(void)
         opal_shmem_base_module->module_finalize();
     }
 
-    /**
-     * close all components that are still open (this should only
-     *  happen during ompi_info).
-     */
-    if (opal_shmem_base_components_opened_valid) {
-        mca_base_components_close(opal_shmem_base_output,
-                                  &opal_shmem_base_components_opened, NULL);
-        OBJ_DESTRUCT(&opal_shmem_base_components_opened);
-        opal_shmem_base_components_opened_valid = false;
-    }
-
-    /* Close the framework output */
-    opal_output_close (opal_shmem_base_output);
-    opal_shmem_base_output = -1;
-
-    /* all done */
-    return OPAL_SUCCESS;
+    return mca_base_framework_components_close (&opal_shmem_base_framework,
+                                                NULL);
 }
 

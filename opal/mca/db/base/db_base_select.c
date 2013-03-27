@@ -38,30 +38,30 @@ opal_db_base_select(void)
     selected = true;
     
     /* Query all available components and ask if they have a module */
-    OPAL_LIST_FOREACH(cli, &opal_db_base.available_components, mca_base_component_list_item_t) {
+    OPAL_LIST_FOREACH(cli, &opal_db_base_framework.framework_components, mca_base_component_list_item_t) {
         component = (opal_db_base_component_t *) cli->cli_component;
 
-        opal_output_verbose(5, opal_db_base.output,
+        opal_output_verbose(5, opal_db_base_framework.framework_output,
                             "mca:db:select: checking available component %s",
                             component->base_version.mca_component_name);
 
         /* If there's no query function, skip it */
         if (NULL == component->query) {
-            opal_output_verbose(5, opal_db_base.output,
+            opal_output_verbose(5, opal_db_base_framework.framework_output,
                                 "mca:db:select: Skipping component [%s]. It does not implement a query function",
                                 component->base_version.mca_component_name );
             continue;
         }
 
         /* Query the component */
-        opal_output_verbose(5, opal_db_base.output,
+        opal_output_verbose(5, opal_db_base_framework.framework_output,
                             "mca:db:select: Querying component [%s]",
                             component->base_version.mca_component_name);
         rc = component->query(&module, &store, &fetch);
 
         /* If no module was returned, then skip component */
         if (OPAL_SUCCESS != rc || NULL == module) {
-            opal_output_verbose(5, opal_db_base.output,
+            opal_output_verbose(5, opal_db_base_framework.framework_output,
                                 "mca:db:select: Skipping component [%s]. Query failed to return a module",
                                 component->base_version.mca_component_name );
             continue;
@@ -118,7 +118,7 @@ opal_db_base_select(void)
         }
     }
 
-    if (4 < opal_output_get_verbosity(opal_db_base.output)) {
+    if (4 < opal_output_get_verbosity(opal_db_base_framework.framework_output)) {
         opal_output(0, "Final db priorities");
         /* show the prioritized list */
         OPAL_LIST_FOREACH(mod, &opal_db_base.store_order, opal_db_active_module_t) {

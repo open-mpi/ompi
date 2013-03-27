@@ -22,7 +22,7 @@
 #define OPAL_PSTAT_BASE_H
 
 #include "opal_config.h"
-
+#include "opal/mca/base/mca_base_framework.h"
 #include "opal/mca/pstat/pstat.h"
 
 /*
@@ -32,31 +32,9 @@
 BEGIN_C_DECLS
 
 /**
- * Initialize the pstat MCA framework
- *
- * @retval OPAL_SUCCESS Upon success
- * @retval OPAL_ERROR Upon failure
- *
- * This must be the first function invoked in the pstat MCA
- * framework.  It initializes the pstat MCA framework, finds
- * and opens pstat components, etc.
- *
- * This function is invoked during opal_init().
+ * Framework structure declaration for this framework
  */
-OPAL_DECLSPEC int opal_pstat_base_open(void);
-
-/**
- * Close the pstat MCA framework
- *
- * @retval OPAL_SUCCESS Upon success
- * @retval OPAL_ERROR Upon failure
- *
- * This must be the last function invoked in the pstat MCA
- * framework.
- *
- * This function is invoked during opal_finalize().
- */
-OPAL_DECLSPEC int opal_pstat_base_close(void);
+OPAL_DECLSPEC extern mca_base_framework_t opal_pstat_base_framework;
 
 /**
  * Select an available component.
@@ -73,8 +51,6 @@ OPAL_DECLSPEC int opal_pstat_base_close(void);
  */
 OPAL_DECLSPEC int opal_pstat_base_select(void);
 
-OPAL_DECLSPEC extern int opal_pstat_base_output;
-OPAL_DECLSPEC extern opal_list_t opal_pstat_base_components_opened;
 OPAL_DECLSPEC extern opal_pstat_base_component_t *opal_pstat_base_component;
 
 END_C_DECLS

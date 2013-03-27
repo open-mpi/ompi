@@ -101,7 +101,7 @@ int opal_hwloc_base_filter_cpus(hwloc_topology_t topo)
 
     /* should only ever enter here once, but check anyway */
     if (NULL != sum->available) {
-        OPAL_OUTPUT_VERBOSE((5, opal_hwloc_base_output,
+        OPAL_OUTPUT_VERBOSE((5, opal_hwloc_base_framework.framework_output,
                              "hwloc:base:filter_cpus specified - already done"));
         return OPAL_SUCCESS;
     }
@@ -111,10 +111,10 @@ int opal_hwloc_base_filter_cpus(hwloc_topology_t topo)
         /* get the root available cpuset */
         avail = hwloc_bitmap_alloc();
         hwloc_bitmap_and(avail, root->online_cpuset, root->allowed_cpuset);
-        OPAL_OUTPUT_VERBOSE((5, opal_hwloc_base_output,
+        OPAL_OUTPUT_VERBOSE((5, opal_hwloc_base_framework.framework_output,
                              "hwloc:base: no cpus specified - using root available cpuset"));
     } else {
-        OPAL_OUTPUT_VERBOSE((5, opal_hwloc_base_output,
+        OPAL_OUTPUT_VERBOSE((5, opal_hwloc_base_framework.framework_output,
                              "hwloc:base: filtering cpuset"));
         /* find the specified logical cpus */
         ranges = opal_argv_split(opal_hwloc_base_cpu_set, ',');
@@ -208,7 +208,7 @@ int opal_hwloc_base_get_topology(void)
 {
     int rc;
 
-    OPAL_OUTPUT_VERBOSE((5, opal_hwloc_base_output,
+    OPAL_OUTPUT_VERBOSE((5, opal_hwloc_base_framework.framework_output,
                          "hwloc:base:get_topology"));
 
     if (0 != hwloc_topology_init(&opal_hwloc_topology) ||
@@ -324,7 +324,7 @@ hwloc_cpuset_t opal_hwloc_base_get_available_cpus(hwloc_topology_t topo,
     opal_hwloc_topo_data_t *rdata;
     opal_hwloc_obj_data_t *data;
 
-    OPAL_OUTPUT_VERBOSE((5, opal_hwloc_base_output,
+    OPAL_OUTPUT_VERBOSE((5, opal_hwloc_base_framework.framework_output,
                          "hwloc:base: get available cpus"));
 
     /* get the node-level information */
@@ -334,7 +334,7 @@ hwloc_cpuset_t opal_hwloc_base_get_available_cpus(hwloc_topology_t topo,
     if (NULL == rdata) {
         rdata = OBJ_NEW(opal_hwloc_topo_data_t);
         root->userdata = (void*)rdata;
-        OPAL_OUTPUT_VERBOSE((5, opal_hwloc_base_output,
+        OPAL_OUTPUT_VERBOSE((5, opal_hwloc_base_framework.framework_output,
                              "hwloc:base:get_available_cpus first time - filtering cpus"));
     }
     /* ensure the topo-level cpuset was prepared */
@@ -342,7 +342,7 @@ hwloc_cpuset_t opal_hwloc_base_get_available_cpus(hwloc_topology_t topo,
 
     /* are we asking about the root object? */
     if (obj == root) {
-        OPAL_OUTPUT_VERBOSE((5, opal_hwloc_base_output,
+        OPAL_OUTPUT_VERBOSE((5, opal_hwloc_base_framework.framework_output,
                              "hwloc:base:get_available_cpus root object"));
         return rdata->available;
     }
@@ -521,7 +521,7 @@ unsigned int opal_hwloc_base_get_obj_idx(hwloc_topology_t topo,
     hwloc_obj_t ptr;
     unsigned int nobjs, i;
 
-    OPAL_OUTPUT_VERBOSE((5, opal_hwloc_base_output,
+    OPAL_OUTPUT_VERBOSE((5, opal_hwloc_base_framework.framework_output,
                          "hwloc:base:get_idx"));
 
     /* see if we already have the info */
@@ -533,7 +533,7 @@ unsigned int opal_hwloc_base_get_obj_idx(hwloc_topology_t topo,
     }
 
     if (data->idx < UINT_MAX) {
-        OPAL_OUTPUT_VERBOSE((5, opal_hwloc_base_output,
+        OPAL_OUTPUT_VERBOSE((5, opal_hwloc_base_framework.framework_output,
                              "hwloc:base:get_idx already have data: %u",
                              data->idx));
         return data->idx;
@@ -545,7 +545,7 @@ unsigned int opal_hwloc_base_get_obj_idx(hwloc_topology_t topo,
     }
     nobjs = opal_hwloc_base_get_nbobjs_by_type(topo, obj->type, cache_level, rtype);
 
-    OPAL_OUTPUT_VERBOSE((5, opal_hwloc_base_output,
+    OPAL_OUTPUT_VERBOSE((5, opal_hwloc_base_framework.framework_output,
                          "hwloc:base:get_idx found %u objects of type %s:%u",
                          nobjs, hwloc_obj_type_string(obj->type), cache_level));
 
@@ -691,7 +691,7 @@ unsigned int opal_hwloc_base_get_nbobjs_by_type(hwloc_topology_t topo,
 
     /* bozo check */
     if (NULL == topo) {
-        OPAL_OUTPUT_VERBOSE((5, opal_hwloc_base_output,
+        OPAL_OUTPUT_VERBOSE((5, opal_hwloc_base_framework.framework_output,
                              "hwloc:base:get_nbobjs NULL topology"));
         return 0;
     }
@@ -728,7 +728,7 @@ unsigned int opal_hwloc_base_get_nbobjs_by_type(hwloc_topology_t topo,
                 cache_level == sum->cache_level &&
                 rtype == sum->rtype) {
                 /* yep - return the value */
-                OPAL_OUTPUT_VERBOSE((5, opal_hwloc_base_output,
+                OPAL_OUTPUT_VERBOSE((5, opal_hwloc_base_framework.framework_output,
                                      "hwloc:base:get_nbojbs pre-existing data %u of %s:%u",
                                      sum->num_objs, hwloc_obj_type_string(target), cache_level));
                 return sum->num_objs;
@@ -747,7 +747,7 @@ unsigned int opal_hwloc_base_get_nbobjs_by_type(hwloc_topology_t topo,
     sum->rtype = rtype;
     opal_list_append(&data->summaries, &sum->super);
 
-    OPAL_OUTPUT_VERBOSE((5, opal_hwloc_base_output,
+    OPAL_OUTPUT_VERBOSE((5, opal_hwloc_base_framework.framework_output,
                          "hwloc:base:get_nbojbs computed data %u of %s:%u",
                          num_objs, hwloc_obj_type_string(target), cache_level));
 
@@ -774,7 +774,7 @@ static hwloc_obj_t df_search_min_bound(hwloc_topology_t topo,
             data = OBJ_NEW(opal_hwloc_obj_data_t);
             start->userdata = data;
         }
-        OPAL_OUTPUT_VERBOSE((5, opal_hwloc_base_output,
+        OPAL_OUTPUT_VERBOSE((5, opal_hwloc_base_framework.framework_output,
                              "hwloc:base:min_bound_under_obj object %s:%u nbound %u min %u",
                              hwloc_obj_type_string(target), start->logical_index,
                              data->num_bound, *min_bound));
@@ -815,7 +815,7 @@ hwloc_obj_t opal_hwloc_base_find_min_bound_target_under_obj(hwloc_topology_t top
 
     /* bozo check */
     if (NULL == topo || NULL == obj) {
-        OPAL_OUTPUT_VERBOSE((5, opal_hwloc_base_output,
+        OPAL_OUTPUT_VERBOSE((5, opal_hwloc_base_framework.framework_output,
                              "hwloc:base:find_min_bound_under_obj NULL %s",
                              (NULL == topo) ? "topology" : "object"));
         return NULL;
@@ -845,12 +845,12 @@ hwloc_obj_t opal_hwloc_base_find_min_bound_target_under_obj(hwloc_topology_t top
     loc = df_search_min_bound(topo, obj, target, cache_level, &min_bound);
 
     if (HWLOC_OBJ_CACHE == target) {
-        OPAL_OUTPUT_VERBOSE((5, opal_hwloc_base_output,
+        OPAL_OUTPUT_VERBOSE((5, opal_hwloc_base_framework.framework_output,
                              "hwloc:base:min_bound_under_obj found min bound of %u on %s:%u:%u",
                              min_bound, hwloc_obj_type_string(target),
                              cache_level, loc->logical_index));
     } else {
-        OPAL_OUTPUT_VERBOSE((5, opal_hwloc_base_output,
+        OPAL_OUTPUT_VERBOSE((5, opal_hwloc_base_framework.framework_output,
                              "hwloc:base:min_bound_under_obj found min bound of %u on %s:%u",
                              min_bound, hwloc_obj_type_string(target), loc->logical_index));
     }
@@ -913,7 +913,7 @@ void opal_hwloc_base_clear_usage(hwloc_topology_t topo)
 
     /* bozo check */
     if (NULL == topo) {
-        OPAL_OUTPUT_VERBOSE((5, opal_hwloc_base_output,
+        OPAL_OUTPUT_VERBOSE((5, opal_hwloc_base_framework.framework_output,
                              "hwloc:base:clear_usage: NULL topology"));
         return;
     }
@@ -1053,7 +1053,7 @@ static int socket_core_to_cpu_set(char *socket_core_list,
                 break;
                 
             case 2:  /* range of core id's was given */
-                opal_output_verbose(5, opal_hwloc_base_output,
+                opal_output_verbose(5, opal_hwloc_base_framework.framework_output,
                                     "range of cores given: start %s stop %s",
                                     range[0], range[1]);
                 lower_range = atoi(range[0]);
@@ -1106,7 +1106,7 @@ int opal_hwloc_base_slot_list_parse(const char *slot_str,
         return OPAL_ERR_BAD_PARAM;
     }
     
-    opal_output_verbose(5, opal_hwloc_base_output,
+    opal_output_verbose(5, opal_hwloc_base_framework.framework_output,
                         "slot assignment: slot_list == %s",
                         slot_str);
     
@@ -1117,7 +1117,7 @@ int opal_hwloc_base_slot_list_parse(const char *slot_str,
     hwloc_bitmap_zero(cpumask);
     /* loop across the items and accumulate the mask */
     for (i=0; NULL != item[i]; i++) {
-        opal_output_verbose(5, opal_hwloc_base_output,
+        opal_output_verbose(5, opal_hwloc_base_framework.framework_output,
                             "working assignment %s",
                             item[i]);
         /* if they specified "socket" by starting with an S/s,
@@ -1306,7 +1306,7 @@ opal_hwloc_locality_t opal_hwloc_base_get_relative_locality(hwloc_topology_t top
         }
     }
 
-    opal_output_verbose(5, opal_hwloc_base_output,
+    opal_output_verbose(5, opal_hwloc_base_framework.framework_output,
                         "locality: %s",
                         opal_hwloc_base_print_locality(locality));
 

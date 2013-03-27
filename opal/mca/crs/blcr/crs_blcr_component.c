@@ -115,7 +115,7 @@ static int crs_blcr_open(void)
         opal_output_set_verbosity(mca_crs_blcr_component.super.output_handle, 
                                   mca_crs_blcr_component.super.verbose);
     } else {
-        mca_crs_blcr_component.super.output_handle = opal_crs_base_output;
+        mca_crs_blcr_component.super.output_handle = opal_crs_base_framework.framework_output;
     }
 
     /*

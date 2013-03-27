@@ -21,7 +21,7 @@ int opal_compress_base_close(void)
 {
     /* Compression currently only used with C/R */
     if( !opal_cr_is_enabled ) {
-        opal_output_verbose(10, opal_compress_base_output,
+        opal_output_verbose(10, opal_compress_base_framework.framework_output,
                             "compress:open: FT is not enabled, skipping!");
         return OPAL_SUCCESS;
     }
@@ -32,13 +32,5 @@ int opal_compress_base_close(void)
     }
 
     /* Close all available modules that are open */
-    mca_base_components_close(opal_compress_base_output,
-                              &opal_compress_base_components_available,
-                              NULL);
-
-    /* Close the framework output */
-    opal_output_close (opal_compress_base_output);
-    opal_compress_base_output = -1;
-    
-    return OPAL_SUCCESS;
+    return mca_base_framework_components_close (&opal_compress_base_framework, NULL);
 }

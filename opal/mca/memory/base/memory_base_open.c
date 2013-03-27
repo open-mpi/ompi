@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -55,32 +56,33 @@ static opal_memory_base_component_2_0_0_t empty_component = {
     opal_memory_base_component_deregister_empty,
 };
 
+
 /*
  * Globals
  */
-opal_list_t opal_memory_base_components_opened;
 opal_memory_base_component_2_0_0_t *opal_memory = &empty_component;
+
+
 
 /*
  * Function for finding and opening either all MCA components, or the one
  * that was specifically requested via a MCA parameter.
  */
-int opal_memory_base_open(void)
+static int opal_memory_base_open(mca_base_open_flag_t flags)
 {
+    int ret;
+
     /* Open up all available components */
-    if (OPAL_SUCCESS !=
-        mca_base_components_open("memory", 0,
-                                 mca_memory_base_static_components,
-                                 &opal_memory_base_components_opened, 
-                                 true)) {
-        return OPAL_ERROR;
+    ret = mca_base_framework_components_open (&opal_memory_base_framework, flags);
+    if (ret != OPAL_SUCCESS) {
+        return ret;
     }
 
     /* can only be zero or one */
-    if (opal_list_get_size(&opal_memory_base_components_opened) == 1) {
+    if (opal_list_get_size(&opal_memory_base_framework.framework_components) == 1) {
         mca_base_component_list_item_t *item;
         item = (mca_base_component_list_item_t*) 
-            opal_list_get_first(&opal_memory_base_components_opened);
+            opal_list_get_first(&opal_memory_base_framework.framework_components);
         opal_memory = (opal_memory_base_component_2_0_0_t*)
             item->cli_component;
     }
@@ -88,3 +90,7 @@ int opal_memory_base_open(void)
     /* All done */
     return OPAL_SUCCESS;
 }
+
+/* Use default register/close functions */
+MCA_BASE_FRAMEWORK_DECLARE(opal, memory, "memory hooks", NULL, opal_memory_base_open, NULL,
+                           mca_memory_base_static_components, 0);

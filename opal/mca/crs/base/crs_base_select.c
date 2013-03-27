@@ -29,7 +29,7 @@
 #include "opal/mca/crs/crs.h"
 #include "opal/mca/crs/base/base.h"
 
-extern bool crs_base_do_not_select;
+bool opal_crs_base_do_not_select = false;
 
 int opal_crs_base_select(void)
 {
@@ -38,13 +38,13 @@ int opal_crs_base_select(void)
     opal_crs_base_module_t *best_module = NULL;
 
     if( !opal_cr_is_enabled ) {
-        opal_output_verbose(10, opal_crs_base_output,
+        opal_output_verbose(10, opal_crs_base_framework.framework_output,
                             "crs:select: FT is not enabled, skipping!");
         return OPAL_SUCCESS;
     }
 
-    if( crs_base_do_not_select ) {
-        opal_output_verbose(10, opal_crs_base_output,
+    if( opal_crs_base_do_not_select ) {
+	opal_output_verbose(10, opal_crs_base_framework.framework_output,
                             "crs:select: Not selecting at this time!");
         return OPAL_SUCCESS;
     }
@@ -52,8 +52,8 @@ int opal_crs_base_select(void)
     /*
      * Select the best component
      */
-    if( OPAL_SUCCESS != mca_base_select("crs", opal_crs_base_output,
-                                        &opal_crs_base_components_available,
+    if( OPAL_SUCCESS != mca_base_select("crs", opal_crs_base_framework.framework_output,
+                                        &opal_crs_base_framework.framework_components,
                                         (mca_base_module_t **) &best_module,
                                         (mca_base_component_t **) &best_component) ) {
         /* This will only happen if no component was selected */

@@ -177,7 +177,7 @@ int orte_ess_base_orted_setup(char **hosts)
     /* open and setup the opal_pstat framework so we can provide
      * process stats if requested
      */
-    if (ORTE_SUCCESS != (ret = opal_pstat_base_open())) {
+    if (ORTE_SUCCESS != (ret = mca_base_framework_open(&opal_pstat_base_framework, 0))) {
         ORTE_ERROR_LOG(ret);
         error = "opal_pstat_base_open";
         goto error;
@@ -268,7 +268,7 @@ int orte_ess_base_orted_setup(char **hosts)
     }
     
     /* database */
-    if (ORTE_SUCCESS != (ret = opal_db_base_open())) {
+    if (ORTE_SUCCESS != (ret = mca_base_framework_open(&opal_db_base_framework, 0))) {
         ORTE_ERROR_LOG(ret);
         error = "orte_db_base_open";
         goto error;

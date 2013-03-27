@@ -82,7 +82,7 @@ int opal_event_init(void)
     bool dumpit=false;
     int i, j;
 
-    if (opal_output_get_verbosity(opal_event_base_output) > 4) {
+    if (opal_output_get_verbosity(opal_event_base_framework.framework_output) > 4) {
         event_enable_debug_mode();
         event_set_debug_output(true);
         dumpit = true;

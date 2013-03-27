@@ -25,25 +25,7 @@ BEGIN_C_DECLS
 /* ******************************************************************** */
 
 /**
- * Initialize the hwloc MCA framework
- *
- * @retval OPAL_SUCCESS Upon success
- * @retval OPAL_ERROR Upon failure
- *
- * This must be the first function invoked in the hwloc MCA
- * framework.  It initializes the hwloc MCA framework, finds
- * and opens hwloc components, etc.
- *
- * This function is invoked during opal_init().
- * 
- * This function fills in the internal global variable
- * opal_hwloc_base_components_opened, which is a list of all
- * hwloc components that were successfully opened.  This
- * variable should \em only be used by other hwloc base
- * functions -- it is not considered a public interface member --
- * and is only mentioned here for completeness.
- *
- * Note that this function does NOT fill the global variable
+ * Note that the open function does NOT fill the global variable
  * opal_hwloc_topology, nor does it set the process-wide memory
  * affinity policy.  Filling opal_hwloc_topology via
  * hwloc_topology_load() can be expensive (and/or serialized by the
@@ -54,28 +36,14 @@ BEGIN_C_DECLS
  * (after opal_hwloc_topology has been loaded) to set the process-wide
  * memory affinity policy.
  */
-OPAL_DECLSPEC int opal_hwloc_base_open(void);
-
-/**
- * Shut down the hwloc MCA framework.
- *
- * @retval OPAL_SUCCESS Always
- *
- * This function shuts down everything in the hwloc MCA
- * framework, and is called during opal_finalize().
- *
- * It must be the last function invoked on the hwloc MCA
- * framework.
- */
-OPAL_DECLSPEC int opal_hwloc_base_close(void);
 
 /**
  * Debugging output stream
  */
-OPAL_DECLSPEC extern int opal_hwloc_base_output;
-OPAL_DECLSPEC extern opal_list_t opal_hwloc_base_components;
 OPAL_DECLSPEC extern bool opal_hwloc_base_inited;
 OPAL_DECLSPEC extern bool opal_hwloc_topology_inited;
+
+OPAL_DECLSPEC extern mca_base_framework_t opal_hwloc_base_framework;
 
 /* we always must have some minimal locality support */
 #define OPAL_HWLOC_PRINT_MAX_SIZE   50
