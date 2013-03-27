@@ -30,7 +30,7 @@
 #include "btl_vader_endpoint.h"
 #include "btl_vader_frag.h"
 
-#define VADER_FIFO_FREE  ((intptr_t)-2)
+#define VADER_FIFO_FREE  ((int64_t)-2)
 
 /*
  * Shared Memory FIFOs
@@ -48,9 +48,10 @@
 
 /* lock free fifo */
 typedef struct vader_fifo_t {
-    volatile intptr_t fifo_head;
-    volatile intptr_t fifo_tail;
-    char pad[VADER_CACHE_LINE_PAD - 2 * sizeof (intptr_t)];
+    volatile int64_t fifo_head;
+    volatile int64_t fifo_tail;
+    /* pad out to fill a cache line (64 or 128 bytes) */
+    char pad[128 - 2 * sizeof (int64_t)];
 } vader_fifo_t;
 
 static inline int vader_fifo_init (vader_fifo_t *fifo)
@@ -60,19 +61,21 @@ static inline int vader_fifo_init (vader_fifo_t *fifo)
     return OMPI_SUCCESS;
 }
 
-static inline void vader_fifo_write (mca_btl_vader_hdr_t *hdr, int rank)
+static inline void vader_fifo_write (mca_btl_vader_hdr_t *hdr, struct mca_btl_base_endpoint_t *ep)
 {
-    vader_fifo_t *fifo = mca_btl_vader_component.fifo[rank];
-    intptr_t prev, value = VIRTUAL2RELATIVE(hdr);
+    vader_fifo_t *fifo = ep->fifo;
+    int64_t prev, value = virtual2relative ((char *) hdr);
 
     hdr->next = VADER_FIFO_FREE;
 
     opal_atomic_wmb ();
-    prev = opal_atomic_swap_ptr (&fifo->fifo_tail, value);
+    prev = opal_atomic_swap_64 (&fifo->fifo_tail, value);
     opal_atomic_rmb ();
 
+    assert (prev != value);
+
     if (OPAL_LIKELY(VADER_FIFO_FREE != prev)) {
-        hdr = (mca_btl_vader_hdr_t *) RELATIVE2VIRTUAL(prev);
+        hdr = (mca_btl_vader_hdr_t *) relative2virtual (prev);
         hdr->next = value;
     } else {
         fifo->fifo_head = value;
@@ -84,17 +87,19 @@ static inline void vader_fifo_write (mca_btl_vader_hdr_t *hdr, int rank)
 static inline mca_btl_vader_hdr_t *vader_fifo_read (vader_fifo_t *fifo)
 {
     mca_btl_vader_hdr_t *hdr;
-    intptr_t value;
+    int64_t value;
 
     opal_atomic_rmb ();
 
-    value = opal_atomic_swap_ptr (&fifo->fifo_head, VADER_FIFO_FREE);
+    value = opal_atomic_swap_64 (&fifo->fifo_head, VADER_FIFO_FREE);
     if (VADER_FIFO_FREE == value) {
         /* fifo is empty or we lost the race with another thread */
         return NULL;
     }
 
-    hdr = (mca_btl_vader_hdr_t *) RELATIVE2VIRTUAL(value);
+    hdr = (mca_btl_vader_hdr_t *) relative2virtual (value);
+
+    assert (hdr->next != value);
 
     if (OPAL_UNLIKELY(VADER_FIFO_FREE == hdr->next)) {
         opal_atomic_rmb();

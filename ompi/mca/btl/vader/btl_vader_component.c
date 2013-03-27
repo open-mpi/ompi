@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2007 Voltaire. All rights reserved.
  * Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2010-2012 Los Alamos National Security, LLC.
+ * Copyright (c) 2010-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2011      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
@@ -26,12 +26,15 @@
 #include "ompi/constants.h"
 #include "opal/util/output.h"
 
+#include "opal/mca/base/mca_base_param.h"
 #include "ompi/mca/btl/base/btl_base_error.h"
 
 #include "btl_vader.h"
 #include "btl_vader_frag.h"
 #include "btl_vader_fifo.h"
 #include "btl_vader_fbox.h"
+
+#include <sys/mman.h>
 
 static int mca_btl_vader_component_progress (void);
 static int mca_btl_vader_component_open(void);
@@ -41,38 +44,32 @@ static mca_btl_base_module_t** mca_btl_vader_component_init(int *num_btls,
                                                             bool enable_progress_threads,
                                                             bool enable_mpi_threads);
 
-/* limit where we should switch from bcopy to memcpy */
-int mca_btl_vader_memcpy_limit     = 524288;
-int mca_btl_vader_log_align        = 21; /* 2 MiB */
-/* maximum size for using copy-in-copy out semantics for contiguous sends */
-int mca_btl_vader_max_inline_send = 256;
-
 /*
  * Shared Memory (VADER) component instance.
  */
 mca_btl_vader_component_t mca_btl_vader_component = {
-    {
+    .super = {
         /* First, the mca_base_component_t struct containing meta information
            about the component itself */
-        {
+        .btl_version = {
             MCA_BTL_BASE_VERSION_2_0_0,
 
-            "vader", /* MCA component name */
-            OMPI_MAJOR_VERSION,  /* MCA component major version */
-            OMPI_MINOR_VERSION,  /* MCA component minor version */
-            OMPI_RELEASE_VERSION,  /* MCA component release version */
-            mca_btl_vader_component_open,  /* component open */
-            mca_btl_vader_component_close,  /* component close */
-            NULL,
-            mca_btl_vader_component_register,
+            .mca_component_name = "vader",
+            .mca_component_major_version = OMPI_MAJOR_VERSION,
+            .mca_component_minor_version = OMPI_MINOR_VERSION,
+            .mca_component_release_version = OMPI_RELEASE_VERSION,
+            .mca_open_component = mca_btl_vader_component_open,
+            .mca_close_component = mca_btl_vader_component_close,
+            .mca_query_component = NULL,
+            .mca_register_component_params = mca_btl_vader_component_register,
         },
-        {
+        .btl_data = {
             /* The component is checkpoint ready */
-            MCA_BASE_METADATA_PARAM_CHECKPOINT
+            .param_field = MCA_BASE_METADATA_PARAM_CHECKPOINT
         },
 
-        mca_btl_vader_component_init,
-        mca_btl_vader_component_progress,
+        .btl_init = mca_btl_vader_component_init,
+        .btl_progress = mca_btl_vader_component_progress,
     }  /* end super */
 };
 
@@ -84,60 +81,73 @@ static int mca_btl_vader_component_register (void)
     /* register VADER component variables */
     mca_btl_vader_component.vader_free_list_num = 8;
     (void) mca_base_component_var_register(&mca_btl_vader_component.super.btl_version,
-                                           "free_list_num", NULL, MCA_BASE_VAR_TYPE_INT, NULL, 0,
-                                           MCA_BASE_VAR_FLAG_SETTABLE,
-                                           OPAL_INFO_LVL_9,
+                                           "free_list_num", "Initial number of fragments "
+                                           "to allocate for shared memory communication.",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0,
+                                           MCA_BASE_VAR_FLAG_SETTABLE, OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_LOCAL,
                                            &mca_btl_vader_component.vader_free_list_num);
     mca_btl_vader_component.vader_free_list_max = 8192;
     (void) mca_base_component_var_register(&mca_btl_vader_component.super.btl_version,
-                                           "free_list_max", NULL, MCA_BASE_VAR_TYPE_INT, NULL, 0,
-                                           MCA_BASE_VAR_FLAG_SETTABLE,
-                                           OPAL_INFO_LVL_9,
+                                           "free_list_max", "Maximum number of fragments "
+                                           "to allocate for shared memory communication.",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0,
+                                           MCA_BASE_VAR_FLAG_SETTABLE, OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_LOCAL,
                                            &mca_btl_vader_component.vader_free_list_max);
     mca_btl_vader_component.vader_free_list_inc = 64;
     (void) mca_base_component_var_register(&mca_btl_vader_component.super.btl_version,
-                                           "free_list_inc", NULL, MCA_BASE_VAR_TYPE_INT, NULL, 0,
-                                           MCA_BASE_VAR_FLAG_SETTABLE,
-                                           OPAL_INFO_LVL_9,
+                                           "free_list_inc", "Number of fragments to create "
+                                           "on each allocation.", MCA_BASE_VAR_TYPE_INT, NULL, 0,
+                                           MCA_BASE_VAR_FLAG_SETTABLE, OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_LOCAL,
                                            &mca_btl_vader_component.vader_free_list_inc);
 
-    mca_btl_vader_memcpy_limit = 524288;
+    mca_btl_vader_component.memcpy_limit = 524288;
     (void) mca_base_component_var_register(&mca_btl_vader_component.super.btl_version,
-                                           "memcpy_limit", NULL, MCA_BASE_VAR_TYPE_INT, NULL, 0,
-                                           MCA_BASE_VAR_FLAG_SETTABLE,
-                                           OPAL_INFO_LVL_5,
+                                           "memcpy_limit", "Message size to switch from using "
+                                           "memove to memcpy. The relative speed of these two "
+                                           "routines can vary by size.", MCA_BASE_VAR_TYPE_INT,
+                                           NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE, OPAL_INFO_LVL_5,
                                            MCA_BASE_VAR_SCOPE_LOCAL,
-                                           &mca_btl_vader_memcpy_limit);
-    mca_btl_vader_log_align = 21;
+                                           &mca_btl_vader_component.memcpy_limit);
+    mca_btl_vader_component.log_attach_align = 21;
     (void) mca_base_component_var_register(&mca_btl_vader_component.super.btl_version,
-                                           "log_align", NULL, MCA_BASE_VAR_TYPE_INT, NULL, 0,
-                                           MCA_BASE_VAR_FLAG_SETTABLE,
-                                           OPAL_INFO_LVL_5,
+                                           "log_align", "Log base 2 of the alignment to use for xpmem "
+                                           "segments (default: 21, minimum: 12, maximum: 25)",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0,
+                                           MCA_BASE_VAR_FLAG_SETTABLE, OPAL_INFO_LVL_5,
                                            MCA_BASE_VAR_SCOPE_LOCAL,
-                                           &mca_btl_vader_log_align);
+                                           &mca_btl_vader_component.log_attach_align);
 
-    mca_btl_vader_max_inline_send = 256;
+    mca_btl_vader_component.segment_size = 1 << 24;
     (void) mca_base_component_var_register(&mca_btl_vader_component.super.btl_version,
-                                           "max_inline_send", NULL, MCA_BASE_VAR_TYPE_INT, NULL, 0,
-                                           MCA_BASE_VAR_FLAG_SETTABLE,
-                                           OPAL_INFO_LVL_5,
-                                           MCA_BASE_VAR_SCOPE_ALL_EQ,
-                                           &mca_btl_vader_max_inline_send);
+                                           "segment_size", "Maximum size of all shared "
+                                           "memory buffers (default: 16M)",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0,
+                                           MCA_BASE_VAR_FLAG_SETTABLE, OPAL_INFO_LVL_5,
+                                           MCA_BASE_VAR_SCOPE_LOCAL,
+                                           &mca_btl_vader_component.segment_size);
 
-    mca_btl_vader.super.btl_exclusivity = MCA_BTL_EXCLUSIVITY_HIGH;
-    mca_btl_vader.super.btl_eager_limit = 64 * 1024;
-    mca_btl_vader.super.btl_rndv_eager_limit = mca_btl_vader.super.btl_eager_limit;
-    mca_btl_vader.super.btl_max_send_size    = mca_btl_vader.super.btl_eager_limit;
+    mca_btl_vader_component.max_inline_send = 256;
+    (void) mca_base_component_var_register(&mca_btl_vader_component.super.btl_version,
+                                           "max_inline_send", "Maximum size to transfer "
+                                           "using copy-in copy-out semantics",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0,
+                                           MCA_BASE_VAR_FLAG_SETTABLE, OPAL_INFO_LVL_5,
+                                           MCA_BASE_VAR_SCOPE_LOCAL,
+                                           &mca_btl_vader_component.max_inline_send);
+
+    mca_btl_vader.super.btl_exclusivity               = MCA_BTL_EXCLUSIVITY_HIGH;
+    mca_btl_vader.super.btl_eager_limit               = 64 * 1024;
+    mca_btl_vader.super.btl_rndv_eager_limit          = mca_btl_vader.super.btl_eager_limit;
+    mca_btl_vader.super.btl_max_send_size             = mca_btl_vader.super.btl_eager_limit;
     mca_btl_vader.super.btl_rdma_pipeline_send_length = mca_btl_vader.super.btl_eager_limit;
-    mca_btl_vader.super.btl_rdma_pipeline_frag_size = mca_btl_vader.super.btl_eager_limit;
-    mca_btl_vader.super.btl_min_rdma_pipeline_size = mca_btl_vader.super.btl_eager_limit;
-    mca_btl_vader.super.btl_flags = MCA_BTL_FLAGS_GET | MCA_BTL_FLAGS_PUT |
-        MCA_BTL_FLAGS_SEND_INPLACE;
-    mca_btl_vader.super.btl_seg_size = sizeof (mca_btl_base_segment_t);
+    mca_btl_vader.super.btl_rdma_pipeline_frag_size   = mca_btl_vader.super.btl_eager_limit;
+    mca_btl_vader.super.btl_min_rdma_pipeline_size    = mca_btl_vader.super.btl_eager_limit;
 
+    mca_btl_vader.super.btl_flags     = MCA_BTL_FLAGS_RDMA | MCA_BTL_FLAGS_SEND_INPLACE;
+    mca_btl_vader.super.btl_seg_size  = sizeof (mca_btl_base_segment_t);
     mca_btl_vader.super.btl_bandwidth = 40000; /* Mbs */
     mca_btl_vader.super.btl_latency   = 1;     /* Microsecs */
 
@@ -155,16 +165,6 @@ static int mca_btl_vader_component_register (void)
 
 static int mca_btl_vader_component_open(void)
 {
-
-    /* limit segment alignment to be between 4k and 16M */
-    if (mca_btl_vader_log_align < 12) {
-        mca_btl_vader_log_align = 12;
-    } else if (mca_btl_vader_log_align > 25) {
-        mca_btl_vader_log_align = 25;
-    }
-
-    mca_btl_vader_component.eager_limit = mca_btl_vader.super.btl_eager_limit;
-
     /* initialize objects */
     OBJ_CONSTRUCT(&mca_btl_vader_component.vader_frags_eager, ompi_free_list_t);
     OBJ_CONSTRUCT(&mca_btl_vader_component.vader_frags_user, ompi_free_list_t);
@@ -180,39 +180,26 @@ static int mca_btl_vader_component_open(void)
 
 static int mca_btl_vader_component_close(void)
 {
-    int return_value = OMPI_SUCCESS;
-
-    /**
-     * We don't have to destroy the fragment lists. They are allocated
-     * directly into the mmapped file, they will auto-magically disappear
-     * when the file get unmapped.
-     */
-    /*OBJ_DESTRUCT(&mca_btl_vader_component.vader_frags_eager);*/
-
-    /* unmap the shared memory control structure */
-    if(mca_btl_vader_component.vader_seg != NULL) {
-        return_value = mca_common_sm_fini( mca_btl_vader_component.vader_seg );
-        if( OMPI_SUCCESS != return_value ) {
-            return_value=OMPI_ERROR;
-            opal_output(0," mca_common_sm_fini failed\n");
-            goto CLEANUP;
-        }
-
-        /* unlink file, so that it will be deleted when all references
-         * to it are gone - no error checking, since we want all procs
-         * to call this, so that in an abnormal termination scenario,
-         * this file will still get cleaned up */
-        /* XXX LANL TODO -- remove unlink once the shmem segment uses xpmem */
-        unlink(mca_btl_vader_component.vader_seg->shmem_ds.seg_name);
-        OBJ_RELEASE(mca_btl_vader_component.vader_seg);
-    }
-
+    OBJ_DESTRUCT(&mca_btl_vader_component.vader_frags_eager);
+    OBJ_DESTRUCT(&mca_btl_vader_component.vader_frags_user);
     OBJ_DESTRUCT(&mca_btl_vader_component.active_sends);
 
- CLEANUP:
+    if (NULL != mca_btl_vader_component.my_segment) {
+        munmap (mca_btl_vader_component.my_segment, mca_btl_vader_component.segment_size);
+    }
 
-    /* return */
-    return return_value;
+    return OMPI_SUCCESS;
+}
+
+static int mca_btl_base_vader_modex_send (void)
+{
+    struct vader_modex_t modex;
+
+    modex.seg_id = mca_btl_vader_component.my_seg_id;
+    modex.segment_base = mca_btl_vader_component.my_segment;
+
+    return ompi_modex_send(&mca_btl_vader_component.super.btl_version,
+                           &modex, sizeof (modex));
 }
 
 /*
@@ -224,18 +211,17 @@ static mca_btl_base_module_t **mca_btl_vader_component_init (int *num_btls,
 {
     mca_btl_vader_component_t *component = &mca_btl_vader_component;
     mca_btl_base_module_t **btls = NULL;
+    int rc;
 
     *num_btls = 0;
 
-    /* if no session directory was created, then we cannot be used */
-    /* XXX LANL FIXME -- this is not the case. we can use an anonymous segment */
-    if (NULL == ompi_process_info.job_session_dir) {
-        return NULL;
-    }
+    /* limit segment alignment to be between 4k and 16M */
     
-    /* lookup/create shared memory pool only when used */
-    component->vader_mpool      = NULL;
-    component->vader_mpool_base = NULL;
+    if (mca_btl_vader_component.segment_size < 12) {
+        mca_btl_vader_component.segment_size = 12;
+    } else if (mca_btl_vader_component.segment_size > 25) {
+        mca_btl_vader_component.segment_size = 25;
+    }
 
     btls = (mca_btl_base_module_t **) calloc (1, sizeof (mca_btl_base_module_t *));
     if (NULL == btls) {
@@ -247,6 +233,35 @@ static mca_btl_base_module_t **mca_btl_vader_component_init (int *num_btls,
                                        (void *)0666);
     if (-1 == component->my_seg_id) {
         free (btls);
+        return NULL;
+    }
+
+    /* ensure a sane segment size */
+    if (mca_btl_vader_component.segment_size < (1 << 20)) {
+        mca_btl_vader_component.segment_size = (1 << 20);
+    }
+
+    component->my_segment = mmap (NULL, mca_btl_vader_component.segment_size, PROT_READ |
+                                  PROT_WRITE, MAP_ANON | MAP_SHARED, -1, 0);
+    if ((void *)-1 == component->my_segment) {
+        free (btls);
+        return NULL;
+    }
+
+    component->segment_offset = 0;
+
+    /* initialize my fifo */
+    rc = vader_fifo_init ((struct vader_fifo_t *) component->my_segment);
+    if (OMPI_SUCCESS != rc) {
+        free (btls);
+        munmap (component->my_segment, mca_btl_vader_component.segment_size);
+        return NULL;
+    }
+
+    rc = mca_btl_base_vader_modex_send ();
+    if (OMPI_SUCCESS != rc) {
+        free (btls);
+        munmap (component->my_segment, mca_btl_vader_component.segment_size);
         return NULL;
     }
 
@@ -268,21 +283,14 @@ static mca_btl_base_module_t **mca_btl_vader_component_init (int *num_btls,
 
 static inline void mca_btl_vader_progress_sends (void)
 {
-    opal_list_t *list = &mca_btl_vader_component.active_sends;
-    opal_list_item_t *item, *next;
-    mca_btl_vader_frag_t *frag;
+    mca_btl_vader_frag_t *frag, *next;
 
-    for (item = opal_list_get_first (list) ; item != opal_list_get_end (list) ; ) {
-        frag = (mca_btl_vader_frag_t *) item;
-        next = opal_list_get_next (item);
-
+    OPAL_LIST_FOREACH_SAFE(frag, next, &mca_btl_vader_component.active_sends, mca_btl_vader_frag_t) {
         if (OPAL_LIKELY(frag->hdr->complete)) {
-            opal_list_remove_item (&mca_btl_vader_component.active_sends, item);
+            opal_list_remove_item (&mca_btl_vader_component.active_sends, (opal_list_item_t *) frag);
 
             mca_btl_vader_frag_complete (frag);
         }
-
-        item = next;
     }
 }
 
@@ -290,11 +298,11 @@ static inline void mca_btl_vader_progress_sends (void)
 static int mca_btl_vader_component_progress (void)
 {
     int my_smp_rank = mca_btl_vader_component.my_smp_rank;
-    vader_fifo_t *fifo = mca_btl_vader_component.fifo[my_smp_rank];
     mca_btl_active_message_callback_t *reg;
     mca_btl_vader_frag_t frag;
     mca_btl_vader_hdr_t *hdr;
     mca_mpool_base_registration_t *xpmem_reg = NULL;
+    struct mca_btl_base_endpoint_t *endpoint;
 
     /* check active sends for completion */
     mca_btl_vader_progress_sends ();
@@ -303,7 +311,7 @@ static int mca_btl_vader_component_progress (void)
     mca_btl_vader_check_fboxes ();
 
     /* poll the fifo once */
-    hdr = vader_fifo_read (fifo);
+    hdr = vader_fifo_read (mca_btl_vader_component.endpoints[my_smp_rank].fifo);
     if (NULL == hdr) {
         return 0;
     }
@@ -314,7 +322,8 @@ static int mca_btl_vader_component_progress (void)
     frag.segments[0].seg_len       = hdr->len;
 
     if (OPAL_UNLIKELY(hdr->flags & MCA_BTL_VADER_FLAG_SINGLE_COPY)) {
-        xpmem_reg = vader_get_registation (hdr->my_smp_rank, hdr->sc_iov.iov_base,
+        endpoint = mca_btl_vader_component.endpoints + hdr->my_smp_rank;
+        xpmem_reg = vader_get_registation (endpoint, hdr->sc_iov.iov_base,
                                            hdr->sc_iov.iov_len, 0);
 
         frag.segments[1].seg_addr.pval = vader_reg_to_ptr (xpmem_reg, hdr->sc_iov.iov_base);
@@ -323,7 +332,7 @@ static int mca_btl_vader_component_progress (void)
         /* recv upcall */
         frag.base.des_dst_cnt = 2;
         reg->cbfunc(&mca_btl_vader.super, hdr->tag, &(frag.base), reg->cbdata);
-        vader_return_registration (xpmem_reg, hdr->my_smp_rank);
+        vader_return_registration (xpmem_reg, endpoint);
     } else {
         frag.base.des_dst_cnt = 1;
         reg->cbfunc(&mca_btl_vader.super, hdr->tag, &(frag.base), reg->cbdata);
