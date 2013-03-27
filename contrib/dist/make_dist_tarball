@@ -341,6 +341,13 @@ elif test -d .hg; then
     fi
     echo "*** Getting hg version number..."
     svn_r=hg`hg tip | grep ^changeset: | head -n 1 | cut -d: -f3`
+elif test -d .git; then
+    echo "*** Removing old VERSION file..."
+    rm -f VERSION
+    echo "*** Restoring pristine VERSION file..."
+    git checkout VERSION
+    echo "*** Getting git version number..."
+    svn_r=git`git log -1 --oneline | head -1 | cut -d' ' -f2`
 fi
 echo "    Repo rev number: $svn_r"
 if test "$svn_r" = ""; then
