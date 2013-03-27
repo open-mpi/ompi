@@ -89,7 +89,6 @@ static int rte_init(void)
     char *cs_env, *string_key;
     char *pmi_id=NULL;
     int *ranks;
-    char *tmp;
     orte_jobid_t jobid;
     orte_process_name_t proc;
     orte_local_rank_t local_rank;
