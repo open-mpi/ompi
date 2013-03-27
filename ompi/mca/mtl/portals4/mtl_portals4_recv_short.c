@@ -56,7 +56,7 @@ ompi_mtl_portals4_recv_block_progress(ptl_event_t *ev,
         opal_list_append(&ompi_mtl_portals4.waiting_recv_short_blocks,
                          &block->base);
     } else {
-        OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_output,
+        OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_framework.framework_output,
                              "OVERFLOW EVENT %d, hdr_data = %lx", ev->type, (long unsigned) ev->hdr_data));
     }
 

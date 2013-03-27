@@ -30,7 +30,7 @@
 
 #include "mpi.h"
 #include "opal/class/opal_list.h"
-#include "ompi/class/ompi_free_list.h"
+#include "opal/mca/base/base.h"
 #include "ompi/mca/io/io.h"
 
 
@@ -39,28 +39,6 @@
  */
 
 BEGIN_C_DECLS
-    /**
-     * Initialize the io MCA framework
-     *
-     * @retval OMPI_SUCCESS Upon success
-     * @retval OMPI_ERROR Upon failure
-     *
-     * This must be the first function invoked in the io MCA
-     * framework.  It initializes the io MCA framework, finds and
-     * opens io components, etc.
-     *
-     * This function is invoked during ompi_mpi_init() and during the
-     * initialization of the special case of the laminfo command.
-     * 
-     * This function fills in the internal global variable
-     * mca_io_base_components_opened, which is a list of all io components
-     * that were successfully opened.  This variable should \em only be
-     * used by other io base functions -- it is not considered a
-     * public interface member -- and is only mentioned here for
-     * completeness.
-     */
-    OMPI_DECLSPEC int mca_io_base_open(void);
-
     /**
      * Create list of available io components.
      *
@@ -179,19 +157,6 @@ BEGIN_C_DECLS
     OMPI_DECLSPEC int mca_io_base_delete(char *filename, 
                                          struct ompi_info_t *info);
 
-    /**
-     * Shut down the io MCA framework.
-     *
-     * @retval OMPI_SUCCESS Always
-     *
-     * This function shuts down everything in the io MCA framework,
-     * and is called during ompi_mpi_finalize() and the special case of
-     * the laminfo fileand.
-     *
-     * It must be the last function invoked on the io MCA framework.
-     */
-    OMPI_DECLSPEC int mca_io_base_close(void);
-
     OMPI_DECLSPEC int mca_io_base_register_datarep(char *,
                                               MPI_Datarep_conversion_function*,
                                               MPI_Datarep_conversion_function*,
@@ -202,39 +167,7 @@ BEGIN_C_DECLS
  * Globals
  */
 
-/**
- * Index number from the "io" MCA parameter, created when the io
- * framework is initialized and used during scope selection.
- */
-OMPI_DECLSPEC extern int mca_io_base_param;
-/**
- * io framework debugging stream ID used with opal_output() and
- * opal_output_verbose().
- */
-OMPI_DECLSPEC extern int mca_io_base_output;
-
-/**
- * Indicator as to whether the list of opened io components is valid or
- * not.
- */
-OMPI_DECLSPEC extern bool mca_io_base_components_opened_valid;
-/**
- * List of all opened components; created when the io framework is
- * initialized and destroyed when we reduce the list to all available
- * io components.
- */
-OMPI_DECLSPEC extern opal_list_t mca_io_base_components_opened;
-/**
- * Indicator as to whether the list of available io components is valid
- * or not.
- */
-OMPI_DECLSPEC extern bool mca_io_base_components_available_valid;
-/**
- * List of all available components; created by reducing the list of open
- * components to all those who indicate that they may run during this
- * process.
- */
-OMPI_DECLSPEC extern opal_list_t mca_io_base_components_available;
+OMPI_DECLSPEC extern mca_base_framework_t ompi_io_base_framework;
 
 END_C_DECLS
 #endif /* MCA_BASE_IO_H */

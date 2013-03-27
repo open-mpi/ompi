@@ -120,7 +120,7 @@ static int crcp_bkmrk_open(void)
         opal_output_set_verbosity(mca_crcp_bkmrk_component.super.output_handle,
                                   mca_crcp_bkmrk_component.super.verbose);
     } else {
-        mca_crcp_bkmrk_component.super.output_handle = ompi_crcp_base_output;
+        mca_crcp_bkmrk_component.super.output_handle = ompi_crcp_base_framework.framework_output;
     }
 
     /*

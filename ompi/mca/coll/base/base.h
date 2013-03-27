@@ -35,34 +35,13 @@
 
 #include "mpi.h"
 #include "opal/class/opal_list.h"
-
+#include "opal/mca/base/base.h"
 
 /*
  * Global functions for MCA overall collective open and close
  */
 
 BEGIN_C_DECLS
-/**
- * Initialize the coll MCA framework
- *
- * @retval OMPI_SUCCESS Upon success
- * @retval OMPI_ERROR Upon failure
- *
- * This must be the first function invoked in the coll MCA
- * framework.  It initializes the coll MCA framework, finds and
- * opens coll components, etc.
- *
- * This function is invoked during ompi_mpi_init() and during the
- * initialization of the special case of the laminfo command.
- * 
- * This function fills in the internal global variable
- * mca_coll_base_components_opened, which is a list of all coll components
- * that were successfully opened.  This variable should \em only be
- * used by other coll base functions -- it is not considered a
- * public interface member -- and is only mentioned here for
- * completeness.
- */
-OMPI_DECLSPEC int mca_coll_base_open(void);
 
 /**
  * Create list of available coll components.
@@ -79,15 +58,10 @@ OMPI_DECLSPEC int mca_coll_base_open(void);
  * successfully opened coll components and create a list of all
  * available coll components.
  *
- * This function traverses the (internal global variable)
- * mca_coll_base_components_opened list and queries each component to see
- * if it ever might want to run during this MPI process.  It creates
- * another internal global variable list named
- * mca_coll_base_components_available, consisting of a list of components
- * that are available for selection when communicators are created.
- * This variable should \em only be used by other coll base
- * functions -- it is not considered a public interface member --
- * and is only mentioned here for completeness.
+ * This function traverses the (internal global variable) framework components
+ * list and queries each component to see if it ever might want to run during
+ * this MPI process.  If a component does not want to run it is closed and
+ * removed from the framework components list.
  */
 int mca_coll_base_find_available(bool enable_progress_threads,
                                  bool enable_mpi_threads);
@@ -147,55 +121,10 @@ int mca_coll_base_comm_select(struct ompi_communicator_t *comm);
  */
 int mca_coll_base_comm_unselect(struct ompi_communicator_t *comm);
 
-/**
- * Shut down the coll MCA framework.
- *
- * @retval OMPI_SUCCESS Always
- *
- * This function shuts down everything in the coll MCA framework,
- * and is called during ompi_mpi_finalize() and the special case of
- * the laminfo command.
- *
- * It must be the last function invoked on the coll MCA framework.
- */
-OMPI_DECLSPEC int mca_coll_base_close(void);
-
-
 /*
  * Globals
  */
-
-/**
- * Coll framework debugging stream ID used with opal_output() and
- * opal_output_verbose().
- */
-OMPI_DECLSPEC extern int mca_coll_base_output;
-
-/**
- * Indicator as to whether the list of opened coll components is valid or
- * not.
- */
-extern bool mca_coll_base_components_opened_valid;
-
-/**
- * List of all opened components; created when the coll framework is
- * initialized and destroyed when we reduce the list to all available
- * coll components.
- */
-OMPI_DECLSPEC extern opal_list_t mca_coll_base_components_opened;
-
-/**
- * Indicator as to whether the list of available coll components is valid
- * or not.
- */
-extern bool mca_coll_base_components_available_valid;
-
-/**
- * List of all available components; created by reducing the list of open
- * components to all those who indicate that they may run during this
- * process.
- */
-extern opal_list_t mca_coll_base_components_available;
+OMPI_DECLSPEC extern mca_base_framework_t ompi_coll_base_framework;
 
 END_C_DECLS
 #endif /* MCA_BASE_COLL_H */

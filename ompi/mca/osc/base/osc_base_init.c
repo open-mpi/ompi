@@ -34,13 +34,13 @@ ompi_osc_base_select(ompi_win_t *win,
     ompi_osc_base_component_t *best_component = NULL;
     int best_priority = -1, priority;
 
-    if (opal_list_get_size(&ompi_osc_base_avail_components) <= 0) {
+    if (opal_list_get_size(&ompi_osc_base_framework.framework_components) <= 0) {
         /* we don't have any components to support us... */
         return OMPI_ERR_NOT_SUPPORTED;
     }
 
-    for (item = opal_list_get_first(&ompi_osc_base_avail_components) ;
-         item != opal_list_get_end(&ompi_osc_base_avail_components) ;
+    for (item = opal_list_get_first(&ompi_osc_base_framework.framework_components) ;
+         item != opal_list_get_end(&ompi_osc_base_framework.framework_components) ;
          item = opal_list_get_next(item)) {
         ompi_osc_base_component_t *component = (ompi_osc_base_component_t*)
             ((mca_base_component_list_item_t*) item)->cli_component;

@@ -53,8 +53,7 @@ int mca_btl_base_select(bool enable_progress_threads,
                         bool enable_mpi_threads)
 {
     int i, num_btls;
-    opal_list_item_t *item;
-    mca_base_component_list_item_t *cli;
+    mca_base_component_list_item_t *cli, *next;
     mca_btl_base_component_t *component;
     mca_btl_base_module_t **modules;
     mca_btl_base_selected_module_t *sm;
@@ -65,11 +64,7 @@ int mca_btl_base_select(bool enable_progress_threads,
     /* Traverse the list of opened modules; call their init
        functions. */
 
-    item  = opal_list_get_first(&mca_btl_base_components_opened);
-    while(item != opal_list_get_end(&mca_btl_base_components_opened)) {
-        opal_list_item_t *next = opal_list_get_next(item);
-        cli = (mca_base_component_list_item_t *) item;
-
+    OPAL_LIST_FOREACH_SAFE(cli, next, &ompi_btl_base_framework.framework_components, mca_base_component_list_item_t) {
         component = (mca_btl_base_component_t *) cli->cli_component;
 
         /* if there is an include list - item must be in the list to be included */
@@ -84,7 +79,6 @@ int mca_btl_base_select(bool enable_progress_threads,
                 argv++;
             }
             if(found == false) {
-                item = next;
                 continue;
             }
 
@@ -100,17 +94,16 @@ int mca_btl_base_select(bool enable_progress_threads,
                 argv++;
             }
             if(found == true) {
-                item = next;
                 continue;
             }
         }
 
-        opal_output_verbose(10, mca_btl_base_output, 
+        opal_output_verbose(10, ompi_btl_base_framework.framework_output, 
                             "select: initializing %s component %s",
                             component->btl_version.mca_type_name,
                             component->btl_version.mca_component_name);
         if (NULL == component->btl_init) {
-            opal_output_verbose(10, mca_btl_base_output,
+            opal_output_verbose(10, ompi_btl_base_framework.framework_output,
                                 "select: no init function; ignoring component %s",
                                 component->btl_version.mca_component_name);
         } else {
@@ -121,21 +114,19 @@ int mca_btl_base_select(bool enable_progress_threads,
                list and remove it from the component repository */
 
             if (NULL == modules) {
-                opal_output_verbose(10, mca_btl_base_output,
+                opal_output_verbose(10, ompi_btl_base_framework.framework_output,
                                     "select: init of component %s returned failure",
                                     component->btl_version.mca_component_name);
-                opal_output_verbose(10, mca_btl_base_output,
-                                    "select: module %s unloaded",
-                                    component->btl_version.mca_component_name);
 
-                mca_base_component_repository_release((mca_base_component_t *) component);
-                opal_list_remove_item(&mca_btl_base_components_opened, item);
+                opal_list_remove_item(&ompi_btl_base_framework.framework_components, &cli->super);
+                mca_base_component_close((mca_base_component_t *) component,
+                                         ompi_btl_base_framework.framework_output);
             } 
 
             /* Otherwise, if it initialized properly, save it. */
 
             else {
-                opal_output_verbose(10, mca_btl_base_output,
+                opal_output_verbose(10, ompi_btl_base_framework.framework_output,
                                     "select: init of component %s returned success",
                                     component->btl_version.mca_component_name);
 
@@ -158,7 +149,6 @@ int mca_btl_base_select(bool enable_progress_threads,
                 free(modules);
             }
         }
-        item = next;
     }
 
     /* Finished querying all components.  Check for the bozo case. */

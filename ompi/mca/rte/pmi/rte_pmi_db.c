@@ -263,7 +263,7 @@ static char* fetch_string(const char *key)
         return NULL;
     }
 
-    opal_output_verbose(5, ompi_rte_base_output,
+    opal_output_verbose(5, ompi_rte_base_framework.framework_output,
                 "%s db:pmi:fetch_string: received key %s DATA %s",
                 OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),
                 key, tmp_val);
@@ -290,7 +290,7 @@ static char* fetch_string(const char *key)
             free(data);
             return NULL;
         }
-        opal_output_verbose(5, ompi_rte_base_output,
+        opal_output_verbose(5, ompi_rte_base_framework.framework_output,
                     "%s db:pmi:fetch_string: received key %s DATA %s",
                     OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),
                     tmpkey, tmp_val);
@@ -403,7 +403,7 @@ ompi_rte_db_store(const ompi_process_name_t *proc,
     char *pmikey, *tmpkey, *tmp, sav;
     char **strdata=NULL;
 
-    opal_output_verbose(5, ompi_rte_base_output,
+    opal_output_verbose(5, ompi_rte_base_framework.framework_output,
                 "%s db:pmi:store: storing key %s[%s] for proc %s",
                 OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),
                 key, opal_dss.lookup_data_type(type), OMPI_NAME_PRINT(proc));
@@ -434,7 +434,7 @@ ompi_rte_db_store(const ompi_process_name_t *proc,
          * required to hold the entire string
          */
         asprintf(&pmidata, "%d:%s", opal_argv_count(strdata), strdata[0]);
-        opal_output_verbose(5, ompi_rte_base_output,
+        opal_output_verbose(5, ompi_rte_base_framework.framework_output,
                     "%s db:pmi:store: storing key %s data %s",
                     OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),
                     pmikey, pmidata);
@@ -449,7 +449,7 @@ ompi_rte_db_store(const ompi_process_name_t *proc,
         /* for each remaining segment, augment the key with the index */
         for (i=1; NULL != strdata[i]; i++) {
             asprintf(&tmpkey, "%s:%d", pmikey, i);
-            opal_output_verbose(5, ompi_rte_base_output,
+            opal_output_verbose(5, ompi_rte_base_framework.framework_output,
                         "%s db:pmi:store: storing key %s data %s",
                         OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),
                         pmikey, strdata[i]);
@@ -510,7 +510,7 @@ ompi_rte_db_store(const ompi_process_name_t *proc,
         return OMPI_ERR_NOT_SUPPORTED;
     }
 
-    opal_output_verbose(5, ompi_rte_base_output,
+    opal_output_verbose(5, ompi_rte_base_framework.framework_output,
                 "%s PUTTING KEY %s DATA %s",
                 OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),
                 pmikey, pmidata);
@@ -542,7 +542,7 @@ ompi_rte_db_fetch(const ompi_process_name_t *proc,
     opal_hwloc_locality_t locality;
     size_t sval;
 
-    opal_output_verbose(5, ompi_rte_base_output,
+    opal_output_verbose(5, ompi_rte_base_framework.framework_output,
                 "%s db:pmi:fetch: searching for key %s[%s] on proc %s",
                 OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),
                 (NULL == key) ? "NULL" : key,
@@ -597,7 +597,7 @@ ompi_rte_db_fetch(const ompi_process_name_t *proc,
         }
         memcpy(*data, &locality, sizeof(opal_hwloc_locality_t));
 
-        opal_output_verbose(5, ompi_rte_base_output,
+        opal_output_verbose(5, ompi_rte_base_framework.framework_output,
                     "%s db:pmi:fetch: done searching for key %s[%s] on proc %s",
                     OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),
                     (NULL == key) ? "NULL" : key,
@@ -661,7 +661,7 @@ ompi_rte_db_fetch(const ompi_process_name_t *proc,
         return OMPI_ERR_NOT_SUPPORTED;
     }
 
-    opal_output_verbose(5, ompi_rte_base_output,
+    opal_output_verbose(5, ompi_rte_base_framework.framework_output,
                         "%s db:pmi:fetch: done searching for key %s[%s] on proc %s",
                         OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),
                         (NULL == key) ? "NULL" : key,
@@ -680,7 +680,7 @@ ompi_rte_db_fetch_pointer(const ompi_process_name_t *proc,
 {
     local_data_t *pdat;
 
-    opal_output_verbose(5, ompi_rte_base_output,
+    opal_output_verbose(5, ompi_rte_base_framework.framework_output,
                         "%s db:pmi:fetch_pointer: searching for key %s on proc %s",
                         OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),
                         (NULL == key) ? "NULL" : key, OMPI_NAME_PRINT(proc));

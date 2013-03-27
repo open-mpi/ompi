@@ -116,10 +116,10 @@ mca_pml_cm_component_open(void)
 {
     int ret;
 
-    ret = ompi_mtl_base_open();
+    ret = mca_base_framework_open(&ompi_mtl_base_framework, 0);
     if (OMPI_SUCCESS == ret) {
       /* If no MTL components initialized CM component can be unloaded */
-      if (0 == opal_list_get_size(&ompi_mtl_base_components_opened)) {
+      if (0 == opal_list_get_size(&ompi_mtl_base_framework.framework_components)) {
 	ret = OPAL_ERR_NOT_AVAILABLE;
       }
     }
@@ -131,7 +131,7 @@ mca_pml_cm_component_open(void)
 static int
 mca_pml_cm_component_close(void)
 {
-    return ompi_mtl_base_close();
+    return mca_base_framework_close(&ompi_mtl_base_framework);
 }
 
 

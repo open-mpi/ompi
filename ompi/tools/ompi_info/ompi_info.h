@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007-2009 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013      Los Alamos National Security, LLC.
+ *                         All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -41,8 +43,7 @@ void ompi_info_do_version(bool want_all, opal_cmd_line_t *cmd_line,
 
 void ompi_info_show_ompi_version(const char *scope);
 
-int ompi_info_register_components(opal_pointer_array_t *mca_types,
-                                  opal_pointer_array_t *component_map);
+int ompi_info_register_framework_params(opal_pointer_array_t *component_map);
 void ompi_info_close_components(void);
 
 void ompi_info_do_config(bool want_all);

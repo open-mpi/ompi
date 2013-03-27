@@ -77,7 +77,7 @@ ompi_op_example_component_t mca_op_example_component = {
  */
 static int example_component_open(void)
 {
-    opal_output(ompi_op_base_output, "example component open");
+    opal_output(ompi_op_base_framework.framework_output, "example component open");
 
     /* A first level check to see if example is even available in this
        process.  E.g., you may want to do a first-order check to see
@@ -99,7 +99,7 @@ static int example_component_open(void)
  */
 static int example_component_close(void)
 {
-    opal_output(ompi_op_base_output, "example component close");
+    opal_output(ompi_op_base_framework.framework_output, "example component close");
 
     /* If example was opened successfully, close it (i.e., release any
        resources that may have been allocated on this component).
@@ -121,7 +121,7 @@ static int example_component_register(void)
     int val;
     char *str;
 
-    opal_output(ompi_op_base_output, "example component register");
+    opal_output(ompi_op_base_framework.framework_output, "example component register");
 
     /* Register any relevant MCA params.  At a minimum, perhaps some
        information MCA params that return version and capability
@@ -181,7 +181,7 @@ static int example_component_register(void)
 static int example_component_init_query(bool enable_progress_threads,
                                         bool enable_mpi_thread_multiple)
 {
-    opal_output(ompi_op_base_output, "example component init query");
+    opal_output(ompi_op_base_framework.framework_output, "example component init query");
 
     /* Query to see if we have the desired hardware / resources to be
        able to perform reduction operations.  This is a much more
@@ -249,7 +249,7 @@ static struct ompi_op_base_module_1_0_0_t *
 {
     ompi_op_base_module_t *module = NULL;
 
-    opal_output(ompi_op_base_output, "example component op query");
+    opal_output(ompi_op_base_framework.framework_output, "example component op query");
 
     /* Sanity check -- although the framework should never invoke the
        _component_op_query() on non-intrinsic MPI_Op's, we'll put a

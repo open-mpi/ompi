@@ -36,19 +36,6 @@
  */
 #include "ompi/mca/coll/base/static-components.h"
 
-
-/*
- * Global variables; most of which are loaded by back-ends of MCA
- * variables
- */
-int mca_coll_base_output = -1;
-
-int mca_coll_base_crossover = 4;
-int mca_coll_base_associative = 1;
-
-bool mca_coll_base_components_opened_valid = false;
-opal_list_t mca_coll_base_components_opened;
-
 /*
  * Ensure all function pointers are NULL'ed out to start with
  */
@@ -102,27 +89,5 @@ static void coll_base_module_construct(mca_coll_base_module_t *m)
 OBJ_CLASS_INSTANCE(mca_coll_base_module_t, opal_object_t, 
                    coll_base_module_construct, NULL);
 
-/*
- * Function for finding and opening either all MCA components, or the one
- * that was specifically requested via a MCA parameter.
- */
-int mca_coll_base_open(void)
-{
-    /* Open an output stream for this framework */
-
-    mca_coll_base_output = opal_output_open(NULL);
-
-    /* Open up all available components */
-
-    if (OMPI_SUCCESS !=
-        mca_base_components_open("coll", mca_coll_base_output,
-                                 mca_coll_base_static_components,
-                                 &mca_coll_base_components_opened, true)) {
-        return OMPI_ERROR;
-    }
-    mca_coll_base_components_opened_valid = true;
-
-    /* All done */
-
-    return OMPI_SUCCESS;
-}
+MCA_BASE_FRAMEWORK_DECLARE(ompi, coll, "Collectives", NULL, NULL, NULL,
+                           mca_coll_base_static_components, 0);

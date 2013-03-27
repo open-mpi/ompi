@@ -40,7 +40,7 @@ int mca_coll_demo_reduce_scatter_intra(void *sbuf, void *rbuf, int *rcounts,
                                        mca_coll_base_module_t *module)
 {
     mca_coll_demo_module_t *demo_module = (mca_coll_demo_module_t*) module;
-    opal_output_verbose(10, mca_coll_base_output, "In demo scatter_intra");
+    opal_output_verbose(10, ompi_coll_base_framework.framework_output, "In demo scatter_intra");
     return demo_module->underlying.coll_reduce_scatter(sbuf, rbuf, rcounts,
                                                        dtype, op, comm,
                                                        demo_module->underlying.coll_reduce_scatter_module);
@@ -61,7 +61,7 @@ int mca_coll_demo_reduce_scatter_inter(void *sbuf, void *rbuf, int *rcounts,
                                        mca_coll_base_module_t *module)
 {
     mca_coll_demo_module_t *demo_module = (mca_coll_demo_module_t*) module;
-    opal_output_verbose(10, mca_coll_base_output, "In demo scatter_inter");
+    opal_output_verbose(10, ompi_coll_base_framework.framework_output, "In demo scatter_inter");
     return demo_module->underlying.coll_reduce_scatter(sbuf, rbuf, rcounts,
                                                        dtype, op, comm,
                                                        demo_module->underlying.coll_reduce_scatter_module);

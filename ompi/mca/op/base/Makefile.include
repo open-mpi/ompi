@@ -25,8 +25,7 @@ headers += \
         base/functions.h
 
 libmca_op_la_SOURCES += \
-        base/op_base_close.c \
-        base/op_base_open.c \
+        base/op_base_frame.c \
         base/op_base_find_available.c \
         base/op_base_functions.c \
         base/op_base_op_select.c

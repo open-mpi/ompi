@@ -132,7 +132,7 @@ int mca_coll_sm_init_query(bool enable_progress_threads,
     }
     /* Don't do much here because we don't really want to allocate any
        shared memory until this component is selected to be used. */
-    opal_output_verbose(10, mca_coll_base_output,
+    opal_output_verbose(10, ompi_coll_base_framework.framework_output,
                         "coll:sm:init_query: pick me! pick me!");
     return OMPI_SUCCESS;
 }
@@ -153,7 +153,7 @@ mca_coll_sm_comm_query(struct ompi_communicator_t *comm, int *priority)
        are not on this node, then we don't want to run */
     if (OMPI_COMM_IS_INTER(comm) || 1 == ompi_comm_size(comm) ||
         !have_local_peers(comm->c_local_group, ompi_comm_size(comm))) {
-        opal_output_verbose(10, mca_coll_base_output,
+        opal_output_verbose(10, ompi_coll_base_framework.framework_output,
                             "coll:sm:comm_query (%d/%s): intercomm, comm is too small, or not all peers local; disqualifying myself", comm->c_contextid, comm->c_name);
 	return NULL;
     }
@@ -162,7 +162,7 @@ mca_coll_sm_comm_query(struct ompi_communicator_t *comm, int *priority)
      * than or equal to 0, then the module is unavailable. */
     *priority = mca_coll_sm_component.sm_priority;
     if (mca_coll_sm_component.sm_priority <= 0) {
-        opal_output_verbose(10, mca_coll_base_output,
+        opal_output_verbose(10, ompi_coll_base_framework.framework_output,
                             "coll:sm:comm_query (%d/%s): priority too low; disqualifying myself", comm->c_contextid, comm->c_name);
 	return NULL;
     }
@@ -192,7 +192,7 @@ mca_coll_sm_comm_query(struct ompi_communicator_t *comm, int *priority)
     sm_module->super.coll_scatter    = NULL;
     sm_module->super.coll_scatterv   = NULL;
 
-    opal_output_verbose(10, mca_coll_base_output,
+    opal_output_verbose(10, ompi_coll_base_framework.framework_output,
                         "coll:sm:comm_query (%d/%s): pick me! pick me!", 
                         comm->c_contextid, comm->c_name);
     return &(sm_module->super);
@@ -207,7 +207,7 @@ static int sm_module_enable(mca_coll_base_module_t *module,
 {
     if (NULL == comm->c_coll.coll_reduce ||
         NULL == comm->c_coll.coll_reduce_module) {
-        opal_output_verbose(10, mca_coll_base_output,
+        opal_output_verbose(10, ompi_coll_base_framework.framework_output,
                             "coll:sm:enable (%d/%s): no underlying reduce; disqualifying myself",
                             comm->c_contextid, comm->c_name);
         return OMPI_ERROR;
@@ -247,7 +247,7 @@ int ompi_coll_sm_lazy_enable(mca_coll_base_module_t *module,
         malloc(sizeof(opal_hwloc_base_memory_segment_t) * 
                c->sm_comm_num_segments * 3);
     if (NULL == maffinity) {
-        opal_output_verbose(10, mca_coll_base_output,
+        opal_output_verbose(10, ompi_coll_base_framework.framework_output,
                             "coll:sm:enable (%d/%s): malloc failed (1)", 
                             comm->c_contextid, comm->c_name);
         return OMPI_ERR_OUT_OF_RESOURCE;
@@ -277,7 +277,7 @@ int ompi_coll_sm_lazy_enable(mca_coll_base_module_t *module,
 #if OPAL_HAVE_HWLOC
         free(maffinity);
 #endif
-        opal_output_verbose(10, mca_coll_base_output,
+        opal_output_verbose(10, ompi_coll_base_framework.framework_output,
                             "coll:sm:enable (%d/%s): malloc failed (2)", 
                             comm->c_contextid, comm->c_name);
         return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
@@ -461,7 +461,7 @@ int ompi_coll_sm_lazy_enable(mca_coll_base_module_t *module,
     opal_atomic_add(&(data->sm_bootstrap_meta->module_seg->seg_inited), 1);
 
     /* Wait for everyone in this communicator to attach and setup */
-    opal_output_verbose(10, mca_coll_base_output,
+    opal_output_verbose(10, ompi_coll_base_framework.framework_output,
                         "coll:sm:enable (%d/%s): waiting for peers to attach",
                         comm->c_contextid, comm->c_name);
     SPIN_CONDITION(size == data->sm_bootstrap_meta->module_seg->seg_inited, seg_init_exit);
@@ -469,7 +469,7 @@ int ompi_coll_sm_lazy_enable(mca_coll_base_module_t *module,
     /* Once we're all here, remove the mmap file; it's not needed anymore */
     if (0 == rank) {
         unlink(data->sm_bootstrap_meta->shmem_ds.seg_name);
-        opal_output_verbose(10, mca_coll_base_output,
+        opal_output_verbose(10, ompi_coll_base_framework.framework_output,
                             "coll:sm:enable (%d/%s): removed mmap file %s", 
                             comm->c_contextid, comm->c_name,
                             data->sm_bootstrap_meta->shmem_ds.seg_name);
@@ -477,7 +477,7 @@ int ompi_coll_sm_lazy_enable(mca_coll_base_module_t *module,
 
     /* All done */
 
-    opal_output_verbose(10, mca_coll_base_output,
+    opal_output_verbose(10, ompi_coll_base_framework.framework_output,
                         "coll:sm:enable (%d/%s): success!", 
                         comm->c_contextid, comm->c_name);
     return OMPI_SUCCESS;
@@ -533,7 +533,7 @@ static int bootstrap_comm(ompi_communicator_t *comm,
     asprintf(&shortpath, "coll-sm-cid-%d-name-%s.mmap", comm->c_contextid,
              OMPI_NAME_PRINT(lowest_name));
     if (NULL == shortpath) {
-        opal_output_verbose(10, mca_coll_base_output,
+        opal_output_verbose(10, ompi_coll_base_framework.framework_output,
                             "coll:sm:enable:bootstrap comm (%d/%s): asprintf failed", 
                             comm->c_contextid, comm->c_name);
         return OMPI_ERR_OUT_OF_RESOURCE;
@@ -542,7 +542,7 @@ static int bootstrap_comm(ompi_communicator_t *comm,
                             shortpath, NULL);
     free(shortpath);
     if (NULL == fullpath) {
-        opal_output_verbose(10, mca_coll_base_output,
+        opal_output_verbose(10, ompi_coll_base_framework.framework_output,
                             "coll:sm:enable:bootstrap comm (%d/%s): opal_os_path failed", 
                             comm->c_contextid, comm->c_name);
         return OMPI_ERR_OUT_OF_RESOURCE;
@@ -573,7 +573,7 @@ static int bootstrap_comm(ompi_communicator_t *comm,
         (num_in_use * control_size) +
         (num_segments * (comm_size * control_size * 2)) +
         (num_segments * (comm_size * frag_size));
-    opal_output_verbose(10, mca_coll_base_output,
+    opal_output_verbose(10, ompi_coll_base_framework.framework_output,
                         "coll:sm:enable:bootstrap comm (%d/%s): attaching to %" PRIsize_t " byte mmap: %s",
                         comm->c_contextid, comm->c_name, size, fullpath);
     data->sm_bootstrap_meta =
@@ -581,7 +581,7 @@ static int bootstrap_comm(ompi_communicator_t *comm,
                                  sizeof(mca_common_sm_seg_header_t),
                                  sizeof(void*));
     if (NULL == data->sm_bootstrap_meta) {
-        opal_output_verbose(10, mca_coll_base_output,
+        opal_output_verbose(10, ompi_coll_base_framework.framework_output,
                             "coll:sm:enable:bootstrap comm (%d/%s): mca_common_sm_init_group failed", 
                             comm->c_contextid, comm->c_name);
         return OMPI_ERR_OUT_OF_RESOURCE;

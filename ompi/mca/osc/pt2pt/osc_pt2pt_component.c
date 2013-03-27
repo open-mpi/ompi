@@ -199,7 +199,7 @@ ompi_osc_pt2pt_component_select(ompi_win_t *win,
     ret = ompi_comm_dup(comm, &(module->p2p_comm));
     if (ret != OMPI_SUCCESS) goto cleanup;
 
-    opal_output_verbose(1, ompi_osc_base_output,
+    opal_output_verbose(1, ompi_osc_base_framework.framework_output,
                         "pt2pt component creating window with id %d",
                         ompi_comm_get_cid(module->p2p_comm));
 
@@ -425,7 +425,7 @@ component_fragment_cb(ompi_request_t *request)
             datatype = ompi_osc_base_datatype_create(proc, &payload);
 
             if (NULL == datatype) {
-                opal_output(ompi_osc_base_output,
+                opal_output(ompi_osc_base_framework.framework_output,
                             "Error recreating datatype.  Aborting.");
                 ompi_mpi_abort(module->p2p_comm, 1, false);
             }
@@ -555,7 +555,7 @@ component_fragment_cb(ompi_request_t *request)
         break;
 
     default:
-        opal_output_verbose(5, ompi_osc_base_output,
+        opal_output_verbose(5, ompi_osc_base_framework.framework_output,
                             "received one-sided packet for with unknown type");
     }
 

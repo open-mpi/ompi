@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2006-2012 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2006-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2006-2009 University of Houston. All rights reserved.
  * Copyright (c) 2008-2009 Sun Microsystems, Inc.  All rights reserved.
@@ -522,7 +522,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
        ddt_init, but befor mca_coll_base_open, since some collective
        modules (e.g., the hierarchical coll component) may need ops in
        their query function. */
-    if (OMPI_SUCCESS != (ret = ompi_op_base_open())) {
+    if (OMPI_SUCCESS != (ret = mca_base_framework_open(&ompi_op_base_framework, 0))) {
         error = "ompi_op_base_open() failed";
         goto error;
     }
@@ -539,34 +539,34 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
 
     /* Open up MPI-related MCA components */
 
-    if (OMPI_SUCCESS != (ret = mca_allocator_base_open())) {
+    if (OMPI_SUCCESS != (ret = mca_base_framework_open(&ompi_allocator_base_framework, 0))) {
         error = "mca_allocator_base_open() failed";
         goto error;
     }
-    if (OMPI_SUCCESS != (ret = mca_rcache_base_open())) {
+    if (OMPI_SUCCESS != (ret = mca_base_framework_open(&ompi_rcache_base_framework, 0))) {
         error = "mca_rcache_base_open() failed";
         goto error;
     }
-    if (OMPI_SUCCESS != (ret = mca_mpool_base_open())) {
+    if (OMPI_SUCCESS != (ret = mca_base_framework_open(&ompi_mpool_base_framework, 0))) {
         error = "mca_mpool_base_open() failed";
         goto error;
     }
-    if (OMPI_SUCCESS != (ret = mca_pml_base_open())) {
+    if (OMPI_SUCCESS != (ret = mca_base_framework_open(&ompi_pml_base_framework, 0))) {
         error = "mca_pml_base_open() failed";
         goto error;
     }
-    if (OMPI_SUCCESS != (ret = mca_coll_base_open())) {
+    if (OMPI_SUCCESS != (ret = mca_base_framework_open(&ompi_coll_base_framework, 0))) {
         error = "mca_coll_base_open() failed";
         goto error;
     }
 
-    if (OMPI_SUCCESS != (ret = ompi_osc_base_open())) {
+    if (OMPI_SUCCESS != (ret = mca_base_framework_open(&ompi_osc_base_framework, 0))) {
         error = "ompi_osc_base_open() failed";
         goto error;
     }
 
 #if OPAL_ENABLE_FT_CR == 1
-    if (OMPI_SUCCESS != (ret = ompi_crcp_base_open())) {
+    if (OMPI_SUCCESS != (ret = mca_base_framework_open(&ompi_crcp_base_framework, 0))) {
         error = "ompi_crcp_base_open() failed";
         goto error;
     }
@@ -840,8 +840,8 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     }
 
     /* Setup the publish/subscribe (PUBSUB) framework */
-    if (OMPI_SUCCESS != (ret = ompi_pubsub_base_open())) {
-        error = "ompi_pubsub_base_open() failed";
+    if (OMPI_SUCCESS != (ret = mca_base_framework_open(&ompi_pubsub_base_framework, 0))) {
+        error = "mca_pubsub_base_open() failed";
         goto error;
     }
     if (OMPI_SUCCESS != (ret = ompi_pubsub_base_select())) {
@@ -850,7 +850,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     }
     
     /* Setup the dynamic process management (DPM) framework */
-    if (OMPI_SUCCESS != (ret = ompi_dpm_base_open())) {
+    if (OMPI_SUCCESS != (ret = mca_base_framework_open(&ompi_dpm_base_framework, 0))) {
         error = "ompi_dpm_base_open() failed";
         goto error;
     }

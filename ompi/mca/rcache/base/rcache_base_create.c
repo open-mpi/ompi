@@ -37,8 +37,8 @@ mca_rcache_base_module_t* mca_rcache_base_module_create(const char* name)
     mca_rcache_base_selected_module_t *sm;
     bool found = false;
 
-    for (item = opal_list_get_first(&mca_rcache_base_components);
-         item != opal_list_get_end(&mca_rcache_base_components);
+    for (item = opal_list_get_first(&ompi_rcache_base_framework.framework_components);
+         item != opal_list_get_end(&ompi_rcache_base_framework.framework_components);
          item = opal_list_get_next(item)) {
         mca_base_component_list_item_t *cli = 
              (mca_base_component_list_item_t *) item;

@@ -565,7 +565,7 @@ basesmuma_module_enable(mca_bcol_base_module_t *module,
     memset(&output_buffer[0],0,sizeof(output_buffer));
     snprintf(output_buffer,sizeof(output_buffer),"%s (cid %d)", comm->c_name,
                        comm->c_contextid);
-    opal_output_verbose(10, mca_bcol_base_output,
+    opal_output_verbose(10, ompi_bcol_base_framework.framework_output,
             "bcol:basesmuma:enable: new communicator: %s", output_buffer);
 
     /* All done */

@@ -23,8 +23,6 @@
 #include "opal/mca/mca.h"
 #include "opal/runtime/opal.h"
 
-int mca_bml_base_output = -1;
-
 mca_bml_base_module_t mca_bml = {
     NULL,                    /* bml_component */
     NULL,                    /* bml_add_procs */ 
@@ -57,13 +55,13 @@ int mca_bml_base_init( bool enable_progress_threads,
 
     init_called = true;
 
-    for (item = opal_list_get_first(&mca_bml_base_components_available); 
-         opal_list_get_end(&mca_bml_base_components_available) != item; 
+    for (item = opal_list_get_first(&ompi_bml_base_framework.framework_components); 
+         opal_list_get_end(&ompi_bml_base_framework.framework_components) != item; 
          item = opal_list_get_next(item)) { 
         cli = (mca_base_component_list_item_t*) item; 
         component = (mca_bml_base_component_t*) cli->cli_component; 
         if(NULL == component->bml_init) {
-            opal_output_verbose( 10, mca_bml_base_output, 
+            opal_output_verbose( 10, ompi_bml_base_framework.framework_output, 
                                  "select: no init function; ignoring component %s", 
                                  component->bml_version.mca_component_name ); 
             continue; 
@@ -85,11 +83,9 @@ int mca_bml_base_init( bool enable_progress_threads,
     if(NULL == best_module) { 
         return OMPI_SUCCESS; 
     }
-    else { 
-        mca_bml_component = *best_component; 
-        mca_bml = *best_module; 
-        return mca_base_components_close(mca_bml_base_output, 
-                                         &mca_bml_base_components_available, 
-                                         (mca_base_component_t*) best_component); 
-    }
+
+    mca_bml_component = *best_component; 
+    mca_bml = *best_module; 
+    return mca_base_framework_components_close(&ompi_bml_base_framework,
+                                               (mca_base_component_t*) best_component);
 }

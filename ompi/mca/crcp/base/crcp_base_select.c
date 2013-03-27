@@ -141,7 +141,7 @@ int ompi_crcp_base_select(void)
     }
 
     if(0 == strncmp(include_list, "none", strlen("none")) ){ 
-        opal_output_verbose(10, ompi_crcp_base_output,
+        opal_output_verbose(10, ompi_crcp_base_framework.framework_output,
                             "crcp:select: Using %s component",
                             include_list);
         best_component = &none_component;
@@ -149,7 +149,7 @@ int ompi_crcp_base_select(void)
         /* JJH: Todo: Check if none is in the list */
         /* Close all components since none will be used */
         mca_base_components_close(0, /* Pass 0 to keep this from closing the output handle */
-                                  &ompi_crcp_base_components_available,
+                                  &ompi_crcp_base_framework.framework_components,
                                   NULL);
         goto skip_select;
     }
@@ -157,8 +157,8 @@ int ompi_crcp_base_select(void)
     /*
      * Select the best component
      */
-    if( OPAL_SUCCESS != mca_base_select("crcp", ompi_crcp_base_output,
-                                        &ompi_crcp_base_components_available,
+    if( OPAL_SUCCESS != mca_base_select("crcp", ompi_crcp_base_framework.framework_output,
+                                        &ompi_crcp_base_framework.framework_components,
                                         (mca_base_module_t **) &best_module,
                                         (mca_base_component_t **) &best_component) ) {
         /* This will only happen if no component was selected */

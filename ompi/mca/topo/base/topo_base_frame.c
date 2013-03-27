@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2012-2013 Los Alamos National Security, Inc.  All rights reserved. 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -39,42 +40,25 @@
 /*
  * Global variables
  */
-int mca_topo_base_output = -1;
-int mca_topo_base_param = -1;
-
-opal_list_t mca_topo_base_components_available;
-opal_list_t mca_topo_base_components_opened;
-
 mca_topo_base_component_t mca_topo_base_selected_component;
 mca_topo_base_module_t mca_topo;
 
-bool mca_topo_base_components_available_valid = false;
-bool mca_topo_base_components_opened_valid = false;
 
+static int mca_topo_base_close(void) 
+{
+    return mca_base_framework_components_close(&ompi_topo_base_framework, NULL);
+}
 
 /**
  * Function for finding and opening either all the MCA topo components, or
  * the one that specifically requested via a MCA parameter.
  */
-int mca_topo_base_open(void) 
+static int mca_topo_base_open(mca_base_open_flag_t flags) 
 {
-     /* Open the topo framework output stream */
-     mca_topo_base_output = opal_output_open(NULL);
-
-     /* Open up all available components  */
-     if (OMPI_SUCCESS !=
-         mca_base_components_open("topo", mca_topo_base_output, 
-                                  mca_topo_base_static_components,
-                                  &mca_topo_base_components_opened, true)) {
-        return OMPI_ERROR;
-    }
-         
-    mca_topo_base_components_opened_valid = true;
-
-    /* Find selection variable */
-    mca_topo_base_param = mca_base_var_find("ompi", "topo", NULL, NULL);
-
-     /* All done */
-
-    return OMPI_SUCCESS;
+    return mca_base_framework_components_open(&ompi_topo_base_framework, flags);
 }
+
+MCA_BASE_FRAMEWORK_DECLARE(ompi, topo, "OMPI Topo", NULL,
+                           mca_topo_base_open, mca_topo_base_close,
+                           mca_topo_base_static_components, 0);
+

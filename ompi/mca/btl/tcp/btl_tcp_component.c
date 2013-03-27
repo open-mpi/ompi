@@ -544,7 +544,7 @@ static char **split_and_resolve(char **orig_str, char *name)
             free(tmp);
             continue;
         }
-        opal_output_verbose(20, mca_btl_base_output, 
+        opal_output_verbose(20, ompi_btl_base_framework.framework_output, 
                             "btl: tcp: Searching for %s address+prefix: %s / %u",
                             name,
                             opal_net_get_hostname((struct sockaddr*) &argv_inaddr),
@@ -575,7 +575,7 @@ static char **split_and_resolve(char **orig_str, char *name)
         /* We found a match; get the name and replace it in the
            argv */
         opal_ifindextoname(if_index, if_name, sizeof(if_name));
-        opal_output_verbose(20, mca_btl_base_output, 
+        opal_output_verbose(20, ompi_btl_base_framework.framework_output, 
                             "btl: tcp: Found match: %s (%s)",
                             opal_net_get_hostname((struct sockaddr*) &if_inaddr),
                             if_name);

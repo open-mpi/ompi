@@ -75,25 +75,19 @@ static OBJ_CLASS_INSTANCE(avail_io_t, opal_list_item_t, NULL, NULL);
  */
 int mca_io_base_delete(char *filename, struct ompi_info_t *info)
 {
-    int err, num_names;
-    char **name_array;
+    int err;
     opal_list_t *selectable;
     opal_list_item_t *item;
     avail_io_t *avail, selected;
-    const char **names_value, *names;
 
     /* Announce */
 
-    opal_output_verbose(10, mca_io_base_output,
+    opal_output_verbose(10, ompi_io_base_framework.framework_output,
                         "io:base:delete: deleting file: %s", 
                         filename);
   
     /* See if a set of component was requested by the MCA parameter.
        Don't check for error. */
-
-    names_value = NULL;
-    (void) mca_base_var_get_value(mca_io_base_param, &names_value, NULL, NULL);
-    names = names_value ? names_value[0] : NULL;
 
     /* Compute the intersection of all of my available components with
        the components from all the other processes in this file */
@@ -104,27 +98,10 @@ int mca_io_base_delete(char *filename, struct ompi_info_t *info)
        and check them all */
 
     err = OMPI_ERROR;
-    if (NULL != names && 0 < strlen(names)) {
-        name_array = opal_argv_split(names, ',');
-        num_names = opal_argv_count(name_array);
-        
-        opal_output_verbose(10, mca_io_base_output, 
-                            "io:base:delete: Checking specific modules: %s",
-                            names);
-        selectable = check_components(&mca_io_base_components_available, 
-                                      filename, info, name_array, num_names);
-        opal_argv_free(name_array);
-    }
-
-    /* Nope -- a specific [set of] component[s] was not requested.  Go
-       check them all. */
-  
-    else {
-        opal_output_verbose(10, mca_io_base_output, 
-                            "io:base:delete: Checking all available modules");
-        selectable = check_components(&mca_io_base_components_available, 
-                                      filename, info, NULL, 0);
-    }
+    opal_output_verbose(10, ompi_io_base_framework.framework_output, 
+                        "io:base:delete: Checking all available modules");
+    selectable = check_components(&ompi_io_base_framework.framework_components,
+                                  filename, info, NULL, 0);
 
     /* Upon return from the above, the modules list will contain the
        list of modules that returned (priority >= 0).  If we have no
@@ -169,13 +146,29 @@ int mca_io_base_delete(char *filename, struct ompi_info_t *info)
 
     /* Announce the winner */
   
-    opal_output_verbose(10, mca_io_base_output,
+    opal_output_verbose(10, ompi_io_base_framework.framework_output,
                         "io:base:delete: Selected io component %s", 
                         selected.ai_component.v2_0_0.io_version.mca_component_name);
   
     return OMPI_SUCCESS;
 }
 
+
+static int avail_io_compare (opal_list_item_t **itema,
+                             opal_list_item_t **itemb)
+{
+    const avail_io_t *availa = (const avail_io_t *) *itema;
+    const avail_io_t *availb = (const avail_io_t *) *itemb;
+
+    /* highest component last */
+    if (availa->ai_priority > availb->ai_priority) {
+        return 1;
+    } else if (availa->ai_priority < availb->ai_priority) {
+        return -1;
+    } else {
+        return 0;
+    }
+}
 
 /*
  * For each module in the list, if it is in the list of names (or the
@@ -190,10 +183,10 @@ static opal_list_t *check_components(opal_list_t *components,
 {
     int i;
     const mca_base_component_t *component;
-    opal_list_item_t *item, *item2;
+    mca_base_component_list_item_t *cli;
     bool want_to_check;
     opal_list_t *selectable;
-    avail_io_t *avail, *avail2;
+    avail_io_t *avail;
 
     /* Make a list of the components that query successfully */
 
@@ -202,12 +195,9 @@ static opal_list_t *check_components(opal_list_t *components,
     /* Scan through the list of components.  This nested loop is
        O(N^2), but we should never have too many components and/or
        names, so this *hopefully* shouldn't matter... */
-  
-    for (item = opal_list_get_first(components); 
-         item != opal_list_get_end(components); 
-         item = opal_list_get_next(item)) {
-        component = ((mca_base_component_priority_list_item_t *) 
-                     item)->super.cli_component;
+
+    OPAL_LIST_FOREACH(cli, components, mca_base_component_list_item_t) {
+        component = cli->cli_component;
 
         /* If we have a list of names, scan through it */
 
@@ -232,49 +222,8 @@ static opal_list_t *check_components(opal_list_t *components,
                 /* Put this item on the list in priority order
                    (highest priority first).  Should it go first? */
                 /* MSC actually put it Lowest priority first */
-
-                for(item2 = opal_list_get_first(selectable);
-                    item2 != opal_list_get_end(selectable);
-                    item2 = opal_list_get_next(item2)) {
-                    avail2 = (avail_io_t*)item2;
-                    if(avail->ai_priority < avail2->ai_priority) {
-                        opal_list_insert_pos(selectable,
-                                             item2, (opal_list_item_t*)avail);
-                        break;
-                    }
-                }
-
-                if(opal_list_get_end(selectable) == item2) {
-                    opal_list_append(selectable, (opal_list_item_t*)avail);
-                }
-
-                /*
-                item2 = opal_list_get_first(selectable); 
-                avail2 = (avail_io_t *) item2;
-                if (opal_list_get_end(selectable) == item2 ||
-                    avail->ai_priority > avail2->ai_priority) {
-                    opal_list_prepend(selectable, (opal_list_item_t*) avail);
-                } else {
-                    for (i = 1; item2 != opal_list_get_end(selectable); 
-                         item2 = opal_list_get_next(selectable), ++i) {
-                        avail2 = (avail_io_t *) item2;
-                        if (avail->ai_priority > avail2->ai_priority) {
-                            opal_list_insert(selectable,
-                                             (opal_list_item_t *) avail, i);
-                            break;
-                        }
-                    }
-                */
-                    /* If we didn't find a place to put it in the
-                       list, then append it (because it has the lowest
-                       priority found so far) */
-                /*
-                    if (opal_list_get_end(selectable) == item2) {
-                        opal_list_append(selectable, 
-                                         (opal_list_item_t *) avail);
-                    }
-                }
-                */
+                /* NTH sort this out later */
+                opal_list_append(selectable, (opal_list_item_t*)avail);
             }
         }
     }
@@ -285,6 +234,8 @@ static opal_list_t *check_components(opal_list_t *components,
         OBJ_RELEASE(selectable);
         return NULL;
     }
+
+    opal_list_sort(selectable, avail_io_compare);
 
     /* All done */
 
@@ -306,12 +257,12 @@ static avail_io_t *check_one_component(const mca_base_component_t *component,
             avail->ai_priority : 100;
         avail->ai_priority = (avail->ai_priority < 0) ?
             0 : avail->ai_priority;
-        opal_output_verbose(10, mca_io_base_output, 
+        opal_output_verbose(10, ompi_io_base_framework.framework_output, 
                             "io:base:delete: component available: %s, priority: %d", 
                             component->mca_component_name, 
                             avail->ai_priority);
     } else {
-        opal_output_verbose(10, mca_io_base_output, 
+        opal_output_verbose(10, ompi_io_base_framework.framework_output, 
                             "io:base:delete: component not available: %s",
                             component->mca_component_name);
     }

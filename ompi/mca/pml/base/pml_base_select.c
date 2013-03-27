@@ -80,10 +80,7 @@ int mca_pml_base_select(bool enable_progress_threads,
     best_component = NULL;
     module = NULL;
     OBJ_CONSTRUCT(&opened, opal_list_t);
-    for (item = opal_list_get_first(&mca_pml_base_components_available);
-         opal_list_get_end(&mca_pml_base_components_available) != item;
-         item = opal_list_get_next(item) ) {
-        cli = (mca_base_component_list_item_t *) item;
+    OPAL_LIST_FOREACH(cli, &ompi_pml_base_framework.framework_components, mca_base_component_list_item_t) {
         component = (mca_pml_base_component_t *) cli->cli_component;
 
         /* if there is an include list - item must be in the list to be included */
@@ -103,7 +100,7 @@ int mca_pml_base_select(bool enable_progress_threads,
         }
 
         if(!found_pml && opal_pointer_array_get_size(&mca_pml_base_pml)) { 
-            opal_output_verbose( 10, mca_pml_base_output,
+            opal_output_verbose( 10, ompi_pml_base_framework.framework_output,
                                      "select: component %s not in the include list",
                                      component->pmlm_version.mca_component_name );
                 
@@ -112,7 +109,7 @@ int mca_pml_base_select(bool enable_progress_threads,
 
         /* if there is no init function - ignore it */
         if (NULL == component->pmlm_init) {
-            opal_output_verbose( 10, mca_pml_base_output,
+            opal_output_verbose( 10, ompi_pml_base_framework.framework_output,
                                  "select: no init function; ignoring component %s",
                                  component->pmlm_version.mca_component_name );
             continue;
@@ -122,7 +119,7 @@ int mca_pml_base_select(bool enable_progress_threads,
         num_pml++;
 
         /* Init component to get its priority */
-        opal_output_verbose( 10, mca_pml_base_output, 
+        opal_output_verbose( 10, ompi_pml_base_framework.framework_output, 
                              "select: initializing %s component %s",
                              component->pmlm_version.mca_type_name,
                              component->pmlm_version.mca_component_name );
@@ -130,18 +127,18 @@ int mca_pml_base_select(bool enable_progress_threads,
         module = component->pmlm_init(&priority, enable_progress_threads,
                                       enable_mpi_threads);
         if (NULL == module) {
-            opal_output_verbose( 10, mca_pml_base_output,
+            opal_output_verbose( 10, ompi_pml_base_framework.framework_output,
                                  "select: init returned failure for component %s",
                                  component->pmlm_version.mca_component_name );
             continue;
         }
 
-        opal_output_verbose( 10, mca_pml_base_output,
+        opal_output_verbose( 10, ompi_pml_base_framework.framework_output,
                              "select: init returned priority %d", priority );
 #if OPAL_ENABLE_FT_CR == 1
         /* Determine if this is the wrapper component */
         if( priority <= PML_SELECT_WRAPPER_PRIORITY) {
-            opal_output_verbose( 10, mca_pml_base_output,
+            opal_output_verbose( 10, ompi_pml_base_framework.framework_output,
                                  "pml:select: Wrapper Component: Component %s was determined to be a Wrapper PML with priority %d",
                                  component->pmlm_version.mca_component_name, priority );
             wrapper_priority  = priority;
@@ -184,7 +181,7 @@ int mca_pml_base_select(bool enable_progress_threads,
         }
     } 
     
-    opal_output_verbose( 10, mca_pml_base_output,
+    opal_output_verbose( 10, ompi_pml_base_framework.framework_output,
                          "selected %s best priority %d\n", 
                          best_component->pmlm_version.mca_component_name, best_priority);
     
@@ -216,7 +213,7 @@ int mca_pml_base_select(bool enable_progress_threads,
                    don't matter anymore) */
                 
                 om->om_component->pmlm_finalize();
-                opal_output_verbose(10, mca_pml_base_output, 
+                opal_output_verbose(10, ompi_pml_base_framework.framework_output, 
                                     "select: component %s not selected / finalized",
                                     om->om_component->pmlm_version.mca_component_name);
             }
@@ -227,18 +224,15 @@ int mca_pml_base_select(bool enable_progress_threads,
     OBJ_DESTRUCT( &opened );
 
 #if OPAL_ENABLE_FT_CR == 1
-    /* Remove the wrapper component from the mca_pml_base_components_available list
+    /* Remove the wrapper component from the ompi_pml_base_framework.framework_components list
      * so we don't unload it prematurely in the next call
      */
     if( NULL != wrapper_component ) {
-        for (item  = opal_list_get_first(&mca_pml_base_components_available);
-             item != opal_list_get_end(&mca_pml_base_components_available);
-             item  = opal_list_get_next(item) ) {
-            cli       = (mca_base_component_list_item_t *) item;
+        OPAL_LIST_FOREACH(cli, &ompi_pml_base_framework.framework_components, mca_base_component_list_item_t) {
             component = (mca_pml_base_component_t *) cli->cli_component;
             
             if( component == wrapper_component ) {
-                opal_list_remove_item(&mca_pml_base_components_available, item);
+                opal_list_remove_item(&ompi_pml_base_framework.framework_components, item);
             }
         }
     }
@@ -248,7 +242,7 @@ int mca_pml_base_select(bool enable_progress_threads,
 
     mca_pml_base_selected_component = *best_component;
     mca_pml = *best_module;
-    opal_output_verbose( 10, mca_pml_base_output, 
+    opal_output_verbose( 10, ompi_pml_base_framework.framework_output, 
                          "select: component %s selected",
                          mca_pml_base_selected_component.pmlm_version.mca_component_name );
 
@@ -256,15 +250,15 @@ int mca_pml_base_select(bool enable_progress_threads,
        available list all unselected components.  The available list will
        contain only the selected component. */
 
-    mca_base_components_close(mca_pml_base_output, 
-                              &mca_pml_base_components_available, 
+    mca_base_components_close(ompi_pml_base_framework.framework_output, 
+                              &ompi_pml_base_framework.framework_components, 
                               (mca_base_component_t *) best_component);
     
 #if OPAL_ENABLE_FT_CR == 1
     /* If we have a wrapper then initalize it */
     if( NULL != wrapper_component ) {
         priority = PML_SELECT_WRAPPER_PRIORITY;
-        opal_output_verbose( 10, mca_pml_base_output,
+        opal_output_verbose( 10, ompi_pml_base_framework.framework_output,
                              "pml:select: Wrapping: Component %s [%d] is being wrapped by component %s [%d]", 
                              mca_pml_base_selected_component.pmlm_version.mca_component_name,
                              best_priority,
@@ -333,14 +327,14 @@ mca_pml_base_pml_check_selected(const char *my_pml,
      * we can assume success
      */
     if (!modex_reqd) {
-        opal_output_verbose( 10, mca_pml_base_output,
+        opal_output_verbose( 10, ompi_pml_base_framework.framework_output,
                             "check:select: modex not reqd");
         return OMPI_SUCCESS;
     }
     
     /* if we are rank=0, then we can also assume success */
     if (0 == OMPI_PROC_MY_NAME->vpid) {
-        opal_output_verbose( 10, mca_pml_base_output,
+        opal_output_verbose( 10, ompi_pml_base_framework.framework_output,
                             "check:select: rank=0");
         return OMPI_SUCCESS;
     }
@@ -352,7 +346,7 @@ mca_pml_base_pml_check_selected(const char *my_pml,
     
     /* if modex isn't implemented, then just assume all is well... */
     if (OMPI_ERR_NOT_IMPLEMENTED == ret) {
-        opal_output_verbose( 10, mca_pml_base_output,
+        opal_output_verbose( 10, ompi_pml_base_framework.framework_output,
                             "check:select: modex not implemented");
         return OMPI_SUCCESS;
     }
@@ -362,12 +356,12 @@ mca_pml_base_pml_check_selected(const char *my_pml,
      * is fast...let's be sure
      */
     if (NULL == remote_pml) {
-        opal_output_verbose( 10, mca_pml_base_output,
+        opal_output_verbose( 10, ompi_pml_base_framework.framework_output,
                             "check:select: got a NULL pml from rank=0");
         return OMPI_ERR_UNREACH;
     }
     
-    opal_output_verbose( 10, mca_pml_base_output,
+    opal_output_verbose( 10, ompi_pml_base_framework.framework_output,
                         "check:select: checking my pml %s against rank=0 pml %s",
                         my_pml, remote_pml);
     

@@ -133,17 +133,12 @@ int mca_pml_dr_component_open(void)
     mca_pml_dr.ack_timer.tv_usec = mca_pml_dr_ack_timer_usec;
 
     mca_pml_dr.enabled = false; 
-    return mca_bml_base_open();
+    return mca_base_framework_open(&ompi_bml_base_framework, 0);
 }
 
 int mca_pml_dr_component_close(void)
 {
-    int rc;
-
-    if(OMPI_SUCCESS != (rc = mca_bml_base_close()))
-        return rc;
-
-    return OMPI_SUCCESS;
+    return mca_base_framework_close(&ompi_bml_base_framework);
 }
 
 mca_pml_base_module_t* mca_pml_dr_component_init(int* priority, 

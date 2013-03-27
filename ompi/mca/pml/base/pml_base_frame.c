@@ -11,6 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -57,7 +58,6 @@ int mca_pml_base_progress(void)
 /*
  * Global variables
  */
-int mca_pml_base_output = 0;
 mca_pml_base_module_t mca_pml = {
     NULL,                    /* pml_add_procs */
     NULL,                    /* pml_del_procs */
@@ -80,18 +80,15 @@ mca_pml_base_module_t mca_pml = {
     0                        /* pml_max_tag */
 };
 
-opal_list_t mca_pml_base_components_available;
 mca_pml_base_component_t mca_pml_base_selected_component;
 opal_pointer_array_t mca_pml_base_pml;
 char *ompi_pml_base_bsend_allocator_name;
-
-static int ompi_pml_base_verbose = 0;
 
 #if !MCA_ompi_pml_DIRECT_CALL && OPAL_ENABLE_FT_CR == 1
 static char *ompi_pml_base_wrapper = NULL;
 #endif
 
-static int pml_base_register(int flags)
+static int mca_pml_base_register(mca_base_register_flag_t flags)
 {
 #if !MCA_ompi_pml_DIRECT_CALL && OPAL_ENABLE_FT_CR == 1
     int var_id;
@@ -103,14 +100,6 @@ static int pml_base_register(int flags)
                                  OPAL_INFO_LVL_9,
                                  MCA_BASE_VAR_SCOPE_READONLY,
                                  &ompi_pml_base_bsend_allocator_name);
-
-    ompi_pml_base_verbose = 0;
-    (void) mca_base_var_register("ompi", "pml", "base", "verbose",
-                                 "Verbosity level of the PML framework",
-                                 MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
-                                 OPAL_INFO_LVL_9,
-                                 MCA_BASE_VAR_SCOPE_READONLY,
-                                 &ompi_pml_base_verbose);
 
 #if !MCA_ompi_pml_DIRECT_CALL && OPAL_ENABLE_FT_CR == 1
     ompi_pml_base_wrapper = NULL;
@@ -126,25 +115,59 @@ static int pml_base_register(int flags)
     return OMPI_SUCCESS;
 }
 
+int mca_pml_base_finalize(void) {
+  if (NULL != mca_pml_base_selected_component.pmlm_finalize) {
+    return mca_pml_base_selected_component.pmlm_finalize();
+  }
+  return OMPI_SUCCESS;
+}
+
+     
+static int mca_pml_base_close(void)
+{
+    int i, j;
+
+    /* turn off the progress code for the pml */
+    if( NULL != mca_pml.pml_progress ) {
+        opal_progress_unregister(mca_pml.pml_progress);
+    }
+
+    /* Blatently ignore the return code (what would we do to recover,
+       anyway?  This module is going away, so errors don't matter
+       anymore) */
+
+    /**
+     * Destruct the send and receive queues. The ompi_free_list_t destructor
+     * will return the memory to the mpool, so this has to be done before the
+     * mpool get released by the PML close function.
+     */
+    OBJ_DESTRUCT(&mca_pml_base_send_requests);
+    OBJ_DESTRUCT(&mca_pml_base_recv_requests);
+
+    mca_pml.pml_progress = mca_pml_base_progress;
+    
+    /* Free all the strings in the array */
+    j = opal_pointer_array_get_size(&mca_pml_base_pml);
+    for (i = 0; i < j; ++i) {
+        char *str;
+        str = (char*) opal_pointer_array_get_item(&mca_pml_base_pml, i);
+        free(str);
+    }
+    OBJ_DESTRUCT(&mca_pml_base_pml);
+
+    /* Close all remaining available components */
+    return mca_base_framework_components_close(&ompi_pml_base_framework, NULL);
+}
+
 /**
  * Function for finding and opening either all MCA components, or the one
  * that was specifically requested via a MCA parameter.
  */
-int mca_pml_base_open(void)
+static int mca_pml_base_open(mca_base_open_flag_t flags)
 {
 #if OPAL_ENABLE_FT_CR == 1
     char* wrapper_pml = NULL;
 #endif
-
-    (void) pml_base_register(0);
-
-    /*
-     * Register some MCA parameters
-     */
-     /* Debugging/Verbose output */
- 
-     mca_pml_base_output = opal_output_open(NULL);
-     opal_output_set_verbosity(mca_pml_base_output, ompi_pml_base_verbose);
 
     /**
      * Construct the send and receive request queues. There are 2 reasons to do it
@@ -160,10 +183,8 @@ int mca_pml_base_open(void)
 
     /* Open up all available components */
 
-    if (OMPI_SUCCESS != 
-        mca_base_components_open("pml", mca_pml_base_output, mca_pml_base_static_components, 
-                                 &mca_pml_base_components_available,
-                                 !MCA_ompi_pml_DIRECT_CALL)) {
+    if (OPAL_SUCCESS != 
+        mca_base_framework_components_open(&ompi_pml_base_framework, flags)) {
         return OMPI_ERROR;
     }
 
@@ -215,3 +236,7 @@ int mca_pml_base_open(void)
     return OMPI_SUCCESS;
 
 }
+
+MCA_BASE_FRAMEWORK_DECLARE(ompi, pml, "OMPI PML", mca_pml_base_register,
+                           mca_pml_base_open, mca_pml_base_close,
+                           mca_pml_base_static_components, 0);

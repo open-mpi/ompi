@@ -7,6 +7,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2012-2013 Los Alamos National Security, LLC.
+ *                         All rights reserved
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -29,7 +31,6 @@
 /*
  * Globals
  */
-OMPI_DECLSPEC int  ompi_pubsub_base_output  = -1;
 OMPI_DECLSPEC ompi_pubsub_base_module_t ompi_pubsub={
     NULL,
     ompi_pubsub_base_null_publish,
@@ -37,27 +38,27 @@ OMPI_DECLSPEC ompi_pubsub_base_module_t ompi_pubsub={
     ompi_pubsub_base_null_lookup,
     NULL
 };
-opal_list_t ompi_pubsub_base_components_available;
-ompi_pubsub_base_component_t ompi_pubsub_base_selected_component;
+
+static int ompi_pubsub_base_close(void)
+{
+    /* Close the selected component */
+    if( NULL != ompi_pubsub.finalize ) {
+        ompi_pubsub.finalize();
+    }
+
+    return mca_base_framework_components_close(&ompi_pubsub_base_framework, NULL);
+}
 
 /**
  * Function for finding and opening either all MCA components,
  * or the one that was specifically requested via a MCA parameter.
  */
-int ompi_pubsub_base_open(void)
+static int ompi_pubsub_base_open(mca_base_open_flag_t flags)
 {
-    /* Debugging/Verbose output */
-    ompi_pubsub_base_output = opal_output_open(NULL);
-
-    /* Open up all available components */
-    if (OPAL_SUCCESS !=
-        mca_base_components_open("pubsub", 
-                                 ompi_pubsub_base_output, 
-                                 mca_pubsub_base_static_components,
-                                 &ompi_pubsub_base_components_available,
-                                 true)) {
-        return OMPI_ERROR;
-    }
-    
-    return OMPI_SUCCESS;
+     /* Open up all available components */
+    return mca_base_framework_components_open(&ompi_pubsub_base_framework, flags);
 }
+
+MCA_BASE_FRAMEWORK_DECLARE(ompi, pubsub, "OMPI Publish-Subscribe Subsystem", NULL,
+                           ompi_pubsub_base_open, ompi_pubsub_base_close,
+                           mca_pubsub_base_static_components, 0);

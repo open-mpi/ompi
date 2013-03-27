@@ -40,19 +40,6 @@
  */
 #include "ompi/mca/op/base/static-components.h"
 
-
-/*
- * Globals
- */
-int ompi_op_base_output = -1;
-bool ompi_op_base_components_opened_valid = false;
-opal_list_t ompi_op_base_components_opened;
-
-/*
- * Locals
- */
-static int ompi_op_base_verbose;
-
 static void module_constructor(ompi_op_base_module_t *m)
 {
     m->opm_enable = NULL;
@@ -74,45 +61,5 @@ OBJ_CLASS_INSTANCE(ompi_op_base_module_t, opal_object_t,
 OBJ_CLASS_INSTANCE(ompi_op_base_module_1_0_0_t, opal_object_t, 
                    module_constructor_1_0_0, NULL);
 
-static int ompi_op_base_register(int flags)
-{
-    /* Debugging / verbose output */
-    ompi_op_base_verbose = 0;
-    (void) mca_base_var_register("ompi", "op", "base", "verbose",
-                                 "Verbosity level of the op framework",
-                                 MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
-                                 OPAL_INFO_LVL_9,
-                                 MCA_BASE_VAR_SCOPE_READONLY,
-                                 &ompi_op_base_verbose);
-
-    return OMPI_SUCCESS;
-}
-
-/*
- * Function for finding and opening either all MCA components, or the one
- * that was specifically requested via a MCA parameter.
- */
-int ompi_op_base_open(void)
-{
-    (void) ompi_op_base_register(0);
-
-    if (0 != ompi_op_base_verbose) {
-        ompi_op_base_output = opal_output_open(NULL);
-    } else {
-        ompi_op_base_output = -1;
-    }
-
-    /* Open up all available components */
-
-    if (OPAL_SUCCESS !=
-        mca_base_components_open("op", ompi_op_base_output,
-                                 mca_op_base_static_components,
-                                 &ompi_op_base_components_opened, true)) {
-        return OPAL_ERROR;
-    }
-    ompi_op_base_components_opened_valid = true;
-
-    /* All done */
-
-    return OPAL_SUCCESS;
-}
+MCA_BASE_FRAMEWORK_DECLARE(ompi, op, NULL, NULL, NULL, NULL,
+                           mca_op_base_static_components, 0);

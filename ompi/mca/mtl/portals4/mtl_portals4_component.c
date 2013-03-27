@@ -64,7 +64,7 @@ mca_mtl_base_component_2_0_0_t mca_mtl_portals4_component = {
     ompi_mtl_portals4_component_init,  /* component init */
 };
 
-static int mca_base_var_enum_value_t long_protocol_values[] = {
+static mca_base_var_enum_value_t long_protocol_values[] = {
     {eager, "eager"},
     {rndv, "rndv"},
     {0, NULL}
@@ -162,7 +162,7 @@ ompi_mtl_portals4_component_register(void)
                                            &ompi_mtl_portals4.protocol);
     OBJ_RELEASE(new_enum);
     if (OPAL_SUCCESS != ret) {
-        opal_output(ompi_mtl_base_output, "Unknown protocol");
+        opal_output(ompi_mtl_base_framework.framework_output, "Unknown protocol");
         return OMPI_ERR_NOT_SUPPORTED;
     }
 
@@ -172,18 +172,18 @@ ompi_mtl_portals4_component_register(void)
 static int
 ompi_mtl_portals4_component_open(void)
 {
-    int i;
+    unsigned int i;
     uint64_t fixed_md_nb;
 
     ompi_mtl_portals4.base.mtl_request_size = 
         sizeof(ompi_mtl_portals4_request_t) -
         sizeof(struct mca_mtl_request_t);
 
-    if (ompi_mtl_portals4_md_size_bit_width < tmp) ompi_mtl_portals4_md_size_bit_width = 48;
+    if (48 < ompi_mtl_portals4_md_size_bit_width) ompi_mtl_portals4_md_size_bit_width = 48;
     ompi_mtl_portals4.fixed_md_distance = (unsigned long int) 1<<ompi_mtl_portals4_md_size_bit_width;
-    opal_output_verbose(1, ompi_mtl_base_output,
+    opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                         "fixed_md_distance=%16.16lx\n", ompi_mtl_portals4.fixed_md_distance);
-    opal_output_verbose(1, ompi_mtl_base_output,
+    opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                         "Flow control: "
 #if OMPI_MTL_PORTALS4_FLOW_CONTROL
                         "yes"
@@ -191,17 +191,17 @@ ompi_mtl_portals4_component_open(void)
                         "no"
 #endif
                         );
-    opal_output_verbose(1, ompi_mtl_base_output,
+    opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                         "Eager limit: %d", (int) 
                         ompi_mtl_portals4.eager_limit);
-    opal_output_verbose(1, ompi_mtl_base_output, 
+    opal_output_verbose(1, ompi_mtl_base_framework.framework_output, 
                         "Short receive blocks: %d", 
                         ompi_mtl_portals4.recv_short_num);
-    opal_output_verbose(1, ompi_mtl_base_output, 
+    opal_output_verbose(1, ompi_mtl_base_framework.framework_output, 
                         "Send queue size: %d", ompi_mtl_portals4.send_queue_size);
-    opal_output_verbose(1, ompi_mtl_base_output, 
+    opal_output_verbose(1, ompi_mtl_base_framework.framework_output, 
                         "Recv queue size: %d", ompi_mtl_portals4.recv_queue_size);
-    opal_output_verbose(1, ompi_mtl_base_output, 
+    opal_output_verbose(1, ompi_mtl_base_framework.framework_output, 
                         "Long protocol: %s", 
                         (ompi_mtl_portals4.protocol == eager) ? "Eager" :
                         (ompi_mtl_portals4.protocol == rndv) ? "Rendezvous" :
@@ -257,7 +257,7 @@ ompi_mtl_portals4_component_init(bool enable_progress_threads,
     /* Initialize Portals and create a physical, matching interface */
     ret = PtlInit();
     if (PTL_OK != ret) {
-        opal_output_verbose(1, ompi_mtl_base_output,
+        opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                             "%s:%d: PtlInit failed: %d\n",
                             __FILE__, __LINE__, ret);
         return NULL;
@@ -270,7 +270,7 @@ ompi_mtl_portals4_component_init(bool enable_progress_threads,
                     NULL,
                     &ompi_mtl_portals4.ni_h);
     if (PTL_OK != ret) {
-        opal_output_verbose(1, ompi_mtl_base_output,
+        opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                             "%s:%d: PtlNIInit failed: %d\n",
                             __FILE__, __LINE__, ret);
         goto error;
@@ -279,7 +279,7 @@ ompi_mtl_portals4_component_init(bool enable_progress_threads,
     /* Publish our NID/PID in the modex */
     ret = PtlGetId(ompi_mtl_portals4.ni_h, &id);
     if (PTL_OK != ret) {
-        opal_output_verbose(1, ompi_mtl_base_output,
+        opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                             "%s:%d: PtlGetId failed: %d\n",
                             __FILE__, __LINE__, ret);
         goto error;
@@ -288,13 +288,13 @@ ompi_mtl_portals4_component_init(bool enable_progress_threads,
     ret = ompi_modex_send(&mca_mtl_portals4_component.mtl_version,
                           &id, sizeof(id));
     if (OMPI_SUCCESS != ret) {
-        opal_output_verbose(1, ompi_mtl_base_output,
+        opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                             "%s:%d: ompi_modex_send failed: %d\n",
                             __FILE__, __LINE__, ret);
         goto error;
     }
 
-    OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_output,
+    OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_framework.framework_output,
                          "My nid,pid = %x,%x",
                          id.phys.nid, id.phys.pid));
 
@@ -303,7 +303,7 @@ ompi_mtl_portals4_component_init(bool enable_progress_threads,
                      ompi_mtl_portals4.send_queue_size,
                      &ompi_mtl_portals4.send_eq_h);
     if (PTL_OK != ret) {
-        opal_output_verbose(1, ompi_mtl_base_output,
+        opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                             "%s:%d: PtlEQAlloc failed: %d\n",
                             __FILE__, __LINE__, ret);
         goto error;
@@ -312,7 +312,7 @@ ompi_mtl_portals4_component_init(bool enable_progress_threads,
                      ompi_mtl_portals4.recv_queue_size,
                      &ompi_mtl_portals4.recv_eq_h);
     if (PTL_OK != ret) {
-        opal_output_verbose(1, ompi_mtl_base_output,
+        opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                             "%s:%d: PtlEQAlloc failed: %d\n",
                             __FILE__, __LINE__, ret);
         goto error;
@@ -327,7 +327,7 @@ ompi_mtl_portals4_component_init(bool enable_progress_threads,
                      REQ_RECV_TABLE_ID,
                      &ompi_mtl_portals4.recv_idx);
     if (PTL_OK != ret) {
-        opal_output_verbose(1, ompi_mtl_base_output,
+        opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                             "%s:%d: PtlPTAlloc failed: %d\n",
                             __FILE__, __LINE__, ret);
         goto error;
@@ -339,7 +339,7 @@ ompi_mtl_portals4_component_init(bool enable_progress_threads,
                      REQ_READ_TABLE_ID,
                      &ompi_mtl_portals4.read_idx);
     if (PTL_OK != ret) {
-        opal_output_verbose(1, ompi_mtl_base_output,
+        opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                             "%s:%d: PtlPTAlloc failed: %d\n",
                             __FILE__, __LINE__, ret);
         goto error;
@@ -356,7 +356,7 @@ ompi_mtl_portals4_component_init(bool enable_progress_threads,
                     &md,
                     &ompi_mtl_portals4.zero_md_h); 
     if (PTL_OK != ret) {
-        opal_output_verbose(1, ompi_mtl_base_output,
+        opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                             "%s:%d: PtlMDBind failed: %d\n",
                             __FILE__, __LINE__, ret);
         goto error;
@@ -365,14 +365,14 @@ ompi_mtl_portals4_component_init(bool enable_progress_threads,
     /* bind fixed md across all of memory */
 
     if (ompi_mtl_portals4.fixed_md_distance) {
-        int i;
+        unsigned int i;
         uint64_t fixed_md_nb, fixed_md_distance;
 
         fixed_md_distance = ompi_mtl_portals4.fixed_md_distance;
         if (MEMORY_MAX_SIZE > fixed_md_distance) fixed_md_nb = MEMORY_MAX_SIZE/fixed_md_distance;
         else fixed_md_nb = 1;
 
-        opal_output_verbose(1, ompi_mtl_base_output, "Fixed MDs :\n");
+        opal_output_verbose(1, ompi_mtl_base_framework.framework_output, "Fixed MDs :\n");
 
         /* Bind the fixed MDs */
         for (i=0; i<fixed_md_nb; i++) {
@@ -380,7 +380,7 @@ ompi_mtl_portals4_component_init(bool enable_progress_threads,
             /* if the most significant bit of the address space is set, set the extended address bits */
             if (offset & (MEMORY_MAX_SIZE >> 1)) offset += EXTENDED_ADDR;
 
-            opal_output_verbose(1, ompi_mtl_base_output, "                %2d: [ %16lx - %16lx ]\n", i, offset, offset + fixed_md_distance - 2);
+            opal_output_verbose(1, ompi_mtl_base_framework.framework_output, "                %2d: [ %16lx - %16lx ]\n", i, offset, offset + fixed_md_distance - 2);
 
             md.start     = (char *) offset;
             md.length    = fixed_md_distance - 1;
@@ -392,14 +392,14 @@ ompi_mtl_portals4_component_init(bool enable_progress_threads,
                             &md,
                             &ompi_mtl_portals4.fixed_md_h[i]); 
             if (PTL_OK != ret) {
-                opal_output_verbose(1, ompi_mtl_base_output,
+                opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                                     "%s:%d: PtlMDBind failed: %d\n",
                                     __FILE__, __LINE__, ret);
                 goto error;
             }
         }
     }
-    else opal_output_verbose(1, ompi_mtl_base_output, "No fixed MD\n");
+    else opal_output_verbose(1, ompi_mtl_base_framework.framework_output, "No fixed MD\n");
 
     /* Handle long overflows */
     me.start = NULL;
@@ -424,7 +424,7 @@ ompi_mtl_portals4_component_init(bool enable_progress_threads,
                       NULL,
                       &ompi_mtl_portals4.long_overflow_me_h);
     if (PTL_OK != ret) {
-        opal_output_verbose(1, ompi_mtl_base_output,
+        opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                             "%s:%d: PtlMEAppend failed: %d\n",
                             __FILE__, __LINE__, ret);
         goto error;
@@ -433,7 +433,7 @@ ompi_mtl_portals4_component_init(bool enable_progress_threads,
     /* attach short unex recv blocks */
     ret = ompi_mtl_portals4_recv_short_init();
     if (OMPI_SUCCESS != ret) {
-        opal_output_verbose(1, ompi_mtl_base_output,
+        opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                             "%s:%d: short receive block initialization failed: %d\n",
                             __FILE__, __LINE__, ret);
         goto error;
@@ -447,7 +447,7 @@ ompi_mtl_portals4_component_init(bool enable_progress_threads,
 #if OMPI_MTL_PORTALS4_FLOW_CONTROL
     ret = ompi_mtl_portals4_flowctl_init();
     if (OMPI_SUCCESS != ret) {
-        opal_output_verbose(1, ompi_mtl_base_output,
+        opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                             "%s:%d: ompi_mtl_portals4_flowctl_init failed: %d\n",
                             __FILE__, __LINE__, ret);
         goto error;
@@ -457,7 +457,7 @@ ompi_mtl_portals4_component_init(bool enable_progress_threads,
     /* activate progress callback */
     ret = opal_progress_register(ompi_mtl_portals4_progress);
     if (OMPI_SUCCESS != ret) {
-        opal_output_verbose(1, ompi_mtl_base_output,
+        opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                             "%s:%d: opal_progress_register failed: %d\n",
                             __FILE__, __LINE__, ret);
         goto error;
@@ -570,7 +570,7 @@ ompi_mtl_portals4_progress(void)
     while (true) {
 	ret = PtlEQPoll(ompi_mtl_portals4.eqs_h, 2, 0, &ev, &which);
         if (PTL_OK == ret) {
-            OPAL_OUTPUT_VERBOSE((60, ompi_mtl_base_output,
+            OPAL_OUTPUT_VERBOSE((60, ompi_mtl_base_framework.framework_output,
                                  "Found event of type %d\n", ev.type));
             count++;
             switch (ev.type) {
@@ -588,7 +588,7 @@ ompi_mtl_portals4_progress(void)
                     ptl_request = ev.user_ptr;
                     ret = ptl_request->event_callback(&ev, ptl_request);
                     if (OMPI_SUCCESS != ret) {
-                        opal_output(ompi_mtl_base_output,
+                        opal_output(ompi_mtl_base_framework.framework_output,
                                     "Error returned from target event callback: %d", ret);
                         abort();
                     }
@@ -597,18 +597,18 @@ ompi_mtl_portals4_progress(void)
 
             case PTL_EVENT_PT_DISABLED:
 #if OMPI_MTL_PORTALS4_FLOW_CONTROL
-                OPAL_OUTPUT_VERBOSE((10, ompi_mtl_base_output,
+                OPAL_OUTPUT_VERBOSE((10, ompi_mtl_base_framework.framework_output,
                                      "Received PT_DISABLED event on pt %d\n",
                                      (int) ev.pt_index));
                 ret = ompi_mtl_portals4_flowctl_trigger();
                 if (OMPI_SUCCESS != ret) {
-                    opal_output_verbose(1, ompi_mtl_base_output,
+                    opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                                         "%s:%d: flowctl_trigger() failed: %d\n",
                                         __FILE__, __LINE__, ret);
                     abort();
                 }
 #else
-                opal_output(ompi_mtl_base_output,
+                opal_output(ompi_mtl_base_framework.framework_output,
                             "Flow control situation without recovery (PT_DISABLED)");
                 abort();
 #endif
@@ -619,18 +619,18 @@ ompi_mtl_portals4_progress(void)
             case PTL_EVENT_FETCH_ATOMIC_OVERFLOW:
             case PTL_EVENT_ATOMIC:
             case PTL_EVENT_ATOMIC_OVERFLOW:
-                opal_output(ompi_mtl_base_output,
+                opal_output(ompi_mtl_base_framework.framework_output,
                             "Unexpected event of type %d", ev.type);
             }
         } else if (PTL_EQ_EMPTY == ret) {
             break;
         } else if (PTL_EQ_DROPPED == ret) {
-            opal_output(ompi_mtl_base_output,
+            opal_output(ompi_mtl_base_framework.framework_output,
                         "Flow control situation without recovery (EQ_DROPPED): %d",
                         which);
             abort();
         } else {
-            opal_output(ompi_mtl_base_output,
+            opal_output(ompi_mtl_base_framework.framework_output,
                         "Error returned from PtlEQGet: %d", ret);
             break;
         }

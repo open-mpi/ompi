@@ -21,8 +21,7 @@ headers += \
         base/base.h
 
 libmca_fbtl_la_SOURCES += \
-        base/fbtl_base_close.c \
+        base/fbtl_base_frame.c \
         base/fbtl_base_file_select.c \
         base/fbtl_base_file_unselect.c \
-        base/fbtl_base_find_available.c \
-        base/fbtl_base_open.c
+        base/fbtl_base_find_available.c

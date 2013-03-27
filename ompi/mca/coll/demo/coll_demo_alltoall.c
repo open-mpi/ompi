@@ -41,7 +41,7 @@ int mca_coll_demo_alltoall_intra(void *sbuf, int scount,
                                  mca_coll_base_module_t *module)
 {
     mca_coll_demo_module_t *demo_module = (mca_coll_demo_module_t*) module;
-    opal_output_verbose(10, mca_coll_base_output, "In demo alltoall_intra\n");
+    opal_output_verbose(10, ompi_coll_base_framework.framework_output, "In demo alltoall_intra\n");
     return demo_module->underlying.coll_alltoall(sbuf, scount, sdtype,
                                                  rbuf, rcount, rdtype, 
                                                  comm,
@@ -64,7 +64,7 @@ int mca_coll_demo_alltoall_inter(void *sbuf, int scount,
                                  mca_coll_base_module_t *module)
 {
     mca_coll_demo_module_t *demo_module = (mca_coll_demo_module_t*) module;
-    opal_output_verbose(10, mca_coll_base_output, "In demo alltoall_inter\n");
+    opal_output_verbose(10, ompi_coll_base_framework.framework_output, "In demo alltoall_inter\n");
     return demo_module->underlying.coll_alltoall(sbuf, scount, sdtype,
                                                  rbuf, rcount, rdtype, 
                                                  comm,

@@ -23,6 +23,7 @@
 #include "ompi_config.h"
 
 #include "opal/mca/mca.h"
+#include "opal/mca/base/mca_base_framework.h"
 #include "ompi/mca/bml/bml.h"
 
 
@@ -46,10 +47,8 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_bml_base_selected_module_t);
  * Global functions for MCA: overall BTL open and close
  */
 
-OMPI_DECLSPEC  int mca_bml_base_open(void);
 OMPI_DECLSPEC  int mca_bml_base_init(bool enable_progress_threads, 
                                      bool enable_mpi_threads);
-OMPI_DECLSPEC  int mca_bml_base_close(void);
 OMPI_DECLSPEC  bool mca_bml_base_inited(void);
 
 OMPI_DECLSPEC  int mca_bml_base_ft_event(int state);
@@ -58,11 +57,9 @@ OMPI_DECLSPEC  int mca_bml_base_ft_event(int state);
 /*
  * Globals
  */
-extern int mca_bml_base_already_opened;
-OMPI_DECLSPEC extern int mca_bml_base_output;
 OMPI_DECLSPEC extern mca_bml_base_component_t mca_bml_component;
-OMPI_DECLSPEC extern opal_list_t mca_bml_base_components_available; 
 OMPI_DECLSPEC extern mca_bml_base_module_t mca_bml; 
+OMPI_DECLSPEC extern mca_base_framework_t ompi_bml_base_framework;
 
 END_C_DECLS
 #endif /* MCA_BML_BASE_H */

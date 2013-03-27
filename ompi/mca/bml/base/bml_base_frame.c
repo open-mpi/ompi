@@ -28,8 +28,13 @@
 #include "ompi/mca/bml/base/static-components.h"
 #include "opal/mca/base/base.h"
 
-int mca_bml_base_already_opened = 0;
-opal_list_t mca_bml_base_components_available = {{0}};
+static int mca_bml_base_register(mca_base_register_flag_t flags);
+static int mca_bml_base_open(mca_base_open_flag_t flags);
+static int mca_bml_base_close(void);
+
+MCA_BASE_FRAMEWORK_DECLARE(ompi, bml, "BTL Multiplexing Layer", mca_bml_base_register,
+                           mca_bml_base_open, mca_bml_base_close, mca_bml_base_static_components,
+                           0);
 
 #if OPAL_ENABLE_DEBUG_RELIABILITY
 int mca_bml_base_error_rate_floor;
@@ -38,7 +43,7 @@ int mca_bml_base_error_count;
 static bool mca_bml_base_srand;
 #endif
 
-int mca_bml_base_register(int flags)
+static int mca_bml_base_register(mca_base_register_flag_t flags)
 {
 #if OPAL_ENABLE_DEBUG_RELIABILITY
     do {
@@ -77,20 +82,13 @@ int mca_bml_base_register(int flags)
     return OMPI_SUCCESS;
 }
 
-int mca_bml_base_open(void) 
+static int mca_bml_base_open(mca_base_open_flag_t flags) 
 {
-    /* See if we've already been here */
-    if (++mca_bml_base_already_opened > 1) {
-        return OMPI_SUCCESS;
-    }
-
-    (void) mca_bml_base_register(0);
+    int ret;
 
     if(OMPI_SUCCESS !=
-       mca_base_components_open("bml", 0, mca_bml_base_static_components, 
-                                &mca_bml_base_components_available, 
-                                true)) {  
-        return OMPI_ERROR; 
+       (ret = mca_base_framework_components_open(&ompi_bml_base_framework, flags))) {
+        return ret;
     }
 
 #if OPAL_ENABLE_DEBUG_RELIABILITY
@@ -108,6 +106,10 @@ int mca_bml_base_open(void)
     }
 #endif
 
-    return mca_btl_base_open(); 
+    return mca_base_framework_open(&ompi_btl_base_framework, 0);
 }
 
+static int mca_bml_base_close( void )
+{
+  return mca_base_framework_close(&ompi_btl_base_framework);
+}

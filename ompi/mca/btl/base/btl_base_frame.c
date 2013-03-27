@@ -70,26 +70,14 @@ OBJ_CLASS_INSTANCE(
 /*
  * Global variables
  */
-int mca_btl_base_output = -1;
 char* mca_btl_base_include = NULL;
 char* mca_btl_base_exclude = NULL;
 int mca_btl_base_warn_component_unused = 1;
-opal_list_t mca_btl_base_components_opened;
 opal_list_t mca_btl_base_modules_initialized;
-int mca_btl_base_already_opened = 0;
 bool mca_btl_base_thread_multiple_override = false;
 
-static int mca_btl_base_register(int flags)
+static int mca_btl_base_register(mca_base_register_flag_t flags)
 {
-    mca_btl_base_verbose = 0;
-    (void) mca_base_var_register("ompi", "btl", "base", "verbose",
-                                 "Verbosity level of the BTL framework",
-                                 MCA_BASE_VAR_TYPE_INT, NULL, 0,
-                                 MCA_BASE_VAR_FLAG_SETTABLE,
-                                 OPAL_INFO_LVL_9,
-                                 MCA_BASE_VAR_SCOPE_LOCAL,
-                                 &mca_btl_base_verbose);
-
     /* Override the per-BTL "don't run if THREAD_MULTIPLE selected"
        embargo? */
     mca_btl_base_thread_multiple_override = false;
@@ -125,23 +113,15 @@ static int mca_btl_base_register(int flags)
  * Function for finding and opening either all MCA components, or the one
  * that was specifically requested via a MCA parameter.
  */
-int mca_btl_base_open(void)
+static int mca_btl_base_open(mca_base_open_flag_t flags)
 {
-    int i;
-    if( ++mca_btl_base_already_opened > 1 ) return OMPI_SUCCESS;
-
-    (void) mca_btl_base_register(0);
-
-    /* Verbose output */
-    mca_btl_base_output = opal_output_open(NULL);
-    opal_output_set_verbosity(mca_btl_base_output, mca_btl_base_verbose);
+    int ret;
 
     /* Open up all available components */
     
     if (OMPI_SUCCESS != 
-        mca_base_components_open("btl", mca_btl_base_output, mca_btl_base_static_components,
-                                 &mca_btl_base_components_opened, true)) {
-        return OMPI_ERROR;
+        (ret = mca_base_framework_components_open(&ompi_btl_base_framework, flags))) {
+        return ret;
     }
 
   /* Initialize the list so that in mca_btl_base_close(), we can
@@ -153,3 +133,39 @@ int mca_btl_base_open(void)
   /* All done */
   return OMPI_SUCCESS;
 }
+
+static int mca_btl_base_close(void)
+{
+    mca_btl_base_selected_module_t *sm;
+
+#if 0
+    /* disable event processing while cleaning up btls */
+    opal_event_disable();
+#endif
+    /* Finalize all the btl components and free their list items */
+
+    OPAL_LIST_FOREACH(sm, &mca_btl_base_modules_initialized, mca_btl_base_selected_module_t) {
+        /* Blatently ignore the return code (what would we do to recover,
+           anyway?  This component is going away, so errors don't matter
+           anymore) */
+
+        sm->btl_module->btl_finalize(sm->btl_module);
+        free(sm);
+    }
+
+    /* Close all remaining opened components (may be one if this is a
+       OMPI RTE program, or [possibly] multiple if this is ompi_info) */
+
+    (void) mca_base_framework_components_close(&ompi_btl_base_framework, NULL);
+
+#if 0
+    /* restore event processing */
+    opal_event_enable();
+#endif
+    /* All done */
+    return OMPI_SUCCESS;
+}
+
+MCA_BASE_FRAMEWORK_DECLARE(ompi, btl, "Byte Transport Layer", mca_btl_base_register,
+                           mca_btl_base_open, mca_btl_base_close, mca_btl_base_static_components,
+                           0);

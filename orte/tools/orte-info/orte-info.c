@@ -39,6 +39,7 @@
 #include "opal/class/opal_object.h"
 #include "opal/class/opal_pointer_array.h"
 #include "opal/runtime/opal.h"
+#include "opal/runtime/opal_info_support.h"
 #include "opal/util/cmd_line.h"
 #include "opal/util/error.h"
 #include "opal/util/argv.h"
@@ -195,48 +196,9 @@ int main(int argc, char *argv[])
     /* setup the mca_types array */
     OBJ_CONSTRUCT(&mca_types, opal_pointer_array_t);
     opal_pointer_array_init(&mca_types, 256, INT_MAX, 128);
-    
-    opal_pointer_array_add(&mca_types, "mca");
-    opal_pointer_array_add(&mca_types, "orte");
-    opal_pointer_array_add(&mca_types, "opal");
-    
-    opal_pointer_array_add(&mca_types, "filter");
-    opal_pointer_array_add(&mca_types, "backtrace");
-    opal_pointer_array_add(&mca_types, "memchecker");
-    opal_pointer_array_add(&mca_types, "memory");
-    opal_pointer_array_add(&mca_types, "paffinity");
-    opal_pointer_array_add(&mca_types, "carto");
-    opal_pointer_array_add(&mca_types, "shmem");
-    opal_pointer_array_add(&mca_types, "maffinity");
-    opal_pointer_array_add(&mca_types, "timer");
-    opal_pointer_array_add(&mca_types, "installdirs");
-#if OPAL_HAVE_HWLOC
-    opal_pointer_array_add(&mca_types, "hwloc");
-#endif
-#if OPAL_ENABLE_FT_CR == 1
-    opal_pointer_array_add(&mca_types, "crs");
-#endif
-    opal_pointer_array_add(&mca_types, "if");
-    opal_pointer_array_add(&mca_types, "event");
-    
-    opal_pointer_array_add(&mca_types, "iof");
-    opal_pointer_array_add(&mca_types, "oob");
-    opal_pointer_array_add(&mca_types, "odls");
-    opal_pointer_array_add(&mca_types, "ras");
-    opal_pointer_array_add(&mca_types, "rmaps");
-    opal_pointer_array_add(&mca_types, "rml");
-    opal_pointer_array_add(&mca_types, "routed");
-    opal_pointer_array_add(&mca_types, "plm");
-#if OPAL_ENABLE_FT_CR == 1
-    opal_pointer_array_add(&mca_types, "snapc");
-#endif
-    opal_pointer_array_add(&mca_types, "sensor");
-    opal_pointer_array_add(&mca_types, "filem");
-    opal_pointer_array_add(&mca_types, "state");
-    opal_pointer_array_add(&mca_types, "errmgr");
-    opal_pointer_array_add(&mca_types, "ess");
-    opal_pointer_array_add(&mca_types, "grpcomm");
-    opal_pointer_array_add(&mca_types, "db");
+     
+    opal_info_register_types(&mca_types);
+    orte_info_register_types(&mca_types);
     
     /* Execute the desired action(s) */
     

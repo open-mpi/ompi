@@ -148,7 +148,6 @@ void orte_info_show_component_version(const char *type_name,
     }
     
     /* Check to see if the type is valid */
-    
     for (found = false, j = 0; j < mca_types.size; ++j) {
         if (NULL == (pos = (char*)opal_pointer_array_get_item(&mca_types, j))) {
             continue;

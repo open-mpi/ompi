@@ -148,7 +148,7 @@ static int connect_accept ( ompi_communicator_t *comm, int root,
     opal_list_item_t *item;
     orte_namelist_t *nm;
 
-    OPAL_OUTPUT_VERBOSE((1, ompi_dpm_base_output,
+    OPAL_OUTPUT_VERBOSE((1, ompi_dpm_base_framework.framework_output,
                          "%s dpm:orte:connect_accept with port %s %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          port_string, send_first ? "sending first" : "recv first"));
@@ -275,7 +275,7 @@ static int connect_accept ( ompi_communicator_t *comm, int root,
                     goto exit;
                 }
                 
-                OPAL_OUTPUT_VERBOSE((3, ompi_dpm_base_output,
+                OPAL_OUTPUT_VERBOSE((3, ompi_dpm_base_framework.framework_output,
                                      "%s dpm:orte:connect_accept adding %s to proc list",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                      ORTE_NAME_PRINT(&proc_list[i]->proc_name)));
@@ -308,13 +308,13 @@ static int connect_accept ( ompi_communicator_t *comm, int root,
 
         /* Exchange the number and the list of processes in the groups */
         if ( send_first ) {
-            OPAL_OUTPUT_VERBOSE((3, ompi_dpm_base_output,
+            OPAL_OUTPUT_VERBOSE((3, ompi_dpm_base_framework.framework_output,
                                  "%s dpm:orte:connect_accept sending first to %s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  ORTE_NAME_PRINT(&port)));
             rc = orte_rml.send_buffer(&port, nbuf, tag, 0);
             /* setup to recv */
-            OPAL_OUTPUT_VERBOSE((3, ompi_dpm_base_output,
+            OPAL_OUTPUT_VERBOSE((3, ompi_dpm_base_framework.framework_output,
                                  "%s dpm:orte:connect_accept waiting for response",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
             waiting_for_recv = true;
@@ -322,13 +322,13 @@ static int connect_accept ( ompi_communicator_t *comm, int root,
                                          ORTE_RML_NON_PERSISTENT, recv_cb, NULL);
             /* wait for response */
             ORTE_WAIT_FOR_COMPLETION(waiting_for_recv);
-            OPAL_OUTPUT_VERBOSE((3, ompi_dpm_base_output,
+            OPAL_OUTPUT_VERBOSE((3, ompi_dpm_base_framework.framework_output,
                                  "%s dpm:orte:connect_accept got data from %s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  ORTE_NAME_PRINT(&carport)));
             
         } else {
-            OPAL_OUTPUT_VERBOSE((3, ompi_dpm_base_output,
+            OPAL_OUTPUT_VERBOSE((3, ompi_dpm_base_framework.framework_output,
                                  "%s dpm:orte:connect_accept recving first",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
             /* setup to recv */
@@ -338,7 +338,7 @@ static int connect_accept ( ompi_communicator_t *comm, int root,
             /* wait for response */
             ORTE_WAIT_FOR_COMPLETION(waiting_for_recv);
             /* now send our info */
-            OPAL_OUTPUT_VERBOSE((3, ompi_dpm_base_output,
+            OPAL_OUTPUT_VERBOSE((3, ompi_dpm_base_framework.framework_output,
                                  "%s dpm:orte:connect_accept sending info to %s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  ORTE_NAME_PRINT(&carport)));
@@ -359,7 +359,7 @@ static int connect_accept ( ompi_communicator_t *comm, int root,
     rnamebuflen_int = (int)rnamebuflen;
 
     /* bcast the buffer-length to all processes in the local comm */
-    OPAL_OUTPUT_VERBOSE((3, ompi_dpm_base_output,
+    OPAL_OUTPUT_VERBOSE((3, ompi_dpm_base_framework.framework_output,
                          "%s dpm:orte:connect_accept bcast buffer length",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     rc = comm->c_coll.coll_bcast (&rnamebuflen_int, 1, MPI_INT, root, comm,
@@ -383,7 +383,7 @@ static int connect_accept ( ompi_communicator_t *comm, int root,
        adds processes, which were not known yet to our
        process pool.
     */
-    OPAL_OUTPUT_VERBOSE((3, ompi_dpm_base_output,
+    OPAL_OUTPUT_VERBOSE((3, ompi_dpm_base_framework.framework_output,
                          "%s dpm:orte:connect_accept bcast proc list",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     rc = comm->c_coll.coll_bcast (rnamebuf, rnamebuflen_int, MPI_BYTE, root, comm,
@@ -419,7 +419,7 @@ static int connect_accept ( ompi_communicator_t *comm, int root,
         goto exit;
     }
 
-    OPAL_OUTPUT_VERBOSE((3, ompi_dpm_base_output,
+    OPAL_OUTPUT_VERBOSE((3, ompi_dpm_base_framework.framework_output,
                          "%s dpm:orte:connect_accept unpacked %d new procs",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), new_proc_len));
     
@@ -445,7 +445,7 @@ static int connect_accept ( ompi_communicator_t *comm, int root,
                 name = OBJ_NEW(orte_namelist_t);
                 name->name = rprocs[i]->proc_name;
                 opal_list_append(&all_procs, &name->super);
-                OPAL_OUTPUT_VERBOSE((3, ompi_dpm_base_output,
+                OPAL_OUTPUT_VERBOSE((3, ompi_dpm_base_framework.framework_output,
                                      "%s dpm:orte:connect_accept send first adding %s to allgather list",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                      ORTE_NAME_PRINT(&name->name)));
@@ -454,7 +454,7 @@ static int connect_accept ( ompi_communicator_t *comm, int root,
                 name = OBJ_NEW(orte_namelist_t);
                 name->name = ompi_group_peer_lookup(group, i)->proc_name;
                 opal_list_append(&all_procs, &name->super);
-                OPAL_OUTPUT_VERBOSE((3, ompi_dpm_base_output,
+                OPAL_OUTPUT_VERBOSE((3, ompi_dpm_base_framework.framework_output,
                                      "%s dpm:orte:connect_accept send first adding %s to allgather list",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                      ORTE_NAME_PRINT(&name->name)));
@@ -465,7 +465,7 @@ static int connect_accept ( ompi_communicator_t *comm, int root,
                 name = OBJ_NEW(orte_namelist_t);
                 name->name = ompi_group_peer_lookup(group, i)->proc_name;
                 opal_list_append(&all_procs, &name->super);
-                OPAL_OUTPUT_VERBOSE((3, ompi_dpm_base_output,
+                OPAL_OUTPUT_VERBOSE((3, ompi_dpm_base_framework.framework_output,
                                      "%s dpm:orte:connect_accept recv first adding %s to allgather list",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                      ORTE_NAME_PRINT(&name->name)));
@@ -474,7 +474,7 @@ static int connect_accept ( ompi_communicator_t *comm, int root,
                 name = OBJ_NEW(orte_namelist_t);
                 name->name = rprocs[i]->proc_name;
                 opal_list_append(&all_procs, &name->super);
-                OPAL_OUTPUT_VERBOSE((3, ompi_dpm_base_output,
+                OPAL_OUTPUT_VERBOSE((3, ompi_dpm_base_framework.framework_output,
                                      "%s dpm:orte:connect_accept recv first adding %s to allgather list",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                      ORTE_NAME_PRINT(&name->name)));
@@ -482,7 +482,7 @@ static int connect_accept ( ompi_communicator_t *comm, int root,
 
         }
 
-        OPAL_OUTPUT_VERBOSE((3, ompi_dpm_base_output,
+        OPAL_OUTPUT_VERBOSE((3, ompi_dpm_base_framework.framework_output,
                              "%s dpm:orte:connect_accept executing modex",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
@@ -509,7 +509,7 @@ static int connect_accept ( ompi_communicator_t *comm, int root,
         }
         OBJ_DESTRUCT(&modex);
 
-        OPAL_OUTPUT_VERBOSE((3, ompi_dpm_base_output,
+        OPAL_OUTPUT_VERBOSE((3, ompi_dpm_base_framework.framework_output,
                              "%s dpm:orte:connect_accept modex complete",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
@@ -520,7 +520,7 @@ static int connect_accept ( ompi_communicator_t *comm, int root,
           OBJ_DESTRUCT(&all_procs);
         */
 
-        OPAL_OUTPUT_VERBOSE((3, ompi_dpm_base_output,
+        OPAL_OUTPUT_VERBOSE((3, ompi_dpm_base_framework.framework_output,
                              "%s dpm:orte:connect_accept adding procs",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
@@ -529,7 +529,7 @@ static int connect_accept ( ompi_communicator_t *comm, int root,
             goto exit;
         }
 
-        OPAL_OUTPUT_VERBOSE((3, ompi_dpm_base_output,
+        OPAL_OUTPUT_VERBOSE((3, ompi_dpm_base_framework.framework_output,
                              "%s dpm:orte:connect_accept new procs added",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     }
@@ -539,7 +539,7 @@ static int connect_accept ( ompi_communicator_t *comm, int root,
         OBJ_RELEASE(nbuf);
     }
 
-    OPAL_OUTPUT_VERBOSE((3, ompi_dpm_base_output,
+    OPAL_OUTPUT_VERBOSE((3, ompi_dpm_base_framework.framework_output,
                          "%s dpm:orte:connect_accept allocating group size %d",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), rsize));
 
@@ -557,7 +557,7 @@ static int connect_accept ( ompi_communicator_t *comm, int root,
     /* increment proc reference counters */
     ompi_group_increment_proc_count(new_group_pointer);
     
-    OPAL_OUTPUT_VERBOSE((3, ompi_dpm_base_output,
+    OPAL_OUTPUT_VERBOSE((3, ompi_dpm_base_framework.framework_output,
                          "%s dpm:orte:connect_accept setting up communicator",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
@@ -583,7 +583,7 @@ static int connect_accept ( ompi_communicator_t *comm, int root,
     OBJ_RELEASE(new_group_pointer);
     new_group_pointer = MPI_GROUP_NULL;
 
-    OPAL_OUTPUT_VERBOSE((3, ompi_dpm_base_output,
+    OPAL_OUTPUT_VERBOSE((3, ompi_dpm_base_framework.framework_output,
                          "%s dpm:orte:connect_accept allocate comm_cid",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
@@ -599,7 +599,7 @@ static int connect_accept ( ompi_communicator_t *comm, int root,
         goto exit;
     }
 
-    OPAL_OUTPUT_VERBOSE((3, ompi_dpm_base_output,
+    OPAL_OUTPUT_VERBOSE((3, ompi_dpm_base_framework.framework_output,
                          "%s dpm:orte:connect_accept activate comm",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
@@ -639,7 +639,7 @@ static int connect_accept ( ompi_communicator_t *comm, int root,
     }
 
     *newcomm = newcomp;
-    OPAL_OUTPUT_VERBOSE((3, ompi_dpm_base_output,
+    OPAL_OUTPUT_VERBOSE((3, ompi_dpm_base_framework.framework_output,
                          "%s dpm:orte:connect_accept complete",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
@@ -1557,7 +1557,7 @@ static int dyn_init(void)
         return OMPI_SUCCESS;
     }
     
-    OPAL_OUTPUT_VERBOSE((1, ompi_dpm_base_output,
+    OPAL_OUTPUT_VERBOSE((1, ompi_dpm_base_framework.framework_output,
                          "%s dpm:orte:dyn_init with port %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          port_name));
