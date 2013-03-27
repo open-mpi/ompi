@@ -1,6 +1,6 @@
 #!/usr/bin/env perl
 #
-# Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2011-2013 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -299,7 +299,7 @@ $constants->{MPI_ERR_SPAWN} = 50;
 $constants->{MPI_ERR_UNSUPPORTED_DATAREP} = 51;
 $constants->{MPI_ERR_UNSUPPORTED_OPERATION} = 52;
 $constants->{MPI_ERR_WIN} = 53;
-$constants->{MPI_ERR_LASTCODE} = 54;
+$constants->{MPI_ERR_LASTCODE} = $constants->{MPI_ERR_WIN};
 
 $constants->{MPI_ERR_SYSRESOURCE} = -2;
 

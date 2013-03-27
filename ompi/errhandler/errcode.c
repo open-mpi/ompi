@@ -11,6 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006      University of Houston. All rights reserved.
+ * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -172,8 +173,10 @@ int ompi_mpi_errcode_init (void)
     CONSTRUCT_ERRCODE( ompi_err_unsupported_operation, MPI_ERR_UNSUPPORTED_OPERATION, "MPI_ERR_UNSUPPORTED_OPERATION: operation not supported" );
     CONSTRUCT_ERRCODE( ompi_err_win, MPI_ERR_WIN, "MPI_ERR_WIN: invalid window" );
 
-    ompi_mpi_errcode_lastused = MPI_ERR_WIN;
-    ompi_mpi_errcode_lastpredefined = MPI_ERR_WIN;
+    /* Per MPI-3 p353:27-32, MPI_LASTUSEDCODE must be >=
+       MPI_ERR_LASTCODE.  So just start it as == MPI_ERR_LASTCODE. */
+    ompi_mpi_errcode_lastused = MPI_ERR_LASTCODE;
+    ompi_mpi_errcode_lastpredefined = MPI_ERR_LASTCODE;
     return OMPI_SUCCESS;
 }
 
