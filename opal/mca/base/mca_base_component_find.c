@@ -173,16 +173,10 @@ int mca_base_component_find(const char *directory, const char *type,
 
 #if OPAL_WANT_LIBLTDL
     /* Find any available dynamic components in the specified directory */
-    if (open_dso_components) {
-        int param, param_disable_dlopen;
-        param = mca_base_param_find("mca", NULL, "component_disable_dlopen");
-        mca_base_param_lookup_int(param, &param_disable_dlopen);
-
-        if (0 == param_disable_dlopen) {
-            find_dyn_components(directory, type,
-                                (const char**)requested_component_names,
-                                include_mode, found_components); 
-        }
+    if (open_dso_components && !mca_base_component_disable_dlopen) {
+        find_dyn_components(directory, type,
+                            (const char**)requested_component_names,
+                            include_mode, found_components); 
     } else {
         opal_output_verbose(40, 0, 
                             "mca: base: component_find: dso loading for %s MCA components disabled", 
@@ -262,11 +256,16 @@ static void find_dyn_components(const char *path, const char *type_name,
        use that as the path. */
   
     if (NULL == path) {
-        mca_base_param_lookup_string(mca_base_param_component_path, 
-                                     &path_to_use);
-        if (NULL == path_to_use) {
+        if (NULL != mca_base_component_path) {
+            path_to_use = strdup(mca_base_component_path);
+        } else {
             /* If there's no path, then there's nothing to search -- we're
                done */
+            return;
+        }
+
+        if (NULL == path_to_use) {
+            /* out of memory */
             return;
         }
     } else {
@@ -431,7 +430,6 @@ static int file_exists(const char *filename, const char *ext)
 static int open_component(component_file_item_t *target_file, 
                        opal_list_t *found_components)
 {
-  int show_errors, param;
   lt_dlhandle component_handle;
   mca_base_component_t *component_struct;
   char *struct_name, *err;
@@ -445,9 +443,7 @@ static int open_component(component_file_item_t *target_file,
   opal_output_verbose(40, 0, "mca: base: component_find: examining dyanmic %s MCA component \"%s\"",
                      target_file->type, target_file->name);
   opal_output_verbose(40, 0, "mca: base: component_find: %s", target_file->filename);
-  param = mca_base_param_find("mca", NULL, "component_show_load_errors");
-  mca_base_param_lookup_int(param, &show_errors);
-  vl = show_errors ? 0 : 40;
+  vl = mca_base_component_show_load_errors ? 0 : 40;
 
   /* Was this component already loaded (e.g., via dependency)? */
 

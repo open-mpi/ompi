@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -39,7 +40,7 @@
 #include "opal_config.h"
 
 #include "opal/constants.h"
-#include "opal/mca/base/mca_base_param.h"
+#include "opal/mca/base/mca_base_var.h"
 #include "opal/mca/memory/memory.h"
 #include "opal/mca/memory/base/empty.h"
 #include "opal/memoryhooks/memory.h"
@@ -60,6 +61,7 @@ static bool ummunotify_opened = false;
 static bool ptmalloc2_opened = false;
 #endif
 
+bool opal_memory_linux_disable = false;
 
 opal_memory_linux_component_t mca_memory_linux_component = {
     /* First, the opal_memory_base_component_2_0_0_t */
@@ -98,61 +100,100 @@ opal_memory_linux_component_t mca_memory_linux_component = {
        it out) */
 };
 
+static bool ptmalloc2_available = MEMORY_LINUX_PTMALLOC2;
+static bool ummunotify_available = MEMORY_LINUX_UMMUNOTIFY;
 
 /*
  * Register MCA params
  */
 static int linux_register(void)
 {
+    int ret;
     /* Information only */
-    mca_base_param_reg_int(&mca_memory_linux_component.super.memoryc_version,
-                           "ptmalloc2_available",
-                           "Whether ptmalloc2 support is included in Open MPI or not (1 = yes, 0 = no)",
-                           false, true, MEMORY_LINUX_PTMALLOC2, NULL);
-    mca_base_param_reg_int(&mca_memory_linux_component.super.memoryc_version,
-                           "ummunotify_available",
-                           "Whether ummunotify support is included in Open MPI or not (1 = yes, 0 = no)",
-                           false, true, MEMORY_LINUX_UMMUNOTIFY, NULL);
+    ret = mca_base_component_var_register (&mca_memory_linux_component.super.memoryc_version,
+                                           "ptmalloc2_available",
+                                           "Whether ptmalloc2 support is included in Open MPI or not (1 = yes, 0 = no)",
+                                           MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                           OPAL_INFO_LVL_3,
+                                           MCA_BASE_VAR_SCOPE_CONSTANT,
+                                           &ptmalloc2_available);
+    if (0 > ret) {
+        return ret;
+    }
+
+    ret = mca_base_component_var_register (&mca_memory_linux_component.super.memoryc_version,
+                                           "ummunotify_available",
+                                           "Whether ummunotify support is included in Open MPI or not (1 = yes, 0 = no)",
+                                           MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                           OPAL_INFO_LVL_3,
+                                           MCA_BASE_VAR_SCOPE_CONSTANT,
+                                           &ummunotify_available);
+    if (0 > ret) {
+        return ret;
+    }
 
     /* Allow user to manually enable/disable */
-    mca_base_param_reg_int(&mca_memory_linux_component.super.memoryc_version,
-                           "ptmalloc2_enable",
-                           "Whether to enable ptmalloc2 support or not (negative = try to enable, but continue even if support is not available, 0 = do not enable support, positive = try to enable and fail if support is not available)",
-                           false, false, -1, 
-                           &mca_memory_linux_component.enable_ptmalloc2);
-    mca_base_param_reg_int(&mca_memory_linux_component.super.memoryc_version,
-                           "ummunotify_enable",
-                           "Whether to enable ummunotify support or not (negative = try to enable, but continue even if support is not available, 0 = do not enable support, positive = try to enable and fail if support is not available)",
-                           false, false, -1, 
-                           &mca_memory_linux_component.enable_ummunotify);
+    mca_memory_linux_component.enable_ptmalloc2 = -1;
+    ret = mca_base_component_var_register (&mca_memory_linux_component.super.memoryc_version,
+                                           "ptmalloc2_enable",
+                                           "Whether to enable ptmalloc2 support or not (negative = try to enable, but continue even if support is not available, 0 = do not enable support, positive = try to enable and fail if support is not available)",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
+                                           OPAL_INFO_LVL_3,
+                                           MCA_BASE_VAR_SCOPE_ALL_EQ,
+                                           &mca_memory_linux_component.enable_ptmalloc2);
+    if (0 > ret) {
+        return ret;
+    }
 
-    return OPAL_SUCCESS;
+    mca_memory_linux_component.enable_ummunotify = -1;
+    ret = mca_base_component_var_register (&mca_memory_linux_component.super.memoryc_version,
+                                           "ummunotify_enable",
+                                           "Whether to enable ummunotify support or not (negative = try to enable, but continue even if support is not available, 0 = do not enable support, positive = try to enable and fail if support is not available)",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
+                                           OPAL_INFO_LVL_3,
+                                           MCA_BASE_VAR_SCOPE_ALL_EQ,
+                                           &mca_memory_linux_component.enable_ummunotify);
+    if (0 > ret) {
+        return ret;
+    }
+
+    opal_memory_linux_disable = false;
+    (void) mca_base_component_var_register (&mca_memory_linux_component.super.memoryc_version,
+                                            "disable",
+                                            "If this MCA parameter is set to 1 **VIA ENVIRONMENT VARIABLE ONLY*** (this MCA parameter *CANNOT* be set in a file or on the mpirun command line!), this component will be disabled and will not attempt to use either ummunotify or memory hook support",
+                                            MCA_BASE_VAR_TYPE_BOOL, NULL, 0, MCA_BASE_VAR_FLAG_ENVIRONMENT_ONLY,
+                                            OPAL_INFO_LVL_9,
+                                            MCA_BASE_VAR_SCOPE_READONLY,
+                                            &opal_memory_linux_disable);
+
+    return (0 > ret) ? ret : OPAL_SUCCESS;
 }
 
 
 static int linux_open(void)
 {
-    int i, v;
+    const int *verbose = NULL;
+    int i;
 
-    i = mca_base_param_find("memory", NULL, "base_verbose");
-    mca_base_param_lookup_int(i, &v);
-    mca_memory_linux_component.verbose_level = v;
+    i = mca_base_var_find("opal", "memory", NULL, "base_verbose");
+    mca_base_var_get_value(i, &verbose, NULL, NULL);
+    mca_memory_linux_component.verbose_level = verbose ? verbose[0] : 0;
 
     /* Try initializing ummunotify first; if that fails, try
        ptmalloc2.  */
 #if MEMORY_LINUX_UMMUNOTIFY
     if (mca_memory_linux_component.enable_ummunotify) {
-        if (v >= 10) {
+        if (mca_memory_linux_component.verbose_level >= 10) {
             opal_output(0, "memory:linux: attempting to initialize ummunotify support");
         }
         if (OPAL_SUCCESS == opal_memory_linux_ummunotify_open()) {
             ummunotify_opened = true;
-            if (v >= 10) {
+            if (mca_memory_linux_component.verbose_level >= 10) {
                 opal_output(0, "memory:linux: ummunotify successfully initialized; we'll use that");
             }
             return OPAL_SUCCESS;
         }
-        if (v >= 10) {
+        if (mca_memory_linux_component.verbose_level >= 10) {
             opal_output(0, "memory:linux: ummunotify failed to initialize");
         }
     }
@@ -160,17 +201,17 @@ static int linux_open(void)
 
 #if MEMORY_LINUX_PTMALLOC2
     if (mca_memory_linux_component.enable_ptmalloc2) {
-        if (v >= 10) {
+        if (mca_memory_linux_component.verbose_level >= 10) {
             opal_output(0, "memory:linux: attempting to initialize ptmalloc2 support");
         }
         if (OPAL_SUCCESS == opal_memory_linux_ptmalloc2_open()) {
             ptmalloc2_opened = true;
-            if (v >= 10) {
+            if (mca_memory_linux_component.verbose_level >= 10) {
                 opal_output(0, "memory:linux: ptmalloc2 successfully initialized; we'll use that");
             }
             return OPAL_SUCCESS;
         }
-        if (v >= 10) {
+        if (mca_memory_linux_component.verbose_level >= 10) {
             opal_output(0, "memory:linux: ptmalloc2 failed to initialize");
         }
     }
@@ -180,7 +221,7 @@ static int linux_open(void)
        available; that will make the MCA base silently disregard this
        component. */
 
-    if (v >= 10) {
+    if (mca_memory_linux_component.verbose_level >= 10) {
         opal_output(0, "memory:linux: no memory hooks available in this process");
     }
     return OPAL_ERR_NOT_AVAILABLE;

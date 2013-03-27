@@ -62,7 +62,6 @@
 #include "orte/util/show_help.h"
 #include "opal/util/opal_environ.h"
 #include "opal/util/basename.h"
-#include "opal/mca/base/mca_base_param.h"
 
 #include "orte/util/name_fns.h"
 #include "orte/runtime/orte_globals.h"
@@ -312,7 +311,7 @@ static void launch_daemons(int fd, short args, void *cbdata)
     env = opal_argv_copy(orte_launch_environ);
 
     /* enable local launch by the orteds */
-    var = mca_base_param_env_var ("plm");
+    (void) mca_base_var_env_name ("plm", &var);
     opal_setenv(var, "rsh", true, &env);
     free(var);
     

@@ -40,6 +40,7 @@ const char *mca_sbgp_p2p_component_version_string =
  * Local functions
  */
 
+static int p2p_register(void);
 static int p2p_open(void);
 static int p2p_close(void);
 static mca_sbgp_base_module_t * mca_sbgp_p2p_select_procs(struct ompi_proc_t ** procs,
@@ -47,18 +48,6 @@ static mca_sbgp_base_module_t * mca_sbgp_p2p_select_procs(struct ompi_proc_t ** 
 
 static int mca_sbgp_p2p_init_query(bool enable_progress_threads,
         bool enable_mpi_threads);
-
-static inline int mca_sbgp_p2p_param_register_int(
-        const char* param_name, int default_value)
-{
-    int param_value = default_value;
-
-    (void) mca_base_param_reg_int (&mca_sbgp_p2p_component.super.sbgp_version,
-                                   param_name, NULL, false, false, default_value,
-                                   &param_value);
-
-    return param_value;
-}
 
 /*
  * Instantiate the public struct with all of our public information
@@ -86,7 +75,7 @@ mca_sbgp_p2p_component_t mca_sbgp_p2p_component = {
             p2p_open,
             p2p_close,
             NULL,
-            NULL
+            p2p_register
         },
 
     mca_sbgp_p2p_init_query,
@@ -99,19 +88,25 @@ mca_sbgp_p2p_component_t mca_sbgp_p2p_component = {
 
 };
 
+static int p2p_register(void)
+{
+    mca_sbgp_p2p_component_t *cs = &mca_sbgp_p2p_component;
+    cs->super.priority = 90;
+    (void) mca_base_component_var_register(&cs->super.sbgp_version,
+                                           "priority", "Priority for the sbgp p2p component",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &cs->super.priority);
+
+    return OMPI_SUCCESS;
+}
+
 /*
  * Open the component
  */
 static int p2p_open(void)
 {
-
-    /* local variables */
-    mca_sbgp_p2p_component_t *cs = &mca_sbgp_p2p_component;
-
-    /* set component priority */
-    cs->super.priority=
-        mca_sbgp_p2p_param_register_int("priority",90);
-
     return OMPI_SUCCESS;
 }
 

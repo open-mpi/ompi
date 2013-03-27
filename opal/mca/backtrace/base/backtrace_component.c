@@ -22,7 +22,6 @@
 #include "opal/constants.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
-#include "opal/mca/base/mca_base_param.h"
 #include "opal/mca/backtrace/backtrace.h"
 #include "opal/mca/backtrace/base/base.h"
 

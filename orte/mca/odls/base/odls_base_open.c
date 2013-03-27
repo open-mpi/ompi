@@ -31,7 +31,6 @@
 #include "opal/class/opal_ring_buffer.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
-#include "opal/mca/base/mca_base_param.h"
 #include "opal/mca/hwloc/hwloc.h"
 #include "opal/util/output.h"
 #include "opal/util/path.h"
@@ -68,6 +67,19 @@ orte_odls_base_module_t orte_odls;
 orte_odls_base_t orte_odls_base;
 orte_odls_globals_t orte_odls_globals;
 
+static int orte_odls_base_register(int flags)
+{
+    orte_odls_globals.timeout_before_sigkill = 1;
+    (void) mca_base_var_register("orte", "odls", "base", "sigkill_timeout",
+                                 "Time to wait for a process to die after issuing a kill signal to it",
+                                 MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                 OPAL_INFO_LVL_9,
+                                 MCA_BASE_VAR_SCOPE_READONLY,
+                                 &orte_odls_globals.timeout_before_sigkill);
+
+    return ORTE_SUCCESS;
+}
+
 /**
  * Function for finding and opening either all MCA components, or the one
  * that was specifically requested via a MCA parameter.
@@ -78,14 +90,12 @@ int orte_odls_base_open(void)
     int rc, i, rank;
     orte_namelist_t *nm;
     bool xterm_hold;
+
+    (void) orte_odls_base_register(0);
     
     /* Debugging / verbose output.  Always have stream open, with
        verbose set by the mca open system... */
     orte_odls_globals.output = opal_output_open(NULL);
-
-    mca_base_param_reg_int_name("odls", "base_sigkill_timeout",
-                                "Time to wait for a process to die after issuing a kill signal to it",
-                                false, false, 1, &orte_odls_globals.timeout_before_sigkill);
 
     /* initialize the global array of local children */
     orte_local_children = OBJ_NEW(opal_pointer_array_t);

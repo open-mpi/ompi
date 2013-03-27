@@ -92,8 +92,9 @@ static OBJ_CLASS_INSTANCE(avail_io_t, opal_list_item_t, NULL, NULL);
 int mca_io_base_file_select(ompi_file_t *file, 
                             mca_base_component_t *preferred)
 {
+    const char **names_value, *names;
     int err, num_names;
-    char *names, **name_array;
+    char **name_array;
     char *str;
     opal_list_t *selectable;
     opal_list_item_t *item;
@@ -114,8 +115,9 @@ int mca_io_base_file_select(ompi_file_t *file,
     /* See if a set of component was requested by the MCA parameter.
        Don't check for error. */
 
-    names = NULL;
-    mca_base_param_lookup_string(mca_io_base_param, &names);
+    names_value = NULL;
+    mca_base_var_get_value(mca_io_base_param, &names_value, NULL, NULL);
+    names = names_value ? names_value[0] : NULL;
 
     /* Compute the intersection of all of my available components with
        the components from all the other processes in this file */

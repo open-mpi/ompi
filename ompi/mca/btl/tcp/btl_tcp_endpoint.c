@@ -533,7 +533,7 @@ void mca_btl_tcp_set_socket_options(int sd)
 {
     int optval;
 #if defined(TCP_NODELAY)
-    optval = mca_btl_tcp_component.tcp_use_nodelay;
+    optval = mca_btl_tcp_component.tcp_not_use_nodelay;
     if(setsockopt(sd, IPPROTO_TCP, TCP_NODELAY, (char *)&optval, sizeof(optval)) < 0) {
         BTL_ERROR(("setsockopt(TCP_NODELAY) failed: %s (%d)", 
                    strerror(opal_socket_errno), opal_socket_errno));

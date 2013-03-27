@@ -26,7 +26,6 @@
 #include <errno.h>
 
 #include "opal/util/opal_environ.h"
-#include "opal/mca/base/mca_base_param.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 
@@ -42,7 +41,7 @@ int orte_ess_env_put(orte_std_cntr_t num_procs,
     /* tell the ESS to select the env component - but don't override
      * anything that may have been provided elsewhere
      */
-    if(NULL == (param = mca_base_param_env_var ("ess"))) {
+    if(OPAL_SUCCESS != mca_base_var_env_name ("ess", &param)) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
@@ -52,7 +51,7 @@ int orte_ess_env_put(orte_std_cntr_t num_procs,
     /* since we want to pass the name as separate components, make sure
      * that the "name" environmental variable is cleared!
      */
-    if(NULL == (param = mca_base_param_env_var ("orte_ess_name"))) {
+    if(OPAL_SUCCESS != mca_base_var_env_name ("orte_ess_name", &param)) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
@@ -60,7 +59,7 @@ int orte_ess_env_put(orte_std_cntr_t num_procs,
     free(param);
 
     asprintf(&value, "%ld", (long) num_procs);
-    if(NULL == (param = mca_base_param_env_var ("orte_ess_num_procs"))) {
+    if(OPAL_SUCCESS != mca_base_var_env_name ("orte_ess_num_procs", &param)) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }

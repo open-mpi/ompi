@@ -26,6 +26,7 @@
 /*
  * Local functionality
  */
+static int crs_blcr_register (void);
 static int crs_blcr_open(void);
 static int crs_blcr_close(void);
 
@@ -53,7 +54,8 @@ opal_crs_blcr_component_t mca_crs_blcr_component = {
             /* Component open and close functions */
             crs_blcr_open,
             crs_blcr_close,
-            opal_crs_blcr_component_query
+            opal_crs_blcr_component_query,
+            crs_blcr_register
         },
         {
             /* The component is checkpoint ready */
@@ -63,29 +65,48 @@ opal_crs_blcr_component_t mca_crs_blcr_component = {
         /* Verbosity level */
         0,
         /* opal_output handler */
-        -1,
-        /* Default priority */
-        10
+        -1
     }
 };
 
+static int crs_blcr_register (void) 
+{
+    int ret;
+
+    mca_crs_blcr_component.super.priority = 10;
+    ret = mca_base_component_var_register (&mca_crs_blcr_component.super.base_version,
+                                           "priority", "Priority of the CRS blcr component "
+                                           "(default: 10)". MCA_BASE_VAR_TYPE_INT, NULL,
+                                           MCA_BASE_VAR_FLAG_SETTABLE,
+                                           OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_ALL_EQ,
+                                           &mca_crs_blcr_component.super.priority);
+    if (0 > ret) {
+        return ret;
+    }
+
+    mca_crs_blcr_component.super.verbose = 0;
+    ret = mca_base_component_var_register (&mca_crs_blcr_component.super.base_version,
+                                           "verbose",
+                                           "Verbose level for the CRS blcr component",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, MCA_BASE_VAR_FLAG_SETTABLE,
+                                           OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_LOCAL,
+                                           &mca_crs_blcr_component.super.verbose);
+    if (0 > ret) {
+        return ret;
+    }
+
+    opal_crs_blcr_dev_null = false;
+    ret = mca_base_component_var_register (&mca_crs_blcr_component.super.base_version,
+                                           "dev_null",
+                                           "Not for general use! For debugging only! Save checkpoint to /dev/null. [Default = disabled]",
+                                           MCA_BASE_VAR_TYPE_BOOL, NULL, MCA_BASE_VAR_FLAG_SETTABLE,
+                                           OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_ALL_EQ,
+                                           &opal_crs_blcr_dev_null);
+    return (0 > ret) ? ret : OPAL_SUCCESS
+}
+
 static int crs_blcr_open(void) 
 {
-    int value;
-
-    mca_base_param_reg_int(&mca_crs_blcr_component.super.base_version,
-                           "priority",
-                           "Priority of the CRS blcr component",
-                           false, false,
-                           mca_crs_blcr_component.super.priority, 
-                           &mca_crs_blcr_component.super.priority);
-
-    mca_base_param_reg_int(&mca_crs_blcr_component.super.base_version,
-                           "verbose",
-                           "Verbose level for the CRS blcr component",
-                           false, false,
-                           mca_crs_blcr_component.super.verbose,
-                           &mca_crs_blcr_component.super.verbose);
     /* If there is a custom verbose level for this component than use it
      * otherwise take our parents level and output channel
      */
@@ -96,14 +117,6 @@ static int crs_blcr_open(void)
     } else {
         mca_crs_blcr_component.super.output_handle = opal_crs_base_output;
     }
-
-    mca_base_param_reg_int(&mca_crs_blcr_component.super.base_version,
-                           "dev_null",
-                           "Not for general use! For debugging only! Save checkpoint to /dev/null. [Default = disabled]",
-                           false, false,
-                           0,
-                           &value);
-    opal_crs_blcr_dev_null = OPAL_INT_TO_BOOL(value);
 
     /*
      * Debug output

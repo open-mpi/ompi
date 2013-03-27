@@ -80,7 +80,7 @@ opal_shmem_mmap_component_t mca_shmem_mmap_component = {
             /* component query */
             mmap_query,
             /* component register */
-            mmap_register,
+            mmap_register
         },
         /* MCA v2.0.0 component meta data */
         {
@@ -89,12 +89,6 @@ opal_shmem_mmap_component_t mca_shmem_mmap_component = {
         },
         mmap_runtime_query,
     },
-    /* ////////////////////////////////////////////////////////////////////// */
-    /* mmap component-specific information */
-    /* see: shmem_mmap.h for more information */
-    /* ////////////////////////////////////////////////////////////////////// */
-    /* (default) priority - set high to make mmap the default */
-    50
 };
 
 /* ////////////////////////////////////////////////////////////////////////// */
@@ -112,7 +106,19 @@ mmap_runtime_query(mca_base_module_t **module,
 static int
 mmap_register(void)
 {
-    int value;
+    int ret;
+
+
+    /* ////////////////////////////////////////////////////////////////////// */
+    /* (default) priority - set high to make mmap the default */
+    mca_shmem_mmap_component.priority = 50;
+    ret = mca_base_component_var_register (&mca_shmem_mmap_component.super.base_version,
+                                           "priority", "Priority for shmem mmap "
+                                           "component (default: 50)", MCA_BASE_VAR_TYPE_INT,
+                                           NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
+                                           OPAL_INFO_LVL_3,
+                                           MCA_BASE_VAR_SCOPE_ALL_EQ,
+                                           &mca_shmem_mmap_component.priority);
 
     /*
      * Do we want the "warning: your mmap file is on NFS!" message?  Per a
@@ -124,15 +130,46 @@ mmap_register(void)
      * provide the ability to turn off this message for systems where the
      * effect doesn't matter.
      */
-    mca_base_param_reg_int(&mca_shmem_mmap_component.super.base_version,
-                           "enable_nfs_warning",
-                           "Enable the warning emitted when Open MPI detects "
-                           "that its shared memory backing file is located on "
-                           "a network filesystem (1 = enabled, 0 = disabled).",
-                           false, false,
-                           (int)true, &value);
+    opal_shmem_mmap_nfs_warning = true;
+    ret = mca_base_component_var_register (&mca_shmem_mmap_component.super.base_version,
+                                           "enable_nfs_warning",
+                                           "Enable the warning emitted when Open MPI detects "
+                                           "that its shared memory backing file is located on "
+                                           "a network filesystem (1 = enabled, 0 = disabled).",
+                                           MCA_BASE_VAR_TYPE_BOOL, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
+                                           OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_LOCAL,
+                                           &opal_shmem_mmap_nfs_warning);
+    if (0 > ret) {
+        return ret;
+    }
 
-    opal_shmem_mmap_nfs_warning = OPAL_INT_TO_BOOL(value);
+    opal_shmem_mmap_relocate_backing_file = 0;
+    ret = mca_base_component_var_register (&mca_shmem_mmap_component.super.base_version,
+                                           "relocate_backing_file",
+                                           "Whether to change the default placement of backing files or not "
+                                           "(Negative = try to relocate backing files to an area rooted at "
+                                           "the path specified by "
+                                           "shmem_mmap_backing_file_base_dir, but continue "
+                                           "with the default path if the relocation fails, 0 = do not relocate, "
+                                           "Positive = same as the negative option, but will fail if the "
+                                           "relocation fails.", MCA_BASE_VAR_TYPE_INT, NULL, 0,
+                                           MCA_BASE_VAR_FLAG_SETTABLE, OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_ALL_EQ, &opal_shmem_mmap_relocate_backing_file);
+    if (0 > ret) {
+        return ret;
+    }
+
+    opal_shmem_mmap_backing_file_base_dir = "/dev/shm";
+    ret = mca_base_component_var_register (&mca_shmem_mmap_component.super.base_version,
+                                           "backing_file_base_dir",
+                                           "Specifies where backing files will be created when "
+                                           "shmem_mmap_relocate_backing_file is in use.", MCA_BASE_VAR_TYPE_STRING,
+                                           NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE, OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_ALL_EQ,
+                                           &opal_shmem_mmap_backing_file_base_dir);
+    if (0 > ret) {
+        return ret;
+    }
 
     return OPAL_SUCCESS;
 }
@@ -141,33 +178,6 @@ mmap_register(void)
 static int
 mmap_open(void)
 {
-    mca_base_param_reg_int(
-        &mca_shmem_mmap_component.super.base_version,
-        "priority", "Priority of the mmap shmem component", false, false,
-        mca_shmem_mmap_component.priority, &mca_shmem_mmap_component.priority
-    );
-
-    mca_base_param_reg_int(
-        &mca_shmem_mmap_component.super.base_version,
-        "relocate_backing_file",
-        "Whether to change the default placement of backing files or not "
-        "(Negative = try to relocate backing files to an area rooted at "
-        "the path specified by "
-        "shmem_mmap_opal_shmem_mmap_backing_file_base_dir, but continue "
-        "with the default path if the relocation fails, 0 = do not relocate, "
-        "Positive = same as the negative option, but will fail if the "
-        "relocation fails.", false, false, 0,
-        &opal_shmem_mmap_relocate_backing_file
-    );
-
-    mca_base_param_reg_string(
-        &mca_shmem_mmap_component.super.base_version,
-        "backing_file_base_dir",
-        "Specifies where backing files will be created when "
-        "shmem_mmap_relocate_backing_file is in use.", false, false, "/dev/shm",
-        &opal_shmem_mmap_backing_file_base_dir
-    );
-
     return OPAL_SUCCESS;
 }
 
@@ -184,9 +194,6 @@ mmap_query(mca_base_module_t **module, int *priority)
 static int
 mmap_close(void)
 {
-    if (NULL != opal_shmem_mmap_backing_file_base_dir) {
-        free(opal_shmem_mmap_backing_file_base_dir);
-    }
     return OPAL_SUCCESS;
 }
 

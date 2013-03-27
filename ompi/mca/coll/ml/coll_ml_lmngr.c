@@ -124,21 +124,24 @@ int mca_coll_ml_lmngr_tune(mca_coll_ml_lmngr_t *lmngr,
 
 int mca_coll_ml_lmngr_reg(void)
 {
-    int ival, tmp;
-    int ret = OMPI_SUCCESS;
+    int tmp, ret = OMPI_SUCCESS;
 
     mca_coll_ml_component_t *cm = &mca_coll_ml_component;
 
 #define CHECK(expr) do {\
     tmp = (expr); \
-    if (OMPI_SUCCESS != tmp) ret = tmp; \
+    if (0 > tmp) ret = tmp; \
  } while (0)
 
     ML_VERBOSE(7, ("Setting parameters for list manager"));
 
-    CHECK(reg_int("memory_manager_list_size", NULL,
-                  "Memory manager list size", 8, &ival, 0));
-    cm->lmngr_size = ival;
+    cm->lmngr_size = 8;
+    CHECK(mca_base_component_var_register(&mca_coll_ml_component.super.collm_version,
+                                          "memory_manager_list_size", "Memory manager list size",
+                                          MCA_BASE_VAR_TYPE_SIZE_T, NULL, 0, 0,
+                                          OPAL_INFO_LVL_9,
+                                          MCA_BASE_VAR_SCOPE_READONLY,
+                                          &cm->lmngr_size));
 
     /* The size list couldn't be less than possible max of ML modules,
        it = max supported communicators by ML */
@@ -146,17 +149,25 @@ int mca_coll_ml_lmngr_reg(void)
         cm->lmngr_size = cm->max_comm;
     }
 
-    CHECK(reg_int("memory_manager_block_size", NULL,
-                  "Memory manager block size", 
-                  cm->payload_buffer_size *
-                  cm->n_payload_buffs_per_bank *
-                  cm->n_payload_mem_banks *
-                  cm->lmngr_size, &ival, 0));
-    mca_coll_ml_component.lmngr_block_size = ival;
+    mca_coll_ml_component.lmngr_block_size = cm->payload_buffer_size *
+      cm->n_payload_buffs_per_bank *
+      cm->n_payload_mem_banks *
+      cm->lmngr_size;
 
-    CHECK(reg_int("memory_manager_alignment", NULL,
-                  "Memory manager alignment", 4 * 1024, &ival, 0));
-    cm->lmngr_alignment = ival;
+    CHECK(mca_base_component_var_register(&mca_coll_ml_component.super.collm_version,
+                                          "memory_manager_block_size", "Memory manager block size", 
+                                          MCA_BASE_VAR_TYPE_SIZE_T, NULL, 0, 0,
+                                          OPAL_INFO_LVL_9,
+                                          MCA_BASE_VAR_SCOPE_READONLY,
+                                          &mca_coll_ml_component.lmngr_block_size));
+
+    cm->lmngr_alignment = 4 * 1024;
+    CHECK(mca_base_component_var_register(&mca_coll_ml_component.super.collm_version,
+                                          "memory_manager_alignment", "Memory manager alignment",
+                                          MCA_BASE_VAR_TYPE_SIZE_T, NULL, 0, 0,
+                                          OPAL_INFO_LVL_9,
+                                          MCA_BASE_VAR_SCOPE_READONLY,
+                                          &mca_coll_ml_component.lmngr_block_size));
 
     return ret;
 }

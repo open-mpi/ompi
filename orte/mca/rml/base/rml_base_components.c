@@ -59,6 +59,29 @@ orte_rml_component_t *orte_rml_component = NULL;
 static bool       component_open_called = false;
 static bool       opened = false;
 static bool       selected = false;
+static char      *orte_rml_base_wrapper = NULL;
+
+static int
+orte_rml_base_register(int flags)
+{
+    int var_id;
+
+    /* 
+     * Which RML Wrapper component to use, if any
+     *  - NULL or "" = No wrapper
+     *  - ow. select that specific wrapper component
+     */
+    orte_rml_base_wrapper = NULL;
+    var_id = mca_base_var_register("orte", "rml", "base", "wrapper",
+                                   "Use a Wrapper component around the selected RML component",
+                                   MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
+                                   OPAL_INFO_LVL_9,
+                                   MCA_BASE_VAR_SCOPE_READONLY,
+                                   &orte_rml_base_wrapper);
+    (void) mca_base_var_register_synonym(var_id, "orte", "rml",NULL,"wrapper", 0);
+
+    return ORTE_SUCCESS;
+}
 
 int
 orte_rml_base_open(void)
@@ -69,21 +92,12 @@ orte_rml_base_open(void)
         return ORTE_SUCCESS;
     }
     opened = true;
+
+    (void) orte_rml_base_register(0);
     
     /* Initialize globals */
     OBJ_CONSTRUCT(&orte_rml_base_components, opal_list_t);
     OBJ_CONSTRUCT(&orte_rml_base_subscriptions, opal_list_t);
-
-
-    /* 
-     * Which RML Wrapper component to use, if any
-     *  - NULL or "" = No wrapper
-     *  - ow. select that specific wrapper component
-     */
-    mca_base_param_reg_string_name("rml", "wrapper",
-                                   "Use a Wrapper component around the selected RML component",
-                                   false, false,
-                                   NULL, NULL);
     
     /* register parameters */
     orte_rml_base_output = opal_output_open(NULL);
@@ -112,18 +126,12 @@ orte_rml_base_select(void)
     int wrapper_priority = -1;
     orte_rml_component_t *wrapper_component = NULL;
     orte_rml_module_t *wrapper_module = NULL;
-    char *rml_wrapper = NULL;
     bool return_silent=false;
 
     if (selected) {
         return ORTE_SUCCESS;
     }
     selected = true;
-    
-    mca_base_param_reg_string_name("rml", "wrapper",
-                                   "Use a Wrapper component around the selected RML component",
-                                   false, false,
-                                   NULL, &rml_wrapper);
     
     for (item = opal_list_get_first(&orte_rml_base_components);
          item != opal_list_get_end(&orte_rml_base_components) ;
@@ -155,12 +163,12 @@ orte_rml_base_select(void)
                 continue;
             }
 
-            if(NULL != rml_wrapper &&
+            if(NULL != orte_rml_base_wrapper &&
                /* If this is a wrapper component then save it for later */
                RML_SELECT_WRAPPER_PRIORITY >= priority) {
                 if( 0 == strncmp(component->rml_version.mca_component_name, 
-                                 rml_wrapper,
-                                 strlen(rml_wrapper) ) ) {
+                                 orte_rml_base_wrapper,
+                                 strlen(orte_rml_base_wrapper) ) ) {
                     wrapper_priority  = priority;
                     wrapper_component = component;
                     wrapper_module    = module;
@@ -220,10 +228,6 @@ orte_rml_base_select(void)
      */
     if( NULL != wrapper_component) {
         wrapper_component->rml_init(NULL);
-    }
-
-    if( NULL != rml_wrapper ) {
-        free(rml_wrapper);
     }
 
     if (NULL == selected_component) {

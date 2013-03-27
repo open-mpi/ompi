@@ -29,7 +29,6 @@
 #include "opal/util/output.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
-#include "opal/mca/base/mca_base_param.h"
 #include "opal/mca/shmem/shmem.h"
 #include "opal/mca/shmem/base/base.h"
 
@@ -39,6 +38,8 @@
 bool opal_shmem_base_selected = false;
 const opal_shmem_base_component_2_0_0_t *opal_shmem_base_component = NULL;
 const opal_shmem_base_module_2_0_0_t *opal_shmem_base_module = NULL;
+
+extern char *opal_shmem_base_runtime_query_hint;
 
 /* ////////////////////////////////////////////////////////////////////////// */
 char *
@@ -84,7 +85,6 @@ opal_shmem_base_runtime_query(mca_base_module_t **best_module,
     mca_base_module_t *module = NULL;
     opal_list_item_t *item = NULL;
     int priority = 0, best_priority = INT32_MIN;
-    char *env_hint_name = NULL, *env_hint_val = NULL;
 
     *best_module = NULL;
     *best_component = NULL;
@@ -92,13 +92,6 @@ opal_shmem_base_runtime_query(mca_base_module_t **best_module,
     opal_output_verbose(10, opal_shmem_base_output,
                         "shmem: base: runtime_query: "
                         "Auto-selecting shmem components");
-    /* we are using a nonstandard name here because shmem_RUNTIME_QUERY_hint
-     * is for internal use only!
-     * see odls_base_default_fns.c for more details.
-     */
-    env_hint_name = mca_base_param_env_var ("shmem_RUNTIME_QUERY_hint");
-    env_hint_val = getenv(env_hint_name);
-    free(env_hint_name);
 
     /* traverse the list of available components.
      * for each call their 'run-time query' functions to determine relative
@@ -130,7 +123,7 @@ opal_shmem_base_runtime_query(mca_base_module_t **best_module,
                             component->mca_component_name);
 
         ((opal_shmem_base_component_2_0_0_t *)
-         component)->runtime_query(&module, &priority, env_hint_val);
+         component)->runtime_query(&module, &priority, opal_shmem_base_runtime_query_hint);
 
         /* if no module was returned, then skip component.
          * this probably means that the run-time test deemed the shared memory

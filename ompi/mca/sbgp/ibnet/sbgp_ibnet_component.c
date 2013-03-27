@@ -126,16 +126,12 @@ static int mca_sbgp_ibnet_open(void)
     int rc;
     mca_sbgp_ibnet_component_t *cs = &mca_sbgp_ibnet_component;
 
+    mca_sbgp_ibnet_component.pkey_val &= SBGP_IBNET_IB_PKEY_MASK;
+
     cs->total_active_ports = 0;
     cs->curr_max_group_id = 100;
 
     OBJ_CONSTRUCT(&cs->devices, opal_list_t);
-
-    /* register all parameters including priority */
-    rc = mca_sbgp_ibnet_register_params();
-    if (OMPI_SUCCESS != rc) {
-        return rc;
-    }
 
     return OMPI_SUCCESS;
 }
@@ -433,7 +429,7 @@ static mca_sbgp_ibnet_device_t* ibnet_load_ports(struct ibv_device *ib_dev, int 
                     }
 
                     pkey = ntohs(pkey) & MCA_SBGP_IBNET_PKEY_MASK;
-                    if (pkey == mca_sbgp_ibnet_component.pkey_val){
+                    if (pkey == (uint32_t) mca_sbgp_ibnet_component.pkey_val){
                         ret = ibnet_init_port(device, p, &ib_port_attr, ib_dev_context);
                         if (OMPI_SUCCESS != ret) {
                             IBNET_ERROR(("Device %s "

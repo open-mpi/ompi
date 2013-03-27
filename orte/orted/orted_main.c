@@ -59,7 +59,7 @@
 #include "opal/util/printf.h"
 #include "opal/util/argv.h"
 #include "opal/runtime/opal.h"
-#include "opal/mca/base/mca_base_param.h"
+#include "opal/mca/base/mca_base_var.h"
 #include "opal/util/daemon_init.h"
 #include "opal/dss/dss.h"
 #include "opal/mca/hwloc/hwloc.h"
@@ -103,6 +103,8 @@
 static opal_event_t *pipe_handler;
 static void shutdown_callback(int fd, short flags, void *arg);
 static void pipe_closed(int fd, short flags, void *arg);
+
+static char *orte_parent_uri;
 
 static struct {
     bool debug;
@@ -331,7 +333,7 @@ int orte_daemon(int argc, char *argv[])
 
 #if OPAL_ENABLE_FT_CR == 1
     /* Mark as a tool program */
-    tmp_env_var = mca_base_param_env_var("opal_cr_is_tool");
+    (void) mca_base_var_env_name ("opal_cr_is_tool", &tmp_env_var);
     opal_setenv(tmp_env_var,
                 "1",
                 true, &environ);
@@ -628,25 +630,37 @@ int orte_daemon(int argc, char *argv[])
     /* If I have a parent, then save his contact info so
      * any messages we send can flow thru him.
      */
-    mca_base_param_reg_string_name("orte", "parent_uri",
-                                   "URI for the parent if tree launch is enabled.",
-                                   true, false, NULL,  &rml_uri);
-    if (NULL != rml_uri) {
+
+    orte_parent_uri = NULL;
+    (void) mca_base_var_register ("orte", "orte", NULL, "parent_uri",
+                                  "URI for the parent if tree launch is enabled.",
+                                  MCA_BASE_VAR_TYPE_STRING, NULL, 0,
+                                  MCA_BASE_VAR_FLAG_INTERNAL,
+                                  OPAL_INFO_LVL_9,
+                                  MCA_BASE_VAR_SCOPE_CONSTANT,
+                                  &orte_parent_uri);
+    if (NULL != orte_parent_uri) {
         orte_process_name_t parent;
 
         /* set the contact info into the hash table */
-        if (ORTE_SUCCESS != (ret = orte_rml.set_contact_info(rml_uri))) {
+        if (ORTE_SUCCESS != (ret = orte_rml.set_contact_info(orte_parent_uri))) {
             ORTE_ERROR_LOG(ret);
-            free(rml_uri);
+            free (orte_parent_uri);
+            orte_parent_uri = NULL;
             goto DONE;
         }
-        ret = orte_rml_base_parse_uris(rml_uri, &parent, NULL );
+        ret = orte_rml_base_parse_uris(orte_parent_uri, &parent, NULL );
         if( ORTE_SUCCESS != ret ) {
             ORTE_ERROR_LOG(ret);
-            free(rml_uri);
+            free (orte_parent_uri);
+            orte_parent_uri = NULL;
             goto DONE;
         }
-        free(rml_uri);
+
+        /* don't need this value anymore */
+        free (orte_parent_uri);
+        orte_parent_uri = NULL;
+
         /* tell the routed module that we have a path
          * back to the HNP
          */

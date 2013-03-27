@@ -39,6 +39,8 @@ opal_list_t mca_sbgp_base_components_in_use;
 int mca_sbgp_base_components_in_use_inited=0;
 OMPI_DECLSPEC char *ompi_sbgp_subgroups_string;
 
+static int ompi_sbgp_base_verbose;
+
 static void mca_sbgp_base_destruct (mca_sbgp_base_module_t *module)
 {
    /* free the list of ranks */
@@ -198,27 +200,47 @@ error:
     return rc;
 }
 
+static int mca_sbgp_base_register(int flags)
+{
+    /* Debugging/Verbose output */
+    ompi_sbgp_base_verbose = 0;
+    (void) mca_base_var_register("ompi", "sbgp", "base", "verbose",
+                                 "Verbosity level of SBGP framework",
+                                 MCA_BASE_VAR_TYPE_INT, NULL, 0,
+                                 MCA_BASE_VAR_FLAG_SETTABLE,
+                                 OPAL_INFO_LVL_9,
+                                 MCA_BASE_VAR_SCOPE_LOCAL,
+                                 &ompi_sbgp_base_verbose);
+
+    /* get list of sub-grouping functions to use */
+    ompi_sbgp_subgroups_string = "basesmsocket,basesmuma,ibnet,p2p";
+    (void) mca_base_var_register("ompi", "sbgp", "base", "subgroups_string",
+                                 "Default set of subgroup operations to apply ",
+                                 MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
+                                 OPAL_INFO_LVL_9,
+                                 MCA_BASE_VAR_SCOPE_LOCAL,
+                                 &ompi_sbgp_subgroups_string);
+
+    return OMPI_SUCCESS;
+}
+
 /**
  * Function for finding and opening either all MCA components, or the one
  * that was specifically requested via a MCA parameter.
  */
 int mca_sbgp_base_open(void)
 {
-    int value, ret = OMPI_SUCCESS;
+    int ret = OMPI_SUCCESS;
 
     /*_sbgp_base_components_available
      * Register some MCA parameters
      */
-     /* Debugging/Verbose output */
-     mca_base_param_reg_int_name("sbgp",
-                                 "base_verbose",
-                                 "Verbosity level of SBGP framework",
-                                 false, false,
-                                 0, &value);
+
+    (void) mca_sbgp_base_register(0);
 
      /* get fraemwork id    */
      mca_sbgp_base_output = opal_output_open(NULL);
-     opal_output_set_verbosity(mca_sbgp_base_output, value);
+     opal_output_set_verbosity(mca_sbgp_base_output, ompi_sbgp_base_verbose);
 
     /* Open up all available components */
     ret = mca_base_components_open("sbgp", mca_sbgp_base_output, mca_sbgp_base_static_components,
@@ -227,11 +249,6 @@ int mca_sbgp_base_open(void)
     if (OMPI_SUCCESS != ret) {
         return OMPI_ERROR;
     }
-
-    /* get list of sub-grouping functions to use */
-    mca_base_param_reg_string_name("sbgp","base_subgroups_string",
-            "Default set of subgroup operations to apply ",
-            false,false,"basesmsocket,basesmuma,ibnet,p2p",&ompi_sbgp_subgroups_string);
 
     ret = ompi_sbgp_set_components_to_use(&mca_sbgp_base_components_opened,
             &mca_sbgp_base_components_in_use);

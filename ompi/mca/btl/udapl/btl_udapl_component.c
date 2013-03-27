@@ -29,7 +29,6 @@
 #include "opal/util/argv.h"
 #include "ompi/mca/btl/btl.h"
 
-#include "opal/mca/base/mca_base_param.h"
 #include "ompi/mca/mpool/base/base.h" 
 #include "btl_udapl.h"
 #include "btl_udapl_frag.h"
@@ -55,7 +54,6 @@ static int mca_btl_udapl_modify_ia_list(DAT_COUNT *num_info_entries,
 static const char*
 mca_btl_udapl_dat_event_to_string(DAT_EVENT_NUMBER event_number);
 
-
 mca_btl_udapl_component_t mca_btl_udapl_component = {
     {
         /* First, the mca_base_component_t struct containing meta information
@@ -68,7 +66,9 @@ mca_btl_udapl_component_t mca_btl_udapl_component = {
             OMPI_MINOR_VERSION,  /* MCA component minor version */
             OMPI_RELEASE_VERSION,  /* MCA component release version */
             mca_btl_udapl_component_open,  /* component open */
-            mca_btl_udapl_component_close  /* component close */
+            mca_btl_udapl_component_close, /* component close */
+            NULL,
+            mca_btl_udapl_register_mca_params
         },
         {
             /* The component is not checkpoint ready */
@@ -179,7 +179,6 @@ mca_btl_udapl_error(DAT_RETURN ret, char* str)
  *  Called by MCA framework to open the component, registers
  *  component parameters.
  */
-
 int mca_btl_udapl_component_open(void)
 {
     int rc = OMPI_SUCCESS;
@@ -192,9 +191,6 @@ int mca_btl_udapl_component_open(void)
     /* initialize objects */ 
     OBJ_CONSTRUCT(&mca_btl_udapl_component.udapl_procs, opal_list_t);
     OBJ_CONSTRUCT(&mca_btl_udapl_component.udapl_lock, opal_mutex_t);
-
-    /* register uDAPL MCA parameters */
-    rc = mca_btl_udapl_register_mca_params();
 
     /* compute udapl_eager_frag_size and udapl_max_frag_size */
     mca_btl_udapl_component.udapl_eager_frag_size =

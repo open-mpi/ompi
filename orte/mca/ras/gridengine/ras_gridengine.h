@@ -36,10 +36,9 @@ BEGIN_C_DECLS
  */
 struct orte_ras_gridengine_component_t {
     orte_ras_base_component_t super;
-    int debug;
     int verbose;
     int priority;
-    int show_jobid;
+    bool show_jobid;
 };
 typedef struct orte_ras_gridengine_component_t orte_ras_gridengine_component_t;
 

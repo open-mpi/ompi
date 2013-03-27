@@ -70,7 +70,8 @@ int mca_sharedfp_base_file_select (struct mca_io_ompio_file_t *file,
     opal_list_item_t *item; 
     opal_list_item_t *next_item; 
     mca_base_component_priority_list_item_t *selectable_item;
-    char *names, **name_array;
+    char **name_array;
+    const char **names_value, *names;
     int num_names;
     mca_base_component_priority_list_item_t *cpli;
     mca_sharedfp_base_component_t *component; 
@@ -136,8 +137,9 @@ int mca_sharedfp_base_file_select (struct mca_io_ompio_file_t *file,
      */ 
 
     /* Check if anything was requested by means on the name parameters */
-    names = NULL;
-    mca_base_param_lookup_string (mca_sharedfp_base_param, &names);
+    names_value = NULL;
+    mca_base_var_get_value(mca_sharedfp_base_param, &names_value, NULL, NULL);
+    names = names_value ? names_value[0] : NULL;
 
     if (NULL != names && 0 < strlen(names)) {
         name_array = opal_argv_split (names, ',');
@@ -167,7 +169,7 @@ int mca_sharedfp_base_file_select (struct mca_io_ompio_file_t *file,
                                 component->sharedfpm_version.mca_type_name,
                                 component->sharedfpm_version.mca_component_name);
 
-            /* check if this name is present in the mca_base_params */
+            /* check if this name is present in the mca_base_var */
             for (i=0; i < num_names; i++) {
                 if (0 == strcmp(name_array[i], component->sharedfpm_version.mca_component_name)) {
                     /* this is present, and should be added o the selectable list */

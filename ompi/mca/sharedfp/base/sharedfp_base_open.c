@@ -24,7 +24,6 @@
 #include "ompi/class/ompi_free_list.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
-#include "opal/mca/base/mca_base_param.h"
 
 #include "ompi/mca/sharedfp/sharedfp.h"
 #include "ompi/mca/sharedfp/base/base.h"
@@ -74,8 +73,8 @@ int mca_sharedfp_base_open(void)
     mca_sharedfp_base_components_opened_valid = true;
 
     /* Find the index of the MCA "sharedfp" param for selection */
-    
-    mca_sharedfp_base_param = mca_base_param_find("sharedfp", "base", NULL);
+
+    mca_sharedfp_base_param = mca_base_var_find("ompi", "sharedfp", NULL, NULL);
 
     return OMPI_SUCCESS;
 }

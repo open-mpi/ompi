@@ -76,7 +76,8 @@
 #include "opal/util/show_help.h"
 #include "opal/constants.h"
 #include "opal/threads/tsd.h"
-#include "opal/mca/base/mca_base_param.h"
+#include "opal/mca/base/mca_base_var.h"
+#include "opal/runtime/opal_params.h"
 
 /* this function doesn't depend on sockaddr_h */
 bool opal_net_isaddr(const char *name)
@@ -150,25 +151,11 @@ get_hostname_buffer(void)
 int
 opal_net_init()
 {
-    char *string_value, **args, *arg;
+    char **args, *arg;
     uint32_t a, b, c, d, bits, addr;
     int i, count, found_bad = 0;
 
-    /* RFC1918 defines
-       - 10.0.0./8
-       - 172.16.0.0/12
-       - 192.168.0.0/16
-       
-       RFC3330 also mentiones
-       - 169.254.0.0/16 for DHCP onlink iff there's no DHCP server
-    */
-    mca_base_param_reg_string_name( "opal", "net_private_ipv4",
-                                    "Semicolon-delimited list of CIDR notation entries specifying what networks are considered \"private\" (default value based on RFC1918 and RFC3330)",
-                                    false, false, "10.0.0.0/8;172.16.0.0/12;192.168.0.0/16;169.254.0.0/16",
-                                    &string_value );
-
-    args = opal_argv_split( string_value, ';' );
-    free(string_value);
+    args = opal_argv_split( opal_net_private_ipv4, ';' );
     if( NULL != args ) {
         count = opal_argv_count(args);
         private_ipv4 = (private_ipv4_t*)malloc( (count + 1) * sizeof(private_ipv4_t));

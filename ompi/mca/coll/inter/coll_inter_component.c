@@ -46,7 +46,7 @@ int mca_coll_inter_verbose_param = 0;
 /*
  * Local function
  */
-static int inter_open(void);
+static int inter_register(void);
 
 /*
  * Instantiate the public struct with all of our public information
@@ -68,8 +68,10 @@ const mca_coll_base_component_2_0_0_t mca_coll_inter_component = {
     OMPI_RELEASE_VERSION,
 
     /* Component open and close functions */
-    inter_open,
-    NULL
+    NULL,
+    NULL,
+    NULL,
+    inter_register
   },
   {
       /* This component is checkpointable */
@@ -82,23 +84,25 @@ const mca_coll_base_component_2_0_0_t mca_coll_inter_component = {
 };
 
 
-static int inter_open(void)
+static int inter_register(void)
 {
-    
-
     /* Use a high priority, but allow other components to be higher */
-    mca_base_param_reg_int(&mca_coll_inter_component.collm_version, 
-			   "priority",
-                           "Priority of the inter coll component",
-                           false, false, mca_coll_inter_priority_param,
-                           &mca_coll_inter_priority_param);
+    mca_coll_inter_priority_param = 40;
+    (void) mca_base_component_var_register(&mca_coll_inter_component.collm_version,
+                                           "priority", "Priority of the inter coll component",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &mca_coll_inter_priority_param);
 
-
-    mca_base_param_reg_int(&mca_coll_inter_component.collm_version, 
-			   "verbose",
-                           "Turn verbose message of the inter coll component on/off",
-                           false, false, mca_coll_inter_verbose_param,
-                           &mca_coll_inter_verbose_param);
+    mca_coll_inter_verbose_param = 0;
+    (void) mca_base_component_var_register(&mca_coll_inter_component.collm_version,
+                                           "verbose",
+                                           "Turn verbose message of the inter coll component on/off",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &mca_coll_inter_verbose_param);
 
     return OMPI_SUCCESS;
 }

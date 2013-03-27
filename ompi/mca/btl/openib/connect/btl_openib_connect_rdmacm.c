@@ -164,7 +164,7 @@ static opal_list_t client_list;
 static opal_mutex_t client_list_lock;
 static struct rdma_event_channel *event_channel = NULL;
 static int rdmacm_priority = 30;
-static uint16_t rdmacm_port = 0;
+static unsigned int rdmacm_port = 0;
 static uint32_t rdmacm_addr = 0;
 static int rdmacm_resolve_timeout = 30000;
 static int rdmacm_resolve_max_retry_count = 20;
@@ -229,55 +229,70 @@ static void rdmacm_component_register(void)
 {
     int value;
 
-    mca_base_param_reg_int(&mca_btl_openib_component.super.btl_version,
-                           "connect_rdmacm_priority",
-                           "The selection method priority for rdma_cm",
-                           false, false, rdmacm_priority, &rdmacm_priority);
-
+    rdmacm_priority = 30;
+    (void) mca_base_component_var_register(&mca_btl_openib_component.super.btl_version,
+                                           "connect_rdmacm_priority",
+                                           "The selection method priority for rdma_cm",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &rdmacm_priority);
     if (rdmacm_priority > 100) {
         rdmacm_priority = 100;
     } else if (rdmacm_priority < 0) {
         rdmacm_priority = 0;
     }
 
-    mca_base_param_reg_int(&mca_btl_openib_component.super.btl_version,
-                           "connect_rdmacm_port",
-                           "The selection method port for rdma_cm",
-                           false, false, rdmacm_port, &value);
-    if (value >= 0 && value < 65536) {
-        rdmacm_port = (uint16_t) value;
-    } else {
+    rdmacm_port = 0;
+    (void) mca_base_component_var_register(&mca_btl_openib_component.super.btl_version,
+                                           "connect_rdmacm_port",
+                                           "The selection method port for rdma_cm",
+                                           MCA_BASE_VAR_TYPE_UNSIGNED_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &rdmacm_port);
+    if (rdmacm_port & ~0xfffful) {
         opal_show_help("help-mpi-btl-openib-cpc-rdmacm.txt",
-                       "illegal tcp port", true, value);
+                       "illegal tcp port", true, (int) rdmacm_port);
+        rdmacm_port = 0;
     }
 
-    mca_base_param_reg_int(&mca_btl_openib_component.super.btl_version,
-                           "connect_rdmacm_resolve_timeout",
-                           "The timeout (in miliseconds) for address and route resolution",
-                           false, false, rdmacm_resolve_timeout, &value);
-    if (value > 0) {
-        rdmacm_resolve_timeout = value;
-    } else {
+    rdmacm_resolve_timeout = 30000;
+    (void) mca_base_component_var_register(&mca_btl_openib_component.super.btl_version,
+                                           "connect_rdmacm_resolve_timeout",
+                                           "The timeout (in miliseconds) for address and route resolution",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &rdmacm_resolve_timeout);
+    if (0 > rdmacm_resolve_timeout) {
         opal_show_help("help-mpi-btl-openib-cpc-rdmacm.txt",
-                       "illegal timeout", true, value);
+                       "illegal timeout", true, rdmacm_resolve_timeout);
+        rdmacm_resolve_timeout = 30000;
     }
 
-    mca_base_param_reg_int(&mca_btl_openib_component.super.btl_version,
-                           "connect_rdmacm_retry_count",
-                           "Maximum number of times rdmacm will retry route resolution",
-                           false, false, rdmacm_resolve_max_retry_count, &value);
-    if (value > 0) {
-        rdmacm_resolve_max_retry_count = value;
-    } else {
+    rdmacm_resolve_max_retry_count = 20;
+    (void) mca_base_component_var_register(&mca_btl_openib_component.super.btl_version,
+                                           "connect_rdmacm_retry_count",
+                                           "Maximum number of times rdmacm will retry route resolution",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &rdmacm_resolve_max_retry_count);
+    if (0 > rdmacm_resolve_max_retry_count) {
         opal_show_help("help-mpi-btl-openib-cpc-rdmacm.txt",
-                       "illegal retry count", true, value);
+                       "illegal retry count", true, rdmacm_resolve_max_retry_count);
+        rdmacm_resolve_max_retry_count = 20;
     }
 
-    mca_base_param_reg_int(&mca_btl_openib_component.super.btl_version,
-                           "connect_rdmacm_reject_causes_connect_error",
-                           "The drivers for some devices are buggy such that an RDMA REJECT action may result in a CONNECT_ERROR event instead of a REJECTED event.  Setting this MCA parameter to true tells Open MPI to treat CONNECT_ERROR events on connections where a REJECT is expected as a REJECT (default: false)",
-                           false, false, 0, &value);
-    rdmacm_reject_causes_connect_error = (bool) (value != 0);
+    rdmacm_reject_causes_connect_error = false;
+    (void) mca_base_component_var_register(&mca_btl_openib_component.super.btl_version,
+                                           "connect_rdmacm_reject_causes_connect_error",
+                                           "The drivers for some devices are buggy such that an RDMA REJECT action may result in a CONNECT_ERROR event instead of a REJECTED event.  Setting this MCA parameter to true tells Open MPI to treat CONNECT_ERROR events on connections where a REJECT is expected as a REJECT (default: false)",
+                                           MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &rdmacm_reject_causes_connect_error);
 }
 
 /*
@@ -1864,7 +1879,7 @@ static int rdmacm_component_query(mca_btl_openib_module_t *openib_btl, ompi_btl_
     memset(&sin, 0, sizeof(sin));
     sin.sin_family = AF_INET;
     sin.sin_addr.s_addr = rdmacm_addr;
-    sin.sin_port = rdmacm_port;
+    sin.sin_port = (uint16_t) rdmacm_port;
 
     /* Bind the rdmacm server to the local IP address and an ephemerial
      * port or one specified by a comand arg.

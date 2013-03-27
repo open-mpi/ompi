@@ -66,6 +66,9 @@ static ompi_btl_openib_connect_base_component_t *all[] = {
 static ompi_btl_openib_connect_base_component_t **available = NULL;
 static int num_available = 0;
 
+static char *btl_openib_cpc_include;
+static char *btl_openib_cpc_exclude;
+
 /*
  * Register MCA parameters
  */
@@ -73,7 +76,6 @@ int ompi_btl_openib_connect_base_register(void)
 {
     int i, j, save;
     char **temp = NULL, *string = NULL, *all_cpc_names = NULL;
-    char *cpc_include = NULL, *cpc_exclude = NULL;
 
     /* Make an MCA parameter to select which connect module to use */
     for (i = 0; NULL != all[i]; ++i) {
@@ -88,18 +90,24 @@ int ompi_btl_openib_connect_base_register(void)
              "Method used to select OpenFabrics connections (valid values: %s)",
              all_cpc_names);
 
-    mca_base_param_reg_string(&mca_btl_openib_component.super.btl_version,
-                              "cpc_include", string, false, false,
-                              NULL, &cpc_include);
+    btl_openib_cpc_include = NULL;
+    (void) mca_base_component_var_register(&mca_btl_openib_component.super.btl_version,
+                                           "cpc_include", string, MCA_BASE_VAR_TYPE_STRING,
+                                           NULL, 0, 0, OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &btl_openib_cpc_include);
     free(string);
 
     asprintf(&string,
              "Method used to exclude OpenFabrics connections (valid values: %s)",
              all_cpc_names);
 
-    mca_base_param_reg_string(&mca_btl_openib_component.super.btl_version,
-                              "cpc_exclude", string, false, false,
-                              NULL, &cpc_exclude);
+    btl_openib_cpc_include = NULL;
+    (void) mca_base_component_var_register(&mca_btl_openib_component.super.btl_version,
+                                           "cpc_exclude", string, MCA_BASE_VAR_TYPE_STRING,
+                                           NULL, 0, 0, OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &btl_openib_cpc_exclude);
     free(string);
 
     /* Parse the if_[in|ex]clude paramters to come up with a list of
@@ -108,9 +116,9 @@ int ompi_btl_openib_connect_base_register(void)
 
     /* If we have an "include" list, then find all those CPCs and put
        them in available[] */
-    if (NULL != cpc_include) {
+    if (NULL != btl_openib_cpc_include) {
         mca_btl_openib_component.cpc_explicitly_defined = true;
-        temp = opal_argv_split(cpc_include, ',');
+        temp = opal_argv_split(btl_openib_cpc_include, ',');
         for (save = j = 0; NULL != temp[j]; ++j) {
             for (i = 0; NULL != all[i]; ++i) {
                 if (0 == strcmp(temp[j], all[i]->cbc_name)) {
@@ -124,7 +132,7 @@ int ompi_btl_openib_connect_base_register(void)
                 opal_show_help("help-mpi-btl-openib-cpc-base.txt",
                                "cpc name not found", true,
                                "include", ompi_process_info.nodename,
-                               "include", cpc_include, temp[j],
+                               "include", btl_openib_cpc_include, temp[j],
                                all_cpc_names);
                 opal_argv_free(temp);
                 free(all_cpc_names);
@@ -136,9 +144,9 @@ int ompi_btl_openib_connect_base_register(void)
 
     /* Otherwise, if we have an "exclude" list, take all the CPCs that
        are not in that list and put them in available[] */
-    else if (NULL != cpc_exclude) {
+    else if (NULL != btl_openib_cpc_exclude) {
         mca_btl_openib_component.cpc_explicitly_defined = true;
-        temp = opal_argv_split(cpc_exclude, ',');
+        temp = opal_argv_split(btl_openib_cpc_exclude, ',');
         /* First: error check -- ensure that all the names are valid */
         for (j = 0; NULL != temp[j]; ++j) {
             for (i = 0; NULL != all[i]; ++i) {
@@ -150,7 +158,7 @@ int ompi_btl_openib_connect_base_register(void)
                 opal_show_help("help-mpi-btl-openib-cpc-base.txt",
                                "cpc name not found", true,
                                "exclude", ompi_process_info.nodename,
-                               "exclude", cpc_exclude, temp[j],
+                               "exclude", btl_openib_cpc_exclude, temp[j],
                                all_cpc_names);
                 opal_argv_free(temp);
                 free(all_cpc_names);

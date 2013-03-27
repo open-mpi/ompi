@@ -25,6 +25,8 @@
 #include "opal/mca/memchecker/memchecker.h"
 #include "memchecker_valgrind.h"
 
+int opal_memchecker_component_priority = 0;
+
 /*
  * Public string showing the memchecker ompi_linux component version number
  */
@@ -34,6 +36,7 @@ const char *opal_memchecker_valgrind_component_version_string =
 /*
  * Local function
  */
+static int valgrind_register(void);
 static int valgrind_open(void);
 static int valgrind_close(void);
 
@@ -42,7 +45,7 @@ static int valgrind_close(void);
  * and pointers to our public functions in it
  */
 
-const opal_memchecker_base_component_2_0_0_t mca_memchecker_valgrind_component = {
+opal_memchecker_base_component_2_0_0_t mca_memchecker_valgrind_component = {
 
     /* First, the mca_component_t struct containing meta information
        about the component itself */
@@ -58,8 +61,8 @@ const opal_memchecker_base_component_2_0_0_t mca_memchecker_valgrind_component =
         /* Component open and close functions */
         valgrind_open,
         valgrind_close,
-        opal_memchecker_valgrind_component_query
-
+        opal_memchecker_valgrind_component_query,
+        valgrind_register
     },
     {
         /* Valgrind does not offer functionality to save the state  */
@@ -67,6 +70,19 @@ const opal_memchecker_base_component_2_0_0_t mca_memchecker_valgrind_component =
     }
 };
 
+
+static int valgrind_register(void)
+{
+    opal_memchecker_component_priority = 0;
+    (void) mca_base_component_var_register(&mca_memchecker_valgrind_component.base_version,
+                                           "priority", "Priority for the memchecker valgrind "
+                                           "component (default: 0)", MCA_BASE_VAR_TYPE_INT,
+                                           NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
+                                           OPAL_INFO_LVL_3, MCA_BASE_VAR_SCOPE_ALL_EQ,
+                                           &opal_memchecker_component_priority);
+
+    return OPAL_SUCCESS;
+}
 
 static int valgrind_open(void)
 {

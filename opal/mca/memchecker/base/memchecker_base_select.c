@@ -16,7 +16,6 @@
 #include "opal/constants.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
-#include "opal/mca/base/mca_base_param.h"
 #include "opal/mca/memchecker/memchecker.h"
 #include "opal/mca/memchecker/base/base.h"
 

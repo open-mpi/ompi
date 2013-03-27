@@ -15,7 +15,6 @@
 #include "opal/util/output.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
-#include "opal/mca/base/mca_base_param.h"
 
 #include "ompi/mca/rte/rte.h"
 #include "ompi/mca/rte/base/base.h"
@@ -36,20 +35,34 @@ int ompi_rte_base_output = -1;
 opal_list_t ompi_rte_components;
 int ompi_rte_base_inited = 0;
 
+static int ompi_rte_base_verbose;
+
+static int ompi_rte_base_register(int flags)
+{
+    /* Debugging / verbose output */
+    ompi_rte_base_verbose = 0;
+    (void) mca_base_var_register("ompi", "rte", "base", "verbose",
+                                 "Verbosity level of the rte framework",
+                                 MCA_BASE_VAR_TYPE_INT, NULL, 0,
+                                 MCA_BASE_VAR_FLAG_SETTABLE,
+                                 OPAL_INFO_LVL_9,
+                                 MCA_BASE_VAR_SCOPE_LOCAL,
+                                 &ompi_rte_base_verbose);
+
+    return OMPI_SUCCESS;
+}
+
 int ompi_rte_base_open(void)
 {
-    int value, rc = OMPI_SUCCESS;
+    int rc = OMPI_SUCCESS;
 
     if( ompi_rte_base_inited++ < 0 ) {
         return OMPI_SUCCESS;
     }
 
-    /* Debugging / verbose output */
-    mca_base_param_reg_int_name("rte", "base_verbose", 
-                                "Verbosity level of the rte framework",
-                                false, false,
-                                0, &value);
-    if (0 != value) {
+    (void) ompi_rte_base_register(0);
+
+    if (0 != ompi_rte_base_verbose) {
         ompi_rte_base_output = opal_output_open(NULL);
     } else {
         ompi_rte_base_output = -1;

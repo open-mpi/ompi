@@ -36,7 +36,7 @@
 
 
 #if OPAL_ENABLE_DEBUG
-extern int opal_copy_debug;
+extern bool opal_copy_debug;
 #define DO_DEBUG(INST)  if( opal_copy_debug ) { INST }
 #else
 #define DO_DEBUG(INST)

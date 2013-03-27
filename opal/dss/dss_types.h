@@ -199,9 +199,12 @@ OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_node_stats_t);
 /**
  * buffer type
  */
-typedef uint8_t opal_dss_buffer_type_t;
-#define OPAL_DSS_BUFFER_NON_DESC        0x00
-#define OPAL_DSS_BUFFER_FULLY_DESC      0x01
+enum opal_dss_buffer_type_t {
+    OPAL_DSS_BUFFER_NON_DESC   = 0x00,
+    OPAL_DSS_BUFFER_FULLY_DESC = 0x01
+};
+
+typedef enum opal_dss_buffer_type_t opal_dss_buffer_type_t;
 
 #define OPAL_DSS_BUFFER_TYPE_HTON(h);
 #define OPAL_DSS_BUFFER_TYPE_NTOH(h);

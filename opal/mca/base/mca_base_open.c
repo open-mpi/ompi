@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -40,10 +41,14 @@
 /*
  * Public variables
  */
-int mca_base_param_component_path = -1;
+char *mca_base_component_path = NULL;
 bool mca_base_opened = false;
-char *mca_base_system_default_path=NULL;
-char *mca_base_user_default_path=NULL;
+char *mca_base_system_default_path = NULL;
+char *mca_base_user_default_path = NULL;
+bool mca_base_component_show_load_errors = true;
+bool mca_base_component_disable_dlopen = false;
+
+static char *mca_base_verbose = NULL;
 
 /*
  * Private functions
@@ -57,15 +62,16 @@ static void parse_verbose(char *e, opal_output_stream_t *lds);
  */
 int mca_base_open(void)
 {
-  char *value;
-  opal_output_stream_t lds;
-  char hostname[64];
+    char *value;
+    opal_output_stream_t lds;
+    char hostname[64];
+    int var_id;
 
-  if (!mca_base_opened) {
-    mca_base_opened = true;
-  } else {
-    return OPAL_SUCCESS;
-  }
+    if (!mca_base_opened) {
+        mca_base_opened = true;
+    } else {
+        return OPAL_SUCCESS;
+    }
 
     /* define the system and user default paths */
 #if OPAL_WANT_HOME_CONFIG_FILES
@@ -82,41 +88,64 @@ int mca_base_open(void)
         asprintf(&value, "%s%c%s", mca_base_system_default_path,
                  OPAL_ENV_SEP, mca_base_user_default_path);
     }
-  mca_base_param_component_path = 
-    mca_base_param_reg_string_name("mca", "component_path",
-                                   "Path where to look for Open MPI and ORTE components", 
-                                   false, false, value, NULL);
-  free(value);
-  
-  mca_base_param_reg_int_name("mca", "component_show_load_errors", 
-                              "Whether to show errors for components that failed to load or not", 
-                              false, false, 1, NULL);
 
-  mca_base_param_reg_int_name("mca", "component_disable_dlopen",
-                              "Whether to attempt to disable opening dynamic components or not",
-                              false, false, 0, NULL);
-
-  /* What verbosity level do we want for the default 0 stream? */
-
-  mca_base_param_reg_string_name("mca", "verbose", 
-                                 "Specifies where the default error output stream goes (this is separate from distinct help messages).  Accepts a comma-delimited list of: stderr, stdout, syslog, syslogpri:<notice|info|debug>, syslogid:<str> (where str is the prefix string for all syslog notices), file[:filename] (if filename is not specified, a default filename is used), fileappend (if not specified, the file is opened for truncation), level[:N] (if specified, integer verbose level; otherwise, 0 is implied)",
-                                 false, false, "stderr", &value);
-  memset(&lds, 0, sizeof(lds));
-  if (NULL != value) {
-    parse_verbose(value, &lds);
+    mca_base_component_path = value;
+    var_id = mca_base_var_register("opal", "mca", "base", "component_path",
+                                   "Path where to look for Open MPI and ORTE components",
+                                   MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
+                                   OPAL_INFO_LVL_9,
+                                   MCA_BASE_VAR_SCOPE_READONLY,
+                                   &mca_base_component_path);
+    (void) mca_base_var_register_synonym(var_id, "opal", "mca", NULL, "component_path",
+                                         MCA_BASE_VAR_SYN_FLAG_DEPRECATED);
     free(value);
-  } else {
-    set_defaults(&lds);
-  }
-  gethostname(hostname, 64);
-  asprintf(&lds.lds_prefix, "[%s:%05d] ", hostname, getpid());
-  opal_output_reopen(0, &lds);
-  opal_output_verbose(5, 0, "mca: base: opening components");
-  free(lds.lds_prefix);
 
-  /* Open up the component repository */
+    mca_base_component_show_load_errors = true;
+    var_id = mca_base_var_register("opal", "mca", "base", "component_show_load_errors",
+                                   "Whether to show errors for components that failed to load or not",
+                                   MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                   OPAL_INFO_LVL_9,
+                                   MCA_BASE_VAR_SCOPE_READONLY,
+                                   &mca_base_component_show_load_errors);
+    (void) mca_base_var_register_synonym(var_id, "opal", "mca", NULL, "component_show_load_errors",
+                                         MCA_BASE_VAR_SYN_FLAG_DEPRECATED);
 
-  return mca_base_component_repository_init();
+    mca_base_component_disable_dlopen = false;
+    var_id = mca_base_var_register("opal", "mca", "base", "component_disable_dlopen",
+                                   "Whether to attempt to disable opening dynamic components or not",
+                                   MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                   OPAL_INFO_LVL_9,
+                                   MCA_BASE_VAR_SCOPE_READONLY,
+                                   &mca_base_component_disable_dlopen);
+    (void) mca_base_var_register_synonym(var_id, "opal", "mca", NULL, "component_disable_dlopen",
+                                         MCA_BASE_VAR_SYN_FLAG_DEPRECATED);
+
+    /* What verbosity level do we want for the default 0 stream? */
+    mca_base_verbose = "stderr";
+    var_id = mca_base_var_register("opal", "mca", "base", "verbose",
+                                   "Specifies where the default error output stream goes (this is separate from distinct help messages).  Accepts a comma-delimited list of: stderr, stdout, syslog, syslogpri:<notice|info|debug>, syslogid:<str> (where str is the prefix string for all syslog notices), file[:filename] (if filename is not specified, a default filename is used), fileappend (if not specified, the file is opened for truncation), level[:N] (if specified, integer verbose level; otherwise, 0 is implied)",
+                                   MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
+                                   OPAL_INFO_LVL_9,
+                                   MCA_BASE_VAR_SCOPE_READONLY,
+                                   &mca_base_verbose);
+    (void) mca_base_var_register_synonym(var_id, "opal", "mca", NULL, "verbose",
+                                         MCA_BASE_VAR_SYN_FLAG_DEPRECATED);
+
+    memset(&lds, 0, sizeof(lds));
+    if (NULL != mca_base_verbose) {
+        parse_verbose(mca_base_verbose, &lds);
+    } else {
+        set_defaults(&lds);
+    }
+    gethostname(hostname, 64);
+    asprintf(&lds.lds_prefix, "[%s:%05d] ", hostname, getpid());
+    opal_output_reopen(0, &lds);
+    opal_output_verbose(5, 0, "mca: base: opening components");
+    free(lds.lds_prefix);
+
+    /* Open up the component repository */
+
+    return mca_base_component_repository_init();
 }
 
 

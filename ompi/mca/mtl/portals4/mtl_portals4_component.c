@@ -21,7 +21,6 @@
 
 #include "opal/mca/event/event.h"
 #include "opal/util/output.h"
-#include "opal/mca/base/mca_base_param.h"
 #include "ompi/runtime/ompi_module_exchange.h"
 
 #include "mtl_portals4.h"
@@ -29,14 +28,16 @@
 #include "mtl_portals4_recv_short.h"
 #include "mtl_portals4_message.h"
 
+static int ompi_mtl_portals4_component_register(void);
 static int ompi_mtl_portals4_component_open(void);
 static int ompi_mtl_portals4_component_close(void);
 static mca_mtl_base_module_t* 
 ompi_mtl_portals4_component_init(bool enable_progress_threads, 
                                  bool enable_mpi_threads);
 
-
 OMPI_MODULE_DECLSPEC extern mca_mtl_base_component_2_0_0_t mca_mtl_portals4_component;
+
+static unsigned int ompi_mtl_portals4_md_size_bit_width;
 
 mca_mtl_base_component_2_0_0_t mca_mtl_portals4_component = {
 
@@ -51,7 +52,9 @@ mca_mtl_base_component_2_0_0_t mca_mtl_portals4_component = {
         OMPI_MINOR_VERSION,  /* MCA component minor version */
         OMPI_RELEASE_VERSION,  /* MCA component release version */
         ompi_mtl_portals4_component_open,  /* component open */
-        ompi_mtl_portals4_component_close  /* component close */
+        ompi_mtl_portals4_component_close, /* component close */
+        NULL,
+        ompi_mtl_portals4_component_register
     },
     {
         /* The component is not checkpoint ready */
@@ -61,12 +64,114 @@ mca_mtl_base_component_2_0_0_t mca_mtl_portals4_component = {
     ompi_mtl_portals4_component_init,  /* component init */
 };
 
+static int mca_base_var_enum_value_t long_protocol_values[] = {
+    {eager, "eager"},
+    {rndv, "rndv"},
+    {0, NULL}
+};
+
+static int
+ompi_mtl_portals4_component_register(void)
+{
+    mca_base_var_enum_t *new_enum;
+    int ret;
+
+    ompi_mtl_portals4.eager_limit = 2 * 1024;
+    (void) mca_base_component_var_register(&mca_mtl_portals4_component.mtl_version,
+                                           "eager_limit",
+                                           "Cross-over point from eager to rendezvous sends",
+                                           MCA_BASE_VAR_TYPE_UNSIGNED_LONG_LONG,
+                                           NULL,
+                                           0,
+                                           0,
+                                           OPAL_INFO_LVL_5,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &ompi_mtl_portals4.eager_limit);
+
+    ompi_mtl_portals4.recv_short_num = 32;
+    (void) mca_base_component_var_register(&mca_mtl_portals4_component.mtl_version,
+                                           "short_recv_num",
+                                           "Number of short message receive blocks",
+                                           MCA_BASE_VAR_TYPE_INT,
+                                           NULL,
+                                           0,
+                                           0,
+                                           OPAL_INFO_LVL_5,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &ompi_mtl_portals4.recv_short_num);
+
+    ompi_mtl_portals4.recv_short_size = 2 * 1024 * 1024;
+    (void) mca_base_component_var_register(&mca_mtl_portals4_component.mtl_version,
+                                           "short_recv_size",
+                                           "Size of short message receive blocks",
+                                           MCA_BASE_VAR_TYPE_UNSIGNED_LONG_LONG,
+                                           NULL,
+                                           0,
+                                           0,
+                                           OPAL_INFO_LVL_5,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &ompi_mtl_portals4.recv_short_size);
+
+    ompi_mtl_portals4.send_queue_size = 1024;
+    (void) mca_base_component_var_register(&mca_mtl_portals4_component.mtl_version,
+                                           "send_event_queue_size",
+                                           "Size of the send event queue in entries",
+                                           MCA_BASE_VAR_TYPE_INT,
+                                           NULL,
+                                           0,
+                                           0,
+                                           OPAL_INFO_LVL_5,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &ompi_mtl_portals4.send_queue_size);
+
+    ompi_mtl_portals4.recv_queue_size = 1024;
+    (void) mca_base_component_var_register(&mca_mtl_portals4_component.mtl_version,
+                                           "recv_event_queue_size",
+                                           "Size of the recv event queue in entries",
+                                           MCA_BASE_VAR_TYPE_INT,
+                                           NULL,
+                                           0,
+                                           0,
+                                           OPAL_INFO_LVL_5,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &ompi_mtl_portals4.recv_queue_size);
+
+    ompi_mtl_portals4_md_size_bit_width = 48;
+    (void) mca_base_component_var_register(&mca_mtl_portals4_component.mtl_version,
+                                           "md_size_bit_width",
+                                           "Number of bits used to specify the length of an MD to the portals4 library",
+                                           MCA_BASE_VAR_TYPE_UNSIGNED_INT,
+                                           NULL,
+                                           0,
+                                           0,
+                                           OPAL_INFO_LVL_5,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &ompi_mtl_portals4_md_size_bit_width);
+
+    ompi_mtl_portals4.protocol = eager;
+    mca_base_var_enum_create("mtl_portals4_long_protocol", long_protocol_values, &new_enum);
+    ret = mca_base_component_var_register(&mca_mtl_portals4_component.mtl_version,
+                                           "long_protocol",
+                                           "Protocol to use for long messages.  Valid entries are eager and rndv",
+                                           MCA_BASE_VAR_TYPE_INT,
+                                           new_enum,
+                                           0,
+                                           0,
+                                           OPAL_INFO_LVL_5,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &ompi_mtl_portals4.protocol);
+    OBJ_RELEASE(new_enum);
+    if (OPAL_SUCCESS != ret) {
+        opal_output(ompi_mtl_base_output, "Unknown protocol");
+        return OMPI_ERR_NOT_SUPPORTED;
+    }
+
+    return OMPI_SUCCESS;
+}
 
 static int
 ompi_mtl_portals4_component_open(void)
 {
-    int tmp;
-    char *tmp_proto;
     int i;
     uint64_t fixed_md_nb;
 
@@ -74,80 +179,10 @@ ompi_mtl_portals4_component_open(void)
         sizeof(ompi_mtl_portals4_request_t) -
         sizeof(struct mca_mtl_request_t);
 
-    mca_base_param_reg_int(&mca_mtl_portals4_component.mtl_version,
-                           "eager_limit",
-                           "Cross-over point from eager to rendezvous sends",
-                           false,
-                           false,
-                           2 * 1024,
-                           &tmp);
-    ompi_mtl_portals4.eager_limit = tmp;
-
-    mca_base_param_reg_int(&mca_mtl_portals4_component.mtl_version,
-                           "short_recv_num",
-                           "Number of short message receive blocks",
-                           false,
-                           false,
-                           32,
-                           &tmp);
-    ompi_mtl_portals4.recv_short_num = tmp;
-
-    mca_base_param_reg_int(&mca_mtl_portals4_component.mtl_version,
-                           "short_recv_size",
-                           "Size of short message receive blocks",
-                           false,
-                           false,
-                           2 * 1024 * 1024,
-                           &tmp);
-    ompi_mtl_portals4.recv_short_size = tmp;
-
-    mca_base_param_reg_int(&mca_mtl_portals4_component.mtl_version,
-                           "send_event_queue_size",
-                           "Size of the send event queue in entries",
-                           false,
-                           false,
-                           1024,
-                           &tmp);
-    ompi_mtl_portals4.send_queue_size = tmp;
-
-    mca_base_param_reg_int(&mca_mtl_portals4_component.mtl_version,
-                           "recv_event_queue_size",
-                           "Size of the recv event queue in entries",
-                           false,
-                           false,
-                           1024,
-                           &tmp);
-    ompi_mtl_portals4.recv_queue_size = tmp;
-
-    mca_base_param_reg_int(&mca_mtl_portals4_component.mtl_version,
-                           "md_size_bit_width",
-                           "Number of bits used to specify the length of an MD to the portals4 library",
-                           false,
-                           false,
-                           48,
-                           &tmp);
-    if (48 < tmp) tmp = 48;
-    ompi_mtl_portals4.fixed_md_distance = (unsigned long int) 1<<tmp;
+    if (ompi_mtl_portals4_md_size_bit_width < tmp) ompi_mtl_portals4_md_size_bit_width = 48;
+    ompi_mtl_portals4.fixed_md_distance = (unsigned long int) 1<<ompi_mtl_portals4_md_size_bit_width;
     opal_output_verbose(1, ompi_mtl_base_output,
                         "fixed_md_distance=%16.16lx\n", ompi_mtl_portals4.fixed_md_distance);
-
-    mca_base_param_reg_string(&mca_mtl_portals4_component.mtl_version,
-                              "long_protocol",
-                              "Protocol to use for long messages.  Valid entries are eager and rndv",
-                              false,
-                              false,
-                              "eager",
-                              &tmp_proto);
-    if (0 == strcmp(tmp_proto, "eager")) {
-        ompi_mtl_portals4.protocol = eager;        
-    } else if (0 == strcmp(tmp_proto, "rndv")) {
-        ompi_mtl_portals4.protocol = rndv;
-    } else {
-        opal_output(ompi_mtl_base_output,
-                    "Unknown protocol type %s", tmp_proto);
-        return OMPI_ERR_NOT_SUPPORTED;
-    }
-
     opal_output_verbose(1, ompi_mtl_base_output,
                         "Flow control: "
 #if OMPI_MTL_PORTALS4_FLOW_CONTROL

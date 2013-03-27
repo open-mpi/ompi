@@ -38,14 +38,13 @@ const char *mca_coll_demo_component_version_string =
 /*
  * Global variable
  */
-int mca_coll_demo_priority_param = -1;
-int mca_coll_demo_verbose_param = -1;
+int mca_coll_demo_priority = -1;
 int mca_coll_demo_verbose = 0;
 
 /*
  * Local function
  */
-static int demo_open(void);
+static int demo_register(void);
 
 
 /*
@@ -68,8 +67,10 @@ const mca_coll_base_component_2_0_0_t mca_coll_demo_component = {
         OMPI_RELEASE_VERSION,
 
         /* Component open and close functions */
-        demo_open,
-        NULL
+        NULL,
+        NULL,
+        NULL,
+        demo_register
     },
     {
         /* The component is checkpoint ready */
@@ -83,15 +84,20 @@ const mca_coll_base_component_2_0_0_t mca_coll_demo_component = {
 };
 
 
-static int demo_open(void)
+static int demo_register(void)
 {
-    mca_coll_demo_priority_param = 
-      mca_base_param_reg_int(&mca_coll_demo_component.collm_version,
-                             "priority", NULL, false, false, 20, NULL);
-    mca_coll_demo_verbose_param = 
-      mca_base_param_reg_int(&mca_coll_demo_component.collm_version,
-                             "verbose", NULL, false, false,
-                             mca_coll_demo_verbose, NULL);
+    mca_coll_demo_priority = 20;
+    (void) mca_base_component_var_register(&mca_coll_demo_component.collm_version, "priority",
+                                           NULL, MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &mca_coll_demo_priority);
+    mca_coll_demo_verbose = 0;
+    (void) mca_base_component_var_register(&mca_coll_demo_component.collm_version, "verbose",
+                                           NULL, MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &mca_coll_demo_verbose);
 
     return OMPI_SUCCESS;
 }

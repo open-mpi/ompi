@@ -17,7 +17,6 @@
 #include "opal/util/show_help.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
-#include "opal/mca/base/mca_base_param.h"
 #include "opal/threads/tsd.h"
 
 #include "opal/mca/hwloc/hwloc.h"
@@ -61,6 +60,114 @@ hwloc_obj_type_t opal_hwloc_levels[] = {
 bool opal_hwloc_use_hwthreads_as_cpus = false;
 #endif
 
+static mca_base_var_enum_value_t hwloc_base_map[] = {
+    {OPAL_HWLOC_BASE_MAP_NONE, "none"},
+    {OPAL_HWLOC_BASE_MAP_LOCAL_ONLY, "local_only"},
+    {0, NULL}
+};
+
+static mca_base_var_enum_value_t hwloc_failure_action[] = {
+    {OPAL_HWLOC_BASE_MBFA_SILENT, "silent"},
+    {OPAL_HWLOC_BASE_MBFA_WARN, "warn"},
+    {OPAL_HWLOC_BASE_MBFA_ERROR, "error"},
+    {0, NULL}
+};
+
+static int opal_hwloc_base_verbose = 0;
+static char *opal_hwloc_base_binding_policy = NULL;
+static bool opal_hwloc_base_bind_to_core = false;
+static bool opal_hwloc_base_bind_to_socket = false;
+
+static int opal_hwloc_base_register(int flags)
+{
+    mca_base_var_enum_t *new_enum;
+    int ret;
+
+#if !OPAL_HAVE_HWLOC
+    return OPAL_ERR_NOT_AVAILABLE;
+#endif
+
+    /* Debugging / verbose output */
+    opal_hwloc_base_verbose = 0;
+    (void) mca_base_var_register("opal", "hwloc", "base", "verbose",
+                                 "Verbosity level of the hwloc framework",
+                                 MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                 OPAL_INFO_LVL_9,
+                                 MCA_BASE_VAR_SCOPE_READONLY,
+                                 &opal_hwloc_base_verbose);
+
+
+    /* hwloc_base_mbind_policy */
+
+    opal_hwloc_base_map = OPAL_HWLOC_BASE_MAP_NONE;
+    mca_base_var_enum_create("hwloc memory allocation policy", hwloc_base_map, &new_enum);
+    ret = mca_base_var_register("opal", "hwloc", "base", "mem_alloc_policy",
+                                "General memory allocations placement policy (this is not memory binding). "
+                                "\"none\" means that no memory policy is applied. \"local_only\" means that a process' memory allocations will be restricted to its local NUMA node. "
+                                "If using direct launch, this policy will not be in effect until after MPI_INIT. "
+                                "Note that operating system paging policies are unaffected by this setting. For example, if \"local_only\" is used and local NUMA node memory is exhausted, a new memory allocation may cause paging.",
+                                MCA_BASE_VAR_TYPE_INT, new_enum, 0, 0, OPAL_INFO_LVL_9,
+                                MCA_BASE_VAR_SCOPE_READONLY, &opal_hwloc_base_map);
+    OBJ_RELEASE(new_enum);
+    if (0 > ret) {
+        return ret;
+    }
+
+    /* hwloc_base_bind_failure_action */
+    opal_hwloc_base_mbfa = OPAL_HWLOC_BASE_MBFA_WARN;
+    mca_base_var_enum_create("hwloc memory bind failure action", hwloc_failure_action, &new_enum);
+    ret = mca_base_var_register("opal", "hwloc", "base", "mem_bind_failure_action",
+                                "What Open MPI will do if it explicitly tries to bind memory to a specific NUMA location, and fails.  Note that this is a different case than the general allocation policy described by hwloc_base_alloc_policy.  A value of \"silent\" means that Open MPI will proceed without comment. A value of \"warn\" means that Open MPI will warn the first time this happens, but allow the job to continue (possibly with degraded performance).  A value of \"error\" means that Open MPI will abort the job if this happens.",
+                                MCA_BASE_VAR_TYPE_INT, new_enum, 0, 0, OPAL_INFO_LVL_9,
+                                MCA_BASE_VAR_SCOPE_READONLY, &opal_hwloc_base_mbfa);
+    OBJ_RELEASE(new_enum);
+    if (0 > ret) {
+        return ret;
+    }
+
+    opal_hwloc_base_binding_policy = NULL;
+    (void) mca_base_var_register("opal", "hwloc", "base", "binding_policy",
+                                 "Policy for binding processes [none (default) | hwthread | core | l1cache | l2cache | l3cache | socket | numa | board] (supported qualifiers: overload-allowed,if-supported)",
+                                 MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0, OPAL_INFO_LVL_9,
+                                 MCA_BASE_VAR_SCOPE_READONLY, &opal_hwloc_base_binding_policy);
+
+    /* backward compatibility */
+    opal_hwloc_base_bind_to_core = false;
+    (void) mca_base_var_register("opal", "hwloc", "base", "bind_to_core", "Bind processes to cores",
+                                 MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0, OPAL_INFO_LVL_9,
+                                 MCA_BASE_VAR_SCOPE_READONLY, &opal_hwloc_base_bind_to_core);
+
+    opal_hwloc_base_bind_to_socket = false;
+    (void) mca_base_var_register("opal", "hwloc", "base", "bind_to_socket", "Bind processes to sockets",
+                                 MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0, OPAL_INFO_LVL_9,
+                                 MCA_BASE_VAR_SCOPE_READONLY, &opal_hwloc_base_bind_to_socket);
+
+    opal_hwloc_report_bindings = false;
+    (void) mca_base_var_register("opal", "hwloc", "base", "report_bindings", "Report bindings to stderr",
+                                 MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0, OPAL_INFO_LVL_9,
+                                 MCA_BASE_VAR_SCOPE_READONLY, &opal_hwloc_report_bindings);
+
+    opal_hwloc_base_slot_list = NULL;
+    (void) mca_base_var_register("opal", "hwloc", "base", "slot_list",
+                                 "List of processor IDs to bind processes to [default=NULL]",
+                                 MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0, OPAL_INFO_LVL_9,
+                                 MCA_BASE_VAR_SCOPE_READONLY, &opal_hwloc_base_slot_list);
+
+    opal_hwloc_base_cpu_set = NULL;
+    (void) mca_base_var_register("opal", "hwloc", "base", "cpu_set",
+                                 "Comma-separated list of ranges specifying logical cpus allocated to this job [default: none]",
+                                 MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0, OPAL_INFO_LVL_9,
+                                 MCA_BASE_VAR_SCOPE_READONLY, &opal_hwloc_base_cpu_set);
+
+    /* declare hwthreads as independent cpus */
+    opal_hwloc_use_hwthreads_as_cpus = false;
+    (void) mca_base_var_register("opal", "hwloc", "base", "use_hwthreads_as_cpus",
+                                 "Use hardware threads as independent cpus",
+                                 MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0, OPAL_INFO_LVL_9,
+                                 MCA_BASE_VAR_SCOPE_READONLY, &opal_hwloc_use_hwthreads_as_cpus);
+
+    return OPAL_SUCCESS;
+}
 
 int opal_hwloc_base_open(void)
 {
@@ -71,95 +178,27 @@ int opal_hwloc_base_open(void)
 
 #if OPAL_HAVE_HWLOC
     {
-        int value, i;
+        int i, value;
         opal_data_type_t tmp;
-        char *str_value;
         char **tmpvals, **quals;
 
-        /* Debugging / verbose output */
-        mca_base_param_reg_int_name("hwloc", "base_verbose", 
-                                    "Verbosity level of the hwloc framework",
-                                    false, false,
-                                    0, &value);
-        if (0 != value) {
+        (void) opal_hwloc_base_register(0);
+
+        if (0 != opal_hwloc_base_verbose) {
             opal_hwloc_base_output = opal_output_open(NULL);
         } else {
             opal_hwloc_base_output = -1;
         }
-
-        /* hwloc_base_mbind_policy */
-        switch (opal_hwloc_base_map) {
-        case OPAL_HWLOC_BASE_MAP_NONE:
-            str_value = "none";
-            break;
-        case OPAL_HWLOC_BASE_MAP_LOCAL_ONLY:
-            str_value = "local_only";
-            break;
-        }
-        mca_base_param_reg_string_name("hwloc", "base_mem_alloc_policy",
-                                       "General memory allocations placement policy (this is not memory binding). "
-                                       "\"none\" means that no memory policy is applied. \"local_only\" means that a process' memory allocations will be restricted to its local NUMA node. "
-                                       "If using direct launch, this policy will not be in effect until after MPI_INIT. "
-                                       "Note that operating system paging policies are unaffected by this setting. For example, if \"local_only\" is used and local NUMA node memory is exhausted, a new memory allocation may cause paging.",
-                                       false, false, str_value, &str_value);
-        if (strcasecmp(str_value, "none") == 0) {
-            opal_hwloc_base_map = OPAL_HWLOC_BASE_MAP_NONE;
-        } else if (strcasecmp(str_value, "local_only") == 0 ||
-                   strcasecmp(str_value, "local-only") == 0) {
-            opal_hwloc_base_map = OPAL_HWLOC_BASE_MAP_LOCAL_ONLY;
-        } else {
-            char hostname[32];
-            gethostname(hostname, sizeof(hostname));
-            opal_show_help("help-opal-hwloc-base.txt", "invalid mem_alloc_policy",
-                           true, hostname, getpid(), str_value);
-            free(str_value);
-            return OPAL_ERR_BAD_PARAM;
-        }
-        free(str_value);
-        
-        /* hwloc_base_bind_failure_action */
-        switch (opal_hwloc_base_mbfa) {
-        case OPAL_HWLOC_BASE_MBFA_SILENT:
-            str_value = "silent";
-            break;
-        case OPAL_HWLOC_BASE_MBFA_WARN:
-            str_value = "warn";
-            break;
-        case OPAL_HWLOC_BASE_MBFA_ERROR:
-            str_value = "error";
-            break;
-        }
-        mca_base_param_reg_string_name("hwloc", "base_mem_bind_failure_action",
-                                       "What Open MPI will do if it explicitly tries to bind memory to a specific NUMA location, and fails.  Note that this is a different case than the general allocation policy described by hwloc_base_alloc_policy.  A value of \"silent\" means that Open MPI will proceed without comment. A value of \"warn\" means that Open MPI will warn the first time this happens, but allow the job to continue (possibly with degraded performance).  A value of \"error\" means that Open MPI will abort the job if this happens.",
-                                       false, false, str_value, &str_value);
-        if (strcasecmp(str_value, "silent") == 0) {
-            opal_hwloc_base_mbfa = OPAL_HWLOC_BASE_MBFA_SILENT;
-        } else if (strcasecmp(str_value, "warn") == 0) {
-            opal_hwloc_base_mbfa = OPAL_HWLOC_BASE_MBFA_WARN;
-        } else if (strcasecmp(str_value, "error") == 0) {
-            opal_hwloc_base_mbfa = OPAL_HWLOC_BASE_MBFA_ERROR;
-        } else {
-            char hostname[32];
-            gethostname(hostname, sizeof(hostname));
-            opal_show_help("help-opal-hwloc-base.txt", "invalid mem_bind_failure_action",
-                           true, hostname, getpid(), str_value);
-            free(str_value);
-            return OPAL_ERR_BAD_PARAM;
-        }
-        free(str_value);
-        
+                
         /* binding specification */
-        mca_base_param_reg_string_name("hwloc", "base_binding_policy",
-                                       "Policy for binding processes [none (default) | hwthread | core | l1cache | l2cache | l3cache | socket | numa | board] (supported qualifiers: overload-allowed,if-supported)",
-                                       false, false, NULL, &str_value);
-        if (NULL == str_value) {
+        if (NULL == opal_hwloc_base_binding_policy) {
             opal_hwloc_binding_policy = OPAL_BIND_TO_NONE;
             /* mark that no binding policy was specified */
             opal_hwloc_binding_policy &= ~OPAL_BIND_GIVEN;
-        } else if (0 == strncasecmp(str_value, "none", strlen("none"))) {
+        } else if (0 == strncasecmp(opal_hwloc_base_binding_policy, "none", strlen("none"))) {
             OPAL_SET_BINDING_POLICY(opal_hwloc_binding_policy, OPAL_BIND_TO_NONE);
         } else {
-            tmpvals = opal_argv_split(str_value, ':');
+            tmpvals = opal_argv_split(opal_hwloc_base_binding_policy, ':');
             if (1 < opal_argv_count(tmpvals)) {
                 quals = opal_argv_split(tmpvals[1], ',');
                 for (i=0; NULL != quals[i]; i++) {
@@ -169,7 +208,7 @@ int opal_hwloc_base_open(void)
                         opal_hwloc_binding_policy |= OPAL_BIND_ALLOW_OVERLOAD;
                     } else {
                         /* unknown option */
-                        opal_output(0, "Unknown qualifier to orte_process_binding: %s", str_value);
+                        opal_output(0, "Unknown qualifier to orte_process_binding: %s", opal_hwloc_base_binding_policy);
                         return OPAL_ERR_BAD_PARAM;
                     }
                 }
@@ -192,20 +231,14 @@ int opal_hwloc_base_open(void)
             } else if (0 == strcasecmp(tmpvals[0], "board")) {
                 OPAL_SET_BINDING_POLICY(opal_hwloc_binding_policy, OPAL_BIND_TO_BOARD);
             } else {
-                opal_show_help("help-opal-hwloc-base.txt", "invalid binding_policy", true, "binding", str_value);
+                opal_show_help("help-opal-hwloc-base.txt", "invalid binding_policy", true, "binding", opal_hwloc_base_binding_policy);
                 opal_argv_free(tmpvals);
-                free(str_value);
                 return OPAL_ERR_BAD_PARAM;
             }
             opal_argv_free(tmpvals);
         }
-        free(str_value);
 
-        /* backward compatibility */
-        mca_base_param_reg_int_name("hwloc", "base_bind_to_core",
-                                    "Bind processes to cores",
-                                    false, false, (int)false, &value);
-        if (value) {
+        if (opal_hwloc_base_bind_to_core) {
             /* set binding policy to core - error if something else already set */
             if (OPAL_BINDING_POLICY_IS_SET(opal_hwloc_binding_policy) &&
                 OPAL_GET_BINDING_POLICY(opal_hwloc_binding_policy) != OPAL_BIND_TO_CORE) {
@@ -217,10 +250,7 @@ int opal_hwloc_base_open(void)
             OPAL_SET_BINDING_POLICY(opal_hwloc_binding_policy, OPAL_BIND_TO_CORE);
         }
 
-        mca_base_param_reg_int_name("hwloc", "base_bind_to_socket",
-                                    "Bind processes to sockets",
-                                    false, false, (int)false, &value);
-        if (value) {
+        if (opal_hwloc_base_bind_to_socket) {
             /* set binding policy to socket - error if something else already set */
             if (OPAL_BINDING_POLICY_IS_SET(opal_hwloc_binding_policy) &&
                 OPAL_GET_BINDING_POLICY(opal_hwloc_binding_policy) != OPAL_BIND_TO_SOCKET) {
@@ -232,15 +262,7 @@ int opal_hwloc_base_open(void)
             OPAL_SET_BINDING_POLICY(opal_hwloc_binding_policy, OPAL_BIND_TO_SOCKET);
         }
 
-        mca_base_param_reg_int_name("hwloc", "base_report_bindings",
-                                    "Report bindings to stderr",
-                                    false, false, (int)false, &value);
-        opal_hwloc_report_bindings = OPAL_INT_TO_BOOL(value);
-
         /* did the user provide a slot list? */
-        tmp = mca_base_param_reg_string_name("hwloc", "base_slot_list",
-                                             "List of processor IDs to bind processes to [default=NULL]",
-                                             false, false, NULL, &opal_hwloc_base_slot_list);
         if (NULL != opal_hwloc_base_slot_list) {
             /* if we already were given a policy, then this is an error */
             if (OPAL_BINDING_POLICY_IS_SET(opal_hwloc_binding_policy)) {
@@ -252,9 +274,6 @@ int opal_hwloc_base_open(void)
         }
 
         /* cpu allocation specification */
-        mca_base_param_reg_string_name("hwloc", "base_cpu_set",
-                                       "Comma-separated list of ranges specifying logical cpus allocated to this job [default: none]",
-                                       false, false, NULL, &opal_hwloc_base_cpu_set);
         if (NULL != opal_hwloc_base_cpu_set) {
             if (!OPAL_BINDING_POLICY_IS_SET(opal_hwloc_binding_policy)) {
                 /* it is okay if a binding policy was already given - just ensure that
@@ -275,12 +294,6 @@ int opal_hwloc_base_open(void)
                                      &opal_hwloc_base_components, true)) {
             return OPAL_ERROR;
         }
-
-        /* declare hwthreads as independent cpus */
-        mca_base_param_reg_int_name("hwloc", "base_use_hwthreads_as_cpus",
-                                    "Use hardware threads as independent cpus",
-                                    false, false, (int)false, &value);
-        opal_hwloc_use_hwthreads_as_cpus = OPAL_INT_TO_BOOL(value);
 
         /* declare the hwloc data types */
         tmp = OPAL_HWLOC_TOPO;

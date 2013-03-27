@@ -720,6 +720,9 @@ ORTE_DECLSPEC extern char *orte_selected_oob_component;
 ORTE_DECLSPEC extern opal_byte_object_t orte_nidmap;
 ORTE_DECLSPEC extern opal_byte_object_t orte_pidmap;
 
+/* user debugger */
+ORTE_DECLSPEC extern char *orte_base_user_debugger;
+
 END_C_DECLS
 
 #endif /* ORTE_RUNTIME_ORTE_GLOBALS_H */

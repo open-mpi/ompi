@@ -13,7 +13,6 @@
 #include "orte/constants.h"
 
 #include "opal/mca/base/base.h"
-#include "opal/mca/base/mca_base_param.h"
 
 #include "orte/mca/rmaps/base/rmaps_private.h"
 #include "orte/mca/rmaps/base/base.h"
@@ -60,39 +59,64 @@ orte_rmaps_base_component_t mca_rmaps_lama_component = {
 static int orte_rmaps_lama_register(void)
 {
     mca_base_component_t *c = &mca_rmaps_lama_component.base_version;
-    int val;
+    int var_id;
 
     /* JMS Artifically low for now */
-    mca_base_param_reg_int(c, "priority",
-                           "Priority of the LAMA rmaps component",
-                           false, false, 0,
-                           &module_priority);
+    module_priority = 0;
+    (void) mca_base_component_var_register (c, "priority", "Priority of the LAMA rmaps component",
+                                            MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                            OPAL_INFO_LVL_9,
+                                            MCA_BASE_VAR_SCOPE_READONLY,
+                                            &module_priority);
 
-    mca_base_param_reg_int(c, "timing",
-                           "Enable timing information. [Default = disabled]",
-                           false, false, 0,
-                           &val);
-    rmaps_lama_timing_enabled = OPAL_INT_TO_BOOL(val);
+    rmaps_lama_timing_enabled = false;
+    (void) mca_base_component_var_register (c, "timing",
+                                            "Enable timing information. [Default = disabled]",
+                                            MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                            OPAL_INFO_LVL_9,
+                                            MCA_BASE_VAR_SCOPE_READONLY,
+                                            &rmaps_lama_timing_enabled);
 
-    mca_base_param_reg_string(c, "map",
-                              "LAMA Map: Process layout iteration ordering (See documentation)",
-                              false, false, NULL,
-                              &rmaps_lama_cmd_map);
+    rmaps_lama_cmd_map = NULL;
+    (void) mca_base_component_var_register (c, "map", "LAMA Map: Process layout iteration ordering (See documentation)",
+                                            MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
+                                            OPAL_INFO_LVL_9,
+                                            MCA_BASE_VAR_SCOPE_READONLY,
+                                            &rmaps_lama_cmd_map);
 
-    mca_base_param_reg_string(c, "bind",
-                              "LAMA Bind: Bind to the specified number of resources (See documentation)",
-                              false, false, NULL,
-                              &rmaps_lama_cmd_bind);
+    rmaps_lama_cmd_bind = NULL;
+    (void) mca_base_component_var_register (c, "bind", "LAMA Bind: Bind to the specified number of resources (See documentation)",
+                                            MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
+                                            OPAL_INFO_LVL_9,
+                                            MCA_BASE_VAR_SCOPE_READONLY,
+                                            &rmaps_lama_cmd_bind);
 
-    mca_base_param_reg_string(c, "mppr",
-                              "LAMA MPPR: Maximum number of the specified resources available (See documentation)",
-                              false, false, NULL,
-                              &rmaps_lama_cmd_mppr);
+    rmaps_lama_cmd_mppr = NULL;
+    (void) mca_base_component_var_register (c, "mppr", "LAMA MPPR: Maximum number of the specified resources available (See documentation)",
+                                            MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
+                                            OPAL_INFO_LVL_9,
+                                            MCA_BASE_VAR_SCOPE_READONLY,
+                                            &rmaps_lama_cmd_mppr);
 
-    mca_base_param_reg_string(c, "ordering",
-                              "LAMA Ordering: Ordering (s) sequential, (n) natural - Default: n (See documentation)",
-                              false, false, NULL,
-                              &rmaps_lama_cmd_ordering);
+    rmaps_lama_cmd_ordering = NULL;
+    (void) mca_base_component_var_register (c, "ordering", "LAMA Ordering: Ordering (s) sequential, (n) natural - Default: n (See documentation)",
+                                            MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
+                                            OPAL_INFO_LVL_9,
+                                            MCA_BASE_VAR_SCOPE_READONLY,
+                                            &rmaps_lama_cmd_ordering);
+
+    /* NTH: Moved from rmaps_lama_params.c */
+    var_id = mca_base_var_find("orte", "rmaps", "base", "pernode");
+    (void) mca_base_var_register_synonym(var_id, "orte", "rmaps", "lama", "pernode", 0);
+
+    var_id = mca_base_var_find("orte", "rmaps", "base", "n_pernode");
+    (void) mca_base_var_register_synonym(var_id, "orte", "rmaps", "lama", "n_pernode", 0);
+
+    var_id = mca_base_var_find("orte", "rmaps", "base", "n_persocket");
+    (void) mca_base_var_register_synonym(var_id, "orte", "rmaps", "lama", "n_persocket", 0);
+
+    var_id = mca_base_var_find("orte", "rmaps", "base", "pattern");
+    (void) mca_base_var_register_synonym(var_id, "orte", "rmaps", "lama", "pattern", 0);
 
     opal_output_verbose(5, orte_rmaps_base.rmaps_output,
                         "mca:rmaps:lama: Priority %3d",
@@ -117,7 +141,7 @@ static int orte_rmaps_lama_register(void)
 
 static int orte_rmaps_lama_query(mca_base_module_t **module, int *priority)
 {
-    /* Only ran on the HNP */
+    /* Only run on the HNP */
 
     *priority = module_priority;
     *module = (mca_base_module_t *)&orte_rmaps_lama_module;

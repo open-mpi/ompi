@@ -29,7 +29,7 @@
 
 #include "opal/util/output.h"
 
-extern int opal_pack_debug;
+extern bool opal_pack_debug;
 #define DO_DEBUG(INST)  if( opal_pack_debug ) { INST }
 #else
 #define DO_DEBUG(INST)

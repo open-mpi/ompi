@@ -17,7 +17,6 @@
 #include "opal/constants.h"
 
 #include "opal/mca/base/base.h"
-#include "opal/mca/base/mca_base_param.h"
 
 #include "opal/mca/db/db.h"
 #include "opal/mca/db/base/base.h"
@@ -25,6 +24,7 @@
 
 extern opal_db_base_module_t opal_db_print_module;
 
+static int print_component_register(void);
 static int print_component_open(void);
 static int print_component_close(void);
 static int print_component_query(opal_db_base_module_t **module,
@@ -61,14 +61,8 @@ opal_db_print_component_t mca_db_print_component = {
     }
 };
 
-
 static int print_component_open(void)
 {
-    mca_base_component_t *c = &mca_db_print_component.super.base_version;
-
-    mca_base_param_reg_string(c, "file",
-                           "Print to the indicated file (- => stdout, + => stderr)",
-                           false, false, NULL,  &mca_db_print_component.filename);
     return OPAL_SUCCESS;
 }
 
@@ -92,14 +86,19 @@ static int print_component_query(opal_db_base_module_t **module,
 
 static int print_component_close(void)
 {
-    if (NULL != mca_db_print_component.filename) {
-        free(mca_db_print_component.filename);
-    }
     return OPAL_SUCCESS;
 }
 
 static int print_component_register(void)
 {
+    mca_db_print_component.filename = NULL;
+    (void) mca_base_component_var_register (&mca_db_print_component.super.base_version,
+                                            "file", "Print to the indicated file (- => stdout, + => stderr)",
+                                            MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
+                                            OPAL_INFO_LVL_9,
+                                            MCA_BASE_VAR_SCOPE_READONLY,
+                                            &mca_db_print_component.filename);
+
     return OPAL_SUCCESS;
 }
 

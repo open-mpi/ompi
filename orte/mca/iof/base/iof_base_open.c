@@ -28,7 +28,6 @@
 
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
-#include "opal/mca/base/mca_base_param.h"
 #include "opal/util/os_dirpath.h"
 #include "opal/util/output.h"
 #include "opal/util/basename.h"
@@ -182,6 +181,28 @@ OBJ_CLASS_INSTANCE(orte_iof_write_output_t,
 
 orte_iof_base_t orte_iof_base;
 
+static int orte_iof_base_register(int flags)
+{
+    /* check for maximum number of pending output messages */
+  orte_iof_base.output_limit = (size_t)-1;
+    (void) mca_base_var_register("orte", "iof", "base", "output_limit",
+                                 "Maximum backlog of output messages [default: unlimited]",
+                                 MCA_BASE_VAR_TYPE_SIZE_T, NULL, 0, 0,
+                                 OPAL_INFO_LVL_9,
+                                 MCA_BASE_VAR_SCOPE_READONLY,
+                                 &orte_iof_base.output_limit);
+
+    /* check for files to be sent to stdin of procs */
+    orte_iof_base.input_files = NULL;
+    (void) mca_base_var_register("orte", "iof","base", "input_files",
+                                 "Comma-separated list of input files to be read and sent to stdin of procs (default: NULL)",
+                                 MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
+                                 OPAL_INFO_LVL_9,
+                                 MCA_BASE_VAR_SCOPE_READONLY,
+                                 &orte_iof_base.input_files);
+
+    return ORTE_SUCCESS;
+}
 
 /**
  * Function for finding and opening either all MCA components, or the one
@@ -190,10 +211,15 @@ orte_iof_base_t orte_iof_base;
 int orte_iof_base_open(void)
 {
     int rc, xmlfd;
+
+    (void) orte_iof_base_register(0);
     
     /* Initialize globals */
     OBJ_CONSTRUCT(&orte_iof_base.iof_components_opened, opal_list_t);
-    orte_iof_base.output_limit = UINT_MAX;
+
+    if (0 > orte_iof_base.output_limit) {
+        orte_iof_base.output_limit = INT_MAX;
+    }
 
     /* did the user request we print output to files? */
     if (NULL != orte_output_filename) {
@@ -212,19 +238,6 @@ int orte_iof_base_open(void)
             }
         }
     }
-    
-   /* check for maximum number of pending output messages */
-    mca_base_param_reg_int_name("iof", "base_output_limit",
-                                "Maximum backlog of output messages [default: unlimited]",
-                                false, false, -1, &rc);
-    if (0 < rc) {
-        orte_iof_base.output_limit = rc;
-    }
-
-    /* check for files to be sent to stdin of procs */
-    mca_base_param_reg_string_name("iof", "base_input_files",
-                                   "Comma-separated list of input files to be read and sent to stdin of procs (default: NULL)",
-                                   false, false, NULL, &orte_iof_base.input_files);
 
     /* daemons do not need to do this as they do not write out stdout/err */
     if (!ORTE_PROC_IS_DAEMON ||

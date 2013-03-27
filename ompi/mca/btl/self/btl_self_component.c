@@ -30,11 +30,10 @@
 #include "ompi/constants.h"
 #include "opal/runtime/opal.h"
 #include "opal/mca/event/event.h"
-#include "opal/mca/base/mca_base_param.h"
 #include "btl_self.h"
 #include "btl_self_frag.h"
 
-
+static int mca_btl_self_component_register(void);
 
 /*
  * Shared Memory (SELF) component instance. 
@@ -52,7 +51,9 @@ mca_btl_self_component_t mca_btl_self_component = {
             OMPI_MINOR_VERSION,  /* MCA component minor version */
             OMPI_RELEASE_VERSION,  /* MCA component release version */
             mca_btl_self_component_open,  /* component open */
-            mca_btl_self_component_close  /* component close */
+            mca_btl_self_component_close, /* component close */
+            NULL,
+            mca_btl_self_component_register
         },
         {
             /* The component is checkpoint ready */
@@ -69,18 +70,33 @@ mca_btl_self_component_t mca_btl_self_component = {
  *  component parameters.
  */
 
-int mca_btl_self_component_open(void)
+static int mca_btl_self_component_register(void)
 {
+    mca_base_var_group_component_register(&mca_btl_self_component.super.btl_version,
+                                          "BTL for self communication");
+
     /* register SELF component parameters */
-    mca_base_param_reg_int( (mca_base_component_t*)&mca_btl_self_component, "free_list_num",
-                            "Number of fragments by default", false, false,
-                            0, &mca_btl_self_component.free_list_num );
-    mca_base_param_reg_int( (mca_base_component_t*)&mca_btl_self_component, "free_list_max",
-                            "Maximum number of fragments", false, false,
-                            -1, &mca_btl_self_component.free_list_max );
-    mca_base_param_reg_int( (mca_base_component_t*)&mca_btl_self_component, "free_list_inc",
-                            "Increment by this number of fragments", false, false,
-                            32, &mca_btl_self_component.free_list_inc );
+    mca_btl_self_component.free_list_num = 0;
+    (void) mca_base_component_var_register(&mca_btl_self_component.super.btl_version, "free_list_num",
+                                           "Number of fragments by default",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &mca_btl_self_component.free_list_num);
+    mca_btl_self_component.free_list_max = -1;
+    (void) mca_base_component_var_register(&mca_btl_self_component.super.btl_version, "free_list_max",
+                                           "Maximum number of fragments",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &mca_btl_self_component.free_list_max);
+    mca_btl_self_component.free_list_inc = 32;
+    (void) mca_base_component_var_register(&mca_btl_self_component.super.btl_version, "free_list_inc",
+                                           "Increment by this number of fragments",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &mca_btl_self_component.free_list_inc);
 
     mca_btl_self.btl_exclusivity = MCA_BTL_EXCLUSIVITY_HIGH;
     mca_btl_self.btl_eager_limit = 128 * 1024;
@@ -96,11 +112,17 @@ int mca_btl_self_component_open(void)
     mca_btl_base_param_register(&mca_btl_self_component.super.btl_version,
             &mca_btl_self);
 
+    return OMPI_SUCCESS;
+}
+
+int mca_btl_self_component_open(void)
+{
     /* initialize objects */
     OBJ_CONSTRUCT(&mca_btl_self_component.self_lock, opal_mutex_t);
     OBJ_CONSTRUCT(&mca_btl_self_component.self_frags_eager, ompi_free_list_t);
     OBJ_CONSTRUCT(&mca_btl_self_component.self_frags_send, ompi_free_list_t);
     OBJ_CONSTRUCT(&mca_btl_self_component.self_frags_rdma, ompi_free_list_t);
+
     return OMPI_SUCCESS;
 }
 

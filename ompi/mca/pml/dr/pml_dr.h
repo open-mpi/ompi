@@ -47,8 +47,8 @@ struct mca_pml_dr_t {
     int free_list_num;      /* initial size of free list */
     int free_list_max;      /* maximum size of free list */
     int free_list_inc;      /* number of elements to grow free list */
-    size_t eager_limit;     /* maximum eager limit size - overrides btl setting */
-    size_t send_pipeline_depth;
+    unsigned int eager_limit;     /* maximum eager limit size - overrides btl setting */
+    unsigned int send_pipeline_depth;
     bool enabled;
 
     /* lock queue accesses */

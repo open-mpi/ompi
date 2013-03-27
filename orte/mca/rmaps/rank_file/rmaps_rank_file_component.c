@@ -27,7 +27,6 @@
 #endif
 
 #include "opal/mca/base/base.h"
-#include "opal/mca/base/mca_base_param.h"
 #include "opal/mca/hwloc/base/base.h"
 
 #include "orte/util/show_help.h"
@@ -41,6 +40,7 @@
  * Local functions
  */
 
+static int orte_rmaps_rank_file_register(void);
 static int orte_rmaps_rank_file_open(void);
 static int orte_rmaps_rank_file_close(void);
 static int orte_rmaps_rank_file_query(mca_base_module_t **module, int *priority);
@@ -61,7 +61,8 @@ orte_rmaps_rf_component_t mca_rmaps_rank_file_component = {
             ORTE_RELEASE_VERSION,  /* MCA component release version */
             orte_rmaps_rank_file_open,  /* component open  */
             orte_rmaps_rank_file_close, /* component close */
-            orte_rmaps_rank_file_query  /* component query */
+            orte_rmaps_rank_file_query, /* component query */
+            orte_rmaps_rank_file_register
         },
         {
             /* The component is checkpoint ready */
@@ -70,26 +71,32 @@ orte_rmaps_rf_component_t mca_rmaps_rank_file_component = {
     }
 };
 
-
 /**
-  * component open/close/init function
+  * component register/open/close/init function
   */
-static int orte_rmaps_rank_file_open(void)
+static int orte_rmaps_rank_file_register(void)
 {
     mca_base_component_t *c = &mca_rmaps_rank_file_component.super.base_version;
     int tmp;
 
-    mca_base_param_reg_int(c, "priority",
-                           "Priority of the rank_file rmaps component",
-                           false, false, 0,
-                           &my_priority);
-    
-    tmp = mca_base_param_reg_string(c, "path",
-                                    "Name of the rankfile to be used for mapping processes (relative or absolute path)",
-                                    false, false, NULL, NULL);
-    mca_base_param_reg_syn_name(tmp, "orte", "rankfile", false);
-    mca_base_param_lookup_string(tmp, &orte_rankfile);
+    my_priority = 0;
+    (void) mca_base_component_var_register(c, "priority", "Priority of the rank_file rmaps component",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY, &my_priority);
+    orte_rankfile = NULL;
+    tmp = mca_base_component_var_register(c, "path",
+                                          "Name of the rankfile to be used for mapping processes (relative or absolute path)",
+                                          MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
+                                          OPAL_INFO_LVL_9,
+                                          MCA_BASE_VAR_SCOPE_READONLY, &orte_rankfile);
+    (void) mca_base_var_register_synonym(tmp, "orte", "orte", NULL, "rankfile", 0);
 
+    return ORTE_SUCCESS;
+}
+
+static int orte_rmaps_rank_file_open(void)
+{
     /* ensure we flag mapping by user */
 #if OPAL_HAVE_HWLOC
     if (NULL != opal_hwloc_base_slot_list || NULL != orte_rankfile) {
@@ -129,6 +136,12 @@ static int orte_rmaps_rank_file_query(mca_base_module_t **module, int *priority)
 
 static int orte_rmaps_rank_file_close(void)
 {
+    int tmp = mca_base_var_find("orte", "orte", NULL, "rankfile");
+
+    if (0 <= tmp) {
+        mca_base_var_deregister(tmp);
+    }
+
     return ORTE_SUCCESS;
 }
 

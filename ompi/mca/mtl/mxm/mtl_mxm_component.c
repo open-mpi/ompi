@@ -10,7 +10,6 @@
 #include "ompi_config.h"
 
 #include "opal/util/output.h"
-#include "opal/mca/base/mca_base_param.h"
 #include "ompi/proc/proc.h"
 
 #include "mtl_mxm.h"
@@ -63,18 +62,22 @@ static int ompi_mtl_mxm_component_register(void)
 
     c = &mca_mtl_mxm_component.super.mtl_version;
 
-    mca_base_param_reg_int(c, "verbose",
-                           "Verbose level of the MXM component",
-                           false, false,
-                           0,
-                           &ompi_mtl_mxm.verbose);
+    ompi_mtl_mxm.verbose = 0;
+    (void) mca_base_component_var_register(c, "verbose",
+                                           "Verbose level of the MXM component",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_LOCAL,
+                                           &ompi_mtl_mxm.verbose);
 
-    mca_base_param_reg_int(c, "np",
-            "[integer] Minimal number of MPI processes in a single job "
-            "required to activate the MXM transport",
-            false, false,
-            128,
-            &ompi_mtl_mxm.mxm_np);
+    ompi_mtl_mxm.mxm_np = 128;
+    (void) mca_base_component_var_register(c, "np",
+                                           "[integer] Minimal number of MPI processes in a single job "
+                                           "required to activate the MXM transport",
+                                           MCA_BASE_VAR_TYPE_INT, NULL,0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &ompi_mtl_mxm.mxm_np);
 
     return OMPI_SUCCESS;
 }

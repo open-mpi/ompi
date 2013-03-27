@@ -24,7 +24,6 @@
 #include "ompi/class/ompi_free_list.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
-#include "opal/mca/base/mca_base_param.h"
 
 #include "ompi/mca/fs/fs.h"
 #include "ompi/mca/fs/base/base.h"

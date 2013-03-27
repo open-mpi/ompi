@@ -34,7 +34,7 @@
 #include <ctype.h>
 
 #include "opal/mca/base/base.h"
-#include "opal/mca/base/mca_base_param.h"
+#include "opal/mca/base/mca_base_var.h"
 #include "opal/util/net.h"
 #include "opal/util/output.h"
 
@@ -85,62 +85,75 @@ ORTE_DECLSPEC orte_proc_info_t orte_process_info = {
 };
 
 static bool init=false;
+static int orte_ess_node_rank;
+static int orte_peer_modex_id;
+static int orte_peer_init_barrier_id;
+static int orte_peer_fini_barrier_id;
 
 int orte_proc_info(void)
 {
     
-    int tmp, idx;
-    char *uri, *ptr;
+    int idx;
+    char *ptr;
     char hostname[ORTE_MAX_HOSTNAME_SIZE];
     
     if (init) {
         return ORTE_SUCCESS;
     }
     init = true;
-    
-    mca_base_param_reg_string_name("orte", "hnp_uri",
-                                   "HNP contact info",
-                                   true, false, NULL,  &uri);
-    if (NULL != uri) {
+
+    orte_process_info.my_hnp_uri = NULL;
+    mca_base_var_register ("orte", "orte", NULL, "hnp_uri",
+                           "HNP contact info",
+                           MCA_BASE_VAR_TYPE_STRING, NULL, 0,
+                           MCA_BASE_VAR_FLAG_INTERNAL,
+                           OPAL_INFO_LVL_9,
+                           MCA_BASE_VAR_SCOPE_READONLY,
+                           &orte_process_info.my_hnp_uri);
+
+    if (NULL != orte_process_info.my_hnp_uri) {
+        ptr = orte_process_info.my_hnp_uri;
         /* the uri value passed to us will have quote marks around it to protect
         * the value if passed on the command line. We must remove those
         * to have a correct uri string
         */
-        if ('"' == uri[0]) {
+        if ('"' == ptr[0]) { 
             /* if the first char is a quote, then so will the last one be */
-            uri[strlen(uri)-1] = '\0';
-            ptr = &uri[1];
-        } else {
-            ptr = &uri[0];
+            ptr[strlen(ptr)-1] = '\0';
+            memmove (ptr, ptr + 1, strlen (ptr));
         }
-        orte_process_info.my_hnp_uri = strdup(ptr);
-        free(uri);
     }
-    
-    mca_base_param_reg_string_name("orte", "local_daemon_uri",
-                                   "Daemon contact info",
-                                   true, false, NULL,  &(uri));
-    
-    if (NULL != uri) {
+
+    orte_process_info.my_daemon_uri = NULL;
+    (void) mca_base_var_register ("orte", "orte", NULL, "local_daemon_uri",
+                                  "Daemon contact info",
+                                  MCA_BASE_VAR_TYPE_STRING, NULL, 0,
+                                  MCA_BASE_VAR_FLAG_INTERNAL,
+                                  OPAL_INFO_LVL_9,
+                                  MCA_BASE_VAR_SCOPE_READONLY,
+                                  &orte_process_info.my_daemon_uri);
+
+    if (NULL != orte_process_info.my_daemon_uri) {
+        ptr = orte_process_info.my_daemon_uri;
         /* the uri value passed to us may have quote marks around it to protect
          * the value if passed on the command line. We must remove those
          * to have a correct uri string
          */
-        if ('"' == uri[0]) {
+        if ('"' == ptr[0]) {
             /* if the first char is a quote, then so will the last one be */
-            uri[strlen(uri)-1] = '\0';
-            ptr = &uri[1];
-        } else {
-            ptr = &uri[0];
+            ptr[strlen(ptr)-1] = '\0';
+            memmove (ptr, ptr + 1, strlen (ptr) - 1);
         }
-        orte_process_info.my_daemon_uri = strdup(ptr);
-        free(uri);
     }
-    
-    mca_base_param_reg_int_name("orte", "app_num",
-                                "Index of the app_context that defines this proc",
-                                true, false, 0, &tmp);
-    orte_process_info.app_num = tmp;
+
+    orte_process_info.app_num = 0;
+    (void) mca_base_var_register ("orte", "orte", NULL, "app_num",
+                                  "Index of the app_context that defines this proc",
+                                  MCA_BASE_VAR_TYPE_INT, NULL, 0,
+                                  MCA_BASE_VAR_FLAG_INTERNAL,
+                                  OPAL_INFO_LVL_9,
+                                  MCA_BASE_VAR_SCOPE_READONLY,
+                                  &orte_process_info.app_num);
     
     /* get the process id */
     orte_process_info.pid = getpid();
@@ -157,10 +170,13 @@ int orte_proc_info(void)
         }
     }
 
-    mca_base_param_reg_int_name("orte", "strip_prefix_from_node_names",
-                                "Whether to strip leading characters and zeroes from node names returned by daemons",
-                                false, false, (int)false, &tmp);
-    orte_process_info.strip_prefix_from_node_names = OPAL_INT_TO_BOOL(tmp);
+    orte_process_info.strip_prefix_from_node_names = false;
+    (void) mca_base_var_register ("orte", "orte", NULL, "strip_prefix_from_node_names",
+                                  "Whether to strip leading characters and zeroes from node names returned by daemons",
+                                  MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                  OPAL_INFO_LVL_9,
+                                  MCA_BASE_VAR_SCOPE_READONLY,
+                                  &orte_process_info.strip_prefix_from_node_names);
 
     /* we have to strip node names here, if user directs, to ensure that
      * the names exchanged in the modex match the names found locally
@@ -183,45 +199,76 @@ int orte_proc_info(void)
     }
 
     /* get the number of nodes in the job */
-    mca_base_param_reg_int_name("orte", "num_nodes",
-                                "Number of nodes in the job",
-                                true, false,
-                                orte_process_info.num_nodes, &tmp);
-    orte_process_info.num_nodes = tmp;
-    
+    orte_process_info.num_nodes = 1;
+    (void) mca_base_var_register ("orte", "orte", NULL, "num_nodes",
+                                  "Number of nodes in the job",
+                                  MCA_BASE_VAR_TYPE_INT, NULL, 0,
+                                  MCA_BASE_VAR_FLAG_INTERNAL,
+                                  OPAL_INFO_LVL_9,
+                                  MCA_BASE_VAR_SCOPE_READONLY,
+                                  &orte_process_info.num_nodes);
+
     /* get the number of times this proc has restarted */
-    mca_base_param_reg_int_name("orte", "num_restarts",
-                                "Number of times this proc has restarted",
-                                true, false, 0, &tmp);
-    orte_process_info.num_restarts = tmp;
-    
-    mca_base_param_reg_int_name("orte", "app_rank",
-                                "Rank of this proc within its app_context",
-                                true, false, 0, &tmp);
-    orte_process_info.app_rank = tmp;
+    orte_process_info.num_restarts = 0;
+    (void) mca_base_var_register ("orte", "orte", NULL, "num_restarts",
+                                  "Number of times this proc has restarted",
+                                  MCA_BASE_VAR_TYPE_INT, NULL, 0,
+                                  MCA_BASE_VAR_FLAG_INTERNAL,
+                                  OPAL_INFO_LVL_9,
+                                  MCA_BASE_VAR_SCOPE_READONLY,
+                                  &orte_process_info.num_restarts);
+
+    orte_process_info.app_rank = 0;
+    (void) mca_base_var_register ("orte", "orte", NULL, "app_rank",
+                                  "Rank of this proc within its app_context",
+                                  MCA_BASE_VAR_TYPE_INT, NULL, 0,
+                                  MCA_BASE_VAR_FLAG_INTERNAL,
+                                  OPAL_INFO_LVL_9,
+                                  MCA_BASE_VAR_SCOPE_READONLY,
+                                  &orte_process_info.app_rank);
 
     /* get my node rank in case we are using static ports - this won't
      * be present for daemons, so don't error out if we don't have it
      */
-    mca_base_param_reg_int_name("orte", "ess_node_rank", "Process node rank",
-                                true, false, ORTE_NODE_RANK_INVALID, &tmp);
-    orte_process_info.my_node_rank = (orte_node_rank_t)tmp;
+    orte_ess_node_rank = ORTE_NODE_RANK_INVALID;
+    (void) mca_base_var_register ("orte", "orte", NULL, "ess_node_rank", "Process node rank",
+                                  MCA_BASE_VAR_TYPE_INT, NULL, 0,
+                                  MCA_BASE_VAR_FLAG_INTERNAL,
+                                  OPAL_INFO_LVL_9,
+                                  MCA_BASE_VAR_SCOPE_CONSTANT,
+                                  &orte_ess_node_rank);
+    orte_process_info.my_node_rank = (orte_node_rank_t) orte_ess_node_rank;
     
     /* setup the sync buffer */
     orte_process_info.sync_buf = OBJ_NEW(opal_buffer_t);
     
     /* get the collective id info */
-    mca_base_param_reg_int_name("orte", "peer_modex_id", "Peer modex collective id",
-                                true, false, -1, &tmp);
-    orte_process_info.peer_modex = (orte_grpcomm_coll_id_t)tmp;
+    orte_peer_modex_id = -1;
+    (void) mca_base_var_register ("orte", "orte", NULL, "peer_modex_id", "Peer modex collective id",
+                                  MCA_BASE_VAR_TYPE_INT, NULL, 0,
+                                  MCA_BASE_VAR_FLAG_INTERNAL,
+                                  OPAL_INFO_LVL_9,
+                                  MCA_BASE_VAR_SCOPE_CONSTANT,
+                                  &orte_peer_modex_id);
+    orte_process_info.peer_modex = (orte_grpcomm_coll_id_t) orte_peer_modex_id;
 
-    mca_base_param_reg_int_name("orte", "peer_init_barrier_id", "Peer init barrier collective id",
-                                true, false, -1, &tmp);
-    orte_process_info.peer_init_barrier = (orte_grpcomm_coll_id_t)tmp;
+    orte_peer_init_barrier_id = -1;
+    (void) mca_base_var_register ("orte", "orte", NULL, "peer_init_barrier_id", "Peer init barrier collective id",
+                                  MCA_BASE_VAR_TYPE_INT, NULL, 0,
+                                  MCA_BASE_VAR_FLAG_INTERNAL,
+                                  OPAL_INFO_LVL_9,
+                                  MCA_BASE_VAR_SCOPE_CONSTANT,
+                                  &orte_peer_init_barrier_id);
+    orte_process_info.peer_init_barrier = (orte_grpcomm_coll_id_t) orte_peer_init_barrier_id;
 
-    mca_base_param_reg_int_name("orte", "peer_fini_barrier_id", "Peer finalize barrier collective id",
-                                true, false, -1, &tmp);
-    orte_process_info.peer_fini_barrier = (orte_grpcomm_coll_id_t)tmp;
+    orte_peer_fini_barrier_id = -1;
+    (void) mca_base_var_register ("orte", "orte", NULL, "peer_fini_barrier_id", "Peer finalize barrier collective id",
+                                  MCA_BASE_VAR_TYPE_INT, NULL, 0,
+                                  MCA_BASE_VAR_FLAG_INTERNAL,
+                                  OPAL_INFO_LVL_9,
+                                  MCA_BASE_VAR_SCOPE_CONSTANT,
+                                  &orte_peer_fini_barrier_id);
+    orte_process_info.peer_fini_barrier = (orte_grpcomm_coll_id_t) orte_peer_fini_barrier_id;
 
     return ORTE_SUCCESS;
 }
@@ -271,16 +318,6 @@ int orte_proc_info_finalize(void)
     if (NULL != orte_process_info.sock_stderr) {
         free(orte_process_info.sock_stderr);
         orte_process_info.sock_stderr = NULL;
-    }
-
-    if (NULL != orte_process_info.my_hnp_uri) {
-        free(orte_process_info.my_hnp_uri);
-        orte_process_info.my_hnp_uri = NULL;
-    }
-
-    if (NULL != orte_process_info.my_daemon_uri) {
-        free(orte_process_info.my_daemon_uri);
-        orte_process_info.my_daemon_uri = NULL;
     }
 
     orte_process_info.proc_type = ORTE_PROC_TYPE_NONE;

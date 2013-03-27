@@ -59,7 +59,6 @@
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
 #include "opal/util/opal_environ.h"
-#include "opal/mca/base/mca_base_param.h"
 
 #include "orte/util/show_help.h"
 #include "orte/runtime/orte_globals.h"

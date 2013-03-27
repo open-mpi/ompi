@@ -29,14 +29,15 @@ ompi_init_preconnect_mpi(void)
 {
     int comm_size = ompi_comm_size(MPI_COMM_WORLD);
     int comm_rank =  ompi_comm_rank(MPI_COMM_WORLD);
-    int param, value, next, prev, i, ret = OMPI_SUCCESS;
+    int param, next, prev, i, ret = OMPI_SUCCESS;
     struct ompi_request_t * requests[2];
     char inbuf[1], outbuf[1];
+    const bool *value;
 
-    param = mca_base_param_find("mpi", NULL, "preconnect_mpi");
+    param = mca_base_var_find("ompi", "mpi", NULL, "preconnect_mpi");
     if (0 > param) return OMPI_SUCCESS;
-    ret = mca_base_param_lookup_int(param, &value);
-    if (OMPI_SUCCESS != ret || 0 == value) {
+    ret = mca_base_var_get_value(param, &value, NULL, NULL);
+    if (OMPI_SUCCESS != ret || 0 == value[0]) {
         return OMPI_SUCCESS;
     }
 

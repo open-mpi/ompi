@@ -22,7 +22,6 @@
 #include "opal/mca/event/event.h"
 #include "ompi/mca/btl/btl.h"
 
-#include "opal/mca/base/mca_base_param.h"
 #include "ompi/mca/mpool/base/base.h" 
 #include "btl_template.h"
 #include "btl_template_frag.h"
@@ -72,37 +71,6 @@ mca_btl_template_component_t mca_btl_template_component = {
     }
 };
 
-
-/*
- * utility routines for parameter registration
- */
-
-static inline char* mca_btl_template_param_register_string(
-                                                     const char* param_name, 
-                                                     const char* default_value)
-{
-    char *param_value;
-
-    (void) mca_base_param_reg_string (&mca_btl_template_component.super.btl_version,
-                                      param_name, NULL, false, false, default_value,
-                                      &param_value);
-
-    return param_value;
-}
-
-static inline int mca_btl_template_param_register_int(
-        const char* param_name, 
-        int default_value)
-{
-    int param_value = default_value;
-
-    (void) mca_base_param_reg_int (&mca_btl_template_component.super.btl_version,
-                                   param_name, NULL, false, false, default_value,
-                                   &param_value);
-
-    return param_value;
-}
-
 static int mca_btl_template_component_open(void)
 {
     return OMPI_SUCCESS;
@@ -118,31 +86,41 @@ static int mca_btl_template_component_register(void)
     OBJ_CONSTRUCT(&mca_btl_template_component.template_procs, opal_list_t);
 
     /* register TEMPLATE component parameters */
-    mca_btl_template_component.template_free_list_num =
-        mca_btl_template_param_register_int ("free_list_num", 8);
-    mca_btl_template_component.template_free_list_max =
-        mca_btl_template_param_register_int ("free_list_max", 1024);
-    mca_btl_template_component.template_free_list_inc =
-        mca_btl_template_param_register_int ("free_list_inc", 32);
-    mca_btl_template_component.template_mpool_name = 
-        mca_btl_template_param_register_string("mpool", "ib"); 
-    mca_btl_template_module.super.btl_exclusivity =
-        mca_btl_template_param_register_int ("exclusivity", 0);
-    mca_btl_template_module.super.btl_eager_limit = 
-        mca_btl_template_param_register_int ("first_frag_size", 64*1024) - sizeof(mca_btl_base_header_t);
-    mca_btl_template_module.super.btl_rndv_eager_limit =
-        mca_btl_template_param_register_int ("min_send_size", 64*1024) - sizeof(mca_btl_base_header_t);
-    mca_btl_template_module.super.btl_max_send_size =
-        mca_btl_template_param_register_int ("max_send_size", 128*1024) - sizeof(mca_btl_base_header_t);
-    mca_btl_template_module.super.btl_min_rdma_pipeline_size = 
-        mca_btl_template_param_register_int("min_rdma_pipeline_size", 1024*1024); 
-    mca_btl_template_module.super.btl_rdma_pipeline_frag_size = 
-        mca_btl_template_param_register_int("rdma_pipeline_frag_size", 1024*1024); 
-    mca_btl_template_module.super.btl_rdma_pipeline_send_length = 
-        mca_btl_template_param_register_int("rdma_pipeline_send_length", 1024*1024); 
-    mca_btl_template_module.super.btl_flags  = 
-        mca_btl_template_param_register_int("flags", MCA_BTL_FLAGS_PUT); 
-    return OMPI_SUCCESS;
+    mca_btl_template_component.template_free_list_num = 8;
+    (void) mca_base_component_var_register(&mca_btl_template_component.super.btl_version,
+                                           "free_list_num", NULL, MCA_BASE_VAR_TYPE_INT,
+                                           NULL, 0, 0, OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &mca_btl_template_component.template_free_list_num);
+    (void) mca_base_component_var_register(&mca_btl_template_component.super.btl_version,
+                                           "free_list_max", NULL, MCA_BASE_VAR_TYPE_INT,
+                                           NULL, 0, 0, OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &mca_btl_template_component.template_free_list_max);
+    (void) mca_base_component_var_register(&mca_btl_template_component.super.btl_version,
+                                           "free_list_inc", NULL, MCA_BASE_VAR_TYPE_INT,
+                                           NULL, 0, 0, OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &mca_btl_template_component.template_free_list_inc);
+
+    mca_btl_template_component.template_mpool_name = "grdma";
+    (void) mca_base_component_var_register(&mca_btl_template_component.super.btl_version,
+                                           "mpool", NULL, MCA_BASE_VAR_TYPE_STRING,
+                                           NULL, 0, 0, OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &mca_btl_template_component.template_mpool_name);
+
+    mca_btl_template_module.super.btl_exclusivity = 0;
+    mca_btl_template_module.super.btl_eager_limit = 64*1024;
+    mca_btl_template_module.super.btl_rndv_eager_limit = 64*1024;
+    mca_btl_template_module.super.btl_max_send_size = 128*1024;
+    mca_btl_template_module.super.btl_min_rdma_pipeline_size = 1024*1024;
+    mca_btl_template_module.super.btl_rdma_pipeline_frag_size = 1024*1024;
+    mca_btl_template_module.super.btl_rdma_pipeline_send_length = 1024*1024;
+    mca_btl_template_module.super.btl_flags  = MCA_BTL_FLAGS_PUT;
+
+    return mca_btl_base_param_register(&mca_btl_template_component.super.btl_version,
+                                       &mca_btl_template_module.super);
 }
 
 /*

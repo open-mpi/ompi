@@ -19,8 +19,6 @@
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 
-#include "opal/mca/base/mca_base_param.h"
-
 #include "ompi/mca/dpm/dpm.h"
 #include "ompi/mca/dpm/base/base.h"
 

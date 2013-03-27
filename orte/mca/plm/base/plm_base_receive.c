@@ -35,7 +35,6 @@
 #endif
 
 #include "opal/mca/mca.h"
-#include "opal/mca/base/mca_base_param.h"
 #include "opal/dss/dss.h"
 #include "opal/threads/threads.h"
 

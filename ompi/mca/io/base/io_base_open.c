@@ -23,7 +23,6 @@
 #include "opal/mca/mca.h"
 #include "opal/util/output.h"
 #include "opal/mca/base/base.h"
-#include "opal/mca/base/mca_base_param.h"
 
 
 #include "ompi/mca/io/io.h"
@@ -55,7 +54,6 @@ opal_list_t mca_io_base_components_opened;
 bool mca_io_base_components_available_valid = false;
 opal_list_t mca_io_base_components_available;
 
-
 /*
  * Function for finding and opening either all MCA components, or the one
  * that was specifically requested via a MCA parameter.
@@ -65,23 +63,6 @@ int mca_io_base_open(void)
     /* Open an output stream for this framework */
 
     mca_io_base_output = opal_output_open(NULL);
-
-    /* Create some parameters */
-
-    if (0 >
-        mca_base_param_reg_int_name("io","base_freelist_initial_size",
-                                    "Initial MPI-2 IO request freelist size",
-                                    false, false, 16, NULL) ||
-        0 >
-        mca_base_param_reg_int_name("io", "base_freelist_max_size",
-                                    "Max size of the MPI-2 IO request freelist",
-                                    false, false, 64, NULL) ||
-        0 >
-        mca_base_param_reg_int_name("io", "base_freelist_increment",
-                                    "Increment size of the MPI-2 IO request freelist",
-                                    false, false, 16, NULL)) {
-        return OMPI_ERROR;
-    }
 
     /* Open up all available components */
 
@@ -95,7 +76,7 @@ int mca_io_base_open(void)
 
     /* Find the index of the MCA "io" param for selection */
     
-    mca_io_base_param = mca_base_param_find("io", "base", NULL);
+    mca_io_base_param = mca_base_var_find("ompi", "io", NULL, NULL);
 
     /* All done */
     

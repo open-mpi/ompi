@@ -20,9 +20,6 @@
 #include "opal/util/output.h"
 #include "opal/mca/base/base.h"
 
-#include "opal/mca/base/mca_base_param.h"
-
-
 #include "ompi/mca/crcp/crcp.h"
 #include "ompi/mca/crcp/base/base.h"
 
@@ -45,8 +42,6 @@ ompi_crcp_base_component_t ompi_crcp_base_selected_component;
  */
 int ompi_crcp_base_open(void)
 {
-    char *str_value = NULL;
-
     ompi_crcp_base_output = opal_output_open(NULL);
 
     /* 
@@ -57,13 +52,6 @@ int ompi_crcp_base_open(void)
      * Note: Set the default to NULL here so ompi_info will work correctly,
      *       The 'real' default is set in base_select.c
      */
-    mca_base_param_reg_string_name("crcp", NULL,
-                                   "Which CRCP component to use (empty = auto-select)",
-                                   false, false,
-                                   NULL, &str_value);
-    if( NULL != str_value ) {
-        free(str_value);
-    }
 
     /* Open up all available components */
     if (OPAL_SUCCESS !=

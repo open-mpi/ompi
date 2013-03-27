@@ -26,8 +26,43 @@ opal_list_t opal_if_list;
 bool opal_if_do_not_resolve;
 bool opal_if_retain_loopback;
 
+static int opal_if_base_verbose = -1;
+
 /* instance the opal_if_t object */
 OBJ_CLASS_INSTANCE(opal_if_t, opal_list_item_t, NULL, NULL);
+
+static int opal_if_base_register(int flags)
+{
+    int var_id;
+
+    opal_if_base_verbose = -1;
+    (void) mca_base_var_register("opal", "if", "base", "verbose",
+                                 "Provide verbose output if greater than 0",
+                                 MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                 OPAL_INFO_LVL_9,
+                                 MCA_BASE_VAR_SCOPE_READONLY,
+                                 &opal_if_base_verbose);
+
+    opal_if_do_not_resolve = false;
+    var_id = mca_base_var_register("opal", "if", "base", "do_not_resolve",
+                                   "If nonzero, do not attempt to resolve interfaces",
+                                   MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                   OPAL_INFO_LVL_9,
+                                   MCA_BASE_VAR_SCOPE_READONLY,
+                                   &opal_if_do_not_resolve);
+    (void) mca_base_var_register_synonym(var_id, "opal", "if", NULL, "do_not_resolve", 0);
+
+    opal_if_retain_loopback = false;
+    var_id = mca_base_var_register("opal", "if", "base", "retain_loopback",
+                                   "If nonzero, retain loopback interfaces",
+                                   MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                   OPAL_INFO_LVL_9,
+                                   MCA_BASE_VAR_SCOPE_READONLY,
+                                   &opal_if_retain_loopback);
+    (void) mca_base_var_register_synonym(var_id, "opal", "if", NULL, "retain_loopback", 0);
+
+    return OPAL_SUCCESS;
+}
 
 int opal_if_base_open(void)
 {
@@ -39,26 +74,15 @@ int opal_if_base_open(void)
     }
     already_done = true;
 
+    (void) opal_if_base_register(0);
+
     /* setup the global list */
     OBJ_CONSTRUCT(&opal_if_list, opal_list_t);
 
-    mca_base_param_reg_int_name("if", "base_verbose",
-                                "Provide verbose output if greater than 0",
-                                false, false, -1, &ret);
-    if (0 < ret) {
+    if (0 < opal_if_base_verbose) {
         opal_if_base_output = opal_output_open(NULL);
-        opal_output_set_verbosity(opal_if_base_output, ret);
+        opal_output_set_verbosity(opal_if_base_output, opal_if_base_verbose);
     }
-
-    mca_base_param_reg_int_name("opal", "if_do_not_resolve",
-                                "If nonzero, do not attempt to resolve interfaces",
-                                false, false, (int)false, &ret);
-    opal_if_do_not_resolve = OPAL_INT_TO_BOOL(ret);
-
-    mca_base_param_reg_int_name("opal", "if_retain_loopback",
-                                "If nonzero, retain loopback interfaces",
-                                false, false, (int)false, &ret);
-    opal_if_retain_loopback = OPAL_INT_TO_BOOL(ret);
 
     OBJ_CONSTRUCT(&opal_if_components, opal_list_t);
     for (i = 0 ; mca_if_base_static_components[i] != NULL ; ++i) {

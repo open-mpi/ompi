@@ -33,6 +33,7 @@ const char *mca_bcol_basesmuma_component_version_string =
  * Local functions
  */
 
+static int basesmuma_register(void);
 static int basesmuma_open(void);
 static int basesmuma_close(void);
 static int mca_bcol_basesmuma_deregister_ctl_sm(
@@ -40,13 +41,23 @@ static int mca_bcol_basesmuma_deregister_ctl_sm(
 
 
 static inline int mca_bcol_basesmuma_param_register_int(
-        const char* param_name, int default_value)
+        const char* param_name, int default_value, int *storage)
 {
-    int param_value;
+    *storage = default_value;
+    return mca_base_component_var_register(&mca_bcol_basesmuma_component.super.bcol_version, param_name,
+                                           NULL, MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY, storage);
+}
 
-    (void) mca_base_param_reg_int (&mca_bcol_basesmuma_component.super.bcol_version, param_name,
-                                   NULL, false, false, default_value, &param_value);
-    return param_value;
+static inline int mca_bcol_basesmuma_param_register_bool(
+        const char* param_name, bool default_value, bool *storage)
+{
+    *storage = default_value;
+    return mca_base_component_var_register(&mca_bcol_basesmuma_component.super.bcol_version, param_name,
+                                           NULL, MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY, storage);
 }
 
 /*
@@ -76,6 +87,8 @@ mca_bcol_basesmuma_component_t mca_bcol_basesmuma_component = {
 
             basesmuma_open,
             basesmuma_close,
+            NULL,
+            basesmuma_register
         },
 
         /* Initialization / querying functions */
@@ -91,6 +104,76 @@ mca_bcol_basesmuma_component_t mca_bcol_basesmuma_component = {
 };
 
 /*
+ * Register the component
+ */
+static int basesmuma_register(void)
+{
+    mca_bcol_basesmuma_component_t *cs = &mca_bcol_basesmuma_component;
+
+    /* set component priority */
+    mca_bcol_basesmuma_param_register_int("priority", 90, &cs->super.priority);
+
+    /* Number of memory banks */
+    mca_bcol_basesmuma_param_register_int("basesmuma_num_ctl_banks", 2,
+                                          &cs->basesmuma_num_mem_banks);
+
+    /* Number of regions per memory bank */
+    mca_bcol_basesmuma_param_register_int("basesmuma_num_buffs_per_bank", 16,
+                                          &cs->basesmuma_num_regions_per_bank);
+
+    /* number of polling loops to allow pending resources to
+     * complete their work
+     */
+    mca_bcol_basesmuma_param_register_int("n_poll_loops", 4, &cs->n_poll_loops);
+
+
+    /* Number of groups supported */
+    mca_bcol_basesmuma_param_register_int("n_groups_supported", 100,
+                                          &cs->n_groups_supported);
+
+    /* order of fanin tree */
+    mca_bcol_basesmuma_param_register_int("radix_fanin", 2, &cs->radix_fanin);
+
+    /* order of fanout tree */
+    mca_bcol_basesmuma_param_register_int("radix_fanout", 2, &cs->radix_fanout);
+
+    /* order of read tree */
+    mca_bcol_basesmuma_param_register_int("radix_read_tree", 3,
+                                          &cs->radix_read_tree);
+
+    /* order of reduction fanout tree */
+    mca_bcol_basesmuma_param_register_int("order_reduction_tree", 2,
+                                          &cs->order_reduction_tree);
+
+    /* k-nomial radix */
+    mca_bcol_basesmuma_param_register_int("k_nomial_radix", 3, &cs->k_nomial_radix);
+
+    /* number of polling loops for non-blocking algorithms */
+    mca_bcol_basesmuma_param_register_int("num_to_probe", 10, &cs->num_to_probe);
+
+    /* radix of the k-ary scatter tree */
+    mca_bcol_basesmuma_param_register_int("scatter_kary_radix", 4,
+                                          &cs->scatter_kary_radix);
+
+    /* register parmeters controlling message fragementation */
+    mca_bcol_basesmuma_param_register_int("min_frag_size", getpagesize(),
+                                          &cs->super.min_frag_size);
+    mca_bcol_basesmuma_param_register_int("max_frag_size", FRAG_SIZE_NO_LIMIT,
+                                          &cs->super.max_frag_size);
+
+    /* by default use pre-registered shared memory segments */
+    /* RLG NOTE: When we have a systematic way to handle single memory
+     * copy semantics, we need to update this logic
+     */
+    mca_bcol_basesmuma_param_register_bool("can_use_user_buffers", false,
+                                           &cs->super.can_use_user_buffers);
+
+    mca_bcol_basesmuma_param_register_int("verbose", 0, &cs->verbose);
+
+    return OMPI_SUCCESS;
+}
+
+/*
  * Open the component
  */
 static int basesmuma_open(void)
@@ -101,37 +184,6 @@ static int basesmuma_open(void)
     int ret = OMPI_SUCCESS;
     opal_mutex_t *mutex_ptr;
     int dummy;
-
-    /* set component priority */
-    cs->super.priority=
-        mca_bcol_basesmuma_param_register_int("priority",90);
-
-    /* set control region size (bytes), per proc */
-    cs->basesmuma_ctl_size_per_proc=
-       
-        mca_bcol_basesmuma_param_register_int("basesmuma_ctl_size_per_proc",
-            CACHE_LINE_SIZE);
-
-    /* set control region alignment (bytes) */
-    cs->basesmuma_ctl_alignment=
-        mca_bcol_basesmuma_param_register_int("basesmuma_ctl_alignment",
-            getpagesize());
-
-    /* Number of memory banks */
-    cs->basesmuma_num_mem_banks=
-        mca_bcol_basesmuma_param_register_int("basesmuma_num_ctl_banks",
-                2);  
-
-    /* Number of regions per memory bank */
-    cs->basesmuma_num_regions_per_bank=
-        mca_bcol_basesmuma_param_register_int("basesmuma_num_buffs_per_bank",
-                16);   
-
-    /* number of polling loops to allow pending resources to
-     * complete their work
-     */
-    cs->n_poll_loops=
-        mca_bcol_basesmuma_param_register_int("n_poll_loops",4);
 
     /*
      * Make sure that the number of banks is a power of 2
@@ -153,58 +205,9 @@ static int basesmuma_open(void)
         goto ERROR;
     }
 
-    /* Number of groups supported */
-    cs->n_groups_supported=
-        mca_bcol_basesmuma_param_register_int("n_groups_supported",100);
-
-    /* order of fanin tree */
-    cs->radix_fanin=
-        mca_bcol_basesmuma_param_register_int("radix_fanin",2);
-
-    /* order of fanout tree */
-    cs->radix_fanout=
-        mca_bcol_basesmuma_param_register_int("radix_fanout",2);
-
-    /* order of read tree */
-    cs->radix_read_tree = 
-        mca_bcol_basesmuma_param_register_int("radix_read_tree",3);
-
-    /* order of reduction fanout tree */
-    cs->order_reduction_tree=
-        mca_bcol_basesmuma_param_register_int("order_reduction_tree",2);
-
-    /* k-nomial radix */
-    cs->k_nomial_radix=
-        mca_bcol_basesmuma_param_register_int("k_nomial_radix",3);
-
-    /* number of polling loops for non-blocking algorithms */
-    cs->num_to_probe =
-        mca_bcol_basesmuma_param_register_int("num_to_probe",10);
-
-    /* radix of the k-ary scatter tree */
-    cs->scatter_kary_radix =
-        mca_bcol_basesmuma_param_register_int("scatter_kary_radix",4);
-
 	/* Portals initialization */
 	cs->portals_init = false;
 	cs->portals_info = NULL;
-
-    cs->verbose =
-        mca_bcol_basesmuma_param_register_int("verbose",0);
-
-    /* register parmeters controlling message fragementation */
-    cs->super.min_frag_size=
-        mca_bcol_basesmuma_param_register_int("min_frag_size",getpagesize());
-    cs->super.max_frag_size=
-        mca_bcol_basesmuma_param_register_int("max_frag_size",FRAG_SIZE_NO_LIMIT);
-    /* by default use pre-registered shared memory segments */
-    /* RLG NOTE: When we have a systematic way to handle single memory
-     * copy semantics, we need to update this logic
-     */
-     cs->super.can_use_user_buffers=
-        mca_bcol_basesmuma_param_register_int("can_use_user_buffers",0);
-     cs->super.use_pipeline=
-         mca_bcol_basesmuma_param_register_int("use_pipeline",1);
 
     /*
      * initialization

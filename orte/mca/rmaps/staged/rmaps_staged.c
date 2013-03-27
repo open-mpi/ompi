@@ -20,7 +20,6 @@
 #include <string.h>
 #endif  /* HAVE_STRING_H */
 
-#include "opal/mca/base/mca_base_param.h"
 #include "opal/mca/hwloc/base/base.h"
 #include "opal/dss/dss.h"
 #include "opal/util/output.h"

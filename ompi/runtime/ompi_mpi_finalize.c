@@ -81,6 +81,7 @@
 #endif
 #include "ompi/runtime/ompi_cr.h"
 
+extern bool ompi_enable_timing;
 
 int ompi_mpi_finalize(void)
 {
@@ -88,7 +89,6 @@ int ompi_mpi_finalize(void)
     static int32_t finalize_has_already_started = 0;
     opal_list_item_t *item;
     struct timeval ompistart, ompistop;
-    bool timing = false;
     ompi_rte_collective_t *coll;
 
     /* Be a bit social if an erroneous program calls MPI_FINALIZE in
@@ -141,11 +141,7 @@ int ompi_mpi_finalize(void)
     opal_progress_event_users_increment();
 
     /* check to see if we want timing information */
-    mca_base_param_reg_int_name("ompi", "timing",
-                                "Request that critical timing loops be measured",
-                                false, false, 0, &value);
-    if (value != 0 && 0 == OMPI_PROC_MY_NAME->vpid) {
-        timing = true;
+    if (ompi_enable_timing != 0 && 0 == OMPI_PROC_MY_NAME->vpid) {
         gettimeofday(&ompistart, NULL);
     }
 
@@ -224,7 +220,7 @@ int ompi_mpi_finalize(void)
 
     /* check for timing request - get stop time and report elapsed
      time if so */
-    if (timing && 0 == OMPI_PROC_MY_NAME->vpid) {
+    if (ompi_enable_timing && 0 == OMPI_PROC_MY_NAME->vpid) {
         gettimeofday(&ompistop, NULL);
         opal_output(0, "ompi_mpi_finalize[%ld]: time to execute barrier %ld usec",
                     (long)OMPI_PROC_MY_NAME->vpid,
@@ -402,12 +398,6 @@ int ompi_mpi_finalize(void)
     if (OMPI_SUCCESS != (ret = mca_rcache_base_close())) { 
         return ret;
     }
-
-    /* Free some OMPI MCA string params */
-    if (NULL != ompi_mpi_show_mca_params_file) {
-        free(ompi_mpi_show_mca_params_file);
-    }
-
 
     /* Leave the RTE */
 

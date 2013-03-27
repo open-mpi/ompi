@@ -10,7 +10,6 @@
  */
 #include <stdarg.h>
 
-#include "opal/mca/base/mca_base_param.h"
 #include "ompi/include/ompi/constants.h"
 #include "netpatterns.h"
 
@@ -18,12 +17,13 @@ int netpatterns_base_verbose = 0; /* disabled by default */
 
 int netpatterns_register_mca_params(void)
 {
-    mca_base_param_reg_int_name("common", 
-                                "netpatterns_base_verbose", 
-                                "Verbosity level of the NETPATTERNS framework", 
-                                false, false, 
-                                0, 
-                                &netpatterns_base_verbose);
+    netpatterns_base_verbose = 0;
+    mca_base_var_register("ompi", "common", "netpatterns", "base_verbose",
+                          "Verbosity level of the NETPATTERNS framework",
+                          MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                          OPAL_INFO_LVL_9,
+                          MCA_BASE_VAR_SCOPE_READONLY,
+                          &netpatterns_base_verbose);
 
     return OMPI_SUCCESS;
 }

@@ -106,7 +106,7 @@ mca_mpool_base_module_t* mca_mpool_base_module_create(
            leave_pinned variables may have been set by a user MCA
            param or elsewhere in the code base).  Yes, we could have
            coded this more succinctly, but this is more clear. */
-        if (ompi_mpi_leave_pinned || ompi_mpi_leave_pinned_pipeline) {
+        if (ompi_mpi_leave_pinned > 0 || ompi_mpi_leave_pinned_pipeline) {
             use_mem_hooks = 1;
         }
 

@@ -23,7 +23,6 @@
 
 #include "opal/mca/event/event.h"
 #include "opal/util/output.h"
-#include "opal/mca/base/mca_base_param.h"
 #include "opal/util/show_help.h"
 #include "ompi/proc/proc.h"
 
@@ -71,88 +70,94 @@ mca_mtl_psm_component_t mca_mtl_psm_component = {
     }
 };
 
+#if PSM_VERNO >= 0x010d
+static mca_base_var_enum_value_t path_query_values[] = {
+    {PSM_PATH_RES_NONE, "none"},
+    {PSM_PATH_RES_OPP, "opp"},
+    {0, NULL}
+};
+#endif
     
 static int
 ompi_mtl_psm_component_register(void)
 {
-    int value;
-    char *service_id = NULL;
-    char *path_res = NULL;
+#if PSM_VERNO >= 0x010d
+    mca_base_var_enum_t *new_enum;
+#endif
+    int ret;
     
-    mca_base_param_reg_int(&mca_mtl_psm_component.super.mtl_version, 
-			   "connect_timeout",
-			   "PSM connection timeout value in seconds",
-			   false, false, 180, &ompi_mtl_psm.connect_timeout);
-  
-    mca_base_param_reg_int(&mca_mtl_psm_component.super.mtl_version, 
-			   "debug",
-			   "PSM debug level",
-			   false, false, 1, 
-			   &value);
-    ompi_mtl_psm.debug_level = value;
-  
-    mca_base_param_reg_int(&mca_mtl_psm_component.super.mtl_version, 
-			   "ib_unit",
-			   "Truescale unit to use",
-			   false, false, -1, 
-			   &ompi_mtl_psm.ib_unit);
+    ompi_mtl_psm.connect_timeout = 180;
+    (void) mca_base_component_var_register(&mca_mtl_psm_component.super.mtl_version,
+                                           "connect_timeout",
+                                           "PSM connection timeout value in seconds",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &ompi_mtl_psm.connect_timeout);
 
-    mca_base_param_reg_int(&mca_mtl_psm_component.super.mtl_version, 
-			   "ib_port",
-			   "Truescale port on unit to use",
-			   false, false, 0, 
-			   &ompi_mtl_psm.ib_port);
+    ompi_mtl_psm.debug_level = 1;
+    (void) mca_base_component_var_register(&mca_mtl_psm_component.super.mtl_version,
+                                           "debug", "PSM debug level",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &ompi_mtl_psm.debug_level);
 
-    mca_base_param_reg_int(&mca_mtl_psm_component.super.mtl_version, 
-			   "ib_service_level",
-			   "Infiniband service level"
-			   "(0 <= SL <= 15)",
-			   false, false, 0, &ompi_mtl_psm.ib_service_level);
+    ompi_mtl_psm.ib_unit = -1;
+    (void) mca_base_component_var_register(&mca_mtl_psm_component.super.mtl_version,
+                                           "ib_unit", "Truescale unit to use",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &ompi_mtl_psm.ib_unit);
+
+    ompi_mtl_psm.ib_port = 0;
+    (void) mca_base_component_var_register(&mca_mtl_psm_component.super.mtl_version,
+                                           "ib_port", "Truescale port on unit to use",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &ompi_mtl_psm.ib_port);
+
+    ompi_mtl_psm.ib_service_level = 0;
+    (void) mca_base_component_var_register(&mca_mtl_psm_component.super.mtl_version,
+                                           "ib_service_level", "Infiniband service level"
+                                           "(0 <= SL <= 15)", MCA_BASE_VAR_TYPE_INT,
+                                           NULL, 0, 0, OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &ompi_mtl_psm.ib_service_level);
   
     ompi_mtl_psm.ib_pkey = 0x7fffUL;
-    mca_base_param_reg_int(&mca_mtl_psm_component.super.mtl_version, 
-			   "ib_pkey",
-			   "Infiniband partition key",
-			   false, false, 0x7fffUL, 
-			   &value);
-    ompi_mtl_psm.ib_pkey = value;
+    (void) mca_base_component_var_register(&mca_mtl_psm_component.super.mtl_version,
+                                           "ib_pkey", "Infiniband partition key",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &ompi_mtl_psm.ib_pkey);
     
 #if PSM_VERNO >= 0x010d
-    mca_base_param_reg_string(&mca_mtl_psm_component.super.mtl_version,
-			      "ib_service_id",
-			      "Infiniband service ID to use for application (default is 0)",
-			      false, false, "0x1000117500000000",
-			      &service_id);
-    ompi_mtl_psm.ib_service_id = (uint64_t) strtoull(service_id, NULL, 0);
-    
-    mca_base_param_reg_string(&mca_mtl_psm_component.super.mtl_version,
-			      "path_query",
-			      "Path record query mechanisms (valid values: opp, none)",
-			      false, false, NULL, &path_res);
-    if ((NULL != path_res) && strcasecmp(path_res, "none")) {
-      if (!strcasecmp(path_res, "opp"))
-	ompi_mtl_psm.path_res_type = PSM_PATH_RES_OPP;
-      else {
-	opal_show_help("help-mtl-psm.txt",
-		       "path query mechanism unknown", true,
-		       path_res, "OfedPlus (opp) | Static Routes (none)");
-	return OMPI_ERR_NOT_FOUND;
-      }
-    }
-    else {
-      /* Default is "static/none" path record queries */
-      ompi_mtl_psm.path_res_type = PSM_PATH_RES_NONE;
-    }
+    ompi_mtl_psm.ib_service_id = 0x1000117500000000ull;
+    (void) mca_base_component_var_register(&mca_mtl_psm_component.super.mtl_version,
+                                           "ib_service_id",
+                                           "Infiniband service ID to use for application (default is 0)",
+                                           MCA_BASE_VAR_TYPE_UNSIGNED_LONG_LONG, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &ompi_mtl_psm.ib_service_id);
+
+    ompi_mtl_psm.path_res_type = PSM_PATH_RES_NONE;
+    mca_base_var_enum_create("mtl_psm_path_query", path_query_values, &new_enum);
+    ret = mca_base_component_var_register(&mca_mtl_psm_component.super.mtl_version,
+                                          "path_query",
+                                          "Path record query mechanisms",
+                                          MCA_BASE_VAR_TYPE_INT, new_enum, 0, 0,
+                                          OPAL_INFO_LVL_9,
+                                          MCA_BASE_VAR_SCOPE_READONLY,
+                                          &ompi_mtl_psm.path_res_type);
+    OBJ_RELEASE(new_enum);
 #endif
-    
-    if (ompi_mtl_psm.ib_service_level < 0)  {
-      ompi_mtl_psm.ib_service_level = 0;
-    } else if (ompi_mtl_psm.ib_service_level > 15) {
-      ompi_mtl_psm.ib_service_level = 15;
-    }
-  
-  return OMPI_SUCCESS;
-    
+
+    return OMPI_SUCCESS;
 }
 
 static int
@@ -160,6 +165,12 @@ ompi_mtl_psm_component_open(void)
 {
   struct stat st;
   
+    if (ompi_mtl_psm.ib_service_level < 0)  {
+      ompi_mtl_psm.ib_service_level = 0;
+    } else if (ompi_mtl_psm.ib_service_level > 15) {
+      ompi_mtl_psm.ib_service_level = 15;
+    }
+
   /* Component available only if Truescale hardware is present */
   if (0 == stat("/dev/ipath", &st)) {
     return OMPI_SUCCESS;

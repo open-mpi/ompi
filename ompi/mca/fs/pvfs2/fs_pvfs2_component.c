@@ -57,8 +57,10 @@ mca_fs_base_component_2_0_0_t mca_fs_pvfs2_component = {
         OMPI_MAJOR_VERSION,
         OMPI_MINOR_VERSION,
         OMPI_RELEASE_VERSION,
-        pvfs2_register,
-        NULL
+        NULL,
+        NULL,
+        NULL,
+        pvfs2_register
     },
     {
         /* This component is checkpointable */
@@ -72,34 +74,24 @@ mca_fs_base_component_2_0_0_t mca_fs_pvfs2_component = {
 static int
 pvfs2_register(void)
 {
-    int param;
-
-    param = mca_base_param_find ("fs", NULL, "pvfs2_stripe_size");
-    if (param >= 0)
-    {
-        mca_base_param_lookup_int (param, &mca_fs_pvfs2_stripe_size);
-    }
-    param = mca_base_param_find ("fs", NULL, "pvfs2_stripe_width");
-    if (param >= 0)
-    {
-        mca_base_param_lookup_int (param, &mca_fs_pvfs2_stripe_width);
-    }
-
-    mca_base_param_reg_int (&mca_fs_pvfs2_component.fsm_version,
-                            "priority",
-                            "Priority of the pvfs2 fs component",
-                            false, false, mca_fs_pvfs2_priority,
-                            &mca_fs_pvfs2_priority);
-    mca_base_param_reg_int (&mca_fs_pvfs2_component.fsm_version,
-                            "stripe_size",
-                            "stripe size of a file over pvfs2",
-                            false, false, mca_fs_pvfs2_stripe_size,
-                            &mca_fs_pvfs2_stripe_size);
-    mca_base_param_reg_int (&mca_fs_pvfs2_component.fsm_version,
-                            "stripe_width",
-                            "stripe width of a file over pvfs2",
-                            false, false, mca_fs_pvfs2_stripe_width,
-                            &mca_fs_pvfs2_stripe_width);
+    mca_fs_pvfs2_priority = 0;
+    (void) mca_base_component_var_register (&mca_fs_pvfs2_component.fsm_version,
+                                            "priority", "Priority of the pvfs2 fs component",
+                                            MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                            OPAL_INFO_LVL_9,
+                                            MCA_BASE_VAR_SCOPE_READONLY, &mca_fs_pvfs2_priority);
+    mca_fs_pvfs2_stripe_size = -1;
+    (void) mca_base_component_var_register (&mca_fs_pvfs2_component.fsm_version,
+                                            "stripe_size", "stripe size of a file over pvfs2",
+                                            MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                            OPAL_INFO_LVL_9,
+                                            MCA_BASE_VAR_SCOPE_READONLY, &mca_fs_pvfs2_stripe_size);
+    mca_fs_pvfs2_stripe_width = -1;
+    (void) mca_base_component_var_register (&mca_fs_pvfs2_component.fsm_version,
+                                            "stripe_width", "stripe width of a file over pvfs2",
+                                            MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                            OPAL_INFO_LVL_9,
+                                            MCA_BASE_VAR_SCOPE_READONLY, &mca_fs_pvfs2_stripe_width);
 
     return OMPI_SUCCESS;
 }

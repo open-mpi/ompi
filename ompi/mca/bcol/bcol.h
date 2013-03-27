@@ -321,16 +321,13 @@ struct mca_bcol_base_component_2_0_0_t {
      */
 
     /** Minimum fragement size */
-    size_t min_frag_size;
+    int min_frag_size;
 
     /** Maximum fragment size */
-    int32_t max_frag_size;
+    int max_frag_size;
 
     /** Supports direct use of user-buffers */
-    int can_use_user_buffers;
-
-    /** Support pipelining */
-    int use_pipeline;
+    bool can_use_user_buffers;
 };
 typedef struct mca_bcol_base_component_2_0_0_t mca_bcol_base_component_2_0_0_t;
 typedef struct mca_bcol_base_component_2_0_0_t mca_bcol_base_component_t;

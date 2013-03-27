@@ -22,7 +22,7 @@
  */
 #include "opal_config.h"
 
-#include "opal/mca/base/mca_base_param.h"
+#include "opal/mca/base/mca_base_var.h"
 
 #include "opal/dss/dss_internal.h"
 
@@ -35,7 +35,16 @@ int opal_dss_initial_size;
 int opal_dss_threshold_size;
 opal_pointer_array_t opal_dss_types;
 opal_data_type_t opal_dss_num_reg_types;
-opal_dss_buffer_type_t default_buf_type;
+opal_dss_buffer_type_t default_buf_type = OPAL_DSS_BUFFER_NON_DESC;
+
+/* variable group id */
+static int opal_dss_group_id = -1;
+
+mca_base_var_enum_value_t buffer_type_values[] = {
+    {OPAL_DSS_BUFFER_NON_DESC, "non-described"},
+    {OPAL_DSS_BUFFER_FULLY_DESC, "described"},
+    {0, NULL}
+};
 
 opal_dss_t opal_dss = {
     opal_dss_pack,
@@ -209,47 +218,77 @@ OBJ_CLASS_INSTANCE(opal_node_stats_t, opal_object_t,
                    opal_node_stats_destruct);
 
 
-int opal_dss_open(void)
+int opal_dss_register_vars (void)
 {
+    mca_base_var_enum_t *new_enum;
     char *enviro_val;
-    int rc;
-    opal_data_type_t tmp;
-    int def_type;
-
-    if (opal_dss_initialized) {
-        return OPAL_SUCCESS;
-    }
+    int ret;
 
     enviro_val = getenv("OPAL_dss_debug");
     if (NULL != enviro_val) {  /* debug requested */
         opal_dss_verbose = 0;
     }
 
+    opal_dss_group_id = mca_base_var_group_register ("opal", "dss", NULL, NULL);
+
     /** set the default buffer type. If we are in debug mode, then we default
      * to fully described buffers. Otherwise, we default to non-described for brevity
      * and performance
      */
 #if OPAL_ENABLE_DEBUG
-    def_type = OPAL_DSS_BUFFER_FULLY_DESC;
+    default_buf_type = OPAL_DSS_BUFFER_FULLY_DESC;
 #else
-    def_type = OPAL_DSS_BUFFER_NON_DESC;
+    default_buf_type = OPAL_DSS_BUFFER_NON_DESC;
 #endif
 
-    (void) mca_base_param_reg_int_name ("dss", "buffer_type",
-					"Set the default mode for OpenRTE buffers (0=non-described, 1=described)",
-					false, false, def_type, &rc);
-    default_buf_type = rc;
+    ret = mca_base_var_enum_create ("buffer types", buffer_type_values, &new_enum);
+    if (OPAL_SUCCESS != ret) {
+        fprintf (stderr, "Fail A\n");
+        return ret;
+    }
+
+    ret = mca_base_var_register ("opal", "dss", NULL, "buffer_type",
+                                 "Set the default mode for OpenRTE buffers (0=non-described, 1=described)",
+                                 MCA_BASE_VAR_TYPE_INT, new_enum, 0, MCA_BASE_VAR_FLAG_SETTABLE,
+                                 OPAL_INFO_LVL_8, MCA_BASE_VAR_SCOPE_ALL_EQ,
+                                 &default_buf_type);
+    OBJ_RELEASE(new_enum);
+    if (0 > ret) {
+        return ret;
+    }
 
     /* setup the initial size of the buffer. */
-    (void) mca_base_param_reg_int_name ("dss", "buffer_initial_size", NULL,
-					false, false, OPAL_DSS_DEFAULT_INITIAL_SIZE,
-					&opal_dss_initial_size);
+    opal_dss_initial_size = OPAL_DSS_DEFAULT_INITIAL_SIZE;
+    ret = mca_base_var_register ("opal", "dss", NULL, "buffer_initial_size", NULL,
+                                 MCA_BASE_VAR_TYPE_INT, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
+                                 OPAL_INFO_LVL_8, MCA_BASE_VAR_SCOPE_ALL_EQ,
+                                 &opal_dss_initial_size);
+    if (0 > ret) {
+        return ret;
+    }
 
     /* the threshold as to where to stop doubling the size of the buffer 
      * allocated memory and start doing additive increases */
-    (void) mca_base_param_reg_int_name ("dss", "buffer_threshold_size", NULL,
-					false, false, OPAL_DSS_DEFAULT_THRESHOLD_SIZE,
-					&opal_dss_threshold_size);
+    opal_dss_threshold_size = OPAL_DSS_DEFAULT_THRESHOLD_SIZE;
+    ret = mca_base_var_register ("opal", "dss", NULL, "buffer_threshold_size", NULL,
+                                 MCA_BASE_VAR_TYPE_INT, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
+                                 OPAL_INFO_LVL_8, MCA_BASE_VAR_SCOPE_ALL_EQ,
+                                 &opal_dss_threshold_size);
+
+    return (0 > ret) ? ret : OPAL_SUCCESS;
+}
+
+int opal_dss_open(void)
+{
+    int rc;
+    opal_data_type_t tmp;
+
+    if (opal_dss_initialized) {
+        return OPAL_SUCCESS;
+    }
+
+    /* Lock DSS MCA variables */
+    mca_base_var_group_set_var_flag (opal_dss_group_id, MCA_BASE_VAR_FLAG_SETTABLE, false);
 
     /* Setup the types array */
     OBJ_CONSTRUCT(&opal_dss_types, opal_pointer_array_t);

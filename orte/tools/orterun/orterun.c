@@ -802,7 +802,7 @@ int orterun(int argc, char *argv[])
 #if OPAL_ENABLE_FT_CR == 1
     /* Disable OPAL CR notifications for this tool */
     opal_cr_set_enabled(false);
-    tmp_env_var = mca_base_param_env_var("opal_cr_is_tool");
+    (void) mca_base_var_env_name("opal_cr_is_tool", &tmp_env_var);
     opal_setenv(tmp_env_var,
                 "1",
                 true, &environ);
@@ -2371,22 +2371,23 @@ static int process(char *orig_line, char *basename, opal_cmd_line_t *cmd_line,
 static void run_debugger(char *basename, opal_cmd_line_t *cmd_line,
                          int argc, char *argv[], int num_procs)
 {
-    int i, id;
+    int i, id, ret;
     char **new_argv = NULL;
+    const char **tmp;
     char *value, **lines, *env_name;
 
     /* Get the orte_base_debug MCA parameter and search for a debugger
        that can run */
     
-    id = mca_base_param_find("orte", NULL, "base_user_debugger");
+    id = mca_base_var_find("orte", "orte", NULL, "base_user_debugger");
     if (id < 0) {
         orte_show_help("help-orterun.txt", "debugger-mca-param-not-found", 
                        true);
         exit(1);
     }
-    value = NULL;
-    mca_base_param_lookup_string(id, &value);
-    if (NULL == value) {
+
+    ret = mca_base_var_get_value (id, &tmp, NULL, NULL);
+    if (OPAL_SUCCESS != ret || NULL == tmp || NULL == tmp[0]) {
         orte_show_help("help-orterun.txt", "debugger-orte_base_user_debugger-empty",
                        true);
         exit(1);
@@ -2394,8 +2395,7 @@ static void run_debugger(char *basename, opal_cmd_line_t *cmd_line,
 
     /* Look through all the values in the MCA param */
 
-    lines = opal_argv_split(value, ':');
-    free(value);
+    lines = opal_argv_split(tmp[0], ':');
     for (i = 0; NULL != lines[i]; ++i) {
         if (ORTE_SUCCESS == process(lines[i], basename, cmd_line, argc, argv, 
                                     &new_argv, num_procs)) {
@@ -2421,8 +2421,8 @@ static void run_debugger(char *basename, opal_cmd_line_t *cmd_line,
        launched under a debugger; not all debuggers are consistent
        about setting MPIR_being_debugged in both the launcher and the
        MPI processes */
-    env_name = mca_base_param_env_var ("orte_in_parallel_debugger");
-    if (NULL != env_name) {
+    ret = mca_base_var_env_name ("orte_in_parallel_debugger", &env_name);
+    if (OPAL_SUCCESS == ret && NULL != env_name) {
         opal_setenv(env_name, "1", true, &environ);
         free(env_name);
     }
@@ -2603,7 +2603,7 @@ static void orte_debugger_init_before_spawn(orte_job_t *jdata)
     opal_output_verbose(1, orte_debug_output, "Info: Spawned by a debugger");
 
     /* tell the procs they are being debugged */
-    env_name = mca_base_param_env_var ("orte_in_parallel_debugger");
+    (void) mca_base_var_env_name ("orte_in_parallel_debugger", &env_name);
     
     for (i=0; i < jdata->apps->size; i++) {
         if (NULL == (app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, i))) {

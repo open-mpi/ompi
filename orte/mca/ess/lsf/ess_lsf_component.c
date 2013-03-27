@@ -22,8 +22,6 @@
 
 #include <lsf/lsbatch.h>
 
-#include "opal/mca/base/mca_base_param.h"
-
 #include "orte/util/proc_info.h"
 
 #include "orte/mca/ess/ess.h"

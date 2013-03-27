@@ -35,7 +35,6 @@
 #include "ompi/runtime/params.h"
 #include "ompi/mca/rte/rte.h"
 
-#include "opal/mca/base/mca_base_param.h"
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
 #include "opal/util/show_help.h"
@@ -65,6 +64,12 @@ bool ompi_have_sparse_group_storage = OPAL_INT_TO_BOOL(OMPI_GROUP_SPARSE);
 bool ompi_use_sparse_group_storage = OPAL_INT_TO_BOOL(OMPI_GROUP_SPARSE);
 bool ompi_mpi_cuda_support = OPAL_INT_TO_BOOL(OMPI_CUDA_SUPPORT);
 
+bool ompi_mpi_yield_when_idle = true;
+int ompi_mpi_event_tick_rate = -1;
+char *ompi_mpi_show_mca_params_string = NULL;
+bool ompi_mpi_have_sparse_group_storage = !!(OMPI_GROUP_SPARSE);
+bool ompi_mpi_preconnect_mpi = false;
+
 static bool show_default_mca_params = false;
 static bool show_file_mca_params = false;
 static bool show_enviro_mca_params = false;
@@ -73,25 +78,21 @@ static bool show_override_mca_params = false;
 int ompi_mpi_register_params(void)
 {
     int value;
-    char *param;
 
     /* Whether we want MPI API function parameter checking or not */
 
-    mca_base_param_reg_int_name("mpi", "param_check", 
-                                "Whether you want MPI API parameters checked at run-time or not.  Possible values are 0 (no checking) and 1 (perform checking at run-time)",
-                                false, false, MPI_PARAM_CHECK, &value);
-    ompi_mpi_param_check = OPAL_INT_TO_BOOL(value);
-    if (ompi_mpi_param_check) {
-        value = 0;
-        if (MPI_PARAM_CHECK) {
-            value = 1;
-        }
-        if (0 == value) {
-            opal_show_help("help-mpi-runtime.txt", 
-                           "mpi-param-check-enabled-but-compiled-out",
-                           true);
-            ompi_mpi_param_check = false;
-        }
+    ompi_mpi_param_check = false;
+    (void) mca_base_var_register("ompi", "mpi", NULL, "param_check",
+                                 "Whether you want MPI API parameters checked at run-time or not.  Possible values are 0 (no checking) and 1 (perform checking at run-time)",
+                                 MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                 OPAL_INFO_LVL_9,
+                                 MCA_BASE_VAR_SCOPE_READONLY,
+                                 &ompi_mpi_param_check);
+    if (ompi_mpi_param_check && !MPI_PARAM_CHECK) {
+        opal_show_help("help-mpi-runtime.txt", 
+                       "mpi-param-check-enabled-but-compiled-out",
+                       true);
+        ompi_mpi_param_check = false;
     }
     
     /*
@@ -100,37 +101,44 @@ int ompi_mpi_register_params(void)
      */
     /* JMS: Need ORTE data here -- set this to 0 when
        exactly/under-subscribed, or 1 when oversubscribed */
-    mca_base_param_reg_int_name("mpi", "yield_when_idle", 
-                                "Yield the processor when waiting for MPI communication (for MPI processes, will default to 1 when oversubscribing nodes)",
-                                false, false, -1, NULL);
-    mca_base_param_reg_int_name("mpi", "event_tick_rate", 
-                                "How often to progress TCP communications (0 = never, otherwise specified in microseconds)",
-                                false, false, -1, NULL);
+    ompi_mpi_yield_when_idle = true;
+    (void) mca_base_var_register("ompi", "mpi", NULL, "yield_when_idle",
+                                 "Yield the processor when waiting for MPI communication (for MPI processes, will default to 1 when oversubscribing nodes)",
+                                 MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                 OPAL_INFO_LVL_9,
+                                 MCA_BASE_VAR_SCOPE_READONLY,
+                                 &ompi_mpi_yield_when_idle);
+
+    ompi_mpi_event_tick_rate = -1;
+    (void) mca_base_var_register("ompi", "mpi", NULL, "event_tick_rate",
+                                 "How often to progress TCP communications (0 = never, otherwise specified in microseconds)",
+                                 MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                 OPAL_INFO_LVL_9,
+                                 MCA_BASE_VAR_SCOPE_READONLY,
+                                 &ompi_mpi_event_tick_rate);
 
     /* Whether or not to show MPI handle leaks */
-    
-    mca_base_param_reg_int_name("mpi", "show_handle_leaks",
-                                "Whether MPI_FINALIZE shows all MPI handles that were not freed or not",
-                                false, false, 
-                                (int) ompi_debug_show_handle_leaks, &value);
-    ompi_debug_show_handle_leaks = OPAL_INT_TO_BOOL(value);
+    ompi_debug_show_handle_leaks = false;
+    (void) mca_base_var_register("ompi", "mpi", NULL, "show_handle_leaks",
+                                 "Whether MPI_FINALIZE shows all MPI handles that were not freed or not",
+                                 MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                 OPAL_INFO_LVL_9,
+                                 MCA_BASE_VAR_SCOPE_READONLY,
+                                 &ompi_debug_show_handle_leaks);
     
     /* Whether or not to free MPI handles.  Useless without run-time
        param checking, so implicitly set that to true if we don't want
        to free the handles. */
-    
-    mca_base_param_reg_int_name("mpi", "no_free_handles", 
-                                "Whether to actually free MPI objects when their handles are freed",
-                                false, false, 
-                                (int) ompi_debug_no_free_handles, &value);
-    ompi_debug_no_free_handles = OPAL_INT_TO_BOOL(value);
+    ompi_debug_no_free_handles = false;
+    (void) mca_base_var_register("ompi", "mpi", NULL, "no_free_handles",
+                                 "Whether to actually free MPI objects when their handles are freed",
+                                 MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                 OPAL_INFO_LVL_9,
+                                 MCA_BASE_VAR_SCOPE_READONLY,
+                                 &ompi_debug_no_free_handles);
     if (ompi_debug_no_free_handles) {
         ompi_mpi_param_check = true;
-        value = 0;
-        if (MPI_PARAM_CHECK) {
-            value = 1;
-        }
-        if (0 == value) {
+        if (!MPI_PARAM_CHECK) {
             opal_output(0, "WARNING: MCA parameter mpi_no_free_handles set to true, but MPI");
             opal_output(0, "WARNING: parameter checking has been compiled out of Open MPI.");
             opal_output(0, "WARNING: mpi_no_free_handles is therefore only partially effective!");
@@ -138,25 +146,30 @@ int ompi_mpi_register_params(void)
     }
 
     /* Whether or not to show MPI_ALLOC_MEM leaks */
-
-    mca_base_param_reg_int_name("mpi", "show_mpi_alloc_mem_leaks",
-                                "If >0, MPI_FINALIZE will show up to this many instances of memory allocated by MPI_ALLOC_MEM that was not freed by MPI_FREE_MEM",
-                                false, false, 
-                                ompi_debug_show_mpi_alloc_mem_leaks,
-                                &ompi_debug_show_mpi_alloc_mem_leaks);
+    ompi_debug_show_mpi_alloc_mem_leaks = 0;
+    (void) mca_base_var_register("ompi", "mpi", NULL, "show_mpi_alloc_mem_leaks",
+                                 "If >0, MPI_FINALIZE will show up to this many instances of memory allocated by MPI_ALLOC_MEM that was not freed by MPI_FREE_MEM",
+                                 MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                 OPAL_INFO_LVL_9,
+                                 MCA_BASE_VAR_SCOPE_READONLY,
+                                 &ompi_debug_show_mpi_alloc_mem_leaks);
 
     /* Whether or not to print all MCA parameters in MPI_INIT */
-    mca_base_param_reg_string_name("mpi", "show_mca_params",
-                                   "Whether to show all MCA parameter values during MPI_INIT or not (good for reproducability of MPI jobs "
-                                   "for debug purposes). Accepted values are all, default, file, api, and enviro - or a comma "
-                                   "delimited combination of them",
-                                   false, false, NULL,  &param);
-    if (NULL != param) {
+    ompi_mpi_show_mca_params_string = NULL;
+    (void) mca_base_var_register("ompi", "mpi", NULL, "show_mca_params",
+                                 "Whether to show all MCA parameter values during MPI_INIT or not (good for reproducability of MPI jobs "
+                                 "for debug purposes). Accepted values are all, default, file, api, and enviro - or a comma "
+                                 "delimited combination of them",
+                                 MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
+                                 OPAL_INFO_LVL_9,
+                                 MCA_BASE_VAR_SCOPE_READONLY,
+                                 &ompi_mpi_show_mca_params_string);
+    if (NULL != ompi_mpi_show_mca_params_string) {
         char **args;
         int i;
         
         ompi_mpi_show_mca_params = true;
-        args = opal_argv_split(param, ',');
+        args = opal_argv_split(ompi_mpi_show_mca_params_string, ',');
         if (NULL == args) {
             opal_output(0, "WARNING: could not parse mpi_show_mca_params request - defaulting to show \"all\"");
             show_default_mca_params = true;
@@ -182,78 +195,88 @@ int ompi_mpi_register_params(void)
             }
             opal_argv_free(args);
         }
-        free(param);
     }
 
     /* File to use when dumping the parameters */
-    mca_base_param_reg_string_name("mpi", "show_mca_params_file",
-                                   "If mpi_show_mca_params is true, setting this string to a valid filename tells Open MPI to dump all the MCA parameter values into a file suitable for reading via the mca_param_files parameter (good for reproducability of MPI jobs)",
-                                   false, false,
-                                   "", &ompi_mpi_show_mca_params_file);
+    ompi_mpi_show_mca_params_file = "";
+    (void) mca_base_var_register("ompi", "mpi", NULL, "show_mca_params_file",
+                                 "If mpi_show_mca_params is true, setting this string to a valid filename tells Open MPI to dump all the MCA parameter values into a file suitable for reading via the mca_param_files parameter (good for reproducability of MPI jobs)",
+                                 MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
+                                 OPAL_INFO_LVL_9,
+                                 MCA_BASE_VAR_SCOPE_READONLY,
+                                 &ompi_mpi_show_mca_params_file);
     
     /* User-level process pinning controls */
 
     /* Do we want to save hostnames for debugging messages?  This can
        eat quite a bit of memory... */
-
-    mca_base_param_reg_int_name("mpi", "keep_peer_hostnames",
-                                "If nonzero, save the string hostnames of all MPI peer processes (mostly for error / debugging output messages).  This can add quite a bit of memory usage to each MPI process.",
-                                false, false, 1, &value);
-    ompi_mpi_keep_peer_hostnames = OPAL_INT_TO_BOOL(value);
+    ompi_mpi_keep_peer_hostnames = true;
+    (void) mca_base_var_register("ompi", "mpi", NULL, "keep_peer_hostnames",
+                                 "If nonzero, save the string hostnames of all MPI peer processes (mostly for error / debugging output messages).  This can add quite a bit of memory usage to each MPI process.",
+                                 MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                 OPAL_INFO_LVL_9,
+                                 MCA_BASE_VAR_SCOPE_READONLY,
+                                 &ompi_mpi_keep_peer_hostnames);
 
     /* MPI_ABORT controls */
-
-    mca_base_param_reg_int_name("mpi", "abort_delay",
+    ompi_mpi_abort_delay = 0;
+    (void) mca_base_var_register("ompi", "mpi", NULL, "abort_delay",
                                 "If nonzero, print out an identifying message when MPI_ABORT is invoked (hostname, PID of the process that called MPI_ABORT) and delay for that many seconds before exiting (a negative delay value means to never abort).  This allows attaching of a debugger before quitting the job.",
-                                false, false, 
-                                ompi_mpi_abort_delay,
-                                &ompi_mpi_abort_delay);
-    
-    mca_base_param_reg_int_name("mpi", "abort_print_stack",
-                                "If nonzero, print out a stack trace when MPI_ABORT is invoked",
-                                false, 
-                                /* If we do not have stack trace
-                                   capability, make this a read-only
-                                   MCA param */
-#if OPAL_WANT_PRETTY_PRINT_STACKTRACE && defined(HAVE_BACKTRACE)
-                                false, 
-#else
-                                true,
-#endif
-                                (int) ompi_mpi_abort_print_stack,
-                                &value);
-#if OPAL_WANT_PRETTY_PRINT_STACKTRACE && defined(HAVE_BACKTRACE)
-    /* Only take the value if we have stack trace capability */
-    ompi_mpi_abort_print_stack = OPAL_INT_TO_BOOL(value);
-#else
-    /* If we do not have stack trace capability, ensure that this is
-       hard-coded to false */
+                                 MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                 OPAL_INFO_LVL_9,
+                                 MCA_BASE_VAR_SCOPE_READONLY,
+                                 &ompi_mpi_abort_delay);
+
     ompi_mpi_abort_print_stack = false;
+    (void) mca_base_var_register("ompi", "mpi", NULL, "abort_print_stack",
+                                 "If nonzero, print out a stack trace when MPI_ABORT is invoked",
+                                 MCA_BASE_VAR_TYPE_BOOL, NULL, 0,
+                                /* If we do not have stack trace
+                                   capability, make this a constant
+                                   MCA variable */
+#if OPAL_WANT_PRETTY_PRINT_STACKTRACE && defined(HAVE_BACKTRACE)
+                                 0,
+                                 OPAL_INFO_LVL_9,
+                                 MCA_BASE_VAR_SCOPE_READONLY,
+#else
+                                 MCA_BASE_VAR_FLAG_DEFAULT_ONLY,
+                                 OPAL_INFO_LVL_9,
+                                 MCA_BASE_VAR_SCOPE_CONSTANT,
 #endif
+                                 &ompi_mpi_abort_print_stack);
 
-    value = mca_base_param_reg_int_name("mpi", "preconnect_mpi",
-                                        "Whether to force MPI processes to fully "
-                                        "wire-up the MPI connections between MPI "
-                                        "processes during "
-                                        "MPI_INIT (vs. making connections lazily -- "
-                                        "upon the first MPI traffic between each "
-                                        "process peer pair)",
-                                        true, false, 0, NULL);
-    mca_base_param_reg_syn_name(value, "mpi", "preconnect_all", true);
-    
+    ompi_mpi_preconnect_mpi = false;
+    value = mca_base_var_register("ompi", "mpi", NULL, "preconnect_mpi",
+                                  "Whether to force MPI processes to fully "
+                                  "wire-up the MPI connections between MPI "
+                                  "processes during "
+                                  "MPI_INIT (vs. making connections lazily -- "
+                                  "upon the first MPI traffic between each "
+                                  "process peer pair)",
+                                  MCA_BASE_VAR_TYPE_BOOL, NULL, 0,
+                                  MCA_BASE_VAR_FLAG_INTERNAL,
+                                  OPAL_INFO_LVL_9,
+                                  MCA_BASE_VAR_SCOPE_READONLY,
+                                  &ompi_mpi_preconnect_mpi);
+    mca_base_var_register_synonym(value, "ompi", "mpi", NULL, "preconnect_all",
+                                  MCA_BASE_VAR_SYN_FLAG_DEPRECATED);
+
     /* Leave pinned parameter */
+    ompi_mpi_leave_pinned = -1;
+    (void) mca_base_var_register("ompi", "mpi", NULL, "leave_pinned",
+                                 "Whether to use the \"leave pinned\" protocol or not.  Enabling this setting can help bandwidth performance when repeatedly sending and receiving large messages with the same buffers over RDMA-based networks (0 = do not use \"leave pinned\" protocol, 1 = use \"leave pinned\" protocol, -1 = allow network to choose at runtime).",
+                                 MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                 OPAL_INFO_LVL_9,
+                                 MCA_BASE_VAR_SCOPE_READONLY,
+                                 &ompi_mpi_leave_pinned);
 
-    mca_base_param_reg_int_name("mpi", "leave_pinned",
-                                "Whether to use the \"leave pinned\" protocol or not.  Enabling this setting can help bandwidth performance when repeatedly sending and receiving large messages with the same buffers over RDMA-based networks (0 = do not use \"leave pinned\" protocol, 1 = use \"leave pinned\" protocol, -1 = allow network to choose at runtime).",
-                                false, false,
-                                ompi_mpi_leave_pinned, &value);
-    ompi_mpi_leave_pinned = (value >= 1) ? true: false;
-
-    mca_base_param_reg_int_name("mpi", "leave_pinned_pipeline",
+    ompi_mpi_leave_pinned_pipeline = false;
+    (void) mca_base_var_register("ompi", "mpi", NULL, "leave_pinned_pipeline",
                                 "Whether to use the \"leave pinned pipeline\" protocol or not.",
-                                false, false,
-                                (int) ompi_mpi_leave_pinned_pipeline, &value);
-    ompi_mpi_leave_pinned_pipeline = OPAL_INT_TO_BOOL(value);
+                                 MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                 OPAL_INFO_LVL_9,
+                                 MCA_BASE_VAR_SCOPE_READONLY,
+                                 &ompi_mpi_leave_pinned_pipeline);
     
     if (ompi_mpi_leave_pinned && ompi_mpi_leave_pinned_pipeline) {
         ompi_mpi_leave_pinned_pipeline = 0;
@@ -262,65 +285,62 @@ int ompi_mpi_register_params(void)
                        true);
     }
 
-    mca_base_param_reg_int_name("mpi", "warn_on_fork",
-                                "If nonzero, issue a warning if program forks under conditions that could cause system errors",
-                                false, false, 
-                                (int) true, &value);
-    ompi_warn_on_fork = OPAL_INT_TO_BOOL(value);
+    ompi_warn_on_fork = true;
+    (void) mca_base_var_register("ompi", "mpi", NULL, "warn_on_fork",
+                                 "If nonzero, issue a warning if program forks under conditions that could cause system errors",
+                                 MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                 OPAL_INFO_LVL_9,
+                                 MCA_BASE_VAR_SCOPE_READONLY,
+                                 &ompi_warn_on_fork);
     
     /* Sparse group storage support */
+    (void) mca_base_var_register("ompi", "mpi", NULL, "have_sparse_group_storage",
+                                 "Whether this Open MPI installation supports storing of data in MPI groups in \"sparse\" formats (good for extremely large process count MPI jobs that create many communicators/groups)",
+                                 MCA_BASE_VAR_TYPE_BOOL, NULL, 0,
+                                 MCA_BASE_VAR_FLAG_DEFAULT_ONLY,
+                                 OPAL_INFO_LVL_9,
+                                 MCA_BASE_VAR_SCOPE_CONSTANT,
+                                 &ompi_mpi_have_sparse_group_storage);
 
-    mca_base_param_reg_int_name("mpi", "have_sparse_group_storage", 
-                                "Whether this Open MPI installation supports storing of data in MPI groups in \"sparse\" formats (good for extremely large process count MPI jobs that create many communicators/groups)",
-                                false, true, (int) OMPI_GROUP_SPARSE, NULL);
-    mca_base_param_reg_int_name("mpi", "use_sparse_group_storage", 
-                                "Whether to use \"sparse\" storage formats for MPI groups (only relevant if mpi_have_sparse_group_storage is 1)",
-                                false, false, OMPI_GROUP_SPARSE, &value);
-    ompi_use_sparse_group_storage = OPAL_INT_TO_BOOL(value);
-    if (ompi_use_sparse_group_storage) {
-        value = 0;
-        if (OMPI_GROUP_SPARSE) {
-            value = 1;
-        }
-        if (0 == value) {
-            opal_show_help("help-mpi-runtime.txt", 
-                           "sparse groups enabled but compiled out",
-                           true);
-            ompi_use_sparse_group_storage = false;
-        }
+    ompi_use_sparse_group_storage = ompi_mpi_have_sparse_group_storage;
+    (void) mca_base_var_register("ompi", "mpi", NULL, "use_sparse_group_storage",
+                                 "Whether to use \"sparse\" storage formats for MPI groups (only relevant if mpi_have_sparse_group_storage is 1)",
+                                 MCA_BASE_VAR_TYPE_BOOL, NULL, 0,
+                                 ompi_mpi_have_sparse_group_storage ? 0 : MCA_BASE_VAR_FLAG_DEFAULT_ONLY,
+                                 OPAL_INFO_LVL_9,
+                                 ompi_mpi_have_sparse_group_storage ? MCA_BASE_VAR_SCOPE_READONLY : MCA_BASE_VAR_SCOPE_CONSTANT,
+                                 &ompi_use_sparse_group_storage);
+    if (ompi_use_sparse_group_storage && !ompi_mpi_have_sparse_group_storage) {
+        opal_show_help("help-mpi-runtime.txt", 
+                       "sparse groups enabled but compiled out",
+                       true);
+        ompi_use_sparse_group_storage = false;
     }
 
-    mca_base_param_reg_int_name("mpi", "cuda_support", 
-                                "Whether CUDA GPU buffer support is enabled or not",
-                                false, false, OMPI_CUDA_SUPPORT, &value);
-    ompi_mpi_cuda_support = OPAL_INT_TO_BOOL(value);
-    if (ompi_mpi_cuda_support) {
-        value = 0;
-        if (OMPI_CUDA_SUPPORT) {
-            value = 1;
-        }
-        if (0 == value) {
-            opal_show_help("help-mpi-runtime.txt", "no cuda support",
-                           true);
-            ompi_mpi_cuda_support = false;
-        }
+    ompi_mpi_cuda_support = !!(OMPI_CUDA_SUPPORT);
+    (void) mca_base_var_register("ompi", "mpi", NULL, "cuda_support",
+                                 "Whether CUDA GPU buffer support is enabled or not",
+                                 MCA_BASE_VAR_TYPE_BOOL, NULL, 0,
+                                 !!(OMPI_CUDA_SUPPORT) ? 0 : MCA_BASE_VAR_FLAG_DEFAULT_ONLY,
+                                 OPAL_INFO_LVL_9,
+                                 !!(OMPI_CUDA_SUPPORT) ? MCA_BASE_VAR_SCOPE_READONLY : MCA_BASE_VAR_SCOPE_CONSTANT,
+                                 &ompi_mpi_cuda_support);
+    if (ompi_mpi_cuda_support && !(OMPI_CUDA_SUPPORT)) {
+        opal_show_help("help-mpi-runtime.txt", "no cuda support",
+                       true);
+        ompi_mpi_cuda_support = false;
     }
 
     return OMPI_SUCCESS;
 }
 
 int ompi_show_all_mca_params(int32_t rank, int requested, char *nodename) {
-    opal_list_t *info;
-    opal_list_item_t *i;
-    mca_base_param_info_t *item;
-    char *value_string;
-    int value_int;
+    const mca_base_var_t *var;
+    int var_count, i, ret;
     FILE *fp = NULL;
     time_t timestamp;
-    mca_base_param_source_t source;
-    char *src_file;
-    char *src_string;
-    
+    char **var_dump;
+
     if (rank != 0) {
         return OMPI_SUCCESS;
     }
@@ -338,108 +358,67 @@ int ompi_show_all_mca_params(int32_t rank, int requested, char *nodename) {
         fprintf(fp, "# by MPI_COMM_WORLD rank %d (out of a total of %d) on %s\n", rank, requested, nodename );
         fprintf(fp, "#\n");
     }
-    
-    mca_base_param_dump(&info, false);
-    for (i =  opal_list_get_first(info); 
-         i != opal_list_get_last(info);
-         i =  opal_list_get_next(i)) {
-        item = (mca_base_param_info_t*) i;
 
-        /* If this is an internal param, don't print it */
-        if (item->mbpp_internal) {
+    var_count = mca_base_var_get_count ();
+    for (i = 0 ; i < var_count ; ++i) {
+        ret = mca_base_var_get (i, &var);
+        if (OPAL_SUCCESS != ret) {
             continue;
         }
-        
-        /* get the source - where the param was last set */
-        if (OPAL_SUCCESS != 
-            mca_base_param_lookup_source(item->mbpp_index, &source, &src_file)) {
+
+        /* If this is an internal param, don't print it */
+        if (MCA_BASE_VAR_FLAG_INTERNAL & var->mbv_flags) {
             continue;
         }
         
         /* is this a default value and we are not displaying
          * defaults, ignore this one
          */
-        if (MCA_BASE_PARAM_SOURCE_DEFAULT == source && !show_default_mca_params) {
+        if (MCA_BASE_VAR_SOURCE_DEFAULT == var->mbv_source && !show_default_mca_params) {
             continue;
         }
         
         /* is this a file value and we are not displaying files,
          * ignore it
          */
-        if (MCA_BASE_PARAM_SOURCE_FILE == source && !show_file_mca_params) {
+        if ((MCA_BASE_VAR_SOURCE_FILE == var->mbv_source ||
+             MCA_BASE_VAR_SOURCE_OVERRIDE) && !show_file_mca_params) {
             continue;
         }
         
         /* is this an enviro value and we are not displaying enviros,
          * ignore it
          */
-        if (MCA_BASE_PARAM_SOURCE_ENV == source && !show_enviro_mca_params) {
+        if (MCA_BASE_VAR_SOURCE_ENV == var->mbv_source && !show_enviro_mca_params) {
             continue;
         }
         
         /* is this an API value and we are not displaying APIs,
          * ignore it
          */
-        if (MCA_BASE_PARAM_SOURCE_OVERRIDE == source && !show_override_mca_params) {
+        if (MCA_BASE_VAR_SOURCE_OVERRIDE == var->mbv_source && !show_override_mca_params) {
             continue;
         }
         
-        /* Get the parameter name, and convert it to a printable string */
-        if (MCA_BASE_PARAM_TYPE_STRING == item->mbpp_type) {
-            mca_base_param_lookup_string(item->mbpp_index, &value_string);
-            if (NULL == value_string) {
-                value_string = strdup("");
-            }
-        } else {
-            mca_base_param_lookup_int(item->mbpp_index, &value_int);
-            asprintf(&value_string, "%d", value_int);
+        ret = mca_base_var_dump (i, &var_dump, MCA_BASE_VAR_DUMP_SIMPLE);
+        if (OPAL_SUCCESS != ret) {
+            continue;
         }
-        
-        switch(source) {
-            case MCA_BASE_PARAM_SOURCE_DEFAULT:
-                src_string = "default value";
-                break;
-            case MCA_BASE_PARAM_SOURCE_ENV:
-                src_string = "environment or cmdline";
-                break;
-            case MCA_BASE_PARAM_SOURCE_FILE:
-                src_string = "file";
-                break;
-            case MCA_BASE_PARAM_SOURCE_OVERRIDE:
-                src_string = "API override";
-                break;
-            default:
-                src_string = NULL;
-                break;
-        }
-        
+
         /* Print the parameter */
         if (0 != strlen(ompi_mpi_show_mca_params_file)) {
-            if (NULL == src_file) {
-                fprintf(fp, "%s=%s (%s)\n", item->mbpp_full_name, value_string,
-                        (NULL != src_string ? src_string : "unknown"));
-            } else {
-                fprintf(fp, "%s=%s (%s:%s)\n", item->mbpp_full_name, value_string,
-                        (NULL != src_string ? src_string : "unknown"), src_file);
-            }
+            fprintf(fp, "%s\n", var_dump[0]);
         } else {
-            if (NULL == src_file) {
-                opal_output(0, "%s=%s (%s)\n", item->mbpp_full_name, value_string,
-                            (NULL != src_string ? src_string : "unknown"));
-            } else {
-                opal_output(0, "%s=%s (%s:%s)\n", item->mbpp_full_name, value_string,
-                            (NULL != src_string ? src_string : "unknown"), src_file);
-            }
+            opal_output(0, "%s\n", var_dump[0]);
         }
-        
-        free(value_string);
+        free (var_dump[0]);
+        free (var_dump);
     }
     
     /* Close file, cleanup allocated memory*/
     if (0 != strlen(ompi_mpi_show_mca_params_file)) {
         fclose(fp);
     }
-    mca_base_param_dump_release(info);
     
     return OMPI_SUCCESS;
 }

@@ -60,6 +60,7 @@ const char *opal_shmem_sysv_component_version_string =
     "OPAL sysv shmem MCA component version " OPAL_VERSION;
 
 /* local functions */
+static int sysv_register (void);
 static int sysv_open(void);
 static int sysv_query(mca_base_module_t **module, int *priority);
 static int sysv_runtime_query(mca_base_module_t **module,
@@ -89,7 +90,8 @@ opal_shmem_sysv_component_t mca_shmem_sysv_component = {
             /* component close */
             NULL,
             /* component query */
-            sysv_query
+            sysv_query,
+            sysv_register
         },
         /* MCA v2.0.0 component meta data */
         {
@@ -101,21 +103,30 @@ opal_shmem_sysv_component_t mca_shmem_sysv_component = {
     /* ////////////////////////////////////////////////////////////////////// */
     /* sysv component-specific information */
     /* see: shmem_sysv.h for more information */
+};
+
+/* ////////////////////////////////////////////////////////////////////////// */
+static int
+sysv_register(void)
+{
     /* ////////////////////////////////////////////////////////////////////// */
     /* (default) priority - set lower than mmap's priority */
-    30
-};
+    mca_shmem_sysv_component.priority = 30;
+    (void) mca_base_component_var_register(&mca_shmem_sysv_component.super.base_version,
+                                           "priority", "Priority for the shmem sysv "
+                                           "component (default: 30)", MCA_BASE_VAR_TYPE_INT,
+                                           NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
+                                           OPAL_INFO_LVL_3,
+                                           MCA_BASE_VAR_SCOPE_ALL_EQ,
+                                           &mca_shmem_sysv_component.priority);
+
+    return OPAL_SUCCESS;
+}
 
 /* ////////////////////////////////////////////////////////////////////////// */
 static int
 sysv_open(void)
 {
-    mca_base_param_reg_int(
-        &mca_shmem_sysv_component.super.base_version,
-        "priority", "Priority of the sysv shmem component", false, false,
-        mca_shmem_sysv_component.priority, &mca_shmem_sysv_component.priority
-    );
-
     return OPAL_SUCCESS;
 }
 

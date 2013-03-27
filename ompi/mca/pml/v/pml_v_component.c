@@ -11,7 +11,6 @@
  
 #include "ompi_config.h"
 
-#include "opal/mca/base/mca_base_param.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_component_repository.h"
 #include "ompi/constants.h"
@@ -21,6 +20,7 @@
 #include "pml_v_output.h"
 #include "pml_v.h"
 
+static int mca_pml_v_component_register(void);
 static int mca_pml_v_component_open(void);
 static int mca_pml_v_component_close(void);
 static int mca_pml_v_component_parasite_close(void);
@@ -30,9 +30,6 @@ static int mca_pml_v_component_finalize(void);
 static int mca_pml_v_component_parasite_finalize(void);
 
 static int mca_pml_v_enable(bool enable);
-
-static inline int mca_pml_v_param_register_int( const char* param_name, int default_value);
-static inline char *mca_pml_v_param_register_string( const char* param_name, char *default_value);
 
 mca_pml_base_component_2_0_0_t mca_pml_v_component = 
 {
@@ -45,7 +42,9 @@ mca_pml_base_component_2_0_0_t mca_pml_v_component =
     OMPI_MINOR_VERSION,  /* MCA component minor version */
     OMPI_RELEASE_VERSION,  /* MCA component release version */
     mca_pml_v_component_open,
-    mca_pml_v_component_close
+    mca_pml_v_component_close,
+    NULL,
+    mca_pml_v_component_register
   },
   {
       MCA_BASE_METADATA_PARAM_NONE /* Component is not checkpointable */
@@ -58,37 +57,54 @@ mca_pml_base_component_2_0_0_t mca_pml_v_component =
 static bool pml_v_enable_progress_treads = OMPI_ENABLE_PROGRESS_THREADS;
 static bool pml_v_enable_mpi_thread_multiple = OMPI_ENABLE_THREAD_MULTIPLE;
 
+static char *ompi_pml_vprotocol_include_list;
+static char *ompi_pml_v_output;
+static int ompi_pml_v_verbose;
+
 /*******************************************************************************
  * MCA level functions - parasite setup
  */
+static int mca_pml_v_component_register(void)
+{
+    int var_id;
+
+    ompi_pml_v_output = "stderr";
+    (void) mca_base_component_var_register(&mca_pml_v_component.pmlm_version,
+                                           "output", NULL, MCA_BASE_VAR_TYPE_STRING,
+                                           NULL, 0, 0, OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &ompi_pml_v_output);
+
+    ompi_pml_v_verbose = 0;
+    (void) mca_base_component_var_register(&mca_pml_v_component.pmlm_version,
+                                           "verbose", "Verbosity of the pml v component",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &ompi_pml_v_verbose);
+
+    ompi_pml_vprotocol_include_list = "";
+    /* This parameter needs to go away if pml/v is unloaded so register it with a pml/v name */
+    var_id = mca_base_component_var_register(&mca_pml_v_component.pmlm_version,
+                                             "vprotocol", "Specify a specific vprotocol to use", 
+                                             MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
+                                             OPAL_INFO_LVL_9,
+                                             MCA_BASE_VAR_SCOPE_READONLY,
+                                             &ompi_pml_vprotocol_include_list);
+    (void) mca_base_var_register_synonym(var_id, "ompi", "vprotocol", NULL, NULL, 0);
+
+    return OMPI_SUCCESS;
+}
+
 static int mca_pml_v_component_open(void)
 {
-    char *output;
-    int verbose;
-    int priority;
-    char *vprotocol_include_list;
     int rc;
-    
-    priority = mca_pml_v_param_register_int("priority", -1);
-    output = mca_pml_v_param_register_string("output", "stderr");
-    verbose = mca_pml_v_param_register_int("verbose", 0);
 
-    mca_base_param_reg_string_name("vprotocol", NULL, 
-                                   "Specify a specific vprotocol to use", 
-                                   false, false, "", &vprotocol_include_list);
-   
-    pml_v_output_open(output, verbose);
-    free(output);
-
-    if(-1 != priority)
-        V_OUTPUT_ERR("pml_v: Overriding priority setting (%d) with -1. The PML V should NEVER be the selected component; even when enabling fault tolerance.", priority);
+    pml_v_output_open(ompi_pml_v_output, ompi_pml_v_verbose);
             
     V_OUTPUT_VERBOSE(500, "loaded");
 
-    rc = mca_vprotocol_base_open(vprotocol_include_list);
-    if (NULL != vprotocol_include_list) {
-        free (vprotocol_include_list);
-    }
+    rc = mca_vprotocol_base_open(ompi_pml_vprotocol_include_list);
 
     return rc;
 }
@@ -237,30 +253,4 @@ static int mca_pml_v_enable(bool enable)
     /* /!\ This is incorrect if another component also changed the requests */
     ompi_request_functions = mca_pml_v.host_request_fns;
     return OMPI_SUCCESS;
-}
-
-
-/*******************************************************************************
- * utilities
- */
-static inline int mca_pml_v_param_register_int( const char* param_name,
-                                                  int default_value )
-{
-    int param_value = default_value;
-
-    (void) mca_base_param_reg_int (&mca_pml_v_component.pmlm_version, param_name,
-                                   NULL, false, false, default_value, &param_value);
-
-    return param_value;
-}
-
-static inline char *mca_pml_v_param_register_string( const char* param_name,
-                                                  char *default_value )
-{
-    char *param_value = default_value;
-
-    (void) mca_base_param_reg_string (&mca_pml_v_component.pmlm_version, param_name,
-                                      NULL, false, false, default_value, &param_value);
-
-    return param_value;
 }

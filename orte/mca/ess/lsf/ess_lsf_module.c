@@ -37,7 +37,6 @@
 #include "orte/util/name_fns.h"
 #include "orte/util/proc_info.h"
 #include "orte/runtime/orte_globals.h"
-#include "opal/mca/base/mca_base_param.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/util/nidmap.h"
 #include "orte/util/regex.h"
@@ -177,33 +176,26 @@ static int lsf_set_name(void)
     int lsf_nodeid;
     orte_jobid_t jobid;
     orte_vpid_t vpid;
-    char* tmp;
       
-    mca_base_param_reg_string_name("orte", "ess_jobid", "Process jobid",
-                                   true, false, NULL, &tmp);
-    if (NULL == tmp) {
+    if (NULL ==orte_ess_base_jobid) {
         ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
         return ORTE_ERR_NOT_FOUND;
     }
-    if (ORTE_SUCCESS != (rc = orte_util_convert_string_to_jobid(&jobid, tmp))) {
+    if (ORTE_SUCCESS != (rc = orte_util_convert_string_to_jobid(&jobid, orte_ess_base_jobid))) {
         ORTE_ERROR_LOG(rc);
         return(rc);
     }
-    free(tmp);
     ORTE_PROC_MY_NAME->jobid = jobid;
 
     /* get the vpid from the nodeid */
-    mca_base_param_reg_string_name("orte", "ess_vpid", "Process vpid",
-                                   true, false, NULL, &tmp);
-    if (NULL == tmp) {
+    if (NULL == orte_ess_base_vpid) {
         ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
         return ORTE_ERR_NOT_FOUND;
     }
-    if (ORTE_SUCCESS != (rc = orte_util_convert_string_to_vpid(&vpid, tmp))) {
+    if (ORTE_SUCCESS != (rc = orte_util_convert_string_to_vpid(&vpid, orte_ess_base_vpid))) {
         ORTE_ERROR_LOG(rc);
         return(rc);
     }
-    free(tmp);
     lsf_nodeid = atoi(getenv("LSF_PM_TASKID"));
     opal_output_verbose(1, orte_ess_base_output,
                         "ess:lsf found LSF_PM_TASKID set to %d",

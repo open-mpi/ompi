@@ -23,7 +23,6 @@
 #include "ompi/datatype/ompi_datatype.h"
 #include "ompi/mca/allocator/base/base.h"
 #include "ompi/mca/allocator/allocator.h"
-#include "opal/mca/base/mca_base_param.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/pml/base/pml_base_request.h"
 #include "ompi/mca/pml/base/pml_base_sendreq.h"
@@ -48,7 +47,8 @@ static size_t           mca_pml_bsend_pagesz;     /* mmap page size */
 static int              mca_pml_bsend_pagebits;   /* number of bits in pagesz */
 static int32_t          mca_pml_bsend_init = 0; 
 
-
+/* defined in pml_base_open.c */
+extern char *ompi_pml_base_bsend_allocator_name;
 
 /*
  * Routine to return pages to sub-allocator as needed 
@@ -72,13 +72,11 @@ static void* mca_pml_bsend_alloc_segment(
     return addr;
 }
 
-
 /*
  * One time initialization at startup
  */
 int mca_pml_base_bsend_init(bool thread_safe)
 {
-    char *name;
     size_t tmp;
 
     if(OPAL_THREAD_ADD32(&mca_pml_bsend_init, 1) > 1)
@@ -89,14 +87,9 @@ int mca_pml_base_bsend_init(bool thread_safe)
     OBJ_CONSTRUCT(&mca_pml_bsend_condition, opal_condition_t);
 
     /* lookup name of the allocator to use for buffered sends */
-    (void) mca_base_param_reg_string_name ("pml", "base_bsend_allocator", NULL, false, false,
-                                           "basic", &name);
-
-    if(NULL == (mca_pml_bsend_allocator_component = mca_allocator_component_lookup(name))) {
-        free(name);
+    if(NULL == (mca_pml_bsend_allocator_component = mca_allocator_component_lookup(ompi_pml_base_bsend_allocator_name))) {
         return OMPI_ERR_BUFFER;
     }
-    free(name);
 
     /* determine page size */
     tmp = mca_pml_bsend_pagesz = sysconf(_SC_PAGESIZE);

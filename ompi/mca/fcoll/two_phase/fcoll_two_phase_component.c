@@ -67,8 +67,10 @@ mca_fcoll_base_component_2_0_0_t mca_fcoll_two_phase_component = {
      OMPI_MAJOR_VERSION,
      OMPI_MINOR_VERSION,
      OMPI_RELEASE_VERSION,
-     two_phase_register,
-     NULL
+     NULL,
+     NULL,
+     NULL,
+     two_phase_register
     },
     {
         /* The component is checkpoint ready */
@@ -84,49 +86,31 @@ mca_fcoll_base_component_2_0_0_t mca_fcoll_two_phase_component = {
 static int
 two_phase_register(void)
 {
-    int param;
-
-    param = mca_base_param_find ("fcoll", NULL, "two_phase_priority");
-    if (param >= 0)
-    {
-        mca_base_param_lookup_int (param, &mca_fcoll_two_phase_priority);
-    }
-    param = mca_base_param_find ("fcoll", NULL, "two_phase_num_io_procs");
-    if (param >= 0)
-    {
-        mca_base_param_lookup_int (param, &mca_fcoll_two_phase_num_io_procs);
-    }
-    param = mca_base_param_find ("fcoll", NULL, "two_phase_constant_cbs");
-    if (param >= 0)
-    {
-        mca_base_param_lookup_int (param, &mca_fcoll_two_phase_constant_cbs);
-    }
-    param = mca_base_param_find ("fcoll", NULL, "two_phase_cycle_buffer_size");
-    if (param >= 0)
-    {
-        mca_base_param_lookup_int (param, &mca_fcoll_two_phase_cycle_buffer_size);
-    }
-
-    mca_base_param_reg_int (&mca_fcoll_two_phase_component.fcollm_version,
-                            "priority",
-                            "Priority of the two_phase fcoll component",
-                            false, false, mca_fcoll_two_phase_priority,
-                            &mca_fcoll_two_phase_priority);
-    mca_base_param_reg_int (&mca_fcoll_two_phase_component.fcollm_version,
-                            "num_io_procs",
-                            "Number of writers in the two_phase fcoll component",
-                            false, false, mca_fcoll_two_phase_num_io_procs,
-                            &mca_fcoll_two_phase_num_io_procs);
-    mca_base_param_reg_int (&mca_fcoll_two_phase_component.fcollm_version,
-                            "constant_cbs",
-                            "wether we are using constant or scaling cycle buffer size in the two_phase fcoll component",
-                            false, false, mca_fcoll_two_phase_constant_cbs,
-                            &mca_fcoll_two_phase_constant_cbs);
-    mca_base_param_reg_int (&mca_fcoll_two_phase_component.fcollm_version,
-                            "cycle_buffer_size",
-                            "Cycle Buffer Size of the two_phase fcoll component",
-                            false, false, mca_fcoll_two_phase_cycle_buffer_size,
-                            &mca_fcoll_two_phase_cycle_buffer_size);
+    mca_fcoll_two_phase_priority = 10;
+    mca_base_component_var_register(&mca_fcoll_two_phase_component.fcollm_version,
+                                    "priority", "Priority of the two_phase fcoll component",
+                                    MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                    OPAL_INFO_LVL_9,
+                                    MCA_BASE_VAR_SCOPE_READONLY, &mca_fcoll_two_phase_priority);
+    mca_fcoll_two_phase_num_io_procs = -1;
+    mca_base_component_var_register(&mca_fcoll_two_phase_component.fcollm_version,
+                                    "num_io_procs", "Number of writers in the two_phase fcoll component",
+                                    MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                    OPAL_INFO_LVL_9,
+                                    MCA_BASE_VAR_SCOPE_READONLY, &mca_fcoll_two_phase_num_io_procs);
+    mca_fcoll_two_phase_constant_cbs = 0;
+    mca_base_component_var_register(&mca_fcoll_two_phase_component.fcollm_version,
+                                    "constant_cbs",
+                                    "wether we are using constant or scaling cycle buffer size in the two_phase fcoll component",
+                                    MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                    OPAL_INFO_LVL_9,
+                                    MCA_BASE_VAR_SCOPE_READONLY, &mca_fcoll_two_phase_constant_cbs);
+    mca_fcoll_two_phase_cycle_buffer_size = OMPIO_PREALLOC_MAX_BUF_SIZE;
+    mca_base_component_var_register(&mca_fcoll_two_phase_component.fcollm_version,
+                                    "cycle_buffer_size", "Cycle Buffer Size of the two_phase fcoll component",
+                                    MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                    OPAL_INFO_LVL_9,
+                                    MCA_BASE_VAR_SCOPE_READONLY, &mca_fcoll_two_phase_cycle_buffer_size);
 
     return OMPI_SUCCESS;
 }

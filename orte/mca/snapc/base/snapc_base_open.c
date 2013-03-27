@@ -1,3 +1,5 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
+
 /*
  * Copyright (c) 2004-2010 The Trustees of Indiana University.
  *                         All rights reserved.
@@ -31,7 +33,6 @@
 
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
-#include "opal/mca/base/mca_base_param.h"
 #include "opal/util/opal_environ.h"
 #include "opal/util/output.h"
 
@@ -63,32 +64,36 @@ orte_snapc_coord_type_t orte_snapc_coord_type = ORTE_SNAPC_UNASSIGN_TYPE;
 bool orte_snapc_base_store_only_one_seq = false;
 bool   orte_snapc_base_has_recovered = false;
 
+static int orte_snapc_base_register(int flags)
+{
+    /*
+     * Reuse sequence numbers
+     * This will create a directory and always use seq 0 for all checkpoints
+     * This *should* also enforce a 2-phase commit protocol
+     */
+    orte_snapc_base_store_only_one_seq = false;
+    (void) mca_base_var_register("orte", "snapc", "base", "only_one_seq",
+                                 "Only store the most recent checkpoint sequence. [Default = disabled]",
+                                 MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                 OPAL_INFO_LVL_9,
+                                 MCA_BASE_VAR_SCOPE_READONLY,
+                                 &orte_snapc_base_store_only_one_seq);
+
+    return ORTE_SUCCESS;
+}
+
 /**
  * Function for finding and opening either all MCA components,
  * or the one that was specifically requested via a MCA parameter.
  */
 int orte_snapc_base_open(void)
 {
-    int value = 0;
-    char * str_value = NULL;
+    (void) orte_snapc_base_register(0);
 
     OPAL_OUTPUT_VERBOSE((10, orte_snapc_base_output,
                          "snapc:base: open()"));
 
     orte_snapc_base_output = opal_output_open(NULL);
-
-    /*
-     * Reuse sequence numbers
-     * This will create a directory and always use seq 0 for all checkpoints
-     * This *should* also enforce a 2-phase commit protocol
-     */
-    mca_base_param_reg_int_name("snapc_base",
-                                "only_one_seq",
-                                "Only store the most recent checkpoint sequence. [Default = disabled]",
-                                false, false,
-                                0,
-                                &value);
-    orte_snapc_base_store_only_one_seq = OPAL_INT_TO_BOOL(value);
 
     OPAL_OUTPUT_VERBOSE((20, orte_snapc_base_output,
                          "snapc:base: open: base_only_one_seq    = %d",
@@ -97,22 +102,6 @@ int orte_snapc_base_open(void)
 
     /* Init the sequence (interval) number */
     orte_snapc_base_snapshot_seq_number = 0;
-
-    /* 
-     * Which SnapC component to open
-     *  - NULL or "" = auto-select
-     *  - "none" = Empty component
-     *  - ow. select that specific component
-     * Note: Set the default to NULL here so ompi_info will work correctly,
-     *       The 'real' default is set in base_select.c
-     */
-    mca_base_param_reg_string_name("snapc", NULL,
-                                   "Which SNAPC component to use (empty = auto-select)",
-                                   false, false,
-                                   NULL, &str_value);
-    if( NULL != str_value ) {
-        free(str_value);
-    }
 
     /* Open up all available components */
     if (OPAL_SUCCESS !=

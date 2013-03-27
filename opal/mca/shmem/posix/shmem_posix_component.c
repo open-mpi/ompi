@@ -56,6 +56,7 @@ const char *opal_shmem_posix_component_version_string =
     "OPAL posix shmem MCA component version " OPAL_VERSION;
 
 /* local functions */
+static int posix_register (void);
 static int posix_open(void);
 static int posix_query(mca_base_module_t **module, int *priority);
 static int posix_runtime_query(mca_base_module_t **module,
@@ -88,7 +89,8 @@ opal_shmem_posix_component_t mca_shmem_posix_component = {
             /* component close */
             NULL,
             /* component query */
-            posix_query
+            posix_query,
+            posix_register
         },
         /* MCA v2.0.0 component meta data */
         {
@@ -100,21 +102,32 @@ opal_shmem_posix_component_t mca_shmem_posix_component = {
     /* ////////////////////////////////////////////////////////////////////// */
     /* posix component-specific information */
     /* see: shmem_posix.h for more information */
-    /* ////////////////////////////////////////////////////////////////////// */
-    /* (default) priority - set lower than mmap's priority */
-    40
 };
+
 
 /* ////////////////////////////////////////////////////////////////////////// */
 static int
+posix_register(void)
+{
+    /* ////////////////////////////////////////////////////////////////////// */
+    /* (default) priority - set lower than mmap's priority */
+    mca_shmem_posix_component.priority = 40;
+    (void) mca_base_component_var_register(&mca_shmem_posix_component.super.base_version,
+                                           "priority", "Priority for the shmem posix "
+                                           "component (default: 40)", MCA_BASE_VAR_TYPE_INT,
+                                           NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
+                                           OPAL_INFO_LVL_3,
+                                           MCA_BASE_VAR_SCOPE_ALL_EQ,
+                                           &mca_shmem_posix_component.priority);
+
+    return OPAL_SUCCESS;
+}
+
+/* ////////////////////////////////////////////////////////////////////////// */
+
+static int
 posix_open(void)
 {
-    mca_base_param_reg_int(
-        &mca_shmem_posix_component.super.base_version,
-        "priority", "Priority of the posix shmem component", false, false,
-        mca_shmem_posix_component.priority, &mca_shmem_posix_component.priority
-    );
-
     return OPAL_SUCCESS;
 }
 

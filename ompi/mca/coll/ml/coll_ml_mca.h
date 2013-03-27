@@ -15,11 +15,6 @@
 #include<ctype.h>
 #include "ompi_config.h"
 
-int reg_int(const char* param_name,
-        const char* deprecated_param_name,
-        const char* param_desc,
-        int default_value, int *out_value, int flags);
-
 int mca_coll_ml_register_params(void);
 
 #endif

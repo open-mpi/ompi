@@ -65,6 +65,10 @@ ORTE_DECLSPEC extern int orte_ess_base_std_buffering;
 
 ORTE_DECLSPEC extern opal_list_t orte_ess_base_components_available;
 
+ORTE_DECLSPEC extern int orte_ess_base_num_procs;
+ORTE_DECLSPEC extern char *orte_ess_base_jobid;
+ORTE_DECLSPEC extern char *orte_ess_base_vpid;
+
 /*
  * Internal helper functions used by components
  */

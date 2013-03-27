@@ -28,7 +28,6 @@
 #include <sys/time.h>
 #endif
 
-#include "opal/mca/base/mca_base_param.h"
 #include "opal/mca/db/db.h"
 #include "opal/mca/hwloc/hwloc.h"
 #include "opal/util/argv.h"
@@ -196,6 +195,9 @@ opal_thread_t orte_progress_thread;
 /* global nidmap/pidmap for daemons to give to apps */
 opal_byte_object_t orte_nidmap;
 opal_byte_object_t orte_pidmap;
+
+/* user debugger */
+char *orte_base_user_debugger = NULL;
 
 char *orte_selected_oob_component = NULL;
 

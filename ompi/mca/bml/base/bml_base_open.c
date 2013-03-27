@@ -32,10 +32,50 @@ int mca_bml_base_already_opened = 0;
 opal_list_t mca_bml_base_components_available = {{0}};
 
 #if OPAL_ENABLE_DEBUG_RELIABILITY
-double mca_bml_base_error_rate_floor;
-double mca_bml_base_error_rate_ceiling;
-int    mca_bml_base_error_count;
+int mca_bml_base_error_rate_floor;
+int mca_bml_base_error_rate_ceiling;
+int mca_bml_base_error_count;
+static bool mca_bml_base_srand;
 #endif
+
+int mca_bml_base_register(int flags)
+{
+#if OPAL_ENABLE_DEBUG_RELIABILITY
+    do {
+        int var_id;
+
+        mca_bml_base_error_rate_floor = 0;
+        var_id = mca_base_var_register("ompi", "bml", "base", "error_rate_floor", NULL,
+                                       MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                       OPAL_INFO_LVL_9,
+                                       MCA_BASE_VAR_SCOPE_READONLY,
+                                       &mca_bml_base_error_rate_floor);
+        (void) mca_base_var_register_synonym(var_id, "ompi", "bml", NULL, "error_rate_floor",
+                                             MCA_BASE_VAR_SYN_FLAG_DEPRECATED);
+
+        mca_bml_base_error_rate_ceiling = 0;
+        var_id = mca_base_var_register("ompi", "bml", "base", "error_rate_ceiling", NULL,
+                                       MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                       OPAL_INFO_LVL_9,
+                                       MCA_BASE_VAR_SCOPE_READONLY,
+                                       &mca_bml_base_error_rate_ceiling);
+        (void) mca_base_var_register_synonym(var_id, "ompi", "bml", NULL, "error_rate_ceiling",
+                                             MCA_BASE_VAR_SYN_FLAG_DEPRECATED);
+
+
+        mca_bml_base_srand = true;
+        var_id = mca_base_var_register("ompi", "bml", "base", "srand", NULL,
+                                       MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                       OPAL_INFO_LVL_9,
+                                       MCA_BASE_VAR_SCOPE_READONLY,
+                                       &mca_bml_base_srand);
+        (void) mca_base_var_register_synonym(var_id, "ompi", "bml", NULL, "srand",
+                                             MCA_BASE_VAR_SYN_FLAG_DEPRECATED);
+    } while (0);
+#endif
+
+    return OMPI_SUCCESS;
+}
 
 int mca_bml_base_open(void) 
 {
@@ -43,6 +83,8 @@ int mca_bml_base_open(void)
     if (++mca_bml_base_already_opened > 1) {
         return OMPI_SUCCESS;
     }
+
+    (void) mca_bml_base_register(0);
 
     if(OMPI_SUCCESS !=
        mca_base_components_open("bml", 0, mca_bml_base_static_components, 
@@ -52,34 +94,20 @@ int mca_bml_base_open(void)
     }
 
 #if OPAL_ENABLE_DEBUG_RELIABILITY
-    do {
-        int param, value;
+    /* seed random number generator */
+    if(mca_bml_base_srand) {
+        struct timeval tv;
+        gettimeofday(&tv, NULL);
+        srand(getpid() * tv.tv_usec);
+    }
 
-        (void) mca_base_param_reg_int_name ("bml", "error_rate_floor", NULL, false, false,
-                                            0, &value);
-        mca_bml_base_error_rate_floor = (double) value;
-
-        (void) mca_base_param_reg_int_name ("bml", "error_rate_ceiling", NULL, false, false,
-                                            0, &value);
-        mca_bml_base_error_rate_ceiling = (double) value;
-
-        (void) mca_base_param_reg_int_name ("bml", "srand", NULL, false, false,
-                                            1, &value);
-
-        /* seed random number generator */
-        if(value) {
-            struct timeval tv;
-            gettimeofday(&tv, NULL);
-            srand(getpid() * tv.tv_usec);
-        }
-
-        /* initialize count */
-        if(mca_bml_base_error_rate_ceiling > 0 
-           && mca_bml_base_error_rate_floor <= mca_bml_base_error_rate_ceiling) {
-            mca_bml_base_error_count = (int) ((mca_bml_base_error_rate_ceiling * rand())/(RAND_MAX+1.0));
-        }
-    } while (0);
+    /* initialize count */
+    if(mca_bml_base_error_rate_ceiling > 0 
+       && mca_bml_base_error_rate_floor <= mca_bml_base_error_rate_ceiling) {
+        mca_bml_base_error_count = (int) (((double) mca_bml_base_error_rate_ceiling * rand())/(RAND_MAX+1.0));
+    }
 #endif
+
     return mca_btl_base_open(); 
 }
 

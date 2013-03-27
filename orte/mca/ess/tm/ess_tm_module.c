@@ -32,7 +32,6 @@
 
 #include "opal/util/opal_environ.h"
 #include "opal/util/output.h"
-#include "opal/mca/base/mca_base_param.h"
 #include "opal/util/argv.h"
 #include "opal/class/opal_pointer_array.h"
 #include "opal/dss/dss.h"
@@ -177,35 +176,26 @@ static int tm_set_name(void)
     int rc;
     orte_jobid_t jobid;
     orte_vpid_t vpid;
-    char* tmp;
-    
     
     OPAL_OUTPUT_VERBOSE((1, orte_ess_base_output,
                          "ess:tm setting name"));
-    
-    mca_base_param_reg_string_name("orte", "ess_jobid", "Process jobid",
-                                   true, false, NULL, &tmp);
-    if (NULL == tmp) {
+    if (NULL == orte_ess_base_jobid) {
         ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
         return ORTE_ERR_NOT_FOUND;
     }
-    if (ORTE_SUCCESS != (rc = orte_util_convert_string_to_jobid(&jobid, tmp))) {
+    if (ORTE_SUCCESS != (rc = orte_util_convert_string_to_jobid(&jobid, orte_ess_base_jobid))) {
         ORTE_ERROR_LOG(rc);
         return(rc);
     }
-    free(tmp);
     
-    mca_base_param_reg_string_name("orte", "ess_vpid", "Process vpid",
-                                   true, false, NULL, &tmp);
-    if (NULL == tmp) {
+    if (NULL == orte_ess_base_vpid) {
         ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
         return ORTE_ERR_NOT_FOUND;
     }
-    if (ORTE_SUCCESS != (rc = orte_util_convert_string_to_vpid(&vpid, tmp))) {
+    if (ORTE_SUCCESS != (rc = orte_util_convert_string_to_vpid(&vpid, orte_ess_base_vpid))) {
         ORTE_ERROR_LOG(rc);
         return(rc);
     }
-    free(tmp);
 
     ORTE_PROC_MY_NAME->jobid = jobid;
     ORTE_PROC_MY_NAME->vpid = vpid;

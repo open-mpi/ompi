@@ -26,7 +26,6 @@
 #endif  /* HAVE_STRING_H */
 #include <stdio.h>
 
-#include "opal/mca/base/mca_base_param.h"
 #include "opal/util/argv.h"
 #include "opal/class/opal_pointer_array.h"
 

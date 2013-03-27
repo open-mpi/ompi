@@ -40,7 +40,7 @@
 #include "ompi/mca/osc/base/osc_base_obj_convert.h"
 #include "ompi/mca/pml/pml.h"
 
-static int component_open(void);
+static int component_register(void);
 static int component_fragment_cb(ompi_request_t *request);
 
 ompi_osc_pt2pt_component_t mca_osc_pt2pt_component = {
@@ -51,8 +51,10 @@ ompi_osc_pt2pt_component_t mca_osc_pt2pt_component = {
             OMPI_MAJOR_VERSION,  /* MCA component major version */
             OMPI_MINOR_VERSION,  /* MCA component minor version */
             OMPI_RELEASE_VERSION,  /* MCA component release version */
-            component_open,
-            NULL
+            NULL,
+            NULL,
+            NULL,
+            component_register
         },
         { /* mca_base_component_data */
             MCA_BASE_METADATA_PARAM_CHECKPOINT
@@ -88,16 +90,16 @@ ompi_osc_pt2pt_module_t ompi_osc_pt2pt_module_template = {
 
 
 static int
-component_open(void)
+component_register(void)
 {
-    int tmp;
-
-    mca_base_param_reg_int(&mca_osc_pt2pt_component.super.osc_version,
-                           "eager_limit",
-                           "Max size of eagerly sent data",
-                           false, false, 16 * 1024, 
-                           &tmp);
-    mca_osc_pt2pt_component.p2p_c_eager_size = tmp;
+    mca_osc_pt2pt_component.p2p_c_eager_size = 16 * 1024;
+    (void) mca_base_component_var_register(&mca_osc_pt2pt_component.super.osc_version,
+                                           "eager_limit",
+                                           "Max size of eagerly sent data",
+                                           MCA_BASE_VAR_TYPE_UNSIGNED_LONG_LONG,
+                                           NULL, 0, 0, OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &mca_osc_pt2pt_component.p2p_c_eager_size);
 
     return OMPI_SUCCESS;
 }

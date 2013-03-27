@@ -252,14 +252,13 @@ int mca_mpool_grdma_register(mca_mpool_base_module_t *mpool, void *addr,
         *reg = NULL; /* in case previous find found something */
 
         /* If no suitable registration is in cache and leave_pinned isn't
-         * set and size of registration cache is unlimited don't use the cache.
+         * set don't use the cache.
          * This is optimisation in case limit is not set. If limit is set we
          * have to put registration into the cache to determine when we hit
          * memory registration limit.
          * NONE: cache is still used for persistent registrations so previous
          * find can find something */
-        if(!mca_mpool_grdma_component.leave_pinned &&
-           mca_mpool_grdma_component.rcache_size_limit == 0) {
+        if(!mca_mpool_grdma_component.leave_pinned) {
             bypass_cache = true;
         }
     }

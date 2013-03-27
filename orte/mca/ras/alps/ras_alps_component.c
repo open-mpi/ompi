@@ -10,8 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008      UT-Battelle, LLC
- * Copyright (c) 2011      Los Alamos National Security, LLC.
- *                         All rights reserved.
+ * Copyright (c) 2011-2013 Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -23,7 +23,6 @@
 
 #include "opal/mca/base/base.h"
 #include "opal/util/output.h"
-#include "opal/mca/base/mca_base_param.h"
 #include "orte/constants.h"
 #include "orte/util/proc_info.h"
 #include "ras_alps.h"
@@ -32,9 +31,10 @@
 
 /* Local variables */
 static int param_priority;
-static int param_read_attempts;
+static int ras_alps_read_attempts;
 
 /* Local functions */
+static int ras_alps_register(void);
 static int ras_alps_open(void);
 static int orte_ras_alps_component_query(mca_base_module_t **module,
                                          int *priority);
@@ -56,7 +56,8 @@ orte_ras_base_component_t mca_ras_alps_component = {
         /* Component open and close functions */
         ras_alps_open,
         NULL,
-        orte_ras_alps_component_query
+        orte_ras_alps_component_query,
+        ras_alps_register
     },
     {
         /* The component is checkpoint ready */
@@ -135,20 +136,30 @@ get_res_id(void)
 }
 
 static int
+ras_alps_register(void)
+{
+    param_priority = 75;
+    (void) mca_base_component_var_register (&mca_ras_alps_component.base_version,
+                                            "priority", "Priority of the alps ras component",
+                                            MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                            OPAL_INFO_LVL_9,
+                                            MCA_BASE_VAR_SCOPE_READONLY,
+                                            &param_priority);
+
+    ras_alps_read_attempts = 10;
+    (void) mca_base_component_var_register (&mca_ras_alps_component.base_version,
+                                            "appinfo_read_attempts",
+                                            "Maximum number of attempts to read ALPS "
+                                            "appinfo file", MCA_BASE_VAR_TYPE_INT,
+                                            NULL, 0, 0, OPAL_INFO_LVL_9,
+                                            MCA_BASE_VAR_SCOPE_READONLY, &ras_alps_read_attempts);
+
+    return ORTE_SUCCESS;
+}
+
+static int
 ras_alps_open(void)
 {
-    param_priority = mca_base_param_reg_int(
-                         &mca_ras_alps_component.base_version,
-                         "priority",
-                         "Priority of the alps ras component",
-                         false, false, 75, NULL);
-
-    param_read_attempts =
-        mca_base_param_reg_int(&mca_ras_alps_component.base_version,
-                               "appinfo_read_attempts",
-                               "Maximum number of attempts to read ALPS "
-                               "appinfo file", false, false, 10, NULL);
-
     return ORTE_SUCCESS;
 }
 
@@ -178,7 +189,7 @@ orte_ras_alps_component_query(mca_base_module_t **module,
         orte_ras_alps_res_id = strtoul(jid_str, NULL, 10);
     }
     if (0 != orte_ras_alps_res_id) {
-        mca_base_param_lookup_int(param_priority, priority);
+        *priority = param_priority;
         opal_output_verbose(2, orte_ras_base.ras_output,
                              "ras:alps: available for selection");
         *module = (mca_base_module_t *) &orte_ras_alps_module;
@@ -197,7 +208,7 @@ orte_ras_alps_component_query(mca_base_module_t **module,
 int
 orte_ras_alps_get_appinfo_attempts(int *attempts)
 {
-    mca_base_param_lookup_int(param_read_attempts, attempts);
+    *attempts = ras_alps_read_attempts;
     opal_output_verbose(2, orte_ras_base.ras_output,
                          "ras:alps:orte_ras_alps_get_appinfo_attempts: %d",
                          *attempts);

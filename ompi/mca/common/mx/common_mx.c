@@ -27,7 +27,6 @@
 #include <errno.h>
 #include "opal/memoryhooks/memory.h"
 #include "opal/util/output.h"
-#include "opal/mca/base/mca_base_param.h"
 #include "ompi/runtime/params.h"
 
 

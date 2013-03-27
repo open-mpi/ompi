@@ -19,7 +19,7 @@
  */
 
 #include "ompi_config.h"
-#include "opal/mca/base/mca_base_param.h"
+#include "opal/mca/base/base.h"
 #include "btl_udapl.h"
 #include "btl_udapl_mca.h"
 #include <string.h>
@@ -39,28 +39,28 @@
 static inline int mca_btl_udapl_reg_string(const char* param_name,
                                            const char* param_desc,
                                            const char* default_value,
-                                           char **out_value, int flags)
+                                           char **storage, int flags)
 {
-    char *value;
-    
-    mca_base_param_reg_string(&mca_btl_udapl_component.super.btl_version, 
-        param_name, param_desc, false, false, default_value, &value);
+    *storage = default_value;
+    (void) mca_base_component_var_register(&mca_btl_udapl_component.super.btl_version, param_name,
+                                           param_desc, MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY, storage);
 
-    if (NULL == value && !((flags & REGSTR_EMPTY_OK) == REGSTR_EMPTY_OK)) {
+    if (NULL == *storage && !((flags & REGSTR_EMPTY_OK) == REGSTR_EMPTY_OK)) {
         BTL_ERROR(("ERROR: MCA Parameter %s : Value (NULL) out of range : "
             "Default value (%s)\n \t Parameter Description : %s",
             param_name, default_value, param_desc));
         return OMPI_ERR_BAD_PARAM;
     }
 
-    if ((flags & REGSTR_EMPTY_NOT_OK) && 0 == strlen(value)) {
+    if ((flags & REGSTR_EMPTY_NOT_OK) && 0 == strlen(*storage)) {
         BTL_ERROR(("ERROR: MCA Parameter %s : Value (%s) out of range : "
             "Default value (%s)\n \t Parameter Description : %s",
-            param_name, value, default_value, param_desc));
+            param_name, *storage, default_value, param_desc));
         return OMPI_ERR_BAD_PARAM;
     }
 
-    *out_value = value;
     return OMPI_SUCCESS;
 }
 
@@ -79,27 +79,28 @@ static inline int mca_btl_udapl_reg_string(const char* param_name,
  */
 static inline int mca_btl_udapl_reg_int(const char* param_name,
                                         const char* param_desc,
-                                        int default_value, int *out_value,
+                                        int default_value, int *storage,
                                         int flags)
 {
-    int value;
+    *storage = default_value;
+    (void) mca_base_component_var_register(&mca_btl_udapl_component.super.btl_version, param_name,
+                                           param_desc, MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY, storage);
 
-    mca_base_param_reg_int(&mca_btl_udapl_component.super.btl_version, 
-        param_name, param_desc, false, false, default_value, &value);
-
-    if ((flags & REGINT_NEG_ONE_OK) && -1 == value) {
-        *out_value = value;
+    if ((flags & REGINT_NEG_ONE_OK) && -1 == *storage) {
         return OMPI_SUCCESS;
     }
-    if (((flags & REGINT_GE_ZERO) && value < 0) ||
-        ((flags & REGINT_GE_ONE) && value < 1) ||
-        ((flags & REGINT_NONZERO) && 0 == value)) {
+
+    if (((flags & REGINT_GE_ZERO) && *storage < 0) ||
+        ((flags & REGINT_GE_ONE) && *storage < 1) ||
+        ((flags & REGINT_NONZERO) && 0 == *storage)) {
         BTL_ERROR(("ERROR: MCA Parameter %s : Value (%d) out of range : "
             "Default value (%d)\n \t Parameter Description : %s\n",
-            param_name, value, default_value, param_desc));
+            param_name, *storage, default_value, param_desc));
         return OMPI_ERR_BAD_PARAM;
     }
-    *out_value = value;
+
     return OMPI_SUCCESS;
 }
 
@@ -111,7 +112,7 @@ static inline int mca_btl_udapl_reg_int(const char* param_name,
  */
 int mca_btl_udapl_register_mca_params(void) 
 {
-    int ival, rc, tmp_rc;
+    int rc, tmp_rc;
 
     rc = OMPI_SUCCESS;
 
@@ -144,9 +145,8 @@ int mca_btl_udapl_register_mca_params(void)
     CHECK_PARAM_REGISTER_RETURN_VALUE(mca_btl_udapl_reg_int("max_modules",
         "Maximum number of supported HCAs.",
         8,
-        &ival,
+        &mca_btl_udapl_component.udapl_max_btls,
         REGINT_GE_ONE), tmp_rc, rc);
-    mca_btl_udapl_component.udapl_max_btls = (uint32_t) ival;
 
     CHECK_PARAM_REGISTER_RETURN_VALUE(mca_btl_udapl_reg_int("num_recvs",
         "Total number of receive buffers to keep posted "
@@ -203,9 +203,8 @@ int mca_btl_udapl_register_mca_params(void)
     CHECK_PARAM_REGISTER_RETURN_VALUE(mca_btl_udapl_reg_int("timeout",
         "Connection timeout, in microseconds.",
         MCA_BTL_UDAPL_CONN_TIMEOUT_DEFAULT,
-        &ival,
+        &mca_btl_udapl_component.udapl_timeout,
         REGINT_GE_ONE), tmp_rc, rc);
-    mca_btl_udapl_component.udapl_timeout = (uint32_t) ival;        
 
     CHECK_PARAM_REGISTER_RETURN_VALUE(mca_btl_udapl_reg_int("conn_priv_data",
         "Use connect private data to establish connections "

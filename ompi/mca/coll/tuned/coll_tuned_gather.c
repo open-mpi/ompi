@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -9,6 +10,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2013      Los Alamos National Security, LLC. All Rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -29,6 +32,21 @@
 #include "coll_tuned_topo.h"
 #include "coll_tuned_util.h"
 
+/* gather algorithm variables */
+static int coll_tuned_gather_algorithm_count = 3;
+static int coll_tuned_gather_forced_algorithm = 0;
+static int coll_tuned_gather_segment_size = 0;
+static int coll_tuned_gather_tree_fanout;
+static int coll_tuned_gather_chain_fanout;
+
+/* valid values for coll_tuned_gather_forced_algorithm */
+static mca_base_var_enum_value_t gather_algorithms[] = {
+    {0, "ignore"},
+    {1, "basic_linear"},
+    {2, "binomial"},
+    {3, "linear_sync"},
+    {0, NULL}
+};
 
 /* Todo: gather_intra_generic, gather_intra_binary, gather_intra_chain,
  * gather_intra_pipeline, segmentation? */
@@ -418,54 +436,64 @@ ompi_coll_tuned_gather_intra_basic_linear(void *sbuf, int scount,
 int 
 ompi_coll_tuned_gather_intra_check_forced_init(coll_tuned_force_algorithm_mca_param_indices_t *mca_param_indices)
 {
-    int rc, max_alg = 3, requested_alg;
+    mca_base_var_enum_t *new_enum;
 
-    ompi_coll_tuned_forced_max_algorithms[GATHER] = max_alg;
+    ompi_coll_tuned_forced_max_algorithms[GATHER] = coll_tuned_gather_algorithm_count;
 
-    rc = mca_base_param_reg_int (&mca_coll_tuned_component.super.collm_version,
-                                 "gather_algorithm_count",
-                                 "Number of gather algorithms available",
-                                 false, true, max_alg, NULL);
+    (void) mca_base_component_var_register(&mca_coll_tuned_component.super.collm_version,
+                                           "gather_algorithm_count",
+                                           "Number of gather algorithms available",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0,
+                                           MCA_BASE_VAR_FLAG_DEFAULT_ONLY,
+                                           OPAL_INFO_LVL_5,
+                                           MCA_BASE_VAR_SCOPE_CONSTANT,
+                                           &coll_tuned_gather_algorithm_count);
 
-    mca_param_indices->algorithm_param_index
-        = mca_base_param_reg_int(&mca_coll_tuned_component.super.collm_version,
-                                 "gather_algorithm",
-                                 "Which gather algorithm is used. Can be locked down to choice of: 0 ignore, 1 basic linear, 2 binomial, 3 linear with synchronization.",
-                                 false, false, 0, NULL);
+    /* MPI_T: This variable should eventually be bound to a communicator */
+    coll_tuned_gather_forced_algorithm = 0;
+    (void) mca_base_var_enum_create("coll_tuned_gather_algorithms", gather_algorithms, &new_enum);
+    mca_param_indices->algorithm_param_index =
+        mca_base_component_var_register(&mca_coll_tuned_component.super.collm_version,
+                                        "gather_algorithm",
+                                        "Which gather algorithm is used. Can be locked down to choice of: 0 ignore, 1 basic linear, 2 binomial, 3 linear with synchronization.",
+                                        MCA_BASE_VAR_TYPE_INT, new_enum, 0, 0,
+                                        OPAL_INFO_LVL_5,
+                                        MCA_BASE_VAR_SCOPE_READONLY,
+                                        &coll_tuned_gather_forced_algorithm);
+    OBJ_RELEASE(new_enum);
     if (mca_param_indices->algorithm_param_index < 0) {
         return mca_param_indices->algorithm_param_index;
     }
-    mca_base_param_lookup_int(mca_param_indices->algorithm_param_index, 
-                              &(requested_alg));
-    if( 0 > requested_alg || requested_alg > max_alg ) {
-        if( 0 == ompi_comm_rank( MPI_COMM_WORLD ) ) {
-            opal_output( 0, "Gather algorithm #%d is not available (range [0..%d]). Switching back to default(0)\n",
-                         requested_alg, max_alg );
-        }
-        mca_base_param_set_int( mca_param_indices->algorithm_param_index, 0);
-    }
 
-    mca_param_indices->segsize_param_index
-        = mca_base_param_reg_int(&mca_coll_tuned_component.super.collm_version,
-                                 "gather_algorithm_segmentsize",
-                                 "Segment size in bytes used by default for gather algorithms. Only has meaning if algorithm is forced and supports segmenting. 0 bytes means no segmentation. Currently, available algorithms do not support segmentation.",
-                                 false, false, 0, NULL);
+    coll_tuned_gather_segment_size = 0;
+    mca_param_indices->segsize_param_index =
+        mca_base_component_var_register(&mca_coll_tuned_component.super.collm_version,
+                                        "gather_algorithm_segmentsize",
+                                        "Segment size in bytes used by default for gather algorithms. Only has meaning if algorithm is forced and supports segmenting. 0 bytes means no segmentation. Currently, available algorithms do not support segmentation.",
+                                        MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                        OPAL_INFO_LVL_5,
+                                        MCA_BASE_VAR_SCOPE_READONLY,
+                                        &coll_tuned_gather_segment_size);
 
-    mca_param_indices->tree_fanout_param_index
-        = mca_base_param_reg_int(&mca_coll_tuned_component.super.collm_version,
-                                 "gather_algorithm_tree_fanout",
-                                 "Fanout for n-tree used for gather algorithms. Only has meaning if algorithm is forced and supports n-tree topo based operation. Currently, available algorithms do not support n-tree topologies.",
-                                 false, false, 
-                                 ompi_coll_tuned_init_tree_fanout, /* get system wide default */
-                                 NULL);
+    coll_tuned_gather_tree_fanout = ompi_coll_tuned_init_tree_fanout; /* get system wide default */
+    mca_param_indices->tree_fanout_param_index =
+        mca_base_component_var_register(&mca_coll_tuned_component.super.collm_version,
+                                        "gather_algorithm_tree_fanout",
+                                        "Fanout for n-tree used for gather algorithms. Only has meaning if algorithm is forced and supports n-tree topo based operation. Currently, available algorithms do not support n-tree topologies.",
+                                        MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                        OPAL_INFO_LVL_5,
+                                        MCA_BASE_VAR_SCOPE_READONLY,
+                                        &coll_tuned_gather_tree_fanout);
 
-    mca_param_indices->chain_fanout_param_index
-        = mca_base_param_reg_int(&mca_coll_tuned_component.super.collm_version,
-                                 "gather_algorithm_chain_fanout",
-                                 "Fanout for chains used for gather algorithms. Only has meaning if algorithm is forced and supports chain topo based operation. Currently, available algorithms do not support chain topologies.",
-                                 false, false, 
-                                 ompi_coll_tuned_init_chain_fanout, /* get system wide default */
-                                 NULL);
+    coll_tuned_gather_chain_fanout = ompi_coll_tuned_init_chain_fanout; /* get system wide default */
+    mca_param_indices->chain_fanout_param_index = 
+      mca_base_component_var_register(&mca_coll_tuned_component.super.collm_version,
+                                      "gather_algorithm_chain_fanout",
+                                      "Fanout for chains used for gather algorithms. Only has meaning if algorithm is forced and supports chain topo based operation. Currently, available algorithms do not support chain topologies.",
+                                      MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                      OPAL_INFO_LVL_5,
+                                      MCA_BASE_VAR_SCOPE_READONLY,
+                                      &coll_tuned_gather_chain_fanout);
 
     return (MPI_SUCCESS);
 }

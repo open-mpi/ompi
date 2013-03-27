@@ -79,7 +79,8 @@ int mca_topo_base_comm_select (struct ompi_communicator_t *comm,
     opal_list_item_t *item; 
     opal_list_item_t *next_item; 
     mca_base_component_priority_list_item_t *selectable_item;
-    char *names, **name_array;
+    char **name_array;
+    const char **names_value, *names;
     int num_names;
     mca_base_component_priority_list_item_t *cpli;
     mca_topo_base_component_t *component; 
@@ -96,7 +97,7 @@ int mca_topo_base_comm_select (struct ompi_communicator_t *comm,
     /* Announce */
 
     /* ANJU:
-     * check for names array .... mca_base_param_ */
+     * check for names array .... mca_base_var_ */
   
     snprintf(name, sizeof(name), "%s (cid %d)", comm->c_name,
                comm->c_contextid);
@@ -160,8 +161,10 @@ int mca_topo_base_comm_select (struct ompi_communicator_t *comm,
      */ 
 
     /* Check if anything was requested by means on the name parameters */
-    names = NULL;
-    mca_base_param_lookup_string (mca_topo_base_param, &names);
+    names_value = NULL;
+    mca_base_var_get_value(mca_topo_base_param, &names_value, NULL, NULL);
+    names = names_value ? names_value[0] : NULL;
+
 
     if (NULL != names && 0 < strlen(names)) {
         name_array = opal_argv_split (names, ',');
@@ -191,7 +194,7 @@ int mca_topo_base_comm_select (struct ompi_communicator_t *comm,
                                 component->topom_version.mca_type_name,
                                 component->topom_version.mca_component_name);
 
-            /* check if this name is present in the mca_base_params */
+            /* check if this name is present in the mca_base_var */
             for (i=0; i < num_names; i++) {
                 if (0 == strcmp(name_array[i], component->topom_version.mca_component_name)) {
                     /* this is present, and should be added o the selectable list */

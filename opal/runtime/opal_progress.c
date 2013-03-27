@@ -27,12 +27,17 @@
 
 #include "opal/runtime/opal_progress.h"
 #include "opal/mca/event/event.h"
-#include "opal/mca/base/mca_base_param.h"
+#include "opal/mca/base/mca_base_var.h"
 #include "opal/constants.h"
 #include "opal/mca/timer/base/base.h"
 #include "opal/util/output.h"
+#include "opal/runtime/opal_params.h"
 
 #define OPAL_PROGRESS_USE_TIMERS (OPAL_TIMER_CYCLE_SUPPORTED || OPAL_TIMER_USEC_SUPPORTED)
+
+#if OPAL_ENABLE_DEBUG
+bool opal_progress_debug = false;
+#endif
 
 /* 
  * default parameters 
@@ -94,10 +99,6 @@ static int fake_cb(void) { return 0; }
 int
 opal_progress_init(void)
 {
-#if OPAL_ENABLE_DEBUG
-    int param, value;
-#endif
-
     /* reentrant issues */
 #if OPAL_ENABLE_MULTI_THREADS
     opal_atomic_init(&progress_lock, OPAL_ATOMIC_UNLOCKED);
@@ -107,10 +108,8 @@ opal_progress_init(void)
     opal_progress_set_event_poll_rate(10000);
 
 #if OPAL_ENABLE_DEBUG
-    param = mca_base_param_find("opal", NULL, "progress_debug");
-    mca_base_param_lookup_int(param, &value);
-    if (value) {
-        debug_output = opal_output_open(NULL);
+    if (opal_progress_debug) {
+       debug_output = opal_output_open(NULL);
     }
 #endif
 

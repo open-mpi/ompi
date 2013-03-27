@@ -25,7 +25,6 @@
 #include "opal/util/output.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
-#include "opal/mca/base/mca_base_param.h"
 #include "opal/mca/shmem/shmem.h"
 #include "opal/mca/shmem/base/base.h"
 
@@ -42,6 +41,12 @@
 OPAL_DECLSPEC int opal_shmem_base_output = -1;
 bool opal_shmem_base_components_opened_valid = false;
 opal_list_t opal_shmem_base_components_opened;
+char *opal_shmem_base_runtime_query_hint = NULL;
+
+/**
+ * locals
+ */
+static int opal_shmem_base_verbose = 0;
 
 /* ////////////////////////////////////////////////////////////////////////// */
 /**
@@ -50,30 +55,38 @@ opal_list_t opal_shmem_base_components_opened;
 int
 opal_shmem_base_register_params(void)
 {
-    int value;
+    int var_id;
 
-    mca_base_param_reg_int_name("shmem", "base_verbose",
-                                "Verbosity level of the shmem framework",
-                                false, false, 0, &value);
+    opal_shmem_base_verbose = 0;
+    (void) mca_base_var_register("opal", "shmem", "base", "verbose",
+                                 "Verbosity level of the shmem framework",
+                                 MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                 OPAL_INFO_LVL_9,
+                                 MCA_BASE_VAR_SCOPE_LOCAL, &opal_shmem_base_verbose);
 
     /* register an INTERNAL parameter used to provide a component selection
      * hint to the shmem framework.
+     * we are using a nonstandard name here because shmem_RUNTIME_QUERY_hint
+     * is for internal use only!
+     * see odls_base_default_fns.c for more details.
      */
-    mca_base_param_reg_string_name("shmem", "RUNTIME_QUERY_hint",
+    opal_shmem_base_runtime_query_hint = NULL;
+    var_id = mca_base_var_register("opal", "shmem", "base", "RUNTIME_QUERY_hint",
                                    "Internal OMPI parameter used to provide a "
                                    "component selection hint to the shmem "
                                    "framework.  The value of this parameter "
                                    "is the name of the component that is "
                                    "available, selectable, and meets our "
                                    "run-time behavior requirements.",
-                                   true, false, NULL, NULL);
-    if (0 != value) {
-        opal_shmem_base_output = opal_output_open(NULL);
-    }
-    else {
-        opal_shmem_base_output = -1;
-    }
-    
+                                   MCA_BASE_VAR_TYPE_STRING, NULL, 0,
+                                   MCA_BASE_VAR_FLAG_INTERNAL,
+                                   OPAL_INFO_LVL_9,
+                                   MCA_BASE_VAR_SCOPE_READONLY,
+                                   &opal_shmem_base_runtime_query_hint);
+    (void) mca_base_var_register_synonym(var_id, "opal", "shmem", NULL,
+                                         "RUNTIME_QUERY_hint",
+                                         MCA_BASE_VAR_SYN_FLAG_INTERNAL);
+
     return OPAL_SUCCESS;
 }
 
@@ -88,6 +101,13 @@ opal_shmem_base_open(void)
 {
     opal_shmem_base_components_opened_valid = false;
 
+    if (0 != opal_shmem_base_verbose) {
+        opal_shmem_base_output = opal_output_open(NULL);
+    }
+    else {
+        opal_shmem_base_output = -1;
+    }
+    
     /* open up all available components */
     if (OPAL_SUCCESS !=
         mca_base_components_open("shmem", opal_shmem_base_output,

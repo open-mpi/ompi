@@ -130,16 +130,13 @@ ompi_common_ofacm_base_component_t ompi_common_ofacm_oob = {
 /* Open - this functions sets up any oob specific commandline params */
 static void oob_component_register(void)
 {
-    mca_base_param_reg_int_name("common",
-            "ofacm_connect_oob_priority",
-            "The selection method priority for oob",
-            false, false, oob_priority, &oob_priority);
-
-    if (oob_priority > 100) {
-        oob_priority = 100;
-    } else if (oob_priority < -1) {
-        oob_priority = -1;
-    }
+    oob_priority = 50;
+    (void) mca_base_var_register("ompi", "common", "ofacm", "connect_oob_priority",
+                                 "The selection method priority for oob",
+                                 MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                 OPAL_INFO_LVL_9,
+                                 MCA_BASE_VAR_SCOPE_READONLY,
+                                 &oob_priority);
 }
 
 /*
@@ -150,6 +147,12 @@ static int oob_component_query(ompi_common_ofacm_base_dev_desc_t *dev,
                                ompi_common_ofacm_base_module_t **cpc)
 {
     int rc;
+
+    if (oob_priority > 100) {
+        oob_priority = 100;
+    } else if (oob_priority < -1) {
+        oob_priority = -1;
+    }
 
     /* If we have the transport_type member, check to ensure we're on
        IB (this CPC will not work with iWarp).  If we do not have the

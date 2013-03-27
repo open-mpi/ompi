@@ -10,9 +10,9 @@
 
 #include "ompi_config.h"
 
-#include "opal/mca/base/mca_base_param.h"
-
 #include "common_verbs.h"
+
+#include "opal/mca/base/mca_base_var.h"
 
 /***********************************************************************/
 
@@ -23,34 +23,25 @@ bool ompi_common_verbs_warn_nonexistent_if = true;
 
 static void register_internal(void)
 {
-    int ival;
-
+    ompi_common_verbs_warn_nonexistent_if = true;
     warn_nonexistent_if_index =
-        mca_base_param_reg_int_name("ompi_common_verbs",
-                                    "warn_nonexistent_if",
-                                    "Warn if non-existent devices and/or ports are specified in device include/exclude MCA parameters "
-                                    "(0 = do not warn; any other value = warn)",
-                                    false, false,
-                                    (int) ompi_common_verbs_warn_nonexistent_if, 
-                                    &ival);
-    ompi_common_verbs_warn_nonexistent_if = (bool) ival;
+      mca_base_var_register("ompi", "ompi_common", "verbs", "warn_nonexistent_if",
+                            "Warn if non-existent devices and/or ports are specified in device include/exclude MCA parameters "
+                            "(0 = do not warn; any other value = warn)",
+                            MCA_BASE_VAR_TYPE_BOOL, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
+                            OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_LOCAL,
+                            &ompi_common_verbs_warn_nonexistent_if);
 
     registered = true;
 }
 
 void ompi_common_verbs_mca_register(mca_base_component_t *component)
 {
-    int ival;
-
     if (!registered) {
         register_internal();
     }
 
-    /* Make synonyms for the common_verbs MCA params.  Need to look up
-       the value again, because a new/different value may have been
-       set by the new synonym name. */
-    mca_base_param_reg_syn(warn_nonexistent_if_index, component,
-                           "warn_nonexistent_if", false);
-    mca_base_param_lookup_int(warn_nonexistent_if_index, &ival);
-    ompi_common_verbs_warn_nonexistent_if = (bool) ival;
+    /* Make synonym for the common_verbs MCA params. */
+    mca_base_var_register_synonym(warn_nonexistent_if_index, "ompi", component->mca_type_name,
+                                  component->mca_component_name, "warn_nonexistent_if", 0);
 }

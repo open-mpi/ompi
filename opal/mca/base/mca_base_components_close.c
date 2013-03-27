@@ -25,6 +25,34 @@
 #include "opal/mca/base/mca_base_component_repository.h"
 #include "opal/constants.h"
 
+int mca_base_component_release (int output_id, const mca_base_component_t *component,
+                                bool opened)
+{
+    int group_id;
+
+    /* Close */
+    if (opened && NULL != component->mca_close_component) {
+        component->mca_close_component();
+        opal_output_verbose(10, output_id, 
+                            "mca: base: close: component %s closed",
+                            component->mca_component_name);
+    }
+
+    /* Unload */
+
+    /* Deregister this group before the component goes away */
+    group_id = mca_base_var_group_find (NULL, component->mca_type_name,
+                                        component->mca_component_name);
+    mca_base_var_group_deregister (group_id);
+
+    opal_output_verbose(10, output_id, 
+                        "mca: base: close: unloading component %s",
+                        component->mca_component_name);
+    mca_base_component_repository_release((mca_base_component_t *) component);
+
+    return OPAL_SUCCESS;
+}
+
 int mca_base_components_close(int output_id, 
                               opal_list_t *components_available, 
                               const mca_base_component_t *skip)
@@ -45,26 +73,10 @@ int mca_base_components_close(int output_id,
     component = pcli->super.cli_component;
 
     if (component != skip) {
-
-      /* Close */
-
-
-      if (NULL != component->mca_close_component) {
-        component->mca_close_component();
-        opal_output_verbose(10, output_id, 
-                            "mca: base: close: component %s closed",
-                           component->mca_component_name);
-      }
-
-      /* Unload */
-
-      opal_output_verbose(10, output_id, 
-                          "mca: base: close: unloading component %s",
-                         component->mca_component_name);
-      mca_base_component_repository_release((mca_base_component_t *) component);
-      free(pcli);
+        mca_base_component_release (output_id, component, true);
+        free(pcli);
     } else {
-      skipped_pcli = pcli;
+        skipped_pcli = pcli;
     }
   }
 

@@ -34,7 +34,7 @@
 #include "opal/util/cmd_line.h"
 #include "opal/util/output.h"
 
-#include "opal/mca/base/mca_base_param.h"
+#include "opal/mca/base/mca_base_var.h"
 #include "opal/constants.h"
 
 
@@ -991,8 +991,8 @@ static int make_opt(opal_cmd_line_t *cmd, opal_cmd_line_init_t *e)
     option->clo_type = e->ocl_variable_type;
     option->clo_variable_dest = e->ocl_variable_dest;
     if (NULL != e->ocl_mca_param_name) {
-        option->clo_mca_param_env_var = 
-            mca_base_param_env_var (e->ocl_mca_param_name);
+        (void) mca_base_var_env_name (e->ocl_mca_param_name,
+                                     &option->clo_mca_param_env_var);
     }
 
     /* Append the item, serializing thread access */

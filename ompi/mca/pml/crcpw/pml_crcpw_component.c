@@ -26,11 +26,11 @@
 #include "mpi.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/btl/base/base.h"
-#include "opal/mca/base/mca_base_param.h"
 #include "ompi/mca/pml/base/pml_base_bsend.h"
 #include "ompi/mca/pml/crcpw/pml_crcpw.h"
 #include "ompi/mca/bml/base/base.h"
 
+static int mca_pml_crcpw_component_register(void);
 
 mca_pml_crcpw_component_t mca_pml_crcpw_component = {
     {
@@ -45,7 +45,9 @@ mca_pml_crcpw_component_t mca_pml_crcpw_component = {
             OMPI_MINOR_VERSION,  /* MCA component minor version */
             OMPI_RELEASE_VERSION,  /* MCA component release version */
             mca_pml_crcpw_component_open,  /* component open */
-            mca_pml_crcpw_component_close  /* component close */
+            mca_pml_crcpw_component_close, /* component close */
+            NULL,
+            mca_pml_crcpw_component_register
         },
         {
             /* The component is checkpoint ready */
@@ -66,27 +68,34 @@ mca_pml_crcpw_component_t mca_pml_crcpw_component = {
 ompi_free_list_t pml_state_list;
 bool pml_crcpw_is_finalized = false;
 
+static int mca_pml_crcpw_component_register(void)
+{
+    /*
+     * Register some MCA parameters
+     */
+    mca_pml_crcpw_component.priority = PML_SELECT_WRAPPER_PRIORITY;
+    (void) mca_base_component_var_register(&mca_pml_crcpw_component.super.pmlm_version, "priority",
+                                           "Priority of the PML crcpw component",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &mca_pml_crcpw_component.priority);
+    
+    mca_pml_crcpw_component.verbose = 0;
+    (void) mca_base_component_var_register(&mca_pml_crcpw_component.super.pmlm_version, "verbose",
+                                           "Verbose level for the PML crcpw component",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &mca_pml_crcpw_component.verbose);
+
+    return OMPI_SUCCESS;
+}
+
 int mca_pml_crcpw_component_open(void)
 {
     opal_output_verbose( 10, mca_pml_crcpw_component.output_handle,
                          "pml:crcpw: component_open: Open");
-
-    /*
-     * Register some MCA parameters
-     */
-    mca_base_param_reg_int(&mca_pml_crcpw_component.super.pmlm_version,
-                           "priority",
-                           "Priority of the PML crcpw component",
-                           false, false,
-                           mca_pml_crcpw_component.priority,
-                           &mca_pml_crcpw_component.priority);
-    
-    mca_base_param_reg_int(&mca_pml_crcpw_component.super.pmlm_version,
-                           "verbose",
-                           "Verbose level for the PML crcpw component",
-                           false, false,
-                           mca_pml_crcpw_component.verbose, 
-                           &mca_pml_crcpw_component.verbose);
 
     mca_pml_crcpw_component.output_handle = opal_output_open(NULL);
     if ( 0 != mca_pml_crcpw_component.verbose) {

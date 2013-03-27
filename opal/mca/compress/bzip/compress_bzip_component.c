@@ -24,6 +24,7 @@ const char *opal_compress_bzip_component_version_string =
 /*
  * Local functionality
  */
+static int compress_bzip_register (void);
 static int compress_bzip_open(void);
 static int compress_bzip_close(void);
 
@@ -49,7 +50,8 @@ opal_compress_bzip_component_t mca_compress_bzip_component = {
             /* Component open and close functions */
             compress_bzip_open,
             compress_bzip_close,
-            opal_compress_bzip_component_query
+            opal_compress_bzip_component_query,
+            compress_bzip_register
         },
         {
             /* The component is checkpoint ready */
@@ -59,9 +61,7 @@ opal_compress_bzip_component_t mca_compress_bzip_component = {
         /* Verbosity level */
         0,
         /* opal_output handler */
-        -1,
-        /* Default priority */
-        10
+        -1
     }
 };
 
@@ -83,21 +83,32 @@ static opal_compress_base_module_t loc_module = {
     opal_compress_bzip_decompress_nb
 };
 
+static int compress_bzip_register (void)
+{
+    int ret;
+
+    mca_compress_bzip_component.super.priority = 10;
+    ret = mca_base_component_var_register (&mca_compress_bzip_component.super.base_version,
+                                           "priority", "Priority of the COMPRESS bzip component "
+                                           "(default: 10)", MCA_BASE_VAR_TYPE_INT, NULL, 0,
+                                           MCA_BASE_VAR_FLAG_SETTABLE,
+                                           OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_ALL_EQ,
+                                           &mca_compress_bzip_component.super.priority);
+    if (0 > ret) {
+        return ret;
+    }
+
+    ret = mca_base_component_var_register (&mca_compress_bzip_component.super.base_version,
+                                           "verbose",
+                                           "Verbose level for the COMPRESS bzip component",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
+                                           OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_LOCAL,
+                                           &mca_compress_bzip_component.super.verbose);
+    return (0 > ret) ? ret : OPAL_SUCCESS;
+}
+
 static int compress_bzip_open(void) 
 {
-    mca_base_param_reg_int(&mca_compress_bzip_component.super.base_version,
-                           "priority",
-                           "Priority of the COMPRESS bzip component",
-                           false, false,
-                           mca_compress_bzip_component.super.priority, 
-                           &mca_compress_bzip_component.super.priority);
-
-    mca_base_param_reg_int(&mca_compress_bzip_component.super.base_version,
-                           "verbose",
-                           "Verbose level for the COMPRESS bzip component",
-                           false, false,
-                           mca_compress_bzip_component.super.verbose,
-                           &mca_compress_bzip_component.super.verbose);
     /* If there is a custom verbose level for this component than use it
      * otherwise take our parents level and output channel
      */

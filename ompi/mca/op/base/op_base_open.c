@@ -27,7 +27,6 @@
 #include "opal/util/output.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
-#include "opal/mca/base/mca_base_param.h"
 
 #include "ompi/constants.h"
 #include "ompi/mca/op/op.h"
@@ -48,6 +47,11 @@
 int ompi_op_base_output = -1;
 bool ompi_op_base_components_opened_valid = false;
 opal_list_t ompi_op_base_components_opened;
+
+/*
+ * Locals
+ */
+static int ompi_op_base_verbose;
 
 static void module_constructor(ompi_op_base_module_t *m)
 {
@@ -70,20 +74,29 @@ OBJ_CLASS_INSTANCE(ompi_op_base_module_t, opal_object_t,
 OBJ_CLASS_INSTANCE(ompi_op_base_module_1_0_0_t, opal_object_t, 
                    module_constructor_1_0_0, NULL);
 
+static int ompi_op_base_register(int flags)
+{
+    /* Debugging / verbose output */
+    ompi_op_base_verbose = 0;
+    (void) mca_base_var_register("ompi", "op", "base", "verbose",
+                                 "Verbosity level of the op framework",
+                                 MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                 OPAL_INFO_LVL_9,
+                                 MCA_BASE_VAR_SCOPE_READONLY,
+                                 &ompi_op_base_verbose);
+
+    return OMPI_SUCCESS;
+}
+
 /*
  * Function for finding and opening either all MCA components, or the one
  * that was specifically requested via a MCA parameter.
  */
 int ompi_op_base_open(void)
 {
-    int value;
+    (void) ompi_op_base_register(0);
 
-    /* Debugging / verbose output */
-
-    mca_base_param_reg_int_name("op", "base_verbose",
-                                "Verbosity level of the op framework",
-                                false, false, 0, &value);
-    if (0 != value) {
+    if (0 != ompi_op_base_verbose) {
         ompi_op_base_output = opal_output_open(NULL);
     } else {
         ompi_op_base_output = -1;

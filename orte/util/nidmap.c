@@ -76,10 +76,15 @@ int orte_util_nidmap_init(opal_buffer_t *buffer)
     int32_t cnt;
     int rc;
     opal_byte_object_t *bo;
-    
-    mca_base_param_reg_int_name("orte", "nidmap_verbose",
-                                "Verbosity of the nidmap subsystem",
-                                true, false, 0,  &orte_nidmap_verbose);
+
+    orte_nidmap_verbose = 0;
+    (void) mca_base_var_register ("orte", "orte", NULL, "nidmap_verbose",
+                                  "Verbosity of the nidmap subsystem",
+                                  MCA_BASE_VAR_TYPE_INT, NULL, 0,
+                                  MCA_BASE_VAR_FLAG_INTERNAL,
+                                  OPAL_INFO_LVL_9,
+                                  MCA_BASE_VAR_SCOPE_ALL_EQ,
+                                  &orte_nidmap_verbose);
     if (0 < orte_nidmap_verbose) {
         orte_nidmap_output = opal_output_open(NULL);
         opal_output_set_verbosity(orte_nidmap_output, orte_nidmap_verbose);

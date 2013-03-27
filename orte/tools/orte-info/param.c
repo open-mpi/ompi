@@ -38,7 +38,6 @@
 #include "opal/class/opal_pointer_array.h"
 #include "opal/util/printf.h"
 #include "opal/memoryhooks/memory.h"
-#include "opal/mca/base/mca_base_param.h"
 #include "opal/include/opal_portable_platform.h"
 
 #include "orte/util/show_help.h"
@@ -72,16 +71,6 @@ const char *orte_info_path_infodir = "infodir";
 const char *orte_info_path_pkgdatadir = "pkgdatadir";
 const char *orte_info_path_pkgincludedir = "pkgincludedir";
 
-/*
- * External variables
- *
- * This exists in mca/base/mca_base_param.c.  It's not extern'ed
- * in mca_base_param.h so that no one else will use it.
- */
-
-extern opal_value_array_t mca_base_params;
-
-
 void orte_info_do_params(bool want_all_in, bool want_internal)
 {
     int count;
@@ -89,7 +78,6 @@ void orte_info_do_params(bool want_all_in, bool want_internal)
     bool found;
     int i;
     bool want_all = false;
-    opal_list_t *info;
     
     orte_info_components_open();
     
@@ -109,17 +97,13 @@ void orte_info_do_params(bool want_all_in, bool want_internal)
         }
     }
     
-    /* Get a dump of all the MCA params */
-    mca_base_param_dump(&info, want_internal);
-    
-    /* Show the params */
-    
+    /* Show the params */    
     if (want_all) {
         for (i = 0; i < mca_types.size; ++i) {
             if (NULL == (type = (char *)opal_pointer_array_get_item(&mca_types, i))) {
                 continue;
             }
-            orte_info_show_mca_params(info, type, orte_info_component_all, want_internal);
+            orte_info_show_mca_params(type, orte_info_component_all, want_internal);
         }
     } else {
         for (i = 0; i < count; ++i) {
@@ -143,229 +127,86 @@ void orte_info_do_params(bool want_all_in, bool want_internal)
                 exit(1);
             }
             
-            orte_info_show_mca_params(info, type, component, want_internal);
+            orte_info_show_mca_params(type, component, want_internal);
         }
     }
-    
-    /* Release all the MCA param memory */
-    mca_base_param_dump_release(info);
 }
 
+static void orte_info_show_mca_group_params(const mca_base_var_group_t *group, bool want_internal)
+{
+    const mca_base_var_t *var;
+    const int *variables;
+    int ret, i, j, count;
+    const int *groups;
+    char **strings;
 
-void orte_info_show_mca_params(opal_list_t *info,
-                               const char *type, const char *component, 
+    variables = OPAL_VALUE_ARRAY_GET_BASE(&group->group_vars, const int);
+    count = opal_value_array_get_size((opal_value_array_t *)&group->group_vars);
+
+    for (i = 0 ; i < count ; ++i) {
+        ret = mca_base_var_get(variables[i], &var);
+        if (OPAL_SUCCESS != ret || ((var->mbv_flags & MCA_BASE_VAR_FLAG_INTERNAL) &&
+                                    !want_internal)) {
+            continue;
+        }
+
+        ret = mca_base_var_dump(variables[i], &strings, !orte_info_pretty ? MCA_BASE_VAR_DUMP_PARSABLE : MCA_BASE_VAR_DUMP_READABLE);
+        if (OPAL_SUCCESS != ret) {
+            continue;
+        }
+
+        for (j = 0 ; strings[j] ; ++j) {
+            if (0 == j && orte_info_pretty) {
+                char *message;
+
+                asprintf (&message, "MCA %s", group->group_framework);
+                orte_info_out(message, message, strings[j]);
+                free(message);
+            } else {
+                orte_info_out("", "", strings[j]);
+            }
+            free(strings[j]);
+        }
+        free(strings);
+    }
+
+    groups = OPAL_VALUE_ARRAY_GET_BASE(&group->group_subgroups, const int);
+    count = opal_value_array_get_size((opal_value_array_t *)&group->group_subgroups);
+
+    for (i = 0 ; i < count ; ++i) {
+        ret = mca_base_var_group_get(groups[i], &group);
+        if (OPAL_SUCCESS != ret) {
+            continue;
+        }
+        orte_info_show_mca_group_params(group, want_internal);
+    }
+}
+
+void orte_info_show_mca_params(const char *type, const char *component, 
                                bool want_internal)
 {
-    opal_list_item_t *i;
-    mca_base_param_info_t *p;
-    char *value_string, *empty = "";
-    char *message, *content, *tmp;
-    int value_int, j;
-    mca_base_param_source_t source;
-    char *src_file;
-    
-    for (i = opal_list_get_first(info); i != opal_list_get_last(info);
-         i = opal_list_get_next(i)) {
-        p = (mca_base_param_info_t*) i;
-        
-        if (NULL != p->mbpp_type_name && 0 == strcmp(type, p->mbpp_type_name)) {
-            if (0 == strcmp(component, orte_info_component_all) || 
-                NULL == p->mbpp_component_name ||
-                (NULL != p->mbpp_component_name &&
-                 0 == strcmp(component, p->mbpp_component_name))) {
-                
-                /* Find the source of the value */
-                if (OPAL_SUCCESS != 
-                    mca_base_param_lookup_source(p->mbpp_index, &source, &src_file)) {
-                    continue;
-                }
-                
-                /* Make a char *for the default value.  Invoke a
-                 * lookup because it may transform the char *("~/" ->
-                 * "<home dir>/") or get the value from the
-                 * environment, a file, etc.
-                 */
-                if (MCA_BASE_PARAM_TYPE_STRING == p->mbpp_type) {
-                    mca_base_param_lookup_string(p->mbpp_index,
-                                                 &value_string);
-                    
-                    /* Can't let value_string NULL because we use it
-                       below */
-                    if (NULL == value_string) {
-                        value_string = strdup(empty);
-                    }
-                } else {
-                    mca_base_param_lookup_int(p->mbpp_index, &value_int);
-                    asprintf(&value_string, "%d", value_int);
-                }
-                
-                /* Build up the strings to orte_info_output. */
-                
-                if (orte_info_pretty) {
-                    asprintf(&message, "MCA %s", p->mbpp_type_name);
-                    
-                    /* Put in the real, full name (which may be
-                     * different than the categorization).
-                     */
-                    asprintf(&content, "%s \"%s\" (%s: <%s>, data source: ",
-                             p->mbpp_read_only ? "information" : "parameter",
-                             p->mbpp_full_name,
-                             p->mbpp_read_only ? "value" : "current value",
-                             (0 == strlen(value_string)) ? "none" : value_string);
-                    
-                    /* Indicate where the param was set from */
-                    switch(source) {
-                        case MCA_BASE_PARAM_SOURCE_DEFAULT:
-                            asprintf(&tmp, "%sdefault value", content);
-                            free(content);
-                            content = tmp;
-                            break;
-                        case MCA_BASE_PARAM_SOURCE_ENV:
-                            asprintf(&tmp, "%senvironment or cmdline", content);
-                            free(content);
-                            content = tmp;
-                            break;
-                        case MCA_BASE_PARAM_SOURCE_FILE:
-                            asprintf(&tmp, "%sfile [%s]", content, src_file);
-                            free(content);
-                            content = tmp;
-                            break;
-                        case MCA_BASE_PARAM_SOURCE_OVERRIDE:
-                            asprintf(&tmp, "%sAPI override", content);
-                            free(content);
-                            content = tmp;
-                            break;
-                        default:
-                            break;
-                    }
-                    
-                    /* Is this parameter deprecated? */
-                    if (p->mbpp_deprecated) {
-                        asprintf(&tmp, "%s, deprecated", content);
-                        free(content);
-                        content = tmp;
-                    }
-                    
-                    /* Does this parameter have any synonyms? */
-                    if (p->mbpp_synonyms_len > 0) {
-                        asprintf(&tmp, "%s, synonyms: ", content);
-                        free(content);
-                        content = tmp;
-                        for (j = 0; j < p->mbpp_synonyms_len; ++j) {
-                            if (j > 0) {
-                                asprintf(&tmp, "%s, %s", content, p->mbpp_synonyms[j]->mbpp_full_name);
-                                free(content);
-                                content = tmp;
-                            } else {
-                                asprintf(&tmp, "%s%s", content, p->mbpp_synonyms[j]->mbpp_full_name);
-                                free(content);
-                                content = tmp;
-                            }
-                        }
-                    }
-                    
-                    /* Is this parameter a synonym of something else? */
-                    else if (NULL != p->mbpp_synonym_parent) {
-                        asprintf(&tmp, "%s, synonym of: %s", content, p->mbpp_synonym_parent->mbpp_full_name);
-                        free(content);
-                        content = tmp;
-                    }
-                    asprintf(&tmp, "%s)", content);
-                    free(content);
-                    content = tmp;
-                    orte_info_out(message, message, content);
-                    free(message);
-                    free(content);
-                    
-                    /* If we have a help message, orte_info_output it */
-                    if (NULL != p->mbpp_help_msg) {
-                        orte_info_out("", "", p->mbpp_help_msg);
-                    }
-                } else {
-                    /* build the message*/
-                    asprintf(&tmp, "mca:%s:%s:param:%s:", p->mbpp_type_name,
-                             (NULL == p->mbpp_component_name) ? "base" : p->mbpp_component_name,
-                             p->mbpp_full_name);
+    const mca_base_var_group_t *group;
+    int ret;
 
-                    /* Output the value */
-                    asprintf(&message, "%svalue", tmp);
-                    orte_info_out(message, message, value_string);
-                    free(message);
-                    
-                    /* Indicate where the param was set from */
-                    
-                    asprintf(&message, "%sdata_source", tmp);
-                    switch(source) {
-                        case MCA_BASE_PARAM_SOURCE_DEFAULT:
-                            content = strdup("default value");
-                            break;
-                        case MCA_BASE_PARAM_SOURCE_ENV:
-                            content = strdup("environment-cmdline");
-                            break;
-                        case MCA_BASE_PARAM_SOURCE_FILE:
-                            asprintf(&content, "file: %s", src_file);
-                            break;
-                        case MCA_BASE_PARAM_SOURCE_OVERRIDE:
-                            content = strdup("API override");
-                            break;
-                        default:
-                            break;
-                    }
-                    orte_info_out(message, message, content);
-                    free(message);
-                    free(content);
-                    
-                    /* Output whether it's read only or writable */
-                    
-                    asprintf(&message, "%sstatus", tmp);
-                    content = p->mbpp_read_only ? "read-only" : "writable";
-                    orte_info_out(message, message, content);
-                    free(message);
-                    
-                    /* If it has a help message, orte_info_output that */
-                    
-                    if (NULL != p->mbpp_help_msg) {
-                        asprintf(&message, "%shelp", tmp);
-                        content = p->mbpp_help_msg;
-                        orte_info_out(message, message, content);
-                        free(message);
-                    }
-                    
-                    /* Is this parameter deprecated? */
-                    asprintf(&message, "%sdeprecated", tmp);
-                    content = p->mbpp_deprecated ? "yes" : "no";
-                    orte_info_out(message, message, content);
-                    free(message);
-                    
-                    /* Does this parameter have any synonyms? */
-                    if (p->mbpp_synonyms_len > 0) {
-                        for (j = 0; j < p->mbpp_synonyms_len; ++j) {
-                            asprintf(&message, "%ssynonym:name", tmp);
-                            content = p->mbpp_synonyms[j]->mbpp_full_name;
-                            orte_info_out(message, message, content);
-                            free(message);
-                        }
-                    }
-                    
-                    /* Is this parameter a synonym of something else? */
-                    else if (NULL != p->mbpp_synonym_parent) {
-                        asprintf(&message, "%ssynonym_of:name", tmp);
-                        content = p->mbpp_synonym_parent->mbpp_full_name;
-                        orte_info_out(message, message, content);
-                        free(message);
-                    }
-                }
-                
-                /* If we allocated the string, then free it */
-                
-                if (NULL != value_string) {
-                    free(value_string);
-                }
-            }
+    if (0 == strcmp (component, "all")) {
+        ret = mca_base_var_group_find("*", type, NULL);
+        if (0 > ret) {
+            return;
         }
+
+        (void) mca_base_var_group_get(ret, &group);
+
+        orte_info_show_mca_group_params(group, want_internal);
+    } else {
+        ret = mca_base_var_group_find("*", type, component);
+        if (0 > ret) {
+            return;
+        }
+
+        (void) mca_base_var_group_get(ret, &group);
+        orte_info_show_mca_group_params(group, want_internal);
     }
 }
-
 
 void orte_info_do_path(bool want_all, opal_cmd_line_t *cmd_line)
 {

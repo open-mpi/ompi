@@ -88,7 +88,8 @@ int    opal_cr_debug_signal     = 0;
 
 bool opal_cr_stall_check       = false;
 bool opal_cr_currently_stalled = false;
-int  opal_cr_output;
+int  opal_cr_output = -1;
+int  opal_cr_verbose = 0;
 int opal_cr_initalized = 0;
 
 static double opal_cr_get_time(void);
@@ -193,11 +194,139 @@ int opal_cr_set_enabled(bool en)
     return OPAL_SUCCESS;
 }
 
+static int opal_cr_register (void)
+{
+    int ret;
+#if OPAL_ENABLE_CRDEBUG == 1
+    int t;
+#endif
+
+    /*
+     * Some startup MCA parameters
+     */
+    ret = mca_base_var_register ("opal", "opal", "cr", "verbose",
+                                 "Verbose output level for the runtime OPAL Checkpoint/Restart functionality",
+                                 MCA_BASE_VAR_TYPE_INT, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
+                                 OPAL_INFO_LVL_8, MCA_BASE_VAR_SCOPE_LOCAL,
+                                 &opal_cr_verbose);
+    if (0 > ret) {
+        return ret;
+    }
+
+    opal_cr_is_enabled = false;
+    (void) mca_base_var_register("opal", "ft", "cr", "enabled",
+                                 "Enable fault tolerance for this program",
+                                 MCA_BASE_VAR_TYPE_BOOL, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
+                                 OPAL_INFO_LVL_8, MCA_BASE_VAR_SCOPE_ALL_EQ,
+                                 &opal_cr_is_enabled);
+
+    opal_cr_timing_enabled = false;
+    (void) mca_base_var_register ("opal", "opal", "cr", "enable_timer",
+                                  "Enable Checkpoint timer (Default: Disabled)",
+                                  MCA_BASE_VAR_TYPE_BOOL, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
+                                  OPAL_INFO_LVL_8, MCA_BASE_VAR_SCOPE_ALL_EQ,
+                                  &opal_cr_timing_enabled);
+
+    opal_cr_timing_barrier_enabled = false;
+    (void) mca_base_var_register ("opal", "opal", "cr", "enable_timer_barrier",
+                                  "Enable Checkpoint timer Barrier. Must have opal_cr_enable_timer set. (Default: Disabled)",
+                                  MCA_BASE_VAR_TYPE_BOOL, NULL, 0, opal_cr_timing_enabled ? MCA_BASE_VAR_FLAG_SETTABLE : 0,
+                                  OPAL_INFO_LVL_8, MCA_BASE_VAR_SCOPE_ALL_EQ,
+                                  &opal_cr_timing_barrier_enabled);
+    opal_cr_timing_barrier_enabled = opal_cr_timing_barrier_enabled && opal_cr_timing_enabled;
+
+    (void) mca_base_var_register ("opal", "opal", "cr", "timer_target_rank",
+                                  "Target Rank for the timer (Default: 0)",
+                                  MCA_BASE_VAR_TYPE_INT, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
+                                  OPAL_INFO_LVL_8, MCA_BASE_VAR_SCOPE_ALL_EQ,
+                                  &opal_cr_timing_target_rank);
+
+#if OPAL_ENABLE_FT_THREAD == 1
+    opal_cr_thread_use_if_avail = false;
+    (void) mca_base_var_register ("opal", "opal", "cr", "use_thread",
+                                  "Use an async thread to checkpoint this program (Default: Disabled)",
+                                  MCA_BASE_VAR_TYPE_BOOL, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
+                                  OPAL_INFO_LVL_8, MCA_BASE_VAR_SCOPE_ALL_EQ,
+                                  &opal_cr_thread_use_if_avail);
+
+    opal_cr_thread_sleep_check = 0;
+    (void) mca_base_var_register ("opal", "opal", "cr", "thread_sleep_check",
+                                  "Time to sleep between checking for a checkpoint (Default: 0)",
+                                  MCA_BASE_VAR_TYPE_INT, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
+                                  OPAL_INFO_LVL_8, MCA_BASE_VAR_SCOPE_ALL_EQ,
+                                  &opal_cr_thread_sleep_check);
+
+    opal_cr_thread_sleep_wait = 100;
+    (void) mca_base_var_register ("opal", "opal", "cr", "thread_sleep_wait",
+                                  "Time to sleep waiting for process to exit MPI library (Default: 1000)",
+                                  MCA_BASE_VAR_TYPE_INT, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
+                                  OPAL_INFO_LVL_8, MCA_BASE_VAR_SCOPE_ALL_EQ,
+                                  &opal_cr_thread_sleep_wait);
+#endif
+
+    opal_cr_is_tool = false;
+    (void) mca_base_var_register ("opal", "opal", "cr", "is_tool",
+                                  "Is this a tool program, meaning does it require a fully operational OPAL or just enough to exec.",
+                                  MCA_BASE_VAR_TYPE_BOOL, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
+                                  OPAL_INFO_LVL_8, MCA_BASE_VAR_SCOPE_ALL_EQ,
+                                  &opal_cr_is_tool);
+
+#ifndef __WINDOWS__
+    opal_cr_entry_point_signal = SIGUSR1;
+    (void) mca_base_var_register ("opal", "opal", "cr", "signal",
+                                  "Checkpoint/Restart signal used to initialize an OPAL Only checkpoint of a program",
+                                  MCA_BASE_VAR_TYPE_INT, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
+                                  OPAL_INFO_LVL_8, MCA_BASE_VAR_SCOPE_ALL_EQ,
+                                  &opal_cr_entry_point_signal);
+
+    opal_cr_debug_sigpipe = false;
+    (void) mca_base_var_register ("opal", "opal", "cr", "debug_sigpipe",
+                                  "Activate a signal handler for debugging SIGPIPE Errors that can happen on restart. (Default: Disabled)",
+                                  MCA_BASE_VAR_TYPE_BOOL, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
+                                  OPAL_INFO_LVL_8, MCA_BASE_VAR_SCOPE_ALL_EQ,
+                                  &opal_cr_debug_sigpipe);
+#else
+    opal_cr_is_tool = true;  /* no support for CR on Windows yet */ 
+#endif  /* __WINDOWS__ */
+
+#if OPAL_ENABLE_CRDEBUG == 1
+    MPIR_debug_with_checkpoint = 0;
+    (void) mca_base_var_register ("opal", "opal", "cr", "enable_crdebug",
+                                  "Enable checkpoint/restart debugging",
+                                  MCA_BASE_VAR_TYPE_INT, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
+                                  OPAL_INFO_LVL_8, MCA_BASE_VAR_SCOPE_ALL_EQ,
+                                  &MPIR_debug_with_checkpoint);
+
+    opal_cr_debug_num_free_threads = 3;
+    opal_cr_debug_free_threads = (opal_thread_t **)malloc(sizeof(opal_thread_t *) * opal_cr_debug_num_free_threads );
+    for(t = 0; t < opal_cr_debug_num_free_threads; ++t ) {
+        opal_cr_debug_free_threads[t] = NULL;
+    }
+
+    opal_cr_debug_signal = SIGTSTP;
+    (void) mca_base_var_register ("opal", "opal", "cr", "crdebug_signal",
+                                  "Checkpoint/Restart signal used to hold threads when debugging",
+                                  MCA_BASE_VAR_TYPE_INT, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
+                                  OPAL_INFO_LVL_8, MCA_BASE_VAR_SCOPE_ALL_EQ,
+                                  &opal_cr_debug_signal);
+#endif
+
+    opal_cr_pipe_dir = (char *) opal_tmp_directory();
+    (void) mca_base_var_register ("opal", "opal", "cr", "tmp_dir",
+                                  "Temporary directory to place rendezvous files for a checkpoint",
+                                  MCA_BASE_VAR_TYPE_STRING, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
+                                  OPAL_INFO_LVL_8, MCA_BASE_VAR_SCOPE_ALL_EQ,
+                                  &opal_cr_pipe_dir);
+
+    return OPAL_SUCCESS;
+}
+
+
 int opal_cr_init(void )
 {
     int ret, exit_status = OPAL_SUCCESS;
     opal_cr_coord_callback_fn_t prev_coord_func;
-    int val, t;
+    int val;
 
     if( ++opal_cr_initalized != 1 ) {
         if( opal_cr_initalized < 1 ) {
@@ -208,129 +337,47 @@ int opal_cr_init(void )
         goto cleanup;
     }
 
-    /*
-     * Some startup MCA parameters
-     */
-    ret = mca_base_param_reg_int_name("opal_cr", "verbose",
-                                      "Verbose output level for the runtime OPAL Checkpoint/Restart functionality",
-                                      false, false,
-                                      0,
-                                      &val);
-    if(0 != val) {
-        opal_cr_output = opal_output_open(NULL);
-    } else {
-        opal_cr_output = -1;
+    ret = opal_cr_register ();
+    if (OPAL_SUCCESS != ret) {
+        return ret;
     }
-    opal_output_set_verbosity(opal_cr_output, val);
+
+    if(0 != opal_cr_verbose) {
+        opal_cr_output = opal_output_open(NULL);
+        opal_output_set_verbosity(opal_cr_output, val);
+    }
 
     opal_output_verbose(10, opal_cr_output,
                         "opal_cr: init: Verbose Level: %d",
                         val);
 
-    mca_base_param_reg_int_name("ft", "cr_enabled",
-                                "Enable fault tolerance for this program",
-                                false, false,
-                                0, &val);
-    opal_cr_set_enabled(OPAL_INT_TO_BOOL(val));
 
     opal_output_verbose(10, opal_cr_output,
-                        "opal_cr: init: FT Enabled: %d",
-                        val);
+                        "opal_cr: init: FT Enabled: %s",
+                        opal_cr_is_enabled ? "true" : "false");
 
-    mca_base_param_reg_int_name("opal_cr", "enable_timer",
-                                "Enable Checkpoint timer (Default: Disabled)",
-                                false, false,
-                                0, &val);
-    opal_cr_timing_enabled = OPAL_INT_TO_BOOL(val);
-
-    mca_base_param_reg_int_name("opal_cr", "enable_timer_barrier",
-                                "Enable Checkpoint timer Barrier (Default: Disabled)",
-                                false, false,
-                                0, &val);
-    if( opal_cr_timing_enabled ) {
-        opal_cr_timing_barrier_enabled = OPAL_INT_TO_BOOL(val);
-    } else {
-        opal_cr_timing_barrier_enabled = false;
-    }
-
-    mca_base_param_reg_int_name("opal_cr", "timer_target_rank",
-                                "Target Rank for the timer (Default: 0)",
-                                false, false,
-                                0, &val);
-    opal_cr_timing_target_rank = val;
-
-#if OPAL_ENABLE_FT_THREAD == 1
-    mca_base_param_reg_int_name("opal_cr", "use_thread",
-                                "Use an async thread to checkpoint this program (Default: Disabled)",
-                                false, false,
-                                0, &val);
-    opal_cr_thread_use_if_avail = OPAL_INT_TO_BOOL(val);
 
     opal_output_verbose(10, opal_cr_output,
-                        "opal_cr: init: FT Use thread: %d",
-                        val);
-
-    mca_base_param_reg_int_name("opal_cr", "thread_sleep_check",
-                                "Time to sleep between checking for a checkpoint (Default: 0)",
-                                false, false,
-                                0, &val);
-    opal_cr_thread_sleep_check = val;
-
-    mca_base_param_reg_int_name("opal_cr", "thread_sleep_wait",
-                                "Time to sleep waiting for process to exit MPI library (Default: 1000)",
-                                false, false,
-                                1000, &val);
-    opal_cr_thread_sleep_wait = val;
-
-    opal_output_verbose(10, opal_cr_output,
-                        "opal_cr: init: FT thread sleep: check = %d, wait = %d",
-                        opal_cr_thread_sleep_check, opal_cr_thread_sleep_wait);
-#endif
-
-    mca_base_param_reg_int_name("opal_cr", "is_tool",
-                                "Is this a tool program, meaning does it require a fully operational OPAL or just enough to exec.",
-                                false, false,
-                                0,
-                                &val);
-    opal_cr_is_tool = OPAL_INT_TO_BOOL(val);
-
-    opal_output_verbose(10, opal_cr_output,
-                        "opal_cr: init: Is a tool program: %d",
-                        val);
-#if OPAL_ENABLE_CRDEBUG == 1
-    mca_base_param_reg_int_name("opal_cr", "enable_crdebug",
-                                "Enable checkpoint/restart debugging",
-                                false, false,
-                                0,
-                                &val);
-    MPIR_debug_with_checkpoint = OPAL_INT_TO_BOOL(val);
-
-    opal_output_verbose(10, opal_cr_output,
-                        "opal_cr: init: C/R Debugging Enabled [%s]\n",
-                        (MPIR_debug_with_checkpoint ? "True": "False"));
-#endif
-
-    mca_base_param_reg_int_name("opal_cr", "signal",
-                                "Checkpoint/Restart signal used to initialize an OPAL Only checkpoint of a program",
-                                false, false,
-                                SIGUSR1,
-                                &opal_cr_entry_point_signal);
-
-    opal_output_verbose(10, opal_cr_output,
-                        "opal_cr: init: Checkpoint Signal: %d",
-                        opal_cr_entry_point_signal);
-
-    mca_base_param_reg_int_name("opal_cr", "debug_sigpipe",
-                                "Activate a signal handler for debugging SIGPIPE Errors that can happen on restart. (Default: Disabled)",
-                                false, false,
-                                0, &val);
-    opal_cr_debug_sigpipe = OPAL_INT_TO_BOOL(val);
+                        "opal_cr: init: Is a tool program: %s",
+                        opal_cr_is_tool ? "true" : "false");
 
     opal_output_verbose(10, opal_cr_output,
                         "opal_cr: init: Debug SIGPIPE: %d (%s)",
                         val, (opal_cr_debug_sigpipe ? "True" : "False"));
 
+    opal_output_verbose(10, opal_cr_output,
+                        "opal_cr: init: Checkpoint Signal: %d",
+                        opal_cr_entry_point_signal);
+
 #if OPAL_ENABLE_FT_THREAD == 1
+    opal_output_verbose(10, opal_cr_output,
+                        "opal_cr: init: FT Use thread: %s",
+                        opal_cr_thread_use_if_avail ? "true" : "false");
+
+    opal_output_verbose(10, opal_cr_output,
+                        "opal_cr: init: FT thread sleep: check = %d, wait = %d",
+                        opal_cr_thread_sleep_check, opal_cr_thread_sleep_wait);
+
     /* If we have a thread, then attach the SIGPIPE signal handler there since
      * it is most likely to be the one that needs it.
      */
@@ -348,36 +395,20 @@ int opal_cr_init(void )
 #endif
 
 #if OPAL_ENABLE_CRDEBUG == 1
-    opal_cr_debug_num_free_threads = 3;
-    opal_cr_debug_free_threads = (opal_thread_t **)malloc(sizeof(opal_thread_t *) * opal_cr_debug_num_free_threads );
-    for(t = 0; t < opal_cr_debug_num_free_threads; ++t ) {
-        opal_cr_debug_free_threads[t] = NULL;
-    }
- 
-    mca_base_param_reg_int_name("opal_cr", "crdebug_signal",
-                                "Checkpoint/Restart signal used to hold threads when debugging",
-                                false, false,
-                                SIGTSTP,
-                                &opal_cr_debug_signal);
+    opal_output_verbose(10, opal_cr_output,
+                        "opal_cr: init: C/R Debugging Enabled [%s]\n",
+                        (MPIR_debug_with_checkpoint ? "True": "False"));
 
     opal_output_verbose(10, opal_cr_output,
                         "opal_cr: init: Checkpoint Signal (Debug): %d",
                         opal_cr_debug_signal);
+
     if( SIG_ERR == signal(opal_cr_debug_signal, MPIR_checkpoint_debugger_signal_handler) ) {
         opal_output(opal_cr_output,
                     "opal_cr: init: Failed to register C/R debug signal (%d)",
                     opal_cr_debug_signal);
     }
-#else
-    /* Silence a compiler warning */
-    t = 0;
 #endif
-
-    mca_base_param_reg_string_name("opal_cr", "tmp_dir",
-                                   "Temporary directory to place rendezvous files for a checkpoint",
-                                   false, false,
-                                   opal_tmp_directory(),
-                                   &opal_cr_pipe_dir);
 
     opal_output_verbose(10, opal_cr_output,
                         "opal_cr: init: Temp Directory: %s",
@@ -889,6 +920,9 @@ int opal_cr_reg_coord_callback(opal_cr_coord_callback_fn_t  new_func,
 int opal_cr_refresh_environ(int prev_pid) {
     int val;
     char *file_name = NULL;
+#if OPAL_ENABLE_CRDEBUG == 1
+    char *tmp;
+#endif
     struct stat file_status;
 
     if( 0 >= prev_pid ) {
@@ -906,18 +940,20 @@ int opal_cr_refresh_environ(int prev_pid) {
     }
 
 #if OPAL_ENABLE_CRDEBUG == 1
-    opal_unsetenv(mca_base_param_env_var("opal_cr_enable_crdebug"), &environ);
+    mca_base_var_env_name ("opal_cr_enable_crdebug", &tmp);
+    opal_unsetenv(tmp, &environ);
+    free (tmp);
 #endif
 
     extract_env_vars(prev_pid, file_name);
 
 #if OPAL_ENABLE_CRDEBUG == 1
-    mca_base_param_reg_int_name("opal_cr", "enable_crdebug",
-                                "Enable checkpoint/restart debugging",
-                                false, false,
-                                0,
-                                &val);
-    MPIR_debug_with_checkpoint = OPAL_INT_TO_BOOL(val);
+    MPIR_debug_with_checkpoint = 0;
+    (void) mca_base_var_register ("opal", "opal", "cr", "enable_crdebug",
+                                  "Enable checkpoint/restart debugging",
+                                  MCA_BASE_VAR_TYPE_INT, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
+                                  OPAL_INFO_LVL_8, MCA_BASE_VAR_SCOPE_ALL_EQ,
+                                  &MPIR_debug_with_checkpoint);
 
     opal_output_verbose(10, opal_cr_output,
                         "opal_cr: init: C/R Debugging Enabled [%s] (refresh)\n",

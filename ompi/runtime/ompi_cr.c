@@ -90,6 +90,7 @@ static int ompi_cr_coord_post_continue(void);
 static opal_cr_coord_callback_fn_t  prev_coord_callback = NULL;
 
 int ompi_cr_output = -1;
+int ompi_cr_verbosity = 0;
 
 #define NUM_COLLECTIVES 16
 
@@ -157,19 +158,19 @@ notify_collectives(int msg)
  */
 int ompi_cr_init(void) 
 {
-    int val;
-
     /*
-     * Register some MCA parameters
+     * Register some MCA variables
      */
-    mca_base_param_reg_int_name("ompi_cr", "verbose",
-                                "Verbose output for the OMPI Checkpoint/Restart functionality",
-                                false, false,
-                                0,
-                                &val);
-    if(0 != val) {
+    ompi_cr_verbosity = 0;
+    (void) mca_base_var_register("ompi", "ompi", "cr", "verbose",
+                                 "Verbose output for the OMPI Checkpoint/Restart functionality",
+                                 MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                 OPAL_INFO_LVL_9,
+                                 MCA_BASE_VAR_SCOPE_READONLY,
+                                 &ompi_cr_verbosity);
+    if(0 != ompi_cr_verbosity) {
         ompi_cr_output = opal_output_open(NULL);
-        opal_output_set_verbosity(ompi_cr_output, val);
+        opal_output_set_verbosity(ompi_cr_output, ompi_cr_verbosity);
     } else {
         ompi_cr_output = opal_cr_output;
     }

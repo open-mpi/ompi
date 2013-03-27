@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c)      2010 The Trustees of Indiana University.
  *                         All rights reserved.
@@ -18,7 +19,6 @@
 #include "opal/util/output.h"
 #include "opal/mca/base/base.h"
 
-#include "opal/mca/base/mca_base_param.h"
 #include "orte/util/proc_info.h"
 
 #include "orte/mca/sstore/sstore.h"
@@ -65,14 +65,46 @@ orte_sstore_base_handle_t orte_sstore_handle_last_stable;
 /* Determine the context of this module */
 int orte_sstore_base_determine_context(void);
 
+static int orte_sstore_base_register(int flags)
+{
+    int mca_index;
+    /*
+     * Base Global Snapshot directory
+     */
+    orte_sstore_base_global_snapshot_dir = (char *) opal_home_directory();
+    mca_index = mca_base_var_register("orte", "sstore", "base", "global_snapshot_dir",
+                                      "The base directory to use when storing global snapshots",
+                                      MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
+                                      OPAL_INFO_LVL_9,
+                                      MCA_BASE_VAR_SCOPE_READONLY,
+                                      &orte_sstore_base_global_snapshot_dir);
+    mca_base_var_register_synonym(mca_index, "orte", "snapc", "base", "global_snapshot_dir",
+                                  MCA_BASE_VAR_SYN_FLAG_DEPRECATED);
+
+    /*
+     * User defined snapshot reference to use for this job
+     */
+    orte_sstore_base_global_snapshot_ref = NULL;
+    mca_index = mca_base_var_register("orte", "sstore", "base", "global_snapshot_ref",
+                                      "The global snapshot reference to be used for this job. "
+                                      " [Default = ompi_global_snapshot_MPIRUNPID.ckpt]",
+                                      MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
+                                      OPAL_INFO_LVL_9,
+                                      MCA_BASE_VAR_SCOPE_READONLY,
+                                      &orte_sstore_base_global_snapshot_ref);
+    mca_base_var_register_synonym(mca_index, "orte", "snapc", "base", "global_snapshot_ref",
+                                  MCA_BASE_VAR_SYN_FLAG_DEPRECATED);
+
+    return ORTE_SUCCESS;
+}
+
 /**
  * Function for finding and opening either all MCA components,
  * or the one that was specifically requested via a MCA parameter.
  */
 int orte_sstore_base_open(void)
 {
-    char *str_value = NULL;
-    int mca_index;
+    (void) orte_sstore_base_register(0);
 
     orte_sstore_handle_current     = ORTE_SSTORE_HANDLE_INVALID;
     orte_sstore_handle_last_stable = ORTE_SSTORE_HANDLE_INVALID;
@@ -82,70 +114,6 @@ int orte_sstore_base_open(void)
     orte_sstore_base_local_snapshot_fmt       = strdup("opal_snapshot_%d.ckpt");
 
     orte_sstore_base_output = opal_output_open(NULL);
-
-    /*
-     * Base Global Snapshot directory
-     */
-    mca_index = mca_base_param_reg_string_name("sstore",
-                                               "base_global_snapshot_dir",
-                                               "The base directory to use when storing global snapshots",
-                                               false, false,
-                                               opal_home_directory(),
-                                               &orte_sstore_base_global_snapshot_dir);
-    mca_base_param_reg_syn_name(mca_index, "snapc", "base_global_snapshot_dir", true);
-
-    /*
-     * User defined snapshot reference to use for this job
-     */
-    mca_index = mca_base_param_reg_string_name("sstore",
-                                               "base_global_snapshot_ref",
-                                               "The global snapshot reference to be used for this job. "
-                                               " [Default = ompi_global_snapshot_MPIRUNPID.ckpt]",
-                                               false, false,
-                                               NULL,
-                                               &orte_sstore_base_global_snapshot_ref);
-    mca_base_param_reg_syn_name(mca_index, "snapc", "base_global_snapshot_ref", true);
-
-    /*
-     * Old, dead parameters
-     */
-#if 0
-    /* (Should just choose to use the 'central' component
-     * Store the checkpoint files in their final location.
-     * This assumes that the storage place is on a shared file 
-     * system that all nodes can access uniformly.
-     * Default = enabled
-     */
-    mca_base_param_reg_int_name("sstore",
-                                "base_store_in_place",
-                                "If global_snapshot_dir is on a shared file system all nodes can access, "
-                                "then the checkpoint files can be stored in place instead of incurring a "
-                                "remote copy. [Default = enabled]",
-                                false, false,
-                                1,
-                                &value);
-#endif
-
-#if 0
-    OPAL_OUTPUT_VERBOSE((20, orte_sstore_base_output,
-                         "sstore:base: open: base_global_snapshot_ref    = %s",
-                         orte_sstore_base_global_snapshot_ref));
-
-    /*
-     * Pre-establish the global snapshot directory upon job registration
-     */
-    mca_base_param_reg_int_name("sstore_base",
-                                "establish_global_snapshot_dir",
-                                "Establish the global snapshot directory on job startup. [Default = disabled]",
-                                false, false,
-                                0,
-                                &value);
-    orte_sstore_base_establish_global_snapshot_dir = OPAL_INT_TO_BOOL(value);
-
-    OPAL_OUTPUT_VERBOSE((20, orte_sstore_base_output,
-                         "sstore:base: open: base_establish_global_snapshot_dir    = %d",
-                         orte_sstore_base_establish_global_snapshot_dir));
-#endif
 
     /*
      * Setup the prelaunch variable to point to the first possible snapshot
@@ -170,20 +138,6 @@ int orte_sstore_base_open(void)
     opal_output_verbose(10, orte_sstore_base_output,
                         "sstore:base: open: Prelaunch location        = %s",
                         (NULL == orte_sstore_base_prelaunch_location ? "Undefined" : orte_sstore_base_prelaunch_location));
-
-    /* 
-     * Which Sstore component to open
-     *  - NULL or "" = auto-select
-     *  - ow. select that specific component
-     */
-    mca_base_param_reg_string_name("sstore", NULL,
-                                   "Which Sstore component to use (empty = auto-select)",
-                                   false, false,
-                                   NULL, &str_value);
-    if( NULL != str_value ) {
-        free(str_value);
-        str_value = NULL;
-    }
 
     /* Open up all available components */
     if (OPAL_SUCCESS !=

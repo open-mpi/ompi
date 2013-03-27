@@ -34,9 +34,9 @@ BEGIN_C_DECLS
 struct mca_mpool_rgpusm_component_t {
     mca_mpool_base_component_t super;
     char* rcache_name;
-    size_t rcache_size_limit;
+    unsigned long long rcache_size_limit;
     bool print_stats;
-    uint32_t leave_pinned;
+    int leave_pinned;
     int output;
 };
 typedef struct mca_mpool_rgpusm_component_t mca_mpool_rgpusm_component_t;

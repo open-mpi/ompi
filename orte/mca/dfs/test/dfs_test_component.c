@@ -26,6 +26,7 @@ const char *orte_dfs_test_component_version_string =
 /*
  * Local functionality
  */
+static int dfs_test_register(void);
 static int dfs_test_open(void);
 static int dfs_test_close(void);
 static int dfs_test_component_query(mca_base_module_t **module, int *priority);
@@ -50,7 +51,8 @@ orte_dfs_base_component_t mca_dfs_test_component =
         /* Component open and close functions */
         dfs_test_open,
         dfs_test_close,
-        dfs_test_component_query
+        dfs_test_component_query,
+        dfs_test_register
     },
     {
         /* The component is checkpoint ready */
@@ -60,14 +62,20 @@ orte_dfs_base_component_t mca_dfs_test_component =
 
 static bool select_me = false;
 
+static int dfs_test_register(void)
+{
+    select_me = false;
+    (void) mca_base_component_var_register(&mca_dfs_test_component.base_version, "select",
+                                           "Apps select the test plug-in for the DFS framework",
+                                           MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_ALL_EQ, &select_me);
+
+    return ORTE_SUCCESS;
+}
+ 
 static int dfs_test_open(void) 
 {
-    int tmp;
-    mca_base_component_t *c = &mca_dfs_test_component.base_version;
-    mca_base_param_reg_int(c, "select",
-                           "Apps select the test plug-in for the DFS framework",
-                           false, false, (int)false, &tmp);
-    select_me = OPAL_INT_TO_BOOL(tmp);
     return ORTE_SUCCESS;
 }
 

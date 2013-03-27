@@ -21,6 +21,7 @@
 
 #include "pubsub_orte.h"
 
+static int pubsub_orte_component_register(void);
 static int pubsub_orte_component_open(void);
 static int pubsub_orte_component_close(void);
 static int pubsub_orte_component_query(mca_base_module_t **module, int *priority);
@@ -41,7 +42,8 @@ ompi_pubsub_orte_component_t mca_pubsub_orte_component = {
           OMPI_RELEASE_VERSION,  /* MCA component release version */
           pubsub_orte_component_open,  /* component open */
           pubsub_orte_component_close, /* component close */
-          pubsub_orte_component_query  /* component query */
+          pubsub_orte_component_query, /* component query */
+          pubsub_orte_component_register /* component register */
         },
         {
             /* This component is checkpoint ready */
@@ -50,36 +52,39 @@ ompi_pubsub_orte_component_t mca_pubsub_orte_component = {
     }
 };
 
+static int pubsub_orte_component_register(void)
+{
+    my_priority = 50;
+    (void) mca_base_component_var_register(&mca_pubsub_orte_component.super.base_version,
+                                           "priority", "Priority of the pubsub pmi component",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &my_priority);
+
+    mca_pubsub_orte_component.server_uri = NULL;
+    (void) mca_base_component_var_register(&mca_pubsub_orte_component.super.base_version,
+                                           "server", "Contact info for ompi_server for publish/subscribe operations",
+                                           MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &mca_pubsub_orte_component.server_uri);    
+
+    return OMPI_SUCCESS;
+}
 
 static int pubsub_orte_component_open(void)
 {
-    mca_base_component_t *c = &mca_pubsub_orte_component.super.base_version;
-
-    mca_base_param_reg_int(c, "priority",
-                           "Priority of the pubsub pmi component",
-                           false, false, my_priority,
-                           &my_priority);
     return OMPI_SUCCESS;
 }
 
 static int pubsub_orte_component_close(void)
 {
-    if (NULL != mca_pubsub_orte_component.server_uri) {
-        free(mca_pubsub_orte_component.server_uri);
-        mca_pubsub_orte_component.server_uri = NULL;
-    }
     return OMPI_SUCCESS;
 }
 
 static int pubsub_orte_component_query(mca_base_module_t **module, int *priority)
 {
-    mca_base_component_t *comp = &mca_pubsub_orte_component.super.base_version;
-    
-    mca_base_param_reg_string(comp, "server",
-                              "Contact info for ompi_server for publish/subscribe operations",
-                              false, false, NULL,
-                              &mca_pubsub_orte_component.server_uri);
-    
     mca_pubsub_orte_component.server_found = false;
     
     *priority = my_priority;

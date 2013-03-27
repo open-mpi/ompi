@@ -127,7 +127,7 @@ struct mca_btl_smcuda_component_t {
     int sm_free_list_num;              /**< initial size of free lists */
     int sm_free_list_max;              /**< maximum size of free lists */
     int sm_free_list_inc;              /**< number of elements to alloc when growing free lists */
-    int32_t sm_max_procs;              /**< upper limit on the number of processes using the shared memory pool */
+    int sm_max_procs;                  /**< upper limit on the number of processes using the shared memory pool */
     int sm_extra_procs;                /**< number of extra procs to allow */
     char* sm_mpool_name;               /**< name of shared memory pool module */
     mca_mpool_base_module_t **sm_mpools; /**< shared memory pools (one for each memory node) */

@@ -24,7 +24,6 @@
 #include "ompi/class/ompi_free_list.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
-#include "opal/mca/base/mca_base_param.h"
 
 #include "ompi/mca/fcoll/fcoll.h"
 #include "ompi/mca/fcoll/base/base.h"
@@ -74,7 +73,7 @@ int mca_fcoll_base_open(void)
 
     /* Find the index of the MCA "fcoll" param for selection */
     
-    mca_fcoll_base_param = mca_base_param_find("fcoll", "base", NULL);
+    mca_fcoll_base_param = mca_base_var_find("ompi", "fcoll", NULL, NULL);
 
     return OMPI_SUCCESS;
 }

@@ -40,6 +40,8 @@
 int mca_bcol_base_output = 0;
 opal_list_t mca_bcol_base_components_opened;
 
+static int mca_bcol_base_verbose = 0;
+
 OMPI_DECLSPEC opal_list_t mca_bcol_base_components_in_use;
 OMPI_DECLSPEC char *ompi_bcol_bcols_string;
 OMPI_DECLSPEC int bcol_mpool_compatibility[BCOL_SIZE][BCOL_SIZE];
@@ -200,27 +202,46 @@ static int mca_bcol_base_set_components_to_use(opal_list_t *bcol_components_avai
     return OMPI_SUCCESS;
 }
 
+static int mca_bcol_base_register(int flags)
+{
+    /* Debugging/Verbose output */
+    (void) mca_base_var_register("ompi", "bcol", "base", "verbose",
+                                 "Verbosity level of BCOL framework",
+                                 MCA_BASE_VAR_TYPE_INT, NULL, 0,
+                                 MCA_BASE_VAR_FLAG_SETTABLE,
+                                 OPAL_INFO_LVL_9,
+                                 MCA_BASE_VAR_SCOPE_LOCAL,
+                                 &mca_bcol_base_verbose);
+
+    /* figure out which bcol and sbgp components will actually be used */
+    /* get list of sub-grouping functions to use */
+    ompi_bcol_bcols_string = "basesmuma,basesmuma,iboffload,ptpcoll,ugni";
+    (void) mca_base_var_register("ompi", "bcol", "base", "string",
+                                 "Default set of basic collective components to use",
+                                 MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
+                                 OPAL_INFO_LVL_9,
+                                 MCA_BASE_VAR_SCOPE_READONLY,
+                                 &ompi_bcol_bcols_string);
+
+    return OMPI_SUCCESS;
+}
+
 /**
  * Function for finding and opening either all MCA components, or the one
  * that was specifically requested via a MCA parameter.
  */
 int mca_bcol_base_open(void)
 {
-    int value, ret;
+    int ret;
 
     /*_bcol_base_components_available
      * Register some MCA parameters
      */
-     /* Debugging/Verbose output */
-     mca_base_param_reg_int_name("bcol",
-                                 "base_verbose",
-                                 "Verbosity level of BCOL framework",
-                                 false, false,
-                                 0, &value);
+    (void) mca_bcol_base_register(0);
 
-     /* get fraemwork id    */
+     /* get framework id    */
      mca_bcol_base_output = opal_output_open(NULL);
-     opal_output_set_verbosity(mca_bcol_base_output, value);
+     opal_output_set_verbosity(mca_bcol_base_output, mca_bcol_base_verbose);
 
     /* Open up all available components */
     if (OMPI_SUCCESS !=
@@ -229,12 +250,6 @@ int mca_bcol_base_open(void)
                                  true)) {
         return OMPI_ERROR;
     }
-
-    /* figure out which bcol and sbgp components will actually be used */
-    /* get list of sub-grouping functions to use */
-    mca_base_param_reg_string_name("bcol","base_string",
-            "Default set of basic collective components to use ",
-            false, false, "basesmuma,basesmuma,iboffload,ptpcoll,ugni", &ompi_bcol_bcols_string);
 
     ret = mca_bcol_base_set_components_to_use(&mca_bcol_base_components_opened,
                                               &mca_bcol_base_components_in_use);

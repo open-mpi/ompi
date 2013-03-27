@@ -31,6 +31,7 @@ const char *opal_crs_self_component_version_string =
 /*
  * Local functionality
  */
+static int crs_self_register (void);
 static int crs_self_open(void);
 static int crs_self_close(void);
 
@@ -56,7 +57,8 @@ opal_crs_self_component_t mca_crs_self_component = {
             /* Component open and close functions */
             crs_self_open,
             crs_self_close,
-            opal_crs_self_component_query
+            opal_crs_self_component_query,
+            crs_self_register
         },
         {
             /* The component is checkpoint ready */
@@ -66,9 +68,7 @@ opal_crs_self_component_t mca_crs_self_component = {
         /* Verbosity level */
         0,
         /* opal_output handler */
-        -1,
-        /* Default priority */
-        20
+        -1
     },
     /* Default prefix */
     PREFIX_DEFAULT,
@@ -82,27 +82,63 @@ opal_crs_self_component_t mca_crs_self_component = {
     NULL
 };
 
+static int crs_self_register (void)
+{
+    int ret;
+
+    /* Default priority */
+    mca_crs_self_component.super.priority = 20;
+    ret = mca_base_component_var_register (&mca_crs_self_component.super.base_version,
+                                           "priority", "Priority of the CRS self component "
+                                           "(default: 20)", MCA_BASE_VAR_TYPE_INT, NULL,
+                                           MCA_BASE_VAR_FLAG_SETTABLE,
+                                           OPAL_INFO_LVL_9, MPI_BASE_VAR_SCOPE_ALL_EQ,
+                                           &mca_crs_self_component.super.priority);
+    if (0 > ret) {
+        return ret;
+    }
+
+    mca_crs_self_component.super.verbose = 0;
+    ret = mca_base_component_var_register (&mca_crs_self_component.super.base_version,
+                                           "verbose",
+                                           "Verbose level for the CRS self component",
+                                           MCA_BASE_VAR_TYPE_INT, NULL,MCA_BASE_VAR_FLAG_SETTABLE,
+                                           OPAL_INFO_LVL_9, MPI_BASE_VAR_SCOPE_LOCAL,
+                                           &mca_crs_self_component.super.verbose);
+    if (0 > ret) {
+        return ret;
+    }
+
+    /*
+     * Handler names
+     */
+    mca_crs_self_component.prefix = NULL;
+    ret = mca_base_component_var_register (&mca_crs_self_component.super.base_version,
+                                           "prefix",
+                                           "Prefix for user defined callback functions",
+                                           MCA_BASE_VAR_TYPE_STRING, NULL, MCA_BASE_VAR_FLAG_SETTABLE,
+                                           OPAL_INFO_LVL_9, MPI_BASE_VAR_SCOPE_LOCAL,
+                                           &mca_crs_self_component.prefix);
+    if (0 > ret) {
+        return ret;
+    }
+
+    ret = mca_base_component_var_register (&mca_crs_self_component.super.base_version,
+                                           "do_restart",
+                                           "Start execution by calling restart callback",
+                                           MCA_BASE_VAR_TYPE_BOOL, NULL, MCA_BASE_VAR_FLAG_SETTABLE,
+                                           OPAL_INFO_LVL_9, MPI_BASE_VAR_SCOPE_LOCAL,
+                                           &mca_crs_self_component.do_restart);
+    return (0 > ret) ? ret : OPAL_SUCCESS;
+}
+ 
 static int crs_self_open(void) 
 {
-    int value;
-
     /*
      * This should be the last componet to ever get used since
      * it doesn't do anything.
      */
-    mca_base_param_reg_int(&mca_crs_self_component.super.base_version,
-                           "priority",
-                           "Priority of the CRS self component",
-                           false, false,
-                           mca_crs_self_component.super.priority,
-                           &mca_crs_self_component.super.priority);
-    
-    mca_base_param_reg_int(&mca_crs_self_component.super.base_version,
-                           "verbose",
-                           "Verbose level for the CRS self component",
-                           false, false,
-                           mca_crs_self_component.super.verbose, 
-                           &mca_crs_self_component.super.verbose);
+
     /* If there is a custom verbose level for this component than use it
      * otherwise take our parents level and output channel
      */
@@ -114,27 +150,6 @@ static int crs_self_open(void)
         mca_crs_self_component.super.output_handle = opal_crs_base_output;
     }
     
-    /*
-     * Handler names
-     */
-    mca_base_param_reg_string(&mca_crs_self_component.super.base_version,
-                              "prefix",
-                              "Prefix for user defined callback functions",
-                              false, false,
-                              mca_crs_self_component.prefix,
-                              &mca_crs_self_component.prefix);
-
-    mca_base_param_reg_int(&mca_crs_self_component.super.base_version,
-                           "do_restart",
-                           "Start execution by calling restart callback",
-                           false, false,
-                           mca_crs_self_component.do_restart,
-                           &value);
-    if(value == 0)
-        mca_crs_self_component.do_restart = false;
-    else 
-        mca_crs_self_component.do_restart = true;
-
     /*
      * Debug Output
      */
@@ -160,11 +175,6 @@ static int crs_self_close(void)
 {
     opal_output_verbose(10, mca_crs_self_component.super.output_handle,
                         "crs:self: close()");
-
-    if(NULL != mca_crs_self_component.prefix ) {
-        free(mca_crs_self_component.prefix);
-        mca_crs_self_component.prefix = NULL;
-    }
 
     return OPAL_SUCCESS;
 }

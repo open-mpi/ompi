@@ -26,7 +26,6 @@
 #include "ompi/constants.h"
 #include "opal/util/output.h"
 
-#include "opal/mca/base/mca_base_param.h"
 #include "ompi/mca/btl/base/btl_base_error.h"
 
 #include "btl_vader.h"
@@ -77,56 +76,56 @@ mca_btl_vader_component_t mca_btl_vader_component = {
     }  /* end super */
 };
 
-
-/*
- * utility routines for parameter registration
- */
-
-static inline char *mca_btl_vader_param_register_string(const char *param_name,
-                                                        const char *default_value)
-{
-    char *param_value;
-
-    (void) mca_base_param_reg_string (&mca_btl_vader_component.super.btl_version,
-                                      param_name, NULL, false, false, default_value,
-                                      &param_value);
-
-    return param_value;
-}
-
-static inline int mca_btl_vader_param_register_int(const char *param_name,
-                                                   int value)
-{
-    (void) mca_base_param_reg_int (&mca_btl_vader_component.super.btl_version,
-                                   param_name, NULL, false, false, value, &value);
-    return value;
-}
-
 static int mca_btl_vader_component_register (void)
 {
-    /* register VADER component parameters */
-    mca_btl_vader_component.vader_free_list_num =
-        mca_btl_vader_param_register_int("free_list_num", 8);
-    mca_btl_vader_component.vader_free_list_max =
-        mca_btl_vader_param_register_int("free_list_max", -1);
-    mca_btl_vader_component.vader_free_list_inc =
-        mca_btl_vader_param_register_int("free_list_inc", 64);
-    mca_btl_vader_component.vader_mpool_name =
-        mca_btl_vader_param_register_string("mpool", "sm");
-    mca_btl_vader_memcpy_limit =
-        mca_btl_vader_param_register_int("memcpy_limit", mca_btl_vader_memcpy_limit);
-    mca_btl_vader_log_align =
-        mca_btl_vader_param_register_int("log_align", mca_btl_vader_log_align);
+    (void) mca_base_var_group_component_register(&mca_btl_vader_component.super.btl_version,
+                                                 "XPMEM shared memory byte transport later");
 
-    /* limit segment alignment to be between 4k and 16M */
-    if (mca_btl_vader_log_align < 12) {
-        mca_btl_vader_log_align = 12;
-    } else if (mca_btl_vader_log_align > 25) {
-        mca_btl_vader_log_align = 25;
-    }
+    /* register VADER component variables */
+    mca_btl_vader_component.vader_free_list_num = 8;
+    (void) mca_base_component_var_register(&mca_btl_vader_component.super.btl_version,
+                                           "free_list_num", NULL, MCA_BASE_VAR_TYPE_INT, NULL, 0,
+                                           MCA_BASE_VAR_FLAG_SETTABLE,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_LOCAL,
+                                           &mca_btl_vader_component.vader_free_list_num);
+    mca_btl_vader_component.vader_free_list_max = 8192;
+    (void) mca_base_component_var_register(&mca_btl_vader_component.super.btl_version,
+                                           "free_list_max", NULL, MCA_BASE_VAR_TYPE_INT, NULL, 0,
+                                           MCA_BASE_VAR_FLAG_SETTABLE,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_LOCAL,
+                                           &mca_btl_vader_component.vader_free_list_max);
+    mca_btl_vader_component.vader_free_list_inc = 64;
+    (void) mca_base_component_var_register(&mca_btl_vader_component.super.btl_version,
+                                           "free_list_inc", NULL, MCA_BASE_VAR_TYPE_INT, NULL, 0,
+                                           MCA_BASE_VAR_FLAG_SETTABLE,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_LOCAL,
+                                           &mca_btl_vader_component.vader_free_list_inc);
 
-    mca_btl_vader_max_inline_send =
-        mca_btl_vader_param_register_int("max_inline_send", mca_btl_vader_max_inline_send);
+    mca_btl_vader_memcpy_limit = 524288;
+    (void) mca_base_component_var_register(&mca_btl_vader_component.super.btl_version,
+                                           "memcpy_limit", NULL, MCA_BASE_VAR_TYPE_INT, NULL, 0,
+                                           MCA_BASE_VAR_FLAG_SETTABLE,
+                                           OPAL_INFO_LVL_5,
+                                           MCA_BASE_VAR_SCOPE_LOCAL,
+                                           &mca_btl_vader_memcpy_limit);
+    mca_btl_vader_log_align = 21;
+    (void) mca_base_component_var_register(&mca_btl_vader_component.super.btl_version,
+                                           "log_align", NULL, MCA_BASE_VAR_TYPE_INT, NULL, 0,
+                                           MCA_BASE_VAR_FLAG_SETTABLE,
+                                           OPAL_INFO_LVL_5,
+                                           MCA_BASE_VAR_SCOPE_LOCAL,
+                                           &mca_btl_vader_log_align);
+
+    mca_btl_vader_max_inline_send = 256;
+    (void) mca_base_component_var_register(&mca_btl_vader_component.super.btl_version,
+                                           "max_inline_send", NULL, MCA_BASE_VAR_TYPE_INT, NULL, 0,
+                                           MCA_BASE_VAR_FLAG_SETTABLE,
+                                           OPAL_INFO_LVL_5,
+                                           MCA_BASE_VAR_SCOPE_ALL_EQ,
+                                           &mca_btl_vader_max_inline_send);
 
     mca_btl_vader.super.btl_exclusivity = MCA_BTL_EXCLUSIVITY_HIGH;
     mca_btl_vader.super.btl_eager_limit = 64 * 1024;
@@ -156,6 +155,14 @@ static int mca_btl_vader_component_register (void)
 
 static int mca_btl_vader_component_open(void)
 {
+
+    /* limit segment alignment to be between 4k and 16M */
+    if (mca_btl_vader_log_align < 12) {
+        mca_btl_vader_log_align = 12;
+    } else if (mca_btl_vader_log_align > 25) {
+        mca_btl_vader_log_align = 25;
+    }
+
     mca_btl_vader_component.eager_limit = mca_btl_vader.super.btl_eager_limit;
 
     /* initialize objects */
@@ -198,10 +205,6 @@ static int mca_btl_vader_component_close(void)
         /* XXX LANL TODO -- remove unlink once the shmem segment uses xpmem */
         unlink(mca_btl_vader_component.vader_seg->shmem_ds.seg_name);
         OBJ_RELEASE(mca_btl_vader_component.vader_seg);
-    }
-
-    if (NULL != mca_btl_vader_component.vader_mpool_name) {
-        free(mca_btl_vader_component.vader_mpool_name);
     }
 
     OBJ_DESTRUCT(&mca_btl_vader_component.active_sends);

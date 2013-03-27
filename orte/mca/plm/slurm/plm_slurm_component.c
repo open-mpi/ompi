@@ -25,8 +25,6 @@
 #include "orte_config.h"
 #include "orte/constants.h"
 
-#include "opal/mca/base/mca_base_param.h"
-
 #include "orte/util/name_fns.h"
 #include "orte/runtime/orte_globals.h"
 
@@ -45,6 +43,7 @@ const char *mca_plm_slurm_component_version_string =
 /*
  * Local functions
  */
+static int plm_slurm_register(void);
 static int plm_slurm_open(void);
 static int plm_slurm_close(void);
 static int orte_plm_slurm_component_query(mca_base_module_t **module, int *priority);
@@ -73,7 +72,8 @@ orte_plm_slurm_component_t mca_plm_slurm_component = {
             /* Component open and close functions */
             plm_slurm_open,
             plm_slurm_close,
-            orte_plm_slurm_component_query
+            orte_plm_slurm_component_query,
+            plm_slurm_register
         },
         {
             /* The component is checkpoint ready */
@@ -86,15 +86,22 @@ orte_plm_slurm_component_t mca_plm_slurm_component = {
 };
 
 
-static int plm_slurm_open(void)
+static int plm_slurm_register(void)
 {
     mca_base_component_t *comp = &mca_plm_slurm_component.super.base_version;
 
-    mca_base_param_reg_string(comp, "args",
-                              "Custom arguments to srun",
-                              false, false, NULL,
-                              &mca_plm_slurm_component.custom_args);
+    mca_plm_slurm_component.custom_args = NULL;
+    (void) mca_base_component_var_register (comp, "args", "Custom arguments to srun",
+                                            MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
+                                            OPAL_INFO_LVL_9,
+                                            MCA_BASE_VAR_SCOPE_READONLY,
+                                            &mca_plm_slurm_component.custom_args);
 
+    return ORTE_SUCCESS;
+}
+
+static int plm_slurm_open(void)
+{
     return ORTE_SUCCESS;
 }
 
@@ -121,9 +128,5 @@ static int orte_plm_slurm_component_query(mca_base_module_t **module, int *prior
 
 static int plm_slurm_close(void)
 {
-    if (NULL != mca_plm_slurm_component.custom_args) {
-        free(mca_plm_slurm_component.custom_args);
-    }
-
     return ORTE_SUCCESS;
 }

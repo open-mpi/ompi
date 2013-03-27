@@ -29,6 +29,7 @@ int orte_dfs_orted_num_worker_threads = 0;
 /*
  * Local functionality
  */
+static int dfs_orted_register(void);
 static int dfs_orted_open(void);
 static int dfs_orted_close(void);
 static int dfs_orted_component_query(mca_base_module_t **module, int *priority);
@@ -53,7 +54,8 @@ orte_dfs_base_component_t mca_dfs_orted_component =
         /* Component open and close functions */
         dfs_orted_open,
         dfs_orted_close,
-        dfs_orted_component_query
+        dfs_orted_component_query,
+        dfs_orted_register
     },
     {
         /* The component is checkpoint ready */
@@ -61,13 +63,20 @@ orte_dfs_base_component_t mca_dfs_orted_component =
     }
 };
 
+static int dfs_orted_register(void)
+{
+    orte_dfs_orted_num_worker_threads = 0;
+    (void) mca_base_component_var_register(&mca_dfs_orted_component.base_version, "num_worker_threads",
+                                           "Number of worker threads to use for processing file requests",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
+                                           OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_LOCAL,
+                                           &orte_dfs_orted_num_worker_threads);
+
+    return ORTE_SUCCESS;
+}
+
 static int dfs_orted_open(void) 
 {
-    mca_base_component_t *c = &mca_dfs_orted_component.base_version;
-
-    mca_base_param_reg_int(c, "num_worker_threads",
-                           "Number of worker threads to use for processing file requests",
-                           false, false, 0, &orte_dfs_orted_num_worker_threads);
     return ORTE_SUCCESS;
 }
 

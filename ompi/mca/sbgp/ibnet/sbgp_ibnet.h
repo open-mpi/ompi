@@ -58,7 +58,7 @@ struct mca_sbgp_ibnet_component_t {
     /* IB MTU requested by user */
     int    mtu;    /** MTU on this port */
     /** IB partition definition */
-    uint32_t pkey_val;
+    int pkey_val;
     /* Keeping hca data */
     char *if_include;
     char **if_include_list;

@@ -178,43 +178,33 @@ struct mca_bcol_iboffload_component_t {
     /** name of ib memory pool */
     char* mpool_name;
     /** max outstanding CQE on the CQ */
-    uint32_t cq_size;
+    int cq_size;
     /** Max size of inline data */
-    uint32_t max_inline_data;
+    int max_inline_data;
     /** IB partition definition */
     uint32_t pkey_val;
     /** Outstanding atomic reads */
     uint32_t qp_ous_rd_atom;
     /** IB MTU */
-    uint32_t mtu;
+    int mtu;
     /** Recv not ready timer */
-    uint32_t min_rnr_timer;
+    int min_rnr_timer;
     /** IB timeout */
-    uint32_t timeout;
+    int timeout;
     /** IB retry count */
-    uint32_t retry_count;
+    int retry_count;
     /** Recv not ready retry count */
-    uint32_t rnr_retry;
+    int rnr_retry;
     /** IB maximum pending RDMA */
-    uint32_t max_rdma_dst_ops;
+    int max_rdma_dst_ops;
     /** IB Service level (QOS) */
-    uint32_t service_level;
-    /** number of iboffload modules that we want to open per single lid */
-    uint32_t bcols_per_lid;
-    /** Max LMCs that we want to support */
-    uint32_t max_lmc;
-    /** Max number of bcols */
-    uint32_t max_bcols;
-    /** Use the async event handler */
-    uint32_t use_async_event_thread;
+    int service_level;
     /** Preferred communication buffer alignment in Bytes (must be power of two) */
-    uint32_t buffer_alignment;
+    int buffer_alignment;
     /** Max tasks number for MQ */
-    uint32_t max_mqe_tasks;
+    int max_mqe_tasks;
     /** Max MQ size */
-    uint32_t max_mq_size;
-    /** Memory fragment size */
-    uint32_t frag_size;
+    int max_mq_size;
     /** HCA/Port include exclude list */
     char *if_include;
     char **if_include_list;
@@ -257,10 +247,6 @@ struct mca_bcol_iboffload_component_t {
     enum ibv_m_wr_calc_op map_ompi_to_ib_calcs[OMPI_OP_NUM_OF_TYPES];
     /** array mapping Open MPI data types to MVerbs data types */
     enum ibv_m_wr_data_type map_ompi_to_ib_dt[OMPI_DATATYPE_MPI_MAX_PREDEFINED];
-    /** The last ib offload calculation will be done by the cpu */
-    bool last_calc_in_cpu;
-    /** The last ib offload calculation will be done by the cpu */
-    bool enable_rdma_calc;
     /** The order of the exchange tree */
     int exchange_tree_order;
     /** Knomial tree order */

@@ -19,7 +19,6 @@
 #include "orte_config.h"
 
 #include "opal/mca/base/base.h"
-#include "opal/mca/base/mca_base_param.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/util/name_fns.h"
 
@@ -36,9 +35,9 @@ static int param_priority;
 /*
  * Local functions
  */
+static int orte_ras_loadleveler_register(void);
 static int orte_ras_loadleveler_open(void);
 static int orte_ras_loadleveler_component_query(mca_base_module_t **module, int *priority);
-
 
 orte_ras_base_component_t mca_ras_loadleveler_component = {
     /* First, the mca_base_component_t struct containing meta
@@ -55,7 +54,8 @@ orte_ras_base_component_t mca_ras_loadleveler_component = {
         /* Component open and close functions */
         orte_ras_loadleveler_open,
         NULL,
-        orte_ras_loadleveler_component_query
+        orte_ras_loadleveler_component_query,
+        orte_ras_loadleveler_register
     },
     {
         /* The component is checkpoint ready */
@@ -63,15 +63,22 @@ orte_ras_base_component_t mca_ras_loadleveler_component = {
     }
 };
 
-
-static int orte_ras_loadleveler_open(void)
+static int orte_ras_loadleveler_register(void)
 {
     /* for now we set the priority lower then the priority of the POE RAS
      * so that it is used whenever the LOADL_PROCESSOR_LIST is actually set */
-    mca_base_param_reg_int(&mca_ras_loadleveler_component.base_version,
-                           "priority",
-                           "Priority of the loadleveler ras component",
-                           false, false, 90, &param_priority);
+    param_priority = 90;
+    (void) mca_base_component_var_register(&mca_ras_loadleveler_component.base_version,
+                                           "priority", "Priority of the loadleveler ras component",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY, &param_priority);
+
+    return ORTE_SUCCESS;
+}
+
+static int orte_ras_loadleveler_open(void)
+{
     return ORTE_SUCCESS;
 }
 
@@ -79,7 +86,7 @@ static int orte_ras_loadleveler_component_query(mca_base_module_t **module, int 
 {
     /* Are we running under a LOADLEVELER job? */
     if (NULL != getenv("LOADL_STEP_ID")) {
-        mca_base_param_lookup_int(param_priority, priority);
+        *priority = param_priority;
         OPAL_OUTPUT_VERBOSE((2, orte_ras_base.ras_output,
                              "%s ras:loadleveler: available for selection",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));

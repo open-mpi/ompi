@@ -49,7 +49,6 @@
 #include "opal/sys/atomic.h"
 #include "opal/util/argv.h"
 #include "opal/memoryhooks/memory.h"
-#include "opal/mca/base/mca_base_param.h"
 /* Define this before including hwloc.h so that we also get the hwloc
    verbs helper header file, too.  We have to do this level of
    indirection because the hwloc subsystem is a component -- we don't
@@ -173,7 +172,7 @@ static int btl_openib_component_register(void)
 
     /* if_include and if_exclude need to be mutually exclusive */
     if (OPAL_SUCCESS != 
-        mca_base_param_check_exclusive_string(
+        mca_base_var_check_exclusive("ompi",
         mca_btl_openib_component.super.btl_version.mca_type_name,
         mca_btl_openib_component.super.btl_version.mca_component_name,
         "if_include",
@@ -620,15 +619,15 @@ static int openib_dereg_mr(void *reg_data, mca_mpool_base_registration_t *reg)
     openib_reg->mr = NULL;
     return OMPI_SUCCESS;
 }
-static inline int param_register_int(const char* param_name, int default_value)
+
+static inline int param_register_uint(const char* param_name, unsigned int default_value, unsigned int *storage)
 {
-    int param_value = default_value;
-
-    (void) mca_base_param_reg_int (&mca_btl_openib_component.super.btl_version,
-                                   param_name, NULL, false, false, default_value,
-                                   &param_value);
-
-    return param_value;
+    *storage = default_value;
+    (void) mca_base_component_var_register(&mca_btl_openib_component.super.btl_version,
+                                           param_name, NULL, MCA_BASE_VAR_TYPE_UNSIGNED_INT,
+                                           NULL, 0, 0, OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY, storage);
+    return *storage;
 }
 
 #if OPAL_HAVE_THREADS
@@ -809,37 +808,31 @@ static int init_one_port(opal_list_t *btl_list, mca_btl_openib_device_t *device,
 
             /* Check bandwidth configured for this device */
             sprintf(param, "bandwidth_%s", ibv_get_device_name(device->ib_dev));
-            openib_btl->super.btl_bandwidth =
-                param_register_int(param, openib_btl->super.btl_bandwidth);
+           param_register_uint(param, openib_btl->super.btl_bandwidth, &openib_btl->super.btl_bandwidth);
 
             /* Check bandwidth configured for this device/port */
             sprintf(param, "bandwidth_%s:%d", ibv_get_device_name(device->ib_dev),
                     port_num);
-            openib_btl->super.btl_bandwidth =
-                param_register_int(param, openib_btl->super.btl_bandwidth);
+           param_register_uint(param, openib_btl->super.btl_bandwidth, &openib_btl->super.btl_bandwidth);
 
             /* Check bandwidth configured for this device/port/LID */
             sprintf(param, "bandwidth_%s:%d:%d",
                     ibv_get_device_name(device->ib_dev), port_num, lid);
-            openib_btl->super.btl_bandwidth =
-                param_register_int(param, openib_btl->super.btl_bandwidth);
+           param_register_uint(param, openib_btl->super.btl_bandwidth, &openib_btl->super.btl_bandwidth);
 
             /* Check latency configured for this device */
             sprintf(param, "latency_%s", ibv_get_device_name(device->ib_dev));
-            openib_btl->super.btl_latency =
-                param_register_int(param, openib_btl->super.btl_latency);
+           param_register_uint(param, openib_btl->super.btl_latency, &openib_btl->super.btl_latency);
 
             /* Check latency configured for this device/port */
             sprintf(param, "latency_%s:%d", ibv_get_device_name(device->ib_dev),
                     port_num);
-            openib_btl->super.btl_latency =
-                param_register_int(param, openib_btl->super.btl_latency);
+           param_register_uint(param, openib_btl->super.btl_latency, &openib_btl->super.btl_latency);
 
             /* Check latency configured for this device/port/LID */
             sprintf(param, "latency_%s:%d:%d", ibv_get_device_name(device->ib_dev),
                     port_num, lid);
-            openib_btl->super.btl_latency =
-                param_register_int(param, openib_btl->super.btl_latency);
+           param_register_uint(param, openib_btl->super.btl_latency, &openib_btl->super.btl_latency);
 
             /* Auto-detect the port bandwidth */
             if (0 == openib_btl->super.btl_bandwidth) {
@@ -2443,7 +2436,7 @@ btl_openib_component_init(int *num_btl_modules,
     int distance;
     int index, value;
     bool found;
-    mca_base_param_source_t source;
+    mca_base_var_source_t source;
     int list_count = 0;
 
     /* initialization */
@@ -2520,36 +2513,20 @@ btl_openib_component_init(int *num_btl_modules,
        support */
     if ((OPAL_MEMORY_FREE_SUPPORT | OPAL_MEMORY_MUNMAP_SUPPORT) ==
         ((OPAL_MEMORY_FREE_SUPPORT | OPAL_MEMORY_MUNMAP_SUPPORT) & value)) {
-        ret = 0;
-        index = mca_base_param_find("mpi", NULL, "leave_pinned");
-        if (index >= 0) {
-            if (OPAL_SUCCESS == mca_base_param_lookup_int(index, &value) &&
-                -1 == value) {
-                ++ret;
-            }
-        }
-        index = mca_base_param_find("mpi", NULL, "leave_pinned_pipeline");
-        if (index >= 0) {
-            if (OPAL_SUCCESS == mca_base_param_lookup_int(index, &value) &&
-                OPAL_SUCCESS == mca_base_param_lookup_source(index, &source,
-                                                             NULL)) {
-                if (0 == value && MCA_BASE_PARAM_SOURCE_DEFAULT == source) {
-                    ++ret;
-                }
-            }
-        }
-        /* If we were good on both parameters, then set leave_pinned=1 */
-        if (2 == ret) {
+        if (0 == ompi_mpi_leave_pinned_pipeline &&
+            -1 == ompi_mpi_leave_pinned) {
             ompi_mpi_leave_pinned = 1;
-            ompi_mpi_leave_pinned_pipeline = 0;
         }
+    } else {
+        ompi_mpi_leave_pinned = 0;
+        ompi_mpi_leave_pinned_pipeline = 0;
     }
-    index = mca_base_param_find("btl", "openib", "max_inline_data");
+
+    index = mca_base_var_find("ompi", "btl", "openib", "max_inline_data");
     if (index >= 0) {
-        if (OPAL_SUCCESS == mca_base_param_lookup_source(index, &source,
-                                                         NULL)) {
+        if (OPAL_SUCCESS == mca_base_var_get_value(index, NULL, &source, NULL)) {
             if (-1 == mca_btl_openib_component.ib_max_inline_data  &&
-                MCA_BASE_PARAM_SOURCE_DEFAULT == source) {
+                MCA_BASE_VAR_SOURCE_DEFAULT == source) {
                 /* If the user has not explicitly set this MCA parameter
                    use max_inline_data value specified in the
                    device-specific parameters INI file */

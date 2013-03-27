@@ -24,7 +24,6 @@
 #include "ompi/class/ompi_free_list.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
-#include "opal/mca/base/mca_base_param.h"
 
 #include "ompi/mca/fs/fs.h"
 #include "ompi/mca/fs/base/base.h"
@@ -75,7 +74,7 @@ int mca_fs_base_open(void)
 
     /* Find the index of the MCA "fs" param for selection */
     
-    mca_fs_base_param = mca_base_param_find("fs", "base", NULL);
+    mca_fs_base_param = mca_base_var_find("ompi", "fs", NULL, NULL);
 
     return OMPI_SUCCESS;
 }

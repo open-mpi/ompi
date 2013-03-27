@@ -24,7 +24,6 @@
 #include "ompi/class/ompi_free_list.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
-#include "opal/mca/base/mca_base_param.h"
 
 #include "ompi/mca/fbtl/fbtl.h"
 #include "ompi/mca/fbtl/base/base.h"
@@ -74,7 +73,7 @@ int mca_fbtl_base_open(void)
 
     /* Find the index of the MCA "fbtl" param for selection */
     
-    mca_fbtl_base_param = mca_base_param_find("fbtl", "base", NULL);
+    mca_fbtl_base_param = mca_base_var_find("ompi", "fbtl", NULL, NULL);
 
     return OMPI_SUCCESS;
 }

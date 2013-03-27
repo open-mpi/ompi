@@ -70,9 +70,9 @@ int mca_topo_base_open(void)
     }
          
     mca_topo_base_components_opened_valid = true;
-    
-    /* Find the index of the "topo" param for selection */
-    mca_topo_base_param = mca_base_param_find("topo", "base", NULL);
+
+    /* Find selection variable */
+    mca_topo_base_param = mca_base_var_find("ompi", "topo", NULL, NULL);
 
      /* All done */
 

@@ -27,7 +27,6 @@
 #include "opal/mca/base/base.h"
 
 
-#include "opal/mca/base/mca_base_param.h"
 #include "ompi/mca/btl/btl.h"
 #include "ompi/mca/btl/base/base.h"
 
@@ -80,6 +79,48 @@ opal_list_t mca_btl_base_modules_initialized;
 int mca_btl_base_already_opened = 0;
 bool mca_btl_base_thread_multiple_override = false;
 
+static int mca_btl_base_register(int flags)
+{
+    mca_btl_base_verbose = 0;
+    (void) mca_base_var_register("ompi", "btl", "base", "verbose",
+                                 "Verbosity level of the BTL framework",
+                                 MCA_BASE_VAR_TYPE_INT, NULL, 0,
+                                 MCA_BASE_VAR_FLAG_SETTABLE,
+                                 OPAL_INFO_LVL_9,
+                                 MCA_BASE_VAR_SCOPE_LOCAL,
+                                 &mca_btl_base_verbose);
+
+    /* Override the per-BTL "don't run if THREAD_MULTIPLE selected"
+       embargo? */
+    mca_btl_base_thread_multiple_override = false;
+    (void) mca_base_var_register("ompi", "btl", "base", "thread_multiple_override",
+                                 "Enable BTLs that are not normally enabled when MPI_THREAD_MULTIPLE is enabled (THIS IS FOR DEVELOPERS ONLY!  SHOULD NOT BE USED BY END USERS!)",
+                                 MCA_BASE_VAR_TYPE_BOOL, NULL, 0,
+                                 MCA_BASE_VAR_FLAG_INTERNAL,
+                                 OPAL_INFO_LVL_9,
+                                 MCA_BASE_VAR_SCOPE_READONLY,
+                                 &mca_btl_base_thread_multiple_override);
+
+    (void) mca_base_var_register("ompi", "btl", "base", "include", NULL,
+                                 MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
+                                 OPAL_INFO_LVL_9,
+                                 MCA_BASE_VAR_SCOPE_READONLY,
+                                 &mca_btl_base_include);
+    (void) mca_base_var_register("ompi", "btl", "base", "exclude", NULL,
+                                 MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
+                                 OPAL_INFO_LVL_9,
+                                 MCA_BASE_VAR_SCOPE_READONLY,
+                                 &mca_btl_base_exclude);
+    (void) mca_base_var_register("ompi", "btl", "base", "warn_component_unused",
+                                 "This parameter is used to turn on warning messages when certain NICs are not used",
+                                 MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                 OPAL_INFO_LVL_9,
+                                 MCA_BASE_VAR_SCOPE_READONLY,
+                                 &mca_btl_base_warn_component_unused);
+
+    return OMPI_SUCCESS;
+}
+
 /**
  * Function for finding and opening either all MCA components, or the one
  * that was specifically requested via a MCA parameter.
@@ -89,48 +130,25 @@ int mca_btl_base_open(void)
     int i;
     if( ++mca_btl_base_already_opened > 1 ) return OMPI_SUCCESS;
 
-    /* Verbose output */
-    mca_base_param_reg_int_name("btl", 
-                                "base_verbose", 
-                                "Verbosity level of the BTL framework", 
-                                false, false, 
-                                0, 
-                                &mca_btl_base_verbose);
+    (void) mca_btl_base_register(0);
 
+    /* Verbose output */
     mca_btl_base_output = opal_output_open(NULL);
     opal_output_set_verbosity(mca_btl_base_output, mca_btl_base_verbose);
 
-    /* Override the per-BTL "don't run if THREAD_MULTIPLE selected"
-       embargo? */
-    mca_base_param_reg_int_name("btl", 
-                                "base_thread_multiple_override", 
-                                "Enable BTLs that are not normally enabled when MPI_THREAD_MULTIPLE is enabled (THIS IS FOR DEVELOPERS ONLY!  SHOULD NOT BE USED BY END USERS!)",
-                                true, false, 
-                                0, &i);
-    mca_btl_base_thread_multiple_override = OPAL_INT_TO_BOOL(i);
-
-  /* Open up all available components */
+    /* Open up all available components */
     
-  if (OMPI_SUCCESS != 
-      mca_base_components_open("btl", mca_btl_base_output, mca_btl_base_static_components,
-                               &mca_btl_base_components_opened, true)) {
-    return OMPI_ERROR;
-  }
+    if (OMPI_SUCCESS != 
+        mca_base_components_open("btl", mca_btl_base_output, mca_btl_base_static_components,
+                                 &mca_btl_base_components_opened, true)) {
+        return OMPI_ERROR;
+    }
 
   /* Initialize the list so that in mca_btl_base_close(), we can
      iterate over it (even if it's empty, as in the case of
      ompi_info) */
 
   OBJ_CONSTRUCT(&mca_btl_base_modules_initialized, opal_list_t);
-
-  /* register parameters */
-  (void) mca_base_param_reg_string_name ("btl", "base_include", NULL, false, false, NULL,
-                                         &mca_btl_base_include);
-  (void) mca_base_param_reg_string_name ("btl", "base_exclude", NULL, false, false, NULL,
-                                         &mca_btl_base_exclude);
-  (void) mca_base_param_reg_int_name ("btl", "base_warn_component_unused",
-      "This parameter is used to turn on warning messages when certain NICs are not used",
-      false, false, 1, &mca_btl_base_warn_component_unused);
 
   /* All done */
   return OMPI_SUCCESS;

@@ -120,10 +120,7 @@ mca_coll_demo_comm_query(struct ompi_communicator_t *comm, int *priority)
     demo_module = OBJ_NEW(mca_coll_demo_module_t);
     if (NULL == demo_module) return NULL;
 
-    if (OMPI_SUCCESS != 
-        mca_base_param_lookup_int(mca_coll_demo_priority_param, priority)) {
-        return NULL;
-    }
+    *priority = mca_coll_demo_priority;
 
     demo_module->super.coll_module_enable = mca_coll_demo_module_enable;
     demo_module->super.ft_event = mca_coll_demo_ft_event;
@@ -182,8 +179,6 @@ mca_coll_demo_module_enable(mca_coll_base_module_t *module,
 {
     mca_coll_demo_module_t *demo_module = (mca_coll_demo_module_t*) module;
 
-    mca_base_param_lookup_int(mca_coll_demo_verbose_param,
-                              &mca_coll_demo_verbose);
     if (mca_coll_demo_verbose > 0) {
         printf("Hello!  This is the \"demo\" coll component.  I'll be your coll component\ntoday.  Please tip your waitresses well.\n");
     }

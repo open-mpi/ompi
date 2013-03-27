@@ -17,10 +17,10 @@
  */
 #include "ompi_config.h"
 
-#include "opal/mca/base/mca_base_param.h"
 #include "ompi/mca/rcache/rcache.h"
 #include "rcache_rb.h"
 
+static int mca_rcache_rb_component_register(void);
 static int mca_rcache_rb_component_open(void); 
 
 static mca_rcache_base_module_t* mca_rcache_rb_component_init( void ); 
@@ -35,7 +35,9 @@ mca_rcache_rb_component_t mca_rcache_rb_component = {
             OMPI_MINOR_VERSION,  /* MCA component minor version */
             OMPI_RELEASE_VERSION,  /* MCA component release version */
             mca_rcache_rb_component_open,  /* component open  */
-            NULL
+            NULL, /* component close */
+            NULL, /* component query */
+            mca_rcache_rb_component_register
         },
         {
             /* The component is checkpoint ready */
@@ -45,6 +47,31 @@ mca_rcache_rb_component_t mca_rcache_rb_component = {
     }
 };
 
+static int ompi_rcache_rb_reg_mru_len;
+static int ompi_rcache_rb_mru_size;
+
+static int mca_rcache_rb_component_register(void)
+{
+    ompi_rcache_rb_reg_mru_len = 256;
+    (void) mca_base_component_var_register(&mca_rcache_rb_component.super.rcache_version,
+                                           "mru_len",
+                                           "The maximum size IN ENTRIES of the MRU (most recently used) rcache list",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &ompi_rcache_rb_reg_mru_len);
+
+    ompi_rcache_rb_mru_size = 1*1024*1024*1024; /* default to 1GB? */
+    (void) mca_base_component_var_register(&mca_rcache_rb_component.super.rcache_version,
+                                           "mru_size",
+                                           "The maximum size IN BYTES of the MRU (most recently used) rcache list",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &ompi_rcache_rb_mru_size);
+
+    return OMPI_SUCCESS;
+}
 
 static int mca_rcache_rb_component_open(void)
 {
@@ -57,22 +84,8 @@ mca_rcache_base_module_t* mca_rcache_rb_component_init(void) {
     rcache = (mca_rcache_rb_module_t*) malloc(sizeof(mca_rcache_rb_module_t));
     mca_rcache_rb_module_init(rcache);
  
-    mca_base_param_reg_int(&mca_rcache_rb_component.super.rcache_version, 
-                           "mru_len", 
-                           "The maximum size IN ENTRIES of the MRU (most recently used) rcache list", 
-                           false, 
-                           false, 
-                           256, 
-                           (int*)&(rcache->reg_mru_len)); 
-    
-    mca_base_param_reg_int(&mca_rcache_rb_component.super.rcache_version, 
-                           "mru_size", 
-                           "The maximum size IN BYTES of the MRU (most recently used) rcache list", 
-                           false, 
-                           false, 
-                           1*1024*1024*1024, /* default to 1GB? */  
-                           (int*)&(rcache->reg_max_mru_size)); 
-
+    rcache->reg_mru_len = (size_t) ompi_rcache_rb_reg_mru_len;
+    rcache->reg_max_mru_size = (size_t) ompi_rcache_rb_mru_size;
     
     return &rcache->base; 
 }

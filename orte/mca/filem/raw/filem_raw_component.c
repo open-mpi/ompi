@@ -27,6 +27,7 @@ const char *orte_filem_raw_component_version_string =
 /*
  * Local functionality
  */
+static int filem_raw_register(void);
 static int filem_raw_open(void);
 static int filem_raw_close(void);
 static int filem_raw_query(mca_base_module_t **module, int *priority);
@@ -45,7 +46,8 @@ orte_filem_base_component_t mca_filem_raw_component = {
         /* Component open and close functions */
         filem_raw_open,
         filem_raw_close,
-        filem_raw_query
+        filem_raw_query,
+        filem_raw_register
     },
     {
         /* The component is checkpoint ready */
@@ -53,16 +55,23 @@ orte_filem_base_component_t mca_filem_raw_component = {
     },
 };
 
-static int filem_raw_open(void) 
+static int filem_raw_register(void)
 {
-    int tmp;
     mca_base_component_t *c = &mca_filem_raw_component.base_version;
 
-    mca_base_param_reg_int(c, "flatten_directory_trees",
-                           "Put all files in the working directory instead of creating their respective directory trees",
-                           false, false, (int)false, &tmp);
-    orte_filem_raw_flatten_trees = OPAL_INT_TO_BOOL(tmp);
+    orte_filem_raw_flatten_trees = false;
+    (void) mca_base_component_var_register(c, "flatten_directory_trees",
+                                           "Put all files in the working directory instead of creating their respective directory trees",
+                                           MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &orte_filem_raw_flatten_trees);
 
+    return ORTE_SUCCESS;
+}
+
+static int filem_raw_open(void) 
+{
     return ORTE_SUCCESS;
 }
 

@@ -38,6 +38,22 @@ opal_compress_base_module_t opal_compress = {
 opal_list_t opal_compress_base_components_available;
 opal_compress_base_component_t opal_compress_base_selected_component;
 
+static int opal_compress_base_verbose = 0;
+
+static int opal_compress_base_register(int flags)
+{
+    /* Debugging/Verbose output */
+    opal_compress_base_verbose = 0;
+    (void) mca_base_var_register("opal", "compress", "base", "verbose",
+                                 "Verbosity level of the COMPRESS framework",
+                                 MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                 OPAL_INFO_LVL_9,
+                                 MCA_BASE_VAR_SCOPE_READONLY,
+                                 &opal_compress_base_verbose);
+
+    return OPAL_SUCCESS;
+}
+
 /**
  * Function for finding and opening either all MCA components,
  * or the one that was specifically requested via a MCA parameter.
@@ -45,32 +61,15 @@ opal_compress_base_component_t opal_compress_base_selected_component;
 int opal_compress_base_open(void)
 {
     int ret, exit_status = OPAL_SUCCESS;
-    int value;
-    char *str_value = NULL;
 
-    /* Debugging/Verbose output */
-    mca_base_param_reg_int_name("compress",
-                                "base_verbose",
-                                "Verbosity level of the COMPRESS framework",
-                                false, false,
-                                0, &value);
-    if(0 != value) {
+    (void) opal_compress_base_register(0);
+
+    if(0 != opal_compress_base_verbose) {
         opal_compress_base_output = opal_output_open(NULL);
     } else {
         opal_compress_base_output = -1;
     }
-    opal_output_set_verbosity(opal_compress_base_output, value);
-
-    /* 
-     * Which COMPRESS component to open
-     *  - NULL or "" = auto-select
-     *  - "none" = Empty component
-     *  - ow. select that specific component
-     */
-    mca_base_param_reg_string_name("compress", NULL,
-                                   "Which COMPRESS component to use (empty = auto-select)",
-                                   false, false,
-                                   NULL, &str_value);
+    opal_output_set_verbosity(opal_compress_base_output, opal_compress_base_verbose);
 
     /* Compression currently only used with C/R */
     if( !opal_cr_is_enabled ) {
@@ -85,17 +84,18 @@ int opal_compress_base_open(void)
                                                         mca_compress_base_static_components,
                                                         &opal_compress_base_components_available,
                                                         true)) ) {
-        if( OPAL_ERR_NOT_FOUND == ret &&
-            NULL != str_value &&
-            0 == strncmp(str_value, "none", strlen("none")) ) {
-            exit_status = OPAL_SUCCESS;
-        } else {
-            exit_status = OPAL_ERROR;
+        exit_status = OPAL_ERROR;
+        if( OPAL_ERR_NOT_FOUND == ret) {
+            const char **str_value = NULL;
+
+            ret = mca_base_var_find("opal", "compress", NULL, NULL);
+            mca_base_var_get_value(ret, &str_value, NULL, NULL);
+            if (NULL != str_value && NULL != str_value[0] &&
+                0 == strncmp(str_value[0], "none", strlen("none"))) {
+                exit_status = OPAL_SUCCESS;
+            }
         }
     }
 
-    if( NULL != str_value ) {
-        free(str_value);
-    }
     return exit_status;
 }

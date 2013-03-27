@@ -34,7 +34,7 @@
 #include "opal/util/argv.h"
 #include "opal/constants.h"
 
-#include "opal/mca/base/mca_base_param.h"
+#include "opal/mca/base/mca_base_var.h"
 
 #include "opal/threads/threads.h"
 #include "opal/threads/mutex.h"
@@ -245,7 +245,7 @@ int opal_crs_blcr_prelaunch(int32_t rank,
 {
     char * tmp_env_var = NULL;
 
-    tmp_env_var = mca_base_param_env_var("opal_cr_is_tool");
+    (void) mca_base_var_env_name("opal_cr_is_tool", &tmp_env_var);
     opal_setenv(tmp_env_var,
                 "0", true, env);
     free(tmp_env_var);

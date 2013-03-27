@@ -53,10 +53,9 @@ OBJ_CLASS_DECLARATION(mca_mpool_grdma_pool_t);
 struct mca_mpool_grdma_component_t {
     mca_mpool_base_component_t super;
     opal_list_t pools;
-    char* rcache_name;
-    size_t rcache_size_limit;
+    char *rcache_name;
     bool print_stats;
-    uint32_t leave_pinned;
+    int leave_pinned;
 };
 typedef struct mca_mpool_grdma_component_t mca_mpool_grdma_component_t;
 

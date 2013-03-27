@@ -22,7 +22,6 @@
 #include "orte/constants.h"
 
 #include "opal/mca/base/base.h"
-#include "opal/mca/base/mca_base_param.h"
 #include "opal/util/net.h"
 #include "opal/opal_socket_errno.h"
 
@@ -37,6 +36,7 @@
 /*
  * Local functions
  */
+static int ras_slurm_register(void);
 static int ras_slurm_open(void);
 static int ras_slurm_close(void);
 static int orte_ras_slurm_component_query(mca_base_module_t **module, int *priority);
@@ -59,7 +59,8 @@ orte_ras_slurm_component_t mca_ras_slurm_component = {
             /* Component open and close functions */
             ras_slurm_open,
             ras_slurm_close,
-            orte_ras_slurm_component_query
+            orte_ras_slurm_component_query,
+            ras_slurm_register
         },
         {
             /* The component is checkpoint ready */
@@ -69,41 +70,52 @@ orte_ras_slurm_component_t mca_ras_slurm_component = {
 };
 
 
+static int ras_slurm_register(void)
+{
+    mca_base_component_t *component = &mca_ras_slurm_component.super.base_version;
+
+    mca_ras_slurm_component.timeout = 30;
+    (void) mca_base_component_var_register (component, "dyn_allocate_timeout",
+                                            "Number of seconds to wait for Slurm dynamic allocation",
+                                            MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                            OPAL_INFO_LVL_9,
+                                            MCA_BASE_VAR_SCOPE_READONLY,
+                                            &mca_ras_slurm_component.timeout);
+
+    mca_ras_slurm_component.dyn_alloc_enabled = false;
+    (void) mca_base_component_var_register (component, "enable_dyn_alloc",
+                                            "Whether or not dynamic allocations are enabled",
+                                            MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                            OPAL_INFO_LVL_9,
+                                            MCA_BASE_VAR_SCOPE_READONLY,
+                                            &mca_ras_slurm_component.dyn_alloc_enabled);
+
+    mca_ras_slurm_component.config_file = NULL;
+    (void) mca_base_component_var_register (component, "config_file",
+                                            "Path to Slurm configuration file",
+                                            MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
+                                            OPAL_INFO_LVL_9,
+                                            MCA_BASE_VAR_SCOPE_READONLY,
+                                            &mca_ras_slurm_component.config_file);
+
+    mca_ras_slurm_component.rolling_alloc = false;
+    (void) mca_base_component_var_register (component, "enable_rolling_alloc",
+                                            "Enable partial dynamic allocations",
+                                            MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                            OPAL_INFO_LVL_9,
+                                            MCA_BASE_VAR_SCOPE_READONLY,
+                                            &mca_ras_slurm_component.rolling_alloc);
+
+    return ORTE_SUCCESS;
+}
+
 static int ras_slurm_open(void)
 {
-    int tmp;
-
-    mca_base_param_reg_int(&mca_ras_slurm_component.super.base_version,
-                           "dyn_allocate_timeout",
-                           "Number of seconds to wait for Slurm dynamic allocation",
-                           false, false, 30, &mca_ras_slurm_component.timeout);
-
-    mca_base_param_reg_int(&mca_ras_slurm_component.super.base_version,
-                           "enable_dyn_alloc",
-                           "Whether or not dynamic allocations are enabled",
-                           false, false, (int)false, &tmp);
-    mca_ras_slurm_component.dyn_alloc_enabled = OPAL_INT_TO_BOOL(tmp);
-
-    mca_base_param_reg_string(&mca_ras_slurm_component.super.base_version,
-                              "config_file",
-                              "Path to Slurm configuration file",
-                              false, false, NULL, &mca_ras_slurm_component.config_file);
-
-    mca_base_param_reg_int(&mca_ras_slurm_component.super.base_version,
-                           "enable_rolling_alloc",
-                           "Enable partial dynamic allocations",
-                           false, false, (int)false, &tmp);
-    mca_ras_slurm_component.rolling_alloc = OPAL_INT_TO_BOOL(tmp);
-
-
     return ORTE_SUCCESS;
 }
 
 static int ras_slurm_close(void)
 {
-    if (NULL != mca_ras_slurm_component.config_file) {
-        free(mca_ras_slurm_component.config_file);
-    }
     return ORTE_SUCCESS;
 }
 

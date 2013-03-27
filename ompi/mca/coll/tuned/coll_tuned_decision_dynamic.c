@@ -23,7 +23,6 @@
 #include "ompi/constants.h"
 #include "ompi/datatype/ompi_datatype.h"
 #include "ompi/communicator/communicator.h"
-#include "opal/mca/base/mca_base_param.h"
 #include "ompi/mca/coll/base/base.h"
 #include "ompi/mca/coll/coll.h"
 #include "ompi/mca/coll/base/coll_tags.h"

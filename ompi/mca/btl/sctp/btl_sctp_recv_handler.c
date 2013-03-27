@@ -39,7 +39,6 @@
 #include "ompi/constants.h"
 #include "opal/mca/event/event.h"
 
-#include "opal/mca/base/mca_base_param.h"
 #include "ompi/mca/mpool/base/base.h" 
 #include "ompi/mca/btl/base/btl_base_error.h"
 #include "btl_sctp.h"

@@ -41,9 +41,9 @@ struct mca_mtl_portals4_module_t {
     mca_mtl_base_module_t base;
 
     /** Eager limit; messages greater than this use a rendezvous protocol */
-    size_t eager_limit;
+    unsigned long long eager_limit;
     /** Size of short message blocks */
-    size_t recv_short_size;
+    unsigned long long recv_short_size;
     /** Number of short message blocks which should be created during startup */
     int recv_short_num;
     /** Length of the send event queues */

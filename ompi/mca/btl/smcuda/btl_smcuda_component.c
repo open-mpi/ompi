@@ -41,7 +41,6 @@
 #include <sys/stat.h>  /* for mkfifo */
 #endif  /* HAVE_SYS_STAT_H */
 
-#include "opal/mca/base/mca_base_param.h"
 #include "opal/mca/shmem/base/base.h"
 #include "opal/mca/shmem/shmem.h"
 #include "opal/util/bit_ops.h"
@@ -116,55 +115,47 @@ mca_btl_smcuda_component_t mca_btl_smcuda_component = {
 
 static inline char* mca_btl_smcuda_param_register_string(
     const char* param_name,
-    const char* default_value)
+    const char* default_value,
+    char **storage)
 {
-    char *param_value;
-
-    (void) mca_base_param_reg_string (&mca_btl_smcuda_component.super.btl_version,
-                                      param_name, NULL, false, false, default_value,
-                                      &param_value);
-
-    return param_value;
+    *storage = default_value;
+    (void) mca_base_component_var_register(&mca_btl_smcuda_component.super.btl_version,
+                                           param_name, NULL, MCA_BASE_VAR_TYPE_STRING,
+                                           NULL, 0, 0, OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY, storage);
+    return *storage;
 }
 
 static inline int mca_btl_smcuda_param_register_int(
     const char* param_name,
-    int default_value)
+    int default_value,
+    int *storage)
 {
-    int param_value = default_value;
-
-    (void) mca_base_param_reg_int (&mca_btl_smcuda_component.super.btl_version,
-                                   param_name, NULL, false, false, default_value,
-                                   &param_value);
-
-    return param_value;
+    *storage = default_value;
+    (void) mca_base_component_var_register(&mca_btl_smcuda_component.super.btl_version,
+                                           param_name, NULL, MCA_BASE_VAR_TYPE_INT,
+                                           NULL, 0, 0, OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY, storage);
+    return *storage;
 }
 
 
 static int smcuda_register(void)
 {
     /* register SM component parameters */
-    mca_btl_smcuda_component.sm_free_list_num =
-        mca_btl_smcuda_param_register_int("free_list_num", 8);
-    mca_btl_smcuda_component.sm_free_list_max =
-        mca_btl_smcuda_param_register_int("free_list_max", -1);
-    mca_btl_smcuda_component.sm_free_list_inc =
-        mca_btl_smcuda_param_register_int("free_list_inc", 64);
-    mca_btl_smcuda_component.sm_max_procs =
-        mca_btl_smcuda_param_register_int("max_procs", -1);
-    mca_btl_smcuda_component.sm_mpool_name =
-        mca_btl_smcuda_param_register_string("mpool", "sm");
-    mca_btl_smcuda_component.fifo_size =
-        mca_btl_smcuda_param_register_int("fifo_size", 4096);
-    mca_btl_smcuda_component.nfifos =
-        mca_btl_smcuda_param_register_int("num_fifos", 1);
+    mca_btl_smcuda_param_register_int("free_list_num", 8, &mca_btl_smcuda_component.sm_free_list_num);
+    mca_btl_smcuda_param_register_int("free_list_max", -1, &mca_btl_smcuda_component.sm_free_list_max);
+    mca_btl_smcuda_param_register_int("free_list_inc", 64, &mca_btl_smcuda_component.sm_free_list_inc);
+    mca_btl_smcuda_param_register_int("max_procs", -1, &mca_btl_smcuda_component.sm_max_procs);
+    /* NTH: selection variables for mpool names don't really work so hard-code the mpool name */
+    mca_btl_smcuda_component.sm_mpool_name = "sm";
+    mca_btl_smcuda_param_register_int("fifo_size", 4096, &mca_btl_smcuda_component.fifo_size);
+    mca_btl_smcuda_param_register_int("num_fifos", 1, &mca_btl_smcuda_component.nfifos);
 
-    mca_btl_smcuda_component.fifo_lazy_free =
-        mca_btl_smcuda_param_register_int("fifo_lazy_free", 120);
+    mca_btl_smcuda_param_register_int("fifo_lazy_free", 120, &mca_btl_smcuda_component.fifo_lazy_free);
 
     /* default number of extra procs to allow for future growth */
-    mca_btl_smcuda_component.sm_extra_procs =
-        mca_btl_smcuda_param_register_int("sm_extra_procs", 0);
+    mca_btl_smcuda_param_register_int("sm_extra_procs", 0, &mca_btl_smcuda_component.sm_extra_procs);
 
 #if OMPI_CUDA_SUPPORT
     /* Lower priority when CUDA support is not requested */
@@ -204,6 +195,10 @@ static int smcuda_register(void)
 
 static int mca_btl_smcuda_component_open(void)
 {
+    if (OMPI_SUCCESS != mca_btl_base_param_verify(&mca_btl_smcuda.super)) {
+        return OMPI_ERROR;
+    }
+
     mca_btl_smcuda_component.sm_max_btls = 1;
 
     /* make sure the number of fifos is a power of 2 */
@@ -289,10 +284,6 @@ static int mca_btl_smcuda_component_close(void)
     }
 #endif
 
-    if (NULL != mca_btl_smcuda_component.sm_mpool_name) {
-        free(mca_btl_smcuda_component.sm_mpool_name);
-    }
-
 CLEANUP:
 
     /* return */
@@ -362,38 +353,24 @@ get_min_mpool_size(mca_btl_smcuda_component_t *comp_ptr,
 {
     char *type_name = "mpool";
     char *param_name = "min_size";
-    char *min_size = NULL;
+    const mca_base_var_storage_t *min_size;
     int id = 0;
-    size_t default_min = 67108864;
-    size_t size = 0;
-    long tmp_size = 0;
 
-    if (0 > (id = mca_base_param_find(type_name, comp_ptr->sm_mpool_name,
-                                      param_name))) {
-        opal_output(0, "mca_base_param_find: failure looking for %s_%s_%s\n",
+    if (0 > (id = mca_base_var_find("ompi", type_name, comp_ptr->sm_mpool_name,
+                                    param_name))) {
+        opal_output(0, "mca_base_var_find: failure looking for %s_%s_%s\n",
                     type_name, comp_ptr->sm_mpool_name, param_name);
         return OMPI_ERR_NOT_FOUND;
     }
-    if (OPAL_ERROR == mca_base_param_lookup_string(id, &min_size)) {
-        opal_output(0, "mca_base_param_lookup_string failure\n");
-        return OMPI_ERROR;
-    }
-    errno = 0;
-    tmp_size = strtol(min_size, (char **)NULL, 10);
-    if (ERANGE == errno || EINVAL == errno || tmp_size <= 0) {
-        opal_output(0, "mca_btl_sm::get_min_mpool_size: "
-                       "Unusable %s_%s_min_size provided. "
-                       "Continuing with %lu.", type_name,
-                       comp_ptr->sm_mpool_name,
-                       (unsigned long)default_min);
 
-        size = default_min;
+    if (OPAL_SUCCESS != mca_base_var_get_value(id, &min_size, NULL, NULL)) {
+        opal_output(0, "mca_base_var_get_value failure!");
+        return OMPI_ERROR;        
     }
-    else {
-        size = (size_t)tmp_size;
-    }
-    free(min_size);
-    *out_size = size;
+
+    /* min_size is a unsigned long long */
+    *out_size = (size_t) min_size->ullval;
+
     return OMPI_SUCCESS;
 }
 

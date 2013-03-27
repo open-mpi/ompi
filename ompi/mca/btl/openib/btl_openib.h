@@ -206,41 +206,44 @@ struct mca_btl_openib_component_t {
 
     uint32_t ib_cq_size[2];  /**< Max outstanding CQE on the CQ */
 
-    int32_t ib_max_inline_data; /**< Max size of inline data */
-    uint32_t ib_pkey_val;
-    uint32_t ib_psn;
-    uint32_t ib_qp_ous_rd_atom;
+    int      ib_max_inline_data; /**< Max size of inline data */
+    unsigned int ib_pkey_val;
+    unsigned int ib_psn;
+    unsigned int ib_qp_ous_rd_atom;
     uint32_t ib_mtu;
-    uint32_t ib_min_rnr_timer;
-    uint32_t ib_timeout;
-    uint32_t ib_retry_count;
-    uint32_t ib_rnr_retry;
-    uint32_t ib_max_rdma_dst_ops;
-    uint32_t ib_service_level;
+    unsigned int ib_min_rnr_timer;
+    unsigned int ib_timeout;
+    unsigned int ib_retry_count;
+    unsigned int ib_rnr_retry;
+    unsigned int ib_max_rdma_dst_ops;
+    unsigned int ib_service_level;
 #if (ENABLE_DYNAMIC_SL)
-    uint32_t ib_path_record_service_level;
+    unsigned int ib_path_record_service_level;
 #endif
-    int32_t use_eager_rdma;
-    int32_t eager_rdma_threshold; /**< After this number of msg, use RDMA for short messages, always */
-    int32_t eager_rdma_num;
+    int     use_eager_rdma;
+    int     eager_rdma_threshold; /**< After this number of msg, use RDMA for short messages, always */
+    int     eager_rdma_num;
     int32_t max_eager_rdma;
-    uint32_t btls_per_lid;
-    uint32_t max_lmc;
-    int32_t apm_lmc;
-    int32_t apm_ports;
-    uint32_t buffer_alignment;    /**< Preferred communication buffer alignment in Bytes (must be power of two) */
+    unsigned int btls_per_lid;
+    unsigned int max_lmc;
+    int     apm_lmc;
+    int     apm_ports;
+    unsigned int buffer_alignment;    /**< Preferred communication buffer alignment in Bytes (must be power of two) */
 #if OPAL_HAVE_THREADS
     int32_t error_counter;           /**< Counts number on error events that we got on all devices */
     int async_pipe[2];               /**< Pipe for comunication with async event thread */
     int async_comp_pipe[2];          /**< Pipe for async thread comunication with main thread */
     pthread_t   async_thread;        /**< Async thread that will handle fatal errors */
-    uint32_t use_async_event_thread; /**< Use the async event handler */
+    bool use_async_event_thread;     /**< Use the async event handler */
     mca_btl_openib_srq_manager_t srq_manager;     /**< Hash table for all BTL SRQs */
 #if BTL_OPENIB_FAILOVER_ENABLED
-    uint32_t port_error_failover;    /**< Report port errors to speed up failover */
+    bool port_error_failover;        /**< Report port errors to speed up failover */
 #endif
 #endif
-    btl_openib_device_type_t device_type;
+    /* declare as an int instead of btl_openib_device_type_t since there is no
+       guarantee about the size of an enum. this value will be registered as an
+       integer with the MCA variable system */
+    int device_type;
     char *if_include;
     char **if_include_list;
     char *if_exclude;
@@ -277,10 +280,10 @@ struct mca_btl_openib_component_t {
         that they all exist) */
     char **if_list;
     bool use_message_coalescing;
-    uint32_t cq_poll_ratio;
-    uint32_t cq_poll_progress;
-    uint32_t cq_poll_batch;
-    uint32_t eager_rdma_poll_ratio;
+    unsigned int cq_poll_ratio;
+    unsigned int cq_poll_progress;
+    unsigned int cq_poll_batch;
+    unsigned int eager_rdma_poll_ratio;
 #ifdef HAVE_IBV_FORK_INIT
     /** Whether we want fork support or not */
     int want_fork_support;
@@ -309,7 +312,7 @@ struct mca_btl_openib_component_t {
     void* (*previous_malloc_hook)(size_t __size, const void*);
 #endif
 #if OMPI_CUDA_SUPPORT /* CUDA_ASYNC_SEND */
-    int cuda_async_send;
+    bool cuda_async_send;
     int cuda_async_recv;
 #endif /* OMPI_CUDA_SUPPORT */
 }; typedef struct mca_btl_openib_component_t mca_btl_openib_component_t;

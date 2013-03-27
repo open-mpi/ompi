@@ -39,6 +39,7 @@ const char *mca_sbgp_basesmuma_component_version_string =
  * Local functions
  */
 
+static int basesmuma_register(void);
 static int basesmuma_open(void);
 static int basesmuma_close(void);
 static mca_sbgp_base_module_t *mca_sbgp_basesmuma_select_procs(struct ompi_proc_t ** procs,
@@ -46,19 +47,6 @@ static mca_sbgp_base_module_t *mca_sbgp_basesmuma_select_procs(struct ompi_proc_
 
 static int mca_sbgp_basesmuma_init_query(bool enable_progress_threads,
         bool enable_mpi_threads);
-
-
-static inline int mca_sbgp_basesmuma_param_register_int(
-        const char* param_name, int default_value)
-{
-    int param_value = default_value;
-
-    (void) mca_base_param_reg_int (&mca_sbgp_basesmuma_component.super.sbgp_version,
-                                   param_name, NULL, false, false, default_value,
-                                   &param_value);
-
-    return param_value;
-}
 
 /*
  * Instantiate the public struct with all of our public information
@@ -83,10 +71,12 @@ mca_sbgp_basesmuma_component_t mca_sbgp_basesmuma_component = {
             OMPI_MINOR_VERSION,
             OMPI_RELEASE_VERSION,
 
-            /* Component open and close functions */
+            /* Component open, close, and register functions */
 
             basesmuma_open,
             basesmuma_close,
+            NULL,
+            basesmuma_register
         },
     mca_sbgp_basesmuma_init_query,
     mca_sbgp_basesmuma_select_procs,
@@ -99,18 +89,28 @@ mca_sbgp_basesmuma_component_t mca_sbgp_basesmuma_component = {
 };
 
 /*
+ * Register the component
+ */
+static int basesmuma_register(void)
+{
+    mca_sbgp_basesmuma_component_t *cs = &mca_sbgp_basesmuma_component;
+
+    /* set component priority */
+    cs->super.priority = 90;
+    (void) mca_base_component_var_register(&cs->super.sbgp_version,
+                                           "priority", "Priority of the sbgp basesmuma",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &cs->super.priority);
+    return OMPI_SUCCESS;
+}
+
+/*
  * Open the component
  */
 static int basesmuma_open(void)
 {
-
-    /* local variables */
-    mca_sbgp_basesmuma_component_t *cs = &mca_sbgp_basesmuma_component;
-
-    /* set component priority */
-    cs->super.priority=
-        mca_sbgp_basesmuma_param_register_int("priority",90);
-
     return OMPI_SUCCESS;
 }
 

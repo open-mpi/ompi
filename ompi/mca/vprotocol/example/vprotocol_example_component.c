@@ -11,14 +11,9 @@
 #include "ompi_config.h"
 
 #include "opal/mca/mca.h"
-#include "opal/mca/base/mca_base_param.h"
 #include "../pml_v.h"
 #include "../pml_v_protocol_base.h"
 #include "vprotocol_example.h"
-
-
-static inline int mca_param_register_int( const char* param_name, int default_value);
-
 
 static int mca_vprotocol_example_component_open(void);
 static int mca_vprotocol_example_component_close(void);
@@ -106,19 +101,3 @@ int mca_vprotocol_example_component_finalize(void)
   
   return OMPI_SUCCESS;
 }
-
-/**
-  * Helper function to set int type mca parameter
-  */ 
-static inline int mca_param_register_int( const char* param_name,
-                                                  int default_value )
-{
-  int param_value = default_value;
-
-  (void) mca_base_param_reg_int (&mca_vprotocol_example_component.pmlm_version,
-                                 param_name, NULL, false, false, default_value,
-                                 &param_value);
-
-  return param_value;
-}
-

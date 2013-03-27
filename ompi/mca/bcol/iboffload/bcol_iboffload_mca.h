@@ -15,5 +15,6 @@
 #include "ompi_config.h"
 
 int mca_bcol_iboffload_register_params(void);
+int mca_bcol_iboffload_verify_params(void);
 
 #endif

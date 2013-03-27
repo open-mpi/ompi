@@ -14,8 +14,6 @@
 #include "orte/constants.h"
 
 #include "opal/mca/base/base.h"
-#include "opal/mca/base/mca_base_param.h"
-
 
 #include "orte/mca/routed/base/base.h"
 #include "routed_direct.h"

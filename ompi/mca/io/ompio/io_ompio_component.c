@@ -35,6 +35,7 @@ int mca_io_ompio_coll_timing_info = 0;
 /*
  * Private functions
  */
+static int register_component(void);
 static int open_component(void);
 static int close_component(void);
 static int init_query(bool enable_progress_threads,
@@ -100,6 +101,8 @@ mca_io_base_component_2_0_0_t mca_io_ompio_component = {
         OMPI_RELEASE_VERSION,
         open_component,
         close_component,
+        NULL,
+        register_component
     },
     {
         /* The component is checkpoint ready */
@@ -121,73 +124,83 @@ mca_io_base_component_2_0_0_t mca_io_ompio_component = {
     NULL  /* io_register_datarep */
 };
 
-
-static int open_component(void)
+static int register_component(void)
 {
-    int param;
+    priority_param = 10;
+    (void) mca_base_component_var_register(&mca_io_ompio_component.io_version,
+                                           "priority", "Priority of the io ompio component",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &priority_param);
+    delete_priority_param = 10;
+    (void) mca_base_component_var_register(&mca_io_ompio_component.io_version,
+                                           "delete_priority", "Delete priority of the io ompio component",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &delete_priority_param);
 
-    param = mca_base_param_find ("io", NULL, "ompio_cycle_buffer_size");
-    if (param >= 0) {
-        mca_base_param_lookup_int (param, &mca_io_ompio_cycle_buffer_size);
-    }
-    param = mca_base_param_find ("io", NULL, "ompio_bytes_per_agg");
-    if (param >= 0) {
-        mca_base_param_lookup_int (param, &mca_io_ompio_bytes_per_agg);
-    }
+    /* NTH: Don't bother registering a version if there is none */
+/*     reg_string(&mca_io_ompio_component.io_version, */
+/*                               "version",  */
+/*                               "Version of OMPIO", */
+/*                               false, true, NULL, NULL); */
 
-    priority_param = 
-        mca_base_param_reg_int(&mca_io_ompio_component.io_version, 
-                               "priority",
-                               "Priority of the io ompio component",
-                               false, false, priority_param, NULL);
-    delete_priority_param = 
-        mca_base_param_reg_int(&mca_io_ompio_component.io_version,
-                               "delete_priority", 
-                               "Delete priority of the io ompio component",
-                               false, false, delete_priority_param, NULL);
+    mca_io_ompio_record_offset_info = 0;
+    (void) mca_base_component_var_register(&mca_io_ompio_component.io_version,
+                                           "record_file_offset_info",
+                                           "The information of the file offset/length",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &mca_io_ompio_record_offset_info);
 
-    mca_base_param_reg_string(&mca_io_ompio_component.io_version,
-                              "version", 
-                              "Version of OMPIO",
-                              false, true, NULL, NULL);
+    mca_io_ompio_coll_timing_info = 0;
+    (void) mca_base_component_var_register(&mca_io_ompio_component.io_version,
+                                           "coll_timing_info",
+                                           "Enable collective algorithm timing information",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &mca_io_ompio_coll_timing_info);
 
-    mca_base_param_reg_int (&mca_io_ompio_component.io_version,
-                            "record_file_offset_info",
-                            "The information of the file offset/length",
-                            false, false, mca_io_ompio_record_offset_info,
-                            &mca_io_ompio_record_offset_info);
+    mca_io_ompio_cycle_buffer_size = OMPIO_PREALLOC_MAX_BUF_SIZE;
+    (void) mca_base_component_var_register(&mca_io_ompio_component.io_version,
+                                           "cycle_buffer_size",
+                                           "Cycle Buffer Size of individual reads/writes",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &mca_io_ompio_cycle_buffer_size);
 
-    mca_base_param_reg_int (&mca_io_ompio_component.io_version,
-                            "coll_timing_info",
-                            "Enable collective algorithm timing information",
-                            false, false, mca_io_ompio_coll_timing_info,
-                            &mca_io_ompio_coll_timing_info);
-
-
-    mca_base_param_reg_int (&mca_io_ompio_component.io_version,
-                            "cycle_buffer_size",
-                            "Cycle Buffer Size of individual reads/writes",
-                            false, false, mca_io_ompio_cycle_buffer_size,
-                            &mca_io_ompio_cycle_buffer_size);
-
-    mca_base_param_reg_int (&mca_io_ompio_component.io_version,
-                            "bytes_per_agg",
-                            "Bytes per aggregator process for automatic selection",
-                            false, false, mca_io_ompio_bytes_per_agg,
-                            &mca_io_ompio_bytes_per_agg);
+    mca_io_ompio_bytes_per_agg = OMPIO_PREALLOC_MAX_BUF_SIZE;
+    (void) mca_base_component_var_register(&mca_io_ompio_component.io_version,
+                                           "bytes_per_agg",
+                                           "Bytes per aggregator process for automatic selection",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &mca_io_ompio_bytes_per_agg);
 
     /*
-    mca_base_param_reg_string(&mca_io_ompio_component.io_version,
+    reg_string(&mca_io_ompio_component.io_version,
                               "user_configure_params", 
                               "User-specified command line parameters passed to OMPIO's configure script",
                               false, true, 
                               MCA_io_ompio_USER_CONFIGURE_FLAGS, NULL);
-    mca_base_param_reg_string(&mca_io_ompio_component.io_version,
+    reg_string(&mca_io_ompio_component.io_version,
                               "complete_configure_params", 
                               "Complete set of command line parameters passed to OMPIO's configure script",
                               false, true, 
                               MCA_io_ompio_COMPLETE_CONFIGURE_FLAGS, NULL);
     */
+  
+    return OMPI_SUCCESS;
+}
+
+static int open_component(void)
+{
     /* Create the mutex */
     OBJ_CONSTRUCT(&mca_io_ompio_mutex, opal_mutex_t);
 
@@ -227,12 +240,7 @@ file_query(struct ompi_file_t *file,
 {
     mca_io_ompio_data_t *data;
 
-    /* Lookup our priority */
-
-    if (OMPI_SUCCESS != mca_base_param_lookup_int(priority_param,
-                                                  priority)) {
-        return NULL;
-    }
+    *priority = priority_param;
 
     /* Allocate a space for this module to hang private data (e.g.,
        the OMPIO file handle) */
@@ -268,13 +276,7 @@ static int delete_query(char *filename, struct ompi_info_t *info,
                         struct mca_io_base_delete_t **private_data,
                         bool *usable, int *priority)
 {
-    /* Lookup our priority */
-
-    if (OMPI_SUCCESS != mca_base_param_lookup_int(delete_priority_param,
-                                                  priority)) {
-        return OMPI_ERROR;
-    }
-
+    *priority = delete_priority_param;
     *usable = true;
     *private_data = NULL;
 
