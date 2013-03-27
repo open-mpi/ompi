@@ -347,7 +347,7 @@ elif test -d .git; then
     echo "*** Restoring pristine VERSION file..."
     git checkout VERSION
     echo "*** Getting git version number..."
-    svn_r=git`git log -1 --oneline | head -1 | cut -d' ' -f2`
+    svn_r=git`git log -1 --oneline | head -1 | cut -d' ' -f1`
 fi
 echo "    Repo rev number: $svn_r"
 if test "$svn_r" = ""; then
