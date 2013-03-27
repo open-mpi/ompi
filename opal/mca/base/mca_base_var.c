@@ -681,7 +681,7 @@ static int var_set_bool (mca_base_var_t *var, bool value)
 
 static int var_set_string (mca_base_var_t *var, char *value)
 {
-    char *tmp, *p;
+    char *tmp, *p=NULL;
     int ret;
 
     if (NULL != var->mbv_storage->stringval) {
@@ -718,7 +718,9 @@ static int var_set_string (mca_base_var_t *var, char *value)
         tmp[0] = '\0';
         tmp += 3;
 
-        ret = asprintf (&tmp, "%s:%s%s%s", p, home ? home : "", home ? "/" : "", tmp);
+        ret = asprintf (&tmp, "%s:%s%s%s",
+                        (NULL == p) ? "" : p,
+                        home ? home : "", home ? "/" : "", tmp);
 
         free (value);
 
