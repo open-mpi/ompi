@@ -57,6 +57,8 @@ void orte_grpcomm_base_xcast_recv(int status, orte_process_name_t* sender,
     opal_byte_object_t *bo;
     int8_t flag;
     orte_grpcomm_collective_t coll;
+    orte_job_t *jdata;
+    orte_proc_t *rec;
 
     OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base.output,
                          "%s grpcomm:xcast:recv:send_relay",
@@ -162,6 +164,16 @@ void orte_grpcomm_base_xcast_recv(int status, orte_process_name_t* sender,
                              ORTE_NAME_PRINT(&nm->name)));
         rly = OBJ_NEW(opal_buffer_t);
         opal_dss.copy_payload(rly, relay);
+        /* check the state of the recipient - no point
+         * sending to someone not alive
+         */
+        jdata = orte_get_job_data_object(nm->name.jobid);
+        if (NULL == (rec = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, nm->name.vpid))) {
+            continue;
+        }
+        if (ORTE_PROC_STATE_RUNNING < rec->state) {
+            continue;
+        }
         if (0 > (ret = orte_rml.send_buffer_nb(&nm->name, rly, ORTE_RML_TAG_XCAST, 0,
                                                orte_rml_send_callback, NULL))) {
             ORTE_ERROR_LOG(ret);

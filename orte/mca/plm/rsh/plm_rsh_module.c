@@ -285,6 +285,8 @@ static void rsh_wait_daemon(pid_t pid, int status, void* cbdata)
             orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, buf,
                                     ORTE_RML_TAG_REPORT_REMOTE_LAUNCH, 0,
                                     orte_rml_send_callback, NULL);
+            /* note that this daemon failed */
+            daemon->state = ORTE_PROC_STATE_FAILED_TO_START;
         } else {
             jdata = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid);
             
