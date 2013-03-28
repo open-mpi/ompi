@@ -3490,10 +3490,7 @@ void vt_enter_stat(uint32_t tid, uint64_t* time)
 
   if (VTTHRD_TRACE_STATUS(VTThrdv[tid]) != VT_TRACE_ON) return;
 
-  VTGen_write_ENTER(VTTHRD_GEN(VTThrdv[tid]), time,
-                    vt_trc_regid[VT__TRC_STAT], 0);
-
-  update_counter(tid, time);
+  VTGen_write_ENTER_STAT(VTTHRD_GEN(VTThrdv[tid]), time);
 }
 
 void vt_exit_stat(uint32_t tid, uint64_t* time)
@@ -3502,10 +3499,7 @@ void vt_exit_stat(uint32_t tid, uint64_t* time)
 
   if (VTTHRD_TRACE_STATUS(VTThrdv[tid]) != VT_TRACE_ON) return;
 
-  update_counter(tid, time);
-  if (VTTHRD_TRACE_STATUS(VTThrdv[tid]) != VT_TRACE_ON) return;
-
-  VTGen_write_LEAVE(VTTHRD_GEN(VTThrdv[tid]), time, 0, 0);
+  VTGen_write_LEAVE_STAT(VTTHRD_GEN(VTThrdv[tid]), time);
 }
 
 void vt_enter_flush(uint32_t tid, uint64_t* time)

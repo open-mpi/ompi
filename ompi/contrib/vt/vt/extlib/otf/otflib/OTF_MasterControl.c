@@ -207,6 +207,7 @@ int OTF_MasterControl_read( OTF_MasterControl* mc, const char* namestub ) {
 			if ( ! OTF_RBuffer_testChar( buffer, ':') ) {
 				OTF_Error( "OTF_MasterControl_read() "
 					"ERROR: missing expected character ':'" );
+				free( buffer );
 				return 0;
 			}
 			mode = (OTF_IofslMode)OTF_RBuffer_readUint32( buffer );
@@ -214,12 +215,14 @@ int OTF_MasterControl_read( OTF_MasterControl* mc, const char* namestub ) {
 				&& mode != OTF_IOFSL_MULTIFILE ) {
 				OTF_Error( "OTF_MasterControl_read() "
 					"ERROR: invalid IofslMode." );
+				free( buffer );
 				return 0;
 			}
 
 			if ( ! OTF_RBuffer_testChar( buffer, ':') ) {
 				OTF_Error( "OTF_MasterControl_read() "
 					"ERROR: missing expected character ':'" );
+				free( buffer );
 				return 0;
 			}
 			streamid_bits = OTF_RBuffer_readUint32( buffer );

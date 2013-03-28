@@ -628,6 +628,7 @@ readDataFile()
         break;
       }
       case 31: // partype_default
+      default:
       {
         if( value.compare( "seq" ) == 0 )
         {
@@ -653,14 +654,6 @@ readDataFile()
                     << value << "'" << std::endl;
           error = true;
         }
-        break;
-      }
-      default:
-      {
-        std::cerr << ExeName << ": "
-                  << data_file << ":" << line_no << ": "
-                  << "could not be parsed" << std::endl;
-        error = true;
         break;
       }
     }
@@ -1457,10 +1450,12 @@ parseCommandLine( int argc, char** argv )
     else if( arg.compare( 0, 5, "-lmpi" ) == 0 ||
              arg.compare( 0, 7, "-lmtmpi" ) == 0 ||
              arg.compare( 0, 7, "-lhpmpi" ) == 0 ||
+             arg.compare( 0, 7, "-lpcmpi" ) == 0 ||
              arg.compare( 0, 7, "-lscmpi" ) == 0 ||
              arg.find( "libmpi" ) != std::string::npos ||
              arg.find( "libmtmpi" ) != std::string::npos ||
              arg.find( "libhpmpi" ) != std::string::npos ||
+             arg.find( "libpcmpi" ) != std::string::npos ||
              arg.find( "libscmpi" ) != std::string::npos )
     {
       Config.setUsesMpi( true );

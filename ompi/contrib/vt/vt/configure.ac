@@ -63,12 +63,7 @@ AS_IF([test "$?" = "0"],
 [AC_MSG_ERROR([VampirTrace does not allow whitespace in the source directory path!])])
 AC_SUBST(top_vt_srcdir)
 AS_IF([test "$top_vt_builddir" != "$top_vt_srcdir"],
-[
-	AC_MSG_NOTICE([detected VPATH build])
-	# If VPATH build, including of the source directory needed
-	# to find '<srcdir>/config_bottom.h' and '<srcdir>/util/util.h'
-	CPPFLAGS='-I$(top_srcdir)'" $CPPFLAGS"
-])
+[AC_MSG_NOTICE([detected VPATH build])])
 
 # Check for file system case sensitivity
 ACVT_CSFS
@@ -463,6 +458,14 @@ AS_IF([test x"$force_vtrun" = "xyes" -a x"$vtrun_error" = "xyes"], [exit 1])
 AS_IF([test x"$enable_config_titles" = "xyes" -a x"$check_vtrun" = "xno"],
 [AC_MSG_NOTICE([disabled via command line switch])])
 AM_CONDITIONAL(AMBUILDVTRUN, test x"$build_vtrun" = "xyes")
+
+# If it's a VPATH build, add the top-level source directory as an include path
+# to find '<srcdir>/config_bottom.h' and '<srcdir>/util/util.h'
+AS_IF([test "$top_vt_builddir" != "$top_vt_srcdir"],
+[
+	CPPFLAGS='-I$(top_srcdir)'" $CPPFLAGS"
+	CPPFLAGS_FOR_BUILD='-I$(top_srcdir)'" $CPPFLAGS_FOR_BUILD"
+])
 
 # Output files
 AC_CONFIG_FILES([Makefile

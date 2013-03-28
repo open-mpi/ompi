@@ -221,6 +221,8 @@ OTFAUX_ThumbnailReader_read( OTFAUX_ThumbnailReader* tn_reader,
                                                const uint32_t* /* function tokens */ ),
                              void* data )
 {
+    int ret = 0;
+
     unsigned long long process;
     uint32_t* functions;
     int status;
@@ -256,15 +258,15 @@ OTFAUX_ThumbnailReader_read( OTFAUX_ThumbnailReader* tn_reader,
         }
     }
 
-    if ( fgetc( tn_reader->file ) != EOF )
+    if ( fgetc( tn_reader->file ) == EOF )
     {
-        return 0;
+        ret = ( i == tn_reader->nprocs
+                && j == tn_reader->width
+                && feof( tn_reader->file ) );
     }
 
 out:
     free( functions );
 
-    return i == tn_reader->nprocs
-           && j == tn_reader->width
-           && feof( tn_reader->file );
+    return ret;
 }

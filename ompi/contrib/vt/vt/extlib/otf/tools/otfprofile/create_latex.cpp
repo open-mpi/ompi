@@ -908,6 +908,9 @@ static void write_Dispersion(fstream& tex, struct AllData& alldata)
   tex << "\\end{tikzpicture}" << endl;
   tex << "}" << endl;
 
+  const std::ios_base::fmtflags tex_flags_sav = tex.flags();
+  const std::streamsize tex_prec_sav = tex.precision();
+
   tex.setf(ios::fixed, ios::floatfield);
   tex.precision(7);
 
@@ -934,6 +937,9 @@ static void write_Dispersion(fstream& tex, struct AllData& alldata)
     tex << "\\verb|" << func_name << "|";
 
     if((factor <= 0) | (lowq < 0) | (median < 0) | (topq < 0)){
+      const std::ios_base::fmtflags cout_flags_sav = std::cout.flags();
+      const std::streamsize cout_prec_sav = std::cout.precision();
+
       cout.setf(ios::scientific, ios::floatfield);
       cout.precision(5);
 
@@ -943,6 +949,9 @@ static void write_Dispersion(fstream& tex, struct AllData& alldata)
           << "median: " << it->second.excl_time_median << ", "
           << "top quartile: " << it->second.excl_time_top_quartile << ", "
           << "maximum: " << it->second.excl_time_maximum << endl;
+
+      cout.setf(cout_flags_sav);
+      cout.precision(cout_prec_sav);
 
       count++;
       it++;
@@ -1016,11 +1025,10 @@ static void write_Dispersion(fstream& tex, struct AllData& alldata)
   }
 
   tex << "\\end{flushleft}" << endl << endl;
-
-  tex.setf(ios::floatfield);
-  tex.precision(7);
-
   tex << "\\newpage" << endl << endl;
+
+  tex.setf(tex_flags_sav);
+  tex.precision(tex_prec_sav);
 }
 
  /*
@@ -1269,6 +1277,9 @@ static void write_Dispersion_callpath(fstream& tex, struct AllData& alldata) {
         pageSize += 1;
         tex << "\\verb|" << func_name << "|";
         if ((factor <= 0) | (lowq < 0) | (median < 0) | (topq < 0)) {
+            const std::ios_base::fmtflags cout_flags_sav = std::cout.flags();
+            const std::streamsize cout_prec_sav = std::cout.precision();
+
             cout.setf(ios::scientific, ios::floatfield);
             cout.precision(5);
 
@@ -1279,6 +1290,9 @@ static void write_Dispersion_callpath(fstream& tex, struct AllData& alldata) {
                     << it->second.excl_time_top_quartile << ", " << "95%: "
                     << it->second.excl_time_95_percent << ", " << "maximum: "
                     << it->second.excl_time_maximum << endl;
+
+            cout.setf(cout_flags_sav);
+            cout.precision(cout_prec_sav);
 
             count++;
             it++;
@@ -1487,6 +1501,9 @@ static void write_Dispersion_callpath(fstream& tex, struct AllData& alldata) {
 
             label[countc] = func_name;
             if ((factor <= 0) | (lowq < 0) | (median < 0) | (topq < 0)) {
+                const std::ios_base::fmtflags cout_flags_sav = std::cout.flags();
+                const std::streamsize cout_prec_sav = std::cout.precision();
+
                 cout.setf(ios::scientific, ios::floatfield);
                 cout.precision(5);
 
@@ -1498,6 +1515,9 @@ static void write_Dispersion_callpath(fstream& tex, struct AllData& alldata) {
                         << "top quartile: "
                         << itc->second.excl_time_top_quartile << ", "
                         << "maximum: " << itc->second.excl_time_maximum << endl;
+
+                cout.setf(cout_flags_sav);
+                cout.precision(cout_prec_sav);
 
                 countc++;
                 itc++;
@@ -1716,6 +1736,12 @@ static void write_Dispersion_histogram(fstream& tex, struct AllData& alldata) {
     const unsigned int BP_WIDTH = 15;
     const unsigned int BP_HEIGHT = 7;
 
+    const std::ios_base::fmtflags tex_flags_sav = tex.flags();
+    const std::streamsize tex_prec_sav = tex.precision();
+
+    tex.setf(ios::floatfield);
+    tex.precision(7);
+
     tex << "\\begin{center}" << endl;
     tex << "{\\Large \\bf Top 20 Dispersion of Functions}";
     tex << endl << "\\bigskip" << endl;
@@ -1819,6 +1845,9 @@ static void write_Dispersion_histogram(fstream& tex, struct AllData& alldata) {
         it++;
         count++;
     }
+
+    tex.setf(tex_flags_sav);
+    tex.precision(tex_prec_sav);
 }
 
 /*

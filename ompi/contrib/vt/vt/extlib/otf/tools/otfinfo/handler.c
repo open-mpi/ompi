@@ -85,7 +85,7 @@ int handleDefinitionComment( void *userData, uint32_t stream,
 {
   definitionInfoT *info = (definitionInfoT*)userData;
   uint32_t index = (info->counterDefinitionComment)++;
-  (info->definitionComments) = (char**)realloc(info->definitionComments,(index + 1) * sizeof(char**));
+  (info->definitionComments) = (char**)realloc(info->definitionComments,(index + 1) * sizeof(char*));
   (info->definitionComments)[index] = strdup(comment);
   return OTF_RETURN_OK;
 }
@@ -141,7 +141,7 @@ int handleDefMarker( void *userData, uint32_t stream, uint32_t token,
   /*in a low info level, increment the marker counter*/
   if( MAXINFOLEVEL > ((definitionInfoT*)userData)->infoLevel )
   {
-    ((definitionInfoT*)userData)->counterDefinitionMarker++;
+    ((definitionInfoT*)userData)->counterMarkerDefinition++;
   }
   else
   {
@@ -151,6 +151,27 @@ int handleDefMarker( void *userData, uint32_t stream, uint32_t token,
     while(info->markerNames[index])
       index++;
     (info->markerNames)[index] = strdup(name);
+  }
+  return OTF_RETURN_OK;
+}
+
+int handleDefCollectiveOperation( void *userData, uint32_t stream,
+                                  uint32_t collOp, const char *name,
+                                  uint32_t type )
+{
+  /*in a low info level, increment the collective counter*/
+  if( 3 > ((definitionInfoT*)userData)->infoLevel )
+  {
+    ((definitionInfoT*)userData)->counterCollectiveOperationDefinition++;
+  }
+  else
+  {
+    /*in the max info level, get the collective operation names*/
+    int index = 0;
+    definitionInfoT *info = (definitionInfoT*)userData;
+    while(info->collectiveOperationNames[index])
+      index++;
+    (info->collectiveOperationNames)[index] = strdup(name);
   }
   return OTF_RETURN_OK;
 }
@@ -221,7 +242,7 @@ int handleDefSclFile( void *userData, uint32_t stream, uint32_t sourceFile,
   definitionInfoT *info = (definitionInfoT*)userData;
   uint32_t index = (info->counterSourceFileName)++;
   (info->sourceFileNames) = (char**)realloc( info->sourceFileNames,(index + 1)
-                                             * sizeof(char**) );
+                                             * sizeof(char*) );
   (info->sourceFileNames)[index] = strdup(name);
   return OTF_RETURN_OK;
 }
@@ -288,22 +309,27 @@ int handleRMAEnd( void *userData, uint64_t time, uint32_t process,
   return OTF_RETURN_OK;
 }
 
-int handleDefCollectiveOperation( void *userData, uint32_t stream,
-                                  uint32_t collOp, const char *name,
-                                  uint32_t type )
+int handleMarker( void *userData, uint64_t time, uint32_t process,
+                  uint32_t token, const char* text )
 {
-  /*in a low info level, increment the collective counter*/
+  ((definitionInfoT*)userData)->counterMarker++;
+  return OTF_RETURN_OK;
+}
+
+int handleCollectiveOperation( void *userData, uint64_t time,
+                               uint32_t process, uint32_t collective,
+                               uint32_t procGroup, uint32_t rootProc,
+                               uint32_t sent, uint32_t received,
+                               uint64_t duration, uint32_t source )
+{
   ((definitionInfoT*)userData)->counterCollectiveOperation++;
-  if( MAXINFOLEVEL <= ((definitionInfoT*)userData)->infoLevel )
-  {
-    /*in the max info level, get the collective operation names*/
-    definitionInfoT *info = (definitionInfoT*)userData;
-    int index = ((definitionInfoT*)userData)->counterCollectiveOperation;
-    (info->collectiveOperationNames) = (char**)realloc(
-                                         info->collectiveOperationNames,
-                                         (index) * sizeof(char**) );
-    (info->collectiveOperationNames)[index-1] = strdup(name);
-  }
+  return OTF_RETURN_OK;
+}
+
+int handleEndCollectiveOperation( void *userData, uint64_t time,
+                                  uint32_t process, uint64_t matchingId )
+{
+  ((definitionInfoT*)userData)->counterCollectiveOperation++;
   return OTF_RETURN_OK;
 }
 

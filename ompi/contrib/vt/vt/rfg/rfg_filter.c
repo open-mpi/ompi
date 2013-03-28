@@ -8,10 +8,13 @@
 
 #include <ctype.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 
 #define MAX_LINE_LEN           0x20000 /* max. file line length */
 
@@ -96,50 +99,49 @@ struct RFG_Filter_struct
 
 static int get_file_content( RFG_Filter* filter )
 {
-  FILE* f;
-  size_t i;
-  uint8_t err = 0;
-  const size_t bsize = 1024;
+  int ret = 1;
+
+  int fd;
 
   if( !filter || !filter->file_name || *(filter->file_name) == '\0' )
     return 0;
 
-  /* open filter definition file */
-
-  f = fopen( filter->file_name, "r" );
-  if( !f )
+  /* open the filter file */
+  if( ( fd = open( filter->file_name, O_RDONLY ) ) == -1 )
     return 0;
 
-  filter->file_content = (char*)malloc( bsize * sizeof( char ) );
-  if( !filter->file_content ) err = 1;
-  else filter->file_content_size = bsize;
-
-  i = 0;
-  while( !err && ( ( filter->file_content[i++] = fgetc( f ) ) != (char)EOF ) )
+  do
   {
-    /* enlarge buffer, if necessary */
+    struct stat file_stat;
 
-    if( i == filter->file_content_size )
+    /* get the file size */
+    if( fstat(fd, &file_stat) == -1 || file_stat.st_size == 0 )
     {
-      filter->file_content =
-        (char*)realloc( filter->file_content,
-          ( filter->file_content_size + bsize ) * sizeof( char ) );
-      if( !filter->file_content )
-      {
-        err = 1;
-        break;
-      }
-      filter->file_content_size += bsize;
+      ret = 0;
+      break;
     }
-  }
 
-  /* append '\0' to buffer */
-  if( !err) filter->file_content[i-1] = '\0';
+    /* allocate the buffer for storing the filter file content */
+    filter->file_content = (char*)malloc( file_stat.st_size * sizeof( char ) );
+    if( !filter->file_content )
+    {
+      ret = 0;
+      break;
+    }
 
-  /* close filter definition file */
-  fclose( f );
+    /* read the filter file */
+    if( read(fd, filter->file_content, file_stat.st_size ) == -1 )
+    {
+      ret = 0;
+      break;
+    }
 
-  return (int)!err;
+  } while( 0 );
+
+  /* close the filter file */
+  close( fd );
+
+  return ret;
 }
 
 static int get_file_content_line( RFG_Filter* filter, char* buf,
@@ -993,7 +995,7 @@ int RFG_Filter_getCallPathRules( RFG_Filter* filter, uint32_t hash,
 {
   RFG_FilterCallPathRulesHN* cpath_rules_hn;
 
-  if( !filter && !r_callLimit )
+  if( !filter || !r_callLimit )
      return 0;
 
   if( size == 0 || size > RFG_FILTER_MAX_CPATH_SIZE )

@@ -488,7 +488,6 @@ libvt_mt_la_CFLAGS = \
 	$(GPUCFLAGS) \
 	$(IOWRAPCFLAGS) \
 	$(LIBWRAPCFLAGS) \
-	$(MALLOCWRAPCFLAGS) \
 	$(OMPCFLAGS) \
 	$(PTHREADCFLAGS) \
 	$(THRDCFLAGS)
@@ -505,7 +504,6 @@ libvt_mt_la_SOURCES = \
 	$(GPUSOURCES) \
 	$(IOWRAPSOURCES) \
 	$(LIBWRAPSOURCES) \
-	$(MALLOCWRAPSOURCES) \
 	$(OMPSOURCES) \
 	$(PTHREADSOURCES) \
 	$(THRDSOURCES)
@@ -521,7 +519,6 @@ libvt_hyb_la_CFLAGS = \
 	$(IOFSLCFLAGS) \
 	$(IOWRAPCFLAGS) \
 	$(LIBWRAPCFLAGS) \
-	$(MALLOCWRAPCFLAGS) \
 	$(MPICFLAGS) \
 	$(MPIINCDIR) \
 	$(OMPCFLAGS) \
@@ -552,7 +549,6 @@ libvt_hyb_la_SOURCES = \
 	$(IOFSLSOURCES) \
 	$(IOWRAPSOURCES) \
 	$(LIBWRAPSOURCES) \
-	$(MALLOCWRAPSOURCES) \
 	$(MPI2IOSOURCES) \
 	$(OMPSOURCES) \
 	$(PTHREADSOURCES) \
@@ -592,6 +588,7 @@ libvt_fmpi_la_CFLAGS = \
 	$(libvt_mpi_la_CFLAGS)
 libvt_fmpi_la_FFLAGS = \
 	$(FMPIINCDIR) \
+	$(FCFLAGS) \
 	$(MPIFCFLAGS)
 libvt_fmpi_la_SOURCES = \
 	vt_fmpiconst.h \

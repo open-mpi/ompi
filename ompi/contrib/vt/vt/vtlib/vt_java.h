@@ -21,6 +21,10 @@
 
 #include "vt_jvmti.h"
 
+#define VT_JAVA_CHECK_ERROR(jvmti, error, prefix)                             \
+  if ( error != JVMTI_ERROR_NONE )                                            \
+    vt_java_error((jvmti), (error), (prefix));
+
 typedef struct
 {
   jvmtiEnv*     jvmti;
@@ -35,8 +39,8 @@ typedef struct
 EXTERN void vt_java_get_thread_name(jvmtiEnv* jvmti, jthread thread,
                                     char* tname, int maxlen);
 
-EXTERN void vt_java_check_error(jvmtiEnv* jvmti, jvmtiError error,
-                                const char* str);
+EXTERN void vt_java_error(jvmtiEnv* jvmti, jvmtiError error,
+                          const char* prefix);
 
 EXTERN VTJVMAgent* vt_jvmti_agent;
 

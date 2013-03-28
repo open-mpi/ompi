@@ -92,12 +92,15 @@ AC_DEFUN([ACVT_MPI],
 	[AS_IF([test x"$MPIDIR" != x], [MPILIBDIR="-L$MPIDIR"lib/])])
 
 	AC_ARG_WITH(hpmpi,
-		AC_HELP_STRING([--with-hpmpi], [set MPI-libs for HP MPI]),
+		AC_HELP_STRING([--with-hpmpi], [set MPI-libs for HP MPI]))
+	AC_ARG_WITH(pcmpi,
+		AC_HELP_STRING([--with-pcmpi], [set MPI-libs for Platform MPI]))
+	AS_IF([test x"$with_hpmpi" = "xyes" -o x"$with_pcmpi" = "xyes"],
 	[
-		AS_IF([test x"$withval" = "xyes" -a x"$inside_openmpi" = "xno"],
+		AS_IF([test x"$inside_openmpi" = "xno"],
 		[
-			MPILIB="-lmtmpi"
-			PMPILIB="-lmtpmpi"
+			MPILIB="-lmpi"
+			PMPILIB="$MPILIB"
 			FMPILIB="-lvt-fmpi"
 			check_mpi2_thread="no"; have_mpi2_thread="yes"
 			check_mpi2_1sided="no"; have_mpi2_1sided="yes"
@@ -496,19 +499,16 @@ dnl		check for MPICXX
 
 dnl		check for MPILIB
 
-		AS_IF([test "$MPICC" = "$CC"],
+		AS_IF([test "$MPICC" = "$CC" -a x"$MPILIB" = x -a x"$mpi_error" = "xno"],
 		[
-			AS_IF([test x"$MPILIB" = x -a x"$mpi_error" = "xno"],
-			[
-				sav_LIBS=$LIBS
-				LIBS="$LIBS $MPILIBDIR -lmpi_r"
-				AC_MSG_CHECKING([whether linking with -lmpi_r works])
-				AC_TRY_LINK([],[],
-				[AC_MSG_RESULT([yes]); MPILIB=-lmpi_r],[AC_MSG_RESULT([no])])
-				LIBS=$sav_LIBS
-			])
+			sav_LIBS=$LIBS
+			LIBS="$LIBS $MPILIBDIR -lmpi_r"
+			AC_MSG_CHECKING([whether linking with -lmpi_r works])
+			AC_TRY_LINK([],[],
+			[AC_MSG_RESULT([yes]); MPILIB=-lmpi_r],[AC_MSG_RESULT([no])])
+			LIBS=$sav_LIBS
 
-			AS_IF([test x"$MPILIB" = x -a x"$mpi_error" = "xno"],
+			AS_IF([test x"$MPILIB" = x],
 			[
 				sav_LIBS=$LIBS
 				LIBS="$LIBS $MPILIBDIR -lmpi"
@@ -528,7 +528,7 @@ dnl		check for MPILIB
 				])
 			])
 
-			AS_IF([test x"$MPILIB" = x -a x"$mpi_error" = "xno"],
+			AS_IF([test x"$MPILIB" = x],
 			[
 				AS_IF([test x"$MPILIBDIR" = x],
 				[pmilibdir="-L/usr/lib/pmi"], [pmilibdir="$MPILIBDIR/pmi"])
@@ -542,7 +542,7 @@ dnl		check for MPILIB
 				LIBS=$sav_LIBS
 			])
 			
-			AS_IF([test x"$MPILIB" = x -a x"$mpi_error" = "xno"],
+			AS_IF([test x"$MPILIB" = x],
 			[
 				sav_LIBS=$LIBS
 				LIBS="$LIBS $MPILIBDIR -lmpich"
@@ -554,7 +554,7 @@ dnl		check for MPILIB
 				[MPICFLAGS="$MPICFLAGS -DMPICH_IGNORE_CXX_SEEK"])
 			])
 
-			AS_IF([test x"$MPILIB" = x -a x"$mpi_error" = "xno"],
+			AS_IF([test x"$MPILIB" = x],
 			[
 				sav_LIBS=$LIBS
 				LIBS="$LIBS $MPILIBDIR -lmpichg2"
@@ -566,7 +566,7 @@ dnl		check for MPILIB
 				[MPICFLAGS="$MPICFLAGS -DMPICH_IGNORE_CXX_SEEK"])
 			])
 
-			AS_IF([test x"$MPILIB" = x -a x"$mpi_error" = "xno"],
+			AS_IF([test x"$MPILIB" = x],
 			[
 				sav_LIBS=$LIBS
 				LIBS="$LIBS $MPILIBDIR -lhpmpi"
@@ -585,7 +585,7 @@ dnl		check for MPILIB
 				])
 			])
 
-			AS_IF([test x"$MPILIB" = x -a x"$mpi_error" = "xno"],
+			AS_IF([test x"$MPILIB" = x],
 			[
 				AC_MSG_NOTICE([error: no libmpi_r, libmpi, liblam, libmpich, or libhpmpi found; check path for MPI package first...])
 				mpi_error="yes"
@@ -606,7 +606,7 @@ dnl		check for PMPILIB
 			[AC_MSG_RESULT([yes]); PMPILIB=-lpmpich],[AC_MSG_RESULT([no])])
 			LIBS=$sav_LIBS
 
-			AS_IF([test x"$PMPILIB" = x -a x"$mpi_error" = "xno"],
+			AS_IF([test x"$PMPILIB" = x],
 			[
 				sav_LIBS=$LIBS
 				LIBS="$LIBS $MPILIBDIR -lpmpichg2 $MPILIB"
@@ -618,7 +618,7 @@ dnl		check for PMPILIB
 
 dnl			Do not check for libpmpi. When using the Open MPI compiler wrapper, this check
 dnl			succeeds even if this library isn't present.
-dnl			AS_IF([test x"$PMPILIB" = x -a x"$mpi_error" = "xno"],
+dnl			AS_IF([test x"$PMPILIB" = x],
 dnl			[
 dnl				sav_LIBS=$LIBS
 dnl				LIBS="$LIBS $MPILIBDIR -lpmpi $MPILIB"
@@ -637,8 +637,11 @@ dnl					LIBS=$sav_LIBS
 dnl				])
 dnl			])
 
-			AS_IF([test x"$PMPILIB" = x -a x"$mpi_error" = "xno"],
-			[PMPILIB="$MPILIB"])
+			AS_IF([test x"$PMPILIB" = x -a x"$MPILIB" != x],
+			[
+				PMPILIB="$MPILIB"
+				AC_MSG_NOTICE([no libpmpich or libpmpichg2 found; assume $MPILIB])
+			])
 
 			CC=$sav_CC
 		])
@@ -657,7 +660,7 @@ dnl		check for FMPILIB
 			[AC_MSG_RESULT([yes]); FMPILIB=-lmpi_f77],[AC_MSG_RESULT([no])])
 			LIBS=$sav_LIBS
 
-			AS_IF([test x"$FMPILIB" = x -a x"$mpi_error" = "xno"],
+			AS_IF([test x"$FMPILIB" = x],
 			[
 				sav_LIBS=$LIBS
 				LIBS="$LIBS $MPILIBDIR -lmpi_mpifh $MPILIB"
@@ -667,7 +670,7 @@ dnl		check for FMPILIB
 				LIBS=$sav_LIBS
 			])
 
-			AS_IF([test x"$FMPILIB" = x -a x"$mpi_error" = "xno"],
+			AS_IF([test x"$FMPILIB" = x],
 			[
 				sav_LIBS=$LIBS
 				LIBS="$LIBS $MPILIBDIR -lmpibinding_f77 $MPILIB"
@@ -677,7 +680,7 @@ dnl		check for FMPILIB
 				LIBS=$sav_LIBS
 			])
 
-			AS_IF([test x"$FMPILIB" = x -a x"$mpi_error" = "xno"],
+			AS_IF([test x"$FMPILIB" = x],
 			[
 				sav_LIBS=$LIBS
 				LIBS="$LIBS $MPILIBDIR -lfmpich $MPILIB"
@@ -687,7 +690,7 @@ dnl		check for FMPILIB
 				LIBS=$sav_LIBS
 			])
 
-			AS_IF([test x"$FMPILIB" = x -a x"$mpi_error" = "xno"],
+			AS_IF([test x"$FMPILIB" = x],
 			[
 				sav_LIBS=$LIBS
 				LIBS="$LIBS $MPILIBDIR -llamf77mpi $MPILIB"
@@ -697,40 +700,21 @@ dnl		check for FMPILIB
 				LIBS=$sav_LIBS
 			])
 
-			AS_IF([test x"$FMPILIB" = x -a x"$mpi_error" = "xno"],
+			AS_IF([test x"$FMPILIB" = x],
 			[
-				sav_LIBS=$LIBS
-				LIBS="$LIBS $MPILIBDIR -lfmpi"
-				AC_MSG_CHECKING([whether linking with -lfmpi works])
-				AC_TRY_LINK([],[],
-				[AC_MSG_RESULT([yes]); FMPILIB=-lfmpi],[AC_MSG_RESULT([no])])
-				LIBS=$sav_LIBS
-			])
-
-			AS_IF([test x"$mpi_error" = "xno"],
-			[
-				AS_IF([test x"$FMPILIB" = x],
-				[
-					AS_IF([test x"$check_fmpiwraplib" = "xyes"],
-					[
-						AC_MSG_WARN([no libmpi_f77, libmpi_mpifh, libmpibinding_f77, libfmpich, liblamf77mpi, or libfmpi found; build libvt-fmpi])
-						FMPILIB="-lvt-fmpi"
-					])
-				],
-				[
-					AS_IF([test x"$FMPILIB" = "x-lvt-fmpi"],
-					[
-						AS_IF([test x"$check_fmpiwraplib" = "xno"],
-						[FMPILIB=])
-					],
-					[
-						AS_IF([test x"$force_fmpiwraplib" = "xyes"],
-						[FMPILIB="-lvt-fmpi"], [check_fmpiwraplib="no"])
-					])
-				])
+				AC_MSG_NOTICE([no libmpi_f77, libmpi_mpifh, libmpibinding_f77, libfmpich, or liblamf77mpi found; build libvt-fmpi])
+				FMPILIB="-lvt-fmpi"
 			])
 
 			CC=$sav_CC
+		])
+
+		AS_IF([test x"$FMPILIB" = "x-lvt-fmpi"],
+		[
+			AS_IF([test x"$check_fmpiwraplib" = "xno"], [FMPILIB=])
+		],
+		[
+			check_fmpiwraplib="no"
 		])
 
 dnl		check for MPI-2

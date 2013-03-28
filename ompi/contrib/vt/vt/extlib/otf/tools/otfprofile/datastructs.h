@@ -165,6 +165,19 @@ struct Progress {
     uint64_t*    rank_cur_bytes; /* current bytes read per rank (except rank 0) */
     uint32_t     ranks_left;     /* root keeps track of ranks left to query */
 #endif /* OTFPROFILE_MPI */
+
+    Progress()
+        : cur_bytes(0), max_bytes(0) {
+#ifdef OTFPROFILE_MPI
+        send_request   = MPI_REQUEST_NULL;
+        recv_buffers   = NULL;
+        recv_requests  = NULL;
+        recv_statuses  = NULL;
+        recv_indices   = NULL;
+        rank_cur_bytes = NULL;
+        ranks_left     = 0;
+#endif /* OTFPROFILE_MPI */
+    }
 };
 
 
@@ -1073,7 +1086,8 @@ struct AllData {
     uint64_t dispersionMarkerBorder;
     AllData( uint32_t my_rank= 0, uint32_t num_ranks= 1 ) :
         myRank(my_rank), numRanks(num_ranks), myProcessesNum(0),
-        myProcessesList(NULL), timerResolution(0), recvTimeKey(0) {
+        myProcessesList(NULL), timerResolution(0), recvTimeKey(0),
+        maxCallpathLength(0), dispersionMarkerBorder(0) {
 
 #ifdef OTFPROFILE_MPI
         packBufferSize= 0;
