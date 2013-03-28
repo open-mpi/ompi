@@ -72,6 +72,7 @@ included in the vX.Y.Z section and be denoted as:
   - Added better "use mpi" support (for compilers that support it)
   - Removed incorrect MPI_SCATTERV interface from "mpi" module that
     was added in the 1.5.x series for ABI reasons.
+- Lots of VampirTrace upgrades and fixes; upgrade to v5.14.3.
 - Modified process affinity system to provide warning when bindings
   result in being "bound to all", which is equivalent to not being
   bound.
