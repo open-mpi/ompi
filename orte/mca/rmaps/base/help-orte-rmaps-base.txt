@@ -38,13 +38,13 @@ The requested hosts were:
 Verify that you have mapped the allocated resources properly using the 
 --host or --hostfile specification.
 [orte-rmaps-base:no-mapped-node]
-There are no allocated resources for the application 
+There are no allocated resources for the application: 
   %s
 that match the requested mapping:
-  %s
+  %s: %s
 
-Verify that you have mapped the allocated resources properly using the 
---host or --hostfile specification.
+Verify that you have mapped the allocated resources properly for the 
+indicated specification.
 [orte-rmaps-base:nolocal-no-available-resources]
 There are no available nodes allocated to this job. This could be because
 no nodes were found or all the available nodes were already used.

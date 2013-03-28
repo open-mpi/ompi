@@ -65,7 +65,7 @@ int orte_rmaps_base_filter_nodes(orte_app_context_t *app,
         /** check that anything is here */
         if (0 == opal_list_get_size(nodes)) {
             orte_show_help("help-orte-rmaps-base.txt", "orte-rmaps-base:no-mapped-node",
-                           true, app->app, app->hostfile);
+                           true, app->app, "-hostfile", app->hostfile);
             return ORTE_ERR_SILENT;
         }
     }
@@ -81,7 +81,7 @@ int orte_rmaps_base_filter_nodes(orte_app_context_t *app,
         /** check that anything is here */
         if (0 == opal_list_get_size(nodes)) {
             orte_show_help("help-orte-rmaps-base.txt", "orte-rmaps-base:no-mapped-node",
-                           true, app->app, app->hostfile);
+                           true, app->app, "-add-hostfile", app->hostfile);
             return ORTE_ERR_SILENT;
         }
     }
@@ -93,8 +93,11 @@ int orte_rmaps_base_filter_nodes(orte_app_context_t *app,
         }
         /** check that anything is left! */
         if (0 == opal_list_get_size(nodes)) {
+            char *foo;
+            foo = opal_argv_join(app->dash_host, ',');
             orte_show_help("help-orte-rmaps-base.txt", "orte-rmaps-base:no-mapped-node",
-                           true, app->app, "");
+                           true, app->app, "-host", foo);
+            free(foo);
             return ORTE_ERR_SILENT;
         }
     }
@@ -106,8 +109,11 @@ int orte_rmaps_base_filter_nodes(orte_app_context_t *app,
         }
         /** check that anything is left! */
         if (0 == opal_list_get_size(nodes)) {
+            char *foo;
+            foo = opal_argv_join(app->dash_host, ',');
             orte_show_help("help-orte-rmaps-base.txt", "orte-rmaps-base:no-mapped-node",
-                           true, app->app, "");
+                           true, app->app, "-add-host", foo);
+            free(foo);
             return ORTE_ERR_SILENT;
         }
     }
