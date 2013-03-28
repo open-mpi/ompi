@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2012-2013 Cisco Systems, Inc.  All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -71,7 +71,7 @@ int ompi_common_verbs_qp_test(struct ibv_context *device_context, int flags)
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
-    cq = ibv_create_cq(device_context, 1, NULL, NULL, 0);
+    cq = ibv_create_cq(device_context, 2, NULL, NULL, 0);
     if (NULL == cq) {
         rc = OMPI_ERR_OUT_OF_RESOURCE;
         goto out;
