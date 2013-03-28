@@ -4,19 +4,15 @@ AC_DEFUN([ACVT_MPI],
 	check_mpi="yes"
 	force_mpi="no"
 	have_mpi="no"
-	have_fmpi="no"
 
+	check_fmpi="yes"; force_fmpi="no"; have_fmpi="no"
 	check_mpi2_thread="yes"; force_mpi2_thread="no"; have_mpi2_thread="no"
 	check_mpi2_1sided="yes"; force_mpi2_1sided="no"; have_mpi2_1sided="no"
 	check_mpi2_extcoll="yes"; force_mpi2_extcoll="no"; have_mpi2_extcoll="no"
 	check_mpi2_io="yes"; force_mpi2_io="no"; have_mpi2_io="no"
 
-	check_fmpiwraplib="yes"
-	force_fmpiwraplib="no"
+	fmpiwraplib="vt-fmpi"
 	build_fmpiwraplib="no"
-	check_fc_conv="yes"
-	have_mpi2_const="no"
-	have_mpi_status_size="no"
 
 	MPIDIR=
 	MPIINCDIR=
@@ -40,7 +36,7 @@ AC_DEFUN([ACVT_MPI],
 
 	AS_IF([test x"$inside_openmpi" != "xno"],
 	[
-		AC_MSG_NOTICE([we are configuring inside Open MPI; presetting cache to skip MPI related tests])
+		AC_MSG_NOTICE([we are configuring inside Open MPI; preset some test results])
 
 		ac_cv_prog_MPICC="$CC"
 		ac_cv_prog_MPICXX="$CXX"
@@ -55,10 +51,11 @@ AC_DEFUN([ACVT_MPI],
 		AS_IF([test "$inside_openmpi" = "1.7"],
 		[with_openmpi17="yes"], [with_openmpi="yes"])
 
-		check_mpi2_io="no"; have_mpi2_io="yes"
-		AC_ARG_ENABLE(mpi-io,
-			AC_HELP_STRING([--enable-mpi-io], [equal to --enable-mpi2-io]),
-		[AS_IF([test x"$enableval" = "xno"], [have_mpi2_io="no"])])
+		AC_ARG_ENABLE(mpi-io, [], [enable_mpi2_io="$enableval"])
+		AC_ARG_ENABLE(mpi-f77, [], [enable_fmpi="$enableval"])     # <  OMPI v1.7
+		AC_ARG_ENABLE(mpi-fortran, [], [enable_fmpi="$enableval"]) # >= OMPI v1.7
+
+dnl		further presets below when handling '--with-openmpi[17]'
 	])
 
 	AC_ARG_ENABLE(mpi,
@@ -97,27 +94,24 @@ AC_DEFUN([ACVT_MPI],
 		AC_HELP_STRING([--with-pcmpi], [set MPI-libs for Platform MPI]))
 	AS_IF([test x"$with_hpmpi" = "xyes" -o x"$with_pcmpi" = "xyes"],
 	[
-		AS_IF([test x"$inside_openmpi" = "xno"],
-		[
-			MPILIB="-lmpi"
-			PMPILIB="$MPILIB"
-			FMPILIB="-lvt-fmpi"
-			check_mpi2_thread="no"; have_mpi2_thread="yes"
-			check_mpi2_1sided="no"; have_mpi2_1sided="yes"
-			check_mpi2_extcoll="no"; have_mpi2_extcoll="yes"
-			ac_cv_have_decl_MPI_IN_PLACE="yes"
-			ac_cv_have_decl_MPI_ROOT="yes"
-		])
+		MPILIB="-lmpi"
+		PMPILIB="$MPILIB"
+		FMPILIB="-l$fmpiwraplib"
+		check_mpi2_thread="no"; have_mpi2_thread="yes"
+		check_mpi2_1sided="no"; have_mpi2_1sided="yes"
+		check_mpi2_extcoll="no"; have_mpi2_extcoll="yes"
+		ac_cv_have_decl_MPI_IN_PLACE="yes"
+		ac_cv_have_decl_MPI_ROOT="yes"
 	])
 
 	AC_ARG_WITH(intelmpi,
 		AC_HELP_STRING([--with-intelmpi], [set MPI-libs for Intel MPI]),
 	[
-		AS_IF([test x"$withval" = "xyes" -a x"$inside_openmpi" = "xno"],
+		AS_IF([test x"$withval" = "xyes"],
 		[
 			MPILIB="-lmpi"
 			PMPILIB="$MPILIB"
-			FMPILIB="-lvt-fmpi"
+			FMPILIB="-l$fmpiwraplib"
 			check_mpi2_thread="no"; have_mpi2_thread="no"
 			check_mpi2_1sided="no"; have_mpi2_1sided="no"
 			check_mpi2_extcoll="no"; have_mpi2_extcoll="no"
@@ -130,11 +124,11 @@ AC_DEFUN([ACVT_MPI],
 	AC_ARG_WITH(intelmpi2,
 		AC_HELP_STRING([--with-intelmpi2], [set MPI-libs for Intel MPI2]),
 	[
-		AS_IF([test x"$withval" = "xyes" -a x"$inside_openmpi" = "xno"],
+		AS_IF([test x"$withval" = "xyes"],
 		[
 			MPILIB="-lmpi"
 			PMPILIB="$MPILIB"
-			FMPILIB="-lvt-fmpi"
+			FMPILIB="-l$fmpiwraplib"
 			check_mpi2_thread="no"; have_mpi2_thread="yes"
 			check_mpi2_1sided="no"; have_mpi2_1sided="yes"
 			check_mpi2_extcoll="no"; have_mpi2_extcoll="yes"
@@ -146,7 +140,7 @@ AC_DEFUN([ACVT_MPI],
 	AC_ARG_WITH(lam,
 		AC_HELP_STRING([--with-lam], [set MPI-libs for LAM/MPI]),
 	[
-		AS_IF([test x"$withval" = "xyes" -a x"$inside_openmpi" = "xno"],
+		AS_IF([test x"$withval" = "xyes"],
 		[
 			MPILIB="-lmpi -llam"
 			PMPILIB="$MPILIB"
@@ -158,7 +152,7 @@ AC_DEFUN([ACVT_MPI],
 	AC_ARG_WITH(mpibgl,
 		AC_HELP_STRING([--with-mpibgl], [set MPI-libs for IBM BG/L]),
 	[
-		AS_IF([test x"$withval" = "xyes" -a x"$inside_openmpi" = "xno"],
+		AS_IF([test x"$withval" = "xyes"],
 		[
 			MPILIB="-lmpich.rts"
 			PMPILIB="-lmpich.rts"
@@ -172,7 +166,7 @@ AC_DEFUN([ACVT_MPI],
 	AC_ARG_WITH(mpibgp,
 		AC_HELP_STRING([--with-mpibgp], [set MPI-libs for IBM BG/P]),
 	[
-		AS_IF([test x"$withval" = "xyes" -a x"$inside_openmpi" = "xno"],
+		AS_IF([test x"$withval" = "xyes"],
 		[
 			MPILIB="-lmpich.cnk"
 			PMPILIB="-lmpich.cnk"
@@ -189,7 +183,7 @@ AC_DEFUN([ACVT_MPI],
 	AC_ARG_WITH(mpibgq,
 		AC_HELP_STRING([--with-mpibgq], [set MPI-libs for IBM BG/Q]),
 	[
-		AS_IF([test x"$withval" = "xyes" -a x"$inside_openmpi" = "xno"],
+		AS_IF([test x"$withval" = "xyes"],
 		[
 			MPILIB="-lmpich"
 			PMPILIB="-lmpich"
@@ -206,7 +200,7 @@ AC_DEFUN([ACVT_MPI],
 	AC_ARG_WITH(mpich,
 		AC_HELP_STRING([--with-mpich], [set MPI-libs for MPICH]),
 	[
-		AS_IF([test x"$withval" = "xyes" -a x"$inside_openmpi" = "xno"],
+		AS_IF([test x"$withval" = "xyes"],
 		[
 			MPILIB="-lmpich"
 			PMPILIB="-lpmpich"
@@ -224,7 +218,7 @@ AC_DEFUN([ACVT_MPI],
 	AC_ARG_WITH(mpich2,
 		AC_HELP_STRING([--with-mpich2], [set MPI-libs for MPICH2]),
 	[
-		AS_IF([test x"$withval" = "xyes" -a x"$inside_openmpi" = "xno"],
+		AS_IF([test x"$withval" = "xyes"],
 		[
 			MPILIB="-lmpich"
 			PMPILIB="$MPILIB"
@@ -241,7 +235,7 @@ AC_DEFUN([ACVT_MPI],
 	AC_ARG_WITH(mvapich,
 		AC_HELP_STRING([--with-mvapich], [set MPI-libs for MVAPICH]),
 	[
-		AS_IF([test x"$withval" = "xyes" -a x"$inside_openmpi" = "xno"],
+		AS_IF([test x"$withval" = "xyes"],
 		[
 			MPILIB="-lmpich"
 			PMPILIB="-lpmpich"
@@ -259,7 +253,7 @@ AC_DEFUN([ACVT_MPI],
 	AC_ARG_WITH(mvapich2,
 		AC_HELP_STRING([--with-mvapich2], [set MPI-libs for MVAPICH2]),
 	[
-		AS_IF([test x"$withval" = "xyes" -a x"$inside_openmpi" = "xno"],
+		AS_IF([test x"$withval" = "xyes"],
 		[
 			MPILIB="-lmpich"
 			PMPILIB="$MPILIB"
@@ -276,7 +270,7 @@ AC_DEFUN([ACVT_MPI],
 	AC_ARG_WITH(mpisx,
 		AC_HELP_STRING([--with-mpisx], [set MPI-libs for NEC MPI/SX]),
 	[
-		AS_IF([test x"$withval" = "xyes" -a x"$inside_openmpi" = "xno"],
+		AS_IF([test x"$withval" = "xyes"],
 		[
 			MPILIB="-lmpi"
 			PMPILIB="-lpmpi"
@@ -293,7 +287,7 @@ AC_DEFUN([ACVT_MPI],
 	AC_ARG_WITH(mpisx-ew,
 		AC_HELP_STRING([--with-mpisx-ew], [set MPI-libs for NEC MPI/SX with Fortran -ew]),
 	[
-		AS_IF([test x"$withval" = "xyes" -a x"$inside_openmpi" = "xno"],
+		AS_IF([test x"$withval" = "xyes"],
 		[
 			MPILIB="-lmpiw"
 			PMPILIB="-lpmpiw"
@@ -336,13 +330,18 @@ AC_DEFUN([ACVT_MPI],
 		ac_cv_func_PMPI_Win_test="yes"
 		ac_cv_func_PMPI_Win_lock="yes"
 		ac_cv_func_PMPI_Win_unlock="yes"
-		AS_IF([test x"$inside_openmpi" != "xno" -a x"$have_mpi2_io" = "xyes"],
+		AS_IF([test x"$inside_openmpi" != "xno"],
 		[
-			ac_cv_func_PMPI_File_read_ordered="yes"
-			ac_cv_func_PMPI_File_read_ordered_begin="yes"
-			ac_cv_func_PMPI_File_write_ordered="yes"
-			ac_cv_func_PMPI_File_write_ordered_begin="yes"
-			ac_cv_func_MPI_Register_datarep="yes"
+			AS_IF([test x"$enable_mpi2_io" != "xno"],
+			[
+				ac_cv_func_MPI_File_open="yes"
+				ac_cv_func_MPI_File_close="yes"
+				ac_cv_func_PMPI_File_read_ordered="yes"
+				ac_cv_func_PMPI_File_read_ordered_begin="yes"
+				ac_cv_func_PMPI_File_write_ordered="yes"
+				ac_cv_func_PMPI_File_write_ordered_begin="yes"
+				ac_cv_func_MPI_Register_datarep="yes"
+			])
 		])
 		ac_cv_have_decl_MPI_IN_PLACE="yes"
 		ac_cv_have_decl_MPI_ROOT="yes"
@@ -351,12 +350,11 @@ AC_DEFUN([ACVT_MPI],
 	AC_ARG_WITH(sgimpt,
 		AC_HELP_STRING([--with-sgimpt], [set MPI-libs for SGI MPT]),
 	[
-		AS_IF([test x"$withval" = "xyes" -a x"$inside_openmpi" = "xno"],
+		AS_IF([test x"$withval" = "xyes"],
 		[
 			MPILIB="-lmpi"
 			PMPILIB="$MPILIB"
-			FMPILIB="-lvt-fmpi"
-			check_fc_conv="no"
+			FMPILIB="-l$fmpiwraplib"
 			check_mpi2_thread="no"; have_mpi2_thread="yes"
 			check_mpi2_1sided="no"; have_mpi2_1sided="yes"
 			check_mpi2_extcoll="no"; have_mpi2_extcoll="no"
@@ -368,11 +366,11 @@ AC_DEFUN([ACVT_MPI],
 	AC_ARG_WITH(sunmpi,
 		AC_HELP_STRING([--with-sunmpi], [set MPI-libs for SUN MPI]),
 	[
-		AS_IF([test x"$withval" = "xyes" -a x"$inside_openmpi" = "xno"],
+		AS_IF([test x"$withval" = "xyes"],
 		[
 			MPILIB="-lmpi"
 			PMPILIB="$MPILIB"
-			FMPILIB="-lvt-fmpi"
+			FMPILIB="-l$fmpiwraplib"
 			check_mpi2_thread="no"; have_mpi2_thread="yes"
 			check_mpi2_1sided="no"; have_mpi2_1sided="yes"
 			check_mpi2_extcoll="no"; have_mpi2_extcoll="yes"
@@ -384,11 +382,11 @@ AC_DEFUN([ACVT_MPI],
 	AC_ARG_WITH(sunmpi-mt,
 		AC_HELP_STRING([--with-sunmpi-mt], [set MPI-libs for SUN MPI-MT]),
 	[
-		AS_IF([test x"$withval" = "xyes" -a x"$inside_openmpi" = "xno"],
+		AS_IF([test x"$withval" = "xyes"],
 		[
 			MPILIB="-lmpi_mt"
 			PMPILIB="$MPILIB"
-			FMPILIB="-lvt-fmpi"
+			FMPILIB="-l$fmpiwraplib"
 			check_mpi2_thread="no"; have_mpi2_thread="yes"
 			check_mpi2_1sided="no"; have_mpi2_1sided="yes"
 			check_mpi2_extcoll="no"; have_mpi2_extcoll="yes"
@@ -400,7 +398,7 @@ AC_DEFUN([ACVT_MPI],
 	AC_ARG_WITH(mpibull2,
 		AC_HELP_STRING([--with-mpibull2], [set MPI-libs for Bull MPICH2]),
 	[
-		AS_IF([test x"$withval" = "xyes" -a x"$inside_openmpi" = "xno"],
+		AS_IF([test x"$withval" = "xyes"],
 		[
 			AS_IF([test x"$MPILIBDIR" = x],
 			[pmilibdir="-L/usr/lib/pmi"], [pmilibdir="$MPILIBDIR/pmi"])
@@ -430,16 +428,19 @@ AC_DEFUN([ACVT_MPI],
 		AC_HELP_STRING([--with-fmpi-lib], [use given fmpi lib]),
 	[FMPILIB="$withval"])
 
+	AC_ARG_ENABLE(fmpi,
+		AC_HELP_STRING([--enable-fmpi],
+		[build MPI Fortran support, default: enable if an MPI Fortran library found by configure]),
+	[AS_IF([test x"$enableval" = "xyes"],
+	[force_fmpi="yes"], [check_fmpi="no"; FMPILIB=])])
+	AS_IF([test x"$FC" = x],
+	[check_fmpi="no"; force_fmpi="no"; FMPILIB=])
+
 	AC_ARG_ENABLE(fmpi-lib,
 		AC_HELP_STRING([--enable-fmpi-lib],
-		[build MPI Fortran support library, default: enable if no MPI Fortran library found by configure]), 
-	[AS_IF([test x"$enableval" = "xyes"],
-	[force_fmpiwraplib="yes"; FMPILIB="-lvt-fmpi"], [check_fmpiwraplib="no"])])
-
-	AC_ARG_ENABLE(fmpi-handle-convert,
-		AC_HELP_STRING([--enable-fmpi-handle-convert],
-		[do convert MPI handles, default: enable if MPI conversion functions found by configure]),
-	[AS_IF([test x"$enableval" != "xyes"], [check_fc_conv="no"])])
+		[build MPI Fortran wrapper library, default: enable if no MPI Fortran library found by configure]), 
+	[AS_IF([test x"$enableval" = "xyes" -a x"$check_fmpi" = "xyes"],
+	[force_fmpi="yes"; FMPILIB="-l$fmpiwraplib"], [FMPILIB=])])
 
 	AC_ARG_ENABLE(mpi2-thread,
 		AC_HELP_STRING([--enable-mpi2-thread],
@@ -648,7 +649,7 @@ dnl			])
 
 dnl		check for FMPILIB
 
-		AS_IF([test x"$FC" != x -a x"$FMPILIB" = x -a x"$mpi_error" = "xno"],
+		AS_IF([test x"$check_fmpi" = "xyes" -a x"$FMPILIB" = x -a x"$mpi_error" = "xno"],
 		[
 			sav_CC=$CC
 			CC=$MPICC
@@ -702,19 +703,11 @@ dnl		check for FMPILIB
 
 			AS_IF([test x"$FMPILIB" = x],
 			[
-				AC_MSG_NOTICE([no libmpi_f77, libmpi_mpifh, libmpibinding_f77, libfmpich, or liblamf77mpi found; build libvt-fmpi])
-				FMPILIB="-lvt-fmpi"
+				AC_MSG_NOTICE([no libmpi_f77, libmpi_mpifh, libmpibinding_f77, libfmpich, or liblamf77mpi found; build lib$fmpiwraplib])
+				FMPILIB="-l$fmpiwraplib"
 			])
 
 			CC=$sav_CC
-		])
-
-		AS_IF([test x"$FMPILIB" = "x-lvt-fmpi"],
-		[
-			AS_IF([test x"$check_fmpiwraplib" = "xno"], [FMPILIB=])
-		],
-		[
-			check_fmpiwraplib="no"
 		])
 
 dnl		check for MPI-2
@@ -849,17 +842,23 @@ dnl			check for MPI-2 I/O
 
 dnl		check for Fortran interoperability
 
-		AS_IF([test x"$check_fmpiwraplib" = "xyes" -a x"$mpi_error" = "xno"],
+		AS_IF([test x"$FMPILIB" = x"-l$fmpiwraplib" -a x"$mpi_error" = "xno"],
 		[
 			ACVT_CONF_SUBTITLE([Fortran interoperability])
 			ACVT_FMPIWRAPLIB
 			AS_IF([test x"$fmpiwraplib_error" = "xno"],
-			[build_fmpiwraplib="yes"], [MPIFC="$FC"; FMPILIB=])
+			[
+				build_fmpiwraplib="yes"
+			],
+			[
+				AS_IF([test x"$force_fmpi" = "xyes"], [exit 1])
+				FMPILIB=
+			])
 		])
 
 		AS_IF([test x"$mpi_error" = "xno"], [have_mpi="yes"],
 		[MPICC="$CC"; MPICXX="$CXX"; MPIFC="$FC"])
-		AS_IF([test x"$FMPILIB" != x], [have_fmpi="yes"])
+		AS_IF([test x"$FMPILIB" != x], [have_fmpi="yes"], [MPIFC=])
 		AS_IF([test x"$have_mpi2_thread" = "xyes"], [VT_MPIGEN_HAVE_MPI2_THREAD=1])
 		AS_IF([test x"$have_mpi2_1sided" = "xyes"], [VT_MPIGEN_HAVE_MPI2_1SIDED=1])
 		AS_IF([test x"$have_mpi2_extcoll" = "xyes"], [VT_MPIGEN_HAVE_MPI2_EXTCOLL=1])
@@ -904,6 +903,9 @@ AC_DEFUN([ACVT_FMPIWRAPLIB],
 [
 	fmpiwraplib_error="no"
 
+	have_mpi2_const="no"
+	have_mpi_status_size="no"
+
 	VT_MPIGEN_HAVE_FC_CONV_COMM=0
 	VT_MPIGEN_HAVE_FC_CONV_ERRH=0
 	VT_MPIGEN_HAVE_FC_CONV_FILE=0
@@ -916,32 +918,25 @@ AC_DEFUN([ACVT_FMPIWRAPLIB],
 	VT_MPIGEN_HAVE_FC_CONV_WIN=0
 	VT_MPIGEN_HAVE_FC_CONV_MPI2CONST=0
 
-	AS_IF([test x"$FC" != x],
-	[
-		AC_CHECK_PROGS(MPIFC, mpif77 hf77 mpxlf_r mpxlf mpf77 cmpifc mpifort mpif90 mpxlf95_r mpxlf90_r mpxlf95 mpxlf90 mpf90 cmpif90c, $FC)
+	AC_CHECK_PROGS(MPIFC, mpif77 hf77 mpxlf_r mpxlf mpf77 cmpifc mpifort mpif90 mpxlf95_r mpxlf90_r mpxlf95 mpxlf90 mpf90 cmpif90c, $FC)
 
-		AS_IF([test x"$MPIFC" = x"$FC" -a x"$inside_openmpi" = "xno"],
-		[
-			AC_MSG_CHECKING([for mpif.h])
-			rm -f conftest.f conftest.o
-			cat > conftest.f << EOF
+	AS_IF([test x"$MPIFC" = x"$FC" -a x"$inside_openmpi" = "xno"],
+	[
+		AC_MSG_CHECKING([for mpif.h])
+		rm -f conftest.f conftest.o
+		cat > conftest.f << EOF
       PROGRAM conftest
       INCLUDE 'mpif.h'
       END
 EOF
-			eval "$FC $FCFLAGS $MPIFCFLAGS $FMPIINCDIR -c conftest.f" >/dev/null 2>&1
-			AS_IF([test "$?" = "0" -a -s conftest.o], [AC_MSG_RESULT([yes])],
-			[
-				AC_MSG_RESULT([no])
-				AC_MSG_NOTICE([error: no mpif.h found; check path for MPI package first...])
-				fmpiwraplib_error="yes"
-			])
-			rm -f conftest.f conftest.o
+		eval "$FC $FCFLAGS $MPIFCFLAGS $FMPIINCDIR -c conftest.f" >/dev/null 2>&1
+		AS_IF([test "$?" = "0" -a -s conftest.o], [AC_MSG_RESULT([yes])],
+		[
+			AC_MSG_RESULT([no])
+			AC_MSG_NOTICE([error: no mpif.h found; check path for MPI package first...])
+			fmpiwraplib_error="yes"
 		])
-	],
-	[
-		AC_MSG_NOTICE([error: no Fortran compiler command given])
-		fmpiwraplib_error="yes"
+		rm -f conftest.f conftest.o
 	])
 
 	AS_IF([test x"$fmpiwraplib_error" = "xno"],
@@ -951,60 +946,57 @@ EOF
 		CC=$MPICC
 		CPPFLAGS="$CPPFLAGS $MPICFLAGS $MPIINCDIR"
 
-		AS_IF([test x"$check_fc_conv" = "xyes"],
-		[
-dnl			check for MPI handle conversion functions
+dnl		check for MPI handle conversion functions
 
-			AC_CHECK_DECL([MPI_Comm_f2c],
-			 [AC_CHECK_DECL([MPI_Comm_c2f],
-			   [VT_MPIGEN_HAVE_FC_CONV_COMM=1], [], [#include "mpi.h"])],
-			 [], [#include "mpi.h"])
+		AC_CHECK_DECL([MPI_Comm_f2c],
+		 [AC_CHECK_DECL([MPI_Comm_c2f],
+		   [VT_MPIGEN_HAVE_FC_CONV_COMM=1], [], [#include "mpi.h"])],
+		 [], [#include "mpi.h"])
 
-			AC_CHECK_DECL([MPI_Errhandler_f2c],
-			 [AC_CHECK_DECL([MPI_Errhandler_c2f],
-			   [VT_MPIGEN_HAVE_FC_CONV_ERRH=1], [], [#include "mpi.h"])],
-			 [], [#include "mpi.h"])
+		AC_CHECK_DECL([MPI_Errhandler_f2c],
+		 [AC_CHECK_DECL([MPI_Errhandler_c2f],
+		   [VT_MPIGEN_HAVE_FC_CONV_ERRH=1], [], [#include "mpi.h"])],
+		 [], [#include "mpi.h"])
 
-			AC_CHECK_DECL([MPI_File_f2c],
-			 [AC_CHECK_DECL([MPI_File_c2f],
-			   [VT_MPIGEN_HAVE_FC_CONV_FILE=1], [], [#include "mpi.h"])],
-			 [], [#include "mpi.h"])
+		AC_CHECK_DECL([MPI_File_f2c],
+		 [AC_CHECK_DECL([MPI_File_c2f],
+		   [VT_MPIGEN_HAVE_FC_CONV_FILE=1], [], [#include "mpi.h"])],
+		 [], [#include "mpi.h"])
 
-			AC_CHECK_DECL([MPI_Group_f2c],
-			 [AC_CHECK_DECL([MPI_Group_c2f],
-			   [VT_MPIGEN_HAVE_FC_CONV_GROUP=1], [], [#include "mpi.h"])],
-			 [], [#include "mpi.h"])
+		AC_CHECK_DECL([MPI_Group_f2c],
+		 [AC_CHECK_DECL([MPI_Group_c2f],
+		   [VT_MPIGEN_HAVE_FC_CONV_GROUP=1], [], [#include "mpi.h"])],
+		 [], [#include "mpi.h"])
 
-			AC_CHECK_DECL([MPI_Info_f2c],
-			 [AC_CHECK_DECL([MPI_Info_c2f],
-			   [VT_MPIGEN_HAVE_FC_CONV_INFO=1], [], [#include "mpi.h"])],
-			 [], [#include "mpi.h"])
+		AC_CHECK_DECL([MPI_Info_f2c],
+		 [AC_CHECK_DECL([MPI_Info_c2f],
+		   [VT_MPIGEN_HAVE_FC_CONV_INFO=1], [], [#include "mpi.h"])],
+		 [], [#include "mpi.h"])
 
-			AC_CHECK_DECL([MPI_Op_f2c],
-			 [AC_CHECK_DECL([MPI_Op_c2f],
-			   [VT_MPIGEN_HAVE_FC_CONV_OP=1], [], [#include "mpi.h"])],
-			 [], [#include "mpi.h"])
+		AC_CHECK_DECL([MPI_Op_f2c],
+		 [AC_CHECK_DECL([MPI_Op_c2f],
+		   [VT_MPIGEN_HAVE_FC_CONV_OP=1], [], [#include "mpi.h"])],
+		 [], [#include "mpi.h"])
 
-			AC_CHECK_DECL([MPI_Request_f2c],
-			 [AC_CHECK_DECL([MPI_Request_c2f],
-			   [VT_MPIGEN_HAVE_FC_CONV_REQUEST=1], [], [#include "mpi.h"])],
-			 [], [#include "mpi.h"])
+		AC_CHECK_DECL([MPI_Request_f2c],
+		 [AC_CHECK_DECL([MPI_Request_c2f],
+		   [VT_MPIGEN_HAVE_FC_CONV_REQUEST=1], [], [#include "mpi.h"])],
+		 [], [#include "mpi.h"])
 
-			AC_CHECK_DECL([MPI_Status_f2c],
-			 [AC_CHECK_DECL([MPI_Status_c2f],
-			   [VT_MPIGEN_HAVE_FC_CONV_STATUS=1], [], [#include "mpi.h"])],
-			 [], [#include "mpi.h"])
+		AC_CHECK_DECL([MPI_Status_f2c],
+		 [AC_CHECK_DECL([MPI_Status_c2f],
+		   [VT_MPIGEN_HAVE_FC_CONV_STATUS=1], [], [#include "mpi.h"])],
+		 [], [#include "mpi.h"])
 
-			AC_CHECK_DECL([MPI_Type_f2c],
-			 [AC_CHECK_DECL([MPI_Type_c2f],
-			   [VT_MPIGEN_HAVE_FC_CONV_TYPE=1], [], [#include "mpi.h"])],
-			 [], [#include "mpi.h"])
+		AC_CHECK_DECL([MPI_Type_f2c],
+		 [AC_CHECK_DECL([MPI_Type_c2f],
+		   [VT_MPIGEN_HAVE_FC_CONV_TYPE=1], [], [#include "mpi.h"])],
+		 [], [#include "mpi.h"])
 
-			AC_CHECK_DECL([MPI_Win_f2c],
-			 [AC_CHECK_DECL([MPI_Win_c2f],
-			   [VT_MPIGEN_HAVE_FC_CONV_WIN=1], [], [#include "mpi.h"])],
-			 [], [#include "mpi.h"])
-		])
+		AC_CHECK_DECL([MPI_Win_f2c],
+		 [AC_CHECK_DECL([MPI_Win_c2f],
+		   [VT_MPIGEN_HAVE_FC_CONV_WIN=1], [], [#include "mpi.h"])],
+		 [], [#include "mpi.h"])
 
 dnl		check for MPI-2 constants to convert
 
