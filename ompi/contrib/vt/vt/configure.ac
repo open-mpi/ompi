@@ -270,8 +270,6 @@ AM_CONDITIONAL(AMHAVETAUINST, test x"$have_tauinst" = "xyes")
 ACVT_CONF_TITLE([Message Passing Interface (MPI)])
 ACVT_MPI
 AS_IF([test x"$force_mpi" = "xyes" -a x"$mpi_error" = "xyes"], [exit 1])
-AS_IF([test x"$force_fmpiwraplib" = "xyes" -a x"$fmpiwraplib_error" = "xyes"], [exit 1])
-AS_IF([test x"$MPICC" = x], [MPICC=$CC])
 AS_IF([test x"$enable_config_titles" = "xyes" -a x"$check_mpi" = "xno"],
 [AC_MSG_NOTICE([disabled via command line switch])])
 AM_CONDITIONAL(AMHAVEMPI, test x"$have_mpi" = "xyes")
