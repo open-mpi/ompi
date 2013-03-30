@@ -23,8 +23,10 @@
 #if !defined(MCA_BASE_VAR_ENUM_H)
 #define MCA_BASE_VAR_ENUM_H
 
+#include "opal_config.h"
+
 #include "opal/class/opal_object.h"
-#include "opal/include/opal/constants.h"
+#include "opal/constants.h"
 
 typedef struct mca_base_var_enum_t mca_base_var_enum_t;
 
