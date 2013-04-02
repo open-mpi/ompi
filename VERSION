@@ -12,7 +12,7 @@
 
 major=1
 minor=7
-release=0
+release=1
 
 # greek is used for alpha or beta release tags.  If it is non-empty,
 # it will be appended to the version number.  It does not have to be
@@ -21,7 +21,7 @@ release=0
 # only requirement is that it must be entirely printable ASCII 
 # characters and have no white space.
 
-greek=rc9
+greek=
 
 # If want_repo_rev=1, then the repo revision number will be included
 # in the overall Open MPI version number in some form.
