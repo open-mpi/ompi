@@ -61,14 +61,15 @@ static int reg_string(const char* param_name,
 {
     int index;
 
-    *storage = default_value;
+    /* the MCA variable system will not change this value */
+    *storage = (char *) default_value;
     index = mca_base_component_var_register(&mca_sbgp_ibnet_component.super.sbgp_version,
                                             param_name, param_desc, MCA_BASE_VAR_TYPE_STRING,
                                             NULL, 0, 0, OPAL_INFO_LVL_9,
                                             MCA_BASE_VAR_SCOPE_READONLY, storage);
     if (NULL != deprecated_param_name) {
         (void) mca_base_var_register_synonym(index, "ompi", "sbgp", "ibnet", deprecated_param_name,
-                                             MCA_BASE_SYN_FLAG_DEPRECATED);
+                                             MCA_BASE_VAR_SYN_FLAG_DEPRECATED);
     }
 
     if (0 != (flags & REGSTR_EMPTY_OK) && (NULL == *storage || 0 == strlen(*storage))) {
@@ -97,7 +98,7 @@ static int reg_int(const char* param_name,
                                             MCA_BASE_VAR_SCOPE_READONLY, storage);
     if (NULL != deprecated_param_name) {
         (void) mca_base_var_register_synonym(index, "ompi", "sbgp", "ibnet", deprecated_param_name,
-                                             MCA_BASE_SYN_FLAG_DEPRECATED);
+                                             MCA_BASE_VAR_SYN_FLAG_DEPRECATED);
     }
 
     if (0 != (flags & REGINT_NEG_ONE_OK) && -1 == *storage) {
@@ -118,10 +119,10 @@ static int reg_int(const char* param_name,
 /*
  * utility routine for boolean parameter registration
  */
-static int reg_int(const char* param_name,
-                   const char* deprecated_param_name,
-                   const char* param_desc,
-                   bool default_value, bool *storage)
+static int reg_bool(const char* param_name,
+                    const char* deprecated_param_name,
+                    const char* param_desc,
+                    bool default_value, bool *storage)
 {
     int index;
 
@@ -132,7 +133,7 @@ static int reg_int(const char* param_name,
                                             MCA_BASE_VAR_SCOPE_READONLY, storage);
     if (NULL != deprecated_param_name) {
         (void) mca_base_var_register_synonym(index, "ompi", "sbgp", "ibnet", deprecated_param_name,
-                                             MCA_BASE_SYN_FLAG_DEPRECATED);
+                                             MCA_BASE_VAR_SYN_FLAG_DEPRECATED);
     }
 
     return OMPI_SUCCESS;
@@ -141,8 +142,8 @@ static int reg_int(const char* param_name,
 int mca_sbgp_ibnet_register_params(void)
 {
     mca_base_var_enum_t *new_enum;
-    char *msg, *pkey;
-    int ival, ret, tmp;
+    char *msg;
+    int ret, tmp;
 
     ret = OMPI_SUCCESS;
 
@@ -206,7 +207,7 @@ int mca_sbgp_ibnet_register_params(void)
     }
 
     (void) mca_base_var_register_synonym(ret, "ompi", "sbgp", "ibnet", "ib_mtu",
-                                         MCA_BASE_SYN_FLAG_DEPRECATED);
+                                         MCA_BASE_VAR_SYN_FLAG_DEPRECATED);
 
     CHECK(reg_string("if_include", NULL,
                      "Comma-delimited list of devices/ports to be used (e.g. \"mthca0,mthca1:2\"; empty value means to use all ports found).  Mutually exclusive with sbgp_ibnet_if_exclude.",
