@@ -41,7 +41,7 @@ public:
    void setSyncMethod( const MethodTypeT & method )
    {
 #ifndef VT_ETIMESYNC
-      assert( method != METHOD_ENHANCED );
+      vt_assert( method != METHOD_ENHANCED );
 #endif // VT_ETIMESYNC
 
       m_syncMethod = method;
@@ -57,7 +57,7 @@ public:
    void setTimeRange( const uint32_t & proc, const uint64_t & minTime,
            const uint64_t & maxTime )
    {
-      assert( proc != 0 );
+      vt_assert( proc != 0 );
 
       // set time range of certain process
       m_proc2TimeRange[proc] = TimeRangeT( minTime, maxTime );
@@ -70,7 +70,7 @@ public:
       // search for time range of given process
       std::map<uint32_t, TimeRangeT>::const_iterator it =
          m_proc2TimeRange.find( proc );
-      assert( it != m_proc2TimeRange.end() );
+      vt_assert( it != m_proc2TimeRange.end() );
 
       // return time range
       return it->second;
@@ -87,14 +87,14 @@ public:
    // update timer parameters of certain process
    void updateSyncParam( const uint32_t & proc )
    {
-      assert( m_eTimeSync );
+      vt_assert( m_eTimeSync );
       m_eTimeSync->updateSyncParam( proc );
    }
 
    // reset timer parameters of certain process
    void resetSyncParam( const uint32_t & proc )
    {
-      assert( m_eTimeSync );
+      vt_assert( m_eTimeSync );
       m_eTimeSync->resetSyncParam( proc );
    }
 
@@ -109,7 +109,7 @@ public:
 
       std::map<uint32_t, UnifyControlS*>::const_iterator it =
          StreamId2UnifyCtl.find( mprocess );
-      assert( it != StreamId2UnifyCtl.end() );
+      vt_assert( it != StreamId2UnifyCtl.end() );
 
 #ifdef VT_ETIMESYNC
       if( m_syncMethod == METHOD_ENHANCED )

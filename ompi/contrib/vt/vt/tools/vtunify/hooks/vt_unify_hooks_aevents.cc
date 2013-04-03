@@ -71,7 +71,7 @@ HooksAsyncEventsC::HandleAsyncEventPre(
       // get actual time from async. event's key-value list
       //
       otf_rc = OTF_KeyValueList_getUint64( kvs, source.key, &actual_time );
-      assert( otf_rc == 0 );
+      vt_assert( otf_rc == 0 );
 
       // ignore async. event, if its time deceeds lower bound
       //
@@ -91,15 +91,15 @@ HooksAsyncEventsC::HandleAsyncEventPre(
       // get a copy of key-value list
       //
       OTF_KeyValueList * new_kvs = OTF_KeyValueList_new();
-      assert( new_kvs );
+      vt_assert( new_kvs );
       otf_rc = OTF_KeyValueList_appendKeyValueList( new_kvs, kvs );
-      assert( otf_rc == 0 );
+      vt_assert( otf_rc == 0 );
       kvs = new_kvs;
 
       // remove key of actual time from key-value list
       //
       otf_rc = OTF_KeyValueList_removeKey( kvs, source.key );
-      assert( otf_rc == 0 );
+      vt_assert( otf_rc == 0 );
 
       ret = true;
 
@@ -114,7 +114,7 @@ HooksAsyncEventsC::HandleAsyncEventPost(
 {
    bool error = false;
 
-   assert( newAsyncEvent );
+   vt_assert( newAsyncEvent );
 
    // abort, if time of async. event isn't increasing
    //
@@ -165,20 +165,20 @@ HooksAsyncEventsC::HandleAsyncCounter( AsyncSourceManagerS::SourceS * source,
       if( procgrp != 0 )
       {
          global_procgrp = tkfac_defprocgrp->translate( proc, procgrp );
-         assert( global_procgrp != 0 );
+         vt_assert( global_procgrp != 0 );
       }
 
       // translate local counter token
       //
       uint32_t global_counter = tkfac_defcntr->translate( proc, counter );
-      assert( global_counter != 0 );
+      vt_assert( global_counter != 0 );
 
       // create new async. event
       //
       AsyncEventBaseS * new_async_event =
          new AsyncEventCounterS( time, kvs, global_procgrp, global_counter,
             value );
-      assert( new_async_event );
+      vt_assert( new_async_event );
 
       // post-handle event: enqueue new async. event
       if( !HandleAsyncEventPost( *source, new_async_event ) )
@@ -257,7 +257,7 @@ HooksAsyncEventsC::phaseHook_UnifyEvents_pre()
       VPrint( 2, " Continuing unification of events\n" );
 
    //return !error;
-   assert( !error );
+   vt_assert( !error );
 }
 
 // record hooks
@@ -312,7 +312,7 @@ HooksAsyncEventsC::writeRecHook_Event( uint64_t * time, uint32_t * streamid,
    if( !manager || manager->stream_id != *streamid )
    {
       manager = getSourceManagerByStreamId( *streamid );
-      assert( manager );
+      vt_assert( manager );
    }
 
    // ignore this event, if write record hooks are suspended
@@ -326,7 +326,7 @@ HooksAsyncEventsC::writeRecHook_Event( uint64_t * time, uint32_t * streamid,
    }
 
    //return !error;
-   assert( !error );
+   vt_assert( !error );
 }
 
 // generic hook
@@ -350,7 +350,7 @@ HooksAsyncEventsC::genericHook( const uint32_t & id, HooksC::VaArgsT & args )
       // get async. source manager by stream id
       //
       AsyncSourceManagerS * manager = getSourceManagerByStreamId( *stream_id );
-      assert( manager );
+      vt_assert( manager );
 
       // open reader streams of async. sources
       error = !openSources( *manager, *stream_id, *stream_prefix, *wstream );
@@ -365,14 +365,14 @@ HooksAsyncEventsC::genericHook( const uint32_t & id, HooksC::VaArgsT & args )
       // get async. source manager by stream id
       //
       AsyncSourceManagerS * manager = getSourceManagerByStreamId( *stream_id );
-      assert( manager );
+      vt_assert( manager );
 
       // write remaining queued async. events and close reader streams
       error = !closeSources( *manager );
    }
 
    //return !error;
-   assert( !error );
+   vt_assert( !error );
 }
 
 // ^^^^^^^^^^^^^^^^^^^^ HOOK METHODS ^^^^^^^^^^^^^^^^^^^^
@@ -384,7 +384,7 @@ HooksAsyncEventsC::openSources( AsyncSourceManagerS & manager,
 {
    bool error = false;
 
-   assert( !manager.opened );
+   vt_assert( !manager.opened );
 
    manager.stream_id = streamId;
    manager.stream_prefix = streamPrefix;
@@ -400,7 +400,7 @@ HooksAsyncEventsC::openSources( AsyncSourceManagerS & manager,
       // open file manager
       //
       source.file_manager = OTF_FileManager_open( 1 );
-      assert( source.file_manager );
+      vt_assert( source.file_manager );
 
       // initialize IOFSL stuff for reading, if necessary
       //
@@ -420,7 +420,7 @@ HooksAsyncEventsC::openSources( AsyncSourceManagerS & manager,
       source.rstream =
          OTF_RStream_open( manager.stream_prefix.c_str(), manager.stream_id,
             source.file_manager );
-      assert( source.rstream );
+      vt_assert( source.rstream );
 
       PVPrint( 3, "  Opened OTF reader stream for reading async. events ahead "
                "[namestub %s id %x async. source %x]\n",
@@ -432,7 +432,7 @@ HooksAsyncEventsC::openSources( AsyncSourceManagerS & manager,
       // create record handler array
       //
       source.handler_array = OTF_HandlerArray_open();
-      assert( source.handler_array );
+      vt_assert( source.handler_array );
 
       // set record handler and its first argument for ...
       //
@@ -461,7 +461,7 @@ HooksAsyncEventsC::closeSources( AsyncSourceManagerS & manager )
 {
    bool error = false;
 
-   assert( manager.opened );
+   vt_assert( manager.opened );
 
    // write remaining queued async. events
    error = !writeAsyncEvents( manager );
@@ -500,7 +500,7 @@ HooksAsyncEventsC::readAhead( AsyncSourceManagerS & manager,
 {
    bool error = false;
 
-   assert( manager.opened );
+   vt_assert( manager.opened );
 
    // either read events ahead for all async. sources
    //
@@ -525,7 +525,7 @@ HooksAsyncEventsC::readAhead( AsyncSourceManagerS & manager,
       //
       std::map<uint32_t, AsyncSourceManagerS::SourceS>::iterator it =
          manager.sources.find( sourceKey );
-      assert( it != manager.sources.end() );
+      vt_assert( it != manager.sources.end() );
 
       AsyncSourceManagerS::SourceS & source = it->second;
 
@@ -662,7 +662,7 @@ HooksAsyncEventsC::writeAsyncEvents( AsyncSourceManagerS & manager,
             // TODO: handle further async. event types here
             default: // ASYNC_EVENT_TYPE_UNKNOWN
             {
-               assert( 0 );
+               vt_assert( 0 );
             }
          }
 
@@ -741,7 +741,7 @@ HooksAsyncEventsC::shareSourceKeys()
 {
    bool error = false;
 
-   assert( NumRanks > 1 );
+   vt_assert( NumRanks > 1 );
 
    // block until all ranks have reached this point
    CALL_MPI( MPI_Barrier( MPI_COMM_WORLD ) );
@@ -766,7 +766,7 @@ HooksAsyncEventsC::shareSourceKeys()
       // allocate memory for the send/receive buffer
       //
       keys = new uint32_t[keys_num];
-      assert( keys );
+      vt_assert( keys );
 
       MASTER
       {

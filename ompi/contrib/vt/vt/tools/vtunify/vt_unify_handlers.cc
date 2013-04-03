@@ -50,12 +50,12 @@ handleKeyValueList( const uint32_t & proc, OTF_KeyValueList * kvs )
          //
          OTF_KeyValuePair* pair = 0;
          OTF_KeyValueList_getPairByIndex( kvs, i, &pair );
-         assert( pair );
+         vt_assert( pair );
 
          // translate local key token
          //
          uint32_t global_key = tkfac_defkeyval->translate( proc, pair->key );
-         assert( global_key != 0 );
+         vt_assert( global_key != 0 );
          pair->key = global_key;
       }
    }
@@ -507,8 +507,8 @@ int
 HandleDefCounterAssignments( FirstHandlerArg_DefsS * fha,
    uint32_t streamid, uint32_t counter, uint32_t n, uint32_t * array )
 {
-   assert( n == 1 ); // only one process group assignment per counter allowed
-   assert( array );
+   vt_assert( n == 1 ); // only one process group assignment per counter allowed
+   vt_assert( array );
 
    uint32_t procgrp = *array;
 
@@ -658,7 +658,7 @@ HandleEnter( FirstHandlerArg_EventsS * fha,
    // translate local function token
    //
    uint32_t global_func = tkfac_deffunc->translate( proc, func );
-   assert( global_func != 0 );
+   vt_assert( global_func != 0 );
 
    // translate local scl token, if necessary
    //
@@ -666,7 +666,7 @@ HandleEnter( FirstHandlerArg_EventsS * fha,
    if( scl != 0 )
    {
       global_scl = tkfac_defscl->translate( proc, scl );
-      assert( global_scl != 0 );
+      vt_assert( global_scl != 0 );
    }
 
    // translate local key token(s)
@@ -716,7 +716,7 @@ HandleLeave( FirstHandlerArg_EventsS * fha,
    if( func != 0 )
    {
       global_func = tkfac_deffunc->translate( proc, func );
-      assert( global_func != 0 );
+      vt_assert( global_func != 0 );
    }
 
    // translate local scl token, if necessary
@@ -725,7 +725,7 @@ HandleLeave( FirstHandlerArg_EventsS * fha,
    if( scl != 0 )
    {
       global_scl = tkfac_defscl->translate( proc, scl );
-      assert( global_scl != 0 );
+      vt_assert( global_scl != 0 );
    }
 
    // translate local key token(s)
@@ -779,13 +779,13 @@ HandleCounter( FirstHandlerArg_EventsS * fha,
    if( procgrp != 0 )
    {
       global_procgrp = tkfac_defprocgrp->translate( proc, procgrp );
-      assert( global_procgrp != 0 );
+      vt_assert( global_procgrp != 0 );
    }
 
    // translate local counter token
    //
    uint32_t global_counter = tkfac_defcntr->translate( proc, counter );
-   assert( global_counter != 0 );
+   vt_assert( global_counter != 0 );
 
    // translate local key token(s)
    handleKeyValueList( proc, kvs );
@@ -831,7 +831,7 @@ HandleBeginFileOp( FirstHandlerArg_EventsS * fha,
    if( scl != 0 )
    {
       global_scl = tkfac_defscl->translate( proc, scl );
-      assert( global_scl != 0 );
+      vt_assert( global_scl != 0 );
    }
 
    // translate local key token(s)
@@ -878,7 +878,7 @@ HandleEndFileOp( FirstHandlerArg_EventsS * fha,
    // translate local file token
    //
    uint32_t global_file = tkfac_deffile->translate( proc, file );
-   assert( global_file != 0 );
+   vt_assert( global_file != 0 );
 
    // translate local scl token, if necessary
    //
@@ -886,7 +886,7 @@ HandleEndFileOp( FirstHandlerArg_EventsS * fha,
    if( scl != 0 )
    {
       global_scl = tkfac_defscl->translate( proc, scl );
-      assert( global_scl != 0 );
+      vt_assert( global_scl != 0 );
    }
 
    // translate local key token(s)
@@ -934,7 +934,7 @@ HandleSendMsg( FirstHandlerArg_EventsS * fha,
    // translate local comm. token
    //
    uint32_t global_comm = tkfac_defprocgrp->translate( sender, comm );
-   assert( global_comm != 0 );
+   vt_assert( global_comm != 0 );
 
    // translate local scl token, if necessary
    //
@@ -942,7 +942,7 @@ HandleSendMsg( FirstHandlerArg_EventsS * fha,
    if( scl != 0 )
    {
       global_scl = tkfac_defscl->translate( sender, scl );
-      assert( global_scl != 0 );
+      vt_assert( global_scl != 0 );
    }
 
    // translate local key token(s)
@@ -1004,7 +1004,7 @@ HandleRecvMsg( FirstHandlerArg_EventsS * fha,
    // translate local comm. token
    //
    uint32_t global_comm = tkfac_defprocgrp->translate( receiver, comm );
-   assert( global_comm != 0 );
+   vt_assert( global_comm != 0 );
 
    // translate local scl token, if necessary
    //
@@ -1012,7 +1012,7 @@ HandleRecvMsg( FirstHandlerArg_EventsS * fha,
    if( scl != 0 )
    {
       global_scl = tkfac_defscl->translate( receiver, scl );
-      assert( global_scl != 0 );
+      vt_assert( global_scl != 0 );
    }
 
    // translate local key token(s)
@@ -1080,12 +1080,12 @@ HandleBeginCollOp( FirstHandlerArg_EventsS * fha,
    // translate local operation token
    //
    uint32_t global_operation = tkfac_defcollop->translate( proc, operation );
-   assert( global_operation != 0 );
+   vt_assert( global_operation != 0 );
 
    // translate local comm. token
    //
    uint32_t global_comm = tkfac_defprocgrp->translate( proc, comm );
-   assert( global_comm != 0 );
+   vt_assert( global_comm != 0 );
 
    // translate local scl token, if necessary
    //
@@ -1093,7 +1093,7 @@ HandleBeginCollOp( FirstHandlerArg_EventsS * fha,
    if( scl != 0 )
    {
       global_scl = tkfac_defscl->translate( proc, scl );
-      assert( global_scl != 0 );
+      vt_assert( global_scl != 0 );
    }
 
    // translate local key token(s)
@@ -1178,7 +1178,7 @@ HandleRMAPut( FirstHandlerArg_EventsS * fha,
    // translate local comm. token
    //
    uint32_t global_comm = tkfac_defprocgrp->translate( proc, comm );
-   assert( global_comm != 0 );
+   vt_assert( global_comm != 0 );
 
    // translate local scl token, if necessary
    //
@@ -1186,7 +1186,7 @@ HandleRMAPut( FirstHandlerArg_EventsS * fha,
    if( scl != 0 )
    {
       global_scl = tkfac_defscl->translate( proc, scl );
-      assert( global_scl != 0 );
+      vt_assert( global_scl != 0 );
    }
 
    // translate local key token(s)
@@ -1239,7 +1239,7 @@ HandleRMAPutRemoteEnd( FirstHandlerArg_EventsS * fha,
    // translate local comm. token
    //
    uint32_t global_comm = tkfac_defprocgrp->translate( proc, comm );
-   assert( global_comm != 0 );
+   vt_assert( global_comm != 0 );
 
    // translate local scl token, if necessary
    //
@@ -1247,7 +1247,7 @@ HandleRMAPutRemoteEnd( FirstHandlerArg_EventsS * fha,
    if( scl != 0 )
    {
       global_scl = tkfac_defscl->translate( proc, scl );
-      assert( global_scl != 0 );
+      vt_assert( global_scl != 0 );
    }
 
    // translate local key token(s)
@@ -1300,7 +1300,7 @@ HandleRMAGet( FirstHandlerArg_EventsS * fha,
    // translate local comm. token
    //
    uint32_t global_comm = tkfac_defprocgrp->translate( proc, comm );
-   assert( global_comm != 0 );
+   vt_assert( global_comm != 0 );
 
    // translate local scl token, if necessary
    //
@@ -1308,7 +1308,7 @@ HandleRMAGet( FirstHandlerArg_EventsS * fha,
    if( scl != 0 )
    {
       global_scl = tkfac_defscl->translate( proc, scl );
-      assert( global_scl != 0 );
+      vt_assert( global_scl != 0 );
    }
 
    // translate local key token(s)
@@ -1361,7 +1361,7 @@ HandleRMAEnd( FirstHandlerArg_EventsS * fha,
    // translate local comm. token
    //
    uint32_t global_comm = tkfac_defprocgrp->translate( proc, comm );
-   assert( global_comm != 0 );
+   vt_assert( global_comm != 0 );
 
    // translate local scl token, if necessary
    //
@@ -1369,7 +1369,7 @@ HandleRMAEnd( FirstHandlerArg_EventsS * fha,
    if( scl != 0 )
    {
       global_scl = tkfac_defscl->translate( proc, scl );
-      assert( global_scl != 0 );
+      vt_assert( global_scl != 0 );
    }
 
    // translate local key token(s)
@@ -1415,7 +1415,7 @@ HandleFunctionSummary( FirstHandlerArg_StatsS * fha,
    // translate local function token
    //
    uint32_t global_func = tkfac_deffunc->translate( proc, func );
-   assert( global_func != 0 );
+   vt_assert( global_func != 0 );
 
    // correct time
    time = theTimeSync->correctTime( proc, time );
@@ -1458,7 +1458,7 @@ HandleMessageSummary( FirstHandlerArg_StatsS * fha,
    if( comm != 0 )
    {
       global_comm = tkfac_defprocgrp->translate( proc, comm );
-      assert( global_comm != 0 );
+      vt_assert( global_comm != 0 );
    }
 
    // correct time
@@ -1506,7 +1506,7 @@ HandleCollOpSummary( FirstHandlerArg_StatsS * fha,
    if( comm != 0 )
    {
       global_comm = tkfac_defprocgrp->translate( proc, comm );
-      assert( global_comm != 0 );
+      vt_assert( global_comm != 0 );
    }
 
    // translate local coll. op, if necessary
@@ -1515,7 +1515,7 @@ HandleCollOpSummary( FirstHandlerArg_StatsS * fha,
    if( collop != 0 )
    {
       global_collop = tkfac_defcollop->translate( proc, collop );
-      assert( global_collop != 0 );
+      vt_assert( global_collop != 0 );
    }
 
    // correct time
@@ -1558,7 +1558,7 @@ HandleFileOpSummary( FirstHandlerArg_StatsS * fha,
    // translate local file
    //
    uint32_t global_file = tkfac_deffile->translate( proc, file );
-   assert( global_file != 0 );
+   vt_assert( global_file != 0 );
 
    // correct time
    time = theTimeSync->correctTime( proc, time );

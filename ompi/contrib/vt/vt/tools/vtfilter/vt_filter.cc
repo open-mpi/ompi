@@ -123,7 +123,7 @@ main( int argc, char ** argv )
     MASTER
     {
       OTF_FileManager* manager = OTF_FileManager_open( 1 );
-      assert( manager );
+      vt_assert( manager );
 
       OTF_Reader* reader =
         OTF_Reader_open( Params.input_trcfile.c_str(), manager );

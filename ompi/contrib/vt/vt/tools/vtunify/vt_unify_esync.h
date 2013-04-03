@@ -88,7 +88,7 @@ public:
    {
       std::map<uint32_t, uint64_t>::const_iterator it =
          m_streamId2StartTime.find( streamId );
-      assert( it != m_streamId2StartTime.end() );
+      vt_assert( it != m_streamId2StartTime.end() );
 
       return it->second;
    }

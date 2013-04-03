@@ -158,7 +158,7 @@ HooksMsgMatchAndSnapsC::HandleRecvMsg( LargeVectorC<RecvMsgS*> * recvMsgs,
    // translate local comm. token
    //
    uint32_t global_comm = tkfac_defprocgrp->translate( receiver, comm );
-   assert( global_comm != 0 );
+   vt_assert( global_comm != 0 );
 
    // translate local scl token, if necessary
    //
@@ -166,7 +166,7 @@ HooksMsgMatchAndSnapsC::HandleRecvMsg( LargeVectorC<RecvMsgS*> * recvMsgs,
    //if( scl != 0 )
    //{
    //   global_scl = tkfac_defscl.translate( receiver, scl );
-   //   assert( global_scl != 0 );
+   //   vt_assert( global_scl != 0 );
    //}
 
    // correct time
@@ -188,7 +188,7 @@ HooksMsgMatchAndSnapsC::HandleRecvMsg( LargeVectorC<RecvMsgS*> * recvMsgs,
    {
       recvMsgs->push_back( new RecvMsgS( time, sender, receiver, global_comm,
          tag /*, length, global_scl*/ ) );
-      assert( recvMsgs->back() );
+      vt_assert( recvMsgs->back() );
    }
 
    return OTF_RETURN_OK;
@@ -521,7 +521,7 @@ HooksMsgMatchAndSnapsC::phaseHook_UnifyEvents_pre()
       const uint32_t streamid = MyStreamIds[i];
       StreamContextS * stream_context = m_streamId2StreamContext[streamid] =
          new StreamContextS( streamid );
-      assert( stream_context );
+      vt_assert( stream_context );
    }
 
    do
@@ -591,8 +591,8 @@ HooksMsgMatchAndSnapsC::phaseHook_UnifyEvents_pre()
          // maximum trace timestamp and snapshot interval time must be set
          // at this point
          //
-         assert( m_maxTime != (uint64_t)-1 );
-         assert( m_snapshotInterval > 0 );
+         vt_assert( m_maxTime != (uint64_t)-1 );
+         vt_assert( m_snapshotInterval > 0 );
 
          // set number of snapshots to generate
          //
@@ -641,7 +641,7 @@ HooksMsgMatchAndSnapsC::phaseHook_UnifyEvents_pre()
             // get stream context by id
             //
             stream_context = getStreamContext( streamid );
-            assert( stream_context );
+            vt_assert( stream_context );
 
             // setup thumbnail
             //
@@ -649,7 +649,7 @@ HooksMsgMatchAndSnapsC::phaseHook_UnifyEvents_pre()
             auxret =
                OTFAUX_State_setupThumbnail( stream_context->auxstate,
                   0, m_maxTime, m_thumbnailWidth );
-            assert( auxret );
+            vt_assert( auxret );
 
             int is_thumbnail_stream = 0;
             if( thumbnail_streams_ids.empty() ||
@@ -660,7 +660,7 @@ HooksMsgMatchAndSnapsC::phaseHook_UnifyEvents_pre()
             auxret =
                OTFAUX_State_declareProcess( stream_context->auxstate,
                   streamid, is_thumbnail_stream );
-            assert( auxret );
+            vt_assert( auxret );
 
             // register callback function for releasing snapshot event data
             // (i.e. key-values)
@@ -669,7 +669,7 @@ HooksMsgMatchAndSnapsC::phaseHook_UnifyEvents_pre()
                OTFAUX_State_setReleaseEventDataCallback(
                   stream_context->auxstate,
                   (OTFAUX_ReleaseEventData)ReleaseEventDataCB, 0 );
-            assert( auxret );
+            vt_assert( auxret );
 
             // register callback functions for writing snapshots
             //
@@ -678,7 +678,7 @@ HooksMsgMatchAndSnapsC::phaseHook_UnifyEvents_pre()
                OTFAUX_State_setWriteEnterSnapshotCallback(
                   stream_context->auxstate,
                   (OTFAUX_WriteEnterSnapshotCallback)WriteEnterSnapshotCB );
-            assert( auxret );
+            vt_assert( auxret );
 
             if( Params.domsgmatch )
             {
@@ -686,7 +686,7 @@ HooksMsgMatchAndSnapsC::phaseHook_UnifyEvents_pre()
                   OTFAUX_State_setWriteSendSnapshotCallback(
                      stream_context->auxstate,
                      (OTFAUX_WriteSendSnapshotCallback)WriteSendSnapshotCB );
-               assert( auxret );
+               vt_assert( auxret );
             }
 
             auxret =
@@ -694,34 +694,34 @@ HooksMsgMatchAndSnapsC::phaseHook_UnifyEvents_pre()
                   stream_context->auxstate,
                   (OTFAUX_WriteOpenFileSnapshotCallback)
                      WriteOpenFileSnapshotCB );
-            assert( auxret );
+            vt_assert( auxret );
 
             auxret =
                OTFAUX_State_setWriteBeginFileOpSnapshotCallback(
                   stream_context->auxstate,
                   (OTFAUX_WriteBeginFileOpSnapshotCallback)
                      WriteBeginFileOpSnapshotCB );
-            assert( auxret );
+            vt_assert( auxret );
 
             auxret =
                OTFAUX_State_setWriteBeginCollopSnapshotCallback(
                   stream_context->auxstate,
                   (OTFAUX_WriteBeginCollopSnapshotCallback)
                      WriteBeginCollopSnapshotCB );
-            assert( auxret );
+            vt_assert( auxret );
 
             auxret =
                OTFAUX_State_setWriteCollopCountSnapshotCallback(
                   stream_context->auxstate,
                   (OTFAUX_WriteCollopCountSnapshotCallback)
                      WriteCollopCountSnapshotCB );
-            assert( auxret );
+            vt_assert( auxret );
 
             auxret =
                OTFAUX_State_setWriteCounterSnapshotCallback(
                   stream_context->auxstate,
                   (OTFAUX_WriteCounterSnapshotCallback)WriteCounterSnapshotCB );
-            assert( auxret );
+            vt_assert( auxret );
          }
       }
 
@@ -731,7 +731,7 @@ HooksMsgMatchAndSnapsC::phaseHook_UnifyEvents_pre()
       VPrint( 2, " Continuing unification of events\n" );
 
    //return !error;
-   assert( !error );
+   vt_assert( !error );
 }
 
 void
@@ -772,7 +772,7 @@ HooksMsgMatchAndSnapsC::phaseHook_UnifyEvents_post()
    m_streamId2StreamContext.clear();
 
    //return !error;
-   assert( !error );
+   vt_assert( !error );
 }
 
 void
@@ -979,7 +979,7 @@ HooksMsgMatchAndSnapsC::phaseHook_CleanUp_post()
 #endif // VT_MPI
 
    //return !error;
-   assert( !error );
+   vt_assert( !error );
 }
 
 // record hooks
@@ -1071,7 +1071,7 @@ HooksMsgMatchAndSnapsC::writeRecHook_Enter( HooksC::VaArgsT & args )
    if( !stream_context || stream_context->streamid != *proc )
    {
       stream_context = getStreamContext( *proc );
-      assert( stream_context );
+      vt_assert( stream_context );
    }
 
    // write outstanding snapshots
@@ -1085,7 +1085,7 @@ HooksMsgMatchAndSnapsC::writeRecHook_Enter( HooksC::VaArgsT & args )
          // clone key-values for snapshot record
          //
          snapshot_kvs = OTF_KeyValueList_clone( *kvs );
-         assert( snapshot_kvs );
+         vt_assert( snapshot_kvs );
       }
 
       // process record for snapshot and thumbnail generation
@@ -1093,11 +1093,11 @@ HooksMsgMatchAndSnapsC::writeRecHook_Enter( HooksC::VaArgsT & args )
       int auxret =
          OTFAUX_State_processEnter( stream_context->auxstate,
             *time, *proc, *func, *scl, snapshot_kvs );
-      assert( auxret );
+      vt_assert( auxret );
    }
 
    //return !error;
-   assert( !error );
+   vt_assert( !error );
 }
 
 void
@@ -1129,7 +1129,7 @@ HooksMsgMatchAndSnapsC::writeRecHook_Leave( HooksC::VaArgsT & args )
    if( !stream_context || stream_context->streamid != *proc )
    {
       stream_context = getStreamContext( *proc );
-      assert( stream_context );
+      vt_assert( stream_context );
    }
 
    // write outstanding snapshots
@@ -1142,11 +1142,11 @@ HooksMsgMatchAndSnapsC::writeRecHook_Leave( HooksC::VaArgsT & args )
       int auxret =
          OTFAUX_State_processLeave( stream_context->auxstate, *time,
             *proc, *func );
-      assert( auxret );
+      vt_assert( auxret );
    }
 
    //return !error;
-   assert( !error );
+   vt_assert( !error );
 }
 
 void
@@ -1178,7 +1178,7 @@ HooksMsgMatchAndSnapsC::writeRecHook_BeginFileOp( HooksC::VaArgsT & args )
    if( !stream_context || stream_context->streamid != *proc )
    {
       stream_context = getStreamContext( *proc );
-      assert( stream_context );
+      vt_assert( stream_context );
    }
 
    // write outstanding snapshots
@@ -1192,7 +1192,7 @@ HooksMsgMatchAndSnapsC::writeRecHook_BeginFileOp( HooksC::VaArgsT & args )
          // clone key-values for snapshot record
          //
          snapshot_kvs = OTF_KeyValueList_clone( *kvs );
-         assert( snapshot_kvs );
+         vt_assert( snapshot_kvs );
       }
 
       // process record for snapshots
@@ -1200,11 +1200,11 @@ HooksMsgMatchAndSnapsC::writeRecHook_BeginFileOp( HooksC::VaArgsT & args )
       int auxret =
          OTFAUX_State_processBeginFileOperation( stream_context->auxstate,
             *time, *proc, *matchid, *scl, snapshot_kvs );
-      assert( auxret );
+      vt_assert( auxret );
    }
 
    //return !error;
-   assert( !error );
+   vt_assert( !error );
 }
 
 void
@@ -1240,7 +1240,7 @@ HooksMsgMatchAndSnapsC::writeRecHook_EndFileOp( HooksC::VaArgsT & args )
    if( !stream_context || stream_context->streamid != *proc )
    {
       stream_context = getStreamContext( *proc );
-      assert( stream_context );
+      vt_assert( stream_context );
    }
 
    // write outstanding snapshots
@@ -1256,7 +1256,7 @@ HooksMsgMatchAndSnapsC::writeRecHook_EndFileOp( HooksC::VaArgsT & args )
       auxret =
          OTFAUX_State_processEndFileOperation( stream_context->auxstate,
             *time, *proc, *matchid );
-      assert( auxret );
+      vt_assert( auxret );
 
       if( !( ( *op & OTF_IOFLAGS_BITS ) & OTF_IOFLAG_IOFAILED ) )
       {
@@ -1268,13 +1268,13 @@ HooksMsgMatchAndSnapsC::writeRecHook_EndFileOp( HooksC::VaArgsT & args )
                // clone key-values for snapshot record
                //
                snapshot_kvs = OTF_KeyValueList_clone( *kvs );
-               assert( snapshot_kvs );
+               vt_assert( snapshot_kvs );
             }
 
             auxret =
                OTFAUX_State_processFileOpen( stream_context->auxstate,
                   *time, *proc, *file, *handleid, *scl, snapshot_kvs );
-            assert( auxret );
+            vt_assert( auxret );
          }
          else if( ( ( *op & OTF_FILEOP_BITS ) == OTF_FILEOP_CLOSE ) )
          {
@@ -1283,13 +1283,13 @@ HooksMsgMatchAndSnapsC::writeRecHook_EndFileOp( HooksC::VaArgsT & args )
                   *time, *proc, *handleid );
             // ignore return value; the corresponding file open event might be
             // missing (i.e. filtered or located on another stream)
-            //assert( auxret );
+            //vt_assert( auxret );
          }
       }
    }
 
    //return !error;
-   assert( !error );
+   vt_assert( !error );
 }
 
 void
@@ -1320,7 +1320,7 @@ HooksMsgMatchAndSnapsC::writeRecHook_SendMsg( HooksC::VaArgsT & args )
    if( !stream_context || stream_context->streamid != *sender )
    {
       stream_context = getStreamContext( *sender );
-      assert( stream_context );
+      vt_assert( stream_context );
    }
 
    // write outstanding snapshots
@@ -1335,7 +1335,7 @@ HooksMsgMatchAndSnapsC::writeRecHook_SendMsg( HooksC::VaArgsT & args )
          // clone key-values for snapshot record
          //
          snapshot_kvs = OTF_KeyValueList_clone( *kvs );
-         assert( snapshot_kvs );
+         vt_assert( snapshot_kvs );
       }
 
       // process record for snapshots and/or message matching
@@ -1350,7 +1350,7 @@ HooksMsgMatchAndSnapsC::writeRecHook_SendMsg( HooksC::VaArgsT & args )
          OTFAUX_State_processSendMsg( stream_context->auxstate,
             *time, *sender, *receiver, *comm, *tag, *length, *scl,
             &recv_time, &recv_length, &recv_scl, snapshot_kvs );
-      assert( auxret );
+      vt_assert( auxret );
 
       // increment total number of messages
       stream_context->msgmatch_bumps.num_messages++;
@@ -1405,7 +1405,7 @@ HooksMsgMatchAndSnapsC::writeRecHook_SendMsg( HooksC::VaArgsT & args )
    }
 
    //return !error;
-   assert( !error );
+   vt_assert( !error );
 }
 
 void
@@ -1436,7 +1436,7 @@ HooksMsgMatchAndSnapsC::writeRecHook_RecvMsg( HooksC::VaArgsT & args )
    if( !stream_context || stream_context->streamid != *receiver )
    {
       stream_context = getStreamContext( *receiver );
-      assert( stream_context );
+      vt_assert( stream_context );
    }
 
    // write outstanding snapshots
@@ -1448,7 +1448,7 @@ HooksMsgMatchAndSnapsC::writeRecHook_RecvMsg( HooksC::VaArgsT & args )
       *do_write = false;
 
    //return !error;
-   assert( !error );
+   vt_assert( !error );
 }
 
 void
@@ -1485,7 +1485,7 @@ HooksMsgMatchAndSnapsC::writeRecHook_BeginCollOp( HooksC::VaArgsT & args )
    if( !stream_context || stream_context->streamid != *proc )
    {
       stream_context = getStreamContext( *proc );
-      assert( stream_context );
+      vt_assert( stream_context );
    }
 
    // write outstanding snapshots
@@ -1501,18 +1501,18 @@ HooksMsgMatchAndSnapsC::writeRecHook_BeginCollOp( HooksC::VaArgsT & args )
          // clone key-values for snapshot record
          //
          snapshot_kvs = OTF_KeyValueList_clone( *kvs );
-         assert( snapshot_kvs );
+         vt_assert( snapshot_kvs );
       }
 
       int auxret =
          OTFAUX_State_processBeginCollectiveOperation( stream_context->auxstate,
             *time, *proc, *comm, *root, *op, *matchid, *sent, *recvd,
             *scl, snapshot_kvs );
-      assert( auxret );
+      vt_assert( auxret );
    }
 
    //return !error;
-   assert( !error );
+   vt_assert( !error );
 }
 
 void
@@ -1543,7 +1543,7 @@ HooksMsgMatchAndSnapsC::writeRecHook_EndCollOp( HooksC::VaArgsT & args )
    if( !stream_context || stream_context->streamid != *proc )
    {
       stream_context = getStreamContext( *proc );
-      assert( stream_context );
+      vt_assert( stream_context );
    }
 
    // write outstanding snapshots
@@ -1556,11 +1556,11 @@ HooksMsgMatchAndSnapsC::writeRecHook_EndCollOp( HooksC::VaArgsT & args )
       int auxret =
          OTFAUX_State_processEndCollectiveOperation( stream_context->auxstate,
             *time, *proc, *matchid );
-      assert( auxret );
+      vt_assert( auxret );
    }
 
    //return !error;
-   assert( !error );
+   vt_assert( !error );
 }
 
 void
@@ -1595,14 +1595,14 @@ HooksMsgMatchAndSnapsC::writeRecHook_RMAPut( HooksC::VaArgsT & args )
    if( !stream_context || stream_context->streamid != *proc )
    {
       stream_context = getStreamContext( *proc );
-      assert( stream_context );
+      vt_assert( stream_context );
    }
 
    // write outstanding snapshots
    error = !writeSnapshots( stream_context, *time, *wstream );
 
    //return !error;
-   assert( !error );
+   vt_assert( !error );
 }
 
 void
@@ -1637,14 +1637,14 @@ HooksMsgMatchAndSnapsC::writeRecHook_RMAPutRemoteEnd( HooksC::VaArgsT & args )
    if( !stream_context || stream_context->streamid != *proc )
    {
       stream_context = getStreamContext( *proc );
-      assert( stream_context );
+      vt_assert( stream_context );
    }
 
    // write outstanding snapshots
    error = !writeSnapshots( stream_context, *time, *wstream );
 
    //return !error;
-   assert( !error );
+   vt_assert( !error );
 }
 
 void
@@ -1679,14 +1679,14 @@ HooksMsgMatchAndSnapsC::writeRecHook_RMAGet( HooksC::VaArgsT & args )
    if( !stream_context || stream_context->streamid != *proc )
    {
       stream_context = getStreamContext( *proc );
-      assert( stream_context );
+      vt_assert( stream_context );
    }
 
    // write outstanding snapshots
    error = !writeSnapshots( stream_context, *time, *wstream );
 
    //return !error;
-   assert( !error );
+   vt_assert( !error );
 }
 
 void
@@ -1720,14 +1720,14 @@ HooksMsgMatchAndSnapsC::writeRecHook_RMAEnd( HooksC::VaArgsT & args )
    if( !stream_context || stream_context->streamid != *proc )
    {
       stream_context = getStreamContext( *proc );
-      assert( stream_context );
+      vt_assert( stream_context );
    }
 
    // write outstanding snapshots
    error = !writeSnapshots( stream_context, *time, *wstream );
 
    //return !error;
-   assert( !error );
+   vt_assert( !error );
 }
 
 void
@@ -1760,7 +1760,7 @@ HooksMsgMatchAndSnapsC::writeRecHook_Counter( HooksC::VaArgsT & args )
    if( !stream_context || stream_context->streamid != *proc )
    {
       stream_context = getStreamContext( *proc );
-      assert( stream_context );
+      vt_assert( stream_context );
    }
 
    // write outstanding snapshots
@@ -1777,17 +1777,17 @@ HooksMsgMatchAndSnapsC::writeRecHook_Counter( HooksC::VaArgsT & args )
          // clone key-values for snapshot record
          //
          snapshot_kvs = OTF_KeyValueList_clone( *kvs );
-         assert( snapshot_kvs );
+         vt_assert( snapshot_kvs );
       }
 
       int auxret =
          OTFAUX_State_processCounter( stream_context->auxstate, *time, *proc,
             *counter, *value, snapshot_kvs );
-      assert( auxret );
+      vt_assert( auxret );
    }
 
    //return !error;
-   assert( !error );
+   vt_assert( !error );
 }
 
 void
@@ -1818,14 +1818,14 @@ HooksMsgMatchAndSnapsC::writeRecHook_EventComment( HooksC::VaArgsT & args )
    if( !stream_context || stream_context->streamid != *proc )
    {
       stream_context = getStreamContext( *proc );
-      assert( stream_context );
+      vt_assert( stream_context );
    }
 
    // write outstanding snapshots
    error = !writeSnapshots( stream_context, *time, *wstream );
 
    //return !error;
-   assert( !error );
+   vt_assert( !error );
 }
 
 // generic hook
@@ -1846,7 +1846,7 @@ HooksMsgMatchAndSnapsC::genericHook( const uint32_t & id,
       OTF_WStream ** wstream = (OTF_WStream**)args[0];
 
       // maximum trace timestamp must be set at this point
-      assert( m_maxTime != (uint64_t)-1 );
+      vt_assert( m_maxTime != (uint64_t)-1 );
 
       // calculate snapshot interval time
       //
@@ -1897,12 +1897,12 @@ HooksMsgMatchAndSnapsC::genericHook( const uint32_t & id,
       uint32_t * streamid = (uint32_t*)args[1];
 
       // maximum trace timestamp must be set at this point
-      assert( m_maxTime != (uint64_t)-1 );
+      vt_assert( m_maxTime != (uint64_t)-1 );
 
       // get stream context by id
       //
       StreamContextS * stream_context = getStreamContext( *streamid );
-      assert( stream_context );
+      vt_assert( stream_context );
 
       // write outstanding snapshots
       //
@@ -1910,7 +1910,7 @@ HooksMsgMatchAndSnapsC::genericHook( const uint32_t & id,
    }
 
    //return !error;
-   assert( !error );
+   vt_assert( !error );
 }
 
 // ^^^^^^^^^^^^^^^^^^^^ HOOK METHODS ^^^^^^^^^^^^^^^^^^^^
@@ -1929,12 +1929,12 @@ HooksMsgMatchAndSnapsC::getRecvMsgs( LargeVectorC<RecvMsgS*> & recvMsgs )
    //
    LargeVectorC<RecvMsgS*> ** recv_msgs =
       new LargeVectorC<RecvMsgS*>*[m_maxThreads];
-   assert( recv_msgs );
+   vt_assert( recv_msgs );
    *recv_msgs = &recvMsgs;
    for( int i = 1; i < m_maxThreads; i++ )
    {
       recv_msgs[i] = new LargeVectorC<RecvMsgS*>( recvMsgs.chunkSize() );
-      assert( recv_msgs[i] );
+      vt_assert( recv_msgs[i] );
    }
 
    int streams_num = (int)MyStreamIds.size();
@@ -1959,7 +1959,7 @@ HooksMsgMatchAndSnapsC::getRecvMsgs( LargeVectorC<RecvMsgS*> & recvMsgs )
       // open file manager
       //
       OTF_FileManager * manager = OTF_FileManager_open( 1 );
-      assert( manager );
+      vt_assert( manager );
 
       // initialize IOFSL stuff for reading, if necessary
       //
@@ -1977,7 +1977,7 @@ HooksMsgMatchAndSnapsC::getRecvMsgs( LargeVectorC<RecvMsgS*> & recvMsgs )
       //
       OTF_RStream * rstream =
       OTF_RStream_open( in_file_prefix.c_str(), streamid, manager );
-      assert( rstream );
+      vt_assert( rstream );
 
       PVPrint( 3, "   Opened OTF reader stream [namestub %s id %x]\n",
                in_file_prefix.c_str(), streamid );
@@ -1999,7 +1999,7 @@ HooksMsgMatchAndSnapsC::getRecvMsgs( LargeVectorC<RecvMsgS*> & recvMsgs )
          // create record handler array
          //
          OTF_HandlerArray * handler_array = OTF_HandlerArray_open();
-         assert( handler_array );
+         vt_assert( handler_array );
 
          // set record handler and its first argument for ...
          //
@@ -2083,7 +2083,7 @@ HooksMsgMatchAndSnapsC::distRecvMsgs( LargeVectorC<RecvMsgS*> & recvMsgs )
 {
    bool error = false;
 
-   assert( NumRanks > 1 );
+   vt_assert( NumRanks > 1 );
 
    // block until all ranks have reached this point
    CALL_MPI( MPI_Barrier( MPI_COMM_WORLD ) );
@@ -2102,7 +2102,7 @@ HooksMsgMatchAndSnapsC::distRecvMsgs( LargeVectorC<RecvMsgS*> & recvMsgs )
       //
       std::map<uint32_t, VT_MPI_INT>::const_iterator it =
          StreamId2Rank.find( recvMsgs[i]->sender );
-      assert( it != StreamId2Rank.end() );
+      vt_assert( it != StreamId2Rank.end() );
 
       // add receive message to map
       rank2recv_msgs[it->second].push_back( recvMsgs[i] );
@@ -2131,15 +2131,15 @@ HooksMsgMatchAndSnapsC::distRecvMsgs( LargeVectorC<RecvMsgS*> & recvMsgs )
    // allocate memory for the send buffer
    //
    RecvMsgS * sendbuf = new RecvMsgS[recvMsgs.size()];
-   assert( sendbuf );
+   vt_assert( sendbuf );
 
    // get sendcounts, senddispls, and fill the send buffer
    //
 
    VT_MPI_INT * sendcounts = new VT_MPI_INT[NumRanks];
-   assert( sendcounts );
+   vt_assert( sendcounts );
    VT_MPI_INT * senddispls = new VT_MPI_INT[NumRanks];
-   assert( senddispls );
+   vt_assert( senddispls );
 
    for( VT_MPI_INT rank = 0; rank < NumRanks; rank++ )
    {
@@ -2182,7 +2182,7 @@ HooksMsgMatchAndSnapsC::distRecvMsgs( LargeVectorC<RecvMsgS*> & recvMsgs )
    //
 
    VT_MPI_INT * recvcounts = new VT_MPI_INT[NumRanks];
-   assert( recvcounts );
+   vt_assert( recvcounts );
 
    CALL_MPI( MPI_Alltoall( sendcounts, 1, MPI_INT, recvcounts, 1, MPI_INT,
                            MPI_COMM_WORLD ) );
@@ -2191,7 +2191,7 @@ HooksMsgMatchAndSnapsC::distRecvMsgs( LargeVectorC<RecvMsgS*> & recvMsgs )
    //
 
    VT_MPI_INT * recvdispls = new VT_MPI_INT[NumRanks];
-   assert( recvdispls );
+   vt_assert( recvdispls );
 
    recvdispls[0] = 0;
    for( VT_MPI_INT rank = 1; rank < NumRanks; rank++ )
@@ -2201,7 +2201,7 @@ HooksMsgMatchAndSnapsC::distRecvMsgs( LargeVectorC<RecvMsgS*> & recvMsgs )
    //
    RecvMsgS * recvbuf =
       new RecvMsgS[recvdispls[NumRanks-1] + recvcounts[NumRanks-1]];
-   assert( recvbuf );
+   vt_assert( recvbuf );
 
    // distribute receive messages
    CALL_MPI( MPI_Alltoallv( sendbuf, sendcounts, senddispls,
@@ -2222,7 +2222,7 @@ HooksMsgMatchAndSnapsC::distRecvMsgs( LargeVectorC<RecvMsgS*> & recvMsgs )
       {
          recvMsgs.push_back(
             new RecvMsgS( (recvbuf + recvdispls[rank])[i] ) );
-         assert( recvMsgs.back() );
+         vt_assert( recvMsgs.back() );
       }
    }
 
@@ -2283,7 +2283,7 @@ HooksMsgMatchAndSnapsC::enqueueRecvMsgs( LargeVectorC<RecvMsgS*> & recvMsgs )
                //
                const StreamContextS * stream_context =
                   getStreamContext( recv_msg->sender );
-               assert( stream_context );
+               vt_assert( stream_context );
 
                // enqueue receive message
                //
@@ -2292,7 +2292,7 @@ HooksMsgMatchAndSnapsC::enqueueRecvMsgs( LargeVectorC<RecvMsgS*> & recvMsgs )
                      recv_msg->time, recv_msg->receiver, recv_msg->sender,
                      recv_msg->comm, recv_msg->tag,
                      0/*recv_msg->length*/, 0/*recv_msg->scl*/ );
-               assert( auxret );
+               vt_assert( auxret );
             }
 
             // release memory of already enqueued receive messages
@@ -2320,7 +2320,7 @@ HooksMsgMatchAndSnapsC::enqueueRecvMsgs( LargeVectorC<RecvMsgS*> & recvMsgs )
          //
          const StreamContextS * stream_context =
             getStreamContext( recv_msg->sender );
-         assert( stream_context );
+         vt_assert( stream_context );
 
          // enqueue receive message
          //
@@ -2329,7 +2329,7 @@ HooksMsgMatchAndSnapsC::enqueueRecvMsgs( LargeVectorC<RecvMsgS*> & recvMsgs )
                recv_msg->time, recv_msg->receiver, recv_msg->sender,
                recv_msg->comm, recv_msg->tag,
                0/*recv_msg->length*/, 0/*recv_msg->scl*/ );
-         assert( auxret );
+         vt_assert( auxret );
 
          // release memory of already enqueued receive messages
          //
@@ -2407,7 +2407,7 @@ HooksMsgMatchAndSnapsC::processMsgMatchBumps()
 
          // index of definition comments where the warning comments will be
          // inserted must be set at this point
-         assert( m_msgMatchBumps.def_comment_idx > 0 );
+         vt_assert( m_msgMatchBumps.def_comment_idx > 0 );
 
          // get temporary input/output file prefix
          //
@@ -2419,13 +2419,13 @@ HooksMsgMatchAndSnapsC::processMsgMatchBumps()
          // open file manager for reader and writer stream
          //
          OTF_FileManager * manager = OTF_FileManager_open( 2 );
-         assert( manager );
+         vt_assert( manager );
 
          // open stream for reading
          //
          OTF_RStream * rstream =
             OTF_RStream_open( tmp_in_file_prefix.c_str(), 0, manager );
-         assert( rstream );
+         vt_assert( rstream );
 
          PVPrint( 3, "   Opened OTF reader stream [namestub %s id 0]\n",
                   tmp_in_file_prefix.c_str() );
@@ -2433,14 +2433,14 @@ HooksMsgMatchAndSnapsC::processMsgMatchBumps()
          // reader stream's definition buffer must exist
          //
          OTF_RBuffer * rbuffer = OTF_RStream_getDefBuffer( rstream );
-         assert( rbuffer );
+         vt_assert( rbuffer );
          OTF_RStream_closeDefBuffer( rstream );
 
          // open stream for writing
          //
          OTF_WStream * wstream =
             OTF_WStream_open( tmp_out_file_prefix.c_str(), 0, manager );
-         assert( wstream );
+         vt_assert( wstream );
 
          PVPrint( 3, "   Opened OTF writer stream [namestub %s id 0]\n",
                   tmp_out_file_prefix.c_str() );
@@ -2456,7 +2456,7 @@ HooksMsgMatchAndSnapsC::processMsgMatchBumps()
          // create record handler array
          //
          OTF_HandlerArray * handler_array = OTF_HandlerArray_open();
-         assert( handler_array );
+         vt_assert( handler_array );
 
          // set record handlers
          //

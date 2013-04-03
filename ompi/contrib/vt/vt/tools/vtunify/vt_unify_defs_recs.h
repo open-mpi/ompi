@@ -337,7 +337,7 @@ struct DefRec_DefProcessGroupS : DefRec_BaseS
       if( nmembers > 0 )
       {
          members = new uint32_t[nmembers];
-         assert( members );
+         vt_assert( members );
          std::copy( first, last, members );
       }
    }

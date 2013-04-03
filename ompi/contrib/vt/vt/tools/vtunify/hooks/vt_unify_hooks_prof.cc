@@ -206,7 +206,7 @@ HooksProfC::processFuncStat( const uint32_t & procId, const uint32_t & funcId,
    //
    std::map<uint32_t, std::map<uint32_t, FuncProfS> >::iterator proc_it =
       m_procId2FuncProf.find( procId );
-   assert( proc_it != m_procId2FuncProf.end() );
+   vt_assert( proc_it != m_procId2FuncProf.end() );
 
    // search function profile by function id
    std::map<uint32_t, FuncProfS>::iterator func_it =
@@ -273,7 +273,7 @@ HooksProfC::getFuncProf( std::vector<HooksProfC::FuncProfS> & funcProfs,
    //
    if( procId == 0 )
    {
-      assert( m_numProcs > 0 );
+      vt_assert( m_numProcs > 0 );
 
       for( uint32_t i = 0; i < funcProfs.size(); i++ )
       {
@@ -408,7 +408,7 @@ HooksProfC::getFuncNameById( const uint32_t & funcId )
    //
    std::map<uint32_t, std::string>::const_iterator it =
       m_funcId2Name.find( funcId );
-   assert( it != m_funcId2Name.end() );
+   vt_assert( it != m_funcId2Name.end() );
 
    return it->second;
 }
@@ -416,7 +416,7 @@ HooksProfC::getFuncNameById( const uint32_t & funcId )
 std::string
 HooksProfC::shortName( const std::string & longName, uint32_t len )
 {
-   assert( len >= 5 );
+   vt_assert( len >= 5 );
 
    std::string short_name;
 
@@ -464,7 +464,7 @@ HooksProfC::formatTime( const uint64_t & time )
 void
 HooksProfC::gatherFuncProfs()
 {
-   assert( NumRanks > 1 );
+   vt_assert( NumRanks > 1 );
 
    // block until all ranks have reached this point
    CALL_MPI( MPI_Barrier( MPI_COMM_WORLD ) );
@@ -518,7 +518,7 @@ HooksProfC::gatherFuncProfs()
    // allocate memory for the send buffer
    //
    send_buffer = new char[send_buffer_size];
-   assert( send_buffer );
+   vt_assert( send_buffer );
 
    // pack send buffer
    //
@@ -575,7 +575,7 @@ HooksProfC::gatherFuncProfs()
       // allocate memory for the receive buffer sizes
       //
       recv_buffer_sizes = new VT_MPI_INT[NumRanks];
-      assert( recv_buffer_sizes );
+      vt_assert( recv_buffer_sizes );
    }
 
    // gather buffer sizes
@@ -587,7 +587,7 @@ HooksProfC::gatherFuncProfs()
       // allocate memory for displacements
       //
       recv_buffer_displs = new VT_MPI_INT[NumRanks];
-      assert( recv_buffer_displs );
+      vt_assert( recv_buffer_displs );
 
       // compute displacements and receive buffer size
       //
@@ -605,7 +605,7 @@ HooksProfC::gatherFuncProfs()
       // allocate memory for the receive buffer
       //
       recv_buffer = new char[recv_buffer_size];
-      assert( recv_buffer );
+      vt_assert( recv_buffer );
    }
 
    // gather packed function profiles

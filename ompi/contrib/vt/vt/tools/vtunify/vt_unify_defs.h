@@ -166,7 +166,7 @@ public:
          // catch multiple added process groups
          //
          bool added_once = m_procGrps.insert( procGrp ).second;
-         assert( added_once );
+         vt_assert( added_once );
       }
    }
 
@@ -309,10 +309,10 @@ private:
          const uint32_t * _members )
          : id( _id ), nmembers( _nmembers ), members( 0 )
       {
-         assert( nmembers > 0 );
+         vt_assert( nmembers > 0 );
 
          members = new uint32_t[nmembers];
-         assert( members );
+         vt_assert( members );
 
          memcpy( members, _members, nmembers * sizeof( uint32_t ) );
       }
@@ -406,7 +406,7 @@ private:
       {
          std::map<uint32_t, CommS*>::iterator it =
             globTk2Comm.find( comm );
-         assert( it != globTk2Comm.end() );
+         vt_assert( it != globTk2Comm.end() );
 
          it->second->members.insert( member );
       }

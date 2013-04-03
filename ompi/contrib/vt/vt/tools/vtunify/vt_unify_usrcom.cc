@@ -102,7 +102,7 @@ UserComC::share()
 {
    bool error = false;
 
-   assert( NumRanks > 1 );
+   vt_assert( NumRanks > 1 );
 
    // block until all ranks have reached this point
    CALL_MPI( MPI_Barrier( MPI_COMM_WORLD ) );
@@ -160,7 +160,7 @@ UserComC::share()
    // allocate memory for the send/receive buffer
    //
    buffer = new char[buffer_size];
-   assert( buffer );
+   vt_assert( buffer );
 
    MASTER
    {
