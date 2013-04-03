@@ -80,11 +80,11 @@ mca_bcol_iboffload_component_t mca_bcol_iboffload_component = {
 
     /* First, fill in the super */
 
-    {
+    .super = {
         /* First, the mca_component_t struct containing meta
            information about the component itself */
 
-        {
+        .bcol_version = {
             MCA_BCOL_BASE_VERSION_2_0_0,
 
             /* Component name and version */
@@ -100,7 +100,6 @@ mca_bcol_iboffload_component_t mca_bcol_iboffload_component = {
             iboffload_close,
             NULL, /* query */
             mca_bcol_iboffload_register_params,
-            NULL, /* reserved */
         },
 
         mca_bcol_iboffload_init_query,
@@ -416,7 +415,8 @@ static int iboffload_open(void)
 
     /* Check MCA parameters */
     if (0 != (mca_bcol_iboffload_component.exchange_tree_order & (mca_bcol_iboffload_component.exchange_tree_order - 1))) {
-        IBOFFLOAD_ERROR(("Warning: ibcol_iboffload_exchange_tree_order is %d which is not a power of 2, setting it to 2", ival));
+        IBOFFLOAD_ERROR(("Warning: ibcol_iboffload_exchange_tree_order is %d which is not a power of 2, setting it to 2", 
+                         mca_bcol_iboffload_component.exchange_tree_order));
         mca_bcol_iboffload_component.exchange_tree_order = 2;
     }
 
