@@ -123,7 +123,6 @@ static int mca_sbgp_ibnet_dummy_init_query(
 static int mca_sbgp_ibnet_open(void)
 {
     /* local variables */
-    int rc;
     mca_sbgp_ibnet_component_t *cs = &mca_sbgp_ibnet_component;
 
     mca_sbgp_ibnet_component.pkey_val &= SBGP_IBNET_IB_PKEY_MASK;
