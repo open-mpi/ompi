@@ -285,8 +285,8 @@ mca_fcoll_two_phase_file_write_all (mca_io_ompio_file_t *fh,
     local_size = iov_count/count;
     
     flat_buf->indices = 
-	(OMPI_MPI_OFFSET_TYPE *)malloc(local_size * 
-				       sizeof(OMPI_MPI_OFFSET_TYPE));
+      (OMPI_MPI_OFFSET_TYPE *)malloc(local_size * 
+					       sizeof(OMPI_MPI_OFFSET_TYPE));
     if ( NULL == flat_buf->indices ){
       ret = OMPI_ERR_OUT_OF_RESOURCE;
       goto exit;
@@ -304,7 +304,7 @@ mca_fcoll_two_phase_file_write_all (mca_io_ompio_file_t *fh,
     flat_buf->count = local_size;
     i=0;j=0;
     while(j < local_size){
-      flat_buf->indices[j] = (OMPI_MPI_OFFSET_TYPE)decoded_iov[i].iov_base;
+      flat_buf->indices[j] = (OMPI_MPI_OFFSET_TYPE)(intptr_t)decoded_iov[i].iov_base;
       flat_buf->blocklens[j] = decoded_iov[i].iov_len;
       if(i < (int)iov_count)
 	i+=1;
@@ -334,8 +334,8 @@ mca_fcoll_two_phase_file_write_all (mca_io_ompio_file_t *fh,
     
 #endif
     
-    start_offset = (OMPI_MPI_OFFSET_TYPE)iov[0].iov_base;
-    end_offset = (OMPI_MPI_OFFSET_TYPE)iov[local_count-1].iov_base +
+    start_offset = (OMPI_MPI_OFFSET_TYPE)(intptr_t)iov[0].iov_base;
+    end_offset = (OMPI_MPI_OFFSET_TYPE)(intptr_t)iov[local_count-1].iov_base +
       (OMPI_MPI_OFFSET_TYPE)iov[local_count-1].iov_len - 1; 
     
 #if DEBUG_ON
@@ -790,7 +790,7 @@ static int two_phase_exch_and_write(mca_io_ompio_file_t *fh,
 		return OMPI_ERR_OUT_OF_RESOURCE;
 	    }
 
-	    fh->f_io_array[0].offset  =(IOVBASE_TYPE *) off;
+	    fh->f_io_array[0].offset  =(IOVBASE_TYPE *)(intptr_t) off;
 	    fh->f_io_array[0].length = len;
 	    fh->f_io_array[0].memory_address = write_buf;
 	    fh->f_num_of_io_entries = 1;
@@ -1038,7 +1038,7 @@ static int two_phase_exchage_data(mca_io_ompio_file_t *fh,
 		    opal_output(1, "OUT OF MEMORY\n");
 		    return OMPI_ERR_OUT_OF_RESOURCE;
 		}
-		fh->f_io_array[0].offset  =(IOVBASE_TYPE *) off;
+		fh->f_io_array[0].offset  =(IOVBASE_TYPE *)(intptr_t) off;
 		fh->f_num_of_io_entries = 1;
 		fh->f_io_array[0].length = size;
 		fh->f_io_array[0].memory_address = write_buf;
@@ -1250,7 +1250,7 @@ static int two_phase_fill_send_buffer(mca_io_ompio_file_t *fh,
     
     for (i=0; i<contig_access_count; i++) { 
 	
-	off     = (OMPI_MPI_OFFSET_TYPE)offset_length[i].iov_base;
+      off     = (OMPI_MPI_OFFSET_TYPE) (intptr_t)offset_length[i].iov_base;
 	rem_len = (OMPI_MPI_OFFSET_TYPE)offset_length[i].iov_len;
 	
 
