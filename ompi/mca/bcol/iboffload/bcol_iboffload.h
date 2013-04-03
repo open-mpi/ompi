@@ -180,11 +180,11 @@ struct mca_bcol_iboffload_component_t {
     /** max outstanding CQE on the CQ */
     int cq_size;
     /** Max size of inline data */
-    int max_inline_data;
+    unsigned int max_inline_data;
     /** IB partition definition */
     uint32_t pkey_val;
     /** Outstanding atomic reads */
-    uint32_t qp_ous_rd_atom;
+    unsigned int qp_ous_rd_atom;
     /** IB MTU */
     int mtu;
     /** Recv not ready timer */
@@ -242,7 +242,7 @@ struct mca_bcol_iboffload_component_t {
       * and set this flag to true */
     bool init_done;
     /** Maximal number of fragments of the same colective request that can be sent in parallel */
-    uint32_t max_pipeline_depth;
+    unsigned int max_pipeline_depth;
     /** array mapping Open MPI reduction operators to MVerbs reduction operators */
     enum ibv_m_wr_calc_op map_ompi_to_ib_calcs[OMPI_OP_NUM_OF_TYPES];
     /** array mapping Open MPI data types to MVerbs data types */
