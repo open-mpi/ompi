@@ -65,7 +65,7 @@ mca_fbtl_posix_preadv (mca_io_ompio_file_t *fh,
             if (0 == iov_count) {
                 iov[iov_count].iov_base = fh->f_io_array[sorted[i]].memory_address;
                 iov[iov_count].iov_len = fh->f_io_array[sorted[i]].length;
-                iov_offset = (OMPI_MPI_OFFSET_TYPE)fh->f_io_array[sorted[i]].offset;
+                iov_offset = (OMPI_MPI_OFFSET_TYPE)(intptr_t)fh->f_io_array[sorted[i]].offset;
                 iov_count ++;
             }
 
@@ -81,9 +81,9 @@ mca_fbtl_posix_preadv (mca_io_ompio_file_t *fh,
             }
 
             if (fh->f_num_of_io_entries != i+1) {
-                if (((OMPI_MPI_OFFSET_TYPE)fh->f_io_array[sorted[i]].offset + 
+	      if (((OMPI_MPI_OFFSET_TYPE)(intptr_t)fh->f_io_array[sorted[i]].offset + 
                      (OPAL_PTRDIFF_TYPE)fh->f_io_array[sorted[i]].length) == 
-                    (OMPI_MPI_OFFSET_TYPE)fh->f_io_array[sorted[i+1]].offset) {                    
+		  (OMPI_MPI_OFFSET_TYPE)(intptr_t)fh->f_io_array[sorted[i+1]].offset) {                    
                     iov[iov_count].iov_base = 
                         fh->f_io_array[sorted[i+1]].memory_address;
                     iov[iov_count].iov_len = fh->f_io_array[sorted[i+1]].length;
@@ -111,7 +111,7 @@ mca_fbtl_posix_preadv (mca_io_ompio_file_t *fh,
             if (0 == iov_count) {
                 iov[iov_count].iov_base = fh->f_io_array[i].memory_address;
                 iov[iov_count].iov_len = fh->f_io_array[i].length;
-                iov_offset = (OMPI_MPI_OFFSET_TYPE)fh->f_io_array[i].offset;
+                iov_offset = (OMPI_MPI_OFFSET_TYPE)(intptr_t)fh->f_io_array[i].offset;
                 iov_count ++;
             }
 
@@ -127,9 +127,9 @@ mca_fbtl_posix_preadv (mca_io_ompio_file_t *fh,
             }
 
             if (fh->f_num_of_io_entries != i+1) {
-                if (((OMPI_MPI_OFFSET_TYPE)fh->f_io_array[i].offset + 
+	      if (((OMPI_MPI_OFFSET_TYPE)(intptr_t)fh->f_io_array[i].offset + 
                      (OPAL_PTRDIFF_TYPE)fh->f_io_array[i].length) == 
-                    (OMPI_MPI_OFFSET_TYPE)fh->f_io_array[i+1].offset) {                    
+		  (OMPI_MPI_OFFSET_TYPE)(intptr_t)fh->f_io_array[i+1].offset) {                    
                     iov[iov_count].iov_base = 
                         fh->f_io_array[i+1].memory_address;
                     iov[iov_count].iov_len = fh->f_io_array[i+1].length;
