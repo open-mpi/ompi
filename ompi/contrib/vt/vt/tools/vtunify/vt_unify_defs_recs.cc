@@ -103,7 +103,7 @@ DefRec_DefCommentS::pack( char *& buffer, const VT_MPI_INT & bufferSize,
    // comment
    //
    char * c_comment = new char[comment_length+1];
-   assert( c_comment );
+   vt_assert( c_comment );
    strcpy( c_comment, comment.c_str() );
    CALL_MPI( MPI_Pack( c_comment, comment_length + 1, MPI_CHAR, buffer,
                        bufferSize, &bufferPos, MPI_COMM_WORLD ) );
@@ -129,7 +129,7 @@ DefRec_DefCommentS::unpack( char *& buffer, const VT_MPI_INT & bufferSize,
    // comment
    //
    char * c_comment = new char[comment_length+1];
-   assert( c_comment );
+   vt_assert( c_comment );
    CALL_MPI( MPI_Unpack( buffer, bufferSize, &bufferPos, c_comment,
                          comment_length + 1, MPI_CHAR, MPI_COMM_WORLD ) );
    comment = c_comment;
@@ -174,7 +174,7 @@ DefRec_DefCreatorS::pack( char *& buffer, const VT_MPI_INT & bufferSize,
    // creator
    //
    char * c_creator = new char[creator_length+1];
-   assert( c_creator );
+   vt_assert( c_creator );
    strcpy( c_creator, creator.c_str() );
    CALL_MPI( MPI_Pack( c_creator, creator_length + 1, MPI_CHAR, buffer,
                        bufferSize, &bufferPos, MPI_COMM_WORLD ) );
@@ -196,7 +196,7 @@ DefRec_DefCreatorS::unpack( char *& buffer, const VT_MPI_INT & bufferSize,
    // creator
    //
    char * c_creator = new char[creator_length+1];
-   assert( c_creator );
+   vt_assert( c_creator );
    CALL_MPI( MPI_Unpack( buffer, bufferSize, &bufferPos, c_creator,
                          creator_length + 1, MPI_CHAR, MPI_COMM_WORLD ) );
    creator = c_creator;
@@ -325,7 +325,7 @@ DefRec_DefProcessS::pack( char *& buffer, const VT_MPI_INT & bufferSize,
    // name
    //
    char * c_name = new char[name_length+1];
-   assert( c_name );
+   vt_assert( c_name );
    strcpy( c_name, name.c_str() );
    CALL_MPI( MPI_Pack( c_name, name_length + 1, MPI_CHAR, buffer, bufferSize,
                        &bufferPos, MPI_COMM_WORLD ) );
@@ -351,7 +351,7 @@ DefRec_DefProcessS::unpack( char *& buffer, const VT_MPI_INT & bufferSize,
    // name
    //
    char * c_name = new char[name_length+1];
-   assert( c_name );
+   vt_assert( c_name );
    CALL_MPI( MPI_Unpack( buffer, bufferSize, &bufferPos, c_name,
                          name_length + 1, MPI_CHAR, MPI_COMM_WORLD ) );
    name = c_name;
@@ -404,7 +404,7 @@ DefRec_DefProcessGroupS::pack( char *& buffer, const VT_MPI_INT & bufferSize,
    // name
    //
    char * c_name = new char[name_length+1];
-   assert( c_name );
+   vt_assert( c_name );
    strcpy( c_name, name.c_str() );
    CALL_MPI( MPI_Pack( c_name, name_length + 1, MPI_CHAR, buffer, bufferSize,
                        &bufferPos, MPI_COMM_WORLD ) );
@@ -446,7 +446,7 @@ DefRec_DefProcessGroupS::unpack( char *& buffer, const VT_MPI_INT & bufferSize,
    // name
    //
    char * c_name = new char[name_length+1];
-   assert( c_name );
+   vt_assert( c_name );
    CALL_MPI( MPI_Unpack( buffer, bufferSize, &bufferPos, c_name,
                          name_length + 1, MPI_CHAR, MPI_COMM_WORLD ) );
    name = c_name;
@@ -465,7 +465,7 @@ DefRec_DefProcessGroupS::unpack( char *& buffer, const VT_MPI_INT & bufferSize,
    if( nmembers > 0 )
    {
       members = new uint32_t[nmembers];
-      assert( members );
+      vt_assert( members );
       CALL_MPI( MPI_Unpack( buffer, bufferSize, &bufferPos, members,
                             nmembers, MPI_UNSIGNED, MPI_COMM_WORLD ) );
    }
@@ -548,7 +548,7 @@ DefRec_DefSclFileS::pack( char *& buffer, const VT_MPI_INT & bufferSize,
    // filename
    //
    char * c_filename = new char[filename_length+1];
-   assert( c_filename );
+   vt_assert( c_filename );
    strcpy( c_filename, filename.c_str() );
    CALL_MPI( MPI_Pack( c_filename, filename_length + 1, MPI_CHAR, buffer,
                        bufferSize, &bufferPos, MPI_COMM_WORLD ) );
@@ -570,7 +570,7 @@ DefRec_DefSclFileS::unpack( char *& buffer, const VT_MPI_INT & bufferSize,
    // filename
    //
    char * c_filename = new char[filename_length+1];
-   assert( c_filename );
+   vt_assert( c_filename );
    CALL_MPI( MPI_Unpack( buffer, bufferSize, &bufferPos, c_filename,
                          filename_length + 1, MPI_CHAR, MPI_COMM_WORLD ) );
    filename = c_filename;
@@ -660,7 +660,7 @@ DefRec_DefFileGroupS::pack( char *& buffer, const VT_MPI_INT & bufferSize,
    // name
    //
    char * c_name = new char[name_length+1];
-   assert( c_name );
+   vt_assert( c_name );
    strcpy( c_name, name.c_str() );
    CALL_MPI( MPI_Pack( c_name, name_length + 1, MPI_CHAR, buffer, bufferSize,
                        &bufferPos, MPI_COMM_WORLD ) );
@@ -682,7 +682,7 @@ DefRec_DefFileGroupS::unpack( char *& buffer, const VT_MPI_INT & bufferSize,
    // name
    //
    char * c_name = new char[name_length+1];
-   assert( c_name );
+   vt_assert( c_name );
    CALL_MPI( MPI_Unpack( buffer, bufferSize, &bufferPos, c_name,
                          name_length + 1, MPI_CHAR, MPI_COMM_WORLD ) );
    name = c_name;
@@ -726,7 +726,7 @@ DefRec_DefFileS::pack( char *& buffer, const VT_MPI_INT & bufferSize,
    // name
    //
    char * c_name = new char[name_length+1];
-   assert( c_name );
+   vt_assert( c_name );
    strcpy( c_name, name.c_str() );
    CALL_MPI( MPI_Pack( c_name, name_length + 1, MPI_CHAR, buffer, bufferSize,
                        &bufferPos, MPI_COMM_WORLD ) );
@@ -752,7 +752,7 @@ DefRec_DefFileS::unpack( char *& buffer, const VT_MPI_INT & bufferSize,
    // name
    //
    char * c_name = new char[name_length+1];
-   assert( c_name );
+   vt_assert( c_name );
    CALL_MPI( MPI_Unpack( buffer, bufferSize, &bufferPos, c_name,
                          name_length + 1, MPI_CHAR, MPI_COMM_WORLD ) );
    name = c_name;
@@ -800,7 +800,7 @@ DefRec_DefFunctionGroupS::pack( char *& buffer, const VT_MPI_INT & bufferSize,
    // name
    //
    char * c_name = new char[name_length+1];
-   assert( c_name );
+   vt_assert( c_name );
    strcpy( c_name, name.c_str() );
    CALL_MPI( MPI_Pack( c_name, name_length + 1, MPI_CHAR, buffer, bufferSize,
                        &bufferPos, MPI_COMM_WORLD ) );
@@ -822,7 +822,7 @@ DefRec_DefFunctionGroupS::unpack( char *& buffer, const VT_MPI_INT & bufferSize,
    // name
    //
    char * c_name = new char[name_length+1];
-   assert( c_name );
+   vt_assert( c_name );
    CALL_MPI( MPI_Unpack( buffer, bufferSize, &bufferPos, c_name,
                          name_length + 1, MPI_CHAR, MPI_COMM_WORLD ) );
    name = c_name;
@@ -866,7 +866,7 @@ DefRec_DefFunctionS::pack( char *& buffer, const VT_MPI_INT & bufferSize,
    // name
    //
    char * c_name = new char[name_length+1];
-   assert( c_name );
+   vt_assert( c_name );
    strcpy( c_name, name.c_str() );
    CALL_MPI( MPI_Pack( c_name, name_length + 1, MPI_CHAR, buffer, bufferSize,
                        &bufferPos, MPI_COMM_WORLD ) );
@@ -896,7 +896,7 @@ DefRec_DefFunctionS::unpack( char *& buffer, const VT_MPI_INT & bufferSize,
    // name
    //
    char * c_name = new char[name_length+1];
-   assert( c_name );
+   vt_assert( c_name );
    CALL_MPI( MPI_Unpack( buffer, bufferSize, &bufferPos, c_name,
                          name_length + 1, MPI_CHAR, MPI_COMM_WORLD ) );
    name = c_name;
@@ -948,7 +948,7 @@ DefRec_DefCollOpS::pack( char *& buffer, const VT_MPI_INT & bufferSize,
    // name
    //
    char * c_name = new char[name_length+1];
-   assert( c_name );
+   vt_assert( c_name );
    strcpy( c_name, name.c_str() );
    CALL_MPI( MPI_Pack( c_name, name_length + 1, MPI_CHAR, buffer, bufferSize,
                        &bufferPos, MPI_COMM_WORLD ) );
@@ -974,7 +974,7 @@ DefRec_DefCollOpS::unpack( char *& buffer, const VT_MPI_INT & bufferSize,
    // name
    //
    char * c_name = new char[name_length+1];
-   assert( c_name );
+   vt_assert( c_name );
    CALL_MPI( MPI_Unpack( buffer, bufferSize, &bufferPos, c_name,
                          name_length + 1, MPI_CHAR, MPI_COMM_WORLD ) );
    name = c_name;
@@ -1022,7 +1022,7 @@ DefRec_DefCounterGroupS::pack( char *& buffer, const VT_MPI_INT & bufferSize,
    // name
    //
    char * c_name = new char[name_length+1];
-   assert( c_name );
+   vt_assert( c_name );
    strcpy( c_name, name.c_str() );
    CALL_MPI( MPI_Pack( c_name, name_length + 1, MPI_CHAR, buffer, bufferSize,
                        &bufferPos, MPI_COMM_WORLD ) );
@@ -1044,7 +1044,7 @@ DefRec_DefCounterGroupS::unpack( char *& buffer, const VT_MPI_INT & bufferSize,
    // name
    //
    char * c_name = new char[name_length+1];
-   assert( c_name );
+   vt_assert( c_name );
    CALL_MPI( MPI_Unpack( buffer, bufferSize, &bufferPos, c_name,
                          name_length + 1, MPI_CHAR, MPI_COMM_WORLD ) );
    name = c_name;
@@ -1088,7 +1088,7 @@ DefRec_DefCounterS::pack( char *& buffer, const VT_MPI_INT & bufferSize,
    // name
    //
    char * c_name = new char[name_length+1];
-   assert( c_name );
+   vt_assert( c_name );
    strcpy( c_name, name.c_str() );
    CALL_MPI( MPI_Pack( c_name, name_length + 1, MPI_CHAR, buffer, bufferSize,
                        &bufferPos, MPI_COMM_WORLD ) );
@@ -1111,7 +1111,7 @@ DefRec_DefCounterS::pack( char *& buffer, const VT_MPI_INT & bufferSize,
    // unit
    //
    char * c_unit = new char[unit_length+1];
-   assert( c_unit );
+   vt_assert( c_unit );
    strcpy( c_unit, unit.c_str() );
    CALL_MPI( MPI_Pack( c_unit, unit_length + 1, MPI_CHAR, buffer, bufferSize,
                        &bufferPos, MPI_COMM_WORLD ) );
@@ -1133,7 +1133,7 @@ DefRec_DefCounterS::unpack( char *& buffer, const VT_MPI_INT & bufferSize,
    // name
    //
    char * c_name = new char[name_length+1];
-   assert( c_name );
+   vt_assert( c_name );
    CALL_MPI( MPI_Unpack( buffer, bufferSize, &bufferPos, c_name,
                          name_length + 1, MPI_CHAR, MPI_COMM_WORLD ) );
    name = c_name;
@@ -1155,7 +1155,7 @@ DefRec_DefCounterS::unpack( char *& buffer, const VT_MPI_INT & bufferSize,
    // unit
    //
    char * c_unit = new char[unit_length+1];
-   assert( c_unit );
+   vt_assert( c_unit );
    CALL_MPI( MPI_Unpack( buffer, bufferSize, &bufferPos, c_unit,
                          unit_length + 1, MPI_CHAR, MPI_COMM_WORLD ) );
    unit = c_unit;
@@ -1268,7 +1268,7 @@ DefRec_DefKeyValueS::pack( char *& buffer, const VT_MPI_INT & bufferSize,
    // name
    //
    char * c_name = new char[name_length+1];
-   assert( c_name );
+   vt_assert( c_name );
    strcpy( c_name, name.c_str() );
    CALL_MPI( MPI_Pack( c_name, name_length + 1, MPI_CHAR, buffer, bufferSize,
                        &bufferPos, MPI_COMM_WORLD ) );
@@ -1294,7 +1294,7 @@ DefRec_DefKeyValueS::unpack( char *& buffer, const VT_MPI_INT & bufferSize,
    // name
    //
    char * c_name = new char[name_length+1];
-   assert( c_name );
+   vt_assert( c_name );
    CALL_MPI( MPI_Unpack( buffer, bufferSize, &bufferPos, c_name,
                          name_length + 1, MPI_CHAR, MPI_COMM_WORLD ) );
    name = c_name;
@@ -1342,7 +1342,7 @@ DefRec_DefMarkerS::pack( char *& buffer, const VT_MPI_INT & bufferSize,
    // name
    //
    char * c_name = new char[name_length+1];
-   assert( c_name );
+   vt_assert( c_name );
    strcpy( c_name, name.c_str() );
    CALL_MPI( MPI_Pack( c_name, name_length + 1, MPI_CHAR, buffer, bufferSize,
                        &bufferPos, MPI_COMM_WORLD ) );
@@ -1368,7 +1368,7 @@ DefRec_DefMarkerS::unpack( char *& buffer, const VT_MPI_INT & bufferSize,
    // name
    //
    char * c_name = new char[name_length+1];
-   assert( c_name );
+   vt_assert( c_name );
    CALL_MPI( MPI_Unpack( buffer, bufferSize, &bufferPos, c_name,
                          name_length + 1, MPI_CHAR, MPI_COMM_WORLD ) );
    name = c_name;

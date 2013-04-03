@@ -60,7 +60,7 @@ TimeSyncC::initialize()
          // create instance of class ETimeSyncC
          //
          m_eTimeSync = new ETimeSyncC();
-         assert( m_eTimeSync );
+         vt_assert( m_eTimeSync );
 
          MASTER
          {

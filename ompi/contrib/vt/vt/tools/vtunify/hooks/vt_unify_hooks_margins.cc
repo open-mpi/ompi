@@ -62,7 +62,7 @@ HooksProcessMarginsC::phaseHook_UnifyEvents_pre()
    // create array of thread contexts
    //
    m_threadContexts = new ThreadContextS[m_maxThreads];
-   assert( m_threadContexts );
+   vt_assert( m_threadContexts );
 }
 
 void
@@ -104,7 +104,7 @@ HooksProcessMarginsC::writeRecHook_Event( OTF_WStream ** wstream,
    }
 
    //return !error;
-   assert( !error );
+   vt_assert( !error );
 }
 
 // generic hook
@@ -145,7 +145,7 @@ HooksProcessMarginsC::genericHook( const uint32_t & id, HooksC::VaArgsT & args )
       //OTF_WStream ** wstream = (OTF_WStream**)args[0];
       uint32_t * stream_id = (uint32_t*)args[1];
 
-      assert( context.streamid == *stream_id );
+      vt_assert( context.streamid == *stream_id );
 
       // write process end record
       error = ( OTF_WStream_writeEndProcess( context.wstream, context.last_time,
@@ -153,7 +153,7 @@ HooksProcessMarginsC::genericHook( const uint32_t & id, HooksC::VaArgsT & args )
    }
 
    //return !error;
-   assert( !error );
+   vt_assert( !error );
 }
 
 // ^^^^^^^^^^^^^^^^^^^^ HOOK METHODS ^^^^^^^^^^^^^^^^^^^^

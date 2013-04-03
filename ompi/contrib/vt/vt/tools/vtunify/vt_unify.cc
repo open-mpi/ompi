@@ -169,28 +169,28 @@ VTUNIFY_MAIN( int argc, char ** argv )
 
    // ... HooksC
    theHooks = new HooksC();
-   assert( theHooks );
+   vt_assert( theHooks );
    // ... TokenFactoryC
    theTokenFactory = new TokenFactoryC();
-   assert( theTokenFactory );
+   vt_assert( theTokenFactory );
    // ... DefinitionsC
    theDefinitions = new DefinitionsC();
-   assert( theDefinitions );
+   vt_assert( theDefinitions );
    // ... MarkersC
    theMarkers = new MarkersC();
-   assert( theMarkers );
+   vt_assert( theMarkers );
    // ... EventsAndStatsC (for unifying events)
    theEvents = new EventsAndStatsC( EventsAndStatsC::SCOPE_EVENTS );
-   assert( theEvents );
+   vt_assert( theEvents );
    // ... EventsAndStatsC (for unifying statistics)
    theStatistics = new EventsAndStatsC( EventsAndStatsC::SCOPE_STATS );
-   assert( theStatistics );
+   vt_assert( theStatistics );
    // ... TimeSyncC
    theTimeSync = new TimeSyncC();
-   assert( theTimeSync );
+   vt_assert( theTimeSync );
    // ... UserComC
    theUserCom = new UserComC();
-   assert( theUserCom );
+   vt_assert( theUserCom );
 
    do
    {
@@ -528,7 +528,7 @@ getUnifyControls()
             else if( line_no == 2 )
             {
                std::istringstream iss( buffer );
-               assert( iss );
+               vt_assert( iss );
 
                // read VT mode flags
                if( UnifyControlS::mode_flags == (uint32_t)-1 )
@@ -591,7 +591,7 @@ getUnifyControls()
                {
                   std::pair<uint32_t, bool> stream_id;
                   std::istringstream iss( buffer );
-                  assert( iss );
+                  vt_assert( iss );
 
                   if( ( error = !( iss >> std::hex >> stream_id.first ) ) )
                      break;
@@ -611,7 +611,7 @@ getUnifyControls()
                case 2:
                {
                   std::istringstream iss( buffer );
-                  assert( iss );
+                  vt_assert( iss );
 
                   switch( ++(col_no[line_no_sec-2]) )
                   {
@@ -660,7 +660,7 @@ getUnifyControls()
                {
                   static ETimeSyncC::SyncPhaseS sync_phase;
                   std::istringstream iss( buffer );
-                  assert( iss );
+                  vt_assert( iss );
 
                   theTimeSync->setSyncMethod( TimeSyncC::METHOD_ENHANCED );
 
@@ -704,7 +704,7 @@ getUnifyControls()
                   static std::pair<uint32_t, uint32_t> sync_pair;
                   static ETimeSyncC::SyncTimeS sync_time;
                   std::istringstream iss( buffer );
-                  assert( iss );
+                  vt_assert( iss );
 
                   if( 4 <= line_no_sec &&
                       line_no_sec <= 4 + sync_phases.size() - 1 )
@@ -1033,7 +1033,7 @@ parseCommandLine( int argc, char ** argv )
       // get a copy of env. value
       //
       char* tmp = new char[strlen( env ) + 1];
-      assert( tmp );
+      vt_assert( tmp );
       strcpy( tmp, env );
 
       // extract IOFSL servers from env. value
@@ -1054,7 +1054,7 @@ parseCommandLine( int argc, char ** argv )
       // get a copy of env. value
       //
       char* tmp = new char[strlen( env ) + 1];
-      assert( tmp );
+      vt_assert( tmp );
       strcpy( tmp, env );
 
       // convert env. value's letter to lower case
@@ -1088,7 +1088,7 @@ parseCommandLine( int argc, char ** argv )
       // get a copy of env. value
       //
       char* tmp = new char[strlen( env ) + 1];
-      assert( tmp );
+      vt_assert( tmp );
       strcpy( tmp, env );
 
       // convert env. value's letter to lower case
@@ -1384,7 +1384,7 @@ parseIofslServerList( char* list )
    // allocate list of IOFSL servers
    //
    Params.iofsl_servers = new char*[n];
-   assert( Params.iofsl_servers );
+   vt_assert( Params.iofsl_servers );
 
    // extract IOFSL servers from list
    //
@@ -1400,7 +1400,7 @@ parseIofslServerList( char* list )
 
       Params.iofsl_servers[Params.iofsl_num_servers] =
          new char[strlen( token ) + 1];
-      assert( Params.iofsl_servers[Params.iofsl_num_servers] );
+      vt_assert( Params.iofsl_servers[Params.iofsl_num_servers] );
       strcpy( Params.iofsl_servers[Params.iofsl_num_servers], token );
       Params.iofsl_num_servers++;
 
@@ -1427,7 +1427,7 @@ writeMasterControl()
    // open file manager
    //
    OTF_FileManager * manager = OTF_FileManager_open( 1 );
-   assert( manager );
+   vt_assert( manager );
 
 #if defined(HAVE_IOFSL) && HAVE_IOFSL
    // initialize IOFSL stuff for writing, if necessary
@@ -1451,7 +1451,7 @@ writeMasterControl()
    // create master control
    //
    OTF_MasterControl * mc = OTF_MasterControl_new( manager );
-   assert( mc );
+   vt_assert( mc );
 
    // add stream/process[group] mappings to master control
    //
@@ -1701,7 +1701,7 @@ shareParams()
 {
    bool error = false;
 
-   assert( NumRanks > 1 );
+   vt_assert( NumRanks > 1 );
 
    // block until all ranks have reached this point
    CALL_MPI( MPI_Barrier( MPI_COMM_WORLD ) );
@@ -1788,7 +1788,7 @@ shareParams()
    // allocate buffer
    //
    buffer = new char[buffer_size];
-   assert( buffer );
+   vt_assert( buffer );
 
    // pack unify parameters
    //
@@ -1936,7 +1936,7 @@ shareParams()
       // in_file_prefix
       //
       char* in_file_prefix = new char[in_file_prefix_length];
-      assert( in_file_prefix );
+      vt_assert( in_file_prefix );
       CALL_MPI( MPI_Unpack( buffer, buffer_size, &position,
                             in_file_prefix, (VT_MPI_INT)in_file_prefix_length,
                             MPI_CHAR, MPI_COMM_WORLD ) );
@@ -1953,7 +1953,7 @@ shareParams()
       // out_file_prefix
       //
       char* out_file_prefix = new char[out_file_prefix_length];
-      assert( out_file_prefix );
+      vt_assert( out_file_prefix );
       CALL_MPI( MPI_Unpack( buffer, buffer_size, &position,
                             out_file_prefix, (VT_MPI_INT)out_file_prefix_length,
                             MPI_CHAR, MPI_COMM_WORLD ) );
@@ -2023,7 +2023,7 @@ shareParams()
       if( Params.iofsl_num_servers > 0 )
       {
          Params.iofsl_servers = new char*[Params.iofsl_num_servers];
-         assert( Params.iofsl_servers );
+         vt_assert( Params.iofsl_servers );
 
          for( uint32_t i = 0; i < Params.iofsl_num_servers; i++ )
          {
@@ -2036,7 +2036,7 @@ shareParams()
             // iofsl_servers[i]
             //
             Params.iofsl_servers[i] = new char[len];
-            assert( Params.iofsl_servers[i] );
+            vt_assert( Params.iofsl_servers[i] );
             CALL_MPI( MPI_Unpack( buffer, buffer_size, &position,
                                   Params.iofsl_servers[i], len, MPI_CHAR,
                                   MPI_COMM_WORLD ) );
@@ -2071,7 +2071,7 @@ shareParams()
       // prof_out_file
       //
       char* prof_out_file = new char[prof_out_file_length];
-      assert( prof_out_file );
+      vt_assert( prof_out_file );
       CALL_MPI( MPI_Unpack( buffer, buffer_size, &position,
                             prof_out_file, (VT_MPI_INT)prof_out_file_length,
                             MPI_CHAR, MPI_COMM_WORLD ) );
@@ -2096,7 +2096,7 @@ shareUnifyControls()
 {
    bool error = false;
 
-   assert( NumRanks > 1 );
+   vt_assert( NumRanks > 1 );
 
    // block until all ranks have reached this point
    CALL_MPI( MPI_Barrier( MPI_COMM_WORLD ) );
@@ -2246,7 +2246,7 @@ shareUnifyControls()
    // allocate buffer
    //
    buffer = new char[buffer_size];
-   assert( buffer );
+   vt_assert( buffer );
 
    // pack unify control data
    //

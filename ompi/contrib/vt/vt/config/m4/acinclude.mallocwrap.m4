@@ -24,7 +24,7 @@ AC_DEFUN([ACVT_MALLOCWRAP],
 		AS_IF([test x"$mallocwrap_error" = "xno"],
 		[
 			sav_CPPFLAGS=$CPPFLAGS
-			CPPFLAGS="$CPPFLAGS $DLINCDIR -D_BSD_SOURCE"
+			CPPFLAGS="$CPPFLAGS $DLINCDIR -D_BSD_SOURCE -D_XOPEN_SOURCE=600"
 			AC_CHECK_FUNCS([memalign posix_memalign valloc])
 			CPPFLAGS=$sav_CPPFLAGS
 

@@ -343,8 +343,8 @@ bool ProcessDispersion( AllData& alldata ) {
 
 
                 uint32_t k=0;
-                callpathcount = (callpathcount *
-                            ((double)alldata.params.dispersion.reduction/100));
+                callpathcount = (uint64_t)((double)callpathcount *
+                            ((double)alldata.params.dispersion.reduction/100.0));
 
                 for (uint64_t i = 0; iter != iter_end; i++)
                 {

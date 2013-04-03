@@ -11,6 +11,7 @@
  **/
 
 #define _BSD_SOURCE /* possibly needed for valloc */
+#define _XOPEN_SOURCE 600 /* possibly needed for posix_memalign */
 
 #include "config.h"
 

@@ -163,7 +163,7 @@ private:
          // create OTFAUX state context
          //
          auxstate = OTFAUX_State_create();
-         assert( auxstate );
+         vt_assert( auxstate );
       }
 
       // destructor

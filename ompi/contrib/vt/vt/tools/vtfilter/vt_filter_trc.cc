@@ -63,7 +63,7 @@ FilterTraceC::run()
         struct stat input_trcfile_stat;
         int input_trcfile_stat_rc =
           stat( input_trcfile.c_str(), &input_trcfile_stat );
-        assert( input_trcfile_stat_rc == 0 );
+        vt_assert( input_trcfile_stat_rc == 0 );
 
         // fail, if device id and inode number are equal
         //
@@ -213,20 +213,20 @@ FilterTraceC::readDefinitions(
   // open OTF file manager
   //
   OTF_FileManager* manager = OTF_FileManager_open( 1 );
-  assert( manager );
+  vt_assert( manager );
 
   // open OTF reader stream
   //
   OTF_RStream* rstream =
     OTF_RStream_open( Params.input_trcfile.c_str(), 0, manager );
-  assert( rstream );
+  vt_assert( rstream );
   VPrint( 2, "  Opened OTF reader stream [namestub %s id 0]\n",
           Params.input_trcfile.c_str() );
 
   // get OTF handler array
   //
   OTF_HandlerArray* handlers = OTF_HandlerArray_open();
-  assert( handlers );
+  vt_assert( handlers );
 
   // initialize first handler argument
   //
@@ -289,7 +289,7 @@ FilterTraceC::readFilter(
   // get RFG filter object
   //
   RFG_Filter* rfg_filter = RFG_Filter_init();
-  assert( rfg_filter );
+  vt_assert( rfg_filter );
 
   // set input filter file name
   RFG_Filter_setDefFile( rfg_filter, Params.f_input_filtfile.c_str() );
@@ -340,7 +340,7 @@ FilterTraceC::readFilter(
       const uint32_t& proc = procs[i].first;
       const uint32_t& parent = procs[i].second;
 
-      assert( proc > 0 );
+      vt_assert( proc > 0 );
 
       // parent process is disabled?
       uint8_t off = (uint8_t)( parent != 0 && m_filter.isProcOff( parent ) );
@@ -410,7 +410,7 @@ FilterTraceC::shareFilter()
 
   VPrint( 1, " Sharing filter rules\n" );
 
-  assert( m_numWorkerRanks > 1 );
+  vt_assert( m_numWorkerRanks > 1 );
 
   char* buffer;
   VT_MPI_INT buffer_size;
@@ -496,7 +496,7 @@ FilterTraceC::shareFilter()
 
         std::map<uint32_t, std::set<uint32_t> >::const_iterator stream_it =
           m_streamProcs.find( stream );
-        assert( stream_it != m_streamProcs.end() );
+        vt_assert( stream_it != m_streamProcs.end() );
 
         const std::set<uint32_t>& procs = stream_it->second;
 
@@ -529,7 +529,7 @@ FilterTraceC::shareFilter()
       // allocate memory for the send buffer
       //
       buffer = new char[buffer_size];
-      assert( buffer );
+      vt_assert( buffer );
 
       // pack send buffer
       //
@@ -554,7 +554,7 @@ FilterTraceC::shareFilter()
 
         std::map<uint32_t, std::set<uint32_t> >::iterator stream_it =
           m_streamProcs.find( stream );
-        assert( stream_it != m_streamProcs.end() );
+        vt_assert( stream_it != m_streamProcs.end() );
 
         const std::set<uint32_t>& procs = stream_it->second;
 
@@ -629,7 +629,7 @@ FilterTraceC::shareFilter()
     // allocate memory for the receive buffer
     //
     buffer = new char[buffer_size];
-    assert( buffer );
+    vt_assert( buffer );
 
     // receive buffer from rank 0
     PVPrint( 2, " Receiving filter rules from rank 0\n" );
@@ -701,12 +701,12 @@ FilterTraceC::writeMasterControl()
   // open OTF file manager
   //
   OTF_FileManager* manager = OTF_FileManager_open( 1 );
-  assert( manager );
+  vt_assert( manager );
 
   // create OTF master control
   //
   OTF_MasterControl* mc = OTF_MasterControl_new( manager );
-  assert( mc );
+  vt_assert( mc );
   VPrint( 2, "  Created new OTF master control object\n" );
 
   // append stream/process mappings to OTF master control
@@ -733,7 +733,7 @@ FilterTraceC::writeMasterControl()
       // append process to output stream
       //
       int append_rc = OTF_MasterControl_append( mc, stream, proc );
-      assert( append_rc );
+      vt_assert( append_rc );
     }
   }
 
@@ -770,13 +770,13 @@ FilterTraceC::processDefinitions()
   // (max. number of simultaneously open files = 2: 1 reader, 1 writer)
   //
   OTF_FileManager* manager = OTF_FileManager_open( 2 );
-  assert( manager );
+  vt_assert( manager );
 
   // open OTF reader stream
   //
   OTF_RStream* rstream =
     OTF_RStream_open( Params.input_trcfile.c_str(), 0, manager );
-  assert( rstream );
+  vt_assert( rstream );
   VPrint( 2, "  Opened OTF reader stream [namestub %s id 0]\n",
           Params.input_trcfile.c_str() );
 
@@ -784,7 +784,7 @@ FilterTraceC::processDefinitions()
   //
   OTF_WStream* wstream =
     OTF_WStream_open( Params.f_output_trcfile.c_str(), 0, manager );
-  assert( wstream );
+  vt_assert( wstream );
   VPrint( 2, "  Opened OTF writer stream [namestub %s id 0]\n",
           Params.f_output_trcfile.c_str() );
 
@@ -796,7 +796,7 @@ FilterTraceC::processDefinitions()
   // get OTF handler array
   //
   OTF_HandlerArray* handlers = OTF_HandlerArray_open();
-  assert( handlers );
+  vt_assert( handlers );
 
   // get OTF copy handlers
   OTF_HandlerArray_getCopyHandler_stream( handlers, wstream );
@@ -866,13 +866,13 @@ FilterTraceC::processMarkers()
   // (max. number of simultaneously open files = 2: 1 reader, 1 writer)
   //
   OTF_FileManager* manager = OTF_FileManager_open( 2 );
-  assert( manager );
+  vt_assert( manager );
 
   // open OTF reader stream
   //
   OTF_RStream* rstream =
     OTF_RStream_open( Params.input_trcfile.c_str(), 0, manager );
-  assert( rstream );
+  vt_assert( rstream );
   VPrint( 2, "  Opened OTF reader stream [namestub %s id 0]\n",
           Params.input_trcfile.c_str() );
 
@@ -885,7 +885,7 @@ FilterTraceC::processMarkers()
     //
     OTF_WStream* wstream =
       OTF_WStream_open( Params.f_output_trcfile.c_str(), 0, manager );
-    assert( wstream );
+    vt_assert( wstream );
     VPrint( 2, "  Opened OTF writer stream [namestub %s id 0]\n",
             Params.f_output_trcfile.c_str() );
 
@@ -897,7 +897,7 @@ FilterTraceC::processMarkers()
     // get OTF handler array
     //
     OTF_HandlerArray* handlers = OTF_HandlerArray_open();
-    assert( handlers );
+    vt_assert( handlers );
 
     // get OTF copy handlers
     OTF_HandlerArray_getCopyHandler_stream( handlers, wstream );
@@ -999,13 +999,13 @@ FilterTraceC::processEventsAndStatistics()
     // open OTF file manager
     //
     OTF_FileManager* manager = OTF_FileManager_open( max_file_handles );
-    assert( manager );
+    vt_assert( manager );
 
     // open OTF reader
     //
     OTF_Reader* reader =
       OTF_Reader_open( Params.input_trcfile.c_str(), manager );
-    assert( reader );
+    vt_assert( reader );
     PVPrint( 2, " Opened OTF reader [namestub %s]\n",
              Params.input_trcfile.c_str() );
 
@@ -1020,7 +1020,7 @@ FilterTraceC::processEventsAndStatistics()
 
     // remove global filter rules from local copy
     //
-    assert( filter.procFuncLimits.find( 0 ) != filter.procFuncLimits.end() );
+    vt_assert( filter.procFuncLimits.find( 0 ) != filter.procFuncLimits.end() );
     filter.procFuncLimits.erase( filter.procFuncLimits.begin() );
 
     // iterate over all processes of output stream
@@ -1058,7 +1058,7 @@ FilterTraceC::processEventsAndStatistics()
     //
     OTF_WStream* wstream =
       OTF_WStream_open( Params.f_output_trcfile.c_str(), stream, manager );
-    assert( wstream );
+    vt_assert( wstream );
     PVPrint( 2, " Opened OTF writer stream [namestub %s id %d]\n",
              Params.f_output_trcfile.c_str(), stream );
 
@@ -1070,7 +1070,7 @@ FilterTraceC::processEventsAndStatistics()
     // get OTF handler array
     //
     OTF_HandlerArray* handlers = OTF_HandlerArray_open();
-    assert( handlers );
+    vt_assert( handlers );
 
     // get OTF copy handlers
     OTF_HandlerArray_getCopyHandler_stream( handlers, wstream );
@@ -1315,17 +1315,17 @@ FilterTraceC::getNumStreams( uint32_t& numStreams )
   // open OTF file manager
   //
   OTF_FileManager* manager = OTF_FileManager_open( 1 );
-  assert( manager );
+  vt_assert( manager );
 
   // create OTF master control
   //
   OTF_MasterControl* mc = OTF_MasterControl_new( manager );
-  assert( mc );
+  vt_assert( mc );
 
   // read OTF master control of input trace file
   //
   int read_rc = OTF_MasterControl_read( mc, Params.input_trcfile.c_str() );
-  assert( read_rc );
+  vt_assert( read_rc );
 
   // get number of input streams
   numStreams = OTF_MasterControl_getCount( mc );
@@ -1355,18 +1355,18 @@ FilterTraceC::getMaxBytesToRead( uint64_t& maxBytes )
     // open OTF file manager
     //
     OTF_FileManager* manager = OTF_FileManager_open( Params.f_max_file_handles );
-    assert( manager );
+    vt_assert( manager );
 
     // open OTF reader
     //
     OTF_Reader* reader =
       OTF_Reader_open( Params.input_trcfile.c_str(), manager );
-    assert( reader );
+    vt_assert( reader );
 
     // get OTF handler array
     //
     OTF_HandlerArray* handlers = OTF_HandlerArray_open();
-    assert( handlers );
+    vt_assert( handlers );
 
     // select processes to read
     //
