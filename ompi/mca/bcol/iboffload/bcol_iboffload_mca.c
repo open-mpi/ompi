@@ -246,7 +246,7 @@ int mca_bcol_iboffload_register_params(void)
 
     CHECK(reg_int("max_pipeline_depth", NULL,
                   "The maximal number of fragments of the same collective request that can be transferred in parallel", 3,
-                  &mca_bcol_iboffload_component.max_pipeline_depth, 0));
+                  (int *) &mca_bcol_iboffload_component.max_pipeline_depth, 0));
 
     CHECK(reg_int("max_mqe_tasks", NULL,
                   "Maximum number of MQEs for each iboffload module",
@@ -293,7 +293,7 @@ int mca_bcol_iboffload_register_params(void)
                   "otherwise must be >= 0). "
                   "If not explicitly set, use max_inline_data from "
                   "the INI file containing device-specific parameters",
-                  128, &mca_bcol_iboffload_component.max_inline_data,
+                  128, (int *) &mca_bcol_iboffload_component.max_inline_data,
                   REGINT_NEG_ONE_OK | REGINT_GE_ZERO));
 
 #if 0
@@ -314,10 +314,8 @@ int mca_bcol_iboffload_register_params(void)
                      0));
 
     CHECK(reg_int("qp_ous_rd_atom", NULL,
-                  "InfiniBand outstanding atomic reads "
-                  "(must be >= 0)",
-                  4, &ival, REGINT_GE_ZERO));
-    mca_bcol_iboffload_component.qp_ous_rd_atom = (uint32_t) ival;
+                  "InfiniBand outstanding atomic reads (must be >= 0)", 4,
+                  (int *) &mca_bcol_iboffload_component.qp_ous_rd_atom, REGINT_GE_ZERO));
 
     asprintf(&msg, "OpenFabrics MTU, in bytes (if not specified in INI files).  Valid values are: %d=256 bytes, %d=512 bytes, %d=1024 bytes, %d=2048 bytes, %d=4096 bytes",
              IBV_MTU_256,
