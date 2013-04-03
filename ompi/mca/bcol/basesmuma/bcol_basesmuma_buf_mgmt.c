@@ -413,8 +413,8 @@ int bcol_basesmuma_bank_init_opti(struct mca_coll_ml_module_t *ml_module,
 	/* now we exchange offset info - don't assume symmetric virtual memory
 	 */
 
-        mem_offset = (uint64_t)(ml_block->block->base_addr) -
-            (uint64_t)(cs->sm_payload_structs->data_addr);
+        mem_offset = (uint64_t)(uintptr_t)(ml_block->block->base_addr) -
+            (uint64_t)(uintptr_t)(cs->sm_payload_structs->data_addr);
 
         /* call into the exchange offsets function */
         ret=comm_allgather_pml(&mem_offset,results_array,1,
@@ -444,11 +444,11 @@ int bcol_basesmuma_bank_init_opti(struct mca_coll_ml_module_t *ml_module,
 
         /* first, set the pointer to the control struct */
         pload_mgmt->data_buffs[array_id].ctl_struct=(mca_bcol_basesmuma_header_t *)
-            (((uint64_t)results_array[array_id])+(uint64_t)base_ptr);
+            (uintptr_t)(((uint64_t)(uintptr_t)results_array[array_id])+(uint64_t)(uintptr_t)base_ptr);
         /* second, calculate where to set the data pointer */
         pload_mgmt->data_buffs[array_id].payload=(void *) 
-            ((uint64_t) pload_mgmt->data_buffs[array_id].ctl_struct + 
-             (uint64_t) ml_module->data_offset);
+            (uintptr_t)((uint64_t)(uintptr_t) pload_mgmt->data_buffs[array_id].ctl_struct + 
+                       (uint64_t)(uintptr_t) ml_module->data_offset);
 
 
         for( buf_id = 1 ; buf_id < loop_limit ; buf_id++ ) {
@@ -458,13 +458,13 @@ int bcol_basesmuma_bank_init_opti(struct mca_coll_ml_module_t *ml_module,
              *
              * first, set the control struct's position */
             pload_mgmt->data_buffs[array_id].ctl_struct=(mca_bcol_basesmuma_header_t *) 
-                (((uint64_t)(pload_mgmt->data_buffs[array_id_m1].ctl_struct) +
-                  (uint64_t)ml_block->size_buffer));
+                (uintptr_t)(((uint64_t)(uintptr_t)(pload_mgmt->data_buffs[array_id_m1].ctl_struct) +
+                           (uint64_t)(uintptr_t)ml_block->size_buffer));
 
             /* second, set the payload pointer */
             pload_mgmt->data_buffs[array_id].payload =(void *)
-                ((uint64_t) pload_mgmt->data_buffs[array_id].ctl_struct +
-                 (uint64_t) ml_module->data_offset); 
+                (uintptr_t)((uint64_t)(uintptr_t) pload_mgmt->data_buffs[array_id].ctl_struct +
+                           (uint64_t)(uintptr_t) ml_module->data_offset); 
         }
 
     }
