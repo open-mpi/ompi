@@ -59,7 +59,8 @@ static int reg_string(const char* param_name,
 {
     int index;
 
-    *storage = default_value;
+    /* the MCA variable system will not attempt to modify this value */
+    *storage = (char *) default_value;
     index = mca_base_component_var_register(&mca_bcol_iboffload_component.super.bcol_version,
                                             param_name, param_desc, MCA_BASE_VAR_TYPE_STRING,
                                             NULL, 0, 0, OPAL_INFO_LVL_9,
@@ -113,6 +114,29 @@ static int reg_int(const char* param_name,
     return OMPI_SUCCESS;
 }
 
+/*
+ * utility routine for integer parameter registration
+ */
+static int reg_bool(const char* param_name,
+                    const char* deprecated_param_name,
+                    const char* param_desc,
+                    bool default_value, bool *storage)
+{
+    int index;
+
+    *storage = default_value;
+    index = mca_base_component_var_register(&mca_bcol_iboffload_component.super.bcol_version,
+                                            param_name, param_desc, MCA_BASE_VAR_TYPE_BOOL,
+                                            NULL, 0, 0, OPAL_INFO_LVL_9,
+                                            MCA_BASE_VAR_SCOPE_READONLY, storage);
+    if (NULL != deprecated_param_name) {
+        (void) mca_base_var_register_synonym(index, "ompi", "bcol", "iboffload", deprecated_param_name,
+                                             MCA_BASE_VAR_SYN_FLAG_DEPRECATED);
+    }
+
+    return OMPI_SUCCESS;
+}
+
 int mca_bcol_iboffload_verify_params(void)
 {
     if (mca_bcol_iboffload_component.min_rnr_timer > 31) {
@@ -120,7 +144,7 @@ int mca_bcol_iboffload_verify_params(void)
                        true, "bcol_iboffload_ib_min_rnr_timer > 31",
                        "bcol_iboffload_ib_min_rnr_timer reset to 31");
         mca_bcol_iboffload_component.min_rnr_timer = 31;
-    } else if (ival < 0){
+    } else if (mca_bcol_iboffload_component.min_rnr_timer < 0){
         opal_show_help("help-mpi-bcol-iboffload.txt", "invalid mca param value",
                    true, "bcol_iboffload_ib_min_rnr_timer < 0",
                    "bcol_iboffload_ib_min_rnr_timer reset to 0");
@@ -132,7 +156,7 @@ int mca_bcol_iboffload_verify_params(void)
                        true, "bcol_iboffload_ib_timeout > 31",
                        "bcol_iboffload_ib_timeout reset to 31");
         mca_bcol_iboffload_component.timeout = 31;
-    } else if (ival < 0) {
+    } else if (mca_bcol_iboffload_component.timeout < 0) {
         opal_show_help("help-mpi-bcol-iboffload.txt", "invalid mca param value",
                    true, "bcol_iboffload_ib_timeout < 0",
                    "bcol_iboffload_ib_timeout reset to 0");
@@ -178,7 +202,7 @@ int mca_bcol_iboffload_verify_params(void)
     if(mca_bcol_iboffload_component.buffer_alignment <= 1 ||
        (mca_bcol_iboffload_component.buffer_alignment & (mca_bcol_iboffload_component.buffer_alignment - 1))) {
         opal_show_help("help-mpi-bcol-iboffload.txt", "wrong buffer alignment",
-                true, ival, ompi_process_info.nodename, 64);
+                true, mca_bcol_iboffload_component.buffer_alignment, ompi_process_info.nodename, 64);
         mca_bcol_iboffload_component.buffer_alignment = 64;
     }
 
@@ -187,6 +211,7 @@ int mca_bcol_iboffload_verify_params(void)
 
 int mca_bcol_iboffload_register_params(void)
 {
+    mca_base_var_enum_t *new_enum;
     char *msg;
     int ret = OMPI_SUCCESS, tmp;
 
@@ -213,11 +238,11 @@ int mca_bcol_iboffload_register_params(void)
 
     CHECK(reg_bool("warn_default_gid_prefix", NULL,
                    "Warn when there is more than one active ports and at least one of them connected to the network with only default GID prefix configured (0 = do not warn; any other value = warn)",
-                   true, &mca_bcol_iboffload_component.warn_default_gid_prefix, 0));
+                   true, &mca_bcol_iboffload_component.warn_default_gid_prefix));
 
     CHECK(reg_bool("warn_nonexistent_if", NULL,
                    "Warn if non-existent devices and/or ports are specified in the bcol_iboffla_if_[in|ex]clude MCA parameters (0 = do not warn; any other value = warn)",
-                   true, &mca_bcol_iboffload_component.warn_nonexistent_if, 0));
+                   true, &mca_bcol_iboffload_component.warn_nonexistent_if));
 
     CHECK(reg_int("max_pipeline_depth", NULL,
                   "The maximal number of fragments of the same collective request that can be transferred in parallel", 3,
@@ -307,9 +332,8 @@ int mca_bcol_iboffload_register_params(void)
     CHECK(mca_base_var_enum_create("infiniband mtu", mtu_values, &new_enum));
     mca_bcol_iboffload_component.mtu = IBV_MTU_1024;
     tmp = mca_base_component_var_register(&mca_bcol_iboffload_component.super.bcol_version,
-                                          "mtu", MCA_BASE_VAR_TYPE_INT, new_enum, 0, 0,
-                                          OPAL_INFO_LVL_9,
-                                          MCA_BASE_VAR_SCOPE_READONLY,
+                                          "mtu", msg, MCA_BASE_VAR_TYPE_INT, new_enum, 0, 0,
+                                          OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
                                           &mca_bcol_iboffload_component.mtu);
     OBJ_RELEASE(new_enum);
     free(msg);
