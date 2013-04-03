@@ -13,7 +13,7 @@
  *                         reserved. 
  * Copyright (c) 2008-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2010      Los Alamos National Security, LLC.
+ * Copyright (c) 2010-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * $COPYRIGHT$
  * 
@@ -42,7 +42,7 @@
 
 char *opal_signal_string = NULL;
 char *opal_net_private_ipv4 = NULL;
-bool opal_set_max_sys_limits = false;
+char *opal_set_max_sys_limits = NULL;
 
 int opal_register_params(void)
 {
@@ -152,10 +152,11 @@ int opal_register_params(void)
 	return ret;
     }
 
-    opal_set_max_sys_limits = false;
+    opal_set_max_sys_limits = NULL;
     ret = mca_base_var_register ("opal", "opal", NULL, "set_max_sys_limits",
-				 "Set to non-zero to automatically set any system-imposed limits to the maximum allowed",
-				 MCA_BASE_VAR_TYPE_BOOL, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
+				 "Set the specified system-imposed limits to the specified value, including \"unlimited\"."
+                                 "Supported params: core, filesize, maxmem, openfiles, stacksize, maxchildren",
+				 MCA_BASE_VAR_TYPE_STRING, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
 				 OPAL_INFO_LVL_3, MCA_BASE_VAR_SCOPE_ALL_EQ,
 				 &opal_set_max_sys_limits);
     if (0 > ret) {
