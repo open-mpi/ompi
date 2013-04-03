@@ -613,7 +613,7 @@ mca_io_ompio_file_get_byte_offset (ompi_file_t *fh,
     }
 
     *disp = data->ompio_fh.f_disp + temp_offset +
-        (OMPI_MPI_OFFSET_TYPE)data->ompio_fh.f_decoded_iov[index].iov_base;
+      (OMPI_MPI_OFFSET_TYPE)(intptr_t)data->ompio_fh.f_decoded_iov[index].iov_base;
 
     return OMPI_SUCCESS;
 }
