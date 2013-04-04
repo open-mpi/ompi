@@ -71,3 +71,25 @@ When creating a URI, all files must be specified in absolute paths:
   Value provided: %s
 
 Please update your application to provide the full path to the file.
+#
+[sys-limit-failed]
+Per request, Open MPI attempted to set a system resource
+limit to a given value:
+
+  Resource:  %s
+  Limit:     %s
+
+The system has refused to allow this operation. This is likely
+due to a permission limitation, or specifying an unsupported
+value. Please check the system or remove the request and try
+again.
+#
+[sys-limit-unrecognized]
+Open MPI received a request to set a system resource limit.
+Sadly, OMPI does not recognize or currently support the specified
+resource:
+
+  Resource:  %s
+  Limit:     %s
+
+Please correct the request and try again.
