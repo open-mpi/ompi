@@ -836,11 +836,12 @@ static bool assign_procs(AllData& alldata) {
     /* broadcast error indicator to workers because Open MPI had all
      ranks except rank 0 waiting endlessly in the MPI_Recv, when the '.otf' file
      was absent. */
-    if ( SyncError( alldata, error, 0 ) ) {
+    SyncError( alldata, error, 0 );
+#endif /* OTFPROFILE_MPI */
+    if (error) {
 
         return false;
     }
-#endif /* OTFPROFILE_MPI */
 
     if (0 == alldata.myRank) {
 
