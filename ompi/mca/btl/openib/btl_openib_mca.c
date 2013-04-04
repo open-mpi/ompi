@@ -727,6 +727,7 @@ int btl_openib_verify_mca_params (void)
     }
 #endif
 
+#if BTL_OPENIB_MALLOC_HOOKS_ENABLED
     if (mca_btl_openib_component.use_memalign != 32  
         && mca_btl_openib_component.use_memalign != 64
         && mca_btl_openib_component.use_memalign != 0){ 
@@ -735,6 +736,7 @@ int btl_openib_verify_mca_params (void)
                        "btl_openib_memalign is reset to 32");
         mca_btl_openib_component.use_memalign = 32; 
     }
+#endif
 
     return OMPI_SUCCESS;
 }
