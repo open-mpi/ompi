@@ -24,7 +24,7 @@ typedef enum {
     XOOB_ADDR_CLOSED
 } ompi_common_ofacm_ib_addr_state_t;
 
-struct ib_address_t {
+struct ofacm_ib_address_t {
     opal_list_item_t super;
     void *key;                                /* the key with size 80bit - [subnet(64) LID(16bit)] */
     uint64_t subnet_id;                       /* caching subnet_id  */
@@ -37,12 +37,12 @@ struct ib_address_t {
     opal_mutex_t addr_lock;                   /* protection */
     ompi_common_ofacm_ib_addr_state_t status; /* ib port status */
 };
-typedef struct ib_address_t 
-               ib_address_t;
+typedef struct ofacm_ib_address_t 
+               ofacm_ib_address_t;
 
 struct ompi_common_ofacm_xoob_local_connection_context_t {
     ompi_common_ofacm_base_local_connection_context_t super;
-    ib_address_t *addr;
+    ofacm_ib_address_t *addr;
     uint32_t xrc_recv_qp_num; /* in xrc we will use it as recv qp */
     uint32_t xrc_recv_psn;
 };
