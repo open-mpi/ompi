@@ -303,9 +303,14 @@ opal_init_util(int* pargc, char*** pargv)
         goto return_error;
     }
 
-    if (OPAL_SUCCESS != (ret = opal_util_init_sys_limits())) {
-        error = "opal_util_init_sys_limits";
-        goto return_error;
+    /* set system resource limits - internally protected against
+     * doing so twice in cases where the launch agent did it for us
+     */
+    if (OPAL_SUCCESS != (ret = opal_util_init_sys_limits(&error))) {
+        opal_show_help("help-opal-runtime.txt",
+                        "opal_init:syslimit", false,
+                        error);
+        return OPAL_ERR_SILENT;
     }
 
     /* initialize the arch string */

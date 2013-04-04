@@ -112,6 +112,7 @@
 #include "opal/class/opal_pointer_array.h"
 #include "opal/util/opal_environ.h"
 #include "opal/util/show_help.h"
+#include "opal/util/sys_limits.h"
 #include "opal/util/fd.h"
 
 #include "orte/util/show_help.h"
@@ -576,6 +577,19 @@ static int do_child(orte_app_context_t* context,
 #if OPAL_HAVE_HWLOC
  PROCEED:
 #endif
+
+    /* if the user requested it, set the system resource limits */
+    if (OPAL_SUCCESS != (rc = opal_util_init_sys_limits(&msg))) {
+        send_error_show_help(write_fd, 1, "help-orte-odls-default.txt",
+                             "set limit",
+                             orte_process_info.nodename, context->app, 
+                             __FILE__, __LINE__, msg);
+    }
+    /* ensure we only do this once */
+    (void) mca_base_var_env_name("opal_set_max_sys_limits", &param);
+    opal_unsetenv(param, &environ_copy);
+    free(param);
+
     /* close all file descriptors w/ exception of stdin/stdout/stderr,
        the pipe used for the IOF INTERNAL messages, and the pipe up to
        the parent. */
