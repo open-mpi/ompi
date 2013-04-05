@@ -49,16 +49,16 @@ AC_DEFUN([MCA_opal_memory_linux_CONFIG],[
         memory_linux_ummu_happy=no
         ;;
     esac
-              
+
     AS_IF([test "$with_memory_manager" = "linux"],
           [memory_linux_ptmalloc2_happy=yes
            memory_linux_ummu_happy=yes
            memory_linux_requested=1],
           [memory_linux_requested=0
-           AS_IF([test "$with_memory_manager" = ""],
+           AS_IF([test "$with_memory_manager" = "" -o "$with_memory_manager" = "yes"],
                  [memory_linux_ptmalloc2_happy=yes
                   memory_linux_ummu_happy=yes],
-                 [memory_linux_ptmalloc2_happy=yes
+                 [memory_linux_ptmalloc2_happy=no
                   memory_linux_ummu_happy=no])])
 
     ######################################################################
