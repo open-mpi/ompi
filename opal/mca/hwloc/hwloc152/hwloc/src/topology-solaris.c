@@ -197,6 +197,7 @@ hwloc_solaris_get_thisthread_cpubind(hwloc_topology_t topology, hwloc_bitmap_t h
 static int
 hwloc_solaris_set_sth_membind(hwloc_topology_t topology, idtype_t idtype, id_t id, hwloc_const_nodeset_t nodeset, hwloc_membind_policy_t policy, int flags)
 {
+  processorid_t binding;
   int depth;
   int n, i;
 
