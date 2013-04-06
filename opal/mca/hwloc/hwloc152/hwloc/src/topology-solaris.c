@@ -197,7 +197,6 @@ hwloc_solaris_get_thisthread_cpubind(hwloc_topology_t topology, hwloc_bitmap_t h
 static int
 hwloc_solaris_set_sth_membind(hwloc_topology_t topology, idtype_t idtype, id_t id, hwloc_const_nodeset_t nodeset, hwloc_membind_policy_t policy, int flags)
 {
-  processorid_t binding;
   int depth;
   int n, i;
 
@@ -221,15 +220,6 @@ hwloc_solaris_set_sth_membind(hwloc_topology_t topology, idtype_t idtype, id_t i
     return -1;
   }
   n = hwloc_get_nbobjs_by_depth(topology, depth);
-
-  /* first check if processor_bind() was used to bind to a single processor rather than to an lgroup */
-
-  if ( processor_bind(idtype, id, PBIND_QUERY, &binding) == 0 && binding != PBIND_NONE ) {
-    hwloc_bitmap_only(hwloc_set, binding);
-    return 0;
-  }
-
-  /* if not, check lgroups */
 
   for (i = 0; i < n; i++) {
     hwloc_obj_t obj = hwloc_get_obj_by_depth(topology, depth, i);
