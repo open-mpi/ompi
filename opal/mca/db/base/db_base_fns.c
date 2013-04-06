@@ -29,7 +29,11 @@ int opal_db_base_store(opal_identifier_t proc,
     opal_db_active_module_t *mod;
     int rc;
 
-    /* cycle thru the actiove modules until one agrees to perform the op */
+    opal_output_verbose(1, opal_db_base_framework.framework_output,
+                        "db:hash:base:store storing data for proc %" PRIu64 " at locality %d",
+                        proc, (int)locality);
+
+    /* cycle thru the active modules until one agrees to perform the op */
     did_op = false;
     OPAL_LIST_FOREACH(mod, &opal_db_base.store_order, opal_db_active_module_t) {
         if (NULL == mod->module->store) {
