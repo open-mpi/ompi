@@ -628,6 +628,7 @@ void orte_plm_base_daemon_callback(int status, orte_process_name_t* sender,
     orte_node_t *node;
     orte_job_t *jdata;
     orte_process_name_t dname;
+    opal_buffer_t *relay;
 
     /* get the daemon job, if necessary */
     if (NULL == jdatorted) {
@@ -856,8 +857,9 @@ void orte_plm_base_daemon_callback(int status, orte_process_name_t* sender,
         ORTE_ACTIVATE_JOB_STATE(jdatorted, ORTE_JOB_STATE_FAILED_TO_START);
     } else if (NULL != orte_tree_launch_cmd) {
         /* if a tree-launch is underway, send the cmd back */
-        OBJ_RETAIN(orte_tree_launch_cmd);
-        orte_rml.send_buffer_nb(sender, orte_tree_launch_cmd,
+        relay = OBJ_NEW(opal_buffer_t);
+        opal_dss.copy_payload(relay, orte_tree_launch_cmd);
+        orte_rml.send_buffer_nb(sender, relay,
                                 ORTE_RML_TAG_DAEMON, 0,
                                 orte_rml_send_callback, NULL);
     }
