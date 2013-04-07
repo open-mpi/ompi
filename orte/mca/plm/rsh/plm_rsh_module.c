@@ -533,7 +533,7 @@ static int setup_launch(int *argcptr, char ***argvptr,
     /* if we are not tree launching or debugging, tell the daemon
      * to daemonize so we can launch the next group
      */
-    if (!mca_plm_rsh_component.tree_spawn &&
+    if (mca_plm_rsh_component.no_tree_spawn &&
         !orte_debug_flag &&
         !orte_debug_daemons_flag &&
         !orte_debug_daemons_file_flag &&
@@ -1081,7 +1081,7 @@ static void launch_daemons(int fd, short args, void *cbdata)
     }
             
     /* if we are tree launching, find our children and create the launch cmd */
-    if (mca_plm_rsh_component.tree_spawn) {
+    if (!mca_plm_rsh_component.no_tree_spawn) {
         orte_daemon_cmd_flag_t command = ORTE_DAEMON_TREE_SPAWN;
         opal_byte_object_t bo, *boptr;
         orte_job_t *jdatorted;
@@ -1144,7 +1144,7 @@ static void launch_daemons(int fd, short args, void *cbdata)
         }
         
         /* if we are tree launching, only launch our own children */
-        if (mca_plm_rsh_component.tree_spawn) {
+        if (!mca_plm_rsh_component.no_tree_spawn) {
             for (item = opal_list_get_first(&coll.targets);
                  item != opal_list_get_end(&coll.targets);
                  item = opal_list_get_next(item)) {
