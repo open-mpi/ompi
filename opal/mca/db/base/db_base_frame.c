@@ -41,8 +41,14 @@ opal_db_base_module_t opal_db = {
 };
 opal_db_base_t opal_db_base;
 
-/* Declared in opal_db_close.c */
-int opal_db_base_close(void);
+static int opal_db_base_close(void)
+{
+    if (NULL != opal_db.finalize) {
+        opal_db.finalize();
+    }
+
+    return mca_base_framework_components_close(&opal_db_base_framework, NULL);
+}
 
 static int opal_db_base_open(mca_base_open_flag_t flags)
 {
