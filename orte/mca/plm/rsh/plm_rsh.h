@@ -57,7 +57,7 @@ struct orte_plm_rsh_component_t {
     bool daemonize_llspawn;
     struct timespec delay;
     int priority;
-    bool tree_spawn;
+    bool no_tree_spawn;
     int num_concurrent;
     char *agent;
     bool assume_same_shell;

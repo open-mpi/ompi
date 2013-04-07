@@ -165,13 +165,13 @@ static int rsh_component_register(void)
                                             MCA_BASE_VAR_SCOPE_READONLY,
                                             &mca_plm_rsh_delay_string);
 
-    mca_plm_rsh_component.tree_spawn = false;
+    mca_plm_rsh_component.no_tree_spawn = false;
     (void) mca_base_component_var_register (c, "no_tree_spawn",
                                             "If set to true, do not launch via a tree-based topology",
                                             MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
                                             OPAL_INFO_LVL_9,
                                             MCA_BASE_VAR_SCOPE_READONLY,
-                                            &mca_plm_rsh_component.tree_spawn);
+                                            &mca_plm_rsh_component.no_tree_spawn);
 
     /* local rsh/ssh launch agent */
     mca_plm_rsh_component.agent = strdup ("ssh : rsh");
@@ -259,7 +259,7 @@ static int rsh_component_query(mca_base_module_t **module, int *priority)
         free(tmp);
         mca_plm_rsh_component.using_qrsh = true;
         /* no tree spawn allowed under qrsh */
-        mca_plm_rsh_component.tree_spawn = false;
+        mca_plm_rsh_component.no_tree_spawn = true;
         goto success; 
     } else if (!mca_plm_rsh_component.disable_llspawn &&
                NULL != getenv("LOADL_STEP_ID")) { 
