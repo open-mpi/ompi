@@ -10,6 +10,7 @@
 
 #include "opal_config.h"
 #include "opal/constants.h"
+#include "opal_stdint.h"
 
 #include "opal/mca/mca.h"
 #include "opal/util/error.h"
