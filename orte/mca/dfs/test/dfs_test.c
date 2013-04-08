@@ -451,7 +451,6 @@ static void process_opens(int fd, short args, void *cbdata)
     orte_process_name_t daemon;
     bool found;
     orte_vpid_t v;
-    opal_identifier_t *id;
 
     opal_output(0, "%s PROCESSING OPEN", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
     /* get the scheme to determine if we can process locally or not */
@@ -480,11 +479,10 @@ static void process_opens(int fd, short args, void *cbdata)
     /* ident the daemon on that host */
     daemon.jobid = ORTE_PROC_MY_DAEMON->jobid;
     found = false;
-    id = (opal_identifier_t*)&daemon;
     for (v=0; v < orte_process_info.num_daemons; v++) {
         daemon.vpid = v;
         /* fetch the hostname where this daemon is located */
-        if (ORTE_SUCCESS != (rc = opal_db.fetch_pointer((*id), ORTE_DB_HOSTNAME, (void**)&hostname, OPAL_STRING))) {
+        if (ORTE_SUCCESS != (rc = opal_db.fetch_pointer((opal_identifier_t*)&daemon, ORTE_DB_HOSTNAME, (void**)&hostname, OPAL_STRING))) {
             ORTE_ERROR_LOG(rc);
             goto complete;
         }

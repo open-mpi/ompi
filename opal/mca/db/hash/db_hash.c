@@ -32,22 +32,22 @@
 
 static int init(void);
 static void finalize(void);
-static int store(opal_identifier_t proc,
+static int store(const opal_identifier_t *proc,
                  opal_db_locality_t locality,
                  const char *key, const void *object,
                  opal_data_type_t type);
-static int store_pointer(opal_identifier_t proc,
+static int store_pointer(const opal_identifier_t *proc,
                          opal_db_locality_t locality,
                          opal_value_t *kv);
-static int fetch(opal_identifier_t proc,
+static int fetch(const opal_identifier_t *proc,
                  const char *key, void **data, opal_data_type_t type);
-static int fetch_pointer(opal_identifier_t proc,
+static int fetch_pointer(const opal_identifier_t *proc,
                          const char *key,
                          void **data, opal_data_type_t type);
-static int fetch_multiple(opal_identifier_t proc,
+static int fetch_multiple(const opal_identifier_t *proc,
                           const char *key,
                           opal_list_t *kvs);
-static int remove_data(opal_identifier_t proc, const char *key);
+static int remove_data(const opal_identifier_t *proc, const char *key);
 
 opal_db_base_module_t opal_db_hash_module = {
     init,
@@ -152,7 +152,7 @@ static proc_data_t* lookup_opal_proc(opal_hash_table_t *jtable, opal_identifier_
     return proc_data;
 }
 
-static int store(const opal_identifier_t id,
+static int store(const opal_identifier_t *uid,
                  opal_db_locality_t locality,
                  const char *key, const void *data,
                  opal_data_type_t type)
@@ -160,6 +160,10 @@ static int store(const opal_identifier_t id,
     proc_data_t *proc_data;
     opal_value_t *kv;
     opal_byte_object_t *boptr;
+    opal_identifier_t id;
+
+    /* to protect alignment, copy the data across */
+    memcpy(&id, uid, sizeof(opal_identifier_t));
 
     /* we are at the bottom of the store priorities, so
      * if this fell to us, we store it
@@ -259,12 +263,16 @@ static int store(const opal_identifier_t id,
     return OPAL_SUCCESS;
 }
 
-static int store_pointer(opal_identifier_t id,
+static int store_pointer(const opal_identifier_t *uid,
                          opal_db_locality_t locality,
                          opal_value_t *kv)
 {
     proc_data_t *proc_data;
     opal_value_t *k2;
+    opal_identifier_t id;
+
+    /* to protect alignment, copy the data across */
+    memcpy(&id, uid, sizeof(opal_identifier_t));
 
     /* we are at the bottom of the store priorities, so
      * if this fell to us, we store it
@@ -298,12 +306,16 @@ static int store_pointer(opal_identifier_t id,
     return OPAL_SUCCESS;
 }
 
-static int fetch(opal_identifier_t id,
+static int fetch(const opal_identifier_t *uid,
                  const char *key, void **data, opal_data_type_t type)
 {
     proc_data_t *proc_data;
     opal_value_t *kv;
     opal_byte_object_t *boptr;
+    opal_identifier_t id;
+
+    /* to protect alignment, copy the data across */
+    memcpy(&id, uid, sizeof(opal_identifier_t));
 
     OPAL_OUTPUT_VERBOSE((5, opal_db_base_framework.framework_output,
                          "db:hash:fetch: searching for key %s[%s] on proc %" PRIu64 "",
@@ -387,12 +399,16 @@ static int fetch(opal_identifier_t id,
     return OPAL_SUCCESS;
 }
 
-static int fetch_pointer(opal_identifier_t id,
+static int fetch_pointer(const opal_identifier_t *uid,
                          const char *key,
                          void **data, opal_data_type_t type)
 {
     proc_data_t *proc_data;
     opal_value_t *kv;
+    opal_identifier_t id;
+
+    /* to protect alignment, copy the data across */
+    memcpy(&id, uid, sizeof(opal_identifier_t));
 
     OPAL_OUTPUT_VERBOSE((5, opal_db_base_framework.framework_output,
                          "db:hash:fetch_pointer: searching for key %s on proc %" PRIu64 "",
@@ -461,7 +477,7 @@ static int fetch_pointer(opal_identifier_t id,
     return OPAL_SUCCESS;
 }
 
-static int fetch_multiple(opal_identifier_t id,
+static int fetch_multiple(const opal_identifier_t *uid,
                           const char *key,
                           opal_list_t *kvs)
 {
@@ -470,6 +486,10 @@ static int fetch_multiple(opal_identifier_t id,
     int rc;
     char *srchkey, *ptr;
     size_t len = 0;
+    opal_identifier_t id;
+
+    /* to protect alignment, copy the data across */
+    memcpy(&id, uid, sizeof(opal_identifier_t));
 
     OPAL_OUTPUT_VERBOSE((5, opal_db_base_framework.framework_output,
                          "db:hash:fetch_multiple: searching for key %s on proc %" PRIu64 "",
@@ -519,10 +539,14 @@ static int fetch_multiple(opal_identifier_t id,
     return OPAL_SUCCESS;
 }
 
-static int remove_data(opal_identifier_t id, const char *key)
+static int remove_data(const opal_identifier_t *uid, const char *key)
 {
     proc_data_t *proc_data;
     opal_value_t *kv;
+    opal_identifier_t id;
+
+    /* to protect alignment, copy the data across */
+    memcpy(&id, uid, sizeof(opal_identifier_t));
 
     /* lookup the specified proc */
     if (NULL == (proc_data = lookup_opal_proc(&hash_data, id))) {

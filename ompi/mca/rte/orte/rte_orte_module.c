@@ -142,48 +142,33 @@ void ompi_rte_wait_for_debugger(void)
 int ompi_rte_db_store(const orte_process_name_t *nm, const char* key,
                       const void *data, opal_data_type_t type)
 {
-    opal_identifier_t *id;
-
-    id = (opal_identifier_t*)nm;
-    return opal_db.store((*id), OPAL_DB_GLOBAL, key, data, type);
+    return opal_db.store((opal_identifier_t*)nm, OPAL_DB_GLOBAL, key, data, type);
 }
 
 int ompi_rte_db_fetch(const orte_process_name_t *nm,
                       const char *key,
                       void **data, opal_data_type_t type)
 {
-    opal_identifier_t *id;
-
-    id = (opal_identifier_t*)nm;
-    return opal_db.fetch((*id), key, data, type);
+    return opal_db.fetch((opal_identifier_t*)nm, key, data, type);
 }
 
 int ompi_rte_db_fetch_pointer(const orte_process_name_t *nm,
                               const char *key,
                               void **data, opal_data_type_t type)
 {
-    opal_identifier_t *id;
-
-    id = (opal_identifier_t*)nm;
-    return opal_db.fetch_pointer((*id), key, data, type);
+    return opal_db.fetch_pointer((opal_identifier_t*)nm, key, data, type);
 }
 
 int ompi_rte_db_fetch_multiple(const orte_process_name_t *nm,
                                const char *key,
                                opal_list_t *kvs)
 {
-    opal_identifier_t *id;
-
-    id = (opal_identifier_t*)nm;
-    return opal_db.fetch_multiple((*id), key, kvs);
+    return opal_db.fetch_multiple((opal_identifier_t*)nm, key, kvs);
 }
 
 int ompi_rte_db_remove(const orte_process_name_t *nm,
                        const char *key)
 {
-    opal_identifier_t *id;
-
-    id = (opal_identifier_t*)nm;
-    return opal_db.remove((*id), key);
+    return opal_db.remove((opal_identifier_t*)nm, key);
 }
 

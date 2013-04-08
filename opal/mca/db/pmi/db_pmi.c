@@ -35,22 +35,22 @@
 
 static int init(void);
 static void finalize(void);
-static int store(opal_identifier_t id,
+static int store(const opal_identifier_t *id,
                  opal_db_locality_t locality,
                  const char *key, const void *object,
                  opal_data_type_t type);
-static int store_pointer(opal_identifier_t proc,
+static int store_pointer(const opal_identifier_t *proc,
                          opal_db_locality_t locality,
                          opal_value_t *kv);
-static int fetch(opal_identifier_t proc,
+static int fetch(const opal_identifier_t *proc,
                  const char *key, void **data, opal_data_type_t type);
-static int fetch_pointer(opal_identifier_t proc,
+static int fetch_pointer(const opal_identifier_t *proc,
                          const char *key,
                          void **data, opal_data_type_t type);
-static int fetch_multiple(opal_identifier_t proc,
+static int fetch_multiple(const opal_identifier_t *proc,
                           const char *key,
                           opal_list_t *kvs);
-static int remove_data(opal_identifier_t proc, const char *key);
+static int remove_data(const opal_identifier_t *proc, const char *key);
 
 opal_db_base_module_t opal_db_pmi_module = {
     init,
@@ -124,7 +124,7 @@ static void finalize(void)
 
 }
 
-static int store(opal_identifier_t proc,
+static int store(const opal_identifier_t *uid,
                  opal_db_locality_t locality,
                  const char *key, const void *data, opal_data_type_t type)
 {
@@ -135,6 +135,10 @@ static int store(opal_identifier_t proc,
     opal_byte_object_t *bo;
     char *pmikey, *tmpkey, *tmp, sav;
     char **strdata=NULL;
+    opal_identifier_t proc;
+
+    /* to protect alignment, copy the data across */
+    memcpy(&proc, uid, sizeof(opal_identifier_t));
 
     /* pass internal stores down to someone else */
     if (OPAL_DB_INTERNAL == locality) {
@@ -312,7 +316,7 @@ static int store(opal_identifier_t proc,
     return OPAL_SUCCESS;
 }
 
-static int store_pointer(opal_identifier_t proc,
+static int store_pointer(const opal_identifier_t *proc,
                          opal_db_locality_t locality,
                          opal_value_t *kv)
 {
@@ -322,10 +326,6 @@ static int store_pointer(opal_identifier_t proc,
     if (OPAL_DB_INTERNAL == locality) {
         return OPAL_ERR_TAKE_NEXT_OPTION;
     }
-
-    OPAL_OUTPUT_VERBOSE((5, opal_db_base_framework.framework_output,
-                         "db:pmi:store: storing pointer of key %s for proc %" PRIu64 "",
-                         kv->key, proc));
 
     /* just push this to PMI */
     if (OPAL_SUCCESS != (rc = store(proc, locality, kv->key, (void*)&kv->data, kv->type))) {
@@ -439,7 +439,7 @@ static char* fetch_string(const char *key)
     return data;
 }
 
-static int fetch(const opal_identifier_t proc,
+static int fetch(const opal_identifier_t *uid,
                  const char *key, void **data, opal_data_type_t type)
 {
     opal_byte_object_t *boptr;
@@ -450,6 +450,10 @@ static int fetch(const opal_identifier_t proc,
     char *pmikey;
     char tmp_val[1024];
     size_t sval;
+    opal_identifier_t proc;
+
+    /* to protect alignment, copy the data across */
+    memcpy(&proc, uid, sizeof(opal_identifier_t));
 
     OPAL_OUTPUT_VERBOSE((5, opal_db_base_framework.framework_output,
                          "db:pmi:fetch: searching for key %s[%s] on proc %" PRIu64 "",
@@ -525,7 +529,7 @@ static int fetch(const opal_identifier_t proc,
  * hostname for the process - so don't worry about other uses
  * here just yet
  */
-static int fetch_pointer(opal_identifier_t proc,
+static int fetch_pointer(const opal_identifier_t *proc,
                          const char *key,
                          void **data, opal_data_type_t type)
 {
@@ -533,19 +537,15 @@ static int fetch_pointer(opal_identifier_t proc,
     return OPAL_ERR_TAKE_NEXT_OPTION;
 }
 
-static int fetch_multiple(opal_identifier_t proc,
+static int fetch_multiple(const opal_identifier_t *proc,
                           const char *key,
                           opal_list_t *kvs)
 {
 
-    OPAL_OUTPUT_VERBOSE((5, opal_db_base_framework.framework_output,
-                         "db:pmi:fetch_multiple: searching for key %s on proc %" PRIu64 "",
-                         (NULL == key) ? "NULL" : key, proc));
-
     return OPAL_ERR_NOT_SUPPORTED;
 }
 
-static int remove_data(opal_identifier_t proc, const char *key)
+static int remove_data(const opal_identifier_t *proc, const char *key)
 {
     /* nothing to do here */
     return OPAL_SUCCESS;

@@ -21,7 +21,7 @@
 #include "opal/mca/db/base/base.h"
 
 
-int opal_db_base_store(opal_identifier_t proc,
+int opal_db_base_store(const opal_identifier_t *proc,
                        opal_db_locality_t locality,
                        const char *key, const void *object,
                        opal_data_type_t type)
@@ -29,10 +29,6 @@ int opal_db_base_store(opal_identifier_t proc,
     bool did_op;
     opal_db_active_module_t *mod;
     int rc;
-
-    opal_output_verbose(1, opal_db_base_framework.framework_output,
-                        "db:hash:base:store storing data for proc %" PRIu64 " at locality %d",
-                        proc, (int)locality);
 
     /* cycle thru the active modules until one agrees to perform the op */
     did_op = false;
@@ -61,7 +57,7 @@ int opal_db_base_store(opal_identifier_t proc,
     return OPAL_SUCCESS;
 }
 
-int opal_db_base_store_pointer(opal_identifier_t proc,
+int opal_db_base_store_pointer(const opal_identifier_t *proc,
                                opal_db_locality_t locality,
                                opal_value_t *kv)
 {
@@ -96,7 +92,7 @@ int opal_db_base_store_pointer(opal_identifier_t proc,
     return OPAL_SUCCESS;
 }
 
-int opal_db_base_fetch(opal_identifier_t proc,
+int opal_db_base_fetch(const opal_identifier_t *proc,
                        const char *key, void **data,
                        opal_data_type_t type)
 {
@@ -131,7 +127,7 @@ int opal_db_base_fetch(opal_identifier_t proc,
     return OPAL_SUCCESS;
 }
 
-int opal_db_base_fetch_pointer(opal_identifier_t proc,
+int opal_db_base_fetch_pointer(const opal_identifier_t *proc,
                                const char *key,
                                void **data, opal_data_type_t type)
 {
@@ -166,7 +162,7 @@ int opal_db_base_fetch_pointer(opal_identifier_t proc,
     return OPAL_SUCCESS;
 }
 
-int opal_db_base_fetch_multiple(opal_identifier_t proc,
+int opal_db_base_fetch_multiple(const opal_identifier_t *proc,
                                 const char *key,
                                 opal_list_t *kvs)
 {
@@ -201,7 +197,7 @@ int opal_db_base_fetch_multiple(opal_identifier_t proc,
     return OPAL_SUCCESS;
 }
 
-int opal_db_base_remove_data(opal_identifier_t proc,
+int opal_db_base_remove_data(const opal_identifier_t *proc,
                              const char *key)
 {
     bool did_op;

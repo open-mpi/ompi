@@ -481,7 +481,6 @@ char* orte_get_proc_hostname(orte_process_name_t *proc)
     orte_proc_t *proct;
     char *hostname;
     int rc;
-    opal_identifier_t *id;
 
     if (ORTE_PROC_IS_DAEMON || ORTE_PROC_IS_HNP) {
         /* look it up on our arrays */
@@ -497,8 +496,7 @@ char* orte_get_proc_hostname(orte_process_name_t *proc)
     }
 
     /* if we are an app, get the pointer from the modex db */
-    id = (opal_identifier_t*)proc;
-    if (ORTE_SUCCESS != (rc = opal_db.fetch_pointer((*id), ORTE_DB_HOSTNAME,
+    if (ORTE_SUCCESS != (rc = opal_db.fetch_pointer((opal_identifier_t*)proc, ORTE_DB_HOSTNAME,
                                                     (void**)&hostname, OPAL_STRING))) {
         ORTE_ERROR_LOG(rc);
         return NULL;
@@ -511,7 +509,6 @@ orte_node_rank_t orte_get_proc_node_rank(orte_process_name_t *proc)
     orte_proc_t *proct;
     orte_node_rank_t noderank, *nr;
     int rc;
-    opal_identifier_t *id;
 
     if (ORTE_PROC_IS_DAEMON || ORTE_PROC_IS_HNP) {
         /* look it up on our arrays */
@@ -524,8 +521,7 @@ orte_node_rank_t orte_get_proc_node_rank(orte_process_name_t *proc)
 
     /* if we are an app, get the value from the modex db */
     nr = &noderank;
-    id = (opal_identifier_t*)proc;
-    if (ORTE_SUCCESS != (rc = opal_db.fetch_pointer((*id), ORTE_DB_NODERANK,
+    if (ORTE_SUCCESS != (rc = opal_db.fetch_pointer((opal_identifier_t*)proc, ORTE_DB_NODERANK,
                                                     (void**)&nr, ORTE_NODE_RANK))) {
         ORTE_ERROR_LOG(rc);
         return ORTE_NODE_RANK_INVALID;
