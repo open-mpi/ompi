@@ -47,23 +47,23 @@ typedef struct {
 
 OPAL_DECLSPEC extern opal_db_base_t opal_db_base;
 
-OPAL_DECLSPEC int opal_db_base_store(opal_identifier_t proc,
+OPAL_DECLSPEC int opal_db_base_store(const opal_identifier_t *proc,
                                      opal_db_locality_t locality,
                                      const char *key, const void *object,
                                      opal_data_type_t type);
-OPAL_DECLSPEC int opal_db_base_store_pointer(opal_identifier_t proc,
+OPAL_DECLSPEC int opal_db_base_store_pointer(const opal_identifier_t *proc,
                                              opal_db_locality_t locality,
                                              opal_value_t *kv);
-OPAL_DECLSPEC int opal_db_base_fetch(opal_identifier_t proc,
+OPAL_DECLSPEC int opal_db_base_fetch(const opal_identifier_t *proc,
                                      const char *key, void **data,
                                      opal_data_type_t type);
-OPAL_DECLSPEC int opal_db_base_fetch_pointer(opal_identifier_t proc,
+OPAL_DECLSPEC int opal_db_base_fetch_pointer(const opal_identifier_t *proc,
                                              const char *key,
                                              void **data, opal_data_type_t type);
-OPAL_DECLSPEC int opal_db_base_fetch_multiple(opal_identifier_t proc,
+OPAL_DECLSPEC int opal_db_base_fetch_multiple(const opal_identifier_t *proc,
                                               const char *key,
                                               opal_list_t *kvs);
-OPAL_DECLSPEC int opal_db_base_remove_data(opal_identifier_t proc,
+OPAL_DECLSPEC int opal_db_base_remove_data(const opal_identifier_t *proc,
                                            const char *key);
 
 OPAL_DECLSPEC int opal_db_base_add_log(const char *table,

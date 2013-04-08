@@ -65,7 +65,7 @@ typedef void (*opal_db_base_module_finalize_fn_t)(void);
  * copied into the database and therefore does not need to be preserved by
  * the caller.
  */
-typedef int (*opal_db_base_module_store_fn_t)(opal_identifier_t proc,
+typedef int (*opal_db_base_module_store_fn_t)(const opal_identifier_t *proc,
                                               opal_db_locality_t locality,
                                               const char *key, const void *data,
                                               opal_data_type_t type);
@@ -75,7 +75,7 @@ typedef int (*opal_db_base_module_store_fn_t)(opal_identifier_t proc,
  * This allows users to share data across the code base without consuming
  * additional memory, but while retaining local access
  */
-typedef int (*opal_db_base_module_store_pointer_fn_t)(opal_identifier_t proc,
+typedef int (*opal_db_base_module_store_pointer_fn_t)(const opal_identifier_t *proc,
                                                       opal_db_locality_t locality,
                                                       opal_value_t *kv);
 
@@ -86,7 +86,7 @@ typedef int (*opal_db_base_module_store_pointer_fn_t)(opal_identifier_t proc,
  * are supported here as well. Caller is responsible for releasing any returned
  * object.
  */
-typedef int (*opal_db_base_module_fetch_fn_t)(opal_identifier_t proc,
+typedef int (*opal_db_base_module_fetch_fn_t)(const opal_identifier_t *proc,
                                               const char *key,
                                               void **data, opal_data_type_t type);
 
@@ -98,7 +98,7 @@ typedef int (*opal_db_base_module_fetch_fn_t)(opal_identifier_t proc,
  * will directly alter information in the database! A local copy of the data should be made
  * wherever modification is possible.
  */
-typedef int (*opal_db_base_module_fetch_pointer_fn_t)(opal_identifier_t proc,
+typedef int (*opal_db_base_module_fetch_pointer_fn_t)(const opal_identifier_t *proc,
                                                       const char *key,
                                                       void **data, opal_data_type_t type);
 /*
@@ -107,7 +107,7 @@ typedef int (*opal_db_base_module_fetch_pointer_fn_t)(opal_identifier_t proc,
  * Retrieve data for the given proc associated with the specified key. Wildcards
  * are supported here as well. Caller is responsible for releasing the objects on the list.
  */
-typedef int (*opal_db_base_module_fetch_multiple_fn_t)(opal_identifier_t proc,
+typedef int (*opal_db_base_module_fetch_multiple_fn_t)(const opal_identifier_t *proc,
                                                        const char *key,
                                                        opal_list_t *kvs);
 
@@ -121,7 +121,7 @@ typedef int (*opal_db_base_module_fetch_multiple_fn_t)(opal_identifier_t proc,
  * that ALL data in the database is to be purged. A WILDCARD vpid will delete all matching
  * keys from that jobid. Etc.
  */
-typedef int (*opal_db_base_module_remove_fn_t)(opal_identifier_t proc, const char *key);
+typedef int (*opal_db_base_module_remove_fn_t)(const opal_identifier_t *proc, const char *key);
 
 /*
  * Log data

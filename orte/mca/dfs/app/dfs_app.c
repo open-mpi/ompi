@@ -507,7 +507,6 @@ static void process_opens(int fd, short args, void *cbdata)
     char *scheme, *host, *filename;
     orte_process_name_t daemon;
     orte_vpid_t *v;
-    opal_identifier_t *id;
 
     /* get the scheme to determine if we can process locally or not */
     if (NULL == (scheme = opal_uri_get_scheme(dfs->uri))) {
@@ -558,8 +557,7 @@ static void process_opens(int fd, short args, void *cbdata)
                         "%s looking for daemon on host %s",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), host);
     v = &daemon.vpid;
-    id = (opal_identifier_t*)ORTE_NAME_WILDCARD;
-    if (ORTE_SUCCESS != (rc = opal_db.fetch((*id), host, (void**)&v, ORTE_VPID))) {
+    if (ORTE_SUCCESS != (rc = opal_db.fetch((opal_identifier_t*)ORTE_NAME_WILDCARD, host, (void**)&v, ORTE_VPID))) {
         ORTE_ERROR_LOG(rc);
         goto complete;
     }

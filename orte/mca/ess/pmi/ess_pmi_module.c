@@ -94,7 +94,6 @@ static int rte_init(void)
     orte_local_rank_t local_rank;
     orte_node_rank_t node_rank;
     char *rmluri;
-    opal_identifier_t *id;
     opal_hwloc_locality_t locality;
 
     /* run the prolog */
@@ -303,36 +302,35 @@ static int rte_init(void)
                  orte_process_info.cpuset);
     }
     /* push our info into the cloud */
-    id = (opal_identifier_t*)ORTE_PROC_MY_NAME;
-    if (ORTE_SUCCESS != (ret = opal_db.store((*id), OPAL_DB_GLOBAL, "RTE", pmirte, OPAL_STRING))) {
+    if (ORTE_SUCCESS != (ret = opal_db.store((opal_identifier_t*)ORTE_PROC_MY_NAME, OPAL_DB_GLOBAL, "RTE", pmirte, OPAL_STRING))) {
         error = "db store RTE info";
         goto error;
     }
     free(pmirte);
     /* store our info in the internal database */
-    if (ORTE_SUCCESS != (ret = opal_db.store((*id), OPAL_DB_INTERNAL, ORTE_DB_RMLURI, rmluri, OPAL_STRING))) {
+    if (ORTE_SUCCESS != (ret = opal_db.store((opal_identifier_t*)ORTE_PROC_MY_NAME, OPAL_DB_INTERNAL, ORTE_DB_RMLURI, rmluri, OPAL_STRING))) {
         error = "db store uri";
         goto error;
     }
     free(rmluri);
-    if (ORTE_SUCCESS != (ret = opal_db.store((*id), OPAL_DB_INTERNAL, ORTE_DB_HOSTNAME, orte_process_info.nodename, OPAL_STRING))) {
+    if (ORTE_SUCCESS != (ret = opal_db.store((opal_identifier_t*)ORTE_PROC_MY_NAME, OPAL_DB_INTERNAL, ORTE_DB_HOSTNAME, orte_process_info.nodename, OPAL_STRING))) {
         error = "db store hostname";
         goto error;
     }
-    if (ORTE_SUCCESS != (ret = opal_db.store((*id), OPAL_DB_INTERNAL, ORTE_DB_CPUSET, orte_process_info.cpuset, OPAL_STRING))) {
+    if (ORTE_SUCCESS != (ret = opal_db.store((opal_identifier_t*)ORTE_PROC_MY_NAME, OPAL_DB_INTERNAL, ORTE_DB_CPUSET, orte_process_info.cpuset, OPAL_STRING))) {
         error = "db store cpuset";
         goto error;
     }
-    if (ORTE_SUCCESS != (ret = opal_db.store((*id), OPAL_DB_INTERNAL, ORTE_DB_LOCALRANK, &orte_process_info.my_local_rank, ORTE_LOCAL_RANK))) {
+    if (ORTE_SUCCESS != (ret = opal_db.store((opal_identifier_t*)ORTE_PROC_MY_NAME, OPAL_DB_INTERNAL, ORTE_DB_LOCALRANK, &orte_process_info.my_local_rank, ORTE_LOCAL_RANK))) {
         error = "db store local rank";
         goto error;
     }
-    if (ORTE_SUCCESS != (ret = opal_db.store((*id), OPAL_DB_INTERNAL, ORTE_DB_NODERANK, &orte_process_info.my_node_rank, ORTE_NODE_RANK))) {
+    if (ORTE_SUCCESS != (ret = opal_db.store((opal_identifier_t*)ORTE_PROC_MY_NAME, OPAL_DB_INTERNAL, ORTE_DB_NODERANK, &orte_process_info.my_node_rank, ORTE_NODE_RANK))) {
         error = "db store node rank";
         goto error;
     }
     locality = OPAL_PROC_ALL_LOCAL;
-    if (ORTE_SUCCESS != (ret = opal_db.store((*id), OPAL_DB_INTERNAL, ORTE_DB_LOCALITY, &locality, OPAL_HWLOC_LOCALITY_T))) {
+    if (ORTE_SUCCESS != (ret = opal_db.store((opal_identifier_t*)ORTE_PROC_MY_NAME, OPAL_DB_INTERNAL, ORTE_DB_LOCALITY, &locality, OPAL_HWLOC_LOCALITY_T))) {
         error = "db store locality";
         goto error;
     }

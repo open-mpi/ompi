@@ -175,7 +175,6 @@ static int modex(orte_grpcomm_collective_t *coll)
     orte_vpid_t v;
     orte_process_name_t name;
     int rc;
-    opal_identifier_t *id;
     opal_hwloc_locality_t locality;
     orte_local_rank_t local_rank;
     orte_node_rank_t node_rank;
@@ -205,7 +204,6 @@ static int modex(orte_grpcomm_collective_t *coll)
 
     /* cycle thru all my peers and collect their RTE info */
     name.jobid = ORTE_PROC_MY_NAME->jobid;
-    id = (opal_identifier_t*)&name;
     fields = NULL;
     for (v=0; v < orte_process_info.num_procs; v++) {
         if (v == ORTE_PROC_MY_NAME->vpid) {
@@ -213,7 +211,7 @@ static int modex(orte_grpcomm_collective_t *coll)
         }
         name.vpid = v;
         /* fetch the RTE data for this proc */
-	if (ORTE_SUCCESS != (rc = opal_db.fetch((*id), "RTE", (void **)&cptr, OPAL_STRING))) {
+	if (ORTE_SUCCESS != (rc = opal_db.fetch((opal_identifier_t*)&name, "RTE", (void **)&cptr, OPAL_STRING))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
@@ -229,7 +227,7 @@ static int modex(orte_grpcomm_collective_t *coll)
         
         /* store the composite parts */
         /* first field is the URI */
-        if (ORTE_SUCCESS != (rc = opal_db.store((*id), OPAL_DB_INTERNAL, ORTE_DB_RMLURI, fields[0], OPAL_STRING))) {
+        if (ORTE_SUCCESS != (rc = opal_db.store((opal_identifier_t*)&name, OPAL_DB_INTERNAL, ORTE_DB_RMLURI, fields[0], OPAL_STRING))) {
             ORTE_ERROR_LOG(rc);
             opal_argv_free(fields);
             return rc;
@@ -244,21 +242,21 @@ static int modex(orte_grpcomm_collective_t *coll)
             return rc;
         }
         /* next is the hostname */
-        if (ORTE_SUCCESS != (rc = opal_db.store((*id), OPAL_DB_INTERNAL, ORTE_DB_HOSTNAME, fields[1], OPAL_STRING))) {
+        if (ORTE_SUCCESS != (rc = opal_db.store((opal_identifier_t*)&name, OPAL_DB_INTERNAL, ORTE_DB_HOSTNAME, fields[1], OPAL_STRING))) {
             ORTE_ERROR_LOG(rc);
             opal_argv_free(fields);
             return rc;
         }
         /* local rank */
         local_rank = strtoul(fields[2], NULL, 10);
-        if (ORTE_SUCCESS != (rc = opal_db.store((*id), OPAL_DB_INTERNAL, ORTE_DB_LOCALRANK, &local_rank, ORTE_LOCAL_RANK))) {
+        if (ORTE_SUCCESS != (rc = opal_db.store((opal_identifier_t*)&name, OPAL_DB_INTERNAL, ORTE_DB_LOCALRANK, &local_rank, ORTE_LOCAL_RANK))) {
             ORTE_ERROR_LOG(rc);
             opal_argv_free(fields);
             return rc;
         }
         /* node rank */
         node_rank = strtoul(fields[3], NULL, 10);
-        if (ORTE_SUCCESS != (rc = opal_db.store((*id), OPAL_DB_INTERNAL, ORTE_DB_NODERANK, &node_rank, ORTE_NODE_RANK))) {
+        if (ORTE_SUCCESS != (rc = opal_db.store((opal_identifier_t*)&name, OPAL_DB_INTERNAL, ORTE_DB_NODERANK, &node_rank, ORTE_NODE_RANK))) {
             ORTE_ERROR_LOG(rc);
             opal_argv_free(fields);
             return rc;
@@ -267,7 +265,7 @@ static int modex(orte_grpcomm_collective_t *coll)
          * that contains its cpuset
          */
         if (5 == opal_argv_count(fields)) {
-            if (ORTE_SUCCESS != (rc = opal_db.store((*id), OPAL_DB_INTERNAL, ORTE_DB_CPUSET, fields[4], OPAL_STRING))) {
+            if (ORTE_SUCCESS != (rc = opal_db.store((opal_identifier_t*)&name, OPAL_DB_INTERNAL, ORTE_DB_CPUSET, fields[4], OPAL_STRING))) {
                 ORTE_ERROR_LOG(rc);
                 opal_argv_free(fields);
                 return rc;
@@ -277,7 +275,7 @@ static int modex(orte_grpcomm_collective_t *coll)
             /* store a placeholder so we know that this value was retrieved,
              * but the proc wasn't bound
              */
-            if (ORTE_SUCCESS != (rc = opal_db.store((*id), OPAL_DB_INTERNAL, ORTE_DB_CPUSET, NULL, OPAL_STRING))) {
+            if (ORTE_SUCCESS != (rc = opal_db.store((opal_identifier_t*)&name, OPAL_DB_INTERNAL, ORTE_DB_CPUSET, NULL, OPAL_STRING))) {
                 ORTE_ERROR_LOG(rc);
                 opal_argv_free(fields);
                 return rc;
@@ -300,7 +298,7 @@ static int modex(orte_grpcomm_collective_t *coll)
                                                              orte_process_info.cpuset,
                                                              fields[4]);
         }
-        if (ORTE_SUCCESS != (rc = opal_db.store((*id), OPAL_DB_INTERNAL, ORTE_DB_LOCALITY, &locality, OPAL_HWLOC_LOCALITY_T))) {
+        if (ORTE_SUCCESS != (rc = opal_db.store((opal_identifier_t*)&name, OPAL_DB_INTERNAL, ORTE_DB_LOCALITY, &locality, OPAL_HWLOC_LOCALITY_T))) {
             ORTE_ERROR_LOG(rc);
             opal_argv_free(fields);
             return rc;
