@@ -224,15 +224,6 @@ opal_cmd_line_init_t orte_cmd_line_opts[] = {
       NULL, OPAL_CMD_LINE_TYPE_NULL, NULL }
 };
 
-static void rml_cbfunc(int status,
-                       struct orte_process_name_t* peer,
-                       struct opal_buffer_t* buffer,
-                       orte_rml_tag_t tag,
-                       void* cbdata)
-{
-    OBJ_RELEASE(buffer);
-}
-
 int orte_daemon(int argc, char *argv[])
 {
     int ret = 0;
@@ -346,6 +337,15 @@ int orte_daemon(int argc, char *argv[])
         orte_map_reduce = true;
     }
 
+    /* detach from controlling terminal
+     * otherwise, remain attached so output can get to us
+     */
+    if(!orte_debug_flag &&
+       !orte_debug_daemons_flag &&
+       orted_globals.daemonize) {
+        opal_daemon_init(NULL);
+    }
+    
     /* Set the flag telling OpenRTE that I am NOT a
      * singleton, but am "infrastructure" - prevents setting
      * up incorrect infrastructure that only a singleton would
@@ -407,15 +407,6 @@ int orte_daemon(int argc, char *argv[])
         }
     }
 
-    /* detach from controlling terminal
-     * otherwise, remain attached so output can get to us
-     */
-    if(!orte_debug_flag &&
-       !orte_debug_daemons_flag &&
-       orted_globals.daemonize) {
-        opal_daemon_init(NULL);
-    }
-    
     /* insert our contact info into our process_info struct so we
      * have it for later use and set the local daemon field to our name
      */
@@ -755,33 +746,13 @@ int orte_daemon(int argc, char *argv[])
         }
 #endif
 
-        if (orte_static_ports  && !orted_globals.tree_spawn) {
-            /* use the rollup collective to send our data to the HNP
-             * so we minimize the HNP bottleneck
-             */
-            orte_grpcomm_collective_t *coll;
-            coll = OBJ_NEW(orte_grpcomm_collective_t);
-            /* get the list of contributors we need from the routed module */
-            orte_routed.get_routing_list(ORTE_GRPCOMM_COLL_PEERS, coll);
-            /* add the collective to our list */
-            opal_list_append(&orte_grpcomm_base.active_colls, &coll->super);
-            /* send the buffer to ourselves to start the collective */
-            if (0 > (ret = orte_rml.send_buffer_nb(ORTE_PROC_MY_NAME, buffer,
-                                                   ORTE_RML_TAG_ROLLUP, 0,
-                                                   rml_cbfunc, NULL))) {
-                ORTE_ERROR_LOG(ret);
-                OBJ_RELEASE(buffer);
-                goto DONE;
-            }
-        } else {
-            /* send directly to the HNP's callback */
-            if (0 > (ret = orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, buffer,
-                                                   ORTE_RML_TAG_ORTED_CALLBACK, 0,
-                                                   rml_cbfunc, NULL))) {
-                ORTE_ERROR_LOG(ret);
-                OBJ_RELEASE(buffer);
-                goto DONE;
-            }
+        /* send to the HNP's callback - will be routed if routes are available */
+        if (0 > (ret = orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, buffer,
+                                               ORTE_RML_TAG_ORTED_CALLBACK, 0,
+                                               orte_rml_send_callback, NULL))) {
+            ORTE_ERROR_LOG(ret);
+            OBJ_RELEASE(buffer);
+            goto DONE;
         }
     }
 
