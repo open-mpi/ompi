@@ -47,6 +47,13 @@ opal_convertor_raw( opal_convertor_t* pConvertor,
     uint32_t index = 0, i;    /* the iov index and a simple counter */
 
     assert( (*iov_count) > 0 );
+    if( OPAL_LIKELY(pConvertor->flags & CONVERTOR_COMPLETED) ) {
+        iov[0].iov_base = NULL;
+        iov[0].iov_len  = 0;
+        *iov_count      = 0;
+        *length         = iov[0].iov_len;
+        return 1;  /* We're still done */
+    }
     if( OPAL_LIKELY(pConvertor->flags & CONVERTOR_NO_OP) ) {
         /* The convertor contain minimal informations, we only use the bConverted
          * to manage the conversion. This function work even after the convertor
