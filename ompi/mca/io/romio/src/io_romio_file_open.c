@@ -51,12 +51,26 @@ mca_io_romio_file_close (ompi_file_t *fh)
     int ret;
     mca_io_romio_data_t *data;
 
-    /* Because ROMIO expects the MPI library to provide error handler management
-     * routines but it doesn't ever participate in MPI_File_close, we have to
-     * somehow inform the MPI library that we no longer hold a reference to any
-     * user defined error handler.  We do this by setting the errhandler at this
-     * point to MPI_ERRORS_RETURN. */
-    PMPI_File_set_errhandler(fh, MPI_ERRORS_RETURN);
+    /* If we've already started MPI_Finalize by this point, then just
+       give up (because ROMIO's file close routine calls MPI_Barrier,
+       which we obviously can't do if we've started to MPI_Finalize).
+       The user didn't close the file, so they should expect
+       unexpected behavior. */
+    if (ompi_mpi_finalized) {
+        return OMPI_SUCCESS;
+    }
+
+    /* Because ROMIO expects the MPI library to provide error handler
+     * management routines but it doesn't ever participate in
+     * MPI_File_close, we have to somehow inform the MPI library that
+     * we no longer hold a reference to any user defined error
+     * handler.  We do this by setting the errhandler at this point to
+     * MPI_ERRORS_RETURN. */
+    if (fh->error_handler != &ompi_mpi_errors_return.eh) {
+        OBJ_RELEASE(fh->error_handler);
+        fh->error_handler = &ompi_mpi_errors_return.eh;
+        OBJ_RETAIN(fh->error_handler);
+    }
 
     data = (mca_io_romio_data_t *) fh->f_io_selected_data;
 
