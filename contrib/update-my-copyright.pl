@@ -80,12 +80,15 @@ print "==> Current directory: $start\n";
 
 # Are we hg or svn?  If we're both hg and svn, assume svn.
 my $cmd;
-$cmd = "svn st ."
-    if (-d "$top/.svn");
-$cmd = "hg st ."
-    if (-d "$top/.hg" && ! -d "$top/.svn");
-die "Can't find SVN or HG meta dirs" 
-    if (!defined($cmd));
+if (-d "$top/.svn") {
+    $cmd = "svn st .";
+} elsif (-d "$top/.hg") {
+    $cmd = "hg st .";
+} elsif (-d "$top/.git") {
+    $cmd = "git status .";
+} else {
+    die "Can't find SVN or HG meta dirs";
+}
 
 # Run the command, parsing the output.  Make a list of files that are
 # added or modified.
@@ -94,6 +97,7 @@ open(CMD, "$cmd|") || die "Can't run command";
 my @files;
 while (<CMD>) {
     chomp;
+    # SVN and HG use this form
     if ($_ =~ /^M/ || $_ =~ /^A/) {
         my @tokens = split(/\s+/, $_);
         # Handle output of both forms:
@@ -105,6 +109,15 @@ while (<CMD>) {
         # Don't bother saving directory names
         push(@files, $filename)
             if (-f $filename);
+    }
+
+    # Git uses these forms
+    elsif ($_ =~ m/^#\s+modified:\s+(\S+)$/) {
+        push(@files, $1)
+            if (-f $1);
+    } elsif ($_ =~ m/^#\s+new file:\s+(\S+)$/) {
+        push(@files, $1)
+            if (-f $1);
     }
 }
 close(CMD);
