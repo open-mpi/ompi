@@ -184,8 +184,14 @@ static inline  __opal_attribute_always_inline__ int coll_ml_fragment_completion_
          * in the fragment descriptor.
          */
         ML_VERBOSE(10, ("Master ? %p %d", coll_op,  coll_op->fragment_data.offset_into_user_buffer));
-        if (0 != coll_op->fragment_data.offset_into_user_buffer &&
-                !out_of_resource) {
+        /* offset_into_user_buffer == 0 is not a valid definition for the first frag. 
+         * if (0 != coll_op->fragment_data.offset_into_user_buffer &&
+         *       !out_of_resource) {
+         * A well posed definition of the first frag is the following
+         */
+        if((&coll_op->full_message !=
+                    coll_op->fragment_data.message_descriptor) &&
+                !out_of_resource){
             /* non-zero offset ==> this is not fragment 0 */
             CHECK_AND_RECYCLE(coll_op);
         }
