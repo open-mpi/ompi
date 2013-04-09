@@ -1409,25 +1409,27 @@ static int mca_btl_openib_finalize_resources(struct mca_btl_base_module_t* btl) 
     }
 
     /* Release all QPs */
-    for (ep_index=0;
-         ep_index < opal_pointer_array_get_size(openib_btl->device->endpoints);
-         ep_index++) {
-        endpoint=(mca_btl_openib_endpoint_t *)opal_pointer_array_get_item(openib_btl->device->endpoints,
-                                                  ep_index);
-        if(!endpoint) {
-            BTL_VERBOSE(("In finalize, got another null endpoint"));
-            continue;
-        }
-        if(endpoint->endpoint_btl != openib_btl) {
-            continue;
-        }
-        for(i = 0; i < openib_btl->device->eager_rdma_buffers_count; i++) {
-            if(openib_btl->device->eager_rdma_buffers[i] == endpoint) {
-                openib_btl->device->eager_rdma_buffers[i] = NULL;
-                OBJ_RELEASE(endpoint);
+    if (NULL != openib_btl->device->endpoints) {
+        for (ep_index=0;
+             ep_index < opal_pointer_array_get_size(openib_btl->device->endpoints);
+             ep_index++) {
+            endpoint=(mca_btl_openib_endpoint_t *)opal_pointer_array_get_item(openib_btl->device->endpoints,
+                                                                              ep_index);
+            if(!endpoint) {
+                BTL_VERBOSE(("In finalize, got another null endpoint"));
+                continue;
             }
+            if(endpoint->endpoint_btl != openib_btl) {
+                continue;
+            }
+            for(i = 0; i < openib_btl->device->eager_rdma_buffers_count; i++) {
+                if(openib_btl->device->eager_rdma_buffers[i] == endpoint) {
+                    openib_btl->device->eager_rdma_buffers[i] = NULL;
+                    OBJ_RELEASE(endpoint);
+                }
+            }
+            OBJ_RELEASE(endpoint);
         }
-        OBJ_RELEASE(endpoint);
     }
 
     /* Release SRQ resources */

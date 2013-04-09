@@ -775,7 +775,7 @@ static int init_one_port(opal_list_t *btl_list, mca_btl_openib_device_t *device,
         for(i = 0; i < mca_btl_openib_component.btls_per_lid; i++){
             char param[40];
 
-            openib_btl = (mca_btl_openib_module_t *) malloc(sizeof(mca_btl_openib_module_t));
+            openib_btl = (mca_btl_openib_module_t *) calloc(1, sizeof(mca_btl_openib_module_t));
             if(NULL == openib_btl) {
                 BTL_ERROR(("Failed malloc: %s:%d", __FILE__, __LINE__));
                 return OMPI_ERR_OUT_OF_RESOURCE;
@@ -873,6 +873,8 @@ static void device_construct(mca_btl_openib_device_t *device)
     device->ib_channel = NULL;
 #endif
     device->btls = 0;
+    device->endpoints = NULL;
+    device->device_btls = NULL;
     device->ib_cq[BTL_OPENIB_HP_CQ] = NULL;
     device->ib_cq[BTL_OPENIB_LP_CQ] = NULL;
     device->cq_size[BTL_OPENIB_HP_CQ] = 0;
