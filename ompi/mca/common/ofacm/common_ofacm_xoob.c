@@ -39,10 +39,10 @@ static int xoob_component_finalize(void);
 static int xoob_module_start_connect
             (ompi_common_ofacm_base_local_connection_context_t *context);
 
-static void xoob_ib_address_constructor(ib_address_t *ib_addr);
-static void xoob_ib_address_destructor(ib_address_t *ib_addr);
+static void xoob_ib_address_constructor(ofacm_ib_address_t *ib_addr);
+static void xoob_ib_address_destructor(ofacm_ib_address_t *ib_addr);
 
-OBJ_CLASS_INSTANCE(ib_address_t,
+OBJ_CLASS_INSTANCE(ofacm_ib_address_t,
                    opal_list_item_t,
                    xoob_ib_address_constructor,
                    xoob_ib_address_destructor);
@@ -130,7 +130,7 @@ OBJ_CLASS_INSTANCE(pending_context_t,
                    xoob_pending_context_constructor,
                    xoob_pending_context_destructor);
 
-static void xoob_ib_address_constructor(ib_address_t *ib_addr)
+static void xoob_ib_address_constructor(ofacm_ib_address_t *ib_addr)
 {
     ib_addr->key = NULL;
     ib_addr->subnet_id = 0;
@@ -141,7 +141,7 @@ static void xoob_ib_address_constructor(ib_address_t *ib_addr)
     OBJ_CONSTRUCT(&ib_addr->pending_contexts, opal_list_t);
 }
 
-static void xoob_ib_address_destructor(ib_address_t *ib_addr)
+static void xoob_ib_address_destructor(ofacm_ib_address_t *ib_addr)
 {
     if(NULL != ib_addr->qps && NULL != ib_addr->qps[0].lcl_qp) {
         if(ibv_destroy_qp(ib_addr->qps[0].lcl_qp)) {
@@ -155,7 +155,7 @@ static void xoob_ib_address_destructor(ib_address_t *ib_addr)
     OBJ_DESTRUCT(&ib_addr->pending_contexts);
 }
 
-static int xoob_ib_address_init(ib_address_t *ib_addr, uint16_t lid, uint64_t s_id, orte_jobid_t ep_jobid)
+static int xoob_ib_address_init(ofacm_ib_address_t *ib_addr, uint16_t lid, uint64_t s_id, ompi_jobid_t ep_jobid)
 {
     ib_addr->key = malloc(SIZE_OF3(s_id, lid, ep_jobid));
     if (NULL == ib_addr->key) {
@@ -179,12 +179,12 @@ static int xoob_ib_address_init(ib_address_t *ib_addr, uint16_t lid, uint64_t s_
  * update the context pointer.
  * Before call to this function you need to protect with
  */
-static ib_address_t* xoob_ib_address_add_new (ompi_common_ofacm_xoob_module_t *xcpc,
+static ofacm_ib_address_t* xoob_ib_address_add_new (ompi_common_ofacm_xoob_module_t *xcpc,
         uint16_t lid, uint64_t s_id, orte_jobid_t ep_jobid)
 {
     void *tmp;
     int ret;
-    struct ib_address_t *ib_addr = OBJ_NEW(ib_address_t);
+    struct ofacm_ib_address_t *ib_addr = OBJ_NEW(ofacm_ib_address_t);
 
     ret = xoob_ib_address_init(ib_addr, lid, s_id, ep_jobid);
     if (OMPI_SUCCESS != ret ) {
@@ -208,7 +208,7 @@ static ib_address_t* xoob_ib_address_add_new (ompi_common_ofacm_xoob_module_t *x
     } else {
         /* so we have this one in the table, just return the pointer */
         OBJ_DESTRUCT(ib_addr);
-        ib_addr = (ib_address_t *)tmp;
+        ib_addr = (ofacm_ib_address_t *)tmp;
         OBJ_RETAIN(ib_addr);
         assert(lid == ib_addr->lid && s_id == ib_addr->subnet_id);
     }
