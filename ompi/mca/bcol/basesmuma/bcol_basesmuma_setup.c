@@ -94,7 +94,7 @@ int base_bcol_basesmuma_exchange_offsets(
         memcpy((void *) &rem_mem_offset, (void *) (recv_buff + i*count + sizeof(int)), sizeof(uint64_t));
 
         array_id=SM_ARRAY_INDEX(leading_dim,0,index_in_group);
-        result_array[array_id]=(void *)rem_mem_offset;
+        result_array[array_id]=(void *)(uintptr_t)rem_mem_offset;
 
     }
 
@@ -267,8 +267,8 @@ static int base_bcol_basesmuma_exchange_ctl_params(
     mca_bcol_basesmuma_ctl_struct_t *ctl_ptr;
 
     /* data block base offset in the mapped file */
-    mem_offset=(uint64_t)(data_blk->data)-
-        (uint64_t)cs->sm_ctl_structs->data_addr;
+    mem_offset=(uint64_t)(uintptr_t)(data_blk->data)-
+        (uint64_t)(uintptr_t)cs->sm_ctl_structs->data_addr;
 
     /* number of buffers in data block */
     loop_limit=cs->basesmuma_num_mem_banks+ctl_mgmt->number_of_buffs;
@@ -303,12 +303,12 @@ static int base_bcol_basesmuma_exchange_ctl_params(
             base_ptr=sm_bcol_module->ctl_backing_files_info[i]->sm_mmap->map_addr;
         }
         ctl_mgmt->ctl_buffs[array_id]=(void *)
-            (((uint64_t)ctl_mgmt->ctl_buffs[array_id])+(uint64_t)base_ptr);
+            (uintptr_t)(((uint64_t)(uintptr_t)ctl_mgmt->ctl_buffs[array_id])+(uint64_t)(uintptr_t)base_ptr);
         for( buf_id = 1 ; buf_id < loop_limit ; buf_id++ ) {
             int array_id_m1=SM_ARRAY_INDEX(leading_dim,(buf_id-1),i);
             array_id=SM_ARRAY_INDEX(leading_dim,buf_id,i);
-            ctl_mgmt->ctl_buffs[array_id]=(void *) ((uint64_t)(ctl_mgmt->ctl_buffs[array_id_m1])+
-                (uint64_t)sizeof(mca_bcol_basesmuma_ctl_struct_t));
+            ctl_mgmt->ctl_buffs[array_id]=(void *) (uintptr_t)((uint64_t)(uintptr_t)(ctl_mgmt->ctl_buffs[array_id_m1])+
+                (uint64_t)(uintptr_t)sizeof(mca_bcol_basesmuma_ctl_struct_t));
         }
     }
     /* initialize my control structues */
