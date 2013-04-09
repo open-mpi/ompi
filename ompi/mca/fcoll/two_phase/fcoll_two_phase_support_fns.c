@@ -374,7 +374,7 @@ int mca_fcoll_two_phase_calc_my_requests (mca_io_ompio_file_t *fh,
 
 	if (offset_len[i].iov_len==0)
 	    continue;
-	off = (OMPI_MPI_OFFSET_TYPE)offset_len[i].iov_base;
+	off = (OMPI_MPI_OFFSET_TYPE)(intptr_t)offset_len[i].iov_base;
 	fd_len = (OMPI_MPI_OFFSET_TYPE)offset_len[i].iov_len;
 	proc = mca_fcoll_two_phase_calc_aggregator(fh, off, min_st_offset, &fd_len, fd_size, 
 					     fd_start, fd_end, striping_unit, num_aggregators,aggregator_list);
@@ -426,7 +426,7 @@ int mca_fcoll_two_phase_calc_my_requests (mca_io_ompio_file_t *fh,
     for (i=0; i<contig_access_count; i++) { 
 	if ((int)offset_len[i].iov_len == 0)
 	    continue;
-	off = (OMPI_MPI_OFFSET_TYPE)offset_len[i].iov_base;
+	off = (OMPI_MPI_OFFSET_TYPE)(intptr_t)offset_len[i].iov_base;
 	fd_len = (OMPI_MPI_OFFSET_TYPE)offset_len[i].iov_len;
  	proc = mca_fcoll_two_phase_calc_aggregator(fh, off, min_st_offset, &fd_len,
 					     fd_size, fd_start, fd_end,

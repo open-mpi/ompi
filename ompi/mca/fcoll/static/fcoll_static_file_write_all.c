@@ -165,7 +165,7 @@ mca_fcoll_static_file_write_all (mca_io_ompio_file_t *fh,
   
   
   for (j=0; j < iov_size; j++){
-    local_iov_array[j].offset = (OMPI_MPI_OFFSET_TYPE)
+    local_iov_array[j].offset = (OMPI_MPI_OFFSET_TYPE)(intptr_t)
       iov[j].iov_base;
     local_iov_array[j].length = (size_t)iov[j].iov_len;
     local_iov_array[j].process_id = fh->f_rank;
@@ -803,7 +803,7 @@ mca_fcoll_static_file_write_all (mca_io_ompio_file_t *fh,
 	fh->f_num_of_io_entries = 0;
 	/*First entry for every aggregator*/
       fh->f_io_array[fh->f_num_of_io_entries].offset = 
-	  (IOVBASE_TYPE *)file_offsets_for_agg[sorted_file_offsets[0]].offset;
+	(IOVBASE_TYPE *)(intptr_t)file_offsets_for_agg[sorted_file_offsets[0]].offset;
       fh->f_io_array[fh->f_num_of_io_entries].length = 
 	  file_offsets_for_agg[sorted_file_offsets[0]].length;
       fh->f_io_array[fh->f_num_of_io_entries].memory_address = 
@@ -818,7 +818,7 @@ mca_fcoll_static_file_write_all (mca_io_ompio_file_t *fh,
 	  }
 	  else {
 	      fh->f_io_array[fh->f_num_of_io_entries].offset = 
-		(IOVBASE_TYPE *)file_offsets_for_agg[sorted_file_offsets[i]].offset;
+		(IOVBASE_TYPE *)(intptr_t)file_offsets_for_agg[sorted_file_offsets[i]].offset;
 	      fh->f_io_array[fh->f_num_of_io_entries].length = 
 		  file_offsets_for_agg[sorted_file_offsets[i]].length;
 	      fh->f_io_array[fh->f_num_of_io_entries].memory_address = 

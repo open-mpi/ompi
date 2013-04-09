@@ -51,11 +51,11 @@ mca_fbtl_posix_ipwritev (mca_io_ompio_file_t *fh,
     if (NULL != sorted) {
         for (i=0 ; i<fh->f_num_of_io_entries ; i++) {
             if (fh->f_num_of_io_entries != i+1) {
-                if (((OMPI_MPI_OFFSET_TYPE)fh->f_io_array[sorted[i]].offset + 
+	      if (((OMPI_MPI_OFFSET_TYPE)(intptr_t)fh->f_io_array[sorted[i]].offset + 
                      (OPAL_PTRDIFF_TYPE)fh->f_io_array[sorted[i]].length) == 
-                    (OMPI_MPI_OFFSET_TYPE)fh->f_io_array[sorted[i+1]].offset) {
+		  (OMPI_MPI_OFFSET_TYPE)(intptr_t)fh->f_io_array[sorted[i+1]].offset) {
                     if (!merge) {
-                        merge_offset = (OMPI_MPI_OFFSET_TYPE)
+		      merge_offset = (OMPI_MPI_OFFSET_TYPE)(intptr_t)
                             fh->f_io_array[sorted[i]].offset;
                         merge_length = fh->f_io_array[sorted[i]].length;
                     }
@@ -100,7 +100,7 @@ mca_fbtl_posix_ipwritev (mca_io_ompio_file_t *fh,
                 }
             }
             else {
-                aiocbp[num_req].aio_offset  = (OMPI_MPI_OFFSET_TYPE)
+	      aiocbp[num_req].aio_offset  = (OMPI_MPI_OFFSET_TYPE)(intptr_t)
                     fh->f_io_array[sorted[i]].offset;
                 aiocbp[num_req].aio_buf     = 
                     fh->f_io_array[sorted[i]].memory_address;
@@ -121,11 +121,11 @@ mca_fbtl_posix_ipwritev (mca_io_ompio_file_t *fh,
     else {
         for (i=0 ; i<fh->f_num_of_io_entries ; i++) {
             if (fh->f_num_of_io_entries != i+1) {
-                if (((OMPI_MPI_OFFSET_TYPE)fh->f_io_array[i].offset + 
+	      if (((OMPI_MPI_OFFSET_TYPE)(intptr_t)fh->f_io_array[i].offset + 
                      (OPAL_PTRDIFF_TYPE)fh->f_io_array[i].length) == 
-                    (OMPI_MPI_OFFSET_TYPE)fh->f_io_array[i+1].offset) {
+		  (OMPI_MPI_OFFSET_TYPE)(intptr_t)fh->f_io_array[i+1].offset) {
                     if (!merge) {
-                        merge_offset = (OMPI_MPI_OFFSET_TYPE)
+		      merge_offset = (OMPI_MPI_OFFSET_TYPE)(intptr_t)
                             fh->f_io_array[i].offset;
                         merge_length = fh->f_io_array[i].length;
                     }
@@ -169,7 +169,7 @@ mca_fbtl_posix_ipwritev (mca_io_ompio_file_t *fh,
                 }
             }
             else {
-                aiocbp[num_req].aio_offset  = (OMPI_MPI_OFFSET_TYPE)
+	      aiocbp[num_req].aio_offset  = (OMPI_MPI_OFFSET_TYPE)(intptr_t)
                     fh->f_io_array[i].offset;
                 aiocbp[num_req].aio_buf     = fh->f_io_array[i].memory_address;
                 aiocbp[num_req].aio_nbytes  = fh->f_io_array[i].length;

@@ -246,7 +246,7 @@ mca_fcoll_two_phase_file_read_all (mca_io_ompio_file_t *fh,
     flat_buf->count = local_size;    
     i=0;j=0;
     while(j < local_size){
-      flat_buf->indices[j] = (OMPI_MPI_OFFSET_TYPE)decoded_iov[i].iov_base;
+      flat_buf->indices[j] = (OMPI_MPI_OFFSET_TYPE)(intptr_t)decoded_iov[i].iov_base;
       flat_buf->blocklens[j] = decoded_iov[i].iov_len;
       
       if(i < (int)iov_count)
@@ -276,9 +276,9 @@ mca_fcoll_two_phase_file_read_all (mca_io_ompio_file_t *fh,
   }
 #endif
   
-  start_offset = (OMPI_MPI_OFFSET_TYPE)iov[0].iov_base;
-  end_offset = (OMPI_MPI_OFFSET_TYPE)iov[local_count-1].iov_base +
-    (OMPI_MPI_OFFSET_TYPE)iov[local_count-1].iov_len - 1; 
+  start_offset = (OMPI_MPI_OFFSET_TYPE)(intptr_t)iov[0].iov_base;
+  end_offset = (OMPI_MPI_OFFSET_TYPE)(intptr_t)iov[local_count-1].iov_base +
+    (OMPI_MPI_OFFSET_TYPE)(intptr_t)iov[local_count-1].iov_len - 1; 
   
 #if DEBUG
   printf("%d: START OFFSET:%ld, END OFFSET:%ld\n",
@@ -648,7 +648,7 @@ static int two_phase_read_and_exch(mca_io_ompio_file_t *fh,
 	opal_output(1, "OUT OF MEMORY\n");
 	return OMPI_ERR_OUT_OF_RESOURCE;
       }
-      fh->f_io_array[0].offset = (IOVBASE_TYPE *) off;
+      fh->f_io_array[0].offset = (IOVBASE_TYPE *) (intptr_t)off;
       fh->f_io_array[0].length = len;
       fh->f_io_array[0].memory_address = 
 	read_buf+for_curr_iter;
@@ -1027,7 +1027,7 @@ static void two_phase_fill_user_buffer(mca_io_ompio_file_t *fh,
   
   for (i=0; i<contig_access_count; i++) { 
     
-    off     = (OMPI_MPI_OFFSET_TYPE)offset_length[i].iov_base;
+    off     = (OMPI_MPI_OFFSET_TYPE)(intptr_t)offset_length[i].iov_base;
     rem_len = (OMPI_MPI_OFFSET_TYPE)offset_length[i].iov_len;
     
     /* this request may span the file domains of more than one process */

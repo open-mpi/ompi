@@ -180,7 +180,7 @@ int ompi_io_ompio_generate_current_file_view (mca_io_ompio_file_t *fh,
 	
         disp = (OPAL_PTRDIFF_TYPE)(fh->f_decoded_iov[j].iov_base) + 
             (fh->f_total_bytes - sum_previous_counts);
-        iov[k].iov_base = (IOVBASE_TYPE *)(disp + fh->f_offset);
+        iov[k].iov_base = (IOVBASE_TYPE *)(intptr_t)(disp + fh->f_offset);
 
         if ((fh->f_decoded_iov[j].iov_len - 
              (fh->f_total_bytes - sum_previous_counts)) 

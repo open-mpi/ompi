@@ -164,7 +164,7 @@ mca_io_ompio_file_read (ompi_file_t *fp,
 
             disp = (OPAL_PTRDIFF_TYPE)fh->f_decoded_iov[j].iov_base + 
                 (fh->f_total_bytes - sum_previous_length);
-            fh->f_io_array[k].offset = (IOVBASE_TYPE *)(disp + fh->f_offset);
+            fh->f_io_array[k].offset = (IOVBASE_TYPE *)(intptr_t)(disp + fh->f_offset);
             
             if (! (fh->f_flags & OMPIO_CONTIGUOUS_FVIEW)) {
                 if (fh->f_decoded_iov[j].iov_len - 
