@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2011-2013 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -58,6 +58,7 @@ hwloc_obj_type_t opal_hwloc_levels[] = {
 bool opal_hwloc_use_hwthreads_as_cpus = false;
 #endif
 
+#if OPAL_HAVE_HWLOC
 static mca_base_var_enum_value_t hwloc_base_map[] = {
     {OPAL_HWLOC_BASE_MAP_NONE, "none"},
     {OPAL_HWLOC_BASE_MAP_LOCAL_ONLY, "local_only"},
@@ -70,6 +71,7 @@ static mca_base_var_enum_value_t hwloc_failure_action[] = {
     {OPAL_HWLOC_BASE_MBFA_ERROR, "error"},
     {0, NULL}
 };
+#endif
 
 static int opal_hwloc_base_register(mca_base_register_flag_t flags);
 static int opal_hwloc_base_open(mca_base_open_flag_t flags);
@@ -79,18 +81,17 @@ int opal_hwloc_base_close(void);
 MCA_BASE_FRAMEWORK_DECLARE(opal, hwloc, NULL, opal_hwloc_base_register, opal_hwloc_base_open, opal_hwloc_base_close,
                            mca_hwloc_base_static_components, 0);
 
+#if OPAL_HAVE_HWLOC
 static char *opal_hwloc_base_binding_policy = NULL;
 static bool opal_hwloc_base_bind_to_core = false;
 static bool opal_hwloc_base_bind_to_socket = false;
+#endif
 
 static int opal_hwloc_base_register(mca_base_register_flag_t flags)
 {
+#if OPAL_HAVE_HWLOC
     mca_base_var_enum_t *new_enum;
     int ret;
-
-#if !OPAL_HAVE_HWLOC
-    return OPAL_ERR_NOT_AVAILABLE;
-#endif
 
     /* hwloc_base_mbind_policy */
 
@@ -163,6 +164,9 @@ static int opal_hwloc_base_register(mca_base_register_flag_t flags)
 
     /* register components */
     return OPAL_SUCCESS;
+#else /* OPAL_HAVE_HWLOC */
+    return OPAL_ERR_NOT_AVAILABLE;
+#endif
 }
 
 static int opal_hwloc_base_open(mca_base_open_flag_t flags)

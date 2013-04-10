@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007-2010 Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2007      Evergrid, Inc. All rights reserved.
- * Copyright (c) 2008-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2008-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010      IBM Corporation.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
@@ -367,7 +367,6 @@ static int send_warn_show_help(int fd, const char *file,
 static void send_error_show_help(int fd, int exit_status,
                                  const char *file, const char *topic, ...)
 {
-    int ret;
     va_list ap;
     pipe_err_msg_t msg;
 
@@ -376,7 +375,7 @@ static void send_error_show_help(int fd, int exit_status,
 
     /* Send it */
     va_start(ap, topic);
-    ret = write_help_msg(fd, &msg, file, topic, ap);
+    write_help_msg(fd, &msg, file, topic, ap);
     va_end(ap);
 
     exit(exit_status);
@@ -388,13 +387,10 @@ static int do_child(orte_app_context_t* context,
                     orte_job_t *jobdat, int write_fd,
                     orte_iof_base_io_conf_t opts)
 {
-    int i;
+    int i, rc;
     sigset_t sigs;
     long fd, fdmax = sysconf(_SC_OPEN_MAX);
-#if OPAL_HAVE_HWLOC
-    int rc;
     char *param, *msg;
-#endif
 
     if (orte_forward_job_control) {
         /* Set a new process group for this child, so that a
