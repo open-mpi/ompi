@@ -4,6 +4,7 @@
  * Copyright (c) 2004-2008 The Trustees of Indiana University.
  *                         All rights reserved.
  *
+ * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -45,7 +46,7 @@ static int valgrind_close(void);
  * and pointers to our public functions in it
  */
 
-opal_memchecker_base_component_2_0_0_t mca_memchecker_valgrind_component = {
+const opal_memchecker_base_component_2_0_0_t mca_memchecker_valgrind_component = {
 
     /* First, the mca_component_t struct containing meta information
        about the component itself */
