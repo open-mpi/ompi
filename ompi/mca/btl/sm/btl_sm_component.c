@@ -77,8 +77,6 @@ typedef enum {
     MCA_BTL_SM_RNDV_MOD_MPOOL
 } mca_btl_sm_rndv_module_type_t;
 
-static bool btl_sm_have_knem = OMPI_BTL_SM_HAVE_KNEM;
-
 /*
  * Shared Memory (SM) component instance.
  */
@@ -160,15 +158,6 @@ static int sm_register(void)
 {
     mca_base_var_flag_t var_flags;
 
-    /* Register an MCA param to indicate whether we have knem support
-       or not */
-    (void) mca_base_component_var_register(&mca_btl_sm_component.super.btl_version,
-                                           "have_knem_support", "Whether this component supports the knem Linux kernel module or not",
-                                           MCA_BASE_VAR_TYPE_BOOL, NULL, 0,
-                                           MCA_BASE_VAR_FLAG_DEFAULT_ONLY,
-                                           OPAL_INFO_LVL_5,
-                                           MCA_BASE_VAR_SCOPE_CONSTANT,
-                                           &btl_sm_have_knem);
     if (OMPI_BTL_SM_HAVE_KNEM) {
         var_flags = 0;
         mca_btl_sm_component.use_knem = -1;
