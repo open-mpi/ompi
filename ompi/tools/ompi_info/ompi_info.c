@@ -112,6 +112,7 @@ int main(int argc, char *argv[])
 
     /* add the top-level type */
     opal_pointer_array_add(&mca_types, "ompi");
+    opal_pointer_array_add(&mca_types, "mpi");
 
     /* push all the types found by autogen */
     for (i=0; NULL != ompi_frameworks[i]; i++) {
