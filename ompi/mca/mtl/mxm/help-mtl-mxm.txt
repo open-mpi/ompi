@@ -20,10 +20,15 @@ active on the node and the hardware is functioning.
 
   Error: %s
 
-[unable to extract endpoint address]
+[unable to extract endpoint ptl address]
 MXM was unable to read settings for endpoint 
 
   PTL ID: %d
+  Error: %s
+
+[unable to extract endpoint address]
+MXM was unable to read settings for endpoint 
+
   Error: %s
 
 [mxm mq create]
