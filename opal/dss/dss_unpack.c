@@ -39,6 +39,8 @@ int opal_dss_unpack(opal_buffer_t *buffer, void *dst, int32_t *num_vals,
      * so return an appropriate error
      */
     if (0 == *num_vals) {
+        OPAL_OUTPUT( ( opal_dss_verbose, "opal_dss_unpack: inadequate space ( %p, %p, %lu, %d )\n",
+                       (void*)buffer, dst, (long unsigned int)*num_vals, (int)type ) );
         return OPAL_ERR_UNPACK_INADEQUATE_SPACE;
     }
 
@@ -76,6 +78,8 @@ int opal_dss_unpack(opal_buffer_t *buffer, void *dst, int32_t *num_vals,
      */
     if (local_num > *num_vals) {
         local_num = *num_vals;
+        OPAL_OUTPUT( ( opal_dss_verbose, "opal_dss_unpack: inadequate space ( %p, %p, %lu, %d )\n",
+                       (void*)buffer, dst, (long unsigned int)*num_vals, (int)type ) );
         ret = OPAL_ERR_UNPACK_INADEQUATE_SPACE;
     } else {  /** enough or more than enough storage */
         *num_vals = local_num;  /** let the user know how many we actually unpacked */
