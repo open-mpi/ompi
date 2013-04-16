@@ -21,12 +21,12 @@ release=1
 # only requirement is that it must be entirely printable ASCII 
 # characters and have no white space.
 
-greek=
+greek=rc1
 
 # If want_repo_rev=1, then the repo revision number will be included
 # in the overall Open MPI version number in some form.
 
-want_repo_rev=0
+want_repo_rev=1
 
 # If repo_rev=-1, then the repository version number will be obtained
 # dynamically at run time, either: 
@@ -50,7 +50,7 @@ repo_rev=-1
 
 # The date when this release was created
 
-date="April 15, 2013"
+date="Unreleased developer copy"
 
 # The shared library version of each of Open MPI's public libraries.
 # These versions are maintained in accordance with the "Library
