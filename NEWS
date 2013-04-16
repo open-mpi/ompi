@@ -53,6 +53,14 @@ included in the vX.Y.Z section and be denoted as:
                                  included in release version vA.B.C.
 
 
+1.7.1
+-----
+
+- Fixed compile error when --without-memory-manager was specified
+  on Linux
+- Fixed XRC compile issue in Open Fabrics support.
+
+
 1.7
 ---
 
