@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2010-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2013      The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
@@ -261,6 +261,24 @@ static int if_posix_open(void)
         /* generate CIDR and assign to netmask */
         intf->if_mask = prefix(((struct sockaddr_in*) &ifr->ifr_addr)->sin_addr.s_addr);
             
+#ifdef SIOCGIFHWADDR
+            /* get the MAC address */
+            if (ioctl(sd, SIOCGIFHWADDR, ifr) < 0) {
+                opal_output(0, "btl_usnic_opal_ifinit: ioctl(SIOCGIFHWADDR) failed with errno=%d", errno);
+                break;
+            }
+            memcpy(intf->if_mac, ifr->ifr_hwaddr.sa_data, 6);
+#endif
+
+#ifdef SIOCGIFMTU
+            /* get the MTU */
+            if (ioctl(sd, SIOCGIFMTU, ifr) < 0) {
+                opal_output(0, "btl_usnic_opal_ifinit: ioctl(SIOCGIFMTU) failed with errno=%d", errno);
+                break;
+            }
+            intf->if_mtu = ifr->ifr_mtu;
+#endif
+
         opal_list_append(&opal_if_list, &(intf->super));
     }
     free(ifconf.ifc_req);
