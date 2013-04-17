@@ -616,7 +616,7 @@ static int two_phase_read_and_exch(mca_io_ompio_file_t *fh,
   off = st_loc;
   for_curr_iter = for_next_iter = 0;
 
-  MPI_Type_extent(datatype, &buftype_extent);
+  ompi_datatype_type_extent(datatype, &buftype_extent);
   
   for (m=0; m<ntimes; m++) {
     
@@ -924,12 +924,12 @@ static int two_phase_exchange_data(mca_io_ompio_file_t *fh,
 	others_req[i].lens[k] = partial_send[i];
       }
 
-      MPI_Type_hindexed(count[i],
-			&(others_req[i].lens[start_pos[i]]),
-			&(others_req[i].mem_ptrs[start_pos[i]]),
-			MPI_BYTE,
-			&send_type);
-      MPI_Type_commit(&send_type);
+      ompi_datatype_create_hindexed(count[i],
+				    &(others_req[i].lens[start_pos[i]]),
+				    &(others_req[i].mem_ptrs[start_pos[i]]),
+				    MPI_BYTE,
+				    &send_type);
+      ompi_datatype_commit(&send_type);
 
       ret = MCA_PML_CALL(isend(MPI_BOTTOM,
 			       1,
@@ -939,7 +939,7 @@ static int two_phase_exchange_data(mca_io_ompio_file_t *fh,
 			       MCA_PML_BASE_SEND_STANDARD,
 			       fh->f_comm,
 			       requests+nprocs_recv+j));
-      MPI_Type_free(&send_type);
+      free(&send_type);
       if (partial_send[i]) others_req[i].lens[k] = tmp;
       j++;
     }
