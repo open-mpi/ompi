@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
- * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2010-2013 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -384,6 +384,46 @@ int opal_ifindextomask(int if_index, uint32_t* if_mask, int length)
         intf =  (opal_if_t*)opal_list_get_next(intf)) {
         if (intf->if_index == if_index) {
             memcpy(if_mask, &intf->if_mask, length);
+            return OPAL_SUCCESS;
+        }
+    }
+    return OPAL_ERROR;
+}
+
+/* 
+ *  Lookup the interface by opal_list index and return the 
+ *  MAC assigned to the interface.
+ */
+
+int btl_usnic_opal_ifindextomac(int if_index, uint8_t mac[6])
+{
+    opal_if_t* intf;
+
+    for (intf = (opal_if_t*)opal_list_get_first(&opal_if_list);
+        intf != (opal_if_t*)opal_list_get_end(&opal_if_list);
+        intf = (opal_if_t*)opal_list_get_next(intf)) {
+        if (intf->if_index == if_index) {
+            memcpy(mac, &intf->if_mac, 6);
+            return OPAL_SUCCESS;
+        }
+    }
+    return OPAL_ERROR;
+}
+
+/* 
+ *  Lookup the interface by opal_list index and return the 
+ *  MTU assigned to the interface.
+ */
+
+int btl_usnic_opal_ifindextomtu(int if_index, int *if_mtu)
+{
+    opal_if_t* intf;
+
+    for (intf = (opal_if_t*)opal_list_get_first(&opal_if_list);
+        intf != (opal_if_t*)opal_list_get_end(&opal_if_list);
+        intf = (opal_if_t*)opal_list_get_next(intf)) {
+        if (intf->if_index == if_index) {
+            *if_mtu = intf->if_mtu;
             return OPAL_SUCCESS;
         }
     }
