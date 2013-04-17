@@ -12,6 +12,7 @@
  * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -153,6 +154,22 @@ OPAL_DECLSPEC int opal_ifindextoaddr(int if_index, struct sockaddr*,
  *  @param size (IN)      Interface address buffer size
  */
 OPAL_DECLSPEC int opal_ifindextomask(int if_index, uint32_t*, int);
+
+/**
+ *  Lookup an interface by index and return its MAC address.
+ *
+ *  @param if_index (IN)  Interface index
+ *  @param if_mac (OUT)   Interface's MAC address
+ */
+OPAL_DECLSPEC int btl_usnic_opal_ifindextomac(int if_index, uint8_t if_mac[6]);
+
+/**
+ *  Lookup an interface by index and return its MTU.
+ *
+ *  @param if_index (IN)  Interface index
+ *  @param if_mtu (OUT)   Interface's MTU
+ */
+OPAL_DECLSPEC int btl_usnic_opal_ifindextomtu(int if_index, int *if_mtu);
 
 /**
  *  Lookup an interface by index and return its flags.
