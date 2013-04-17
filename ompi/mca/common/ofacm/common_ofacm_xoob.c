@@ -155,7 +155,7 @@ static void xoob_ib_address_destructor(ofacm_ib_address_t *ib_addr)
     OBJ_DESTRUCT(&ib_addr->pending_contexts);
 }
 
-static int xoob_ib_address_init(ofacm_ib_address_t *ib_addr, uint16_t lid, uint64_t s_id, ompi_jobid_t ep_jobid)
+static int xoob_ib_address_init(ofacm_ib_address_t *ib_addr, uint16_t lid, uint64_t s_id, orte_jobid_t ep_jobid)
 {
     ib_addr->key = malloc(SIZE_OF3(s_id, lid, ep_jobid));
     if (NULL == ib_addr->key) {
