@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2010-2013 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -22,12 +22,13 @@ opal_list_t opal_if_list;
 bool opal_if_do_not_resolve = false;
 bool opal_if_retain_loopback = false;
 
-/* instance the opal_if_t object */
-OBJ_CLASS_INSTANCE(opal_if_t, opal_list_item_t, NULL, NULL);
-
 static int opal_if_base_register (mca_base_register_flag_t flags);
 static int opal_if_base_open (mca_base_open_flag_t flags);
 static int opal_if_base_close(void);
+static void opal_if_construct(opal_if_t *obj);
+
+/* instance the opal_if_t object */
+OBJ_CLASS_INSTANCE(opal_if_t, opal_list_item_t, opal_if_construct, NULL);
 
 MCA_BASE_FRAMEWORK_DECLARE(opal, if, NULL, opal_if_base_register, opal_if_base_open, opal_if_base_close,
                            mca_if_base_static_components, 0);
@@ -73,3 +74,14 @@ static int opal_if_base_close(void)
     return mca_base_framework_components_close (&opal_if_base_framework, NULL);
 }
 
+static void opal_if_construct(opal_if_t *obj)
+{
+    memset(obj->if_name, 0, sizeof(obj->if_name));
+    obj->if_index = -1;
+    obj->if_kernel_index = (uint16_t) -1;
+    obj->if_flags = 0;
+    obj->if_speed = 0;
+    memset(&obj->if_addr, 0, sizeof(obj->if_addr));
+    obj->if_mask = 0;
+    obj->if_bandwidth = 0;
+}
