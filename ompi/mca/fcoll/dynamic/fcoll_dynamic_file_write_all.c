@@ -89,13 +89,14 @@ mca_fcoll_dynamic_file_write_all (mca_io_ompio_file_t *fh,
     /* array that contains the sorted indices of the global_iov */
     int *sorted = NULL, *sorted_file_offsets=NULL;
     int *displs = NULL;
-    size_t max_data = 0; 
+    size_t max_data = 0, datatype_size = 0; 
     int **blocklen_per_process=NULL;
     MPI_Aint **displs_per_process=NULL, *memory_displacements=NULL;
     ompi_datatype_t **recvtype = NULL;
     MPI_Aint *total_bytes_per_process = NULL;
     MPI_Request *send_req=NULL, *recv_req=NULL;
-    int datatype_size, recv_req_count=0;
+    int recv_req_count=0;
+    
 
 #if TIME_BREAKDOWN
     double write_time = 0.0, start_write_time = 0.0, end_write_time = 0.0;
@@ -745,8 +746,8 @@ mca_fcoll_dynamic_file_write_all (mca_io_ompio_file_t *fh,
 					&recvtype[i]);
 	  ompi_datatype_commit(&recvtype[i]); 
 		
-	  MPI_Type_size (recvtype[i],
-			 &datatype_size);
+	  ompi_datatype_type_size (recvtype[i],
+				   &datatype_size);
 	  
 	  
 	  if (datatype_size){

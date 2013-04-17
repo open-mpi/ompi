@@ -575,7 +575,8 @@ static int two_phase_exch_and_write(mca_io_ompio_file_t *fh,
     OMPI_MPI_OFFSET_TYPE st_loc=-1, end_loc=-1, off, done;
     OMPI_MPI_OFFSET_TYPE size=0, req_off, len;
     MPI_Aint buftype_extent;
-    int byte_size, hole;
+    int  hole;
+    size_t byte_size;
 
     #if DEBUG_ON
     int ii,jj;
@@ -584,7 +585,7 @@ static int two_phase_exch_and_write(mca_io_ompio_file_t *fh,
     char *write_buf=NULL;
 
 
-    MPI_Type_size(MPI_BYTE, &byte_size);
+    ompi_datatype_type_size(MPI_BYTE, &byte_size);
     
     for (i = 0; i < fh->f_size; i++){
 	if (others_req[i].count) {
@@ -688,7 +689,7 @@ static int two_phase_exch_and_write(mca_io_ompio_file_t *fh,
     done = 0;
     off = st_loc;
     
-    MPI_Type_extent(datatype, &buftype_extent);
+    ompi_datatype_type_extent(datatype, &buftype_extent);
     for (m=0;m <ntimes; m++){
 	for (i=0; i< fh->f_size; i++) count[i] = recv_size[i] = 0;
 	
@@ -965,11 +966,11 @@ static int two_phase_exchage_data(mca_io_ompio_file_t *fh,
 		tmp_len[i] = others_req[i].lens[k];
 		others_req[i].lens[k] = partial_recv[i];
 	    }
-	    MPI_Type_hindexed(count[i], 
-			      &(others_req[i].lens[start_pos[i]]),
-			      &(others_req[i].mem_ptrs[start_pos[i]]), 
-			      MPI_BYTE, recv_types+j);
-	    MPI_Type_commit(recv_types+j);
+	    ompi_datatype_create_hindexed(count[i], 
+					  &(others_req[i].lens[start_pos[i]]),
+					  &(others_req[i].mem_ptrs[start_pos[i]]), 
+					  MPI_BYTE, recv_types+j);
+	    ompi_datatype_commit(recv_types+j);
 	    j++;
 	}
     }
@@ -1143,7 +1144,7 @@ static int two_phase_exchage_data(mca_io_ompio_file_t *fh,
       }
     }
 
-    for (i=0; i<nprocs_recv; i++) MPI_Type_free(recv_types+i);
+    for (i=0; i<nprocs_recv; i++) free(recv_types+i);
     free(recv_types);
     ret = ompi_request_wait_all (nprocs_send+nprocs_recv,
 				 requests,
