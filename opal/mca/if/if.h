@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved. 
+ * Copyright (c) 2010-2013 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -91,8 +91,10 @@ typedef struct opal_if_t {
     int                 if_flags;
     int                 if_speed;
     struct sockaddr_storage  if_addr;
-   uint32_t             if_mask;
+    uint32_t            if_mask;
     uint32_t            if_bandwidth;
+    uint8_t             if_mac[6];
+    int                 if_mtu;
 } opal_if_t;
 OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_if_t);
 
