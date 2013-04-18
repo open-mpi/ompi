@@ -52,6 +52,7 @@
 #include "ompi/mca/mpool/base/base.h"
 #include "ompi/mca/common/sm/common_sm.h"
 #include "ompi/mca/btl/base/btl_base_error.h"
+#include "ompi/mca/rte/rte.h"
 #if OMPI_CUDA_SUPPORT
 #include "ompi/runtime/params.h"
 #include "ompi/mca/common/cuda/common_cuda.h"
@@ -113,32 +114,36 @@ mca_btl_smcuda_component_t mca_btl_smcuda_component = {
  * utility routines for parameter registration
  */
 
-static inline char* mca_btl_smcuda_param_register_string(
-    const char* param_name,
-    const char* default_value,
-    char **storage)
-{
-    *storage = default_value;
-    (void) mca_base_component_var_register(&mca_btl_smcuda_component.super.btl_version,
-                                           param_name, NULL, MCA_BASE_VAR_TYPE_STRING,
-                                           NULL, 0, 0, OPAL_INFO_LVL_9,
-                                           MCA_BASE_VAR_SCOPE_READONLY, storage);
-    return *storage;
-}
-
 static inline int mca_btl_smcuda_param_register_int(
     const char* param_name,
     int default_value,
     int *storage)
 {
     *storage = default_value;
-    (void) mca_base_component_var_register(&mca_btl_smcuda_component.super.btl_version,
-                                           param_name, NULL, MCA_BASE_VAR_TYPE_INT,
-                                           NULL, 0, 0, OPAL_INFO_LVL_9,
-                                           MCA_BASE_VAR_SCOPE_READONLY, storage);
+    (void) mca_base_component_var_register (&mca_btl_smcuda_component.super.btl_version,
+                                            param_name, NULL, MCA_BASE_VAR_TYPE_INT,
+                                            NULL, 0, 0, OPAL_INFO_LVL_9,
+                                            MCA_BASE_VAR_SCOPE_READONLY, storage);
     return *storage;
 }
 
+static inline unsigned int mca_btl_smcuda_param_register_uint(
+    const char* param_name,
+    unsigned int default_value,
+    unsigned int *storage)
+{
+    *storage = default_value;
+    (void) mca_base_component_var_register (&mca_btl_smcuda_component.super.btl_version,
+                                            param_name, NULL, MCA_BASE_VAR_TYPE_UNSIGNED_INT,
+                                            NULL, 0, 0, OPAL_INFO_LVL_9,
+                                            MCA_BASE_VAR_SCOPE_READONLY, storage);
+    return *storage;
+}
+
+static int mca_btl_smcuda_component_verify(void) {
+
+    return mca_btl_base_param_verify(&mca_btl_smcuda.super);
+}
 
 static int smcuda_register(void)
 {
@@ -147,12 +152,13 @@ static int smcuda_register(void)
     mca_btl_smcuda_param_register_int("free_list_max", -1, &mca_btl_smcuda_component.sm_free_list_max);
     mca_btl_smcuda_param_register_int("free_list_inc", 64, &mca_btl_smcuda_component.sm_free_list_inc);
     mca_btl_smcuda_param_register_int("max_procs", -1, &mca_btl_smcuda_component.sm_max_procs);
-    /* NTH: selection variables for mpool names don't really work so hard-code the mpool name */
+    /* there is no practical use for the mpool name parameter since mpool resources differ
+       between components */
     mca_btl_smcuda_component.sm_mpool_name = "sm";
-    mca_btl_smcuda_param_register_int("fifo_size", 4096, &mca_btl_smcuda_component.fifo_size);
+    mca_btl_smcuda_param_register_uint("fifo_size", 4096, &mca_btl_smcuda_component.fifo_size);
     mca_btl_smcuda_param_register_int("num_fifos", 1, &mca_btl_smcuda_component.nfifos);
 
-    mca_btl_smcuda_param_register_int("fifo_lazy_free", 120, &mca_btl_smcuda_component.fifo_lazy_free);
+    mca_btl_smcuda_param_register_uint("fifo_lazy_free", 120, &mca_btl_smcuda_component.fifo_lazy_free);
 
     /* default number of extra procs to allow for future growth */
     mca_btl_smcuda_param_register_int("sm_extra_procs", 0, &mca_btl_smcuda_component.sm_extra_procs);
@@ -185,7 +191,7 @@ static int smcuda_register(void)
     mca_btl_base_param_register(&mca_btl_smcuda_component.super.btl_version,
                                 &mca_btl_smcuda.super);
 
-    return OMPI_SUCCESS;
+    return mca_btl_smcuda_component_verify();
 }
 
 /*
@@ -195,7 +201,7 @@ static int smcuda_register(void)
 
 static int mca_btl_smcuda_component_open(void)
 {
-    if (OMPI_SUCCESS != mca_btl_base_param_verify(&mca_btl_smcuda.super)) {
+    if (OMPI_SUCCESS != mca_btl_smcuda_component_verify()) {
         return OMPI_ERROR;
     }
 
@@ -298,7 +304,7 @@ get_num_local_procs(void)
 {
     /* num_local_peers does not include us in
      * its calculation, so adjust for that */
-    return (int)(1 + orte_process_info.num_local_peers);
+    return (int)(1 + ompi_process_info.num_local_peers);
 }
 
 static void
@@ -351,24 +357,24 @@ static int
 get_min_mpool_size(mca_btl_smcuda_component_t *comp_ptr,
                    size_t *out_size)
 {
-    char *type_name = "mpool";
-    char *param_name = "min_size";
+    const char *type_name = "mpool";
+    const char *param_name = "min_size";
     const mca_base_var_storage_t *min_size;
     int id = 0;
 
     if (0 > (id = mca_base_var_find("ompi", type_name, comp_ptr->sm_mpool_name,
-                                    param_name))) {
+                                      param_name))) {
         opal_output(0, "mca_base_var_find: failure looking for %s_%s_%s\n",
                     type_name, comp_ptr->sm_mpool_name, param_name);
         return OMPI_ERR_NOT_FOUND;
     }
 
     if (OPAL_SUCCESS != mca_base_var_get_value(id, &min_size, NULL, NULL)) {
-        opal_output(0, "mca_base_var_get_value failure!");
-        return OMPI_ERROR;        
+        opal_output(0, "mca_base_var_get_value failure\n");
+        return OMPI_ERROR;
     }
 
-    /* min_size is a unsigned long long */
+    /* the min_size variable is an unsigned long long */
     *out_size = (size_t) min_size->ullval;
 
     return OMPI_SUCCESS;
@@ -435,29 +441,29 @@ set_uniq_paths_for_init_rndv(mca_btl_smcuda_component_t *comp_ptr)
 
     if (asprintf(&comp_ptr->sm_mpool_ctl_file_name,
                  "%s"OPAL_PATH_SEP"shared_mem_cuda_pool.%s",
-                 orte_process_info.job_session_dir,
-                 orte_process_info.nodename) < 0) {
+                 ompi_process_info.job_session_dir,
+                 ompi_process_info.nodename) < 0) {
         /* rc set */
         goto out;
     }
     if (asprintf(&comp_ptr->sm_mpool_rndv_file_name,
                  "%s"OPAL_PATH_SEP"shared_mem_cuda_pool_rndv.%s",
-                 orte_process_info.job_session_dir,
-                 orte_process_info.nodename) < 0) {
+                 ompi_process_info.job_session_dir,
+                 ompi_process_info.nodename) < 0) {
         /* rc set */
         goto out;
     }
     if (asprintf(&comp_ptr->sm_ctl_file_name,
                  "%s"OPAL_PATH_SEP"shared_mem_cuda_btl_module.%s",
-                 orte_process_info.job_session_dir,
-                 orte_process_info.nodename) < 0) {
+                 ompi_process_info.job_session_dir,
+                 ompi_process_info.nodename) < 0) {
         /* rc set */
         goto out;
     }
     if (asprintf(&comp_ptr->sm_rndv_file_name,
                  "%s"OPAL_PATH_SEP"shared_mem_cuda_btl_rndv.%s",
-                 orte_process_info.job_session_dir,
-                 orte_process_info.nodename) < 0) {
+                 ompi_process_info.job_session_dir,
+                 ompi_process_info.nodename) < 0) {
         /* rc set */
         goto out;
     }
@@ -586,14 +592,15 @@ out:
  */
 static int
 backing_store_init(mca_btl_smcuda_component_t *comp_ptr,
-                   orte_node_rank_t node_rank)
+                   ompi_local_rank_t local_rank)
 {
     int rc = OMPI_SUCCESS;
 
     if (OMPI_SUCCESS != (rc = set_uniq_paths_for_init_rndv(comp_ptr))) {
         goto out;
     }
-    if (0 == node_rank) {
+    /* only let the lowest rank setup the metadata */
+    if (0 == local_rank) {
         /* === sm mpool === */
         if (OMPI_SUCCESS != (rc =
             create_rndv_file(comp_ptr, MCA_BTL_SM_RNDV_MOD_MPOOL))) {
@@ -620,7 +627,7 @@ mca_btl_smcuda_component_init(int *num_btls,
 {
     int num_local_procs = 0;
     mca_btl_base_module_t **btls = NULL;
-    orte_node_rank_t my_node_rank = ORTE_NODE_RANK_INVALID;
+    ompi_local_rank_t my_local_rank = OMPI_LOCAL_RANK_INVALID;
 
     *num_btls = 0;
     /* lookup/create shared memory pool only when used */
@@ -635,9 +642,13 @@ mca_btl_smcuda_component_init(int *num_btls,
         return NULL;
     }
     /* if we don't have locality information, then we cannot be used because we
-     * need to know who the respective node ranks for initialization. */
-    if (ORTE_NODE_RANK_INVALID ==
-        (my_node_rank = orte_process_info.my_node_rank)) {
+     * need to know who the respective node ranks for initialization. note the
+     * use of my_local_rank here. we use this instead of my_node_rank because in
+     * the spawn case we need to designate a metadata creator rank within the
+     * set of processes that are initializing the btl, and my_local_rank seems
+     * to provide that for us. */
+    if (OMPI_LOCAL_RANK_INVALID ==
+        (my_local_rank = ompi_process_info.my_local_rank)) {
         opal_show_help("help-mpi-btl-sm.txt", "no locality", true);
         return NULL;
     }
@@ -654,7 +665,7 @@ mca_btl_smcuda_component_init(int *num_btls,
      * other local procs can read from it during add_procs. The rest will just
      * stash the known paths for use later in init. */
     if (OMPI_SUCCESS != backing_store_init(&mca_btl_smcuda_component,
-                                           my_node_rank)) {
+                                           my_local_rank)) {
         return NULL;
     }
 

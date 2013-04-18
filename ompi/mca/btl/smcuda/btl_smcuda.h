@@ -146,8 +146,8 @@ struct mca_btl_smcuda_component_t {
                                           but this one, in process private memory, is
                                           a real virtual address */
     uint16_t *mem_nodes;               /**< cached copy of mem nodes of each local rank */
-    size_t fifo_size;                  /**< number of FIFO queue entries */
-    size_t fifo_lazy_free;             /**< number of reads before lazy fifo free is triggered */
+    unsigned int fifo_size;            /**< number of FIFO queue entries */
+    unsigned int fifo_lazy_free;       /**< number of reads before lazy fifo free is triggered */
     int nfifos;                        /**< number of FIFOs per receiver */
     int32_t num_smp_procs;             /**< current number of smp procs on this host */
     int32_t my_smp_rank;               /**< My SMP process rank.  Used for accessing
@@ -183,7 +183,7 @@ struct mca_btl_smcuda_component_t {
 
     /** MCA: minimal message size (bytes) to offload on DMA engine
         when using knem */
-    uint32_t knem_dma_min;
+    unsigned int knem_dma_min;
 
     /** MCA: how many simultaneous ongoing knem operations to
         support */

@@ -179,7 +179,7 @@ int opal_datatype_register_params(void)
     /* Set different levels of verbosity in the cuda related code. */
     ret = mca_base_var_register ("opal", "opal", NULL, "cuda_verbose",
                                  "Set level of opal cuda verbosity",
-                                 MCA_BASE_VAR_TYPE_INT, NULL, MCA_BASE_VAR_FLAG_SETTABLE,
+                                 MCA_BASE_VAR_TYPE_INT, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
                                  OPAL_INFO_LVL_8, MCA_BASE_VAR_SCOPE_LOCAL,
                                  &opal_cuda_verbose);
 #endif

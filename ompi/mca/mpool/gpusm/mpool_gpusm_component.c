@@ -77,7 +77,7 @@ static int gpusm_open(void)
 
 static int gpusm_register(void)
 {
-    return mca_common_cuda_register_mca_variables();
+	return OMPI_SUCCESS;
 }
 
 
