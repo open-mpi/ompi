@@ -147,8 +147,6 @@ void *opal_cuda_memmove(void *dest, void *src, size_t size)
  */
 static void opal_cuda_support_init(void)
 {
-    int id;
-
     if (initialized) {
         return;
     }

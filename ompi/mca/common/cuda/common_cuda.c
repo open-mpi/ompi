@@ -252,7 +252,7 @@ int mca_common_cuda_register_mca_variables(void)
  */
 static int mca_common_cuda_init(opal_common_cuda_function_table_t *ftable)
 {
-    int id, value, i, s;
+    int i, s;
     CUresult res;
     CUcontext cuContext;
     common_cuda_mem_regs_t *mem_reg;

@@ -41,13 +41,13 @@
 #include "opal/sys/atomic.h"
 #include "opal/class/opal_bitmap.h"
 #include "opal/util/output.h"
-#include "opal/util/printf.h"
 #include "opal/util/show_help.h"
+#include "opal/util/printf.h"
 #include "opal/mca/hwloc/base/base.h"
 #include "opal/mca/shmem/base/base.h"
 #include "opal/mca/shmem/shmem.h"
-#include "opal/datatype/opal_convertor.h"
 
+#include "opal/datatype/opal_convertor.h"
 #include "ompi/class/ompi_free_list.h"
 #include "ompi/runtime/ompi_module_exchange.h"
 #include "ompi/mca/btl/btl.h"
@@ -209,7 +209,7 @@ sm_segment_attach(mca_btl_smcuda_component_t *comp_ptr)
          * itself on failure. */
         opal_output(0, "sm_segment_attach: "
                     "mca_common_sm_module_attach failure!\n");
-        return OMPI_ERROR;
+        rc = OMPI_ERROR;
     }
 
 out:
@@ -257,7 +257,7 @@ smcuda_btl_first_time_init(mca_btl_smcuda_t *smcuda_btl,
                the previous carto-based implementation), but it really
                should be improved to be how many NUMA nodes are being
                used *in this job*. */
-            mca_btl_sm_component.num_mem_nodes = num_mem_nodes = i;
+            mca_btl_smcuda_component.num_mem_nodes = num_mem_nodes = i;
 
             /* if we are not bound, then there is nothing further to do */
             if (NULL != ompi_process_info.cpuset) {
@@ -280,9 +280,9 @@ smcuda_btl_first_time_init(mca_btl_smcuda_t *smcuda_btl,
                  * a NUMA we are on, then not much we can do
                  */
                 if (1 == n_bound) {
-                    mca_btl_sm_component.mem_node = my_mem_node = numa;
+                    mca_btl_smcuda_component.mem_node = my_mem_node = numa;
                 } else {
-                    mca_btl_sm_component.mem_node = my_mem_node = -1;
+                    mca_btl_smcuda_component.mem_node = my_mem_node = -1;
                 }
             }
         }
@@ -328,6 +328,7 @@ smcuda_btl_first_time_init(mca_btl_smcuda_t *smcuda_btl,
         free(res);
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
+
     /* remember that node rank zero is already attached */
     if (0 != my_smp_rank) {
         if (OMPI_SUCCESS != (rc = sm_segment_attach(m))) {
