@@ -916,7 +916,7 @@ static int two_phase_exchage_data(mca_io_ompio_file_t *fh,
     int *tmp_len=NULL, sum, *srt_len=NULL, nprocs_recv, nprocs_send,  k,i,j;
     int ret=OMPI_SUCCESS;
     MPI_Request *requests=NULL, *send_req=NULL;
-    MPI_Datatype *recv_types=NULL;
+    ompi_datatype_t **recv_types=NULL;
     OMPI_MPI_OFFSET_TYPE *srt_off=NULL;
     char **send_buf = NULL; 
     
@@ -945,11 +945,12 @@ static int two_phase_exchage_data(mca_io_ompio_file_t *fh,
     }
     
     
-    recv_types = (MPI_Datatype *)
-	malloc (( nprocs_recv + 1 ) * sizeof(MPI_Datatype *));
+    recv_types = (ompi_datatype_t **)
+	malloc (( nprocs_recv + 1 ) * sizeof(ompi_datatype_t *));
     
     if ( NULL == recv_types ){
-      return OMPI_ERR_OUT_OF_RESOURCE;
+      ret = OMPI_ERR_OUT_OF_RESOURCE;
+      goto exit;
     }
 
     tmp_len = (int *) malloc(fh->f_size*sizeof(int));
@@ -981,13 +982,15 @@ static int two_phase_exchage_data(mca_io_ompio_file_t *fh,
       malloc((sum+1)*sizeof(OMPI_MPI_OFFSET_TYPE));
     
     if ( NULL == srt_off ){
-      return OMPI_ERR_OUT_OF_RESOURCE;
+      ret = OMPI_ERR_OUT_OF_RESOURCE;
+      goto exit;
     }
     
     srt_len = (int *) malloc((sum+1)*sizeof(int));
     
     if ( NULL == srt_len ) {
-      return OMPI_ERR_OUT_OF_RESOURCE;
+      ret = OMPI_ERR_OUT_OF_RESOURCE;
+      goto exit;
     }
 
 
@@ -1085,7 +1088,7 @@ static int two_phase_exchage_data(mca_io_ompio_file_t *fh,
 				   requests+j));
 
 	  if ( OMPI_SUCCESS != ret ){
-	    return ret;
+	    goto exit;
 	  }
 	  j++;
 	}
@@ -1107,7 +1110,7 @@ static int two_phase_exchage_data(mca_io_ompio_file_t *fh,
 				     send_req+j));	
 
 	    if ( OMPI_SUCCESS != ret ){
-	      return ret;
+	      goto exit;
 	    }
 	    
 	    j++;
@@ -1117,14 +1120,16 @@ static int two_phase_exchage_data(mca_io_ompio_file_t *fh,
     else if(nprocs_send && (!(fh->f_flags & OMPIO_CONTIGUOUS_MEMORY))){
       send_buf = (char **) malloc(fh->f_size*sizeof(char*));
       if ( NULL == send_buf ){
-	return OMPI_ERR_OUT_OF_RESOURCE;
+	ret = OMPI_ERR_OUT_OF_RESOURCE;
+	goto exit;
       }
       for (i=0; i < fh->f_size; i++){
 	if (send_size[i]) {
 	  send_buf[i] = (char *) malloc(send_size[i]);
 	  
 	  if ( NULL == send_buf[i] ){
-	    return OMPI_ERR_OUT_OF_RESOURCE;
+	    ret = OMPI_ERR_OUT_OF_RESOURCE;
+	    goto exit;
 	  }
 	}
       }
@@ -1140,12 +1145,15 @@ static int two_phase_exchage_data(mca_io_ompio_file_t *fh,
 				       aggregator_list);
       
       if ( OMPI_SUCCESS != ret ){
-	return ret;
+	goto exit;
       }
     }
 
-    for (i=0; i<nprocs_recv; i++) free(recv_types+i);
-    free(recv_types);
+    //for (i=0; i<nprocs_recv; i++) MPI_Type_free(recv_types+i);
+    if (NULL != recv_types){
+      free(recv_types);
+      recv_types = NULL;
+    }
     ret = ompi_request_wait_all (nprocs_send+nprocs_recv,
 				 requests,
 				 MPI_STATUS_IGNORE);
@@ -1159,7 +1167,8 @@ static int two_phase_exchage_data(mca_io_ompio_file_t *fh,
       end_comm_time = MPI_Wtime();
       comm_time += (end_comm_time - start_comm_time);
 #endif
-    
+
+ exit:    
     return ret;
 }
 
