@@ -827,7 +827,9 @@ static int two_phase_exchange_data(mca_io_ompio_file_t *fh,
   int ret = OMPI_SUCCESS;
   char **recv_buf = NULL;
   MPI_Request *requests=NULL;
-  MPI_Datatype send_type;
+  //  MPI_Datatype *send_type=NULL;
+  ompi_datatype_t **send_type = NULL;
+
 
 
 #if TIME_BREAKDOWN
@@ -924,22 +926,33 @@ static int two_phase_exchange_data(mca_io_ompio_file_t *fh,
 	others_req[i].lens[k] = partial_send[i];
       }
 
+      send_type = (ompi_datatype_t **) malloc (sizeof(ompi_datatype_t *));
+      if (NULL == send_type){
+	ret = OMPI_ERR_OUT_OF_RESOURCE;
+	goto exit;
+      }
+
       ompi_datatype_create_hindexed(count[i],
 				    &(others_req[i].lens[start_pos[i]]),
 				    &(others_req[i].mem_ptrs[start_pos[i]]),
 				    MPI_BYTE,
-				    &send_type);
-      ompi_datatype_commit(&send_type);
+				    send_type);
+
+      ompi_datatype_commit(send_type);
 
       ret = MCA_PML_CALL(isend(MPI_BOTTOM,
 			       1,
-			       send_type,
+			       send_type[0],
 			       i,
 			       fh->f_rank+i+100*iter,
 			       MCA_PML_BASE_SEND_STANDARD,
 			       fh->f_comm,
 			       requests+nprocs_recv+j));
-      free(&send_type);
+      if (NULL != send_type){
+	free(send_type);
+	send_type = NULL;
+      }
+      
       if (partial_send[i]) others_req[i].lens[k] = tmp;
       j++;
     }
@@ -987,7 +1000,8 @@ static int two_phase_exchange_data(mca_io_ompio_file_t *fh,
     rcomm_time += (end_rcomm_time - start_rcomm_time);
 #endif
 
-  return ret;
+ exit:
+    return ret;
 
 }
 
