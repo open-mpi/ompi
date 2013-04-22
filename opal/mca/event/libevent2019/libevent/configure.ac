@@ -613,18 +613,18 @@ int main(int argc, char **argv)
     struct epoll_event epevout;
     int res;
     int epfd;
-    int fildes[[2]];
+    int fildes[2];
 
     if ((epfd = epoll_create(1)) == -1)
         exit(1);
-    if (pipe(&fildes[[0]]) < 0)
+    if (pipe(&fildes[0]) < 0)
         exit(1);
     memset(&epevin, 0, sizeof(epevin));
     memset(&epevout, 0, sizeof(epevout));
     memset(&epevin.data.ptr, 5, sizeof(epevin.data.ptr));
     epevin.events = EPOLLIN | EPOLLOUT;
 
-    if (epoll_ctl(epfd, EPOLL_CTL_ADD, fildes[[1]], &epevin) == -1)
+    if (epoll_ctl(epfd, EPOLL_CTL_ADD, fildes[1], &epevin) == -1)
         exit(1);
 
     res = epoll_wait(epfd, &epevout, 1, 0);
