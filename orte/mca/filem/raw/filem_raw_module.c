@@ -517,6 +517,7 @@ static int raw_preposition_files(orte_job_t *jdata,
             opal_output(0, "%s CANNOT ACCESS FILE %s",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), fs->local_target);
             OBJ_RELEASE(item);
+            opal_list_remove_item(&outbound_files, &outbound->super);
             OBJ_RELEASE(outbound);
             return ORTE_ERROR;
         }
