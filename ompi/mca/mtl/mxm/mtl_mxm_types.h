@@ -38,14 +38,11 @@ typedef struct mca_mtl_mxm_module_t {
 } mca_mtl_mxm_module_t;
 
 
-typedef struct ompi_mtl_mxm_ep_conn_info_t {
 #if MXM_API < MXM_VERSION(2,0)
+typedef struct ompi_mtl_mxm_ep_conn_info_t {
     struct sockaddr_storage  ptl_addr[MXM_PTL_LAST];
-#else
-    unsigned                 domain_bitmap;
-    struct sockaddr_storage  dest_addr[MXM_DOMAIN_LAST];
-#endif
 } ompi_mtl_mxm_ep_conn_info_t;
+#endif
 
 extern mca_mtl_mxm_module_t ompi_mtl_mxm;
 
