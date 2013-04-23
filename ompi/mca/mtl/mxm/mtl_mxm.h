@@ -15,7 +15,9 @@
 #include <unistd.h>
 
 #include <mxm/api/mxm_api.h>
+#if MXM_API < MXM_VERSION(2, 0)
 #include <mxm/api/mxm_addr.h>
+#endif
 
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/mtl/mtl.h"
