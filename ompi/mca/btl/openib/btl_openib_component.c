@@ -2607,9 +2607,13 @@ btl_openib_component_init(int *num_btl_modules,
     init_data->order = mca_btl_openib_component.rdma_qp;
     init_data->list = &mca_btl_openib_component.send_user_free;
 
+    /* Align fragments on 8-byte boundaries (instead of 2) to fix bus errors that
+       occur on some 32-bit platforms. Depending on the size of the fragment this
+       will waste 2-6 bytes of space per frag. In most cases this shouldn't waste
+       any space. */
     if (OMPI_SUCCESS != ompi_free_list_init_ex_new(
                 &mca_btl_openib_component.send_user_free,
-                sizeof(mca_btl_openib_put_frag_t), 2,
+                sizeof(mca_btl_openib_put_frag_t), 8,
                 OBJ_CLASS(mca_btl_openib_put_frag_t),
                 0, 0,
                 mca_btl_openib_component.ib_free_list_num,
@@ -2626,7 +2630,7 @@ btl_openib_component_init(int *num_btl_modules,
 
     if(OMPI_SUCCESS != ompi_free_list_init_ex_new(
                 &mca_btl_openib_component.recv_user_free,
-                sizeof(mca_btl_openib_get_frag_t), 2,
+                sizeof(mca_btl_openib_get_frag_t), 8,
                 OBJ_CLASS(mca_btl_openib_get_frag_t),
                 0, 0,
                 mca_btl_openib_component.ib_free_list_num,
@@ -2643,7 +2647,7 @@ btl_openib_component_init(int *num_btl_modules,
 
     if(OMPI_SUCCESS != ompi_free_list_init_ex(
                 &mca_btl_openib_component.send_free_coalesced,
-                length, 2, OBJ_CLASS(mca_btl_openib_coalesced_frag_t),
+                length, 8, OBJ_CLASS(mca_btl_openib_coalesced_frag_t),
                 mca_btl_openib_component.ib_free_list_num,
                 mca_btl_openib_component.ib_free_list_max,
                 mca_btl_openib_component.ib_free_list_inc,
