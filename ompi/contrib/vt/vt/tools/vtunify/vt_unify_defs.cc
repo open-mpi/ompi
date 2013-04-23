@@ -50,7 +50,7 @@ DefinitionsC::DefinitionsC()
    // create token factory scopes for def. record type ...
    //
 
-   assert( theTokenFactory );
+   vt_assert( theTokenFactory );
 
    // ... DEF_REC_TYPE__DefProcessGroup
    theTokenFactory->addScope(
@@ -119,17 +119,17 @@ DefinitionsC::DefinitionsC()
    // create instance of sub-class GroupCountersC
    //
    m_groupCntrs = new GroupCountersC( *this );
-   assert( m_groupCntrs );
+   vt_assert( m_groupCntrs );
 
    // create instance of sub-class CommentsC
    //
    m_comments = new CommentsC( *this );
-   assert( m_comments );
+   vt_assert( m_comments );
 
    // create instance of sub-class ProcessGroupsC
    //
    m_procGrps = new ProcessGroupsC( *this );
-   assert( m_procGrps );
+   vt_assert( m_procGrps );
 }
 
 DefinitionsC::~DefinitionsC()
@@ -146,7 +146,7 @@ DefinitionsC::~DefinitionsC()
    // delete token factory scopes of def. record types ...
    //
 
-   assert( theTokenFactory );
+   vt_assert( theTokenFactory );
 
    // ... DEF_REC_TYPE__DefProcessGroup
    theTokenFactory->deleteScope( DEF_REC_TYPE__DefProcessGroup );
@@ -575,7 +575,7 @@ DefinitionsC::readLocal()
          // allocate memory for the send buffer
          //
          buffer = new char[buffer_size];
-         assert( buffer );
+         vt_assert( buffer );
 
          // pack send buffer
          //
@@ -664,7 +664,7 @@ DefinitionsC::readLocal()
             // allocate memory for the receive buffer
             //
             buffer = new char[buffer_size];
-            assert( buffer );
+            vt_assert( buffer );
 
             PVPrint( 3, "  Receiving local definitions from rank %d\n",
                      rank );
@@ -798,10 +798,10 @@ DefinitionsC::readLocal()
                   }
                   default:
                   {
-                     assert( 0 );
+                     vt_assert( 0 );
                   }
                }
-               assert( new_loc_def );
+               vt_assert( new_loc_def );
 
                // unpack local definition from receive buffer
                new_loc_def->unpack( buffer, buffer_size, buffer_pos );
@@ -886,7 +886,7 @@ DefinitionsC::readLocal( const uint32_t & streamId,
    // open file manager for reader stream
    //
    OTF_FileManager * manager = OTF_FileManager_open( 1 );
-   assert( manager );
+   vt_assert( manager );
 
    // initialize IOFSL stuff for reading, if necessary
    //
@@ -904,7 +904,7 @@ DefinitionsC::readLocal( const uint32_t & streamId,
    //
    OTF_RStream * rstream =
       OTF_RStream_open( Params.in_file_prefix.c_str(), streamId, manager );
-   assert( rstream );
+   vt_assert( rstream );
 
    PVPrint( 3, "  Opened OTF reader stream [namestub %s id %x]\n",
             Params.in_file_prefix.c_str(), streamId );
@@ -926,7 +926,7 @@ DefinitionsC::readLocal( const uint32_t & streamId,
       // create record handler array
       //
       OTF_HandlerArray * handler_array = OTF_HandlerArray_open();
-      assert( handler_array );
+      vt_assert( handler_array );
 
       // create first handler argument
       FirstHandlerArg_DefsS fha( locDefs );
@@ -1195,7 +1195,7 @@ DefinitionsC::processLocal( const LargeVectorC<DefRec_BaseS*> & locDefs )
             uint32_t global_procgrp =
                tkfac_defprocgrp->translate( loc_def_entry->loccpuid,
                   loc_def_entry->deftoken );
-            assert( global_procgrp != 0 );
+            vt_assert( global_procgrp != 0 );
 
             // search for global attributes by process group token
             std::map<uint32_t, DefRec_DefProcessGroupAttributesS>::iterator
@@ -1253,7 +1253,7 @@ DefinitionsC::processLocal( const LargeVectorC<DefRec_BaseS*> & locDefs )
             uint32_t global_sclfile =
                tkfac_defsclfile->translate(
                   loc_def_entry->loccpuid, loc_def_entry->sclfile );
-            assert( global_sclfile != 0 );
+            vt_assert( global_sclfile != 0 );
             loc_def_entry->sclfile = global_sclfile;
 
             // create global token for DefScl
@@ -1295,7 +1295,7 @@ DefinitionsC::processLocal( const LargeVectorC<DefRec_BaseS*> & locDefs )
             uint32_t global_filegroup =
                tkfac_deffilegroup->translate(
                   loc_def_entry->loccpuid, loc_def_entry->group );
-            assert( global_filegroup != 0 );
+            vt_assert( global_filegroup != 0 );
             loc_def_entry->group = global_filegroup;
 
             // create global token for DefFile
@@ -1341,7 +1341,7 @@ DefinitionsC::processLocal( const LargeVectorC<DefRec_BaseS*> & locDefs )
             uint32_t global_funcgroup =
                tkfac_deffuncgroup->translate(
                   loc_def_entry->loccpuid, loc_def_entry->group );
-            assert( global_funcgroup != 0 );
+            vt_assert( global_funcgroup != 0 );
             loc_def_entry->group = global_funcgroup;
 
             // get global token for DefScl
@@ -1351,7 +1351,7 @@ DefinitionsC::processLocal( const LargeVectorC<DefRec_BaseS*> & locDefs )
                uint32_t global_scl =
                   tkfac_defscl->translate(
                      loc_def_entry->loccpuid, loc_def_entry->scltoken );
-               assert( global_scl != 0 );
+               vt_assert( global_scl != 0 );
                loc_def_entry->scltoken = global_scl;
             }
 
@@ -1409,7 +1409,7 @@ DefinitionsC::processLocal( const LargeVectorC<DefRec_BaseS*> & locDefs )
             uint32_t global_cntrgroup =
                tkfac_defcntrgroup->translate(
                   loc_def_entry->loccpuid, loc_def_entry->group );
-            assert( global_cntrgroup != 0 );
+            vt_assert( global_cntrgroup != 0 );
             loc_def_entry->group = global_cntrgroup;
 
             // create global token for DefCounter
@@ -1436,7 +1436,7 @@ DefinitionsC::processLocal( const LargeVectorC<DefRec_BaseS*> & locDefs )
             uint32_t global_cntr =
                tkfac_defcntr->translate(
                   loc_def_entry->loccpuid, loc_def_entry->deftoken );
-            assert( global_cntr != 0 );
+            vt_assert( global_cntr != 0 );
 
             // search for global counter assignments by counter token
             std::map<uint32_t, DefRec_DefCounterAssignmentsS>::iterator
@@ -1459,7 +1459,7 @@ DefinitionsC::processLocal( const LargeVectorC<DefRec_BaseS*> & locDefs )
             uint32_t global_procgrp =
                tkfac_defprocgrp->translate( loc_def_entry->loccpuid,
                   *(loc_def_entry->groups.begin()) );
-            assert( global_procgrp != 0 );
+            vt_assert( global_procgrp != 0 );
 
             // add process group token to global counter assignments
             cntr_assigns_it->second.groups.insert( global_procgrp );
@@ -1487,7 +1487,7 @@ DefinitionsC::processLocal( const LargeVectorC<DefRec_BaseS*> & locDefs )
          }
          default:
          {
-            assert( 0 );
+            vt_assert( 0 );
          }
       }
    }
@@ -1509,7 +1509,7 @@ DefinitionsC::writeGlobal()
    // open file manager for writer stream
    //
    OTF_FileManager * manager = OTF_FileManager_open( 1 );
-   assert( manager );
+   vt_assert( manager );
 
 #if defined(HAVE_IOFSL) && HAVE_IOFSL
    // initialize IOFSL stuff for writing, if necessary
@@ -1534,7 +1534,7 @@ DefinitionsC::writeGlobal()
    //
    OTF_WStream * wstream =
       OTF_WStream_open( tmp_out_file_prefix.c_str(), 0, manager );
-   assert( wstream );
+   vt_assert( wstream );
 
    VPrint( 3, "  Opened OTF writer stream [namestub %s id 0]\n",
            tmp_out_file_prefix.c_str() );
@@ -1776,7 +1776,7 @@ DefinitionsC::writeGlobal()
                      TokenFactoryScopeC<attrs_list_t> * tkfac_attrs_list =
                         new TokenFactoryScopeC<attrs_list_t>
                            ( &global_attrs_lists );
-                     assert( tkfac_attrs_list );
+                     vt_assert( tkfac_attrs_list );
 
                      // iterate over all process group attr. definitions
                      for( std::map<uint32_t,
@@ -2278,7 +2278,7 @@ DefinitionsC::writeGlobal()
                     //
                     uint32_t n = record.groups.size();
                     uint32_t * array = new uint32_t[n];
-                    assert( array );
+                    vt_assert( array );
                     uint32_t i = 0;
                     for( std::set<uint32_t>::const_iterator it =
                          record.groups.begin(); it != record.groups.end();
@@ -2392,7 +2392,7 @@ DefinitionsC::CommentsC::processLocal( const DefRec_DefCommentS & locComment )
    bool error = false;
 
    std::istringstream iss( locComment.comment );
-   assert( iss );
+   vt_assert( iss );
 
    switch( locComment.type )
    {
@@ -2402,7 +2402,7 @@ DefinitionsC::CommentsC::processLocal( const DefRec_DefCommentS & locComment )
          //
          uint64_t starttime;
          iss >> starttime;
-         assert( iss );
+         vt_assert( iss );
 
          // update minimum start time, if necessary
          if( starttime < m_minStartTimeEpoch )
@@ -2416,7 +2416,7 @@ DefinitionsC::CommentsC::processLocal( const DefRec_DefCommentS & locComment )
          //
          uint64_t stoptime;
          iss >> stoptime;
-         assert( iss );
+         vt_assert( iss );
 
          // update maximum stop time, if necessary
          if( stoptime > m_maxStopTimeEpoch )
@@ -2442,28 +2442,28 @@ DefinitionsC::CommentsC::processLocal( const DefRec_DefCommentS & locComment )
                case 0: // 'C'
                {
                   iss >> delim;
-                  assert( iss );
-                  assert( delim == 'C' );
+                  vt_assert( iss );
+                  vt_assert( delim == 'C' );
                   break;
                }
                case 1: // communicator token
                {
                   iss >> std::hex >> comm;
-                  assert( iss );
+                  vt_assert( iss );
                   break;
                }
                case 2: // 'T'
                {
                   iss >> delim;
-                  assert( iss );
-                  assert( delim == 'T' );
+                  vt_assert( iss );
+                  vt_assert( delim == 'T' );
                   break;
                }
                case 3: // tag
                default:
                {
                   iss >> std::hex >> tag;
-                  assert( iss );
+                  vt_assert( iss );
                   break;
                }
             }
@@ -2477,7 +2477,7 @@ DefinitionsC::CommentsC::processLocal( const DefRec_DefCommentS & locComment )
          //
          uint32_t global_comm =
             tkfac_defprocgrp->translate( locComment.loccpuid, comm );
-         assert( global_comm != 0 );
+         vt_assert( global_comm != 0 );
 
          // add process id to members of user communicator
          m_defs.m_procGrps->m_userCom.addCommMember( global_comm,
@@ -2541,7 +2541,7 @@ DefinitionsC::CommentsC::processLocal( const DefRec_DefCommentS & locComment )
       }
       default: // DefRec_DefCommentS::TYPE_UNKNOWN
       {
-         assert( 0 );
+         vt_assert( 0 );
       }
    }
 
@@ -2724,7 +2724,7 @@ DefinitionsC::ProcessGroupsC::processLocal(
 	    ( locProcGrp.type == DefRec_DefProcessGroupS::TYPE_MPI_GROUP );
 
          // process group must have members
-         assert( locProcGrp.nmembers > 0 );
+         vt_assert( locProcGrp.nmembers > 0 );
 
          // deflate process group members and get its unique id
          //
@@ -2788,7 +2788,7 @@ DefinitionsC::ProcessGroupsC::processLocal(
             it =
                m_userCom.name2Comm.insert( std::make_pair( locProcGrp.name,
                   new UserComS::CommS() ) ).first;
-            assert( it->second );
+            vt_assert( it->second );
 
             it->second->global_token = global_token;
 
@@ -2854,7 +2854,7 @@ DefinitionsC::ProcessGroupsC::processLocal(
       }
       default: // DefRec_DefProcessGroupS::TYPE_UNKNOWN
       {
-         assert( 0 );
+         vt_assert( 0 );
       }
    }
 
@@ -2883,7 +2883,7 @@ DefinitionsC::ProcessGroupsC::finish( void )
            m_userCom.name2Comm.begin(); comm_it != m_userCom.name2Comm.end();
            ++comm_it )
       {
-         assert( comm_it->second->global_token != 0 );
+         vt_assert( comm_it->second->global_token != 0 );
 
          new_proc_grp.name = comm_it->first;
          new_proc_grp.assignMembers( comm_it->second->members.size(),
@@ -2913,7 +2913,7 @@ DefinitionsC::ProcessGroupsC::finish( void )
            m_other.name2Group.begin();
            group_it != m_other.name2Group.end(); ++group_it )
       {
-         assert( group_it->second.global_token != 0 );
+         vt_assert( group_it->second.global_token != 0 );
 
          new_proc_grp.name = group_it->first;
          new_proc_grp.assignMembers( group_it->second.members.size(),
@@ -2970,7 +2970,7 @@ DefinitionsC::ProcessGroupsC::deflateMembers(
 
       UniqueMembersS * new_unique_members =
          new UniqueMembersS( id, procGrp.nmembers, procGrp.members );
-      assert( new_unique_members );
+      vt_assert( new_unique_members );
 
       m_uniqueMembers.push_back( new_unique_members );
       m_hash2UniqueMembers.insert(
@@ -2982,7 +2982,7 @@ DefinitionsC::ProcessGroupsC::deflateMembers(
    delete [] procGrp.members;
    procGrp.nmembers = 2;
    procGrp.members = new uint32_t[2];
-   assert( procGrp.members );
+   vt_assert( procGrp.members );
    procGrp.members[0] = DEFLATED_MEMBERS_TAG;
    procGrp.members[1] = id;
 }
@@ -2995,19 +2995,19 @@ DefinitionsC::ProcessGroupsC::inflateMembers(
    if( procGrp.nmembers == 0 || procGrp.members[0] != DEFLATED_MEMBERS_TAG )
       return;
 
-   assert( procGrp.nmembers == 2 );
+   vt_assert( procGrp.nmembers == 2 );
 
    // get unique id of deflated input group member array
    //
    uint32_t id = procGrp.members[1];
-   assert( id < m_uniqueMembers.size() );
+   vt_assert( id < m_uniqueMembers.size() );
 
    // inflate input group member array
    //
    delete [] procGrp.members;
    procGrp.nmembers = m_uniqueMembers[id]->nmembers;
    procGrp.members = new uint32_t[procGrp.nmembers];
-   assert( procGrp.members );
+   vt_assert( procGrp.members );
    memcpy( procGrp.members, m_uniqueMembers[id]->members,
       procGrp.nmembers * sizeof( uint32_t ) );
 }

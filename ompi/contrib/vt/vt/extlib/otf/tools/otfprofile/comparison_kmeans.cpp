@@ -382,7 +382,8 @@ static bool do_kmeans( uint32_t n, uint32_t max, uint32_t len,
                 cnt++;
             }
         }
-        ret_quality->avg_dist2_vec_to_cent= ret_quality->avg_dist2_vec_to_cent / cnt;
+        if ( 0 < cnt )
+            ret_quality->avg_dist2_vec_to_cent= ret_quality->avg_dist2_vec_to_cent / cnt;
 
         ret_quality->min_dist2_cent_to_cent= numeric_limits<double>::max( );
         ret_quality->max_dist2_cent_to_cent= numeric_limits<double>::min( );
@@ -402,7 +403,8 @@ static bool do_kmeans( uint32_t n, uint32_t max, uint32_t len,
                 cnt++;
             }
         }
-        ret_quality->avg_dist2_cent_to_cent= ret_quality->avg_dist2_cent_to_cent / cnt;
+        if ( 0 < cnt )
+            ret_quality->avg_dist2_cent_to_cent= ret_quality->avg_dist2_cent_to_cent / cnt;
 
         ret_quality->iterations_used= m;
         ret_quality->iterations_max= max;

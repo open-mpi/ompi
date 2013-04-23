@@ -202,19 +202,16 @@ dnl		check for MPI Fortran interoperability
 
 		AS_IF([test x"$unimci_error" = "xno" -a x"$have_fmpi" = "xyes" -a x"$build_fmpiwraplib" = "xno"],
 		[
-			AS_IF([test x"$FC" != x],
+			ACVT_CONF_SUBSUBTITLE([MPI Fortran interoperability])
+			ACVT_FMPIWRAPLIB
+			AS_IF([test x"$fmpiwraplib_error" = "xno"],
 			[
-				ACVT_CONF_SUBSUBTITLE([MPI Fortran interoperability])
-				ACVT_FMPIWRAPLIB
-				AS_IF([test x"$fmpiwraplib_error" = "xno"],
-				[
-					build_fmpiwraplib="yes"
-					FMPILIB="-lvt-fmpi"
-				],
-				[
-					AC_MSG_NOTICE([error: MPI Fortran interoperability checks failed])
-					unimci_error = "yes"
-				])
+				build_fmpiwraplib="yes"
+				FMPILIB="-lvt-fmpi"
+			],
+			[
+				AC_MSG_NOTICE([error: MPI Fortran interoperability checks failed])
+				unimci_error = "yes"
 			])
 		])
 

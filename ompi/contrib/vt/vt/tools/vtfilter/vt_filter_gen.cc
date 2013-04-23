@@ -97,8 +97,8 @@ FilterGeneratorC::getOldParams( int& argc, char**& argv, char**& envp )
 {
   // at this point we should have an input trace file and an output filter file
   //
-  assert( !Params.input_trcfile.empty() );
-  assert( !Params.g_output_filtfile.empty() );
+  vt_assert( !Params.input_trcfile.empty() );
+  vt_assert( !Params.g_output_filtfile.empty() );
 
   // vector of converted command line options
   std::vector<std::string> args;
@@ -187,7 +187,7 @@ FilterGeneratorC::getOldParams( int& argc, char**& argv, char**& envp )
   if( !Params.g_incl_file.empty() )
   {
     envp[0] = new char[24 + Params.g_incl_file.length() + 1];
-    assert( envp[0] );
+    vt_assert( envp[0] );
     sprintf( envp[0], "TRACEFILTER_INCLUDEFILE=%s",
              Params.g_incl_file.c_str() );
     putenv( envp[0] );
@@ -198,7 +198,7 @@ FilterGeneratorC::getOldParams( int& argc, char**& argv, char**& envp )
   if( !Params.g_excl_file.empty() )
   {
     envp[1] = new char[24 + Params.g_excl_file.length() + 1];
-    assert( envp[1] );
+    vt_assert( envp[1] );
     sprintf( envp[1], "TRACEFILTER_EXCLUDEFILE=%s",
              Params.g_excl_file.c_str() );
     putenv( envp[1] );
@@ -212,7 +212,7 @@ FilterGeneratorC::getOldParams( int& argc, char**& argv, char**& envp )
   for( int i = 0; i < argc; i++ )
   {
     argv[i] = strdup( args[i].c_str() );
-    assert( argv[i] );
+    vt_assert( argv[i] );
   }
 
   return true;

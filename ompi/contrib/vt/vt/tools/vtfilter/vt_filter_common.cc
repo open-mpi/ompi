@@ -65,15 +65,15 @@ FilterCommonC::prepareProgress( const uint64_t& maxBytes )
       // allocate memory for some arrays
       //
       m_progress.recvBuffers = new uint64_t[m_numWorkerRanks-1];
-      assert( m_progress.recvBuffers );
+      vt_assert( m_progress.recvBuffers );
       m_progress.recvRequests = new MPI_Request[m_numWorkerRanks-1];
-      assert( m_progress.recvRequests );
+      vt_assert( m_progress.recvRequests );
       m_progress.recvStatuses = new MPI_Status[m_numWorkerRanks-1];
-      assert( m_progress.recvStatuses );
+      vt_assert( m_progress.recvStatuses );
       m_progress.recvIndices = new VT_MPI_INT[m_numWorkerRanks-1];
-      assert( m_progress.recvIndices );
+      vt_assert( m_progress.recvIndices );
       m_progress.rankCurBytes = new uint64_t[m_numWorkerRanks-1];
-      assert( m_progress.rankCurBytes );
+      vt_assert( m_progress.rankCurBytes );
 
       // initialize arrays
       //

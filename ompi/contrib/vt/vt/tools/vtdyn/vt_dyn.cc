@@ -93,7 +93,7 @@ main( int argc, char ** argv )
       // create instance of class MutatorC
       //
       theMutator = new MutatorC();
-      assert( theMutator );
+      vt_assert( theMutator );
 
       // start mutation
       //
@@ -425,7 +425,7 @@ MutatorC::initialize()
       // get RFG filter object
       //
       m_filter = RFG_Filter_init();
-      assert( m_filter );
+      vt_assert( m_filter );
 
       // read input filter files, if given
       //
@@ -465,7 +465,7 @@ MutatorC::initialize()
          {
             vPrint( 1, "Creating process\n" );
 
-            assert( Params.mutatee.length() > 0 );
+            vt_assert( Params.mutatee.length() > 0 );
 
             char ** mutatee_args;
             uint32_t i;
@@ -474,7 +474,7 @@ MutatorC::initialize()
             //
 
             mutatee_args = new char*[Params.mutatee_args.size()+1];
-            assert( mutatee_args );
+            vt_assert( mutatee_args );
 
             for( i = 0; i < Params.mutatee_args.size(); i++ )
             {
@@ -509,7 +509,7 @@ MutatorC::initialize()
          }
          case MODE_ATTACH:
          {
-            assert( Params.mutatee_pid );
+            vt_assert( Params.mutatee_pid );
 
             vPrint( 1, "Attaching to PID %d\n", Params.mutatee_pid );
 
@@ -542,7 +542,7 @@ MutatorC::initialize()
          }
          case MODE_REWRITE:
          {
-            assert( Params.mutatee.length() > 0 );
+            vt_assert( Params.mutatee.length() > 0 );
 
             vPrint( 1, "Opening %s\n", Params.mutatee.c_str() );
 
@@ -1069,7 +1069,7 @@ MutatorC::getFunctions( std::vector<FunctionS*> & funcRegions ) const
                         {
                            std::string::size_type si =
                               loop_iter_name.find_last_of( "@#" );
-                           assert( si != std::string::npos );
+                           vt_assert( si != std::string::npos );
 
                            loop_iter_name.insert( si, "iter " );
                         }
@@ -1445,7 +1445,7 @@ MutatorC::RegionS::RegionS( const std::string & _name, const SclS & _scl,
    : name( _name ), scl( _scl ), inst_points( _inst_points )
 {
    // the new operator should already catch this case
-   assert( Count < VT_MAX_DYNINST_REGIONS );
+   vt_assert( Count < VT_MAX_DYNINST_REGIONS );
 
    // set region's index and increment counter
    index = Count++;

@@ -4,9 +4,15 @@
 	- fixed build error when using the Intel MPI compiler wrappers
 	- prepend cross-prefix to the compiler wrappers *only* if
 	  '--with-cross-prefix[=PREFIX]' is given
+	- fixed passing FCFLAGS to the Fortran compiler when building libvt-fmpi
+	- temporary disabled memory allocation tracing for multi-threaded
+	  applications (introduced in v5.14.1) due to broken counter values
+	  when memory is freed in a different thread than where it was allocated
 	- fixed a potential minor bug in CUPTI activity stream handling
 	- workaround for CUDA 5.0 bug: do not call cuDeviceSynchronize(), if
 	  stream reuse is enabled and a CUDA stream is about to be destroyed
+	- fixed segmentation fault when writing intermediate statistics
+	  (VT_STAT_INTV != 0)
 	- vtdyn: do not instrument regions where using a trap is required
 	- plugin counters: Merge a set of post-mortem counters and write them
 	  under a single async key. This speeds up the unification.

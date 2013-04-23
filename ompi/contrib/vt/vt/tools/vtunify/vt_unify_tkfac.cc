@@ -32,8 +32,8 @@ TokenFactoryC::~TokenFactoryC()
 void
 TokenFactoryC::addScope( const DefRecTypeT & type, TokenFactoryScopeI * scope )
 {
-   assert( type < DEF_REC_TYPE__Num );
-   assert( scope );
+   vt_assert( type < DEF_REC_TYPE__Num );
+   vt_assert( scope );
 
    // search for already added scope instance
    std::map<DefRecTypeT, TokenFactoryScopeI*>::const_iterator it = m_def2scope.find( type );
@@ -46,7 +46,7 @@ TokenFactoryC::addScope( const DefRecTypeT & type, TokenFactoryScopeI * scope )
 void
 TokenFactoryC::deleteScope( const DefRecTypeT & type )
 {
-   assert( type < DEF_REC_TYPE__Num );
+   vt_assert( type < DEF_REC_TYPE__Num );
 
    // search scope instance
    std::map<DefRecTypeT, TokenFactoryScopeI*>::iterator it = m_def2scope.find( type );
@@ -62,7 +62,7 @@ TokenFactoryC::deleteScope( const DefRecTypeT & type )
 TokenFactoryScopeI *
 TokenFactoryC::getScope( const DefRecTypeT & type ) const
 {
-   assert( type < DEF_REC_TYPE__Num );
+   vt_assert( type < DEF_REC_TYPE__Num );
 
    // search scope instance
    std::map<DefRecTypeT, TokenFactoryScopeI*>::const_iterator it_scope =
@@ -80,7 +80,7 @@ TokenFactoryC::distTranslations( const VT_MPI_INT & destRank,
 {
    bool error = false;
 
-   assert( NumRanks > 1 );
+   vt_assert( NumRanks > 1 );
 
    // message tag to use for p2p communication
    const VT_MPI_INT msg_tag = 200;
@@ -91,7 +91,7 @@ TokenFactoryC::distTranslations( const VT_MPI_INT & destRank,
 
    MASTER
    {
-      assert( destRank != 0 );
+      vt_assert( destRank != 0 );
 
       // send token translation tables to given destination rank
       //
@@ -148,7 +148,7 @@ TokenFactoryC::distTranslations( const VT_MPI_INT & destRank,
       //
       if( request != MPI_REQUEST_NULL )
       {
-         assert( buffer );
+         vt_assert( buffer );
 
          CALL_MPI( MPI_Wait( &request, &status ) );
          delete [] buffer;
@@ -157,7 +157,7 @@ TokenFactoryC::distTranslations( const VT_MPI_INT & destRank,
       // allocate memory for the send buffer
       //
       buffer = new char[buffer_size];
-      assert( buffer );
+      vt_assert( buffer );
 
       // pack send buffer
       //
@@ -216,7 +216,7 @@ TokenFactoryC::distTranslations( const VT_MPI_INT & destRank,
       // allocate memory for the receive buffer
       //
       buffer = new char[buffer_size];
-      assert( buffer );
+      vt_assert( buffer );
 
       // receive buffer
       CALL_MPI( MPI_Recv( buffer, buffer_size, MPI_PACKED, 0, msg_tag,

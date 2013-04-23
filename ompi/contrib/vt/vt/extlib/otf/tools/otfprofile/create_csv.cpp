@@ -404,9 +404,6 @@ bool CreateCSV( AllData& alldata ) {
                             write_collop_data( alldata, csv_file,
                                 csv_file_name );
                             break;
-                        default:
-                            assert( 0 );
-                            break;
 
                     }
 

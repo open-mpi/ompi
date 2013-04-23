@@ -2,6 +2,8 @@
 	- otfprofile, LaTeX output:
 		- swapped x & y axis of the Message Data Rate Matrix
 		- adapted labels to Vampir
+	- otfinfo:
+		- fixed counting of collective operations and markers
 
 1.12.2openmpi
 	- fixed conflicts with OpenType Fonts:
