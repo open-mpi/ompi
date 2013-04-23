@@ -30,7 +30,7 @@ FiltTrc__EventHandler_FirstArgS::stackPush( const uint32_t& proc,
   //
   std::map<uint32_t, std::map<uint32_t, int32_t> >::iterator proc_it =
     filter.procFuncLimits.find( proc );
-  assert( proc_it != filter.procFuncLimits.end() );
+  vt_assert( proc_it != filter.procFuncLimits.end() );
 
   // get current function's call limit
   std::map<uint32_t, int32_t>::iterator func_it = proc_it->second.find( func );
@@ -125,7 +125,7 @@ FiltTrc__Handle_DefProcessGroup( FiltTrc__DefHandler_FirstArg_BaseS* farg,
 {
   int handler_rc = OTF_RETURN_OK;
 
-  assert( farg->isWriting() );
+  vt_assert( farg->isWriting() );
 
   FiltTrc__DefHandler_FirstArg_WriteS* farg_write =
     static_cast<FiltTrc__DefHandler_FirstArg_WriteS*>( farg );
@@ -177,7 +177,7 @@ FiltTrc__Handle_DefFunction( FiltTrc__DefHandler_FirstArg_BaseS* farg,
                              const char* name, uint32_t group,
                              uint32_t scltoken, OTF_KeyValueList* list )
 {
-  assert( farg->isReading() );
+  vt_assert( farg->isReading() );
 
   FiltTrc__DefHandler_FirstArg_ReadS* farg_read =
     static_cast<FiltTrc__DefHandler_FirstArg_ReadS*>( farg );

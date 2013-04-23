@@ -380,7 +380,7 @@ EventsAndStatsC::rewrite()
       // open file manager for reading
       //
       OTF_FileManager * rmanager = OTF_FileManager_open( 1 );
-      assert( rmanager );
+      vt_assert( rmanager );
 
       // initialize IOFSL stuff for reading, if necessary
       //
@@ -398,7 +398,7 @@ EventsAndStatsC::rewrite()
       //
       OTF_RStream * rstream =
       OTF_RStream_open( in_file_prefix.c_str(), streamid, rmanager );
-      assert( rstream );
+      vt_assert( rstream );
 
       PVPrint( 3, " Opened OTF reader stream [namestub %s id %x]\n",
                in_file_prefix.c_str(), streamid );
@@ -436,7 +436,7 @@ EventsAndStatsC::rewrite()
          //
          OTF_FileManager * wmanager =
             OTF_FileManager_open( 2 /* 1xevent + 1xsnaps */ );
-         assert( wmanager );
+         vt_assert( wmanager );
 
 #if defined(HAVE_IOFSL) && HAVE_IOFSL
          // initialize IOFSL stuff for writing, if necessary
@@ -461,7 +461,7 @@ EventsAndStatsC::rewrite()
          //
          OTF_WStream * wstream =
          OTF_WStream_open( tmp_out_file_prefix.c_str(), streamid, wmanager );
-         assert( wstream );
+         vt_assert( wstream );
 
          PVPrint( 3, " Opened OTF writer stream [namestub %s id %x]\n",
                   tmp_out_file_prefix.c_str(), streamid );
@@ -492,7 +492,7 @@ EventsAndStatsC::rewrite()
          // create record handler array
          //
          OTF_HandlerArray * handler_array = OTF_HandlerArray_open();
-         assert( handler_array );
+         vt_assert( handler_array );
 
          if( m_scope == SCOPE_EVENTS )
          {

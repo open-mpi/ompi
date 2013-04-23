@@ -43,7 +43,10 @@
 # define vt_fnmatch(_pattern, _string, __flags) strcmp(_string, _pattern)
 #endif /* HAVE_FNMATCH_H */
 
-#define assert(expr) vt_assert((expr))
+/* Cannot define assert() at this point, because subsequent #includes of system
+   header files may implicitly include 'assert.h' which would result in
+   a redefinition of assert(). */
+/*#define assert(expr) vt_assert((expr))*/
 
 #if defined(HAVE_SYS_PARAM_H) && HAVE_SYS_PARAM_H
 # include <sys/param.h>

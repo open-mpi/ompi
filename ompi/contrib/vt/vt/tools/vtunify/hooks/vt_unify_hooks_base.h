@@ -35,8 +35,8 @@ private:
    // trigger phase hook
    void triggerPhaseHook( const HooksC::PhaseTypeT & phase )
    {
-      assert( m_phaseMethods.size() > (uint32_t)phase );
-      assert( m_phaseMethods[phase] != 0 );
+      vt_assert( m_phaseMethods.size() > (uint32_t)phase );
+      vt_assert( m_phaseMethods[phase] != 0 );
 
       ( this->*( m_phaseMethods[phase] ) )();
    }
@@ -45,8 +45,8 @@ private:
    void triggerReadRecordHook( const HooksC::RecordTypeT & rectype,
                                HooksC::VaArgsT & args )
    {
-      assert( m_readRecHookMethods.size() > (uint32_t)rectype );
-      assert( m_readRecHookMethods[rectype] != 0 );
+      vt_assert( m_readRecHookMethods.size() > (uint32_t)rectype );
+      vt_assert( m_readRecHookMethods[rectype] != 0 );
 
       ( this->*( m_readRecHookMethods[rectype] ) )( args );
    }
@@ -55,8 +55,8 @@ private:
    void triggerWriteRecordHook( const HooksC::RecordTypeT & rectype,
                                 HooksC::VaArgsT & args )
    {
-      assert( m_writeRecHookMethods.size() > (uint32_t)rectype );
-      assert( m_writeRecHookMethods[rectype] != 0 );
+      vt_assert( m_writeRecHookMethods.size() > (uint32_t)rectype );
+      vt_assert( m_writeRecHookMethods[rectype] != 0 );
 
       ( this->*( m_writeRecHookMethods[rectype] ) )( args );
    }

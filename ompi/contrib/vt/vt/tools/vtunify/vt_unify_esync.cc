@@ -98,7 +98,7 @@ ETimeSyncC::ETimeSyncC()
 
    for( i = 0; i < UnifyCtls.size(); i++ )
    {
-      assert( UnifyCtls[i]->sync_phases.size() > 0 );
+      vt_assert( UnifyCtls[i]->sync_phases.size() > 0 );
 
       // insert map entry for stream id / round num
       m_streamId2RoundNum.insert(
@@ -106,11 +106,11 @@ ETimeSyncC::ETimeSyncC()
 
       if( !UnifyCtls[i]->sync_times.empty() )
       {
-         assert( !UnifyCtls[i]->sync_pairs.empty() );
+         vt_assert( !UnifyCtls[i]->sync_pairs.empty() );
       }
       if( !UnifyCtls[i]->sync_pairs.empty() )
       {
-         assert( !UnifyCtls[i]->sync_times.empty() );
+         vt_assert( !UnifyCtls[i]->sync_times.empty() );
       }
 
       // continue if current process doesn't have sync. information
@@ -120,7 +120,7 @@ ETimeSyncC::ETimeSyncC()
          continue;
       }
 
-      assert( UnifyCtls[i]->sync_times.size() ==
+      vt_assert( UnifyCtls[i]->sync_times.size() ==
               UnifyCtls[i]->sync_pairs.size() );
 
       // set number of sync. phases, if first process
@@ -131,7 +131,7 @@ ETimeSyncC::ETimeSyncC()
       // check whether number of sync. phases is equal to first process
       else
       {
-         assert( UnifyCtls[i]->sync_phases.size() == m_roundMax );
+         vt_assert( UnifyCtls[i]->sync_phases.size() == m_roundMax );
       }
 
       for( j = 0; j < UnifyCtls[i]->sync_times.size(); j++ )
@@ -274,14 +274,14 @@ ETimeSyncC::updateSyncParam( const uint32_t & proc )
 {
    std::map<uint32_t, UnifyControlS*>::const_iterator iter_uctl =
       StreamId2UnifyCtl.find( proc );
-   assert( iter_uctl != StreamId2UnifyCtl.end() );
+   vt_assert( iter_uctl != StreamId2UnifyCtl.end() );
 
    UnifyControlS * uctl = iter_uctl->second;
    const std::vector<SyncPhaseS> & sync_phases = uctl->sync_phases;
 
    std::map<uint32_t, uint32_t>::iterator iter_round_num =
       m_streamId2RoundNum.find( proc );
-   assert( iter_round_num != m_streamId2RoundNum.end() );
+   vt_assert( iter_round_num != m_streamId2RoundNum.end() );
 
    uint32_t & round_num = iter_round_num->second;
    const SyncPhaseS & phase = sync_phases[round_num];
@@ -304,14 +304,14 @@ ETimeSyncC::resetSyncParam( const uint32_t & proc )
    // reset round number of given stream
    std::map<uint32_t, uint32_t>::iterator iter_round_num =
       m_streamId2RoundNum.find( proc );
-   assert( iter_round_num != m_streamId2RoundNum.end() );
+   vt_assert( iter_round_num != m_streamId2RoundNum.end() );
 
    iter_round_num->second = 0;
 
    // reset offset and drift of given process
    std::map<uint32_t, UnifyControlS*>::const_iterator iter_uctl =
       StreamId2UnifyCtl.find( proc );
-   assert( iter_uctl != StreamId2UnifyCtl.end() );
+   vt_assert( iter_uctl != StreamId2UnifyCtl.end() );
 
    UnifyControlS * uctl = iter_uctl->second;
    std::vector<SyncPhaseS> & sync_phases = uctl->sync_phases;
@@ -319,7 +319,7 @@ ETimeSyncC::resetSyncParam( const uint32_t & proc )
    SyncPhaseS phase = sync_phases[0];
    std::map<uint32_t, std::vector<SyncParamS*>*>::const_iterator iter_param =
       m_idxvecSyncParam.find( phase.mapid );
-   assert( iter_param != m_idxvecSyncParam.end() );
+   vt_assert( iter_param != m_idxvecSyncParam.end() );
 
    uctl->sync_offset = (*(iter_param->second))[1]->offset;
    uctl->sync_drift  = (*(iter_param->second))[1]->drift;
@@ -418,7 +418,7 @@ ETimeSyncC::calcSync( uint32_t round,
       SyncTimeS * p_data2;
       iter2 = lastTimeStamps.find(iter->first);
 
-      assert( iter2 != lastTimeStamps.end() );
+      vt_assert( iter2 != lastTimeStamps.end() );
 
       p_data2=iter2->second;
 
@@ -704,7 +704,7 @@ ETimeSyncC::calcSync( uint32_t round,
       {
          std::map<uint32_t, UnifyControlS*>::const_iterator iter_uctl =
             StreamId2UnifyCtl.find(i+1);
-         assert( iter_uctl != StreamId2UnifyCtl.end() );
+         vt_assert( iter_uctl != StreamId2UnifyCtl.end() );
 
          UnifyControlS * uctl = iter_uctl->second;
 
@@ -761,7 +761,7 @@ ETimeSyncC::calcSync( uint32_t round,
       {
          std::map<uint32_t, UnifyControlS*>::const_iterator iter_uctl =
             StreamId2UnifyCtl.find(i+1);
-         assert( iter_uctl != StreamId2UnifyCtl.end() );
+         vt_assert( iter_uctl != StreamId2UnifyCtl.end() );
 
          UnifyControlS * uctl = iter_uctl->second;
 
@@ -859,7 +859,7 @@ ETimeSyncC::distStartTimes()
 {
    bool error = false;
 
-   assert( NumRanks > 1 );
+   vt_assert( NumRanks > 1 );
 
    CALL_MPI( MPI_Barrier( MPI_COMM_WORLD ) );
 
@@ -896,7 +896,7 @@ ETimeSyncC::distStartTimes()
    // allocate memory for the send buffer
    //
    buffer = new char[buffer_size];
-   assert( buffer );
+   vt_assert( buffer );
 
    // pack send buffer
    //
@@ -935,7 +935,7 @@ ETimeSyncC::distStartTimes()
    // allocate memory for the receive buffer sizes
    //
    rbuffer_sizes = new VT_MPI_INT[NumRanks];
-   assert( rbuffer_sizes );
+   vt_assert( rbuffer_sizes );
 
    // gather receive buffer sizes
    CALL_MPI( MPI_Allgather( &buffer_size, 1, MPI_INT, rbuffer_sizes, 1, MPI_INT,
@@ -948,7 +948,7 @@ ETimeSyncC::distStartTimes()
    // allocate memory for displacements
    //
    rdispls = new VT_MPI_INT[NumRanks];
-   assert( rdispls );
+   vt_assert( rdispls );
 
    // compute displacements and receive buffer size
    //
@@ -961,7 +961,7 @@ ETimeSyncC::distStartTimes()
    // allocate memory for the receive buffer
    //
    rbuffer = new char[rbuffer_size];
-   assert( rbuffer );
+   vt_assert( rbuffer );
 
    // gather start times
    CALL_MPI( MPI_Allgatherv( buffer, buffer_size, MPI_PACKED, rbuffer,

@@ -35,7 +35,7 @@ MarkersC::MarkersC() : m_tkfacScope( 0 )
       //
       m_tkfacScope =
          new TokenFactoryScopeC<DefRec_DefMarkerS>( &m_globDefs );
-      assert( m_tkfacScope );
+      vt_assert( m_tkfacScope );
    }
 }
 
@@ -381,7 +381,7 @@ MarkersC::readLocal()
             new_glob_spot.marker =
                m_tkfacScope->translate
                   ( new_glob_spot.proc, new_glob_spot.marker );
-            assert( new_glob_spot.marker != 0 );
+            vt_assert( new_glob_spot.marker != 0 );
 
             // add new global marker spot to vector
             m_globSpots.push_back( new_glob_spot );
@@ -412,7 +412,7 @@ MarkersC::readLocal( const uint32_t & streamId,
    // open file manager for reader stream
    //
    OTF_FileManager * manager = OTF_FileManager_open( 1 );
-   assert( manager );
+   vt_assert( manager );
 
    // initialize IOFSL stuff for reading, if necessary
    //
@@ -430,7 +430,7 @@ MarkersC::readLocal( const uint32_t & streamId,
    //
    OTF_RStream * rstream =
       OTF_RStream_open( Params.in_file_prefix.c_str(), streamId, manager );
-   assert( rstream );
+   vt_assert( rstream );
 
    PVPrint( 3, "  Opened OTF reader stream [namestub %s id %x]\n",
             Params.in_file_prefix.c_str(), streamId );
@@ -452,7 +452,7 @@ MarkersC::readLocal( const uint32_t & streamId,
       // create record handler array
       //
       OTF_HandlerArray * handler_array = OTF_HandlerArray_open();
-      assert( handler_array );
+      vt_assert( handler_array );
 
       // create first handler argument
       FirstHandlerArg_MarkersS fha( locDefs, locSpots );
@@ -517,7 +517,7 @@ MarkersC::writeGlobal()
    // open file manager for writer stream
    //
    OTF_FileManager * manager = OTF_FileManager_open( 1 );
-   assert( manager );
+   vt_assert( manager );
 
 #if defined(HAVE_IOFSL) && HAVE_IOFSL
    // initialize IOFSL stuff for writing, if necessary
@@ -542,7 +542,7 @@ MarkersC::writeGlobal()
    //
    OTF_WStream * wstream =
       OTF_WStream_open( tmp_out_file_prefix.c_str(), 0, manager );
-   assert( wstream );
+   vt_assert( wstream );
 
    VPrint( 3, "  Opened OTF writer stream [namestub %s id 0]\n",
            tmp_out_file_prefix.c_str() );
@@ -641,7 +641,7 @@ MarkersC::gatherLocal( const GatherTypeT & type, void * locRecs )
 {
    bool error = false;
 
-   assert( NumRanks > 1 );
+   vt_assert( NumRanks > 1 );
 
    // block until all ranks have reached this point
    CALL_MPI( MPI_Barrier( MPI_COMM_WORLD ) );
@@ -695,7 +695,7 @@ MarkersC::gatherLocal( const GatherTypeT & type, void * locRecs )
    // allocate memory for the send buffer
    //
    send_buffer = new char[send_buffer_size];
-   assert( send_buffer );
+   vt_assert( send_buffer );
 
    // pack send buffer
    //
@@ -744,7 +744,7 @@ MarkersC::gatherLocal( const GatherTypeT & type, void * locRecs )
       // allocate memory for the receive buffer sizes
       //
       recv_buffer_sizes = new VT_MPI_INT[NumRanks];
-      assert( recv_buffer_sizes );
+      vt_assert( recv_buffer_sizes );
    }
 
    // gather buffer sizes
@@ -756,7 +756,7 @@ MarkersC::gatherLocal( const GatherTypeT & type, void * locRecs )
       // allocate memory for displacements
       //
       recv_buffer_displs = new VT_MPI_INT[NumRanks];
-      assert( recv_buffer_displs );
+      vt_assert( recv_buffer_displs );
 
       // compute displacements and receive buffer size
       //
@@ -774,7 +774,7 @@ MarkersC::gatherLocal( const GatherTypeT & type, void * locRecs )
       // allocate memory for the receive buffer
       //
       recv_buffer = new char[recv_buffer_size];
-      assert( recv_buffer );
+      vt_assert( recv_buffer );
    }
 
    // gather packed local marker definitions

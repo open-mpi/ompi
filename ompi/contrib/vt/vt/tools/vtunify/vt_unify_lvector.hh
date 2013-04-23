@@ -37,7 +37,7 @@ public:
    LargeVectorC( const size_type & chunkSize )
       : m_size( 0 )
    {
-      assert( chunkSize > 0 );
+      vt_assert( chunkSize > 0 );
       m_chunkSize = chunkSize;
    }
 
@@ -87,14 +87,14 @@ public:
    // access the first element
    T & front()
    {
-      assert( m_size > 0 );
+      vt_assert( m_size > 0 );
       return m_vector[0];
    }
 
    // access the last element
    T & back()
    {
-      assert( m_size > 0 );
+      vt_assert( m_size > 0 );
       return m_vector[m_size-1];
    }
 
@@ -112,14 +112,14 @@ public:
    // get reference to element at specific location
    T & operator[]( size_type pos )
    {
-      assert( pos < m_size );
+      vt_assert( pos < m_size );
       return m_vector[pos];
    }
 
    // get reference to element at specific location (const version)
    const T & operator[]( size_type pos ) const
    {
-      assert( pos < m_size );
+      vt_assert( pos < m_size );
       return m_vector[pos];
    }
 
