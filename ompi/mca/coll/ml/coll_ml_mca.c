@@ -65,8 +65,6 @@ static int reg_string(const char* param_name,
                                deprecated_param_name, true);
     }
 
-    mca_base_param_lookup_string(index, &value);
-
     if (0 != (flags & REGSTR_EMPTY_OK) && 0 == strlen(value)) {
         opal_output(0, "Bad parameter value for parameter \"%s\"",
                 param_name);

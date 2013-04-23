@@ -67,6 +67,7 @@ static int mca_pml_v_component_open(void)
     int verbose;
     int priority;
     char *vprotocol_include_list;
+    int rc;
     
     priority = mca_pml_v_param_register_int("priority", -1);
     output = mca_pml_v_param_register_string("output", "stderr");
@@ -84,7 +85,12 @@ static int mca_pml_v_component_open(void)
             
     V_OUTPUT_VERBOSE(500, "loaded");
 
-    return mca_vprotocol_base_open(vprotocol_include_list);
+    rc = mca_vprotocol_base_open(vprotocol_include_list);
+    if (NULL != vprotocol_include_list) {
+        free (vprotocol_include_list);
+    }
+
+    return rc;
 }
  
 static int mca_pml_v_component_close(void)

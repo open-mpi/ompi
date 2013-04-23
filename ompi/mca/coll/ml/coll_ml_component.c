@@ -407,6 +407,8 @@ static int ml_open(void)
     cs->base_sequence_number = -1;
     cs->progress_is_busy = false;
 
+    mca_coll_ml_component.config_file_name = NULL;
+
     /* load mca parametres */
     rc = mca_coll_ml_register_params();
     if (OMPI_SUCCESS != rc) {
@@ -493,6 +495,12 @@ static int ml_close(void)
     int ret;
 
     mca_coll_ml_component_t *cs = &mca_coll_ml_component;
+
+    /* Free the config file name (allocated by mca_coll_ml_register_params) */
+    if (NULL != mca_coll_ml_component.config_file_name) {
+        free (mca_coll_ml_component.config_file_name);
+        mca_coll_ml_component.config_file_name = NULL;
+    }
 
     /* There is not need to release/close resource if the 
      * priority was set to zero */
