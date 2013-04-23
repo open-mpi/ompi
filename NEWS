@@ -53,6 +53,17 @@ included in the vX.Y.Z section and be denoted as:
                                  included in release version vA.B.C.
 
 
+1.7.2
+-----
+
+- Fix an error that caused epoll to automatically be disabled
+  in libevent
+- Upgrade hwloc to 1.5.2
+- Fix MXM connection establishment flow
+- Lots of VampirTrace upgrades and fixes; upgrade to v5.14.8
+- Fixed some minor memory leaks
+
+
 1.7.1
 -----
 
