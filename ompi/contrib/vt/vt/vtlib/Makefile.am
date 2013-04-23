@@ -334,9 +334,8 @@ else
 MATHLIBRARY =
 endif
 
-VT_COMMON_SOURCES = \
+COMMONSOURCES = \
 	vt_comp.h \
-	$(GPUHEADERS) \
 	vt_defs.h \
 	vt_demangle.h \
 	vt_dyninst.h \
@@ -369,17 +368,7 @@ VT_COMMON_SOURCES = \
 	vt_thrd.h \
 	vt_trc.h \
 	vt_unimci.h \
-	$(COMPINSTSOURCES) \
-	$(DYNINSTSOURCES) \
-	$(GETCPUSOURCES) \
-	$(GPUSOURCES) \
-	$(EXECWRAPSOURCES) \
-	$(IOWRAPSOURCES) \
-	$(LIBWRAPSOURCES) \
-	$(MALLOCWRAPSOURCES) \
-	$(METRSOURCES) \
-	$(PLUGINCNTRSOURCES) \
-	$(RUSAGESOURCES) \
+	$(GPUHEADERS) \
 	vt_env.c \
 	vt_error.c \
 	vt_fbindings.c \
@@ -393,86 +382,225 @@ VT_COMMON_SOURCES = \
 	vt_user_count.c \
 	vt_user_marker.c \
 	vt_user_message.c \
-	vt_user_region.c
+	vt_user_region.c \
+	$(GETCPUSOURCES) \
+	$(METRSOURCES) \
+	$(PLUGINCNTRSOURCES) \
+	$(RUSAGESOURCES)
+COMMONCFLAGS = \
+	-I$(top_srcdir)/include -I$(top_builddir)/include \
+	-I$(top_srcdir)/rfg \
+	$(GETCPUCFLAGS) \
+	$(DLCFLAGS) \
+	$(METRCFLAGS) \
+	$(OTFCFLAGS) \
+	$(PLUGINCNTRCFLAGS) \
+	$(RUSAGECFLAGS)
+COMMONLIBRARIES = \
+	$(top_builddir)/util/libvt_util.la \
+	$(top_builddir)/rfg/libvt_rfg.la \
+	$(OTFLIBRARY) \
+	$(DLLIBRARY) \
+	$(MATHLIBRARY) \
+	$(METRLIBRARY)
+COMMONDEPENDENCIES = \
+	$(top_builddir)/util/libvt_util.la \
+	$(top_builddir)/rfg/libvt_rfg.la \
+	$(OTFDEPENDENCIES)
 
-VT_SEQ_SOURCES = \
-	vt_fork.c
+CC = $(MPICC)
+F77 = $(MPIFC)
 
-VT_MPI_SOURCES = \
+libvt_la_CFLAGS = \
+	$(COMMONCFLAGS) \
+	$(COMPINSTCFLAGS) \
+	$(DYNINSTCFLAGS) \
+	$(EXECWRAPCFLAGS) \
+	$(GPUCFLAGS) \
+	$(IOWRAPCFLAGS) \
+	$(LIBWRAPCFLAGS) \
+	$(MALLOCWRAPCFLAGS)
+libvt_la_LIBADD = \
+	$(COMMONLIBRARIES) \
+	$(GPULIBRARY)
+libvt_la_DEPENDENCIES = \
+	$(COMMONDEPENDENCIES)
+libvt_la_SOURCES = \
+	$(COMMONSOURCES) \
+	vt_fork.c \
+	$(COMPINSTSOURCES) \
+	$(DYNINSTSOURCES) \
+	$(EXECWRAPSOURCES) \
+	$(GPUSOURCES) \
+	$(IOWRAPSOURCES) \
+	$(LIBWRAPSOURCES) \
+	$(MALLOCWRAPSOURCES)
+
+libvt_mpi_la_CFLAGS = \
+	$(COMMONCFLAGS) \
+	-DVT_MPI \
+	$(COMPINSTCFLAGS) \
+	$(DYNINSTCFLAGS) \
+	$(ETIMESYNCCFLAGS) \
+	$(EXECWRAPCFLAGS) \
+	$(GPUCFLAGS) \
+	$(IOFSLCFLAGS) \
+	$(IOWRAPCFLAGS) \
+	$(LIBWRAPCFLAGS) \
+	$(MALLOCWRAPCFLAGS) \
+	$(MPICFLAGS) \
+	$(MPIINCDIR) \
+	$(VTMPIUNIFYLIBCFLAGS) \
+	$(UNIMCICFLAGS)
+libvt_mpi_la_LIBADD = \
+	$(COMMONLIBRARIES) \
+	$(GPULIBRARY) \
+	$(VTMPIUNIFYLIBLIBRARY) \
+	$(MPILIBDIR) $(PMPILIB)
+libvt_mpi_la_DEPENDENCIES = \
+	$(COMMONDEPENDENCIES) \
+	$(VTMPIUNIFYLIBDEPENDENCIES)
+libvt_mpi_la_SOURCES = \
+	$(COMMONSOURCES) \
 	vt_mpicom.c \
 	vt_mpireg.c \
 	vt_mpireq.c \
 	vt_mpiwrap.c \
 	vt_sync.c \
-	$(MPI2IOSOURCES) \
+	$(COMPINSTSOURCES) \
+	$(DYNINSTSOURCES) \
 	$(ETIMESYNCSOURCES) \
+	$(EXECWRAPSOURCES) \
+	$(GPUSOURCES) \
 	$(IOFSLSOURCES) \
+	$(IOWRAPSOURCES) \
+	$(LIBWRAPSOURCES) \
+	$(MALLOCWRAPSOURCES) \
+	$(MPI2IOSOURCES) \
 	$(UNIMCISOURCES)
 
-VT_MT_SOURCES = \
-	$(THRDSOURCES) \
+libvt_mt_la_CFLAGS = \
+	$(COMMONCFLAGS) \
+	-DVT_MT \
+	$(COMPINSTCFLAGS) \
+	$(DYNINSTCFLAGS) \
+	$(EXECWRAPCFLAGS) \
+	$(GPUCFLAGS) \
+	$(IOWRAPCFLAGS) \
+	$(LIBWRAPCFLAGS) \
+	$(MALLOCWRAPCFLAGS) \
+	$(OMPCFLAGS) \
+	$(PTHREADCFLAGS) \
+	$(THRDCFLAGS)
+libvt_mt_la_LIBADD = \
+	$(COMMONLIBRARIES) \
+	$(GPULIBRARY)
+libvt_mt_la_DEPENDENCIES = \
+	$(COMMONDEPENDENCIES)
+libvt_mt_la_SOURCES = \
+	$(COMMONSOURCES) \
+	$(COMPINSTSOURCES) \
+	$(DYNINSTSOURCES) \
+	$(EXECWRAPSOURCES) \
+	$(GPUSOURCES) \
+	$(IOWRAPSOURCES) \
+	$(LIBWRAPSOURCES) \
+	$(MALLOCWRAPSOURCES) \
+	$(OMPSOURCES) \
 	$(PTHREADSOURCES) \
-	$(OMPSOURCES)
+	$(THRDSOURCES)
 
-VT_HYB_SOURCES = \
-	$(VT_MPI_SOURCES) \
-	$(VT_MT_SOURCES)
+libvt_hyb_la_CFLAGS = \
+	$(COMMONCFLAGS) \
+	-DVT_HYB \
+	$(COMPINSTCFLAGS) \
+	$(DYNINSTCFLAGS) \
+	$(ETIMESYNCCFLAGS) \
+	$(EXECWRAPCFLAGS) \
+	$(GPUCFLAGS) \
+	$(IOFSLCFLAGS) \
+	$(IOWRAPCFLAGS) \
+	$(LIBWRAPCFLAGS) \
+	$(MALLOCWRAPCFLAGS) \
+	$(MPICFLAGS) \
+	$(MPIINCDIR) \
+	$(OMPCFLAGS) \
+	$(PTHREADCFLAGS) \
+	$(THRDCFLAGS) \
+	$(UNIMCICFLAGS) \
+	$(VTMPIUNIFYLIBCFLAGS)
+libvt_hyb_la_LIBADD = \
+	$(COMMONLIBRARIES) \
+	$(GPULIBRARY) \
+	$(VTMPIUNIFYLIBLIBRARY) \
+	$(MPILIBDIR) $(PMPILIB)
+libvt_hyb_la_DEPENDENCIES = \
+	$(COMMONDEPENDENCIES) \
+	$(VTMPIUNIFYLIBDEPENDENCIES)
+libvt_hyb_la_SOURCES = \
+	$(COMMONSOURCES) \
+	vt_mpicom.c \
+	vt_mpireg.c \
+	vt_mpireq.c \
+	vt_mpiwrap.c \
+	vt_sync.c \
+	$(COMPINSTSOURCES) \
+	$(DYNINSTSOURCES) \
+	$(ETIMESYNCSOURCES) \
+	$(EXECWRAPSOURCES) \
+	$(GPUSOURCES) \
+	$(IOFSLSOURCES) \
+	$(IOWRAPSOURCES) \
+	$(LIBWRAPSOURCES) \
+	$(MALLOCWRAPSOURCES) \
+	$(MPI2IOSOURCES) \
+	$(OMPSOURCES) \
+	$(PTHREADSOURCES) \
+	$(THRDSOURCES) \
+	$(UNIMCISOURCES)
 
-VT_JAVA_SOURCES = \
+libvt_java_la_CFLAGS = \
+	$(COMMONCFLAGS) \
+	-DVT_JAVA \
+	$(JVMTIINCDIR)
+libvt_java_la_LDFLAGS = \
+	-shared
+libvt_java_la_LIBADD = \
+	$(COMMONLIBRARIES)
+libvt_java_la_DEPENDENCIES = \
+	$(COMMONDEPENDENCIES)
+libvt_java_la_SOURCES = \
+	$(COMMONSOURCES) \
 	vt_jvmti.h \
 	vt_java.c \
 	vt_thrd_java.c
 
-VT_POMP_SOURCES = \
+libvt_pomp_la_CFLAGS = \
+	$(COMMONCFLAGS) \
+	-static \
+	-prefer-pic \
+	$(OPENMP_CFLAGS) \
+	-I$(top_srcdir)/tools/opari/lib
+libvt_pomp_la_LDFLAGS = \
+	-static
+libvt_pomp_la_SOURCES = \
 	vt_pomp.h \
 	vt_pomp.c \
 	vt_fpomp.c
 
-VT_FMPI_SOURCES = \
+libvt_fmpi_la_CFLAGS = \
+	$(libvt_mpi_la_CFLAGS)
+libvt_fmpi_la_FFLAGS = \
+	$(FMPIINCDIR) \
+	$(MPIFCFLAGS)
+libvt_fmpi_la_SOURCES = \
 	vt_fmpiconst.h \
 	vt_fmpiconst.c \
 	vt_fmpiwrap.c \
 	vt_fmpiconst_1.f \
 	$(FMPI2CONSTSOURCES)
 
-CC = $(MPICC)
-AM_CFLAGS = -I$(top_srcdir)/include -I$(top_builddir)/include -I$(top_srcdir)/rfg $(OTFCFLAGS) $(DLCFLAGS) $(COMPINSTCFLAGS) $(DYNINSTCFLAGS) $(LIBWRAPCFLAGS) $(GPUCFLAGS) $(EXECWRAPCFLAGS) $(IOWRAPCFLAGS) $(MALLOCWRAPCFLAGS) $(GETCPUCFLAGS) $(RUSAGECFLAGS) $(METRCFLAGS) $(PLUGINCNTRCFLAGS)
-
-libvt_la_LIBADD = $(top_builddir)/util/libvt_util.la $(top_builddir)/rfg/libvt_rfg.la $(OTFLIBRARY) $(METRLIBRARY) $(GPULIBRARY) $(DLLIBRARY) $(MATHLIBRARY)
-libvt_la_DEPENDENCIES = $(top_builddir)/util/libvt_util.la $(top_builddir)/rfg/libvt_rfg.la $(OTFDEPENDENCIES)
-libvt_la_SOURCES = $(VT_COMMON_SOURCES) $(VT_SEQ_SOURCES)
-
-libvt_mpi_la_CFLAGS = -DVT_MPI $(AM_CFLAGS) $(MPICFLAGS) $(MPIINCDIR) $(VTMPIUNIFYLIBCFLAGS) $(ETIMESYNCCFLAGS) $(IOFSLCFLAGS) $(UNIMCICFLAGS)
-libvt_mpi_la_LIBADD = $(top_builddir)/util/libvt_util.la $(top_builddir)/rfg/libvt_rfg.la $(OTFLIBRARY) $(VTMPIUNIFYLIBLIBRARY) $(MPILIBDIR) $(PMPILIB) $(METRLIBRARY) $(GPULIBRARY) $(DLLIBRARY) $(MATHLIBRARY)
-libvt_mpi_la_DEPENDENCIES = $(top_builddir)/util/libvt_util.la $(top_builddir)/rfg/libvt_rfg.la $(OTFDEPENDENCIES) $(VTMPIUNIFYLIBDEPENDENCIES)
-libvt_mpi_la_SOURCES = $(VT_COMMON_SOURCES) $(VT_MPI_SOURCES)
-
-libvt_mt_la_CFLAGS = -DVT_MT $(AM_CFLAGS) $(PTHREADCFLAGS) $(OMPCFLAGS) $(THRDCFLAGS)
-libvt_mt_la_LIBADD = $(top_builddir)/util/libvt_util.la $(top_builddir)/rfg/libvt_rfg.la $(OTFLIBRARY) $(METRLIBRARY) $(GPULIBRARY) $(DLLIBRARY) $(MATHLIBRARY)
-libvt_mt_la_DEPENDENCIES = $(top_builddir)/util/libvt_util.la $(top_builddir)/rfg/libvt_rfg.la $(OTFDEPENDENCIES)
-libvt_mt_la_SOURCES = $(VT_COMMON_SOURCES) $(VT_MT_SOURCES)
-
-libvt_hyb_la_CFLAGS = -DVT_HYB $(AM_CFLAGS) $(MPICFLAGS) $(MPIINCDIR) $(VTMPIUNIFYLIBCFLAGS) $(PTHREADCFLAGS) $(OMPCFLAGS) $(THRDCFLAGS) $(ETIMESYNCCFLAGS) $(IOFSLCFLAGS) $(UNIMCICFLAGS)
-libvt_hyb_la_LIBADD = $(top_builddir)/util/libvt_util.la $(top_builddir)/rfg/libvt_rfg.la $(OTFLIBRARY) $(VTMPIUNIFYLIBLIBRARY) $(MPILIBDIR) $(PMPILIB) $(METRLIBRARY) $(GPULIBRARY) $(DLLIBRARY) $(MATHLIBRARY)
-libvt_hyb_la_DEPENDENCIES = $(top_builddir)/util/libvt_util.la $(top_builddir)/rfg/libvt_rfg.la $(OTFDEPENDENCIES) $(VTMPIUNIFYLIBDEPENDENCIES)
-libvt_hyb_la_SOURCES = $(VT_COMMON_SOURCES) $(VT_HYB_SOURCES)
-
-libvt_java_la_CFLAGS = -DVT_JAVA $(AM_CFLAGS) $(JVMTIINCDIR)
-libvt_java_la_LDFLAGS = -shared
-libvt_java_la_LIBADD = $(top_builddir)/util/libvt_util.la $(top_builddir)/rfg/libvt_rfg.la $(OTFLIBRARY) $(METRLIBRARY) $(GPULIBRARY)
-libvt_java_la_DEPENDENCIES = $(top_builddir)/util/libvt_util.la $(top_builddir)/rfg/libvt_rfg.la $(OTFDEPENDENCIES)
-libvt_java_la_SOURCES = $(VT_COMMON_SOURCES) $(VT_JAVA_SOURCES)
-
-libvt_pomp_la_CFLAGS = -static -prefer-pic $(AM_CFLAGS) $(OPENMP_CFLAGS) -I$(top_srcdir)/tools/opari/lib
-libvt_pomp_la_LDFLAGS = -static
-libvt_pomp_la_SOURCES = $(VT_POMP_SOURCES)
-
-F77 = $(MPIFC)
-libvt_fmpi_la_CFLAGS = $(libvt_mpi_la_CFLAGS)
-libvt_fmpi_la_FFLAGS = $(MPIFCFLAGS) $(FMPIINCDIR)
-libvt_fmpi_la_SOURCES = $(VT_FMPI_SOURCES)
-
-vtsysconf_DATA = \
+dist_vtsysconf_DATA = \
 	$(VTJAVAETCDATA)
 vtsysconfdir = $(sysconfdir)
 
@@ -492,8 +620,7 @@ EXTRA_DIST = \
 	vt_pform_necsx.c \
 	vt_pform_origin.c \
 	vt_pform_sicortex.c \
-	vt_pform_sun.c \
-	vt-java-default-filter.spec
+	vt_pform_sun.c
 
 DISTCLEANFILES = \
 	vt_mpireg.gen.c \

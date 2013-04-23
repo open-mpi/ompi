@@ -2,7 +2,7 @@
  * VampirTrace
  * http://www.tu-dresden.de/zih/vampirtrace
  *
- * Copyright (c) 2005-2012, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2013, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich, Juelich Supercomputing
  *                          Centre, Federal Republic of Germany
@@ -229,7 +229,7 @@ EXTERN uint32_t vt_def_region_group(uint32_t tid, const char* gname);
  */
 EXTERN uint32_t vt_def_region(uint32_t tid, const char* rname, uint32_t fid,
                               uint32_t begln, uint32_t endln,
-                              const char* rdesc, uint8_t rtype);
+                              const char* rgroup, uint8_t rtype);
 
 /**
  * TODO: Description

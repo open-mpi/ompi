@@ -468,31 +468,14 @@ AC_DEFUN([ACVT_MPI],
 
 	AS_IF([test x"$check_mpi" = "xyes"],
 	[
-		AC_CHECK_PROGS(MPICC, mpicc hcc mpcc_r mpcc mpxlc_r mpxlc mpixlc_r mpixlc cmpicc mpiicc)
-		AS_IF([test x"$MPICC" != x],
-		[
-			AS_IF([test x"$inside_openmpi" = "xno"],
-			[
-				mpicc=`echo $MPICC | cut -d ' ' -f 1`
-				which_mpicc=`which $mpicc 2>/dev/null`
-				AS_IF([test x"$which_mpicc" = x], [AC_MSG_ERROR([$mpicc not found])])
+dnl		check for MPICC
 
-				mpi_bin_dir=`dirname $which_mpicc`
-				AS_IF([test "$mpi_bin_dir" != "/usr/bin" -a "$mpi_bin_dir" != "/SX/usr/bin"],
-				[
-					AS_IF([test x"$MPIDIR" = x],
-					[MPIDIR=`echo $mpi_bin_dir | sed -e 's/bin//'`])
-					AS_IF([test x"$MPIINCDIR" = x],
-					[MPIINCDIR=-I`echo $mpi_bin_dir | sed -e 's/bin/include/'`])
-					AS_IF([test x"$FMPIINCDIR" = x],
-					[FMPIINCDIR=$MPIINCDIR])
-					AS_IF([test x"$MPILIBDIR" = x],
-					[MPILIBDIR=-L`echo $mpi_bin_dir | sed -e 's/bin/lib/'`])
-				])
-			])
-		],
+		AC_CHECK_PROGS(MPICC, mpicc hcc mpcc_r mpcc mpxlc_r mpxlc mpixlc_r mpixlc cmpicc mpiicc, $CC)
+
+dnl		check for mpi.h, if MPICC was not found
+
+		AS_IF([test x"$MPICC" = x"$CC" -a x"$inside_openmpi" = "xno"],
 		[
-			MPICC="$CC"
 			sav_CPPFLAGS=$CPPFLAGS
 			CPPFLAGS="$CPPFLAGS $MPIINCDIR"
 			AC_CHECK_HEADER([mpi.h], [],
@@ -503,175 +486,182 @@ AC_DEFUN([ACVT_MPI],
 			CPPFLAGS=$sav_CPPFLAGS
 		])
 
+dnl		check for MPICXX
+
 		AS_IF([test x"$mpi_error" = "xno"],
 		[
-			AC_CHECK_PROGS(MPICXX, mpicxx mpic++ mpiCC hcp mpxlC_r mpxlC mpCC_r mpCC cmpic++)
-			AS_IF([test x"$MPICXX" = x], [MPICXX="$CXX"])
-
+			AC_CHECK_PROGS(MPICXX, mpicxx mpic++ mpiCC hcp mpxlC_r mpxlC mpCC_r mpCC cmpic++, $CXX)
 			MPICXXFLAGS="$MPICXXFLAGS -DMPICH_SKIP_MPICXX -DOMPI_SKIP_MPICXX -DMPI_NO_CPPBIND"
 		])
 
 dnl		check for MPILIB
 
-		AS_IF([test x"$MPILIB" = x -a x"$mpi_error" = "xno"],
+		AS_IF([test "$MPICC" = "$CC"],
 		[
-			sav_LIBS=$LIBS
-			LIBS="$LIBS $MPILIBDIR -lmpi_r"
-			AC_MSG_CHECKING([whether linking with -lmpi_r works])
-			AC_TRY_LINK([],[],
-			[AC_MSG_RESULT([yes]); MPILIB=-lmpi_r],[AC_MSG_RESULT([no])])
-			LIBS=$sav_LIBS
-		])
-
-		AS_IF([test x"$MPILIB" = x -a x"$mpi_error" = "xno"],
-		[
-			sav_LIBS=$LIBS
-			LIBS="$LIBS $MPILIBDIR -lmpi"
-			AC_MSG_CHECKING([whether linking with -lmpi works])
-			AC_TRY_LINK([],[],
-			[AC_MSG_RESULT([yes]); MPILIB=-lmpi],[AC_MSG_RESULT([no])])
-			LIBS=$sav_LIBS
-
-			AS_IF([test x"$MPILIB" != x],
+			AS_IF([test x"$MPILIB" = x -a x"$mpi_error" = "xno"],
 			[
 				sav_LIBS=$LIBS
-				LIBS="$LIBS $MPILIBDIR -llam"
-				AC_MSG_CHECKING([whether linking with -llam works])
+				LIBS="$LIBS $MPILIBDIR -lmpi_r"
+				AC_MSG_CHECKING([whether linking with -lmpi_r works])
 				AC_TRY_LINK([],[],
-				[AC_MSG_RESULT([yes]); MPILIB="-lmpi -llam"],[AC_MSG_RESULT([no])])
+				[AC_MSG_RESULT([yes]); MPILIB=-lmpi_r],[AC_MSG_RESULT([no])])
 				LIBS=$sav_LIBS
 			])
-		])
 
-		AS_IF([test x"$MPILIB" = x -a x"$mpi_error" = "xno"],
-		[
-			AS_IF([test x"$MPILIBDIR" = x],
-			[pmilibdir="-L/usr/lib/pmi"], [pmilibdir="$MPILIBDIR/pmi"])
+			AS_IF([test x"$MPILIB" = x -a x"$mpi_error" = "xno"],
+			[
+				sav_LIBS=$LIBS
+				LIBS="$LIBS $MPILIBDIR -lmpi"
+				AC_MSG_CHECKING([whether linking with -lmpi works])
+				AC_TRY_LINK([],[],
+				[AC_MSG_RESULT([yes]); MPILIB=-lmpi],[AC_MSG_RESULT([no])])
+				LIBS=$sav_LIBS
 
-			sav_LIBS=$LIBS
-			LIBS="$LIBS $MPILIBDIR $pmilibdir -lmpi -lpmi"
-			AC_MSG_CHECKING([whether linking with -lmpi $pmilibdir -lpmi works])
-			AC_TRY_LINK([],[],
-			[AC_MSG_RESULT([yes]); MPILIBDIR="$MPILIBDIR $pmilibdir"; MPILIB="-lmpi -lpmi"],
-			[AC_MSG_RESULT([no])])
-			LIBS=$sav_LIBS
-		])
+				AS_IF([test x"$MPILIB" != x],
+				[
+					sav_LIBS=$LIBS
+					LIBS="$LIBS $MPILIBDIR -llam"
+					AC_MSG_CHECKING([whether linking with -llam works])
+					AC_TRY_LINK([],[],
+					[AC_MSG_RESULT([yes]); MPILIB="-lmpi -llam"],[AC_MSG_RESULT([no])])
+					LIBS=$sav_LIBS
+				])
+			])
+
+			AS_IF([test x"$MPILIB" = x -a x"$mpi_error" = "xno"],
+			[
+				AS_IF([test x"$MPILIBDIR" = x],
+				[pmilibdir="-L/usr/lib/pmi"], [pmilibdir="$MPILIBDIR/pmi"])
+
+				sav_LIBS=$LIBS
+				LIBS="$LIBS $MPILIBDIR $pmilibdir -lmpi -lpmi"
+				AC_MSG_CHECKING([whether linking with -lmpi $pmilibdir -lpmi works])
+				AC_TRY_LINK([],[],
+				[AC_MSG_RESULT([yes]); MPILIBDIR="$MPILIBDIR $pmilibdir"; MPILIB="-lmpi -lpmi"],
+				[AC_MSG_RESULT([no])])
+				LIBS=$sav_LIBS
+			])
 			
-		AS_IF([test x"$MPILIB" = x -a x"$mpi_error" = "xno"],
-		[
-			sav_LIBS=$LIBS
-			LIBS="$LIBS $MPILIBDIR -lmpich"
-			AC_MSG_CHECKING([whether linking with -lmpich works])
-			AC_TRY_LINK([],[],
-			[AC_MSG_RESULT([yes]); MPILIB=-lmpich],[AC_MSG_RESULT([no])])
-			LIBS=$sav_LIBS
-			AS_IF([test x"$MPILIB" != x],
-			[MPICFLAGS="$MPICFLAGS -DMPICH_IGNORE_CXX_SEEK"])
-		])
-
-		AS_IF([test x"$MPILIB" = x -a x"$mpi_error" = "xno"],
-		[
-			sav_LIBS=$LIBS
-			LIBS="$LIBS $MPILIBDIR -lmpichg2"
-			AC_MSG_CHECKING([whether linking with -lmpichg2 works])
-			AC_TRY_LINK([],[],
-			[AC_MSG_RESULT([yes]); MPILIB=-lmpichg2],[AC_MSG_RESULT([no])])
-			LIBS=$sav_LIBS
-			AS_IF([test x"$MPILIB" != x],
-			[MPICFLAGS="$MPICFLAGS -DMPICH_IGNORE_CXX_SEEK"])
-		])
-
-		AS_IF([test x"$MPILIB" = x -a x"$mpi_error" = "xno"],
-		[
-			sav_LIBS=$LIBS
-			LIBS="$LIBS $MPILIBDIR -lhpmpi"
-			AC_MSG_CHECKING([whether linking with -lhpmpi works])
-			AC_TRY_LINK([],[],
-			[AC_MSG_RESULT([yes]); MPILIB=-lhpmpi],[AC_MSG_RESULT([no])])
-			LIBS=$sav_LIBS
-			AS_IF([test x"$MPILIB" != x],
+			AS_IF([test x"$MPILIB" = x -a x"$mpi_error" = "xno"],
 			[
 				sav_LIBS=$LIBS
-				LIBS="$LIBS $MPILIBDIR -lmtmpi"
-				AC_MSG_CHECKING([whether linking with -lmtmpi works])
+				LIBS="$LIBS $MPILIBDIR -lmpich"
+				AC_MSG_CHECKING([whether linking with -lmpich works])
 				AC_TRY_LINK([],[],
-				[AC_MSG_RESULT([yes]); MPILIB=-lmtmpi],[AC_MSG_RESULT([no])])
+				[AC_MSG_RESULT([yes]); MPILIB=-lmpich],[AC_MSG_RESULT([no])])
 				LIBS=$sav_LIBS
+				AS_IF([test x"$MPILIB" != x],
+				[MPICFLAGS="$MPICFLAGS -DMPICH_IGNORE_CXX_SEEK"])
 			])
-		])
 
-		AS_IF([test x"$MPILIB" = x -a x"$mpi_error" = "xno"],
-		[
-			AC_MSG_NOTICE([error: no libmpi_r, libmpi, liblam, libmpich, or libhpmpi found; check path for MPI package first...])
-			mpi_error="yes"
+			AS_IF([test x"$MPILIB" = x -a x"$mpi_error" = "xno"],
+			[
+				sav_LIBS=$LIBS
+				LIBS="$LIBS $MPILIBDIR -lmpichg2"
+				AC_MSG_CHECKING([whether linking with -lmpichg2 works])
+				AC_TRY_LINK([],[],
+				[AC_MSG_RESULT([yes]); MPILIB=-lmpichg2],[AC_MSG_RESULT([no])])
+				LIBS=$sav_LIBS
+				AS_IF([test x"$MPILIB" != x],
+				[MPICFLAGS="$MPICFLAGS -DMPICH_IGNORE_CXX_SEEK"])
+			])
+
+			AS_IF([test x"$MPILIB" = x -a x"$mpi_error" = "xno"],
+			[
+				sav_LIBS=$LIBS
+				LIBS="$LIBS $MPILIBDIR -lhpmpi"
+				AC_MSG_CHECKING([whether linking with -lhpmpi works])
+				AC_TRY_LINK([],[],
+				[AC_MSG_RESULT([yes]); MPILIB=-lhpmpi],[AC_MSG_RESULT([no])])
+				LIBS=$sav_LIBS
+				AS_IF([test x"$MPILIB" != x],
+				[
+					sav_LIBS=$LIBS
+					LIBS="$LIBS $MPILIBDIR -lmtmpi"
+					AC_MSG_CHECKING([whether linking with -lmtmpi works])
+					AC_TRY_LINK([],[],
+					[AC_MSG_RESULT([yes]); MPILIB=-lmtmpi],[AC_MSG_RESULT([no])])
+					LIBS=$sav_LIBS
+				])
+			])
+
+			AS_IF([test x"$MPILIB" = x -a x"$mpi_error" = "xno"],
+			[
+				AC_MSG_NOTICE([error: no libmpi_r, libmpi, liblam, libmpich, or libhpmpi found; check path for MPI package first...])
+				mpi_error="yes"
+			])
 		])
 
 dnl		check for PMPILIB
 
 		AS_IF([test x"$PMPILIB" = x -a x"$mpi_error" = "xno"],
 		[
+			sav_CC=$CC
+			CC=$MPICC
+
 			sav_LIBS=$LIBS
-			LIBS="$LIBS $MPILIBDIR -lpmpich"
-			AC_MSG_CHECKING([whether linking with -lpmpich works])
+			LIBS="$LIBS $MPILIBDIR -lpmpich $MPILIB"
+			AC_MSG_CHECKING([whether linking with -lpmpich $MPILIB works])
 			AC_TRY_LINK([],[],
 			[AC_MSG_RESULT([yes]); PMPILIB=-lpmpich],[AC_MSG_RESULT([no])])
 			LIBS=$sav_LIBS
-		])
 
-		AS_IF([test x"$PMPILIB" = x -a x"$mpi_error" = "xno"],
-		[
-			sav_LIBS=$LIBS
-			LIBS="$LIBS $MPILIBDIR -lpmpichg2"
-			AC_MSG_CHECKING([whether linking with -lpmpichg2 works])
-			AC_TRY_LINK([],[],
-			[AC_MSG_RESULT([yes]); PMPILIB=-lpmpichg2],[AC_MSG_RESULT([no])])
-			LIBS=$sav_LIBS
-		])
-
-		AS_IF([test x"$PMPILIB" = x -a x"$mpi_error" = "xno"],
-		[
-			sav_LIBS=$LIBS
-			LIBS="$LIBS $MPILIBDIR -lpmpi"
-			AC_MSG_CHECKING([whether linking with -lpmpi works])
-			AC_TRY_LINK([],[],
-			[AC_MSG_RESULT([yes]); PMPILIB=-lpmpi],[AC_MSG_RESULT([no])])
-			LIBS=$sav_LIBS
-			AS_IF([test x"$PMPILIB" != x],
+			AS_IF([test x"$PMPILIB" = x -a x"$mpi_error" = "xno"],
 			[
 				sav_LIBS=$LIBS
-				LIBS="$LIBS $MPILIBDIR -lmtpmpi"
-				AC_MSG_CHECKING([whether linking with -lmtpmpi works])
+				LIBS="$LIBS $MPILIBDIR -lpmpichg2 $MPILIB"
+				AC_MSG_CHECKING([whether linking with -lpmpichg2 $MPILIB works])
 				AC_TRY_LINK([],[],
-				[AC_MSG_RESULT([yes]); PMPILIB=-lmtpmpi],[AC_MSG_RESULT([no])])
+				[AC_MSG_RESULT([yes]); PMPILIB=-lpmpichg2],[AC_MSG_RESULT([no])])
 				LIBS=$sav_LIBS
 			])
-		])
 
-		AS_IF([test x"$PMPILIB" = x -a x"$mpi_error" = "xno"],
-		[
-			PMPILIB="$MPILIB"
-			AC_MSG_WARN([no libpmpich, or libpmpi found; assuming $MPILIB])
+dnl			Do not check for libpmpi. When using the Open MPI compiler wrapper, this check
+dnl			succeeds even if this library isn't present.
+dnl			AS_IF([test x"$PMPILIB" = x -a x"$mpi_error" = "xno"],
+dnl			[
+dnl				sav_LIBS=$LIBS
+dnl				LIBS="$LIBS $MPILIBDIR -lpmpi $MPILIB"
+dnl				AC_MSG_CHECKING([whether linking with -lpmpi $MPILIB works])
+dnl				AC_TRY_LINK([],[],
+dnl				[AC_MSG_RESULT([yes]); PMPILIB=-lpmpi],[AC_MSG_RESULT([no])])
+dnl				LIBS=$sav_LIBS
+dnl				AS_IF([test x"$PMPILIB" != x],
+dnl				[
+dnl					sav_LIBS=$LIBS
+dnl					LIBS="$LIBS $MPILIBDIR -lmtpmpi"
+dnl					AC_MSG_CHECKING([whether linking with -lmtpmpi works])
+dnl					AC_TRY_LINK([],[],
+dnl					[AC_MSG_RESULT([yes]); PMPILIB=-lmtpmpi],[AC_MSG_RESULT([no])])
+dnl					LIBS=$sav_LIBS
+dnl				])
+dnl			])
+
+			AS_IF([test x"$PMPILIB" = x -a x"$mpi_error" = "xno"],
+			[PMPILIB="$MPILIB"])
+
+			CC=$sav_CC
 		])
 
 dnl		check for FMPILIB
 
-		AS_IF([test x"$FC" != x],
+		AS_IF([test x"$FC" != x -a x"$FMPILIB" = x -a x"$mpi_error" = "xno"],
 		[
-			AS_IF([test x"$FMPILIB" = x -a x"$mpi_error" = "xno"],
-			[
-				sav_LIBS=$LIBS
-				LIBS="$LIBS $MPILIBDIR -lmpi_f77 $MPILIB"
-				AC_MSG_CHECKING([whether linking with -lmpi_f77 works])
-				AC_TRY_LINK([],[],
-				[AC_MSG_RESULT([yes]); FMPILIB=-lmpi_f77],[AC_MSG_RESULT([no])])
-				LIBS=$sav_LIBS
-			])
+			sav_CC=$CC
+			CC=$MPICC
+
+			sav_LIBS=$LIBS
+			LIBS="$LIBS $MPILIBDIR -lmpi_f77 $MPILIB"
+			AC_MSG_CHECKING([whether linking with -lmpi_f77 $MPILIB works])
+			AC_TRY_LINK([],[],
+			[AC_MSG_RESULT([yes]); FMPILIB=-lmpi_f77],[AC_MSG_RESULT([no])])
+			LIBS=$sav_LIBS
 
 			AS_IF([test x"$FMPILIB" = x -a x"$mpi_error" = "xno"],
 			[
 				sav_LIBS=$LIBS
 				LIBS="$LIBS $MPILIBDIR -lmpi_mpifh $MPILIB"
-				AC_MSG_CHECKING([whether linking with -lmpi_mpifh works])
+				AC_MSG_CHECKING([whether linking with -lmpi_mpifh $MPILIB works])
 				AC_TRY_LINK([],[],
 				[AC_MSG_RESULT([yes]); FMPILIB="-lmpi_mpifh"],[AC_MSG_RESULT([no])])
 				LIBS=$sav_LIBS
@@ -680,8 +670,8 @@ dnl		check for FMPILIB
 			AS_IF([test x"$FMPILIB" = x -a x"$mpi_error" = "xno"],
 			[
 				sav_LIBS=$LIBS
-				LIBS="$LIBS $MPILIBDIR -lmpibinding_f77"
-				AC_MSG_CHECKING([whether linking with -lmpibinding_f77 works])
+				LIBS="$LIBS $MPILIBDIR -lmpibinding_f77 $MPILIB"
+				AC_MSG_CHECKING([whether linking with -lmpibinding_f77 $MPILIB works])
 				AC_TRY_LINK([],[],
 				[AC_MSG_RESULT([yes]); FMPILIB=-lmpibinding_f77],[AC_MSG_RESULT([no])])
 				LIBS=$sav_LIBS
@@ -690,8 +680,8 @@ dnl		check for FMPILIB
 			AS_IF([test x"$FMPILIB" = x -a x"$mpi_error" = "xno"],
 			[
 				sav_LIBS=$LIBS
-				LIBS="$LIBS $MPILIBDIR -lfmpich"
-				AC_MSG_CHECKING([whether linking with -lfmpich works])
+				LIBS="$LIBS $MPILIBDIR -lfmpich $MPILIB"
+				AC_MSG_CHECKING([whether linking with -lfmpich $MPILIB works])
 				AC_TRY_LINK([],[],
 				[AC_MSG_RESULT([yes]); FMPILIB=-lfmpich],[AC_MSG_RESULT([no])])
 				LIBS=$sav_LIBS
@@ -700,8 +690,8 @@ dnl		check for FMPILIB
 			AS_IF([test x"$FMPILIB" = x -a x"$mpi_error" = "xno"],
 			[
 				sav_LIBS=$LIBS
-				LIBS="$LIBS $MPILIBDIR -llamf77mpi"
-				AC_MSG_CHECKING([whether linking with -llamf77mpi works])
+				LIBS="$LIBS $MPILIBDIR -llamf77mpi $MPILIB"
+				AC_MSG_CHECKING([whether linking with -llamf77mpi $MPILIB works])
 				AC_TRY_LINK([],[],
 				[AC_MSG_RESULT([yes]); FMPILIB=-llamf77mpi],[AC_MSG_RESULT([no])])
 				LIBS=$sav_LIBS
@@ -739,6 +729,8 @@ dnl		check for FMPILIB
 					])
 				])
 			])
+
+			CC=$sav_CC
 		])
 
 dnl		check for MPI-2
@@ -942,26 +934,10 @@ AC_DEFUN([ACVT_FMPIWRAPLIB],
 
 	AS_IF([test x"$FC" != x],
 	[
-		AC_CHECK_PROGS(MPIFC, mpif77 hf77 mpxlf_r mpxlf mpf77 cmpifc mpifort mpif90 mpxlf95_r mpxlf90_r mpxlf95 mpxlf90 mpf90 cmpif90c)
-		AS_IF([test x"$MPIFC" != x],
-		[
-			AS_IF([test x"$inside_openmpi" = "xno"],
-			[
-				mpifc=`echo $MPIFC | cut -d ' ' -f 1`
-				which_mpifc=`which $mpifc 2>/dev/null`
-				AS_IF([test x"$which_mpifc" = x], [AC_MSG_ERROR([$mpifc not found])])
+		AC_CHECK_PROGS(MPIFC, mpif77 hf77 mpxlf_r mpxlf mpf77 cmpifc mpifort mpif90 mpxlf95_r mpxlf90_r mpxlf95 mpxlf90 mpf90 cmpif90c, $FC)
 
-				mpi_bin_dir=`dirname $which_mpifc`
-				AS_IF([test "$mpi_bin_dir" != "/usr/bin" -a "$mpi_bin_dir" != "/SX/usr/bin" -a x"$FMPIINCDIR" != x-I"$mpi_inc_dir"],
-				[
-					mpi_inc_dir=-I`echo $mpi_bin_dir | sed -e 's/bin/include/'`
-					AS_IF([test x"$FMPIINCDIR" != x"$mpi_inc_dir"],
-					[FMPIINCDIR="$FMPIINCDIR -I`echo $mpi_bin_dir | sed -e 's/bin/include/'`"])
-				])
-			])
-		],
+		AS_IF([test x"$MPIFC" = x"$FC" -a x"$inside_openmpi" = "xno"],
 		[
-			MPIFC="$FC"
 			AC_MSG_CHECKING([for mpif.h])
 			rm -f conftest.f conftest.o
 			cat > conftest.f << EOF

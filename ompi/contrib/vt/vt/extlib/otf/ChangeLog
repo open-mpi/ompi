@@ -1,3 +1,8 @@
+1.12.3openmpi
+	- otfprofile, LaTeX output:
+		- swapped x & y axis of the Message Data Rate Matrix
+		- adapted labels to Vampir
+
 1.12.2openmpi
 	- fixed conflicts with OpenType Fonts:
 		- install header files to INCLUDEDIR/open-trace-format
