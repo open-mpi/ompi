@@ -23,7 +23,17 @@ install its own signal handler for this signal by setting the
 
   Signal: %d
   Current opal_signal value: %s
-*
+#
+[stacktrace bad signal]
+Open MPI was inserting a signal handler but was given an invalid
+signal number:
+
+  Signal string: %s
+  Bad value:     %s
+
+The given value must be an integer within the signal number
+range. Please correct the value and try again.
+#
 [malformed net_private_ipv4]
 Open MPI has detected at least one malformed IP address or netmask in
 the value of the opal_net_private_ipv4 MCA parameter.  The
