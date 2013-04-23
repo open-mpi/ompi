@@ -12,22 +12,21 @@
 EXTRA_DIST = \
         hwloc/doc/README.txt \
         hwloc/tests/README.txt \
-        hwloc/utils/README.txt \
-        .windows
+        hwloc/utils/README.txt
 
 SUBDIRS = hwloc
 
 # Headers and sources
-headers = hwloc151.h
-sources = hwloc151_component.c
+headers = hwloc152.h
+sources = hwloc152_component.c
 
 # We only ever build this component statically
-noinst_LTLIBRARIES = libmca_hwloc_hwloc151.la
-libmca_hwloc_hwloc151_la_SOURCES = $(headers) $(sources)
-nodist_libmca_hwloc_hwloc151_la_SOURCES = $(nodist_headers)
-libmca_hwloc_hwloc151_la_LDFLAGS = -module -avoid-version $(opal_hwloc_hwloc151_LDFLAGS)
-libmca_hwloc_hwloc151_la_LIBADD = $(opal_hwloc_hwloc151_LIBS)
-libmca_hwloc_hwloc151_la_DEPENDENCIES = \
+noinst_LTLIBRARIES = libmca_hwloc_hwloc152.la
+libmca_hwloc_hwloc152_la_SOURCES = $(headers) $(sources)
+nodist_libmca_hwloc_hwloc152_la_SOURCES = $(nodist_headers)
+libmca_hwloc_hwloc152_la_LDFLAGS = -module -avoid-version $(opal_hwloc_hwloc152_LDFLAGS)
+libmca_hwloc_hwloc152_la_LIBADD = $(opal_hwloc_hwloc152_LIBS)
+libmca_hwloc_hwloc152_la_DEPENDENCIES = \
     $(HWLOC_top_builddir)/src/libhwloc_embedded.la
 
 # Since the rest of the code base includes the underlying hwloc.h, we

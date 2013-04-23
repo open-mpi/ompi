@@ -1,4 +1,4 @@
-# Copyright © 2009-2010 inria.  All rights reserved.
+# Copyright © 2009-2013 Inria.  All rights reserved.
 # Copyright © 2009-2010, 2012 Université Bordeaux 1
 # Copyright © 2009-2010 Cisco Systems, Inc.  All rights reserved.
 # Copyright © 2011-2012 Oracle and/or its affiliates.  All rights reserved.
@@ -39,9 +39,9 @@ if HWLOC_HAVE_LIBXML2
 sources += topology-xml-libxml.c
 endif HWLOC_HAVE_LIBXML2
 
-if HWLOC_HAVE_LIBPCI
+if HWLOC_HAVE_PCI
 sources += topology-libpci.c
-endif HWLOC_HAVE_LIBPCI
+endif HWLOC_HAVE_PCI
 
 if HWLOC_HAVE_SOLARIS
 sources += topology-solaris.c
