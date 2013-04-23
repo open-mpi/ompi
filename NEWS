@@ -75,6 +75,25 @@ Trunk (not on release branches yet)
 - Added MPI Java bindings
 
 
+1.7.2
+-----
+
+- Fix an error that caused epoll to automatically be disabled
+  in libevent
+- Upgrade hwloc to 1.5.2
+- Fix MXM connection establishment flow
+- Lots of VampirTrace upgrades and fixes; upgrade to v5.14.8
+- Fixed some minor memory leaks 
+
+
+1.7.1
+-----
+
+- Fixed compile error when --without-memory-manager was specified
+  on Linux
+- Fixed XRC compile issue in Open Fabrics support.
+
+
 1.7
 ---
 
