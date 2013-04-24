@@ -887,6 +887,8 @@ mca_fcoll_static_file_write_all (mca_io_ompio_file_t *fh,
 	    free (fh->f_io_array);
 	    fh->f_io_array = NULL;
 	}
+	for (i = 0; i < fh->f_procs_per_group; i++)
+	  ompi_datatype_destroy(recvtype+i);
 	if (NULL != recvtype){
 	    free(recvtype);
 	    recvtype=NULL;

@@ -745,10 +745,9 @@ mca_fcoll_dynamic_file_write_all (mca_io_ompio_file_t *fh,
 					MPI_BYTE,
 					&recvtype[i]);
 	  ompi_datatype_commit(&recvtype[i]); 
-		
-	  ompi_datatype_type_size (recvtype[i],
-				   &datatype_size);
 	  
+	  opal_datatype_type_size(&recvtype[i]->super, 
+				  &datatype_size);
 	  
 	  if (datatype_size){
 	    
@@ -978,6 +977,8 @@ mca_fcoll_dynamic_file_write_all (mca_io_ompio_file_t *fh,
 	    free (fh->f_io_array);
 	    fh->f_io_array = NULL;
 	  }
+	  for (i =0; i< fh->f_procs_per_group; i++) 
+	    ompi_datatype_destroy(recvtype+i);
 	  if (NULL != recvtype){
 	      free(recvtype);
 	      recvtype=NULL;
