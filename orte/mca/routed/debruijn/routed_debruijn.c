@@ -404,8 +404,8 @@ static orte_process_name_t get_route(orte_process_name_t *target)
         ret.jobid = ORTE_PROC_MY_NAME->jobid;
         /* find out what daemon hosts this proc */
         if (ORTE_VPID_INVALID == (ret.vpid = orte_get_proc_daemon_vpid(target))) {
-            ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-            ret = *ORTE_NAME_INVALID;
+            /* we don't yet know about this daemon. just route this to the "parent" */
+            ret = *ORTE_PROC_MY_PARENT;
             break;
         }
 
