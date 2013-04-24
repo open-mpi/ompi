@@ -253,9 +253,6 @@ static int btl_openib_component_close(void)
     ompi_btl_openib_connect_base_finalize();
     ompi_btl_openib_fd_finalize();
     ompi_btl_openib_ini_finalize();
-    if (NULL != mca_btl_openib_component.receive_queues) {
-        free(mca_btl_openib_component.receive_queues);
-    }
 
     if (NULL != mca_btl_openib_component.default_recv_qps) {
         free(mca_btl_openib_component.default_recv_qps);
