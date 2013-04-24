@@ -55,7 +55,6 @@ ORTE_DECLSPEC int orte_grpcomm_base_select(void);
  * globals that might be needed
  */
 typedef struct {
-    int output;
     orte_grpcomm_coll_id_t coll_id;
     opal_list_t active_colls;
 #if OPAL_HAVE_HWLOC
@@ -73,7 +72,7 @@ OBJ_CLASS_DECLARATION(orte_grpcomm_caddy_t);
 #define ORTE_GRPCOMM_ACTIVATE(o, cb)                                    \
     do {                                                                \
         orte_grpcomm_caddy_t *caddy;                                    \
-        OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base.output,               \
+        OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_framework.framework_output, \
                              "%s ACTIVATING GRCPCOMM OP %d at %s:%d",   \
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),        \
                              (o)->id, __FILE__, __LINE__));             \

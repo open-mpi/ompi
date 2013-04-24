@@ -60,7 +60,7 @@ void orte_grpcomm_base_xcast_recv(int status, orte_process_name_t* sender,
     orte_job_t *jdata;
     orte_proc_t *rec;
 
-    OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base.output,
+    OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_framework.framework_output,
                          "%s grpcomm:xcast:recv:send_relay",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
@@ -94,7 +94,7 @@ void orte_grpcomm_base_xcast_recv(int status, orte_process_name_t* sender,
                 free(bo->bytes);
             }
         } else {
-            OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base.output,
+            OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_framework.framework_output,
                                  "%s grpcomm:base:xcast updating daemon nidmap",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
@@ -148,7 +148,7 @@ void orte_grpcomm_base_xcast_recv(int status, orte_process_name_t* sender,
 
     /* if list is empty, no relay is required */
     if (opal_list_is_empty(&coll.targets)) {
-        OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base.output,
+        OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_framework.framework_output,
                              "%s orte:daemon:send_relay - recipient list is empty!",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
         goto CLEANUP;
@@ -158,7 +158,7 @@ void orte_grpcomm_base_xcast_recv(int status, orte_process_name_t* sender,
     while (NULL != (item = opal_list_remove_first(&coll.targets))) {
         nm = (orte_namelist_t*)item;
 
-        OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base.output,
+        OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_framework.framework_output,
                              "%s orte:daemon:send_relay sending relay msg to %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_NAME_PRINT(&nm->name)));
