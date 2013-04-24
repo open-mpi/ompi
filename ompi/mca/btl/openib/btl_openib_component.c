@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2011 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2006-2009 Mellanox Technologies. All rights reserved.
  * Copyright (c) 2006-2012 Los Alamos National Security, LLC.  All rights
  *                         reserved.
@@ -780,7 +780,7 @@ static int init_one_port(opal_list_t *btl_list, mca_btl_openib_device_t *device,
         for(i = 0; i < mca_btl_openib_component.btls_per_lid; i++){
             char param[40];
 
-            openib_btl = malloc(sizeof(mca_btl_openib_module_t));
+            openib_btl = calloc(1, sizeof(mca_btl_openib_module_t));
             if(NULL == openib_btl) {
                 BTL_ERROR(("Failed malloc: %s:%d", __FILE__, __LINE__));
                 return OMPI_ERR_OUT_OF_RESOURCE;
@@ -935,6 +935,8 @@ static void device_construct(mca_btl_openib_device_t *device)
     device->ib_channel = NULL;
 #endif
     device->btls = 0;
+    device->endpoints = NULL;
+    device->device_btls = NULL;
     device->ib_cq[BTL_OPENIB_HP_CQ] = NULL;
     device->ib_cq[BTL_OPENIB_LP_CQ] = NULL;
     device->cq_size[BTL_OPENIB_HP_CQ] = 0;
