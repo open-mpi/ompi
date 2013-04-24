@@ -742,60 +742,56 @@ void opal_info_show_component_version(opal_pointer_array_t *mca_types,
                                       const char *scope, const char *ver_type)
 {
     bool want_all_components = false;
+    bool want_all_types = false;
     bool found;
-    opal_list_item_t *item;
     mca_base_component_list_item_t *cli;
-    const mca_base_component_t *component;
-    opal_list_t *components;
     int j;
     char *pos;
     opal_info_component_map_t *map;
     
     /* see if all components wanted */
-    if (0 == strcmp(opal_info_type_all, component_name)) {
+    if (0 == strcmp(opal_info_component_all, component_name)) {
+        want_all_components = true;
+    }
+
+    /* see if all types wanted */
+    if (0 != strcmp(opal_info_type_all, type_name)) {
+        /* Check to see if the type is valid */
+    
+        for (found = false, j = 0; j < mca_types->size; ++j) {
+            if (NULL == (pos = (char*)opal_pointer_array_get_item(mca_types, j))) {
+                continue;
+            }
+            if (0 == strcmp(pos, type_name)) {
+                found = true;
+                break;
+            }
+        }
+    
+        if (!found) {
+            return;
+        }
+    } else {
         want_all_components = true;
     }
     
-    /* Check to see if the type is valid */
-    
-    for (found = false, j = 0; j < mca_types->size; ++j) {
-        if (NULL == (pos = (char*)opal_pointer_array_get_item(mca_types, j))) {
-            continue;
-        }
-        if (0 == strcmp(pos, type_name)) {
-            found = true;
-            break;
-        }
-    }
-    
-    if (!found) {
-        exit(1);
-    }
-    
-    /* Now that we have a valid type, find the right component list */
-    components = NULL;
+    /* Now that we have a valid type, find the right components */
     for (j=0; j < component_map->size; j++) {
         if (NULL == (map = (opal_info_component_map_t*)opal_pointer_array_get_item(component_map, j))) {
             continue;
         }
-        if (0 == strcmp(type_name, map->type)) {
+        if ((want_all_types || 0 == strcmp(type_name, map->type)) && map->components) {
             /* found it! */
-            components = map->components;
-            break;
-        }
-    }
-
-    if (NULL != components) {
-        if (opal_list_get_size(components) > 0){
-            for (item = opal_list_get_first(components);
-                 opal_list_get_end(components) != item;
-                 item = opal_list_get_next(item)) {
-                cli = (mca_base_component_list_item_t *) item;
-                component = cli->cli_component;
+            OPAL_LIST_FOREACH(cli, map->components, mca_base_component_list_item_t) {
+                const mca_base_component_t *component = cli->cli_component;
                 if (want_all_components || 
                     0 == strcmp(component->mca_component_name, component_name)) {
                     opal_info_show_mca_version(component, scope, ver_type);
                 }
+            }
+
+            if (!want_all_types) {
+                break;
             }
         }
     }
