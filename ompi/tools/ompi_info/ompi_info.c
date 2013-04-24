@@ -36,6 +36,7 @@
 #endif
 #include <errno.h>
 
+#include "opal/version.h"
 #include "opal/mca/installdirs/installdirs.h"
 #include "opal/class/opal_object.h"
 #include "opal/class/opal_pointer_array.h"
@@ -99,6 +100,12 @@ int main(int argc, char *argv[])
         exit(ret);
     }
 
+    if (opal_cmd_line_is_taken(ompi_info_cmd_line, "version")) {
+        fprintf(stdout, "Open MPI v%s\n\n%s\n",
+                OPAL_VERSION, PACKAGE_BUGREPORT);
+        exit(0);
+    }
+
     /* setup the mca_types array */
     OBJ_CONSTRUCT(&mca_types, opal_pointer_array_t);
     opal_pointer_array_init(&mca_types, 256, INT_MAX, 128);
@@ -157,11 +164,6 @@ int main(int argc, char *argv[])
 
     /* Execute the desired action(s) */    
     want_all = opal_cmd_line_is_taken(ompi_info_cmd_line, "all");
-    if (want_all || opal_cmd_line_is_taken(ompi_info_cmd_line, "version")) {
-        ompi_info_do_version(want_all, ompi_info_cmd_line,
-                             &mca_types, &component_map);
-        acted = true;
-    }
     if (want_all || opal_cmd_line_is_taken(ompi_info_cmd_line, "path")) {
         opal_info_do_path(want_all, ompi_info_cmd_line);
         acted = true;
