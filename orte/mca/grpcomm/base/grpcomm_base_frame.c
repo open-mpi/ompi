@@ -66,10 +66,6 @@ static int orte_grpcomm_base_close(void)
  */
 static int orte_grpcomm_base_open(mca_base_open_flag_t flags)
 {
-    /* Debugging / verbose output.  Always have stream open, with
-       verbose set by the mca open system... */
-    orte_grpcomm_base.output = opal_output_open(NULL);
-    
     /* init globals */
     OBJ_CONSTRUCT(&orte_grpcomm_base.active_colls, opal_list_t);
     orte_grpcomm_base.coll_id = 0;
