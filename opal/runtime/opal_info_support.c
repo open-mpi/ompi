@@ -772,7 +772,7 @@ void opal_info_show_component_version(opal_pointer_array_t *mca_types,
             return;
         }
     } else {
-        want_all_components = true;
+        want_all_types = true;
     }
     
     /* Now that we have a valid type, find the right components */

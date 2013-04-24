@@ -72,7 +72,6 @@ int main(int argc, char *argv[])
     bool want_all = false;
     char **app_env = NULL, **global_env = NULL;
     int i;
-    char *str;
     opal_cmd_line_t *ompi_info_cmd_line;
     opal_pointer_array_t mca_types;
     opal_pointer_array_t component_map;
@@ -130,27 +129,6 @@ int main(int argc, char *argv[])
     /* init the component map */
     OBJ_CONSTRUCT(&component_map, opal_pointer_array_t);
     opal_pointer_array_init(&component_map, 256, INT_MAX, 128);
-    
-    /* Register OPAL's params */
-    if (OPAL_SUCCESS != (ret = opal_info_register_framework_params(&component_map))) {
-        if (OPAL_ERR_BAD_PARAM == ret) {
-            /* output where the error occurred */
-            opal_info_err_params(&component_map);
-        }
-        exit(1);
-    }
-
-#if OMPI_RTE_ORTE
-    /* Register ORTE's params */
-    if (OMPI_SUCCESS != (ret = orte_info_register_framework_params(&component_map))) {
-        if (OPAL_ERR_BAD_PARAM == ret) {
-            /* output what we got */
-            opal_info_do_params(true, opal_cmd_line_is_taken(ompi_info_cmd_line, "internal"),
-                                &mca_types, NULL);
-        }
-        exit(1);
-    }
-#endif
 
     /* Register OMPI's params */
     if (OMPI_SUCCESS != (ret = ompi_info_register_framework_params(&component_map))) {
