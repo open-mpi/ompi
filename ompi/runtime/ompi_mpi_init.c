@@ -314,6 +314,36 @@ bool ompi_enable_timing;
 extern bool ompi_mpi_yield_when_idle;
 extern int ompi_mpi_event_tick_rate;
 
+
+void ompi_mpi_thread_level(int requested, int *provided)
+{
+    /**
+     * These values are monotonic; MPI_THREAD_SINGLE < MPI_THREAD_FUNNELED
+     *                             < MPI_THREAD_SERIALIZED < MPI_THREAD_MULTIPLE.
+     * If possible, the call will return provided = required. Failing this,
+     * the call will return the least supported level such that
+     * provided > required. Finally, if the user requirement cannot be
+     * satisfied, then the call will return in provided the highest
+     * supported level.
+     */
+    ompi_mpi_thread_requested = requested;
+
+    if (OMPI_ENABLE_THREAD_MULTIPLE == 1) {
+        ompi_mpi_thread_provided = *provided = requested;
+        ompi_mpi_main_thread = opal_thread_get_self();
+    } else {
+        if (MPI_THREAD_MULTIPLE == requested) {
+            ompi_mpi_thread_provided = *provided = MPI_THREAD_SERIALIZED;
+        } else {
+            ompi_mpi_thread_provided = *provided = requested;
+        }
+        ompi_mpi_main_thread = (OPAL_ENABLE_MULTI_THREADS ? opal_thread_get_self() : NULL);
+    }
+
+    ompi_mpi_thread_multiple = (ompi_mpi_thread_provided == 
+                                MPI_THREAD_MULTIPLE);
+}
+
 static int ompi_register_mca_variables(void)
 {
     int ret;
@@ -459,31 +489,8 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
        MPI_THREAD_MULTIPLE.  Set this stuff up here early in the
        process so that other components can make decisions based on
        this value. */
-    /**
-     * These values are monotonic; MPI_THREAD_SINGLE < MPI_THREAD_FUNNELED
-     *                             < MPI_THREAD_SERIALIZED < MPI_THREAD_MULTIPLE.
-     * If possible, the call will return provided = required. Failing this,
-     * the call will return the least supported level such that
-     * provided > required. Finally, if the user requirement cannot be
-     * satisfied, then the call will return in provided the highest
-     * supported level.
-     */
-    ompi_mpi_thread_requested = requested;
 
-    if (OMPI_ENABLE_THREAD_MULTIPLE == 1) {
-        ompi_mpi_thread_provided = *provided = requested;
-        ompi_mpi_main_thread = opal_thread_get_self();
-    } else {
-        if (MPI_THREAD_MULTIPLE == requested) {
-            ompi_mpi_thread_provided = *provided = MPI_THREAD_SERIALIZED;
-        } else {
-            ompi_mpi_thread_provided = *provided = requested;
-        }
-        ompi_mpi_main_thread = (OPAL_ENABLE_MULTI_THREADS ? opal_thread_get_self() : NULL);
-    }
-
-    ompi_mpi_thread_multiple = (ompi_mpi_thread_provided == 
-                                MPI_THREAD_MULTIPLE);
+    ompi_mpi_thread_level(requested, provided);
 
     /* determine the bitflag belonging to the threadlevel_support provided */
     memset ( &threadlevel_bf, 0, sizeof(uint8_t));

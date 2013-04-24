@@ -74,60 +74,6 @@
  * Private variables
  */
 
-static int info_register_framework (mca_base_framework_t *framework, opal_pointer_array_t *component_map) {
-    opal_info_component_map_t *map;
-    int rc;
-
-    rc = mca_base_framework_register(framework, MCA_BASE_REGISTER_ALL);
-    if (OPAL_SUCCESS != rc && OPAL_ERR_BAD_PARAM != rc) {
-        return rc;
-    }
-
-    map = OBJ_NEW(opal_info_component_map_t);
-    map->type = strdup(framework->framework_name);
-    map->components = &framework->framework_components;
-    opal_pointer_array_add(component_map, map);
-
-    return rc;
-}
-
-int ompi_info_register_framework_params(opal_pointer_array_t *component_map)
-{
-    int i, rc;
-    char *str;
-    
-    /* Register the MPI layer's MCA parameters */
-    if (OMPI_SUCCESS != (rc = ompi_mpi_register_params())) {
-        str = "ompi_mpi_register_params";
-        if (OMPI_ERR_BAD_PARAM == rc)  {
-            goto breakout;
-        }
-        goto error;
-    }
-    
-    /* MPI frameworks */
-    for (i=0; NULL != ompi_frameworks[i]; i++) {
-        if (OPAL_SUCCESS != (rc = info_register_framework(ompi_frameworks[i], component_map))) {
-            fprintf (stderr, "rc = %d\n", rc);
-            str = ompi_frameworks[i]->framework_name;
-            break;
-        }
-    }
-
- breakout:
-    if (OPAL_ERR_BAD_PARAM == rc) {
-        fprintf(stderr, "\nA \"bad parameter\" error was encountered when opening the OMPI %s framework\n", str);
-        fprintf(stderr, "The output received from that framework includes the following parameters:\n\n");
-    }
-    return rc;
-
- error:
-    fprintf(stderr, "ompi_info_register: %s failed\n", str);
-    fprintf(stderr, "ompi_info will likely not display all configuration information\n");
-    return OMPI_ERROR;
-}
-
-
 void ompi_info_close_components()
 {
     int i;

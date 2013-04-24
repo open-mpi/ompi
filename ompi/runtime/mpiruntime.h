@@ -141,6 +141,14 @@ OMPI_DECLSPEC extern const char ompi_version_string[];
 OMPI_DECLSPEC void ompi_warn_fork(void);
 
 /**
+ * Determine the thread level
+ *
+ * @param requested Thread support that is requested (IN)
+ * @param provided Thread support that is provided (OUT)
+ */
+void ompi_mpi_thread_level(int requested, int *provided);
+
+/**
  * Initialize the Open MPI MPI environment
  *
  * @param argc argc, typically from main() (IN)
