@@ -169,7 +169,7 @@ void orte_grpcomm_base_xcast_recv(int status, orte_process_name_t* sender,
          */
         jdata = orte_get_job_data_object(nm->name.jobid);
         if (NULL == (rec = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, nm->name.vpid))) {
-            OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base.output,
+            OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_framework.framework_output,
                                  "%s orte:daemon:send_relay proc %s not found - cannot relay",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  ORTE_NAME_PRINT(&nm->name)));
@@ -177,7 +177,7 @@ void orte_grpcomm_base_xcast_recv(int status, orte_process_name_t* sender,
             continue;
         }
         if (ORTE_PROC_STATE_RUNNING < rec->state) {
-            OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base.output,
+            OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_framework.framework_output,
                                  "%s orte:daemon:send_relay proc %s not running - cannot relay",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  ORTE_NAME_PRINT(&nm->name)));
