@@ -195,16 +195,9 @@ int main(int argc, char *argv[])
         opal_info_do_arch();
         opal_info_do_hostname();
         ompi_info_do_config(false);
-        for (i = 0; i < mca_types.size; ++i) {
-            if (NULL == (str = (char*)opal_pointer_array_get_item(&mca_types, i))) {
-                continue;
-            }
-            if (0 != strcmp("mpi", str)) {
-                opal_info_show_component_version(&mca_types, &component_map,
-                                                 str, opal_info_component_all, 
-                                                 opal_info_ver_full, opal_info_type_all);
-            }
-        }
+        opal_info_show_component_version(&mca_types, &component_map, opal_info_type_all,
+                                         opal_info_component_all, opal_info_ver_full,
+                                         opal_info_ver_all);
     }
     
     /* All done */

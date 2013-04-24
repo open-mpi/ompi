@@ -37,10 +37,6 @@ BEGIN_C_DECLS
 extern const char *ompi_info_type_ompi;
 extern const char *ompi_info_type_base;
 
-void ompi_info_do_version(bool want_all, opal_cmd_line_t *cmd_line,
-                          opal_pointer_array_t *mca_types,
-                          opal_pointer_array_t *component_map);
-
 void ompi_info_show_ompi_version(const char *scope);
 
 void ompi_info_close_components(void);
