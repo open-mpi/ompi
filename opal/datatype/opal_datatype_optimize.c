@@ -73,15 +73,12 @@ opal_datatype_optimize_short( opal_datatype_t* pData,
 {
     dt_elem_desc_t* pElemDesc;
     ddt_elem_desc_t opt_elem;
-    OPAL_PTRDIFF_TYPE last_disp = 0;
     dt_stack_t* pStack;            /* pointer to the position on the stack */
     int32_t pos_desc = 0;          /* actual position in the description of the derived datatype */
-    int32_t stack_pos = 0, last_type = OPAL_DATATYPE_UINT1;
-    int32_t type = OPAL_DATATYPE_LOOP, nbElems = 0, changes = 0;
-    int32_t optimized = 0, continuity;
+    int32_t stack_pos = 0, last_type = OPAL_DATATYPE_UINT1, last_length = 0;
+    int32_t type = OPAL_DATATYPE_LOOP, nbElems = 0, continuity;
+    OPAL_PTRDIFF_TYPE total_disp = 0, last_extent = 1, last_disp = 0;
     uint16_t last_flags = 0xFFFF;  /* keep all for the first datatype */
-    OPAL_PTRDIFF_TYPE total_disp = 0, last_extent = 1;
-	int32_t last_length = 0;
     uint32_t i;
 
     pStack = (dt_stack_t*)alloca( sizeof(dt_stack_t) * (pData->btypes[OPAL_DATATYPE_LOOP]+2) );
@@ -134,7 +131,8 @@ opal_datatype_optimize_short( opal_datatype_t* pData,
                     /* the whole loop is contiguous */
                     if( !continuity ) {
                         if( 0 != last_length ) {
-                            CREATE_ELEM( pElemDesc, last_type, OPAL_DATATYPE_FLAG_BASIC, last_length, last_disp, last_extent );
+                            CREATE_ELEM( pElemDesc, last_type, OPAL_DATATYPE_FLAG_BASIC,
+                                         last_length, last_disp, last_extent );
                             pElemDesc++; nbElems++;
                             last_length = 0;
                         }
@@ -144,9 +142,9 @@ opal_datatype_optimize_short( opal_datatype_t* pData,
                                    + loop->loops * end_loop->size);
                     last_type   = OPAL_DATATYPE_UINT1;
                     last_extent = 1;
-                    optimized++;
                 } else {
                     int counter = loop->loops;
+                    OPAL_PTRDIFF_TYPE merged_disp = 0;
                     /* if the previous data is contiguous with this piece and it has a length not ZERO */
                     if( last_length != 0 ) {
                         if( continuity ) {
@@ -155,27 +153,42 @@ opal_datatype_optimize_short( opal_datatype_t* pData,
                             last_type    = OPAL_DATATYPE_UINT1;
                             last_extent  = 1;
                             counter--;
+                            merged_disp = loop->extent;  /* merged loop, update the disp of the remaining elems */
                         }
-                        CREATE_ELEM( pElemDesc, last_type, OPAL_DATATYPE_FLAG_BASIC, last_length, last_disp, last_extent );
+                        CREATE_ELEM( pElemDesc, last_type, OPAL_DATATYPE_FLAG_BASIC,
+                                     last_length, last_disp, last_extent );
                         pElemDesc++; nbElems++;
                         last_disp += last_length;
                         last_length = 0;
                         last_type = OPAL_DATATYPE_LOOP;
                     }
-                    /* we have a gap in the begining or the end of the loop but the whole
-                     * loop can be merged in just one memcpy.
+                    /**
+                     * The content of the loop is contiguous (maybe with a gap before or after).
+                     *
+                     * If any of the loops have been merged with the previous element, then the
+                     * displacement of the first element (or the displacement of all elements if the
+                     * loop will be removed) must be updated accordingly.
                      */
-                    CREATE_LOOP_START( pElemDesc, counter, 2, loop->extent, loop->common.flags );
-                    pElemDesc++; nbElems++;
-                    CREATE_ELEM( pElemDesc, OPAL_DATATYPE_UINT1, OPAL_DATATYPE_FLAG_BASIC, end_loop->size, loop_disp, 1);
-                    pElemDesc++; nbElems++;
-                    CREATE_LOOP_END( pElemDesc, 2, end_loop->first_elem_disp, end_loop->size,
-                                     end_loop->common.flags );
-                    pElemDesc++; nbElems++;
-                    if( loop->items > 2 ) optimized++;
+                    if( counter <= 2 ) {
+                        merged_disp += end_loop->first_elem_disp;
+                        while( counter > 0 ) {
+                            CREATE_ELEM( pElemDesc, OPAL_DATATYPE_UINT1, OPAL_DATATYPE_FLAG_BASIC,
+                                         end_loop->size, merged_disp, 1);
+                            pElemDesc++; nbElems++; counter--;
+                            merged_disp += loop->extent;
+                        }
+                    } else {
+                        CREATE_LOOP_START( pElemDesc, counter, 2, loop->extent, loop->common.flags );
+                        pElemDesc++; nbElems++;
+                        CREATE_ELEM( pElemDesc, OPAL_DATATYPE_UINT1, OPAL_DATATYPE_FLAG_BASIC,
+                                     end_loop->size, loop_disp, 1);
+                        pElemDesc++; nbElems++;
+                        CREATE_LOOP_END( pElemDesc, 2, end_loop->first_elem_disp + merged_disp,
+                                         end_loop->size, end_loop->common.flags );
+                        pElemDesc++; nbElems++;
+                    }
                 }
                 pos_desc += loop->items + 1;
-                changes++;
             } else {
                 ddt_elem_desc_t* elem = (ddt_elem_desc_t*)&(pData->desc.desc[pos_desc+1]);
                 if( last_length != 0 ) {
@@ -192,7 +205,6 @@ opal_datatype_optimize_short( opal_datatype_t* pData,
                                      loop->loops, elem->disp, loop->extent );
                         pElemDesc++; nbElems++;
                         pos_desc += loop->items + 1;
-                        changes++; optimized++;
                         goto complete_loop;
                     } else if( loop->loops < 3 ) {
                         OPAL_PTRDIFF_TYPE elem_displ = elem->disp;
@@ -203,7 +215,6 @@ opal_datatype_optimize_short( opal_datatype_t* pData,
                             pElemDesc++; nbElems++;
                         }
                         pos_desc += loop->items + 1;
-                        changes += loop->loops; optimized += loop->loops;
                         goto complete_loop;
                     }
                 }
@@ -238,7 +249,6 @@ opal_datatype_optimize_short( opal_datatype_t* pData,
                             pData->desc.desc[pos_desc].elem.count * opal_datatype_basicDatatypes[type]->size;
                         last_type = OPAL_DATATYPE_UINT1;
                         last_extent = 1;
-                        optimized++;
                     }
                 }
                 last_flags &= pData->desc.desc[pos_desc].elem.common.flags;
