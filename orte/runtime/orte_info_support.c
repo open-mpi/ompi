@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -37,6 +38,8 @@
 
 const char *orte_info_type_orte = "orte";
 
+static bool orte_info_registered = false;
+
 void orte_info_register_types(opal_pointer_array_t *mca_types)
 {
     int i;
@@ -50,55 +53,30 @@ void orte_info_register_types(opal_pointer_array_t *mca_types)
     }
 }
 
-static int info_register_framework (mca_base_framework_t *framework, opal_pointer_array_t *component_map) {
-    opal_info_component_map_t *map;
-    int rc;
-
-    rc = mca_base_framework_register(framework, MCA_BASE_REGISTER_ALL);
-    if (OPAL_SUCCESS != rc && OPAL_ERR_BAD_PARAM != rc) {
-        return rc;
-    }
-
-    map = OBJ_NEW(opal_info_component_map_t);
-    map->type = strdup(framework->framework_name);
-    map->components = &framework->framework_components;
-    opal_pointer_array_add(component_map, map);
-
-    return rc;
-}
-
 int orte_info_register_framework_params(opal_pointer_array_t *component_map)
 {
-    char *str=NULL;
-    int i, rc;
+    int rc;
+
+    if (orte_info_registered) {
+        return ORTE_SUCCESS;
+    }
+
+    orte_info_registered = true;
 
     /* Register the ORTE layer's MCA parameters */
     
     if (ORTE_SUCCESS != (rc = orte_register_params()) &&
         ORTE_ERR_BAD_PARAM != rc) {
-        str = "orte_register_params";
-        goto error;
-    }
-    
-    for (i=0; NULL != orte_frameworks[i]; i++) {
-        if (OPAL_SUCCESS != (rc = info_register_framework(orte_frameworks[i], component_map))) {
-            fprintf (stderr, "rc = %d\n", rc);
-            str = orte_frameworks[i]->framework_name;
-            goto error;
-        }
+        fprintf(stderr, "orte_info_register: orte_register_params failed\n");
+        return rc;
     }
 
-    if (ORTE_ERR_BAD_PARAM == rc) {
-        fprintf(stderr, "\nA \"bad parameter\" error was encountered when opening the ORTE %s framework\n",
-                (NULL == str) ? "NULL" : str);
-        fprintf(stderr, "The output received from that framework includes the following parameters:\n\n");
+    rc = opal_info_register_framework_params(component_map);
+    if (OPAL_SUCCESS != rc) {
+        return rc;
     }
 
-    return rc;
-
- error:
-    fprintf(stderr, "orte_info_register: %s failed\n", str);
-    return ORTE_ERROR;
+    return opal_info_register_project_frameworks("orte", orte_frameworks, component_map);
 }
 
 void orte_info_close_components(void)

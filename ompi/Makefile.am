@@ -180,6 +180,7 @@ include tools/Makefile.am
 include mpi/Makefile.am
 include mpi/man/man3/Makefile.extra
 include mpiext/Makefile.am
+include mpit/Makefile.am
 include patterns/net/Makefile.am
 include patterns/comm/Makefile.am
 

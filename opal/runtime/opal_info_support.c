@@ -83,6 +83,7 @@ const char *opal_info_ver_mca = "mca";
 const char *opal_info_ver_type = "type";
 const char *opal_info_ver_component = "component";
 
+static bool opal_info_registered = false;
 
 static void component_map_construct(opal_info_component_map_t *map)
 {
@@ -214,7 +215,8 @@ void opal_info_finalize(void)
     opal_finalize_util();
 }
 
-static int info_register_framework (mca_base_framework_t *framework, opal_pointer_array_t *component_map) {
+static int info_register_framework (mca_base_framework_t *framework, opal_pointer_array_t *component_map)
+{
     opal_info_component_map_t *map;
     int rc;
 
@@ -223,10 +225,35 @@ static int info_register_framework (mca_base_framework_t *framework, opal_pointe
         return rc;
     }
 
-    map = OBJ_NEW(opal_info_component_map_t);
-    map->type = strdup(framework->framework_name);
-    map->components = &framework->framework_components;
-    opal_pointer_array_add(component_map, map);
+    if (NULL != component_map) {
+        map = OBJ_NEW(opal_info_component_map_t);
+        map->type = strdup(framework->framework_name);
+        map->components = &framework->framework_components;
+        opal_pointer_array_add(component_map, map);
+    }
+
+    return rc;
+}
+
+int opal_info_register_project_frameworks (const char *project_name, mca_base_framework_t **frameworks,
+                                           opal_pointer_array_t *component_map)
+{
+    int i, rc;
+
+    for (i=0; NULL != frameworks[i]; i++) {
+        if (OPAL_SUCCESS != (rc = info_register_framework(frameworks[i], component_map))) {
+            if (OPAL_ERR_BAD_PARAM == rc) {
+                fprintf(stderr, "\nA \"bad parameter\" error was encountered when opening the %s %s framework\n",
+                        project_name, frameworks[i]->framework_name);
+                fprintf(stderr, "The output received from that framework includes the following parameters:\n\n");
+            } else {
+                fprintf(stderr, "%s_info_register: %s failed\n", project_name, frameworks[i]->framework_name);
+                rc = OPAL_ERROR;
+            }
+
+            break;
+        }
+    }
 
     return rc;
 }
@@ -247,29 +274,27 @@ void opal_info_register_types(opal_pointer_array_t *mca_types)
 
 int opal_info_register_framework_params(opal_pointer_array_t *component_map)
 {
-    int i, rc;
-    char *str;
+    int rc;
+
+    if (opal_info_registered) {
+        return OPAL_SUCCESS;
+    }
+
+    opal_info_registered = true;
+
+    /* Register mca/base parameters */
+    if( OPAL_SUCCESS != mca_base_open() ) {
+        opal_show_help("help-opal_info.txt", "lib-call-fail", true, "mca_base_open", __FILE__, __LINE__ );
+        return OPAL_ERROR;
+    }
 
     /* Register the OPAL layer's MCA parameters */
     if (OPAL_SUCCESS != (rc = opal_register_params())) {
-        str = "opal_register_params";
-        goto error;
+        fprintf(stderr, "opal_info_register: opal_register_params failed\n");
+        return rc;
     }
 
-    /* OPAL frameworks */
-    for (i=0; NULL != opal_frameworks[i]; i++) {
-        if (OPAL_SUCCESS != (rc = info_register_framework(opal_frameworks[i], component_map))) {
-            fprintf (stderr, "rc = %d\n", rc);
-            str = opal_frameworks[i]->framework_name;
-            goto error;
-        }
-    }
-
-    return OPAL_SUCCESS;
-
- error:
-    fprintf(stderr, "opal_info_register: %s failed\n", str);
-    return OPAL_ERROR;
+    return opal_info_register_project_frameworks("opal", opal_frameworks, component_map);
 }
 
 

@@ -103,6 +103,10 @@ OPAL_DECLSPEC void opal_info_out_int(const char *pretty_message,
                                      const char *plain_message, 
                                      int value);
 
+OPAL_DECLSPEC int opal_info_register_project_frameworks (const char *project_name,
+                                                         mca_base_framework_t **frameworks,
+                                                         opal_pointer_array_t *component_map);
+
 END_C_DECLS
 
 #endif

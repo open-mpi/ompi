@@ -299,7 +299,23 @@ $constants->{MPI_ERR_SPAWN} = 50;
 $constants->{MPI_ERR_UNSUPPORTED_DATAREP} = 51;
 $constants->{MPI_ERR_UNSUPPORTED_OPERATION} = 52;
 $constants->{MPI_ERR_WIN} = 53;
-$constants->{MPI_ERR_LASTCODE} = $constants->{MPI_ERR_WIN};
+# these error codes will never be returned by a fortran function
+# since there are no fortran bindings for MPI_T
+$constants->{MPI_T_ERR_MEMORY} = 54;
+$constants->{MPI_T_ERR_NOT_INITIALIZED} = 55;
+$constants->{MPI_T_ERR_CANNOT_INIT} = 56;
+$constants->{MPI_T_ERR_INVALID_INDEX} = 57;
+$constants->{MPI_T_ERR_INVALID_ITEM} = 58;
+$constants->{MPI_T_ERR_INVALID_HANDLE} = 59;
+$constants->{MPI_T_ERR_OUT_OF_HANDLES} = 60;
+$constants->{MPI_T_ERR_OUT_OF_SESSIONS} = 61;
+$constants->{MPI_T_ERR_INVALID_SESSION} = 62;
+$constants->{MPI_T_ERR_CVAR_SET_NOT_NOW} = 63;
+$constants->{MPI_T_ERR_CVAR_SET_NEVER} = 64;
+$constants->{MPI_T_ERR_PVAR_NO_STARTSTOP} = 65;
+$constants->{MPI_T_ERR_PVAR_NO_WRITE} = 66;
+$constants->{MPI_T_ERR_PVAR_NO_ATOMIC} = 67;
+$constants->{MPI_ERR_LASTCODE} = $constants->{MPI_T_ERR_PVAR_NO_ATOMIC};
 
 $constants->{MPI_ERR_SYSRESOURCE} = -2;
 

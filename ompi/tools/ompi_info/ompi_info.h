@@ -43,7 +43,6 @@ void ompi_info_do_version(bool want_all, opal_cmd_line_t *cmd_line,
 
 void ompi_info_show_ompi_version(const char *scope);
 
-int ompi_info_register_framework_params(opal_pointer_array_t *component_map);
 void ompi_info_close_components(void);
 
 void ompi_info_do_config(bool want_all);

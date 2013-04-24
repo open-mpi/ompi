@@ -54,6 +54,7 @@
 #include "ompi/include/ompi/frameworks.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/tools/ompi_info/ompi_info.h"
+#include "ompi/runtime/ompi_info_support.h"
 
 /*
  * Public variables

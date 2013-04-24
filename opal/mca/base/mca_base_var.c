@@ -1585,7 +1585,7 @@ int mca_base_var_register_synonym (int synonym_for, const char *project_name,
     }
 
     return register_variable (project_name, framework_name, component_name,
-                              synonym_name, NULL, var->mbv_type, var->mbv_enumerator,
+                              synonym_name, var->mbv_description, var->mbv_type, var->mbv_enumerator,
                               var->mbv_bind, var_flags, var->mbv_info_lvl, var->mbv_scope,
                               synonym_for, NULL);
 }
