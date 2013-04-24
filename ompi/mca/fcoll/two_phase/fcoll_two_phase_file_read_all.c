@@ -518,13 +518,15 @@ static int two_phase_read_and_exch(mca_io_ompio_file_t *fh,
   int *partial_send=NULL, *start_pos=NULL, req_len=0, flag=0;
   int *recd_from_proc=NULL;
   MPI_Aint buftype_extent=0;
-  int byte_size = 0;
+  size_t byte_size = 0;
   OMPI_MPI_OFFSET_TYPE st_loc=-1, end_loc=-1, off=0, done=0, for_next_iter=0;
   OMPI_MPI_OFFSET_TYPE size=0, req_off=0, real_size=0, real_off=0, len=0;
   OMPI_MPI_OFFSET_TYPE for_curr_iter=0;
   char *read_buf=NULL, *tmp_buf=NULL;
+  MPI_Datatype byte = MPI_BYTE;
   
-  MPI_Type_size(MPI_BYTE, &byte_size);
+  opal_datatype_type_size(&byte->super, 
+			  &byte_size);
 
   for (i = 0; i < fh->f_size; i++){
     if (others_req[i].count) {
@@ -827,8 +829,7 @@ static int two_phase_exchange_data(mca_io_ompio_file_t *fh,
   int ret = OMPI_SUCCESS;
   char **recv_buf = NULL;
   MPI_Request *requests=NULL;
-  //  MPI_Datatype *send_type=NULL;
-  ompi_datatype_t **send_type = NULL;
+  MPI_Datatype send_type;
 
 
 
@@ -846,7 +847,7 @@ static int two_phase_exchange_data(mca_io_ompio_file_t *fh,
 					  fh->f_comm->c_coll.coll_alltoall_module);
 
   if ( OMPI_SUCCESS != ret ){
-    return ret;
+    goto exit;
   }
   
   
@@ -891,10 +892,11 @@ static int two_phase_exchange_data(mca_io_ompio_file_t *fh,
     }
   }
   else{
-
+    
     recv_buf = (char **)malloc(fh->f_size * sizeof(char *));
     if (NULL == recv_buf){
-      return OMPI_ERR_OUT_OF_RESOURCE;
+      ret = OMPI_ERR_OUT_OF_RESOURCE;
+      goto exit;
     }
 
     for (i=0; i < fh->f_size; i++)
@@ -926,32 +928,23 @@ static int two_phase_exchange_data(mca_io_ompio_file_t *fh,
 	others_req[i].lens[k] = partial_send[i];
       }
 
-      send_type = (ompi_datatype_t **) malloc (sizeof(ompi_datatype_t *));
-      if (NULL == send_type){
-	ret = OMPI_ERR_OUT_OF_RESOURCE;
-	goto exit;
-      }
-
       ompi_datatype_create_hindexed(count[i],
 				    &(others_req[i].lens[start_pos[i]]),
 				    &(others_req[i].mem_ptrs[start_pos[i]]),
 				    MPI_BYTE,
-				    send_type);
+				    &send_type);
 
-      ompi_datatype_commit(send_type);
+      ompi_datatype_commit(&send_type);
 
       ret = MCA_PML_CALL(isend(MPI_BOTTOM,
 			       1,
-			       send_type[0],
+			       send_type,
 			       i,
 			       fh->f_rank+i+100*iter,
 			       MCA_PML_BASE_SEND_STANDARD,
 			       fh->f_comm,
 			       requests+nprocs_recv+j));
-      if (NULL != send_type){
-	free(send_type);
-	send_type = NULL;
-      }
+      ompi_datatype_destroy(&send_type);
       
       if (partial_send[i]) others_req[i].lens[k] = tmp;
       j++;

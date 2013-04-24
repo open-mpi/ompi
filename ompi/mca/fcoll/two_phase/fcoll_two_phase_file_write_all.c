@@ -577,7 +577,7 @@ static int two_phase_exch_and_write(mca_io_ompio_file_t *fh,
     MPI_Aint buftype_extent;
     int  hole;
     size_t byte_size;
-
+    MPI_Datatype byte = MPI_BYTE;
     #if DEBUG_ON
     int ii,jj;
     #endif
@@ -585,7 +585,8 @@ static int two_phase_exch_and_write(mca_io_ompio_file_t *fh,
     char *write_buf=NULL;
 
 
-    ompi_datatype_type_size(MPI_BYTE, &byte_size);
+    opal_datatype_type_size(&byte->super,
+			    &byte_size);
     
     for (i = 0; i < fh->f_size; i++){
 	if (others_req[i].count) {
@@ -1149,11 +1150,13 @@ static int two_phase_exchage_data(mca_io_ompio_file_t *fh,
       }
     }
 
-    //for (i=0; i<nprocs_recv; i++) MPI_Type_free(recv_types+i);
+
+    for (i=0; i<nprocs_recv; i++) ompi_datatype_destroy(recv_types+i);
     if (NULL != recv_types){
       free(recv_types);
       recv_types = NULL;
     }
+
     ret = ompi_request_wait_all (nprocs_send+nprocs_recv,
 				 requests,
 				 MPI_STATUS_IGNORE);

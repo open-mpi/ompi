@@ -849,6 +849,8 @@ mca_fcoll_static_file_read_all (mca_io_ompio_file_t *fh,
 	free (fh->f_io_array);
 	fh->f_io_array = NULL;
       }
+      for (i = 0; i < fh->f_procs_per_group; i++)
+	ompi_datatype_destroy(sendtype+i);
       if (NULL != sendtype){
 	free(sendtype);
 	sendtype=NULL;

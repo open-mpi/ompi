@@ -824,6 +824,8 @@
 	   free (global_buf);
 	   global_buf = NULL;
 	 }
+	 for (i = 0; i < fh->f_procs_per_group; i++)
+	   ompi_datatype_destroy(sendtype+i);
 	 if (NULL != sendtype){
 	   free(sendtype);
 	   sendtype=NULL;
