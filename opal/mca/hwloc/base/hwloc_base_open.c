@@ -162,11 +162,9 @@ static int opal_hwloc_base_register(mca_base_register_flag_t flags)
                                  MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0, OPAL_INFO_LVL_9,
                                  MCA_BASE_VAR_SCOPE_READONLY, &opal_hwloc_use_hwthreads_as_cpus);
 
-    /* register components */
-    return OPAL_SUCCESS;
-#else /* OPAL_HAVE_HWLOC */
-    return OPAL_ERR_NOT_AVAILABLE;
 #endif
+    /* register parameters */
+    return OPAL_SUCCESS;
 }
 
 static int opal_hwloc_base_open(mca_base_open_flag_t flags)
