@@ -395,7 +395,7 @@ int opal_ifindextomask(int if_index, uint32_t* if_mask, int length)
  *  MAC assigned to the interface.
  */
 
-int btl_usnic_opal_ifindextomac(int if_index, uint8_t mac[6])
+int opal_ifindextomac(int if_index, uint8_t mac[6])
 {
     opal_if_t* intf;
 
@@ -415,7 +415,7 @@ int btl_usnic_opal_ifindextomac(int if_index, uint8_t mac[6])
  *  MTU assigned to the interface.
  */
 
-int btl_usnic_opal_ifindextomtu(int if_index, int *if_mtu)
+int opal_ifindextomtu(int if_index, int *if_mtu)
 {
     opal_if_t* intf;
 

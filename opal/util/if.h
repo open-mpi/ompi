@@ -161,7 +161,7 @@ OPAL_DECLSPEC int opal_ifindextomask(int if_index, uint32_t*, int);
  *  @param if_index (IN)  Interface index
  *  @param if_mac (OUT)   Interface's MAC address
  */
-OPAL_DECLSPEC int btl_usnic_opal_ifindextomac(int if_index, uint8_t if_mac[6]);
+OPAL_DECLSPEC int opal_ifindextomac(int if_index, uint8_t if_mac[6]);
 
 /**
  *  Lookup an interface by index and return its MTU.
@@ -169,7 +169,7 @@ OPAL_DECLSPEC int btl_usnic_opal_ifindextomac(int if_index, uint8_t if_mac[6]);
  *  @param if_index (IN)  Interface index
  *  @param if_mtu (OUT)   Interface's MTU
  */
-OPAL_DECLSPEC int btl_usnic_opal_ifindextomtu(int if_index, int *if_mtu);
+OPAL_DECLSPEC int opal_ifindextomtu(int if_index, int *if_mtu);
 
 /**
  *  Lookup an interface by index and return its flags.
