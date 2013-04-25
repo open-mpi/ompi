@@ -90,6 +90,12 @@ OPAL_DECLSPEC int opal_ifnametoindex(const char* if_name);
  */
 OPAL_DECLSPEC int16_t opal_ifnametokindex(const char* if_name);
 
+/*
+ *  Attempt to resolve an address (given as either IPv4/IPv6 string
+ *  or hostname) and lookup corresponding interface's kernel index
+ */
+OPAL_DECLSPEC int16_t opal_ifaddrtokindex(const char* if_addr);
+
 /**
  *  Lookup an interface by opal_list index and return its kernel index.
  *  
