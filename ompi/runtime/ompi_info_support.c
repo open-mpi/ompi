@@ -49,7 +49,7 @@ int ompi_info_register_framework_params(opal_pointer_array_t *component_map)
     ompi_info_registered = true;
 
     rc = opal_info_register_framework_params(component_map);
-    if (ORTE_SUCCESS != rc) {
+    if (OPAL_SUCCESS != rc) {
         return rc;
     }
 
