@@ -275,6 +275,86 @@ int opal_ifaddrtoname(const char* if_addr, char* if_name, int length)
 }
 
 /*
+ *  Attempt to resolve the address (given as either IPv4/IPv6 string
+ *  or hostname) and lookup corresponding interface's kernel index
+ */
+int16_t opal_ifaddrtokindex(const char* if_addr)
+{
+    opal_if_t* intf;
+#if OPAL_WANT_IPV6
+    int error;
+    struct addrinfo hints, *res = NULL, *r;
+#else
+    in_addr_t inaddr;
+    struct hostent *h;
+#endif
+
+    if (OPAL_SUCCESS != mca_base_framework_open(&opal_if_base_framework, 0)) {
+        return OPAL_ERROR;
+    }
+
+#if OPAL_WANT_IPV6
+    memset(&hints, 0, sizeof(hints));
+    hints.ai_family = PF_UNSPEC;
+    hints.ai_socktype = SOCK_STREAM;
+    error = getaddrinfo(if_addr, NULL, &hints, &res);
+
+    if (error) {
+        if (NULL != res) {
+            freeaddrinfo (res);
+        }
+        return OPAL_ERR_NOT_FOUND;
+    }
+
+    for (r = res; r != NULL; r = r->ai_next) {
+        for (intf =  (opal_if_t*)opal_list_get_first(&opal_if_list);
+            intf != (opal_if_t*)opal_list_get_end(&opal_if_list);
+            intf =  (opal_if_t*)opal_list_get_next(intf)) {
+            
+            if (AF_INET == r->ai_family) {
+                struct sockaddr_in ipv4;
+                struct sockaddr_in *inaddr;
+
+                inaddr = (struct sockaddr_in*) &intf->if_addr;
+                memcpy (&ipv4, r->ai_addr, r->ai_addrlen);
+                
+                if (inaddr->sin_addr.s_addr == ipv4.sin_addr.s_addr) {
+                    return intf->if_kernel_index;
+                }
+            } else {
+                if (IN6_ARE_ADDR_EQUAL(&((struct sockaddr_in6*) &intf->if_addr)->sin6_addr,
+                    &((struct sockaddr_in6*) r->ai_addr)->sin6_addr)) {
+                    return intf->if_kernel_index;
+                }
+            }
+        }
+    }
+    if (NULL != res) {
+        freeaddrinfo (res);
+    }
+#else
+    inaddr = inet_addr(if_addr);
+
+    if (INADDR_NONE == inaddr) {
+        h = gethostbyname(if_addr);
+        if (0 == h) {
+            return OPAL_ERR_NOT_FOUND;
+        }
+        memcpy(&inaddr, h->h_addr, sizeof(inaddr));
+    }
+
+    for (intf =  (opal_if_t*)opal_list_get_first(&opal_if_list);
+        intf != (opal_if_t*)opal_list_get_end(&opal_if_list);
+        intf =  (opal_if_t*)opal_list_get_next(intf)) {
+        if (((struct sockaddr_in*) &intf->if_addr)->sin_addr.s_addr == inaddr) {
+            return intf->if_kernel_index;
+        }
+    }
+#endif
+    return OPAL_ERR_NOT_FOUND;
+}
+
+/*
  *  Return the number of discovered interface.
  */
 
