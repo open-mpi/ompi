@@ -217,7 +217,7 @@ opal_datatype_is_contiguous_memory_layout( const opal_datatype_t* datatype, int3
 {
     if( !(datatype->flags & OPAL_DATATYPE_FLAG_CONTIGUOUS) ) return 0;
     if( (count == 1) || (datatype->flags & OPAL_DATATYPE_FLAG_NO_GAPS) ) return 1;
-    assert( (OPAL_PTRDIFF_TYPE)datatype->size != (datatype->ub - datatype->lb) );
+    assert( (OPAL_PTRDIFF_TYPE)datatype->size != (datatype->ub - datatype->lb)  && count != 0 );
     return 0;
 }
 
