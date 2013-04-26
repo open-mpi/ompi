@@ -2886,9 +2886,6 @@ btl_openib_component_init(int *num_btl_modules,
     /* If we fail early enough in the setup, we just modex around that
        there are no openib BTL's in this process and return NULL. */
 
-    /* Be sure to shut down the fd listener */
-    ompi_btl_openib_fd_finalize();
-
     mca_btl_openib_component.ib_num_btls = 0;
     btl_openib_modex_send();
 #if BTL_OPENIB_MALLOC_HOOKS_ENABLED
