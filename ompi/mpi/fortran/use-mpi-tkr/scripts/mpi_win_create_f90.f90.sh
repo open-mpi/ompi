@@ -47,7 +47,7 @@ output() {
     cat <<EOF
 
 subroutine ${proc}(base, size, disp_unit, info, comm, &
-        win, ierr)
+        win, ierror)
   include "mpif-config.h"
   ${type}, intent(in) :: base
   integer(kind=MPI_ADDRESS_KIND), intent(in) :: size
@@ -55,9 +55,9 @@ subroutine ${proc}(base, size, disp_unit, info, comm, &
   integer, intent(in) :: info
   integer, intent(in) :: comm
   integer, intent(out) :: win
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
   call ${procedure}(base, size, disp_unit, info, comm, &
-        win, ierr)
+        win, ierror)
 end subroutine ${proc}
 
 EOF

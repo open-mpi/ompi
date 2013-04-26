@@ -47,16 +47,16 @@ output() {
     cat <<EOF
 
 subroutine ${proc}(fh, buf, count, datatype, request&
-        , ierr)
+        , ierror)
   include "mpif-config.h"
   integer, intent(in) :: fh
   ${type} :: buf
   integer, intent(in) :: count
   integer, intent(in) :: datatype
   integer, intent(out) :: request
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
   call ${procedure}(fh, buf, count, datatype, request&
-        , ierr)
+        , ierror)
 end subroutine ${proc}
 
 EOF

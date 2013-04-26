@@ -36,13 +36,13 @@ output() {
 
     cat <<EOF
 
-subroutine MPI_Waitall${suffix}(count, array_of_requests, array_of_statuses, ierr)
+subroutine MPI_Waitall${suffix}(count, array_of_requests, array_of_statuses, ierror)
   include 'mpif-config.h'
   integer, intent(in) :: count
   integer, dimension(count), intent(inout) :: array_of_requests
   $status_type, intent(out) :: array_of_statuses
-  integer, intent(out) :: ierr
-  call MPI_Waitall(count, array_of_requests, array_of_statuses, ierr)
+  integer, intent(out) :: ierror
+  call MPI_Waitall(count, array_of_requests, array_of_statuses, ierror)
 end subroutine MPI_Waitall${suffix}
 
 EOF

@@ -37,16 +37,16 @@ output() {
     cat <<EOF
 
 subroutine MPI_Waitsome${suffix}(incount, array_of_requests, outcount, array_of_indices, array_of_statuses&
-        , ierr)
+        , ierror)
   include 'mpif-config.h'
   integer, intent(in) :: incount
   integer, dimension(incount), intent(inout) :: array_of_requests
   integer, intent(out) :: outcount
   integer, dimension(*), intent(out) :: array_of_indices
   $status_type, intent(out) :: array_of_statuses
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 
-  call MPI_Waitsome(incount, array_of_requests, outcount, array_of_indices, array_of_statuses, ierr)
+  call MPI_Waitsome(incount, array_of_requests, outcount, array_of_indices, array_of_statuses, ierror)
 end subroutine MPI_Waitsome${suffix}
 
 EOF

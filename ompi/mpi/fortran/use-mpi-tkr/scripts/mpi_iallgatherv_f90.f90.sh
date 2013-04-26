@@ -47,7 +47,7 @@ output() {
     cat <<EOF
 
 subroutine ${proc}(sendbuf, sendcount, sendtype, recvbuf, recvcounts, &
-        displs, recvtype, comm, request, ierr)
+        displs, recvtype, comm, request, ierror)
   include "mpif-config.h"
   ${type}, intent(in) :: sendbuf
   integer, intent(in) :: sendcount
@@ -58,9 +58,9 @@ subroutine ${proc}(sendbuf, sendcount, sendtype, recvbuf, recvcounts, &
   integer, intent(in) :: recvtype
   integer, intent(in) :: comm
   integer, intent(out) :: request
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
   call ${procedure}(sendbuf, sendcount, sendtype, recvbuf, recvcounts, &
-        displs, recvtype, comm, request, ierr)
+        displs, recvtype, comm, request, ierror)
 end subroutine ${proc}
 
 EOF

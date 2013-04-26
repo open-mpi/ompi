@@ -25,40 +25,40 @@ procedure='MPI_Sizeof'
 rank=0
 
     proc="${procedure}${rank}DCH"
-    echo "subroutine ${proc}(x, size, ierr)"
+    echo "subroutine ${proc}(x, size, ierror)"
     echo "  implicit none"
     echo "  include 'fortran_sizes.h'"
     echo "  character, intent(in) :: x"
     echo "  integer, intent(out) :: size"
-    echo "  integer, intent(out) :: ierr"
+    echo "  integer, intent(out) :: ierror"
     echo "  size = OMPI_SIZEOF_F90_CHARACTER"
-    echo "  ierr = 0"
+    echo "  ierror = 0"
     echo "end subroutine ${proc}"
     echo
 
     proc="${procedure}${rank}DL"
-    echo "subroutine ${proc}(x, size, ierr)"
+    echo "subroutine ${proc}(x, size, ierror)"
     echo "  implicit none"
     echo "  include 'fortran_sizes.h'"
     echo "  logical, intent(in) :: x"
     echo "  integer, intent(out) :: size"
-    echo "  integer, intent(out) :: ierr"
+    echo "  integer, intent(out) :: ierror"
     echo "  size = OMPI_SIZEOF_F90_LOGICAL"
-    echo "  ierr = 0"
+    echo "  ierror = 0"
     echo "end subroutine ${proc}"
     echo
 
 for kind in $ikinds
 do
     proc="${procedure}${rank}DI${kind}"
-    echo "subroutine ${proc}(x, size, ierr)"
+    echo "subroutine ${proc}(x, size, ierror)"
     echo "  implicit none"
     echo "  include 'fortran_sizes.h'"
     echo "  integer*${kind}, intent(in) :: x"
     echo "  integer, intent(out) :: size"
-    echo "  integer, intent(out) :: ierr"
+    echo "  integer, intent(out) :: ierror"
     echo "  size = OMPI_SIZEOF_F90_INT${kind}"
-    echo "  ierr = 0"
+    echo "  ierror = 0"
     echo "end subroutine ${proc}"
     echo
 done
@@ -66,14 +66,14 @@ done
 for kind in $rkinds
 do
     proc="${procedure}${rank}DR${kind}"
-    echo "subroutine ${proc}(x, size, ierr)"
+    echo "subroutine ${proc}(x, size, ierror)"
     echo "  implicit none"
     echo "  include 'fortran_sizes.h'"
     echo "  real*${kind}, intent(in) :: x"
     echo "  integer, intent(out) :: size"
-    echo "  integer, intent(out) :: ierr"
+    echo "  integer, intent(out) :: ierror"
     echo "  size = OMPI_SIZEOF_F90_REAL${kind}"
-    echo "  ierr = 0"
+    echo "  ierror = 0"
     echo "end subroutine ${proc}"
     echo
 done
@@ -81,14 +81,14 @@ done
 for kind in $ckinds
 do
     proc="${procedure}${rank}DC${kind}"
-    echo "subroutine ${proc}(x, size, ierr)"
+    echo "subroutine ${proc}(x, size, ierror)"
     echo "  implicit none"
     echo "  include 'fortran_sizes.h'"
     echo "  complex*${kind}, intent(in) :: x"
     echo "  integer, intent(out) :: size"
-    echo "  integer, intent(out) :: ierr"
+    echo "  integer, intent(out) :: ierror"
     echo "  size = OMPI_SIZEOF_F90_COMPLEX${kind}"
-    echo "  ierr = 0"
+    echo "  ierror = 0"
     echo "end subroutine ${proc}"
     echo
 done
@@ -105,40 +105,40 @@ do
   case "$rank" in  7)  dim='1,1,1,1,1,1,*'  ;  esac
 
     proc="${procedure}${rank}DCH"
-    echo "subroutine ${proc}(x, size, ierr)"
+    echo "subroutine ${proc}(x, size, ierror)"
     echo "  implicit none"
     echo "  include 'fortran_sizes.h'"
     echo "  character, dimension(${dim}), intent(in) :: x"
     echo "  integer, intent(out) :: size"
-    echo "  integer, intent(out) :: ierr"
+    echo "  integer, intent(out) :: ierror"
     echo "  size = OMPI_SIZEOF_F90_CHARACTER"
-    echo "  ierr = 0"
+    echo "  ierror = 0"
     echo "end subroutine ${proc}"
     echo
 
     proc="${procedure}${rank}DL"
-    echo "subroutine ${proc}(x, size, ierr)"
+    echo "subroutine ${proc}(x, size, ierror)"
     echo "  implicit none"
     echo "  include 'fortran_sizes.h'"
     echo "  logical, dimension(${dim}), intent(in) :: x"
     echo "  integer, intent(out) :: size"
-    echo "  integer, intent(out) :: ierr"
+    echo "  integer, intent(out) :: ierror"
     echo "  size = OMPI_SIZEOF_F90_LOGICAL"
-    echo "  ierr = 0"
+    echo "  ierror = 0"
     echo "end subroutine ${proc}"
     echo
 
   for kind in $ikinds
   do
     proc="${procedure}${rank}DI${kind}"
-    echo "subroutine ${proc}(x, size, ierr)"
+    echo "subroutine ${proc}(x, size, ierror)"
     echo "  implicit none"
     echo "  include 'fortran_sizes.h'"
     echo "  integer*${kind}, dimension(${dim}), intent(in) :: x"
     echo "  integer, intent(out) :: size"
-    echo "  integer, intent(out) :: ierr"
+    echo "  integer, intent(out) :: ierror"
     echo "  size = OMPI_SIZEOF_F90_INT${kind}"
-    echo "  ierr = 0"
+    echo "  ierror = 0"
     echo "end subroutine ${proc}"
     echo
   done
@@ -146,14 +146,14 @@ do
   for kind in $rkinds
   do
     proc="${procedure}${rank}DR${kind}"
-    echo "subroutine ${proc}(x, size, ierr)"
+    echo "subroutine ${proc}(x, size, ierror)"
     echo "  implicit none"
     echo "  include 'fortran_sizes.h'"
     echo "  real*${kind}, dimension(${dim}), intent(in) :: x"
     echo "  integer, intent(out) :: size"
-    echo "  integer, intent(out) :: ierr"
+    echo "  integer, intent(out) :: ierror"
     echo "  size = OMPI_SIZEOF_F90_REAL${kind}"
-    echo "  ierr = 0"
+    echo "  ierror = 0"
     echo "end subroutine ${proc}"
     echo
   done
@@ -161,14 +161,14 @@ do
   for kind in $ckinds
   do
     proc="${procedure}${rank}DC${kind}"
-    echo "subroutine ${proc}(x, size, ierr)"
+    echo "subroutine ${proc}(x, size, ierror)"
     echo "  implicit none"
     echo "  include 'fortran_sizes.h'"
     echo "  complex*${kind}, dimension(${dim}), intent(in) :: x"
     echo "  integer, intent(out) :: size"
-    echo "  integer, intent(out) :: ierr"
+    echo "  integer, intent(out) :: ierror"
     echo "  size = OMPI_SIZEOF_F90_COMPLEX${kind}"
-    echo "  ierr = 0"
+    echo "  ierror = 0"
     echo "end subroutine ${proc}"
     echo
   done
