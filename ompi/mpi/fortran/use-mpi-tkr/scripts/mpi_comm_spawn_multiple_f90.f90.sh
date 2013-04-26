@@ -43,7 +43,7 @@ output() {
     cat <<EOF
 subroutine ${proc}(count, array_of_commands, array_of_argv, &
         array_of_maxprocs, array_of_info, &
-        root, comm, intercomm, array_of_errcodes, ierr)
+        root, comm, intercomm, array_of_errcodes, ierror)
   include 'mpif-config.h'
   integer, intent(in) :: count
   character(len=*), dimension(*), intent(in) :: array_of_commands
@@ -54,11 +54,11 @@ subroutine ${proc}(count, array_of_commands, array_of_argv, &
   integer, intent(in) :: comm
   integer, intent(out) :: intercomm
   integer, dimension(*), intent(out) :: array_of_errcodes
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 
   call ${procedure}(count, array_of_commands, array_of_argv, &
       array_of_maxprocs, array_of_info, root, comm, intercomm, &
-      array_of_errcodes, ierr)
+      array_of_errcodes, ierror)
 end subroutine ${proc}
 
 EOF

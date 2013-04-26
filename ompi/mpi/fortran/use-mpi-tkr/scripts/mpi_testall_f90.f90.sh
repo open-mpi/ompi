@@ -36,15 +36,15 @@ output() {
 
     cat <<EOF
 
-subroutine MPI_Testall${suffix}(count, array_of_requests, flag, array_of_statuses, ierr)
+subroutine MPI_Testall${suffix}(count, array_of_requests, flag, array_of_statuses, ierror)
   include 'mpif-config.h'
   integer, intent(in) :: count
   integer, dimension(count), intent(inout) :: array_of_requests
   logical, intent(out) :: flag
   $status_type, intent(out) :: array_of_statuses
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 
-  call MPI_Testall(count, array_of_requests, flag, array_of_statuses, ierr)
+  call MPI_Testall(count, array_of_requests, flag, array_of_statuses, ierror)
 end subroutine MPI_Testall${suffix}
 
 EOF

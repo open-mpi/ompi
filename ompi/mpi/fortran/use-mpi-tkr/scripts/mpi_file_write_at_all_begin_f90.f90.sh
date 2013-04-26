@@ -47,16 +47,16 @@ output() {
     cat <<EOF
 
 subroutine ${proc}(fh, offset, buf, count, datatype&
-        , ierr)
+        , ierror)
   include "mpif-config.h"
   integer, intent(in) :: fh
   integer(kind=MPI_OFFSET_KIND), intent(in) :: offset
   ${type}, intent(in) :: buf
   integer, intent(in) :: count
   integer, intent(in) :: datatype
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
   call ${procedure}(fh, offset, buf, count, datatype&
-        , ierr)
+        , ierror)
 end subroutine ${proc}
 
 EOF

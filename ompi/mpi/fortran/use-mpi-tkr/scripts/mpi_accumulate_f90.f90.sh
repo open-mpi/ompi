@@ -47,7 +47,7 @@ output() {
     cat <<EOF
 
 subroutine ${proc}(origin_addr, origin_count, origin_datatype, target_rank, target_disp, &
-        target_count, target_datatype, op, win, ierr)
+        target_count, target_datatype, op, win, ierror)
   include "mpif-config.h"
   ${type} :: origin_addr
   integer, intent(in) :: origin_count
@@ -58,9 +58,9 @@ subroutine ${proc}(origin_addr, origin_count, origin_datatype, target_rank, targ
   integer, intent(in) :: target_datatype
   integer, intent(in) :: op
   integer, intent(in) :: win
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
   call ${procedure}(origin_addr, origin_count, origin_datatype, target_rank, target_disp, &
-        target_count, target_datatype, op, win, ierr)
+        target_count, target_datatype, op, win, ierror)
 end subroutine ${proc}
 
 EOF

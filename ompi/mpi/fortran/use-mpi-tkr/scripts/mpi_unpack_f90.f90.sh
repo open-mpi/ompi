@@ -47,7 +47,7 @@ output() {
     cat <<EOF
 
 subroutine ${proc}(inbuf, insize, position, outbuf, outcount, &
-        datatype, comm, ierr)
+        datatype, comm, ierror)
   include "mpif-config.h"
   ${type}, intent(in) :: inbuf
   integer, intent(in) :: insize
@@ -56,9 +56,9 @@ subroutine ${proc}(inbuf, insize, position, outbuf, outcount, &
   integer, intent(in) :: outcount
   integer, intent(in) :: datatype
   integer, intent(in) :: comm
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
   call ${procedure}(inbuf, insize, position, outbuf, outcount, &
-        datatype, comm, ierr)
+        datatype, comm, ierror)
 end subroutine ${proc}
 
 EOF

@@ -47,7 +47,7 @@ output() {
     cat <<EOF
 
 subroutine ${proc}(buf, count, datatype, dest, sendtag, &
-        source, recvtag, comm, status, ierr)
+        source, recvtag, comm, status, ierror)
   include "mpif-config.h"
   ${type} :: buf
   integer, intent(in) :: count
@@ -58,9 +58,9 @@ subroutine ${proc}(buf, count, datatype, dest, sendtag, &
   integer, intent(in) :: recvtag
   integer, intent(in) :: comm
   integer, dimension(MPI_STATUS_SIZE), intent(inout) :: status
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
   call ${procedure}(buf, count, datatype, dest, sendtag, &
-        source, recvtag, comm, status, ierr)
+        source, recvtag, comm, status, ierror)
 end subroutine ${proc}
 
 EOF

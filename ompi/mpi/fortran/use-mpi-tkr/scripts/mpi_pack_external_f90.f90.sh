@@ -47,7 +47,7 @@ output() {
     cat <<EOF
 
 subroutine ${proc}(datarep, inbuf, incount, datatype, outbuf, &
-        outsize, position, ierr)
+        outsize, position, ierror)
   include "mpif-config.h"
   character(len=*), intent(in) :: datarep
   ${type}, intent(in) :: inbuf
@@ -56,9 +56,9 @@ subroutine ${proc}(datarep, inbuf, incount, datatype, outbuf, &
   ${type} :: outbuf
   integer(kind=MPI_ADDRESS_KIND), intent(in) :: outsize
   integer(kind=MPI_ADDRESS_KIND), intent(inout) :: position
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
   call ${procedure}(datarep, inbuf, incount, datatype, outbuf, &
-        outsize, position, ierr)
+        outsize, position, ierror)
 end subroutine ${proc}
 
 EOF

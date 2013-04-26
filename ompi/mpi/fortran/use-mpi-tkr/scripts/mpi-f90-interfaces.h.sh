@@ -95,10 +95,10 @@ output_1() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(comm, errorcode, ierr)
+subroutine ${procedure}(comm, errorcode, ierror)
   integer, intent(in) :: comm
   integer, intent(in) :: errorcode
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -122,7 +122,7 @@ output_2() {
     cat <<EOF
 
 subroutine ${proc}(origin_addr, origin_count, origin_datatype, target_rank, target_disp, &
-        target_count, target_datatype, op, win, ierr)
+        target_count, target_datatype, op, win, ierror)
   include 'mpif-config.h'
   ${type} :: origin_addr
   integer, intent(in) :: origin_count
@@ -133,7 +133,7 @@ subroutine ${proc}(origin_addr, origin_count, origin_datatype, target_rank, targ
   integer, intent(in) :: target_datatype
   integer, intent(in) :: op
   integer, intent(in) :: win
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${proc}
 
 EOF
@@ -179,9 +179,9 @@ output_3() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(errorclass, ierr)
+subroutine ${procedure}(errorclass, ierror)
   integer, intent(out) :: errorclass
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -201,10 +201,10 @@ output_4() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(errorclass, errorcode, ierr)
+subroutine ${procedure}(errorclass, errorcode, ierror)
   integer, intent(in) :: errorclass
   integer, intent(out) :: errorcode
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -224,10 +224,10 @@ output_5() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(errorcode, string, ierr)
+subroutine ${procedure}(errorcode, string, ierror)
   integer, intent(in) :: errorcode
   character(len=*), intent(in) :: string
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -250,10 +250,10 @@ output_6() {
     proc="$1$2D$3"
     cat <<EOF
 
-subroutine ${proc}(location, address, ierr)
+subroutine ${proc}(location, address, ierror)
   ${type}, intent(in) :: location
   integer, intent(out) :: address
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${proc}
 
 EOF
@@ -303,7 +303,7 @@ output_7() {
     cat <<EOF
 
 subroutine ${proc}(sendbuf, sendcount, sendtype, recvbuf, recvcount, &
-        recvtype, comm, ierr)
+        recvtype, comm, ierror)
   ${type}, intent(in) :: sendbuf
   integer, intent(in) :: sendcount
   integer, intent(in) :: sendtype
@@ -311,7 +311,7 @@ subroutine ${proc}(sendbuf, sendcount, sendtype, recvbuf, recvcount, &
   integer, intent(in) :: recvcount
   integer, intent(in) :: recvtype
   integer, intent(in) :: comm
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${proc}
 
 EOF
@@ -361,7 +361,7 @@ output_7_nonblocking() {
     cat <<EOF
 
 subroutine ${proc}(sendbuf, sendcount, sendtype, recvbuf, recvcount, &
-        recvtype, comm, request, ierr)
+        recvtype, comm, request, ierror)
   ${type}, intent(in) :: sendbuf
   integer, intent(in) :: sendcount
   integer, intent(in) :: sendtype
@@ -370,7 +370,7 @@ subroutine ${proc}(sendbuf, sendcount, sendtype, recvbuf, recvcount, &
   integer, intent(in) :: recvtype
   integer, intent(in) :: comm
   integer, intent(out) :: request
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${proc}
 
 EOF
@@ -420,7 +420,7 @@ output_8() {
     cat <<EOF
 
 subroutine ${proc}(sendbuf, sendcount, sendtype, recvbuf, recvcounts, &
-        displs, recvtype, comm, ierr)
+        displs, recvtype, comm, ierror)
   ${type}, intent(in) :: sendbuf
   integer, intent(in) :: sendcount
   integer, intent(in) :: sendtype
@@ -429,7 +429,7 @@ subroutine ${proc}(sendbuf, sendcount, sendtype, recvbuf, recvcounts, &
   integer, dimension(*), intent(in) :: displs
   integer, intent(in) :: recvtype
   integer, intent(in) :: comm
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${proc}
 
 EOF
@@ -479,7 +479,7 @@ output_8_nonblocking() {
     cat <<EOF
 
 subroutine ${proc}(sendbuf, sendcount, sendtype, recvbuf, recvcounts, &
-        displs, recvtype, comm, request, ierr)
+        displs, recvtype, comm, request, ierror)
   ${type}, intent(in) :: sendbuf
   integer, intent(in) :: sendcount
   integer, intent(in) :: sendtype
@@ -489,7 +489,7 @@ subroutine ${proc}(sendbuf, sendcount, sendtype, recvbuf, recvcounts, &
   integer, intent(in) :: recvtype
   integer, intent(in) :: comm
   integer, intent(out) :: request
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${proc}
 
 EOF
@@ -535,12 +535,12 @@ output_9() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(size, info, baseptr, ierr)
+subroutine ${procedure}(size, info, baseptr, ierror)
   include 'mpif-config.h'
   integer(kind=MPI_ADDRESS_KIND), intent(in) :: size
   integer, intent(in) :: info
   integer(kind=MPI_ADDRESS_KIND), intent(out) :: baseptr
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -564,14 +564,14 @@ output_10() {
     cat <<EOF
 
 subroutine ${proc}(sendbuf, recvbuf, count, datatype, op, &
-        comm, ierr)
+        comm, ierror)
   ${type}, intent(in) :: sendbuf
   ${type} :: recvbuf
   integer, intent(in) :: count
   integer, intent(in) :: datatype
   integer, intent(in) :: op
   integer, intent(in) :: comm
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${proc}
 
 EOF
@@ -621,7 +621,7 @@ output_10_nonblocking() {
     cat <<EOF
 
 subroutine ${proc}(sendbuf, recvbuf, count, datatype, op, &
-        comm, request, ierr)
+        comm, request, ierror)
   ${type}, intent(in) :: sendbuf
   ${type} :: recvbuf
   integer, intent(in) :: count
@@ -629,7 +629,7 @@ subroutine ${proc}(sendbuf, recvbuf, count, datatype, op, &
   integer, intent(in) :: op
   integer, intent(in) :: comm
   integer, intent(out) :: request
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${proc}
 
 EOF
@@ -679,7 +679,7 @@ output_11() {
     cat <<EOF
 
 subroutine ${proc}(sendbuf, sendcount, sendtype, recvbuf, recvcount, &
-        recvtype, comm, ierr)
+        recvtype, comm, ierror)
   ${type}, intent(in) :: sendbuf
   integer, intent(in) :: sendcount
   integer, intent(in) :: sendtype
@@ -687,7 +687,7 @@ subroutine ${proc}(sendbuf, sendcount, sendtype, recvbuf, recvcount, &
   integer, intent(in) :: recvcount
   integer, intent(in) :: recvtype
   integer, intent(in) :: comm
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${proc}
 
 EOF
@@ -737,7 +737,7 @@ output_11_nonblocking() {
     cat <<EOF
 
 subroutine ${proc}(sendbuf, sendcount, sendtype, recvbuf, recvcount, &
-        recvtype, comm, request, ierr)
+        recvtype, comm, request, ierror)
   ${type}, intent(in) :: sendbuf
   integer, intent(in) :: sendcount
   integer, intent(in) :: sendtype
@@ -746,7 +746,7 @@ subroutine ${proc}(sendbuf, sendcount, sendtype, recvbuf, recvcount, &
   integer, intent(in) :: recvtype
   integer, intent(in) :: comm
   integer, intent(out) :: request
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${proc}
 
 EOF
@@ -796,7 +796,7 @@ output_12() {
     cat <<EOF
 
 subroutine ${proc}(sendbuf, sendcounts, sdispls, sendtype, recvbuf, &
-        recvcounts, rdispls, recvtype, comm, ierr)
+        recvcounts, rdispls, recvtype, comm, ierror)
   ${type}, intent(in) :: sendbuf
   integer, dimension(*), intent(in) :: sendcounts
   integer, dimension(*), intent(in) :: sdispls
@@ -806,7 +806,7 @@ subroutine ${proc}(sendbuf, sendcounts, sdispls, sendtype, recvbuf, &
   integer, dimension(*), intent(in) :: rdispls
   integer, intent(in) :: recvtype
   integer, intent(in) :: comm
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${proc}
 
 EOF
@@ -856,7 +856,7 @@ output_12_nonblocking() {
     cat <<EOF
 
 subroutine ${proc}(sendbuf, sendcounts, sdispls, sendtype, recvbuf, &
-        recvcounts, rdispls, recvtype, comm, request, ierr)
+        recvcounts, rdispls, recvtype, comm, request, ierror)
   ${type}, intent(in) :: sendbuf
   integer, dimension(*), intent(in) :: sendcounts
   integer, dimension(*), intent(in) :: sdispls
@@ -867,7 +867,7 @@ subroutine ${proc}(sendbuf, sendcounts, sdispls, sendtype, recvbuf, &
   integer, intent(in) :: recvtype
   integer, intent(in) :: comm
   integer, intent(out) :: request
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${proc}
 
 EOF
@@ -917,7 +917,7 @@ output_13() {
     cat <<EOF
 
 subroutine ${proc}(sendbuf, sendcounts, sdispls, sendtypes, recvbuf, &
-        recvcounts, rdispls, recvtypes, comm, ierr)
+        recvcounts, rdispls, recvtypes, comm, ierror)
   ${type}, intent(in) :: sendbuf
   integer, dimension(*), intent(in) :: sendcounts
   integer, dimension(*), intent(in) :: sdispls
@@ -927,7 +927,7 @@ subroutine ${proc}(sendbuf, sendcounts, sdispls, sendtypes, recvbuf, &
   integer, dimension(*), intent(in) :: rdispls
   integer, dimension(*), intent(in) :: recvtypes
   integer, intent(in) :: comm
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${proc}
 
 EOF
@@ -977,7 +977,7 @@ output_13_nonblocking() {
     cat <<EOF
 
 subroutine ${proc}(sendbuf, sendcounts, sdispls, sendtypes, recvbuf, &
-        recvcounts, rdispls, recvtypes, comm, request, ierr)
+        recvcounts, rdispls, recvtypes, comm, request, ierror)
   ${type}, intent(in) :: sendbuf
   integer, dimension(*), intent(in) :: sendcounts
   integer, dimension(*), intent(in) :: sdispls
@@ -988,7 +988,7 @@ subroutine ${proc}(sendbuf, sendcounts, sdispls, sendtypes, recvbuf, &
   integer, dimension(*), intent(in) :: recvtypes
   integer, intent(in) :: comm
   integer, intent(out) :: request
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${proc}
 
 EOF
@@ -1034,10 +1034,10 @@ output_14() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(comm, keyval, ierr)
+subroutine ${procedure}(comm, keyval, ierror)
   integer, intent(in) :: comm
   integer, intent(in) :: keyval
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -1057,12 +1057,12 @@ output_15() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(comm, keyval, attribute_val, flag, ierr)
+subroutine ${procedure}(comm, keyval, attribute_val, flag, ierror)
   integer, intent(in) :: comm
   integer, intent(in) :: keyval
   integer, intent(out) :: attribute_val
   logical, intent(out) :: flag
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -1082,11 +1082,11 @@ output_16() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(comm, keyval, attribute_val, ierr)
+subroutine ${procedure}(comm, keyval, attribute_val, ierror)
   integer, intent(in) :: comm
   integer, intent(in) :: keyval
   integer, intent(in) :: attribute_val
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -1106,9 +1106,9 @@ output_17() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(comm, ierr)
+subroutine ${procedure}(comm, ierror)
   integer, intent(in) :: comm
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -1128,10 +1128,10 @@ output_17_nonblocking() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(comm, request, ierr)
+subroutine ${procedure}(comm, request, ierror)
   integer, intent(in) :: comm
   integer, intent(out) :: request
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -1155,13 +1155,13 @@ output_18() {
     cat <<EOF
 
 subroutine ${proc}(buffer, count, datatype, root, comm&
-        , ierr)
+        , ierror)
   ${type} :: buffer
   integer, intent(in) :: count
   integer, intent(in) :: datatype
   integer, intent(in) :: root
   integer, intent(in) :: comm
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${proc}
 
 EOF
@@ -1211,14 +1211,14 @@ output_18_nonblocking() {
     cat <<EOF
 
 subroutine ${proc}(buffer, count, datatype, root, comm&
-        , request, ierr)
+        , request, ierror)
   ${type} :: buffer
   integer, intent(in) :: count
   integer, intent(in) :: datatype
   integer, intent(in) :: root
   integer, intent(in) :: comm
   integer, intent(out) :: request
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${proc}
 
 EOF
@@ -1268,14 +1268,14 @@ output_19() {
     cat <<EOF
 
 subroutine ${proc}(buf, count, datatype, dest, tag, &
-        comm, ierr)
+        comm, ierror)
   ${type}, intent(in) :: buf
   integer, intent(in) :: count
   integer, intent(in) :: datatype
   integer, intent(in) :: dest
   integer, intent(in) :: tag
   integer, intent(in) :: comm
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${proc}
 
 EOF
@@ -1325,7 +1325,7 @@ output_20() {
     cat <<EOF
 
 subroutine ${proc}(buf, count, datatype, dest, tag, &
-        comm, request, ierr)
+        comm, request, ierror)
   ${type}, intent(in) :: buf
   integer, intent(in) :: count
   integer, intent(in) :: datatype
@@ -1333,7 +1333,7 @@ subroutine ${proc}(buf, count, datatype, dest, tag, &
   integer, intent(in) :: tag
   integer, intent(in) :: comm
   integer, intent(out) :: request
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${proc}
 
 EOF
@@ -1382,10 +1382,10 @@ output_21() {
     proc="$1$2D$3"
     cat <<EOF
 
-subroutine ${proc}(buffer, size, ierr)
+subroutine ${proc}(buffer, size, ierror)
   ${type}, intent(in) :: buffer
   integer, intent(in) :: size
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${proc}
 
 EOF
@@ -1434,10 +1434,10 @@ output_22() {
     proc="$1$2D$3"
     cat <<EOF
 
-subroutine ${proc}(buffer, size, ierr)
+subroutine ${proc}(buffer, size, ierror)
   ${type} :: buffer
   integer, intent(out) :: size
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${proc}
 
 EOF
@@ -1483,9 +1483,9 @@ output_23() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(request, ierr)
+subroutine ${procedure}(request, ierror)
   integer, intent(in) :: request
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -1505,12 +1505,12 @@ output_24() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(comm, rank, maxdims, coords, ierr)
+subroutine ${procedure}(comm, rank, maxdims, coords, ierror)
   integer, intent(in) :: comm
   integer, intent(in) :: rank
   integer, intent(in) :: maxdims
   integer, dimension(*), intent(out) :: coords
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -1531,14 +1531,14 @@ output_25() {
     cat <<EOF
 
 subroutine ${procedure}(old_comm, ndims, dims, periods, reorder, &
-        comm_cart, ierr)
+        comm_cart, ierror)
   integer, intent(in) :: old_comm
   integer, intent(in) :: ndims
   integer, dimension(*), intent(in) :: dims
   logical, dimension(*), intent(in) :: periods
   logical, intent(in) :: reorder
   integer, intent(out) :: comm_cart
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -1559,13 +1559,13 @@ output_26() {
     cat <<EOF
 
 subroutine ${procedure}(comm, maxdims, dims, periods, coords&
-        , ierr)
+        , ierror)
   integer, intent(in) :: comm
   integer, intent(in) :: maxdims
   integer, dimension(*), intent(out) :: dims
   logical, dimension(*), intent(out) :: periods
   integer, dimension(*), intent(out) :: coords
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -1586,13 +1586,13 @@ output_27() {
     cat <<EOF
 
 subroutine ${procedure}(comm, ndims, dims, periods, newrank&
-        , ierr)
+        , ierror)
   integer, intent(in) :: comm
   integer, intent(in) :: ndims
   integer, dimension(*), intent(in) :: dims
   logical, dimension(*), intent(in) :: periods
   integer, intent(out) :: newrank
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -1612,11 +1612,11 @@ output_28() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(comm, coords, rank, ierr)
+subroutine ${procedure}(comm, coords, rank, ierror)
   integer, intent(in) :: comm
   integer, dimension(*), intent(in) :: coords
   integer, intent(out) :: rank
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -1637,13 +1637,13 @@ output_29() {
     cat <<EOF
 
 subroutine ${procedure}(comm, direction, disp, rank_source, rank_dest&
-        , ierr)
+        , ierror)
   integer, intent(in) :: comm
   integer, intent(in) :: direction
   integer, intent(in) :: disp
   integer, intent(out) :: rank_source
   integer, intent(out) :: rank_dest
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -1663,11 +1663,11 @@ output_30() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(comm, remain_dims, new_comm, ierr)
+subroutine ${procedure}(comm, remain_dims, new_comm, ierror)
   integer, intent(in) :: comm
   logical, dimension(*), intent(in) :: remain_dims
   integer, intent(out) :: new_comm
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -1687,10 +1687,10 @@ output_31() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(comm, ndims, ierr)
+subroutine ${procedure}(comm, ndims, ierror)
   integer, intent(in) :: comm
   integer, intent(out) :: ndims
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -1710,10 +1710,10 @@ output_32() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(comm, errorcode, ierr)
+subroutine ${procedure}(comm, errorcode, ierror)
   integer, intent(in) :: comm
   integer, intent(in) :: errorcode
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -1733,11 +1733,11 @@ output_33() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(comm1, comm2, result, ierr)
+subroutine ${procedure}(comm1, comm2, result, ierror)
   integer, intent(in) :: comm1
   integer, intent(in) :: comm2
   integer, intent(out) :: result
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -1757,11 +1757,11 @@ output_34() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(comm, group, newcomm, ierr)
+subroutine ${procedure}(comm, group, newcomm, ierror)
   integer, intent(in) :: comm
   integer, intent(in) :: group
   integer, intent(out) :: newcomm
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -1781,10 +1781,10 @@ output_35() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(function, errhandler, ierr)
+subroutine ${procedure}(function, errhandler, ierror)
   external :: function
   integer, intent(out) :: errhandler
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -1804,13 +1804,13 @@ output_36() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(comm_copy_attr_fn, comm_delete_attr_fn, comm_keyval, extra_state, ierr)
+subroutine ${procedure}(comm_copy_attr_fn, comm_delete_attr_fn, comm_keyval, extra_state, ierror)
   include 'mpif-config.h'
   external :: comm_copy_attr_fn
   external :: comm_delete_attr_fn
   integer, intent(out) :: comm_keyval
   integer(kind=MPI_ADDRESS_KIND), intent(in) :: extra_state
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -1830,10 +1830,10 @@ output_37() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(comm, comm_keyval, ierr)
+subroutine ${procedure}(comm, comm_keyval, ierror)
   integer, intent(in) :: comm
   integer, intent(in) :: comm_keyval
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -1853,10 +1853,10 @@ output_38() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(comm, newcomm, ierr)
+subroutine ${procedure}(comm, newcomm, ierror)
   integer, intent(in) :: comm
   integer, intent(out) :: newcomm
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -1876,9 +1876,9 @@ output_39() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(comm, ierr)
+subroutine ${procedure}(comm, ierror)
   integer, intent(inout) :: comm
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -1898,9 +1898,9 @@ output_40() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(comm_keyval, ierr)
+subroutine ${procedure}(comm_keyval, ierror)
   integer, intent(inout) :: comm_keyval
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -1920,13 +1920,13 @@ output_41() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(comm, comm_keyval, attribute_val, flag, ierr)
+subroutine ${procedure}(comm, comm_keyval, attribute_val, flag, ierror)
   include 'mpif-config.h'
   integer, intent(in) :: comm
   integer, intent(in) :: comm_keyval
   integer(kind=MPI_ADDRESS_KIND), intent(out) :: attribute_val
   logical, intent(out) :: flag
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -1946,10 +1946,10 @@ output_42() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(comm, erhandler, ierr)
+subroutine ${procedure}(comm, erhandler, ierror)
   integer, intent(in) :: comm
   integer, intent(out) :: erhandler
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -1969,11 +1969,11 @@ output_43() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(comm, comm_name, resultlen, ierr)
+subroutine ${procedure}(comm, comm_name, resultlen, ierror)
   integer, intent(in) :: comm
   character(len=*), intent(out) :: comm_name
   integer, intent(out) :: resultlen
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -1993,10 +1993,10 @@ output_44() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(comm, group, ierr)
+subroutine ${procedure}(comm, group, ierror)
   integer, intent(in) :: comm
   integer, intent(out) :: group
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -2016,10 +2016,10 @@ output_45() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(comm, rank, ierr)
+subroutine ${procedure}(comm, rank, ierror)
   integer, intent(in) :: comm
   integer, intent(out) :: rank
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -2039,10 +2039,10 @@ output_46() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(comm, group, ierr)
+subroutine ${procedure}(comm, group, ierror)
   integer, intent(in) :: comm
   integer, intent(out) :: group
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -2062,10 +2062,10 @@ output_47() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(comm, size, ierr)
+subroutine ${procedure}(comm, size, ierror)
   integer, intent(in) :: comm
   integer, intent(out) :: size
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -2085,12 +2085,12 @@ output_48() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(comm, comm_keyval, attribute_val, ierr)
+subroutine ${procedure}(comm, comm_keyval, attribute_val, ierror)
   include 'mpif-config.h'
   integer, intent(in) :: comm
   integer, intent(in) :: comm_keyval
   integer(kind=MPI_ADDRESS_KIND), intent(in) :: attribute_val
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -2110,10 +2110,10 @@ output_49() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(comm, errhandler, ierr)
+subroutine ${procedure}(comm, errhandler, ierror)
   integer, intent(in) :: comm
   integer, intent(in) :: errhandler
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -2133,10 +2133,10 @@ output_50() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(comm, comm_name, ierr)
+subroutine ${procedure}(comm, comm_name, ierror)
   integer, intent(in) :: comm
   character(len=*), intent(in) :: comm_name
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -2156,10 +2156,10 @@ output_51() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(comm, size, ierr)
+subroutine ${procedure}(comm, size, ierror)
   integer, intent(in) :: comm
   integer, intent(out) :: size
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -2179,12 +2179,12 @@ output_52() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(comm, color, key, newcomm, ierr)
+subroutine ${procedure}(comm, color, key, newcomm, ierror)
   integer, intent(in) :: comm
   integer, intent(in) :: color
   integer, intent(in) :: key
   integer, intent(out) :: newcomm
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -2204,10 +2204,10 @@ output_53() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(comm, flag, ierr)
+subroutine ${procedure}(comm, flag, ierror)
   integer, intent(in) :: comm
   logical, intent(out) :: flag
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -2227,11 +2227,11 @@ output_54() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(nnodes, ndims, dims, ierr)
+subroutine ${procedure}(nnodes, ndims, dims, ierror)
   integer, intent(in) :: nnodes
   integer, intent(in) :: ndims
   integer, dimension(*), intent(inout) :: dims
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -2251,10 +2251,10 @@ output_55() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(function, errhandler, ierr)
+subroutine ${procedure}(function, errhandler, ierror)
   external :: function
   integer, intent(out) :: errhandler
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -2274,9 +2274,9 @@ output_56() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(errhandler, ierr)
+subroutine ${procedure}(errhandler, ierror)
   integer, intent(inout) :: errhandler
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -2296,10 +2296,10 @@ output_57() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(comm, errhandler, ierr)
+subroutine ${procedure}(comm, errhandler, ierror)
   integer, intent(in) :: comm
   integer, intent(out) :: errhandler
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -2319,10 +2319,10 @@ output_58() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(comm, errhandler, ierr)
+subroutine ${procedure}(comm, errhandler, ierror)
   integer, intent(in) :: comm
   integer, intent(in) :: errhandler
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -2342,10 +2342,10 @@ output_59() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(errorcode, errorclass, ierr)
+subroutine ${procedure}(errorcode, errorclass, ierror)
   integer, intent(in) :: errorcode
   integer, intent(out) :: errorclass
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -2365,11 +2365,11 @@ output_60() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(errorcode, string, resultlen, ierr)
+subroutine ${procedure}(errorcode, string, resultlen, ierror)
   integer, intent(in) :: errorcode
   character(len=*), intent(out) :: string
   integer, intent(out) :: resultlen
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -2393,14 +2393,14 @@ output_61() {
     cat <<EOF
 
 subroutine ${proc}(sendbuf, recvbuf, count, datatype, op, &
-        comm, ierr)
+        comm, ierror)
   ${type}, intent(in) :: sendbuf
   ${type} :: recvbuf
   integer, intent(in) :: count
   integer, intent(in) :: datatype
   integer, intent(in) :: op
   integer, intent(in) :: comm
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${proc}
 
 EOF
@@ -2450,7 +2450,7 @@ output_61_nonblocking() {
     cat <<EOF
 
 subroutine ${proc}(sendbuf, recvbuf, count, datatype, op, &
-        comm, request, ierr)
+        comm, request, ierror)
   ${type}, intent(in) :: sendbuf
   ${type} :: recvbuf
   integer, intent(in) :: count
@@ -2458,7 +2458,7 @@ subroutine ${proc}(sendbuf, recvbuf, count, datatype, op, &
   integer, intent(in) :: op
   integer, intent(in) :: comm
   integer, intent(out) :: request
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${proc}
 
 EOF
@@ -2504,10 +2504,10 @@ output_62() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(fh, errorcode, ierr)
+subroutine ${procedure}(fh, errorcode, ierror)
   integer, intent(in) :: fh
   integer, intent(in) :: errorcode
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -2527,9 +2527,9 @@ output_63() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(fh, ierr)
+subroutine ${procedure}(fh, ierror)
   integer, intent(inout) :: fh
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -2549,10 +2549,10 @@ output_64() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(function, errhandler, ierr)
+subroutine ${procedure}(function, errhandler, ierror)
   external :: function
   integer, intent(out) :: errhandler
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -2572,10 +2572,10 @@ output_65() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(filename, info, ierr)
+subroutine ${procedure}(filename, info, ierror)
   character(len=*), intent(in) :: filename
   integer, intent(in) :: info
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -2595,10 +2595,10 @@ output_66() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(fh, amode, ierr)
+subroutine ${procedure}(fh, amode, ierror)
   integer, intent(in) :: fh
   integer, intent(out) :: amode
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -2618,10 +2618,10 @@ output_67() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(fh, flag, ierr)
+subroutine ${procedure}(fh, flag, ierror)
   integer, intent(in) :: fh
   logical, intent(out) :: flag
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -2641,12 +2641,12 @@ output_68() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(fh, offset, disp, ierr)
+subroutine ${procedure}(fh, offset, disp, ierror)
   include 'mpif-config.h'
   integer, intent(in) :: fh
   integer(kind=MPI_OFFSET_KIND), intent(in) :: offset
   integer(kind=MPI_OFFSET_KIND), intent(out) :: disp
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -2666,10 +2666,10 @@ output_69() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(file, errhandler, ierr)
+subroutine ${procedure}(file, errhandler, ierror)
   integer, intent(in) :: file
   integer, intent(out) :: errhandler
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -2689,10 +2689,10 @@ output_70() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(fh, group, ierr)
+subroutine ${procedure}(fh, group, ierror)
   integer, intent(in) :: fh
   integer, intent(out) :: group
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -2712,10 +2712,10 @@ output_71() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(fh, info_used, ierr)
+subroutine ${procedure}(fh, info_used, ierror)
   integer, intent(in) :: fh
   integer, intent(out) :: info_used
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -2735,11 +2735,11 @@ output_72() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(fh, offset, ierr)
+subroutine ${procedure}(fh, offset, ierror)
   include 'mpif-config.h'
   integer, intent(in) :: fh
   integer(kind=MPI_OFFSET_KIND), intent(out) :: offset
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -2759,11 +2759,11 @@ output_73() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(fh, offset, ierr)
+subroutine ${procedure}(fh, offset, ierror)
   include 'mpif-config.h'
   integer, intent(in) :: fh
   integer(kind=MPI_OFFSET_KIND), intent(out) :: offset
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -2783,11 +2783,11 @@ output_74() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(fh, size, ierr)
+subroutine ${procedure}(fh, size, ierror)
   include 'mpif-config.h'
   integer, intent(in) :: fh
   integer(kind=MPI_OFFSET_KIND), intent(out) :: size
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -2807,12 +2807,12 @@ output_75() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(fh, datatype, extent, ierr)
+subroutine ${procedure}(fh, datatype, extent, ierror)
   include 'mpif-config.h'
   integer, intent(in) :: fh
   integer, intent(in) :: datatype
   integer(kind=MPI_ADDRESS_KIND), intent(out) :: extent
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -2833,14 +2833,14 @@ output_76() {
     cat <<EOF
 
 subroutine ${procedure}(fh, disp, etype, filetype, datarep&
-        , ierr)
+        , ierror)
   include 'mpif-config.h'
   integer, intent(in) :: fh
   integer(kind=MPI_OFFSET_KIND), intent(out) :: disp
   integer, intent(out) :: etype
   integer, intent(out) :: filetype
   character(len=*), intent(out) :: datarep
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -2864,13 +2864,13 @@ output_77() {
     cat <<EOF
 
 subroutine ${proc}(fh, buf, count, datatype, request&
-        , ierr)
+        , ierror)
   integer, intent(in) :: fh
   ${type} :: buf
   integer, intent(in) :: count
   integer, intent(in) :: datatype
   integer, intent(out) :: request
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${proc}
 
 EOF
@@ -2920,7 +2920,7 @@ output_78() {
     cat <<EOF
 
 subroutine ${proc}(fh, offset, buf, count, datatype, &
-        request, ierr)
+        request, ierror)
   include 'mpif-config.h'
   integer, intent(in) :: fh
   integer(kind=MPI_OFFSET_KIND), intent(in) :: offset
@@ -2928,7 +2928,7 @@ subroutine ${proc}(fh, offset, buf, count, datatype, &
   integer, intent(in) :: count
   integer, intent(in) :: datatype
   integer, intent(out) :: request
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${proc}
 
 EOF
@@ -2978,13 +2978,13 @@ output_79() {
     cat <<EOF
 
 subroutine ${proc}(fh, buf, count, datatype, request&
-        , ierr)
+        , ierror)
   integer, intent(in) :: fh
   ${type} :: buf
   integer, intent(in) :: count
   integer, intent(in) :: datatype
   integer, intent(out) :: request
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${proc}
 
 EOF
@@ -3034,13 +3034,13 @@ output_80() {
     cat <<EOF
 
 subroutine ${proc}(fh, buf, count, datatype, request&
-        , ierr)
+        , ierror)
   integer, intent(in) :: fh
   ${type}, intent(in) :: buf
   integer, intent(in) :: count
   integer, intent(in) :: datatype
   integer, intent(out) :: request
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${proc}
 
 EOF
@@ -3090,7 +3090,7 @@ output_81() {
     cat <<EOF
 
 subroutine ${proc}(fh, offset, buf, count, datatype, &
-        request, ierr)
+        request, ierror)
   include 'mpif-config.h'
   integer, intent(in) :: fh
   integer(kind=MPI_OFFSET_KIND), intent(in) :: offset
@@ -3098,7 +3098,7 @@ subroutine ${proc}(fh, offset, buf, count, datatype, &
   integer, intent(in) :: count
   integer, intent(in) :: datatype
   integer, intent(out) :: request
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${proc}
 
 EOF
@@ -3148,13 +3148,13 @@ output_82() {
     cat <<EOF
 
 subroutine ${proc}(fh, buf, count, datatype, request&
-        , ierr)
+        , ierror)
   integer, intent(in) :: fh
   ${type}, intent(in) :: buf
   integer, intent(in) :: count
   integer, intent(in) :: datatype
   integer, intent(out) :: request
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${proc}
 
 EOF
@@ -3201,13 +3201,13 @@ output_83() {
     cat <<EOF
 
 subroutine ${procedure}(comm, filename, amode, info, fh&
-        , ierr)
+        , ierror)
   integer, intent(in) :: comm
   character(len=*), intent(in) :: filename
   integer, intent(in) :: amode
   integer, intent(in) :: info
   integer, intent(out) :: fh
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -3227,11 +3227,11 @@ output_84() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(fh, size, ierr)
+subroutine ${procedure}(fh, size, ierror)
   include 'mpif-config.h'
   integer, intent(in) :: fh
   integer(kind=MPI_OFFSET_KIND), intent(in) :: size
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -3255,14 +3255,14 @@ output_85() {
     cat <<EOF
 
 subroutine ${proc}(fh, buf, count, datatype, status&
-        , ierr)
+        , ierror)
   include 'mpif-config.h'
   integer, intent(in) :: fh
   ${type} :: buf
   integer, intent(in) :: count
   integer, intent(in) :: datatype
   integer, dimension(MPI_STATUS_SIZE), intent(out) :: status
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${proc}
 
 EOF
@@ -3312,14 +3312,14 @@ output_86() {
     cat <<EOF
 
 subroutine ${proc}(fh, buf, count, datatype, status&
-        , ierr)
+        , ierror)
   include 'mpif-config.h'
   integer, intent(in) :: fh
   ${type} :: buf
   integer, intent(in) :: count
   integer, intent(in) :: datatype
   integer, dimension(MPI_STATUS_SIZE), intent(out) :: status
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${proc}
 
 EOF
@@ -3368,12 +3368,12 @@ output_87() {
     proc="$1$2D$3"
     cat <<EOF
 
-subroutine ${proc}(fh, buf, count, datatype, ierr)
+subroutine ${proc}(fh, buf, count, datatype, ierror)
   integer, intent(in) :: fh
   ${type} :: buf
   integer, intent(in) :: count
   integer, intent(in) :: datatype
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${proc}
 
 EOF
@@ -3422,12 +3422,12 @@ output_88() {
     proc="$1$2D$3"
     cat <<EOF
 
-subroutine ${proc}(fh, buf, status, ierr)
+subroutine ${proc}(fh, buf, status, ierror)
   include 'mpif-config.h'
   integer, intent(in) :: fh
   ${type} :: buf
   integer, dimension(MPI_STATUS_SIZE), intent(out) :: status
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${proc}
 
 EOF
@@ -3477,7 +3477,7 @@ output_89() {
     cat <<EOF
 
 subroutine ${proc}(fh, offset, buf, count, datatype, &
-        status, ierr)
+        status, ierror)
   include 'mpif-config.h'
   integer, intent(in) :: fh
   integer(kind=MPI_OFFSET_KIND), intent(in) :: offset
@@ -3485,7 +3485,7 @@ subroutine ${proc}(fh, offset, buf, count, datatype, &
   integer, intent(in) :: count
   integer, intent(in) :: datatype
   integer, dimension(MPI_STATUS_SIZE), intent(out) :: status
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${proc}
 
 EOF
@@ -3535,7 +3535,7 @@ output_90() {
     cat <<EOF
 
 subroutine ${proc}(fh, offset, buf, count, datatype, &
-        status, ierr)
+        status, ierror)
   include 'mpif-config.h'
   integer, intent(in) :: fh
   integer(kind=MPI_OFFSET_KIND), intent(in) :: offset
@@ -3543,7 +3543,7 @@ subroutine ${proc}(fh, offset, buf, count, datatype, &
   integer, intent(in) :: count
   integer, intent(in) :: datatype
   integer, dimension(MPI_STATUS_SIZE), intent(out) :: status
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${proc}
 
 EOF
@@ -3593,14 +3593,14 @@ output_91() {
     cat <<EOF
 
 subroutine ${proc}(fh, offset, buf, count, datatype&
-        , ierr)
+        , ierror)
   include 'mpif-config.h'
   integer, intent(in) :: fh
   integer(kind=MPI_OFFSET_KIND), intent(in) :: offset
   ${type} :: buf
   integer, intent(in) :: count
   integer, intent(in) :: datatype
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${proc}
 
 EOF
@@ -3649,12 +3649,12 @@ output_92() {
     proc="$1$2D$3"
     cat <<EOF
 
-subroutine ${proc}(fh, buf, status, ierr)
+subroutine ${proc}(fh, buf, status, ierror)
   include 'mpif-config.h'
   integer, intent(in) :: fh
   ${type} :: buf
   integer, dimension(MPI_STATUS_SIZE), intent(out) :: status
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${proc}
 
 EOF
@@ -3704,14 +3704,14 @@ output_93() {
     cat <<EOF
 
 subroutine ${proc}(fh, buf, count, datatype, status&
-        , ierr)
+        , ierror)
   include 'mpif-config.h'
   integer, intent(in) :: fh
   ${type} :: buf
   integer, intent(in) :: count
   integer, intent(in) :: datatype
   integer, dimension(MPI_STATUS_SIZE), intent(out) :: status
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${proc}
 
 EOF
@@ -3760,12 +3760,12 @@ output_94() {
     proc="$1$2D$3"
     cat <<EOF
 
-subroutine ${proc}(fh, buf, count, datatype, ierr)
+subroutine ${proc}(fh, buf, count, datatype, ierror)
   integer, intent(in) :: fh
   ${type} :: buf
   integer, intent(in) :: count
   integer, intent(in) :: datatype
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${proc}
 
 EOF
@@ -3814,12 +3814,12 @@ output_95() {
     proc="$1$2D$3"
     cat <<EOF
 
-subroutine ${proc}(fh, buf, status, ierr)
+subroutine ${proc}(fh, buf, status, ierror)
   include 'mpif-config.h'
   integer, intent(in) :: fh
   ${type} :: buf
   integer, dimension(MPI_STATUS_SIZE), intent(out) :: status
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${proc}
 
 EOF
@@ -3869,14 +3869,14 @@ output_96() {
     cat <<EOF
 
 subroutine ${proc}(fh, buf, count, datatype, status&
-        , ierr)
+        , ierror)
   include 'mpif-config.h'
   integer, intent(in) :: fh
   ${type} :: buf
   integer, intent(in) :: count
   integer, intent(in) :: datatype
   integer, dimension(MPI_STATUS_SIZE), intent(out) :: status
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${proc}
 
 EOF
@@ -3922,12 +3922,12 @@ output_97() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(fh, offset, whence, ierr)
+subroutine ${procedure}(fh, offset, whence, ierror)
   include 'mpif-config.h'
   integer, intent(in) :: fh
   integer(kind=MPI_OFFSET_KIND), intent(in) :: offset
   integer, intent(in) :: whence
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -3947,12 +3947,12 @@ output_98() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(fh, offset, whence, ierr)
+subroutine ${procedure}(fh, offset, whence, ierror)
   include 'mpif-config.h'
   integer, intent(in) :: fh
   integer(kind=MPI_OFFSET_KIND), intent(in) :: offset
   integer, intent(in) :: whence
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -3972,10 +3972,10 @@ output_99() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(fh, flag, ierr)
+subroutine ${procedure}(fh, flag, ierror)
   integer, intent(in) :: fh
   logical, intent(in) :: flag
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -3995,10 +3995,10 @@ output_100() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(file, errhandler, ierr)
+subroutine ${procedure}(file, errhandler, ierror)
   integer, intent(in) :: file
   integer, intent(in) :: errhandler
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -4018,10 +4018,10 @@ output_101() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(fh, info, ierr)
+subroutine ${procedure}(fh, info, ierror)
   integer, intent(in) :: fh
   integer, intent(in) :: info
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -4041,11 +4041,11 @@ output_102() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(fh, size, ierr)
+subroutine ${procedure}(fh, size, ierror)
   include 'mpif-config.h'
   integer, intent(in) :: fh
   integer(kind=MPI_OFFSET_KIND), intent(in) :: size
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -4066,7 +4066,7 @@ output_103() {
     cat <<EOF
 
 subroutine ${procedure}(fh, disp, etype, filetype, datarep, &
-        info, ierr)
+        info, ierror)
   include 'mpif-config.h'
   integer, intent(in) :: fh
   integer(kind=MPI_OFFSET_KIND), intent(in) :: disp
@@ -4074,7 +4074,7 @@ subroutine ${procedure}(fh, disp, etype, filetype, datarep, &
   integer, intent(in) :: filetype
   character(len=*), intent(in) :: datarep
   integer, intent(in) :: info
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -4094,9 +4094,9 @@ output_104() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(fh, ierr)
+subroutine ${procedure}(fh, ierror)
   integer, intent(in) :: fh
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -4120,14 +4120,14 @@ output_105() {
     cat <<EOF
 
 subroutine ${proc}(fh, buf, count, datatype, status&
-        , ierr)
+        , ierror)
   include 'mpif-config.h'
   integer, intent(in) :: fh
   ${type}, intent(in) :: buf
   integer, intent(in) :: count
   integer, intent(in) :: datatype
   integer, dimension(MPI_STATUS_SIZE), intent(out) :: status
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${proc}
 
 EOF
@@ -4177,14 +4177,14 @@ output_106() {
     cat <<EOF
 
 subroutine ${proc}(fh, buf, count, datatype, status&
-        , ierr)
+        , ierror)
   include 'mpif-config.h'
   integer, intent(in) :: fh
   ${type}, intent(in) :: buf
   integer, intent(in) :: count
   integer, intent(in) :: datatype
   integer, dimension(MPI_STATUS_SIZE), intent(out) :: status
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${proc}
 
 EOF
@@ -4233,12 +4233,12 @@ output_107() {
     proc="$1$2D$3"
     cat <<EOF
 
-subroutine ${proc}(fh, buf, count, datatype, ierr)
+subroutine ${proc}(fh, buf, count, datatype, ierror)
   integer, intent(in) :: fh
   ${type}, intent(in) :: buf
   integer, intent(in) :: count
   integer, intent(in) :: datatype
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${proc}
 
 EOF
@@ -4287,12 +4287,12 @@ output_108() {
     proc="$1$2D$3"
     cat <<EOF
 
-subroutine ${proc}(fh, buf, status, ierr)
+subroutine ${proc}(fh, buf, status, ierror)
   include 'mpif-config.h'
   integer, intent(in) :: fh
   ${type}, intent(in) :: buf
   integer, dimension(MPI_STATUS_SIZE), intent(out) :: status
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${proc}
 
 EOF
@@ -4342,7 +4342,7 @@ output_109() {
     cat <<EOF
 
 subroutine ${proc}(fh, offset, buf, count, datatype, &
-        status, ierr)
+        status, ierror)
   include 'mpif-config.h'
   integer, intent(in) :: fh
   integer(kind=MPI_OFFSET_KIND), intent(in) :: offset
@@ -4350,7 +4350,7 @@ subroutine ${proc}(fh, offset, buf, count, datatype, &
   integer, intent(in) :: count
   integer, intent(in) :: datatype
   integer, dimension(MPI_STATUS_SIZE), intent(out) :: status
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${proc}
 
 EOF
@@ -4400,7 +4400,7 @@ output_110() {
     cat <<EOF
 
 subroutine ${proc}(fh, offset, buf, count, datatype, &
-        status, ierr)
+        status, ierror)
   include 'mpif-config.h'
   integer, intent(in) :: fh
   integer(kind=MPI_OFFSET_KIND), intent(in) :: offset
@@ -4408,7 +4408,7 @@ subroutine ${proc}(fh, offset, buf, count, datatype, &
   integer, intent(in) :: count
   integer, intent(in) :: datatype
   integer, dimension(MPI_STATUS_SIZE), intent(out) :: status
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${proc}
 
 EOF
@@ -4458,14 +4458,14 @@ output_111() {
     cat <<EOF
 
 subroutine ${proc}(fh, offset, buf, count, datatype&
-        , ierr)
+        , ierror)
   include 'mpif-config.h'
   integer, intent(in) :: fh
   integer(kind=MPI_OFFSET_KIND), intent(in) :: offset
   ${type}, intent(in) :: buf
   integer, intent(in) :: count
   integer, intent(in) :: datatype
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${proc}
 
 EOF
@@ -4514,12 +4514,12 @@ output_112() {
     proc="$1$2D$3"
     cat <<EOF
 
-subroutine ${proc}(fh, buf, status, ierr)
+subroutine ${proc}(fh, buf, status, ierror)
   include 'mpif-config.h'
   integer, intent(in) :: fh
   ${type}, intent(in) :: buf
   integer, dimension(MPI_STATUS_SIZE), intent(out) :: status
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${proc}
 
 EOF
@@ -4569,14 +4569,14 @@ output_113() {
     cat <<EOF
 
 subroutine ${proc}(fh, buf, count, datatype, status&
-        , ierr)
+        , ierror)
   include 'mpif-config.h'
   integer, intent(in) :: fh
   ${type}, intent(in) :: buf
   integer, intent(in) :: count
   integer, intent(in) :: datatype
   integer, dimension(MPI_STATUS_SIZE), intent(out) :: status
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${proc}
 
 EOF
@@ -4625,12 +4625,12 @@ output_114() {
     proc="$1$2D$3"
     cat <<EOF
 
-subroutine ${proc}(fh, buf, count, datatype, ierr)
+subroutine ${proc}(fh, buf, count, datatype, ierror)
   integer, intent(in) :: fh
   ${type}, intent(in) :: buf
   integer, intent(in) :: count
   integer, intent(in) :: datatype
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${proc}
 
 EOF
@@ -4679,12 +4679,12 @@ output_115() {
     proc="$1$2D$3"
     cat <<EOF
 
-subroutine ${proc}(fh, buf, status, ierr)
+subroutine ${proc}(fh, buf, status, ierror)
   include 'mpif-config.h'
   integer, intent(in) :: fh
   ${type}, intent(in) :: buf
   integer, dimension(MPI_STATUS_SIZE), intent(out) :: status
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${proc}
 
 EOF
@@ -4734,14 +4734,14 @@ output_116() {
     cat <<EOF
 
 subroutine ${proc}(fh, buf, count, datatype, status&
-        , ierr)
+        , ierror)
   include 'mpif-config.h'
   integer, intent(in) :: fh
   ${type}, intent(in) :: buf
   integer, intent(in) :: count
   integer, intent(in) :: datatype
   integer, dimension(MPI_STATUS_SIZE), intent(out) :: status
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${proc}
 
 EOF
@@ -4787,8 +4787,8 @@ output_117() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(ierr)
-  integer, intent(out) :: ierr
+subroutine ${procedure}(ierror)
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -4808,9 +4808,9 @@ output_118() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(flag, ierr)
+subroutine ${procedure}(flag, ierror)
   logical, intent(out) :: flag
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -4833,9 +4833,9 @@ output_119() {
     proc="$1$2D$3"
     cat <<EOF
 
-subroutine ${proc}(base, ierr)
+subroutine ${proc}(base, ierror)
   ${type}, intent(in) :: base
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${proc}
 
 EOF
@@ -4885,7 +4885,7 @@ output_120() {
     cat <<EOF
 
 subroutine ${proc}(sendbuf, sendcount, sendtype, recvbuf, recvcount, &
-        recvtype, root, comm, ierr)
+        recvtype, root, comm, ierror)
   ${type}, intent(in) :: sendbuf
   integer, intent(in) :: sendcount
   integer, intent(in) :: sendtype
@@ -4894,7 +4894,7 @@ subroutine ${proc}(sendbuf, sendcount, sendtype, recvbuf, recvcount, &
   integer, intent(in) :: recvtype
   integer, intent(in) :: root
   integer, intent(in) :: comm
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${proc}
 
 EOF
@@ -4944,7 +4944,7 @@ output_120_nonblocking() {
     cat <<EOF
 
 subroutine ${proc}(sendbuf, sendcount, sendtype, recvbuf, recvcount, &
-        recvtype, root, comm, request, ierr)
+        recvtype, root, comm, request, ierror)
   ${type}, intent(in) :: sendbuf
   integer, intent(in) :: sendcount
   integer, intent(in) :: sendtype
@@ -4954,7 +4954,7 @@ subroutine ${proc}(sendbuf, sendcount, sendtype, recvbuf, recvcount, &
   integer, intent(in) :: root
   integer, intent(in) :: comm
   integer, intent(out) :: request
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${proc}
 
 EOF
@@ -5004,7 +5004,7 @@ output_121() {
     cat <<EOF
 
 subroutine ${proc}(sendbuf, sendcount, sendtype, recvbuf, recvcounts, &
-        displs, recvtype, root, comm, ierr)
+        displs, recvtype, root, comm, ierror)
   ${type}, intent(in) :: sendbuf
   integer, intent(in) :: sendcount
   integer, intent(in) :: sendtype
@@ -5014,7 +5014,7 @@ subroutine ${proc}(sendbuf, sendcount, sendtype, recvbuf, recvcounts, &
   integer, intent(in) :: recvtype
   integer, intent(in) :: root
   integer, intent(in) :: comm
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${proc}
 
 EOF
@@ -5064,7 +5064,7 @@ output_121_nonblocking() {
     cat <<EOF
 
 subroutine ${proc}(sendbuf, sendcount, sendtype, recvbuf, recvcounts, &
-        displs, recvtype, root, comm, ierr)
+        displs, recvtype, root, comm, ierror)
   ${type}, intent(in) :: sendbuf
   integer, intent(in) :: sendcount
   integer, intent(in) :: sendtype
@@ -5074,7 +5074,7 @@ subroutine ${proc}(sendbuf, sendcount, sendtype, recvbuf, recvcounts, &
   integer, intent(in) :: recvtype
   integer, intent(in) :: root
   integer, intent(in) :: comm
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${proc}
 
 EOF
@@ -5124,7 +5124,7 @@ output_122() {
     cat <<EOF
 
 subroutine ${proc}(origin_addr, origin_count, origin_datatype, target_rank, target_disp, &
-        target_count, target_datatype, win, ierr)
+        target_count, target_datatype, win, ierror)
   include 'mpif-config.h'
   ${type} :: origin_addr
   integer, intent(in) :: origin_count
@@ -5134,7 +5134,7 @@ subroutine ${proc}(origin_addr, origin_count, origin_datatype, target_rank, targ
   integer, intent(in) :: target_count
   integer, intent(in) :: target_datatype
   integer, intent(in) :: win
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${proc}
 
 EOF
@@ -5183,11 +5183,11 @@ output_123() {
     proc="$1$2D$3"
     cat <<EOF
 
-subroutine ${proc}(location, address, ierr)
+subroutine ${proc}(location, address, ierror)
   include 'mpif-config.h'
   ${type}, intent(in) :: location
   integer(kind=MPI_ADDRESS_KIND), intent(out) :: address
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${proc}
 
 EOF
@@ -5233,12 +5233,12 @@ output_124() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(status, datatype, count, ierr)
+subroutine ${procedure}(status, datatype, count, ierror)
   include 'mpif-config.h'
   integer, dimension(MPI_STATUS_SIZE), intent(in) :: status
   integer, intent(in) :: datatype
   integer, intent(out) :: count
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -5258,12 +5258,12 @@ output_125() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(status, datatype, count, ierr)
+subroutine ${procedure}(status, datatype, count, ierror)
   include 'mpif-config.h'
   integer, dimension(MPI_STATUS_SIZE), intent(in) :: status
   integer, intent(in) :: datatype
   integer, intent(out) :: count
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -5283,10 +5283,10 @@ output_126() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(name, resultlen, ierr)
+subroutine ${procedure}(name, resultlen, ierror)
   character(len=*), intent(out) :: name
   integer, intent(out) :: resultlen
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -5306,10 +5306,10 @@ output_127() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(version, subversion, ierr)
+subroutine ${procedure}(version, subversion, ierror)
   integer, intent(out) :: version
   integer, intent(out) :: subversion
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -5330,14 +5330,14 @@ output_128() {
     cat <<EOF
 
 subroutine ${procedure}(comm_old, nnodes, index, edges, reorder, &
-        comm_graph, ierr)
+        comm_graph, ierror)
   integer, intent(in) :: comm_old
   integer, intent(in) :: nnodes
   integer, dimension(*), intent(in) :: index
   integer, dimension(*), intent(in) :: edges
   logical, intent(in) :: reorder
   integer, intent(out) :: comm_graph
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -5358,13 +5358,13 @@ output_129() {
     cat <<EOF
 
 subroutine ${procedure}(comm, maxindex, maxedges, index, edges&
-        , ierr)
+        , ierror)
   integer, intent(in) :: comm
   integer, intent(in) :: maxindex
   integer, intent(in) :: maxedges
   integer, dimension(*), intent(out) :: index
   integer, dimension(*), intent(out) :: edges
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -5385,13 +5385,13 @@ output_130() {
     cat <<EOF
 
 subroutine ${procedure}(comm, nnodes, index, edges, newrank&
-        , ierr)
+        , ierror)
   integer, intent(in) :: comm
   integer, intent(in) :: nnodes
   integer, dimension(*), intent(in) :: index
   integer, dimension(*), intent(in) :: edges
   integer, intent(out) :: newrank
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -5411,12 +5411,12 @@ output_131() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(comm, rank, maxneighbors, neighbors, ierr)
+subroutine ${procedure}(comm, rank, maxneighbors, neighbors, ierror)
   integer, intent(in) :: comm
   integer, intent(in) :: rank
   integer, intent(in) :: maxneighbors
   integer, dimension(*), intent(out) :: neighbors
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -5436,11 +5436,11 @@ output_132() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(comm, rank, nneighbors, ierr)
+subroutine ${procedure}(comm, rank, nneighbors, ierror)
   integer, intent(in) :: comm
   integer, intent(in) :: rank
   integer, intent(out) :: nneighbors
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -5460,11 +5460,11 @@ output_133() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(comm, nnodes, nedges, ierr)
+subroutine ${procedure}(comm, nnodes, nedges, ierror)
   integer, intent(in) :: comm
   integer, intent(out) :: nnodes
   integer, intent(out) :: nedges
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -5484,9 +5484,9 @@ output_134() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(request, ierr)
+subroutine ${procedure}(request, ierror)
   integer, intent(in) :: request
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -5507,14 +5507,14 @@ output_135() {
     cat <<EOF
 
 subroutine ${procedure}(query_fn, free_fn, cancel_fn, extra_state, request&
-        , ierr)
+        , ierror)
   include 'mpif-config.h'
   external :: query_fn
   external :: free_fn
   external :: cancel_fn
   integer(kind=MPI_ADDRESS_KIND), intent(in) :: extra_state
   integer, intent(out) :: request
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -5534,11 +5534,11 @@ output_136() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(group1, group2, result, ierr)
+subroutine ${procedure}(group1, group2, result, ierror)
   integer, intent(in) :: group1
   integer, intent(in) :: group2
   integer, intent(out) :: result
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -5558,11 +5558,11 @@ output_137() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(group1, group2, newgroup, ierr)
+subroutine ${procedure}(group1, group2, newgroup, ierror)
   integer, intent(in) :: group1
   integer, intent(in) :: group2
   integer, intent(out) :: newgroup
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -5582,12 +5582,12 @@ output_138() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(group, n, ranks, newgroup, ierr)
+subroutine ${procedure}(group, n, ranks, newgroup, ierror)
   integer, intent(in) :: group
   integer, intent(in) :: n
   integer, dimension(*), intent(in) :: ranks
   integer, intent(out) :: newgroup
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -5607,9 +5607,9 @@ output_139() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(group, ierr)
+subroutine ${procedure}(group, ierror)
   integer, intent(inout) :: group
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -5629,12 +5629,12 @@ output_140() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(group, n, ranks, newgroup, ierr)
+subroutine ${procedure}(group, n, ranks, newgroup, ierror)
   integer, intent(in) :: group
   integer, intent(in) :: n
   integer, dimension(*), intent(in) :: ranks
   integer, intent(out) :: newgroup
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -5654,11 +5654,11 @@ output_141() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(group1, group2, newgroup, ierr)
+subroutine ${procedure}(group1, group2, newgroup, ierror)
   integer, intent(in) :: group1
   integer, intent(in) :: group2
   integer, intent(out) :: newgroup
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -5678,12 +5678,12 @@ output_142() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(group, n, ranges, newgroup, ierr)
+subroutine ${procedure}(group, n, ranges, newgroup, ierror)
   integer, intent(in) :: group
   integer, intent(in) :: n
   integer, dimension(3, *), intent(in) :: ranges
   integer, intent(out) :: newgroup
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -5703,12 +5703,12 @@ output_143() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(group, n, ranges, newgroup, ierr)
+subroutine ${procedure}(group, n, ranges, newgroup, ierror)
   integer, intent(in) :: group
   integer, intent(in) :: n
   integer, dimension(3, *), intent(in) :: ranges
   integer, intent(out) :: newgroup
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -5728,10 +5728,10 @@ output_144() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(group, rank, ierr)
+subroutine ${procedure}(group, rank, ierror)
   integer, intent(in) :: group
   integer, intent(out) :: rank
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -5751,10 +5751,10 @@ output_145() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(group, size, ierr)
+subroutine ${procedure}(group, size, ierror)
   integer, intent(in) :: group
   integer, intent(out) :: size
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -5775,13 +5775,13 @@ output_146() {
     cat <<EOF
 
 subroutine ${procedure}(group1, n, ranks1, group2, ranks2&
-        , ierr)
+        , ierror)
   integer, intent(in) :: group1
   integer, intent(in) :: n
   integer, dimension(*), intent(in) :: ranks1
   integer, intent(in) :: group2
   integer, dimension(*), intent(out) :: ranks2
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -5801,11 +5801,11 @@ output_147() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(group1, group2, newgroup, ierr)
+subroutine ${procedure}(group1, group2, newgroup, ierror)
   integer, intent(in) :: group1
   integer, intent(in) :: group2
   integer, intent(out) :: newgroup
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -5829,7 +5829,7 @@ output_148() {
     cat <<EOF
 
 subroutine ${proc}(buf, count, datatype, dest, tag, &
-        comm, request, ierr)
+        comm, request, ierror)
   ${type}, intent(in) :: buf
   integer, intent(in) :: count
   integer, intent(in) :: datatype
@@ -5837,7 +5837,7 @@ subroutine ${proc}(buf, count, datatype, dest, tag, &
   integer, intent(in) :: tag
   integer, intent(in) :: comm
   integer, intent(out) :: request
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${proc}
 
 EOF
@@ -5883,9 +5883,9 @@ output_149() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(info, ierr)
+subroutine ${procedure}(info, ierror)
   integer, intent(out) :: info
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -5905,10 +5905,10 @@ output_150() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(info, key, ierr)
+subroutine ${procedure}(info, key, ierror)
   integer, intent(in) :: info
   character(len=*), intent(in) :: key
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -5928,10 +5928,10 @@ output_151() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(info, newinfo, ierr)
+subroutine ${procedure}(info, newinfo, ierror)
   integer, intent(in) :: info
   integer, intent(out) :: newinfo
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -5951,9 +5951,9 @@ output_152() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(info, ierr)
+subroutine ${procedure}(info, ierror)
   integer, intent(inout) :: info
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -5974,13 +5974,13 @@ output_153() {
     cat <<EOF
 
 subroutine ${procedure}(info, key, valuelen, value, flag&
-        , ierr)
+        , ierror)
   integer, intent(in) :: info
   character(len=*), intent(in) :: key
   integer, intent(in) :: valuelen
   character(len=*), intent(out) :: value
   logical, intent(out) :: flag
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -6000,10 +6000,10 @@ output_154() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(info, nkeys, ierr)
+subroutine ${procedure}(info, nkeys, ierror)
   integer, intent(in) :: info
   integer, intent(out) :: nkeys
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -6023,11 +6023,11 @@ output_155() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(info, n, key, ierr)
+subroutine ${procedure}(info, n, key, ierror)
   integer, intent(in) :: info
   integer, intent(in) :: n
   character(len=*), intent(out) :: key
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -6047,12 +6047,12 @@ output_156() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(info, key, valuelen, flag, ierr)
+subroutine ${procedure}(info, key, valuelen, flag, ierror)
   integer, intent(in) :: info
   character(len=*), intent(in) :: key
   integer, intent(out) :: valuelen
   logical, intent(out) :: flag
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -6072,11 +6072,11 @@ output_157() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(info, key, value, ierr)
+subroutine ${procedure}(info, key, value, ierror)
   integer, intent(in) :: info
   character(len=*), intent(in) :: key
   character(len=*), intent(in) :: value
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -6096,8 +6096,8 @@ output_158() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(ierr)
-  integer, intent(out) :: ierr
+subroutine ${procedure}(ierror)
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -6117,10 +6117,10 @@ output_159() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(required, provided, ierr)
+subroutine ${procedure}(required, provided, ierror)
   integer, intent(in) :: required
   integer, intent(out) :: provided
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -6140,9 +6140,9 @@ output_160() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(flag, ierr)
+subroutine ${procedure}(flag, ierror)
   logical, intent(out) :: flag
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -6163,14 +6163,14 @@ output_161() {
     cat <<EOF
 
 subroutine ${procedure}(local_comm, local_leader, bridge_comm, remote_leader, tag, &
-        newintercomm, ierr)
+        newintercomm, ierror)
   integer, intent(in) :: local_comm
   integer, intent(in) :: local_leader
   integer, intent(in) :: bridge_comm
   integer, intent(in) :: remote_leader
   integer, intent(in) :: tag
   integer, intent(out) :: newintercomm
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -6190,11 +6190,11 @@ output_162() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(intercomm, high, newintercomm, ierr)
+subroutine ${procedure}(intercomm, high, newintercomm, ierror)
   integer, intent(in) :: intercomm
   logical, intent(in) :: high
   integer, intent(out) :: newintercomm
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -6215,14 +6215,14 @@ output_163() {
     cat <<EOF
 
 subroutine ${procedure}(source, tag, comm, flag, status&
-        , ierr)
+        , ierror)
   include 'mpif-config.h'
   integer, intent(in) :: source
   integer, intent(in) :: tag
   integer, intent(in) :: comm
   logical, intent(out) :: flag
   integer, dimension(MPI_STATUS_SIZE), intent(out) :: status
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -6246,7 +6246,7 @@ output_164() {
     cat <<EOF
 
 subroutine ${proc}(buf, count, datatype, source, tag, &
-        comm, request, ierr)
+        comm, request, ierror)
   ${type} :: buf
   integer, intent(in) :: count
   integer, intent(in) :: datatype
@@ -6254,7 +6254,7 @@ subroutine ${proc}(buf, count, datatype, source, tag, &
   integer, intent(in) :: tag
   integer, intent(in) :: comm
   integer, intent(out) :: request
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${proc}
 
 EOF
@@ -6304,7 +6304,7 @@ output_165() {
     cat <<EOF
 
 subroutine ${proc}(buf, count, datatype, dest, tag, &
-        comm, request, ierr)
+        comm, request, ierror)
   ${type}, intent(in) :: buf
   integer, intent(in) :: count
   integer, intent(in) :: datatype
@@ -6312,7 +6312,7 @@ subroutine ${proc}(buf, count, datatype, dest, tag, &
   integer, intent(in) :: tag
   integer, intent(in) :: comm
   integer, intent(out) :: request
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${proc}
 
 EOF
@@ -6358,9 +6358,9 @@ output_166() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(flag, ierr)
+subroutine ${procedure}(flag, ierror)
   logical, intent(out) :: flag
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -6384,7 +6384,7 @@ output_167() {
     cat <<EOF
 
 subroutine ${proc}(buf, count, datatype, dest, tag, &
-        comm, request, ierr)
+        comm, request, ierror)
   ${type}, intent(in) :: buf
   integer, intent(in) :: count
   integer, intent(in) :: datatype
@@ -6392,7 +6392,7 @@ subroutine ${proc}(buf, count, datatype, dest, tag, &
   integer, intent(in) :: tag
   integer, intent(in) :: comm
   integer, intent(out) :: request
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${proc}
 
 EOF
@@ -6442,7 +6442,7 @@ output_168() {
     cat <<EOF
 
 subroutine ${proc}(buf, count, datatype, dest, tag, &
-        comm, request, ierr)
+        comm, request, ierror)
   ${type}, intent(in) :: buf
   integer, intent(in) :: count
   integer, intent(in) :: datatype
@@ -6450,7 +6450,7 @@ subroutine ${proc}(buf, count, datatype, dest, tag, &
   integer, intent(in) :: tag
   integer, intent(in) :: comm
   integer, intent(out) :: request
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${proc}
 
 EOF
@@ -6496,12 +6496,12 @@ output_169() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(copy_fn, delete_fn, keyval, extra_state, ierr)
+subroutine ${procedure}(copy_fn, delete_fn, keyval, extra_state, ierror)
   external :: copy_fn
   external :: delete_fn
   integer, intent(out) :: keyval
   integer, intent(in) :: extra_state
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -6521,9 +6521,9 @@ output_170() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(keyval, ierr)
+subroutine ${procedure}(keyval, ierror)
   integer, intent(inout) :: keyval
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -6543,10 +6543,10 @@ output_171_commutative() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(op, commute, ierr)
+subroutine ${procedure}(op, commute, ierror)
   integer, intent(in) :: op
   logical, intent(out) :: commute
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -6566,11 +6566,11 @@ output_171() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(function, commute, op, ierr)
+subroutine ${procedure}(function, commute, op, ierror)
   external :: function
   logical, intent(in) :: commute
   integer, intent(out) :: op
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -6590,9 +6590,9 @@ output_172() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(op, ierr)
+subroutine ${procedure}(op, ierror)
   integer, intent(inout) :: op
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -6616,7 +6616,7 @@ output_173() {
     cat <<EOF
 
 subroutine ${proc}(inbuf, incount, datatype, outbuf, outsize, &
-        position, comm, ierr)
+        position, comm, ierror)
   ${type}, intent(in) :: inbuf
   integer, intent(in) :: incount
   integer, intent(in) :: datatype
@@ -6624,7 +6624,7 @@ subroutine ${proc}(inbuf, incount, datatype, outbuf, outsize, &
   integer, intent(in) :: outsize
   integer, intent(inout) :: position
   integer, intent(in) :: comm
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${proc}
 
 EOF
@@ -6674,7 +6674,7 @@ output_174() {
     cat <<EOF
 
 subroutine ${proc}(datarep, inbuf, incount, datatype, outbuf, &
-        outsize, position, ierr)
+        outsize, position, ierror)
   include 'mpif-config.h'
   character(len=*), intent(in) :: datarep
   ${type}, intent(in) :: inbuf
@@ -6683,7 +6683,7 @@ subroutine ${proc}(datarep, inbuf, incount, datatype, outbuf, &
   ${type} :: outbuf
   integer(kind=MPI_ADDRESS_KIND), intent(in) :: outsize
   integer(kind=MPI_ADDRESS_KIND), intent(inout) :: position
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${proc}
 
 EOF
@@ -6729,13 +6729,13 @@ output_175() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(datarep, incount, datatype, size, ierr)
+subroutine ${procedure}(datarep, incount, datatype, size, ierror)
   include 'mpif-config.h'
   character(len=*), intent(in) :: datarep
   integer, intent(in) :: incount
   integer, intent(in) :: datatype
   integer(kind=MPI_ADDRESS_KIND), intent(out) :: size
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -6755,12 +6755,12 @@ output_176() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(incount, datatype, comm, size, ierr)
+subroutine ${procedure}(incount, datatype, comm, size, ierror)
   integer, intent(in) :: incount
   integer, intent(in) :: datatype
   integer, intent(in) :: comm
   integer, intent(out) :: size
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -6802,13 +6802,13 @@ output_178() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(source, tag, comm, status, ierr)
+subroutine ${procedure}(source, tag, comm, status, ierror)
   include 'mpif-config.h'
   integer, intent(in) :: source
   integer, intent(in) :: tag
   integer, intent(in) :: comm
   integer, dimension(MPI_STATUS_SIZE), intent(out) :: status
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -6832,7 +6832,7 @@ output_179() {
     cat <<EOF
 
 subroutine ${proc}(origin_addr, origin_count, origin_datatype, target_rank, target_disp, &
-        target_count, target_datatype, win, ierr)
+        target_count, target_datatype, win, ierror)
   include 'mpif-config.h'
   ${type}, intent(in) :: origin_addr
   integer, intent(in) :: origin_count
@@ -6842,7 +6842,7 @@ subroutine ${proc}(origin_addr, origin_count, origin_datatype, target_rank, targ
   integer, intent(in) :: target_count
   integer, intent(in) :: target_datatype
   integer, intent(in) :: win
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${proc}
 
 EOF
@@ -6888,9 +6888,9 @@ output_180() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(provided, ierr)
+subroutine ${procedure}(provided, ierror)
   integer, intent(out) :: provided
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -6914,7 +6914,7 @@ output_181() {
     cat <<EOF
 
 subroutine ${proc}(buf, count, datatype, source, tag, &
-        comm, status, ierr)
+        comm, status, ierror)
   include 'mpif-config.h'
   ${type} :: buf
   integer, intent(in) :: count
@@ -6923,7 +6923,7 @@ subroutine ${proc}(buf, count, datatype, source, tag, &
   integer, intent(in) :: tag
   integer, intent(in) :: comm
   integer, dimension(MPI_STATUS_SIZE), intent(out) :: status
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${proc}
 
 EOF
@@ -6973,7 +6973,7 @@ output_182() {
     cat <<EOF
 
 subroutine ${proc}(buf, count, datatype, source, tag, &
-        comm, request, ierr)
+        comm, request, ierror)
   ${type} :: buf
   integer, intent(in) :: count
   integer, intent(in) :: datatype
@@ -6981,7 +6981,7 @@ subroutine ${proc}(buf, count, datatype, source, tag, &
   integer, intent(in) :: tag
   integer, intent(in) :: comm
   integer, intent(out) :: request
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${proc}
 
 EOF
@@ -7031,7 +7031,7 @@ output_183() {
     cat <<EOF
 
 subroutine ${proc}(sendbuf, recvbuf, count, datatype, op, &
-        root, comm, ierr)
+        root, comm, ierror)
   ${type}, intent(in) :: sendbuf
   ${type} :: recvbuf
   integer, intent(in) :: count
@@ -7039,7 +7039,7 @@ subroutine ${proc}(sendbuf, recvbuf, count, datatype, op, &
   integer, intent(in) :: op
   integer, intent(in) :: root
   integer, intent(in) :: comm
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${proc}
 
 EOF
@@ -7089,7 +7089,7 @@ output_183_nonblocking() {
     cat <<EOF
 
 subroutine ${proc}(sendbuf, recvbuf, count, datatype, op, &
-        root, comm, request, ierr)
+        root, comm, request, ierror)
   ${type}, intent(in) :: sendbuf
   ${type} :: recvbuf
   integer, intent(in) :: count
@@ -7098,7 +7098,7 @@ subroutine ${proc}(sendbuf, recvbuf, count, datatype, op, &
   integer, intent(in) :: root
   integer, intent(in) :: comm
   integer, intent(out) :: request
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${proc}
 
 EOF
@@ -7148,13 +7148,13 @@ output_183_local() {
     cat <<EOF
 
 subroutine ${proc}(inbuf, inout, count, datatype, op, &
-        ierr)
+        ierror)
   ${type}, intent(in) :: inbuf
   ${type} :: inout
   integer, intent(in) :: count
   integer, intent(in) :: datatype
   integer, intent(in) :: op
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${proc}
 
 EOF
@@ -7204,14 +7204,14 @@ output_184() {
     cat <<EOF
 
 subroutine ${proc}(sendbuf, recvbuf, recvcounts, datatype, op, &
-        comm, ierr)
+        comm, ierror)
   ${type}, intent(in) :: sendbuf
   ${type} :: recvbuf
   integer, dimension(*), intent(in) :: recvcounts
   integer, intent(in) :: datatype
   integer, intent(in) :: op
   integer, intent(in) :: comm
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${proc}
 
 EOF
@@ -7261,14 +7261,14 @@ output_184_nonblocking() {
     cat <<EOF
 
 subroutine ${proc}(sendbuf, recvbuf, recvcounts, datatype, op, &
-        comm, ierr)
+        comm, ierror)
   ${type}, intent(in) :: sendbuf
   ${type} :: recvbuf
   integer, dimension(*), intent(in) :: recvcounts
   integer, intent(in) :: datatype
   integer, intent(in) :: op
   integer, intent(in) :: comm
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${proc}
 
 EOF
@@ -7318,14 +7318,14 @@ output_184_block() {
     cat <<EOF
 
 subroutine ${proc}(sendbuf, recvbuf, recvcount, datatype, op, &
-        comm, ierr)
+        comm, ierror)
   ${type}, intent(in) :: sendbuf
   ${type} :: recvbuf
   integer, intent(in) :: recvcount
   integer, intent(in) :: datatype
   integer, intent(in) :: op
   integer, intent(in) :: comm
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${proc}
 
 EOF
@@ -7375,7 +7375,7 @@ output_184_block_nonblocking() {
     cat <<EOF
 
 subroutine ${proc}(sendbuf, recvbuf, recvcount, datatype, op, &
-        comm, request, ierr)
+        comm, request, ierror)
   ${type}, intent(in) :: sendbuf
   ${type} :: recvbuf
   integer, intent(in) :: recvcount
@@ -7383,7 +7383,7 @@ subroutine ${proc}(sendbuf, recvbuf, recvcount, datatype, op, &
   integer, intent(in) :: op
   integer, intent(in) :: comm
   integer, intent(out) :: request
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${proc}
 
 EOF
@@ -7430,14 +7430,14 @@ output_185() {
     cat <<EOF
 
 subroutine ${procedure}(datarep, read_conversion_fn, write_conversion_fn, dtype_file_extent_fn, extra_state&
-        , ierr)
+        , ierror)
   include 'mpif-config.h'
   character(len=*), intent(in) :: datarep
   external :: read_conversion_fn
   external :: write_conversion_fn
   external :: dtype_file_extent_fn
   integer(kind=MPI_ADDRESS_KIND), intent(in) :: extra_state
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -7457,9 +7457,9 @@ output_186() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(request, ierr)
+subroutine ${procedure}(request, ierror)
   integer, intent(inout) :: request
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -7479,12 +7479,12 @@ output_187() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(request, flag, status, ierr)
+subroutine ${procedure}(request, flag, status, ierror)
   include 'mpif-config.h'
   integer, intent(in) :: request
   logical, intent(out) :: flag
   integer, dimension(MPI_STATUS_SIZE), intent(out) :: status
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -7508,14 +7508,14 @@ output_188() {
     cat <<EOF
 
 subroutine ${proc}(ibuf, count, datatype, dest, tag, &
-        comm, ierr)
+        comm, ierror)
   ${type}, intent(in) :: ibuf
   integer, intent(in) :: count
   integer, intent(in) :: datatype
   integer, intent(in) :: dest
   integer, intent(in) :: tag
   integer, intent(in) :: comm
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${proc}
 
 EOF
@@ -7565,7 +7565,7 @@ output_189() {
     cat <<EOF
 
 subroutine ${proc}(buf, count, datatype, dest, tag, &
-        comm, request, ierr)
+        comm, request, ierror)
   ${type}, intent(in) :: buf
   integer, intent(in) :: count
   integer, intent(in) :: datatype
@@ -7573,7 +7573,7 @@ subroutine ${proc}(buf, count, datatype, dest, tag, &
   integer, intent(in) :: tag
   integer, intent(in) :: comm
   integer, intent(out) :: request
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${proc}
 
 EOF
@@ -7623,14 +7623,14 @@ output_190() {
     cat <<EOF
 
 subroutine ${proc}(sendbuf, recvbuf, count, datatype, op, &
-        comm, ierr)
+        comm, ierror)
   ${type}, intent(in) :: sendbuf
   ${type} :: recvbuf
   integer, intent(in) :: count
   integer, intent(in) :: datatype
   integer, intent(in) :: op
   integer, intent(in) :: comm
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${proc}
 
 EOF
@@ -7680,7 +7680,7 @@ output_190_block() {
     cat <<EOF
 
 subroutine ${proc}(sendbuf, recvbuf, count, datatype, op, &
-        comm, request, ierr)
+        comm, request, ierror)
   ${type}, intent(in) :: sendbuf
   ${type} :: recvbuf
   integer, intent(in) :: count
@@ -7688,7 +7688,7 @@ subroutine ${proc}(sendbuf, recvbuf, count, datatype, op, &
   integer, intent(in) :: op
   integer, intent(in) :: comm
   integer, intent(out) :: request
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${proc}
 
 EOF
@@ -7738,7 +7738,7 @@ output_191() {
     cat <<EOF
 
 subroutine ${proc}(sendbuf, sendcount, sendtype, recvbuf, recvcount, &
-        recvtype, root, comm, ierr)
+        recvtype, root, comm, ierror)
   ${type}, intent(in) :: sendbuf
   integer, intent(in) :: sendcount
   integer, intent(in) :: sendtype
@@ -7747,7 +7747,7 @@ subroutine ${proc}(sendbuf, sendcount, sendtype, recvbuf, recvcount, &
   integer, intent(in) :: recvtype
   integer, intent(in) :: root
   integer, intent(in) :: comm
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${proc}
 
 EOF
@@ -7797,7 +7797,7 @@ output_191_nonblocking() {
     cat <<EOF
 
 subroutine ${proc}(sendbuf, sendcount, sendtype, recvbuf, recvcount, &
-        recvtype, root, comm, request, ierr)
+        recvtype, root, comm, request, ierror)
   ${type}, intent(in) :: sendbuf
   integer, intent(in) :: sendcount
   integer, intent(in) :: sendtype
@@ -7807,7 +7807,7 @@ subroutine ${proc}(sendbuf, sendcount, sendtype, recvbuf, recvcount, &
   integer, intent(in) :: root
   integer, intent(in) :: comm
   integer, intent(out) :: request
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${proc}
 
 EOF
@@ -7857,7 +7857,7 @@ output_192() {
     cat <<EOF
 
 subroutine ${proc}(sendbuf, sendcounts, displs, sendtype, recvbuf, &
-        recvcount, recvtype, root, comm, ierr)
+        recvcount, recvtype, root, comm, ierror)
   ${type}, intent(in) :: sendbuf
   integer, dimension(*), intent(in) :: sendcounts
   integer, dimension(*), intent(in) :: displs
@@ -7867,7 +7867,7 @@ subroutine ${proc}(sendbuf, sendcounts, displs, sendtype, recvbuf, &
   integer, intent(in) :: recvtype
   integer, intent(in) :: root
   integer, intent(in) :: comm
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${proc}
 
 EOF
@@ -7917,7 +7917,7 @@ output_192_nonblocking() {
     cat <<EOF
 
 subroutine ${proc}(sendbuf, sendcounts, displs, sendtype, recvbuf, &
-        recvcount, recvtype, root, comm, request, ierr)
+        recvcount, recvtype, root, comm, request, ierror)
   ${type}, intent(in) :: sendbuf
   integer, dimension(*), intent(in) :: sendcounts
   integer, dimension(*), intent(in) :: displs
@@ -7928,7 +7928,7 @@ subroutine ${proc}(sendbuf, sendcounts, displs, sendtype, recvbuf, &
   integer, intent(in) :: root
   integer, intent(in) :: comm
   integer, intent(out) :: request
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${proc}
 
 EOF
@@ -7978,14 +7978,14 @@ output_193() {
     cat <<EOF
 
 subroutine ${proc}(buf, count, datatype, dest, tag, &
-        comm, ierr)
+        comm, ierror)
   ${type}, intent(in) :: buf
   integer, intent(in) :: count
   integer, intent(in) :: datatype
   integer, intent(in) :: dest
   integer, intent(in) :: tag
   integer, intent(in) :: comm
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${proc}
 
 EOF
@@ -8035,7 +8035,7 @@ output_194() {
     cat <<EOF
 
 subroutine ${proc}(buf, count, datatype, dest, tag, &
-        comm, request, ierr)
+        comm, request, ierror)
   ${type}, intent(in) :: buf
   integer, intent(in) :: count
   integer, intent(in) :: datatype
@@ -8043,7 +8043,7 @@ subroutine ${proc}(buf, count, datatype, dest, tag, &
   integer, intent(in) :: tag
   integer, intent(in) :: comm
   integer, intent(out) :: request
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${proc}
 
 EOF
@@ -8093,7 +8093,7 @@ output_195() {
     cat <<EOF
 
 subroutine ${proc}(sendbuf, sendcount, sendtype, dest, sendtag, &
-        recvbuf, recvcount, recvtype, source, recvtag, comm, status, ierr)
+        recvbuf, recvcount, recvtype, source, recvtag, comm, status, ierror)
   include 'mpif-config.h'
   ${type}, intent(in) :: sendbuf
   integer, intent(in) :: sendcount
@@ -8107,7 +8107,7 @@ subroutine ${proc}(sendbuf, sendcount, sendtype, dest, sendtag, &
   integer, intent(in) :: recvtag
   integer, intent(in) :: comm
   integer, dimension(MPI_STATUS_SIZE), intent(out) :: status
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${proc}
 
 EOF
@@ -8157,7 +8157,7 @@ output_196() {
     cat <<EOF
 
 subroutine ${proc}(buf, count, datatype, dest, sendtag, &
-        source, recvtag, comm, status, ierr)
+        source, recvtag, comm, status, ierror)
   include 'mpif-config.h'
   ${type} :: buf
   integer, intent(in) :: count
@@ -8168,7 +8168,7 @@ subroutine ${proc}(buf, count, datatype, dest, sendtag, &
   integer, intent(in) :: recvtag
   integer, intent(in) :: comm
   integer, dimension(MPI_STATUS_SIZE), intent(out) :: status
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${proc}
 
 EOF
@@ -8217,10 +8217,10 @@ output_197() {
     proc="$1$2D$3"
     cat <<EOF
 
-subroutine ${proc}(x, size, ierr)
+subroutine ${proc}(x, size, ierror)
   ${type}, intent(in) :: x
   integer, intent(out) :: size
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${proc}
 
 EOF
@@ -8270,14 +8270,14 @@ output_198() {
     cat <<EOF
 
 subroutine ${proc}(buf, count, datatype, dest, tag, &
-        comm, ierr)
+        comm, ierror)
   ${type}, intent(in) :: buf
   integer, intent(in) :: count
   integer, intent(in) :: datatype
   integer, intent(in) :: dest
   integer, intent(in) :: tag
   integer, intent(in) :: comm
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${proc}
 
 EOF
@@ -8327,7 +8327,7 @@ output_199() {
     cat <<EOF
 
 subroutine ${proc}(buf, count, datatype, dest, tag, &
-        comm, request, ierr)
+        comm, request, ierror)
   ${type}, intent(in) :: buf
   integer, intent(in) :: count
   integer, intent(in) :: datatype
@@ -8335,7 +8335,7 @@ subroutine ${proc}(buf, count, datatype, dest, tag, &
   integer, intent(in) :: tag
   integer, intent(in) :: comm
   integer, intent(out) :: request
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${proc}
 
 EOF
@@ -8381,9 +8381,9 @@ output_200() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(request, ierr)
+subroutine ${procedure}(request, ierror)
   integer, intent(inout) :: request
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -8403,10 +8403,10 @@ output_201() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(count, array_of_requests, ierr)
+subroutine ${procedure}(count, array_of_requests, ierror)
   integer, intent(in) :: count
   integer, dimension(*), intent(inout) :: array_of_requests
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -8426,11 +8426,11 @@ output_202() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(status, flag, ierr)
+subroutine ${procedure}(status, flag, ierror)
   include 'mpif-config.h'
   integer, dimension(MPI_STATUS_SIZE), intent(inout) :: status
   logical, intent(in) :: flag
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -8450,12 +8450,12 @@ output_203() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(status, datatype, count, ierr)
+subroutine ${procedure}(status, datatype, count, ierror)
   include 'mpif-config.h'
   integer, dimension(MPI_STATUS_SIZE), intent(inout) :: status
   integer, intent(in) :: datatype
   integer, intent(in) :: count
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -8475,12 +8475,12 @@ output_204() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(request, flag, status, ierr)
+subroutine ${procedure}(request, flag, status, ierror)
   include 'mpif-config.h'
   integer, intent(inout) :: request
   logical, intent(out) :: flag
   integer, dimension(MPI_STATUS_SIZE), intent(out) :: status
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -8500,11 +8500,11 @@ output_205() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(status, flag, ierr)
+subroutine ${procedure}(status, flag, ierror)
   include 'mpif-config.h'
   integer, dimension(MPI_STATUS_SIZE), intent(in) :: status
   logical, intent(out) :: flag
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -8524,13 +8524,13 @@ output_206() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(count, array_of_requests, flag, array_of_statuses, ierr)
+subroutine ${procedure}(count, array_of_requests, flag, array_of_statuses, ierror)
   include 'mpif-config.h'
   integer, intent(in) :: count
   integer, dimension(count), intent(inout) :: array_of_requests
   logical, intent(out) :: flag
   integer, dimension(MPI_STATUS_SIZE, count), intent(out) :: array_of_statuses
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -8551,14 +8551,14 @@ output_207() {
     cat <<EOF
 
 subroutine ${procedure}(count, array_of_requests, index, flag, status&
-        , ierr)
+        , ierror)
   include 'mpif-config.h'
   integer, intent(in) :: count
   integer, dimension(count), intent(inout) :: array_of_requests
   integer, intent(out) :: index
   logical, intent(out) :: flag
   integer, dimension(MPI_STATUS_SIZE), intent(out) :: status
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -8579,14 +8579,14 @@ output_208() {
     cat <<EOF
 
 subroutine ${procedure}(incount, array_of_requests, outcount, array_of_indices, array_of_statuses&
-        , ierr)
+        , ierror)
   include 'mpif-config.h'
   integer, intent(in) :: incount
   integer, dimension(incount), intent(inout) :: array_of_requests
   integer, intent(out) :: outcount
   integer, dimension(*), intent(out) :: array_of_indices
   integer, dimension(MPI_STATUS_SIZE, *), intent(out) :: array_of_statuses
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -8606,10 +8606,10 @@ output_209() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(comm, status, ierr)
+subroutine ${procedure}(comm, status, ierror)
   integer, intent(in) :: comm
   integer, intent(out) :: status
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -8629,9 +8629,9 @@ output_210() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(type, ierr)
+subroutine ${procedure}(type, ierror)
   integer, intent(inout) :: type
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -8651,11 +8651,11 @@ output_211() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(count, oldtype, newtype, ierr)
+subroutine ${procedure}(count, oldtype, newtype, ierror)
   integer, intent(in) :: count
   integer, intent(in) :: oldtype
   integer, intent(out) :: newtype
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -8676,7 +8676,7 @@ output_212() {
     cat <<EOF
 
 subroutine ${procedure}(size, rank, ndims, gsize_array, distrib_array, &
-        darg_array, psize_array, order, oldtype, newtype, ierr)
+        darg_array, psize_array, order, oldtype, newtype, ierror)
   integer, intent(in) :: size
   integer, intent(in) :: rank
   integer, intent(in) :: ndims
@@ -8687,7 +8687,7 @@ subroutine ${procedure}(size, rank, ndims, gsize_array, distrib_array, &
   integer, intent(in) :: order
   integer, intent(in) :: oldtype
   integer, intent(out) :: newtype
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -8707,11 +8707,11 @@ output_213() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(p, r, newtype, ierr)
+subroutine ${procedure}(p, r, newtype, ierror)
   integer, intent(in) :: p
   integer, intent(in) :: r
   integer, intent(out) :: newtype
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -8731,10 +8731,10 @@ output_214() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(r, newtype, ierr)
+subroutine ${procedure}(r, newtype, ierror)
   integer, intent(in) :: r
   integer, intent(out) :: newtype
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -8754,11 +8754,11 @@ output_215() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(p, r, newtype, ierr)
+subroutine ${procedure}(p, r, newtype, ierror)
   integer, intent(in) :: p
   integer, intent(in) :: r
   integer, intent(out) :: newtype
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -8779,14 +8779,14 @@ output_216() {
     cat <<EOF
 
 subroutine ${procedure}(count, array_of_blocklengths, array_of_displacements, oldtype, newtype&
-        , ierr)
+        , ierror)
   include 'mpif-config.h'
   integer, intent(in) :: count
   integer, dimension(*), intent(in) :: array_of_blocklengths
   integer(kind=MPI_ADDRESS_KIND), dimension(*), intent(in) :: array_of_displacements
   integer, intent(in) :: oldtype
   integer, intent(out) :: newtype
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -8807,14 +8807,14 @@ output_217() {
     cat <<EOF
 
 subroutine ${procedure}(count, blocklength, stride, oldtype, newtype&
-        , ierr)
+        , ierror)
   include 'mpif-config.h'
   integer, intent(in) :: count
   integer, intent(in) :: blocklength
   integer(kind=MPI_ADDRESS_KIND), intent(in) :: stride
   integer, intent(in) :: oldtype
   integer, intent(out) :: newtype
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -8835,13 +8835,13 @@ output_218() {
     cat <<EOF
 
 subroutine ${procedure}(count, blocklength, array_of_displacements, oldtype, newtype&
-        , ierr)
+        , ierror)
   integer, intent(in) :: count
   integer, intent(in) :: blocklength
   integer, dimension(*), intent(in) :: array_of_displacements
   integer, intent(in) :: oldtype
   integer, intent(out) :: newtype
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -8861,13 +8861,13 @@ output_219() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(type_copy_attr_fn, type_delete_attr_fn, type_keyval, extra_state, ierr)
+subroutine ${procedure}(type_copy_attr_fn, type_delete_attr_fn, type_keyval, extra_state, ierror)
   include 'mpif-config.h'
   external :: type_copy_attr_fn
   external :: type_delete_attr_fn
   integer, intent(out) :: type_keyval
   integer(kind=MPI_ADDRESS_KIND), intent(in) :: extra_state
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -8887,13 +8887,13 @@ output_220() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(oldtype, lb, extent, newtype, ierr)
+subroutine ${procedure}(oldtype, lb, extent, newtype, ierror)
   include 'mpif-config.h'
   integer, intent(in) :: oldtype
   integer(kind=MPI_ADDRESS_KIND), intent(in) :: lb
   integer(kind=MPI_ADDRESS_KIND), intent(in) :: extent
   integer, intent(out) :: newtype
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -8914,14 +8914,14 @@ output_221() {
     cat <<EOF
 
 subroutine ${procedure}(count, array_of_block_lengths, array_of_displacements, array_of_types, newtype&
-        , ierr)
+        , ierror)
   include 'mpif-config.h'
   integer, intent(in) :: count
   integer, dimension(*), intent(in) :: array_of_block_lengths
   integer(kind=MPI_ADDRESS_KIND), dimension(*), intent(in) :: array_of_displacements
   integer, dimension(*), intent(in) :: array_of_types
   integer, intent(out) :: newtype
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -8942,7 +8942,7 @@ output_222() {
     cat <<EOF
 
 subroutine ${procedure}(ndims, size_array, subsize_array, start_array, order, &
-        oldtype, newtype, ierr)
+        oldtype, newtype, ierror)
   integer, intent(in) :: ndims
   integer, dimension(*), intent(in) :: size_array
   integer, dimension(*), intent(in) :: subsize_array
@@ -8950,7 +8950,7 @@ subroutine ${procedure}(ndims, size_array, subsize_array, start_array, order, &
   integer, intent(in) :: order
   integer, intent(in) :: oldtype
   integer, intent(out) :: newtype
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -8970,10 +8970,10 @@ output_223() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(type, type_keyval, ierr)
+subroutine ${procedure}(type, type_keyval, ierror)
   integer, intent(in) :: type
   integer, intent(in) :: type_keyval
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -8993,10 +8993,10 @@ output_224() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(type, newtype, ierr)
+subroutine ${procedure}(type, newtype, ierror)
   integer, intent(in) :: type
   integer, intent(out) :: newtype
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -9016,10 +9016,10 @@ output_225() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(type, extent, ierr)
+subroutine ${procedure}(type, extent, ierror)
   integer, intent(in) :: type
   integer, intent(out) :: extent
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -9039,9 +9039,9 @@ output_226() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(type, ierr)
+subroutine ${procedure}(type, ierror)
   integer, intent(inout) :: type
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -9061,9 +9061,9 @@ output_227() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(type_keyval, ierr)
+subroutine ${procedure}(type_keyval, ierror)
   integer, intent(inout) :: type_keyval
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -9083,13 +9083,13 @@ output_228() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(type, type_keyval, attribute_val, flag, ierr)
+subroutine ${procedure}(type, type_keyval, attribute_val, flag, ierror)
   include 'mpif-config.h'
   integer, intent(in) :: type
   integer, intent(in) :: type_keyval
   integer(kind=MPI_ADDRESS_KIND), intent(out) :: attribute_val
   logical, intent(out) :: flag
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -9110,7 +9110,7 @@ output_229() {
     cat <<EOF
 
 subroutine ${procedure}(mtype, max_integers, max_addresses, max_datatypes, array_of_integers, &
-        array_of_addresses, array_of_datatypes, ierr)
+        array_of_addresses, array_of_datatypes, ierror)
   include 'mpif-config.h'
   integer, intent(in) :: mtype
   integer, intent(in) :: max_integers
@@ -9119,7 +9119,7 @@ subroutine ${procedure}(mtype, max_integers, max_addresses, max_datatypes, array
   integer, dimension(*), intent(out) :: array_of_integers
   integer(kind=MPI_ADDRESS_KIND), dimension(*), intent(out) :: array_of_addresses
   integer, dimension(*), intent(out) :: array_of_datatypes
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -9140,13 +9140,13 @@ output_230() {
     cat <<EOF
 
 subroutine ${procedure}(type, num_integers, num_addresses, num_datatypes, combiner&
-        , ierr)
+        , ierror)
   integer, intent(in) :: type
   integer, intent(out) :: num_integers
   integer, intent(out) :: num_addresses
   integer, intent(out) :: num_datatypes
   integer, intent(out) :: combiner
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -9166,12 +9166,12 @@ output_231() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(type, lb, extent, ierr)
+subroutine ${procedure}(type, lb, extent, ierror)
   include 'mpif-config.h'
   integer, intent(in) :: type
   integer(kind=MPI_ADDRESS_KIND), intent(out) :: lb
   integer(kind=MPI_ADDRESS_KIND), intent(out) :: extent
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -9191,11 +9191,11 @@ output_232() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(type, type_name, resultlen, ierr)
+subroutine ${procedure}(type, type_name, resultlen, ierror)
   integer, intent(in) :: type
   character(len=*), intent(out) :: type_name
   integer, intent(out) :: resultlen
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -9215,12 +9215,12 @@ output_233() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(datatype, true_lb, true_extent, ierr)
+subroutine ${procedure}(datatype, true_lb, true_extent, ierror)
   include 'mpif-config.h'
   integer, intent(in) :: datatype
   integer(kind=MPI_ADDRESS_KIND), intent(out) :: true_lb
   integer(kind=MPI_ADDRESS_KIND), intent(out) :: true_extent
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -9241,13 +9241,13 @@ output_234() {
     cat <<EOF
 
 subroutine ${procedure}(count, array_of_blocklengths, array_of_displacements, oldtype, newtype&
-        , ierr)
+        , ierror)
   integer, intent(in) :: count
   integer, dimension(*), intent(in) :: array_of_blocklengths
   integer, dimension(*), intent(in) :: array_of_displacements
   integer, intent(in) :: oldtype
   integer, intent(out) :: newtype
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -9268,13 +9268,13 @@ output_235() {
     cat <<EOF
 
 subroutine ${procedure}(count, blocklength, stride, oldtype, newtype&
-        , ierr)
+        , ierror)
   integer, intent(in) :: count
   integer, intent(in) :: blocklength
   integer, intent(in) :: stride
   integer, intent(in) :: oldtype
   integer, intent(out) :: newtype
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -9295,13 +9295,13 @@ output_236() {
     cat <<EOF
 
 subroutine ${procedure}(count, array_of_blocklengths, array_of_displacements, oldtype, newtype&
-        , ierr)
+        , ierror)
   integer, intent(in) :: count
   integer, dimension(*), intent(in) :: array_of_blocklengths
   integer, dimension(*), intent(in) :: array_of_displacements
   integer, intent(in) :: oldtype
   integer, intent(out) :: newtype
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -9321,10 +9321,10 @@ output_237() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(type, lb, ierr)
+subroutine ${procedure}(type, lb, ierror)
   integer, intent(in) :: type
   integer, intent(out) :: lb
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -9344,11 +9344,11 @@ output_238() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(typeclass, size, type, ierr)
+subroutine ${procedure}(typeclass, size, type, ierror)
   integer, intent(in) :: typeclass
   integer, intent(in) :: size
   integer, intent(out) :: type
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -9368,12 +9368,12 @@ output_239() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(type, type_keyval, attr_val, ierr)
+subroutine ${procedure}(type, type_keyval, attr_val, ierror)
   include 'mpif-config.h'
   integer, intent(in) :: type
   integer, intent(in) :: type_keyval
   integer(kind=MPI_ADDRESS_KIND), intent(in) :: attr_val
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -9393,10 +9393,10 @@ output_240() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(type, type_name, ierr)
+subroutine ${procedure}(type, type_name, ierror)
   integer, intent(in) :: type
   character(len=*), intent(in) :: type_name
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -9416,10 +9416,10 @@ output_241() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(type, size, ierr)
+subroutine ${procedure}(type, size, ierror)
   integer, intent(in) :: type
   integer, intent(out) :: size
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -9440,13 +9440,13 @@ output_242() {
     cat <<EOF
 
 subroutine ${procedure}(count, array_of_blocklengths, array_of_displacements, array_of_types, newtype&
-        , ierr)
+        , ierror)
   integer, intent(in) :: count
   integer, dimension(*), intent(in) :: array_of_blocklengths
   integer, dimension(*), intent(in) :: array_of_displacements
   integer, dimension(*), intent(in) :: array_of_types
   integer, intent(out) :: newtype
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -9466,10 +9466,10 @@ output_243() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(mtype, ub, ierr)
+subroutine ${procedure}(mtype, ub, ierror)
   integer, intent(in) :: mtype
   integer, intent(out) :: ub
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -9490,13 +9490,13 @@ output_244() {
     cat <<EOF
 
 subroutine ${procedure}(count, blocklength, stride, oldtype, newtype&
-        , ierr)
+        , ierror)
   integer, intent(in) :: count
   integer, intent(in) :: blocklength
   integer, intent(in) :: stride
   integer, intent(in) :: oldtype
   integer, intent(out) :: newtype
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -9520,7 +9520,7 @@ output_245() {
     cat <<EOF
 
 subroutine ${proc}(inbuf, insize, position, outbuf, outcount, &
-        datatype, comm, ierr)
+        datatype, comm, ierror)
   ${type}, intent(in) :: inbuf
   integer, intent(in) :: insize
   integer, intent(inout) :: position
@@ -9528,7 +9528,7 @@ subroutine ${proc}(inbuf, insize, position, outbuf, outcount, &
   integer, intent(in) :: outcount
   integer, intent(in) :: datatype
   integer, intent(in) :: comm
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${proc}
 
 EOF
@@ -9578,7 +9578,7 @@ output_246() {
     cat <<EOF
 
 subroutine ${proc}(datarep, inbuf, insize, position, outbuf, &
-        outcount, datatype, ierr)
+        outcount, datatype, ierror)
   include 'mpif-config.h'
   character(len=*), intent(in) :: datarep
   ${type}, intent(in) :: inbuf
@@ -9587,7 +9587,7 @@ subroutine ${proc}(datarep, inbuf, insize, position, outbuf, &
   ${type} :: outbuf
   integer, intent(in) :: outcount
   integer, intent(in) :: datatype
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${proc}
 
 EOF
@@ -9633,11 +9633,11 @@ output_247() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(request, status, ierr)
+subroutine ${procedure}(request, status, ierror)
   include 'mpif-config.h'
   integer, intent(inout) :: request
   integer, dimension(MPI_STATUS_SIZE), intent(out) :: status
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -9657,12 +9657,12 @@ output_248() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(count, array_of_requests, array_of_statuses, ierr)
+subroutine ${procedure}(count, array_of_requests, array_of_statuses, ierror)
   include 'mpif-config.h'
   integer, intent(in) :: count
   integer, dimension(count), intent(inout) :: array_of_requests
   integer, dimension(MPI_STATUS_SIZE, *), intent(out) :: array_of_statuses
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -9682,13 +9682,13 @@ output_249() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(count, array_of_requests, index, status, ierr)
+subroutine ${procedure}(count, array_of_requests, index, status, ierror)
   include 'mpif-config.h'
   integer, intent(in) :: count
   integer, dimension(count), intent(inout) :: array_of_requests
   integer, intent(out) :: index
   integer, dimension(MPI_STATUS_SIZE), intent(out) :: status
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -9709,14 +9709,14 @@ output_250() {
     cat <<EOF
 
 subroutine ${procedure}(incount, array_of_requests, outcount, array_of_indices, array_of_statuses&
-        , ierr)
+        , ierror)
   include 'mpif-config.h'
   integer, intent(in) :: incount
   integer, dimension(incount), intent(inout) :: array_of_requests
   integer, intent(out) :: outcount
   integer, dimension(*), intent(out) :: array_of_indices
   integer, dimension(MPI_STATUS_SIZE, *), intent(out) :: array_of_statuses
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -9736,10 +9736,10 @@ output_251() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(win, errorcode, ierr)
+subroutine ${procedure}(win, errorcode, ierror)
   integer, intent(in) :: win
   integer, intent(in) :: errorcode
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -9759,9 +9759,9 @@ output_252() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(win, ierr)
+subroutine ${procedure}(win, ierror)
   integer, intent(in) :: win
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -9785,7 +9785,7 @@ output_253() {
     cat <<EOF
 
 subroutine ${proc}(base, size, disp_unit, info, comm, &
-        win, ierr)
+        win, ierror)
   include 'mpif-config.h'
   ${type}, intent(in) :: base
   integer(kind=MPI_ADDRESS_KIND), intent(in) :: size
@@ -9793,7 +9793,7 @@ subroutine ${proc}(base, size, disp_unit, info, comm, &
   integer, intent(in) :: info
   integer, intent(in) :: comm
   integer, intent(out) :: win
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${proc}
 
 EOF
@@ -9839,10 +9839,10 @@ output_254() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(function, errhandler, ierr)
+subroutine ${procedure}(function, errhandler, ierror)
   external :: function
   integer, intent(out) :: errhandler
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -9862,13 +9862,13 @@ output_255() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(win_copy_attr_fn, win_delete_attr_fn, win_keyval, extra_state, ierr)
+subroutine ${procedure}(win_copy_attr_fn, win_delete_attr_fn, win_keyval, extra_state, ierror)
   include 'mpif-config.h'
   external :: win_copy_attr_fn
   external :: win_delete_attr_fn
   integer, intent(out) :: win_keyval
   integer(kind=MPI_ADDRESS_KIND), intent(in) :: extra_state
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -9888,10 +9888,10 @@ output_256() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(win, win_keyval, ierr)
+subroutine ${procedure}(win, win_keyval, ierror)
   integer, intent(in) :: win
   integer, intent(in) :: win_keyval
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -9911,10 +9911,10 @@ output_257() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(assert, win, ierr)
+subroutine ${procedure}(assert, win, ierror)
   integer, intent(in) :: assert
   integer, intent(in) :: win
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -9934,9 +9934,9 @@ output_258() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(win, ierr)
+subroutine ${procedure}(win, ierror)
   integer, intent(inout) :: win
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -9956,9 +9956,9 @@ output_259() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(win_keyval, ierr)
+subroutine ${procedure}(win_keyval, ierror)
   integer, intent(inout) :: win_keyval
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -9978,13 +9978,13 @@ output_260() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(win, win_keyval, attribute_val, flag, ierr)
+subroutine ${procedure}(win, win_keyval, attribute_val, flag, ierror)
   include 'mpif-config.h'
   integer, intent(in) :: win
   integer, intent(in) :: win_keyval
   integer(kind=MPI_ADDRESS_KIND), intent(out) :: attribute_val
   logical, intent(out) :: flag
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -10004,10 +10004,10 @@ output_261() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(win, errhandler, ierr)
+subroutine ${procedure}(win, errhandler, ierror)
   integer, intent(in) :: win
   integer, intent(out) :: errhandler
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -10027,10 +10027,10 @@ output_262() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(win, group, ierr)
+subroutine ${procedure}(win, group, ierror)
   integer, intent(in) :: win
   integer, intent(out) :: group
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -10050,11 +10050,11 @@ output_263() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(win, win_name, resultlen, ierr)
+subroutine ${procedure}(win, win_name, resultlen, ierror)
   integer, intent(in) :: win
   character(len=*), intent(out) :: win_name
   integer, intent(out) :: resultlen
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -10074,12 +10074,12 @@ output_264() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(lock_type, rank, assert, win, ierr)
+subroutine ${procedure}(lock_type, rank, assert, win, ierror)
   integer, intent(in) :: lock_type
   integer, intent(in) :: rank
   integer, intent(in) :: assert
   integer, intent(in) :: win
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -10099,11 +10099,11 @@ output_265() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(group, assert, win, ierr)
+subroutine ${procedure}(group, assert, win, ierror)
   integer, intent(in) :: group
   integer, intent(in) :: assert
   integer, intent(in) :: win
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -10123,12 +10123,12 @@ output_266() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(win, win_keyval, attribute_val, ierr)
+subroutine ${procedure}(win, win_keyval, attribute_val, ierror)
   include 'mpif-config.h'
   integer, intent(in) :: win
   integer, intent(in) :: win_keyval
   integer(kind=MPI_ADDRESS_KIND), intent(in) :: attribute_val
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -10148,10 +10148,10 @@ output_267() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(win, errhandler, ierr)
+subroutine ${procedure}(win, errhandler, ierror)
   integer, intent(in) :: win
   integer, intent(in) :: errhandler
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -10171,10 +10171,10 @@ output_268() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(win, win_name, ierr)
+subroutine ${procedure}(win, win_name, ierror)
   integer, intent(in) :: win
   character(len=*), intent(in) :: win_name
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -10194,11 +10194,11 @@ output_269() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(group, assert, win, ierr)
+subroutine ${procedure}(group, assert, win, ierror)
   integer, intent(in) :: group
   integer, intent(in) :: assert
   integer, intent(in) :: win
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -10218,10 +10218,10 @@ output_270() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(win, flag, ierr)
+subroutine ${procedure}(win, flag, ierror)
   integer, intent(in) :: win
   logical, intent(out) :: flag
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -10241,10 +10241,10 @@ output_271() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(rank, win, ierr)
+subroutine ${procedure}(rank, win, ierror)
   integer, intent(in) :: rank
   integer, intent(in) :: win
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -10264,9 +10264,9 @@ output_272() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(win, ierr)
+subroutine ${procedure}(win, ierror)
   integer, intent(in) :: win
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -10286,9 +10286,9 @@ output_273() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(port_name, ierr)
+subroutine ${procedure}(port_name, ierror)
   character(len=*), intent(in) :: port_name
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -10308,11 +10308,11 @@ output_274() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(service_name, info, port_name, ierr)
+subroutine ${procedure}(service_name, info, port_name, ierror)
   character(len=*), intent(in) :: service_name
   integer, intent(in) :: info
   character(len=*), intent(out) :: port_name
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -10332,10 +10332,10 @@ output_275() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(info, port_name, ierr)
+subroutine ${procedure}(info, port_name, ierror)
   integer, intent(in) :: info
   character(len=*), intent(out) :: port_name
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -10355,11 +10355,11 @@ output_276() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(service_name, info, port_name, ierr)
+subroutine ${procedure}(service_name, info, port_name, ierror)
   character(len=*), intent(in) :: service_name
   integer, intent(in) :: info
   character(len=*), intent(in) :: port_name
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -10379,11 +10379,11 @@ output_277() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(service_name, info, port_name, ierr)
+subroutine ${procedure}(service_name, info, port_name, ierror)
   character(len=*), intent(in) :: service_name
   integer, intent(in) :: info
   character(len=*), intent(in) :: port_name
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -10403,9 +10403,9 @@ output_278() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(comm, ierr)
+subroutine ${procedure}(comm, ierror)
   integer, intent(inout) :: comm
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -10425,9 +10425,9 @@ output_279() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(parent, ierr)
+subroutine ${procedure}(parent, ierror)
   integer, intent(out) :: parent
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -10447,10 +10447,10 @@ output_280() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(fd, intercomm, ierr)
+subroutine ${procedure}(fd, intercomm, ierror)
   integer, intent(in) :: fd
   integer, intent(out) :: intercomm
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -10471,13 +10471,13 @@ output_281() {
     cat <<EOF
 
 subroutine ${procedure}(port_name, info, root, comm, newcomm&
-        , ierr)
+        , ierror)
   character(len=*), intent(in) :: port_name
   integer, intent(in) :: info
   integer, intent(in) :: root
   integer, intent(in) :: comm
   integer, intent(out) :: newcomm
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -10498,13 +10498,13 @@ output_282() {
     cat <<EOF
 
 subroutine ${procedure}(port_name, info, root, comm, newcomm&
-        , ierr)
+        , ierror)
   character(len=*), intent(in) :: port_name
   integer, intent(in) :: info
   integer, intent(in) :: root
   integer, intent(in) :: comm
   integer, intent(out) :: newcomm
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -10525,7 +10525,7 @@ output_283() {
     cat <<EOF
 
 subroutine ${procedure}(command, argv, maxprocs, info, root, &
-        comm, intercomm, array_of_errcodes, ierr)
+        comm, intercomm, array_of_errcodes, ierror)
   character(len=*), intent(in) :: command
   character(len=*), dimension(*), intent(in) :: argv
   integer, intent(in) :: maxprocs
@@ -10534,7 +10534,7 @@ subroutine ${procedure}(command, argv, maxprocs, info, root, &
   integer, intent(in) :: comm
   integer, intent(out) :: intercomm
   integer, dimension(*), intent(out) :: array_of_errcodes
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -10555,7 +10555,7 @@ output_284() {
     cat <<EOF
 
 subroutine ${procedure}(count, array_of_commands, array_of_argv, array_of_maxprocs, array_of_info, &
-        root, comm, intercomm, array_of_errcodes, ierr)
+        root, comm, intercomm, array_of_errcodes, ierror)
   integer, intent(in) :: count
   character(len=*), dimension(*), intent(in) :: array_of_commands
   character(len=*), dimension(count,*), intent(in) :: array_of_argv
@@ -10565,7 +10565,7 @@ subroutine ${procedure}(count, array_of_commands, array_of_argv, array_of_maxpro
   integer, intent(in) :: comm
   integer, intent(out) :: intercomm
   integer, dimension(*), intent(out) :: array_of_errcodes
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -10585,14 +10585,14 @@ output_285() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(source, tag, comm, message, status, ierr)
+subroutine ${procedure}(source, tag, comm, message, status, ierror)
   include 'mpif-config.h'
   integer, intent(in) :: source
   integer, intent(in) :: tag
   integer, intent(in) :: comm
   integer, intent(out) :: message
   integer, dimension(MPI_STATUS_SIZE), intent(out) :: status
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -10612,7 +10612,7 @@ output_286() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(source, tag, comm, flag, message, status, ierr)
+subroutine ${procedure}(source, tag, comm, flag, message, status, ierror)
   include 'mpif-config.h'
   integer, intent(in) :: source
   integer, intent(in) :: tag
@@ -10620,7 +10620,7 @@ subroutine ${procedure}(source, tag, comm, flag, message, status, ierr)
   logical, intent(out) :: flag
   integer, intent(out) :: message
   integer, dimension(MPI_STATUS_SIZE), intent(out) :: status
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -10643,14 +10643,14 @@ output_287() {
     proc="$1$2D$3"
     cat <<EOF
 
-subroutine ${proc}(buf, count, datatype, message, status, ierr)
+subroutine ${proc}(buf, count, datatype, message, status, ierror)
   include 'mpif-config.h'
   ${type} :: buf
   integer, intent(in) :: count
   integer, intent(in) :: datatype
   integer, intent(inout) :: message
   integer, dimension(MPI_STATUS_SIZE), intent(out) :: status
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${proc}
 
 EOF
@@ -10699,14 +10699,14 @@ output_288() {
     proc="$1$2D$3"
     cat <<EOF
 
-subroutine ${proc}(buf, count, datatype, message, request, ierr)
+subroutine ${proc}(buf, count, datatype, message, request, ierror)
   include 'mpif-config.h'
   ${type} :: buf
   integer, intent(in) :: count
   integer, intent(in) :: datatype
   integer, intent(inout) :: message
   integer, intent(out) :: request
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${proc}
 
 EOF
@@ -10752,10 +10752,10 @@ output_289() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(version, resultlen, ierr)
+subroutine ${procedure}(version, resultlen, ierror)
   character(len=*), intent(out) :: version
   integer, intent(out) :: resultlen
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -10775,13 +10775,13 @@ output_290() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(comm, split_type, key, info, newcomm, ierr)
+subroutine ${procedure}(comm, split_type, key, info, newcomm, ierror)
   integer, intent(in) :: comm
   integer, intent(in) :: split_type
   integer, intent(in) :: key
   integer, intent(in) :: info
   integer, intent(out) :: newcomm
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -10802,14 +10802,14 @@ output_291() {
     cat <<EOF
 
 subroutine ${procedure}(count, blocklength, array_of_displacements, oldtype, newtype&
-        , ierr)
+        , ierror)
   include 'mpif-config.h'
   integer, intent(in) :: count
   integer, intent(in) :: blocklength
   integer(kind=MPI_ADDRESS_KIND), dimension(*), intent(in) :: array_of_displacements
   integer, intent(in) :: oldtype
   integer, intent(out) :: newtype
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
