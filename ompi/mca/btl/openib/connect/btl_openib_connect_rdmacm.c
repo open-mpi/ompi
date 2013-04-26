@@ -227,8 +227,6 @@ static void rdmacm_contents_destructor(rdmacm_contents_t *contents)
  */
 static void rdmacm_component_register(void)
 {
-    int value;
-
     rdmacm_priority = 30;
     (void) mca_base_component_var_register(&mca_btl_openib_component.super.btl_version,
                                            "connect_rdmacm_priority",
@@ -1338,17 +1336,14 @@ static int finish_connect(id_context_t *context)
     struct rdma_conn_param conn_param;
     private_data_t msg;
     int rc;
-    struct sockaddr *peeraddr, *localaddr;
-    uint32_t localipaddr, remoteipaddr;
+    struct sockaddr *peeraddr;
+    uint32_t remoteipaddr;
     uint16_t remoteport;
     modex_message_t *message;
 
     remoteport = rdma_get_dst_port(context->id);
     peeraddr = rdma_get_peer_addr(context->id);
     remoteipaddr = ((struct sockaddr_in *)peeraddr)->sin_addr.s_addr;
-
-    localaddr = rdma_get_local_addr(context->id);
-    localipaddr = ((struct sockaddr_in *)localaddr)->sin_addr.s_addr;
 
     message = (modex_message_t *)
         context->endpoint->endpoint_remote_cpc_data->cbm_modex_message;
@@ -1505,7 +1500,7 @@ static int event_handler(struct rdma_cm_event *event)
     rdmacm_contents_t *contents;
     struct sockaddr *peeraddr, *localaddr;
     uint32_t peeripaddr, localipaddr;
-    int rc = -1, qpnum;
+    int rc = -1;
     ompi_btl_openib_ini_values_t ini;
     bool found;
 
@@ -1514,7 +1509,6 @@ static int event_handler(struct rdma_cm_event *event)
     }
 
     contents = context->contents;
-    qpnum = context->qpnum;
     localaddr = rdma_get_local_addr(event->id);
     peeraddr = rdma_get_peer_addr(event->id);
     localipaddr = ((struct sockaddr_in *)localaddr)->sin_addr.s_addr;
