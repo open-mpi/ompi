@@ -127,8 +127,8 @@ int opal_info_init(int argc, char **argv,
     }
     
     /* add the cmd line options */
-    opal_cmd_line_make_opt3(opal_info_cmd_line, 'v', NULL, "version", 2, 
-                            "Show version of Open MPI or a component.  The first parameter can be a keyword [\"ompi\" | \"orte\" | \"opal\" | \"all\"], a framework name (indicating all components in a framework), or a framework:component string (indicating a specific component).  The second parameter can be one of [full | major | minor | release | greek | svn]");
+    opal_cmd_line_make_opt3(opal_info_cmd_line, 'V', NULL, "version", 0, 
+                            "Show version of Open MPI");
     opal_cmd_line_make_opt3(opal_info_cmd_line, '\0', NULL, "param", 2, 
                             "Show MCA parameters.  The first parameter is the framework (or the keyword \"all\"); the second parameter is the specific component name (or the keyword \"all\").");
     opal_cmd_line_make_opt3(opal_info_cmd_line, '\0', NULL, "params", 2, 
