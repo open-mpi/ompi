@@ -66,6 +66,7 @@
 
 #include <pthread.h>
 
+#include "opal/util/show_help.h"
 #include "opal/util/output.h"
 #include "opal/util/error.h"
 #include "opal_stdint.h"
