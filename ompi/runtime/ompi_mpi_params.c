@@ -81,7 +81,7 @@ int ompi_mpi_register_params(void)
 
     /* Whether we want MPI API function parameter checking or not */
 
-    ompi_mpi_param_check = false;
+    ompi_mpi_param_check = true;
     (void) mca_base_var_register("ompi", "mpi", NULL, "param_check",
                                  "Whether you want MPI API parameters checked at run-time or not.  Possible values are 0 (no checking) and 1 (perform checking at run-time)",
                                  MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
