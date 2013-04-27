@@ -630,3 +630,8 @@ More than one combiner was specified. The combiner takes the output
 from the final reducer in each chain to produce a single, combined
 result. Thus, there can only be one combiner for a job. Please
 review your command line and try again.
+#
+[orterun:no-preload]
+%s in the v1.7 series does not support preloading of binaries
+or files at this time. It is expected that this capability will
+be restored in later releases.

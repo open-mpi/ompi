@@ -1761,6 +1761,17 @@ static int create_app(int argc, char* argv[],
 
     total_num_apps++;
 
+    /* The preload binary option is not functional in the v1.7 series, but
+     * should be restored in v1.9. So for now, if someone indicates they want
+     * that service, warn them of this fact and abort
+     */
+    if (orte_preload_binaries ||
+        NULL != orterun_globals.preload_files) {
+        orte_show_help("help-orterun.txt", "orterun:no-preload",
+                       true, orte_basename);
+        exit(1);
+    }
+
     /* Preserve if we are to preload the binary */
     app->preload_binary = orte_preload_binaries;
     if( NULL != orterun_globals.preload_files)
