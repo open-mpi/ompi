@@ -1,6 +1,6 @@
 enable_mem_debug=yes
 with_blcr=no
-with_verbs=no
+with_verbs=yes
 enable_debug_symbols=yes
 enable_binaries=yes
 with_devel_headers=yes
