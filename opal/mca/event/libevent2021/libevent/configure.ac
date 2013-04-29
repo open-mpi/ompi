@@ -8,7 +8,7 @@ dnl Original version Dug Song <dugsong@monkey.org>
 
 AC_PREREQ(2.59c)
 # Open MPI: changed to 4 arg AC INIT
-AC_INIT([libevent], [2.0.19-stable], [http://libevent.org], [libevent])
+AC_INIT([libevent], [2.0.21-stable], [http://libevent.org], [libevent])
 
 AC_CONFIG_MACRO_DIR([m4])
 
