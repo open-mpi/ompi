@@ -40,7 +40,7 @@
 #ifdef HAVE_SYS_STAT_H
 #include <sys/stat.h>
 #endif
-
+#include <unistd.h>
 
 void mca_fs_base_get_parent_dir ( char *filename, char **dirnamep)
 {

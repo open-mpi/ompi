@@ -28,6 +28,7 @@
 #endif  /* HAVE_UNISTD_H */
 #include <string.h>
 
+#include "opal/util/argv.h"
 #include "opal/util/if.h"
 #include "opal/util/output.h"
 #include "opal/mca/mca.h"

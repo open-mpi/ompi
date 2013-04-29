@@ -22,6 +22,7 @@
 
 #include "opal/mca/hwloc/base/base.h"
 #include "opal/dss/dss.h"
+#include "opal/util/argv.h"
 #include "opal/util/output.h"
 
 #include "orte/util/show_help.h"

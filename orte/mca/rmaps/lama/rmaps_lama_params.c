@@ -13,6 +13,8 @@
  */
 #include "rmaps_lama.h"
 
+#include "opal/util/argv.h"
+
 #include "orte/mca/rmaps/base/rmaps_private.h"
 #include "orte/mca/rmaps/base/base.h"
 

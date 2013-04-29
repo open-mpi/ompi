@@ -22,6 +22,7 @@
 #endif  /* HAVE_STRING_H */
 
 #include "opal/mca/hwloc/base/base.h"
+#include "opal/util/argv.h"
 
 #include "orte/util/show_help.h"
 #include "orte/mca/errmgr/errmgr.h"

@@ -39,6 +39,7 @@
 #include "opal/runtime/opal.h"
 #include "opal/runtime/opal_cr.h"
 
+#include "opal/util/argv.h"
 #include "opal/util/if.h"
 #include "opal/util/os_path.h"
 #include "opal/util/output.h"
