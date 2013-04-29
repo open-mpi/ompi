@@ -102,7 +102,7 @@ int ompi_btl_openib_connect_base_register(void)
              "Method used to exclude OpenFabrics connections (valid values: %s)",
              all_cpc_names);
 
-    btl_openib_cpc_include = NULL;
+    btl_openib_cpc_exclude = NULL;
     (void) mca_base_component_var_register(&mca_btl_openib_component.super.btl_version,
                                            "cpc_exclude", string, MCA_BASE_VAR_TYPE_STRING,
                                            NULL, 0, 0, OPAL_INFO_LVL_9,
