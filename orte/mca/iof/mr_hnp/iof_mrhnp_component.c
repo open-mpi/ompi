@@ -12,6 +12,7 @@
 #include "orte_config.h"
 
 #include "opal/mca/base/base.h"
+#include "opal/util/argv.h"
 
 #include "orte/util/proc_info.h"
 

@@ -46,6 +46,7 @@
 #endif
 #include "opal/mca/base/base.h"
 #include "opal/runtime/opal_info_support.h"
+#include "opal/util/argv.h"
 #include "opal/util/show_help.h"
 
 #if OMPI_RTE_ORTE

@@ -52,6 +52,7 @@
 
 #include "opal_config.h"
 
+#include "opal/prefetch.h"
 #include "opal/class/opal_object.h"
 #include "opal/mca/event/event.h"
 
