@@ -83,7 +83,6 @@ opal_util_keyval_parse(const char *filename,
         }
     }
     fclose(opal_util_keyval_yyin);
-    opal_util_keyval_yylex_destroy ();
 
 cleanup:
     OPAL_THREAD_UNLOCK(&keyval_mutex);

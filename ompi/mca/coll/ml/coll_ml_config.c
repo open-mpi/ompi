@@ -551,7 +551,6 @@ static int parse_file(char *filename)
     }
     save_settings(&coll_config);
     fclose(coll_ml_config_yyin);
-    coll_ml_config_yylex_destroy ();
     ret = OMPI_SUCCESS;
 
 cleanup:
