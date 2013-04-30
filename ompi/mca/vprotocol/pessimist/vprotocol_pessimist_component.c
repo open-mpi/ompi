@@ -143,17 +143,23 @@ int mca_vprotocol_pessimist_enable(bool enable) {
 static inline int mca_param_register_int( const char* param_name,
                                                   int default_value )
 {
-    int id = mca_base_param_register_int("vprotocol", "pessimist", param_name, NULL, default_value);
     int param_value = default_value;
-    mca_base_param_lookup_int(id, &param_value);
+
+    (void) mca_base_param_reg_int (&mca_vprotocol_pessimist_component.pmlm_version,
+                                   param_name, NULL, false, false, default_value,
+                                   &param_value);
+
     return param_value;
 }
 
 static inline char *mca_param_register_string( const char* param_name,
                                                   char *default_value )
 {
-    int id = mca_base_param_register_string("vprotocol", "pessimist", param_name, NULL, default_value);
     char *param_value = default_value;
-    mca_base_param_lookup_string(id, &param_value);
+
+    (void) mca_base_param_reg_string (&mca_vprotocol_pessimist_component.pmlm_version,
+                                      param_name, NULL, false, false, default_value,
+                                      &param_value);
+
     return param_value;
 }

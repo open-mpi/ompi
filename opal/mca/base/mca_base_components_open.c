@@ -487,9 +487,14 @@ static int open_components(const char *type_name, int output_id,
             if (0 > mca_base_param_find(type_name, 
                                         component->mca_component_name,
                                         "priority")) {
-                mca_base_param_register_int(type_name,
-                                            component->mca_component_name,
-                                            "priority", NULL, 0);
+                char *tmp_name;
+                asprintf (&tmp_name, "%s_priority", component->mca_component_name);
+
+                if (NULL != tmp_name) {
+                    (void) mca_base_param_reg_int_name (type_name, tmp_name, NULL,
+                                                        false, false, 0, NULL);
+                    free (tmp_name);
+                }
             }
             
             cli = OBJ_NEW(mca_base_component_list_item_t);
