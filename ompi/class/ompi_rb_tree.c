@@ -23,11 +23,6 @@
 
 #include "ompi/class/ompi_rb_tree.h"
 
-/* declare the instance of the classes  */
-OBJ_CLASS_INSTANCE(ompi_rb_tree_node_t, ompi_free_list_item_t, NULL, NULL);
-OBJ_CLASS_INSTANCE(ompi_rb_tree_t, opal_object_t, ompi_rb_tree_construct,
-                   ompi_rb_tree_destruct);
-
 /* Private functions */
 static void btree_insert(ompi_rb_tree_t *tree, ompi_rb_tree_node_t * node);
 static void btree_delete_fixup(ompi_rb_tree_t *tree, ompi_rb_tree_node_t * x);
@@ -43,9 +38,14 @@ static void inorder_traversal(ompi_rb_tree_t *tree,
                               ompi_rb_tree_node_t * node);
 
 
-
-/* constructor */
-void ompi_rb_tree_construct(opal_object_t * object)
+/**
+ * the constructor function. creates the free list to get the nodes from
+ *
+ * @param object the tree that is to be used
+ *
+ * @retval NONE
+ */
+static void ompi_rb_tree_construct(opal_object_t * object)
 {
     ompi_rb_tree_t * tree = (ompi_rb_tree_t *) object;
     tree->root_ptr = NULL;
@@ -56,8 +56,12 @@ void ompi_rb_tree_construct(opal_object_t * object)
             0, -1 , 128, NULL);
 }
 
-/* the destructor function */
-void ompi_rb_tree_destruct(opal_object_t * object)
+/**
+ * the destructor function. Free the tree and destroys the free list.
+ *
+ * @param object the tree object
+ */
+static void ompi_rb_tree_destruct(opal_object_t * object)
 {
     if(NULL != ((ompi_rb_tree_t *)object)->root_ptr) {
         ompi_rb_tree_destroy((ompi_rb_tree_t *) object);
@@ -65,6 +69,11 @@ void ompi_rb_tree_destruct(opal_object_t * object)
     OBJ_DESTRUCT(&(((ompi_rb_tree_t *)object)->free_list));
     return;
 }
+
+/* declare the instance of the classes  */
+OBJ_CLASS_INSTANCE(ompi_rb_tree_node_t, ompi_free_list_item_t, NULL, NULL);
+OBJ_CLASS_INSTANCE(ompi_rb_tree_t, opal_object_t, ompi_rb_tree_construct,
+                   ompi_rb_tree_destruct);
 
 /* Create the tree */
 int ompi_rb_tree_init(ompi_rb_tree_t * tree,
