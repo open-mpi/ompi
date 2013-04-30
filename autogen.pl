@@ -56,13 +56,11 @@ my $exclude_list;
 my $ompi_automake_version = "1.11.1";
 my $ompi_autoconf_version = "2.65";
 my $ompi_libtool_version = "2.2.6b";
-my $ompi_flex_version = "2.5.4";
 
 # Search paths
 my $ompi_autoconf_search = "autoconf";
 my $ompi_automake_search = "automake";
 my $ompi_libtoolize_search = "libtoolize;glibtoolize";
-my $ompi_flex_search = "flex";
 
 # One-time setup
 my $username;
@@ -799,7 +797,6 @@ GNU tools:
     GNU Autoconf: $ompi_autoconf_version
     GNU Automake: $ompi_automake_version
     GNU Libtool: $ompi_libtool_version
-    Flex: $ompi_flex_version
 =================================================================\n";
     my_exit(1);
 }
@@ -1018,7 +1015,6 @@ $step. Checking tool versions\n\n";
 &find_and_check("autoconf", $ompi_autoconf_search, $ompi_autoconf_version);
 &find_and_check("libtool", $ompi_libtoolize_search, $ompi_libtool_version);
 &find_and_check("automake", $ompi_automake_search, $ompi_automake_version);
-&find_and_check("flex", $ompi_flex_search, $ompi_flex_version);
 
 #---------------------------------------------------------------------------
 
