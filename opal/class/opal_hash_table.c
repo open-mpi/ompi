@@ -249,7 +249,7 @@ int opal_hash_table_get_value_uint64(opal_hash_table_t* ht, uint64_t key,
         node =  (opal_uint64_hash_node_t*)opal_list_get_next(node)) {
         if (node->hn_key == key) {
             *ptr = node->hn_value;
-	    return OPAL_SUCCESS;
+            return OPAL_SUCCESS;
         }
     } 
     return OPAL_ERR_NOT_FOUND;
