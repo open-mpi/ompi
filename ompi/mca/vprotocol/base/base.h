@@ -21,7 +21,6 @@
 BEGIN_C_DECLS
 
 struct mca_pml_v_t {
-    int                                 output;
     size_t                              host_pml_req_recv_size;
     size_t                              host_pml_req_send_size;
     mca_pml_base_component_t            host_pml_component;
