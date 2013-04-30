@@ -130,6 +130,9 @@ static int mca_btl_base_open(mca_base_open_flag_t flags)
 
   OBJ_CONSTRUCT(&mca_btl_base_modules_initialized, opal_list_t);
 
+  /* get the verbosity so that BTL_VERBOSE will work */
+  mca_btl_base_verbose = opal_output_get_verbosity(ompi_btl_base_framework.framework_output);
+
   /* All done */
   return OMPI_SUCCESS;
 }
