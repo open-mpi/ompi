@@ -121,16 +121,16 @@ mca_btl_tcp_proc_t* mca_btl_tcp_proc_create(ompi_proc_t* ompi_proc)
 
     /* lookup tcp parameters exported by this proc */
     rc = ompi_modex_recv( &mca_btl_tcp_component.super.btl_version,
-                                  ompi_proc,
-                                  (void**)&btl_proc->proc_addrs,
-                                  &size );
+                          ompi_proc,
+                          (void**)&btl_proc->proc_addrs,
+                          &size );
     if(rc != OMPI_SUCCESS) {
-        BTL_ERROR(("mca_base_modex_recv: failed with return value=%d", rc));
+        BTL_ERROR(("ompi_modex_recv: failed with return value=%d", rc));
         OBJ_RELEASE(btl_proc);
         return NULL;
     }
     if(0 != (size % sizeof(mca_btl_tcp_addr_t))) {
-        BTL_ERROR(("mca_base_modex_recv: invalid size %lu: btl-size: %lu\n",
+        BTL_ERROR(("ompi_modex_recv: invalid size %lu: btl-size: %lu\n",
           (unsigned long) size, (unsigned long)sizeof(mca_btl_tcp_addr_t)));
         return NULL;
     }
