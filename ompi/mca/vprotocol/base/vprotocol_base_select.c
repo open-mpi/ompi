@@ -124,7 +124,7 @@ int mca_vprotocol_base_select(bool enable_progress_threads,
         free(om);
     }
     
-    mca_base_components_close(mca_pml_v.output, 
+    mca_base_components_close(ompi_vprotocol_base_framework.framework_output,
                               &ompi_vprotocol_base_framework.framework_components, 
                               (mca_base_component_t *) best_component);
     
