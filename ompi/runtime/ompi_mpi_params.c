@@ -278,7 +278,7 @@ int ompi_mpi_register_params(void)
                                  MCA_BASE_VAR_SCOPE_READONLY,
                                  &ompi_mpi_leave_pinned_pipeline);
     
-    if (ompi_mpi_leave_pinned && ompi_mpi_leave_pinned_pipeline) {
+    if (ompi_mpi_leave_pinned > 0 && ompi_mpi_leave_pinned_pipeline) {
         ompi_mpi_leave_pinned_pipeline = 0;
         opal_show_help("help-mpi-runtime.txt", 
                        "mpi-params:leave-pinned-and-pipeline-selected",
