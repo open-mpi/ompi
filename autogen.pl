@@ -56,7 +56,7 @@ my $exclude_list;
 my $ompi_automake_version = "1.11.1";
 my $ompi_autoconf_version = "2.65";
 my $ompi_libtool_version = "2.2.6b";
-my $ompi_flex_version = "2.5.35";
+my $ompi_flex_version = "2.5.4";
 
 # Search paths
 my $ompi_autoconf_search = "autoconf";

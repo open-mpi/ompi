@@ -305,6 +305,7 @@ static int parse_file(char *filename)
     }
     save_section(&section);
     fclose(btl_openib_ini_yyin);
+    btl_openib_ini_yylex_destroy ();
 
 cleanup:
     reset_section(true, &section);

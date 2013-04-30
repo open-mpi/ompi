@@ -15,7 +15,6 @@ BEGIN_C_DECLS
 /*
  * local functions
  */
-static int finish_parsing(void) ;
 static int coll_ml_config_yywrap(void);
 
 END_C_DECLS
@@ -26,9 +25,6 @@ END_C_DECLS
 int coll_ml_config_yynewlines = 1;
 bool coll_ml_config_parse_done = false;
 char *coll_ml_config_string = NULL;
-
-#define yyterminate() \
-  return finish_parsing()
 
 %}
 
@@ -99,23 +95,6 @@ NAME_CHAR   [A-Za-z0-9_\-\.\\\/]
 .                   { return COLL_ML_CONFIG_PARSE_ERROR; }
 %%
 
-
-/*
- * This cleans up at the end of the parse (since, in this case, we
- * always parse the entire file) and prevents a memory leak.
- */
-static int finish_parsing(void)
-{
-    if (NULL != YY_CURRENT_BUFFER) {
-        yy_delete_buffer(YY_CURRENT_BUFFER);
-#if defined(YY_CURRENT_BUFFER_LVALUE)
-        YY_CURRENT_BUFFER_LVALUE = NULL;
-#else
-        YY_CURRENT_BUFFER = NULL;
-#endif  /* YY_CURRENT_BUFFER_LVALUE */
-    }
-    return YY_NULL;
-}
 
 
 static int coll_ml_config_yywrap(void)

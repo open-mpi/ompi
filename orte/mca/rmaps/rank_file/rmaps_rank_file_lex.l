@@ -34,13 +34,12 @@
 
 BEGIN_C_DECLS
 
-static int finish_parsing(void);
 int orte_rmaps_rank_file_yywrap(void);
 
 END_C_DECLS
 
 #define yyterminate() \
-  return finish_parsing()
+  return orte_rmaps_rank_file_yylex_destroy()
 
 /*
  * global variables
@@ -124,23 +123,6 @@ username           { orte_rmaps_rank_file_value.sval = yytext;
                      return ORTE_RANKFILE_ERROR; }
 
 %%
-
-/*
- * This cleans up at the end of the parse (since, in this case, we
- * always parse the entire file) and prevents a memory leak.
- */
-static int finish_parsing(void) 
-{
-    if (NULL != YY_CURRENT_BUFFER) {
-        yy_delete_buffer(YY_CURRENT_BUFFER); 
-#if defined(YY_CURRENT_BUFFER_LVALUE)
-        YY_CURRENT_BUFFER_LVALUE = NULL;
-#else
-        YY_CURRENT_BUFFER = NULL;
-#endif  /* YY_CURRENT_BUFFER_LVALUE */
-    }
-    return YY_NULL;
-}
 
 int orte_rmaps_rank_file_wrap(void)
 {
