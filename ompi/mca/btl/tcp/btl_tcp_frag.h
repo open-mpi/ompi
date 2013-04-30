@@ -20,7 +20,6 @@
 #define MCA_BTL_TCP_FRAG_H
 
 
-#define MCA_BTL_TCP_FRAG_ALIGN (8)
 #include "ompi_config.h"
 
 #ifdef HAVE_SYS_TYPES_H
