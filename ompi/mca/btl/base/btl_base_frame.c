@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2007 Sun Microsystems, Inc.  All rights reserved.
- * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2008-2013 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -139,7 +139,7 @@ static int mca_btl_base_open(mca_base_open_flag_t flags)
 
 static int mca_btl_base_close(void)
 {
-    mca_btl_base_selected_module_t *sm;
+    mca_btl_base_selected_module_t *sm, *next;
 
 #if 0
     /* disable event processing while cleaning up btls */
@@ -147,12 +147,13 @@ static int mca_btl_base_close(void)
 #endif
     /* Finalize all the btl components and free their list items */
 
-    OPAL_LIST_FOREACH(sm, &mca_btl_base_modules_initialized, mca_btl_base_selected_module_t) {
+    OPAL_LIST_FOREACH_SAFE(sm, next, &mca_btl_base_modules_initialized, mca_btl_base_selected_module_t) {
         /* Blatently ignore the return code (what would we do to recover,
            anyway?  This component is going away, so errors don't matter
            anymore) */
 
         sm->btl_module->btl_finalize(sm->btl_module);
+        opal_list_remove_item(&mca_btl_base_modules_initialized, &sm->super);
         free(sm);
     }
 
@@ -160,6 +161,8 @@ static int mca_btl_base_close(void)
        OMPI RTE program, or [possibly] multiple if this is ompi_info) */
 
     (void) mca_base_framework_components_close(&ompi_btl_base_framework, NULL);
+
+    OBJ_DESTRUCT(&mca_btl_base_modules_initialized);
 
 #if 0
     /* restore event processing */
