@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
- * Copyright (c) 2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2012-2013 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -59,7 +59,9 @@ int MPI_Mrecv(void *buf, int count, MPI_Datatype type,
     }
 
     if (&ompi_message_no_proc.message == *message) {
-        *status = ompi_request_empty.req_status;
+        if (MPI_STATUS_IGNORE != status) {
+            *status = ompi_request_empty.req_status;
+        }
         *message = MPI_MESSAGE_NULL;
         return MPI_SUCCESS;
      }
