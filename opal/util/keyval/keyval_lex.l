@@ -12,6 +12,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2012      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -34,7 +36,6 @@
 
 BEGIN_C_DECLS
 
-static int finish_parsing(void);
 int opal_util_keyval_yywrap(void);
 
 END_C_DECLS
@@ -45,9 +46,6 @@ END_C_DECLS
 int opal_util_keyval_yynewlines = 1;
 bool opal_util_keyval_parse_done = false;
 char *opal_util_keyval_string = NULL;
-
-#define yyterminate() \
-  return finish_parsing()
 
 %}
 
@@ -83,15 +81,16 @@ CHAR        [A-Za-z0-9_\-\.]
 
 %%
 
+/* Old flex (2.5.4a? and older) does not define a destroy function */
+#if !defined(YY_FLEX_SUBMINOR_VERSION)
+#define YY_FLEX_SUBMINOR_VERSION 0
+#endif
 
-/*
- * This cleans up at the end of the parse (since, in this case, we
- * always parse the entire file) and prevents a memory leak.
- */
-static int finish_parsing(void) 
+#if (YY_FLEX_MAJOR_VERSION < 2) || (YY_FLEX_MAJOR_VERSION == 2 && (YY_FLEX_MINOR_VERSION < 5 || (YY_FLEX_MINOR_VERSION == 5 && YY_FLEX_SUBMINOR_VERSION < 5)))
+int opal_util_keyval_yylex_destroy(void)
 {
     if (NULL != YY_CURRENT_BUFFER) {
-        yy_delete_buffer(YY_CURRENT_BUFFER); 
+        yy_delete_buffer(YY_CURRENT_BUFFER);
 #if defined(YY_CURRENT_BUFFER_LVALUE)
         YY_CURRENT_BUFFER_LVALUE = NULL;
 #else
@@ -100,6 +99,7 @@ static int finish_parsing(void)
     }
     return YY_NULL;
 }
+#endif
 
 int opal_util_keyval_yywrap(void)
 {

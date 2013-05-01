@@ -39,6 +39,7 @@ BEGIN_C_DECLS
 
 int btl_openib_ini_yylex(void);
 int btl_openib_ini_init_buffer(FILE *file);
+int btl_openib_ini_yylex_destroy(void);
 
 extern FILE *btl_openib_ini_yyin;
 extern bool btl_openib_ini_parse_done;

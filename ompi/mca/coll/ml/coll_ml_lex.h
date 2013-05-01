@@ -8,6 +8,7 @@ BEGIN_C_DECLS
 
 int coll_ml_config_yylex(void);
 int coll_ml_config_init_buffer(FILE *file);
+int coll_ml_config_yylex_destroy(void);
 
 extern FILE *coll_ml_config_yyin;
 extern bool coll_ml_config_parse_done;

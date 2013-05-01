@@ -36,6 +36,7 @@
 BEGIN_C_DECLS
 int opal_show_help_yylex(void);
 int opal_show_help_init_buffer(FILE *file);
+int opal_show_help_yylex_destroy(void);
 
 extern FILE *opal_show_help_yyin;
 extern bool opal_show_help_parse_done;

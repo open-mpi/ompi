@@ -34,13 +34,9 @@
 
 BEGIN_C_DECLS
 
-static int finish_parsing(void);
 int orte_rmaps_rank_file_yywrap(void);
 
 END_C_DECLS
-
-#define yyterminate() \
-  return finish_parsing()
 
 /*
  * global variables
@@ -125,14 +121,16 @@ username           { orte_rmaps_rank_file_value.sval = yytext;
 
 %%
 
-/*
- * This cleans up at the end of the parse (since, in this case, we
- * always parse the entire file) and prevents a memory leak.
- */
-static int finish_parsing(void) 
+/* Old flex (2.5.4a? and older) does not define a destroy function */
+#if !defined(YY_FLEX_SUBMINOR_VERSION)
+#define YY_FLEX_SUBMINOR_VERSION 0
+#endif
+
+#if (YY_FLEX_MAJOR_VERSION < 2) || (YY_FLEX_MAJOR_VERSION == 2 && (YY_FLEX_MINOR_VERSION < 5 || (YY_FLEX_MINOR_VERSION == 5 && YY_FLEX_SUBMINOR_VERSION < 5)))
+int orte_rmaps_rank_file_lex_destroy (void)
 {
     if (NULL != YY_CURRENT_BUFFER) {
-        yy_delete_buffer(YY_CURRENT_BUFFER); 
+        yy_delete_buffer(YY_CURRENT_BUFFER);
 #if defined(YY_CURRENT_BUFFER_LVALUE)
         YY_CURRENT_BUFFER_LVALUE = NULL;
 #else
@@ -141,6 +139,7 @@ static int finish_parsing(void)
     }
     return YY_NULL;
 }
+#endif
 
 int orte_rmaps_rank_file_wrap(void)
 {

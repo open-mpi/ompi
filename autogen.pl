@@ -730,8 +730,18 @@ sub find_and_check {
             verbose "  $_ not found\n";
             next;
         }
-        $version =~ m/\s([\d\w\.]+)$/m;
-        $version = $1;
+
+	# Matches a version string with 1 or more parts possibly prefixed with a letter (ex:
+	# v2.2) or followed by a letter (ex: 2.2.6b). This regex assumes there is a space
+	# before the version string and that the version is ok if there is no version.
+	if (!($version =~ m/\s[vV]?(\d[\d\.]*\w?)/m)) {
+	    verbose "  WARNING: $_ does not appear to support --version. Assuming it is ok\n";
+
+	    return;
+	}
+
+	$version = $1;
+
         verbose "     Found $_ version $version; checking version...\n";
         push(@versions_found, $version);
 
@@ -792,7 +802,7 @@ I need at least $req_version, but only found the following versions:\n\n";
     print "\nI am gonna abort.  :-(
 
 Please make sure you are using at least the following versions of the
-GNU tools:
+tools:
 
     GNU Autoconf: $ompi_autoconf_version
     GNU Automake: $ompi_automake_version

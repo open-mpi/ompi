@@ -48,9 +48,6 @@ END_C_DECLS
 int opal_show_help_yynewlines = 1;
 bool opal_show_help_parse_done = false;
 
-#define yyterminate() \
-  return opal_show_help_finish_parsing()
-
 %}
 
 WHITE       [\f\t\v ]
@@ -70,12 +67,13 @@ CHAR        [A-Za-z0-9_\-\.]
 
 %%
 
+/* Old flex (2.5.4a? and older) does not define a destroy function */
+#if !defined(YY_FLEX_SUBMINOR_VERSION)
+#define YY_FLEX_SUBMINOR_VERSION 0
+#endif
 
-/*
- * This cleans up at the end of the parse (since, in this case, we
- * always parse the entire file) and prevents a memory leak.
- */
-int opal_show_help_finish_parsing(void) 
+#if (YY_FLEX_MAJOR_VERSION < 2) || (YY_FLEX_MAJOR_VERSION == 2 && (YY_FLEX_MINOR_VERSION < 5 || (YY_FLEX_MINOR_VERSION == 5 && YY_FLEX_SUBMINOR_VERSION < 5)))
+int opal_show_help_yylex_destroy(void)
 {
     if (NULL != YY_CURRENT_BUFFER) {
         yy_delete_buffer(YY_CURRENT_BUFFER); 
@@ -87,7 +85,7 @@ int opal_show_help_finish_parsing(void)
     }
     return YY_NULL;
 }
-
+#endif
 
 static int opal_show_help_yywrap(void)
 {

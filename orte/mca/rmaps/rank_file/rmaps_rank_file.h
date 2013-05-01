@@ -36,6 +36,8 @@
 
 BEGIN_C_DECLS
 
+int orte_rmaps_rank_file_lex_destroy (void);
+
 struct orte_rmaps_rf_component_t {
     orte_rmaps_base_component_t super;
     char *slot_list;
