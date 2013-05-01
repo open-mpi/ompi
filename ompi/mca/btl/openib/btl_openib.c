@@ -635,7 +635,11 @@ static uint64_t calculate_max_reg (void)
 
     mem_total = calculate_total_mem ();
 
-    if (0 == stat("/sys/module/mlx4_core/parameters", &statinfo)) {
+    if (0 == stat("/sys/module/mlx5_core", &statinfo)) {
+        /* mlx5 means that we have ofed 2.0 and it can always register 2xmem_total for any mlx hca */
+        max_reg = 2 * mem_total;
+    }
+    else if (0 == stat("/sys/module/mlx4_core/parameters", &statinfo)) {
         mtts_per_seg = 1 << read_module_param("/sys/module/mlx4_core/parameters/log_mtts_per_seg", 1);
         num_mtt = 1 << read_module_param("/sys/module/mlx4_core/parameters/log_num_mtt", 20);
         if (1 == num_mtt) {
