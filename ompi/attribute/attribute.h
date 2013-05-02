@@ -186,8 +186,8 @@ typedef struct ompi_attribute_keyval_t ompi_attribute_keyval_t;
 static inline
 int ompi_attr_hash_init(opal_hash_table_t **hash)
 {
-   *hash = OBJ_NEW(opal_hash_table_t);
-    if (NULL == hash) {
+    *hash = OBJ_NEW(opal_hash_table_t);
+    if (NULL == *hash) {
         fprintf(stderr, "Error while creating the local attribute list\n");
         return MPI_ERR_SYSRESOURCE;
     }
@@ -431,7 +431,7 @@ int ompi_attr_get_c(opal_hash_table_t *attr_hash, int key,
  * Get an attribute on the comm/win/datatype in a form valid for
  * Fortran MPI-2.
  *
- * @param attrhash       The attribute hash table hanging on the object(IN)
+ * @param attr_hash      The attribute hash table hanging on the object(IN)
  * @param key            Key val for the attribute (IN)
  * @param attribute      The actual attribute pointer (OUT)
  * @param flag           Flag whether an attribute is associated 
@@ -471,21 +471,21 @@ int ompi_attr_delete(ompi_attribute_type_t type, void *object,
 
 
 /** 
- * This to be used from functions like MPI_*_DUP inorder to copy all
+ * This to be used from functions like MPI_*_DUP in order to copy all
  * the attributes from the old Comm/Win/Dtype object to a new
  * object. 
  * @param type         Type of attribute (COMM/WIN/DTYPE) (IN)
  * @param old_object   The old COMM/WIN/DTYPE object (IN)
  * @param new_object   The new COMM/WIN/DTYPE object (IN)
- * @param attr_hash    The attribute hash table hanging on old object(IN)
+ * @param oldattr_hash The attribute hash table hanging on old object(IN)
  * @param newattr_hash The attribute hash table hanging on new object(IN)
  * @return OMPI error code
  *
  */
 
 int ompi_attr_copy_all(ompi_attribute_type_t type, void *old_object, 
-                      void *new_object, opal_hash_table_t *oldattr_hash,
-                      opal_hash_table_t *newkeyhash);
+                       void *new_object, opal_hash_table_t *oldattr_hash,
+                       opal_hash_table_t *newattr_hash);
 
 
 /** 
