@@ -87,11 +87,6 @@ int opal_event_init(void)
         dumpit = true;
     }
 
-#if OPAL_EVENT_HAVE_THREAD_SUPPORT
-    /* turn on libevent thread safety */
-    evthread_use_pthreads ();
-#endif
-
     if (NULL == event_module_include) {
         /* Shouldn't happen, but... */
         event_module_include = strdup("select");

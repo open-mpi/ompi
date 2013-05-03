@@ -99,15 +99,7 @@ OPAL_DECLSPEC int opal_event_init(void);
 #define opal_event_set_priority(x, n) event_priority_set((x), (n))
 
 /* thread support APIs */
-#if OPAL_EVENT_HAVE_THREAD_SUPPORT
-#ifdef WIN32
-#define opal_event_use_threads() evthread_use_windows_threads()
-#else
 #define opal_event_use_threads() evthread_use_pthreads()
-#endif
-#else
-#define opal_event_use_threads()
-#endif
 
 /* Basic event APIs */
 #define opal_event_enable_debug_mode() event_enable_debug_mode()
