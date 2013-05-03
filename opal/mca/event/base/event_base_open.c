@@ -71,10 +71,7 @@ static int opal_event_base_open(mca_base_open_flag_t flags)
         return rc;
     }
 
-    /* Declare our intent to use threads. If event library internal
-     * thread support was not enabled during configuration, this
-     * function defines to no-op
-     */
+    /* Declare our intent to use threads */
     opal_event_use_threads();
 
     /* get our event base */
