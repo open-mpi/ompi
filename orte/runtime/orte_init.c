@@ -138,8 +138,8 @@ int orte_init(int* pargc, char*** pargv, orte_proc_type_t flags)
         goto error;
     }
 
+    if (ORTE_PROC_IS_APP) {
 #if ORTE_ENABLE_PROGRESS_THREADS
-#if OPAL_EVENT_HAVE_THREAD_SUPPORT
         /* get a separate orte event base */
         orte_event_base = opal_event_base_create();
        /* construct the thread object */
@@ -151,14 +151,15 @@ int orte_init(int* pargc, char*** pargv, orte_proc_type_t flags)
             goto error;
         }
 #else
-        error = "event thread support is not configured";
-        ret = ORTE_ERROR;
-        goto error;
-#endif
-#else
         /* set the event base to the opal one */
         orte_event_base = opal_event_base;
 #endif
+    } else {
+        /* ORTE tools "block" in their own loop over the event
+         * base, so no progress thread is required
+         */
+        orte_event_base = opal_event_base;
+    }
 
     /* initialize the RTE for this environment */
     if (ORTE_SUCCESS != (ret = orte_ess.init())) {

@@ -1025,19 +1025,9 @@ int orterun(int argc, char *argv[])
     rc = orte_plm.spawn(jdata);
 
     /* loop the event lib until an exit event is detected */
-#if ORTE_ENABLE_PROGRESS_THREADS
-    while (orte_event_base_active) {
-        /* provide a very short quiet period so we
-         * don't hammer the cpu while
-         */
-        struct timespec tp = {0, 100};
-        nanosleep(&tp, NULL);
-    }
-#else
     while (orte_event_base_active) {
         opal_event_loop(orte_event_base, OPAL_EVLOOP_ONCE);
     }
-#endif
 
     /* ensure all local procs are dead */
     orte_odls.kill_local_procs(NULL);
