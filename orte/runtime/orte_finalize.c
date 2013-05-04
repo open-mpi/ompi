@@ -71,18 +71,20 @@ int orte_finalize(void)
     
     /* close the ess itself */
     (void) mca_base_framework_close(&orte_ess_base_framework);
-    
+
+    if (ORTE_PROC_IS_APP) {
 #if ORTE_ENABLE_PROGRESS_THREADS
-    /* stop the progress thread */
-    orte_event_base_active = false;
-    /* break the event loop */
-    opal_event_base_loopbreak(orte_event_base);
-    /* wait for thread to exit */
-    opal_thread_join(&orte_progress_thread, NULL);
-    OBJ_DESTRUCT(&orte_progress_thread);
-    /* release the event base */
-/*    opal_event_base_free(orte_event_base); */
+        /* stop the progress thread */
+        orte_event_base_active = false;
+        /* break the event loop */
+        opal_event_base_loopbreak(orte_event_base);
+        /* wait for thread to exit */
+        opal_thread_join(&orte_progress_thread, NULL);
+        OBJ_DESTRUCT(&orte_progress_thread);
+        /* release the event base */
+        opal_event_base_free(orte_event_base);
 #endif
+    }
 
     /* cleanup the process info */
     orte_proc_info_finalize();
