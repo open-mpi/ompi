@@ -97,13 +97,6 @@ AC_ARG_ENABLE([orte-progress-threads],
 if test "$enable_orte_progress_threads" = "yes"; then
     AC_MSG_RESULT([yes])
     orte_enable_progress_threads=1
-    # require libevent thread support
-    if test "$enable_event_thread_support" != "yes" ; then
-        AC_MSG_WARN([ORTE progress threads require libevent thread])
-        AC_MSG_WARN([be enabled. Please configure with])
-        AC_MSG_WARN([--enable-event-thread-support])
-        AC_MSG_ERROR([Cannot continue])
-    fi
 else
     AC_MSG_RESULT([no])
     orte_enable_progress_threads=0
