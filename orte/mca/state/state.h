@@ -64,8 +64,12 @@ ORTE_DECLSPEC extern mca_base_framework_t orte_state_base_framework;
  */
 #define ORTE_TERMINATE(x)                                               \
     do {                                                                \
-        ORTE_UPDATE_EXIT_STATUS(x);                                     \
-        ORTE_ACTIVATE_JOB_STATE(NULL, ORTE_JOB_STATE_FORCED_EXIT);      \
+        if (!orte_abnormal_term_ordered) {                              \
+            ORTE_UPDATE_EXIT_STATUS(x);                                 \
+            ORTE_ACTIVATE_JOB_STATE(NULL, ORTE_JOB_STATE_FORCED_EXIT);  \
+            /* set the global abnormal exit flag  */                    \
+            orte_abnormal_term_ordered = true;                          \
+        }                                                               \
     } while(0);
 
 #define ORTE_ACTIVATE_JOB_STATE(j, s)                                   \
