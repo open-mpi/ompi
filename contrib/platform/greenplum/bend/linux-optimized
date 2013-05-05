@@ -1,4 +1,3 @@
-enable_event_thread_support=yes
 enable_opal_multi_threads=yes
 enable_orte_progress_threads=yes
 enable_ft_thread=no
