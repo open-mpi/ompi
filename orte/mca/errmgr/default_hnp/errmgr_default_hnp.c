@@ -153,13 +153,6 @@ static void job_errors(int fd, short args, void *cbdata)
                          ORTE_JOBID_PRINT(jdata->jobid),
                          orte_job_state_to_str(jobstate)));
 
-    /* set global flags */
-    if (ORTE_PROC_MY_NAME->jobid == jdata->jobid && !orte_abnormal_term_ordered) {
-        /* set the flag indicating that a daemon failed so we use the proper
-         * methods for attempting to shutdown the rest of the system
-         */
-        orte_abnormal_term_ordered = true;
-    }
     if (ORTE_JOB_STATE_NEVER_LAUNCHED == jobstate ||
         ORTE_JOB_STATE_ALLOC_FAILED == jobstate) {
         orte_never_launched = true;
@@ -177,11 +170,7 @@ static void job_errors(int fd, short args, void *cbdata)
          */
         if (NULL != jdata->aborted_proc) {
             sts = jdata->aborted_proc->exit_code;
-            if (ORTE_PROC_MY_NAME->jobid == jdata->jobid && !orte_abnormal_term_ordered) {
-                /* set the flag indicating that a daemon failed so we use the proper
-                 * methods for attempting to shutdown the rest of the system
-                 */
-                orte_abnormal_term_ordered = true;
+            if (ORTE_PROC_MY_NAME->jobid == jdata->jobid) {
                 if (WIFSIGNALED(sts)) { /* died on signal */
 #ifdef WCOREDUMP
                     if (WCOREDUMP(sts)) {
@@ -209,6 +198,8 @@ static void job_errors(int fd, short args, void *cbdata)
 
     /* abort the job */
     ORTE_ACTIVATE_JOB_STATE(caddy->jdata, ORTE_JOB_STATE_FORCED_EXIT);
+    /* set the global abnormal exit flag  */
+    orte_abnormal_term_ordered = true;
     OBJ_RELEASE(caddy);
 }
 

@@ -153,6 +153,11 @@ static int rte_init(void)
      * the basic POSIX trap functions to handle the signal,
      * and then let that signal handler do some magic to
      * avoid the hang
+     *
+     * NOTE: posix traps don't allow us to do anything major
+     * in them, so use a pipe tied to a libevent event to
+     * reach a "safe" place where the termination event can
+     * be created
      */
     pipe(term_pipe);
     /* setup an event to attempt normal termination on signal */
@@ -669,7 +674,6 @@ static int rte_init(void)
         }
     }
 
-#if !ORTE_ENABLE_PROGRESS_THREADS
     /* We actually do *not* want an HNP to voluntarily yield() the
      processor more than necessary.  Orterun already blocks when
      it is doing nothing, so it doesn't use any more CPU cycles than
@@ -689,7 +693,6 @@ static int rte_init(void)
      problematic in some scenarios (e.g., COMM_SPAWN, BTL's that
      require OOB messages for wireup, etc.). */
     opal_progress_set_yield_when_idle(false);
-#endif
 
     return ORTE_SUCCESS;
 
@@ -738,6 +741,7 @@ static int rte_finalize(void)
     (void) mca_base_framework_close(&orte_ras_base_framework);
     (void) mca_base_framework_close(&orte_rmaps_base_framework);
     (void) mca_base_framework_close(&orte_plm_base_framework);
+    (void) mca_base_framework_close(&orte_odls_base_framework);
     (void) mca_base_framework_close(&orte_errmgr_base_framework);
     (void) mca_base_framework_close(&orte_routed_base_framework);
     (void) mca_base_framework_close(&orte_rml_base_framework);
@@ -819,10 +823,6 @@ static void clean_abort(int fd, short flags, void *arg)
         return;
     }
 
-    /* set the global abnormal exit flag so we know not to
-     * use the standard xcast for terminating orteds
-     */
-    orte_abnormal_term_ordered = true;
     /* ensure that the forwarding of stdin stops */
     orte_job_term_ordered = true;
 
@@ -842,9 +842,6 @@ static void clean_abort(int fd, short flags, void *arg)
        Instead, we have to exit this handler and setup to call
        job_completed() after this. */
     ORTE_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
-
-    /* reset the event */
-    opal_event_add(&term_handler, NULL);
 }
 
 static struct timeval current, last={0,0};
@@ -875,7 +872,7 @@ static void abort_signal_callback(int fd)
         if ((current.tv_sec - last.tv_sec) < 5) {
             exit(1);
         }
-    write(1, (void*)msg, strlen(msg));
+        write(1, (void*)msg, strlen(msg));
     }
     /* save the time */
     last.tv_sec = current.tv_sec;
