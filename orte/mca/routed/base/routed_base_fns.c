@@ -346,14 +346,9 @@ int orte_routed_base_process_callback(orte_jobid_t job, opal_buffer_t *buffer)
     orte_vpid_t vpid;
     int rc;
 
-    if (ORTE_JOB_FAMILY(job) == ORTE_JOB_FAMILY(ORTE_PROC_MY_NAME->jobid)) {
-        /* came from singleton - don't process it */
-        return ORTE_SUCCESS;
-    }
-
     /* lookup the job object for this process */
     if (NULL == (jdata = orte_get_job_data_object(job))) {
-        /* came from my job family - this is an error */
+        /* came from a different job family - this is an error */
         ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
         return ORTE_ERR_NOT_FOUND;
     }
