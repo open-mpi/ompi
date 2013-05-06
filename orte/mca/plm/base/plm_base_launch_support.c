@@ -534,9 +534,6 @@ void orte_plm_base_post_launch(int fd, short args, void *cbdata)
         return;
     }
 
-    /* complete debugger interface */
-    ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_READY_FOR_DEBUGGERS);
-
     /* cleanup */
     OBJ_RELEASE(caddy);
 }
@@ -608,8 +605,9 @@ void orte_plm_base_registered(int fd, short args, void *cbdata)
     }
 
  cleanup:
-    /* RHC: need to init_after_spawn for debuggers */
-    /* no state to activate - this ends the launch sequence */
+    /* need to init_after_spawn for debuggers */
+    ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_READY_FOR_DEBUGGERS);
+
     OBJ_RELEASE(caddy);
 }
 
