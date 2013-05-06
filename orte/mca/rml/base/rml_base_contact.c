@@ -76,15 +76,12 @@ int orte_rml_base_update_contact_info(opal_buffer_t* data)
     orte_process_name_t name;
     bool got_name;
     int rc;
-    orte_job_t *jdata;
-    orte_proc_t *proc;
 
     /* unpack the data for each entry */
     num_procs = 0;
     name.jobid = ORTE_JOBID_INVALID;
     got_name = false;
     cnt = 1;
-    jdata = NULL;
     while (ORTE_SUCCESS == (rc = opal_dss.unpack(data, &rml_uri, &cnt, OPAL_STRING))) {
         
         OPAL_OUTPUT_VERBOSE((5, orte_rml_base_framework.framework_output,
@@ -99,40 +96,16 @@ int orte_rml_base_update_contact_info(opal_buffer_t* data)
                 free(rml_uri);
                 return(rc);
             }
-            /* extract the name */
-            if (ORTE_SUCCESS != (rc = orte_rml_base_parse_uris(rml_uri, &name, NULL))) {
-                ORTE_ERROR_LOG(rc);
-                free(rml_uri);
-                return rc;
-            }
-            /* if we are the HNP, then we need to update the proc info
-             * so that debuggers can attach
-             */
-            if (ORTE_PROC_IS_HNP) {
-                /* all the entries come from a single jobid, so only get
-                 * the job object once
-                 */
-                if (NULL == jdata) {
-                    if (NULL == (jdata = orte_get_job_data_object(name.jobid))) {
-                        ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-                        free(rml_uri);
-                        continue;
-                    }
-                }
-                if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, name.vpid))) {
-                    ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-                    free(rml_uri);
-                    continue;
-                }
-                if (NULL != proc->rml_uri) {
-                    free(proc->rml_uri);
-                }
-                proc->rml_uri = strdup(rml_uri);
-            }
             if (!got_name) {
-                /* only do this once as all messages to another job family
-                 * are routed thru that mpirun
+                /* we only get an update from a single jobid - the command
+                 * that creates these doesn't cross jobid boundaries - so
+                 * record it here
                  */
+                if (ORTE_SUCCESS != (rc = orte_rml_base_parse_uris(rml_uri, &name, NULL))) {
+                    ORTE_ERROR_LOG(rc);
+                    free(rml_uri);
+                    return rc;
+                }
                 got_name = true;
                 /* if this is for a different job family, update the route to this proc */
                 if (ORTE_JOB_FAMILY(name.jobid) != ORTE_JOB_FAMILY(ORTE_PROC_MY_NAME->jobid)) {
