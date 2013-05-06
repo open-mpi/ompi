@@ -76,6 +76,8 @@ int orte_rml_base_update_contact_info(opal_buffer_t* data)
     orte_process_name_t name;
     bool got_name;
     int rc;
+    orte_job_t *jdata;
+    orte_proc_t *proc;
 
     /* unpack the data for each entry */
     num_procs = 0;
@@ -96,16 +98,36 @@ int orte_rml_base_update_contact_info(opal_buffer_t* data)
                 free(rml_uri);
                 return(rc);
             }
+            /* extract the name */
+            if (ORTE_SUCCESS != (rc = orte_rml_base_parse_uris(rml_uri, &name, NULL))) {
+                ORTE_ERROR_LOG(rc);
+                free(rml_uri);
+                return rc;
+            }
+            /* if we are the HNP, then we need to update the proc info
+             * so that debuggers can attach
+             */
+            if (ORTE_PROC_IS_HNP) {
+                if (NULL == (jdata = orte_get_job_data_object(name.jobid))) {
+                    ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+                    free(rml_uri);
+                    continue;
+                }
+                if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, name.vpid))) {
+                    ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+                    free(rml_uri);
+                    continue;
+                }
+                if (NULL != proc->rml_uri) {
+                    free(proc->rml_uri);
+                }
+                proc->rml_uri = strdup(rml_uri);
+            }
             if (!got_name) {
                 /* we only get an update from a single jobid - the command
                  * that creates these doesn't cross jobid boundaries - so
-                 * record it here
+                 * only do this once
                  */
-                if (ORTE_SUCCESS != (rc = orte_rml_base_parse_uris(rml_uri, &name, NULL))) {
-                    ORTE_ERROR_LOG(rc);
-                    free(rml_uri);
-                    return rc;
-                }
                 got_name = true;
                 /* if this is for a different job family, update the route to this proc */
                 if (ORTE_JOB_FAMILY(name.jobid) != ORTE_JOB_FAMILY(ORTE_PROC_MY_NAME->jobid)) {
