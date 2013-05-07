@@ -2790,6 +2790,10 @@ void orte_debugger_init_after_spawn(int fd, short event, void *cbdata)
                      */
                     continue;
                 }
+                opal_output_verbose(2, orte_debug_output,
+                                    "%s sending debugger release to %s",
+                                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                    ORTE_NAME_PRINT(&proc->name));
                 buf = OBJ_NEW(opal_buffer_t); /* don't need anything in this */
                 if (0 > (rc = orte_rml.send_buffer_nb(&proc->name, buf,
                                                       ORTE_RML_TAG_DEBUGGER_RELEASE, 0,

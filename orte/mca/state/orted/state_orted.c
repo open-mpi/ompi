@@ -448,6 +448,10 @@ static int pack_child_contact_info(orte_jobid_t jobid, opal_buffer_t *buf)
             continue;
         }
         if (jobid == pptr->name.jobid) {
+            if (OPAL_SUCCESS != (rc = opal_dss.pack(buf, &pptr->name.vpid, 1, ORTE_VPID))) {
+                ORTE_ERROR_LOG(rc);
+                return rc;
+            }
             if (OPAL_SUCCESS != (rc = opal_dss.pack(buf, &pptr->rml_uri, 1, OPAL_STRING))) {
                 ORTE_ERROR_LOG(rc);
                 return rc;
