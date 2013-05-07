@@ -568,7 +568,7 @@ int btl_openib_register_mca_params(void)
     }
 
     snprintf(default_qps, 100,
-            "P,128,256,192,128:S,%u,256,128,32:S,%u,256,128,32:S,%u,256,128,32",
+            "P,128,256,192,128:S,%u,1024,1008,64:S,%u,1024,1008,64:S,%u,1024,1008,64",
             mid_qp_size,
             (uint32_t)mca_btl_openib_module.super.btl_eager_limit,
             (uint32_t)mca_btl_openib_module.super.btl_max_send_size);
