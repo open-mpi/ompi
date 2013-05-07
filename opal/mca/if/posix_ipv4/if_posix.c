@@ -270,7 +270,7 @@ static int if_posix_open(void)
             memcpy(intf->if_mac, ifr->ifr_hwaddr.sa_data, 6);
 #endif
 
-#ifdef SIOCGIFMTU
+#if defined(SIOCGIFMTU) && defined(HAVE_STRUCT_IFREQ_IFR_MTU)
             /* get the MTU */
             if (ioctl(sd, SIOCGIFMTU, ifr) < 0) {
                 opal_output(0, "btl_usnic_opal_ifinit: ioctl(SIOCGIFMTU) failed with errno=%d", errno);
