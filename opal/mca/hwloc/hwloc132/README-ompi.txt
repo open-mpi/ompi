@@ -8,3 +8,6 @@ https://svn.open-mpi.org/trac/hwloc/changeset/4340
 https://svn.open-mpi.org/trac/hwloc/changeset/4345
 https://svn.open-mpi.org/trac/hwloc/changeset/5295
 https://svn.open-mpi.org/trac/hwloc/changeset/5296
+
+From after 1.5.2:
+https://svn.open-mpi.org/trac/hwloc/changeset/5588

@@ -712,7 +712,6 @@ EOF])
     AC_SUBST(HWLOC_CFLAGS)
     HWLOC_CPPFLAGS='-I$(HWLOC_top_builddir)/include -I$(HWLOC_top_srcdir)/include'    
     AC_SUBST(HWLOC_CPPFLAGS)
-    HWLOC_LDFLAGS='-L$(HWLOC_top_builddir)/src'
     AC_SUBST(HWLOC_LDFLAGS)
     AC_SUBST(HWLOC_LIBS)
 
