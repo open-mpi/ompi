@@ -504,14 +504,7 @@ dnl MCA information\n";
                 push(@tmp, $f)
                     if ($f ne "common");
             }
-
-            # Then, check ignore status and prume ignored frameworks
-            @mykeys = ();
-            my $dir = "$topdir/$pdir/mca";
-            foreach my $f (@tmp) {
-                push(@mykeys, $f)
-                    if (!ignored("$dir/$f"));
-            }
+            @mykeys = @tmp;
 
             foreach my $f (@mykeys) {
                 $frameworks_comma .= ", $f";
