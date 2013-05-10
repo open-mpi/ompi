@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
- * Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2009-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010-2012 Los Alamos National Security, LLC.  
  *                         All rights reserved. 
  * $COPYRIGHT$
@@ -452,7 +452,7 @@ int ompi_coll_sm_lazy_enable(mca_coll_base_module_t *module,
 
         maffinity[j].mbs_len = c->sm_control_size;
         maffinity[j].mbs_start_addr = (void *)
-            (data->mcb_data_index[i].mcbmi_control +
+            (((char*) data->mcb_data_index[i].mcbmi_control) +
              (rank * c->sm_control_size));
         ++j;
 
@@ -460,7 +460,7 @@ int ompi_coll_sm_lazy_enable(mca_coll_base_module_t *module,
 
         maffinity[j].mbs_len = c->sm_fragment_size;
         maffinity[j].mbs_start_addr = 
-            data->mcb_data_index[i].mcbmi_data +
+            ((char*) data->mcb_data_index[i].mcbmi_data) +
             (rank * c->sm_control_size);
         ++j;
 #endif
@@ -608,7 +608,7 @@ static int bootstrap_comm(ompi_communicator_t *comm,
     data->sm_bootstrap_meta =
         mca_common_sm_init_group(comm->c_local_group, size, fullpath,
                                  sizeof(mca_common_sm_seg_header_t),
-                                 sizeof(void*));
+                                 getpagesize());
     if (NULL == data->sm_bootstrap_meta) {
         opal_output_verbose(10, mca_coll_base_output,
                             "coll:sm:enable:bootstrap comm (%d/%s): mca_common_sm_init_group failed", 
