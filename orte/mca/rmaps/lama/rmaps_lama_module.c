@@ -386,7 +386,8 @@ static int orte_rmaps_lama_process_params(orte_job_t *jdata)
     }
 
     /*
-     * Parse: Binding
+     * Parse: Binding.  It will print its own error message if
+     * something goes wrong.
      */
     opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                         "mca:rmaps:lama: ---------------------------------");
@@ -412,7 +413,8 @@ static int orte_rmaps_lama_process_params(orte_job_t *jdata)
     OPAL_SET_BINDING_POLICY(jdata->map->binding, OPAL_BIND_TO_NONE);
 
     /*
-     * Parse: Mapping from Process Layout string
+     * Parse: Mapping from Process Layout string.  It will print its
+     * own error message if something goes wrong.
      */
     opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                         "mca:rmaps:lama: ---------------------------------");
@@ -423,9 +425,7 @@ static int orte_rmaps_lama_process_params(orte_job_t *jdata)
                                                         &lama_mapping_layout,
                                                         &lama_mapping_layout_sort,
                                                         &lama_mapping_num_layouts)) ) {
-        /* JMS Check -- I think ^^ will show_help, so this should be redundant */
-        opal_output(0, "mca:rmaps:lama: ERROR: Invalid Mapping Process Layout: %s",
-                    rmaps_lama_cmd_map);
+        ORTE_ERROR_LOG(ret);
         return ret;
     }
 
@@ -442,7 +442,8 @@ static int orte_rmaps_lama_process_params(orte_job_t *jdata)
     }
 
     /*
-     * Parse: MPPR
+     * Parse: MPPR.  It will print its own error message if something
+     * goes wrong.
      */
     opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                         "mca:rmaps:lama: ---------------------------------");
@@ -452,8 +453,7 @@ static int orte_rmaps_lama_process_params(orte_job_t *jdata)
     if( ORTE_SUCCESS != (ret = rmaps_lama_parse_mppr(rmaps_lama_cmd_mppr,
                                                      &lama_mppr_levels,
                                                      &lama_mppr_num_levels)) ) {
-        opal_output(0, "mca:rmaps:lama: ERROR: Invalid MPPR: %s",
-                    rmaps_lama_cmd_mppr);
+        ORTE_ERROR_LOG(ret);
         return ret;
     }
 
@@ -478,8 +478,7 @@ static int orte_rmaps_lama_process_params(orte_job_t *jdata)
                         rmaps_lama_cmd_ordering);
     if( ORTE_SUCCESS != (ret = rmaps_lama_parse_ordering(rmaps_lama_cmd_ordering,
                                                          &lama_ordering)) ) {
-        opal_output(0, "mca:rmaps:lama: ERROR: Invalid Ordering Argument: %s",
-                    rmaps_lama_cmd_ordering);
+        ORTE_ERROR_LOG(ret);
         return ret;
     }
 
