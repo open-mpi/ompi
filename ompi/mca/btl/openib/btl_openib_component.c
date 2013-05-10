@@ -101,10 +101,10 @@ static int btl_openib_component_close(void);
 static mca_btl_base_module_t **btl_openib_component_init(int*, bool, bool);
 static int btl_openib_component_progress(void);
 #if OMPI_CUDA_SUPPORT /* CUDA_ASYNC_RECV */
-static int btl_openib_handle_incoming_completion(mca_btl_base_module_t* btl,
-                                                 mca_btl_openib_endpoint_t *ep,
-                                                 mca_btl_base_descriptor_t* des,
-                                                 int status);
+static void btl_openib_handle_incoming_completion(mca_btl_base_module_t* btl,
+                                                  mca_btl_openib_endpoint_t *ep,
+                                                  mca_btl_base_descriptor_t* des,
+                                                  int status);
 #endif /* OMPI_CUDA_SUPPORT */
 /*
  * Local variables
@@ -3146,7 +3146,7 @@ static int btl_openib_handle_incoming(mca_btl_openib_module_t *openib_btl,
  * Called by the PML when the copying of the data out of the fragment
  * is complete.
  */
-static int btl_openib_handle_incoming_completion(mca_btl_base_module_t* btl,
+static void btl_openib_handle_incoming_completion(mca_btl_base_module_t* btl,
                                                  mca_btl_base_endpoint_t *ep,
                                                  mca_btl_base_descriptor_t* des,
                                                  int status)
@@ -3155,7 +3155,6 @@ static int btl_openib_handle_incoming_completion(mca_btl_base_module_t* btl,
     mca_btl_openib_header_t *hdr = frag->hdr;
     int rqp = to_base_frag(frag)->base.order, cqp;
     uint16_t rcredits = 0, credits;
-    bool is_credit_msg;
 
     OPAL_OUTPUT((-1, "handle_incoming_complete frag=%p", (void *)des));
 
@@ -3175,19 +3174,16 @@ static int btl_openib_handle_incoming_completion(mca_btl_base_module_t* btl,
     if(hdr->cm_seen)
          OPAL_THREAD_ADD32(&ep->qps[cqp].u.pp_qp.cm_sent, -hdr->cm_seen);
 
-    /* We should not be here with eager or control messages */
+    /* We should not be here with eager, control, or credit messages */
     assert(openib_frag_type(frag) != MCA_BTL_OPENIB_FRAG_EAGER_RDMA);
     assert(0 == is_cts_message(frag));
+    assert(0 == is_credit_message(frag));
     /* HACK - clear out flags.  Must be better way */
     des->des_flags = 0;
     /* Otherwise, FRAG_RETURN it and repost if necessary */
     MCA_BTL_IB_FRAG_RETURN(frag);
     if (BTL_OPENIB_QP_TYPE_PP(rqp)) {
-        if (OPAL_UNLIKELY(is_credit_msg)) {
-            OPAL_THREAD_ADD32(&ep->qps[cqp].u.pp_qp.cm_received, 1);
-        } else {
-            OPAL_THREAD_ADD32(&ep->qps[rqp].u.pp_qp.rd_posted, -1);
-        }
+        OPAL_THREAD_ADD32(&ep->qps[rqp].u.pp_qp.rd_posted, -1);
         mca_btl_openib_endpoint_post_rr(ep, cqp);
     } else {
         mca_btl_openib_module_t *btl = ep->endpoint_btl;
@@ -3210,13 +3206,14 @@ static int btl_openib_handle_incoming_completion(mca_btl_base_module_t* btl,
 
         if (OMPI_SUCCESS !=
             (rc = progress_no_credits_pending_frags(ep))) {
-            return rc;
+            /* No where to return an error to so have to abort */
+            opal_output(0, "%s:%d FATAL", __FILE__, __LINE__);
+            orte_errmgr.abort(-1, NULL);
         }
     }
 
     send_credits(ep, cqp);
 
-    return OMPI_SUCCESS;
 }
 #endif /* OMPI_CUDA_SUPPORT */
 
