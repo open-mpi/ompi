@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2009 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2006-2012 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2008-2011 Mellanox Technologies.  All rights reserved.
@@ -128,7 +128,7 @@ static int oob_component_query(mca_btl_openib_module_t *btl,
        IB (this CPC will not work with iWarp).  If we do not have the
        transport_type member, then we must be < OFED v1.2, and
        therefore we must be IB. */
-#if defined(HAVE_STRUCT_IBV_DEVICE_TRANSPORT_TYPE)
+#if defined(HAVE_STRUCT_IBV_DEVICE_TRANSPORT_TYPE) && defined(HAVE_IBV_LINK_LAYER_ETHERNET)
     if (BTL_OPENIB_CONNECT_BASE_CHECK_IF_NOT_IB(btl)) {
         opal_output_verbose(5, mca_btl_base_output,
                             "openib BTL: oob CPC only supported on InfiniBand; skipped on  %s:%d",

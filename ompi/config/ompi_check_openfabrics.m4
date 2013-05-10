@@ -198,8 +198,8 @@ AC_DEFUN([OMPI_CHECK_OPENFABRICS],[
                           [#include <infiniband/verbs.h>])
 
            AC_MSG_CHECKING([if RDMAoE support is enabled])
+           AC_DEFINE_UNQUOTED([OMPI_HAVE_RDMAOE], [$$1_have_rdmaoe], [Enable RDMAoE support])
            if test "1" = "$$1_have_rdmaoe"; then
-                AC_DEFINE_UNQUOTED([OMPI_HAVE_RDMAOE], [$$1_have_rdmaoe], [Enable RDMAoE support])
                 AC_MSG_RESULT([yes])
            else
                 AC_MSG_RESULT([no])

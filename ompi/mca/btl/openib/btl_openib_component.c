@@ -28,17 +28,6 @@
 #include "ompi_config.h"
 
 #include <infiniband/verbs.h>
-/* This is crummy, but <infiniband/driver.h> doesn't work on all
-   platforms with all compilers.  Specifically, trying to include it
-   on RHEL4U3 with the PGI 32 bit compiler will cause problems because
-   certain 64 bit types are not defined.  Per advice from Roland D.,
-   just include the one prototype that we need in this case
-   (ibv_get_sysfs_path()). */
-#ifdef HAVE_INFINIBAND_DRIVER_H
-#include <infiniband/driver.h>
-#else
-const char *ibv_get_sysfs_path(void);
-#endif
 #include <errno.h>
 #include <string.h>
 #ifdef HAVE_UNISTD_H
@@ -61,7 +50,6 @@ const char *ibv_get_sysfs_path(void);
 #include "opal/util/argv.h"
 #include "opal/memoryhooks/memory.h"
 #include "opal/mca/base/mca_base_param.h"
-#include "ompi/mca/common/ofautils/common_ofautils.h"
 /* Define this before including hwloc.h so that we also get the hwloc
    verbs helper header file, too.  We have to do this level of
    indirection because the hwloc subsystem is a component -- we don't
@@ -81,6 +69,7 @@ const char *ibv_get_sysfs_path(void);
 #include "ompi/proc/proc.h"
 #include "ompi/mca/btl/btl.h"
 #include "ompi/mca/common/cuda/common_cuda.h"
+#include "ompi/mca/common/verbs/common_verbs.h"
 #include "ompi/mca/mpool/base/base.h"
 #include "ompi/mca/mpool/grdma/mpool_grdma.h"
 #include "ompi/mca/btl/base/base.h"
@@ -280,29 +269,6 @@ static int btl_openib_component_close(void)
 #endif
 
     return rc;
-}
-
-static bool check_basics(void)
-{
-    int rc;
-    char *file;
-    struct stat s;
-
-#if defined(__linux__)
-    /* Check to see if $sysfsdir/class/infiniband/ exists */
-    asprintf(&file, "%s/class/infiniband", ibv_get_sysfs_path());
-    if (NULL == file) {
-        return false;
-    }
-    rc = stat(file, &s);
-    free(file);
-    if (0 != rc || !S_ISDIR(s.st_mode)) {
-        return false;
-    }
-#endif
-
-    /* It exists and is a directory -- good enough */
-    return true;
 }
 
 static void inline pack8(char **dest, uint8_t value)
@@ -728,7 +694,7 @@ static int init_one_port(opal_list_t *btl_list, mca_btl_openib_device_t *device,
             return OMPI_ERR_NOT_FOUND;
         }
 
-#ifdef OMPI_HAVE_RDMAOE
+#if defined(HAVE_IBV_LINK_LAYER_ETHERNET)
         if (IBV_LINK_LAYER_ETHERNET == ib_port_attr->link_layer) {
             subnet_id = mca_btl_openib_get_ip_subnet_id(device->ib_dev,
                                                            port_num);
@@ -866,71 +832,18 @@ static int init_one_port(opal_list_t *btl_list, mca_btl_openib_device_t *device,
 
             /* Auto-detect the port bandwidth */
             if (0 == openib_btl->super.btl_bandwidth) {
-                /* To calculate the bandwidth available on this port,
-                   we have to look up the values corresponding to
-                   port->active_speed and port->active_width.  These
-                   are enums corresponding to the IB spec.  Overall
-                   forumula to get the true link speed is 8/10 or
-                   64/66 of the reported speed (depends on the coding
-                   that is being used for the particular speed) times
-                   the number of links. */
-                switch (ib_port_attr->active_speed) {
-                case 1:
-                    /* SDR: 2.5 Gbps * 0.8, in megabits */
-                    openib_btl->super.btl_bandwidth = 2000;
-                    break;
-                case 2:
-                    /* DDR: 5 Gbps * 0.8, in megabits */
-                    openib_btl->super.btl_bandwidth = 4000;
-                    break;
-                case 4:
-                    /* QDR: 10 Gbps * 0.8, in megabits */
-                    openib_btl->super.btl_bandwidth = 8000;
-                    break;
-                case 8:
-                    /* FDR10: 10.3125 Gbps * 64/66, in megabits */
-                    openib_btl->super.btl_bandwidth = 10000;
-                    break;
-                case 16:
-                    /* FDR: 14.0625 Gbps * 64/66, in megabits */
-                    openib_btl->super.btl_bandwidth = 13636;
-                    break;
-                case 32:
-                    /* EDR: 25.78125 Gbps * 64/66, in megabits */
-                    openib_btl->super.btl_bandwidth = 25000;
-                    break;
-                default:
-                    /* Who knows?  Declare this port unreachable (do
-                       *not* return ERR_VALUE_OF_OUT_OF_BOUNDS; that
-                       is reserved for when we exceed the number of
-                       allowable BTLs). */
-                    return OMPI_ERR_UNREACH;
-                }
-                switch (ib_port_attr->active_width) {
-                case 1:
-                    /* 1x */
-                    /* unity */
-                    break;
-                case 2:
-                    /* 4x */
-                    openib_btl->super.btl_bandwidth *= 4;
-                    break;
-                case 4:
-                    /* 8x */
-                    openib_btl->super.btl_bandwidth *= 8;
-                    break;
-                case 8:
-                    /* 12x */
-                    openib_btl->super.btl_bandwidth *= 12;
-                    break;
-                default:
-                    /* Who knows?  Declare this port unreachable (do
-                       *not* return ERR_VALUE_OF_OUT_OF_BOUNDS; that
-                       is reserved for when we exceed the number of
-                       allowable BTLs). */
+                if (OMPI_SUCCESS !=
+                    ompi_common_verbs_port_bw(ib_port_attr,
+                                              &openib_btl->super.btl_bandwidth)) {
+                    /* If we can't figure out the bandwidth, declare
+                       this port unreachable (do not* return
+                       ERR_VALUE_OF_OUT_OF_BOUNDS; that is reserved
+                       for when we exceed the number of allowable
+                       BTLs). */
                     return OMPI_ERR_UNREACH;
                 }
             }
+
             opal_list_append(btl_list, (opal_list_item_t*) ib_selected);
             opal_pointer_array_add(device->device_btls, (void*) openib_btl);
             ++device->btls;
@@ -1669,15 +1582,32 @@ static int init_one_device(opal_list_t *btl_list, struct ibv_device* ib_dev)
     ompi_btl_openib_ini_values_t values, default_values;
     int *allowed_ports = NULL;
     bool need_search;
+    struct ibv_context *dev_context = NULL;
+
+    /* Open up the device */
+    dev_context = ibv_open_device(ib_dev);
+    if (NULL == dev_context) {
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+
+    /* Find out if this device supports RC QPs */
+    if (OMPI_SUCCESS != ompi_common_verbs_qp_test(dev_context, 
+                                                  OMPI_COMMON_VERBS_FLAGS_RC)) {
+        ibv_close_device(dev_context);
+        BTL_VERBOSE(("openib: RC QPs not supported -- skipping %s",
+                     ibv_get_device_name(ib_dev)));
+        return OMPI_ERR_NOT_SUPPORTED;
+    }
 
     device = OBJ_NEW(mca_btl_openib_device_t);
     if(NULL == device){
         BTL_ERROR(("Failed malloc: %s:%d", __FILE__, __LINE__));
+        ibv_close_device(dev_context);
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
     device->ib_dev = ib_dev;
-    device->ib_dev_context = ibv_open_device(ib_dev);
+    device->ib_dev_context = dev_context;
     device->ib_pd = NULL;
     device->device_btls = OBJ_NEW(opal_pointer_array_t);
     if (OPAL_SUCCESS != opal_pointer_array_init(device->device_btls, 2, INT_MAX, 2)) {
@@ -1810,66 +1740,13 @@ static int init_one_device(opal_list_t *btl_list, struct ibv_device* ib_dev)
             }
         }
     }
-    /* Horrible.  :-( Per the thread starting here:
-       http://lists.openfabrics.org/pipermail/general/2008-June/051822.html,
-       we can't rely on the value reported by the device to determine
-       the maximum max_inline_data value.  So we have to search by
-       looping over max_inline_data values and trying to make dummy
-       QPs.  Yuck! */
+
+    /* If we don't have a set max inline data size, search for it */
     if (need_search) {
-        struct ibv_qp *qp;
-        struct ibv_cq *cq;
-        struct ibv_qp_init_attr init_attr;
-        uint32_t max_inline_data;
-
-        /* Make a dummy CQ */
-#if OMPI_IBV_CREATE_CQ_ARGS == 3
-        cq = ibv_create_cq(device->ib_dev_context, 1, NULL);
-#else
-        cq = ibv_create_cq(device->ib_dev_context, 1, NULL, NULL, 0);
-#endif
-        if (NULL == cq) {
-            orte_show_help("help-mpi-btl-openib.txt", "init-fail-create-q",
-                           true, orte_process_info.nodename,
-                           __FILE__, __LINE__, "ibv_create_cq",
-                           strerror(errno), errno,
-                           ibv_get_device_name(device->ib_dev));
-            ret = OMPI_ERR_NOT_AVAILABLE;
-            goto error;
-        }
-
-        /* Setup the QP attributes */
-        memset(&init_attr, 0, sizeof(init_attr));
-        init_attr.qp_type = IBV_QPT_RC;
-        init_attr.send_cq = cq;
-        init_attr.recv_cq = cq;
-        init_attr.srq = 0;
-        init_attr.cap.max_send_sge = 1;
-        init_attr.cap.max_recv_sge = 1;
-        init_attr.cap.max_recv_wr = 1;
-
-        /* Loop over max_inline_data values; just check powers of 2 --
-           that's good enough */
-        init_attr.cap.max_inline_data = max_inline_data = 1 << 20;
-        while (max_inline_data > 0) {
-            qp = ibv_create_qp(device->ib_pd, &init_attr);
-            if (NULL != qp) {
-                break;
-            }
-            max_inline_data >>= 1;
-            init_attr.cap.max_inline_data = max_inline_data;
-        }
-
-        /* Did we find it? */
-        if (NULL != qp) {
-            device->max_inline_data = max_inline_data;
-            ibv_destroy_qp(qp);
-        } else {
-            device->max_inline_data = 0;
-        }
-
-        /* Destroy the temp CQ */
-        ibv_destroy_cq(cq);
+        ompi_common_verbs_find_max_inline(device->ib_dev,
+                                          device->ib_dev_context,
+                                          device->ib_pd,
+                                          &device->max_inline_data);
     }
 
     /* Should we use RDMA for short / eager messages?  First check MCA
@@ -2576,7 +2453,7 @@ btl_openib_component_init(int *num_btl_modules,
        assume that the RDMA hardware drivers are not loaded, and
        therefore we don't want OpenFabrics verbs support in this OMPI
        job.  No need to print a warning. */
-    if (!check_basics()) {
+    if (!ompi_common_verbs_check_basics()) {
         goto no_btls;
     }
 
@@ -2787,7 +2664,7 @@ btl_openib_component_init(int *num_btl_modules,
             opal_argv_copy(mca_btl_openib_component.if_exclude_list);
     }
 
-    ib_devs = ibv_get_device_list_compat(&num_devs);
+    ib_devs = ompi_ibv_get_device_list(&num_devs);
 
     if(0 == num_devs || NULL == ib_devs) {
         mca_btl_base_error_no_nics("OpenFabrics (openib)", "device");
@@ -3005,7 +2882,7 @@ btl_openib_component_init(int *num_btl_modules,
     btl_openib_modex_send();
 
     *num_btl_modules = mca_btl_openib_component.ib_num_btls;
-    ibv_free_device_list_compat(ib_devs);
+    ompi_ibv_free_device_list(ib_devs);
     if (NULL != mca_btl_openib_component.if_include_list) {
         opal_argv_free(mca_btl_openib_component.if_include_list);
         mca_btl_openib_component.if_include_list = NULL;
