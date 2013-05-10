@@ -7,11 +7,12 @@
 # $HEADER$
 #
 
+dist_pkgdata_DATA = help-ras-simulator.txt
+
 sources = \
         ras_sim.h \
         ras_sim_component.c \
         ras_sim_module.c
-
 
 # Make the output library in this directory, and name it either
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la

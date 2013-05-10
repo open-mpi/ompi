@@ -39,6 +39,7 @@ static int test_comp(opal_tree_item_t *item, void *key);
 static int test_serialize(opal_tree_item_t *item, opal_buffer_t *buffer);
 static int test_deserialize(opal_buffer_t *serial_data, 
 			    opal_tree_item_t **item);
+static void *test_get_key(opal_tree_item_t *item);
 
 int main(int argc, char **argv)
 {
@@ -63,9 +64,9 @@ int main(int argc, char **argv)
     /* initialize tree */
 
     OBJ_CONSTRUCT(&tree, opal_tree_t);
-    opal_tree_init(&tree, &test_comp, &test_serialize, &test_deserialize);
+    opal_tree_init(&tree, test_comp, test_serialize, test_deserialize, test_get_key);
     OBJ_CONSTRUCT(&x, opal_tree_t);
-    opal_tree_init(&x, &test_comp, &test_serialize, &test_deserialize);
+    opal_tree_init(&x, test_comp, test_serialize, test_deserialize, test_get_key);
 
     /* check length of tree */
     tree_size=opal_tree_get_size(&tree);
@@ -217,8 +218,8 @@ int main(int argc, char **argv)
 
         /* create new tree */
         OBJ_CONSTRUCT(&tmp_tree, opal_tree_t);
-        opal_tree_init(&tmp_tree, &test_comp, &test_serialize, 
-                       &test_deserialize);
+        opal_tree_init(&tmp_tree, test_comp, test_serialize, 
+                       test_deserialize, test_get_key);
 
         /* deserialize tree */
         opal_tree_deserialize(serial_tree, &(tmp_tree.opal_tree_sentinel));
@@ -320,4 +321,9 @@ static int test_deserialize(opal_buffer_t *serial_data, opal_tree_item_t **item)
 	*item = NULL;
     }
     return(rc);
+}
+
+static void *test_get_key(opal_tree_item_t *item)
+{
+    return (void*) (((test_data_t *)item)->data);
 }

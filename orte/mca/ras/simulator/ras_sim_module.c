@@ -86,7 +86,14 @@ static int allocate(opal_list_t *nodes)
             return ORTE_ERR_SILENT;
         }
     }
-
+#else
+    /* If we don't have hwloc and hwloc files were specified, then
+       error out (because we can't deliver that functionality) */
+    if (NULL == mca_ras_simulator_component.topofiles) {
+        orte_show_help("help-ras-simulator.txt", 
+                       "no hwloc support for topofiles", true);
+        return ORTE_ERR_SILENT;
+    }
 #endif
 
     /* setup the prefix to the node names */
@@ -112,22 +119,33 @@ static int allocate(opal_list_t *nodes)
             topo = opal_hwloc_topology;
         } else {
             if (0 != hwloc_topology_init(&topo)) {
-                return ORTE_ERROR;
+                orte_show_help("help-ras-simulator.txt", 
+                               "hwloc API fail", true, 
+                               __FILE__, __LINE__, "hwloc_topology_init");
+                return ORTE_ERR_SILENT;
             }
             if (0 != hwloc_topology_set_xml(topo, files[n])) {
+                orte_show_help("help-ras-simulator.txt", 
+                               "hwloc failed to load xml", true, files[n]);
                 hwloc_topology_destroy(topo);
-                return ORTE_ERROR;
+                return ORTE_ERR_SILENT;
             }
             /* since we are loading this from an external source, we have to
              * explicitly set a flag so hwloc sets things up correctly
              */
             if (0 != hwloc_topology_set_flags(topo, HWLOC_TOPOLOGY_FLAG_IS_THISSYSTEM)) {
+                orte_show_help("help-ras-simulator.txt", 
+                               "hwloc API fail", true, 
+                               __FILE__, __LINE__, "hwloc_topology_set_flags");
                 hwloc_topology_destroy(topo);
-                return ORTE_ERROR;
+                return ORTE_ERR_SILENT;
             }
             if (0 != hwloc_topology_load(topo)) {
+                orte_show_help("help-ras-simulator.txt", 
+                               "hwloc API fail", true, 
+                               __FILE__, __LINE__, "hwloc_topology_load");
                 hwloc_topology_destroy(topo);
-                return ORTE_ERROR;
+                return ORTE_ERR_SILENT;
             }
             /* remove the hostname from the topology. Unfortunately, hwloc
              * decided to add the source hostname to the "topology", thus

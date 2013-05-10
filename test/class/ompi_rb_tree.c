@@ -43,8 +43,9 @@ int values[] = {
 };
 
 int comp_fn(void * ele1, void * ele2);
-
 void test1(void);
+int comp_key(void* key1, void* key2);
+void test_keys(void);
 
 int comp_fn(void * ele1, void * ele2)
 {
@@ -67,6 +68,7 @@ struct my_val_t{
     int val; 
 }; typedef struct my_val_t my_val_t; 
 
+
 int comp_key(void* key1, void* key2) { 
     if( ((my_key_t*) key1)->base < 
         ((my_key_t*) key2)->base) { 
@@ -81,10 +83,11 @@ int comp_key(void* key1, void* key2) {
     }
 }
 
+
 void test_keys(void)
 {
     ompi_rb_tree_t tree; 
-    int rc, i, *result; 
+    int rc, i;
     my_key_t keys[NUM_KEYS];
     my_val_t vals[NUM_KEYS];
     char buf[200];
