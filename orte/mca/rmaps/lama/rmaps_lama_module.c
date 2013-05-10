@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
  *
- * Copyright (c) 2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2012-2013 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -378,15 +378,17 @@ static int orte_rmaps_lama_process_params(orte_job_t *jdata)
     char *type_str = NULL;
 
     /*
-     * Process map/bind/order/mppr aliases
+     * Process map/bind/order/mppr aliases.  It will print its own
+     * error message if something went wrong.
      */
     if( ORTE_SUCCESS != (ret = rmaps_lama_process_alias_params(jdata) ) ) {
-        opal_output(0, "mca:rmaps:lama: ERROR: Failed while processing aliases");
+        ORTE_ERROR_LOG(ret);
         return ret;
     }
 
     /*
-     * Parse: Binding
+     * Parse: Binding.  It will print its own error message if
+     * something goes wrong.
      */
     opal_output_verbose(5, orte_rmaps_base.rmaps_output,
                         "mca:rmaps:lama: ---------------------------------");
@@ -396,8 +398,7 @@ static int orte_rmaps_lama_process_params(orte_job_t *jdata)
     if( ORTE_SUCCESS != (ret = rmaps_lama_parse_binding(rmaps_lama_cmd_bind,
                                                         &lama_binding_level,
                                                         &lama_binding_num_levels)) ) {
-        opal_output(0, "mca:rmaps:lama: ERROR: Invalid Binding String: %s",
-                    rmaps_lama_cmd_bind);
+        ORTE_ERROR_LOG(ret);
         return ret;
     }
 
@@ -413,7 +414,8 @@ static int orte_rmaps_lama_process_params(orte_job_t *jdata)
     OPAL_SET_BINDING_POLICY(jdata->map->binding, OPAL_BIND_TO_NONE);
 
     /*
-     * Parse: Mapping from Process Layout string
+     * Parse: Mapping from Process Layout string.  It will print its
+     * own error message if something goes wrong.
      */
     opal_output_verbose(5, orte_rmaps_base.rmaps_output,
                         "mca:rmaps:lama: ---------------------------------");
@@ -424,8 +426,7 @@ static int orte_rmaps_lama_process_params(orte_job_t *jdata)
                                                         &lama_mapping_layout,
                                                         &lama_mapping_layout_sort,
                                                         &lama_mapping_num_layouts)) ) {
-        opal_output(0, "mca:rmaps:lama: ERROR: Invalid Mapping Process Layout: %s",
-                    rmaps_lama_cmd_map);
+        ORTE_ERROR_LOG(ret);
         return ret;
     }
 
@@ -442,7 +443,8 @@ static int orte_rmaps_lama_process_params(orte_job_t *jdata)
     }
 
     /*
-     * Parse: MPPR
+     * Parse: MPPR.  It will print its own error message if something
+     * goes wrong.
      */
     opal_output_verbose(5, orte_rmaps_base.rmaps_output,
                         "mca:rmaps:lama: ---------------------------------");
@@ -452,8 +454,7 @@ static int orte_rmaps_lama_process_params(orte_job_t *jdata)
     if( ORTE_SUCCESS != (ret = rmaps_lama_parse_mppr(rmaps_lama_cmd_mppr,
                                                      &lama_mppr_levels,
                                                      &lama_mppr_num_levels)) ) {
-        opal_output(0, "mca:rmaps:lama: ERROR: Invalid MPPR: %s",
-                    rmaps_lama_cmd_mppr);
+        ORTE_ERROR_LOG(ret);
         return ret;
     }
 
@@ -478,8 +479,7 @@ static int orte_rmaps_lama_process_params(orte_job_t *jdata)
                         rmaps_lama_cmd_ordering);
     if( ORTE_SUCCESS != (ret = rmaps_lama_parse_ordering(rmaps_lama_cmd_ordering,
                                                          &lama_ordering)) ) {
-        opal_output(0, "mca:rmaps:lama: ERROR: Invalid Ordering Argument: %s",
-                    rmaps_lama_cmd_ordering);
+        ORTE_ERROR_LOG(ret);
         return ret;
     }
 
