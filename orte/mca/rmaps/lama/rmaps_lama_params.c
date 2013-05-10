@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
- *
+ * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -17,6 +17,7 @@
 
 #include "orte/mca/rmaps/base/rmaps_private.h"
 #include "orte/mca/rmaps/base/base.h"
+#include "orte/util/show_help.h"
 
 #include <ctype.h>
 
@@ -54,7 +55,10 @@ int rmaps_lama_process_alias_params(orte_job_t *jdata)
             break;
         case ORTE_MAPPING_BYBOARD:
             /* rmaps_lama_cmd_map = strdup("bnNsL3L2L1ch"); */
-            opal_output(0, "mca:rmaps:lama: ERROR: Unsupported Mapping Option!");
+            orte_show_help("help-orte-rmaps-lama.txt",
+                           "invalid mapping option",
+                           true,
+                           "by board", "mapping by board not supported by LAMA");
             exit_status = ORTE_ERR_NOT_SUPPORTED;
             goto cleanup;
             break;
@@ -85,9 +89,24 @@ int rmaps_lama_process_alias_params(orte_job_t *jdata)
             rmaps_lama_cmd_map = strdup("hcsbn");
             break;
         case ORTE_MAPPING_RR:
+            orte_show_help("help-orte-rmaps-lama.txt",
+                           "invalid mapping option",
+                           true,
+                           "round robin", "mapping by round robin not supported by LAMA");
+            exit_status = ORTE_ERR_NOT_SUPPORTED;
+            goto cleanup;
         case ORTE_MAPPING_SEQ:
+            orte_show_help("help-orte-rmaps-lama.txt",
+                           "invalid mapping option",
+                           true,
+                           "sequential", "mapping by sequential not supported by LAMA");
+            exit_status = ORTE_ERR_NOT_SUPPORTED;
+            goto cleanup;
         case ORTE_MAPPING_BYUSER:
-            opal_output(0, "mca:rmaps:lama: ERROR: Unsupported Mapping Option!");
+            orte_show_help("help-orte-rmaps-lama.txt",
+                           "invalid mapping option",
+                           true,
+                           "by user", "mapping by user not supported by LAMA");
             exit_status = ORTE_ERR_NOT_SUPPORTED;
             goto cleanup;
         default:
@@ -115,7 +134,10 @@ int rmaps_lama_process_alias_params(orte_job_t *jdata)
         switch( OPAL_GET_BINDING_POLICY(jdata->map->binding) ) {
         case OPAL_BIND_TO_BOARD:
             /* rmaps_lama_cmd_bind = strdup("1b"); */
-            opal_output(0, "mca:rmaps:lama: ERROR: Unsupported Binding Option!");
+            orte_show_help("help-orte-rmaps-lama.txt",
+                           "invalid binding option",
+                           true,
+                           "by board", "binding to board not supported by LAMA");
             exit_status = ORTE_ERR_NOT_SUPPORTED;
             goto cleanup;
             break;
@@ -141,7 +163,10 @@ int rmaps_lama_process_alias_params(orte_job_t *jdata)
             rmaps_lama_cmd_bind = strdup("1h");
             break;
         case OPAL_BIND_TO_CPUSET:
-            opal_output(0, "mca:rmaps:lama: ERROR: Unsupported Binding Option!");
+            orte_show_help("help-orte-rmaps-lama.txt",
+                           "invalid binding option",
+                           true,
+                           "by CPU set", "binding to CPU set not supported by LAMA");
             exit_status = ORTE_ERR_NOT_SUPPORTED;
             goto cleanup;
             break;
@@ -172,7 +197,10 @@ int rmaps_lama_process_alias_params(orte_job_t *jdata)
             break;
         case ORTE_RANK_BY_BOARD:
             /* rmaps_lama_cmd_ordering = strdup("n"); */
-            opal_output(0, "mca:rmaps:lama: ERROR: Unsupported Ordering/Ranking Option!");
+            orte_show_help("help-orte-rmaps-lama.txt",
+                           "invalid ordering option",
+                           true,
+                           "by board", "ordering by board not supported by LAMA");
             exit_status = ORTE_ERR_NOT_SUPPORTED;
             goto cleanup;
             break;
@@ -255,7 +283,6 @@ int rmaps_lama_process_alias_params(orte_job_t *jdata)
                         "mca:rmaps:lama: Order : %s",
                         rmaps_lama_cmd_ordering);
 
-
  cleanup:
     return exit_status;
 }
@@ -283,6 +310,11 @@ int rmaps_lama_parse_mapping(char *layout,
      * then this is an error.
      */
     if( NULL == layout ) {
+        orte_show_help("help-orte-rmaps-lama.txt",
+                       "internal error",
+                       true,
+                       "rmaps_lama_parse_mapping",
+                       "internal error 1");
         return ORTE_ERROR;
     }
 
@@ -305,8 +337,10 @@ int rmaps_lama_parse_mapping(char *layout,
              * Check for 2 characters
              */
             if( i >= len ) {
-                opal_output(0, "mca:rmaps:lama: Error: Cache Level must be followed by a number [%s]!",
-                            layout);
+                orte_show_help("help-orte-rmaps-lama.txt",
+                               "invalid mapping option",
+                               true,
+                               layout, "cache level missing number");
                 exit_status = ORTE_ERROR;
                 goto cleanup;
             }
@@ -349,8 +383,13 @@ int rmaps_lama_parse_mapping(char *layout,
          * Look for unknown and unsupported options
          */
         if( LAMA_LEVEL_UNKNOWN <= (*layout_types)[i] ) {
-            opal_output(0, "mca:rmaps:lama: Error: Unknown or Unsupported option in layout [%s] position %d!",
-                        layout, i+1);
+            char *msg;
+            asprintf(&msg, "unknown mapping level at position %d", i + 1);
+            orte_show_help("help-orte-rmaps-lama.txt",
+                           "invalid mapping option",
+                           true,
+                           layout, msg);
+            free(msg);
             exit_status = ORTE_ERROR;
             goto cleanup;
         }
@@ -372,8 +411,14 @@ int rmaps_lama_parse_mapping(char *layout,
          */
         for( j = i+1; j < *num_types; ++j ) {
             if( (*layout_types)[i] == (*layout_types)[j] ) {
-                opal_output(0, "mca:rmaps:lama: Error: Duplicate key detected in layout [%s] position %d and %d!",
-                            layout, i+1, j+1);
+                char *msg;
+                asprintf(&msg, "duplicate mapping levels at position %d and %d",
+                         i + 1, j + 1);
+                orte_show_help("help-orte-rmaps-lama.txt",
+                               "invalid mapping option",
+                               true,
+                               layout, msg);
+                free(msg);
                 exit_status = ORTE_ERROR;
                 goto cleanup;
             }
@@ -385,22 +430,37 @@ int rmaps_lama_parse_mapping(char *layout,
      * - machine
      * - hardware thread (needed for lower bound binding) JJH: We should be able to lift this...
      * - binding layer (need it to stride the mapping)
+     * Only print the error message once, for brevity.
      */
     if( !found_req_param_n ) {
-        opal_output(0, "mca:rmaps:lama: Error: Required level not specified 'n' in layout [%s]!",
-                    layout);
+        char *msg;
+        asprintf(&msg, "missing required 'n' mapping token");
+        orte_show_help("help-orte-rmaps-lama.txt",
+                       "invalid mapping option",
+                       true,
+                       layout, msg);
+        free(msg);
         exit_status = ORTE_ERROR;
         goto cleanup;
     }
-    if( !found_req_param_h ) {
-        opal_output(0, "mca:rmaps:lama: Error: Required level not specified 'h' in layout [%s]!",
-                    layout);
+    else if(!found_req_param_h) {
+        char *msg;
+        asprintf(&msg, "missing required 'h' mapping token");
+        orte_show_help("help-orte-rmaps-lama.txt",
+                       "invalid mapping option",
+                       true,
+                       layout, msg);
+        free(msg);
         exit_status = ORTE_ERROR;
         goto cleanup;
-    }
-    if( !found_req_param_bind ) {
-        opal_output(0, "mca:rmaps:lama: Error: Required binding level [%s] not specified in mapping layout [%s]!",
-                    rmaps_lama_cmd_bind, layout);
+    } else if (!found_req_param_bind) {
+        char *msg;
+        asprintf(&msg, "missing required mapping token for the current binding level");
+        orte_show_help("help-orte-rmaps-lama.txt",
+                       "invalid mapping option",
+                       true,
+                       layout, msg);
+        free(msg);
         exit_status = ORTE_ERROR;
         goto cleanup;
     }
@@ -409,7 +469,6 @@ int rmaps_lama_parse_mapping(char *layout,
      * Sort the items
      */
     qsort((*layout_types_sorted ), (*num_types), sizeof(int), lama_parse_int_sort);
-
 
  cleanup:
     return exit_status;
@@ -449,8 +508,10 @@ int rmaps_lama_parse_binding(char *layout, rmaps_lama_level_type_t *binding_leve
              * Check: Digits must come first
              */
             if( p != 0 ) {
-                opal_output(0, "mca:rmaps:lama: Error: Binding: Digits must only come before Level string [%s]!",
-                            layout);
+                orte_show_help("help-orte-rmaps-lama.txt",
+                               "invalid binding option",
+                               true,
+                               layout, "missing digit(s) before binding level token");
                 exit_status = ORTE_ERROR;
                 goto cleanup;
             }
@@ -461,8 +522,10 @@ int rmaps_lama_parse_binding(char *layout, rmaps_lama_level_type_t *binding_leve
              * Check: Exceed bound of number of digits
              */
             if( n >= MAX_BIND_DIGIT_LEN ) {
-                opal_output(0, "mca:rmaps:lama: Error: Binding: Too many digits in [%s]! Limit %d",
-                            layout, MAX_BIND_DIGIT_LEN-1);
+                orte_show_help("help-orte-rmaps-lama.txt",
+                               "invalid binding option",
+                               true,
+                               layout, "too many digits");
                 exit_status = ORTE_ERROR;
                 goto cleanup;
             }
@@ -475,8 +538,10 @@ int rmaps_lama_parse_binding(char *layout, rmaps_lama_level_type_t *binding_leve
              * Check: Digits must come first
              */
             if( n == 0 ) {
-                opal_output(0, "mca:rmaps:lama: Error: Binding: Digits must come before Level string [%s] [%c]!",
-                            layout, layout[i]);
+                orte_show_help("help-orte-rmaps-lama.txt",
+                               "invalid binding option",
+                               true,
+                               layout, "missing digit(s) before binding level token");
                 exit_status = ORTE_ERROR;
                 goto cleanup;
             }
@@ -484,8 +549,10 @@ int rmaps_lama_parse_binding(char *layout, rmaps_lama_level_type_t *binding_leve
              * Check: Only one level allowed
              */
             if( p != 0 ) {
-                opal_output(0, "mca:rmaps:lama: Error: Binding: Only one level may be specified [%s]!",
-                            layout);
+                orte_show_help("help-orte-rmaps-lama.txt",
+                               "invalid binding option",
+                               true,
+                               layout, "only one binding level may be specified");
                 exit_status = ORTE_ERROR;
                 goto cleanup;
             }
@@ -502,8 +569,10 @@ int rmaps_lama_parse_binding(char *layout, rmaps_lama_level_type_t *binding_leve
                  * Check for 2 characters
                  */
                 if( i >= len ) {
-                    opal_output(0, "mca:rmaps:lama: Error: Cache Level must be followed by a number [%s]!",
-                                layout);
+                    orte_show_help("help-orte-rmaps-lama.txt",
+                                   "invalid binding option",
+                                   true,
+                                   layout, "only one binding level may be specified");
                     exit_status = ORTE_ERROR;
                     goto cleanup;
                 }
@@ -529,8 +598,10 @@ int rmaps_lama_parse_binding(char *layout, rmaps_lama_level_type_t *binding_leve
      * Check that the level was specified
      */
     if( p == 0 ) {
-        opal_output(0, "mca:rmaps:lama: Error: Binding: Level not specified [%s]!",
-                    layout);
+        orte_show_help("help-orte-rmaps-lama.txt",
+                       "invalid binding option",
+                       true,
+                       layout, "binding specification is empty");
         exit_status = ORTE_ERROR;
         goto cleanup;
     }
@@ -543,8 +614,10 @@ int rmaps_lama_parse_binding(char *layout, rmaps_lama_level_type_t *binding_leve
      * Check for unknown level
      */
     if( LAMA_LEVEL_UNKNOWN <= *binding_level ) {
-        opal_output(0, "mca:rmaps:lama: Error: Unknown or Unsupported option in layout [%s]!",
-                    layout);
+        orte_show_help("help-orte-rmaps-lama.txt",
+                       "invalid binding option",
+                       true,
+                       layout, "unknown binding level");
         exit_status = ORTE_ERROR;
         goto cleanup;
     }
@@ -603,8 +676,10 @@ int rmaps_lama_parse_mppr(char *layout, rmaps_lama_level_info_t **mppr_levels, i
                  * Check: Digits must come first
                  */
                 if( p != 0 ) {
-                    opal_output(0, "mca:rmaps:lama: Error: MPPR: Digits must only come before Level string [%s] at [%s]!",
-                                layout, argv[j]);
+                    orte_show_help("help-orte-rmaps-lama.txt",
+                                   "invalid mppr option",
+                                   true,
+                                   layout, "missing digit(s) before resource specification");
                     exit_status = ORTE_ERROR;
                     goto cleanup;
                 }
@@ -615,8 +690,10 @@ int rmaps_lama_parse_mppr(char *layout, rmaps_lama_level_info_t **mppr_levels, i
                  * Check: Exceed bound of number of digits
                  */
                 if( n >= MAX_BIND_DIGIT_LEN ) {
-                    opal_output(0, "mca:rmaps:lama: Error: MPPR: Too many digits in [%s]! Limit %d",
-                                argv[j], MAX_BIND_DIGIT_LEN-1);
+                    orte_show_help("help-orte-rmaps-lama.txt",
+                                   "invalid mppr option",
+                                   true,
+                                   layout, "too many digits");
                     exit_status = ORTE_ERROR;
                     goto cleanup;
                 }
@@ -629,8 +706,10 @@ int rmaps_lama_parse_mppr(char *layout, rmaps_lama_level_info_t **mppr_levels, i
                  * Check: Digits must come first
                  */
                 if( n == 0 ) {
-                    opal_output(0, "mca:rmaps:lama: Error: MPPR: Digits must come before Level string [%s]!",
-                                argv[j]);
+                    orte_show_help("help-orte-rmaps-lama.txt",
+                                   "invalid mppr option",
+                                   true,
+                                   layout, "missing digit(s) before resource specification");
                     exit_status = ORTE_ERROR;
                     goto cleanup;
                 }
@@ -638,8 +717,10 @@ int rmaps_lama_parse_mppr(char *layout, rmaps_lama_level_info_t **mppr_levels, i
                  * Check: Only one level allowed
                  */
                 if( p != 0 ) {
-                    opal_output(0, "mca:rmaps:lama: Error: MPPR: Only one level may be specified [%s]!",
-                                argv[j]);
+                    orte_show_help("help-orte-rmaps-lama.txt",
+                                   "invalid mppr option",
+                                   true,
+                                   layout, "only one resource type may be listed per specification");
                     exit_status = ORTE_ERROR;
                     goto cleanup;
                 }
@@ -656,8 +737,10 @@ int rmaps_lama_parse_mppr(char *layout, rmaps_lama_level_info_t **mppr_levels, i
                      * Check for 2 characters
                      */
                     if( i >= len ) {
-                        opal_output(0, "mca:rmaps:lama: Error: MPPR: Cache Level must be followed by a number [%s]!",
-                                    argv[j]);
+                        orte_show_help("help-orte-rmaps-lama.txt",
+                                       "invalid mppr option",
+                                       true,
+                                       layout, "cache level missing number");
                         exit_status = ORTE_ERROR;
                         goto cleanup;
                     }
@@ -691,8 +774,10 @@ int rmaps_lama_parse_mppr(char *layout, rmaps_lama_level_info_t **mppr_levels, i
          * Check that the level was specified
          */
         if( p == 0 ) {
-            opal_output(0, "mca:rmaps:lama: Error: MPPR: Level not specified [%s]!",
-                        layout);
+            orte_show_help("help-orte-rmaps-lama.txt",
+                           "invalid mppr option",
+                           true,
+                           layout, "resource type not specified");
             exit_status = ORTE_ERROR;
             goto cleanup;
         }
@@ -716,8 +801,13 @@ int rmaps_lama_parse_mppr(char *layout, rmaps_lama_level_info_t **mppr_levels, i
          * Look for unknown and unsupported options
          */
         if( LAMA_LEVEL_UNKNOWN <= (*mppr_levels)[i].type ) {
-            opal_output(0, "mca:rmaps:lama: Error: Unknown or Unsupported option in layout [%s] position %d!",
-                        layout, i+1);
+            char *msg;
+            asprintf(&msg, "unknown resource type at position %d", i + 1);
+            orte_show_help("help-orte-rmaps-lama.txt",
+                           "invalid mppr option",
+                           true,
+                           layout, msg);
+            free(msg);
             exit_status = ORTE_ERROR;
             goto cleanup;
         }
@@ -727,8 +817,14 @@ int rmaps_lama_parse_mppr(char *layout, rmaps_lama_level_info_t **mppr_levels, i
          */
         for( j = i+1; j < *num_types; ++j ) {
             if( (*mppr_levels)[i].type == (*mppr_levels)[j].type ) {
-                opal_output(0, "mca:rmaps:lama: Error: Duplicate key detected in layout [%s] position %d and %d!",
-                            layout, i+1, j+1);
+                char *msg;
+                asprintf(&msg, "duplicate resource tpyes at position %d and %d",
+                         i + 1, j + 1);
+                orte_show_help("help-orte-rmaps-lama.txt",
+                               "invalid mppr option",
+                               true,
+                               layout, msg);
+                free(msg);
                 exit_status = ORTE_ERROR;
                 goto cleanup;
             }
@@ -773,8 +869,10 @@ int rmaps_lama_parse_ordering(char *layout,
      * Check for unknown options
      */
     else {
-        opal_output(0, "mca:rmaps:lama: Error: Unknown or Unsupported option in ordering [%s]!",
-                    layout);
+        orte_show_help("help-orte-rmaps-lama.txt",
+                       "invalid ordering option",
+                       true,
+                       "unsupported ordering option", layout);
         return ORTE_ERROR;
     }
 
