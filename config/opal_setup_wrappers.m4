@@ -11,7 +11,7 @@ dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
 dnl Copyright (c) 2006-2010 Oracle and/or its affiliates.  All rights reserved.
-dnl Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved.
 dnl $COPYRIGHT$
 dnl 
 dnl Additional copyrights may follow
@@ -120,6 +120,13 @@ AC_DEFUN([OPAL_SETUP_WRAPPER_INIT],[
                                 [Extra flags to add to LIBS when using wrapper compilers])])
     AS_IF([test "$with_wrapper_libs" = "yes" -o "$with_wrapper_libs" = "no"],
           [AC_MSG_ERROR([--with-wrapper-libs must have an argument.])])
+
+    AC_MSG_CHECKING([if want wrapper compiler rpath support])
+    AC_ARG_ENABLE([wrapper-rpath],
+                  [AS_HELP_STRING([--enable-wrapper-rpath],
+                  [enable rpath support in the wrapper compilers (default=no)])])
+    AS_IF([test "$enable_wrapper_rpath" != "no"], [enable_wrapper_rpath=yes])
+    AC_MSG_RESULT([$enable_wrapper_rpath])
 ])
 
 
@@ -342,4 +349,7 @@ AC_DEFUN([OPAL_SETUP_WRAPPER_FINAL],[
        AC_DEFINE_UNQUOTED(WRAPPER_EXTRA_LIBS, "$OMPI_WRAPPER_EXTRA_LIBS",
            [Additional LIBS to pass through the wrapper compilers])
     ])
+
+    AC_DEFINE_UNQUOTED(WRAPPER_RPATH_SUPPORT, "$WRAPPER_RPATH_SUPPORT",
+        [Whether the wrapper compilers add rpath flags by default])
 ])

@@ -679,6 +679,45 @@ INSTALLATION OPTIONS
   Be sure to read the description of --without-memory-manager, below;
   it may have some effect on --enable-static.
 
+--disable-wrapper-rpath
+
+  By default, the wrapper compilers (e.g., mpicc) will enable "rpath"
+  support in generated executables on systems that support it.  That
+  is, they will include a file reference to the location of Open MPI's
+  libraries in the MPI application executable itself.  This mean that
+  the user does not have to set LD_LIBRARY_PATH to find Open MPI's
+  libraries (e.g., if they are installed in a location that the
+  run-time linker does not search by default).
+
+  On systems that utilize the GNU ld linker, recent enough versions
+  will actually utilize "runpath" functionality, not "rpath".  There
+  is an important difference between the two:
+
+  "rpath": the location of the Open MPI libraries is hard-coded into
+      the MPI application and cannot be overridden at run-time.
+  "runpath": the location of the Open MPI libraries is hard-coded into
+      the MPI application, but can be overridden at run-time by
+      setting the LD_LIBRARY_PATH environment variable.
+
+  For example, consider that you install Open MPI vA.B.0 and
+  compile/link your MPI application against it.  Later, you install
+  Open MPI vA.B.1 to a different installation prefix (e.g.,
+  /opt/openmpi/A.B.1 vs. /opt/openmpi/A.B.0), and you leave the old
+  installation intact.
+
+  In the rpath case, your MPI application will always use the
+  libraries from your A.B.0 installation.  In the runpath case, you
+  can set the LD_LIBRARY_PATH environment variable to point to the
+  A.B.1 installation, and then your MPI application will use those
+  libraries.  
+
+  Note that in both cases, however, if you remove the original A.B.0
+  installation and set LD_LIBRARY_PATH to point to the A.B.1
+  installation, your application will use the A.B.1 libraries.
+
+  This rpath/runpath behavior can be disabled via
+  --disable-wrapper-rpath.
+
 --enable-dlopen
   Build all of Open MPI's components as standalone Dynamic Shared
   Objects (DSO's) that are loaded at run-time.  The opposite of this

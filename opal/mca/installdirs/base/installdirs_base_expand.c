@@ -20,12 +20,25 @@
 #include "opal/mca/installdirs/base/base.h"
 #include "opal/mca/installdirs/installdirs.h"
 
+/* Support both ${name} and @{name} forms.  The latter allows us to
+   pass values through AC_SUBST without being munged by m4 (e.g., if
+   we want to pass "@{libdir}" and not have it replaced by m4 to be
+   whatever the actual value of the shell variable is. */
 #define EXPAND_STRING(field)                                            \
     do {                                                                \
         if (NULL != (start_pos = strstr(retval, "${" #field "}"))) {    \
             tmp = retval;                                               \
             *start_pos = '\0';                                          \
             end_pos = start_pos + strlen("${" #field "}");              \
+            asprintf(&retval, "%s%s%s", tmp,                            \
+                     opal_install_dirs.field + destdir_offset,          \
+                     end_pos);                                          \
+            free(tmp);                                                  \
+            changed = true;                                             \
+        } else if (NULL != (start_pos = strstr(retval, "@{" #field "}"))) { \
+            tmp = retval;                                               \
+            *start_pos = '\0';                                          \
+            end_pos = start_pos + strlen("@{" #field "}");              \
             asprintf(&retval, "%s%s%s", tmp,                            \
                      opal_install_dirs.field + destdir_offset,          \
                      end_pos);                                          \
@@ -97,7 +110,7 @@ opal_install_dirs_expand_internal(const char* input, bool is_setup)
 
     len = strlen(input);
     for (i = 0 ; i < len ; ++i) {
-        if (input[i] == '$') {
+        if ('$' == input[i] || '@' == input[i]) {
             needs_expand = true;
             break;
         }
