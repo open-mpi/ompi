@@ -10,6 +10,7 @@ dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
+dnl Copyright (c) 2010-2012 Cisco Systems, Inc.  All rights reserved.
 dnl $COPYRIGHT$
 dnl 
 dnl Additional copyrights may follow
@@ -79,10 +80,9 @@ ompi_check_linker_flags_work yes
 # eat any extra whitespace in CC, as libtool will do the same
 tmpCC=`echo $CC | sed -e 's/\//\\\\\//g'`
 output=`echo $output | sed -e "s/^$tmpCC//"`
-eval "set $output"
 extra_ldflags=
-while test -n "[$]1"; do
-    case "[$]1" in
+for arg in $output ; do
+    case "$arg" in
     *.libs/bar*) ;;
     bar*) ;;
     -I*) ;;
@@ -94,7 +94,7 @@ while test -n "[$]1"; do
     *.so) ;;
     *.a) ;;
     *)
-	extra_ldflags="$extra_ldflags [$]1"
+	extra_ldflags="$extra_ldflags $arg"
 	;;
     esac
     shift
@@ -106,5 +106,75 @@ else
     AC_MSG_RESULT([no extra flags])
 fi
 
+#
+# Now do something similar in order to capture the rpath flags: re-run
+# the link, but give the libtool --rpath argument.  Then capture the
+# difference between this output and the previous output.  Do this
+# separately from the above tests to ensure that we don't accidentally
+# remove -R if it's needed for rpath.
+#
+
+WRAPPER_RPATH_SUPPORT=disabled
+AS_IF([test "x$enable_wrapper_rpath" = "xyes"],
+      [AC_MSG_CHECKING([for libtool-supplied rpath arguments])
+       no_rpath_output=$output
+
+       cmd="$libtool --dry-run --mode=link --tag=CC $CC -rpath /ompi-bogus-test-dir bar.lo libfoo.la -o bar $extra_flags"
+       ompi_check_linker_flags_work yes
+
+       # eat any extra whitespace in CC, as libtool will do the same
+       tmpCC=`echo $CC | sed -e 's/\//\\\\\//g'`
+       output=`echo $output | sed -e "s/^$tmpCC//"`
+
+       rpath_args=
+       for rp in $output ; do
+           found=0
+           for nrp in $no_rpath_output ; do
+               AS_IF([test "$rp" = "$nrp"], [found=1])
+           done
+
+           # If we didn't find it, then it must be an rpath argument.
+           # Ensure to replace /ompi-bogus-test-dir with ${libdir} so
+           # that the wrapper can do proper replacement, later.
+           AS_IF([test "$found" = "0"], 
+                 [rpath_args="$rpath_args `echo $rp | sed -e 's@/ompi-bogus-test-dir@\@{libdir}@'`"])
+       done
+
+       # If there were no flags necessary, then we really aren't doing
+       # anything to enable rpath, so let's not claim that we are.
+       AS_IF([test "`echo $rpath_args`" = ""],
+             [rpath_args=
+              enable_wrapper_rpath=no
+              WRAPPER_RPATH_SUPPORT=unnecessary
+              msg="no extra flags"],
+             [wrapper_extra_ldflags="$wrapper_extra_ldflags $rpath_args"
+              WRAPPER_RPATH_SUPPORT=rpath
+              msg=$rpath_args])
+       AC_MSG_RESULT([$msg])
+      ])
+
+# We don't need to be in the subdir any more
 cd ..
-rm -rf conftest.$$])dnl
+rm -rf conftest.$$
+
+AS_IF([test "x$enable_wrapper_rpath" = "xyes"],
+      [
+       # Now that we have the rpath flags, check to see if the linker
+       # supports the DT_RUNPATH flags via --enable-new-dtags (a GNU
+       # ld-specific option).  These flags are more social than
+       # DT_RPATH -- they can be overridden by LD_LIBRARY_PATH (where
+       # a regular DT_RPATH cannot).
+       AC_MSG_CHECKING([if linker supports RUNPATH (vs. RPATH)])
+       LDFLAGS_save=$LDFLAGS
+       LDFLAGS="$LDFLAGS $rpath_args -Wl,--enable-new-dtags"
+       AC_LANG_PUSH([C])
+       AC_LINK_IFELSE([AC_LANG_PROGRAM([], [return 7;])],
+                      [msg=yes
+                       WRAPPER_RPATH_SUPPORT=runpath
+                       wrapper_extra_ldflags="$wrapper_extra_ldflags -Wl,--enable-new-dtags"],
+                      [msg=no])
+       AC_LANG_POP([C])
+       LDFLAGS=$LDFLAGS_save
+       AC_MSG_RESULT([$msg])
+      ])
+])dnl
