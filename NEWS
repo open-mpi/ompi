@@ -74,6 +74,11 @@ Trunk (not on release branches yet)
   available from that group for Windows-based use.
 - Added MPI Java bindings
 
+- Wrapper compilers now add rpath support by default to generated
+  executables on systems that support it.  This behavior can be
+  disabled via --disable-wrapper-rpath.  See note in README about ABI
+  issues when using rpath in MPI applications.
+
 
 1.7.2
 -----
