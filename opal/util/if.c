@@ -283,19 +283,13 @@ int opal_ifaddrtoname(const char* if_addr, char* if_name, int length)
 int16_t opal_ifaddrtokindex(const char* if_addr)
 {
     opal_if_t* intf;
-#if OPAL_WANT_IPV6
     int error;
     struct addrinfo hints, *res = NULL, *r;
-#else
-    in_addr_t inaddr;
-    struct hostent *h;
-#endif
 
     if (OPAL_SUCCESS != mca_base_framework_open(&opal_if_base_framework, 0)) {
         return OPAL_ERROR;
     }
 
-#if OPAL_WANT_IPV6
     memset(&hints, 0, sizeof(hints));
     hints.ai_family = PF_UNSPEC;
     hints.ai_socktype = SOCK_STREAM;
@@ -322,36 +316,20 @@ int16_t opal_ifaddrtokindex(const char* if_addr)
                 if (opal_net_samenetwork((struct sockaddr*)&ipv4, (struct sockaddr*)&intf->if_addr, intf->if_mask)) {
                     return intf->if_kernel_index;
                 }
-            } else {
+            }
+#if OPAL_WANT_IPV6
+            else {
                 if (opal_net_samenetwork((struct sockaddr*)&((struct sockaddr_in6*)&intf->if_addr)->sin6_addr,
                                          (struct sockaddr*)&((struct sockaddr_in6*) r->ai_addr)->sin6_addr, intf->if_mask)) {
                     return intf->if_kernel_index;
                 }
             }
+#endif
         }
     }
     if (NULL != res) {
         freeaddrinfo (res);
     }
-#else
-    inaddr = inet_addr(if_addr);
-
-    if (INADDR_NONE == inaddr) {
-        h = gethostbyname(if_addr);
-        if (0 == h) {
-            return OPAL_ERR_NOT_FOUND;
-        }
-        memcpy(&inaddr, h->h_addr, sizeof(inaddr));
-    }
-
-    for (intf =  (opal_if_t*)opal_list_get_first(&opal_if_list);
-        intf != (opal_if_t*)opal_list_get_end(&opal_if_list);
-        intf =  (opal_if_t*)opal_list_get_next(intf)) {
-        if (opal_net_samenetwork((struct sockaddr*)&intf->if_addr, (struct sockaddr*)&inaddr, intf->if_mask)) {
-            return intf->if_kernel_index;
-        }
-    }
-#endif
     return OPAL_ERR_NOT_FOUND;
 }
 
