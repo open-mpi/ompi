@@ -1338,7 +1338,7 @@ void VTGen_delete(VTGen* gen)
           FILE* outfile;
 
           /* allocate buffer */
-          buflen = vt_env_copy_bsize();
+          buflen = VT_FILE_COPY_BUFFER_SIZE;
           buffer = malloc( buflen );
           if( !buffer )
             vt_error_msg( "Cannot allocate %u bytes for copy buffer", buflen );

@@ -1,3 +1,18 @@
+5.14.4openmpi
+	- fixed build issues due to API changes in MPI-3
+	- fixed potential buffer overflow when reading the filter file
+	- enabled access to CUPTI counters for CUDA tracing via CUPTI
+	- enabled GPU memory usage tracing independent of the CUDA API
+	- enabled recording of CUDA synchronization and implicit synchronization in 
+	  blocking CUDA memory copies for CUDA tracing via CUPTI
+	- enabled recording of synchronous peer-to-peer CUDA memory copies for CUDA
+	  tracing via CUPTI
+	- consider CUDA data transfers as not idle for option 'pure_idle'
+	- fixed identification of the CUDA device ID for CUDA tracing via CUPTI
+	- fixed region filtering for applications using the CUDA runtime API wrapper
+	- compiler wrappers: add path to mpi.h to the PDT parser command and
+	  preprocessor flags
+
 5.14.3openmpi
 	- updated version of internal OTF to 1.12.3openmpi
 	  (see extlib/otf/ChangeLog)

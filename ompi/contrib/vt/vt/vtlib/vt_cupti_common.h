@@ -27,6 +27,8 @@
 #define VT_CUPTI_NO_CUDA_DEVICE (CUdevice)VT_NO_ID
 #define VT_CUPTI_NO_DEVICE_ID VT_NO_ID
 #define VT_CUPTI_NO_CONTEXT_ID VT_NO_ID
+#define VT_CUPTI_NO_STREAM (CUstream)VT_NO_ID
+#define VT_CUPTI_NO_STREAM_ID VT_NO_ID
 
 #define VT_CUPTI_CALL(_err, _msg)                        \
   if(_err != CUPTI_SUCCESS){                             \
@@ -92,7 +94,20 @@ typedef struct vtcuptievents_st
   uint64_t *counterData;      /**< preallocated buffer for counter data */
   CUpti_EventID *cuptiEvtIDs; /**< preallocated buffer for CUPTI event IDs*/
 }vt_cupti_events_t;
-#endif
+#endif /* VT_CUPTI_EVENTS */
+
+/* 
+ * VampirTrace CUPTI stream
+ */
+typedef struct vt_cupti_strm_st
+{
+  CUstream cuStrm;             /**< the CUDA stream */
+  uint32_t cuStrmID;           /**< the CUDA stream ID */
+  uint32_t vtThrdID;           /**< VT thread id for this stream (unique) */
+  uint64_t vtLastTime;         /**< last written VampirTrace timestamp */
+  uint8_t destroyed;           /**< Is stream destroyed? Ready for reuse? */
+  struct vt_cupti_strm_st *next;
+}vt_cupti_strm_t;
 
 #if (defined(VT_CUPTI_CALLBACKS) || defined(VT_CUPTI_ACTIVITY))
 /* 
@@ -100,7 +115,7 @@ typedef struct vtcuptievents_st
  */
 typedef struct vt_cupti_gpumem_st
 {
-  void *memPtr;                 /**< pointer value to allocated memory */
+  uint64_t address;           /**< pointer value to allocated memory */
   size_t size;                  /**< number of bytes allocated */
   uint32_t tid;                 /**< thread id used with this malloc */
   struct vt_cupti_gpumem_st *next;
@@ -109,24 +124,15 @@ typedef struct vt_cupti_gpumem_st
 
 #if defined(VT_CUPTI_CALLBACKS)
 /* 
- * structure of a VampirTrace CUPTI CUDA stream
- */
-typedef struct vt_cupticb_strm_st
-{
-  CUstream stream;             /**< the CUDA stream */
-  uint32_t tid;                /**< VT thread id for this stream (unique) */
-  struct vt_cupticb_strm_st *next;
-}vt_cupticb_strm_t;
-
-/* 
  * structure of a VampirTrace CUPTI CUDA runtime kernel
  */
-typedef struct vt_cupticb_kernel_st
+typedef struct vt_cupti_kernel_st
 {
-  cudaStream_t stream;        /**< the CUDA stream */
+  CUstream stream;            /**< the CUDA stream */
   uint32_t blocksPerGrid;     /**< number of blocks per grid */
   uint32_t threadsPerBlock;   /**< number of threads per block */
-  struct vt_cupticb_kernel_st *prev;
+  struct vt_cupti_kernel_st *up;
+  struct vt_cupti_kernel_st *down;
 }vt_cupti_kernel_t;
 
 
@@ -135,21 +141,17 @@ typedef struct vt_cupticb_kernel_st
  */
 typedef struct vtcupticallbacks_st
 {
-# if defined(VT_CUPTI_ACTIVITY)
-  uint8_t concurrentKernels;
-  uint8_t streamsCreated;
-# else
-  vt_cupti_gpumem_t *gpuMemList;    /**< list of allocated GPU memory fields */
-  size_t gpuMemAllocated;           /**< memory allocated on CUDA device */
-  vt_cupticb_strm_t *strmList;      /**< CUDA stream list */
-  uint32_t strmNum;           /**< Number of streams created for this device */
   vt_cupti_kernel_t *kernelData;    /**< pointer to top of CUDA runtime kernel 
                                          configuration stack */
-  uint8_t stack_size;               /**< number of params on the stack */
+  uint8_t streamsCreated;           /**< #streams created for this device */
+# if (defined(CUPTI_API_VERSION) && (CUPTI_API_VERSION >= 3))
+  uint8_t concurrentKernels;
+# endif
+# if !defined(VT_CUPTI_ACTIVITY)
   uint8_t callbacks_enabled;        /**< execute callback function? */
 # endif
 }vt_cupti_callbacks_t;
-#endif
+#endif /* VT_CUPTI_CALLBACKS */
 
 #if defined(VT_CUPTI_ACTIVITY)
 /* 
@@ -164,32 +166,17 @@ typedef struct vt_cuptiact_sync_st
 }vt_cupti_sync_t;
 
 /* 
- * VampirTrace CUPTI activity stream
- */
-typedef struct vt_cuptiact_strm_st
-{
-  uint32_t strmID;             /**< the CUDA stream */
-  uint32_t vtThrdID;           /**< VT thread id for this stream (unique) */
-  uint64_t vtLastTime;         /**< last written VampirTrace timestamp */
-  uint8_t destroyed;           /**< Is stream destroyed? Ready for reuse? */
-  struct vt_cuptiact_strm_st *next;
-}vt_cuptiact_strm_t;
-
-/* 
  * VampirTrace CUPTI activity specific context data.
  */
 typedef struct vtcuptiactivity_st
 {
-  vt_cuptiact_strm_t *strmList;     /**< list of streams */
   uint32_t defaultStrmID;           /**< CUPTI stream ID of default stream */
-  vt_cupti_gpumem_t *gpuMemList; /**< list of allocated GPU memory fields */
-  size_t gpuMemAllocated;           /**< memory allocated on CUDA device */
-  vt_cupti_sync_t sync;          /**< store synchronization information */
+  vt_cupti_sync_t sync;             /**< store synchronization information */
   uint8_t *buffer;                  /**< CUPTI activity buffer pointer */
   uint64_t vtLastGPUTime;           /**< last written VampirTrace timestamp */
   uint8_t gpuIdleOn;                /**< has idle region enter been written last */
 }vt_cupti_activity_t;
-#endif
+#endif /* VT_CUPTI_ACTIVITY */
 
 /* 
  * VampirTrace CUPTI context.
@@ -201,6 +188,11 @@ typedef struct vtcuptictx_st
   uint32_t devID;                   /**< device ID */
   CUdevice cuDev;                   /**< CUDA device handle */
   uint32_t ptid;                    /**< VampirTrace process/thread */
+#if (defined(VT_CUPTI_ACTIVITY) || defined(VT_CUPTI_CALLBACKS))
+  vt_cupti_strm_t *strmList;        /**< list of VT CUDA streams */
+  vt_cupti_gpumem_t *gpuMemList;    /**< list of allocated GPU memory fields */
+  size_t gpuMemAllocated;           /**< memory allocated on CUDA device */
+#endif
 #if defined(VT_CUPTI_EVENTS)
   vt_cupti_events_t* events;
 #endif
@@ -307,11 +299,50 @@ EXTERN vt_cupti_ctx_t* vt_cupti_getCreateCtx(CUcontext cuCtx);
 EXTERN vt_cupti_ctx_t* vt_cupti_removeCtx(CUcontext *cuCtx);
 
 /*
- * Free the allocated memory for this VampirTrace CUPTI context.
+ * Finalize the VampirTrace CUPTI context and free all memory allocated with it.
  * 
  * @param vtCtx pointer to the VampirTrace CUPTI context
  */
-EXTERN void vt_cupti_freeCtx(vt_cupti_ctx_t *vtCtx);
+EXTERN void vt_cupti_finalizeCtx(vt_cupti_ctx_t *vtCtx);
+
+#if (defined(VT_CUPTI_ACTIVITY) || defined(VT_CUPTI_CALLBACKS))
+/*
+ * Create a VampirTrace CUPTI stream.
+ * 
+ * @param vtCtx VampirTrace CUPTI context
+ * @param cuStrm CUDA stream
+ * @param strmID ID of the CUDA stream
+ * 
+ * @return pointer to created VampirTrace CUPTI stream
+ */
+EXTERN vt_cupti_strm_t* vt_cupti_createStream(vt_cupti_ctx_t *vtCtx, 
+                                              CUstream cuStrm, uint32_t strmID);
+
+/*
+ * Get a VampirTrace CUPTI stream by CUDA stream without locking.
+ * 
+ * @param vtCtx pointer to the VampirTrace CUPTI context, containing the stream
+ * @param strmID the CUPTI stream ID
+ * 
+ * @return VampirTrace CUPTI stream
+ */
+EXTERN vt_cupti_strm_t* vt_cupti_getStreamByID(vt_cupti_ctx_t *vtCtx,
+                                               uint32_t strmID);
+
+/*
+ * Retrieve a VampirTrace CUPTI stream object. This function will lookup, if 
+ * the stream is already available, a stream is reusable or if it has to be
+ * created and will return the VampirTrace CUPTI stream object.
+ * 
+ * @param vtCtx VampirTrace CUPTI Activity context
+ * @param cuStrm CUDA stream
+ * @param strmID the CUDA stream ID provided by CUPTI callback API
+ * 
+ * @return the VampirTrace CUPTI stream
+ */
+EXTERN vt_cupti_strm_t* vt_cupti_getCreateStream(vt_cupti_ctx_t* vtCtx, 
+                                                 CUstream cuStrm, 
+                                                 uint32_t strmID);
+#endif
 
 #endif	/* VT_CUPTI_COMMON_H */
-

@@ -76,11 +76,7 @@ dnl		further presets below when handling '--with-openmpi[17]'
 	AC_ARG_WITH(fmpi-inc-dir,
 		AC_HELP_STRING([--with-fmpi-inc-dir=FMPIINCDIR],
 		[give the path for Fortran MPI-include files, default: MPIINCDIR]),
-	[FMPIINCDIR="-I$withval/"],
-	[
-		FMPIINCDIR=$MPIINCDIR
-		AS_IF([test x"$FMPIINCDIR" = x], [FMPIINCDIR="-I/usr/include"])
-	])
+	[FMPIINCDIR="-I$withval/"], [FMPIINCDIR="$MPIINCDIR"])
 
 	AC_ARG_WITH(mpi-lib-dir,
 		AC_HELP_STRING([--with-mpi-lib-dir=MPILIBDIR],
@@ -476,18 +472,50 @@ dnl		check for MPICC
 
 		AC_CHECK_PROGS(MPICC, mpicc hcc mpcc_r mpcc mpxlc_r mpxlc mpixlc_r mpixlc cmpicc mpiicc, $CC)
 
-dnl		check for mpi.h, if MPICC was not found
+dnl		check for mpi.h, using *CC*
 
-		AS_IF([test x"$MPICC" = x"$CC" -a x"$inside_openmpi" = "xno"],
+		AS_IF([test x"$inside_openmpi" = "xno"],
 		[
-			sav_CPPFLAGS=$CPPFLAGS
-			CPPFLAGS="$CPPFLAGS $MPIINCDIR"
-			AC_CHECK_HEADER([mpi.h], [],
+dnl			guess the MPI include directory based on MPICC's pathname
+
+			mpiincdir_guessed="no"
+			AS_IF([test x"$MPICC" != x"$CC" -a x"$MPIINCDIR" = x],
 			[
-				AC_MSG_NOTICE([error: no mpi.h found; check path for MPI package first...])
-				mpi_error="yes"
+				mpicc_pathname="`which $MPICC 2>/dev/null`"
+				AS_IF([test x"$mpicc_pathname" != x],
+				[
+					MPIINCDIR="-I`dirname $mpicc_pathname`/../include"
+					mpiincdir_guessed="yes"
+				],
+				[
+					AC_MSG_NOTICE([error: $MPICC not found; check path for MPI package first...])
+					mpi_error="yes"
+				])
 			])
-			CPPFLAGS=$sav_CPPFLAGS
+
+dnl			check for mpi.h; print a warning message if MPIINCDIR was guessed, otherwise trigger an error
+
+			AS_IF([test x"$mpi_error" = "xno"],
+			[
+				sav_CPPFLAGS=$CPPFLAGS
+				CPPFLAGS="$CPPFLAGS $MPIINCDIR"
+				AC_CHECK_HEADER([mpi.h],
+				[
+					AS_IF([test x"$mpiincdir_guessed" = "xyes" -a x"$FMPIINCDIR" = x],
+					[FMPIINCDIR=$MPIINCDIR])
+				],
+				[
+					AS_IF([test x"$mpiincdir_guessed" = "xyes"],
+					[
+						AC_MSG_WARN([could not determine the MPI include directory based on $MPICC; use the '--with-mpi-inc-dir' option to specify it...])
+						MPIINCDIR=
+					],
+					[
+						AC_MSG_NOTICE([error: no mpi.h found; check path for MPI package first...])
+						mpi_error="yes"
+					])
+				])
+			])
 		])
 
 dnl		check for MPICXX
