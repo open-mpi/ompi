@@ -347,7 +347,7 @@ int16_t opal_ifaddrtokindex(const char* if_addr)
     for (intf =  (opal_if_t*)opal_list_get_first(&opal_if_list);
         intf != (opal_if_t*)opal_list_get_end(&opal_if_list);
         intf =  (opal_if_t*)opal_list_get_next(intf)) {
-        if (opal_net_samenetwork(((struct sockaddr*) &intf->if_addr)->sin_addr.s_addr, (struct sockaddr*)&inaddr, intf->if_mask)) {
+        if (opal_net_samenetwork((struct sockaddr*)&intf->if_addr, (struct sockaddr*)&inaddr, intf->if_mask)) {
             return intf->if_kernel_index;
         }
     }
