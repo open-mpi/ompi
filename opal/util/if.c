@@ -72,6 +72,7 @@
 
 #include "opal/class/opal_list.h"
 #include "opal/util/if.h"
+#include "opal/util/net.h"
 #include "opal/util/output.h"
 #include "opal/util/argv.h"
 #include "opal/util/show_help.h"
@@ -276,7 +277,8 @@ int opal_ifaddrtoname(const char* if_addr, char* if_name, int length)
 
 /*
  *  Attempt to resolve the address (given as either IPv4/IPv6 string
- *  or hostname) and lookup corresponding interface's kernel index
+ *  or hostname) and return the kernel index of the interface
+ *  on the same network as the specified address
  */
 int16_t opal_ifaddrtokindex(const char* if_addr)
 {
@@ -317,13 +319,12 @@ int16_t opal_ifaddrtokindex(const char* if_addr)
 
                 inaddr = (struct sockaddr_in*) &intf->if_addr;
                 memcpy (&ipv4, r->ai_addr, r->ai_addrlen);
-                
-                if (inaddr->sin_addr.s_addr == ipv4.sin_addr.s_addr) {
+                if (opal_net_samenetwork((struct sockaddr*)&ipv4, (struct sockaddr*)&intf->if_addr, intf->if_mask)) {
                     return intf->if_kernel_index;
                 }
             } else {
-                if (IN6_ARE_ADDR_EQUAL(&((struct sockaddr_in6*) &intf->if_addr)->sin6_addr,
-                    &((struct sockaddr_in6*) r->ai_addr)->sin6_addr)) {
+                if (opal_net_samenetwork((struct sockaddr*)&((struct sockaddr_in6*)&intf->if_addr)->sin6_addr,
+                                         (struct sockaddr*)&((struct sockaddr_in6*) r->ai_addr)->sin6_addr, intf->if_mask)) {
                     return intf->if_kernel_index;
                 }
             }
@@ -346,7 +347,7 @@ int16_t opal_ifaddrtokindex(const char* if_addr)
     for (intf =  (opal_if_t*)opal_list_get_first(&opal_if_list);
         intf != (opal_if_t*)opal_list_get_end(&opal_if_list);
         intf =  (opal_if_t*)opal_list_get_next(intf)) {
-        if (((struct sockaddr_in*) &intf->if_addr)->sin_addr.s_addr == inaddr) {
+        if (opal_net_samenetwork(((struct sockaddr*) &intf->if_addr)->sin_addr.s_addr, (struct sockaddr*)&inaddr, intf->if_mask)) {
             return intf->if_kernel_index;
         }
     }
