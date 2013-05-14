@@ -140,8 +140,8 @@ static opal_event_t recv_ev;
 /* init the module */
 static int init(void)
 {
-    char *slurm_host;
-    uint16_t port;
+    char *slurm_host=NULL;
+    uint16_t port=0;
     struct sockaddr_in address;
     int flags;
     struct hostent *h;
@@ -153,7 +153,8 @@ static int init(void)
         }
         /* setup the socket */
         if (ORTE_SUCCESS != read_ip_port(mca_ras_slurm_component.config_file,
-                                         &slurm_host, &port)) {
+                                         &slurm_host, &port) ||
+            NULL == slurm_host || 0 == port) {
             return ORTE_ERR_SILENT;
         }
         OPAL_OUTPUT_VERBOSE((2, orte_ras_base_framework.framework_output,
@@ -778,6 +779,7 @@ static void recv_data(int fd, short args, void *cbdata)
     orte_util_convert_string_to_jobid(&jobid, tpn+1);
     /* get the corresponding job object */
     jdata = orte_get_job_data_object(jobid);
+    jtrk = NULL;
     /* find the associated tracking object */
     for (item = opal_list_get_first(&jobs);
          item != opal_list_get_end(&jobs);
@@ -803,6 +805,9 @@ static void recv_data(int fd, short args, void *cbdata)
      */
     OBJ_CONSTRUCT(&nds, opal_list_t);
     OBJ_CONSTRUCT(&ndtmp, opal_list_t);
+    idx = -1;
+    sjob = -1;
+    nodelist = NULL;
     for (i=1; NULL != alloc[i]; i++) {
         if (ORTE_SUCCESS != parse_alloc_msg(alloc[i], &idx, &sjob, &nodelist, &tpn)) {
             orte_show_help("help-ras-slurm.txt", "slurm-dyn-alloc-failed", true, jtrk->cmd);
