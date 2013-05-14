@@ -19,6 +19,7 @@
 #include "orte/mca/ess/ess.h"
 #include "orte/runtime/orte_globals.h"
 #include "ompi/communicator/communicator.h"
+#include "opal/memoryhooks/memory.h"
 
 #include "mtl_mxm.h"
 #include "mtl_mxm_types.h"
@@ -43,7 +44,11 @@ mca_mtl_mxm_module_t ompi_mtl_mxm = {
        ompi_mtl_mxm_cancel,
        ompi_mtl_mxm_add_comm,
        ompi_mtl_mxm_del_comm
-    }
+    },
+    0,
+    0,
+    NULL,
+    NULL
 };
 
 
@@ -82,6 +87,10 @@ static uint32_t ompi_mtl_mxm_get_job_id(void)
 }
 
 int ompi_mtl_mxm_progress(void);
+#if MXM_API >= MXM_VERSION(2,0)
+static void ompi_mtl_mxm_mem_release_cb(void *buf, size_t length,
+                                        void *cbdata, bool from_alloc);
+#endif
 
 #if MXM_API < MXM_VERSION(2, 0)
 static int ompi_mtl_mxm_get_ep_address(ompi_mtl_mxm_ep_conn_info_t *ep_info, mxm_ptl_id_t ptlid)
@@ -416,11 +425,22 @@ int ompi_mtl_mxm_module_init(void)
      
     /* Register the MXM progress function */
     opal_progress_register(ompi_mtl_mxm_progress);
+
+#if MXM_API >= MXM_VERSION(2,0)
+    if (ompi_mtl_mxm.using_mem_hooks) {
+        opal_mem_hooks_register_release(ompi_mtl_mxm_mem_release_cb, NULL);
+    }
+#endif
     return OMPI_SUCCESS;
 }
 
 int ompi_mtl_mxm_finalize(struct mca_mtl_base_module_t* mtl)
 {
+#if MXM_API >= MXM_VERSION(2,0)
+    if (ompi_mtl_mxm.using_mem_hooks) {
+        opal_mem_hooks_unregister_release(ompi_mtl_mxm_mem_release_cb);
+    }
+#endif
     opal_progress_unregister(ompi_mtl_mxm_progress);
     mxm_ep_destroy(ompi_mtl_mxm.ep);
     return OMPI_SUCCESS;
@@ -569,6 +589,15 @@ int ompi_mtl_mxm_progress(void)
     }
     return 1;
 }
+
+#if MXM_API >= MXM_VERSION(2,0)
+static void ompi_mtl_mxm_mem_release_cb(void *buf, size_t length,
+                                        void *cbdata, bool from_alloc)
+{
+    mxm_mem_unmap(ompi_mtl_mxm.mxm_context, buf, length,
+                  from_alloc ? MXM_MEM_UNMAP_MARK_INVALID : 0);
+}
+#endif
 
 #if MXM_API >= MXM_VERSION(1,5)
 OBJ_CLASS_INSTANCE(
