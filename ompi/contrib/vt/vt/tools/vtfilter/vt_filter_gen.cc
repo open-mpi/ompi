@@ -77,7 +77,7 @@ FilterGeneratorC::run()
     delete [] argv;
   }
 
-  if( envp )
+  //if( envp )
   {
     if( envp[0] )
       delete [] envp[0];

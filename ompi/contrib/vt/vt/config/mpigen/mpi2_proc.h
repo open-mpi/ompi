@@ -35,15 +35,15 @@
  *
  **/
 
-VT_MPI_INT MPI_Close_port(char* port_name_CLASS_SINGLE_IN);
-VT_MPI_INT MPI_Comm_accept(char* port_name_CLASS_SINGLE_IN, MPI_Info info, VT_MPI_INT root, MPI_Comm comm, MPI_Comm* newcomm_CLASS_SINGLE_OUT);
-VT_MPI_INT MPI_Comm_connect(char* port_name_CLASS_SINGLE_IN, MPI_Info info, VT_MPI_INT root, MPI_Comm comm, MPI_Comm* newcomm_CLASS_SINGLE_OUT);
+VT_MPI_INT MPI_Close_port(CONST char* port_name_CLASS_SINGLE_IN);
+VT_MPI_INT MPI_Comm_accept(CONST char* port_name_CLASS_SINGLE_IN, MPI_Info info, VT_MPI_INT root, MPI_Comm comm, MPI_Comm* newcomm_CLASS_SINGLE_OUT);
+VT_MPI_INT MPI_Comm_connect(CONST char* port_name_CLASS_SINGLE_IN, MPI_Info info, VT_MPI_INT root, MPI_Comm comm, MPI_Comm* newcomm_CLASS_SINGLE_OUT);
 VT_MPI_INT MPI_Comm_disconnect(MPI_Comm* comm_CLASS_SINGLE_IO);
 VT_MPI_INT MPI_Comm_get_parent(MPI_Comm* parent_CLASS_SINGLE_OUT);
 VT_MPI_INT MPI_Comm_join(VT_MPI_INT fd, MPI_Comm* intercomm_CLASS_SINGLE_OUT);
-VT_MPI_INT MPI_Comm_spawn(char* command_CLASS_SINGLE_IN, char** argv, VT_MPI_INT maxprocs, MPI_Info info, VT_MPI_INT root, MPI_Comm comm, MPI_Comm* intercomm_CLASS_SINGLE_OUT, VT_MPI_INT* array_of_errcodes);
-VT_MPI_INT MPI_Comm_spawn_multiple(VT_MPI_INT count, char** array_of_commands, char*** array_of_argv, VT_MPI_INT* array_of_maxprocs, MPI_Info* array_of_info_CLASS_ARRAY_IN_count, VT_MPI_INT root, MPI_Comm comm, MPI_Comm* intercomm_CLASS_SINGLE_OUT, VT_MPI_INT* array_of_errcodes);
-VT_MPI_INT MPI_Lookup_name(char* service_name_CLASS_SINGLE_IN, MPI_Info info, char* port_name_CLASS_SINGLE_OUT);
+VT_MPI_INT MPI_Comm_spawn(const char* command_CLASS_SINGLE_IN, char** argv, VT_MPI_INT maxprocs, MPI_Info info, VT_MPI_INT root, MPI_Comm comm, MPI_Comm* intercomm_CLASS_SINGLE_OUT, VT_MPI_INT* array_of_errcodes);
+VT_MPI_INT MPI_Comm_spawn_multiple(VT_MPI_INT count, char** array_of_commands, char*** array_of_argv, CONST VT_MPI_INT* array_of_maxprocs, CONST MPI_Info* array_of_info_CLASS_ARRAY_IN_count, VT_MPI_INT root, MPI_Comm comm, MPI_Comm* intercomm_CLASS_SINGLE_OUT, VT_MPI_INT* array_of_errcodes);
+VT_MPI_INT MPI_Lookup_name(CONST char* service_name_CLASS_SINGLE_IN, MPI_Info info, char* port_name_CLASS_SINGLE_OUT);
 VT_MPI_INT MPI_Open_port(MPI_Info info, char* port_name_CLASS_SINGLE_OUT);
-VT_MPI_INT MPI_Publish_name(char* service_name_CLASS_SINGLE_IN, MPI_Info info, char* port_name_CLASS_SINGLE_IN);
-VT_MPI_INT MPI_Unpublish_name(char* service_name_CLASS_SINGLE_IN, MPI_Info info, char* port_name_CLASS_SINGLE_IN);
+VT_MPI_INT MPI_Publish_name(CONST char* service_name_CLASS_SINGLE_IN, MPI_Info info, CONST char* port_name_CLASS_SINGLE_IN);
+VT_MPI_INT MPI_Unpublish_name(CONST char* service_name_CLASS_SINGLE_IN, MPI_Info info, CONST char* port_name_CLASS_SINGLE_IN);

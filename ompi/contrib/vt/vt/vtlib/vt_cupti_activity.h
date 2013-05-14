@@ -32,12 +32,28 @@ EXTERN void vt_cupti_activity_init(void);
 EXTERN void vt_cupti_activity_finalize(void);
 
 /*
+ * Finalize the VampirTrace CUPTI activity context.
+ * 
+ * @param vtCtx the VampirTrace CUPTI context, which contains the activities
+ */
+EXTERN void vt_cupti_activity_finalizeContext(vt_cupti_ctx_t *vtCtx);
+
+/*
  * Setup a the VampirTrace CUPTI activity context. Trigger initialization and 
  * enqueuing of the CUPTI activity buffer for the given context.
  * 
  * @param vtCtx the VampirTrace CUPTI context
  */
 EXTERN void vt_cuptiact_setupActivityContext(vt_cupti_ctx_t *vtCtx);
+
+/*
+ * Check for empty activity buffer.
+ * 
+ * @param cuCtx CUDA context
+ * 
+ * @return 1 for empty, 0 for non-empty buffer
+ */
+EXTERN uint8_t vt_cupti_activity_isBufferEmpty(CUcontext cuCtx);
 
 /*
  * Handle activities buffered by CUPTI. Lock a call to this routine!!!
@@ -61,7 +77,7 @@ EXTERN void vt_cuptiact_setupActivityContext(vt_cupti_ctx_t *vtCtx);
  * @param vtCtx VampirTrace CUPTI context, NULL to handle globally buffered 
  * activities
  */
-EXTERN void vt_cuptiact_flushCtxActivities(vt_cupti_ctx_t *cuCtx);
+EXTERN void vt_cuptiact_flushCtxActivities(vt_cupti_ctx_t *vtCtx);
 
 /*
  * Mark a CUDA stream as destroyed, so that it can be reused afterwards.

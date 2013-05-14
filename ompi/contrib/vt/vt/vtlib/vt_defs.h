@@ -24,9 +24,10 @@ function  /* definition */
  *-----------------------------------------------------------------------------
  */
 
-#define VT_MIN_BUFSIZE               0x19000   /* 100KB */
-#define VT_DEFAULT_BUFSIZE           0x2000000 /* 32MB */
-#define VT_DEFAULT_COPY_BUFFER_SIZE  0x100000  /* 1MB */
+#define VT_MIN_BUFSIZE               0x19000     /* 100KB */
+#define VT_MAX_BUFSIZE               0x280000000 /* 10GB */
+#define VT_MAX_THREAD_BUFSIZE        0x40000000  /* 1GB */
+#define VT_DEFAULT_BUFSIZE           0x2000000   /* 32MB */
 
 typedef unsigned char* buffer_t;
 
@@ -56,6 +57,8 @@ typedef unsigned char* buffer_t;
 #define VT_MAX_COMMENT_LEN      4096
 #define VT_MAX_MARKER_LEN       4096
 #define VT_MAX_THREAD_NAME_LEN  100
+/* maximum verbosity level */
+#define VT_MAX_VERBOSE_LEVEL    10
 /* maximum number of certain MPI handles defined per process
    (initial maximums; raised as needed) */
 #define VT_MAX_MPI_COMMS_INIT   100
@@ -322,6 +325,8 @@ typedef unsigned char* buffer_t;
  */
 
 #define VT_MAX_GETHOSTID_RETRIES  10
+
+#define VT_FILE_COPY_BUFFER_SIZE  0x400000 /* 4MB */
 
 #define VT_DYNINST_CONT_SIGNUM    SIGUSR1
 #define VT_DYNINST_ERROR_SIGNUM   SIGUSR2

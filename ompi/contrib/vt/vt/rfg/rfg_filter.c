@@ -121,8 +121,10 @@ static int get_file_content( RFG_Filter* filter )
       break;
     }
 
+    filter->file_content_size = file_stat.st_size;
+
     /* allocate the buffer for storing the filter file content */
-    filter->file_content = (char*)malloc( file_stat.st_size * sizeof( char ) );
+    filter->file_content = (char*)malloc( (filter->file_content_size + 1) * sizeof( char ) );
     if( !filter->file_content )
     {
       ret = 0;
@@ -130,12 +132,14 @@ static int get_file_content( RFG_Filter* filter )
     }
 
     /* read the filter file */
-    if( read(fd, filter->file_content, file_stat.st_size ) == -1 )
+    if( read(fd, filter->file_content, filter->file_content_size ) == -1 )
     {
       ret = 0;
       break;
     }
 
+    filter->file_content[ filter->file_content_size ] = '\0';
+    
   } while( 0 );
 
   /* close the filter file */
@@ -147,18 +151,16 @@ static int get_file_content( RFG_Filter* filter )
 static int get_file_content_line( RFG_Filter* filter, char* buf,
                                   size_t bufsize, size_t* pos )
 {
-  size_t content_size;
   size_t i;
 
   if( !filter || !filter->file_content )
     return 0;
 
-  content_size = strlen( filter->file_content );
 
-  if( *pos >= content_size )
+  if( *pos >= filter->file_content_size )
     return 0;
 
-  for( i = 0; i < bufsize && *pos < content_size; i++ )
+  for( i = 0; i < bufsize && *pos < filter->file_content_size; i++ )
   {
     buf[i] = filter->file_content[(*pos)++];
     if( buf[i] == '\n' )

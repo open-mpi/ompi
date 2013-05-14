@@ -10,9 +10,12 @@
  * See the file COPYING in the package base directory for details
  **/
 
+#include "stdio.h"
+
 #include "vt_thrd.h"            /* thread creation for GPU kernels */
 #include "vt_gpu.h"             /* common for GPU */
 #include "vt_mallocwrap.h"      /* wrapping of malloc and free */
+#include "vt_pform.h"           /* VampirTrace time measurement */
 #include "vt_cupti.h"           /* Support for CUPTI */
 #include "vt_cupti_common.h"    /* CUPTI common structures, functions, etc. */
 
@@ -37,7 +40,7 @@ static uint8_t vt_cupti_finalized   = 0;
 
 void vt_cupti_init()
 {
-  if(!vt_cupti_initialized){ 
+  if(!vt_cupti_initialized){
 #if (defined(VT_MT) || defined(VT_HYB))
     VTThrd_createMutex(&VTThrdMutexCupti);
 #endif
@@ -72,7 +75,7 @@ void vt_cupti_finalize()
 
         vt_cupti_ctxList = vt_cupti_ctxList->next;
 
-        vt_cupti_freeCtx(tmp);
+        vt_cupti_finalizeCtx(tmp);
         tmp = NULL;
       }
       
@@ -88,8 +91,234 @@ void vt_cupti_finalize()
   }
 }
 
+#if (defined(VT_CUPTI_ACTIVITY) || defined(VT_CUPTI_CALLBACKS))
 /*
- * Create a VampirTrace CUPTI context.
+ * Create a VampirTrace CUPTI stream.
+ * 
+ * @param vtCtx VampirTrace CUPTI context
+ * @param cuStrm CUDA stream
+ * @param strmID ID of the CUDA stream
+ * 
+ * @return pointer to created VampirTrace CUPTI stream
+ */
+vt_cupti_strm_t* vt_cupti_createStream(vt_cupti_ctx_t *vtCtx, 
+                                       CUstream cuStrm, uint32_t strmID)
+{
+  vt_cupti_strm_t *vtStrm = NULL;
+  
+  if(vtCtx == NULL){
+    vt_warning("[CUPTI] Cannot create stream without VampirTrace CUPTI context");
+    return NULL;
+  }
+  
+  vtStrm = (vt_cupti_strm_t *)malloc(sizeof(vt_cupti_strm_t));
+  if(vtStrm == NULL)
+    vt_error_msg("[CUPTI] Could not allocate memory for stream!");
+  vtStrm->cuStrm = cuStrm;
+  vtStrm->vtLastTime = vt_gpu_init_time;
+  vtStrm->destroyed = 0;
+  vtStrm->next = NULL;
+  
+#if defined(VT_CUPTI_ACTIVITY)
+  /* create stream by VT CUPTI callbacks implementation (CUstream is given) */
+  if(strmID == VT_CUPTI_NO_STREAM_ID){
+    if(cuStrm != VT_CUPTI_NO_STREAM){
+      VT_CUPTI_CALL(cuptiGetStreamId(vtCtx->cuCtx, cuStrm, &strmID), 
+                                     "cuptiGetStreamId");
+    }else{
+      vt_warning("[CUPTI] Neither CUDA stream nor stream ID given!");
+      free(vtStrm);
+      return NULL;
+    }
+  }
+#else /* only VT_CUPTI_CALLBACKS is defined */
+  if(vtCtx->callbacks != NULL){
+    strmID = vtCtx->callbacks->streamsCreated;
+    vtCtx->callbacks->streamsCreated++;
+  }
+#endif
+
+  vtStrm->cuStrmID = strmID;
+  
+  /* create VampirTrace thread */
+  {
+    char thread_name[16] = "CUDA";
+
+    if(vt_gpu_stream_reuse){
+      if(vtCtx->devID != VT_NO_ID){
+        if(-1 == snprintf(thread_name+4, 12, "[%d]", vtCtx->devID))
+          vt_cntl_msg(1, "Could not create thread name for CUDA thread!");
+      }
+    }else{
+      if(vtCtx->devID == VT_NO_ID){
+        if(-1 == snprintf(thread_name+4, 12, "[?:%d]", strmID))
+          vt_cntl_msg(1, "Could not create thread name for CUDA thread!");
+      }else{
+        if(-1 == snprintf(thread_name+4, 12, "[%d:%d]", vtCtx->devID, strmID))
+          vt_cntl_msg(1, "Could not create thread name for CUDA thread!");
+      }
+    }
+    
+    VT_CHECK_THREAD;
+    vt_gpu_registerThread(thread_name, VT_MY_THREAD, &(vtStrm->vtThrdID));
+  }
+  
+  if(vt_gpu_init_time < vt_start_time)
+      vt_gpu_init_time = vt_start_time;
+  
+  /* for the first stream created for this context */
+  if(vtCtx->strmList == NULL){
+    if(vt_gpu_trace_idle > 0){      
+      /* write enter event for GPU_IDLE on first stream */
+      vt_enter(vtStrm->vtThrdID, &vt_gpu_init_time, vt_gpu_rid_idle);
+      /*vt_warning("IDLEente: %llu (%d)", vt_gpu_init_time, vtStrm->vtThrdID);*/
+      
+#if defined(VT_CUPTI_ACTIVITY)
+      if(vtCtx->activity != NULL)
+        vtCtx->activity->gpuIdleOn = 1;
+#endif
+    }
+    
+    /* set the counter value for cudaMalloc to 0 on first stream */
+    if(vt_gpu_trace_memusage > 0)
+      vt_count(vtStrm->vtThrdID, &vt_gpu_init_time, vt_gpu_cid_memusage, 0);
+  }
+
+  if(vt_gpu_trace_kernels > 1){
+    /* set count values to zero */
+    vt_count(vtStrm->vtThrdID, &vt_gpu_init_time, vt_cupti_cid_blocksPerGrid, 0);
+    vt_count(vtStrm->vtThrdID, &vt_gpu_init_time, vt_cupti_cid_threadsPerBlock, 0);
+    vt_count(vtStrm->vtThrdID, &vt_gpu_init_time, vt_cupti_cid_threadsPerKernel, 0);
+  }
+  
+  /* prepend the stream 
+  vtStrm->next = vtCtx->strmList;
+  vtCtx->strmList = vtStrm;*/
+  
+  return vtStrm;
+}
+
+/*
+ * Retrieve a VampirTrace CUPTI stream object. This function will lookup, if 
+ * the stream is already available, a stream is reusable or if it has to be
+ * created and will return the VampirTrace CUPTI stream object.
+ * 
+ * @param vtCtx VampirTrace CUPTI Activity context
+ * @param cuStrm CUDA stream
+ * @param strmID the CUDA stream ID provided by CUPTI callback API
+ * 
+ * @return the VampirTrace CUPTI stream
+ */
+vt_cupti_strm_t* vt_cupti_getCreateStream(vt_cupti_ctx_t* vtCtx, 
+                                          CUstream cuStrm, uint32_t strmID)
+{
+  vt_cupti_strm_t *currStrm = NULL;
+  vt_cupti_strm_t *lastStrm = NULL;
+  vt_cupti_strm_t *reusableStrm = NULL;
+  
+  if(vtCtx == NULL){
+    vt_error_msg("[CUPTI] No context given in vt_cupti_checkStream()!");
+    return NULL;
+  }
+  
+  if(strmID == VT_CUPTI_NO_STREAM_ID && cuStrm == VT_CUPTI_NO_STREAM){
+    vt_error_msg("[CUPTI] No stream information given!");
+    return NULL;
+  }
+  
+  /*** lookup stream ***/
+  /*VT_CUPTI_LOCK();*/
+  currStrm = vtCtx->strmList;
+  lastStrm = vtCtx->strmList;
+  while(currStrm != NULL){
+    
+    /* check for existing stream */
+    if( (strmID != VT_CUPTI_NO_STREAM_ID && currStrm->cuStrmID == strmID) || 
+        (cuStrm != VT_CUPTI_NO_STREAM && currStrm->cuStrm == cuStrm) ){
+      /*VT_CUPTI_UNLOCK();*/
+      return currStrm;
+    }
+    
+    /* check for reusable stream */
+    if(vt_gpu_stream_reuse && reusableStrm == NULL && currStrm->destroyed == 1){
+      reusableStrm = currStrm;
+    }
+    
+    /* remember last stream to append new created stream later */
+    lastStrm = currStrm;
+    
+    /* check next stream */
+    currStrm = currStrm->next;
+  }
+  
+  /* reuse a destroyed stream, if there is any available */
+  if(vt_gpu_stream_reuse && reusableStrm){
+    vt_cntl_msg(2, "[CUPTI] Reusing CUDA stream %d with stream %d",
+                   reusableStrm->cuStrmID, strmID);
+    reusableStrm->destroyed = 0;
+    reusableStrm->cuStrmID = strmID;
+    reusableStrm->cuStrm = cuStrm;
+
+    return reusableStrm;
+  }
+  
+#if defined(VT_CUPTI_ACTIVITY)
+  /* 
+   * If stream list is empty, the stream to be created is not the default
+   * stream and GPU idle and memory copy tracing is enabled, then create
+   * a default stream.
+   * This is necessary to preserve increasing event time stamps!
+   */
+  if(vtCtx->strmList == NULL && vtCtx->activity != NULL && 
+     strmID != vtCtx->activity->defaultStrmID && 
+     vt_gpu_trace_idle > 0 && vt_gpu_trace_mcpy){
+    vtCtx->strmList = vt_cupti_createStream(vtCtx, cuStrm, 
+                                               vtCtx->activity->defaultStrmID);
+    lastStrm = vtCtx->strmList;
+  }
+#endif /* VT_CUPTI_ACTIVITY */
+  
+  /* create the stream, which has not been created yet */
+  currStrm = vt_cupti_createStream(vtCtx, cuStrm, strmID);
+  
+  /* append the newly created stream */
+  if(NULL != lastStrm) lastStrm->next = currStrm;
+  else vtCtx->strmList = currStrm;
+  
+  /*VT_CUPTI_UNLOCK();*/
+  return currStrm;
+}
+
+/*
+ * Get a VampirTrace CUPTI stream by CUDA stream without locking.
+ * 
+ * @param vtCtx pointer to the VampirTrace CUPTI context, containing the stream
+ * @param strmID the CUPTI stream ID
+ * 
+ * @return VampirTrace CUPTI stream
+ */
+vt_cupti_strm_t* vt_cupti_getStreamByID(vt_cupti_ctx_t *vtCtx,
+                                        uint32_t strmID)
+{
+  vt_cupti_strm_t* vtStrm = NULL;
+
+  vtStrm = vtCtx->strmList;
+  while(vtStrm != NULL){
+    if(vtStrm->cuStrmID == strmID){
+      return vtStrm;
+    }
+    vtStrm = vtStrm->next;
+  }
+  
+  return NULL;
+}
+#endif /* VT_CUPTI_ACTIVITY || VT_CUPTI_CALLBACKS */
+
+
+
+/*
+ * Create a VampirTrace CUPTI context. If the CUDA context is not given, the 
+ * current context will be requested and used.
  * 
  * @param cuCtx CUDA context
  * @param cuDev CUDA device
@@ -108,22 +337,37 @@ vt_cupti_ctx_t* vt_cupti_createCtx(CUcontext cuCtx, CUdevice cuDev,
   if(vtCtx == NULL) 
     vt_error_msg("[CUPTI] Could not allocate memory for VT CUPTI context!");
   vtCtx->ctxID = cuCtxID;
+#if (defined(VT_CUPTI_ACTIVITY) || defined(VT_CUPTI_CALLBACKS))
+  vtCtx->gpuMemAllocated = 0;
+  vtCtx->gpuMemList = NULL;
+  vtCtx->strmList = NULL;
+#endif
   vtCtx->next = NULL;
   
   VT_CHECK_THREAD;
   vtCtx->ptid = VT_MY_THREAD;
   
-  /* get the current CUDA context, if it is not given */
-  if(cuCtx == NULL) CHECK_CU_ERROR(cuCtxGetCurrent(&cuCtx), NULL);
-  vtCtx->cuCtx = cuCtx;
-  
   /* try to get CUDA device (ID), if they are not given */
   if(cuDevID == VT_CUPTI_NO_DEVICE_ID){
     if(cuDev == VT_CUPTI_NO_CUDA_DEVICE){
-      /* neither device ID nor CUDA device is given */
-      if(CUDA_SUCCESS == cuCtxGetDevice(&cuDev)){
-        cuDevID = (uint32_t)cuDev;
+      CUcontext cuCurrCtx;
+      
+      if(cuCtx != NULL){
+        cuCtxGetCurrent(&cuCurrCtx);
+      
+        /* if given context does not match the current one, get the device for 
+           the given one */
+        if(cuCtx != cuCurrCtx)
+          VT_CUDRV_CALL(cuCtxSetCurrent(cuCtx), NULL);
       }
+      
+      if(CUDA_SUCCESS == cuCtxGetDevice(&cuDev))
+        cuDevID = (uint32_t)cuDev;
+      
+      /* reset the active context */
+      if(cuCtx != NULL && cuCtx != cuCurrCtx)
+        VT_CUDRV_CALL(cuCtxSetCurrent(cuCurrCtx), NULL);
+      
     }else{
       /* no device ID, but CUDA device is given */
       cuDevID = (uint32_t)cuDev;
@@ -132,6 +376,13 @@ vt_cupti_ctx_t* vt_cupti_createCtx(CUcontext cuCtx, CUdevice cuDev,
   
   vtCtx->devID = cuDevID;
   vtCtx->cuDev = cuDev;
+  
+  /* get the current CUDA context, if it is not given */
+  if(cuCtx == NULL) 
+    VT_CUDRV_CALL(cuCtxGetCurrent(&cuCtx), NULL);
+  
+  /* set the CUDA context */
+  vtCtx->cuCtx = cuCtx;
   
 #if defined(VT_CUPTI_ACTIVITY)
   vtCtx->activity = NULL;
@@ -146,7 +397,7 @@ vt_cupti_ctx_t* vt_cupti_createCtx(CUcontext cuCtx, CUdevice cuDev,
 #endif
 
   vt_cntl_msg(2, "[CUPTI] Created context for CUcontext %d, CUdevice %d", 
-               cuCtx, cuDev);
+              cuCtx, cuDev);
   
   return vtCtx;
 }
@@ -180,6 +431,19 @@ vt_cupti_ctx_t* vt_cupti_getCtx(CUcontext cuCtx)
   vtCtx = vt_cupti_ctxList;
   while(vtCtx != NULL){
     if(vtCtx->cuCtx == cuCtx){
+      
+      /* workaround to set the correct device number 
+      if(vtCtx->devID == VT_CUPTI_NO_DEVICE_ID){
+        CUdevice cuDev;
+        
+        if(CUDA_SUCCESS != cuCtxGetDevice(&cuDev)){
+          vt_warning("[CUPTI] Could not get CUdevice from context");
+        }
+        
+        vtCtx->devID = (uint32_t)cuDev;
+        vtCtx->cuDev = cuDev;
+      }*/
+      
       VT_CUPTI_UNLOCK();
       return vtCtx;
     }
@@ -221,26 +485,16 @@ vt_cupti_ctx_t* vt_cupti_getCtxNoLock(CUcontext cuCtx)
  */
 vt_cupti_ctx_t* vt_cupti_getCreateCtx(CUcontext cuCtx)
 {
-  vt_cupti_ctx_t* vtCtx = NULL;
+  vt_cupti_ctx_t* vtCtx = vt_cupti_getCtx(cuCtx);
   
-  /* lookup context */
-  VT_CUPTI_LOCK();
-  vtCtx = vt_cupti_ctxList;
-  while(vtCtx != NULL){
-    if(vtCtx->cuCtx == cuCtx){
-      VT_CUPTI_UNLOCK();
-      return vtCtx;
-    }
-    vtCtx = vtCtx->next;
+  if(vtCtx == NULL){
+    VT_SUSPEND_MALLOC_TRACING(VT_CURRENT_THREAD);
+    vtCtx = vt_cupti_createCtx(cuCtx, VT_CUPTI_NO_CUDA_DEVICE,
+                               VT_CUPTI_NO_CONTEXT_ID, VT_CUPTI_NO_DEVICE_ID);
+    VT_RESUME_MALLOC_TRACING(VT_CURRENT_THREAD);
+
+    vt_cupti_prependCtx(vtCtx);
   }
-  VT_CUPTI_UNLOCK();
-  
-  VT_SUSPEND_MALLOC_TRACING(VT_CURRENT_THREAD);
-  vtCtx = vt_cupti_createCtx(cuCtx, VT_CUPTI_NO_CUDA_DEVICE,
-                             VT_CUPTI_NO_CONTEXT_ID, VT_CUPTI_NO_DEVICE_ID);
-  VT_RESUME_MALLOC_TRACING(VT_CURRENT_THREAD);
-  
-  vt_cupti_prependCtx(vtCtx);
   
   return vtCtx;
 }
@@ -280,14 +534,49 @@ vt_cupti_ctx_t* vt_cupti_removeCtx(CUcontext *cuCtx)
 }
 
 /*
- * Free the allocated memory for this VampirTrace CUPTI context.
+ * Finalize the VampirTrace CUPTI context and free all memory allocated with it.
  * 
  * @param vtCtx pointer to the VampirTrace CUPTI context
  */
-void vt_cupti_freeCtx(vt_cupti_ctx_t *vtCtx)
+void vt_cupti_finalizeCtx(vt_cupti_ctx_t *vtCtx)
 {
   if(vtCtx == NULL)
     return;
+  
+  /* write exit event for GPU idle time */
+  if(vt_gpu_trace_idle > 0 && vtCtx->strmList != NULL 
+#if defined(VT_CUPTI_ACTIVITY)
+     && vtCtx->activity != NULL && vtCtx->activity->gpuIdleOn == 1
+#endif
+    ){
+    uint64_t idle_end = vt_pform_wtime();
+    
+    /*vt_warning("IDLEexit: %llu (%d)", idle_end, vtCtx->strmList->vtThrdID);*/
+    vt_exit(vtCtx->strmList->vtThrdID, &idle_end);
+  }
+  
+  /* cleanup stream list */
+  while(vtCtx->strmList != NULL){
+    vt_cupti_strm_t *vtStrm = vtCtx->strmList;
+    
+    vtCtx->strmList = vtCtx->strmList->next;
+    
+    free(vtStrm);
+    vtStrm = NULL;
+  }
+  
+  /* free CUDA malloc entries, if user application has memory leaks */
+  while(vtCtx->gpuMemList != NULL){
+    vt_cupti_gpumem_t *vtMem =  vtCtx->gpuMemList;
+    
+    if(vt_gpu_trace_memusage > 1)
+      vt_cntl_msg(1, "[CUPTI] Free of %d bytes GPU memory missing!", 
+                     vtMem->size);
+    
+    vtCtx->gpuMemList = vtMem->next;
+    free(vtMem);
+    vtMem = NULL;
+  }
   
 #if defined(VT_CUPTI_ACTIVITY)
   if(vtCtx->activity != NULL)
@@ -305,6 +594,7 @@ void vt_cupti_freeCtx(vt_cupti_ctx_t *vtCtx)
 #endif
   
   free(vtCtx);
+  vtCtx = NULL;
 }
 
 /*

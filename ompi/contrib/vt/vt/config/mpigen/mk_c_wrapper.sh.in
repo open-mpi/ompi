@@ -137,9 +137,11 @@ cat <<End-of-File >$tmp.awk
   if (NF > 2) {
     for (i=3; i<=NF; i++) {
       split(\$i,typeandpara," ")
-      type[i-2]=typeandpara[1]
-      para[i-2]=typeandpara[2]
+      j=1
       if (i > 3) printf ", "
+      if (length(typeandpara) == 3) printf "%s ",typeandpara[j++]
+      type[i-2]=typeandpara[j++]
+      para[i-2]=typeandpara[j]
       printf "%s %s",type[i-2],para[i-2]
     }
   }
