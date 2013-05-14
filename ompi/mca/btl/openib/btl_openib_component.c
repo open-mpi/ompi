@@ -3707,14 +3707,14 @@ static int btl_openib_component_progress(void)
         int local_count = 0;
         mca_btl_base_descriptor_t *frag;
         while (local_count < 10 && (1 == progress_one_cuda_dtoh_event(&frag))) {
-            opal_output(-1, "btl_openib: event completed on frag=%p", (void *)frag);
+            OPAL_OUTPUT((-1, "btl_openib: event completed on frag=%p", (void *)frag));
             frag->des_cbfunc(NULL, NULL, frag, OMPI_SUCCESS);
             local_count++;
         }
         count += local_count;
     }
     if (count > 0) {
-        opal_output(-1, "btl_openib: DONE with openib progress, count=%d", count);
+        OPAL_OUTPUT((-1, "btl_openib: DONE with openib progress, count=%d", count));
     }
 #endif /* OMPI_CUDA_SUPPORT */
 

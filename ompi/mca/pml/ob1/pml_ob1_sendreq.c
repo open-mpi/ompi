@@ -349,7 +349,7 @@ mca_pml_ob1_copy_frag_completion( mca_btl_base_module_t* btl,
     des->des_cbfunc = mca_pml_ob1_frag_completion;
     /* Reset the BTL onwership flag as the BTL can free it after completion. */
     des->des_flags |= MCA_BTL_DES_FLAGS_BTL_OWNERSHIP;
-    opal_output(-1, "copy_frag_completion FRAG frag=%p", (void *)des);
+    OPAL_OUTPUT((-1, "copy_frag_completion FRAG frag=%p", (void *)des));
     /* Currently, we cannot support a failure in the send.  In the blocking
      * case, the counters tracking the fragments being sent are not adjusted
      * until the function returns success, so it handles the error by leaving
@@ -1069,7 +1069,7 @@ cannot_pack:
           * set up prior to checking.
           */
         if (des->des_flags & MCA_BTL_DES_FLAGS_CUDA_COPY_ASYNC) {
-            opal_output(-1, "Initiating async copy on FRAG frag=%p", (void *)des);
+            OPAL_OUTPUT((-1, "Initiating async copy on FRAG frag=%p", (void *)des));
             /* Need to make sure BTL does not free frag after completion
              * of asynchronous copy as we still need to send the fragment. */
             des->des_flags &= ~MCA_BTL_DES_FLAGS_BTL_OWNERSHIP;
