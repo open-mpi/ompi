@@ -35,7 +35,7 @@ const char *mca_fs_pvfs2_component_version_string =
 
 static int pvfs2_register(void);
 
-int mca_fs_pvfs2_priority = 0;
+int mca_fs_pvfs2_priority = 20;
 int mca_fs_pvfs2_stripe_size = -1;
 int mca_fs_pvfs2_stripe_width = -1;
 int mca_fs_pvfs2_IS_INITIALIZED = 0;
@@ -74,7 +74,7 @@ mca_fs_base_component_2_0_0_t mca_fs_pvfs2_component = {
 static int
 pvfs2_register(void)
 {
-    mca_fs_pvfs2_priority = 0;
+    mca_fs_pvfs2_priority = 20;
     (void) mca_base_component_var_register (&mca_fs_pvfs2_component.fsm_version,
                                             "priority", "Priority of the pvfs2 fs component",
                                             MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,

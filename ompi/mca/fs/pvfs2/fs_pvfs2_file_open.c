@@ -61,9 +61,6 @@ mca_fs_pvfs2_file_open (struct ompi_communicator_t *comm,
                         struct ompi_info_t *info,
                         mca_io_ompio_file_t *fh)
 {
-    /*    int amode;
-    int old_mask, perm;
-    */
     int ret;
     mca_fs_pvfs2 *pvfs2_fs;
     PVFS_fs_id pvfs2_id;
@@ -74,6 +71,10 @@ mca_fs_pvfs2_file_open (struct ompi_communicator_t *comm,
     struct ompi_datatype_t *types[2] = {&ompi_mpi_int.dt, &ompi_mpi_byte.dt};
     int lens[2] = {1, sizeof(PVFS_object_ref)};
     OPAL_PTRDIFF_TYPE offsets[2];
+    char char_stripe[MPI_MAX_INFO_KEY];
+    int flag;
+    int fs_pvfs2_stripe_size = -1;
+    int fs_pvfs2_stripe_width = -1;
 
     /* We are going to do what ROMIO does with one process resolving
      * the name and broadcasting to others */
@@ -101,6 +102,29 @@ mca_fs_pvfs2_file_open (struct ompi_communicator_t *comm,
     memset(&(pvfs2_fs->credentials), 0, sizeof(PVFS_credentials));
     PVFS_util_gen_credentials(&(pvfs2_fs->credentials));
 
+    /* check for stripe size and stripe depth in the info object and
+       update mca_fs_pvfs2_stripe_width and mca_fs_pvfs2_stripe_size
+       before calling fake_an_open() */
+
+    ompi_info_get (info, "stripe_size", MPI_MAX_INFO_VAL, char_stripe, &flag);
+    if ( flag ) {
+        sscanf ( char_stripe, "%d", &fs_pvfs2_stripe_size );
+    }
+
+    ompi_info_get (info, "stripe_width", MPI_MAX_INFO_VAL, char_stripe, &flag);
+    if ( flag ) {
+        sscanf ( char_stripe, "%d", &fs_pvfs2_stripe_width );
+    }
+
+    if (fs_pvfs2_stripe_size < 0) {
+        fs_pvfs2_stripe_size = mca_fs_pvfs2_stripe_size;
+    }
+
+    if (fs_pvfs2_stripe_width < 0) {
+        fs_pvfs2_stripe_width = mca_fs_pvfs2_stripe_width;
+    }
+
+
     if (OMPIO_ROOT == fh->f_rank) {
         ret = PVFS_util_resolve(filename, &pvfs2_id, pvfs2_path, OMPIO_MAX_NAME);
         if (ret < 0 ) {
@@ -111,8 +135,8 @@ mca_fs_pvfs2_file_open (struct ompi_communicator_t *comm,
             fake_an_open (pvfs2_id, 
                           pvfs2_path,
                           access_mode, 
-                          mca_fs_pvfs2_stripe_width,
-                          (PVFS_size)mca_fs_pvfs2_stripe_size,
+                          fs_pvfs2_stripe_width,
+                          (PVFS_size)fs_pvfs2_stripe_size,
                           pvfs2_fs, 
                           &o_status);
         }
@@ -121,8 +145,8 @@ mca_fs_pvfs2_file_open (struct ompi_communicator_t *comm,
     }
 
     /* broadcast status and (possibly valid) object reference */
-    MPI_Address(&o_status.error, &offsets[0]);
-    MPI_Address(&o_status.object_ref, &offsets[1]);
+    offsets[0] = (MPI_Aint)(&o_status.error);
+    offsets[1] = (MPI_Aint)(&o_status.object_ref);
 
     ompi_datatype_create_struct (2, lens, offsets, types, &open_status_type);
     ompi_datatype_commit (&open_status_type);
@@ -136,54 +160,27 @@ mca_fs_pvfs2_file_open (struct ompi_communicator_t *comm,
 
     ompi_datatype_destroy (&open_status_type);
 
-    if (o_status.error != 0)
-    {
-        if (NULL != pvfs2_fs) {
-            free(pvfs2_fs);
-            pvfs2_fs = NULL;
-        }
+    if (o_status.error != 0) {
+	/* No need to free the pvfs2_fs structure, since it will
+	   be deallocated in file_close in case of an error */
 	return OMPI_ERROR;
     }
 
     pvfs2_fs->object_ref = o_status.object_ref;
     fh->f_fs_ptr = pvfs2_fs;
-    if (mca_fs_pvfs2_stripe_size > 0) {
-        fh->f_stripe_size = mca_fs_pvfs2_stripe_size;
-    }
-    else {
-        fh->f_stripe_size = 65536;
-    }
-    return OMPI_SUCCESS;
 
-    /*
-    if (fh->f_perm == OMPIO_PERM_NULL) {
-        old_mask = umask(022);
-        umask(old_mask);
-        perm = old_mask ^ 0666;
-    }
-    else {
-        perm = fh->f_perm;
-    }
-
-    amode = 0;
-    if (fh->f_amode & MPI_MODE_CREATE)
-        amode = amode | O_CREAT;
-    if (fh->f_amode & MPI_MODE_RDONLY)
-        amode = amode | O_RDONLY;
-    if (fh->f_amode & MPI_MODE_WRONLY)
-        amode = amode | O_WRONLY;
-    if (fh->f_amode & MPI_MODE_RDWR)
-        amode = amode | O_RDWR;
-    if (fh->f_amode & MPI_MODE_EXCL)
-        amode = amode | O_EXCL;
-
-    fh->fd = open (filename, amode, perm);
-    if (fh->fd < 0) {
-        return OMPI_ERROR;
-    }
-
-    return OMPI_SUCCESS;
+    /* update the internal ompio structure to store stripe
+       size and stripe depth correctly. 
+       Hadi(to be done): For this read the stripe size and stripe depth from
+       the file itself
     */
+    
+    if (fs_pvfs2_stripe_size > 0 && fs_pvfs2_stripe_width > 0) {
+        fh->f_stripe_size = fs_pvfs2_stripe_size;
+        fh->f_cc_size = fs_pvfs2_stripe_width;
+    }
+ 
+    return OMPI_SUCCESS;
 }
 
 static void fake_an_open(PVFS_fs_id id, 
@@ -228,7 +225,7 @@ static void fake_an_open(PVFS_fs_id id,
                           &resp_lookup, 
                           PVFS2_LOOKUP_LINK_FOLLOW);
 
-    if (ret == (-PVFS_ENOENT)) {
+    if ( ret == (-PVFS_ENOENT)) {
 	if (access_mode & MPI_MODE_CREATE)  {
 	    ret = PVFS_sys_getparent(id, 
                                      pvfs2_name,
@@ -240,15 +237,14 @@ static void fake_an_open(PVFS_fs_id id,
 		return;
 	    }
             
-            /* Set the distribution strip size if specified */
+            /* Set the distribution stripe size if specified */
             if (0 < stripe_size) {
                 /* Note that the distribution is hardcoded here */
                 dist = PVFS_sys_dist_lookup ("simple_stripe");
                 ret = PVFS_sys_dist_setparam (dist,
                                               "strip_size",
                                               &stripe_size);
-                if (ret < 0)
-                {
+                if (ret < 0)  {
                     opal_output (1, 
                             "pvfs_sys_dist_setparam returns with %d\n", ret);
                     o_status->error = ret;
@@ -270,7 +266,7 @@ static void fake_an_open(PVFS_fs_id id,
                                   &(pvfs2_fs->credentials), 
                                   dist, 
                                   &resp_create); 
-#else             
+				  #else             
             ret = PVFS_sys_create(resp_getparent.basename, 
                                   resp_getparent.parent_ref, 
                                   attribs, 
@@ -303,7 +299,7 @@ static void fake_an_open(PVFS_fs_id id,
 	    o_status->object_ref = resp_create.ref;
 	}
         else {
-	    opal_output (1, "cannot create file without MPI_MODE_CREATE\n");
+	    opal_output (10, "cannot create file without MPI_MODE_CREATE\n");
 	    o_status->error = ret;
 	    return;
 	}
