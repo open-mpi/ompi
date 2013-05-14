@@ -255,8 +255,10 @@ opal_net_islocalhost(const struct sockaddr *addr)
 bool
 opal_net_samenetwork(const struct sockaddr *addr1, 
                      const struct sockaddr *addr2,
-                     uint32_t prefixlen)
+                     uint32_t plen)
 {
+    uint32_t prefixlen;
+
     if(addr1->sa_family != addr2->sa_family) {
         return false; /* address families must be equal */
     }
@@ -264,6 +266,11 @@ opal_net_samenetwork(const struct sockaddr *addr1,
     switch (addr1->sa_family) {
     case AF_INET:
         {
+            if (0 == plen) {
+                prefixlen = 32;
+            } else {
+                prefixlen = plen;
+            }
             const struct sockaddr_in *inaddr1 = (struct sockaddr_in*) addr1;
             const struct sockaddr_in *inaddr2 = (struct sockaddr_in*) addr2;
             uint32_t netmask = opal_net_prefix2netmask (prefixlen);
@@ -283,7 +290,12 @@ opal_net_samenetwork(const struct sockaddr *addr1,
             struct in6_addr *a6_1 = (struct in6_addr*) &inaddr1->sin6_addr;
             struct in6_addr *a6_2 = (struct in6_addr*) &inaddr2->sin6_addr;
 
-            if (64 == prefixlen) {
+            if (0 == plen) {
+                prefixlen = 64;
+            } else {
+                prefixlen = plen;
+            }
+             if (64 == prefixlen) {
                 /* prefixlen is always /64, any other case would be routing.
                    Compare the first eight bytes (64 bits) and hope that
                    endianess is not an issue on any system as long as
