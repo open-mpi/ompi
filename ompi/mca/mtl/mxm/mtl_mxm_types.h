@@ -29,12 +29,15 @@ typedef struct mca_mtl_mxm_module_t {
     int                   verbose;
     int                   mxm_np;
     mxm_h                 mxm_context;
+    mxm_ep_h              ep;
 #if MXM_API < MXM_VERSION(1,5)
     mxm_context_opts_t    mxm_opts;
 #else
     mxm_context_opts_t   *mxm_opts;
 #endif
-    mxm_ep_h              ep;
+#if MXM_API >= MXM_VERSION(2,0)
+    int                   using_mem_hooks;
+#endif
 } mca_mtl_mxm_module_t;
 
 
