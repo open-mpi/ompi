@@ -313,7 +313,7 @@ struct mca_btl_openib_component_t {
 #endif
 #if OMPI_CUDA_SUPPORT /* CUDA_ASYNC_SEND */
     bool cuda_async_send;
-    int cuda_async_recv;
+    bool cuda_async_recv;
 #endif /* OMPI_CUDA_SUPPORT */
 }; typedef struct mca_btl_openib_component_t mca_btl_openib_component_t;
 
