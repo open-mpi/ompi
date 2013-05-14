@@ -104,7 +104,7 @@ static rlim_t opal_setlimit(int resource, char *value)
 
 int opal_util_init_sys_limits(char **errmsg)
 {
-    char **lims, **lim, *setlim;
+    char **lims, **lim=NULL, *setlim;
     int i;
 
     /* if limits were not given, then nothing to do */
