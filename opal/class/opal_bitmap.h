@@ -246,6 +246,11 @@ OPAL_DECLSPEC int opal_bitmap_num_unset_bits(opal_bitmap_t *bm, int len);
  */
 OPAL_DECLSPEC int opal_bitmap_num_set_bits(opal_bitmap_t *bm, int len);
 
+/**
+ * Check a bitmap to see if any bit is set
+ */
+OPAL_DECLSPEC bool opal_bitmap_is_clear(opal_bitmap_t *bm);
+
 END_C_DECLS
 
 #endif
