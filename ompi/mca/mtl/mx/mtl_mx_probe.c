@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2010-2012 Oracle and/or its affiliates.  All rights reserved.
  *
  * Additional copyrights may follow
  *
@@ -62,7 +62,7 @@ ompi_mtl_mx_iprobe(struct mca_mtl_base_module_t* mtl,
         if(MPI_STATUS_IGNORE != status) { 
             MX_GET_SRC(mx_status.match_info, status->MPI_SOURCE);
             MX_GET_TAG(mx_status.match_info, status->MPI_TAG); 
-            OMPI_STATUS_SET_COUNT(&status->_ucount, &mx_status.msg_length);
+            status->_ucount = mx_status.msg_length;
         }
         *flag = 1;
     } else {

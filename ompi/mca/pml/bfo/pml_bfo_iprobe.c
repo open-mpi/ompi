@@ -40,7 +40,7 @@ int mca_pml_bfo_iprobe(int src,
 
     if( recvreq.req_recv.req_base.req_ompi.req_complete == true ) {
         if( NULL != status ) {
-            OMPI_STATUS_SET(status, &recvreq.req_recv.req_base.req_ompi.req_status);
+            *status = recvreq.req_recv.req_base.req_ompi.req_status;
         }
         rc = recvreq.req_recv.req_base.req_ompi.req_status.MPI_ERROR;
         *matched = 1;
@@ -71,7 +71,7 @@ int mca_pml_bfo_probe(int src,
     ompi_request_wait_completion(&recvreq.req_recv.req_base.req_ompi);
     rc = recvreq.req_recv.req_base.req_ompi.req_status.MPI_ERROR;
     if (NULL != status) {
-        OMPI_STATUS_SET(status, &recvreq.req_recv.req_base.req_ompi.req_status);
+        *status = recvreq.req_recv.req_base.req_ompi.req_status;
     }
 
     MCA_PML_BASE_RECV_REQUEST_FINI( &recvreq.req_recv );

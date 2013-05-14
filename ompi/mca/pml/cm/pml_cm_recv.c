@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2010-2012 Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2012      Sandia National Laboratories.  All rights reserved.
  * $COPYRIGHT$
  *
@@ -115,7 +115,7 @@ mca_pml_cm_recv(void *addr,
     ompi_request_wait_completion(&recvreq->req_base.req_ompi);
 
     if (NULL != status) {  /* return status */
-        OMPI_STATUS_SET(status, &recvreq->req_base.req_ompi.req_status);
+        *status = recvreq->req_base.req_ompi.req_status;
     }
     ret = recvreq->req_base.req_ompi.req_status.MPI_ERROR;
     ompi_request_free( (ompi_request_t**)&recvreq );
@@ -190,7 +190,7 @@ mca_pml_cm_mrecv(void *buf,
     ompi_request_wait_completion(&recvreq->req_base.req_ompi);
 
     if (NULL != status) {  /* return status */
-        OMPI_STATUS_SET(status, &recvreq->req_base.req_ompi.req_status);
+        *status = recvreq->req_base.req_ompi.req_status;
     }
     ret = recvreq->req_base.req_ompi.req_status.MPI_ERROR;
     ompi_request_free( (ompi_request_t**)&recvreq );

@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2012      Oracle and/or its affiliates.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -20,6 +21,7 @@
 #include "ompi_config.h"
 
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
+#include "ompi/mpi/fortran/mpif-h/status-conversion.h"
 #include "ompi/mpi/fortran/base/constants.h"
 
 #if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
@@ -73,25 +75,9 @@ void ompi_file_read_at_all_f(MPI_Fint *fh, MPI_Offset *offset,
    int c_ierr;
    MPI_File c_fh = MPI_File_f2c(*fh);
    MPI_Datatype c_type = MPI_Type_f2c(*datatype);
-   MPI_Status *c_status;
-#if OMPI_SIZEOF_FORTRAN_INTEGER != SIZEOF_INT
-   MPI_Status c_status2;
-#endif
+    OMPI_FORTRAN_STATUS_DECLARATION(c_status,c_status2)
 
-   /* See if we got MPI_STATUS_IGNORE */
-   if (OMPI_IS_FORTRAN_STATUS_IGNORE(status)) {
-      c_status = MPI_STATUS_IGNORE;
-   } else {
-      /* If sizeof(int) == sizeof(INTEGER), then there's no
-         translation necessary -- let the underlying functions write
-         directly into the Fortran status */
-      
-#if OMPI_SIZEOF_FORTRAN_INTEGER == SIZEOF_INT
-      c_status = (MPI_Status *) status;
-#else
-      c_status = &c_status2;
-#endif
-    }
+    OMPI_FORTRAN_STATUS_SET_POINTER(c_status,c_status2,status)
 
    c_ierr = MPI_File_read_at_all(c_fh, 
                                  (MPI_Offset) *offset,
@@ -101,10 +87,5 @@ void ompi_file_read_at_all_f(MPI_Fint *fh, MPI_Offset *offset,
                                  c_status);
    if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
-#if OMPI_SIZEOF_FORTRAN_INTEGER != SIZEOF_INT
-   if (MPI_SUCCESS == c_ierr &&
-       MPI_STATUS_IGNORE != c_status) {
-      MPI_Status_c2f(c_status, status);
-   }
-#endif
+    OMPI_FORTRAN_STATUS_RETURN(c_status,c_status2,status,c_ierr)
 }

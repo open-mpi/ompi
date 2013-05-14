@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2012      Oracle and/or its affiliates.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -20,6 +21,7 @@
 #include "ompi_config.h"
 
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
+#include "ompi/mpi/fortran/mpif-h/status-conversion.h"
 #include "ompi/mpi/fortran/base/constants.h"
 #include "ompi/communicator/communicator.h"
 
@@ -66,27 +68,11 @@ void ompi_mrecv_f(char *buf, MPI_Fint *count, MPI_Fint *datatype,
                   MPI_Fint *message, MPI_Fint *status, MPI_Fint *ierr)
 {
    int c_ierr;
-   MPI_Status *c_status;
-#if OMPI_SIZEOF_FORTRAN_INTEGER != SIZEOF_INT
-   MPI_Status c_status2;
-#endif
+    OMPI_FORTRAN_STATUS_DECLARATION(c_status,c_status2)
    MPI_Message c_message = MPI_Message_f2c(*message);
    MPI_Datatype c_type = MPI_Type_f2c(*datatype);
 
-   /* See if we got MPI_STATUS_IGNORE */
-   if (OMPI_IS_FORTRAN_STATUS_IGNORE(status)) {
-      c_status = MPI_STATUS_IGNORE;
-   } else {
-      /* If sizeof(int) == sizeof(INTEGER), then there's no
-         translation necessary -- let the underlying functions write
-         directly into the Fortran status */
-
-#if OMPI_SIZEOF_FORTRAN_INTEGER == SIZEOF_INT
-      c_status = (MPI_Status *) status;
-#else
-      c_status = &c_status2;
-#endif
-   }
+    OMPI_FORTRAN_STATUS_SET_POINTER(c_status,c_status2,status)
 
    /* Call the C function */
    c_ierr = OMPI_INT_2_FINT(MPI_Mrecv(OMPI_F2C_BOTTOM(buf), OMPI_FINT_2_INT(*count),
@@ -95,11 +81,7 @@ void ompi_mrecv_f(char *buf, MPI_Fint *count, MPI_Fint *datatype,
    if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
    if (MPI_SUCCESS == c_ierr) {
-#if OMPI_SIZEOF_FORTRAN_INTEGER != SIZEOF_INT
-       if (MPI_STATUS_IGNORE != c_status) {
-           MPI_Status_c2f(c_status, status);
-       }
-#endif
+      OMPI_FORTRAN_STATUS_RETURN(c_status,c_status2,status,c_ierr)
       /* message is an INOUT, and may be updated by the recv */
       *message = MPI_Message_c2f(c_message);
    }

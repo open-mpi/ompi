@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2013 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart,
@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2008 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2010-2012 Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
  * $COPYRIGHT$
  *
@@ -41,7 +41,7 @@ int ompi_request_default_test( ompi_request_t ** rptr,
     if( request->req_state == OMPI_REQUEST_INACTIVE ) {
         *completed = true;
         if (MPI_STATUS_IGNORE != status) {
-            OMPI_STATUS_SET(status, &ompi_status_empty);
+            *status = ompi_status_empty;
         }
         return OMPI_SUCCESS;
     }
@@ -57,14 +57,14 @@ int ompi_request_default_test( ompi_request_t ** rptr,
             ompi_grequest_invoke_query(request, &request->req_status);
             if (MPI_STATUS_IGNORE != status) {
                 int old_error = status->MPI_ERROR;
-                OMPI_STATUS_SET(status, &request->req_status);
+                *status = request->req_status;
                 status->MPI_ERROR = old_error;
             }
         } else if (MPI_STATUS_IGNORE != status) {
             /* Do *NOT* set a new value for status->MPI_ERROR here!
                See MPI-1.1 doc, sec 3.2.5, p.22 */
             int old_error = status->MPI_ERROR;
-            OMPI_STATUS_SET(status, &request->req_status);
+            *status = request->req_status;
             status->MPI_ERROR = old_error;
         }
         if( request->req_persistent ) {
@@ -133,14 +133,14 @@ int ompi_request_default_test_any(
                     /* Do *NOT* set a new value for status->MPI_ERROR
                        here!  See MPI-1.1 doc, sec 3.2.5, p.22 */
                     int old_error = status->MPI_ERROR;
-                    OMPI_STATUS_SET(status, &request->req_status);
+                    *status = request->req_status;
                     status->MPI_ERROR = old_error;
                 }
             } else if (MPI_STATUS_IGNORE != status) {
                 /* Do *NOT* set a new value for status->MPI_ERROR
                    here!  See MPI-1.1 doc, sec 3.2.5, p.22 */
                 int old_error = status->MPI_ERROR;
-                OMPI_STATUS_SET(status, &request->req_status);
+                *status = request->req_status;
                 status->MPI_ERROR = old_error;
             }
 
@@ -169,7 +169,7 @@ int ompi_request_default_test_any(
     } else {
         *completed = true;
         if (MPI_STATUS_IGNORE != status) {
-            OMPI_STATUS_SET(status, &ompi_status_empty);
+            *status = ompi_status_empty;
         }
     }
     return OMPI_SUCCESS;
@@ -215,20 +215,17 @@ int ompi_request_default_test_all(
         /* fill out completion status and free request if required */
         for( i = 0; i < count; i++, rptr++ ) {
             request  = *rptr;
-            /*
-             * If the request is OMPI_REQUEST_INACTIVE set the status
-             * (either in the case of standard and persistent requests),
-             * to the already initialized req_status.
-             * Works also in the case of persistent request w/ MPI_PROC_NULL.
+            /* If the request is OMPI_REQUEST_INACTIVE set the status
+             * to ompi_status_empty.
              */
             if( request->req_state == OMPI_REQUEST_INACTIVE ) {
-                OMPI_STATUS_SET(&statuses[i], &request->req_status);
+                statuses[i] = ompi_status_empty;
                 continue;
             }
             if (OMPI_REQUEST_GEN == request->req_type) {
                 ompi_grequest_invoke_query(request, &request->req_status);
             }
-            OMPI_STATUS_SET(&statuses[i], &request->req_status);
+            statuses[i] = request->req_status;
             if( request->req_persistent ) {
                 request->req_state = OMPI_REQUEST_INACTIVE;
                 continue;
@@ -325,11 +322,14 @@ int ompi_request_default_test_some(
     for( i = 0; i < num_requests_done; i++) {
         request = requests[indices[i]];
 
+        /* See note above: if a generalized request completes, we
+           *have* to call the query fn, even if STATUSES_IGNORE
+           was supplied */
+        if (OMPI_REQUEST_GEN == request->req_type) {
+            ompi_grequest_invoke_query(request, &request->req_status);
+        }
         if (MPI_STATUSES_IGNORE != statuses) {
-            if (OMPI_REQUEST_GEN == request->req_type) {
-                ompi_grequest_invoke_query(request, &request->req_status);
-            }
-            OMPI_STATUS_SET(&statuses[i], &request->req_status);
+            statuses[i] = request->req_status;
         }
 
         if (MPI_SUCCESS != request->req_status.MPI_ERROR) {
