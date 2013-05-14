@@ -319,6 +319,8 @@ if ($dry_run_arg) {
     print "Running: $cmd\n";
     if (0 == system($cmd)) {
         unlink($commit_file);
+        print "\nRunning final 'svn up' to get a stable svnversion\n";
+        system("svn up");
         exit(0);
     } else {
         print "Error during SVN commit!\n";
