@@ -173,7 +173,6 @@ int opal_datatype_register_params(void)
     if (0 > ret) {
 	return ret;
     }
-#endif /* OPAL_ENABLE_DEBUG */
 
 #if OPAL_CUDA_SUPPORT
     /* Set different levels of verbosity in the cuda related code. */
@@ -182,7 +181,12 @@ int opal_datatype_register_params(void)
                                  MCA_BASE_VAR_TYPE_INT, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
                                  OPAL_INFO_LVL_8, MCA_BASE_VAR_SCOPE_LOCAL,
                                  &opal_cuda_verbose);
+    if (0 > ret) {
+	return ret;
+    }
 #endif
+
+#endif /* OPAL_ENABLE_DEBUG */
 
     return OPAL_SUCCESS;
 }
