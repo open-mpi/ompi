@@ -94,7 +94,7 @@ OPAL_DECLSPEC bool opal_net_islocalhost(const struct sockaddr *addr);
  *
  * @param addr1             struct sockaddr of address
  * @param addr2             struct sockaddr of address
- * @param prefixlen         netmask (either CIDR oder IPv6 prefixlen)
+ * @param prefixlen         netmask (either CIDR or IPv6 prefixlen)
  * @return                  true if \c addr1 and \c addr2 are on the
  *                          same net, false otherwise.
  */
