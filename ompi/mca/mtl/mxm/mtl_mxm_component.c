@@ -13,6 +13,7 @@
 #include "opal/util/output.h"
 #include "opal/mca/base/mca_base_param.h"
 #include "ompi/proc/proc.h"
+#include "opal/memoryhooks/memory.h"
 
 #include "mtl_mxm.h"
 #include "mtl_mxm_types.h"
@@ -100,20 +101,35 @@ static int ompi_mtl_mxm_component_open(void)
         return OMPI_ERR_NOT_AVAILABLE;
     }
 #if MXM_API < MXM_VERSION(1,5)
-        mxm_fill_context_opts(&ompi_mtl_mxm.mxm_opts);
-        err = mxm_init(&ompi_mtl_mxm.mxm_opts, &ompi_mtl_mxm.mxm_context);
-        MXM_VERBOSE(1, "mxm component open");
+    mxm_fill_context_opts(&ompi_mtl_mxm.mxm_opts);
+    err = mxm_init(&ompi_mtl_mxm.mxm_opts, &ompi_mtl_mxm.mxm_context);
+    MXM_VERBOSE(1, "mxm component open");
 #else
-        err = mxm_config_read_context_opts(&ompi_mtl_mxm.mxm_opts);
-        if (err != MXM_OK) {
-           MXM_ERROR("Failed to parse MXM configuration");
-            return OPAL_ERR_BAD_PARAM;
-        }
 
-        err = mxm_init(ompi_mtl_mxm.mxm_opts, &ompi_mtl_mxm.mxm_context);
-        MXM_VERBOSE(1, "mxm component open");
+#if MXM_API >= MXM_VERSION(2,0)
+    /* Register memory hooks */
+    if ((OPAL_MEMORY_FREE_SUPPORT | OPAL_MEMORY_MUNMAP_SUPPORT) ==
+        ((OPAL_MEMORY_FREE_SUPPORT | OPAL_MEMORY_MUNMAP_SUPPORT) &
+         opal_mem_hooks_support_level()))
+    {
+        setenv("MXM_MEM_ON_DEMAND_MAP", "y", 0);
+        MXM_VERBOSE(1, "Enabling on-demand memory mapping");
+        ompi_mtl_mxm.using_mem_hooks = 1;
+    } else {
+        MXM_VERBOSE(1, "Disabling on-demand memory mapping");
+        ompi_mtl_mxm.using_mem_hooks = 0;
+    }
 #endif
 
+    err = mxm_config_read_context_opts(&ompi_mtl_mxm.mxm_opts);
+    if (err != MXM_OK) {
+        MXM_ERROR("Failed to parse MXM configuration");
+        return OPAL_ERR_BAD_PARAM;
+    }
+
+    err = mxm_init(ompi_mtl_mxm.mxm_opts, &ompi_mtl_mxm.mxm_context);
+    MXM_VERBOSE(1, "mxm component open");
+#endif
 
     if (MXM_OK != err) {
         if (MXM_ERR_NO_DEVICE == err) {
@@ -133,8 +149,7 @@ static int ompi_mtl_mxm_component_close(void)
     unsigned long cur_ver;
 
     cur_ver = mxm_get_version();
-
-    if (cur_ver == MXM_API) {
+    if ((cur_ver == MXM_API) && (ompi_mtl_mxm.mxm_context != NULL)) {
         mxm_cleanup(ompi_mtl_mxm.mxm_context);
         ompi_mtl_mxm.mxm_context = NULL;
     }
@@ -159,4 +174,3 @@ ompi_mtl_mxm_component_init(bool enable_progress_threads,
             sizeof(mca_mtl_mxm_request_t) - sizeof(struct mca_mtl_request_t);
     return &ompi_mtl_mxm.super;
 }
-
