@@ -660,21 +660,23 @@ int orte_dt_print_map(char **output, char *prefix, orte_job_map_t *src, opal_dat
     
     if (orte_devel_level_output) {
 #if OPAL_HAVE_HWLOC
-        asprintf(&tmp, "\n%sMapper requested: %s  Last mapper: %s  Mapping policy: %s  Ranking policy: %s  Binding policy: %s  Cpu set: %s  PPR: %s",
+        asprintf(&tmp, "\n%sMapper requested: %s  Last mapper: %s  Mapping policy: %s  Ranking policy: %s\n%sBinding policy: %s  Cpu set: %s  PPR: %s  Cpus-per-rank: %d",
                  pfx2, (NULL == src->req_mapper) ? "NULL" : src->req_mapper,
                  (NULL == src->last_mapper) ? "NULL" : src->last_mapper,
                  orte_rmaps_base_print_mapping(src->mapping),
                  orte_rmaps_base_print_ranking(src->ranking),
-                 opal_hwloc_base_print_binding(src->binding),
+                 pfx2, opal_hwloc_base_print_binding(src->binding),
                  (NULL == opal_hwloc_base_cpu_set) ? "NULL" : opal_hwloc_base_cpu_set,
-                 (NULL == src->ppr) ? "NULL" : src->ppr);
+                 (NULL == src->ppr) ? "NULL" : src->ppr,
+                 (int)src->cpus_per_rank);
 #else
-        asprintf(&tmp, "\n%sMapper requested: %s  Last mapper: %s  Mapping policy: %s  Ranking policy: %s  PPR: %s",
+        asprintf(&tmp, "\n%sMapper requested: %s  Last mapper: %s  Mapping policy: %s  Ranking policy: %s  PPR: %s  Cpus-per-rank: %d",
                  pfx2, (NULL == src->req_mapper) ? "NULL" : src->req_mapper,
                  (NULL == src->last_mapper) ? "NULL" : src->last_mapper,
                  orte_rmaps_base_print_mapping(src->mapping),
                  orte_rmaps_base_print_ranking(src->ranking),
-                 (NULL == src->ppr) ? "NULL" : src->ppr);
+                 (NULL == src->ppr) ? "NULL" : src->ppr,
+                 (int)src->cpus_per_rank));
 #endif
 
         if (ORTE_VPID_INVALID == src->daemon_vpid_start) {

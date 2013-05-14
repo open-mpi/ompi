@@ -316,7 +316,10 @@ static int bind_downwards(orte_job_t *jdata,
                                     "%s GOT %d CPUS",
                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ncpus);
                 /* track the number bound */
-                data = (opal_hwloc_obj_data_t*)trg_obj->userdata;
+                if (NULL == (data = (opal_hwloc_obj_data_t*)trg_obj->userdata)) {
+                    data = OBJ_NEW(opal_hwloc_obj_data_t);
+                    trg_obj->userdata = data;
+                }
                 data->num_bound++;
                 /* error out if adding a proc would cause overload and that wasn't allowed */
                 if (ncpus < data->num_bound &&
