@@ -13,6 +13,8 @@
 #ifndef _VT_DEFS_H
 #define _VT_DEFS_H
 
+#include "config.h"
+
 /* macro for one-step declaration and definition of functions */
 #define VT_DECLDEF(function)  \
 function; /* declaration */   \
@@ -25,8 +27,13 @@ function  /* definition */
  */
 
 #define VT_MIN_BUFSIZE               0x19000     /* 100KB */
-#define VT_MAX_BUFSIZE               0x280000000 /* 10GB */
-#define VT_MAX_THREAD_BUFSIZE        0x40000000  /* 1GB */
+#if SIZEOF_SIZE_T == 8
+# define VT_MAX_BUFSIZE              0x280000000 /* 10GB */
+# define VT_MAX_THREAD_BUFSIZE       0x40000000  /* 1GB */
+#else /* SIZEOF_SIZE_T */
+# define VT_MAX_BUFSIZE              0x40000000  /* 1GB */
+# define VT_MAX_THREAD_BUFSIZE       0x6400000   /* 100MB */
+#endif /* SIZEOF_SIZE_T */
 #define VT_DEFAULT_BUFSIZE           0x2000000   /* 32MB */
 
 typedef unsigned char* buffer_t;

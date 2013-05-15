@@ -1,5 +1,7 @@
 5.14.4openmpi
 	- fixed build issues due to API changes in MPI-3
+        - removed non-posix call to length(array) in AWK script for generating
+	  the C MPI wrapper functions
 	- fixed potential buffer overflow when reading the filter file
 	- enabled access to CUPTI counters for CUDA tracing via CUPTI
 	- enabled GPU memory usage tracing independent of the CUDA API
