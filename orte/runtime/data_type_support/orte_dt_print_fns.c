@@ -676,7 +676,7 @@ int orte_dt_print_map(char **output, char *prefix, orte_job_map_t *src, opal_dat
                  orte_rmaps_base_print_mapping(src->mapping),
                  orte_rmaps_base_print_ranking(src->ranking),
                  (NULL == src->ppr) ? "NULL" : src->ppr,
-                 (int)src->cpus_per_rank));
+                 (int)src->cpus_per_rank);
 #endif
 
         if (ORTE_VPID_INVALID == src->daemon_vpid_start) {
