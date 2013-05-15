@@ -56,7 +56,7 @@ static int staged_mapper(orte_job_t *jdata)
     /* only use this mapper if it was specified */
     if (NULL == jdata->map->req_mapper ||
         0 != strcasecmp(jdata->map->req_mapper, c->mca_component_name) ||
-        !(ORTE_MAPPING_STAGED & ORTE_GET_MAPPING_POLICY(jdata->map->mapping))) {
+        ORTE_MAPPING_STAGED != ORTE_GET_MAPPING_POLICY(jdata->map->mapping)) {
         /* I wasn't specified */
         opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                             "mca:rmaps:staged: job %s not using staged mapper",
