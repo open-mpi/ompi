@@ -109,7 +109,7 @@ static int ppr_mapper(orte_job_t *jdata)
         return ORTE_ERR_TAKE_NEXT_OPTION;
     }
     if (NULL == jdata->map->ppr ||
-        !(ORTE_MAPPING_PPR == ORTE_GET_MAPPING_DIRECTIVE(jdata->map->mapping))) {
+        !(ORTE_MAPPING_PPR & ORTE_GET_MAPPING_DIRECTIVE(jdata->map->mapping))) {
         /* not for us */
         opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                             "mca:rmaps:ppr: job %s not using ppr mapper",
