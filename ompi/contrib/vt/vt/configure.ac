@@ -170,6 +170,7 @@ AC_CHECK_SIZEOF(void*, 8)
 AC_CHECK_SIZEOF(int, 4)
 AC_CHECK_SIZEOF(long, 8)
 AC_CHECK_SIZEOF(mode_t, 4)
+AC_CHECK_SIZEOF(size_t, 8)
 SIZEOF_LONG=$ac_cv_sizeof_long
 AC_SUBST(SIZEOF_LONG)
 
