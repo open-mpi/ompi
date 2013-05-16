@@ -72,7 +72,7 @@ static int init(void);
 static int connect_accept ( ompi_communicator_t *comm, int root,
                             char *port_string, bool send_first,
                             ompi_communicator_t **newcomm );
-static void disconnect(ompi_communicator_t *comm);
+static int disconnect(ompi_communicator_t *comm);
 static int spawn(int count, char **array_of_commands,
                  char ***array_of_argv,
                  int *array_of_maxprocs,
@@ -646,12 +646,12 @@ static int connect_accept ( ompi_communicator_t *comm, int root,
     return rc;
 }
 
-static void disconnect(ompi_communicator_t *comm)
+static int disconnect(ompi_communicator_t *comm)
 {
     ompi_dpm_base_disconnect_obj *dobj;
     
     dobj = ompi_dpm_base_disconnect_init (comm);
-    ompi_dpm_base_disconnect_waitall(1, &dobj);
+    return ompi_dpm_base_disconnect_waitall(1, &dobj);
     
 }
 

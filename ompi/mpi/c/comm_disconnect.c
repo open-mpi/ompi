@@ -41,6 +41,8 @@ static const char FUNC_NAME[] = "MPI_Comm_disconnect";
 
 int MPI_Comm_disconnect(MPI_Comm *comm) 
 {
+    int ret = MPI_SUCCESS;
+
     MEMCHECKER(
         memchecker_comm(*comm);
     );
@@ -60,7 +62,9 @@ int MPI_Comm_disconnect(MPI_Comm *comm)
     OPAL_CR_ENTER_LIBRARY();
 
     if ( OMPI_COMM_IS_DYNAMIC(*comm)) {
-        ompi_dpm.disconnect (*comm);
+        if (OMPI_SUCCESS != ompi_dpm.disconnect (*comm)) {
+            ret = OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM, FUNC_NAME);
+        }
     }
     else {
         (*comm)->c_coll.coll_barrier(*comm, (*comm)->c_coll.coll_barrier_module);
@@ -69,5 +73,5 @@ int MPI_Comm_disconnect(MPI_Comm *comm)
     ompi_comm_free(comm);
 
     OPAL_CR_EXIT_LIBRARY();
-    return MPI_SUCCESS;
+    return ret;
 }
