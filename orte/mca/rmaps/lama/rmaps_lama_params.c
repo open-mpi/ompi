@@ -879,7 +879,7 @@ int rmaps_lama_parse_ordering(char *layout,
     return ORTE_SUCCESS;
 }
 
-bool rmaps_lama_ok_to_prune_level(rmaps_lama_order_type_t level)
+bool rmaps_lama_ok_to_prune_level(rmaps_lama_level_type_t level)
 {
     int i;
 
