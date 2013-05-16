@@ -37,9 +37,9 @@ int ompi_dpm_base_null_connect_accept (ompi_communicator_t *comm, int root,
     return OMPI_ERR_NOT_SUPPORTED;
 }
 
-void ompi_dpm_base_null_disconnect(ompi_communicator_t *comm)
+int ompi_dpm_base_null_disconnect(ompi_communicator_t *comm)
 {
-    return;
+    return OMPI_SUCCESS;
 }
 
 int ompi_dpm_base_null_spawn(int count, char **array_of_commands,
