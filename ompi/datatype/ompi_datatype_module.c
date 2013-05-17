@@ -426,26 +426,39 @@ int32_t ompi_datatype_init( void )
     int32_t i;
 
     for( i = 0; i < OMPI_DATATYPE_MPI_MAX_PREDEFINED; i++ ) {
-        const ompi_datatype_t* datatype = (ompi_datatype_t*)ompi_datatype_basicDatatypes[i];
+        ompi_datatype_t* datatype = (ompi_datatype_t*)ompi_datatype_basicDatatypes[i];
+        dt_elem_desc_t* pDesc;
 
         if( 0 == datatype->super.size ) continue;
-        datatype->super.desc.desc[0].elem.common.flags = OPAL_DATATYPE_FLAG_PREDEFINED |
-                                                         OPAL_DATATYPE_FLAG_DATA |
-                                                         OPAL_DATATYPE_FLAG_CONTIGUOUS;
-        datatype->super.desc.desc[0].elem.common.type  = i;
-        datatype->super.desc.desc[0].elem.count        = 1;
-        datatype->super.desc.desc[0].elem.disp         = 0;
-        datatype->super.desc.desc[0].elem.extent       = datatype->super.size;
 
-        datatype->super.desc.desc[1].end_loop.common.flags    = 0;
-        datatype->super.desc.desc[1].end_loop.common.type     = OPAL_DATATYPE_END_LOOP;
-        datatype->super.desc.desc[1].end_loop.items           = 1;
-        datatype->super.desc.desc[1].end_loop.first_elem_disp = datatype->super.desc.desc[0].elem.disp;
-        datatype->super.desc.desc[1].end_loop.size            = datatype->super.size;
+        /**
+         * Most of the OMPI datatypes have been initialized with the basic desc of the
+         * OPAL datatypes. Thus don't modify the desc, instead rebase the desc back into
+         * the OMPI predefined_elem_desc and update the fields there.
+         */
+        pDesc = &ompi_datatype_predefined_elem_desc[2 * i];
+        if( pDesc != datatype->super.desc.desc ) {
+            memcpy(pDesc, datatype->super.desc.desc, 2 * sizeof(dt_elem_desc_t));
+            datatype->super.desc.desc = pDesc;
+        } else {
+            datatype->super.desc.desc[0].elem.common.flags = OPAL_DATATYPE_FLAG_PREDEFINED |
+                                                             OPAL_DATATYPE_FLAG_DATA |
+                                                             OPAL_DATATYPE_FLAG_CONTIGUOUS |
+                                                             OPAL_DATATYPE_FLAG_NO_GAPS;
+            datatype->super.desc.desc[0].elem.common.type  = i;
+            datatype->super.desc.desc[0].elem.count        = 1;
+            datatype->super.desc.desc[0].elem.disp         = 0;
+            datatype->super.desc.desc[0].elem.extent       = datatype->super.size;
 
+            datatype->super.desc.desc[1].end_loop.common.flags    = 0;
+            datatype->super.desc.desc[1].end_loop.common.type     = OPAL_DATATYPE_END_LOOP;
+            datatype->super.desc.desc[1].end_loop.items           = 1;
+            datatype->super.desc.desc[1].end_loop.first_elem_disp = datatype->super.desc.desc[0].elem.disp;
+            datatype->super.desc.desc[1].end_loop.size            = datatype->super.size;
+        }
         /* Check if the data contain gaps */
-        if( (datatype->super.ub - datatype->super.lb) == (OPAL_PTRDIFF_TYPE)datatype->super.size ) {
-            datatype->super.desc.desc[0].elem.common.flags |= OPAL_DATATYPE_FLAG_NO_GAPS;
+        if( (datatype->super.ub - datatype->super.lb) != (OPAL_PTRDIFF_TYPE)datatype->super.size ) {
+            datatype->super.desc.desc[0].elem.common.flags &= ~OPAL_DATATYPE_FLAG_NO_GAPS;
         }
     }
 
