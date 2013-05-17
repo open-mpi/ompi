@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008-2012 University of Houston. All rights reserved.
+ * Copyright (c) 2008-2013 University of Houston. All rights reserved.
  * Copyright (c) 2011      Cisco Systems, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
@@ -436,28 +436,28 @@ int ompi_io_ompio_set_explicit_offset (mca_io_ompio_file_t *fh,
     int i = 0;
     int k = 0;
 
+    /* starting offset of the current copy of the filew view */
     fh->f_offset = (fh->f_view_extent * 
 		    ((offset*fh->f_etype_size) / fh->f_view_size)) + fh->f_disp;
 
-    fh->f_position_in_file_view = 0;
 
+    /* number of bytes used within the current copy of the file view */
     fh->f_total_bytes = (offset*fh->f_etype_size) % fh->f_view_size;
-
-    fh->f_index_in_file_view = 0;
     i = fh->f_total_bytes;
 
-    k = 0;
-    while (1) {
+
+    /* Initialize the block id and the starting offset of the current block 
+       within the current copy of the file view to zero */
+    fh->f_index_in_file_view = 0;
+    fh->f_position_in_file_view = 0;
+
+    /* determine block id that the offset is located in and
+       the starting offset of that block */
+    k = fh->f_decoded_iov[fh->f_index_in_file_view].iov_len;
+    while (i >= k) {
+        fh->f_position_in_file_view = k;
+        fh->f_index_in_file_view++;
         k += fh->f_decoded_iov[fh->f_index_in_file_view].iov_len;
-        if (i >= k) {
-            i = i - fh->f_decoded_iov[fh->f_index_in_file_view].iov_len;
-            fh->f_position_in_file_view += 
-                fh->f_decoded_iov[fh->f_index_in_file_view].iov_len;
-            fh->f_index_in_file_view = fh->f_index_in_file_view+1;
-        }
-        else {
-            break;
-        }
     }
 
     return OMPI_SUCCESS;
