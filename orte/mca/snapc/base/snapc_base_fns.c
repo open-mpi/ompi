@@ -9,6 +9,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007      Evergrid, Inc. All rights reserved.
  *
+ * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -357,7 +358,7 @@ static void snapc_none_global_cmdline_request(int status,
                                               orte_rml_tag_t tag,
                                               void* cbdata)
 {
-    int ret, exit_status = ORTE_SUCCESS;
+    int ret;
     orte_snapc_cmd_flag_t command;
     orte_std_cntr_t n = 1;
     opal_crs_base_ckpt_options_t *options = NULL;
@@ -368,7 +369,6 @@ static void snapc_none_global_cmdline_request(int status,
     n = 1;
     if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &command, &n, ORTE_SNAPC_CMD))) {
         ORTE_ERROR_LOG(ret);
-        exit_status = ret;
         goto cleanup;
     }
 
@@ -382,7 +382,6 @@ static void snapc_none_global_cmdline_request(int status,
          */
         if( ORTE_SUCCESS != (ret = orte_snapc_base_global_coord_ckpt_init_cmd(sender, buffer, options, &jobid)) ) {
             ORTE_ERROR_LOG(ret);
-            exit_status = ret;
             goto cleanup;
         }
 
@@ -391,7 +390,6 @@ static void snapc_none_global_cmdline_request(int status,
          */
         if( ORTE_SUCCESS != (ret = orte_snapc_base_global_coord_ckpt_update_cmd(sender, 0, ORTE_SNAPC_CKPT_STATE_NO_CKPT)) ) {
             ORTE_ERROR_LOG(ret);
-            exit_status = ret;
             goto cleanup;
         }
     }

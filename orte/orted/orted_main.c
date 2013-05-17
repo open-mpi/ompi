@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2011 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2007-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2009      Institut National de Recherche en Informatique
@@ -232,7 +232,9 @@ int orte_daemon(int argc, char *argv[])
     int i;
     opal_buffer_t *buffer;
     char hostname[100];
+#if OPAL_ENABLE_FT_CR == 1
     char *tmp_env_var = NULL;
+#endif
     
     /* initialize the globals */
     memset(&orted_globals, 0, sizeof(orted_globals));
@@ -330,7 +332,6 @@ int orte_daemon(int argc, char *argv[])
                 true, &environ);
     free(tmp_env_var);
 #endif
-    tmp_env_var = NULL; /* Silence compiler warning */
 
     /* if mapreduce set, flag it */
     if (orted_globals.mapreduce) {

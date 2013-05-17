@@ -12,7 +12,7 @@
  * Copyright (c) 2007-2008 Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2007-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
- * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2011-2013 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -123,7 +123,9 @@ int
 main(int argc, char *argv[])
 {
     int ret = ORTE_SUCCESS;
+#if OPAL_ENABLE_FT_CR == 1
     char *tmp_env_var;
+#endif
 
     /* This is needed so we can print the help message */
     if (ORTE_SUCCESS != (ret = opal_init_util(&argc, &argv))) {
@@ -153,8 +155,6 @@ main(int argc, char *argv[])
     opal_setenv(tmp_env_var,
                 "1", true, NULL);
     free(tmp_env_var);
-#else
-    tmp_env_var = NULL; /* Silence compiler warning */
 #endif
 
     if (ORTE_SUCCESS != (ret = orte_init(&argc, &argv, ORTE_PROC_TOOL))) {

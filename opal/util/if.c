@@ -309,9 +309,7 @@ int16_t opal_ifaddrtokindex(const char* if_addr)
             
             if (AF_INET == r->ai_family) {
                 struct sockaddr_in ipv4;
-                struct sockaddr_in *inaddr;
 
-                inaddr = (struct sockaddr_in*) &intf->if_addr;
                 memcpy (&ipv4, r->ai_addr, r->ai_addrlen);
                 if (opal_net_samenetwork((struct sockaddr*)&ipv4, (struct sockaddr*)&intf->if_addr, intf->if_mask)) {
                     return intf->if_kernel_index;

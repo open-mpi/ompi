@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
@@ -367,7 +367,9 @@ static int parse_args(int argc, char *argv[]) {
 
 static int orte_ps_init(int argc, char *argv[]) {
     int ret;
+#if OPAL_ENABLE_FT_CR == 1
     char * tmp_env_var = NULL;
+#endif
 
     /*
      * Make sure to init util before parse_args
@@ -415,8 +417,6 @@ static int orte_ps_init(int argc, char *argv[]) {
                 "1",
                 true, &environ);
     free(tmp_env_var);
-#else
-    tmp_env_var = NULL; /* Silence compiler warning */
 #endif
 
     /***************************
@@ -533,7 +533,9 @@ static int pretty_print_jobs(orte_job_t **jobs, orte_std_cntr_t num_jobs) {
     orte_std_cntr_t i;
     char *jobstr;
     orte_jobid_t mask=0x0000ffff;
+#if OPAL_ENABLE_FT_CR == 1
     char * state_str = NULL;
+#endif
 
     for(i=0; i < num_jobs; i++) {
         job = jobs[i];
@@ -569,7 +571,6 @@ static int pretty_print_jobs(orte_job_t **jobs, orte_std_cntr_t num_jobs) {
                              strlen("Ckpt Loc") :
                              strlen(job->ckpt_snapshot_loc) ) );
 #else
-        state_str = NULL;
         len_ckpt_s = -3;
         len_ckpt_r = -3;
         len_ckpt_l = -3;
@@ -642,7 +643,9 @@ static int pretty_print_vpids(orte_job_t *job) {
     orte_proc_t *vpid;
     orte_app_context_t *app;
     char *o_proc_name;
+#if OPAL_ENABLE_FT_CR == 1
     char *state_str = NULL;
+#endif
 
     /*
      * Caculate segment lengths
@@ -719,8 +722,6 @@ static int pretty_print_vpids(orte_job_t *job) {
         if( NULL != vpid->ckpt_snapshot_loc &&
             (int)strlen(vpid->ckpt_snapshot_loc) > len_ckpt_l) 
             len_ckpt_l = strlen(vpid->ckpt_snapshot_loc);
-#else
-        state_str = NULL;
 #endif
     }
 

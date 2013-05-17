@@ -4,6 +4,7 @@
  * Copyright (c) 2012      The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
+ * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -566,7 +567,6 @@ int opal_tree_copy_subtree(opal_tree_t *from_tree, opal_tree_item_t *from_item,
 
 opal_tree_item_t *opal_tree_dup_item(opal_tree_t *base, opal_tree_item_t *from)
 {
-    int ret;
     opal_buffer_t *buffer = NULL;
     opal_tree_item_t *new_item = NULL;
 
@@ -575,7 +575,7 @@ opal_tree_item_t *opal_tree_dup_item(opal_tree_t *base, opal_tree_item_t *from)
     opal_tree_serialize(from, buffer);
 
     new_item = OBJ_NEW(opal_tree_item_t);
-    ret = opal_tree_deserialize(buffer, new_item);
+    opal_tree_deserialize(buffer, new_item);
 
     OBJ_RELEASE(buffer);
     return new_item;
@@ -670,7 +670,7 @@ static opal_tree_item_t *find_in_descendants(opal_tree_item_t* item, void *key)
  */
 opal_tree_item_t *opal_tree_find_with(opal_tree_item_t *item, void *key)
 {
-    opal_tree_item_t *root, *curr_item = item, *result = NULL;
+    opal_tree_item_t *curr_item = item, *result = NULL;
     
     if (!opal_tree_is_empty(item->opal_tree_container)) {
         /* check my descendant for a match */
@@ -684,7 +684,6 @@ opal_tree_item_t *opal_tree_find_with(opal_tree_item_t *item, void *key)
         }
             
         /* check my ancestors (uncles) for match */
-        root = opal_tree_get_root(item->opal_tree_container);
         curr_item = item;
         while (!result && curr_item && curr_item->opal_tree_num_ancestors > 0){
             curr_item = opal_tree_get_next_sibling(item->opal_tree_parent);

@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
+ * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -1285,7 +1286,7 @@ static void recv_dfs_cmd(int status, orte_process_name_t* sender,
     orte_dfs_cmd_t cmd;
     int32_t cnt;
     opal_list_item_t *item;
-    int remote_fd, my_fd;
+    int my_fd;
     int32_t rc, nmaps;
     char *filename;
     orte_dfs_tracker_t *trk;
@@ -1581,7 +1582,6 @@ static void recv_dfs_cmd(int status, orte_process_name_t* sender,
 
     case ORTE_DFS_READ_CMD:
         /* set default error */
-        remote_fd = -1;
         my_fd = -1;
         bytes_read = -1;
         read_buf = NULL;

@@ -13,7 +13,7 @@
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2011-2013 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -1088,7 +1088,6 @@ void orte_odls_base_default_launch_local(int fd, short sd, void *cbdata)
     orte_proc_t *child=NULL;
     bool oversubscribed;
     int rc=ORTE_SUCCESS;
-    opal_buffer_t *alert;
     orte_std_cntr_t proc_rank;
     char basedir[MAXPATHLEN];
     char **argvsav=NULL;
@@ -1177,9 +1176,6 @@ void orte_odls_base_default_launch_local(int fd, short sd, void *cbdata)
     orte_sstore.wait_all_deps();
 #endif
 
-    /* setup to report the proc state to the HNP */
-    alert = OBJ_NEW(opal_buffer_t);
-    
     /* compute the total number of local procs currently alive and about to be launched */
     total_num_local_procs = compute_num_procs_alive(job) + jobdat->num_local_procs;
 
