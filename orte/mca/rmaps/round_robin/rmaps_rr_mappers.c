@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2009-2011 Cisco Systems, Inc.  All rights reserved. 
+ * Copyright (c) 2009-2013 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -434,7 +434,6 @@ int orte_rmaps_rr_byobj(orte_job_t *jdata,
     unsigned int nobjs;
     float balance;
     bool add_one=false;
-    bool oversubscribed = false;
 
     /* there are two modes for mapping by object: span and not-span. The
      * span mode essentially operates as if there was just a single
@@ -471,7 +470,6 @@ int orte_rmaps_rr_byobj(orte_job_t *jdata,
                            true, app->num_procs, app->app);
             return ORTE_ERR_SILENT;
         }
-        oversubscribed = true;
         /* compute how many extra procs to put on each node */
         balance = (float)((jdata->num_procs + app->num_procs) - num_slots) / (float)opal_list_get_size(node_list);
         extra_procs_to_assign = (int)balance;

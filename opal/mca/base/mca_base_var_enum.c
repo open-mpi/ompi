@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008-2011 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2008-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
@@ -63,7 +63,7 @@ int mca_base_var_enum_create (char *name, mca_base_var_enum_value_t *values, mca
 
 static int enum_dump (mca_base_var_enum_t *self, char **out)
 {
-    size_t len, i;
+    size_t i;
     char *tmp;
     int ret;
 
@@ -74,7 +74,7 @@ static int enum_dump (mca_base_var_enum_t *self, char **out)
     }
 
     tmp = NULL;
-    for (i = 0, len = 0 ; self->enum_values[i].string ; ++i) {
+    for (i = 0; self->enum_values[i].string ; ++i) {
         ret = asprintf (out, "%s%s%d:\"%s\"", tmp ? tmp : "", tmp ? ", " : "", self->enum_values[i].value,
                         self->enum_values[i].string);
         if (tmp) free (tmp);

@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2011 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * $COPYRIGHT$
@@ -48,7 +48,7 @@ static int orte_rmaps_rr_map(orte_job_t *jdata)
     int i;
     opal_list_t node_list;
     opal_list_item_t *item;
-    orte_std_cntr_t num_nodes, num_slots;
+    orte_std_cntr_t num_slots;
     int rc;
     mca_base_component_t *c = &mca_rmaps_round_robin_component.base_version;
     bool initial_map=true;
@@ -121,7 +121,6 @@ static int orte_rmaps_rr_map(orte_job_t *jdata)
             ORTE_ERROR_LOG(rc);
             goto error;
         }
-        num_nodes = (orte_std_cntr_t)opal_list_get_size(&node_list);
         /* flag that all subsequent requests should not reset the node->mapped flag */
         initial_map = false;
 

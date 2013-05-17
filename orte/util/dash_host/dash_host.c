@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -239,7 +240,6 @@ int orte_util_filter_dash_host_nodes(opal_list_t *nodes,
                                      bool remove)
 {
     opal_list_item_t* item;
-    bool found;
     opal_list_item_t *next;
     orte_std_cntr_t i, j, len_mapped_node=0;
     int rc;
@@ -339,7 +339,6 @@ int orte_util_filter_dash_host_nodes(opal_list_t *nodes,
                 next = opal_list_get_next(item);  /* save this position */
                 node = (orte_node_t*)item;
                 /* search -host list to see if this one is found */
-                found = false;
                 if (0 == strcmp(node->name, mapped_nodes[i]) ||
                     (0 == strcmp(node->name, hnp_node->name) &&
                     (0 == strcasecmp(mapped_nodes[i], "localhost") || opal_ifislocal(mapped_nodes[i])))) {

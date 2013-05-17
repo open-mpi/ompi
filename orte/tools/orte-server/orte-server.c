@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2007-2012 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * $COPYRIGHT$
@@ -107,7 +107,9 @@ int main(int argc, char *argv[])
     int ret = 0;
     opal_cmd_line_t *cmd_line = NULL;
     char *rml_uri;
+#if OPAL_ENABLE_FT_CR == 1
     char * tmp_env_var = NULL;
+#endif
 
     /* init enough of opal to process cmd lines */
     if (OPAL_SUCCESS != opal_init_util(&argc, &argv)) {
@@ -186,8 +188,6 @@ int main(int argc, char *argv[])
                 "1",
                 true, &environ);
     free(tmp_env_var);
-#else
-    tmp_env_var = NULL; /* Silence compiler warning */
 #endif
 
     /* don't want session directories */

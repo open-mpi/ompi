@@ -13,7 +13,7 @@
  * Copyright (c) 2006-2007 University of Houston. All rights reserved.
  * Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
- * Copyright (c) 2007      Cisco Systems, Inc. All rights reserved.
+ * Copyright (c) 2007-2013 Cisco Systems, Inc.  All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -184,7 +184,6 @@ int ompi_dpm_base_disconnect_waitall (int count, ompi_dpm_base_disconnect_obj **
     char *treq=NULL;
     int totalcount = 0;
     int i;
-    int ret;
 
     for (i=0; i<count; i++) {
         if (NULL == objs[i]) {
@@ -209,7 +208,7 @@ int ompi_dpm_base_disconnect_waitall (int count, ompi_dpm_base_disconnect_obj **
     }
 
     /* force all non-blocking all-to-alls to finish */
-    ret = ompi_request_wait_all (2*totalcount, reqs, MPI_STATUSES_IGNORE);
+    ompi_request_wait_all (2*totalcount, reqs, MPI_STATUSES_IGNORE);
 
     /* Finally, free everything */
     for (i=0; i< count; i++ ) {

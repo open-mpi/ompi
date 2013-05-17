@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2009-2012 Oak Ridge National Laboratory.  All rights reserved.
  * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
+ * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -252,9 +253,6 @@ int bcol_basesmuma_bcast_k_nomial_anyroot(bcol_function_args_t *input_args,
     int count=input_args->count;
     struct ompi_datatype_t* dtype=input_args->dtype;
     int64_t sequence_number=input_args->sequence_num;
-    
-
-    int pow_k_levels;
     int radix = cs->k_nomial_radix;
     int radix_mask;
     int relative_rank;
@@ -264,8 +262,6 @@ int bcol_basesmuma_bcast_k_nomial_anyroot(bcol_function_args_t *input_args,
     int bcol_id = (int) bcol_module->super.bcol_id;
     volatile mca_bcol_basesmuma_payload_t *data_buffs;
     volatile void* parent_data_pointer;
-    volatile void* my_data_pointer;
-    
     
     volatile mca_bcol_basesmuma_header_t *child_ctl_pointer;
     volatile mca_bcol_basesmuma_header_t *my_ctl_pointer;
@@ -294,15 +290,12 @@ int bcol_basesmuma_bcast_k_nomial_anyroot(bcol_function_args_t *input_args,
     idx=SM_ARRAY_INDEX(leading_dim,buff_idx,0);
 
     /* get pow_k_levels and pow_k_group_size */
-    pow_k_levels = bcol_module->pow_k_levels;
     pow_k_group_size = bcol_module->pow_k;
     
     
     data_buffs=(volatile mca_bcol_basesmuma_payload_t *)
         bcol_module->colls_with_user_data.data_buffs+idx;
      
-    my_data_pointer = data_buffs[my_rank].payload;
-
     /* Set pointer to current proc ctrl region */
     my_ctl_pointer = data_buffs[my_rank].ctl_struct; 
    

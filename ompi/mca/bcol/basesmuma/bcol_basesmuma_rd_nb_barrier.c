@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2009-2010 UT-Battelle, LLC. All rights reserved.
  * Copyright (c) 2009-2010 Mellanox Technologies. All rights reserved.
+ * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -36,7 +37,7 @@ int bcol_basesmuma_rd_nb_barrier_init_admin(
     int pair_rank;
     mca_bcol_basesmuma_ctl_struct_t **ctl_structs;
     netpatterns_pair_exchange_node_t *my_exchange_node;
-    int extra_rank, my_rank, pow_2;
+    int extra_rank, my_rank;
     mca_bcol_basesmuma_ctl_struct_t volatile *partner_ctl;
     mca_bcol_basesmuma_ctl_struct_t volatile *my_ctl;
     int64_t bank_genaration;
@@ -54,7 +55,6 @@ int bcol_basesmuma_rd_nb_barrier_init_admin(
     
 	my_exchange_node=&(bcol_module->recursive_doubling_tree);
     my_rank=bcol_module->super.sbgp_partner_module->my_index;
-    pow_2=bcol_module->super.sbgp_partner_module->pow_2;
     my_ctl=ctl_structs[my_rank];
     /* debug print */
     /*
@@ -206,7 +206,7 @@ int bcol_basesmuma_rd_nb_barrier_progress_admin(
     int pair_rank, start_index, restart_phase;
     mca_bcol_basesmuma_ctl_struct_t **ctl_structs;
     netpatterns_pair_exchange_node_t *my_exchange_node;
-    int extra_rank, my_rank, pow_2;
+    int extra_rank, my_rank;
     mca_bcol_basesmuma_ctl_struct_t volatile *partner_ctl;
     mca_bcol_basesmuma_ctl_struct_t volatile *my_ctl;
     int64_t bank_genaration;
@@ -224,7 +224,6 @@ int bcol_basesmuma_rd_nb_barrier_progress_admin(
 
     my_exchange_node=&(bcol_module->recursive_doubling_tree);
     my_rank=bcol_module->super.sbgp_partner_module->my_index;
-    pow_2=bcol_module->super.sbgp_partner_module->pow_2;
     my_ctl=ctl_structs[my_rank];
 
     /* check to make sure that this should be progressed */

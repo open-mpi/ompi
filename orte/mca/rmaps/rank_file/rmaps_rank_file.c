@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2011 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2008      Voltaire. All rights reserved
@@ -71,7 +71,7 @@ static int orte_rmaps_rf_map(orte_job_t *jdata)
     opal_list_item_t *item;
     orte_node_t *node, *nd, *root_node;
     orte_vpid_t rank, vpid_start;
-    orte_std_cntr_t num_nodes, num_slots;
+    orte_std_cntr_t num_slots;
     orte_rmaps_rank_file_map_t *rfmap;
     orte_std_cntr_t relative_index, tmp_cnt;
     int rc;
@@ -162,7 +162,6 @@ static int orte_rmaps_rf_map(orte_job_t *jdata)
             ORTE_ERROR_LOG(rc);
             goto error;
         }
-        num_nodes = (orte_std_cntr_t)opal_list_get_size(&node_list);
         /* flag that all subsequent requests should not reset the node->mapped flag */
         initial_map = false;
 
@@ -348,7 +347,6 @@ static int orte_rmaps_rank_file_parse(const char *rankfile)
     int rc = ORTE_SUCCESS;
     int cnt;
     char* node_name = NULL;
-    char* username = NULL; 
     char** argv;
     char buff[64];
     char* value;
@@ -444,7 +442,6 @@ static int orte_rmaps_rank_file_parse(const char *rankfile)
                         if (1 == cnt) {
                             node_name = strdup(argv[0]);
                         } else if (2 == cnt) {
-                            username = strdup(argv[0]);
                             node_name = strdup(argv[1]);
                         }
                         else {

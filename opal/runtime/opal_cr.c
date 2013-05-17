@@ -12,7 +12,7 @@
  * Copyright (c) 2007-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2012-2013 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -917,7 +917,6 @@ int opal_cr_reg_coord_callback(opal_cr_coord_callback_fn_t  new_func,
 }
 
 int opal_cr_refresh_environ(int prev_pid) {
-    int val;
     char *file_name = NULL;
 #if OPAL_ENABLE_CRDEBUG == 1
     char *tmp;
@@ -957,8 +956,6 @@ int opal_cr_refresh_environ(int prev_pid) {
     opal_output_verbose(10, opal_cr_output,
                         "opal_cr: init: C/R Debugging Enabled [%s] (refresh)\n",
                         (MPIR_debug_with_checkpoint ? "True": "False"));
-#else
-    val = 0; /* Silence Compiler warning */
 #endif
 
     if( NULL != file_name ){

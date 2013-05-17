@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2009-2012 Oak Ridge National Laboratory.  All rights reserved.
  * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
+ * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -269,10 +270,6 @@ int mca_bcol_base_fn_table_destroy(struct mca_bcol_base_module_t *bcol_module){
     int bcol_fn;
 
     for (bcol_fn = 0; bcol_fn < BCOL_NUM_OF_FUNCTIONS; bcol_fn++){
-        opal_list_t *tmp_list;
-
-        tmp_list = &bcol_module->bcol_fns_table[bcol_fn];
-
         /* gvm FIX: Go through the list and destroy each item */
         /* Destroy the function table object for each bcol type list */
         OBJ_DESTRUCT(&(bcol_module->bcol_fns_table[bcol_fn]));

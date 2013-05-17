@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2007-2009 Sun Microsystems, Inc. All rights reserved.
  * Copyright (c) 2007-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
@@ -596,11 +596,13 @@ int orterun(int argc, char *argv[])
 {
     int rc;
     opal_cmd_line_t cmd_line;
-    char *tmp_env_var = NULL;
     char *param;
     orte_job_t *daemons;
     orte_app_context_t *app, *dapp;
     orte_job_t *jdata=NULL, *jptr;
+#if OPAL_ENABLE_FT_CR == 1
+    char *tmp_env_var = NULL;
+#endif
 
     /* find our basename (the name of the executable) so that we can
        use it in pretty-print error messages */
@@ -808,7 +810,6 @@ int orterun(int argc, char *argv[])
                 true, &environ);
     free(tmp_env_var);
 #endif
-    tmp_env_var = NULL; /* Silence compiler warning */
 
     /* Intialize our Open RTE environment
      * Set the flag telling orte_init that I am NOT a

@@ -619,7 +619,6 @@ static int orte_ras_slurm_parse_range(char *base, char *range, char ***names)
     char *str, temp1[BUFSIZ];
     size_t i, j, start, end;
     size_t base_len, len, num_len;
-    size_t str_start, str_end;
     size_t num_str_len;
     bool found;
     int ret;
@@ -635,7 +634,6 @@ static int orte_ras_slurm_parse_range(char *base, char *range, char ***names)
     for (found = false, i = 0; i < len; ++i) {
         if (isdigit((int) range[i])) {
             if (!found) {
-                str_start = i;
                 start = atoi(range + i);
                 found = true;
                 break;
@@ -658,7 +656,6 @@ static int orte_ras_slurm_parse_range(char *base, char *range, char ***names)
     /* Was there no range, just a single number? */
     
     if (i >= len) {
-        str_end = len;
         end = start;
         found = true;
     }
@@ -667,7 +664,6 @@ static int orte_ras_slurm_parse_range(char *base, char *range, char ***names)
        number */
     
     else {
-        str_end = i - 1;
         for (; i < len; ++i) {
             if (isdigit((int) range[i])) {
                 end = atoi(range + i);
