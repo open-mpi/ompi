@@ -184,6 +184,7 @@ int ompi_dpm_base_disconnect_waitall (int count, ompi_dpm_base_disconnect_obj **
     char *treq=NULL;
     int totalcount = 0;
     int i;
+    int ret;
 
     for (i=0; i<count; i++) {
         if (NULL == objs[i]) {
@@ -208,7 +209,7 @@ int ompi_dpm_base_disconnect_waitall (int count, ompi_dpm_base_disconnect_obj **
     }
 
     /* force all non-blocking all-to-alls to finish */
-    ompi_request_wait_all (2*totalcount, reqs, MPI_STATUSES_IGNORE);
+    ret = ompi_request_wait_all (2*totalcount, reqs, MPI_STATUSES_IGNORE);
 
     /* Finally, free everything */
     for (i=0; i< count; i++ ) {
