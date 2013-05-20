@@ -286,8 +286,8 @@ opal_init_util(int* pargc, char*** pargv)
     }
 
     /* Setup the parameter system */
-    if (OPAL_SUCCESS != (ret = mca_base_param_init())) {
-        error = "mca_base_param_init";
+    if (OPAL_SUCCESS != (ret = mca_base_var_init())) {
+        error = "mca_base_var_init";
         goto return_error;
     }
 

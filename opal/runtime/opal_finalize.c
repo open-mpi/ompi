@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2012 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2010-2012 Los Alamos National Security, LLC.
+ * Copyright (c) 2010-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * $COPYRIGHT$
  *
@@ -74,7 +74,7 @@ opal_finalize_util(void)
     (void) mca_base_framework_close(&opal_if_base_framework);
 
     /* Clear out all the registered MCA params */
-    mca_base_param_finalize();
+    mca_base_var_finalize();
 
     opal_net_finalize();
 
