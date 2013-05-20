@@ -33,8 +33,8 @@ meta directory (that is present in all Subversion checkouts) in your
 source tree, and therefore activates a number of developer-only
 debugging features in the Open MPI code base.  
 
-The same debugging features are activated if you build in a Mercurial
-clone (with the hidden ".hg" meta directory).
+The same debugging features are activated if you build in a Git or
+Mercurial clone (with the hidden ".git" or ".hg" meta directory).
 
 By definition, debugging builds will perform [much] slower than
 optimized builds of Open MPI.  You should *NOT* conduct timing tests
