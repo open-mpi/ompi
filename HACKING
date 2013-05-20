@@ -56,7 +56,7 @@ developer's checkout, you have three main options:
      shell$ make all install
 
 2. Use a VPATH build.  Simply build Open MPI from a different
-   directory than the source tree -- one where the .svn / .hg
+   directory than the source tree -- one where the .svn / .git / .hg
    subdirectory is not present.  For example:
 
      shell$ svn co http://svn.open-mpi.org/svn/ompi/trunk ompi
