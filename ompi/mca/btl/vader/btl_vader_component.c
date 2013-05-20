@@ -26,7 +26,6 @@
 #include "ompi/constants.h"
 #include "opal/util/output.h"
 
-#include "opal/mca/base/mca_base_param.h"
 #include "ompi/mca/btl/base/btl_base_error.h"
 
 #include "btl_vader.h"

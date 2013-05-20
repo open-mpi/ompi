@@ -32,7 +32,6 @@
  * These units are large enough to warrant their own .h files
  */
 #include "opal/mca/mca.h"
-#include "opal/mca/base/mca_base_param.h"
 #include "opal/mca/base/mca_base_var.h"
 #include "opal/mca/base/mca_base_framework.h"
 #include "opal/util/cmd_line.h"
