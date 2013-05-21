@@ -145,5 +145,5 @@ MPI::Op::Is_commutative(void) const
 {
     int commute;
     (void)MPI_Op_commutative(mpi_op, &commute);
-    return (bool) commute;
+    return (bool) (commute != 0);
 }
