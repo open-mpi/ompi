@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
  *
+ * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -131,7 +132,7 @@ int rmaps_lama_parse_mppr(char *layout,
 int rmaps_lama_parse_ordering(char *layout,
                               rmaps_lama_order_type_t *order);
 
-bool rmaps_lama_ok_to_prune_level(rmaps_lama_order_type_t level);
+bool rmaps_lama_ok_to_prune_level(rmaps_lama_level_type_t level);
 
 /*********************************
  * Max Tree Structure
