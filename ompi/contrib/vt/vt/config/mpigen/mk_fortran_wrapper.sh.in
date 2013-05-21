@@ -1,8 +1,13 @@
 ##
 # @configure_input@
 #
-# make fortran_wrapper.c
+# make vtlib/vt_fmpiwrap.gen.c
 ##
+
+# exit the script if any statement returns a non-true return value
+set -e
+
+
 
 export SRCDIR=@top_vt_srcdir@/config/mpigen
 
@@ -55,7 +60,8 @@ for s in $src; do
     -e 's/(/,/' \
     -e 's/);//' \
     -e 's/, /,/g' \
-    -e 's/,$//'
+    -e 's/,$//' \
+    -e 's/CONST//g'
 done
 
 cat <<End-of-File >$tmp.c

@@ -21,8 +21,7 @@
 
 #include "vt_gpu.h"         /* common for GPU */
 #include "vt_libwrap.h"     /* wrapping of CUDA Runtime API functions */
-
-#include "vt_cuda_runtime_api.h" /* includes CUDA runtime API functions */
+#include "vt_cuda_runtime_api.h"       /* includes CUDA runtime API functions */
 
 /*#if (defined(VT_CUDARTWRAP))*/
 

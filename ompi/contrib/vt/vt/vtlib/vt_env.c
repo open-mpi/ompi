@@ -580,6 +580,12 @@ size_t vt_env_bsize()
                          buffer_size, VT_MIN_BUFSIZE);
               buffer_size = VT_MIN_BUFSIZE;
             }
+          else if (buffer_size > VT_MAX_BUFSIZE)
+            {
+              vt_warning("VT_BUFFER_SIZE=%d resized to %d bytes",
+                         buffer_size, VT_MAX_BUFSIZE);
+              buffer_size = VT_MAX_BUFSIZE;
+            }
         }
       else
         {
@@ -613,6 +619,12 @@ size_t vt_env_thread_bsize()
                          buffer_size, VT_MIN_BUFSIZE);
               buffer_size = VT_MIN_BUFSIZE;
             }
+          else if (buffer_size > VT_MAX_THREAD_BUFSIZE)
+            {
+              vt_warning("VT_THREAD_BUFFER_SIZE=%d resized to %d bytes",
+                         buffer_size, VT_MAX_THREAD_BUFSIZE);
+              buffer_size = VT_MAX_THREAD_BUFSIZE;
+            }
         }
       else
         {
@@ -620,30 +632,6 @@ size_t vt_env_thread_bsize()
         }
     }
 
-  return buffer_size;
-}
-
-size_t vt_env_copy_bsize()
-{
-  static size_t buffer_size = 0;
-  char* tmp;
-
-  if (buffer_size == 0)
-    {
-      tmp = getenv("VT_COPY_BUFFER_SIZE");
-      if (tmp != NULL && strlen(tmp) > 0)
-        {
-          vt_cntl_msg(2, "VT_COPY_BUFFER_SIZE=%s", tmp);
-
-          buffer_size = parse_size(tmp);
-          if (buffer_size <= 0)
-            vt_error_msg("VT_COPY_BUFFER_SIZE not properly set");
-        }
-      else
-        {
-          buffer_size = VT_DEFAULT_COPY_BUFFER_SIZE;
-        }
-    }
   return buffer_size;
 }
 
@@ -947,10 +935,13 @@ int vt_env_verbose()
       tmp = getenv("VT_VERBOSE");
       if (tmp != NULL && strlen(tmp) > 0)
         {
-          verbose = atoi(tmp);
-          if (verbose < 0) verbose = 0;
-
           vt_cntl_msg(2, "VT_VERBOSE=%s", tmp);
+
+          verbose = atoi(tmp);
+          if (verbose < 0)
+            verbose = 0;
+          else if (verbose > VT_MAX_VERBOSE_LEVEL)
+            verbose = VT_MAX_VERBOSE_LEVEL;
         }
       else
         {
@@ -1837,29 +1828,6 @@ size_t vt_env_cudatrace_bsize()
   return limit;
 }
 
-int vt_env_cudatrace_sync()
-{
-  static int sync = -1;
-
-  if (sync == -1)
-    {
-      char* tmp = getenv("VT_CUDATRACE_SYNC");
-      if (tmp != NULL && strlen(tmp) > 0)
-        {
-          vt_cntl_msg(2, "VT_CUDATRACE_SYNC=%s", tmp);
-
-          sync = atoi(tmp);
-          /* perhaps user wrote 'yes' or 'true' */
-          if(sync == 0 && parse_bool(tmp) == 1) sync = 3;
-        }
-      else
-        {
-          sync = 3;
-        }
-    }
-  return sync;
-}
-
 char* vt_env_cupti_events()
 {
   static int read = 1;
@@ -1973,6 +1941,29 @@ int vt_env_gputrace_memusage()
                   "use option 'memusage' with VT_GPUTRACE instead!");
     }
   return gpumem;
+}
+
+int vt_env_gputrace_sync()
+{
+  static int sync = -1;
+
+  if (sync == -1)
+    {
+      char* tmp = getenv("VT_GPUTRACE_SYNC");
+      if (tmp != NULL && strlen(tmp) > 0)
+        {
+          vt_cntl_msg(2, "VT_GPUTRACE_SYNC=%s", tmp);
+
+          sync = atoi(tmp);
+          /* perhaps user wrote 'yes' or 'true' */
+          if(sync == 0 && parse_bool(tmp) == 1) sync = 3;
+        }
+      else
+        {
+          sync = 3;
+        }
+    }
+  return sync;
 }
 
 char* vt_env_iofsl_servers()

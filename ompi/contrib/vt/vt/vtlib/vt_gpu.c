@@ -29,6 +29,8 @@ uint8_t vt_gpu_trace_idle = 0;
 
 uint8_t vt_gpu_trace_mcpy = 0;
 
+uint8_t vt_gpu_sync_level = 0;
+
 uint8_t vt_gpu_stream_reuse = 0;
 
 uint8_t vt_gpu_trace_memusage = 0;
@@ -38,6 +40,8 @@ uint8_t vt_gpu_debug = 0;
 uint8_t vt_gpu_error = 0;
 
 uint32_t vt_gpu_rid_idle = VT_NO_ID;
+
+uint32_t vt_gpu_rid_sync = VT_NO_ID;
 
 uint32_t vt_gpu_cid_memusage = VT_NO_ID;
 
@@ -70,13 +74,18 @@ void vt_gpu_init(void)
     vt_gpu_get_config();
 
     /* GPU idle time */
-    if(vt_gpu_trace_idle && vt_gpu_trace_kernels > 0){
-      vt_gpu_rid_idle = vt_def_region(VT_MASTER_THREAD, "compute_idle", VT_NO_ID,
-                                VT_NO_LNO, VT_NO_LNO, "GPU_IDLE", VT_FUNCTION);
+    if(vt_gpu_trace_idle > 0){
+      if(vt_gpu_trace_idle == 2 && vt_gpu_trace_mcpy){
+        vt_gpu_rid_idle = vt_def_region(VT_MASTER_THREAD, "gpu_idle", 
+                      VT_NO_ID, VT_NO_LNO, VT_NO_LNO, "GPU_IDLE", VT_FUNCTION);
+      }else if(vt_gpu_trace_kernels > 0){
+        vt_gpu_rid_idle = vt_def_region(VT_MASTER_THREAD, "compute_idle", 
+                      VT_NO_ID, VT_NO_LNO, VT_NO_LNO, "GPU_IDLE", VT_FUNCTION);
+      }else{
+        vt_gpu_trace_idle = 0;
+      }
       
       vt_gpu_init_time = vt_pform_wtime();
-    }else{
-      vt_gpu_trace_idle = 0;
     }
     
     /* GPU memory usage */
@@ -161,34 +170,32 @@ uint32_t vt_gpu_get_config(void)
       }else if(strcmp(feature, "idle") == 0){
         vt_gpu_config |= VT_GPU_TRACE_IDLE;
         vt_gpu_trace_idle = 1;
+      }else if(strcmp(feature, "pure_idle") == 0){
+        vt_gpu_config |= VT_GPU_TRACE_IDLE;
+        vt_gpu_trace_idle = 2;
       }else if(strcmp(feature, "memcpy") == 0){
         vt_gpu_config |= VT_GPU_TRACE_MEMCPY;
         vt_gpu_trace_mcpy = 1;
-      }else if(strcmp(feature, "stream_reuse") == 0){
-        vt_gpu_config |= VT_GPU_TRACE_STREAM_REUSE;
-        vt_gpu_stream_reuse = 1;
       }else if(strcmp(feature, "memusage") == 0){
         vt_gpu_config |= VT_GPU_TRACE_MEMUSAGE;
         vt_gpu_trace_memusage = 1;
+      }else if(strcmp(feature, "sync") == 0){
+        vt_gpu_config |= VT_GPU_TRACE_SYNC;
+        vt_gpu_sync_level = (uint8_t)vt_env_gputrace_sync();
+      }else if(strcmp(feature, "stream_reuse") == 0){
+        vt_gpu_config |= VT_GPU_STREAM_REUSE;
+        vt_gpu_stream_reuse = 1;
       }else if(strcmp(feature, "debug") == 0){
-        vt_gpu_config |= VT_GPU_TRACE_DEBUG;
+        vt_gpu_config |= VT_GPU_DEBUG;
         vt_gpu_debug = 1;
       }else if(strcmp(feature, "error") == 0){
-        vt_gpu_config |= VT_GPU_TRACE_ERROR;
+        vt_gpu_config |= VT_GPU_ERROR;
         vt_gpu_error = 1;
       }else{
         vt_warning("[GPU] Unknown GPU tracing option: '%s'", feature);
       }
       
       feature = strtok(NULL, sep);
-    }
-    
-    /* "memusage" requires "runtime" to be set */
-    if(vt_gpu_trace_memusage == 1 && 
-       (vt_gpu_config & VT_GPU_TRACE_RUNTIME_API) != VT_GPU_TRACE_RUNTIME_API){
-      vt_warning("[GPU] The option 'memusage' requires 'runtime' to be set! "
-                 "Setting option 'runtime'.");
-      vt_gpu_config |= VT_GPU_TRACE_RUNTIME_API;
     }
     
     /* environment variables for further refinement */

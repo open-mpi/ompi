@@ -22,7 +22,7 @@
 #define PRINT_CUPTI_ERROR(err, _msg){                    \
     const char *errstr;                                  \
     cuptiGetResultString(err, &errstr);                  \
-    vt_warning("[CUPTI EVENTS] %s:%d:%s:'%s'",           \
+    vt_warning("[CUPTI Events] %s:%d:%s:'%s'",           \
                  __FILE__, __LINE__, _msg, errstr);      \
   }
 
@@ -65,6 +65,9 @@
 
 #endif
 
+uint8_t vt_cupti_events_enabled = 0;
+uint8_t vt_cupti_events_sampling = 0;
+
 static uint32_t vt_cuptievt_rid_init;
 static uint8_t vt_cuptievt_initialized = 0;
 static uint8_t vt_cuptievt_finalized = 0;
@@ -92,16 +95,6 @@ static void vt_cuptievt_start(vt_cupti_events_t *vtcuptiEvtCtx);
 static void vt_cuptievt_stop(vt_cupti_events_t *vtcuptiEvtCtx);
 
 /*
- * Initialize a VampirTrace CUPTI events context. This includes the creation/
- * memory allocation.
- * 
- * @param cuDev the CUDA device
- * 
- * @return pointer to the created VampirTrace CUPTI context
- */
-static void vt_cuptievt_initCtx(vt_cupti_ctx_t *vtcuptiCtx);
-
-/*
  * Get to current VampirTrace CUPTI context or create a new one, if CUDA context
  * is not registered yet.
  *
@@ -118,13 +111,6 @@ static vt_cupti_ctx_t* vt_cuptievt_getOrCreateCtx(CUcontext cuCtx, uint32_t ptid
  * @param vtcuptiEvtCtx pointer to the VampirTrace CUPTI events context
  */
 static void vt_cuptievt_freeEventCtx(vt_cupti_events_t *vtcuptiEvtCtx);
-
-/* 
- * De-initialize the VampirTrace CUPTI events context without destroying it.
- * 
- * @param vtcuptiCtx pointer to the VampirTrace CUPTI events context
- */
-static void vt_cuptievt_finish(vt_cupti_events_t *vtcuptiEvtCtx);
 
 /*
  * Create a VampirTrace CUPTI event group.
@@ -234,7 +220,7 @@ static void vt_cupti_addEvtGrpsToCtx(vt_cupti_ctx_t *vtcuptiCtx)
         if(cuptiErr == CUPTI_ERROR_MAX_LIMIT_REACHED ||
            cuptiErr == CUPTI_ERROR_NOT_COMPATIBLE){
 
-          vt_cntl_msg(2, "[CUPTI EVENTS] Create new event group for event %d",
+          vt_cntl_msg(2, "[CUPTI Events] Create new event group for event %d",
                          vtcuptiEvt->cuptiEvtID);
 
           /* prepend last group to list, if it is not empty */
@@ -264,11 +250,11 @@ static void vt_cupti_addEvtGrpsToCtx(vt_cupti_ctx_t *vtcuptiCtx)
 }
 
 /*
- * Initializes a CUPTI host thread and create the event group.
- *
- * @param vtcuptiCtx optionally given CUDA context
+ * Initialize the CUPTI events data of the given VampirTrace CUPTI context.
+ * 
+ * @param vtCtx pointer to the VampirTrace CUPTI context
  */
-static void vt_cuptievt_initCtx(vt_cupti_ctx_t *vtcuptiCtx)
+void vt_cupti_events_initContext(vt_cupti_ctx_t *vtcuptiCtx)
 {
   vt_cupti_events_t *vtcuptiEvtCtx = NULL;
   
@@ -279,11 +265,10 @@ static void vt_cuptievt_initCtx(vt_cupti_ctx_t *vtcuptiCtx)
     CUresult cuErr = CUDA_SUCCESS;
     int dev_major, dev_minor;
     vt_cupti_device_t *cuptiDev;
-    
-    /*CHECK_CU_ERROR(cuCtxGetDevice(&cuDev), "cuCtxGetDevice");*/
 
+    /* TODO: do not trace this driver API function call */
     cuErr = cuDeviceComputeCapability(&dev_major, &dev_minor, vtcuptiCtx->cuDev);
-    CHECK_CU_ERROR(cuErr, "cuDeviceComputeCapability");
+    VT_CUDRV_CALL(cuErr, "cuDeviceComputeCapability");
 
     /* check if device capability already listed */
     VT_CUPTI_LOCK();
@@ -291,11 +276,11 @@ static void vt_cuptievt_initCtx(vt_cupti_ctx_t *vtcuptiCtx)
     VT_CUPTI_UNLOCK();
     
     cuptiDev = vt_cupti_checkMetricList(cuptiDev, dev_major, dev_minor);
-    if(cuptiDev){      
+    if(cuptiDev){
       /* allocate the VampirTrace CUPTI events context */
       vtcuptiEvtCtx = (vt_cupti_events_t *)malloc(sizeof(vt_cupti_events_t));
       if(vtcuptiEvtCtx == NULL)
-        vt_error_msg("malloc(sizeof(vt_cupti_events_t)) failed!");
+        vt_error_msg("[CUPTI Events] malloc(sizeof(vt_cupti_events_t)) failed!");
       
       vtcuptiEvtCtx->vtDevCap = cuptiDev;
       vtcuptiEvtCtx->vtGrpList = NULL;
@@ -320,11 +305,18 @@ static void vt_cuptievt_initCtx(vt_cupti_ctx_t *vtcuptiCtx)
     vtcuptiEvtCtx->cuptiEvtIDs = 
             (CUpti_EventID *)malloc(allocSize*sizeof(CUpti_EventID));
   }
+  
+  vt_cuptievt_start(vtcuptiEvtCtx);
 }
 
 static void vt_cuptievt_freeEventCtx(vt_cupti_events_t *vtcuptiEvtCtx)
 {
-  vt_cupti_evtgrp_t *vtcuptiGrp = vtcuptiEvtCtx->vtGrpList;
+  vt_cupti_evtgrp_t *vtcuptiGrp = NULL;
+  
+  if(vtcuptiEvtCtx == NULL)
+    return;
+  
+  vtcuptiGrp = vtcuptiEvtCtx->vtGrpList;
 
   while(vtcuptiGrp != NULL){
     free(vtcuptiGrp->cuptiEvtIDs);
@@ -364,18 +356,7 @@ static vt_cupti_ctx_t* vt_cuptievt_getOrCreateCtx(CUcontext cuCtx, uint32_t ptid
   
   /* if the event context is not available yet, then create it */
   if(NULL == vtcuptiCtx->events){
-    
-    vt_cuptievt_initCtx(vtcuptiCtx);
-    
-    /* start gathering counter values, if context was successfully initialized */
-    if(NULL != vtcuptiCtx->events){
-      vt_cuptievt_start(vtcuptiCtx->events);
-    }else{
-      /* no performance counters for this thread available */
-      vt_gpu_prop[ptid] |= VTGPU_NO_PC;
-      vt_cntl_msg(2, "[CUPTI Events] Could not initialize!");
-    }
-    
+    vt_cupti_events_initContext(vtcuptiCtx);
   }
   
   time = vt_pform_wtime();
@@ -430,7 +411,7 @@ static void vt_cupti_fillMetricList(vt_cupti_device_t *capList)
                                          &vtcuptiEvt->cuptiEvtID);
       if(cuptiErr != CUPTI_SUCCESS){
         if(!strncmp(metric, "help", 4)) vt_cupti_showAllCounters(capList);
-        vt_warning("[CUPTI EVENTS] Skipping invalid event '%s' for device %d",
+        vt_warning("[CUPTI Events] Skipping invalid event '%s' for device %d",
                    metric, cuptiDev->cuDev);
         metric = strtok(NULL, metric_sep);
         continue;
@@ -461,7 +442,7 @@ static void vt_cupti_fillMetricList(vt_cupti_device_t *capList)
 
         if(cuptiErr != CUPTI_SUCCESS){
           if(!strncmp(metric, "help", 4)) vt_cupti_showAllCounters(capList);
-          vt_warning("[CUPTI EVENTS] Skipping invalid event '%s' for device %d",
+          vt_warning("[CUPTI Events] Skipping invalid event '%s' for device %d",
                      metric, cuptiDev->cuDev);
         }else{
           /* create VampirTrace counter ID, if not yet done for other device */
@@ -531,13 +512,13 @@ static vt_cupti_device_t* vt_cuptievt_setupMetricList(void)
   VT_SUSPEND_MALLOC_TRACING(VT_CURRENT_THREAD);
   
   /* CUDA initialization */
-	CHECK_CU_ERROR(cuInit(0), "cuInit");
+	VT_CUDRV_CALL(cuInit(0), "cuInit");
   
   /* How many GPGPU devices do we have? */
 	err = cuDeviceGetCount( &deviceCount );
-	CHECK_CU_ERROR(err, "cuDeviceGetCount");
+	VT_CUDRV_CALL(err, "cuDeviceGetCount");
 	if(deviceCount == 0){
-		vt_error_msg("[CUPTI EVENTS] There is no device supporting CUDA.");
+		vt_error_msg("[CUPTI Events] There is no device supporting CUDA available.");
 	}
 
   /* create list with available compute capabilities */
@@ -547,10 +528,10 @@ static vt_cupti_device_t* vt_cuptievt_setupMetricList(void)
     int dev_major, dev_minor;
 
     err = cuDeviceGet(&cuDev, id);
-		CHECK_CU_ERROR(err, "cuDeviceGet");
+		VT_CUDRV_CALL(err, "cuDeviceGet");
 
     err = cuDeviceComputeCapability(&dev_major, &dev_minor, cuDev);
-    CHECK_CU_ERROR(err, "cuDeviceComputeCapability");
+    VT_CUDRV_CALL(err, "cuDeviceComputeCapability");
 
     /* check if device capability already listed */
     cuptiDev = vt_cupti_checkMetricList(capList, dev_major, dev_minor);
@@ -626,7 +607,9 @@ static void vt_cuptievt_enumEvents(CUdevice cuDev, CUpti_EventDomainID domainId)
 
   size = sizeof(CUpti_EventID) * maxEvents;
   eventId = (CUpti_EventID*)malloc(size);
-  if(eventId == NULL) vt_error_msg("Failed to allocate memory for event ID");
+  if(eventId == NULL) 
+    vt_error_msg("[CUPTI Events] Failed to allocate memory for event ID");
+  
   memset(eventId, 0, size);
 
   VTCUPTIEVENTDOMAINENUMEVENTS(cuDev,
@@ -686,7 +669,7 @@ static void vt_cupti_showAllCounters(vt_cupti_device_t *capList)
   
   while(capList != NULL){
     CUdevice cuDev = capList->cuDev;
-    vt_cntl_msg(1, "[CUPTI EVENTS] Available events for device %d (SM %d.%d):", 
+    vt_cntl_msg(1, "[CUPTI Events] Available events for device %d (SM %d.%d):", 
                    cuDev, capList->dev_major, capList->dev_minor);
     vt_cntl_msg(1, "Id:Name");
     vt_cntl_msg(1, "Description\n"
@@ -696,14 +679,14 @@ static void vt_cupti_showAllCounters(vt_cupti_device_t *capList)
     VT_CUPTI_CALL(cuptiErr, "cuptiDeviceGetNumEventDomains");
 
     if(maxDomains == 0){
-      vt_cntl_msg(1, "[CUPTI EVENTS] No domain is exposed by dev = %d\n", cuDev);
+      vt_warning("[CUPTI Events] No domain is exposed by dev = %d\n", cuDev);
       return;
     }
 
     size = sizeof(CUpti_EventDomainID) * maxDomains;
     domainId = (CUpti_EventDomainID*)malloc(size);
     if(domainId == NULL){
-      vt_cntl_msg(1, "[CUPTI EVENTS] Failed to allocate memory to domain ID");
+      vt_warning("[CUPTI Events] Failed to allocate memory to domain ID");
       return;
     }
     memset(domainId, 0, size);
@@ -738,8 +721,14 @@ static void vt_cuptievt_start(vt_cupti_events_t *vtcuptiEvtCtx)
   vt_cupti_evtgrp_t *vtcuptiGrp = NULL;
   vt_cupti_evtgrp_t *lastGrp = NULL;
 
-  if(vtcuptiEvtCtx == NULL) 
+  /* start gathering counter values, if context was successfully initialized */
+  if(NULL == vtcuptiEvtCtx){
+    /* no performance counters for this thread available */
+    VT_CHECK_THREAD;
+    vt_gpu_prop[VT_MY_THREAD] |= VTGPU_NO_PC;
+    vt_cntl_msg(2, "[CUPTI Events] Context not initialized!");
     return;
+  }
 
   /* start all groups */
   vtcuptiGrp = vtcuptiEvtCtx->vtGrpList;
@@ -792,8 +781,6 @@ static void vt_cuptievt_start(vt_cupti_events_t *vtcuptiEvtCtx)
 static void vt_cuptievt_stop(vt_cupti_events_t *vtcuptiEvtCtx)
 {
   vt_cupti_evtgrp_t *vtcuptiGrp = NULL;
-  
-  /*vt_cntl_msg(1, "[CUPTI EVENTS] vt_cupti_stop() ... ");*/
 
   if(vtcuptiEvtCtx == NULL || vt_gpu_debug) 
     return;
@@ -813,41 +800,6 @@ static void vt_cuptievt_stop(vt_cupti_events_t *vtcuptiEvtCtx)
     vtcuptiGrp = vtcuptiGrp->next;
   }
 }
-
-/* 
- * De-initialize the VampirTrace CUPTI event context without destroying it.
- * 
- * @param vtcuptiEvtCtx pointer to the VampirTrace CUPTI events context
- */
-static void vt_cuptievt_finish(vt_cupti_events_t *vtcuptiEvtCtx)
-{
-  CUptiResult cuptiErr = CUPTI_SUCCESS;
-
-  if(vtcuptiEvtCtx == NULL || vt_gpu_debug) 
-    return;
-
-  /*uint64_t time = vt_pform_wtime();
-  vt_cupti_resetCounter(vtcuptiCtx, 0, &time);*/
-
-  /* stop CUPTI counter capturing */
-  vt_cuptievt_stop(vtcuptiEvtCtx);
-
-  /* destroy all CUPTI event groups, which have been created */
-  {
-    vt_cupti_evtgrp_t *vtcuptiGrp = vtcuptiEvtCtx->vtGrpList;
-    
-    while(vtcuptiGrp != NULL){
-      cuptiErr = cuptiEventGroupRemoveAllEvents(vtcuptiGrp->evtGrp);
-      VT_CUPTI_CALL(cuptiErr, "cuptiEventGroupRemoveAllEvents");
-
-      cuptiErr = cuptiEventGroupDestroy(vtcuptiGrp->evtGrp);
-      VT_CUPTI_CALL(cuptiErr, "cuptiEventGroupDestroy");
-
-      vtcuptiGrp = vtcuptiGrp->next;
-    }
-  }
-}
-
 
 /* -------------START: Implementation of public functions ------------------ */
 /* ------------------------------------------------------------------------- */
@@ -876,11 +828,17 @@ void vt_cupti_events_init()
       VTTHRD_UNLOCK_IDS();
   #endif
 
+      vt_cupti_events_sampling = (uint8_t)vt_env_cupti_sampling();
+
       vtcuptievtCapList = vt_cuptievt_setupMetricList();
 
-      /* register the finalize function of VampirTrace CUPTI to be called before
-       * the program exits */
-      atexit(vt_cupti_events_finalize);
+      if(NULL == vtcuptievtCapList){
+        vt_cupti_events_enabled = 0;
+      }else{
+        /* register the finalize function of VampirTrace CUPTI to be called before
+         * the program exits */
+        atexit(vt_cupti_events_finalize);
+      }
 
       vt_cuptievt_initialized = 1;
       VT_CUPTI_UNLOCK();
@@ -897,17 +855,21 @@ void vt_cupti_events_finalize()
     VT_CUPTI_LOCK();
     if(!vt_cuptievt_finalized && vt_cuptievt_initialized){
       vt_cupti_ctx_t *vtcuptiCtxList =  vt_cupti_ctxList;
+      
+      /* needed because of the atexit in vt_cupti_events_init() */
+      VT_SUSPEND_MALLOC_TRACING(VT_CURRENT_THREAD);
 
       vt_cntl_msg(2, "[CUPTI Events] Finalizing ...");
 
       /* free VampirTrace CUPTI events context structures */
       while(vtcuptiCtxList != NULL){
-        vt_cuptievt_finish(vtcuptiCtxList->events);
+        if(vtcuptiCtxList->events != NULL){
+          vt_cupti_events_finalizeContext(vtcuptiCtxList);
+          free(vtcuptiCtxList->events);
+          vtcuptiCtxList->events = NULL;
+        }
 
         vtcuptiCtxList = vtcuptiCtxList->next;
-
-        free(vtcuptiCtxList->events);
-        vtcuptiCtxList->events = NULL;
       }
 
       /* free capability metric list */
@@ -926,11 +888,89 @@ void vt_cupti_events_finalize()
         free(tmp);
         tmp = NULL;
       }
+      
+      VT_RESUME_MALLOC_TRACING(VT_CURRENT_THREAD);
 
       vt_cuptievt_finalized = 1;
       VT_CUPTI_UNLOCK();
     }
   }
+}
+
+void vt_cupti_events_finalizeContext(vt_cupti_ctx_t *vtCtx)
+{
+  uint64_t time = vt_pform_wtime();
+  vt_cupti_strm_t *curStrm = NULL;
+  vt_cupti_evtgrp_t *vtcuptiGrp = NULL;
+  
+  if(vtCtx == NULL || vtCtx->events == NULL)
+    return;
+  
+  /* These CUPTI calls may fail, as CUPTI has implicitly destroyed something */
+  if(vt_gpu_debug == 0){
+    curStrm = vtCtx->strmList;
+
+
+    /* for all streams of this context */
+    while(curStrm != NULL){
+
+      /* ensure increasing time stamps */
+      if(time < curStrm->vtLastTime){
+        curStrm = curStrm->next;
+        continue;
+      }
+
+      vt_cuptievt_resetCounter(vtCtx->events, curStrm->vtThrdID, &time);
+
+      curStrm = curStrm->next;
+    }
+
+    /* stop CUPTI counter capturing */
+    vt_cuptievt_stop(vtCtx->events);
+
+    /* destroy all CUPTI event groups, which have been created */
+    vtcuptiGrp = vtCtx->events->vtGrpList;
+
+    while(vtcuptiGrp != NULL){
+      VT_CUPTI_CALL(cuptiEventGroupRemoveAllEvents(vtcuptiGrp->evtGrp), 
+                    "cuptiEventGroupRemoveAllEvents");
+
+      VT_CUPTI_CALL(cuptiEventGroupDestroy(vtcuptiGrp->evtGrp), 
+                    "cuptiEventGroupDestroy");
+
+      vtcuptiGrp = vtcuptiGrp->next;
+    }
+  }else{
+    /* set at least the VampirTrace counter to zero */
+    curStrm = vtCtx->strmList;
+
+    /* for all streams of this context */
+    while(curStrm != NULL){
+
+      /* ensure increasing time stamps */
+      if(time < curStrm->vtLastTime){
+        curStrm = curStrm->next;
+        continue;
+      }
+      
+      vtcuptiGrp = vtCtx->events->vtGrpList;
+
+      while(vtcuptiGrp != NULL){
+        size_t i;
+        
+        for(i = 0; i < vtcuptiGrp->evtNum; i++){
+          vt_count(curStrm->vtThrdID, &time, *(vtcuptiGrp->vtCIDs+i), 0);
+        }
+
+        vtcuptiGrp = vtcuptiGrp->next;
+      }
+      
+      curStrm = curStrm->next;
+    }
+  }
+  
+  /* free previously allocated memory */
+  vt_cuptievt_freeEventCtx(vtCtx->events);
 }
 
 /*
@@ -949,14 +989,14 @@ vt_cupti_ctx_t* vt_cuptievt_getOrCreateCurrentCtx(uint32_t ptid)
   if(!vt_cuptievt_initialized) vt_cupti_events_init();
 
 # if (defined(CUDA_VERSION) && (CUDA_VERSION < 4000))
-  CHECK_CU_ERROR(cuCtxPopCurrent(&cuCtx), "cuCtxPopCurrent");
-  CHECK_CU_ERROR(cuCtxPushCurrent(cuCtx), "cuCtxPushCurrent");
+  VT_CUDRV_CALL(cuCtxPopCurrent(&cuCtx), "cuCtxPopCurrent");
+  VT_CUDRV_CALL(cuCtxPushCurrent(cuCtx), "cuCtxPushCurrent");
 # else
-  CHECK_CU_ERROR(cuCtxGetCurrent(&cuCtx), "cuCtxGetCurrent");
+  VT_CUDRV_CALL(cuCtxGetCurrent(&cuCtx), "cuCtxGetCurrent");
 # endif
   
   if(cuCtx == NULL){
-    vt_cntl_msg(2, "[CUPTI EVENTS] No context is bound to the calling CPU thread!");
+    vt_cntl_msg(2, "[CUPTI Events] No context is bound to the calling CPU thread!");
     return NULL;
   }
   
@@ -1004,8 +1044,8 @@ void vt_cuptievt_writeCounter(vt_cupti_events_t *vtcuptiEvtCtx, uint32_t strmid,
       VT_CUPTI_CALL(cuptiErr, "cuptiEventGroupReadAllEvents");
       
       if(vtcuptiGrp->evtNum != numCountersRead){
-        vt_error_msg("[CUPTI EVENTS] %d counter reads, %d metrics specified in "
-                   "VT_CUPTI_METRICS!", numCountersRead, vtcuptiGrp->evtNum);
+        vt_error_msg("[CUPTI Events] %d counter reads, %d metrics specified in "
+                     "VT_CUPTI_METRICS!", numCountersRead, vtcuptiGrp->evtNum);
       }
 
       /* For all events of the event group: map added event IDs to just read event
@@ -1053,14 +1093,13 @@ void vt_cuptievt_resetCounter(vt_cupti_events_t *vtcuptiEvtCtx, uint32_t strmid,
     if(vtcuptiEvtCtx == NULL) return;
   }
 
-  if(vtcuptiEvtCtx==NULL) vt_warning("vtcuptiEvtCtx==NULL");
-  if(vtcuptiEvtCtx->vtGrpList==NULL) vt_warning("vtGrpList==NULL");
   vtcuptiGrp = vtcuptiEvtCtx->vtGrpList;
+  
   while(vtcuptiGrp != NULL){
     for(i = 0; i < vtcuptiGrp->evtNum; i++){
       vt_count(strmid, time, *(vtcuptiGrp->vtCIDs+i), 0);
     }
-
+    
     /* reset counter values of this group */
     VT_CUPTI_CALL(cuptiEventGroupResetAllEvents(vtcuptiGrp->evtGrp),
                       "cuptiEventGroupResetAllEvents");
@@ -1075,25 +1114,29 @@ void vt_cuptievt_resetCounter(vt_cupti_events_t *vtcuptiEvtCtx, uint32_t strmid,
  * @param ptid VampirTrace process/thread id
  * @param cleanExit 1 to cleanup CUPTI event group, otherwise 0
  */
-void vt_cuptievt_finalize_device(uint32_t ptid, uint8_t cleanExit){
+void vt_cuptievt_finalize_device(uint8_t cleanExit){
   CUptiResult cuptiErr = CUPTI_SUCCESS;
   vt_cupti_ctx_t *vtcuptiCtx = NULL;
 
-  vt_cntl_msg(2, "[CUPTI EVENTS] Finalize device ... ");
+  vt_cntl_msg(2, "[CUPTI Events] Finalize device ... ");
 
   {
     CUcontext cuCtx;
     
 #if (defined(CUDA_VERSION) && (CUDA_VERSION < 4000))
-    CHECK_CU_ERROR(cuCtxPopCurrent(&cuCtx), "cuCtxPopCurrent");
-    CHECK_CU_ERROR(cuCtxPushCurrent(cuCtx), "cuCtxPushCurrent");
+    VT_CUDRV_CALL(cuCtxPopCurrent(&cuCtx), "cuCtxPopCurrent");
+    VT_CUDRV_CALL(cuCtxPushCurrent(cuCtx), "cuCtxPushCurrent");
 #else
-    CHECK_CU_ERROR(cuCtxGetCurrent(&cuCtx), "cuCtxGetCurrent");
+    VT_CUDRV_CALL(cuCtxGetCurrent(&cuCtx), "cuCtxGetCurrent");
 #endif
 
     vtcuptiCtx = vt_cupti_removeCtx(&cuCtx);
-    if(vtcuptiCtx == NULL) return;
+    if(vtcuptiCtx == NULL) 
+      return;
   }
+  
+  if(vtcuptiCtx->events == NULL)
+    return;
 
   if(cleanExit && vt_gpu_debug != 0){
     /*uint64_t time = vt_pform_wtime();

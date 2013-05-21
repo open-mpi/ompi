@@ -394,6 +394,22 @@ int RFG_Regions_free( RFG_Regions* regions )
   return ret;
 }
 
+RFG_Filter* RFG_Regions_getFilter( RFG_Regions* regions )
+{
+  if( !regions || !regions->filter )
+    return NULL;
+
+  return regions->filter;
+}
+
+RFG_Groups* RFG_Regions_getGroups( RFG_Regions* regions )
+{
+  if( !regions || !regions->groups )
+    return NULL;
+
+  return regions->groups;
+}
+
 int RFG_Regions_setRegionIdGenFunc( RFG_Regions* regions,
                                     uint32_t (*func)(void) )
 {

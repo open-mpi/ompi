@@ -43,6 +43,16 @@
 
 #include "mpi.h"
 
+/* since MPI-3 the C keyword "const" is added to all relevant MPI API parameters
+   (e.g. MPI_Send(void* sendbuf, ...) -> MPI_Send(const void* sendbuf, ...));
+   prepend CONST to these parameters which is defined either to "const"
+   (if MPI-3) or to nothing (if MPI-1/2) */
+#if defined(MPI_VERSION) && MPI_VERSION >= 3
+# define CONST const
+#else /* MPI_VERSION */
+# define CONST
+#endif /* MPI_VERSION */
+
 /* get calling thread id */
 #ifdef VT_HYB
 # if defined(HAVE_MPI2_THREAD) &&  HAVE_MPI2_THREAD
@@ -903,8 +913,8 @@ VT_MPI_INT MPI_Group_difference(MPI_Group group1, MPI_Group group2,
 
 /* -- MPI_Group_incl -- */
 
-VT_MPI_INT MPI_Group_incl(MPI_Group group, VT_MPI_INT n, VT_MPI_INT* ranks,
-                          MPI_Group* newgroup)
+VT_MPI_INT MPI_Group_incl(MPI_Group group, VT_MPI_INT n,
+                          CONST VT_MPI_INT* ranks, MPI_Group* newgroup)
 {
   VT_MPI_INT result;
   uint32_t tid;
@@ -952,8 +962,8 @@ VT_MPI_INT MPI_Group_incl(MPI_Group group, VT_MPI_INT n, VT_MPI_INT* ranks,
 
 /* -- MPI_Group_excl -- */
 
-VT_MPI_INT MPI_Group_excl(MPI_Group group, VT_MPI_INT n, VT_MPI_INT* ranks,
-                          MPI_Group* newgroup)
+VT_MPI_INT MPI_Group_excl(MPI_Group group, VT_MPI_INT n,
+                          CONST VT_MPI_INT* ranks, MPI_Group* newgroup)
 {
   VT_MPI_INT result;
   uint32_t tid;
@@ -1313,8 +1323,8 @@ VT_MPI_INT MPI_Win_get_group(MPI_Win win, MPI_Group* group)
 /* -- MPI_Cart_create -- */
 
 VT_MPI_INT MPI_Cart_create(MPI_Comm comm_old, VT_MPI_INT ndims,
-                           VT_MPI_INT* dims, VT_MPI_INT* periodv,
-                            VT_MPI_INT reorder, MPI_Comm* comm_cart)
+                           CONST VT_MPI_INT* dims, CONST VT_MPI_INT* periodv,
+                           VT_MPI_INT reorder, MPI_Comm* comm_cart)
 {
   VT_MPI_INT result;
   uint32_t tid;
@@ -1366,7 +1376,7 @@ VT_MPI_INT MPI_Cart_create(MPI_Comm comm_old, VT_MPI_INT ndims,
 
 /* -- MPI_Cart_sub -- */
 
-VT_MPI_INT MPI_Cart_sub(MPI_Comm comm, VT_MPI_INT* rem_dims, MPI_Comm* newcomm )
+VT_MPI_INT MPI_Cart_sub(MPI_Comm comm, CONST VT_MPI_INT* rem_dims, MPI_Comm* newcomm )
 {
   VT_MPI_INT result;
   uint32_t tid;
@@ -1415,7 +1425,7 @@ VT_MPI_INT MPI_Cart_sub(MPI_Comm comm, VT_MPI_INT* rem_dims, MPI_Comm* newcomm )
 /* -- MPI_Graph_create -- */
 
 VT_MPI_INT MPI_Graph_create(MPI_Comm comm_old, VT_MPI_INT nnodes,
-                            VT_MPI_INT* index, VT_MPI_INT* edges,
+                            CONST VT_MPI_INT* index, CONST VT_MPI_INT* edges,
                             VT_MPI_INT reorder, MPI_Comm* comm_graph)
 {
   VT_MPI_INT result;
@@ -1633,7 +1643,7 @@ VT_MPI_INT MPI_Comm_free(MPI_Comm* comm)
 
 /* -- MPI_Send -- */
 
-VT_MPI_INT MPI_Send(void* buf, VT_MPI_INT count, MPI_Datatype datatype,
+VT_MPI_INT MPI_Send(CONST void* buf, VT_MPI_INT count, MPI_Datatype datatype,
                     VT_MPI_INT dest, VT_MPI_INT tag, MPI_Comm comm)
 {
   VT_MPI_INT result;
@@ -1687,7 +1697,7 @@ VT_MPI_INT MPI_Send(void* buf, VT_MPI_INT count, MPI_Datatype datatype,
 
 /* -- MPI_Bsend -- */
 
-VT_MPI_INT MPI_Bsend(void* buf, VT_MPI_INT count, MPI_Datatype datatype,
+VT_MPI_INT MPI_Bsend(CONST void* buf, VT_MPI_INT count, MPI_Datatype datatype,
                      VT_MPI_INT dest, VT_MPI_INT tag, MPI_Comm comm)
 {
   VT_MPI_INT result;
@@ -1741,7 +1751,7 @@ VT_MPI_INT MPI_Bsend(void* buf, VT_MPI_INT count, MPI_Datatype datatype,
 
 /* -- MPI_Rsend -- */
 
-VT_MPI_INT MPI_Rsend(void* buf, VT_MPI_INT count, MPI_Datatype datatype,
+VT_MPI_INT MPI_Rsend(CONST void* buf, VT_MPI_INT count, MPI_Datatype datatype,
                      VT_MPI_INT dest, VT_MPI_INT tag, MPI_Comm comm)
 {
   VT_MPI_INT result;
@@ -1795,7 +1805,7 @@ VT_MPI_INT MPI_Rsend(void* buf, VT_MPI_INT count, MPI_Datatype datatype,
 
 /* -- MPI_Ssend -- */
 
-VT_MPI_INT MPI_Ssend(void* buf, VT_MPI_INT count, MPI_Datatype datatype,
+VT_MPI_INT MPI_Ssend(CONST void* buf, VT_MPI_INT count, MPI_Datatype datatype,
                      VT_MPI_INT dest, VT_MPI_INT tag, MPI_Comm comm)
 {
   VT_MPI_INT result;
@@ -1915,7 +1925,7 @@ VT_MPI_INT MPI_Recv(void* buf, VT_MPI_INT count, MPI_Datatype datatype,
 
 /* -- MPI_Sendrecv -- */
 
-VT_MPI_INT MPI_Sendrecv(void* sendbuf, VT_MPI_INT sendcount,
+VT_MPI_INT MPI_Sendrecv(CONST void* sendbuf, VT_MPI_INT sendcount,
                         MPI_Datatype sendtype, VT_MPI_INT dest,
                         VT_MPI_INT sendtag, void* recvbuf, VT_MPI_INT recvcount,
                         MPI_Datatype recvtype, VT_MPI_INT source,
@@ -2082,7 +2092,7 @@ VT_MPI_INT MPI_Sendrecv_replace(void* buf, VT_MPI_INT count,
 
 /* -- MPI_Isend -- */
 
-VT_MPI_INT MPI_Isend(void* buf, VT_MPI_INT count, MPI_Datatype datatype,
+VT_MPI_INT MPI_Isend(CONST void* buf, VT_MPI_INT count, MPI_Datatype datatype,
                      VT_MPI_INT dest, VT_MPI_INT tag, MPI_Comm comm,
                      MPI_Request* request)
 {
@@ -2208,7 +2218,7 @@ VT_MPI_INT MPI_Irecv(void* buf, VT_MPI_INT count, MPI_Datatype datatype,
 
 /* -- MPI_Ibsend -- */
 
-VT_MPI_INT MPI_Ibsend(void* buf, VT_MPI_INT count, MPI_Datatype datatype,
+VT_MPI_INT MPI_Ibsend(CONST void* buf, VT_MPI_INT count, MPI_Datatype datatype,
                       VT_MPI_INT dest, VT_MPI_INT tag, MPI_Comm comm,
                       MPI_Request* request)
 {
@@ -2277,7 +2287,7 @@ VT_MPI_INT MPI_Ibsend(void* buf, VT_MPI_INT count, MPI_Datatype datatype,
 
 /* -- MPI_Issend -- */
 
-VT_MPI_INT MPI_Issend(void* buf, VT_MPI_INT count, MPI_Datatype datatype,
+VT_MPI_INT MPI_Issend(CONST void* buf, VT_MPI_INT count, MPI_Datatype datatype,
                       VT_MPI_INT dest, VT_MPI_INT tag, MPI_Comm comm,
                       MPI_Request* request)
 {
@@ -2346,7 +2356,7 @@ VT_MPI_INT MPI_Issend(void* buf, VT_MPI_INT count, MPI_Datatype datatype,
 
 /* -- MPI_Irsend -- */
 
-VT_MPI_INT MPI_Irsend(void* buf, VT_MPI_INT count, MPI_Datatype datatype,
+VT_MPI_INT MPI_Irsend(CONST void* buf, VT_MPI_INT count, MPI_Datatype datatype,
                       VT_MPI_INT dest, VT_MPI_INT tag, MPI_Comm comm,
                       MPI_Request* request )
 {
@@ -2945,9 +2955,9 @@ VT_MPI_INT MPI_Testsome(VT_MPI_INT incount, MPI_Request* array_of_requests,
 
 /* -- MPI_Send_init -- */
 
-VT_MPI_INT MPI_Send_init(void* buf, VT_MPI_INT count, MPI_Datatype datatype,
-                         VT_MPI_INT dest, VT_MPI_INT tag, MPI_Comm comm,
-                         MPI_Request* request)
+VT_MPI_INT MPI_Send_init(CONST void* buf, VT_MPI_INT count,
+                         MPI_Datatype datatype, VT_MPI_INT dest,
+                         VT_MPI_INT tag, MPI_Comm comm, MPI_Request* request)
 {
   VT_MPI_INT result;
   uint32_t tid;
@@ -3059,9 +3069,9 @@ VT_MPI_INT MPI_Recv_init(void* buf, VT_MPI_INT count, MPI_Datatype datatype,
 
 /* -- MPI_Bsend_init -- */
 
-VT_MPI_INT MPI_Bsend_init(void* buf, VT_MPI_INT count, MPI_Datatype datatype,
-                          VT_MPI_INT dest, VT_MPI_INT tag, MPI_Comm comm,
-                          MPI_Request* request)
+VT_MPI_INT MPI_Bsend_init(CONST void* buf, VT_MPI_INT count,
+                          MPI_Datatype datatype, VT_MPI_INT dest,
+                          VT_MPI_INT tag, MPI_Comm comm, MPI_Request* request)
 {
   VT_MPI_INT result;
   uint32_t tid;
@@ -3116,9 +3126,9 @@ VT_MPI_INT MPI_Bsend_init(void* buf, VT_MPI_INT count, MPI_Datatype datatype,
 
 /* -- MPI_Ssend_init -- */
 
-VT_MPI_INT MPI_Ssend_init(void* buf, VT_MPI_INT count, MPI_Datatype datatype,
-                          VT_MPI_INT dest, VT_MPI_INT tag, MPI_Comm comm,
-                          MPI_Request* request)
+VT_MPI_INT MPI_Ssend_init(CONST void* buf, VT_MPI_INT count,
+                          MPI_Datatype datatype, VT_MPI_INT dest,
+                          VT_MPI_INT tag, MPI_Comm comm, MPI_Request* request)
 {
   VT_MPI_INT result;
   uint32_t tid;
@@ -3173,9 +3183,9 @@ VT_MPI_INT MPI_Ssend_init(void* buf, VT_MPI_INT count, MPI_Datatype datatype,
 
 /* -- MPI_Rsend_init -- */
 
-VT_MPI_INT MPI_Rsend_init(void* buf, VT_MPI_INT count, MPI_Datatype datatype,
-                          VT_MPI_INT dest, VT_MPI_INT tag, MPI_Comm comm,
-                          MPI_Request* request)
+VT_MPI_INT MPI_Rsend_init(CONST void* buf, VT_MPI_INT count,
+                          MPI_Datatype datatype, VT_MPI_INT dest,
+                          VT_MPI_INT tag, MPI_Comm comm, MPI_Request* request)
 {
   VT_MPI_INT result;
   uint32_t tid;
@@ -3484,7 +3494,7 @@ VT_MPI_INT MPI_Cancel(MPI_Request* request)
 
 /* -- MPI_Allreduce -- */
 
-VT_MPI_INT MPI_Allreduce(void* sendbuf, void* recvbuf, VT_MPI_INT count,
+VT_MPI_INT MPI_Allreduce(CONST void* sendbuf, void* recvbuf, VT_MPI_INT count,
                          MPI_Datatype datatype, MPI_Op op, MPI_Comm comm)
 {
   VT_MPI_INT result;
@@ -3706,7 +3716,7 @@ VT_MPI_INT MPI_Bcast(void* buf, VT_MPI_INT count, MPI_Datatype datatype,
 
 /* -- MPI_Gather -- */
 
-VT_MPI_INT MPI_Gather(void* sendbuf, VT_MPI_INT sendcount,
+VT_MPI_INT MPI_Gather(CONST void* sendbuf, VT_MPI_INT sendcount,
                       MPI_Datatype sendtype, void* recvbuf,
                       VT_MPI_INT recvcount, MPI_Datatype recvtype,
                       VT_MPI_INT root, MPI_Comm comm)
@@ -3817,7 +3827,7 @@ VT_MPI_INT MPI_Gather(void* sendbuf, VT_MPI_INT sendcount,
 
 /* -- MPI_Reduce -- */
 
-VT_MPI_INT MPI_Reduce(void* sendbuf, void* recvbuf, VT_MPI_INT count,
+VT_MPI_INT MPI_Reduce(CONST void* sendbuf, void* recvbuf, VT_MPI_INT count,
                       MPI_Datatype datatype, MPI_Op op, VT_MPI_INT root,
                       MPI_Comm comm)
 {
@@ -3910,9 +3920,9 @@ VT_MPI_INT MPI_Reduce(void* sendbuf, void* recvbuf, VT_MPI_INT count,
 
 /* -- MPI_Gatherv -- */
 
-VT_MPI_INT MPI_Gatherv(void* sendbuf, VT_MPI_INT sendcount,
+VT_MPI_INT MPI_Gatherv(CONST void* sendbuf, VT_MPI_INT sendcount,
                        MPI_Datatype sendtype, void* recvbuf,
-                       VT_MPI_INT *recvcounts, VT_MPI_INT *displs,
+                       CONST VT_MPI_INT *recvcounts, CONST VT_MPI_INT *displs,
                        MPI_Datatype recvtype, VT_MPI_INT root, MPI_Comm comm)
 {
   VT_MPI_INT result;
@@ -4019,7 +4029,7 @@ VT_MPI_INT MPI_Gatherv(void* sendbuf, VT_MPI_INT sendcount,
 
 /* -- MPI_Allgather -- */
 
-VT_MPI_INT MPI_Allgather(void* sendbuf, VT_MPI_INT sendcount,
+VT_MPI_INT MPI_Allgather(CONST void* sendbuf, VT_MPI_INT sendcount,
                          MPI_Datatype sendtype, void* recvbuf,
                          VT_MPI_INT recvcount, MPI_Datatype recvtype,
                          MPI_Comm comm)
@@ -4104,10 +4114,11 @@ VT_MPI_INT MPI_Allgather(void* sendbuf, VT_MPI_INT sendcount,
 
 /* -- MPI_Allgatherv -- */
 
-VT_MPI_INT MPI_Allgatherv(void* sendbuf, VT_MPI_INT sendcount,
+VT_MPI_INT MPI_Allgatherv(CONST void* sendbuf, VT_MPI_INT sendcount,
                           MPI_Datatype sendtype, void* recvbuf,
-                          VT_MPI_INT* recvcounts, VT_MPI_INT* displs,
-                          MPI_Datatype recvtype, MPI_Comm comm)
+                          CONST VT_MPI_INT* recvcounts,
+                          CONST VT_MPI_INT* displs, MPI_Datatype recvtype,
+                          MPI_Comm comm)
 {
   VT_MPI_INT result;
   uint32_t tid;
@@ -4194,7 +4205,7 @@ VT_MPI_INT MPI_Allgatherv(void* sendbuf, VT_MPI_INT sendcount,
 
 /* -- MPI_Alltoall -- */
 
-VT_MPI_INT MPI_Alltoall(void* sendbuf, VT_MPI_INT sendcount,
+VT_MPI_INT MPI_Alltoall(CONST void* sendbuf, VT_MPI_INT sendcount,
                         MPI_Datatype sendtype, void* recvbuf,
                         VT_MPI_INT recvcount, MPI_Datatype recvtype,
                         MPI_Comm comm)
@@ -4272,10 +4283,10 @@ VT_MPI_INT MPI_Alltoall(void* sendbuf, VT_MPI_INT sendcount,
 
 /* -- MPI_Alltoallv -- */
 
-VT_MPI_INT MPI_Alltoallv(void* sendbuf, VT_MPI_INT* sendcounts,
-                         VT_MPI_INT* sdispls, MPI_Datatype sendtype,
-                         void* recvbuf, VT_MPI_INT* recvcounts,
-                         VT_MPI_INT* rdispls, MPI_Datatype recvtype,
+VT_MPI_INT MPI_Alltoallv(CONST void* sendbuf, CONST VT_MPI_INT* sendcounts,
+                         CONST VT_MPI_INT* sdispls, MPI_Datatype sendtype,
+                         void* recvbuf, CONST VT_MPI_INT* recvcounts,
+                         CONST VT_MPI_INT* rdispls, MPI_Datatype recvtype,
                          MPI_Comm comm)
 {
   VT_MPI_INT result;
@@ -4355,7 +4366,7 @@ VT_MPI_INT MPI_Alltoallv(void* sendbuf, VT_MPI_INT* sendcounts,
 
 /* -- MPI_Scan -- */
 
-VT_MPI_INT MPI_Scan(void* sendbuf, void* recvbuf, VT_MPI_INT count,
+VT_MPI_INT MPI_Scan(CONST void* sendbuf, void* recvbuf, VT_MPI_INT count,
                     MPI_Datatype datatype, MPI_Op op, MPI_Comm comm)
 {
   VT_MPI_INT result;
@@ -4427,7 +4438,7 @@ VT_MPI_INT MPI_Scan(void* sendbuf, void* recvbuf, VT_MPI_INT count,
 
 /* -- MPI_Scatter -- */
 
-VT_MPI_INT MPI_Scatter(void* sendbuf, VT_MPI_INT sendcount,
+VT_MPI_INT MPI_Scatter(CONST void* sendbuf, VT_MPI_INT sendcount,
                        MPI_Datatype sendtype, void* recvbuf,
                        VT_MPI_INT recvcount, MPI_Datatype recvtype,
                        VT_MPI_INT root, MPI_Comm comm)
@@ -4538,8 +4549,8 @@ VT_MPI_INT MPI_Scatter(void* sendbuf, VT_MPI_INT sendcount,
 
 /* -- MPI_Scatterv -- */
 
-VT_MPI_INT MPI_Scatterv(void* sendbuf, VT_MPI_INT* sendcounts,
-                        VT_MPI_INT* displs, MPI_Datatype sendtype,
+VT_MPI_INT MPI_Scatterv(CONST void* sendbuf, CONST VT_MPI_INT* sendcounts,
+                        CONST VT_MPI_INT* displs, MPI_Datatype sendtype,
                         void* recvbuf, VT_MPI_INT recvcount,
                         MPI_Datatype recvtype, VT_MPI_INT root, MPI_Comm comm)
 {
@@ -4647,9 +4658,9 @@ VT_MPI_INT MPI_Scatterv(void* sendbuf, VT_MPI_INT* sendcounts,
 
 /* -- MPI_Reduce_scatter -- */
 
-VT_MPI_INT MPI_Reduce_scatter(void* sendbuf, void* recvbuf,
-                              VT_MPI_INT* recvcounts, MPI_Datatype datatype,
-                              MPI_Op op, MPI_Comm comm)
+VT_MPI_INT MPI_Reduce_scatter(CONST void* sendbuf, void* recvbuf,
+                              CONST VT_MPI_INT* recvcounts,
+                              MPI_Datatype datatype, MPI_Op op, MPI_Comm comm)
 {
   VT_MPI_INT result;
   uint32_t tid;
@@ -4735,7 +4746,7 @@ VT_MPI_INT MPI_Reduce_scatter(void* sendbuf, void* recvbuf,
 
 /* -- MPI_Put -- */
 
-VT_MPI_INT MPI_Put(void* origin_addr, VT_MPI_INT origin_count,
+VT_MPI_INT MPI_Put(CONST void* origin_addr, VT_MPI_INT origin_count,
                    MPI_Datatype origin_datatype, VT_MPI_INT target_rank,
                    MPI_Aint target_disp, VT_MPI_INT target_count,
                    MPI_Datatype target_datatype, MPI_Win win)
@@ -4869,7 +4880,7 @@ VT_MPI_INT MPI_Get(void* origin_addr, VT_MPI_INT origin_count,
 
 /* -- MPI_Accumulate -- */
 
-VT_MPI_INT MPI_Accumulate(void* origin_addr, VT_MPI_INT origin_count,
+VT_MPI_INT MPI_Accumulate(CONST void* origin_addr, VT_MPI_INT origin_count,
                           MPI_Datatype origin_datatype, VT_MPI_INT target_rank,
                           MPI_Aint target_disp, VT_MPI_INT target_count,
                           MPI_Datatype target_datatype, MPI_Op op,
@@ -5392,10 +5403,11 @@ VT_MPI_INT MPI_Win_unlock(VT_MPI_INT rank, MPI_Win win)
 
 /* -- MPI_Alltoallw -- */
 
-VT_MPI_INT MPI_Alltoallw(void* sendbuf, VT_MPI_INT* sendcounts,
-                         VT_MPI_INT* sdispls, MPI_Datatype* sendtypes,
-                         void* recvbuf, VT_MPI_INT* recvcounts,
-                         VT_MPI_INT* rdispls, MPI_Datatype* recvtypes,
+VT_MPI_INT MPI_Alltoallw(CONST void* sendbuf, CONST VT_MPI_INT* sendcounts,
+                         CONST VT_MPI_INT* sdispls,
+                         CONST MPI_Datatype* sendtypes, void* recvbuf,
+                         CONST VT_MPI_INT* recvcounts,
+                         CONST VT_MPI_INT* rdispls, CONST MPI_Datatype* recvtypes,
                          MPI_Comm comm)
 {
   VT_MPI_INT result;
@@ -5475,7 +5487,7 @@ VT_MPI_INT MPI_Alltoallw(void* sendbuf, VT_MPI_INT* sendcounts,
 
 /* -- MPI_Exscan -- */
 
-VT_MPI_INT MPI_Exscan(void* sendbuf, void* recvbuf, VT_MPI_INT count,
+VT_MPI_INT MPI_Exscan(CONST void* sendbuf, void* recvbuf, VT_MPI_INT count,
                       MPI_Datatype datatype, MPI_Op op, MPI_Comm comm)
 {
   VT_MPI_INT result;
@@ -5812,7 +5824,7 @@ VT_MPI_INT MPI_File_close(MPI_File* fh)
 
 /* -- MPI_File_open -- */
 
-VT_MPI_INT MPI_File_open(MPI_Comm comm, char* filename, VT_MPI_INT amode,
+VT_MPI_INT MPI_File_open(MPI_Comm comm, CONST char* filename, VT_MPI_INT amode,
                          MPI_Info info, MPI_File* fh)
 {
   VT_MPI_INT result;
@@ -5863,7 +5875,7 @@ VT_MPI_INT MPI_File_open(MPI_Comm comm, char* filename, VT_MPI_INT amode,
 
 /* -- MPI_File_delete -- */
 
-VT_MPI_INT MPI_File_delete(char* filename, MPI_Info info)
+VT_MPI_INT MPI_File_delete(CONST char* filename, MPI_Info info)
 {
   VT_MPI_INT result;
   uint32_t tid;
@@ -6026,7 +6038,7 @@ VT_MPI_INT MPI_File_iread(MPI_File fh, void* buf, VT_MPI_INT count,
 
 /* -- MPI_File_iwrite -- */
 
-VT_MPI_INT MPI_File_iwrite(MPI_File fh, void* buf, VT_MPI_INT count,
+VT_MPI_INT MPI_File_iwrite(MPI_File fh, CONST void* buf, VT_MPI_INT count,
                            MPI_Datatype datatype, MPI_Request* request)
 {
   VT_MPI_INT result;
@@ -6153,7 +6165,7 @@ VT_MPI_INT MPI_File_seek(MPI_File fh, MPI_Offset offset, VT_MPI_INT whence)
 
 /* -- MPI_File_write -- */
 
-VT_MPI_INT MPI_File_write(MPI_File fh, void* buf, VT_MPI_INT count,
+VT_MPI_INT MPI_File_write(MPI_File fh, CONST void* buf, VT_MPI_INT count,
                           MPI_Datatype datatype, MPI_Status* status)
 {
   VT_MPI_INT result;
@@ -6185,7 +6197,7 @@ VT_MPI_INT MPI_File_write(MPI_File fh, void* buf, VT_MPI_INT count,
 
 /* -- MPI_File_write_all -- */
 
-VT_MPI_INT MPI_File_write_all(MPI_File fh, void* buf, VT_MPI_INT count,
+VT_MPI_INT MPI_File_write_all(MPI_File fh, CONST void* buf, VT_MPI_INT count,
                               MPI_Datatype datatype, MPI_Status* status)
 {
   VT_MPI_INT result;
@@ -6225,8 +6237,8 @@ VT_MPI_INT MPI_File_write_all(MPI_File fh, void* buf, VT_MPI_INT count,
 
 /* -- MPI_File_read_all_begin -- */
 
-VT_MPI_INT MPI_File_read_all_begin(MPI_File fh, void* buf, VT_MPI_INT count,
-                                   MPI_Datatype datatype)
+VT_MPI_INT MPI_File_read_all_begin(MPI_File fh, void* buf,
+                                   VT_MPI_INT count, MPI_Datatype datatype)
 {
   VT_MPI_INT result;
   uint32_t tid;
@@ -6419,7 +6431,7 @@ VT_MPI_INT MPI_File_read_ordered_end(MPI_File fh, void* buf, MPI_Status* status)
 
 /* -- MPI_File_write_all_begin -- */
 
-VT_MPI_INT MPI_File_write_all_begin(MPI_File fh, void* buf, VT_MPI_INT count,
+VT_MPI_INT MPI_File_write_all_begin(MPI_File fh, CONST void* buf, VT_MPI_INT count,
                                     MPI_Datatype datatype)
 {
   VT_MPI_INT result;
@@ -6451,7 +6463,8 @@ VT_MPI_INT MPI_File_write_all_begin(MPI_File fh, void* buf, VT_MPI_INT count,
 
 /* -- MPI_File_write_all_end -- */
 
-VT_MPI_INT MPI_File_write_all_end(MPI_File fh, void* buf, MPI_Status* status)
+VT_MPI_INT MPI_File_write_all_end(MPI_File fh, CONST void* buf,
+                                  MPI_Status* status)
 {
   VT_MPI_INT result;
   uint32_t tid;
@@ -6483,7 +6496,7 @@ VT_MPI_INT MPI_File_write_all_end(MPI_File fh, void* buf, MPI_Status* status)
 /* -- MPI_File_write_at_all_begin -- */
 
 VT_MPI_INT MPI_File_write_at_all_begin(MPI_File fh, MPI_Offset offset,
-                                       void* buf, VT_MPI_INT count,
+                                       CONST void* buf, VT_MPI_INT count,
                                        MPI_Datatype datatype)
 {
   VT_MPI_INT result;
@@ -6515,7 +6528,8 @@ VT_MPI_INT MPI_File_write_at_all_begin(MPI_File fh, MPI_Offset offset,
 
 /* -- MPI_File_write_at_all_end -- */
 
-VT_MPI_INT MPI_File_write_at_all_end(MPI_File fh, void* buf, MPI_Status* status)
+VT_MPI_INT MPI_File_write_at_all_end(MPI_File fh, CONST void* buf,
+                                     MPI_Status* status)
 {
   VT_MPI_INT result;
   uint32_t tid;
@@ -6548,7 +6562,7 @@ VT_MPI_INT MPI_File_write_at_all_end(MPI_File fh, void* buf, MPI_Status* status)
 
 /* -- MPI_File_write_ordered_begin -- */
 
-VT_MPI_INT MPI_File_write_ordered_begin(MPI_File fh, void* buf,
+VT_MPI_INT MPI_File_write_ordered_begin(MPI_File fh, CONST void* buf,
                                         VT_MPI_INT count, MPI_Datatype datatype)
 {
   VT_MPI_INT result;
@@ -6580,7 +6594,7 @@ VT_MPI_INT MPI_File_write_ordered_begin(MPI_File fh, void* buf,
 
 /* -- MPI_File_write_ordered_end -- */
 
-VT_MPI_INT MPI_File_write_ordered_end(MPI_File fh, void* buf,
+VT_MPI_INT MPI_File_write_ordered_end(MPI_File fh, CONST void* buf,
                                       MPI_Status* status)
 {
   VT_MPI_INT result;
@@ -6657,7 +6671,7 @@ VT_MPI_INT MPI_File_iread_at(MPI_File fh, MPI_Offset offset, void* buf,
 
 /* -- MPI_File_iwrite_at -- */
 
-VT_MPI_INT MPI_File_iwrite_at(MPI_File fh, MPI_Offset offset, void* buf,
+VT_MPI_INT MPI_File_iwrite_at(MPI_File fh, MPI_Offset offset, CONST void* buf,
                               VT_MPI_INT count, MPI_Datatype datatype,
                               MPI_Request* request)
 {
@@ -6762,7 +6776,7 @@ VT_MPI_INT MPI_File_read_at_all(MPI_File fh, MPI_Offset offset, void* buf,
 
 /* -- MPI_File_write_at -- */
 
-VT_MPI_INT MPI_File_write_at(MPI_File fh, MPI_Offset offset, void* buf,
+VT_MPI_INT MPI_File_write_at(MPI_File fh, MPI_Offset offset, CONST void* buf,
                              VT_MPI_INT count, MPI_Datatype datatype,
                              MPI_Status* status)
 {
@@ -6797,9 +6811,9 @@ VT_MPI_INT MPI_File_write_at(MPI_File fh, MPI_Offset offset, void* buf,
 
 /* -- MPI_File_write_at_all -- */
 
-VT_MPI_INT MPI_File_write_at_all(MPI_File fh, MPI_Offset offset, void* buf,
-                                 VT_MPI_INT count, MPI_Datatype datatype,
-                                 MPI_Status* status)
+VT_MPI_INT MPI_File_write_at_all(MPI_File fh, MPI_Offset offset,
+                                 CONST void* buf, VT_MPI_INT count,
+                                 MPI_Datatype datatype, MPI_Status* status)
 {
   VT_MPI_INT result;
   uint32_t tid;
@@ -6872,8 +6886,9 @@ VT_MPI_INT MPI_File_iread_shared(MPI_File fh, void* buf, VT_MPI_INT count,
 
 /* -- MPI_File_iwrite_shared -- */
 
-VT_MPI_INT MPI_File_iwrite_shared(MPI_File fh, void* buf, VT_MPI_INT count,
-                                  MPI_Datatype datatype, MPI_Request* request)
+VT_MPI_INT MPI_File_iwrite_shared(MPI_File fh, CONST void* buf,
+                                  VT_MPI_INT count, MPI_Datatype datatype,
+                                  MPI_Request* request)
 {
   VT_MPI_INT result;
   uint32_t tid;
@@ -7006,7 +7021,7 @@ VT_MPI_INT MPI_File_seek_shared(MPI_File fh, MPI_Offset offset,
 
 /* -- MPI_File_write_ordered -- */
 
-VT_MPI_INT MPI_File_write_ordered(MPI_File fh, void* buf, VT_MPI_INT count,
+VT_MPI_INT MPI_File_write_ordered(MPI_File fh, CONST void* buf, VT_MPI_INT count,
                                   MPI_Datatype datatype, MPI_Status* status)
 {
   VT_MPI_INT result;
@@ -7040,7 +7055,7 @@ VT_MPI_INT MPI_File_write_ordered(MPI_File fh, void* buf, VT_MPI_INT count,
 
 /* -- MPI_File_write_shared -- */
 
-VT_MPI_INT MPI_File_write_shared(MPI_File fh, void* buf, VT_MPI_INT count,
+VT_MPI_INT MPI_File_write_shared(MPI_File fh, CONST void* buf, VT_MPI_INT count,
                                  MPI_Datatype datatype, MPI_Status* status)
 {
   VT_MPI_INT result;

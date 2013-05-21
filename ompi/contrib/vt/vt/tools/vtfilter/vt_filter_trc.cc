@@ -371,7 +371,7 @@ FilterTraceC::readFilter(
         for( std::map<uint32_t, std::string>::const_iterator it = funcs.begin();
              it != funcs.end(); it++ )
         {
-          const uint32_t& func = it->first;
+          const uint32_t func = it->first;
           const std::string& func_name = it->second;
           int32_t limit;
 
