@@ -177,7 +177,7 @@ ompi_dpm_base_disconnect_obj *ompi_dpm_base_disconnect_init ( ompi_communicator_
  * - call waitall on the overall request array
  * - free the objects
  */
-void ompi_dpm_base_disconnect_waitall (int count, ompi_dpm_base_disconnect_obj **objs)
+int ompi_dpm_base_disconnect_waitall (int count, ompi_dpm_base_disconnect_obj **objs)
 {
 
     ompi_request_t **reqs=NULL;
@@ -189,7 +189,7 @@ void ompi_dpm_base_disconnect_waitall (int count, ompi_dpm_base_disconnect_obj *
     for (i=0; i<count; i++) {
         if (NULL == objs[i]) {
             printf("Error in comm_disconnect_waitall\n");
-            return;
+            return OMPI_ERROR;
         }
 
         totalcount += objs[i]->size;
@@ -198,7 +198,7 @@ void ompi_dpm_base_disconnect_waitall (int count, ompi_dpm_base_disconnect_obj *
     reqs = (ompi_request_t **) malloc (2*totalcount*sizeof(ompi_request_t *));
     if ( NULL == reqs ) {
         printf("ompi_comm_disconnect_waitall: error allocating memory\n");
-        return;
+        return OMPI_ERROR;
     }
 
     /* generate a single, large array of pending requests */
@@ -221,7 +221,7 @@ void ompi_dpm_base_disconnect_waitall (int count, ompi_dpm_base_disconnect_obj *
 
     free (reqs);
 
-    return;
+    return ret;
 }
 
 /**********************************************************************/

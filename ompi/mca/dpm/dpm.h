@@ -81,7 +81,7 @@ typedef int (*ompi_dpm_base_module_connect_accept_fn_t)(ompi_communicator_t *com
  * Executes internally a disconnect on all dynamic communicators
  * in case the user did not disconnect them.
  */
-typedef void (*ompi_dpm_base_module_disconnect_fn_t)(ompi_communicator_t *comm);
+typedef int (*ompi_dpm_base_module_disconnect_fn_t)(ompi_communicator_t *comm);
 
 /*
  * Dynamically spawn processes

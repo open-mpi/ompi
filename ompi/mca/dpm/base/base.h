@@ -74,7 +74,7 @@ OMPI_DECLSPEC char* ompi_dpm_base_dyn_init (void);
 OMPI_DECLSPEC int ompi_dpm_base_dyn_finalize (void);
 OMPI_DECLSPEC void ompi_dpm_base_mark_dyncomm (ompi_communicator_t *comm);
 OMPI_DECLSPEC ompi_dpm_base_disconnect_obj *ompi_dpm_base_disconnect_init ( ompi_communicator_t *comm);
-OMPI_DECLSPEC void ompi_dpm_base_disconnect_waitall (int count, ompi_dpm_base_disconnect_obj **objs);
+OMPI_DECLSPEC int ompi_dpm_base_disconnect_waitall (int count, ompi_dpm_base_disconnect_obj **objs);
 
 #endif
 
@@ -82,7 +82,7 @@ OMPI_DECLSPEC void ompi_dpm_base_disconnect_waitall (int count, ompi_dpm_base_di
 int ompi_dpm_base_null_connect_accept (ompi_communicator_t *comm, int root,
                                        char *port_string, bool send_first,
                                        ompi_communicator_t **newcomm);
-void ompi_dpm_base_null_disconnect(ompi_communicator_t *comm);
+int ompi_dpm_base_null_disconnect(ompi_communicator_t *comm);
 int ompi_dpm_base_null_spawn(int count, char **array_of_commands,
                              char ***array_of_argv,
                              int *array_of_maxprocs,
