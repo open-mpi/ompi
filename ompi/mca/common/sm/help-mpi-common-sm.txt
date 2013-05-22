@@ -48,3 +48,13 @@ the MCA parameter "orte_no_session_dir".
 
   Local host: %s
   Fileame:    %s
+#
+[unexpected message id]
+Open MPI received an unexpected message ID during common sm initialization.
+This is likely an error in Open MPI itself.  If you see this error, you should
+see if there is an update available for Open MPI that addresses this issue, and
+if not, contact the Open MPI developers.
+
+  Local Host:          %s
+  Expected Message ID: %s
+  Message ID Received: %s
