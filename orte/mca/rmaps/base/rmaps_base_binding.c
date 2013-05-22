@@ -604,9 +604,7 @@ int orte_rmaps_base_compute_bindings(orte_job_t *jdata)
 
     /* binding requested */
     /* if the job was mapped by the corresponding target, then
-     * there is nothing more to do - the launch message creator
-     * will see that the binding object is NULL and will simply
-     * use the locale as the place to bind the proc
+     * we bind in place
      *
      * otherwise, we have to bind either up or down the hwloc
      * tree. If we are binding upwards (e.g., mapped to hwthread
@@ -617,7 +615,50 @@ int orte_rmaps_base_compute_bindings(orte_job_t *jdata)
      * to core), then we have to do a round-robin assigment of
      * procs to the resources below.
      */
-    if (OPAL_BIND_TO_HWTHREAD == OPAL_GET_BINDING_POLICY(jdata->map->binding)) {
+            
+    if (ORTE_MAPPING_BYDIST == ORTE_GET_MAPPING_POLICY(jdata->map->mapping)) {
+        int rc = ORTE_SUCCESS;
+        if (OPAL_BIND_TO_NUMA == OPAL_GET_BINDING_POLICY(jdata->map->binding)) {
+            opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
+                                "mca:rmaps: bindings for job %s - dist to numa",
+                                ORTE_JOBID_PRINT(jdata->jobid));
+            if (ORTE_SUCCESS != (rc = bind_in_place(jdata, HWLOC_OBJ_NODE, 0))) {
+                ORTE_ERROR_LOG(rc);
+            }
+        } else if (OPAL_BIND_TO_NUMA < OPAL_GET_BINDING_POLICY(jdata->map->binding)) {
+            if (OPAL_BIND_TO_HWTHREAD == OPAL_GET_BINDING_POLICY(jdata->map->binding)) {
+                if (ORTE_SUCCESS != (rc = bind_downwards(jdata, HWLOC_OBJ_PU, 0))) {
+                    ORTE_ERROR_LOG(rc);
+                } 
+            } else if (OPAL_BIND_TO_CORE == OPAL_GET_BINDING_POLICY(jdata->map->binding)) {
+                if (ORTE_SUCCESS != (rc = bind_downwards(jdata, HWLOC_OBJ_CORE, 0))) {
+                    ORTE_ERROR_LOG(rc);
+                } 
+            } else if (OPAL_BIND_TO_L1CACHE == OPAL_GET_BINDING_POLICY(jdata->map->binding)) {
+                if (ORTE_SUCCESS != (rc = bind_downwards(jdata, HWLOC_OBJ_CACHE, 1))) {
+                    ORTE_ERROR_LOG(rc);
+                } 
+            } else if (OPAL_BIND_TO_L2CACHE == OPAL_GET_BINDING_POLICY(jdata->map->binding)) {
+                if (ORTE_SUCCESS != (rc = bind_downwards(jdata, HWLOC_OBJ_CACHE, 2))) {
+                    ORTE_ERROR_LOG(rc);
+                } 
+            } else if (OPAL_BIND_TO_L3CACHE == OPAL_GET_BINDING_POLICY(jdata->map->binding)) {
+                if (ORTE_SUCCESS != (rc = bind_downwards(jdata, HWLOC_OBJ_CACHE, 3))) {
+                    ORTE_ERROR_LOG(rc);
+                } 
+            } else if (OPAL_BIND_TO_SOCKET == OPAL_GET_BINDING_POLICY(jdata->map->binding)) {
+                if (ORTE_SUCCESS != (rc = bind_downwards(jdata, HWLOC_OBJ_SOCKET, 0))) {
+                    ORTE_ERROR_LOG(rc);
+                } 
+            }
+        }
+        /* if the binding policy is less than numa, then we are unbound - so
+         * just ignore this and return (should have been caught in prior
+         * tests anyway as only options meeting that criteria are "none"
+         * and "board")
+         */
+        return rc;
+    } else if (OPAL_BIND_TO_HWTHREAD == OPAL_GET_BINDING_POLICY(jdata->map->binding)) {
         int rc;
         if (ORTE_MAPPING_BYHWTHREAD == ORTE_GET_MAPPING_POLICY(jdata->map->mapping)) {
             opal_output_verbose(5, orte_rmaps_base_framework.framework_output,

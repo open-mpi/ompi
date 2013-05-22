@@ -111,6 +111,7 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_job_map_t);
 #define ORTE_MAPPING_BYL1CACHE         8
 #define ORTE_MAPPING_BYCORE            9
 #define ORTE_MAPPING_BYHWTHREAD        10
+#define ORTE_MAPPING_BYDIST            11
 /* convenience - declare anything <= 15 to be round-robin*/
 #define ORTE_MAPPING_RR                0x000f
 /* sequential policy */

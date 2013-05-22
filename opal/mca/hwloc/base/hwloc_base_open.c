@@ -452,10 +452,19 @@ static void sum_const(opal_hwloc_summary_t *ptr)
 {
     ptr->num_objs = 0;
     ptr->rtype = 0;
+    OBJ_CONSTRUCT(&ptr->sorted_by_dist_list, opal_list_t);
+}
+static void sum_dest(opal_hwloc_summary_t *ptr)
+{
+    opal_list_item_t *item;
+    while (NULL != (item = opal_list_remove_first(&ptr->sorted_by_dist_list))) {
+        OBJ_RELEASE(item);
+    }
+    OBJ_DESTRUCT(&ptr->sorted_by_dist_list);
 }
 OBJ_CLASS_INSTANCE(opal_hwloc_summary_t,
                    opal_list_item_t,
-                   sum_const, NULL);
+                   sum_const, sum_dest);
 static void topo_data_const(opal_hwloc_topo_data_t *ptr)
 {
     ptr->available = NULL;
@@ -479,4 +488,9 @@ OBJ_CLASS_INSTANCE(opal_hwloc_topo_data_t,
                    opal_object_t,
                    topo_data_const,
                    topo_data_dest);
+
+OBJ_CLASS_INSTANCE(orte_rmaps_numa_node_t,
+        opal_list_item_t,
+        NULL,
+        NULL);
 #endif
