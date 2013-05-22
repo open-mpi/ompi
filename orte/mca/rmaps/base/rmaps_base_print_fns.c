@@ -155,6 +155,9 @@ char* orte_rmaps_base_print_mapping(orte_mapping_policy_t mapping)
     case ORTE_MAPPING_BYUSER:
         map = "BYUSER";
         break;
+    case ORTE_MAPPING_BYDIST:
+        map = "MINDIST";
+        break;
     default:
         if (ORTE_MAPPING_PPR & ORTE_GET_MAPPING_DIRECTIVE(mapping)) {
             map = "PPR";
