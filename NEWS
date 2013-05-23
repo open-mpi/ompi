@@ -57,11 +57,16 @@ included in the vX.Y.Z section and be denoted as:
 -----
 
 - Fix an error that caused epoll to automatically be disabled
-  in libevent
-- Upgrade hwloc to 1.5.2
-- Fix MXM connection establishment flow
-- Lots of VampirTrace upgrades and fixes; upgrade to v5.14.8
-- Fixed some minor memory leaks
+  in libevent.
+- Upgrade hwloc to 1.5.2.
+- Fix MXM connection establishment flow.
+- Lots of VampirTrace upgrades and fixes; upgrade to v5.14.8.
+- Fixed some minor memory leaks.
+- Add retransmit framework for unreliable networks.
+- Fixed datatype corruption issue when combining datatypes of specific
+  formats.
+- Added Location Aware Mapping Algorithm (LAMA) mapping component.
+- Fixes for MPI_STATUS handling in corner cases.
 
 
 1.7.1
