@@ -16,7 +16,7 @@
  *                         reserved.
  * Copyright (c) 2006-2007 Voltaire All rights reserved.
  * Copyright (c) 2009-2012 Oracle and/or its affiliates.  All rights reserved.
- * Copyright (c) 2011      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2011-2013 NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2012      Oak Ridge National Laboratory.  All rights reserved
  * $COPYRIGHT$
  *
@@ -3206,9 +3206,11 @@ static void btl_openib_handle_incoming_completion(mca_btl_base_module_t* btl,
 
         if (OMPI_SUCCESS !=
             (rc = progress_no_credits_pending_frags(ep))) {
-            /* No where to return an error to so have to abort */
-            opal_output(0, "%s:%d FATAL", __FILE__, __LINE__);
-            orte_errmgr.abort(-1, NULL);
+            /* This is a fatal issue so call into PML and let it know. */
+            mca_btl_openib_module_t* openib_btl = (mca_btl_openib_module_t*) btl;
+            openib_btl->error_cb(&openib_btl->super, MCA_BTL_ERROR_FLAGS_FATAL,
+                                 NULL, NULL);
+            return;
         }
     }
 
