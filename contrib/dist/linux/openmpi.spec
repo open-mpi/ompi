@@ -194,7 +194,7 @@
 #
 #############################################################################
 
-Summary: A powerful implementaion of MPI
+Summary: A powerful implementation of MPI
 Name: %{?_name:%{_name}}%{!?_name:openmpi}
 Version: $VERSION
 Release: 1
