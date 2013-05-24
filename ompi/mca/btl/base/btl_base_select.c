@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2007 The University of Tennessee and The University
+ * Copyright (c) 2004-2013 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -47,6 +47,7 @@ int mca_btl_base_select(bool enable_progress_threads,
                         bool enable_mpi_threads)
 {
     int i, num_btls;
+    opal_list_t btls_to_close;
     opal_list_item_t *item;
     mca_base_component_list_item_t *cli;
     mca_btl_base_component_t *component;
@@ -55,6 +56,8 @@ int mca_btl_base_select(bool enable_progress_threads,
 
     char** include = opal_argv_split(mca_btl_base_include, ',');
     char** exclude = opal_argv_split(mca_btl_base_exclude, ',');
+
+    OBJ_CONSTRUCT(&btls_to_close, opal_list_t);
 
     /* Traverse the list of opened modules; call their init
        functions. */
@@ -78,8 +81,7 @@ int mca_btl_base_select(bool enable_progress_threads,
                 argv++;
             }
             if(found == false) {
-                item = next;
-                continue;
+                goto close_component_and_continue;
             }
 
             /* otherwise - check the exclude list to see if this item has been specifically excluded */
@@ -94,8 +96,7 @@ int mca_btl_base_select(bool enable_progress_threads,
                 argv++;
             }
             if(found == true) {
-                item = next;
-                continue;
+                goto close_component_and_continue;
             }
         }
 
@@ -107,6 +108,7 @@ int mca_btl_base_select(bool enable_progress_threads,
             opal_output_verbose(10, mca_btl_base_output,
                                 "select: no init function; ignoring component %s",
                                 component->btl_version.mca_component_name);
+            goto close_component_and_continue;
         } else {
             modules = component->btl_init(&num_btls, enable_progress_threads,
                                           enable_mpi_threads);
@@ -118,12 +120,7 @@ int mca_btl_base_select(bool enable_progress_threads,
                 opal_output_verbose(10, mca_btl_base_output,
                                     "select: init of component %s returned failure",
                                     component->btl_version.mca_component_name);
-                opal_output_verbose(10, mca_btl_base_output,
-                                    "select: module %s unloaded",
-                                    component->btl_version.mca_component_name);
-
-                mca_base_component_repository_release((mca_base_component_t *) component);
-                opal_list_remove_item(&mca_btl_base_components_opened, item);
+                goto close_component_and_continue;
             } 
 
             /* Otherwise, it initialized properly.  Save it. */
@@ -148,10 +145,27 @@ int mca_btl_base_select(bool enable_progress_threads,
                                      (opal_list_item_t*) sm);
                 }
                 free(modules);
+                item = next;
+                continue;  /* The only succesful path for this component */
             }
         }
+      close_component_and_continue:
+        opal_output_verbose(10, mca_btl_base_output,
+                            "select: component %s unloaded",
+                            component->btl_version.mca_component_name);
+
+        opal_list_remove_item(&mca_btl_base_components_opened, item);
+        opal_list_append(&btls_to_close, item);
         item = next;
+     }
+
+    /* Close/release all the components that said they don't want to
+       run */
+    if (!opal_list_is_empty(&btls_to_close)) {
+        mca_base_components_close(mca_btl_base_output,
+                                  &btls_to_close, NULL);
     }
+    OBJ_DESTRUCT(&btls_to_close);
 
     /* Finished querying all components.  Check for the bozo case. */
 
@@ -160,5 +174,6 @@ int mca_btl_base_select(bool enable_progress_threads,
                        "btl");
         orte_errmgr.abort(1, NULL);
     }
+
     return OMPI_SUCCESS;
 }
