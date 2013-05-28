@@ -635,12 +635,12 @@ static void write_def_header(void)
                   VT_UNIFY_STRID_VT_COMMENT" VT_CUDATRACE_BUFFER_SIZE: %s",
                   tmp_char);
 
-    /* VT_CUDATRACE_SYNC */
+    /* VT_GPUTRACE_SYNC */
     if((vt_gpu_config & VT_GPU_TRACE_CUDA) == VT_GPU_TRACE_CUDA &&
-       vt_env_cudatrace_sync() != 3)
+       vt_env_gputrace_sync() != 3)
       vt_def_comment(VT_MASTER_THREAD,
-                    VT_UNIFY_STRID_VT_COMMENT" VT_CUDATRACE_SYNC: %i",
-                    vt_env_cudatrace_sync());
+                    VT_UNIFY_STRID_VT_COMMENT" VT_GPUTRACE_SYNC: %i",
+                    vt_env_gputrace_sync());
     
     /* VT_GPUTRACE_MEMUSAGE */
     if(vt_env_gputrace_memusage() > 1)

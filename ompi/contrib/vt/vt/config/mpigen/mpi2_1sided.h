@@ -35,9 +35,9 @@
  *
  **/
 
-VT_MPI_INT MPI_Accumulate(void* origin_addr_CLASS_BUFFER, VT_MPI_INT origin_count, MPI_Datatype origin_datatype, VT_MPI_INT target_rank, MPI_Aint target_disp, VT_MPI_INT target_count, MPI_Datatype target_datatype, MPI_Op op, MPI_Win win);
+VT_MPI_INT MPI_Accumulate(CONST void* origin_addr_CLASS_BUFFER, VT_MPI_INT origin_count, MPI_Datatype origin_datatype, VT_MPI_INT target_rank, MPI_Aint target_disp, VT_MPI_INT target_count, MPI_Datatype target_datatype, MPI_Op op, MPI_Win win);
 VT_MPI_INT MPI_Get(void* origin_addr_CLASS_BUFFER, VT_MPI_INT origin_count, MPI_Datatype origin_datatype, VT_MPI_INT target_rank, MPI_Aint target_disp, VT_MPI_INT target_count, MPI_Datatype target_datatype, MPI_Win win);
-VT_MPI_INT MPI_Put(void* origin_addr_CLASS_BUFFER, VT_MPI_INT origin_count, MPI_Datatype origin_datatype, VT_MPI_INT target_rank, MPI_Aint target_disp, VT_MPI_INT target_count, MPI_Datatype target_datatype, MPI_Win win);
+VT_MPI_INT MPI_Put(CONST void* origin_addr_CLASS_BUFFER, VT_MPI_INT origin_count, MPI_Datatype origin_datatype, VT_MPI_INT target_rank, MPI_Aint target_disp, VT_MPI_INT target_count, MPI_Datatype target_datatype, MPI_Win win);
 VT_MPI_INT MPI_Win_complete(MPI_Win win);
 VT_MPI_INT MPI_Win_create(void* base, MPI_Aint size, VT_MPI_INT disp_unit, MPI_Info info, MPI_Comm comm, MPI_Win* win_CLASS_SINGLE_OUT);
 VT_MPI_INT MPI_Win_fence(VT_MPI_INT assert, MPI_Win win);

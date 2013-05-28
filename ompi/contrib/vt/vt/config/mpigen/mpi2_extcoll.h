@@ -35,5 +35,5 @@
  *
  **/
 
-VT_MPI_INT MPI_Alltoallw(void* sendbuf_CLASS_BUFFER, VT_MPI_INT* sendcounts, VT_MPI_INT* sdispls, MPI_Datatype* sendtypes_CLASS_ARRAY_IN_sendcounts, void* recvbuf_CLASS_BUFFER, VT_MPI_INT* recvcounts, VT_MPI_INT* rdispls, MPI_Datatype* recvtypes_CLASS_ARRAY_IN_recvcounts, MPI_Comm comm); /*COLL_ALL2ALL*/
-VT_MPI_INT MPI_Exscan(void* sendbuf_CLASS_BUFFER, void* recvbuf_CLASS_BUFFER, VT_MPI_INT count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm); /*COLL_ALL2ALL*/
+VT_MPI_INT MPI_Alltoallw(CONST void* sendbuf_CLASS_BUFFER, CONST VT_MPI_INT* sendcounts, CONST VT_MPI_INT* sdispls, CONST MPI_Datatype* sendtypes_CLASS_ARRAY_IN_sendcounts, void* recvbuf_CLASS_BUFFER, CONST VT_MPI_INT* recvcounts, CONST VT_MPI_INT* rdispls, CONST MPI_Datatype* recvtypes_CLASS_ARRAY_IN_recvcounts, MPI_Comm comm); /*COLL_ALL2ALL*/
+VT_MPI_INT MPI_Exscan(CONST void* sendbuf_CLASS_BUFFER, void* recvbuf_CLASS_BUFFER, VT_MPI_INT count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm); /*COLL_ALL2ALL*/

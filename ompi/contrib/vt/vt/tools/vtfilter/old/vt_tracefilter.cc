@@ -861,6 +861,7 @@ int main( int argc, char** argv ) {
 			cerr << "Error while reading definitions. aborting" << endl;
 			OTF_WStream_close( fha.wstream );
 			OTF_RStream_close( defrstream );
+			OTF_HandlerArray_close( defhandlers );
 #ifdef VT_MPI
 			MPI_Abort( MPI_COMM_WORLD, 1 );
 #endif // VT_MPI
@@ -889,6 +890,7 @@ int main( int argc, char** argv ) {
 				cerr << "Error while reading definitions. aborting" << endl;
 				OTF_WStream_close( fha.wstream );
 				OTF_RStream_close( defrstream );
+				OTF_HandlerArray_close( defhandlers );
 #ifdef VT_MPI
 				MPI_Abort( MPI_COMM_WORLD, 1 );
 #endif // VT_MPI

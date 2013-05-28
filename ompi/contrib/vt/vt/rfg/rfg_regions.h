@@ -70,6 +70,12 @@ RFG_Regions* RFG_Regions_dup( const RFG_Regions* oldRegions );
 /* cleanup RFG regions object */
 int RFG_Regions_free( RFG_Regions* regions );
 
+/* get RFG filter object associated with given regions object */
+RFG_Filter* RFG_Regions_getFilter( RFG_Regions* regions );
+
+/* get RFG groups object associated with given regions object */
+RFG_Groups* RFG_Regions_getGroups( RFG_Regions* groups );
+
 /* sets pointer to a function which generates region ids */
 int RFG_Regions_setRegionIdGenFunc( RFG_Regions* regions,
                                     uint32_t (*func)(void) );

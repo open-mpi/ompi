@@ -23,6 +23,10 @@
 
 #include "vt_cupti_common.h"    /* CUPTI common structures, functions, etc. */
 
+EXTERN uint8_t vt_cupti_events_enabled;
+
+EXTERN uint8_t vt_cupti_events_sampling;
+
 /*
  * Initialize VampirTrace IDs and registers the finalize function.
  * This may be done implicitly by vt_cuptievt_count().
@@ -35,12 +39,26 @@ EXTERN void vt_cupti_events_init(void);
 EXTERN void vt_cupti_events_finalize(void);
 
 /*
+ * Initialize the CUPTI events data of the given VampirTrace CUPTI context.
+ * 
+ * @param vtCtx pointer to the VampirTrace CUPTI context
+ */
+EXTERN void vt_cupti_events_initContext(vt_cupti_ctx_t *vtCtx);
+
+/*
+ * Finalizes the given VampirTrace CUPTI events context.
+ * 
+ * @param vtCtx pointer to the VampirTrace CUPTI context
+ */
+EXTERN void vt_cupti_events_finalizeContext(vt_cupti_ctx_t *vtCtx);
+
+/*
  * Finalizes CUPTI device.
  * 
  * @param ptid the VampirTrace process/thread id
  * @param cleanExit 1 to cleanup CUPTI event group, otherwise 0
  */
-EXTERN void vt_cuptievt_finalize_device(uint32_t ptid, uint8_t cleanExit);
+EXTERN void vt_cuptievt_finalize_device(uint8_t cleanExit);
 
 /*
  * Returns the VampirTrace CUPTI context for the CUDA context associated with

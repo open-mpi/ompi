@@ -36,9 +36,11 @@
 #define VT_GPU_TRACE_IDLE               (1 << 7)
 #define VT_GPU_TRACE_MEMCPY             (1 << 8)
 #define VT_GPU_TRACE_MEMUSAGE           (1 << 9)
-#define VT_GPU_TRACE_DEBUG              (1 << 10)
-#define VT_GPU_TRACE_ERROR              (1 << 11)
-#define VT_GPU_TRACE_STREAM_REUSE       (1 << 12)
+#define VT_GPU_TRACE_SYNC               (1 << 10)
+#define VT_GPU_STREAM_REUSE             (1 << 11)
+#define VT_GPU_DEBUG                    (1 << 12)
+#define VT_GPU_ERROR                    (1 << 13)
+
 
 /* set the default tracing configuration */
 #if defined(VT_CUDARTWRAP)
@@ -62,9 +64,9 @@
 #define VT_CUPTI_ACT_DEFAULT_BSIZE 65536
 
 /* defines for GPU GROUP and GPU COMM (8 bit only!!!) */
-#define VTGPU_NO_GPU   0x00 /* thread is no gpu and does no gpu communication */
+#define VTGPU_NO_GPU   0x00 /* thread is no GPU and does no GPU communication */
 #define VTGPU_GPU      0x01 /* thread is a GPU thread */
-#define VTGPU_GPU_COMM 0x02 /* thread does gpu communication (CPU or GPU) */
+#define VTGPU_GPU_COMM 0x02 /* thread does GPU communication (CPU or GPU) */
 
 /* performance counter available? */
 #define VTGPU_NO_PC    0x04 /* no performance counter for this thread available */
@@ -98,6 +100,7 @@ EXTERN char vt_gpu_kernel_name[VTGPU_KERNEL_STRING_SIZE];
  */
 EXTERN char* vt_cuda_demangleKernel(const char* mangled);
 #endif /* defined(VT_DEMANGLE) */
+
 #endif /* defined(VT_CUDARTWRAP) || defined(VT_CUPTI) */
 
 
@@ -105,7 +108,7 @@ EXTERN char* vt_cuda_demangleKernel(const char* mangled);
 
 #include "vt_cuda_driver_api.h"
 
-# define CHECK_CU_ERROR(_err, _msg) \
+# define VT_CUDRV_CALL(_err, _msg) \
   if(_err != CUDA_SUCCESS){ \
     vt_gpu_handleCuError(_err, _msg, __FILE__,__LINE__); \
   }
@@ -123,7 +126,7 @@ EXTERN void vt_gpu_handleCuError(CUresult ecode, const char* msg,
 
 #else /* defined(VT_CUDA) && defined(VT_CUPTI) */
 
-# define CHECK_CU_ERROR(_err, _msg)
+# define VT_CUDRV_CALL(_err, _msg)
 
 #endif /* defined(VT_CUDA) && defined(VT_CUPTI) */
 
@@ -173,6 +176,15 @@ EXTERN uint8_t vt_gpu_trace_idle;
  */
 EXTERN uint8_t vt_gpu_trace_mcpy;
 
+/* 
+ * Synchronization Level:
+ * 0 no extra synchronization
+ * 1 synchronize before synchronous memory copy or synchronization - correct
+ *   data transfer rates for communication
+ * 2 show synchronization in extra region group to get host wait time
+ */
+EXTERN uint8_t vt_gpu_sync_level;
+
 /*
  * flag: Reuse destroyed GPU streams?
  */
@@ -203,6 +215,11 @@ EXTERN uint64_t vt_gpu_init_time;
  * VampirTrace region ID for GPU idle time 
  */
 EXTERN uint32_t vt_gpu_rid_idle;
+
+/*
+ * VampirTrace region ID for synchronization of host and CUDA device
+ */
+EXTERN uint32_t vt_gpu_rid_sync;
 
 /*
  * VampirTrace GPU memory allocation counter

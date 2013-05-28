@@ -1,8 +1,13 @@
 ##
 # @configure_input@
 #
-# make wrapper.c
+# make vtlib/vt_mpiwrap.gen.c
 ##
+
+# exit the script if any statement returns a non-true return value
+set -e
+
+
 
 export SRCDIR=@top_vt_srcdir@/config/mpigen
 
@@ -136,10 +141,12 @@ cat <<End-of-File >$tmp.awk
   
   if (NF > 2) {
     for (i=3; i<=NF; i++) {
-      split(\$i,typeandpara," ")
-      type[i-2]=typeandpara[1]
-      para[i-2]=typeandpara[2]
+      n=split(\$i,typeandpara," ")
+      j=1
       if (i > 3) printf ", "
+      if (n == 3) printf "%s ",typeandpara[j++]
+      type[i-2]=typeandpara[j++]
+      para[i-2]=typeandpara[j]
       printf "%s %s",type[i-2],para[i-2]
     }
   }
