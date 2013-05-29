@@ -229,10 +229,14 @@ int32_t opal_datatype_add( opal_datatype_t* pdtBase, const opal_datatype_t* pdtA
     pdtBase->flags |= OPAL_DATATYPE_FLAG_DATA;
 
     /*
-     * the count == 0 is LEGAL only for MPI_UB and MPI_LB. Therefore we support it
-     * here in the upper part of this function. As an extension, the count set to
-     * zero can be used to reset the alignment of the data, but not for changing
-     * the true_lb and true_ub.
+     * MPI Standard 3.0 Chapter 4.1: Most datatype constructors have
+     * replication count or block length arguments. If the value is zero,
+     * no elements are generated in the type map and there is no effect
+     * on datatype bounds or extent.
+     *
+     * Therefore we support it here in the upper part of this function. As an
+     * extension, the count set to zero can be used to reset the alignment of
+     * the data, but not for changing the true_lb and true_ub.
      */
     if( (0 == count) || (0 == pdtAdd->size) ) {
         return OPAL_SUCCESS;
