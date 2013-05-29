@@ -47,13 +47,33 @@ included in the vX.Y.Z section and be denoted as:
    (** also appeared: A.B.C)  -- indicating that this item was previously
                                  included in release version vA.B.C.
 
-1.6.5 (unreleased)
-------------------
+1.6.5
+-----
 
+- Remove extraneous -L from hwloc's embedding.  Thanks to Stefan
+  Friedel for reporting the issue.
+  (** also to appear: 1.7.2)
+- Fix contiguous datatype memory check.  Thanks to Eric Chamberland
+  for reporting the issue.
+  (** also to appear: 1.7.2)
+- Make the openib BTL more friendly to ignoring verbs devices that are
+  not RC-capable.
+  (** also to appear: 1.7.2)
+- Fix some MPI datatype engine issues.  Thanks to Thomas Jahns for
+  reporting the issue.
+  (** also to appear: 1.7.2)
+- Add INI information for Chelsio T5 device.
+  (** also to appear: 1.7.2)
+- Integrate MXM STREAM support for MPI_ISEND and MPI_IRECV, and other
+  minor MXM fixes.
+  (** also to appear: 1.7.2)
+- Improved alignment for OpenFabrics buffers.
+- Update to VampirTrace 5.14.3.8.
+  (** also to appear: 1.7.2)
 - Fix to not show amorphous "MPI was already finalized" error when
   failing to MPI_File_close an open file.  Thanks to Brian Smith for
   reporting the issue.
-  (** also to/appeared: 1.7.1)
+  (** also to appear: 1.7.2)
 
 
 1.6.4
