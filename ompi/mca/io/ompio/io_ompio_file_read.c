@@ -62,11 +62,17 @@ mca_io_ompio_file_read (ompi_file_t *fp,
     data = (mca_io_ompio_data_t *) fp->f_io_selected_data;
     fh = &data->ompio_fh;
 
+    if ( 0 == count ) {
+	if ( MPI_STATUS_IGNORE != status ) {
+	    status->_ucount = max_data;
+	}
+	return ret;
+    }
 
     if (fh->f_amode & MPI_MODE_WRONLY){
       printf("Improper use of FILE Mode, Using WRONLY for Read!\n");
       ret = OMPI_ERROR;
-      goto exit;
+      return ret;
     }
 
     ompi_io_ompio_decode_datatype (fh, 
@@ -218,7 +224,6 @@ mca_io_ompio_file_read (ompi_file_t *fp,
 	status->_ucount = max_data;
     }
 
- exit:
     return ret;
 }
 

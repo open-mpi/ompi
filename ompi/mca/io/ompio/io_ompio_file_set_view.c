@@ -167,7 +167,9 @@ OMPI_MPI_OFFSET_TYPE get_contiguous_chunk_size (mca_io_ompio_file_t *fh)
             }
         }
     }
-    avg = avg/fh->f_iov_count;
+    if ( 0 != fh->f_iov_count ) {
+	avg = avg/fh->f_iov_count;
+    }
     fh->f_comm->c_coll.coll_allreduce (&avg,
                                        &global_avg,
                                        1,
