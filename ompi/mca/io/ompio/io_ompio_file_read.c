@@ -64,7 +64,7 @@ mca_io_ompio_file_read (ompi_file_t *fp,
 
     if ( 0 == count ) {
 	if ( MPI_STATUS_IGNORE != status ) {
-	    status->_ucount = max_data;
+	    status->_ucount = 0;
 	}
 	return ret;
     }
