@@ -9,7 +9,7 @@
  *                          University of Stuttgart.  All rights reserved.
  *  Copyright (c) 2004-2005 The Regents of the University of California.
  *                          All rights reserved.
- *  Copyright (c) 2008-2012 University of Houston. All rights reserved.
+ *  Copyright (c) 2008-2013 University of Houston. All rights reserved.
  *  $COPYRIGHT$
  *  
  *  Additional copyrights may follow
@@ -58,6 +58,13 @@ mca_io_ompio_file_write (ompi_file_t *fp,
     int k = 0; /* index into the io_array */
     size_t sum_previous_counts = 0;
     size_t sum_previous_length = 0;
+
+    if ( 0 == count ) {
+	if ( MPI_STATUS_IGNORE != status ) {
+	    status->_ucount = 0;
+	}
+	return ret;
+    }
 
     data = (mca_io_ompio_data_t *) fp->f_io_selected_data;
     fh = &data->ompio_fh;

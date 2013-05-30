@@ -491,6 +491,14 @@ int ompi_io_ompio_decode_datatype (mca_io_ompio_file_t *fh,
         opal_output (1, "Cannot attach the datatype to a convertor\n");
         return OMPI_ERROR;
     }
+
+    if ( 0 == datatype->super.size ) {
+	*max_data = 0;
+	*iovec_count = 0;
+	*iov = NULL;
+	return OMPI_SUCCESS;
+    }
+
     remaining_length = count * datatype->super.size;
 
     temp_count = OMPIO_IOVEC_INITIAL_SIZE;
