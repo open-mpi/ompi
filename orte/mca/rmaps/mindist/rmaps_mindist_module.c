@@ -241,6 +241,9 @@ static int mindist_map(orte_job_t *jdata)
                     }
                 }
             }
+            /* first we need to fill summary object for root with information about nodes 
+             * so we call opal_hwloc_base_get_nbobjs_by_type */
+            opal_hwloc_base_get_nbobjs_by_type(node->topology, HWLOC_OBJ_NODE, 0, OPAL_HWLOC_AVAILABLE);
             OBJ_CONSTRUCT(&numa_list, opal_list_t);
             opal_hwloc_get_sorted_numa_list(node->topology, orte_rmaps_base.device, &numa_list);
             if (opal_list_get_size(&numa_list) > 0) {

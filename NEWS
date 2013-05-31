@@ -93,7 +93,7 @@ Trunk (not on release branches yet)
   formats.
 - Added Location Aware Mapping Algorithm (LAMA) mapping component.
 - Fixes for MPI_STATUS handling in corner cases.-
-
+- Add a distance-based mapping component to find the socket "closest" to the PCI bus.
 
 1.7.1
 -----
