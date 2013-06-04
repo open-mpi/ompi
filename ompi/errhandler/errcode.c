@@ -91,6 +91,20 @@ ompi_mpi_errcode_t ompi_err_spawn;
 ompi_mpi_errcode_t ompi_err_unsupported_datarep;
 ompi_mpi_errcode_t ompi_err_unsupported_operation;
 ompi_mpi_errcode_t ompi_err_win;
+ompi_mpi_errcode_t ompi_t_err_memory;
+ompi_mpi_errcode_t ompi_t_err_not_initialized;
+ompi_mpi_errcode_t ompi_t_err_cannot_init;
+ompi_mpi_errcode_t ompi_t_err_invalid_index;
+ompi_mpi_errcode_t ompi_t_err_invalid_item;
+ompi_mpi_errcode_t ompi_t_err_invalid_handle;
+ompi_mpi_errcode_t ompi_t_err_out_of_handles;
+ompi_mpi_errcode_t ompi_t_err_out_of_sessions;
+ompi_mpi_errcode_t ompi_t_err_invalid_session;
+ompi_mpi_errcode_t ompi_t_err_cvar_set_not_now;
+ompi_mpi_errcode_t ompi_t_err_cvar_set_never;
+ompi_mpi_errcode_t ompi_t_err_pvar_no_startstop;
+ompi_mpi_errcode_t ompi_t_err_pvar_no_write;
+ompi_mpi_errcode_t ompi_t_err_pvar_no_atomic;
 
 static void ompi_mpi_errcode_construct(ompi_mpi_errcode_t* errcode);
 static void ompi_mpi_errcode_destruct(ompi_mpi_errcode_t* errcode);
@@ -172,6 +186,20 @@ int ompi_mpi_errcode_init (void)
     CONSTRUCT_ERRCODE( ompi_err_unsupported_datarep, MPI_ERR_UNSUPPORTED_DATAREP, "MPI_ERR_UNSUPPORTED_DATAREP: data representation not supported" );
     CONSTRUCT_ERRCODE( ompi_err_unsupported_operation, MPI_ERR_UNSUPPORTED_OPERATION, "MPI_ERR_UNSUPPORTED_OPERATION: operation not supported" );
     CONSTRUCT_ERRCODE( ompi_err_win, MPI_ERR_WIN, "MPI_ERR_WIN: invalid window" );
+    CONSTRUCT_ERRCODE( ompi_t_err_memory, MPI_T_ERR_MEMORY, "MPI_T_ERR_MEMORY: out of memory" );
+    CONSTRUCT_ERRCODE( ompi_t_err_not_initialized, MPI_T_ERR_NOT_INITIALIZED, "MPI_T_ERR_NOT_INITIALIZED: interface not initialized" );
+    CONSTRUCT_ERRCODE( ompi_t_err_cannot_init, MPI_T_ERR_CANNOT_INIT, "MPI_T_ERR_CANNOT_INIT: interface not in the state to be initialized" );
+    CONSTRUCT_ERRCODE( ompi_t_err_invalid_index, MPI_T_ERR_INVALID_INDEX, "MPI_T_ERR_INVALID_INDEX: invalid index" );
+    CONSTRUCT_ERRCODE( ompi_t_err_invalid_item, MPI_T_ERR_INVALID_ITEM, "MPI_T_ERR_INVALID_ITEM: the item index queried is out of range" );
+    CONSTRUCT_ERRCODE( ompi_t_err_invalid_handle, MPI_T_ERR_INVALID_HANDLE, "MPI_T_ERR_INVALID_HANDLE: the handle is invalid" );
+    CONSTRUCT_ERRCODE( ompi_t_err_out_of_handles, MPI_T_ERR_OUT_OF_HANDLES, "MPI_T_ERR_OUT_OF_HANDLES: no more handles available" );
+    CONSTRUCT_ERRCODE( ompi_t_err_out_of_sessions, MPI_T_ERR_OUT_OF_SESSIONS, "MPI_T_ERR_OUT_OF_SESSIONS: no more sessions available" );
+    CONSTRUCT_ERRCODE( ompi_t_err_invalid_session, MPI_T_ERR_INVALID_SESSION, "MPI_T_ERR_INVALID_SESSION: session argument is not a valid session" );
+    CONSTRUCT_ERRCODE( ompi_t_err_cvar_set_not_now, MPI_T_ERR_CVAR_SET_NOT_NOW, "MPI_T_ERR_CVAR_SET_NOT_NOW: variable cannot be set at this moment" );
+    CONSTRUCT_ERRCODE( ompi_t_err_cvar_set_never, MPI_T_ERR_CVAR_SET_NEVER, "MPI_T_ERR_CVAR_SET_NEVER: variable cannot be set until end of execution" );
+    CONSTRUCT_ERRCODE( ompi_t_err_pvar_no_startstop, MPI_T_ERR_PVAR_NO_STARTSTOP, "MPI_T_ERR_PVAR_NO_STARTSTOP: variable cannot be started or stopped" );
+    CONSTRUCT_ERRCODE( ompi_t_err_pvar_no_write, MPI_T_ERR_PVAR_NO_WRITE, "MPI_T_ERR_PVAR_NO_WRITE: variable cannot be written or reset" );
+    CONSTRUCT_ERRCODE( ompi_t_err_pvar_no_atomic, MPI_T_ERR_PVAR_NO_ATOMIC, "MPI_T_ERR_PVAR_NO_ATOMIC: variable cannot be read and written atomically" );
 
     /* Per MPI-3 p353:27-32, MPI_LASTUSEDCODE must be >=
        MPI_ERR_LASTCODE.  So just start it as == MPI_ERR_LASTCODE. */
