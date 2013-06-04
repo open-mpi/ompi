@@ -371,7 +371,7 @@ int mqs_image_has_queues (mqs_image *image, char **message)
     i_info->extra = NULL;
 
     /* Default failure message ! */
-    *message = "The symbols and types in the Open MPI library used by TotalView\n"
+    *message = "The symbols and types in the Open MPI library used by the debugger\n"
         "to extract the message queues are not as expected in\n"
         "the image '%s'\n"
         "No message queue display is possible.\n"
