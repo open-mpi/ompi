@@ -143,6 +143,7 @@ mca_fcoll_dynamic_file_write_all (mca_io_ompio_file_t *fh,
 	    goto exit;
 	}
     }
+
     if (-1 == mca_fcoll_dynamic_num_io_procs) {
         mca_fcoll_dynamic_num_io_procs = 1;
     }
@@ -195,13 +196,10 @@ mca_fcoll_dynamic_file_write_all (mca_io_ompio_file_t *fh,
 #if DEBUG_ON    
     for (i=0 ; i<local_count ; i++) {
    
-
-      printf("Local offset-length pair for rank:%d \n",
-	     fh->f_rank);
-      printf("%d: OFFSET: %p   LENGTH: %lld\n",
-               fh->f_rank,
-               iov[i].iov_base,
-               iov[i].iov_len);
+      printf("%d: OFFSET: %d   LENGTH: %ld\n",
+	     fh->f_rank,
+	     local_iov_array[i].iov_base,
+	     local_iov_array[i].iov_len);
 
     }
 #endif   
@@ -247,6 +245,7 @@ mca_fcoll_dynamic_file_write_all (mca_io_ompio_file_t *fh,
     }
     
 #if DEBUG_ON
+    printf("total_fview_count : %d\n", total_fview_count);
     if (fh->f_procs_in_group[fh->f_aggregator_index] == fh->f_rank) {
         for (i=0 ; i<fh->f_procs_per_group ; i++) {
             printf ("%d: PROCESS: %d  ELEMENTS: %d  DISPLS: %d\n",
@@ -270,37 +269,20 @@ mca_fcoll_dynamic_file_write_all (mca_io_ompio_file_t *fh,
       }
 
     }
-    if (fh->f_flags & OMPIO_UNIFORM_FVIEW) {
-
-      ret =  ompi_io_ompio_allgather_array (local_iov_array,
-					    local_count,
-					    fh->f_iov_type,
-					    global_iov_array,
-					    local_count,
-					    fh->f_iov_type,
-					    fh->f_aggregator_index,
-					    fh->f_procs_in_group,
-					    fh->f_procs_per_group,
-					    fh->f_comm);
-      if (OMPI_SUCCESS != ret){
-	goto exit;
-      }
-    }
-    else { 
-      ret = ompi_io_ompio_allgatherv_array (local_iov_array,
-					    local_count,
-					    fh->f_iov_type,
-					    global_iov_array,
-					    fview_count,
-					    displs,
-					    fh->f_iov_type,
-					    fh->f_aggregator_index,
-					    fh->f_procs_in_group,
-					    fh->f_procs_per_group,
-					    fh->f_comm);
-      if (OMPI_SUCCESS != ret){
-	goto exit;
-      }
+    
+    ret = ompi_io_ompio_allgatherv_array (local_iov_array,
+					  local_count,
+					  fh->f_iov_type,
+					  global_iov_array,
+					  fview_count,
+					  displs,
+					  fh->f_iov_type,
+					  fh->f_aggregator_index,
+					  fh->f_procs_in_group,
+					  fh->f_procs_per_group,
+					  fh->f_comm);
+    if (OMPI_SUCCESS != ret){
+      goto exit;
     }
 
     /* sort it */
@@ -331,8 +313,8 @@ mca_fcoll_dynamic_file_write_all (mca_io_ompio_file_t *fh,
       for (tv=0 ; tv<total_fview_count ; tv++) {
 	printf("%d: OFFSET: %lld   LENGTH: %ld\n",
 	       fh->f_rank,
-	       global_iov_array[sorted[tv]].offset,
-	       global_iov_array[sorted[tv]].length);
+	       global_iov_array[sorted[tv]].iov_base,
+	       global_iov_array[sorted[tv]].iov_len);
       }
     }
 #endif
@@ -702,7 +684,7 @@ mca_fcoll_dynamic_file_write_all (mca_io_ompio_file_t *fh,
 	       index+1,fh->f_rank);
 	for (i=0;i<fh->f_procs_per_group; i++){
 	  for(j=0;j<disp_index[i];j++){
-	    if (blocklen[i][j] > 0){
+	    if (blocklen_per_process[i][j] > 0){
 	      printf("%d sends blocklen[%d]: %d, disp[%d]: %ld to %d\n",
 		     fh->f_procs_in_group[i],j,
 		     blocklen_per_process[i][j],j,
