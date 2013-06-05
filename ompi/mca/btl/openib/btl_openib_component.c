@@ -163,7 +163,6 @@ static int btl_openib_component_register(void)
     int ret;
 
     /* register IB component parameters */
-    ret = btl_openib_register_mca_params();
     if (OMPI_SUCCESS != (ret = btl_openib_register_mca_params())) {
         return ret;
     }
