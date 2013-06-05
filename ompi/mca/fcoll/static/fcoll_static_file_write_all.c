@@ -163,14 +163,14 @@ mca_fcoll_static_file_write_all (mca_io_ompio_file_t *fh,
       goto exit;
   }
 
-  /*  printf("max_data %ld\n", max_data);  */
-  local_iov_array = (local_io_array *)malloc (iov_size * sizeof(local_io_array));
-  if ( NULL == local_iov_array){
+  if (0 != iov_size){
+    local_iov_array = (local_io_array *)malloc (iov_size * sizeof(local_io_array));
+    if ( NULL == local_iov_array){
       fprintf(stderr,"local_iov_array allocation error\n");
       ret = OMPI_ERR_OUT_OF_RESOURCE;
       goto exit;
+    }
   }
-  
   
   for (j=0; j < iov_size; j++){
     local_iov_array[j].offset = (OMPI_MPI_OFFSET_TYPE)(intptr_t)
@@ -307,35 +307,20 @@ mca_fcoll_static_file_write_all (mca_io_ompio_file_t *fh,
     }
   }
   
-  if (fh->f_flags & OMPIO_UNIFORM_FVIEW) {
-      ret = ompi_io_ompio_gather_array (local_iov_array,
-					iov_size,
-					io_array_type,
-					global_iov_array,
-					iov_size,
-					io_array_type,
-					fh->f_aggregator_index,
-					fh->f_procs_in_group,
-					fh->f_procs_per_group,
-					fh->f_comm);
-  }
-  else {
-      ret = ompi_io_ompio_gatherv_array (local_iov_array,
-					 iov_size,
-					 io_array_type,
-					 global_iov_array,
-					 iovec_count_per_process,
-					 displs,
-					 io_array_type,
-					 fh->f_aggregator_index,
-					 fh->f_procs_in_group,
-					 fh->f_procs_per_group,
-					 fh->f_comm);
-  }
-
+  ret = ompi_io_ompio_gatherv_array (local_iov_array,
+				     iov_size,
+				     io_array_type,
+				     global_iov_array,
+				     iovec_count_per_process,
+				     displs,
+				     io_array_type,
+				     fh->f_aggregator_index,
+				     fh->f_procs_in_group,
+				     fh->f_procs_per_group,
+				     fh->f_comm);
   if (OMPI_SUCCESS != ret){
-      fprintf(stderr,"global_iov_array gather error!\n");
-      goto exit;
+    fprintf(stderr,"global_iov_array gather error!\n");
+    goto exit;
   }
   
   if (fh->f_procs_in_group[fh->f_aggregator_index] == fh->f_rank) {
