@@ -164,6 +164,9 @@ static int btl_openib_component_register(void)
 
     /* register IB component parameters */
     ret = btl_openib_register_mca_params();
+    if (OMPI_SUCCESS != (ret = btl_openib_register_mca_params())) {
+        return ret;
+    }
 
     mca_btl_openib_component.max_send_size =
         mca_btl_openib_module.super.btl_max_send_size;
