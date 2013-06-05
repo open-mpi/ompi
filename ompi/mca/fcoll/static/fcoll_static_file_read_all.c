@@ -298,31 +298,22 @@ mca_fcoll_static_file_read_all (mca_io_ompio_file_t *fh,
       return OMPI_ERR_OUT_OF_RESOURCE;
     }
   }
-
-  if (fh->f_flags & OMPIO_UNIFORM_FVIEW) {
-    ompi_io_ompio_gather_array (local_iov_array,
-				iov_size,
-				io_array_type,
-				global_iov_array,
-				iov_size,
-				io_array_type,
-				fh->f_aggregator_index,
-				fh->f_procs_in_group,
-				fh->f_procs_per_group,
-				fh->f_comm);
-  }
-  else {
-    ompi_io_ompio_gatherv_array (local_iov_array,
-				 iov_size,
-				 io_array_type,
-				 global_iov_array,
-				 iovec_count_per_process,
-				 displs,
-				 io_array_type,
-				 fh->f_aggregator_index,
-				 fh->f_procs_in_group,
-				 fh->f_procs_per_group,
-				 fh->f_comm);
+  
+  ret = ompi_io_ompio_gatherv_array (local_iov_array,
+				     iov_size,
+				     io_array_type,
+				     global_iov_array,
+				     iovec_count_per_process,
+				     displs,
+				     io_array_type,
+				     fh->f_aggregator_index,
+				     fh->f_procs_in_group,
+				     fh->f_procs_per_group,
+				     fh->f_comm);
+  
+  if (OMPI_SUCCESS != ret){
+    fprintf(stderr,"global_iov_array gather error!\n");
+    goto exit;
   }
 
   

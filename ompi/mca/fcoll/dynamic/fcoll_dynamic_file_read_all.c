@@ -250,40 +250,22 @@
        }
      }
 
-     if (fh->f_flags & OMPIO_UNIFORM_FVIEW) {
-
-       ret = ompi_io_ompio_allgather_array (local_iov_array,
+     ret =  ompi_io_ompio_allgatherv_array (local_iov_array,
 					    local_count,
 					    fh->f_iov_type,
 					    global_iov_array,
-					    local_count,
+					    fview_count,
+					    displs,
 					    fh->f_iov_type,
 					    fh->f_aggregator_index,
 					    fh->f_procs_in_group,
 					    fh->f_procs_per_group,
 					    fh->f_comm);
-
-       if (OMPI_SUCCESS != ret){
-	 goto exit;
-       }
+     
+     if (OMPI_SUCCESS != ret){
+       goto exit;
      }
-     else { 
-       ret =  ompi_io_ompio_allgatherv_array (local_iov_array,
-					      local_count,
-					      fh->f_iov_type,
-					      global_iov_array,
-					      fview_count,
-					      displs,
-					      fh->f_iov_type,
-					      fh->f_aggregator_index,
-					      fh->f_procs_in_group,
-					      fh->f_procs_per_group,
-					      fh->f_comm);
-
-       if (OMPI_SUCCESS != ret){
-	 goto exit;
-       }
-     }
+ 
      /* sort it */
      if (0 != total_fview_count) {
 	 sorted = (int *)malloc (total_fview_count * sizeof(int));
