@@ -9,7 +9,7 @@
  *                          University of Stuttgart.  All rights reserved.
  *  Copyright (c) 2004-2005 The Regents of the University of California.
  *                          All rights reserved.
- *  Copyright (c) 2008-2012 University of Houston. All rights reserved.
+ *  Copyright (c) 2008-2013 University of Houston. All rights reserved.
  *  $COPYRIGHT$
  *
  *  Additional copyrights may follow
@@ -163,7 +163,7 @@ OMPI_MPI_OFFSET_TYPE get_contiguous_chunk_size (mca_io_ompio_file_t *fh)
 
     for (i=0 ; i<(int)fh->f_iov_count ; i++) {
         avg[0] += fh->f_decoded_iov[i].iov_len;
-        if (i && uniform) {
+        if (i && 0 == uniform) {
             if (fh->f_decoded_iov[i].iov_len != fh->f_decoded_iov[i-1].iov_len) {
                 uniform = 1;
             }
@@ -183,27 +183,34 @@ OMPI_MPI_OFFSET_TYPE get_contiguous_chunk_size (mca_io_ompio_file_t *fh)
                                        fh->f_comm,
                                        fh->f_comm->c_coll.coll_allreduce_module);
     global_avg[0] = global_avg[0]/fh->f_size;
+    global_avg[1] = global_avg[1]/fh->f_size;
 
     if ( global_avg[0] == avg[0] && 
 	 global_avg[1] == avg[1] &&
 	 0 == avg[2]             &&
 	 0 == global_avg[2] ) {
-	/* second confirmation round to see whether all processes agree
-	** on having a uniform file view or not 
-	*/
 	uniform = 0;
-	fh->f_comm->c_coll.coll_allreduce (&uniform,
-					   &global_uniform,
-					   1,
-					   MPI_INT,
-					   MPI_MAX,
-					   fh->f_comm,
-					   fh->f_comm->c_coll.coll_allreduce_module);
-	if ( 0 == global_uniform  ){
-	    /* yes, everybody agrees on having a uniform file view */
-	    fh->f_flags |= OMPIO_UNIFORM_FVIEW;
-	}
     }
+    else {
+	uniform = 1;
+    }
+
+    /* second confirmation round to see whether all processes agree
+    ** on having a uniform file view or not 
+    */
+    fh->f_comm->c_coll.coll_allreduce (&uniform,
+				       &global_uniform,
+				       1,
+				       MPI_INT,
+				       MPI_MAX,
+				       fh->f_comm,
+				       fh->f_comm->c_coll.coll_allreduce_module);
+
+    if ( 0 == global_uniform  ){
+	/* yes, everybody agrees on having a uniform file view */
+	fh->f_flags |= OMPIO_UNIFORM_FVIEW;
+    }
+
 
     return global_avg[0];
 }
