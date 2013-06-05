@@ -362,7 +362,6 @@
 #endif
 
 
-OMPI_DECLSPEC extern union dt_elem_desc ompi_datatype_predefined_elem_desc[2 * OMPI_DATATYPE_MPI_MAX_PREDEFINED];
 extern const ompi_datatype_t* ompi_datatype_basicDatatypes[OMPI_DATATYPE_MPI_MAX_PREDEFINED];
 
 /* There 3 types of predefined data types.
@@ -420,20 +419,6 @@ extern const ompi_datatype_t* ompi_datatype_basicDatatypes[OMPI_DATATYPE_MPI_MAX
 
 #if OMPI_WANT_F77_BINDINGS
 /*
- * For Fortran, we need to pass information, such as ALIGNMENT and SIZE as well
- * Therefore, for initialization at compile-time, pass this data as well.
- *
- * However, there is no underlying OPAL-TYPE, therefore we just pass NAME, SIZE,
- * ALIGN and the FLAGS. Additionally, ONLY for Fortran we need the
- * ompi_datatype_predefined_elem_desc for the additional types.
- */
-#define OMPI_DATATYPE_INIT_DESC_PREDEFINED(TYPE, SIZE)                               \
-    {                                                                                \
-        1 /*length*/, 1 /*used*/,                                                    \
-        &(ompi_datatype_predefined_elem_desc[2 * OPAL_DATATYPE_ ## TYPE ## SIZE]) /*desc*/ \
-    }
-
-/*
  * Fortran types are based on the underlying OPAL types: They share the ID -- however,
  * the alignment is overwritten.
  */
@@ -450,8 +435,8 @@ extern const ompi_datatype_t* ompi_datatype_basicDatatypes[OMPI_DATATYPE_MPI_MAX
         (ALIGN) /*align*/,                                                           \
         1 /*nbElems*/,                                                               \
         OPAL_DATATYPE_INIT_NAME(TYPE ## SIZE) /*name*/,                              \
-        OMPI_DATATYPE_INIT_DESC_PREDEFINED(TYPE, SIZE) /*desc*/,                     \
-        OMPI_DATATYPE_INIT_DESC_PREDEFINED(TYPE, SIZE) /*opt_desc*/,                 \
+        OPAL_DATATYPE_INIT_DESC_PREDEFINED(TYPE, SIZE) /*desc*/,                     \
+        OPAL_DATATYPE_INIT_DESC_PREDEFINED(TYPE, SIZE) /*opt_desc*/,                 \
         OPAL_DATATYPE_INIT_BTYPES_ARRAY_ ## TYPE ## SIZE /*btypes*/                  \
     }
 
