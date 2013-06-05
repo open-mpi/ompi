@@ -31,7 +31,7 @@
 
 
 #define DEBUG_ON 0
-#define TIME_BREAKDOWN 1
+#define TIME_BREAKDOWN 0
 
 /*Used for loading file-offsets per aggregator*/
 typedef struct local_io_array{
