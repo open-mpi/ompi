@@ -45,8 +45,6 @@ int mca_io_ompio_set_view_internal(mca_io_ompio_file_t *fh,
 				   char *datarep,
 				   ompi_info_t *info)
 {
-
-
     size_t max_data = 0;
     MPI_Aint lb,ub;    
 
@@ -79,9 +77,6 @@ int mca_io_ompio_set_view_internal(mca_io_ompio_file_t *fh,
         }
     }
 
-
-
-    
     return OMPI_SUCCESS;
 }
 
@@ -94,8 +89,6 @@ int mca_io_ompio_file_set_view (ompi_file_t *fp,
 {
     mca_io_ompio_data_t *data;
     mca_io_ompio_file_t *fh;
-
-
 
     data = (mca_io_ompio_data_t *) fp->f_io_selected_data;
     fh = &data->ompio_fh;
@@ -129,6 +122,7 @@ int mca_io_ompio_file_set_view (ompi_file_t *fp,
         opal_output(1, "mca_fcoll_base_file_select() failed\n");
         return OMPI_ERROR;
     }
+
     return OMPI_SUCCESS;
 }
 
@@ -154,126 +148,62 @@ int mca_io_ompio_file_get_view (struct ompi_file_t *fp,
 
 OMPI_MPI_OFFSET_TYPE get_contiguous_chunk_size (mca_io_ompio_file_t *fh)
 {
-    int uniform = 1;
+    int uniform = 0, global_uniform = 0;
     int i = 0;
-    OMPI_MPI_OFFSET_TYPE avg = 0;
-    OMPI_MPI_OFFSET_TYPE global_avg = 0;
+    OMPI_MPI_OFFSET_TYPE avg[3] = {0,0,0};
+    OMPI_MPI_OFFSET_TYPE global_avg[3] = {0,0,0};
+
+    /* This function does two things: first, it determines the average data chunk 
+    ** size in the file view for each process and across all processes. 
+    ** Second, it establishes whether the view across all processes is uniform. 
+    ** By definition, uniform means:
+    ** 1. the file view of each process has the same number of contiguous sections
+    ** 2. each section in the file view has exactly the same size
+    */
 
     for (i=0 ; i<(int)fh->f_iov_count ; i++) {
-        avg += fh->f_decoded_iov[i].iov_len;
+        avg[0] += fh->f_decoded_iov[i].iov_len;
         if (i && uniform) {
             if (fh->f_decoded_iov[i].iov_len != fh->f_decoded_iov[i-1].iov_len) {
-                uniform = 0;
+                uniform = 1;
             }
         }
     }
     if ( 0 != fh->f_iov_count ) {
-	avg = avg/fh->f_iov_count;
+	avg[0] = avg[0]/fh->f_iov_count;
     }
-    fh->f_comm->c_coll.coll_allreduce (&avg,
-                                       &global_avg,
-                                       1,
+    avg[1] = (OMPI_MPI_OFFSET_TYPE) fh->f_iov_count;
+    avg[2] = (OMPI_MPI_OFFSET_TYPE) uniform;
+
+    fh->f_comm->c_coll.coll_allreduce (avg,
+                                       global_avg,
+                                       3,
                                        MPI_LONG,
                                        MPI_SUM,
                                        fh->f_comm,
                                        fh->f_comm->c_coll.coll_allreduce_module);
-    global_avg = global_avg/fh->f_size;
+    global_avg[0] = global_avg[0]/fh->f_size;
 
-    if (global_avg == avg && uniform) {
-        fh->f_flags |= OMPIO_UNIFORM_FVIEW;
+    if ( global_avg[0] == avg[0] && 
+	 global_avg[1] == avg[1] &&
+	 0 == avg[2]             &&
+	 0 == global_avg[2] ) {
+	/* second confirmation round to see whether all processes agree
+	** on having a uniform file view or not 
+	*/
+	uniform = 0;
+	fh->f_comm->c_coll.coll_allreduce (&uniform,
+					   &global_uniform,
+					   1,
+					   MPI_INT,
+					   MPI_MAX,
+					   fh->f_comm,
+					   fh->f_comm->c_coll.coll_allreduce_module);
+	if ( 0 == global_uniform  ){
+	    /* yes, everybody agrees on having a uniform file view */
+	    fh->f_flags |= OMPIO_UNIFORM_FVIEW;
+	}
     }
 
-    return global_avg;
+    return global_avg[0];
 }
-
-
-
-    /*
-    opal_convertor_clone (fh->f_convertor, &convertor, 0);
-    
-    if (OMPI_SUCCESS != opal_convertor_prepare_for_send (&convertor, filetype, 1, NULL))
-    {
-        printf ("Cannot attach the datatype to a convertor\n");
-        return OMPI_ERROR;
-    }
-
-    remaining_length = 1 * filetype->size;
-
-    printf ("FILETYPE SIZE: %d\n",filetype->size);
-    while (0 == opal_convertor_raw(&convertor, fh->f_decoded_iov, &fh->f_iovec_count, &max_data)) 
-    {
-#if 1
-        printf ("New raw extraction (fh->f_iovec_count = %d, max_data = %d)\n",
-                fh->f_iovec_count, max_data);
-        for (i = 0; i < fh->f_iovec_count; i++) 
-        {
-            printf ("\t{%p, %d}\n", fh->f_decoded_iov[i].iov_base, fh->f_decoded_iov[i].iov_len);
-        }
-#endif
-        remaining_length -= max_data;
-        fh->f_iovec_count = iov_num;
-    }
-#if 1
-    printf ("LAST extraction (fh->f_iovec_count = %d, max_data = %d)\n",
-            fh->f_iovec_count, max_data);
-    for (i = 0; i < fh->f_iovec_count; i++) 
-    {
-        printf ("\t{%p, %d}\n", fh->f_decoded_iov[i].iov_base, fh->f_decoded_iov[i].iov_len);
-    }
-#endif
-
-    remaining_length -= max_data;
-
-    if (remaining_length != 0) {
-        printf( "Not all raw description was been extracted (%lu bytes missing)\n",
-                (unsigned long) remaining_length );
-    }
-    */
-
-/*
-  
-    ompi_datatype_t *pdt;
-    struct iovec *iov;
-    int iov_count = OMPIO_IOVEC_INITIAL_SIZE;
-
-    remote_arch = ompi_mpi_local_arch;
-    ompi_ddt_create_vector( 10,1,2, MPI_INT, &pdt );
-    ompi_ddt_commit( &pdt );
-
-    iov = (struct iovec*)malloc(iov_num * sizeof(struct iovec));
-
-    opal_convertor_clone( fh->f_convertor, &convertor, 0 );
-    
-    if( OMPI_SUCCESS != opal_convertor_prepare_for_send( &convertor, pdt, 1, NULL ) ) {
-        printf( "Cannot attach the datatype to a convertor\n" );
-        return OMPI_ERROR;
-    }
-
-    remaining_length = 1 * pdt->size;
-    printf ("PDT SIZE: %d\n",pdt->size);
-
-    while ( 0 == opal_convertor_raw(&convertor, iov, &iov_count, &max_data) ) {
-        printf( "New raw extraction (iov_count = %d, max_data = %zu)\n",
-                iov_count, max_data );
-        for (i = 0; i < iov_count; i++) {
-            printf( "\t{%p, %d}\n", iov[i].iov_base, iov[i].iov_len );
-        }
-        remaining_length -= max_data;
-        iov_count = iov_num;
-    }
-    printf( "LAST Extraction (iov_count = %d, max_data = %zu)\n",
-            iov_count, max_data );
-    for (i = 0; i < iov_count; i++) {
-        printf( "\t{%p, %d}\n", iov[i].iov_base, iov[i].iov_len );
-    }
-
-    remaining_length -= max_data;
-
-    if( remaining_length != 0 ) {
-        printf( "Not all raw description was been extracted (%lu bytes missing)\n",
-                (unsigned long) remaining_length );
-    }
-
-    sleep(3);
-    exit(0);
-*/
