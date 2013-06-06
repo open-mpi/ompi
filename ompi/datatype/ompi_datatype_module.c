@@ -35,7 +35,6 @@
 
 /* by default the debuging is turned off */
 int ompi_datatype_dfd = -1;
-OMPI_DECLSPEC union dt_elem_desc ompi_datatype_predefined_elem_desc[2 * OMPI_DATATYPE_MPI_MAX_PREDEFINED];
 
 /**
  * This is the number of predefined datatypes. It is different than the MAX_PREDEFINED
@@ -426,30 +425,6 @@ opal_pointer_array_t ompi_datatype_f_to_c_table;
 int32_t ompi_datatype_init( void )
 {
     int32_t i;
-
-    for( i = 0; i < OMPI_DATATYPE_MPI_MAX_PREDEFINED; i++ ) {
-        const ompi_datatype_t* datatype = (ompi_datatype_t*)ompi_datatype_basicDatatypes[i];
-
-        if( 0 == datatype->super.size ) continue;
-        datatype->super.desc.desc[0].elem.common.flags = OPAL_DATATYPE_FLAG_PREDEFINED |
-                                                         OPAL_DATATYPE_FLAG_DATA |
-                                                         OPAL_DATATYPE_FLAG_CONTIGUOUS;
-        datatype->super.desc.desc[0].elem.common.type  = i;
-        datatype->super.desc.desc[0].elem.count        = 1;
-        datatype->super.desc.desc[0].elem.disp         = 0;
-        datatype->super.desc.desc[0].elem.extent       = datatype->super.size;
-
-        datatype->super.desc.desc[1].end_loop.common.flags    = 0;
-        datatype->super.desc.desc[1].end_loop.common.type     = OPAL_DATATYPE_END_LOOP;
-        datatype->super.desc.desc[1].end_loop.items           = 1;
-        datatype->super.desc.desc[1].end_loop.first_elem_disp = datatype->super.desc.desc[0].elem.disp;
-        datatype->super.desc.desc[1].end_loop.size            = datatype->super.size;
-
-        /* Check if the data contain gaps */
-        if( (datatype->super.ub - datatype->super.lb) == (OPAL_PTRDIFF_TYPE)datatype->super.size ) {
-            datatype->super.desc.desc[0].elem.common.flags |= OPAL_DATATYPE_FLAG_NO_GAPS;
-        }
-    }
 
     /* Create the f2c translation table */
     OBJ_CONSTRUCT(&ompi_datatype_f_to_c_table, opal_pointer_array_t);
