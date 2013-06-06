@@ -163,14 +163,17 @@ mca_fcoll_static_file_write_all (mca_io_ompio_file_t *fh,
       goto exit;
   }
 
-  if (0 != iov_size){
-    local_iov_array = (local_io_array *)malloc (iov_size * sizeof(local_io_array));
-    if ( NULL == local_iov_array){
-      fprintf(stderr,"local_iov_array allocation error\n");
-      ret = OMPI_ERR_OUT_OF_RESOURCE;
-      goto exit;
-    }
+  if (0 == iov_size){
+    iov_size  = 1;
   }
+  
+  local_iov_array = (local_io_array *)malloc (iov_size * sizeof(local_io_array));
+  if ( NULL == local_iov_array){
+    fprintf(stderr,"local_iov_array allocation error\n");
+    ret = OMPI_ERR_OUT_OF_RESOURCE;
+      goto exit;
+  }
+
   
   for (j=0; j < iov_size; j++){
     local_iov_array[j].offset = (OMPI_MPI_OFFSET_TYPE)(intptr_t)
@@ -324,6 +327,11 @@ mca_fcoll_static_file_write_all (mca_io_ompio_file_t *fh,
   }
   
   if (fh->f_procs_in_group[fh->f_aggregator_index] == fh->f_rank) {
+
+    if ( 0 == global_iov_count){
+      global_iov_count =  1;
+    }
+
     sorted = (int *)malloc (global_iov_count * sizeof(int));
     if (NULL == sorted) {
       opal_output (1, "OUT OF MEMORY\n");
@@ -970,6 +978,11 @@ static int local_heap_sort (local_io_array *io_array,
     int temp = 0;
     unsigned char done = 0;
     int* temp_arr = NULL;
+
+    if( 0 == num_entries){
+      num_entries = 1;
+    }
+
 
     temp_arr = (int*)malloc(num_entries*sizeof(int));
     if (NULL == temp_arr) {
