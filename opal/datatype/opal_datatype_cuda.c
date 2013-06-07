@@ -66,6 +66,11 @@ void mca_cuda_convertor_init(opal_convertor_t* convertor, const void *pUserBuf)
  */
 bool opal_cuda_check_bufs(char *dest, char *src)
 {
+    /* Only do the initialization on the first GPU access */
+    if (!initialized) {
+        opal_cuda_support_init();
+    }
+
     if (!opal_cuda_enabled) {
         return false;
     }
