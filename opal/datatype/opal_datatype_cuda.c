@@ -165,10 +165,10 @@ static void opal_cuda_support_init(void)
 
     if (1 == opal_cuda_enabled) {
         opal_output_verbose(10, opal_cuda_output,
-                            "CUDA: not enabled, CUDA device pointers will not work");
+                            "CUDA: enabled successfully, CUDA device pointers will work");
     } else {
         opal_output_verbose(10, opal_cuda_output,
-                            "CUDA: enabled successfully, CUDA device pointers will work");
+                            "CUDA: not enabled, CUDA device pointers will not work");
     }
 
     initialized = true;
