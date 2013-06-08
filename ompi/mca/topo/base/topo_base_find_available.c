@@ -69,7 +69,7 @@ int mca_topo_base_find_available(bool enable_progress_threads,
          item = next;
      }
 
-     /* There should at least be one sharedfp component which was available */
+     /* There should at least be one topo component available */
     if (0 == opal_list_get_size(&ompi_topo_base_framework.framework_components)) {
          opal_output_verbose (10, ompi_topo_base_framework.framework_output,
                               "topo:find_available: no topo components available!");
