@@ -9,21 +9,21 @@
 #
 
 .1in.1:
-	@ echo Creating $@ man page...
+	@ echo "  SED      $@"
 	@ sed -e 's/#PACKAGE_NAME#/@PACKAGE_NAME@/g' \
 	  -e 's/#PACKAGE_VERSION#/@PACKAGE_VERSION@/g' \
 	  -e 's/#OMPI_DATE#/@OMPI_RELEASE_DATE@/g' \
 	  > $@ < $<
 
 .3in.3:
-	@ echo Creating $@ man page...
+	@ echo "  SED      $@"
 	@ sed -e 's/#PACKAGE_NAME#/@PACKAGE_NAME@/g' \
 	  -e 's/#PACKAGE_VERSION#/@PACKAGE_VERSION@/g' \
 	  -e 's/#OMPI_DATE#/@OMPI_RELEASE_DATE@/g' \
 	  > $@ < $<
 
 .7in.7:
-	@ echo Creating $@ man page...
+	@ echo "  SED      $@"
 	@ sed -e 's/#PACKAGE_NAME#/@PACKAGE_NAME@/g' \
 	  -e 's/#PACKAGE_VERSION#/@PACKAGE_VERSION@/g' \
 	  -e 's/#OMPI_DATE#/@OMPI_RELEASE_DATE@/g' \
