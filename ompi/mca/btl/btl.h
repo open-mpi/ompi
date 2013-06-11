@@ -202,6 +202,14 @@ typedef uint8_t mca_btl_base_tag_t;
 #define MCA_BTL_FLAGS_CUDA_COPY_ASYNC_SEND 0x1000
 #define MCA_BTL_FLAGS_CUDA_COPY_ASYNC_RECV 0x2000
 
+/* btl can support signaled operations. BTLs that support this flag are
+ * expected to provide a mechanism for asynchronous progress on descriptors
+ * where the feature is requested. BTLs should also be aware that users can
+ * (and probably will) turn this flag on and off using the MCA variable
+ * system.
+ */
+#define MCA_BTL_FLAGS_SIGNALED        0x4000
+
 /* Default exclusivity levels */
 #define MCA_BTL_EXCLUSIVITY_HIGH     (64*1024) /* internal loopback */
 #define MCA_BTL_EXCLUSIVITY_DEFAULT  1024      /* GM/IB/etc. */
@@ -308,6 +316,12 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_btl_base_descriptor_t);
  */
 #define MCA_BTL_DES_FLAGS_PUT               0x0010
 #define MCA_BTL_DES_FLAGS_GET               0x0020
+
+/* Ask the BTL to wake the remote process (send/sendi) or local process
+ * (put/get) to handle this message. The BTL may ignore this flag if
+ * signaled operations are not supported.
+ */
+#define MCA_BTL_DES_FLAGS_SIGNAL            0x0040
 
 /**
  * Maximum number of allowed segments in src/dst fields of a descriptor.
