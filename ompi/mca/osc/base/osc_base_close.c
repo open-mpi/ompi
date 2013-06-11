@@ -7,6 +7,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -51,7 +52,7 @@ ompi_osc_base_close(void)
                    &ompi_osc_base_avail_components);
 
     mca_base_components_close(ompi_osc_base_output,
-                              &ompi_osc_base_open_components, NULL);
+                              &ompi_osc_base_open_components, NULL, true);
 
     OBJ_DESTRUCT(&ompi_osc_base_open_components);
     OBJ_DESTRUCT(&ompi_osc_base_avail_components);

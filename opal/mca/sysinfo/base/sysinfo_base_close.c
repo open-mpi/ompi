@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved. 
+ * Copyright (c) 2009-2013 Cisco Systems, Inc.  All rights reserved.
  *
  * $COPYRIGHT$
  * 
@@ -34,7 +34,8 @@ int opal_sysinfo_base_close(void)
      happen during ompi_info). */
     
     mca_base_components_close(opal_sysinfo_base_output,
-                              &opal_sysinfo_base_components_opened, NULL);
+                              &opal_sysinfo_base_components_opened,
+                              NULL, true);
     OBJ_DESTRUCT(&opal_sysinfo_base_components_opened);
     
     /* All done */

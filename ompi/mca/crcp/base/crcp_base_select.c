@@ -7,6 +7,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -136,9 +137,9 @@ int ompi_crcp_base_select(void)
         best_module    = &none_module;
         /* JJH: Todo: Check if none is in the list */
         /* Close all components since none will be used */
-        mca_base_components_close(0, /* Pass 0 to keep this from closing the output handle */
+        mca_base_components_close(ompi_crcp_base_output,
                                   &ompi_crcp_base_components_available,
-                                  NULL);
+                                  NULL, false);
         goto skip_select;
     }
 

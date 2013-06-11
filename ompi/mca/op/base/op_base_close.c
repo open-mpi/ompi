@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2009 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2013 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -35,16 +35,18 @@ int ompi_op_base_close(void)
 
     if (ompi_op_base_components_opened_valid) {
         mca_base_components_close(ompi_op_base_output,
-                                  &ompi_op_base_components_opened, NULL);
+                                  &ompi_op_base_components_opened, 
+                                  NULL, false);
         OBJ_DESTRUCT(&ompi_op_base_components_opened);
         ompi_op_base_components_opened_valid = false;
     } else if (ompi_op_base_components_available_valid) {
         mca_base_components_close(ompi_op_base_output,
                                   &ompi_op_base_components_available,
-                                  NULL);
+                                  NULL, false);
         OBJ_DESTRUCT(&ompi_op_base_components_available);
         ompi_op_base_components_available_valid = false;
     }
+    opal_output_close(ompi_op_base_output);
 
     /* All done */
 

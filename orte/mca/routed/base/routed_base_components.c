@@ -4,6 +4,7 @@
  * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2004-2008 The Trustees of Indiana University.
  *                         All rights reserved.
+ * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -129,7 +130,7 @@ orte_routed_base_close(void)
     /* shutdown any remaining opened components */
     if (component_open_called) {
         mca_base_components_close(orte_routed_base_output, 
-                                  &orte_routed_base_components, NULL);
+                                  &orte_routed_base_components, NULL, true);
     }
 
     OBJ_DESTRUCT(&orte_routed_base_components);

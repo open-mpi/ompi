@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -64,7 +65,7 @@ opal_backtrace_base_close(void)
     /* Close all components that are still open */
     mca_base_components_close(0, 
                               &opal_backtrace_base_components_opened, 
-                              NULL);
+                              NULL, true);
     OBJ_DESTRUCT(&opal_backtrace_base_components_opened);
 
     /* All done */

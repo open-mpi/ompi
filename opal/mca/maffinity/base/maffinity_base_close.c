@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -31,7 +32,8 @@ int opal_maffinity_base_close(void)
 
     if (opal_maffinity_base_components_opened_valid) {
         mca_base_components_close(opal_maffinity_base_output,
-                                  &opal_maffinity_base_components_opened, NULL);
+                                  &opal_maffinity_base_components_opened, 
+                                  NULL, true);
         OBJ_DESTRUCT(&opal_maffinity_base_components_opened);
         opal_maffinity_base_components_opened_valid = false;
     }

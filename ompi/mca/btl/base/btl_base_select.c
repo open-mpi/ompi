@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -163,7 +164,7 @@ int mca_btl_base_select(bool enable_progress_threads,
        run */
     if (!opal_list_is_empty(&btls_to_close)) {
         mca_base_components_close(mca_btl_base_output,
-                                  &btls_to_close, NULL);
+                                  &btls_to_close, NULL, false);
     }
     OBJ_DESTRUCT(&btls_to_close);
 

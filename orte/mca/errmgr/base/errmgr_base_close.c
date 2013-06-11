@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -38,7 +39,8 @@ int orte_errmgr_base_close(void)
         OMPI RTE program, or [possibly] multiple if this is ompi_info) */
     
     mca_base_components_close(orte_errmgr_base_output, 
-                              &orte_errmgr_base_components_available, NULL);
+                              &orte_errmgr_base_components_available, 
+                              NULL, true);
     
     orte_errmgr_initialized = false;
     

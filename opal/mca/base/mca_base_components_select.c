@@ -2,6 +2,7 @@
  * Copyright (c) 2004-2008 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
+ * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -109,9 +110,9 @@ int mca_base_select(const char *type_name, int output_id,
         /*
          * Still close the non-selected components
          */
-        mca_base_components_close(0, /* Pass 0 to keep this from closing the output handle */
+        mca_base_components_close(output_id,
                                   components_available,
-                                  NULL);
+                                  NULL, false);
         return OPAL_ERR_NOT_FOUND;
     }
 
@@ -127,8 +128,8 @@ int mca_base_select(const char *type_name, int output_id,
      */
     mca_base_components_close(output_id,
                               components_available,
-                              (mca_base_component_t *) (*best_component));
-
+                              (mca_base_component_t *) (*best_component), 
+                              false);
 
     return OPAL_SUCCESS;
 }

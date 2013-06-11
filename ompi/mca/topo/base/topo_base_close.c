@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -35,11 +36,13 @@ int mca_topo_base_close(void)
 
     if (mca_topo_base_components_opened_valid) {
         mca_base_components_close (mca_topo_base_output,
-                                &mca_topo_base_components_opened, NULL);
+                                   &mca_topo_base_components_opened, 
+                                   NULL, false);
         mca_topo_base_components_opened_valid = false;
     } else if (mca_topo_base_components_available_valid) {
         mca_base_components_close (mca_topo_base_output,
-                                &mca_topo_base_components_available, NULL);
+                                   &mca_topo_base_components_available, 
+                                   NULL, false);
         mca_topo_base_components_available_valid = false;
     }
 

@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2004-2007 The Trustees of the University of Tennessee.
  *                         All rights reserved.
+ * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -124,7 +125,7 @@ int mca_vprotocol_base_select(bool enable_progress_threads,
     
     mca_base_components_close(mca_pml_v.output, 
                               &mca_vprotocol_base_components_available, 
-                              (mca_base_component_t *) best_component);
+                              (mca_base_component_t *) best_component, false);
     
     /* All done */
     if(best_component != NULL) 

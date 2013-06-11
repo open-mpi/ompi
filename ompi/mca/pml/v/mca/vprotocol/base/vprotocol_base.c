@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2004-2007 The Trustees of the University of Tennessee.
  *                         All rights reserved.
- * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2009-2013 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -42,7 +42,7 @@ int mca_vprotocol_base_close(void)
     int ret;
     ret = mca_base_components_close(mca_pml_v.output, 
                                     &mca_vprotocol_base_components_available, 
-                                    NULL);
+                                    NULL, true);
     if (NULL != mca_vprotocol_base_include_list) {
         free(mca_vprotocol_base_include_list);
     }

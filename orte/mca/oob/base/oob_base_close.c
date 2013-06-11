@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2013 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -53,7 +53,8 @@ int mca_oob_base_close(void)
   /* Close all remaining available modules (may be one if this is a
      OMPI RTE program, or [possibly] multiple if this is ompi_info) */
 
-  mca_base_components_close(mca_oob_base_output, &mca_oob_base_components, NULL);
+  mca_base_components_close(mca_oob_base_output, &mca_oob_base_components, 
+                            NULL, true);
 
   OBJ_DESTRUCT(&mca_oob_base_modules);
   OBJ_DESTRUCT(&mca_oob_base_components);

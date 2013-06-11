@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2009-2013 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -161,7 +161,8 @@ OPAL_DECLSPEC int mca_base_components_open(const char *type_name, int output_id,
 /* mca_base_components_close.c */
 
 OPAL_DECLSPEC int mca_base_components_close(int output_id, opal_list_t *components_available, 
-                                            const mca_base_component_t *skip);
+                                            const mca_base_component_t *skip,
+                                            bool close_stream);
 
 #if 0
 /* JMS Not implemented yet */

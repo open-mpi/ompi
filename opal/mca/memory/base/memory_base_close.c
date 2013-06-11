@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -29,7 +30,8 @@ int opal_memory_base_close(void)
 {
     /* Close all components that are still open (this should only
        happen during laminfo). */
-    mca_base_components_close(0, &opal_memory_base_components_opened, NULL);
+    mca_base_components_close(0, &opal_memory_base_components_opened, 
+                              NULL, true);
     OBJ_DESTRUCT(&opal_memory_base_components_opened);
 
     /* All done */

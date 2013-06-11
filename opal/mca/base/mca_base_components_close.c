@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -27,7 +28,8 @@
 
 int mca_base_components_close(int output_id, 
                               opal_list_t *components_available, 
-                              const mca_base_component_t *skip)
+                              const mca_base_component_t *skip,
+                              bool close_stream)
 {
   opal_list_item_t *item;
   mca_base_component_priority_list_item_t *pcli, *skipped_pcli = NULL;
@@ -79,9 +81,11 @@ int mca_base_components_close(int output_id,
    * If we are not the verbose output stream, and we shouldn't skip
    * any components, close the output stream.  If there's a skip
    * component, this is a 'choose one' framework and we're closing the
-   * unchoosen components, but will still be using the framework.
+   * unchoosen components, but will still be using the framework.  Or,
+   * if the caller told us to close the stream, then close it.
    */
-  if (0 != output_id && NULL == skip) {
+  if (output_id > 0 && 
+      (close_stream || NULL == skip)) {
       opal_output_close (output_id);
   }
   /* All done */

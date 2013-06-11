@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2013 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -31,7 +31,8 @@ int opal_pstat_base_close(void)
      happen during ompi_info). */
     
     mca_base_components_close(opal_pstat_base_output,
-                              &opal_pstat_base_components_opened, NULL);
+                              &opal_pstat_base_components_opened, 
+                              NULL, true);
     OBJ_DESTRUCT(&opal_pstat_base_components_opened);
     
     /* All done */

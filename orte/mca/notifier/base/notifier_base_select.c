@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -49,9 +50,9 @@ int orte_notifier_base_select(void)
      */
     if( 0 >= opal_list_get_size(&mca_notifier_base_components_available) || NULL == include_list) { 
         /* Close all components since none will be used */
-        mca_base_components_close(0, /* Pass 0 to keep this from closing the output handle */
+        mca_base_components_close(orte_notifier_base_output,
                                   &mca_notifier_base_components_available,
-                                  NULL);
+                                  NULL, false);
         goto cleanup;
     }
     

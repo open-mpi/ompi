@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2010 Cisco Systems, Inc. All rights reserved.
+ * Copyright (c) 2007-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010-2011 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * $COPYRIGHT$
@@ -168,9 +168,10 @@ opal_shmem_base_runtime_query(mca_base_module_t **best_module,
                             "shmem: base: runtime_query: "
                             "(%5s) No component selected!", "shmem");
         /* still close the non-selected components.
-         * pass 0 to keep this from closing the output handle.
          */
-        mca_base_components_close(0, &opal_shmem_base_components_opened, NULL);
+        mca_base_components_close(opal_shmem_base_output,
+                                  &opal_shmem_base_components_opened, 
+                                  NULL, false);
         return OPAL_ERR_NOT_FOUND;
     }
 
@@ -181,7 +182,8 @@ opal_shmem_base_runtime_query(mca_base_module_t **best_module,
     /* close the non-selected components */
     mca_base_components_close(opal_shmem_base_output,
                               &opal_shmem_base_components_opened,
-                              (mca_base_component_t *)(*best_component));
+                              (mca_base_component_t *)(*best_component),
+                              false);
 
     return OPAL_SUCCESS;
 }

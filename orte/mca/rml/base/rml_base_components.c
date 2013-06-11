@@ -1,4 +1,5 @@
 /*
+ * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -242,7 +243,7 @@ orte_rml_base_close(void)
     /* shutdown any remaining opened components */
     if (component_open_called) {
         mca_base_components_close(orte_rml_base_output, 
-                                  &orte_rml_base_components, NULL);
+                                  &orte_rml_base_components, NULL, true);
     }
 
     OBJ_DESTRUCT(&orte_rml_base_components);

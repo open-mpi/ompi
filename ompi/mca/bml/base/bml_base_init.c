@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -93,6 +94,7 @@ int mca_bml_base_init( bool enable_progress_threads,
         }
         return mca_base_components_close(mca_bml_base_output, 
                                          &mca_bml_base_components_available, 
-                                         (mca_base_component_t*) best_component); 
+                                         (mca_base_component_t*) best_component,
+                                         false); 
     }
 }
