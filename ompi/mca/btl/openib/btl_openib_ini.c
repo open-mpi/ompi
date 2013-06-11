@@ -408,6 +408,12 @@ static int parse_line(parsed_section_values_t *sv)
         sv->values.rdmacm_reject_causes_connect_error_set = true;
     }
 
+    else if (0 == strcasecmp(key_buffer, "ignore_device")) {
+        /* Single value */
+        sv->values.ignore_device = (bool) ompi_btl_openib_ini_intify(value);
+        sv->values.ignore_device_set = true;
+    }
+
     else {
         /* Have no idea what this parameter is.  Not an error -- just
            ignore it */
@@ -561,6 +567,11 @@ static int save_section(parsed_section_values_t *s)
                             s->values.rdmacm_reject_causes_connect_error;
                         h->values.rdmacm_reject_causes_connect_error_set = 
                             true;
+                    }
+
+                    if (s->values.ignore_device_set) {
+                        h->values.ignore_device = s->values.ignore_device;
+                        h->values.ignore_device_set = true;
                     }
 
                     found = true;
