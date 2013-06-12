@@ -38,6 +38,13 @@
 #include <stdlib.h>
 #include <stddef.h>
 #if BTL_OPENIB_MALLOC_HOOKS_ENABLED
+/*
+ * The include of malloc.h below breaks layers in OMPI
+ * The malloc hooks in newer glibc were deprecated, including stock malloc.h causes compilation erros
+ * So, we use internal malloc.h which does not cause compilation errors.
+ * Internally, OMPI uses built-in ptmalloc anyway
+ *
+ */
 #include "opal/mca/memory/linux/malloc.h"
 #endif
 
