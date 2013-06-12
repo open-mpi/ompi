@@ -61,6 +61,7 @@ int MPI_Iprobe(int source, int tag, MPI_Comm comm, int *flag, MPI_Status *status
     }
 
     if (MPI_PROC_NULL == source) {
+        *flag = 1;
         if (MPI_STATUS_IGNORE != status) {
             *status = ompi_request_empty.req_status;
             /*
