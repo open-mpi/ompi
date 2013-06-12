@@ -276,6 +276,20 @@ int ompi_mpi_errcode_finalize(void)
     OBJ_DESTRUCT(&ompi_err_unsupported_datarep);
     OBJ_DESTRUCT(&ompi_err_unsupported_operation);
     OBJ_DESTRUCT(&ompi_err_win);
+    OBJ_DESTRUCT(&ompi_t_err_memory);
+    OBJ_DESTRUCT(&ompi_t_err_not_initialized);
+    OBJ_DESTRUCT(&ompi_t_err_cannot_init);
+    OBJ_DESTRUCT(&ompi_t_err_invalid_index);
+    OBJ_DESTRUCT(&ompi_t_err_invalid_item);
+    OBJ_DESTRUCT(&ompi_t_err_invalid_handle);
+    OBJ_DESTRUCT(&ompi_t_err_out_of_handles);
+    OBJ_DESTRUCT(&ompi_t_err_out_of_sessions);
+    OBJ_DESTRUCT(&ompi_t_err_invalid_session);
+    OBJ_DESTRUCT(&ompi_t_err_cvar_set_not_now);
+    OBJ_DESTRUCT(&ompi_t_err_cvar_set_never);
+    OBJ_DESTRUCT(&ompi_t_err_pvar_no_startstop);
+    OBJ_DESTRUCT(&ompi_t_err_pvar_no_write);
+    OBJ_DESTRUCT(&ompi_t_err_pvar_no_atomic);
 
     OBJ_DESTRUCT(&ompi_mpi_errcodes);
     return OMPI_SUCCESS;
