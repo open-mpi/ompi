@@ -1653,12 +1653,11 @@ static void sort_by_dist(hwloc_topology_t topo, const char* device_name, opal_li
     hwloc_obj_t device_obj = NULL;
     hwloc_obj_t obj = NULL, root = NULL;
     const struct hwloc_distances_s* distances;
-    opal_list_item_t *numa_item;
     orte_rmaps_numa_node_t *numa_node;
     int close_node_index;
     float latency;
-    int j;
-    int depth;
+    unsigned int j;
+    unsigned int depth;
     unsigned i;
 
     for (device_obj = hwloc_get_obj_by_type(topo, HWLOC_OBJ_OS_DEVICE, 0); device_obj; device_obj = hwloc_get_next_osdev(topo, device_obj)) {
