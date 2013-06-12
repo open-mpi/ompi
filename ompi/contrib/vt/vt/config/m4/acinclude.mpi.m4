@@ -42,9 +42,7 @@ AC_DEFUN([ACVT_MPI],
 		ac_cv_prog_MPICXX="$CXX"
 		ac_cv_prog_MPIFC="$FC"
 
-		MPIINCDIR="-I$top_vt_srcdir/../../../include -I$top_vt_builddir/../../../include"
-		FMPIINCDIR="$MPIINCDIR"
-		# MPILIBDIR is used in the compiler wrapper configuration files; set LDFLAGS instead
+		CPPFLAGS="$CPPFLAGS -I$top_vt_srcdir/../../../include -I$top_vt_builddir/../../../include"
 		LDFLAGS="$LDFLAGS -L$top_vt_builddir/../../../.libs"
 
 		enable_mpi="yes"
@@ -515,6 +513,7 @@ dnl			check for mpi.h; print a warning message if MPIINCDIR was guessed, otherwi
 						mpi_error="yes"
 					])
 				])
+				CPPFLAGS=$sav_CPPFLAGS
 			])
 		])
 
