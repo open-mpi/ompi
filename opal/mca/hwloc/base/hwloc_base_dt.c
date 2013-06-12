@@ -150,7 +150,6 @@ int opal_hwloc_unpack(opal_buffer_t *buffer, void *dest,
 
 int opal_hwloc_copy(hwloc_topology_t *dest, hwloc_topology_t src, opal_data_type_t type)
 {
-    int i;
     char *xml;
     int len;
     struct hwloc_topology_support *support, *destsupport;
