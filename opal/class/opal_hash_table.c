@@ -26,12 +26,11 @@
 #include "opal/class/opal_hash_table.h"
 #include "opal/constants.h"
 #include "opal/util/bit_ops.h"
+#include "opal/util/crc.h"
 
 /*
  * opal_hash_table_t
  */
-
-#define HASH_MULTIPLIER 31
 
 static void opal_hash_table_construct(opal_hash_table_t* ht);
 static void opal_hash_table_destruct(opal_hash_table_t* ht);
@@ -352,18 +351,11 @@ static OBJ_CLASS_INSTANCE(opal_ptr_hash_node_t,
                           opal_ptr_hash_node_construct,
                           opal_ptr_hash_node_destruct);
 
-
 static inline uint32_t opal_hash_value(size_t mask, const void *key,
                                        size_t keysize)
 {
-    size_t h, i;
-    const unsigned char *p;
-    
-    h = 0;
-    p = (const unsigned char *)key;
-    for (i = 0; i < keysize; i++, p++)
-        h = HASH_MULTIPLIER*h + *p;
-    return (uint32_t)(h & mask);
+    unsigned int crc = opal_uicrc_partial (key, keysize, 0);
+    return (uint32_t) (crc & mask);
 }
 
 int opal_hash_table_get_value_ptr(opal_hash_table_t* ht, const void* key,
