@@ -38,7 +38,7 @@
 #include <stdlib.h>
 #include <stddef.h>
 #if BTL_OPENIB_MALLOC_HOOKS_ENABLED
-#include <malloc.h>
+#include "opal/mca/memory/linux/malloc.h"
 #endif
 
 #include "opal/mca/event/event.h"
