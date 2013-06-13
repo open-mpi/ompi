@@ -935,13 +935,13 @@ int vt_env_verbose()
       tmp = getenv("VT_VERBOSE");
       if (tmp != NULL && strlen(tmp) > 0)
         {
-          vt_cntl_msg(2, "VT_VERBOSE=%s", tmp);
-
           verbose = atoi(tmp);
           if (verbose < 0)
             verbose = 0;
           else if (verbose > VT_MAX_VERBOSE_LEVEL)
             verbose = VT_MAX_VERBOSE_LEVEL;
+
+          vt_cntl_msg(2, "VT_VERBOSE=%s", tmp);
         }
       else
         {
