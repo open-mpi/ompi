@@ -2770,9 +2770,9 @@ btl_openib_component_init(int *num_btl_modules,
         /* If there were unusable devices that weren't specifically
            ignored, warn about it */
         if (num_devices_intentionally_ignored < num_devs) {
-            opal_show_help("help-mpi-btl-openib.txt",
+            orte_show_help("help-mpi-btl-openib.txt",
                            "no active ports found", true, 
-                           ompi_process_info.nodename);
+                           orte_process_info.nodename);
         }
         goto no_btls;
     }
