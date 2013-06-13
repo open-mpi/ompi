@@ -45,7 +45,7 @@ const char *ibv_get_sysfs_path(void);
 #include <stdlib.h>
 #include <stddef.h>
 #if BTL_OPENIB_MALLOC_HOOKS_ENABLED
-#include <malloc.h>
+#include "opal/mca/memory/linux/malloc.h"
 #endif
 
 #include "opal/event/event.h"
