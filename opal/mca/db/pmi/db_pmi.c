@@ -196,7 +196,7 @@ static int store(const opal_identifier_t *uid,
                     }
                 }
                 if (!subbed) {
-                    ptr[k++] = str[i];
+                    ptr[k++] = str[n];
                 }
             }
             /* pass the result */
