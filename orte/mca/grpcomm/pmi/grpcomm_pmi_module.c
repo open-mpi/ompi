@@ -219,7 +219,7 @@ static int modex(orte_grpcomm_collective_t *coll)
         fields = opal_argv_split(cptr, ',');
         free(cptr);
         /* sanity check */
-        if (6 != opal_argv_count(fields)) {
+        if (4 > opal_argv_count(fields)) {
             ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
             opal_argv_free(fields);
             return ORTE_ERR_BAD_PARAM;
