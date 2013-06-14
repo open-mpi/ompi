@@ -50,6 +50,21 @@ included in the vX.Y.Z section and be denoted as:
 1.6.5
 -----
 
+- Major VT update to 5.14.4.2.
+  (** also to appear: 1.7.2)
+- Fix to set flag==1 when MPI_IPROBE is called with MPI_PROC_NULL.
+  (** also to appear: 1.7.2)
+- Set the Intel Phi device to be ignored by default by the openib BTL.
+  (** also to appear: 1.7.2)
+- Decrease the internal memory storage used by intrinsic MPI datatypes
+  for Fortran types.  Thanks to Takahiro Kawashima for the initial
+  patch.
+  (** also to appear: 1.7.2)
+- Fix total registered memory calculation for Mellanox ConnectIB and
+  OFED 2.0.
+  (** also to appear: 1.7.2)
+- Fix possible data corruption in the MXM MTL component.
+  (** also to appear: 1.7.2)
 - Remove extraneous -L from hwloc's embedding.  Thanks to Stefan
   Friedel for reporting the issue.
   (** also to appear: 1.7.2)
