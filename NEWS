@@ -50,7 +50,7 @@ included in the vX.Y.Z section and be denoted as:
 1.6.5
 -----
 
-- Major VT update to 5.14.4.2.
+- Major VampirTrace update to 5.14.4.2.
   (** also to appear: 1.7.2)
 - Fix to set flag==1 when MPI_IPROBE is called with MPI_PROC_NULL.
   (** also to appear: 1.7.2)
@@ -83,8 +83,6 @@ included in the vX.Y.Z section and be denoted as:
   minor MXM fixes.
   (** also to appear: 1.7.2)
 - Improved alignment for OpenFabrics buffers.
-- Update to VampirTrace 5.14.3.8.
-  (** also to appear: 1.7.2)
 - Fix to not show amorphous "MPI was already finalized" error when
   failing to MPI_File_close an open file.  Thanks to Brian Smith for
   reporting the issue.
