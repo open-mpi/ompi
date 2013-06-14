@@ -56,13 +56,47 @@ included in the vX.Y.Z section and be denoted as:
 1.7.2
 -----
 
+- Major VampirTrace update to 5.14.4.2.
+  (** also appeared: 1.6.5)
+- Fix to set flag==1 when MPI_IPROBE is called with MPI_PROC_NULL.
+  (** also appeared: 1.6.5)
+- Set the Intel Phi device to be ignored by default by the openib BTL.
+  (** also appeared: 1.6.5)
+- Decrease the internal memory storage used by intrinsic MPI datatypes
+  for Fortran types.  Thanks to Takahiro Kawashima for the initial
+  patch.
+  (** also appeared: 1.6.5)
+- Fix total registered memory calculation for Mellanox ConnectIB and
+  OFED 2.0.
+  (** also appeared: 1.6.5)
+- Fix possible data corruption in the MXM MTL component.
+  (** also appeared: 1.6.5)
+- Remove extraneous -L from hwloc's embedding.  Thanks to Stefan
+  Friedel for reporting the issue.
+  (** also appeared: 1.6.5)
+- Fix contiguous datatype memory check.  Thanks to Eric Chamberland
+  for reporting the issue.
+  (** also appeared: 1.6.5)
+- Make the openib BTL more friendly to ignoring verbs devices that are
+  not RC-capable.
+  (** also appeared: 1.6.5)
+- Fix some MPI datatype engine issues.  Thanks to Thomas Jahns for
+  reporting the issue.
+  (** also appeared: 1.6.5)
+- Add INI information for Chelsio T5 device.
+  (** also appeared: 1.6.5)
+- Integrate MXM STREAM support for MPI_ISEND and MPI_IRECV, and other
+  minor MXM fixes.
+  (** also appeared: 1.6.5)
+- Fix to not show amorphous "MPI was already finalized" error when
+  failing to MPI_File_close an open file.  Thanks to Brian Smith for
+  reporting the issue.
+  (** also appeared: 1.6.5)
 - Fix an error that caused epoll to automatically be disabled
   in libevent.
 - Upgrade hwloc to 1.5.2.
 - Fix MXM connection establishment flow.
-- Lots of VampirTrace upgrades and fixes; upgrade to v5.14.8.
 - Fixed some minor memory leaks.
-- Add retransmit framework for unreliable networks.
 - Fixed datatype corruption issue when combining datatypes of specific
   formats.
 - Added Location Aware Mapping Algorithm (LAMA) mapping component.
@@ -148,6 +182,48 @@ included in the vX.Y.Z section and be denoted as:
   reporting it
 - Fix a very old error in opal_path_access(). Thanks to Marco Atzeri
   for chasing it down.
+
+
+1.6.5
+-----
+
+- Major VampirTrace update to 5.14.4.2.
+  (** also to appear: 1.7.2)
+- Fix to set flag==1 when MPI_IPROBE is called with MPI_PROC_NULL.
+  (** also to appear: 1.7.2)
+- Set the Intel Phi device to be ignored by default by the openib BTL.
+  (** also to appear: 1.7.2)
+- Decrease the internal memory storage used by intrinsic MPI datatypes
+  for Fortran types.  Thanks to Takahiro Kawashima for the initial
+  patch.
+  (** also to appear: 1.7.2)
+- Fix total registered memory calculation for Mellanox ConnectIB and
+  OFED 2.0.
+  (** also to appear: 1.7.2)
+- Fix possible data corruption in the MXM MTL component.
+  (** also to appear: 1.7.2)
+- Remove extraneous -L from hwloc's embedding.  Thanks to Stefan
+  Friedel for reporting the issue.
+  (** also to appear: 1.7.2)
+- Fix contiguous datatype memory check.  Thanks to Eric Chamberland
+  for reporting the issue.
+  (** also to appear: 1.7.2)
+- Make the openib BTL more friendly to ignoring verbs devices that are
+  not RC-capable.
+  (** also to appear: 1.7.2)
+- Fix some MPI datatype engine issues.  Thanks to Thomas Jahns for
+  reporting the issue.
+  (** also to appear: 1.7.2)
+- Add INI information for Chelsio T5 device.
+  (** also to appear: 1.7.2)
+- Integrate MXM STREAM support for MPI_ISEND and MPI_IRECV, and other
+  minor MXM fixes.
+  (** also to appear: 1.7.2)
+- Improved alignment for OpenFabrics buffers.
+- Fix to not show amorphous "MPI was already finalized" error when
+  failing to MPI_File_close an open file.  Thanks to Brian Smith for
+  reporting the issue.
+  (** also to appear: 1.7.2)
 
 
 1.6.4
