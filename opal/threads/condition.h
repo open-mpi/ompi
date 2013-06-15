@@ -68,9 +68,9 @@ static inline int opal_condition_wait(opal_condition_t *c, opal_mutex_t *m)
     c->c_waiting++;
 
 #if OPAL_ENABLE_DEBUG && !OPAL_ENABLE_MULTI_THREADS
-    if (opal_mutex_check_locks && 0 == m->m_lock_debug) {                                         \
-        opal_output(0, "Warning -- mutex not locked in condition_wait"); \
-    }                                                                   \
+    if (opal_mutex_check_locks && 0 == m->m_lock_debug) {
+        opal_output(0, "Warning -- mutex not locked in condition_wait");
+    }
     m->m_lock_debug--;
 #endif
 

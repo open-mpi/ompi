@@ -878,22 +878,6 @@ static inline void opal_list_insert_pos(opal_list_t *list, opal_list_item_t *pos
      * The important thing to realize here is that a and b will be \em
      * double pointers to the items that you need to compare.  Here's
      * a sample compare function to illustrate this point:
-     *
-     * \verb
-     * static int compare(opal_list_item_t **a, opal_list_item_t **b)
-     * {
-     *     orte_pls_base_cmp_t *aa = *((orte_pls_base_cmp_t **) a);
-     *     orte_pls_base_cmp_t *bb = *((orte_pls_base_cmp_t **) b);
-     *
-     *     if (bb->priority > aa->priority) {
-     *         return 1;
-     *     } else if (bb->priority == aa->priority) {
-     *         return 0;
-     *     } else {
-     *         return -1;
-     *     }
-     * }
-     * \endverb
      */
     typedef int (*opal_list_item_compare_fn_t)(opal_list_item_t **a,
                                                opal_list_item_t **b);
