@@ -14,8 +14,6 @@
 
 #include "orte_config.h"
 
-#include "orte/mca/rml/rml.h"
-
 #include "orte/mca/sstore/sstore.h"
 
 /*
