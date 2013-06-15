@@ -14,7 +14,6 @@
 
 #include "opal/align.h"
 #include "opal/util/output.h"
-#include "orte/util/show_help.h"
 #include "opal/datatype/opal_convertor.h"
 #include "opal/datatype/opal_datatype_cuda.h"
 
