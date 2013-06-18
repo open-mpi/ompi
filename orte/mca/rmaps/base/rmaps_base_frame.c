@@ -253,7 +253,7 @@ static int orte_rmaps_base_open(mca_base_open_flag_t flags)
              * and save the second argument as the device
              */
 #if OPAL_HAVE_HWLOC
-            if (0 == strncasecmp(ck[0], "dist", len)) {
+            if (0 == strncasecmp(ck[0], "dist", strlen(ck[0]))) {
                 tmp = ORTE_MAPPING_BYDIST;
                 ck2 = opal_argv_split(ck[1], ',');
                 if (ck2[0] != NULL) {
