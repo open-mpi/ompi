@@ -129,6 +129,7 @@ int MPIR_force_to_main = 0;
 static void orte_debugger_dump(void);
 static void orte_debugger_init_before_spawn(orte_job_t *jdata);
 static void orte_debugger_init_after_spawn(int fd, short event, void *arg);
+static void orte_debugger_detached(int fd, short event, void *arg);
 static void attach_debugger(int fd, short event, void *arg);
 static void build_debugger_args(orte_app_context_t *debugger);
 static void open_fifo (void);
@@ -987,6 +988,9 @@ int orterun(int argc, char *argv[])
     orte_debugger_init_before_spawn(jdata);
     orte_state.add_job_state(ORTE_JOB_STATE_READY_FOR_DEBUGGERS,
                              orte_debugger_init_after_spawn,
+                             ORTE_SYS_PRI);
+    orte_state.add_job_state(ORTE_JOB_STATE_DEBUGGER_DETACH,
+                             orte_debugger_detached,
                              ORTE_SYS_PRI);
 
     if (orte_staged_execution) {
@@ -2907,6 +2911,15 @@ void orte_debugger_init_after_spawn(int fd, short event, void *cbdata)
 
     /* if we are not being debugged, then just cleanup and depart */
     OBJ_RELEASE(caddy);
+}
+
+static void orte_debugger_detached(int fd, short event, void *cbdata)
+{
+    orte_state_caddy_t *caddy = (orte_state_caddy_t*)cbdata;
+    OBJ_RELEASE(caddy);
+
+    /* need to ensure MPIR_Breakpoint is called again if another debugger attaches */
+    mpir_breakpoint_fired = false;
 }
 
 static void open_fifo (void)
