@@ -43,15 +43,14 @@ a different location to be used (use -h to see the cmd line option), or
 simply let the system pick a default location.
 #
 [orte:session:dir:nopwname]
-Open MPI was unable to obtain the username in order to
-create a path for its required temporary directories. This
-is usually caused by either the UID being removed from the
-passed file, or from use of network-based authentication
-service (e.g., NIS) on a large cluster that might suffer
-from congestion.
+Open MPI was unable to obtain the username in order to create a path
+for its required temporary directories.  This type of error is usually
+caused by a transient failure of network-based authentication services
+(e.g., LDAP or NIS failure due to network congestion), but can also be
+an indication of system misconfiguration.
 
-Please consult your system administrator about these
-conditions and try again.
+Please consult your system administrator about these issues and try
+again.
 #
 [orte_nidmap:too_many_nodes]
 An error occurred while trying to pack the information about the job. More nodes
