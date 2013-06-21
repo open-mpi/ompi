@@ -13,11 +13,6 @@
 #include "orte_config.h"
 #include "orte/constants.h"
 
-#include <pmi.h>
-#if WANT_CRAY_PMI2_EXT
-#include <pmi2.h>
-#endif
-
 #include "opal/mca/mca.h"
 #include "opal/mca/common/pmi/common_pmi.h"
 
