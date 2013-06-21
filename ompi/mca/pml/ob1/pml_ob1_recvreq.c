@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2008      UT-Battelle, LLC. All rights reserved.
  * Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
- * Copyright (c) 2012      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2012-2013 NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2012      FUJITSU LIMITED.  All rights reserved.
@@ -335,11 +335,11 @@ static void mca_pml_ob1_rget_completion( mca_btl_base_module_t* btl,
 
     /* is receive request complete */
     OPAL_THREAD_ADD_SIZE_T(&recvreq->req_bytes_received, frag->rdma_length);
-    if (recvreq->req_bytes_expected <= recvreq->req_bytes_received) {
+    if (recvreq->req_recv.req_bytes_packed <= recvreq->req_bytes_received) {
         mca_pml_ob1_send_fin(recvreq->req_recv.req_base.req_proc,
-                              bml_btl,
-    	                      frag->rdma_hdr.hdr_rget.hdr_des,
-    	                      des->order, 0);
+                             bml_btl,
+                             frag->rdma_hdr.hdr_rget.hdr_des,
+                             des->order, 0);
     }
 
     recv_request_pml_complete_check(recvreq);
