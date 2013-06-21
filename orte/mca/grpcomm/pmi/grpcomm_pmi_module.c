@@ -18,7 +18,7 @@
 
 #include <string.h>
 #include <pmi.h>
-#if WANT_CRAY_PMI2_EXT
+#if WANT_PMI2_SUPPORT
 #include <pmi2.h>
 #endif
 
@@ -65,7 +65,7 @@ static int init(void)
 {
     int max_length, rc;
 
-#if WANT_CRAY_PMI2_EXT
+#if WANT_PMI2_SUPPORT
     /* TODO -- is this ok */
     max_length = 1024;
 #else
@@ -79,7 +79,7 @@ static int init(void)
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
 
-#if WANT_CRAY_PMI2_EXT
+#if WANT_PMI2_SUPPORT
     rc = PMI2_Job_GetId(pmi_kvs_name, max_length);
 #else
     rc = PMI_KVS_Get_my_name(pmi_kvs_name,max_length);
@@ -136,8 +136,8 @@ static int pmi_barrier(orte_grpcomm_collective_t *coll)
         return ORTE_SUCCESS;
     }
     
-#if WANT_CRAY_PMI2_EXT
-    /* Cray doesn't provide a barrier, so use the Fence function here */
+#if WANT_PMI2_SUPPORT
+    /* PMI2 doesn't provide a barrier, so use the Fence function here */
     if (PMI_SUCCESS != (rc = PMI2_KVS_Fence())) {
         OPAL_PMI_ERROR(rc, "PMI2_KVS_Fence");
         return ORTE_ERROR;
@@ -187,7 +187,7 @@ static int modex(orte_grpcomm_collective_t *coll)
      /* our RTE data was constructed and pushed in the ESS pmi component */
 
     /* commit our modex info */
-#if WANT_CRAY_PMI2_EXT
+#if WANT_PMI2_SUPPORT
     PMI2_KVS_Fence();
 #else
     {

@@ -15,7 +15,7 @@
 #include <time.h>
 #include <string.h>
 #include <pmi.h>
-#if WANT_CRAY_PMI2_EXT
+#if WANT_PMI2_SUPPORT
 #include <pmi2.h>
 #endif
 
@@ -80,7 +80,7 @@ static int pmi_keylen_max = -1;
  */
 static int kvs_put(const char *key, const char *value)
 {
-#if WANT_CRAY_PMI2_EXT
+#if WANT_PMI2_SUPPORT
     return PMI2_KVS_Put(key, value);
 #else
     return PMI_KVS_Put(pmi_kvs_name, key, value);
@@ -89,7 +89,7 @@ static int kvs_put(const char *key, const char *value)
 
 static int kvs_get(const char *key, char *value, int valuelen)
 {
-#if WANT_CRAY_PMI2_EXT
+#if WANT_PMI2_SUPPORT
     int len;
 
     return PMI2_KVS_Get(pmi_kvs_name, PMI2_ID_NULL, key, value, valuelen, &len);
@@ -98,7 +98,7 @@ static int kvs_get(const char *key, char *value, int valuelen)
 #endif
 }
 
-#if WANT_CRAY_PMI2_EXT
+#if WANT_PMI2_SUPPORT
 static char escape_char = '$';
 static char *illegal = "/;=";
 static char *sub = "012";
@@ -156,7 +156,7 @@ static int store(const opal_identifier_t *uid,
 
     switch (type) {
     case OPAL_STRING:
-#if WANT_CRAY_PMI2_EXT
+#if WANT_PMI2_SUPPORT
         {
             /* the blasted Cray PMI implementation marked a number of common
              * ASCII characters as "illegal", so if we are on one of those
@@ -391,7 +391,7 @@ static char* fetch_string(const char *key)
     /* cleanup */
     free(tmp_val);
 
-#if WANT_CRAY_PMI2_EXT
+#if WANT_PMI2_SUPPORT
         {
             /* the blasted Cray PMI implementation marked a number of common
              * ASCII characters as "illegal", so if we are on one of those
@@ -555,7 +555,7 @@ static int setup_pmi(void)
 {
     int max_length, rc;
 
-#if WANT_CRAY_PMI2_EXT
+#if WANT_PMI2_SUPPORT
     pmi_vallen_max = PMI2_MAX_VALLEN;
 #else
     rc = PMI_KVS_Get_value_length_max(&pmi_vallen_max);
@@ -565,7 +565,7 @@ static int setup_pmi(void)
     }
 #endif
 
-#if WANT_CRAY_PMI2_EXT
+#if WANT_PMI2_SUPPORT
     /* TODO -- is this ok */
     max_length = 1024;
 #else
@@ -579,7 +579,7 @@ static int setup_pmi(void)
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
 
-#if WANT_CRAY_PMI2_EXT
+#if WANT_PMI2_SUPPORT
     rc = PMI2_Job_GetId(pmi_kvs_name, max_length);
 #else
     rc = PMI_KVS_Get_my_name(pmi_kvs_name,max_length);
@@ -589,7 +589,7 @@ static int setup_pmi(void)
         return OPAL_ERROR;
     }
 
-#if WANT_CRAY_PMI2_EXT
+#if WANT_PMI2_SUPPORT
     pmi_keylen_max = PMI2_MAX_KEYLEN;
 #else
     if (PMI_SUCCESS != (rc = PMI_KVS_Get_key_length_max(&pmi_keylen_max))) {

@@ -12,10 +12,7 @@
 
 #include "ompi_config.h"
 
-#include <pmi.h>
-#if WANT_CRAY_PMI2_EXT
-#include <pmi2.h>
-#endif
+#include "opal/mca/common/pmi/common_pmi.h"
 
 #include "ompi/constants.h"
 #include "ompi/mca/rte/rte.h"
@@ -74,39 +71,13 @@ static int pubsub_pmi_component_close(void)
 static int pubsub_pmi_component_query(mca_base_module_t **module, int *priority)
 {
     /* for now, only use PMI when direct launched */
-    if (NULL == ompi_process_info.my_hnp_uri) {
-        goto cleanup;
+    if (NULL != ompi_process_info.my_hnp_uri &&
+        mca_common_pmi_init ()) {
+        *priority = my_priority;
+        *module = (mca_base_module_t *)&ompi_pubsub_pmi_module;
+        return OMPI_SUCCESS;
     }
-    
-#if WANT_CRAY_PMI2_EXT
-    {
-        int spawned, size, rank, appnum;
 
-        if (PMI2_Initialized ()) return OMPI_SUCCESS;
-        if (PMI_SUCCESS != PMI2_Init(&spawned, &size, &rank, &appnum)) {
-            goto cleanup;
-        }
-    }
-#else
-    {
-        PMI_BOOL initialized;
-
-        if (PMI_SUCCESS != PMI_Initialized(&initialized)) {
-            goto cleanup;
-        }
-
-        if (PMI_TRUE != initialized && PMI_SUCCESS != PMI_Init(&initialized)) {
-            goto cleanup;
-        }
-    }
-#endif
-
-    /* if PMI is available, use it */
-    *priority = my_priority;
-    *module = (mca_base_module_t *)&ompi_pubsub_pmi_module;
-    return OMPI_SUCCESS;
-
- cleanup:
     /* we can't run */
     *priority = -1;
     *module = NULL;
