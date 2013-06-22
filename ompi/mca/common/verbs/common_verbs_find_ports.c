@@ -187,12 +187,13 @@ static const char *link_layer_to_str(int link_type)
 static void check_sanity(char ***if_sanity_list, const char *dev_name, int port)
 {
     int i;
-    char tmp[BUFSIZ], **list = *if_sanity_list;
+    char tmp[BUFSIZ], **list;
     const char *compare;
 
     if (NULL == if_sanity_list || NULL == *if_sanity_list) {
         return;
     }
+    list = *if_sanity_list;
 
     /* A match is found if:
        - "dev_name" is in the list and port == -1, or
