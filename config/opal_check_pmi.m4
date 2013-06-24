@@ -29,9 +29,8 @@ AC_DEFUN([OPAL_CHECK_PMI],[
 	                        [], with_pmi=no)
 
     opal_enable_pmi=0
-    opal_use_pmi2=0
     opal_pmi_rpath=
-    opal_have_slurm_pmi2=0
+    opal_have_pmi2=0
 
     # save flags
     opal_check_pmi_$1_save_CPPFLAGS="$CPPFLAGS"
@@ -44,11 +43,12 @@ AC_DEFUN([OPAL_CHECK_PMI],[
     opal_check_pmi_$1_LIBS=
 
     AC_MSG_CHECKING([if user requested PMI support])
+    opal_have_pmi_support=no
     AS_IF([test "$with_pmi" = "no"],
           [AC_MSG_RESULT([no])
            $3],
           [AC_MSG_RESULT([yes])
-           AC_MSG_CHECKING([if PMI or PMI2 support installed])
+           AC_MSG_CHECKING([if PMI or PMI2 headers installed])
            # cannot use OMPI_CHECK_PACKAGE as its backend header
            # support appends "include" to the path, which won't
            # work with slurm :-(
@@ -58,22 +58,22 @@ AC_DEFUN([OPAL_CHECK_PMI],[
                          opal_pmi_rpath="$with_pmi/lib64"],
                         [opal_check_pmi_$1_LDFLAGS="-L$with_pmi/lib"
                          opal_pmi_rpath="$with_pmi/lib"])
-                  # default to using PMI-2 if it is present
+                  # look for required headers - both pmi.h AND/OR pmi2.h
+                  # may be present
                   AS_IF([test -f "$with_pmi/include/pmi2.h" -o -f "$with_pmi/include/pmi.h"],
                         [opal_check_pmi_$1_CPPFLAGS="-I$with_pmi/include"
                          AS_IF([test -f "$with_pmi/include/pmi2.h"],
-                                [opal_use_pmi2=1
-                                 AC_MSG_RESULT([PMI2 support found])],
-                                [opal_use_pmi2=0
-                                 AC_MSG_RESULT([PMI support found])])],
+                                [opal_check_pmi_$1_LIBS="$opal_check_pmi_$1_libs -lpmi2"
+                                 AC_MSG_RESULT([PMI2 header found])],
+                                [opal_check_pmi_$1_LIBS="$opal_check_pmi_$1_libs -lpmi"
+                                 AC_MSG_RESULT([PMI header found])])],
                         [AS_IF([test -f "$with_pmi/include/slurm/pmi2.h" -o -f "$with_pmi/include/slurm/pmi.h"],
                                [opal_check_pmi_$1_CPPFLAGS="-I$with_pmi/include/slurm"
                                 AS_IF([test -f "$with_pmi/include/slurm/pmi2.h"],
-                                      [opal_use_pmi2=1
-                                       opal_have_slurm_pmi2=1
-                                       AC_MSG_RESULT([Slurm PMI2 support found])],
-                                      [opal_use_pmi2=0
-                                       AC_MSG_RESULT([Slurm PMI support found])])],
+                                      [opal_check_pmi_$1_LIBS="$opal_check_pmi_$1_libs -lpmi2"
+                                       AC_MSG_RESULT([Slurm PMI2 headers found])],
+                                      [opal_check_pmi_$1_LIBS="$opal_check_pmi_$1_libs -lpmi"
+                                       AC_MSG_RESULT([Slurm PMI headers found])])],
                                [AC_MSG_RESULT([not found])
                                 AC_MSG_WARN([PMI support requested (via --with-pmi) but neither pmi.h])
                                 AC_MSG_WARN([nor pmi2.h were found under locations:])
@@ -81,26 +81,28 @@ AC_DEFUN([OPAL_CHECK_PMI],[
                                 AC_MSG_WARN([    $with_pmi/include/slurm])
                                 AC_MSG_WARN([Specified path: $with_pmi])
                                 AC_MSG_ERROR([Aborting])
-                                $3])])])
+                                $3])])],
+                 [AS_IF([test -f "/usr/include/slurm/pmi2.h" -o -f "/usr/include/slurm/pmi.h"],
+                        [opal_check_pmi_$1_CPPFLAGS="-I/usr/include/slurm"])
+                  AC_MSG_RESULT([in default locations])])
 
-           AS_IF([test $opal_use_pmi2 = 1],
-                 [AS_IF([test $opal_have_slurm_pmi2 = 1],
-                        [ # slurm puts pmi2 into a separate lib
-                         opal_check_pmi_$1_LIBS="-lpmi2 -lpmi -Wl,-rpath=$opal_pmi_rpath"],
-                        [opal_check_pmi_$1_LIBS="-lpmi -Wl,-rpath=$opal_pmi_rpath"])],
-                 [opal_check_pmi_$1_LIBS="-lpmi -Wl,-rpath=$opal_pmi_rpath"])
-
+           # setup to check libraries
            LDFLAGS="$LDFLAGS $opal_check_pmi_$1_LDFLAGS"
            CPPFLAGS="$CPPFLAGS $opal_check_pmi_$1_CPPFLAGS"
            LIBS="$LIBS $opal_check_pmi_$1_LIBS"
-           opal_have_pmi_support=no
-           AS_IF([test "$opal_use_pmi2" = "1"],
-                 [AC_CHECK_HEADERS([pmi2.h],
-                                   [AC_CHECK_LIB([pmi2], [PMI2_Init],
-                                   [opal_have_pmi_support=yes])])],
-                 [AC_CHECK_HEADERS([pmi.h],
-                                   [AC_CHECK_LIB([pmi], [PMI_Init],
-                                   [opal_have_pmi_support=yes])])])
+           # reset the included libs so we only link in the
+           # ones we successfully check
+           opal_check_pmi_$1_libs=
+           # check the PMI libs - both -lpmi and -lpmi2 may
+           # be present. If both are present, then we need
+           # to link against both
+           AC_CHECK_LIB([pmi2], [PMI2_Init],
+                        [opal_have_pmi_support=yes
+                         opal_have_pmi2=1
+                         opal_check_pmi_$1_LIBS="$opal_check_pmi_$1_libs -lpmi2"])
+           AC_CHECK_LIB([pmi], [PMI_Init],
+                        [opal_have_pmi_support=yes
+                         opal_check_pmi_$1_LIBS="$opal_check_pmi_$1_libs -lpmi"])
 
            AC_MSG_CHECKING([PMI2 or PMI support enabled])
            AS_IF([test "$opal_have_pmi_support" = "yes"],
@@ -108,7 +110,7 @@ AC_DEFUN([OPAL_CHECK_PMI],[
                   opal_enable_pmi=1
                   $1_LDFLAGS="$opal_check_pmi_$1_LDFLAGS"
                   $1_CPPFLAGS="$opal_check_pmi_$1_CPPFLAGS"
-                  $1_LIBS="-lpmi"
+                  $1_LIBS="$opal_check_pmi_$1_LIBS  -Wl,-rpath=$opal_pmi_rpath"
                   $2],
                  [AC_MSG_RESULT([no])
                   AC_MSG_WARN([PMI support requested (via --with-pmi) but not found.])
@@ -125,7 +127,7 @@ AC_DEFUN([OPAL_CHECK_PMI],[
                       [$opal_enable_pmi],
                       [Whether we want PMI support])
    AC_DEFINE_UNQUOTED([WANT_PMI2_SUPPORT],
-                      [$opal_use_pmi2],
-                      [Whether we want to use PMI2])
+                      [$opal_have_pmi2],
+                      [Whether we have PMI2 support])
    AM_CONDITIONAL(WANT_PMI_SUPPORT, [test "$opal_enable_pmi" = 1])
 ])
