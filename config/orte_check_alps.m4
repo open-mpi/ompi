@@ -80,13 +80,13 @@ AC_DEFUN([ORTE_CHECK_ALPS],[
            fi
 
            if test -z "$orte_check_alps_pmi_happy"; then
-               # if pmi support is requested, then ORTE_CHECK_PMI
+               # if pmi support is requested, then OPAL_CHECK_PMI
                # will have added the -lpmi flag to LIBS. We then need
                # to add a couple of alps libs to support static
                # builds
                orte_check_alps_pmi_happy=no
 
-               if test "$orte_enable_pmi" = 1 ; then
+               if test "$opal_enable_pmi" = 1 ; then
                    AC_MSG_CHECKING([for alps libraries in "$orte_check_alps_libdir"])
 
                    # libalpslli and libalpsutil are needed by libpmi to compile statically
@@ -104,7 +104,7 @@ AC_DEFUN([ORTE_CHECK_ALPS],[
     fi
 
     # Set LIBS, CPPFLAGS, and LDFLAGS here so they always get set
-    if test "$orte_check_alps_happy" = "yes" -a "$orte_enable_pmi" = 1 ; then
+    if test "$orte_check_alps_happy" = "yes" -a "$opal_enable_pmi" = 1 ; then
 	$1_LIBS="-lalpslli -lalpsutil"
     fi
 
