@@ -478,7 +478,11 @@ void orte_state_base_track_procs(int fd, short argc, void *cbdata)
         pdata->state = state;
         jdata->num_launched++;
         if (jdata->num_launched == jdata->num_procs) {
-            ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_RUNNING);
+            if (jdata->controls & ORTE_JOB_CONTROL_DEBUGGER_DAEMON) {
+                ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_READY_FOR_DEBUGGERS);
+            } else {
+                ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_RUNNING);
+            }
         }
     } else if (ORTE_PROC_STATE_REGISTERED == state) {
         /* update the proc state */
@@ -746,6 +750,10 @@ void orte_state_base_check_all_complete(int fd, short args, void *cbdata)
                  * is maintained!
                  */
                 if (1 < j) {
+		    if (jdata->controls & ORTE_JOB_CONTROL_DEBUGGER_DAEMON) {
+			/* this was a debugger daemon. notify that a debugger has detached */
+			ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_DEBUGGER_DETACH);
+		    }
                     opal_pointer_array_set_item(orte_job_data, j, NULL);  /* ensure the array has a NULL */
                     OBJ_RELEASE(jdata);
                 }

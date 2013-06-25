@@ -113,6 +113,7 @@ typedef int32_t orte_job_state_t;
 #define ORTE_JOB_STATE_REGISTERED               15  /* all procs registered for sync */
 #define ORTE_JOB_STATE_READY_FOR_DEBUGGERS      16  /* job ready for debugger init after spawn */
 #define ORTE_JOB_STATE_LOCAL_LAUNCH_COMPLETE    17  /* all local procs have attempted launch */
+#define ORTE_JOB_STATE_DEBUGGER_DETACH          18  /* a debugger has detached */
 
 /*
  * Define a "boundary" so we can easily and quickly determine
