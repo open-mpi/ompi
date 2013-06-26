@@ -95,7 +95,9 @@ included in the vX.Y.Z section and be denoted as:
 - Fix an error that caused epoll to automatically be disabled
   in libevent.
 - Upgrade hwloc to 1.5.2.
+- *Really* fixed XRC compile issue in Open Fabrics support.
 - Fix MXM connection establishment flow.
+- Fixed parallel debugger ability to attach to MPI jobs.
 - Fixed some minor memory leaks.
 - Fixed datatype corruption issue when combining datatypes of specific
   formats.
