@@ -492,16 +492,19 @@ static int mca_common_cuda_init(opal_common_cuda_function_table_t *ftable)
 /**
  * This function will open and load the symbols needed from the CUDA driver
  * library.  Any failure will result in a message and we will return 1.
+ * First look for the SONAME of the library which is libcuda.so.1.
  */
 #define NUMLIBS 2
+#define SEARCHPATHS 2
 static int mca_common_cuda_load_libcuda(void)
 {
     opal_lt_dladvise advise;
-    int retval, i;
+    int retval, i, j;
     int advise_support = 1;
     bool loaded = true;
-    char *errs[NUMLIBS] = {NULL, NULL};
-    char *cudalibs[NUMLIBS] = {"libcuda.so", "libcuda.so.1"};
+    char *errs[NUMLIBS*SEARCHPATHS];
+    char *cudalibs[NUMLIBS] = {"libcuda.so.1", "libcuda.so"};
+    char *searchpaths[SEARCHPATHS] = {NULL, "/usr/lib64"};
 
     if (0 != (retval = opal_lt_dlinit())) {
         if (OPAL_ERR_NOT_SUPPORTED == retval) {
@@ -525,14 +528,25 @@ static int mca_common_cuda_load_libcuda(void)
         }
     }
 
-    /* Make sure we check in lib64 also in the case where there are both
-     * 32 and 64 bit libraries installed.  Otherwise, we may fail trying to
-     * load the 32 bit library. */
-    opal_lt_dladdsearchdir("/usr/lib64");
+    for (i = 0; i < NUMLIBS*SEARCHPATHS; i++) {
+        errs[i] = NULL; /* just to be safe */
+    }
 
     /* Now walk through all the potential names libcuda and find one
      * that works.  If it does, all is good.  If not, print out all
-     * the messages about why things failed. */
+     * the messages about why things failed.  This code was careful
+     * to try and save away all error messages if the loading ultimately
+     * failed to help with debugging.  
+     * NOTE: On the first loop we just utilize the default loading
+     * paths from the system.  For the second loop, set /usr/lib64 to
+     * the search path and try again.  This is done to handle the case
+     * where we have both 32 and 64 bit libcuda.so libraries
+     * installed.  If we are running in 64 bit mode, then the loading
+     * /usr/lib/libcuda.so will fail and no more searching will be
+     * done.  Note that we only set this search path after the
+     * original search.  This is so that LD_LIBRARY_PATH and run path
+     * settings are respected.  Setting this search path overrides
+     * them.  It really should just be appended. */
     if (advise_support) {
         if (0 != (retval = opal_lt_dladvise_global(&advise))) {
             opal_show_help("help-mpi-common-cuda.txt", "unknown ltdl error", true,
@@ -540,51 +554,73 @@ static int mca_common_cuda_load_libcuda(void)
             opal_lt_dladvise_destroy(&advise);
             return 1;
         }
-        for (i = 0; i < NUMLIBS; i++) {
-            const char *str;
-            libcuda_handle = opal_lt_dlopenadvise(cudalibs[i], advise);
-            if (NULL == libcuda_handle) {
-                str = opal_lt_dlerror();
-                if (NULL != str) {
-                    errs[i] = strdup(str);
-                } else {
-                    errs[i] = strdup("lt_dlerror() returned NULL.");
-                }
-                opal_output_verbose(10, mca_common_cuda_output,
-                                    "CUDA: Library open error: %s",
-                                    errs[i]);
-            } else {
-                loaded = true;
-                break;
+        for (j = 0; j <= SEARCHPATHS; j++) {
+            if (NULL != searchpaths[j]) {
+                opal_lt_dlsetsearchpath(searchpaths[j]);
             }
+            for (i = 0; i < NUMLIBS; i++) {
+                const char *str;
+                libcuda_handle = opal_lt_dlopenadvise(cudalibs[i], advise);
+                if (NULL == libcuda_handle) {
+                    str = opal_lt_dlerror();
+                    if (NULL != str) {
+                        errs[j*NUMLIBS + i] = strdup(str);
+                    } else {
+                        errs[j*NUMLIBS + i] = strdup("lt_dlerror() returned NULL.");
+                    }
+                    opal_output_verbose(10, mca_common_cuda_output,
+                                        "CUDA: Library open error: %s",
+                                        errs[j*NUMLIBS + i]);
+                } else {
+                    opal_output_verbose(10, mca_common_cuda_output,
+                                        "CUDA: Library successfully opened %s",
+                                        cudalibs[i]);
+                    loaded = true;
+                    break;
+                }
+            }
+            if (true == loaded) break; /* Break out of outer loop */
         }
         opal_lt_dladvise_destroy(&advise);
     } else {
         /* No lt_dladvise support.  This should rarely happen. */
-        for (i = 0; i < NUMLIBS; i++) {
-            const char *str;
-            libcuda_handle = opal_lt_dlopen(cudalibs[i]);
-            if (NULL == libcuda_handle) {
-                str = opal_lt_dlerror();
-                if (NULL != str) {
-                    errs[i] = strdup(str);
-                } else {
-                    errs[i] = strdup("lt_dlerror() returned NULL.");
-                }
-            } else {
-                loaded = true;
-                break;
+        for (j = 0; j <= SEARCHPATHS; j++) {
+            if (NULL != searchpaths[j]) {
+                opal_lt_dlsetsearchpath(searchpaths[j]);
             }
+            for (i = 0; i < NUMLIBS; i++) {
+                const char *str;
+                libcuda_handle = opal_lt_dlopen(cudalibs[i]);
+                if (NULL == libcuda_handle) {
+                    str = opal_lt_dlerror();
+                    if (NULL != str) {
+                        errs[j*NUMLIBS + i] = strdup(str);
+                    } else {
+                        errs[j*NUMLIBS + i] = strdup("lt_dlerror() returned NULL.");
+                    }
+                    opal_output_verbose(10, mca_common_cuda_output,
+                                        "CUDA: Library open error: %s",
+                                        errs[j*NUMLIBS + i]);
+                } else {
+                    opal_output_verbose(10, mca_common_cuda_output,
+                                        "CUDA: Library successfully opened %s",
+                                        cudalibs[i]);
+                    loaded = true;
+                    break;
+                }
+            }
+	        if (true == loaded) break; /* Break out of outer loop */
         }
     }
 
     if (loaded != true) {
         opal_show_help("help-mpi-common-cuda.txt", "dlopen failed", true,
-                       cudalibs[0], errs[0], cudalibs[1], errs[1]);
+                       cudalibs[0], errs[0], cudalibs[1], errs[1], 
+                       cudalibs[2], errs[2], cudalibs[3], errs[3]);
     }
     
     /* Cleanup error messages.  Need to do this after printing them. */
-    for (i = 0; i < NUMLIBS; i++) {
+    for (i = 0; i < NUMLIBS*SEARCHPATHS; i++) {
         if (NULL != errs[i]) {
             free(errs[i]);
         }

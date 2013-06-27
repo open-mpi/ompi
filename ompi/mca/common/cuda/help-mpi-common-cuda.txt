@@ -171,6 +171,10 @@ The library attempted to open the supporting CUDA libraries but failed.
   Error string:      %s
   Library attempted: %s
   Error string:      %s
+  Library attempted: %s
+  Error string:      %s
+  Library attempted: %s
+  Error string:      %s
 #
 [dlsym failed]
 An error occurred while trying to map in the address of a function.
