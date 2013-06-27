@@ -231,6 +231,87 @@ int opal_hwloc_base_get_topology(void)
     return rc;
 }
 
+int opal_hwloc_base_set_topology(char *topofile)
+{
+    hwloc_obj_t obj;
+    unsigned j, k;
+    struct hwloc_topology_support *support;
+    int rc;
+
+     OPAL_OUTPUT_VERBOSE((5, opal_hwloc_base_framework.framework_output,
+                         "hwloc:base:set_topology"));
+
+   if (NULL != opal_hwloc_topology) {
+        hwloc_topology_destroy(opal_hwloc_topology);
+    }
+    if (0 != hwloc_topology_init(&opal_hwloc_topology)) {
+        return OPAL_ERR_NOT_SUPPORTED;
+    }
+    if (0 != hwloc_topology_set_xml(opal_hwloc_topology, topofile)) {
+        hwloc_topology_destroy(opal_hwloc_topology);
+        return OPAL_ERR_NOT_SUPPORTED;
+    }
+    /* since we are loading this from an external source, we have to
+     * explicitly set a flag so hwloc sets things up correctly
+     */
+    if (0 != hwloc_topology_set_flags(opal_hwloc_topology,
+                                      (HWLOC_TOPOLOGY_FLAG_IS_THISSYSTEM |
+                                       HWLOC_TOPOLOGY_FLAG_WHOLE_SYSTEM |
+                                       HWLOC_TOPOLOGY_FLAG_IO_DEVICES))) {
+        hwloc_topology_destroy(opal_hwloc_topology);
+        return OPAL_ERR_NOT_SUPPORTED;
+    }
+    if (0 != hwloc_topology_load(opal_hwloc_topology)) {
+        hwloc_topology_destroy(opal_hwloc_topology);
+        return OPAL_ERR_NOT_SUPPORTED;
+    }
+    /* remove the hostname from the topology. Unfortunately, hwloc
+     * decided to add the source hostname to the "topology", thus
+     * rendering it unusable as a pure topological description. So
+     * we remove that information here.
+     */
+    obj = hwloc_get_root_obj(opal_hwloc_topology);
+    for (k=0; k < obj->infos_count; k++) {
+        if (NULL == obj->infos[k].name ||
+            NULL == obj->infos[k].value) {
+            continue;
+        }
+        if (0 == strncmp(obj->infos[k].name, "HostName", strlen("HostName"))) {
+            free(obj->infos[k].name);
+            free(obj->infos[k].value);
+            /* left justify the array */
+            for (j=k; j < obj->infos_count-1; j++) {
+                obj->infos[j] = obj->infos[j+1];
+            }
+            obj->infos[obj->infos_count-1].name = NULL;
+            obj->infos[obj->infos_count-1].value = NULL;
+            obj->infos_count--;
+            break;
+        }
+    }
+    /* unfortunately, hwloc does not include support info in its
+     * xml output :-(( We default to assuming it is present as
+     * systems that use this option are likely to provide
+     * binding support
+     */
+    support = (struct hwloc_topology_support*)hwloc_topology_get_support(opal_hwloc_topology);
+    support->cpubind->set_thisproc_cpubind = true;
+    support->membind->set_thisproc_membind = true;
+
+    /* filter the cpus thru any default cpu set */
+    rc = opal_hwloc_base_filter_cpus(opal_hwloc_topology);
+    if (OPAL_SUCCESS != rc) {
+        return rc;
+    }
+
+    /* fill opal_cache_line_size global with the smallest L1 cache
+       line size */
+    fill_cache_line_size();
+
+    /* all done */
+    return OPAL_SUCCESS;
+}
+
 static void free_object(hwloc_obj_t obj)
 {
     opal_hwloc_obj_data_t *data;
