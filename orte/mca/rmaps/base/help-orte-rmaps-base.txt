@@ -204,3 +204,14 @@ No objects of the specified type were found on at least one node:
   Node: %s
 
 The map cannot be done as specified.
+#
+[topo-file]
+A topology file was given for the compute nodes, but
+we were unable to correctly process it. Common errors
+include incorrectly specifying the path to the file,
+or the file being generated in a way that is incompatible
+with the version of hwloc being used by OMPI.
+
+  File: %s
+
+Please correct the problem and try again.

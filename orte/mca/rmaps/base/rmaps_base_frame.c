@@ -33,6 +33,7 @@
 
 #include "orte/runtime/orte_globals.h"
 #include "orte/util/show_help.h"
+#include "orte/mca/errmgr/errmgr.h"
 
 #include "orte/mca/rmaps/base/rmaps_private.h"
 #include "orte/mca/rmaps/base/base.h"
@@ -65,6 +66,7 @@ static bool rmaps_base_no_oversubscribe = false;
 static bool rmaps_base_oversubscribe = false;
 static bool rmaps_base_display_devel_map = false;
 static bool rmaps_base_display_diffable_map = false;
+static char *rmaps_base_topo_file = NULL;
 
 static int orte_rmaps_base_register(mca_base_register_flag_t flags)
 {
@@ -202,6 +204,13 @@ static int orte_rmaps_base_register(mca_base_register_flag_t flags)
                                  OPAL_INFO_LVL_9,
                                  MCA_BASE_VAR_SCOPE_READONLY, &rmaps_base_display_diffable_map);
 
+    rmaps_base_topo_file = NULL;
+    (void) mca_base_var_register("orte", "rmaps", "base", "topology",
+                                 "hwloc topology file (xml format) describing the topology of the compute nodes [default: none]",
+                                 MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0, OPAL_INFO_LVL_9,
+                                 MCA_BASE_VAR_SCOPE_READONLY, &rmaps_base_topo_file);
+
+
     return ORTE_SUCCESS;
 }
 
@@ -236,6 +245,18 @@ static int orte_rmaps_base_open(mca_base_open_flag_t flags)
     orte_rmaps_base.slot_list = NULL;
     orte_rmaps_base.mapping = 0;
     orte_rmaps_base.ranking = 0;
+
+    /* if a topology file was given, then set our topology
+     * from it. Even though our actual topology may differ,
+     * mpirun only needs to see the compute node topology
+     * for mapping purposes
+     */
+    if (NULL != rmaps_base_topo_file) {
+        if (OPAL_SUCCESS != (rc = opal_hwloc_base_set_topology(rmaps_base_topo_file))) {
+            orte_show_help("help-orte-rmaps-base.txt", "topo-file", true, rmaps_base_topo_file);
+            return ORTE_ERR_SILENT;
+        }
+    }
 
     if (NULL == rmaps_base_mapping_policy) {
         ORTE_SET_MAPPING_POLICY(orte_rmaps_base.mapping, ORTE_MAPPING_BYSLOT);
