@@ -501,7 +501,7 @@ static int mca_common_cuda_load_libcuda(void)
     opal_lt_dladvise advise;
     int retval, i, j;
     int advise_support = 1;
-    bool loaded = true;
+    bool loaded = false;
     char *errs[NUMLIBS*SEARCHPATHS];
     char *cudalibs[NUMLIBS] = {"libcuda.so.1", "libcuda.so"};
     char *searchpaths[SEARCHPATHS] = {NULL, "/usr/lib64"};
@@ -554,7 +554,7 @@ static int mca_common_cuda_load_libcuda(void)
             opal_lt_dladvise_destroy(&advise);
             return 1;
         }
-        for (j = 0; j <= SEARCHPATHS; j++) {
+        for (j = 0; j < SEARCHPATHS; j++) {
             if (NULL != searchpaths[j]) {
                 opal_lt_dlsetsearchpath(searchpaths[j]);
             }
