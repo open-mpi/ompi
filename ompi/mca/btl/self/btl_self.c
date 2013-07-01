@@ -127,6 +127,7 @@ mca_btl_base_descriptor_t* mca_btl_self_alloc(
 {
     mca_btl_self_frag_t* frag = NULL;
     int rc;
+
     if(size <= mca_btl_self.btl_eager_limit) {
         MCA_BTL_SELF_FRAG_ALLOC_EAGER(frag,rc);
     } else if (size <= btl->btl_max_send_size) {
@@ -140,6 +141,7 @@ mca_btl_base_descriptor_t* mca_btl_self_alloc(
     frag->base.des_flags   = flags;
     frag->base.des_src     = &(frag->segment);
     frag->base.des_src_cnt = 1;
+    (void)rc;  /* unused but needed by a macro */
     return (mca_btl_base_descriptor_t*)frag;
 }
                                                                                                                    
@@ -271,6 +273,7 @@ mca_btl_self_prepare_dst( struct mca_btl_base_module_t* btl,
     frag->base.des_dst = &frag->segment;
     frag->base.des_dst_cnt = 1;
     frag->base.des_flags = flags;
+    (void)rc;  /* unused but needed by a macro */
     return &frag->base;
 }
  
