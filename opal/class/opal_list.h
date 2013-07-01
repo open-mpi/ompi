@@ -239,7 +239,7 @@ typedef struct opal_list_t opal_list_t;
  * @param[in] list List to iterate over
  * @param[in] type Type of each list item
  *
- * This macro provides a simple way to loop over the items in an opal_list_t. If
+ * This macro provides a simple way to loop over the items in an opal_list_t. It
  * is safe to call opal_list_remove_item(list, item) from within the loop.
  *
  * Example Usage:
