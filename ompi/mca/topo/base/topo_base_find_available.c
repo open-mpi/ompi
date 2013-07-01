@@ -64,6 +64,7 @@ int mca_topo_base_find_available(bool enable_progress_threads,
                 has already been invoked. Close it out of the DSO repository
                 (if it is there in the repository) */
              mca_base_component_repository_release(cli->cli_component);
+             opal_list_remove_item(&ompi_topo_base_framework.framework_components, item);
              OBJ_RELEASE(item);
          }
          item = next;
