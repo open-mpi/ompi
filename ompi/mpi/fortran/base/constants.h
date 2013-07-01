@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2012 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2011-2012 INRIA.  All rights reserved.
+ * Copyright (c) 2011-2012 Universite Bordeaux 1
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -98,6 +100,8 @@ DECL(int, MPI_FORTRAN_BOTTOM, mpi_fortran_bottom,
      mpi_fortran_bottom_, mpi_fortran_bottom__);
 DECL(int, MPI_FORTRAN_IN_PLACE, mpi_fortran_in_place,
      mpi_fortran_in_place_, mpi_fortran_in_place__);
+DECL(int, MPI_FORTRAN_UNWEIGHTED, mpi_fortran_unweighted,
+     mpi_fortran_unweighted_, mpi_fortran_unweighted__);
 DECL(char *, MPI_FORTRAN_ARGV_NULL, mpi_fortran_argv_null,
      mpi_fortran_argv_null_, mpi_fortran_argv_null__);
 DECL(char *, MPI_FORTRAN_ARGVS_NULL, mpi_fortran_argvs_null,
@@ -124,6 +128,11 @@ DECL(int *, MPI_FORTRAN_STATUSES_IGNORE, mpi_fortran_statuses_ignore,
    addr == (void*) &mpi_fortran_in_place || \
    addr == (void*) &mpi_fortran_in_place_ || \
    addr == (void*) &mpi_fortran_in_place__)
+#define OMPI_IS_FORTRAN_UNWEIGHTED(addr) \
+  (addr == (void*) &MPI_FORTRAN_UNWEIGHTED || \
+   addr == (void*) &mpi_fortran_unweighted || \
+   addr == (void*) &mpi_fortran_unweighted_ || \
+   addr == (void*) &mpi_fortran_unweighted__)
 #define OMPI_IS_FORTRAN_ARGV_NULL(addr) \
   (addr == (void*) &MPI_FORTRAN_ARGV_NULL || \
    addr == (void*) &mpi_fortran_argv_null || \
@@ -155,6 +164,8 @@ DECL(int *, MPI_FORTRAN_STATUSES_IGNORE, mpi_fortran_statuses_ignore,
   (addr == (void*) &MPI_FORTRAN_BOTTOM)
 #define OMPI_IS_FORTRAN_IN_PLACE(addr) \
   (addr == (void*) &MPI_FORTRAN_IN_PLACE)
+#define OMPI_IS_FORTRAN_UNWEIGHTED(addr) \
+  (addr == (void*) &MPI_FORTRAN_UNWEIGHTED)
 #define OMPI_IS_FORTRAN_ARGV_NULL(addr) \
   (addr == (void*) &MPI_FORTRAN_ARGV_NULL)
 #define OMPI_IS_FORTRAN_ARGVS_NULL(addr) \
@@ -171,6 +182,8 @@ DECL(int *, MPI_FORTRAN_STATUSES_IGNORE, mpi_fortran_statuses_ignore,
    (addr == (void*) &mpi_fortran_bottom)
 #define OMPI_IS_FORTRAN_IN_PLACE(addr) \
    (addr == (void*) &mpi_fortran_in_place)
+#define OMPI_IS_FORTRAN_UNWEIGHTED(addr) \
+   (addr == (void*) &mpi_fortran_unweighted)
 #define OMPI_IS_FORTRAN_ARGV_NULL(addr) \
    (addr == (void*) &mpi_fortran_argv_null)
 #define OMPI_IS_FORTRAN_ARGVS_NULL(addr) \
@@ -187,6 +200,8 @@ DECL(int *, MPI_FORTRAN_STATUSES_IGNORE, mpi_fortran_statuses_ignore,
    (addr == (void*) &mpi_fortran_bottom_)
 #define OMPI_IS_FORTRAN_IN_PLACE(addr) \
    (addr == (void*) &mpi_fortran_in_place_)
+#define OMPI_IS_FORTRAN_UNWEIGHTED(addr) \
+   (addr == (void*) &mpi_fortran_unweighted_)
 #define OMPI_IS_FORTRAN_ARGV_NULL(addr) \
    (addr == (void*) &mpi_fortran_argv_null_)
 #define OMPI_IS_FORTRAN_ARGVS_NULL(addr) \
@@ -203,6 +218,8 @@ DECL(int *, MPI_FORTRAN_STATUSES_IGNORE, mpi_fortran_statuses_ignore,
    (addr == (void*) &mpi_fortran_bottom__)
 #define OMPI_IS_FORTRAN_IN_PLACE(addr) \
    (addr == (void*) &mpi_fortran_in_place__)
+#define OMPI_IS_FORTRAN_UNWEIGHTED(addr) \
+   (addr == (void*) &mpi_fortran_unweighted__)
 #define OMPI_IS_FORTRAN_ARGV_NULL(addr) \
    (addr == (void*) &mpi_fortran_argv_null__)
 #define OMPI_IS_FORTRAN_ARGVS_NULL(addr) \
@@ -217,7 +234,8 @@ DECL(int *, MPI_FORTRAN_STATUSES_IGNORE, mpi_fortran_statuses_ignore,
 #endif /* weak / specific symbol type */
 
 /* Convert between Fortran and C MPI_BOTTOM */
-#define OMPI_F2C_BOTTOM(addr)    (OMPI_IS_FORTRAN_BOTTOM(addr) ? MPI_BOTTOM : (addr))
-#define OMPI_F2C_IN_PLACE(addr)  (OMPI_IS_FORTRAN_IN_PLACE(addr) ? MPI_IN_PLACE : (addr))
+#define OMPI_F2C_BOTTOM(addr)      (OMPI_IS_FORTRAN_BOTTOM(addr) ? MPI_BOTTOM : (addr))
+#define OMPI_F2C_IN_PLACE(addr)    (OMPI_IS_FORTRAN_IN_PLACE(addr) ? MPI_IN_PLACE : (addr))
+#define OMPI_F2C_UNWEIGHTED(addr)  (OMPI_IS_FORTRAN_UNWEIGHTED(addr) ? MPI_UNWEIGHTED : (addr))
 
 #endif /* OMPI_FORTRAN_BASE_CONSTANTS_H */

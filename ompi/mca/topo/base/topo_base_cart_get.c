@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2013 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -41,18 +41,18 @@
  *
  * @retval MPI_SUCCESS
  */
-int mca_topo_base_cart_get (ompi_communicator_t* comm,
-                        int maxdims,
-                        int *dims,
-                        int *periods,
-                        int *coords)
+int mca_topo_base_cart_get(ompi_communicator_t* comm,
+                           int maxdims,
+                           int *dims,
+                           int *periods,
+                           int *coords)
 {
-    int m = (maxdims <= comm->c_topo_comm->mtc_ndims_or_nnodes) ?
-        maxdims : comm->c_topo_comm->mtc_ndims_or_nnodes;
+    int m = (maxdims <= comm->c_topo->mtc.cart->ndims) ?
+        maxdims : comm->c_topo->mtc.cart->ndims;
 
-    memcpy(dims, comm->c_topo_comm->mtc_dims_or_index, m * sizeof(int));
-    memcpy(periods, comm->c_topo_comm->mtc_periods_or_edges, m * sizeof(int));
-    memcpy(coords, comm->c_topo_comm->mtc_coords, m * sizeof(int));
+    memcpy(dims, comm->c_topo->mtc.cart->dims, m * sizeof(int));
+    memcpy(periods, comm->c_topo->mtc.cart->periods, m * sizeof(int));
+    memcpy(coords, comm->c_topo->mtc.cart->coords, m * sizeof(int));
 
     return MPI_SUCCESS;
 }

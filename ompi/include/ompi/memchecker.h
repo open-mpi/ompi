@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
- * Copyright (c) 2010      The University of Tennessee and The University
+ * Copyright (c) 2010-2013 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
@@ -163,7 +163,7 @@ static inline int memchecker_comm(MPI_Comm comm)
     }
 
     /*
-     * We should not check unterlying objects in this way -- either another opal/include/memchecker.h
+     * We should not check underlying objects in this way -- either another opal/include/memchecker.h
      * However, let us assume, that underlying objects are initialized correctly
      */
 #if 0
@@ -211,10 +211,7 @@ static inline int memchecker_comm(MPI_Comm comm)
     opal_memchecker_base_isdefined (&comm->c_remote_group, sizeof(ompi_group_t *));
     opal_memchecker_base_isdefined (&comm->c_keyhash, sizeof(struct opal_hash_table_t *));
     opal_memchecker_base_isdefined (&comm->c_cube_dim, sizeof(int));
-    opal_memchecker_base_isdefined (&comm->c_topo_component, sizeof(mca_base_component_t *));
-    opal_memchecker_base_isdefined (&comm->c_topo, sizeof(const struct mca_topo_base_module_1_0_0_t *));
-    opal_memchecker_base_isdefined (&comm->c_topo_comm, sizeof(struct mca_topo_base_comm_1_0_0_t *));
-    opal_memchecker_base_isdefined (&comm->c_topo_module, sizeof(struct mca_topo_base_module_comm_t *));
+    opal_memchecker_base_isdefined (&comm->c_topo, sizeof(const struct mca_topo_base_module_t *));
     opal_memchecker_base_isdefined (&comm->c_f_to_c_index, sizeof(int));
 #ifdef OMPI_WANT_PERUSE
     opal_memchecker_base_isdefined (&comm->c_peruse_handles, sizeof(struct ompi_peruse_handle_t **));

@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2011 The University of Tennessee and The University
+ * Copyright (c) 2004-2013 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -12,6 +12,8 @@
  * Copyright (c) 2007-2011 University of Houston. All rights reserved.
  * Copyright (c) 2007-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2011-2013 INRIA.  All rights reserved.
+ * Copyright (c) 2011-2013 Universite Bordeaux 1
  * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, LLC.
  *                         All rights reserved.
@@ -50,8 +52,7 @@
 static int rankkeycompare(const void *, const void *);
 
 /**
- * to fill the rest of the stuff for the communicator when either
- * MPI_Cart_create or MPI_Graph_create is used 
+ * to fill the rest of the stuff for the communicator
  */ 
 static int ompi_comm_fill_rest (ompi_communicator_t *comm,
                                 int num_procs,
@@ -94,12 +95,11 @@ int ompi_comm_set ( ompi_communicator_t **ncomm,
                     int *remote_ranks,
                     opal_hash_table_t *attr,
                     ompi_errhandler_t *errh,
-                    mca_base_component_t *topocomponent, 
+                    bool copy_topocomponent, 
                     ompi_group_t *local_group, 
                     ompi_group_t *remote_group )
-
 {
-    ompi_communicator_t *newcomm=NULL;
+    ompi_communicator_t *newcomm = NULL;
     int ret;
     
     /* ompi_comm_allocate */
@@ -114,8 +114,7 @@ int ompi_comm_set ( ompi_communicator_t **ncomm,
            efficiently */
         ret = ompi_group_incl(oldcomm->c_local_group, local_size, 
                               local_ranks, &newcomm->c_local_group);
-    }
-    else {
+    } else {
         newcomm->c_local_group = local_group;
         OBJ_RETAIN(newcomm->c_local_group);
         ompi_group_increment_proc_count(newcomm->c_local_group);
@@ -127,8 +126,7 @@ int ompi_comm_set ( ompi_communicator_t **ncomm,
         if ( NULL == remote_group ) {
             ret = ompi_group_incl(oldcomm->c_remote_group, remote_size, 
                                   remote_ranks, &newcomm->c_remote_group);
-        }
-        else {
+        } else {
             newcomm->c_remote_group = remote_group;
             OBJ_RETAIN(newcomm->c_remote_group);
             ompi_group_increment_proc_count(newcomm->c_remote_group);
@@ -139,8 +137,7 @@ int ompi_comm_set ( ompi_communicator_t **ncomm,
         } else {
             ompi_comm_dup(oldcomm->c_local_comm, &newcomm->c_local_comm);
         }
-    }
-    else { 
+    } else { 
         newcomm->c_remote_group = newcomm->c_local_group;
         OBJ_RETAIN(newcomm->c_remote_group);
     }
@@ -149,74 +146,33 @@ int ompi_comm_set ( ompi_communicator_t **ncomm,
        Necessary for the disconnect of dynamic communicators. */
 
     if ( 0 < local_size  ) {
-	ompi_dpm.mark_dyncomm (newcomm);
+        ompi_dpm.mark_dyncomm (newcomm);
     }
 
     /* Set error handler */
     newcomm->error_handler = errh;
     OBJ_RETAIN ( newcomm->error_handler );
     
-    /* Set Topology, if required */
-    
-    if ( NULL != topocomponent ) {
-        /*
-         * This functions is never used to determine the topology
-         * component. The topology component is determined only by the
-         * ompi_cart_create and ompi_comm_create functions. Have to
-         * see what ahppens during MPI_Comm_dup though. During this
-         * the topology information has to be copied into the new
-         * communicator which includes selecting a new topology
-         * component and setting the information which is on that
-         * communicator into this communicator. This probably is
-         * another function in this file.
-         */ 
- 
-        if (OMPI_COMM_IS_CART ( oldcomm ) ) {
-            newcomm->c_flags |= OMPI_COMM_CART;
-        }
-        if (OMPI_COMM_IS_GRAPH ( oldcomm ) ) {
-            newcomm->c_flags |= OMPI_COMM_GRAPH;
-        }
-
-        /*
-         * Now I have to set the information on the topology from the previous
-         * communicator
-         */ 
- 
-        /* allocate the data for the common good */
-        newcomm->c_topo_comm = (mca_topo_base_comm_t *)malloc(sizeof(mca_topo_base_comm_t));
- 
-        if (NULL == newcomm->c_topo_comm) {
-            OBJ_RELEASE(newcomm);
-            return OMPI_ERROR;
-        }
- 
-        if (OMPI_SUCCESS != (ret = mca_topo_base_comm_select (newcomm, 
-                                                              oldcomm->c_topo_component))) {
-            free(newcomm->c_topo_comm); 
-            OBJ_RELEASE(newcomm);
-            return ret;
-        }
-        
-        /*
-         * Should copy over the information from the previous communicator
+    /* Set Topology, if required and if available */
+    if ( copy_topocomponent && (NULL != oldcomm->c_topo) ) {
+        /**
+         * The MPI standard is pretty clear on this, the topology information
+         * behave as info keys, and is copied only on MPI_Comm_dup.
          */
-        if (OMPI_SUCCESS != (ret = ompi_comm_copy_topo (oldcomm, newcomm))) {
-            OBJ_RELEASE(newcomm);
+        if (OMPI_SUCCESS != (ret = ompi_comm_copy_topo(oldcomm, newcomm))) {
+            ompi_comm_free(&newcomm);
             return ret;
         }
     }
       
-    /* Copy attributes and call according copy functions, if
-       required */
-    
+    /* Copy attributes and call according copy functions, if required */
     if (NULL != oldcomm->c_keyhash) {
         if (NULL != attr) {
             ompi_attr_hash_init(&newcomm->c_keyhash);
             if (OMPI_SUCCESS != (ret = ompi_attr_copy_all (COMM_ATTR, oldcomm,
                                                            newcomm, attr, 
                                                            newcomm->c_keyhash))) {
-                OBJ_RELEASE(newcomm);
+                ompi_comm_free(&newcomm);
                 return ret;
             }                                    
         }
@@ -325,7 +281,7 @@ int ompi_comm_create ( ompi_communicator_t *comm, ompi_group_t *group,
                          rranks,                   /* remote_ranks */
                          NULL,                     /* attrs */
                          comm->error_handler,      /* error handler */
-                         NULL,                     /* topo component */
+                         false,                    /* dont copy the topo */
                          group,                    /* local group */
                          NULL                      /* remote group */
                          );
@@ -396,8 +352,8 @@ int ompi_comm_create ( ompi_communicator_t *comm, ompi_group_t *group,
 /*
 ** Counterpart to MPI_Comm_split. To be used within OMPI (e.g. MPI_Cart_sub).
 */
-int ompi_comm_split ( ompi_communicator_t* comm, int color, int key, 
-                      ompi_communicator_t **newcomm, bool pass_on_topo )
+int ompi_comm_split( ompi_communicator_t* comm, int color, int key, 
+                     ompi_communicator_t **newcomm, bool pass_on_topo )
 {
     int myinfo[2];
     int size, my_size;
@@ -552,14 +508,12 @@ int ompi_comm_split ( ompi_communicator_t* comm, int color, int key,
                          rranks,             /* remote_ranks */
                          NULL,               /* attrs */
                          comm->error_handler,/* error handler */
-                         (pass_on_topo)?  
-                         (mca_base_component_t *)comm->c_topo_component:
-                         NULL,               /* topo component */
+                         pass_on_topo,
                          NULL,               /* local group */
                          NULL                /* remote group */
                          );
 
-    if ( NULL == newcomm ) {
+    if ( NULL == newcomp ) {
         rc =  MPI_ERR_INTERN;
         goto exit;
     }
@@ -805,10 +759,9 @@ ompi_comm_split_type(ompi_communicator_t *comm,
                          rranks,             /* remote_ranks */
                          NULL,               /* attrs */
                          comm->error_handler,/* error handler */
-                         NULL,               /* topo component */
+                         false,              /* don't copy the topo */
                          NULL,               /* local group */
-                         NULL                /* remote group */
-                         );
+                         NULL );             /* remote group */
 
     if ( NULL == newcomm ) {
         rc =  MPI_ERR_INTERN;
@@ -892,32 +845,27 @@ ompi_comm_split_type(ompi_communicator_t *comm,
 /**********************************************************************/
 int ompi_comm_dup ( ompi_communicator_t * comm, ompi_communicator_t **newcomm )
 {
-    ompi_communicator_t *comp=NULL;
-    ompi_communicator_t *newcomp=NULL;
-    int rsize, mode, rc=OMPI_SUCCESS;
+    ompi_communicator_t *newcomp = NULL;
+    int rsize = 0, mode = OMPI_COMM_CID_INTRA, rc = OMPI_SUCCESS;
 
-    comp = (ompi_communicator_t *) comm;
-    if ( OMPI_COMM_IS_INTER ( comp ) ){
-        rsize  = comp->c_remote_group->grp_proc_count;
+    if ( OMPI_COMM_IS_INTER ( comm ) ){
+        rsize  = comm->c_remote_group->grp_proc_count;
         mode   = OMPI_COMM_CID_INTER;
-    } else {
-        rsize  = 0;
-        mode   = OMPI_COMM_CID_INTRA;
     }
     
     *newcomm = MPI_COMM_NULL;
 
     rc =  ompi_comm_set ( &newcomp,                               /* new comm */
-                          comp,                                   /* old comm */
-                          comp->c_local_group->grp_proc_count,    /* local_size */
+                          comm,                                   /* old comm */
+                          comm->c_local_group->grp_proc_count,    /* local_size */
                           NULL,                                   /* local_procs*/
                           rsize,                                  /* remote_size */
                           NULL,                                   /* remote_procs */
-                          comp->c_keyhash,                        /* attrs */
-                          comp->error_handler,                    /* error handler */
-                          (mca_base_component_t *) comp->c_topo_component,  /* topo component */
-                          comp->c_local_group,                    /* local group */
-                          comp ->c_remote_group );                /* remote group */
+                          comm->c_keyhash,                        /* attrs */
+                          comm->error_handler,                    /* error handler */
+                          true,                                   /* copy the topo */
+                          comm->c_local_group,                    /* local group */
+                          comm->c_remote_group );                 /* remote group */
     if ( NULL == newcomp ) {
         rc =  MPI_ERR_INTERN;
         return rc;
@@ -928,7 +876,7 @@ int ompi_comm_dup ( ompi_communicator_t * comm, ompi_communicator_t **newcomm )
 
     /* Determine context id. It is identical to f_2_c_handle */
     rc = ompi_comm_nextcid ( newcomp,  /* new communicator */ 
-                             comp,     /* old comm */
+                             comm,     /* old comm */
                              NULL,     /* bridge comm */
                              NULL,     /* local leader */
                              NULL,     /* remote_leader */
@@ -944,7 +892,7 @@ int ompi_comm_dup ( ompi_communicator_t * comm, ompi_communicator_t **newcomm )
 
     /* activate communicator and init coll-module */
     rc = ompi_comm_activate( &newcomp, /* new communicator */ 
-                             comp,
+                             comm,
                              NULL, 
                              NULL, 
                              NULL, 
@@ -1157,7 +1105,7 @@ static int ompi_comm_allgather_emulate_intra( void *inbuf, int incount,
 ** The freeing of all attached objects (groups, errhandlers
 ** etc. ) has moved to the destructor. 
 */
-int ompi_comm_free ( ompi_communicator_t **comm )
+int ompi_comm_free( ompi_communicator_t **comm )
 {
     int ret;
     int cid = (*comm)->c_contextid;
@@ -1206,7 +1154,7 @@ int ompi_comm_free ( ompi_communicator_t **comm )
     if ( OMPI_COMM_IS_DYNAMIC (*comm) ) {
         ompi_comm_num_dyncomm --;
     }
-    OBJ_RELEASE ( (*comm) );
+    OBJ_RELEASE( (*comm) );
 
     if ( is_extra_retain) {
         /* This communicator has been marked as an "extra retain"
@@ -1227,10 +1175,9 @@ int ompi_comm_free ( ompi_communicator_t **comm )
          */
         ompi_communicator_t *tmpcomm = (ompi_communicator_t *) opal_pointer_array_get_item(&ompi_mpi_communicators, cid);
         if ( NULL != tmpcomm ){
-            OBJ_RELEASE (tmpcomm);
+            ompi_comm_free(&tmpcomm);
         }
     }
-
 
     *comm = MPI_COMM_NULL;
     return OMPI_SUCCESS;
@@ -1496,10 +1443,12 @@ int ompi_comm_dump ( ompi_communicator_t *comm )
     if ( OMPI_COMM_IS_INTER(comm) )
         opal_output(0," inter-comm,");
     if ( OMPI_COMM_IS_CART(comm))
-        opal_output(0," topo-cart,");
-    if ( OMPI_COMM_IS_GRAPH(comm))
+        opal_output(0," topo-cart");
+    else if ( OMPI_COMM_IS_GRAPH(comm))
         opal_output(0," topo-graph");
-    opal_output(0,"\n");
+    else if ( OMPI_COMM_IS_DIST_GRAPH(comm))
+        opal_output(0," topo-dist-graph");
+     opal_output(0,"\n");
 
     if (OMPI_COMM_IS_INTER(comm)) {
         opal_output(0,"  Remote group size:%d\n", comm->c_remote_group->grp_proc_count);
@@ -1547,7 +1496,7 @@ static int rankkeycompare (const void *p, const void *q)
 }
 
 
-/*************************************************************************************
+/***********************************************************************
  * Counterpart of MPI_Cart/Graph_create. This will be called from the
  * top level MPI. The condition for INTER communicator is already
  * checked by the time this has been invoked. This function should do
@@ -1558,195 +1507,33 @@ static int rankkeycompare (const void *p, const void *q)
  * use this proc structure to create the communicator using
  * ompi_comm_set.
  */
-int ompi_topo_create (ompi_communicator_t *old_comm, 
-                      int ndims_or_nnodes,
-                      int *dims_or_index,
-                      int *periods_or_edges,
-                      bool reorder,
-                      ompi_communicator_t **comm_topo,
-                      int cart_or_graph){
 
-    ompi_communicator_t *new_comm;
-    int new_rank;
-    ompi_proc_t **topo_procs;
-    int num_procs;
-    int ret;
-    ompi_proc_t **proc_list=NULL;
-    int i;
-
-    /* allocate a new communicator */
-
-    new_comm = ompi_comm_allocate(ompi_comm_size(old_comm), 0);
-    if (NULL == new_comm) {
-        return MPI_ERR_INTERN;
-    }
-
-    /* allocate the data for the common good */
-
-    new_comm->c_topo_comm = (mca_topo_base_comm_t*)malloc(sizeof(mca_topo_base_comm_t));
-    if (NULL == new_comm->c_topo_comm) {
-        OBJ_RELEASE(new_comm);
-        return OMPI_ERR_OUT_OF_RESOURCE;
-    }
-
-    /* select the topology component on the communicator */
-
-    if (OMPI_SUCCESS != (ret = mca_topo_base_comm_select (new_comm, NULL))) {
-        /* OBJ_RELEASE also frees new_comm->c_topo_comm */
-        OBJ_RELEASE(new_comm);
-        return ret;
-    }
-
-    /* since the topo component has initialised, let us now initialise
-     * the topo comm structure */
-    new_comm->c_flags |= cart_or_graph;
-
-    new_comm->c_topo_comm->mtc_ndims_or_nnodes = ndims_or_nnodes;
-    new_comm->c_topo_comm->mtc_dims_or_index = NULL;
-    new_comm->c_topo_comm->mtc_periods_or_edges = NULL;
-    new_comm->c_topo_comm->mtc_reorder = reorder;
-    new_comm->c_topo_comm->mtc_coords = NULL;
-
-    /* MPI-2.1 allows 0-dimension cartesian communicators, so prevent
-       a 0-byte malloc -- leave dims_or_index as NULL */
-    if (!(OMPI_COMM_CART == cart_or_graph && 0 == ndims_or_nnodes)) {
-        new_comm->c_topo_comm->mtc_dims_or_index = 
-            (int *) malloc(sizeof(int) * ndims_or_nnodes);
-        if (NULL == new_comm->c_topo_comm->mtc_dims_or_index) {
-            ompi_comm_free (&new_comm);
-            *comm_topo = new_comm;
-            return OMPI_ERROR;
-        }
-        memcpy (new_comm->c_topo_comm->mtc_dims_or_index,
-                dims_or_index, ndims_or_nnodes * sizeof(int));
-    }
-
-    /* Now the topology component has been selected, let the component
-     * re-arrange the proc ranks if need be. This is a down-call into
-     * the topo component and does not have anything to do with this
-     * level */
-
-    /* first, copy the proc structure from the previous communicator
-     * over to the new one. the topology component can then work on
-     * this and rearrange it as it deems fit.
-     */
-    num_procs = old_comm->c_local_group->grp_proc_count;
-    topo_procs = (ompi_proc_t **)malloc (num_procs * sizeof(ompi_proc_t *));
-
-    if(OMPI_GROUP_IS_DENSE(old_comm->c_local_group)) {
-        memcpy (topo_procs, 
-                old_comm->c_local_group->grp_proc_pointers,
-                num_procs * sizeof(ompi_proc_t *));
-    }
-    else {
-        proc_list = (ompi_proc_t **) calloc (old_comm->c_local_group->grp_proc_count, 
-                                             sizeof (ompi_proc_t *));
-        for(i=0 ; i<old_comm->c_local_group->grp_proc_count ; i++) {
-            proc_list[i] = ompi_group_peer_lookup(old_comm->c_local_group,i);
-        }
-        
-        memcpy (topo_procs, 
-                proc_list,
-                num_procs * sizeof(ompi_proc_t *));
-        
-    }
-    if ( NULL != proc_list ) {
-        free ( proc_list );
-    }
-    new_rank = old_comm->c_local_group->grp_my_rank;
-
-    if (OMPI_COMM_CART == cart_or_graph) {
-
-        /* A cartesian system has been requested. Call the right function */
-
-        /* Note that we fill in the basic information, i.e, copy the
-         * information which was provided to us over into the
-         * structure. The base component functions are free to change
-         * it as they deem fit */
-
-        if (ndims_or_nnodes > 0) {
-            new_comm->c_topo_comm->mtc_periods_or_edges =
-                (int*) malloc(sizeof(int) * ndims_or_nnodes);
-            if (NULL == new_comm->c_topo_comm->mtc_periods_or_edges) {
-                ompi_comm_free (&new_comm);
-                *comm_topo = new_comm;
-                return OMPI_ERR_OUT_OF_RESOURCE;
-            }
-            memcpy (new_comm->c_topo_comm->mtc_periods_or_edges,
-                    periods_or_edges, ndims_or_nnodes * sizeof(int));
-
-            new_comm->c_topo_comm->mtc_coords = 
-                (int *) malloc(sizeof(int) * ndims_or_nnodes);
-            if (NULL == new_comm->c_topo_comm->mtc_coords) {
-                ompi_comm_free (&new_comm);
-                *comm_topo = new_comm;
-                return OMPI_ERR_OUT_OF_RESOURCE;
-            }
-        }
-
-        if (OMPI_SUCCESS != 
-            (ret = new_comm->c_topo->topo_cart_create (new_comm->c_topo_comm,
-                                                       &num_procs,
-                                                       topo_procs,
-                                                       &new_rank,
-                                                       ndims_or_nnodes,
-                                                       dims_or_index,
-                                                       periods_or_edges,
-                                                       reorder))) {
-            return ret;
-        }
-
-    } else if (OMPI_COMM_GRAPH == cart_or_graph) {
-
-        /* A graph system has been requested. Call the right function */
-
-        /* Note that we fill in the basic information, i.e, copy the
-         * information which was provided to us over into the
-         * structure. The base component functions are free to change
-         * it as they deem fit */
-
-        new_comm->c_topo_comm->mtc_periods_or_edges = (int *)
-            malloc (sizeof(int) * dims_or_index[ndims_or_nnodes-1]);
-        if (NULL == new_comm->c_topo_comm->mtc_periods_or_edges) {
-            ompi_comm_free (&new_comm);
-            *comm_topo = new_comm;
-            return OMPI_ERROR;
-        }
-        memcpy (new_comm->c_topo_comm->mtc_periods_or_edges,
-                periods_or_edges, dims_or_index[ndims_or_nnodes-1] * sizeof(int));
-
-        if (OMPI_SUCCESS != 
-            (ret = new_comm->c_topo->topo_graph_create (new_comm->c_topo_comm,
-                                                        &num_procs,
-                                                        topo_procs,
-                                                        &new_rank,
-                                                        ndims_or_nnodes,
-                                                        dims_or_index,
-                                                        periods_or_edges,
-                                                        reorder))) {
-            return ret;
-        }
-
-    }
+/**
+ * Take an almost complete communicator and reserve the CID as well
+ * as activate it (initialize the collective and the topologies).
+ */
+int ompi_comm_enable(ompi_communicator_t *old_comm,
+                     ompi_communicator_t *new_comm,
+                     int new_rank,
+                     int num_procs,
+                     ompi_proc_t** topo_procs)
+{
+    int ret = OMPI_SUCCESS;
 
     /* Determine context id. It is identical to f_2_c_handle */
-
-    ret = ompi_comm_nextcid ( new_comm,  /* new communicator */
-                              old_comm,     /* old comm */
+    ret = ompi_comm_nextcid ( new_comm, /* new communicator */
+                              old_comm, /* old comm */
                               NULL,     /* bridge comm */
                               NULL,     /* local leader */
                               NULL,     /* remote_leader */
                               OMPI_COMM_CID_INTRA,   /* mode */
                               -1 );     /* send first, doesn't matter */
     if (OMPI_SUCCESS != ret) {
-        /* something wrong happened during setting the communicator */
-        ompi_comm_free (&new_comm);
-        *comm_topo = new_comm;
-        return ret;
+        /* something wrong happened while setting the communicator */
+        goto complete_and_return;
     }
 
-
-    /* Now, the topology component has been selected and the group
+    /* Now, the topology module has been selected and the group
      * which has the topology information has been created. All we
      * need to do now is to fill the rest of the information into the
      * communicator. The following steps are not just similar to
@@ -1759,53 +1546,42 @@ int ompi_topo_create (ompi_communicator_t *old_comm,
                               old_comm->error_handler); /* error handler */
 
     if (OMPI_SUCCESS != ret) {
-        /* something wrong happened during setting the communicator */
-        ompi_comm_free (&new_comm);
-        *comm_topo = new_comm;
-        return ret;
+        /* something wrong happened while setting the communicator */
+        goto complete_and_return;
     }
 
     ret = ompi_comm_activate( &new_comm,  /* new communicator */
-                              old_comm,     /* old comm */
-                              NULL,     /* bridge comm */
-                              NULL,     /* local leader */
-                              NULL,     /* remote_leader */
+                              old_comm,   /* old comm */
+                              NULL,       /* bridge comm */
+                              NULL,       /* local leader */
+                              NULL,       /* remote_leader */
                               OMPI_COMM_CID_INTRA,   /* mode */
-                              -1 );     /* send first, doesn't matter */
+                              -1 );       /* send first, doesn't matter */
 
 
     if (OMPI_SUCCESS != ret) {
-        /* something wrong happened during setting the communicator */
-        *comm_topo = new_comm;
-        return ret;
-    }
-    
-    /* if the returned rank is -1, then this process is not in the 
-     * new topology, so free everything we have allocated and return */
-    if (MPI_UNDEFINED == new_rank) {
-        ompi_comm_free (&new_comm);
-        *comm_topo = new_comm;
-    } else {
-        *comm_topo = new_comm;
+        /* something wrong happened while setting the communicator */
+        goto complete_and_return;
     }
 
-    return OMPI_SUCCESS;
+ complete_and_return:
+    return ret;
 }
 
-static int ompi_comm_fill_rest (ompi_communicator_t *comm,
-                                int num_procs,
-                                ompi_proc_t **proc_pointers,
-                                int my_rank,
-                                ompi_errhandler_t *errh )
+static int ompi_comm_fill_rest(ompi_communicator_t *comm,
+                               int num_procs,
+                               ompi_proc_t **proc_pointers,
+                               int my_rank,
+                               ompi_errhandler_t *errh)
 {
     /* properly decrement the ref counts on the groups.
        We are doing this because this function is sort of a redo 
-       of what is done in comm.c.. No need to decrement the ref 
+       of what is done in comm.c. No need to decrement the ref 
        count on the proc pointers 
        This is just a quick fix, and will be looking for a 
        better solution */
-    OBJ_RELEASE ( comm->c_local_group );
-    OBJ_RELEASE ( comm->c_local_group );
+    OBJ_RELEASE( comm->c_local_group );
+    OBJ_RELEASE( comm->c_local_group );
 
     /* allocate a group structure for the new communicator */
     comm->c_local_group = ompi_group_allocate(num_procs);
@@ -1818,7 +1594,7 @@ static int ompi_comm_fill_rest (ompi_communicator_t *comm,
 
     /* set the remote group to be the same as local group */
     comm->c_remote_group = comm->c_local_group;
-    OBJ_RETAIN ( comm->c_remote_group );
+    OBJ_RETAIN( comm->c_remote_group );
 
     /* retain these proc pointers */
     ompi_group_increment_proc_count(comm->c_local_group);
@@ -1827,9 +1603,11 @@ static int ompi_comm_fill_rest (ompi_communicator_t *comm,
     comm->c_local_group->grp_my_rank = my_rank;
     comm->c_my_rank = my_rank;
 
-    /* verify whether to set the flag, that this comm
-       contains process from more than one jobid. */
-    ompi_dpm.mark_dyncomm (comm);
+    if( MPI_UNDEFINED != my_rank ) {
+        /* verify whether to set the flag, that this comm
+           contains process from more than one jobid. */
+        ompi_dpm.mark_dyncomm (comm);
+    }
 
     /* set the error handler */
     comm->error_handler = errh;
@@ -1848,68 +1626,14 @@ static int ompi_comm_fill_rest (ompi_communicator_t *comm,
     return OMPI_SUCCESS;
 }
 
-static int ompi_comm_copy_topo (ompi_communicator_t *oldcomm, 
-                                ompi_communicator_t *newcomm) 
+static int ompi_comm_copy_topo(ompi_communicator_t *oldcomm, 
+                               ompi_communicator_t *newcomm) 
 {
-    mca_topo_base_comm_t *oldt = oldcomm->c_topo_comm;
-    mca_topo_base_comm_t *newt = newcomm->c_topo_comm;
+    if( NULL == oldcomm->c_topo )
+        return OMPI_ERR_NOT_FOUND;
 
-    /* pointers for the rest of the information have been set
-       up.... simply allocate enough space and copy all the
-       information from the previous one.  Remember that MPI-2.1
-       allows for 0-dimensional Cartesian communicators. */
-
-    newt->mtc_ndims_or_nnodes = oldt->mtc_ndims_or_nnodes;
-    newt->mtc_reorder = oldt->mtc_reorder;
-    if (OMPI_COMM_IS_CART(oldcomm) && 0 == oldt->mtc_ndims_or_nnodes) {
-        newt->mtc_dims_or_index = NULL;
-        newt->mtc_periods_or_edges = NULL;
-        newt->mtc_coords = NULL;
-        return MPI_SUCCESS;
-    }
-
-    newt->mtc_dims_or_index = 
-        (int *)malloc(sizeof(int) * newt->mtc_ndims_or_nnodes);
-    if (NULL == newt->mtc_dims_or_index) {
-        return OMPI_ERR_OUT_OF_RESOURCE;
-    }
-    memcpy (newt->mtc_dims_or_index, oldt->mtc_dims_or_index,
-            newt->mtc_ndims_or_nnodes * sizeof(int));
-
-    /* Note that the length of the mtc_periods_or_edges array is
-       different depending whether it's a cartesian or graph */
-    if (OMPI_COMM_IS_CART(oldcomm)) {
-        newt->mtc_periods_or_edges =
-            (int*) malloc (sizeof(int) * oldt->mtc_ndims_or_nnodes);
-        if (NULL == newt->mtc_periods_or_edges) {
-            return OMPI_ERR_OUT_OF_RESOURCE;
-        }
-        
-        newt->mtc_coords =
-            (int *)malloc(sizeof(int)*
-                          newcomm->c_topo_comm->mtc_ndims_or_nnodes);   
-        if (NULL == newt->mtc_coords) {
-            return OMPI_ERROR;
-        }
-        memcpy(newt->mtc_periods_or_edges, oldt->mtc_periods_or_edges, 
-               sizeof(int) * oldt->mtc_ndims_or_nnodes);
-
-        memcpy (newt->mtc_coords, oldt->mtc_coords,
-                sizeof(int) * newt->mtc_ndims_or_nnodes);
-    } else {
-        int index = oldt->mtc_dims_or_index[oldt->mtc_ndims_or_nnodes-1];
-        index = (index > 0) ? index : -index;
-        newt->mtc_periods_or_edges =
-            (int*) malloc (sizeof(int)*index);
-        if (NULL == newt->mtc_periods_or_edges) {
-            return OMPI_ERR_OUT_OF_RESOURCE;
-        }
-        
-        memcpy(newt->mtc_periods_or_edges, oldt->mtc_periods_or_edges, 
-               sizeof(int) * index );
-
-        newt->mtc_coords = NULL;
-    }
-
+    newcomm->c_topo = oldcomm->c_topo;
+    OBJ_RETAIN(newcomm->c_topo);
+    newcomm->c_flags |= newcomm->c_topo->type;
     return OMPI_SUCCESS;
 }

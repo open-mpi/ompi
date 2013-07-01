@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2013 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -14,15 +14,14 @@
  * Additional copyrights may follow
  * 
  * $HEADER$
- */ 
+ */
 
 #include "ompi_config.h"
-#include "ompi/mca/topo/unity/topo_unity.h"
-
+#include "ompi/mca/topo/base/base.h"
 #include "ompi/communicator/communicator.h"
 
 /*
- * function - mca_topo_unity_cart_map
+ * function - mca_topo_base_cart_map
  *
  *  @param comm input communicator (handle)
  *  @param ndims number of dimensions of cartesian structure (integer)
@@ -37,17 +36,11 @@
  *  @retval MPI_ERR_DIMS               
  */
 
-int mca_topo_unity_cart_map (ompi_communicator_t* comm,
-                             int ndims,
-                             int *dims,
-                             int *periods,
-                             int *newrank)
+int mca_topo_base_cart_map(ompi_communicator_t* comm,
+                           int ndims,
+                           int *dims, int *periods, int *newrank)
 {
-    int nprocs;
-    int rank;
-    int size;
-    int i;
-    int *p;
+    int nprocs, rank, size, i, *p;
 
     /*
      * Compute the # of processes in the grid.

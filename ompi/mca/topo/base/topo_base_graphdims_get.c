@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2012 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -34,11 +34,12 @@
  * @retval MPI_ERR_ARG
  */
 int mca_topo_base_graphdims_get (ompi_communicator_t* comm,
-                              int *nodes,
-                              int *nedges){
-
+                                 int *nodes,
+                                 int *nedges)
+{
+    mca_topo_base_comm_graph_2_1_0_t* graph = comm->c_topo->mtc.graph;
     *nodes = ompi_comm_size(comm);
-    *nedges = comm->c_topo_comm->mtc_dims_or_index[*nodes -1]; 
+    *nedges = graph->index[*nodes -1]; 
 
     return MPI_SUCCESS;
 }

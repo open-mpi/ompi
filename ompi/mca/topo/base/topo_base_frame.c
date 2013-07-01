@@ -37,12 +37,8 @@
  */
 #include "ompi/mca/topo/base/static-components.h"
 
-/*
- * Global variables
- */
-mca_topo_base_component_t mca_topo_base_selected_component;
-mca_topo_base_module_t mca_topo;
-
+OBJ_CLASS_INSTANCE(mca_topo_base_module_t, opal_object_t,
+                   NULL, NULL);
 
 static int mca_topo_base_close(void) 
 {

@@ -89,6 +89,10 @@ mpi_api_files = \
         comm_spawn_multiple_f08.F90 \
         comm_split_f08.F90 \
         comm_test_inter_f08.F90 \
+        dist_graph_create_adjacent_f08.F90 \
+        dist_graph_create_f08.F90 \
+        dist_graph_neighbors_count_f08.F90 \
+        dist_graph_neighbors_f08.F90 \
         dims_create_f08.F90 \
         errhandler_free_f08.F90 \
         error_class_f08.F90 \

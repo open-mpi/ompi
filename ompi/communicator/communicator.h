@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2011 The University of Tennessee and The University
+ * Copyright (c) 2004-2013 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -13,6 +13,8 @@
  * Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2006-2010 University of Houston.  All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc. All rights reserved.
+ * Copyright (c) 2011-2013 INRIA.  All rights reserved.
+ * Copyright (c) 2011-2013 Universite Bordeaux 1
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -37,28 +39,31 @@ BEGIN_C_DECLS
 
 OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_communicator_t);
 
-#define OMPI_COMM_INTER      0x00000001
-#define OMPI_COMM_CART       0x00000002
-#define OMPI_COMM_GRAPH      0x00000004
-#define OMPI_COMM_NAMEISSET  0x00000008
-#define OMPI_COMM_ISFREED    0x00000010
-#define OMPI_COMM_INTRINSIC  0x00000020
-#define OMPI_COMM_DYNAMIC    0x00000040
-#define OMPI_COMM_INVALID    0x00000080
-#define OMPI_COMM_PML_ADDED  0x00000100
-#define OMPI_COMM_EXTRA_RETAIN 0x00000200
+#define OMPI_COMM_INTER        0x00000001
+#define OMPI_COMM_NAMEISSET    0x00000002
+#define OMPI_COMM_INTRINSIC    0x00000004
+#define OMPI_COMM_DYNAMIC      0x00000008
+#define OMPI_COMM_ISFREED      0x00000010
+#define OMPI_COMM_INVALID      0x00000020
+#define OMPI_COMM_CART         0x00000100
+#define OMPI_COMM_GRAPH        0x00000200
+#define OMPI_COMM_DIST_GRAPH   0x00000400
+#define OMPI_COMM_PML_ADDED    0x00001000
+#define OMPI_COMM_EXTRA_RETAIN 0x00004000
 
 /* some utility #defines */
 #define OMPI_COMM_IS_INTER(comm) ((comm)->c_flags & OMPI_COMM_INTER)
 #define OMPI_COMM_IS_INTRA(comm) (!((comm)->c_flags & OMPI_COMM_INTER))
 #define OMPI_COMM_IS_CART(comm) ((comm)->c_flags & OMPI_COMM_CART)
 #define OMPI_COMM_IS_GRAPH(comm) ((comm)->c_flags & OMPI_COMM_GRAPH)
+#define OMPI_COMM_IS_DIST_GRAPH(comm) ((comm)->c_flags & OMPI_COMM_DIST_GRAPH)
 #define OMPI_COMM_IS_INTRINSIC(comm) ((comm)->c_flags & OMPI_COMM_INTRINSIC)
 #define OMPI_COMM_IS_FREED(comm) ((comm)->c_flags & OMPI_COMM_ISFREED)
 #define OMPI_COMM_IS_DYNAMIC(comm) ((comm)->c_flags & OMPI_COMM_DYNAMIC)
 #define OMPI_COMM_IS_INVALID(comm) ((comm)->c_flags & OMPI_COMM_INVALID)
 #define OMPI_COMM_IS_PML_ADDED(comm) ((comm)->c_flags & OMPI_COMM_PML_ADDED)
 #define OMPI_COMM_IS_EXTRA_RETAIN(comm) ((comm)->c_flags & OMPI_COMM_EXTRA_RETAIN)
+
 
 #define OMPI_COMM_SET_DYNAMIC(comm) ((comm)->c_flags |= OMPI_COMM_DYNAMIC)
 #define OMPI_COMM_SET_INVALID(comm) ((comm)->c_flags |= OMPI_COMM_INVALID)
@@ -69,7 +74,6 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_communicator_t);
 /* a set of special tags: */
 
 /*  to recognize an MPI_Comm_join in the comm_connect_accept routine. */
-
 #define OMPI_COMM_ALLGATHER_TAG -31078
 #define OMPI_COMM_BARRIER_TAG   -31079
 #define OMPI_COMM_ALLREDUCE_TAG -31080
@@ -117,9 +121,10 @@ struct ompi_communicator_t {
     ompi_group_t        *c_local_group;
     ompi_group_t       *c_remote_group;
 
-    struct ompi_communicator_t *c_local_comm; /* a duplicate of the local 
-                                                 communicator in case the comm  
-                                                 is an inter-comm*/
+    struct ompi_communicator_t *c_local_comm; /* a duplicate of the
+                                                 local communicator in
+                                                 case the comm is an
+                                                 inter-comm*/
                      
     /* Attributes */
     struct opal_hash_table_t       *c_keyhash;
@@ -127,20 +132,11 @@ struct ompi_communicator_t {
     /**< inscribing cube dimension */
     int c_cube_dim;
 
-    /* Hooks for topo module to hang things */
-    mca_base_component_t *c_topo_component;
-
-    const struct mca_topo_base_module_1_0_0_t* c_topo; 
-    /**< structure of function pointers */
-
-    struct mca_topo_base_comm_1_0_0_t* c_topo_comm; 
-    /**< structure containing basic information about the topology */
-
-    struct mca_topo_base_module_comm_t *c_topo_module;
-    /**< module specific data */
+    /* Standard information about the selected topology module (or NULL
+       if this is not a cart, graph or dist graph communicator) */
+    struct mca_topo_base_module_t* c_topo;
 
     /* index in Fortran <-> C translation array */
-
     int c_f_to_c_index;
 
 #ifdef OMPI_WANT_PERUSE
@@ -361,17 +357,25 @@ OMPI_DECLSPEC int ompi_comm_group (ompi_communicator_t *comm, ompi_group_t **gro
 int ompi_comm_create (ompi_communicator_t* comm, ompi_group_t *group,
                       ompi_communicator_t** newcomm);
 
+/**
+ * Take an almost complete communicator and reserve the CID as well
+ * as activate it (initialize the collective and the topologies).
+ */
+int ompi_comm_enable(ompi_communicator_t *old_comm,
+                     ompi_communicator_t *new_comm,
+                     int new_rank,
+                     int num_procs,
+                     ompi_proc_t** topo_procs);
 
 /**
- * create a cartesian communicator
+ * Back end of MPI_DIST_GRAPH_CREATE_ADJACENT
  */
-int ompi_topo_create (ompi_communicator_t *old_comm,
-                      int ndims_or_nnodes,
-                      int *dims_or_index,
-                      int *periods_or_edges,
-                      bool reorder,
-                      ompi_communicator_t **comm_cart,
-                      int cart_or_graph);
+int ompi_topo_dist_graph_create_adjacent(ompi_communicator_t *old_comm, 
+                                         int indegree, int sources[],
+                                         int sourceweights[], int outdegree,
+                                         int destinations[], int destweights[],
+                                         MPI_Info info, int reorder,
+                                         MPI_Comm *comm_dist_graph);
 
 /**
  * split a communicator based on color and key. Parameters
@@ -480,7 +484,7 @@ OMPI_DECLSPEC int ompi_comm_set ( ompi_communicator_t** newcomm,
                                   int *remote_ranks,
                                   opal_hash_table_t *attr,
                                   ompi_errhandler_t *errh,
-                                  mca_base_component_t *topocomponent,
+                                  bool copy_topocomponent,
                                   ompi_group_t *local_group,
                                   ompi_group_t *remote_group   );
 /**

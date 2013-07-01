@@ -11,7 +11,8 @@
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
-# Copyright (c) 2012      Inria.  All rights reserved.
+# Copyright (c) 2011-2012 Inria.  All rights reserved.
+# Copyright (c) 2011-2012 Universite Bordeaux 1
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -106,6 +107,10 @@ nodist_libmpi_mpifh_pmpi_la_SOURCES = \
         pcomm_split_type_f.c \
         pcomm_test_inter_f.c \
         pdims_create_f.c \
+        pdist_graph_create_adjacent_f.c \
+        pdist_graph_create_f.c \
+        pdist_graph_neighbors_f.c \
+        pdist_graph_neighbors_count_f.c \
         perrhandler_create_f.c \
         perrhandler_free_f.c \
         perrhandler_get_f.c \

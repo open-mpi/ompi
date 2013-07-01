@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2012 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart, 
@@ -40,10 +40,10 @@ static const char FUNC_NAME[] = "MPI_Cart_create";
 
 
 int MPI_Cart_create(MPI_Comm old_comm, int ndims, int dims[],
-                    int periods[], int reorder, MPI_Comm *comm_cart) {
-
+                    int periods[], int reorder, MPI_Comm *comm_cart)
+{
+    mca_topo_base_module_t* topo;
     int err;
-    bool re_order = false;
 
     MEMCHECKER(
         memchecker_comm(old_comm);
@@ -55,9 +55,8 @@ int MPI_Cart_create(MPI_Comm old_comm, int ndims, int dims[],
         if (ompi_comm_invalid(old_comm)) {
             return OMPI_ERRHANDLER_INVOKE (MPI_COMM_WORLD, MPI_ERR_COMM,
                                           FUNC_NAME);
-        }
-        if (OMPI_COMM_IS_INTER(old_comm)) {
-            return OMPI_ERRHANDLER_INVOKE (old_comm, MPI_ERR_COMM,
+        } else if (OMPI_COMM_IS_INTER(old_comm)) {
+            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM, 
                                           FUNC_NAME);
         }
         if (ndims < 0) {
@@ -71,14 +70,12 @@ int MPI_Cart_create(MPI_Comm old_comm, int ndims, int dims[],
 
         /* check if the number of processes on the grid are correct */
         {
-           int i;
+           int i, count_nodes = 1;
            int *p = dims;
-           int count_nodes = 1;
            int parent_procs = ompi_comm_size(old_comm);
 
-           for (i=0; i < ndims; i++) {
+           for (i=0; i < ndims; i++, p++) {
                count_nodes *= *p;
-               p++;
            }
 
            if (parent_procs < count_nodes) {
@@ -88,43 +85,29 @@ int MPI_Cart_create(MPI_Comm old_comm, int ndims, int dims[],
         }
     }
 
-    /*
-     * Now we have to check if the topo module exists or not. This has been
-     * removed from initialization since most of the MPI calls do not use 
-     * this module 
-     */
-    if (OMPI_SUCCESS != (err =  mca_base_framework_open(&ompi_topo_base_framework, 0))) {
-        return OMPI_ERRHANDLER_INVOKE(old_comm, err, FUNC_NAME);
-    }
-    if (OMPI_SUCCESS != 
-        (err = mca_topo_base_find_available(OMPI_ENABLE_PROGRESS_THREADS,
-                                            OMPI_ENABLE_THREAD_MULTIPLE))) {
-        return OMPI_ERRHANDLER_INVOKE(old_comm, err, FUNC_NAME);
-    }
-    
-    OPAL_CR_ENTER_LIBRARY();
-
-    /* everything seems to be alright with the communicator, we can go 
+    /* 
+     * everything seems to be alright with the communicator, we can go 
      * ahead and select a topology module for this purpose and create 
-     * the new cartesian communicator
+     * the new graph communicator
      */
+    if (OMPI_SUCCESS != (err = mca_topo_base_comm_select(old_comm,
+                                                         NULL,
+                                                         &topo,
+                                                         OMPI_COMM_CART))) {
+        return err;
+    }
 
-    re_order = (0 == reorder)? false : true;
-
-    err = ompi_topo_create (old_comm,
-                            ndims,
-                            dims,
-                            periods,
-                            re_order,
-                            comm_cart,
-                            OMPI_COMM_CART);
-
+    /* Now let that topology module rearrange procs/ranks if it wants to */    
+    err = topo->topo.cart.cart_create(topo, old_comm,
+                                      ndims, dims, periods,
+                                      (0 == reorder) ? false : true, comm_cart);
     OPAL_CR_EXIT_LIBRARY();
-    /* check the error status */
+
     if (MPI_SUCCESS != err) {
+        OBJ_RELEASE(topo);
         return OMPI_ERRHANDLER_INVOKE(old_comm, err, FUNC_NAME);
     }
-    
+
     /* All done */
     return MPI_SUCCESS;
 }

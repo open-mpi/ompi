@@ -15,15 +15,15 @@
  * 
  * $HEADER$
  */
-#include "ompi_config.h"
-#include <stdio.h>
 
+#include "ompi_config.h"
+
+#include <stdio.h>
 #include "ompi/mpi/c/bindings.h"
 #include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/memchecker.h"
-
 #if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Topo_test = PMPI_Topo_test
 #endif
@@ -53,10 +53,12 @@ int MPI_Topo_test(MPI_Comm comm, int *status)
         }
     }
 
-    if ( comm->c_flags & OMPI_COMM_CART ) {
+    if (OMPI_COMM_IS_CART(comm)) {
         *status = MPI_CART;
-    } else if ( comm->c_flags & OMPI_COMM_GRAPH ) {
+    } else if (OMPI_COMM_IS_GRAPH(comm)) {
         *status = MPI_GRAPH;
+    } else if (OMPI_COMM_IS_DIST_GRAPH(comm)) {
+        *status = MPI_DIST_GRAPH;
     } else {
         *status = MPI_UNDEFINED;
     }

@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2012 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart, 
@@ -37,12 +37,9 @@
 
 static const char FUNC_NAME[] = "MPI_Cart_get";
 
-
 int MPI_Cart_get(MPI_Comm comm, int maxdims, int dims[],
                  int periods[], int coords[]) 
 {
-    /* local variables */
-    mca_topo_base_module_cart_get_fn_t func;
     int err;
 
     MEMCHECKER(
@@ -56,10 +53,6 @@ int MPI_Cart_get(MPI_Comm comm, int maxdims, int dims[],
             return OMPI_ERRHANDLER_INVOKE (MPI_COMM_WORLD, MPI_ERR_COMM,
                                           FUNC_NAME);
         }
-        if (!OMPI_COMM_IS_CART(comm)) {
-            return OMPI_ERRHANDLER_INVOKE (comm, MPI_ERR_TOPOLOGY,
-                                          FUNC_NAME);
-        }
         if ((0 > maxdims) || (0 < maxdims && 
                               ((NULL == dims) || (NULL == periods) ||
                                (NULL == coords)))) {
@@ -68,18 +61,14 @@ int MPI_Cart_get(MPI_Comm comm, int maxdims, int dims[],
         }
     }
 
+    if (!OMPI_COMM_IS_CART(comm)) {
+        return OMPI_ERRHANDLER_INVOKE (comm, MPI_ERR_TOPOLOGY,
+                                      FUNC_NAME);
+    }
     OPAL_CR_ENTER_LIBRARY();
 
-    /* get the function pointer to do the right thing */
-    func = comm->c_topo->topo_cart_get;
-
-    /* all arguments are checked and now call the back end function */
-    err = func(comm, maxdims, dims, periods, coords);
+    err = comm->c_topo->topo.cart.cart_get(comm, maxdims, dims, periods, coords);
     OPAL_CR_EXIT_LIBRARY();
-    if ( MPI_SUCCESS != err ) {
-        return OMPI_ERRHANDLER_INVOKE(comm, err, FUNC_NAME);
-    }
-    
-    /* All done */
-    return MPI_SUCCESS;
+
+    OMPI_ERRHANDLER_RETURN(err, comm, err, FUNC_NAME);
 }

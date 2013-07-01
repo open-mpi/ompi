@@ -10,7 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2012      Inria.  All rights reserved.
+ * Copyright (c) 2011-2012 Inria.  All rights reserved.
+ * Copyright (c) 2011      Universite Bordeaux 1
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -83,6 +84,10 @@
 #define ompi_comm_split_type_f pompi_comm_split_type_f
 #define ompi_comm_test_inter_f pompi_comm_test_inter_f
 #define ompi_dims_create_f pompi_dims_create_f
+#define ompi_dist_graph_create_f pompi_dist_graph_create_f
+#define ompi_dist_graph_create_adjacent_f pompi_dist_graph_create_adjacent_f
+#define ompi_dist_graph_neighbors_f pompi_dist_graph_neighbors_f
+#define ompi_dist_graph_neighbors_count_f pompi_dist_graph_neighbors_count_f
 #define ompi_errhandler_create_f pompi_errhandler_create_f
 #define ompi_errhandler_free_f pompi_errhandler_free_f
 #define ompi_errhandler_get_f pompi_errhandler_get_f

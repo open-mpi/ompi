@@ -101,7 +101,7 @@ int MPI_Intercomm_merge(MPI_Comm intercomm, int high,
                          NULL,                     /* remote_procs */
                          NULL,                     /* attrs */
                          intercomm->error_handler, /* error handler*/
-                         NULL,                     /* topo mpodule */
+                         false,                    /* don't copy the topo */
                          new_group_pointer,        /* local group */
                          NULL                      /* remote group */
                          );

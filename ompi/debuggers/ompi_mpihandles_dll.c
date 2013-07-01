@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2007-2008 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2004-2007 The University of Tennessee and The University
+ * Copyright (c) 2004-2013 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
@@ -537,7 +537,7 @@ int mpidbg_comm_query(mqs_image *image, mqs_image_info *image_info,
        [slightly] easier (and less confusing!) to have separate
        retrieval code blocks. */
     topo = ompi_fetch_pointer(process, 
-                              c_comm + i_info->ompi_communicator_t.offset.c_topo_comm,
+                              c_comm + i_info->ompi_communicator_t.offset.c_topo,
                               p_info);
     if (0 != topo && 
         0 != ((*info)->comm_bitflags & MPIDBG_COMM_INFO_CARTESIAN)) {
@@ -547,7 +547,7 @@ int mpidbg_comm_query(mqs_image *image, mqs_image_info *image_info,
         /* Alloc space for copying arrays */
         (*info)->comm_cart_num_dims = ndims =
             ompi_fetch_int(process, 
-                           topo + i_info->ompi_mca_topo_base_comm_1_0_0_t.offset.mtc_ndims_or_nnodes,
+                           topo + i_info->ompi_mca_topo_base_comm_1_0_0_t.offset.mtc.cart.ndims,
                            p_info);
         (*info)->comm_cart_dims = mqs_malloc(ndims * sizeof(int));
         if (NULL == (*info)->comm_cart_dims) {
@@ -563,10 +563,10 @@ int mpidbg_comm_query(mqs_image *image, mqs_image_info *image_info,
         /* Retrieve the dimension and periodic description data from
            the two arrays on the image's communicator */
         dims = ompi_fetch_pointer(process, 
-                                 topo + i_info->ompi_mca_topo_base_comm_1_0_0_t.offset.mtc_dims_or_index,
+                                 topo + i_info->ompi_mca_topo_base_comm_1_0_0_t.offset.mtc.cart.dims,
                                  p_info);
         periods = ompi_fetch_pointer(process, 
-                                 topo + i_info->ompi_mca_topo_base_comm_1_0_0_t.offset.mtc_periods_or_edges,
+                                 topo + i_info->ompi_mca_topo_base_comm_1_0_0_t.offset.mtc.cart.periods,
                                  p_info);
 
         for (i = 0; i < ndims; ++i) {
@@ -584,7 +584,7 @@ int mpidbg_comm_query(mqs_image *image, mqs_image_info *image_info,
         /* Alloc space for copying the indexes */
         (*info)->comm_graph_num_nodes = nnodes = 
             ompi_fetch_int(process, 
-                           topo + i_info->ompi_mca_topo_base_comm_1_0_0_t.offset.mtc_ndims_or_nnodes,
+                           topo + i_info->ompi_mca_topo_base_comm_1_0_0_t.offset.mtc.graph.nnodes,
                            p_info);
         (*info)->comm_graph_index = mqs_malloc(nnodes * sizeof(int));
         if (NULL == (*info)->comm_graph_index) {
@@ -593,7 +593,7 @@ int mpidbg_comm_query(mqs_image *image, mqs_image_info *image_info,
 
         /* Retrieve the index data */
         index = ompi_fetch_pointer(process, 
-                                 topo + i_info->ompi_mca_topo_base_comm_1_0_0_t.offset.mtc_dims_or_index,
+                                 topo + i_info->ompi_mca_topo_base_comm_1_0_0_t.offset.mtc.graph.index,
                                  p_info);
         for (i = 0; i < nnodes; ++i) {
             (*info)->comm_graph_index[i] = 
@@ -610,7 +610,7 @@ int mpidbg_comm_query(mqs_image *image, mqs_image_info *image_info,
 
         /* Retrieve the edge data */
         edges = ompi_fetch_pointer(process, 
-                                 topo + i_info->ompi_mca_topo_base_comm_1_0_0_t.offset.mtc_periods_or_edges,
+                                 topo + i_info->ompi_mca_topo_base_comm_1_0_0_t.offset.mtc.graph.edges,
                                  p_info);
         for (i = 0; 
              i < (*info)->comm_graph_index[(*info)->comm_graph_num_nodes - 1]; 
@@ -618,6 +618,9 @@ int mpidbg_comm_query(mqs_image *image, mqs_image_info *image_info,
             (*info)->comm_graph_edges[i] = 
                 ompi_fetch_int(process, edges + (sizeof(int) * i), p_info);
         }
+    } else if (0 != topo &&
+               0 != ((*info)->comm_bitflags & MPIDBG_COMM_INFO_DIST_GRAPH)) {
+        /* TODO: Complete the info if the communicator has a distributed graph topology */
     }
 
     /* Fortran handle */

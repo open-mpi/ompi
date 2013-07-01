@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2013 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -26,19 +26,19 @@
 #include "opal/util/output.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
+
 #include "ompi/mca/topo/topo.h"
 #include "ompi/mca/topo/base/base.h"
 #include "ompi/communicator/communicator.h"
 
-
 /*
  * Local functions
  */
-static void fill_null_pointers(mca_topo_base_module_t *module);
+static void fill_null_pointers(int type, mca_topo_base_module_t *module);
 
 
 /*
- * This structure is needed so that we can close the modules 
+ * This structure is needed so that we can close the modules
  * which are not selected but were opened. mca_base_modules_close
  * which does this job for us requires a opal_list_t which contains
  * these modules
@@ -51,31 +51,28 @@ struct queried_module_t {
 typedef struct queried_module_t queried_module_t;
 static OBJ_CLASS_INSTANCE(queried_module_t, opal_list_item_t, NULL, NULL);
 
-
 /*
- * Only one topo module can be attached to each communicator.
+ * Only one topo module can be attached to each communicator. The
+ * communicator provided as argument is the old communicator, and the
+ * newly selected topology is __not__ supposed to be attached to it.
  *
  * This module calls the query funtion on all the components that were
  * detected by topo_base_open. This function is called on a
  * per-communicator basis. This function has the following function.
  *
- * 1. Iterate over the list of available_components
+ * 1. Iterate over the list of available_components.
  * 2. Call the query function on each of these components.
- * 3. query function returns the structure containing pointers
- *    to its module and its priority
- * 4. Select the module with the highest priority
- * 5. Call the init function on the selected module so that it does the
- *    right setup for the communicator
- * 6. Call finalize on all the other modules which returned 
- *    their module but were unfortunate to not get selected
+ * 3. The query function returns a module and its priority.
+ * 4. Select the module with the highest priority.
+ * 5. OBJ_RELEASE all the "losing" modules.
  */  
-
-int mca_topo_base_comm_select (struct ompi_communicator_t *comm,
-                               mca_base_component_t *preferred) 
+int mca_topo_base_comm_select(const ompi_communicator_t*  comm,
+                              mca_topo_base_module_t*     preferred_module,
+                              mca_topo_base_module_t**    selected_module,
+                              uint32_t                    type)
 {
-    int priority; 
-    int best_priority; 
-    char name[MPI_MAX_OBJECT_NAME+32];
+    int priority;
+    int best_priority;
     opal_list_item_t *item; 
     mca_base_component_list_item_t *cli;
     mca_topo_base_component_t *component; 
@@ -83,68 +80,52 @@ int mca_topo_base_comm_select (struct ompi_communicator_t *comm,
     mca_topo_base_module_t *module; 
     opal_list_t queried;
     queried_module_t *om;
-    char *str;
     int err = MPI_SUCCESS;
 
-    /* Announce */
-
-    /* ANJU:
-     * check for names array .... mca_base_var_ */
-  
-    snprintf(name, sizeof(name), "%s (cid %d)", comm->c_name,
-               comm->c_contextid);
-    name[sizeof(name) - 1] = '\0';
+    /* Ensure the topo framework is initialized */
+    if (OMPI_SUCCESS != (err = mca_topo_base_lazy_init())) {
+        return err;
+    }
     opal_output_verbose(10, ompi_topo_base_framework.framework_output,
-                        "topo:base:comm_select: new communicator: %s",
-                        name);
-
+                        "topo:base:comm_select: new communicator: %s (cid %d)",
+                        comm->c_name, comm->c_contextid);
 
     /* Check and see if a preferred component was provided. If it was
-     provided then it should be used (if possible) */
+       provided then it should be used (if possible) */
+    if (NULL != preferred_module) {
 
-    if (NULL != preferred) {
-         
-        /* We have a preferred component. Check if it is available
+        /* We have a preferred module. Check if it is available
            and if so, whether it wants to run */
-         
-         str = &(preferred->mca_component_name[0]);
          
          opal_output_verbose(10, ompi_topo_base_framework.framework_output,
                              "topo:base:comm_select: Checking preferred component: %s",
-                             str);
+                             preferred_module->topo_component->topoc_version.mca_component_name);
 
          /* query the component for its priority and get its module 
             structure. This is necessary to proceed */
-
-        component = (mca_topo_base_component_t *)preferred;
-         module = component->topom_comm_query (&priority);
-         if (NULL != module && 
-             NULL != module->topo_module_init &&
-             NULL != module->topo_graph_map &&
-             NULL != module->topo_cart_map) {
+         component = (mca_topo_base_component_t *)preferred_module->topo_component;
+         module = component->topoc_comm_query(comm, &priority, type);
+         if (NULL != module) {
 
              /* this query seems to have returned something legitimate
-              * and we can now go ahead and initialize the
-              * communicator with it * but first, the functions which
-              * are null need to be filled in */
-
-             fill_null_pointers (module);
-             comm->c_topo = module;
-             comm->c_topo_component = preferred;
-
-             return module->topo_module_init(comm);
+              * and we can now go ahead fill the NULL functions with the
+              * corresponding base version and then return.
+              */
+             fill_null_pointers(type, module);
+             *selected_module = module;
+             module->topo_component = component;
+             return OMPI_SUCCESS;
          } 
-            /* His preferred component is present, but is unable to
-             * run. This is not a good sign. We should try selecting
-             * some other component We let it fall through and select
-             * from the list of available components
-             */
-     } /*end of selection for preferred component */
+         /* If we get here, the preferred component is present, but is
+            unable to run.  This is not a good sign.  We should try
+            selecting some other component.  We let it fall through
+            and select from the list of available components */
+    }
 
     /*
-     * We fall till here if one of the two things happened:
+     * We fall here if one of the two things happened:
      * 1. The preferred component was provided but for some reason was
-     * not able to be selected
+     *    not able to be selected
      * 2. No preferred component was provided
      *
      * All we need to do is to go through the list of available
@@ -160,25 +141,22 @@ int mca_topo_base_comm_select (struct ompi_communicator_t *comm,
        component = (mca_topo_base_component_t *) cli->cli_component;
        opal_output_verbose(10, ompi_topo_base_framework.framework_output,
                            "select: initialising %s component %s",
-                           component->topom_version.mca_type_name,
-                           component->topom_version.mca_component_name);
+                           component->topoc_version.mca_type_name,
+                           component->topoc_version.mca_component_name);
 
        /*
         * we can call the query function only if there is a function :-)
         */
-       if (NULL == component->topom_comm_query) {
+       if (NULL == component->topoc_comm_query) {
           opal_output_verbose(10, ompi_topo_base_framework.framework_output,
                              "select: no query, ignoring the component");
        } else {
            /*
             * call the query function and see what it returns
             */ 
-           module = component->topom_comm_query (&priority);
+           module = component->topoc_comm_query(comm, &priority, type);
 
-           if (NULL == module ||
-               NULL == module->topo_module_init ||
-               NULL == module->topo_graph_map  ||
-               NULL == module->topo_cart_map) {
+           if (NULL == module) {
                /*
                 * query did not return any action which can be used
                 */ 
@@ -208,7 +186,7 @@ int mca_topo_base_comm_select (struct ompi_communicator_t *comm,
                om->om_module = module; 
                opal_list_append(&queried, (opal_list_item_t *)om); 
            } /* end else of if (NULL == module) */
-       } /* end else of if (NULL == component->topom_init) */
+       } /* end else of if (NULL == component->init) */
     } /* end for ... end of traversal */
 
     /*
@@ -219,13 +197,7 @@ int mca_topo_base_comm_select (struct ompi_communicator_t *comm,
      * components which should are initialized.
      */
     if (NULL == best_component) {
-       /*
-        * This typically means that there was no component which was
-        * able to run properly this time. So, we need to abort
-        * JMS replace with show_help
-        */
-        OBJ_DESTRUCT(&queried);
-        return OMPI_ERROR;
+        return OMPI_ERR_NOT_FOUND;
     }
 
     /*
@@ -248,43 +220,23 @@ int mca_topo_base_comm_select (struct ompi_communicator_t *comm,
             * module structure we need to fill it in with the base
             * structure function pointers. This is yet to be done
             */ 
-
-            /*
-             * We don return here coz we still need to go through and
-             * elease the other objects
-             */
-
-            fill_null_pointers (om->om_module);
-            comm->c_topo = om->om_module;
-            err = om->om_module->topo_module_init(comm);
-            comm->c_topo_component = (mca_base_component_t *)best_component;
-
+            fill_null_pointers(type, om->om_module);
+            om->om_module->topo_component = best_component;
+            *selected_module = om->om_module;
          } else {
-            /*
-             * this is not the "choosen one", finalize
-             */
-             if (NULL != om->om_component->topom_comm_unquery) {
-                /* unquery the component only if they have some clean
-                 * up job to do. Components which are queried but do
-                 * not actually do anything typically do not have a
-                 * unquery. Hence this check is necessary
-                 */
-                 (void) om->om_component->topom_comm_unquery(comm);
-                 opal_output_verbose(10, ompi_topo_base_framework.framework_output,
-                                     "select: component %s is not selected",
-                                     om->om_component->topom_version.mca_component_name);
-               } /* end if */
-          } /* if not best component */
+             /* this is not the "choosen one", finalize */
+              opal_output_verbose(10, ompi_topo_base_framework.framework_output,
+                                  "select: component %s is not selected",
+                                  om->om_component->topoc_version.mca_component_name);
+              OBJ_RELEASE(om->om_module);
+          }
           OBJ_RELEASE(om);
     } /* traversing through the entire list */
     
     opal_output_verbose(10, ompi_topo_base_framework.framework_output,
                        "select: component %s selected",
-                        best_component->topom_version.mca_component_name);
-
-    OBJ_DESTRUCT(&queried);
-
-    return err;
+                        best_component->topoc_version.mca_component_name);
+    return OMPI_SUCCESS;
 }
 
 
@@ -293,27 +245,70 @@ int mca_topo_base_comm_select (struct ompi_communicator_t *comm,
  * those functions which are not implemented by the module with the
  * pointers from the base function. Somewhere, I need to incoroporate
  * a check for the common minimum funtions being implemented by the
- * module atleast. If not, this module cannot be considered.
- */ 
-static void fill_null_pointers(mca_topo_base_module_t *module) 
+ * module.
+ */
+static void fill_null_pointers(int type, mca_topo_base_module_t *module) 
 {
-#define CHECK_FOR_NULL_FUNCTION_POINTER(name) \
-   if (NULL == module->topo_##name) { \
-      module->topo_##name = mca_topo_base_##name; \
-   }
-
-   CHECK_FOR_NULL_FUNCTION_POINTER(cart_coords);
-   CHECK_FOR_NULL_FUNCTION_POINTER(cart_create); 
-   CHECK_FOR_NULL_FUNCTION_POINTER(cart_get);
-   CHECK_FOR_NULL_FUNCTION_POINTER(cartdim_get);
-   CHECK_FOR_NULL_FUNCTION_POINTER(cart_rank);
-   CHECK_FOR_NULL_FUNCTION_POINTER(cart_shift);
-   CHECK_FOR_NULL_FUNCTION_POINTER(cart_sub);
-   CHECK_FOR_NULL_FUNCTION_POINTER(graph_create); 
-   CHECK_FOR_NULL_FUNCTION_POINTER(graph_get);
-   CHECK_FOR_NULL_FUNCTION_POINTER(graphdims_get);
-   CHECK_FOR_NULL_FUNCTION_POINTER(graph_neighbors);
-   CHECK_FOR_NULL_FUNCTION_POINTER(graph_neighbors_count);
-
-#undef CHECK_FOR_NULL_FUNCTION_POINTER
+    if( OMPI_COMM_CART == type ) {
+        if (NULL == module->topo.cart.cart_coords) {
+            module->topo.cart.cart_coords = mca_topo_base_cart_coords;
+        }
+        if (NULL == module->topo.cart.cart_create) {
+            module->topo.cart.cart_create = mca_topo_base_cart_create;
+        }
+        if (NULL == module->topo.cart.cart_get) {
+            module->topo.cart.cart_get = mca_topo_base_cart_get;
+        }
+        if (NULL == module->topo.cart.cartdim_get) {
+            module->topo.cart.cartdim_get = mca_topo_base_cartdim_get;
+        }
+/*
+        if (NULL == module->topo.cart.cart_map) {
+            module->topo.cart.cart_map = mca_topo_base_cart_map;
+        }
+*/
+        if (NULL == module->topo.cart.cart_rank) {
+            module->topo.cart.cart_rank = mca_topo_base_cart_rank;
+        }
+        if (NULL == module->topo.cart.cart_shift) {
+            module->topo.cart.cart_shift = mca_topo_base_cart_shift;
+        }
+        if (NULL == module->topo.cart.cart_sub) {
+            module->topo.cart.cart_sub = mca_topo_base_cart_sub;
+        }
+    } else if( OMPI_COMM_GRAPH == type ) {
+        if (NULL == module->topo.graph.graph_create) {
+            module->topo.graph.graph_create = mca_topo_base_graph_create;
+        }
+        if (NULL == module->topo.graph.graph_get) {
+            module->topo.graph.graph_get = mca_topo_base_graph_get;
+        }
+/*
+        if (NULL == module->topo.graph.graph_map) {
+            module->topo.graph.graph_map = mca_topo_base_graph_map;
+        }
+*/
+        if (NULL == module->topo.graph.graphdims_get) {
+            module->topo.graph.graphdims_get = mca_topo_base_graphdims_get;
+        }
+        if (NULL == module->topo.graph.graph_neighbors) {
+            module->topo.graph.graph_neighbors = mca_topo_base_graph_neighbors;
+        }
+        if (NULL == module->topo.graph.graph_neighbors_count) {
+            module->topo.graph.graph_neighbors_count = mca_topo_base_graph_neighbors_count;
+        }
+    } else if( OMPI_COMM_DIST_GRAPH == type ) {
+        if (NULL == module->topo.dist_graph.dist_graph_create) {
+            module->topo.dist_graph.dist_graph_create = mca_topo_base_dist_graph_create;
+        }
+        if (NULL == module->topo.dist_graph.dist_graph_create_adjacent) {
+            module->topo.dist_graph.dist_graph_create_adjacent = mca_topo_base_dist_graph_create_adjacent;
+        }
+        if (NULL == module->topo.dist_graph.dist_graph_neighbors) {
+            module->topo.dist_graph.dist_graph_neighbors = mca_topo_base_dist_graph_neighbors;
+        }
+        if (NULL == module->topo.dist_graph.dist_graph_neighbors_count) {
+            module->topo.dist_graph.dist_graph_neighbors_count = mca_topo_base_dist_graph_neighbors_count;
+        }
+    }
 }

@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2012 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -34,28 +34,28 @@
  */
 
 int mca_topo_base_graph_neighbors (ompi_communicator_t* comm,
-                               int rank,
-                               int maxneighbors,
-                               int *neighbors){
-    int nnbrs;
-    int i;
-    int *p;
+                                   int rank,
+                                   int maxneighbors,
+                                   int *neighbors)
+{
+    mca_topo_base_comm_graph_2_1_0_t* graph = comm->c_topo->mtc.graph;
+    int nnbrs, i, *p;
 
     /*
      * Fill the neighbours.
      */
-     nnbrs = comm->c_topo_comm->mtc_dims_or_index[rank];
-     p = comm->c_topo_comm->mtc_periods_or_edges;
+    nnbrs = graph->index[rank];
+    p = graph->edges;
 
-     if (rank > 0) {
-        i = comm->c_topo_comm->mtc_dims_or_index[rank - 1];
+    if (rank > 0) {
+        i = graph->index[rank - 1];
         nnbrs -= i;
         p += i;
-     }
+    }
 
-     for (i = 0; (i < maxneighbors) && (i < nnbrs); ++i, ++p) {
+    for (i = 0; (i < maxneighbors) && (i < nnbrs); ++i, ++p) {
         *neighbors++ = *p;
-     }
+    }
 
-     return MPI_SUCCESS;
+    return MPI_SUCCESS;
 }

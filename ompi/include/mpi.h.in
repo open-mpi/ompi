@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2010 The University of Tennessee and The University
+ * Copyright (c) 2004-2013 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2007 High Performance Computing Center Stuttgart,
@@ -14,6 +14,7 @@
  * Copyright (c) 2009-2012 Oak Rigde National Laboratory.  All rights reserved.
  * Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
  * Copyright (c) 2012      Los Alamos Nat Security, LLC. All rights reserved.
+ * Copyright (c) 2011-2013 INRIA.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -416,6 +417,7 @@ typedef int (MPI_Grequest_cancel_function)(void *, int);
 #define MPI_MAX_OBJECT_NAME    OPAL_MAX_OBJECT_NAME    /* max object name length */
 #define MPI_MAX_LIBRARY_VERSION_STRING 256             /* max length of library version string */
 #define MPI_UNDEFINED          -32766                  /* undefined stuff */
+#define MPI_DIST_GRAPH         3                       /* dist graph topology */
 #define MPI_CART               1                       /* cartesian topology */
 #define MPI_GRAPH              2                       /* graph topology */
 #define MPI_KEYVAL_INVALID     -1                      /* invalid key value */
@@ -423,6 +425,7 @@ typedef int (MPI_Grequest_cancel_function)(void *, int);
 /*
  * More constants
  */
+#define MPI_UNWEIGHTED           ((void *) 2)          /* unweighted graph */
 #define MPI_BOTTOM               ((void *) 0)          /* base reference address */
 #define MPI_IN_PLACE             ((void *) 1)          /* in place buffer */
 #define MPI_BSEND_OVERHEAD       128                   /* size of bsend header + ptr */
@@ -1227,6 +1230,27 @@ OMPI_DECLSPEC  int MPI_Comm_free_keyval(int *comm_keyval);
 OMPI_DECLSPEC  int MPI_Comm_free(MPI_Comm *comm);
 OMPI_DECLSPEC  int MPI_Comm_get_attr(MPI_Comm comm, int comm_keyval,
                                      void *attribute_val, int *flag);
+OMPI_DECLSPEC  int MPI_Dist_graph_create(MPI_Comm comm_old, int n, int nodes[],
+                                         int degrees[], int targets[], 
+                                         int weights[], MPI_Info info, 
+                                         int reorder, MPI_Comm * newcomm);
+OMPI_DECLSPEC  int MPI_Dist_graph_create_adjacent(MPI_Comm comm_old,
+                                                  int indegree, int sources[],
+                                                  int sourceweights[], 
+                                                  int outdegree,
+                                                  int destinations[], 
+                                                  int destweights[],
+                                                  MPI_Info info, int reorder,
+                                                  MPI_Comm *comm_dist_graph);
+OMPI_DECLSPEC int MPI_Dist_graph_neighbors(MPI_Comm comm, int maxindegree,
+                                           int sources[], int sourceweights[],
+                                           int maxoutdegree, 
+                                           int destinations[],
+                                           int destweights[]);
+OMPI_DECLSPEC  int MPI_Dist_graph_neighbors_count(MPI_Comm comm, 
+                                                  int *inneighbors,
+                                                  int *outneighbors, 
+                                                  int *weighted);
 OMPI_DECLSPEC  int MPI_Comm_get_errhandler(MPI_Comm comm, MPI_Errhandler *erhandler);
 OMPI_DECLSPEC  int MPI_Comm_get_name(MPI_Comm comm, char *comm_name, int *resultlen);
 OMPI_DECLSPEC  int MPI_Comm_get_parent(MPI_Comm *parent);
@@ -1766,6 +1790,27 @@ OMPI_DECLSPEC  int PMPI_Attr_delete(MPI_Comm comm, int keyval)
                                     __mpi_interface_deprecated__("MPI_Attr_delete is superseded by MPI_Comm_delete_attr in MPI-2.0");
 OMPI_DECLSPEC  int PMPI_Attr_get(MPI_Comm comm, int keyval, void *attribute_val, int *flag)
                                  __mpi_interface_deprecated__("MPI_Attr_get is superseded by MPI_Comm_get_attr in MPI-2.0");
+OMPI_DECLSPEC  int PMPI_Dist_graph_create(MPI_Comm comm_old, int n, int nodes[],
+                                          int degrees[], int targets[], 
+                                          int weights[], MPI_Info info, 
+                                          int reorder, MPI_Comm * newcomm);
+OMPI_DECLSPEC  int PMPI_Dist_graph_create_adjacent(MPI_Comm comm_old,
+                                                   int indegree, int sources[],
+                                                   int sourceweights[], 
+                                                   int outdegree,
+                                                   int destinations[], 
+                                                    int destweights[],
+                                                   MPI_Info info, int reorder,
+                                                   MPI_Comm *comm_dist_graph);
+OMPI_DECLSPEC int PMPI_Dist_graph_neighbors(MPI_Comm comm, int maxindegree,
+                                            int sources[], int sourceweights[],
+                                            int maxoutdegree, 
+                                             int destinations[],
+                                            int destweights[]);
+OMPI_DECLSPEC  int PMPI_Dist_graph_neighbors_count(MPI_Comm comm, 
+                                                   int *inneighbors,
+                                                   int *outneighbors, 
+                                                   int *weighted);
 OMPI_DECLSPEC  int PMPI_Attr_put(MPI_Comm comm, int keyval, void *attribute_val)
                                  __mpi_interface_deprecated__("MPI_Attr_put is superseded by MPI_Comm_set_attr in MPI-2.0");
 OMPI_DECLSPEC  int PMPI_Barrier(MPI_Comm comm);

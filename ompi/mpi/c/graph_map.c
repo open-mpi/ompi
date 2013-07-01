@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2012 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart, 
@@ -42,8 +42,7 @@ static const char FUNC_NAME[] = "MPI_Graph_map";
 int MPI_Graph_map(MPI_Comm comm, int nnodes, int indx[], int edges[],
                   int *newrank) 
 {
-    int err;
-    mca_topo_base_module_graph_map_fn_t func;
+    int err = MPI_SUCCESS;
 
     MEMCHECKER(
         memchecker_comm(comm);
@@ -73,20 +72,10 @@ int MPI_Graph_map(MPI_Comm comm, int nnodes, int indx[], int edges[],
            it, we just return the "default" value suggested by MPI:
            newrank = rank */
         *newrank = ompi_comm_rank(comm);
+    } else {
+        err = comm->c_topo->topo.graph.graph_map(comm, nnodes, indx, edges, newrank);
     }
-    else {
-        /* map the function pointer to do the right thing */
-        func = comm->c_topo->topo_graph_map;
-	
-        /* call the function */
-        if ( MPI_SUCCESS != 
-             (err = func(comm, nnodes, indx, edges, newrank))) {
-            OPAL_CR_EXIT_LIBRARY();
-            return OMPI_ERRHANDLER_INVOKE(comm, err, FUNC_NAME);
-        }
-    }
-
-    /* All done */
     OPAL_CR_EXIT_LIBRARY();
-    return MPI_SUCCESS;
+
+    OMPI_ERRHANDLER_RETURN(err, comm, err, FUNC_NAME);
 }

@@ -52,8 +52,8 @@ static const char FUNC_NAME[] = "MPI_Info_set";
  *   @retval MPI_ERR_NO_MEM
  *
  *   MPI_Info_set adds the (key,value) pair to info, and overrides
- *   teh value if for the same key a previsou value was set. key and
- *   value must be NULL terminated strings in C. In fortan, leading 
+ *   the value if for the same key a previsou value was set. key and
+ *   value must be NULL terminated strings in C. In Fortan, leading 
  *   and trailing spaces in key and value are stripped. If either 
  *   key or value is greater than the allowed maxima, MPI_ERR_INFO_KEY
  *   and MPI_ERR_INFO_VALUE are raised
@@ -66,10 +66,10 @@ int MPI_Info_set(MPI_Info info, char *key, char *value)
 
     /*
      * Error conditions are
-     *          - info is NULL
-     *          - No storage space available for the new value
-     *          - Key length exceeded MPI_MAX_KEY_VAL
-     *          - value length exceeded MPI_MAX_KEY_VAL
+     *   - info is NULL
+     *   - No storage space available for the new value
+     *   - Key length exceeded MPI_MAX_KEY_VAL
+     *   - value length exceeded MPI_MAX_KEY_VAL
      */
 
     if (MPI_PARAM_CHECK) {

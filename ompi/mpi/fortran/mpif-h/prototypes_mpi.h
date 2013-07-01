@@ -10,7 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2012      Inria.  All rights reserved.
+ * Copyright (c) 2011-2012 Inria.  All rights reserved.
+ * Copyright (c) 2011-2012 Universite Bordeaux 1
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -139,6 +140,10 @@ PN2(void, MPI_Comm_split, mpi_comm_split, MPI_COMM_SPLIT, (MPI_Fint *comm, MPI_F
 PN2(void, MPI_Comm_split_type, mpi_comm_split_type, MPI_COMM_SPLIT_TYPE, (MPI_Fint *comm, MPI_Fint *split_type, MPI_Fint *key, MPI_Fint *info, MPI_Fint *newcomm, MPI_Fint *ierr));
 PN2(void, MPI_Comm_test_inter, mpi_comm_test_inter, MPI_COMM_TEST_INTER, (MPI_Fint *comm, ompi_fortran_logical_t *flag, MPI_Fint *ierr));
 PN2(void, MPI_Dims_create, mpi_dims_create, MPI_DIMS_CREATE, (MPI_Fint *nnodes, MPI_Fint *ndims, MPI_Fint *dims, MPI_Fint *ierr));
+PN2(void, MPI_Dist_graph_create, mpi_dist_graph_create, MPI_DIST_GRAPH_CREATE, (MPI_Fint *comm_old, MPI_Fint *n, MPI_Fint *sources, MPI_Fint *degrees, MPI_Fint *destinations, MPI_Fint *weights, MPI_Fint *info,  ompi_fortran_logical_t *reorder, MPI_Fint *comm_graph,  MPI_Fint *ierr));
+PN2(void, MPI_Dist_graph_create_adjacent, mpi_dist_graph_create_adjacent, MPI_DIST_GRAPH_CREATE_ADJACENT, (MPI_Fint *comm_old, MPI_Fint *indegree,  MPI_Fint *sources, MPI_Fint *sourceweights, MPI_Fint *outdegree,  MPI_Fint *destinations, MPI_Fint *destweights, MPI_Fint *info, ompi_fortran_logical_t *reorder, MPI_Fint *comm_graph, MPI_Fint *ierr));
+PN2(void, MPI_Dist_graph_neighbors, mpi_dist_graph_neighbors, MPI_DIST_GRAPH_NEIGHBORS, (MPI_Fint* comm, MPI_Fint* maxindegree, MPI_Fint* sources, MPI_Fint* sourceweights, MPI_Fint* maxoutdegree, MPI_Fint* destinations, MPI_Fint* destweights, MPI_Fint *ierr));
+PN2(void, MPI_Dist_graph_neighbors_count, mpi_dist_graph_neighbors_count, MPI_DIST_GRAPH_NEIGHBORS_COUNT, (MPI_Fint *comm, MPI_Fint *inneighbors, MPI_Fint *outneighbors, ompi_fortran_logical_t *weighted, MPI_Fint *ierr));
 PN2(void, MPI_Errhandler_create, mpi_errhandler_create, MPI_ERRHANDLER_CREATE, (ompi_errhandler_fortran_handler_fn_t* function, MPI_Fint *errhandler, MPI_Fint *ierr));
 PN2(void, MPI_Errhandler_free, mpi_errhandler_free, MPI_ERRHANDLER_FREE, (MPI_Fint *errhandler, MPI_Fint *ierr));
 PN2(void, MPI_Errhandler_get, mpi_errhandler_get, MPI_ERRHANDLER_GET, (MPI_Fint *comm, MPI_Fint *errhandler, MPI_Fint *ierr));
