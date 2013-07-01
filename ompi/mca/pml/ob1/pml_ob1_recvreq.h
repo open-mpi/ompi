@@ -386,7 +386,7 @@ static inline void mca_pml_ob1_recv_request_schedule(
 #define MCA_PML_OB1_ADD_ACK_TO_PENDING(P, S, D, O)                      \
     do {                                                                \
         mca_pml_ob1_pckt_pending_t *_pckt;                              \
-        int _rc;                                                        \
+        int _rc; (void)_rc;                                             \
                                                                         \
         MCA_PML_OB1_PCKT_PENDING_ALLOC(_pckt,_rc);                      \
         _pckt->hdr.hdr_common.hdr_type = MCA_PML_OB1_HDR_TYPE_ACK;      \
