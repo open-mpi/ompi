@@ -102,7 +102,7 @@ int ompi_group_translate_ranks ( ompi_group_t *group1,
                 /* initialize to no "match" */
                 ranks2[proc] = MPI_UNDEFINED;
                 for (proc2 = 0; proc2 < group2->grp_proc_count; proc2++) {
-                    proc2_pointer= ompi_group_peer_lookup(group2 ,proc2);
+                    proc2_pointer= ompi_group_peer_lookup(group2, proc2);
                     if ( proc1_pointer == proc2_pointer) {
                         ranks2[proc] = proc2;
                         break;

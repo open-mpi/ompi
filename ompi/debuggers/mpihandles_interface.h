@@ -2,7 +2,7 @@
  * Copyright (c) 2007      High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2007-2008 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2007      The University of Tennessee and The University of
+ * Copyright (c) 2007-2013 The University of Tennessee and The University of
  *                         Tennessee Research Foundation.  All rights reserved.
  * $COPYRIGHT$
  * 
@@ -242,6 +242,8 @@ enum mpidbg_comm_info_bitmap_t {
     MPIDBG_COMM_INFO_FREED_OBJECT =    0x40,
     /* The queried communicator is MPI_COMM_NULL */
     MPIDBG_COMM_INFO_COMM_NULL =       0x80,
+    /* The queried communicator has a distributed graph topology attached to it */
+    MPIDBG_COMM_INFO_DIST_GRAPH =      0x00000400,
     /* Sentinel max value */
     MPIDBG_COMM_INFO_MAX
 };

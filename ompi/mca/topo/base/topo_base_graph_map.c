@@ -14,15 +14,14 @@
  * Additional copyrights may follow
  * 
  * $HEADER$
- */ 
+ */
 
 #include "ompi_config.h"
-#include "ompi/mca/topo/unity/topo_unity.h"
-
+#include "ompi/mca/topo/base/base.h"
 #include "ompi/communicator/communicator.h"
 
 /*
- * function - mca_topo_unity_graph_map
+ * function - mca_topo_base_graph_map
  *
  *  @param comm input communicator (handle)
  *  @param nnodes number of graph nodes (integer)
@@ -34,19 +33,17 @@
  *
  *  @retval MPI_SUCCESS
  *  @retval MPI_UNDEFINED
- */ 
+ */
 
-int mca_topo_unity_graph_map (ompi_communicator_t* comm,
-                              int nnodes,
-                              int *index,
-                              int *edges,
-                              int *newrank)
+int mca_topo_base_graph_map(ompi_communicator_t * comm,
+                            int nnodes,
+                            int *index, int *edges, int *newrank)
 {
     int myrank;
 
     myrank = ompi_comm_rank(comm);
-    *newrank = 
+    *newrank =
         ((0 > myrank) || (myrank >= nnodes)) ? MPI_UNDEFINED : myrank;
-    
+
     return OMPI_SUCCESS;
 }

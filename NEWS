@@ -54,6 +54,7 @@ included in the vX.Y.Z section and be denoted as:
 Trunk (not on release branches yet)
 -----------------------------------
 
+- Add support for MPI_Dist_graph functionality (MPI 2.2).
 - Do not build the MPI C++ bindings by default.  They must be enabled
   via --enable-mpi-cxx.
 - Adding a new parallel I/O component and multiple new frameworks to 

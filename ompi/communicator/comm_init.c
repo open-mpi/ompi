@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2007 The University of Tennessee and The University
+ * Copyright (c) 2004-2013 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -14,7 +14,9 @@
  * Copyright (c) 2007-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc. All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, LLC.
- *                         All rights reserved.
+ * Copyright (c) 2011-2013 INRIA.  All rights reserved.
+ * Copyright (c) 2011-2013 Universite Bordeaux 1
+  *                         All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -60,7 +62,9 @@ ompi_predefined_communicator_t *ompi_mpi_comm_null_addr =
 static void ompi_comm_construct(ompi_communicator_t* comm);
 static void ompi_comm_destruct(ompi_communicator_t* comm);
 
-OBJ_CLASS_INSTANCE(ompi_communicator_t,opal_object_t,ompi_comm_construct,ompi_comm_destruct);
+OBJ_CLASS_INSTANCE(ompi_communicator_t, opal_object_t,
+                   ompi_comm_construct,
+                   ompi_comm_destruct);
 
 /* This is the counter for the number of communicators, which contain
    process with more than one jobid. This counter is a usefull 
@@ -323,17 +327,14 @@ static void ompi_comm_construct(ompi_communicator_t* comm)
     comm->error_handler  = NULL;
     comm->c_pml_comm     = NULL;
     comm->c_topo         = NULL;
-    comm->c_topo_component = NULL;
-    comm->c_topo_comm    = NULL; 
-    comm->c_topo_module  = NULL;
 
     /* A keyhash will be created if/when an attribute is cached on
-       this communiucator */
-    comm->c_keyhash = NULL;
+       this communicator */
+    comm->c_keyhash      = NULL;
 
-    comm->errhandler_type           = OMPI_ERRHANDLER_TYPE_COMM;
+    comm->errhandler_type  = OMPI_ERRHANDLER_TYPE_COMM;
 #ifdef OMPI_WANT_PERUSE
-    comm->c_peruse_handles          = NULL;
+    comm->c_peruse_handles = NULL;
 #endif
 
     /* Need to zero out the collectives module because we sometimes
@@ -356,39 +357,6 @@ static void ompi_comm_destruct(ompi_communicator_t* comm)
         mca_coll_base_comm_unselect(comm);
     }
 
-    /*  Check if the communicator is a topology */
-    if ( MPI_COMM_NULL != comm && 
-         (OMPI_COMM_IS_CART(comm) || OMPI_COMM_IS_GRAPH(comm))) {
-
-        /* check and free individual things */
-        
-        if (NULL != comm->c_topo_comm) {
-
-            /* check for all pointers and free them */
-
-            if (NULL != comm->c_topo_comm->mtc_dims_or_index) {
-                free(comm->c_topo_comm->mtc_dims_or_index);
-                comm->c_topo_comm->mtc_dims_or_index = NULL;
-            }
-        
-            if (NULL != comm->c_topo_comm->mtc_periods_or_edges) {
-                free(comm->c_topo_comm->mtc_periods_or_edges);
-                comm->c_topo_comm->mtc_periods_or_edges = NULL;
-            }
-
-            if (NULL != comm->c_topo_comm->mtc_coords) {
-                free(comm->c_topo_comm->mtc_coords);
-                comm->c_topo_comm->mtc_coords = NULL;
-            }
-
-            free(comm->c_topo_comm);
-            comm->c_topo_comm = NULL;
-        }
-
-    }
-
-    comm->c_topo_component = NULL;
-
     /* Tell the PML that this communicator is done.
        MCA_PML_CALL(add_comm()) was called explicitly in
        ompi_comm_init() when setting up COMM_WORLD and COMM_SELF; it's
@@ -408,8 +376,11 @@ static void ompi_comm_destruct(ompi_communicator_t* comm)
         MCA_PML_CALL(del_comm (comm));
     }
 
-    /* Release topology information */
-    mca_topo_base_comm_unselect(comm);
+    /* Release topology module */
+    if (NULL != comm->c_topo) {
+        OBJ_RELEASE(comm->c_topo);
+        comm->c_topo = NULL;
+    }
 
     if (NULL != comm->c_local_group) {
         ompi_group_decrement_proc_count (comm->c_local_group);
@@ -417,7 +388,8 @@ static void ompi_comm_destruct(ompi_communicator_t* comm)
         comm->c_local_group = NULL;
         if ( OMPI_COMM_IS_INTRA(comm) ) {
             /* We have to decrement the ref count on the remote group
-               even if it is identical to the local one in case of intra-comm */
+               even if it is identical to the local one in case of
+               intra-comm */
             OBJ_RELEASE ( comm->c_remote_group );
             comm->c_remote_group = NULL;
         }

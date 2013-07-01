@@ -455,4 +455,37 @@ ob1_hdr_hton_intr(mca_pml_ob1_hdr_t *hdr, const uint8_t hdr_type,
 #else
 #define ob1_hdr_hton(h, t, p) do{}while(0)
 #endif
-#endif
+
+static inline __opal_attribute_always_inline__ void
+ob1_hdr_copy(mca_pml_ob1_hdr_t *src, mca_pml_ob1_hdr_t *dst)
+{
+    switch(src->hdr_common.hdr_type) {
+        case MCA_PML_OB1_HDR_TYPE_MATCH:
+            memcpy( &(dst->hdr_match), &(src->hdr_match), sizeof(mca_pml_ob1_match_hdr_t) );
+            break;
+        case MCA_PML_OB1_HDR_TYPE_RNDV:
+            memcpy( &(dst->hdr_rndv), &(src->hdr_rndv), sizeof(mca_pml_ob1_rendezvous_hdr_t) );
+            break;
+        case MCA_PML_OB1_HDR_TYPE_RGET:
+            memcpy( &(dst->hdr_rget), &(src->hdr_rget), sizeof(mca_pml_ob1_rget_hdr_t) );
+            break;
+        case MCA_PML_OB1_HDR_TYPE_ACK:
+            memcpy( &(dst->hdr_ack), &(src->hdr_ack), sizeof(mca_pml_ob1_ack_hdr_t) );
+            break;
+        case MCA_PML_OB1_HDR_TYPE_FRAG:
+            memcpy( &(dst->hdr_frag), &(src->hdr_frag), sizeof(mca_pml_ob1_frag_hdr_t) );
+            break;
+        case MCA_PML_OB1_HDR_TYPE_PUT:
+            memcpy( &(dst->hdr_rdma), &(src->hdr_rdma), sizeof(mca_pml_ob1_rdma_hdr_t) );
+            break;
+        case MCA_PML_OB1_HDR_TYPE_FIN:
+            memcpy( &(dst->hdr_fin), &(src->hdr_fin), sizeof(mca_pml_ob1_fin_hdr_t) );
+            break;
+        default:
+            memcpy( &(dst->hdr_common), &(src->hdr_common), sizeof(mca_pml_ob1_common_hdr_t) );
+            break;
+    }
+}
+
+#endif  /* MCA_PML_OB1_HEADER_H */
+

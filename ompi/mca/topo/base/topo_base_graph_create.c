@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2012 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -36,50 +36,101 @@
  * @retval MPI_ERR_OUT_OF_RESOURCE
  */
 
-int mca_topo_base_graph_create (mca_topo_base_comm_t *topo_data,
-                                int *proc_count,
-                                ompi_proc_t **proc_pointers,
-                                int *new_rank,
-                                int nnodes,
-                                int *index,
-                                int *edges,
-                                bool reorder)
+int mca_topo_base_graph_create(mca_topo_base_module_t *topo,
+                               ompi_communicator_t* old_comm,
+                               int nnodes,
+                               int *index,
+                               int *edges,
+                               bool reorder,
+                               ompi_communicator_t** comm_topo)
 {
-    int  nedges;
-    int  i;
-    int  *p;
+    ompi_communicator_t *new_comm;
+    int new_rank, num_procs, ret, i;
+    ompi_proc_t **topo_procs = NULL;
+    mca_topo_base_comm_graph_2_1_0_t* graph;
 
-    /* check if the number of nodes is more than the number of procs */
+    num_procs = old_comm->c_local_group->grp_proc_count;
+    new_rank = old_comm->c_local_group->grp_my_rank;
+    assert(topo->type == OMPI_COMM_GRAPH);
 
-    if (nnodes > *proc_count) {
+    if( num_procs < nnodes ) {
         return MPI_ERR_DIMS;
     }
+    if( num_procs > nnodes ) {
+        num_procs = nnodes;
+    }
+    if( new_rank > (nnodes - 1) ) {
+        new_rank = MPI_UNDEFINED;
+        num_procs = 0;
+        nnodes = 0;
+    }
 
-    /* Create and error check the topology information */
+    graph = (mca_topo_base_comm_graph_2_1_0_t*)malloc(sizeof(mca_topo_base_comm_graph_2_1_0_t));
+    if( NULL == graph ) {
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+    graph->nnodes = nnodes;
+    graph->index = NULL;
+    graph->edges = NULL;
 
-    nedges = topo_data->mtc_dims_or_index[nnodes-1];
+    graph->index = (int*)malloc(sizeof(int) * nnodes);
+    if (NULL == graph->index) {
+        free(graph);
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+    memcpy(graph->index, index, nnodes * sizeof(int));
 
-    /* Check if there are any negative values on the edges */
+    /* Graph communicator; copy the right data to the common information */
+    graph->edges = (int*)malloc(sizeof(int) * index[nnodes-1]);
+    if (NULL == graph->edges) {
+        free(graph->index);
+        free(graph);
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+    memcpy(graph->edges, edges, index[nnodes-1] * sizeof(int));
+
+    topo_procs = (ompi_proc_t**)malloc(num_procs * sizeof(ompi_proc_t *));
+    if(OMPI_GROUP_IS_DENSE(old_comm->c_local_group)) {
+        memcpy(topo_procs, 
+               old_comm->c_local_group->grp_proc_pointers,
+               num_procs * sizeof(ompi_proc_t *));
+    } else {
+        for(i = 0 ; i < num_procs; i++) {
+            topo_procs[i] = ompi_group_peer_lookup(old_comm->c_local_group,i);
+        }
+    }
+
+    /* allocate a new communicator */
+    new_comm = ompi_comm_allocate(nnodes, 0);
+    if (NULL == new_comm) {
+        free(topo_procs);
+        free(graph->edges);
+        free(graph->index);
+        free(graph);
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+
+    ret = ompi_comm_enable(old_comm, new_comm,
+                           new_rank, num_procs, topo_procs);
+    if (OMPI_SUCCESS != ret) {
+        free(topo_procs);
+        free(graph->edges);
+        free(graph->index);
+        free(graph);
+        ompi_comm_free (&new_comm);
+        return ret;
+    }
     
-    p = topo_data->mtc_periods_or_edges;
+    new_comm->c_topo            = topo;
+    new_comm->c_topo->mtc.graph = graph;
+    new_comm->c_flags          |= OMPI_COMM_GRAPH;
+    new_comm->c_topo->reorder   = reorder;
+    *comm_topo = new_comm;
 
-    for (i = 0; i < nedges; ++i, ++p) {
-         if (*p < 0 || *p >= nnodes) {
-            return MPI_ERR_TOPOLOGY;
-         }
+    if( MPI_UNDEFINED == new_rank ) {
+        ompi_comm_free(&new_comm);
+        *comm_topo = MPI_COMM_NULL;
     }
 
-    /* if the graph does not have to be trimmed, then nothing has to change */
-    if (nnodes < *proc_count) {
-        *proc_count = nnodes;
-    }
-
-    /* check if this rank makes the cut. if it does not return -1 */
-    if (*new_rank > (nnodes-1)) {
-        /* sorry but in our scheme, you are out */
-        *new_rank = MPI_UNDEFINED;
-        return MPI_SUCCESS;
-    }
-
-    return(MPI_SUCCESS);
+    return OMPI_SUCCESS;
 }

@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2012 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -32,12 +32,13 @@
  */                             
 
 int mca_topo_base_graph_neighbors_count (ompi_communicator_t* comm,
-                                     int rank,
-                                     int *nneighbors){
-
-   *nneighbors = comm->c_topo_comm->mtc_dims_or_index[rank];
-   if (rank > 0) {
-      *nneighbors -= comm->c_topo_comm->mtc_dims_or_index[rank - 1];
+                                         int rank,
+                                         int *nneighbors)
+{
+    mca_topo_base_comm_graph_2_1_0_t* graph = comm->c_topo->mtc.graph;
+    *nneighbors = graph->index[rank];
+    if (rank > 0) {
+        *nneighbors -= graph->index[rank - 1];
     }
 
     return MPI_SUCCESS;

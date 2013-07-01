@@ -10,7 +10,8 @@
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
-# Copyright (c) 2012      Inria.  All rights reserved.
+# Copyright (c) 2011-2012 Inria.  All rights reserved.
+# Copyright (c) 2011-2012 Universite Bordeaux 1
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -135,6 +136,10 @@ libmpi_mpifh_la_SOURCES += \
         comm_split_f.c \
         comm_split_type_f.c \
         comm_test_inter_f.c \
+        dist_graph_create_adjacent_f.c \
+        dist_graph_create_f.c \
+        dist_graph_neighbors_f.c \
+        dist_graph_neighbors_count_f.c \
         dims_create_f.c \
         errhandler_create_f.c \
         errhandler_free_f.c \

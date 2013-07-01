@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2013 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -37,109 +37,112 @@
  * @retval MPI_ERR_COMM
  */                
 int mca_topo_base_cart_sub (ompi_communicator_t* comm,
-                        int *remain_dims,
-                        ompi_communicator_t** new_comm){
+                            int *remain_dims,
+                            ompi_communicator_t** new_comm)
+{
+    struct ompi_communicator_t *temp_comm;
+    mca_topo_base_comm_cart_2_1_0_t *old_cart;
+    int errcode, colour, key, colfactor, keyfactor;
+    int ndim, dim, i;
+    int *d, *dorig = NULL, *dold, *c, *r, *p, *porig = NULL, *pold;
+    mca_topo_base_module_t* topo;
+    mca_topo_base_comm_cart_2_1_0_t* cart;
 
-     struct ompi_communicator_t *temp_comm;
-     int errcode;
-     int colour;
-     int key;
-     int colfactor;
-     int keyfactor;
-     int rank;
-     int ndim;
-     int dim;
-     int i;
-     int *d, *dold;
-     int *c;
-     int *r;
-     int *p, *pold;
-
-     *new_comm = MPI_COMM_NULL;
+    *new_comm = MPI_COMM_NULL;
+    old_cart = comm->c_topo->mtc.cart;
 
     /*
      * Compute colour and key used in splitting the communicator.
      */
-     colour = key = 0;
-     colfactor = keyfactor = 1;
-     ndim = 0;
+    colour = key = 0;
+    colfactor = keyfactor = 1;
+    ndim = 0;
 
-     i = comm->c_topo_comm->mtc_ndims_or_nnodes - 1;
-     d = comm->c_topo_comm->mtc_dims_or_index + i;
-     c = comm->c_topo_comm->mtc_coords + i;
-     r = remain_dims + i;
+    i = old_cart->ndims - 1;
+    d = old_cart->dims + i;
+    c = comm->c_topo->mtc.cart->coords + i;
+    r = remain_dims + i;
 
-     for (; i >= 0; --i, --d, --c, --r) {
+    for (; i >= 0; --i, --d, --c, --r) {
         dim = *d;
         if (*r == 0) {
-           colour += colfactor * (*c);
-           colfactor *= dim;
+            colour += colfactor * (*c);
+            colfactor *= dim;
         } else {
-          ++ndim;
-          key += keyfactor * (*c);
-          keyfactor *= dim;
+            ++ndim;
+            key += keyfactor * (*c);
+            keyfactor *= dim;
         }
-     }
+    }
     /* Special case: if all of remain_dims were false, we need to make
        a 0-dimension cartesian communicator with just ourselves in it
        (you can't have a communicator unless you're in it). */
-     if (0 == ndim) {
-         colour = ompi_comm_rank (comm);
-     }
-    /*
-     * Split the communicator.
-     */
-     errcode = ompi_comm_split (comm, colour, key, &temp_comm, true);
-     if (errcode != MPI_SUCCESS) {
+    if (0 == ndim) {
+        colour = ompi_comm_rank (comm);
+    }
+    /* Split the communicator. */
+    errcode = ompi_comm_split(comm, colour, key, &temp_comm, false);
+    if (errcode != OMPI_SUCCESS) {
         return errcode;
-     }
-    /*
-     * Fill the communicator with topology information.
-     */
-     if (temp_comm != MPI_COMM_NULL) {
-        
-        temp_comm->c_topo_comm->mtc_ndims_or_nnodes = ndim;
+    }
 
+    /* Fill the communicator with topology information. */
+    if (temp_comm != MPI_COMM_NULL) {
+        
+        assert( NULL == temp_comm->c_topo );
+        if (OMPI_SUCCESS != (errcode = mca_topo_base_comm_select(temp_comm,
+                                                                 comm->c_topo,
+                                                                 &topo,
+                                                                 OMPI_COMM_CART))) {
+            ompi_comm_free(&temp_comm);
+            return OMPI_ERR_OUT_OF_RESOURCE;
+        }
         if (ndim >= 1) {
             /* Copy the dimensions */
-            d = temp_comm->c_topo_comm->mtc_dims_or_index;
-            dold = comm->c_topo_comm->mtc_dims_or_index;
+            dorig = d = (int*)malloc(ndim * sizeof(int));
+            dold = old_cart->dims;
+            /* Copy the periods */
+            porig = p = (int*)malloc(ndim * sizeof(int));
+            pold = old_cart->periods;
             r = remain_dims;
-            for (i = 0; i < comm->c_topo_comm->mtc_ndims_or_nnodes; 
-                 ++i, ++dold, ++r) {
+            for (i = 0; i < old_cart->ndims; ++i, ++dold, ++pold, ++r) {
                 if (*r) {
                     *d++ = *dold;
-                }
-            }
-
-            /* Copy the periods */
-            p = temp_comm->c_topo_comm->mtc_periods_or_edges;
-            pold = comm->c_topo_comm->mtc_periods_or_edges;
-            r = remain_dims;
-            for (i = 0; i < comm->c_topo_comm->mtc_ndims_or_nnodes; 
-                 ++i, ++pold, ++r) {
-                if (*r) {
                     *p++ = *pold;
                 }
             }
+        }
+        cart = (mca_topo_base_comm_cart_2_1_0_t*)calloc(1, sizeof(mca_topo_base_comm_cart_2_1_0_t));
+        if( NULL == cart ) {
+            ompi_comm_free(&temp_comm);
+            return OMPI_ERR_OUT_OF_RESOURCE;
+        }
+        cart->ndims = ndim;
+        cart->dims = dorig;
+        cart->periods = porig;
+        cart->coords = (int*)malloc(sizeof(int) * ndim);
+        if (NULL == cart->coords) {
+            free(cart->periods);
+            if(NULL != cart->dims) free(cart->dims);
+            free(cart);
+            return OMPI_ERR_OUT_OF_RESOURCE;
+        }
+        {  /* setup the cartesian topology */
+            int nprocs = temp_comm->c_local_group->grp_proc_count,
+                rank   = temp_comm->c_local_group->grp_my_rank;
 
-            /*
-             * Compute the caller's coordinates, if ndims>0
-             */
-            rank = ompi_comm_rank (temp_comm);
-            if (MPI_SUCCESS != errcode) {
-                OBJ_RELEASE(temp_comm);
-                return errcode;
-            }
-            errcode = temp_comm->c_topo->topo_cart_coords (temp_comm, rank,
-                                                           ndim, temp_comm->c_topo_comm->mtc_coords);
-            if (MPI_SUCCESS != errcode) {
-                OBJ_RELEASE(temp_comm);
-                return errcode;
+            for (i = 0; i < ndim; ++i) {
+                nprocs /= cart->dims[i];
+                cart->coords[i] = rank / nprocs;
+                rank %= nprocs;
             }
         }
-     }
+        temp_comm->c_topo           = topo;
+        temp_comm->c_topo->mtc.cart = cart;
+        temp_comm->c_topo->reorder  = false;
+        temp_comm->c_flags         |= OMPI_COMM_CART;
+    }
+    *new_comm = temp_comm;
 
-      *new_comm = temp_comm;
-      return MPI_SUCCESS;
+    return MPI_SUCCESS;
 }

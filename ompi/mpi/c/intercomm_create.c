@@ -181,7 +181,7 @@ int MPI_Intercomm_create(MPI_Comm local_comm, int local_leader,
                          NULL,                                         /* remote_procs */
                          NULL,                                         /* attrs */
                          local_comm->error_handler,                    /* error handler*/
-                         NULL,                                         /* topo mpodule */
+                         false,                                        /* dont copy the topo */
                          local_comm->c_local_group,                    /* local group */
                          new_group_pointer                             /* remote group */
                          );

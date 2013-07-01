@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2007 The University of Tennessee and The University
+ * Copyright (c) 2004-2013 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -12,6 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2008-2013 University of Houston. All rights reserved.
  * Copyright (c) 2011      Cisco Systems, Inc. All rights reserved.
+ * Copyright (c) 2012-2013 INRIA.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -918,7 +919,7 @@ int ompi_io_ompio_set_aggregator_props (mca_io_ompio_file_t *fh,
     if (-1 == num_aggregators) {
         /* Determine Topology Information */
         if (fh->f_comm->c_flags & OMPI_COMM_CART) {
-            fh->f_comm->c_topo->topo_cartdim_get(fh->f_comm, &ndims);
+            fh->f_comm->c_topo->topo.cart.cartdim_get(fh->f_comm, &ndims);
 
             dims = (int*)malloc (ndims * sizeof(int));
             if (NULL == dims) {
@@ -944,7 +945,7 @@ int ompi_io_ompio_set_aggregator_props (mca_io_ompio_file_t *fh,
                 return OMPI_ERR_OUT_OF_RESOURCE;
             }
 
-            fh->f_comm->c_topo->topo_cart_get(fh->f_comm, ndims, dims, periods, coords);
+            fh->f_comm->c_topo->topo.cart.cart_get(fh->f_comm, ndims, dims, periods, coords);
 
             /*
               printf ("NDIMS = %d\n", ndims);
@@ -1007,7 +1008,7 @@ int ompi_io_ompio_set_aggregator_props (mca_io_ompio_file_t *fh,
             }
 
             for (j=0 ; j<fh->f_size ; j++) {
-                fh->f_comm->c_topo->topo_cart_coords (fh->f_comm, j, ndims, coords_tmp);
+                fh->f_comm->c_topo->topo.cart.cart_coords (fh->f_comm, j, ndims, coords_tmp);
                 if (coords_tmp[0]/i == coords[0]/i) {
                     if ((coords_tmp[1]/root_offset)*root_offset == 
                         (coords[1]/root_offset)*root_offset) {

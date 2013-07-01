@@ -10820,3 +10820,121 @@ output_291 MPI_Type_create_hindexed_block
 end MPI_Type_create_hindexed_block
 
 
+#------------------------------------------------------------------------
+
+output_292() {
+    if test "$output" = "0"; then
+        return 0
+    fi
+
+    procedure=$1
+    cat <<EOF
+
+subroutine ${procedure}(comm_old, n, sources, degrees, destinations, &
+        weights, info, reorder, comm_dist_graph, ierr)
+  integer, intent(in) :: comm_old
+  integer, intent(in) :: n
+  integer, dimension(n), intent(in) :: sources
+  integer, dimension(n), intent(in) :: degrees
+  integer, dimension(n), intent(in) :: destinations
+  integer, dimension(n), intent(in) :: weights
+  logical, intent(in) :: info
+  logical, intent(in) :: reorder
+  integer, intent(out) :: comm_dist_graph
+  integer, intent(out) :: ierr
+end subroutine ${procedure}
+
+EOF
+}
+
+start MPI_Dist_graph_create small
+output_292 MPI_Dist_graph_create
+end MPI_Dist_graph_create
+
+#------------------------------------------------------------------------
+
+output_293() {
+    if test "$output" = "0"; then
+        return 0
+    fi
+
+    procedure=$1
+    cat <<EOF
+
+subroutine ${procedure}(comm_old, indegree, sources, sourceweights, &
+       outdegree, destinations, destweights, info, reorder, &
+       comm_dist_graph, ierr)
+  integer, intent(in) :: comm_old
+  integer, intent(in) :: indegree
+  integer, dimension(indegree), intent(in) :: sources
+  integer, dimension(indegree), intent(in) :: sourceweights
+  integer, intent(in) :: outdegree
+  integer, dimension(outdegree), intent(in) :: destinations
+  integer, dimension(outdegree), intent(in) :: destweights
+  logical, intent(in) :: info
+  logical, intent(in) :: reorder
+  integer, intent(out) :: comm_dist_graph
+  integer, intent(out) :: ierr
+end subroutine ${procedure}
+
+EOF
+}
+
+start MPI_Dist_graph_create_adjacent small
+output_293 MPI_Dist_graph_create_adjacent
+end MPI_Dist_graph_create_adjacent
+
+#------------------------------------------------------------------------
+
+output_294() {
+    if test "$output" = "0"; then
+        return 0
+    fi
+
+    procedure=$1
+    cat <<EOF
+
+subroutine ${procedure}(comm, indegree, outdegree, weighted, ierr)
+  integer, intent(in) :: comm
+  integer, intent(out) :: indegree
+  integer, intent(out) :: outdegree
+  logical, intent(out) :: weighted
+  integer, intent(out) :: ierr
+end subroutine ${procedure}
+
+EOF
+}
+
+start MPI_Dist_graph_neighbors_count small
+output_294 MPI_Dist_graph_neighbors_count
+end MPI_Dist_graph_neighbors_count
+
+#------------------------------------------------------------------------
+
+output_295() {
+    if test "$output" = "0"; then
+        return 0
+    fi
+
+    procedure=$1
+    cat <<EOF
+
+subroutine ${procedure}(comm, maxindegree, sources, sourceweights, &
+       maxoutdegree, destinations, destweights, ierr)
+  integer, intent(in) :: comm
+  integer, intent(in) :: maxindegree
+  integer, dimension(maxindegree), intent(out) :: sources
+  integer, dimension(maxindegree), intent(out) :: sourceweights
+  integer, intent(in) :: maxoutdegree
+  integer, dimension(maxoutdegree), intent(out) :: destinations
+  integer, dimension(maxoutdegree), intent(out) :: destweights
+  integer, intent(out) :: ierr
+end subroutine ${procedure}
+
+EOF
+}
+
+start MPI_Dist_graph_neighbors small
+output_295 MPI_Dist_graph_neighbors
+end MPI_Dist_graph_neighbors
+

@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2012 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart, 
@@ -42,9 +42,8 @@ static const char FUNC_NAME[] = "MPI_Graph_create";
 int MPI_Graph_create(MPI_Comm old_comm, int nnodes, int indx[],
                      int edges[], int reorder, MPI_Comm *comm_graph) 
 {
-
+    mca_topo_base_module_t* topo;
     int err;
-    bool re_order = false;
 
     MEMCHECKER(
         memchecker_comm(old_comm);
@@ -56,10 +55,9 @@ int MPI_Graph_create(MPI_Comm old_comm, int nnodes, int indx[],
         if (ompi_comm_invalid(old_comm)) {
             return OMPI_ERRHANDLER_INVOKE (MPI_COMM_WORLD, MPI_ERR_COMM,
                                            FUNC_NAME);
-        }
-        if (OMPI_COMM_IS_INTER(old_comm)) {
-            return OMPI_ERRHANDLER_INVOKE (old_comm, MPI_ERR_COMM,
-                                           FUNC_NAME);
+        } else if (OMPI_COMM_IS_INTER(old_comm)) {
+            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM, 
+                                          FUNC_NAME);
         }
         if (nnodes < 0) {
             return OMPI_ERRHANDLER_INVOKE (old_comm, MPI_ERR_ARG,
@@ -81,42 +79,32 @@ int MPI_Graph_create(MPI_Comm old_comm, int nnodes, int indx[],
         *comm_graph = MPI_COMM_NULL;
         return MPI_SUCCESS;
     }
-
-    /*
-     * Now we have to check if the topo module exists or not. This has been
-     * removed from initialization since most of the MPI calls do not use 
-     * this module 
-     */
-    if (OMPI_SUCCESS != (err =  mca_base_framework_open(&ompi_topo_base_framework, 0))) {
-        return OMPI_ERRHANDLER_INVOKE(old_comm, err, FUNC_NAME);
-    }
-    if (OMPI_SUCCESS != 
-        (err = mca_topo_base_find_available(OMPI_ENABLE_PROGRESS_THREADS,
-                                            OMPI_ENABLE_THREAD_MULTIPLE))) {
-        return OMPI_ERRHANDLER_INVOKE(old_comm, err, FUNC_NAME);
+    if( nnodes > old_comm->c_local_group->grp_proc_count ) {
+        return OMPI_ERRHANDLER_INVOKE (old_comm, MPI_ERR_ARG,
+                                       FUNC_NAME);
     }
 
     OPAL_CR_ENTER_LIBRARY();
-
     /* 
      * everything seems to be alright with the communicator, we can go 
      * ahead and select a topology module for this purpose and create 
      * the new graph communicator
      */
+    if (OMPI_SUCCESS != (err = mca_topo_base_comm_select(old_comm,
+                                                         NULL,
+                                                         &topo,
+                                                         OMPI_COMM_GRAPH))) {
+        return err;
+    }
 
-    re_order = (0 == reorder) ? false : true;
-
-    err = ompi_topo_create ((struct ompi_communicator_t *)old_comm,
-                            nnodes,
-                            indx,
-                            edges,
-                            re_order,
-                            (struct ompi_communicator_t **)comm_graph,
-                            OMPI_COMM_GRAPH);
-
+    /* Now let that topology module rearrange procs/ranks if it wants to */    
+    err = topo->topo.graph.graph_create(topo, old_comm,
+                                        nnodes, indx, edges,
+                                        (0 == reorder) ? false : true, comm_graph);
     OPAL_CR_EXIT_LIBRARY();
-    /* check the error status */
+
     if (MPI_SUCCESS != err) {
+        OBJ_RELEASE(topo);
         return OMPI_ERRHANDLER_INVOKE(old_comm, err, FUNC_NAME);
     }
     

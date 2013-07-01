@@ -91,6 +91,10 @@
 #define MPI_Comm_remote_group PMPI_Comm_remote_group
 #define MPI_Comm_remote_size PMPI_Comm_remote_size
 #define MPI_Comm_set_attr PMPI_Comm_set_attr
+#define MPI_Dist_graph_create PMPI_Dist_graph_create
+#define MPI_Dist_graph_create_adjacent PMPI_Dist_graph_create_adjacent
+#define MPI_Dist_graph_neighbors PMPI_Dist_graph_neighbors
+#define MPI_Dist_graph_neighbors_count PMPI_Dist_graph_neighbors_count
 #define MPI_Comm_set_errhandler PMPI_Comm_set_errhandler
 #define MPI_Comm_set_name PMPI_Comm_set_name
 #define MPI_Comm_size PMPI_Comm_size
