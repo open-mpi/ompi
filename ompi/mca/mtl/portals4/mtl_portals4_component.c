@@ -161,8 +161,7 @@ ompi_mtl_portals4_component_register(void)
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &ompi_mtl_portals4.protocol);
     OBJ_RELEASE(new_enum);
-    if (OPAL_SUCCESS != ret) {
-        opal_output(ompi_mtl_base_framework.framework_output, "Unknown protocol");
+    if (0 > ret) {
         return OMPI_ERR_NOT_SUPPORTED;
     }
 
