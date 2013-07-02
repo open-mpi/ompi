@@ -748,9 +748,14 @@ void opal_memory_linux_malloc_init_hook(void)
        "fakeroot" build environment that allocates memory during
        stat() (see http://bugs.debian.org/531522).  It may not be
        necessary any more since we're using access(), not stat().  But
-       we'll leave the check, anyway. */
+       we'll leave the check, anyway.
+
+       This is also an issue when using Gentoo's version of
+       'fakeroot', sandbox v2.5.  Sandbox environments can also be
+       detected fairly easily by looking for SANDBOX_PID. */
     if (getenv("FAKEROOTKEY") != NULL ||
-        getenv("FAKED_MODE") != NULL) {
+        getenv("FAKED_MODE") != NULL ||
+        getenv("SANDBOX_PID") != NULL ) {
         return;
     }
 
