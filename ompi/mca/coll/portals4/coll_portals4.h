@@ -33,6 +33,7 @@ struct mca_coll_portals4_component_t {
     ptl_pt_index_t finish_pt_idx;
     ptl_handle_eq_t eq_h;
     ptl_handle_me_t barrier_unex_me_h;
+    ptl_handle_me_t finish_me_h;
     ptl_handle_md_t md_h;
 
     ompi_free_list_t requests; /* request free list for the i collectives */
