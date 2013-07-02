@@ -56,8 +56,7 @@ endif
 mcacomponentdir = $(pkglibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_mtl_portals4_la_SOURCES = $(local_sources)
-mca_mtl_portals4_la_LIBADD = \
-    $(mtl_portals4_LIBS)
+mca_mtl_portals4_la_LIBADD = $(mtl_portals4_LIBS)
 mca_mtl_portals4_la_LDFLAGS = -module -avoid-version $(mtl_portals4_LDFLAGS)
 
 noinst_LTLIBRARIES = $(component_noinst)
