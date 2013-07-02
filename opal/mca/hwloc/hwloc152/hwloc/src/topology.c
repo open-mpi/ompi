@@ -1509,15 +1509,28 @@ restrict_object_nodeset(hwloc_topology_t topology, hwloc_obj_t *pobj, hwloc_node
 static void
 merge_useless_child(hwloc_topology_t topology, hwloc_obj_t *pparent)
 {
-  hwloc_obj_t parent = *pparent, child, *pchild;
+  hwloc_obj_t parent = *pparent, child, *pchild, ios;
 
   for_each_child_safe(child, parent, pchild)
     merge_useless_child(topology, pchild);
 
   child = parent->first_child;
-  if (!child || child->next_sibling)
-    /* There are no or several children, it's useful to keep them.  */
+  if (!child)
+    /* There are no child, nothing to merge. */
     return;
+
+  if (child->next_sibling && !hwloc_obj_type_is_io(child->next_sibling->type))
+    /* There are several non-I/O children */
+    return;
+
+  /* There is one non-I/O child and possible some I/O children.
+   * I/O children shouldn't prevent merging because they can be attached
+   * to anything with the same locality.
+   * Move them to the side during merging, and append them back later.
+   * This is easy because I/O children are always last in the list.
+   */
+  ios = child->next_sibling;
+  child->next_sibling = NULL;
 
   /* TODO: have a preference order?  */
   if (topology->ignored_types[parent->type] == HWLOC_IGNORE_TYPE_KEEP_STRUCTURE) {
@@ -1533,6 +1546,15 @@ merge_useless_child(hwloc_topology_t topology, hwloc_obj_t *pparent)
     print_object(topology, 0, child);
     parent->first_child = child->first_child;
     hwloc_free_unlinked_object(child);
+
+  }
+
+  if (ios) {
+    /* append I/O children to the list of children of the remaining object */
+    pchild = &((*pparent)->first_child);
+    while (*pchild)
+      pchild = &((*pchild)->next_sibling);
+    *pchild = ios;
   }
 }
 

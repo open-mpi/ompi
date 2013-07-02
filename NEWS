@@ -105,7 +105,7 @@ included in the vX.Y.Z section and be denoted as:
   formats.
 - Added Location Aware Mapping Algorithm (LAMA) mapping component.
 - Fixes for MPI_STATUS handling in corner cases.
-
+- Add a distance-based mapping component to find the socket "closest" to the PCI bus.
 
 1.7.1
 -----

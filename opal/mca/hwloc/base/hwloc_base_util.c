@@ -214,7 +214,7 @@ int opal_hwloc_base_get_topology(void)
     if (0 != hwloc_topology_init(&opal_hwloc_topology) ||
         0 != hwloc_topology_set_flags(opal_hwloc_topology, 
                                       (HWLOC_TOPOLOGY_FLAG_WHOLE_SYSTEM |
-                                       HWLOC_TOPOLOGY_FLAG_WHOLE_IO)) ||
+                                       HWLOC_TOPOLOGY_FLAG_IO_DEVICES)) ||
         0 != hwloc_topology_load(opal_hwloc_topology)) {
         return OPAL_ERR_NOT_SUPPORTED;
     }
@@ -844,15 +844,17 @@ hwloc_obj_t opal_hwloc_base_find_min_bound_target_under_obj(hwloc_topology_t top
 
     loc = df_search_min_bound(topo, obj, target, cache_level, &min_bound);
 
-    if (HWLOC_OBJ_CACHE == target) {
-        OPAL_OUTPUT_VERBOSE((5, opal_hwloc_base_output,
-                             "hwloc:base:min_bound_under_obj found min bound of %u on %s:%u:%u",
-                             min_bound, hwloc_obj_type_string(target),
-                             cache_level, loc->logical_index));
-    } else {
-        OPAL_OUTPUT_VERBOSE((5, opal_hwloc_base_output,
-                             "hwloc:base:min_bound_under_obj found min bound of %u on %s:%u",
-                             min_bound, hwloc_obj_type_string(target), loc->logical_index));
+    if (NULL != loc) {
+        if (HWLOC_OBJ_CACHE == target) {
+            OPAL_OUTPUT_VERBOSE((5, opal_hwloc_base_output,
+                                 "hwloc:base:min_bound_under_obj found min bound of %u on %s:%u:%u",
+                                 min_bound, hwloc_obj_type_string(target),
+                                 cache_level, loc->logical_index));
+        } else {
+            OPAL_OUTPUT_VERBOSE((5, opal_hwloc_base_output,
+                                 "hwloc:base:min_bound_under_obj found min bound of %u on %s:%u",
+                                 min_bound, hwloc_obj_type_string(target), loc->logical_index));
+        }
     }
 
     return loc;
@@ -1860,4 +1862,130 @@ int opal_hwloc_base_cset2mapstr(char *str, int len, hwloc_cpuset_t cpuset)
     }
 
     return OPAL_SUCCESS;
+}
+
+static int dist_cmp_fn (opal_list_item_t **a, opal_list_item_t **b)
+{
+    orte_rmaps_numa_node_t *aitem = *((orte_rmaps_numa_node_t **) a);
+    orte_rmaps_numa_node_t *bitem = *((orte_rmaps_numa_node_t **) b);
+
+    if (bitem->dist_from_closed > aitem->dist_from_closed) {
+        return 1;
+    } else if( aitem->dist_from_closed == bitem->dist_from_closed ) {
+        return 0;
+    } else {
+        return -1;
+    }
+}
+
+static void sort_by_dist(hwloc_topology_t topo, const char* device_name, opal_list_t *sorted_list)
+{
+    hwloc_obj_t device_obj = NULL;
+    hwloc_obj_t obj = NULL, root = NULL;
+    const struct hwloc_distances_s* distances;
+    orte_rmaps_numa_node_t *numa_node;
+    int close_node_index;
+    float latency;
+    unsigned int j;
+    unsigned int depth;
+    unsigned i;
+
+    for (device_obj = hwloc_get_obj_by_type(topo, HWLOC_OBJ_OS_DEVICE, 0); device_obj; device_obj = hwloc_get_next_osdev(topo, device_obj)) {
+        if (device_obj->attr->osdev.type == HWLOC_OBJ_OSDEV_OPENFABRICS
+                || device_obj->attr->osdev.type == HWLOC_OBJ_OSDEV_NETWORK) {
+            if (!strcmp(device_obj->name, device_name)) {
+                /* find numa node containing this device */
+                obj = device_obj->parent;
+                while ((obj != NULL) && (obj->type != HWLOC_OBJ_NODE)) {
+                    obj = obj->parent;
+                }
+                if (obj == NULL) {
+                    return;
+                } else {
+                    close_node_index = obj->logical_index;
+                }
+
+                /* find distance matrix for all numa nodes */
+                distances = hwloc_get_whole_distance_matrix_by_type(topo, HWLOC_OBJ_NODE);
+                if (NULL ==  distances) {
+                    /* we can try to find distances under group object. This info can be there. */
+                    depth = hwloc_get_type_depth(topo, HWLOC_OBJ_NODE);
+                    if (depth < 0) {
+                        return;
+                    }
+                    root = hwloc_get_root_obj(topo);
+                    for (i = 0; i < root->arity; i++) {
+                        obj = root->children[i];
+                        if (obj->distances_count > 0) {
+                            for(j = 0; j < obj->distances_count; j++) {
+                                if (obj->distances[j]->relative_depth + 1 == depth) {
+                                    distances = obj->distances[j];
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+                /* find all distances for our close node with logical index = close_node_index as close_node_index + nbobjs*j */
+                if ((NULL == distances) || (0 == distances->nbobjs)) {
+                    return;
+                }
+                /* fill list of numa nodes */
+                for (j = 0; j < distances->nbobjs; j++) {
+                    latency = distances->latency[close_node_index + distances->nbobjs * j];
+                    numa_node = OBJ_NEW(orte_rmaps_numa_node_t);
+                    numa_node->index = j;
+                    numa_node->dist_from_closed = latency;
+                    opal_list_append(sorted_list, &numa_node->super);
+                }
+                /* sort numa nodes by distance from the closest one to PCI */
+                opal_list_sort(sorted_list, dist_cmp_fn);
+                return;
+            }
+        }
+    }
+}
+
+void opal_hwloc_get_sorted_numa_list(hwloc_topology_t topo, const char* device_name, opal_list_t *sorted_list)
+{
+    hwloc_obj_t obj;
+    opal_list_item_t *item;
+    opal_hwloc_summary_t *sum;
+    opal_hwloc_topo_data_t *data;
+    orte_rmaps_numa_node_t *numa, *copy_numa;
+
+    obj = hwloc_get_root_obj(topo);
+
+    /* first see if the topology already has this info */
+    /* we call opal_hwloc_base_get_nbobjs_by_type() before it to fill summary object so it should exist*/
+    data = (opal_hwloc_topo_data_t*)obj->userdata;
+    if (NULL != data) {
+        for (item = opal_list_get_first(&data->summaries);
+                item != opal_list_get_end(&data->summaries);
+                item = opal_list_get_next(item)) {
+            sum = (opal_hwloc_summary_t*)item;
+            if (HWLOC_OBJ_NODE == sum->type) {
+                if (opal_list_get_size(&sum->sorted_by_dist_list) > 0) { 
+                    OPAL_LIST_FOREACH(numa, &(sum->sorted_by_dist_list), orte_rmaps_numa_node_t) {
+                        copy_numa = OBJ_NEW(orte_rmaps_numa_node_t);
+                        copy_numa->index = numa->index;
+                        copy_numa->dist_from_closed = numa->dist_from_closed;
+                        opal_list_append(sorted_list, &copy_numa->super);
+                    }
+                    return;
+                }else {
+                    /* don't already know it - go get it */
+                    sort_by_dist(topo, device_name, sorted_list);
+                    /* store this info in summary object for later usage */
+                    OPAL_LIST_FOREACH(numa, sorted_list, orte_rmaps_numa_node_t) {
+                        copy_numa = OBJ_NEW(orte_rmaps_numa_node_t);
+                        copy_numa->index = numa->index;
+                        copy_numa->dist_from_closed = numa->dist_from_closed;
+                        opal_list_append(&(sum->sorted_by_dist_list), &copy_numa->super);
+                    }
+                    return;
+                }
+            }
+        }
+    }
 }

@@ -72,6 +72,8 @@ typedef struct {
     /* default mapping directives */
     orte_mapping_policy_t mapping;
     orte_ranking_policy_t ranking;
+    /* device specification for min distance mapping */
+    char *device;
 } orte_rmaps_base_t;
 
 /**

@@ -108,6 +108,14 @@ OPAL_DECLSPEC opal_hwloc_locality_t opal_hwloc_base_get_relative_locality(hwloc_
  */
 OPAL_DECLSPEC void opal_hwloc_base_get_local_cpuset(void);
 
+struct orte_rmaps_numa_node_t {
+    opal_list_item_t super;
+    int index;
+    float dist_from_closed;
+};
+typedef struct orte_rmaps_numa_node_t orte_rmaps_numa_node_t;
+OBJ_CLASS_DECLARATION(orte_rmaps_numa_node_t);
+
 /**
  * Enum for what memory allocation policy we want for user allocations.
  * MAP = memory allocation policy.
@@ -176,6 +184,10 @@ OPAL_DECLSPEC hwloc_obj_t opal_hwloc_base_get_level_and_index(hwloc_cpuset_t cpu
 OPAL_DECLSPEC int opal_hwloc_base_get_local_index(hwloc_obj_type_t type,
                                                   unsigned cache_level,
                                                   unsigned int *idx);
+
+OPAL_DECLSPEC void opal_hwloc_get_sorted_numa_list(hwloc_topology_t topo, 
+                                    const char* device_name, 
+                                    opal_list_t *sorted_list);
 
 /**
  * Get the number of pu's under a given hwloc object.

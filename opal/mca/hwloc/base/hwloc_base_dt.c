@@ -28,7 +28,6 @@ int opal_hwloc_pack(opal_buffer_t *buffer, const void *src,
     for (i=0; i < num_vals; i++) {
         t = tarray[i];
 
-
         /* extract an xml-buffer representation of the tree */
         if (0 != hwloc_topology_export_xmlbuffer(t, &xmlbuffer, &len)) {
             return OPAL_ERROR;
@@ -44,6 +43,7 @@ int opal_hwloc_pack(opal_buffer_t *buffer, const void *src,
         if (NULL != xmlbuffer) {
             free(xmlbuffer);
         }
+
         /* get the available support - hwloc unfortunately does
          * not include this info in its xml export!
          */
@@ -102,7 +102,7 @@ int opal_hwloc_unpack(opal_buffer_t *buffer, void *dest,
         /* since we are loading this from an external source, we have to
          * explicitly set a flag so hwloc sets things up correctly
          */
-        if (0 != hwloc_topology_set_flags(t, HWLOC_TOPOLOGY_FLAG_IS_THISSYSTEM)) {
+        if (0 != hwloc_topology_set_flags(t, HWLOC_TOPOLOGY_FLAG_IS_THISSYSTEM | HWLOC_TOPOLOGY_FLAG_IO_DEVICES)) {
             free(xmlbuffer);
             rc = OPAL_ERROR;
             hwloc_topology_destroy(t);
@@ -118,6 +118,7 @@ int opal_hwloc_unpack(opal_buffer_t *buffer, void *dest,
         if (NULL != xmlbuffer) {
             free(xmlbuffer);
         }
+
         /* get the available support - hwloc unfortunately does
          * not include this info in its xml import!
          */
@@ -134,6 +135,7 @@ int opal_hwloc_unpack(opal_buffer_t *buffer, void *dest,
         if (OPAL_SUCCESS != (rc = opal_dss.unpack(buffer, support->membind, &cnt, OPAL_BYTE))) {
             goto cleanup;
         }
+
         /* pass it back */
         tarray[i] = t;
 
@@ -204,7 +206,6 @@ int opal_hwloc_compare(const hwloc_topology_t topo1,
     } else if (d2 > d1) {
         return OPAL_VALUE2_GREATER;
     }
-
 
     /* do the comparison the "cheat" way - get an xml representation
      * of each tree, and strcmp!

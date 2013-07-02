@@ -98,7 +98,7 @@ int orte_rmaps_base_open(void)
     /* define default mapping policy */
     param = mca_base_param_reg_string_name("rmaps", "base_mapping_policy",
 #if OPAL_HAVE_HWLOC
-                                           "Mapping Policy [slot (default) | hwthread | core | l1cache | l2cache | l3cache | socket | numa | board | node | seq], with allowed modifiers :SPAN,OVERSUBSCRIBE,NOOVERSUBSCRIBE",
+                                           "Mapping Policy [slot (default) | hwthread | core | l1cache | l2cache | l3cache | socket | numa | board | node | seq | dist], with allowed modifiers :SPAN,OVERSUBSCRIBE,NOOVERSUBSCRIBE",
 #else
                                            "Mapping Policy [slot (default) | node], with allowed modifiers :SPAN,OVERSUBSCRIBE,NOOVERSUBSCRIBE",
 #endif
@@ -117,6 +117,25 @@ int orte_rmaps_base_open(void)
             return ORTE_ERR_SILENT;
         }
         if (2 == opal_argv_count(ck)) {
+            /* if the policy is "dist", then we set the policy to that value 
+             * and save the second argument as the device 
+             */ 
+#if OPAL_HAVE_HWLOC 
+            if (0 == strncasecmp(ck[0], "dist", 4)) { 
+                tmp = ORTE_MAPPING_BYDIST; 
+                ck2 = opal_argv_split(ck[1], ','); 
+                if (ck2[0] != NULL) { 
+                    orte_rmaps_base.device = strdup(ck2[0]); 
+                    for (i=1; NULL != ck2[i]; i++) { 
+                        if (0 == strncasecmp(ck2[i], "span", strlen(ck2[i]))) { 
+                            orte_rmaps_base.mapping |= ORTE_MAPPING_SPAN; 
+                        }  
+                    } 
+                } 
+                opal_argv_free(ck2); 
+                goto setpolicy; 
+            } 
+#endif
             ck2 = opal_argv_split(ck[1], ',');
             for (i=0; NULL != ck2[i]; i++) {
                 if (0 == strncasecmp(ck2[i], "span", strlen(ck2[i]))) {
@@ -181,6 +200,7 @@ int orte_rmaps_base_open(void)
             opal_argv_free(ck);
             return ORTE_ERR_SILENT;
         }
+    setpolicy:
         ORTE_SET_MAPPING_POLICY(orte_rmaps_base.mapping, tmp);
         ORTE_SET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping, ORTE_MAPPING_GIVEN);
         opal_argv_free(ck);
@@ -298,7 +318,6 @@ int orte_rmaps_base_open(void)
         ORTE_SET_RANKING_DIRECTIVE(orte_rmaps_base.ranking, ORTE_RANKING_GIVEN);
     }
 
-#if 0
     /* #cpus/rank to use */
     param = mca_base_param_reg_int_name("rmaps", "base_cpus_per_proc",
                                         "Number of cpus to use for each rank [1-2**15 (default=1)]",
@@ -306,12 +325,23 @@ int orte_rmaps_base_open(void)
     mca_base_param_reg_syn_name(param, "rmaps", "base_cpus_per_rank", false);
     mca_base_param_lookup_int(param, &value);
     orte_rmaps_base.cpus_per_rank = value;
-    /* if the cpus/rank > 1, then we have to bind to cores UNLESS the binding has
-     * already been set to something else
-     */
-    if (1 < orte_rmaps_base.cpus_per_rank &&
-        !OPAL_BINDING_POLICY_IS_SET(opal_hwloc_binding_policy)) {
-        opal_hwloc_binding_policy |= OPAL_BIND_TO_CORE;
+#if OPAL_HAVE_HWLOC
+    if (!OPAL_BINDING_POLICY_IS_SET(opal_hwloc_binding_policy)) {
+        /* if MAP BY DIST then we set binding policy to numa UNLESS the binding has
+         * already been set to something else
+         */
+        if (ORTE_GET_MAPPING_POLICY(orte_rmaps_base.mapping) == ORTE_MAPPING_BYDIST) {
+            OPAL_SET_BINDING_POLICY(opal_hwloc_binding_policy, OPAL_BIND_TO_NUMA);
+        } else if (1 < orte_rmaps_base.cpus_per_rank) {
+            /* if the cpus/rank > 1, then we have to bind to cores UNLESS the binding has
+             * already been set to something else
+             */
+            if (opal_hwloc_use_hwthreads_as_cpus) {
+                OPAL_SET_BINDING_POLICY(opal_hwloc_binding_policy, OPAL_BIND_TO_HWTHREAD);
+            } else {
+                OPAL_SET_BINDING_POLICY(opal_hwloc_binding_policy, OPAL_BIND_TO_CORE);
+            }
+        }
     }
 #endif
 

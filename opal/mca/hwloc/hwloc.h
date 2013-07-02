@@ -169,6 +169,7 @@ typedef struct {
     unsigned cache_level;
     unsigned int num_objs;
     opal_hwloc_resource_type_t rtype;
+    opal_list_t sorted_by_dist_list;
 } opal_hwloc_summary_t;
 OBJ_CLASS_DECLARATION(opal_hwloc_summary_t);
 
