@@ -22,9 +22,11 @@
 #include "ompi_config.h"
 
 #include "coll_portals4.h"
+#include "coll_portals4_request.h"
 
 #include "mpi.h"
 #include "ompi/mca/coll/coll.h"
+#include "ompi/mca/coll/base/base.h"
 
 const char *mca_coll_portals4_component_version_string =
     "Open MPI Portals 4 collective MCA component version " OMPI_VERSION;
@@ -38,33 +40,38 @@ static mca_coll_base_module_t* portals4_comm_query(struct ompi_communicator_t *c
                                                    int *priority);
 static int portals4_module_enable(mca_coll_base_module_t *module,
                                   struct ompi_communicator_t *comm);
+static int portals4_progress(void);
 
-const mca_coll_base_component_2_0_0_t mca_coll_portals4_component = {
 
-    /* First, the mca_component_t struct containing meta information
-     * about the component itself */
-
+mca_coll_portals4_component_t mca_coll_portals4_component = {
     {
-     MCA_COLL_BASE_VERSION_2_0_0,
+        /* First, the mca_component_t struct containing meta information
+         * about the component itself */
 
-     /* Component name and version */
-     "portals4",
-     OMPI_MAJOR_VERSION,
-     OMPI_MINOR_VERSION,
-     OMPI_RELEASE_VERSION,
+        {
+            MCA_COLL_BASE_VERSION_2_0_0,
 
-     /* Component open and close functions */
-     NULL,
-     NULL,
-     NULL,
-     portals4_register
-    },
-    {
-    },
+            /* Component name and version */
+            "portals4",
+            OMPI_MAJOR_VERSION,
+            OMPI_MINOR_VERSION,
+            OMPI_RELEASE_VERSION,
 
-    /* Initialization / querying functions */
-    mca_coll_portals4_init_query,
-    mca_coll_portals4_comm_query
+            /* Component open and close functions */
+            NULL,
+            NULL,
+            NULL,
+            portals4_register
+        },
+        {
+            /* The component is not checkpoint ready */
+            MCA_BASE_METADATA_PARAM_NONE
+        },
+
+        /* Initialization / querying functions */
+        portals4_init_query,
+        portals4_comm_query
+    }
 };
 
 
@@ -72,7 +79,7 @@ static int
 portals4_register(void)
 {
     mca_coll_portals4_priority = 100;
-    (void) mca_base_component_var_register(&mca_coll_portals4_component.collm_version, "priority",
+    (void) mca_base_component_var_register(&mca_coll_portals4_component.super.collm_version, "priority",
                                            "Priority of the portals4 coll component",
                                            MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
                                            OPAL_INFO_LVL_9,
@@ -93,6 +100,154 @@ static int
 portals4_init_query(bool enable_progress_threads,
                     bool enable_mpi_threads)
 {
+    int ret;
+    ptl_md_t md;
+    ptl_me_t me;
+
+    /* Initialize Portals and create a physical, matching interface */
+    ret = PtlNIInit(PTL_IFACE_DEFAULT,
+                    PTL_NI_PHYSICAL | PTL_NI_MATCHING,
+                    PTL_PID_ANY,
+                    NULL,
+                    NULL,
+                    &mca_coll_portals4_component.ni_h);
+    if (PTL_OK != ret) {
+        opal_output_verbose(1, ompi_coll_base_framework.framework_output,
+                            "%s:%d: PtlNIInit failed: %d\n",
+                            __FILE__, __LINE__, ret);
+        return OMPI_ERROR;
+    }
+
+    /* FIX ME: Need to make sure our ID matches with the MTL... */
+
+    ret = PtlEQAlloc(mca_coll_portals4_component.ni_h,
+                     4096,
+                     &mca_coll_portals4_component.eq_h);
+    if (PTL_OK != ret) {
+        opal_output_verbose(1, ompi_coll_base_framework.framework_output,
+                            "%s:%d: PtlEQAlloc failed: %d\n",
+                            __FILE__, __LINE__, ret);
+        return OMPI_ERROR;
+    }
+
+    ret = PtlPTAlloc(mca_coll_portals4_component.ni_h,
+                     0,
+                     mca_coll_portals4_component.eq_h,
+                     15,
+                     &mca_coll_portals4_component.pt_idx);
+    if (PTL_OK != ret) {
+        opal_output_verbose(1, ompi_coll_base_framework.framework_output,
+                            "%s:%d: PtlPTAlloc failed: %d\n",
+                            __FILE__, __LINE__, ret);
+        return OMPI_ERROR;
+    }
+
+    ret = PtlPTAlloc(mca_coll_portals4_component.ni_h,
+                     0,
+                     mca_coll_portals4_component.eq_h,
+                     16,
+                     &mca_coll_portals4_component.finish_pt_idx);
+    if (PTL_OK != ret) {
+        opal_output_verbose(1, ompi_coll_base_framework.framework_output,
+                            "%s:%d: PtlPTAlloc failed: %d\n",
+                            __FILE__, __LINE__, ret);
+        return OMPI_ERROR;
+    }
+
+    /* send space... */
+    md.start = 0;
+    md.length = PTL_SIZE_MAX;
+    md.options = 0;
+    md.eq_handle = PTL_EQ_NONE;
+    md.ct_handle = PTL_CT_NONE;
+    ret = PtlMDBind(mca_coll_portals4_component.ni_h,
+                    &md,
+                    &mca_coll_portals4_component.md_h);
+    if (PTL_OK != ret) {
+        opal_output_verbose(1, ompi_coll_base_framework.framework_output,
+                            "%s:%d: PtlMDBind failed: %d\n",
+                            __FILE__, __LINE__, ret);
+        return OMPI_ERROR;
+    }
+
+    /* setup finish ack ME */
+    me.start = NULL;
+    me.length = 0;
+    me.ct_handle = PTL_CT_NONE;
+    me.min_free = 0;
+    me.uid = PTL_UID_ANY;
+    me.options = PTL_ME_OP_PUT | 
+        PTL_ME_EVENT_LINK_DISABLE | PTL_ME_EVENT_UNLINK_DISABLE;
+    me.match_id.phys.nid = PTL_NID_ANY;
+    me.match_id.phys.pid = PTL_PID_ANY;
+    me.match_bits = 0;
+    me.ignore_bits = 0;
+
+    ret = PtlMEAppend(mca_coll_portals4_component.ni_h,
+                      mca_coll_portals4_component.finish_pt_idx,
+                      &me,
+                      PTL_OVERFLOW_LIST,
+                      NULL,
+                      &mca_coll_portals4_component.barrier_unex_me_h);
+    if (PTL_OK != ret) {
+        opal_output_verbose(1, ompi_coll_base_framework.framework_output,
+                            "%s:%d: PtlMEAppend of barrier unexpected failed: %d\n",
+                            __FILE__, __LINE__, ret);
+        return OMPI_ERROR;
+    }
+
+    /* Setup Barrier unexpected arena, which is not per-communicator specific. */
+    me.start = NULL;
+    me.length = 0;
+    me.ct_handle = PTL_CT_NONE;
+    me.min_free = 0;
+    me.uid = PTL_UID_ANY;
+    me.options = PTL_ME_OP_PUT | PTL_ME_EVENT_SUCCESS_DISABLE |
+        PTL_ME_EVENT_LINK_DISABLE | PTL_ME_EVENT_UNLINK_DISABLE;
+    me.match_id.phys.nid = PTL_NID_ANY;
+    me.match_id.phys.pid = PTL_PID_ANY;
+    MTL_PORTALS4_SET_BITS(me.match_bits, 0, 0, COLL_PORTALS4_BARRIER, 0);
+    me.ignore_bits = COLL_PORTALS4_CID_MASK | COLL_PORTALS4_OP_COUNT_MASK;
+
+    ret = PtlMEAppend(mca_coll_portals4_component.ni_h,
+                      mca_coll_portals4_component.pt_idx,
+                      &me,
+                      PTL_OVERFLOW_LIST,
+                      NULL,
+                      &mca_coll_portals4_component.barrier_unex_me_h);
+    if (PTL_OK != ret) {
+        opal_output_verbose(1, ompi_coll_base_framework.framework_output,
+                            "%s:%d: PtlMEAppend of barrier unexpected failed: %d\n",
+                            __FILE__, __LINE__, ret);
+        return OMPI_ERROR;
+    }
+
+    OBJ_CONSTRUCT(&mca_coll_portals4_component.requests, ompi_free_list_t);
+    ret = ompi_free_list_init(&mca_coll_portals4_component.requests,
+                              sizeof(ompi_coll_portals4_request_t),
+                              OBJ_CLASS(ompi_coll_portals4_request_t),
+                              8,
+                              0,
+                              8,
+                              NULL);
+    if (OMPI_SUCCESS != ret) {
+        opal_output_verbose(1, ompi_coll_base_framework.framework_output,
+                            "%s:%d: ompi_free_list_init failed: %d\n",
+                            __FILE__, __LINE__, ret);
+        return ret;
+    }
+
+    /* activate progress callback */
+    ret = opal_progress_register(portals4_progress);
+    if (OMPI_SUCCESS != ret) {
+        opal_output_verbose(1, ompi_coll_base_framework.framework_output,
+                            "%s:%d: opal_progress_register failed: %d\n",
+                            __FILE__, __LINE__, ret);
+        return OMPI_ERROR;
+    }
+
+    /* FIX ME: Need to find a way to shutdown when we're all done... */
+
     return OMPI_SUCCESS;
 }
 
@@ -106,15 +261,23 @@ mca_coll_base_module_t *
 portals4_comm_query(struct ompi_communicator_t *comm, 
                     int *priority)
 {
-    int size;
     mca_coll_portals4_module_t *portals4_module;
+
+    /* For now, we don't support intercommunicators */
+    if (OMPI_COMM_IS_INTER(comm)) {
+        return NULL;
+    }
 
     portals4_module = OBJ_NEW(mca_coll_portals4_module_t);
     if (NULL == portals4_module) return NULL;
 
     *priority = mca_coll_portals4_priority;
-    portals4_module->super.coll_module_enable = mca_coll_portals4_module_enable;
+    portals4_module->super.coll_module_enable = portals4_module_enable;
     portals4_module->super.ft_event = NULL;
+    portals4_module->super.coll_barrier = ompi_coll_portals4_barrier_intra;
+    portals4_module->super.coll_ibarrier = ompi_coll_portals4_ibarrier_intra;
+
+    portals4_module->barrier_count = 0;
 
     return &(portals4_module->super);
 }
@@ -123,12 +286,57 @@ portals4_comm_query(struct ompi_communicator_t *comm,
 /*
  * Init module on the communicator
  */
-int
+static int
 portals4_module_enable(mca_coll_base_module_t *module,
-                             struct ompi_communicator_t *comm)
+                       struct ompi_communicator_t *comm)
 {
     return OMPI_SUCCESS;
 }
+
+
+static int
+portals4_progress(void)
+{
+    int count = 0, ret;
+    ptl_event_t ev;
+    ompi_coll_portals4_request_t *ptl_request;
+
+    while (true) {
+	ret = PtlEQGet(mca_coll_portals4_component.eq_h, &ev);
+        if (PTL_OK == ret) {
+            OPAL_OUTPUT_VERBOSE((60, ompi_coll_base_framework.framework_output,
+                                 "Found event of type %d\n", ev.type));
+            count++;
+            if (PTL_OK == ev.ni_fail_type) {
+                assert(0 != ev.hdr_data);
+                ptl_request = (ompi_coll_portals4_request_t*) ev.hdr_data;
+                assert(NULL != ptl_request);
+                switch (ptl_request->type) {
+                case OMPI_COLL_PORTALS4_TYPE_BARRIER:
+                    ompi_coll_portals4_ibarrier_intra_fini(ptl_request);
+                    break;
+                }
+            } else {
+                opal_output(ompi_coll_base_framework.framework_output,
+                            "Error reported in event: %d\n", ev.ni_fail_type);
+                abort();
+            }
+        } else if (PTL_EQ_EMPTY == ret) {
+            break;
+        } else if (PTL_EQ_DROPPED == ret) {
+            opal_output(ompi_coll_base_framework.framework_output,
+                        "Flow control situation without recovery (EQ_DROPPED)\n");
+            abort();
+        } else {
+            opal_output(ompi_coll_base_framework.framework_output,
+                        "Error returned from PtlEQGet: %d", ret);
+            break;
+        }
+    }
+
+    return count;
+}
+
 
 OBJ_CLASS_INSTANCE(mca_coll_portals4_module_t,
                    mca_coll_base_module_t,
