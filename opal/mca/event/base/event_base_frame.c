@@ -46,11 +46,19 @@
  * and is only mentioned here for completeness.
  */
 static int opal_event_base_open(mca_base_open_flag_t flags);
+static int opal_event_base_close(void);
 
 /* Use default register and close function */
 MCA_BASE_FRAMEWORK_DECLARE(opal, event, NULL, NULL, opal_event_base_open,
-			   NULL, mca_event_base_static_components,
+			   opal_event_base_close, mca_event_base_static_components,
 			   0);
+
+static int opal_event_base_close(void)
+{
+    /* cleanup components even though they are statically opened */
+    return mca_base_framework_components_close (&opal_event_base_framework,
+						NULL);
+}
 			   
 /*
  * Globals
