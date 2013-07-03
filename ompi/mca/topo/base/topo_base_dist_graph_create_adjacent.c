@@ -48,31 +48,40 @@ int mca_topo_base_dist_graph_create_adjacent(mca_topo_base_module_t* module,
     topo->indegree = indegree;
     topo->outdegree = outdegree;
     topo->weighted = !((MPI_UNWEIGHTED == sourceweights) && (MPI_UNWEIGHTED == destweights));
-    topo->in = (int*)malloc(sizeof(int) * topo->indegree);
-    if( NULL == topo->in ) {
-        goto bail_out;
-    }
-    memcpy( topo->in, sources, sizeof(int) * topo->indegree );
-    if( MPI_UNWEIGHTED != sourceweights ) {
-        topo->inw = (int*)malloc(sizeof(int) * topo->indegree);
-        if( NULL == topo->inw ) {
+
+    if (topo->indegree > 0) {
+        topo->in = (int*)malloc(sizeof(int) * topo->indegree);
+        if (NULL == topo->in) {
             goto bail_out;
         }
-        memcpy( topo->inw, sourceweights, sizeof(int) * topo->indegree );
+        memcpy(topo->in, sources, sizeof(int) * topo->indegree);
+        if (MPI_UNWEIGHTED != sourceweights) {
+            topo->inw = (int*)malloc(sizeof(int) * topo->indegree);
+            if( NULL == topo->inw ) {
+                goto bail_out;
+            }
+            memcpy( topo->inw, sourceweights, sizeof(int) * topo->indegree );
+        }
     }
-    topo->out = (int*)malloc(sizeof(int) * topo->outdegree);
-    if( NULL == topo->out ) {
-        goto bail_out;
-    }
-    memcpy( topo->out, destinations, sizeof(int) * topo->outdegree );
-    topo->outw = NULL;
-    if( MPI_UNWEIGHTED != destweights ) {
-        topo->outw = (int*)malloc(sizeof(int) * topo->outdegree);
-        if( NULL == topo->outw ) {
+
+    if (topo->outdegree > 0) {
+        topo->out = (int*)malloc(sizeof(int) * topo->outdegree);
+        if (NULL == topo->out) {
             goto bail_out;
         }
-        memcpy( topo->outw, destweights, sizeof(int) * topo->outdegree );
+        memcpy(topo->out, destinations, sizeof(int) * topo->outdegree);
+        topo->outw = NULL;
+        if (MPI_UNWEIGHTED != destweights) {
+            if (topo->outdegree > 0) {
+                topo->outw = (int*)malloc(sizeof(int) * topo->outdegree);
+                if (NULL == topo->outw) {
+                    goto bail_out;
+                }
+                memcpy(topo->outw, destweights, sizeof(int) * topo->outdegree);
+            }
+        }
     }
+
     (*newcomm)->c_topo                 = module;
     (*newcomm)->c_topo->mtc.dist_graph = topo;
     (*newcomm)->c_topo->reorder        = reorder;

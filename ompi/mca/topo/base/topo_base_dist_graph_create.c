@@ -127,20 +127,41 @@ int mca_topo_base_dist_graph_distribute(mca_topo_base_module_t* module,
     topo->indegree  = idx[0].in;
     topo->outdegree = idx[0].out;
     topo->weighted = (weights != MPI_UNWEIGHTED);
-    topo->in = (int*)malloc(sizeof(int) * topo->indegree);
-    topo->out = (int*)malloc(sizeof(int) * topo->outdegree);
-    if( (NULL == topo->in) || (NULL == topo->out) ) {
-        err = OMPI_ERR_OUT_OF_RESOURCE;
-        goto bail_out;
+    if (topo->indegree > 0) {
+        topo->in = (int*)malloc(sizeof(int) * topo->indegree);
+        if (NULL == topo->in) {
+            err = OMPI_ERR_OUT_OF_RESOURCE;
+            goto bail_out;
+        }    
+    } else {
+        topo->in = NULL;
     }
+    if (topo->outdegree > 0) {
+        topo->out = (int*)malloc(sizeof(int) * topo->outdegree);
+        if (NULL == topo->out) {
+            err = OMPI_ERR_OUT_OF_RESOURCE;
+            goto bail_out;
+        }    
+    } else {
+        topo->out = NULL;
+    }
+
     topo->inw = NULL;
     topo->outw = NULL;
     if (MPI_UNWEIGHTED != weights) {
-        topo->inw = (int*)malloc(sizeof(int) * topo->indegree);
-        topo->outw = (int*)malloc(sizeof(int) * topo->outdegree);
-        if( (NULL == topo->inw) || (NULL == topo->outw) ) {
-            err = OMPI_ERR_OUT_OF_RESOURCE;
-            goto bail_out;
+        if (topo->indegree > 0) {
+            topo->inw = (int*)malloc(sizeof(int) * topo->indegree);
+            if (NULL == topo->inw) {
+                err = OMPI_ERR_OUT_OF_RESOURCE;
+                goto bail_out;
+            }
+        }
+        if (topo->outdegree > 0) {
+            topo->outw = (int*)malloc(sizeof(int) * topo->outdegree);
+            if (NULL == topo->outw) {
+                err = OMPI_ERR_OUT_OF_RESOURCE;
+                goto bail_out;
+            }
         }
     }
 
@@ -179,10 +200,14 @@ int mca_topo_base_dist_graph_distribute(mca_topo_base_module_t* module,
     temp = topo->in;
     if (MPI_UNWEIGHTED != weights) {
         count *= 2;  /* don't forget the weights */
-        temp = (int*)malloc(count*sizeof(int));  /* Allocate an array big enough to hold the edges and their weights */
-        if( NULL == temp ) {
-            err = OMPI_ERR_OUT_OF_RESOURCE;
-            goto bail_out;
+        if (count > 0) {
+            /* Allocate an array big enough to hold the edges and
+               their weights */
+            temp = (int*)malloc(count*sizeof(int));
+            if (NULL == temp) {
+                err = OMPI_ERR_OUT_OF_RESOURCE;
+                goto bail_out;
+            }
         }
     }
     for( left_over = count, current_pos = i = 0; left_over > 0; i++ ) {
@@ -211,10 +236,14 @@ int mca_topo_base_dist_graph_distribute(mca_topo_base_module_t* module,
     temp = topo->out;
     if (MPI_UNWEIGHTED != weights) {
         count *= 2;  /* don't forget the weights */
-        temp = (int*)malloc(count*sizeof(int));  /* Allocate an array big enough to hold the edges and their weights */
-        if( NULL == temp ) {
-            err = OMPI_ERR_OUT_OF_RESOURCE;
-            goto bail_out;
+        if (count > 0) {
+            /* Allocate an array big enough to hold the edges and
+               their weights */
+            temp = (int*)malloc(count*sizeof(int));
+            if (NULL == temp) {
+                err = OMPI_ERR_OUT_OF_RESOURCE;
+                goto bail_out;
+            }
         }
     }
     for( left_over = count, current_pos = i = 0; left_over > 0; i++ ) {
