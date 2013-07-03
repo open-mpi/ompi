@@ -29,6 +29,7 @@ struct mca_coll_portals4_component_t {
 
     /** Network interface handle for matched interface */
     ptl_handle_ni_t ni_h;
+    ptl_uid_t uid;
     ptl_pt_index_t pt_idx;
     ptl_pt_index_t finish_pt_idx;
     ptl_handle_eq_t eq_h;

@@ -58,6 +58,8 @@ struct mca_mtl_portals4_module_t {
 
     /** Network interface handle for matched interface */
     ptl_handle_ni_t ni_h;
+    /** Uid for current user */
+    ptl_uid_t uid;
 
     /** portals index for message matching */
     ptl_pt_index_t recv_idx;

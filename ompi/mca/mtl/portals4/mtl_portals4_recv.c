@@ -380,7 +380,7 @@ ompi_mtl_portals4_irecv(struct mca_mtl_base_module_t* mtl,
     me.length = length;
     me.ct_handle = PTL_CT_NONE;
     me.min_free = 0;
-    me.uid = PTL_UID_ANY;
+    me.uid = ompi_mtl_portals4.uid;
     me.options = 
         PTL_ME_OP_PUT | 
         PTL_ME_USE_ONCE | 

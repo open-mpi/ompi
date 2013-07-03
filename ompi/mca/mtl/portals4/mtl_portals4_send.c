@@ -213,7 +213,7 @@ ompi_mtl_portals4_short_isend(mca_pml_base_send_mode_t mode,
         me.length = 0;
         me.ct_handle = PTL_CT_NONE;
         me.min_free = 0;
-        me.uid = PTL_UID_ANY;
+        me.uid = ompi_mtl_portals4.uid;
         me.options = 
             PTL_ME_OP_PUT | 
             PTL_ME_USE_ONCE | 
@@ -300,7 +300,7 @@ ompi_mtl_portals4_long_isend(void *start, int length, int contextid, int tag,
     me.length = length;
     me.ct_handle = PTL_CT_NONE;
     me.min_free = 0;
-    me.uid = PTL_UID_ANY;
+    me.uid = ompi_mtl_portals4.uid;
     me.options = 
         PTL_ME_OP_GET | 
         PTL_ME_USE_ONCE | 

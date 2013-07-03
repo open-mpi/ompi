@@ -118,7 +118,7 @@ ompi_mtl_portals4_activate_block(ompi_mtl_portals4_recv_short_block_t *block)
     me.length = ompi_mtl_portals4.recv_short_size;
     me.ct_handle = PTL_CT_NONE;
     me.min_free = ompi_mtl_portals4.eager_limit;
-    me.uid = PTL_UID_ANY;
+    me.uid = ompi_mtl_portals4.uid;
     me.options = 
         PTL_ME_OP_PUT | 
         PTL_ME_EVENT_LINK_DISABLE |
