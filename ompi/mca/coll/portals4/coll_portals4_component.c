@@ -232,6 +232,14 @@ portals4_init_query(bool enable_progress_threads,
 
     /* FIX ME: Need to make sure our ID matches with the MTL... */
 
+    ret = PtlGetUid(mca_coll_portals4_component.ni_h, &mca_coll_portals4_component.uid);
+    if (PTL_OK != ret) {
+        opal_output_verbose(1, ompi_coll_base_framework.framework_output,
+                            "%s:%d: PtlGetUid failed: %d\n",
+                            __FILE__, __LINE__, ret);
+        return OMPI_ERROR;
+    }
+
     ret = PtlEQAlloc(mca_coll_portals4_component.ni_h,
                      4096,
                      &mca_coll_portals4_component.eq_h);
@@ -287,7 +295,7 @@ portals4_init_query(bool enable_progress_threads,
     me.length = 0;
     me.ct_handle = PTL_CT_NONE;
     me.min_free = 0;
-    me.uid = PTL_UID_ANY;
+    me.uid = mca_coll_portals4_component.uid;
     me.options = PTL_ME_OP_PUT | 
         PTL_ME_EVENT_LINK_DISABLE | PTL_ME_EVENT_UNLINK_DISABLE;
     me.match_id.phys.nid = PTL_NID_ANY;
@@ -313,7 +321,7 @@ portals4_init_query(bool enable_progress_threads,
     me.length = 0;
     me.ct_handle = PTL_CT_NONE;
     me.min_free = 0;
-    me.uid = PTL_UID_ANY;
+    me.uid = mca_coll_portals4_component.uid;
     me.options = PTL_ME_OP_PUT | PTL_ME_EVENT_SUCCESS_DISABLE |
         PTL_ME_EVENT_LINK_DISABLE | PTL_ME_EVENT_UNLINK_DISABLE;
     me.match_id.phys.nid = PTL_NID_ANY;

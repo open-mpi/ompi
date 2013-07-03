@@ -60,7 +60,7 @@ ompi_coll_portals4_barrier_intra(struct ompi_communicator_t *comm,
     me.length = 0;
     me.ct_handle = ct_h;
     me.min_free = 0;
-    me.uid = PTL_UID_ANY;
+    me.uid = mca_coll_portals4_component.uid;
     me.options = PTL_ME_OP_PUT | PTL_ME_EVENT_SUCCESS_DISABLE |
         PTL_ME_EVENT_LINK_DISABLE | PTL_ME_EVENT_UNLINK_DISABLE |
         PTL_ME_EVENT_CT_COMM | PTL_ME_EVENT_CT_OVERFLOW;
@@ -214,7 +214,7 @@ ompi_coll_portals4_ibarrier_intra(struct ompi_communicator_t *comm,
     me.length = 0;
     me.ct_handle = request->ct_h;
     me.min_free = 0;
-    me.uid = PTL_UID_ANY;
+    me.uid = mca_coll_portals4_component.uid;
     me.options = PTL_ME_OP_PUT | PTL_ME_EVENT_SUCCESS_DISABLE |
         PTL_ME_EVENT_LINK_DISABLE | PTL_ME_EVENT_UNLINK_DISABLE |
         PTL_ME_EVENT_CT_COMM | PTL_ME_EVENT_CT_OVERFLOW;

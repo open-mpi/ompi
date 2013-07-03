@@ -275,6 +275,14 @@ ompi_mtl_portals4_component_init(bool enable_progress_threads,
         goto error;
     }
 
+    ret = PtlGetUid(ompi_mtl_portals4.ni_h, &ompi_mtl_portals4.uid);
+    if (PTL_OK != ret) {
+        opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
+                            "%s:%d: PtlGetUid failed: %d\n",
+                            __FILE__, __LINE__, ret);
+        goto error;
+    }
+
     /* Publish our NID/PID in the modex */
     ret = PtlGetId(ompi_mtl_portals4.ni_h, &id);
     if (PTL_OK != ret) {
@@ -405,7 +413,7 @@ ompi_mtl_portals4_component_init(bool enable_progress_threads,
     me.length = 0;
     me.ct_handle = PTL_CT_NONE;
     me.min_free = 0;
-    me.uid = PTL_UID_ANY;
+    me.uid = ompi_mtl_portals4.uid;
     me.options = PTL_ME_OP_PUT | 
         PTL_ME_EVENT_LINK_DISABLE |
         PTL_ME_EVENT_COMM_DISABLE | 
