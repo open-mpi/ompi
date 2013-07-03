@@ -752,10 +752,10 @@ void opal_memory_linux_malloc_init_hook(void)
 
        This is also an issue when using Gentoo's version of
        'fakeroot', sandbox v2.5.  Sandbox environments can also be
-       detected fairly easily by looking for SANDBOX_PID. */
+       detected fairly easily by looking for SANDBOX_ON. */
     if (getenv("FAKEROOTKEY") != NULL ||
         getenv("FAKED_MODE") != NULL ||
-        getenv("SANDBOX_PID") != NULL ) {
+        getenv("SANDBOX_ON") != NULL ) {
         return;
     }
 
