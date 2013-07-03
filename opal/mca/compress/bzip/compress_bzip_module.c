@@ -27,7 +27,6 @@
 #include "opal/util/opal_environ.h"
 
 #include "opal/constants.h"
-#include "opal/mca/base/mca_base_param.h"
 #include "opal/util/basename.h"
 
 #include "opal/mca/compress/compress.h"

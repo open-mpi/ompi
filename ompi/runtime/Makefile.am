@@ -25,7 +25,8 @@ headers += \
         runtime/mpiruntime.h \
 	runtime/ompi_cr.h \
         runtime/params.h \
-	runtime/ompi_module_exchange.h
+	runtime/ompi_module_exchange.h \
+	runtime/ompi_info_support.h
 
 libmpi_la_SOURCES += \
         runtime/ompi_mpi_abort.c \
@@ -34,4 +35,5 @@ libmpi_la_SOURCES += \
         runtime/ompi_mpi_params.c \
         runtime/ompi_mpi_preconnect.c \
 	runtime/ompi_cr.c \
-	runtime/ompi_module_exchange.c
+	runtime/ompi_module_exchange.c \
+	runtime/ompi_info_support.c

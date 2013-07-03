@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -12,7 +13,7 @@
  * Copyright (c) 2007-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2010-2012 Los Alamos National Security, LLC.
+ * Copyright (c) 2010-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * $COPYRIGHT$
  *
@@ -243,8 +244,8 @@ opal_init_util(int* pargc, char*** pargv)
     opal_output_init();
 
     /* initialize install dirs code */
-    if (OPAL_SUCCESS != (ret = opal_installdirs_base_open())) {
-        fprintf(stderr, "opal_installdirs_base_open() failed -- process will likely abort (%s:%d, returned %d instead of OPAL_INIT)\n",
+    if (OPAL_SUCCESS != (ret = mca_base_framework_open(&opal_installdirs_base_framework, 0))) {
+        fprintf(stderr, "opal_installdirs_base_open() failed -- process will likely abort (%s:%d, returned %d instead of OPAL_SUCCESS)\n",
                 __FILE__, __LINE__, ret);
         return ret;
     }
@@ -309,6 +310,11 @@ opal_init_util(int* pargc, char*** pargv)
         goto return_error;
     }
 
+    if (OPAL_SUCCESS != (ret = mca_base_framework_register(&opal_event_base_framework, 0))) {
+        error = "opal_event_register";
+        goto return_error;
+    }
+
     return OPAL_SUCCESS;
 
  return_error:
@@ -348,16 +354,16 @@ opal_init(int* pargc, char*** pargv)
     /* open hwloc - since this is a static framework, no
      * select is required
      */
-    if (OPAL_SUCCESS != (ret = opal_hwloc_base_open())) {
+    if (OPAL_SUCCESS != (ret = mca_base_framework_open(&opal_hwloc_base_framework, 0))) {
         error = "opal_hwloc_base_open";
         goto return_error;
     }
 
     /* the memcpy component should be one of the first who get
-     * loaded in order to make sure we ddo have all the available
+     * loaded in order to make sure we have all the available
      * versions of memcpy correctly configured.
      */
-    if( OPAL_SUCCESS != (ret = opal_memcpy_base_open()) ) {
+    if (OPAL_SUCCESS != (ret = mca_base_framework_open(&opal_memcpy_base_framework, 0))) {
         error = "opal_memcpy_base_open";
         goto return_error;
     }
@@ -366,7 +372,7 @@ opal_init(int* pargc, char*** pargv)
        triggered before this (any time after mem_free_init(),
        actually).  This is a hook available for memory manager hooks
        without good initialization routine support */
-    if (OPAL_SUCCESS != (ret = opal_memory_base_open())) {
+    if (OPAL_SUCCESS != (ret = mca_base_framework_open(&opal_memory_base_framework, 0))) {
         error = "opal_memory_base_open";
         goto return_error;
     }
@@ -378,7 +384,7 @@ opal_init(int* pargc, char*** pargv)
     }
 
     /* initialize the memory checker, to allow early support for annotation */
-    if (OPAL_SUCCESS != (ret = opal_memchecker_base_open())) {
+    if (OPAL_SUCCESS != (ret = mca_base_framework_open(&opal_memchecker_base_framework, 0))) {
         error = "opal_memchecker_base_open";
         goto return_error;
     }
@@ -389,12 +395,12 @@ opal_init(int* pargc, char*** pargv)
         goto return_error;
     }
 
-    if (OPAL_SUCCESS != (ret = opal_backtrace_base_open())) {
+    if (OPAL_SUCCESS != (ret = mca_base_framework_open(&opal_backtrace_base_framework, 0))) {
         error = "opal_backtrace_base_open";
         goto return_error;
     }
 
-    if (OPAL_SUCCESS != (ret = opal_timer_base_open())) {
+    if (OPAL_SUCCESS != (ret = mca_base_framework_open(&opal_timer_base_framework, 0))) {
         error = "opal_timer_base_open";
         goto return_error;
     }
@@ -407,7 +413,7 @@ opal_init(int* pargc, char*** pargv)
     /*
      * Initialize the event library
      */
-    if (OPAL_SUCCESS != (ret = opal_event_base_open())) {
+    if (OPAL_SUCCESS != (ret = mca_base_framework_open(&opal_event_base_framework, 0))) {
         error = "opal_event_base_open";
         goto return_error;
     }
@@ -423,7 +429,7 @@ opal_init(int* pargc, char*** pargv)
     opal_progress_event_users_increment();
 
     /* setup the shmem framework */
-    if (OPAL_SUCCESS != (ret = opal_shmem_base_open())) {
+    if (OPAL_SUCCESS != (ret = mca_base_framework_open(&opal_shmem_base_framework, 0))) {
         error = "opal_shmem_base_open";
         goto return_error;
     }
@@ -440,7 +446,7 @@ opal_init(int* pargc, char*** pargv)
      *       initialize when C/R is enabled. If other places in the code
      *       wish to use this framework, it is safe to remove the protection.
      */
-    if( OPAL_SUCCESS != (ret = opal_compress_base_open()) ) {
+    if( OPAL_SUCCESS != (ret = mca_base_framework_open(&opal_compress_base_framework, 0)) ) {
         error = "opal_compress_base_open";
         goto return_error;
     }

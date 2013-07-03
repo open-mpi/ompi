@@ -40,7 +40,7 @@ struct ompi_osc_pt2pt_component_t {
     ompi_osc_base_component_t super;
 
     /** max size of eager message */
-    size_t p2p_c_eager_size;
+    unsigned long long p2p_c_eager_size;
 
     /** free list of ompi_osc_pt2pt_sendreq_t structures */
     opal_free_list_t p2p_c_sendreqs;

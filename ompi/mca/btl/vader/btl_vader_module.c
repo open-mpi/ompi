@@ -133,8 +133,7 @@ static inline int vader_init_mpool (mca_btl_vader_t *vader_btl, int n)
 
     /* now, create it */
     component->vader_mpool =
-        mca_mpool_base_module_create(component->vader_mpool_name,
-                                     vader_btl, &res);
+        mca_mpool_base_module_create("sm", vader_btl, &res);
     /* Sanity check to ensure that we found it */
     if(NULL == component->vader_mpool) {
         return OMPI_ERR_OUT_OF_RESOURCE;

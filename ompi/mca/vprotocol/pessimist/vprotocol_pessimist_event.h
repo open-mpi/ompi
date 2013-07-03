@@ -9,7 +9,6 @@
  */
 
 #include "ompi_config.h"
-#include "opal/mca/base/mca_base_param.h"
 #include "ompi/mca/pml/base/pml_base_request.h"
 #include "opal_stdint.h"
 

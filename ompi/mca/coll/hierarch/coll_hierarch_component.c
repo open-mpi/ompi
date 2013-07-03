@@ -52,7 +52,7 @@ int mca_coll_hierarch_segsize_param=32768;
 /*
  * Local function
  */
-static int hierarch_open(void);
+static int hierarch_register(void);
 
 /*
  * Instantiate the public struct with all of our public information
@@ -74,8 +74,10 @@ const mca_coll_base_component_2_0_0_t mca_coll_hierarch_component = {
     OMPI_RELEASE_VERSION,
 
     /* Component open and close functions */
-    hierarch_open,
-    NULL
+    NULL,
+    NULL,
+    NULL,
+    hierarch_register
   },
   {
       /* The component is checkpoint ready */
@@ -88,58 +90,75 @@ const mca_coll_base_component_2_0_0_t mca_coll_hierarch_component = {
 };
 
 
-static int hierarch_open(void)
+static int hierarch_register(void)
 {
-    
-
     /* Use a high priority, but allow other components to be higher */
-    mca_base_param_reg_int(&mca_coll_hierarch_component.collm_version, 
-			   "priority",
-                           "Priority of the hierarchical coll component",
-                           false, false, mca_coll_hierarch_priority_param,
-                           &mca_coll_hierarch_priority_param);
+    mca_coll_hierarch_priority_param = 0;
+    (void) mca_base_component_var_register(&mca_coll_hierarch_component.collm_version,
+                                           "priority", "Priority of the hierarchical coll component",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &mca_coll_hierarch_priority_param);
+
+    mca_coll_hierarch_verbose_param = 0;
+    (void) mca_base_component_var_register(&mca_coll_hierarch_component.collm_version,
+                                           "verbose",
+                                           "Turn verbose message of the hierarchical coll component on/off",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &mca_coll_hierarch_verbose_param);
+
+    mca_coll_hierarch_use_rdma_param = 0;
+    (void) mca_base_component_var_register(&mca_coll_hierarch_component.collm_version,
+                                           "use_rdma",
+                                           "Switch from the send btl list used to detect hierarchies to "
+                                           "the rdma btl list",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &mca_coll_hierarch_use_rdma_param);
+
+    mca_coll_hierarch_ignore_sm_param = 0;
+    (void) mca_base_component_var_register(&mca_coll_hierarch_component.collm_version,
+                                           "ignore_sm",
+                                           "Ignore sm protocol when detecting hierarchies. "
+                                           "Required to enable the usage of protocol"
+                                           " specific collective operations",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &mca_coll_hierarch_ignore_sm_param);
+
+    mca_coll_hierarch_detection_alg_param = 2;
+    (void) mca_base_component_var_register(&mca_coll_hierarch_component.collm_version,
+                                           "detection_alg",
+                                           "Used to specify the algorithm for detecting Hierarchy."
+                                           "Choose between all or two levels of hierarchy",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &mca_coll_hierarch_detection_alg_param);
 
 
-    mca_base_param_reg_int(&mca_coll_hierarch_component.collm_version, 
-			   "verbose",
-                           "Turn verbose message of the hierarchical coll component on/off",
-                           false, false, mca_coll_hierarch_verbose_param,
-                           &mca_coll_hierarch_verbose_param);
+    mca_coll_hierarch_bcast_alg_param = COLL_HIERARCH_BASIC_BCAST_ALG;
+    (void) mca_base_component_var_register(&mca_coll_hierarch_component.collm_version,
+                                           "bcast_alg",
+                                           "Used to specify the algorithm used for bcast operations.",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &mca_coll_hierarch_bcast_alg_param);
 
-    mca_base_param_reg_int(&mca_coll_hierarch_component.collm_version, 
-			   "use_rdma",
-                           "Switch from the send btl list used to detect hierarchies to "
-			   "the rdma btl list",
-                           false, false, mca_coll_hierarch_use_rdma_param,
-                           &mca_coll_hierarch_use_rdma_param);
-
-    mca_base_param_reg_int(&mca_coll_hierarch_component.collm_version, 
-			   "ignore_sm",
-                           "Ignore sm protocol when detecting hierarchies. "
-			   "Required to enable the usage of protocol"
-			   " specific collective operations",
-                           false, false, mca_coll_hierarch_ignore_sm_param,
-                           &mca_coll_hierarch_ignore_sm_param);
-
-    mca_base_param_reg_int(&mca_coll_hierarch_component.collm_version,
-                           "detection_alg",
-                           "Used to specify the algorithm for detecting Hierarchy."
-			   "Choose between all or two levels of hierarchy",
-                           false, false, mca_coll_hierarch_detection_alg_param,
-                           &mca_coll_hierarch_detection_alg_param);
-
-
-    mca_base_param_reg_int(&mca_coll_hierarch_component.collm_version,
-                           "bcast_alg",
-                           "Used to specify the algorithm used for bcast operations.",
-                           false, false, mca_coll_hierarch_bcast_alg_param,
-                           &mca_coll_hierarch_bcast_alg_param);
-
-    mca_base_param_reg_int(&mca_coll_hierarch_component.collm_version,
-                           "segment_size",
-                           "Used to specify the segment size for segmented algorithms.",
-                           false, false, mca_coll_hierarch_segsize_param,
-                           &mca_coll_hierarch_segsize_param);
+    mca_coll_hierarch_segsize_param = 32768;
+    (void) mca_base_component_var_register(&mca_coll_hierarch_component.collm_version,
+                                           "segment_size",
+                                           "Used to specify the segment size for segmented algorithms.",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &mca_coll_hierarch_segsize_param);
 
     return OMPI_SUCCESS;
 }

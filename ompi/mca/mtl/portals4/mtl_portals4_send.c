@@ -46,14 +46,14 @@ ompi_mtl_portals4_callback(ptl_event_t *ev,
         ompi_mtl_portals4_pending_request_t *pending = 
             ptl_request->pending;
 
-        OPAL_OUTPUT_VERBOSE((10, ompi_mtl_base_output,
+        OPAL_OUTPUT_VERBOSE((10, ompi_mtl_base_framework.framework_output,
                              "send %lu hit flow control",
                              ptl_request->opcount));
 
         if (!PtlHandleIsEqual(ptl_request->me_h, PTL_INVALID_HANDLE)) {
             ret = PtlMEUnlink(ptl_request->me_h);
             if (PTL_OK != ret) {
-                opal_output_verbose(1, ompi_mtl_base_output,
+                opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                                     "%s:%d: send callback PtlMEUnlink returned %d",
                                     __FILE__, __LINE__, ret);
             }
@@ -69,14 +69,14 @@ ompi_mtl_portals4_callback(ptl_event_t *ev,
 #endif
 
     if (OPAL_UNLIKELY(ev->ni_fail_type != PTL_NI_OK)) {
-        opal_output_verbose(1, ompi_mtl_base_output,
+        opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                             "%s:%d: send callback ni_fail_type: %d",
                             __FILE__, __LINE__, ev->ni_fail_type);
         *complete = true;
         return OMPI_ERROR;
     }
 
-    OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_output,
+    OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_framework.framework_output,
                          "send %lu got event of type %d",
                          ptl_request->opcount, ev->type));
 
@@ -92,7 +92,7 @@ ompi_mtl_portals4_callback(ptl_event_t *ev,
            1, so they don't need to enter this path) */
         ret = PtlMEUnlink(ptl_request->me_h);
         if (PTL_OK != ret) {
-            opal_output_verbose(1, ompi_mtl_base_output,
+            opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                                 "%s:%d: send callback PtlMEUnlink returned %d",
                                 __FILE__, __LINE__, ret);
         }
@@ -106,7 +106,7 @@ ompi_mtl_portals4_callback(ptl_event_t *ev,
         if (NULL != ptl_request->buffer_ptr) {
             free(ptl_request->buffer_ptr);
         }
-        OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_output, "send %lu completed",
+        OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_framework.framework_output, "send %lu completed",
                              ptl_request->opcount));
         *complete = true;
 #if OMPI_MTL_PORTALS4_FLOW_CONTROL
@@ -203,20 +203,20 @@ ompi_mtl_portals4_short_isend(mca_pml_base_send_mode_t mode,
                           ptl_request,
                           &ptl_request->me_h);
         if (OPAL_UNLIKELY(PTL_OK != ret)) {
-            opal_output_verbose(1, ompi_mtl_base_output,
+            opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                                 "%s:%d: PtlMEAppend failed: %d",
                                 __FILE__, __LINE__, ret);
             return ompi_mtl_portals4_get_error(ret);
         }
 
-        OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_output,
+        OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_framework.framework_output,
                              "Send %lu short sync send with hdr_data 0x%lx (0x%lx)",
                              ptl_request->opcount, hdr_data, match_bits));
     } else {
         ptl_request->event_count = 1;
         ptl_request->me_h = PTL_INVALID_HANDLE;
 
-        OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_output,
+        OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_framework.framework_output,
                              "Send %lu short send with hdr_data 0x%lx (0x%lx)",
                              ptl_request->opcount, hdr_data, match_bits));
     }
@@ -232,7 +232,7 @@ ompi_mtl_portals4_short_isend(mca_pml_base_send_mode_t mode,
                  ptl_request,
 		 hdr_data);
     if (OPAL_UNLIKELY(PTL_OK != ret)) {
-        opal_output_verbose(1, ompi_mtl_base_output,
+        opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                             "%s:%d: PtlPut failed: %d",
                             __FILE__, __LINE__, ret);
         if (MCA_PML_BASE_SEND_SYNCHRONOUS == mode) {
@@ -282,13 +282,13 @@ ompi_mtl_portals4_long_isend(void *start, int length, int contextid, int tag,
                       ptl_request,
                       &ptl_request->me_h);
     if (OPAL_UNLIKELY(PTL_OK != ret)) {
-        opal_output_verbose(1, ompi_mtl_base_output,
+        opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                             "%s:%d: PtlMEAppend failed: %d",
                             __FILE__, __LINE__, ret);
         return ompi_mtl_portals4_get_error(ret);
     }
 
-    OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_output,
+    OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_framework.framework_output,
                          "Send %lu long send with hdr_data 0x%lx (0x%lx)",
                          ptl_request->opcount, hdr_data, match_bits));
 
@@ -305,7 +305,7 @@ ompi_mtl_portals4_long_isend(void *start, int length, int contextid, int tag,
                  ptl_request,
                  hdr_data);
     if (OPAL_UNLIKELY(PTL_OK != ret)) {
-        opal_output_verbose(1, ompi_mtl_base_output,
+        opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                             "%s:%d: PtlPut failed: %d",
                             __FILE__, __LINE__, ret);
 	PtlMEUnlink(ptl_request->me_h);
@@ -395,7 +395,7 @@ ompi_mtl_portals4_send_start(struct mca_mtl_base_module_t* mtl,
     ptl_request->buffer_ptr = (free_after) ? start : NULL;
     ptl_request->event_count = 0;
 
-    OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_output,
+    OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_framework.framework_output,
                          "Send %lu to %x,%x of length %d\n",
                          ptl_request->opcount,
                          endpoint->ptl_proc.phys.nid, 

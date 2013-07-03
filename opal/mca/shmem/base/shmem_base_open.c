@@ -25,7 +25,7 @@
 #include "opal/util/output.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
-#include "opal/mca/base/mca_base_param.h"
+#include "opal/mca/base/mca_base_var.h"
 #include "opal/mca/shmem/shmem.h"
 #include "opal/mca/shmem/base/base.h"
 
@@ -39,66 +39,35 @@
 /**
  * globals
  */
-OPAL_DECLSPEC int opal_shmem_base_output = -1;
-bool opal_shmem_base_components_opened_valid = false;
-opal_list_t opal_shmem_base_components_opened;
+char *opal_shmem_base_RUNTIME_QUERY_hint = NULL;
 
 /* ////////////////////////////////////////////////////////////////////////// */
 /**
  * Register some shmem-wide MCA params 
  */
-int
-opal_shmem_base_register_params(void)
+static int
+opal_shmem_base_register (mca_base_register_flag_t flags)
 {
-    int value;
-
-    mca_base_param_reg_int_name("shmem", "base_verbose",
-                                "Verbosity level of the shmem framework",
-                                false, false, 0, &value);
+    int ret;
 
     /* register an INTERNAL parameter used to provide a component selection
      * hint to the shmem framework.
      */
-    mca_base_param_reg_string_name("shmem", "RUNTIME_QUERY_hint",
-                                   "Internal OMPI parameter used to provide a "
-                                   "component selection hint to the shmem "
-                                   "framework.  The value of this parameter "
-                                   "is the name of the component that is "
-                                   "available, selectable, and meets our "
-                                   "run-time behavior requirements.",
-                                   true, true, NULL, NULL);
-    if (0 != value) {
-        opal_shmem_base_output = opal_output_open(NULL);
-    }
-    else {
-        opal_shmem_base_output = -1;
-    }
-    
-    return OPAL_SUCCESS;
+    ret = mca_base_framework_var_register (&opal_shmem_base_framework, "RUNTIME_QUERY_hint",
+                                           "Internal OMPI parameter used to provide a "
+                                           "component selection hint to the shmem "
+                                           "framework.  The value of this parameter "
+                                           "is the name of the component that is "
+                                           "available, selectable, and meets our "
+                                           "run-time behavior requirements.",
+                                           MCA_BASE_VAR_TYPE_STRING, NULL, 0,
+                                           MCA_BASE_VAR_FLAG_INTERNAL,
+                                           OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_ALL,
+                                           &opal_shmem_base_RUNTIME_QUERY_hint);
+
+    return (0 > ret) ? ret : OPAL_SUCCESS;
 }
 
-
-/* ////////////////////////////////////////////////////////////////////////// */ 
-/** 
- * Function for finding and opening either all MCA components, or the one 
- * that was specifically requested via a MCA parameter. 
- */
-int
-opal_shmem_base_open(void) 
-{
-    opal_shmem_base_components_opened_valid = false;
-
-    /* open up all available components */
-    if (OPAL_SUCCESS !=
-        mca_base_components_open("shmem", opal_shmem_base_output,
-                                 mca_shmem_base_static_components,
-                                 &opal_shmem_base_components_opened, true)) {
-        return OPAL_ERROR;
-    }
-
-    opal_shmem_base_components_opened_valid = true;
-
-    /* all done */
-    return OPAL_SUCCESS;
-}
-
+/* Use the default open function */
+MCA_BASE_FRAMEWORK_DECLARE(opal, shmem, "shared memory", opal_shmem_base_register, NULL,
+                           opal_shmem_base_close, mca_shmem_base_static_components, 0);

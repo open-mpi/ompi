@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012      Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2012-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * $COPYRIGHT$
  * 
@@ -100,18 +100,9 @@ void orte_iof_mrhnp_read_local_handler(int fd, short event, void *cbdata)
     bool write_out=false;
 
     /* read up to the fragment size */
-#if !defined(__WINDOWS__)
     numbytes = read(fd, data, sizeof(data));
-#else
-    {
-        DWORD readed;
-        HANDLE handle = (HANDLE)_get_osfhandle(fd);
-        ReadFile(handle, data, sizeof(data), &readed, NULL);
-        numbytes = (int)readed;
-    }
-#endif  /* !defined(__WINDOWS__) */
-    
-    OPAL_OUTPUT_VERBOSE((1, orte_iof_base.iof_output,
+
+    OPAL_OUTPUT_VERBOSE((1, orte_iof_base_framework.framework_output,
                          "%s iof:mrhnp:read handler read %d bytes from %s:%d",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), numbytes,
                          ORTE_NAME_PRINT(&rev->name), fd));
@@ -125,7 +116,7 @@ void orte_iof_mrhnp_read_local_handler(int fd, short event, void *cbdata)
             return;
         } 
 
-        OPAL_OUTPUT_VERBOSE((1, orte_iof_base.iof_output,
+        OPAL_OUTPUT_VERBOSE((1, orte_iof_base_framework.framework_output,
                              "%s iof:mrhnp:read handler %s Error on connection:%d",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_NAME_PRINT(&rev->name), fd));
@@ -159,7 +150,7 @@ void orte_iof_mrhnp_read_local_handler(int fd, short event, void *cbdata)
                 continue;
             }
             jdata = iofjob->jdata;
-            OPAL_OUTPUT_VERBOSE((1, orte_iof_base.iof_output,
+            OPAL_OUTPUT_VERBOSE((1, orte_iof_base_framework.framework_output,
                                  "%s read %d bytes from stdin - writing to job %s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), numbytes,
                                  ORTE_JOBID_PRINT(jdata->jobid)));
@@ -190,7 +181,7 @@ void orte_iof_mrhnp_read_local_handler(int fd, short event, void *cbdata)
                             if (ORTE_IOF_MAX_INPUT_BUFFERS < orte_iof_base_write_output(&proct->name, ORTE_IOF_STDIN, data, numbytes, proct->sink->wev)) {
                                 /* getting too backed up - stop the read event for now if it is still active */
                                 if (mca_iof_mr_hnp_component.stdinev->active) {
-                                    OPAL_OUTPUT_VERBOSE((1, orte_iof_base.iof_output,
+                                    OPAL_OUTPUT_VERBOSE((1, orte_iof_base_framework.framework_output,
                                                          "buffer backed up - holding"));
                                     mca_iof_mr_hnp_component.stdinev->active = false;
                                 }
@@ -204,7 +195,7 @@ void orte_iof_mrhnp_read_local_handler(int fd, short event, void *cbdata)
                         }
                     }
                 } else {
-                    OPAL_OUTPUT_VERBOSE((1, orte_iof_base.iof_output,
+                    OPAL_OUTPUT_VERBOSE((1, orte_iof_base_framework.framework_output,
                                          "%s sending %d bytes from stdin to daemon %s",
                                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), numbytes,
                                          ORTE_NAME_PRINT(&daemon->name)));
@@ -278,7 +269,7 @@ void orte_iof_mrhnp_read_local_handler(int fd, short event, void *cbdata)
                     }
                 }
             } else {
-                OPAL_OUTPUT_VERBOSE((1, orte_iof_base.iof_output,
+                OPAL_OUTPUT_VERBOSE((1, orte_iof_base_framework.framework_output,
                                      "%s sending %d bytes from stdout of %s to daemon %s",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), numbytes,
                                      ORTE_NAME_PRINT(&rev->name),
@@ -293,7 +284,7 @@ void orte_iof_mrhnp_read_local_handler(int fd, short event, void *cbdata)
     }
     
  PROCESS:
-    OPAL_OUTPUT_VERBOSE((1, orte_iof_base.iof_output,
+    OPAL_OUTPUT_VERBOSE((1, orte_iof_base_framework.framework_output,
                          "%s read %d bytes from %s of %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), numbytes,
                          (ORTE_IOF_STDOUT & rev->tag) ? "stdout" : ((ORTE_IOF_STDERR & rev->tag) ? "stderr" : "stddiag"),

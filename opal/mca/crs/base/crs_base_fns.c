@@ -197,12 +197,12 @@ int opal_crs_base_cleanup_append(char* filename, bool is_dir)
     }
 
     if( is_dir ) {
-        opal_output_verbose(15, opal_crs_base_output,
+        opal_output_verbose(15, opal_crs_base_framework.framework_output,
                             "opal:crs: cleanup_append: Append Dir  <%s>\n",
                             filename);
         opal_argv_append_nosize(&cleanup_dir_argv, filename);
     } else {
-        opal_output_verbose(15, opal_crs_base_output,
+        opal_output_verbose(15, opal_crs_base_framework.framework_output,
                             "opal:crs: cleanup_append: Append File <%s>\n",
                             filename);
         opal_argv_append_nosize(&cleanup_file_argv, filename);
@@ -221,7 +221,7 @@ int opal_crs_base_cleanup_flush(void)
     if( NULL != cleanup_file_argv ) {
         argc = opal_argv_count(cleanup_file_argv);
         for( i = 0; i < argc; ++i) {
-            opal_output_verbose(15, opal_crs_base_output,
+            opal_output_verbose(15, opal_crs_base_framework.framework_output,
                                 "opal:crs: cleanup_flush: Remove File <%s>\n", cleanup_file_argv[i]);
             unlink(cleanup_file_argv[i]);
         }
@@ -236,7 +236,7 @@ int opal_crs_base_cleanup_flush(void)
     if( NULL != cleanup_dir_argv ) {
         argc = opal_argv_count(cleanup_dir_argv);
         for( i = 0; i < argc; ++i) {
-            opal_output_verbose(15, opal_crs_base_output,
+            opal_output_verbose(15, opal_crs_base_framework.framework_output,
                                 "opal:crs: cleanup_flush: Remove Dir  <%s>\n", cleanup_dir_argv[i]);
             opal_os_dirpath_destroy(cleanup_dir_argv[i], true, NULL);
         }
@@ -283,13 +283,13 @@ int opal_crs_base_copy_options(opal_crs_base_ckpt_options_t *from,
                                  opal_crs_base_ckpt_options_t *to)
 {
     if( NULL == from ) {
-        opal_output(opal_crs_base_output,
+        opal_output(opal_crs_base_framework.framework_output,
                     "opal:crs:base: copy_options: Error: from value is NULL\n");
         return OPAL_ERROR;
     }
 
     if( NULL == to ) {
-        opal_output(opal_crs_base_output,
+        opal_output(opal_crs_base_framework.framework_output,
                     "opal:crs:base: copy_options: Error: to value is NULL\n");
         return OPAL_ERROR;
     }
@@ -311,7 +311,7 @@ int opal_crs_base_copy_options(opal_crs_base_ckpt_options_t *from,
 int opal_crs_base_clear_options(opal_crs_base_ckpt_options_t *target)
 {
     if( NULL == target ) {
-        opal_output(opal_crs_base_output,
+        opal_output(opal_crs_base_framework.framework_output,
                     "opal:crs:base: copy_options: Error: target value is NULL\n");
         return OPAL_ERROR;
     }

@@ -12,6 +12,5 @@
 headers += \
         base/base.h
 libmca_bcol_la_SOURCES += \
-        base/bcol_base_close.c \
-        base/bcol_base_open.c  \
+        base/bcol_base_frame.c \
         base/bcol_base_init.c

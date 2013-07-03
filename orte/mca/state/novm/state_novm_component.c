@@ -25,6 +25,7 @@ const char *orte_state_novm_component_version_string =
 /*
  * Local functionality
  */
+static int state_novm_register (void);
 static int state_novm_open(void);
 static int state_novm_close(void);
 static int state_novm_component_query(mca_base_module_t **module, int *priority);
@@ -49,7 +50,8 @@ orte_state_base_component_t mca_state_novm_component =
         /* Component open and close functions */
         state_novm_open,
         state_novm_close,
-        state_novm_component_query
+        state_novm_component_query,
+        state_novm_register
     },
     {
         /* The component is checkpoint ready */
@@ -59,15 +61,23 @@ orte_state_base_component_t mca_state_novm_component =
 
 static bool select_me = false;
 
+static int state_novm_register (void)
+{
+    int ret;
+
+    select_me = false;
+    ret = mca_base_component_var_register (&mca_state_novm_component.base_version,
+                                           "select", "Use this component",
+                                           MCA_BASE_VAR_TYPE_BOOL, NULL,
+                                           0, MCA_BASE_VAR_FLAG_SETTABLE,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_ALL_EQ,
+                                           &select_me);
+    return (0 > ret) ? ret : ORTE_SUCCESS;
+}
+
 static int state_novm_open(void) 
 {
-    int tmp;
-    mca_base_component_t *c=&mca_state_novm_component.base_version;
-
-    mca_base_param_reg_int(c, "select",
-                           "Use this component",
-                           false, false, (int)false, &tmp);
-    select_me = OPAL_INT_TO_BOOL(tmp);
     return ORTE_SUCCESS;
 }
 

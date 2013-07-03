@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2007 Voltaire. All rights reserved.
  * Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2010-2011 Los Alamos National Security, LLC.
+ * Copyright (c) 2010-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2011      NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2010-2012 IBM Corporation.  All rights reserved.
@@ -50,7 +50,6 @@
 #include "orte/util/show_help.h"
 #include "orte/runtime/orte_globals.h"
 
-#include "opal/mca/base/mca_base_param.h"
 #include "ompi/mca/mpool/base/base.h"
 #include "ompi/mca/common/sm/common_sm.h"
 #include "ompi/mca/btl/base/btl_base_error.h"
@@ -107,116 +106,33 @@ mca_btl_sm_component_t mca_btl_sm_component = {
  * utility routines for parameter registration
  */
 
-static inline char* mca_btl_sm_param_register_string(
-    const char* param_name,
-    const char* default_value)
-{
-    char *param_value;
-
-    (void) mca_base_param_reg_string (&mca_btl_sm_component.super.btl_version,
-                                      param_name, NULL, false, false, default_value,
-                                      &param_value);
-
-    return param_value;
-}
-
 static inline int mca_btl_sm_param_register_int(
     const char* param_name,
-    int default_value)
+    int default_value,
+    int *storage)
 {
-    int param_value = default_value;
-
-    (void) mca_base_param_reg_int (&mca_btl_sm_component.super.btl_version,
-                                   param_name, NULL, false, false, default_value,
-                                   &param_value);
-
-    return param_value;
+    *storage = default_value;
+    (void) mca_base_component_var_register (&mca_btl_sm_component.super.btl_version,
+                                            param_name, NULL, MCA_BASE_VAR_TYPE_INT,
+                                            NULL, 0, 0, OPAL_INFO_LVL_9,
+                                            MCA_BASE_VAR_SCOPE_READONLY, storage);
+    return *storage;
 }
 
-
-static int sm_register(void)
+static inline unsigned int mca_btl_sm_param_register_uint(
+    const char* param_name,
+    unsigned int default_value,
+    unsigned int *storage)
 {
-    int i;
+    *storage = default_value;
+    (void) mca_base_component_var_register (&mca_btl_sm_component.super.btl_version,
+                                            param_name, NULL, MCA_BASE_VAR_TYPE_UNSIGNED_INT,
+                                            NULL, 0, 0, OPAL_INFO_LVL_9,
+                                            MCA_BASE_VAR_SCOPE_READONLY, storage);
+    return *storage;
+}
 
-    /* Register an MCA param to indicate whether we have knem support
-       or not */
-    mca_base_param_reg_int(&mca_btl_sm_component.super.btl_version,
-                           "have_knem_support", "Whether this component supports the knem Linux kernel module or not",
-                           false, true, OMPI_BTL_SM_HAVE_KNEM, NULL);
-
-    if (OMPI_BTL_SM_HAVE_KNEM) {
-        i = -1;
-    } else {
-        i = 0;
-    }
-    mca_base_param_reg_int(&mca_btl_sm_component.super.btl_version,
-                           "use_knem",
-                           "Whether knem support is desired or not "
-                           "(negative = try to enable knem support, but continue even if it is not available, 0 = do not enable knem support, positive = try to enable knem support and fail if it is not available)",
-                           false, false, i, &i);
-    if (OMPI_BTL_SM_HAVE_KNEM) {
-        mca_btl_sm_component.use_knem = i;
-    } else {
-        if (i > 0) {
-            orte_show_help("help-mpi-btl-sm.txt",
-                           "knem requested but not supported", true,
-                           orte_process_info.nodename);
-            return OMPI_ERROR;
-        }
-        mca_btl_sm_component.use_knem = 0;
-    }
-    /* Currently disabling DMA mode by default; it's not clear that
-       this is useful in all applications and architectures. */
-    mca_base_param_reg_int(&mca_btl_sm_component.super.btl_version,
-                           "knem_dma_min",
-                           "Minimum message size (in bytes) to use the knem DMA mode; ignored if knem does not support DMA mode (0 = do not use the knem DMA mode)",
-                           false, false, 0, &i);
-    mca_btl_sm_component.knem_dma_min = (uint32_t) i;
-
-    mca_base_param_reg_int(&mca_btl_sm_component.super.btl_version,
-                           "knem_max_simultaneous",
-                           "Max number of simultaneous ongoing knem operations to support (0 = do everything synchronously, which probably gives the best large message latency; >0 means to do all operations asynchronously, which supports better overlap for simultaneous large message sends)",
-                           false, false, 0,
-                           &mca_btl_sm_component.knem_max_simultaneous);
-
-    /* CMA parameters */
-    mca_base_param_reg_int(&mca_btl_sm_component.super.btl_version,
-                           "use_cma",
-                           "Whether or not to enable CMA",
-                           false, false, 0, &mca_btl_sm_component.use_cma);
-
-
-    /* register SM component parameters */
-    mca_btl_sm_component.sm_free_list_num =
-        mca_btl_sm_param_register_int("free_list_num", 8);
-    mca_btl_sm_component.sm_free_list_max =
-        mca_btl_sm_param_register_int("free_list_max", -1);
-    mca_btl_sm_component.sm_free_list_inc =
-        mca_btl_sm_param_register_int("free_list_inc", 64);
-    mca_btl_sm_component.sm_max_procs =
-        mca_btl_sm_param_register_int("max_procs", -1);
-    mca_btl_sm_component.sm_mpool_name =
-        mca_btl_sm_param_register_string("mpool", "sm");
-    mca_btl_sm_component.fifo_size =
-        mca_btl_sm_param_register_int("fifo_size", 4096);
-    mca_btl_sm_component.nfifos =
-        mca_btl_sm_param_register_int("num_fifos", 1);
-
-    mca_btl_sm_component.fifo_lazy_free =
-        mca_btl_sm_param_register_int("fifo_lazy_free", 120);
-
-    /* default number of extra procs to allow for future growth */
-    mca_btl_sm_component.sm_extra_procs =
-        mca_btl_sm_param_register_int("sm_extra_procs", 0);
-
-    mca_btl_sm.super.btl_exclusivity = MCA_BTL_EXCLUSIVITY_HIGH-1;
-    mca_btl_sm.super.btl_eager_limit = 4*1024;
-    mca_btl_sm.super.btl_rndv_eager_limit = 4*1024;
-    mca_btl_sm.super.btl_max_send_size = 32*1024;
-    mca_btl_sm.super.btl_rdma_pipeline_send_length = 64*1024;
-    mca_btl_sm.super.btl_rdma_pipeline_frag_size = 64*1024;
-    mca_btl_sm.super.btl_min_rdma_pipeline_size = 64*1024;
-    mca_btl_sm.super.btl_flags = MCA_BTL_FLAGS_SEND;
+static int mca_btl_sm_component_verify(void) {
 #if OMPI_BTL_SM_HAVE_KNEM || OMPI_BTL_SM_HAVE_CMA
     if (mca_btl_sm_component.use_knem || mca_btl_sm_component.use_cma) {
         mca_btl_sm.super.btl_flags |= MCA_BTL_FLAGS_GET;
@@ -228,7 +144,85 @@ static int sm_register(void)
         mca_btl_sm_component.use_cma = 0;
     }
 
-#endif
+#endif /* OMPI_BTL_SM_HAVE_KNEM || OMPI_BTL_SM_HAVE_CMA */
+
+    return mca_btl_base_param_verify(&mca_btl_sm.super);
+}
+
+static int sm_register(void)
+{
+    mca_base_var_flag_t var_flags;
+
+    if (OMPI_BTL_SM_HAVE_KNEM) {
+        var_flags = 0;
+        mca_btl_sm_component.use_knem = -1;
+    } else {
+        var_flags = MCA_BASE_VAR_FLAG_DEFAULT_ONLY;
+        mca_btl_sm_component.use_knem = 0;
+    }
+    (void) mca_base_component_var_register(&mca_btl_sm_component.super.btl_version,
+                                           "use_knem", "Whether knem support is desired or not "
+                                           "(negative = try to enable knem support, but continue "
+                                           "even if it is not available, 0 = do not enable knem "
+                                           "support, positive = try to enable knem support and "
+                                           "fail if it is not available)", MCA_BASE_VAR_TYPE_INT,
+                                           NULL, 0, var_flags, OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY, &mca_btl_sm_component.use_knem);
+
+    /* Currently disabling DMA mode by default; it's not clear that
+       this is useful in all applications and architectures. */
+    mca_btl_sm_component.knem_dma_min = 0;
+    (void) mca_base_component_var_register(&mca_btl_sm_component.super.btl_version,
+                                           "knem_dma_min",
+                                           "Minimum message size (in bytes) to use the knem DMA mode; "
+                                           "ignored if knem does not support DMA mode (0 = do not use the "
+                                           "knem DMA mode)", MCA_BASE_VAR_TYPE_UNSIGNED_INT, NULL, 0,
+                                           0, OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
+                                           &mca_btl_sm_component.knem_dma_min);
+
+    mca_btl_sm_component.knem_max_simultaneous = 0;
+    (void) mca_base_component_var_register(&mca_btl_sm_component.super.btl_version,
+                                           "knem_max_simultaneous",
+                                           "Max number of simultaneous ongoing knem operations to support "
+                                           "(0 = do everything synchronously, which probably gives the "
+                                           "best large message latency; >0 means to do all operations "
+                                           "asynchronously, which supports better overlap for simultaneous "
+                                           "large message sends)", MCA_BASE_VAR_TYPE_UNSIGNED_INT, NULL, 0,
+                                           0, OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY, 
+                                           &mca_btl_sm_component.knem_max_simultaneous);
+
+    /* CMA parameters */
+    mca_btl_sm_component.use_cma = 0;
+    (void) mca_base_component_var_register(&mca_btl_sm_component.super.btl_version,
+                                           "use_cma", "Whether or not to enable CMA",
+                                           MCA_BASE_VAR_TYPE_UNSIGNED_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
+                                           &mca_btl_sm_component.use_cma);
+
+    /* register SM component parameters */
+    mca_btl_sm_param_register_int("free_list_num", 8, &mca_btl_sm_component.sm_free_list_num);
+    mca_btl_sm_param_register_int("free_list_max", -1, &mca_btl_sm_component.sm_free_list_max);
+    mca_btl_sm_param_register_int("free_list_inc", 64, &mca_btl_sm_component.sm_free_list_inc);
+    mca_btl_sm_param_register_int("max_procs", -1, &mca_btl_sm_component.sm_max_procs);
+    /* there is no practical use for the mpool name parameter since mpool resources differ
+       between components */
+    mca_btl_sm_component.sm_mpool_name = "sm";
+    mca_btl_sm_param_register_uint("fifo_size", 4096, &mca_btl_sm_component.fifo_size);
+    mca_btl_sm_param_register_int("num_fifos", 1, &mca_btl_sm_component.nfifos);
+
+    mca_btl_sm_param_register_uint("fifo_lazy_free", 120, &mca_btl_sm_component.fifo_lazy_free);
+
+    /* default number of extra procs to allow for future growth */
+    mca_btl_sm_param_register_int("sm_extra_procs", 0, &mca_btl_sm_component.sm_extra_procs);
+
+    mca_btl_sm.super.btl_exclusivity = MCA_BTL_EXCLUSIVITY_HIGH-1;
+    mca_btl_sm.super.btl_eager_limit = 4*1024;
+    mca_btl_sm.super.btl_rndv_eager_limit = 4*1024;
+    mca_btl_sm.super.btl_max_send_size = 32*1024;
+    mca_btl_sm.super.btl_rdma_pipeline_send_length = 64*1024;
+    mca_btl_sm.super.btl_rdma_pipeline_frag_size = 64*1024;
+    mca_btl_sm.super.btl_min_rdma_pipeline_size = 64*1024;
+    mca_btl_sm.super.btl_flags = MCA_BTL_FLAGS_SEND;
     mca_btl_sm.super.btl_seg_size = sizeof (mca_btl_sm_segment_t);
     mca_btl_sm.super.btl_bandwidth = 9000;  /* Mbs */
     mca_btl_sm.super.btl_latency   = 1;     /* Microsecs */
@@ -237,7 +231,7 @@ static int sm_register(void)
     mca_btl_base_param_register(&mca_btl_sm_component.super.btl_version,
                                 &mca_btl_sm.super);
 
-    return OMPI_SUCCESS;
+    return mca_btl_sm_component_verify();
 }
 
 /*
@@ -247,6 +241,10 @@ static int sm_register(void)
 
 static int mca_btl_sm_component_open(void)
 {
+    if (OMPI_SUCCESS != mca_btl_sm_component_verify()) {
+        return OMPI_ERROR;
+    }
+
     mca_btl_sm_component.sm_max_btls = 1;
 
     /* make sure the number of fifos is a power of 2 */
@@ -346,10 +344,6 @@ static int mca_btl_sm_component_close(void)
         unlink(mca_btl_sm_component.sm_fifo_path);
     }
 #endif
-
-    if (NULL != mca_btl_sm_component.sm_mpool_name) {
-        free(mca_btl_sm_component.sm_mpool_name);
-    }
 
 CLEANUP:
 

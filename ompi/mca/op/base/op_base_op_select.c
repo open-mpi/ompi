@@ -93,7 +93,7 @@ int ompi_op_base_op_select(ompi_op_t *op)
     ompi_op_base_module_t *module;
 
     /* Announce */
-    opal_output_verbose(10, ompi_op_base_output,
+    opal_output_verbose(10, ompi_op_base_framework.framework_output,
                         "op:base:op_select: new op: %s", 
                         op->o_name);
 
@@ -126,9 +126,9 @@ int ompi_op_base_op_select(ompi_op_t *op)
     /* Check for any components that want to run.  It's not an error
        if there are none; we'll just use all the base functions in
        this case. */
-    opal_output_verbose(10, ompi_op_base_output, 
+    opal_output_verbose(10, ompi_op_base_framework.framework_output, 
                         "op:base:op_select: Checking all available components");
-    selectable = check_components(&ompi_op_base_components_available, op);
+    selectable = check_components(&ompi_op_base_framework.framework_components, op);
 
     /* Do the selection loop.  The selectable list is in priority
        order; lowest priority first. */
@@ -203,6 +203,20 @@ int ompi_op_base_op_select(ompi_op_t *op)
     return OMPI_SUCCESS;
 }
 
+static int avail_op_compare(opal_list_item_t **itema,
+                            opal_list_item_t **itemb)
+{
+    avail_op_t *availa = (avail_op_t *) itema;
+    avail_op_t *availb = (avail_op_t *) itemb;
+
+    if (availa->ao_priority > availb->ao_priority) {
+        return 1;
+    } else if (availa->ao_priority < availb->ao_priority) {
+        return -1;
+    } else {
+        return 0;
+    }
+}
 
 /*
  * For each module in the list, check and see if it wants to run, and
@@ -214,11 +228,11 @@ static opal_list_t *check_components(opal_list_t *components,
                                      ompi_op_t *op)
 {
     int priority;
+    mca_base_component_list_item_t *cli;
     const mca_base_component_t *component;
-    opal_list_item_t *item, *item2;
     ompi_op_base_module_1_0_0_t *module;
     opal_list_t *selectable;
-    avail_op_t *avail, *avail2;
+    avail_op_t *avail;
   
     /* Make a list of the components that query successfully */
     selectable = OBJ_NEW(opal_list_t);
@@ -226,40 +240,23 @@ static opal_list_t *check_components(opal_list_t *components,
     /* Scan through the list of components.  This nested loop is O(N^2),
        but we should never have too many components and/or names, so this
        *hopefully* shouldn't matter... */
-  
-    for (item = opal_list_get_first(components); 
-         item != opal_list_get_end(components); 
-         item = opal_list_get_next(item)) {
-        component = ((mca_base_component_priority_list_item_t *) 
-                     item)->super.cli_component;
+
+    OPAL_LIST_FOREACH(cli, components, mca_base_component_list_item_t) {
+        component = cli->cli_component;
 
         priority = check_one_component(op, component, &module);
         if (priority >= 0) {
-            
             /* We have a component that indicated that it wants to run by
                giving us a module */
             avail = OBJ_NEW(avail_op_t);
             avail->ao_priority = priority;
             avail->ao_module = module;
             
-            /* Put this item on the list in priority order (lowest
-               priority first).  Should it go first? */
-            for (item2 = opal_list_get_first(selectable);
-                 item2 != opal_list_get_end(selectable);
-                 item2 = opal_list_get_next(item2)) {
-                avail2 = (avail_op_t*)item2;
-                if(avail->ao_priority < avail2->ao_priority) {
-                    opal_list_insert_pos(selectable,
-                                         item2, (opal_list_item_t*)avail);
-                    break;
-                }
-            }
-            
-            if (opal_list_get_end(selectable) == item2) {
-                opal_list_append(selectable, (opal_list_item_t*)avail);
-            }
+            opal_list_append(selectable, (opal_list_item_t*)avail);
         }
     }
+
+    opal_list_sort(selectable, avail_op_compare);
 
     /* All done (even if the list is empty; that's ok) */
     return selectable;
@@ -280,13 +277,13 @@ static int check_one_component(ompi_op_t *op,
 
     if (OMPI_SUCCESS == err) {
         priority = (priority < 100) ? priority : 100;
-        opal_output_verbose(10, ompi_op_base_output, 
+        opal_output_verbose(10, ompi_op_base_framework.framework_output, 
                             "op:base:op_select: component available: %s, priority: %d", 
                             component->mca_component_name, priority);
 
     } else {
         priority = -1;
-        opal_output_verbose(10, ompi_op_base_output, 
+        opal_output_verbose(10, ompi_op_base_framework.framework_output, 
                             "op:base:op_select: component not available: %s",
                             component->mca_component_name);
     }

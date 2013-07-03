@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -10,6 +11,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2009      University of Houston. All rights reserved.
+ * Copyright (c) 2013      Los Alamos National Security, LLC. All Rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -31,6 +34,24 @@
 #include "coll_tuned.h"
 #include "coll_tuned_topo.h"
 #include "coll_tuned_util.h"
+
+/* allreduce algorithm variables */
+static int coll_tuned_allreduce_algorithm_count = 5;
+static int coll_tuned_allreduce_forced_algorithm = 0;
+static int coll_tuned_allreduce_segment_size = 0;
+static int coll_tuned_allreduce_tree_fanout;
+static int coll_tuned_allreduce_chain_fanout;
+
+/* valid values for coll_tuned_allreduce_forced_algorithm */
+static mca_base_var_enum_value_t allreduce_algorithms[] = {
+    {0, "ignore"},
+    {1, "basic_linear"},
+    {2, "nonoverlapping"},
+    {3, "recursive_doubling"},
+    {4, "ring"},
+    {5, "segmented_ring"},
+    {0, NULL}
+};
 
 /*
  * ompi_coll_tuned_allreduce_intra_nonoverlapping
@@ -921,52 +942,64 @@ ompi_coll_tuned_allreduce_intra_basic_linear(void *sbuf, void *rbuf, int count,
 
 int ompi_coll_tuned_allreduce_intra_check_forced_init (coll_tuned_force_algorithm_mca_param_indices_t *mca_param_indices)
 {
-    int max_alg = 5, requested_alg;
+    mca_base_var_enum_t *new_enum;
 
-    ompi_coll_tuned_forced_max_algorithms[ALLREDUCE] = max_alg;
+    ompi_coll_tuned_forced_max_algorithms[ALLREDUCE] = coll_tuned_allreduce_algorithm_count;
 
-    mca_base_param_reg_int (&mca_coll_tuned_component.super.collm_version,
-                            "allreduce_algorithm_count",
-                            "Number of allreduce algorithms available",
-                            false, true, max_alg, NULL);
+    (void) mca_base_component_var_register(&mca_coll_tuned_component.super.collm_version,
+                                           "allreduce_algorithm_count",
+                                           "Number of allreduce algorithms available",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0,
+                                           MCA_BASE_VAR_FLAG_DEFAULT_ONLY,
+                                           OPAL_INFO_LVL_5,
+                                           MCA_BASE_VAR_SCOPE_CONSTANT,
+                                           &coll_tuned_allreduce_algorithm_count);
 
-    mca_param_indices->algorithm_param_index
-        = mca_base_param_reg_int( &mca_coll_tuned_component.super.collm_version,
-                                  "allreduce_algorithm",
-                                  "Which allreduce algorithm is used. Can be locked down to any of: 0 ignore, 1 basic linear, 2 nonoverlapping (tuned reduce + tuned bcast), 3 recursive doubling, 4 ring, 5 segmented ring",
-                                  false, false, 0, NULL);
+    /* MPI_T: This variable should eventually be bound to a communicator */
+    coll_tuned_allreduce_forced_algorithm = 0;
+    (void) mca_base_var_enum_create("coll_tuned_allreduce_algorithms", allreduce_algorithms, &new_enum);
+    mca_param_indices->algorithm_param_index =
+        mca_base_component_var_register(&mca_coll_tuned_component.super.collm_version,
+                                        "allreduce_algorithm",
+                                        "Which allreduce algorithm is used. Can be locked down to any of: 0 ignore, 1 basic linear, 2 nonoverlapping (tuned reduce + tuned bcast), 3 recursive doubling, 4 ring, 5 segmented ring",
+                                        MCA_BASE_VAR_TYPE_INT, new_enum, 0, 0,
+                                        OPAL_INFO_LVL_5,
+                                        MCA_BASE_VAR_SCOPE_READONLY,
+                                        &coll_tuned_allreduce_forced_algorithm);
+    OBJ_RELEASE(new_enum);
     if (mca_param_indices->algorithm_param_index < 0) {
         return mca_param_indices->algorithm_param_index;
     }
-    mca_base_param_lookup_int( mca_param_indices->algorithm_param_index, &(requested_alg));
-    if( 0 > requested_alg || requested_alg > max_alg ) {
-        if( 0 == ompi_comm_rank( MPI_COMM_WORLD ) ) {
-            opal_output( 0, "Allreduce algorithm #%d is not available (range [0..%d]). Switching back to ignore(0)\n",
-                         requested_alg, max_alg );
-        }
-        mca_base_param_set_int( mca_param_indices->algorithm_param_index, 0);
-    }
 
-    mca_param_indices->segsize_param_index
-        = mca_base_param_reg_int( &mca_coll_tuned_component.super.collm_version,
-                                  "allreduce_algorithm_segmentsize",
-                                  "Segment size in bytes used by default for allreduce algorithms. Only has meaning if algorithm is forced and supports segmenting. 0 bytes means no segmentation.",
-                                  false, false, 0, NULL);
-  
-    mca_param_indices->tree_fanout_param_index
-        = mca_base_param_reg_int( &mca_coll_tuned_component.super.collm_version,
-                                  "allreduce_algorithm_tree_fanout",
-                                  "Fanout for n-tree used for allreduce algorithms. Only has meaning if algorithm is forced and supports n-tree topo based operation.",
-                                  false, false, ompi_coll_tuned_init_tree_fanout, /* get system wide default */
-                                  NULL);
+    coll_tuned_allreduce_segment_size = 0;
+    mca_param_indices->segsize_param_index =
+        mca_base_component_var_register(&mca_coll_tuned_component.super.collm_version,
+                                        "allreduce_algorithm_segmentsize",
+                                        "Segment size in bytes used by default for allreduce algorithms. Only has meaning if algorithm is forced and supports segmenting. 0 bytes means no segmentation.",
+                                        MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                        OPAL_INFO_LVL_5,
+                                        MCA_BASE_VAR_SCOPE_READONLY,
+                                        &coll_tuned_allreduce_segment_size);
 
-    mca_param_indices->chain_fanout_param_index
-        = mca_base_param_reg_int( &mca_coll_tuned_component.super.collm_version,
-                                  "allreduce_algorithm_chain_fanout",
-                                  "Fanout for chains used for allreduce algorithms. Only has meaning if algorithm is forced and supports chain topo based operation.",
-                                  false, false,
-                                  ompi_coll_tuned_init_chain_fanout, /* get system wide default */
-                                  NULL);
+    coll_tuned_allreduce_tree_fanout = ompi_coll_tuned_init_tree_fanout; /* get system wide default */
+    mca_param_indices->tree_fanout_param_index =
+        mca_base_component_var_register(&mca_coll_tuned_component.super.collm_version,
+                                        "allreduce_algorithm_tree_fanout",
+                                        "Fanout for n-tree used for allreduce algorithms. Only has meaning if algorithm is forced and supports n-tree topo based operation.",
+                                        MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                        OPAL_INFO_LVL_5,
+                                        MCA_BASE_VAR_SCOPE_READONLY,
+                                        &coll_tuned_allreduce_tree_fanout);
+
+    coll_tuned_allreduce_chain_fanout = ompi_coll_tuned_init_chain_fanout; /* get system wide default */
+    mca_param_indices->chain_fanout_param_index = 
+      mca_base_component_var_register(&mca_coll_tuned_component.super.collm_version,
+                                      "allreduce_algorithm_chain_fanout",
+                                      "Fanout for chains used for allreduce algorithms. Only has meaning if algorithm is forced and supports chain topo based operation.",
+                                      MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                      OPAL_INFO_LVL_5,
+                                      MCA_BASE_VAR_SCOPE_READONLY,
+                                      &coll_tuned_allreduce_chain_fanout);
 
     return (MPI_SUCCESS);
 }

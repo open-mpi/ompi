@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
- * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
+ * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * $COPYRIGHT$
  *
@@ -102,7 +102,7 @@ static int xcast(orte_jobid_t job,
     int rc = ORTE_SUCCESS;
     opal_buffer_t *buf;
     
-    OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base.output,
+    OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_framework.framework_output,
                          "%s grpcomm:bad:xcast sent to job %s tag %ld",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_JOBID_PRINT(job), (long)tag));
@@ -140,7 +140,7 @@ static int bad_barrier(orte_grpcomm_collective_t *coll)
     opal_buffer_t *buf;
     orte_namelist_t *nm;
 
-    OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base.output,
+    OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_framework.framework_output,
                          "%s grpcomm:bad entering barrier",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
@@ -186,7 +186,7 @@ static int bad_barrier(orte_grpcomm_collective_t *coll)
         return rc;
     }
     
-    OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base.output,
+    OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base_framework.framework_output,
                          "%s grpcomm:bad barrier underway",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
@@ -200,7 +200,7 @@ static int bad_allgather(orte_grpcomm_collective_t *gather)
     orte_namelist_t *nm;
     opal_list_item_t *item;
 
-    OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base.output,
+    OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_framework.framework_output,
                          "%s grpcomm:bad entering allgather",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
@@ -239,7 +239,7 @@ static int bad_allgather(orte_grpcomm_collective_t *gather)
         orte_grpcomm_base_pack_collective(buf, ORTE_PROC_MY_NAME->jobid,
                                           gather, ORTE_GRPCOMM_INTERNAL_STG_APP);
 
-        OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base.output,
+        OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_framework.framework_output,
                              "%s grpcomm:bad sending collective %d to our daemon",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              (int)gather->id));
@@ -263,7 +263,7 @@ static int bad_allgather(orte_grpcomm_collective_t *gather)
             nm = (orte_namelist_t*)item;
             buf = OBJ_NEW(opal_buffer_t);
             opal_dss.copy_payload(buf, &gather->buffer);
-            OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base.output,
+            OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_framework.framework_output,
                                  "%s grpcomm:bad sending collective %d to %s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  (int)gather->id,
@@ -279,7 +279,7 @@ static int bad_allgather(orte_grpcomm_collective_t *gather)
         return rc;
     }
     
-    OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base.output,
+    OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_framework.framework_output,
                          "%s grpcomm:bad allgather underway",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     

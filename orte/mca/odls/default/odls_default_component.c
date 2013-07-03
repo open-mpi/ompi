@@ -33,7 +33,6 @@
 
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
-#include "opal/mca/base/mca_base_param.h"
 
 #include "orte/mca/odls/odls.h"
 #include "orte/mca/odls/base/odls_private.h"

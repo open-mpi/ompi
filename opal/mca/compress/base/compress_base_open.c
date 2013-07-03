@@ -1,8 +1,9 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2010 The Trustees of Indiana University.
  *                         All rights reserved.
  *
- * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
+ * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * $COPYRIGHT$
  * 
@@ -26,7 +27,6 @@
 /*
  * Globals
  */
-int  opal_compress_base_output  = -1;
 opal_compress_base_module_t opal_compress = {
     NULL, /* init             */
     NULL, /* finalize         */
@@ -35,67 +35,39 @@ opal_compress_base_module_t opal_compress = {
     NULL, /* decompress       */
     NULL  /* decompress_nb    */
 };
-opal_list_t opal_compress_base_components_available;
+
 opal_compress_base_component_t opal_compress_base_selected_component;
+
+static int opal_compress_base_register (mca_base_register_flag_t flags);
+
+MCA_BASE_FRAMEWORK_DECLARE(opal, compress, NULL, opal_compress_base_register, opal_compress_base_open,
+                           opal_compress_base_close, mca_compress_base_static_components, 0);
+
+static int opal_compress_base_register (mca_base_register_flag_t flags)
+{
+    /* Compression currently only used with C/R */
+    if( !opal_cr_is_enabled ) {
+        opal_output_verbose(10, opal_compress_base_framework.framework_output,
+                            "compress:open: FT is not enabled, skipping!");
+        return OPAL_ERR_NOT_AVAILABLE;
+    }
+
+    return OPAL_SUCCESS;
+}
 
 /**
  * Function for finding and opening either all MCA components,
  * or the one that was specifically requested via a MCA parameter.
  */
-int opal_compress_base_open(void)
+int opal_compress_base_open(mca_base_open_flag_t flags)
 {
-    int ret, exit_status = OPAL_SUCCESS;
-    int value;
-    char *str_value = NULL;
-
-    /* Debugging/Verbose output */
-    mca_base_param_reg_int_name("compress",
-                                "base_verbose",
-                                "Verbosity level of the COMPRESS framework",
-                                false, false,
-                                0, &value);
-    if(0 != value) {
-        opal_compress_base_output = opal_output_open(NULL);
-    } else {
-        opal_compress_base_output = -1;
-    }
-    opal_output_set_verbosity(opal_compress_base_output, value);
-
-    /* 
-     * Which COMPRESS component to open
-     *  - NULL or "" = auto-select
-     *  - "none" = Empty component
-     *  - ow. select that specific component
-     */
-    mca_base_param_reg_string_name("compress", NULL,
-                                   "Which COMPRESS component to use (empty = auto-select)",
-                                   false, false,
-                                   NULL, &str_value);
-
     /* Compression currently only used with C/R */
     if( !opal_cr_is_enabled ) {
-        opal_output_verbose(10, opal_compress_base_output,
+        opal_output_verbose(10, opal_compress_base_framework.framework_output,
                             "compress:open: FT is not enabled, skipping!");
         return OPAL_SUCCESS;
     }
 
     /* Open up all available components */
-    if (OPAL_SUCCESS != (ret = mca_base_components_open("compress", 
-                                                        opal_compress_base_output, 
-                                                        mca_compress_base_static_components,
-                                                        &opal_compress_base_components_available,
-                                                        true)) ) {
-        if( OPAL_ERR_NOT_FOUND == ret &&
-            NULL != str_value &&
-            0 == strncmp(str_value, "none", strlen("none")) ) {
-            exit_status = OPAL_SUCCESS;
-        } else {
-            exit_status = OPAL_ERROR;
-        }
-    }
-
-    if( NULL != str_value ) {
-        free(str_value);
-    }
-    return exit_status;
+    return mca_base_framework_components_open (&opal_compress_base_framework, flags);
 }

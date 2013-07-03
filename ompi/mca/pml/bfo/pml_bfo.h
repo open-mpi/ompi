@@ -50,9 +50,9 @@ struct mca_pml_bfo_t {
     int free_list_num;      /* initial size of free list */
     int free_list_max;      /* maximum size of free list */
     int free_list_inc;      /* number of elements to grow free list */
-    size_t send_pipeline_depth;
-    size_t recv_pipeline_depth;
-    size_t rdma_put_retries_limit;
+    unsigned int send_pipeline_depth;
+    unsigned int recv_pipeline_depth;
+    unsigned int rdma_put_retries_limit;
     int max_rdma_per_request;
     int max_send_per_range;
     bool leave_pinned; 
@@ -78,7 +78,7 @@ struct mca_pml_bfo_t {
     bool enabled; 
     char* allocator_name;
     mca_allocator_base_module_t* allocator; 
-    uint32_t unexpected_limit;
+    unsigned int unexpected_limit;
 };
 typedef struct mca_pml_bfo_t mca_pml_bfo_t; 
 

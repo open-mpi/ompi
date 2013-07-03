@@ -88,8 +88,7 @@ extern const char *orte_info_path_pkgdatadir;
 extern const char *orte_info_path_pkgincludedir;
 
 void orte_info_do_params(bool want_all, bool want_internal);
-void orte_info_show_mca_params(opal_list_t *info,
-                               const char *type, const char *component, 
+void orte_info_show_mca_params(const char *type, const char *component, 
                                bool want_internal);
 
 void orte_info_do_path(bool want_all, opal_cmd_line_t *cmd_line);
@@ -120,8 +119,8 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_info_component_map_t);
 
 extern opal_pointer_array_t component_map;
 
-void orte_info_open_components(void);
-void orte_info_close_components(void);
+void orte_info_components_open(void);
+void orte_info_components_close(void);
 
 END_C_DECLS
 

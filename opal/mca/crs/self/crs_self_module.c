@@ -38,7 +38,7 @@
 #include "opal/util/opal_environ.h"
 
 #include "opal/constants.h"
-#include "opal/mca/base/mca_base_param.h"
+#include "opal/mca/base/mca_base_var.h"
 
 #include "opal/mca/crs/crs.h"
 #include "opal/mca/crs/base/base.h"
@@ -526,7 +526,7 @@ int opal_crs_self_prelaunch(int32_t rank,
         return OPAL_ERR_NOT_SUPPORTED;
     }
 
-    tmp_env_var = mca_base_param_env_var("opal_cr_is_tool");
+    (void) mca_base_var_env_name("opal_cr_is_tool", &tmp_env_var);
     opal_setenv(tmp_env_var,
                 "0", true, env);
     free(tmp_env_var);
@@ -633,21 +633,21 @@ static int opal_crs_self_restart_cmd(opal_crs_self_snapshot_t *snapshot, char **
     opal_output_verbose(10, mca_crs_self_component.super.output_handle,
                         "crs:self: restart_cmd(%s, ---)", snapshot->cmd_line);
 
-    tmp_env_var = mca_base_param_env_var("crs");
+    (void) mca_base_var_env_name("crs", &tmp_env_var);
     opal_setenv(tmp_env_var,
                 "self", 
                 true, &environ);
     free(tmp_env_var);
     tmp_env_var = NULL;
 
-    tmp_env_var = mca_base_param_env_var("crs_self_do_restart");
+    (void) mca_base_var_env_name("crs_self_do_restart", &tmp_env_var);
     opal_setenv(tmp_env_var,
                 "1", 
                 true, &environ);
     free(tmp_env_var);
     tmp_env_var = NULL;
 
-    tmp_env_var = mca_base_param_env_var("crs_self_prefix");
+    (void) mca_base_var_env_name("crs_self_prefix", &tmp_env_var);
     opal_setenv(tmp_env_var,
                 mca_crs_self_component.prefix, 
                 true, &environ);

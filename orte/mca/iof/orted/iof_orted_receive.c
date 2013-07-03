@@ -65,7 +65,7 @@ void orte_iof_orted_send_xonxoff(orte_iof_tag_t tag)
         return;
     }
 
-    OPAL_OUTPUT_VERBOSE((1, orte_iof_base.iof_output,
+    OPAL_OUTPUT_VERBOSE((1, orte_iof_base_framework.framework_output,
                          "%s sending %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          (ORTE_IOF_XON == tag) ? "xon" : "xoff"));
@@ -124,7 +124,7 @@ void orte_iof_orted_recv(int status, orte_process_name_t* sender,
     }
     /* numbytes will contain the actual #bytes that were sent */
     
-    OPAL_OUTPUT_VERBOSE((1, orte_iof_base.iof_output,
+    OPAL_OUTPUT_VERBOSE((1, orte_iof_base_framework.framework_output,
                          "%s unpacked %d bytes for local proc %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), numbytes,
                          ORTE_NAME_PRINT(&target)));
@@ -140,7 +140,7 @@ void orte_iof_orted_recv(int status, orte_process_name_t* sender,
             /* yes - is this intended for all vpids or this vpid? */
             if (ORTE_VPID_WILDCARD == target.vpid ||
                 sink->name.vpid == target.vpid) {
-                OPAL_OUTPUT_VERBOSE((1, orte_iof_base.iof_output,
+                OPAL_OUTPUT_VERBOSE((1, orte_iof_base_framework.framework_output,
                                      "%s writing data to local proc %s",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                      ORTE_NAME_PRINT(&sink->name)));

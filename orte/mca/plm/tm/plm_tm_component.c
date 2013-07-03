@@ -26,7 +26,6 @@
 #include "orte_config.h"
 #include "orte/constants.h"
 
-#include "opal/mca/base/mca_base_param.h"
 #include "opal/util/argv.h"
 
 
@@ -47,6 +46,7 @@ const char *mca_plm_tm_component_version_string =
 /*
  * Local function
  */
+static int plm_tm_register(void);
 static int plm_tm_open(void);
 static int plm_tm_close(void);
 static int orte_plm_tm_component_query(mca_base_module_t **module, int *priority);
@@ -74,7 +74,8 @@ orte_plm_tm_component_t mca_plm_tm_component = {
             /* Component open and close functions */
             plm_tm_open,
             plm_tm_close,
-            orte_plm_tm_component_query
+            orte_plm_tm_component_query,
+            plm_tm_register
         },
         {
             /* The component is checkpoint ready */
@@ -83,17 +84,23 @@ orte_plm_tm_component_t mca_plm_tm_component = {
     }
 };
 
+static int plm_tm_register(void)
+{
+    mca_base_component_t *comp = &mca_plm_tm_component.super.base_version;
+
+    mca_plm_tm_component.want_path_check = true;
+    (void) mca_base_component_var_register (comp, "want_path_check",
+                                            "Whether the launching process should check for the plm_tm_orted executable in the PATH before launching (the TM API does not give an indication of failure; this is a somewhat-lame workaround; non-zero values enable this check)",
+                                            MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                            OPAL_INFO_LVL_9,
+                                            MCA_BASE_VAR_SCOPE_READONLY,
+                                            &mca_plm_tm_component.want_path_check);
+
+    return ORTE_SUCCESS;
+}
 
 static int plm_tm_open(void)
 {
-    int tmp;
-    mca_base_component_t *comp = &mca_plm_tm_component.super.base_version;
-
-    mca_base_param_reg_int(comp, "want_path_check",
-                           "Whether the launching process should check for the plm_tm_orted executable in the PATH before launching (the TM API does not give an indication of failure; this is a somewhat-lame workaround; non-zero values enable this check)",
-                           false, false, (int) true, &tmp);
-    mca_plm_tm_component.want_path_check = OPAL_INT_TO_BOOL(tmp);
-    
     mca_plm_tm_component.checked_paths = NULL;
    
     return ORTE_SUCCESS;

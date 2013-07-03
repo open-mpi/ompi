@@ -28,7 +28,6 @@
 #include <sys/time.h>
 #endif
 
-#include "opal/mca/base/mca_base_param.h"
 #include "opal/mca/hwloc/hwloc.h"
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
@@ -199,6 +198,8 @@ opal_event_t orte_finalize_event;
 char *orte_selected_oob_component = NULL;
 
 #endif /* !ORTE_DISABLE_FULL_RTE */
+/* user debugger */
+char *orte_base_user_debugger = NULL;
 
 int orte_debug_output = -1;
 bool orte_debug_daemons_flag = false;

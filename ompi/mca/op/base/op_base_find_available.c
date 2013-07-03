@@ -36,24 +36,14 @@
 #include "ompi/mca/op/op.h"
 #include "ompi/mca/op/base/base.h"
 
-
-/*
- * Global variables
- */
-bool ompi_op_base_components_available_valid = false;
-opal_list_t ompi_op_base_components_available;
-
-
 /*
  * Private functions
  */
 static int init_query(const mca_base_component_t * ls,
-                      mca_base_component_priority_list_item_t * entry,
                       bool enable_progress_threads,
                       bool enable_mpi_threads);
 static int init_query_1_0_0(const mca_base_component_t * ls,
-                            mca_base_component_priority_list_item_t *
-                            entry, bool enable_progress_threads,
+                            bool enable_progress_threads,
                             bool enable_mpi_threads);
 
 /*
@@ -69,56 +59,27 @@ static int init_query_1_0_0(const mca_base_component_t * ls,
 int ompi_op_base_find_available(bool enable_progress_threads,
                                 bool enable_mpi_threads)
 {
-    bool found = false;
-    mca_base_component_priority_list_item_t *entry;
-    opal_list_item_t *p;
-    const mca_base_component_t *component;
-
-    /* Initialize the list */
-
-    OBJ_CONSTRUCT(&ompi_op_base_components_available, opal_list_t);
-    ompi_op_base_components_available_valid = true;
+    mca_base_component_list_item_t *cli, *next;
 
     /* The list of components that we should check has already been
        established in ompi_op_base_open. */
 
-    for (found = false,
-         p = opal_list_remove_first(&ompi_op_base_components_opened);
-         p != NULL;
-         p = opal_list_remove_first(&ompi_op_base_components_opened)) {
-        component = ((mca_base_component_list_item_t *) p)->cli_component;
+    OPAL_LIST_FOREACH_SAFE(cli, next, &ompi_op_base_framework.framework_components, mca_base_component_list_item_t) {
+        const mca_base_component_t *component = cli->cli_component;
 
         /* Call a subroutine to do the work, because the component may
            represent different versions of the op MCA. */
 
-        entry = OBJ_NEW(mca_base_component_priority_list_item_t);
-        entry->super.cli_component = component;
-        entry->cpli_priority = 0;
-        if (OMPI_SUCCESS == init_query(component, entry,
+        if (OMPI_SUCCESS != init_query(component,
                                        enable_progress_threads,
                                        enable_mpi_threads)) {
-            opal_list_append(&ompi_op_base_components_available,
-                             (opal_list_item_t *) entry);
-            found = true;
-        } else {
 
-            /* If the component doesn't want to run, then close it.
-               It's already had its close() method invoked; now close
-               it out of the DSO repository (if it's there). */
-
-            mca_base_component_repository_release(component);
-            OBJ_RELEASE(entry);
+            /* If the component doesn't want to run, then close it. */
+            opal_list_remove_item(&ompi_op_base_framework.framework_components, &cli->super);
+            mca_base_component_close(component, ompi_op_base_framework.framework_output);
+            OBJ_RELEASE(cli);
         }
-
-        /* Free the entry from the "opened" list */
-
-        OBJ_RELEASE(p);
     }
-
-    /* The opened list is now no longer useful and we can free it */
-
-    OBJ_DESTRUCT(&ompi_op_base_components_opened);
-    ompi_op_base_components_opened_valid = false;
 
     /* It is not an error if there are no components available; we'll
        just fall back to the base functions. */
@@ -132,12 +93,11 @@ int ompi_op_base_find_available(bool enable_progress_threads,
  * some information.  If it doesn't, close it.
  */
 static int init_query(const mca_base_component_t * c,
-                      mca_base_component_priority_list_item_t * entry,
                       bool enable_progress_threads, bool enable_mpi_threads)
 {
     int ret;
 
-    opal_output_verbose(10, ompi_op_base_output,
+    opal_output_verbose(10, ompi_op_base_framework.framework_output,
                         "op:find_available: querying op component %s",
                         c->mca_component_name);
 
@@ -147,12 +107,12 @@ static int init_query(const mca_base_component_t * c,
     if (1 == c->mca_type_major_version &&
         0 == c->mca_type_minor_version &&
         0 == c->mca_type_release_version) {
-        ret = init_query_1_0_0(c, entry, enable_progress_threads,
+        ret = init_query_1_0_0(c, enable_progress_threads,
                                enable_mpi_threads);
     } else {
         /* Unrecognized op API version */
 
-        opal_output_verbose(10, ompi_op_base_output,
+        opal_output_verbose(10, ompi_op_base_framework.framework_output,
                             "op:find_available: unrecognized op API version (%d.%d.%d, ignored)",
                             c->mca_type_major_version,
                             c->mca_type_minor_version,
@@ -163,14 +123,11 @@ static int init_query(const mca_base_component_t * c,
     /* Query done -- look at the return value to see what happened */
 
     if (OMPI_SUCCESS != ret) {
-        opal_output_verbose(10, ompi_op_base_output,
+        opal_output_verbose(10, ompi_op_base_framework.framework_output,
                             "op:find_available: op component %s is not available",
                             c->mca_component_name);
-        if (NULL != c->mca_close_component) {
-            c->mca_close_component();
-        }
     } else {
-        opal_output_verbose(10, ompi_op_base_output,
+        opal_output_verbose(10, ompi_op_base_framework.framework_output,
                             "op:find_available: op component %s is available",
                             c->mca_component_name);
     }
@@ -185,7 +142,6 @@ static int init_query(const mca_base_component_t * c,
  * Query a specific component, op v2.0.0
  */
 static int init_query_1_0_0(const mca_base_component_t * component,
-                            mca_base_component_priority_list_item_t * entry,
                             bool enable_progress_threads, 
                             bool enable_mpi_threads)
 {

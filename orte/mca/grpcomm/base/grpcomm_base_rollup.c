@@ -70,7 +70,7 @@ void orte_grpcomm_base_rollup_recv(int status, orte_process_name_t* sender,
     bool done = false;
     opal_buffer_t *relay;
 
-    OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base.output,
+    OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_framework.framework_output,
                          "%s grpcomm:rollup:recv from sender %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(sender)));
@@ -103,7 +103,7 @@ void orte_grpcomm_base_rollup_recv(int status, orte_process_name_t* sender,
 
     if (done) {
         /* send the message to my parent */
-        OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base.output,
+        OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_framework.framework_output,
                              "%s grpcomm:rollup: sending rollup msg to %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_NAME_PRINT(ORTE_PROC_MY_PARENT)));

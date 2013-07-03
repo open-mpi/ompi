@@ -20,7 +20,6 @@
 #include "orte/constants.h"
 
 #include "opal/mca/base/base.h"
-#include "opal/mca/base/mca_base_param.h"
 #include "opal/mca/if/if.h"
 
 #include "orte/util/name_fns.h"
@@ -66,42 +65,60 @@ orte_ras_sim_component_t mca_ras_simulator_component = {
 
 static int ras_sim_register(void)
 {
-    mca_base_param_reg_string(&mca_ras_simulator_component.super.base_version,
-                           "slots",
-                           "Comma-separated list of number of slots on each node to simulate",
-                           false, false, "1", &mca_ras_simulator_component.slots);
-    mca_base_param_reg_string(&mca_ras_simulator_component.super.base_version,
-                           "max_slots",
-                           "Comma-separated list of number of max slots on each node to simulate",
-                           false, false, "0", &mca_ras_simulator_component.slots_max);
-#if OPAL_HAVE_HWLOC
-    {
-        int tmp;
+    mca_base_component_t *component = &mca_ras_simulator_component.super.base_version;
 
-        mca_base_param_reg_string(&mca_ras_simulator_component.super.base_version,
-                                  "num_nodes",
-                                  "Comma-separated list of number of nodes to simulate for each topology",
-                                  false, false, NULL, &mca_ras_simulator_component.num_nodes);
-        mca_base_param_reg_string(&mca_ras_simulator_component.super.base_version,
-                                  "topo_files",
-                                  "Comma-separated list of files containing xml topology descriptions for simulated nodes",
-                                  false, false, NULL, &mca_ras_simulator_component.topofiles);
-        mca_base_param_reg_int(&mca_ras_simulator_component.super.base_version,
-                               "have_cpubind",
-                               "Topology supports binding to cpus",
-                               false, false, (int)true, &tmp);
-        mca_ras_simulator_component.have_cpubind = OPAL_INT_TO_BOOL(tmp);
-        mca_base_param_reg_int(&mca_ras_simulator_component.super.base_version,
-                               "have_membind",
-                               "Topology supports binding to memory",
-                               false, false, (int)true, &tmp);
-        mca_ras_simulator_component.have_membind = OPAL_INT_TO_BOOL(tmp);
-    }
+    mca_ras_simulator_component.slots = strdup ("1");
+    (void) mca_base_component_var_register (component, "slots",
+                                            "Comma-separated list of number of slots on each node to simulate",
+                                            MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
+                                            OPAL_INFO_LVL_9,
+                                            MCA_BASE_VAR_SCOPE_READONLY,
+                                            &mca_ras_simulator_component.slots);
+
+    mca_ras_simulator_component.slots_max = strdup ("0");
+    (void) mca_base_component_var_register (component, "max_slots",
+                                            "Comma-separated list of number of max slots on each node to simulate",
+                                            MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
+                                            OPAL_INFO_LVL_9,
+                                            MCA_BASE_VAR_SCOPE_READONLY,
+                                            &mca_ras_simulator_component.slots_max);
+#if OPAL_HAVE_HWLOC
+    mca_ras_simulator_component.num_nodes = NULL;
+    (void) mca_base_component_var_register (component, "num_nodes",
+                                            "Comma-separated list of number of nodes to simulate for each topology",
+                                            MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
+                                            OPAL_INFO_LVL_9,
+                                            MCA_BASE_VAR_SCOPE_READONLY,
+                                            &mca_ras_simulator_component.num_nodes);
+    mca_ras_simulator_component.topofiles = NULL;
+    (void) mca_base_component_var_register (component, "topo_files",
+                                            "Comma-separated list of files containing xml topology descriptions for simulated nodes",
+                                            MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
+                                            OPAL_INFO_LVL_9,
+                                            MCA_BASE_VAR_SCOPE_READONLY,
+                                            &mca_ras_simulator_component.topofiles);
+    mca_ras_simulator_component.have_cpubind = true;
+    (void) mca_base_component_var_register (component, "have_cpubind",
+                                            "Topology supports binding to cpus",
+                                            MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                            OPAL_INFO_LVL_9,
+                                            MCA_BASE_VAR_SCOPE_READONLY,
+                                                &mca_ras_simulator_component.have_cpubind);
+    mca_ras_simulator_component.have_membind = true;
+    (void) mca_base_component_var_register (component, "have_membind",
+                                            "Topology supports binding to memory",
+                                            MCA_BASE_VAR_TYPE_BOOL,NULL, 0, 0,
+                                            OPAL_INFO_LVL_9,
+                                            MCA_BASE_VAR_SCOPE_READONLY,
+                                            &mca_ras_simulator_component.have_membind);
 #else
-    mca_base_param_reg_string(&mca_ras_simulator_component.super.base_version,
-                              "num_nodes",
-                              "Number of nodes to simulate",
-                              false, false, NULL, &mca_ras_simulator_component.num_nodes);
+    mca_ras_simulator_component.num_nodes = NULL;
+    (void) mca_base_component_var_register (component, "num_nodes",
+                                            "Number of nodes to simulate",
+                                            MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
+                                            OPAL_INFO_LVL_9,
+                                            MCA_BASE_VAR_SCOPE_READONLY,
+                                            &mca_ras_simulator_component.num_nodes);
 #endif
         
     return ORTE_SUCCESS;

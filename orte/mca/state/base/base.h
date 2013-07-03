@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011      Los Alamos National Security, LLC.
+ * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * $COPYRIGHT$
  * 
@@ -27,23 +27,8 @@
 
 BEGIN_C_DECLS
 
-/*
- * MCA Framework functions
- */
-ORTE_DECLSPEC    int orte_state_base_open(void);
+/* select a component */
 ORTE_DECLSPEC    int orte_state_base_select(void);
-ORTE_DECLSPEC    int orte_state_base_close(void);
-
-/**
- * Output and component variables
- */
-ORTE_DECLSPEC extern opal_list_t orte_state_base_components_available;
-
-/**
- * Internal module reference
- */
-ORTE_DECLSPEC extern orte_state_base_component_t orte_state_base_selected_component;
-
 
 /* debug tools */
 ORTE_DECLSPEC void orte_state_base_print_job_state_machine(void);

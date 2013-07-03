@@ -20,8 +20,6 @@
 #include "opal/util/output.h"
 #include "opal/mca/base/base.h"
 
-#include "opal/mca/base/mca_base_param.h"
-
 #include "orte/mca/sstore/sstore.h"
 #include "orte/mca/sstore/base/base.h"
 
@@ -35,8 +33,8 @@ int orte_sstore_base_select(void)
     /*
      * Select the best component
      */
-    if( OPAL_SUCCESS != mca_base_select("sstore", orte_sstore_base_output,
-                                        &orte_sstore_base_components_available,
+    if( OPAL_SUCCESS != mca_base_select("sstore", orte_sstore_base_framework.framework_output,
+                                        &orte_sstore_base_framework.framework_components,
                                         (mca_base_module_t **) &best_module,
                                         (mca_base_component_t **) &best_component) ) {
         /* This will only happen if no component was selected */
@@ -45,7 +43,6 @@ int orte_sstore_base_select(void)
     }
 
     /* Save the winner */
-    orte_sstore_base_selected_component = *best_component;
     orte_sstore = *best_module;
 
     /* Initialize the winner */

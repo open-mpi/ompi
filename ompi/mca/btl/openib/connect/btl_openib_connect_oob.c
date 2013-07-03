@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2006-2012 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2008-2011 Mellanox Technologies.  All rights reserved.
@@ -103,10 +103,14 @@ ompi_btl_openib_connect_base_component_t ompi_btl_openib_connect_oob = {
 /* Open - this functions sets up any oob specific commandline params */
 static void oob_component_register(void)
 {
-    mca_base_param_reg_int(&mca_btl_openib_component.super.btl_version,
-                           "connect_oob_priority",
-                           "The selection method priority for oob",
-                           false, false, oob_priority, &oob_priority);
+    oob_priority = 50;
+    (void) mca_base_component_var_register(&mca_btl_openib_component.super.btl_version,
+                                           "connect_oob_priority",
+                                           "The selection method priority for oob",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &oob_priority);
 
     if (oob_priority > 100) {
         oob_priority = 100;
@@ -130,7 +134,7 @@ static int oob_component_query(mca_btl_openib_module_t *btl,
        therefore we must be IB. */
 #if defined(HAVE_STRUCT_IBV_DEVICE_TRANSPORT_TYPE) && defined(HAVE_IBV_LINK_LAYER_ETHERNET)
     if (BTL_OPENIB_CONNECT_BASE_CHECK_IF_NOT_IB(btl)) {
-        opal_output_verbose(5, mca_btl_base_output,
+        opal_output_verbose(5, ompi_btl_base_framework.framework_output,
                             "openib BTL: oob CPC only supported on InfiniBand; skipped on  %s:%d",
                             ibv_get_device_name(btl->device->ib_dev),
                             btl->port_num);
@@ -139,7 +143,7 @@ static int oob_component_query(mca_btl_openib_module_t *btl,
 #endif
 
     if (mca_btl_openib_component.num_xrc_qps > 0) {
-        opal_output_verbose(5, mca_btl_base_output,
+        opal_output_verbose(5, ompi_btl_base_framework.framework_output,
                             "openib BTL: oob CPC not supported with XRC receive queues, please try xoob CPC; skipped on %s:%d",
                             ibv_get_device_name(btl->device->ib_dev),
                             btl->port_num);
@@ -155,7 +159,7 @@ static int oob_component_query(mca_btl_openib_module_t *btl,
                                      rml_recv_cb,
                                      NULL);
         if (ORTE_SUCCESS != rc) {
-            opal_output_verbose(5, mca_btl_base_output,
+            opal_output_verbose(5, ompi_btl_base_framework.framework_output,
                                 "openib BTL: oob CPC system error %d (%s)",
                                 rc, opal_strerror(rc));
             return rc;
@@ -167,10 +171,17 @@ static int oob_component_query(mca_btl_openib_module_t *btl,
     if (NULL == *cpc) {
         orte_rml.recv_cancel(ORTE_NAME_WILDCARD, OMPI_RML_TAG_OPENIB);
         rml_recv_posted = false;
-        opal_output_verbose(5, mca_btl_base_output,
+        opal_output_verbose(5, ompi_btl_base_framework.framework_output,
                             "openib BTL: oob CPC system error (malloc failed)");
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
+
+    if (oob_priority > 100) {
+        oob_priority = 100;
+    } else if (oob_priority < -1) {
+        oob_priority = -1;
+    }
+
     (*cpc)->data.cbm_component = &ompi_btl_openib_connect_oob;
     (*cpc)->data.cbm_priority = oob_priority;
     (*cpc)->data.cbm_modex_message = NULL;
@@ -182,7 +193,7 @@ static int oob_component_query(mca_btl_openib_module_t *btl,
     (*cpc)->cbm_finalize = NULL;
     (*cpc)->cbm_uses_cts = false;
 
-    opal_output_verbose(5, mca_btl_base_output,
+    opal_output_verbose(5, ompi_btl_base_framework.framework_output,
                         "openib BTL: oob CPC available for use on %s:%d",
                         ibv_get_device_name(btl->device->ib_dev),
                         btl->port_num);

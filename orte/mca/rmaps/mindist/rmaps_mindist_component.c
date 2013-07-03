@@ -58,11 +58,12 @@ orte_rmaps_base_component_t mca_rmaps_mindist_component = {
 
 static int orte_rmaps_mindist_register(void)
 {
-    mca_base_component_t *c=&mca_rmaps_mindist_component.base_version;
-
-    mca_base_param_reg_int(c, "priority",
-                           "Priority of the mindist rmaps component",
-                           false, false, my_priority, &my_priority);
+    (void) mca_base_component_var_register(&mca_rmaps_mindist_component.base_version,
+                                           "priority", "Priority of the mindist rmaps component",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &my_priority);
 
     return ORTE_SUCCESS;
 }

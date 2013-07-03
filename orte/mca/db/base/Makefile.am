@@ -1,6 +1,6 @@
 #
 # Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved. 
-# Copyright (c) 2012      Los Alamos National Security, Inc.  All rights reserved. 
+# Copyright (c) 2012-2013 Los Alamos National Security, Inc.  All rights reserved. 
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -14,6 +14,5 @@ headers += \
 	base/base.h
 
 libmca_db_la_SOURCES += \
-	base/db_base_open.c \
-	base/db_base_close.c \
+	base/db_base_frame.c \
 	base/db_base_select.c

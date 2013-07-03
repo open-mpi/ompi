@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007-2012 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2010      Los Alamos National Security, LLC.
+ * Copyright (c) 2010-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * $COPYRIGHT$
  * 
@@ -39,6 +39,7 @@
 #include "opal/class/opal_object.h"
 #include "opal/class/opal_pointer_array.h"
 #include "opal/runtime/opal.h"
+#include "opal/runtime/opal_info_support.h"
 #include "opal/util/cmd_line.h"
 #include "opal/util/error.h"
 #include "opal/util/argv.h"
@@ -47,6 +48,7 @@
 
 #include "orte/constants.h"
 #include "orte/util/show_help.h"
+#include "orte/runtime/orte_info_support.h"
 #include "orte/runtime/orte_locks.h"
 
 #include "orte/tools/orte-info/orte-info.h"
@@ -195,51 +197,9 @@ int main(int argc, char *argv[])
     /* setup the mca_types array */
     OBJ_CONSTRUCT(&mca_types, opal_pointer_array_t);
     opal_pointer_array_init(&mca_types, 256, INT_MAX, 128);
-    
-    opal_pointer_array_add(&mca_types, "mca");
-    opal_pointer_array_add(&mca_types, "orte");
-    opal_pointer_array_add(&mca_types, "opal");
-    
-    opal_pointer_array_add(&mca_types, "filter");
-    opal_pointer_array_add(&mca_types, "backtrace");
-    opal_pointer_array_add(&mca_types, "memchecker");
-    opal_pointer_array_add(&mca_types, "memory");
-    opal_pointer_array_add(&mca_types, "paffinity");
-    opal_pointer_array_add(&mca_types, "carto");
-    opal_pointer_array_add(&mca_types, "shmem");
-    opal_pointer_array_add(&mca_types, "maffinity");
-    opal_pointer_array_add(&mca_types, "timer");
-    opal_pointer_array_add(&mca_types, "installdirs");
-#if OPAL_HAVE_HWLOC
-    opal_pointer_array_add(&mca_types, "hwloc");
-#endif
-#if OPAL_ENABLE_FT_CR == 1
-    opal_pointer_array_add(&mca_types, "crs");
-#endif
-    opal_pointer_array_add(&mca_types, "if");
-    opal_pointer_array_add(&mca_types, "event");
-    
-#if !ORTE_DISABLE_FULL_SUPPORT
-    opal_pointer_array_add(&mca_types, "iof");
-    opal_pointer_array_add(&mca_types, "oob");
-    opal_pointer_array_add(&mca_types, "odls");
-    opal_pointer_array_add(&mca_types, "ras");
-    opal_pointer_array_add(&mca_types, "rmaps");
-    opal_pointer_array_add(&mca_types, "rml");
-    opal_pointer_array_add(&mca_types, "routed");
-    opal_pointer_array_add(&mca_types, "plm");
-#if OPAL_ENABLE_FT_CR == 1
-    opal_pointer_array_add(&mca_types, "snapc");
-#endif
-    opal_pointer_array_add(&mca_types, "sensor");
-    opal_pointer_array_add(&mca_types, "filem");
-#endif
-    /* these are always included */
-    opal_pointer_array_add(&mca_types, "state");
-    opal_pointer_array_add(&mca_types, "errmgr");
-    opal_pointer_array_add(&mca_types, "ess");
-    opal_pointer_array_add(&mca_types, "grpcomm");
-    opal_pointer_array_add(&mca_types, "db");
+     
+    opal_info_register_types(&mca_types);
+    orte_info_register_types(&mca_types);
     
     /* Execute the desired action(s) */
     
@@ -283,7 +243,7 @@ int main(int argc, char *argv[])
         orte_info_do_arch();
         orte_info_do_hostname();
         orte_info_do_config(false);
-        orte_info_open_components();
+        orte_info_components_open();
         for (i = 0; i < mca_types.size; ++i) {
             if (NULL == (str = (char*)opal_pointer_array_get_item(&mca_types, i))) {
                 continue;
@@ -301,7 +261,7 @@ int main(int argc, char *argv[])
     if (NULL != global_env) {
         opal_argv_free(global_env);
     }
-    orte_info_close_components();
+    orte_info_components_close ();
     OBJ_RELEASE(orte_info_cmd_line);
     OBJ_DESTRUCT(&mca_types);
     mca_base_close();

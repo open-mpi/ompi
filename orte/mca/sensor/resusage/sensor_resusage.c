@@ -1,8 +1,8 @@
 /*
  * Copyright (c) 2009-2011 Cisco Systems, Inc.  All rights reserved. 
- * Copyright (c) 2011      Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
-  *
+ *
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -152,7 +152,7 @@ static void sample(int fd, short event, void *arg)
         return;
     }
     
-    OPAL_OUTPUT_VERBOSE((1, orte_sensor_base.output,
+    OPAL_OUTPUT_VERBOSE((1, orte_sensor_base_framework.framework_output,
                          "sample:resusage sampling resource usage"));
     
     /* update stats on ourself and the node */
@@ -204,7 +204,7 @@ static void sample(int fd, short event, void *arg)
 
     /* are there any issues with node-level usage? */
     if (0.0 < mca_sensor_resusage_component.node_memory_limit) {
-        OPAL_OUTPUT_VERBOSE((2, orte_sensor_base.output,
+        OPAL_OUTPUT_VERBOSE((2, orte_sensor_base_framework.framework_output,
                              "%s CHECKING NODE MEM",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
         /* compute the percentage of node memory in-use */
@@ -212,7 +212,7 @@ static void sample(int fd, short event, void *arg)
             goto RESTART;
         }
         in_use = 1.0 - (nst->free_mem / nst->total_mem);
-        OPAL_OUTPUT_VERBOSE((2, orte_sensor_base.output,
+        OPAL_OUTPUT_VERBOSE((2, orte_sensor_base_framework.framework_output,
                              "%s PERCENT USED: %f LIMIT: %f",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              in_use, mca_sensor_resusage_component.node_memory_limit));
@@ -234,7 +234,7 @@ static void sample(int fd, short event, void *arg)
                 if (NULL == (st = (opal_pstats_t*)opal_ring_buffer_poke(&child->stats, -1))) {
                     continue;
                 }
-                OPAL_OUTPUT_VERBOSE((5, orte_sensor_base.output,
+                OPAL_OUTPUT_VERBOSE((5, orte_sensor_base_framework.framework_output,
                                      "%s PROC %s AT VSIZE %f",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                      ORTE_NAME_PRINT(&child->name), st->vsize));
@@ -247,7 +247,7 @@ static void sample(int fd, short event, void *arg)
                 /* if all children dead and we are still too big,
                  * then we must be the culprit - abort
                  */
-                OPAL_OUTPUT_VERBOSE((2, orte_sensor_base.output,
+                OPAL_OUTPUT_VERBOSE((2, orte_sensor_base_framework.framework_output,
                                      "%s NO CHILD: COMMITTING SUICIDE",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
                 orte_errmgr.abort(ORTE_ERR_MEM_LIMIT_EXCEEDED, NULL);
@@ -255,7 +255,7 @@ static void sample(int fd, short event, void *arg)
                 /* report the problem - this will normally kill the proc, so
                  * we have to release the ODLS thread first
                  */
-                OPAL_OUTPUT_VERBOSE((2, orte_sensor_base.output,
+                OPAL_OUTPUT_VERBOSE((2, orte_sensor_base_framework.framework_output,
                                      "%s REPORTING %s TO ERRMGR FOR EXCEEDING LIMITS",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                      ORTE_NAME_PRINT(&hog->name)));
@@ -267,7 +267,7 @@ static void sample(int fd, short event, void *arg)
 
     /* check proc limits */
     if (0.0 < mca_sensor_resusage_component.proc_memory_limit) {
-        OPAL_OUTPUT_VERBOSE((2, orte_sensor_base.output,
+        OPAL_OUTPUT_VERBOSE((2, orte_sensor_base_framework.framework_output,
                              "%s CHECKING PROC MEM",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
         /* check my children first */
@@ -285,7 +285,7 @@ static void sample(int fd, short event, void *arg)
             if (NULL == (st = (opal_pstats_t*)opal_ring_buffer_poke(&child->stats, -1))) {
                 continue;
             }
-            OPAL_OUTPUT_VERBOSE((5, orte_sensor_base.output,
+            OPAL_OUTPUT_VERBOSE((5, orte_sensor_base_framework.framework_output,
                                  "%s PROC %s AT VSIZE %f",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  ORTE_NAME_PRINT(&child->name), st->vsize));

@@ -39,12 +39,12 @@ const char *mca_coll_self_component_version_string =
 /*
  * Global variable
  */
-int mca_coll_self_priority_param = -1;
+int ompi_coll_self_priority = 0;
 
 /*
  * Local function
  */
-static int self_open(void);
+static int self_register(void);
 
 
 /*
@@ -67,8 +67,10 @@ const mca_coll_base_component_2_0_0_t mca_coll_self_component = {
         OMPI_RELEASE_VERSION,
 
         /* Component open and close functions */
-        self_open,
-        NULL
+        NULL,
+        NULL,
+        NULL,
+        self_register
     },
     {
         /* The component is checkpoint ready */
@@ -81,15 +83,16 @@ const mca_coll_base_component_2_0_0_t mca_coll_self_component = {
     mca_coll_self_comm_query
 };
 
-
-static int self_open(void)
+static int self_register(void)
 {
     /* We'll always be picked if there's only one process in the
        communicator */
-    
-    mca_coll_self_priority_param = 
-      mca_base_param_reg_int (&mca_coll_self_component.collm_version,
-                              "priority", NULL, false, false, 75, NULL);
+    ompi_coll_self_priority = 75;
+    (void) mca_base_component_var_register(&mca_coll_self_component.collm_version,
+                                           "priority", NULL, MCA_BASE_VAR_TYPE_INT,
+                                           NULL, 0, 0, OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &ompi_coll_self_priority);
 
     return OMPI_SUCCESS;
 }

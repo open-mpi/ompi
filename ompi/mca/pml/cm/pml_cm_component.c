@@ -19,7 +19,6 @@
 
 #include "pml_cm.h"
 #include "opal/mca/event/event.h"
-#include "opal/mca/base/mca_base_param.h"
 #include "ompi/mca/mtl/mtl.h"
 #include "ompi/mca/mtl/base/base.h"
 #include "ompi/mca/pml/base/pml_base_bsend.h"
@@ -77,37 +76,37 @@ static int
 mca_pml_cm_component_register(void)
 {
 
-    mca_base_param_reg_int(&mca_pml_cm_component.pmlm_version,
-                           "free_list_num",
-                           "Initial size of request free lists",
-                           false,
-                           false,
-                           4,
-                           &ompi_pml_cm.free_list_num);
+    ompi_pml_cm.free_list_num = 4;
+    (void) mca_base_component_var_register(&mca_pml_cm_component.pmlm_version, "free_list_num",
+                                           "Initial size of request free lists",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &ompi_pml_cm.free_list_num);
 
-    mca_base_param_reg_int(&mca_pml_cm_component.pmlm_version,
-                           "free_list_max",
-                           "Maximum size of request free lists",
-                           false,
-                           false,
-                           -1,
-                           &ompi_pml_cm.free_list_max);
+    ompi_pml_cm.free_list_max = -1;
+    (void) mca_base_component_var_register(&mca_pml_cm_component.pmlm_version, "free_list_max",
+                                           "Maximum size of request free lists",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &ompi_pml_cm.free_list_max);
 
-    mca_base_param_reg_int(&mca_pml_cm_component.pmlm_version,
-                           "free_list_inc",
-                           "Number of elements to add when growing request free lists",
-                           false,
-                           false,
-                           64,
-                           &ompi_pml_cm.free_list_inc);
+    ompi_pml_cm.free_list_inc = 64;
+    (void) mca_base_component_var_register(&mca_pml_cm_component.pmlm_version, "free_list_inc",
+                                           "Number of elements to add when growing request free lists",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &ompi_pml_cm.free_list_inc);
 
-    mca_base_param_reg_int(&mca_pml_cm_component.pmlm_version,
-                           "priority",
-                           "CM PML selection priority",
-                           false,
-                           false,
-                           10,
-                           &ompi_pml_cm.default_priority);
+    ompi_pml_cm.default_priority = 10;
+    (void) mca_base_component_var_register(&mca_pml_cm_component.pmlm_version, "priority",
+                                           "CM PML selection priority",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &ompi_pml_cm.default_priority);
 
     return OPAL_SUCCESS;
 }
@@ -117,10 +116,10 @@ mca_pml_cm_component_open(void)
 {
     int ret;
 
-    ret = ompi_mtl_base_open();
+    ret = mca_base_framework_open(&ompi_mtl_base_framework, 0);
     if (OMPI_SUCCESS == ret) {
       /* If no MTL components initialized CM component can be unloaded */
-      if (0 == opal_list_get_size(&ompi_mtl_base_components_opened)) {
+      if (0 == opal_list_get_size(&ompi_mtl_base_framework.framework_components)) {
 	ret = OPAL_ERR_NOT_AVAILABLE;
       }
     }
@@ -132,7 +131,7 @@ mca_pml_cm_component_open(void)
 static int
 mca_pml_cm_component_close(void)
 {
-    return ompi_mtl_base_close();
+    return mca_base_framework_close(&ompi_mtl_base_framework);
 }
 
 

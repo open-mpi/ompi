@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2006-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2012      NVIDIA Corporation.  All rights reserved.
@@ -31,8 +31,8 @@
  * During library initialization, all available BTL components are
  * loaded and opened via their mca_base_open_component_fn_t
  * function. The BTL open function should register any mca parameters
- * used to tune/adjust the behaviour of the BTL (mca_base_param_reg_int(),
- * mca_base_param_reg_string()). Note that the open function may fail
+ * used to tune/adjust the behaviour of the BTL (mca_base_var_register()
+ * mca_base_component_var_register()). Note that the open function may fail
  * if the resources (e.g. shared libraries, etc) required by the network
  * transport are not available.
  *

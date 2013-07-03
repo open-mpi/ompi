@@ -21,7 +21,6 @@
 
 #include "opal/mca/base/base.h"
 #include "opal/util/output.h"
-#include "opal/mca/base/mca_base_param.h"
 
 
 #include "orte/mca/rml/base/base.h"
@@ -29,7 +28,8 @@
 #include "rml_ftrm.h"
 
 
-static int orte_rml_ftrm_open( void);
+static int orte_rml_ftrm_register(void);
+static int orte_rml_ftrm_open(void);
 static int orte_rml_ftrm_close(void);
 
 /**
@@ -48,6 +48,8 @@ orte_rml_component_t mca_rml_ftrm_component = {
 
         orte_rml_ftrm_open,    /* component open */
         orte_rml_ftrm_close,   /* component close */
+        NULL,
+        orte_rml_ftrm_register,
       },
       {
           /* The component is checkpoint ready */
@@ -88,6 +90,7 @@ orte_rml_module_t orte_rml_ftrm_module = {
 int rml_ftrm_output_handle;
 
 static int ftrm_priority = -1;
+static int ftrm_verbosity;
 
 /*
  * Initalize the wrapper component
@@ -120,40 +123,49 @@ orte_rml_module_t* orte_rml_ftrm_component_init(int* priority)
     }
 }
 
+static int orte_rml_ftrm_register(void)
+{
+#if OPAL_ENABLE_FT_CR != 1
+    return ORTE_ERR_NOT_AVAILABLE;
+#endif
+
+    ftrm_priority = RML_SELECT_WRAPPER_PRIORITY;
+    (void) mca_base_component_var_register(&mca_rml_ftrm_component.rml_version,
+                                           "priority",
+                                           "Priority of the RML ftrm component",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &ftrm_priority);
+    /* Enable this wrapper = RML_SELECT_WRAPPER_PRIORITY
+     * ow = -1 or never selected
+     */
+    ftrm_verbosity = 0;
+    (void) mca_base_component_var_register(&mca_rml_ftrm_component.rml_version,
+                                           "verbose",
+                                           "Verbose level for the RML ftrm component",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &ftrm_verbosity);
+    return ORTE_SUCCESS;
+}
+
 /*
  * Initalize the structures upon opening
  */
 static int orte_rml_ftrm_open(void)
 {
-    int value;
-
-    mca_base_param_reg_int(&mca_rml_ftrm_component.rml_version,
-                           "priority",
-                           "Priority of the RML ftrm component",
-                           false, false,
-                           RML_SELECT_WRAPPER_PRIORITY,
-                           &value);
-    /* Enable this wrapper = RML_SELECT_WRAPPER_PRIORITY
-     * ow = -1 or never selected
-     */
-#if OPAL_ENABLE_FT_CR == 1
-    ftrm_priority = value;
-#else
-    ftrm_priority = -1;
+#if OPAL_ENABLE_FT_CR != 1
+    return ORTE_ERR_NOT_AVAILABLE;
 #endif
 
-    mca_base_param_reg_int(&mca_rml_ftrm_component.rml_version,
-                           "verbose",
-                           "Verbose level for the RML ftrm component",
-                           false, false,
-                           0, 
-                           &value);
     /* If there is a custom verbose level for this component than use it
      * otherwise take our parents level and output channel
      */
-    if ( 0 != value) {
+    if ( 0 != ftrm_verbosity ) {
         rml_ftrm_output_handle = opal_output_open(NULL);
-        opal_output_set_verbosity(rml_ftrm_output_handle, value);
+        opal_output_set_verbosity(rml_ftrm_output_handle, ftrm_verbosity);
     } else {
         rml_ftrm_output_handle = -1;
     }
@@ -161,7 +173,7 @@ static int orte_rml_ftrm_open(void)
     opal_output_verbose(10, rml_ftrm_output_handle,
                         "orte_rml_ftrm: open(): Priority  = %d", ftrm_priority);
     opal_output_verbose(10, rml_ftrm_output_handle,
-                        "orte_rml_ftrm: open(): Verbosity = %d", value);
+                        "orte_rml_ftrm: open(): Verbosity = %d", ftrm_verbosity);
 
     return ORTE_SUCCESS;
 }

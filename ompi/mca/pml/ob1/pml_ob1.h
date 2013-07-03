@@ -81,7 +81,7 @@ struct mca_pml_ob1_t {
     bool enabled; 
     char* allocator_name;
     mca_allocator_base_module_t* allocator; 
-    uint32_t unexpected_limit;
+    unsigned int unexpected_limit;
 };
 typedef struct mca_pml_ob1_t mca_pml_ob1_t; 
 

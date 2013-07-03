@@ -14,14 +14,13 @@
 #include <cuda.h>
 
 #include "opal/align.h"
-#include "opal/mca/base/mca_base_param.h"
 #include "opal/util/output.h"
 #include "orte/util/show_help.h"
 #include "opal/datatype/opal_convertor.h"
 #include "opal/datatype/opal_datatype_cuda.h"
 
 static bool initialized = false;
-static int opal_cuda_verbose;
+int opal_cuda_verbose = 0;
 static int opal_cuda_output = 0;
 static void opal_cuda_support_init(void);
 static int (*common_cuda_initialization_function)(void) = NULL;
@@ -135,7 +134,6 @@ void *opal_cuda_memmove(void *dest, void *src, size_t size)
  */
 static void opal_cuda_support_init(void)
 {
-    int id;
     CUresult res;
     CUcontext cuContext;
 
@@ -150,9 +148,6 @@ static void opal_cuda_support_init(void)
     }
 
     /* Set different levels of verbosity in the cuda related code. */
-    id = mca_base_param_reg_int_name("opal", "cuda_verbose", 
-                                     "Set level of opal cuda verbosity",
-                                     false, false, 0, &opal_cuda_verbose);
     opal_cuda_output = opal_output_open(NULL);
     opal_output_set_verbosity(opal_cuda_output, opal_cuda_verbose);
 

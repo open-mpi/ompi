@@ -2,6 +2,7 @@
  * Copyright (c) 2004-2007 The Trustees of the University of Tennessee.
  *                         All rights reserved.
  * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2012-2013 Los Alamos National Security, Inc.  All rights reserved. 
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -31,14 +32,22 @@ typedef struct mca_pml_v_t mca_pml_v_t;
 
 OMPI_DECLSPEC extern mca_pml_v_t mca_pml_v;
 
-OMPI_DECLSPEC int mca_vprotocol_base_open(char *vprotocol_include_list);
+/*
+ * MCA Framework
+ */
+OMPI_DECLSPEC extern mca_base_framework_t ompi_vprotocol_base_framework;
+
+/* this needs to be called before vprotocol is opened. this replaces the 
+   need for a unique open function */
+void mca_vprotocol_base_set_include_list(char *vprotocol_include_list);
+
+/* select a component */
 OMPI_DECLSPEC int mca_vprotocol_base_select(bool enable_progress_threads, 
                                             bool enable_mpi_threads);
+
 OMPI_DECLSPEC int mca_vprotocol_base_parasite(void);
-OMPI_DECLSPEC int mca_vprotocol_base_close(void);
     
 OMPI_DECLSPEC extern char *mca_vprotocol_base_include_list;
-OMPI_DECLSPEC extern opal_list_t mca_vprotocol_base_components_available;
 OMPI_DECLSPEC extern mca_vprotocol_base_component_t mca_vprotocol_component;
 OMPI_DECLSPEC extern mca_vprotocol_base_module_t mca_vprotocol;
     

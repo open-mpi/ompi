@@ -70,7 +70,7 @@ int orte_grpcomm_base_modex(orte_grpcomm_collective_t *modex)
     bool found;
     orte_grpcomm_collective_t *cptr;
 
-    OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base.output,
+    OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_framework.framework_output,
                          "%s grpcomm:base:modex: performing modex",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
@@ -106,7 +106,7 @@ int orte_grpcomm_base_modex(orte_grpcomm_collective_t *modex)
              item != opal_list_get_end(&orte_grpcomm_base.active_colls);
              item = opal_list_get_next(item)) {
             cptr = (orte_grpcomm_collective_t*)item;
-            OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base.output,
+            OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_framework.framework_output,
                                  "%s CHECKING COLL id %d",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  cptr->id));
@@ -201,7 +201,7 @@ int orte_grpcomm_base_modex(orte_grpcomm_collective_t *modex)
         goto cleanup;
     }
     
-    OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base.output,
+    OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base_framework.framework_output,
                          "%s grpcomm:base:full:modex: executing allgather",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
@@ -211,7 +211,7 @@ int orte_grpcomm_base_modex(orte_grpcomm_collective_t *modex)
         goto cleanup;
     }
 
-    OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base.output,
+    OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base_framework.framework_output,
                          "%s grpcomm:base:modex: modex posted",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
@@ -232,7 +232,7 @@ void orte_grpcomm_base_store_peer_modex(opal_buffer_t *rbuf, void *cbdata)
     orte_grpcomm_collective_t *modex = (orte_grpcomm_collective_t*)cbdata;
     opal_hwloc_locality_t locality;
 
-    OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base.output,
+    OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base_framework.framework_output,
                          "%s STORING PEER MODEX DATA",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
@@ -308,7 +308,7 @@ void orte_grpcomm_base_store_peer_modex(opal_buffer_t *rbuf, void *cbdata)
                 ORTE_ERROR_LOG(rc);
                 goto cleanup;
             }
-            OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base.output,
+            OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base_framework.framework_output,
                                  "%s store:peer:modex setting proc %s level %s idx %u",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  ORTE_NAME_PRINT(&proc_name),
@@ -316,14 +316,14 @@ void orte_grpcomm_base_store_peer_modex(opal_buffer_t *rbuf, void *cbdata)
 
             if (OPAL_EQUAL == orte_util_compare_name_fields(ORTE_NS_CMP_ALL, &proc_name, ORTE_PROC_MY_NAME)) {
                 /* if this data is from myself, then set locality to all */
-                OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base.output,
+                OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_framework.framework_output,
                                      "%s store:peer:modex setting proc %s locale ALL",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                      ORTE_NAME_PRINT(&proc_name)));
                 locality = OPAL_PROC_ALL_LOCAL;
             } else if (daemon != ORTE_PROC_MY_DAEMON->vpid) {
                 /* this is on a different node, then mark as non-local */
-                OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base.output,
+                OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_framework.framework_output,
                                      "%s store:peer:modex setting proc %s locale NONLOCAL",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                      ORTE_NAME_PRINT(&proc_name)));
@@ -340,7 +340,7 @@ void orte_grpcomm_base_store_peer_modex(opal_buffer_t *rbuf, void *cbdata)
                                                                  orte_process_info.bind_level,
                                                                  orte_process_info.bind_idx,
                                                                  bind_level, bind_idx);
-                OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base.output,
+                OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_framework.framework_output,
                                      "%s store:peer:modex setting proc %s locale %s",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                      ORTE_NAME_PRINT(&proc_name),
@@ -350,14 +350,14 @@ void orte_grpcomm_base_store_peer_modex(opal_buffer_t *rbuf, void *cbdata)
 #else
         if (OPAL_EQUAL == orte_util_compare_name_fields(ORTE_NS_CMP_ALL, &proc_name, ORTE_PROC_MY_NAME)) {
             /* if this data is from myself, then set locality to all */
-            OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base.output,
+            OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_framework.framework_output,
                                  "%s grpcomm:base:modex setting proc %s locale ALL",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  ORTE_NAME_PRINT(&proc_name)));
             locality = OPAL_PROC_ALL_LOCAL;
         } else if (daemon != ORTE_PROC_MY_DAEMON->vpid) {
             /* this is on a different node, then mark as non-local */
-            OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base.output,
+            OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_framework.framework_output,
                                  "%s store:peer:modex setting proc %s locale NONLOCAL",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  ORTE_NAME_PRINT(&proc_name)));
@@ -372,7 +372,7 @@ void orte_grpcomm_base_store_peer_modex(opal_buffer_t *rbuf, void *cbdata)
             goto cleanup;
         }
 
-        OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base.output,
+        OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_framework.framework_output,
                              "%s store:peer:modex: adding modex entry for proc %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_NAME_PRINT(&proc_name)));
@@ -382,7 +382,7 @@ void orte_grpcomm_base_store_peer_modex(opal_buffer_t *rbuf, void *cbdata)
             ORTE_ERROR_LOG(rc);
             goto cleanup;
         }            
-        OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base.output,
+        OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_framework.framework_output,
                              "%s store:peer:modex: completed modex entry for proc %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_NAME_PRINT(&proc_name)));
@@ -397,12 +397,12 @@ void orte_grpcomm_base_store_peer_modex(opal_buffer_t *rbuf, void *cbdata)
     opal_list_remove_item(&orte_grpcomm_base.active_colls, &modex->super);
     /* notify that the modex is complete */
     if (NULL != modex->cbfunc) {
-        OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base.output,
+        OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base_framework.framework_output,
                              "%s CALLING MODEX RELEASE",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
         modex->cbfunc(NULL, modex->cbdata);
     } else {
-        OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base.output,
+        OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base_framework.framework_output,
                              "%s store:peer:modex NO MODEX RELEASE CBFUNC",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     }
@@ -415,7 +415,7 @@ void orte_grpcomm_base_store_modex(opal_buffer_t *rbuf, void *cbdata)
     int rc=ORTE_SUCCESS;
     orte_grpcomm_collective_t *modex = (orte_grpcomm_collective_t*)cbdata;
 
-    OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base.output,
+    OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base_framework.framework_output,
                          "%s STORING MODEX DATA",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
@@ -423,7 +423,7 @@ void orte_grpcomm_base_store_modex(opal_buffer_t *rbuf, void *cbdata)
     cnt=1;
     while (ORTE_SUCCESS == (rc = opal_dss.unpack(rbuf, &proc_name, &cnt, ORTE_NAME))) {
         
-        OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base.output,
+        OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_framework.framework_output,
                              "%s grpcomm:base:store_modex adding modex entry for proc %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_NAME_PRINT(&proc_name)));
@@ -445,7 +445,7 @@ void orte_grpcomm_base_store_modex(opal_buffer_t *rbuf, void *cbdata)
     opal_list_remove_item(&orte_grpcomm_base.active_colls, &modex->super);
     /* execute user callback, if requested */
     if (NULL != modex->cbfunc) {
-        OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base.output,
+        OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base_framework.framework_output,
                              "%s CALLING MODEX RELEASE",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
         modex->cbfunc(NULL, modex->cbdata);
@@ -469,7 +469,7 @@ int orte_grpcomm_base_update_modex_entries(orte_process_name_t *proc_name,
         goto cleanup;
     }
     
-    OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base.output,
+    OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_framework.framework_output,
                          "%s grpcomm:base:update_modex_entries: adding %d entries for proc %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), num_recvd_entries,
                          ORTE_NAME_PRINT(proc_name)));
@@ -537,7 +537,7 @@ int orte_grpcomm_base_pack_modex_entries(opal_buffer_t *buf)
         item = next;
     }
 
-    OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base.output,
+    OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_framework.framework_output,
                          "%s grpcomm:base:pack_modex: reporting %d entries",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), num_entries));
     

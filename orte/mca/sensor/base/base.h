@@ -23,24 +23,16 @@
 
 #include "orte/mca/sensor/sensor.h"
 
-
-/*
- * Global functions for MCA overall collective open and close
- */
 BEGIN_C_DECLS
 
 /*
- * function definitions
+ * MCA Framework
  */
-ORTE_DECLSPEC    int orte_sensor_base_open(void);
-ORTE_DECLSPEC    int orte_sensor_base_select(void);
-ORTE_DECLSPEC    int orte_sensor_base_close(void);
+ORTE_DECLSPEC extern mca_base_framework_t orte_sensor_base_framework;
 
-/*
- * globals that might be needed
- */
+/* select a component */
+ORTE_DECLSPEC int orte_sensor_base_select(void);
 
-ORTE_DECLSPEC extern opal_list_t mca_sensor_base_components_available;
 
 #if !ORTE_DISABLE_FULL_SUPPORT
 

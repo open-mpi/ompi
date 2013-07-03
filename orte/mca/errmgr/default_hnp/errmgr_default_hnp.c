@@ -7,7 +7,7 @@
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2011      Oracle and/or all its affiliates.  All rights reserved. 
- * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
+ * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * $COPYRIGHT$
  * 
@@ -147,7 +147,7 @@ static void job_errors(int fd, short args, void *cbdata)
     jobstate = caddy->job_state;
     jdata->state = jobstate;
 
-    OPAL_OUTPUT_VERBOSE((1, orte_errmgr_base.output,
+    OPAL_OUTPUT_VERBOSE((1, orte_errmgr_base_framework.framework_output,
                          "%s errmgr:default_hnp: job %s reported state %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_JOBID_PRINT(jdata->jobid),
@@ -240,7 +240,7 @@ static void proc_errors(int fd, short args, void *cbdata)
     orte_proc_state_t state = caddy->proc_state;
     int i;
 
-    OPAL_OUTPUT_VERBOSE((1, orte_errmgr_base.output,
+    OPAL_OUTPUT_VERBOSE((1, orte_errmgr_base_framework.framework_output,
                          "%s errmgr:default_hnp: for proc %s state %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(proc),
@@ -274,14 +274,14 @@ static void proc_errors(int fd, short args, void *cbdata)
         /* is this to a daemon? */
         if (ORTE_PROC_MY_NAME->jobid != proc->jobid) {
             /* nope - ignore it */
-            OPAL_OUTPUT_VERBOSE((5, orte_errmgr_base.output,
+            OPAL_OUTPUT_VERBOSE((5, orte_errmgr_base_framework.framework_output,
                                  "%s Comm failure to non-daemon proc - ignoring it",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
             goto cleanup;
         }
         /* if this is my own connection, ignore it */
         if (ORTE_PROC_MY_NAME->vpid == proc->vpid) {
-            OPAL_OUTPUT_VERBOSE((5, orte_errmgr_base.output,
+            OPAL_OUTPUT_VERBOSE((5, orte_errmgr_base_framework.framework_output,
                                  "%s Comm failure on my own connection - ignoring it",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
             goto cleanup;
@@ -289,7 +289,7 @@ static void proc_errors(int fd, short args, void *cbdata)
         /* if we have ordered orteds to terminate or abort
          * is in progress, record it */
         if (orte_orteds_term_ordered || orte_abnormal_term_ordered) {
-            OPAL_OUTPUT_VERBOSE((5, orte_errmgr_base.output,
+            OPAL_OUTPUT_VERBOSE((5, orte_errmgr_base_framework.framework_output,
                                  "%s Comm failure: daemons terminating - recording daemon %s as gone",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_NAME_PRINT(proc)));
             /* remove from dependent routes, if it is one */
@@ -304,14 +304,14 @@ static void proc_errors(int fd, short args, void *cbdata)
                 }
 	      }
 	      /* call our appropriate exit procedure */
-	      OPAL_OUTPUT_VERBOSE((5, orte_errmgr_base.output,
+	      OPAL_OUTPUT_VERBOSE((5, orte_errmgr_base_framework.framework_output,
 				   "%s errmgr_hnp: all routes and children gone - ordering exit",
 				   ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 	      ORTE_ACTIVATE_JOB_STATE(NULL, ORTE_JOB_STATE_DAEMONS_TERMINATED);
 	    }
             goto cleanup;
         }
-        OPAL_OUTPUT_VERBOSE((5, orte_errmgr_base.output,
+        OPAL_OUTPUT_VERBOSE((5, orte_errmgr_base_framework.framework_output,
                              "%s Comm failure: daemon %s - aborting",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_NAME_PRINT(proc)));
         /* record the first one to fail */
@@ -346,7 +346,7 @@ static void proc_errors(int fd, short args, void *cbdata)
      */
     switch (state) {
     case ORTE_PROC_STATE_KILLED_BY_CMD:
-        OPAL_OUTPUT_VERBOSE((5, orte_errmgr_base.output,
+        OPAL_OUTPUT_VERBOSE((5, orte_errmgr_base_framework.framework_output,
                              "%s errmgr:hnp: proc %s killed by cmd",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_NAME_PRINT(proc)));
@@ -361,7 +361,7 @@ static void proc_errors(int fd, short args, void *cbdata)
         break;
 
     case ORTE_PROC_STATE_ABORTED:
-        OPAL_OUTPUT_VERBOSE((5, orte_errmgr_base.output,
+        OPAL_OUTPUT_VERBOSE((5, orte_errmgr_base_framework.framework_output,
                              "%s errmgr:hnp: proc %s aborted",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_NAME_PRINT(proc)));
@@ -379,7 +379,7 @@ static void proc_errors(int fd, short args, void *cbdata)
         break;
 
     case ORTE_PROC_STATE_ABORTED_BY_SIG:
-        OPAL_OUTPUT_VERBOSE((5, orte_errmgr_base.output,
+        OPAL_OUTPUT_VERBOSE((5, orte_errmgr_base_framework.framework_output,
                              "%s errmgr:hnp: proc %s aborted by signal",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_NAME_PRINT(proc)));
@@ -397,7 +397,7 @@ static void proc_errors(int fd, short args, void *cbdata)
         break;
 
     case ORTE_PROC_STATE_TERM_WO_SYNC:
-        OPAL_OUTPUT_VERBOSE((5, orte_errmgr_base.output,
+        OPAL_OUTPUT_VERBOSE((5, orte_errmgr_base_framework.framework_output,
                              "%s errmgr:hnp: proc %s terminated without sync",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_NAME_PRINT(proc)));
@@ -422,7 +422,7 @@ static void proc_errors(int fd, short args, void *cbdata)
 
     case ORTE_PROC_STATE_FAILED_TO_START:
     case ORTE_PROC_STATE_FAILED_TO_LAUNCH:
-        OPAL_OUTPUT_VERBOSE((5, orte_errmgr_base.output,
+        OPAL_OUTPUT_VERBOSE((5, orte_errmgr_base_framework.framework_output,
                              "%s errmgr:hnp: proc %s %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_NAME_PRINT(proc),
@@ -445,7 +445,7 @@ static void proc_errors(int fd, short args, void *cbdata)
         break;
 
     case ORTE_PROC_STATE_CALLED_ABORT:
-        OPAL_OUTPUT_VERBOSE((5, orte_errmgr_base.output,
+        OPAL_OUTPUT_VERBOSE((5, orte_errmgr_base_framework.framework_output,
                              "%s errmgr:hnp: proc %s called abort",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_NAME_PRINT(proc)));
@@ -463,7 +463,7 @@ static void proc_errors(int fd, short args, void *cbdata)
         break;
 
     case ORTE_PROC_STATE_SENSOR_BOUND_EXCEEDED:
-        OPAL_OUTPUT_VERBOSE((5, orte_errmgr_base.output,
+        OPAL_OUTPUT_VERBOSE((5, orte_errmgr_base_framework.framework_output,
                              "%s errmgr:hnp: proc %s exceeded sensor boundary",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_NAME_PRINT(proc)));
@@ -481,7 +481,7 @@ static void proc_errors(int fd, short args, void *cbdata)
         break;
 
     case ORTE_PROC_STATE_TERM_NON_ZERO:
-        OPAL_OUTPUT_VERBOSE((5, orte_errmgr_base.output,
+        OPAL_OUTPUT_VERBOSE((5, orte_errmgr_base_framework.framework_output,
                              "%s errmgr:hnp: proc %s exited with non-zero status %d",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_NAME_PRINT(proc),
@@ -510,7 +510,7 @@ static void proc_errors(int fd, short args, void *cbdata)
         break;
 
     case ORTE_PROC_STATE_HEARTBEAT_FAILED:
-        OPAL_OUTPUT_VERBOSE((5, orte_errmgr_base.output,
+        OPAL_OUTPUT_VERBOSE((5, orte_errmgr_base_framework.framework_output,
                              "%s errmgr:hnp: proc %s heartbeat failed",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_NAME_PRINT(proc)));
@@ -531,7 +531,7 @@ static void proc_errors(int fd, short args, void *cbdata)
 
     default:
         /* shouldn't get this, but terminate job if required */
-        OPAL_OUTPUT_VERBOSE((5, orte_errmgr_base.output,
+        OPAL_OUTPUT_VERBOSE((5, orte_errmgr_base_framework.framework_output,
                              "%s errmgr:hnp: proc %s default error %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_NAME_PRINT(proc),
@@ -574,14 +574,14 @@ static void default_hnp_abort(orte_job_t *jdata)
 
     /* if we are already in progress, then ignore this call */
     if (opal_atomic_trylock(&orte_abort_inprogress_lock)) { /* returns 1 if already locked */
-        OPAL_OUTPUT_VERBOSE((1, orte_errmgr_base.output,
+        OPAL_OUTPUT_VERBOSE((1, orte_errmgr_base_framework.framework_output,
                              "%s errmgr:default_hnp: abort in progress, ignoring abort on job %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_JOBID_PRINT(jdata->jobid)));
         return;
     }
 
-    OPAL_OUTPUT_VERBOSE((1, orte_errmgr_base.output,
+    OPAL_OUTPUT_VERBOSE((1, orte_errmgr_base_framework.framework_output,
                          "%s errmgr:default_hnp: abort called on job %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_JOBID_PRINT(jdata->jobid)));
@@ -614,7 +614,7 @@ static void default_hnp_abort(orte_job_t *jdata)
                     "processes returned\nnon-zero exit codes.");
     }
 
-    OPAL_OUTPUT_VERBOSE((1, orte_errmgr_base.output,
+    OPAL_OUTPUT_VERBOSE((1, orte_errmgr_base_framework.framework_output,
                          "%s errmgr:default_hnp: ordering orted termination",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     

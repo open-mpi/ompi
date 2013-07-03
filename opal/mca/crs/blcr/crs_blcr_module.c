@@ -34,7 +34,7 @@
 #include "opal/util/argv.h"
 #include "opal/constants.h"
 
-#include "opal/mca/base/mca_base_param.h"
+#include "opal/mca/base/mca_base_var.h"
 
 #include "opal/threads/threads.h"
 #include "opal/threads/mutex.h"
@@ -245,7 +245,7 @@ int opal_crs_blcr_prelaunch(int32_t rank,
 {
     char * tmp_env_var = NULL;
 
-    tmp_env_var = mca_base_param_env_var("opal_cr_is_tool");
+    (void) mca_base_var_env_name("opal_cr_is_tool", &tmp_env_var);
     opal_setenv(tmp_env_var,
                 "0", true, env);
     free(tmp_env_var);
@@ -521,7 +521,7 @@ int opal_crs_blcr_restart(opal_crs_base_snapshot_t *base_snapshot, bool spawn_ch
      * along very well.
      */
     opal_progress_finalize();
-    opal_event_base_close();
+    (void) mca_base_framework_close(&opal_event_base_framework);
 
     if (!spawn_child) {
         cr_full_cmd = opal_argv_join(cr_argv, ' ');
@@ -705,7 +705,7 @@ static int opal_crs_blcr_restart_cmd(char *fname, char **cmd)
                         "crs:blcr: restart_cmd(%s, ---)", fname);
 
     if (NULL == fname) {
-        opal_output_verbose(10, opal_crs_base_output, 
+        opal_output_verbose(10, opal_crs_base_framework.framework_output, 
                             "crs:blcr: restart_cmd: Error: filename is NULL!");
         return OPAL_CRS_ERROR;
     }

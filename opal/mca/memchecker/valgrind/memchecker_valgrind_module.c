@@ -21,7 +21,7 @@
 #include "opal_config.h"
 
 #include "opal/constants.h"
-#include "opal/mca/base/mca_base_param.h"
+#include "opal/mca/base/mca_base_var.h"
 #include "opal/mca/memchecker/memchecker.h"
 #include "opal/mca/memchecker/base/base.h"
 #include "memchecker_valgrind.h"
@@ -48,6 +48,8 @@ static int valgrind_module_get_vbits(void * p, char * vbits, size_t len);
 static int valgrind_module_set_vbits(void * p, char * vbits, size_t len);
 #endif
 
+extern int opal_memchecker_component_priority;
+
 /*
  * Valgrind memchecker module
  */
@@ -71,10 +73,7 @@ static const opal_memchecker_base_module_1_0_0_t loc_module = {
 
 int opal_memchecker_valgrind_component_query(mca_base_module_t **module, int *priority)
 {
-    int param;
-
-    param = mca_base_param_find("memchecker", "valgrind", "priority");
-    mca_base_param_lookup_int(param, priority);
+    *priority = opal_memchecker_component_priority;
 
     *module = (mca_base_module_t *)&loc_module;
 

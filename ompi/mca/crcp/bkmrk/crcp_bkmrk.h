@@ -45,7 +45,7 @@ BEGIN_C_DECLS
     /*
      * Local variables
      */
-    extern int timing_enabled;
+    extern bool timing_enabled;
 
     /*
      * Module functions

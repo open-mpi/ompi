@@ -11,6 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
+ * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -34,37 +35,24 @@
 BEGIN_C_DECLS
 
 /*
- * Global functions for MCA overall collective open and close
+ * MCA Framework
  */
-
-/**
- * Open the ess framework
- */
-ORTE_DECLSPEC int orte_ess_base_open(void);
-
+ORTE_DECLSPEC extern mca_base_framework_t orte_ess_base_framework;
 /**
  * Select a ess module
  */
 ORTE_DECLSPEC int orte_ess_base_select(void);
-
-/**
- * Close the ess framework
- */
-ORTE_DECLSPEC int orte_ess_base_close(void);
-
-/*
- * The verbose channel for debug output
- */
-ORTE_DECLSPEC extern int orte_ess_base_output;
 
 /*
  * stdout/stderr buffering control parameter
  */
 ORTE_DECLSPEC extern int orte_ess_base_std_buffering;
 
-ORTE_DECLSPEC extern opal_list_t orte_ess_base_components_available;
-
 #if !ORTE_DISABLE_FULL_SUPPORT
+
+ORTE_DECLSPEC extern int orte_ess_base_num_procs;
+ORTE_DECLSPEC extern char *orte_ess_base_jobid;
+ORTE_DECLSPEC extern char *orte_ess_base_vpid;
 
 /*
  * Internal helper functions used by components

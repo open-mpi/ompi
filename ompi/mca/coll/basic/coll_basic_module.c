@@ -23,7 +23,6 @@
 #include <stdio.h>
 
 #include "mpi.h"
-#include "opal/mca/base/mca_base_param.h"
 #include "ompi/mca/coll/coll.h"
 #include "ompi/mca/coll/base/base.h"
 #include "coll_basic.h"

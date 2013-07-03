@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -76,16 +77,9 @@ int MPI_File_open(MPI_Comm comm, char *filename, int amode,
        and MPI_FILE_DELETE are the only two places that it will be
        initialized). */
 
-    if (!(mca_io_base_components_opened_valid ||
-          mca_io_base_components_available_valid)) {
-        if (OMPI_SUCCESS != (rc = mca_io_base_open())) {
-            return OMPI_ERRHANDLER_INVOKE(MPI_FILE_NULL, rc, FUNC_NAME);
-        }
-        if (OMPI_SUCCESS != 
-            (rc = mca_io_base_find_available(OMPI_ENABLE_PROGRESS_THREADS,
-                                             OMPI_ENABLE_THREAD_MULTIPLE))) {
-            return OMPI_ERRHANDLER_INVOKE(MPI_FILE_NULL, rc, FUNC_NAME);
-        }
+    rc = mca_base_framework_open(&ompi_io_base_framework, 0);
+    if (OMPI_SUCCESS != rc) {
+        return OMPI_ERRHANDLER_INVOKE(MPI_FILE_NULL, rc, FUNC_NAME);
     }
 
     OPAL_CR_ENTER_LIBRARY();

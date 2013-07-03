@@ -701,6 +701,9 @@ ORTE_DECLSPEC extern char *orte_selected_oob_component;
 
 #endif /* ORTE_DISABLE_FULL_SUPPORT */
 
+/* user debugger */
+ORTE_DECLSPEC extern char *orte_base_user_debugger;
+
 END_C_DECLS
 
 #endif /* ORTE_RUNTIME_ORTE_GLOBALS_H */

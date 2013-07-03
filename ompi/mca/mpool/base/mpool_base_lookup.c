@@ -37,6 +37,7 @@
 #include "ompi/mca/mpool/mpool.h"
 #include "ompi/runtime/params.h"
 #include "ompi/mca/mpool/base/base.h"
+#include "opal/memoryhooks/memory.h"
 #include "mpool_base_mem_cb.h"
 
 
@@ -44,8 +45,8 @@ mca_mpool_base_component_t* mca_mpool_base_component_lookup(const char* name)
 {
     /* Traverse the list of available modules; call their init functions. */
     opal_list_item_t* item;
-    for (item = opal_list_get_first(&mca_mpool_base_components);
-         item != opal_list_get_end(&mca_mpool_base_components);
+    for (item = opal_list_get_first(&ompi_mpool_base_framework.framework_components);
+         item != opal_list_get_end(&ompi_mpool_base_framework.framework_components);
          item = opal_list_get_next(item)) {
          mca_base_component_list_item_t *cli = 
            (mca_base_component_list_item_t *) item;
@@ -69,8 +70,8 @@ mca_mpool_base_module_t* mca_mpool_base_module_create(
     opal_list_item_t* item;
     mca_mpool_base_selected_module_t *sm;
 
-    for (item = opal_list_get_first(&mca_mpool_base_components);
-         item != opal_list_get_end(&mca_mpool_base_components);
+    for (item = opal_list_get_first(&ompi_mpool_base_framework.framework_components);
+         item != opal_list_get_end(&ompi_mpool_base_framework.framework_components);
          item = opal_list_get_next(item)) {
          mca_base_component_list_item_t *cli = 
            (mca_base_component_list_item_t *) item;
@@ -81,7 +82,7 @@ mca_mpool_base_module_t* mca_mpool_base_module_create(
          }
     }
 
-    if (opal_list_get_end(&mca_mpool_base_components) == item) {
+    if (opal_list_get_end(&ompi_mpool_base_framework.framework_components) == item) {
         return NULL;
     }
     module = component->mpool_init(resources); 
@@ -105,7 +106,7 @@ mca_mpool_base_module_t* mca_mpool_base_module_create(
            leave_pinned variables may have been set by a user MCA
            param or elsewhere in the code base).  Yes, we could have
            coded this more succinctly, but this is more clear. */
-        if (ompi_mpi_leave_pinned || ompi_mpi_leave_pinned_pipeline) {
+        if (ompi_mpi_leave_pinned > 0 || ompi_mpi_leave_pinned_pipeline) {
             use_mem_hooks = 1;
         }
 

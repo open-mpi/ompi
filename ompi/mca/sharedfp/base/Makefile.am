@@ -10,6 +10,7 @@
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2008-2011 University of Houston. All rights reserved.
+# Copyright (c) 2012-2013 Los Alamos National Security, Inc.  All rights reserved. 
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -21,8 +22,7 @@ headers += \
         base/base.h
 
 libmca_sharedfp_la_SOURCES += \
-        base/sharedfp_base_close.c \
         base/sharedfp_base_file_select.c \
         base/sharedfp_base_file_unselect.c \
         base/sharedfp_base_find_available.c \
-        base/sharedfp_base_open.c
+        base/sharedfp_base_frame.c

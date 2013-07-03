@@ -9,6 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2012-2013 Los Alamos National Security, LLC.
+ *                         All rights reserved
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -26,21 +28,17 @@
 
 #include "orte/mca/filem/filem.h"
 
-/*
- * Global functions for MCA overall FILEM
- */
-
 BEGIN_C_DECLS
 
-/**
- * Initialize the FILEM MCA framework
- *
- * @retval ORTE_SUCCESS Upon success
- * @retval ORTE_ERROR   Upon failures
- * 
- * This function is invoked during orte_init();
+/*
+ * MCA framework
  */
-ORTE_DECLSPEC int orte_filem_base_open(void);
+ORTE_DECLSPEC extern mca_base_framework_t orte_filem_base_framework;
+
+/*
+ * Select an available component.
+ */
+ORTE_DECLSPEC int orte_filem_base_select(void);
 
 #if !ORTE_DISABLE_FULL_SUPPORT
 /*
@@ -73,22 +71,10 @@ typedef uint8_t orte_filem_cmd_flag_t;
      *
      */
     ORTE_DECLSPEC int orte_filem_base_select(void);
-    
-    /**
-     * Finalize the FILEM MCA framework
-     *
-     * @retval ORTE_SUCCESS Upon success
-     * @retval ORTE_ERROR   Upon failures
-     * 
-     * This function is invoked during orte_finalize();
-     */
-    ORTE_DECLSPEC int orte_filem_base_close(void);
 
     /**
      * Globals
      */
-    ORTE_DECLSPEC extern int  orte_filem_base_output;
-    ORTE_DECLSPEC extern opal_list_t orte_filem_base_components_available;
     ORTE_DECLSPEC extern orte_filem_base_component_t orte_filem_base_selected_component;
     ORTE_DECLSPEC extern orte_filem_base_module_t orte_filem;
     ORTE_DECLSPEC extern bool orte_filem_base_is_active;

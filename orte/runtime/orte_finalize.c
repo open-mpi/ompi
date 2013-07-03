@@ -63,19 +63,12 @@ int orte_finalize(void)
     orte_ess.finalize();
     
     /* close the ess itself */
-    orte_ess_base_close();
+    (void) mca_base_framework_close(&orte_ess_base_framework);
     
     /* cleanup the process info */
     orte_proc_info_finalize();
 
 #if !ORTE_DISABLE_FULL_SUPPORT
-    /* Free some MCA param strings */
-    if (NULL != orte_launch_agent) {
-        free(orte_launch_agent);
-    }
-    if( NULL != orte_default_hostfile ) {
-        free(orte_default_hostfile);
-    }
 #if ORTE_ENABLE_PROGRESS_THREADS
     if (ORTE_PROC_IS_APP) {
         /* stop the progress thread */

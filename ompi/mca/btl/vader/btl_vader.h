@@ -92,7 +92,6 @@ struct mca_btl_vader_component_t {
     int vader_free_list_max;                /**< maximum size of free lists */
     int vader_free_list_inc;                /**< number of elements to alloc
                                              * when growing free lists */
-    char *vader_mpool_name;                 /**< name of shared memory pool module */
     mca_mpool_base_module_t *vader_mpool;   /**< mpool on local node */
     void *vader_mpool_base;                 /**< base address of shared memory pool */
     size_t eager_limit;                     /**< send fragment size */

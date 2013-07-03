@@ -9,6 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
+ *                         All rights reserved. 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -43,8 +45,8 @@ int orte_plm_base_select(void)
     /*
      * Select the best component
      */
-    if( OPAL_SUCCESS != mca_base_select("plm", orte_plm_globals.output,
-                                        &orte_plm_base.available_components,
+    if( OPAL_SUCCESS != mca_base_select("plm", orte_plm_base_framework.framework_output,
+                                        &orte_plm_base_framework.framework_components,
                                         (mca_base_module_t **) &best_module,
                                         (mca_base_component_t **) &best_component) ) {
         /* This will only happen if no component was selected
@@ -66,9 +68,7 @@ int orte_plm_base_select(void)
 
     /* Save the winner */
     orte_plm = *best_module;
-    orte_plm_base.selected_component = *best_component;
-    orte_plm_base.selected = true;
-    
+
  cleanup:
     return exit_status;
 }

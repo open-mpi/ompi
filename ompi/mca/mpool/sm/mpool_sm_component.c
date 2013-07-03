@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007-2009 Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2008-2009 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2010      Los Alamos National Security, LLC.  
+ * Copyright (c) 2010-2013 Los Alamos National Security, LLC.  
  *                         All rights reserved. 
  * $COPYRIGHT$
  *
@@ -29,7 +29,6 @@
 #endif  /* HAVE_STDLIB_H */
 #include <errno.h>
 #include "opal/mca/base/base.h"
-#include "opal/mca/base/mca_base_param.h"
 
 #include "orte/util/proc_info.h"
 
@@ -45,10 +44,17 @@
 /*
  * Local functions
  */
-static int mca_mpool_sm_open(void);
-static int mca_mpool_sm_close( void );
-static mca_mpool_base_module_t* mca_mpool_sm_init(
-    struct mca_mpool_base_resources_t* resources);
+static int
+mca_mpool_sm_register(void);
+
+static int
+mca_mpool_sm_open(void);
+
+static int
+mca_mpool_sm_close(void);
+
+static mca_mpool_base_module_t *
+mca_mpool_sm_init(struct mca_mpool_base_resources_t* resources);
 
 mca_mpool_sm_component_t mca_mpool_sm_component = {
     {
@@ -63,7 +69,9 @@ mca_mpool_sm_component_t mca_mpool_sm_component = {
         OMPI_MINOR_VERSION,  /* MCA component minor version */
         OMPI_RELEASE_VERSION,  /* MCA component release version */
         mca_mpool_sm_open,  /* component open  */
-        mca_mpool_sm_close
+        mca_mpool_sm_close,
+        NULL,
+        mca_mpool_sm_register
       },
       {
           /* The component is checkpoint ready */
@@ -74,42 +82,51 @@ mca_mpool_sm_component_t mca_mpool_sm_component = {
     }
 };
 
-static char *min_size_param = NULL;
-static long default_min;
+static long default_min = 67108864;
+static unsigned long long ompi_mpool_sm_min_size;
+static int ompi_mpool_sm_verbose;
+
+static int mca_mpool_sm_register(void)
+{
+    /* register SM component parameters */
+    (void) mca_base_var_group_component_register(&mca_mpool_sm_component.super.mpool_version,
+                                                 "Shared memory pool");
+
+    mca_mpool_sm_component.sm_allocator_name = "bucket";
+    (void) mca_base_component_var_register(&mca_mpool_sm_component.super.mpool_version,
+                                           "allocator", "Name of allocator component "
+                                           "to use with sm mpool", MCA_BASE_VAR_TYPE_STRING,
+                                           NULL, 0, 0, OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &mca_mpool_sm_component.sm_allocator_name);
+
+    /* register as an unsigned long long to get up to 64 bits for the size */
+    ompi_mpool_sm_min_size = default_min;
+    (void) mca_base_component_var_register(&mca_mpool_sm_component.super.mpool_version,
+                                           "min_size", "Minimum size of the sm mpool shared memory file",
+                                           MCA_BASE_VAR_TYPE_UNSIGNED_LONG_LONG, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &ompi_mpool_sm_min_size);
+
+    ompi_mpool_sm_verbose = 0;
+    (void) mca_base_component_var_register(&mca_mpool_sm_component.super.mpool_version,
+                                           "verbose", "Enable verbose output for mpool sm component",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &ompi_mpool_sm_verbose);
+
+    return OMPI_SUCCESS;
+}
 
 /**
   * component open/close/init function
   */
 static int mca_mpool_sm_open(void)
 {
-    int value = 0;
-    char *size_str = NULL;
-
-    default_min = 67108864;
-
-    /* register SM component parameters */
-    mca_base_param_reg_string(&mca_mpool_sm_component.super.mpool_version,
-                              "allocator",
-                              "Name of allocator component to use with sm mpool",
-                              false, false,
-                              "bucket",
-                              &mca_mpool_sm_component.sm_allocator_name);
-
-    /* register values as string instead of int. A string-converted
-     * signed long int allows the min_size or the sm_size
-     * to be set up to 2GB-1 for 32 bit and much greater for 64 bit. */
-    asprintf(&size_str, "%ld", default_min);
-    mca_base_param_reg_string(&mca_mpool_sm_component.super.mpool_version,
-                               "min_size",
-                               "Minimum size of the sm mpool shared memory file",
-                               false, false, size_str, &min_size_param);
-    free(size_str);
-    mca_base_param_reg_int(&mca_mpool_sm_component.super.mpool_version,
-                               "verbose",
-                               "Enable verbose output for mpool sm component",
-                               false, false, 0, &value);
-    if (value != 0) {
-            mca_mpool_sm_component.verbose = opal_output_open(NULL);
+    if (ompi_mpool_sm_verbose != 0) {
+        mca_mpool_sm_component.verbose = opal_output_open(NULL);
     } else {
             mca_mpool_sm_component.verbose = -1;
     }
@@ -119,12 +136,6 @@ static int mca_mpool_sm_open(void)
 
 static int mca_mpool_sm_close( void )
 {
-    if (NULL != mca_mpool_sm_component.sm_allocator_name) {
-        free(mca_mpool_sm_component.sm_allocator_name);
-    }
-    if (NULL != min_size_param) {
-        free(min_size_param);
-    }
     return OMPI_SUCCESS;
 }
 
@@ -135,7 +146,6 @@ static mca_mpool_base_module_t* mca_mpool_sm_init(
     int len;
     mca_mpool_sm_module_t* mpool_module;
     mca_allocator_base_component_t* allocator_component;
-    long min_size;
     ompi_proc_t **procs;
     size_t num_all_procs, i, num_local_procs = 0;
 
@@ -148,18 +158,6 @@ static mca_mpool_base_module_t* mca_mpool_sm_init(
         }
     }
 
-    /* parse the min size and validate it */
-    /* if other parameters are added, absolutely necessary to reset errno each time */
-    errno = 0;
-    min_size  = strtol(min_size_param, (char **)NULL, 10);
-    if (errno == ERANGE) {
-        opal_output(0, "mca_mpool_sm_init: min_size overflows! set to default (%ld)", default_min);
-        min_size = default_min;
-    } else if (errno == EINVAL) {
-        opal_output(0, "mca_mpool_sm_init: invalid min_size entered. set it to (%ld)", default_min);
-        min_size = default_min;
-    }
-
     /* Make a new mpool module */
     mpool_module = 
         (mca_mpool_sm_module_t*)malloc(sizeof(mca_mpool_sm_module_t));
@@ -169,8 +167,8 @@ static mca_mpool_base_module_t* mca_mpool_sm_init(
     mpool_module->sm_size = resources->size;
 
     /* clip at the min size */
-    if (mpool_module->sm_size < min_size) {
-        mpool_module->sm_size = min_size;
+    if (mpool_module->sm_size < (long) ompi_mpool_sm_min_size) {
+      mpool_module->sm_size = (long) ompi_mpool_sm_min_size;
     }
 
     /* add something for the control structure */
@@ -180,13 +178,18 @@ static mca_mpool_base_module_t* mca_mpool_sm_init(
         mca_mpool_sm_component.sm_allocator_name);
 
     /* if specified allocator cannot be loaded - look for an alternative */
-    if(NULL == allocator_component) {
-        if(opal_list_get_size(&mca_allocator_base_components) == 0) {
-            mca_base_component_list_item_t* item = (mca_base_component_list_item_t*)
-                opal_list_get_first(&mca_allocator_base_components);
-            allocator_component = (mca_allocator_base_component_t*)item->cli_component;
-            opal_output(0, "mca_mpool_sm_init: unable to locate allocator: %s - using %s\n",
-                mca_mpool_sm_component.sm_allocator_name, allocator_component->allocator_version.mca_component_name);
+    if (NULL == allocator_component) {
+        if (opal_list_get_size(&ompi_allocator_base_framework.framework_components) == 0) {
+            mca_base_component_list_item_t *item =
+                (mca_base_component_list_item_t *)
+                opal_list_get_first(&ompi_allocator_base_framework.framework_components);
+            allocator_component =
+                (mca_allocator_base_component_t *)item->cli_component;
+            opal_output(
+                0, "mca_mpool_sm_init: "
+                "unable to locate allocator: %s - using %s\n",
+                mca_mpool_sm_component.sm_allocator_name,
+                allocator_component->allocator_version.mca_component_name);
         } else {
             opal_output(0, "mca_mpool_sm_init: unable to locate allocator: %s\n",
                 mca_mpool_sm_component.sm_allocator_name);

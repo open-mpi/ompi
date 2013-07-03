@@ -253,7 +253,7 @@ int orte_routed_base_register_sync(bool setup)
     orte_daemon_cmd_flag_t command=ORTE_DAEMON_SYNC_BY_PROC;
     char *rml_uri;
     
-    OPAL_OUTPUT_VERBOSE((5, orte_routed_base_output,
+    OPAL_OUTPUT_VERBOSE((5, orte_routed_base_framework.framework_output,
                          "%s registering sync to daemon %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(ORTE_PROC_MY_DAEMON)));
@@ -307,7 +307,7 @@ int orte_routed_base_register_sync(bool setup)
         return rc;
     }
     
-    OPAL_OUTPUT_VERBOSE((5, orte_routed_base_output,
+    OPAL_OUTPUT_VERBOSE((5, orte_routed_base_framework.framework_output,
                          "%s registering sync waiting for ack",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
@@ -317,7 +317,7 @@ int orte_routed_base_register_sync(bool setup)
      * process exiting
      */
     ORTE_WAIT_FOR_COMPLETION(sync_waiting);
-    OPAL_OUTPUT_VERBOSE((5, orte_routed_base_output,
+    OPAL_OUTPUT_VERBOSE((5, orte_routed_base_framework.framework_output,
                          "%s registering sync ack recvd",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
@@ -349,7 +349,7 @@ int orte_routed_base_process_callback(orte_jobid_t job, opal_buffer_t *buffer)
             continue;
         }
         
-        OPAL_OUTPUT_VERBOSE((2, orte_routed_base_output,
+        OPAL_OUTPUT_VERBOSE((2, orte_routed_base_framework.framework_output,
                              "%s routed_binomial:callback got uri %s for job %s rank %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              (NULL == rml_uri) ? "NULL" : rml_uri,

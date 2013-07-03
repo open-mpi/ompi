@@ -11,12 +11,9 @@
 #include "ompi_config.h"
 
 #include "opal/mca/mca.h"
-#include "opal/mca/base/mca_base_param.h"
 #include "vprotocol_pessimist.h"
 
-static inline int mca_param_register_int( const char* param_name, int default_value);
-static inline char *mca_param_register_string(const char* param_name, char *default_value);
-
+static int mca_vprotocol_pessimist_component_register(void);
 static int mca_vprotocol_pessimist_component_open(void);
 static int mca_vprotocol_pessimist_component_close(void);
 
@@ -43,7 +40,9 @@ mca_vprotocol_base_component_2_0_0_t mca_vprotocol_pessimist_component =
       OMPI_MINOR_VERSION,  /* MCA component minor version */
       OMPI_RELEASE_VERSION,  /* MCA component release version */
       mca_vprotocol_pessimist_component_open,  /* component open */
-      mca_vprotocol_pessimist_component_close  /* component close */
+      mca_vprotocol_pessimist_component_close, /* component close */
+      NULL,
+      mca_vprotocol_pessimist_component_register
     },
     {
         /* component is not checkpointable */
@@ -56,15 +55,48 @@ mca_vprotocol_base_component_2_0_0_t mca_vprotocol_pessimist_component =
 
 /** MCA level functions
   */
+static int mca_vprotocol_pessimist_component_register(void)
+{
+    _priority = 30;
+    (void) mca_base_component_var_register(&mca_vprotocol_pessimist_component.pmlm_version,
+                                           "priority", NULL, MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY, &_priority);\
+    _free_list_num = 16;
+    (void) mca_base_component_var_register(&mca_vprotocol_pessimist_component.pmlm_version,
+                                           "free_list_num", NULL, MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY, &_free_list_num);
+    _free_list_max = -1;
+    (void) mca_base_component_var_register(&mca_vprotocol_pessimist_component.pmlm_version,
+                                           "free_list_max", NULL, MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY, &_free_list_max);
+    _free_list_inc = 64;
+    (void) mca_base_component_var_register(&mca_vprotocol_pessimist_component.pmlm_version,
+                                           "free_list_inc", NULL, MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY, &_free_list_inc);
+    _sender_based_size = 256 * 1024 * 1024;
+    (void) mca_base_component_var_register(&mca_vprotocol_pessimist_component.pmlm_version,
+                                           "sender_based_chunk", NULL, MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY, &_sender_based_size);
+    _event_buffer_size = 1024;
+    (void) mca_base_component_var_register(&mca_vprotocol_pessimist_component.pmlm_version,
+                                           "event_buffer_size", NULL, MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY, &_event_buffer_size);
+    _mmap_file_name = "vprotocol_pessimist-senderbased";
+    (void) mca_base_component_var_register(&mca_vprotocol_pessimist_component.pmlm_version,
+                                           "sender_based_file", NULL, MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY, &_mmap_file_name);
+    return OMPI_SUCCESS;
+}
+
 static int mca_vprotocol_pessimist_component_open(void)
 {
-    _priority = mca_param_register_int("priority", 30);
-    _free_list_num = mca_param_register_int("free_list_num", 16);
-    _free_list_max = mca_param_register_int("free_list_max", -1);
-    _free_list_inc = mca_param_register_int("free_list_inc", 64);
-    _sender_based_size = mca_param_register_int("sender_based_chunk", 256 * 1024 * 1024);
-    _event_buffer_size = mca_param_register_int("event_buffer_size", 1024);
-    _mmap_file_name = mca_param_register_string("sender_based_file", "vprotocol_pessimist-senderbased");
     V_OUTPUT_VERBOSE(500, "vprotocol_pessimist: component_open: read priority %d", _priority);
   return OMPI_SUCCESS;
 }
@@ -137,29 +169,4 @@ int mca_vprotocol_pessimist_enable(bool enable) {
         vprotocol_pessimist_event_logger_disconnect(mca_vprotocol_pessimist.el_comm);
     }
     return OMPI_SUCCESS;
-}
-
-
-static inline int mca_param_register_int( const char* param_name,
-                                                  int default_value )
-{
-    int param_value = default_value;
-
-    (void) mca_base_param_reg_int (&mca_vprotocol_pessimist_component.pmlm_version,
-                                   param_name, NULL, false, false, default_value,
-                                   &param_value);
-
-    return param_value;
-}
-
-static inline char *mca_param_register_string( const char* param_name,
-                                                  char *default_value )
-{
-    char *param_value = default_value;
-
-    (void) mca_base_param_reg_string (&mca_vprotocol_pessimist_component.pmlm_version,
-                                      param_name, NULL, false, false, default_value,
-                                      &param_value);
-
-    return param_value;
 }

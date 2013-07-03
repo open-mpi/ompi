@@ -34,6 +34,8 @@
 #include "ompi/mca/mpool/base/base.h"
 #include "ompi/runtime/mpiruntime.h"
 
+#include "opal/mca/mca.h"
+#include "opal/memoryhooks/memory.h"
 
 static char msg[512];
 

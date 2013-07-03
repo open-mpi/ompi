@@ -93,27 +93,34 @@ static int mca_oob_ud_component_close (void)
 
 static int mca_oob_ud_component_register (void)
 {
-  mca_base_param_reg_int (&mca_oob_ud_component.super.oob_base,
-			  "min_qp", "Minimum number of UD queue pairs "
-			  "to allocate (default: 8)", false, false,
-			  8, &mca_oob_ud_component.ud_min_qp);
+    mca_base_component_t *component = &mca_oob_ud_component.super.oob_base;
 
-  mca_base_param_reg_int (&mca_oob_ud_component.super.oob_base,
-			  "max_qp", "Maximum number of UD queue pairs "
-			  "to allocate (default: 32)", false, false,
-			  32, &mca_oob_ud_component.ud_max_qp);
+    mca_oob_ud_component.ud_min_qp = 8;
 
-  mca_base_param_reg_int (&mca_oob_ud_component.super.oob_base,
-			  "recv_buffers", "Number of MTU sized recv "
-			  "buffers to post (default: 512)", false, false,
-			  512, &mca_oob_ud_component.ud_recv_buffer_count);
+    (void) mca_base_component_var_register (component, "min_qp", "Minimum number of UD queue pairs "
+                                            "to allocate (default: 8)", MCA_BASE_VAR_TYPE_INT, NULL,
+                                            0, MCA_BASE_VAR_FLAG_SETTABLE, OPAL_INFO_LVL_5,
+                                            MCA_BASE_VAR_SCOPE_LOCAL, &mca_oob_ud_component.ud_min_qp);
 
-  mca_base_param_reg_int (&mca_oob_ud_component.super.oob_base,
-			  "send_buffers", "Number of MTU sized sent "
-			  "buffers to post (default: 512)", false, false,
-			  512, &mca_oob_ud_component.ud_send_buffer_count);
+    mca_oob_ud_component.ud_max_qp = 32;
+    (void) mca_base_component_var_register (component, "max_qp", "Maximum number of UD queue pairs "
+                                            "to allocate (default: 32)", MCA_BASE_VAR_TYPE_INT, NULL,
+                                            0, MCA_BASE_VAR_FLAG_SETTABLE, OPAL_INFO_LVL_5,
+                                            MCA_BASE_VAR_SCOPE_LOCAL, &mca_oob_ud_component.ud_max_qp);
 
-  return ORTE_SUCCESS;
+    mca_oob_ud_component.ud_recv_buffer_count = 512;
+    (void) mca_base_component_var_register (component, "recv_buffers", "Number of MTU sized recv "
+                                            "buffers to post (default: 512)", MCA_BASE_VAR_TYPE_INT, NULL,
+                                            0, MCA_BASE_VAR_FLAG_SETTABLE, OPAL_INFO_LVL_5,
+                                            MCA_BASE_VAR_SCOPE_LOCAL, &mca_oob_ud_component.ud_recv_buffer_count);
+
+    mca_oob_ud_component.ud_send_buffer_count = 512;
+    (void) mca_base_component_var_register (component, "send_buffers", "Number of MTU sized send "
+                                            "buffers to allocate (default: 512)", MCA_BASE_VAR_TYPE_INT, NULL,
+                                            0, MCA_BASE_VAR_FLAG_SETTABLE, OPAL_INFO_LVL_5,
+                                            MCA_BASE_VAR_SCOPE_LOCAL, &mca_oob_ud_component.ud_send_buffer_count);
+
+    return ORTE_SUCCESS;
 }
 
 static int port_mtus[] = {0, 256, 512, 1024, 2048, 4096};

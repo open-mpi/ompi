@@ -21,4 +21,4 @@ headers += \
 	base/mtl_base_datatype.h
 
 libmca_mtl_la_SOURCES += \
-	base/mtl_base_component.c
+	base/mtl_base_frame.c

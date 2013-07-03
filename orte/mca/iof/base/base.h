@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2012      Los Alamos National Security, LLC.
+ * Copyright (c) 2012-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * $COPYRIGHT$
  * 
@@ -54,7 +54,15 @@
 
 BEGIN_C_DECLS
 
-ORTE_DECLSPEC int orte_iof_base_open(void);
+/*
+ * MCA framework
+ */
+ORTE_DECLSPEC extern mca_base_framework_t orte_iof_base_framework;
+
+/*
+ * Select an available component.
+ */
+ORTE_DECLSPEC int orte_iof_base_select(void);
 
 #if !ORTE_DISABLE_FULL_SUPPORT
 
@@ -122,10 +130,8 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_iof_write_output_t);
 
 /* the iof globals struct */
 struct orte_iof_base_t {
-    int                     iof_output;
     size_t                  output_limit;
     char                    *input_files;
-    opal_list_t             iof_components_opened;
     opal_mutex_t            iof_write_output_lock;
     orte_iof_sink_t         *iof_write_stdout;
     orte_iof_sink_t         *iof_write_stderr;
@@ -136,7 +142,7 @@ typedef struct orte_iof_base_t orte_iof_base_t;
 #define ORTE_IOF_SINK_DEFINE(snk, nm, fid, tg, wrthndlr, eplist)    \
     do {                                                            \
         orte_iof_sink_t *ep;                                        \
-        OPAL_OUTPUT_VERBOSE((1, orte_iof_base.iof_output,           \
+        OPAL_OUTPUT_VERBOSE((1, orte_iof_base_framework.framework_output,           \
                             "defining endpt: file %s line %d fd %d",\
                             __FILE__, __LINE__, (fid)));            \
         ep = OBJ_NEW(orte_iof_sink_t);                              \
@@ -166,7 +172,7 @@ typedef struct orte_iof_base_t orte_iof_base_t;
 #define ORTE_IOF_READ_EVENT(rv, nm, fid, tg, cbfunc, actv)          \
     do {                                                            \
         orte_iof_read_event_t *rev;                                 \
-        OPAL_OUTPUT_VERBOSE((1, orte_iof_base.iof_output,           \
+        OPAL_OUTPUT_VERBOSE((1, orte_iof_base_framework.framework_output,           \
                             "%s defining read event for %s: %s %d", \
                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),     \
                             ORTE_NAME_PRINT((nm)),                  \
@@ -189,8 +195,6 @@ typedef struct orte_iof_base_t orte_iof_base_t;
     } while(0);
 
 
-ORTE_DECLSPEC int orte_iof_base_close(void);
-ORTE_DECLSPEC int orte_iof_base_select(void);
 ORTE_DECLSPEC int orte_iof_base_flush(void);
 
 ORTE_DECLSPEC extern orte_iof_base_t orte_iof_base;

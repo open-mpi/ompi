@@ -9,6 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2012-2013 Los Alamos National Security, LLC.
+ *                         All rights reserved
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -29,36 +31,14 @@
 
 BEGIN_C_DECLS
 
-/**
- * Initialize the PUBSUB MCA framework
- *
- * @retval OMPI_SUCCESS Upon success
- * @retval OMPI_ERROR   Upon failures
- * 
- * This function is invoked during ompi_init();
+/*
+ * MCA framework
  */
-OMPI_DECLSPEC int ompi_pubsub_base_open(void);
-
-/**
+OMPI_DECLSPEC extern mca_base_framework_t ompi_pubsub_base_framework;
+/*
  * Select an available component.
- *
- * @retval OMPI_SUCCESS Upon Success
- * @retval OMPI_NOT_FOUND If no component can be selected
- * @retval OMPI_ERROR Upon other failure
- *
  */
 OMPI_DECLSPEC int ompi_pubsub_base_select(void);
-
-/**
- * Finalize the PUBSUB MCA framework
- *
- * @retval OMPI_SUCCESS Upon success
- * @retval OMPI_ERROR   Upon failures
- * 
- * This function is invoked during ompi_finalize();
- */
-OMPI_DECLSPEC int ompi_pubsub_base_close(void);
-
 
 /* NULL functions */
 OMPI_DECLSPEC int ompi_pubsub_base_null_publish(char *service, ompi_info_t *info, char *port);
@@ -66,9 +46,6 @@ OMPI_DECLSPEC int ompi_pubsub_base_null_unpublish(char *service, ompi_info_t *in
 OMPI_DECLSPEC char* ompi_pubsub_base_null_lookup(char *service, ompi_info_t *info);
 
 /* useful globals */
-OMPI_DECLSPEC extern int  ompi_pubsub_base_output;
-OMPI_DECLSPEC extern opal_list_t ompi_pubsub_base_components_available;
-OMPI_DECLSPEC extern ompi_pubsub_base_component_t ompi_pubsub_base_selected_component;
 OMPI_DECLSPEC extern ompi_pubsub_base_module_t ompi_pubsub;
 
 END_C_DECLS

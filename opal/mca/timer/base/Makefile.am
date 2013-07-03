@@ -21,5 +21,4 @@ headers += \
 	base/timer_base_null.h
 
 libmca_timer_la_SOURCES += \
-        base/timer_base_close.c \
         base/timer_base_open.c

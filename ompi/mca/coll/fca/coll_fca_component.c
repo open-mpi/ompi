@@ -176,109 +176,142 @@ static int fca_register(void)
 
     c = &mca_coll_fca_component.super.collm_version;
 
-    mca_base_param_reg_int(c, "priority",
-                           "Priority of the fca coll component",
-                           false, false,
-                           80,
-                           &mca_coll_fca_component.fca_priority);
+    mca_coll_fca_component.fca_priority = 80;
+    (void) mca_base_component_var_register(c, "priority",
+                                           "Priority of the fca coll component",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &mca_coll_fca_component.fca_priority);
 
-    mca_base_param_reg_int(c, "verbose",
-                           "Verbose level of the fca coll component",
-                           false, false,
-                           0,
-                           &mca_coll_fca_component.fca_verbose);
+    mca_coll_fca_component.fca_verbose = 0;
+    (void) mca_base_component_var_register(c, "verbose",
+                                           "Verbose level of the fca coll component",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &mca_coll_fca_component.fca_verbose);
 
-    mca_base_param_reg_int(c, "enable",
-                           "[1|0|] Enable/Disable Fabric Collective Accelerator",
-                           false, false,
-                           1,
-                           &mca_coll_fca_component.fca_enable);
+    mca_coll_fca_component.fca_enable = 1;
+    (void) mca_base_component_var_register(c, "enable",
+                                           "[1|0|] Enable/Disable Fabric Collective Accelerator",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &mca_coll_fca_component.fca_enable);
 
-    mca_base_param_reg_string(c, "spec_file",
-                           "Path to the FCA configuration file fca_mpi_spec.ini",
-                           false, false,
-                           ""COLL_FCA_HOME"/etc/fca_mpi_spec.ini",
-                           &mca_coll_fca_component.fca_spec_file);
+    mca_coll_fca_component.fca_spec_file = ""COLL_FCA_HOME"/etc/fca_mpi_spec.ini";
+    (void) mca_base_component_var_register(c, "spec_file",
+                                           "Path to the FCA configuration file fca_mpi_spec.ini",
+                                           MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &mca_coll_fca_component.fca_spec_file);
 
-    mca_base_param_reg_int(c, "np",
-                           "[integer] Minimal allowed job's NP to activate FCA",
-                           false, false,
-                           64,
-                           &mca_coll_fca_component.fca_np);
+    mca_coll_fca_component.fca_np = 64;
+    (void) mca_base_component_var_register(c, "np",
+                                           "[integer] Minimal allowed job's NP to activate FCA",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &mca_coll_fca_component.fca_np);
 
-    mca_base_param_reg_int(c, "enable_barrier",
-                           "[1|0|] Enable/Disable FCA Barrier support",
-                           false, false,
-                           OMPI_FCA_BCAST,
-                           &mca_coll_fca_component.fca_enable_barrier);
+    mca_coll_fca_component.fca_enable_barrier = OMPI_FCA_BCAST;
+    (void) mca_base_component_var_register(c, "enable_barrier",
+                                           "[1|0|] Enable/Disable FCA Barrier support",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &mca_coll_fca_component.fca_enable_barrier);
 
-    mca_base_param_reg_int(c, "enable_bcast",
-                           "[1|0|] Enable/Disable FCA Bcast support",
-                           false, false,
-                           OMPI_FCA_BCAST,
-                           &mca_coll_fca_component.fca_enable_bcast);
+    mca_coll_fca_component.fca_enable_bcast = OMPI_FCA_BCAST;
+    (void) mca_base_component_var_register(c, "enable_bcast",
+                                           "[1|0|] Enable/Disable FCA Bcast support",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &mca_coll_fca_component.fca_enable_bcast);
 
-    mca_base_param_reg_int(c, "enable_reduce",
-                           "[1|0|] Enable/Disable FCA Reduce support",
-                           false, false,
-                           OMPI_FCA_REDUCE,
-                           &mca_coll_fca_component.fca_enable_reduce);
+    mca_coll_fca_component.fca_enable_reduce = OMPI_FCA_REDUCE;
+    (void) mca_base_component_var_register(c, "enable_reduce",
+                                           "[1|0|] Enable/Disable FCA Reduce support",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &mca_coll_fca_component.fca_enable_reduce);
 
-    mca_base_param_reg_int(c, "enable_reduce_scatter",
-                           "[1|0|] Enable/Disable FCA Reduce support",
-                           false, false,
-                           OMPI_FCA_REDUCE_SCATTER,
-                           &mca_coll_fca_component.fca_enable_reduce_scatter);
+    mca_coll_fca_component.fca_enable_reduce_scatter = OMPI_FCA_REDUCE_SCATTER;
+    (void) mca_base_component_var_register(c, "enable_reduce_scatter",
+                                           "[1|0|] Enable/Disable FCA Reduce support",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &mca_coll_fca_component.fca_enable_reduce_scatter);
 
-    mca_base_param_reg_int(c, "enable_allreduce",
-                           "[1|0|] Enable/Disable FCA Allreduce support",
-                           false, false,
-                           OMPI_FCA_ALLREDUCE,
-                           &mca_coll_fca_component.fca_enable_allreduce);
+    mca_coll_fca_component.fca_enable_allreduce = OMPI_FCA_ALLREDUCE;
+    (void) mca_base_component_var_register(c, "enable_allreduce",
+                                           "[1|0|] Enable/Disable FCA Allreduce support",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &mca_coll_fca_component.fca_enable_allreduce);
 
-    mca_base_param_reg_int(c, "enable_allgather",
-                           "[1|0|] Enable/Disable FCA Allgather support",
-                           false, false,
-                           OMPI_FCA_ALLGATHER,
-                           &mca_coll_fca_component.fca_enable_allgather);
+    mca_coll_fca_component.fca_enable_allgather = OMPI_FCA_ALLGATHER;
+    (void) mca_base_component_var_register(c, "enable_allgather",
+                                           "[1|0|] Enable/Disable FCA Allgather support",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &mca_coll_fca_component.fca_enable_allgather);
 
-    mca_base_param_reg_int(c, "enable_allgatherv",
-                           "[1|0|] Enable/Disable FCA Allgatherv support",
-                           false, false,
-                           OMPI_FCA_ALLGATHERV,
-                           &mca_coll_fca_component.fca_enable_allgatherv);
+    mca_coll_fca_component.fca_enable_allgatherv = OMPI_FCA_ALLGATHERV;
+    (void) mca_base_component_var_register(c, "enable_allgatherv",
+                                           "[1|0|] Enable/Disable FCA Allgatherv support",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &mca_coll_fca_component.fca_enable_allgatherv);
 
-    mca_base_param_reg_int(c, "enable_gather",
-                           "[1|0|] Enable/Disable FCA Gather support",
-                           false, false,
-                           OMPI_FCA_GATHER,
-                           &mca_coll_fca_component.fca_enable_gather);
+    mca_coll_fca_component.fca_enable_gather = OMPI_FCA_GATHER;
+    (void) mca_base_component_var_register(c, "enable_gather",
+                                           "[1|0|] Enable/Disable FCA Gather support",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &mca_coll_fca_component.fca_enable_gather);
 
-    mca_base_param_reg_int(c, "enable_gatherv",
-                           "[1|0|] Enable/Disable FCA Gatherv support",
-                           false, false,
-                           OMPI_FCA_GATHER,
-                           &mca_coll_fca_component.fca_enable_gatherv);
+    mca_coll_fca_component.fca_enable_gatherv = OMPI_FCA_GATHER;
+    (void) mca_base_component_var_register(c, "enable_gatherv",
+                                           "[1|0|] Enable/Disable FCA Gatherv support",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &mca_coll_fca_component.fca_enable_gatherv);
 
 
-    mca_base_param_reg_int(c, "enable_alltoall",
-                           "[1|0|] Enable/Disable FCA AlltoAll support",
-                           false, false,
-                           OMPI_FCA_ALLTOALL,
-                           &mca_coll_fca_component.fca_enable_alltoall);
+    mca_coll_fca_component.fca_enable_alltoall = OMPI_FCA_ALLTOALL;
+    (void) mca_base_component_var_register(c, "enable_alltoall",
+                                           "[1|0|] Enable/Disable FCA AlltoAll support",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &mca_coll_fca_component.fca_enable_alltoall);
 
-    mca_base_param_reg_int(c, "enable_alltoallv",
-                           "[1|0|] Enable/Disable FCA AlltoAllv support",
-                           false, false,
-                           OMPI_FCA_ALLTOALLV,
-                           &mca_coll_fca_component.fca_enable_alltoallv);
+    mca_coll_fca_component.fca_enable_alltoallv = OMPI_FCA_ALLTOALLV;
+    (void) mca_base_component_var_register(c, "enable_alltoallv",
+                                           "[1|0|] Enable/Disable FCA AlltoAllv support",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &mca_coll_fca_component.fca_enable_alltoallv);
 
-    mca_base_param_reg_int(c, "enable_alltoallw",
-                           "[1|0|] Enable/Disable FCA AlltoAllw support",
-                           false, false,
-                           OMPI_FCA_ALLTOALLW,
-                           &mca_coll_fca_component.fca_enable_alltoallw);
-
+    mca_coll_fca_component.fca_enable_alltoallw = OMPI_FCA_ALLTOALLW;
+    (void) mca_base_component_var_register(c, "enable_alltoallw",
+                                           "[1|0|] Enable/Disable FCA AlltoAllw support",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &mca_coll_fca_component.fca_enable_alltoallw);
 
     return OMPI_SUCCESS;
 }

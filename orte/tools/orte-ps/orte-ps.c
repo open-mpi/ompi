@@ -60,7 +60,6 @@
 #include "opal/util/opal_environ.h"
 #include "opal/util/show_help.h"
 #include "opal/mca/base/base.h"
-#include "opal/mca/base/mca_base_param.h"
 #include "opal/runtime/opal.h"
 #if OPAL_ENABLE_FT_CR == 1
 #include "opal/runtime/opal_cr.h"
@@ -404,14 +403,14 @@ static int orte_ps_init(int argc, char *argv[]) {
     opal_cr_set_enabled(false);
 
     /* Select the none component, since we don't actually use a checkpointer */
-    tmp_env_var = mca_base_param_env_var("crs");
+    (void) mca_base_var_env_name("crs", &tmp_env_var);
     opal_setenv(tmp_env_var,
                 "none",
                 true, &environ);
     free(tmp_env_var);
     tmp_env_var = NULL;
 
-    tmp_env_var = mca_base_param_env_var("opal_cr_is_tool");
+    (void) mca_base_var_env_name("opal_cr_is_tool", &tmp_env_var);
     opal_setenv(tmp_env_var,
                 "1",
                 true, &environ);

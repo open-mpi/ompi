@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2011      Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * $COPYRIGHT$
  * 
@@ -35,15 +35,19 @@
 
 BEGIN_C_DECLS
 
-ORTE_DECLSPEC int orte_ras_base_open(void);
+/*
+ * MCA Framework
+ */
+ORTE_DECLSPEC extern mca_base_framework_t orte_ras_base_framework;
+
+/* select a component */
+ORTE_DECLSPEC    int orte_ras_base_select(void);
 
 #if !ORTE_DISABLE_FULL_SUPPORT
 /*
  * globals that might be needed
  */
 typedef struct orte_ras_base_t {
-    int ras_output;
-    opal_list_t ras_opened;
     bool allocation_read;
     bool display_alloc;
     orte_ras_base_module_t *active_module;
@@ -51,13 +55,6 @@ typedef struct orte_ras_base_t {
 } orte_ras_base_t;
 
 ORTE_DECLSPEC extern orte_ras_base_t orte_ras_base;
-
-/*
- * function definitions
- */
-ORTE_DECLSPEC int orte_ras_base_select(void);
-ORTE_DECLSPEC int orte_ras_base_finalize(void);
-ORTE_DECLSPEC int orte_ras_base_close(void);
 
 ORTE_DECLSPEC void orte_ras_base_allocate(int fd, short args, void *cbdata);
 

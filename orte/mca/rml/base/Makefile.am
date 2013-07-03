@@ -20,7 +20,7 @@ headers += \
 	base/base.h
 
 libmca_rml_la_SOURCES += \
-	base/rml_base_components.c \
+	base/rml_base_frame.c \
         base/rml_base_null_fns.c
 
 if !ORTE_DISABLE_FULL_SUPPORT

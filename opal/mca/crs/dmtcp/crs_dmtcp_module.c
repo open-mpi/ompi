@@ -28,7 +28,7 @@
 #include "opal/util/argv.h"
 #include "opal/constants.h"
 
-#include "opal/mca/base/mca_base_param.h"
+#include "opal/mca/base/mca_base_var.h"
 
 #include "opal/threads/mutex.h"
 #include "opal/threads/condition.h"
@@ -194,7 +194,7 @@ int opal_crs_dmtcp_prelaunch(int32_t rank,
     /*
      * The below should be left untouched for now
      */
-    tmp_env_var = mca_base_param_env_var("opal_cr_is_tool");
+    (void) mca_base_var_env_name("opal_cr_is_tool", &tmp_env_var);
     opal_setenv(tmp_env_var,
                 "0", true, env);
     free(tmp_env_var);

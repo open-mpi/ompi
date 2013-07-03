@@ -51,7 +51,7 @@ int orte_rmaps_rr_byslot(orte_job_t *jdata,
     float balance;
     bool add_one=false;
 
-    opal_output_verbose(2, orte_rmaps_base.rmaps_output,
+    opal_output_verbose(2, orte_rmaps_base_framework.framework_output,
                         "mca:rmaps:rr: mapping by slot for job %s slots %d num_procs %lu",
                         ORTE_JOBID_PRINT(jdata->jobid), (int)num_slots, (unsigned long)num_procs);
 
@@ -72,7 +72,7 @@ int orte_rmaps_rr_byslot(orte_job_t *jdata,
          item != opal_list_get_end(node_list);
          item = opal_list_get_next(item)) {
         node = (orte_node_t*)item;
-        opal_output_verbose(2, orte_rmaps_base.rmaps_output,
+        opal_output_verbose(2, orte_rmaps_base_framework.framework_output,
                             "mca:rmaps:rr:slot working node %s",
                             node->name);
 #if OPAL_HAVE_HWLOC
@@ -84,7 +84,7 @@ int orte_rmaps_rr_byslot(orte_job_t *jdata,
         }
 #endif
         if (node->slots_alloc <= node->slots_inuse) {
-            opal_output_verbose(2, orte_rmaps_base.rmaps_output,
+            opal_output_verbose(2, orte_rmaps_base_framework.framework_output,
                                 "mca:rmaps:rr:slot working node %s is full - skipping",
                                 node->name);
             continue;
@@ -116,7 +116,7 @@ int orte_rmaps_rr_byslot(orte_job_t *jdata,
         return ORTE_SUCCESS;
     }
 
-    opal_output_verbose(2, orte_rmaps_base.rmaps_output,
+    opal_output_verbose(2, orte_rmaps_base_framework.framework_output,
                         "mca:rmaps:rr:slot job %s is oversubscribed - performing second pass",
                         ORTE_JOBID_PRINT(jdata->jobid));
 
@@ -141,7 +141,7 @@ int orte_rmaps_rr_byslot(orte_job_t *jdata,
          item != opal_list_get_end(node_list);
          item = opal_list_get_next(item)) {
         node = (orte_node_t*)item;
-        opal_output_verbose(2, orte_rmaps_base.rmaps_output,
+        opal_output_verbose(2, orte_rmaps_base_framework.framework_output,
                             "mca:rmaps:rr:slot working node %s",
                             node->name);
 #if OPAL_HAVE_HWLOC
@@ -171,7 +171,7 @@ int orte_rmaps_rr_byslot(orte_job_t *jdata,
             }
         }
         num_procs_to_assign = (node->slots_alloc - node->slots_inuse) + extra_procs_to_assign;
-        opal_output_verbose(2, orte_rmaps_base.rmaps_output,
+        opal_output_verbose(2, orte_rmaps_base_framework.framework_output,
                             "mca:rmaps:rr:slot adding up to %d procs to node %s",
                             num_procs_to_assign, node->name);
         for (i=0; i < num_procs_to_assign && nprocs_mapped < app->num_procs; i++) {
@@ -215,7 +215,7 @@ int orte_rmaps_rr_bynode(orte_job_t *jdata,
     bool add_one=false;
     bool oversubscribed=false;
 
-    opal_output_verbose(2, orte_rmaps_base.rmaps_output,
+    opal_output_verbose(2, orte_rmaps_base_framework.framework_output,
                         "mca:rmaps:rr: mapping by node for job %s app %d slots %d num_procs %lu",
                         ORTE_JOBID_PRINT(jdata->jobid), (int)app->idx,
                         (int)num_slots, (unsigned long)num_procs);
@@ -259,7 +259,7 @@ int orte_rmaps_rr_bynode(orte_job_t *jdata,
         add_one = true;
     }
 
-    opal_output_verbose(2, orte_rmaps_base.rmaps_output,
+    opal_output_verbose(2, orte_rmaps_base_framework.framework_output,
                         "mca:rmaps:rr: mapping by node navg %d extra_procs %d extra_nodes %d",
                         navg, extra_procs_to_assign, nxtra_nodes);
 
@@ -446,7 +446,7 @@ int orte_rmaps_rr_byobj(orte_job_t *jdata,
                           num_procs, target, cache_level);
     }
 
-    opal_output_verbose(2, orte_rmaps_base.rmaps_output,
+    opal_output_verbose(2, orte_rmaps_base_framework.framework_output,
                         "mca:rmaps:rr: mapping no-span by %s for job %s slots %d num_procs %lu",
                         hwloc_obj_type_string(target),
                         ORTE_JOBID_PRINT(jdata->jobid),
@@ -478,7 +478,7 @@ int orte_rmaps_rr_byobj(orte_job_t *jdata,
         }
     }
 
-    opal_output_verbose(2, orte_rmaps_base.rmaps_output,
+    opal_output_verbose(2, orte_rmaps_base_framework.framework_output,
                         "mca:rmaps:rr: mapping no-span by %s extra_procs %d extra_nodes %d",
                         hwloc_obj_type_string(target),
                         extra_procs_to_assign, nxtra_nodes);
@@ -523,7 +523,7 @@ int orte_rmaps_rr_byobj(orte_job_t *jdata,
 
         /* get the number of objects of this type on this node */
         nobjs = opal_hwloc_base_get_nbobjs_by_type(node->topology, target, cache_level, OPAL_HWLOC_AVAILABLE);
-        opal_output_verbose(2, orte_rmaps_base.rmaps_output,
+        opal_output_verbose(2, orte_rmaps_base_framework.framework_output,
                             "mca:rmaps:rr:byobj: found %d objs on node %s", nobjs, node->name);
         /* if there are no objects of this type, then report the error
          * and abort - this can happen, for example, on systems that
@@ -537,12 +537,12 @@ int orte_rmaps_rr_byobj(orte_job_t *jdata,
 
         /* compute the number of procs to go on each object */
         nperobj = num_procs_to_assign / nobjs;
-        opal_output_verbose(2, orte_rmaps_base.rmaps_output,
+        opal_output_verbose(2, orte_rmaps_base_framework.framework_output,
                             "mca:rmaps:rr:byobj: placing %d procs on each object", nperobj);
         if ((int)(nperobj * nobjs) < num_procs_to_assign) {
             /* compute how many objs need an extra proc */
             nxtra_objs = num_procs_to_assign - nperobj * nobjs;
-            opal_output_verbose(2, orte_rmaps_base.rmaps_output,
+            opal_output_verbose(2, orte_rmaps_base_framework.framework_output,
                                 "mca:rmaps:rr:byobj: adding 1 extra proc to the first %d objects, if needed", nxtra_objs);
         }
         /* loop through the number of objects */
@@ -604,7 +604,7 @@ static int byobj_span(orte_job_t *jdata,
     bool add_one=false;
     bool oversubscribed=false;
 
-    opal_output_verbose(2, orte_rmaps_base.rmaps_output,
+    opal_output_verbose(2, orte_rmaps_base_framework.framework_output,
                         "mca:rmaps:rr: mapping span by %s for job %s slots %d num_procs %lu",
                         hwloc_obj_type_string(target),
                         ORTE_JOBID_PRINT(jdata->jobid),
@@ -653,7 +653,7 @@ static int byobj_span(orte_job_t *jdata,
         add_one = true;
     }
 
-    opal_output_verbose(2, orte_rmaps_base.rmaps_output,
+    opal_output_verbose(2, orte_rmaps_base_framework.framework_output,
                         "mca:rmaps:rr: mapping by %s navg %d extra_procs %d extra_nodes %d",
                         hwloc_obj_type_string(target),
                         navg, extra_procs_to_assign, nxtra_nodes);
@@ -738,16 +738,16 @@ static int byobj_span(orte_job_t *jdata,
 
         /* get the number of objects of this type on this node */
         nobjs = opal_hwloc_base_get_nbobjs_by_type(node->topology, target, cache_level, OPAL_HWLOC_AVAILABLE);
-        opal_output_verbose(2, orte_rmaps_base.rmaps_output,
+        opal_output_verbose(2, orte_rmaps_base_framework.framework_output,
                             "mca:rmaps:rr:byobj: found %d objs on node %s", nobjs, node->name);
         /* compute the number of procs to go on each object */
         nperobj = num_procs_to_assign / nobjs;
-        opal_output_verbose(2, orte_rmaps_base.rmaps_output,
+        opal_output_verbose(2, orte_rmaps_base_framework.framework_output,
                             "mca:rmaps:rr:byobj: placing %d procs on each object", nperobj);
         if ((int)(nperobj * nobjs) < num_procs_to_assign) {
             /* compute how many objs need an extra proc */
             nxtra_objs = num_procs_to_assign - nperobj * nobjs;
-            opal_output_verbose(2, orte_rmaps_base.rmaps_output,
+            opal_output_verbose(2, orte_rmaps_base_framework.framework_output,
                                 "mca:rmaps:rr:byobj: adding 1 extra proc to the first %d objects, if needed", nxtra_objs);
         }
         /* loop through the number of objects */

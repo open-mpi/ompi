@@ -50,12 +50,6 @@ typedef struct mca_allocator_base_selected_module_t mca_allocator_base_selected_
 OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_allocator_base_selected_module_t);
                                                                                                      
 
-/*
- * Global functions for MCA: overall allocator open and close
- */
-
-OMPI_DECLSPEC int mca_allocator_base_open(void);
-OMPI_DECLSPEC int mca_allocator_base_close(void);
 OMPI_DECLSPEC mca_allocator_base_component_t* mca_allocator_component_lookup(const char* name);
 
 
@@ -63,9 +57,9 @@ OMPI_DECLSPEC mca_allocator_base_component_t* mca_allocator_component_lookup(con
  * Globals
  */
 /**
- * The list of all the selected components.
+ * The allocator framework
  */
-OMPI_DECLSPEC extern opal_list_t mca_allocator_base_components;
+OMPI_DECLSPEC extern mca_base_framework_t ompi_allocator_base_framework;
 
 END_C_DECLS
 

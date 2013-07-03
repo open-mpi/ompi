@@ -20,7 +20,6 @@
 #include "orte/constants.h"
 
 #include "opal/mca/base/base.h"
-#include "opal/mca/base/mca_base_param.h"
 #include "opal/class/opal_pointer_array.h"
 
 #include "orte/util/proc_info.h"
@@ -33,6 +32,7 @@
  * Local functions
  */
 
+static int orte_rmaps_resilient_register(void);
 static int orte_rmaps_resilient_open(void);
 static int orte_rmaps_resilient_close(void);
 static int orte_rmaps_resilient_query(mca_base_module_t **module, int *priority);
@@ -50,7 +50,8 @@ orte_rmaps_res_component_t mca_rmaps_resilient_component = {
             ORTE_RELEASE_VERSION,  /* MCA component release version */
             orte_rmaps_resilient_open,  /* component open  */
             orte_rmaps_resilient_close, /* component close */
-            orte_rmaps_resilient_query  /* component query */
+            orte_rmaps_resilient_query, /* component query */
+            orte_rmaps_resilient_register
         },
         {
             /* The component is checkpoint ready */
@@ -61,24 +62,34 @@ orte_rmaps_res_component_t mca_rmaps_resilient_component = {
 
 
 /**
-  * component open/close/init function
+  * component register/open/close/init function
   */
+static int orte_rmaps_resilient_register (void)
+{
+    my_priority = 40;
+    (void) mca_base_component_var_register (&mca_rmaps_resilient_component.super.base_version,
+                                            "priority", "Priority of the resilient rmaps component",
+                                            MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                            OPAL_INFO_LVL_9,
+                                            MCA_BASE_VAR_SCOPE_READONLY, &my_priority);
+
+    mca_rmaps_resilient_component.fault_group_file = NULL;
+    (void) mca_base_component_var_register (&mca_rmaps_resilient_component.super.base_version,
+                                            "fault_grp_file",
+                                            "Filename that contains a description of fault groups for this system",
+                                            MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
+                                            OPAL_INFO_LVL_9,
+                                            MCA_BASE_VAR_SCOPE_READONLY,
+                                            &mca_rmaps_resilient_component.fault_group_file);
+
+    return ORTE_SUCCESS;
+}
+
 static int orte_rmaps_resilient_open(void)
 {
-    mca_base_component_t *c = &mca_rmaps_resilient_component.super.base_version;
-
     /* initialize globals */
     OBJ_CONSTRUCT(&mca_rmaps_resilient_component.fault_grps, opal_list_t);
-    
-    /* lookup parameters */
-    mca_base_param_reg_string(c, "fault_grp_file",
-                              "Filename that contains a description of fault groups for this system",
-                              false, false, NULL,  &mca_rmaps_resilient_component.fault_group_file);
 
-    mca_base_param_reg_int(c, "priority",
-                           "Priority of the resilient rmaps component",
-                           false, false, 40,
-                           &my_priority);
     return ORTE_SUCCESS;
 }
 

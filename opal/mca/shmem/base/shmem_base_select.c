@@ -29,7 +29,6 @@
 #include "opal/util/output.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
-#include "opal/mca/base/mca_base_param.h"
 #include "opal/mca/shmem/shmem.h"
 #include "opal/mca/shmem/base/base.h"
 
@@ -47,7 +46,7 @@ opal_shmem_base_best_runnable_component_name(void)
     mca_base_component_t *best_component = NULL;
     mca_base_module_t *best_module = NULL;
 
-    opal_output_verbose(10, opal_shmem_base_output,
+    opal_output_verbose(10, opal_shmem_base_framework.framework_output,
                         "shmem: base: best_runnable_component_name: "
                         "Searching for best runnable component.");
     /* select the best component so we can get its name. */
@@ -58,14 +57,14 @@ opal_shmem_base_best_runnable_component_name(void)
     }
     else {
         if (NULL != best_component) {
-            opal_output_verbose(10, opal_shmem_base_output,
+            opal_output_verbose(10, opal_shmem_base_framework.framework_output,
                                 "shmem: base: best_runnable_component_name: "
                                 "Found best runnable component: (%s).",
                                 best_component->mca_component_name);
             return strdup(best_component->mca_component_name);
         }
         else {
-            opal_output_verbose(10, opal_shmem_base_output,
+            opal_output_verbose(10, opal_shmem_base_framework.framework_output,
                                 "shmem: base: best_runnable_component_name: "
                                 "Could not find runnable component.");
             /* no component returned, so return NULL */
@@ -82,32 +81,20 @@ opal_shmem_base_runtime_query(mca_base_module_t **best_module,
     mca_base_component_list_item_t *cli = NULL;
     mca_base_component_t *component = NULL;
     mca_base_module_t *module = NULL;
-    opal_list_item_t *item = NULL;
     int priority = 0, best_priority = INT32_MIN;
-    char *env_hint_name = NULL, *env_hint_val = NULL;
 
     *best_module = NULL;
     *best_component = NULL;
 
-    opal_output_verbose(10, opal_shmem_base_output,
+    opal_output_verbose(10, opal_shmem_base_framework.framework_output,
                         "shmem: base: runtime_query: "
                         "Auto-selecting shmem components");
-    /* we are using a nonstandard name here because shmem_RUNTIME_QUERY_hint
-     * is for internal use only!
-     * see odls_base_default_fns.c for more details.
-     */
-    env_hint_name = mca_base_param_env_var ("shmem_RUNTIME_QUERY_hint");
-    env_hint_val = getenv(env_hint_name);
-    free(env_hint_name);
 
     /* traverse the list of available components.
      * for each call their 'run-time query' functions to determine relative
      * priority.
      */
-    for (item  = opal_list_get_first(&opal_shmem_base_components_opened);
-         item != opal_list_get_end(&opal_shmem_base_components_opened);
-         item  = opal_list_get_next(item) ) {
-        cli = (mca_base_component_list_item_t *)item;
+    OPAL_LIST_FOREACH(cli, &opal_shmem_base_framework.framework_components, mca_base_component_list_item_t) {
         component = (mca_base_component_t *)cli->cli_component;
 
         /* if there is a run-time query function then use it. otherwise, skip
@@ -115,7 +102,7 @@ opal_shmem_base_runtime_query(mca_base_module_t **best_module,
          */
         if (NULL == ((opal_shmem_base_component_2_0_0_t *)
                      component)->runtime_query) {
-            opal_output_verbose(5, opal_shmem_base_output,
+            opal_output_verbose(5, opal_shmem_base_framework.framework_output,
                                 "shmem: base: runtime_query: "
                                 "(shmem) Skipping component [%s]. It does not "
                                 "implement a run-time query function",
@@ -124,20 +111,20 @@ opal_shmem_base_runtime_query(mca_base_module_t **best_module,
         }
 
         /* query this component for the module and priority */
-        opal_output_verbose(5, opal_shmem_base_output,
+        opal_output_verbose(5, opal_shmem_base_framework.framework_output,
                             "shmem: base: runtime_query: "
                             "(shmem) Querying component (run-time) [%s]",
                             component->mca_component_name);
 
         ((opal_shmem_base_component_2_0_0_t *)
-         component)->runtime_query(&module, &priority, env_hint_val);
+         component)->runtime_query(&module, &priority, opal_shmem_base_RUNTIME_QUERY_hint);
 
         /* if no module was returned, then skip component.
          * this probably means that the run-time test deemed the shared memory
          * backing facility unusable or unsafe.
          */
         if (NULL == module) {
-            opal_output_verbose(5, opal_shmem_base_output,
+            opal_output_verbose(5, opal_shmem_base_framework.framework_output,
                                 "shmem: base: runtime_query: "
                                 "(shmem) Skipping component [%s]. Run-time "
                                 "Query failed to return a module",
@@ -148,7 +135,7 @@ opal_shmem_base_runtime_query(mca_base_module_t **best_module,
         /* determine if this is the best module we have seen by looking the
          * priority
          */
-        opal_output_verbose(5, opal_shmem_base_output,
+        opal_output_verbose(5, opal_shmem_base_framework.framework_output,
                             "shmem: base: runtime_query: "
                             "(%5s) Query of component [%s] set priority to %d",
                             "shmem", component->mca_component_name, priority);
@@ -163,24 +150,20 @@ opal_shmem_base_runtime_query(mca_base_module_t **best_module,
      * make sure we found something in the process.
      */
     if (NULL == *best_component) {
-        opal_output_verbose(5, opal_shmem_base_output,
+        opal_output_verbose(5, opal_shmem_base_framework.framework_output,
                             "shmem: base: runtime_query: "
                             "(%5s) No component selected!", "shmem");
-        /* still close the non-selected components.
-         * pass 0 to keep this from closing the output handle.
-         */
-        mca_base_components_close(0, &opal_shmem_base_components_opened, NULL);
         return OPAL_ERR_NOT_FOUND;
     }
 
-    opal_output_verbose(5, opal_shmem_base_output,
+    opal_output_verbose(5, opal_shmem_base_framework.framework_output,
                         "shmem: base: runtime_query: "
                         "(%5s) Selected component [%s]", "shmem",
                         (*best_component)->mca_component_name);
+
     /* close the non-selected components */
-    mca_base_components_close(opal_shmem_base_output,
-                              &opal_shmem_base_components_opened,
-                              (mca_base_component_t *)(*best_component));
+    (void) mca_base_framework_components_close (&opal_shmem_base_framework,
+                                                (mca_base_component_t *)(*best_component));
 
     return OPAL_SUCCESS;
 }

@@ -23,7 +23,6 @@
 #define OPAL_DISABLE_ENABLE_MEM_DEBUG 1
 #include "ompi_config.h"
 #include "opal/mca/base/base.h"
-#include "opal/mca/base/mca_base_param.h"
 #include "mpool_gpusm.h"
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
@@ -78,7 +77,7 @@ static int gpusm_open(void)
 
 static int gpusm_register(void)
 {
-    return OMPI_SUCCESS;
+    return mca_common_cuda_register_mca_variables();
 }
 
 

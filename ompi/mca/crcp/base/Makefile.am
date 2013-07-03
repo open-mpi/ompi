@@ -22,8 +22,7 @@ headers += \
         base/base.h
 
 libmca_crcp_la_SOURCES += \
-        base/crcp_base_open.c \
-        base/crcp_base_close.c \
+        base/crcp_base_frame.c \
         base/crcp_base_select.c \
         base/crcp_base_fns.c
 

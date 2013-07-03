@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -10,6 +11,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2009      University of Houston. All rights reserved.
+ * Copyright (c) 2013      Los Alamos National Security, LLC. All Rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -28,6 +31,24 @@
 #include "coll_tuned.h"
 #include "coll_tuned_topo.h"
 #include "coll_tuned_util.h"
+
+/* allgatherv algorithm variables */
+static int coll_tuned_allgatherv_algorithm_count = 5;
+static int coll_tuned_allgatherv_forced_algorithm = 0;
+static int coll_tuned_allgatherv_segment_size = 0;
+static int coll_tuned_allgatherv_tree_fanout;
+static int coll_tuned_allgatherv_chain_fanout;
+
+/* valid values for coll_tuned_allgatherv_forced_algorithm */
+static mca_base_var_enum_value_t allgatherv_algorithms[] = {
+    {0, "ignore"},
+    {1, "default"},
+    {2, "bruck"},
+    {3, "ring"},
+    {4, "neighbor"},
+    {5, "two_proc"},
+    {0, NULL}
+};
 
 /*
  * ompi_coll_tuned_allgatherv_intra_bruck
@@ -665,54 +686,64 @@ ompi_coll_tuned_allgatherv_intra_basic_default(void *sbuf, int scount,
 int 
 ompi_coll_tuned_allgatherv_intra_check_forced_init(coll_tuned_force_algorithm_mca_param_indices_t *mca_param_indices)
 {
-    int max_alg = 5, requested_alg;
-    
-    ompi_coll_tuned_forced_max_algorithms[ALLGATHERV] = max_alg;
-    
-    mca_base_param_reg_int (&mca_coll_tuned_component.super.collm_version,
-                            "allgatherv_algorithm_count",
-                            "Number of allgather algorithms available",
-                            false, true, max_alg, NULL);
-    
-    mca_param_indices->algorithm_param_index
-        = mca_base_param_reg_int(&mca_coll_tuned_component.super.collm_version,
-                                 "allgatherv_algorithm",
-                                 "Which allgather algorithm is used. Can be locked down to choice of: 0 ignore, 1 default (gatherv + bcast), 2 bruck, 3 ring, 4 neighbor exchange, 5: two proc only.",
-                                 false, false, 0, NULL);
+    mca_base_var_enum_t *new_enum;
+
+    ompi_coll_tuned_forced_max_algorithms[ALLGATHERV] = coll_tuned_allgatherv_algorithm_count;
+
+    (void) mca_base_component_var_register(&mca_coll_tuned_component.super.collm_version,
+                                           "allgatherv_algorithm_count",
+                                           "Number of allgatherv algorithms available",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0,
+                                           MCA_BASE_VAR_FLAG_DEFAULT_ONLY,
+                                           OPAL_INFO_LVL_5,
+                                           MCA_BASE_VAR_SCOPE_CONSTANT,
+                                           &coll_tuned_allgatherv_algorithm_count);
+
+    /* MPI_T: This variable should eventually be bound to a communicator */
+    coll_tuned_allgatherv_forced_algorithm = 0;
+    (void) mca_base_var_enum_create("coll_tuned_allgatherv_algorithms", allgatherv_algorithms, &new_enum);
+    mca_param_indices->algorithm_param_index =
+        mca_base_component_var_register(&mca_coll_tuned_component.super.collm_version,
+                                        "allgatherv_algorithm",
+                                        "Which allallgatherv algorithm is used. Can be locked down to choice of: 0 ignore, 1 default (allgathervv + bcast), 2 bruck, 3 ring, 4 neighbor exchange, 5: two proc only.",
+                                        MCA_BASE_VAR_TYPE_INT, new_enum, 0, 0,
+                                        OPAL_INFO_LVL_5,
+                                        MCA_BASE_VAR_SCOPE_READONLY,
+                                        &coll_tuned_allgatherv_forced_algorithm);
+    OBJ_RELEASE(new_enum);
     if (mca_param_indices->algorithm_param_index < 0) {
         return mca_param_indices->algorithm_param_index;
     }
-    mca_base_param_lookup_int(mca_param_indices->algorithm_param_index, 
-                              &(requested_alg));
-    if( 0 > requested_alg || requested_alg > max_alg ) {
-        if( 0 == ompi_comm_rank( MPI_COMM_WORLD ) ) {
-            opal_output( 0, "Allgather algorithm #%d is not available (range [0..%d]). Switching back to ignore(0)\n",
-                         requested_alg, max_alg );
-        }
-        mca_base_param_set_int( mca_param_indices->algorithm_param_index, 0);
-    }
-    
-    mca_param_indices->segsize_param_index
-        = mca_base_param_reg_int(&mca_coll_tuned_component.super.collm_version,
-                                 "allgatherv_algorithm_segmentsize",
-                                 "Segment size in bytes used by default for allgather algorithms. Only has meaning if algorithm is forced and supports segmenting. 0 bytes means no segmentation. Currently, available algorithms do not support segmentation.",
-                                 false, false, 0, NULL);
-    
-    mca_param_indices->tree_fanout_param_index
-        = mca_base_param_reg_int(&mca_coll_tuned_component.super.collm_version,
-                                 "allgatherv_algorithm_tree_fanout",
-                                 "Fanout for n-tree used for allgather algorithms. Only has meaning if algorithm is forced and supports n-tree topo based operation. Currently, available algorithms do not support n-tree topologies.",
-                                 false, false, 
-                                 ompi_coll_tuned_init_tree_fanout, /* get system wide default */
-                                 NULL);
 
-    mca_param_indices->chain_fanout_param_index
-        = mca_base_param_reg_int(&mca_coll_tuned_component.super.collm_version,
-                                 "allgatherv_algorithm_chain_fanout",
-                                 "Fanout for chains used for allgather algorithms. Only has meaning if algorithm is forced and supports chain topo based operation. Currently, available algorithms do not support chain topologies.",
-                                 false, false, 
-                                 ompi_coll_tuned_init_chain_fanout, /* get system wide default */
-                                 NULL);
+    coll_tuned_allgatherv_segment_size = 0;
+    mca_param_indices->segsize_param_index =
+        mca_base_component_var_register(&mca_coll_tuned_component.super.collm_version,
+                                        "allgatherv_algorithm_segmentsize",
+                                        "Segment size in bytes used by default for allgatherv algorithms. Only has meaning if algorithm is forced and supports segmenting. 0 bytes means no segmentation. Currently, available algorithms do not support segmentation.",
+                                        MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                        OPAL_INFO_LVL_5,
+                                        MCA_BASE_VAR_SCOPE_READONLY,
+                                        &coll_tuned_allgatherv_segment_size);
+
+    coll_tuned_allgatherv_tree_fanout = ompi_coll_tuned_init_tree_fanout; /* get system wide default */
+    mca_param_indices->tree_fanout_param_index =
+        mca_base_component_var_register(&mca_coll_tuned_component.super.collm_version,
+                                        "allgatherv_algorithm_tree_fanout",
+                                        "Fanout for n-tree used for allgatherv algorithms. Only has meaning if algorithm is forced and supports n-tree topo based operation. Currently, available algorithms do not support n-tree topologies.",
+                                        MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                        OPAL_INFO_LVL_5,
+                                        MCA_BASE_VAR_SCOPE_READONLY,
+                                        &coll_tuned_allgatherv_tree_fanout);
+
+    coll_tuned_allgatherv_chain_fanout = ompi_coll_tuned_init_chain_fanout; /* get system wide default */
+    mca_param_indices->chain_fanout_param_index = 
+      mca_base_component_var_register(&mca_coll_tuned_component.super.collm_version,
+                                      "allgatherv_algorithm_chain_fanout",
+                                      "Fanout for chains used for allgatherv algorithms. Only has meaning if algorithm is forced and supports chain topo based operation. Currently, available algorithms do not support chain topologies.",
+                                      MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                      OPAL_INFO_LVL_5,
+                                      MCA_BASE_VAR_SCOPE_READONLY,
+                                      &coll_tuned_allgatherv_chain_fanout);
 
     return (MPI_SUCCESS);
 }

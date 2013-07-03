@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2009 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -9,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2007-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
@@ -64,7 +65,6 @@
 #include "opal/util/error.h"
 #include "opal/util/output.h"
 #include "opal/mca/base/base.h"
-#include "opal/mca/base/mca_base_param.h"
 
 #include "opal/runtime/opal.h"
 #include "opal/runtime/opal_cr.h"
@@ -244,7 +244,7 @@ static int initialize(int argc, char *argv[]) {
      * Select the 'none' CRS component, 
      * since we don't actually use a checkpointer
      */
-    tmp_env_var = mca_base_param_env_var("crs");
+    (void) mca_base_var_env_name("crs", &tmp_env_var);
     opal_setenv(tmp_env_var,
                 "none",
                 true, &environ);
@@ -327,7 +327,7 @@ static int parse_args(int argc, char *argv[]) {
         putenv(global_env[i]);
     }
 
-    tmp_env_var = mca_base_param_env_var("opal_cr_is_tool");
+    (void) mca_base_var_env_name("opal_cr_is_tool", &tmp_env_var);
     opal_setenv(tmp_env_var,
                 "1",
                 true, &environ);

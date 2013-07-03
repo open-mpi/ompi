@@ -50,7 +50,7 @@ int mca_bml_r2_ft_event(int state)
     int ret, p;
     int loc_state;
     int param_type = -1;
-    char *param_list = NULL;
+    const char **btl_list;
     orte_grpcomm_collective_t coll;
 
     if(OPAL_CRS_CHECKPOINT == state) {
@@ -147,7 +147,7 @@ int mca_bml_r2_ft_event(int state)
                 opal_output(0, "bml:r2: ft_event(Restart): Failed to finalize BML framework\n");
                 return ret;
             }
-            if( OMPI_SUCCESS != (ret = mca_btl_base_close()) ) {
+            if( OMPI_SUCCESS != (ret = mca_base_framework_close(&ompi_btl_base_framework)) ) {
                 opal_output(0, "bml:r2: ft_event(Restart): Failed to close BTL framework\n");
                 return ret;
             }
@@ -171,7 +171,7 @@ int mca_bml_r2_ft_event(int state)
             /*
              * Re-open the BTL framework to get the full list of components.
              */
-            if( OMPI_SUCCESS != (ret = mca_btl_base_open()) ) {
+            if( OMPI_SUCCESS != (ret = mca_base_framework_open(&ompi_btl_base_framework, 0)) ) {
                 opal_output(0, "bml:r2: ft_event(Restart): Failed to open BTL framework\n");
                 return ret;
             }
@@ -225,7 +225,7 @@ int mca_bml_r2_ft_event(int state)
             opal_output(0, "bml:r2: ft_event(Restart): Failed to finalize BML framework\n");
             return ret;
         }
-        if( OMPI_SUCCESS != (ret = mca_btl_base_close()) ) {
+        if( OMPI_SUCCESS != (ret = mca_base_framework_close(&ompi_btl_base_framework)) ) {
             opal_output(0, "bml:r2: ft_event(Restart): Failed to close BTL framework\n");
             return ret;
         }
@@ -250,32 +250,22 @@ int mca_bml_r2_ft_event(int state)
          * Re-open the BTL framework to get the full list of components.
          * - but first clear the MCA value that was there
          */
-        param_type = mca_base_param_find("btl", NULL, NULL);
-        mca_base_param_lookup_string(param_type, &param_list);
+        param_type = mca_base_var_find("ompi", "btl", NULL, NULL);
+        btl_list = NULL;
+        mca_base_var_get_value(param_type, &btl_list, NULL, NULL);
         opal_output_verbose(11, ompi_cr_output,
-                            "Restart (Previous BTL MCA): <%s>\n", param_list);
-        if( NULL != param_list ) {
-            free(param_list);
-            param_list = NULL;
-        }
+                            "Restart (Previous BTL MCA): <%s>\n", btl_list ? btl_list[0] : "");
 
-        /* Deregister the old value, and refresh the file cache to grab any updates */
-        mca_base_param_deregister(param_type);
-        mca_base_param_recache_files(false);
-
-        if( OMPI_SUCCESS != (ret = mca_btl_base_open()) ) {
+        if( OMPI_SUCCESS != (ret = mca_base_framework_open(&ompi_btl_base_framework, 0)) ) {
             opal_output(0, "bml:r2: ft_event(Restart): Failed to open BTL framework\n");
             return ret;
         }
 
-        param_type = mca_base_param_find("btl", NULL, NULL);
-        mca_base_param_lookup_string(param_type, &param_list);
+        /* The reregistered paramter is guaranteed to have the same index */
+        btl_list = NULL;
+        mca_base_var_get_value(param_type, &btl_list, NULL, NULL);
         opal_output_verbose(11, ompi_cr_output,
-                            "Restart (New BTL MCA): <%s>\n", param_list);
-        if( NULL != param_list ) {
-            free(param_list);
-            param_list = NULL;
-        }
+                            "Restart (New BTL MCA): <%s>\n", btl_list ? btl_list[0] : "");
 
         /*
          * Re-select the BTL components/modules

@@ -23,8 +23,7 @@ headers += \
         base/btl_base_error.h
 
 libmca_btl_la_SOURCES += \
-        base/btl_base_close.c \
+        base/btl_base_frame.c \
         base/btl_base_error.c \
-        base/btl_base_open.c \
         base/btl_base_select.c \
         base/btl_base_mca.c

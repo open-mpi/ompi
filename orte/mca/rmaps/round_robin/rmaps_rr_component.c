@@ -20,7 +20,6 @@
 #include "orte/constants.h"
 
 #include "opal/mca/base/base.h"
-#include "opal/mca/base/mca_base_param.h"
 
 #include "orte/mca/rmaps/base/rmaps_private.h"
 #include "rmaps_rr.h"
@@ -29,6 +28,7 @@
  * Local functions
  */
 
+static int orte_rmaps_round_robin_register(void);
 static int orte_rmaps_round_robin_open(void);
 static int orte_rmaps_round_robin_close(void);
 static int orte_rmaps_round_robin_query(mca_base_module_t **module, int *priority);
@@ -45,7 +45,8 @@ orte_rmaps_base_component_t mca_rmaps_round_robin_component = {
         ORTE_RELEASE_VERSION,  /* MCA component release version */
         orte_rmaps_round_robin_open,  /* component open  */
         orte_rmaps_round_robin_close, /* component close */
-        orte_rmaps_round_robin_query  /* component query */
+        orte_rmaps_round_robin_query, /* component query */
+        orte_rmaps_round_robin_register
     },
     {
         /* The component is checkpoint ready */
@@ -55,16 +56,22 @@ orte_rmaps_base_component_t mca_rmaps_round_robin_component = {
 
 
 /**
-  * component open/close/init function
+  * component register/open/close/init function
   */
+static int orte_rmaps_round_robin_register(void)
+{
+    my_priority = 10;
+    (void) mca_base_component_var_register(&mca_rmaps_round_robin_component.base_version,
+                                           "priority", "Priority of the rr rmaps component",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY, &my_priority);
+
+    return ORTE_SUCCESS;
+}
+
 static int orte_rmaps_round_robin_open(void)
 {
-    mca_base_component_t *c = &mca_rmaps_round_robin_component.base_version;
-
-    mca_base_param_reg_int(c, "priority",
-                           "Priority of the rr rmaps component",
-                           false, false, 10,
-                           &my_priority);
     return ORTE_SUCCESS;
 }
 

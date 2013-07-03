@@ -20,7 +20,6 @@
 #include "ompi_config.h"
 #include "ompi/mca/allocator/allocator.h"
 #include "ompi/constants.h"
-#include "opal/mca/base/mca_base_param.h"
 #include "ompi/mca/allocator/bucket/allocator_bucket_alloc.h"
 #include "ompi/mca/mpool/mpool.h" 
 
@@ -80,9 +79,16 @@ struct mca_allocator_base_module_t* mca_allocator_bucket_module_init(
     return((mca_allocator_base_module_t *) allocator);
 }
 
+static int mca_allocator_bucket_module_register(void) {
+    mca_allocator_num_buckets = 30;
+    (void) mca_base_component_var_register(&mca_allocator_bucket_component.allocator_version,
+                                           "num_buckets", NULL, MCA_BASE_VAR_TYPE_INT, NULL, 0,
+                                           MCA_BASE_VAR_FLAG_SETTABLE, OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_LOCAL, &mca_allocator_num_buckets);
+    return(OMPI_SUCCESS);
+}
+
 int mca_allocator_bucket_module_open(void) {
-    (void) mca_base_param_reg_int_name ("allocator", "bucket_num_buckets", NULL, false, false,
-                                        30, &mca_allocator_num_buckets);
     return(OMPI_SUCCESS);
 }
 
@@ -116,7 +122,9 @@ mca_allocator_base_component_t mca_allocator_bucket_component = {
     OMPI_MINOR_VERSION,
     OMPI_RELEASE_VERSION,
     mca_allocator_bucket_module_open,  /* module open */
-    mca_allocator_bucket_module_close  /* module close */
+    mca_allocator_bucket_module_close, /* module close */
+    NULL,
+    mca_allocator_bucket_module_register
   },
   {
       /* The component is checkpoint ready */

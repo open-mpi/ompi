@@ -9,6 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2012-2013 Los Alamos National Security, LLC.
+ *                         All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -20,7 +22,6 @@
 #include "orte/constants.h"
 
 #include "opal/mca/base/base.h"
-#include "opal/mca/base/mca_base_param.h"
 
 #include "orte/util/name_fns.h"
 #include "orte/runtime/orte_globals.h"
@@ -28,16 +29,10 @@
 #include "orte/mca/ras/base/ras_private.h"
 #include "ras_slurm.h"
 
-
-/*
- * Local variables
- */
-static int param_priority;
-
-
 /*
  * Local functions
  */
+static int ras_slurm_register(void);
 static int ras_slurm_open(void);
 static int orte_ras_slurm_component_query(mca_base_module_t **module, int *priority);
 
@@ -58,7 +53,8 @@ orte_ras_base_component_t mca_ras_slurm_component = {
         /* Component open and close functions */
         ras_slurm_open,
         NULL,
-        orte_ras_slurm_component_query
+        orte_ras_slurm_component_query,
+        ras_slurm_register
     },
     {
         /* The component is checkpoint ready */
@@ -67,14 +63,13 @@ orte_ras_base_component_t mca_ras_slurm_component = {
 };
 
 
+static int ras_slurm_register(void)
+{
+    return ORTE_SUCCESS;
+}
+
 static int ras_slurm_open(void)
 {
-    param_priority = 
-        mca_base_param_reg_int(&mca_ras_slurm_component.base_version,
-                               "priority",
-                               "Priority of the slurm ras component",
-                               false, false, 75, NULL);
-
     return ORTE_SUCCESS;
 }
 
@@ -84,19 +79,24 @@ static int orte_ras_slurm_component_query(mca_base_module_t **module, int *prior
     /* Are we running under a SLURM job? */
 
     if (NULL != getenv("SLURM_JOBID")) {
-        mca_base_param_lookup_int(param_priority, priority);
-        OPAL_OUTPUT_VERBOSE((2, orte_ras_base.ras_output,
+        OPAL_OUTPUT_VERBOSE((2, orte_ras_base_framework.framework_output,
                              "%s ras:slurm: available for selection",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
         *module = (mca_base_module_t *) &orte_ras_slurm_module;
+        /* since only one RM can exist on a cluster, just set
+         * my priority to something - the other components won't
+         * be responding anyway
+         */
+        *priority = 50;
         return ORTE_SUCCESS;
     }
 
     /* Sadly, no */
 
-    OPAL_OUTPUT_VERBOSE((2, orte_ras_base.ras_output,
+    OPAL_OUTPUT_VERBOSE((2, orte_ras_base_framework.framework_output,
                          "%s ras:slurm: NOT available for selection",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     *module = NULL;
+    *priority = 0;
     return ORTE_ERROR;
 }

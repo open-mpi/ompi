@@ -6,7 +6,7 @@
  * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
+ * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * $COPYRIGHT$
  * 
@@ -152,7 +152,7 @@ static void job_errors(int fd, short args, void *cbdata)
     jobstate = caddy->job_state;
     jdata->state = jobstate;
 
-    OPAL_OUTPUT_VERBOSE((1, orte_errmgr_base.output,
+    OPAL_OUTPUT_VERBOSE((1, orte_errmgr_base_framework.framework_output,
                          "%s errmgr:default_orted: job %s reported error state %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_JOBID_PRINT(jdata->jobid),
@@ -232,7 +232,7 @@ static void proc_errors(int fd, short args, void *cbdata)
         goto cleanup;
     }
 
-    OPAL_OUTPUT_VERBOSE((2, orte_errmgr_base.output,
+    OPAL_OUTPUT_VERBOSE((2, orte_errmgr_base_framework.framework_output,
                          "%s errmgr:default_orted:proc_errors process %s error state %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(proc),
@@ -256,13 +256,13 @@ static void proc_errors(int fd, short args, void *cbdata)
             /* nope - ignore */
             goto cleanup;
         }
-        OPAL_OUTPUT_VERBOSE((2, orte_errmgr_base.output,
+        OPAL_OUTPUT_VERBOSE((2, orte_errmgr_base_framework.framework_output,
                              "%s errmgr:default:orted daemon %s exited",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_NAME_PRINT(proc)));
         /* see if this was a lifeline */
         if (ORTE_SUCCESS != orte_routed.route_lost(proc)) {
-            OPAL_OUTPUT_VERBOSE((2, orte_errmgr_base.output,
+            OPAL_OUTPUT_VERBOSE((2, orte_errmgr_base_framework.framework_output,
                                  "%s errmgr:orted daemon %s was a lifeline - exiting",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  ORTE_NAME_PRINT(proc)));
@@ -285,12 +285,12 @@ static void proc_errors(int fd, short args, void *cbdata)
         /* if all my routes and children are gone, then terminate
            ourselves nicely (i.e., this is a normal termination) */
         if (0 == orte_routed.num_routes()) {
-            OPAL_OUTPUT_VERBOSE((2, orte_errmgr_base.output,
+            OPAL_OUTPUT_VERBOSE((2, orte_errmgr_base_framework.framework_output,
                                  "%s errmgr:default:orted all routes gone - exiting",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
             ORTE_TERMINATE(0);
         } else {
-            OPAL_OUTPUT_VERBOSE((2, orte_errmgr_base.output,
+            OPAL_OUTPUT_VERBOSE((2, orte_errmgr_base_framework.framework_output,
                                  "%s errmgr:default:orted not exiting, num_routes() == %d",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  (int)orte_routed.num_routes()));
@@ -329,7 +329,7 @@ static void proc_errors(int fd, short args, void *cbdata)
         goto cleanup;
     }
 
-    OPAL_OUTPUT_VERBOSE((2, orte_errmgr_base.output,
+    OPAL_OUTPUT_VERBOSE((2, orte_errmgr_base_framework.framework_output,
                          "%s errmgr:default_orted got state %s for proc %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          orte_proc_state_to_str(state),
@@ -392,7 +392,7 @@ static void proc_errors(int fd, short args, void *cbdata)
         /* Decrement the number of local procs */
         jdata->num_local_procs--;
 
-        OPAL_OUTPUT_VERBOSE((5, orte_errmgr_base.output,
+        OPAL_OUTPUT_VERBOSE((5, orte_errmgr_base_framework.framework_output,
                              "%s errmgr:default_orted reporting proc %s abnormally terminated with non-zero status (local procs = %d)",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_NAME_PRINT(&child->name),
@@ -456,7 +456,7 @@ static void proc_errors(int fd, short args, void *cbdata)
         /* Decrement the number of local procs */
         jdata->num_local_procs--;
 
-        OPAL_OUTPUT_VERBOSE((5, orte_errmgr_base.output,
+        OPAL_OUTPUT_VERBOSE((5, orte_errmgr_base_framework.framework_output,
                              "%s errmgr:default_orted reporting proc %s aborted to HNP (local procs = %d)",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_NAME_PRINT(&child->name),
@@ -483,7 +483,7 @@ static void proc_errors(int fd, short args, void *cbdata)
              * else that needs it
              */
 
-            OPAL_OUTPUT_VERBOSE((5, orte_errmgr_base.output,
+            OPAL_OUTPUT_VERBOSE((5, orte_errmgr_base_framework.framework_output,
                                  "%s errmgr:default_orted: sending contact info to HNP",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
             
@@ -547,7 +547,7 @@ static void proc_errors(int fd, short args, void *cbdata)
             return;
         }
 
-        OPAL_OUTPUT_VERBOSE((5, orte_errmgr_base.output,
+        OPAL_OUTPUT_VERBOSE((5, orte_errmgr_base_framework.framework_output,
                              "%s errmgr:default_orted reporting all procs in %s terminated",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_JOBID_PRINT(jdata->jobid)));
@@ -778,7 +778,7 @@ static void failed_start(orte_job_t *jobdat)
             }
         }
     }
-    OPAL_OUTPUT_VERBOSE((1, orte_errmgr_base.output,
+    OPAL_OUTPUT_VERBOSE((1, orte_errmgr_base_framework.framework_output,
                          "%s errmgr:hnp: job %s reported incomplete start",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_JOBID_PRINT(jobdat->jobid)));

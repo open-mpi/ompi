@@ -37,11 +37,6 @@ static opal_output_stream_t tracer;
 void opal_trace_init(void)
 {
 #if OPAL_ENABLE_TRACE
-    int param, value;
-
-    param = mca_base_param_reg_int_name("trace", "verbose",
-                                        "Verbosity level for opal trace system",
-                                        false, false, 0, &value);
 
     OBJ_CONSTRUCT(&tracer, opal_output_stream_t);
 
@@ -59,7 +54,13 @@ void opal_trace_init(void)
         tracer.lds_want_file = true;
     }
 
-    tracer.lds_verbose_level = value;
+    tracer.lds_verbose_level = 0;
+    (void) mca_base_var_register ("opal", "trace", NULL, "verbose",
+                                  "Verbosity level for opal trace system",
+                                  MCA_BASE_VAR_TYPE_INT, NULL, 0,
+                                  MCA_BASE_VAR_VERBOSE_MPIDEV_ALL,
+                                  MCA_BASE_VAR_SCOPE_LOCAL,
+                                  &tracer.lds_verbose_level);
 
     opal_trace_handle = opal_output_open(&tracer);
 #endif
@@ -68,6 +69,8 @@ void opal_trace_init(void)
 void opal_trace_finalize(void)
 {
 #if OPAL_ENABLE_TRACE
+    mca_base_var_dereg_group (mca_base_var_find_group ("opal", "trace", NULL));
+
     opal_output_close(opal_trace_handle);
     OBJ_DESTRUCT(&tracer);
 #endif

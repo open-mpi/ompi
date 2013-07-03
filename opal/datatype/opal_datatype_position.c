@@ -34,7 +34,7 @@
 #if OPAL_ENABLE_DEBUG
 #include "opal/util/output.h"
 
-extern int opal_position_debug;
+extern bool opal_position_debug;
 #define DO_DEBUG(INST)  if( opal_position_debug ) { INST }
 #else
 #define DO_DEBUG(INST)

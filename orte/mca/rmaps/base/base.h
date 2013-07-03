@@ -9,8 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2011 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2011      Los Alamos National Security, LLC.
+ * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * $COPYRIGHT$
  * 
@@ -40,12 +40,15 @@
 
 BEGIN_C_DECLS
 
-/**
- * Open the rmaps framework
+/*
+ * MCA Framework
  */
-ORTE_DECLSPEC int orte_rmaps_base_open(void);
+ORTE_DECLSPEC extern mca_base_framework_t orte_rmaps_base_framework;
 
 #if !ORTE_DISABLE_FULL_SUPPORT
+
+/* select a component */
+ORTE_DECLSPEC    int orte_rmaps_base_select(void);
 
 /*
  * Global functions for MCA overall collective open and close
@@ -55,10 +58,6 @@ ORTE_DECLSPEC int orte_rmaps_base_open(void);
  * Struct to hold data global to the rmaps framework
  */
 typedef struct {
-    /** Verbose/debug output stream */
-    int rmaps_output;
-    /** List of available components */
-    opal_list_t available_components;
     /* list of selected modules */
     opal_list_t selected_modules;
     /* default ppr */
@@ -82,6 +81,14 @@ typedef struct {
 ORTE_DECLSPEC extern orte_rmaps_base_t orte_rmaps_base;
 
 /**
+ * Global MCA variables
+ */
+ORTE_DECLSPEC extern bool orte_rmaps_base_pernode;
+ORTE_DECLSPEC extern int orte_rmaps_base_n_pernode;
+ORTE_DECLSPEC extern int orte_rmaps_base_n_persocket;
+ORTE_DECLSPEC extern char *orte_rmaps_base_pattern;
+
+/**
  * Select an rmaps component / module
  */
 typedef struct {
@@ -91,8 +98,6 @@ typedef struct {
     mca_base_component_t *component;
 } orte_rmaps_base_selected_module_t;
 OBJ_CLASS_DECLARATION(orte_rmaps_base_selected_module_t);
-
-ORTE_DECLSPEC int orte_rmaps_base_select(void);
 
 /*
  * Map a job
@@ -111,11 +116,6 @@ ORTE_DECLSPEC int orte_rmaps_base_set_vpid_range(orte_jobid_t jobid,
 /* pretty-print functions */
 ORTE_DECLSPEC char* orte_rmaps_base_print_mapping(orte_mapping_policy_t mapping);
 ORTE_DECLSPEC char* orte_rmaps_base_print_ranking(orte_ranking_policy_t ranking);
-
-/**
- * Close down the rmaps framework
- */
-ORTE_DECLSPEC int orte_rmaps_base_close(void);
 
 #if OPAL_HAVE_HWLOC
 ORTE_DECLSPEC int orte_rmaps_base_prep_topology(hwloc_topology_t topo);

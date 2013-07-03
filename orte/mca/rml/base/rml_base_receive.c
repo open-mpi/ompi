@@ -102,7 +102,7 @@ orte_rml_base_recv(int status, orte_process_name_t* sender,
     int rc;
     
 
-    OPAL_OUTPUT_VERBOSE((5, orte_rml_base_output,
+    OPAL_OUTPUT_VERBOSE((5, orte_rml_base_framework.framework_output,
                          "%s rml:base:recv: processing message from %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(sender)));
@@ -132,7 +132,7 @@ orte_rml_base_recv(int status, orte_process_name_t* sender,
      * a message to fail because the update contact info message is
      * processed too late
      */
-    OPAL_OUTPUT_VERBOSE((5, orte_rml_base_output,
+    OPAL_OUTPUT_VERBOSE((5, orte_rml_base_framework.framework_output,
                          "%s rml:base:recv: sending ack to %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(sender)));

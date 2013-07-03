@@ -24,11 +24,9 @@
 
 #include "mpi.h"
 #include "ompi/constants.h"
-#include "opal/class/opal_list.h"
 #include "opal/util/output.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
-#include "opal/mca/base/mca_base_component_repository.h"
 #include "ompi/mca/io/io.h"
 #include "ompi/mca/io/base/base.h"
 #include "ompi/mca/io/base/io_base_request.h"
@@ -39,11 +37,9 @@
  * Private functions
  */
 static int init_query(const mca_base_component_t *ls, 
-                      mca_base_component_priority_list_item_t *entry,
                       bool enable_progress_threads,
                       bool enable_mpi_threads);
 static int init_query_2_0_0(const mca_base_component_t *ls, 
-                            mca_base_component_priority_list_item_t *entry,
                             bool enable_progress_threads,
                             bool enable_mpi_threads);
 
@@ -63,61 +59,29 @@ static int init_query_2_0_0(const mca_base_component_t *ls,
 int mca_io_base_find_available(bool enable_progress_threads,
                                bool enable_mpi_threads)
 {
-    mca_base_component_priority_list_item_t *entry;
-    opal_list_item_t *p;
-    const mca_base_component_t *component;
-
-    /* Initialize the list */
-
-    OBJ_CONSTRUCT(&mca_io_base_components_available, opal_list_t);
-    mca_io_base_components_available_valid = true;
+    mca_base_component_list_item_t *cli, *next;
 
     /* The list of components that we should check has already been
        established in mca_io_base_open. */
   
-    for (p = opal_list_remove_first(&mca_io_base_components_opened);
-         p != NULL;
-         p = opal_list_remove_first(&mca_io_base_components_opened)) {
-        component = ((mca_base_component_list_item_t *) p)->cli_component;
-        
+    OPAL_LIST_FOREACH_SAFE(cli, next, &ompi_io_base_framework.framework_components, mca_base_component_list_item_t) {
+        const mca_base_component_t *component = cli->cli_component;
+
         /* Call a subroutine to do the work, because the component may
            represent different versions of the io MCA. */
     
-        entry = OBJ_NEW(mca_base_component_priority_list_item_t);
-        entry->super.cli_component = component;
-        entry->cpli_priority = 0;
-        if (OMPI_SUCCESS == init_query(component, entry, 
+        if (OMPI_SUCCESS != init_query(component,
                                        enable_progress_threads,
                                        enable_mpi_threads)) {
-      
-            /* Save the results in the list.  The priority isn't
-               relevant, because selection is decided at
-               communicator-constructor time.  But we save the thread
-               arguments (set in the init_query() function) so that
-               the initial selection algorithm can negotiate the
-               overall thread level for this process. */
-      
-            opal_list_append(&mca_io_base_components_available, 
-                             (opal_list_item_t *) entry);
-        } else {
       
             /* If the component doesn't want to run, then close it.
                It's already had its close() method invoked; now close
                it out of the DSO repository (if it's there). */
-      
-            mca_base_component_repository_release(component);
-            OBJ_RELEASE(entry);
+            opal_list_remove_item(&ompi_io_base_framework.framework_components, &cli->super);
+            mca_base_component_close(component, ompi_io_base_framework.framework_output);
+            OBJ_RELEASE(cli);
         }
-
-        /* Free the entry from the "opened" list */
-
-        OBJ_RELEASE(p);
     }
-
-    /* The opened list is now no longer useful and we can free it */
-    
-    OBJ_DESTRUCT(&mca_io_base_components_opened);
-    mca_io_base_components_opened_valid = false;
 
     /* All done */
 
@@ -130,13 +94,12 @@ int mca_io_base_find_available(bool enable_progress_threads,
  * some information.  If it doesn't, close it.
  */
 static int init_query(const mca_base_component_t *m, 
-                      mca_base_component_priority_list_item_t *entry,
                       bool enable_progress_threads,
                       bool enable_mpi_threads)
 {
     int ret;
 
-    opal_output_verbose(10, mca_io_base_output,
+    opal_output_verbose(10, ompi_io_base_framework.framework_output,
                         "io:find_available: querying io component %s", 
                         m->mca_component_name);
 
@@ -146,12 +109,12 @@ static int init_query(const mca_base_component_t *m,
     if (2 == m->mca_type_major_version &&
         0 == m->mca_type_minor_version &&
         0 == m->mca_type_release_version) {
-        ret = init_query_2_0_0(m, entry, enable_progress_threads, 
+        ret = init_query_2_0_0(m, enable_progress_threads, 
                                enable_mpi_threads);
     } else {
         /* Unrecognized io API version */
 
-        opal_output_verbose(10, mca_io_base_output,
+        opal_output_verbose(10, ompi_io_base_framework.framework_output,
                             "io:find_available: unrecognized io API version (%d.%d.%d)", 
                             m->mca_type_major_version,
                             m->mca_type_minor_version,
@@ -163,14 +126,11 @@ static int init_query(const mca_base_component_t *m,
     /* Query done -- look at the return value to see what happened */
 
     if (OMPI_SUCCESS != ret) {
-        opal_output_verbose(10, mca_io_base_output, 
+        opal_output_verbose(10, ompi_io_base_framework.framework_output, 
                             "io:find_available: io component %s is not available", 
                             m->mca_component_name);
-        if (NULL != m->mca_close_component) {
-            m->mca_close_component();
-        }
     } else {
-        opal_output_verbose(10, mca_io_base_output, 
+        opal_output_verbose(10, ompi_io_base_framework.framework_output, 
                             "io:find_available: io component %s is available", 
                             m->mca_component_name);
     }
@@ -185,7 +145,6 @@ static int init_query(const mca_base_component_t *m,
  * Query a specific component, io v2.0.0
  */
 static int init_query_2_0_0(const mca_base_component_t *component, 
-                            mca_base_component_priority_list_item_t *entry,
                             bool enable_progress_threads,
                             bool enable_mpi_threads)
 {

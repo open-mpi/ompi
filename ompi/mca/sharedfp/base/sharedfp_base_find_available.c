@@ -32,77 +32,48 @@
 #include "ompi/mca/sharedfp/sharedfp.h"
 #include "ompi/mca/sharedfp/base/base.h"
 
-opal_list_t mca_sharedfp_base_modules_available;
-bool mca_sharedfp_base_modules_available_valid = false;
-
 static int init_query(const mca_base_component_t *m,
-                      mca_base_component_priority_list_item_t *entry,
+                      mca_base_component_list_item_t *entry,
                       bool enable_progress_threads,
                       bool enable_mpi_threads);
 static int init_query_2_0_0(const mca_base_component_t *component,
-                            mca_base_component_priority_list_item_t *entry,
+                            mca_base_component_list_item_t *entry,
                             bool enable_progress_threads,
                             bool enable_mpi_threads);
     
 int mca_sharedfp_base_find_available(bool enable_progress_threads,
-                               bool enable_mpi_threads)
+                                     bool enable_mpi_threads)
 {
-    bool found = false;
-    mca_base_component_priority_list_item_t *entry;
-    opal_list_item_t *p;
-
-    /* Initialize the list */
-
-    OBJ_CONSTRUCT(&mca_sharedfp_base_components_available, opal_list_t);
-    mca_sharedfp_base_components_available_valid = true;
+    opal_list_item_t *item, *next;
+    mca_base_component_list_item_t *cli;
 
     /* The list of components which we should check is already present 
-       in mca_sharedfp_base_components_opened, which was established in 
+       in ompi_sharedfp_base_framework.framework_components, which was established in 
        mca_sharedfp_base_open */
 
-     for (found = false, 
-            p = opal_list_remove_first (&mca_sharedfp_base_components_opened);
-          NULL != p;
-          p = opal_list_remove_first (&mca_sharedfp_base_components_opened)) {
-         entry = OBJ_NEW(mca_base_component_priority_list_item_t);
-         entry->super.cli_component =
-           ((mca_base_component_list_item_t *)p)->cli_component;
+    item = opal_list_get_first(&ompi_sharedfp_base_framework.framework_components);
+    while (item != opal_list_get_end(&ompi_sharedfp_base_framework.framework_components)) {
+        next = opal_list_get_next(item);
+         cli = (mca_base_component_list_item_t*)item;
 
          /* Now for this entry, we have to determine the thread level. Call 
             a subroutine to do the job for us */
 
-         if (OMPI_SUCCESS == init_query(entry->super.cli_component, entry,
+         if (OMPI_SUCCESS != init_query(cli->cli_component, cli,
                                         enable_progress_threads,
                                         enable_mpi_threads)) {
-             /* Save the results in the list. The priority is not relvant at 
-                this point in time. But we save the thread arguments so that
-                the initial selection algorithm can negotiate overall thread
-                level for this process */
-             entry->cpli_priority = 0;
-             opal_list_append (&mca_sharedfp_base_components_available,
-                               (opal_list_item_t *) entry);
-             found = true;
-         } else {
              /* The component does not want to run, so close it. Its close()
                 has already been invoked. Close it out of the DSO repository
                 (if it is there in the repository) */
-             mca_base_component_repository_release(entry->super.cli_component);
-             OBJ_RELEASE(entry);
+             mca_base_component_repository_release(cli->cli_component);
+             OBJ_RELEASE(item);
          }
-         /* Free entry from the "opened" list */
-         OBJ_RELEASE(p);
+         item = next;
      }
 
-     /* The opened list is no longer necessary, so we can free it */
-     OBJ_DESTRUCT (&mca_sharedfp_base_components_opened);
-     mca_sharedfp_base_components_opened_valid = false;
-
-     /* There should atleast be one sharedfp component which was available */
-     if (false == found) {
-         /* Need to free all items in the list */
-         OBJ_DESTRUCT(&mca_sharedfp_base_components_available);
-         mca_sharedfp_base_components_available_valid = false;
-         opal_output_verbose (10, mca_sharedfp_base_output,
+     /* There should at least be one sharedfp component which was available */
+    if (0 == opal_list_get_size(&ompi_sharedfp_base_framework.framework_components)) {
+         opal_output_verbose (10, ompi_sharedfp_base_framework.framework_output,
                               "sharedfp:find_available: no sharedfp components available!");
          return OMPI_ERROR;
      }
@@ -113,13 +84,13 @@ int mca_sharedfp_base_find_available(bool enable_progress_threads,
               
        
 static int init_query(const mca_base_component_t *m,
-                      mca_base_component_priority_list_item_t *entry,
+                      mca_base_component_list_item_t *entry,
                       bool enable_progress_threads,
                       bool enable_mpi_threads) 
 {
     int ret;
     
-    opal_output_verbose(10, mca_sharedfp_base_output,
+    opal_output_verbose(10, ompi_sharedfp_base_framework.framework_output,
                         "sharedfp:find_available: querying sharedfp component %s",
                         m->mca_component_name);
 
@@ -131,7 +102,7 @@ static int init_query(const mca_base_component_t *m,
                                enable_mpi_threads);
     } else {
         /* unrecognised API version */
-        opal_output_verbose(10, mca_sharedfp_base_output,
+        opal_output_verbose(10, ompi_sharedfp_base_framework.framework_output,
                             "sharedfp:find_available:unrecognised sharedfp API version (%d.%d.%d)",
                             m->mca_type_major_version,
                             m->mca_type_minor_version,
@@ -141,14 +112,14 @@ static int init_query(const mca_base_component_t *m,
 
     /* Query done -- look at return value to see what happened */
     if (OMPI_SUCCESS != ret) {
-        opal_output_verbose(10, mca_sharedfp_base_output,
+        opal_output_verbose(10, ompi_sharedfp_base_framework.framework_output,
                             "sharedfp:find_available sharedfp component %s is not available",
                             m->mca_component_name);
         if (NULL != m->mca_close_component) {
             m->mca_close_component();
         } 
     } else {
-        opal_output_verbose(10, mca_sharedfp_base_output,
+        opal_output_verbose(10, ompi_sharedfp_base_framework.framework_output,
                             "sharedfp:find_avalable: sharedfp component %s is available",
                             m->mca_component_name);
 
@@ -159,7 +130,7 @@ static int init_query(const mca_base_component_t *m,
 
 
 static int init_query_2_0_0(const mca_base_component_t *component,
-                            mca_base_component_priority_list_item_t *entry,
+                            mca_base_component_list_item_t *entry,
                             bool enable_progress_threads,
                             bool enable_mpi_threads) 
 {

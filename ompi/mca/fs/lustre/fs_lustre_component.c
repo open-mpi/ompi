@@ -59,8 +59,10 @@ mca_fs_base_component_2_0_0_t mca_fs_lustre_component = {
         OMPI_MAJOR_VERSION,
         OMPI_MINOR_VERSION,
         OMPI_RELEASE_VERSION,
-        lustre_register,
-        NULL
+        NULL,
+        NULL,
+        NULL,
+        lustre_register
     },
     {
         /* This component is checkpointable */
@@ -74,34 +76,24 @@ mca_fs_base_component_2_0_0_t mca_fs_lustre_component = {
 static int
 lustre_register(void)
 {
-    int param;
-
-    param = mca_base_param_find ("fs", NULL, "lustre_stripe_size");
-    if (param >= 0)
-    {
-        mca_base_param_lookup_int (param, &mca_fs_lustre_stripe_size);
-    }
-    param = mca_base_param_find ("fs", NULL, "lustre_stripe_width");
-    if (param >= 0)
-    {
-        mca_base_param_lookup_int (param, &mca_fs_lustre_stripe_width);
-    }
-
-    mca_base_param_reg_int (&mca_fs_lustre_component.fsm_version,
-                            "priority",
-                            "Priority of the lustre fs component",
-                            false, false, mca_fs_lustre_priority,
-                            &mca_fs_lustre_priority);
-    mca_base_param_reg_int (&mca_fs_lustre_component.fsm_version,
-                            "stripe_size",
-                            "stripe size of a file over lustre",
-                            false, false, mca_fs_lustre_stripe_size,
-                            &mca_fs_lustre_stripe_size);
-    mca_base_param_reg_int (&mca_fs_lustre_component.fsm_version,
-                            "stripe_width",
-                            "stripe width of a file over lustre",
-                            false, false, mca_fs_lustre_stripe_width,
-                            &mca_fs_lustre_stripe_width);
+    mca_fs_lustre_priority = 20;
+    (void) mca_base_component_var_register(&mca_fs_lustre_component.fsm_version,
+                                           "priority", "Priority of the lustre fs component",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY, &mca_fs_lustre_priority);
+    mca_fs_lustre_stripe_size = 1048576;
+    (void) mca_base_component_var_register(&mca_fs_lustre_component.fsm_version,
+                                           "stripe_size", "stripe size of a file over lustre",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY, &mca_fs_lustre_stripe_size);
+    mca_fs_lustre_stripe_width = 0;
+    (void) mca_base_component_var_register(&mca_fs_lustre_component.fsm_version,
+                                           "stripe_width", "stripe width of a file over lustre",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY, &mca_fs_lustre_stripe_width);
 
     return OMPI_SUCCESS;
 }

@@ -321,6 +321,13 @@ typedef int (*opal_dss_copy_payload_fn_t)(opal_buffer_t *dest,
                                           opal_buffer_t *src);
 
 /**
+ * DSS register function
+ *
+ * This function registers variables associated with the DSS system.
+ */
+OPAL_DECLSPEC int opal_dss_register_vars (void);
+
+/**
  * DSS initialization function.
  *
  * In dynamic libraries, declared objects and functions don't get

@@ -61,9 +61,11 @@ int mca_io_ompio_get_fcoll_dynamic_num_io_procs (int *num_procs)
 {
     int param;
 
-    param = mca_base_param_find("fcoll", "dynamic", "num_io_procs");
+    param = mca_base_var_find("ompi", "fcoll", "dynamic", "num_io_procs");
     if (param >= 0){
-	mca_base_param_lookup_int(param, num_procs);
+        const int *value = NULL;
+        mca_base_var_get_value(param, &value, NULL, NULL);
+        *num_procs = value[0];
 /*	printf("num procs : %d\n", num_procs);*/
 	return OMPI_SUCCESS;
     }
@@ -76,9 +78,11 @@ int mca_io_ompio_get_fcoll_dynamic_constant_cbs (int *constant_cbs)
 {
     int param;
     
-    param = mca_base_param_find("fcoll", "dynamic", "constant_cbs");
+    param = mca_base_var_find("ompi", "fcoll", "dynamic", "constant_cbs");
     if (param >= 0){
-	mca_base_param_lookup_int(param, constant_cbs);
+        const int *value = NULL;
+        mca_base_var_get_value(param, &value, NULL, NULL);
+        *constant_cbs = value[0];
 /*	printf ("constant_cbs: %d\n", constant_cbs);*/
 	return OMPI_SUCCESS;
     }
@@ -94,9 +98,11 @@ int mca_io_ompio_get_fcoll_dynamic_cycle_buffer_size (int *cycle_buffer_size)
    
     int param;
 
-    param = mca_base_param_find("fcoll", "dynamic", "cycle_buffer_size");
+    param = mca_base_var_find("ompi", "fcoll", "dynamic", "cycle_buffer_size");
     if (param >= 0){
-	mca_base_param_lookup_int(param, cycle_buffer_size);
+        const int *value = NULL;
+        mca_base_var_get_value(param, &value, NULL, NULL);
+        *cycle_buffer_size = value[0];
 /*	printf ("cycle_buffer_size : %d\n", *cycle_buffer_size);*/
 	return OMPI_SUCCESS;
     }

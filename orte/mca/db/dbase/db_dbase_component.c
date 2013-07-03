@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved. 
- * Copyright (c) 2012      Los Alamos National Security, Inc. All rights reserved.
+ * Copyright (c) 2012-2013 Los Alamos National Security, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -18,7 +18,6 @@
 #include "orte/constants.h"
 
 #include "opal/mca/base/base.h"
-#include "opal/mca/base/mca_base_param.h"
 
 #include "orte/util/proc_info.h"
 
@@ -28,6 +27,8 @@
 
 extern orte_db_base_module_t orte_db_dbase_module;
 char *orte_db_dbase_directory;
+
+static int orte_db_dbase_component_register(void);
 
 /*
  * Instantiate the public struct with all of our public information
@@ -46,7 +47,8 @@ orte_db_base_component_t mca_db_dbase_component = {
         /* Component open and close functions */
         orte_db_dbase_component_open,
         orte_db_dbase_component_close,
-        orte_db_dbase_component_query
+        orte_db_dbase_component_query,
+        orte_db_dbase_component_register
     },
     {
         /* The component is checkpoint ready */
@@ -54,6 +56,20 @@ orte_db_base_component_t mca_db_dbase_component = {
     }
 };
 
+static int orte_db_dbase_component_register(void)
+{
+    mca_base_component_t *c = &mca_db_dbase_component.base_version;
+
+    /* retrieve the name of the file to be used */
+    orte_db_dbase_directory = NULL;
+    (void) mca_base_component_var_register(c, "dir",
+                                           "Name of directory to be used for storing and recovering db information",
+                                           MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
+                                           &orte_db_dbase_directory);
+    
+    return ORTE_SUCCESS;
+}
 
 int
 orte_db_dbase_component_open(void)
@@ -69,13 +85,7 @@ int orte_db_dbase_component_query(mca_base_module_t **module, int *priority)
      * IFF we are requested
      */
     bool is_required = false;
-    mca_base_component_t *c = &mca_db_dbase_component.base_version;
 
-    /* retrieve the name of the file to be used */
-    mca_base_param_reg_string(c, "dir",
-                              "Name of directory to be used for storing and recovering db information",
-                              false, false, NULL, &orte_db_dbase_directory);
-    
     mca_base_is_component_required(&orte_db_base_components_available,
                                    &mca_db_dbase_component.base_version,
                                    true,

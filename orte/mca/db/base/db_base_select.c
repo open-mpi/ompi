@@ -28,8 +28,8 @@ orte_db_base_select(void)
     /*
      * Select the best component
      */
-    if( OPAL_SUCCESS != mca_base_select("db", orte_db_base.output,
-                                        &orte_db_base.available_components,
+    if( OPAL_SUCCESS != mca_base_select("db", orte_db_base_framework.framework_output,
+                                        &orte_db_base_framework.framework_components,
                                         (mca_base_module_t **) &best_module,
                                         (mca_base_component_t **) &best_component) ) {
         /* It is okay to not select a component - default

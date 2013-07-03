@@ -74,7 +74,7 @@ static int mindist_map(orte_job_t *jdata)
      * when mindist mapping is desired
      */
     if (ORTE_JOB_CONTROL_RESTART & jdata->controls) {
-        opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+        opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                             "mca:rmaps:mindist: job %s is being restarted - mindist cannot map",
                             ORTE_JOBID_PRINT(jdata->jobid));
         return ORTE_ERR_TAKE_NEXT_OPTION;
@@ -82,14 +82,14 @@ static int mindist_map(orte_job_t *jdata)
     if (NULL != jdata->map->req_mapper &&
         0 != strcasecmp(jdata->map->req_mapper, c->mca_component_name)) {
         /* a mapper has been specified, and it isn't me */
-        opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+        opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                             "mca:rmaps:mindist: job %s not using mindist mapper",
                             ORTE_JOBID_PRINT(jdata->jobid));
         return ORTE_ERR_TAKE_NEXT_OPTION;
     }
     if (ORTE_MAPPING_BYDIST != ORTE_GET_MAPPING_POLICY(jdata->map->mapping)) {
         /* not me */
-        opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+        opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                             "mca:rmaps:mindist: job %s not using mindist mapper",
                             ORTE_JOBID_PRINT(jdata->jobid));
         return ORTE_ERR_TAKE_NEXT_OPTION;
@@ -118,7 +118,7 @@ static int mindist_map(orte_job_t *jdata)
         bynode = false;
     }
 
-    opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+    opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                         "mca:rmaps:mindist: mapping job %s",
                         ORTE_JOBID_PRINT(jdata->jobid));
  
@@ -272,7 +272,7 @@ static int mindist_map(orte_job_t *jdata)
                         break;
                     }
                 }
-                opal_output_verbose(2, orte_rmaps_base.rmaps_output,
+                opal_output_verbose(2, orte_rmaps_base_framework.framework_output,
                         "mca:rmaps:mindist: assigned %d procs to node %s",
                         j, node->name);
             } else {
@@ -309,7 +309,7 @@ static int mindist_map(orte_job_t *jdata)
                 rc = ORTE_ERR_SILENT;
                 goto error;
             }
-            opal_output_verbose(2, orte_rmaps_base.rmaps_output,
+            opal_output_verbose(2, orte_rmaps_base_framework.framework_output,
                     "mca:rmaps:mindist job %s is oversubscribed - performing second pass",
                     ORTE_JOBID_PRINT(jdata->jobid));
             num_procs_to_assign = extra_procs/num_nodes;
@@ -325,7 +325,7 @@ static int mindist_map(orte_job_t *jdata)
                 if (nprocs_mapped == app->num_procs)
                     break;
                 node->oversubscribed = true;
-                opal_output_verbose(2, orte_rmaps_base.rmaps_output,
+                opal_output_verbose(2, orte_rmaps_base_framework.framework_output,
                         "mca:rmaps:mindist: second pass assigning %d extra procs to node %s",
                         (int)num_procs_to_assign, node->name);
                 OBJ_CONSTRUCT(&numa_list, opal_list_t);

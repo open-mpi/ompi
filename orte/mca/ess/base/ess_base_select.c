@@ -31,8 +31,6 @@
 
 #include "orte/mca/ess/base/base.h"
 
-extern opal_list_t orte_ess_base_components_available;
-
 int 
 orte_ess_base_select(void)
 {
@@ -42,8 +40,8 @@ orte_ess_base_select(void)
     /*
      * Select the best component
      */
-    if( OPAL_SUCCESS != mca_base_select("ess", orte_ess_base_output,
-                                        &orte_ess_base_components_available,
+    if( OPAL_SUCCESS != mca_base_select("ess", orte_ess_base_framework.framework_output,
+                                        &orte_ess_base_framework.framework_components,
                                         (mca_base_module_t **) &best_module,
                                         (mca_base_component_t **) &best_component) ) {
         /* error message emitted by fn above */

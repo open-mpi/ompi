@@ -26,8 +26,6 @@
 #include "opal/util/output.h"
 #include "opal/mca/base/base.h"
 
-#include "opal/mca/base/mca_base_param.h"
-
 #include "orte/mca/filem/filem.h"
 #include "orte/mca/filem/base/base.h"
 
@@ -78,64 +76,29 @@ int orte_filem_base_select(void)
     int exit_status = OPAL_SUCCESS;
     orte_filem_base_component_t *best_component = NULL;
     orte_filem_base_module_t *best_module = NULL;
-    char *include_list = NULL;
-
-    /*
-     * Register the framework MCA param and look up include list
-     */
-    mca_base_param_reg_string_name("filem", NULL,
-                                   "Which FILEM component to use (empty = auto-select)",
-                                   false, false,
-                                   NULL, &include_list);
-
-    /* If we do not have any components to select this is ok. The user likely
-     * decided not to build with filem components. Just use the none
-     * component and move on.
-     */
-    if( 0 >= opal_list_get_size(&orte_filem_base_components_available) || 
-        (NULL != include_list && 0 == strncmp(include_list, "none", strlen("none")) ) ) { 
-        opal_output_verbose(1, orte_filem_base_output,
-                            "filem:select: Warning: Using none component. Some functionality (e.g., --preload-binary) will not work in this mode.");
-        best_component = &none_component;
-        best_module    = &none_module;
-
-        /* JJH: Todo: Check if none is in the list */
-        /* Close all components since none will be used */
-        mca_base_components_close(0, /* Pass 0 to keep this from closing the output handle */
-                                  &orte_filem_base_components_available,
-                                  NULL);
-        goto skip_select;
-    }
 
     /*
      * Select the best component
      */
-    if( OPAL_SUCCESS != mca_base_select("filem", orte_filem_base_output,
-                                        &orte_filem_base_components_available,
+    if( OPAL_SUCCESS != mca_base_select("filem", orte_filem_base_framework.framework_output,
+                                        &orte_filem_base_framework.framework_components,
                                         (mca_base_module_t **) &best_module,
                                         (mca_base_component_t **) &best_component) ) {
-        /* This will only happen if no component was selected */
-        exit_status = ORTE_ERROR;
-        goto cleanup;
+        /* It is okay to not select anything - we'll just retain
+         * the default none module
+         */
+        best_component = &none_component;
+        best_module = &none_module;
     }
 
- skip_select:
     /* Save the winner */
-    orte_filem_base_selected_component = *best_component;
     orte_filem = *best_module;
 
     /* Initialize the winner */
-    if (NULL != best_module) {
-        if (OPAL_SUCCESS != orte_filem.filem_init()) {
-            exit_status = OPAL_ERROR;
-            goto cleanup;
+    if (NULL != orte_filem.filem_init) {
+        if (ORTE_SUCCESS != orte_filem.filem_init()) {
+            exit_status = ORTE_ERROR;
         }
-    }
-
- cleanup:
-    if( NULL != include_list ) {
-        free(include_list);
-        include_list = NULL;
     }
 
     return exit_status;

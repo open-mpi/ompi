@@ -51,7 +51,6 @@
 #include "opal/util/output.h"
 #include "opal/constants.h"
 #include "opal/util/argv.h"
-#include "opal/mca/base/mca_base_param.h"
 #include "opal/mca/event/base/base.h"
 
 #include "libevent/event.h"

@@ -22,6 +22,5 @@ headers += \
         base/empty.h
 
 libmca_memory_la_SOURCES += \
-        base/memory_base_close.c \
         base/memory_base_open.c \
         base/memory_base_empty.c

@@ -42,8 +42,8 @@ int orte_iof_base_select(void)
     /*
      * Select the best component
      */
-    if( OPAL_SUCCESS != mca_base_select("iof", orte_iof_base.iof_output,
-                                        &orte_iof_base.iof_components_opened,
+    if( OPAL_SUCCESS != mca_base_select("iof", orte_iof_base_framework.framework_output,
+                                        &orte_iof_base_framework.framework_components,
                                         (mca_base_module_t **) &best_module,
                                         (mca_base_component_t **) &best_component) ) {
         /* it is okay to not find a module if we are a CM process */

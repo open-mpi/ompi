@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012      Los Alamos National Security, LLC.
+ * Copyright (c) 2012-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
 * $COPYRIGHT$
  * 
@@ -61,8 +61,7 @@ OPAL_DECLSPEC void opal_info_finalize(void);
 
 OPAL_DECLSPEC void opal_info_register_types(opal_pointer_array_t *mca_types);
 
-OPAL_DECLSPEC int opal_info_register_components(opal_pointer_array_t *mca_types,
-                                                opal_pointer_array_t *component_map);
+OPAL_DECLSPEC int opal_info_register_framework_params(opal_pointer_array_t *component_map);
 
 OPAL_DECLSPEC void opal_info_close_components(void);
 OPAL_DECLSPEC void opal_info_err_params(opal_pointer_array_t *component_map);
@@ -75,8 +74,7 @@ OPAL_DECLSPEC void opal_info_show_path(const char *type, const char *value);
 
 OPAL_DECLSPEC void opal_info_do_path(bool want_all, opal_cmd_line_t *cmd_line);
 
-OPAL_DECLSPEC void opal_info_show_mca_params(opal_list_t *info,
-                                             const char *type,
+OPAL_DECLSPEC void opal_info_show_mca_params(const char *type,
                                              const char *component, 
                                              bool want_internal);
 
@@ -105,5 +103,9 @@ OPAL_DECLSPEC void opal_info_out(const char *pretty_message, const char *plain_m
 OPAL_DECLSPEC void opal_info_out_int(const char *pretty_message, 
                                      const char *plain_message, 
                                      int value);
+
+OPAL_DECLSPEC int opal_info_register_project_frameworks (const char *project_name,
+                                                         mca_base_framework_t **frameworks,
+                                                         opal_pointer_array_t *component_map);
 
 #endif

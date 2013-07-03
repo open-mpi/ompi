@@ -62,7 +62,6 @@
 #include "orte/util/show_help.h"
 #include "opal/util/opal_environ.h"
 #include "opal/util/basename.h"
-#include "opal/mca/base/mca_base_param.h"
 
 #include "orte/util/name_fns.h"
 #include "orte/runtime/orte_globals.h"
@@ -242,7 +241,7 @@ static void launch_daemons(int fd, short args, void *cbdata)
         return;
     }
     
-    OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+    OPAL_OUTPUT_VERBOSE((1, orte_plm_base_framework.framework_output,
                          "%s plm:tm: launching vm",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
@@ -287,9 +286,9 @@ static void launch_daemons(int fd, short args, void *cbdata)
                                           nodelist);
     free(nodelist);
     
-    if (0 < opal_output_get_verbosity(orte_plm_globals.output)) {
+    if (0 < opal_output_get_verbosity(orte_plm_base_framework.framework_output)) {
         param = opal_argv_join(argv, ' ');
-        OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+        OPAL_OUTPUT_VERBOSE((1, orte_plm_base_framework.framework_output,
                              "%s plm:tm: final top-level argv:\n\t%s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              (NULL == param) ? "NULL" : param));
@@ -312,7 +311,7 @@ static void launch_daemons(int fd, short args, void *cbdata)
     env = opal_argv_copy(orte_launch_environ);
 
     /* enable local launch by the orteds */
-    var = mca_base_param_env_var ("plm");
+    (void) mca_base_var_env_name ("plm", &var);
     opal_setenv(var, "rsh", true, &env);
     free(var);
     
@@ -338,7 +337,7 @@ static void launch_daemons(int fd, short args, void *cbdata)
             if (0 == strncmp("PATH=", env[i], 5)) {
                 asprintf(&newenv, "%s/%s:%s", 
                             app->prefix_dir, bin_base, env[i] + 5);
-                OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+                OPAL_OUTPUT_VERBOSE((1, orte_plm_base_framework.framework_output,
                                      "%s plm:tm: resetting PATH: %s",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                      newenv));
@@ -350,7 +349,7 @@ static void launch_daemons(int fd, short args, void *cbdata)
             else if (0 == strncmp("LD_LIBRARY_PATH=", env[i], 16)) {
                 asprintf(&newenv, "%s/%s:%s", 
                             app->prefix_dir, lib_base, env[i] + 16);
-                OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+                OPAL_OUTPUT_VERBOSE((1, orte_plm_base_framework.framework_output,
                                      "%s plm:tm: resetting LD_LIBRARY_PATH: %s",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                      newenv));
@@ -372,7 +371,7 @@ static void launch_daemons(int fd, short args, void *cbdata)
             continue;
         }
  
-        OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+        OPAL_OUTPUT_VERBOSE((1, orte_plm_base_framework.framework_output,
                              "%s plm:tm: launching on node %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              node->name));
@@ -388,9 +387,9 @@ static void launch_daemons(int fd, short args, void *cbdata)
         free(vpid_string);
         
         /* exec the daemon */
-        if (0 < opal_output_get_verbosity(orte_plm_globals.output)) {
+        if (0 < opal_output_get_verbosity(orte_plm_base_framework.framework_output)) {
             param = opal_argv_join(argv, ' ');
-            OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+            OPAL_OUTPUT_VERBOSE((1, orte_plm_base_framework.framework_output,
                                  "%s plm:tm: executing:\n\t%s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  (NULL == param) ? "NULL" : param));
@@ -415,7 +414,7 @@ static void launch_daemons(int fd, short args, void *cbdata)
     /* flag that launch was successful, so far as we currently know */
     failed_launch = false;
 
-    OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+    OPAL_OUTPUT_VERBOSE((1, orte_plm_base_framework.framework_output,
                          "%s plm:tm:launch: finished spawning orteds",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
@@ -456,7 +455,7 @@ static void poll_spawns(int fd, short args, void *cbdata)
      * millisec/daemon timeout provided by the user to compute time
      */
     if (0 < orte_startup_timeout) {
-        OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+        OPAL_OUTPUT_VERBOSE((1, orte_plm_base_framework.framework_output,
                              "%s plm:tm: setting startup timer for %d milliseconds",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              orte_startup_timeout));

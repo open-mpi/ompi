@@ -46,7 +46,7 @@
 #include "ompi/mca/bml/base/base.h"
 #include "ompi/mca/pml/pml.h"
 
-static int component_open(void);
+static int component_register(void);
 static void component_fragment_cb(struct mca_btl_base_module_t *btl,
                                   mca_btl_base_tag_t tag,
                                   mca_btl_base_descriptor_t *descriptor,
@@ -61,8 +61,10 @@ ompi_osc_rdma_component_t mca_osc_rdma_component = {
             OMPI_MAJOR_VERSION,  /* MCA component major version */
             OMPI_MINOR_VERSION,  /* MCA component minor version */
             OMPI_RELEASE_VERSION,  /* MCA component release version */
-            component_open,
-            NULL
+            NULL,
+            NULL,
+            NULL,
+            component_register
         },
         { /* mca_base_component_data */
             /* The component is not checkpoint ready */
@@ -106,6 +108,7 @@ check_config_value_bool(char *key, ompi_info_t *info)
 {
     char *value_string;
     int value_len, ret, flag, param;
+    const bool *flag_value;
     bool result;
 
     ret = ompi_info_get_valuelen(info, key, &value_len, &flag);
@@ -128,56 +131,80 @@ check_config_value_bool(char *key, ompi_info_t *info)
     return result;
 
  info_not_found:
-    param = mca_base_param_find("osc", "rdma", key);
+    param = mca_base_var_find("ompi", "osc", "rdma", key);
     if (0 > param) return false;
 
-    ret = mca_base_param_lookup_int(param, &flag);
+    ret = mca_base_var_get_value(param, &flag_value, NULL, NULL);
     if (OMPI_SUCCESS != ret) return false;
 
-    return OPAL_INT_TO_BOOL(flag);
+    return flag_value[0];
 }
 
+static bool ompi_osc_rdma_eager_send;
+static bool ompi_osc_rdma_use_buffers;
+static bool ompi_osc_rdma_use_rdma;
+static bool ompi_osc_rdma_rdma_completion_wait;
+static bool ompi_osc_rdma_no_locks;
 
 static int
-component_open(void)
+component_register(void)
 {
-    mca_base_param_reg_int(&mca_osc_rdma_component.super.osc_version,
-                           "eager_send",
-                           "Attempt to start data movement during communication "
-                           "call, instead of at synchrnoization time.  "
-                           "Info key of same name overrides this value.",
-                           false, false, 1, NULL);
+    ompi_osc_rdma_eager_send = true;
+    (void) mca_base_component_var_register(&mca_osc_rdma_component.super.osc_version,
+                                           "eager_send",
+                                           "Attempt to start data movement during communication "
+                                           "call, instead of at synchrnoization time.  "
+                                           "Info key of same name overrides this value.",
+                                           MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &ompi_osc_rdma_eager_send);
 
-     mca_base_param_reg_int(&mca_osc_rdma_component.super.osc_version,
-                            "use_buffers",
-                            "Coalesce messages during an epoch to reduce "
-                            "network utilization.  Info key of same name "
-                            "overrides this value.",
-                            false, false, 1, NULL);
+    ompi_osc_rdma_use_buffers = true;
+    (void) mca_base_component_var_register(&mca_osc_rdma_component.super.osc_version,
+                                           "use_buffers",
+                                           "Coalesce messages during an epoch to reduce "
+                                           "network utilization.  Info key of same name "
+                                           "overrides this value.",
+                                           MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &ompi_osc_rdma_use_buffers);
 
-    mca_base_param_reg_int(&mca_osc_rdma_component.super.osc_version,
-                           "use_rdma",
-                           "Use real RDMA operations to transfer data.  "
-                           "Info key of same name overrides this value.",
-                           false, false, 0, NULL);
+    ompi_osc_rdma_use_rdma = false;
+    (void) mca_base_component_var_register(&mca_osc_rdma_component.super.osc_version,
+                                           "use_rdma",
+                                           "Use real RDMA operations to transfer data.  "
+                                           "Info key of same name overrides this value.",
+                                           MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &ompi_osc_rdma_use_rdma);
 
-     mca_base_param_reg_int(&mca_osc_rdma_component.super.osc_version,
-                            "rdma_completion_wait",
-                            "Wait for all completion of rdma events before "
-                            "sending acknowledgment.  Info key of same name "
-                            "overrides this value.",
-                            false, false, 1, NULL);
+    ompi_osc_rdma_rdma_completion_wait = true;
+    (void) mca_base_component_var_register(&mca_osc_rdma_component.super.osc_version,
+                                           "rdma_completion_wait",
+                                           "Wait for all completion of rdma events before "
+                                           "sending acknowledgment.  Info key of same name "
+                                           "overrides this value.",
+                                           MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &ompi_osc_rdma_rdma_completion_wait);
 
-    mca_base_param_reg_int(&mca_osc_rdma_component.super.osc_version,
-                           "no_locks",
-                           "Enable optimizations available only if MPI_LOCK is "
-                           "not used.  "
-                           "Info key of same name overrides this value.",
-                           false, false, 0, NULL);
+    ompi_osc_rdma_no_locks = false;
+    (void) mca_base_component_var_register(&mca_osc_rdma_component.super.osc_version,
+                                           "no_locks",
+                                           "Enable optimizations available only if MPI_LOCK is "
+                                           "not used.  "
+                                           "Info key of same name overrides this value.",
+                                           MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &ompi_osc_rdma_no_locks);
 
     return OMPI_SUCCESS;
 }
-
 
 int
 ompi_osc_rdma_component_init(bool enable_progress_threads,
@@ -229,7 +256,7 @@ ompi_osc_rdma_component_finalize(void)
 
     if (0 != 
         (num_modules = opal_hash_table_get_size(&mca_osc_rdma_component.c_modules))) {
-        opal_output(ompi_osc_base_output,
+        opal_output(ompi_osc_base_framework.framework_output,
                     "WARNING: There were %d Windows created but not freed.",
                     (int) num_modules);
     }
@@ -297,7 +324,7 @@ ompi_osc_rdma_component_select(ompi_win_t *win,
     ret = ompi_comm_dup(comm, &module->m_comm);
     if (ret != OMPI_SUCCESS) goto cleanup;
 
-    opal_output_verbose(1, ompi_osc_base_output,
+    opal_output_verbose(1, ompi_osc_base_framework.framework_output,
                         "rdma component creating window with id %d",
                         ompi_comm_get_cid(module->m_comm));
 
@@ -419,7 +446,7 @@ ompi_osc_rdma_component_select(ompi_win_t *win,
     }
     if (OMPI_SUCCESS != ret) goto cleanup;
 
-    OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_output,
+    OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
                          "done creating window %d", ompi_comm_get_cid(module->m_comm)));
 
     return OMPI_SUCCESS;
@@ -583,7 +610,7 @@ component_fragment_cb(struct mca_btl_base_module_t *btl,
                 datatype = ompi_osc_base_datatype_create(proc, &payload);
 
                 if (NULL == datatype) {
-                    opal_output(ompi_osc_base_output,
+                    opal_output(ompi_osc_base_framework.framework_output,
                                 "Error recreating datatype.  Aborting.");
                     ompi_mpi_abort(module->m_comm, 1, false);
                 }
@@ -839,12 +866,12 @@ component_fragment_cb(struct mca_btl_base_module_t *btl,
                 endpoint = (mca_bml_base_endpoint_t*) proc->proc_bml;
                 bml_btl = mca_bml_base_btl_array_find(&endpoint->btl_rdma, btl);
                 if (NULL == bml_btl) {
-                    opal_output(ompi_osc_base_output,
+                    opal_output(ompi_osc_base_framework.framework_output,
                                 "received rdma info for unknown btl from rank %d",
                                 origin);
                     return;
                 } else {
-                    OPAL_OUTPUT_VERBOSE((1, ompi_osc_base_output,
+                    OPAL_OUTPUT_VERBOSE((1, ompi_osc_base_framework.framework_output,
                                          "received rdma info from rank %d for BTL %s",
                                          origin,
                                          bml_btl->btl->
@@ -876,7 +903,7 @@ component_fragment_cb(struct mca_btl_base_module_t *btl,
 
         default:
             /* BWB - FIX ME - this sucks */
-            opal_output(ompi_osc_base_output,
+            opal_output(ompi_osc_base_framework.framework_output,
                         "received packet for Window with unknown type");
         }
 

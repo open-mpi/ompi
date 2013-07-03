@@ -2,6 +2,7 @@
  * Copyright (c) 2004-2007 The Trustees of the University of Tennessee.
  *                         All rights reserved.
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2012-2013 Los Alamos National Security, Inc.  All rights reserved. 
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -15,7 +16,6 @@
 #include "opal/mca/base/base.h"
 #include "ompi/mca/vprotocol/base/static-components.h"
 
-opal_list_t mca_vprotocol_base_components_available;
 char *mca_vprotocol_base_include_list;
 mca_pml_v_t mca_pml_v = {-1, 0, 0};
 
@@ -24,36 +24,37 @@ mca_pml_v_t mca_pml_v = {-1, 0, 0};
  * 
  * Also fill the mca_vprotocol_base_include_list with components that exists
  */
-int mca_vprotocol_base_open(char *vprotocol_include_list)
+
+static int mca_vprotocol_base_open(mca_base_open_flag_t flags)
 {
-    OBJ_CONSTRUCT(&mca_vprotocol_base_components_available, opal_list_t);
-    if (NULL == vprotocol_include_list ||
-        vprotocol_include_list[0] == 0) {
+    if (NULL == mca_vprotocol_base_include_list) {
         return OMPI_SUCCESS;
     }
-    if (NULL != vprotocol_include_list) {
-      mca_vprotocol_base_include_list = strdup (vprotocol_include_list);
-    } else {
-      mca_vprotocol_base_include_list = NULL;
-    }
 
-    return mca_base_components_open("vprotocol", 0, 
-                                    mca_vprotocol_base_static_components, 
-                                    &mca_vprotocol_base_components_available, 
-                                    true);
+    return mca_base_framework_components_open(&ompi_vprotocol_base_framework, 0);
+}
+
+void mca_vprotocol_base_set_include_list(char *vprotocol_include_list)
+{
+    mca_vprotocol_base_include_list = NULL;
+
+    if (NULL != vprotocol_include_list && vprotocol_include_list[0] != '\0') {
+        mca_vprotocol_base_include_list = strdup (vprotocol_include_list);
+    }
 }
 
 /* Close and unload any vprotocol MCA component loaded.
  */
-int mca_vprotocol_base_close(void)
+static int mca_vprotocol_base_close(void)
 {
-    int ret;
-    ret = mca_base_components_close(mca_pml_v.output, 
-                                    &mca_vprotocol_base_components_available, 
-                                    NULL);
     if (NULL != mca_vprotocol_base_include_list) {
         free(mca_vprotocol_base_include_list);
     }
-    OBJ_DESTRUCT(&mca_vprotocol_base_components_available);
-    return ret;
+
+    return mca_base_framework_components_close(&ompi_vprotocol_base_framework, NULL);;
 }
+
+MCA_BASE_FRAMEWORK_DECLARE(ompi, vprotocol, "OMPI Vprotocol", NULL,
+                           mca_vprotocol_base_open, mca_vprotocol_base_close,
+                           mca_vprotocol_base_static_components, 0);
+

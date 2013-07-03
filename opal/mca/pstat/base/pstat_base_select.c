@@ -23,7 +23,6 @@
 #include "opal/constants.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
-#include "opal/mca/base/mca_base_param.h"
 #include "opal/mca/pstat/pstat.h"
 #include "opal/mca/pstat/base/base.h"
 
@@ -40,8 +39,8 @@ int opal_pstat_base_select(void)
     /*
      * Select the best component
      */
-    if( OPAL_SUCCESS != mca_base_select("pstat", opal_pstat_base_output,
-                                        &opal_pstat_base_components_opened,
+    if( OPAL_SUCCESS != mca_base_select("pstat", opal_pstat_base_framework.framework_output,
+                                        &opal_pstat_base_framework.framework_components,
                                         (mca_base_module_t **) &best_module,
                                         (mca_base_component_t **) &best_component) ) {
         /* It is okay if we don't find a runnable component - default

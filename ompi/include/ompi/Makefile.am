@@ -1,3 +1,4 @@
+# -*- makefile -*-
 #
 # Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
 #                         University Research and Technology
@@ -9,6 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2012 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -22,8 +24,9 @@
 headers += \
 	ompi/constants.h \
 	ompi/types.h \
-    ompi/memchecker.h \
-	ompi/totalview.h
+	ompi/memchecker.h \
+	ompi/totalview.h \
+	ompi/frameworks.h
 
 nodist_headers += \
 	ompi/version.h

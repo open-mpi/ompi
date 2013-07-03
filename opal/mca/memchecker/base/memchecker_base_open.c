@@ -15,10 +15,8 @@
 #include "opal/util/output.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
-#include "opal/mca/base/mca_base_param.h"
 #include "opal/mca/memchecker/memchecker.h"
 #include "opal/mca/memchecker/base/base.h"
-
 
 /*
  * The following file was created by configure.  It contains extern
@@ -30,45 +28,6 @@
 /*
  * Globals
  */
-int opal_memchecker_base_output = -1;
-bool opal_memchecker_base_components_opened_valid = false;
-opal_list_t opal_memchecker_base_components_opened;
-
-/*
- * Function for finding and opening either all MCA components, or the one
- * that was specifically requested via a MCA parameter.
- */
-int opal_memchecker_base_open(void)
-{
-    int value;
-    OBJ_CONSTRUCT( &opal_memchecker_base_components_opened, opal_list_t );
-
-    /* Debugging / verbose output */
-    mca_base_param_reg_int_name("memchecker_base", "verbose",
-                                "Verbosity level of the memchecker framework",
-                                false, false,
-                                0, &value);
-
-    if (0 != value) {
-        opal_memchecker_base_output = opal_output_open(NULL);
-    } else {
-        opal_memchecker_base_output = -1;
-    }
-
-    opal_memchecker_base_components_opened_valid = false;
-
-    /* Open up all available components */
-    if (OPAL_SUCCESS !=
-        mca_base_components_open("memchecker", opal_memchecker_base_output,
-                                 mca_memchecker_base_static_components,
-                                 &opal_memchecker_base_components_opened,
-                                 true)) {
-        return OPAL_ERROR;
-    }
-
-    opal_memchecker_base_components_opened_valid = true;
- 
-    /* All done */
-    return OPAL_SUCCESS;
-}
-
+/* Use default register/open/close */
+MCA_BASE_FRAMEWORK_DECLARE(opal, memchecker, "memory checker framework", NULL, NULL, NULL,
+                           mca_memchecker_base_static_components, 0);

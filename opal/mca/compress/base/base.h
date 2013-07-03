@@ -17,6 +17,8 @@
 #include "opal/util/opal_environ.h"
 #include "opal/runtime/opal_cr.h"
 
+#include "opal/mca/base/base.h"
+
 /*
  * Global functions for MCA overall COMPRESS
  */
@@ -33,7 +35,7 @@ extern "C" {
      * 
      * This function is invoked during opal_init();
      */
-    OPAL_DECLSPEC int opal_compress_base_open(void);
+    OPAL_DECLSPEC int opal_compress_base_open(mca_base_open_flag_t flags);
     
     /**
      * Select an available component.
@@ -58,8 +60,7 @@ extern "C" {
     /**
      * Globals
      */
-    OPAL_DECLSPEC extern int  opal_compress_base_output;
-    OPAL_DECLSPEC extern opal_list_t opal_compress_base_components_available;
+    OPAL_DECLSPEC extern mca_base_framework_t opal_compress_base_framework;
     OPAL_DECLSPEC extern opal_compress_base_component_t opal_compress_base_selected_component;
     OPAL_DECLSPEC extern opal_compress_base_module_t opal_compress;
 

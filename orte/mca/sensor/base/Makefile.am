@@ -1,5 +1,6 @@
 #
 # Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved. 
+# Copyright (c) 2012-2013 Los Alamos National Security, Inc. All rights reserved.
 #
 # $COPYRIGHT$
 #
@@ -12,7 +13,7 @@ headers += \
         base/base.h
 
 libmca_sensor_la_SOURCES += \
-        base/sensor_base_open.c
+        base/sensor_base_frame.c
 
 if !ORTE_DISABLE_FULL_SUPPORT
 
@@ -20,7 +21,6 @@ headers += \
         base/sensor_private.h
 
 libmca_sensor_la_SOURCES += \
-        base/sensor_base_close.c \
         base/sensor_base_select.c
 
 endif

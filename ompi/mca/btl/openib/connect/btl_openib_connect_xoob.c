@@ -5,7 +5,7 @@
  * Copyright (c) 2010-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2012      Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2012-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  *
  * $COPYRIGHT$
@@ -1010,7 +1010,7 @@ static int xoob_component_query(mca_btl_openib_module_t *openib_btl,
     int rc;
 
     if (mca_btl_openib_component.num_xrc_qps <= 0) {
-        opal_output_verbose(5, mca_btl_base_output,
+        opal_output_verbose(5, ompi_btl_base_framework.framework_output,
                             "openib BTL: xoob CPC only supported with XRC receive queues; skipped on %s:%d",
                             ibv_get_device_name(openib_btl->device->ib_dev),
                             openib_btl->port_num);
@@ -1019,7 +1019,7 @@ static int xoob_component_query(mca_btl_openib_module_t *openib_btl,
 
     *cpc = malloc(sizeof(ompi_btl_openib_connect_base_module_t));
     if (NULL == *cpc) {
-        opal_output_verbose(5, mca_btl_base_output,
+        opal_output_verbose(5, ompi_btl_base_framework.framework_output,
                             "openib BTL: xoob CPC system error (malloc failed)");
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
@@ -1034,12 +1034,18 @@ static int xoob_component_query(mca_btl_openib_module_t *openib_btl,
                                      xoob_rml_recv_cb,
                                      NULL);
         if (ORTE_SUCCESS != rc) {
-            opal_output_verbose(5, mca_btl_base_output,
+            opal_output_verbose(5, ompi_btl_base_framework.framework_output,
                                 "openib BTL: xoob CPC system error %d (%s)",
                                 rc, opal_strerror(rc));
             return rc;
         }
         rml_recv_posted = true;
+    }
+
+    if (xoob_priority > 100) {
+        xoob_priority = 100;
+    } else if (xoob_priority < -1) {
+        xoob_priority = -1;
     }
 
     (*cpc)->data.cbm_component = &ompi_btl_openib_connect_xoob;
@@ -1053,7 +1059,7 @@ static int xoob_component_query(mca_btl_openib_module_t *openib_btl,
     (*cpc)->cbm_finalize = NULL;
     (*cpc)->cbm_uses_cts = false;
 
-    opal_output_verbose(5, mca_btl_base_output,
+    opal_output_verbose(5, ompi_btl_base_framework.framework_output,
                         "openib BTL: xoob CPC available for use on %s:%d",
                         ibv_get_device_name(openib_btl->device->ib_dev),
                         openib_btl->port_num);
@@ -1063,10 +1069,14 @@ static int xoob_component_query(mca_btl_openib_module_t *openib_btl,
 /* Open - this functions sets up any xoob specific commandline params */
 static void xoob_component_register(void)
 {
-    mca_base_param_reg_int(&mca_btl_openib_component.super.btl_version,
-                           "connect_xoob_priority",
-                           "The selection method priority for xoob",
-                           false, false, xoob_priority, &xoob_priority);
+    xoob_priority = 60;
+    (void) mca_base_component_var_register(&mca_btl_openib_component.super.btl_version,
+                                           "connect_xoob_priority",
+                                           "The selection method priority for xoob",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &xoob_priority);
 
     if (xoob_priority > 100) {
         xoob_priority = 100;

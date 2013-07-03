@@ -85,14 +85,14 @@
 #endif
 #include "ompi/runtime/ompi_cr.h"
 
+extern bool ompi_enable_timing;
 
 int ompi_mpi_finalize(void)
 {
-    int ret, value;
+    int ret;
     static int32_t finalize_has_already_started = 0;
     opal_list_item_t *item;
     struct timeval ompistart, ompistop;
-    bool timing = false;
     orte_grpcomm_collective_t *coll;
 
     /* Be a bit social if an erroneous program calls MPI_FINALIZE in
@@ -145,11 +145,7 @@ int ompi_mpi_finalize(void)
     opal_progress_event_users_increment();
 
     /* check to see if we want timing information */
-    mca_base_param_reg_int_name("ompi", "timing",
-                                "Request that critical timing loops be measured",
-                                false, false, 0, &value);
-    if (value != 0 && 0 == ORTE_PROC_MY_NAME->vpid) {
-        timing = true;
+    if (ompi_enable_timing != 0 && 0 == ORTE_PROC_MY_NAME->vpid) {
         gettimeofday(&ompistart, NULL);
     }
 
@@ -228,7 +224,7 @@ int ompi_mpi_finalize(void)
 
     /* check for timing request - get stop time and report elapsed
      time if so */
-    if (timing && 0 == ORTE_PROC_MY_NAME->vpid) {
+    if (ompi_enable_timing && 0 == ORTE_PROC_MY_NAME->vpid) {
         gettimeofday(&ompistop, NULL);
         opal_output(0, "ompi_mpi_finalize[%ld]: time to execute barrier %ld usec",
                     (long)ORTE_PROC_MY_NAME->vpid,
@@ -304,7 +300,8 @@ int ompi_mpi_finalize(void)
 
     /* Now that all MPI objects dealing with communications are gone,
        shut down MCA types having to do with communications */
-    if (OMPI_SUCCESS != (ret = mca_pml_base_close())) {
+    if (OMPI_SUCCESS != (ret = mca_base_framework_close(&ompi_pml_base_framework) ) ) {
+        ORTE_ERROR_LOG(ret);
         return ret;
     }
 
@@ -315,7 +312,7 @@ int ompi_mpi_finalize(void)
     /*
      * Shutdown the CRCP Framework, must happen after PML shutdown
      */
-    if (OMPI_SUCCESS != (ret = ompi_crcp_base_close() ) ) {
+    if (OMPI_SUCCESS != (ret = mca_base_framework_close(&ompi_crcp_base_framework) ) ) {
         ORTE_ERROR_LOG(ret);
         return ret;
     }
@@ -339,12 +336,12 @@ int ompi_mpi_finalize(void)
     }
     
     /* finalize the pubsub functions */
-    if ( OMPI_SUCCESS != (ret = ompi_pubsub_base_close())) {
+    if (OMPI_SUCCESS != (ret = mca_base_framework_close(&ompi_pubsub_base_framework) ) ) {
         return ret;
     }
     
     /* finalize the DPM framework */
-    if ( OMPI_SUCCESS != (ret = ompi_dpm_base_close())) {
+    if ( OMPI_SUCCESS != (ret = mca_base_framework_close(&ompi_dpm_base_framework))) {
         return ret;
     }
     
@@ -384,34 +381,27 @@ int ompi_mpi_finalize(void)
 
     /* io is opened lazily, so it's only necessary to close it if it
        was actually opened */
+    if (0 < ompi_io_base_framework.framework_refcnt) {
+        /* May have been "opened" multiple times. We want it closed now */
+        ompi_io_base_framework.framework_refcnt = 1;
 
-    if (mca_io_base_components_opened_valid ||
-        mca_io_base_components_available_valid) {
-        if (OMPI_SUCCESS != (ret = mca_io_base_close())) {
+        if (OMPI_SUCCESS != mca_base_framework_close(&ompi_io_base_framework)) {
             return ret;
         }
     }
-    if (OMPI_SUCCESS != (ret = mca_topo_base_close())) {
+    (void) mca_base_framework_close(&ompi_topo_base_framework);
+    if (OMPI_SUCCESS != (ret = mca_base_framework_close(&ompi_osc_base_framework))) {
         return ret;
     }
-    if (OMPI_SUCCESS != (ret = ompi_osc_base_close())) {
+    if (OMPI_SUCCESS != (ret = mca_base_framework_close(&ompi_coll_base_framework))) {
         return ret;
     }
-    if (OMPI_SUCCESS != (ret = mca_coll_base_close())) {
+    if (OMPI_SUCCESS != (ret = mca_base_framework_close(&ompi_mpool_base_framework))) {
         return ret;
     }
-    if (OMPI_SUCCESS != (ret = mca_mpool_base_close())) {
+    if (OMPI_SUCCESS != (ret = mca_base_framework_close(&ompi_rcache_base_framework))) {
         return ret;
     }
-    if (OMPI_SUCCESS != (ret = mca_rcache_base_close())) { 
-        return ret;
-    }
-
-    /* Free some OMPI MCA string params */
-    if (NULL != ompi_mpi_show_mca_params_file) {
-        free(ompi_mpi_show_mca_params_file);
-    }
-
 
     /* Leave the RTE */
 

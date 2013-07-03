@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2009 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2008      Mellanox Technologies. All rights reserved.
- * Copyright (c) 2012      Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2012-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * $COPYRIGHT$
  *
@@ -31,7 +31,6 @@
 #endif
 
 #include "orte/util/show_help.h"
-#include "opal/mca/base/mca_base_param.h"
 
 #include "btl_openib.h"
 #include "btl_openib_lex.h"

@@ -25,6 +25,10 @@
 #include <string.h>
 #include <ctype.h>
 
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
+
 #include "opal/class/opal_list.h"
 #include "opal/class/opal_pointer_array.h"
 
@@ -36,22 +40,9 @@
 #include "opal/runtime/opal.h"
 #include "opal/dss/dss.h"
 
+#include "opal/include/opal/frameworks.h"
+
 #include "opal/mca/installdirs/installdirs.h"
-#include "opal/mca/event/base/base.h"
-#include "opal/mca/base/base.h"
-#include "opal/mca/backtrace/base/base.h"
-#include "opal/mca/shmem/base/base.h"
-#include "opal/mca/memory/base/base.h"
-#include "opal/mca/memcpy/base/base.h"
-#include "opal/mca/memchecker/base/base.h"
-#include "opal/mca/timer/base/base.h"
-#include "opal/mca/installdirs/base/base.h"
-#include "opal/mca/hwloc/base/base.h"
-#if OPAL_ENABLE_FT_CR == 1
-#include "opal/mca/crs/base/base.h"
-#include "opal/mca/compress/base/base.h"
-#endif
-#include "opal/mca/if/base/base.h"
 
 #include "opal/runtime/opal_info_support.h"
 
@@ -92,6 +83,7 @@ const char *opal_info_ver_mca = "mca";
 const char *opal_info_ver_type = "type";
 const char *opal_info_ver_component = "component";
 
+static bool opal_info_registered = false;
 
 static void component_map_construct(opal_info_component_map_t *map)
 {
@@ -223,290 +215,96 @@ void opal_info_finalize(void)
     opal_finalize_util();
 }
 
-void opal_info_register_types(opal_pointer_array_t *mca_types)
-{
-    opal_pointer_array_add(mca_types, "backtrace");
-#if OPAL_ENABLE_FT_CR == 1
-    opal_cr_set_enabled(true);
-    opal_pointer_array_add(mca_types, "compress");
-    opal_pointer_array_add(mca_types, "crs");
-#endif
-    opal_pointer_array_add(mca_types, "event");
-    opal_pointer_array_add(mca_types, "filter");
-    opal_pointer_array_add(mca_types, "hwloc");
-    opal_pointer_array_add(mca_types, "if");
-    opal_pointer_array_add(mca_types, "installdirs");
-    opal_pointer_array_add(mca_types, "mca");
-    opal_pointer_array_add(mca_types, "memchecker");
-    opal_pointer_array_add(mca_types, "memory");
-    opal_pointer_array_add(mca_types, "memcpy");
-    opal_pointer_array_add(mca_types, "opal");
-    opal_pointer_array_add(mca_types, "shmem");
-    opal_pointer_array_add(mca_types, "timer");
-
-}
-
-int opal_info_register_components(opal_pointer_array_t *mca_types,
-                                  opal_pointer_array_t *component_map)
+static int info_register_framework (mca_base_framework_t *framework, opal_pointer_array_t *component_map)
 {
     opal_info_component_map_t *map;
-    char *env, *str;
-    int i, rc;
-    char *target, *save, *type;
-    char **env_save=NULL;
+    int rc;
 
-    /* Clear out the environment.  Use strdup() to orphan the resulting
-     * strings because items are placed in the environment by reference,
-     * not by value.
-     */
-    for (i = 0; i < mca_types->size; ++i) {
-        if (NULL == (type = (char*)opal_pointer_array_get_item(mca_types, i))) {
-            continue;
-        }
-        asprintf(&env, "OMPI_MCA_%s", type);
-        if (NULL != (save = getenv(env))) {
-            /* save this param so it can later be restored */
-            asprintf(&str, "%s=%s", env, save);
-            opal_argv_append_nosize(&env_save, str);
-            free(str);
-            /* can't manipulate it directly, so make a copy first */
-            asprintf(&target, "%s=", env);
-            putenv(target);
-        }
-        free(env);
+    rc = mca_base_framework_register(framework, MCA_BASE_REGISTER_ALL);
+    if (OPAL_SUCCESS != rc && OPAL_ERR_BAD_PARAM != rc) {
+        return rc;
     }
 
-    /* some components require the event library be active, so activate it */
-    if (OPAL_SUCCESS != (rc = opal_event_base_open())) {
-        if (OPAL_ERR_BAD_PARAM == rc)  {
-            goto breakout;
-        }
-        str = "opal_event_base_open";
-        goto error;
-    }
-    
-    /* Open the DSS */
-    if (OPAL_SUCCESS != (rc = opal_dss_open())) {
-        if (OPAL_ERR_BAD_PARAM == rc)  {
-            str = "opal_dss";
-            goto breakout;
-        }
-        str = "dss_open";
-        goto error;
-    }
-    
-    /* Register the OPAL layer's MCA parameters */
-    if (OPAL_SUCCESS != (rc = opal_register_params())) {
-        str = "opal_register_params";
-        if (OPAL_ERR_BAD_PARAM == rc)  {
-            goto breakout;
-        }
-        goto error;
-    }
-
-    /* OPAL frameworks */
-    
-    if (OPAL_SUCCESS != (rc = opal_backtrace_base_open()) &&
-        OPAL_ERR_BAD_PARAM != rc) {
-        str = "backtrace open";
-        goto error;
-    }
-    map = OBJ_NEW(opal_info_component_map_t);
-    map->type = strdup("backtrace");
-    map->components = &opal_backtrace_base_components_opened;
-    opal_pointer_array_add(component_map, map);
-    if (OPAL_ERR_BAD_PARAM == rc)  {
-        str = "backtrace";
-        goto breakout;
-    }
-
-#if OPAL_ENABLE_FT_CR == 1
-    if (OPAL_SUCCESS != (rc = opal_compress_base_open()) &&
-        OPAL_ERR_BAD_PARAM != rc) {
-        str = "compress open";
-        goto error;
-    }
-    map = OBJ_NEW(opal_info_component_map_t);
-    map->type = strdup("compress");
-    map->components = &opal_compress_base_components_available;
-    opal_pointer_array_add(component_map, map);
-    if (OPAL_ERR_BAD_PARAM == rc)  {
-        str = "compress";
-        goto breakout;
-    }
-
-    if (OPAL_SUCCESS != (rc = opal_crs_base_open()) &&
-        OPAL_ERR_BAD_PARAM != rc) {
-        str = "crs open";
-        goto error;
-    }
-    map = OBJ_NEW(opal_info_component_map_t);
-    map->type = strdup("crs");
-    map->components = &opal_crs_base_components_available;
-    opal_pointer_array_add(component_map, map);
-    if (OPAL_ERR_BAD_PARAM == rc)  {
-        str = "crs";
-        goto breakout;
-    }
-#endif
-
-    /* the event framework is already open - just get its components */
-    map = OBJ_NEW(opal_info_component_map_t);
-    map->type = strdup("event");
-    map->components = &opal_event_components;
-    opal_pointer_array_add(component_map, map);
-
-#if OPAL_HAVE_HWLOC
-    if (OPAL_SUCCESS != (rc = opal_hwloc_base_open()) &&
-        OPAL_ERR_BAD_PARAM != rc) {
-        str = "hwloc open";
-        goto error;
-    }
-    map = OBJ_NEW(opal_info_component_map_t);
-    map->type = strdup("hwloc");
-    map->components = &opal_hwloc_base_components;
-    opal_pointer_array_add(component_map, map);
-    if (OPAL_ERR_BAD_PARAM == rc)  {
-        str = "hwloc";
-        goto breakout;
-    }
-#endif
-
-    if (OPAL_SUCCESS != (rc = opal_if_base_open()) &&
-        OPAL_ERR_BAD_PARAM != rc) {
-        str = "if open";
-        goto error;
-    }
-    map = OBJ_NEW(opal_info_component_map_t);
-    map->type = strdup("if");
-    map->components = &opal_if_components;
-    opal_pointer_array_add(component_map, map);
-    if (OPAL_ERR_BAD_PARAM == rc)  {
-        str = "if";
-        goto breakout;
-    }
-
-    /* OPAL's installdirs base open has already been called as part of
-     * opal_init_util() back in main().
-     */
-    map = OBJ_NEW(opal_info_component_map_t);
-    map->type = strdup("installdirs");
-    map->components = &opal_installdirs_components;
-    opal_pointer_array_add(component_map, map);
-
-    if (OPAL_SUCCESS != (rc = opal_memory_base_open()) &&
-        OPAL_ERR_BAD_PARAM != rc) {
-        str = "memory open";
-        goto error;
-    }
-    map = OBJ_NEW(opal_info_component_map_t);
-    map->type = strdup("memory");
-    map->components = &opal_memory_base_components_opened;
-    opal_pointer_array_add(component_map, map);
-    if (OPAL_ERR_BAD_PARAM == rc)  {
-        str = "memory";
-        goto breakout;
-    }
-
-    if (OPAL_SUCCESS != (rc = opal_memcpy_base_open()) &&
-        OPAL_ERR_BAD_PARAM != rc) {
-        str = "memcpy open";
-        goto error;
-    }
-    map = OBJ_NEW(opal_info_component_map_t);
-    map->type = strdup("memcpy");
-    map->components = &opal_memcpy_base_components_opened;
-    opal_pointer_array_add(component_map, map);
-    if (OPAL_ERR_BAD_PARAM == rc)  {
-        str = "memcpy";
-        goto breakout;
-    }
-
-    if (OPAL_SUCCESS != (rc = opal_memchecker_base_open()) &&
-        OPAL_ERR_BAD_PARAM != rc) {
-        str = "memchecker open";
-        goto error;
-    }
-    map = OBJ_NEW(opal_info_component_map_t);
-    map->type = strdup("memchecker");
-    map->components = &opal_memchecker_base_components_opened;
-    opal_pointer_array_add(component_map, map);
-    if (OPAL_ERR_BAD_PARAM == rc)  {
-        str = "memchecker";
-        goto breakout;
-    }
-
-    if (OPAL_SUCCESS != (rc = opal_shmem_base_open()) &&
-        OPAL_ERR_BAD_PARAM != rc) {
-        str = "shmem open";
-        goto error;
-    }
-    map = OBJ_NEW(opal_info_component_map_t);
-    map->type = strdup("shmem");
-    map->components = &opal_shmem_base_components_opened;
-    opal_pointer_array_add(component_map, map);
-    if (OPAL_ERR_BAD_PARAM == rc)  {
-        str = "shmem";
-        goto breakout;
-    }
-
-    if (OPAL_SUCCESS != (rc = opal_timer_base_open()) &&
-        OPAL_ERR_BAD_PARAM != rc) {
-        str = "timer open";
-        goto error;
-    }
-    map = OBJ_NEW(opal_info_component_map_t);
-    map->type = strdup("timer");
-    map->components = &opal_timer_base_components_opened;
-    opal_pointer_array_add(component_map, map);
-    if (OPAL_ERR_BAD_PARAM == rc)  {
-        str = "timer";
-    }
-
- breakout:
-    /* Restore the environment to what it was before we started so that
-     * if users setenv OMPI_MCA_<framework name> to some value, they'll
-     * see that value when it is shown via --param output.
-     */
-    
-    if (NULL != env_save) {
-        for (i = 0; i < opal_argv_count(env_save); ++i) {
-            putenv(env_save[i]);
-        }
-    }
-    
-    if (OPAL_ERR_BAD_PARAM == rc) {
-        fprintf(stderr, "\nA \"bad parameter\" error was encountered when opening the OPAL %s framework.\n", str);
-        fprintf(stderr, "The output received from that framework includes the following parameters:\n\n");
+    if (NULL != component_map) {
+        map = OBJ_NEW(opal_info_component_map_t);
+        map->type = strdup(framework->framework_name);
+        map->components = &framework->framework_components;
+        opal_pointer_array_add(component_map, map);
     }
 
     return rc;
+}
 
- error:
-    fprintf(stderr, "opal_info_register: %s failed\n", str);
-    return OPAL_ERROR;
+int opal_info_register_project_frameworks (const char *project_name, mca_base_framework_t **frameworks,
+                                           opal_pointer_array_t *component_map)
+{
+    int i, rc;
+
+    for (i=0; NULL != frameworks[i]; i++) {
+        if (OPAL_SUCCESS != (rc = info_register_framework(frameworks[i], component_map))) {
+            if (OPAL_ERR_BAD_PARAM == rc) {
+                fprintf(stderr, "\nA \"bad parameter\" error was encountered when opening the %s %s framework\n",
+                        project_name, frameworks[i]->framework_name);
+                fprintf(stderr, "The output received from that framework includes the following parameters:\n\n");
+            } else {
+                fprintf(stderr, "%s_info_register: %s failed\n", project_name, frameworks[i]->framework_name);
+                rc = OPAL_ERROR;
+            }
+
+            break;
+        }
+    }
+
+    return rc;
+}
+
+void opal_info_register_types(opal_pointer_array_t *mca_types)
+{
+    int i;
+
+    /* add the top-level types */
+    opal_pointer_array_add(mca_types, "mca");
+    opal_pointer_array_add(mca_types, "opal");
+
+    /* push all the types found by autogen */
+    for (i=0; NULL != opal_frameworks[i]; i++) {
+        opal_pointer_array_add(mca_types, opal_frameworks[i]->framework_name);
+    }
+}
+
+int opal_info_register_framework_params(opal_pointer_array_t *component_map)
+{
+    int rc;
+
+    if (opal_info_registered) {
+        return OPAL_SUCCESS;
+    }
+
+    opal_info_registered = true;
+
+    /* Register mca/base parameters */
+    if( OPAL_SUCCESS != mca_base_open() ) {
+        opal_show_help("help-opal_info.txt", "lib-call-fail", true, "mca_base_open", __FILE__, __LINE__ );
+        return OPAL_ERROR;
+    }
+
+    /* Register the OPAL layer's MCA parameters */
+    if (OPAL_SUCCESS != (rc = opal_register_params())) {
+        fprintf(stderr, "opal_info_register: opal_register_params failed\n");
+        return rc;
+    }
+
+    return opal_info_register_project_frameworks("opal", opal_frameworks, component_map);
 }
 
 
 void opal_info_close_components(void)
 {
-    (void) opal_backtrace_base_close();
-    (void) opal_memcpy_base_close();
-    (void) opal_memory_base_close();
-    (void) opal_memchecker_base_close();
-    (void) opal_timer_base_close();
-#if OPAL_HAVE_HWLOC
-    (void) opal_hwloc_base_close();
-#endif
-#if OPAL_ENABLE_FT_CR == 1
-    (void) opal_crs_base_close();
-#endif
-    (void) opal_dss_close();
-    (void) opal_event_base_close();
-        
-    /* Do not call OPAL's installdirs close; it will be handled in
-     * opal_finalize_util().  Ditto for opal_if_base_close().
-     */
+    int i;
+
+    for (i=0; NULL != opal_frameworks[i]; i++) {
+        (void) mca_base_framework_close(opal_frameworks[i]);
+    }
 }
 
 
@@ -606,16 +404,6 @@ void opal_info_do_path(bool want_all, opal_cmd_line_t *cmd_line)
     }
 }
 
-/*
- * External variables
- *
- * This exists in mca/base/mca_base_param.c.  It's not extern'ed
- * in mca_base_param.h so that no one else will use it.
- */
-
-extern opal_value_array_t mca_base_params;
-
-
 void opal_info_do_params(bool want_all_in, bool want_internal,
                          opal_pointer_array_t *mca_types,
                          opal_cmd_line_t *opal_info_cmd_line)
@@ -625,7 +413,6 @@ void opal_info_do_params(bool want_all_in, bool want_internal,
     bool found;
     int i;
     bool want_all = false;
-    opal_list_t *info;
     char *p;
 
     if (opal_cmd_line_is_taken(opal_info_cmd_line, "param")) {
@@ -652,9 +439,6 @@ void opal_info_do_params(bool want_all_in, bool want_internal,
         }
     }
     
-    /* Get a dump of all the MCA params */
-    mca_base_param_dump(&info, want_internal);
-    
     /* Show the params */
     
     if (want_all) {
@@ -662,7 +446,7 @@ void opal_info_do_params(bool want_all_in, bool want_internal,
             if (NULL == (type = (char *)opal_pointer_array_get_item(mca_types, i))) {
                 continue;
             }
-            opal_info_show_mca_params(info, type, opal_info_component_all, want_internal);
+            opal_info_show_mca_params(type, opal_info_component_all, want_internal);
         }
     } else {
         for (i = 0; i < count; ++i) {
@@ -686,19 +470,15 @@ void opal_info_do_params(bool want_all_in, bool want_internal,
                 exit(1);
             }
             
-            opal_info_show_mca_params(info, type, component, want_internal);
+            opal_info_show_mca_params(type, component, want_internal);
         }
     }
-    
-    /* Release all the MCA param memory */
-    mca_base_param_dump_release(info);
 }
 
 void opal_info_err_params(opal_pointer_array_t *component_map)
 {
     opal_info_component_map_t *map, *mptr;
     int i;
-    opal_list_t *info=NULL;
 
     /* all we want to do is display the LAST entry in the
      * component_map array as this is the one that generated the error
@@ -709,224 +489,89 @@ void opal_info_err_params(opal_pointer_array_t *component_map)
         }
         map = mptr;
     }
-    mca_base_param_dump(&info, true);
-    opal_info_show_mca_params(info, map->type, opal_info_component_all, true);
+    if (NULL == map) {
+        fprintf(stderr, "opal_info_err_params: map not found\n");
+        return;
+    }
+    opal_info_show_mca_params(map->type, opal_info_component_all, true);
     fprintf(stderr, "\n");
     return;
 }
 
-void opal_info_show_mca_params(opal_list_t *info,
-                               const char *type, const char *component, 
+
+static void opal_info_show_mca_group_params(const mca_base_var_group_t *group, bool want_internal)
+{
+    const mca_base_var_t *var;
+    const int *variables;
+    int ret, i, j, count;
+    const int *groups;
+    char **strings;
+
+    variables = OPAL_VALUE_ARRAY_GET_BASE(&group->group_vars, const int);
+    count = opal_value_array_get_size((opal_value_array_t *)&group->group_vars);
+
+    for (i = 0 ; i < count ; ++i) {
+        ret = mca_base_var_get(variables[i], &var);
+        if (OPAL_SUCCESS != ret || ((var->mbv_flags & MCA_BASE_VAR_FLAG_INTERNAL) &&
+                                    !want_internal)) {
+            continue;
+        }
+
+        ret = mca_base_var_dump(variables[i], &strings, !opal_info_pretty ? MCA_BASE_VAR_DUMP_PARSABLE : MCA_BASE_VAR_DUMP_READABLE);
+        if (OPAL_SUCCESS != ret) {
+            continue;
+        }
+
+        for (j = 0 ; strings[j] ; ++j) {
+            if (0 == j && opal_info_pretty) {
+                char *message;
+
+                asprintf (&message, "MCA %s", group->group_framework);
+                opal_info_out(message, message, strings[j]);
+                free(message);
+            } else {
+                opal_info_out("", "", strings[j]);
+            }
+            free(strings[j]);
+        }
+        free(strings);
+    }
+
+    groups = OPAL_VALUE_ARRAY_GET_BASE(&group->group_subgroups, const int);
+    count = opal_value_array_get_size((opal_value_array_t *)&group->group_subgroups);
+
+    for (i = 0 ; i < count ; ++i) {
+        ret = mca_base_var_group_get(groups[i], &group);
+        if (OPAL_SUCCESS != ret) {
+            continue;
+        }
+        opal_info_show_mca_group_params(group, want_internal);
+    }
+}
+
+void opal_info_show_mca_params(const char *type, const char *component, 
                                bool want_internal)
 {
-    opal_list_item_t *i;
-    mca_base_param_info_t *p;
-    char *value_string, *empty = "";
-    char *message, *content, *tmp;
-    int value_int, j;
-    mca_base_param_source_t source;
-    char *src_file;
-    
-    for (i = opal_list_get_first(info); i != opal_list_get_end(info);
-         i = opal_list_get_next(i)) {
-        p = (mca_base_param_info_t*) i;
-        
-        if (NULL != p->mbpp_type_name && 0 == strcmp(type, p->mbpp_type_name)) {
-            if (0 == strcmp(component, opal_info_component_all) || 
-                NULL == p->mbpp_component_name ||
-                (NULL != p->mbpp_component_name &&
-                 0 == strcmp(component, p->mbpp_component_name))) {
-                
-                /* Find the source of the value */
-                if (OPAL_SUCCESS != 
-                    mca_base_param_lookup_source(p->mbpp_index, &source, &src_file)) {
-                    continue;
-                }
-                
-                /* Make a char *for the default value.  Invoke a
-                 * lookup because it may transform the char *("~/" ->
-                 * "<home dir>/") or get the value from the
-                 * environment, a file, etc.
-                 */
-                if (MCA_BASE_PARAM_TYPE_STRING == p->mbpp_type) {
-                    mca_base_param_lookup_string(p->mbpp_index,
-                                                 &value_string);
-                    
-                    /* Can't let the char *be NULL because we
-                     * assign it to a std::string, below
-                     */
-                    if (NULL == value_string) {
-                        value_string = strdup(empty);
-                    }
-                } else {
-                    mca_base_param_lookup_int(p->mbpp_index, &value_int);
-                    asprintf(&value_string, "%d", value_int);
-                }
-                
-                /* Build up the strings to opal_info_output. */
-                
-                if (opal_info_pretty) {
-                    asprintf(&message, "MCA %s", p->mbpp_type_name);
-                    
-                    /* Put in the real, full name (which may be
-                     * different than the categorization).
-                     */
-                    asprintf(&content, "%s \"%s\" (%s: <%s>, data source: ",
-                             p->mbpp_read_only ? "information" : "parameter",
-                             p->mbpp_full_name,
-                             p->mbpp_read_only ? "value" : "current value",
-                             (0 == strlen(value_string)) ? "none" : value_string);
-                    
-                    /* Indicate where the param was set from */
-                    switch(source) {
-                        case MCA_BASE_PARAM_SOURCE_DEFAULT:
-                            asprintf(&tmp, "%sdefault value", content);
-                            free(content);
-                            content = tmp;
-                            break;
-                        case MCA_BASE_PARAM_SOURCE_ENV:
-                            asprintf(&tmp, "%senvironment or cmdline", content);
-                            free(content);
-                            content = tmp;
-                            break;
-                        case MCA_BASE_PARAM_SOURCE_FILE:
-                            asprintf(&tmp, "%sfile [%s]", content, src_file);
-                            free(content);
-                            content = tmp;
-                            break;
-                        case MCA_BASE_PARAM_SOURCE_OVERRIDE:
-                            asprintf(&tmp, "%sAPI override", content);
-                            free(content);
-                            content = tmp;
-                            break;
-                        default:
-                            break;
-                    }
-                    
-                    /* Is this parameter deprecated? */
-                    if (p->mbpp_deprecated) {
-                        asprintf(&tmp, "%s, deprecated", content);
-                        free(content);
-                        content = tmp;
-                    }
-                    
-                    /* Does this parameter have any synonyms? */
-                    if (p->mbpp_synonyms_len > 0) {
-                        asprintf(&tmp, "%s, synonyms: ", content);
-                        free(content);
-                        content = tmp;
-                        for (j = 0; j < p->mbpp_synonyms_len; ++j) {
-                            if (j > 0) {
-                                asprintf(&tmp, "%s, %s", content, p->mbpp_synonyms[j]->mbpp_full_name);
-                                free(content);
-                                content = tmp;
-                            } else {
-                                asprintf(&tmp, "%s%s", content, p->mbpp_synonyms[j]->mbpp_full_name);
-                                free(content);
-                                content = tmp;
-                            }
-                        }
-                    }
-                    
-                    /* Is this parameter a synonym of something else? */
-                    else if (NULL != p->mbpp_synonym_parent) {
-                        asprintf(&tmp, "%s, synonym of: %s", content, p->mbpp_synonym_parent->mbpp_full_name);
-                        free(content);
-                        content = tmp;
-                    }
-                    asprintf(&tmp, "%s)", content);
-                    free(content);
-                    content = tmp;
-                    opal_info_out(message, message, content);
-                    free(message);
-                    free(content);
-                    
-                    /* If we have a help message, opal_info_output it */
-                    if (NULL != p->mbpp_help_msg) {
-                        opal_info_out("", "", p->mbpp_help_msg);
-                    }
-                } else {
-                    /* build the message*/
-                    asprintf(&tmp, "mca:%s:%s:param:%s:", p->mbpp_type_name,
-                             (NULL == p->mbpp_component_name) ? "base" : p->mbpp_component_name,
-                             p->mbpp_full_name);
+    const mca_base_var_group_t *group;
+    int ret;
 
-                    /* Output the value */
-                    asprintf(&message, "%svalue", tmp);
-                    opal_info_out(message, message, value_string);
-                    free(message);
-                    
-                    /* Indicate where the param was set from */
-                    
-                    asprintf(&message, "%sdata_source", tmp);
-                    switch(source) {
-                        case MCA_BASE_PARAM_SOURCE_DEFAULT:
-                            content = strdup("default value");
-                            break;
-                        case MCA_BASE_PARAM_SOURCE_ENV:
-                            content = strdup("environment-cmdline");
-                            break;
-                        case MCA_BASE_PARAM_SOURCE_FILE:
-                            asprintf(&content, "file: %s", src_file);
-                            break;
-                        case MCA_BASE_PARAM_SOURCE_OVERRIDE:
-                            content = strdup("API override");
-                            break;
-                        default:
-                            break;
-                    }
-                    opal_info_out(message, message, content);
-                    free(message);
-                    free(content);
-                    
-                    /* Output whether it's read only or writable */
-                    
-                    asprintf(&message, "%sstatus", tmp);
-                    content = p->mbpp_read_only ? "read-only" : "writable";
-                    opal_info_out(message, message, content);
-                    free(message);
-                    
-                    /* If it has a help message, opal_info_output that */
-                    
-                    if (NULL != p->mbpp_help_msg) {
-                        asprintf(&message, "%shelp", tmp);
-                        content = p->mbpp_help_msg;
-                        opal_info_out(message, message, content);
-                        free(message);
-                    }
-                    
-                    /* Is this parameter deprecated? */
-                    asprintf(&message, "%sdeprecated", tmp);
-                    content = p->mbpp_deprecated ? "yes" : "no";
-                    opal_info_out(message, message, content);
-                    free(message);
-                    
-                    /* Does this parameter have any synonyms? */
-                    if (p->mbpp_synonyms_len > 0) {
-                        for (j = 0; j < p->mbpp_synonyms_len; ++j) {
-                            asprintf(&message, "%ssynonym:name", tmp);
-                            content = p->mbpp_synonyms[j]->mbpp_full_name;
-                            opal_info_out(message, message, content);
-                            free(message);
-                        }
-                    }
-                    
-                    /* Is this parameter a synonym of something else? */
-                    else if (NULL != p->mbpp_synonym_parent) {
-                        asprintf(&message, "%ssynonym_of:name", tmp);
-                        content = p->mbpp_synonym_parent->mbpp_full_name;
-                        opal_info_out(message, message, content);
-                        free(message);
-                    }
-                }
-                
-                /* If we allocated the string, then free it */
-                
-                if (NULL != value_string) {
-                    free(value_string);
-                }
-            }
+    if (0 == strcmp (component, "all")) {
+        ret = mca_base_var_group_find("*", type, NULL);
+        if (0 > ret) {
+            return;
         }
+
+        (void) mca_base_var_group_get(ret, &group);
+
+        opal_info_show_mca_group_params(group, want_internal);
+    } else {
+        ret = mca_base_var_group_find("*", type, component);
+        if (0 > ret) {
+            return;
+        }
+
+        (void) mca_base_var_group_get(ret, &group);
+        opal_info_show_mca_group_params(group, want_internal);
     }
 }
 
@@ -956,7 +601,7 @@ static int screen_width = 78;
  */
 void opal_info_out(const char *pretty_message, const char *plain_message, const char *value)
 {
-    size_t i, len, max_value_width;
+    size_t len, max_value_width, value_offset;
     char *spaces = NULL;
     char *filler = NULL;
     char *pos, *v, savev, *v_to_free;
@@ -980,30 +625,14 @@ void opal_info_out(const char *pretty_message, const char *plain_message, const 
 #endif
 
     /* Strip leading and trailing whitespace from the string value */
-    v = v_to_free = strdup(value);
+    value_offset = strspn(value, " ");
+
+    v = v_to_free = strdup(value + value_offset);
     len = strlen(v);
-    if (isspace(v[0])) {
-        char *newv;
-        i = 0;
-        while (isspace(v[i]) && i < len) {
-            ++i;
-        }
-        newv = strdup(v + i);
-        free(v_to_free);
-        v_to_free = v = newv;
-        len = strlen(v);
-    }
-    if (len > 0 && isspace(v[len - 1])) {
-        i = len - 1;
-        /* Note that i is size_t (unsigned), so we can't check for i
-           >= 0.  But we don't need to, because if the value was all
-           whitespace, stripping whitespace from the left (above)
-           would have resulted in an empty string, and we wouldn't
-           have gotten into this block. */
-        while (isspace(v[i]) && i > 0) {
-            --i;
-        }
-        v[i + 1] = '\0';
+
+    if (len > 0) {
+        while (len > 0 && isspace(v[len-1])) len--;
+        v[len] = '\0';
     }
 
     if (opal_info_pretty && NULL != pretty_message) {
@@ -1083,7 +712,7 @@ void opal_info_out(const char *pretty_message, const char *plain_message, const 
         if (NULL != plain_message && 0 < strlen(plain_message)) {
             printf("%s:%s\n", plain_message, value);
         } else {
-            printf("  %s\n", value);
+            printf("%s\n", value);
         }
     }
     if (NULL != v_to_free) {
@@ -1113,60 +742,56 @@ void opal_info_show_component_version(opal_pointer_array_t *mca_types,
                                       const char *scope, const char *ver_type)
 {
     bool want_all_components = false;
+    bool want_all_types = false;
     bool found;
-    opal_list_item_t *item;
     mca_base_component_list_item_t *cli;
-    const mca_base_component_t *component;
-    opal_list_t *components;
     int j;
     char *pos;
     opal_info_component_map_t *map;
     
     /* see if all components wanted */
-    if (0 == strcmp(opal_info_type_all, component_name)) {
+    if (0 == strcmp(opal_info_component_all, component_name)) {
         want_all_components = true;
     }
+
+    /* see if all types wanted */
+    if (0 != strcmp(opal_info_type_all, type_name)) {
+        /* Check to see if the type is valid */
     
-    /* Check to see if the type is valid */
+        for (found = false, j = 0; j < mca_types->size; ++j) {
+            if (NULL == (pos = (char*)opal_pointer_array_get_item(mca_types, j))) {
+                continue;
+            }
+            if (0 == strcmp(pos, type_name)) {
+                found = true;
+                break;
+            }
+        }
     
-    for (found = false, j = 0; j < mca_types->size; ++j) {
-        if (NULL == (pos = (char*)opal_pointer_array_get_item(mca_types, j))) {
-            continue;
+        if (!found) {
+            return;
         }
-        if (0 == strcmp(pos, type_name)) {
-            found = true;
-            break;
-        }
+    } else {
+        want_all_types = true;
     }
     
-    if (!found) {
-        exit(1);
-    }
-    
-    /* Now that we have a valid type, find the right component list */
-    components = NULL;
+    /* Now that we have a valid type, find the right components */
     for (j=0; j < component_map->size; j++) {
         if (NULL == (map = (opal_info_component_map_t*)opal_pointer_array_get_item(component_map, j))) {
             continue;
         }
-        if (0 == strcmp(type_name, map->type)) {
+        if ((want_all_types || 0 == strcmp(type_name, map->type)) && map->components) {
             /* found it! */
-            components = map->components;
-            break;
-        }
-    }
-
-    if (NULL != components) {
-        if (opal_list_get_size(components) > 0){
-            for (item = opal_list_get_first(components);
-                 opal_list_get_end(components) != item;
-                 item = opal_list_get_next(item)) {
-                cli = (mca_base_component_list_item_t *) item;
-                component = cli->cli_component;
+            OPAL_LIST_FOREACH(cli, map->components, mca_base_component_list_item_t) {
+                const mca_base_component_t *component = cli->cli_component;
                 if (want_all_components || 
                     0 == strcmp(component->mca_component_name, component_name)) {
                     opal_info_show_mca_version(component, scope, ver_type);
                 }
+            }
+
+            if (!want_all_types) {
+                break;
             }
         }
     }

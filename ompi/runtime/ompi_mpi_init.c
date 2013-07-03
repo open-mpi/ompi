@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2006-2012 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2006-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2006-2009 University of Houston. All rights reserved.
  * Copyright (c) 2008-2009 Sun Microsystems, Inc.  All rights reserved.
@@ -321,6 +321,60 @@ opal_hash_table_t ompi_mpi_f90_complex_hashtable;
  */
 opal_list_t ompi_registered_datareps;
 
+bool ompi_enable_timing;
+extern bool ompi_mpi_yield_when_idle;
+extern int ompi_mpi_event_tick_rate;
+
+
+void ompi_mpi_thread_level(int requested, int *provided)
+{
+    /**
+     * These values are monotonic; MPI_THREAD_SINGLE < MPI_THREAD_FUNNELED
+     *                             < MPI_THREAD_SERIALIZED < MPI_THREAD_MULTIPLE.
+     * If possible, the call will return provided = required. Failing this,
+     * the call will return the least supported level such that
+     * provided > required. Finally, if the user requirement cannot be
+     * satisfied, then the call will return in provided the highest
+     * supported level.
+     */
+    ompi_mpi_thread_requested = requested;
+
+    if (OMPI_ENABLE_THREAD_MULTIPLE == 1) {
+        ompi_mpi_thread_provided = *provided = requested;
+        ompi_mpi_main_thread = opal_thread_get_self();
+    } else {
+        if (MPI_THREAD_MULTIPLE == requested) {
+            ompi_mpi_thread_provided = *provided = MPI_THREAD_SERIALIZED;
+        } else {
+            ompi_mpi_thread_provided = *provided = requested;
+        }
+        ompi_mpi_main_thread = (OPAL_ENABLE_MULTI_THREADS ? opal_thread_get_self() : NULL);
+    }
+
+    ompi_mpi_thread_multiple = (ompi_mpi_thread_provided == 
+                                MPI_THREAD_MULTIPLE);
+}
+
+static int ompi_register_mca_variables(void)
+{
+    int ret;
+
+    /* Register MPI variables */
+    if (OMPI_SUCCESS != (ret = ompi_mpi_register_params())) {
+        return ret;
+    }
+
+    /* check to see if we want timing information */
+    ompi_enable_timing = false;
+    (void) mca_base_var_register("ompi", "ompi", NULL, "timing",
+                                 "Request that critical timing loops be measured",
+                                 MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                 OPAL_INFO_LVL_9,
+                                 MCA_BASE_VAR_SCOPE_READONLY,
+                                 &ompi_enable_timing);
+
+    return OMPI_SUCCESS;
+}
 
 int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
 {
@@ -328,10 +382,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     ompi_proc_t** procs;
     size_t nprocs;
     char *error = NULL;
-    bool timing = false;
-    int param, value;
     struct timeval ompistart, ompistop;
-    char *event_val = NULL;
     bool orte_setup = false;
     orte_grpcomm_collective_t *coll;
     char *cmd=NULL, *av=NULL;
@@ -352,6 +403,12 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         goto error;
     }
 
+    /* Register MCA variables */
+    if (OPAL_SUCCESS != (ret = ompi_register_mca_variables())) {
+        error = "ompi_mpi_init: ompi_register_mca_variables failed";
+        goto error;
+    }
+
     /* _After_ opal_init_util() but _before_ orte_init(), we need to
        set an MCA param that tells libevent that it's ok to use any
        mechanism in libevent that is available on this platform (e.g.,
@@ -359,10 +416,10 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
        select/poll -- but we know that MPI processes won't be using
        pty's with the event engine, so it's ok to relax this
        constraint and let any fd-monitoring mechanism be used. */
-    ret = mca_base_param_reg_string_name("opal", "event_include",
-                                         "Internal orted MCA param: tell opal_init() to use a specific mechanism in libevent",
-                                         false, false, "all", &event_val);
+
+    ret = mca_base_var_find("opal", "event", "*", "event_include");
     if (ret >= 0) {
+        char *allvalue = "all";
         /* We have to explicitly "set" the MCA param value here
            because libevent initialization will re-register the MCA
            param and therefore override the default. Setting the value
@@ -375,25 +432,13 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
            environment variable, just so that it won't be inherited by
            any spawned processes and potentially cause unintented
            side-effects with launching ORTE tools... */
-        if (0 == strcmp("all", event_val)) {
-            mca_base_param_set_string(ret, "all");
-        }
+        mca_base_var_set_value(ret, allvalue, 4, MCA_BASE_VAR_SOURCE_DEFAULT, NULL);
     }
 
-    if( NULL != event_val ) {
-        free(event_val);
-        event_val = NULL;
-    }
-
-    /* check to see if we want timing information */
-    param = mca_base_param_reg_int_name("ompi", "timing",
-                                        "Request that critical timing loops be measured",
-                                        false, false, 0, &value);
-    if (value != 0) {
-        timing = true;
+    if (ompi_enable_timing && 0 == ORTE_PROC_MY_NAME->vpid) {
         gettimeofday(&ompistart, NULL);
     }
-    
+
     /* if we were not externally started, then we need to setup
      * some envars so the MPI_INFO_ENV can get the cmd name
      * and argv (but only if the user supplied a non-NULL argv!), and
@@ -419,7 +464,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     orte_setup = true;
     
     /* check for timing request - get stop time and report elapsed time if so */
-    if (timing && 0 == ORTE_PROC_MY_NAME->vpid) {
+    if (ompi_enable_timing && 0 == ORTE_PROC_MY_NAME->vpid) {
         gettimeofday(&ompistop, NULL);
         opal_output(0, "ompi_mpi_init [%ld]: time from start to completion of orte_init %ld usec",
                     (long)ORTE_PROC_MY_NAME->vpid,
@@ -450,31 +495,8 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
        MPI_THREAD_MULTIPLE.  Set this stuff up here early in the
        process so that other components can make decisions based on
        this value. */
-    /**
-     * These values are monotonic; MPI_THREAD_SINGLE < MPI_THREAD_FUNNELED
-     *                             < MPI_THREAD_SERIALIZED < MPI_THREAD_MULTIPLE.
-     * If possible, the call will return provided = required. Failing this,
-     * the call will return the least supported level such that
-     * provided > required. Finally, if the user requirement cannot be
-     * satisfied, then the call will return in provided the highest
-     * supported level.
-     */
-    ompi_mpi_thread_requested = requested;
 
-    if (OMPI_ENABLE_THREAD_MULTIPLE == 1) {
-        ompi_mpi_thread_provided = *provided = requested;
-        ompi_mpi_main_thread = opal_thread_get_self();
-    } else {
-        if (MPI_THREAD_MULTIPLE == requested) {
-            ompi_mpi_thread_provided = *provided = MPI_THREAD_SERIALIZED;
-        } else {
-            ompi_mpi_thread_provided = *provided = requested;
-        }
-        ompi_mpi_main_thread = (OPAL_ENABLE_MULTI_THREADS ? opal_thread_get_self() : NULL);
-    }
-
-    ompi_mpi_thread_multiple = (ompi_mpi_thread_provided == 
-                                MPI_THREAD_MULTIPLE);
+    ompi_mpi_thread_level(requested, provided);
 
     /* determine the bitflag belonging to the threadlevel_support provided */
     memset ( &threadlevel_bf, 0, sizeof(uint8_t));
@@ -483,14 +505,6 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     /* add this bitflag to the modex */
     if ( OMPI_SUCCESS != (ret = ompi_modex_send_string("MPI_THREAD_LEVEL", &threadlevel_bf, sizeof(uint8_t)))) {
         error = "ompi_mpi_init: modex send thread level";
-        goto error;
-    }
-
-    /* Once we've joined the RTE, see if any MCA parameters were
-       passed to the MPI level */
-
-    if (OMPI_SUCCESS != (ret = ompi_mpi_register_params())) {
-        error = "mca_mpi_register_params() failed";
         goto error;
     }
 
@@ -513,7 +527,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
        ddt_init, but befor mca_coll_base_open, since some collective
        modules (e.g., the hierarchical coll component) may need ops in
        their query function. */
-    if (OMPI_SUCCESS != (ret = ompi_op_base_open())) {
+    if (OMPI_SUCCESS != (ret = mca_base_framework_open(&ompi_op_base_framework, 0))) {
         error = "ompi_op_base_open() failed";
         goto error;
     }
@@ -530,34 +544,34 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
 
     /* Open up MPI-related MCA components */
 
-    if (OMPI_SUCCESS != (ret = mca_allocator_base_open())) {
+    if (OMPI_SUCCESS != (ret = mca_base_framework_open(&ompi_allocator_base_framework, 0))) {
         error = "mca_allocator_base_open() failed";
         goto error;
     }
-    if (OMPI_SUCCESS != (ret = mca_rcache_base_open())) {
+    if (OMPI_SUCCESS != (ret = mca_base_framework_open(&ompi_rcache_base_framework, 0))) {
         error = "mca_rcache_base_open() failed";
         goto error;
     }
-    if (OMPI_SUCCESS != (ret = mca_mpool_base_open())) {
+    if (OMPI_SUCCESS != (ret = mca_base_framework_open(&ompi_mpool_base_framework, 0))) {
         error = "mca_mpool_base_open() failed";
         goto error;
     }
-    if (OMPI_SUCCESS != (ret = mca_pml_base_open())) {
+    if (OMPI_SUCCESS != (ret = mca_base_framework_open(&ompi_pml_base_framework, 0))) {
         error = "mca_pml_base_open() failed";
         goto error;
     }
-    if (OMPI_SUCCESS != (ret = mca_coll_base_open())) {
+    if (OMPI_SUCCESS != (ret = mca_base_framework_open(&ompi_coll_base_framework, 0))) {
         error = "mca_coll_base_open() failed";
         goto error;
     }
 
-    if (OMPI_SUCCESS != (ret = ompi_osc_base_open())) {
+    if (OMPI_SUCCESS != (ret = mca_base_framework_open(&ompi_osc_base_framework, 0))) {
         error = "ompi_osc_base_open() failed";
         goto error;
     }
 
 #if OPAL_ENABLE_FT_CR == 1
-    if (OMPI_SUCCESS != (ret = ompi_crcp_base_open())) {
+    if (OMPI_SUCCESS != (ret = mca_base_framework_open(&ompi_crcp_base_framework, 0))) {
         error = "ompi_crcp_base_open() failed";
         goto error;
     }
@@ -586,7 +600,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     }
 
     /* check for timing request - get stop time and report elapsed time if so */
-    if (timing && 0 == ORTE_PROC_MY_NAME->vpid) {
+    if (ompi_enable_timing && 0 == ORTE_PROC_MY_NAME->vpid) {
         gettimeofday(&ompistop, NULL);
         opal_output(0, "ompi_mpi_init[%ld]: time from completion of orte_init to modex %ld usec",
                     (long)ORTE_PROC_MY_NAME->vpid,
@@ -613,7 +627,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     }
     OBJ_RELEASE(coll);
 
-    if (timing && 0 == ORTE_PROC_MY_NAME->vpid) {
+    if (ompi_enable_timing && 0 == ORTE_PROC_MY_NAME->vpid) {
         gettimeofday(&ompistop, NULL);
         opal_output(0, "ompi_mpi_init[%ld]: time to execute modex %ld usec",
                     (long)ORTE_PROC_MY_NAME->vpid,
@@ -778,7 +792,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     
     /* check for timing request - get stop time and report elapsed
        time if so, then start the clock again */
-    if (timing && 0 == ORTE_PROC_MY_NAME->vpid) {
+    if (ompi_enable_timing && 0 == ORTE_PROC_MY_NAME->vpid) {
         gettimeofday(&ompistop, NULL);
         opal_output(0, "ompi_mpi_init[%ld]: time from modex to first barrier %ld usec",
                     (long)ORTE_PROC_MY_NAME->vpid,
@@ -802,7 +816,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
 
     /* check for timing request - get stop time and report elapsed
        time if so, then start the clock again */
-    if (timing && 0 == ORTE_PROC_MY_NAME->vpid) {
+    if (ompi_enable_timing && 0 == ORTE_PROC_MY_NAME->vpid) {
         gettimeofday(&ompistop, NULL);
         opal_output(0, "ompi_mpi_init[%ld]: time to execute barrier %ld usec",
                     (long)ORTE_PROC_MY_NAME->vpid,
@@ -831,8 +845,8 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     }
 
     /* Setup the publish/subscribe (PUBSUB) framework */
-    if (OMPI_SUCCESS != (ret = ompi_pubsub_base_open())) {
-        error = "ompi_pubsub_base_open() failed";
+    if (OMPI_SUCCESS != (ret = mca_base_framework_open(&ompi_pubsub_base_framework, 0))) {
+        error = "mca_pubsub_base_open() failed";
         goto error;
     }
     if (OMPI_SUCCESS != (ret = ompi_pubsub_base_select())) {
@@ -841,7 +855,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     }
     
     /* Setup the dynamic process management (DPM) framework */
-    if (OMPI_SUCCESS != (ret = ompi_dpm_base_open())) {
+    if (OMPI_SUCCESS != (ret = mca_base_framework_open(&ompi_dpm_base_framework, 0))) {
         error = "ompi_dpm_base_open() failed";
         goto error;
     }
@@ -907,21 +921,11 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     opal_progress_event_users_decrement(); 
 
     /* see if yield_when_idle was specified - if so, use it */
-    param = mca_base_param_find("mpi", NULL, "yield_when_idle");
-    mca_base_param_lookup_int(param, &value);
-    if (value < 0) {
-        /* if no info is provided, just default to conservative */
-        opal_progress_set_yield_when_idle(true);
-    } else {
-        /* info was provided, so set idle accordingly */
-        opal_progress_set_yield_when_idle(value == 0 ? false : true);
-    }
+    opal_progress_set_yield_when_idle(ompi_mpi_yield_when_idle);
     
-    param = mca_base_param_find("mpi", NULL, "event_tick_rate");
-    mca_base_param_lookup_int(param, &value);
     /* negative value means use default - just don't do anything */
-    if (value >= 0) {
-        opal_progress_set_event_poll_rate(value);
+    if (ompi_mpi_event_tick_rate >= 0) {
+        opal_progress_set_event_poll_rate(ompi_mpi_event_tick_rate);
     }
 
     /* At this point, we are fully configured and in MPI mode.  Any
@@ -974,7 +978,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     ompi_mpi_initialized = true;
 
     /* check for timing request - get stop time and report elapsed time if so */
-    if (timing && 0 == ORTE_PROC_MY_NAME->vpid) {
+    if (ompi_enable_timing && 0 == ORTE_PROC_MY_NAME->vpid) {
         gettimeofday(&ompistop, NULL);
         opal_output(0, "ompi_mpi_init[%ld]: time from barrier to complete mpi_init %ld usec",
                     (long)ORTE_PROC_MY_NAME->vpid,

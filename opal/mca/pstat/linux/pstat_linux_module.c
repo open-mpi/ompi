@@ -39,7 +39,6 @@
 
 #include <sys/param.h>  /* for HZ to convert jiffies to actual time */
 
-#include "opal/mca/base/mca_base_param.h"
 #include "opal/dss/dss_types.h"
 #include "opal/util/printf.h"
 

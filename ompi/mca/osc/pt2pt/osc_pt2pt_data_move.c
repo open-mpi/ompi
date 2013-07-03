@@ -94,7 +94,7 @@ ompi_osc_pt2pt_sendreq_send_long_cb(ompi_request_t *request)
     ompi_osc_pt2pt_sendreq_t *sendreq = longreq->req_basereq.req_sendreq;
     int32_t count;
 
-    OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_output,
+    OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
                          "%d completed long sendreq to %d",
                          ompi_comm_rank(sendreq->req_module->p2p_comm),
                          sendreq->req_target_rank));
@@ -285,7 +285,7 @@ ompi_osc_pt2pt_sendreq_send(ompi_osc_pt2pt_module_t *module,
 #endif
 
     /* send fragment */
-    OPAL_OUTPUT_VERBOSE((51, ompi_osc_base_output,
+    OPAL_OUTPUT_VERBOSE((51, ompi_osc_base_framework.framework_output,
                          "%d sending sendreq to %d",
                          ompi_comm_rank(sendreq->req_module->p2p_comm),
                          sendreq->req_target_rank));
@@ -308,7 +308,7 @@ ompi_osc_pt2pt_sendreq_send(ompi_osc_pt2pt_module_t *module,
         ompi_osc_pt2pt_longreq_alloc(&longreq);
         longreq->req_basereq.req_sendreq = sendreq;
 
-        OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_output,
+        OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
                              "%d starting long sendreq to %d (%d)",
                              ompi_comm_rank(sendreq->req_module->p2p_comm),
                              sendreq->req_target_rank,
@@ -559,7 +559,7 @@ ompi_osc_pt2pt_sendreq_recv_put(ompi_osc_pt2pt_module_t *module,
         ompi_osc_base_datatype_create(proc, &inbuf);
 
     if (NULL == datatype) {
-        opal_output(ompi_osc_base_output,
+        opal_output(ompi_osc_base_framework.framework_output,
                     "Error recreating datatype.  Aborting.");
         ompi_mpi_abort(module->p2p_comm, 1, false);
     }
@@ -696,7 +696,7 @@ ompi_osc_pt2pt_sendreq_recv_accum_long_cb(ompi_request_t *request)
     /* unlock the window for accumulates */
     OPAL_THREAD_UNLOCK(&longreq->req_module->p2p_acc_lock);
     
-    OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_output,
+    OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
                          "%d finished receiving long accum message from %d",
                          ompi_comm_rank(longreq->req_module->p2p_comm),
                          header->hdr_origin));
@@ -732,7 +732,7 @@ ompi_osc_pt2pt_sendreq_recv_accum(ompi_osc_pt2pt_module_t *module,
         ((unsigned long)header->hdr_target_disp * module->p2p_win->w_disp_unit);    
 
     if (NULL == datatype) {
-        opal_output(ompi_osc_base_output,
+        opal_output(ompi_osc_base_framework.framework_output,
                     "Error recreating datatype.  Aborting.");
         ompi_mpi_abort(module->p2p_comm, 1, false);
     }
@@ -849,7 +849,7 @@ ompi_osc_pt2pt_sendreq_recv_accum(ompi_osc_pt2pt_module_t *module,
 
         inmsg_mark_complete(module);
 
-        OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_output,
+        OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
                              "%d received accum message from %d",
                              ompi_comm_rank(module->p2p_comm),
                              header->hdr_origin));
@@ -893,7 +893,7 @@ ompi_osc_pt2pt_sendreq_recv_accum(ompi_osc_pt2pt_module_t *module,
                                              ompi_osc_pt2pt_sendreq_recv_accum_long_cb,
                                              longreq);
 
-        OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_output,
+        OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
                              "%d started long recv accum message from %d (%d)",
                              ompi_comm_rank(module->p2p_comm),
                              header->hdr_origin,

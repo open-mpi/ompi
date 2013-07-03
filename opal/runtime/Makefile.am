@@ -32,7 +32,8 @@ headers += \
         runtime/opal_progress.h \
         runtime/opal.h \
         runtime/opal_cr.h \
-        runtime/opal_info_support.h
+        runtime/opal_info_support.h \
+        runtime/opal_params.h
 
 libopen_pal_la_SOURCES += \
         runtime/opal_progress.c \

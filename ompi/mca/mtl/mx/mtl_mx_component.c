@@ -20,7 +20,6 @@
 #include "ompi_config.h"
 
 #include "opal/mca/event/event.h"
-#include "opal/mca/base/mca_base_param.h"
 #include "ompi/mca/mtl/base/base.h"
 #include "ompi/mca/common/mx/common_mx.h"
 
@@ -31,6 +30,7 @@
 #include "myriexpress.h"
 
 #define  MCA_MTL_MX_QUEUE_LENGTH_MAX 2*1024*1024
+static int ompi_mtl_mx_component_register(void);
 static int ompi_mtl_mx_component_open(void);
 static int ompi_mtl_mx_component_close(void);
 static int ompi_mtl_mx_component_initialized = 0;
@@ -52,7 +52,9 @@ mca_mtl_mx_component_t mca_mtl_mx_component = {
             OMPI_MINOR_VERSION,  /* MCA component minor version */
             OMPI_RELEASE_VERSION,  /* MCA component release version */
             ompi_mtl_mx_component_open,  /* component open */
-            ompi_mtl_mx_component_close  /* component close */
+            ompi_mtl_mx_component_close, /* component close */
+            NULL,
+            ompi_mtl_mx_component_register
         },
         {
             /* The component is not checkpoint ready */
@@ -63,43 +65,65 @@ mca_mtl_mx_component_t mca_mtl_mx_component = {
     }
 };
 
-    
+static int
+ompi_mtl_mx_component_register(void)
+{
+    ompi_mtl_mx.mx_filter = 0xaaaaffff;
+    (void) mca_base_component_var_register(&mca_mtl_mx_component.super.mtl_version, "filter",
+                                           "user assigned value used to filter incomming messages",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY, &ompi_mtl_mx.mx_filter);
+
+    ompi_mtl_mx.mx_timeout = MX_INFINITE;
+    (void) mca_base_component_var_register(&mca_mtl_mx_component.super.mtl_version, "timeout",
+                                           "Timeout for connections", MCA_BASE_VAR_TYPE_INT,
+                                           NULL, 0, 0, OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY, &ompi_mtl_mx.mx_timeout);
+
+    ompi_mtl_mx.mx_retries = 20;
+    (void) mca_base_component_var_register(&mca_mtl_mx_component.super.mtl_version, "retries",
+                                           "Number of retries for each new connection before considering the peer as unreacheable",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY, &ompi_mtl_mx.mx_retries);
+
+    ompi_mtl_mx.mx_support_sharedmem = 1;
+    (void) mca_base_component_var_register(&mca_mtl_mx_component.super.mtl_version, "shared_mem",
+                                           "Enable the MX support for shared memory", MCA_BASE_VAR_TYPE_INT,
+                                           NULL, 0, 0, OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY, &ompi_mtl_mx.mx_support_sharedmem);
+
+    ompi_mtl_mx.mx_unexp_queue_max = MCA_MTL_MX_QUEUE_LENGTH_MAX;
+    (void) mca_base_component_var_register(&mca_mtl_mx_component.super.mtl_version, "unexpected_queue_length",
+                                           "Length of MX unexpected message queue", MCA_BASE_VAR_TYPE_INT,
+                                           NULL, 0, 0, OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY, &ompi_mtl_mx.mx_unexp_queue_max);
+
+    ompi_mtl_mx.mx_board_num = -1;
+    (void) mca_base_component_var_register(&mca_mtl_mx_component.super.mtl_version, "board",
+                                           "Which MX board number to use (<0 = any)",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY, &ompi_mtl_mx.mx_board_num);
+
+    ompi_mtl_mx.mx_endpoint_num = -1;
+    (void) mca_base_component_var_register(&mca_mtl_mx_component.super.mtl_version, "endpoint",
+                                           "Which MX endpoint number to use (<0 = any)",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY, &ompi_mtl_mx.mx_endpoint_num);
+
+    return OMPI_SUCCESS;
+}
+
 static int
 ompi_mtl_mx_component_open(void)
 {
-        
-    
-    mca_base_param_reg_int(&mca_mtl_mx_component.super.mtl_version, "filter",
-                           "user assigned value used to filter incomming messages",
-                           false, false, 0xaaaaffff, &ompi_mtl_mx.mx_filter);
-    
-    mca_base_param_reg_int(&mca_mtl_mx_component.super.mtl_version, "timeout",
-                           "Timeout for connections",
-                           false, false, MX_INFINITE, &ompi_mtl_mx.mx_timeout);
-    
-    mca_base_param_reg_int(&mca_mtl_mx_component.super.mtl_version, "retries",
-                           "Number of retries for each new connection before considering the peer as unreacheable",
-                           false, false, 20, &ompi_mtl_mx.mx_retries);
-    
-    mca_base_param_reg_int(&mca_mtl_mx_component.super.mtl_version, "shared_mem",
-                           "Enable the MX support for shared memory",
-                           false, true, 1, &ompi_mtl_mx.mx_support_sharedmem );
-    
-    mca_base_param_reg_int(&mca_mtl_mx_component.super.mtl_version, "unexpected_queue_length", 
-                           "Length of MX unexpected message queue", 
-                           false, false, MCA_MTL_MX_QUEUE_LENGTH_MAX, &ompi_mtl_mx.mx_unexp_queue_max);
-    
-    if(ompi_mtl_mx.mx_unexp_queue_max >  MCA_MTL_MX_QUEUE_LENGTH_MAX) { 
-        ompi_mtl_mx.mx_unexp_queue_max =  MCA_MTL_MX_QUEUE_LENGTH_MAX; 
+    if(ompi_mtl_mx.mx_unexp_queue_max > MCA_MTL_MX_QUEUE_LENGTH_MAX) { 
+        ompi_mtl_mx.mx_unexp_queue_max = MCA_MTL_MX_QUEUE_LENGTH_MAX; 
     }
 
-    mca_base_param_reg_int(&mca_mtl_mx_component.super.mtl_version, "board",
-                           "Which MX board number to use (<0 = any)",
-                           false, false, -1, &ompi_mtl_mx.mx_board_num);
-    mca_base_param_reg_int(&mca_mtl_mx_component.super.mtl_version, "endpoint",
-                           "Which MX endpoint number to use (<0 = any)",
-                           false, false, -1, &ompi_mtl_mx.mx_endpoint_num);
-    
     return OMPI_SUCCESS;
 }
 

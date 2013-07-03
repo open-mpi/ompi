@@ -3,7 +3,7 @@
  * Copyright (c) 2007-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2008-2009 Mellanox Technologies. All rights reserved.
  * Copyright (c) 2009      IBM Corporation.  All rights reserved.
- * Copyright (c) 2011      Los Alamos National Security, LLC.  All
+ * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All
  *                         rights reserved.
  *
  * $COPYRIGHT$
@@ -360,38 +360,41 @@ ompi_btl_openib_connect_base_component_t ompi_btl_openib_connect_udcm = {
 
 static void udcm_component_register(void)
 {
-    mca_base_param_reg_int(&mca_btl_openib_component.super.btl_version,
-                           "connect_udcm_priority",
-                           "The selection method priority for ud",
-                           false, false, udcm_priority, &udcm_priority);
-    if (udcm_priority > 100) {
-        udcm_priority = 100;
-    } else if (udcm_priority < 0) {
-        udcm_priority = 0;
-    }
+    udcm_priority = 0;
+    (void) mca_base_component_var_register(&mca_btl_openib_component.super.btl_version,
+                                           "connect_udcm_priority",
+                                           "The selection method priority for ud",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &udcm_priority);
 
-    mca_base_param_reg_int(&mca_btl_openib_component.super.btl_version,
-			   "connect_udcm_recv_count",
-			   "Number of connection buffers to post",
-			   false, false, udcm_recv_count,
-			   &udcm_recv_count);
-    if (UDCM_MIN_RECV_COUNT > udcm_recv_count) {
-	udcm_recv_count = UDCM_MIN_RECV_COUNT;
-    }
+    udcm_recv_count = UDCM_MIN_RECV_COUNT;
+    (void) mca_base_component_var_register(&mca_btl_openib_component.super.btl_version,
+                                           "connect_udcm_recv_count",
+                                           "Number of connection buffers to post",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &udcm_recv_count);
 
-    mca_base_param_reg_int(&mca_btl_openib_component.super.btl_version,
-			   "connect_udcm_timeout",
-			   "Microseconds to wait for ud connection response",
-			   false, false, udcm_timeout,
-			   &udcm_timeout);
-    if (UDCM_MIN_TIMEOUT > udcm_timeout) {
-	udcm_timeout = UDCM_MIN_TIMEOUT;
-    }
+    udcm_timeout = UDCM_MIN_TIMEOUT;
+    (void) mca_base_component_var_register(&mca_btl_openib_component.super.btl_version,
+                                           "connect_udcm_timeout",
+                                           "Microseconds to wait for ud connection response",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &udcm_timeout);
 
-    mca_base_param_reg_int(&mca_btl_openib_component.super.btl_version,
-			   "connect_udcm_max_retry",
-			   "Maximum number of times to retry sending a connection message",
-			   false, false, udcm_max_retry, &udcm_max_retry);
+    udcm_max_retry = 10;
+    (void) mca_base_component_var_register(&mca_btl_openib_component.super.btl_version,
+                                           "connect_udcm_max_retry",
+                                           "Maximum number of times to retry sending a connection message",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &udcm_max_retry);
 }
 
 static int udcm_component_query(mca_btl_openib_module_t *btl, 
@@ -428,6 +431,20 @@ static int udcm_component_query(mca_btl_openib_module_t *btl,
 	    rc = OMPI_ERR_OUT_OF_RESOURCE;
 	    break;
 	}
+
+        if (udcm_priority > 100) {
+            udcm_priority = 100;
+        } else if (udcm_priority < 0) {
+            udcm_priority = 0;
+        }
+
+        if (UDCM_MIN_RECV_COUNT > udcm_recv_count) {
+            udcm_recv_count = UDCM_MIN_RECV_COUNT;
+        }
+
+        if (UDCM_MIN_TIMEOUT > udcm_timeout) {
+            udcm_timeout = UDCM_MIN_TIMEOUT;
+        }
 
 	rc = udcm_module_init (m, btl);
 	if (OMPI_SUCCESS != rc) {

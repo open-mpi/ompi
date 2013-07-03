@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2011      Los Alamos National Security, LLC.
+ * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * $COPYRIGHT$
  * 
@@ -68,7 +68,7 @@ int orte_ess_base_tool_setup(void)
     /* Setup the communication infrastructure */
     
     /* Runtime Messaging Layer */
-    if (ORTE_SUCCESS != (ret = orte_rml_base_open())) {
+    if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_rml_base_framework, 0))) {
         ORTE_ERROR_LOG(ret);
         error = "orte_rml_base_open";
         goto error;
@@ -79,9 +79,9 @@ int orte_ess_base_tool_setup(void)
         goto error;
     }
     /* Routed system */
-    if (ORTE_SUCCESS != (ret = orte_routed_base_open())) {
+    if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_routed_base_framework, 0))) {
         ORTE_ERROR_LOG(ret);
-        error = "orte_routed_base_open";
+        error = "orte_rml_base_open";
         goto error;
     }
     if (ORTE_SUCCESS != (ret = orte_routed_base_select())) {
@@ -109,9 +109,9 @@ int orte_ess_base_tool_setup(void)
      * this node might be located
      */
     if (ORTE_SUCCESS != (ret = orte_session_dir_get_name(NULL,
-                                   &orte_process_info.tmpdir_base,
-                                   &orte_process_info.top_session_dir,
-                                   orte_process_info.nodename, NULL, NULL))) {
+                                                         &orte_process_info.tmpdir_base,
+                                                         &orte_process_info.top_session_dir,
+                                                         orte_process_info.nodename, NULL, NULL))) {
         ORTE_ERROR_LOG(ret);
         error = "define session dir names";
         goto error;
@@ -129,7 +129,7 @@ int orte_ess_base_tool_setup(void)
     /* setup I/O forwarding system - must come after we init routes */
     if (NULL != orte_process_info.my_hnp_uri) {
         /* only do this if we were given an HNP */
-        if (ORTE_SUCCESS != (ret = orte_iof_base_open())) {
+        if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_iof_base_framework, 0))) {
             ORTE_ERROR_LOG(ret);
             error = "orte_iof_base_open";
             goto error;
@@ -162,7 +162,7 @@ int orte_ess_base_tool_setup(void)
     
     return ORTE_SUCCESS;
     
-error:
+ error:
     orte_show_help("help-orte-runtime.txt",
                    "orte_init:startup:internal-failure",
                    true, error, ORTE_ERROR_NAME(ret), ret);
@@ -183,10 +183,10 @@ int orte_ess_base_tool_finalize(void)
      * I only back those elements out
      */
     if (NULL != orte_process_info.my_hnp_uri) {
-        orte_iof_base_close();
+        (void) mca_base_framework_close(&orte_iof_base_framework);
     }
-    orte_routed_base_close();
-    orte_rml_base_close();
+    (void) mca_base_framework_close(&orte_routed_base_framework);
+    (void) mca_base_framework_close(&orte_rml_base_framework);
 
     return ORTE_SUCCESS;    
 }

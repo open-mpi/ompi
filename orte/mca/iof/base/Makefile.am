@@ -20,7 +20,7 @@ headers += \
         base/base.h
 
 libmca_iof_la_SOURCES += \
-        base/iof_base_open.c
+        base/iof_base_frame.c
 
 if !ORTE_DISABLE_FULL_SUPPORT
 
@@ -28,7 +28,6 @@ headers += \
 	base/iof_base_setup.h
 
 libmca_iof_la_SOURCES += \
-        base/iof_base_close.c \
 	base/iof_base_select.c \
         base/iof_base_output.c \
 	base/iof_base_setup.c

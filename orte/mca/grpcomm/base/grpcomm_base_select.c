@@ -9,6 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2013      Los Alamos National Security, LLC.
+ *                         All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -38,8 +40,8 @@ int orte_grpcomm_base_select(void)
     /*
      * Select the best component
      */
-    if( OPAL_SUCCESS != mca_base_select("grpcomm", orte_grpcomm_base.output,
-                                        &orte_grpcomm_base.components_available,
+    if( OPAL_SUCCESS != mca_base_select("grpcomm", orte_grpcomm_base_framework.framework_output,
+                                        &orte_grpcomm_base_framework.framework_components,
                                         (mca_base_module_t **) &best_module,
                                         (mca_base_component_t **) &best_component) ) {
         /* This will only happen if no component was selected */
@@ -55,8 +57,6 @@ int orte_grpcomm_base_select(void)
         exit_status = ret;
         goto cleanup;
     }
-
-    orte_grpcomm_base.selected = true;
 
  cleanup:
     return exit_status;

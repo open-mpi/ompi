@@ -34,8 +34,7 @@ BEGIN_C_DECLS
  */
 
 OMPI_MODULE_DECLSPEC extern const mca_coll_base_component_2_0_0_t mca_coll_self_component;
-extern int mca_coll_self_priority_param;
-
+extern int ompi_coll_self_priority;
 
 /*
  * coll API functions

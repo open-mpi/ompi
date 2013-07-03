@@ -37,7 +37,6 @@
 #include "opal/hash_string.h"
 #include "opal/util/argv.h"
 #include "opal/util/path.h"
-#include "opal/mca/base/mca_base_param.h"
 #include "opal/mca/installdirs/installdirs.h"
 
 #include "orte/util/show_help.h"
@@ -70,6 +69,8 @@ static void set_handler_default(int sig)
 static int rte_init(void);
 static int rte_finalize(void);
 
+extern char *orte_ess_singleton_server_uri;
+
 orte_ess_base_module_t orte_ess_singleton_module = {
     rte_init,
     rte_finalize,
@@ -80,7 +81,7 @@ orte_ess_base_module_t orte_ess_singleton_module = {
 static int rte_init(void)
 {
     int rc;
-    char *server_uri, *param;
+    char *param;
     uint16_t jobfam;
     uint32_t hash32;
     uint32_t bias;
@@ -90,25 +91,20 @@ static int rte_init(void)
         ORTE_ERROR_LOG(rc);
         return rc;
     }
-    
-    /* look for the ompi-server MCA param */
-    mca_base_param_reg_string_name("orte", "server",
-                                   "Server to be used as HNP - [file|FILE]:<filename> or just uri",
-                                   false, false, NULL, &server_uri);
 
-    if (NULL != server_uri) {
+    if (NULL != orte_ess_singleton_server_uri) {
         /* we are going to connect to a server HNP */
-        if (0 == strncmp(server_uri, "file", strlen("file")) ||
-            0 == strncmp(server_uri, "FILE", strlen("FILE"))) {
+        if (0 == strncmp(orte_ess_singleton_server_uri, "file", strlen("file")) ||
+            0 == strncmp(orte_ess_singleton_server_uri, "FILE", strlen("FILE"))) {
             char input[1024], *filename;
             FILE *fp;
             
             /* it is a file - get the filename */
-            filename = strchr(server_uri, ':');
+            filename = strchr(orte_ess_singleton_server_uri, ':');
             if (NULL == filename) {
                 /* filename is not correctly formatted */
                 orte_show_help("help-orterun.txt", "orterun:ompi-server-filename-bad", true,
-                               "singleton", server_uri);
+                               "singleton", orte_ess_singleton_server_uri);
                 return ORTE_ERROR;
             }
             ++filename; /* space past the : */
@@ -116,7 +112,7 @@ static int rte_init(void)
             if (0 >= strlen(filename)) {
                 /* they forgot to give us the name! */
                 orte_show_help("help-orterun.txt", "orterun:ompi-server-filename-missing", true,
-                               "singleton", server_uri);
+                               "singleton", orte_ess_singleton_server_uri);
                 return ORTE_ERROR;
             }
             
@@ -124,21 +120,21 @@ static int rte_init(void)
             fp = fopen(filename, "r");
             if (NULL == fp) { /* can't find or read file! */
                 orte_show_help("help-orterun.txt", "orterun:ompi-server-filename-access", true,
-                               "singleton", server_uri);
+                               "singleton", orte_ess_singleton_server_uri);
                 return ORTE_ERROR;
             }
             if (NULL == fgets(input, 1024, fp)) {
                 /* something malformed about file */
                 fclose(fp);
                 orte_show_help("help-orterun.txt", "orterun:ompi-server-file-bad", true,
-                               "singleton", server_uri, "singleton");
+                               "singleton", orte_ess_singleton_server_uri, "singleton");
                 return ORTE_ERROR;
             }
             fclose(fp);
             input[strlen(input)-1] = '\0';  /* remove newline */
             orte_process_info.my_hnp_uri = strdup(input);
         } else {
-            orte_process_info.my_hnp_uri = strdup(server_uri);
+            orte_process_info.my_hnp_uri = strdup(orte_ess_singleton_server_uri);
         }
         /* save the daemon uri - we will process it later */
         orte_process_info.my_daemon_uri = strdup(orte_process_info.my_hnp_uri);
@@ -153,7 +149,7 @@ static int rte_init(void)
         
         bias = (uint32_t)orte_process_info.pid;
         
-        OPAL_OUTPUT_VERBOSE((5, orte_ess_base_output,
+        OPAL_OUTPUT_VERBOSE((5, orte_ess_base_framework.framework_output,
                              "ess:singleton: initial bias %ld nodename hash %lu",
                              (long)bias, (unsigned long)hash32));
         
@@ -163,7 +159,7 @@ static int rte_init(void)
         /* now compress to 16-bits */
         jobfam = (uint16_t)(((0x0000ffff & (0xffff0000 & hash32) >> 16)) ^ (0x0000ffff & hash32));
         
-        OPAL_OUTPUT_VERBOSE((5, orte_ess_base_output,
+        OPAL_OUTPUT_VERBOSE((5, orte_ess_base_framework.framework_output,
                              "ess:singleton:: final jobfam %lu",
                              (unsigned long)jobfam));
         

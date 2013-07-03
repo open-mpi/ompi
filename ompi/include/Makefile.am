@@ -54,7 +54,7 @@ nodist_include_HEADERS += \
         mpif-config.h
 endif
 
-include ompi/Makefile.include
+include ompi/Makefile.am
 
 # This is complicated, but mpif-values.pl generates
 # several mpif-*.h files in this directory (during autogen.pl).

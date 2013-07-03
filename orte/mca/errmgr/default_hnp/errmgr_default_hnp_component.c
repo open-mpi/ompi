@@ -25,6 +25,7 @@ const char *orte_errmgr_default_hnp_component_version_string =
 /*
  * Local functionality
  */
+static int default_hnp_register(void);
 static int default_hnp_open(void);
 static int default_hnp_close(void);
 static int default_hnp_component_query(mca_base_module_t **module, int *priority);
@@ -48,7 +49,8 @@ orte_errmgr_base_component_t mca_errmgr_default_hnp_component = {
         /* Component open and close functions */
         default_hnp_open,
         default_hnp_close,
-        default_hnp_component_query
+        default_hnp_component_query,
+        default_hnp_register
     },
     {
         /* The component is checkpoint ready */
@@ -58,15 +60,22 @@ orte_errmgr_base_component_t mca_errmgr_default_hnp_component = {
 
 static int my_priority;
 
-static int default_hnp_open(void) 
+static int default_hnp_register(void)
 {
     mca_base_component_t *c = &mca_errmgr_default_hnp_component.base_version;
 
-    mca_base_param_reg_int(c, "priority",
-                           "Priority of the default_hnp errmgr component",
-                           false, false, 1000,
-                           &my_priority);
+    my_priority = 1000;
+    (void) mca_base_component_var_register(c, "priority",
+                                           "Priority of the default_hnp errmgr component",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY, &my_priority);
 
+    return ORTE_SUCCESS;
+}
+
+static int default_hnp_open(void) 
+{
     return ORTE_SUCCESS;
 }
 

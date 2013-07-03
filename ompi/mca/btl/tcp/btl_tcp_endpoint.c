@@ -512,7 +512,7 @@ void mca_btl_tcp_set_socket_options(int sd)
 {
     int optval;
 #if defined(TCP_NODELAY)
-    optval = mca_btl_tcp_component.tcp_use_nodelay;
+    optval = mca_btl_tcp_component.tcp_not_use_nodelay;
     if(setsockopt(sd, IPPROTO_TCP, TCP_NODELAY, (char *)&optval, sizeof(optval)) < 0) {
         BTL_ERROR(("setsockopt(TCP_NODELAY) failed: %s (%d)", 
                    strerror(opal_socket_errno), opal_socket_errno));
@@ -584,7 +584,7 @@ static int mca_btl_tcp_endpoint_start_connect(mca_btl_base_endpoint_t* btl_endpo
     /* start the connect - will likely fail with EINPROGRESS */
     mca_btl_tcp_proc_tosocks(btl_endpoint->endpoint_addr, &endpoint_addr);
 
-    opal_output_verbose(20, mca_btl_base_output, 
+    opal_output_verbose(20, ompi_btl_base_framework.framework_output, 
                         "btl: tcp: attempting to connect() to %s address %s on port %d",
                         ORTE_NAME_PRINT(&btl_endpoint->endpoint_proc->proc_ompi->proc_name),
                         opal_net_get_hostname((struct sockaddr*) &endpoint_addr),

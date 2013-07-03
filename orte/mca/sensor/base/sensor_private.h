@@ -38,7 +38,6 @@ BEGIN_C_DECLS
 
 /* define a struct to hold framework-global values */
 typedef struct {
-    int output;
     opal_pointer_array_t modules;
     orte_proc_t *my_proc;
     orte_node_t *my_node;

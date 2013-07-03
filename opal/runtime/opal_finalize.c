@@ -65,18 +65,23 @@ opal_finalize_util(void)
         return OPAL_SUCCESS;
     }
 
+    /* close interfaces code. */
+    if (opal_if_base_framework.framework_refcnt > 1) {
+        /* opal if may have been opened many times -- FIXME */
+        opal_if_base_framework.framework_refcnt = 1;
+    }
+
+    (void) mca_base_framework_close(&opal_if_base_framework);
+
     /* Clear out all the registered MCA params */
     mca_base_param_finalize();
-
-    /* close interfaces code. */
-    opal_if_base_close();
 
     opal_net_finalize();
 
     /* keyval lex-based parser */
     opal_util_keyval_parse_finalize();
 
-    opal_installdirs_base_close();
+    (void) mca_base_framework_close(&opal_installdirs_base_framework);
 
     /* finalize the memory allocator */
     opal_malloc_finalize();
@@ -117,36 +122,36 @@ opal_finalize(void)
     opal_cr_finalize();
 
 #if OPAL_ENABLE_FT_CR    == 1
-    opal_compress_base_close();
+    (void) mca_base_framework_close(&opal_compress_base_framework);
 #endif
     
     opal_progress_finalize();
 
-    opal_event_base_close();
+    (void) mca_base_framework_close(&opal_event_base_framework);
 
     /* close high resolution timers */
-    opal_timer_base_close();
+    (void) mca_base_framework_close(&opal_timer_base_framework);
 
-    opal_backtrace_base_close();
+    (void) mca_base_framework_close(&opal_backtrace_base_framework);
 
     /* close the memory manager components.  Registered hooks can
        still be fired any time between now and the call to
        opal_mem_free_finalize(), and callbacks from the memory manager
        hooks to the bowels of the mem_free code can still occur any
        time between now and end of application (even post main()!) */
-    opal_memory_base_close();
+    (void) mca_base_framework_close(&opal_memory_base_framework);
 
     /* finalize the memory manager / tracker */
     opal_mem_hooks_finalize();
 
     /* close the shmem framework */
-    opal_shmem_base_close();
-    
-    /* close the hwloc framework */
-    opal_hwloc_base_close();
+    (void) mca_base_framework_close(&opal_shmem_base_framework);
 
-    /* close the memcpy base */
-    opal_memcpy_base_close();
+    /* close the hwloc framework */
+    (void) mca_base_framework_close(&opal_hwloc_base_framework);
+
+    /* close the memcpy framework */
+    (void) mca_base_framework_close(&opal_memcpy_base_framework);
 
     /* finalize the mca */
     mca_base_close();

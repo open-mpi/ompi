@@ -192,7 +192,7 @@ static int store(const orte_process_name_t *proc,
     opal_value_t *kv;
     opal_byte_object_t *boptr;
 
-    OPAL_OUTPUT_VERBOSE((5, orte_db_base.output,
+    OPAL_OUTPUT_VERBOSE((5, orte_db_base_framework.framework_output,
                          "%s db:hash:store: storing key %s[%s] for proc %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          key, opal_dss.lookup_data_type(type), ORTE_NAME_PRINT(proc)));
@@ -281,7 +281,7 @@ static int store_pointer(const orte_process_name_t *proc,
     proc_data_t *proc_data;
     opal_value_t *k2;
 
-    OPAL_OUTPUT_VERBOSE((5, orte_db_base.output,
+    OPAL_OUTPUT_VERBOSE((5, orte_db_base_framework.framework_output,
                          "%s db:hash:store: storing pointer of key %s for proc %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          kv->key, ORTE_NAME_PRINT(proc)));
@@ -330,7 +330,7 @@ static int fetch(const orte_process_name_t *proc,
     opal_value_t *kv;
     opal_byte_object_t *boptr;
 
-    OPAL_OUTPUT_VERBOSE((5, orte_db_base.output,
+    OPAL_OUTPUT_VERBOSE((5, orte_db_base_framework.framework_output,
                          "%s db:hash:fetch: searching for key %s[%s] on proc %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          (NULL == key) ? "NULL" : key,
@@ -437,7 +437,7 @@ static int fetch_pointer(const orte_process_name_t *proc,
     proc_data_t *proc_data;
     opal_value_t *kv;
 
-    OPAL_OUTPUT_VERBOSE((5, orte_db_base.output,
+    OPAL_OUTPUT_VERBOSE((5, orte_db_base_framework.framework_output,
                          "%s db:hash:fetch_pointer: searching for key %s on proc %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          (NULL == key) ? "NULL" : key, ORTE_NAME_PRINT(proc)));
@@ -537,7 +537,7 @@ static int fetch_multiple(const orte_process_name_t *proc,
     char *srchkey, *ptr;
     size_t len = 0;
 
-    OPAL_OUTPUT_VERBOSE((5, orte_db_base.output,
+    OPAL_OUTPUT_VERBOSE((5, orte_db_base_framework.framework_output,
                          "%s db:hash:fetch_multiple: searching for key %s on proc %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          (NULL == key) ? "NULL" : key, ORTE_NAME_PRINT(proc)));

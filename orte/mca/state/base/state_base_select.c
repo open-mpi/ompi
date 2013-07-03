@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
+ * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * $COPYRIGHT$
  * 
@@ -18,7 +18,6 @@
 
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
-#include "opal/mca/base/mca_base_param.h"
 #include "opal/util/output.h"
 
 #include "orte/mca/state/base/base.h"
@@ -33,8 +32,8 @@ int orte_state_base_select(void)
     /*
      * Select the best component
      */
-    if( OPAL_SUCCESS != mca_base_select("state", orte_state_base_output,
-                                        &orte_state_base_components_available,
+    if( OPAL_SUCCESS != mca_base_select("state", orte_state_base_framework.framework_output,
+                                        &orte_state_base_framework.framework_components,
                                         (mca_base_module_t **) &best_module,
                                         (mca_base_component_t **) &best_component) ) {
         /* This will only happen if no component was selected */
@@ -43,7 +42,6 @@ int orte_state_base_select(void)
     }
 
     /* Save the winner */
-    orte_state_base_selected_component = *best_component;
     orte_state = *best_module;
 
     /* Initialize the winner */

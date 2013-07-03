@@ -1,8 +1,8 @@
 /*
  * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved. 
- * Copyright (c) 2011      Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
-  *
+ *
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -75,7 +75,7 @@ static int init(void)
 {
     int rc=ORTE_SUCCESS;
 
-    OPAL_OUTPUT_VERBOSE((1, orte_sensor_base.output,
+    OPAL_OUTPUT_VERBOSE((1, orte_sensor_base_framework.framework_output,
                          "%s initializing heartbeat recvs",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
@@ -257,7 +257,7 @@ static void read_stats(int fd, short event, void *arg)
         goto reset;
     }
 
-    OPAL_OUTPUT_VERBOSE((1, orte_sensor_base.output,
+    OPAL_OUTPUT_VERBOSE((1, orte_sensor_base_framework.framework_output,
                          "%s sensor:heartbeat READING LOCAL STATS",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
@@ -304,7 +304,7 @@ static void send_heartbeat(int fd, short event, void *arg)
         goto reset;
     }
 
-    OPAL_OUTPUT_VERBOSE((1, orte_sensor_base.output,
+    OPAL_OUTPUT_VERBOSE((1, orte_sensor_base_framework.framework_output,
                          "%s sending heartbeat",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
@@ -425,13 +425,13 @@ static void check_heartbeat(int fd, short dummy, void *arg)
     orte_proc_t *proc;
     opal_event_t *tmp = (opal_event_t*)arg;
 
-    OPAL_OUTPUT_VERBOSE((3, orte_sensor_base.output,
+    OPAL_OUTPUT_VERBOSE((3, orte_sensor_base_framework.framework_output,
                          "%s sensor:check_heartbeat",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
     /* if we are aborting or shutting down, ignore this */
     if (orte_abnormal_term_ordered || orte_finalizing || !orte_initialized) {
-        OPAL_OUTPUT_VERBOSE((3,  orte_sensor_base.output,
+        OPAL_OUTPUT_VERBOSE((3,  orte_sensor_base_framework.framework_output,
                              "%s IGNORING CHECK abnorm_term %s fin %s init %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              orte_abnormal_term_ordered ? "TRUE" : "FALSE",
@@ -449,7 +449,7 @@ static void check_heartbeat(int fd, short dummy, void *arg)
             continue;
         }
         if (ORTE_PROC_STATE_RUNNING != proc->state) {
-            OPAL_OUTPUT_VERBOSE((1, orte_sensor_base.output,
+            OPAL_OUTPUT_VERBOSE((1, orte_sensor_base_framework.framework_output,
                                  "%s sensor:heartbeat DAEMON %s IS NOT RUNNING",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  ORTE_NAME_PRINT(&proc->name)));
@@ -458,13 +458,13 @@ static void check_heartbeat(int fd, short dummy, void *arg)
 
         if (0 == proc->beat) {
             /* no heartbeat recvd in last window */
-            OPAL_OUTPUT_VERBOSE((1, orte_sensor_base.output,
+            OPAL_OUTPUT_VERBOSE((1, orte_sensor_base_framework.framework_output,
                                  "%s sensor:check_heartbeat FAILED for daemon %s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  ORTE_NAME_PRINT(&proc->name)));
             orte_errmgr.update_proc_state(&proc->name, ORTE_PROC_STATE_HEARTBEAT_FAILED);
         } else {
-            OPAL_OUTPUT_VERBOSE((1, orte_sensor_base.output,
+            OPAL_OUTPUT_VERBOSE((1, orte_sensor_base_framework.framework_output,
                                  "%s HEARTBEAT DETECTED FOR %s: NUM BEATS %d",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  ORTE_NAME_PRINT(&proc->name), proc->beat));
@@ -496,7 +496,7 @@ static void recv_beats(int status, orte_process_name_t* sender,
 
     /* get this daemon's object */
     if (NULL != (proc = (orte_proc_t*)opal_pointer_array_get_item(daemons->procs, sender->vpid))) {
-        OPAL_OUTPUT_VERBOSE((1, orte_sensor_base.output,
+        OPAL_OUTPUT_VERBOSE((1, orte_sensor_base_framework.framework_output,
                              "%s marked beat from %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_NAME_PRINT(sender)));

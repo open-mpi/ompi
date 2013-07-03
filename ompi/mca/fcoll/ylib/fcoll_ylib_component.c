@@ -67,8 +67,10 @@ mca_fcoll_base_component_2_0_0_t mca_fcoll_ylib_component = {
      OMPI_MAJOR_VERSION,
      OMPI_MINOR_VERSION,
      OMPI_RELEASE_VERSION,
+     NULL,
+     NULL,
+     NULL,
      ylib_register,
-     NULL
     },
     {
         /* The component is checkpoint ready */
@@ -84,49 +86,30 @@ mca_fcoll_base_component_2_0_0_t mca_fcoll_ylib_component = {
 static int
 ylib_register(void)
 {
-    int param;
-
-    param = mca_base_param_find ("fcoll", NULL, "ylib_priority");
-    if (param >= 0)
-    {
-        mca_base_param_lookup_int (param, &mca_fcoll_ylib_priority);
-    }
-    param = mca_base_param_find ("fcoll", NULL, "ylib_num_io_procs");
-    if (param >= 0)
-    {
-        mca_base_param_lookup_int (param, &mca_fcoll_ylib_num_io_procs);
-    }
-    param = mca_base_param_find ("fcoll", NULL, "ylib_stripe_size");
-    if (param >= 0)
-    {
-        mca_base_param_lookup_int (param, &mca_fcoll_ylib_stripe_size);
-    }
-    param = mca_base_param_find ("fcoll", NULL, "ylib_blocks_per_cycle");
-    if (param >= 0)
-    {
-        mca_base_param_lookup_int (param, &mca_fcoll_ylib_blocks_per_cycle);
-    }
-
-    mca_base_param_reg_int (&mca_fcoll_ylib_component.fcollm_version,
-                            "priority",
-                            "Priority of the ylib fcoll component",
-                            false, false, mca_fcoll_ylib_priority,
-                            &mca_fcoll_ylib_priority);
-    mca_base_param_reg_int (&mca_fcoll_ylib_component.fcollm_version,
-                            "num_io_procs",
-                            "Number of writers in the ylib fcoll component",
-                            false, false, mca_fcoll_ylib_num_io_procs,
-                            &mca_fcoll_ylib_num_io_procs);
-    mca_base_param_reg_int (&mca_fcoll_ylib_component.fcollm_version,
-                            "stripe_size",
-                            "Stripe Size of the ylib fcoll component",
-                            false, false, mca_fcoll_ylib_stripe_size,
-                            &mca_fcoll_ylib_stripe_size);
-    mca_base_param_reg_int (&mca_fcoll_ylib_component.fcollm_version,
-                            "blocks_per_cycle",
-                            "Blocks to write per cycle of the ylib fcoll component",
-                            false, false, mca_fcoll_ylib_blocks_per_cycle,
-                            &mca_fcoll_ylib_blocks_per_cycle);
+    mca_fcoll_ylib_priority = 0;
+    (void) mca_base_component_var_register(&mca_fcoll_ylib_component.fcollm_version,
+                                           "priority", "Priority of the ylib fcoll component",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY, &mca_fcoll_ylib_priority);
+    mca_fcoll_ylib_num_io_procs = 1;
+    (void) mca_base_component_var_register(&mca_fcoll_ylib_component.fcollm_version,
+                                           "num_io_procs", "Number of writers in the ylib fcoll component",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY, &mca_fcoll_ylib_num_io_procs);
+    mca_fcoll_ylib_stripe_size = 1048576;
+    (void) mca_base_component_var_register(&mca_fcoll_ylib_component.fcollm_version,
+                                           "stripe_size", "Stripe Size of the ylib fcoll component",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY, &mca_fcoll_ylib_stripe_size);
+    mca_fcoll_ylib_blocks_per_cycle = 20;
+    (void) mca_base_component_var_register(&mca_fcoll_ylib_component.fcollm_version,
+                                           "blocks_per_cycle", "Blocks to write per cycle of the ylib fcoll component",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY, &mca_fcoll_ylib_blocks_per_cycle);
 
     return OMPI_SUCCESS;
 }

@@ -20,6 +20,5 @@ headers += \
         base/base.h
 
 libmca_pstat_la_SOURCES += \
-        base/pstat_base_close.c \
         base/pstat_base_select.c \
         base/pstat_base_open.c

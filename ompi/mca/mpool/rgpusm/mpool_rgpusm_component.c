@@ -23,7 +23,6 @@
 #define OPAL_DISABLE_ENABLE_MEM_DEBUG 1
 #include "ompi_config.h"
 #include "opal/mca/base/base.h"
-#include "opal/mca/base/mca_base_param.h"
 #include "mpool_rgpusm.h"
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
@@ -39,6 +38,8 @@ static int rgpusm_open(void);
 static int rgpusm_close(void);
 static int rgpusm_register(void);
 static mca_mpool_base_module_t* rgpusm_init(struct mca_mpool_base_resources_t* resources);
+
+static int ompi_mpool_rgpusm_verbose = 0;
 
 mca_mpool_rgpusm_component_t mca_mpool_rgpusm_component = {
     {
@@ -71,57 +72,66 @@ mca_mpool_rgpusm_component_t mca_mpool_rgpusm_component = {
   */
 static int rgpusm_open(void)
 {
+    mca_mpool_rgpusm_component.output = opal_output_open(NULL);
+    opal_output_set_verbosity(mca_mpool_rgpusm_component.output, ompi_mpool_rgpusm_verbose);
+
     return OMPI_SUCCESS;
 }
 
 
 static int rgpusm_register(void)
 {
-    int val;
+    mca_mpool_rgpusm_component.rcache_name = "vma";
+    (void) mca_base_component_var_register(&mca_mpool_rgpusm_component.super.mpool_version,
+                                           "rcache_name",
+                                           "The name of the registration cache the mpool should use",
+                                           MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &mca_mpool_rgpusm_component.rcache_name);
+    mca_mpool_rgpusm_component.rcache_size_limit = 0;
+    (void) mca_base_component_var_register(&mca_mpool_rgpusm_component.super.mpool_version,
+                                           "rcache_size_limit",
+                                           "the maximum size of registration cache in bytes. "
+                                           "0 is unlimited (default 0)",
+                                           MCA_BASE_VAR_TYPE_UNSIGNED_LONG_LONG, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &mca_mpool_rgpusm_component.rcache_size_limit);
 
-    mca_base_param_reg_string(&mca_mpool_rgpusm_component.super.mpool_version,
-            "rcache_name",
-            "The name of the registration cache the mpool should use",
-            false, false, "vma", &mca_mpool_rgpusm_component.rcache_name);
+    mca_mpool_rgpusm_component.leave_pinned = 1;
+    (void) mca_base_component_var_register(&mca_mpool_rgpusm_component.super.mpool_version,
+                                           "leave_pinned",
+                                           "Whether to keep memory handles around or release them when done. ",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &mca_mpool_rgpusm_component.leave_pinned);
 
-    mca_base_param_reg_int(&mca_mpool_rgpusm_component.super.mpool_version,
-            "rcache_size_limit",
-            "the maximum size of registration cache in bytes. "
-            "0 is unlimited (default 0)", false, false, 0, &val);
-
-    mca_mpool_rgpusm_component.rcache_size_limit = (size_t)val;
-
-    mca_base_param_reg_int(&mca_mpool_rgpusm_component.super.mpool_version,
-            "leave_pinned",
-            "Whether to keep memory handles around or release them when done. ",
-            false, false, 1, &val);
-    mca_mpool_rgpusm_component.leave_pinned = (size_t)val;
-
-    mca_base_param_reg_int(&mca_mpool_rgpusm_component.super.mpool_version,
-            "print_stats",
-            "print pool usage statistics at the end of the run",
-            false, false, 0, &val);
-
-    mca_mpool_rgpusm_component.print_stats = val?true:false;
+    mca_mpool_rgpusm_component.print_stats = false;
+    (void) mca_base_component_var_register(&mca_mpool_rgpusm_component.super.mpool_version,
+                                           "print_stats",
+                                           "print pool usage statistics at the end of the run",
+                                           MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &mca_mpool_rgpusm_component.print_stats);
 
     /* Set different levels of verbosity in the rgpusm related code. */
-    mca_base_param_reg_int(&mca_mpool_rgpusm_component.super.mpool_version,
-             "verbose", 
-             "Set level of mpool rgpusm verbosity",
-             false, false, 0, &val);
-    mca_mpool_rgpusm_component.output = opal_output_open(NULL);
-    opal_output_set_verbosity(mca_mpool_rgpusm_component.output, val);
+    ompi_mpool_rgpusm_verbose = 0;
+    (void) mca_base_component_var_register(&mca_mpool_rgpusm_component.super.mpool_version,
+                                           "verbose", "Set level of mpool rgpusm verbosity",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &ompi_mpool_rgpusm_verbose);
 
-    return OMPI_SUCCESS;
+    return mca_common_cuda_register_mca_variables();
 }
 
 
 static int rgpusm_close(void)
 {
-    if (NULL != mca_mpool_rgpusm_component.rcache_name) {
-        free(mca_mpool_rgpusm_component.rcache_name);
-    }
-
     return OMPI_SUCCESS;
 }
 

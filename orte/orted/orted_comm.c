@@ -50,7 +50,6 @@
 #include "opal/util/opal_environ.h"
 #include "opal/runtime/opal.h"
 #include "opal/runtime/opal_progress.h"
-#include "opal/mca/base/mca_base_param.h"
 #include "opal/dss/dss.h"
 
 #include "orte/util/proc_info.h"

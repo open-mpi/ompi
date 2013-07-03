@@ -34,7 +34,7 @@ orte_rml_recv_msg_callback(int status,
         (orte_rml_oob_msg_header_t*) iov[0].iov_base;
     ORTE_RML_OOB_MSG_HEADER_NTOH(*hdr);
 
-    OPAL_OUTPUT_VERBOSE((1, orte_rml_base_output,
+    OPAL_OUTPUT_VERBOSE((1, orte_rml_base_framework.framework_output,
                          "%s recv from %s for %s (tag %d)",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(&hdr->origin),

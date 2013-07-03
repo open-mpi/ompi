@@ -30,7 +30,6 @@
 #include "opal/class/opal_object.h"
 #include "ompi/file/file.h"
 #include "opal/mca/base/base.h"
-#include "opal/mca/base/mca_base_param.h"
 #include "ompi/mca/io/base/base.h"
 #include "ompi/mca/io/base/io_base_request.h"
 

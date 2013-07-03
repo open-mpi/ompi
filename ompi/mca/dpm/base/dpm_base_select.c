@@ -21,7 +21,6 @@
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 
-#include "opal/mca/base/mca_base_param.h"
 #include "opal/mca/base/mca_base_component_repository.h"
 
 #include "ompi/mca/dpm/dpm.h"
@@ -37,8 +36,8 @@ int ompi_dpm_base_select(void)
     /*
      * Select the best component
      */
-    if( OPAL_SUCCESS != (ret = mca_base_select("dpm", ompi_dpm_base_output,
-                                        &ompi_dpm_base_components_available,
+    if( OPAL_SUCCESS != (ret = mca_base_select("dpm", ompi_dpm_base_framework.framework_output,
+                                        &ompi_dpm_base_framework.framework_components,
                                         (mca_base_module_t **) &best_module,
                                         (mca_base_component_t **) &best_component))) {
         /* it is okay not to find any executable components */

@@ -16,7 +16,6 @@
 #include "opal/constants.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
-#include "opal/mca/base/mca_base_param.h"
 #include "opal/mca/memchecker/memchecker.h"
 #include "opal/mca/memchecker/base/base.h"
 
@@ -38,8 +37,8 @@ int opal_memchecker_base_select(void)
     /*
      * Select the best component
      */
-    if( OPAL_SUCCESS != mca_base_select("memchecker", opal_memchecker_base_output,
-                                        &opal_memchecker_base_components_opened,
+    if( OPAL_SUCCESS != mca_base_select("memchecker", opal_memchecker_base_framework.framework_output,
+                                        &opal_memchecker_base_framework.framework_components,
                                         (mca_base_module_t **) &best_module,
                                         (mca_base_component_t **) &best_component) ) {
         /* This will only happen if no component was selected */

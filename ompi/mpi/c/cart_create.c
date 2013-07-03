@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007-2008 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2012      Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2012-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * $COPYRIGHT$
  * 
@@ -93,18 +93,15 @@ int MPI_Cart_create(MPI_Comm old_comm, int ndims, int dims[],
      * removed from initialization since most of the MPI calls do not use 
      * this module 
      */
-    if (!(mca_topo_base_components_opened_valid ||
-          mca_topo_base_components_available_valid)) {
-        if (OMPI_SUCCESS != (err = mca_topo_base_open())) {
-            return OMPI_ERRHANDLER_INVOKE(old_comm, err, FUNC_NAME);
-        }
-        if (OMPI_SUCCESS != 
-            (err = mca_topo_base_find_available(OMPI_ENABLE_PROGRESS_THREADS,
-                                                OMPI_ENABLE_THREAD_MULTIPLE))) {
-            return OMPI_ERRHANDLER_INVOKE(old_comm, err, FUNC_NAME);
-        }
+    if (OMPI_SUCCESS != (err =  mca_base_framework_open(&ompi_topo_base_framework, 0))) {
+        return OMPI_ERRHANDLER_INVOKE(old_comm, err, FUNC_NAME);
     }
-
+    if (OMPI_SUCCESS != 
+        (err = mca_topo_base_find_available(OMPI_ENABLE_PROGRESS_THREADS,
+                                            OMPI_ENABLE_THREAD_MULTIPLE))) {
+        return OMPI_ERRHANDLER_INVOKE(old_comm, err, FUNC_NAME);
+    }
+    
     OPAL_CR_ENTER_LIBRARY();
 
     /* everything seems to be alright with the communicator, we can go 

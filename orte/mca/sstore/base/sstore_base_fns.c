@@ -35,7 +35,6 @@
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 #include "opal/util/argv.h"
-#include "opal/mca/base/mca_base_param.h"
 
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/rml/rml_types.h"
@@ -592,7 +591,7 @@ int orte_sstore_base_extract_global_metadata(orte_sstore_base_global_snapshot_in
      * Open the metadata file
      */
     if (NULL == (metadata = fopen(global_snapshot->metadata_filename, "r")) ) {
-        opal_output(orte_sstore_base_output,
+        opal_output(orte_sstore_base_framework.framework_output,
                     "sstore:base:extract_global_metadata() Unable to open the file (%s)\n",
                     global_snapshot->metadata_filename);
         ORTE_ERROR_LOG(ORTE_ERROR);
@@ -692,7 +691,7 @@ int orte_sstore_base_find_largest_seq_num(orte_sstore_base_global_snapshot_info_
      * Open the metadata file
      */
     if (NULL == (metadata = fopen(global_snapshot->metadata_filename, "r")) ) {
-        opal_output(orte_sstore_base_output,
+        opal_output(orte_sstore_base_framework.framework_output,
                     "sstore:base:find_largest_seq_num() Unable to open the file (%s)\n",
                     global_snapshot->metadata_filename);
         ORTE_ERROR_LOG(ORTE_ERROR);
@@ -733,7 +732,7 @@ int orte_sstore_base_find_all_seq_nums(orte_sstore_base_global_snapshot_info_t *
      * Open the metadata file
      */
     if (NULL == (metadata = fopen(global_snapshot->metadata_filename, "r")) ) {
-        opal_output(orte_sstore_base_output,
+        opal_output(orte_sstore_base_framework.framework_output,
                     "sstore:base:find_all_seq_nums() Unable to open the file (%s)\n",
                     global_snapshot->metadata_filename);
         ORTE_ERROR_LOG(ORTE_ERROR);

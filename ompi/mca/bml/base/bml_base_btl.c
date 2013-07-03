@@ -69,9 +69,9 @@ int mca_bml_base_btl_array_reserve(mca_bml_base_btl_array_t* array, size_t size)
 
 #if OPAL_ENABLE_DEBUG_RELIABILITY
 
-extern double mca_bml_base_error_rate_floor;
-extern double mca_bml_base_error_rate_ceiling;
-extern int    mca_bml_base_error_count;
+extern int mca_bml_base_error_rate_floor;
+extern int mca_bml_base_error_rate_ceiling;
+extern int  mca_bml_base_error_count;
 
 struct mca_bml_base_context_t {
     size_t index;
@@ -102,9 +102,9 @@ int mca_bml_base_send( mca_bml_base_btl_t* bml_btl,
 { 
     des->des_context = (void*)bml_btl; 
     if(mca_bml_base_error_count <= 0 && mca_bml_base_error_rate_ceiling > 0) {
-        mca_bml_base_error_count = (int) ((mca_bml_base_error_rate_ceiling * rand())/(RAND_MAX+1.0));
-        if(mca_bml_base_error_count < mca_bml_base_error_rate_floor) { 
-            mca_bml_base_error_count = mca_bml_base_error_rate_floor;
+      mca_bml_base_error_count = (int) (((double) mca_bml_base_error_rate_ceiling * rand())/(RAND_MAX+1.0));
+        if(mca_bml_base_error_count < (double) mca_bml_base_error_rate_floor) { 
+          mca_bml_base_error_count = (double) mca_bml_base_error_rate_floor;
         }
         if(mca_bml_base_error_count % 2) {
             /* local completion - network "drops" packet */

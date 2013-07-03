@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2012-2013 Los Alamos National Security, Inc.  All rights reserved. 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -37,21 +38,11 @@
 BEGIN_C_DECLS
 
 /*
- * MCA Framework functions
+ * MCA Framework
  */
-ORTE_DECLSPEC    int orte_errmgr_base_open(void);
+ORTE_DECLSPEC extern mca_base_framework_t orte_errmgr_base_framework;
+/* select a component */
 ORTE_DECLSPEC    int orte_errmgr_base_select(void);
-ORTE_DECLSPEC    int orte_errmgr_base_close(void);
-
-/**
- * Output and component variables
- */
-ORTE_DECLSPEC extern opal_list_t orte_errmgr_base_components_available;
-
-/**
- * Internal module reference
- */
-ORTE_DECLSPEC extern orte_errmgr_base_component_t orte_errmgr_base_selected_component;
 
 /**
  * Interfaces for orte-migrate tool

@@ -66,8 +66,10 @@ mca_fcoll_base_component_2_0_0_t mca_fcoll_individual_component = {
      OMPI_MAJOR_VERSION,
      OMPI_MINOR_VERSION,
      OMPI_RELEASE_VERSION,
-     individual_register,
-     NULL
+     NULL,
+     NULL,
+     NULL,
+     individual_register
     },
     {
         /* The component is checkpoint ready */
@@ -83,39 +85,25 @@ mca_fcoll_base_component_2_0_0_t mca_fcoll_individual_component = {
 static int
 individual_register(void)
 {
-    int param;
-
-    param = mca_base_param_find ("fcoll", NULL, "individual_priority");
-    if (param >= 0)
-    {
-        mca_base_param_lookup_int (param, &mca_fcoll_individual_priority);
-    }
-    param = mca_base_param_find ("fcoll", NULL, "individual_constant_cbs");
-    if (param >= 0)
-    {
-        mca_base_param_lookup_int (param, &mca_fcoll_individual_constant_cbs);
-    }
-    param = mca_base_param_find ("fcoll", NULL, "individual_cycle_buffer_size");
-    if (param >= 0)
-    {
-        mca_base_param_lookup_int (param, &mca_fcoll_individual_cycle_buffer_size);
-    }
-
-    mca_base_param_reg_int (&mca_fcoll_individual_component.fcollm_version,
-                            "priority",
-                            "Priority of the individual fcoll component",
-                            false, false, mca_fcoll_individual_priority,
-                            &mca_fcoll_individual_priority);
-    mca_base_param_reg_int (&mca_fcoll_individual_component.fcollm_version,
-                            "constant_cbs",
-                            "wether we are using constant or scaling cycle buffer size in the individual fcoll component",
-                            false, false, mca_fcoll_individual_constant_cbs,
-                            &mca_fcoll_individual_constant_cbs);
-    mca_base_param_reg_int (&mca_fcoll_individual_component.fcollm_version,
-                            "cycle_buffer_size",
-                            "Cycle Buffer Size of the individual fcoll component",
-                            false, false, mca_fcoll_individual_cycle_buffer_size,
-                            &mca_fcoll_individual_cycle_buffer_size);
+    mca_fcoll_individual_priority = 10;
+    (void) mca_base_component_var_register(&mca_fcoll_individual_component.fcollm_version,
+                                           "priority", "Priority of the individual fcoll component",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY, &mca_fcoll_individual_priority);
+    mca_fcoll_individual_constant_cbs = 0;
+    (void) mca_base_component_var_register(&mca_fcoll_individual_component.fcollm_version,
+                                           "constant_cbs",
+                                           "wether we are using constant or scaling cycle buffer size in the individual fcoll component",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY, &mca_fcoll_individual_constant_cbs);
+    mca_fcoll_individual_cycle_buffer_size = OMPIO_PREALLOC_MAX_BUF_SIZE;
+    (void) mca_base_component_var_register(&mca_fcoll_individual_component.fcollm_version,
+                                           "cycle_buffer_size", "Cycle Buffer Size of the individual fcoll component",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY, &mca_fcoll_individual_cycle_buffer_size);
 
     return OMPI_SUCCESS;
 }

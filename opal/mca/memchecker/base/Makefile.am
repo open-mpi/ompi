@@ -13,7 +13,6 @@ headers += \
         base/base.h
 
 libmca_memchecker_la_SOURCES += \
-        base/memchecker_base_close.c \
         base/memchecker_base_open.c \
         base/memchecker_base_select.c \
         base/memchecker_base_wrappers.c

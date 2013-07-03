@@ -3,7 +3,7 @@
  * Copyright (c) 2007      The Trustees of Indiana University.
  *                         All rights reserved.
  * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2011-2012 Los Alamos National Security, LLC. All
+ * Copyright (c) 2011-2013 Los Alamos National Security, LLC. All
  *                         rights reserved.
  * $COPYRIGHT$
  *
@@ -165,13 +165,13 @@ static int pmi_barrier(orte_grpcomm_collective_t *coll)
 {
     int rc;
     
-    OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base.output,
+    OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_framework.framework_output,
                          "%s grpcomm:pmi entering barrier",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
     /* if I am alone, just execute the callback */
     if (1 == orte_process_info.num_procs) {
-        OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base.output,
+        OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_framework.framework_output,
                              "%s grpcomm:pmi:barrier only one proc",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
         coll->active = false;
@@ -195,7 +195,7 @@ static int pmi_barrier(orte_grpcomm_collective_t *coll)
     }
 #endif
 
-    OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base.output,
+    OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base_framework.framework_output,
                          "%s grpcomm:pmi barrier complete",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     /* execute the callback */
@@ -229,7 +229,7 @@ static int pmi_put_last_key (void) {
 	return rc;
     }
 
-    OPAL_OUTPUT_VERBOSE((10, orte_grpcomm_base.output,
+    OPAL_OUTPUT_VERBOSE((10, orte_grpcomm_base_framework.framework_output,
                          "%s PUTTING KEY %s DATA %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          pmi_kvs_key, pmi_packed_data));
@@ -251,7 +251,7 @@ static int pmi_set_proc_attr(const char *attr_name,
 {
     int rc;
 
-    OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base.output,
+    OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_framework.framework_output,
                          "%s grpcomm:pmi: set attr %s of size %lu in KVS %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), attr_name,
                          (unsigned long)size, pmi_kvs_name));
@@ -285,7 +285,7 @@ static int pmi_get_proc_attr(const orte_process_name_t name,
     *size = 0;
     *buffer = NULL;
 
-    OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base.output,
+    OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_framework.framework_output,
 			 "%s grpcomm:pmi: get attr %s for proc %s in KVS %s",
 			 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), attr_name,
 			 ORTE_NAME_PRINT(&name), pmi_kvs_name));
@@ -300,7 +300,7 @@ static int pmi_get_proc_attr(const orte_process_name_t name,
 	    return rc;
 	}
 
-        OPAL_OUTPUT_VERBOSE((10, orte_grpcomm_base.output,
+        OPAL_OUTPUT_VERBOSE((10, orte_grpcomm_base_framework.framework_output,
                              "%s GETTING KEY %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              pmi_kvs_key));
@@ -334,7 +334,7 @@ static int pmi_get_proc_attr(const orte_process_name_t name,
 	} while (NULL != (tmp = strtok_r (NULL, ",", &tok_ctx)));
 
 	if (NULL != *buffer) {
-	    OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base.output,
+	    OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_framework.framework_output,
 				 "%s grpcomm:pmi: got attr %s of size %lu",
 				 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
 				 attr_name, (unsigned long)(*size)));
@@ -363,7 +363,7 @@ static int modex(orte_grpcomm_collective_t *coll)
     opal_byte_object_t bo;
     char *hostname;
 
-    OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base.output,
+     OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_framework.framework_output,
                          "%s grpcomm:pmi: modex entered",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
@@ -475,7 +475,7 @@ static int modex(orte_grpcomm_collective_t *coll)
 	    return rc;
 	}
 
-        OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base.output,
+        OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base_framework.framework_output,
                              "%s grpcomm:pmi: proc %s oob endpoint %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_NAME_PRINT(&name), rml_uri));
@@ -492,7 +492,7 @@ static int modex(orte_grpcomm_collective_t *coll)
 	    return rc;
 	}
 
-        OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base.output,
+        OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base_framework.framework_output,
                              "%s grpcomm:pmi: proc %s location %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_NAME_PRINT(&name), hostname));
@@ -551,7 +551,7 @@ static int modex(orte_grpcomm_collective_t *coll)
                                                                  orte_process_info.bind_idx,
                                                                  bind_level, bind_idx);
 	    }
-	    OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base.output,
+	    OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_framework.framework_output,
 				 "%s grpcomm:pmi setting proc %s locale %s",
 				 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
 				 ORTE_NAME_PRINT(&name),
@@ -589,7 +589,7 @@ static int modex(orte_grpcomm_collective_t *coll)
             return rc;
         }
 
-        OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base.output,
+        OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base_framework.framework_output,
                              "%s grpcomm:pmi: proc %s lrank %u nrank %u",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_NAME_PRINT(&name),
@@ -648,7 +648,7 @@ static int modex(orte_grpcomm_collective_t *coll)
                 ORTE_ERROR_LOG(rc);
                 return rc;
             }
-            OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base.output,
+            OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_framework.framework_output,
                                  "%s grpcomm:pmi: got modex value for proc %s key %s[%s] len %d",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  ORTE_NAME_PRINT(&name), kv->key,
@@ -710,7 +710,7 @@ static int modex(orte_grpcomm_collective_t *coll)
         OBJ_DESTRUCT(&modex_data);
     }
 
-    OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base.output,
+    OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_framework.framework_output,
                          "%s grpcomm:pmi: modex completed",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 

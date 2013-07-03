@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2004-2007 The Trustees of the University of Tennessee.
  *                         All rights reserved.
+ * Copyright (c) 2012-2013 Los Alamos National Security, Inc.  All rights reserved. 
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -54,13 +55,14 @@ int mca_vprotocol_base_select(bool enable_progress_threads,
     /* Traverse the list of available components; call their init
         functions. */
     OBJ_CONSTRUCT(&opened, opal_list_t);
-    for(item = opal_list_get_first(&mca_vprotocol_base_components_available);
-        opal_list_get_end(&mca_vprotocol_base_components_available) != item;
-        item = opal_list_get_next(item)) 
+    OPAL_LIST_FOREACH(cli, &ompi_vprotocol_base_framework.framework_components, mca_base_component_list_item_t) 
     {
-        cli = (mca_base_component_list_item_t *) item;
         component = (mca_vprotocol_base_component_t *) cli->cli_component;
-        
+
+        if (NULL == mca_vprotocol_base_include_list) {
+            continue;
+        }        
+
         V_OUTPUT_VERBOSE(500, "vprotocol select: initializing %s component %s", component->pmlm_version.mca_type_name, component->pmlm_version.mca_component_name);
         if(strcmp(component->pmlm_version.mca_component_name, 
                   mca_vprotocol_base_include_list)) {
@@ -123,7 +125,7 @@ int mca_vprotocol_base_select(bool enable_progress_threads,
     }
     
     mca_base_components_close(mca_pml_v.output, 
-                              &mca_vprotocol_base_components_available, 
+                              &ompi_vprotocol_base_framework.framework_components, 
                               (mca_base_component_t *) best_component);
     
     /* All done */

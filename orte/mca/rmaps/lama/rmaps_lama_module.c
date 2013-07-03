@@ -21,7 +21,6 @@
 #include <string.h>
 #endif  /* HAVE_STRING_H */
 
-#include "opal/mca/base/mca_base_param.h"
 #include "opal/mca/hwloc/hwloc.h"
 
 #include "opal/util/argv.h"
@@ -268,14 +267,14 @@ static int orte_rmaps_lama_map(orte_job_t *jdata)
     if (NULL != jdata->map->req_mapper &&
         0 != strcasecmp(jdata->map->req_mapper, loc_comp->mca_component_name)) {
         /* a mapper has been specified, and it isn't me */
-        opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+        opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                             "mca:rmaps:lama: job %s not using lama mapper (using %s)",
                             ORTE_JOBID_PRINT(jdata->jobid),
                             jdata->map->req_mapper);
         return ORTE_ERR_TAKE_NEXT_OPTION;
     }
 
-    opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+    opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                         "mca:rmaps:lama: Mapping job %s",
                         ORTE_JOBID_PRINT(jdata->jobid));
 
@@ -390,9 +389,9 @@ static int orte_rmaps_lama_process_params(orte_job_t *jdata)
      * Parse: Binding.  It will print its own error message if
      * something goes wrong.
      */
-    opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+    opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                         "mca:rmaps:lama: ---------------------------------");
-    opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+    opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                         "mca:rmaps:lama: ----- Binding  : [%s]",
                         rmaps_lama_cmd_bind);
     if( ORTE_SUCCESS != (ret = rmaps_lama_parse_binding(rmaps_lama_cmd_bind,
@@ -402,9 +401,9 @@ static int orte_rmaps_lama_process_params(orte_job_t *jdata)
         return ret;
     }
 
-    if( 10 <= opal_output_get_verbosity(orte_rmaps_base.rmaps_output) ) {
+    if( 10 <= opal_output_get_verbosity(orte_rmaps_base_framework.framework_output) ) {
         type_str = lama_type_enum_to_str(lama_binding_level);
-        opal_output_verbose(10, orte_rmaps_base.rmaps_output,
+        opal_output_verbose(10, orte_rmaps_base_framework.framework_output,
                             "mca:rmaps:lama: ----- Binding  : %*d x %10s",
                             MAX_BIND_DIGIT_LEN, lama_binding_num_levels, type_str);
         free(type_str);
@@ -417,9 +416,9 @@ static int orte_rmaps_lama_process_params(orte_job_t *jdata)
      * Parse: Mapping from Process Layout string.  It will print its
      * own error message if something goes wrong.
      */
-    opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+    opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                         "mca:rmaps:lama: ---------------------------------");
-    opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+    opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                         "mca:rmaps:lama: ----- Mapping  : [%s]",
                         rmaps_lama_cmd_map);
     if( ORTE_SUCCESS != (ret = rmaps_lama_parse_mapping(rmaps_lama_cmd_map,
@@ -430,10 +429,10 @@ static int orte_rmaps_lama_process_params(orte_job_t *jdata)
         return ret;
     }
 
-    if( 10 <= opal_output_get_verbosity(orte_rmaps_base.rmaps_output) ) {
+    if( 10 <= opal_output_get_verbosity(orte_rmaps_base_framework.framework_output) ) {
         for( i = 0; i < lama_mapping_num_layouts; ++i ) {
             type_str = lama_type_enum_to_str(lama_mapping_layout[i]);
-            opal_output_verbose(10, orte_rmaps_base.rmaps_output,
+            opal_output_verbose(10, orte_rmaps_base_framework.framework_output,
                                 "mca:rmaps:lama: ----- Mapping  : (%d) %10s (%d vs %d)",
                                 i, type_str,
                                 lama_mapping_layout[i], lama_mapping_layout_sort[i]);
@@ -446,9 +445,9 @@ static int orte_rmaps_lama_process_params(orte_job_t *jdata)
      * Parse: MPPR.  It will print its own error message if something
      * goes wrong.
      */
-    opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+    opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                         "mca:rmaps:lama: ---------------------------------");
-    opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+    opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                         "mca:rmaps:lama: ----- MPPR     : [%s]",
                         rmaps_lama_cmd_mppr);
     if( ORTE_SUCCESS != (ret = rmaps_lama_parse_mppr(rmaps_lama_cmd_mppr,
@@ -458,10 +457,10 @@ static int orte_rmaps_lama_process_params(orte_job_t *jdata)
         return ret;
     }
 
-    if( 10 <= opal_output_get_verbosity(orte_rmaps_base.rmaps_output) ) {
+    if( 10 <= opal_output_get_verbosity(orte_rmaps_base_framework.framework_output) ) {
         for( i = 0; i < lama_mppr_num_levels; ++i ) {
             type_str = lama_type_enum_to_str(lama_mppr_levels[i].type);
-            opal_output_verbose(10, orte_rmaps_base.rmaps_output,
+            opal_output_verbose(10, orte_rmaps_base_framework.framework_output,
                                 "mca:rmaps:lama: ----- MPPR     : %*d at %10s",
                                 MAX_BIND_DIGIT_LEN, lama_mppr_levels[i].max_resources, type_str);
             free(type_str);
@@ -472,9 +471,9 @@ static int orte_rmaps_lama_process_params(orte_job_t *jdata)
     /*
      * Parse: Ordering
      */
-    opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+    opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                         "mca:rmaps:lama: ---------------------------------");
-    opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+    opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                         "mca:rmaps:lama: ----- Ordering : [%s]",
                         rmaps_lama_cmd_ordering);
     if( ORTE_SUCCESS != (ret = rmaps_lama_parse_ordering(rmaps_lama_cmd_ordering,
@@ -483,7 +482,7 @@ static int orte_rmaps_lama_process_params(orte_job_t *jdata)
         return ret;
     }
 
-    if( 10 <= opal_output_get_verbosity(orte_rmaps_base.rmaps_output) ) {
+    if( 10 <= opal_output_get_verbosity(orte_rmaps_base_framework.framework_output) ) {
         if( LAMA_ORDER_NATURAL == lama_ordering ) {
             type_str = strdup("Natural");
         }
@@ -493,14 +492,14 @@ static int orte_rmaps_lama_process_params(orte_job_t *jdata)
         else {
             type_str = strdup("Unknown");
         }
-        opal_output_verbose(10, orte_rmaps_base.rmaps_output,
+        opal_output_verbose(10, orte_rmaps_base_framework.framework_output,
                             "mca:rmaps:lama: ----- Ordering : %10s",
                             type_str);
         free(type_str);
         type_str = NULL;
     }
 
-    opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+    opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                         "mca:rmaps:lama: ---------------------------------");
 
     return ORTE_SUCCESS;
@@ -670,9 +669,9 @@ static int orte_rmaps_lama_map_core(orte_job_t *jdata)
         RMAPS_LAMA_END_TIMER(RMAPS_LAMA_TIMER_BUILD_MAX_TREE);
 
 
-        opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+        opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                             "mca:rmaps:lama: Mapping:  -----------------------");
-        opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+        opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                             "mca:rmaps:lama: ---------------------------------");
         RMAPS_LAMA_START_TIMER(RMAPS_LAMA_TIMER_MAPPING);
 
@@ -762,7 +761,7 @@ static int orte_rmaps_lama_map_core(orte_job_t *jdata)
          * Display Bookmark for debugging
          */
         last_level_str = pu_ref_to_str(last_pu_idx_ref, lama_mapping_num_layouts);
-        opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+        opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                             "mca:rmaps:lama: Bookmark: --> Node %10s PU %10s",
                             jdata->bookmark->name, last_level_str);
         free(last_level_str);
@@ -790,10 +789,10 @@ static int orte_rmaps_lama_map_core(orte_job_t *jdata)
      * Ordering
      */
     RMAPS_LAMA_START_TIMER(RMAPS_LAMA_TIMER_ORDERING);
-    opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+    opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                         "mca:rmaps:lama: ---------------------------------");
     if( LAMA_ORDER_SEQ == lama_ordering ) {
-        opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+        opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                             "mca:rmaps:lama: Ordering: Sequential ------------");
 
         if( ORTE_SUCCESS != (ret = rmaps_lama_ordering_sequential(jdata)) ) {
@@ -803,7 +802,7 @@ static int orte_rmaps_lama_map_core(orte_job_t *jdata)
         }
     }
     else {
-        opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+        opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                             "mca:rmaps:lama: Ordering: Natural ---------------");
 #if 0
         /*
@@ -818,15 +817,15 @@ static int orte_rmaps_lama_map_core(orte_job_t *jdata)
     /*
      * Display Mapping
      */
-    if( 10 <= opal_output_get_verbosity(orte_rmaps_base.rmaps_output) ) {
-        opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+    if( 10 <= opal_output_get_verbosity(orte_rmaps_base_framework.framework_output) ) {
+        opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                             "mca:rmaps:lama: ---------------------------------");
         for( j = 0; j < jdata->procs->size; ++j) {
             if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, j))) {
                 continue;
             }
 
-            opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+            opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                                 "mca:rmaps:lama: Ordering: Proc. %2d on Node %10s - Slot %s",
                                 proc->name.vpid, proc->node->name, proc->cpu_bitmap);
         }
@@ -836,9 +835,9 @@ static int orte_rmaps_lama_map_core(orte_job_t *jdata)
     /*
      * All done
      */
-    opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+    opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                         "mca:rmaps:lama: Finished ------------------------");
-    opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+    opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                         "mca:rmaps:lama: ---------------------------------");
 
 
@@ -924,7 +923,7 @@ static int rmaps_lama_map_core_iter_level(orte_job_t *jdata,
          * Display last mapped
          */
         last_level_str = pu_ref_to_str(*last_pu_idx_ref, lama_mapping_num_layouts);
-        opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+        opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                             "mca:rmaps:lama: Bookmark: --> Last Mapped: Node %10s (bkmrk %10s) PU %10s - Level %2d",
                             (NULL == *cur_mach_ptr ? "(NULL)" : (*cur_mach_ptr)->name),
                             jdata->bookmark->name, last_level_str, (*last_pu_idx_ref)[pu_idx]);
@@ -951,13 +950,13 @@ static int rmaps_lama_map_core_iter_level(orte_job_t *jdata,
         (*pu_idx_ref)[pu_idx] = i;
 
         if( (*last_pu_idx_ref)[0] >= 0 && 0 == *iter_passes ) {
-            opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+            opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                                 "mca:rmaps:lama: Mapping: --> Level %2d: %10s (%2d) - I %2d - Arity %2d - %10s - Increment only",
                                 cur_level+1,
                                 level_str, pu_idx, i, max_subtree_arity,
                                 (NULL == *cur_mach_ptr ? "" : (*cur_mach_ptr)->name));
         } else {
-            opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+            opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                                 "mca:rmaps:lama: Mapping: --> Level %2d: %10s (%2d) - I %2d - Arity %2d - %10s",
                                 cur_level+1,
                                 level_str, pu_idx, i, max_subtree_arity,
@@ -1029,7 +1028,7 @@ static int rmaps_lama_map_core_iter_level(orte_job_t *jdata,
                                           *pu_idx_ref,
                                           &slot_list);
             if( ORTE_SUCCESS != ret || NULL == slot_list ) {
-                opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+                opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                                     "mca:rmaps:hwtopo: Mapping: --> Level %2d: %s - INVALID/SKIP",
                                     cur_level+1,
                                     level_str);
@@ -1040,7 +1039,7 @@ static int rmaps_lama_map_core_iter_level(orte_job_t *jdata,
                  */
             }
             else {
-                opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+                opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                                     "mca:rmaps:lama: Mapping: --> Level %2d: %s - Slot List (%s)",
                                     cur_level+1,
                                     level_str, slot_list);
@@ -1238,7 +1237,7 @@ static int rmaps_lama_ordering_sequential(orte_job_t *jdata)
 
     map = jdata->map;
 
-    opal_output_verbose(15, orte_rmaps_base.rmaps_output,
+    opal_output_verbose(15, orte_rmaps_base_framework.framework_output,
                         "mca:rmaps:lama: ---------------------------------");
 
     /*
@@ -1257,7 +1256,7 @@ static int rmaps_lama_ordering_sequential(orte_job_t *jdata)
                 continue;
             }
 
-            opal_output_verbose(15, orte_rmaps_base.rmaps_output,
+            opal_output_verbose(15, orte_rmaps_base_framework.framework_output,
                                 "mca:rmaps:lama: Ordering: Rename Proc. %2d to %2d (Rev. %s)",
                                 proc->name.vpid, cur_rank, proc->node->name);
             proc->name.vpid = cur_rank;
@@ -1275,7 +1274,7 @@ static int rmaps_lama_ordering_sequential(orte_job_t *jdata)
      * JJH: Look at combining these loops with the loop in the core so we
      * JJH: do not have to iterate over the list two times
      */
-    opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+    opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                         "mca:rmaps:lama: ---------------------------------");
     cur_rank = 0;
     for( j = 0; j < jdata->procs->size; ++j) {
@@ -1283,7 +1282,7 @@ static int rmaps_lama_ordering_sequential(orte_job_t *jdata)
             continue;
         }
 
-        opal_output_verbose(15, orte_rmaps_base.rmaps_output,
+        opal_output_verbose(15, orte_rmaps_base_framework.framework_output,
                             "mca:rmaps:lama: Ordering: Proc. %2d on Node %s",
                             proc->name.vpid, proc->node->name);
 
@@ -1293,7 +1292,7 @@ static int rmaps_lama_ordering_sequential(orte_job_t *jdata)
             opal_pointer_array_set_item(jdata->procs, proc->name.vpid, proc);
             opal_pointer_array_set_item(jdata->procs, cur_rank,        swap);
 
-            opal_output_verbose(15, orte_rmaps_base.rmaps_output,
+            opal_output_verbose(15, orte_rmaps_base_framework.framework_output,
                                 "mca:rmaps:lama: Ordering: \t SWAP Proc. %2d (%d) and Proc. %2d (%d)",
                                 proc->name.vpid, cur_rank, swap->name.vpid, proc->name.vpid);
             proc = swap;
@@ -1322,7 +1321,7 @@ static void display_pu_ref(int *ref, int size, int rank, orte_proc_t *proc)
     char *str = NULL;
 
     str = pu_ref_to_str(ref, size);
-    opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+    opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                         "mca:rmaps:lama: Mapping: PU Ref: %s [Rank %2d] Name: %s",
                         str, rank,
                         (NULL == proc ? "(null)" : ORTE_NAME_PRINT(&proc->name)));
@@ -1356,10 +1355,10 @@ static int check_node_availability(orte_node_t *cur_node,
     hwloc_obj_t *topo_child = NULL, *topo_parent=NULL;
 
 
-    opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+    opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                         "mca:rmaps:lama: Checking: Node (%s) -------------",
                         cur_node->name);
-    opal_output_verbose(11, orte_rmaps_base.rmaps_output,
+    opal_output_verbose(11, orte_rmaps_base_framework.framework_output,
                         "mca:rmaps:lama: ---------------------------------");
 
 
@@ -1388,7 +1387,7 @@ static int check_node_availability(orte_node_t *cur_node,
         }
 
         level_str = lama_type_enum_to_str(lama_mapping_layout_sort[i]);
-        opal_output_verbose(11, orte_rmaps_base.rmaps_output,
+        opal_output_verbose(11, orte_rmaps_base_framework.framework_output,
                             "mca:rmaps:lama: Checking: %2d of %s",
                             pu_idx_ref[i], level_str);
 
@@ -1405,7 +1404,7 @@ static int check_node_availability(orte_node_t *cur_node,
          * so it is unavailable.
          */
         if( NULL == topo_child ) {
-            opal_output_verbose(11, orte_rmaps_base.rmaps_output,
+            opal_output_verbose(11, orte_rmaps_base_framework.framework_output,
                                 "mca:rmaps:lama: Check failed: Node %s does not have a %10s %2d",
                                 cur_node->name, level_str, pu_idx_ref[i]);
             exit_status = ORTE_ERROR;
@@ -1459,12 +1458,12 @@ static int rmaps_lama_check_mppr(orte_node_t *node,
      * Optimization if no MPPR provided
      */
     if( NULL == lama_mppr_levels ) {
-        opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+        opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                             "mca:rmaps:lama: No MPPR to check - Skip...");
         return ORTE_SUCCESS;
     }
 
-    opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+    opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                         "mca:rmaps:lama: Check ---------------------------");
     /*
      * Check Parents (excluding self)
@@ -1473,7 +1472,7 @@ static int rmaps_lama_check_mppr(orte_node_t *node,
         return ret;
     }
 
-    opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+    opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                         "mca:rmaps:lama: Check ---------------------------");
 
     /*
@@ -1483,7 +1482,7 @@ static int rmaps_lama_check_mppr(orte_node_t *node,
         return ret;
     }
 
-    opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+    opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                         "mca:rmaps:lama: Check ---------------------------");
 
     return ORTE_SUCCESS;
@@ -1498,12 +1497,12 @@ static int rmaps_lama_inc_mppr(orte_node_t *node,
      * Optimization if no MPPR provided
      */
     if( NULL == lama_mppr_levels ) {
-        opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+        opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                             "mca:rmaps:lama: No MPPR to increment - Skip...");
         return ORTE_SUCCESS;
     }
 
-    opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+    opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                         "mca:rmaps:lama: Inc   ---------------------------");
     /*
      * Increment Parents (excluding self)
@@ -1512,7 +1511,7 @@ static int rmaps_lama_inc_mppr(orte_node_t *node,
         return ret;
     }
 
-    opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+    opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                         "mca:rmaps:lama: Inc   ---------------------------");
 
     /*
@@ -1522,7 +1521,7 @@ static int rmaps_lama_inc_mppr(orte_node_t *node,
         return ret;
     }
 
-    opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+    opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                         "mca:rmaps:lama: Inc   ---------------------------");
 
     return ORTE_SUCCESS;
@@ -1553,7 +1552,7 @@ static int rmaps_lama_iter_mppr_parents(orte_node_t *node,
     mppr_accounting = (rmaps_lama_node_mppr_t*)opal_pointer_array_get_item(hwloc_userdata->node_mppr, node->index);
 
     hwloc_obj_snprintf(str, sizeof(str), node->topology, *child_obj, "#", 0);
-    opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+    opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                         "mca:rmaps:lama: %s: P [%2d] %10s - %20s - Max %3d , Cur %3d (Oversub.: %s / %s)",
                         (check_only ? "Checking " : "Increment"),
                         node->index, node->name, str,
@@ -1605,7 +1604,7 @@ static int rmaps_lama_iter_mppr_children(orte_node_t *node,
     mppr_accounting = (rmaps_lama_node_mppr_t*)opal_pointer_array_get_item(hwloc_userdata->node_mppr, node->index);
 
     hwloc_obj_snprintf(str, sizeof(str), node->topology, *child_obj, "#", 0);
-    opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+    opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                         "mca:rmaps:lama: %s: C [%2d] %10s - %20s - Max %3d , Cur %3d (Oversub.: %s / %s)",
                         (check_only ? "Checking " : "Increment"),
                         node->index, node->name, str,
@@ -1727,7 +1726,7 @@ static char * get_native_slot_list(orte_node_t *cur_node, hwloc_obj_t *pu_obj, i
          */
         if( (i+1) < lama_binding_num_levels && NULL == (*cur_parent)->next_cousin ) {
             type_str = lama_type_enum_to_str(lama_binding_level);
-            opal_output_verbose(10, orte_rmaps_base.rmaps_output,
+            opal_output_verbose(10, orte_rmaps_base_framework.framework_output,
                                 "mca:rmaps:lama: Error: Not able to bind to %*d x %10s - Stopped at %*d",
                                 MAX_BIND_DIGIT_LEN, lama_binding_num_levels,
                                 type_str,

@@ -17,6 +17,7 @@
 #include "orte/types.h"
 
 #include "opal/mca/mca.h"
+#include "opal/mca/base/mca_base_framework.h"
 #include "opal/class/opal_list.h"
 #include "opal/dss/dss.h"
 
@@ -25,25 +26,11 @@
 BEGIN_C_DECLS
 
 /**
- * Open the db framework
- */
-ORTE_DECLSPEC int orte_db_base_open(void);
-
-/**
  * Select a db module
  */
 ORTE_DECLSPEC int orte_db_base_select(void);
 
-/**
- * Close the db framework
- */
-ORTE_DECLSPEC int orte_db_base_close(void);
-
-typedef struct {
-    int output;
-    opal_list_t available_components;
-} orte_db_base_t;
-ORTE_DECLSPEC extern orte_db_base_t orte_db_base;
+extern ORTE_DECLSPEC mca_base_framework_t orte_db_base_framework;
 
 ORTE_DECLSPEC int orte_db_base_send_modex_string(const char* key,
                                                  const void *buffer,

@@ -105,7 +105,7 @@ static int finalize(void)
 
 static int delete_route(orte_process_name_t *proc)
 {
-    OPAL_OUTPUT_VERBOSE((1, orte_routed_base_output,
+    OPAL_OUTPUT_VERBOSE((1, orte_routed_base_framework.framework_output,
                          "%s routed_direct_delete_route for %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(proc)));
@@ -118,7 +118,7 @@ static int delete_route(orte_process_name_t *proc)
 static int update_route(orte_process_name_t *target,
                         orte_process_name_t *route)
 { 
-    OPAL_OUTPUT_VERBOSE((1, orte_routed_base_output,
+    OPAL_OUTPUT_VERBOSE((1, orte_routed_base_framework.framework_output,
                          "%s routed_direct_update: %s --> %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(target), 
@@ -144,7 +144,7 @@ static orte_process_name_t get_route(orte_process_name_t *target)
     ret = target;
 
  found:
-    OPAL_OUTPUT_VERBOSE((2, orte_routed_base_output,
+    OPAL_OUTPUT_VERBOSE((2, orte_routed_base_framework.framework_output,
                          "%s routed_direct_get(%s) --> %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(target), 
@@ -169,7 +169,7 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndat)
      */
     if (ORTE_PROC_IS_DAEMON) {
         
-        OPAL_OUTPUT_VERBOSE((1, orte_routed_base_output,
+        OPAL_OUTPUT_VERBOSE((1, orte_routed_base_framework.framework_output,
                              "%s direct: init routes for daemon job %s\n\thnp_uri %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_JOBID_PRINT(job),
@@ -211,7 +211,7 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndat)
             return rc;
         }
         
-        OPAL_OUTPUT_VERBOSE((2, orte_routed_base_output,
+        OPAL_OUTPUT_VERBOSE((2, orte_routed_base_framework.framework_output,
                              "%s routed_direct: completed init routes",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
         
@@ -221,7 +221,7 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndat)
     
     if (ORTE_PROC_IS_HNP) {
         
-        OPAL_OUTPUT_VERBOSE((1, orte_routed_base_output,
+        OPAL_OUTPUT_VERBOSE((1, orte_routed_base_framework.framework_output,
                              "%s routed_direct: init routes for HNP job %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_JOBID_PRINT(job)));
@@ -280,7 +280,7 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndat)
      * job family. It really doesn't matter as everything must
      * go direct
      */
-    OPAL_OUTPUT_VERBOSE((1, orte_routed_base_output,
+    OPAL_OUTPUT_VERBOSE((1, orte_routed_base_framework.framework_output,
                          "%s routed_direct: init routes w/non-NULL data",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
@@ -348,7 +348,7 @@ static void get_routing_list(orte_grpcomm_coll_t type,
             }
             if( proc->state <= ORTE_PROC_STATE_UNTERMINATED &&
                 NULL != proc->rml_uri ) {
-                OPAL_OUTPUT_VERBOSE((5, orte_routed_base_output,
+                OPAL_OUTPUT_VERBOSE((5, orte_routed_base_framework.framework_output,
                                      "%s get_routing_tree: Adding process %s state %s",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                      ORTE_NAME_PRINT(&(proc->name)),
@@ -359,7 +359,7 @@ static void get_routing_list(orte_grpcomm_coll_t type,
                 nm->name.vpid = proc->name.vpid;
                 opal_list_append(&coll->targets, &nm->super);
             } else {
-                OPAL_OUTPUT_VERBOSE((5, orte_routed_base_output,
+                OPAL_OUTPUT_VERBOSE((5, orte_routed_base_framework.framework_output,
                                      "%s get_routing_tree: Skipped process %15s state %s (non functional daemon)",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                      ORTE_NAME_PRINT(&(proc->name)),

@@ -171,7 +171,7 @@ static void add_to_env(char **params, char **values, char ***env)
        vars of the form OMPI_MCA_*=value. */
 
     for (i = 0; NULL != params && NULL != params[i]; ++i) {
-        name = mca_base_param_env_var (params[i]);
+        (void) mca_base_var_env_name (params[i], &name);
         opal_setenv(name, values[i], true, env);
         free(name);
     }

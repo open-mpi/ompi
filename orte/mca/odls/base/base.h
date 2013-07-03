@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -28,7 +29,6 @@
 #include "orte_config.h"
 
 #include "opal/mca/mca.h"
-#include "opal/class/opal_list.h"
 
 #include "orte/mca/odls/odls.h"
 
@@ -36,9 +36,9 @@
 BEGIN_C_DECLS
 
 /**
- * Open the odls framework
+ * Global instance of odls-wide framework data
  */
-ORTE_DECLSPEC int orte_odls_base_open(void);
+ORTE_DECLSPEC extern mca_base_framework_t orte_odls_base_framework;
 
 #if !ORTE_DISABLE_FULL_SUPPORT
 
@@ -46,35 +46,17 @@ ORTE_DECLSPEC int orte_odls_base_open(void);
  * Struct to hold globals for the odls framework
  */
 typedef struct orte_odls_base_t {
-    /* components are available */
-    bool components_available;
     /* component has been selected */
     bool selected;
-    /** List of opened components */
-    opal_list_t available_components;
     /** selected component */
     orte_odls_base_component_t selected_component;
 } orte_odls_base_t;
 
-/**
- * Global instance of odls-wide framework data
- */
-ORTE_DECLSPEC extern orte_odls_base_t orte_odls_base;
-
 /*
- * Global functions for MCA overall collective open and close
- */
-
-/**
- * Select an odls module
+ * Select an available component.
  */
 ORTE_DECLSPEC int orte_odls_base_select(void);
 
-/**
- * Close the odls framework
- */
-ORTE_DECLSPEC int orte_odls_base_finalize(void);
-ORTE_DECLSPEC int orte_odls_base_close(void);
 
 #endif /* ORTE_DISABLE_FULL_SUPPORT */
 

@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2012 University of Houston. All rights reserved.
- * Copyright (c) 2010-2012 Los Alamos National Security, LLC.
+ * Copyright (c) 2010-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * $COPYRIGHT$
  * 
@@ -50,8 +50,10 @@
 
 #include "orte/runtime/orte_info_support.h"
 
+#include "ompi/include/ompi/frameworks.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/tools/ompi_info/ompi_info.h"
+#include "ompi/runtime/ompi_info_support.h"
 
 /*
  * Public variables
@@ -68,7 +70,6 @@ int main(int argc, char *argv[])
     bool want_all = false;
     char **app_env = NULL, **global_env = NULL;
     int i;
-    char *str;
     opal_cmd_line_t *ompi_info_cmd_line;
     opal_pointer_array_t mca_types;
     opal_pointer_array_t component_map;
@@ -112,57 +113,21 @@ int main(int argc, char *argv[])
     /* add in the orte frameworks */
     orte_info_register_types(&mca_types);
 
-    /* add in the ompi frameworks */
-    opal_pointer_array_add(&mca_types, "allocator");
-    opal_pointer_array_add(&mca_types, "bml");
-    opal_pointer_array_add(&mca_types, "btl");
-    opal_pointer_array_add(&mca_types, "coll");
-    opal_pointer_array_add(&mca_types, "common");
-#if OPAL_ENABLE_FT_CR == 1
-    opal_pointer_array_add(&mca_types, "crcp");
-#endif
-    opal_pointer_array_add(&mca_types, "dpm");
-    opal_pointer_array_add(&mca_types, "fbtl");
-    opal_pointer_array_add(&mca_types, "fcoll");
-    opal_pointer_array_add(&mca_types, "fs");
-    opal_pointer_array_add(&mca_types, "io");
-    opal_pointer_array_add(&mca_types, "mpi");
-    opal_pointer_array_add(&mca_types, "mpool");
-    opal_pointer_array_add(&mca_types, "mtl");
+    /* add the top-level type */
     opal_pointer_array_add(&mca_types, "ompi");
-    opal_pointer_array_add(&mca_types, "op");
-    opal_pointer_array_add(&mca_types, "osc");
-    opal_pointer_array_add(&mca_types, "pml");
-    opal_pointer_array_add(&mca_types, "pubsub");
-    opal_pointer_array_add(&mca_types, "rcache");
-    opal_pointer_array_add(&mca_types, "sharedfp");
-    opal_pointer_array_add(&mca_types, "topo");
+    opal_pointer_array_add(&mca_types, "mpi");
+
+    /* push all the types found by autogen */
+    for (i=0; NULL != ompi_frameworks[i]; i++) {
+        opal_pointer_array_add(&mca_types, ompi_frameworks[i]->framework_name);
+    }
     
     /* init the component map */
     OBJ_CONSTRUCT(&component_map, opal_pointer_array_t);
     opal_pointer_array_init(&component_map, 256, INT_MAX, 128);
-    
-    /* Register OPAL's params */
-    if (OPAL_SUCCESS != (ret = opal_info_register_components(&mca_types, &component_map))) {
-        if (OPAL_ERR_BAD_PARAM == ret) {
-            /* output where the error occurred */
-            opal_info_err_params(&component_map);
-        }
-        exit(1);
-    }
-
-    /* Register ORTE's params */
-    if (ORTE_SUCCESS != (ret = orte_info_register_components(&mca_types, &component_map))) {
-        if (OPAL_ERR_BAD_PARAM == ret) {
-            /* output what we got */
-            opal_info_do_params(true, opal_cmd_line_is_taken(ompi_info_cmd_line, "internal"),
-                                &mca_types, NULL);
-        }
-        exit(1);
-    }
 
     /* Register OMPI's params */
-    if (OMPI_SUCCESS != (ret = ompi_info_register_components(&mca_types, &component_map))) {
+    if (OMPI_SUCCESS != (ret = ompi_info_register_framework_params(&component_map))) {
         if (OMPI_ERR_BAD_PARAM == ret) {
             /* output what we got */
             opal_info_do_params(true, opal_cmd_line_is_taken(ompi_info_cmd_line, "internal"),
@@ -204,16 +169,9 @@ int main(int argc, char *argv[])
         opal_info_do_arch();
         opal_info_do_hostname();
         ompi_info_do_config(false);
-        for (i = 0; i < mca_types.size; ++i) {
-            if (NULL == (str = (char*)opal_pointer_array_get_item(&mca_types, i))) {
-                continue;
-            }
-            if (0 != strcmp("mpi", str)) {
-                opal_info_show_component_version(&mca_types, &component_map,
-                                                 str, opal_info_component_all, 
-                                                 opal_info_ver_full, opal_info_type_all);
-            }
-        }
+        opal_info_show_component_version(&mca_types, &component_map, opal_info_type_all,
+                                         opal_info_component_all, opal_info_ver_full,
+                                         opal_info_ver_all);
     }
     
     /* All done */

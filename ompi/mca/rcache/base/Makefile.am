@@ -9,6 +9,8 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2013      Los Alamos National Security, LLC.
+#                         All rights reserved
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -20,6 +22,5 @@ headers += \
         base/base.h 
 
 libmca_rcache_la_SOURCES += \
-	base/rcache_base_open.c \
-	base/rcache_base_create.c \
-	base/rcache_base_close.c
+	base/rcache_base_frame.c \
+	base/rcache_base_create.c

@@ -84,6 +84,7 @@ bool orte_cr_flush_restart_files = true;
 static opal_cr_coord_callback_fn_t  prev_coord_callback = NULL;
 
 static int orte_cr_output = -1;
+static int orte_cr_verbose = 0;
 
 /*
  * CR Init
@@ -91,7 +92,6 @@ static int orte_cr_output = -1;
 int orte_cr_init(void) 
 {
     int ret, exit_status = ORTE_SUCCESS;
-    int val;
 
     /*
      * OPAL Frameworks
@@ -104,20 +104,22 @@ int orte_cr_init(void)
     /*
      * Register MCA Parameters
      */
-    mca_base_param_reg_int_name("orte_cr", "verbose",
-                                "Verbose output for the ORTE Checkpoint/Restart functionality",
-                                false, false,
-                                0,
-                                &val);
-    
+    orte_cr_verbose = 0;
+    (void) mca_base_var_register ("orte", "orte_cr", NULL, "verbose",
+                                  "Verbose output for the ORTE Checkpoint/Restart functionality",
+                                  MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                  OPAL_INFO_LVL_8,
+                                  MCA_BASE_VAR_SCOPE_READONLY,
+                                  &orte_cr_verbose);
+
     /*** RHC: This is going to crash-and-burn when the output conversion is
      * completed as opal_output will have no idea what opal_cr_output stream means,
      * or even worse, will have assigned it to someone else!
      */
     
-    if(0 != val) {
+    if(0 != orte_cr_verbose) {
         orte_cr_output = opal_output_open(NULL);
-        opal_output_set_verbosity(orte_cr_output, val);
+        opal_output_set_verbosity(orte_cr_output, orte_cr_verbose);
     } else {
         orte_cr_output = opal_cr_output;
     }

@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2010-2012 Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2011-2012 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * $COPYRIGHT$
  * 
@@ -89,7 +89,7 @@ int orte_ess_base_app_setup(void)
     }
 
     /* open and setup the state machine */
-    if (ORTE_SUCCESS != (ret = orte_state_base_open())) {
+    if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_state_base_framework, 0))) {
         ORTE_ERROR_LOG(ret);
         error = "orte_state_base_open";
         goto error;
@@ -101,7 +101,7 @@ int orte_ess_base_app_setup(void)
     }
 
     /* open the errmgr */
-    if (ORTE_SUCCESS != (ret = orte_errmgr_base_open())) {
+    if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_errmgr_base_framework, 0))) {
         ORTE_ERROR_LOG(ret);
         error = "orte_errmgr_base_open";
         goto error;
@@ -110,7 +110,7 @@ int orte_ess_base_app_setup(void)
     /* Setup the communication infrastructure */
     
     /* Runtime Messaging Layer */
-    if (ORTE_SUCCESS != (ret = orte_rml_base_open())) {
+    if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_rml_base_framework, 0))) {
         ORTE_ERROR_LOG(ret);
         error = "orte_rml_base_open";
         goto error;
@@ -129,7 +129,7 @@ int orte_ess_base_app_setup(void)
     }
 
     /* Routed system */
-    if (ORTE_SUCCESS != (ret = orte_routed_base_open())) {
+    if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_routed_base_framework, 0))) {
         ORTE_ERROR_LOG(ret);
         error = "orte_routed_base_open";
         goto error;
@@ -141,7 +141,7 @@ int orte_ess_base_app_setup(void)
     }
     
     /* database */
-    if (ORTE_SUCCESS != (ret = orte_db_base_open())) {
+    if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_db_base_framework, 0))) {
         ORTE_ERROR_LOG(ret);
         error = "orte_db_base_open";
         goto error;
@@ -155,7 +155,7 @@ int orte_ess_base_app_setup(void)
     /*
      * Group communications
      */
-    if (ORTE_SUCCESS != (ret = orte_grpcomm_base_open())) {
+    if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_grpcomm_base_framework, 0))) {
         ORTE_ERROR_LOG(ret);
         error = "orte_grpcomm_base_open";
         goto error;
@@ -184,7 +184,7 @@ int orte_ess_base_app_setup(void)
     
     /* setup my session directory */
     if (orte_create_session_dirs) {
-        OPAL_OUTPUT_VERBOSE((2, orte_ess_base_output,
+        OPAL_OUTPUT_VERBOSE((2, orte_ess_base_framework.framework_output,
                              "%s setting up session dir with\n\ttmpdir: %s\n\thost %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              (NULL == orte_process_info.tmpdir_base) ? "UNDEF" : orte_process_info.tmpdir_base,
@@ -223,9 +223,14 @@ int orte_ess_base_app_setup(void)
     /*
      * Setup the SnapC
      */
-    if (ORTE_SUCCESS != (ret = orte_snapc_base_open())) {
+    if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_snapc_base_framework, 0))) {
         ORTE_ERROR_LOG(ret);
         error = "orte_snapc_base_open";
+        goto error;
+    }
+    if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_sstore_base_framework, 0))) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_sstore_base_open";
         goto error;
     }
     if (ORTE_SUCCESS != (ret = orte_snapc_base_select(ORTE_PROC_IS_HNP, !ORTE_PROC_IS_DAEMON))) {
@@ -233,7 +238,12 @@ int orte_ess_base_app_setup(void)
         error = "orte_snapc_base_select";
         goto error;
     }
-    
+    if (ORTE_SUCCESS != (ret = orte_sstore_base_select())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_sstore_base_select";
+        goto error;
+    }
+
     /* apps need the OPAL CR stuff */
     opal_cr_set_enabled(true);
 #else
@@ -290,19 +300,22 @@ int orte_ess_base_app_finalize(void)
     orte_cr_finalize();
     
 #if OPAL_ENABLE_FT_CR == 1
-    orte_snapc_base_close();
+    (void) mca_base_framework_close(&orte_snapc_base_framework);
+    (void) mca_base_framework_close(&orte_sstore_base_framework);
 #endif
-    orte_filem_base_close();
-    
-    orte_wait_finalize();
 
-    orte_errmgr_base_close();
+    /* close frameworks */
+    (void) mca_base_framework_close(&orte_errmgr_base_framework);
+
+    (void) mca_base_framework_close(&orte_filem_base_framework);
+    orte_wait_finalize();
+    (void) mca_base_framework_close(&orte_errmgr_base_framework);
 
     /* now can close the rml and its friendly group comm */
-    orte_grpcomm_base_close();
-    orte_db_base_close();
-    orte_routed_base_close();
-    orte_rml_base_close();
+    (void) mca_base_framework_close(&orte_grpcomm_base_framework);
+    (void) mca_base_framework_close(&orte_db_base_framework);
+    (void) mca_base_framework_close(&orte_routed_base_framework);
+    (void) mca_base_framework_close(&orte_rml_base_framework);
     
     orte_session_dir_finalize(ORTE_PROC_MY_NAME);
         

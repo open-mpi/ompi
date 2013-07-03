@@ -32,7 +32,7 @@ completion_fn(ptl_event_t *ev, ompi_mtl_portals4_base_request_t *ptl_base_reques
     ompi_mtl_portals4_probe_request_t *ptl_request = 
         (ompi_mtl_portals4_probe_request_t*) ptl_base_request;
 
-    opal_output_verbose(1, ompi_mtl_base_output,
+    opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                         "%s:%d: completion_fn: %d %d",
                         __FILE__, __LINE__, ev->type, ev->ni_fail_type);
 
@@ -104,7 +104,7 @@ ompi_mtl_portals4_iprobe(struct mca_mtl_base_module_t* mtl,
                       PTL_SEARCH_ONLY,
                       &request);
     if (OPAL_UNLIKELY(PTL_OK != ret)) {
-        opal_output_verbose(1, ompi_mtl_base_output,
+        opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                             "%s:%d: PtlMESearch failed: %d",
                             __FILE__, __LINE__, ret);
         return ompi_mtl_portals4_get_error(ret);
@@ -139,7 +139,7 @@ ompi_mtl_portals4_improbe(struct mca_mtl_base_module_t *mtl,
     ptl_match_bits_t match_bits, ignore_bits;
     int ret;
 
-    opal_output_verbose(1, ompi_mtl_base_output,
+    opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                         "%s:%d: improbe %d %d %d",
                         __FILE__, __LINE__, comm->c_contextid, src, tag);
 
@@ -178,7 +178,7 @@ ompi_mtl_portals4_improbe(struct mca_mtl_base_module_t *mtl,
                       PTL_SEARCH_DELETE,
                       &request);
     if (OPAL_UNLIKELY(PTL_OK != ret)) {
-        opal_output_verbose(1, ompi_mtl_base_output,
+        opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                             "%s:%d: PtlMESearch failed: %d",
                             __FILE__, __LINE__, ret);
         return ompi_mtl_portals4_get_error(ret);

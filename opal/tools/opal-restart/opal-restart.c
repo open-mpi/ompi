@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -9,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2007-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2007      Evergrid, Inc. All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
@@ -65,7 +66,6 @@
 #include "opal/util/error.h"
 #include "opal/util/basename.h"
 #include "opal/mca/base/base.h"
-#include "opal/mca/base/mca_base_param.h"
 
 #include "opal/runtime/opal.h"
 #include "opal/runtime/opal_cr.h"
@@ -189,7 +189,7 @@ main(int argc, char *argv[])
     }
 
     /* Re-enable the selection of the CRS component, so we can choose the right one */
-    tmp_env_var = mca_base_param_env_var("crs_base_do_not_select");
+    (void) mca_base_var_env_name("crs_base_do_not_select", &tmp_env_var);
     opal_setenv(tmp_env_var,
                 "0", /* turn on the selection */
                 true, &environ);
@@ -234,8 +234,8 @@ main(int argc, char *argv[])
     opal_output_verbose(10, opal_restart_globals.output,
                         "Restart Expects checkpointer: (%s)",
                         expected_crs_comp);
-    
-    tmp_env_var = mca_base_param_env_var("crs");
+
+    (void) mca_base_var_env_name("crs", &tmp_env_var);
     opal_setenv(tmp_env_var,
                 expected_crs_comp,
                 true, &environ);
@@ -371,7 +371,7 @@ static int initialize(int argc, char *argv[])
      * Turn off the selection of the CRS component,
      * we need to do that later
      */
-    tmp_env_var = mca_base_param_env_var("crs_base_do_not_select");
+    (void) mca_base_var_env_name("crs_base_do_not_select", &tmp_env_var);
     opal_setenv(tmp_env_var,
                 "1", /* turn off the selection */
                 true, &environ);
@@ -382,7 +382,7 @@ static int initialize(int argc, char *argv[])
      * Make sure we select the proper compress component.
      */
     if( NULL != opal_restart_globals.snapshot_compress ) {
-        tmp_env_var = mca_base_param_env_var("compress");
+        (void) mca_base_var_env_name("compress", &tmp_env_var);
         opal_setenv(tmp_env_var,
                     opal_restart_globals.snapshot_compress,
                     true, &environ);
@@ -409,7 +409,7 @@ static int initialize(int argc, char *argv[])
          * this way the user can swich compression mechanism
          * across restart
          */
-        tmp_env_var = mca_base_param_env_var("compress");
+        (void) mca_base_var_env_name("compress", &tmp_env_var);
         opal_unsetenv(tmp_env_var, &environ);
         free(tmp_env_var);
         tmp_env_var = NULL;

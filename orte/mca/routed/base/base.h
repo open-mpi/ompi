@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007      Los Alamos National Security, LLC.
+ * Copyright (c) 2007-2013 Los Alamos National Security, LLC.
  *                         All rights reserved. 
  * $COPYRIGHT$
  * 
@@ -24,21 +24,20 @@
 
 BEGIN_C_DECLS
 
-ORTE_DECLSPEC int orte_routed_base_open(void);
+/*
+ * MCA Framework
+ */
+ORTE_DECLSPEC extern mca_base_framework_t orte_routed_base_framework;
 
 #if !ORTE_DISABLE_FULL_SUPPORT
 
-/*
- * Global functions for the ROUTED
- */
+/* select a component */
+ORTE_DECLSPEC    int orte_routed_base_select(void);
 
-ORTE_DECLSPEC int orte_routed_base_select(void);
-ORTE_DECLSPEC int orte_routed_base_close(void);
 
-ORTE_DECLSPEC extern int orte_routed_base_output;
-ORTE_DECLSPEC extern opal_list_t orte_routed_base_components;
 ORTE_DECLSPEC extern opal_mutex_t orte_routed_base_lock;
 ORTE_DECLSPEC extern opal_condition_t orte_routed_base_cond;
+
 ORTE_DECLSPEC extern bool orte_routed_base_wait_sync;
 ORTE_DECLSPEC extern opal_pointer_array_t orte_routed_jobfams;
 

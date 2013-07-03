@@ -54,7 +54,7 @@ struct mca_btl_tcp_component_t {
     mca_btl_base_component_2_0_0_t super;   /**< base BTL component */ 
     uint32_t tcp_addr_count;                /**< total number of addresses */
     uint32_t tcp_num_btls;                  /**< number of interfaces available to the TCP component */
-    uint32_t tcp_num_links;                 /**< number of logical links per physical device */
+    unsigned int tcp_num_links;             /**< number of logical links per physical device */
     struct mca_btl_tcp_module_t **tcp_btls; /**< array of available BTL modules */
     struct mca_btl_tcp_proc_t* tcp_local;   /**< local proc struct */
     int tcp_free_list_num;                  /**< initial size of free lists */
@@ -68,14 +68,14 @@ struct mca_btl_tcp_component_t {
     opal_event_t tcp_recv_event;            /**< recv event for IPv4 listen socket */
     int tcp_listen_sd;                      /**< IPv4 listen socket for incoming connection requests */
     unsigned short tcp_listen_port;         /**< IPv4 listen port */
-    int32_t tcp_port_min;                   /**< IPv4 minimum port */
-    int32_t tcp_port_range;                 /**< IPv4 port range */
+    int tcp_port_min;                       /**< IPv4 minimum port */
+    int tcp_port_range;                     /**< IPv4 port range */
 #if OPAL_WANT_IPV6
     opal_event_t tcp6_recv_event;           /**< recv event for IPv6 listen socket */
     int tcp6_listen_sd;                     /**< IPv6 listen socket for incoming connection requests */
     unsigned short tcp6_listen_port;        /**< IPv6 listen port */
-    int32_t tcp6_port_min;                  /**< IPv4 minimum port */
-    int32_t tcp6_port_range;                /**< IPv4 port range */
+    int tcp6_port_min;                      /**< IPv4 minimum port */
+    int tcp6_port_range;                    /**< IPv4 port range */
 #endif
     /* Port range restriction */
 
@@ -91,7 +91,7 @@ struct mca_btl_tcp_component_t {
     ompi_free_list_t tcp_frag_user;
 
     /* Do we want to use TCP_NODELAY? */
-    int    tcp_use_nodelay;
+    int    tcp_not_use_nodelay;
 
     /* If btl_tcp_if_seq was specified, this is the one interface
        (name) that we're supposed to use. */

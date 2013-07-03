@@ -23,9 +23,6 @@
 
 #include "ompi_config.h"
 
-#include "opal/mca/mca.h"
-#include "opal/memoryhooks/memory.h"
-
 BEGIN_C_DECLS
 
 /*

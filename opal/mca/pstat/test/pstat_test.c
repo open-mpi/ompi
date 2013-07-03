@@ -32,7 +32,6 @@
 #include <sys/time.h>
 #endif
 
-#include "opal/mca/base/mca_base_param.h"
 #include "opal/mca/pstat/pstat.h"
 #include "opal/mca/pstat/base/base.h"
 

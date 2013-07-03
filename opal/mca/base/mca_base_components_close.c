@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -9,6 +10,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -25,65 +28,62 @@
 #include "opal/mca/base/mca_base_component_repository.h"
 #include "opal/constants.h"
 
-int mca_base_components_close(int output_id, 
-                              opal_list_t *components_available, 
-                              const mca_base_component_t *skip)
+void mca_base_component_close (const mca_base_component_t *component, int output_id)
 {
-  opal_list_item_t *item;
-  mca_base_component_priority_list_item_t *pcli, *skipped_pcli = NULL;
-  const mca_base_component_t *component;
+    int ret;
 
-  /* Close and unload all components in the available list, except the
-     "skip" item.  This is handy to close out all non-selected
-     components.  It's easier to simply remove the entire list and
-     then simply re-add the skip entry when done. */
-
-  for (item = opal_list_remove_first(components_available);
-       NULL != item; 
-       item = opal_list_remove_first(components_available)) {
-    pcli = (mca_base_component_priority_list_item_t *) item;
-    component = pcli->super.cli_component;
-
-    if (component != skip) {
-
-      /* Close */
-
-
-      if (NULL != component->mca_close_component) {
+    /* Close */
+    if (NULL != component->mca_close_component) {
         component->mca_close_component();
         opal_output_verbose(10, output_id, 
                             "mca: base: close: component %s closed",
-                           component->mca_component_name);
-      }
-
-      /* Unload */
-
-      opal_output_verbose(10, output_id, 
-                          "mca: base: close: unloading component %s",
-                         component->mca_component_name);
-      mca_base_component_repository_release((mca_base_component_t *) component);
-      free(pcli);
-    } else {
-      skipped_pcli = pcli;
+                            component->mca_component_name);
     }
-  }
 
-  /* If we found it, re-add the skipped component to the available
-     list (see above comment) */
+    /* Unload */
+    opal_output_verbose(10, output_id, 
+                        "mca: base: close: unloading component %s",
+                        component->mca_component_name);
 
-  if (NULL != skipped_pcli) {
-    opal_list_append(components_available, (opal_list_item_t *) skipped_pcli);
-  }
+    /* XXX -- TODO -- Replace reserved by mca_project_name for 1.9 */
+    ret = mca_base_var_group_find (component->reserved, component->mca_type_name,
+                                   component->mca_component_name);
+    if (0 <= ret) {
+        mca_base_var_group_deregister (ret);
+    }
 
-  /*
-   * If we are not the verbose output stream, and we shouldn't skip
-   * any components, close the output stream.  If there's a skip
-   * component, this is a 'choose one' framework and we're closing the
-   * unchoosen components, but will still be using the framework.
-   */
-  if (0 != output_id && NULL == skip) {
-      opal_output_close (output_id);
-  }
-  /* All done */
-  return OPAL_SUCCESS;
+    mca_base_component_repository_release((mca_base_component_t *) component);
+}
+
+int mca_base_framework_components_close (mca_base_framework_t *framework,
+                                         const mca_base_component_t *skip)
+{
+    return mca_base_components_close (framework->framework_output,
+                                      &framework->framework_components,
+                                      skip);
+}
+
+int mca_base_components_close(int output_id, opal_list_t *components, 
+                              const mca_base_component_t *skip)
+{
+    mca_base_component_list_item_t *cli, *next;
+
+    /* Close and unload all components in the available list, except the
+       "skip" item.  This is handy to close out all non-selected
+       components.  It's easier to simply remove the entire list and
+       then simply re-add the skip entry when done. */
+
+    OPAL_LIST_FOREACH_SAFE(cli, next, components, mca_base_component_list_item_t) {
+        if (skip == cli->cli_component) {
+            continue;
+        }
+
+        mca_base_component_close (cli->cli_component, output_id);
+        opal_list_remove_item (components, &cli->super);
+
+        OBJ_RELEASE(cli);
+    }
+
+    /* All done */
+    return OPAL_SUCCESS;
 }

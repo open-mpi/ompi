@@ -25,14 +25,17 @@
 #include "orte_config.h"
 #include "orte/constants.h"
 
-#include "opal/mca/base/mca_base_param.h"
-
 #include "orte/util/proc_info.h"
 
 #include "orte/mca/ess/ess.h"
 #include "orte/mca/ess/singleton/ess_singleton.h"
 
 extern orte_ess_base_module_t orte_ess_singleton_module;
+
+char *orte_ess_singleton_server_uri = NULL;
+
+static int
+orte_ess_singleton_component_register(void);
 
 /*
  * Instantiate the public struct with all of our public information
@@ -53,7 +56,8 @@ orte_ess_base_component_t mca_ess_singleton_component = {
         /* Component open and close functions */
         orte_ess_singleton_component_open,
         orte_ess_singleton_component_close,
-        orte_ess_singleton_component_query
+        orte_ess_singleton_component_query,
+        orte_ess_singleton_component_register
     },
     {
         /* The component is not checkpoint ready */
@@ -61,6 +65,23 @@ orte_ess_base_component_t mca_ess_singleton_component = {
     }
 };
 
+static int
+orte_ess_singleton_component_register(void)
+{
+    int ret;
+
+    orte_ess_singleton_server_uri = NULL;
+    ret = mca_base_component_var_register(&mca_ess_singleton_component.base_version,
+                                          "server",
+                                          "Server to be used as HNP - [file|FILE]:<filename> or just uri",
+                                          MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
+                                          OPAL_INFO_LVL_9,
+                                          MCA_BASE_VAR_SCOPE_READONLY,
+                                          &orte_ess_singleton_server_uri);
+    (void) mca_base_var_register_synonym(ret, "orte", NULL, NULL, "server", 0);
+
+    return ORTE_SUCCESS;
+}
 
 int
 orte_ess_singleton_component_open(void)

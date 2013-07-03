@@ -35,7 +35,6 @@
 #endif
 
 #include "opal/mca/mca.h"
-#include "opal/mca/base/mca_base_param.h"
 #include "opal/dss/dss.h"
 #include "opal/threads/threads.h"
 
@@ -69,7 +68,7 @@ int orte_plm_base_comm_start(void)
         return ORTE_SUCCESS;
     }
     
-    OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+    OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
                          "%s plm:base:receive start comm",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
@@ -106,7 +105,7 @@ int orte_plm_base_comm_stop(void)
         return ORTE_SUCCESS;
     }
     
-    OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+    OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
                          "%s plm:base:receive stop comm",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
@@ -140,7 +139,7 @@ void orte_plm_base_recv(int status, orte_process_name_t* sender,
     pid_t pid;
     bool running;
         
-    OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+    OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
                          "%s plm:base:receive processing msg",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
@@ -152,7 +151,7 @@ void orte_plm_base_recv(int status, orte_process_name_t* sender,
         
     switch (command) {
     case ORTE_PLM_LAUNCH_JOB_CMD:
-        OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+        OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
                              "%s plm:base:receive job launch command from %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_NAME_PRINT(sender)));
@@ -187,7 +186,7 @@ void orte_plm_base_recv(int status, orte_process_name_t* sender,
             child_app->prefix_dir = strdup(app->prefix_dir);
         }
                     
-        OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+        OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
                              "%s plm:base:receive adding hosts",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
@@ -212,7 +211,7 @@ void orte_plm_base_recv(int status, orte_process_name_t* sender,
         }
 
         /* launch it */
-        OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+        OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
                              "%s plm:base:receive calling spawn",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
         if (ORTE_SUCCESS != (rc = orte_plm.spawn(jdata))) {
@@ -221,7 +220,7 @@ void orte_plm_base_recv(int status, orte_process_name_t* sender,
         }
         break;
     ANSWER_LAUNCH:
-        OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+        OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
                              "%s plm:base:receive - error on launch: %d",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), rc));
 
@@ -242,14 +241,14 @@ void orte_plm_base_recv(int status, orte_process_name_t* sender,
         break;
                 
     case ORTE_PLM_UPDATE_PROC_STATE:
-        OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+        OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
                              "%s plm:base:receive update proc state command from %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_NAME_PRINT(sender)));
         count = 1;
         while (ORTE_SUCCESS == (rc = opal_dss.unpack(buffer, &job, &count, ORTE_JOBID))) {
                     
-            OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+            OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
                                  "%s plm:base:receive got update_proc_state for job %s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  ORTE_JOBID_PRINT(job)));
@@ -290,7 +289,7 @@ void orte_plm_base_recv(int status, orte_process_name_t* sender,
                     goto CLEANUP;
                 }
                         
-                OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+                OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
                                      "%s plm:base:receive got update_proc_state for vpid %lu state %s exit_code %d",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                      (unsigned long)vpid, orte_proc_state_to_str(state), (int)exit_code));
@@ -372,7 +371,7 @@ void orte_plm_base_recv(int status, orte_process_name_t* sender,
         ORTE_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
     }
     
-    OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+    OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
                          "%s plm:base:receive done processing commands",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 }

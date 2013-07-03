@@ -101,7 +101,7 @@ struct orte_proc_info_t {
     orte_proc_type_t proc_type;         /**< Type of process */
     opal_buffer_t *sync_buf;            /**< buffer to store sync response */
     uint16_t my_port;                   /**< TCP port for out-of-band comm */
-    int32_t num_restarts;               /**< number of times this proc has restarted */
+    int num_restarts;                   /**< number of times this proc has restarted */
     orte_node_rank_t my_node_rank;      /**< node rank */
     orte_local_rank_t my_local_rank;    /**< local rank */
     int32_t num_local_peers;            /**< number of procs from my job that share my node with me */
@@ -123,7 +123,7 @@ struct orte_proc_info_t {
     opal_hwloc_level_t bind_level;
     unsigned int bind_idx;
 #endif
-    int32_t app_rank;                       /**< rank within my app_context */
+    int app_rank;                        /**< rank within my app_context */
     orte_grpcomm_coll_id_t peer_modex;   /**< modex collective id */
     orte_grpcomm_coll_id_t peer_init_barrier;   /**< barrier id during init */
     orte_grpcomm_coll_id_t peer_fini_barrier;   /**< barrier id during finalize */

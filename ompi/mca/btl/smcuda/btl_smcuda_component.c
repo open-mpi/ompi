@@ -49,7 +49,6 @@
 #include "orte/util/show_help.h"
 #include "orte/runtime/orte_globals.h"
 
-#include "opal/mca/base/mca_base_param.h"
 #include "ompi/mca/mpool/base/base.h"
 #if OMPI_CUDA_SUPPORT
 #include "ompi/runtime/params.h"
@@ -112,55 +111,47 @@ mca_btl_smcuda_component_t mca_btl_smcuda_component = {
 
 static inline char* mca_btl_smcuda_param_register_string(
     const char* param_name,
-    const char* default_value)
+    const char* default_value,
+    char **storage)
 {
-    char *param_value;
-
-    (void) mca_base_param_reg_string (&mca_btl_smcuda_component.super.btl_version,
-                                      param_name, NULL, false, false, default_value,
-                                      &param_value);
-
-    return param_value;
+    *storage = default_value;
+    (void) mca_base_component_var_register(&mca_btl_smcuda_component.super.btl_version,
+                                           param_name, NULL, MCA_BASE_VAR_TYPE_STRING,
+                                           NULL, 0, 0, OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY, storage);
+    return *storage;
 }
 
 static inline int mca_btl_smcuda_param_register_int(
     const char* param_name,
-    int default_value)
+    int default_value,
+    int *storage)
 {
-    int param_value = default_value;
-
-    (void) mca_base_param_reg_int (&mca_btl_smcuda_component.super.btl_version,
-                                   param_name, NULL, false, false, default_value,
-                                   &param_value);
-
-    return param_value;
+    *storage = default_value;
+    (void) mca_base_component_var_register(&mca_btl_smcuda_component.super.btl_version,
+                                           param_name, NULL, MCA_BASE_VAR_TYPE_INT,
+                                           NULL, 0, 0, OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY, storage);
+    return *storage;
 }
 
 
 static int smcuda_register(void)
 {
     /* register SM component parameters */
-    mca_btl_smcuda_component.sm_free_list_num =
-        mca_btl_smcuda_param_register_int("free_list_num", 8);
-    mca_btl_smcuda_component.sm_free_list_max =
-        mca_btl_smcuda_param_register_int("free_list_max", -1);
-    mca_btl_smcuda_component.sm_free_list_inc =
-        mca_btl_smcuda_param_register_int("free_list_inc", 64);
-    mca_btl_smcuda_component.sm_max_procs =
-        mca_btl_smcuda_param_register_int("max_procs", -1);
-    mca_btl_smcuda_component.sm_mpool_name =
-        mca_btl_smcuda_param_register_string("mpool", "sm");
-    mca_btl_smcuda_component.fifo_size =
-        mca_btl_smcuda_param_register_int("fifo_size", 4096);
-    mca_btl_smcuda_component.nfifos =
-        mca_btl_smcuda_param_register_int("num_fifos", 1);
+    mca_btl_smcuda_param_register_int("free_list_num", 8, &mca_btl_smcuda_component.sm_free_list_num);
+    mca_btl_smcuda_param_register_int("free_list_max", -1, &mca_btl_smcuda_component.sm_free_list_max);
+    mca_btl_smcuda_param_register_int("free_list_inc", 64, &mca_btl_smcuda_component.sm_free_list_inc);
+    mca_btl_smcuda_param_register_int("max_procs", -1, &mca_btl_smcuda_component.sm_max_procs);
+    /* NTH: selection variables for mpool names don't really work so hard-code the mpool name */
+    mca_btl_smcuda_component.sm_mpool_name = "sm";
+    mca_btl_smcuda_param_register_int("fifo_size", 4096, &mca_btl_smcuda_component.fifo_size);
+    mca_btl_smcuda_param_register_int("num_fifos", 1, &mca_btl_smcuda_component.nfifos);
 
-    mca_btl_smcuda_component.fifo_lazy_free =
-        mca_btl_smcuda_param_register_int("fifo_lazy_free", 120);
+    mca_btl_smcuda_param_register_int("fifo_lazy_free", 120, &mca_btl_smcuda_component.fifo_lazy_free);
 
     /* default number of extra procs to allow for future growth */
-    mca_btl_smcuda_component.sm_extra_procs =
-        mca_btl_smcuda_param_register_int("sm_extra_procs", 0);
+    mca_btl_smcuda_param_register_int("sm_extra_procs", 0, &mca_btl_smcuda_component.sm_extra_procs);
 
 #if OMPI_CUDA_SUPPORT
     mca_btl_smcuda.super.btl_exclusivity = MCA_BTL_EXCLUSIVITY_HIGH;
@@ -195,6 +186,10 @@ static int smcuda_register(void)
 
 static int mca_btl_smcuda_component_open(void)
 {
+    if (OMPI_SUCCESS != mca_btl_base_param_verify(&mca_btl_smcuda.super)) {
+        return OMPI_ERROR;
+    }
+
     mca_btl_smcuda_component.sm_max_btls = 1;
 
     /* make sure the number of fifos is a power of 2 */
@@ -279,10 +274,6 @@ static int mca_btl_smcuda_component_close(void)
         unlink(mca_btl_smcuda_component.sm_fifo_path);
     }
 #endif
-
-    if (NULL != mca_btl_smcuda_component.sm_mpool_name) {
-        free(mca_btl_smcuda_component.sm_mpool_name);
-    }
 
 CLEANUP:
 
