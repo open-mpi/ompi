@@ -1546,6 +1546,10 @@ event_loop(int flags)
 	return event_base_loop(current_base, flags);
 }
 
+/********* OMPI CHANGE **********/
+static int warn_once = 0;
+/*********/
+
 int
 event_base_loop(struct event_base *base, int flags)
 {
@@ -1558,9 +1562,12 @@ event_base_loop(struct event_base *base, int flags)
 	 * as we invoke user callbacks. */
 	EVBASE_ACQUIRE_LOCK(base, th_base_lock);
 
-	if (base->running_loop) {
+	if (base->running_loop && 0 == warn_once) {
 		event_warnx("%s: reentrant invocation.  Only one event_base_loop"
 		    " can run on each event_base at once.", __func__);
+                /********* OMPI CHANGE **********/
+                warn_once = 1;
+                /*********/
 		EVBASE_RELEASE_LOCK(base, th_base_lock);
 		return -1;
 	}
