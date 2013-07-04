@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2013 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -125,10 +125,10 @@ OBJ_CLASS_DECLARATION(mca_btl_udapl_frag_eager_rdma_t);
  * free list(s).
  */
 
-#define MCA_BTL_UDAPL_FRAG_ALLOC_EAGER(btl, frag, rc)              \
+#define MCA_BTL_UDAPL_FRAG_ALLOC_EAGER(btl, frag)                  \
 {                                                                  \
     ompi_free_list_item_t *item;                                   \
-    OMPI_FREE_LIST_GET(&((mca_btl_udapl_module_t*)btl)->udapl_frag_eager, item, rc); \
+    OMPI_FREE_LIST_GET(&((mca_btl_udapl_module_t*)btl)->udapl_frag_eager, item); \
     frag = (mca_btl_udapl_frag_t*) item;                           \
 }
 
@@ -138,17 +138,17 @@ OBJ_CLASS_DECLARATION(mca_btl_udapl_frag_eager_rdma_t);
         (ompi_free_list_item_t*)(frag));                           \
 }
 
-#define MCA_BTL_UDAPL_FRAG_ALLOC_EAGER_RECV(btl, frag, rc)              \
+#define MCA_BTL_UDAPL_FRAG_ALLOC_EAGER_RECV(btl, frag)             \
 {                                                                  \
     ompi_free_list_item_t *item;                                   \
-    OMPI_FREE_LIST_GET(&((mca_btl_udapl_module_t*)btl)->udapl_frag_eager_recv, item, rc); \
+    OMPI_FREE_LIST_GET(&((mca_btl_udapl_module_t*)btl)->udapl_frag_eager_recv, item); \
     frag = (mca_btl_udapl_frag_t*) item;                           \
 }
 
-#define MCA_BTL_UDAPL_FRAG_ALLOC_MAX(btl, frag, rc)                \
+#define MCA_BTL_UDAPL_FRAG_ALLOC_MAX(btl, frag)                    \
 {                                                                  \
     ompi_free_list_item_t *item;                                   \
-    OMPI_FREE_LIST_GET(&((mca_btl_udapl_module_t*)btl)->udapl_frag_max, item, rc); \
+    OMPI_FREE_LIST_GET(&((mca_btl_udapl_module_t*)btl)->udapl_frag_max, item); \
     frag = (mca_btl_udapl_frag_t*) item;                           \
 }
 
@@ -158,17 +158,17 @@ OBJ_CLASS_DECLARATION(mca_btl_udapl_frag_eager_rdma_t);
         (ompi_free_list_item_t*)(frag));                           \
 }
 
-#define MCA_BTL_UDAPL_FRAG_ALLOC_MAX_RECV(btl, frag, rc)                \
+#define MCA_BTL_UDAPL_FRAG_ALLOC_MAX_RECV(btl, frag)                \
 {                                                                  \
     ompi_free_list_item_t *item;                                   \
-    OMPI_FREE_LIST_GET(&((mca_btl_udapl_module_t*)btl)->udapl_frag_max_recv, item, rc); \
+    OMPI_FREE_LIST_GET(&((mca_btl_udapl_module_t*)btl)->udapl_frag_max_recv, item); \
     frag = (mca_btl_udapl_frag_t*) item;                           \
 }
 
-#define MCA_BTL_UDAPL_FRAG_ALLOC_USER(btl, frag, rc)               \
+#define MCA_BTL_UDAPL_FRAG_ALLOC_USER(btl, frag)                   \
 {                                                                  \
     ompi_free_list_item_t *item;                                   \
-    OMPI_FREE_LIST_GET(&((mca_btl_udapl_module_t*)btl)->udapl_frag_user, item, rc); \
+    OMPI_FREE_LIST_GET(&((mca_btl_udapl_module_t*)btl)->udapl_frag_user, item); \
     frag = (mca_btl_udapl_frag_t*) item;                           \
 }
 
@@ -178,14 +178,14 @@ OBJ_CLASS_DECLARATION(mca_btl_udapl_frag_eager_rdma_t);
         (ompi_free_list_item_t*)(frag)); \
 }
 
-#define MCA_BTL_UDAPL_FRAG_ALLOC_CONTROL(btl, frag, rc)              \
+#define MCA_BTL_UDAPL_FRAG_ALLOC_CONTROL(btl, frag)                \
 {                                                                  \
     ompi_free_list_item_t *item;                                   \
-    OMPI_FREE_LIST_GET(&((mca_btl_udapl_module_t*)btl)->udapl_frag_control, item, rc); \
+    OMPI_FREE_LIST_GET(&((mca_btl_udapl_module_t*)btl)->udapl_frag_control, item); \
     frag = (mca_btl_udapl_frag_t*) item;                           \
 }
 
-#define MCA_BTL_UDAPL_FRAG_RETURN_CONTROL(btl, frag)                 \
+#define MCA_BTL_UDAPL_FRAG_RETURN_CONTROL(btl, frag)               \
 {                                                                  \
     OMPI_FREE_LIST_RETURN(&((mca_btl_udapl_module_t*)btl)->udapl_frag_control, \
         (ompi_free_list_item_t*)(frag));                           \

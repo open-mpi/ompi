@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2008 The University of Tennessee and The University
+ * Copyright (c) 2004-2013 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -174,12 +174,11 @@ mca_btl_base_descriptor_t* mca_btl_tcp_alloc(
     uint32_t flags)
 {
     mca_btl_tcp_frag_t* frag = NULL;
-    int rc;
     
     if(size <= btl->btl_eager_limit) { 
-        MCA_BTL_TCP_FRAG_ALLOC_EAGER(frag, rc); 
+        MCA_BTL_TCP_FRAG_ALLOC_EAGER(frag); 
     } else if (size <= btl->btl_max_send_size) { 
-        MCA_BTL_TCP_FRAG_ALLOC_MAX(frag, rc); 
+        MCA_BTL_TCP_FRAG_ALLOC_MAX(frag); 
     }
     if( OPAL_UNLIKELY(NULL == frag) ) {
         return NULL;
@@ -243,13 +242,13 @@ mca_btl_base_descriptor_t* mca_btl_tcp_prepare_src(
      * than the eager limit pack into a fragment from the eager pool
      */
     if (max_data+reserve <= btl->btl_eager_limit) {
-        MCA_BTL_TCP_FRAG_ALLOC_EAGER(frag, rc);
+        MCA_BTL_TCP_FRAG_ALLOC_EAGER(frag);
     } else {
         /* 
          * otherwise pack as much data as we can into a fragment
          * that is the max send size.
          */
-        MCA_BTL_TCP_FRAG_ALLOC_MAX(frag, rc);
+        MCA_BTL_TCP_FRAG_ALLOC_MAX(frag);
     }
     if( OPAL_UNLIKELY(NULL == frag) ) {
         return NULL;
@@ -326,12 +325,11 @@ mca_btl_base_descriptor_t* mca_btl_tcp_prepare_dst(
     uint32_t flags)
 {
     mca_btl_tcp_frag_t* frag;
-    int rc;
 
     if( OPAL_UNLIKELY((*size) > UINT32_MAX) ) {  /* limit the size to what we support */
         *size = (size_t)UINT32_MAX;
     }
-    MCA_BTL_TCP_FRAG_ALLOC_USER(frag, rc);
+    MCA_BTL_TCP_FRAG_ALLOC_USER(frag);
     if( OPAL_UNLIKELY(NULL == frag) ) {
         return NULL;
     }

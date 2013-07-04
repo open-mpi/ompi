@@ -3,6 +3,9 @@
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2011      UT-Battelle, LLC. All rights reserved.
+ * Copyright (c) 2013      The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -57,6 +60,7 @@ typedef union mca_btl_ugni_frag_hdr_t {
 
 enum {
     MCA_BTL_UGNI_FRAG_BUFFERED      = 1, /* frag data is buffered */
+k
     MCA_BTL_UGNI_FRAG_COMPLETE      = 2, /* smsg complete for frag */
     MCA_BTL_UGNI_FRAG_EAGER         = 4, /* eager get frag */
     MCA_BTL_UGNI_FRAG_IGNORE        = 8, /* ignore local smsg completion */
@@ -99,16 +103,16 @@ static inline int mca_btl_ugni_frag_alloc (mca_btl_base_endpoint_t *ep,
                                            mca_btl_ugni_base_frag_t **frag)
 {
     ompi_free_list_item_t *item = NULL;
-    int rc;
 
-    OMPI_FREE_LIST_GET(list, item, rc);
+    OMPI_FREE_LIST_GET(list, item);
     *frag = (mca_btl_ugni_base_frag_t *) item;
     if (OPAL_LIKELY(NULL != item)) {
         (*frag)->my_list  = list;
         (*frag)->endpoint = ep;
+        return OMPI_SUCCESS;
     }
 
-    return rc;
+    return OMPI_ERR_OUT_OF_RESOURCE;
 }
 
 static inline int mca_btl_ugni_frag_return (mca_btl_ugni_base_frag_t *frag)

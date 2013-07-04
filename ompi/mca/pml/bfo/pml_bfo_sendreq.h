@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2010 The University of Tennessee and The University
+ * Copyright (c) 2004-2013 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -122,16 +122,14 @@ get_request_from_send_pending(mca_pml_bfo_send_pending_t *type)
 
 #define MCA_PML_BFO_SEND_REQUEST_ALLOC( comm,                           \
                                         dst,                            \
-                                        sendreq,                        \
-                                        rc)                             \
+                                        sendreq)                        \
     {                                                                   \
         ompi_proc_t *proc = ompi_comm_peer_lookup( comm, dst );         \
         ompi_free_list_item_t* item;                                    \
                                                                         \
-        rc = OMPI_ERR_OUT_OF_RESOURCE;                                  \
+        sendreq = NULL;                                                 \
         if( OPAL_LIKELY(NULL != proc) ) {                               \
-            rc = OMPI_SUCCESS;                                          \
-            OMPI_FREE_LIST_WAIT(&mca_pml_base_send_requests, item, rc); \
+            OMPI_FREE_LIST_WAIT(&mca_pml_base_send_requests, item);     \
             sendreq = (mca_pml_bfo_send_request_t*)item;                \
             sendreq->req_send.req_base.req_proc = proc;                 \
         }                                                               \

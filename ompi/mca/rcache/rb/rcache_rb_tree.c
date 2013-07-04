@@ -2,7 +2,7 @@
   * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
   *                         University Research and Technology
   *                         Corporation.  All rights reserved.
-  * Copyright (c) 2004-2006 The University of Tennessee and The University
+  * Copyright (c) 2004-2013 The University of Tennessee and The University
   *                         of Tennessee Research Foundation.  All rights
   *                         reserved.
   * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -116,9 +116,9 @@ int mca_rcache_rb_tree_insert(
     int rc; 
     mca_rcache_rb_tree_item_t* rb_tree_item; 
     
-    OMPI_FREE_LIST_GET(&rb_module->rb_tree_item_list, item, rc);
-    if(OMPI_SUCCESS != rc) { 
-        return rc; 
+    OMPI_FREE_LIST_GET(&rb_module->rb_tree_item_list, item);
+    if(NULL == item) { 
+        return OMPI_ERR_OUT_OF_RESOURCE;
     }
     rb_tree_item = (mca_rcache_rb_tree_item_t*) item; 
     

@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2011 The University of Tennessee and The University
+ * Copyright (c) 2004-2013 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -1162,18 +1162,18 @@ static int mca_btl_udapl_endpoint_post_recv(mca_btl_udapl_endpoint_t* endpoint,
     
     for(i = 0; i < mca_btl_udapl_component.udapl_num_recvs; i++) {
         if(size == mca_btl_udapl_component.udapl_eager_frag_size) {
-            MCA_BTL_UDAPL_FRAG_ALLOC_EAGER_RECV(endpoint->endpoint_btl, frag, rc);
+            MCA_BTL_UDAPL_FRAG_ALLOC_EAGER_RECV(endpoint->endpoint_btl, frag);
             ep = endpoint->endpoint_eager;
         } else {
             assert(size == mca_btl_udapl_component.udapl_max_frag_size);
-            MCA_BTL_UDAPL_FRAG_ALLOC_MAX_RECV(endpoint->endpoint_btl, frag, rc);
+            MCA_BTL_UDAPL_FRAG_ALLOC_MAX_RECV(endpoint->endpoint_btl, frag);
             ep = endpoint->endpoint_max;
         } 
     
         if (NULL == frag) {
             BTL_ERROR(("ERROR: %s posting recv, out of resources\n",
                 "MCA_BTL_UDAPL_ALLOC"));
-            return rc;
+            return OMPI_ERR_OUT_OF_RESOURCE;
         }
 
         assert(size == frag->size);
@@ -1333,7 +1333,6 @@ static mca_btl_base_descriptor_t* mca_btl_udapl_endpoint_initialize_control_mess
 {
     mca_btl_udapl_module_t* udapl_btl = (mca_btl_udapl_module_t*) btl; 
     mca_btl_udapl_frag_t* frag;
-    int rc;
     int pad = 0;
 
     /* compute pad as needed */
@@ -1343,7 +1342,7 @@ static mca_btl_base_descriptor_t* mca_btl_udapl_endpoint_initialize_control_mess
     /* control messages size should never be greater than eager message size */
     assert((size+pad) <= btl->btl_eager_limit);
 
-    MCA_BTL_UDAPL_FRAG_ALLOC_CONTROL(udapl_btl, frag, rc); 
+    MCA_BTL_UDAPL_FRAG_ALLOC_CONTROL(udapl_btl, frag); 
 
     /* Set up the LMR triplet from the frag segment */
     frag->segment.base.seg_len = (uint32_t)size;

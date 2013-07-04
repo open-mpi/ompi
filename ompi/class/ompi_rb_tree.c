@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2013 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -79,19 +79,18 @@ OBJ_CLASS_INSTANCE(ompi_rb_tree_t, opal_object_t, ompi_rb_tree_construct,
 int ompi_rb_tree_init(ompi_rb_tree_t * tree,
                       ompi_rb_tree_comp_fn_t comp)
 {
-    int rc;
-
     ompi_free_list_item_t * node;
     /* we need to get memory for the root pointer from the free list */
-    OMPI_FREE_LIST_GET(&(tree->free_list), node, rc);
+    OMPI_FREE_LIST_GET(&(tree->free_list), node);
     tree->root_ptr = (ompi_rb_tree_node_t *) node;
-    if (OMPI_SUCCESS != rc) {
-        return rc;
+    if (NULL == node) {
+        return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
-    OMPI_FREE_LIST_GET(&(tree->free_list), node, rc);
-    if (OMPI_SUCCESS != rc) {
-        return rc;
+    OMPI_FREE_LIST_GET(&(tree->free_list), node);
+    if (NULL == node) {
+        OMPI_FREE_LIST_RETURN(&(tree->free_list), (ompi_free_list_item_t*)tree->root_ptr);
+        return OMPI_ERR_OUT_OF_RESOURCE;
     }
     tree->nill = (ompi_rb_tree_node_t *) node;
     /* initialize tree->nill */
@@ -121,12 +120,11 @@ int ompi_rb_tree_insert(ompi_rb_tree_t *tree, void * key, void * value)
     ompi_rb_tree_node_t * y;
     ompi_rb_tree_node_t * node;
     ompi_free_list_item_t * item;
-    int rc;
 
     /* get the memory for a node */
-    OMPI_FREE_LIST_GET(&(tree->free_list), item, rc);
-    if (OMPI_SUCCESS != rc) {
-        return rc;
+    OMPI_FREE_LIST_GET(&(tree->free_list), item);
+    if (NULL == item) {
+        return OMPI_ERR_OUT_OF_RESOURCE;
     }
     node = (ompi_rb_tree_node_t *) item;
     /* insert the data into the node */

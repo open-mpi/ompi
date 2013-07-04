@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2013 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -384,10 +384,9 @@ OBJ_CLASS_DECLARATION(mca_btl_openib_coalesced_frag_t);
 static inline mca_btl_openib_send_control_frag_t *
 alloc_control_frag(mca_btl_openib_module_t *btl)
 {
-    int rc;
     ompi_free_list_item_t *item;
 
-    OMPI_FREE_LIST_WAIT(&btl->device->send_free_control, item, rc);
+    OMPI_FREE_LIST_WAIT(&btl->device->send_free_control, item);
 
     return to_send_control_frag(item);
 }
@@ -405,30 +404,27 @@ static inline uint8_t frag_size_to_order(mca_btl_openib_module_t* btl,
 
 static inline mca_btl_openib_com_frag_t *alloc_send_user_frag(void)
 {
-    int rc;
     ompi_free_list_item_t *item;
 
-    OMPI_FREE_LIST_GET(&mca_btl_openib_component.send_user_free, item, rc);
+    OMPI_FREE_LIST_GET(&mca_btl_openib_component.send_user_free, item);
 
     return to_com_frag(item);
 }
 
 static inline mca_btl_openib_com_frag_t *alloc_recv_user_frag(void)
 {
-    int rc;
     ompi_free_list_item_t *item;
 
-    OMPI_FREE_LIST_GET(&mca_btl_openib_component.recv_user_free, item, rc);
+    OMPI_FREE_LIST_GET(&mca_btl_openib_component.recv_user_free, item);
 
     return to_com_frag(item);
 }
 
 static inline mca_btl_openib_coalesced_frag_t *alloc_coalesced_frag(void)
 {
-    int rc;
     ompi_free_list_item_t *item;
 
-    OMPI_FREE_LIST_GET(&mca_btl_openib_component.send_free_coalesced, item, rc);
+    OMPI_FREE_LIST_GET(&mca_btl_openib_component.send_free_coalesced, item);
 
     return to_coalesced_frag(item);
 }

@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2013 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -207,9 +207,8 @@ void *mca_allocator_basic_alloc(
 
     /* create a segment for any extra allocation */
     if(allocated_size > size) {
-        int rc;
-        OMPI_FREE_LIST_GET(&module->seg_descriptors, item, rc);
-        if(rc != OMPI_SUCCESS) {
+        OMPI_FREE_LIST_GET(&module->seg_descriptors, item);
+        if(NULL == item) {
             OPAL_THREAD_UNLOCK(&module->seg_lock);
             return NULL;
         }
@@ -278,7 +277,6 @@ void mca_allocator_basic_free(
     ompi_free_list_item_t *item;
     unsigned char* addr = (unsigned char*)ptr - sizeof(size_t);
     size_t size = *(size_t*)addr;
-    int rc;
     OPAL_THREAD_LOCK(&module->seg_lock);
 
     /* maintain the free list in sorted order by address */
@@ -311,8 +309,8 @@ void mca_allocator_basic_free(
             /* insert before larger entry */
             } else {
                 mca_allocator_basic_segment_t* new_seg;
-                OMPI_FREE_LIST_GET(&module->seg_descriptors, item, rc);
-                if(rc != OMPI_SUCCESS) {
+                OMPI_FREE_LIST_GET(&module->seg_descriptors, item);
+                if(NULL == item) {
                     OPAL_THREAD_UNLOCK(&module->seg_lock);
                     return;
                 }
@@ -327,8 +325,8 @@ void mca_allocator_basic_free(
     }
 
     /* append to the end of the list */
-    OMPI_FREE_LIST_GET(&module->seg_descriptors, item, rc);
-    if(rc != OMPI_SUCCESS) {
+    OMPI_FREE_LIST_GET(&module->seg_descriptors, item);
+    if(NULL == item) {
         OPAL_THREAD_UNLOCK(&module->seg_lock);
         return;
     }

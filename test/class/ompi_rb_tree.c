@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2013 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -338,8 +338,8 @@ void test2(void)
             test_failure("system out of memory");
             return;
         }   
-        OMPI_FREE_LIST_GET(&key_list, new_value, rc);
-        if(OMPI_SUCCESS != rc)
+        OMPI_FREE_LIST_GET(&key_list, new_value);
+        if(NULL == new_value)
         {
             test_failure("failed to get memory from free list");
         }

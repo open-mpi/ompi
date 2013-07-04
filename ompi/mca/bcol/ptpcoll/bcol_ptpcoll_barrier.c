@@ -1,6 +1,9 @@
 /*
  * Copyright (c) 2009-2012 Oak Ridge National Laboratory.  All rights reserved.
  * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
+ * Copyright (c) 2013      The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -53,10 +56,10 @@ static int bcol_ptpcoll_barrier_recurs_knomial_new(
 
     mca_bcol_ptpcoll_collreq_t *collreq;
 
-    OMPI_FREE_LIST_WAIT(&ptpcoll_module->collreqs_free, item, rc);
-    if (OPAL_UNLIKELY(OMPI_SUCCESS != rc)) {
+    OMPI_FREE_LIST_WAIT(&ptpcoll_module->collreqs_free, item);
+    if (OPAL_UNLIKELY(NULL == item)) {
         PTPCOLL_ERROR(("Free list waiting failed."));
-        return rc;
+        return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
     collreq = (mca_bcol_ptpcoll_collreq_t *) item;
@@ -384,10 +387,10 @@ static int bcol_ptpcoll_barrier_recurs_knomial_extra_new(
 
     mca_bcol_ptpcoll_collreq_t *collreq;
 
-    OMPI_FREE_LIST_WAIT(&ptpcoll_module->collreqs_free, item, rc);
-    if (OPAL_UNLIKELY(OMPI_SUCCESS != rc)) {
+    OMPI_FREE_LIST_WAIT(&ptpcoll_module->collreqs_free, item);
+    if (OPAL_UNLIKELY(NULL == item)) {
         PTPCOLL_ERROR(("Free list waiting failed."));
-        return rc;
+        return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
     collreq = (mca_bcol_ptpcoll_collreq_t *) item;
@@ -466,10 +469,10 @@ static int bcol_ptpcoll_barrier_recurs_dbl_new(
 
     mca_bcol_ptpcoll_collreq_t *collreq;
 
-    OMPI_FREE_LIST_WAIT(&ptp_module->collreqs_free, item, rc);
-    if (OPAL_UNLIKELY(OMPI_SUCCESS != rc)) {
+    OMPI_FREE_LIST_WAIT(&ptp_module->collreqs_free, item);
+    if (OPAL_UNLIKELY(NULL == item)) {
         PTPCOLL_ERROR(("Free list waiting failed."));
-        return rc;
+        return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
     collreq = (mca_bcol_ptpcoll_collreq_t *) item;
@@ -771,10 +774,10 @@ static int bcol_ptpcoll_barrier_recurs_dbl_extra_new(
                          (mca_bcol_ptpcoll_module_t *) const_args->bcol_module;
     ompi_communicator_t *comm = ptp_module->super.sbgp_partner_module->group_comm;
 
-    OMPI_FREE_LIST_WAIT(&ptp_module->collreqs_free, item, rc);
-    if (OPAL_UNLIKELY(OMPI_SUCCESS != rc)) {
+    OMPI_FREE_LIST_WAIT(&ptp_module->collreqs_free, item);
+    if (OPAL_UNLIKELY(NULL == item)) {
         PTPCOLL_ERROR(("Free list waiting failed."));
-        return rc;
+        return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
     collreq = (mca_bcol_ptpcoll_collreq_t *) item;

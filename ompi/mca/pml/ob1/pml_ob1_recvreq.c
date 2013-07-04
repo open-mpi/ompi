@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2012 The University of Tennessee and The University
+ * Copyright (c) 2004-2013 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart, 
@@ -684,10 +684,10 @@ void mca_pml_ob1_recv_request_progress_rget( mca_pml_ob1_recv_request_t* recvreq
      * accumulates the number of bytes that were sent so far. */
     while (bytes_remaining > 0) {
         /* allocate/initialize a fragment */
-        MCA_PML_OB1_RDMA_FRAG_ALLOC(frag,rc);
+        MCA_PML_OB1_RDMA_FRAG_ALLOC(frag);
         if (OPAL_UNLIKELY(NULL == frag)) {
             /* GLB - FIX */
-             OMPI_ERROR_LOG(rc);
+             OMPI_ERROR_LOG(OMPI_ERR_OUT_OF_RESOURCE);
              ompi_rte_abort(-1, NULL);
         }
 

@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2007 The University of Tennessee and The University
+ * Copyright (c) 2004-2013 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -135,9 +135,9 @@ int mca_mpool_gpusm_register(mca_mpool_base_module_t *mpool, void *addr,
     base = addr;
     bound = (unsigned char *)addr + size - 1;
 
-    OMPI_FREE_LIST_GET(&mpool_gpusm->reg_list, item, rc);
-    if(OMPI_SUCCESS != rc) {
-        return rc;
+    OMPI_FREE_LIST_GET(&mpool_gpusm->reg_list, item);
+    if(NULL == item) {
+        return OMPI_ERR_OUT_OF_RESOURCE;
     }
     gpusm_reg = (mca_mpool_base_registration_t*)item;
 

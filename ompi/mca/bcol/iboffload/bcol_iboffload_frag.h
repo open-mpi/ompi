@@ -1,6 +1,9 @@
 /*
  * Copyright (c) 2009-2012 Oak Ridge National Laboratory.  All rights reserved.
  * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
+ * Copyright (c) 2013      The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -103,16 +106,13 @@ mca_bcol_iboffload_frag_t* mca_bcol_iboffload_get_ml_empty_frag(
                     mca_bcol_iboffload_module_t *iboffload,
                     int qp_index)
 {
-    /* local variables */
-    int rc;
-
     ompi_free_list_item_t *item;
     mca_bcol_iboffload_frag_t *frag;
 
     mca_bcol_iboffload_component_t *cm = &mca_bcol_iboffload_component;
 
     /* Get frag from free list */
-    OMPI_FREE_LIST_GET(&cm->ml_frags_free, item, rc);
+    OMPI_FREE_LIST_GET(&cm->ml_frags_free, item);
     if (OPAL_UNLIKELY(NULL == item)) {
         return NULL;
     }

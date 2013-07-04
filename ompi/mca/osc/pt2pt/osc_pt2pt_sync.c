@@ -1,8 +1,9 @@
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University.
  *                         All rights reserved.
- * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
- *                         All rights reserved.
+ * Copyright (c) 2004-2013 The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
@@ -525,7 +526,6 @@ ompi_osc_pt2pt_passive_lock(ompi_osc_pt2pt_module_t *module,
                             int32_t lock_type)
 {
     bool send_ack = false;
-    int ret = OMPI_SUCCESS;
     ompi_proc_t *proc = ompi_comm_peer_lookup( module->p2p_comm, origin );
     ompi_osc_pt2pt_pending_lock_t *new_pending;
 
@@ -565,8 +565,6 @@ ompi_osc_pt2pt_passive_lock(ompi_osc_pt2pt_module_t *module,
             new_pending->lock_type = lock_type;
             opal_list_append(&(module->p2p_locks_pending), &(new_pending->super));
         }
-    } else {
-        ret = OMPI_ERROR;
     }
     OPAL_THREAD_UNLOCK(&(module->p2p_lock));
 

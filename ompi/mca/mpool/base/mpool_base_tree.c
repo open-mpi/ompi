@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2013 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -143,11 +143,8 @@ mca_mpool_base_tree_item_t* mca_mpool_base_tree_find(void* base) {
  */
 mca_mpool_base_tree_item_t* mca_mpool_base_tree_item_get(void) { 
     ompi_free_list_item_t* item = NULL;
-    int rc;
-    OMPI_FREE_LIST_GET(&mca_mpool_base_tree_item_free_list, 
-                       item, 
-                       rc); 
-    if(OMPI_SUCCESS == rc) { 
+    OMPI_FREE_LIST_GET(&mca_mpool_base_tree_item_free_list, item);
+    if(NULL != item) { 
         return (mca_mpool_base_tree_item_t*) item; 
     } else { 
         return NULL;

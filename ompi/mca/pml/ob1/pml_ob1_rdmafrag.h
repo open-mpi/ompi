@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2013 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -51,10 +51,10 @@ typedef struct mca_pml_ob1_rdma_frag_t mca_pml_ob1_rdma_frag_t;
 OBJ_CLASS_DECLARATION(mca_pml_ob1_rdma_frag_t);
 
 
-#define MCA_PML_OB1_RDMA_FRAG_ALLOC(frag,rc)                    \
+#define MCA_PML_OB1_RDMA_FRAG_ALLOC(frag)                       \
 do {                                                            \
     ompi_free_list_item_t* item;                                \
-    OMPI_FREE_LIST_WAIT(&mca_pml_ob1.rdma_frags, item, rc);     \
+    OMPI_FREE_LIST_WAIT(&mca_pml_ob1.rdma_frags, item);         \
     frag = (mca_pml_ob1_rdma_frag_t*)item;                      \
 } while(0)
 

@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2011 The University of Tennessee and The University
+ * Copyright (c) 2004-2013 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -1072,12 +1072,11 @@ static void mca_btl_sctp_endpoint_recv_handler(int sd, short flags, void* user)
 
             frag = btl_endpoint->endpoint_recv_frag;
             if(NULL == frag) {
-                int rc;
                 if(mca_btl_sctp_module.super.btl_max_send_size > 
                    mca_btl_sctp_module.super.btl_eager_limit) { 
-                    MCA_BTL_SCTP_FRAG_ALLOC_MAX(frag, rc);
+                    MCA_BTL_SCTP_FRAG_ALLOC_MAX(frag);
                 } else { 
-                    MCA_BTL_SCTP_FRAG_ALLOC_EAGER(frag, rc);
+                    MCA_BTL_SCTP_FRAG_ALLOC_EAGER(frag);
                 }
                 
                 if(NULL == frag) {
