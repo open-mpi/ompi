@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2008 The University of Tennessee and The University
+ * Copyright (c) 2004-2013 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -126,12 +126,11 @@ mca_btl_base_descriptor_t* mca_btl_self_alloc(
         uint32_t flags)
 {
     mca_btl_self_frag_t* frag = NULL;
-    int rc;
 
     if(size <= mca_btl_self.btl_eager_limit) {
-        MCA_BTL_SELF_FRAG_ALLOC_EAGER(frag,rc);
+        MCA_BTL_SELF_FRAG_ALLOC_EAGER(frag);
     } else if (size <= btl->btl_max_send_size) {
-        MCA_BTL_SELF_FRAG_ALLOC_SEND(frag,rc);
+        MCA_BTL_SELF_FRAG_ALLOC_SEND(frag);
     }
     if( OPAL_UNLIKELY(NULL == frag) ) {
         return NULL; 
@@ -141,7 +140,6 @@ mca_btl_base_descriptor_t* mca_btl_self_alloc(
     frag->base.des_flags   = flags;
     frag->base.des_src     = &(frag->segment);
     frag->base.des_src_cnt = 1;
-    (void)rc;  /* unused but needed by a macro */
     return (mca_btl_base_descriptor_t*)frag;
 }
                                                                                                                    
@@ -198,7 +196,7 @@ mca_btl_self_prepare_src( struct mca_btl_base_module_t* btl,
         max_data < mca_btl_self.btl_max_send_size ||
         reserve != 0 ) {
 
-        MCA_BTL_SELF_FRAG_ALLOC_SEND(frag, rc);
+        MCA_BTL_SELF_FRAG_ALLOC_SEND(frag);
         if(OPAL_UNLIKELY(NULL == frag)) {
             return NULL;
         }
@@ -218,7 +216,7 @@ mca_btl_self_prepare_src( struct mca_btl_base_module_t* btl,
         frag->segment.seg_len = reserve + max_data;
         *size = max_data;
     } else {
-        MCA_BTL_SELF_FRAG_ALLOC_RDMA(frag, rc);
+        MCA_BTL_SELF_FRAG_ALLOC_RDMA(frag);
         if(OPAL_UNLIKELY(NULL == frag)) {
             return NULL;
         }
@@ -258,9 +256,8 @@ mca_btl_self_prepare_dst( struct mca_btl_base_module_t* btl,
     mca_btl_self_frag_t* frag;
     size_t max_data = *size;
     void *ptr;
-    int rc;
 
-    MCA_BTL_SELF_FRAG_ALLOC_RDMA(frag, rc);
+    MCA_BTL_SELF_FRAG_ALLOC_RDMA(frag);
     if(OPAL_UNLIKELY(NULL == frag)) {
         return NULL;
     }
@@ -273,7 +270,6 @@ mca_btl_self_prepare_dst( struct mca_btl_base_module_t* btl,
     frag->base.des_dst = &frag->segment;
     frag->base.des_dst_cnt = 1;
     frag->base.des_flags = flags;
-    (void)rc;  /* unused but needed by a macro */
     return &frag->base;
 }
  

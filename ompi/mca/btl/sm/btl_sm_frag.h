@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2009 The University of Tennessee and The University
+ * Copyright (c) 2004-2013 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -76,24 +76,24 @@ OBJ_CLASS_DECLARATION(mca_btl_sm_frag1_t);
 OBJ_CLASS_DECLARATION(mca_btl_sm_frag2_t);
 OBJ_CLASS_DECLARATION(mca_btl_sm_user_t);
 
-#define MCA_BTL_SM_FRAG_ALLOC_EAGER(frag, rc)                           \
+#define MCA_BTL_SM_FRAG_ALLOC_EAGER(frag)                               \
 {                                                                       \
     ompi_free_list_item_t* item;                                        \
-    OMPI_FREE_LIST_GET(&mca_btl_sm_component.sm_frags_eager, item, rc); \
+    OMPI_FREE_LIST_GET(&mca_btl_sm_component.sm_frags_eager, item);     \
     frag = (mca_btl_sm_frag_t*)item;                                    \
 }
 
-#define MCA_BTL_SM_FRAG_ALLOC_MAX(frag, rc)                             \
+#define MCA_BTL_SM_FRAG_ALLOC_MAX(frag)                                 \
 {                                                                       \
     ompi_free_list_item_t* item;                                        \
-    OMPI_FREE_LIST_GET(&mca_btl_sm_component.sm_frags_max, item, rc);   \
+    OMPI_FREE_LIST_GET(&mca_btl_sm_component.sm_frags_max, item);       \
     frag = (mca_btl_sm_frag_t*)item;                                    \
 }
 
-#define MCA_BTL_SM_FRAG_ALLOC_USER(frag, rc)                             \
+#define MCA_BTL_SM_FRAG_ALLOC_USER(frag)                                \
 {                                                                       \
 	ompi_free_list_item_t* item;                                        \
-	OMPI_FREE_LIST_GET(&mca_btl_sm_component.sm_frags_user, item, rc);   \
+	OMPI_FREE_LIST_GET(&mca_btl_sm_component.sm_frags_user, item);      \
 	frag = (mca_btl_sm_frag_t*)item;                                    \
 }
 

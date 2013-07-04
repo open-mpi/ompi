@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2007 The University of Tennessee and The University
+ * Copyright (c) 2004-2013 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -220,10 +220,10 @@ struct mca_pml_ob1_pckt_pending_t {
 typedef struct mca_pml_ob1_pckt_pending_t mca_pml_ob1_pckt_pending_t;
 OBJ_CLASS_DECLARATION(mca_pml_ob1_pckt_pending_t);
 
-#define MCA_PML_OB1_PCKT_PENDING_ALLOC(pckt,rc)                 \
+#define MCA_PML_OB1_PCKT_PENDING_ALLOC(pckt)                    \
 do {                                                            \
     ompi_free_list_item_t* item;                                \
-    OMPI_FREE_LIST_WAIT(&mca_pml_ob1.pending_pckts, item, rc);  \
+    OMPI_FREE_LIST_WAIT(&mca_pml_ob1.pending_pckts, item);      \
     pckt = (mca_pml_ob1_pckt_pending_t*)item;                   \
 } while (0)
 
@@ -237,9 +237,8 @@ do {                                                            \
 #define MCA_PML_OB1_ADD_FIN_TO_PENDING(P, D, B, O, S)               \
     do {                                                            \
         mca_pml_ob1_pckt_pending_t *_pckt;                          \
-        int _rc;                                                    \
                                                                     \
-        MCA_PML_OB1_PCKT_PENDING_ALLOC(_pckt,_rc);                  \
+        MCA_PML_OB1_PCKT_PENDING_ALLOC(_pckt);                      \
         _pckt->hdr.hdr_common.hdr_type = MCA_PML_OB1_HDR_TYPE_FIN;  \
         _pckt->hdr.hdr_fin.hdr_des = (D);                           \
         _pckt->hdr.hdr_fin.hdr_fail = (S);                          \

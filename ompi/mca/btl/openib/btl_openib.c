@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2011 The University of Tennessee and The University
+ * Copyright (c) 2004-2013 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -965,12 +965,12 @@ static inline mca_btl_base_descriptor_t *
 ib_frag_alloc(mca_btl_openib_module_t *btl, size_t size, uint8_t order,
         uint32_t flags)
 {
-    int qp, rc;
+    int qp;
     ompi_free_list_item_t* item = NULL;
 
     for(qp = 0; qp < mca_btl_openib_component.num_qps; qp++) {
          if(mca_btl_openib_component.qp_infos[qp].size >= size) {
-             OMPI_FREE_LIST_GET(&btl->device->qps[qp].send_free, item, rc);
+             OMPI_FREE_LIST_GET(&btl->device->qps[qp].send_free, item);
              if(item)
                  break;
          }
@@ -1550,8 +1550,7 @@ int mca_btl_openib_sendi( struct mca_btl_base_module_t* btl,
     mca_btl_openib_module_t *obtl = (mca_btl_openib_module_t*)btl;
     size_t size = payload_size + header_size;
     size_t eager_limit;
-    int rc,
-        qp = frag_size_to_order(obtl, size),
+    int qp = frag_size_to_order(obtl, size),
         prio = !(flags & MCA_BTL_DES_FLAGS_PRIORITY),
         ib_rc;
     int32_t cm_return;
@@ -1606,7 +1605,7 @@ int mca_btl_openib_sendi( struct mca_btl_base_module_t* btl,
     }
 
     /* Allocate fragment */
-    OMPI_FREE_LIST_GET(&obtl->device->qps[qp].send_free, item, rc);
+    OMPI_FREE_LIST_GET(&obtl->device->qps[qp].send_free, item);
     if(OPAL_UNLIKELY(NULL == item)) {
         /* we don't return NULL because maybe later we will try to coalesce */
         goto no_frags;

@@ -1,6 +1,9 @@
 /*
  * Copyright (c) 2009-2012 Oak Ridge National Laboratory.  All rights reserved.
  * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
+ * Copyright (c) 2013      The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -136,7 +139,6 @@ static inline __opal_attribute_always_inline__ mca_bcol_iboffload_task_t*
                                          mca_bcol_iboffload_frag_t *frags,
                                          int qp_index, struct ibv_qp *qp)
 {
-    int rc;
     ompi_free_list_item_t *item;
     mca_bcol_iboffload_task_t *task;
 
@@ -144,7 +146,7 @@ static inline __opal_attribute_always_inline__ mca_bcol_iboffload_task_t*
     mca_bcol_iboffload_endpoint_t *endpoint = iboffload->endpoints[source];
 
     /* blocking allocation for send fragment */
-    OMPI_FREE_LIST_GET(&cm->tasks_free, item, rc);
+    OMPI_FREE_LIST_GET(&cm->tasks_free, item);
     if (OPAL_UNLIKELY(NULL == item)) {
         mca_bcol_iboffload_return_recv_frags_toendpoint(frags, endpoint, qp_index);
         return NULL;
@@ -193,8 +195,6 @@ mca_bcol_iboffload_prepare_send_task(
         int qp_index, ompi_free_list_t *task_list,
         mca_bcol_iboffload_collfrag_t *collfrag)
 {
-    int rc;
-
     ompi_free_list_item_t *item;
     mca_bcol_iboffload_task_t *task;
 
@@ -203,7 +203,7 @@ mca_bcol_iboffload_prepare_send_task(
                             endpoint->iboffload_module->ibnet->super.group_list[endpoint->index]));
 
     /* get item from free list */
-    OMPI_FREE_LIST_GET(task_list, item, rc);
+    OMPI_FREE_LIST_GET(task_list, item);
     if (OPAL_UNLIKELY(NULL == item)) {
         return NULL;
     }

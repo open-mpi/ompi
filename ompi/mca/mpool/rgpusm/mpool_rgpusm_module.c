@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2007 The University of Tennessee and The University
+ * Copyright (c) 2004-2013 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -210,9 +210,9 @@ int mca_mpool_rgpusm_register(mca_mpool_base_module_t *mpool, void *addr,
      * are not leaving the registrations pinned, the number of
      * registrations is unlimited and there is no need for a cache. */
     if(!mca_mpool_rgpusm_component.leave_pinned && 0 == mca_mpool_rgpusm_component.rcache_size_limit) {
-        OMPI_FREE_LIST_GET(&mpool_rgpusm->reg_list, item, rc);
-        if(OMPI_SUCCESS != rc) {
-            return rc;
+        OMPI_FREE_LIST_GET(&mpool_rgpusm->reg_list, item);
+        if(NULL == item) {
+            return OMPI_ERR_OUT_OF_RESOURCE;
         }
         rgpusm_reg = (mca_mpool_common_cuda_reg_t*)item;
         rgpusm_reg->base.mpool = mpool;
@@ -323,10 +323,10 @@ int mca_mpool_rgpusm_register(mca_mpool_base_module_t *mpool, void *addr,
                         "RGPUSM: New registration ep=%d, addr=%p, size=%d. Need to register and insert in cache",
                          mypeer, addr, (int)size);
 
-    OMPI_FREE_LIST_GET(&mpool_rgpusm->reg_list, item, rc);
-    if(OMPI_SUCCESS != rc) {
+    OMPI_FREE_LIST_GET(&mpool_rgpusm->reg_list, item);
+    if(NULL == item) {
         OPAL_THREAD_UNLOCK(&mpool->rcache->lock);
-        return rc;
+        return OMPI_ERR_OUT_OF_RESOURCE;
     }
     rgpusm_reg = (mca_mpool_common_cuda_reg_t*)item;
 

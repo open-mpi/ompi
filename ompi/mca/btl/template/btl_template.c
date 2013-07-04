@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2008 The University of Tennessee and The University
+ * Copyright (c) 2004-2013 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -169,12 +169,11 @@ mca_btl_base_descriptor_t* mca_btl_template_alloc(
 {
     mca_btl_template_module_t* template_btl = (mca_btl_template_module_t*) btl; 
     mca_btl_template_frag_t* frag = NULL;
-    int rc;
     
     if(size <= btl->btl_eager_limit){ 
-        MCA_BTL_TEMPLATE_FRAG_ALLOC_EAGER(template_btl, frag, rc); 
+        MCA_BTL_TEMPLATE_FRAG_ALLOC_EAGER(template_btl, frag); 
     } else { 
-        MCA_BTL_TEMPLATE_FRAG_ALLOC_MAX(template_btl, frag, rc); 
+        MCA_BTL_TEMPLATE_FRAG_ALLOC_MAX(template_btl, frag); 
     }
     if( OPAL_UNLIKELY(NULL != frag) ) {
         return NULL;
@@ -241,7 +240,7 @@ mca_btl_base_descriptor_t* mca_btl_template_prepare_src(
     */
     if (max_data+reserve <= btl->btl_eager_limit) {
 
-        MCA_BTL_TEMPLATE_FRAG_ALLOC_EAGER(btl, frag, rc);
+        MCA_BTL_TEMPLATE_FRAG_ALLOC_EAGER(btl, frag);
         if(OPAL_UNLIKELY(NULL == frag)) {
             return NULL;
         }
@@ -264,7 +263,7 @@ mca_btl_base_descriptor_t* mca_btl_template_prepare_src(
      */
     else {
                                                                                                     
-        MCA_BTL_TEMPLATE_FRAG_ALLOC_MAX(btl, frag, rc);
+        MCA_BTL_TEMPLATE_FRAG_ALLOC_MAX(btl, frag);
         if(OPAL_UNLIKELY(NULL == frag)) {
             return NULL;
         }
@@ -318,9 +317,8 @@ mca_btl_base_descriptor_t* mca_btl_template_prepare_dst(
     uint32_t flags)
 {
     mca_btl_template_frag_t* frag;
-    int rc;
 
-    MCA_BTL_TEMPLATE_FRAG_ALLOC_USER(btl, frag, rc);
+    MCA_BTL_TEMPLATE_FRAG_ALLOC_USER(btl, frag);
     if(OPAL_UNLIKELY(NULL == frag)) {
         return NULL;
     }

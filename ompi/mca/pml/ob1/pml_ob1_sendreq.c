@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2008 The University of Tennessee and The University
+ * Copyright (c) 2004-2013 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart, 
@@ -868,13 +868,13 @@ void mca_pml_ob1_send_request_copy_in_out( mca_pml_ob1_send_request_t *sendreq,
     ompi_free_list_item_t *i;
     mca_bml_base_endpoint_t* bml_endpoint = sendreq->req_endpoint;
     int num_btls = mca_bml_base_btl_array_get_size(&bml_endpoint->btl_send);
-    int rc, n;
+    int n;
     double weight_total = 0;
 
     if( OPAL_UNLIKELY(0 == send_length) )
         return;
 
-    OMPI_FREE_LIST_WAIT(&mca_pml_ob1.send_ranges, i, rc);
+    OMPI_FREE_LIST_WAIT(&mca_pml_ob1.send_ranges, i);
 
     sr = (mca_pml_ob1_send_range_t*)i;
 
@@ -1241,7 +1241,6 @@ void mca_pml_ob1_send_request_put( mca_pml_ob1_send_request_t* sendreq,
 {
     mca_bml_base_endpoint_t *bml_endpoint = sendreq->req_endpoint;
     mca_pml_ob1_rdma_frag_t* frag;
-    int rc;
     size_t i, size = 0;
 
     if(hdr->hdr_common.hdr_flags & MCA_PML_OB1_HDR_TYPE_ACK) { 
@@ -1250,11 +1249,11 @@ void mca_pml_ob1_send_request_put( mca_pml_ob1_send_request_t* sendreq,
 
     sendreq->req_recv.pval = hdr->hdr_recv_req.pval;
 
-    MCA_PML_OB1_RDMA_FRAG_ALLOC(frag, rc); 
+    MCA_PML_OB1_RDMA_FRAG_ALLOC(frag); 
 
     if( OPAL_UNLIKELY(NULL == frag) ) {
         /* TSW - FIX */
-        OMPI_ERROR_LOG(rc);
+        OMPI_ERROR_LOG(OMPI_ERR_OUT_OF_RESOURCE);
         ompi_rte_abort(-1, NULL);
     }
 

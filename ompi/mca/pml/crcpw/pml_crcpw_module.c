@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2009 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2013 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -58,11 +58,11 @@ mca_pml_crcpw_module_t mca_pml_crcpw_module = {
     }
 };
 
-#define PML_CRCP_STATE_ALLOC(pml_state, rc)         \
+#define PML_CRCP_STATE_ALLOC(pml_state)             \
 do {                                                \
   if( !pml_crcpw_is_finalized ) {                   \
     ompi_free_list_item_t* item;                    \
-    OMPI_FREE_LIST_WAIT(&pml_state_list, item, rc); \
+    OMPI_FREE_LIST_WAIT(&pml_state_list, item);     \
     pml_state = (ompi_crcp_base_pml_state_t*)item;  \
   }                                                 \
 } while(0); 
@@ -84,7 +84,7 @@ int mca_pml_crcpw_enable(bool enable)
         return mca_pml_crcpw_module.wrapped_pml_module.pml_enable(enable);
     }
 
-    PML_CRCP_STATE_ALLOC(pml_state, ret);
+    PML_CRCP_STATE_ALLOC(pml_state);
 
     pml_state->wrapped_pml_component = &(mca_pml_crcpw_module.wrapped_pml_component);
     pml_state->wrapped_pml_module    = &(mca_pml_crcpw_module.wrapped_pml_module);
@@ -126,7 +126,7 @@ int mca_pml_crcpw_add_comm(ompi_communicator_t* comm)
         return mca_pml_crcpw_module.wrapped_pml_module.pml_add_comm(comm);
     }
 
-    PML_CRCP_STATE_ALLOC(pml_state, ret);
+    PML_CRCP_STATE_ALLOC(pml_state);
 
     pml_state->wrapped_pml_component = &(mca_pml_crcpw_module.wrapped_pml_component);
     pml_state->wrapped_pml_module    = &(mca_pml_crcpw_module.wrapped_pml_module);
@@ -168,7 +168,7 @@ int mca_pml_crcpw_del_comm(ompi_communicator_t* comm)
         return mca_pml_crcpw_module.wrapped_pml_module.pml_del_comm(comm);
     }
 
-    PML_CRCP_STATE_ALLOC(pml_state, ret);
+    PML_CRCP_STATE_ALLOC(pml_state);
     if( NULL == pml_state ) {
         return mca_pml_crcpw_module.wrapped_pml_module.pml_del_comm(comm);
     }
@@ -209,7 +209,7 @@ int mca_pml_crcpw_add_procs(ompi_proc_t** procs, size_t nprocs)
     int ret;
     ompi_crcp_base_pml_state_t * pml_state = NULL;
 
-    PML_CRCP_STATE_ALLOC(pml_state, ret);
+    PML_CRCP_STATE_ALLOC(pml_state);
 
     pml_state->wrapped_pml_component = &(mca_pml_crcpw_module.wrapped_pml_component);
     pml_state->wrapped_pml_module    = &(mca_pml_crcpw_module.wrapped_pml_module);
@@ -247,7 +247,7 @@ int mca_pml_crcpw_del_procs(ompi_proc_t** procs, size_t nprocs)
     int ret;
     ompi_crcp_base_pml_state_t * pml_state = NULL;
 
-    PML_CRCP_STATE_ALLOC(pml_state, ret);
+    PML_CRCP_STATE_ALLOC(pml_state);
 
     pml_state->wrapped_pml_component = &(mca_pml_crcpw_module.wrapped_pml_component);
     pml_state->wrapped_pml_module    = &(mca_pml_crcpw_module.wrapped_pml_module);
@@ -285,7 +285,7 @@ int mca_pml_crcpw_iprobe(int dst, int tag, struct ompi_communicator_t* comm, int
     int ret;
     ompi_crcp_base_pml_state_t * pml_state = NULL;
 
-    PML_CRCP_STATE_ALLOC(pml_state, ret);
+    PML_CRCP_STATE_ALLOC(pml_state);
 
     pml_state->wrapped_pml_component = &(mca_pml_crcpw_module.wrapped_pml_component);
     pml_state->wrapped_pml_module    = &(mca_pml_crcpw_module.wrapped_pml_module);
@@ -328,7 +328,7 @@ int mca_pml_crcpw_probe( int dst, int tag, struct ompi_communicator_t* comm, omp
     int ret;
     ompi_crcp_base_pml_state_t * pml_state = NULL;
 
-    PML_CRCP_STATE_ALLOC(pml_state, ret);
+    PML_CRCP_STATE_ALLOC(pml_state);
 
     pml_state->wrapped_pml_component = &(mca_pml_crcpw_module.wrapped_pml_component);
     pml_state->wrapped_pml_module    = &(mca_pml_crcpw_module.wrapped_pml_module);
@@ -372,7 +372,7 @@ int mca_pml_crcpw_isend_init( void *buf, size_t count, ompi_datatype_t *datatype
     int ret;
     ompi_crcp_base_pml_state_t * pml_state = NULL;
 
-    PML_CRCP_STATE_ALLOC(pml_state, ret);
+    PML_CRCP_STATE_ALLOC(pml_state);
 
     pml_state->wrapped_pml_component = &(mca_pml_crcpw_module.wrapped_pml_component);
     pml_state->wrapped_pml_module    = &(mca_pml_crcpw_module.wrapped_pml_module);
@@ -411,7 +411,7 @@ int mca_pml_crcpw_isend( void *buf, size_t count, ompi_datatype_t *datatype, int
     int ret;
     ompi_crcp_base_pml_state_t * pml_state = NULL;
 
-    PML_CRCP_STATE_ALLOC(pml_state, ret);
+    PML_CRCP_STATE_ALLOC(pml_state);
 
     pml_state->wrapped_pml_component = &(mca_pml_crcpw_module.wrapped_pml_component);
     pml_state->wrapped_pml_module    = &(mca_pml_crcpw_module.wrapped_pml_module);
@@ -453,7 +453,7 @@ int mca_pml_crcpw_send(  void *buf, size_t count, ompi_datatype_t *datatype, int
     int ret;
     ompi_crcp_base_pml_state_t * pml_state = NULL;
 
-    PML_CRCP_STATE_ALLOC(pml_state, ret);
+    PML_CRCP_STATE_ALLOC(pml_state);
 
     pml_state->wrapped_pml_component = &(mca_pml_crcpw_module.wrapped_pml_component);
     pml_state->wrapped_pml_module    = &(mca_pml_crcpw_module.wrapped_pml_module);
@@ -495,7 +495,7 @@ int mca_pml_crcpw_irecv_init( void *buf, size_t count, ompi_datatype_t *datatype
     int ret;
     ompi_crcp_base_pml_state_t * pml_state = NULL;
 
-    PML_CRCP_STATE_ALLOC(pml_state, ret);
+    PML_CRCP_STATE_ALLOC(pml_state);
 
     pml_state->wrapped_pml_component = &(mca_pml_crcpw_module.wrapped_pml_component);
     pml_state->wrapped_pml_module    = &(mca_pml_crcpw_module.wrapped_pml_module);
@@ -534,7 +534,7 @@ int mca_pml_crcpw_irecv( void *buf, size_t count, ompi_datatype_t *datatype, int
     int ret;
     ompi_crcp_base_pml_state_t * pml_state = NULL;
 
-    PML_CRCP_STATE_ALLOC(pml_state, ret);
+    PML_CRCP_STATE_ALLOC(pml_state);
 
     pml_state->wrapped_pml_component = &(mca_pml_crcpw_module.wrapped_pml_component);
     pml_state->wrapped_pml_module    = &(mca_pml_crcpw_module.wrapped_pml_module);
@@ -579,7 +579,7 @@ int mca_pml_crcpw_recv(  void *buf, size_t count, ompi_datatype_t *datatype, int
     ompi_status_public_t* status = NULL;
     ompi_crcp_base_pml_state_t * pml_state = NULL;
 
-    PML_CRCP_STATE_ALLOC(pml_state, ret);
+    PML_CRCP_STATE_ALLOC(pml_state);
 
     pml_state->wrapped_pml_component = &(mca_pml_crcpw_module.wrapped_pml_component);
     pml_state->wrapped_pml_module    = &(mca_pml_crcpw_module.wrapped_pml_module);
@@ -636,7 +636,7 @@ int mca_pml_crcpw_dump( struct ompi_communicator_t* comm, int verbose )
     int ret;
     ompi_crcp_base_pml_state_t * pml_state = NULL;
 
-    PML_CRCP_STATE_ALLOC(pml_state, ret);
+    PML_CRCP_STATE_ALLOC(pml_state);
 
     pml_state->wrapped_pml_component = &(mca_pml_crcpw_module.wrapped_pml_component);
     pml_state->wrapped_pml_module    = &(mca_pml_crcpw_module.wrapped_pml_module);
@@ -678,7 +678,7 @@ int mca_pml_crcpw_progress(void)
         return mca_pml_crcpw_module.wrapped_pml_module.pml_progress();
     }
 
-    PML_CRCP_STATE_ALLOC(pml_state, ret);
+    PML_CRCP_STATE_ALLOC(pml_state);
 
     pml_state->wrapped_pml_component = &(mca_pml_crcpw_module.wrapped_pml_component);
     pml_state->wrapped_pml_module    = &(mca_pml_crcpw_module.wrapped_pml_module);
@@ -716,7 +716,7 @@ int mca_pml_crcpw_start( size_t count, ompi_request_t** requests )
     int ret;
     ompi_crcp_base_pml_state_t * pml_state = NULL;
 
-    PML_CRCP_STATE_ALLOC(pml_state, ret);
+    PML_CRCP_STATE_ALLOC(pml_state);
 
     pml_state->wrapped_pml_component = &(mca_pml_crcpw_module.wrapped_pml_component);
     pml_state->wrapped_pml_module    = &(mca_pml_crcpw_module.wrapped_pml_module);
@@ -805,7 +805,7 @@ int mca_pml_crcpw_ft_event(int state)
     int ret;
     ompi_crcp_base_pml_state_t * pml_state = NULL;
 
-    PML_CRCP_STATE_ALLOC(pml_state, ret);
+    PML_CRCP_STATE_ALLOC(pml_state);
 
     pml_state->wrapped_pml_component = &(mca_pml_crcpw_module.wrapped_pml_component);
     pml_state->wrapped_pml_module    = &(mca_pml_crcpw_module.wrapped_pml_module);

@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2008 The University of Tennessee and The University
+ * Copyright (c) 2004-2013 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -44,11 +44,11 @@ OBJ_CLASS_DECLARATION(mca_btl_self_frag_eager_t);
 OBJ_CLASS_DECLARATION(mca_btl_self_frag_send_t);
 OBJ_CLASS_DECLARATION(mca_btl_self_frag_rdma_t);
 
-#define MCA_BTL_SELF_FRAG_ALLOC_EAGER(frag, rc)                              \
-{                                                                            \
-    ompi_free_list_item_t* item;                                             \
-    OMPI_FREE_LIST_GET(&mca_btl_self_component.self_frags_eager, item, rc);  \
-    frag = (mca_btl_self_frag_t*)item;                                       \
+#define MCA_BTL_SELF_FRAG_ALLOC_EAGER(frag)                             \
+{                                                                       \
+    ompi_free_list_item_t* item;                                        \
+    OMPI_FREE_LIST_GET(&mca_btl_self_component.self_frags_eager, item); \
+    frag = (mca_btl_self_frag_t*)item;                                  \
 }
 
 #define MCA_BTL_SELF_FRAG_RETURN_EAGER(frag)                                 \
@@ -58,11 +58,11 @@ OBJ_CLASS_DECLARATION(mca_btl_self_frag_rdma_t);
     frag->segment.seg_addr.pval = frag+1;                                    \
 }
 
-#define MCA_BTL_SELF_FRAG_ALLOC_SEND(frag, rc)                               \
-{                                                                            \
-    ompi_free_list_item_t* item;                                             \
-    OMPI_FREE_LIST_GET(&mca_btl_self_component.self_frags_send, item, rc);   \
-    frag = (mca_btl_self_frag_t*)item;                                       \
+#define MCA_BTL_SELF_FRAG_ALLOC_SEND(frag)                              \
+{                                                                       \
+    ompi_free_list_item_t* item;                                        \
+    OMPI_FREE_LIST_GET(&mca_btl_self_component.self_frags_send, item);  \
+    frag = (mca_btl_self_frag_t*)item;                                  \
 }
 
 #define MCA_BTL_SELF_FRAG_RETURN_SEND(frag)                                  \
@@ -72,11 +72,11 @@ OBJ_CLASS_DECLARATION(mca_btl_self_frag_rdma_t);
     frag->segment.seg_addr.pval = frag+1;                                    \
 }
 
-#define MCA_BTL_SELF_FRAG_ALLOC_RDMA(frag, rc)                               \
-{                                                                            \
-    ompi_free_list_item_t* item;                                             \
-    OMPI_FREE_LIST_GET(&mca_btl_self_component.self_frags_rdma, item, rc);   \
-    frag = (mca_btl_self_frag_t*)item;                                       \
+#define MCA_BTL_SELF_FRAG_ALLOC_RDMA(frag)                              \
+{                                                                       \
+    ompi_free_list_item_t* item;                                        \
+    OMPI_FREE_LIST_GET(&mca_btl_self_component.self_frags_rdma, item);  \
+    frag = (mca_btl_self_frag_t*)item;                                  \
 }
 
 #define MCA_BTL_SELF_FRAG_RETURN_RDMA(frag)                                  \

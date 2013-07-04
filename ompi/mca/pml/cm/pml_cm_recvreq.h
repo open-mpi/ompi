@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2007 The University of Tennessee and The University
+ * Copyright (c) 2004-2013 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -52,20 +52,20 @@ OBJ_CLASS_DECLARATION(mca_pml_cm_hvy_recv_request_t);
  *  @param rc (OUT)  OMPI_SUCCESS or error status on failure.
  *  @return          Receive request.
  */
-#define MCA_PML_CM_THIN_RECV_REQUEST_ALLOC(recvreq, rc)                        \
+#define MCA_PML_CM_THIN_RECV_REQUEST_ALLOC(recvreq)                            \
     do {                                                                       \
     ompi_free_list_item_t*item;                                                \
-    OMPI_FREE_LIST_GET(&mca_pml_base_recv_requests, item, rc);                 \
+    OMPI_FREE_LIST_GET(&mca_pml_base_recv_requests, item);                     \
     recvreq = (mca_pml_cm_thin_recv_request_t*) item;                          \
     recvreq->req_base.req_pml_type = MCA_PML_CM_REQUEST_RECV_THIN;             \
     recvreq->req_mtl.ompi_req = (ompi_request_t*) recvreq;                     \
     recvreq->req_mtl.completion_callback = mca_pml_cm_recv_request_completion; \
  } while (0)
 
-#define MCA_PML_CM_HVY_RECV_REQUEST_ALLOC(recvreq, rc)                         \
+#define MCA_PML_CM_HVY_RECV_REQUEST_ALLOC(recvreq)                             \
 do {                                                                           \
     ompi_free_list_item_t*item;                                                \
-    OMPI_FREE_LIST_GET(&mca_pml_base_recv_requests, item, rc);                 \
+    OMPI_FREE_LIST_GET(&mca_pml_base_recv_requests, item);                     \
     recvreq = (mca_pml_cm_hvy_recv_request_t*) item;                           \
     recvreq->req_base.req_pml_type = MCA_PML_CM_REQUEST_RECV_HEAVY;            \
     recvreq->req_mtl.ompi_req = (ompi_request_t*) recvreq;                     \

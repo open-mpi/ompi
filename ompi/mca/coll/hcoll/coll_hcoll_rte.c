@@ -1,6 +1,9 @@
 /*
  * Copyright (c) 2009-2012 Oak Ridge National Laboratory.  All rights reserved.
  * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
+ * Copyright (c) 2013      The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -381,16 +384,15 @@ static uint32_t jobid(void){
 
 static void* get_coll_handle(void)
 {
-    int rc;
     ompi_request_t *ompi_req;
     ompi_free_list_item_t *item;
-    OMPI_FREE_LIST_WAIT(&(mca_coll_hcoll_component.requests),item,rc);
-    ompi_req = (ompi_request_t *)item;
-    OMPI_REQUEST_INIT(ompi_req,false);
-    if (OPAL_UNLIKELY(OMPI_SUCCESS != rc)) {
+    OMPI_FREE_LIST_WAIT(&(mca_coll_hcoll_component.requests),item);
+    if (OPAL_UNLIKELY(NULL == item)) {
         HCOL_ERROR("Wait for free list failed.\n");
         return NULL;
     }
+    ompi_req = (ompi_request_t *)item;
+    OMPI_REQUEST_INIT(ompi_req,false);
     return (void *)ompi_req;
 }
 

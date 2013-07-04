@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2008 The University of Tennessee and The University
+ * Copyright (c) 2004-2013 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -67,10 +67,10 @@ OBJ_CLASS_DECLARATION(mca_btl_mx_frag_user_t);
  * free list(s).
  */
 
-#define MCA_BTL_MX_FRAG_ALLOC_EAGER(btl, frag, rc)                            \
+#define MCA_BTL_MX_FRAG_ALLOC_EAGER(btl, frag)                                \
 do {                                                                          \
     ompi_free_list_item_t *item;                                              \
-    OMPI_FREE_LIST_GET( &mca_btl_mx_component.mx_send_eager_frags, item, rc); \
+    OMPI_FREE_LIST_GET( &mca_btl_mx_component.mx_send_eager_frags, item);     \
     if( OPAL_LIKELY(NULL != item) ) {                                         \
         frag = (mca_btl_mx_frag_t*) item;                                     \
         frag->mx_frag_list = &(mca_btl_mx_component.mx_send_eager_frags);     \
@@ -78,10 +78,10 @@ do {                                                                          \
     }                                                                         \
 } while(0)
 
-#define MCA_BTL_MX_FRAG_ALLOC_USER(btl, frag, rc)                            \
+#define MCA_BTL_MX_FRAG_ALLOC_USER(btl, frag)                                \
 do {                                                                         \
     ompi_free_list_item_t *item;                                             \
-    OMPI_FREE_LIST_GET( &mca_btl_mx_component.mx_send_user_frags, item, rc); \
+    OMPI_FREE_LIST_GET( &mca_btl_mx_component.mx_send_user_frags, item);     \
     if( OPAL_LIKELY(NULL != item) ) {                                        \
         frag = (mca_btl_mx_frag_t*) item;                                    \
         frag->mx_frag_list = &(mca_btl_mx_component.mx_send_user_frags);     \

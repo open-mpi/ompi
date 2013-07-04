@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2008 The University of Tennessee and The University
+ * Copyright (c) 2004-2013 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -123,11 +123,11 @@ int mca_btl_mx_register( struct mca_btl_base_module_t* btl,
         mca_btl_mx_frag_t* frag = NULL;
         mx_return_t mx_return;
         mx_segment_t mx_segment;
-        int i, rc;
+        int i;
 
         /* Post the receives if there is no unexpected handler */
         for( i = 0; i < mca_btl_mx_component.mx_max_posted_recv; i++ ) {
-            MCA_BTL_MX_FRAG_ALLOC_EAGER( mx_btl, frag, rc );
+            MCA_BTL_MX_FRAG_ALLOC_EAGER(mx_btl, frag);
             if( NULL == frag ) {
                 opal_output( 0, "mca_btl_mx_register: unable to allocate more eager fragments\n" );
                 if( 0 == i ) {
@@ -175,9 +175,8 @@ mca_btl_base_descriptor_t* mca_btl_mx_alloc( struct mca_btl_base_module_t* btl,
 {
     mca_btl_mx_module_t* mx_btl = (mca_btl_mx_module_t*) btl; 
     mca_btl_mx_frag_t* frag = NULL;
-    int rc;
     
-    MCA_BTL_MX_FRAG_ALLOC_EAGER(mx_btl, frag, rc);
+    MCA_BTL_MX_FRAG_ALLOC_EAGER(mx_btl, frag);
     if( OPAL_UNLIKELY(NULL == frag) ) {
         return NULL;
     }
@@ -229,7 +228,6 @@ mca_btl_mx_prepare_src( struct mca_btl_base_module_t* btl,
     struct iovec iov;
     uint32_t iov_count = 1;
     size_t max_data;
-    int rc;
 
     max_data = btl->btl_eager_limit - reserve;
     if( (*size) < max_data ) {
@@ -245,21 +243,21 @@ mca_btl_mx_prepare_src( struct mca_btl_base_module_t* btl,
          */
         iov.iov_base = NULL;
         if( 0 == reserve ) {
-            MCA_BTL_MX_FRAG_ALLOC_USER(btl, frag, rc);
+            MCA_BTL_MX_FRAG_ALLOC_USER(btl, frag);
             if( OPAL_UNLIKELY(NULL == frag) ) {
                 return NULL;
             }
             max_data = *size;
             frag->base.des_src_cnt = 1;
         } else {
-            MCA_BTL_MX_FRAG_ALLOC_EAGER( mx_btl, frag, rc );
+            MCA_BTL_MX_FRAG_ALLOC_EAGER(mx_btl, frag);
             if( OPAL_UNLIKELY(NULL == frag) ) {
                 return NULL;
             }
             frag->base.des_src_cnt = 2;
         }
     } else {
-        MCA_BTL_MX_FRAG_ALLOC_EAGER( mx_btl, frag, rc );
+        MCA_BTL_MX_FRAG_ALLOC_EAGER(mx_btl, frag);
         if( OPAL_UNLIKELY(NULL == frag) ) {
             return NULL;
         }
@@ -314,9 +312,8 @@ mca_btl_base_descriptor_t* mca_btl_mx_prepare_dst( struct mca_btl_base_module_t*
     mca_btl_mx_frag_t* frag = NULL;
     mx_return_t mx_return;
     mx_segment_t mx_segment;
-    int rc;
 
-    MCA_BTL_MX_FRAG_ALLOC_USER(btl, frag, rc);
+    MCA_BTL_MX_FRAG_ALLOC_USER(btl, frag);
     if( OPAL_UNLIKELY(NULL == frag) ) {
         return NULL;
     }

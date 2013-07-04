@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2013 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -185,37 +185,33 @@ OMPI_DECLSPEC int ompi_free_list_resize(ompi_free_list_t *flist, size_t size);
  *
  * @param fl (IN)        Free list.
  * @param item (OUT)     Allocated item.
- * @param rc (OUT)       OMPI_SUCCESS or error status on failure.
  *
  * If the requested item is not available the free list is grown to 
  * accomodate the request - unless the max number of allocations has 
- * been reached.  If this is the case - an out of resource error is 
- * returned to the caller.
+ * been reached.  If this is the case - a NULL pointer is returned 
+ * to the caller.
  */
- 
-#define OMPI_FREE_LIST_GET(fl, item, rc) \
-{ \
-    rc = OMPI_SUCCESS; \
-    item = (ompi_free_list_item_t*) opal_atomic_lifo_pop(&((fl)->super)); \
-    if( OPAL_UNLIKELY(NULL == item) ) { \
-        if(opal_using_threads()) { \
-            opal_mutex_lock(&((fl)->fl_lock)); \
-            ompi_free_list_grow((fl), (fl)->fl_num_per_alloc); \
-            opal_mutex_unlock(&((fl)->fl_lock)); \
-        } else { \
-            ompi_free_list_grow((fl), (fl)->fl_num_per_alloc); \
-        } \
+
+#define OMPI_FREE_LIST_GET(fl, item)                                    \
+    {                                                                   \
         item = (ompi_free_list_item_t*) opal_atomic_lifo_pop(&((fl)->super)); \
-        if( OPAL_UNLIKELY(NULL == item) ) rc = OMPI_ERR_TEMP_OUT_OF_RESOURCE; \
-    }  \
-} 
+        if( OPAL_UNLIKELY(NULL == item) ) {                             \
+            if(opal_using_threads()) {                                  \
+                opal_mutex_lock(&((fl)->fl_lock));                      \
+                ompi_free_list_grow((fl), (fl)->fl_num_per_alloc);      \
+                opal_mutex_unlock(&((fl)->fl_lock));                    \
+            } else {                                                    \
+                ompi_free_list_grow((fl), (fl)->fl_num_per_alloc);      \
+            }                                                           \
+            item = (ompi_free_list_item_t*) opal_atomic_lifo_pop(&((fl)->super)); \
+        }                                                               \
+    } 
 
 /**
  * Blocking call to obtain an item from a free list.
  *
  * @param fl (IN)        Free list.
  * @param item (OUT)     Allocated item.
- * @param rc (OUT)       OMPI_SUCCESS or error status on failure.
  *
  * If the requested item is not available the free list is grown to 
  * accomodate the request - unless the max number of allocations has 
@@ -223,11 +219,11 @@ OMPI_DECLSPEC int ompi_free_list_resize(ompi_free_list_t *flist, size_t size);
  * is returned to the list.
  */
 
-#define OMPI_FREE_LIST_WAIT(fl, item, rc)                                  \
-    rc = __ompi_free_list_wait( (fl), &(item) )
+#define OMPI_FREE_LIST_WAIT(fl, item)           \
+    __ompi_free_list_wait( (fl), &(item) )
 
-static inline int __ompi_free_list_wait( ompi_free_list_t* fl,
-                                         ompi_free_list_item_t** item )
+static inline void __ompi_free_list_wait( ompi_free_list_t* fl,
+                                          ompi_free_list_item_t** item )
 {
     *item = (ompi_free_list_item_t*)opal_atomic_lifo_pop(&((fl)->super));
     while( NULL == *item ) {
@@ -262,7 +258,6 @@ static inline int __ompi_free_list_wait( ompi_free_list_t* fl,
         OPAL_THREAD_UNLOCK(&((fl)->fl_lock));
         *item = (ompi_free_list_item_t*)opal_atomic_lifo_pop(&((fl)->super));
     }
-    return OMPI_SUCCESS;
 } 
 
 /**

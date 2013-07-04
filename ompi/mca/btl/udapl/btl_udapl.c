@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2008 The University of Tennessee and The University
+ * Copyright (c) 2004-2013 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -937,7 +937,6 @@ mca_btl_base_descriptor_t* mca_btl_udapl_alloc(
 {
     mca_btl_udapl_module_t* udapl_btl = (mca_btl_udapl_module_t*) btl; 
     mca_btl_udapl_frag_t* frag;
-    int rc;
     int pad = 0;
     
     /* compute pad as needed */
@@ -945,9 +944,9 @@ mca_btl_base_descriptor_t* mca_btl_udapl_alloc(
         (size + sizeof(mca_btl_udapl_footer_t)));
 
     if((size + pad) <= btl->btl_eager_limit) { 
-        MCA_BTL_UDAPL_FRAG_ALLOC_EAGER(udapl_btl, frag, rc); 
+        MCA_BTL_UDAPL_FRAG_ALLOC_EAGER(udapl_btl, frag); 
     } else if(size <= btl->btl_max_send_size) {
-        MCA_BTL_UDAPL_FRAG_ALLOC_MAX(udapl_btl, frag, rc); 
+        MCA_BTL_UDAPL_FRAG_ALLOC_MAX(udapl_btl, frag); 
     } else {
         return NULL;
     }
@@ -1043,7 +1042,7 @@ mca_btl_base_descriptor_t* mca_btl_udapl_prepare_src(
     if(opal_convertor_need_buffers(convertor) == false && 0 == reserve) {
         if(registration != NULL || max_data > btl->btl_max_send_size) {
 
-            MCA_BTL_UDAPL_FRAG_ALLOC_USER(btl, frag, rc);
+            MCA_BTL_UDAPL_FRAG_ALLOC_USER(btl, frag);
             if(NULL == frag){
                 return NULL;
             }
@@ -1090,13 +1089,13 @@ mca_btl_base_descriptor_t* mca_btl_udapl_prepare_src(
     if(max_data + pad + reserve <= btl->btl_eager_limit) {
         /* the data is small enough to fit in the eager frag and
          * memory is not prepinned */
-        MCA_BTL_UDAPL_FRAG_ALLOC_EAGER(btl, frag, rc);
+        MCA_BTL_UDAPL_FRAG_ALLOC_EAGER(btl, frag);
     }
 
     if(NULL == frag) {
         /* the data doesn't fit into eager frag or eager frag is
          * not available */
-        MCA_BTL_UDAPL_FRAG_ALLOC_MAX(btl, frag, rc);
+        MCA_BTL_UDAPL_FRAG_ALLOC_MAX(btl, frag);
         if(NULL == frag) {
             return NULL;
         }
@@ -1161,7 +1160,7 @@ mca_btl_base_descriptor_t* mca_btl_udapl_prepare_dst(
     mca_btl_udapl_frag_t* frag;
     int rc;
 
-    MCA_BTL_UDAPL_FRAG_ALLOC_USER(btl, frag, rc);
+    MCA_BTL_UDAPL_FRAG_ALLOC_USER(btl, frag);
     if(NULL == frag) {
         return NULL;
     }

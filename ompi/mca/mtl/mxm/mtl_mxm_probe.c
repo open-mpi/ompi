@@ -1,5 +1,8 @@
 /*
  * Copyright (C) Mellanox Technologies Ltd. 2001-2011.  ALL RIGHTS RESERVED.
+ * Copyright (c) 2013      The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -52,16 +55,15 @@ int ompi_mtl_mxm_improbe(struct mca_mtl_base_module_t *mtl,
                          struct ompi_status_public_t *status)
 {
 #if MXM_API >= MXM_VERSION(1,5)
-    int rc;
     mxm_error_t err;
     mxm_recv_req_t req;
 
     ompi_free_list_item_t *item;
     ompi_mtl_mxm_message_t *msgp;
 
-    OMPI_FREE_LIST_WAIT(&mca_mtl_mxm_component.mxm_messages, item, rc);
-    if (OPAL_UNLIKELY(OMPI_SUCCESS != rc)) {
-        return rc;
+    OMPI_FREE_LIST_WAIT(&mca_mtl_mxm_component.mxm_messages, item);
+    if (OPAL_UNLIKELY(NULL == item)) {
+        return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
     msgp = (ompi_mtl_mxm_message_t *) item;
