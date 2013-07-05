@@ -29,10 +29,9 @@ OBJ_CLASS_DECLARATION(ompi_coll_portals4_request_t);
 
 #define OMPI_COLL_PORTALS4_REQUEST_ALLOC(comm, req)                     \
     do {                                                                \
-        int rc;                                                         \
         ompi_free_list_item_t *item;                                    \
-        OMPI_FREE_LIST_WAIT(&mca_coll_portals4_component.requests,      \
-                            item, rc);                                  \
+        OMPI_FREE_LIST_GET(&mca_coll_portals4_component.requests,       \
+                           item);                                       \
         req = (ompi_coll_portals4_request_t*) item;                     \
         OMPI_REQUEST_INIT(&req->super, false);                          \
         req->super.req_mpi_object.comm = comm;                          \
