@@ -1111,7 +1111,6 @@ int ompi_comm_free( ompi_communicator_t **comm )
     int cid = (*comm)->c_contextid;
     int is_extra_retain = OMPI_COMM_IS_EXTRA_RETAIN(*comm);
 
-
     /* Release attributes.  We do this now instead of during the
        communicator destructor for 2 reasons:
 
@@ -1130,16 +1129,16 @@ int ompi_comm_free( ompi_communicator_t **comm )
        we delay releasing the attributes -- we need to release the
        attributes right away so that we can report the error right
        away. */
-    if ( OMPI_COMM_IS_INTER(*comm) ) {
-        ompi_comm_free (&(*comm)->c_local_comm);
-    }
-
     if (NULL != (*comm)->c_keyhash) {
         ret = ompi_attr_delete_all(COMM_ATTR, *comm, (*comm)->c_keyhash);
         if (OMPI_SUCCESS != ret) {
             return ret;
         }
         OBJ_RELEASE((*comm)->c_keyhash);
+    }
+
+    if ( OMPI_COMM_IS_INTER(*comm) ) {
+        ompi_comm_free (&(*comm)->c_local_comm);
     }
 
     /* Special case: if we are freeing the parent handle, then we need
