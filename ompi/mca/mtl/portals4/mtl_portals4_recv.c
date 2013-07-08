@@ -80,6 +80,9 @@ ompi_mtl_portals4_recv_progress(ptl_event_t *ev,
         if (!MTL_PORTALS4_IS_SHORT_MSG(ev->match_bits) && ompi_mtl_portals4.protocol == rndv) {
             ptl_md_t md;
 
+            /* FIX ME: This needs to fit into the send eq somehow;
+               this won't trigger flow control, which could cause
+               badness... */
             md.start = (char*) ptl_request->delivery_ptr + ompi_mtl_portals4.eager_limit;
             md.length = ((msg_length > ptl_request->delivery_len) ?
                          ptl_request->delivery_len : msg_length) - ompi_mtl_portals4.eager_limit;

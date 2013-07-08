@@ -32,9 +32,6 @@
 
 BEGIN_C_DECLS
 
-#define MEMORY_MAX_SIZE   ((long int)1<<48)
-#define EXTENDED_ADDR     (0xffff000000000000)
-
 struct mca_mtl_portals4_send_request_t;
 
 struct mca_mtl_portals4_module_t {
@@ -75,9 +72,12 @@ struct mca_mtl_portals4_module_t {
     /** MD handle for sending ACKS */
     ptl_handle_md_t zero_md_h;
 
-    /** Fixed MD handles covering all of memory for sending normal messages */
-    ptl_handle_md_t *fixed_md_h;
-    uint64_t fixed_md_distance;
+    /** Send MD handle(s).  Use ompi_mtl_portals4_get_md() to get the right md */
+#if OMPI_PORTALS4_MAX_MD_SIZE < OMPI_PORTALS4_MAX_VA_SIZE
+    ptl_handle_md_t *send_md_hs;
+#else
+    ptl_handle_md_t send_md_h;
+#endif
 
     /** long message receive overflow ME.  Persistent ME, first in
         overflow list on the recv_idx portal table. */
@@ -205,6 +205,64 @@ extern mca_mtl_portals4_module_t ompi_mtl_portals4;
 #define MTL_PORTALS4_GET_LENGTH(hdr_data) ((size_t)(hdr_data & 0xFFFFFFFFFFFFULL))
 #define MTL_PORTALS4_IS_SYNC_MSG(hdr_data)            \
     (0 != (MTL_PORTALS4_SYNC_MSG & hdr_data))
+
+
+/*
+ * Not all implementations of Portals 4 support binding a memory
+ * descriptor which covers all of memory, but all support covering a
+ * large fraction of memory.  Therefore, rather than working around
+ * the issue by pinning per message, we use a number of memory
+ * descriptors to cover all of memory.  As long as the maximum memory
+ * descriptor is a large fraction of the user virtual address space
+ * (like 46 bit MDs on a platform with 47 bits of user virtual address
+ * space), this works fine.
+ *
+ * Our scheme is to create N memory descriptors which contiguously
+ * cover the entire user address space, then another N-1 contiguous
+ * memory descriptors offset by 1/2 the size of the MD, then a final
+ * memory descriptor of 1/2 the size of the other MDs covering the top
+ * of the memory space, to avoid if statements in the critical path.  This
+ * scheme allows for a maximum message size of 1/2 the size of the MD
+ * without ever crossing an MD boundary.  Also, because MD sizes are
+ * always on a power of 2 in this scheme, computing the offsets and MD
+ * selection are quick, using only bit shift and mask.q
+ *
+ * ompi_mtl_portals4_get_md() relies heavily on compiler constant folding.
+ * "mask" can be constant folded into a constant.  "which" compiler folds 
+ * into a bit shift of a register a constant number of times, then masked
+ * by a constant (the input is, unfortunately, not constant).
+ *
+ * In the case where an MD can cover all of memory,
+ * ompi_mtl_portals4_get_md() will be compiled into two assignments.
+ * Assuming the function inlines (and it certainly should be), the two
+ * assignments should be optimized into register assignments for the
+ * Portals call relatively easily.
+ */
+static inline void
+ompi_mtl_portals4_get_md(const void *ptr, ptl_handle_md_t *md_h, void **base_ptr)
+{
+#if OMPI_PORTALS4_MAX_MD_SIZE < OMPI_PORTALS4_MAX_VA_SIZE
+    int mask = (1ULL << (OMPI_PORTALS4_MAX_VA_SIZE - OMPI_PORTALS4_MAX_MD_SIZE + 1)) - 1;
+    int which = (((uintptr_t) ptr) >> (OMPI_PORTALS4_MAX_MD_SIZE - 1)) & mask;
+    *md_h = ompi_mtl_portals4.send_md_hs[which];
+    *base_ptr = (void*) (which * (1ULL << (OMPI_PORTALS4_MAX_MD_SIZE - 1)));
+#else
+    *md_h = ompi_mtl_portals4.send_md_h;
+    *base_ptr = 0;
+#endif
+}
+
+
+static inline int
+ompi_mtl_portals4_get_num_mds(void)
+{
+#if OMPI_PORTALS4_MAX_MD_SIZE < OMPI_PORTALS4_MAX_VA_SIZE
+    return (1 << (OMPI_PORTALS4_MAX_VA_SIZE - OMPI_PORTALS4_MAX_MD_SIZE + 1));
+#else
+    return 1;
+#endif
+}
+
 
 /* MTL interface functions */
 extern int ompi_mtl_portals4_finalize(struct mca_mtl_base_module_t *mtl);

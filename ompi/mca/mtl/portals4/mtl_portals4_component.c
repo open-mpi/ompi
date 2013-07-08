@@ -37,8 +37,6 @@ ompi_mtl_portals4_component_init(bool enable_progress_threads,
 
 OMPI_MODULE_DECLSPEC extern mca_mtl_base_component_2_0_0_t mca_mtl_portals4_component;
 
-static unsigned int ompi_mtl_portals4_md_size_bit_width;
-
 mca_mtl_base_component_2_0_0_t mca_mtl_portals4_component = {
 
     /* First, the mca_base_component_t struct containing meta
@@ -136,18 +134,6 @@ ompi_mtl_portals4_component_register(void)
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &ompi_mtl_portals4.recv_queue_size);
 
-    ompi_mtl_portals4_md_size_bit_width = 48;
-    (void) mca_base_component_var_register(&mca_mtl_portals4_component.mtl_version,
-                                           "md_size_bit_width",
-                                           "Number of bits used to specify the length of an MD to the portals4 library",
-                                           MCA_BASE_VAR_TYPE_UNSIGNED_INT,
-                                           NULL,
-                                           0,
-                                           0,
-                                           OPAL_INFO_LVL_5,
-                                           MCA_BASE_VAR_SCOPE_READONLY,
-                                           &ompi_mtl_portals4_md_size_bit_width);
-
     ompi_mtl_portals4.protocol = eager;
     mca_base_var_enum_create("mtl_portals4_long_protocol", long_protocol_values, &new_enum);
     ret = mca_base_component_var_register(&mca_mtl_portals4_component.mtl_version,
@@ -171,17 +157,10 @@ ompi_mtl_portals4_component_register(void)
 static int
 ompi_mtl_portals4_component_open(void)
 {
-    unsigned int i;
-    uint64_t fixed_md_nb;
-
     ompi_mtl_portals4.base.mtl_request_size = 
         sizeof(ompi_mtl_portals4_request_t) -
         sizeof(struct mca_mtl_request_t);
 
-    if (48 < ompi_mtl_portals4_md_size_bit_width) ompi_mtl_portals4_md_size_bit_width = 48;
-    ompi_mtl_portals4.fixed_md_distance = (unsigned long int) 1<<ompi_mtl_portals4_md_size_bit_width;
-    opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
-                        "fixed_md_distance=%16.16lx\n", ompi_mtl_portals4.fixed_md_distance);
     opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                         "Flow control: "
 #if OMPI_MTL_PORTALS4_FLOW_CONTROL
@@ -218,14 +197,11 @@ ompi_mtl_portals4_component_open(void)
     ompi_mtl_portals4.recv_eq_h = PTL_INVALID_HANDLE;
     ompi_mtl_portals4.zero_md_h = PTL_INVALID_HANDLE;
 
-    if (MEMORY_MAX_SIZE > ompi_mtl_portals4.fixed_md_distance) fixed_md_nb = MEMORY_MAX_SIZE/ompi_mtl_portals4.fixed_md_distance;
-    else fixed_md_nb = 1;
-    if (fixed_md_nb > 32) ompi_mtl_portals4.fixed_md_distance = 0;
-    else {
-            /* Allocate the md_h table */
-        ompi_mtl_portals4.fixed_md_h = malloc(fixed_md_nb * sizeof(ptl_handle_md_t));
-        for (i=0; i<fixed_md_nb; i++) ompi_mtl_portals4.fixed_md_h[i] = PTL_INVALID_HANDLE;
-    }
+#if OMPI_PORTALS4_MAX_MD_SIZE < OMPI_PORTALS4_MAX_VA_SIZE
+    ompi_mtl_portals4.send_md_hs = NULL;
+#else
+    ompi_mtl_portals4.send_md_h = PTL_INVALID_HANDLE;
+#endif
 
     ompi_mtl_portals4.long_overflow_me_h = PTL_INVALID_HANDLE;
     ompi_mtl_portals4.recv_idx = (ptl_pt_index_t) ~0UL;
@@ -369,35 +345,42 @@ ompi_mtl_portals4_component_init(bool enable_progress_threads,
         goto error;
     }
 
-    /* bind fixed md across all of memory */
+    /* Bind MD/MDs across all memory.  We prefer (for obvious reasons)
+       to have a single MD across all of memory */
+#if OMPI_PORTALS4_MAX_MD_SIZE < OMPI_PORTALS4_MAX_VA_SIZE
+    {
+        int i;
+        int num_mds = ompi_mtl_portals4_get_num_mds();
+        ptl_size_t size = 1ULL << OMPI_PORTALS4_MAX_MD_SIZE;
+        ptl_size_t offset_unit = (1ULL << OMPI_PORTALS4_MAX_MD_SIZE) / 2;
 
-    if (ompi_mtl_portals4.fixed_md_distance) {
-        unsigned int i;
-        uint64_t fixed_md_nb, fixed_md_distance;
+        ompi_mtl_portals4.send_md_hs = malloc(sizeof(ptl_handle_md_t) * num_mds);
+        if (NULL == ompi_mtl_portals4.send_md_hs) {
+            opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
+                                "%s:%d: Error allocating MD array",
+                                __FILE__, __LINE__);
+            ret = OMPI_ERR_TEMP_OUT_OF_RESOURCE;
+            goto error;
+        }
 
-        fixed_md_distance = ompi_mtl_portals4.fixed_md_distance;
-        if (MEMORY_MAX_SIZE > fixed_md_distance) fixed_md_nb = MEMORY_MAX_SIZE/fixed_md_distance;
-        else fixed_md_nb = 1;
+        for (i = 0 ; i < num_mds ; ++i) {
+            ompi_mtl_portals4.send_md_hs[i] = PTL_INVALID_HANDLE;
+        }
 
-        opal_output_verbose(1, ompi_mtl_base_framework.framework_output, "Fixed MDs :\n");
-
-        /* Bind the fixed MDs */
-        for (i=0; i<fixed_md_nb; i++) {
-            uint64_t offset = i * fixed_md_distance;
-            /* if the most significant bit of the address space is set, set the extended address bits */
-            if (offset & (MEMORY_MAX_SIZE >> 1)) offset += EXTENDED_ADDR;
-
-            opal_output_verbose(1, ompi_mtl_base_framework.framework_output, "                %2d: [ %16lx - %16lx ]\n", i, offset, offset + fixed_md_distance - 2);
-
-            md.start     = (char *) offset;
-            md.length    = fixed_md_distance - 1;
-            md.options   = 0;
+        for (i = 0 ; i < num_mds ; ++i) {
+            md.start = (char*) (offset_unit * i);
+            md.length = (i - 1 == num_mds) ? size / 2 : size;
+            md.options = 0;
             md.eq_handle = ompi_mtl_portals4.send_eq_h;
             md.ct_handle = PTL_CT_NONE;
 
+            opal_output_verbose(50, ompi_mtl_base_framework.framework_output,
+                                "Binding md from %p of length %lx",
+                                md.start, md.length);
+
             ret = PtlMDBind(ompi_mtl_portals4.ni_h,
                             &md,
-                            &ompi_mtl_portals4.fixed_md_h[i]); 
+                            &ompi_mtl_portals4.send_md_hs[i]); 
             if (PTL_OK != ret) {
                 opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                                     "%s:%d: PtlMDBind failed: %d\n",
@@ -406,7 +389,23 @@ ompi_mtl_portals4_component_init(bool enable_progress_threads,
             }
         }
     }
-    else opal_output_verbose(1, ompi_mtl_base_framework.framework_output, "No fixed MD\n");
+#else
+        md.start = 0;
+        md.length = PTL_SIZE_MAX;
+        md.options = 0;
+        md.eq_handle = ompi_mtl_portals4.send_eq_h;
+        md.ct_handle = PTL_CT_NONE;
+
+        ret = PtlMDBind(ompi_mtl_portals4.ni_h,
+                        &md,
+                        &ompi_mtl_portals4.send_md_h); 
+        if (PTL_OK != ret) {
+            opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
+                                "%s:%d: PtlMDBind failed: %d\n",
+                                __FILE__, __LINE__, ret);
+            goto error;
+        }
+#endif
 
     /* Handle long overflows */
     me.start = NULL;
@@ -479,18 +478,24 @@ ompi_mtl_portals4_component_init(bool enable_progress_threads,
     if (!PtlHandleIsEqual(ompi_mtl_portals4.zero_md_h, PTL_INVALID_HANDLE)) {
         PtlMDRelease(ompi_mtl_portals4.zero_md_h);
     }
-    if (ompi_mtl_portals4.fixed_md_distance) {
+#if OMPI_PORTALS4_MAX_MD_SIZE < OMPI_PORTALS4_MAX_VA_SIZE
+    if (NULL != ompi_mtl_portals4.send_md_hs) {
         int i;
-        int fixed_md_nb;
-        if (MEMORY_MAX_SIZE > ompi_mtl_portals4.fixed_md_distance) fixed_md_nb = MEMORY_MAX_SIZE/ompi_mtl_portals4.fixed_md_distance;
-        else fixed_md_nb = 1;
+        int num_mds = ompi_mtl_portals4_get_num_mds();
 
-        for (i=0; i<fixed_md_nb; i++) {
-            if (!PtlHandleIsEqual(ompi_mtl_portals4.fixed_md_h[i], PTL_INVALID_HANDLE)) {
-                PtlMDRelease(ompi_mtl_portals4.fixed_md_h[i]);
+        for (i = 0 ; i < num_mds ; ++i) {
+            if (!PtlHandleIsEqual(ompi_mtl_portals4.send_md_hs[i], PTL_INVALID_HANDLE)) {
+                PtlMDRelease(ompi_mtl_portals4.send_md_hs[i]);
             }
         }
+
+        free(ompi_mtl_portals4.send_md_hs);
     }
+#else
+    if (!PtlHandleIsEqual(ompi_mtl_portals4.send_md_h, PTL_INVALID_HANDLE)) {
+        PtlMDRelease(ompi_mtl_portals4.send_md_h);
+    }
+#endif
     if (ompi_mtl_portals4.read_idx != (ptl_pt_index_t) ~0UL) {
         PtlPTFree(ompi_mtl_portals4.ni_h, ompi_mtl_portals4.read_idx);
     }

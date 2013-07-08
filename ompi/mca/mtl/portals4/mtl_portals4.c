@@ -155,15 +155,20 @@ ompi_mtl_portals4_finalize(struct mca_mtl_base_module_t *mtl)
 
     PtlMEUnlink(ompi_mtl_portals4.long_overflow_me_h);
     PtlMDRelease(ompi_mtl_portals4.zero_md_h);
+#if OMPI_PORTALS4_MAX_MD_SIZE < OMPI_PORTALS4_MAX_VA_SIZE
+    {
+        int i;
+        int num_mds = ompi_mtl_portals4_get_num_mds();
 
-    if (0 != ompi_mtl_portals4.fixed_md_h) {
-        int i, fixed_md_nb;
+        for (i = 0 ; i < num_mds ; ++i) {
+            PtlMDRelease(ompi_mtl_portals4.send_md_hs[i]);
+        }
 
-        if (MEMORY_MAX_SIZE > ompi_mtl_portals4.fixed_md_distance) fixed_md_nb = MEMORY_MAX_SIZE/ompi_mtl_portals4.fixed_md_distance;
-        else fixed_md_nb = 1;
-        for (i=0; i< fixed_md_nb; i++) PtlMDRelease(ompi_mtl_portals4.fixed_md_h[i]);
-        free(ompi_mtl_portals4.fixed_md_h);
+        free(ompi_mtl_portals4.send_md_hs);
     }
+#else
+    PtlMDRelease(ompi_mtl_portals4.send_md_h);
+#endif
 
     PtlPTFree(ompi_mtl_portals4.ni_h, ompi_mtl_portals4.read_idx);
     PtlPTFree(ompi_mtl_portals4.ni_h, ompi_mtl_portals4.recv_idx);
