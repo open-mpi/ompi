@@ -35,6 +35,10 @@ ompi_coll_portals4_barrier_intra(struct ompi_communicator_t *comm,
     ptl_me_t me;
     size_t count;
     ptl_match_bits_t match_bits;
+    ptl_handle_md_t md_h;
+    void *base;
+
+    ompi_coll_portals4_get_md(0, &md_h, &base);
 
     count = opal_atomic_add_size_t(&portals4_module->barrier_count, 1);
 
@@ -47,7 +51,7 @@ ompi_coll_portals4_barrier_intra(struct ompi_communicator_t *comm,
         return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
     }
 
-    MTL_PORTALS4_SET_BITS(match_bits, ompi_comm_get_cid(comm), 
+    COLL_PORTALS4_SET_BITS(match_bits, ompi_comm_get_cid(comm), 
                           0, COLL_PORTALS4_BARRIER, count);
 
     /* Build "tree" out of hypercube */
@@ -87,18 +91,18 @@ ompi_coll_portals4_barrier_intra(struct ompi_communicator_t *comm,
     /* send to parent when children have sent to us */
     if (rank > 0) {
         int parent = rank & ~(1 << hibit);
-        PtlTriggeredPut(mca_coll_portals4_component.md_h,
-                        0,
-                        0,
-                        PTL_NO_ACK_REQ,
-                        ompi_coll_portals4_get_peer(comm, parent),
-                        mca_coll_portals4_component.pt_idx,
-                        match_bits,
-                        0,
-                        NULL,
-                        0,
-                        ct_h,
-                        num_msgs);
+        ret = PtlTriggeredPut(md_h,
+                              0,
+                              0,
+                              PTL_NO_ACK_REQ,
+                              ompi_coll_portals4_get_peer(comm, parent),
+                              mca_coll_portals4_component.pt_idx,
+                              match_bits,
+                              0,
+                              NULL,
+                              0,
+                              ct_h,
+                              num_msgs);
         if (PTL_OK != ret) {
             opal_output_verbose(1, ompi_coll_base_framework.framework_output,
                                 "%s:%d: PtlTriggeredPut failed: %d\n",
@@ -114,18 +118,18 @@ ompi_coll_portals4_barrier_intra(struct ompi_communicator_t *comm,
     for (i = hibit + 1, mask = 1 << i; i <= dim; ++i, mask <<= 1) {
         int peer = rank | mask;
         if (peer < size) {
-            PtlTriggeredPut(mca_coll_portals4_component.md_h,
-                            0,
-                            0,
-                            PTL_NO_ACK_REQ,
-                            ompi_coll_portals4_get_peer(comm, peer),
-                            mca_coll_portals4_component.pt_idx,
-                            match_bits,
-                            0,
-                            NULL,
-                            0,
-                            ct_h,
-                            num_msgs);
+            ret = PtlTriggeredPut(md_h,
+                                  0,
+                                  0,
+                                  PTL_NO_ACK_REQ,
+                                  ompi_coll_portals4_get_peer(comm, peer),
+                                  mca_coll_portals4_component.pt_idx,
+                                  match_bits,
+                                  0,
+                                  NULL,
+                                  0,
+                                  ct_h,
+                                  num_msgs);
             if (PTL_OK != ret) {
                 opal_output_verbose(1, ompi_coll_base_framework.framework_output,
                                     "%s:%d: PtlTriggeredPut failed: %d\n",
@@ -177,6 +181,10 @@ ompi_coll_portals4_ibarrier_intra(struct ompi_communicator_t *comm,
     size_t count;
     ptl_match_bits_t match_bits;
     ompi_coll_portals4_request_t *request;
+    ptl_handle_md_t md_h;
+    void *base;
+
+    ompi_coll_portals4_get_md(0, &md_h, &base);
 
     OMPI_COLL_PORTALS4_REQUEST_ALLOC(comm, request);
     if (NULL == request) {
@@ -199,7 +207,7 @@ ompi_coll_portals4_ibarrier_intra(struct ompi_communicator_t *comm,
         return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
     }
 
-    MTL_PORTALS4_SET_BITS(match_bits, ompi_comm_get_cid(comm), 
+    COLL_PORTALS4_SET_BITS(match_bits, ompi_comm_get_cid(comm), 
                           0, COLL_PORTALS4_BARRIER, count);
 
     /* Build "tree" out of hypercube */
@@ -238,18 +246,19 @@ ompi_coll_portals4_ibarrier_intra(struct ompi_communicator_t *comm,
     /* send to parent when children have sent to us */
     if (rank > 0) {
         int parent = rank & ~(1 << hibit);
-        PtlTriggeredPut(mca_coll_portals4_component.md_h,
-                        0,
-                        0,
-                        PTL_NO_ACK_REQ,
-                        ompi_coll_portals4_get_peer(comm, parent),
-                        mca_coll_portals4_component.pt_idx,
-                        match_bits,
-                        0,
-                        NULL,
-                        0,
-                        request->ct_h,
-                        num_msgs);
+
+        ret = PtlTriggeredPut(md_h,
+                              0,
+                              0,
+                              PTL_NO_ACK_REQ,
+                              ompi_coll_portals4_get_peer(comm, parent),
+                              mca_coll_portals4_component.pt_idx,
+                              match_bits,
+                              0,
+                              NULL,
+                              0,
+                              request->ct_h,
+                              num_msgs);
         if (PTL_OK != ret) {
             opal_output_verbose(1, ompi_coll_base_framework.framework_output,
                                 "%s:%d: PtlTriggeredPut failed: %d\n",
@@ -265,18 +274,18 @@ ompi_coll_portals4_ibarrier_intra(struct ompi_communicator_t *comm,
     for (i = hibit + 1, mask = 1 << i; i <= dim; ++i, mask <<= 1) {
         int peer = rank | mask;
         if (peer < size) {
-            PtlTriggeredPut(mca_coll_portals4_component.md_h,
-                            0,
-                            0,
-                            PTL_NO_ACK_REQ,
-                            ompi_coll_portals4_get_peer(comm, peer),
-                            mca_coll_portals4_component.pt_idx,
-                            match_bits,
-                            0,
-                            NULL,
-                            0,
-                            request->ct_h,
-                            num_msgs);
+            ret = PtlTriggeredPut(md_h,
+                                  0,
+                                  0,
+                                  PTL_NO_ACK_REQ,
+                                  ompi_coll_portals4_get_peer(comm, peer),
+                                  mca_coll_portals4_component.pt_idx,
+                                  match_bits,
+                                  0,
+                                  NULL,
+                                  0,
+                                  request->ct_h,
+                                  num_msgs);
             if (PTL_OK != ret) {
                 opal_output_verbose(1, ompi_coll_base_framework.framework_output,
                                     "%s:%d: PtlTriggeredPut failed: %d\n",
@@ -287,16 +296,18 @@ ompi_coll_portals4_ibarrier_intra(struct ompi_communicator_t *comm,
     }
 
     /* Send a put to self when we've received all our messages... */
-    PtlPut(mca_coll_portals4_component.md_h,
-           0,
-           0,
-           PTL_NO_ACK_REQ,
-           ompi_coll_portals4_get_peer(comm, rank),
-           mca_coll_portals4_component.finish_pt_idx,
-           0,
-           0,
-           NULL,
-           (uintptr_t) request);
+    ret = PtlTriggeredPut(md_h,
+                          0,
+                          0,
+                          PTL_NO_ACK_REQ,
+                          ompi_coll_portals4_get_peer(comm, rank),
+                          mca_coll_portals4_component.finish_pt_idx,
+                          0,
+                          0,
+                          NULL,
+                          (uintptr_t) request,
+                          request->ct_h,
+                          num_msgs);
 
     if (PTL_OK != ret) {
         opal_output_verbose(1, ompi_coll_base_framework.framework_output,
