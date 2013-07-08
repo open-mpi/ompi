@@ -36,7 +36,6 @@
 #include "opal/mca/pstat/base/base.h"
 
 #include "opal/util/show_help.h"
-#include "opal/mca/errmgr/base/base.h"
 #include "opal/runtime/opal_globals.h"
 
 #include "opal/mca/db/base/base.h"
