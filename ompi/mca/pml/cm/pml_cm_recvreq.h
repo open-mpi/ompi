@@ -55,7 +55,7 @@ OBJ_CLASS_DECLARATION(mca_pml_cm_hvy_recv_request_t);
 #define MCA_PML_CM_THIN_RECV_REQUEST_ALLOC(recvreq)                            \
     do {                                                                       \
     ompi_free_list_item_t*item;                                                \
-    OMPI_FREE_LIST_GET(&mca_pml_base_recv_requests, item);                     \
+    OMPI_FREE_LIST_GET_MT(&mca_pml_base_recv_requests, item);                     \
     recvreq = (mca_pml_cm_thin_recv_request_t*) item;                          \
     recvreq->req_base.req_pml_type = MCA_PML_CM_REQUEST_RECV_THIN;             \
     recvreq->req_mtl.ompi_req = (ompi_request_t*) recvreq;                     \
@@ -65,7 +65,7 @@ OBJ_CLASS_DECLARATION(mca_pml_cm_hvy_recv_request_t);
 #define MCA_PML_CM_HVY_RECV_REQUEST_ALLOC(recvreq)                             \
 do {                                                                           \
     ompi_free_list_item_t*item;                                                \
-    OMPI_FREE_LIST_GET(&mca_pml_base_recv_requests, item);                     \
+    OMPI_FREE_LIST_GET_MT(&mca_pml_base_recv_requests, item);                     \
     recvreq = (mca_pml_cm_hvy_recv_request_t*) item;                           \
     recvreq->req_base.req_pml_type = MCA_PML_CM_REQUEST_RECV_HEAVY;            \
     recvreq->req_mtl.ompi_req = (ompi_request_t*) recvreq;                     \
@@ -296,7 +296,7 @@ do {                                                                    \
     OBJ_RELEASE((recvreq)->req_base.req_datatype);                      \
     OMPI_REQUEST_FINI(&(recvreq)->req_base.req_ompi);                   \
     opal_convertor_cleanup( &((recvreq)->req_base.req_convertor) );     \
-    OMPI_FREE_LIST_RETURN( &mca_pml_base_recv_requests,                 \
+    OMPI_FREE_LIST_RETURN_MT( &mca_pml_base_recv_requests,                 \
                            (ompi_free_list_item_t*)(recvreq));          \
 }
 
@@ -309,7 +309,7 @@ do {                                                                    \
     OBJ_RELEASE((recvreq)->req_base.req_datatype);                      \
     OMPI_REQUEST_FINI(&(recvreq)->req_base.req_ompi);                   \
     opal_convertor_cleanup( &((recvreq)->req_base.req_convertor) );     \
-    OMPI_FREE_LIST_RETURN( &mca_pml_base_recv_requests,                 \
+    OMPI_FREE_LIST_RETURN_MT( &mca_pml_base_recv_requests,                 \
                            (ompi_free_list_item_t*)(recvreq));          \
 }
 

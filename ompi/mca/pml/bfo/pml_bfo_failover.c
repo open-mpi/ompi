@@ -790,7 +790,7 @@ void mca_pml_bfo_send_request_restart(mca_pml_bfo_send_request_t* sendreq,
     last_item = opal_list_get_last(&sendreq->req_send_ranges);
     while (first_item != last_item) {
         opal_list_remove_item(&sendreq->req_send_ranges, last_item);
-        OMPI_FREE_LIST_RETURN(&mca_pml_bfo.send_ranges, (ompi_free_list_item_t *)last_item);
+        OMPI_FREE_LIST_RETURN_MT(&mca_pml_bfo.send_ranges, (ompi_free_list_item_t *)last_item);
         last_item = opal_list_get_last(&sendreq->req_send_ranges);
     }
     OPAL_THREAD_UNLOCK(&sendreq->req_send_range_lock);

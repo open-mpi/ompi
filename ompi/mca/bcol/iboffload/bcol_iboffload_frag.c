@@ -106,7 +106,7 @@ mca_bcol_iboffload_get_packed_frag(mca_bcol_iboffload_module_t *iboffload,
     mca_bcol_iboffload_device_t *device = iboffload->device;
 
     /* Get frag from free list */
-    OMPI_FREE_LIST_GET(&device->frags_free[qp_index], item);
+    OMPI_FREE_LIST_GET_MT(&device->frags_free[qp_index], item);
     if (OPAL_UNLIKELY(NULL == item)) {
         return NULL;
     }
@@ -123,7 +123,7 @@ mca_bcol_iboffload_get_packed_frag(mca_bcol_iboffload_module_t *iboffload,
             &out_size, &max_size);
     if (OPAL_UNLIKELY(rc < 0)) {
         /* Error: put the fragment back */
-        OMPI_FREE_LIST_RETURN(&device->frags_free[qp_index], item);
+        OMPI_FREE_LIST_RETURN_MT(&device->frags_free[qp_index], item);
         return NULL;
     }
 
@@ -146,7 +146,7 @@ mca_bcol_iboffload_get_calc_frag(mca_bcol_iboffload_module_t *iboffload, int qp_
     IBOFFLOAD_VERBOSE(10, ("Start to pack frag.\n"));
 
     /* Get frag from free list */
-    OMPI_FREE_LIST_GET(&device->frags_free[qp_index], item);
+    OMPI_FREE_LIST_GET_MT(&device->frags_free[qp_index], item);
     if (OPAL_UNLIKELY(NULL == item)) {
         return NULL;
     }
@@ -209,7 +209,7 @@ mca_bcol_iboffload_get_send_frag(mca_bcol_iboffload_collreq_t *coll_request,
             IBOFFLOAD_VERBOSE(10, ("Getting MCA_BCOL_IBOFFLOAD_SEND_FRAG"));
 
             /* Get frag from free list */
-            OMPI_FREE_LIST_GET(&iboffload->device->frags_free[qp_index], item);
+            OMPI_FREE_LIST_GET_MT(&iboffload->device->frags_free[qp_index], item);
 
             frag = (mca_bcol_iboffload_frag_t *) item;
         }

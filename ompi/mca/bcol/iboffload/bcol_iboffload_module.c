@@ -1375,7 +1375,7 @@ int mca_bcol_iboffload_exchange_rem_addr(mca_bcol_iboffload_endpoint_t *ep)
 
     mca_bcol_iboffload_component_t *cm = &mca_bcol_iboffload_component;
 
-    OMPI_FREE_LIST_WAIT(&cm->collreqs_free, item);
+    OMPI_FREE_LIST_WAIT_MT(&cm->collreqs_free, item);
     if (NULL == item) {
         IBOFFLOAD_ERROR(("Failing for coll request free list waiting.\n"));
         return OMPI_ERR_OUT_OF_RESOURCE;

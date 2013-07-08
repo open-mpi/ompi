@@ -66,7 +66,7 @@ static void mca_bcol_iboffload_endpoint_destruct(mca_bcol_iboffload_endpoint_t *
                 item = (ompi_free_list_item_t *)
                     opal_list_remove_first(&ep->qps[qp_index].preposted_frags);
                 if(OPAL_LIKELY(NULL != item)) {
-                    OMPI_FREE_LIST_RETURN(&ep->device->frags_free[qp_index], item);
+                    OMPI_FREE_LIST_RETURN_MT(&ep->device->frags_free[qp_index], item);
                 }
             } while (NULL != item);
 

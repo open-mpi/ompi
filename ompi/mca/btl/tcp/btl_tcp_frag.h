@@ -80,27 +80,27 @@ OBJ_CLASS_DECLARATION(mca_btl_tcp_frag_user_t);
 #define MCA_BTL_TCP_FRAG_ALLOC_EAGER(frag)                                 \
 {                                                                          \
     ompi_free_list_item_t *item;                                           \
-    OMPI_FREE_LIST_GET(&mca_btl_tcp_component.tcp_frag_eager, item);       \
+    OMPI_FREE_LIST_GET_MT(&mca_btl_tcp_component.tcp_frag_eager, item);       \
     frag = (mca_btl_tcp_frag_t*) item;                                     \
 }
 
 #define MCA_BTL_TCP_FRAG_ALLOC_MAX(frag)                                   \
 {                                                                          \
     ompi_free_list_item_t *item;                                           \
-    OMPI_FREE_LIST_GET(&mca_btl_tcp_component.tcp_frag_max, item);         \
+    OMPI_FREE_LIST_GET_MT(&mca_btl_tcp_component.tcp_frag_max, item);         \
     frag = (mca_btl_tcp_frag_t*) item;                                     \
 }
 
 #define MCA_BTL_TCP_FRAG_ALLOC_USER(frag)                                  \
 {                                                                          \
     ompi_free_list_item_t *item;                                           \
-    OMPI_FREE_LIST_GET(&mca_btl_tcp_component.tcp_frag_user, item);        \
+    OMPI_FREE_LIST_GET_MT(&mca_btl_tcp_component.tcp_frag_user, item);        \
     frag = (mca_btl_tcp_frag_t*) item;                                     \
 }
 
 #define MCA_BTL_TCP_FRAG_RETURN(frag)                                      \
 {                                                                          \
-    OMPI_FREE_LIST_RETURN(frag->my_list, (ompi_free_list_item_t*)(frag));  \
+    OMPI_FREE_LIST_RETURN_MT(frag->my_list, (ompi_free_list_item_t*)(frag));  \
 }
 
 #define MCA_BTL_TCP_FRAG_INIT_DST(frag,ep)                                 \

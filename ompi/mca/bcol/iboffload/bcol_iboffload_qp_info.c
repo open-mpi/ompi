@@ -153,7 +153,7 @@ static int mca_bcol_iboffload_frag_reg_qp_prepost(
 
     while (num_preposted < num_to_prepost) {
         /* put the item on list of preposted */
-        OMPI_FREE_LIST_GET(&device->frags_free[qp_index], item);
+        OMPI_FREE_LIST_GET_MT(&device->frags_free[qp_index], item);
         if (OPAL_UNLIKELY(NULL == item)) {
             break;
         }
@@ -181,7 +181,7 @@ static int mca_bcol_iboffload_frag_reg_qp_prepost(
 
             /* Return allocated frags */
             for (i = 0; i < num_preposted; i++) {
-                OMPI_FREE_LIST_RETURN(&device->frags_free[qp_index],
+                OMPI_FREE_LIST_RETURN_MT(&device->frags_free[qp_index],
                         (ompi_free_list_item_t *)
                             opal_list_remove_last(preposted));
             }

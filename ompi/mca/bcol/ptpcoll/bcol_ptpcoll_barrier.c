@@ -56,7 +56,7 @@ static int bcol_ptpcoll_barrier_recurs_knomial_new(
 
     mca_bcol_ptpcoll_collreq_t *collreq;
 
-    OMPI_FREE_LIST_WAIT(&ptpcoll_module->collreqs_free, item);
+    OMPI_FREE_LIST_WAIT_MT(&ptpcoll_module->collreqs_free, item);
     if (OPAL_UNLIKELY(NULL == item)) {
         PTPCOLL_ERROR(("Free list waiting failed."));
         return OMPI_ERR_OUT_OF_RESOURCE;
@@ -214,7 +214,7 @@ static int bcol_ptpcoll_barrier_recurs_knomial_new(
         }
     }
 
-    OMPI_FREE_LIST_RETURN(&ptpcoll_module->collreqs_free, (ompi_free_list_item_t *) collreq);
+    OMPI_FREE_LIST_RETURN_MT(&ptpcoll_module->collreqs_free, (ompi_free_list_item_t *) collreq);
     return BCOL_FN_COMPLETE;
 }
 
@@ -387,7 +387,7 @@ static int bcol_ptpcoll_barrier_recurs_knomial_extra_new(
 
     mca_bcol_ptpcoll_collreq_t *collreq;
 
-    OMPI_FREE_LIST_WAIT(&ptpcoll_module->collreqs_free, item);
+    OMPI_FREE_LIST_WAIT_MT(&ptpcoll_module->collreqs_free, item);
     if (OPAL_UNLIKELY(NULL == item)) {
         PTPCOLL_ERROR(("Free list waiting failed."));
         return OMPI_ERR_OUT_OF_RESOURCE;
@@ -441,7 +441,7 @@ static int bcol_ptpcoll_barrier_recurs_knomial_extra_new(
         return BCOL_FN_STARTED;
     }
 
-    OMPI_FREE_LIST_RETURN(&ptpcoll_module->collreqs_free, (ompi_free_list_item_t *) collreq);
+    OMPI_FREE_LIST_RETURN_MT(&ptpcoll_module->collreqs_free, (ompi_free_list_item_t *) collreq);
     return BCOL_FN_COMPLETE;
 }
 
@@ -469,7 +469,7 @@ static int bcol_ptpcoll_barrier_recurs_dbl_new(
 
     mca_bcol_ptpcoll_collreq_t *collreq;
 
-    OMPI_FREE_LIST_WAIT(&ptp_module->collreqs_free, item);
+    OMPI_FREE_LIST_WAIT_MT(&ptp_module->collreqs_free, item);
     if (OPAL_UNLIKELY(NULL == item)) {
         PTPCOLL_ERROR(("Free list waiting failed."));
         return OMPI_ERR_OUT_OF_RESOURCE;
@@ -619,7 +619,7 @@ static int bcol_ptpcoll_barrier_recurs_dbl_new(
         }
     }
 
-    OMPI_FREE_LIST_RETURN(&ptp_module->collreqs_free, (ompi_free_list_item_t *) collreq);
+    OMPI_FREE_LIST_RETURN_MT(&ptp_module->collreqs_free, (ompi_free_list_item_t *) collreq);
     return BCOL_FN_COMPLETE;
 }
 
@@ -774,7 +774,7 @@ static int bcol_ptpcoll_barrier_recurs_dbl_extra_new(
                          (mca_bcol_ptpcoll_module_t *) const_args->bcol_module;
     ompi_communicator_t *comm = ptp_module->super.sbgp_partner_module->group_comm;
 
-    OMPI_FREE_LIST_WAIT(&ptp_module->collreqs_free, item);
+    OMPI_FREE_LIST_WAIT_MT(&ptp_module->collreqs_free, item);
     if (OPAL_UNLIKELY(NULL == item)) {
         PTPCOLL_ERROR(("Free list waiting failed."));
         return OMPI_ERR_OUT_OF_RESOURCE;
@@ -830,7 +830,7 @@ static int bcol_ptpcoll_barrier_recurs_dbl_extra_new(
         return BCOL_FN_STARTED;
     }
 
-    OMPI_FREE_LIST_RETURN(&ptp_module->collreqs_free, (ompi_free_list_item_t *) collreq);
+    OMPI_FREE_LIST_RETURN_MT(&ptp_module->collreqs_free, (ompi_free_list_item_t *) collreq);
     return BCOL_FN_COMPLETE;
 }
 

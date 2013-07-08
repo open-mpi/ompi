@@ -35,7 +35,7 @@ static inline int mca_btl_ugni_ep_smsg_get_mbox (mca_btl_base_endpoint_t *ep) {
     mca_btl_ugni_module_t *ugni_module = ep->btl;
     ompi_free_list_item_t *mbox;
 
-    OMPI_FREE_LIST_GET(&ugni_module->smsg_mboxes, mbox);
+    OMPI_FREE_LIST_GET_MT(&ugni_module->smsg_mboxes, mbox);
     if (OPAL_UNLIKELY(NULL == mbox)) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
@@ -70,7 +70,7 @@ int mca_btl_ugni_ep_disconnect (mca_btl_base_endpoint_t *ep, bool send_disconnec
         (void) ompi_common_ugni_ep_destroy (&ep->smsg_ep_handle);
         (void) ompi_common_ugni_ep_destroy (&ep->rdma_ep_handle);
 
-        OMPI_FREE_LIST_RETURN(&ep->btl->smsg_mboxes, ((ompi_free_list_item_t *) ep->mailbox));
+        OMPI_FREE_LIST_RETURN_MT(&ep->btl->smsg_mboxes, ((ompi_free_list_item_t *) ep->mailbox));
         ep->mailbox = NULL;
 
         ep->state = MCA_BTL_UGNI_EP_STATE_INIT;

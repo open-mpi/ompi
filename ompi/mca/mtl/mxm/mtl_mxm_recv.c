@@ -190,7 +190,7 @@ int ompi_mtl_mxm_imrecv(struct mca_mtl_base_module_t* mtl,
         return OMPI_ERROR;
     }
 
-    OMPI_FREE_LIST_RETURN(&mca_mtl_mxm_component.mxm_messages,
+    OMPI_FREE_LIST_RETURN_MT(&mca_mtl_mxm_component.mxm_messages,
                          (ompi_free_list_item_t *) msgp);
 
     ompi_message_return(*message);

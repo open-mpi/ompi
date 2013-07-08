@@ -86,7 +86,7 @@ static inline bool unlock_recv_request(mca_pml_bfo_recv_request_t *recvreq)
 #define MCA_PML_BFO_RECV_REQUEST_ALLOC(recvreq)                    \
 do {                                                               \
    ompi_free_list_item_t* item;                                    \
-   OMPI_FREE_LIST_GET(&mca_pml_base_recv_requests, item);          \
+   OMPI_FREE_LIST_GET_MT(&mca_pml_base_recv_requests, item);          \
    recvreq = (mca_pml_bfo_recv_request_t*)item;                    \
 } while(0)
 
@@ -140,7 +140,7 @@ do {                                                                \
 #define MCA_PML_BFO_RECV_REQUEST_RETURN(recvreq)                        \
     {                                                                   \
         MCA_PML_BASE_RECV_REQUEST_FINI(&(recvreq)->req_recv);           \
-        OMPI_FREE_LIST_RETURN( &mca_pml_base_recv_requests,             \
+        OMPI_FREE_LIST_RETURN_MT( &mca_pml_base_recv_requests,             \
                                (ompi_free_list_item_t*)(recvreq));      \
     }
 

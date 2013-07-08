@@ -62,7 +62,7 @@ mca_pml_crcpw_module_t mca_pml_crcpw_module = {
 do {                                                \
   if( !pml_crcpw_is_finalized ) {                   \
     ompi_free_list_item_t* item;                    \
-    OMPI_FREE_LIST_WAIT(&pml_state_list, item);     \
+    OMPI_FREE_LIST_WAIT_MT(&pml_state_list, item);     \
     pml_state = (ompi_crcp_base_pml_state_t*)item;  \
   }                                                 \
 } while(0); 
@@ -70,7 +70,7 @@ do {                                                \
 #define PML_CRCP_STATE_RETURN(pml_state)    \
 do {                                        \
   if( !pml_crcpw_is_finalized ) {           \
-    OMPI_FREE_LIST_RETURN(&pml_state_list,  \
+    OMPI_FREE_LIST_RETURN_MT(&pml_state_list,  \
     (ompi_free_list_item_t*)pml_state);     \
   }                                         \
 } while(0);
