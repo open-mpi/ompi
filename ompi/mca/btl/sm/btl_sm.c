@@ -643,8 +643,8 @@ int mca_btl_sm_add_procs(
     mca_btl_sm_component.num_smp_procs += n_local_procs;
 
     /* make sure we have enough eager fragmnents for each process */
-    return_code = ompi_free_list_resize(&mca_btl_sm_component.sm_frags_eager,
-                                        mca_btl_sm_component.num_smp_procs * 2);
+    return_code = ompi_free_list_resize_mt(&mca_btl_sm_component.sm_frags_eager,
+                                           mca_btl_sm_component.num_smp_procs * 2);
     if (OMPI_SUCCESS != return_code)
         goto CLEANUP;
 

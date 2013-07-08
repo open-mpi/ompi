@@ -119,7 +119,7 @@ typedef ompi_coll_libnbc_request_t NBC_Handle;
 #define OMPI_COLL_LIBNBC_REQUEST_ALLOC(comm, req)                       \
     do {                                                                \
         ompi_free_list_item_t *item;                                    \
-        OMPI_FREE_LIST_WAIT(&mca_coll_libnbc_component.requests, item); \
+        OMPI_FREE_LIST_WAIT_MT(&mca_coll_libnbc_component.requests, item); \
         req = (ompi_coll_libnbc_request_t*) item;                       \
         OMPI_REQUEST_INIT(&req->super, false);                          \
         req->super.req_mpi_object.comm = comm;                          \
@@ -130,7 +130,7 @@ typedef ompi_coll_libnbc_request_t NBC_Handle;
 #define OMPI_COLL_LIBNBC_REQUEST_RETURN(req)                            \
     do {                                                                \
         OMPI_REQUEST_FINI(&request->super);                             \
-        OMPI_FREE_LIST_RETURN(&mca_coll_libnbc_component.requests,      \
+        OMPI_FREE_LIST_RETURN_MT(&mca_coll_libnbc_component.requests,      \
                               (ompi_free_list_item_t*) req);            \
     } while (0)
 

@@ -42,7 +42,7 @@ static int mca_bcol_iboffload_bcast_init(
     mca_bcol_iboffload_component_t *cm = &mca_bcol_iboffload_component;
     int my_group_index = iboffload_module->super.sbgp_partner_module->my_index;
 
-    OMPI_FREE_LIST_WAIT(&cm->collreqs_free, item);
+    OMPI_FREE_LIST_WAIT_MT(&cm->collreqs_free, item);
     if (OPAL_UNLIKELY(NULL == item)) {
         IBOFFLOAD_ERROR(("Wait for free list failed.\n"));
         return OMPI_ERR_OUT_OF_RESOURCE;

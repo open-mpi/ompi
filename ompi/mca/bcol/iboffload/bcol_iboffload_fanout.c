@@ -178,7 +178,7 @@ static int mca_bcol_iboffload_fanout_init(
 
     IBOFFLOAD_VERBOSE(10, ("Calling for mca_bcol_iboffload_barrier_init"));
 
-    OMPI_FREE_LIST_WAIT(&cm->collreqs_free, item);
+    OMPI_FREE_LIST_WAIT_MT(&cm->collreqs_free, item);
     if(NULL == item) {
         IBOFFLOAD_VERBOSE(10, ("Failing for coll request free list waiting.\n"));
         return OMPI_ERR_OUT_OF_RESOURCE;

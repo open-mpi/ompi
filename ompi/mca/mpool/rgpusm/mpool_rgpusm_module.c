@@ -130,7 +130,7 @@ static inline bool mca_mpool_rgpusm_deregister_lru (mca_mpool_base_module_t *mpo
         return false;
     }
 
-    OMPI_FREE_LIST_RETURN(&mpool_rgpusm->reg_list,
+    OMPI_FREE_LIST_RETURN_MT(&mpool_rgpusm->reg_list,
                           (ompi_free_list_item_t*)old_reg);
     mpool_rgpusm->stat_evicted++;
 
@@ -210,7 +210,7 @@ int mca_mpool_rgpusm_register(mca_mpool_base_module_t *mpool, void *addr,
      * are not leaving the registrations pinned, the number of
      * registrations is unlimited and there is no need for a cache. */
     if(!mca_mpool_rgpusm_component.leave_pinned && 0 == mca_mpool_rgpusm_component.rcache_size_limit) {
-        OMPI_FREE_LIST_GET(&mpool_rgpusm->reg_list, item);
+        OMPI_FREE_LIST_GET_MT(&mpool_rgpusm->reg_list, item);
         if(NULL == item) {
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
@@ -234,7 +234,7 @@ int mca_mpool_rgpusm_register(mca_mpool_base_module_t *mpool, void *addr,
         assert(OMPI_ERR_WOULD_BLOCK != rc);
 
         if(rc != OMPI_SUCCESS) {
-            OMPI_FREE_LIST_RETURN(&mpool_rgpusm->reg_list, item);
+            OMPI_FREE_LIST_RETURN_MT(&mpool_rgpusm->reg_list, item);
             return rc;
         }
         rgpusm_reg->base.ref_count++;
@@ -323,7 +323,7 @@ int mca_mpool_rgpusm_register(mca_mpool_base_module_t *mpool, void *addr,
                         "RGPUSM: New registration ep=%d, addr=%p, size=%d. Need to register and insert in cache",
                          mypeer, addr, (int)size);
 
-    OMPI_FREE_LIST_GET(&mpool_rgpusm->reg_list, item);
+    OMPI_FREE_LIST_GET_MT(&mpool_rgpusm->reg_list, item);
     if(NULL == item) {
         OPAL_THREAD_UNLOCK(&mpool->rcache->lock);
         return OMPI_ERR_OUT_OF_RESOURCE;
@@ -405,7 +405,7 @@ int mca_mpool_rgpusm_register(mca_mpool_base_module_t *mpool, void *addr,
 
     if(rc != OMPI_SUCCESS) {
         OPAL_THREAD_UNLOCK(&mpool->rcache->lock);
-        OMPI_FREE_LIST_RETURN(&mpool_rgpusm->reg_list, item);
+        OMPI_FREE_LIST_RETURN_MT(&mpool_rgpusm->reg_list, item);
         return rc;
     }
 
@@ -424,7 +424,7 @@ int mca_mpool_rgpusm_register(mca_mpool_base_module_t *mpool, void *addr,
 
     if(rc != OMPI_SUCCESS) {
         OPAL_THREAD_UNLOCK(&mpool->rcache->lock);
-        OMPI_FREE_LIST_RETURN(&mpool_rgpusm->reg_list, item);
+        OMPI_FREE_LIST_RETURN_MT(&mpool_rgpusm->reg_list, item);
         /* We cannot recover from this.  We can be here if the size of
          * the cache is smaller than the amount of memory we are
          * trying to register in a single transfer.  In that case, rc
@@ -529,7 +529,7 @@ int mca_mpool_rgpusm_deregister(struct mca_mpool_base_module_t *mpool,
         OPAL_THREAD_LOCK(&mpool->rcache->lock);
 
         if(OMPI_SUCCESS == rc) {
-            OMPI_FREE_LIST_RETURN(&mpool_rgpusm->reg_list,
+            OMPI_FREE_LIST_RETURN_MT(&mpool_rgpusm->reg_list,
                                   (ompi_free_list_item_t*)reg);
         }
     }
@@ -593,7 +593,7 @@ void mca_mpool_rgpusm_finalize(struct mca_mpool_base_module_t *mpool)
                 continue;
             }
 
-            OMPI_FREE_LIST_RETURN(&mpool_rgpusm->reg_list,
+            OMPI_FREE_LIST_RETURN_MT(&mpool_rgpusm->reg_list,
                                   (ompi_free_list_item_t*)reg);
         }
     } while(reg_cnt == RGPUSM_MPOOL_NREGS);

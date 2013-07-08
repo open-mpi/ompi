@@ -112,7 +112,7 @@ mca_bcol_iboffload_frag_t* mca_bcol_iboffload_get_ml_empty_frag(
     mca_bcol_iboffload_component_t *cm = &mca_bcol_iboffload_component;
 
     /* Get frag from free list */
-    OMPI_FREE_LIST_GET(&cm->ml_frags_free, item);
+    OMPI_FREE_LIST_GET_MT(&cm->ml_frags_free, item);
     if (OPAL_UNLIKELY(NULL == item)) {
         return NULL;
     }

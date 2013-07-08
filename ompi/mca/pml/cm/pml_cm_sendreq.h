@@ -65,7 +65,7 @@ do {                                                                    \
     if(OPAL_UNLIKELY(NULL == ompi_proc)) {                              \
         sendreq = NULL;                                                 \
     } else {                                                            \
-        OMPI_FREE_LIST_WAIT(&mca_pml_base_send_requests, item);         \
+        OMPI_FREE_LIST_WAIT_MT(&mca_pml_base_send_requests, item);         \
         sendreq = (mca_pml_cm_thin_send_request_t*)item;                \
         sendreq->req_send.req_base.req_pml_type = MCA_PML_CM_REQUEST_SEND_THIN; \
         sendreq->req_mtl.ompi_req = (ompi_request_t*) sendreq;          \
@@ -82,7 +82,7 @@ do {                                                                    \
     if(OPAL_UNLIKELY(NULL == ompi_proc)) {                              \
         sendreq = NULL;                                                 \
     } else {                                                            \
-        OMPI_FREE_LIST_WAIT(&mca_pml_base_send_requests, item);         \
+        OMPI_FREE_LIST_WAIT_MT(&mca_pml_base_send_requests, item);         \
         sendreq = (mca_pml_cm_hvy_send_request_t*)item;                 \
         sendreq->req_send.req_base.req_pml_type = MCA_PML_CM_REQUEST_SEND_HEAVY; \
         sendreq->req_mtl.ompi_req = (ompi_request_t*) sendreq;          \
@@ -307,7 +307,7 @@ do {                                                                            
         OBJ_RELEASE(sendreq->req_send.req_base.req_comm);               \
         OMPI_REQUEST_FINI(&sendreq->req_send.req_base.req_ompi);        \
         opal_convertor_cleanup( &(sendreq->req_send.req_base.req_convertor) ); \
-        OMPI_FREE_LIST_RETURN( &mca_pml_base_send_requests,             \
+        OMPI_FREE_LIST_RETURN_MT( &mca_pml_base_send_requests,             \
                                (ompi_free_list_item_t*)sendreq);        \
     }
 
@@ -346,7 +346,7 @@ do {                                                                         \
         OBJ_RELEASE(sendreq->req_send.req_base.req_comm);               \
         OMPI_REQUEST_FINI(&sendreq->req_send.req_base.req_ompi);        \
         opal_convertor_cleanup( &(sendreq->req_send.req_base.req_convertor) ); \
-        OMPI_FREE_LIST_RETURN( &mca_pml_base_send_requests,             \
+        OMPI_FREE_LIST_RETURN_MT( &mca_pml_base_send_requests,             \
                                (ompi_free_list_item_t*)sendreq);        \
     }
 

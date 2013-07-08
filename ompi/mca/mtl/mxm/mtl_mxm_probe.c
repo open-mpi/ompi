@@ -61,7 +61,7 @@ int ompi_mtl_mxm_improbe(struct mca_mtl_base_module_t *mtl,
     ompi_free_list_item_t *item;
     ompi_mtl_mxm_message_t *msgp;
 
-    OMPI_FREE_LIST_WAIT(&mca_mtl_mxm_component.mxm_messages, item);
+    OMPI_FREE_LIST_WAIT_MT(&mca_mtl_mxm_component.mxm_messages, item);
     if (OPAL_UNLIKELY(NULL == item)) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }

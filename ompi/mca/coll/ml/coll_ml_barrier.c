@@ -49,7 +49,7 @@ static int mca_coll_ml_barrier_launch(mca_coll_ml_module_t *ml_module,
 
     
     /* Blocking call on fragment allocation (Maybe we want to make it non blocking ?) */
-    OMPI_FREE_LIST_WAIT(&(ml_module->coll_ml_collective_descriptors),
+    OMPI_FREE_LIST_WAIT_MT(&(ml_module->coll_ml_collective_descriptors),
                         item);
 
     coll_op = (mca_coll_ml_collective_operation_progress_t *) item;

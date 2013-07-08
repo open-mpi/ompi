@@ -220,14 +220,14 @@ OBJ_CLASS_DECLARATION(mca_pml_bfo_pckt_pending_t);
 #define MCA_PML_BFO_PCKT_PENDING_ALLOC(pckt)                    \
 do {                                                            \
     ompi_free_list_item_t* item;                                \
-    OMPI_FREE_LIST_WAIT(&mca_pml_bfo.pending_pckts, item);      \
+    OMPI_FREE_LIST_WAIT_MT(&mca_pml_bfo.pending_pckts, item);      \
     pckt = (mca_pml_bfo_pckt_pending_t*)item;                   \
 } while (0)
 
 #define MCA_PML_BFO_PCKT_PENDING_RETURN(pckt)                   \
 do {                                                            \
     /* return packet */                                         \
-    OMPI_FREE_LIST_RETURN(&mca_pml_bfo.pending_pckts,           \
+    OMPI_FREE_LIST_RETURN_MT(&mca_pml_bfo.pending_pckts,           \
         (ompi_free_list_item_t*)pckt);                          \
 } while(0)
 

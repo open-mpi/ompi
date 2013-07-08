@@ -116,7 +116,7 @@ int mca_rcache_rb_tree_insert(
     int rc; 
     mca_rcache_rb_tree_item_t* rb_tree_item; 
     
-    OMPI_FREE_LIST_GET(&rb_module->rb_tree_item_list, item);
+    OMPI_FREE_LIST_GET_MT(&rb_module->rb_tree_item_list, item);
     if(NULL == item) { 
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
@@ -130,7 +130,7 @@ int mca_rcache_rb_tree_insert(
                              (void*) &rb_tree_item->key, item);
         
     if(OMPI_SUCCESS != rc) {
-        OMPI_FREE_LIST_RETURN(&rb_module->rb_tree_item_list, item);
+        OMPI_FREE_LIST_RETURN_MT(&rb_module->rb_tree_item_list, item);
         return rc; 
     }
     return OMPI_SUCCESS; 
@@ -157,7 +157,7 @@ int mca_rcache_rb_tree_delete(mca_rcache_rb_module_t* rb_module,
     assert(reg == tree_item->reg);
     rc =  ompi_rb_tree_delete(&rb_module->rb_tree, &tree_item->key); 
    
-    OMPI_FREE_LIST_RETURN(&rb_module->rb_tree_item_list, 
+    OMPI_FREE_LIST_RETURN_MT(&rb_module->rb_tree_item_list, 
                           (ompi_free_list_item_t*) tree_item);
 
     return rc;

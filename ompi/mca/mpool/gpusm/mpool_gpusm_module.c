@@ -135,7 +135,7 @@ int mca_mpool_gpusm_register(mca_mpool_base_module_t *mpool, void *addr,
     base = addr;
     bound = (unsigned char *)addr + size - 1;
 
-    OMPI_FREE_LIST_GET(&mpool_gpusm->reg_list, item);
+    OMPI_FREE_LIST_GET_MT(&mpool_gpusm->reg_list, item);
     if(NULL == item) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
@@ -149,7 +149,7 @@ int mca_mpool_gpusm_register(mca_mpool_base_module_t *mpool, void *addr,
     rc = mpool_gpusm->resources.register_mem(base, size, gpusm_reg, NULL);
 
     if(rc != OMPI_SUCCESS) {
-        OMPI_FREE_LIST_RETURN(&mpool_gpusm->reg_list, item);
+        OMPI_FREE_LIST_RETURN_MT(&mpool_gpusm->reg_list, item);
         return rc;
     }
 
@@ -169,7 +169,7 @@ int mca_mpool_gpusm_deregister(struct mca_mpool_base_module_t *mpool,
     mca_mpool_gpusm_module_t *mpool_gpusm = (mca_mpool_gpusm_module_t *)mpool;
 
     rc = mpool_gpusm->resources.deregister_mem(mpool, reg);
-    OMPI_FREE_LIST_RETURN(&mpool_gpusm->reg_list, (ompi_free_list_item_t*)reg);
+    OMPI_FREE_LIST_RETURN_MT(&mpool_gpusm->reg_list, (ompi_free_list_item_t*)reg);
     return OMPI_SUCCESS;
 }
 

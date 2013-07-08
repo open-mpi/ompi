@@ -57,14 +57,14 @@ OBJ_CLASS_DECLARATION(mca_pml_bfo_rdma_frag_t);
 #define MCA_PML_BFO_RDMA_FRAG_ALLOC(frag)                       \
 do {                                                            \
     ompi_free_list_item_t* item;                                \
-    OMPI_FREE_LIST_WAIT(&mca_pml_bfo.rdma_frags, item);         \
+    OMPI_FREE_LIST_WAIT_MT(&mca_pml_bfo.rdma_frags, item);         \
     frag = (mca_pml_bfo_rdma_frag_t*)item;                      \
 } while(0)
 
 #define MCA_PML_BFO_RDMA_FRAG_RETURN(frag)                      \
 do {                                                            \
     /* return fragment */                                       \
-    OMPI_FREE_LIST_RETURN(&mca_pml_bfo.rdma_frags,              \
+    OMPI_FREE_LIST_RETURN_MT(&mca_pml_bfo.rdma_frags,              \
         (ompi_free_list_item_t*)frag);                          \
 } while(0)
 

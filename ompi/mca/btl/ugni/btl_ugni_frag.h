@@ -104,7 +104,7 @@ static inline int mca_btl_ugni_frag_alloc (mca_btl_base_endpoint_t *ep,
 {
     ompi_free_list_item_t *item = NULL;
 
-    OMPI_FREE_LIST_GET(list, item);
+    OMPI_FREE_LIST_GET_MT(list, item);
     *frag = (mca_btl_ugni_base_frag_t *) item;
     if (OPAL_LIKELY(NULL != item)) {
         (*frag)->my_list  = list;
@@ -125,7 +125,7 @@ static inline int mca_btl_ugni_frag_return (mca_btl_ugni_base_frag_t *frag)
 
     frag->flags = 0;
 
-    OMPI_FREE_LIST_RETURN(frag->my_list, (ompi_free_list_item_t *) frag);
+    OMPI_FREE_LIST_RETURN_MT(frag->my_list, (ompi_free_list_item_t *) frag);
 
     return OMPI_SUCCESS;
 }

@@ -125,7 +125,7 @@ get_request_from_send_pending(mca_pml_ob1_send_pending_t *type)
         ompi_free_list_item_t* item;                                    \
                                                                         \
         if( OPAL_LIKELY(NULL != proc) ) {                               \
-            OMPI_FREE_LIST_WAIT(&mca_pml_base_send_requests, item);     \
+            OMPI_FREE_LIST_WAIT_MT(&mca_pml_base_send_requests, item);     \
             sendreq = (mca_pml_ob1_send_request_t*)item;                \
             sendreq->req_send.req_base.req_proc = proc;                 \
             sendreq->src_des = NULL;                                    \
@@ -216,7 +216,7 @@ do {                                                                            
     do {                                                                \
     /*  Let the base handle the reference counts */                     \
     MCA_PML_BASE_SEND_REQUEST_FINI((&(sendreq)->req_send));             \
-    OMPI_FREE_LIST_RETURN( &mca_pml_base_send_requests,                 \
+    OMPI_FREE_LIST_RETURN_MT( &mca_pml_base_send_requests,                 \
                            (ompi_free_list_item_t*)sendreq);            \
     } while(0)
 

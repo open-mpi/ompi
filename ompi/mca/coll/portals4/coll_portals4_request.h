@@ -30,7 +30,7 @@ OBJ_CLASS_DECLARATION(ompi_coll_portals4_request_t);
 #define OMPI_COLL_PORTALS4_REQUEST_ALLOC(comm, req)                     \
     do {                                                                \
         ompi_free_list_item_t *item;                                    \
-        OMPI_FREE_LIST_GET(&mca_coll_portals4_component.requests,       \
+        OMPI_FREE_LIST_GET_MT(&mca_coll_portals4_component.requests,       \
                            item);                                       \
         req = (ompi_coll_portals4_request_t*) item;                     \
         OMPI_REQUEST_INIT(&req->super, false);                          \
@@ -42,7 +42,7 @@ OBJ_CLASS_DECLARATION(ompi_coll_portals4_request_t);
 #define OMPI_COLL_PORTALS4_REQUEST_RETURN(req)                          \
     do {                                                                \
         OMPI_REQUEST_FINI(&request->super);                             \
-        OMPI_FREE_LIST_RETURN(&mca_coll_portals4_component.requests,    \
+        OMPI_FREE_LIST_RETURN_MT(&mca_coll_portals4_component.requests,    \
                               (ompi_free_list_item_t*) req);            \
     } while (0)
 

@@ -386,7 +386,7 @@ static void* get_coll_handle(void)
 {
     ompi_request_t *ompi_req;
     ompi_free_list_item_t *item;
-    OMPI_FREE_LIST_WAIT(&(mca_coll_hcoll_component.requests),item);
+    OMPI_FREE_LIST_WAIT_MT(&(mca_coll_hcoll_component.requests),item);
     if (OPAL_UNLIKELY(NULL == item)) {
         HCOL_ERROR("Wait for free list failed.\n");
         return NULL;
@@ -404,7 +404,7 @@ static int coll_handle_test(void* handle)
 
 static void coll_handle_free(void *handle){
     ompi_request_t *ompi_req = (ompi_request_t *)handle;
-    OMPI_FREE_LIST_RETURN(&mca_coll_hcoll_component.requests,
+    OMPI_FREE_LIST_RETURN_MT(&mca_coll_hcoll_component.requests,
                           (ompi_free_list_item_t *)ompi_req);
 }
 

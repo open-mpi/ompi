@@ -178,7 +178,7 @@ OMPI_DECLSPEC int ompi_free_list_grow(ompi_free_list_t* flist, size_t num_elemen
    will not shrink the list if it is already larger than size and may
    grow it past size if necessary (it will grow in
    num_elements_per_alloc chunks) */
-OMPI_DECLSPEC int ompi_free_list_resize(ompi_free_list_t *flist, size_t size);
+OMPI_DECLSPEC int ompi_free_list_resize_mt(ompi_free_list_t *flist, size_t size);
 
 /**
  * Attemp to obtain an item from a free list. 
@@ -192,7 +192,7 @@ OMPI_DECLSPEC int ompi_free_list_resize(ompi_free_list_t *flist, size_t size);
  * to the caller.
  */
 
-#define OMPI_FREE_LIST_GET(fl, item)                                    \
+#define OMPI_FREE_LIST_GET_MT(fl, item)                                 \
     {                                                                   \
         item = (ompi_free_list_item_t*) opal_atomic_lifo_pop(&((fl)->super)); \
         if( OPAL_UNLIKELY(NULL == item) ) {                             \
@@ -219,11 +219,11 @@ OMPI_DECLSPEC int ompi_free_list_resize(ompi_free_list_t *flist, size_t size);
  * is returned to the list.
  */
 
-#define OMPI_FREE_LIST_WAIT(fl, item)           \
-    __ompi_free_list_wait( (fl), &(item) )
+#define OMPI_FREE_LIST_WAIT_MT(fl, item)           \
+    __ompi_free_list_wait_mt( (fl), &(item) )
 
-static inline void __ompi_free_list_wait( ompi_free_list_t* fl,
-                                          ompi_free_list_item_t** item )
+static inline void __ompi_free_list_wait_mt( ompi_free_list_t* fl,
+                                             ompi_free_list_item_t** item )
 {
     *item = (ompi_free_list_item_t*)opal_atomic_lifo_pop(&((fl)->super));
     while( NULL == *item ) {
@@ -268,7 +268,7 @@ static inline void __ompi_free_list_wait( ompi_free_list_t* fl,
  *
  */
  
-#define OMPI_FREE_LIST_RETURN(fl, item)                                 \
+#define OMPI_FREE_LIST_RETURN_MT(fl, item)                              \
     do {                                                                \
         opal_list_item_t* original;                                     \
                                                                         \

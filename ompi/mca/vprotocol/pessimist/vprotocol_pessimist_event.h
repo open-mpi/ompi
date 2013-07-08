@@ -54,7 +54,7 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_vprotocol_pessimist_event_t);
 #define VPESSIMIST_MATCHING_EVENT_NEW(event)                            \
     do {                                                                \
         ompi_free_list_item_t *item;                                    \
-        OMPI_FREE_LIST_WAIT(&mca_vprotocol_pessimist.events_pool, item); \
+        OMPI_FREE_LIST_WAIT_MT(&mca_vprotocol_pessimist.events_pool, item); \
         event = (mca_vprotocol_pessimist_event_t *) item;               \
         event->type = VPROTOCOL_PESSIMIST_EVENT_TYPE_MATCHING;          \
         event->u_event.e_matching.src = -1;                             \
@@ -63,13 +63,13 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_vprotocol_pessimist_event_t);
 #define VPESSIMIST_DELIVERY_EVENT_NEW(event)                            \
     do {                                                                \
         ompi_free_list_item_t *item;                                    \
-        OMPI_FREE_LIST_WAIT(&mca_vprotocol_pessimist.events_pool, item); \
+        OMPI_FREE_LIST_WAIT_MT(&mca_vprotocol_pessimist.events_pool, item); \
         event = (mca_vprotocol_pessimist_event_t *) item;               \
         event->type = VPROTOCOL_PESSIMIST_EVENT_TYPE_DELIVERY;          \
     } while(0)
 
 #define VPESSIMIST_EVENT_RETURN(event)                                  \
-    OMPI_FREE_LIST_RETURN(&mca_vprotocol_pessimist.events_pool,         \
+    OMPI_FREE_LIST_RETURN_MT(&mca_vprotocol_pessimist.events_pool,         \
                           (ompi_free_list_item_t *) event)
 
 END_C_DECLS

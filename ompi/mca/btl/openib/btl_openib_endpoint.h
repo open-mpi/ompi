@@ -358,7 +358,7 @@ static inline int post_recvs(mca_btl_base_endpoint_t *ep, const int qp,
 
     for(i = 0; i < num_post; i++) {
         ompi_free_list_item_t* item;
-        OMPI_FREE_LIST_WAIT(&openib_btl->device->qps[qp].recv_free, item);
+        OMPI_FREE_LIST_WAIT_MT(&openib_btl->device->qps[qp].recv_free, item);
         to_base_frag(item)->base.order = qp;
         to_com_frag(item)->endpoint = ep;
         if(NULL == wr)

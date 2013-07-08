@@ -475,7 +475,7 @@ mca_coll_ml_alloc_op_prog_single_frag_dag(
     ompi_request_t *req;
 
     /* Blocking call on fragment allocation (Maybe we want to make it non blocking ?) */
-    OMPI_FREE_LIST_WAIT(&(ml_module->coll_ml_collective_descriptors),
+    OMPI_FREE_LIST_WAIT_MT(&(ml_module->coll_ml_collective_descriptors),
                         item);
 
     coll_op = (mca_coll_ml_collective_operation_progress_t *) item;
@@ -535,7 +535,7 @@ static inline __opal_attribute_always_inline__ mca_coll_ml_collective_operation_
     mca_coll_ml_collective_operation_progress_t  *coll_op = NULL;
 
     /* Blocking call on fragment allocation (Maybe we want to make it non blocking ?) */
-    OMPI_FREE_LIST_WAIT(&(ml_module->coll_ml_collective_descriptors),
+    OMPI_FREE_LIST_WAIT_MT(&(ml_module->coll_ml_collective_descriptors),
                         item);
 
     coll_op = (mca_coll_ml_collective_operation_progress_t *) item;

@@ -123,7 +123,7 @@ static inline __opal_attribute_always_inline__
     mca_bcol_iboffload_component_t *cm = &mca_bcol_iboffload_component;
 
     /* blocking allocation for collectives fragment */
-    OMPI_FREE_LIST_GET(&cm->collfrags_free, item);
+    OMPI_FREE_LIST_GET_MT(&cm->collfrags_free, item);
     if (OPAL_UNLIKELY(NULL == item)) {
         IBOFFLOAD_ERROR(("Failed to allocated collfrag.\n"));
         return NULL;

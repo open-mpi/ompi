@@ -409,7 +409,7 @@ do {                                                                            
         assert(&coll_op->full_message !=                                        \
                                     coll_op->fragment_data.message_descriptor); \
         ML_VERBOSE(10, ("Releasing %p", op));                                   \
-        OMPI_FREE_LIST_RETURN(&(((mca_coll_ml_module_t *)(op)->coll_module)->   \
+        OMPI_FREE_LIST_RETURN_MT(&(((mca_coll_ml_module_t *)(op)->coll_module)->   \
                     coll_ml_collective_descriptors),                            \
                 (ompi_free_list_item_t *)op);                                   \
         /* Special check for memory synchronization completion */               \

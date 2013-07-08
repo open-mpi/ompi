@@ -617,13 +617,13 @@ static void traffic_message_dump_drain_msg_indv(ompi_crcp_bkmrk_pml_drain_messag
 #define HOKE_PEER_REF_ALLOC(peer_ref)                 \
 do {                                                  \
   ompi_free_list_item_t* item;                        \
-  OMPI_FREE_LIST_WAIT(&peer_ref_free_list, item);     \
+  OMPI_FREE_LIST_WAIT_MT(&peer_ref_free_list, item);     \
   peer_ref = (ompi_crcp_bkmrk_pml_peer_ref_t*)item;   \
 } while(0); 
 
 #define HOKE_PEER_REF_RETURN(peer_ref)        \
 do {                                          \
-   OMPI_FREE_LIST_RETURN(&peer_ref_free_list, \
+   OMPI_FREE_LIST_RETURN_MT(&peer_ref_free_list, \
    (ompi_free_list_item_t*)peer_ref);         \
 } while(0);
 
@@ -631,7 +631,7 @@ do {                                          \
 #define HOKE_CONTENT_REF_ALLOC(content_ref)                       \
 do {                                                              \
   ompi_free_list_item_t* item;                                    \
-  OMPI_FREE_LIST_WAIT(&content_ref_free_list, item);              \
+  OMPI_FREE_LIST_WAIT_MT(&content_ref_free_list, item);              \
   content_ref = (ompi_crcp_bkmrk_pml_message_content_ref_t*)item; \
   content_ref->msg_id = content_ref_seq_num;                      \
   content_ref_seq_num++;\
@@ -639,7 +639,7 @@ do {                                                              \
 
 #define HOKE_CONTENT_REF_RETURN(content_ref)     \
 do {                                             \
-   OMPI_FREE_LIST_RETURN(&content_ref_free_list, \
+   OMPI_FREE_LIST_RETURN_MT(&content_ref_free_list, \
    (ompi_free_list_item_t*)content_ref);         \
 } while(0);
 
@@ -647,13 +647,13 @@ do {                                             \
 #define HOKE_TRAFFIC_MSG_REF_ALLOC(msg_ref)                   \
 do {                                                          \
   ompi_free_list_item_t* item;                                \
-  OMPI_FREE_LIST_WAIT(&traffic_msg_ref_free_list, item);      \
+  OMPI_FREE_LIST_WAIT_MT(&traffic_msg_ref_free_list, item);      \
   msg_ref = (ompi_crcp_bkmrk_pml_traffic_message_ref_t*)item; \
 } while(0); 
 
 #define HOKE_TRAFFIC_MSG_REF_RETURN(msg_ref)         \
 do {                                                 \
-   OMPI_FREE_LIST_RETURN(&traffic_msg_ref_free_list, \
+   OMPI_FREE_LIST_RETURN_MT(&traffic_msg_ref_free_list, \
    (ompi_free_list_item_t*)msg_ref);                 \
 } while(0);
 
@@ -661,13 +661,13 @@ do {                                                 \
 #define HOKE_DRAIN_MSG_REF_ALLOC(msg_ref)                   \
 do {                                                        \
   ompi_free_list_item_t* item;                              \
-  OMPI_FREE_LIST_WAIT(&drain_msg_ref_free_list, item);      \
+  OMPI_FREE_LIST_WAIT_MT(&drain_msg_ref_free_list, item);      \
   msg_ref = (ompi_crcp_bkmrk_pml_drain_message_ref_t*)item; \
 } while(0); 
 
 #define HOKE_DRAIN_MSG_REF_RETURN(msg_ref)         \
 do {                                               \
-   OMPI_FREE_LIST_RETURN(&drain_msg_ref_free_list, \
+   OMPI_FREE_LIST_RETURN_MT(&drain_msg_ref_free_list, \
    (ompi_free_list_item_t*)msg_ref);               \
 } while(0);
 
@@ -675,13 +675,13 @@ do {                                               \
 #define HOKE_DRAIN_ACK_MSG_REF_ALLOC(msg_ref)                   \
 do {                                                            \
   ompi_free_list_item_t* item;                                  \
-  OMPI_FREE_LIST_WAIT(&drain_ack_msg_ref_free_list, item);      \
+  OMPI_FREE_LIST_WAIT_MT(&drain_ack_msg_ref_free_list, item);      \
   msg_ref = (ompi_crcp_bkmrk_pml_drain_message_ack_ref_t*)item; \
 } while(0); 
 
 #define HOKE_DRAIN_ACK_MSG_REF_RETURN(msg_ref)         \
 do {                                                   \
-   OMPI_FREE_LIST_RETURN(&drain_ack_msg_ref_free_list, \
+   OMPI_FREE_LIST_RETURN_MT(&drain_ack_msg_ref_free_list, \
    (ompi_free_list_item_t*)msg_ref);                   \
 } while(0);
 
@@ -968,13 +968,13 @@ OBJ_CLASS_INSTANCE(ompi_crcp_bkmrk_pml_state_t,
 #define CRCP_COORD_STATE_ALLOC(state_ref)                 \
 do {                                                      \
   ompi_free_list_item_t* item;                            \
-  OMPI_FREE_LIST_WAIT(&coord_state_free_list, item);      \
+  OMPI_FREE_LIST_WAIT_MT(&coord_state_free_list, item);      \
   state_ref = (ompi_crcp_bkmrk_pml_state_t*)item;         \
 } while(0); 
 
 #define CRCP_COORD_STATE_RETURN(state_ref)       \
 do {                                             \
-   OMPI_FREE_LIST_RETURN(&coord_state_free_list, \
+   OMPI_FREE_LIST_RETURN_MT(&coord_state_free_list, \
    (ompi_free_list_item_t*)state_ref);           \
 } while(0);
 

@@ -99,10 +99,10 @@ static inline __opal_attribute_always_inline__ void
         if (MCA_BCOL_IBOFFLOAD_DUMMY_OWNER != frag->type &&
                                       0 == frag->ref_counter) {
             if (MCA_BCOL_IBOFFLOAD_BCOL_OWNER == frag->type) {
-                OMPI_FREE_LIST_RETURN((&(list[frag->qp_index])),
+                OMPI_FREE_LIST_RETURN_MT((&(list[frag->qp_index])),
                         (ompi_free_list_item_t*) frag);
             } else if (MCA_BCOL_IBOFFLOAD_ML_OWNER == frag->type) {
-                OMPI_FREE_LIST_RETURN((&(cm->ml_frags_free)),
+                OMPI_FREE_LIST_RETURN_MT((&(cm->ml_frags_free)),
                         (ompi_free_list_item_t*) frag);
             }
         }
@@ -124,7 +124,7 @@ static inline __opal_attribute_always_inline__ void
             opal_list_prepend(&ep->qps[qp_index].preposted_frags,
                             (opal_list_item_t *) recv_frag);
         } else {
-            OMPI_FREE_LIST_RETURN((&(cm->ml_frags_free)),
+            OMPI_FREE_LIST_RETURN_MT((&(cm->ml_frags_free)),
                 (ompi_free_list_item_t*) recv_frag);
         }
 
@@ -146,7 +146,7 @@ static inline __opal_attribute_always_inline__ mca_bcol_iboffload_task_t*
     mca_bcol_iboffload_endpoint_t *endpoint = iboffload->endpoints[source];
 
     /* blocking allocation for send fragment */
-    OMPI_FREE_LIST_GET(&cm->tasks_free, item);
+    OMPI_FREE_LIST_GET_MT(&cm->tasks_free, item);
     if (OPAL_UNLIKELY(NULL == item)) {
         mca_bcol_iboffload_return_recv_frags_toendpoint(frags, endpoint, qp_index);
         return NULL;
@@ -203,7 +203,7 @@ mca_bcol_iboffload_prepare_send_task(
                             endpoint->iboffload_module->ibnet->super.group_list[endpoint->index]));
 
     /* get item from free list */
-    OMPI_FREE_LIST_GET(task_list, item);
+    OMPI_FREE_LIST_GET_MT(task_list, item);
     if (OPAL_UNLIKELY(NULL == item)) {
         return NULL;
     }

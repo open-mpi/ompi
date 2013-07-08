@@ -874,7 +874,7 @@ void mca_pml_ob1_send_request_copy_in_out( mca_pml_ob1_send_request_t *sendreq,
     if( OPAL_UNLIKELY(0 == send_length) )
         return;
 
-    OMPI_FREE_LIST_WAIT(&mca_pml_ob1.send_ranges, i);
+    OMPI_FREE_LIST_WAIT_MT(&mca_pml_ob1.send_ranges, i);
 
     sr = (mca_pml_ob1_send_range_t*)i;
 
@@ -928,7 +928,7 @@ get_next_send_range(mca_pml_ob1_send_request_t* sendreq,
 {
     OPAL_THREAD_LOCK(&sendreq->req_send_range_lock);
     opal_list_remove_item(&sendreq->req_send_ranges, (opal_list_item_t *)range);
-    OMPI_FREE_LIST_RETURN(&mca_pml_ob1.send_ranges, &range->base);
+    OMPI_FREE_LIST_RETURN_MT(&mca_pml_ob1.send_ranges, &range->base);
     range = get_send_range_nolock(sendreq);
     OPAL_THREAD_UNLOCK(&sendreq->req_send_range_lock);
 

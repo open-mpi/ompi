@@ -250,7 +250,7 @@ static int mca_coll_ml_request_free(ompi_request_t** request)
     assert(0 == ml_request->fragment_data.offset_into_user_buffer);
     assert(ml_request->dag_description.status_array[0].item.opal_list_item_refcount == 0);
     ML_VERBOSE(10, ("Releasing Master %p", ml_request));
-    OMPI_FREE_LIST_RETURN(&(ml_module->coll_ml_collective_descriptors),
+    OMPI_FREE_LIST_RETURN_MT(&(ml_module->coll_ml_collective_descriptors),
             (ompi_free_list_item_t *)ml_request);
 
     /* MPI needs to return with the request object set to MPI_REQUEST_NULL

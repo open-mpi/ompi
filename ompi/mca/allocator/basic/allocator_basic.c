@@ -122,7 +122,7 @@ static void mca_allocator_basic_combine_prev(
         if(prev->seg_addr + prev->seg_size == seg->seg_addr) {
             prev->seg_size += seg->seg_size;
             opal_list_remove_item(&module->seg_list, &seg->seg_item.super);
-            OMPI_FREE_LIST_RETURN(&module->seg_descriptors, &seg->seg_item);
+            OMPI_FREE_LIST_RETURN_MT(&module->seg_descriptors, &seg->seg_item);
             return;
         }
     }
@@ -139,7 +139,7 @@ static void mca_allocator_basic_combine_next(
             next->seg_addr = seg->seg_addr;
             next->seg_size += seg->seg_size;
             opal_list_remove_item(&module->seg_list, &seg->seg_item.super);
-            OMPI_FREE_LIST_RETURN(&module->seg_descriptors, &seg->seg_item);
+            OMPI_FREE_LIST_RETURN_MT(&module->seg_descriptors, &seg->seg_item);
             return;
         }
     }
@@ -191,7 +191,7 @@ void *mca_allocator_basic_alloc(
         } else if (seg->seg_size == size) {
             addr = seg->seg_addr;
             opal_list_remove_item(&module->seg_list, &item->super);
-            OMPI_FREE_LIST_RETURN(&module->seg_descriptors, item);
+            OMPI_FREE_LIST_RETURN_MT(&module->seg_descriptors, item);
             OPAL_THREAD_UNLOCK(&module->seg_lock);
             *(size_t*)addr = size;
             return addr+sizeof(size_t);
@@ -207,7 +207,7 @@ void *mca_allocator_basic_alloc(
 
     /* create a segment for any extra allocation */
     if(allocated_size > size) {
-        OMPI_FREE_LIST_GET(&module->seg_descriptors, item);
+        OMPI_FREE_LIST_GET_MT(&module->seg_descriptors, item);
         if(NULL == item) {
             OPAL_THREAD_UNLOCK(&module->seg_lock);
             return NULL;
@@ -309,7 +309,7 @@ void mca_allocator_basic_free(
             /* insert before larger entry */
             } else {
                 mca_allocator_basic_segment_t* new_seg;
-                OMPI_FREE_LIST_GET(&module->seg_descriptors, item);
+                OMPI_FREE_LIST_GET_MT(&module->seg_descriptors, item);
                 if(NULL == item) {
                     OPAL_THREAD_UNLOCK(&module->seg_lock);
                     return;
@@ -325,7 +325,7 @@ void mca_allocator_basic_free(
     }
 
     /* append to the end of the list */
-    OMPI_FREE_LIST_GET(&module->seg_descriptors, item);
+    OMPI_FREE_LIST_GET_MT(&module->seg_descriptors, item);
     if(NULL == item) {
         OPAL_THREAD_UNLOCK(&module->seg_lock);
         return;

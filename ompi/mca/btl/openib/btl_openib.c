@@ -970,7 +970,7 @@ ib_frag_alloc(mca_btl_openib_module_t *btl, size_t size, uint8_t order,
 
     for(qp = 0; qp < mca_btl_openib_component.num_qps; qp++) {
          if(mca_btl_openib_component.qp_infos[qp].size >= size) {
-             OMPI_FREE_LIST_GET(&btl->device->qps[qp].send_free, item);
+             OMPI_FREE_LIST_GET_MT(&btl->device->qps[qp].send_free, item);
              if(item)
                  break;
          }
@@ -1605,7 +1605,7 @@ int mca_btl_openib_sendi( struct mca_btl_base_module_t* btl,
     }
 
     /* Allocate fragment */
-    OMPI_FREE_LIST_GET(&obtl->device->qps[qp].send_free, item);
+    OMPI_FREE_LIST_GET_MT(&obtl->device->qps[qp].send_free, item);
     if(OPAL_UNLIKELY(NULL == item)) {
         /* we don't return NULL because maybe later we will try to coalesce */
         goto no_frags;
