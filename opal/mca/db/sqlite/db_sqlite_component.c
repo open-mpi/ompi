@@ -20,7 +20,6 @@
 
 #include "opal/mca/base/base.h"
 
-#include "opal/util/proc_info.h"
 #include "opal/util/show_help.h"
 
 #include "opal/mca/db/db.h"
