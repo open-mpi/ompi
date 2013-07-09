@@ -55,7 +55,6 @@ orte_sensor_file_component_t mca_sensor_file_component = {
 static int orte_sensor_file_register (void)
 {
     mca_base_component_t *c = &mca_sensor_file_component.super.base_version;
-    int tmp;
 
     /* lookup parameters */
     mca_sensor_file_component.file = NULL;

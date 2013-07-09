@@ -60,25 +60,25 @@ static int orte_sensor_ft_tester_register (void)
     mca_base_component_t *c = &mca_sensor_ft_tester_component.super.base_version;
 
     fail_prob = NULL;
-    void) mca_base_var_register (c, "fail_prob", "Probability of killing a single executable",
-                                 MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
-                                 OPAL_INFO_LVL_9,
-                                 MCA_BASE_VAR_SCOPE_READONLY,
-                                 &fail_prob);
+    (void) mca_base_component_var_register (c, "fail_prob", "Probability of killing a single executable",
+                                            MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
+                                            OPAL_INFO_LVL_9,
+                                            MCA_BASE_VAR_SCOPE_READONLY,
+                                            &fail_prob);
 
     mca_sensor_ft_tester_component.multi_fail = false;
-    (void) mca_base_var_register (c, "multi_allowed", "Allow multiple executables to be killed at one time",
-                                  MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
-                                  OPAL_INFO_LVL_9,
-                                  MCA_BASE_VAR_SCOPE_READONLY,
-                                  &mca_sensor_ft_tester_component.multi_fail);
+    (void) mca_base_component_var_register (c, "multi_allowed", "Allow multiple executables to be killed at one time",
+                                            MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                            OPAL_INFO_LVL_9,
+                                            MCA_BASE_VAR_SCOPE_READONLY,
+                                            &mca_sensor_ft_tester_component.multi_fail);
 
     daemon_fail_prob = NULL;
-    (void) mca_base_var_register (c, "daemon_fail_prob", "Probability of killing a daemon",
-                                  MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
-                                  OPAL_INFO_LVL_9,
-                                  MCA_BASE_VAR_SCOPE_READONLY,
-                                  &daemon_fail_prob);
+    (void) mca_base_component_var_register (c, "daemon_fail_prob", "Probability of killing a daemon",
+                                            MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
+                                            OPAL_INFO_LVL_9,
+                                            MCA_BASE_VAR_SCOPE_READONLY,
+                                            &daemon_fail_prob);
 
     return ORTE_SUCCESS;
 }

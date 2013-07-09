@@ -90,7 +90,7 @@ static int sqlite_component_query(opal_db_base_module_t **module,
             *module = NULL;
             return OPAL_ERROR;
         }
-        *module = (mca_base_module_t*)&opal_db_sqlite_module;
+        *module = &opal_db_sqlite_module;
         return OPAL_SUCCESS;
     }
     
@@ -101,7 +101,7 @@ static int sqlite_component_query(opal_db_base_module_t **module,
 
 static int sqlite_component_close(void)
 {
-    return ORTE_SUCCESS;
+    return OPAL_SUCCESS;
 }
 
 static int sqlite_component_register(void)
@@ -124,6 +124,6 @@ static int sqlite_component_register(void)
                                             MCA_BASE_VAR_SCOPE_READONLY,
                                             &mca_db_sqlite_component.num_worker_threads);
 
-    return ORTE_SUCCESS;
+    return OPAL_SUCCESS;
 }
 

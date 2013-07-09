@@ -27,6 +27,7 @@
 #include <sqlite3.h>
 
 #include "opal/dss/dss_types.h"
+#include "opal/util/argv.h"
 #include "opal/util/basename.h"
 #include "opal/util/os_dirpath.h"
 #include "opal/util/os_path.h"
@@ -36,7 +37,6 @@
 #include "opal/mca/pstat/base/base.h"
 
 #include "opal/util/show_help.h"
-#include "opal/runtime/opal_globals.h"
 
 #include "opal/mca/db/base/base.h"
 #include "db_sqlite.h"
@@ -119,8 +119,7 @@ static int add_log(const char *table,
     sqlite3_stmt *stmt;
 
     opal_output_verbose(2, opal_db_base_framework.framework_output,
-                        "%s Logging data for table %s",
-                        OPAL_NAME_PRINT(OPAL_PROC_MY_NAME), table);
+                        "Logging data for table %s", table);
 
     /* setup the insert statement */
     for (i=0; i < nkvs; i++) {
@@ -177,7 +176,8 @@ static int add_log(const char *table,
     if (SQLITE_OK != rc) {
         return OPAL_ERROR;
     }
-    opal_output(0, "%s INSERTED ROW %d", OPAL_NAME_PRINT(OPAL_PROC_MY_NAME), (int)sqlite3_last_insert_rowid(dbhandles[active]));
+    opal_output_verbose(2, opal_db_base_framework.framework_output,
+                        "INSERTED ROW %d", (int)sqlite3_last_insert_rowid(dbhandles[active]));
 
     /* cycle to the next worker thread */
     active++;

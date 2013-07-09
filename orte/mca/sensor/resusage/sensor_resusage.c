@@ -29,10 +29,10 @@
 #include "opal/dss/dss.h"
 #include "opal/util/output.h"
 #include "opal/mca/pstat/pstat.h"
+#include "opal/mca/db/db.h"
 
 #include "orte/util/proc_info.h"
 #include "orte/util/name_fns.h"
-#include "orte/mca/db/db.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/odls/odls_types.h"
 #include "orte/mca/odls/base/odls_private.h"
@@ -281,8 +281,6 @@ static void res_log(opal_buffer_t *sample)
     int rc, n, i;
     opal_value_t kv[14];
     char *node;
-    opal_diskstats_t *dk;
-    opal_netstats_t *ns;
 
     if (!log_enabled) {
         return;
@@ -364,7 +362,7 @@ static void res_log(opal_buffer_t *sample)
         kv[i++].data.fval = nst->la15;
 
         /* store it */
-        if (ORTE_SUCCESS != (rc = orte_db.add_log("nodestats", kv, 12))) {
+        if (ORTE_SUCCESS != (rc = opal_db.add_log("nodestats", kv, 12))) {
             /* don't bark about it - just quietly disable the log */
             log_enabled = false;
         }
@@ -430,7 +428,7 @@ static void res_log(opal_buffer_t *sample)
             kv[13].data.tv.tv_sec = st->sample_time.tv_sec;
             kv[13].data.tv.tv_usec = st->sample_time.tv_usec;
             /* store it */
-            if (ORTE_SUCCESS != (rc = orte_db.add_log("procstats", kv, 14))) {
+            if (ORTE_SUCCESS != (rc = opal_db.add_log("procstats", kv, 14))) {
                 log_enabled = false;
             }
             for (i=0; i < 14; i++) {

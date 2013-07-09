@@ -28,8 +28,7 @@ OPAL_DECLSPEC extern opal_db_base_module_t opal_db_sqlite_module;
     {                                                           \
         *(r) = sqlite3_ ## f;                                   \
         if (*(r) != SQLITE_OK) {                                \
-            opal_output(0, "%s: %s failed with status %d: %s",  \
-                        OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),     \
+            opal_output(0, "%s failed with status %d: %s",      \
                         #f, *(r), sqlite3_errmsg(db));          \
         }                                                       \
     }                                                           \
@@ -38,8 +37,7 @@ OPAL_DECLSPEC extern opal_db_base_module_t opal_db_sqlite_module;
     {                                                           \
         *(r) = sqlite3_ ## f;                                   \
         if (*(r) != SQLITE_ ## x) {                             \
-            opal_output(0, "%s: %s failed with status %d: %s",  \
-                        OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),     \
+            opal_output(0, "%s failed with status %d: %s",      \
                         #f, *(r), sqlite3_errmsg(db));          \
         }                                                       \
     }                                                           \
