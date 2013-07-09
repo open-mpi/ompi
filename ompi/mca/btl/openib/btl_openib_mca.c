@@ -546,6 +546,29 @@ int btl_openib_register_mca_params(void)
             &mca_btl_openib_component.super.btl_version,
             &mca_btl_openib_module.super));
 
+#if OMPI_CUDA_SUPPORT /* CUDA_ASYNC_RECV */
+    /* Default is enabling CUDA asynchronous send copies */
+    CHECK(reg_bool("cuda_async_send", NULL,
+                  "Enable or disable CUDA async send copies "
+                  "(true = async; false = sync)",
+                  true, &mca_btl_openib_component.cuda_async_send));
+    if (mca_btl_openib_component.cuda_async_send) {
+        mca_btl_openib_module.super.btl_flags |= MCA_BTL_FLAGS_CUDA_COPY_ASYNC_SEND;
+    }
+    /* Default is enabling CUDA asynchronous receive copies */
+    CHECK(reg_bool("cuda_async_recv", NULL,
+                  "Enable or disable CUDA async recv copies "
+                  "(true = async; false = sync)",
+                  true, &mca_btl_openib_component.cuda_async_recv));
+    if (mca_btl_openib_component.cuda_async_recv) {
+        mca_btl_openib_module.super.btl_flags |= MCA_BTL_FLAGS_CUDA_COPY_ASYNC_RECV;
+    }
+    /* Also make the max send size larger for better GPU buffer performance */
+   mca_btl_openib_module.super.btl_max_send_size = 128 * 1024;
+   /* Turn of message coalescing - not sure if it works with GPU buffers */
+   mca_btl_openib_component.use_message_coalescing = 0;
+#endif /* OMPI_CUDA_SUPPORT */
+
     /* setup all the qp stuff */
     /* round mid_qp_size to smallest power of two */
     mid_qp_size = opal_next_poweroftwo (mca_btl_openib_module.super.btl_eager_limit / 4) >> 1;
@@ -687,20 +710,6 @@ int btl_openib_verify_mca_params (void)
                 true, mca_btl_openib_component.buffer_alignment, orte_process_info.nodename, 64);
         mca_btl_openib_component.buffer_alignment = 64;
     }
-
-#if OMPI_CUDA_SUPPORT /* CUDA_ASYNC_RECV */
-    if (mca_btl_openib_component.cuda_async_send) {
-        mca_btl_openib_module.super.btl_flags |= MCA_BTL_FLAGS_CUDA_COPY_ASYNC_SEND;
-    } else {
-        mca_btl_openib_module.super.btl_flags &= ~MCA_BTL_FLAGS_CUDA_COPY_ASYNC_SEND;
-    }
-
-    if (mca_btl_openib_component.cuda_async_recv) {
-        mca_btl_openib_module.super.btl_flags |= MCA_BTL_FLAGS_CUDA_COPY_ASYNC_RECV;
-    } else {
-        mca_btl_openib_module.super.btl_flags &= ~MCA_BTL_FLAGS_CUDA_COPY_ASYNC_RECV;
-    }
-#endif
 
     if (mca_btl_openib_component.use_memalign != 32  
         && mca_btl_openib_component.use_memalign != 64

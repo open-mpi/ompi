@@ -73,7 +73,7 @@ int mca_pml_ob1_send_request_start_cuda(mca_pml_ob1_send_request_t* sendreq,
                 rc = mca_pml_ob1_send_request_start_rndv(sendreq, bml_btl, size,
                                                          MCA_PML_OB1_HDR_FLAGS_CONTIG);
             } else {
-                rc = mca_pml_ob1_send_request_start_rndv(sendreq, bml_btl, size, 0);
+                rc = mca_pml_ob1_send_request_start_rndv(sendreq, bml_btl, 0, 0);
             }
         }
     } else {

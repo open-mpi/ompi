@@ -126,7 +126,7 @@ static int rgpusm_register(void)
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &ompi_mpool_rgpusm_verbose);
 
-    return mca_common_cuda_register_mca_variables();
+    return OMPI_SUCCESS;
 }
 
 

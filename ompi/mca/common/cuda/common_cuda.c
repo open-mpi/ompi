@@ -180,15 +180,9 @@ int mca_common_cuda_register_mca_variables(void)
     return OMPI_SUCCESS;
 }
 
-/**
- * This function is registered with the OPAL CUDA support.  In that way,
- * we will complete initialization when OPAL detects the first GPU memory
- * access.  In the case that no GPU memory access happens, then this function
- * never gets called.
- */
-static int mca_common_cuda_init(opal_common_cuda_function_table_t *ftable)
+static int mca_common_cuda_init(void)
 {
-    int id, value, i, s;
+    int i, s;
     CUresult res;
     CUcontext cuContext;
     common_cuda_mem_regs_t *mem_reg;

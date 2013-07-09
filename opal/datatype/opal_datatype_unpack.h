@@ -26,7 +26,7 @@
 /* Make use of existing macro to do CUDA style memcpy */
 #undef MEMCPY_CSUM
 #define MEMCPY_CSUM( DST, SRC, BLENGTH, CONVERTOR ) \
-    CONVERTOR->cbmemcpy( (DST), (SRC), (BLENGTH) )
+    CONVERTOR->cbmemcpy( (DST), (SRC), (BLENGTH), (CONVERTOR) )
 #endif
 
 #include "opal/datatype/opal_convertor.h"

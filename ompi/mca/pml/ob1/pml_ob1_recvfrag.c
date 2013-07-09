@@ -44,6 +44,10 @@
 #include "pml_ob1_recvreq.h"
 #include "pml_ob1_sendreq.h"
 #include "pml_ob1_hdr.h"
+#if OMPI_CUDA_SUPPORT
+#include "opal/datatype/opal_datatype_cuda.h"
+#include "ompi/mca/common/cuda/common_cuda.h"
+#endif /* OMPI_CUDA_SUPPORT */
 
 OBJ_CLASS_INSTANCE( mca_pml_ob1_buffer_t,
                     ompi_free_list_item_t,
@@ -332,6 +336,17 @@ void mca_pml_ob1_recv_frag_callback_ack(mca_btl_base_module_t* btl,
         OPAL_THREAD_ADD32(&sendreq->req_state, -1);
     }
 
+#if OMPI_CUDA_SUPPORT /* CUDA_ASYNC_SEND */
+    if ((sendreq->req_send.req_base.req_convertor.flags & CONVERTOR_CUDA) &&
+        (btl->btl_flags & MCA_BTL_FLAGS_CUDA_COPY_ASYNC_SEND)) {
+        /* The user's buffer is GPU and this BTL can support asynchronous copies,
+         * so adjust the convertor accordingly.  All the subsequent fragments will
+         * use the asynchronous copy. */
+        void *strm = mca_common_cuda_get_dtoh_stream();
+        opal_cuda_set_copy_function_async(&sendreq->req_send.req_base.req_convertor, strm);
+    }
+#endif /* OMPI_CUDA_SUPPORT */
+
     if(send_request_pml_complete_check(sendreq) == false)
         mca_pml_ob1_send_request_schedule(sendreq);
 
@@ -351,6 +366,22 @@ void mca_pml_ob1_recv_frag_callback_frag(mca_btl_base_module_t* btl,
     }
     ob1_hdr_ntoh(hdr, MCA_PML_OB1_HDR_TYPE_FRAG);
     recvreq = (mca_pml_ob1_recv_request_t*)hdr->hdr_frag.hdr_dst_req.pval;
+#if OMPI_CUDA_SUPPORT /* CUDA_ASYNC_RECV */
+    /* If data is destined for GPU buffer and convertor was set up for asynchronous
+     * copies, then start the copy and return.  The copy completion will trigger
+     * the next phase. */
+    if (recvreq->req_recv.req_base.req_convertor.flags & CONVERTOR_CUDA_ASYNC) {
+        assert(btl->btl_flags & MCA_BTL_FLAGS_CUDA_COPY_ASYNC_RECV);
+
+        /* This will trigger the opal_convertor_pack to start asynchronous copy. */
+        mca_pml_ob1_recv_request_frag_copy_start(recvreq,btl,segments,des->des_dst_cnt,des);
+        
+        /* Let BTL know that it CANNOT free the frag */
+        des->des_flags |= MCA_BTL_DES_FLAGS_CUDA_COPY_ASYNC;
+
+        return;
+    }
+#endif /* OMPI_CUDA_SUPPORT */
     mca_pml_ob1_recv_request_progress_frag(recvreq,btl,segments,des->des_dst_cnt);
 
     return;

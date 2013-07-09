@@ -41,7 +41,7 @@
 #if OPAL_CUDA_SUPPORT
 #include "opal/datatype/opal_datatype_cuda.h"
 #define MEMCPY_CUDA( DST, SRC, BLENGTH, CONVERTOR ) \
-    CONVERTOR->cbmemcpy( (DST), (SRC), (BLENGTH) )
+    CONVERTOR->cbmemcpy( (DST), (SRC), (BLENGTH), (CONVERTOR) )
 #endif
 
 extern int opal_convertor_create_stack_with_pos_general( opal_convertor_t* convertor,
@@ -55,7 +55,7 @@ static void opal_convertor_construct( opal_convertor_t* convertor )
     convertor->remoteArch     = opal_local_arch;
     convertor->flags          = OPAL_DATATYPE_FLAG_NO_GAPS | CONVERTOR_COMPLETED;
 #if OPAL_CUDA_SUPPORT
-    convertor->cbmemcpy       = &memcpy;
+    convertor->cbmemcpy       = &opal_cuda_memcpy;
 #endif
 }
 

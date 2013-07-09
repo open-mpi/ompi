@@ -55,6 +55,7 @@ BEGIN_C_DECLS
 #define CONVERTOR_NO_OP            0x00100000
 #define CONVERTOR_WITH_CHECKSUM    0x00200000
 #define CONVERTOR_CUDA             0x00400000
+#define CONVERTOR_CUDA_ASYNC       0x00800000
 #define CONVERTOR_TYPE_MASK        0x00FF0000
 #define CONVERTOR_STATE_START      0x01000000
 #define CONVERTOR_STATE_COMPLETE   0x02000000
@@ -69,7 +70,7 @@ typedef int32_t (*convertor_advance_fct_t)( opal_convertor_t* pConvertor,
                                             uint32_t* out_size,
                                             size_t* max_data );
 typedef void*(*memalloc_fct_t)( size_t* pLength, void* userdata );
-typedef void*(*memcpy_fct_t)( void* dest, const void* src, size_t n );
+typedef void*(*memcpy_fct_t)( void* dest, const void* src, size_t n, opal_convertor_t* pConvertor );
 
 /* The master convertor struct (defined in convertor_internal.h) */
 struct opal_convertor_master_t;
@@ -116,6 +117,7 @@ struct opal_convertor_t {
 
 #if OPAL_CUDA_SUPPORT
     memcpy_fct_t                  cbmemcpy;       /**< memcpy or cuMemcpy */
+    void *                        stream;         /**< CUstream for async copy */
 #endif
     /* size: 248, cachelines: 4, members: 20 */
     /* last cacheline: 56 bytes */
@@ -164,9 +166,6 @@ static inline int opal_convertor_cleanup( opal_convertor_t* convertor )
         convertor->pStack     = convertor->static_stack;
         convertor->stack_size = DT_STATIC_STACK_SIZE;
     }
-#if OPAL_CUDA_SUPPORT
-    convertor->cbmemcpy = &memcpy;
-#endif
     convertor->pDesc     = NULL;
     convertor->stack_pos = 0;
     convertor->flags     = OPAL_DATATYPE_FLAG_NO_GAPS | CONVERTOR_COMPLETED;

@@ -78,7 +78,7 @@ static size_t opal_datatype_memop_block_size = 128 * 1024;
 #undef MEM_OP_NAME
 #define MEM_OP_NAME non_overlap_cuda
 #undef MEM_OP
-#define MEM_OP opal_cuda_memcpy
+#define MEM_OP opal_cuda_memcpy_sync
 #include "opal_datatype_copy.h"
 
 #undef MEM_OP_NAME

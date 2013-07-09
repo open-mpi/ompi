@@ -199,6 +199,8 @@ typedef uint8_t mca_btl_base_tag_t;
 #define MCA_BTL_FLAGS_CUDA_PUT        0x0400
 #define MCA_BTL_FLAGS_CUDA_GET        0x0800
 #define MCA_BTL_FLAGS_CUDA_RDMA (MCA_BTL_FLAGS_CUDA_GET|MCA_BTL_FLAGS_CUDA_PUT)
+#define MCA_BTL_FLAGS_CUDA_COPY_ASYNC_SEND 0x1000
+#define MCA_BTL_FLAGS_CUDA_COPY_ASYNC_RECV 0x2000
 
 /* Default exclusivity levels */
 #define MCA_BTL_EXCLUSIVITY_HIGH     (64*1024) /* internal loopback */
@@ -297,6 +299,10 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_btl_base_descriptor_t);
  * if the send succeded in the btl_send (i.e in the fast path).
  */
 #define MCA_BTL_DES_SEND_ALWAYS_CALLBACK    0x0004
+
+/* Tell the PML that the copy is being done asynchronously
+ */
+#define MCA_BTL_DES_FLAGS_CUDA_COPY_ASYNC   0x0008
 
 /* Type of transfer that will be done with this frag.
  */
