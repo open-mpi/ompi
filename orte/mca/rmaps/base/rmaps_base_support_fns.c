@@ -200,36 +200,22 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
              * hostfile, but it is empty. If the user didn't remove it
              * or put something into it, then we will have pursued that
              * option and found nothing. This isn't an error, we just need
-             * to use the local host
+             * to add all the known nodes
              */
             if (0 == opal_list_get_size(&nodes)) {
                 OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base_framework.framework_output,
-                                     "%s nothing in default hostfile - using local host",
+                                     "%s nothing in default hostfile - using known nodes",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-                node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, 0);
-                OBJ_RETAIN(node);
-                opal_list_append(allocated_nodes, &node->super);
-                OBJ_DESTRUCT(&nodes);
-                if (initial_map) {
-                    /* mark the node as not in the map */
-                    node->mapped = false;
-                }
-                goto complete;
+                goto addknown;
             }
         } else {
-            /* if nothing else was available, then use the local host */
+            /* if nothing else was available, then use all known nodes, which
+             * will include ourselves
+             */
             OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base_framework.framework_output,
-                                 "%s using local host",
+                                 "%s using known nodes",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-            node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, 0);
-            OBJ_RETAIN(node);
-            opal_list_append(allocated_nodes, &node->super);
-            OBJ_DESTRUCT(&nodes);
-            if (initial_map) {
-                /* mark the node as not in the map */
-                node->mapped = false;
-            }
-            goto complete;
+            goto addknown;
         }
 
         /** if we still don't have anything */
@@ -334,7 +320,7 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
         goto complete;
     }
 
-
+ addknown:
     /* if the hnp was allocated, include it unless flagged not to */
     if (orte_hnp_is_allocated && !(ORTE_GET_MAPPING_DIRECTIVE(policy) & ORTE_MAPPING_NO_USE_LOCAL)) {
         if (NULL != (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, 0))) {
