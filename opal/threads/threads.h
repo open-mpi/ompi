@@ -28,6 +28,9 @@
 #elif OPAL_HAVE_SOLARIS_THREADS
 #include <thread.h>
 #endif
+#ifdef HAVE_SIGNAL_H
+#include <signal.h>
+#endif
 
 #include "opal/class/opal_object.h"
 #if OPAL_ENABLE_DEBUG
