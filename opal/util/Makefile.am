@@ -10,6 +10,7 @@
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2007-2010 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2013      NVIDIA Corporation.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -25,6 +26,8 @@ AM_LFLAGS = -Popal_show_help_yy
 LEX_OUTPUT_ROOT = lex.opal_show_help_yy
 
 noinst_LTLIBRARIES = libopalutil.la
+
+AM_CPPFLAGS = $(LTDLINCL)
 
 # Source code files
 
@@ -43,6 +46,7 @@ headers = \
         fd.c \
         if.h \
         keyval_parse.h \
+        lt_interface.h \
         malloc.h \
         net.h \
         numtostr.h \
@@ -76,6 +80,7 @@ libopalutil_la_SOURCES = \
         if.c \
         keyval_parse.c \
         malloc.c \
+        lt_interface.c \
         net.c \
         numtostr.c \
         opal_environ.c \
