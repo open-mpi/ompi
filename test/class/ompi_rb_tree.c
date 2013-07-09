@@ -338,7 +338,7 @@ void test2(void)
             test_failure("system out of memory");
             return;
         }   
-        OMPI_FREE_LIST_GET(&key_list, new_value);
+        OMPI_FREE_LIST_GET_MT(&key_list, new_value);
         if(NULL == new_value)
         {
             test_failure("failed to get memory from free list");
@@ -394,7 +394,7 @@ void test2(void)
         {
             free(mem[i]);
         }
-        OMPI_FREE_LIST_RETURN(&(key_list), key_array[i]);
+        OMPI_FREE_LIST_RETURN_MT(&(key_list), key_array[i]);
     }
 
     OBJ_DESTRUCT(&tree);
