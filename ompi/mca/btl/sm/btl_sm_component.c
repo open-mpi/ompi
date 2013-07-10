@@ -114,12 +114,13 @@ mca_btl_sm_component_t mca_btl_sm_component = {
 static inline int mca_btl_sm_param_register_int(
     const char* param_name,
     int default_value,
+    int level,
     int *storage)
 {
     *storage = default_value;
     (void) mca_base_component_var_register (&mca_btl_sm_component.super.btl_version,
                                             param_name, NULL, MCA_BASE_VAR_TYPE_INT,
-                                            NULL, 0, 0, OPAL_INFO_LVL_9,
+                                            NULL, 0, 0, level,
                                             MCA_BASE_VAR_SCOPE_READONLY, storage);
     return *storage;
 }
@@ -127,12 +128,13 @@ static inline int mca_btl_sm_param_register_int(
 static inline unsigned int mca_btl_sm_param_register_uint(
     const char* param_name,
     unsigned int default_value,
+    int level,
     unsigned int *storage)
 {
     *storage = default_value;
     (void) mca_base_component_var_register (&mca_btl_sm_component.super.btl_version,
                                             param_name, NULL, MCA_BASE_VAR_TYPE_UNSIGNED_INT,
-                                            NULL, 0, 0, OPAL_INFO_LVL_9,
+                                            NULL, 0, 0, level,
                                             MCA_BASE_VAR_SCOPE_READONLY, storage);
     return *storage;
 }
@@ -205,20 +207,20 @@ static int sm_register(void)
                                            &mca_btl_sm_component.use_cma);
 
     /* register SM component parameters */
-    mca_btl_sm_param_register_int("free_list_num", 8, &mca_btl_sm_component.sm_free_list_num);
-    mca_btl_sm_param_register_int("free_list_max", -1, &mca_btl_sm_component.sm_free_list_max);
-    mca_btl_sm_param_register_int("free_list_inc", 64, &mca_btl_sm_component.sm_free_list_inc);
-    mca_btl_sm_param_register_int("max_procs", -1, &mca_btl_sm_component.sm_max_procs);
+    mca_btl_sm_param_register_int("free_list_num", 8, OPAL_INFO_LVL_5, &mca_btl_sm_component.sm_free_list_num);
+    mca_btl_sm_param_register_int("free_list_max", -1, OPAL_INFO_LVL_5, &mca_btl_sm_component.sm_free_list_max);
+    mca_btl_sm_param_register_int("free_list_inc", 64, OPAL_INFO_LVL_5, &mca_btl_sm_component.sm_free_list_inc);
+    mca_btl_sm_param_register_int("max_procs", -1, OPAL_INFO_LVL_5, &mca_btl_sm_component.sm_max_procs);
     /* there is no practical use for the mpool name parameter since mpool resources differ
        between components */
     mca_btl_sm_component.sm_mpool_name = "sm";
-    mca_btl_sm_param_register_uint("fifo_size", 4096, &mca_btl_sm_component.fifo_size);
-    mca_btl_sm_param_register_int("num_fifos", 1, &mca_btl_sm_component.nfifos);
+    mca_btl_sm_param_register_uint("fifo_size", 4096, OPAL_INFO_LVL_4, &mca_btl_sm_component.fifo_size);
+    mca_btl_sm_param_register_int("num_fifos", 1, OPAL_INFO_LVL_4, &mca_btl_sm_component.nfifos);
 
-    mca_btl_sm_param_register_uint("fifo_lazy_free", 120, &mca_btl_sm_component.fifo_lazy_free);
+    mca_btl_sm_param_register_uint("fifo_lazy_free", 120, OPAL_INFO_LVL_5, &mca_btl_sm_component.fifo_lazy_free);
 
     /* default number of extra procs to allow for future growth */
-    mca_btl_sm_param_register_int("sm_extra_procs", 0, &mca_btl_sm_component.sm_extra_procs);
+    mca_btl_sm_param_register_int("sm_extra_procs", 0, OPAL_INFO_LVL_9, &mca_btl_sm_component.sm_extra_procs);
 
     mca_btl_sm.super.btl_exclusivity = MCA_BTL_EXCLUSIVITY_HIGH-1;
     mca_btl_sm.super.btl_eager_limit = 4*1024;
