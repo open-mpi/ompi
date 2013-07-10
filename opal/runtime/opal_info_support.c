@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2010-2012 Los Alamos National Security, LLC.
+ * Copyright (c) 2010-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2011-2012 University of Houston. All rights reserved.
  * $COPYRIGHT$
@@ -145,7 +145,9 @@ int opal_info_init(int argc, char **argv,
                             "Show the hostname that Open MPI was configured and built on");
     opal_cmd_line_make_opt3(opal_info_cmd_line, 'a', NULL, "all", 0, 
                             "Show all configuration options and MCA parameters");
-    
+    opal_cmd_line_make_opt3(opal_info_cmd_line, 'l', NULL, "level", 1,
+                            "Show only variables with at most this level (1-9)");
+
     /* set our threading level */
     opal_set_using_threads(false);
     
@@ -408,6 +410,7 @@ void opal_info_do_params(bool want_all_in, bool want_internal,
                          opal_pointer_array_t *mca_types,
                          opal_cmd_line_t *opal_info_cmd_line)
 {
+    mca_base_var_info_lvl_t max_level = OPAL_INFO_LVL_1;
     int count;
     char *type, *component, *str;
     bool found;
@@ -421,6 +424,19 @@ void opal_info_do_params(bool want_all_in, bool want_internal,
         p = "params";
     } else {
         p = "foo";  /* should never happen, but protect against segfault */
+    }
+
+    if (NULL != (str = opal_cmd_line_get_param (opal_info_cmd_line, "level", 0, 0))) {
+        char *tmp;
+
+        errno = 0;
+        max_level = strtol (str, &tmp, 10) + OPAL_INFO_LVL_1 - 1;
+        if (0 != errno || '\0' != tmp[0] || max_level < OPAL_INFO_LVL_1 || max_level > OPAL_INFO_LVL_9) {
+            char *usage = opal_cmd_line_get_usage_msg(opal_info_cmd_line);
+            opal_show_help("help-opal_info.txt", "invalid-level", true, str);
+            free(usage);
+            exit(1);
+        }
     }
 
     if (want_all_in) {
@@ -446,7 +462,7 @@ void opal_info_do_params(bool want_all_in, bool want_internal,
             if (NULL == (type = (char *)opal_pointer_array_get_item(mca_types, i))) {
                 continue;
             }
-            opal_info_show_mca_params(type, opal_info_component_all, want_internal);
+            opal_info_show_mca_params(type, opal_info_component_all, max_level, want_internal);
         }
     } else {
         for (i = 0; i < count; ++i) {
@@ -470,7 +486,7 @@ void opal_info_do_params(bool want_all_in, bool want_internal,
                 exit(1);
             }
             
-            opal_info_show_mca_params(type, component, want_internal);
+            opal_info_show_mca_params(type, component, max_level, want_internal);
         }
     }
 }
@@ -493,13 +509,13 @@ void opal_info_err_params(opal_pointer_array_t *component_map)
         fprintf(stderr, "opal_info_err_params: map not found\n");
         return;
     }
-    opal_info_show_mca_params(map->type, opal_info_component_all, true);
+    opal_info_show_mca_params(map->type, opal_info_component_all, OPAL_INFO_LVL_9, true);
     fprintf(stderr, "\n");
     return;
 }
 
 
-static void opal_info_show_mca_group_params(const mca_base_var_group_t *group, bool want_internal)
+static void opal_info_show_mca_group_params(const mca_base_var_group_t *group, mca_base_var_info_lvl_t max_level, bool want_internal)
 {
     const mca_base_var_t *var;
     const int *variables;
@@ -513,7 +529,8 @@ static void opal_info_show_mca_group_params(const mca_base_var_group_t *group, b
     for (i = 0 ; i < count ; ++i) {
         ret = mca_base_var_get(variables[i], &var);
         if (OPAL_SUCCESS != ret || ((var->mbv_flags & MCA_BASE_VAR_FLAG_INTERNAL) &&
-                                    !want_internal)) {
+                                    !want_internal) ||
+            max_level < var->mbv_info_lvl) {
             continue;
         }
 
@@ -545,12 +562,12 @@ static void opal_info_show_mca_group_params(const mca_base_var_group_t *group, b
         if (OPAL_SUCCESS != ret) {
             continue;
         }
-        opal_info_show_mca_group_params(group, want_internal);
+        opal_info_show_mca_group_params(group, max_level, want_internal);
     }
 }
 
 void opal_info_show_mca_params(const char *type, const char *component, 
-                               bool want_internal)
+                               mca_base_var_info_lvl_t max_level, bool want_internal)
 {
     const mca_base_var_group_t *group;
     int ret;
@@ -563,7 +580,7 @@ void opal_info_show_mca_params(const char *type, const char *component,
 
         (void) mca_base_var_group_get(ret, &group);
 
-        opal_info_show_mca_group_params(group, want_internal);
+        opal_info_show_mca_group_params(group, max_level, want_internal);
     } else {
         ret = mca_base_var_group_find("*", type, component);
         if (0 > ret) {
@@ -571,7 +588,7 @@ void opal_info_show_mca_params(const char *type, const char *component,
         }
 
         (void) mca_base_var_group_get(ret, &group);
-        opal_info_show_mca_group_params(group, want_internal);
+        opal_info_show_mca_group_params(group, max_level, want_internal);
     }
 }
 

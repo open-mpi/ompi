@@ -75,6 +75,7 @@ OPAL_DECLSPEC void opal_info_do_path(bool want_all, opal_cmd_line_t *cmd_line);
 
 OPAL_DECLSPEC void opal_info_show_mca_params(const char *type,
                                              const char *component, 
+                                             mca_base_var_info_lvl_t max_level,
                                              bool want_internal);
 
 OPAL_DECLSPEC void opal_info_show_mca_version(const mca_base_component_t *component,
