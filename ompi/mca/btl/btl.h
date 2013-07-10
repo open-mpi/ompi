@@ -251,8 +251,7 @@ typedef void (*mca_btl_base_completion_fn_t)(
  *
  * BTL MUST use mca_btl_base_segment_t or a subclass and
  * MUST store their segment length in btl_seg_size. BTLs
- * MIST specify a segment no larger than MCA_BTL_SEG_MAX_SIZE.
- *
+ * MUST specify a segment no larger than MCA_BTL_SEG_MAX_SIZE.
  */
 
 struct mca_btl_base_segment_t {
