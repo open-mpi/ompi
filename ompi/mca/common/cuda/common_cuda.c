@@ -584,7 +584,7 @@ static int mca_common_cuda_load_libcuda(void)
         opal_lt_dladvise_destroy(&advise);
     } else {
         /* No lt_dladvise support.  This should rarely happen. */
-        for (j = 0; j <= SEARCHPATHS; j++) {
+        for (j = 0; j < SEARCHPATHS; j++) {
             if (NULL != searchpaths[j]) {
                 opal_lt_dlsetsearchpath(searchpaths[j]);
             }
