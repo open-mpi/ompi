@@ -52,16 +52,6 @@ AC_DEFUN([OMPI_CHECK_HCOLL],[
 			   [ompi_check_hcoll_happy="no"])
           ])
 
-    MCA_COMPONENT_BUILD_CHECK([ompi],[coll],[ml],
-            [AM_COND_IF(
-                MCA_BUILD_ompi_coll_ml_DSO,
-                [],
-                [AC_MSG_ERROR([Can not use coll/hcoll and coll/ml (static build)  simultaneously. You have two options:
-                1. Use static build & disable ml with: --enable-mpi-no-build=coll-ml]
-                2. Use dso build for ML & disable ml at runtime: -mca coll self,basic,hcoll,tuned,libnbc)]
-                )
-            ],
-            [])
 
 
     AS_IF([test "$ompi_check_hcoll_happy" = "yes" -a "$enable_progress_threads" = "yes"],
