@@ -72,6 +72,18 @@ static opal_list_t mca_base_var_override_values;
 static int mca_base_var_count = 0;
 static int mca_base_var_group_count = 0;
 
+static const char *info_lvl_strings[] = {
+    "user/basic",
+    "user/detail",
+    "user/all",
+    "tuner/basic",
+    "tuner/detail",
+    "tuner/all",
+    "dev/basic",
+    "dev/detail",
+    "dev/all"
+};
+
 /*
  * local functions
  */
@@ -2100,7 +2112,7 @@ int mca_base_var_dump(int index, char ***out, mca_base_var_dump_type_t output_ty
             (void) var->mbv_enumerator->get_count(var->mbv_enumerator, &enum_count);
         }
 
-        line_count = 7 + (var->mbv_description ? 1 : 0) + (VAR_IS_SYNONYM(var[0]) ? 1 : synonym_count) +
+        line_count = 8 + (var->mbv_description ? 1 : 0) + (VAR_IS_SYNONYM(var[0]) ? 1 : synonym_count) +
             enum_count;
 
         *out = (char **) calloc (line_count + 1, sizeof (char *));
@@ -2124,6 +2136,9 @@ int mca_base_var_dump(int index, char ***out, mca_base_var_dump_type_t output_ty
 
         /* Output whether it's read only or writable */
         asprintf(out[0] + line++, "%sstatus:%s", tmp, VAR_IS_DEFAULT_ONLY(var[0]) ? "read-only" : "writeable");
+
+        /* Output the info level of this parametere */
+        asprintf(out[0] + line++, "%slevel:%d", tmp, var->mbv_info_lvl + 1);
 
         /* If it has a help message, output the help message */
         if (var->mbv_description) {
@@ -2176,9 +2191,10 @@ int mca_base_var_dump(int index, char ***out, mca_base_var_dump_type_t output_ty
             return OPAL_ERR_OUT_OF_RESOURCE;
         }
 
-        asprintf (out[0], "%s \"%s\" (current value: \"%s\", data source: %s",
+        asprintf (out[0], "%s \"%s\" (current value: \"%s\", data source: %s, level: %d %s",
                   VAR_IS_DEFAULT_ONLY(var[0]) ? "informational" : "parameter",
-                  full_name, value_string, source_string);
+                  full_name, value_string, source_string, var->mbv_info_lvl + 1,
+                  info_lvl_strings[var->mbv_info_lvl]);
         free (value_string);
         free (source_string);
 

@@ -42,7 +42,7 @@ int mca_btl_base_param_register(mca_base_component_t *version,
     (void) mca_base_component_var_register(version, "exclusivity",
                                            "BTL exclusivity (must be >= 0)",
                                            MCA_BASE_VAR_TYPE_UNSIGNED_INT, NULL, 0, 0,
-                                           OPAL_INFO_LVL_9,
+                                           OPAL_INFO_LVL_7,
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &module->btl_exclusivity);
 
@@ -59,51 +59,51 @@ int mca_btl_base_param_register(mca_base_component_t *version,
              MCA_BTL_FLAGS_FAILOVER_SUPPORT);
     (void) mca_base_component_var_register(version, "flags", msg,
                                            MCA_BASE_VAR_TYPE_UNSIGNED_INT, NULL, 0, 0,
-                                           OPAL_INFO_LVL_9,
+                                           OPAL_INFO_LVL_5,
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &module->btl_flags);
     free(msg);
 
     (void) mca_base_component_var_register(version, "rndv_eager_limit", "Size (in bytes, including header) of \"phase 1\" fragment sent for all large messages (must be >= 0 and <= eager_limit)",
                                            MCA_BASE_VAR_TYPE_SIZE_T, NULL, 0, 0,
-                                           OPAL_INFO_LVL_9,
+                                           OPAL_INFO_LVL_4,
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &module->btl_rndv_eager_limit);
 
     (void) mca_base_component_var_register(version, "eager_limit", "Maximum size (in bytes, including header) of \"short\" messages (must be >= 1).",
                                            MCA_BASE_VAR_TYPE_SIZE_T, NULL, 0, 0,
-                                           OPAL_INFO_LVL_9,
+                                           OPAL_INFO_LVL_4,
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &module->btl_eager_limit);
 
     (void) mca_base_component_var_register(version, "max_send_size", "Maximum size (in bytes) of a single \"phase 2\" fragment of a long message when using the pipeline protocol (must be >= 1)",
                                            MCA_BASE_VAR_TYPE_SIZE_T, NULL, 0, 0,
-                                           OPAL_INFO_LVL_9,
+                                           OPAL_INFO_LVL_4,
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &module->btl_max_send_size);
 
     if (NULL != module->btl_put) {
       (void) mca_base_component_var_register(version, "rdma_pipeline_send_length", "Length of the \"phase 2\" portion of a large message (in bytes) when using the pipeline protocol.  This part of the message will be split into fragments of size max_send_size and sent using send/receive semantics (must be >= 0; only relevant when the PUT flag is set)",
                                              MCA_BASE_VAR_TYPE_SIZE_T, NULL, 0, 0,
-                                             OPAL_INFO_LVL_9,
+                                             OPAL_INFO_LVL_4,
                                              MCA_BASE_VAR_SCOPE_READONLY,
                                              &module->btl_rdma_pipeline_send_length);
 
       (void) mca_base_component_var_register(version, "rdma_pipeline_frag_size", "Maximum size (in bytes) of a single \"phase 3\" fragment from a long message when using the pipeline protocol.  These fragments will be sent using RDMA semantics (must be >= 1; only relevant when the PUT flag is set)",
                                              MCA_BASE_VAR_TYPE_SIZE_T, NULL, 0, 0,
-                                             OPAL_INFO_LVL_9,
+                                             OPAL_INFO_LVL_4,
                                              MCA_BASE_VAR_SCOPE_READONLY,
                                              &module->btl_rdma_pipeline_frag_size);
 
       (void) mca_base_component_var_register(version, "min_rdma_pipeline_size", "Messages smaller than this size (in bytes) will not use the RDMA pipeline protocol.  Instead, they will be split into fragments of max_send_size and sent using send/receive semantics (must be >=0, and is automatically adjusted up to at least (eager_limit+btl_rdma_pipeline_send_length); only relevant when the PUT flag is set)",
                                              MCA_BASE_VAR_TYPE_SIZE_T, NULL, 0, 0,
-                                             OPAL_INFO_LVL_9,
+                                             OPAL_INFO_LVL_4,
                                              MCA_BASE_VAR_SCOPE_READONLY,
                                              &module->btl_min_rdma_pipeline_size);
 
       (void) mca_base_component_var_register(version, "bandwidth", "Approximate maximum bandwidth of interconnect (0 = auto-detect value at run-time [not supported in all BTL modules], >= 1 = bandwidth in Mbps)",
                                              MCA_BASE_VAR_TYPE_UNSIGNED_INT, NULL, 0, 0,
-                                             OPAL_INFO_LVL_9,
+                                             OPAL_INFO_LVL_5,
                                              MCA_BASE_VAR_SCOPE_READONLY,
                                              &module->btl_latency);
     }

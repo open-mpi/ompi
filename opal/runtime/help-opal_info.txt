@@ -11,6 +11,8 @@
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2013      Los Alamos National Security, LLC. All rights
+#                         reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -55,3 +57,9 @@ for that framework was not configured into this version of OMPI. Please see
   ompi_info --config
 
 for a full report of how OMPI was configured.
+#
+[invalid-level]
+An invalid MCA parameter information level was specified. Valid values are
+1-9.
+
+  Value: %s

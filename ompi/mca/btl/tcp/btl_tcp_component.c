@@ -117,12 +117,13 @@ static inline char* mca_btl_tcp_param_register_string(
         const char* param_name, 
         const char* help_string,
         const char* default_value,
+        int level,
         char **storage)
 {
     *storage = (char *) default_value;
     (void) mca_base_component_var_register(&mca_btl_tcp_component.super.btl_version,
                                            param_name, help_string, MCA_BASE_VAR_TYPE_STRING,
-                                           NULL, 0, 0, OPAL_INFO_LVL_9,
+                                           NULL, 0, 0, level,
                                            MCA_BASE_VAR_SCOPE_READONLY, storage);
     return *storage;
 }
@@ -131,12 +132,13 @@ static inline int mca_btl_tcp_param_register_int(
         const char* param_name, 
         const char* help_string,
         int default_value,
+        int level,
         int *storage)
 {
     *storage = default_value;
     (void) mca_base_component_var_register(&mca_btl_tcp_component.super.btl_version,
                                            param_name, help_string, MCA_BASE_VAR_TYPE_INT,
-                                           NULL, 0, 0, OPAL_INFO_LVL_9,
+                                           NULL, 0, 0, level,
                                            MCA_BASE_VAR_SCOPE_READONLY, storage);
     return *storage;
 }
@@ -145,12 +147,13 @@ static inline unsigned int mca_btl_tcp_param_register_uint(
         const char* param_name, 
         const char* help_string,
         unsigned int default_value,
+        int level,
         unsigned int *storage)
 {
     *storage = default_value;
     (void) mca_base_component_var_register(&mca_btl_tcp_component.super.btl_version,
                                            param_name, help_string, MCA_BASE_VAR_TYPE_UNSIGNED_INT,
-                                           NULL, 0, 0, OPAL_INFO_LVL_9,
+                                           NULL, 0, 0, level,
                                            MCA_BASE_VAR_SCOPE_READONLY, storage);
     return *storage;
 }
@@ -223,26 +226,26 @@ static int mca_btl_tcp_component_register(void)
     char* message;
 
     /* register TCP component parameters */
-    mca_btl_tcp_param_register_uint("links", NULL, 1, &mca_btl_tcp_component.tcp_num_links);
-    mca_btl_tcp_param_register_string("if_include", "Comma-delimited list of devices and/or CIDR notation of networks to use for MPI communication (e.g., \"eth0,192.168.0.0/16\").  Mutually exclusive with btl_tcp_if_exclude.", "", &mca_btl_tcp_component.tcp_if_include);
+    mca_btl_tcp_param_register_uint("links", NULL, 1, OPAL_INFO_LVL_4, &mca_btl_tcp_component.tcp_num_links);
+    mca_btl_tcp_param_register_string("if_include", "Comma-delimited list of devices and/or CIDR notation of networks to use for MPI communication (e.g., \"eth0,192.168.0.0/16\").  Mutually exclusive with btl_tcp_if_exclude.", "", OPAL_INFO_LVL_1, &mca_btl_tcp_component.tcp_if_include);
     mca_btl_tcp_param_register_string("if_exclude", "Comma-delimited list of devices and/or CIDR notation of networks to NOT use for MPI communication -- all devices not matching these specifications will be used (e.g., \"eth0,192.168.0.0/16\").  If set to a non-default value, it is mutually exclusive with btl_tcp_if_include.", 
                                       "127.0.0.1/8,sppp",
-                                      &mca_btl_tcp_component.tcp_if_exclude);
+                                      OPAL_INFO_LVL_1, &mca_btl_tcp_component.tcp_if_exclude);
 
-    mca_btl_tcp_param_register_int ("free_list_num", NULL, 8, &mca_btl_tcp_component.tcp_free_list_num);
-    mca_btl_tcp_param_register_int ("free_list_max", NULL, -1, &mca_btl_tcp_component.tcp_free_list_max);
-    mca_btl_tcp_param_register_int ("free_list_inc", NULL, 32, &mca_btl_tcp_component.tcp_free_list_inc);
-    mca_btl_tcp_param_register_int ("sndbuf", NULL, 128*1024, &mca_btl_tcp_component.tcp_sndbuf);
-    mca_btl_tcp_param_register_int ("rcvbuf", NULL, 128*1024, &mca_btl_tcp_component.tcp_rcvbuf);
+    mca_btl_tcp_param_register_int ("free_list_num", NULL, 8, OPAL_INFO_LVL_5,  &mca_btl_tcp_component.tcp_free_list_num);
+    mca_btl_tcp_param_register_int ("free_list_max", NULL, -1, OPAL_INFO_LVL_5,  &mca_btl_tcp_component.tcp_free_list_max);
+    mca_btl_tcp_param_register_int ("free_list_inc", NULL, 32, OPAL_INFO_LVL_5,  &mca_btl_tcp_component.tcp_free_list_inc);
+    mca_btl_tcp_param_register_int ("sndbuf", NULL, 128*1024, OPAL_INFO_LVL_4, &mca_btl_tcp_component.tcp_sndbuf);
+    mca_btl_tcp_param_register_int ("rcvbuf", NULL, 128*1024, OPAL_INFO_LVL_4, &mca_btl_tcp_component.tcp_rcvbuf);
     mca_btl_tcp_param_register_int ("endpoint_cache",
         "The size of the internal cache for each TCP connection. This cache is"
         " used to reduce the number of syscalls, by replacing them with memcpy."
         " Every read will read the expected data plus the amount of the"
-        " endpoint_cache", 30*1024, &mca_btl_tcp_component.tcp_endpoint_cache);
-    mca_btl_tcp_param_register_int ("use_nagle", "Whether to use Nagle's algorithm or not (using Nagle's algorithm may increase short message latency)", 0, &mca_btl_tcp_component.tcp_not_use_nodelay);
+                                    " endpoint_cache", 30*1024, OPAL_INFO_LVL_4, &mca_btl_tcp_component.tcp_endpoint_cache);
+    mca_btl_tcp_param_register_int ("use_nagle", "Whether to use Nagle's algorithm or not (using Nagle's algorithm may increase short message latency)", 0, OPAL_INFO_LVL_4, &mca_btl_tcp_component.tcp_not_use_nodelay);
     mca_btl_tcp_param_register_int( "port_min_v4", 
                                     "The minimum port where the TCP BTL will try to bind (default 1024)",
-                                    1024, &mca_btl_tcp_component.tcp_port_min);
+                                    1024, OPAL_INFO_LVL_2, &mca_btl_tcp_component.tcp_port_min);
 
     asprintf( &message, 
               "The number of ports where the TCP BTL will try to bind (default %d)."
@@ -251,12 +254,12 @@ static int mca_btl_tcp_component_register(void)
               (0x1 << 16) - mca_btl_tcp_component.tcp_port_min - 1 );
     mca_btl_tcp_param_register_int( "port_range_v4", message,
                                     (0x1 << 16) - mca_btl_tcp_component.tcp_port_min - 1,
-                                    &mca_btl_tcp_component.tcp_port_range);
+                                    OPAL_INFO_LVL_2, &mca_btl_tcp_component.tcp_port_range);
     free(message);
 #if OPAL_WANT_IPV6
     mca_btl_tcp_param_register_int( "port_min_v6",
                                     "The minimum port where the TCP BTL will try to bind (default 1024)", 1024,
-                                    & mca_btl_tcp_component.tcp6_port_min );
+                                    OPAL_INFO_LVL_2, & mca_btl_tcp_component.tcp6_port_min );
     asprintf( &message, 
               "The number of ports where the TCP BTL will try to bind (default %d)."
               " This parameter together with the port min, define a range of ports"
@@ -264,7 +267,7 @@ static int mca_btl_tcp_component_register(void)
               (0x1 << 16) - mca_btl_tcp_component.tcp6_port_min - 1 );
     mca_btl_tcp_param_register_int( "port_range_v6", message,
                                     (0x1 << 16) - mca_btl_tcp_component.tcp6_port_min - 1,
-                                    &mca_btl_tcp_component.tcp6_port_range );
+                                    OPAL_INFO_LVL_2, &mca_btl_tcp_component.tcp6_port_range );
     free(message);
 #endif
 
@@ -287,11 +290,11 @@ static int mca_btl_tcp_component_register(void)
     mca_btl_base_param_register(&mca_btl_tcp_component.super.btl_version,
                                 &mca_btl_tcp_module.super);
 
-    mca_btl_tcp_param_register_int ("disable_family", NULL, 0, &mca_btl_tcp_component.tcp_disable_family);
+    mca_btl_tcp_param_register_int ("disable_family", NULL, 0, OPAL_INFO_LVL_2,  &mca_btl_tcp_component.tcp_disable_family);
 
     /* Register a list of interfaces to use in sequence */
     mca_btl_tcp_param_register_string("if_seq", 
-                                      "If specified, a comma-delimited list of TCP interfaces.  Interfaces will be assigned, one to each MPI process, in a round-robin fashion on each server.  For example, if the list is \"eth0,eth1\" and four MPI processes are run on a single server, then local ranks 0 and 2 will use eth0 and local ranks 1 and 3 will use eth1.", NULL, &mca_btl_tcp_if_seq_string);
+                                      "If specified, a comma-delimited list of TCP interfaces.  Interfaces will be assigned, one to each MPI process, in a round-robin fashion on each server.  For example, if the list is \"eth0,eth1\" and four MPI processes are run on a single server, then local ranks 0 and 2 will use eth0 and local ranks 1 and 3 will use eth1.", NULL, OPAL_INFO_LVL_9, &mca_btl_tcp_if_seq_string);
 
     mca_btl_tcp_component.tcp_if_seq = NULL;
     if (NULL != mca_btl_tcp_if_seq_string && '\0' != *mca_btl_tcp_if_seq_string) {
@@ -465,11 +468,11 @@ static int mca_btl_tcp_create(int if_kindex, const char* if_name)
 
         /* allow user to specify interface bandwidth */
         sprintf(param, "bandwidth_%s", if_name);
-        mca_btl_tcp_param_register_uint(param, NULL, btl->super.btl_bandwidth, &btl->super.btl_bandwidth);
+        mca_btl_tcp_param_register_uint(param, NULL, btl->super.btl_bandwidth, OPAL_INFO_LVL_5, &btl->super.btl_bandwidth);
 
         /* allow user to override/specify latency ranking */
         sprintf(param, "latency_%s", if_name);
-        mca_btl_tcp_param_register_uint(param, NULL, btl->super.btl_latency, &btl->super.btl_latency);
+        mca_btl_tcp_param_register_uint(param, NULL, btl->super.btl_latency, OPAL_INFO_LVL_5,  &btl->super.btl_latency);
         if( i > 0 ) {
             btl->super.btl_bandwidth >>= 1;
             btl->super.btl_latency   <<= 1;
@@ -477,11 +480,11 @@ static int mca_btl_tcp_create(int if_kindex, const char* if_name)
 
         /* allow user to specify interface bandwidth */
         sprintf(param, "bandwidth_%s:%d", if_name, i);
-        mca_btl_tcp_param_register_uint(param, NULL, btl->super.btl_bandwidth, &btl->super.btl_bandwidth);
+        mca_btl_tcp_param_register_uint(param, NULL, btl->super.btl_bandwidth, OPAL_INFO_LVL_5, &btl->super.btl_bandwidth);
 
         /* allow user to override/specify latency ranking */
         sprintf(param, "latency_%s:%d", if_name, i);
-        mca_btl_tcp_param_register_uint(param, NULL, btl->super.btl_latency, &btl->super.btl_latency);
+        mca_btl_tcp_param_register_uint(param, NULL, btl->super.btl_latency, OPAL_INFO_LVL_5, &btl->super.btl_latency);
 #if 0 && OPAL_ENABLE_DEBUG
         BTL_OUTPUT(("interface %s instance %i: bandwidth %d latency %d\n", if_name, i,
                     btl->super.btl_bandwidth, btl->super.btl_latency));
