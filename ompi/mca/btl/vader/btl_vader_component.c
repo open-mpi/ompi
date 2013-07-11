@@ -167,7 +167,6 @@ static int mca_btl_vader_component_open(void)
     /* initialize objects */
     OBJ_CONSTRUCT(&mca_btl_vader_component.vader_frags_eager, ompi_free_list_t);
     OBJ_CONSTRUCT(&mca_btl_vader_component.vader_frags_user, ompi_free_list_t);
-    OBJ_CONSTRUCT(&mca_btl_vader_component.active_sends, opal_list_t);
 
     return OMPI_SUCCESS;
 }
@@ -181,7 +180,6 @@ static int mca_btl_vader_component_close(void)
 {
     OBJ_DESTRUCT(&mca_btl_vader_component.vader_frags_eager);
     OBJ_DESTRUCT(&mca_btl_vader_component.vader_frags_user);
-    OBJ_DESTRUCT(&mca_btl_vader_component.active_sends);
 
     if (NULL != mca_btl_vader_component.my_segment) {
         munmap (mca_btl_vader_component.my_segment, mca_btl_vader_component.segment_size);
@@ -214,6 +212,11 @@ static mca_btl_base_module_t **mca_btl_vader_component_init (int *num_btls,
 
     *num_btls = 0;
 
+    /* disable if there are no local peers */
+    if (0 == MCA_BTL_VADER_NUM_LOCAL_PEERS) {
+        return NULL;
+    }
+
     /* limit segment alignment to be between 4k and 16M */
     
     if (mca_btl_vader_component.segment_size < 12) {
@@ -241,13 +244,16 @@ static mca_btl_base_module_t **mca_btl_vader_component_init (int *num_btls,
     }
 
     component->my_segment = mmap (NULL, mca_btl_vader_component.segment_size, PROT_READ |
-                                  PROT_WRITE, MAP_ANON | MAP_SHARED, -1, 0);
+                                  PROT_WRITE, MAP_ANONYMOUS | MAP_SHARED, -1, 0);
     if ((void *)-1 == component->my_segment) {
         free (btls);
         return NULL;
     }
 
     component->segment_offset = 0;
+
+    memset (component->my_segment + 4096, MCA_BTL_VADER_FBOX_FREE, MCA_BTL_VADER_NUM_LOCAL_PEERS *
+            MCA_BTL_VADER_FBOX_PEER_SIZE);
 
     /* initialize my fifo */
     rc = vader_fifo_init ((struct vader_fifo_t *) component->my_segment);
@@ -269,76 +275,63 @@ static mca_btl_base_module_t **mca_btl_vader_component_init (int *num_btls,
     /* get pointer to the btls */
     btls[0] = (mca_btl_base_module_t *) &mca_btl_vader;
 
-    /* initialize some BTL data */
-    /* start with no VADER procs */
-    component->num_smp_procs    = 0;
-    component->my_smp_rank      = -1;  /* not defined */
-
     /* set flag indicating btl not inited */
     mca_btl_vader.btl_inited = false;
 
     return btls;
 }
 
-static inline void mca_btl_vader_progress_sends (void)
-{
-    mca_btl_vader_frag_t *frag, *next;
-
-    OPAL_LIST_FOREACH_SAFE(frag, next, &mca_btl_vader_component.active_sends, mca_btl_vader_frag_t) {
-        if (OPAL_LIKELY(frag->hdr->complete)) {
-            opal_list_remove_item (&mca_btl_vader_component.active_sends, (opal_list_item_t *) frag);
-
-            mca_btl_vader_frag_complete (frag);
-        }
-    }
-}
-
-
 static int mca_btl_vader_component_progress (void)
 {
-    int my_smp_rank = mca_btl_vader_component.my_smp_rank;
-    mca_btl_active_message_callback_t *reg;
-    mca_btl_vader_frag_t frag;
-    mca_btl_vader_hdr_t *hdr;
+    mca_btl_vader_frag_t frag = {.base = {.des_dst = frag.segments, .des_dst_cnt = 1}};
+    const int my_smp_rank = MCA_BTL_VADER_LOCAL_RANK;
     mca_mpool_base_registration_t *xpmem_reg = NULL;
+    const mca_btl_active_message_callback_t *reg;
     struct mca_btl_base_endpoint_t *endpoint;
-
-    /* check active sends for completion */
-    mca_btl_vader_progress_sends ();
+    mca_btl_vader_hdr_t *hdr; 
+    int fifo_count;
 
     /* check for messages in fast boxes */
     mca_btl_vader_check_fboxes ();
 
-    /* poll the fifo once */
-    hdr = vader_fifo_read (mca_btl_vader_component.endpoints[my_smp_rank].fifo);
-    if (NULL == hdr) {
-        return 0;
+    /* poll the fifo until it is empty or a limit has been hit (8 is arbitrary) */
+    for (fifo_count = 0 ; fifo_count < 8 ; ++fifo_count) {
+        hdr = vader_fifo_read (mca_btl_vader_component.endpoints[my_smp_rank].fifo);
+        if (NULL == hdr) {
+            return fifo_count;
+        }
+
+        if (hdr->flags & MCA_BTL_VADER_FLAG_COMPLETE) {
+            mca_btl_vader_frag_complete (hdr->frag);
+            continue;
+        }
+ 
+        reg = mca_btl_base_active_message_trigger + hdr->tag;
+        frag.segments[0].seg_addr.pval = (void *) (hdr + 1);
+        frag.segments[0].seg_len       = hdr->len;
+
+        endpoint = mca_btl_vader_component.endpoints + hdr->src_smp_rank;
+
+        if (hdr->flags & MCA_BTL_VADER_FLAG_SINGLE_COPY) {
+            xpmem_reg = vader_get_registation (endpoint, hdr->sc_iov.iov_base,
+                                               hdr->sc_iov.iov_len, 0,
+                                               &frag.segments[1].seg_addr.pval);
+
+            frag.segments[1].seg_len       = hdr->sc_iov.iov_len;
+
+            /* recv upcall */
+            frag.base.des_dst_cnt = 2;
+            reg->cbfunc(&mca_btl_vader.super, hdr->tag, &(frag.base), reg->cbdata);
+            frag.base.des_dst_cnt = 1;
+            vader_return_registration (xpmem_reg, endpoint);
+        } else {
+            reg->cbfunc(&mca_btl_vader.super, hdr->tag, &(frag.base), reg->cbdata);
+        }
+
+        /* return the fragment */
+        hdr->flags = MCA_BTL_VADER_FLAG_COMPLETE;
+        vader_fifo_write_back (hdr, endpoint); 
     }
 
-    reg = mca_btl_base_active_message_trigger + hdr->tag;
-    frag.base.des_dst     = frag.segments;
-    frag.segments[0].seg_addr.pval = (void *) (hdr + 1);
-    frag.segments[0].seg_len       = hdr->len;
-
-    if (OPAL_UNLIKELY(hdr->flags & MCA_BTL_VADER_FLAG_SINGLE_COPY)) {
-        endpoint = mca_btl_vader_component.endpoints + hdr->my_smp_rank;
-        xpmem_reg = vader_get_registation (endpoint, hdr->sc_iov.iov_base,
-                                           hdr->sc_iov.iov_len, 0);
-
-        frag.segments[1].seg_addr.pval = vader_reg_to_ptr (xpmem_reg, hdr->sc_iov.iov_base);
-        frag.segments[1].seg_len       = hdr->sc_iov.iov_len;
-
-        /* recv upcall */
-        frag.base.des_dst_cnt = 2;
-        reg->cbfunc(&mca_btl_vader.super, hdr->tag, &(frag.base), reg->cbdata);
-        vader_return_registration (xpmem_reg, endpoint);
-    } else {
-        frag.base.des_dst_cnt = 1;
-        reg->cbfunc(&mca_btl_vader.super, hdr->tag, &(frag.base), reg->cbdata);
-    }
-
-    /* return the fragment */
-    hdr->complete = true;
-
-    return 1;
+    return fifo_count;
 }

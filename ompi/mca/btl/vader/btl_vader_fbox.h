@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2011-2012 Los Alamos National Security, LLC.  
+ * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  
  *                         All rights reserved. 
  * $COPYRIGHT$
  *
@@ -14,38 +14,51 @@
 
 #include "btl_vader.h"
 #include "btl_vader_endpoint.h"
+#include "btl_vader_xpmem.h"
 
-/* XXX -- FIXME -- make no assumptions if possible */
-/* Assumptions: page size: 4096, cache line: 64 or 128 bytes, tag = 1 byte */
-#define FBOX_SIZE 128 /* 2-4 cache lines */
-#define LAST_FBOX 31  /* page size assumtion: 4096 */
-#define MAX_MSG   126 /* 1 byte used each for size and tag */
+/* these hard-coded settings are based on the ideal setup for an Opteron 61xx chip and
+ * may need to be adjusted for other systems. adding an MCA variable is possible but
+ * can cost 20-40 ns on the fast path. this size is limited to 256 maximum bytes */
+#define MCA_BTL_VADER_FBOX_SIZE 64
+/* there should be a power of two number of fast boxes to simplify the math in the
+ * critical path */
+#define MCA_BTL_VADER_LAST_FBOX 63
+/* two bytes are reserved for tag and size */
+#define MCA_BTL_VADER_FBOX_MAX_SIZE (MCA_BTL_VADER_FBOX_SIZE - 2)
+/* total size of all the fast boxes assigned to a particular peer */
+#define MCA_BTL_VADER_FBOX_PEER_SIZE (MCA_BTL_VADER_FBOX_SIZE * (MCA_BTL_VADER_LAST_FBOX + 1))
 
-enum {MCA_BTL_VADER_FBOX_FREE = 0xfe, MCA_BTL_VADER_FBOX_RESERVED = 0xff};
+enum {MCA_BTL_VADER_FBOX_FREE = 0, MCA_BTL_VADER_FBOX_RESERVED = 0x80};
 
-#define MCA_BTL_VADER_FBOX_OUT_PTR(ep, fbox) ((ep)->fbox_out + FBOX_SIZE * (fbox))
-#define MCA_BTL_VADER_FBOX_IN_PTR(ep, fbox) ((ep)->fbox_in + FBOX_SIZE * (fbox))
+#define MCA_BTL_VADER_FBOX_OUT_PTR(ep, fbox) ((ep)->fbox_out + MCA_BTL_VADER_FBOX_SIZE * (fbox))
+#define MCA_BTL_VADER_FBOX_IN_PTR(ep, fbox) ((ep)->fbox_in + MCA_BTL_VADER_FBOX_SIZE * (fbox))
+#define MCA_BTL_VADER_NEXT_FBOX(fbox) (((fbox) + 1) & MCA_BTL_VADER_LAST_FBOX)
 
-static inline unsigned char *mca_btl_vader_reserve_fbox (struct mca_btl_base_endpoint_t *ep, size_t size)
+static inline unsigned char * restrict mca_btl_vader_reserve_fbox (struct mca_btl_base_endpoint_t *ep, const size_t size)
 {
-    int next_fbox = ep->next_fbox_out;
-    unsigned char *fbox = (unsigned char *) MCA_BTL_VADER_FBOX_OUT_PTR(ep, next_fbox);  
+    const int next_fbox = ep->next_fbox_out;
+    unsigned char * restrict fbox = (unsigned char * restrict) MCA_BTL_VADER_FBOX_OUT_PTR(ep, next_fbox);  
 
     /* todo -- need thread locks/atomics here for the multi-threaded case */
-    if (OPAL_UNLIKELY(size > MAX_MSG || fbox[0] != MCA_BTL_VADER_FBOX_FREE)) {
-        /* fall back on fifo */
-        return NULL;
+    if (OPAL_LIKELY(size <= MCA_BTL_VADER_FBOX_MAX_SIZE && fbox[0] == MCA_BTL_VADER_FBOX_FREE)) {
+        /* mark this fast box as in use */
+        fbox[0] = MCA_BTL_VADER_FBOX_RESERVED;
+
+        ep->next_fbox_out = MCA_BTL_VADER_NEXT_FBOX(next_fbox);
+        return fbox + 2;
+    } else if (OPAL_LIKELY(size <= (MCA_BTL_VADER_FBOX_MAX_SIZE + MCA_BTL_VADER_FBOX_SIZE) && MCA_BTL_VADER_LAST_FBOX != next_fbox &&
+                           MCA_BTL_VADER_FBOX_FREE == fbox[0] && MCA_BTL_VADER_FBOX_FREE == fbox[MCA_BTL_VADER_FBOX_SIZE])) {
+        /* aggregate two fast boxes */
+        fbox[0] = MCA_BTL_VADER_FBOX_RESERVED;
+        ep->next_fbox_out = MCA_BTL_VADER_NEXT_FBOX(next_fbox + 1);
+        return fbox + 2;
     }
 
-    ep->next_fbox_out = (next_fbox + 1) & LAST_FBOX;
-
-    /* mark this fast box as in use */
-    fbox[0] = MCA_BTL_VADER_FBOX_RESERVED;
-
-    return fbox + 2;
+    return NULL;
 }
 
-static inline void mca_btl_vader_fbox_send (unsigned char *fbox, unsigned char tag, size_t size)
+static inline void mca_btl_vader_fbox_send (unsigned char * restrict fbox, unsigned char tag,
+                                            size_t size)
 {
     fbox[-1] = tag;
 
@@ -56,20 +69,20 @@ static inline void mca_btl_vader_fbox_send (unsigned char *fbox, unsigned char t
 }
 
 static inline int mca_btl_vader_fbox_sendi (struct mca_btl_base_endpoint_t *endpoint, char tag,
-                                            void *header, size_t header_size,
-                                            void *payload, size_t payload_size)
+                                            void * restrict header, const size_t header_size,
+                                            void * restrict payload, const size_t payload_size)
 {
-    unsigned char *fbox;
+    unsigned char * restrict fbox;
 
     fbox = mca_btl_vader_reserve_fbox(endpoint, header_size + payload_size);
     if (OPAL_UNLIKELY(NULL == fbox)) {
         return 0;
     }
 
-    memcpy (fbox, header, header_size);
+    memmove (fbox, header, header_size);
     if (OPAL_UNLIKELY(payload)) {
         /* inline sends are typically just pml headers (due to MCA_BTL_FLAGS_SEND_INPLACE) */
-        memcpy (fbox + header_size, payload, payload_size);
+        memmove (fbox + header_size, payload, payload_size);
     }
 
     /* mark the fbox as sent */
@@ -81,40 +94,40 @@ static inline int mca_btl_vader_fbox_sendi (struct mca_btl_base_endpoint_t *endp
 
 static inline void mca_btl_vader_check_fboxes (void)
 {
-    int my_smp_rank = mca_btl_vader_component.my_smp_rank;
-    mca_btl_active_message_callback_t *reg;
+    mca_btl_vader_frag_t frag = {.base = {.des_dst = frag.segments, .des_dst_cnt = 1}};
+    const int num_smp_procs = MCA_BTL_VADER_NUM_LOCAL_PEERS + 1;
+    const mca_btl_active_message_callback_t *reg;
     struct mca_btl_base_endpoint_t *endpoint;
-    unsigned char size, tag, *fbox;
-    mca_btl_vader_frag_t frag;
+    unsigned char * restrict fbox;
     int i, next_fbox;
 
-    for (i = 0 ; i < mca_btl_vader_component.num_smp_procs ; ++i) {
-        if (my_smp_rank == i) {
+    for (i = 0, endpoint = mca_btl_vader_component.endpoints ; i < num_smp_procs ; ++i, ++endpoint) {
+        if (NULL == endpoint->fbox_in) {
             continue;
         }
 
-        endpoint = mca_btl_vader_component.endpoints + i;
         next_fbox = endpoint->next_fbox_in;
         fbox = (unsigned char *) MCA_BTL_VADER_FBOX_IN_PTR(endpoint, next_fbox);
 
         /* process all fast-box messages */
-        while (0xfe != ((size = fbox[0]) & 0xfe)) {
-            opal_atomic_rmb ();
+        while ((frag.segments[0].seg_len = fbox[0]) & 0x7f) {
+            const unsigned char tag = fbox[1];
 
-            tag = fbox[1];
+            opal_atomic_rmb ();
 
             reg = mca_btl_base_active_message_trigger + tag;
 
             frag.segments[0].seg_addr.pval = fbox + 2;
-            frag.segments[0].seg_len       = size;
 
-            frag.base.des_dst     = frag.segments;
-            frag.base.des_dst_cnt = 1;
             reg->cbfunc(&mca_btl_vader.super, tag, &(frag.base), reg->cbdata);
 
+            if (fbox[0] > MCA_BTL_VADER_FBOX_MAX_SIZE) {
+                fbox[MCA_BTL_VADER_FBOX_SIZE] = MCA_BTL_VADER_FBOX_FREE;
+                ++next_fbox;
+            }
             fbox[0] = MCA_BTL_VADER_FBOX_FREE;
 
-            next_fbox = next_fbox == LAST_FBOX ? 0 : next_fbox + 1;
+            next_fbox = MCA_BTL_VADER_NEXT_FBOX(next_fbox);
             fbox = (unsigned char *) MCA_BTL_VADER_FBOX_IN_PTR(endpoint, next_fbox);
         }
 
@@ -123,3 +136,11 @@ static inline void mca_btl_vader_check_fboxes (void)
 }
 
 #endif /* !defined(MCA_BTL_VADER_FBOX_H) */
+
+
+
+
+
+
+
+

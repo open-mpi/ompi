@@ -14,6 +14,7 @@
 #include "btl_vader.h"
 #include "btl_vader_frag.h"
 #include "btl_vader_endpoint.h"
+#include "btl_vader_xpmem.h"
 
 /**
  * Initiate an synchronous put.
@@ -29,19 +30,16 @@ int mca_btl_vader_put (struct mca_btl_base_module_t *btl,
     mca_btl_vader_frag_t *frag = (mca_btl_vader_frag_t *) des;
     mca_btl_base_segment_t *src = des->des_src;
     mca_btl_base_segment_t *dst = des->des_dst;
-    size_t size = min(dst->seg_len, src->seg_len);
+    const size_t size = min(dst->seg_len, src->seg_len);
     mca_mpool_base_registration_t *reg;
     void *rem_ptr;
 
-    reg = vader_get_registation (endpoint, (void *)(uintptr_t) dst->seg_addr.lval,
-                                 dst->seg_len, 0);
+    reg = vader_get_registation (endpoint, dst->seg_addr.pval, dst->seg_len, 0, &rem_ptr);
     if (OPAL_UNLIKELY(NULL == reg)) {
         return OMPI_ERROR;
     }
 
-    rem_ptr = vader_reg_to_ptr (reg, (void *)(uintptr_t) dst->seg_addr.lval);
-
-    vader_memmove (rem_ptr, (void *)(uintptr_t) src->seg_addr.lval, size);
+    vader_memmove (rem_ptr, src->seg_addr.pval, size);
 
     vader_return_registration (reg, endpoint);
 

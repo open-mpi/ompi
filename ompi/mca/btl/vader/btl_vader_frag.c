@@ -29,7 +29,9 @@ static inline void mca_btl_vader_frag_constructor (mca_btl_vader_frag_t *frag)
 {
     frag->hdr = (mca_btl_vader_hdr_t*)frag->base.super.ptr;
     if(frag->hdr != NULL) {
-        frag->hdr->my_smp_rank = mca_btl_vader_component.my_smp_rank;
+        frag->hdr->src_smp_rank = MCA_BTL_VADER_LOCAL_RANK;
+        frag->hdr->frag = frag;
+        frag->segments[0].seg_addr.pval = (char *)(frag->hdr + 1);
     }
 
     frag->base.des_src     = frag->segments;
@@ -59,8 +61,10 @@ void mca_btl_vader_frag_return (mca_btl_vader_frag_t *frag)
     frag->base.des_src_cnt = 1;
     frag->base.des_dst     = frag->segments;
     frag->base.des_dst_cnt = 1;
+    frag->hdr->flags       = 0;
+    frag->segments[0].seg_addr.pval = (char *)(frag->hdr + 1);
 
-    OMPI_FREE_LIST_RETURN_MT(frag->my_list, (ompi_free_list_item_t *)frag);
+    OMPI_FREE_LIST_RETURN(frag->my_list, (ompi_free_list_item_t *)frag);
 }
 
 OBJ_CLASS_INSTANCE(mca_btl_vader_frag_t, mca_btl_base_descriptor_t,

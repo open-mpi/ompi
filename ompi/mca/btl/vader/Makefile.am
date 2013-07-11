@@ -36,7 +36,8 @@ libmca_btl_vader_la_sources = \
     btl_vader_fbox.h \
     btl_vader_get.c \
     btl_vader_put.c \
-    btl_vader_xpmem.c
+    btl_vader_xpmem.c \
+    btl_vader_xpmem.h
 
 # Make the output library in this directory, and name it either
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la

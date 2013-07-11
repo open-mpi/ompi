@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2007 Voltaire. All rights reserved.
  * Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2010-2012 Los Alamos National Security, LLC.  
+ * Copyright (c) 2010-2013 Los Alamos National Security, LLC.  
  *                         All rights reserved. 
  * $COPYRIGHT$
  *
@@ -61,12 +61,9 @@ static inline int vader_fifo_init (vader_fifo_t *fifo)
     return OMPI_SUCCESS;
 }
 
-static inline void vader_fifo_write (mca_btl_vader_hdr_t *hdr, struct mca_btl_base_endpoint_t *ep)
+static inline void _vader_fifo_write (vader_fifo_t *fifo, int64_t value)
 {
-    vader_fifo_t *fifo = ep->fifo;
-    int64_t prev, value = virtual2relative ((char *) hdr);
-
-    hdr->next = VADER_FIFO_FREE;
+    int64_t prev;
 
     opal_atomic_wmb ();
     prev = opal_atomic_swap_64 (&fifo->fifo_tail, value);
@@ -75,13 +72,27 @@ static inline void vader_fifo_write (mca_btl_vader_hdr_t *hdr, struct mca_btl_ba
     assert (prev != value);
 
     if (OPAL_LIKELY(VADER_FIFO_FREE != prev)) {
-        hdr = (mca_btl_vader_hdr_t *) relative2virtual (prev);
+        mca_btl_vader_hdr_t *hdr = (mca_btl_vader_hdr_t *) relative2virtual (prev);
         hdr->next = value;
     } else {
         fifo->fifo_head = value;
     }
 
     opal_atomic_wmb ();
+}
+
+/* write a frag (relative to this process' base) to another rank's fifo */
+static inline void vader_fifo_write (mca_btl_vader_hdr_t *hdr, struct mca_btl_base_endpoint_t *ep)
+{
+    hdr->next = VADER_FIFO_FREE;
+    _vader_fifo_write (ep->fifo, virtual2relative ((char *) hdr));
+}
+
+/* write a frag (relative to the remote process' base) to the remote fifo. note the remote peer must own hdr */
+static inline void vader_fifo_write_back (mca_btl_vader_hdr_t *hdr, struct mca_btl_base_endpoint_t *ep)
+{
+    hdr->next = VADER_FIFO_FREE;
+    _vader_fifo_write(ep->fifo, virtual2relativepeer (ep, (char *) hdr));
 }
 
 static inline mca_btl_vader_hdr_t *vader_fifo_read (vader_fifo_t *fifo)
