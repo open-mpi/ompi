@@ -18,7 +18,7 @@
 
 #include <string.h>
 #include <pmi.h>
-#if WANT_CRAY_PMI2_EXT
+#if WANT_PMI2_SUPPORT
 #include <pmi2.h>
 #endif
 
@@ -31,7 +31,7 @@ bool mca_common_pmi_init (void) {
         return true;
     }
 
-#if WANT_CRAY_PMI2_EXT
+#if WANT_PMI2_SUPPORT
     {
         int spawned, size, rank, appnum;
 
@@ -70,7 +70,7 @@ void mca_common_pmi_finalize (void) {
     }
 
     if (0 == --mca_common_pmi_init_count) {
-#if WANT_CRAY_PMI2_EXT
+#if WANT_PMI2_SUPPORT
         PMI2_Finalize ();
 #else
         PMI_Finalize ();
