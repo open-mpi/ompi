@@ -47,6 +47,9 @@
 
 #include "opal/class/opal_free_list.h"
 #include "opal/sys/atomic.h"
+
+#include "ompi/mca/rte/rte.h"
+
 #include "ompi/mca/btl/btl.h"
 
 #include "ompi/mca/mpool/mpool.h"
@@ -92,12 +95,8 @@ struct mca_btl_vader_component_t {
     size_t segment_size;                    /* size of my_segment */
     size_t segment_offset;                  /* start of unused portion of my_segment */
     int32_t num_smp_procs;                  /**< current number of smp procs on this host */
-    int32_t my_smp_rank;                    /**< My SMP process rank.  Used for accessing
-                                             * SMP specfic data structures. */
     ompi_free_list_t vader_frags_eager;     /**< free list of vader send frags */
     ompi_free_list_t vader_frags_user;      /**< free list of vader put/get frags */
-
-    opal_list_t active_sends;               /**< list of outstanding fragments */
 
     int memcpy_limit;                       /** Limit where we switch from memmove to memcpy */
     int log_attach_align;                   /** Log of the alignment for xpmem segments */
@@ -128,10 +127,23 @@ OMPI_MODULE_DECLSPEC extern mca_btl_vader_t mca_btl_vader;
  * virtual addresses.
  */
 
+
+/* number of peers on the node (not including self) */
+#define MCA_BTL_VADER_NUM_LOCAL_PEERS ompi_process_info.num_local_peers
+
+/* local rank in the group */
+#define MCA_BTL_VADER_LOCAL_RANK ompi_process_info.my_local_rank
+
+
 /* This only works for finding the relative address for a pointer within my_segment */
 static inline int64_t virtual2relative (char *addr)
 {
-    return (int64_t)(uintptr_t) (addr - mca_btl_vader_component.my_segment) | ((int64_t)mca_btl_vader_component.my_smp_rank << 32);
+    return (int64_t)(uintptr_t) (addr - mca_btl_vader_component.my_segment) | ((int64_t)MCA_BTL_VADER_LOCAL_RANK << 32);
+}
+
+static inline int64_t virtual2relativepeer (struct mca_btl_base_endpoint_t *endpoint, char *addr)
+{
+    return (int64_t)(uintptr_t) (addr - endpoint->segment_base) | ((int64_t)endpoint->peer_smp_rank << 32);
 }
 
 static inline void *relative2virtual (int64_t offset)
@@ -149,15 +161,6 @@ static inline void vader_memmove (void *dst, void *src, size_t size)
         memmove (dst, src, size);
     }
 }
-
-/* look up the remote pointer in the peer rcache and attach if
- * necessary */
-mca_mpool_base_registration_t *vader_get_registation (struct mca_btl_base_endpoint_t *endpoint, void *rem_ptr,
-						      size_t size, int flags);
-
-void vader_return_registration (mca_mpool_base_registration_t *reg, struct mca_btl_base_endpoint_t *endpoint);
-
-void *vader_reg_to_ptr (mca_mpool_base_registration_t *reg, void *rem_ptr);
 
 /**
  * Initiate a send to the peer.
@@ -215,7 +218,6 @@ int mca_btl_vader_get (struct mca_btl_base_module_t *btl,
 mca_btl_base_descriptor_t* mca_btl_vader_alloc (struct mca_btl_base_module_t* btl,
                                                 struct mca_btl_base_endpoint_t* endpoint,
                                                 uint8_t order, size_t size, uint32_t flags);
-
 
 END_C_DECLS
 
