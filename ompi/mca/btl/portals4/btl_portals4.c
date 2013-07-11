@@ -423,14 +423,24 @@ mca_btl_portals4_finalize(struct mca_btl_base_module_t *btl)
     PtlMEUnlink(mca_btl_portals4_module.long_overflow_me_h);
     PtlMDRelease(mca_btl_portals4_module.zero_md_h);
 
-    if (0 != mca_btl_portals4_module.fixed_md_h) {
-        int i, fixed_md_nb;
+#if OMPI_PORTALS4_MAX_MD_SIZE < OMPI_PORTALS4_MAX_VA_SIZE
+    if (NULL != mca_btl_portals4_module.send_md_hs) {
+        int i;
+        int num_mds = mca_btl_portals4_module_get_num_mds();
 
-        if (MEMORY_MAX_SIZE > mca_btl_portals4_module.fixed_md_distance) fixed_md_nb = MEMORY_MAX_SIZE/mca_btl_portals4_module.fixed_md_distance;
-        else fixed_md_nb = 1;
-        for (i=0; i< fixed_md_nb; i++) PtlMDRelease(mca_btl_portals4_module.fixed_md_h[i]);
-        free(mca_btl_portals4_module.fixed_md_h);
+        for (i = 0 ; i < num_mds ; ++i) {
+            if (!PtlHandleIsEqual(mca_btl_portals4_module.send_md_hs[i], PTL_INVALID_HANDLE)) {
+                PtlMDRelease(mca_btl_portals4_module.send_md_hs[i]);
+            }
+        }
+
+        free(mca_btl_portals4_module.send_md_hs);
     }
+#else
+    if (!PtlHandleIsEqual(mca_btl_portals4_module.send_md_h, PTL_INVALID_HANDLE)) {
+        PtlMDRelease(mca_btl_portals4_module.send_md_h);
+    }
+#endif
 
     PtlPTFree(mca_btl_portals4_module.portals_ni_h, mca_btl_portals4_module.recv_idx);
 

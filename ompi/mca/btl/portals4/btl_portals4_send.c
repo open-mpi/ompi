@@ -12,6 +12,7 @@
  * Copyright (c) 2008      UT-Battelle, LLC. All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
+ * Copyright (c) 2013      Sandia National Laboratories.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -25,12 +26,6 @@
 
 #include "btl_portals4.h"
 
-static int mca_btl_portals4_try_to_use_fixed_md(void *start,
-                    int length,
-                    ptl_handle_md_t *md_h,
-                    int64_t *offset,
-                    mca_btl_portals4_frag_t *frag);
-
 int mca_btl_portals4_send(struct mca_btl_base_module_t* btl_base,
                      struct mca_btl_base_endpoint_t* endpoint,
                      struct mca_btl_base_descriptor_t* descriptor, 
@@ -38,15 +33,15 @@ int mca_btl_portals4_send(struct mca_btl_base_module_t* btl_base,
 {
     mca_btl_portals4_frag_t *frag = (mca_btl_portals4_frag_t*) descriptor;
     ptl_match_bits_t match_bits, msglen_type;
-    ptl_size_t put_length, put_local_offset;
+    ptl_size_t put_length;
     int64_t offset;
     ptl_handle_md_t md_h;
+    void *base;
     int ret;
 
     frag->endpoint = endpoint;
     frag->hdr.tag = tag;
 
-    put_local_offset = (ptl_size_t) frag->segments[0].base.seg_addr.pval;
     put_length       = frag->segments[0].base.seg_len;
     if (put_length > mca_btl_portals4_module.super.btl_eager_limit)
          msglen_type = BTL_PORTALS4_LONG_MSG;
@@ -54,25 +49,25 @@ int mca_btl_portals4_send(struct mca_btl_base_module_t* btl_base,
 
     BTL_PORTALS4_SET_SEND_BITS(match_bits, 0, 0, tag, msglen_type);
 
+    ompi_btl_portals4_get_md(frag->segments[0].base.seg_addr.pval, &md_h, &base);
+    offset = (ptl_size_t) ((char*) frag->segments[0].base.seg_addr.pval - (char*) base);
+
     /* reserve space in the event queue for rdma operations immediately */
     while (OPAL_THREAD_ADD32(&mca_btl_portals4_module.portals_outstanding_ops, 1) >
            mca_btl_portals4_module.portals_max_outstanding_ops) {
         OPAL_THREAD_ADD32(&mca_btl_portals4_module.portals_outstanding_ops, -1);
-        OPAL_OUTPUT_VERBOSE((90, ompi_btl_base_framework.framework_output, "Call to mca_btl_portals4_component_progress (4)\n"));
+        OPAL_OUTPUT_VERBOSE((90, ompi_btl_base_framework.framework_output,
+                             "Call to mca_btl_portals4_component_progress (4)\n"));
         mca_btl_portals4_component_progress();
     }
-    OPAL_OUTPUT_VERBOSE((90, ompi_btl_base_framework.framework_output, "mca_btl_portals4_send: Incrementing portals_outstanding_ops=%d\n",
+    OPAL_OUTPUT_VERBOSE((90, ompi_btl_base_framework.framework_output,
+                         "mca_btl_portals4_send: Incrementing portals_outstanding_ops=%d\n",
         mca_btl_portals4_module.portals_outstanding_ops));
 
-    ret = mca_btl_portals4_try_to_use_fixed_md((void*)put_local_offset, put_length, &md_h, &offset, frag);
-    if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
-        return ret;
-    }
-
     OPAL_OUTPUT_VERBOSE((50, ompi_btl_base_framework.framework_output,
-                         "PtlPut frag=%p pid=%x tag=%x addr=%p len=%ld match_bits=%lx\n",
+                         "PtlPut frag=%p pid=%x tag=%x len=%ld match_bits=%lx\n",
                          (void*)frag,  endpoint->ptl_proc.phys.pid, tag, 
-                         (void *)put_local_offset, put_length, (uint64_t)match_bits));
+                         put_length, (uint64_t)match_bits));
     ret = PtlPut(md_h,
                  (ptl_size_t) offset,
                  put_length, /* fragment length */
@@ -105,65 +100,5 @@ int mca_btl_portals4_sendi(struct mca_btl_base_module_t* btl_base,
 {
     opal_output(0, "mca_btl_portals_sendi is not implemented");
     abort();
-    return OMPI_SUCCESS;
-}
-
-static int
-mca_btl_portals4_try_to_use_fixed_md(void *start,
-                    int length,
-                    ptl_handle_md_t *md_h,
-                    int64_t *offset,
-                    mca_btl_portals4_frag_t *frag)
-{
-    int ret;
-    ptl_md_t md;
-    int64_t addr;
-
-    addr = ((int64_t)start & ~EXTENDED_ADDR);
-
-    /* If fixed_md_distance is defined for MD and if the memory buffer is strictly contained in one of them, then use one */
-    if ((0 != mca_btl_portals4_module.fixed_md_distance) &&
-        (((addr % mca_btl_portals4_module.fixed_md_distance) + length) < mca_btl_portals4_module.fixed_md_distance)) {
-               if (0 == length) OPAL_OUTPUT_VERBOSE((90, ompi_btl_base_framework.framework_output,
-                                    "          Memory  : [ %16lx -   (len = 0)      ] is in fixed MD number: %d\n",
-                                    (unsigned long) start, (int) (addr / mca_btl_portals4_module.fixed_md_distance)));
-                else OPAL_OUTPUT_VERBOSE((90, ompi_btl_base_framework.framework_output,
-                         "          Memory  : [ %16lx - %16lx ] is in fixed MD number: %d\n",
-                         (unsigned long) start, (long int)start + length - 1, (int)(addr / mca_btl_portals4_module.fixed_md_distance)));
-                /* Use the fixed MD */
-                *md_h = mca_btl_portals4_module.fixed_md_h[addr / mca_btl_portals4_module.fixed_md_distance];
-                *offset = (addr % mca_btl_portals4_module.fixed_md_distance);
-                frag->md_h = PTL_INVALID_HANDLE;
-    }
-    else {
-        if (0 == mca_btl_portals4_module.fixed_md_distance)
-             OPAL_OUTPUT_VERBOSE((90, ompi_btl_base_framework.framework_output,
-                 "\nWARNING: Memory cannot be connected to a fixed MD\n"));
-        else OPAL_OUTPUT_VERBOSE((90, ompi_btl_base_framework.framework_output,
-                 "\nWARNING: Memory outside the scope of the fixed MD %d\n",
-                 (int)(addr / mca_btl_portals4_module.fixed_md_distance)));
-
-        /* Bind the MD (and unbind it where necessary) */
-        md.start     = start;
-        md.length    = length;
-        md.options   = 0;
-        md.eq_handle = mca_btl_portals4_module.recv_eq_h;
-        md.ct_handle = PTL_CT_NONE;
-
-        ret = PtlMDBind(mca_btl_portals4_module.portals_ni_h,
-                        &md,
-                        &frag->md_h);
-        if (OPAL_UNLIKELY(PTL_OK != ret)) {
-            opal_output_verbose(1, ompi_btl_base_framework.framework_output,
-                                "%s:%d: PtlMDBind failed: %d\n",
-                                __FILE__, __LINE__, ret);
-            return mca_btl_portals4_get_error(ret);
-        }
-        *md_h = frag->md_h;
-        *offset = 0;
-    }
-    OPAL_OUTPUT_VERBOSE((90, ompi_btl_base_framework.framework_output, "try_to_use_fixed_md: frag=%p start=%p len=%lx offset=%lx\n",
-        (void*)frag, (void *)start, (unsigned long)length, (unsigned long)*offset));
-
     return OMPI_SUCCESS;
 }

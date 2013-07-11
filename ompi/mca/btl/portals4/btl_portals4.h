@@ -103,9 +103,12 @@ struct mca_btl_portals4_module_t {
     /** MD handle for sending ACKS */
     ptl_handle_md_t zero_md_h;
 
-    /** Fixed MD handles covering all of memory for sending normal messages */
-    ptl_handle_md_t *fixed_md_h;
-    uint64_t fixed_md_distance;
+    /** Send MD handle(s).  Use ompi_mtl_portals4_get_md() to get the right md */
+#if OMPI_PORTALS4_MAX_MD_SIZE < OMPI_PORTALS4_MAX_VA_SIZE
+    ptl_handle_md_t *send_md_hs;
+#else
+    ptl_handle_md_t send_md_h;
+#endif
 
     /** long message receive overflow ME.  Persistent ME, first in
         overflow list on the recv_idx portal table. */
@@ -158,6 +161,36 @@ extern mca_btl_portals4_module_t mca_btl_portals4_module;
         hdr_data = (hdr_data << 48);                                 \
         hdr_data |= (length & 0xFFFFFFFFFFFFULL);                    \
     }
+
+/*
+ * See note in ompi/mtl/portals4/mtl_portals4.h for how we deal with
+ * platforms that don't allow us to crate an MD that covers all of
+ * memory.
+ */
+static inline void
+ompi_btl_portals4_get_md(const void *ptr, ptl_handle_md_t *md_h, void **base_ptr)
+{
+#if OMPI_PORTALS4_MAX_MD_SIZE < OMPI_PORTALS4_MAX_VA_SIZE
+    int mask = (1ULL << (OMPI_PORTALS4_MAX_VA_SIZE - OMPI_PORTALS4_MAX_MD_SIZE + 1)) - 1;
+    int which = (((uintptr_t) ptr) >> (OMPI_PORTALS4_MAX_MD_SIZE - 1)) & mask;
+    *md_h = ompi_btl_portals4.send_md_hs[which];
+    *base_ptr = (void*) (which * (1ULL << (OMPI_PORTALS4_MAX_MD_SIZE - 1)));
+#else
+    *md_h = mca_btl_portals4_module.send_md_h;
+    *base_ptr = 0;
+#endif
+}
+
+
+static inline int
+ompi_btl_portals4_get_num_mds(void)
+{
+#if OMPI_PORTALS4_MAX_MD_SIZE < OMPI_PORTALS4_MAX_VA_SIZE
+    return (1 << (OMPI_PORTALS4_MAX_VA_SIZE - OMPI_PORTALS4_MAX_MD_SIZE + 1));
+#else
+    return 1;
+#endif
+}
 
 int mca_btl_portals4_component_progress(void);
 

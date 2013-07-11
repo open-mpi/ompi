@@ -194,9 +194,6 @@ mca_btl_portals4_component_register(void)
 static int
 mca_btl_portals4_component_open(void)
 {
-    unsigned int i;
-    uint64_t fixed_md_nb;
-
     mca_btl_portals4_component.portals_verbosity = opal_output_get_verbosity(ompi_btl_base_framework.framework_output);
     OPAL_OUTPUT_VERBOSE((1, ompi_btl_base_framework.framework_output, "mca_btl_portals4_component_open\n"));
 
@@ -223,10 +220,11 @@ mca_btl_portals4_component_open(void)
 
     mca_btl_portals4_module.recv_eq_h = PTL_EQ_NONE;
 
-    if (48 < ompi_btl_portals4_md_size_bit_width) ompi_btl_portals4_md_size_bit_width = 48;
-    mca_btl_portals4_module.fixed_md_distance = (unsigned long int) 1<<ompi_btl_portals4_md_size_bit_width;
-    opal_output_verbose(1, ompi_btl_base_framework.framework_output,
-                        "fixed_md_distance=%16.16lx\n", mca_btl_portals4_module.fixed_md_distance);
+#if OMPI_PORTALS4_MAX_MD_SIZE < OMPI_PORTALS4_MAX_VA_SIZE
+    mca_btl_portals4_module.send_md_hs = NULL;
+#else
+    mca_btl_portals4_module.send_md_h = PTL_INVALID_HANDLE;
+#endif
 
     OBJ_CONSTRUCT(&(mca_btl_portals4_module.portals_frag_eager), ompi_free_list_t);
     OBJ_CONSTRUCT(&(mca_btl_portals4_module.portals_frag_max), ompi_free_list_t);
@@ -272,16 +270,6 @@ mca_btl_portals4_component_open(void)
 
     mca_btl_portals4_module.portals_ni_h = PTL_INVALID_HANDLE;
     mca_btl_portals4_module.zero_md_h = PTL_INVALID_HANDLE;
-
-    if (MEMORY_MAX_SIZE > mca_btl_portals4_module.fixed_md_distance)
-        fixed_md_nb = MEMORY_MAX_SIZE/mca_btl_portals4_module.fixed_md_distance;
-    else fixed_md_nb = 1;
-    if (fixed_md_nb > 32) mca_btl_portals4_module.fixed_md_distance = 0;
-    else {
-            /* Allocate the md_h table */
-        mca_btl_portals4_module.fixed_md_h = malloc(fixed_md_nb * sizeof(ptl_handle_md_t));
-        for (i=0; i<fixed_md_nb; i++) mca_btl_portals4_module.fixed_md_h[i] = PTL_INVALID_HANDLE;
-    }
 
     mca_btl_portals4_module.long_overflow_me_h = PTL_INVALID_HANDLE;
     mca_btl_portals4_module.portals_outstanding_ops = 0;
@@ -425,35 +413,42 @@ static mca_btl_base_module_t** mca_btl_portals4_component_init(int *num_btls,
     }
     OPAL_OUTPUT_VERBOSE((90, ompi_btl_base_framework.framework_output, "PtlMDBind (zero-length md) OK\n"));
 
-    /* bind fixed md across all of memory */
-    if (mca_btl_portals4_module.fixed_md_distance) {
-        unsigned int i;
-        uint64_t fixed_md_nb, fixed_md_distance;
+    /* Bind MD/MDs across all memory.  We prefer (for obvious reasons)
+       to have a single MD across all of memory */
+#if OMPI_PORTALS4_MAX_MD_SIZE < OMPI_PORTALS4_MAX_VA_SIZE
+    {
+        int i;
+        int num_mds = ompi_btl_portals4_get_num_mds();
+        ptl_size_t size = 1ULL << OMPI_PORTALS4_MAX_MD_SIZE;
+        ptl_size_t offset_unit = (1ULL << OMPI_PORTALS4_MAX_MD_SIZE) / 2;
 
-        fixed_md_distance = mca_btl_portals4_module.fixed_md_distance;
-        if (MEMORY_MAX_SIZE > fixed_md_distance) fixed_md_nb = MEMORY_MAX_SIZE/fixed_md_distance;
-        else fixed_md_nb = 1;
-
-        opal_output_verbose(1, ompi_btl_base_framework.framework_output, "Fixed MDs :\n");
-
-        /* Bind the fixed MDs */
-        for (i=0; i<fixed_md_nb; i++) {
-            uint64_t offset = i * fixed_md_distance;
-            /* if the most significant bit of the address space is set, set the extended address bits */
-            if (offset & (MEMORY_MAX_SIZE >> 1)) offset += EXTENDED_ADDR;
-
+        mca_btl_portals4_module.send_md_hs = malloc(sizeof(ptl_handle_md_t) * num_mds);
+        if (NULL == mca_btl_portals4_module.send_md_hs) {
             opal_output_verbose(1, ompi_btl_base_framework.framework_output,
-                "                %2d: [ %16lx - %16lx ]\n", i, offset, offset + fixed_md_distance - 2);
+                                "%s:%d: Error allocating MD array",
+                                __FILE__, __LINE__);
+            ret = OMPI_ERR_TEMP_OUT_OF_RESOURCE;
+            goto error;
+        }
 
-            md.start     = (char *) offset;
-            md.length    = fixed_md_distance - 1;
-            md.options   = 0;
-            md.eq_handle = mca_btl_portals4_module.recv_eq_h;
+        for (i = 0 ; i < num_mds ; ++i) {
+            mca_btl_portals4_module.send_md_hs[i] = PTL_INVALID_HANDLE;
+        }
+
+        for (i = 0 ; i < num_mds ; ++i) {
+            md.start = (char*) (offset_unit * i);
+            md.length = (i - 1 == num_mds) ? size / 2 : size;
+            md.options = 0;
+            md.eq_handle = mca_btl_portals4_module.send_eq_h;
             md.ct_handle = PTL_CT_NONE;
+
+            opal_output_verbose(50, ompi_btl_base_framework.framework_output,
+                                "Binding md from %p of length %lx",
+                                md.start, md.length);
 
             ret = PtlMDBind(mca_btl_portals4_module.portals_ni_h,
                             &md,
-                            &mca_btl_portals4_module.fixed_md_h[i]);
+                            &mca_btl_portals4_module.send_md_hs[i]); 
             if (PTL_OK != ret) {
                 opal_output_verbose(1, ompi_btl_base_framework.framework_output,
                                     "%s:%d: PtlMDBind failed: %d\n",
@@ -461,9 +456,24 @@ static mca_btl_base_module_t** mca_btl_portals4_component_init(int *num_btls,
                 goto error;
             }
         }
-        OPAL_OUTPUT_VERBOSE((90, ompi_btl_base_framework.framework_output, "PtlMDBind (all memory) OK\n"));
     }
-    else opal_output_verbose(1, ompi_btl_base_framework.framework_output, "No fixed MD\n");
+#else
+    md.start = 0;
+    md.length = PTL_SIZE_MAX;
+    md.options = 0;
+    md.eq_handle = mca_btl_portals4_module.recv_eq_h;
+    md.ct_handle = PTL_CT_NONE;
+
+    ret = PtlMDBind(mca_btl_portals4_module.portals_ni_h,
+                    &md,
+                    &mca_btl_portals4_module.send_md_h); 
+    if (PTL_OK != ret) {
+        opal_output_verbose(1, ompi_btl_base_framework.framework_output,
+                            "%s:%d: PtlMDBind failed: %d\n",
+                            __FILE__, __LINE__, ret);
+        goto error;
+    }
+#endif
 
     /* Handle long overflows */
     me.start = NULL;
@@ -505,18 +515,6 @@ static mca_btl_base_module_t** mca_btl_portals4_component_init(int *num_btls,
     opal_output_verbose(1, ompi_btl_base_framework.framework_output, "Error in mca_btl_portals4_component_init\n");
 
     free(btls);
-    if (mca_btl_portals4_module.fixed_md_distance) {
-        int i;
-        int fixed_md_nb;
-        if (MEMORY_MAX_SIZE > mca_btl_portals4_module.fixed_md_distance) fixed_md_nb = MEMORY_MAX_SIZE/mca_btl_portals4_module.fixed_md_distance;
-    else fixed_md_nb = 1;
-
-        for (i=0; i<fixed_md_nb; i++) {
-            if (!PtlHandleIsEqual(mca_btl_portals4_module.fixed_md_h[i], PTL_INVALID_HANDLE)) {
-                PtlMDRelease(mca_btl_portals4_module.fixed_md_h[i]);
-            }
-        }
-    }
     /* Free also other portals4 resources */
  return NULL;
 }
