@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012      Cisco Systems, Inc. All rights reserved.
+ * Copyright (c) 2012-2013 Cisco Systems, Inc. All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, LLC. All rights reserved
  * $COPYRIGHT$
  * 
@@ -191,6 +191,27 @@ static inline int opal_hotel_checkin(opal_hotel_t *hotel,
                    &(hotel->eviction_timeout));
 
     return OPAL_SUCCESS;
+}
+
+/**
+ * Same as opal_hotel_checkin(), but slightly optimized for when the
+ * caller *knows* that there is a room available.
+ */
+static inline void opal_hotel_checkin_with_res(opal_hotel_t *hotel,
+                                     void *occupant,
+                                     int *room_num)
+{
+    opal_hotel_room_t *room;
+
+    /* Put this occupant into the first empty room that we have */
+    *room_num = hotel->unoccupied_rooms[hotel->last_unoccupied_room--];
+    room = &(hotel->rooms[*room_num]);
+    assert(room->occupant == NULL);
+    room->occupant = occupant;
+
+    /* Assign the event and make it pending */
+    opal_event_add(&(room->eviction_timer_event),
+                   &(hotel->eviction_timeout));
 }
 
 /**
