@@ -86,7 +86,7 @@ static int mca_btl_vader_component_register (void)
                                            MCA_BASE_VAR_FLAG_SETTABLE, OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_LOCAL,
                                            &mca_btl_vader_component.vader_free_list_num);
-    mca_btl_vader_component.vader_free_list_max = 8192;
+    mca_btl_vader_component.vader_free_list_max = 16384;
     (void) mca_base_component_var_register(&mca_btl_vader_component.super.btl_version,
                                            "free_list_max", "Maximum number of fragments "
                                            "to allocate for shared memory communication.",
@@ -138,7 +138,7 @@ static int mca_btl_vader_component_register (void)
                                            &mca_btl_vader_component.max_inline_send);
 
     mca_btl_vader.super.btl_exclusivity               = MCA_BTL_EXCLUSIVITY_HIGH;
-    mca_btl_vader.super.btl_eager_limit               = 64 * 1024;
+    mca_btl_vader.super.btl_eager_limit               = 32 * 1024;
     mca_btl_vader.super.btl_rndv_eager_limit          = mca_btl_vader.super.btl_eager_limit;
     mca_btl_vader.super.btl_max_send_size             = mca_btl_vader.super.btl_eager_limit;
     mca_btl_vader.super.btl_rdma_pipeline_send_length = mca_btl_vader.super.btl_eager_limit;
@@ -219,10 +219,10 @@ static mca_btl_base_module_t **mca_btl_vader_component_init (int *num_btls,
 
     /* limit segment alignment to be between 4k and 16M */
     
-    if (mca_btl_vader_component.segment_size < 12) {
-        mca_btl_vader_component.segment_size = 12;
-    } else if (mca_btl_vader_component.segment_size > 25) {
-        mca_btl_vader_component.segment_size = 25;
+    if (mca_btl_vader_component.log_attach_align < 12) {
+        mca_btl_vader_component.log_attach_align = 12;
+    } else if (mca_btl_vader_component.log_attach_align > 25) {
+        mca_btl_vader_component.log_attach_align = 25;
     }
 
     btls = (mca_btl_base_module_t **) calloc (1, sizeof (mca_btl_base_module_t *));
@@ -239,8 +239,8 @@ static mca_btl_base_module_t **mca_btl_vader_component_init (int *num_btls,
     }
 
     /* ensure a sane segment size */
-    if (mca_btl_vader_component.segment_size < (1 << 20)) {
-        mca_btl_vader_component.segment_size = (1 << 20);
+    if (mca_btl_vader_component.segment_size < (2 << 20)) {
+        mca_btl_vader_component.segment_size = (2 << 20);
     }
 
     component->my_segment = mmap (NULL, mca_btl_vader_component.segment_size, PROT_READ |
