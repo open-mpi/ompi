@@ -134,8 +134,6 @@ static bool x86_sse3_available;
  */
 static int x86_component_register(void)
 {
-    int val;
-
     opal_output(ompi_op_base_framework.framework_output, "x86 component register");
 
     /* Probe the hardware and see what we have */

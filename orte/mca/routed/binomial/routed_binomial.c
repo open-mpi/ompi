@@ -4,6 +4,7 @@
  *                         reserved.
  * Copyright (c) 2007-2012 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
+ * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -840,7 +841,6 @@ static int binomial_tree(int rank, int parent, int me, int num_procs,
     int i, bitmap, peer, hibit, mask, found;
     orte_routed_tree_t *child;
     opal_bitmap_t *relations;
-    orte_process_name_t proc_name;
 
     OPAL_OUTPUT_VERBOSE((3, orte_routed_base_framework.framework_output,
                          "%s routed:binomial rank %d parent %d me %d num_procs %d",
@@ -864,12 +864,6 @@ static int binomial_tree(int rank, int parent, int me, int num_procs,
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                      rank,
                                      ORTE_VPID_PRINT(child->vpid)));
-
-                /* If the process we are looking at next is already dead, then
-                 * we inherit its children. Keep up with the process name of
-                 * that process so we can check it's state.
-                 */
-                proc_name.vpid = peer;
 
                 if (mine) {
                     /* this is a direct child - add it to my list */
@@ -913,8 +907,6 @@ static int binomial_tree(int rank, int parent, int me, int num_procs,
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
             /* execute compute on this child */
             if (0 <= (found = binomial_tree(peer, rank, me, num_procs, nchildren, childrn, relatives, mine))) {
-                proc_name.vpid = found;
-
                 OPAL_OUTPUT_VERBOSE((5, orte_routed_base_framework.framework_output,
                                      "%s routed:binomial find children returning found value %d",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), found));

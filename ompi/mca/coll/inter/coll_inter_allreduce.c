@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2007 University of Houston. All rights reserved.
+ * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -44,13 +45,12 @@ mca_coll_inter_allreduce_inter(void *sbuf, void *rbuf, int count,
                                struct ompi_communicator_t *comm,
                                mca_coll_base_module_t *module)
 {
-    int err, rank, root = 0, rsize;
+    int err, rank, root = 0;
     ptrdiff_t lb, extent;
     char *tmpbuf = NULL, *pml_buffer = NULL;
     ompi_request_t *req[2];
 
     rank = ompi_comm_rank(comm);
-    rsize = ompi_comm_remote_size(comm);
     
     /* Perform the reduction locally */
     err = ompi_datatype_get_extent(dtype, &lb, &extent);

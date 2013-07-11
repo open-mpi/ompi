@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; -*- */
 /*
- * Copyright (c) 2007-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2008-2009 Mellanox Technologies. All rights reserved.
  * Copyright (c) 2009      IBM Corporation.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All
@@ -828,7 +828,6 @@ static int udcm_module_create_listen_qp (udcm_module_t *m)
 
 static void udcm_module_destroy_listen_qp (udcm_module_t *m)
 {
-    enum ibv_qp_attr_mask attr_mask;
     struct ibv_qp_attr attr;
     struct ibv_wc wc;
     mca_btl_openib_async_cmd_t async_command;
@@ -858,7 +857,6 @@ static void udcm_module_destroy_listen_qp (udcm_module_t *m)
 	memset(&attr, 0, sizeof(attr));
 	attr.qp_state = IBV_QPS_ERR;
 	attr.sq_psn = 0;
-	attr_mask = IBV_QP_STATE | IBV_QP_SQ_PSN;
 
 	BTL_VERBOSE(("Setting qp to err state %p", (void *)m->listen_qp));
 
