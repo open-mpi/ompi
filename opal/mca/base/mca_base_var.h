@@ -112,15 +112,18 @@ typedef enum {
 /**
  * MCA variable scopes
  *
- * Equivalent to MPIT scopes
+ * Equivalent to MPI_T scopes with the same base name (e.g.,
+ * MCA_BASE_VAR_SCOPE_CONSTANT corresponts to MPI_T_SCOPE_CONSTANT).
  */
 typedef enum {
-    /** The value of this variable will not change after it 
-        is registered. Implies !MCA_BASE_VAR_FLAG_SETTABLE */
+    /** The value of this variable will not change after it is
+        registered.  This flag is incompatible with
+        MCA_BASE_VAR_FLAG_SETTABLE, and also implies
+        MCA_BASE_VAR_SCOPE_READONLY. */
     MCA_BASE_VAR_SCOPE_CONSTANT,
-    /** The value of this variable may change but it should not be
-        changed using the mca_base_var_set function. Implies
-        !MCA_BASE_VAR_FLAG_SETTABLE */
+    /** Setting the READONLY flag means that the mca_base_var_set()
+        function cannot be used to set the value of this variable
+        (e.g., the MPI_T_cvar_write() MPI_T function). */
     MCA_BASE_VAR_SCOPE_READONLY,
     /** The value of this variable may be changed locally. */
     MCA_BASE_VAR_SCOPE_LOCAL,
@@ -446,59 +449,67 @@ OPAL_DECLSPEC int mca_base_var_group_get_stamp (void);
  * This function registers an MCA variable and associates it
  * with a specific group.
  *
- * The {description} is a string of arbitrary length (verbose is
- * good!) for explaining what the variable is for and what its
- * valid values are.  This message is used in help messages, such
- * as the output from the ompi_info executable.
+ * {description} is a string of arbitrary length (verbose is good!)
+ * for explaining what the variable is for and what its valid values
+ * are.  This message is used in help messages, such as the output
+ * from the ompi_info executable.  The {description} string is copied
+ * internally; the caller can free {description} upon successful
+ * return.
  *
- * The {enumerator} describes the valid values of an integer
- * variable. The variable may be set to either the enumerator value
- * (0, 1, 2, etc) or a string representing that value. The
- * value provided by the user will be compared against the
- * values in the enumerator. The {enumerator} is not valid with
- * any other type of variable. {enumerator} is retained until
- * either the variable is deregistered using mca_base_var_deregister(),
- * mca_base_var_group_deregister(), or mca_base_var_finalize().
+ * {enumerator} is either NULL or a handle that was created via
+ * mca_base_var_enum_create(), and describes the valid values of an
+ * integer variable (i.e., one with type MCA_BASE_VAR_TYPE_INT).  When
+ * a non-NULL {enumerator} is used, the value set for this variable by
+ * the user will be compared against the values in the enumerator.
+ * The MCA variable system will allow the parameter to be set to
+ * either one of the enumerator values (0, 1, 2, etc) or a string
+ * representing one of those values.  {enumerator} is retained until
+ * either the variable is deregistered using
+ * mca_base_var_deregister(), mca_base_var_group_deregister(), or
+ * mca_base_var_finalize().  {enumerator} should be NULL for
+ * parameters that do not support enumerated values.
  *
- * The {flags} indicate attributes of this variable (internal,
- * settable, default only, etc).
+ * {flags} indicate attributes of this variable (internal, settable,
+ * default only, etc.), as listed below.
  *
- * If MCA_BASE_VAR_FLAG_SETTABLE is set in {flags}, this variable
- * may be set using mca_base_var_set_value().
+ * If MCA_BASE_VAR_FLAG_SETTABLE is set in {flags}, this variable may
+ * be set using mca_base_var_set_value() (i.e., the MPI_T interface).
  *
  * If MCA_BASE_VAR_FLAG_INTERNAL is set in {flags}, this variable
  * is not shown by default in the output of ompi_info.  That is,
  * this variable is considered internal to the Open MPI implementation
  * and is not supposed to be viewed / changed by the user.
  *
- * If MCA_BASE_VAR_FLAG_DEFAULT_ONLY is set in {flags}, then the
- * value provided in storage will not be modified by the MCA
- * variable system. It is up to the caller to specify (using the scope)
- * if this value may change (MCA_BASE_VAR_SCOPE_READONLY)
- * or remain constant (MCA_BASE_VAR_SCOPE_CONSTANT).
- * MCA_BASE_VAR_FLAG_DEFAULT_ONLY must not be specified with
- * MCA_BASE_VAR_FLAG_SETTABLE.
+ * If MCA_BASE_VAR_FLAG_DEFAULT_ONLY is set in {flags}, then the value
+ * provided in storage will not be modified by the MCA variable system
+ * (i.e., users cannot set the value of this variable via CLI
+ * parameter, environment variable, file, etc.). It is up to the
+ * caller to specify (using the scope) if this value may change
+ * (MCA_BASE_VAR_SCOPE_READONLY) or remain constant
+ * (MCA_BASE_VAR_SCOPE_CONSTANT).  MCA_BASE_VAR_FLAG_DEFAULT_ONLY must
+ * not be specified with MCA_BASE_VAR_FLAG_SETTABLE.
  *
  * Set MCA_BASE_VAR_FLAG_DEPRECATED in {flags} to indicate that
  * this variable name is deprecated. The user will get a warning
  * if they set this variable.
  *
- * The {scope} is for informational purposes to indicate how this
- * variable should be set or if it is considered constant or readonly.
- * A readonly scope means something different than setting {read_only}
- * to true. A readonly scope will still allow the variable to be
- * overridden by a file or environment variable.
+ * {scope} is for informational purposes to indicate how this variable
+ * can be set, or if it is considered constant or readonly (which, by
+ * MPI_T's definitions, are different things).  See the comments in
+ * the description of mca_base_var_scope_t for information about the
+ * different scope meanings.
  *
- * The {storage} pointer points to a char *, int, or bool where the
- * value of this variable is stored. The {type} indicates the type
- * of this pointer. The initial value passed to this function may
- * be overwritten if the MCA_BASE_VAR_FLAG_DEFAULT_ONLY flag is not
- * set and either an environment variable or a file value for this
- * variable is set. If {storage} points to a char * the value will
- * be duplicated and it is up to the caller to retain and free the
- * original value if needed. Any string value set when this
- * variable is deregistered (including finalize) will be freed
- * automatically.
+ * {storage} points to a (char *), (int), or (bool) where the value of
+ * this variable is stored ({type} indicates the type of this
+ * pointer).  The location pointed to by {storage} must exist until
+ * the variable is deregistered.  Note that the initial value in
+ * {storage} may be overwritten if the MCA_BASE_VAR_FLAG_DEFAULT_ONLY
+ * flag is not set (e.g., if the user sets this variable via CLI
+ * option, environment variable, or file value).  If input value of
+ * {storage} points to a (char *), the pointed-to string will be
+ * duplicated and maintained internally by the MCA variable system;
+ * the caller may free the original string after this function returns
+ * successfully.  
  */
 OPAL_DECLSPEC int mca_base_var_register (const char *project_name, const char *framework_name,
                                          const char *component_name, const char *variable_name,
