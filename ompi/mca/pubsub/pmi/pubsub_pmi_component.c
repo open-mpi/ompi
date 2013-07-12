@@ -13,6 +13,11 @@
 #include "ompi_config.h"
 #include "ompi/constants.h"
 
+#include <pmi.h>
+#if WANT_CRAY_PMI2_EXT
+#include <pmi2.h>
+#endif
+
 #include "orte/util/proc_info.h"
 #include "orte/util/name_fns.h"
 #include "orte/mca/common/pmi/common_pmi.h"
