@@ -61,13 +61,12 @@ OBJ_CLASS_DECLARATION(mca_btl_vader_frag_t);
 
 static inline int mca_btl_vader_frag_alloc (mca_btl_vader_frag_t **frag, ompi_free_list_t *list) {
     ompi_free_list_item_t *item;
-    int rc;
 
-    OMPI_FREE_LIST_GET(list, item, rc);
+    OMPI_FREE_LIST_GET_MT(list, item);
     *frag = (mca_btl_vader_frag_t *) item;
     if (OPAL_LIKELY(NULL != item)) {
         if (NULL == (*frag)->hdr) {
-            OMPI_FREE_LIST_RETURN(list, (ompi_free_list_item_t *)*frag);
+            OMPI_FREE_LIST_RETURN_MT(list, (ompi_free_list_item_t *)*frag);
             *frag = NULL;
             return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
         }
@@ -76,7 +75,7 @@ static inline int mca_btl_vader_frag_alloc (mca_btl_vader_frag_t **frag, ompi_fr
         (*frag)->my_list = list;
     }
 
-    return rc;
+    return OMPI_SUCCESS;
 }
 
 void mca_btl_vader_frag_return (mca_btl_vader_frag_t *frag);
