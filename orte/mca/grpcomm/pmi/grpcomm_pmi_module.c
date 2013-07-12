@@ -18,7 +18,7 @@
 
 #include <string.h>
 #include <pmi.h>
-#if WANT_PMI2_SUPPORT
+#if WANT_CRAY_PMI2_EXT
 #include <pmi2.h>
 #endif
 
@@ -76,7 +76,7 @@ static int pmi_packed_data_off = 0;
  */
 static int kvs_put(const char *key, const char *value)
 {
-#if WANT_PMI2_SUPPORT
+#if WANT_CRAY_PMI2_EXT
     return PMI2_KVS_Put(key, value);
 #else
     return PMI_KVS_Put(pmi_kvs_name, key, value);
@@ -85,7 +85,7 @@ static int kvs_put(const char *key, const char *value)
 
 static int kvs_get(const char *key, char *value, int valuelen)
 {
-#if WANT_PMI2_SUPPORT
+#if WANT_CRAY_PMI2_EXT
     int len;
 
     return PMI2_KVS_Get(pmi_kvs_name, PMI2_ID_NULL, key, value, valuelen, &len);
@@ -96,7 +96,7 @@ static int kvs_get(const char *key, char *value, int valuelen)
 
 static int kvs_commit(void)
 {
-#if WANT_PMI2_SUPPORT
+#if WANT_CRAY_PMI2_EXT
     return PMI2_KVS_Fence();
 #else
     int rc;
@@ -181,7 +181,7 @@ static int pmi_barrier(orte_grpcomm_collective_t *coll)
         return ORTE_SUCCESS;
     }
     
-#if WANT_PMI2_SUPPORT
+#if WANT_CRAY_PMI2_EXT
     /* Cray doesn't provide a barrier, so use the Fence function here */
     if (PMI_SUCCESS != (rc = PMI2_KVS_Fence())) {
         ORTE_PMI_ERROR(rc, "PMI2_KVS_Fence");
@@ -833,7 +833,7 @@ static int setup_pmi(void)
 {
     int max_length, rc;
 
-#if WANT_PMI2_SUPPORT
+#if WANT_CRAY_PMI2_EXT
     pmi_vallen_max = PMI2_MAX_VALLEN;
 #else
     rc = PMI_KVS_Get_value_length_max(&pmi_vallen_max);
@@ -852,7 +852,7 @@ static int setup_pmi(void)
 	return ORTE_ERR_OUT_OF_RESOURCE;
     }
 
-#if WANT_PMI2_SUPPORT
+#if WANT_CRAY_PMI2_EXT
     /* TODO -- is this ok */
     max_length = 1024;
 #else
@@ -866,7 +866,7 @@ static int setup_pmi(void)
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
 
-#if WANT_PMI2_SUPPORT
+#if WANT_CRAY_PMI2_EXT
     rc = PMI2_Job_GetId(pmi_kvs_name, max_length);
 #else
     rc = PMI_KVS_Get_my_name(pmi_kvs_name,max_length);
@@ -876,7 +876,7 @@ static int setup_pmi(void)
         return ORTE_ERROR;
     }
 
-#if WANT_PMI2_SUPPORT
+#if WANT_CRAY_PMI2_EXT
     pmi_keylen_max = PMI2_MAX_KEYLEN;
 #else
     if (PMI_SUCCESS != (rc = PMI_KVS_Get_key_length_max(&pmi_keylen_max))) {
