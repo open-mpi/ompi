@@ -64,7 +64,7 @@ void mca_btl_vader_frag_return (mca_btl_vader_frag_t *frag)
     frag->hdr->flags       = 0;
     frag->segments[0].seg_addr.pval = (char *)(frag->hdr + 1);
 
-    OMPI_FREE_LIST_RETURN(frag->my_list, (ompi_free_list_item_t *)frag);
+    OMPI_FREE_LIST_RETURN_MT(frag->my_list, (ompi_free_list_item_t *)frag);
 }
 
 OBJ_CLASS_INSTANCE(mca_btl_vader_frag_t, mca_btl_base_descriptor_t,
