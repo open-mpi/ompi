@@ -13,6 +13,7 @@
 # Copyright (c) 2010      IBM Corporation.  All rights reserved.
 # Copyright (c) 2010-2011 Oak Ridge National Labs.  All rights reserved.
 # Copyright (c) 2013      Los Alamos National Security, Inc.  All rights reserved.
+# Copyright (c) 2013      Intel Corporation.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -104,21 +105,13 @@ EXTRA_DIST = \
 	platform/ibm/debug-ppc64-gcc \
 	platform/ibm/optimized-ppc32-gcc \
 	platform/ibm/optimized-ppc64-gcc \
-	platform/greenplum/bend/mac \
-	platform/greenplum/bend/mac.conf \
-	platform/greenplum/bend/linux \
-	platform/greenplum/bend/linux.conf \
-	platform/greenplum/bend/mac-optimized \
-	platform/greenplum/bend/mac-optimized.conf \
-	platform/greenplum/bend/linux-optimized \
-	platform/greenplum/bend/linux-optimized.conf \
-	platform/greenplum/mrplus/mac \
-	platform/greenplum/mrplus/mac.conf \
-	platform/greenplum/mrplus/linux \
-	platform/greenplum/mrplus/linux.conf \
-	platform/greenplum/mrplus/mac-optimized \
-	platform/greenplum/mrplus/mac-optimized.conf \
-	platform/greenplum/mrplus/linux-optimized \
-	platform/greenplum/mrplus/linux-optimized.conf
+	platform/intel/bend/mac \
+	platform/intel/bend/mac.conf \
+	platform/intel/bend/linux \
+	platform/intel/bend/linux.conf \
+	platform/intel/bend/mac-optimized \
+	platform/intel/bend/mac-optimized.conf \
+	platform/intel/bend/linux-optimized \
+	platform/intel/bend/linux-optimized.conf \
 
 dist_pkgdata_DATA = openmpi-valgrind.supp
