@@ -246,6 +246,7 @@ static int orte_rmaps_base_open(mca_base_open_flag_t flags)
     orte_rmaps_base.mapping = 0;
     orte_rmaps_base.ranking = 0;
 
+#if OPAL_HAVE_HWLOC
     /* if a topology file was given, then set our topology
      * from it. Even though our actual topology may differ,
      * mpirun only needs to see the compute node topology
@@ -257,6 +258,7 @@ static int orte_rmaps_base_open(mca_base_open_flag_t flags)
             return ORTE_ERR_SILENT;
         }
     }
+#endif
 
     if (NULL == rmaps_base_mapping_policy) {
         ORTE_SET_MAPPING_POLICY(orte_rmaps_base.mapping, ORTE_MAPPING_BYSLOT);
