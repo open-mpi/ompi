@@ -112,6 +112,6 @@ EXTRA_DIST = \
 	platform/intel/bend/mac-optimized \
 	platform/intel/bend/mac-optimized.conf \
 	platform/intel/bend/linux-optimized \
-	platform/intel/bend/linux-optimized.conf \
+	platform/intel/bend/linux-optimized.conf
 
 dist_pkgdata_DATA = openmpi-valgrind.supp
