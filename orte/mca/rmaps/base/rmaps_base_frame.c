@@ -355,7 +355,9 @@ static int orte_rmaps_base_open(mca_base_open_flag_t flags)
             opal_argv_free(ck);
             return ORTE_ERR_SILENT;
         }
+#if OPAL_HAVE_HWLOC
     setpolicy:
+#endif
         ORTE_SET_MAPPING_POLICY(orte_rmaps_base.mapping, tmp);
         ORTE_SET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping, ORTE_MAPPING_GIVEN);
         opal_argv_free(ck);
