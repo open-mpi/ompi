@@ -1048,6 +1048,9 @@ static int parse_requested (const char *requested, bool *include_mode,
     /* Are we including or excluding?  We only allow the negate
        character to be the *first* character of the value (but be nice
        and allow any number of negate characters in the beginning). */
+    *include_mode = requested[0] != negate[0];
+
+    /* skip over all negate symbols at the beginning */
     requested += strspn (requested, negate);
 
     /* Double check to ensure that the user did not specify the negate
