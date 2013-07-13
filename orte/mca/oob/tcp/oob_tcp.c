@@ -1696,7 +1696,8 @@ int mca_oob_tcp_resolve(mca_oob_tcp_peer_t* peer)
                             ORTE_NAME_PRINT(&peer->peer_name), host);
                 goto unlock;
             } else {
-                haddr = inet_ntoa(*(struct in_addr*)h->h_addr_list[0]);
+                rc = ORTE_ERR_ADDRESSEE_UNKNOWN;
+                goto unlock;
             }
         proceed:
             /* we can't know which af_family we are using, so for now, let's
