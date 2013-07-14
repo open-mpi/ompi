@@ -12,6 +12,7 @@
  * Copyright (c) 2010-2011 Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
+ * Copyright (c) 2013      Intel, Inc. All rights reserved
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -38,7 +39,6 @@
 
 #include "opal/util/opal_environ.h"
 #include "opal/util/output.h"
-#include "opal/util/trace.h"
 #include "opal/util/output.h"
 
 #include "orte/util/show_help.h"

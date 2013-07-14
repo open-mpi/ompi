@@ -13,6 +13,7 @@
  * Copyright (c) 2010-2011 Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
+ * Copyright (c) 2013      Intel, Inc. All rights reserved
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -49,7 +50,6 @@
 
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
-#include "opal/util/trace.h"
 #include "opal/util/os_dirpath.h"
 #include "opal/util/output.h"
 #include "opal/util/basename.h"
@@ -182,8 +182,6 @@ void orte_errmgr_base_log(int error_code, char *filename, int line)
 {
     char *errstring = NULL;
 
-    OPAL_TRACE(1);
-    
     errstring = (char*)ORTE_ERROR_NAME(error_code);
 
     if (NULL == errstring) {
