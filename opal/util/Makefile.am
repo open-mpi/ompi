@@ -11,6 +11,7 @@
 #                         All rights reserved.
 # Copyright (c) 2007-2010 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2013      NVIDIA Corporation.  All rights reserved.
+# Copyright (c) 2013      Intel, Inc. All rights reserved
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -64,7 +65,6 @@ headers = \
         stacktrace.h \
         strncpy.h \
         sys_limits.h \
-        trace.h \
 	uri.h
 
 libopalutil_la_SOURCES = \
@@ -98,7 +98,6 @@ libopalutil_la_SOURCES = \
         stacktrace.c \
         strncpy.c \
         sys_limits.c \
-        trace.c \
 	uri.c
 
 libopalutil_la_LIBADD = \
