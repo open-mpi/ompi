@@ -141,21 +141,11 @@ cause the program to abort.
   cuStreamCreate return value:   %d
 Check the cuda.h file for what the return vale means.
 #
-[dlopen disabled]
-While trying to load the supporting libcuda.so library, an error was 
-detected.  This error indicates that the Open MPI library was probably
-configured with the --disable-dlopen flag.  When the library is 
-configured in this way, CUDA support is disabled because CUDA support
-depends on the ability to dynamically open libraries.  Reconfigure
-without the --disable-dlopen flag to get around this problem.
-#
-[dladvise disabled]
-While trying to initialize the lt_dladvise structure, an error was 
-detected.  This error indicates that the Open MPI library was
-configured such that there is no support for the lt_dladvise 
-structure.  This is needed for properly opening the libcuda library.
-Look around for the OPAL_HAVE_LTDL_ADVISE macro and ensure that it
-is defined as a 1.  
+[dlopen disabled] 
+Open MPI was compiled without dynamic library support (e.g., with the
+ --disable-dlopen flag), and therefore cannot utilize CUDA support.  
+
+If you need CUDA support, reconfigure Open MPI with dynamic library support enabled.
 #
 [unknown ltdl error]
 While attempting to load the supporting libcuda.so library, an error
@@ -166,15 +156,9 @@ MPI developers.
    Error string: %s
 #
 [dlopen failed]
-The library attempted to open the supporting CUDA libraries but failed.
-  Library attempted: %s
-  Error string:      %s
-  Library attempted: %s
-  Error string:      %s
-  Library attempted: %s
-  Error string:      %s
-  Library attempted: %s
-  Error string:      %s
+The library attempted to open the following supporting CUDA libraries, 
+but each of them failed.
+%s
 #
 [dlsym failed]
 An error occurred while trying to map in the address of a function.
