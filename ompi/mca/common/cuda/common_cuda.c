@@ -55,7 +55,7 @@ do {                                                                            
     *(void **)(&cuFunc.funcName) = opal_lt_dlsym(libhandle, STRINGIFY(funcName));    \
     if (NULL == cuFunc.funcName) {                                                   \
         opal_show_help("help-mpi-common-cuda.txt", "dlsym failed", true,             \
-                       STRINGIFY(funcName));                                         \
+                       STRINGIFY(funcName), opal_lt_dlerror());                      \
         return 1;                                                                    \
     } else {                                                                         \
         opal_output_verbose(15, mca_common_cuda_output,                              \
@@ -609,7 +609,7 @@ static int mca_common_cuda_load_libcuda(void)
                     break;
                 }
             }
-	        if (true == loaded) break; /* Break out of outer loop */
+            if (true == loaded) break; /* Break out of outer loop */
         }
     }
 

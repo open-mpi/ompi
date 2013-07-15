@@ -179,3 +179,4 @@ The library attempted to open the supporting CUDA libraries but failed.
 [dlsym failed]
 An error occurred while trying to map in the address of a function.
   Function Name: %s
+  Error string:  %s
