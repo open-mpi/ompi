@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2011-2012 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2011-2013 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2011      UT-Battelle, LLC. All rights reserved.
  * $COPYRIGHT$
@@ -15,15 +15,15 @@
 
 #include "ompi/include/ompi_config.h"
 #include "opal/mca/base/mca_base_var.h"
+#include "opal/mca/base/mca_base_pvar.h"
 #include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/constants.h"
+#include "ompi/datatype/ompi_datatype.h"
 
 #include "mpi.h"
 
 #include <string.h>
-
-#define MPI_T_ENUM_NULL NULL
 
 typedef struct ompi_mpit_cvar_handle_t {
     const mca_base_var_t *var;
@@ -31,22 +31,12 @@ typedef struct ompi_mpit_cvar_handle_t {
     void           *bound_object;
 } ompi_mpit_cvar_handle_t;
 
-typedef struct ompi_mpi_pvar_handle_t {
-    int dummy;
-} ompi_mpi_pvar_handle_t;
-
-typedef struct ompi_mpi_pvar_session_t {
-    int dummy;
-} ompi_mpi_pvar_session_t;
-
-typedef struct ompi_mpit_enum_t {
-    mca_base_var_enum_t *enumerator;
-} ompi_mpit_enum_t;
-
 void mpit_lock (void);
 void mpit_unlock (void);
 
 extern volatile uint32_t mpit_init_count;
+
+int ompit_var_type_to_datatype (mca_base_var_type_t type, MPI_Datatype *datatype);
 
 static inline int mpit_is_initialized (void)
 {

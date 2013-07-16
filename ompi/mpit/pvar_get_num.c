@@ -9,7 +9,7 @@
  * $HEADER$
  */
 
-#include "ompi/mpit/mpit-internal.h"
+#include "mpit-internal.h"
 
 static const char FUNC_NAME[] = "MPI_T_pvar_get_num";
 
@@ -23,9 +23,6 @@ int MPI_T_pvar_get_num(int *num_pvar)
         return MPI_ERR_ARG;
     }
 
-    /* XXX -- TODO -- Add pvars */
-    *num_pvar = 0;
-
-    return MPI_SUCCESS;
+    return mca_base_pvar_get_count (num_pvar);
 }
 

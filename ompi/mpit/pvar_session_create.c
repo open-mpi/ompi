@@ -15,10 +15,23 @@ static const char FUNC_NAME[] = "MPI_T_pvar_session_create";
 
 int MPI_T_pvar_session_create(MPI_T_pvar_session *session)
 {
+    int ret = MPI_SUCCESS;
+
     if (!mpit_is_initialized ()) {
         return MPI_T_ERR_NOT_INITIALIZED;
     }
 
-    /* XXX -- TODO -- Implement me */
-    return MPI_ERR_OTHER;
+    mpit_lock ();
+
+    do {
+        *session = OBJ_NEW(mca_base_pvar_session_t);
+        if (NULL == *session) {
+            ret = MPI_ERR_NO_MEM;
+            break;
+        }
+    } while (0);
+
+    mpit_unlock ();
+
+    return ret;
 }

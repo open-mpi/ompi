@@ -15,7 +15,7 @@ static const char FUNC_NAME[] = "MPI_T_enum_get_info";
 
 int MPI_T_enum_get_info(MPI_T_enum enumtype, int *num, char *name, int *name_len)
 {
-    int rc;
+    int rc = MPI_SUCCESS;
 
     if (!mpit_is_initialized ()) {
         return MPI_T_ERR_NOT_INITIALIZED;

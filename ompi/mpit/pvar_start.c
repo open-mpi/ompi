@@ -13,12 +13,39 @@
 
 static const char FUNC_NAME[] = "MPI_T_pvar_start";
 
+static int pvar_handle_start (mca_base_pvar_handle_t *handle)
+{
+    if (OPAL_SUCCESS != mca_base_pvar_handle_start (handle)) {
+        return MPI_T_ERR_PVAR_NO_STARTSTOP;
+    }
+
+    return MPI_SUCCESS;
+}
+
 int MPI_T_pvar_start(MPI_T_pvar_session session, MPI_T_pvar_handle handle)
 {
+    int ret;
+
     if (!mpit_is_initialized ()) {
         return MPI_T_ERR_NOT_INITIALIZED;
     }
 
-    /* XXX -- TODO -- Implement me */
-    return MPI_T_ERR_INVALID_HANDLE;
+    mpit_lock ();
+
+    if (MPI_T_PVAR_ALL_HANDLES == handle) {
+        OPAL_LIST_FOREACH(handle, &session->handles, mca_base_pvar_handle_t) {
+            /* Per MPI 3.0: ignore continuous and started variables when starting
+               all variable handles. */
+            if (!mca_base_pvar_handle_is_running (handle) &&
+                OMPI_SUCCESS != pvar_handle_start (handle)) {
+                ret = MPI_T_ERR_PVAR_NO_STARTSTOP;
+            }
+        }
+    } else {
+        ret = pvar_handle_start (handle);
+    }
+
+    mpit_unlock ();
+
+    return ret;
 }

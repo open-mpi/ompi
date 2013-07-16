@@ -331,8 +331,8 @@ typedef struct ompi_status_public_t MPI_Status;
 typedef struct ompi_win_t *MPI_Win;
 typedef struct mca_base_var_enum_t *MPI_T_enum;
 typedef struct ompi_mpit_cvar_handle_t *MPI_T_cvar_handle;
-typedef struct ompi_mpit_pvar_handle_t *MPI_T_pvar_handle;
-typedef struct ompi_mpit_pvar_session_t *MPI_T_pvar_session;
+typedef struct mca_base_pvar_handle_t *MPI_T_pvar_handle;
+typedef struct mca_base_pvar_session_t *MPI_T_pvar_session;
 
 /*
  * MPI_Status
@@ -725,7 +725,7 @@ enum {
 #if OMPI_PROVIDE_MPI_FILE_INTERFACE
 #define MPI_FILE_NULL OMPI_PREDEFINED_GLOBAL(MPI_File, ompi_mpi_file_null)
 #endif
-#define MPI_T_ENUM_NULL NULL
+#define MPI_T_ENUM_NULL ((MPI_T_enum) NULL)
 
 /*
  * MPI_INFO_ENV handle
@@ -734,6 +734,12 @@ enum {
 
 #define MPI_STATUS_IGNORE ((MPI_Status *) 0)
 #define MPI_STATUSES_IGNORE ((MPI_Status *) 0)
+
+/*
+ * Special MPI_T handles
+ */
+#define MPI_T_PVAR_ALL_HANDLES ((MPI_T_pvar_handle) -1)
+#define MPI_T_PVAR_HANDLE_NULL ((MPI_T_pvar_handle) 0)
 
 /* MPI-2 specifies that the name "MPI_TYPE_NULL_DELETE_FN" (and all
    related friends) must be accessible in C, C++, and Fortran. This is

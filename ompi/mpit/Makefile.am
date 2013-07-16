@@ -16,7 +16,7 @@
 
 # This Makefile.am does not stand on its own - it is included from ompi/Makefile.am
 
-headers += mpit/mpit-internal.h
+headers += mpit/mpit-internal.h mpit/mpit-pvar.h
 
 libmpi_la_SOURCES += mpit/init_thread.c mpit/finalize.c mpit/cvar_get_num.c \
 		     mpit/cvar_get_info.c mpit/cvar_read.c mpit/cvar_write.c \

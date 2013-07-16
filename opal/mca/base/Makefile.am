@@ -33,7 +33,9 @@ headers = \
         base.h \
         mca_base_component_repository.h \
         mca_base_var.h \
+        mca_base_pvar.h \
 	mca_base_var_enum.h \
+        mca_base_var_group.h \
         mca_base_vari.h \
 	mca_base_framework.h
 
@@ -52,7 +54,9 @@ libmca_base_la_SOURCES = \
         mca_base_list.c \
         mca_base_open.c \
         mca_base_var.c \
+        mca_base_pvar.c \
 	mca_base_var_enum.c \
+        mca_base_var_group.c \
         mca_base_parse_paramfile.c \
 	mca_base_components_register.c \
 	mca_base_framework.c

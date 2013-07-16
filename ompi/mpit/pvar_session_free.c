@@ -19,6 +19,10 @@ int MPI_T_pvar_session_free(MPI_T_pvar_session *session)
         return MPI_T_ERR_NOT_INITIALIZED;
     }
 
-    /* XXX -- TODO -- Implement me */
-    return MPI_ERR_OTHER;
+    if (NULL != *session) {
+        OBJ_RELEASE(*session);
+        *session = NULL;
+    }
+
+    return MPI_SUCCESS;
 }

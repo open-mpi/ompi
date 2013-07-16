@@ -9,7 +9,7 @@
  * $HEADER$
  */
 
-#include "ompi/mpit/mpit-internal.h"
+#include "mpit-internal.h"
 
 static const char FUNC_NAME[] = "MPI_T_pvar_get_info";
 
@@ -18,10 +18,69 @@ int MPI_T_pvar_get_info(int pvar_index, char *name, int *name_len,
                         MPI_T_enum *enumtype, char *desc, int *desc_len, int *bind,
                         int *readonly, int *continuous, int *atomic)
 {
+    const mca_base_pvar_t *pvar;
+    int ret;
+
     if (!mpit_is_initialized ()) {
         return MPI_T_ERR_NOT_INITIALIZED;
     }
 
-    /* XXX -- TODO -- Implement me */
-    return MPI_T_ERR_INVALID_INDEX;
+    mpit_lock ();
+
+    do {
+        /* Find the performance variable. mca_base_pvar_get() handles the
+           bounds checking. */
+        ret = mca_base_pvar_get (pvar_index, &pvar);
+        if (OMPI_SUCCESS != ret) {
+            break;
+        }
+
+        /* Check the variable binding is something sane */
+        if (pvar->bind > MPI_T_BIND_MPI_INFO || pvar->bind < MPI_T_BIND_NO_OBJECT) {
+            /* This variable specified an invalid binding (not an MPI object). */
+            ret = MPI_T_ERR_INVALID_INDEX;
+            break;
+        }
+
+        /* Copy name an description */
+        mpit_copy_string (name, name_len, pvar->name);
+        mpit_copy_string (desc, desc_len, pvar->description);
+
+        if (verbosity) {
+            *verbosity = pvar->verbosity;
+        }
+
+        if (var_class) {
+            *var_class = pvar->var_class;
+        }
+
+        ret = ompit_var_type_to_datatype (pvar->type, datatype);
+        if (OMPI_SUCCESS != ret) {
+            break;
+        }
+
+        if (NULL != enumtype) {
+            *enumtype = pvar->enumerator ? (MPI_T_enum) pvar->enumerator : MPI_T_ENUM_NULL;
+        }
+
+        if (NULL != bind) {
+            *bind = pvar->bind;
+        }
+
+        if (NULL != readonly) {
+            *readonly = mca_base_pvar_is_readonly (pvar);
+        }
+
+        if (NULL != continuous) {
+            *continuous = mca_base_pvar_is_continuous (pvar);
+        }
+
+        if (NULL != atomic) {
+            *atomic = mca_base_pvar_is_atomic (pvar);
+        }
+    } while (0);
+
+    mpit_unlock ();
+
+    return ret;
 }

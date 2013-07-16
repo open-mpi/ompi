@@ -41,6 +41,9 @@ int MPI_T_cvar_read (MPI_T_cvar_handle handle, void *buf)
         case MCA_BASE_VAR_TYPE_UNSIGNED_INT:
             ((int *) buf)[0] = value->intval;
             break;
+        case MCA_BASE_VAR_TYPE_UNSIGNED_LONG:
+            ((unsigned long *) buf)[0] = value->ulval;
+            break;
         case MCA_BASE_VAR_TYPE_UNSIGNED_LONG_LONG:
             ((unsigned long long *) buf)[0] = value->ullval;
             break;
@@ -49,6 +52,9 @@ int MPI_T_cvar_read (MPI_T_cvar_handle handle, void *buf)
             break;
         case MCA_BASE_VAR_TYPE_BOOL:
             ((int *) buf)[0] = value->boolval;
+            break;
+        case MCA_BASE_VAR_TYPE_DOUBLE:
+            ((double *) buf)[0] = value->lfval;
             break;
         case MCA_BASE_VAR_TYPE_STRING:
             if (NULL == value->stringval) {
