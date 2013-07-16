@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; -*- */
 /*
- * Copyright (c) 2009-2012 The University of Tennessee and The University
+ * Copyright (c) 2009-2013 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
@@ -329,24 +329,41 @@ OMPI_DECLSPEC int32_t ompi_datatype_copy_args( const ompi_datatype_t* source_dat
 OMPI_DECLSPEC int32_t ompi_datatype_release_args( ompi_datatype_t* pData );
 OMPI_DECLSPEC ompi_datatype_t* ompi_datatype_get_single_predefined_type_from_args( ompi_datatype_t* type );
 
-/*
- *
+/**
+ * Return the amount of buffer necessary to pack the entire description of
+ * the datatype. This value is computed once per datatype, and it is stored
+ * in the datatype structure together with the packed description. As a side
+ * note special care is taken to align the amount of data on void* for
+ * architectures that require it.
  */
-OMPI_DECLSPEC size_t ompi_datatype_pack_description_length( const ompi_datatype_t* datatype );
+OMPI_DECLSPEC size_t ompi_datatype_pack_description_length( ompi_datatype_t* datatype );
 
-/*
- *
+/**
+ * Return a pointer to the constant packed representation of the datatype.
+ * The length can be retrieved with the ompi_datatype_pack_description_length,
+ * and it is quarantee this is exactly the amount to be copied and not an
+ * upper bound. Additionally, the packed representation is slightly optimized
+ * compared with the get_content function, as all combiner_dup have been replaced
+ * directly with the target type.
  */
 OMPI_DECLSPEC int ompi_datatype_get_pack_description( ompi_datatype_t* datatype,
                                                       const void** packed_buffer );
 
-/*
- *
+/**
+ * Extract a fully-fledged datatype from the packed representation. This datatype
+ * is ready to be used in communications (it is automatically committed). However,
+ * this datatype does not have an internal representation, so it might not be
+ * repacked. Read the comment for the ompi_datatype_get_pack_description function
+ * for extra information.
  */
 struct ompi_proc_t;
-OMPI_DECLSPEC ompi_datatype_t* ompi_datatype_create_from_packed_description( void** packed_buffer,
-                                                                             struct ompi_proc_t* remote_processor );
+OMPI_DECLSPEC ompi_datatype_t*
+ompi_datatype_create_from_packed_description( void** packed_buffer,
+                                              struct ompi_proc_t* remote_processor );
 
+/**
+ * Auxiliary function providing a pretty print for the packed data description.
+ */
 OMPI_DECLSPEC int32_t ompi_datatype_print_args( const ompi_datatype_t* pData );
 
 #if OPAL_ENABLE_DEBUG

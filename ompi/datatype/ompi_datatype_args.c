@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2009 The University of Tennessee and The University
+ * Copyright (c) 2004-2013 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2006 High Performance Computing Center Stuttgart,
@@ -123,13 +123,10 @@ int32_t ompi_datatype_set_args( ompi_datatype_t* pData,
     pArgs = (ompi_datatype_args_t*)pData->args;
     pArgs->create_type = type;
 
-    switch(type){
+    switch(type) {
 
     case MPI_COMBINER_DUP:
-        /* Recompute the data description packed size based on the optimization
-         * for MPI_COMBINER_DUP.
-         */
-        pArgs->total_pack_size = 2 * sizeof(int);
+        pArgs->total_pack_size = 0;  /* store no extra data */
         break;
 
     case MPI_COMBINER_CONTIGUOUS:
@@ -251,6 +248,8 @@ int32_t ompi_datatype_set_args( ompi_datatype_t* pData,
             assert( pArgs->total_pack_size ==
                     OPAL_ALIGN(pArgs->total_pack_size, sizeof(OPAL_PTRDIFF_TYPE), int) );
 #endif  /* OPAL_ALIGN_WORD_SIZE_INTEGERS */
+        } else {
+            pArgs->total_pack_size += 2 * sizeof(int);  /* _NAMED + predefined id */
         }
     }
 
@@ -425,16 +424,6 @@ int32_t ompi_datatype_release_args( ompi_datatype_t* pData )
 }
 
 
-size_t ompi_datatype_pack_description_length( const ompi_datatype_t* datatype )
-{
-    if( ompi_datatype_is_predefined(datatype) ) {
-        return sizeof(int) * 2;
-    }
-    assert( NULL != (ompi_datatype_args_t*)datatype->args );
-    return ((ompi_datatype_args_t*)datatype->args)->total_pack_size;
-}
-
-
 static inline int __ompi_datatype_pack_description( ompi_datatype_t* datatype,
                                                     void** packed_buffer, int* next_index )
 {
@@ -443,15 +432,18 @@ static inline int __ompi_datatype_pack_description( ompi_datatype_t* datatype,
     char* next_packed = (char*)*packed_buffer;
 
     if( ompi_datatype_is_predefined(datatype) ) {
-        position[0] = MPI_COMBINER_DUP;
+        position[0] = MPI_COMBINER_NAMED;
         position[1] = datatype->id;   /* On the OMPI - layer, copy the ompi_datatype.id */
+        next_packed += (2 * sizeof(int));
+        *packed_buffer = next_packed;
         return OMPI_SUCCESS;
     }
     /* For duplicated datatype we don't have to store all the information */
     if( MPI_COMBINER_DUP == args->create_type ) {
-        position[0] = args->create_type;
-        position[1] = args->d[0]->id; /* On the OMPI - layer, copy the ompi_datatype.id */
-        return OMPI_SUCCESS;
+        ompi_datatype_t* temp_data = args->d[0];
+        return __ompi_datatype_pack_description(temp_data,
+                                                packed_buffer,
+                                                next_index );
     }
     position[0] = args->create_type;
     position[1] = args->ci;
@@ -512,15 +504,37 @@ int ompi_datatype_get_pack_description( ompi_datatype_t* datatype,
         } else if( NULL == args ) {
             return OMPI_ERROR;
         } else {
-            datatype->packed_description = malloc( args->total_pack_size );
+            datatype->packed_description = malloc(args->total_pack_size);
         }
         recursive_buffer = datatype->packed_description;
         __ompi_datatype_pack_description( datatype, &recursive_buffer, &next_index );
+        if( !ompi_datatype_is_predefined(datatype) ) {
+            args->total_pack_size = (uintptr_t)((char*)recursive_buffer - (char*)datatype->packed_description);
+            OMPI_DATATYPE_ALIGN_PTR(args->total_pack_size, char*);
+        }
     }
+
     *packed_buffer = (const void*)datatype->packed_description;
     return OMPI_SUCCESS;
 }
 
+size_t ompi_datatype_pack_description_length( ompi_datatype_t* datatype )
+{
+    if( ompi_datatype_is_predefined(datatype) ) {
+        return 2 * sizeof(int);
+    }
+    if( NULL == datatype->packed_description ) {
+        const void* buf;
+        int rc;
+
+        rc = ompi_datatype_get_pack_description(datatype, &buf);
+        if( OMPI_SUCCESS != rc )
+            return 0;
+    }
+    assert( NULL != (ompi_datatype_args_t*)datatype->args );
+    assert( NULL != (ompi_datatype_args_t*)datatype->packed_description );
+    return ((ompi_datatype_args_t*)datatype->args)->total_pack_size;
+}
 
 static ompi_datatype_t* __ompi_datatype_create_from_packed_description( void** packed_buffer,
                                                                         const struct ompi_proc_t* remote_processor )
@@ -554,7 +568,7 @@ static ompi_datatype_t* __ompi_datatype_create_from_packed_description( void** p
         create_type = opal_swap_bytes4(create_type);
     }
 #endif
-    if( MPI_COMBINER_DUP == create_type ) {
+    if( MPI_COMBINER_NAMED == create_type ) {
         /* there we have a simple predefined datatype */
         data_id = position[1];
 #if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
@@ -654,6 +668,7 @@ static ompi_datatype_t* __ompi_datatype_create_from_args( int32_t* i, MPI_Aint* 
     case MPI_COMBINER_DUP:
         /* should we duplicate d[0]? */
         /* ompi_datatype_set_args( datatype, 0, NULL, 0, NULL, 1, d[0], MPI_COMBINER_DUP ); */
+        assert(0);  /* shouldn't happen */
         break;
         /******************************************************************/
     case MPI_COMBINER_CONTIGUOUS:
