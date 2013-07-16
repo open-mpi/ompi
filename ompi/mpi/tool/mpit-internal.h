@@ -57,12 +57,16 @@ static inline void mpit_copy_string (char *dest, int *len, const char *source)
         return;
     }
 
-    if ((int) strlen (source) < *len) {
+    if (0 != *len && NULL != dest) {
+        if ((int) strlen (source) < *len) {
+            *len = strlen (source) + 1;
+        }
+
+        strncpy (dest, source, *len);
+        dest[*len - 1] = '\0';
+    } else {
         *len = strlen (source) + 1;
     }
-
-    strncpy (dest, source, *len);
-    dest[*len - 1] = '\0';
 }
 
 #endif /* !defined(MPIT_INTERNAL_H) */
