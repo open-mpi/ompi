@@ -12,6 +12,8 @@
 # Copyright (c) 2008-2012 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
 # Copyright (c) 2010-2011 Sandia National Laboratories. All rights reserved.
+# Copyright (c) 2013      Los Alamos National Security, LLC. All rights
+#                         reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -22,12 +24,12 @@
 # We always have C bindings, but do we have profiling?
 
 if BUILD_MPI_BINDINGS_LAYER
-c_mpi_lib = mpi/c/libmpi_c_mpi.la
+c_mpi_lib = mpi/c/libmpi_c_mpi.la mpi/tool/libmpi_mpit.la
 else
 c_mpi_lib = 
 endif
 if BUILD_PMPI_BINDINGS_LAYER
-c_pmpi_lib = mpi/c/profile/libmpi_c_pmpi.la
+c_pmpi_lib = mpi/c/profile/libmpi_c_pmpi.la mpi/tool/profile/libmpi_pmpit.la
 else
 c_pmpi_lib = 
 endif
@@ -77,6 +79,7 @@ SUBDIRS = \
         debuggers \
         etc \
         mpi/c \
+	mpi/tool \
         $(OMPI_MPIEXT_C_DIRS) \
         mpi/fortran/base/ \
         $(MCA_ompi_FRAMEWORKS_SUBDIRS) \
@@ -108,6 +111,7 @@ DIST_SUBDIRS = \
         debuggers \
         etc \
         mpi/c \
+	mpi/tool \
         mpi/cxx \
         mpi/fortran/base \
         mpi/fortran/mpif-h \
@@ -117,6 +121,7 @@ DIST_SUBDIRS = \
         mpi/fortran/use-mpi-f08-desc \
         mpi/fortran/mpiext \
         mpi/java \
+	mpi/tool \
         $(OMPI_MPIEXT_ALL_SUBDIRS) \
         $(MCA_ompi_FRAMEWORKS_SUBDIRS) \
         $(MCA_ompi_FRAMEWORK_COMPONENT_ALL_SUBDIRS) \
@@ -180,7 +185,6 @@ include tools/Makefile.am
 include mpi/Makefile.am
 include mpi/man/man3/Makefile.extra
 include mpiext/Makefile.am
-include mpit/Makefile.am
 include patterns/net/Makefile.am
 include patterns/comm/Makefile.am
 
