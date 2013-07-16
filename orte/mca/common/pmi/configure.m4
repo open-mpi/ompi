@@ -15,7 +15,7 @@
 AC_DEFUN([MCA_orte_common_pmi_CONFIG], [
     AC_CONFIG_FILES([orte/mca/common/pmi/Makefile])
          
-    ORTE_CHECK_PMI([common_pmi], [common_pmi_good=1], [common_pmi_good=0])
+    OPAL_CHECK_PMI([common_pmi], [common_pmi_good=1], [common_pmi_good=0])
          
     # Evaluate succeed / fail
     AS_IF([test "$common_pmi_good" = 1 -a "$orte_without_full_support" = 0],

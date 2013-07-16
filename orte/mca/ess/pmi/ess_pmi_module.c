@@ -38,6 +38,9 @@
 #endif
 
 #include <pmi.h>
+#if WANT_PMI2_SUPPORT
+#include <pmi2.h>
+#endif
 
 #include "opal/util/opal_environ.h"
 #include "opal/util/output.h"

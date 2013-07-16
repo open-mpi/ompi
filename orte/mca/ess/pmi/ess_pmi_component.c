@@ -18,11 +18,6 @@
 #include "orte_config.h"
 #include "orte/constants.h"
 
-#include <pmi.h>
-#if WANT_CRAY_PMI2_EXT
-#include <pmi2.h>
-#endif
-
 #include "orte/util/proc_info.h"
 
 #include "orte/mca/ess/ess.h"
