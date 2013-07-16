@@ -257,11 +257,11 @@ static int mca_common_cuda_init(opal_common_cuda_function_table_t *ftable)
     CUcontext cuContext;
     common_cuda_mem_regs_t *mem_reg;
 
-    if (!ompi_mpi_cuda_support) {
+    if (OPAL_UNLIKELY(!ompi_mpi_cuda_support)) {
         return OMPI_ERROR;
     }
 
-    if (common_cuda_initialized) {
+    if (OPAL_LIKELY(common_cuda_initialized)) {
         return OMPI_SUCCESS;
     }
 
@@ -492,18 +492,18 @@ static int mca_common_cuda_init(opal_common_cuda_function_table_t *ftable)
 /**
  * This function will open and load the symbols needed from the CUDA driver
  * library.  Any failure will result in a message and we will return 1.
- * First look for the SONAME of the library which is libcuda.so.1.
+ * First look for the SONAME of the library which is libcuda.so.1.  In most
+ * cases, this will be the library found.  However, there are some setups
+ * that require the extra steps for searching.
  */
-#define NUMLIBS 2
-#define SEARCHPATHS 2
 static int mca_common_cuda_load_libcuda(void)
 {
     opal_lt_dladvise advise;
-    int retval, i, j;
+    int retval, i = 0, j = 0;
     int advise_support = 1;
     bool loaded = false;
-    char *cudalibs[NUMLIBS] = {"libcuda.so.1", "libcuda.so"};
-    char *searchpaths[SEARCHPATHS] = {NULL, "/usr/lib64"};
+    char *cudalibs[] = {"libcuda.so.1", "libcuda.so", NULL};
+    char *searchpaths[] = {"", "/usr/lib64", NULL};
     char **errmsgs = NULL;
     char *errmsg = NULL;
     int errsize;
@@ -552,11 +552,12 @@ static int mca_common_cuda_load_libcuda(void)
             opal_lt_dladvise_destroy(&advise);
             return 1;
         }
-        for (j = 0; j < SEARCHPATHS; j++) {
-            if (NULL != searchpaths[j]) {
+        while (searchpaths[j] != NULL) {
+            /* Set explicit search path if entry is not empty string */
+            if (strcmp("", searchpaths[j])) {
                 opal_lt_dlsetsearchpath(searchpaths[j]);
             }
-            for (i = 0; i < NUMLIBS; i++) {
+            while (cudalibs[i] != NULL) {
                 const char *str;
                 libcuda_handle = opal_lt_dlopenadvise(cudalibs[i], advise);
                 if (NULL == libcuda_handle) {
@@ -576,17 +577,21 @@ static int mca_common_cuda_load_libcuda(void)
                     loaded = true;
                     break;
                 }
+                i++;
             }
             if (true == loaded) break; /* Break out of outer loop */
+            j++;
         }
         opal_lt_dladvise_destroy(&advise);
     } else {
+        i = j = 0;
         /* No lt_dladvise support.  This should rarely happen. */
-        for (j = 0; j < SEARCHPATHS; j++) {
-            if (NULL != searchpaths[j]) {
+        while (searchpaths[j] != NULL) {
+            /* Set explicit search path if entry is not empty string */
+            if (strcmp("", searchpaths[j])) {
                 opal_lt_dlsetsearchpath(searchpaths[j]);
             }
-            for (i = 0; i < NUMLIBS; i++) {
+            while (cudalibs[i] != NULL) {
                 const char *str;
                 libcuda_handle = opal_lt_dlopen(cudalibs[i]);
                 if (NULL == libcuda_handle) {
@@ -608,8 +613,10 @@ static int mca_common_cuda_load_libcuda(void)
                     loaded = true;
                     break;
                 }
+                i++;
             }
             if (true == loaded) break; /* Break out of outer loop */
+            j++;
         }
     }
 
