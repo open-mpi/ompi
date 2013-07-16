@@ -36,8 +36,7 @@
 #include "ompi/mca/bml/base/base.h" 
 #include "pml_ob1_component.h"
 #include "ompi/mca/allocator/base/base.h"
-
-#include "ompi/mpit/mpit-internal.h"
+#include "opal/mca/base/mca_base_pvar.h"
 
 OBJ_CLASS_INSTANCE( mca_pml_ob1_pckt_pending_t,
                     ompi_free_list_item_t,
