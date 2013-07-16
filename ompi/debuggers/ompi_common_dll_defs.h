@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2007-2008 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2004-2010 The University of Tennessee and The University
+ * Copyright (c) 2004-2013 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * $COPYRIGHT$
@@ -197,7 +197,7 @@ typedef struct
             int c_remote_group;
             int c_flags;
             int c_f_to_c_index;
-            int c_topo_comm;
+            int c_topo;
             int c_keyhash;
         } offset;
     } ompi_communicator_t;
@@ -206,12 +206,28 @@ typedef struct
         mqs_type *type;
         int size;
         struct {
-            int mtc_ndims_or_nnodes;
-            int mtc_dims_or_index;
-            int mtc_periods_or_edges;
-            int mtc_reorder;
+            struct {
+                int ndims;
+                int dims;
+                int periods;
+            } mtc_cart;
+            struct {
+                int nnodes;
+                int index;
+                int edges;
+            } mtc_graph;
+            struct {
+                int in;
+                int inw;
+                int out;
+                int outw;
+                int indegree;
+                int outdegree;
+                int weighted;
+            } mtc_dist_graph;
+            int reorder;
         } offset;
-    } ompi_mca_topo_base_comm_1_0_0_t;
+    } ompi_mca_topo_base_module_t;
     /* MPI_Status */
     struct {
         mqs_type *type;

@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2013 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -41,64 +41,140 @@
  * @retval OMPI_SUCCESS
  */                       
 
-int mca_topo_base_cart_create (mca_topo_base_comm_t *topo_data,
-                               int *proc_count,
-                               ompi_proc_t **proc_pointers,
-                               int *new_rank,
-                               int ndims,
-                               int *dims,
-                               int *periods,
-                               bool reorder) {
+int mca_topo_base_cart_create(mca_topo_base_module_t *topo,
+                              ompi_communicator_t* old_comm,
+                              int ndims,
+                              int *dims,
+                              int *periods,
+                              bool reorder,
+                              ompi_communicator_t** comm_topo)
+{
+    int nprocs = 1, i, *p, new_rank, num_procs, ret;
+    ompi_communicator_t *new_comm;
+    ompi_proc_t **topo_procs = NULL;
+    mca_topo_base_comm_cart_2_1_0_t* cart;
 
-   int nprocs;
-   int dim;
-   int i;
-   int *p;
-   int *coords = topo_data->mtc_coords;
-   int dummy_rank;
+    num_procs = old_comm->c_local_group->grp_proc_count;
+    new_rank = old_comm->c_local_group->grp_my_rank;
+    assert(topo->type == OMPI_COMM_CART);
 
-   nprocs = 1;
-   p = topo_data->mtc_dims_or_index;
-
-   /* Calculate the number of processes in this grid */
-   for (i = 0; i < topo_data->mtc_ndims_or_nnodes; ++i, ++p) {
-      if(*p <= 0) {
-          return OMPI_ERROR;
-       }
-       nprocs *= *p;
-   }
-
-   /* check for the error condition */
-
-   if (*proc_count < nprocs) {
-       return MPI_ERR_DIMS;
-   }
-
-   /* check if we have to trim the list of processes */
-   if (nprocs < *proc_count) {
-       *proc_count = nprocs;
-   }
-   
-   if (*new_rank > (nprocs-1)) {
-       /* sorry, but in our scheme this process is cut off */
-       *new_rank = MPI_UNDEFINED;
-       return OMPI_SUCCESS;
-   }
-
-   /* Have to replace this with the actual function body itself */
-   p = topo_data->mtc_dims_or_index;
-   coords =  topo_data->mtc_coords;
-   dummy_rank = *new_rank;
-
-   for (i=0; 
-        (i < topo_data->mtc_ndims_or_nnodes && i < ndims); 
-        ++i, ++p) {
-        dim = *p;
-        nprocs /= dim;
-        *coords++ = dummy_rank / nprocs;
-        dummy_rank %= nprocs;
+    /* Calculate the number of processes in this grid */
+    p = dims;
+    for (i = 0; i < ndims; ++i, ++p) {
+        if(*p <= 0) {
+            return OMPI_ERROR;
+        }
+        nprocs *= *p;
     }
 
-   /* end here */
-   return OMPI_SUCCESS;
+    /* check for the error condition */
+    if (num_procs < nprocs) {
+        return MPI_ERR_DIMS;
+    }
+
+    /* check if we have to trim the list of processes */
+    if (nprocs < num_procs) {
+        num_procs = nprocs;
+    }
+   
+    if (new_rank > (nprocs-1)) {
+        ndims = 0;
+        new_rank = MPI_UNDEFINED;
+        num_procs = 0;
+    }
+
+    cart = (mca_topo_base_comm_cart_2_1_0_t*)calloc(1, sizeof(mca_topo_base_comm_cart_2_1_0_t));
+    if( NULL == cart ) {
+        ompi_comm_free(&new_comm);
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+    cart->ndims = ndims;
+
+    /* MPI-2.1 allows 0-dimension cartesian communicators, so prevent
+       a 0-byte malloc -- leave dims as NULL */
+    if( ndims > 0 ) {
+        cart->dims = (int*)malloc(sizeof(int) * ndims);
+        if (NULL == cart->dims) {
+            free(cart);
+            return OMPI_ERROR;
+        }
+        memcpy(cart->dims, dims, ndims * sizeof(int));
+
+        /* Cartesian communicator; copy the right data to the common information */
+        cart->periods = (int*)malloc(sizeof(int) * ndims);
+        if (NULL == cart->periods) {
+            if(NULL != cart->dims) free(cart->dims);
+            free(cart);
+            return OMPI_ERR_OUT_OF_RESOURCE;
+        }
+        memcpy(cart->periods, periods, ndims * sizeof(int));
+        
+        cart->coords = (int*)malloc(sizeof(int) * ndims);
+        if (NULL == cart->coords) {
+            free(cart->periods);
+            if(NULL != cart->dims) free(cart->dims);
+            free(cart);
+            return OMPI_ERR_OUT_OF_RESOURCE;
+        }
+        {  /* setup the cartesian topology */
+            int nprocs = num_procs, rank = new_rank;
+
+            for (i = 0; i < ndims; ++i) {
+                nprocs /= cart->dims[i];
+                cart->coords[i] = rank / nprocs;
+                rank %= nprocs;
+            }
+        }
+    }
+
+    /* Copy the proc structure from the previous communicator over to
+       the new one.  The topology module is then able to work on this
+       copy and rearrange it as it deems fit. */
+    topo_procs = (ompi_proc_t**)malloc(num_procs * sizeof(ompi_proc_t *));
+    if(OMPI_GROUP_IS_DENSE(old_comm->c_local_group)) {
+        memcpy(topo_procs, 
+               old_comm->c_local_group->grp_proc_pointers,
+               num_procs * sizeof(ompi_proc_t *));
+    } else {
+        for(i = 0 ; i < num_procs; i++) {
+            topo_procs[i] = ompi_group_peer_lookup(old_comm->c_local_group,i);
+        }
+    }
+
+    /* allocate a new communicator */
+    new_comm = ompi_comm_allocate(num_procs, 0);
+    if (NULL == new_comm) {
+        free(topo_procs);
+        if(NULL != cart->periods) free(cart->periods);
+        if(NULL != cart->coords) free(cart->coords);
+        if(NULL != cart->dims) free(cart->dims);
+        free(cart);
+        return MPI_ERR_INTERN;
+    }
+
+    ret = ompi_comm_enable(old_comm, new_comm,
+                           new_rank, num_procs, topo_procs);
+    if (OMPI_SUCCESS != ret) {
+        /* something wrong happened during setting the communicator */
+        ompi_comm_free (&new_comm);
+        if(NULL != cart->periods) free(cart->periods);
+        if(NULL != cart->coords) free(cart->coords);
+        if(NULL != cart->dims) free(cart->dims);
+        free(cart);
+        return ret;
+    }
+
+    new_comm->c_topo           = topo;
+    new_comm->c_topo->mtc.cart = cart;
+    new_comm->c_topo->reorder  = reorder;
+    new_comm->c_flags         |= OMPI_COMM_CART;
+    *comm_topo = new_comm;
+
+    if( MPI_UNDEFINED == new_rank ) {
+        ompi_comm_free(&new_comm);
+        *comm_topo = MPI_COMM_NULL;
+    }
+
+    /* end here */
+    return OMPI_SUCCESS;
 }

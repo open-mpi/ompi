@@ -53,6 +53,13 @@ included in the vX.Y.Z section and be denoted as:
                                  included in release version vA.B.C.
 
 
+1.7.3
+-----
+
+- Add support for MPI_Dist_graph functionality (MPI 2.2).
+
+
+
 1.7.2
 -----
 

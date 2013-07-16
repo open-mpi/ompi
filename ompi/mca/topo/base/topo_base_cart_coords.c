@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2013 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -32,30 +32,23 @@
  *                   coordinates of specified process (integer)
  *
  * @retval MPI_SUCCESS
- * @retval MPI_ERR_COMM
- * @retval MPI_ERR_TOPOLOGY
- * @retval MPI_ERR_RANK
- * @retval MPI_ERR_DIMS
- * @retval MPI_ERR_ARG
  */                   
 
-int mca_topo_base_cart_coords (ompi_communicator_t* comm,
-                           int rank,
-                           int maxdims,
-                           int *coords){
-    int dim;
-    int remprocs;
-    int i;
-    int *d;
+int mca_topo_base_cart_coords(ompi_communicator_t* comm,
+                              int rank,
+                              int maxdims,
+                              int *coords)
+{
+    int dim, remprocs, i, *d;
 
     /*
      * loop computing the co-ordinates
      */ 
-    d = comm->c_topo_comm->mtc_dims_or_index;
+    d = comm->c_topo->mtc.cart->dims;
     remprocs = ompi_comm_size(comm);
 
     for (i = 0; 
-        (i < comm->c_topo_comm->mtc_ndims_or_nnodes) && (i < maxdims); 
+        (i < comm->c_topo->mtc.cart->ndims) && (i < maxdims); 
         ++i, ++d) {
         dim = *d;
         remprocs /= dim;

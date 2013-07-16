@@ -105,6 +105,10 @@ nodist_libmpi_c_pmpi_la_SOURCES = \
         pcomm_remote_group.c \
         pcomm_remote_size.c \
         pcomm_set_attr.c \
+        pdist_graph_create.c \
+        pdist_graph_create_adjacent.c \
+        pdist_graph_neighbors.c \
+        pdist_graph_neighbors_count.c \
         pcomm_set_errhandler.c \
         pcomm_set_name.c \
         pcomm_size.c \

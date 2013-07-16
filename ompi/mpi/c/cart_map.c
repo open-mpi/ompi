@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2012 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart, 
@@ -42,8 +42,7 @@ static const char FUNC_NAME[] = "MPI_Cart_map";
 int MPI_Cart_map(MPI_Comm comm, int ndims, int dims[],
                 int periods[], int *newrank) 
 {
-    int err;
-    mca_topo_base_module_cart_map_fn_t func;
+    int err = MPI_SUCCESS;
 
     MEMCHECKER(
         memchecker_comm(comm);
@@ -73,19 +72,10 @@ int MPI_Cart_map(MPI_Comm comm, int ndims, int dims[],
            it, we just return the "default" value suggested by MPI:
            newrank = rank */
         *newrank = ompi_comm_rank(comm);
-    }
-    else {
-        /* get the function pointer on this communicator */
-        func = comm->c_topo->topo_cart_map;
-	
-        /* call the function */
-        err = func(comm, ndims, dims, periods, newrank);
-        if ( MPI_SUCCESS != err ) {
-            OPAL_CR_EXIT_LIBRARY();
-            return OMPI_ERRHANDLER_INVOKE(comm, err, FUNC_NAME);
-        }
+    } else {
+        err = comm->c_topo->topo.cart.cart_map(comm, ndims, dims, periods, newrank);
     }
 
     OPAL_CR_EXIT_LIBRARY();
-    return MPI_SUCCESS;
+    OMPI_ERRHANDLER_RETURN(err, comm, err, FUNC_NAME);
 }

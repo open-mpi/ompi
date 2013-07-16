@@ -69,7 +69,7 @@ do {                                                                    \
     unsigned char* _ptr = (unsigned char*)frag->addr;                   \
     /* init recv_frag */                                                \
     frag->btl = btl;                                                    \
-    frag->hdr = *(mca_pml_ob1_hdr_t*)hdr;                               \
+    ob1_hdr_copy( (mca_pml_ob1_hdr_t*)hdr, &frag->hdr );                \
     frag->num_segments = 1;                                             \
     _size = segs[0].seg_len;                                            \
     for( i = 1; i < cnt; i++ ) {                                        \

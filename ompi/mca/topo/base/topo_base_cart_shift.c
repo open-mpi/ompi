@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2013 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -35,47 +35,38 @@
  * Cartesian mesh.
  *
  * @retval MPI_SUCCESS
- * @retval MPI_ERR_TOPOLOGY
- * @retval MPI_ERR_DIMS
- * @retval MPI_ERR_COMM
- * @retval MPI_ERR_ARG
  */                  
-int mca_topo_base_cart_shift (ompi_communicator_t* comm,
-                          int direction,
-                          int disp,
-                          int *rank_source,
-                          int *rank_dest){
-    int factor;
-    int thisdirection = 0;
-    int thisperiod = 0;
-    int ord;
-    int srcord;
-    int destord;
-    int i;
-    int *d, *q;
+int mca_topo_base_cart_shift(ompi_communicator_t* comm,
+                             int direction,
+                             int disp,
+                             int *rank_source,
+                             int *rank_dest)
+{
+    int factor, thisdirection = 0, thisperiod = 0, ord;
+    int srcord, destord, i, *d, *q;
 
-   /*
-    * Handle the trivial case.
-    */
+    /*
+     * Handle the trivial case.
+     */
     ord = ompi_comm_rank(comm);
 
     if (disp == 0) {
         *rank_dest = *rank_source = ord;
         return MPI_SUCCESS;
     }
-   /*
-    * Compute the rank factor and ordinate.
-    */
+    /*
+     * Compute the rank factor and ordinate.
+     */
     factor = ompi_comm_size(comm);
-    d = comm->c_topo_comm->mtc_dims_or_index;
-    q = comm->c_topo_comm->mtc_periods_or_edges;
-    for (i = 0; (i < comm->c_topo_comm->mtc_ndims_or_nnodes) && (i <= direction); ++i, ++d, ++q) {
+    d = comm->c_topo->mtc.cart->dims;
+    q = comm->c_topo->mtc.cart->periods;
+    for (i = 0; (i < comm->c_topo->mtc.cart->ndims) && (i <= direction); ++i, ++d, ++q) {
         thisdirection = *d;
         thisperiod = *q;
 
         ord %= factor;
         factor /= thisdirection;
-     }
+    }
 
     ord /= factor;
     /*
@@ -86,20 +77,20 @@ int mca_topo_base_cart_shift (ompi_communicator_t* comm,
     srcord = ord - disp;
     destord = ord + disp;
     if ( ((destord < 0) || (destord >= thisdirection)) && (!thisperiod) ) {
-         *rank_dest = MPI_PROC_NULL;
+        *rank_dest = MPI_PROC_NULL;
     } else {
-       destord %= thisdirection;
-       if (destord < 0) destord += thisdirection;
-       *rank_dest = ompi_comm_rank(comm);
-       *rank_dest += ((destord - ord) * factor);
+        destord %= thisdirection;
+        if (destord < 0) destord += thisdirection;
+        *rank_dest = ompi_comm_rank(comm);
+        *rank_dest += ((destord - ord) * factor);
     }
     if ( ((srcord < 0) || (srcord >= thisdirection)) && (!thisperiod) ) {
-         *rank_source = MPI_PROC_NULL;
+        *rank_source = MPI_PROC_NULL;
     } else {
-       srcord %= thisdirection;
-       if (srcord < 0) srcord += thisdirection;
-       *rank_source= ompi_comm_rank(comm);
-       *rank_source += ((srcord - ord) * factor);
+        srcord %= thisdirection;
+        if (srcord < 0) srcord += thisdirection;
+        *rank_source= ompi_comm_rank(comm);
+        *rank_source += ((srcord - ord) * factor);
     }
 
     return MPI_SUCCESS;

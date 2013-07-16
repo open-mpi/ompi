@@ -1,7 +1,10 @@
 /*   
  * Copyright (c) 2009      Sun Microsystems, Inc  All rights reserved.
  * Copyright (c) 2009      Cisco Systems, Inc  All rights reserved.
- * $COPYRIGHT$
+ * Copyright (c) 2013      The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
+  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
  * 
@@ -54,11 +57,8 @@ int main(int argc, char **argv) {
     GAP_CHECK("c_local_comm", test_comm, c_local_comm,  c_remote_group,  1);
     GAP_CHECK("c_keyhash", test_comm, c_keyhash, c_local_comm,  1);
     GAP_CHECK("c_cube_dim", test_comm, c_cube_dim, c_keyhash,  1);
-    GAP_CHECK("c_topo_component", test_comm, c_topo_component, c_cube_dim,  1);
-    GAP_CHECK("c_topo", test_comm, c_topo, c_topo_component,  1);
-    GAP_CHECK("c_topo_comm", test_comm, c_topo_comm, c_topo,  1);
-    GAP_CHECK("c_topo_module", test_comm, c_topo_module, c_topo_comm,  1);
-    GAP_CHECK("c_f_to_c_index", test_comm, c_f_to_c_index, c_topo_module, 1);
+    GAP_CHECK("c_topo", test_comm, c_topo, c_cube_dim,  1);
+    GAP_CHECK("c_f_to_c_index", test_comm, c_f_to_c_index, c_topo, 1);
 #ifdef OMPI_WANT_PERUSE
     GAP_CHECK("c_peruse_handles", test_comm, c_peruse_handles, c_f_to_c_index, 1);
     GAP_CHECK("error_handler", test_comm, error_handler, c_peruse_handles, 1);
