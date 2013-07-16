@@ -538,6 +538,14 @@ int orte_register_params(void)
                                  OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
                                  &orte_allocation_required);
 
+    /* whether or not to map stddiag to stderr */
+    orte_map_stddiag_to_stderr = false;
+    (void) mca_base_var_register ("orte", "orte", NULL, "map_stddiag_to_stderr",
+                                  "Map output from opal_output to stderr of the local process [default: no]",
+                                  MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                  OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
+                                  &orte_map_stddiag_to_stderr);
+
    /* generate new terminal windows to display output from specified ranks */
    orte_xterm = NULL;
    (void) mca_base_var_register ("orte", "orte", NULL, "xterm",
@@ -557,14 +565,6 @@ int orte_register_params(void)
          */
         orte_map_stddiag_to_stderr = true;
     }
-
-    /* whether or not to map stddiag to stderr */
-    orte_map_stddiag_to_stderr = false;
-    (void) mca_base_var_register ("orte", "orte", NULL, "map_stddiag_to_stderr",
-                                  "Map output from opal_output to stderr of the local process [default: no]",
-                                  MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
-                                  OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
-                                  &orte_map_stddiag_to_stderr);
 
     /* whether or not to forward SIGTSTP and SIGCONT signals */
     orte_forward_job_control = false;
