@@ -38,31 +38,9 @@ int MPI_T_cvar_get_info(int cvar_index, char *name, int *name_len, int *verbosit
         mpit_copy_string (desc, desc_len, var->mbv_description);
 
         /* find the corresponding mpi type for an mca type */
-        switch (var->mbv_type) {
-        case MCA_BASE_VAR_TYPE_INT:
-        case MCA_BASE_VAR_TYPE_BOOL:
-            *datatype = MPI_INT;
+        rc = ompit_var_type_to_datatype (var->mbv_type, datatype);
+        if (OMPI_SUCCESS != rc) {
             break;
-        case MCA_BASE_VAR_TYPE_UNSIGNED_INT:
-            *datatype = MPI_UNSIGNED;
-            break;
-        case MCA_BASE_VAR_TYPE_UNSIGNED_LONG_LONG:
-            *datatype = MPI_UNSIGNED_LONG_LONG;
-            break;        
-        case MCA_BASE_VAR_TYPE_SIZE_T:
-            if (sizeof(size_t) == sizeof (unsigned long long)) {
-                *datatype = MPI_UNSIGNED_LONG_LONG;
-            } else {
-                *datatype = MPI_UNSIGNED;
-            }
-        case MCA_BASE_VAR_TYPE_STRING:
-            *datatype = MPI_CHAR;
-            break;
-        default:
-            /* Internal error! Did the MCA variable system change? */
-            assert (0);
-            mpit_unlock ();
-            return MPI_ERR_OTHER;
         }
 
         if (NULL != enumtype) {

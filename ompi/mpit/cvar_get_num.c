@@ -23,7 +23,7 @@ int MPI_T_cvar_get_num (int *num_cvar) {
     }
 
     mpit_lock ();
-    *num_cvar = mca_base_var_group_get_count();
+    *num_cvar = mca_base_var_get_count();
     mpit_unlock ();
     
     return MPI_SUCCESS;

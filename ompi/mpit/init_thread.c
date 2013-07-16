@@ -39,6 +39,59 @@ void mpit_unlock (void)
     }
 }
 
+int ompit_var_type_to_datatype (mca_base_var_type_t type, MPI_Datatype *datatype)
+{
+    switch (type) {
+    case MCA_BASE_VAR_TYPE_INT:
+        *datatype = MPI_INT;
+        break;
+    case MCA_BASE_VAR_TYPE_UNSIGNED_INT:
+        *datatype = MPI_UNSIGNED;
+        break;
+    case MCA_BASE_VAR_TYPE_UNSIGNED_LONG:
+        *datatype = MPI_UNSIGNED_LONG;
+        break;
+    case MCA_BASE_VAR_TYPE_UNSIGNED_LONG_LONG:
+        *datatype = MPI_UNSIGNED_LONG_LONG;
+        break;
+    case MCA_BASE_VAR_TYPE_SIZE_T:
+        if (sizeof (size_t) == sizeof (unsigned)) {
+            *datatype = MPI_UNSIGNED;
+        } else if (sizeof (size_t) == sizeof (unsigned long)) {
+            *datatype = MPI_UNSIGNED_LONG;
+        } else if (sizeof (size_t) == sizeof (unsigned long long)) {
+            *datatype = MPI_UNSIGNED_LONG_LONG;
+        } else {
+            /* not supported -- fixme */
+            assert (0);
+        }
+
+        break;
+    case MCA_BASE_VAR_TYPE_STRING:
+        *datatype = MPI_CHAR;
+        break;
+    case MCA_BASE_VAR_TYPE_BOOL:
+        if (sizeof (bool) == sizeof (char)) {
+            *datatype = MPI_CHAR;
+        } else if (sizeof (bool) == sizeof (int)) {
+            *datatype = MPI_INT;
+        } else {
+            /* not supported -- fixme */
+            assert (0);
+        }
+        break;
+    case MCA_BASE_VAR_TYPE_DOUBLE:
+        *datatype = MPI_DOUBLE;
+        break;
+    default:
+        /* not supported -- fixme */
+        assert (0);
+        break;
+    }
+
+    return OMPI_SUCCESS;
+}
+
 int MPI_T_init_thread (int required, int *provided)
 {
     static volatile int32_t first_init = 1;
@@ -50,8 +103,7 @@ int MPI_T_init_thread (int required, int *provided)
     }
 
     while (!initted) {
-        sched_yield ();
-        usleep (1000);
+        usleep (10);
     }
 
     mpit_lock ();
@@ -68,11 +120,15 @@ int MPI_T_init_thread (int required, int *provided)
             break;
         }
 
+        /* register all parameters */
         rc = ompi_info_register_framework_params (NULL);
         if (OMPI_SUCCESS != rc) {
             rc = MPI_ERR_OTHER;
             break;
         }
+
+        /* determine the thread level. TODO -- this might
+           be wrong */
         ompi_mpi_thread_level (required, provided);
     } while (0);
 

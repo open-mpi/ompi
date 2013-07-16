@@ -76,6 +76,15 @@ INT).  This a developer error; your job may abort.
 
   MCA variable name: %s
 #
+[var-name-conflict]
+A name collision was detected on an MCA variable name. This can happen
+if two components try to register the same variable with slightly
+different name components. The conflicting variables are listed below:
+
+  MCA variable name: %s
+  New name: %s %s %s
+  Existing name: %s %s %s
+#
 [overridden-param-set]
 WARNING: A user-supplied value attempted to set a variable that is set
 in the override variable file (openmpi-mca-params-override.conf).

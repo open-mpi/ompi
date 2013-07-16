@@ -33,9 +33,8 @@ int MPI_T_category_get_info(int cat_index, char *name, int *name_len,
             break;
         }
 
-        /* XXX -- TODO -- Implement me */
         if (NULL != num_pvars) {
-            *num_pvars = 0;
+            *num_pvars = opal_value_array_get_size ((opal_value_array_t *) &group->group_pvars);
         }
 
         if (NULL != num_cvars) {
