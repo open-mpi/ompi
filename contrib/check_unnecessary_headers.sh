@@ -126,8 +126,7 @@ SEARCH_HEADER[41]="opal/util/printf.h snprintf vsnprintf asprintf vasprintf"
 SEARCH_HEADER[42]="opal/util/show_help.h opal_show_help_init opal_show_help_finalize opal_show_help opal_show_vhelp opal_show_help_string opal_show_help_finish_parsing"
 SEARCH_HEADER[43]="opal/util/strncpy.h opal_strncpy"
 SEARCH_HEADER[44]="opal/util/sys_limits.h opal_sys_limits opal_util_init_sys_limits"
-SEARCH_HEADER[45]="opal/util/trace.h OPAL_TRACE opal_trace_handle opal_trace_init opal_trace_finalize"
-SEARCH_HEADER[46]=""
+SEARCH_HEADER[45]=""
 
 delete_unnessary_header .
 

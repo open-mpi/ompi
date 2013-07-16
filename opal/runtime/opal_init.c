@@ -15,6 +15,7 @@
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2010-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
+ * Copyright (c) 2013      Intel, Inc. All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -28,7 +29,6 @@
 
 #include "opal/util/malloc.h"
 #include "opal/util/output.h"
-#include "opal/util/trace.h"
 #include "opal/util/show_help.h"
 #include "opal/memoryhooks/memory.h"
 #include "opal/mca/base/base.h"
@@ -260,9 +260,6 @@ opal_init_util(int* pargc, char*** pargv)
         error = "opal_error_register";
         goto return_error;
     }
-
-    /* init the trace function */
-    opal_trace_init();
 
     /* keyval lex-based parser */
     if (OPAL_SUCCESS != (ret = opal_util_keyval_parse_init())) {

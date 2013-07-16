@@ -302,26 +302,6 @@ AC_DEFINE_UNQUOTED([OPAL_ENABLE_HETEROGENEOUS_SUPPORT],
 
 
 #
-# Internal trace file logging (debugging)
-#
-
-AC_MSG_CHECKING([if want trace file debugging])
-AC_ARG_ENABLE([trace],
-    [AC_HELP_STRING([--enable-trace],
-                    [Enable internal tracing of OMPI/ORTE/OPAL calls -- used only for developer debugging, not tracing of MPI applications (default: disabled)])])
-if test "$enable_trace" = "yes"; then
-    AC_MSG_RESULT([yes])
-    opal_want_trace=1
-else
-    AC_MSG_RESULT([no])
-    opal_want_trace=0
-fi
-AC_DEFINE_UNQUOTED([OPAL_ENABLE_TRACE], [$opal_want_trace],
-                   [Enable run-time tracing of internal functions])
-
-
-
-#
 # Cross-compile data
 #
 AC_ARG_WITH([cross],
