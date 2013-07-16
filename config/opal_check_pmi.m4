@@ -88,7 +88,7 @@ AC_DEFUN([OPAL_CHECK_PMI],[
            CPPFLAGS="$CPPFLAGS $opal_check_pmi_$1_CPPFLAGS"
            # reset the included libs so we only link in the
            # ones we successfully check
-           opal_check_pmi_$1_libs=
+           opal_check_pmi_$1_LIBS=
            # check the PMI libs - both -lpmi and -lpmi2 may
            # be present. If both are present, then we need
            # to link against both
@@ -96,7 +96,7 @@ AC_DEFUN([OPAL_CHECK_PMI],[
            AC_CHECK_LIB([pmi2], [PMI2_Init],
                         [opal_have_pmi_support=yes
                          opal_have_pmi2=1
-                         opal_check_pmi_$1_LIBS="$opal_check_pmi_$1_libs -lpmi2"])
+                         opal_check_pmi_$1_LIBS="$opal_check_pmi_$1_LIBS -lpmi2"])
           # if the pmi2 functions aren't in -lpmi2, they might
           # be in -lpmi. Nobody follows a convention here, so
           # all we can do is check both
@@ -106,13 +106,13 @@ AC_DEFUN([OPAL_CHECK_PMI],[
                               [opal_have_pmi_support=yes
                                opal_have_pmi2=1
                                opal_have_pmi1=1
-                               opal_check_pmi_$1_LIBS="$opal_check_pmi_$1_libs -lpmi"])])
+                               opal_check_pmi_$1_LIBS="$opal_check_pmi_$1_LIBS -lpmi"])])
           # if we haven't already added -lpmi, look for the pmi1 functions
           AS_IF([test "$opal_have_pmi1" = "0"],
                 [LIBS="$opal_check_pmi_$1_save_LIBS -lpmi"
                  AC_CHECK_LIB([pmi], [PMI_Init],
                               [opal_have_pmi_support=yes
-                               opal_check_pmi_$1_LIBS="$opal_check_pmi_$1_libs -lpmi"])])
+                               opal_check_pmi_$1_LIBS="$opal_check_pmi_$1_LIBS -lpmi"])])
 
            AC_MSG_CHECKING([PMI2 and/or PMI support enabled])
            AS_IF([test "$opal_have_pmi_support" = "yes"],
@@ -121,6 +121,9 @@ AC_DEFUN([OPAL_CHECK_PMI],[
                   $1_LDFLAGS="$opal_check_pmi_$1_LDFLAGS"
                   $1_CPPFLAGS="$opal_check_pmi_$1_CPPFLAGS"
                   $1_LIBS="$opal_check_pmi_$1_LIBS  -Wl,-rpath=$opal_pmi_rpath"
+                  AC_MSG_CHECKING([final added libraries])
+                  AC_MSG_RESULT([$opal_check_pmi_$1_LIBS])
+
                   $2],
                  [AC_MSG_RESULT([no])
                   AC_MSG_WARN([PMI support requested (via --with-pmi) but not found.])
