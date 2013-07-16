@@ -71,7 +71,8 @@ mca_fcoll_static_file_write_all (mca_io_ompio_file_t *fh,
   int i=0,j=0,l=0, temp_index;
   int ret=OMPI_SUCCESS, cycles, local_cycles, *bytes_per_process=NULL;
   int index, *disp_index=NULL, **blocklen_per_process=NULL;
-  int *iovec_count_per_process=NULL, *displs=NULL, total_bytes_written=0;
+  int *iovec_count_per_process=NULL, *displs=NULL;
+  size_t total_bytes_written=0;
   MPI_Aint **displs_per_process=NULL, *memory_displacements=NULL;
   MPI_Aint bytes_to_write_in_cycle=0, global_iov_count=0, global_count=0;
 
@@ -89,6 +90,13 @@ mca_fcoll_static_file_write_all (mca_io_ompio_file_t *fh,
   ompi_datatype_t *types[3];
   ompi_datatype_t *io_array_type=MPI_DATATYPE_NULL;
   /*----------------------------------------------*/
+#if TIME_BREAKDOWN
+  double write_time = 0.0, start_write_time = 0.0, end_write_time = 0.0;
+  double comm_time = 0.0, start_comm_time = 0.0, end_comm_time = 0.0;
+  double exch_write = 0.0, start_exch = 0.0, end_exch = 0.0;
+  print_entry nentry;
+#endif
+
   
   #if DEBUG_ON
     MPI_Aint gc_in;
@@ -155,14 +163,17 @@ mca_fcoll_static_file_write_all (mca_io_ompio_file_t *fh,
       goto exit;
   }
 
-  /*  printf("max_data %ld\n", max_data);  */
-  local_iov_array = (local_io_array *)malloc (iov_size * sizeof(local_io_array));
-  if ( NULL == local_iov_array){
-      fprintf(stderr,"local_iov_array allocation error\n");
-      ret = OMPI_ERR_OUT_OF_RESOURCE;
-      goto exit;
+  if (0 == iov_size){
+    iov_size  = 1;
   }
   
+  local_iov_array = (local_io_array *)malloc (iov_size * sizeof(local_io_array));
+  if ( NULL == local_iov_array){
+    fprintf(stderr,"local_iov_array allocation error\n");
+    ret = OMPI_ERR_OUT_OF_RESOURCE;
+      goto exit;
+  }
+
   
   for (j=0; j < iov_size; j++){
     local_iov_array[j].offset = (OMPI_MPI_OFFSET_TYPE)(intptr_t)
@@ -299,38 +310,28 @@ mca_fcoll_static_file_write_all (mca_io_ompio_file_t *fh,
     }
   }
   
-  if (fh->f_flags & OMPIO_UNIFORM_FVIEW) {
-      ret = ompi_io_ompio_gather_array (local_iov_array,
-					iov_size,
-					io_array_type,
-					global_iov_array,
-					iov_size,
-					io_array_type,
-					fh->f_aggregator_index,
-					fh->f_procs_in_group,
-					fh->f_procs_per_group,
-					fh->f_comm);
-  }
-  else {
-      ret = ompi_io_ompio_gatherv_array (local_iov_array,
-					 iov_size,
-					 io_array_type,
-					 global_iov_array,
-					 iovec_count_per_process,
-					 displs,
-					 io_array_type,
-					 fh->f_aggregator_index,
-					 fh->f_procs_in_group,
-					 fh->f_procs_per_group,
-					 fh->f_comm);
-  }
-
+  ret = ompi_io_ompio_gatherv_array (local_iov_array,
+				     iov_size,
+				     io_array_type,
+				     global_iov_array,
+				     iovec_count_per_process,
+				     displs,
+				     io_array_type,
+				     fh->f_aggregator_index,
+				     fh->f_procs_in_group,
+				     fh->f_procs_per_group,
+				     fh->f_comm);
   if (OMPI_SUCCESS != ret){
-      fprintf(stderr,"global_iov_array gather error!\n");
-      goto exit;
+    fprintf(stderr,"global_iov_array gather error!\n");
+    goto exit;
   }
   
   if (fh->f_procs_in_group[fh->f_aggregator_index] == fh->f_rank) {
+
+    if ( 0 == global_iov_count){
+      global_iov_count =  1;
+    }
+
     sorted = (int *)malloc (global_iov_count * sizeof(int));
     if (NULL == sorted) {
       opal_output (1, "OUT OF MEMORY\n");
@@ -350,6 +351,11 @@ mca_fcoll_static_file_write_all (mca_io_ompio_file_t *fh,
     }
   }
 #endif
+
+#if TIME_BREAKDOWN
+    start_exch = MPI_Wtime();
+#endif
+
   
   for (index = 0; index < cycles; index++){
     if (fh->f_procs_in_group[fh->f_aggregator_index] == fh->f_rank) {
@@ -669,6 +675,9 @@ mca_fcoll_static_file_write_all (mca_io_ompio_file_t *fh,
 	       bytes_to_write_in_cycle,
 	       fh->f_procs_per_group);
 #endif
+#if TIME_BREAKDOWN
+	  start_comm_time = MPI_Wtime();
+#endif
 	global_buf  = (char *) malloc (global_count);
 	if (NULL == global_buf){
 	    opal_output(1, "OUT OF MEMORY");
@@ -792,7 +801,13 @@ mca_fcoll_static_file_write_all (mca_io_ompio_file_t *fh,
 	}
 #endif
     }
+#if TIME_BREAKDOWN
+      end_comm_time = MPI_Wtime();
+      comm_time += end_comm_time - start_comm_time;
+#endif
+
     
+
     if (fh->f_procs_in_group[fh->f_aggregator_index] == fh->f_rank) {
 	fh->f_io_array = (mca_io_ompio_io_array_t *) malloc 
 	    (entries_per_aggregator * sizeof (mca_io_ompio_io_array_t));
@@ -837,18 +852,20 @@ mca_fcoll_static_file_write_all (mca_io_ompio_file_t *fh,
 #endif
       
 #if TIME_BREAKDOWN
-      start_ptime = MPI_Wtime();
+	start_write_time = MPI_Wtime();
 #endif
+
       if (fh->f_num_of_io_entries) {
 	  if (OMPI_SUCCESS != fh->f_fbtl->fbtl_pwritev (fh, NULL)) {
 	      opal_output (1, "WRITE FAILED\n");
 	      ret = OMPI_ERROR;
 	      goto exit;
 	}
-      }
+      } 
+      
 #if TIME_BREAKDOWN
-      end_ptime = MPI_Wtime();
-      tpw = end_ptime - start_ptime;
+	end_write_time = MPI_Wtime();
+	write_time += end_write_time - start_write_time;
 #endif
       
     }
@@ -863,6 +880,8 @@ mca_fcoll_static_file_write_all (mca_io_ompio_file_t *fh,
 	    free (fh->f_io_array);
 	    fh->f_io_array = NULL;
 	}
+	for (i = 0; i < fh->f_procs_per_group; i++)
+	  ompi_datatype_destroy(recvtype+i);
 	if (NULL != recvtype){
 	    free(recvtype);
 	    recvtype=NULL;
@@ -877,6 +896,24 @@ mca_fcoll_static_file_write_all (mca_io_ompio_file_t *fh,
 	}
     }
   }
+
+#if TIME_BREAKDOWN
+    end_exch = MPI_Wtime();
+    exch_write += end_exch - start_exch;
+    nentry.time[0] = write_time;
+    nentry.time[1] = comm_time;
+    nentry.time[2] = exch_write;
+    if (fh->f_procs_in_group[fh->f_aggregator_index] == fh->f_rank)
+      nentry.aggregator = 1;
+    else
+      nentry.aggregator = 0;
+    nentry.nprocs_for_coll = mca_fcoll_static_num_io_procs;
+    if (!ompi_io_ompio_full_print_queue(WRITE_PRINT_QUEUE)){
+      ompi_io_ompio_register_print_entry(WRITE_PRINT_QUEUE,
+					 nentry);
+    } 
+#endif
+
   
   
  exit:
@@ -941,6 +978,11 @@ static int local_heap_sort (local_io_array *io_array,
     int temp = 0;
     unsigned char done = 0;
     int* temp_arr = NULL;
+
+    if( 0 == num_entries){
+      num_entries = 1;
+    }
+
 
     temp_arr = (int*)malloc(num_entries*sizeof(int));
     if (NULL == temp_arr) {
