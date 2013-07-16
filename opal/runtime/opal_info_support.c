@@ -249,9 +249,11 @@ int opal_info_register_project_frameworks (const char *project_name, mca_base_fr
                 fprintf(stderr, "\nA \"bad parameter\" error was encountered when opening the %s %s framework\n",
                         project_name, frameworks[i]->framework_name);
                 fprintf(stderr, "The output received from that framework includes the following parameters:\n\n");
-            } else {
+            } else if (OPAL_ERR_NOT_AVAILABLE != rc) {
                 fprintf(stderr, "%s_info_register: %s failed\n", project_name, frameworks[i]->framework_name);
                 rc = OPAL_ERROR;
+            } else {
+                continue;
             }
 
             break;
@@ -559,10 +561,10 @@ static void opal_info_show_mca_group_params(const mca_base_var_group_t *group, m
     count = opal_value_array_get_size((opal_value_array_t *)&group->group_pvars);
 
     for (i = 0 ; i < count ; ++i) {
-	ret = mca_base_pvar_dump (variables[i], &strings, !opal_info_pretty ? MCA_BASE_VAR_DUMP_PARSABLE : MCA_BASE_VAR_DUMP_READABLE);
-	if (OPAL_SUCCESS != ret) {
-	    continue;
-	}
+        ret = mca_base_pvar_dump (variables[i], &strings, !opal_info_pretty ? MCA_BASE_VAR_DUMP_PARSABLE : MCA_BASE_VAR_DUMP_READABLE);
+        if (OPAL_SUCCESS != ret) {
+            continue;
+        }
 
         for (j = 0 ; strings[j] ; ++j) {
             if (0 == j && opal_info_pretty) {
