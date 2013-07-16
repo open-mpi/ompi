@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008-2012 University of Houston. All rights reserved.
+ * Copyright (c) 2008-2013 University of Houston. All rights reserved.
  * Copyright (c) 2011      Cisco Systems, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
@@ -46,15 +46,16 @@
 #ifdef HAVE_SYS_STAT_H
 #include <sys/stat.h>
 #endif
-
-
-
 #include "io_ompio.h"
+
+print_queue *coll_write_time=NULL;
+print_queue *coll_read_time=NULL;
+
 
 int ompi_io_ompio_set_file_defaults (mca_io_ompio_file_t *fh)
 {
 
-    if (NULL != fh) {
+   if (NULL != fh) {
         ompi_datatype_t *types[2], *default_file_view;
         int blocklen[2] = {1, 1};
         OPAL_PTRDIFF_TYPE d[2], base;
@@ -137,8 +138,8 @@ int ompi_io_ompio_generate_current_file_view (mca_io_ompio_file_t *fh,
     size_t sum_previous_counts = 0;
     int j, k;
     int block = 1;
- 
-    /* allocate an initial iovec, will grow if needed */
+
+   /* allocate an initial iovec, will grow if needed */
     iov = (struct iovec *) malloc 
         (OMPIO_IOVEC_INITIAL_SIZE * sizeof (struct iovec));
     if (NULL == iov) {
@@ -198,10 +199,234 @@ int ompi_io_ompio_generate_current_file_view (mca_io_ompio_file_t *fh,
     }
     fh->f_position_in_file_view = sum_previous_counts;
     fh->f_index_in_file_view = j;
-
     *iov_count = k;
     *f_iov = iov;
 
+    if (mca_io_ompio_record_offset_info){
+	
+	int tot_entries=0, *recvcounts=NULL, *displs=NULL;
+	mca_io_ompio_offlen_array_t *per_process=NULL;
+	mca_io_ompio_offlen_array_t  *all_process=NULL;
+	int *sorted=NULL, *column_list=NULL, *values=NULL;
+	int *row_index=NULL, i=0, l=0, m=0;
+	int column_index=0, r_index=0;
+	int blocklen[3] = {1, 1, 1};
+	OPAL_PTRDIFF_TYPE d[3], base;
+	ompi_datatype_t *types[3];
+	ompi_datatype_t *io_array_type=MPI_DATATYPE_NULL;
+	int **adj_matrix=NULL;
+	FILE *fp;
+
+
+        recvcounts = (int *) malloc (fh->f_size * sizeof(int));
+        if (NULL == recvcounts){
+            return OMPI_ERR_OUT_OF_RESOURCE;
+	}
+        displs = (int *) malloc (fh->f_size * sizeof(int));
+        if (NULL == displs){
+            return OMPI_ERR_OUT_OF_RESOURCE;
+	}
+
+        fh->f_comm->c_coll.coll_gather (&k,
+                                        1,
+                                        MPI_INT,
+                                        recvcounts,
+                                        1,
+					MPI_INT,
+                                        OMPIO_ROOT,
+                                        fh->f_comm,
+                                        fh->f_comm->c_coll.coll_gather_module);
+
+        per_process = (mca_io_ompio_offlen_array_t *)
+	    malloc (k * sizeof(mca_io_ompio_offlen_array_t));
+	if (NULL == per_process){
+            opal_output(1,"Error while allocating per process!\n");
+            return  OMPI_ERR_OUT_OF_RESOURCE;
+        }
+        for (i=0;i<k;i++){
+            per_process[i].offset =
+                (OMPI_MPI_OFFSET_TYPE)iov[i].iov_base;
+            per_process[i].length =
+                (MPI_Aint)iov[i].iov_len;
+            per_process[i].process_id = fh->f_rank;
+        }
+	
+	types[0] = &ompi_mpi_long.dt;
+        types[1] = &ompi_mpi_long.dt;
+        types[2] = &ompi_mpi_int.dt;
+
+	d[0] = (OPAL_PTRDIFF_TYPE)&per_process[0];
+        d[1] = (OPAL_PTRDIFF_TYPE)&per_process[0].length;
+        d[2] = (OPAL_PTRDIFF_TYPE)&per_process[0].process_id;
+        base = d[0];
+        for (i=0;i<3;i++){
+            d[i] -= base;
+        }
+        ompi_datatype_create_struct (3,
+                                     blocklen,
+                                     d,
+                                     types,
+                                     &io_array_type);
+        ompi_datatype_commit (&io_array_type);
+
+	if (OMPIO_ROOT == fh->f_rank){
+            tot_entries = recvcounts[0];
+            displs[0] = 0;
+            for(i=1;i<fh->f_size;i++){
+                displs[i] = displs[i-1] + recvcounts[i-1];
+                tot_entries += recvcounts[i];
+            }
+            all_process = (mca_io_ompio_offlen_array_t *)
+                malloc (tot_entries * sizeof(mca_io_ompio_offlen_array_t));
+            if (NULL == all_process){
+                opal_output(1,"Error while allocating per process!\n");
+                return  OMPI_ERR_OUT_OF_RESOURCE;
+            }
+
+            sorted = (int *) malloc
+                (tot_entries * sizeof(int));
+            if (NULL == all_process){
+                opal_output(1,"Error while allocating per process!\n");
+                return  OMPI_ERR_OUT_OF_RESOURCE;
+            }
+
+            adj_matrix = (int **) malloc (fh->f_size *
+                                          sizeof(int *));
+            for (i=0;i<fh->f_size;i++){
+                adj_matrix[i] = (int *) malloc (fh->f_size *
+                                                sizeof (int ));
+            }
+
+            for (i=0;i<fh->f_size;i++){
+                for (j=0;j<fh->f_size;j++){
+                    adj_matrix[i][j] = 0;
+                }
+            }
+	}
+	fh->f_comm->c_coll.coll_gatherv (per_process,
+					 k,
+					 io_array_type,
+					 all_process,
+					 recvcounts,
+					 displs,
+					 io_array_type,
+					 OMPIO_ROOT,
+					 fh->f_comm,
+					 fh->f_comm->c_coll.coll_gatherv_module);
+
+	ompi_datatype_destroy(&io_array_type);
+	
+	if (OMPIO_ROOT == fh->f_rank){
+	    
+	    ompi_io_ompio_sort_offlen(all_process,
+				      tot_entries,
+				      sorted);
+	    
+	    for (i=0;i<tot_entries-1;i++){
+		j = all_process[sorted[i]].process_id;
+		l = all_process[sorted[i+1]].process_id;
+		adj_matrix[j][l] += 1;
+		adj_matrix[l][j] += 1;
+	    }
+	    
+	    /*Compress sparse matrix based on CRS to write to file */
+	    m = 0;
+	    for (i=0; i<fh->f_size; i++){
+		for (j=0; j<fh->f_size; j++){
+		    if (adj_matrix[i][j] > 0){
+			m++;
+		    }
+		}
+	    }
+	    fp = fopen("fileview_info.out", "w+");
+	    fprintf(fp,"FILEVIEW\n");
+	    column_list = (int *) malloc ( m * sizeof(int));
+	    if (NULL == column_list){
+		opal_output(1,"Error while allocating column list\n");
+		return OMPI_ERR_OUT_OF_RESOURCE;
+	    }
+	    values = (int *) malloc ( m * sizeof(int));
+	    if (NULL == values){
+		opal_output(1,"Error while allocating values list\n");
+		return OMPI_ERR_OUT_OF_RESOURCE;
+	    }
+	    
+	    row_index = (int *) malloc ((fh->f_size + 1) *
+					sizeof(int));
+	    if (NULL == row_index){
+		opal_output(1,"Error while allocating row_index list\n");
+		return OMPI_ERR_OUT_OF_RESOURCE;
+	    }
+	    fprintf(fp,"%d %d\n", m, fh->f_size+1);
+	    column_index = 0;
+	    r_index = 1;
+	    row_index[0] = r_index;
+	    for (i=0; i<fh->f_size; i++){
+		for (j=0; j<fh->f_size; j++){
+		    if (adj_matrix[i][j] > 0){
+			values[column_index]= adj_matrix[i][j];
+			column_list[column_index]= j;
+			fprintf(fp,"%d ", column_list[column_index]);
+			column_index++;
+			r_index++;
+		    }
+		    
+		}
+		row_index[i+1]= r_index;
+	    }
+
+	    fprintf(fp,"\n");
+	    for (i=0; i<m;i++){
+		fprintf(fp, "%d ", values[i]);
+	    }
+	    fprintf(fp, "\n");
+	    for (i=0; i< (fh->f_size + 1); i++){
+		fprintf(fp, "%d ", row_index[i]);
+	    }
+	    fprintf(fp, "\n");
+	    fclose(fp);
+
+	    if (NULL != recvcounts){
+		free(recvcounts);
+		recvcounts = NULL;
+	    }
+	    if (NULL != displs){
+		free(displs);
+		displs = NULL;
+	    }
+	    if (NULL != sorted){
+		free(sorted);
+		sorted = NULL;
+	    }
+	    if (NULL != per_process){
+		free(per_process);
+		per_process = NULL;
+	    }
+	    if (NULL != all_process){
+		free(all_process);
+		all_process = NULL;
+	    }
+	    if (NULL != column_list){
+		free(column_list);
+		column_list = NULL;
+	    }
+	    if (NULL != values){
+		free(values);
+		values = NULL;
+	    }
+	    if (NULL != row_index){
+		free(row_index);
+		row_index = NULL;
+	    }
+	    if (NULL != adj_matrix){
+		for (i=0;i<fh->f_size;i++){
+		    free(adj_matrix[i]);
+		}
+		free(adj_matrix);
+		adj_matrix = NULL;
+	    }
+	}
+    }
     return OMPI_SUCCESS;
 }
 
@@ -211,28 +436,28 @@ int ompi_io_ompio_set_explicit_offset (mca_io_ompio_file_t *fh,
     int i = 0;
     int k = 0;
 
+    /* starting offset of the current copy of the filew view */
     fh->f_offset = (fh->f_view_extent * 
 		    ((offset*fh->f_etype_size) / fh->f_view_size)) + fh->f_disp;
 
-    fh->f_position_in_file_view = 0;
 
+    /* number of bytes used within the current copy of the file view */
     fh->f_total_bytes = (offset*fh->f_etype_size) % fh->f_view_size;
-
-    fh->f_index_in_file_view = 0;
     i = fh->f_total_bytes;
 
-    k = 0;
-    while (1) {
+
+    /* Initialize the block id and the starting offset of the current block 
+       within the current copy of the file view to zero */
+    fh->f_index_in_file_view = 0;
+    fh->f_position_in_file_view = 0;
+
+    /* determine block id that the offset is located in and
+       the starting offset of that block */
+    k = fh->f_decoded_iov[fh->f_index_in_file_view].iov_len;
+    while (i >= k) {
+        fh->f_position_in_file_view = k;
+        fh->f_index_in_file_view++;
         k += fh->f_decoded_iov[fh->f_index_in_file_view].iov_len;
-        if (i >= k) {
-            i = i - fh->f_decoded_iov[fh->f_index_in_file_view].iov_len;
-            fh->f_position_in_file_view += 
-                fh->f_decoded_iov[fh->f_index_in_file_view].iov_len;
-            fh->f_index_in_file_view = fh->f_index_in_file_view+1;
-        }
-        else {
-            break;
-        }
     }
 
     return OMPI_SUCCESS;
@@ -266,6 +491,14 @@ int ompi_io_ompio_decode_datatype (mca_io_ompio_file_t *fh,
         opal_output (1, "Cannot attach the datatype to a convertor\n");
         return OMPI_ERROR;
     }
+
+    if ( 0 == datatype->super.size ) {
+	*max_data = 0;
+	*iovec_count = 0;
+	*iov = NULL;
+	return OMPI_SUCCESS;
+    }
+
     remaining_length = count * datatype->super.size;
 
     temp_count = OMPIO_IOVEC_INITIAL_SIZE;
@@ -279,13 +512,13 @@ int ompi_io_ompio_decode_datatype (mca_io_ompio_file_t *fh,
 				   temp_iov,
                                    &temp_count, 
                                    &temp_data)) {
-#if 0
-        printf ("%d: New raw extraction (iovec_count = %d, max_data = %d)\n",
-                fh->f_rank,temp_count, temp_data);
+#if 0 
+        printf ("%d: New raw extraction (iovec_count = %d, max_data = %lu)\n",
+                fh->f_rank,temp_count, (unsigned long)temp_data);
         for (i = 0; i < temp_count; i++) {
-            printf ("%d: \t{%p, %d}\n",fh->f_rank,
+            printf ("%d: \t{%p, %lu}\n",fh->f_rank,
 		    temp_iov[i].iov_base,
-		    temp_iov[i].iov_len);
+		    (unsigned long)temp_iov[i].iov_len);
         }
 #endif
 
@@ -535,6 +768,109 @@ int ompi_io_ompio_sort_iovec (struct iovec *iov,
             if ((right <= heap_size) && 
                 (iov[temp_arr[right]].iov_base > 
                  iov[temp_arr[largest]].iov_base)) {
+                largest = right;
+            }
+            if (largest != j) {
+                temp = temp_arr[largest];
+                temp_arr[largest] = temp_arr[j];
+                temp_arr[j] = temp;
+                j = largest;
+            }
+            else {
+                done = 1;
+            }
+        }
+        sorted[i] = temp_arr[i];
+    }
+    sorted[0] = temp_arr[0];
+
+    if (NULL != temp_arr) {
+        free(temp_arr);
+        temp_arr = NULL;
+    }
+    return OMPI_SUCCESS;
+}
+
+int ompi_io_ompio_sort_offlen (mca_io_ompio_offlen_array_t *io_array,
+                               int num_entries,
+                               int *sorted){
+
+    int i = 0;
+    int j = 0;
+    int left = 0;
+    int right = 0;
+    int largest = 0;
+    int heap_size = num_entries - 1;
+    int temp = 0;
+    unsigned char done = 0;
+    int* temp_arr = NULL;
+
+    temp_arr = (int*)malloc(num_entries*sizeof(int));
+    if (NULL == temp_arr) {
+        opal_output (1, "OUT OF MEMORY\n");
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+    temp_arr[0] = 0;
+    for (i = 1; i < num_entries; ++i) {
+        temp_arr[i] = i;
+    }
+    /* num_entries can be a large no. so NO RECURSION */
+    for (i = num_entries/2-1 ; i>=0 ; i--) {
+        done = 0;
+        j = i;
+        largest = j;
+
+        while (!done) {
+	    left = j*2+1;
+            right = j*2+2;
+            if ((left <= heap_size) &&
+                (io_array[temp_arr[left]].offset > io_array[temp_arr[j]].offset)) {
+                largest = left;
+            }
+            else {
+                largest = j;
+            }
+            if ((right <= heap_size) &&
+                (io_array[temp_arr[right]].offset >
+                 io_array[temp_arr[largest]].offset)) {
+                largest = right;
+            }
+            if (largest != j) {
+                temp = temp_arr[largest];
+                temp_arr[largest] = temp_arr[j];
+                temp_arr[j] = temp;
+                j = largest;
+            }
+            else {
+                done = 1;
+            }
+        }
+    }
+
+    for (i = num_entries-1; i >=1; --i) {
+        temp = temp_arr[0];
+        temp_arr[0] = temp_arr[i];
+        temp_arr[i] = temp;
+        heap_size--;
+        done = 0;
+        j = 0;
+        largest = j;
+
+        while (!done) {
+            left =  j*2+1;
+            right = j*2+2;
+
+            if ((left <= heap_size) &&
+                (io_array[temp_arr[left]].offset >
+                 io_array[temp_arr[j]].offset)) {
+		largest = left;
+            }
+            else {
+                largest = j;
+            }
+            if ((right <= heap_size) &&
+                (io_array[temp_arr[right]].offset >
+                 io_array[temp_arr[largest]].offset)) {
                 largest = right;
             }
             if (largest != j) {
@@ -1664,4 +2000,255 @@ int ompi_io_ompio_scatter_data (mca_io_ompio_file_t *fh,
     return rc;
 }
 
+/* Print queue related function implementations */
+
+
+int ompi_io_ompio_set_print_queue (print_queue **q, 
+				   int queue_type){
+
+    int  ret = OMPI_SUCCESS;
+
+    switch(queue_type) { 
+
+    case WRITE_PRINT_QUEUE: 
+	*q = coll_write_time; 
+	break;		 
+    case READ_PRINT_QUEUE: 
+	*q = coll_read_time; 
+	break; 
+    }	  
+
+    if (NULL == q){				
+	ret = OMPI_ERROR;				
+    } 						
+    return ret;
+
+} 
+
+
+int ompi_io_ompio_initialize_print_queue(print_queue *q){
+
+    int ret = OMPI_SUCCESS;
+    q->first = 0;
+    q->last = QUEUESIZE - 1;
+    q->count = 0;
+    return ret;
+}
+int ompi_io_ompio_register_print_entry (int queue_type,
+					print_entry x){
+    
+    int ret = OMPI_SUCCESS;
+    print_queue *q=NULL;
+
+    ret = ompi_io_ompio_set_print_queue(&q, queue_type);
+
+    if (ret != OMPI_ERROR){
+	if (q->count >= QUEUESIZE){
+	    return OMPI_ERROR;
+	}
+	else{
+	    q->last = (q->last + 1) % QUEUESIZE;
+	    q->entry[q->last] = x;
+	    q->count = q->count + 1;
+	}
+    }
+    return ret;
+}
+
+int  ompi_io_ompio_unregister_print_entry (int queue_type, 
+					   print_entry *x){
+    
+    int ret = OMPI_SUCCESS;
+    print_queue *q=NULL;
+    ret = ompi_io_ompio_set_print_queue(&q, queue_type);
+    if (ret != OMPI_ERROR){
+	if (q->count <= 0){
+	    return OMPI_ERROR;
+	}
+	else{
+	    *x = q->entry[q->first];
+	    q->first = (q->first+1) % QUEUESIZE;
+	    q->count = q->count - 1;
+	}
+    }
+    return OMPI_SUCCESS;
+}
+
+int ompi_io_ompio_empty_print_queue(int queue_type){
+
+    int ret = OMPI_SUCCESS;
+    print_queue *q=NULL;
+    ret =  ompi_io_ompio_set_print_queue(&q, queue_type);
+    
+    assert (ret != OMPI_ERROR);	
+    if (q->count == 0)
+	    return 1;
+    else
+	return 0;
+
+    
+}
+
+int ompi_io_ompio_full_print_queue(int queue_type){
+    
+
+    int ret = OMPI_SUCCESS;
+    print_queue *q=NULL;
+    ret =  ompi_io_ompio_set_print_queue(&q, queue_type);
+    
+    assert ( ret != OMPI_ERROR);	
+    if (q->count < QUEUESIZE)
+	    return 0;
+    else
+	return 1;
+    
+}
+
+
+int ompi_io_ompio_print_time_info(int queue_type,
+				  char *name,
+				  mca_io_ompio_file_t *fh){
+    
+    int i = 0, j=0, nprocs_for_coll = 0, ret = OMPI_SUCCESS, count = 0;
+    double *time_details = NULL, *final_sum = NULL;
+    double *final_max = NULL, *final_min = NULL;
+    double *final_time_details=NULL;
+    print_queue *q=NULL;
+	
+    ret =  ompi_io_ompio_set_print_queue(&q, queue_type);
+ 	
+    assert (ret != OMPI_ERROR); 	
+    nprocs_for_coll = q->entry[0].nprocs_for_coll;
+    time_details = (double *) malloc (4*sizeof(double));
+    if ( NULL == time_details){
+	ret = OMPI_ERR_OUT_OF_RESOURCE;
+	goto exit;
+	
+    }
+   
+    if (!fh->f_rank){
+	
+	final_min = (double *) malloc (3*sizeof(double));
+	if ( NULL == final_min){
+	    ret = OMPI_ERR_OUT_OF_RESOURCE;
+	    goto exit;
+	}
+
+	final_max = (double *) malloc (3*sizeof(double));
+	if ( NULL == final_max){
+	    ret = OMPI_ERR_OUT_OF_RESOURCE;
+	    goto exit;
+
+	}
+
+	final_sum = (double *) malloc (3*sizeof(double));
+	if ( NULL == final_sum){
+	    ret = OMPI_ERR_OUT_OF_RESOURCE;
+	    goto exit;
+	}
+    
+	final_time_details = 
+	    (double *)malloc
+	    (fh->f_size * 4 * sizeof(double));
+	if (NULL == final_time_details){
+	    ret = OMPI_ERR_OUT_OF_RESOURCE;
+	    goto exit;
+	}
+
+	count = 4 * fh->f_size;
+	for(i=0;i<count;i++){
+	    final_time_details[i] = 0.0;
+	}
+
+ 
+    }
+    
+    for (i = 0; i < 4; i++){
+	time_details[i] = 0.0;
+    } 
+
+    if (q->count > 0){
+	for (i=0; i < q->count; i++){
+	    for (j=0;j<3;j++){
+		if (!fh->f_rank){
+		    final_min[j] = 100000.0;
+		    final_max[j] = 0.0;
+		    final_sum[j] = 0.0;
+		}
+		time_details[j] += q->entry[i].time[j];
+	    }
+	    time_details[3]  = q->entry[i].aggregator;
+	}
+    }
+
+    fh->f_comm->c_coll.coll_gather(time_details,
+				   4,
+				   MPI_DOUBLE,
+				   final_time_details,
+				   4,
+				   MPI_DOUBLE,
+				   0,
+				   fh->f_comm,
+				   fh->f_comm->c_coll.coll_gather_module);
+	    
+
+
+    if (!fh->f_rank){
+
+	for (i=0;i<count;i+=4){
+	    if (final_time_details[i+3] == 1){
+		final_sum[0] += final_time_details[i];
+		final_sum[1] += final_time_details[i+1];
+		final_sum[2] += final_time_details[i+2];
+
+		if ( final_time_details[i] < final_min[0])
+		    final_min[0] = final_time_details[i];
+		if ( final_time_details[i+1] < final_min[1])
+		    final_min[1] = final_time_details[i+1];
+		if ( final_time_details[i+2] < final_min[2])
+		    final_min[2] = final_time_details[i+2];
+
+
+
+		if ( final_time_details[i] > final_max[0])
+		    final_max[0] = final_time_details[i];
+		if ( final_time_details[i+1] > final_max[1])
+		    final_max[1] = final_time_details[i+1];
+		if ( final_time_details[i+2] > final_max[2])
+		    final_max[2] = final_time_details[i+2];
+
+	    }
+	}
+    
+	printf ("\n# MAX-%s AVG-%s MIN-%s MAX-COMM AVG-COMM MIN-COMM",
+		name, name, name);
+	printf (" MAX-EXCH AVG-EXCH MIN-EXCH\n");
+	printf (" %f %f %f %f %f %f %f %f %f\n\n",
+		final_max[0], final_sum[0]/nprocs_for_coll, final_min[0],
+		final_max[1], final_sum[1]/nprocs_for_coll, final_min[1],
+		final_max[2], final_sum[2]/nprocs_for_coll, final_min[2]);
+	
+    }
+    
+ exit:
+    if ( NULL != final_max){
+	free(final_max);
+	final_max = NULL;
+    }
+    if (NULL != final_min){
+	free(final_min);
+	final_min = NULL;
+    }
+    if (NULL != final_sum){
+	free(final_sum);
+	final_sum = NULL;
+    }
+    if (NULL != time_details){
+	free(time_details);
+	time_details = NULL;
+    }
+
+    return ret;
+}
+    
 
