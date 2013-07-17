@@ -9,7 +9,7 @@
  *                          University of Stuttgart.  All rights reserved.
  *  Copyright (c) 2004-2005 The Regents of the University of California.
  *                          All rights reserved.
- *  Copyright (c) 2008-2012 University of Houston. All rights reserved.
+ *  Copyright (c) 2008-2013 University of Houston. All rights reserved.
  *  $COPYRIGHT$
  *  
  *  Additional copyrights may follow
@@ -28,6 +28,8 @@
 #include "ompi/mca/fcoll/base/base.h"
 #include "ompi/mca/fbtl/fbtl.h"
 #include "ompi/mca/fbtl/base/base.h"
+#include "ompi/mca/sharedfp/sharedfp.h"
+#include "ompi/mca/sharedfp/base/base.h"
 
 #include <unistd.h>
 #include "io_ompio.h"
@@ -41,8 +43,34 @@ mca_io_ompio_file_open (ompi_communicator_t *comm,
 {
     int ret = OMPI_SUCCESS;
     mca_io_ompio_data_t *data=NULL;
-    int remote_arch;
+    bool use_sharedfp = true;
 
+    data = (mca_io_ompio_data_t *) fh->f_io_selected_data;
+    if ( NULL == data ) {
+        return  OMPI_ERR_OUT_OF_RESOURCE;
+    }
+
+    ret = ompio_io_ompio_file_open(comm,filename,amode,info,&data->ompio_fh,use_sharedfp);
+
+    if ( OMPI_SUCCESS == ret ) {
+        fh->f_flags |= OMPIO_FILE_IS_OPEN;
+        /*save pointer back to the file_t structure */
+        data->ompio_fh.f_fh = fh;
+    }
+
+    return ret;
+
+}
+
+int
+ompio_io_ompio_file_open (ompi_communicator_t *comm,
+                        char *filename,
+                        int amode,
+                        ompi_info_t *info,
+                        mca_io_ompio_file_t *ompio_fh, bool use_sharedfp)
+{
+    int ret = OMPI_SUCCESS;
+    int remote_arch;
 
     if ( ((amode&MPI_MODE_RDONLY)?1:0) + ((amode&MPI_MODE_RDWR)?1:0) +
 	 ((amode&MPI_MODE_WRONLY)?1:0) != 1 ) {
@@ -53,37 +81,29 @@ mca_io_ompio_file_open (ompi_communicator_t *comm,
         ((amode & MPI_MODE_CREATE) || (amode & MPI_MODE_EXCL))) {
 	return  MPI_ERR_AMODE;
     }
-						
-
 
     if ((amode & MPI_MODE_RDWR) && (amode & MPI_MODE_SEQUENTIAL)) {
 	return MPI_ERR_AMODE;
     }
 
-    data = (mca_io_ompio_data_t *) fh->f_io_selected_data;
-    if ( NULL == data ) {	
-	return  OMPI_ERR_OUT_OF_RESOURCE;
-    }
-
-    data->ompio_fh.f_fh       = fh;
-    data->ompio_fh.f_iov_type = MPI_DATATYPE_NULL;
-    data->ompio_fh.f_rank     = ompi_comm_rank (fh->f_comm);
-    data->ompio_fh.f_size     = ompi_comm_size (fh->f_comm);
+    ompio_fh->f_iov_type = MPI_DATATYPE_NULL;
+    ompio_fh->f_rank     = ompi_comm_rank (comm);
+    ompio_fh->f_size     = ompi_comm_size (comm);
     remote_arch = opal_local_arch;
-    data->ompio_fh.f_convertor = opal_convertor_create (remote_arch, 0);
+    ompio_fh->f_convertor = opal_convertor_create (remote_arch, 0);
 
-    ret = ompi_comm_dup (comm, &data->ompio_fh.f_comm);
+    ret = ompi_comm_dup (comm, &ompio_fh->f_comm);
     if ( ret != OMPI_SUCCESS )  {
 	goto fn_fail;
     }
 
-    data->ompio_fh.f_fstype = NONE;
-    data->ompio_fh.f_amode  = amode;
-    data->ompio_fh.f_info   = fh->f_info;
-    data->ompio_fh.f_atomicity = 0;
+    ompio_fh->f_fstype = NONE;
+    ompio_fh->f_amode  = amode;
+    ompio_fh->f_info   = info;
+    ompio_fh->f_atomicity = 0;
 
-    ompi_io_ompio_set_file_defaults ( &data->ompio_fh);
-    data->ompio_fh.f_filename = fh->f_filename;
+    ompi_io_ompio_set_file_defaults (ompio_fh);
+    ompio_fh->f_filename = filename;
 
     /*Initialize the print_queues queues here!*/
     coll_write_time = (print_queue *) malloc (sizeof(print_queue));
@@ -94,7 +114,7 @@ mca_io_ompio_file_open (ompi_communicator_t *comm,
 
     /*
     if (MPI_INFO_NULL != info)  {
-        ret = ompi_info_dup (info, &data->ompio_fh.f_info);
+        ret = ompi_info_dup (info, &ompio_fh->f_info);
 	if (OMPI_SUCCESS != ret) {
              goto fn_fail;
 	}
@@ -109,47 +129,67 @@ mca_io_ompio_file_open (ompi_communicator_t *comm,
      /*--------------------------------------------------*/
 
 
-    if (OMPI_SUCCESS != (ret = mca_fs_base_file_select (&data->ompio_fh, 
+    if (OMPI_SUCCESS != (ret = mca_fs_base_file_select (ompio_fh,
                                                         NULL))) {
         opal_output(1, "mca_fs_base_file_select() failed\n");
         goto fn_fail;
     }
-    if (OMPI_SUCCESS != (ret = mca_fbtl_base_file_select (&data->ompio_fh, 
+    if (OMPI_SUCCESS != (ret = mca_fbtl_base_file_select (ompio_fh,
                                                           NULL))) {
         opal_output(1, "mca_fbtl_base_file_select() failed\n");
         goto fn_fail;
     }
 
-    if (OMPI_SUCCESS != (ret = mca_fcoll_base_file_select (&data->ompio_fh, 
+    if (OMPI_SUCCESS != (ret = mca_fcoll_base_file_select (ompio_fh,
                                                            NULL))) {
         opal_output(1, "mca_fcoll_base_file_select() failed\n");
         goto fn_fail;
     }
 
+    ompio_fh->f_sharedfp_component = NULL; /*component*/
+    ompio_fh->f_sharedfp           = NULL; /*module*/
+    ompio_fh->f_sharedfp_data      = NULL; /*data*/
 
-    ret = data->ompio_fh.f_fs->fs_file_open (comm,
-                                             filename,
-                                             amode,
-                                             info,
-                                             &data->ompio_fh);
-    if (ret != OMPI_SUCCESS) {
+    if (OMPI_SUCCESS != (ret = mca_sharedfp_base_file_select (ompio_fh, NULL))) {
+	opal_output(1, "mca_sharedfp_base_file_select() failed\n");
+	goto fn_fail;
+    }
+
+    ret = ompio_fh->f_fs->fs_file_open (comm,
+					filename,
+					amode,
+					info,
+					ompio_fh);
+    if ( OMPI_SUCCESS != ret ) {
 	ret = MPI_ERR_FILE;
         goto fn_fail;
     }
 
-    fh->f_flags |= OMPIO_FILE_IS_OPEN;
+    /* open the file once more for the shared file pointer if required.
+    ** Per default, the shared file pointer specific actions are however 
+    ** only performed on first access of the shared file pointer.
+    */
+    if ( true == use_sharedfp && !mca_io_ompio_sharedfp_lazy_open ){
+        ret = ompio_fh->f_sharedfp->sharedfp_file_open(comm,
+                                                       filename,
+                                                       amode,
+                                                       info,
+                                                       ompio_fh);
 
-    /* If file has been opened in the append mode, move the internal 
-       file pointer of OMPIO to the very end of the file. */
-    if ( data->ompio_fh.f_amode & MPI_MODE_APPEND ) {
-	OMPI_MPI_OFFSET_TYPE current_size;
-
-        data->ompio_fh.f_fs->fs_file_get_size (&data->ompio_fh, 
-					       &current_size);
-	ompi_io_ompio_set_explicit_offset (&data->ompio_fh, current_size);
+        if ( OMPI_SUCCESS != ret ) {
+            goto fn_fail;
+        }
     }
 
+    /* If file has been opened in the append mode, move the internal
+       file pointer of OMPIO to the very end of the file. */
+    if ( ompio_fh->f_amode & MPI_MODE_APPEND ) {
+        OMPI_MPI_OFFSET_TYPE current_size;
 
+        ompio_fh->f_fs->fs_file_get_size( ompio_fh,
+                                          &current_size);
+        ompi_io_ompio_set_explicit_offset (ompio_fh, current_size);
+    }
     
     return OMPI_SUCCESS;
 
@@ -160,102 +200,113 @@ mca_io_ompio_file_open (ompi_communicator_t *comm,
 
     return ret;
 }
-
 int
 mca_io_ompio_file_close (ompi_file_t *fh)
 {
     int ret = OMPI_SUCCESS;
     mca_io_ompio_data_t *data;
-    int delete_flag = 0;
-    char name[256];
 
     data = (mca_io_ompio_data_t *) fh->f_io_selected_data;
     if ( NULL == data ) {
 	/* structure has already been freed, this is an erroneous call to file_close */
 	return ret;
     }
+    ret = ompio_io_ompio_file_close(&data->ompio_fh);
+
+    if ( NULL != data ) {
+      free ( data );
+    }
+
+    return ret;
+}
+
+int
+ompio_io_ompio_file_close (mca_io_ompio_file_t *ompio_fh)
+{
+    int ret = OMPI_SUCCESS;
+    int delete_flag = 0;
+    char name[256];
 
     if(mca_io_ompio_coll_timing_info){
-      strcpy (name, "WRITE");
-      if (!ompi_io_ompio_empty_print_queue(WRITE_PRINT_QUEUE)){
-	ret = ompi_io_ompio_print_time_info(WRITE_PRINT_QUEUE,
-					    name,
-					    &data->ompio_fh);
-	if (OMPI_SUCCESS != ret){
-	  printf("Error in print_time_info ");
-	}
-	
-      }
-      strcpy (name, "READ");
-      if (!ompi_io_ompio_empty_print_queue(READ_PRINT_QUEUE)){
-	ret = ompi_io_ompio_print_time_info(READ_PRINT_QUEUE,
-					    name,
-					    &data->ompio_fh);
-	if (OMPI_SUCCESS != ret){
-	  printf("Error in print_time_info ");
-	}
-      }
-    }
-    if ( data->ompio_fh.f_amode & MPI_MODE_DELETE_ON_CLOSE ) {
-	delete_flag = 1;
-    }
+        strcpy (name, "WRITE");
+        if (!ompi_io_ompio_empty_print_queue(WRITE_PRINT_QUEUE)){
+            ret = ompi_io_ompio_print_time_info(WRITE_PRINT_QUEUE,
+                                                name,
+                                                ompio_fh);
+            if (OMPI_SUCCESS != ret){
+                printf("Error in print_time_info ");
+            }
 
-    ret = data->ompio_fh.f_fs->fs_file_close (&data->ompio_fh);
-    if ( delete_flag && 0 == data->ompio_fh.f_rank ) {
-	mca_io_ompio_file_delete ( data->ompio_fh.f_filename, MPI_INFO_NULL );
+        }
+        strcpy (name, "READ");
+        if (!ompi_io_ompio_empty_print_queue(READ_PRINT_QUEUE)){
+            ret = ompi_io_ompio_print_time_info(READ_PRINT_QUEUE,
+                                                name,
+                                                ompio_fh);
+            if (OMPI_SUCCESS != ret){
+                printf("Error in print_time_info ");
+            }
+        }
+    }
+    if ( ompio_fh->f_amode & MPI_MODE_DELETE_ON_CLOSE ) {
+        delete_flag = 1;
     }
 
-
-
-    mca_fs_base_file_unselect (&data->ompio_fh);
-    mca_fbtl_base_file_unselect (&data->ompio_fh);
-    mca_fcoll_base_file_unselect (&data->ompio_fh);
-
-    if (NULL != data->ompio_fh.f_io_array) {
-        free (data->ompio_fh.f_io_array);
-        data->ompio_fh.f_io_array = NULL;
+    /*close the sharedfp file*/
+    if(ompio_fh->f_sharedfp != NULL){
+        ret = ompio_fh->f_sharedfp->sharedfp_file_close(ompio_fh);
+    }
+    ret = ompio_fh->f_fs->fs_file_close (ompio_fh);
+    if ( delete_flag && 0 == ompio_fh->f_rank ) {
+        mca_io_ompio_file_delete ( ompio_fh->f_filename, MPI_INFO_NULL );
     }
 
-    if (NULL != data->ompio_fh.f_procs_in_group) {
-        free (data->ompio_fh.f_procs_in_group);
-        data->ompio_fh.f_procs_in_group = NULL;
+    mca_fs_base_file_unselect (ompio_fh);
+    mca_fbtl_base_file_unselect (ompio_fh);
+    mca_fcoll_base_file_unselect (ompio_fh);
+    /* mca_sharedfp_base_file_unselect (ompio_fh) ; EG?*/ 
+
+    if (NULL != ompio_fh->f_io_array) {
+        free (ompio_fh->f_io_array);
+        ompio_fh->f_io_array = NULL;
     }
 
-    if (NULL != data->ompio_fh.f_decoded_iov) {
-        free (data->ompio_fh.f_decoded_iov);
-        data->ompio_fh.f_decoded_iov = NULL;
+    if (NULL != ompio_fh->f_procs_in_group) {
+        free (ompio_fh->f_procs_in_group);
+        ompio_fh->f_procs_in_group = NULL;
     }
 
-    if (NULL != data->ompio_fh.f_convertor) {
-        free (data->ompio_fh.f_convertor);
-        data->ompio_fh.f_convertor = NULL;
+    if (NULL != ompio_fh->f_decoded_iov) {
+        free (ompio_fh->f_decoded_iov);
+        ompio_fh->f_decoded_iov = NULL;
     }
 
-    if (NULL != data->ompio_fh.f_datarep) {
-        free (data->ompio_fh.f_datarep);
-        data->ompio_fh.f_datarep = NULL;
+    if (NULL != ompio_fh->f_convertor) {
+        free (ompio_fh->f_convertor);
+        ompio_fh->f_convertor = NULL;
     }
 
-    if (MPI_DATATYPE_NULL != data->ompio_fh.f_iov_type) {
-        ompi_datatype_destroy (&data->ompio_fh.f_iov_type);
+    if (NULL != ompio_fh->f_datarep) {
+        free (ompio_fh->f_datarep);
+        ompio_fh->f_datarep = NULL;
     }
 
-    if (MPI_COMM_NULL != data->ompio_fh.f_comm)  {
-        ompi_comm_free (&data->ompio_fh.f_comm);
+    if (MPI_DATATYPE_NULL != ompio_fh->f_iov_type) {
+        ompi_datatype_destroy (&ompio_fh->f_iov_type);
+    }
+
+    if (MPI_COMM_NULL != ompio_fh->f_comm)  {
+        ompi_comm_free (&ompio_fh->f_comm);
     }
 
 
     /*
-    if (MPI_INFO_NULL != data->ompio_fh.f_info)
+    if (MPI_INFO_NULL != ompio_fh->f_info)
     {
-        ompi_info_free (&data->ompio_fh.f_info);
+        ompi_info_free (&ompio_fh->f_info);
     }
     */
-
-    if ( NULL != data ) {
-	free ( data );
-    }
-
+    
     return ret;
 }
 
@@ -402,8 +453,18 @@ mca_io_ompio_file_get_size (ompi_file_t *fh,
     mca_io_ompio_data_t *data;
 
     data = (mca_io_ompio_data_t *) fh->f_io_selected_data;
+    ret = ompio_io_ompio_file_get_size(&data->ompio_fh,size);
 
-    ret = data->ompio_fh.f_fs->fs_file_get_size (&data->ompio_fh, size);
+    return ret;
+}
+
+int
+ompio_io_ompio_file_get_size (mca_io_ompio_file_t *ompio_fh,
+                              OMPI_MPI_OFFSET_TYPE *size)
+{
+    int ret = OMPI_SUCCESS;
+
+    ret = ompio_fh->f_fs->fs_file_get_size (ompio_fh, size);
 
     return ret;
 }
@@ -558,7 +619,6 @@ mca_io_ompio_file_seek (ompi_file_t *fh,
         return OMPI_ERROR;
     }
 
-    /*printf ("seeking to: %lld \n", offset);*/
     ret = ompi_io_ompio_set_explicit_offset (&data->ompio_fh, 
                                              offset/data->ompio_fh.f_etype_size);
     return ret;
@@ -613,7 +673,7 @@ mca_io_ompio_file_get_byte_offset (ompi_file_t *fh,
     }
 
     *disp = data->ompio_fh.f_disp + temp_offset +
-      (OMPI_MPI_OFFSET_TYPE)(intptr_t)data->ompio_fh.f_decoded_iov[index].iov_base;
+        (OMPI_MPI_OFFSET_TYPE)(intptr_t)data->ompio_fh.f_decoded_iov[index].iov_base;
 
     return OMPI_SUCCESS;
 }
