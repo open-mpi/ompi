@@ -318,10 +318,10 @@ mca_fcoll_two_phase_file_read_all (mca_io_ompio_file_t *fh,
 
   ret = fh->f_comm->c_coll.coll_allgather(&start_offset,
 					  1,
-					  MPI_LONG,
+					  OMPI_OFFSET_DATATYPE,
 					  start_offsets,
 					  1,
-					  MPI_LONG,
+					  OMPI_OFFSET_DATATYPE,
 					  fh->f_comm,
 					  fh->f_comm->c_coll.coll_allgather_module);
   
@@ -331,10 +331,10 @@ mca_fcoll_two_phase_file_read_all (mca_io_ompio_file_t *fh,
 
   ret = fh->f_comm->c_coll.coll_allgather(&end_offset,
 					  1,
-					  MPI_LONG,
+					  OMPI_OFFSET_DATATYPE,
 					  end_offsets,
 					  1,
-					  MPI_LONG,
+					  OMPI_OFFSET_DATATYPE,
 					  fh->f_comm,
 					  fh->f_comm->c_coll.coll_allgather_module);
   
