@@ -137,6 +137,7 @@ libmpi_la_LIBADD = \
         mpi/c/libmpi_c.la \
         $(c_mpi_lib) \
         $(c_pmpi_lib) \
+        mpi/tool/libmpi_mpit.la \
         $(mpi_fortran_base_lib) \
         $(MCA_ompi_FRAMEWORK_LIBS) \
         $(OMPI_MPIEXT_C_LIBS) \
