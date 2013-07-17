@@ -499,7 +499,7 @@ static int mca_common_cuda_init(opal_common_cuda_function_table_t *ftable)
 static int mca_common_cuda_load_libcuda(void)
 {
     opal_lt_dladvise advise;
-    int retval, i = 0, j = 0;
+    int retval, i, j;
     int advise_support = 1;
     bool loaded = false;
     char *cudalibs[] = {"libcuda.so.1", "libcuda.so", NULL};
@@ -552,11 +552,13 @@ static int mca_common_cuda_load_libcuda(void)
             opal_lt_dladvise_destroy(&advise);
             return 1;
         }
+        j = 0;
         while (searchpaths[j] != NULL) {
             /* Set explicit search path if entry is not empty string */
             if (strcmp("", searchpaths[j])) {
                 opal_lt_dlsetsearchpath(searchpaths[j]);
             }
+            i = 0;
             while (cudalibs[i] != NULL) {
                 const char *str;
                 libcuda_handle = opal_lt_dlopenadvise(cudalibs[i], advise);
@@ -584,13 +586,14 @@ static int mca_common_cuda_load_libcuda(void)
         }
         opal_lt_dladvise_destroy(&advise);
     } else {
-        i = j = 0;
+        j = 0;
         /* No lt_dladvise support.  This should rarely happen. */
         while (searchpaths[j] != NULL) {
             /* Set explicit search path if entry is not empty string */
             if (strcmp("", searchpaths[j])) {
                 opal_lt_dlsetsearchpath(searchpaths[j]);
             }
+            i = 0;
             while (cudalibs[i] != NULL) {
                 const char *str;
                 libcuda_handle = opal_lt_dlopen(cudalibs[i]);
