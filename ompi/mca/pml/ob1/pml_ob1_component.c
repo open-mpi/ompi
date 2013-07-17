@@ -136,7 +136,7 @@ static int mca_pml_ob1_comm_size_notify (mca_base_pvar_t *pvar, mca_base_pvar_ev
     return OMPI_SUCCESS;
 }
 
-static int mca_pml_ob1_get_unex_msgq_size (mca_base_pvar_t *pvar, void *value, void *obj_handle)
+static int mca_pml_ob1_get_unex_msgq_size (const struct mca_base_pvar_t *pvar, void *value, void *obj_handle)
 {
     ompi_communicator_t *comm = (ompi_communicator_t *) obj_handle;
     mca_pml_ob1_comm_t *pml_comm = comm->c_pml_comm;
@@ -154,7 +154,7 @@ static int mca_pml_ob1_get_unex_msgq_size (mca_base_pvar_t *pvar, void *value, v
     return OMPI_SUCCESS;
 }
 
-static int mca_pml_ob1_get_posted_recvq_size (mca_base_pvar_t *pvar, void *value, void *obj_handle)
+static int mca_pml_ob1_get_posted_recvq_size (const struct mca_base_pvar_t *pvar, void *value, void *obj_handle)
 {
     ompi_communicator_t *comm = (ompi_communicator_t *) obj_handle;
     mca_pml_ob1_comm_t *pml_comm = comm->c_pml_comm;
