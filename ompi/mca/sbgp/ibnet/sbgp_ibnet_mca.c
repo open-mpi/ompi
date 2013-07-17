@@ -197,7 +197,8 @@ int mca_sbgp_ibnet_register_params(void)
     if (OPAL_SUCCESS != ret) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
-    
+
+    mca_sbgp_ibnet_component.mtu = IBV_MTU_1024;
     ret = mca_base_component_var_register(&mca_sbgp_ibnet_component.super.sbgp_version,
                                           "mtu", msg, MCA_BASE_VAR_TYPE_INT, new_enum,
                                           0, 0, OPAL_INFO_LVL_9,
