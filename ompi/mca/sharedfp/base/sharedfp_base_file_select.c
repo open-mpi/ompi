@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008-2011 University of Houston. All rights reserved.
+ * Copyright (c) 2008-2013 University of Houston. All rights reserved.
  * Copyright (c) 2012-2013 Los Alamos National Security, Inc.  All rights reserved. 
  * $COPYRIGHT$
  * 
@@ -96,7 +96,7 @@ int mca_sharedfp_base_file_select (struct mca_io_ompio_file_t *file,
             structure. This is necessary to proceed */
          
          component = (mca_sharedfp_base_component_t *)preferred;
-         module = component->sharedfpm_file_query (&priority);
+         module = component->sharedfpm_file_query (file, &priority);
          if (NULL != module && 
              NULL != module->sharedfp_module_init) {
 
@@ -150,7 +150,7 @@ int mca_sharedfp_base_file_select (struct mca_io_ompio_file_t *file,
            /*
             * call the query function and see what it returns
             */ 
-           module = component->sharedfpm_file_query (&priority);
+           module = component->sharedfpm_file_query (file, &priority);
 
            if (NULL == module ||
                NULL == module->sharedfp_module_init) {
