@@ -334,8 +334,8 @@ mca_fcoll_two_phase_file_write_all (mca_io_ompio_file_t *fh,
     
 #endif
     
-    start_offset = (OMPI_MPI_OFFSET_TYPE)(intptr_t)iov[0].iov_base;
-    end_offset = (OMPI_MPI_OFFSET_TYPE)(intptr_t)iov[local_count-1].iov_base +
+    start_offset = (OMPI_MPI_OFFSET_TYPE)(uintptr_t)iov[0].iov_base;
+    end_offset = (OMPI_MPI_OFFSET_TYPE)(uintptr_t)iov[local_count-1].iov_base +
       (OMPI_MPI_OFFSET_TYPE)iov[local_count-1].iov_len - 1; 
     
 #if DEBUG_ON
@@ -365,10 +365,10 @@ mca_fcoll_two_phase_file_write_all (mca_io_ompio_file_t *fh,
     
     ret = fh->f_comm->c_coll.coll_allgather(&start_offset,
 					    1,
-					    MPI_LONG,
+					    OMPI_OFFSET_DATATYPE,
 					    start_offsets,
 					    1,
-					    MPI_LONG,
+					    OMPI_OFFSET_DATATYPE,
 					    fh->f_comm,
 					    fh->f_comm->c_coll.coll_allgather_module);
 
@@ -379,10 +379,10 @@ mca_fcoll_two_phase_file_write_all (mca_io_ompio_file_t *fh,
 
     ret = fh->f_comm->c_coll.coll_allgather(&end_offset,
 					    1,
-					    MPI_LONG,
+					    OMPI_OFFSET_DATATYPE,
 					    end_offsets,
 					    1,
-					    MPI_LONG,
+					    OMPI_OFFSET_DATATYPE,
 					    fh->f_comm,
 					    fh->f_comm->c_coll.coll_allgather_module);
 
@@ -781,7 +781,7 @@ static int two_phase_exch_and_write(mca_io_ompio_file_t *fh,
 	    printf("rank : %d enters writing\n", fh->f_rank);
 	    printf("size : %ld, off : %ld\n",size, off);
 	    for (ii=0, jj=0;jj<size;jj+=4, ii++){
-		printf("%d : write_buf[%d]: %d\n", fh->f_rank, ii,((int *)write_buf[jj]));
+	      printf("%d : write_buf[%d]: %d\n", fh->f_rank, ii,((int *)write_buf[jj]));
 	    }
 	    #endif
 	    len = size * byte_size;
