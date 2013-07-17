@@ -28,6 +28,8 @@
 #include "ompi/mca/fcoll/base/base.h"
 #include "ompi/mca/fbtl/fbtl.h"
 #include "ompi/mca/fbtl/base/base.h"
+#include "ompi/mca/sharedfp/sharedfp.h"
+#include "ompi/mca/sharedfp/base/base.h"
 
 #include "io_ompio.h"
 #include "math.h"
@@ -43,6 +45,23 @@ mca_io_ompio_file_write (ompi_file_t *fp,
     int ret = OMPI_SUCCESS;
     mca_io_ompio_data_t *data;
     mca_io_ompio_file_t *fh;
+
+    data = (mca_io_ompio_data_t *) fp->f_io_selected_data;
+    fh = &data->ompio_fh;
+
+    ret = ompio_io_ompio_file_write(fh,buf,count,datatype,status);
+    return ret;
+}
+
+int
+ompio_io_ompio_file_write (mca_io_ompio_file_t *fh,
+                           void *buf,
+                           int count,
+                           struct ompi_datatype_t *datatype,
+                           ompi_status_public_t *status)
+{
+    int ret = OMPI_SUCCESS;
+
     size_t total_bytes_written = 0;     /* total bytes that have been written*/
     size_t bytes_to_write_in_cycle = 0; /* left to be written in a cycle*/
     size_t bytes_per_cycle = 0;         /* total written in each cycle by each process*/
@@ -65,9 +84,6 @@ mca_io_ompio_file_write (ompi_file_t *fp,
 	}
 	return ret;
     }
-
-    data = (mca_io_ompio_data_t *) fp->f_io_selected_data;
-    fh = &data->ompio_fh;
 
     ompi_io_ompio_decode_datatype (fh, 
                                    datatype, 
@@ -227,13 +243,26 @@ mca_io_ompio_file_write_at (ompi_file_t *fh,
 
     data = (mca_io_ompio_data_t *) fh->f_io_selected_data;
 
-    ompi_io_ompio_set_explicit_offset (&data->ompio_fh, offset);
+    ret = ompio_io_ompio_file_write_at (&data->ompio_fh, offset,buf,count,datatype,status);
+    return ret;
+}
 
-    ret = mca_io_ompio_file_write (fh,
-                                   buf,
-                                   count,
-                                   datatype,
-                                   status);
+int
+ompio_io_ompio_file_write_at (mca_io_ompio_file_t *fh,
+                              OMPI_MPI_OFFSET_TYPE offset,
+                              void *buf,
+                              int count,
+                              struct ompi_datatype_t *datatype,
+                              ompi_status_public_t *status)
+{
+    int ret = OMPI_SUCCESS;
+    ompi_io_ompio_set_explicit_offset (fh, offset);
+
+    ret = ompio_io_ompio_file_write (fh,
+                                     buf,
+                                     count,
+                                     datatype,
+                                     status);
 
     return ret;
 }
@@ -317,16 +346,28 @@ mca_io_ompio_file_write_at_all (ompi_file_t *fh,
     mca_io_ompio_data_t *data;
 
     data = (mca_io_ompio_data_t *) fh->f_io_selected_data;
+    ret = ompio_io_ompio_file_write_at_all(&data->ompio_fh,offset,buf,count,datatype,status);
 
-    ompi_io_ompio_set_explicit_offset (&data->ompio_fh, offset);
+    return ret;
+}
 
-    ret = data->ompio_fh.
-        f_fcoll->fcoll_file_write_all (&data->ompio_fh, 
-                                       buf, 
-                                       count, 
-                                       datatype, 
-                                       status);
+int
+ompio_io_ompio_file_write_at_all (mca_io_ompio_file_t *fh,
+                                  OMPI_MPI_OFFSET_TYPE offset,
+                                  void *buf,
+                                  int count,
+                                  struct ompi_datatype_t *datatype,
+                                  ompi_status_public_t *status)
+{
+    int ret = OMPI_SUCCESS;
 
+    ompi_io_ompio_set_explicit_offset (fh, offset);
+
+    ret = fh->f_fcoll->fcoll_file_write_all (fh,
+                                             buf,
+                                             count,
+                                             datatype,
+                                             status);
     return ret;
 }
 
@@ -341,14 +382,26 @@ mca_io_ompio_file_write_at_all_begin (ompi_file_t *fh,
     mca_io_ompio_data_t *data;
 
     data = (mca_io_ompio_data_t *) fh->f_io_selected_data;
+    ret = ompio_io_ompio_file_write_at_all_begin(&data->ompio_fh,offset,buf,count,datatype);
 
-    ompi_io_ompio_set_explicit_offset (&data->ompio_fh, offset);
+    return ret;
+}
 
-    ret = data->ompio_fh.
-        f_fcoll->fcoll_file_write_all_begin (&data->ompio_fh, 
-                                            buf, 
-                                            count, 
-                                            datatype);
+int
+ompio_io_ompio_file_write_at_all_begin (mca_io_ompio_file_t *fh,
+                                        OMPI_MPI_OFFSET_TYPE offset,
+                                        void *buf,
+                                        int count,
+                                        struct ompi_datatype_t *datatype)
+{
+    int ret = OMPI_SUCCESS;
+
+    ompi_io_ompio_set_explicit_offset (fh, offset);
+
+    ret = fh->f_fcoll->fcoll_file_write_all_begin (fh,
+                                                   buf,
+                                                   count,
+                                                   datatype);
 
     return ret;
 }
@@ -362,11 +415,21 @@ mca_io_ompio_file_write_at_all_end (ompi_file_t *fh,
     mca_io_ompio_data_t *data;
 
     data = (mca_io_ompio_data_t *) fh->f_io_selected_data;
+    ret = ompio_io_ompio_file_write_at_all_end(&data->ompio_fh,buf,status);
 
-    ret = data->ompio_fh.
-        f_fcoll->fcoll_file_write_all_end (&data->ompio_fh, 
-                                          buf, 
-                                          status);
+    return ret;
+}
+
+int
+ompio_io_ompio_file_write_at_all_end (mca_io_ompio_file_t *fh,
+                                      void *buf,
+                                      ompi_status_public_t * status)
+{
+    int ret = OMPI_SUCCESS;
+
+    ret = fh->f_fcoll->fcoll_file_write_all_end (fh,
+                                                 buf,
+                                                 status);
 
     return ret;
 }
@@ -378,6 +441,23 @@ mca_io_ompio_file_iwrite (ompi_file_t *fp,
                           struct ompi_datatype_t *datatype,
                           ompi_request_t **request)
 {
+    int ret = OMPI_SUCCESS;
+    mca_io_ompio_data_t *data;
+
+    data = (mca_io_ompio_data_t *) fp->f_io_selected_data;
+    ret = ompio_io_ompio_file_iwrite(&data->ompio_fh,buf,count,datatype,request);
+
+    return ret;
+}
+
+int
+ompio_io_ompio_file_iwrite (mca_io_ompio_file_t *fh,
+                            void *buf,
+                            int count,
+                            struct ompi_datatype_t *datatype,
+                            ompi_request_t **request)
+{
+
     int ret = MPI_ERR_OTHER;
     return ret;
 }
@@ -394,10 +474,24 @@ mca_io_ompio_file_iwrite_at (ompi_file_t *fh,
     mca_io_ompio_data_t *data;
         
     data = (mca_io_ompio_data_t *) fh->f_io_selected_data;
+    ret = ompio_io_ompio_file_iwrite_at(&data->ompio_fh,offset,buf,count,datatype,request);
 
-    ompi_io_ompio_set_explicit_offset (&data->ompio_fh, offset);
+    return ret;
+}
 
-    ret = mca_io_ompio_file_iwrite (fh,
+int
+ompio_io_ompio_file_iwrite_at (mca_io_ompio_file_t *fh,
+                             OMPI_MPI_OFFSET_TYPE offset,
+                             void *buf,
+                             int count,
+                             struct ompi_datatype_t *datatype,
+                             ompi_request_t **request)
+{
+
+    int ret = OMPI_SUCCESS;
+
+    ompi_io_ompio_set_explicit_offset (fh, offset);
+    ret = ompio_io_ompio_file_iwrite (fh,
                                     buf,
                                     count,
                                     datatype,
@@ -406,53 +500,108 @@ mca_io_ompio_file_iwrite_at (ompi_file_t *fh,
 }
 
 int
-mca_io_ompio_file_write_shared (ompi_file_t *fh,
+mca_io_ompio_file_write_shared (ompi_file_t *fp,
                                 void *buf,
                                 int count,
                                 struct ompi_datatype_t *datatype,
                                 ompi_status_public_t * status)
 {
-    int ret = MPI_ERR_OTHER;
+    int ret = OMPI_SUCCESS;
+    mca_io_ompio_data_t *data;
+    mca_io_ompio_file_t *fh;
+    mca_sharedfp_base_module_t * shared_fp_base_module;
+
+    data = (mca_io_ompio_data_t *) fp->f_io_selected_data;
+    fh = &data->ompio_fh;
+
+    /*get the shared fp module associated with this file*/
+    shared_fp_base_module = fh->f_sharedfp;
+    ret = shared_fp_base_module->sharedfp_write(fh,buf,count,datatype,status);
+
     return ret;
 }
 
 int
-mca_io_ompio_file_iwrite_shared (ompi_file_t *fh,
+mca_io_ompio_file_iwrite_shared (ompi_file_t *fp,
                                  void *buf,
                                  int count,
                                  struct ompi_datatype_t *datatype,
                                  ompi_request_t **request)
 {
-    int ret = MPI_ERR_OTHER;
+    int ret = OMPI_SUCCESS;
+    mca_io_ompio_data_t *data;
+    mca_io_ompio_file_t *fh;
+    mca_sharedfp_base_module_t * shared_fp_base_module;
+
+    data = (mca_io_ompio_data_t *) fp->f_io_selected_data;
+    fh = &data->ompio_fh;
+
+    /*get the shared fp module associated with this file*/
+    shared_fp_base_module = fh->f_sharedfp;
+    ret = shared_fp_base_module->sharedfp_iwrite(fh,buf,count,datatype,request);
+
     return ret;
 }
 
 int
-mca_io_ompio_file_write_ordered (ompi_file_t *fh,
+mca_io_ompio_file_write_ordered (ompi_file_t *fp,
                                  void *buf,
                                  int count,
                                  struct ompi_datatype_t *datatype,
                                  ompi_status_public_t * status)
 {
-    int ret = MPI_ERR_OTHER;
+    int ret = OMPI_SUCCESS;
+    mca_io_ompio_data_t *data;
+    mca_io_ompio_file_t *fh;
+    mca_sharedfp_base_module_t * shared_fp_base_module;
+
+    data = (mca_io_ompio_data_t *) fp->f_io_selected_data;
+    fh = &data->ompio_fh;
+
+    /*get the shared fp module associated with this file*/
+    shared_fp_base_module = fh->f_sharedfp;
+    ret = shared_fp_base_module->sharedfp_write_ordered(fh,buf,count,datatype,status);
+
     return ret;
 }
 
 int
-mca_io_ompio_file_write_ordered_begin (ompi_file_t *fh,
+mca_io_ompio_file_write_ordered_begin (ompi_file_t *fp,
                                        void *buf,
                                        int count,
                                        struct ompi_datatype_t *datatype)
 {
-    int ret = MPI_ERR_OTHER;
+    int ret = OMPI_SUCCESS;
+    mca_io_ompio_data_t *data;
+    mca_io_ompio_file_t *fh;
+    mca_sharedfp_base_module_t * shared_fp_base_module;
+
+    data = (mca_io_ompio_data_t *) fp->f_io_selected_data;
+    fh = &data->ompio_fh;
+
+    /*get the shared fp module associated with this file*/
+    shared_fp_base_module = fh->f_sharedfp;
+    ret = shared_fp_base_module->sharedfp_write_ordered_begin(fh,buf,count,datatype);
+
     return ret;
 }
 
 int
-mca_io_ompio_file_write_ordered_end (ompi_file_t *fh,
+mca_io_ompio_file_write_ordered_end (ompi_file_t *fp,
                                      void *buf,
                                      ompi_status_public_t *status)
 {
-    int ret = MPI_ERR_OTHER;
+    int ret = OMPI_SUCCESS;
+    mca_io_ompio_data_t *data;
+    mca_io_ompio_file_t *fh;
+    mca_sharedfp_base_module_t * shared_fp_base_module;
+
+    data = (mca_io_ompio_data_t *) fp->f_io_selected_data;
+    fh = &data->ompio_fh;
+
+    /*get the shared fp module associated with this file*/
+    shared_fp_base_module = fh->f_sharedfp;
+    ret = shared_fp_base_module->sharedfp_write_ordered_end(fh,buf,status);
+
     return ret;
 }
