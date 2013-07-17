@@ -6,12 +6,15 @@ all individuals who have committed code to the Open MPI repository.
 
 Username    Name                        Affiliation(s)
 ----------- --------------------------- -------------------------
-Anya        Anya Tatashina              Sun
 abbyz       Abhishek Kulkarni           IU
 adi         Adrian Knoth                UJ
 adkulkar    Abhishek Kulkarni           IU
 afriedle    Andrew Friedley             IU, SNL
+alekseys    Aleksey Senin               Mellanox
+alex        Alex Margolin               Mellanox
+amikheev    Alex Mikheev                Mellanox
 angskun     Thara Angskun               UTK
+Anya        Anya Tatashina              Sun
 apant       Avneesh Pant                QLogic
 bbenton     Brad Benton                 IBM
 bosilca     George Bosilca              UTK
@@ -26,6 +29,7 @@ damico      Bill D'Amico                Cisco
 ddd         David Daniel                LANL
 derbeyn     Nadia Derby                 Bull
 dgdimick    Denis Dimick                LANL
+dgoodell    Dave Goodell                Cisco
 dkerr       Donald Kerr                 Sun, Oracle
 dlacher     Dan Lacher                  Sun
 edgar       Edgar Gabriel               HLRS, UH, UTK
@@ -41,8 +45,10 @@ hjelmn      Nathan Hjelm                LANL
 hpcstork    Sven Stork                  HLRS
 htor        Torsten Hoefler             IU, TUC
 igb         Iain Bason                  Sun, Oracle
+igoru       Igor Usarov                 Mellanox
 jdmason     Jon Mason                   Chelsio
 jjhursey    Josh Hursey                 IU, ORNL, LANL, LBNL
+jladd       Joshua Ladd                 Mellanox
 jnysal      Nysal Jan                   IBM
 jsquyres    Jeff Squyres                Cisco, IU
 jurenz      Matthias Jurenz             ZIH
@@ -58,6 +64,7 @@ miked       Mike Dubman                 Voltaire
 mitch       Mitch Sukalski              SNL
 mschaara    Mohamad Chaarawi            UH
 mt          Mark Taylor                 LANL
+naughtont   Tom Naughton                ORNL
 ollie       Li-Ta Lo                    LANL
 paklui      Pak Lui                     Sun
 pasha       Pavel Shamis                Mellanox
@@ -75,6 +82,7 @@ rusraink    Rainer Keller               HLRS, ORNL
 sami        Sami Ayyorgun               LANL
 samuel      Samuel K. Gutierrez         LANL
 santhana    Gopal Santhanaraman         OSU
+sboehm      Swen Boehm                  ORNL
 sharonm     Sharon Melamed              Voltaire
 shiqing     Shiqing Fan                 HLRS
 surs        Sayantan Sur                OSU
@@ -87,6 +95,7 @@ twoodall    Tim Woodall                 LANL
 vasily      Vasily Filipov              Mellanox
 vsahay      Vishal Sahay                IU
 wbland      Wesley Bland                UTK
+yosefe      Yossi Etigin                Mellanox
 yuw         Weikuan Yu                  LANL, OSU
 
 Affiliaion abbreviations:
