@@ -17,6 +17,9 @@
 AC_DEFUN([MCA_ompi_common_cuda_CONFIG],[
     AC_CONFIG_FILES([ompi/mca/common/cuda/Makefile])
 
+    # make sure that CUDA-aware checks have been done
+    AC_REQUIRE([OPAL_CHECK_CUDA])
+
     # Use CUDA_SUPPORT which was filled in by the opal configure code.
     AM_CONDITIONAL([MCA_ompi_cuda_support], [test "x$CUDA_SUPPORT" = "x1"])
     AC_DEFINE_UNQUOTED([OMPI_CUDA_SUPPORT],$CUDA_SUPPORT,
@@ -33,6 +36,5 @@ AC_DEFUN([MCA_ompi_common_cuda_CONFIG],[
     # Copy over the includes needed to build CUDA
     common_cuda_CPPFLAGS=$opal_datatype_cuda_CPPFLAGS
     AC_SUBST([common_cuda_CPPFLAGS])
-    AC_SUBST([common_cuda_LIBS])
 
 ])dnl
