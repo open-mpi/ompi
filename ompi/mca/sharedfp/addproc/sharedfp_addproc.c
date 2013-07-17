@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008-2011 University of Houston. All rights reserved.
+ * Copyright (c) 2013      University of Houston. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -26,18 +26,31 @@
 #include "ompi_config.h"
 #include "mpi.h"
 #include "ompi/mca/sharedfp/sharedfp.h"
-#include "ompi/mca/sharedfp/dummy/sharedfp_dummy.h"
+#include "ompi/mca/sharedfp/addproc/sharedfp_addproc.h"
 
 /*
  * *******************************************************************
  * ************************ actions structure ************************
  * *******************************************************************
  */
-static mca_sharedfp_base_module_1_0_0_t dummy =  {
-    mca_sharedfp_dummy_module_init, /* initalise after being selected */
-    mca_sharedfp_dummy_module_finalize, /* close a module on a communicator */
-    mca_sharedfp_dummy_update,
-    mca_sharedfp_dummy_seek
+ /* IMPORTANT: Update here when adding sharedfp component interface functions*/
+static mca_sharedfp_base_module_1_0_0_t  addproc =  {
+    mca_sharedfp_addproc_module_init, /* initalise after being selected */
+    mca_sharedfp_addproc_module_finalize, /* close a module on a communicator */
+    mca_sharedfp_addproc_seek,
+    mca_sharedfp_addproc_get_position,
+    mca_sharedfp_addproc_read,
+    mca_sharedfp_addproc_read_ordered,
+    mca_sharedfp_addproc_read_ordered_begin,
+    mca_sharedfp_addproc_read_ordered_end,
+    mca_sharedfp_addproc_iread,
+    mca_sharedfp_addproc_write,
+    mca_sharedfp_addproc_write_ordered,
+    mca_sharedfp_addproc_write_ordered_begin,
+    mca_sharedfp_addproc_write_ordered_end,
+    mca_sharedfp_addproc_iwrite,
+    mca_sharedfp_addproc_file_open,
+    mca_sharedfp_addproc_file_close
 };
 /*
  * *******************************************************************
@@ -45,7 +58,7 @@ static mca_sharedfp_base_module_1_0_0_t dummy =  {
  * *******************************************************************
  */
 
-int mca_sharedfp_dummy_component_init_query(bool enable_progress_threads,
+int mca_sharedfp_addproc_component_init_query(bool enable_progress_threads,
                                             bool enable_mpi_threads)
 {
     /* Nothing to do */
@@ -54,14 +67,16 @@ int mca_sharedfp_dummy_component_init_query(bool enable_progress_threads,
 }      
 
 struct mca_sharedfp_base_module_1_0_0_t *
-mca_sharedfp_dummy_component_file_query (int *priority)
-{
-   *priority = 20;
+        mca_sharedfp_addproc_component_file_query
+        (mca_io_ompio_file_t *fh, int *priority) {
+    *priority = mca_sharedfp_addproc_priority;
 
-   return &dummy;
+    /*test, and update priority*/
+
+    return &addproc;
 }
 
-int mca_sharedfp_dummy_component_file_unquery (mca_io_ompio_file_t *file)
+int mca_sharedfp_addproc_component_file_unquery (mca_io_ompio_file_t *file)
 {    
    /* This function might be needed for some purposes later. for now it
     * does not have anything to do since there are no steps which need 
@@ -70,13 +85,13 @@ int mca_sharedfp_dummy_component_file_unquery (mca_io_ompio_file_t *file)
    return OMPI_SUCCESS;
 }
 
-int mca_sharedfp_dummy_module_init (mca_io_ompio_file_t *file)
+int mca_sharedfp_addproc_module_init (mca_io_ompio_file_t *file)
 {
     return OMPI_SUCCESS;
 }
 
    
-int mca_sharedfp_dummy_module_finalize (mca_io_ompio_file_t *file) 
+int mca_sharedfp_addproc_module_finalize (mca_io_ompio_file_t *file)
 {
     return OMPI_SUCCESS;
 }
