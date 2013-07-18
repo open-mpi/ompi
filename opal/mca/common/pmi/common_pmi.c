@@ -5,6 +5,7 @@
  * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC. All
  *                         rights reserved.
+ * Copyright (c) 2013      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -25,6 +26,8 @@
 #include "common_pmi.h"
 
 static int mca_common_pmi_init_count = 0;
+static int mca_common_pmi_init_size = 0;
+static int mca_common_pmi_init_rank = 0;
 
 bool mca_common_pmi_init (void) {
     if (0 < mca_common_pmi_init_count++) {
@@ -41,6 +44,8 @@ bool mca_common_pmi_init (void) {
         }
 
         if (PMI_SUCCESS != PMI2_Init(&spawned, &size, &rank, &appnum)) {
+            mca_common_pmi_init_size = size;
+            mca_common_pmi_init_rank = rank;
             mca_common_pmi_init_count--;
             return false;
         }
@@ -106,4 +111,36 @@ char* opal_errmgr_base_pmi_error(int pmi_err)
         default: err_msg = "Unkown error";
     }
     return err_msg;
+}
+
+
+bool mca_common_pmi_rank(int *rank) {
+
+#if !WANT_PMI2_SUPPORT
+    {
+        int ret;
+        if (PMI_SUCCESS != (ret = PMI_Get_rank(&mca_common_pmi_init_rank))) {
+            OPAL_PMI_ERROR(ret, "PMI_Get_rank");
+            return false;
+        }
+    }
+#endif
+    *rank = mca_common_pmi_init_rank;
+    return true;
+}
+
+
+bool mca_common_pmi_size(int *size) {
+
+#if !WANT_PMI2_SUPPORT
+    {
+        int ret;
+        if (PMI_SUCCESS != (ret = PMI_Get_universe_size(&mca_common_pmi_init_size))) {
+            OPAL_PMI_ERROR(ret, "PMI_Get_universe_size");
+            return false;
+        }
+    }
+#endif
+    *size = mca_common_pmi_init_size;
+    return true;
 }
