@@ -45,8 +45,6 @@ int mca_fcoll_two_phase_domain_partition (mca_io_ompio_file_t *fh,
     if (fd_size < min_fd_size)
 	fd_size = min_fd_size;
     
-/*    printf("fd_size :%lld, min_fd_size : %d\n", fd_size, min_fd_size);*/
-    
     *fd_st_ptr = (OMPI_MPI_OFFSET_TYPE *)
 	malloc(nprocs_for_coll*sizeof(OMPI_MPI_OFFSET_TYPE)); 
 
@@ -67,12 +65,10 @@ int mca_fcoll_two_phase_domain_partition (mca_io_ompio_file_t *fh,
     
     
     if (striping_unit > 0){
-	
-	/* Lock Boundary based domain partitioning */
+      /* Lock Boundary based domain partitioning */
 	int rem_front, rem_back;
 	OMPI_MPI_OFFSET_TYPE end_off;
 	
-	printf("striping unit based partitioning!\n ");
 	fd_start[0] = min_st_offset;
         end_off     = fd_start[0] + fd_size;
         rem_front   = end_off % striping_unit;
@@ -247,7 +243,7 @@ int mca_fcoll_two_phase_calc_others_requests(mca_io_ompio_file_t *fh,
 	if (others_req[i].count){
             ret = MCA_PML_CALL(irecv(others_req[i].offsets,
 				     others_req[i].count,
-				     MPI_LONG,
+				     OMPI_OFFSET_DATATYPE,
 				     i,
 				     i+fh->f_rank,
 				     fh->f_comm,
@@ -278,7 +274,7 @@ int mca_fcoll_two_phase_calc_others_requests(mca_io_ompio_file_t *fh,
 	if (my_req[i].count) {
 	    ret = MCA_PML_CALL(isend(my_req[i].offsets,
 				     my_req[i].count,
-				     MPI_LONG,
+				     OMPI_OFFSET_DATATYPE,
 				     i,
 				     i+fh->f_rank,
 				     MCA_PML_BASE_SEND_STANDARD, 
@@ -337,14 +333,14 @@ int mca_fcoll_two_phase_calc_my_requests (mca_io_ompio_file_t *fh,
 					  int *count_my_req_procs_ptr,
 					  int **count_my_req_per_proc_ptr,
 					  mca_io_ompio_access_array_t **my_req_ptr,
-					  int **buf_indices,
+					  size_t **buf_indices,
 					  int striping_unit,
 					  int num_aggregators,
 					  int *aggregator_list)
 {
     
     int *count_my_req_per_proc, count_my_req_procs;
-    int *buf_idx;
+    size_t *buf_idx = NULL;
     int i, l, proc;
     OMPI_MPI_OFFSET_TYPE fd_len, rem_len, curr_idx, off;
     mca_io_ompio_access_array_t *my_req;
@@ -362,7 +358,7 @@ int mca_fcoll_two_phase_calc_my_requests (mca_io_ompio_file_t *fh,
 	count_my_req_per_proc[i] = 0;
     }
         
-    buf_idx = (int *) malloc (fh->f_size * sizeof(int));
+    buf_idx = (size_t *) malloc (fh->f_size * sizeof(size_t));
     
     if ( NULL == buf_idx ){ 
 	return OMPI_ERR_OUT_OF_RESOURCE;
@@ -432,7 +428,7 @@ int mca_fcoll_two_phase_calc_my_requests (mca_io_ompio_file_t *fh,
 					     fd_size, fd_start, fd_end,
 					     striping_unit, num_aggregators,
 					     aggregator_list);
-	if (buf_idx[proc] == -1){
+	if (buf_idx[proc] == (size_t) -1){
 	    buf_idx[proc] = (int) curr_idx;
 	}
 	l = my_req[proc].count;
@@ -451,7 +447,7 @@ int mca_fcoll_two_phase_calc_my_requests (mca_io_ompio_file_t *fh,
 						       num_aggregators,
 						       aggregator_list);
 	    
-	    if (buf_idx[proc] == -1){
+	    if (buf_idx[proc] == (size_t) -1){
 		buf_idx[proc] = (int) curr_idx;
 	    }
 		    

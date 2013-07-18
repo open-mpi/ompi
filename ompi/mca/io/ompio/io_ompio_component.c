@@ -28,7 +28,8 @@
 
 int mca_io_ompio_cycle_buffer_size = OMPIO_PREALLOC_MAX_BUF_SIZE;
 int mca_io_ompio_bytes_per_agg = OMPIO_PREALLOC_MAX_BUF_SIZE;
-
+int mca_io_ompio_coll_timing_info = 0;
+int mca_io_ompio_record_offset_info = 0;
 /*
  * Private functions
  */
@@ -161,6 +162,24 @@ static int register_component(void)
                                            OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &mca_io_ompio_bytes_per_agg);
+
+    mca_io_ompio_record_offset_info = 0;
+    (void) mca_base_component_var_register(&mca_io_ompio_component.io_version,
+                                           "record_file_offset_info",
+                                           "The information of the file offset/length",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &mca_io_ompio_record_offset_info);
+
+    mca_io_ompio_coll_timing_info = 0;
+    (void) mca_base_component_var_register(&mca_io_ompio_component.io_version,
+					   "coll_timing_info",
+					   "Enable collective algorithm timing information",
+					   MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+					   OPAL_INFO_LVL_9,
+					   MCA_BASE_VAR_SCOPE_READONLY,
+					   &mca_io_ompio_coll_timing_info);
 
     /*
     reg_string(&mca_io_ompio_component.io_version,

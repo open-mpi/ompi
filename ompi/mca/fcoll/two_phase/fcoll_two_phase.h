@@ -109,7 +109,7 @@ int mca_fcoll_two_phase_calc_my_requests (mca_io_ompio_file_t *fh,
 					  int *count_my_req_procs_ptr,
 					  int **count_my_req_per_proc_ptr,
 					  mca_io_ompio_access_array_t **my_req_ptr,
-					  int **buf_indices,
+					  size_t **buf_indices,
 					  int striping_unit,
 					  int num_aggregators,
 					  int *aggregator_list);
