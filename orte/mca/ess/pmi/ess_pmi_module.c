@@ -79,7 +79,6 @@ orte_ess_base_module_t orte_ess_pmi_module = {
 };
 
 static bool app_init_complete=false;
-static int pmi_maxlen=0;
 
 /****    MODULE FUNCTIONS    ****/
 
@@ -160,16 +159,20 @@ static int rte_init(void)
             goto error;
         }
 #else
-        /* get our PMI id length */
-        if (PMI_SUCCESS != (ret = PMI_Get_id_length_max(&pmi_maxlen))) {
-            error = "PMI_Get_id_length_max";
-            goto error;
-        }
-        pmi_id = (char*)malloc(pmi_maxlen);
-        if (PMI_SUCCESS != (ret = PMI_Get_kvs_domain_id(pmi_id, pmi_maxlen))) {
-            free(pmi_id);
-            error = "PMI_Get_kvs_domain_id";
-            goto error;
+        {
+            int pmi_maxlen;
+
+            /* get our PMI id length */
+            if (PMI_SUCCESS != (ret = PMI_Get_id_length_max(&pmi_maxlen))) {
+                error = "PMI_Get_id_length_max";
+                goto error;
+            }
+            pmi_id = (char*)malloc(pmi_maxlen);
+            if (PMI_SUCCESS != (ret = PMI_Get_kvs_domain_id(pmi_id, pmi_maxlen))) {
+                free(pmi_id);
+                error = "PMI_Get_kvs_domain_id";
+                goto error;
+            }
         }
 #endif
         /* PMI is very nice to us - the domain id is an integer followed
