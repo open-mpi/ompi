@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2013      University of Houston. All rights reserved.
+ * Copyright (c) 2013      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -19,6 +20,11 @@
 
 
 #include "ompi_config.h"
+
+#if HAVE_LIBGEN_H
+#include <libgen.h>
+#endif
+
 #include "sharedfp_sm.h"
 
 #include "mpi.h"
