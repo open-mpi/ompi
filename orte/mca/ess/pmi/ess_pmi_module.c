@@ -39,7 +39,7 @@
 #endif
 
 #include <pmi.h>
-#ifdef WANT_PMI2_SUPPORT
+#if WANT_PMI2_SUPPORT
 #include <pmi2.h>
 #endif
 
