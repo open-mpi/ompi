@@ -601,10 +601,6 @@ int mca_bcol_iboffload_nb_memory_service_barrier_start(
         struct mca_bcol_iboffload_module_t *iboffload,
         struct mca_bcol_iboffload_collreq_t *coll_request);
 
-int mca_bcol_iboffload_allreduce_first_call(
-                struct mca_bcol_iboffload_module_t *iboffload,
-                struct mca_bcol_iboffload_collreq_t *coll_request);
-
 int mca_bcol_iboffload_fanin_register(mca_bcol_base_module_t *super);
 int mca_bcol_iboffload_fanout_register(mca_bcol_base_module_t *super);
 int mca_bcol_iboffload_barrier_register(mca_bcol_base_module_t *super);

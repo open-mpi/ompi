@@ -79,7 +79,7 @@ mca_bcol_iboffload_module_construct(mca_bcol_iboffload_module_t *module)
         default: module->barrier_algth = NULL;
     }
 
-    module->allreduce_algth = mca_bcol_iboffload_allreduce_first_call;
+    module->allreduce_algth = NULL;
     module->fanin_algth     = mca_bcol_iboffload_new_style_fanin_first_call;
     module->fanout_algth    = mca_bcol_iboffload_new_style_fanout_first_call;
     module->memsync_algth   = mca_bcol_iboffload_nb_memory_service_barrier_start;
