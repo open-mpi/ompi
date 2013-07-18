@@ -129,16 +129,14 @@ static int rte_init(void)
         }
         ORTE_PROC_MY_NAME->jobid = jobid;
         /* get our rank from PMI */
-        if (!(ret = mca_common_pmi_rank(&i))) {
-            OPAL_PMI_ERROR(ret, "PMI_Get_rank");
+        if (!mca_common_pmi_rank(&i)) {
             error = "could not get PMI rank";
             goto error;
         }
         ORTE_PROC_MY_NAME->vpid = i + 1;  /* compensate for orterun */
 
         /* get the number of procs from PMI */
-        if (!(ret = mca_common_pmi_size(&i))) {
-            OPAL_PMI_ERROR(ret, "PMI_Get_universe_size");
+        if (!mca_common_pmi_size(&i)) {
             error = "could not get PMI universe size";
             goto error;
         }
