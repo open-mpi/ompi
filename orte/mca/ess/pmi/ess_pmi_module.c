@@ -12,6 +12,7 @@
  * Copyright (c) 2008-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC.
  *                         All rights reserved. 
+ * Copyright (c) 2013      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -38,6 +39,9 @@
 #endif
 
 #include <pmi.h>
+#ifdef WANT_PMI2_SUPPORT
+#include <pmi2.h>
+#endif
 
 #include "opal/util/opal_environ.h"
 #include "opal/util/output.h"
@@ -126,7 +130,7 @@ static int rte_init(void)
         }
         ORTE_PROC_MY_NAME->jobid = jobid;
         /* get our rank from PMI */
-        if (PMI_SUCCESS != (ret = PMI_Get_rank(&i))) {
+        if (!(ret = mca_common_pmi_rank(&i))) {
             OPAL_PMI_ERROR(ret, "PMI_Get_rank");
             error = "could not get PMI rank";
             goto error;
@@ -134,7 +138,7 @@ static int rte_init(void)
         ORTE_PROC_MY_NAME->vpid = i + 1;  /* compensate for orterun */
 
         /* get the number of procs from PMI */
-        if (PMI_SUCCESS != (ret = PMI_Get_universe_size(&i))) {
+        if (!(ret = mca_common_pmi_size(&i))) {
             OPAL_PMI_ERROR(ret, "PMI_Get_universe_size");
             error = "could not get PMI universe size";
             goto error;
@@ -148,17 +152,26 @@ static int rte_init(void)
             goto error;
         }
     } else {  /* we are a direct-launched MPI process */
+#if WANT_PMI2_SUPPORT
+        /* Get domain id */
+        pmi_id = (char*)malloc(PMI2_MAX_VALLEN);
+        if (PMI_SUCCESS != (ret = PMI2_Job_GetId(pmi_id, PMI2_MAX_VALLEN))) {
+            error = "PMI2_Job_GetId failed";
+            goto error;
+        }
+#else
         /* get our PMI id length */
         if (PMI_SUCCESS != (ret = PMI_Get_id_length_max(&pmi_maxlen))) {
             error = "PMI_Get_id_length_max";
             goto error;
         }
-        pmi_id = malloc(pmi_maxlen);
+        pmi_id = (char*)malloc(pmi_maxlen);
         if (PMI_SUCCESS != (ret = PMI_Get_kvs_domain_id(pmi_id, pmi_maxlen))) {
             free(pmi_id);
             error = "PMI_Get_kvs_domain_id";
             goto error;
         }
+#endif
         /* PMI is very nice to us - the domain id is an integer followed
          * by a '.', followed by essentially a stepid. The first integer
          * defines an overall job number. The second integer is the number of
@@ -180,16 +193,14 @@ static int rte_init(void)
         ORTE_PROC_MY_NAME->jobid = ORTE_CONSTRUCT_LOCAL_JOBID(jobfam << 16, stepid);
 
         /* get our rank */
-        if (PMI_SUCCESS != (ret = PMI_Get_rank(&i))) {
-            OPAL_PMI_ERROR(ret, "PMI_Get_rank");
+        if (!mca_common_pmi_rank(&i)) {
             error = "could not get PMI rank";
             goto error;
         }
         ORTE_PROC_MY_NAME->vpid = i;
 
         /* get the number of procs from PMI */
-        if (PMI_SUCCESS != (ret = PMI_Get_universe_size(&i))) {
-            OPAL_PMI_ERROR(ret, "PMI_Get_universe_size");
+        if (!mca_common_pmi_size(&i)) {
             error = "could not get PMI universe size";
             goto error;
         }
@@ -245,6 +256,48 @@ static int rte_init(void)
             goto error;
         }
 
+#if WANT_PMI2_SUPPORT
+        {
+            /* get our local proc info to find our local rank */
+            char *pmapping = (char*)malloc(PMI2_MAX_VALLEN);
+            int found, sid, nodes, procs, k;
+            orte_vpid_t n;
+            char *p;
+            ret = PMI2_Info_GetJobAttr("PMI_process_mapping", pmapping, PMI2_MAX_VALLEN, &found);
+            if (!found) {
+                error = "could not get PMI_process_mapping (PMI2_Info_GetJobAttr() failed)";
+                goto error;
+            }
+
+            i = 0; n = 0; procs = 0;
+            if (NULL != (p = strstr(pmapping, "(vector"))) {
+                while (NULL != (p = strstr(p+1, ",("))) {
+                    if (3 == sscanf(p, ",(%d,%d,%d)", &sid, &nodes, &procs)) {
+                        for (k = 0; k < nodes; k++) {
+                            if ((ORTE_PROC_MY_NAME->vpid >= n) &&
+                                (ORTE_PROC_MY_NAME->vpid < (n + procs))) {
+                                break;
+                            }
+                            n += procs;
+                        }
+                    }
+                }
+            }
+            free(pmapping);
+
+            if ((procs > 0) && (n < orte_process_info.num_procs)) {
+                ranks = (int*)malloc(procs * sizeof(int));
+                for (i=0; i < procs; i++) {
+                    ranks[i] = n + i;
+                }
+            }
+
+            if (NULL == ranks) {
+                error = "could not get PMI_process_mapping";
+                goto error;
+            }
+        }
+#else
         /* get our local proc info to find our local rank */
         if (PMI_SUCCESS != (ret = PMI_Get_clique_size(&i))) {
             OPAL_PMI_ERROR(ret, "PMI_Get_clique_size");
@@ -263,6 +316,7 @@ static int rte_init(void)
             error = "could not get clique ranks";
             goto error;
         }
+#endif
         /* The clique ranks are returned in rank order, so
          * cycle thru the array and update the local/node
          * rank info
@@ -302,35 +356,49 @@ static int rte_init(void)
                  orte_process_info.cpuset);
     }
     /* push our info into the cloud */
-    if (ORTE_SUCCESS != (ret = opal_db.store((opal_identifier_t*)ORTE_PROC_MY_NAME, OPAL_DB_GLOBAL, "RTE", pmirte, OPAL_STRING))) {
+    if (ORTE_SUCCESS != (ret = opal_db.store((opal_identifier_t*)ORTE_PROC_MY_NAME,
+                                             OPAL_DB_GLOBAL, "RTE",
+                                             pmirte, OPAL_STRING))) {
         error = "db store RTE info";
         goto error;
     }
     free(pmirte);
     /* store our info in the internal database */
-    if (ORTE_SUCCESS != (ret = opal_db.store((opal_identifier_t*)ORTE_PROC_MY_NAME, OPAL_DB_INTERNAL, ORTE_DB_RMLURI, rmluri, OPAL_STRING))) {
+    if (ORTE_SUCCESS != (ret = opal_db.store((opal_identifier_t*)ORTE_PROC_MY_NAME,
+                                             OPAL_DB_INTERNAL, ORTE_DB_RMLURI,
+                                             rmluri, OPAL_STRING))) {
         error = "db store uri";
         goto error;
     }
     free(rmluri);
-    if (ORTE_SUCCESS != (ret = opal_db.store((opal_identifier_t*)ORTE_PROC_MY_NAME, OPAL_DB_INTERNAL, ORTE_DB_HOSTNAME, orte_process_info.nodename, OPAL_STRING))) {
+    if (ORTE_SUCCESS != (ret = opal_db.store((opal_identifier_t*)ORTE_PROC_MY_NAME,
+                                             OPAL_DB_INTERNAL, ORTE_DB_HOSTNAME,
+                                             orte_process_info.nodename, OPAL_STRING))) {
         error = "db store hostname";
         goto error;
     }
-    if (ORTE_SUCCESS != (ret = opal_db.store((opal_identifier_t*)ORTE_PROC_MY_NAME, OPAL_DB_INTERNAL, ORTE_DB_CPUSET, orte_process_info.cpuset, OPAL_STRING))) {
+    if (ORTE_SUCCESS != (ret = opal_db.store((opal_identifier_t*)ORTE_PROC_MY_NAME,
+                                             OPAL_DB_INTERNAL, ORTE_DB_CPUSET,
+                                             orte_process_info.cpuset, OPAL_STRING))) {
         error = "db store cpuset";
         goto error;
     }
-    if (ORTE_SUCCESS != (ret = opal_db.store((opal_identifier_t*)ORTE_PROC_MY_NAME, OPAL_DB_INTERNAL, ORTE_DB_LOCALRANK, &orte_process_info.my_local_rank, ORTE_LOCAL_RANK))) {
+    if (ORTE_SUCCESS != (ret = opal_db.store((opal_identifier_t*)ORTE_PROC_MY_NAME,
+                                             OPAL_DB_INTERNAL, ORTE_DB_LOCALRANK,
+                                             &orte_process_info.my_local_rank, ORTE_LOCAL_RANK))) {
         error = "db store local rank";
         goto error;
     }
-    if (ORTE_SUCCESS != (ret = opal_db.store((opal_identifier_t*)ORTE_PROC_MY_NAME, OPAL_DB_INTERNAL, ORTE_DB_NODERANK, &orte_process_info.my_node_rank, ORTE_NODE_RANK))) {
+    if (ORTE_SUCCESS != (ret = opal_db.store((opal_identifier_t*)ORTE_PROC_MY_NAME,
+                                             OPAL_DB_INTERNAL, ORTE_DB_NODERANK,
+                                             &orte_process_info.my_node_rank, ORTE_NODE_RANK))) {
         error = "db store node rank";
         goto error;
     }
     locality = OPAL_PROC_ALL_LOCAL;
-    if (ORTE_SUCCESS != (ret = opal_db.store((opal_identifier_t*)ORTE_PROC_MY_NAME, OPAL_DB_INTERNAL, ORTE_DB_LOCALITY, &locality, OPAL_HWLOC_LOCALITY_T))) {
+    if (ORTE_SUCCESS != (ret = opal_db.store((opal_identifier_t*)ORTE_PROC_MY_NAME,
+                                             OPAL_DB_INTERNAL, ORTE_DB_LOCALITY,
+                                             &locality, OPAL_HWLOC_LOCALITY_T))) {
         error = "db store locality";
         goto error;
     }
