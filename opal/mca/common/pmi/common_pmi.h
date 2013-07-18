@@ -3,8 +3,9 @@
  * Copyright (c) 2007      The Trustees of Indiana University.
  *                         All rights reserved.
  * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2011-2012 Los Alamos National Security, LLC. All
+ * Copyright (c) 2011-2013 Los Alamos National Security, LLC. All
  *                         rights reserved.
+ * Copyright (c) 2013      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -12,8 +13,8 @@
  * $HEADER$
  */
 
-#if !defined(ORTE_MCA_COMMON_PMI)
-#define ORTE_MCA_COMMON_PMI
+#if !defined(OPAL_MCA_COMMON_PMI)
+#define OPAL_MCA_COMMON_PMI
 
 /**
  * mca_common_pmi_init:
@@ -33,4 +34,15 @@ bool mca_common_pmi_init (void);
  */
 void mca_common_pmi_finalize (void);
 
+#define OPAL_PMI_ERROR(pmi_err, pmi_func)                               \
+    do {                                                                \
+        opal_output(0, "[%s:%d:%s] %s: %s\n",                         \
+                    __FILE__, __LINE__, __func__,                       \
+                    pmi_func, opal_errmgr_base_pmi_error(pmi_err));     \
+    } while(0);
+OPAL_DECLSPEC char* opal_errmgr_base_pmi_error(int pmi_err);
+
 #endif
+
+bool mca_common_pmi_rank(int *rank);
+bool mca_common_pmi_size(int *size);

@@ -14,9 +14,9 @@
 #include "orte/constants.h"
 
 #include "opal/mca/mca.h"
+#include "opal/mca/common/pmi/common_pmi.h"
 
 #include "orte/util/proc_info.h"
-#include "orte/mca/common/pmi/common_pmi.h"
 
 #include "grpcomm_pmi.h"
 
@@ -81,7 +81,7 @@ int orte_grpcomm_pmi_component_query(mca_base_module_t **module, int *priority)
     /* only use PMI when direct launched */
     if (NULL == orte_process_info.my_hnp_uri &&
         ORTE_PROC_IS_MPI &&
-       mca_common_pmi_init ()) {
+        mca_common_pmi_init ()) {
         /* if PMI is available, make it available for use by MPI procs */
         *priority = my_priority;
         *module = (mca_base_module_t *)&orte_grpcomm_pmi_module;

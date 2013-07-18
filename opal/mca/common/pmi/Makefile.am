@@ -1,6 +1,8 @@
 #
 # Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2012      Sandia National Laboratories. All rights reserved.
+# Copyright (c) 2013      Los Alamos National Security, LLC.  All rights
+#                         reserved. 
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -24,7 +26,7 @@ AM_CPPFLAGS = $(common_pmi_CPPFLAGS)
 
 # control whether building an installed library or a convenience
 # (noinst) library
-if MCA_BUILD_orte_common_pmi_DSO
+if MCA_BUILD_opal_common_pmi_DSO
 component_noinst =
 component_install = libmca_common_pmi.la
 else

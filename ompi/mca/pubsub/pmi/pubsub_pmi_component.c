@@ -13,9 +13,10 @@
 #include "ompi_config.h"
 #include "ompi/constants.h"
 
+#include "opal/mca/common/pmi/common_pmi.h"
+
 #include "orte/util/proc_info.h"
 #include "orte/util/name_fns.h"
-#include "orte/mca/common/pmi/common_pmi.h"
 
 #include "pubsub_pmi.h"
 
