@@ -97,7 +97,6 @@ int mca_sharedfp_sm_iwrite (mca_io_ompio_file_t *fh,
                                     int count,
                                     struct ompi_datatype_t *datatype,
                                     ompi_request_t **request);
-
 /*--------------------------------------------------------------*
  *Structures and definitions only for this component
  *--------------------------------------------------------------*/
@@ -105,7 +104,7 @@ int mca_sharedfp_sm_iwrite (mca_io_ompio_file_t *fh,
 struct sm_offset{
     sem_t mutex; /* the mutex: a Posix memory-based semaphore */
     long long offset; /* and the shared file pointer offset */
-} sm_offset;
+};
 
 /*This structure will hang off of the mca_sharedfp_base_data_t's
  *selected_module_data attribute

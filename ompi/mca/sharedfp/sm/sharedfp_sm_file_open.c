@@ -29,6 +29,8 @@
 
 #include <semaphore.h>
 #include <sys/mman.h>
+#include <libgen.h>
+
 
 int mca_sharedfp_sm_file_open (struct ompi_communicator_t *comm,
                                char* filename,
@@ -43,6 +45,7 @@ int mca_sharedfp_sm_file_open (struct ompi_communicator_t *comm,
     char * filename_basename;
     char * sm_filename;
     struct sm_offset * sm_offset_ptr;
+    struct sm_offset sm_offset;
     int sm_fd;
     int rank;
 
@@ -123,7 +126,8 @@ int mca_sharedfp_sm_file_open (struct ompi_communicator_t *comm,
     
     /*TODO: is it necessary to write to the file first?*/
     if( 0 == rank ){
-	write(sm_fd, &sm_offset, sizeof(struct sm_offset));
+	memset ( &sm_offset, 0, sizeof (struct sm_offset ));
+	write ( sm_fd, &sm_offset, sizeof(struct sm_offset));
     }
     comm->c_coll.coll_barrier (comm, comm->c_coll.coll_barrier_module );
     
