@@ -1,0 +1,180 @@
+# -*- text -*-
+#
+# Copyright (c) 2012 Cisco Systems, Inc.  All rights reserved.
+#
+# $COPYRIGHT$
+#
+# Additional copyrights may follow
+#
+# $HEADER$
+#
+# This is the US/English help file for the Open MPI usnic BTL.
+#
+[ibv API failed]
+Open MPI failed a basic verbs operation on a Cisco usNIC device.  This
+is highly unusual and shouldn't happen.  It suggests that there may be
+something wrong with the usNIC or OpenFabrics configuration on this
+server.
+
+In addition to any suggestions listed below, you might want to check
+the Linux "memlock" limits on your system (they should probably be
+"unlimited").  See this FAQ entry for details:
+
+    http://www.open-mpi.org/faq/?category=openfabrics#ib-locked-pages
+
+Open MPI will skip this device/port in the usnic BTL, which may result
+in either lower performance or your job aborting.
+
+  Server:          %s
+  Device:          %s
+  Port:            %d
+  Failed function: %s (%s:%d)
+  Description:     %s
+#
+[not enough usnic resources]
+There are not enough usNIC resources on a VIC for all the MPI
+processes on this server.
+
+This means that you have either not provisioned enough usNICs on this
+VIC, or there are not enough total receive, transmit, or completion
+queues on the provisioned usNICs.  On each VIC in a given server, you
+need to provision at least as many usNICs as MPI processes on that
+server.  In each usNIC, you need to provision at least two each of the
+following: send queues, receive queues, and completion queues.
+
+Open MPI will skip this device in the usnic BTL, which may result in
+either lower performance or your job aborting.
+
+  Server:          %s
+  Device:          %s
+  Description:     %s
+#
+[create ibv resource failed]
+Open MPI failed to allocate a usNIC-related resource on a VIC.  This
+usually means one of two things:
+
+1. You are running something other than this MPI job on this server
+   that is consuming usNIC resources.
+2. You have run our of locked Linux memory.  You should probably set
+   the Linux "memlock" limits to "unlimited".  See this FAQ entry for
+   details:
+
+     http://www.open-mpi.org/faq/?category=openfabrics#ib-locked-pages
+
+This Open MPI job will skip this device/port in the usnic BTL, which
+may result in either lower performance or the job aborting.
+
+  Server:          %s
+  Device:          %s
+  Failed function: %s (%s:%d)
+  Description:     %s
+#
+[async event]
+Open MPI detected a fatal error on a usNIC port.  Your MPI job will
+now abort; sorry.
+
+  Server:           %s
+  Device:           %s
+  Port:             %d
+  Async event code: %s (%d)
+#
+[internal error during init]
+An internal error has occurred in the Open MPI usNIC BTL.  This is
+highly unusual and shouldn't happen.  It suggests that there may be
+something wrong with the usNIC or OpenFabrics configuration on this
+server.
+
+Open MPI will skip this device/port in the usnic BTL, which may result
+in either lower performance or your job aborting.
+
+  Server:          %s
+  Device:          %s
+  Port:            %d
+  Failure:         %s (%s:%d)
+  Description:     %s
+#
+[internal error after init]
+An internal error has occurred in the Open MPI usNIC BTL.  This is
+highly unusual and shouldn't happen.  It suggests that there may be
+something wrong with the usNIC or OpenFabrics configuration on this
+server.
+
+[ibv API failed after init]
+Open MPI failed a basic verbs operation on a Cisco usNIC device.  This
+is highly unusual and shouldn't happen.  It suggests that there may be
+something wrong with the usNIC or OpenFabrics configuration on this
+server.
+
+Your MPI job may behave erratically, hang, and/or abort.
+
+  Server:          %s
+  Failure:         %s (%s:%d)
+  Description:     %s
+#
+[verbs_port_bw failed]
+Open MPI failed to query the supported bandwidth of a port on a Cisco
+usNIC device.  This is unusual and shouldn't happen.  It suggests that
+there may be something wrong with the usNIC or OpenFabrics
+configuration on this server.
+
+Open MPI will skip this device/port in the usnic BTL, which may result
+in either lower performance or your job aborting.
+
+  Server:     %s
+  Device:     %s
+  Port:       %d
+#
+[eager_limit too high]
+The eager_limit in the usnic BTL is too high for a device that Open
+MPI tried to use.  The usnic BTL eager_limit value is the largest
+message payload that Open MPI will send in a single datagram.  
+
+You are seeing this message because the eager_limit was set to a value
+larger than the MPI message payload capacity of a single UD datagram.
+The max payload size is smaller than the size of individual datagrams
+because each datagram also contains MPI control metadata, meaning that
+the some bytes in the datagram must be reserved for overhead.
+
+Open MPI will skip this device/port in the usnic BTL, which may result
+in either lower performance or your job aborting.
+
+  Server:                %s
+  Device:                %s
+  Port:                  %d
+  Max payload allowed:   %d
+  Specified eager_limit: %d
+#
+[check_reg_mem_basics fail]
+The usNIC BTL failed to initialize while trying to register some
+memory.  This typically can indicate that the "memlock" limits are set
+too low.  For most HPC installations, the memlock limits should be set
+to "unlimited".  The failure occured here:
+
+  Local host:    %s
+  Memlock limit: %s
+
+You may need to consult with your system administrator to get this
+problem fixed.  This FAQ entry on the Open MPI web site may also be
+helpful:
+
+    http://www.open-mpi.org/faq/?category=openfabrics#ib-locked-pages
+#
+[invalid if_inexclude]
+WARNING: An invalid value was given for btl_usnic_if_%s.  This
+value will be ignored.
+
+  Local host: %s
+  Value:      %s
+  Message:    %s
+#
+[MTU mismatch]
+The MTU does not match on local and remote hosts.  All interfaces on all
+hosts participating in an MPI job must be configured with the same MTU.
+The device and port listed below will not be used to communicate with this
+remote host.
+
+  Local host:  %s
+  Device/port: %s/%d
+  Local MTU:   %d
+  Remote host: %s
+  Remote MTU:  %d
