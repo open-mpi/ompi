@@ -265,7 +265,7 @@ static int rte_init(void)
             orte_vpid_t n;
             char *p;
             ret = PMI2_Info_GetJobAttr("PMI_process_mapping", pmapping, PMI2_MAX_VALLEN, &found);
-            if (!found) {
+            if (!found || PMI2_SUCCESS != ret) {
                 error = "could not get PMI_process_mapping (PMI2_Info_GetJobAttr() failed)";
                 goto error;
             }
