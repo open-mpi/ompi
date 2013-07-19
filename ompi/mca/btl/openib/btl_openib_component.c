@@ -1619,6 +1619,7 @@ static int init_one_device(opal_list_t *btl_list, struct ibv_device* ib_dev)
         ibv_close_device(dev_context);
         BTL_VERBOSE(("openib: RC QPs not supported -- skipping %s",
                      ibv_get_device_name(ib_dev)));
+        ++num_devices_intentionally_ignored;
         return OMPI_ERR_NOT_SUPPORTED;
     }
 
