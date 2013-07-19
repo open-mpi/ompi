@@ -91,9 +91,8 @@ static int rte_init(void)
     uint64_t unique_key[2];
     char *cs_env, *string_key;
     char *pmi_id=NULL;
-    int *ranks;
+    int *ranks=NULL;
     orte_jobid_t jobid;
-    orte_process_name_t proc;
     orte_local_rank_t local_rank;
     orte_node_rank_t node_rank;
     char *rmluri;
@@ -265,7 +264,7 @@ static int rte_init(void)
             orte_vpid_t n;
             char *p;
             ret = PMI2_Info_GetJobAttr("PMI_process_mapping", pmapping, PMI2_MAX_VALLEN, &found);
-            if (!found) {
+            if (!found || PMI_SUCCESS != ret) { /* can't check PMI2_SUCCESS as some folks (i.e., Cray) don't define it */
                 error = "could not get PMI_process_mapping (PMI2_Info_GetJobAttr() failed)";
                 goto error;
             }
@@ -322,9 +321,7 @@ static int rte_init(void)
          * cycle thru the array and update the local/node
          * rank info
          */
-        proc.jobid = ORTE_PROC_MY_NAME->jobid;
         for (j=0; j < i; j++) {
-            proc.vpid = ranks[j];
             local_rank = j;
             node_rank = j;
             if (ranks[j] == (int)ORTE_PROC_MY_NAME->vpid) {

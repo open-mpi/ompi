@@ -43,10 +43,12 @@ bool mca_common_pmi_init (void) {
             return true;
         }
 
-        if (PMI_SUCCESS != PMI2_Init(&spawned, &size, &rank, &appnum)) {
+        if (PMI_SUCCESS == PMI2_Init(&spawned, &size, &rank, &appnum)) {
             mca_common_pmi_init_size = size;
             mca_common_pmi_init_rank = rank;
             mca_common_pmi_init_count--;
+            return true;
+        } else {
             return false;
         }
     }
