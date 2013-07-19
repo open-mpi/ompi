@@ -498,12 +498,10 @@ Network Support
     - Loopback (send-to-self)
     - Myrinet MX and Open-MX
     - Portals
-    - Quadrics Elan
     - Shared memory
     - TCP
     - SCTP
     - uDAPL
-    - Windows Verbs
     - Cisco usNIC
 
   - "csum" is exactly the same as "ob1", except that it performs
