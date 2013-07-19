@@ -214,10 +214,19 @@ ompi_errhandler_t *ompi_errhandler_create(ompi_errhandler_type_t object_type,
 }
 
 /**
- * Runtime errhandler callback
+ * Default runtime errhandler callback
  */
-void ompi_errhandler_runtime_callback(opal_pointer_array_t *procs) {
-    ompi_mpi_abort(MPI_COMM_WORLD, 1, false);
+int ompi_errhandler_runtime_callback(opal_pointer_array_t *errors) {
+    ompi_rte_error_report_t *err;
+    int errcode = 1;
+
+    if (NULL != errors ||
+        (NULL != (err = (ompi_rte_error_report_t*)opal_pointer_array_get_item(errors, 0)))) {
+        errcode = err->errcode;
+    }
+        
+    ompi_mpi_abort(MPI_COMM_WORLD, errcode, false);
+    return OMPI_SUCCESS;
 }
 
 /**************************************************************************

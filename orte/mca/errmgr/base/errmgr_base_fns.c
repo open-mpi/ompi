@@ -245,6 +245,95 @@ int orte_errmgr_base_abort_peers(orte_process_name_t *procs, orte_std_cntr_t num
     return ORTE_ERR_NOT_IMPLEMENTED;
 }
 
+int orte_errmgr_base_register_error_callback(orte_errmgr_error_callback_fn_t *cbfunc,
+                                             orte_errmgr_error_order_t order)
+{
+    orte_errmgr_cback_t *cb, *cbcur;
+
+    /* check the order to see what to do */
+    switch(order) {
+    case ORTE_ERRMGR_CALLBACK_FIRST:
+        /* only one can be so designated */
+        if (NULL != (cb = (orte_errmgr_cback_t*)opal_list_get_first(&orte_errmgr_base.error_cbacks))) {
+            if (ORTE_ERRMGR_CALLBACK_FIRST == cb->order) {
+                return ORTE_ERR_NOT_SUPPORTED;
+            }
+        }
+        cb = OBJ_NEW(orte_errmgr_cback_t);
+        cb->order = order;
+        cb->callback =cbfunc;
+        opal_list_prepend(&orte_errmgr_base.error_cbacks, &cb->super);
+        break;
+    case ORTE_ERRMGR_CALLBACK_LAST:
+        /* only one can be so designated */
+        if (NULL != (cb = (orte_errmgr_cback_t*)opal_list_get_last(&orte_errmgr_base.error_cbacks))) {
+            if (ORTE_ERRMGR_CALLBACK_LAST == cb->order) {
+                return ORTE_ERR_NOT_SUPPORTED;
+            }
+        }
+        cb = OBJ_NEW(orte_errmgr_cback_t);
+        cb->order = order;
+        cb->callback = cbfunc;
+        opal_list_append(&orte_errmgr_base.error_cbacks, &cb->super);
+        break;
+    case ORTE_ERRMGR_CALLBACK_PREPEND:
+        cb = OBJ_NEW(orte_errmgr_cback_t);
+        cb->order = order;
+        cb->callback =cbfunc;
+        if (NULL != (cbcur = (orte_errmgr_cback_t*)opal_list_get_first(&orte_errmgr_base.error_cbacks)) &&
+            ORTE_ERRMGR_CALLBACK_FIRST == cbcur->order) {
+            opal_list_insert(&orte_errmgr_base.error_cbacks, &cb->super, 1);
+        } else {
+            opal_list_prepend(&orte_errmgr_base.error_cbacks, &cb->super);
+        }
+        break;
+    case ORTE_ERRMGR_CALLBACK_APPEND:
+        cb = OBJ_NEW(orte_errmgr_cback_t);
+        cb->order = order;
+        cb->callback =cbfunc;
+        if (NULL != (cbcur = (orte_errmgr_cback_t*)opal_list_get_last(&orte_errmgr_base.error_cbacks)) &&
+            ORTE_ERRMGR_CALLBACK_LAST == cbcur->order) {
+            opal_list_insert_pos(&orte_errmgr_base.error_cbacks, &cbcur->super, &cb->super);
+        } else {
+            opal_list_append(&orte_errmgr_base.error_cbacks, &cb->super);
+        }
+        opal_list_append(&orte_errmgr_base.error_cbacks, &cb->super);
+        break;
+    }
+    return ORTE_SUCCESS;
+}
+
+void orte_errmgr_base_execute_error_callbacks(opal_pointer_array_t *errors)
+{
+    orte_errmgr_cback_t *cb;
+    char *errstring;
+    orte_error_t *err;
+    int errcode = ORTE_ERROR_DEFAULT_EXIT_CODE;
+
+    /* if no callbacks have been provided, then we abort */
+    if (0 == opal_list_get_size(&orte_errmgr_base.error_cbacks)) {
+        /* take the first entry, if available */
+        if (NULL != errors &&
+            (NULL != (err = (orte_error_t*)opal_pointer_array_get_item(errors, 0)))) {
+            errstring = (char*)ORTE_ERROR_NAME(err->errcode);
+            errcode = err->errcode;
+        }
+        if (NULL == errstring) {
+            /* if the error is silent, say nothing */
+            orte_errmgr.abort(errcode, NULL);
+        }
+        orte_errmgr.abort(errcode, "Executing default error callback: %s", errstring);
+    }
+
+    /* cycle across the provided callbacks until we complete the list
+     * or one reports that no further action is required
+     */
+    OPAL_LIST_FOREACH(cb, &orte_errmgr_base.error_cbacks, orte_errmgr_cback_t) {
+        if (ORTE_SUCCESS == cb->callback(errors)) {
+            break;
+        }
+    }
+}
 
 /********************
  * Utility functions
@@ -650,18 +739,6 @@ int orte_errmgr_base_migrate_job(orte_jobid_t jobid, orte_snapc_base_request_op_
 }
 
 #endif
-
-orte_errmgr_fault_callback_t *orte_errmgr_base_set_fault_callback(orte_errmgr_fault_callback_t *cbfunc) {
-    orte_errmgr_fault_callback_t *temp_cbfunc = fault_cbfunc;
-
-    OPAL_OUTPUT_VERBOSE((10, orte_errmgr_base_framework.framework_output, 
-                "%s errmgr:base Called set_fault_callback", 
-                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-
-    fault_cbfunc = cbfunc;
-
-    return temp_cbfunc;
-}
 
 /********************
  * Local Functions
