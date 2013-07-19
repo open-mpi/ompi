@@ -93,7 +93,6 @@ static int rte_init(void)
     char *pmi_id=NULL;
     int *ranks=NULL;
     orte_jobid_t jobid;
-    orte_process_name_t proc;
     orte_local_rank_t local_rank;
     orte_node_rank_t node_rank;
     char *rmluri;
@@ -322,9 +321,7 @@ static int rte_init(void)
          * cycle thru the array and update the local/node
          * rank info
          */
-        proc.jobid = ORTE_PROC_MY_NAME->jobid;
         for (j=0; j < i; j++) {
-            proc.vpid = ranks[j];
             local_rank = j;
             node_rank = j;
             if (ranks[j] == (int)ORTE_PROC_MY_NAME->vpid) {
