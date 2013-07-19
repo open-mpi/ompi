@@ -304,11 +304,6 @@ static int rte_init(void)
             error = "could not get PMI clique size";
             goto error;
         }
-        /* store that info - remember, we want the number of peers that
-         * share the node WITH ME, so we have to subtract ourselves from
-         * that number
-         */
-        orte_process_info.num_local_peers = i - 1;
         /* now get the specific ranks */
         ranks = (int*)malloc(i * sizeof(int));
         if (PMI_SUCCESS != (ret = PMI_Get_clique_ranks(ranks, i))) {
@@ -317,6 +312,11 @@ static int rte_init(void)
             goto error;
         }
 #endif
+        /* store the number of local peers - remember, we want the number
+         * of peers that share the node WITH ME, so we have to subtract
+         * ourselves from that number
+         */
+        orte_process_info.num_local_peers = i - 1;
         /* The clique ranks are returned in rank order, so
          * cycle thru the array and update the local/node
          * rank info
