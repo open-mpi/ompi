@@ -50,7 +50,7 @@
 /*
  * Globals
  */
-orte_errmgr_fault_callback_t *fault_cbfunc;
+orte_errmgr_base_t orte_errmgr_base;
 
 /* Public module provides a wrapper around previous functions */
 orte_errmgr_base_module_t orte_errmgr_default_fns = {
@@ -62,7 +62,9 @@ orte_errmgr_base_module_t orte_errmgr_default_fns = {
     NULL, /* predicted_fault     */
     NULL, /* suggest_map_targets */
     NULL, /* ft_event            */
-    orte_errmgr_base_register_migration_warning
+    orte_errmgr_base_register_migration_warning,
+    orte_errmgr_base_register_error_callback,
+    orte_errmgr_base_execute_error_callbacks
 };
 /* NOTE: ABSOLUTELY MUST initialize this
  * struct to include the log function as it
@@ -73,6 +75,8 @@ orte_errmgr_base_module_t orte_errmgr = {
     NULL,
     NULL,
     orte_errmgr_base_log,
+    NULL,
+    NULL,
     NULL,
     NULL,
     NULL,
@@ -90,6 +94,9 @@ static int orte_errmgr_base_close(void)
     /* always leave a default set of fn pointers */
     orte_errmgr = orte_errmgr_default_fns;
 
+    /* destruct the callback list */
+    OPAL_LIST_DESTRUCT(&orte_errmgr_base.error_cbacks);
+
     return mca_base_framework_components_close(&orte_errmgr_base_framework, NULL);
 }
 
@@ -102,6 +109,9 @@ static int orte_errmgr_base_open(mca_base_open_flag_t flags)
     /* load the default fns */
     orte_errmgr = orte_errmgr_default_fns;
 
+    /* initialize the error callback list */
+    OBJ_CONSTRUCT(&orte_errmgr_base.error_cbacks, opal_list_t);
+
     /* Open up all available components */
     return mca_base_framework_components_open(&orte_errmgr_base_framework, flags);
 }
@@ -110,3 +120,6 @@ MCA_BASE_FRAMEWORK_DECLARE(orte, errmgr, "ORTE Error Manager", NULL,
                            orte_errmgr_base_open, orte_errmgr_base_close,
                            mca_errmgr_base_static_components, 0);
 
+OBJ_CLASS_INSTANCE(orte_errmgr_cback_t,
+                   opal_list_item_t,
+                   NULL, NULL);

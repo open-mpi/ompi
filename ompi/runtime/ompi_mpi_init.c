@@ -482,10 +482,11 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     }
 #endif
 
-    /* Register errhandler callback - RTE will ignore if it
+    /* Register the default errhandler callback - RTE will ignore if it
      * doesn't support this capability
      */
-    ompi_rte_set_fault_callback(ompi_errhandler_runtime_callback);
+    ompi_rte_register_errhandler(ompi_errhandler_runtime_callback,
+                                 OMPI_RTE_ERRHANDLER_LAST);
 
     /* Figure out the final MPI thread levels.  If we were not
        compiled for support for MPI threads, then don't allow
