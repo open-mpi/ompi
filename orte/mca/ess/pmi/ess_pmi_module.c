@@ -91,7 +91,7 @@ static int rte_init(void)
     uint64_t unique_key[2];
     char *cs_env, *string_key;
     char *pmi_id=NULL;
-    int *ranks;
+    int *ranks=NULL;
     orte_jobid_t jobid;
     orte_process_name_t proc;
     orte_local_rank_t local_rank;
