@@ -14,7 +14,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <pmi.h>
-#if WANT_CRAY_PMI2_EXT
+#if WANT_PMI2_SUPPORT
 #include <pmi2.h>
 #endif
 

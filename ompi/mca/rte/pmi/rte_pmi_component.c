@@ -15,7 +15,7 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <pmi.h>
-#if WANT_CRAY_PMI2_EXT
+#if WANT_PMI2_SUPPORT
 #include <pmi2.h>
 #endif
 
@@ -72,7 +72,7 @@ ompi_rte_init(int *argc, char ***argv)
     hwloc_cpuset_t boundset, rootset;
     char *tmp_str;
 
-#if WANT_CRAY_PMI2_EXT
+#if WANT_PMI2_SUPPORT
     {
         int spawned, appnum;
 
@@ -120,6 +120,7 @@ ompi_rte_init(int *argc, char ***argv)
     for (i = 0 ; i < ompi_process_info.num_local_peers ; ++i) {
         if (rank == node_ranks[i]) {
             ompi_process_info.my_local_rank = i;
+            ompi_process_info.my_node_rank = i;
             break;
         }
     }
