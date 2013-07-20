@@ -80,18 +80,25 @@
  *     1. ompi_process_info_t - a struct containing info about the current process.
  *        The struct must contain at least the following fields:
  *           a. app_num -
- *           b. pid -
- *           c. num_procs -
- *           d. my_node_rank -
- *           e. my_hnp_uri -
- *           f. peer_modex - a collective id for the modex operation
- *           g. peer_init_barrier - a collective id for the barrier during MPI_Init
- *           h. peer_fini_barrier - a collective id for the barrier during MPI_Finalize
- *           i. job_session_dir - 
- *           j. proc_session_dir -
- *           k. nodename - a string representation for the name of the node this
+ *           b. pid - this process's pid.  Should be same as getpid().
+ *           c. num_procs - Number of processes in this job (ie, MCW)
+ *           d. my_node_rank - relative rank on local node to other peers this run-time 
+ *                    instance knows about.  If doing dynamics, this may be something
+ *                    different than my_local_rank, but will be my_local_rank in a
+ *                    static job.
+ *           d. my_local_rank - relative rank on local node with other peers in this job (ie, MCW)
+ *           e. num_local_peers - Number of local peers (peers in MCW on your node)
+ *           f. my_hnp_uri -
+ *           g. peer_modex - a collective id for the modex operation
+ *           h. peer_init_barrier - a collective id for the barrier during MPI_Init
+ *           i. peer_fini_barrier - a collective id for the barrier during MPI_Finalize
+ *           j. job_session_dir - 
+ *           k. proc_session_dir -
+ *           l. nodename - a string representation for the name of the node this
  *              process is on
- *     2. ompi_rte_proc_is_bound - global boolean that will be true if the runtime bound 
+ *           m. cpuset -
+ *     2. ompi_process_info - a global instance of the ompi_process_t structure.
+ *     3. ompi_rte_proc_is_bound - global boolean that will be true if the runtime bound 
  *        the process to a particular core or set of cores and is false otherwise.
  *
  * (d) Error handling objects and operations
@@ -100,7 +107,7 @@
  *     2. int ompi_rte_abort_peers(ompi_process_name_t *procs, size_t nprocs) - 
  *        Abort the specified list of peers
  *     3. OMPI_ERROR_LOG(rc) - print error message regarding the given return code
- *     4. ompi_rte_set_fault_callback - register a callback function for the RTE
+ *     4. ompi_rte_register_errhandler - register a callback function for the RTE
  *        to report asynchronous errors to the caller
  *
  * (e) Init and finalize objects and operations
