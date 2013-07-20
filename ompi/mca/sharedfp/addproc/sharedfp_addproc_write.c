@@ -23,7 +23,6 @@
 
 #include "mpi.h"
 #include "ompi/constants.h"
-#include "orte/util/show_help.h"
 #include "ompi/mca/sharedfp/sharedfp.h"
 
 int mca_sharedfp_addproc_write (mca_io_ompio_file_t *fh,

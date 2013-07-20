@@ -23,7 +23,6 @@
 
 #include "mpi.h"
 #include "ompi/constants.h"
-#include "orte/util/show_help.h"
 #include "ompi/mca/sharedfp/sharedfp.h"
 
 /*Use fcntl to lock the file which stores the current position*/

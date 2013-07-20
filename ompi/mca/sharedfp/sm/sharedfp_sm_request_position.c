@@ -23,7 +23,6 @@
 
 #include "mpi.h"
 #include "ompi/constants.h"
-#include "orte/util/show_help.h"
 #include "ompi/mca/sharedfp/sharedfp.h"
 
 /*use a semaphore to lock the shared memory*/
