@@ -106,7 +106,12 @@ OMPI_DECLSPEC int ompi_rte_abort_peers(ompi_process_name_t *procs, size_t nprocs
 OMPI_DECLSPEC int ompi_rte_error_log(const char *file, int line, 
                                      const char *func, int ret);
 #define OMPI_ERROR_LOG(ret) ompi_rte_error_log(__FILE__, __LINE__, __func__, ret)
-void ompi_rte_set_fault_callback(void (*)(opal_pointer_array_t*));
+struct ompi_rte_error_report_t {
+    int errcode;
+};
+typedef struct ompi_rte_error_report_t ompi_rte_error_report_t;
+#define OMPI_RTE_ERRHANDLER_LAST 0
+void ompi_rte_register_errhandler(int (*)(opal_pointer_array_t*), int);
 
 /* Init and finalize objects and operations */
 OMPI_DECLSPEC int ompi_rte_init(int *argc, char ***argv);

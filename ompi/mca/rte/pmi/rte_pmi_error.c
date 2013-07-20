@@ -62,7 +62,7 @@ ompi_rte_error_log(const char *file, int line,
 
 
 void
-ompi_rte_set_fault_callback(void (*callback)(opal_pointer_array_t*))
+ompi_rte_register_errhandler(int (*callback)(opal_pointer_array_t*), int order)
 {
     /* This is intentionally a no-op.  We don't get async errors from PMI. */
 }
