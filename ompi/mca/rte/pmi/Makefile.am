@@ -23,6 +23,7 @@ endif
 
 local_sources = \
 	rte_pmi.h \
+	rte_pmi_internal.h \
 	rte_pmi_coll.c \
 	rte_pmi_component.c \
 	rte_pmi_name.c \
