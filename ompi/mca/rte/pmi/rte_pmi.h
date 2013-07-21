@@ -95,6 +95,7 @@ struct ompi_process_info_t {
 };
 typedef struct ompi_process_info_t ompi_process_info_t;
 #define OMPI_LOCAL_RANK_INVALID (-1)
+#define OMPI_NODE_RANK_INVALID (-1)
 
 
 OMPI_DECLSPEC extern ompi_process_info_t ompi_process_info;

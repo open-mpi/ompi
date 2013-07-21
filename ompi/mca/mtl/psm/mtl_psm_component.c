@@ -198,11 +198,11 @@ get_num_local_procs(int *out_nlp)
 static int
 get_local_rank(int *out_rank)
 {
-    orte_node_rank_t my_node_rank;
+    ompi_node_rank_t my_node_rank;
 
     *out_rank = 0;
 
-    if (ORTE_NODE_RANK_INVALID == (my_node_rank =
+    if (OMPI_NODE_RANK_INVALID == (my_node_rank =
         ompi_process_info.my_node_rank)) {
         return OMPI_ERROR;
     }
