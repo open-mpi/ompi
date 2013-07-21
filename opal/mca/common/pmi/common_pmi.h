@@ -16,6 +16,8 @@
 #if !defined(OPAL_MCA_COMMON_PMI)
 #define OPAL_MCA_COMMON_PMI
 
+#include "opal/util/output.h"
+
 /**
  * mca_common_pmi_init:
  *
