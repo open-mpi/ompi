@@ -54,6 +54,7 @@ opal_db_base_module_t opal_db_hash_module = {
     finalize,
     store,
     store_pointer,
+    NULL,
     fetch,
     fetch_pointer,
     fetch_multiple,

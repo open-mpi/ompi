@@ -42,6 +42,7 @@ static int store(const opal_identifier_t *id,
 static int store_pointer(const opal_identifier_t *proc,
                          opal_db_locality_t locality,
                          opal_value_t *kv);
+static void commit(void);
 static int fetch(const opal_identifier_t *proc,
                  const char *key, void **data, opal_data_type_t type);
 static int fetch_pointer(const opal_identifier_t *proc,
@@ -57,6 +58,7 @@ opal_db_base_module_t opal_db_pmi_module = {
     finalize,
     store,
     store_pointer,
+    commit,
     fetch,
     fetch_pointer,
     fetch_multiple,
@@ -333,6 +335,25 @@ static int store_pointer(const opal_identifier_t *proc,
     }
     return rc;
 }
+
+static void commit(void)
+{
+#if WANT_PMI2_SUPPORT
+    PMI2_KVS_Fence();
+#else
+    {
+        int rc;
+        
+        if (PMI_SUCCESS != (rc = PMI_KVS_Commit(pmi_kvs_name))) {
+            OPAL_PMI_ERROR(rc, "PMI_KVS_Commit");
+            return;
+        }
+        /* Barrier here to ensure all other procs have committed */
+        PMI_Barrier();
+    }
+#endif
+}
+
 
 static char* fetch_string(const char *key)
 {

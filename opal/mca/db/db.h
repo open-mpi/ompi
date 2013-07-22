@@ -80,6 +80,11 @@ typedef int (*opal_db_base_module_store_pointer_fn_t)(const opal_identifier_t *p
                                                       opal_value_t *kv);
 
 /*
+ * Commit data to the database
+ */
+typedef void (*opal_db_base_module_commit_fn_t)(void);
+
+/*
  * Retrieve data
  *
  * Retrieve data for the given proc associated with the specified key. Wildcards
@@ -138,6 +143,7 @@ struct opal_db_base_module_1_0_0_t {
     opal_db_base_module_finalize_fn_t                  finalize;
     opal_db_base_module_store_fn_t                     store;
     opal_db_base_module_store_pointer_fn_t             store_pointer;
+    opal_db_base_module_commit_fn_t                    commit;
     opal_db_base_module_fetch_fn_t                     fetch;
     opal_db_base_module_fetch_pointer_fn_t             fetch_pointer;
     opal_db_base_module_fetch_multiple_fn_t            fetch_multiple;
