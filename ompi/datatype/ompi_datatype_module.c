@@ -514,9 +514,20 @@ int32_t ompi_datatype_init( void )
     ompi_mpi_cxx_cplex.dt.super.flags |= OMPI_DATATYPE_FLAG_DATA_CPP | OMPI_DATATYPE_FLAG_DATA_COMPLEX;
     DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_cxx_dblcplex.dt, "MPI_CXX_DOUBLE_COMPLEX", &ompi_mpi_dblcplex.dt );
     ompi_mpi_cxx_dblcplex.dt.super.flags |= OMPI_DATATYPE_FLAG_DATA_CPP | OMPI_DATATYPE_FLAG_DATA_COMPLEX;
+
+    /* C99 complex types */
+    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_c_complex.dt, "MPI_C_COMPLEX", &ompi_mpi_cplex.dt );
+    ompi_mpi_c_complex.dt.super.flags |= OMPI_DATATYPE_FLAG_DATA_C | OMPI_DATATYPE_FLAG_DATA_COMPLEX;
+    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_c_float_complex.dt, "MPI_C_FLOAT_COMPLEX", &ompi_mpi_cplex.dt );
+    ompi_mpi_c_float_complex.dt.super.flags |= OMPI_DATATYPE_FLAG_DATA_C | OMPI_DATATYPE_FLAG_DATA_COMPLEX;
+    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_c_double_complex.dt, "MPI_C_DOUBLE_COMPLEX", &ompi_mpi_dblcplex.dt );
+    ompi_mpi_c_double_complex.dt.super.flags |= OMPI_DATATYPE_FLAG_DATA_C | OMPI_DATATYPE_FLAG_DATA_COMPLEX;
+
 #if HAVE_LONG_DOUBLE
     DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_cxx_ldblcplex.dt, "MPI_CXX_LONG_DOUBLE_COMPLEX", &ompi_mpi_ldblcplex.dt );
     ompi_mpi_cxx_ldblcplex.dt.super.flags |= OMPI_DATATYPE_FLAG_DATA_CPP | OMPI_DATATYPE_FLAG_DATA_COMPLEX;
+    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_c_long_double_complex.dt, "MPI_C_LONG_DOUBLE_COMPLEX", &ompi_mpi_ldblcplex.dt );
+    ompi_mpi_c_long_double_complex.dt.super.flags |= OMPI_DATATYPE_FLAG_DATA_C | OMPI_DATATYPE_FLAG_DATA_COMPLEX;
 #endif  /* HAVE_LONG_DOUBLE */
 
 
