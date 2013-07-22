@@ -16,8 +16,6 @@ sources = \
 
 # Conditionally install the header files
 if WANT_INSTALL_HEADERS
-headers += rte_orte.h
-
 ompidir = $(includedir)/openmpi/$(subdir)
 nobase_ompi_HEADERS = $(headers)
 endif
