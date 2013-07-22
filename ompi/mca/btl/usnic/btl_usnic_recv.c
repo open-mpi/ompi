@@ -53,9 +53,9 @@ lookup_sender(ompi_btl_usnic_module_t *module, ompi_btl_usnic_segment_t *seg)
     int ret;
     ompi_btl_usnic_endpoint_t *sender;
 
-    /* Use the hashed ORTE process name in the BTL header to uniquely
+    /* Use the hashed RTE process name in the BTL header to uniquely
        identify the sending process (using the MAC/hardware address
-       only identifies the sending server -- not the sending ORTE
+       only identifies the sending server -- not the sending RTE
        process). */
     /* JMS Cesare suggests using a handshake before sending any data
        so that instead of looking up a hash on the btl_header->sender,

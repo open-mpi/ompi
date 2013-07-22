@@ -30,8 +30,7 @@
 #include <unistd.h>
 
 #include "opal/prefetch.h"
-
-#include "orte/util/show_help.h"
+#include "opal/util/show_help.h"
 
 #include "ompi/types.h"
 

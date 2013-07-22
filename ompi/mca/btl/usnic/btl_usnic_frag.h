@@ -94,7 +94,7 @@ typedef enum {
  * holes.
  */
 typedef struct {
-    /* Hashed ORTE process name of the sender */
+    /* Hashed RTE process name of the sender */
     uint64_t sender;
 
     /* Sliding window sequence number (echoed back in an ACK).  This

@@ -25,10 +25,9 @@
 
 #include "opal_stdint.h"
 #include "opal/util/arch.h"
+#include "opal/util/show_help.h"
 
-#include "orte/mca/errmgr/errmgr.h"
-#include "orte/util/show_help.h"
-
+#include "ompi/mca/rte/rte.h"
 #include "ompi/runtime/ompi_module_exchange.h"
 #include "ompi/constants.h"
 
@@ -107,12 +106,12 @@ ompi_btl_usnic_proc_lookup_ompi(ompi_proc_t* ompi_proc)
 
 
 /*
- * Look for an existing usnic proc based on a hashed ORTE process
+ * Look for an existing usnic proc based on a hashed RTE process
  * name.
  */
 ompi_btl_usnic_endpoint_t *
 ompi_btl_usnic_proc_lookup_endpoint(ompi_btl_usnic_module_t *receiver,
-                                      uint64_t sender_hashed_orte_name)
+                                    uint64_t sender_hashed_rte_name)
 {
     size_t i;
     uint32_t mynet, peernet;
@@ -125,8 +124,8 @@ ompi_btl_usnic_proc_lookup_endpoint(ompi_btl_usnic_module_t *receiver,
              opal_list_get_end(&mca_btl_usnic_component.usnic_procs);
          proc  = (ompi_btl_usnic_proc_t*)
              opal_list_get_next(proc)) {
-        if (orte_util_hash_name(&proc->proc_ompi->proc_name) ==
-            sender_hashed_orte_name) {
+        if (ompi_rte_hash_name(&proc->proc_ompi->proc_name) ==
+            sender_hashed_rte_name) {
             break;
         }
     }
@@ -186,9 +185,9 @@ static ompi_btl_usnic_proc_t *create_proc(ompi_proc_t *ompi_proc)
                          &size);
 
     if (OMPI_SUCCESS != rc) {
-        orte_show_help("help-mpi-btl-usnic.txt", "internal error during init",
+        opal_show_help("help-mpi-btl-usnic.txt", "internal error during init",
                        true,
-                       orte_process_info.nodename,
+                       ompi_process_info.nodename,
                        "<none>", 0,
                        "ompi_modex_recv() failed", __FILE__, __LINE__,
                        opal_strerror(rc));
@@ -200,11 +199,11 @@ static ompi_btl_usnic_proc_t *create_proc(ompi_proc_t *ompi_proc)
 
         snprintf(msg, sizeof(msg), 
                  "sizeof(modex for peer %s data) == %d, expected multiple of %d",
-                 ORTE_NAME_PRINT(&ompi_proc->proc_name),
+                 OMPI_NAME_PRINT(&ompi_proc->proc_name),
                  (int) size, (int) sizeof(ompi_btl_usnic_addr_t));
-        orte_show_help("help-mpi-btl-usnic.txt", "internal error during init",
+        opal_show_help("help-mpi-btl-usnic.txt", "internal error during init",
                        true,
-                       orte_process_info.nodename,
+                       ompi_process_info.nodename,
                        "<none>", 0,
                        "invalid modex data", __FILE__, __LINE__,
                        msg);
@@ -223,7 +222,7 @@ static ompi_btl_usnic_proc_t *create_proc(ompi_proc_t *ompi_proc)
     proc->proc_modex_claimed = (bool*) 
         calloc(proc->proc_modex_count, sizeof(bool));
     if (NULL == proc->proc_modex_claimed) {
-        ORTE_ERROR_LOG(OMPI_ERR_OUT_OF_RESOURCE);
+        OMPI_ERROR_LOG(OMPI_ERR_OUT_OF_RESOURCE);
         OBJ_RELEASE(proc);
         return NULL;
     }
@@ -231,7 +230,7 @@ static ompi_btl_usnic_proc_t *create_proc(ompi_proc_t *ompi_proc)
     proc->proc_endpoints = (mca_btl_base_endpoint_t**)
         calloc(proc->proc_modex_count, sizeof(mca_btl_base_endpoint_t*));
     if (NULL == proc->proc_endpoints) {
-        ORTE_ERROR_LOG(OMPI_ERR_OUT_OF_RESOURCE);
+        OMPI_ERROR_LOG(OMPI_ERR_OUT_OF_RESOURCE);
         OBJ_RELEASE(proc);
         return NULL;
     }
@@ -303,9 +302,9 @@ static int match_modex(ompi_btl_usnic_module_t *module,
             peer_hostname =
                 "<unknown -- please run with mpi_keep_peer_hostnames=1>";
         }
-        orte_show_help("help-mpi-btl-usnic.txt", "MTU mismatch",
+        opal_show_help("help-mpi-btl-usnic.txt", "MTU mismatch",
                 true,
-                orte_process_info.nodename,
+                ompi_process_info.nodename,
                 ibv_get_device_name(module->device),
                 module->port_num,
                 module->if_mtu,
@@ -333,7 +332,7 @@ ompi_btl_usnic_create_endpoint(ompi_btl_usnic_module_t *module,
     if (modex_index < 0) {
         opal_output_verbose(5, USNIC_OUT,
                             "btl:usnic:create_endpoint: did not find usnic modex info for peer %s",
-                            ORTE_NAME_PRINT(&proc->proc_ompi->proc_name));
+                            OMPI_NAME_PRINT(&proc->proc_ompi->proc_name));
         return OMPI_ERR_NOT_FOUND;
     }
 
@@ -358,9 +357,9 @@ ompi_btl_usnic_create_endpoint(ompi_btl_usnic_module_t *module,
 
     endpoint->endpoint_remote_ah = ibv_create_ah(module->pd, &ah_attr);
     if (NULL == endpoint->endpoint_remote_ah) {
-        orte_show_help("help-mpi-btl-usnic.txt", "ibv API failed",
+        opal_show_help("help-mpi-btl-usnic.txt", "ibv API failed",
                        true,
-                       orte_process_info.nodename,
+                       ompi_process_info.nodename,
                        ibv_get_device_name(module->device),
                        module->port_num,
                        "ibv_create_ah()", __FILE__, __LINE__,

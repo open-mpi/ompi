@@ -49,11 +49,9 @@
 #include "opal/util/if.h"
 #include "opal/mca/base/mca_base_var.h"
 #include "opal/mca/memchecker/base/base.h"
+#include "opal/util/show_help.h"
 
-#include "orte/mca/errmgr/errmgr.h"
-#include "orte/runtime/orte_globals.h"
-#include "orte/util/show_help.h"
-
+#include "ompi/mca/rte/rte.h"
 #include "ompi/constants.h"
 #include "ompi/mca/btl/btl.h"
 #include "ompi/mca/btl/base/base.h"
@@ -275,9 +273,9 @@ static int check_reg_mem_basics(void)
         asprintf(&str_limit, "Unknown");
     }
 
-    orte_show_help("help-mpi-btl-usnic.txt", "check_reg_mem_basics fail",
+    opal_show_help("help-mpi-btl-usnic.txt", "check_reg_mem_basics fail",
                    true,
-                   orte_process_info.nodename,
+                   ompi_process_info.nodename,
                    str_limit);
 
     return OMPI_ERR_OUT_OF_RESOURCE;
@@ -352,8 +350,8 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
      ************************************************************************/
 
     /* initialization */
-    mca_btl_usnic_component.my_hashed_orte_name = 
-        orte_util_hash_name(&(ompi_proc_local()->proc_name));
+    mca_btl_usnic_component.my_hashed_rte_name = 
+        ompi_rte_hash_name(&(ompi_proc_local()->proc_name));
 
     seed_prng();
 
@@ -375,7 +373,6 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
         malloc(mca_btl_usnic_component.num_modules * 
                sizeof(ompi_btl_usnic_module_t*));
     if (NULL == btls) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         btls = NULL;
         goto free_include_list;
     }
@@ -386,7 +383,6 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
                sizeof(ompi_btl_usnic_module_t));
     if (NULL == mca_btl_usnic_component.usnic_modules) {
         free(btls);
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         btls = NULL;
         goto free_include_list;
     }
@@ -415,7 +411,7 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
         filter = NULL;
     }
 
-    num_local_procs = orte_process_info.num_local_peers;
+    num_local_procs = ompi_process_info.num_local_peers;
 
     /* Go through the list of ports and determine if we want it or
        not.  Create and (mostly) fill a module struct for each port
@@ -467,9 +463,9 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
 
         /* Query this device */
         if (0 != ibv_query_device(module->device_context, &device_attr)) {
-            orte_show_help("help-mpi-btl-usnic.txt", "ibv API failed",
+            opal_show_help("help-mpi-btl-usnic.txt", "ibv API failed",
                            true, 
-                           orte_process_info.nodename,
+                           ompi_process_info.nodename,
                            ibv_get_device_name(module->device),
                            module->port_num,
                            "ibv_query_device", __FILE__, __LINE__,
@@ -487,10 +483,10 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
             char *str;
             asprintf(&str, "Not enough usNIC QPs (found %d, need %d)",
                      device_attr.max_qp, num_local_procs * 2);
-            orte_show_help("help-mpi-btl-usnic.txt",
+            opal_show_help("help-mpi-btl-usnic.txt",
                            "not enough usnic resources",
                            true,
-                           orte_process_info.nodename,
+                           ompi_process_info.nodename,
                            ibv_get_device_name(module->device),
                            str);
             free(str);
@@ -501,10 +497,10 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
             char *str;
             asprintf(&str, "Not enough usNIC CQs (found %d, need %d)",
                      device_attr.max_cq, num_local_procs * 2);
-            orte_show_help("help-mpi-btl-usnic.txt",
+            opal_show_help("help-mpi-btl-usnic.txt",
                            "not enough usnic resources",
                            true,
-                           orte_process_info.nodename,
+                           ompi_process_info.nodename,
                            ibv_get_device_name(module->device),
                            str);
             free(str);
@@ -538,7 +534,8 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
          * override.
          */
         if (-1 == mca_btl_usnic_component.prio_sd_num) {
-            module->prio_sd_num = max(128, 32*orte_process_info.num_procs) - 1;
+            module->prio_sd_num = 
+                max(128, 32 * ompi_process_info.num_procs) - 1;
         } else {
             module->prio_sd_num = mca_btl_usnic_component.prio_sd_num;
         }
@@ -546,7 +543,8 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
             module->prio_sd_num = device_attr.max_qp_wr;
         }
         if (-1 == mca_btl_usnic_component.prio_rd_num) {
-            module->prio_rd_num = max(128, 32*orte_process_info.num_procs) - 1;
+            module->prio_rd_num = 
+                max(128, 32 * ompi_process_info.num_procs) - 1;
         } else {
             module->prio_rd_num = mca_btl_usnic_component.prio_rd_num;
         }
@@ -908,7 +906,7 @@ static int usnic_component_progress(void)
 static void seed_prng(void)
 {
     unsigned short seedv[3];
-    seedv[0] = ORTE_PROC_MY_NAME->vpid;
+    seedv[0] = OMPI_PROC_MY_NAME->vpid;
     seedv[1] = opal_timer_base_get_cycles();
     usleep(1);
     seedv[2] = opal_timer_base_get_cycles();
@@ -963,9 +961,9 @@ static int init_module_from_port(ompi_btl_usnic_module_t *module,
                            module->port_num,
                            mca_btl_usnic_component.gid_index, &gid)) {
         opal_memchecker_base_mem_defined(&gid, sizeof(gid));
-        orte_show_help("help-mpi-btl-usnic.txt", "ibv API failed",
+        opal_show_help("help-mpi-btl-usnic.txt", "ibv API failed",
                        true,
-                       orte_process_info.nodename,
+                       ompi_process_info.nodename,
                        ibv_get_device_name(module->device),
                        module->port_num,
                        "ibv_query_gid", __FILE__, __LINE__,
@@ -1011,9 +1009,9 @@ static int init_module_from_port(ompi_btl_usnic_module_t *module,
             /* If we don't get OMPI_SUCCESS, then we weren't able
                to figure out what the bandwidth was of this port.
                That's a bad sign.  Let's ignore this port. */
-            orte_show_help("help-mpi-btl-usnic.txt", "verbs_port_bw failed",
+            opal_show_help("help-mpi-btl-usnic.txt", "verbs_port_bw failed",
                            true,
-                           orte_process_info.nodename,
+                           ompi_process_info.nodename,
                            ibv_get_device_name(module->device),
                            module->port_num);
             return OMPI_ERROR;
@@ -1077,7 +1075,6 @@ static usnic_if_filter_t *parse_ifex_str(const char *orig_str,
     /* Get a wrapper for the filter */
     filter = calloc(sizeof(*filter), 1);
     if (NULL == filter) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         return NULL;
     }
 
@@ -1090,7 +1087,6 @@ static usnic_if_filter_t *parse_ifex_str(const char *orig_str,
     /* upper bound: each entry could be a mask */
     filter->elts = malloc(sizeof(*filter->elts) * n_argv);
     if (NULL == filter->elts) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         free(filter);
         opal_argv_free(argv);
         return NULL;
@@ -1120,8 +1116,8 @@ static usnic_if_filter_t *parse_ifex_str(const char *orig_str,
         tmp = strdup(argv[i]);
         str = strchr(argv[i], '/');
         if (NULL == str) {
-            orte_show_help("help-mpi-btl-usnic.txt", "invalid if_inexclude",
-                           true, name, orte_process_info.nodename,
+            opal_show_help("help-mpi-btl-usnic.txt", "invalid if_inexclude",
+                           true, name, ompi_process_info.nodename,
                            tmp, "Invalid specification (missing \"/\")");
             free(tmp);
             continue;
@@ -1129,8 +1125,8 @@ static usnic_if_filter_t *parse_ifex_str(const char *orig_str,
         *str = '\0';
         argv_prefix = atoi(str + 1);
         if (argv_prefix < 1 || argv_prefix > 32) {
-            orte_show_help("help-mpi-btl-usnic.txt", "invalid if_inexclude",
-                           true, name, orte_process_info.nodename,
+            opal_show_help("help-mpi-btl-usnic.txt", "invalid if_inexclude",
+                           true, name, ompi_process_info.nodename,
                            tmp, "Invalid specification (prefix < 1 or prefix >32)");
             free(tmp);
             continue;
@@ -1141,8 +1137,8 @@ static usnic_if_filter_t *parse_ifex_str(const char *orig_str,
         ret = inet_pton(AF_INET, argv[i],
                         &((struct sockaddr_in*) &argv_inaddr)->sin_addr);
         if (1 != ret) {
-            orte_show_help("help-mpi-btl-usnic.txt", "invalid if_inexclude",
-                           true, name, orte_process_info.nodename, tmp,
+            opal_show_help("help-mpi-btl-usnic.txt", "invalid if_inexclude",
+                           true, name, ompi_process_info.nodename, tmp,
                            "Invalid specification (inet_pton() failed)");
             free(tmp);
             continue;
