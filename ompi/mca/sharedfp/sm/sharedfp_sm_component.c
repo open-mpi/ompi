@@ -57,8 +57,7 @@ mca_sharedfp_base_component_2_0_0_t mca_sharedfp_sm_component = {
         OMPI_MAJOR_VERSION,
         OMPI_MINOR_VERSION,
         OMPI_RELEASE_VERSION,
-        sm_register,
-        NULL
+        .mca_register_component_params = sm_register,
     },
     {
         /* This component is checkpointable */
