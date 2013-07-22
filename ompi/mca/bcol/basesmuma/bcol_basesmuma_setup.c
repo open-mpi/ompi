@@ -156,9 +156,9 @@ int base_bcol_basesmuma_exchange_offsets(
         &(sm_bcol_module->super.sbgp_partner_module->my_index),1,OPAL_UINT32);
 
     if (OMPI_SUCCESS != ret) {
-        goto ERROR;
-	fprintf(stderr,"ORTE error packing my_index!!\n");
+	fprintf(stderr,"Error packing my_index!!\n");
 	fflush(stderr);
+        goto ERROR;
     }
 
     /* pack the offset of the allocated region */
