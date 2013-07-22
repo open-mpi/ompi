@@ -111,9 +111,9 @@ typedef struct ompi_btl_usnic_component_t {
     char *if_exclude;
     uint32_t *vendor_part_ids;
 
-    /* Cached hashed version of my ORTE proc name (to stuff in
+    /* Cached hashed version of my RTE proc name (to stuff in
        protocol headers) */
-    uint64_t my_hashed_orte_name;
+    uint64_t my_hashed_rte_name;
 
     /** array of available BTLs */
     struct ompi_btl_usnic_module_t* usnic_modules;

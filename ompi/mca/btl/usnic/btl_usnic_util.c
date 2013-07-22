@@ -13,9 +13,9 @@
 #include <unistd.h>
 #include <infiniband/verbs.h>
 
-#include "orte/mca/errmgr/errmgr.h"
-#include "orte/util/show_help.h"
+#include "opal/util/show_help.h"
 
+#include "ompi/mca/rte/rte.h"
 #include "ompi/constants.h"
 
 #include "btl_usnic_util.h"
@@ -24,7 +24,7 @@
 
 void ompi_btl_usnic_exit(void)
 {
-    orte_errmgr.abort(1, NULL);
+    ompi_rte_abort(1, NULL);
 
     /* If the error manager returns, wait to be killed */
     while (1) {
@@ -181,16 +181,16 @@ uint32_t ompi_btl_usnic_get_ipv4_subnet(uint32_t addrn, uint32_t cidr_len)
 
 /*
  * Simple utility in a .c file, mainly so that inline functions in .h
- * files don't need to include ORTE header files.
+ * files don't need to include RTE header files.
  */
 void ompi_btl_usnic_util_abort(const char *msg, const char *file, int line,
                                int ret)
 {
-    orte_show_help("help-mpi-btl-usnic.txt", "internal error after init",
+    opal_show_help("help-mpi-btl-usnic.txt", "internal error after init",
                    true,
-                   orte_process_info.nodename,
+                   ompi_process_info.nodename,
                    msg, file, line, strerror(ret));
 
-    orte_errmgr.abort(ret, NULL);
+    ompi_rte_abort(ret, NULL);
     /* Never returns */
 }

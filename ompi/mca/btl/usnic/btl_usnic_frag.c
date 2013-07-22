@@ -40,7 +40,7 @@ common_send_seg_helper(
     bseg = &seg->ss_base;
 
     bseg->us_btl_header = (ompi_btl_usnic_btl_header_t *)bseg->us_list.ptr;
-    bseg->us_btl_header->sender = mca_btl_usnic_component.my_hashed_orte_name;
+    bseg->us_btl_header->sender = mca_btl_usnic_component.my_hashed_rte_name;
 
     /* build verbs work request descriptor */
     seg->ss_send_desc.wr_id = (unsigned long) seg;

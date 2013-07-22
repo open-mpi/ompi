@@ -67,7 +67,7 @@ struct ompi_btl_usnic_module_t;
 
 ompi_btl_usnic_endpoint_t *
 ompi_btl_usnic_proc_lookup_endpoint(struct ompi_btl_usnic_module_t *receiver,
-                                    uint64_t sender_hashed_orte_name);
+                                    uint64_t sender_hashed_rte_name);
 
 int ompi_btl_usnic_proc_match(ompi_proc_t* ompi_proc,
                               struct ompi_btl_usnic_module_t *module,

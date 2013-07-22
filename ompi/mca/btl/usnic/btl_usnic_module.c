@@ -30,10 +30,9 @@
 #include "opal/util/output.h"
 #include "opal/datatype/opal_convertor.h"
 #include "opal/include/opal_stdint.h"
+#include "opal/util/show_help.h"
 
-#include "orte/util/show_help.h"
-#include "orte/mca/errmgr/errmgr.h"
-
+#include "ompi/mca/rte/rte.h"
 #include "ompi/mca/btl/btl.h"
 #include "ompi/mca/btl/base/btl_base_error.h"
 #include "ompi/mca/mpool/base/base.h"
@@ -1314,9 +1313,9 @@ static void module_async_event_callback(int fd, short flags, void *arg)
         case IBV_EVENT_GID_CHANGE:
 #endif
         default:
-            orte_show_help("help-mpi-btl-usnic.txt", "async event",
+            opal_show_help("help-mpi-btl-usnic.txt", "async event",
                            true, 
-                           orte_process_info.nodename,
+                           ompi_process_info.nodename,
                            ibv_get_device_name(module->device), 
                            module->port_num,
                            ibv_event_type_str(event.event_type),
@@ -1376,9 +1375,9 @@ init_qp(
        job is consuming QPs. */
     channel->qp = ibv_create_qp(module->pd, &qp_init_attr);
     if (NULL == channel->qp) {
-        orte_show_help("help-mpi-btl-usnic.txt", "create ibv resource failed",
+        opal_show_help("help-mpi-btl-usnic.txt", "create ibv resource failed",
                        true, 
-                       orte_process_info.nodename,
+                       ompi_process_info.nodename,
                        ibv_get_device_name(module->device), 
                        "ibv_create_qp()", __FILE__, __LINE__,
                        "Failed to create a usNIC queue pair");
@@ -1395,9 +1394,9 @@ init_qp(
 
     if (ibv_modify_qp(channel->qp, &qp_attr,
                       IBV_QP_STATE | IBV_QP_PORT)) {
-        orte_show_help("help-mpi-btl-usnic.txt", "ibv API failed",
+        opal_show_help("help-mpi-btl-usnic.txt", "ibv API failed",
                        true, 
-                       orte_process_info.nodename,
+                       ompi_process_info.nodename,
                        ibv_get_device_name(module->device),
                        module->port_num,
                        "ibv_modify_qp()", __FILE__, __LINE__,
@@ -1410,9 +1409,9 @@ init_qp(
     memset(&qp_init_attr, 0, sizeof(qp_init_attr));
     if (ibv_query_qp(channel->qp, &qp_attr, IBV_QP_CAP,
                      &qp_init_attr) != 0) {
-        orte_show_help("help-mpi-btl-usnic.txt", "ibv API failed",
+        opal_show_help("help-mpi-btl-usnic.txt", "ibv API failed",
                        true, 
-                       orte_process_info.nodename,
+                       ompi_process_info.nodename,
                        ibv_get_device_name(module->device), 
                        module->port_num,
                        "ibv_query_qp()", __FILE__, __LINE__,
@@ -1438,9 +1437,9 @@ static int move_qp_to_rtr(ompi_btl_usnic_module_t *module,
 
     qp_attr.qp_state = IBV_QPS_RTR;
     if (ibv_modify_qp(channel->qp, &qp_attr, IBV_QP_STATE)) {
-        orte_show_help("help-mpi-btl-usnic.txt", "ibv API failed",
+        opal_show_help("help-mpi-btl-usnic.txt", "ibv API failed",
                        true, 
-                       orte_process_info.nodename,
+                       ompi_process_info.nodename,
                        ibv_get_device_name(module->device),
                        module->port_num,
                        "ibv_modify_qp", __FILE__, __LINE__,
@@ -1461,9 +1460,9 @@ static int move_qp_to_rts(ompi_btl_usnic_module_t *module,
 
     qp_attr.qp_state = IBV_QPS_RTS;
     if (ibv_modify_qp(channel->qp, &qp_attr, IBV_QP_STATE)) {
-        orte_show_help("help-mpi-btl-usnic.txt", "ibv API failed",
+        opal_show_help("help-mpi-btl-usnic.txt", "ibv API failed",
                        true, 
-                       orte_process_info.nodename,
+                       ompi_process_info.nodename,
                        ibv_get_device_name(module->device),
                        module->port_num,
                        "ibv_modify_qp", __FILE__, __LINE__,
@@ -1534,9 +1533,9 @@ ompi_btl_usnic_channel_init(
        job is consuming CQs. */
     channel->cq = ibv_create_cq(ctx, module->cq_num, NULL, NULL, 0);
     if (NULL == channel->cq) {
-        orte_show_help("help-mpi-btl-usnic.txt", "create ibv resource failed",
+        opal_show_help("help-mpi-btl-usnic.txt", "create ibv resource failed",
                        true, 
-                       orte_process_info.nodename,
+                       ompi_process_info.nodename,
                        ibv_get_device_name(module->device),
                        "ibv_create_cq()", __FILE__, __LINE__,
                        "Failed to create a usNIC completion queue");
@@ -1570,10 +1569,10 @@ ompi_btl_usnic_channel_init(
         rseg = (ompi_btl_usnic_recv_segment_t*)item;
 
         if (NULL == rseg) {
-            orte_show_help("help-mpi-btl-usnic.txt",
+            opal_show_help("help-mpi-btl-usnic.txt",
                            "internal error during init",
                            true, 
-                           orte_process_info.nodename,
+                           ompi_process_info.nodename,
                            ibv_get_device_name(module->device),
                            module->port_num,
                            "get freelist buffer()", __FILE__, __LINE__,
@@ -1586,9 +1585,9 @@ ompi_btl_usnic_channel_init(
         rseg->rs_recv_desc.next = NULL;
 
         if (ibv_post_recv(channel->qp, &rseg->rs_recv_desc, &bad_wr)) {
-            orte_show_help("help-mpi-btl-usnic.txt", "ibv API failed",
+            opal_show_help("help-mpi-btl-usnic.txt", "ibv API failed",
                            true, 
-                           orte_process_info.nodename,
+                           ompi_process_info.nodename,
                            ibv_get_device_name(module->device),
                            module->port_num,
                            "ibv_post_recv", __FILE__, __LINE__,
@@ -1641,15 +1640,15 @@ int ompi_btl_usnic_module_init(ompi_btl_usnic_module_t *module)
     /* Setup the pointer array for the procs that will be used by this
        module */
     OBJ_CONSTRUCT(&module->all_procs, opal_pointer_array_t);
-    opal_pointer_array_init(&module->all_procs, orte_process_info.num_procs,
+    opal_pointer_array_init(&module->all_procs, ompi_process_info.num_procs,
                             INT_MAX, 32);
 
     /* Get a PD */
     module->pd = ibv_alloc_pd(ctx);
     if (NULL == module->pd) {
-        orte_show_help("help-mpi-btl-usnic.txt", "ibv API failed",
+        opal_show_help("help-mpi-btl-usnic.txt", "ibv API failed",
                        true, 
-                       orte_process_info.nodename,
+                       ompi_process_info.nodename,
                        ibv_get_device_name(module->device), 
                        module->port_num,
                        "ibv_alloc_pd()", __FILE__, __LINE__,
@@ -1668,9 +1667,9 @@ int ompi_btl_usnic_module_init(ompi_btl_usnic_module_t *module)
         mca_mpool_base_module_create(mca_btl_usnic_component.usnic_mpool_name,
                                      &module->super, &mpool_resources);
     if (NULL == module->super.btl_mpool) {
-        orte_show_help("help-mpi-btl-usnic.txt", "ibv API failed",
+        opal_show_help("help-mpi-btl-usnic.txt", "ibv API failed",
                        true, 
-                       orte_process_info.nodename,
+                       ompi_process_info.nodename,
                        ibv_get_device_name(module->device),
                        module->port_num,
                        "create mpool", __FILE__, __LINE__,
