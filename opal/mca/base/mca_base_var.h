@@ -179,8 +179,13 @@ typedef enum {
     MCA_BASE_VAR_FLAG_OVERRIDE     = 0x0010,
     /** Variable may not be set from a file */
     MCA_BASE_VAR_FLAG_ENVIRONMENT_ONLY = 0x0020,
-    /** Variable should be deregistered when the group
-        is deregistered */
+    /** Variable should be deregistered when the group is deregistered
+        (DWG = "deregister with group").  This flag is set
+        automatically when you register a variable with
+        mca_base_component_var_register(), but can also be set
+        manually when you register a variable with
+        mca_base_var_register().  Analogous to the
+        MCA_BASE_PVAR_FLAG_IWG. */
     MCA_BASE_VAR_FLAG_DWG          = 0x0040
 } mca_base_var_flag_t;
 
@@ -396,8 +401,13 @@ OPAL_DECLSPEC int mca_base_var_register (const char *project_name, const char *f
                                          mca_base_var_scope_t scope, void *storage);
 
 /**
- * Convinience function for registering a variable associated with a component.
- * See mca_base_var_register().
+ * Convinience function for registering a variable associated with a
+ * component.
+ *
+ * While quite similar to mca_base_var_register(), there is one key
+ * difference: vars registered this this function will automatically
+ * be unregistered / made unavailable when that component is closed by
+ * its framework.
  */
 OPAL_DECLSPEC int mca_base_component_var_register (const mca_base_component_t *component,
                                                    const char *variable_name, const char *description,
