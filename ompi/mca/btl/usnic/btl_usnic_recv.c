@@ -57,9 +57,11 @@ lookup_sender(ompi_btl_usnic_module_t *module, ompi_btl_usnic_segment_t *seg)
        identify the sending process (using the MAC/hardware address
        only identifies the sending server -- not the sending RTE
        process). */
-    /* JMS Cesare suggests using a handshake before sending any data
-       so that instead of looking up a hash on the btl_header->sender,
-       echo back the ptr to the sender's ompi_proc */
+    /* JMS We've experimented with using a handshake before sending
+       any data so that instead of looking up a hash on the
+       btl_header->sender, echo back the ptr to the sender's
+       ompi_proc.  There was limited speedup with this scheme; more
+       investigation is required. */
     ret = opal_hash_table_get_value_uint64(&module->senders, 
                                            seg->us_btl_header->sender,
                                            (void**) &sender);
