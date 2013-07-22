@@ -13,9 +13,17 @@
 
 #include "opal/mca/base/mca_base_var.h"
 
+/*
+ * These flags are used when registering a new pvar.
+ */
 typedef enum {
     /** This variable should be marked as invalid when the containing
-        group is deregistered. Equivalent to MCA_BASE_VAR_FLAG_DWG. */
+        group is deregistered (IWG = "invalidate with group").  This
+        flag is set automatically when you register a variable with
+        mca_base_component_pvvar_register(), but can also be set
+        manually when you register a variable with
+        mca_base_pvar_register().  Analogous to the
+        MCA_BASE_VAR_FLAG_DWG flag. */
     MCA_BASE_PVAR_FLAG_IWG        = 0x040,
     /** This variable can not be written. Will be ignored for counter,
         timer, and aggregate variables. These variable handles will be
@@ -32,6 +40,9 @@ typedef enum {
     MCA_BASE_PVAR_FLAG_INVALID    = 0x400,
 } mca_base_pvar_flag_t;
 
+/*
+ * These flags are passed to the mca_base_notify_fn_t function.
+ */
 typedef enum {
     /** A handle has been created an bound to this variable. The
         return value must be the number of values associated with
@@ -49,6 +60,9 @@ typedef enum {
     MCA_BASE_PVAR_HANDLE_UNBIND
 } mca_base_pvar_event_t;
 
+/*
+ * The class type is passed when registering a new pvar.
+ */
 enum {
     /** Variable represents a state */
     MCA_BASE_PVAR_CLASS_STATE,
@@ -77,7 +91,10 @@ enum {
     MCA_BASE_PVAR_CLASS_GENERIC
 };
 
-/* Reserved bindings. OMPI will ignore any other binding type */
+/*
+ * Reserved bindings; passed when registering a new pvar. OMPI will
+ * ignore any other binding type.
+ */
 enum {
     MCA_BASE_VAR_BIND_NO_OBJECT,
     MCA_BASE_VAR_BIND_MPI_COMM,
@@ -248,15 +265,11 @@ typedef struct mca_base_pvar_handle_t {
 } mca_base_pvar_handle_t;
 OBJ_CLASS_DECLARATION(mca_base_pvar_handle_t);
 
-/**
- * Return the number or registered performance variables.
- *
- * @param[out] count Number of registered performance variables.
- *
- * This function can be called before mca_base_pvar_init() and after
- * mca_base_pvar_finalize(). 
- */
-OPAL_DECLSPEC int mca_base_pvar_get_count (int *count);
+/****************************************************************************
+ * The following functions are public functions, and are intended to
+ * be used by components and frameworks to expose their performance
+ * variables.
+ ****************************************************************************/
 
 /**
  * Register a performance variable
@@ -270,7 +283,9 @@ OPAL_DECLSPEC int mca_base_pvar_get_count (int *count);
  *                        MPI_T verbosity.
  * @param[in] var_class   Class of performance variable. See mpi.h.in MPI_T_PVAR_CLASS_*
  * @param[in] type        Type of this performance variable
- * @param[in] enumerator  Enumerator for this variable. Will be OBJ_RETAIN'd.
+ * @param[in] enumerator  Enumerator for this variable. Will be
+ *                        OBJ_RETAIN'd (created by, for example,
+ *                        mca_base_var_enum_create()).
  * @param[in] bind        Object type this variable should be bound to. See mpi.h.in
  *                        MPI_T_BIND_*
  * @param[in] flags       Flags for this variable. See mca_base_pvar_flag_t for acceptable
@@ -291,8 +306,8 @@ OPAL_DECLSPEC int mca_base_pvar_get_count (int *count);
  * @returns index         On success returns the index of this variable.
  * @returns OMPI_ERROR    On error.
  *
- * Note: if used incorrectly this functions may call abort(). Please see MPI 3.0 14.3 to see
- * acceptable values for datatype given the class.
+ * Note: if used incorrectly this function may fail an assert(); see
+ * MPI 3.0 14.3 to see acceptable values for datatype given the class.
  */
 OPAL_DECLSPEC int mca_base_pvar_register (const char *project, const char *framework, const char *component, const char *name,
                             const char *description, mca_base_var_info_lvl_t verbosity,
@@ -301,8 +316,13 @@ OPAL_DECLSPEC int mca_base_pvar_register (const char *project, const char *frame
                             mca_base_set_value_fn_t set_value, mca_base_notify_fn_t notify, void *ctx);
 
 /**
- * Convinience function for registering a performance variable associated with a component.
- * See mca_base_pvar_register().
+ * Convinience function for registering a performance variable
+ * associated with a component.
+ *
+ * While quite similar to mca_base_pvar_register(), there is one key
+ * difference: pvars registered this this function will automatically
+ * be unregistered / made unavailable when that component is closed by
+ * its framework.
  */
 OPAL_DECLSPEC int mca_base_component_pvar_register (const mca_base_component_t *component, const char *name,
                             const char *description, mca_base_var_info_lvl_t verbosity, int var_class,
@@ -340,6 +360,21 @@ OPAL_DECLSPEC int mca_base_pvar_find (const char *project, const char *framework
  * See mca_base_pvar_find().
  */
 OPAL_DECLSPEC int mca_base_pvar_find_by_name (const char *full_name, int *index);
+
+/****************************************************************************
+ * The following functions are the back-end to the MPI_T API functions
+ * and/or the internals of the performance variable system itself.
+ ****************************************************************************/
+
+/**
+ * Return the number or registered performance variables.
+ *
+ * @param[out] count Number of registered performance variables.
+ *
+ * This function can be called before mca_base_pvar_init() and after
+ * mca_base_pvar_finalize(). 
+ */
+OPAL_DECLSPEC int mca_base_pvar_get_count (int *count);
 
 /**
  * Update the handles associated with the specified performance variable and MPI object
