@@ -66,10 +66,7 @@ mca_fcoll_base_component_2_0_0_t mca_fcoll_individual_component = {
      OMPI_MAJOR_VERSION,
      OMPI_MINOR_VERSION,
      OMPI_RELEASE_VERSION,
-     NULL,
-     NULL,
-     NULL,
-     individual_register
+     .mca_register_component_params = individual_register,
     },
     {
         /* The component is checkpoint ready */
