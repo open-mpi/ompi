@@ -484,7 +484,7 @@ Collectives
 Network Support
 ---------------
 
-- There are three MPI network models available: "ob1", and "cm". "ob1"
+- There are two MPI network models available: "ob1", and "cm". "ob1"
   uses BTL ("Byte Transfer Layer") components for each supported network.
   "cm" uses MTL ("Matching Tranport Layer") components for each supported
   network.
@@ -504,7 +504,7 @@ Network Support
     - uDAPL
     - Cisco usNIC
     - uGNI (Cray Gemini, Ares)
-    - vader (xpmem)
+    - vader (XPMEM)
 
   - "cm" supports a smaller number of networks (and they cannot be
     used together), but may provide better better overall MPI
