@@ -19,9 +19,6 @@
 #include "ompi/communicator/communicator.h"
 #include "ompi/mca/bcol/bcol.h"
 #include "ompi/mca/bcol/base/base.h"
-#include "orte/mca/rml/rml.h"
-#include "orte/util/show_help.h"
-#include "orte/util/proc_info.h"
 #include "ompi/mca/common/ofacm/base.h"
 
 #include "sbgp_ibnet.h"

@@ -29,10 +29,12 @@
 #include "ompi/runtime/params.h"
 
 #include "opal/runtime/opal_info_support.h"
-#include "orte/runtime/orte_info_support.h"
 #include "ompi/runtime/ompi_info_support.h"
 #include "opal/util/show_help.h"
 
+#if OMPI_RTE_ORTE
+#include "orte/runtime/orte_info_support.h"
+#endif
 
 static bool ompi_info_registered = false;
 
@@ -57,10 +59,12 @@ int ompi_info_register_framework_params(opal_pointer_array_t *component_map)
         return rc;
     }
 
+#if OMPI_RTE_ORTE
     rc = orte_info_register_framework_params(component_map);
     if (ORTE_SUCCESS != rc) {
         return rc;
     }
+#endif
 
     return opal_info_register_project_frameworks("ompi", ompi_frameworks, component_map);
 }

@@ -31,10 +31,6 @@
 #include "opal/dss/dss_internal.h"
 #include "opal/class/opal_object.h"
 
-#include "orte/mca/rml/rml.h"
-#include "orte/util/name_fns.h"
-#include "orte/mca/grpcomm/grpcomm.h"
-
 #include "ompi/constants.h"
 #include "ompi/communicator/communicator.h"
 #include "sbgp_basesmsocket.h"

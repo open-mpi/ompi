@@ -49,6 +49,7 @@ static int finalize(void);
 
 static int abort_peers(orte_process_name_t *procs,
                        orte_std_cntr_t num_procs);
+static orte_errmgr_fault_callback_t* set_fault_callback(orte_errmgr_fault_callback_t *cbfunc);
 
 /******************
  * HNP module
@@ -63,7 +64,7 @@ orte_errmgr_base_module_t orte_errmgr_default_app_module = {
     NULL,
     NULL,
     orte_errmgr_base_register_migration_warning,
-    NULL
+    set_fault_callback
 };
 
 static void proc_errors(int fd, short args, void *cbdata);
@@ -133,4 +134,9 @@ static int abort_peers(orte_process_name_t *procs, orte_std_cntr_t num_procs)
         orte_errmgr_base_abort(ORTE_ERROR_DEFAULT_EXIT_CODE, NULL);
     }
     return ORTE_SUCCESS;
+}
+
+static orte_errmgr_fault_callback_t* set_fault_callback(orte_errmgr_fault_callback_t *cbfunc)
+{
+    return NULL;
 }

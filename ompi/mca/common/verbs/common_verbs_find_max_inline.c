@@ -35,11 +35,9 @@
 #include "opal/util/output.h"
 #include "opal/util/argv.h"
 #include "opal/class/opal_object.h"
+#include "opal/util/show_help.h"
 
-#include "orte/util/show_help.h"
-#include "orte/util/proc_info.h"
-#include "orte/runtime/orte_globals.h"
-
+#include "ompi/mca/rte/rte.h"
 #include "ompi/constants.h"
 
 #include "common_verbs.h"
@@ -69,8 +67,8 @@ int ompi_common_verbs_find_max_inline(struct ibv_device *device,
     cq = ibv_create_cq(context, 1, NULL, NULL, 0);
 #endif
     if (NULL == cq) {
-        orte_show_help("help-mpi-btl-openib.txt", "init-fail-create-q",
-                       true, orte_process_info.nodename,
+        opal_show_help("help-mpi-btl-openib.txt", "init-fail-create-q",
+                       true, ompi_process_info.nodename,
                        __FILE__, __LINE__, "ibv_create_cq",
                        strerror(errno), errno,
                        ibv_get_device_name(device));

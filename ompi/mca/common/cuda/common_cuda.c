@@ -34,8 +34,6 @@
 #include "opal/datatype/opal_datatype_cuda.h"
 #include "opal/util/output.h"
 #include "ompi/mca/mpool/base/base.h"
-#include "orte/util/show_help.h"
-#include "orte/util/proc_info.h"
 #include "common_cuda.h"
 
 static bool common_cuda_initialized = false;
@@ -205,10 +203,10 @@ static int mca_common_cuda_init(void)
             /* Check for the not initialized error since we can make suggestions to
              * user for this error. */
             if (CUDA_ERROR_NOT_INITIALIZED == res) {
-                orte_show_help("help-mpi-common-cuda.txt", "cuCtxGetCurrent failed not initialized",
+                opal_show_help("help-mpi-common-cuda.txt", "cuCtxGetCurrent failed not initialized",
                                true);
             } else {
-                orte_show_help("help-mpi-common-cuda.txt", "cuCtxGetCurrent failed",
+                opal_show_help("help-mpi-common-cuda.txt", "cuCtxGetCurrent failed",
                                true, res);
             }
         }
@@ -216,7 +214,7 @@ static int mca_common_cuda_init(void)
         mca_common_cuda_register_memory = false;
     } else if ((CUDA_SUCCESS == res) && (NULL == cuContext)) {
         if (mca_common_cuda_warning) {
-            orte_show_help("help-mpi-common-cuda.txt", "cuCtxGetCurrent returned NULL",
+            opal_show_help("help-mpi-common-cuda.txt", "cuCtxGetCurrent returned NULL",
                            true);
         }
         mca_common_cuda_enabled = false;
@@ -241,7 +239,7 @@ static int mca_common_cuda_init(void)
 
         cuda_event_ipc_array = (CUevent *) malloc(sizeof(CUevent) * cuda_event_max);
         if (NULL == cuda_event_ipc_array) {
-            orte_show_help("help-mpi-common-cuda.txt", "No memory",
+            opal_show_help("help-mpi-common-cuda.txt", "No memory",
                            true, errno, strerror(errno));
             return OMPI_ERROR;
         }
@@ -250,7 +248,7 @@ static int mca_common_cuda_init(void)
         for (i = 0; i < cuda_event_max; i++) {
             res = cuEventCreate(&cuda_event_ipc_array[i], CU_EVENT_DISABLE_TIMING);
             if (CUDA_SUCCESS != res) {
-                orte_show_help("help-mpi-common-cuda.txt", "cuEventCreate failed",
+                opal_show_help("help-mpi-common-cuda.txt", "cuEventCreate failed",
                                true, res);
                 return OMPI_ERROR;
             }
@@ -261,7 +259,7 @@ static int mca_common_cuda_init(void)
         cuda_event_ipc_frag_array = (struct mca_btl_base_descriptor_t **)
             malloc(sizeof(struct mca_btl_base_descriptor_t *) * cuda_event_max);
         if (NULL == cuda_event_ipc_frag_array) {
-            orte_show_help("help-mpi-common-cuda.txt", "No memory",
+            opal_show_help("help-mpi-common-cuda.txt", "No memory",
                            true, errno, strerror(errno));
             return OMPI_ERROR;
         }
@@ -279,7 +277,7 @@ static int mca_common_cuda_init(void)
 
         cuda_event_dtoh_array = (CUevent *) malloc(sizeof(CUevent) * cuda_event_max);
         if (NULL == cuda_event_dtoh_array) {
-            orte_show_help("help-mpi-common-cuda.txt", "No memory",
+            opal_show_help("help-mpi-common-cuda.txt", "No memory",
                            true, errno, strerror(errno));
             return OMPI_ERROR;
         }
@@ -288,7 +286,7 @@ static int mca_common_cuda_init(void)
         for (i = 0; i < cuda_event_max; i++) {
             res = cuEventCreate(&cuda_event_dtoh_array[i], CU_EVENT_DISABLE_TIMING);
             if (CUDA_SUCCESS != res) {
-                orte_show_help("help-mpi-common-cuda.txt", "cuEventCreate failed",
+                opal_show_help("help-mpi-common-cuda.txt", "cuEventCreate failed",
                                true, res);
                 return OMPI_ERROR;
             }
@@ -299,7 +297,7 @@ static int mca_common_cuda_init(void)
         cuda_event_dtoh_frag_array = (struct mca_btl_base_descriptor_t **)
             malloc(sizeof(struct mca_btl_base_descriptor_t *) * cuda_event_max);
         if (NULL == cuda_event_dtoh_frag_array) {
-            orte_show_help("help-mpi-common-cuda.txt", "No memory",
+            opal_show_help("help-mpi-common-cuda.txt", "No memory",
                            true, errno, strerror(errno));
             return OMPI_ERROR;
         }
@@ -314,7 +312,7 @@ static int mca_common_cuda_init(void)
 
         cuda_event_htod_array = (CUevent *) malloc(sizeof(CUevent) * cuda_event_max);
         if (NULL == cuda_event_htod_array) {
-            orte_show_help("help-mpi-common-cuda.txt", "No memory",
+            opal_show_help("help-mpi-common-cuda.txt", "No memory",
                            true, errno, strerror(errno));
             return OMPI_ERROR;
         }
@@ -323,7 +321,7 @@ static int mca_common_cuda_init(void)
         for (i = 0; i < cuda_event_max; i++) {
             res = cuEventCreate(&cuda_event_htod_array[i], CU_EVENT_DISABLE_TIMING);
             if (CUDA_SUCCESS != res) {
-                orte_show_help("help-mpi-common-cuda.txt", "cuEventCreate failed",
+                opal_show_help("help-mpi-common-cuda.txt", "cuEventCreate failed",
                                true, res);
                 return OMPI_ERROR;
             }
@@ -334,7 +332,7 @@ static int mca_common_cuda_init(void)
         cuda_event_htod_frag_array = (struct mca_btl_base_descriptor_t **)
             malloc(sizeof(struct mca_btl_base_descriptor_t *) * cuda_event_max);
         if (NULL == cuda_event_htod_frag_array) {
-            orte_show_help("help-mpi-common-cuda.txt", "No memory",
+            opal_show_help("help-mpi-common-cuda.txt", "No memory",
                            true, errno, strerror(errno));
             return OMPI_ERROR;
         }
@@ -349,9 +347,9 @@ static int mca_common_cuda_init(void)
             if (res != CUDA_SUCCESS) {
                 /* If registering the memory fails, print a message and continue.
                  * This is not a fatal error. */
-                orte_show_help("help-mpi-common-cuda.txt", "cuMemHostRegister failed",
+                opal_show_help("help-mpi-common-cuda.txt", "cuMemHostRegister failed",
                                true, mem_reg->ptr, mem_reg->amount,
-                               orte_process_info.nodename, res, mem_reg->msg);
+                               ompi_process_info.nodename, res, mem_reg->msg);
             } else {
                 opal_output_verbose(20, mca_common_cuda_output,
                                     "CUDA: cuMemHostRegister OK on mpool %s: "
@@ -366,7 +364,7 @@ static int mca_common_cuda_init(void)
     /* Create stream for use in ipc asynchronous copies */
     res = cuStreamCreate(&ipcStream, 0);
     if (res != CUDA_SUCCESS) {
-        orte_show_help("help-mpi-common-cuda.txt", "cuStreamCreate failed",
+        opal_show_help("help-mpi-common-cuda.txt", "cuStreamCreate failed",
                        true, res);
         return OMPI_ERROR;
     }
@@ -374,7 +372,7 @@ static int mca_common_cuda_init(void)
     /* Create stream for use in dtoh asynchronous copies */
     res = cuStreamCreate(&dtohStream, 0);
     if (res != CUDA_SUCCESS) {
-        orte_show_help("help-mpi-common-cuda.txt", "cuStreamCreate failed",
+        opal_show_help("help-mpi-common-cuda.txt", "cuStreamCreate failed",
                        true, res);
         return OMPI_ERROR;
 
@@ -383,7 +381,7 @@ static int mca_common_cuda_init(void)
     /* Create stream for use in htod asynchronous copies */
     res = cuStreamCreate(&htodStream, 0);
     if (res != CUDA_SUCCESS) {
-        orte_show_help("help-mpi-common-cuda.txt", "cuStreamCreate failed",
+        opal_show_help("help-mpi-common-cuda.txt", "cuStreamCreate failed",
                        true, res);
         return OMPI_ERROR;
 
@@ -423,9 +421,9 @@ void mca_common_cuda_register(void *ptr, size_t amount, char *msg) {
         if (res != CUDA_SUCCESS) {
             /* If registering the memory fails, print a message and continue.
              * This is not a fatal error. */
-            orte_show_help("help-mpi-common-cuda.txt", "cuMemHostRegister failed",
+            opal_show_help("help-mpi-common-cuda.txt", "cuMemHostRegister failed",
                            true, ptr, amount, 
-                           orte_process_info.nodename, res, msg);
+                           ompi_process_info.nodename, res, msg);
         } else {
             opal_output_verbose(20, mca_common_cuda_output,
                                 "CUDA: cuMemHostRegister OK on mpool %s: "
@@ -462,9 +460,9 @@ void mca_common_cuda_unregister(void *ptr, char *msg) {
         if (res != CUDA_SUCCESS) {
             /* If unregistering the memory fails, print a message and continue.
              * This is not a fatal error. */
-            orte_show_help("help-mpi-common-cuda.txt", "cuMemHostUnregister failed",
+            opal_show_help("help-mpi-common-cuda.txt", "cuMemHostUnregister failed",
                            true, ptr,
-                           orte_process_info.nodename, res, msg);
+                           ompi_process_info.nodename, res, msg);
         } else {
             opal_output_verbose(20, mca_common_cuda_output,
                                 "CUDA: cuMemHostUnregister OK on mpool %s: "
@@ -503,7 +501,7 @@ int cuda_getmemhandle(void *base, size_t size, mca_mpool_base_registration_t *ne
     CUDA_DUMP_MEMHANDLE((100, &memHandle, "GetMemHandle-After"));
 
     if (CUDA_SUCCESS != result) {
-        orte_show_help("help-mpi-common-cuda.txt", "cuIpcGetMemHandle failed",
+        opal_show_help("help-mpi-common-cuda.txt", "cuIpcGetMemHandle failed",
                        true, result, base);
         return OMPI_ERROR;
     } else {
@@ -516,7 +514,7 @@ int cuda_getmemhandle(void *base, size_t size, mca_mpool_base_registration_t *ne
      * how the remote side saves the handles in a cache. */
     result = cuMemGetAddressRange(&pbase, &psize, (CUdeviceptr)base);
     if (CUDA_SUCCESS != result) {
-        orte_show_help("help-mpi-common-cuda.txt", "cuMemGetAddressRange failed",
+        opal_show_help("help-mpi-common-cuda.txt", "cuMemGetAddressRange failed",
                        true, result, base);
         return OMPI_ERROR;
     } else {
@@ -539,7 +537,7 @@ int cuda_getmemhandle(void *base, size_t size, mca_mpool_base_registration_t *ne
      * with. */
     result = cuEventRecord((CUevent)cuda_reg->event, 0);
     if (CUDA_SUCCESS != result) {
-        orte_show_help("help-mpi-common-cuda.txt", "cuEventRecord failed",
+        opal_show_help("help-mpi-common-cuda.txt", "cuEventRecord failed",
                        true, result, base);
         return OMPI_ERROR;
     }
@@ -591,7 +589,7 @@ int cuda_openmemhandle(void *base, size_t size, mca_mpool_base_registration_t *n
         return OMPI_ERR_WOULD_BLOCK;
     }
     if (CUDA_SUCCESS != result) {
-        orte_show_help("help-mpi-common-cuda.txt", "cuIpcOpenMemHandle failed",
+        opal_show_help("help-mpi-common-cuda.txt", "cuIpcOpenMemHandle failed",
                        true, result, base);
         /* Currently, this is a non-recoverable error */
         return OMPI_ERROR;
@@ -615,7 +613,7 @@ int cuda_closememhandle(void *reg_data, mca_mpool_base_registration_t *reg)
 
     result = cuIpcCloseMemHandle((CUdeviceptr)cuda_reg->base.alloc_base);
     if (CUDA_SUCCESS != result) {
-        orte_show_help("help-mpi-common-cuda.txt", "cuIpcCloseMemHandle failed",
+        opal_show_help("help-mpi-common-cuda.txt", "cuIpcCloseMemHandle failed",
                        true, result, cuda_reg->base.alloc_base);
         /* We will just continue on and hope things continue to work. */
     } else {
@@ -634,13 +632,13 @@ void mca_common_cuda_construct_event_and_handle(uint64_t **event, void **handle)
 
     result = cuEventCreate((CUevent *)event, CU_EVENT_INTERPROCESS | CU_EVENT_DISABLE_TIMING);
     if (CUDA_SUCCESS != result) {
-        orte_show_help("help-mpi-common-cuda.txt", "cuEventCreate failed",
+        opal_show_help("help-mpi-common-cuda.txt", "cuEventCreate failed",
                        true, result);
     }
 
     result = cuIpcGetEventHandle((CUipcEventHandle *)handle, (CUevent)*event);
     if (CUDA_SUCCESS != result){
-        orte_show_help("help-mpi-common-cuda.txt", "cuIpcGetEventHandle failed",
+        opal_show_help("help-mpi-common-cuda.txt", "cuIpcGetEventHandle failed",
                        true, result);
     }
 
@@ -654,7 +652,7 @@ void mca_common_cuda_destruct_event(uint64_t *event)
 
     result = cuEventDestroy((CUevent)event);
     if (CUDA_SUCCESS != result) {
-        orte_show_help("help-mpi-common-cuda.txt", "cuEventDestroy failed",
+        opal_show_help("help-mpi-common-cuda.txt", "cuEventDestroy failed",
                        true, result);
     }
 }
@@ -675,7 +673,7 @@ void mca_common_wait_stream_synchronize(mca_mpool_common_cuda_reg_t *rget_reg)
 
     result = cuIpcOpenEventHandle(&event, evtHandle);
     if (CUDA_SUCCESS != result){
-        orte_show_help("help-mpi-common-cuda.txt", "cuIpcOpenEventHandle failed",
+        opal_show_help("help-mpi-common-cuda.txt", "cuIpcOpenEventHandle failed",
                        true, result);
     }
 
@@ -686,21 +684,21 @@ void mca_common_wait_stream_synchronize(mca_mpool_common_cuda_reg_t *rget_reg)
      */
     result = cuEventRecord(event, 0);
     if (CUDA_SUCCESS != result) {
-        orte_show_help("help-mpi-common-cuda.txt", "cuEventRecord failed",
+        opal_show_help("help-mpi-common-cuda.txt", "cuEventRecord failed",
                        true, result);
     }
     /* END of Workaround */
 
     result = cuStreamWaitEvent(0, event, 0);
     if (CUDA_SUCCESS != result) {
-        orte_show_help("help-mpi-common-cuda.txt", "cuStreamWaitEvent failed",
+        opal_show_help("help-mpi-common-cuda.txt", "cuStreamWaitEvent failed",
                        true, result);
     }
 
     /* All done with this event. */
     result = cuEventDestroy(event);
     if (CUDA_SUCCESS != result) {
-        orte_show_help("help-mpi-common-cuda.txt", "cuEventDestroy failed",
+        opal_show_help("help-mpi-common-cuda.txt", "cuEventDestroy failed",
                        true, result);
     }
 }
@@ -719,7 +717,7 @@ int mca_common_cuda_memcpy(void *dst, void *src, size_t amount, char *msg,
      * return an error.  The error message will tell the user to try and
      * run again, but with a larger array for storing events. */
     if (cuda_event_ipc_num_used == cuda_event_max) {
-        orte_show_help("help-mpi-common-cuda.txt", "Out of cuEvent handles",
+        opal_show_help("help-mpi-common-cuda.txt", "Out of cuEvent handles",
                        true, cuda_event_max, cuda_event_max+100, cuda_event_max+100);
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
@@ -729,7 +727,7 @@ int mca_common_cuda_memcpy(void *dst, void *src, size_t amount, char *msg,
     if (OPAL_LIKELY(mca_common_cuda_async)) {
         result = cuMemcpyAsync((CUdeviceptr)dst, (CUdeviceptr)src, amount, ipcStream);
         if (CUDA_SUCCESS != result) {
-            orte_show_help("help-mpi-common-cuda.txt", "cuMemcpyAsync failed",
+            opal_show_help("help-mpi-common-cuda.txt", "cuMemcpyAsync failed",
                            true, dst, src, amount, result);
             return OMPI_ERROR;
         } else {
@@ -739,7 +737,7 @@ int mca_common_cuda_memcpy(void *dst, void *src, size_t amount, char *msg,
         }
         result = cuEventRecord(cuda_event_ipc_array[cuda_event_ipc_first_avail], ipcStream);
         if (CUDA_SUCCESS != result) {
-            orte_show_help("help-mpi-common-cuda.txt", "cuEventRecord failed",
+            opal_show_help("help-mpi-common-cuda.txt", "cuEventRecord failed",
                            true, result);
             return OMPI_ERROR;
         }
@@ -757,7 +755,7 @@ int mca_common_cuda_memcpy(void *dst, void *src, size_t amount, char *msg,
         /* Mimic the async function so they use the same memcpy call. */
         result = cuMemcpyAsync((CUdeviceptr)dst, (CUdeviceptr)src, amount, ipcStream);
         if (CUDA_SUCCESS != result) {
-            orte_show_help("help-mpi-common-cuda.txt", "cuMemcpyAsync failed",
+            opal_show_help("help-mpi-common-cuda.txt", "cuMemcpyAsync failed",
                            true, dst, src, amount, result);
             return OMPI_ERROR;
         } else {
@@ -769,7 +767,7 @@ int mca_common_cuda_memcpy(void *dst, void *src, size_t amount, char *msg,
         /* Record an event, then wait for it to complete with calls to cuEventQuery */
         result = cuEventRecord(cuda_event_ipc_array[cuda_event_ipc_first_avail], ipcStream);
         if (CUDA_SUCCESS != result) {
-            orte_show_help("help-mpi-common-cuda.txt", "cuEventRecord failed",
+            opal_show_help("help-mpi-common-cuda.txt", "cuEventRecord failed",
                            true, result);
             return OMPI_ERROR;
         }
@@ -785,7 +783,7 @@ int mca_common_cuda_memcpy(void *dst, void *src, size_t amount, char *msg,
 
         result = cuEventQuery(cuda_event_ipc_array[cuda_event_ipc_first_used]);
         if ((CUDA_SUCCESS != result) && (CUDA_ERROR_NOT_READY != result)) {
-            orte_show_help("help-mpi-common-cuda.txt", "cuEventQuery failed",
+            opal_show_help("help-mpi-common-cuda.txt", "cuEventQuery failed",
                            true, result);
             return OMPI_ERROR;
         }
@@ -797,7 +795,7 @@ int mca_common_cuda_memcpy(void *dst, void *src, size_t amount, char *msg,
             }
             result = cuEventQuery(cuda_event_ipc_array[cuda_event_ipc_first_used]);
             if ((CUDA_SUCCESS != result) && (CUDA_ERROR_NOT_READY != result)) {
-                orte_show_help("help-mpi-common-cuda.txt", "cuEventQuery failed",
+                opal_show_help("help-mpi-common-cuda.txt", "cuEventQuery failed",
                                true, result);
                 return OMPI_ERROR;
             }
@@ -826,14 +824,14 @@ int mca_common_cuda_record_dtoh_event(char *msg, struct mca_btl_base_descriptor_
      * return an error.  The error message will tell the user to try and
      * run again, but with a larger array for storing events. */
     if (cuda_event_dtoh_num_used == cuda_event_max) {
-        orte_show_help("help-mpi-common-cuda.txt", "Out of cuEvent handles",
+        opal_show_help("help-mpi-common-cuda.txt", "Out of cuEvent handles",
                        true, cuda_event_max, cuda_event_max+100, cuda_event_max+100);
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
     result = cuEventRecord(cuda_event_dtoh_array[cuda_event_dtoh_first_avail], dtohStream);
     if (CUDA_SUCCESS != result) {
-        orte_show_help("help-mpi-common-cuda.txt", "cuEventRecord failed",
+        opal_show_help("help-mpi-common-cuda.txt", "cuEventRecord failed",
                        true, result);
         return OMPI_ERROR;
     }
@@ -861,14 +859,14 @@ int mca_common_cuda_record_htod_event(char *msg, struct mca_btl_base_descriptor_
      * return an error.  The error message will tell the user to try and
      * run again, but with a larger array for storing events. */
     if (cuda_event_htod_num_used == cuda_event_max) {
-        orte_show_help("help-mpi-common-cuda.txt", "Out of cuEvent handles",
+        opal_show_help("help-mpi-common-cuda.txt", "Out of cuEvent handles",
                        true, cuda_event_max, cuda_event_max+100, cuda_event_max+100);
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
     result = cuEventRecord(cuda_event_htod_array[cuda_event_htod_first_avail], htodStream);
     if (CUDA_SUCCESS != result) {
-        orte_show_help("help-mpi-common-cuda.txt", "cuEventRecord failed",
+        opal_show_help("help-mpi-common-cuda.txt", "cuEventRecord failed",
                        true, result);
         return OMPI_ERROR;
     }
@@ -920,7 +918,7 @@ int progress_one_cuda_ipc_event(struct mca_btl_base_descriptor_t **frag) {
             *frag = NULL;
             return 0;
         } else if (CUDA_SUCCESS != result) {
-            orte_show_help("help-mpi-common-cuda.txt", "cuEventQuery failed",
+            opal_show_help("help-mpi-common-cuda.txt", "cuEventQuery failed",
                            true, result);
             *frag = NULL;
             return OMPI_ERROR;
@@ -962,7 +960,7 @@ int progress_one_cuda_dtoh_event(struct mca_btl_base_descriptor_t **frag) {
             *frag = NULL;
             return 0;
         } else if (CUDA_SUCCESS != result) {
-            orte_show_help("help-mpi-common-cuda.txt", "cuEventQuery failed",
+            opal_show_help("help-mpi-common-cuda.txt", "cuEventQuery failed",
                            true, result);
             *frag = NULL;
             return OMPI_ERROR;
@@ -1004,7 +1002,7 @@ int progress_one_cuda_htod_event(struct mca_btl_base_descriptor_t **frag) {
             *frag = NULL;
             return 0;
         } else if (CUDA_SUCCESS != result) {
-            orte_show_help("help-mpi-common-cuda.txt", "cuEventQuery failed",
+            opal_show_help("help-mpi-common-cuda.txt", "cuEventQuery failed",
                            true, result);
             *frag = NULL;
             return OMPI_ERROR;

@@ -76,7 +76,7 @@ void mca_btl_tcp_proc_destruct(mca_btl_tcp_proc_t* tcp_proc)
     /* remove from list of all proc instances */
     OPAL_THREAD_LOCK(&mca_btl_tcp_component.tcp_lock);
     opal_hash_table_remove_value_uint64(&mca_btl_tcp_component.tcp_procs, 
-                                        orte_util_hash_name(&tcp_proc->proc_ompi->proc_name));
+                                        ompi_rte_hash_name(&tcp_proc->proc_ompi->proc_name));
     OPAL_THREAD_UNLOCK(&mca_btl_tcp_component.tcp_lock);
 
     /* release resources */
@@ -99,7 +99,7 @@ mca_btl_tcp_proc_t* mca_btl_tcp_proc_create(ompi_proc_t* ompi_proc)
     int rc;
     size_t size;
     mca_btl_tcp_proc_t* btl_proc;
-    uint64_t hash = orte_util_hash_name(&ompi_proc->proc_name);
+    uint64_t hash = ompi_rte_hash_name(&ompi_proc->proc_name);
 
     OPAL_THREAD_LOCK(&mca_btl_tcp_component.tcp_lock);
     rc = opal_hash_table_get_value_uint64(&mca_btl_tcp_component.tcp_procs, 
@@ -706,12 +706,12 @@ int mca_btl_tcp_proc_remove(mca_btl_tcp_proc_t* btl_proc, mca_btl_base_endpoint_
  * Look for an existing TCP process instance based on the globally unique
  * process identifier.
  */
-mca_btl_tcp_proc_t* mca_btl_tcp_proc_lookup(const orte_process_name_t *name)
+mca_btl_tcp_proc_t* mca_btl_tcp_proc_lookup(const ompi_process_name_t *name)
 {
     mca_btl_tcp_proc_t* proc = NULL;
     OPAL_THREAD_LOCK(&mca_btl_tcp_component.tcp_lock);
     opal_hash_table_get_value_uint64(&mca_btl_tcp_component.tcp_procs, 
-                                     orte_util_hash_name(name), (void**)&proc);
+                                     ompi_rte_hash_name(name), (void**)&proc);
     OPAL_THREAD_UNLOCK(&mca_btl_tcp_component.tcp_lock);
     return proc;
 }

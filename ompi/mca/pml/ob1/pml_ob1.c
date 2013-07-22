@@ -30,10 +30,7 @@
 
 #include "opal/class/opal_bitmap.h"
 #include "opal/util/output.h"
-
-#include "orte/mca/errmgr/errmgr.h"
-#include "orte/mca/grpcomm/grpcomm.h"
-#include "orte/util/show_help.h"
+#include "opal/util/show_help.h"
 
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/pml/base/base.h"
@@ -357,10 +354,10 @@ int mca_pml_ob1_add_procs(ompi_proc_t** procs, size_t nprocs)
         mca_btl_base_selected_module_t *sm = 
             (mca_btl_base_selected_module_t*) item;
         if (sm->btl_module->btl_eager_limit < sizeof(mca_pml_ob1_hdr_t)) {
-            orte_show_help("help-mpi-pml-ob1.txt", "eager_limit_too_small",
+            opal_show_help("help-mpi-pml-ob1.txt", "eager_limit_too_small",
                            true, 
                            sm->btl_component->btl_version.mca_component_name,
-                           orte_process_info.nodename,
+                           ompi_process_info.nodename,
                            sm->btl_component->btl_version.mca_component_name,
                            sm->btl_module->btl_eager_limit,
                            sm->btl_component->btl_version.mca_component_name,
@@ -617,7 +614,7 @@ void mca_pml_ob1_process_pending_rdma(void)
 void mca_pml_ob1_error_handler(
         struct mca_btl_base_module_t* btl, int32_t flags,
         ompi_proc_t* errproc, char* btlinfo ) { 
-    orte_errmgr.abort(-1, NULL);
+    ompi_rte_abort(-1, NULL);
 }
 
 #if OPAL_ENABLE_FT_CR    == 0

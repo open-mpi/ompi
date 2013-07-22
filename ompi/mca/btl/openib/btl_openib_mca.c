@@ -29,7 +29,7 @@
 #include "opal/util/bit_ops.h"
 #include "opal/mca/installdirs/installdirs.h"
 #include "opal/util/output.h"
-#include "orte/util/show_help.h"
+#include "opal/util/show_help.h"
 #include "btl_openib.h"
 #include "btl_openib_mca.h"
 #include "btl_openib_ini.h"
@@ -660,9 +660,9 @@ int btl_openib_verify_mca_params (void)
 
 #if !HAVE_IBV_FORK_INIT
     if (0 != mca_btl_openib_component.want_fork_support) {
-        orte_show_help("help-mpi-btl-openib.txt",
+        opal_show_help("help-mpi-btl-openib.txt",
                        "ibv_fork requested but not supported", true,
-                       orte_process_info.nodename);
+                       ompi_process_info.nodename);
         return OMPI_ERR_BAD_PARAM;
     }
 #endif
@@ -670,35 +670,35 @@ int btl_openib_verify_mca_params (void)
     mca_btl_openib_component.ib_pkey_val &= MCA_BTL_IB_PKEY_MASK;
 
     if (mca_btl_openib_component.ib_min_rnr_timer > 31) {
-        orte_show_help("help-mpi-btl-openib.txt", "invalid mca param value",
+        opal_show_help("help-mpi-btl-openib.txt", "invalid mca param value",
                        true, "btl_openib_ib_min_rnr_timer > 31",
                        "btl_openib_ib_min_rnr_timer reset to 31");
         mca_btl_openib_component.ib_min_rnr_timer = 31;
     }
 
     if (mca_btl_openib_component.ib_timeout > 31) {
-        orte_show_help("help-mpi-btl-openib.txt", "invalid mca param value",
+        opal_show_help("help-mpi-btl-openib.txt", "invalid mca param value",
                        true, "btl_openib_ib_timeout > 31",
                        "btl_openib_ib_timeout reset to 31");
         mca_btl_openib_component.ib_timeout = 31;
     }
 
     if (mca_btl_openib_component.ib_retry_count > 7) {
-        orte_show_help("help-mpi-btl-openib.txt", "invalid mca param value",
+        opal_show_help("help-mpi-btl-openib.txt", "invalid mca param value",
                        true, "btl_openib_ib_retry_count > 7",
                        "btl_openib_ib_retry_count reset to 7");
         mca_btl_openib_component.ib_retry_count = 7;
     }
 
     if (mca_btl_openib_component.ib_rnr_retry > 7) {
-        orte_show_help("help-mpi-btl-openib.txt", "invalid mca param value",
+        opal_show_help("help-mpi-btl-openib.txt", "invalid mca param value",
                        true, "btl_openib_ib_rnr_retry > 7",
                        "btl_openib_ib_rnr_retry reset to 7");
         mca_btl_openib_component.ib_rnr_retry = 7;
     }
 
     if (mca_btl_openib_component.ib_service_level > 15) {
-        orte_show_help("help-mpi-btl-openib.txt", "invalid mca param value",
+        opal_show_help("help-mpi-btl-openib.txt", "invalid mca param value",
                        true, "btl_openib_ib_service_level > 15",
                        "btl_openib_ib_service_level reset to 15");
         mca_btl_openib_component.ib_service_level = 15;
@@ -706,15 +706,15 @@ int btl_openib_verify_mca_params (void)
 
     if(mca_btl_openib_component.buffer_alignment <= 1 ||
        (mca_btl_openib_component.buffer_alignment & (mca_btl_openib_component.buffer_alignment - 1))) {
-        orte_show_help("help-mpi-btl-openib.txt", "wrong buffer alignment",
-                true, mca_btl_openib_component.buffer_alignment, orte_process_info.nodename, 64);
+        opal_show_help("help-mpi-btl-openib.txt", "wrong buffer alignment",
+                true, mca_btl_openib_component.buffer_alignment, ompi_process_info.nodename, 64);
         mca_btl_openib_component.buffer_alignment = 64;
     }
 
     if (mca_btl_openib_component.use_memalign != 32  
         && mca_btl_openib_component.use_memalign != 64
         && mca_btl_openib_component.use_memalign != 0){ 
-        orte_show_help("help-mpi-btl-openib.txt", "invalid mca param value",
+        opal_show_help("help-mpi-btl-openib.txt", "invalid mca param value",
                        true, "Wrong btl_openib_memalign parameter value. Allowed values: 64, 32, 0.",
                        "btl_openib_memalign is reset to 32");
         mca_btl_openib_component.use_memalign = 32; 

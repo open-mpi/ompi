@@ -43,14 +43,9 @@
 #include "opal/util/output.h"
 #include "opal/runtime/opal_progress.h"
 #include "opal/mca/base/base.h"
-#include "orte/util/show_help.h"
 #include "opal/sys/atomic.h"
 #include "opal/runtime/opal.h"
-
-#include "orte/mca/errmgr/errmgr.h"
-#include "orte/mca/grpcomm/grpcomm.h"
-#include "orte/runtime/runtime.h"
-#include "orte/runtime/orte_globals.h"
+#include "opal/util/show_help.h"
 
 #include "mpi.h"
 #include "ompi/constants.h"
@@ -67,6 +62,7 @@
 #include "ompi/mca/pml/base/base.h"
 #include "ompi/mca/osc/base/base.h"
 #include "ompi/mca/coll/base/base.h"
+#include "ompi/mca/rte/rte.h"
 #include "ompi/mca/topo/base/base.h"
 #include "ompi/mca/io/io.h"
 #include "ompi/mca/io/base/base.h"
@@ -93,7 +89,7 @@ int ompi_mpi_finalize(void)
     static int32_t finalize_has_already_started = 0;
     opal_list_item_t *item;
     struct timeval ompistart, ompistop;
-    orte_grpcomm_collective_t *coll;
+    ompi_rte_collective_t *coll;
 
     /* Be a bit social if an erroneous program calls MPI_FINALIZE in
        two different threads, otherwise we may deadlock in
@@ -108,7 +104,7 @@ int ompi_mpi_finalize(void)
         pid_t pid = getpid();
         gethostname(hostname, sizeof(hostname));
 
-        orte_show_help("help-mpi-runtime.txt",
+        opal_show_help("help-mpi-runtime.txt",
                        "mpi_finalize:invoked_multiple_times",
                        true, hostname, pid);
         return MPI_ERR_OTHER;
@@ -145,7 +141,7 @@ int ompi_mpi_finalize(void)
     opal_progress_event_users_increment();
 
     /* check to see if we want timing information */
-    if (ompi_enable_timing != 0 && 0 == ORTE_PROC_MY_NAME->vpid) {
+    if (ompi_enable_timing != 0 && 0 == OMPI_PROC_MY_NAME->vpid) {
         gettimeofday(&ompistart, NULL);
     }
 
@@ -209,10 +205,10 @@ int ompi_mpi_finalize(void)
        MPI barrier doesn't ensure that all messages have been transmitted
        before exiting, so the possibility of a stranded message exists.
     */
-    coll = OBJ_NEW(orte_grpcomm_collective_t);
-    coll->id = orte_process_info.peer_fini_barrier;
-    if (ORTE_SUCCESS != (ret = orte_grpcomm.barrier(coll))) {
-        ORTE_ERROR_LOG(ret);
+    coll = OBJ_NEW(ompi_rte_collective_t);
+    coll->id = ompi_process_info.peer_fini_barrier;
+    if (OMPI_SUCCESS != (ret = ompi_rte_barrier(coll))) {
+        OMPI_ERROR_LOG(ret);
         return ret;
     }
 
@@ -224,10 +220,10 @@ int ompi_mpi_finalize(void)
 
     /* check for timing request - get stop time and report elapsed
      time if so */
-    if (ompi_enable_timing && 0 == ORTE_PROC_MY_NAME->vpid) {
+    if (ompi_enable_timing && 0 == OMPI_PROC_MY_NAME->vpid) {
         gettimeofday(&ompistop, NULL);
         opal_output(0, "ompi_mpi_finalize[%ld]: time to execute barrier %ld usec",
-                    (long)ORTE_PROC_MY_NAME->vpid,
+                    (long)OMPI_PROC_MY_NAME->vpid,
                     (long int)((ompistop.tv_sec - ompistart.tv_sec)*1000000 +
                                (ompistop.tv_usec - ompistart.tv_usec)));
     }
@@ -236,7 +232,7 @@ int ompi_mpi_finalize(void)
      * Shutdown the Checkpoint/Restart Mech.
      */
     if (OMPI_SUCCESS != (ret = ompi_cr_finalize())) {
-        ORTE_ERROR_LOG(ret);
+        OMPI_ERROR_LOG(ret);
     }
 
     /* Shut down any bindings-specific issues: C++, F77, F90 */
@@ -301,7 +297,7 @@ int ompi_mpi_finalize(void)
     /* Now that all MPI objects dealing with communications are gone,
        shut down MCA types having to do with communications */
     if (OMPI_SUCCESS != (ret = mca_base_framework_close(&ompi_pml_base_framework) ) ) {
-        ORTE_ERROR_LOG(ret);
+        OMPI_ERROR_LOG(ret);
         return ret;
     }
 
@@ -313,7 +309,7 @@ int ompi_mpi_finalize(void)
      * Shutdown the CRCP Framework, must happen after PML shutdown
      */
     if (OMPI_SUCCESS != (ret = mca_base_framework_close(&ompi_crcp_base_framework) ) ) {
-        ORTE_ERROR_LOG(ret);
+        OMPI_ERROR_LOG(ret);
         return ret;
     }
 #endif
@@ -405,7 +401,7 @@ int ompi_mpi_finalize(void)
 
     /* Leave the RTE */
 
-    if (ORTE_SUCCESS != (ret = orte_finalize())) {
+    if (OMPI_SUCCESS != (ret = ompi_rte_finalize())) {
         return ret;
     }
 

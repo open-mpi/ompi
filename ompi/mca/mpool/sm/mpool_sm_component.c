@@ -30,8 +30,6 @@
 #include <errno.h>
 #include "opal/mca/base/base.h"
 
-#include "orte/util/proc_info.h"
-
 #include "ompi/mca/allocator/base/base.h"
 #include "mpool_sm.h"
 #include "ompi/mca/common/sm/common_sm.h"
@@ -202,8 +200,8 @@ static mca_mpool_base_module_t* mca_mpool_sm_init(
 
     /* create initial shared memory mapping */
     len = asprintf( &file_name, "%s"OPAL_PATH_SEP"shared_mem_pool.%s",
-                    orte_process_info.job_session_dir,
-                    orte_process_info.nodename );
+                    ompi_process_info.job_session_dir,
+                    ompi_process_info.nodename );
     if ( 0 > len ) {
         free(mpool_module);
         free(procs);

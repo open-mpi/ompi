@@ -70,8 +70,6 @@
 #include "opal/util/output.h"
 #include "opal/util/error.h"
 #include "opal_stdint.h"
-#include "orte/mca/ess/ess.h"
-#include "orte/util/show_help.h"
 
 #include "btl_openib_endpoint.h"
 #include "btl_openib_proc.h"
@@ -1069,7 +1067,7 @@ static int udcm_create_sync_qp (mca_btl_base_endpoint_t *lcl_ep)
 
     udep->sync_qp = ibv_create_qp(m->btl->device->ib_pd, &init_attr);
     if (NULL == udep->sync_qp) {
-        orte_show_help("help-mpi-btl-openib-cpc-base.txt",
+        opal_show_help("help-mpi-btl-openib-cpc-base.txt",
                        "ibv_create_qp failed", true, orte_process_info.nodename,
                        ibv_get_device_name(m->btl->device->ib_dev),
 		       "Reliable connected (RC)");
@@ -1183,7 +1181,7 @@ static int udcm_qp_create_one(udcm_module_t *m, mca_btl_base_endpoint_t* lcl_ep,
     lcl_ep->qps[qp].qp->lcl_qp = ibv_create_qp(m->btl->device->ib_pd,
 					       &init_attr);
     if (NULL == lcl_ep->qps[qp].qp->lcl_qp) { 
-        orte_show_help("help-mpi-btl-openib-cpc-base.txt",
+        opal_show_help("help-mpi-btl-openib-cpc-base.txt",
                        "ibv_create_qp failed", true, orte_process_info.nodename,
                        ibv_get_device_name(m->btl->device->ib_dev),
 		       "Reliable connected (RC)");
@@ -1193,8 +1191,8 @@ static int udcm_qp_create_one(udcm_module_t *m, mca_btl_base_endpoint_t* lcl_ep,
 
     if (init_attr.cap.max_inline_data < req_inline) {
         lcl_ep->qps[qp].ib_inline_max = init_attr.cap.max_inline_data;
-        orte_show_help("help-mpi-btl-openib-cpc-base.txt",
-                       "inline truncated", true, orte_process_info.nodename,
+        opal_show_help("help-mpi-btl-openib-cpc-base.txt",
+                       "inline truncated", true, ompi_process_info.nodename,
                        ibv_get_device_name(m->btl->device->ib_dev),
                        m->btl->port_num, req_inline,
 		       init_attr.cap.max_inline_data);

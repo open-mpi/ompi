@@ -15,7 +15,10 @@
 AC_DEFUN([MCA_ompi_pubsub_orte_CONFIG],[
     AC_CONFIG_FILES([ompi/mca/pubsub/orte/Makefile])
 
-    AS_IF([test "$orte_without_full_support" = 0],
-        [$1],
-        [$2])
-])dnl
+    AC_ARG_WITH([orte],
+        AC_HELP_STRING([--with-orte],
+                       [Use ORTE run-time environment (default: yes)]))
+    AS_IF([test "$with_orte" != "no"],
+          [$1],
+          [$2])
+])

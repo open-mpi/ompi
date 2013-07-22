@@ -28,11 +28,6 @@
 #include "ompi/mca/bcol/base/base.h"
 #include "ompi/mca/sbgp/base/base.h"
 
-#include "orte/mca/rml/rml.h"
-#include "orte/util/proc_info.h"
-#include "orte/util/name_fns.h"
-#include "orte/mca/errmgr/errmgr.h"
-
 #include "coll_ml.h"
 #include "coll_ml_inlines.h"
 

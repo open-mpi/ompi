@@ -24,7 +24,6 @@
 #include "ompi/mca/bcol/bcol.h"
 #include "bcol_ptpcoll.h"
 #include "ompi/mca/bcol/base/base.h"
-#include "orte/mca/rml/rml.h"
 
 #include "bcol_ptpcoll_mca.h"
 #include "bcol_ptpcoll_utils.h"

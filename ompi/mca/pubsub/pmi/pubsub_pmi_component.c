@@ -11,12 +11,11 @@
  */
 
 #include "ompi_config.h"
-#include "ompi/constants.h"
 
 #include "opal/mca/common/pmi/common_pmi.h"
 
-#include "orte/util/proc_info.h"
-#include "orte/util/name_fns.h"
+#include "ompi/constants.h"
+#include "ompi/mca/rte/rte.h"
 
 #include "pubsub_pmi.h"
 
@@ -66,21 +65,17 @@ static int pubsub_pmi_component_open(void)
 
 static int pubsub_pmi_component_close(void)
 {
-    mca_common_pmi_finalize ();
-
     return OMPI_SUCCESS;
 }
 
 static int pubsub_pmi_component_query(mca_base_module_t **module, int *priority)
 {
     /* for now, only use PMI when direct launched */
-    if (NULL == orte_process_info.my_hnp_uri &&
-        ORTE_PROC_IS_MPI &&
+    if (NULL != ompi_process_info.my_hnp_uri &&
         mca_common_pmi_init ()) {
-        /* if PMI is available, use it */
         *priority = my_priority;
         *module = (mca_base_module_t *)&ompi_pubsub_pmi_module;
-        return ORTE_SUCCESS;
+        return OMPI_SUCCESS;
     }
 
     /* we can't run */

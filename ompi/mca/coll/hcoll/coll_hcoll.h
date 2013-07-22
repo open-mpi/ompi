@@ -21,8 +21,6 @@
 #include "ompi/communicator/communicator.h"
 #include "ompi/op/op.h"
 
-#include "orte/runtime/orte_globals.h"
-
 #include "hcoll_api.h"
 #include "hcoll_constants.h"
 

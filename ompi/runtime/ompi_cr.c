@@ -46,8 +46,10 @@
 #include "opal/mca/installdirs/installdirs.h"
 #include "opal/runtime/opal_cr.h"
 
+#if OPAL_ENABLE_FT_CR == 1
 #include "orte/mca/snapc/snapc.h"
 #include "orte/mca/snapc/base/base.h"
+#endif
 
 #include "ompi/constants.h"
 #include "ompi/mca/pml/pml.h"
@@ -58,7 +60,6 @@
 #include "ompi/communicator/communicator.h"
 #include "ompi/runtime/ompi_cr.h"
 #if OPAL_ENABLE_CRDEBUG == 1
-#include "orte/runtime/orte_globals.h"
 #include "ompi/debuggers/debuggers.h"
 #endif
 
@@ -199,7 +200,7 @@ int ompi_cr_init(void)
                  opal_install_dirs.bindir);
 
         /* Set contact information for HNP */
-        uri = strdup(orte_process_info.my_hnp_uri);
+        uri = strdup(ompi_process_info.my_hnp_uri);
         hostname = strchr(uri, ';') + 1;
         sep = strchr(hostname, ';');
         if (sep) {
@@ -394,7 +395,7 @@ static int ompi_cr_coord_pre_restart(void) {
 }
     
 static int ompi_cr_coord_pre_continue(void) {
-#if !ORTE_DISABLE_FULL_SUPPORT
+#if OPAL_ENABLE_FT_CR == 1
     int ret, exit_status = OMPI_SUCCESS;
 
     /*

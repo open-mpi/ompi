@@ -169,7 +169,7 @@ mca_btl_ugni_module_finalize (struct mca_btl_base_module_t *btl)
     /* cancel wildcard post */
     rc = GNI_EpPostDataCancelById (ugni_module->wildcard_ep,
                                    MCA_BTL_UGNI_CONNECT_WILDCARD_ID |
-                                   ORTE_PROC_MY_NAME->vpid);
+                                   OMPI_PROC_MY_NAME->vpid);
     if (GNI_RC_SUCCESS != rc) {
         BTL_VERBOSE(("btl/ugni error cancelling wildcard post"));
     }

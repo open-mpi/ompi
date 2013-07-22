@@ -26,7 +26,6 @@
 #include "ompi/constants.h"
 #include "ompi/communicator/communicator.h"
 #include "sbgp_p2p.h"
-#include "orte/mca/rml/rml.h"
 #include "ompi/mca/bml/bml.h"
 
 

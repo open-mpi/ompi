@@ -28,8 +28,10 @@
 #include "opal/util/argv.h"
 #include "opal/runtime/opal_info_support.h"
 
+#if OMPI_RTE_ORTE
 #include "orte/runtime/runtime.h"
 #include "orte/runtime/orte_info_support.h"
+#endif
 
 #if OPAL_ENABLE_FT_CR == 1
 #include "ompi/mca/crcp/crcp.h"
@@ -61,6 +63,8 @@ void ompi_info_close_components()
         (void) mca_base_framework_close(ompi_frameworks[i]);
     }
 
+#if OMPI_RTE_ORTE
     /* close the ORTE components */
     (void) orte_info_close_components();
+#endif
 }

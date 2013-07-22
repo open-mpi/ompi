@@ -77,8 +77,6 @@
 #define OPAL_DISABLE_ENABLE_MEM_DEBUG 1
 #include "ompi_config.h"
 #include "opal/align.h"
-#include "orte/util/name_fns.h"
-#include "orte/runtime/orte_globals.h"
 #include "ompi/mca/mpool/rgpusm/mpool_rgpusm.h"
 #include <errno.h>
 #include <string.h>
@@ -556,7 +554,7 @@ void mca_mpool_rgpusm_finalize(struct mca_mpool_base_module_t *mpool)
     if(true == mca_mpool_rgpusm_component.print_stats) {
         opal_output(0, "%s rgpusm: stats "
                 "(hit/valid/invalid/miss/evicted): %d/%d/%d/%d/%d\n",
-                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),
                 mpool_rgpusm->stat_cache_hit, mpool_rgpusm->stat_cache_valid, 
                 mpool_rgpusm->stat_cache_invalid, mpool_rgpusm->stat_cache_miss,
                 mpool_rgpusm->stat_evicted);

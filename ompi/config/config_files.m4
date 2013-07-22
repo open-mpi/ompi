@@ -45,7 +45,5 @@ AC_DEFUN([OMPI_CONFIG_FILES],[
         ompi/tools/wrappers/ompi-c.pc
         ompi/tools/wrappers/ompi-cxx.pc
         ompi/tools/wrappers/ompi-fort.pc
-        ompi/tools/ortetools/Makefile
-        ompi/tools/ompi-server/Makefile
     ])
 ])

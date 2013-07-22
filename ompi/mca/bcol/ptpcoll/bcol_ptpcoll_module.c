@@ -1,6 +1,8 @@
 /*
  * Copyright (c) 2009-2012 Oak Ridge National Laboratory.  All rights reserved.
  * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
+ * Copyright (c) 2012      Los Alamos National Security, LLC.
+ *                         All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -25,9 +27,6 @@
 #include "ompi/mca/bcol/bcol.h"
 #include "opal/util/show_help.h"
 #include "ompi/mca/bcol/base/base.h"
-#include "ompi/mca/dpm/dpm.h"
-#include "orte/mca/rml/rml.h"
-#include "orte/util/proc_info.h"
 #include "ompi/mca/pml/pml.h"  /* need this for the max tag size */
 
 #include "ompi/mca/coll/ml/coll_ml.h"

@@ -48,7 +48,7 @@ int OMPI_CR_Migrate(MPI_Comm comm, char *hostname, int rank, MPI_Info *info)
     MPI_Comm_rank(comm, &my_rank);
     MPI_Comm_size(comm, &my_size);
     if( 0 == my_rank ) {
-        datum->leader = ORTE_PROC_MY_NAME->vpid;
+        datum->leader = OMPI_PROC_MY_NAME->vpid;
     } else {
         datum->leader = -1; /* Unknown from non-root ranks */
     }
@@ -62,7 +62,7 @@ int OMPI_CR_Migrate(MPI_Comm comm, char *hostname, int rank, MPI_Info *info)
         strncpy(loc_hostname, hostname, strlen(hostname));
         loc_hostname[strlen(hostname)] = '\0';
     }
-    my_vpid = (int) ORTE_PROC_MY_NAME->vpid;
+    my_vpid = (int) OMPI_PROC_MY_NAME->vpid;
 
     if( 0 == my_rank ) {
         datum->mig_num = my_size;

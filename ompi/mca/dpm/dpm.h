@@ -30,40 +30,10 @@
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 
-#include "orte/mca/rml/rml_types.h"
 #include "ompi/info/info.h"
 #include "ompi/communicator/communicator.h"
 
 BEGIN_C_DECLS
-
-/* OMPI port definitions */
-/* carry over the INVALID def */
-#define OMPI_RML_TAG_INVALID                        ORTE_RML_TAG_INVALID
-/* define a starting point to avoid conflicts */
-#define OMPI_RML_TAG_BASE                           ORTE_RML_TAG_MAX
-
-#define OMPI_RML_TAG_UDAPL                          OMPI_RML_TAG_BASE+1
-#define OMPI_RML_TAG_OPENIB                         OMPI_RML_TAG_BASE+2
-#define OMPI_RML_TAG_XOPENIB                        OMPI_RML_TAG_BASE+3
-#define OMPI_RML_TAG_COMM_CID_INTRA                 OMPI_RML_TAG_BASE+4
-#define OMPI_RML_TAG_XOOB                           OMPI_RML_TAG_BASE+5
-#define OMPI_RML_TAG_SM_BACK_FILE_CREATED           OMPI_RML_TAG_BASE+6
-#define OMPI_CRCP_COORD_BOOKMARK_TAG                OMPI_RML_TAG_BASE+7
-#define OMPI_COMM_JOIN_TAG                          OMPI_RML_TAG_BASE+8
-
-/* support for shared memory collectives */
-#define OMPI_RML_TAG_COLL_SM2_BACK_FILE_CREATED     OMPI_RML_TAG_BASE+9
-/* common sm component query result index */
-#define OMPI_RML_TAG_COMMON_SM_COMP_INDEX           OMPI_RML_TAG_BASE+10
-
-/* OFACM RML TAGs */
-#define OMPI_RML_TAG_OFACM                          OMPI_RML_TAG_BASE+11
-#define OMPI_RML_TAG_XOFACM                         OMPI_RML_TAG_BASE+12
-
-#define OMPI_RML_TAG_DYNAMIC                        OMPI_RML_TAG_BASE+200
-
-
-
 
 /*
  * Initialize a module
@@ -120,20 +90,20 @@ typedef void (*ompi_dpm_base_module_mark_dyncomm_fn_t)(ompi_communicator_t *comm
  * specified tag is valid, then it will be used to form the port. Otherwise,
  * a dynamically assigned tag that is unique to this request will be provided
  */
-typedef int (*ompi_dpm_base_module_open_port_fn_t)(char *port_name, orte_rml_tag_t tag);
+typedef int (*ompi_dpm_base_module_open_port_fn_t)(char *port_name, ompi_rml_tag_t tag);
 
 /*
  * Converts an opaque port string to a RML process nane and tag.
  */
 typedef int (*ompi_dpm_base_module_parse_port_name_t)(char *port_name,
                                                       char **hnp_uri, char **rml_uri,
-                                                      orte_rml_tag_t *tag);
+                                                      ompi_rml_tag_t *tag);
 
 /* 
  * Update the routed component to make sure that the RML can send messages to
  * the remote port
  */
-typedef int (*ompi_dpm_base_module_route_to_port_t)(char *rml_uri, orte_process_name_t *rproc);
+typedef int (*ompi_dpm_base_module_route_to_port_t)(char *rml_uri, ompi_process_name_t *rproc);
 
 
 /*

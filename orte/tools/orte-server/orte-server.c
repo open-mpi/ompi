@@ -50,6 +50,7 @@
 #include "opal/util/daemon_init.h"
 #include "opal/runtime/opal.h"
 #include "opal/runtime/opal_cr.h"
+#include "opal/mca/base/mca_base_param.h"
 
 
 #include "orte/util/name_fns.h"
@@ -79,7 +80,7 @@ static char *report_uri=NULL;
 /*
  * define the context table for obtaining parameters
  */
-opal_cmd_line_init_t ompi_server_cmd_line_opts[] = {
+opal_cmd_line_init_t orte_server_cmd_line_opts[] = {
     /* Various "obvious" options */
     { NULL, 'h', NULL, "help", 0,
       &help, OPAL_CMD_LINE_TYPE_BOOL,
@@ -117,7 +118,7 @@ int main(int argc, char *argv[])
     
     /* setup to check common command line options that just report and die */
     cmd_line = OBJ_NEW(opal_cmd_line_t);
-    opal_cmd_line_create(cmd_line, ompi_server_cmd_line_opts);
+    opal_cmd_line_create(cmd_line, orte_server_cmd_line_opts);
     mca_base_cmd_line_setup(cmd_line);
     if (OPAL_SUCCESS != (ret = opal_cmd_line_parse(cmd_line, false,
                                                    argc, argv))) {
@@ -132,8 +133,8 @@ int main(int argc, char *argv[])
     if (help) {
         char *str, *args = NULL;
         args = opal_cmd_line_get_usage_msg(cmd_line);
-        str = opal_show_help_string("help-ompi-server.txt", 
-                                    "ompiserver:usage", false,
+        str = opal_show_help_string("help-orte-server.txt", 
+                                    "orteserver:usage", false,
                                     argv[0], args);
         if (NULL != str) {
             printf("%s", str);
@@ -173,7 +174,7 @@ int main(int argc, char *argv[])
     opal_cr_set_enabled(false);
     
     /* Select the none component, since we don't actually use a checkpointer */
-    (void) mca_base_var_env_name("crs", &tmp_env_var);
+    tmp_env_var = mca_base_param_env_var("crs");
     opal_setenv(tmp_env_var,
                 "none",
                 true, &environ);
@@ -181,7 +182,7 @@ int main(int argc, char *argv[])
     tmp_env_var = NULL;
 
     /* Mark as a tool program */
-    (void) mca_base_var_env_name("opal_cr_is_tool", &tmp_env_var);
+    tmp_env_var = mca_base_param_env_var("opal_cr_is_tool");
     opal_setenv(tmp_env_var,
                 "1",
                 true, &environ);
@@ -195,7 +196,7 @@ int main(int argc, char *argv[])
 
     /* Perform the standard init, but flag that we are an HNP */
     if (ORTE_SUCCESS != (ret = orte_init(&argc, &argv, ORTE_PROC_HNP))) {
-        fprintf(stderr, "ompi-server: failed to initialize -- aborting\n");
+        fprintf(stderr, "orte-server: failed to initialize -- aborting\n");
         exit(1);
     }
     
@@ -215,7 +216,7 @@ int main(int argc, char *argv[])
             FILE *fp;
             fp = fopen(report_uri, "w");
             if (NULL == fp) {
-                fprintf(stderr, "ompi-server: failed to open designated file %s -- aborting\n", report_uri);
+                fprintf(stderr, "orte-server: failed to open designated file %s -- aborting\n", report_uri);
                 orte_finalize();
                 exit(1);
             }
@@ -227,7 +228,7 @@ int main(int argc, char *argv[])
     
     /* setup the data server to listen for commands */
     if (ORTE_SUCCESS != (ret = orte_data_server_init())) {
-        fprintf(stderr, "ompi-server: failed to start data server -- aborting\n");
+        fprintf(stderr, "orte-server: failed to start data server -- aborting\n");
         orte_finalize();
         exit(1);
     }
@@ -281,7 +282,7 @@ int main(int argc, char *argv[])
     opal_progress_set_event_flag(OPAL_EVLOOP_ONCE);
 
     if (debug) {
-        opal_output(0, "%s ompi-server: up and running!", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+        opal_output(0, "%s orte-server: up and running!", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
     }
 
     /* wait to hear we are done */
@@ -303,7 +304,7 @@ static void shutdown_callback(int fd, short flags, void *arg)
     int ret;
     
     if (debug) {
-        opal_output(0, "%s ompi-server: finalizing", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+        opal_output(0, "%s orte-server: finalizing", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
     }
     
     /* Finalize and clean up ourselves */

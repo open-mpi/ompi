@@ -23,8 +23,6 @@
 #include "opal/threads/mutex.h"
 #include "opal/sys/atomic.h"
 
-#include "orte/util/show_help.h"
-
 #include "ompi/op/op.h"
 #include "ompi/constants.h"
 #include "ompi/mca/coll/coll.h"

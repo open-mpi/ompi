@@ -20,8 +20,6 @@
 #include "opal/mca/base/base.h"
 #include "opal/util/argv.h"
 
-#include "orte/util/show_help.h"
-
 #include "ompi/mca/bcol/bcol.h"
 #include "ompi/mca/bcol/base/base.h"
 #include "ompi/include/ompi/constants.h"

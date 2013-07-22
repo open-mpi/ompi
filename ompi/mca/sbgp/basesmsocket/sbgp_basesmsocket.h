@@ -19,10 +19,6 @@
 #include "ompi/mca/mpool/mpool.h"
 #include "ompi/request/request.h"
 #include "ompi/proc/proc.h"
-#if OPAL_ENABLE_DEBUG
-#include "orte/util/name_fns.h"
-#include "orte/runtime/orte_globals.h"
-#endif
 
 BEGIN_C_DECLS
 
@@ -52,8 +48,8 @@ static inline int mca_sbgp_basesmsocket_err(const char* fmt, ...)
     do {                                                        \
         if(10 >= level) {         \
             mca_sbgp_basesmsocket_err("[%s]%s[%s:%d:%s] BASESMSOCKET ",       \
-                    orte_process_info.nodename,                 \
-                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),         \
+                    ompi_process_info.nodename,                 \
+                    OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),         \
                     __FILE__, __LINE__, __func__);              \
             mca_sbgp_basesmsocket_err args;                            \
             mca_sbgp_basesmsocket_err("\n");                           \

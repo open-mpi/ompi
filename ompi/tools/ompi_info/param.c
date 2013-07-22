@@ -40,7 +40,9 @@
 #include "opal/memoryhooks/memory.h"
 #include "opal/runtime/opal_info_support.h"
 
+#if OMPI_RTE_ORTE
 #include "orte/util/show_help.h"
+#endif
 
 #include "ompi/tools/ompi_info/ompi_info.h"
 #include "ompi/include/mpi_portable_platform.h"
@@ -108,7 +110,9 @@ void ompi_info_do_config(bool want_all)
     char *cxxexceptions;
     char *threads;
     char *want_libltdl;
+#if OMPI_RTE_ORTE
     char *mpirun_prefix_by_default;
+#endif
     char *sparse_groups;
     char *have_mpi_io;
     char *wtime_support;
@@ -222,7 +226,9 @@ void ompi_info_do_config(bool want_all)
     fortran_usempi_profiling = (OMPI_ENABLE_MPI_PROFILING && OMPI_BUILD_FORTRAN_USEMPI_BINDINGS) ? "yes" : "no";
     fortran_usempif08_profiling = (OMPI_ENABLE_MPI_PROFILING && OMPI_BUILD_FORTRAN_USEMPIF08_BINDINGS) ? "yes" : "no";
     want_libltdl = OPAL_WANT_LIBLTDL ? "yes" : "no";
+#if OMPI_RTE_ORTE
     mpirun_prefix_by_default = ORTE_WANT_ORTERUN_PREFIX_BY_DEFAULT ? "yes" : "no";
+#endif
     sparse_groups = OMPI_GROUP_SPARSE ? "yes" : "no";
     have_mpi_io = OMPI_PROVIDE_MPI_FILE_INTERFACE ? "yes" : "no";
     wtime_support = OPAL_TIMER_USEC_NATIVE ? "native" : "gettimeofday";
@@ -253,10 +259,22 @@ void ompi_info_do_config(bool want_all)
     }
 
     if (OPAL_HAVE_SOLARIS_THREADS || OPAL_HAVE_POSIX_THREADS) {        /* should just test OPAL_HAVE_THREADS */
-        asprintf(&threads, "%s (MPI_THREAD_MULTIPLE: %s, progress: %s)", OPAL_HAVE_SOLARIS_THREADS ? "solaris" :
-                 (OPAL_HAVE_POSIX_THREADS ? "posix" : "type unknown"), /* "type unknown" can presumably never happen */
-                 OMPI_ENABLE_THREAD_MULTIPLE ? "yes" : "no",
-                 OMPI_ENABLE_PROGRESS_THREADS ? "yes" : "no");
+#if OMPI_RTE_ORTE
+        (void)asprintf(&threads, "%s (MPI_THREAD_MULTIPLE: %s, OPAL support: %s, OMPI progress: %s, ORTE progress: %s, Event lib: yes)",
+                       OPAL_HAVE_SOLARIS_THREADS ? "solaris" :
+                       (OPAL_HAVE_POSIX_THREADS ? "posix" : "type unknown"), /* "type unknown" can presumably never happen */
+                       OMPI_ENABLE_THREAD_MULTIPLE ? "yes" : "no",
+                       OPAL_ENABLE_MULTI_THREADS ? "yes" : "no",
+                       OMPI_ENABLE_PROGRESS_THREADS ? "yes" : "no",
+                       ORTE_ENABLE_PROGRESS_THREADS ? "yes" : "no");
+#else
+        (void)asprintf(&threads, "%s (MPI_THREAD_MULTIPLE: %s, OPAL support: %s, OMPI progress: %s, Event lib: yes)",
+                       OPAL_HAVE_SOLARIS_THREADS ? "solaris" :
+                       (OPAL_HAVE_POSIX_THREADS ? "posix" : "type unknown"), /* "type unknown" can presumably never happen */
+                       OMPI_ENABLE_THREAD_MULTIPLE ? "yes" : "no",
+                       OPAL_ENABLE_MULTI_THREADS ? "yes" : "no",
+                       OMPI_ENABLE_PROGRESS_THREADS ? "yes" : "no");
+#endif
     } else {
         threads = strdup("no");
     }
@@ -547,8 +565,10 @@ void ompi_info_do_config(bool want_all)
     opal_info_out("Memory debugging support", "option:mem-debug", memdebug);
     opal_info_out("libltdl support", "option:dlopen", want_libltdl);
     opal_info_out("Heterogeneous support", "options:heterogeneous", heterogeneous);
+#if OMPI_RTE_ORTE
     opal_info_out("mpirun default --prefix", "mpirun:prefix_by_default", 
                   mpirun_prefix_by_default);
+#endif
     opal_info_out("MPI I/O support", "options:mpi-io", have_mpi_io);
     opal_info_out("MPI_WTIME support", "options:mpi-wtime", wtime_support);
     opal_info_out("Symbol vis. support", "options:visibility", symbol_visibility);

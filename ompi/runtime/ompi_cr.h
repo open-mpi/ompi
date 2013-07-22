@@ -26,7 +26,7 @@
 #define OMPI_CR_H
 
 #include "ompi_config.h"
-#if !ORTE_DISABLE_FULL_SUPPORT
+#if OPAL_ENABLE_FT_CR == 1
 #include "orte/runtime/orte_cr.h"
 #endif
 

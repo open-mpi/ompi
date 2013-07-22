@@ -46,7 +46,7 @@ int OMPI_CR_Quiesce_start(MPI_Comm commP, MPI_Info *info)
 
     MPI_Comm_rank(comm, &my_rank);
     if( 0 == my_rank ) {
-        datum->leader = ORTE_PROC_MY_NAME->vpid;
+        datum->leader = OMPI_PROC_MY_NAME->vpid;
     } else {
         datum->leader = -1; /* Unknown from non-root ranks */
     }
@@ -189,19 +189,19 @@ static int extract_info_into_datum(ompi_info_t *info, orte_snapc_base_quiesce_t 
      */
     OPAL_OUTPUT_VERBOSE((3, mca_crcp_bkmrk_component.super.output_handle,
                          "crcp:bkmrk: %s extract_info: Info('crs' = '%s')",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),
                          (NULL == datum->crs_name ? "Default (none)" : datum->crs_name)));
     OPAL_OUTPUT_VERBOSE((3, mca_crcp_bkmrk_component.super.output_handle,
                          "crcp:bkmrk: %s extract_info: Info('cmdline' = '%s')",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),
                          (NULL == datum->cmdline ? "Default ()" : datum->cmdline)));
     OPAL_OUTPUT_VERBOSE((3, mca_crcp_bkmrk_component.super.output_handle,
                          "crcp:bkmrk: %s extract_info: Info('checkpointing' = '%c')",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),
                          (datum->checkpointing ? 'T' : 'F')));
     OPAL_OUTPUT_VERBOSE((3, mca_crcp_bkmrk_component.super.output_handle,
                          "crcp:bkmrk: %s extract_info: Info('restarting' = '%c')",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),
                          (datum->restarting ? 'T' : 'F')));
 
     if( NULL != info_char ) {

@@ -48,7 +48,9 @@
 #include "opal/runtime/opal_info_support.h"
 #include "opal/util/show_help.h"
 
+#if OMPI_RTE_ORTE
 #include "orte/runtime/orte_info_support.h"
+#endif
 
 #include "ompi/include/ompi/frameworks.h"
 #include "ompi/communicator/communicator.h"
@@ -110,8 +112,10 @@ int main(int argc, char *argv[])
     /* add in the opal frameworks */
     opal_info_register_types(&mca_types);
 
+#if OMPI_RTE_ORTE
     /* add in the orte frameworks */
     orte_info_register_types(&mca_types);
+#endif
 
     /* add the top-level type */
     opal_pointer_array_add(&mca_types, "ompi");

@@ -14,10 +14,8 @@
 #define COMM_PATTERNS_H
 
 #include "ompi_config.h"
-#include "orte/util/proc_info.h"
-#include "orte/runtime/orte_globals.h"
-#include "orte/util/name_fns.h"
 
+#include "ompi/mca/rte/rte.h"
 #include "netpatterns_knomial_tree.h"
 
 BEGIN_C_DECLS
@@ -32,8 +30,8 @@ OMPI_DECLSPEC extern int netpatterns_base_err(const char*, ...) __opal_attribute
     do {                                                         \
         if(netpatterns_base_verbose > 0) {           \
             netpatterns_base_err("[%s]%s[%s:%d:%s] ",\
-                    orte_process_info.nodename,                  \
-                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),          \
+                    ompi_process_info.nodename,                  \
+                    OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),          \
                     __FILE__, __LINE__, __func__);               \
             netpatterns_base_err args;               \
             netpatterns_base_err("\n");              \

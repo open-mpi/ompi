@@ -92,7 +92,6 @@
 #include "ompi/errhandler/errcode.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/mca/pml/pml.h"
-#include "orte/util/proc_info.h"
 
 /*
  * Private functions
@@ -174,7 +173,7 @@ int ompi_attr_create_predefined(void)
         return ret;
     }
 
-    ret = set_f(MPI_APPNUM, orte_process_info.app_num);
+    ret = set_f(MPI_APPNUM, ompi_process_info.app_num);
 
     return ret;
 }

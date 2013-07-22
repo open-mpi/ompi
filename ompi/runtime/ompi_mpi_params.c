@@ -29,13 +29,16 @@
 #endif  /* HAVE_TIME_H */
 
 #include "opal/mca/base/base.h"
-#include "orte/util/show_help.h"
 #include "ompi/constants.h"
 #include "ompi/datatype/ompi_datatype.h"
 #include "ompi/runtime/mpiruntime.h"
 #include "ompi/runtime/params.h"
+#include "ompi/mca/rte/rte.h"
+
+#include "opal/mca/base/mca_base_param.h"
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
+#include "opal/util/show_help.h"
 
 /*
  * Global variables
@@ -86,7 +89,7 @@ int ompi_mpi_register_params(void)
                                  MCA_BASE_VAR_SCOPE_READONLY,
                                  &ompi_mpi_param_check);
     if (ompi_mpi_param_check && !MPI_PARAM_CHECK) {
-        orte_show_help("help-mpi-runtime.txt", 
+        opal_show_help("help-mpi-runtime.txt", 
                        "mpi-param-check-enabled-but-compiled-out",
                        true);
         ompi_mpi_param_check = false;
@@ -277,7 +280,7 @@ int ompi_mpi_register_params(void)
     
     if (ompi_mpi_leave_pinned > 0 && ompi_mpi_leave_pinned_pipeline) {
         ompi_mpi_leave_pinned_pipeline = 0;
-        orte_show_help("help-mpi-runtime.txt", 
+        opal_show_help("help-mpi-runtime.txt", 
                        "mpi-params:leave-pinned-and-pipeline-selected",
                        true);
     }
@@ -308,7 +311,7 @@ int ompi_mpi_register_params(void)
                                  ompi_mpi_have_sparse_group_storage ? MCA_BASE_VAR_SCOPE_READONLY : MCA_BASE_VAR_SCOPE_CONSTANT,
                                  &ompi_use_sparse_group_storage);
     if (ompi_use_sparse_group_storage && !ompi_mpi_have_sparse_group_storage) {
-        orte_show_help("help-mpi-runtime.txt", 
+        opal_show_help("help-mpi-runtime.txt", 
                        "sparse groups enabled but compiled out",
                        true);
         ompi_use_sparse_group_storage = false;

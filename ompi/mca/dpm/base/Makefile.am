@@ -24,9 +24,5 @@ headers += \
 libmca_dpm_la_SOURCES += \
         base/dpm_base_frame.c \
         base/dpm_base_select.c \
-        base/dpm_base_null_fns.c
-
-if !ORTE_DISABLE_FULL_SUPPORT
-libmca_dpm_la_SOURCES += \
+        base/dpm_base_null_fns.c \
         base/dpm_base_common_fns.c
-endif

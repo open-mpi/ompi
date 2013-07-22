@@ -8,6 +8,7 @@
  * 
  * $HEADER$
  */
+#include <stdarg.h>
 
 #include "ompi/include/ompi/constants.h"
 #include "netpatterns.h"

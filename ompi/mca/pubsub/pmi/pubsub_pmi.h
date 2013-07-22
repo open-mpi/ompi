@@ -10,10 +10,6 @@
 #ifndef OMPI_PUBSUB_PMI_H
 #define OMPI_PUBSUB_PMI_H
 
-#include "ompi_config.h"
-
-#include "orte/types.h"
-
 #include "ompi/mca/pubsub/pubsub.h"
 
 BEGIN_C_DECLS

@@ -25,7 +25,6 @@
 #define OPAL_DISABLE_ENABLE_MEM_DEBUG 1
 #include "ompi_config.h"
 #include "opal/mca/base/base.h"
-#include "orte/util/proc_info.h"
 #include "ompi/runtime/params.h"
 #include "mpool_grdma.h"
 #ifdef HAVE_UNISTD_H
