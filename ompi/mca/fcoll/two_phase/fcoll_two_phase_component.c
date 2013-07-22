@@ -67,10 +67,7 @@ mca_fcoll_base_component_2_0_0_t mca_fcoll_two_phase_component = {
      OMPI_MAJOR_VERSION,
      OMPI_MINOR_VERSION,
      OMPI_RELEASE_VERSION,
-     NULL,
-     NULL,
-     NULL,
-     two_phase_register
+     .mca_register_component_params = two_phase_register,
     },
     {
         /* The component is checkpoint ready */

@@ -59,10 +59,7 @@ mca_fs_base_component_2_0_0_t mca_fs_lustre_component = {
         OMPI_MAJOR_VERSION,
         OMPI_MINOR_VERSION,
         OMPI_RELEASE_VERSION,
-        NULL,
-        NULL,
-        NULL,
-        lustre_register
+        .mca_register_component_params = lustre_register,
     },
     {
         /* This component is checkpointable */

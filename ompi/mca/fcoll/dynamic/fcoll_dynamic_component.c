@@ -64,8 +64,7 @@ mca_fcoll_base_component_2_0_0_t mca_fcoll_dynamic_component = {
      OMPI_MAJOR_VERSION,
      OMPI_MINOR_VERSION,
      OMPI_RELEASE_VERSION,
-     dynamic_register,
-     NULL
+     .mca_register_component_params = dynamic_register,
     },
     {
         /* The component is checkpoint ready */

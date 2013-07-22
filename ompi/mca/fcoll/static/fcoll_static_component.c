@@ -67,8 +67,7 @@ mca_fcoll_base_component_2_0_0_t mca_fcoll_static_component = {
      OMPI_MAJOR_VERSION,
      OMPI_MINOR_VERSION,
      OMPI_RELEASE_VERSION,
-     static_register,
-     NULL
+     .mca_register_component_params = static_register,
     },
     {
         /* The component is checkpoint ready */

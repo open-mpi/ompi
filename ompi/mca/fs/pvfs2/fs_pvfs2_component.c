@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008-2011 University of Houston. All rights reserved.
+ * Copyright (c) 2008-2013 University of Houston. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -57,10 +57,7 @@ mca_fs_base_component_2_0_0_t mca_fs_pvfs2_component = {
         OMPI_MAJOR_VERSION,
         OMPI_MINOR_VERSION,
         OMPI_RELEASE_VERSION,
-        NULL,
-        NULL,
-        NULL,
-        pvfs2_register
+        .mca_register_component_params = pvfs2_register,
     },
     {
         /* This component is checkpointable */

@@ -101,8 +101,7 @@ mca_io_base_component_2_0_0_t mca_io_ompio_component = {
         OMPI_RELEASE_VERSION,
         open_component,
         close_component,
-        NULL,
-        register_component
+        .mca_register_component_params = register_component,
     },
     {
         /* The component is checkpoint ready */
