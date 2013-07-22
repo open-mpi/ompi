@@ -187,20 +187,7 @@ static int modex(orte_grpcomm_collective_t *coll)
      /* our RTE data was constructed and pushed in the ESS pmi component */
 
     /* commit our modex info */
-#if WANT_PMI2_SUPPORT
-    PMI2_KVS_Fence();
-#else
-    {
-        int rc;
-        
-        if (PMI_SUCCESS != (rc = PMI_KVS_Commit(pmi_kvs_name))) {
-            OPAL_PMI_ERROR(rc, "PMI_KVS_Commit");
-            return ORTE_ERR_FATAL;
-        }
-        /* Barrier here to ensure all other procs have committed */
-        PMI_Barrier();
-    }
-#endif
+     opal_db.commit();
 
     /* cycle thru all my peers and collect their RTE info */
     name.jobid = ORTE_PROC_MY_NAME->jobid;

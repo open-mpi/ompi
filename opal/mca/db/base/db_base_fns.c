@@ -65,7 +65,7 @@ int opal_db_base_store_pointer(const opal_identifier_t *proc,
     opal_db_active_module_t *mod;
     int rc;
 
-    /* cycle thru the actiove modules until one agrees to perform the op */
+    /* cycle thru the active modules until one agrees to perform the op */
     did_op = false;
     OPAL_LIST_FOREACH(mod, &opal_db_base.store_order, opal_db_active_module_t) {
         if (NULL == mod->module->store_pointer) {
@@ -91,6 +91,20 @@ int opal_db_base_store_pointer(const opal_identifier_t *proc,
     }
     return OPAL_SUCCESS;
 }
+
+void opal_db_base_commit(void)
+{
+    opal_db_active_module_t *mod;
+
+    /* cycle thru the active modules giving each a chance to perform the op */
+    OPAL_LIST_FOREACH(mod, &opal_db_base.store_order, opal_db_active_module_t) {
+        if (NULL == mod->module->commit) {
+            continue;
+        }
+        mod->module->commit();
+    }
+}
+
 
 int opal_db_base_fetch(const opal_identifier_t *proc,
                        const char *key, void **data,

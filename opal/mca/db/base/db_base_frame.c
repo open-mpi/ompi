@@ -33,6 +33,7 @@ opal_db_base_module_t opal_db = {
     NULL,
     opal_db_base_store,
     opal_db_base_store_pointer,
+    opal_db_base_commit,
     opal_db_base_fetch,
     opal_db_base_fetch_pointer,
     opal_db_base_fetch_multiple,
