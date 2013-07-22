@@ -49,7 +49,7 @@
  *           b. OMPI_RTE_CMP_JOBID
  *           c. OMPI_RTE_CMP_VPID
  *           d. OMPI_RTE_CMP_ALL
- *      7. uint64_t ompi_rte_hash_names(name) - return a string hash uniquely
+ *      7. uint64_t ompi_rte_hash_name(name) - return a string hash uniquely
  *         representing the ompi_process_name passed in.
  *      8. OMPI_NAME - an Opal DSS constant for a handler already registered 
  *         to serialize/deserialize an ompi_process_name_t structure.
