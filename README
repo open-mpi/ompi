@@ -507,8 +507,7 @@ Network Support
     - vader (XPMEM)
 
   - "cm" supports a smaller number of networks (and they cannot be
-    used together), but may provide better better overall MPI
-    performance:
+    used together), but may provide better overall MPI performance:
 
     - Myrinet MX and Open-MX
     - InfiniPath PSM
