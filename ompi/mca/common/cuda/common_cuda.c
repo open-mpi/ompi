@@ -492,9 +492,9 @@ static int mca_common_cuda_init(opal_common_cuda_function_table_t *ftable)
 /**
  * This function will open and load the symbols needed from the CUDA driver
  * library.  Any failure will result in a message and we will return 1.
- * First look for the SONAME of the library which is libcuda.so.1.  In most
- * cases, this will be the library found.  However, there are some setups
- * that require the extra steps for searching.
+ * Look for the SONAME of the library which is libcuda.so.1.  In most
+ * cases, this will result in the library found.  However, there are some
+ * setups that require the extra steps for searching.
  */
 static int mca_common_cuda_load_libcuda(void)
 {
@@ -502,7 +502,7 @@ static int mca_common_cuda_load_libcuda(void)
     int retval, i, j;
     int advise_support = 1;
     bool loaded = false;
-    char *cudalibs[] = {"libcuda.so.1", "libcuda.so", NULL};
+    char *cudalibs[] = {"libcuda.so.1", NULL};
     char *searchpaths[] = {"", "/usr/lib64", NULL};
     char **errmsgs = NULL;
     char *errmsg = NULL;
@@ -538,13 +538,14 @@ static int mca_common_cuda_load_libcuda(void)
      * NOTE: On the first loop we just utilize the default loading
      * paths from the system.  For the second loop, set /usr/lib64 to
      * the search path and try again.  This is done to handle the case
-     * where we have both 32 and 64 bit libcuda.so libraries
-     * installed.  If we are running in 64 bit mode, then the loading
-     * /usr/lib/libcuda.so will fail and no more searching will be
-     * done.  Note that we only set this search path after the
-     * original search.  This is so that LD_LIBRARY_PATH and run path
-     * settings are respected.  Setting this search path overrides
-     * them.  It really should just be appended. */
+     * where we have both 32 and 64 bit libcuda.so libraries installed.
+     * Even when running in 64-bit mode, the /usr/lib direcotry
+     * is searched first and we may find a 32-bit libcuda.so.1 library.
+     * Loading of this library will fail as libtool does not handle having
+     * the wrong ABI in the search path (unlike ld or ld.so).  Note that
+     * we only set this search path after the original search.  This is
+     * so that LD_LIBRARY_PATH and run path settings are respected.
+     * Setting this search path overrides them (rather then being appended). */
     if (advise_support) {
         if (0 != (retval = opal_lt_dladvise_global(&advise))) {
             opal_show_help("help-mpi-common-cuda.txt", "unknown ltdl error", true,
