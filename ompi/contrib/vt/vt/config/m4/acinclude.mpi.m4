@@ -68,19 +68,19 @@ dnl		further presets below when handling '--with-openmpi[17]'
 	AC_ARG_WITH(mpi-inc-dir,
 		AC_HELP_STRING([--with-mpi-inc-dir=MPIINCDIR],
 		[give the path for MPI-include files, default: MPIDIR/include]),
-	[MPIINCDIR="-I$withval/"],
-	[AS_IF([test x"$MPIDIR" != x], [MPIINCDIR="-I$MPIDIR"include/])])
+	[MPIINCDIR="-I$withval"],
+	[AS_IF([test x"$MPIDIR" != x], [MPIINCDIR="-I$MPIDIR"include])])
 
 	AC_ARG_WITH(fmpi-inc-dir,
 		AC_HELP_STRING([--with-fmpi-inc-dir=FMPIINCDIR],
 		[give the path for Fortran MPI-include files, default: MPIINCDIR]),
-	[FMPIINCDIR="-I$withval/"], [FMPIINCDIR="$MPIINCDIR"])
+	[FMPIINCDIR="-I$withval"], [FMPIINCDIR="$MPIINCDIR"])
 
 	AC_ARG_WITH(mpi-lib-dir,
 		AC_HELP_STRING([--with-mpi-lib-dir=MPILIBDIR],
 		[give the path for MPI-libraries, default: MPIDIR/lib]),
-	[MPILIBDIR="-L$withval/"],
-	[AS_IF([test x"$MPIDIR" != x], [MPILIBDIR="-L$MPIDIR"lib/])])
+	[MPILIBDIR="-L$withval"],
+	[AS_IF([test x"$MPIDIR" != x], [MPILIBDIR="-L$MPIDIR"lib])])
 
 	AC_ARG_WITH(hpmpi,
 		AC_HELP_STRING([--with-hpmpi], [set MPI-libs for HP MPI]))

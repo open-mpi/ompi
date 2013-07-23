@@ -16,14 +16,14 @@ AC_DEFUN([ACVT_CLAPACK],
 	AC_ARG_WITH(clapack-inc-dir,
 		AC_HELP_STRING([--with-clapack-inc-dir=CLAPACKINCDIR],
 		[give the path for CLAPACK-include files, default: CLAPACKDIR/include)]),
-	[CLAPACKINCDIR="-I$withval/"],
-	[AS_IF([test x"$CLAPACKDIR" != x], [CLAPACKINCDIR="-I$CLAPACKDIR"include/])])
+	[CLAPACKINCDIR="-I$withval"],
+	[AS_IF([test x"$CLAPACKDIR" != x], [CLAPACKINCDIR="-I$CLAPACKDIR"include])])
 
 	AC_ARG_WITH(clapack-lib-dir,
 		AC_HELP_STRING([--with-clapack-lib-dir=CLAPACKLIBDIR],
 		[give the path for CLAPACK-libraries, default: CLAPACKDIR/lib]),
-	[CLAPACKLIBDIR="-L$withval/"],
-	[AS_IF([test x"$CLAPACKDIR" != x], [CLAPACKLIBDIR="-L$CLAPACKDIR"lib/])])
+	[CLAPACKLIBDIR="-L$withval"],
+	[AS_IF([test x"$CLAPACKDIR" != x], [CLAPACKLIBDIR="-L$CLAPACKDIR"lib])])
 
 	AC_ARG_WITH(clapack-mkl,
 		AC_HELP_STRING([--with-clapack-mkl], [set CLAPACK-lib for MKL]),

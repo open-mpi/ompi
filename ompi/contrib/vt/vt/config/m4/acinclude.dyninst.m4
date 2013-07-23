@@ -32,14 +32,14 @@ AC_DEFUN([ACVT_DYNINST],
 	AC_ARG_WITH(dyninst-inc-dir,
 		AC_HELP_STRING([--with-dyninst-inc-dir=DYNIINCDIR],
 		[give the path for Dyninst-include files, default: DYNIDIR/include]),
-	[DYNIINCDIR="-I$withval/"],
-	[AS_IF([test x"$DYNIDIR" != x], [DYNIINCDIR="-I$DYNIDIR"include/])])
+	[DYNIINCDIR="-I$withval"],
+	[AS_IF([test x"$DYNIDIR" != x], [DYNIINCDIR="-I$DYNIDIR"include])])
 
 	AC_ARG_WITH(dyninst-lib-dir,
 		AC_HELP_STRING([--with-dyninst-lib-dir=DYNILIBDIR],
 		[give the path for Dyninst-libraries, default: DYNIDIR/lib]),
-	[DYNILIBDIR="-L$withval/"],
-	[AS_IF([test x"$DYNIDIR" != x], [DYNILIBDIR="-L$DYNIDIR"lib/])])
+	[DYNILIBDIR="-L$withval"],
+	[AS_IF([test x"$DYNIDIR" != x], [DYNILIBDIR="-L$DYNIDIR"lib])])
 
 	AC_ARG_WITH(dyninst-lib,
 		AC_HELP_STRING([--with-dyninst-lib=DYNILIB], [use given Dyninst lib, default: -ldyninstAPI]),
