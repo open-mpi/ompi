@@ -21,14 +21,14 @@ AC_DEFUN([ACVT_CUDA],
 	AC_ARG_WITH(cuda-inc-dir,
 		AC_HELP_STRING([--with-cuda-inc-dir=CUDATKINCDIR],
 		[give the path for CUDA-Toolkit-include files, default: CUDATKDIR/include]),
-	[CUDATKINCDIR="-I$withval/"],
-	[AS_IF([test x"$CUDATKDIR" != x], [CUDATKINCDIR="-I$CUDATKDIR"include/])])
+	[CUDATKINCDIR="-I$withval"],
+	[AS_IF([test x"$CUDATKDIR" != x], [CUDATKINCDIR="-I$CUDATKDIR"include])])
 
 	AC_ARG_WITH(cuda-lib-dir,
 		AC_HELP_STRING([--with-cuda-lib-dir=CUDATKLIBDIR],
 		[give the path for CUDA-Toolkit-libraries, default: CUDATKDIR/lib64]),
-	[CUDATKLIBDIR="-L$withval/"],
-	[AS_IF([test x"$CUDATKDIR" != x], [CUDATKLIBDIR="-L$CUDATKDIR"lib64/])])
+	[CUDATKLIBDIR="-L$withval"],
+	[AS_IF([test x"$CUDATKDIR" != x], [CUDATKLIBDIR="-L$CUDATKDIR"lib64])])
 
 	AC_ARG_WITH(cuda-lib,
 		AC_HELP_STRING([--with-cuda-lib=CUDALIB], [use given CUDA driver library, default: -lcuda]),

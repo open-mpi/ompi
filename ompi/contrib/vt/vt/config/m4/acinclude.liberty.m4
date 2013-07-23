@@ -21,14 +21,14 @@ AC_DEFUN([ACVT_LIBERTY],
 	AC_ARG_WITH(liberty-inc-dir,
 		AC_HELP_STRING([--with-liberty-inc-dir=LIBERTYINCDIR],
 		[give the path for LIBERTY-include files, default: LIBERTYDIR/include]),
-	[LIBERTYINCDIR="-I$withval/"],
-	[AS_IF([test x"$LIBERTYDIR" != x], [LIBERTYINCDIR="-I$LIBERTYDIR"include/])])
+	[LIBERTYINCDIR="-I$withval"],
+	[AS_IF([test x"$LIBERTYDIR" != x], [LIBERTYINCDIR="-I$LIBERTYDIR"include])])
 
 	AC_ARG_WITH(liberty-lib-dir,
 		AC_HELP_STRING([--with-liberty-lib-dir=LIBERTYLIBDIR],
 		[give the path for LIBERTY-libraries, default: LIBERTYDIR/lib]),
-	[LIBERTYLIBDIR="-L$withval/"],
-	[AS_IF([test x"$LIBERTYDIR" != x], [LIBERTYLIBDIR="-L$LIBERTYDIR"lib/])])
+	[LIBERTYLIBDIR="-L$withval"],
+	[AS_IF([test x"$LIBERTYDIR" != x], [LIBERTYLIBDIR="-L$LIBERTYDIR"lib])])
 
 	AC_ARG_WITH(liberty-lib,
 		AC_HELP_STRING([--with-liberty-lib=LIBERTYLIB], [use given liberty lib, default: -liberty]),

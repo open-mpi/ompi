@@ -16,14 +16,14 @@ AC_DEFUN([ACVT_PAPI],
 	AC_ARG_WITH(papi-inc-dir,
 		AC_HELP_STRING([--with-papi-inc-dir=PAPIINCDIR],
 		[give the path for PAPI-include files, default: PAPIDIR/include]),
-	[PAPIINCDIR="-I$withval/"],
-	[AS_IF([test x"$PAPIDIR" != x], [PAPIINCDIR="-I$PAPIDIR"include/])])
+	[PAPIINCDIR="-I$withval"],
+	[AS_IF([test x"$PAPIDIR" != x], [PAPIINCDIR="-I$PAPIDIR"include])])
 
 	AC_ARG_WITH(papi-lib-dir,
 		AC_HELP_STRING([--with-papi-lib-dir=PAPILIBDIR],
 		[give the path for PAPI-libraries, default: PAPIDIR/lib]),
-	[PAPILIBDIR="-L$withval/"],
-	[AS_IF([test x"$PAPIDIR" != x], [PAPILIBDIR="-L$PAPIDIR"lib/])])
+	[PAPILIBDIR="-L$withval"],
+	[AS_IF([test x"$PAPIDIR" != x], [PAPILIBDIR="-L$PAPIDIR"lib])])
 
 	AC_ARG_WITH(papi-lib,
 		AC_HELP_STRING([--with-papi-lib=PAPILIB], [use given papi lib, default: -lpapi]),

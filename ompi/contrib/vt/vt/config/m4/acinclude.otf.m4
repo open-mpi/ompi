@@ -21,15 +21,15 @@ AC_DEFUN([ACVT_OTF],
 
 	AC_ARG_WITH(extern-otf-inc-dir,
 		AC_HELP_STRING([--with-extern-otf-inc-dir=OTFINCDIR],
-		[give the path for OTF-include files, default: OTFDIR/include]),
-	[OTFINCDIR="-I$withval/"],
-	[AS_IF([test x"$OTFDIR" != x], [OTFINCDIR="-I$OTFDIR"include/])])
+		[give the path for OTF-include files, default: OTFDIR/include/open-trace-format]),
+	[OTFINCDIR="-I$withval"],
+	[AS_IF([test x"$OTFDIR" != x], [OTFINCDIR="-I$OTFDIR"include/open-trace-format])])
 
 	AC_ARG_WITH(extern-otf-lib-dir,
 		AC_HELP_STRING([--with-extern-otf-lib-dir=OTFLIBDIR],
 		[give the path for OTF-libraries, default: OTFDIR/lib]),
-	[OTFLIBDIR="-L$withval/"],
-	[AS_IF([test x"$OTFDIR" != x], [OTFLIBDIR="-L$OTFDIR"lib/])])
+	[OTFLIBDIR="-L$withval"],
+	[AS_IF([test x"$OTFDIR" != x], [OTFLIBDIR="-L$OTFDIR"lib])])
 
 	AC_ARG_WITH(otf-lib,
 		AC_HELP_STRING([--with-otf-lib=OTFLIB], [use given otf lib, default: -lopen-trace-format ZLIBLIBDIR ZLIBLIB ZOIDFSLIBDIR ZOIDFSLIB BMILIBDIR BMILIB]),
