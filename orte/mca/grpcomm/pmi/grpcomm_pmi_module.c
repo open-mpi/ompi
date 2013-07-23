@@ -384,6 +384,12 @@ static int modex(orte_grpcomm_collective_t *coll)
     }
     free(rml_uri);
 
+    /* add our hostname */
+    rc = pmi_set_proc_attr(ORTE_DB_HOSTNAME, orte_process_info.nodename, strlen(orte_process_info.nodename));
+    if (ORTE_SUCCESS != rc) {
+	return rc;
+    }
+
 #if OPAL_HAVE_HWLOC
     rc = pmi_set_proc_attr (ORTE_DB_BIND_LEVEL, &orte_process_info.bind_level, sizeof (orte_process_info.bind_level));
     if (ORTE_SUCCESS != rc) {
