@@ -16,14 +16,14 @@ AC_DEFUN([ACVT_CTOOL],
 	AC_ARG_WITH(ctool-inc-dir,
 		AC_HELP_STRING([--with-ctool-inc-dir=CTOOLINCDIR],
 		[give the path for CTool-include files, default: CTOOLDIR/include]),
-	[CTOOLINCDIR="-I$withval/"],
-	[AS_IF([test x"$CTOOLDIR" != x], [CTOOLINCDIR="-I$CTOOLDIR"include/])])
+	[CTOOLINCDIR="-I$withval"],
+	[AS_IF([test x"$CTOOLDIR" != x], [CTOOLINCDIR="-I$CTOOLDIR"include])])
 
 	AC_ARG_WITH(ctool-lib-dir,
 		AC_HELP_STRING([--with-ctool-lib-dir=CTOOLLIBDIR],
 		[give the path for CTool-libraries, default: CTOOLDIR/lib]),
-	[CTOOLLIBDIR="-L$withval/"],
-	[AS_IF([test x"$CTOOLDIR" != x], [CTOOLLIBDIR="-L$CTOOLDIR"lib/])])
+	[CTOOLLIBDIR="-L$withval"],
+	[AS_IF([test x"$CTOOLDIR" != x], [CTOOLLIBDIR="-L$CTOOLDIR"lib])])
 
 	AC_ARG_WITH(ctool-lib,
 		AC_HELP_STRING([--with-ctool-lib=CTOOLLIB], [use given CTool lib, default: -lctool]),

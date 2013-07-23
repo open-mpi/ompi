@@ -22,14 +22,14 @@ AC_DEFUN([ACVT_ZLIB],
 	AC_ARG_WITH(zlib-inc-dir,
 		AC_HELP_STRING([--with-zlib-inc-dir=ZLIBINCDIR],
 		[give the path for ZLIB-include files, default: ZLIBDIR/include]),
-	[ZLIBINCDIR="-I$withval/"],
-	[AS_IF([test x"$ZLIBDIR" != x], [ZLIBINCDIR="-I$ZLIBDIR"include/])])
+	[ZLIBINCDIR="-I$withval"],
+	[AS_IF([test x"$ZLIBDIR" != x], [ZLIBINCDIR="-I$ZLIBDIR"include])])
 
 	AC_ARG_WITH(zlib-lib-dir,
 		AC_HELP_STRING([--with-zlib-lib-dir=ZLIBLIBDIR],
 		[give the path for ZLIB-libraries, default: ZLIBDIR/lib]),
-	[ZLIBLIBDIR="-L$withval/"],
-	[AS_IF([test x"$ZLIBDIR" != x], [ZLIBLIBDIR="-L$ZLIBDIR"lib/])])
+	[ZLIBLIBDIR="-L$withval"],
+	[AS_IF([test x"$ZLIBDIR" != x], [ZLIBLIBDIR="-L$ZLIBDIR"lib])])
 
 	AC_ARG_WITH(zlib-lib,
 		AC_HELP_STRING([--with-zlib-lib=ZLIBLIB], [use given zlib lib, default: -lz]),

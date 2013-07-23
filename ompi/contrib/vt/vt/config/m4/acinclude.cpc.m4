@@ -16,14 +16,14 @@ AC_DEFUN([ACVT_CPC],
 	AC_ARG_WITH(cpc-inc-dir,
 		AC_HELP_STRING([--with-cpc-inc-dir=CPCINCDIR],
 		[give the path for CPC-include files, default: CPCDIR/include]),
-	[CPCINCDIR="-I$withval/"],
-	[AS_IF([test x"$CPCDIR" != x], [CPCINCDIR="-I$CPCDIR"include/])])
+	[CPCINCDIR="-I$withval"],
+	[AS_IF([test x"$CPCDIR" != x], [CPCINCDIR="-I$CPCDIR"include])])
 
 	AC_ARG_WITH(cpc-lib-dir,
 		AC_HELP_STRING([--with-cpc-lib-dir=CPCLIBDIR],
 		[give the path for CPC-libraries, default: CPCDIR/lib]),
-	[CPCLIBDIR="-L$withval/"],
-	[AS_IF([test x"$CPCDIR" != x], [CPCLIBDIR="-L$CPCDIR"lib/])])
+	[CPCLIBDIR="-L$withval"],
+	[AS_IF([test x"$CPCDIR" != x], [CPCLIBDIR="-L$CPCDIR"lib])])
 
 	AC_ARG_WITH(cpc-lib,
 		AC_HELP_STRING([--with-cpc-lib=CPCLIB], [use given cpc lib, default: -lcpc]),
