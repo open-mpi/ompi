@@ -62,7 +62,8 @@ int ompi_mpi_leave_pinned = -1;
 bool ompi_mpi_leave_pinned_pipeline = false;
 bool ompi_have_sparse_group_storage = OPAL_INT_TO_BOOL(OMPI_GROUP_SPARSE);
 bool ompi_use_sparse_group_storage = OPAL_INT_TO_BOOL(OMPI_GROUP_SPARSE);
-bool ompi_mpi_cuda_support = OPAL_INT_TO_BOOL(OMPI_CUDA_SUPPORT);
+bool ompi_mpi_built_with_cuda_support = OPAL_INT_TO_BOOL(OMPI_CUDA_SUPPORT);
+bool ompi_mpi_cuda_support;
 
 bool ompi_mpi_yield_when_idle = true;
 int ompi_mpi_event_tick_rate = -1;
@@ -317,18 +318,27 @@ int ompi_mpi_register_params(void)
         ompi_use_sparse_group_storage = false;
     }
 
-    ompi_mpi_cuda_support = !!(OMPI_CUDA_SUPPORT);
+    (void) mca_base_var_register("ompi", "mpi", NULL, "built_with_cuda_support",
+                                 "Whether CUDA GPU buffer support is built into library or not",
+                                 MCA_BASE_VAR_TYPE_BOOL, NULL, 0,
+                                 MCA_BASE_VAR_FLAG_DEFAULT_ONLY,
+                                 OPAL_INFO_LVL_4,
+                                 MCA_BASE_VAR_SCOPE_CONSTANT,
+                                 &ompi_mpi_built_with_cuda_support);
+
+	/* Current default is to enable CUDA support if it is built into library */
+	ompi_mpi_cuda_support = ompi_mpi_built_with_cuda_support;
+
     (void) mca_base_var_register("ompi", "mpi", NULL, "cuda_support",
                                  "Whether CUDA GPU buffer support is enabled or not",
-                                 MCA_BASE_VAR_TYPE_BOOL, NULL, 0,
-                                 !!(OMPI_CUDA_SUPPORT) ? 0 : MCA_BASE_VAR_FLAG_DEFAULT_ONLY,
-                                 OPAL_INFO_LVL_9,
-                                 !!(OMPI_CUDA_SUPPORT) ? MCA_BASE_VAR_SCOPE_READONLY : MCA_BASE_VAR_SCOPE_CONSTANT,
+                                 MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                 OPAL_INFO_LVL_4,
+                                 MCA_BASE_VAR_SCOPE_LOCAL,
                                  &ompi_mpi_cuda_support);
-    if (ompi_mpi_cuda_support && !(OMPI_CUDA_SUPPORT)) {
+    if (ompi_mpi_cuda_support && !ompi_mpi_built_with_cuda_support) {
         opal_show_help("help-mpi-runtime.txt", "no cuda support",
                        true);
-        ompi_mpi_cuda_support = false;
+        ompi_rte_abort(1, NULL);
     }
 
     return OMPI_SUCCESS;
