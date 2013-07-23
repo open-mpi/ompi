@@ -32,14 +32,14 @@ AC_DEFUN([ACVT_IOFSL],
 	AC_ARG_WITH(zoidfs-inc-dir,
 		AC_HELP_STRING([--with-zoidfs-inc-dir=ZOIDFSINCDIR],
 		[give the path for ZOIDFS-include files, default: ZOIDFSDIR/include]),
-	[ZOIDFSINCDIR="-I$withval/"],
-	[AS_IF([test x"$ZOIDFSDIR" != x], [ZOIDFSINCDIR="-I$ZOIDFSDIR"include/])])
+	[ZOIDFSINCDIR="-I$withval"],
+	[AS_IF([test x"$ZOIDFSDIR" != x], [ZOIDFSINCDIR="-I$ZOIDFSDIR"include])])
 
 	AC_ARG_WITH(zoidfs-lib-dir,
 		AC_HELP_STRING([--with-zoidfs-lib-dir=ZOIDFSLIBDIR],
 		[give the path for ZOIDFS-libraries, default: ZOIDFSDIR/lib]),
-	[ZOIDFSLIBDIR="-L$withval/"],
-	[AS_IF([test x"$ZOIDFSDIR" != x], [ZOIDFSLIBDIR="-L$ZOIDFSDIR"lib/])])
+	[ZOIDFSLIBDIR="-L$withval"],
+	[AS_IF([test x"$ZOIDFSDIR" != x], [ZOIDFSLIBDIR="-L$ZOIDFSDIR"lib])])
 
 	AC_ARG_WITH(zoidfs-lib,
 		AC_HELP_STRING([--with-zoidfs-lib=ZOIDFSLIB], [use given zoidfs lib, default: $zoidfs_lib_default BMILIBDIR BMILIB]),
@@ -52,14 +52,14 @@ AC_DEFUN([ACVT_IOFSL],
 	AC_ARG_WITH(bmi-inc-dir,
 		AC_HELP_STRING([--with-bmi-inc-dir=BMIINCDIR],
 		[give the path for BMI-include files, default: BMIDIR/include]),
-	[BMIINCDIR="-I$withval/"],
-	[AS_IF([test x"$BMIDIR" != x], [BMIINCDIR="-I$BMIDIR"include/])])
+	[BMIINCDIR="-I$withval"],
+	[AS_IF([test x"$BMIDIR" != x], [BMIINCDIR="-I$BMIDIR"include])])
 
 	AC_ARG_WITH(bmi-lib-dir,
 		AC_HELP_STRING([--with-bmi-lib-dir=BMILIBDIR],
 		[give the path for BMI-libraries, default: BMIDIR/lib]),
-	[BMILIBDIR="-L$withval/"],
-	[AS_IF([test x"$BMIDIR" != x], [BMILIBDIR="-L$BMIDIR"lib/])])
+	[BMILIBDIR="-L$withval"],
+	[AS_IF([test x"$BMIDIR" != x], [BMILIBDIR="-L$BMIDIR"lib])])
 
 	AC_ARG_WITH(bmi-lib,
 		AC_HELP_STRING([--with-bmi-lib=BMILIB], [use given bmi lib, default: $bmi_lib_default]),

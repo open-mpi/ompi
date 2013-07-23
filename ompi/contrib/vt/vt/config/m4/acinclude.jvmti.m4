@@ -17,8 +17,8 @@ AC_DEFUN([ACVT_JVMTI],
 	AC_ARG_WITH(jvmti-inc-dir,
 		AC_HELP_STRING([--with-jvmti-inc-dir=JVMTIINCDIR],
 		[give the path for JVMTI-include files, default: JVMTI/include]),
-	[JVMTIINCDIR="-I$withval/"],
-	[AS_IF([test x"$JVMTIDIR" != x], [JVMTIINCDIR="-I$JVMTIDIR"include/])])
+	[JVMTIINCDIR="-I$withval"],
+	[AS_IF([test x"$JVMTIDIR" != x], [JVMTIINCDIR="-I$JVMTIDIR"include])])
 
 	extra_inc_dir=
 	case $PLATFORM in
@@ -32,8 +32,8 @@ AC_DEFUN([ACVT_JVMTI],
 	AS_IF([test x"$extra_inc_dir" != x],
 	[
 		AS_IF([test x"$JVMTIINCDIR" != x],
-		[JVMTIINCDIR="$JVMTIINCDIR $JVMTIINCDIR$extra_inc_dir/"],
-		[JVMTIINCDIR="-I/usr/include/$extra_inc_dir/"])
+		[JVMTIINCDIR="$JVMTIINCDIR $JVMTIINCDIR/$extra_inc_dir"],
+		[JVMTIINCDIR="-I/usr/include/$extra_inc_dir"])
 	])
 
 	sav_CPPFLAGS=$CPPFLAGS

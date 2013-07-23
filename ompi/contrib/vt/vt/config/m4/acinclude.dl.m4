@@ -20,14 +20,14 @@ AC_DEFUN([ACVT_DL],
 	AC_ARG_WITH(dl-inc-dir,
 		AC_HELP_STRING([--with-dl-inc-dir=DLINCDIR],
 		[give the path for libdl-include files, default: DLDIR/include]),
-	[DLINCDIR="-I$withval/"],
-	[AS_IF([test x"$DLDIR" != x], [DLINCDIR="-I$DLDIR"include/])])
+	[DLINCDIR="-I$withval"],
+	[AS_IF([test x"$DLDIR" != x], [DLINCDIR="-I$DLDIR"include])])
 
 	AC_ARG_WITH(dl-lib-dir,
 		AC_HELP_STRING([--with-dl-lib-dir=DLLIBDIR],
 		[give the path for libdl-libraries, default: DLDIR/lib]),
-	[DLLIBDIR="-L$withval/"],
-	[AS_IF([test x"$DLDIR" != x], [DLLIBDIR="-L$DLDIR"lib/])])
+	[DLLIBDIR="-L$withval"],
+	[AS_IF([test x"$DLDIR" != x], [DLLIBDIR="-L$DLDIR"lib])])
 
 	AC_ARG_WITH(dl-lib,
 		AC_HELP_STRING([--with-dl-lib=DLLIB], [use given libdl lib, default: -ldl]),
