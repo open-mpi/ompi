@@ -5275,6 +5275,31 @@ end MPI_Get_elements
 
 #------------------------------------------------------------------------
 
+output_125_x() {
+    if test "$output" = "0"; then
+        return 0
+    fi
+
+    procedure=$1
+    cat <<EOF
+
+subroutine ${procedure}(status, datatype, count, ierror)
+  include 'mpif-config.h'
+  integer, dimension(MPI_STATUS_SIZE), intent(in) :: status
+  integer, intent(in) :: datatype
+  integer(kind=MPI_COUNT_KIND), intent(out) :: count
+  integer, intent(out) :: ierror
+end subroutine ${procedure}
+
+EOF
+}
+
+start MPI_Get_elements_x small
+output_125_x MPI_Get_elements_x
+end MPI_Get_elements_x
+
+#------------------------------------------------------------------------
+
 output_126() {
     if test "$output" = "0"; then
         return 0
@@ -9183,6 +9208,31 @@ end MPI_Type_get_extent
 
 #------------------------------------------------------------------------
 
+output_231_x() {
+    if test "$output" = "0"; then
+        return 0
+    fi
+
+    procedure=$1
+    cat <<EOF
+
+subroutine ${procedure}(type, lb, extent, ierror)
+  include 'mpif-config.h'
+  integer, intent(in) :: type
+  integer(kind=MPI_COUNT_KIND), intent(out) :: lb
+  integer(kind=MPI_COUNT_KIND), intent(out) :: extent
+  integer, intent(out) :: ierror
+end subroutine ${procedure}
+
+EOF
+}
+
+start MPI_Type_get_extent_x small
+output_231_x MPI_Type_get_extent_x
+end MPI_Type_get_extent_x
+
+#------------------------------------------------------------------------
+
 output_232() {
     if test "$output" = "0"; then
         return 0
@@ -9229,6 +9279,31 @@ EOF
 start MPI_Type_get_true_extent small
 output_233 MPI_Type_get_true_extent
 end MPI_Type_get_true_extent
+
+#------------------------------------------------------------------------
+
+output_233_x() {
+    if test "$output" = "0"; then
+        return 0
+    fi
+
+    procedure=$1
+    cat <<EOF
+
+subroutine ${procedure}(datatype, true_lb, true_extent, ierror)
+  include 'mpif-config.h'
+  integer, intent(in) :: datatype
+  integer(kind=MPI_COUNT_KIND), intent(out) :: true_lb
+  integer(kind=MPI_COUNT_KIND), intent(out) :: true_extent
+  integer, intent(out) :: ierror
+end subroutine ${procedure}
+
+EOF
+}
+
+start MPI_Type_get_true_extent_x small
+output_233_x MPI_Type_get_true_extent_x
+end MPI_Type_get_true_extent_x
 
 #------------------------------------------------------------------------
 
@@ -9428,6 +9503,30 @@ EOF
 start MPI_Type_size small
 output_241 MPI_Type_size
 end MPI_Type_size
+
+#------------------------------------------------------------------------
+
+output_241_x() {
+    if test "$output" = "0"; then
+        return 0
+    fi
+
+    procedure=$1
+    cat <<EOF
+
+subroutine ${procedure}(type, size, ierror)
+  include 'mpif-config.h'
+  integer, intent(in) :: type
+  integer(kind=MPI_COUNT_KIND), intent(out) :: size
+  integer, intent(out) :: ierror
+end subroutine ${procedure}
+
+EOF
+}
+
+start MPI_Type_size_x small
+output_241_x MPI_Type_size_x
+end MPI_Type_size_x
 
 #------------------------------------------------------------------------
 
