@@ -185,6 +185,15 @@ int ompi_op_init(void)
     ompi_op_ddt_map[OMPI_DATATYPE_MPI_C_DOUBLE_COMPLEX] = OMPI_OP_BASE_TYPE_COMPLEX16;
     ompi_op_ddt_map[OMPI_DATATYPE_MPI_C_LONG_DOUBLE_COMPLEX] = OMPI_OP_BASE_TYPE_COMPLEX32;
 
+    /* MPI 3.0 datatypes */
+#if OMPI_MPI_COUNT_SIZE == 4
+    ompi_op_ddt_map[OMPI_DATATYPE_MPI_COUNT] = OMPI_OP_BASE_TYPE_INT32_T;
+#elif OMPI_MPI_COUNT_SIZE == 8
+    ompi_op_ddt_map[OMPI_DATATYPE_MPI_COUNT] = OMPI_OP_BASE_TYPE_INT64_T;
+#else
+#warning Unsupported definition for MPI_COUNT
+#endif
+
     /* Create the intrinsic ops */
 
     if (OMPI_SUCCESS != 

@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -9,13 +10,15 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
  * 
  * $HEADER$
  */
+
 #include "ompi_config.h"
 #include <stdio.h>
 #include <limits.h>
@@ -28,20 +31,19 @@
 #include "ompi/memchecker.h"
 
 #if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
-#pragma weak MPI_Get_count = PMPI_Get_count
+#pragma weak MPI_Get_elements_x = PMPI_Get_elements_x
 #endif
 
 #if OMPI_PROFILING_DEFINES
 #include "ompi/mpi/c/profile/defines.h"
 #endif
 
-static const char FUNC_NAME[] = "MPI_Get_count";
+static const char FUNC_NAME[] = "MPI_Get_elements_x";
 
-
-int MPI_Get_count(MPI_Status *status, MPI_Datatype datatype, int *count) 
+int MPI_Get_elements_x(MPI_Status *status, MPI_Datatype datatype, MPI_Count *count)
 {
-    size_t size = 0, internal_count;
-    int rc      = MPI_SUCCESS;
+    size_t internal_count;
+    int ret;
 
     OPAL_CR_NOOP_PROGRESS();
 
@@ -58,24 +60,32 @@ int MPI_Get_count(MPI_Status *status, MPI_Datatype datatype, int *count)
                );
 
     if (MPI_PARAM_CHECK) {
+        int err = MPI_SUCCESS;
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-        OMPI_CHECK_DATATYPE_FOR_RECV(rc, datatype, 1);
-
-        OMPI_ERRHANDLER_CHECK(rc, MPI_COMM_WORLD, rc, FUNC_NAME);
-    }
-
-    if( ompi_datatype_type_size( datatype, &size ) == MPI_SUCCESS ) {
-        if( size == 0 ) {
-            *count = 0;
+        if (NULL == status || MPI_STATUSES_IGNORE == status || 
+            MPI_STATUS_IGNORE == status || NULL == count) {
+            err = MPI_ERR_ARG;
+        } else if (NULL == datatype || MPI_DATATYPE_NULL == datatype) {
+            err = MPI_ERR_TYPE;
         } else {
-            internal_count = status->_ucount / size; /* count the number of complete datatypes */
-            if( (internal_count * size) != status->_ucount ||
-                internal_count > ((size_t) INT_MAX) ) {
-                *count = MPI_UNDEFINED;
-            } else {
-                *count = (int)internal_count;
-            }
+            OMPI_CHECK_DATATYPE_FOR_RECV(err, datatype, 1);
         }
+        OMPI_ERRHANDLER_CHECK(err, MPI_COMM_WORLD, err, FUNC_NAME);
     }
-    return MPI_SUCCESS;
+
+    ret = ompi_datatype_get_elements (datatype, status->_ucount, &internal_count);
+    if (OMPI_SUCCESS == ret || OMPI_ERR_VALUE_OUT_OF_BOUNDS == ret) {
+        if (OMPI_SUCCESS == ret && internal_count <= (size_t) SSIZE_MAX) {
+            *count = internal_count;
+        } else {
+            /* If we have more elements that we can represent with an MPI_Count then we must
+             * set count to MPI_UNDEFINED (MPI 3.0).
+             */
+            *count = MPI_UNDEFINED;
+        }
+
+        return MPI_SUCCESS;
+    }
+
+    return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, FUNC_NAME);
 }

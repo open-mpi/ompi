@@ -156,6 +156,7 @@ libmpi_c_mpi_la_SOURCES = \
         get_address.c \
         get_count.c \
         get_elements.c \
+        get_elements_x.c \
         get_library_version.c \
         get_processor_name.c \
         get_version.c \
@@ -260,6 +261,7 @@ libmpi_c_mpi_la_SOURCES = \
         status_f2c.c \
         status_set_cancelled.c \
         status_set_elements.c \
+        status_set_elements_x.c \
         testall.c \
         testany.c \
         test.c \
@@ -291,8 +293,10 @@ libmpi_c_mpi_la_SOURCES = \
         type_get_contents.c \
         type_get_envelope.c \
         type_get_extent.c \
+        type_get_extent_x.c \
         type_get_name.c \
         type_get_true_extent.c \
+        type_get_true_extent_x.c \
         type_hindexed.c \
         type_hvector.c \
         type_indexed.c \
@@ -301,6 +305,7 @@ libmpi_c_mpi_la_SOURCES = \
         type_set_attr.c \
         type_set_name.c \
         type_size.c \
+        type_size_x.c \
         type_struct.c \
         type_ub.c \
         type_vector.c \

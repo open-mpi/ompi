@@ -89,10 +89,24 @@
 
 #define OMPI_DATATYPE_MPI_LB                      0x2C
 #define OMPI_DATATYPE_MPI_UB                      0x2D
+
+/*
+ * Datatypes from the MPI 3.0 standard
+ */
+#define OMPI_DATATYPE_MPI_COUNT                   0x2E
+
 /* This should __ALWAYS__ stay last  */
-#define OMPI_DATATYPE_MPI_UNAVAILABLE             0x2E
+#define OMPI_DATATYPE_MPI_UNAVAILABLE             0x2F
+
 
 #define OMPI_DATATYPE_MPI_MAX_PREDEFINED          (OMPI_DATATYPE_MPI_UNAVAILABLE+1)
+
+/*
+ * Ensure we can support the predefined datatypes.
+ */
+#if OMPI_DATATYPE_MAX_PREDEFINED < OMPI_DATATYPE_MPI_UNAVAILABLE
+#error OMPI_DATATYPE_MAX_PREDEFINED should be updated to the value of OMPI_DATATYPE_MPI_UNAVAILABLE
+#endif
 
 /*
  * Mapped types. The following types have basic equivalents in OPAL. Instead

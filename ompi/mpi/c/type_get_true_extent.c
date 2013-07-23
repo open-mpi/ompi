@@ -9,6 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -35,9 +37,8 @@
 
 static const char FUNC_NAME[] = "MPI_Type_get_true_extent";
 
-
 int MPI_Type_get_true_extent(MPI_Datatype datatype,
-                             MPI_Aint *true_lb, 
+                             MPI_Aint *true_lb,
                              MPI_Aint *true_extent)
 {
    int rc;

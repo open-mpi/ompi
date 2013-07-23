@@ -56,7 +56,7 @@ BEGIN_C_DECLS
  *
  * XXX TODO Adapt to whatever the OMPI-layer needs
  */
-#define OPAL_DATATYPE_MAX_SUPPORTED  46
+#define OPAL_DATATYPE_MAX_SUPPORTED  47
 
 
 /* flags for the datatypes. */
@@ -113,11 +113,11 @@ struct opal_datatype_t {
     OPAL_PTRDIFF_TYPE  ub;       /**< upper bound in memory */
     /* --- cacheline 1 boundary (64 bytes) --- */
     uint32_t           align;    /**< data should be aligned to */
-    uint32_t           nbElems;  /**< total number of elements inside the datatype */
+    size_t             nbElems;  /**< total number of elements inside the datatype */
 
     /* Attribute fields */
     char               name[OPAL_MAX_OBJECT_NAME];  /**< name of the datatype */
-    /* --- cacheline 2 boundary (128 bytes) was 8 bytes ago --- */
+    /* --- cacheline 2 boundary (128 bytes) was 8-12 bytes ago --- */
     dt_type_desc_t     desc;     /**< the data description */
     dt_type_desc_t     opt_desc; /**< short description of the data used when conversion is useless
                                       or in the send case (without conversion) */
@@ -127,10 +127,10 @@ struct opal_datatype_t {
                                       datatype for remote nodes. The length of the array is dependent on
                                       the maximum number of datatypes of all top layers.
                                       Reason being is that Fortran is not at the OPAL layer. */
-    /* --- cacheline 5 boundary (320 bytes) was 32 bytes ago --- */
+    /* --- cacheline 5 boundary (320 bytes) was 32-36 bytes ago --- */
 
     /* size: 352, cachelines: 6, members: 15 */
-    /* last cacheline: 32 bytes */
+    /* last cacheline: 28-32 bytes */
 };
 
 typedef struct opal_datatype_t opal_datatype_t;
@@ -272,10 +272,10 @@ opal_datatype_get_true_extent( const opal_datatype_t* pData, OPAL_PTRDIFF_TYPE* 
     return 0;
 }
 
-OPAL_DECLSPEC int32_t
+OPAL_DECLSPEC ssize_t
 opal_datatype_get_element_count( const opal_datatype_t* pData, size_t iSize );
 OPAL_DECLSPEC int32_t
-opal_datatype_set_element_count( const opal_datatype_t* pData, uint32_t count, size_t* length );
+opal_datatype_set_element_count( const opal_datatype_t* pData, size_t count, size_t* length );
 OPAL_DECLSPEC int32_t
 opal_datatype_copy_content_same_ddt( const opal_datatype_t* pData, int32_t count,
                                      char* pDestBuf, char* pSrcBuf );
