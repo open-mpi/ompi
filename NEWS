@@ -214,6 +214,17 @@ Trunk (not on release branches yet)
   for chasing it down.
 
 
+1.6.6 (unreleased)
+------------------
+
+- Update VT to 5.14.4.3:
+  - Fix support for building RPMs on Fedora with CUDA libraries.
+- Add openib part number for ConnectX3-Pro HCA.
+- Ensure to check that all resolved IP addresses are local.
+- Fix MPI_COMM_SPAWN via rsh when mpirun is on a different server.
+- Add Gentoo "sandbox" memory hooks override.
+
+
 1.6.5
 -----
 
