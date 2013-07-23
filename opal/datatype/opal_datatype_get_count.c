@@ -28,11 +28,11 @@
  *   positive = number of basic elements inside
  *   negative = some error occurs
  */
-int32_t opal_datatype_get_element_count( const opal_datatype_t* datatype, size_t iSize )
+ssize_t opal_datatype_get_element_count( const opal_datatype_t* datatype, size_t iSize )
 {
     dt_stack_t* pStack;   /* pointer to the position on the stack */
     uint32_t pos_desc;    /* actual position in the description of the derived datatype */
-    int32_t nbElems = 0, stack_pos = 0;
+    ssize_t nbElems = 0, stack_pos = 0;
     size_t local_size;
     dt_elem_desc_t* pElems;
 
@@ -82,12 +82,12 @@ int32_t opal_datatype_get_element_count( const opal_datatype_t* datatype, size_t
     }
 }
 
-int32_t opal_datatype_set_element_count( const opal_datatype_t* datatype, uint32_t count, size_t* length )
+int32_t opal_datatype_set_element_count( const opal_datatype_t* datatype, size_t count, size_t* length )
 {
     dt_stack_t* pStack;   /* pointer to the position on the stack */
-    uint32_t pos_desc;    /* actual position in the description of the derived datatype */
+    size_t pos_desc;    /* actual position in the description of the derived datatype */
     int32_t stack_pos = 0;
-    uint32_t local_length = 0;
+    size_t local_length = 0;
     dt_elem_desc_t* pElems;
 
     /**

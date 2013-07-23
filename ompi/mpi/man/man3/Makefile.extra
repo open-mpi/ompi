@@ -150,6 +150,7 @@ mpi_api_man_pages = \
         mpi/man/man3/MPI_Get_address.3 \
         mpi/man/man3/MPI_Get_count.3 \
         mpi/man/man3/MPI_Get_elements.3 \
+        mpi/man/man3/MPI_Get_elements_x.3 \
         mpi/man/man3/MPI_Get_library_version.3 \
         mpi/man/man3/MPI_Get_processor_name.3 \
         mpi/man/man3/MPI_Get_version.3 \
@@ -248,6 +249,7 @@ mpi_api_man_pages = \
         mpi/man/man3/MPI_Status_f2c.3 \
         mpi/man/man3/MPI_Status_set_cancelled.3 \
         mpi/man/man3/MPI_Status_set_elements.3 \
+        mpi/man/man3/MPI_Status_set_elements_x.3 \
         mpi/man/man3/MPI_Test.3 \
         mpi/man/man3/MPI_Testall.3 \
         mpi/man/man3/MPI_Testany.3 \
@@ -278,8 +280,10 @@ mpi_api_man_pages = \
         mpi/man/man3/MPI_Type_get_contents.3 \
         mpi/man/man3/MPI_Type_get_envelope.3 \
         mpi/man/man3/MPI_Type_get_extent.3 \
+        mpi/man/man3/MPI_Type_get_extent_x.3 \
         mpi/man/man3/MPI_Type_get_name.3 \
         mpi/man/man3/MPI_Type_get_true_extent.3 \
+        mpi/man/man3/MPI_Type_get_true_extent_x.3 \
         mpi/man/man3/MPI_Type_hindexed.3 \
         mpi/man/man3/MPI_Type_hvector.3 \
         mpi/man/man3/MPI_Type_indexed.3 \
@@ -288,6 +292,7 @@ mpi_api_man_pages = \
         mpi/man/man3/MPI_Type_set_attr.3 \
         mpi/man/man3/MPI_Type_set_name.3 \
         mpi/man/man3/MPI_Type_size.3 \
+        mpi/man/man3/MPI_Type_size_x.3 \
         mpi/man/man3/MPI_Type_struct.3 \
         mpi/man/man3/MPI_Type_ub.3 \
         mpi/man/man3/MPI_Type_vector.3 \

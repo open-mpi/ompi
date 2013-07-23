@@ -59,7 +59,7 @@ BEGIN_C_DECLS
 #define OMPI_DATATYPE_FLAG_DATA_FORTRAN  0xC000
 #define OMPI_DATATYPE_FLAG_DATA_LANGUAGE 0xC000
 
-#define OMPI_DATATYPE_MAX_PREDEFINED 45
+#define OMPI_DATATYPE_MAX_PREDEFINED 47
 
 #if OMPI_DATATYPE_MAX_PREDEFINED > OPAL_DATATYPE_MAX_SUPPORTED
 #error Need to increase the number of supported dataypes by OPAL (value OPAL_DATATYPE_MAX_SUPPORTED).
@@ -272,14 +272,14 @@ ompi_datatype_get_true_extent( const ompi_datatype_t* type, OPAL_PTRDIFF_TYPE* t
     return opal_datatype_get_true_extent( &type->super, true_lb, true_extent);
 }
 
-static inline int32_t
+static inline ssize_t
 ompi_datatype_get_element_count( const ompi_datatype_t* type, size_t iSize )
 {
     return opal_datatype_get_element_count( &type->super, iSize );
 }
 
 static inline int32_t
-ompi_datatype_set_element_count( const ompi_datatype_t* type, uint32_t count, size_t* length )
+ompi_datatype_set_element_count( const ompi_datatype_t* type, size_t count, size_t* length )
 {
     return opal_datatype_set_element_count( &type->super, count, length );
 }
@@ -365,6 +365,16 @@ ompi_datatype_create_from_packed_description( void** packed_buffer,
  * Auxiliary function providing a pretty print for the packed data description.
  */
 OMPI_DECLSPEC int32_t ompi_datatype_print_args( const ompi_datatype_t* pData );
+
+
+/**
+ * Get the number of basic elements of the datatype in ucount
+ *
+ * @returns OMPI_SUCCESS if the count is valid
+ * @returns OMPI_ERR_VALUE_OUT_OF_BOUNDS if no
+ */
+OMPI_DECLSPEC int ompi_datatype_get_elements (ompi_datatype_t *datatype, size_t ucount,
+                                              size_t *count);
 
 #if OPAL_ENABLE_DEBUG
 /*

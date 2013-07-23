@@ -13,7 +13,7 @@
  * Copyright (c) 2008-2009 Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2009-2012 Oak Rigde National Laboratory.  All rights reserved.
  * Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
- * Copyright (c) 2012      Los Alamos Nat Security, LLC. All rights reserved.
+ * Copyright (c) 2012-2013 Los Alamos Nat Security, LLC. All rights reserved.
  * Copyright (c) 2011-2013 INRIA.  All rights reserved.
  * $COPYRIGHT$
  *
@@ -145,6 +145,12 @@
 
 /* Size of the MPI_Offset corresponding type */
 #undef OMPI_MPI_OFFSET_SIZE
+
+/* Type of MPI_Count */
+#undef OMPI_MPI_COUNT_TYPE
+
+/* Size of MPI_Count */
+#undef OMPI_MPI_COUNT_SIZE
 
 /* type to use for ptrdiff_t, if it does not exist, set to ptrdiff_t if it does exist */
 #undef OPAL_PTRDIFF_TYPE
@@ -316,6 +322,7 @@ extern "C" {
 
 typedef OPAL_PTRDIFF_TYPE MPI_Aint;
 typedef OMPI_MPI_OFFSET_TYPE MPI_Offset;
+typedef OMPI_MPI_COUNT_TYPE MPI_Count;
 typedef struct ompi_communicator_t *MPI_Comm;
 typedef struct ompi_datatype_t *MPI_Datatype;
 typedef struct ompi_errhandler_t *MPI_Errhandler;
@@ -968,6 +975,7 @@ OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_int64_t;
 OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_uint64_t;
 OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_aint;
 OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_offset;
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_count;
 OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_c_bool;
 OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_c_complex;
 OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_c_float_complex;
@@ -1128,6 +1136,9 @@ OMPI_DECLSPEC extern MPI_Fint *MPI_F_STATUSES_IGNORE;
 #define MPI_CXX_FLOAT_COMPLEX     OMPI_PREDEFINED_GLOBAL(MPI_Datatype, ompi_mpi_cxx_cplex)
 #define MPI_CXX_DOUBLE_COMPLEX    OMPI_PREDEFINED_GLOBAL(MPI_Datatype, ompi_mpi_cxx_dblcplex)
 #define MPI_CXX_LONG_DOUBLE_COMPLEX OMPI_PREDEFINED_GLOBAL(MPI_Datatype, ompi_mpi_cxx_ldblcplex)
+
+/* New datatypes from the 3.0 standard */
+#define MPI_COUNT                 OMPI_PREDEFINED_GLOBAL(MPI_Datatype, ompi_mpi_count)
 
 #define MPI_ERRORS_ARE_FATAL OMPI_PREDEFINED_GLOBAL(MPI_Errhandler, ompi_mpi_errors_are_fatal)
 #define MPI_ERRORS_RETURN OMPI_PREDEFINED_GLOBAL(MPI_Errhandler, ompi_mpi_errors_return)
@@ -1409,6 +1420,7 @@ OMPI_DECLSPEC  int MPI_Igatherv(void *sendbuf, int sendcount, MPI_Datatype sendt
 OMPI_DECLSPEC  int MPI_Get_address(void *location, MPI_Aint *address);
 OMPI_DECLSPEC  int MPI_Get_count(MPI_Status *status, MPI_Datatype datatype, int *count);
 OMPI_DECLSPEC  int MPI_Get_elements(MPI_Status *status, MPI_Datatype datatype, int *count);
+OMPI_DECLSPEC  int MPI_Get_elements_x(MPI_Status *status, MPI_Datatype datatype, MPI_Count *count);
 OMPI_DECLSPEC  int MPI_Get(void *origin_addr, int origin_count,
                            MPI_Datatype origin_datatype, int target_rank,
                            MPI_Aint target_disp, int target_count,
@@ -1603,6 +1615,8 @@ OMPI_DECLSPEC  int MPI_Status_f2c(MPI_Fint *f_status, MPI_Status *c_status);
 OMPI_DECLSPEC  int MPI_Status_set_cancelled(MPI_Status *status, int flag);
 OMPI_DECLSPEC  int MPI_Status_set_elements(MPI_Status *status, MPI_Datatype datatype,
                                            int count);
+OMPI_DECLSPEC  int MPI_Status_set_elements_x(MPI_Status *status, MPI_Datatype datatype,
+                                             MPI_Count count);
 OMPI_DECLSPEC  int MPI_Testall(int count, MPI_Request array_of_requests[], int *flag,
                                MPI_Status array_of_statuses[]);
 OMPI_DECLSPEC  int MPI_Testany(int count, MPI_Request array_of_requests[], int *index,
@@ -1671,10 +1685,14 @@ OMPI_DECLSPEC  int MPI_Type_get_envelope(MPI_Datatype type, int *num_integers,
                                          int *combiner);
 OMPI_DECLSPEC  int MPI_Type_get_extent(MPI_Datatype type, MPI_Aint *lb,
                                        MPI_Aint *extent);
+OMPI_DECLSPEC  int MPI_Type_get_extent_x(MPI_Datatype type, MPI_Count *lb,
+                                         MPI_Count *extent);
 OMPI_DECLSPEC  int MPI_Type_get_name(MPI_Datatype type, char *type_name,
                                      int *resultlen);
 OMPI_DECLSPEC  int MPI_Type_get_true_extent(MPI_Datatype datatype, MPI_Aint *true_lb,
                                             MPI_Aint *true_extent);
+OMPI_DECLSPEC  int MPI_Type_get_true_extent_x(MPI_Datatype datatype, MPI_Count *true_lb,
+                                              MPI_Count *true_extent);
 OMPI_DECLSPEC  int MPI_Type_hindexed(int count, int array_of_blocklengths[],
                                      MPI_Aint array_of_displacements[],
                                      MPI_Datatype oldtype, MPI_Datatype *newtype)
@@ -1692,6 +1710,7 @@ OMPI_DECLSPEC  int MPI_Type_set_attr(MPI_Datatype type, int type_keyval,
                                      void *attr_val);
 OMPI_DECLSPEC  int MPI_Type_set_name(MPI_Datatype type, char *type_name);
 OMPI_DECLSPEC  int MPI_Type_size(MPI_Datatype type, int *size);
+OMPI_DECLSPEC  int MPI_Type_size_x(MPI_Datatype type, MPI_Count *size);
 OMPI_DECLSPEC  int MPI_Type_struct(int count, int array_of_blocklengths[],
                                    MPI_Aint array_of_displacements[],
                                    MPI_Datatype array_of_types[],
@@ -2020,6 +2039,8 @@ OMPI_DECLSPEC  int PMPI_Get_address(void *location, MPI_Aint *address);
 OMPI_DECLSPEC  int PMPI_Get_count(MPI_Status *status, MPI_Datatype datatype, int *count);
 OMPI_DECLSPEC  int PMPI_Get_elements(MPI_Status *status, MPI_Datatype datatype,
                                      int *count);
+OMPI_DECLSPEC  int PMPI_Get_elements_x(MPI_Status *status, MPI_Datatype datatype,
+                                       MPI_Count *count);
 OMPI_DECLSPEC  int PMPI_Get(void *origin_addr, int origin_count,
                             MPI_Datatype origin_datatype, int target_rank,
                             MPI_Aint target_disp, int target_count,
@@ -2214,6 +2235,8 @@ OMPI_DECLSPEC  int PMPI_Status_f2c(MPI_Fint *f_status, MPI_Status *c_status);
 OMPI_DECLSPEC  int PMPI_Status_set_cancelled(MPI_Status *status, int flag);
 OMPI_DECLSPEC  int PMPI_Status_set_elements(MPI_Status *status, MPI_Datatype datatype,
                                             int count);
+OMPI_DECLSPEC  int PMPI_Status_set_elements_x(MPI_Status *status, MPI_Datatype datatype,
+                                              MPI_Count count);
 OMPI_DECLSPEC  int PMPI_Testall(int count, MPI_Request array_of_requests[], int *flag,
                                 MPI_Status array_of_statuses[]);
 OMPI_DECLSPEC  int PMPI_Testany(int count, MPI_Request array_of_requests[], int *index, int *flag, MPI_Status *status);
@@ -2281,10 +2304,14 @@ OMPI_DECLSPEC  int PMPI_Type_get_envelope(MPI_Datatype type, int *num_integers,
                                           int *combiner);
 OMPI_DECLSPEC  int PMPI_Type_get_extent(MPI_Datatype type, MPI_Aint *lb,
                                         MPI_Aint *extent);
+OMPI_DECLSPEC  int PMPI_Type_get_extent_x(MPI_Datatype type, MPI_Count *lb,
+                                          MPI_Count *extent);
 OMPI_DECLSPEC  int PMPI_Type_get_name(MPI_Datatype type, char *type_name,
                                       int *resultlen);
 OMPI_DECLSPEC  int PMPI_Type_get_true_extent(MPI_Datatype datatype, MPI_Aint *true_lb,
                                              MPI_Aint *true_extent);
+OMPI_DECLSPEC  int PMPI_Type_get_true_extent_x(MPI_Datatype datatype, MPI_Count *true_lb,
+                                               MPI_Count *true_extent);
 OMPI_DECLSPEC  int PMPI_Type_hindexed(int count, int array_of_blocklengths[],
                                       MPI_Aint array_of_displacements[],
                                       MPI_Datatype oldtype, MPI_Datatype *newtype)
@@ -2302,6 +2329,7 @@ OMPI_DECLSPEC  int PMPI_Type_set_attr(MPI_Datatype type, int type_keyval,
                                       void *attr_val);
 OMPI_DECLSPEC  int PMPI_Type_set_name(MPI_Datatype type, char *type_name);
 OMPI_DECLSPEC  int PMPI_Type_size(MPI_Datatype type, int *size);
+OMPI_DECLSPEC  int PMPI_Type_size_x(MPI_Datatype type, MPI_Count *size);
 OMPI_DECLSPEC  int PMPI_Type_struct(int count, int array_of_blocklengths[],
                                     MPI_Aint array_of_displacements[],
                                     MPI_Datatype array_of_types[],
