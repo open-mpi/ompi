@@ -978,6 +978,7 @@ int opal_ifaddrtoname(const char* if_addr, char* if_name, int length)
 #else 
     unsigned long inaddr;
 #endif
+    int i;
     struct hostent *h;
 #endif
 
@@ -1036,22 +1037,20 @@ int opal_ifaddrtoname(const char* if_addr, char* if_name, int length)
         freeaddrinfo (res);
     }
 #else
-    inaddr = inet_addr(if_addr);
-
-    if (INADDR_NONE == inaddr) {
-        h = gethostbyname(if_addr);
-        if (0 == h) {
-            return OPAL_ERR_NOT_FOUND;
-        }
-        memcpy(&inaddr, h->h_addr, sizeof(inaddr));
+    h = gethostbyname(if_addr);
+    if (0 == h) {
+        return OPAL_ERR_NOT_FOUND;
     }
 
-    for (intf =  (opal_if_t*)opal_list_get_first(&opal_if_list);
-        intf != (opal_if_t*)opal_list_get_end(&opal_if_list);
-        intf =  (opal_if_t*)opal_list_get_next(intf)) {
-        if (((struct sockaddr_in*) &intf->if_addr)->sin_addr.s_addr == inaddr) {
-            strncpy(if_name, intf->if_name, length);
-            return OPAL_SUCCESS;
+    for (i=0; NULL != h->h_addr_list[i]; i++) {
+        memcpy(&inaddr, h->h_addr_list[i], sizeof(inaddr));
+        for (intf =  (opal_if_t*)opal_list_get_first(&opal_if_list);
+             intf != (opal_if_t*)opal_list_get_end(&opal_if_list);
+             intf =  (opal_if_t*)opal_list_get_next(intf)) {
+            if (((struct sockaddr_in*) &intf->if_addr)->sin_addr.s_addr == inaddr) {
+                strncpy(if_name, intf->if_name, length);
+                return OPAL_SUCCESS;
+            }
         }
     }
 #endif
