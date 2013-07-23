@@ -651,8 +651,12 @@ static int modex(orte_grpcomm_collective_t *coll)
                 continue;
             }
             if (ORTE_SUCCESS != (rc = pmi_get_proc_attr(name, kv->key, &tmp_val, &len))) {
-                ORTE_ERROR_LOG(rc);
-                return rc;
+                /* this just means that we pushed something into the cloud, but this proc
+                 * did not. We can't know if this was an error or not, so we'll just
+                 * motor on for now - if someone tries to access the data, they'll get
+                 * a NOT_FOUND error and can decide what to do about it
+                 */
+                continue;
             }
             OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_framework.framework_output,
                                  "%s grpcomm:pmi: got modex value for proc %s key %s[%s] len %d",
