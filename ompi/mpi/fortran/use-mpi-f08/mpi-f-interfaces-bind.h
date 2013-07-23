@@ -410,6 +410,16 @@ subroutine ompi_get_elements_f(status,datatype,count,ierror) &
    INTEGER, INTENT(OUT) :: ierror
 end subroutine ompi_get_elements_f
 
+subroutine ompi_get_elements_x_f(status,datatype,count,ierror) &
+   BIND(C, name="ompi_get_elements_x_f")
+   use :: mpi_f08_types, only : MPI_Status, MPI_COUNT_KIND
+   implicit none
+   TYPE(MPI_Status), INTENT(IN) :: status
+   INTEGER, INTENT(IN) :: datatype
+   INTEGER(MPI_COUNT_KIND), INTENT(OUT) :: count
+   INTEGER, INTENT(OUT) :: ierror
+end subroutine ompi_get_elements_x_f
+
 subroutine ompi_pack_f(inbuf,incount,datatype,outbuf,outsize, &
                        position,comm,ierror) &
    BIND(C, name="ompi_pack_f")
@@ -618,6 +628,15 @@ subroutine ompi_type_get_extent_f(datatype,lb,extent,ierror) &
    INTEGER, INTENT(OUT) :: ierror
 end subroutine ompi_type_get_extent_f
 
+subroutine ompi_type_get_extent_x_f(datatype,lb,extent,ierror) &
+   BIND(C, name="ompi_type_get_extent_x_f")
+   use :: mpi_f08_types, only : MPI_COUNT_KIND
+   implicit none
+   INTEGER, INTENT(IN) :: datatype
+   INTEGER(MPI_COUNT_KIND), INTENT(OUT) :: lb, extent
+   INTEGER, INTENT(OUT) :: ierror
+end subroutine ompi_type_get_extent_x_f
+
 subroutine ompi_type_get_true_extent_f(datatype,true_lb,true_extent,ierror) &
    BIND(C, name="ompi_type_get_true_extent_f")
    use :: mpi_f08_types, only : MPI_ADDRESS_KIND
@@ -626,6 +645,15 @@ subroutine ompi_type_get_true_extent_f(datatype,true_lb,true_extent,ierror) &
    INTEGER(MPI_ADDRESS_KIND), INTENT(OUT) :: true_lb, true_extent
    INTEGER, INTENT(OUT) :: ierror
 end subroutine ompi_type_get_true_extent_f
+
+subroutine ompi_type_get_true_extent_x_f(datatype,true_lb,true_extent,ierror) &
+   BIND(C, name="ompi_type_get_true_extent_x_f")
+   use :: mpi_f08_types, only : MPI_COUNT_KIND
+   implicit none
+   INTEGER, INTENT(IN) :: datatype
+   INTEGER(MPI_COUNT_KIND), INTENT(OUT) :: true_lb, true_extent
+   INTEGER, INTENT(OUT) :: ierror
+end subroutine ompi_type_get_true_extent_x_f
 
 subroutine ompi_type_indexed_f(count,array_of_blocklengths, &
                                array_of_displacements,oldtype,newtype,ierror) &
@@ -645,6 +673,15 @@ subroutine ompi_type_size_f(datatype,size,ierror) &
    INTEGER, INTENT(OUT) :: size
    INTEGER, INTENT(OUT) :: ierror
 end subroutine ompi_type_size_f
+
+subroutine ompi_type_size_x_f(datatype,size,ierror) &
+   BIND(C, name="ompi_type_size_x_f")
+   use :: mpi_f08_types, only : MPI_COUNT_KIND
+   implicit none
+   INTEGER, INTENT(IN) :: datatype
+   INTEGER(MPI_COUNT_KIND), INTENT(OUT) :: size
+   INTEGER, INTENT(OUT) :: ierror
+end subroutine ompi_type_size_x_f
 
 subroutine ompi_type_vector_f(count,blocklength,stride,oldtype,newtype,ierror) &
    BIND(C, name="ompi_type_vector_f")
@@ -2410,6 +2447,16 @@ subroutine ompi_status_set_elements_f(status,datatype,count,ierror) &
    INTEGER, INTENT(IN) :: count
    INTEGER, INTENT(OUT) :: ierror
 end subroutine ompi_status_set_elements_f
+
+subroutine ompi_status_set_elements_x_f(status,datatype,count,ierror) &
+   BIND(C, name="ompi_status_set_elements_x_f")
+   use :: mpi_f08_types, only : MPI_Status, MPI_COUNT_KIND
+   implicit none
+   TYPE(MPI_Status), INTENT(INOUT) :: status
+   INTEGER, INTENT(IN) :: datatype
+   INTEGER(MPI_COUNT_KIND), INTENT(IN) :: count
+   INTEGER, INTENT(OUT) :: ierror
+end subroutine ompi_status_set_elements_x_f
 
 #if OMPI_PROVIDE_MPI_FILE_INTERFACE
 
