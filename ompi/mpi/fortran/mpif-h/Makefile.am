@@ -157,6 +157,7 @@ libmpi_mpifh_la_SOURCES += \
         get_address_f.c \
         get_count_f.c \
         get_elements_f.c \
+        get_elements_x_f.c \
         get_library_version_f.c \
         get_processor_name_f.c \
         get_version_f.c \
@@ -260,6 +261,7 @@ libmpi_mpifh_la_SOURCES += \
         start_f.c \
         status_set_cancelled_f.c \
         status_set_elements_f.c \
+        status_set_elements_x_f.c \
         testall_f.c \
         testany_f.c \
         test_cancelled_f.c \
@@ -289,8 +291,10 @@ libmpi_mpifh_la_SOURCES += \
         type_get_contents_f.c \
         type_get_envelope_f.c \
         type_get_extent_f.c \
+        type_get_extent_x_f.c \
         type_get_name_f.c \
         type_get_true_extent_f.c \
+        type_get_true_extent_x_f.c \
         type_hindexed_f.c \
         type_hvector_f.c \
         type_indexed_f.c \
@@ -299,6 +303,7 @@ libmpi_mpifh_la_SOURCES += \
         type_set_attr_f.c \
         type_set_name_f.c \
         type_size_f.c \
+        type_size_x_f.c \
         type_struct_f.c \
         type_ub_f.c \
         type_vector_f.c \

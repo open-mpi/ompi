@@ -127,6 +127,7 @@ nodist_libmpi_mpifh_pmpi_la_SOURCES = \
         pget_address_f.c \
         pget_count_f.c \
         pget_elements_f.c \
+        pget_elements_x_f.c \
         pget_library_version_f.c \
         pget_processor_name_f.c \
         pget_version_f.c \
@@ -230,6 +231,7 @@ nodist_libmpi_mpifh_pmpi_la_SOURCES = \
         pstart_f.c \
         pstatus_set_cancelled_f.c \
         pstatus_set_elements_f.c \
+        pstatus_set_elements_x_f.c \
         ptestall_f.c \
         ptestany_f.c \
         ptest_cancelled_f.c \
@@ -259,8 +261,10 @@ nodist_libmpi_mpifh_pmpi_la_SOURCES = \
         ptype_get_contents_f.c \
         ptype_get_envelope_f.c \
         ptype_get_extent_f.c \
+        ptype_get_extent_x_f.c \
         ptype_get_name_f.c \
         ptype_get_true_extent_f.c \
+        ptype_get_true_extent_x_f.c \
         ptype_hindexed_f.c \
         ptype_hvector_f.c \
         ptype_indexed_f.c \
@@ -269,6 +273,7 @@ nodist_libmpi_mpifh_pmpi_la_SOURCES = \
         ptype_set_attr_f.c \
         ptype_set_name_f.c \
         ptype_size_f.c \
+        ptype_size_x_f.c \
         ptype_struct_f.c \
         ptype_ub_f.c \
         ptype_vector_f.c \
