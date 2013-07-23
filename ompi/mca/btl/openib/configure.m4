@@ -13,6 +13,7 @@
 # Copyright (c) 2007-2010 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2008-2011 Mellanox Technologies.  All rights reserved.
 # Copyright (c) 2011      Oracle and/or its affiliates.  All rights reserved.
+# Copyright (c) 2013      NVIDIA Corporation.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -119,6 +120,9 @@ AC_DEFUN([MCA_ompi_btl_openib_CONFIG],[
 
     AC_DEFINE_UNQUOTED(BTL_OPENIB_MALLOC_HOOKS_ENABLED, [$btl_openib_malloc_hooks_enabled],
                        [Whether the openib BTL malloc hooks are enabled]) 
+
+    # make sure that CUDA-aware checks have been done
+    AC_REQUIRE([OPAL_CHECK_CUDA])
    
     # substitute in the things needed to build openib
     AC_SUBST([btl_openib_CFLAGS])

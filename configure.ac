@@ -15,7 +15,7 @@
 # Copyright (c) 2006-2011 Los Alamos National Security, LLC.  All rights
 #                         reserved.
 # Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
-# Copyright (c) 2011      NVIDIA Corporation.  All rights reserved.
+# Copyright (c) 2011-2013 NVIDIA Corporation.  All rights reserved.
 # Copyright (c) 2012      Oracle and/or its affiliates.  All rights reserved.
 # $COPYRIGHT$
 # 
@@ -245,6 +245,7 @@ AC_SUBST(top_ompi_builddir)
 ############################################################################
 
 OPAL_CONFIGURE_OPTIONS
+OPAL_CHECK_CUDA
 m4_ifdef([project_orte], [ORTE_CONFIGURE_OPTIONS])
 m4_ifdef([project_ompi], [OMPI_CONFIGURE_OPTIONS])
 

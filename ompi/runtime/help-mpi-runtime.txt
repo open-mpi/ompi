@@ -11,6 +11,7 @@
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2007-2012 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2013      NVIDIA Corporation.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -109,3 +110,7 @@ double check that everything has shut down cleanly.
   Reason:     %s
   Local host: %s
   PID:        %d
+#
+[no cuda support]
+The user requested CUDA support with the --mca mpi_cuda_support 1 flag
+but the library was not compiled with any support.

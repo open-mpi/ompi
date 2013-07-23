@@ -1,6 +1,6 @@
 # -*- text -*-
 #
-# Copyright (c) 2011-2012 NVIDIA.  All rights reserved.
+# Copyright (c) 2011-2013 NVIDIA.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -140,3 +140,27 @@ The call to cuStreamCreate failed.  This is a unrecoverable error and will
 cause the program to abort.
   cuStreamCreate return value:   %d
 Check the cuda.h file for what the return vale means.
+#
+[dlopen disabled] 
+Open MPI was compiled without dynamic library support (e.g., with the
+ --disable-dlopen flag), and therefore cannot utilize CUDA support.  
+
+If you need CUDA support, reconfigure Open MPI with dynamic library support enabled.
+#
+[unknown ltdl error]
+While attempting to load the supporting libcuda.so library, an error
+occurred.  This really should rarely happen.  Please notify the Open
+MPI developers. 
+   Function:     %s
+   Return Value: %d
+   Error string: %s
+#
+[dlopen failed]
+The library attempted to open the following supporting CUDA libraries, 
+but each of them failed.
+%s
+#
+[dlsym failed]
+An error occurred while trying to map in the address of a function.
+  Function Name: %s
+  Error string:  %s

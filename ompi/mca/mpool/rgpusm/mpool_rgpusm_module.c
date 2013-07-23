@@ -86,6 +86,7 @@
 #include "ompi/mca/rcache/rcache.h"
 #include "ompi/mca/rcache/base/base.h"
 #include "ompi/mca/mpool/base/base.h"
+#include "ompi/mca/rte/rte.h" 
 #include "ompi/runtime/params.h"
 #include "ompi/mca/common/cuda/common_cuda.h"
 

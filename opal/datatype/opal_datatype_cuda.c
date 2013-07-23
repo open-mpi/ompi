@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2011-2013 NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -11,55 +11,51 @@
 
 #include <errno.h>
 #include <unistd.h>
-#include <cuda.h>
 
 #include "opal/align.h"
 #include "opal/util/output.h"
-#include "orte/util/show_help.h"
 #include "opal/datatype/opal_convertor.h"
 #include "opal/datatype/opal_datatype_cuda.h"
 
 static bool initialized = false;
 int opal_cuda_verbose = 0;
+static int opal_cuda_enabled = 0; /* Starts out disabled */
 static int opal_cuda_output = 0;
 static void opal_cuda_support_init(void);
-static int (*common_cuda_initialization_function)(void) = NULL;
+static int (*common_cuda_initialization_function)(opal_common_cuda_function_table_t *) = NULL;
+static opal_common_cuda_function_table_t ftable;
 
 /* This function allows the common cuda code to register an
  * initialization function that gets called the first time an attempt
  * is made to send or receive a GPU pointer.  This allows us to delay
  * some CUDA initialization until after MPI_Init().
  */
-void opal_cuda_add_initialization_function(int (*fptr)(void)) {
+void opal_cuda_add_initialization_function(int (*fptr)(opal_common_cuda_function_table_t *)) {
     common_cuda_initialization_function = fptr;
 }
 
+/**
+ * This function is called when a convertor is instantiated.  It has to call
+ * the opal_cuda_support_init() function once to figure out if CUDA support
+ * is enabled or not.  If CUDA is not enabled, then short circuit out
+ * for all future calls.
+ */
 void mca_cuda_convertor_init(opal_convertor_t* convertor, const void *pUserBuf)
 {   
-    int res;
-    CUmemorytype memType;
-    CUdeviceptr dbuf = (CUdeviceptr)pUserBuf;
-
-    res = cuPointerGetAttribute(&memType,
-                                CU_POINTER_ATTRIBUTE_MEMORY_TYPE, dbuf);
-    if (res != CUDA_SUCCESS) {
-        /* If we cannot determine it is device pointer,
-         * just assume it is not. */
-        return;
-    } else if (memType == CU_MEMORYTYPE_HOST) {
-        /* Host memory, nothing to do here */
-        return;
-    }
-    /* Must be a device pointer */
-    assert(memType == CU_MEMORYTYPE_DEVICE);
-
     /* Only do the initialization on the first GPU access */
     if (!initialized) {
         opal_cuda_support_init();
     }
 
-    convertor->cbmemcpy = (memcpy_fct_t)&opal_cuda_memcpy;
-    convertor->flags |= CONVERTOR_CUDA;
+    /* If not enabled, then nothing else to do */
+    if (!opal_cuda_enabled) {
+        return;
+    }
+
+    if (ftable.gpu_is_gpu_buffer(pUserBuf)) {
+        convertor->cbmemcpy = (memcpy_fct_t)&opal_cuda_memcpy;
+        convertor->flags |= CONVERTOR_CUDA;
+    }
 }
 
 /* Checks the type of pointer
@@ -69,19 +65,20 @@ void mca_cuda_convertor_init(opal_convertor_t* convertor, const void *pUserBuf)
  */
 bool opal_cuda_check_bufs(char *dest, char *src)
 {
-    int res;
-    CUmemorytype memType = CU_MEMORYTYPE_HOST;
+    /* Only do the initialization on the first GPU access */
+    if (!initialized) {
+        opal_cuda_support_init();
+    }
 
-    res = cuPointerGetAttribute(&memType, CU_POINTER_ATTRIBUTE_MEMORY_TYPE, (CUdeviceptr)dest);
-    if( memType == CU_MEMORYTYPE_DEVICE){
-        return true;
+    if (!opal_cuda_enabled) {
+        return false;
     }
-    res = cuPointerGetAttribute(&memType, CU_POINTER_ATTRIBUTE_MEMORY_TYPE, (CUdeviceptr)src);
-    if( memType == CU_MEMORYTYPE_DEVICE){
+
+    if (ftable.gpu_is_gpu_buffer(dest) || ftable.gpu_is_gpu_buffer(src)) {
         return true;
+    } else {
+        return false;
     }
-    /* Assuming it is a host pointer for all other situations */
-    return false;
 }
 
 /*
@@ -99,13 +96,12 @@ void *opal_cuda_memcpy(void *dest, const void *src, size_t size, opal_convertor_
     }
             
     if (convertor->flags & CONVERTOR_CUDA_ASYNC) {
-        res = cuMemcpyAsync((CUdeviceptr)dest, (CUdeviceptr)src, size,
-                            (CUstream)convertor->stream);
+        res = ftable.gpu_cu_memcpy_async(dest, (void *)src, size, convertor);
     } else {
-        res = cuMemcpy((CUdeviceptr)dest, (CUdeviceptr)src, size);
+        res = ftable.gpu_cu_memcpy(dest, (void *)src, size);
     }
 
-    if (res != CUDA_SUCCESS) {
+    if (res != 0) {
         opal_output(0, "CUDA: Error in cuMemcpy: res=%d, dest=%p, src=%p, size=%d",
                     res, dest, src, (int)size);
         abort();
@@ -122,8 +118,8 @@ void *opal_cuda_memcpy(void *dest, const void *src, size_t size, opal_convertor_
 void *opal_cuda_memcpy_sync(void *dest, void *src, size_t size)
 {
     int res;
-    res = cuMemcpy((CUdeviceptr)dest, (CUdeviceptr)src, size);
-    if (res != CUDA_SUCCESS) {
+    res = ftable.gpu_cu_memcpy(dest, src, size);
+    if (res != 0) {
         opal_output(0, "CUDA: Error in cuMemcpy: res=%d, dest=%p, src=%p, size=%d",
                     res, dest, src, (int)size);
         abort();
@@ -138,23 +134,14 @@ void *opal_cuda_memcpy_sync(void *dest, void *src, size_t size)
  */
 void *opal_cuda_memmove(void *dest, void *src, size_t size)
 {
-    CUdeviceptr tmp;
     int res;
 
-    res = cuMemAlloc(&tmp,size);
-    res = cuMemcpy(tmp, (CUdeviceptr) src, size);
-    if(res != CUDA_SUCCESS){
-        opal_output(0, "CUDA: memmove-Error in cuMemcpy: res=%d, dest=%p, src=%p, size=%d",
-                    res, (void *)tmp, src, (int)size);
+    res = ftable.gpu_memmove(dest, src, size);
+    if(res != 0){
+        opal_output(0, "CUDA: Error in gpu memmove: res=%d, dest=%p, src=%p, size=%d",
+                    res, dest, src, (int)size);
         abort();
     }
-    res = cuMemcpy((CUdeviceptr) dest, tmp, size);
-    if(res != CUDA_SUCCESS){
-        opal_output(0, "CUDA: memmove-Error in cuMemcpy: res=%d, dest=%p, src=%p, size=%d",
-                    res, dest, (void *)tmp, (int)size);
-        abort();
-    }
-    cuMemFree(tmp);
     return dest;
 }
 
@@ -164,33 +151,28 @@ void *opal_cuda_memmove(void *dest, void *src, size_t size)
  */
 static void opal_cuda_support_init(void)
 {
-    CUresult res;
-    CUcontext cuContext;
-
     if (initialized) {
         return;
-    }
-
-    /* Callback into the common cuda initialization routine. This is only
-     * set if some work had been done already in the common cuda code.*/
-    if (NULL != common_cuda_initialization_function) {
-        common_cuda_initialization_function();
     }
 
     /* Set different levels of verbosity in the cuda related code. */
     opal_cuda_output = opal_output_open(NULL);
     opal_output_set_verbosity(opal_cuda_output, opal_cuda_verbose);
 
-    /* Check to see if this process is running in a CUDA context.  If so,
-     * all is good.  Currently, just print out a message in verbose mode
-     * to help with debugging. */
-    res = cuCtxGetCurrent(&cuContext);
-    if (CUDA_SUCCESS != res) {
+    /* Callback into the common cuda initialization routine. This is only
+     * set if some work had been done already in the common cuda code.*/
+    if (NULL != common_cuda_initialization_function) {
+        if (0 == common_cuda_initialization_function(&ftable)) {
+            opal_cuda_enabled = 1;
+        }
+    }
+
+    if (1 == opal_cuda_enabled) {
         opal_output_verbose(10, opal_cuda_output,
-                            "CUDA: cuCtxGetCurrent failed, CUDA device pointers will not work");
+                            "CUDA: enabled successfully, CUDA device pointers will work");
     } else {
         opal_output_verbose(10, opal_cuda_output,
-                            "CUDA: cuCtxGetCurrent succeeded, CUDA device pointers will work");
+                            "CUDA: not enabled, CUDA device pointers will not work");
     }
 
     initialized = true;
