@@ -1,0 +1,59 @@
+. -*- nroff -*-
+.\" Copyright 2013 Los Alamos National Security, LLC. All rights reserved.
+.\" Copyright 2006-2008 Sun Microsystems, Inc.
+.\" Copyright (c) 1996 Thinking Machines Corporation
+.\" Copyright (c) 2010 Cisco Systems, Inc.  All rights reserved.
+.TH MPI_T_pvar_reset 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
+.
+.SH NAME
+\fBMPI_T_pvar_reset\fP \- Reset the value of a performance variable
+.
+.SH SYNTAX
+.ft R
+.
+.SH C Syntax
+.nf
+#include <mpi.h>
+int MPI_T_pvar_reset(MPI_T_pvar_session \fIsession\fP, MPI_T_pvar_handle \fIhandle\fP)
+
+.fi
+.SH INPUT PARAMETERS
+.ft R
+.TP 1i
+session
+Performance experiment session.
+.TP 1i
+handle
+Performance variable handle or MPI_T_PVAR_ALL_HANDLES.
+.
+.
+.SH DESCRIPTION
+.ft R
+MPI_T_pvar_reset sets the performance variable specified by the handle in \fIhandle\fP
+to its initial value. The special value MPI_T_PVAR_ALL_HANDLES can be passed in \fIhandle\fP
+to reset all read-write handles in the session specified in \fIsession\fP.
+.
+.
+.SH ERRORS
+.ft R
+MPI_T_pvar_reset() will fail if:
+.TP 1i
+[MPI_T_ERR_NOT_INITIALIZED]
+The MPI Tools interface not initialized
+.TP 1i
+[MPI_T_ERR_INVALID_HANDLE]
+The handle is invalid
+.TP 1i
+[MPI_T_ERR_INVALID_SESSION]
+Session argument is not a valid session
+.TP 1i
+[MPI_T_ERR_PVAR_NO_WRITE]
+Variable cannot be reset
+
+.SH SEE ALSO
+.ft R
+.nf
+MPI_T_pvar_handle_alloc
+MPI_T_pvar_get_info
+MPI_T_pvar_session_create
+MPI_T_pvar_write

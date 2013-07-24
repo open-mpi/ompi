@@ -1,0 +1,65 @@
+. -*- nroff -*-
+.\" Copyright 2013 Los Alamos National Security, LLC. All rights reserved.
+.\" Copyright 2006-2008 Sun Microsystems, Inc.
+.\" Copyright (c) 1996 Thinking Machines Corporation
+.\" Copyright (c) 2010 Cisco Systems, Inc.  All rights reserved.
+.TH MPI_T_enum_get_info 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
+.
+.SH NAME
+\fBMPI_T_enum_get_info\fP \- Query information about an enumerator
+.
+.SH SYNTAX
+.ft R
+.
+.SH C Syntax
+.nf
+#include <mpi.h>
+int MPI_T_enum_get_info(MPI_T_enum \fIenumtype\fP, int *\fInum\fP, char *\fIname\fP, int *\fIname_len\fP)
+
+.fi
+.SH INPUT PARAMETERS
+.ft R
+.TP 1i
+enumtype
+Enumerator to be queried.
+
+.SH INPUT/OUTPUT PARAMETERS
+.ft R
+.TP 1i
+name_len
+Length of the string and/or buffer for name.
+
+.SH OUTPUT PARAMETERS
+.ft R
+.TP li
+num
+number of discrete values represented by this enumeration.
+.TP 1i
+name
+Buffer to return the string containing the name of the
+category.
+
+.SH DESCRIPTION
+.ft R
+MPI_T_enum_get_info can be used to query information about an enumerator. The function returns the
+number of discrete values represented by this enumerator in the \fInum\fP parameter.
+
+.SH NOTES
+.ft R
+This MPI tool interface function returns the name of the enumeration as a string. This function
+takes two argument for the string: \fIname\fP which specifies a buffer where the name of the
+should be stored, and \fIname_len\fP which must initially specify the size of the buffer pointed
+to by \fIname\fP. This function will copy at most \fIname_len\fP - 1 characters of the name
+and sets \fIname_len\fP to the number of characters returned + 1. If \fIname_len\fP is NULL
+or the value specified in \fIname_len\fP is 0 the \fIname\fP buffer is ignored and the name of
+the enumeration is not returned.
+
+.SH ERRORS
+.ft R
+MPI_T_enum_get_info() will fail if:
+.TP 1i
+[MPI_T_ERR_NOT_INITIALIZED]
+The MPI Tools interface not initialized
+.TP 1i
+[MPI_T_ERR_INVALID_INDEX]
+The enumeration is invalid or has been deleted

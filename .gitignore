@@ -375,6 +375,7 @@ ompi/mpi/java/java/*.h
 ompi/mpi/man/man3/MPI*.3
 ompi/mpi/man/man3/OpenMPI.3
 ompi/mpi/man/man3/.dir-stamp
+ompi/mpi/tool/profile/p*.c
 ompi/mpiext/affinity/c/OMPI_Affinity_str.3
 ompi/mpiext/affinity/c/example
 ompi/mpiext/example/tests/progress_c

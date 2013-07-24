@@ -1,0 +1,203 @@
+. -*- nroff -*-
+.\" Copyright 2013 Los Alamos National Security, LLC. All rights reserved.
+.\" Copyright 2006-2008 Sun Microsystems, Inc.
+.\" Copyright (c) 1996 Thinking Machines Corporation
+.\" Copyright (c) 2010 Cisco Systems, Inc.  All rights reserved.
+.TH MPI_T_pvar_get_info 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
+.
+.SH NAME
+\fBMPI_T_pvar_get_info\fP \- Query information from a performance variable
+.
+.SH SYNTAX
+.ft R
+.
+.SH C Syntax
+.nf
+#include <mpi.h>
+int MPI_T_pvar_get_info(int \fIpvar_index\fP, char *\fIname\fP, int *\fIname_len\fP,
+                        int *\fIverbosity\fP, int *\fIvar_class\fP, MPI_Datatype *\fIdatatype\fP, MPI_T_enum *\fIenumtype\fP,
+                        char *\fIdesc\fP, int *\fIdesc_len\fP, int *\fIbind\fP, int *\fIreadonly\fP, int *\fIcontinuous\fP,
+                        int *\fIatomic\fP)
+
+.fi
+.SH INPUT PARAMETERS
+.ft R
+.TP 1i
+pvar_index
+Index of the performance variable to be queried.
+
+.SH INPUT/OUTPUT PARAMETERS
+.ft R
+.TP 1i
+name_len
+Length of the string and/or buffer for name.
+.TP 1i
+desc_len
+Length of the string and/or buffer for desc.
+
+.SH OUTPUT PARAMETERS
+.ft R
+.TP 1i
+name
+Buffer to return the string containing the name of the
+performance variable.
+.TP 1i
+verbosity
+Verbosity level of this variable.
+.TP 1i
+var_class
+Class of performance variable.
+.TP 1i
+datatype
+MPI datatype of the information stored in the performance variable.
+.TP 1i
+enumtype
+Optional descriptor for enumeration information.
+.TP 1i
+desc
+Buffer to return the string containing the description of the performance variable.
+.TP 1i
+bind
+Type of MPI object to which this variable must be bound.
+.TP 1i
+readonly
+Flag indicating whether the variable can be written/reset.
+.TP 1i
+continuous
+Flag indicating whether the variable can be started and stopped or is continuously active.
+.TP 1i
+atomic
+Flag indicating whether the variable can be atomically read and reset.
+.
+.
+.SH DESCRIPTION
+.ft R
+MPI_T_pvar_get_info can be used to query information from a performance variable. The function returns
+the verbosity, class, datatype, enumeration type, and binding of the queried control variable in the arguments
+\fIverbosity\fP, \fIvar_class\fP, \fIdatatype\fP, \fIenumtype\fP, and \fIbind\fP respectively. Flags indicating
+whether the variable is read-only, continuous, or atomic are returns in \fIreadonly\fP, \fIcontinuous\fP, and
+\fIatomic\fP accordingly. See MPI-3 § 14.3.7 for more information. See the man page for MPI_T_cvar_get_info
+for information on variable verbosity.
+
+.SH VARIABLE CLASS
+.ft R
+Performance variables are categorized into classes which describe their initial value, valid types, and
+behavior. The class returned in the \fIvar_class\fP parameter may be one of the following:
+.TP 2
+MPI_T_PVAR_CLASS_STATE
+Variable represents a set of discrete states that may be described by an enumerator. Variables of this class
+must be represented by an MPI_INT. The starting value is the current state of the variable. 
+.TP 2
+MPI_T_PVAR_CLASS_LEVEL
+Variable represents the current utilization level of a resource. Variables of this class must be represented
+by an MPI_UNSIGNED, MPI_UNSIGNED_LONG, MPI_UNSIGNED_LONG_LONG, or MPI_DOUBLE. The starting value is the
+current utilization level of the resource.
+.TP 2
+MPI_T_PVAR_CLASS_SIZE
+Variable represents the fixed size of a resource. Variables of this class are represented by an MPI_UNSIGNED,
+MPI_UNSIGNED_LONG, MPI_UNSIGNED_LONG_LONG, or MPI_DOUBLE. The starting value is the current size of the resource.
+.TP 2
+MPI_T_PVAR_CLASS_PERCENTAGE
+Variable represents the current precentage utilization level of a resource. Variables of this class are
+represented by an MPI_DOUBLE. The starting value is the current percentage utilization of the resource.
+.TP 2
+MPI_T_PVAR_CLASS_HIGHWATERMARK
+Variable represents the high watermark of the utilization of a resource. Variables of this class are
+represented by an MPI_UNSIGNED, MPI_UNSIGNED_LONG, MPI_UNSIGNED_LONG_LONG, or MPI_DOUBLE. The starting value
+is the current utilization of the resource.
+.TP 2
+MPI_T_PVAR_CLASS_HIGHWATERMARK
+Variable represents the low watermark of the utilization of a resource. Variables of this class are
+represented by an MPI_UNSIGNED, MPI_UNSIGNED_LONG, MPI_UNSIGNED_LONG_LONG, or MPI_DOUBLE. The starting value
+is the current utilization of the resource.
+.TP 2
+MPI_T_PVAR_CLASS_COUNTER
+Variable represents a count of the number of occurrences of a specific event. Variables of this class are
+represented by an MPI_UNSIGNED, MPI_UNSIGNED_LONG, or MPI_UNSIGNED_LONG_LONG. The starting value is 0.
+.TP 2
+MPI_T_PVAR_CLASS_COUNTER
+Variable represents an aggregated value that represents a sum of arguments processed during a specific event.
+Variables of this class are represented by an MPI_UNSIGNED, MPI_UNSIGNED_LONG, MPI_UNSIGNED_LONG_LONG,
+or MPI_DOUBLE. The starting value is 0.
+.TP 2
+MPI_T_PVAR_CLASS_TIMER
+Variable represents the aggregated time spent by the MPI implementation while processing an event, type of
+event, or section of code. Variables of this class are represented by an MPI_UNSIGNED, MPI_UNSIGNED_LONG,
+MPI_UNSIGNED_LONG_LONG, or MPI_DOUBLE. If the variable is represented by an MPI_DOUBLE the units will be
+the same as those used by MPI_Wtime(). The starting value is 0.
+.TP 2
+MPI_T_PVAR_CLASS_GENERIC
+Variable does not fit into any other class. Can by represented by an type supported by the MPI tool
+information interface (see DATATYPE). Starting value is variable specific.
+
+For more information see MPI-3 \[char 167] 14.3.7.
+
+.SH DATATYPE
+.ft R
+The datatype returned by MPI_T_pvar_get_info is restricted to one of the following datatypes: MPI_INT,
+MPI_UNSIGNED, MPI_UNSIGNED_LONG, MPI_UNSIGNED_LONG_LONG, MPI_COUNT, MPI_CHAR, and MPI_DOUBLE. For more
+information on datatypes in the MPI Tool information interface see MPI-3 \[char167] 14.3.5.
+
+.SH BINDING
+.ft R
+Performance variables may be bound to an MPI object. The binding returned in the \fIbind\fP parameter may be
+one of the following:
+.TP 1i
+MPI_T_BIND_NO_OBJECT
+No object
+.TP 1i
+MPI_T_BIND_MPI_COMM
+MPI communicator
+.TP 1i
+MPI_T_BIND_MPI_DATATYPE
+MPI datatype
+.TP 1i
+MPI_T_BIND_MPI_ERRHANDLER
+MPI error handler
+.TP 1i
+MPI_T_BIND_MPI_FILE
+MPI file handle
+.TP 1i
+MPI_T_BIND_MPI_GROUP
+MPI group
+.TP 1i
+MPI_T_BIND_MPI_OP
+MPI reduction operator
+.TP 1i
+MPI_T_BIND_MPI_REQUEST
+MPI request
+.TP 1i
+MPI_T_BIND_MPI_WIN
+MPI window for one-sided communication
+.TP 1i
+MPI_T_BIND_MPI_MESSAGE
+MPI message object
+.TP 1i
+MPI_T_BIND_MPI_INFO
+MPI info object
+
+For more information see MPI-3 \[char167] 14.3.2.
+
+.SH NOTES
+.ft R
+This MPI tool interface function returns two strings. This function takes two argument for each string:
+a buffer to store the string, and a length which must initially specify the size of the buffer. If the
+length passed is n then this function will copy at most n - 1 characters of the string into the
+corresponding buffer and set the length to the number of characters copied - 1. If the length argument
+is NULL or the value specified in the length is 0 the corresponding string buffer is ignored and the
+string is not returned. For more information see MPI-3 \[char167] 14.3.3.
+
+.SH ERRORS
+.ft R
+MPI_T_pvar_get_info() will fail if:
+.TP 1i
+[MPI_T_ERR_NOT_INITIALIZED]
+The MPI Tools interface not initialized
+.TP 1i
+[MPI_T_ERR_INVALID_INDEX]
+The performance variable index is invalid
+.
+.SH SEE ALSO
+.ft R
+.nf
+MPI_T_cvar_get_info

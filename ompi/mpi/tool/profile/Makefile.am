@@ -44,12 +44,12 @@ endif
 headers = defines.h
 
 nodist_libmpi_pmpit_la_SOURCES = \
-	pcatagory_changed.c \
-	pcatagory_get_catagories.c \
-	pcatagory_get_cvars.c \
-	pcatagory_get_info.c \
-	pcatagory_get_num.c \
-	pcatagory_get_pvars.c \
+	pcategory_changed.c \
+	pcategory_get_categories.c \
+	pcategory_get_cvars.c \
+	pcategory_get_info.c \
+	pcategory_get_num.c \
+	pcategory_get_pvars.c \
 	pcvar_get_info.c \
 	pcvar_get_num.c \
 	pcvar_handle_alloc.c \

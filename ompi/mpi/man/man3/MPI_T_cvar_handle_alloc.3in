@@ -1,0 +1,67 @@
+. -*- nroff -*-
+.\" Copyright 2013 Los Alamos National Security, LLC. All rights reserved.
+.\" Copyright 2006-2008 Sun Microsystems, Inc.
+.\" Copyright (c) 1996 Thinking Machines Corporation
+.\" Copyright (c) 2010 Cisco Systems, Inc.  All rights reserved.
+.TH MPI_T_cvar_handle_alloc 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
+.
+.SH NAME
+\fBMPI_T_cvar_handle_alloc\fP, \fBMPI_T_cvar_handle_free\fP \- Allocate/free contol variable handles
+.
+.SH SYNTAX
+.ft R
+.
+.SH C Syntax
+.nf
+#include <mpi.h>
+int MPI_T_cvar_handle_alloc(int \fIcvar_index\fP, void *\fIobj_handle\fP,
+                            MPI_T_cvar_handle *\fIhandle\fP, int *\fIcount\fP)
+
+int MPI_T_cvar_handle_free(MPI_T_cvar_handle *\fIhandle\fP)
+
+.SH DESCRIPTION
+.ft R
+MPI_T_cvar_handle_alloc binds the control variable specified in \fIcvar_index\fP to the MPI
+object specified in \fIobj_handle\fP. If MPI_T_cvar_get_info returns MPI_T_BIND_NO_OBJECT
+as the binding of the variable the \fIobj_handle\fP argument is ignored. The number of
+values represented by this control variable is returned in the \fIcount\fP parameter. If the
+control variable represents a string then \fIcount\fP will be the maximum length of the
+string.
+
+MPI_T_cvar_handle_free frees a handle allocated by MPI_T_cvar_handle_alloc and sets the
+\fIhandle\fP argument to MPI_T_CVAR_HANDLE_NULL.
+
+
+.SH NOTES
+.ft R
+Open MPI does not currently support binding MPI objects to control variables so the
+\fIobj_handle\fP argument is always ignored.
+
+
+.SH ERRORS
+.ft R
+MPI_T_cvar_handle_alloc() will fail if:
+.TP 1i
+[MPI_T_ERR_NOT_INITIALIZED]
+The MPI Tools interface not initialized
+.TP 1i
+[MPI_T_ERR_INVALID_INDEX]
+The control variable index is invalid
+.TP 1i
+[MPI_T_ERR_OUT_OF_HANDLES]
+No more handles available
+.TP 1i
+MPI_T_cvar_handle_free() will fail if:
+.TP 1i
+[MPI_T_ERR_NOT_INITIALIZED]
+The MPI Tools interface not initialized
+.TP 1i
+[MPI_T_ERR_INVALID_HANDLE]
+The handle is invalid
+
+
+.SH SEE ALSO
+.ft R
+.nf
+MPI_T_cvar_get_info
+

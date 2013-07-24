@@ -19,7 +19,7 @@
 #include "ompi/mpi/tool/profile/defines.h"
 #endif
 
-static const char FUNC_NAME[] = "MPI_T_catagory_get_num";
+static const char FUNC_NAME[] = "MPI_T_category_get_num";
 
 int MPI_T_category_get_num (int *num_cat)
 {

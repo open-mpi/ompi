@@ -1,0 +1,61 @@
+. -*- nroff -*-
+.\" Copyright 2013 Los Alamos National Security, LLC. All rights reserved.
+.\" Copyright 2006-2008 Sun Microsystems, Inc.
+.\" Copyright (c) 1996 Thinking Machines Corporation
+.\" Copyright (c) 2010 Cisco Systems, Inc.  All rights reserved.
+.TH MPI_T_pvar_start 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
+.
+.SH NAME
+\fBMPI_T_pvar_start\fP, \fBMPI_T_pvar_stop\fP \- Start/stop a performance variable
+.
+.SH SYNTAX
+.ft R
+.
+.SH C Syntax
+.nf
+#include <mpi.h>
+int MPI_T_pvar_start(MPI_T_pvar_session \fIsession\fP, MPI_T_pvar_handle \fIhandle\fP)
+
+int MPI_T_pvar_stop(MPI_T_pvar_session \fIsession\fP, MPI_T_pvar_handle \fIhandle\fP)
+
+.SH INPUT PARAMETERS
+.ft R
+.TP 1i
+session
+Performance experiment session.
+.TP 1i
+handle
+Performance variable handle.
+
+.SH DESCRIPTION
+.ft R
+MPI_T_pvar_start starts the performance variable with the handle specified in \fIhandle\fP.
+The special value MPI_T_PVAR_ALL_HANDLES can be passed in \fIhandle\fP to start all
+non-continuous handles in the session specified in \fIsession\fP.
+
+MPI_T_pvar_stop stops the performance variable with the handle specified in \fIhandle\fP.
+The special value MPI_T_PVAR_ALL_HANDLES can be passed in \fIhandle\fP to stop all
+non-continuous handles in the session specified in \fIsession\fP.
+
+Continuous performance variables can neither be started nor stopped. 
+
+.SH ERRORS
+.ft R
+MPI_T_pvar_start() and MPI_T_pvar_stop() will fail if:
+.TP 1i
+[MPI_T_ERR_NOT_INITIALIZED]
+The MPI Tools interface not initialized
+.TP 1i
+[MPI_T_ERR_INVALID_SESSION]
+Session parameter is not a valid session
+.TP 1i
+[MPI_T_ERR_INVALID_HANDLE]
+Invalid handle or handle not associated with the session
+.TP 1i
+[MPI_T_ERR_PVAR_NO_STARTSTOP]
+The variable cannot be started or stopped
+
+.SH SEE ALSO
+.ft R
+.nf
+MPI_T_pvar_get_info
