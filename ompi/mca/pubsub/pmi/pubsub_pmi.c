@@ -17,6 +17,8 @@
 #include <pmi2.h>
 #endif
 
+#include "opal/mca/common/pmi/common_pmi.h"
+
 #include "ompi/info/info.h"
 #include "ompi/mca/rte/rte.h"
 #include "ompi/mca/pubsub/base/base.h"
@@ -39,12 +41,12 @@ static int publish ( char *service_name, ompi_info_t *info, char *port_name )
 
 #if WANT_PMI2_SUPPORT
     if (PMI_SUCCESS != (rc = PMI2_Nameserv_publish(service_name, NULL, port_name))) {
-        OMPI_ERROR_LOG(rc);
+        OPAL_PMI_ERROR(rc, "PMI2_Nameserv_publish");
         return OMPI_ERROR;
     }
 #else
     if (PMI_SUCCESS != (rc = PMI_Publish_name(service_name, port_name))) {
-        OMPI_ERROR_LOG(rc);
+        OPAL_PMI_ERROR(rc, "PMI_Publish_name");
         return OMPI_ERROR;
     }
 #endif
@@ -59,13 +61,13 @@ static char* lookup ( char *service_name, ompi_info_t *info )
 #if WANT_PMI2_SUPPORT
     port = (char*)malloc(1024*sizeof(char));  /* arbitrary size */
     if (PMI_SUCCESS != (rc = PMI2_Nameserv_lookup(service_name, NULL, port, 1024))) {
-        OMPI_ERROR_LOG(rc);
+        OPAL_PMI_ERROR(rc, "PMI2_Nameserv_lookup");
         free(port);
         return NULL;
     }
 #else
     if (PMI_SUCCESS != (rc = PMI_Lookup_name(service_name, port))) {
-        OMPI_ERROR_LOG(rc);
+        OPAL_PMI_ERROR(rc, "PMI_Lookup_name");
         return NULL;
     }
 #endif
@@ -80,12 +82,12 @@ static int unpublish ( char *service_name, ompi_info_t *info )
 
 #if WANT_PMI2_SUPPORT
     if (PMI_SUCCESS != (rc = PMI2_Nameserv_unpublish(service_name, NULL))) {
-        OMPI_ERROR_LOG(rc);
+        OPAL_PMI_ERROR(rc, "PMI2_Nameserv_unpublish");
         return OMPI_ERROR;
     }
 #else
     if (PMI_SUCCESS != (rc = PMI_Unpublish_name(service_name))) {
-        OMPI_ERROR_LOG(rc);
+        OPAL_PMI_ERROR(rc, "PMI2_Nameserv_unpublish");
         return OMPI_ERROR;
     }
 #endif
