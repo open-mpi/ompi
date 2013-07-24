@@ -179,7 +179,7 @@ ompi_btl_usnic_send_slower(
             (int)frag->sf_base.uf_src_seg[0].seg_len,
             frag->sf_base.uf_src_seg[1].seg_addr.pval,
             (int)frag->sf_base.uf_src_seg[1].seg_len);
-    opal_output(0, "  inline seg  %d segs %p(%d) + %p(%d)\n",
+    opal_output(0, "  small seg  %d segs %p(%d) + %p(%d)\n",
             sseg->ss_send_desc.num_sge,
             (void *)sseg->ss_send_desc.sg_list[0].addr,
             sseg->ss_send_desc.sg_list[0].length,

@@ -616,6 +616,7 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
         /* Find the max payload this port can handle */
         module->max_frag_payload =
             module->if_mtu - /* start with the MTU */
+            sizeof(ompi_btl_usnic_protocol_header_t) -
             sizeof(ompi_btl_usnic_btl_header_t); /* subtract size of
                                                     the BTL header */
         /* same, but use chunk header */
@@ -873,10 +874,11 @@ static int usnic_component_progress(void)
                         if (cwc->byte_len <
                              (sizeof(ompi_btl_usnic_protocol_header_t)+
                               sizeof(ompi_btl_usnic_btl_header_t))) {
-                        BTL_ERROR(("RX error polling CQ with status %d for wr_id %" PRIx64 " vend_err %d, byte_len %d (%d of %d)",
-                               cwc->status, cwc->wr_id,
+                        BTL_ERROR(("RX error polling CQ[%d] with status %d for wr_id %" PRIx64 " vend_err %d, byte_len %d (%d of %d)",
+                               c, cwc->status, cwc->wr_id,
                                cwc->vendor_err,
                                j, num_events, cwc->byte_len));
+abort();
                         } else {
                             /* silently count CRC errors */
                             ++module->num_crc_errors;
