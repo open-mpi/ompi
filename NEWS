@@ -56,8 +56,8 @@ included in the vX.Y.Z section and be denoted as:
 1.7.3
 -----
 
+- Added new usnic BTL to support the Cisco usNIC device
 - Add support for MPI_Dist_graph functionality (MPI 2.2).
-
 
 
 1.7.2

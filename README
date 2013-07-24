@@ -448,6 +448,7 @@ Network Support
     - TCP
     - SCTP
     - uDAPL
+    - Cisco usNIC
 
   - "csum" is exactly the same as "ob1", except that it performs
     additional data integrity checks to ensure that the received data
@@ -485,6 +486,11 @@ Network Support
   - Progress thread
   - Shared memory communication
   - Hardware-assisted reliability
+
+- The usnic BTL is support for Cisco's usNIC device ("userspace NIC")
+  on Cisco UCS servers with the Virtualized Interface Card (VIC).
+  Although the usNIC is accessed via the OpenFabrics / Verbs API
+  stack, this BTL is specific to the Cisco usNIC device.
 
 - The OpenFabrics Enterprise Distribution (OFED) software package v1.0
   will not work properly with Open MPI v1.2 (and later) due to how its
@@ -708,8 +714,8 @@ NETWORKING SUPPORT / OPTIONS
   This option is generally only necessary if the verbs headers and
   libraries are not in default compiler/linker search paths.
 
-  "OpenFabrics" refers to iWARP-, RoCE- (aka "IBoIP"), and
-  InfiniBand-based networks.
+  "OpenFabrics" refers to operating system bypass networks, such as
+  InfiniBand, usNIC, iWARP, and RoCE (aka "IBoIP").
 
 --with-verbs-libdir=<directory>
   Look in directory for the verbs libraries.  By default, Open
@@ -1023,9 +1029,9 @@ MPI FUNCTIONALITY
 --without-memory-manager
   Disable building Open MPI's memory manager.  Open MPI's memory
   manager is usually built on Linux based platforms, and is generally
-  only used for optimizations with OpenFabrics-based networks (it is
-  not *necessary* for OpenFabrics networks, but some performance loss
-  may be observed without it).
+  only used for optimizations with some OpenFabrics-based networks (it
+  is not *necessary* for OpenFabrics networks, but some performance
+  loss may be observed without it).
 
   However, it may be necessary to disable the memory manager in order
   to build Open MPI statically.
