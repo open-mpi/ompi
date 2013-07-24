@@ -249,7 +249,7 @@ ompi_btl_usnic_ack_timeout(
     endpoint = seg->ss_parent_frag->sf_endpoint;
     module = endpoint->endpoint_module;
 
-#if MSGDEBUG1
+#if MSGDEBUG2
     {
         static int num_timeouts = 0;
         opal_output(0, "Send timeout!  seg %p, room %d, seq %" UDSEQ "\n",
