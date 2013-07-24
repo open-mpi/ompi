@@ -24,9 +24,9 @@ headers = mpit-internal.h
 libmpi_mpit_la_SOURCES = init_thread.c finalize.c cvar_get_num.c \
 		     cvar_get_info.c cvar_read.c cvar_write.c \
                      cvar_handle_alloc.c cvar_handle_free.c \
-                     catagory_get_num.c catagory_get_info.c \
-                     catagory_get_cvars.c catagory_get_pvars.c \
-                     catagory_get_catagories.c catagory_changed.c \
+                     category_get_num.c category_get_info.c \
+                     category_get_cvars.c category_get_pvars.c \
+                     category_get_categories.c category_changed.c \
                      pvar_get_info.c pvar_get_num.c pvar_handle_alloc.c \
                      pvar_handle_free.c pvar_read.c pvar_readreset.c \
                      pvar_reset.c pvar_session_create.c pvar_session_free.c \

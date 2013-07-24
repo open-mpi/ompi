@@ -30,6 +30,10 @@ int MPI_T_pvar_read(MPI_T_pvar_session session, MPI_T_pvar_handle handle,
         return MPI_T_ERR_NOT_INITIALIZED;
     }
 
+    if (MPI_T_PVAR_ALL_HANDLES == handle || session != handle->session) {
+        return MPI_T_ERR_INVALID_HANDLE;
+    }
+
     mpit_lock ();
 
     ret = mca_base_pvar_handle_read_value (handle, buf);
