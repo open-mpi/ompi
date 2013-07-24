@@ -308,8 +308,8 @@ struct mca_btl_openib_component_t {
     void* (*previous_malloc_hook)(size_t __size, const void*);
 #endif
 #if OMPI_CUDA_SUPPORT /* CUDA_ASYNC_SEND */
-    int cuda_async_send;
-    int cuda_async_recv;
+    bool cuda_async_send;
+    bool cuda_async_recv;
 #endif /* OMPI_CUDA_SUPPORT */
 }; typedef struct mca_btl_openib_component_t mca_btl_openib_component_t;
 
