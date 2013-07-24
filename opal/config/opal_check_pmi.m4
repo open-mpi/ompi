@@ -131,8 +131,8 @@ AC_DEFUN([OPAL_CHECK_PMI],[
                   $3])
            ])
 
-    # restore flags - have to add CPPFLAGS so base functions can find pmi.h
-    CPPFLAGS="$opal_check_pmi_$1_save_CPPFLAGS $opal_check_pmi_$1_CPPFLAGS"
+    # restore flags
+    CPPFLAGS="$opal_check_pmi_$1_save_CPPFLAGS"
     LDFLAGS="$opal_check_pmi_$1_save_LDFLAGS"
     LIBS="$opal_check_pmi_$1_save_LIBS"
 

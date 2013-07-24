@@ -24,6 +24,7 @@
 
 #include "opal/dss/dss.h"
 #include "opal/mca/hwloc/base/base.h"
+#include "opal/mca/common/pmi/common_pmi.h"
 
 #include "orte/mca/db/db.h"
 #include "orte/mca/errmgr/errmgr.h"
@@ -184,13 +185,13 @@ static int pmi_barrier(orte_grpcomm_collective_t *coll)
 #if WANT_PMI2_SUPPORT
     /* Cray doesn't provide a barrier, so use the Fence function here */
     if (PMI_SUCCESS != (rc = PMI2_KVS_Fence())) {
-        ORTE_PMI_ERROR(rc, "PMI2_KVS_Fence");
+        OPAL_PMI_ERROR(rc, "PMI2_KVS_Fence");
         return ORTE_ERROR;
     }
 #else
     /* use the PMI barrier function */
     if (PMI_SUCCESS != (rc = PMI_Barrier())) {
-        ORTE_PMI_ERROR(rc, "PMI_Barrier");
+        OPAL_PMI_ERROR(rc, "PMI_Barrier");
         return ORTE_ERROR;
     }
 #endif
@@ -236,7 +237,7 @@ static int pmi_put_last_key (void) {
 
     rc = kvs_put(pmi_kvs_key, pmi_packed_data);
     if (PMI_SUCCESS != rc) {
-	ORTE_PMI_ERROR(rc, "PMI_KVS_Put");
+	OPAL_PMI_ERROR(rc, "PMI_KVS_Put");
 	return ORTE_ERROR;
     }
 
@@ -458,7 +459,7 @@ static int modex(orte_grpcomm_collective_t *coll)
 
     /* commit our modex info */
     if (PMI_SUCCESS != (rc = kvs_commit())) {
-        ORTE_PMI_ERROR(rc, "PMI_KVS_Commit failed");
+        OPAL_PMI_ERROR(rc, "PMI_KVS_Commit failed");
         return ORTE_ERROR;
     }
 
@@ -848,7 +849,7 @@ static int setup_pmi(void)
 #else
     rc = PMI_KVS_Get_value_length_max(&pmi_vallen_max);
     if (PMI_SUCCESS != rc) {
-        ORTE_PMI_ERROR(rc, "PMI_Get_value_length_max");
+        OPAL_PMI_ERROR(rc, "PMI_Get_value_length_max");
         return ORTE_ERROR;
     }
 #endif
@@ -867,7 +868,7 @@ static int setup_pmi(void)
     max_length = 1024;
 #else
     if (PMI_SUCCESS != (rc = PMI_KVS_Get_name_length_max(&max_length))) {
-        ORTE_PMI_ERROR(rc, "PMI_KVS_Get_name_length_max");
+        OPAL_PMI_ERROR(rc, "PMI_KVS_Get_name_length_max");
         return ORTE_ERROR;
     }
 #endif
@@ -882,7 +883,7 @@ static int setup_pmi(void)
     rc = PMI_KVS_Get_my_name(pmi_kvs_name,max_length);
 #endif
     if (PMI_SUCCESS != rc) {
-        ORTE_PMI_ERROR(rc, "PMI_KVS_Get_my_name");
+        OPAL_PMI_ERROR(rc, "PMI_KVS_Get_my_name");
         return ORTE_ERROR;
     }
 
@@ -890,7 +891,7 @@ static int setup_pmi(void)
     pmi_keylen_max = PMI2_MAX_KEYLEN;
 #else
     if (PMI_SUCCESS != (rc = PMI_KVS_Get_key_length_max(&pmi_keylen_max))) {
-        ORTE_PMI_ERROR(rc, "PMI_KVS_Get_key_length_max");
+        OPAL_PMI_ERROR(rc, "PMI_KVS_Get_key_length_max");
         return ORTE_ERROR;
     }
 #endif
