@@ -40,6 +40,9 @@
 #include <unistd.h>
 #include <sys/time.h>
 #include <sys/resource.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 
 #include "opal_stdint.h"
 #include "opal/prefetch.h"
@@ -286,6 +289,89 @@ static int check_reg_mem_basics(void)
 #endif
 }
 
+static int read_device_sysfs(ompi_btl_usnic_module_t *module, const char *name)
+{
+    int ret, fd;
+    char filename[OPAL_PATH_MAX], line[256];
+
+    snprintf(filename, sizeof(filename), "/sys/class/infiniband/%s/%s",
+             ibv_get_device_name(module->device), name);
+    fd = open(filename, O_RDONLY);
+    if (fd < 0) {
+        return -1;
+    }
+
+    ret = read(fd, line, sizeof(line));
+    close(fd);
+    if (ret < 0) {
+        return -1;
+    }
+
+    return atoi(line);
+}
+
+static int check_usnic_config(struct ibv_device_attr *device_attr,
+                              ompi_btl_usnic_module_t *module,
+                              int num_local_procs)
+{
+    char str[128];
+    int num_vfs, qp_per_vf, cq_per_vf;
+
+    /* usNIC allocates QPs as a combination of PCI virtual functions
+       (VFs) and resources inside those VFs.  Ensure that:
+
+       1. num_vfs (i.e., "usNICs") >= num_local_procs (to ensure that
+          each MPI process will be able to have its own protection
+          domain), and
+       2. num_vfs * num_qps_per_vf >= num_local_procs * NUM_CHANNELS
+          (to ensure that each MPI process will be able to get the
+          number of QPs it needs -- we know that every VF will have
+          the same number of QPs), and
+       3. num_vfs * num_cqs_per_vf >= num_local_procs * NUM_CHANNELS
+          (to ensure that each MPI process will be able to get the
+          number of CQs that it needs) */
+    num_vfs = read_device_sysfs(module, "max_vf");
+    qp_per_vf = read_device_sysfs(module, "qp_per_vf");
+    cq_per_vf = read_device_sysfs(module, "cq_per_vf");
+    if (num_vfs < 0 || qp_per_vf < 0 || cq_per_vf < 0) {
+        snprintf(str, sizeof(str), "Cannot read usNIC Linux verbs resources");
+        goto error;
+    }
+
+    if (num_vfs < num_local_procs) {
+        snprintf(str, sizeof(str), "Not enough usNICs (found %d, need %d)",
+                 num_vfs, num_local_procs);
+        goto error;
+    }
+
+    if (num_vfs * qp_per_vf < num_local_procs * USNIC_NUM_CHANNELS) {
+        snprintf(str, sizeof(str), "Not enough SQ/RQ (found %d, need %d)",
+                 num_vfs * qp_per_vf,
+                 num_local_procs * USNIC_NUM_CHANNELS);
+        goto error;
+    }
+    if (num_vfs * cq_per_vf < num_local_procs * USNIC_NUM_CHANNELS) {
+        snprintf(str, sizeof(str), "Not enough CQ per usNIC (found %d, need %d)",
+                 num_vfs * cq_per_vf,
+                 num_local_procs * USNIC_NUM_CHANNELS);
+        goto error;
+    }
+
+    /* All is good! */
+    return OMPI_SUCCESS;
+
+ error:
+    /* Sad panda */
+    opal_show_help("help-mpi-btl-usnic.txt",
+                   "not enough usnic resources",
+                   true,
+                   ompi_process_info.nodename,
+                   ibv_get_device_name(module->device),
+                   str);
+    return OMPI_ERROR;
+}
+
+
 static void
 usnic_clock_callback(int fd, short flags, void *timeout)
 {
@@ -476,34 +562,9 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
         }
         opal_memchecker_base_mem_defined(&device_attr, sizeof(device_attr));
 
-        /* Do a little math: are there enough qp's on this device for
-           all MPI processes in this job on this server?  If not, then
-           don't even try.  We currently need 2 QPs per MPI process. */
-        if (device_attr.max_qp < num_local_procs * 2) {
-            char *str;
-            asprintf(&str, "Not enough usNIC QPs (found %d, need %d)",
-                     device_attr.max_qp, num_local_procs * 2);
-            opal_show_help("help-mpi-btl-usnic.txt",
-                           "not enough usnic resources",
-                           true,
-                           ompi_process_info.nodename,
-                           ibv_get_device_name(module->device),
-                           str);
-            free(str);
-            --mca_btl_usnic_component.num_modules;
-            --i;
-            continue;
-        } else if (device_attr.max_cq < num_local_procs * 2) {
-            char *str;
-            asprintf(&str, "Not enough usNIC CQs (found %d, need %d)",
-                     device_attr.max_cq, num_local_procs * 2);
-            opal_show_help("help-mpi-btl-usnic.txt",
-                           "not enough usnic resources",
-                           true,
-                           ompi_process_info.nodename,
-                           ibv_get_device_name(module->device),
-                           str);
-            free(str);
+        /* Check some usNIC configuration minimum settings */
+        if (check_usnic_config(&device_attr, module,
+                               num_local_procs) != OMPI_SUCCESS) {
             --mca_btl_usnic_component.num_modules;
             --i;
             continue;
