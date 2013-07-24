@@ -79,6 +79,11 @@ Trunk (not on release branches yet)
   executables on systems that support it.  This behavior can be
   disabled via --disable-wrapper-rpath.  See note in README about ABI
   issues when using rpath in MPI applications.
+- Add support for MPI_C_*COMPLEX and MPI_CXX_*COMPLEX datatypes.
+- Add support for the MPI_COUNT datatype and the associated MPI
+  functions introduced with MPI-3.
+- Add support for the MPI tool information interface (MPI_T).
+- Update ompi_info to support limiting output by opal info level.
 
 
 1.7.2
