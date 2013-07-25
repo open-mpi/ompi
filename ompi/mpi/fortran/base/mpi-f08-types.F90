@@ -22,12 +22,6 @@ module mpi_f08_types
 #endif
 
    !
-   ! kind parameters
-   !
-
-   integer, parameter :: MPI_DOUBLE_KIND  = C_DOUBLE
-
-   !
    ! derived types
    !
 
