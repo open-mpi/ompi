@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -11,6 +12,8 @@
  *                         All rights reserved.
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -423,6 +426,14 @@ struct mca_coll_tuned_module_t {
 };
 typedef struct mca_coll_tuned_module_t mca_coll_tuned_module_t;
 OBJ_CLASS_DECLARATION(mca_coll_tuned_module_t);
+
+static inline void mca_coll_tuned_free_reqs(ompi_request_t ** reqs,
+                                            int count)
+{
+    int i;
+    for (i = 0; i < count; ++i)
+      ompi_request_free(reqs + i);
+}
 
 END_C_DECLS
 

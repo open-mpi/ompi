@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -10,6 +11,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
+ * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -26,6 +29,103 @@
 #include "ompi/mca/coll/coll.h"
 #include "ompi/mca/coll/base/coll_tags.h"
 #include "ompi/mca/pml/pml.h"
+
+
+static int
+mca_coll_basic_alltoallw_intra_inplace(void *rbuf, int *rcounts, const int *rdisps,
+                                       struct ompi_datatype_t * const *rdtypes,
+                                       struct ompi_communicator_t *comm,
+                                       mca_coll_base_module_t *module)
+{
+    mca_coll_basic_module_t *basic_module = (mca_coll_basic_module_t*) module;
+    int i, j, size, rank, err, max_size;
+    MPI_Request *preq;
+    char *tmp_buffer;
+    ptrdiff_t ext;
+
+    /* Initialize. */
+
+    size = ompi_comm_size(comm);
+    rank = ompi_comm_rank(comm);
+
+    /* If only one process, we're done. */
+    if (1 == size) {
+        return MPI_SUCCESS;
+    }
+
+    /* Find the largest receive amount */
+    for (i = 0, max_size = 0 ; i < size ; ++i) {
+        ompi_datatype_type_extent (rdtypes[i], &ext);
+        ext *= rcounts[rank];
+
+        max_size = ext > max_size ? ext : max_size;
+    }
+
+    /* Allocate a temporary buffer */
+    tmp_buffer = calloc (max_size, 1);
+    if (NULL == tmp_buffer) {
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+
+    /* in-place alltoallw slow algorithm (but works) */
+    for (i = 0 ; i < size ; ++i) {
+        for (j = i+1 ; j < size ; ++j) {
+            ompi_datatype_type_extent (rdtypes[j], &ext);
+
+            /* Initiate all send/recv to/from others. */
+            preq = basic_module->mccb_reqs;
+
+            if (i == rank && rcounts[j] != 0) {
+                /* Copy the data into the temporary buffer */
+                err = ompi_datatype_copy_content_same_ddt (rdtypes[j], rcounts[j],
+                                                           tmp_buffer, (char *) rbuf + rdisps[j]);
+                if (MPI_SUCCESS != err) { goto error_hndl; }
+
+                /* Exchange data with the peer */
+                err = MCA_PML_CALL(irecv ((char *) rbuf + rdisps[j], rcounts[j], rdtypes[j],
+                                          j, MCA_COLL_BASE_TAG_ALLTOALLW, comm, preq++));
+                if (MPI_SUCCESS != err) { goto error_hndl; }
+
+                err = MCA_PML_CALL(isend ((void *) tmp_buffer,  rcounts[j], rdtypes[j],
+                                          j, MCA_COLL_BASE_TAG_ALLTOALLW, MCA_PML_BASE_SEND_STANDARD,
+                                          comm, preq++));
+                if (MPI_SUCCESS != err) { goto error_hndl; }
+            } else if (j == rank && rcounts[i] != 0) {
+                /* Copy the data into the temporary buffer */
+                err = ompi_datatype_copy_content_same_ddt (rdtypes[i], rcounts[i],
+                                                           tmp_buffer, (char *) rbuf + rdisps[i]);
+                if (MPI_SUCCESS != err) { goto error_hndl; }
+
+                /* Exchange data with the peer */
+                err = MCA_PML_CALL(irecv ((char *) rbuf + rdisps[i], rcounts[i], rdtypes[i],
+                                          i, MCA_COLL_BASE_TAG_ALLTOALLW, comm, preq++));
+                if (MPI_SUCCESS != err) { goto error_hndl; }
+
+                err = MCA_PML_CALL(isend ((void *) tmp_buffer,  rcounts[i], rdtypes[i],
+                                          i, MCA_COLL_BASE_TAG_ALLTOALLW, MCA_PML_BASE_SEND_STANDARD,
+                                          comm, preq++));
+                if (MPI_SUCCESS != err) { goto error_hndl; }
+            } else {
+                continue;
+            }
+
+            /* Wait for the requests to complete */
+            err = ompi_request_wait_all (2, basic_module->mccb_reqs, MPI_STATUS_IGNORE);
+            if (MPI_SUCCESS != err) { goto error_hndl; }
+
+            /* Free the requests. */
+            mca_coll_basic_free_reqs(basic_module->mccb_reqs, 2);
+        }
+    }
+
+ error_hndl:
+    /* Free the temporary buffer */
+    free (tmp_buffer);
+
+    /* All done */
+
+    return err;
+}
 
 
 /*
@@ -54,6 +154,10 @@ mca_coll_basic_alltoallw_intra(void *sbuf, int *scounts, int *sdisps,
     mca_coll_basic_module_t *basic_module = (mca_coll_basic_module_t*) module;
 
     /* Initialize. */
+    if (MPI_IN_PLACE == sbuf) {
+        return mca_coll_basic_alltoallw_intra_inplace (rbuf, rcounts, rdisps,
+                                                       rdtypes, comm, module);
+    }
 
     size = ompi_comm_size(comm);
     rank = ompi_comm_rank(comm);

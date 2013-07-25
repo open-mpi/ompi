@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -10,6 +11,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -57,6 +60,11 @@ int MPI_Alltoall(void *sendbuf, int sendcount, MPI_Datatype sendtype,
         /* Unrooted operation -- same checks for all ranks on both
            intracommunicators and intercommunicators */
 
+        if (MPI_IN_PLACE == sendbuf) {
+            sendcount = recvcount;
+            sendtype = recvtype;
+        }
+
         err = MPI_SUCCESS;
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
         if (ompi_comm_invalid(comm)) {
@@ -66,7 +74,7 @@ int MPI_Alltoall(void *sendbuf, int sendcount, MPI_Datatype sendtype,
             err = MPI_ERR_TYPE;
         } else if (recvcount < 0) {
             err = MPI_ERR_COUNT;
-        } else if (MPI_IN_PLACE == sendbuf || MPI_IN_PLACE == recvbuf) {
+        } else if (MPI_IN_PLACE == recvbuf) {
             err = MPI_ERR_ARG;
         } else {
             OMPI_CHECK_DATATYPE_FOR_SEND(err, sendtype, sendcount);

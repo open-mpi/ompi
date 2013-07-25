@@ -51,6 +51,98 @@ static mca_base_var_enum_value_t alltoall_algorithms[] = {
     {0, NULL}
 };
 
+/* MPI_IN_PLACE all to all algorithm. TODO: implement a better one. */
+static int
+mca_coll_tuned_alltoall_intra_basic_inplace(void *rbuf, int rcount,
+                                            struct ompi_datatype_t *rdtype,
+                                            struct ompi_communicator_t *comm,
+                                            mca_coll_base_module_t *module)
+{
+    mca_coll_tuned_module_t *tuned_module = (mca_coll_tuned_module_t*) module;
+    int i, j, size, rank, err;
+    MPI_Request *preq;
+    char *tmp_buffer;
+    size_t max_size;
+    ptrdiff_t ext;
+
+    /* Initialize. */
+
+    size = ompi_comm_size(comm);
+    rank = ompi_comm_rank(comm);
+
+    /* If only one process, we're done. */
+    if (1 == size) {
+        return MPI_SUCCESS;
+    }
+
+    /* Find the largest receive amount */
+    ompi_datatype_type_extent (rdtype, &ext);
+    max_size = ext * rcount;
+
+    /* Allocate a temporary buffer */
+    tmp_buffer = calloc (max_size, 1);
+    if (NULL == tmp_buffer) {
+      return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+
+    /* in-place alltoall slow algorithm (but works) */
+    for (i = 0 ; i < size ; ++i) {
+        for (j = i+1 ; j < size ; ++j) {
+            /* Initiate all send/recv to/from others. */
+            preq = tuned_module->tuned_data->mcct_reqs;
+
+            if (i == rank) {
+                /* Copy the data into the temporary buffer */
+                err = ompi_datatype_copy_content_same_ddt (rdtype, rcount, tmp_buffer,
+                                                       (char *) rbuf + j * max_size);
+                if (MPI_SUCCESS != err) { goto error_hndl; }
+
+                /* Exchange data with the peer */
+                err = MCA_PML_CALL(irecv ((char *) rbuf + max_size * j, rcount, rdtype,
+                                          j, MCA_COLL_BASE_TAG_ALLTOALL, comm, preq++));
+                if (MPI_SUCCESS != err) { goto error_hndl; }
+
+                err = MCA_PML_CALL(isend ((char *) tmp_buffer,  rcount, rdtype,
+                                          j, MCA_COLL_BASE_TAG_ALLTOALL, MCA_PML_BASE_SEND_STANDARD,
+                                          comm, preq++));
+                if (MPI_SUCCESS != err) { goto error_hndl; }
+            } else if (j == rank) {
+                /* Copy the data into the temporary buffer */
+                err = ompi_datatype_copy_content_same_ddt (rdtype, rcount, tmp_buffer,
+                                                       (char *) rbuf + i * max_size);
+                if (MPI_SUCCESS != err) { goto error_hndl; }
+
+                /* Exchange data with the peer */
+                err = MCA_PML_CALL(irecv ((char *) rbuf + max_size * i, rcount, rdtype,
+                                          i, MCA_COLL_BASE_TAG_ALLTOALL, comm, preq++));
+                if (MPI_SUCCESS != err) { goto error_hndl; }
+
+                err = MCA_PML_CALL(isend ((char *) tmp_buffer,  rcount, rdtype,
+                                          i, MCA_COLL_BASE_TAG_ALLTOALL, MCA_PML_BASE_SEND_STANDARD,
+                                          comm, preq++));
+                if (MPI_SUCCESS != err) { goto error_hndl; }
+            } else {
+                continue;
+            }
+
+            /* Wait for the requests to complete */
+            err = ompi_request_wait_all (2, tuned_module->tuned_data->mcct_reqs, MPI_STATUS_IGNORE);
+            if (MPI_SUCCESS != err) { goto error_hndl; }
+
+            /* Free the requests. */
+            mca_coll_tuned_free_reqs(tuned_module->tuned_data->mcct_reqs, 2);
+        }
+    }
+
+ error_hndl:
+    /* Free the temporary buffer */
+    free (tmp_buffer);
+
+    /* All done */
+
+    return err;
+}
+
 int ompi_coll_tuned_alltoall_intra_pairwise(void *sbuf, int scount, 
                                             struct ompi_datatype_t *sdtype,
                                             void* rbuf, int rcount,
@@ -61,6 +153,11 @@ int ompi_coll_tuned_alltoall_intra_pairwise(void *sbuf, int scount,
     int line = -1, err = 0, rank, size, step, sendto, recvfrom;
     void * tmpsend, *tmprecv;
     ptrdiff_t lb, sext, rext;
+
+    if (MPI_IN_PLACE == sbuf) {
+        return mca_coll_tuned_alltoall_intra_basic_inplace (rbuf, rcount, rdtype,
+                                                            comm, module);
+    }
 
     size = ompi_comm_size(comm);
     rank = ompi_comm_rank(comm);
@@ -120,6 +217,11 @@ int ompi_coll_tuned_alltoall_intra_bruck(void *sbuf, int scount,
     mca_coll_tuned_module_t *tuned_module = (mca_coll_tuned_module_t*) module;
     mca_coll_tuned_comm_t *data = tuned_module->tuned_data;
 #endif
+
+    if (MPI_IN_PLACE == sbuf) {
+        return mca_coll_tuned_alltoall_intra_basic_inplace (rbuf, rcount, rdtype,
+                                                            comm, module);
+    }
 
     size = ompi_comm_size(comm);
     rank = ompi_comm_rank(comm);
@@ -279,6 +381,11 @@ int ompi_coll_tuned_alltoall_intra_linear_sync(void *sbuf, int scount,
 
     ompi_request_t **reqs = NULL;
 
+    if (MPI_IN_PLACE == sbuf) {
+        return mca_coll_tuned_alltoall_intra_basic_inplace (rbuf, rcount, rdtype,
+                                                            comm, module);
+    }
+
     /* Initialize. */
 
     size = ompi_comm_size(comm);
@@ -418,6 +525,11 @@ int ompi_coll_tuned_alltoall_intra_two_procs(void *sbuf, int scount,
     void * tmpsend, *tmprecv;
     ptrdiff_t sext, rext, lb;
 
+    if (MPI_IN_PLACE == sbuf) {
+        return mca_coll_tuned_alltoall_intra_basic_inplace (rbuf, rcount, rdtype,
+                                                            comm, module);
+    }
+
     rank = ompi_comm_rank(comm);
 
     OPAL_OUTPUT((ompi_coll_tuned_stream,
@@ -481,7 +593,7 @@ int ompi_coll_tuned_alltoall_intra_basic_linear(void *sbuf, int scount,
                                                 void* rbuf, int rcount,
                                                 struct ompi_datatype_t *rdtype,
                                                 struct ompi_communicator_t *comm,
-						mca_coll_base_module_t *module)
+                                                mca_coll_base_module_t *module)
 {
     int i, rank, size, err, nreqs;
     char *psnd, *prcv;
@@ -489,6 +601,11 @@ int ompi_coll_tuned_alltoall_intra_basic_linear(void *sbuf, int scount,
     ompi_request_t **req, **sreq, **rreq;
     mca_coll_tuned_module_t *tuned_module = (mca_coll_tuned_module_t*) module;
     mca_coll_tuned_comm_t *data = tuned_module->tuned_data;
+
+    if (MPI_IN_PLACE == sbuf) {
+        return mca_coll_tuned_alltoall_intra_basic_inplace (rbuf, rcount, rdtype,
+                                                            comm, module);
+    }
 
     /* Initialize. */
 
