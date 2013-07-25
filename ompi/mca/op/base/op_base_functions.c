@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -322,6 +323,15 @@ COMPLEX_OP_FUNC_SUM(fortran_complex16, ompi_fortran_complex16_t)
 #if OMPI_HAVE_FORTRAN_REAL16 && OMPI_HAVE_FORTRAN_COMPLEX32
 COMPLEX_OP_FUNC_SUM(fortran_complex32, ompi_fortran_complex32_t)
 #endif
+#if HAVE_FLOAT__COMPLEX
+OP_FUNC(sum, c_float__complex, float _Complex, +=)
+#endif
+#if HAVE_DOUBLE__COMPLEX
+OP_FUNC(sum, c_double__complex, double _Complex, +=)
+#endif
+#if HAVE_LONG_DOUBLE__COMPLEX
+OP_FUNC(sum, c_long_double__complex, long double _Complex, +=)
+#endif
 
 /*************************************************************************
  * Product
@@ -394,6 +404,15 @@ COMPLEX_OP_FUNC_PROD(fortran_complex16, ompi_fortran_complex16_t)
 #endif
 #if OMPI_HAVE_FORTRAN_REAL16 && OMPI_HAVE_FORTRAN_COMPLEX32
 COMPLEX_OP_FUNC_PROD(fortran_complex32, ompi_fortran_complex32_t)
+#endif
+#if HAVE_FLOAT__COMPLEX
+OP_FUNC(prod, c_float__complex, float _Complex, *=)
+#endif
+#if HAVE_DOUBLE__COMPLEX
+OP_FUNC(prod, c_double__complex, double _Complex, *=)
+#endif
+#if HAVE_LONG_DOUBLE__COMPLEX
+OP_FUNC(prod, c_long_double__complex, long double _Complex, *=)
 #endif
 
 /*************************************************************************
@@ -947,6 +966,15 @@ COMPLEX_OP_FUNC_SUM_3BUF(fortran_complex16, ompi_fortran_complex16_t)
 #if OMPI_HAVE_FORTRAN_REAL16 && OMPI_HAVE_FORTRAN_COMPLEX32
 COMPLEX_OP_FUNC_SUM_3BUF(fortran_complex32, ompi_fortran_complex32_t)
 #endif
+#if HAVE_FLOAT__COMPLEX
+OP_FUNC_3BUF(sum, c_float__complex, float _Complex, +=)
+#endif
+#if HAVE_DOUBLE__COMPLEX
+OP_FUNC_3BUF(sum, c_double__complex, double _Complex, +=)
+#endif
+#if HAVE_LONG_DOUBLE__COMPLEX
+OP_FUNC_3BUF(sum, c_long_double__complex, long double _Complex, +=)
+#endif
 
 /*************************************************************************
  * Product
@@ -1019,6 +1047,15 @@ COMPLEX_OP_FUNC_PROD_3BUF(fortran_complex16, ompi_fortran_complex16_t)
 #endif
 #if OMPI_HAVE_FORTRAN_REAL16 && OMPI_HAVE_FORTRAN_COMPLEX32
 COMPLEX_OP_FUNC_PROD_3BUF(fortran_complex32, ompi_fortran_complex32_t)
+#endif
+#if HAVE_FLOAT__COMPLEX
+OP_FUNC_3BUF(prod, c_float__complex, float _Complex, *=)
+#endif
+#if HAVE_DOUBLE__COMPLEX
+OP_FUNC_3BUF(prod, c_double__complex, double _Complex, *=)
+#endif
+#if HAVE_LONG_DOUBLE__COMPLEX
+OP_FUNC_3BUF(prod, c_long_double__complex, long double _Complex, *=)
 #endif
 
 /*************************************************************************
@@ -1547,6 +1584,9 @@ LOC_FUNC_3BUF(minloc, long_double_int, <)
 #if OMPI_HAVE_FORTRAN_REAL4 && OMPI_HAVE_FORTRAN_COMPLEX8
 #define COMPLEX8(name) ompi_op_base_##name##_fortran_complex8
 #define COMPLEX8_3BUFF(name) ompi_op_base_3buff_##name##_fortran_complex8
+#elif HAVE_FLOAT__COMPLEX
+#define COMPLEX8(name) ompi_op_base_##name##_c_float__complex
+#define COMPLEX8_3BUFF(name) ompi_op_base_3buff_##name##_c_float__complex
 #else
 #define COMPLEX8(name) NULL
 #define COMPLEX8_3BUFF(name) NULL
@@ -1554,6 +1594,9 @@ LOC_FUNC_3BUF(minloc, long_double_int, <)
 #if OMPI_HAVE_FORTRAN_REAL8 && OMPI_HAVE_FORTRAN_COMPLEX16
 #define COMPLEX16(name) ompi_op_base_##name##_fortran_complex16
 #define COMPLEX16_3BUFF(name) ompi_op_base_3buff_##name##_fortran_complex16
+#elif HAVE_DOUBLE__COMPLEX
+#define COMPLEX16(name) ompi_op_base_##name##_c_double__complex
+#define COMPLEX16_3BUFF(name) ompi_op_base_3buff_##name##_c_double__complex
 #else
 #define COMPLEX16(name) NULL
 #define COMPLEX16_3BUFF(name) NULL
@@ -1568,38 +1611,74 @@ LOC_FUNC_3BUF(minloc, long_double_int, <)
 #if OMPI_HAVE_FORTRAN_REAL16 && OMPI_REAL16_MATCHES_C && OMPI_HAVE_FORTRAN_COMPLEX32
 #define COMPLEX32(name) ompi_op_base_##name##_fortran_complex32
 #define COMPLEX32_3BUFF(name) ompi_op_base_3buff_##name##_fortran_complex32
+#elif HAVE_LONG_DOUBLE__COMPLEX
+#define COMPLEX32(name) ompi_op_base_##name##_c_long_double__complex
+#define COMPLEX32_3BUFF(name) ompi_op_base_3buff_##name##_c_long_double__complex
 #else
 #define COMPLEX32(name) NULL
 #define COMPLEX32_3BUFF(name) NULL
 #endif
+#if HAVE_FLOAT__COMPLEX
+#define C_FLOAT__COMPLEX(name) ompi_op_base_##name##_c_float__complex
+#define C_FLOAT__COMPLEX_3BUFF(name) ompi_op_base_3buff_##name##_c_float__complex
+#else
+#define C_FLOAT__COMPLEX(name) NULL
+#define C_FLOAT__COMPLEX_3BUFF(name) NULL
+#endif
+#if HAVE_DOUBLE__COMPLEX
+#define C_DOUBLE__COMPLEX(name) ompi_op_base_##name##_c_double__complex
+#define C_DOUBLE__COMPLEX_3BUFF(name) ompi_op_base_3buff_##name##_c_double__complex
+#else
+#define C_DOUBLE__COMPLEX(name) NULL
+#define C_DOUBLE__COMPLEX_3BUFF(name) NULL
+#endif
+#if HAVE_LONG_DOUBLE__COMPLEX
+#define C_LONG_DOUBLE__COMPLEX(name) ompi_op_base_##name##_c_long_double__complex
+#define C_LONG_DOUBLE__COMPLEX_3BUFF(name) ompi_op_base_3buff_##name##_c_long_double__complex
+#else
+#define C_LONG_DOUBLE__COMPLEX(name) NULL
+#define C_LONG_DOUBLE__COMPLEX_3BUFF(name) NULL
+#endif
 
 #define COMPLEX(name) \
-  COMPLEX_PLAIN(name),  /* OMPI_OP_BASE_TYPE_COMPLEX */ \
-  COMPLEX_DOUBLE(name), /* OMPI_OP_BASE_TYPE_DOUBLE_COMPLEX */ \
-  COMPLEX8(name),       /* OMPI_OP_BASE_TYPE_COMPLEX8 */ \
-  COMPLEX16(name),      /* OMPI_OP_BASE_TYPE_COMPLEX16 */ \
-  COMPLEX32(name)       /* OMPI_OP_BASE_TYPE_COMPLEX32 */
+  COMPLEX_PLAIN(name),          /* OMPI_OP_BASE_TYPE_COMPLEX */ \
+  COMPLEX_DOUBLE(name),         /* OMPI_OP_BASE_TYPE_DOUBLE_COMPLEX */ \
+  COMPLEX8(name),               /* OMPI_OP_BASE_TYPE_COMPLEX8 */ \
+  COMPLEX16(name),              /* OMPI_OP_BASE_TYPE_COMPLEX16 */ \
+  COMPLEX32(name),              /* OMPI_OP_BASE_TYPE_COMPLEX32 */ \
+  C_FLOAT__COMPLEX(name),       /* OMPI_OP_BASE_TYPE_C_FLOAT__COMPLEX */ \
+  C_DOUBLE__COMPLEX(name),      /* OMPI_OP_BASE_TYPE_C_DOUBLE__COMPLEX */ \
+  C_LONG_DOUBLE__COMPLEX(name)  /* OMPI_OP_BASE_TYPE_C_LONG_DOUBLE__COMPLEX */
 
 #define COMPLEX_3BUFF(name) \
-  COMPLEX_PLAIN_3BUFF(name),  /* OMPI_OP_BASE_TYPE_COMPLEX */ \
-  COMPLEX_DOUBLE_3BUFF(name), /* OMPI_OP_BASE_TYPE_DOUBLE_COMPLEX */ \
-  COMPLEX8_3BUFF(name),       /* OMPI_OP_BASE_TYPE_COMPLEX8 */ \
-  COMPLEX16_3BUFF(name),      /* OMPI_OP_BASE_TYPE_COMPLEX16 */ \
-  COMPLEX32_3BUFF(name)       /* OMPI_OP_BASE_TYPE_COMPLEX32 */
+  COMPLEX_PLAIN_3BUFF(name),          /* OMPI_OP_BASE_TYPE_COMPLEX */ \
+  COMPLEX_DOUBLE_3BUFF(name),         /* OMPI_OP_BASE_TYPE_DOUBLE_COMPLEX */ \
+  COMPLEX8_3BUFF(name),               /* OMPI_OP_BASE_TYPE_COMPLEX8 */ \
+  COMPLEX16_3BUFF(name),              /* OMPI_OP_BASE_TYPE_COMPLEX16 */ \
+  COMPLEX32_3BUFF(name),              /* OMPI_OP_BASE_TYPE_COMPLEX32 */ \
+  C_FLOAT__COMPLEX_3BUFF(name),       /* OMPI_OP_BASE_TYPE_C_FLOAT__COMPLEX */ \
+  C_DOUBLE__COMPLEX_3BUFF(name),      /* OMPI_OP_BASE_TYPE_C_DOUBLE__COMPLEX*/ \
+  C_LONG_DOUBLE__COMPLEX_3BUFF(name)  /* OMPI_OP_BASE_TYPE_C_LONG_DOUBLE__COMPLEX*/
 
 #define COMPLEX_NULL \
   NULL,  /* OMPI_OP_BASE_TYPE_COMPLEX */ \
   NULL,  /* OMPI_OP_BASE_TYPE_DOUBLE_COMPLEX */ \
   NULL,  /* OMPI_OP_BASE_TYPE_COMPLEX8 */ \
   NULL,  /* OMPI_OP_BASE_TYPE_COMPLEX16 */ \
-  NULL   /* OMPI_OP_BASE_TYPE_COMPLEX32 */
+  NULL,  /* OMPI_OP_BASE_TYPE_COMPLEX32 */ \
+  NULL,  /* OMPI_OP_BASE_TYPE_C_FLOAT__COMPLEX */ \
+  NULL,  /* OMPI_OP_BASE_TYPE_C_DOUBLE__COMPLEX */ \
+  NULL   /* OMPI_OP_BASE_TYPE_C_LONG_DOUBLE__COMPLEX */
 
 #define COMPLEX_NULL_3BUFF \
   NULL,  /* OMPI_OP_BASE_TYPE_COMPLEX */ \
   NULL,  /* OMPI_OP_BASE_TYPE_DOUBLE_COMPLEX */ \
   NULL,  /* OMPI_OP_BASE_TYPE_COMPLEX8 */ \
   NULL,  /* OMPI_OP_BASE_TYPE_COMPLEX16 */ \
-  NULL   /* OMPI_OP_BASE_TYPE_COMPLEX32 */
+  NULL,  /* OMPI_OP_BASE_TYPE_COMPLEX32 */ \
+  NULL,  /* OMPI_OP_BASE_TYPE_C_FLOAT__COMPLEX */  \
+  NULL,  /* OMPI_OP_BASE_TYPE_C_DOUBLE__COMPLEX */ \
+  NULL   /* OMPI_OP_BASE_TYPE_C_LONG_DOUBLE__COMPLEX */
 
 /** Byte ****************************************************************/
 
