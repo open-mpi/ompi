@@ -27,5 +27,5 @@ with_tm=no
 with_devel_headers=yes
 with_portals=no
 with_valgrind=no
-with_pmi=/home/common/slurm/build/slurm-2.6.0
+
 
