@@ -163,6 +163,14 @@ enum {
     /** Complex32 */
     OMPI_OP_BASE_TYPE_COMPLEX32,
 
+    /** C Complex */
+    /* float _Complex */
+    OMPI_OP_BASE_TYPE_C_FLOAT__COMPLEX,
+    /* double _Complex */
+    OMPI_OP_BASE_TYPE_C_DOUBLE__COMPLEX,
+    /* long double _Complex */
+    OMPI_OP_BASE_TYPE_C_LONG_DOUBLE__COMPLEX,
+
     /** Byte */
     OMPI_OP_BASE_TYPE_BYTE,
 

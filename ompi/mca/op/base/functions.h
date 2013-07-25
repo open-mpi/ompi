@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2009 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -160,12 +162,34 @@
 #else
 #define OMPI_OP_HANDLER_COMPLEX32(name)
 #endif
+#if HAVE_FLOAT__COMPLEX
+#define OMPI_OP_HANDLER_FLOAT__COMPLEX(name) \
+  void ompi_op_base_##name##_c_float__complex OMPI_OP_PROTO;
+#else
+#define OMPI_OP_HANDLER_FLOAT__COMPLEX(name)
+#endif
+#if HAVE_DOUBLE__COMPLEX
+#define OMPI_OP_HANDLER_DOUBLE__COMPLEX(name) \
+  void ompi_op_base_##name##_c_double__complex OMPI_OP_PROTO;
+#else
+#define OMPI_OP_HANDLER_DOUBLE__COMPLEX(name)
+#endif
+#if HAVE_LONG_DOUBLE__COMPLEX
+#define OMPI_OP_HANDLER_LONG_DOUBLE__COMPLEX(name) \
+  void ompi_op_base_##name##_c_long_double__complex OMPI_OP_PROTO;
+#else
+#define OMPI_OP_HANDLER_LONG_DOUBLE__COMPLEX(name)
+#endif
+
 #define OMPI_OP_HANDLER_COMPLEX(name) \
   OMPI_OP_HANDLER_COMPLEX_INTRINSIC(name) \
   OMPI_OP_HANDLER_DOUBLE_COMPLEX_INTRINSIC(name) \
   OMPI_OP_HANDLER_COMPLEX8(name) \
   OMPI_OP_HANDLER_COMPLEX16(name) \
-  OMPI_OP_HANDLER_COMPLEX32(name)
+  OMPI_OP_HANDLER_COMPLEX32(name) \
+  OMPI_OP_HANDLER_FLOAT__COMPLEX(name) \
+  OMPI_OP_HANDLER_DOUBLE__COMPLEX(name) \
+  OMPI_OP_HANDLER_LONG_DOUBLE__COMPLEX(name)
 
 /* Byte */
 
@@ -406,12 +430,33 @@ BEGIN_C_DECLS
 #else
 #define OMPI_OP_3BUFF_HANDLER_COMPLEX32(name)
 #endif
+#if HAVE_FLOAT__COMPLEX
+#define OMPI_OP_3BUFF_HANDLER_FLOAT__COMPLEX(name) \
+  void ompi_op_base_3buff_##name##_c_float__complex OMPI_OP_PROTO_3BUF;
+#else
+#define OMPI_OP_3BUFF_HANDLER_FLOAT__COMPLEX(name)
+#endif
+#if HAVE_DOUBLE__COMPLEX
+#define OMPI_OP_3BUFF_HANDLER_DOUBLE__COMPLEX(name) \
+  void ompi_op_base_3buff_##name##_c_double__complex OMPI_OP_PROTO_3BUF;
+#else
+#define OMPI_OP_3BUFF_HANDLER_DOUBLE__COMPLEX(name)
+#endif
+#if HAVE_LONG_DOUBLE__COMPLEX
+#define OMPI_OP_3BUFF_HANDLER_LONG_DOUBLE__COMPLEX(name) \
+  void ompi_op_base_3buff_##name##_c_long_double__complex OMPI_OP_PROTO_3BUF;
+#else
+#define OMPI_OP_3BUFF_HANDLER_LONG_DOUBLE__COMPLEX(name)
+#endif
 #define OMPI_OP_3BUFF_HANDLER_COMPLEX(name) \
   OMPI_OP_3BUFF_HANDLER_COMPLEX_INTRINSIC(name) \
   OMPI_OP_3BUFF_HANDLER_DOUBLE_COMPLEX_INTRINSIC(name) \
   OMPI_OP_3BUFF_HANDLER_COMPLEX8(name) \
   OMPI_OP_3BUFF_HANDLER_COMPLEX16(name) \
-  OMPI_OP_3BUFF_HANDLER_COMPLEX32(name)
+  OMPI_OP_3BUFF_HANDLER_COMPLEX32(name) \
+  OMPI_OP_3BUFF_HANDLER_FLOAT__COMPLEX(name) \
+  OMPI_OP_3BUFF_HANDLER_DOUBLE__COMPLEX(name) \
+  OMPI_OP_3BUFF_HANDLER_LONG_DOUBLE__COMPLEX(name)
 
 /* Byte */
 
