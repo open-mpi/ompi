@@ -585,7 +585,7 @@ end interface  PMPI_Get_elements
 interface  PMPI_Get_elements_x
 subroutine PMPI_Get_elements_x_f08(status,datatype,count,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Get_elements_x_f08")
-   use :: mpi_f08_types, only : MPI_Status, MPI_Datatype
+   use :: mpi_f08_types, only : MPI_Status, MPI_Datatype, MPI_COUNT_KIND
    implicit none
    TYPE(MPI_Status), INTENT(IN) :: status
    TYPE(MPI_Datatype), INTENT(IN) :: datatype
@@ -858,7 +858,7 @@ end interface  PMPI_Type_get_extent
 interface  PMPI_Type_get_extent_x
 subroutine PMPI_Type_get_extent_x_f08(datatype,lb,extent,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Type_get_extent_x_f08")
-   use :: mpi_f08_types, only : MPI_Datatype, MPI_ADDRESS_KIND
+   use :: mpi_f08_types, only : MPI_Datatype, MPI_ADDRESS_KIND, MPI_COUNT_KIND
    implicit none
    TYPE(MPI_Datatype), INTENT(IN) :: datatype
    INTEGER(MPI_COUNT_KIND), INTENT(OUT) :: lb, extent
@@ -880,7 +880,7 @@ end interface  PMPI_Type_get_true_extent
 interface  PMPI_Type_get_true_extent_x
 subroutine PMPI_Type_get_true_extent_x_f08(datatype,true_lb,true_extent,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Type_get_true_extent_x_f08")
-   use :: mpi_f08_types, only : MPI_Datatype, MPI_ADDRESS_KIND
+   use :: mpi_f08_types, only : MPI_Datatype, MPI_ADDRESS_KIND, MPI_COUNT_KIND
    implicit none
    TYPE(MPI_Datatype), INTENT(IN) :: datatype
    INTEGER(MPI_COUNT_KIND), INTENT(OUT) :: true_lb, true_extent
@@ -916,7 +916,7 @@ end interface  PMPI_Type_size
 interface  PMPI_Type_size_x
 subroutine PMPI_Type_size_x_f08(datatype,size,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Type_size_x_f08")
-   use :: mpi_f08_types, only : MPI_Datatype
+   use :: mpi_f08_types, only : MPI_Datatype, MPI_COUNT_KIND
    implicit none
    TYPE(MPI_Datatype), INTENT(IN) :: datatype
    INTEGER(MPI_COUNT_KIND), INTENT(OUT) :: size
@@ -3282,7 +3282,7 @@ end interface  PMPI_Status_set_elements
 interface  PMPI_Status_set_elements_x
 subroutine PMPI_Status_set_elements_x_f08(status,datatype,count,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Status_set_elements_x_f08")
-   use :: mpi_f08_types, only : MPI_Status, MPI_Datatype
+   use :: mpi_f08_types, only : MPI_Status, MPI_Datatype, MPI_COUNT_KIND
    implicit none
    TYPE(MPI_Status), INTENT(INOUT) :: status
    TYPE(MPI_Datatype), INTENT(IN) :: datatype
