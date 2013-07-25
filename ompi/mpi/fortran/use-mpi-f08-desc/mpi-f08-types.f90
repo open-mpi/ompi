@@ -23,7 +23,6 @@ module mpi_f08_types
    ! kind parameters
    !
 
-   integer, parameter :: MPI_COUNT_KIND   = C_INT
    integer, parameter :: MPI_DOUBLE_KIND  = C_DOUBLE
 
    !
