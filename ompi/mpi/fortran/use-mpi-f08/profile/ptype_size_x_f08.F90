@@ -6,7 +6,7 @@
 ! $COPYRIGHT$
 
 subroutine PMPI_Type_size_x_f08(datatype,size,ierror)
-   use :: mpi_f08_types, only : MPI_Datatype, MPI_ADDRESS_KIND
+   use :: mpi_f08_types, only : MPI_Datatype, MPI_ADDRESS_KIND, MPI_COUNT_KIND
    use :: mpi_f08, only : ompi_type_size_x_f
    implicit none
    TYPE(MPI_Datatype), INTENT(IN) :: datatype

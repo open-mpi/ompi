@@ -6,7 +6,7 @@
 ! $COPYRIGHT$
 
 subroutine MPI_Status_set_elements_x_f08(status,datatype,count,ierror)
-   use :: mpi_f08_types, only : MPI_Status, MPI_Datatype
+   use :: mpi_f08_types, only : MPI_Status, MPI_Datatype, MPI_COUNT_KIND
    use :: mpi_f08, only : ompi_status_set_elements_x_f
    implicit none
    TYPE(MPI_Status), INTENT(INOUT) :: status
