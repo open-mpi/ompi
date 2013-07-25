@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -10,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2012      Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2012-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * $COPYRIGHT$
  * 
@@ -81,9 +82,15 @@ int MPI_Alltoallw(void *sendbuf, int sendcounts[], int sdispls[],
                                           FUNC_NAME);
         }
 
+        if (MPI_IN_PLACE == sendbuf) {
+            sendcounts = recvcounts;
+            sdispls    = rdispls;
+            sendtypes  = recvtypes;
+        }
+
         if ((NULL == sendcounts) || (NULL == sdispls) || (NULL == sendtypes) ||
             (NULL == recvcounts) || (NULL == rdispls) || (NULL == recvtypes) ||
-            MPI_IN_PLACE == sendbuf || MPI_IN_PLACE == recvbuf) {
+             MPI_IN_PLACE == recvbuf) {
             return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, FUNC_NAME);
         }
 

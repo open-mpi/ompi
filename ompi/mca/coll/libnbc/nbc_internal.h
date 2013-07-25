@@ -550,10 +550,6 @@ static inline void NBC_SchedCache_dictwipe(hb_tree *dict, int *size) {
   if(sendbuf == MPI_IN_PLACE) { \
     sendbuf = recvbuf; \
     inplace = 1; \
-  } else \
-  if(recvbuf == MPI_IN_PLACE) { \
-    recvbuf = sendbuf; \
-    inplace = 1; \
   } \
 }
 
