@@ -30,9 +30,76 @@
 
 static void mca_base_var_enum_constructor (mca_base_var_enum_t *enumerator);
 static void mca_base_var_enum_destructor (mca_base_var_enum_t *enumerator);
-OBJ_CLASS_INSTANCE(mca_base_var_enum_t, opal_object_t,
-                   mca_base_var_enum_constructor,
+OBJ_CLASS_INSTANCE(mca_base_var_enum_t, opal_object_t, mca_base_var_enum_constructor,
                    mca_base_var_enum_destructor);
+
+static int mca_base_var_enum_bool_get_count (mca_base_var_enum_t *enumerator, int *count)
+{
+    *count = 2;
+    return OPAL_SUCCESS;
+}
+
+static int mca_base_var_enum_bool_get_value (mca_base_var_enum_t *self, int index,
+                                             int *value, const char **string_value)
+{
+    if (1 < index) {
+        return OPAL_ERR_VALUE_OUT_OF_BOUNDS;
+    }
+
+    *value = index ? 1 : 0;
+    *string_value = index ? "true" : "false";
+
+    return OPAL_SUCCESS;
+}
+
+static int mca_base_var_enum_bool_vfs (mca_base_var_enum_t *self, const char *string_value,
+                                       int *value)
+{
+    char *tmp;
+    int v;
+
+    v = strtol (string_value, &tmp, 10);
+    if (*tmp != '\0') {
+        if (0 == strcmp (string_value, "true") || 0 == strcmp (string_value, "t") ||
+            0 == strcmp (string_value, "enabled")) {
+            v = 1;
+        } else if (0 == strcmp (string_value, "false") || 0 == strcmp (string_value, "f") ||
+                   0 == strcmp (string_value, "disabled")) {
+            v = 0;
+        } else {
+            return OPAL_ERR_VALUE_OUT_OF_BOUNDS;
+        }
+    }
+
+    *value = !!v;
+
+    return OPAL_SUCCESS;
+}
+
+static int mca_base_var_enum_bool_sfv (mca_base_var_enum_t *self, const int value,
+                                       const char **string_value)
+{
+    *string_value = value ? "true" : "false";
+
+    return OPAL_SUCCESS;
+}
+
+static int mca_base_var_enum_bool_dump (mca_base_var_enum_t *self, char **out)
+{
+    *out = strdup ("0: f|false|disabled, 1: t|true|enabled");
+    return *out ? OPAL_SUCCESS : OPAL_ERR_OUT_OF_RESOURCE;
+}
+
+mca_base_var_enum_t mca_base_var_enum_bool = {
+    .super     = OPAL_OBJ_STATIC_INIT(opal_object_t),
+    .enum_name = "boolean",
+    .get_count = mca_base_var_enum_bool_get_count,
+    .get_value = mca_base_var_enum_bool_get_value,
+    .value_from_string = mca_base_var_enum_bool_vfs,
+    .string_from_value = mca_base_var_enum_bool_sfv,
+    .dump      = mca_base_var_enum_bool_dump
+};
+
 
 int mca_base_var_enum_create (char *name, mca_base_var_enum_value_t *values, mca_base_var_enum_t **enumerator)
 {
@@ -186,4 +253,7 @@ static void mca_base_var_enum_constructor (mca_base_var_enum_t *enumerator)
 
 static void mca_base_var_enum_destructor (mca_base_var_enum_t *enumerator)
 {
+    if (enumerator->enum_name) {
+        free (enumerator->enum_name);
+    }
 }
