@@ -540,11 +540,7 @@ static int int_from_string(const char *src, mca_base_var_enum_t *enumerator, uin
     value = strtoull (src, &tmp, 0);
     is_int = tmp[0] == '\0';
 
-    if (0 == strcasecmp (src, "true")) {
-        value = 1;
-    } else if (0 == strcasecmp (src, "false")) {
-        value = 0;
-    } else if (!is_int && tmp != src) {
+    if (!is_int && tmp != src) {
         switch (tmp[0]) {
         case 'G':
         case 'g':
@@ -701,10 +697,11 @@ int mca_base_var_deregister(int index)
         var->mbv_storage->stringval) {
         free (var->mbv_storage->stringval);
         var->mbv_storage->stringval = NULL;
-    } else if (NULL != var->mbv_enumerator) {
+    } else if (MCA_BASE_VAR_TYPE_BOOL != var->mbv_type && NULL != var->mbv_enumerator) {
         OBJ_RELEASE(var->mbv_enumerator);
-        var->mbv_enumerator = NULL;
     }
+
+    var->mbv_enumerator = NULL;
 
     var->mbv_storage = NULL;
 
@@ -1252,11 +1249,13 @@ static int register_variable (const char *project_name, const char *framework_na
         }
     }
 
-    if (var->mbv_enumerator) {
-        OBJ_RELEASE (var->mbv_enumerator);
-    }
+    if (MCA_BASE_VAR_TYPE_BOOL == var->mbv_type) {
+        enumerator = &mca_base_var_enum_bool;
+    } else if (NULL != enumerator) {
+        if (var->mbv_enumerator) {
+            OBJ_RELEASE (var->mbv_enumerator);
+        }
 
-    if (NULL != enumerator) {
         OBJ_RETAIN(enumerator);
     }
 
@@ -1607,7 +1606,8 @@ static void var_destructor(mca_base_var_t *var)
         free (var->mbv_storage->stringval);
     }
 
-    if (NULL != var->mbv_enumerator) {
+    /* don't release the boolean enumerator */
+    if (MCA_BASE_VAR_TYPE_BOOL != var->mbv_type && NULL != var->mbv_enumerator) {
         OBJ_RELEASE(var->mbv_enumerator);
     }
 
@@ -1674,9 +1674,7 @@ static int var_value_string (mca_base_var_t *var, char **value_string)
     }
 
     if (NULL == var->mbv_enumerator) {
-        if (MCA_BASE_VAR_TYPE_BOOL == var->mbv_type) {
-            ret = asprintf (value_string, value->boolval ? "true" : "false");
-        } else if (MCA_BASE_VAR_TYPE_STRING == var->mbv_type) {
+        if (MCA_BASE_VAR_TYPE_STRING == var->mbv_type) {
             ret = asprintf (value_string, "%s", value->stringval ? value->stringval : "");
         } else {
             ret = asprintf (value_string, var_type_formats[var->mbv_type], value[0]);
