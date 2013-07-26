@@ -967,13 +967,13 @@ COMPLEX_OP_FUNC_SUM_3BUF(fortran_complex16, ompi_fortran_complex16_t)
 COMPLEX_OP_FUNC_SUM_3BUF(fortran_complex32, ompi_fortran_complex32_t)
 #endif
 #if HAVE_FLOAT__COMPLEX
-OP_FUNC_3BUF(sum, c_float__complex, float _Complex, +=)
+OP_FUNC_3BUF(sum, c_float__complex, float _Complex, +)
 #endif
 #if HAVE_DOUBLE__COMPLEX
-OP_FUNC_3BUF(sum, c_double__complex, double _Complex, +=)
+OP_FUNC_3BUF(sum, c_double__complex, double _Complex, +)
 #endif
 #if HAVE_LONG_DOUBLE__COMPLEX
-OP_FUNC_3BUF(sum, c_long_double__complex, long double _Complex, +=)
+OP_FUNC_3BUF(sum, c_long_double__complex, long double _Complex, +)
 #endif
 
 /*************************************************************************
@@ -1049,13 +1049,13 @@ COMPLEX_OP_FUNC_PROD_3BUF(fortran_complex16, ompi_fortran_complex16_t)
 COMPLEX_OP_FUNC_PROD_3BUF(fortran_complex32, ompi_fortran_complex32_t)
 #endif
 #if HAVE_FLOAT__COMPLEX
-OP_FUNC_3BUF(prod, c_float__complex, float _Complex, *=)
+OP_FUNC_3BUF(prod, c_float__complex, float _Complex, *)
 #endif
 #if HAVE_DOUBLE__COMPLEX
-OP_FUNC_3BUF(prod, c_double__complex, double _Complex, *=)
+OP_FUNC_3BUF(prod, c_double__complex, double _Complex, *)
 #endif
 #if HAVE_LONG_DOUBLE__COMPLEX
-OP_FUNC_3BUF(prod, c_long_double__complex, long double _Complex, *=)
+OP_FUNC_3BUF(prod, c_long_double__complex, long double _Complex, *)
 #endif
 
 /*************************************************************************
