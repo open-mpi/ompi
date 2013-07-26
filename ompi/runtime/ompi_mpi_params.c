@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -82,9 +83,10 @@ int ompi_mpi_register_params(void)
 {
     int value;
 
-    /* Whether we want MPI API function parameter checking or not */
+    /* Whether we want MPI API function parameter checking or not. Disable this by default if
+       parameter checking is compiled out. */
 
-    ompi_mpi_param_check = true;
+    ompi_mpi_param_check = !!(MPI_PARAM_CHECK);
     (void) mca_base_var_register("ompi", "mpi", NULL, "param_check",
                                  "Whether you want MPI API parameters checked at run-time or not.  Possible values are 0 (no checking) and 1 (perform checking at run-time)",
                                  MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
