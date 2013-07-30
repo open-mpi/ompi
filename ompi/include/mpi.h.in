@@ -149,9 +149,6 @@
 /* Type of MPI_Count */
 #undef OMPI_MPI_COUNT_TYPE
 
-/* Size of MPI_Count */
-#undef OMPI_MPI_COUNT_SIZE
-
 /* type to use for ptrdiff_t, if it does not exist, set to ptrdiff_t if it does exist */
 #undef OPAL_PTRDIFF_TYPE
 
