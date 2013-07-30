@@ -1,5 +1,6 @@
 enable_opal_multi_threads=yes
 enable_orte_progress_threads=yes
+enable_orterun_prefix_by_default=yes
 enable_ft_thread=no
 enable_mem_debug=no
 enable_mem_profile=no
@@ -23,8 +24,6 @@ enable_mca_no_build=crs,memchecker,snapc,crcp,rml-ftrm
 enable_contrib_no_build=libnbc,vt
 with_memory_manager=no
 with_tm=no
-with_slurm=/home/common/slurm/build
 with_devel_headers=yes
 with_portals=no
 with_valgrind=no
-with_pmi=/home/common/slurm/build
