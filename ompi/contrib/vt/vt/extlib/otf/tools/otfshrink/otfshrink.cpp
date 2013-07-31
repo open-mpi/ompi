@@ -54,7 +54,7 @@ static const char* Helptext[] = {
 "      -V            show OTF version                                       \n",
 "      -i <file>     input file name                                        \n",
 "      -o <name>     namestub of the output file                            \n",
-"                    (default: "DEFAULT_OUTFILE")                           \n",
+"                    (default: " DEFAULT_OUTFILE ")                         \n",
 "      -l \"<list>\"   a list of processes in quotes                        \n",
 "                    to enable, i.e. keep in the copy,                      \n",
 "                    e.g. '-l \"1,2 4-8 3\",10 12-20'                       \n",
