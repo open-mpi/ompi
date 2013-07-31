@@ -89,6 +89,7 @@ static int orte_ess_node_rank;
 static int orte_peer_modex_id;
 static int orte_peer_init_barrier_id;
 static int orte_peer_fini_barrier_id;
+static char *orte_strip_prefix;
 
 int orte_proc_info(void)
 {
@@ -178,10 +179,18 @@ int orte_proc_info(void)
                                   MCA_BASE_VAR_SCOPE_READONLY,
                                   &orte_process_info.strip_prefix_from_node_names);
 
+    orte_strip_prefix = "";
+    (void) mca_base_var_register ("orte", "orte", NULL, "strip_prefix",
+				  "Prefix to match when deciding whether to strip leading characters and zeroes from "
+				  "node names returned by daemons (empty = strip all). Does nothing if orte_strip_prefix_from_node_names "
+				  "is set to false", MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
+				  OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
+				  &orte_strip_prefix);
+
     /* we have to strip node names here, if user directs, to ensure that
      * the names exchanged in the modex match the names found locally
      */
-    if (orte_process_info.strip_prefix_from_node_names) {
+    if (orte_process_info.strip_prefix_from_node_names && 0 == strncmp (hostname, orte_strip_prefix, strlen (orte_strip_prefix))) {
         /* remove all leading characters and zeroes */
         idx = 0;
         while (idx < (int)strlen(hostname) &&
