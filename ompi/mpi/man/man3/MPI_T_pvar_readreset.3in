@@ -1,0 +1,68 @@
+. -*- nroff -*-
+.\" Copyright 2013 Los Alamos National Security, LLC. All rights reserved.
+.\" Copyright 2006-2008 Sun Microsystems, Inc.
+.\" Copyright (c) 1996 Thinking Machines Corporation
+.\" Copyright (c) 2010 Cisco Systems, Inc.  All rights reserved.
+.TH MPI_T_pvar_readreset 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
+.
+.SH NAME
+\fBMPI_T_pvar_readreset\fP \- Atomically read and reset the value of a performance variable
+.
+.SH SYNTAX
+.ft R
+.
+.SH C Syntax
+.nf
+#include <mpi.h>
+int MPI_T_pvar_readreset(MPI_T_pvar_session \fIsession\fP, MPI_T_pvar_handle \fIhandle\fP, const void *\fIbuf\fP)
+
+.fi
+.SH INPUT PARAMETERS
+.ft R
+.TP 1i
+session
+Performance experiment session.
+.TP 1i
+handle
+Performance variable handle.
+.TP 1i
+buf
+Initial address of storage location for variable value.
+
+.SH DESCRIPTION
+.ft R
+MPI_T_pvar_readreset atomically queries and resets the value of a performance variable
+bound to the handle specified by \fIhandle\fP in the session specified by \fIsession\fP.
+The result is stored in the buffer pointed to by \fIbuf\fP. This function can only be
+used with performance variables that are atomic and not readonly. The caller must ensure
+that the buffer pointed to by \fIbuf\fP is large enough to hold the entire value of the
+performance variable.
+
+.SH ERRORS
+.ft R
+MPI_T_pvar_readreset() will fail if:
+.TP 1i
+[MPI_T_ERR_NOT_INITIALIZED]
+The MPI Tools interface not initialized
+.TP 1i
+[MPI_T_ERR_INVALID_HANDLE]
+The handle is invalid or not associated with the session
+.TP 1i
+[MPI_T_ERR_INVALID_SESSION]
+Session argument is not a valid session
+.TP 1i
+[MPI_T_ERR_PVAR_NO_ATOMIC]
+Variable cannot be read and written atomically
+.TP 1i
+[MPI_T_ERR_PVAR_NO_WRITE]
+Variable cannot be reset
+
+.SH SEE ALSO
+.ft R
+.nf
+MPI_T_pvar_handle_alloc
+MPI_T_pvar_get_info
+MPI_T_pvar_session_create
+MPI_T_pvar_read
+MPI_T_pvar_reset
+

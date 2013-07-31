@@ -331,8 +331,8 @@ typedef struct ompi_status_public_t MPI_Status;
 typedef struct ompi_win_t *MPI_Win;
 typedef struct mca_base_var_enum_t *MPI_T_enum;
 typedef struct ompi_mpit_cvar_handle_t *MPI_T_cvar_handle;
-typedef struct ompi_mpit_pvar_handle_t *MPI_T_pvar_handle;
-typedef struct ompi_mpit_pvar_session_t *MPI_T_pvar_session;
+typedef struct mca_base_pvar_handle_t *MPI_T_pvar_handle;
+typedef struct mca_base_pvar_session_t *MPI_T_pvar_session;
 
 /*
  * MPI_Status
@@ -725,7 +725,7 @@ enum {
 #if OMPI_PROVIDE_MPI_FILE_INTERFACE
 #define MPI_FILE_NULL OMPI_PREDEFINED_GLOBAL(MPI_File, ompi_mpi_file_null)
 #endif
-#define MPI_T_ENUM_NULL NULL
+#define MPI_T_ENUM_NULL ((MPI_T_enum) NULL)
 
 /*
  * MPI_INFO_ENV handle
@@ -734,6 +734,13 @@ enum {
 
 #define MPI_STATUS_IGNORE ((MPI_Status *) 0)
 #define MPI_STATUSES_IGNORE ((MPI_Status *) 0)
+
+/*
+ * Special MPI_T handles
+ */
+#define MPI_T_PVAR_ALL_HANDLES ((MPI_T_pvar_handle) -1)
+#define MPI_T_PVAR_HANDLE_NULL ((MPI_T_pvar_handle) 0)
+#define MPI_T_CVAR_HANDLE_NULL ((MPI_T_cvar_handle) 0)
 
 /* MPI-2 specifies that the name "MPI_TYPE_NULL_DELETE_FN" (and all
    related friends) must be accessible in C, C++, and Fortran. This is
@@ -2347,6 +2354,49 @@ OMPI_DECLSPEC  int PMPI_Win_unlock(int rank, MPI_Win win);
 OMPI_DECLSPEC  int PMPI_Win_wait(MPI_Win win);
 OMPI_DECLSPEC  double PMPI_Wtick(void);
 OMPI_DECLSPEC  double PMPI_Wtime(void);
+OMPI_DECLSPEC  int PMPI_T_init_thread (int required, int *provided);
+OMPI_DECLSPEC  int PMPI_T_finalize (void);
+OMPI_DECLSPEC  int PMPI_T_cvar_get_num (int *num_cvar);
+OMPI_DECLSPEC  int PMPI_T_cvar_get_info (int cvar_index, char *name, int *name_len,
+                                         int *verbosity, MPI_Datatype *datatype,
+                                         MPI_T_enum *enumtype, char *desc,
+                                         int *desc_len, int *bind, int *scope);
+OMPI_DECLSPEC  int PMPI_T_cvar_handle_alloc (int cvar_index, void *obj_handle,
+                                            MPI_T_cvar_handle *handle, int *count);
+OMPI_DECLSPEC  int PMPI_T_cvar_handle_free (MPI_T_cvar_handle *handle);
+OMPI_DECLSPEC  int PMPI_T_cvar_read (MPI_T_cvar_handle handle, void *buf);
+OMPI_DECLSPEC  int PMPI_T_cvar_write (MPI_T_cvar_handle handle, const void *buf);
+OMPI_DECLSPEC  int PMPI_T_category_get_num(int *num_cat);
+OMPI_DECLSPEC  int PMPI_T_category_get_info(int cat_index, char *name, int *name_len,
+                                            char *desc, int *desc_len, int *num_cvars,
+                                            int *num_pvars, int *num_categories);
+OMPI_DECLSPEC  int PMPI_T_category_get_cvars(int cat_index, int len, int indices[]);
+OMPI_DECLSPEC  int PMPI_T_category_get_pvars(int cat_index, int len, int indices[]);
+OMPI_DECLSPEC  int PMPI_T_category_get_categories(int cat_index, int len, int indices[]);
+OMPI_DECLSPEC  int PMPI_T_category_changed(int *stamp);
+
+OMPI_DECLSPEC  int PMPI_T_pvar_get_num(int *num_pvar);
+OMPI_DECLSPEC  int PMPI_T_pvar_get_info(int pvar_index, char *name, int *name_len,
+                                        int *verbosity, int *var_class, MPI_Datatype *datatype,
+                                        MPI_T_enum *enumtype, char *desc, int *desc_len, int *bind,
+                                        int *readonly, int *continuous, int *atomic);
+OMPI_DECLSPEC  int PMPI_T_pvar_session_create(MPI_T_pvar_session *session);
+OMPI_DECLSPEC  int PMPI_T_pvar_session_free(MPI_T_pvar_session *session);
+OMPI_DECLSPEC  int PMPI_T_pvar_handle_alloc(MPI_T_pvar_session session, int pvar_index,
+                                            void *obj_handle, MPI_T_pvar_handle *handle, int *count);
+OMPI_DECLSPEC  int PMPI_T_pvar_handle_free(MPI_T_pvar_session session, MPI_T_pvar_handle *handle);
+OMPI_DECLSPEC  int PMPI_T_pvar_start(MPI_T_pvar_session session, MPI_T_pvar_handle handle);
+OMPI_DECLSPEC  int PMPI_T_pvar_stop(MPI_T_pvar_session session, MPI_T_pvar_handle handle);
+OMPI_DECLSPEC  int PMPI_T_pvar_read(MPI_T_pvar_session session, MPI_T_pvar_handle handle,
+                                    void *buf);
+OMPI_DECLSPEC  int PMPI_T_pvar_write(MPI_T_pvar_session session, MPI_T_pvar_handle handle,
+                                     const void *buf);
+OMPI_DECLSPEC  int PMPI_T_pvar_reset(MPI_T_pvar_session session, MPI_T_pvar_handle handle);
+OMPI_DECLSPEC  int PMPI_T_pvar_readreset(MPI_T_pvar_session session, MPI_T_pvar_handle handle,
+                                         void *buf);
+OMPI_DECLSPEC  int PMPI_T_enum_get_info(MPI_T_enum enumtype, int *num, char *name, int *name_len);
+OMPI_DECLSPEC  int PMPI_T_enum_get_item(MPI_T_enum enumtype, int index, int *value, char *name,
+                                        int *name_len);
 
   /*
    * Tool MPI API

@@ -64,6 +64,7 @@
 #include "opal/class/opal_list.h"
 #include "opal/class/opal_value_array.h"
 #include "opal/mca/base/mca_base_var_enum.h"
+#include "opal/mca/base/mca_base_var_group.h"
 #include "opal/mca/base/mca_base_framework.h"
 #include "opal/mca/mca.h"
 
@@ -75,6 +76,8 @@ typedef enum {
     MCA_BASE_VAR_TYPE_INT,
     /** The variable is of type unsigned int */
     MCA_BASE_VAR_TYPE_UNSIGNED_INT,
+    /** The variable is of type unsigned long */
+    MCA_BASE_VAR_TYPE_UNSIGNED_LONG,
     /** The variable is of type unsigned long long */
     MCA_BASE_VAR_TYPE_UNSIGNED_LONG_LONG,
     /** The variable is of type size_t */
@@ -83,6 +86,8 @@ typedef enum {
     MCA_BASE_VAR_TYPE_STRING,
     /** The variable is of type bool */
     MCA_BASE_VAR_TYPE_BOOL,
+    /** The variable is of type double */
+    MCA_BASE_VAR_TYPE_DOUBLE,
     /** Maximum variable type. */
     MCA_BASE_VAR_TYPE_MAX
 } mca_base_var_type_t;
@@ -171,8 +176,13 @@ typedef enum {
     MCA_BASE_VAR_FLAG_OVERRIDE     = 0x0010,
     /** Variable may not be set from a file */
     MCA_BASE_VAR_FLAG_ENVIRONMENT_ONLY = 0x0020,
-    /** Variable should be deregistered when the group
-        is deregistered */
+    /** Variable should be deregistered when the group is deregistered
+        (DWG = "deregister with group").  This flag is set
+        automatically when you register a variable with
+        mca_base_component_var_register(), but can also be set
+        manually when you register a variable with
+        mca_base_var_register().  Analogous to the
+        MCA_BASE_PVAR_FLAG_IWG. */
     MCA_BASE_VAR_FLAG_DWG          = 0x0040
 } mca_base_var_flag_t;
 
@@ -181,18 +191,22 @@ typedef enum {
  * Types for MCA parameters.
  */
 typedef union {
-    /** Integer value */
+    /** integer value */
     int intval;
-    /** Unsigned int value */
+    /** unsigned int value */
     unsigned int uintval;
-    /** String value */
+    /** string value */
     char *stringval;
-    /** Boolean value */
+    /** boolean value */
     bool boolval;
+    /** unsigned long value */
+    unsigned long ulval;
     /** unsigned long long value */
     unsigned long long ullval;
     /** size_t value */
     size_t sizetval;
+    /** double value */
+    double lfval;
 } mca_base_var_storage_t;
 
 
@@ -265,34 +279,6 @@ struct mca_base_var_t {
  */
 typedef struct mca_base_var_t mca_base_var_t;
 
-struct mca_base_var_group_t {
-    opal_list_item_t super;
-
-    /** Index of group */
-    int group_index;
-
-    /** Group is valid (registered) */
-    bool group_isvalid;
-
-    /** Group name */
-    char *group_full_name;
-
-    char *group_project;
-    char *group_framework;
-    char *group_component;
-
-    /** Group help message (description) */
-    char *group_description;
-
-    /** Integer value array of subgroup indices */
-    opal_value_array_t group_subgroups;
-
-    /** Integer array of group variables */
-    opal_value_array_t group_vars;
-};
-
-typedef struct mca_base_var_group_t mca_base_var_group_t;
-
 /*
  * Global functions for MCA
  */
@@ -304,12 +290,6 @@ BEGIN_C_DECLS
  */
 OPAL_DECLSPEC OBJ_CLASS_DECLARATION(mca_base_var_t);
 
-
-/**
- * Object declaration for mca_base_var_group_t
- */
-OPAL_DECLSPEC OBJ_CLASS_DECLARATION(mca_base_var_group_t);
-
 /**
  * Initialize the MCA variable system.
  *
@@ -320,104 +300,6 @@ OPAL_DECLSPEC OBJ_CLASS_DECLARATION(mca_base_var_group_t);
  * here for completeness.
  */
 OPAL_DECLSPEC int mca_base_var_init(void);
-
-/**
- * Register an MCA variable group
- *
- * @param[in] project_name Project name for this group.
- * @param[in] framework_name Framework name for this group.
- * @param[in] component_name Component name for this group.
- * @param[in] descrition Description of this group.
- *
- * @retval index Unique group index
- * @return opal error code on Error
- *
- * Create an MCA variable group. If the group already exists
- * this call is equivalent to mca_base_ver_find_group().
- */
-OPAL_DECLSPEC int mca_base_var_group_register(const char *project_name,
-                                              const char *framework_name,
-                                              const char *component_name,
-                                              const char *description);
-
-/**
- * Register an MCA variable group for a component
- *
- * @param[in] component [in] Pointer to the component for which the
- * group is being registered.
- * @param[in] description Description of this group.
- *
- * @retval index Unique group index
- * @return opal error code on Error
- */
-OPAL_DECLSPEC int mca_base_var_group_component_register (const mca_base_component_t *component,
-                                                         const char *description);
-
-/**
- * Deregister an MCA param group
- *
- * @param group_index [in] Group index from mca_base_var_group_register (),
- * mca_base_var_group_find().
- *
- * This call deregisters all associated variables and subgroups.
- */
-OPAL_DECLSPEC int mca_base_var_group_deregister (int group_index);
-
-/**
- * Find an MCA group
- *
- * @param project_name [in] Project name
- * @param framework_name [in] Type name
- * @param component_name [in] Component name
- */
-OPAL_DECLSPEC int mca_base_var_group_find (const char *project_name,
-                                           const char *framework_name,
-                                           const char *component_name);
-
-/**
- * Dump info from a group
- *
- * @param[in] group_index Group index
- * @param[out] group Storage for the group object pointer.
- *
- * @retval OPAL_ERR_NOT_FOUND If the group specified by group_index does not exist.
- * @retval OPAL_ERR_OUT_OF_RESOURCE If memory allocation fails.
- * @retval OPAL_SUCCESS If the group is dumped successfully.
- *
- * The returned pointer belongs to the MCA variable system. Do not modify/release/retain
- * the pointer.
- */
-OPAL_DECLSPEC int mca_base_var_group_get (const int group_index,
-                                          const mca_base_var_group_t **group);
-
-/**
- * Set/unset a flags for all variables in a group.
- *
- * @param[in] group_index Index of group
- * @param[in] flag Flag(s) to set or unset.
- * @param[in] set Boolean indicating whether to set flag(s).
- *
- * Set a flag for every variable in a group. See mca_base_var_set_flag() for more info.
- */
-OPAL_DECLSPEC int mca_base_var_group_set_var_flag (const int group_index,
-                                                   mca_base_var_flag_t flags,
-                                                   bool set);
-
-/**
- * Get the number of registered MCA groups
- *
- * @retval count Number of registered MCA groups
- */
-OPAL_DECLSPEC int mca_base_var_group_get_count (void);
-
-/**
- * Get a relative timestamp for the MCA group system
- *
- * @retval stamp 
- *
- * This value will change if groups or variables are either added or removed.
- */
-OPAL_DECLSPEC int mca_base_var_group_get_stamp (void);
 
 /**
  * Register an MCA variable
@@ -508,8 +390,13 @@ OPAL_DECLSPEC int mca_base_var_register (const char *project_name, const char *f
                                          mca_base_var_scope_t scope, void *storage);
 
 /**
- * Convinience function for registering a variable associated with a component.
- * See mca_base_var_register().
+ * Convinience function for registering a variable associated with a
+ * component.
+ *
+ * While quite similar to mca_base_var_register(), there is one key
+ * difference: vars registered this this function will automatically
+ * be unregistered / made unavailable when that component is closed by
+ * its framework.
  */
 OPAL_DECLSPEC int mca_base_component_var_register (const mca_base_component_t *component,
                                                    const char *variable_name, const char *description,
@@ -530,7 +417,6 @@ OPAL_DECLSPEC int mca_base_framework_var_register (const mca_base_framework_t *f
                                      mca_base_var_flag_t flags,
                                      mca_base_var_info_lvl_t info_level,
                                      mca_base_var_scope_t scope, void *storage);
-
 
 /**
  * Register a synonym name for an MCA variable.
@@ -633,7 +519,7 @@ OPAL_DECLSPEC int mca_base_var_get_value (int index, const void *value,
  * a synonym the variable the synonym represents) if the value is
  * settable.
  */
-OPAL_DECLSPEC int mca_base_var_set_value (int index, void *value, size_t size,
+OPAL_DECLSPEC int mca_base_var_set_value (int index, const void *value, size_t size,
                                           mca_base_var_source_t source,
                                           const char *source_file);
 
@@ -656,25 +542,34 @@ OPAL_DECLSPEC int mca_base_var_env_name(const char *param_name,
 /**
  * Find the index for an MCA variable based on its names.
  *
- * @param type Name of the type containing the variable.
- * @param component Name of the component containing the variable.
- * @param param Name of the variable.
+ * @param project_name   Name of the project
+ * @param type_name      Name of the type containing the variable.
+ * @param component_name Name of the component containing the variable.
+ * @param param_name     Name of the variable.
  *
  * @retval OPAL_ERROR If the variable was not found.
  * @retval index If the variable was found.
  *
  * It is not always convenient to widely propagate a variable's index
  * value, or it may be necessary to look up the variable from a
- * different component -- where it is not possible to have the return
- * value from mca_base_var_reg_int() or mca_base_var_reg_string().
- * This function can be used to look up the index of any registered
- * variable.  The returned index can be used with
- * mca_base_var_lookup_int() and mca_base_var_lookup_string().
+ * different component. This function can be used to look up the index
+ * of any registered variable.  The returned index can be used with
+ * mca_base_var_get() and mca_base_var_get_value().
  */
 OPAL_DECLSPEC int mca_base_var_find (const char *project_name,
                                      const char *type_name,
                                      const char *component_name,
                                      const char *param_name);
+
+/**
+ * Find the index for a variable based on its full name
+ *
+ * @param full_name [in] Full name of the variable
+ * @param index [out]    Index of the variable
+ *
+ * See mca_base_var_find().
+ */
+OPAL_DECLSPEC int mca_base_var_find_by_name (const char *full_name, int *index);
 
 /**
  * Check that two MCA variables were not both set to non-default
@@ -790,20 +685,23 @@ OPAL_DECLSPEC int mca_base_var_build_env(char ***env, int *num_env,
 OPAL_DECLSPEC int mca_base_var_finalize(void);
 
 typedef enum {
+    /* Dump human-readable strings */
     MCA_BASE_VAR_DUMP_READABLE = 0,
+    /* Dump easily parsable strings */
     MCA_BASE_VAR_DUMP_PARSABLE = 1,
+    /* Dump simple name=value string */
     MCA_BASE_VAR_DUMP_SIMPLE   = 2,
 } mca_base_var_dump_type_t;
 
 /**
- * Dump strings for variable at index.
+ * Dump strings describing the MCA variable at an index.
  *
- * @param[in]  index Variable index
- * @param[out] out   Array of strings representing this variable
- * @param[in]  flags Flags indication how to output variable
+ * @param[in]  index       Variable index
+ * @param[out] out         Array of strings describing this variable
+ * @param[in]  output_type Type of output desired
  *
- * This functions returns an array strings for the variable. All strings and the array
- * need to be freed by the caller.
+ * This function returns an array of strings describing the variable. All strings
+ * and the array must be freed by the caller.
  */
 OPAL_DECLSPEC int mca_base_var_dump(int index, char ***out, mca_base_var_dump_type_t output_type);
 

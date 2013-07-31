@@ -1,4 +1,4 @@
-/* -*- Mode: C; c-basic-offset:4 ; -*- */
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -12,6 +12,8 @@
  *                         All rights reserved.
  * Copyright (c) 2007-2010 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved
+ * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -34,6 +36,7 @@
 #include "ompi/mca/bml/base/base.h" 
 #include "pml_ob1_component.h"
 #include "ompi/mca/allocator/base/base.h"
+#include "opal/mca/base/mca_base_pvar.h"
 
 OBJ_CLASS_INSTANCE( mca_pml_ob1_pckt_pending_t,
                     ompi_free_list_item_t,
@@ -123,6 +126,52 @@ static inline size_t mca_pml_ob1_param_register_sizet(
     return *storage;
 }
 
+static int mca_pml_ob1_comm_size_notify (mca_base_pvar_t *pvar, mca_base_pvar_event_t event, void *obj_handle, int *count)
+{
+    if (MCA_BASE_PVAR_HANDLE_BIND == event) {
+        /* Return the size of the communicator as the number of values */
+        *count = ompi_comm_size ((ompi_communicator_t *) obj_handle);
+    }
+
+    return OMPI_SUCCESS;
+}
+
+static int mca_pml_ob1_get_unex_msgq_size (const struct mca_base_pvar_t *pvar, void *value, void *obj_handle)
+{
+    ompi_communicator_t *comm = (ompi_communicator_t *) obj_handle;
+    mca_pml_ob1_comm_t *pml_comm = comm->c_pml_comm;
+    int comm_size = ompi_comm_size (comm);
+    unsigned *values = (unsigned *) value;
+    mca_pml_ob1_comm_proc_t *pml_proc;
+    int i;
+
+    for (i = 0 ; i < comm_size ; ++i) {
+        pml_proc = pml_comm->procs + i;
+
+        values[i] = opal_list_get_size (&pml_proc->unexpected_frags);
+    }
+
+    return OMPI_SUCCESS;
+}
+
+static int mca_pml_ob1_get_posted_recvq_size (const struct mca_base_pvar_t *pvar, void *value, void *obj_handle)
+{
+    ompi_communicator_t *comm = (ompi_communicator_t *) obj_handle;
+    mca_pml_ob1_comm_t *pml_comm = comm->c_pml_comm;
+    int comm_size = ompi_comm_size (comm);
+    unsigned *values = (unsigned *) value;
+    mca_pml_ob1_comm_proc_t *pml_proc;
+    int i;
+
+    for (i = 0 ; i < comm_size ; ++i) {
+        pml_proc = pml_comm->procs + i;
+
+        values[i] = opal_list_get_size (&pml_proc->specific_receives);
+    }
+
+    return OMPI_SUCCESS;
+}
+
 static int mca_pml_ob1_component_register(void)
 {
     mca_pml_ob1_param_register_int("verbose", 0, &mca_pml_ob1_verbose);
@@ -148,10 +197,20 @@ static int mca_pml_ob1_component_register(void)
     mca_pml_ob1.allocator_name = "bucket";
     (void) mca_base_component_var_register(&mca_pml_ob1_component.pmlm_version, "allocator",
                                            "Name of allocator component for unexpected messages",
-                                           MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
-                                           OPAL_INFO_LVL_9,
-                                           MCA_BASE_VAR_SCOPE_READONLY,
-                                           &mca_pml_ob1.allocator_name);
+                                           MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0, OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY, &mca_pml_ob1.allocator_name);
+
+    (void) mca_base_pvar_register ("ompi", "pml", "ob1", "unexpected_msgq_length", "Number of unexpected messages "
+                                   "received by each peer in a communicator", OPAL_INFO_LVL_4, MPI_T_PVAR_CLASS_SIZE,
+                                   MCA_BASE_VAR_TYPE_UNSIGNED_INT, NULL, MPI_T_BIND_MPI_COMM,
+                                   MCA_BASE_PVAR_FLAG_READONLY | MCA_BASE_PVAR_FLAG_CONTINUOUS,
+                                   mca_pml_ob1_get_unex_msgq_size, NULL, mca_pml_ob1_comm_size_notify, NULL);
+
+    (void) mca_base_pvar_register ("ompi", "pml", "ob1", "posted_recvq_length", "Number of unmatched receives "
+                                   "posted for each peer in a communicator", OPAL_INFO_LVL_4, MPI_T_PVAR_CLASS_SIZE,
+                                   MCA_BASE_VAR_TYPE_UNSIGNED_INT, NULL, MPI_T_BIND_MPI_COMM,
+                                   MCA_BASE_PVAR_FLAG_READONLY | MCA_BASE_PVAR_FLAG_CONTINUOUS,
+                                   mca_pml_ob1_get_posted_recvq_size, NULL, mca_pml_ob1_comm_size_notify, NULL);
 
     return OMPI_SUCCESS;
 }

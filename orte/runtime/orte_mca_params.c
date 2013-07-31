@@ -347,7 +347,7 @@ int orte_register_params(void)
     }
     
     /* User-level debugger info string */
-    orte_base_user_debugger = strdup ("totalview @mpirun@ -a @mpirun_args@ : ddt -n @np@ -start @executable@ @executable_argv@ @single_app@ : fxp @mpirun@ -a @mpirun_args@");
+    orte_base_user_debugger = "totalview @mpirun@ -a @mpirun_args@ : ddt -n @np@ -start @executable@ @executable_argv@ @single_app@ : fxp @mpirun@ -a @mpirun_args@";
     (void) mca_base_var_register ("orte", "orte", NULL, "base_user_debugger",
                                   "Sequence of user-level debuggers to search for in orterun",
                                   MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,

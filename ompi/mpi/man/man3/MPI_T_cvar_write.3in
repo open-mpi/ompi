@@ -1,0 +1,58 @@
+. -*- nroff -*-
+.\" Copyright 2013 Los Alamos National Security, LLC. All rights reserved.
+.\" Copyright 2006-2008 Sun Microsystems, Inc.
+.\" Copyright (c) 1996 Thinking Machines Corporation
+.\" Copyright (c) 2010 Cisco Systems, Inc.  All rights reserved.
+.TH MPI_T_cvar_write 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
+.
+.SH NAME
+\fBMPI_T_cvar_write\fP \- Write the value of a bound control variable
+.
+.SH SYNTAX
+.ft R
+.
+.SH C Syntax
+.nf
+#include <mpi.h>
+int MPI_T_cvar_write(MPI_T_cvar_handle \fIhandle\fP, const void *\fIbuf\fP)
+
+.fi
+.SH INPUT PARAMETERS
+.ft R
+.TP 1i
+handle
+Handle of the control variable to be written.
+.TP 1i
+buf
+Initial address of storage location for variable value.
+
+.SH DESCRIPTION
+.ft R
+MPI_T_cvar_write sets the value the control variable identified by the handle
+specified in \fIhandle\fP from the buffer provided in \fIbuf\fP. The caller must
+ensure that the buffer specified in \fIbuf\fP is large enough to hold the
+entire value of the control variable. If the variable has global scope, any
+write call must be issued on all connected MPI processes. For more
+information see MPI-3 \[char167] 14.3.6.
+
+.SH ERRORS
+.ft R
+MPI_T_cvar_write() will fail if:
+.TP 1i
+[MPI_T_ERR_NOT_INITIALIZED]
+The MPI Tools interface not initialized
+.TP 1i
+[MPI_T_ERR_INVALID_HANDLE]
+The handle is invalid
+.TP 1i
+[MPI_T_ERR_CVAR_SET_NOT_NOW]
+Variable cannot be set at this moment
+.TP 1i
+[MPI_T_ERR_CVAR_SET_NEVER]
+Variable cannot be set until end of execution
+
+.SH SEE ALSO
+.ft R
+.nf
+MPI_T_cvar_handle_alloc
+MPI_T_cvar_get_info

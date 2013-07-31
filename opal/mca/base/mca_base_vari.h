@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2012      Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2012-2013 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  * 
@@ -23,8 +23,8 @@
 /** 
  * @file 
  *
- * This is the private declarations for the MCA parameter system.
- * This file is internal to the MCA parameter system and should not
+ * This is the private declarations for the MCA variable system.
+ * This file is internal to the MCA variable system and should not
  * need to be used by any other elements in Open MPI except the
  * special case of the ompi_info command.
  *
@@ -41,7 +41,10 @@
 #include "opal/class/opal_object.h"
 #include "opal/class/opal_list.h"
 #include "opal/class/opal_value_array.h"
+#include "opal/class/opal_pointer_array.h"
+#include "opal/class/opal_hash_table.h"
 #include "opal/mca/base/mca_base_var.h"
+#include "opal/mca/base/mca_base_pvar.h"
 
 BEGIN_C_DECLS
 
@@ -66,6 +69,11 @@ typedef enum {
 #define VAR_IS_SETTABLE(var) (!!((var).mbv_flags & MCA_BASE_VAR_FLAG_SETTABLE))
 #define VAR_IS_DEPRECATED(var) (!!((var).mbv_flags & MCA_BASE_VAR_FLAG_DEPRECATED))
 
+extern const char *var_type_names[];
+extern const size_t var_type_sizes[];
+extern bool mca_base_var_initialized;
+
+extern mca_base_var_enum_t mca_base_var_enum_bool;
 
 /**
  * \internal
@@ -83,6 +91,7 @@ struct mca_base_var_file_value_t {
     /** File it came from */
     char *mbvfv_file;
 };
+
 /**
  * \internal
  *
@@ -95,6 +104,16 @@ typedef struct mca_base_var_file_value_t mca_base_var_file_value_t;
  */
 OPAL_DECLSPEC OBJ_CLASS_DECLARATION(mca_base_var_file_value_t);
 
+/**
+ * \internal
+ *
+ * Get a group
+ *
+ * @param[in]  group_index Group index
+ * @param[out] group       Returned group if it exists
+ * @param[in]  invalidok   Return group even if it has been deregistered
+ */
+OPAL_DECLSPEC int mca_base_var_group_get_internal (const int group_index, mca_base_var_group_t **group, bool invalidok);
 
 /**
  * \internal
@@ -102,6 +121,45 @@ OPAL_DECLSPEC OBJ_CLASS_DECLARATION(mca_base_var_file_value_t);
  * Parse a parameter file.
  */
 OPAL_DECLSPEC int mca_base_parse_paramfile(const char *paramfile, opal_list_t *list);
+
+/**
+ * \internal
+ *
+ * Add a variable to a group
+ */
+OPAL_DECLSPEC int mca_base_var_group_add_var (const int group_index, const int param_index);
+
+/**
+ * \internal
+ *
+ * Add a performance variable to a group
+ */
+OPAL_DECLSPEC int mca_base_var_group_add_pvar (const int group_index, const int param_index);
+
+/**
+ * \internal
+ *
+ * Generate a full name with _ between all of the non-NULL arguments
+ */
+OPAL_DECLSPEC int mca_base_var_generate_full_name4 (const char *project, const char *framework,
+                                                    const char *component, const char *variable,
+                                                    char **full_name);
+
+/**
+ * \internal
+ *
+ * Initialize/finalize MCA variable groups
+ */
+OPAL_DECLSPEC int mca_base_var_group_init (void);
+OPAL_DECLSPEC int mca_base_var_group_finalize (void);
+
+/**
+ * \internal
+ *
+ * Initialize MCA performance variables
+ */
+OPAL_DECLSPEC int mca_base_pvar_init (void);
+OPAL_DECLSPEC int mca_base_pvar_finalize (void);
 
 END_C_DECLS
     

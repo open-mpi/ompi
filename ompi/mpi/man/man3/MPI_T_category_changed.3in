@@ -1,0 +1,37 @@
+. -*- nroff -*-
+.\" Copyright 2013 Los Alamos National Security, LLC. All rights reserved.
+.\" Copyright 2006-2008 Sun Microsystems, Inc.
+.\" Copyright (c) 1996 Thinking Machines Corporation
+.\" Copyright (c) 2010 Cisco Systems, Inc.  All rights reserved.
+.TH MPI_T_category_changed 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
+.
+.SH NAME
+\fBMPI_T_category_changed\fP \- Get a timestamp for the categories
+.
+.SH SYNTAX
+.ft R
+.
+.SH C Syntax
+.nf
+#include <mpi.h>
+int MPI_T_category_changed(int *\fIstamp\fP)
+
+.fi
+.SH INPUT PARAMETERS
+.ft R
+.TP 1i
+stamp
+A virtual time stamp to indicate the last change to the categories.
+
+.SH DESCRIPTION
+.ft R
+If two subsequent calls to this routine return the same timestamp, it is guaranteed that
+no categories have been changed or added. If the timestamp from the second call is
+higher than some categories have been added or changed.
+
+.SH ERRORS
+.ft R
+MPI_T_category_changed() will fail if:
+.TP 1i
+[MPI_T_ERR_NOT_INITIALIZED]
+The MPI Tools interface not initialized
