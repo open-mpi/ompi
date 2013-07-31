@@ -24,7 +24,7 @@ with_verbs=yes
 with_psm=yes
 with_devel_headers=yes
 with_io_romio_flags=--with-file-system=ufs+nfs+panfs
-with_memory_manager=ptmalloc2
+with_memory_manager=linux
 with_valgrind=no
 CFLAGS="-I/opt/panfs/include"
 CXXFLAGS="-I/opt/panfs/include"
