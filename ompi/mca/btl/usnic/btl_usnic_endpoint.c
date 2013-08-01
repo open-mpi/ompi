@@ -66,10 +66,6 @@ static void endpoint_construct(mca_btl_base_endpoint_t* endpoint)
     /* list of fragments queued to be sent */
     OBJ_CONSTRUCT(&endpoint->endpoint_frag_send_queue, opal_list_t);
 
-    endpoint->endpoint_next_seq_to_send = 10;
-    endpoint->endpoint_ack_seq_rcvd = 9;
-    endpoint->endpoint_next_contig_seq_to_recv = 10;
-    endpoint->endpoint_highest_seq_rcvd = 9;
     endpoint->endpoint_next_frag_id = 1;
     endpoint->endpoint_acktime = 0;
 

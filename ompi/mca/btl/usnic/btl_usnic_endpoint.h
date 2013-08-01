@@ -65,6 +65,7 @@ typedef enum ompi_btl_usnic_channel_id_t {
 } ompi_btl_usnic_channel_id_t;
 
 typedef struct ompi_btl_usnic_addr_t {
+    ompi_btl_usnic_seq_t isn;
     uint32_t qp_num[USNIC_NUM_CHANNELS];
     union ibv_gid gid;
     uint32_t ipv4_addr;
