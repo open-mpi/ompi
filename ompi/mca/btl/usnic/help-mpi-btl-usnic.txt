@@ -1,6 +1,6 @@
 # -*- text -*-
 #
-# Copyright (c) 2012 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2012-2013 Cisco Systems, Inc.  All rights reserved.
 #
 # $COPYRIGHT$
 #
@@ -55,7 +55,7 @@ usually means one of two things:
 
 1. You are running something other than this MPI job on this server
    that is consuming usNIC resources.
-2. You have run our of locked Linux memory.  You should probably set
+2. You have run out of locked Linux memory.  You should probably set
    the Linux "memlock" limits to "unlimited".  See this FAQ entry for
    details:
 
@@ -148,7 +148,7 @@ in either lower performance or your job aborting.
 The usNIC BTL failed to initialize while trying to register some
 memory.  This typically can indicate that the "memlock" limits are set
 too low.  For most HPC installations, the memlock limits should be set
-to "unlimited".  The failure occured here:
+to "unlimited".  The failure occurred here:
 
   Local host:    %s
   Memlock limit: %s

@@ -72,7 +72,7 @@ ompi_btl_usnic_post_segment(
                 sseg->ss_base.us_type,
                 (void*) sseg->ss_send_desc.sg_list->addr, 
                 sseg->ss_send_desc.sg_list->length);
-    ompi_btl_usnic_dump_hex((void *)(sseg->ss_send_desc.sg_list->addr + sizeof(ompi_btl_usnic_btl_header_t)), 16);
+    /*ompi_btl_usnic_dump_hex((void *)(sseg->ss_send_desc.sg_list->addr + sizeof(ompi_btl_usnic_btl_header_t)), 16); */
 #endif
 
     /* set target address */

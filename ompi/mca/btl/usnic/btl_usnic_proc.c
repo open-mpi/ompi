@@ -191,6 +191,7 @@ static ompi_btl_usnic_proc_t *create_proc(ompi_proc_t *ompi_proc)
                        "<none>", 0,
                        "ompi_modex_recv() failed", __FILE__, __LINE__,
                        opal_strerror(rc));
+        OBJ_RELEASE(proc);
         return NULL;
     }
 
@@ -344,6 +345,14 @@ ompi_btl_usnic_create_endpoint(ompi_btl_usnic_module_t *module,
     /* Initalize the endpoint */
     endpoint->endpoint_module = module;
     endpoint->endpoint_remote_addr = proc->proc_modex[modex_index];
+
+    /* Initialize endpoint sequence number info */
+    endpoint->endpoint_next_seq_to_send = module->local_addr.isn;
+    endpoint->endpoint_ack_seq_rcvd = endpoint->endpoint_next_seq_to_send - 1;
+    endpoint->endpoint_next_contig_seq_to_recv =
+        endpoint->endpoint_remote_addr.isn;
+    endpoint->endpoint_highest_seq_rcvd =
+        endpoint->endpoint_next_contig_seq_to_recv - 1;
 
     /* Create the address handle on this endpoint from the modex info.
        memset to both silence valgrind warnings (since the attr struct
