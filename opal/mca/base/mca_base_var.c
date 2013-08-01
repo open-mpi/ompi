@@ -107,6 +107,7 @@ const char *var_source_names[] = {
     "command line",
     "environment",
     "file",
+    "set",
     "override"
 };
 
@@ -564,7 +565,7 @@ static int int_from_string(const char *src, mca_base_var_enum_t *enumerator, uin
 static int var_set_from_string (mca_base_var_t *var, char *src)
 {
     mca_base_var_storage_t *dst = var->mbv_storage;
-    uint64_t int_value;
+    uint64_t int_value = 0;
     int ret;
 
     switch (var->mbv_type) {
@@ -1645,7 +1646,7 @@ static char *source_name(mca_base_var_t *var)
 {
     char *ret;
 
-    if (MCA_BASE_VAR_SOURCE_FILE == var->mbv_source) {
+    if (MCA_BASE_VAR_SOURCE_FILE == var->mbv_source || MCA_BASE_VAR_SOURCE_OVERRIDE == var->mbv_source) {
         int rc = asprintf(&ret, "file (%s)", var->mbv_source_file);
         /* some compilers will warn if the return code of asprintf is not checked (even if it is cast to void) */
         if (0 > rc) {
@@ -1756,7 +1757,7 @@ int mca_base_var_dump(int index, char ***out, mca_base_var_dump_type_t output_ty
     const char *project, *framework, *component, *full_name;
     int i, line_count, line = 0, enum_count = 0;
     char *value_string, *source_string, *tmp;
-    int synonym_count, ret, *synonyms;
+    int synonym_count, ret, *synonyms = NULL;
     mca_base_var_t *var, *original;
     mca_base_var_group_t *group;
 
