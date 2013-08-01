@@ -799,9 +799,10 @@ AC_CACHE_SAVE
 ompi_show_title "System-specific tests"
 
 #
-# Test to determine type of MPI_Offset. This is searched in the following order
-# int64_t, long long, long, int. If none of these are 8 bytes, then we should
-# search for int32_t, long long, long, int.
+# Test to determine types of MPI_Offset and MPI_Count. This is searched in the
+# following order int64_t, long long, long, int. If none of these are 8 bytes,
+# then we should search for int32_t, long long, long, int. MPI_Count needs to
+# be at least as large as MPI_Offset and MPI_Aint.
 #
 MPI_OFFSET_TYPE="not found"
 MPI_OFFSET_DATATYPE="not found"
@@ -810,30 +811,42 @@ if test $ac_cv_type_long_long = yes -a $ac_cv_sizeof_long_long = 8; then
     MPI_OFFSET_TYPE="long long"
     MPI_OFFSET_DATATYPE=MPI_LONG_LONG
     MPI_OFFSET_SIZE=8
+    MPI_COUNT_TYPE="long long"
+    MPI_COUNT_SIZE=8
 elif test $ac_cv_type_long = yes -a $ac_cv_sizeof_long = 8; then
     MPI_OFFSET_TYPE="long"
     MPI_OFFSET_DATATYPE=MPI_LONG
     MPI_OFFSET_SIZE=8
+    MPI_COUNT_TYPE="long"
+    MPI_COUNT_SIZE=8
 elif test $ac_cv_sizeof_int = 8; then
     MPI_OFFSET_TYPE="int"
     MPI_OFFSET_DATATYPE=MPI_INT
     MPI_OFFSET_SIZE=8
+    MPI_COUNT_TYPE="int"
+    MPI_COUNT_SIZE=8
 elif test $ac_cv_type_long_long = yes -a $ac_cv_sizeof_long_long = 4; then
     MPI_OFFSET_TYPE="long long"
     MPI_OFFSET_DATATYPE=MPI_LONG_LONG
     MPI_OFFSET_SIZE=4
+    MPI_COUNT_TYPE="long long"
+    MPI_COUNT_SIZE=4
 elif test $ac_cv_type_long = yes -a $ac_cv_sizeof_long = 4; then
     MPI_OFFSET_TYPE="long"
     MPI_OFFSET_DATATYPE=MPI_LONG
     MPI_OFFSET_SIZE=4
+    MPI_COUNT_TYPE="long"
+    MPI_COUNT_SIZE=8
 elif test $ac_cv_sizeof_int = 4; then
     MPI_OFFSET_TYPE="int"
     MPI_OFFSET_DATATYPE=MPI_INT
     MPI_OFFSET_SIZE=4
+    MPI_COUNT_TYPE="int"
+    MPI_COUNT_SIZE=8
 fi
 AC_MSG_RESULT([$MPI_OFFSET_TYPE])
 if test "$MPI_OFFSET_TYPE" = "not found"; then
-    AC_MSG_WARN([*** Unable to find the right definition for MPI_Offset])
+    AC_MSG_WARN([*** Unable to find the right definition for MPI_Offset and MPI_Count])
     AC_MSG_ERROR([Cannot continue])
 fi
 AC_MSG_CHECKING([checking for an MPI datatype for MPI_Offset])
@@ -847,6 +860,16 @@ fi
 AC_DEFINE_UNQUOTED(OMPI_MPI_OFFSET_TYPE, $MPI_OFFSET_TYPE, [Type of MPI_Offset -- has to be defined here and typedef'ed later because mpi.h does not get AC SUBST's])
 AC_DEFINE_UNQUOTED(OMPI_MPI_OFFSET_SIZE, $MPI_OFFSET_SIZE, [Size of the MPI_Offset])
 AC_DEFINE_UNQUOTED(OMPI_OFFSET_DATATYPE, $MPI_OFFSET_DATATYPE, [MPI datatype corresponding to MPI_Offset])
+
+if test $MPI_COUNT_SIZE -eq 8 ; then
+    MPI_COUNT_MAX="0x7fffffffffffffffll"
+elif test $MPI_COUNT_SIZE -eq 4 ; then
+    MPI_COUNT_MAX="0x7fffffffl"
+fi
+
+AC_DEFINE_UNQUOTED(OMPI_MPI_COUNT_SIZE, $MPI_COUNT_SIZE, [Size of the MPI_Count datatype])
+AC_DEFINE_UNQUOTED(OMPI_MPI_COUNT_TYPE, $MPI_COUNT_TYPE, [Type of the MPI_Count datatype])
+AC_DEFINE_UNQUOTED(MPI_COUNT_MAX, $MPI_COUNT_MAX, [Maximum value for an MPI_Count])
 
 #
 # Check for MPI_Aint type.  Yes, there are platforms where

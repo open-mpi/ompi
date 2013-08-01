@@ -30,16 +30,16 @@
 #include "ompi/memchecker.h"
 
 #if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
-#pragma weak MPI_Type_size = PMPI_Type_size
+#pragma weak MPI_Type_size_x = PMPI_Type_size_x
 #endif
 
 #if OMPI_PROFILING_DEFINES
 #include "ompi/mpi/c/profile/defines.h"
 #endif
 
-static const char FUNC_NAME[] = "MPI_Type_size";
+static const char FUNC_NAME[] = "MPI_Type_size_x";
 
-int MPI_Type_size(MPI_Datatype type, int *size)
+int MPI_Type_size_x(MPI_Datatype type, MPI_Count *size)
 {
     size_t type_size;
     MEMCHECKER(
@@ -59,7 +59,7 @@ int MPI_Type_size(MPI_Datatype type, int *size)
 
     opal_datatype_type_size ( &type->super, &type_size);
 
-    *size = (type_size > (size_t) INT_MAX) ? MPI_UNDEFINED : (int) type_size;
+    *size = (type_size > (size_t) MPI_COUNT_MAX) ? MPI_UNDEFINED : (MPI_Count) type_size;
 
     return MPI_SUCCESS;
 }

@@ -30,16 +30,16 @@
 #include "ompi/memchecker.h"
 
 #if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
-#pragma weak MPI_Status_set_elements = PMPI_Status_set_elements
+#pragma weak MPI_Status_set_elements_x = PMPI_Status_set_elements_x
 #endif
 
 #if OMPI_PROFILING_DEFINES
 #include "ompi/mpi/c/profile/defines.h"
 #endif
 
-static const char FUNC_NAME[] = "MPI_Status_set_elements";
+static const char FUNC_NAME[] = "MPI_Status_set_elements_x";
 
-int MPI_Status_set_elements(MPI_Status *status, MPI_Datatype datatype, int count)
+int MPI_Status_set_elements_x(MPI_Status *status, MPI_Datatype datatype, MPI_Count count)
 {
     int rc = MPI_SUCCESS;
     size_t size;

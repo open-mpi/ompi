@@ -10,7 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
+# Copyright (c) 2007-2013 Los Alamos National Security, LLC.  All rights
 #                         reserved.
 # Copyright (c) 2010 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
@@ -40,7 +40,8 @@ libdatatype_la_SOURCES = \
         ompi_datatype_external32.c \
         ompi_datatype_match_size.c \
         ompi_datatype_module.c \
-        ompi_datatype_sndrcv.c
+        ompi_datatype_sndrcv.c \
+        ompi_datatype_get_elements.c
 
 libdatatype_la_LIBADD =
 

@@ -5,6 +5,8 @@
 #                         of Tennessee Research Foundation.  All rights
 #                         reserved.
 # Copyright (c) 2012      Inria.  All rights reserved.
+# Copyright (c) 2013      Los Alamos National Security, LLC. All rights
+#                         reserved.
 #
 # $COPYRIGHT$
 # 
@@ -107,6 +109,7 @@ mpi_api_files = \
         get_address_f08.F90 \
         get_count_f08.F90 \
         get_elements_f08.F90 \
+        get_elements_x_f08.F90 \
         get_f08.F90 \
         get_library_version_f08.F90 \
         get_processor_name_f08.F90 \
@@ -210,6 +213,7 @@ mpi_api_files = \
         start_f08.F90 \
         status_set_cancelled_f08.F90 \
         status_set_elements_f08.F90 \
+        status_set_elements_x_f08.F90 \
         testall_f08.F90 \
         testany_f08.F90 \
         test_cancelled_f08.F90 \
@@ -238,8 +242,10 @@ mpi_api_files = \
         type_get_contents_f08.F90 \
         type_get_envelope_f08.F90 \
         type_get_extent_f08.F90 \
+        type_get_extent_x_f08.F90 \
         type_get_name_f08.F90 \
         type_get_true_extent_f08.F90 \
+        type_get_true_extent_x_f08.F90 \
         type_indexed_f08.F90 \
         type_match_size_f08.F90 \
         type_set_attr_f08.F90 \
@@ -420,6 +426,7 @@ pmpi_api_files = \
         profile/pget_address_f08.F90 \
         profile/pget_count_f08.F90 \
         profile/pget_elements_f08.F90 \
+        profile/pget_elements_x_f08.F90 \
         profile/pget_f08.F90 \
         profile/pget_processor_name_f08.F90 \
         profile/pget_version_f08.F90 \
@@ -522,6 +529,7 @@ pmpi_api_files = \
         profile/pstart_f08.F90 \
         profile/pstatus_set_cancelled_f08.F90 \
         profile/pstatus_set_elements_f08.F90 \
+        profile/pstatus_set_elements_x_f08.F90 \
         profile/ptestall_f08.F90 \
         profile/ptestany_f08.F90 \
         profile/ptest_cancelled_f08.F90 \
@@ -550,13 +558,16 @@ pmpi_api_files = \
         profile/ptype_get_contents_f08.F90 \
         profile/ptype_get_envelope_f08.F90 \
         profile/ptype_get_extent_f08.F90 \
+        profile/ptype_get_extent_x_f08.F90 \
         profile/ptype_get_name_f08.F90 \
         profile/ptype_get_true_extent_f08.F90 \
+        profile/ptype_get_true_extent_x_f08.F90 \
         profile/ptype_indexed_f08.F90 \
         profile/ptype_match_size_f08.F90 \
         profile/ptype_set_attr_f08.F90 \
         profile/ptype_set_name_f08.F90 \
         profile/ptype_size_f08.F90 \
+        profile/ptype_size_x_f08.F90 \
         profile/ptype_vector_f08.F90 \
         profile/punpack_external_f08.F90 \
         profile/punpack_f08.F90 \

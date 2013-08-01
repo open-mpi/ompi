@@ -277,6 +277,11 @@ AC_DEFUN([OMPI_SETUP_MPI_FORTRAN],[
     OMPI_MPI_OFFSET_KIND=$OMPI_FORTRAN_C_INT64_T_KIND
     AC_SUBST(OMPI_MPI_OFFSET_KIND)
 
+    # Get the kind value for Fortran MPI_COUNT_KIND (corresponding to 
+    # INTEGER*8) 
+    OMPI_MPI_COUNT_KIND=$OMPI_FORTRAN_C_INT64_T_KIND 
+    AC_SUBST(OMPI_MPI_COUNT_KIND) 
+
     #--------------------------------------------------------
     # This is all we need for the Fortran mpif.h MPI bindings
     #--------------------------------------------------------

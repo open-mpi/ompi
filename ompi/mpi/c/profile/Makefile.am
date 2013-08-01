@@ -138,6 +138,7 @@ nodist_libmpi_c_pmpi_la_SOURCES = \
         pget_address.c \
         pget_count.c \
         pget_elements.c \
+        pget_elements_x.c \
         pget_library_version.c \
         pget_processor_name.c \
         pget_version.c \
@@ -242,6 +243,7 @@ nodist_libmpi_c_pmpi_la_SOURCES = \
         pstatus_f2c.c \
         pstatus_set_cancelled.c \
         pstatus_set_elements.c \
+        pstatus_set_elements_x.c \
         ptestall.c \
         ptestany.c \
         ptest.c \
@@ -273,8 +275,10 @@ nodist_libmpi_c_pmpi_la_SOURCES = \
         ptype_get_contents.c \
         ptype_get_envelope.c \
         ptype_get_extent.c \
+        ptype_get_extent_x.c \
         ptype_get_name.c \
         ptype_get_true_extent.c \
+        ptype_get_true_extent_x.c \
         ptype_hindexed.c \
         ptype_hvector.c \
         ptype_indexed.c \
@@ -283,6 +287,7 @@ nodist_libmpi_c_pmpi_la_SOURCES = \
         ptype_set_attr.c \
         ptype_set_name.c \
         ptype_size.c \
+        ptype_size_x.c \
         ptype_struct.c \
         ptype_ub.c \
         ptype_vector.c  \

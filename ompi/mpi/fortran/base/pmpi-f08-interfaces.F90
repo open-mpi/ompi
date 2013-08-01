@@ -582,6 +582,18 @@ subroutine PMPI_Get_elements_f08(status,datatype,count,ierror &
 end subroutine PMPI_Get_elements_f08
 end interface  PMPI_Get_elements
 
+interface  PMPI_Get_elements_x
+subroutine PMPI_Get_elements_x_f08(status,datatype,count,ierror &
+           ) OMPI_F08_INTERFACE_BIND_C("PMPI_Get_elements_x_f08")
+   use :: mpi_f08_types, only : MPI_Status, MPI_Datatype, MPI_COUNT_KIND
+   implicit none
+   TYPE(MPI_Status), INTENT(IN) :: status
+   TYPE(MPI_Datatype), INTENT(IN) :: datatype
+   INTEGER(MPI_COUNT_KIND), INTENT(OUT) :: count
+   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+end subroutine PMPI_Get_elements_x_f08
+end interface  PMPI_Get_elements_x
+
 interface  PMPI_Pack
 subroutine PMPI_Pack_f08(inbuf,incount,datatype,outbuf,outsize,position,comm,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Pack_f08")
@@ -843,6 +855,17 @@ subroutine PMPI_Type_get_extent_f08(datatype,lb,extent,ierror &
 end subroutine PMPI_Type_get_extent_f08
 end interface  PMPI_Type_get_extent
 
+interface  PMPI_Type_get_extent_x
+subroutine PMPI_Type_get_extent_x_f08(datatype,lb,extent,ierror &
+           ) OMPI_F08_INTERFACE_BIND_C("PMPI_Type_get_extent_x_f08")
+   use :: mpi_f08_types, only : MPI_Datatype, MPI_ADDRESS_KIND, MPI_COUNT_KIND
+   implicit none
+   TYPE(MPI_Datatype), INTENT(IN) :: datatype
+   INTEGER(MPI_COUNT_KIND), INTENT(OUT) :: lb, extent
+   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+end subroutine PMPI_Type_get_extent_x_f08
+end interface  PMPI_Type_get_extent_x
+
 interface  PMPI_Type_get_true_extent
 subroutine PMPI_Type_get_true_extent_f08(datatype,true_lb,true_extent,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Type_get_true_extent_f08")
@@ -853,6 +876,17 @@ subroutine PMPI_Type_get_true_extent_f08(datatype,true_lb,true_extent,ierror &
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 end subroutine PMPI_Type_get_true_extent_f08
 end interface  PMPI_Type_get_true_extent
+
+interface  PMPI_Type_get_true_extent_x
+subroutine PMPI_Type_get_true_extent_x_f08(datatype,true_lb,true_extent,ierror &
+           ) OMPI_F08_INTERFACE_BIND_C("PMPI_Type_get_true_extent_x_f08")
+   use :: mpi_f08_types, only : MPI_Datatype, MPI_ADDRESS_KIND, MPI_COUNT_KIND
+   implicit none
+   TYPE(MPI_Datatype), INTENT(IN) :: datatype
+   INTEGER(MPI_COUNT_KIND), INTENT(OUT) :: true_lb, true_extent
+   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+end subroutine PMPI_Type_get_true_extent_x_f08
+end interface  PMPI_Type_get_true_extent_x
 
 interface  PMPI_Type_indexed
 subroutine PMPI_Type_indexed_f08(count,array_of_blocklengths, &
@@ -878,6 +912,17 @@ subroutine PMPI_Type_size_f08(datatype,size,ierror &
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 end subroutine PMPI_Type_size_f08
 end interface  PMPI_Type_size
+
+interface  PMPI_Type_size_x
+subroutine PMPI_Type_size_x_f08(datatype,size,ierror &
+           ) OMPI_F08_INTERFACE_BIND_C("PMPI_Type_size_x_f08")
+   use :: mpi_f08_types, only : MPI_Datatype, MPI_COUNT_KIND
+   implicit none
+   TYPE(MPI_Datatype), INTENT(IN) :: datatype
+   INTEGER(MPI_COUNT_KIND), INTENT(OUT) :: size
+   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+end subroutine PMPI_Type_size_x_f08
+end interface  PMPI_Type_size_x
 
 interface  PMPI_Type_vector
 subroutine PMPI_Type_vector_f08(count,blocklength,stride,oldtype,newtype,ierror &
@@ -3233,6 +3278,18 @@ subroutine PMPI_Status_set_elements_f08(status,datatype,count,ierror &
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 end subroutine PMPI_Status_set_elements_f08
 end interface  PMPI_Status_set_elements
+
+interface  PMPI_Status_set_elements_x
+subroutine PMPI_Status_set_elements_x_f08(status,datatype,count,ierror &
+           ) OMPI_F08_INTERFACE_BIND_C("PMPI_Status_set_elements_x_f08")
+   use :: mpi_f08_types, only : MPI_Status, MPI_Datatype, MPI_COUNT_KIND
+   implicit none
+   TYPE(MPI_Status), INTENT(INOUT) :: status
+   TYPE(MPI_Datatype), INTENT(IN) :: datatype
+   INTEGER(MPI_COUNT_KIND), INTENT(IN) :: count
+   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+end subroutine PMPI_Status_set_elements_x_f08
+end interface  PMPI_Status_set_elements_x
 
 #if OMPI_PROVIDE_MPI_FILE_INTERFACE
 

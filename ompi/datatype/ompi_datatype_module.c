@@ -276,6 +276,18 @@ ompi_predefined_datatype_t ompi_mpi_c_long_double_complex =  OMPI_DATATYPE_INIT_
 #endif  /* HAVE_LONG_DOUBLE */
 
 /*
+ * MPI 3.0 Datatypes
+ */
+#if OMPI_MPI_COUNT_SIZE == 4
+ompi_predefined_datatype_t ompi_mpi_count = OMPI_DATATYPE_INIT_PREDEFINED_BASIC_TYPE(INT32_T, COUNT, OMPI_DATATYPE_FLAG_DATA_C | OMPI_DATATYPE_FLAG_DATA_INT);
+#elif OMPI_MPI_COUNT_SIZE == 8
+ompi_predefined_datatype_t ompi_mpi_count = OMPI_DATATYPE_INIT_PREDEFINED_BASIC_TYPE(INT64_T, COUNT, OMPI_DATATYPE_FLAG_DATA_C | OMPI_DATATYPE_FLAG_DATA_INT);
+#else
+ompi_predefined_datatype_t ompi_mpi_count = OMPI_DATATYPE_INIT_UNAVAILABLE_BASIC_TYPE(INT64_T, COUNT, OMPI_DATATYPE_FLAG_DATA_C | OMPI_DATATYPE_FLAG_DATA_INT);
+#endif
+
+
+/*
  * NOTE: The order of this array *MUST* match what is listed in
  * opal_datatype_internal.h and ompi_datatype_internal.h
  * Everything referring to types/ids should be ORDERED as in ompi_datatype_basicDatatypes array.
@@ -336,7 +348,11 @@ const ompi_datatype_t* ompi_datatype_basicDatatypes[OMPI_DATATYPE_MPI_MAX_PREDEF
 
     &ompi_mpi_lb.dt,                         /* 0x2C */
     &ompi_mpi_ub.dt,                         /* 0x2D */
-    &ompi_mpi_unavailable.dt,                /* 0x2E */
+
+    /* MPI 3.0 types */
+    &ompi_mpi_count.dt,                      /* 0x2E */
+
+    &ompi_mpi_unavailable.dt,                /* 0x2F */
 };
 
 opal_pointer_array_t ompi_datatype_f_to_c_table;
@@ -659,6 +675,9 @@ int32_t ompi_datatype_init( void )
     MOOG(uint64_t, 65);
     MOOG(aint, 66);
     MOOG(offset, 67);
+
+    /* MPI 3.0 types */
+    MOOG(count, 68);
 
     /**
      * Now make sure all non-contiguous types are marked as such.

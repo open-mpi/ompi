@@ -182,6 +182,7 @@ $handles->{MPI_INT64_T} = 64;
 $handles->{MPI_UINT64_T} = 65;
 $handles->{MPI_AINT} = 66;
 $handles->{MPI_OFFSET} = 67;
+$handles->{MPI_COUNT} = 68;
 
 $handles->{MPI_MESSAGE_NO_PROC} = 1;
 

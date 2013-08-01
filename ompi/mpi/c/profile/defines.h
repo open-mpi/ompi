@@ -181,6 +181,7 @@
 #define MPI_Get_address PMPI_Get_address
 #define MPI_Get_count PMPI_Get_count
 #define MPI_Get_elements PMPI_Get_elements
+#define MPI_Get_elements_x PMPI_Get_elements_x
 #define MPI_Get PMPI_Get
 #define MPI_Get_library_version PMPI_Get_library_version
 #define MPI_Get_processor_name PMPI_Get_processor_name
@@ -289,7 +290,8 @@
 #define MPI_Status_c2f PMPI_Status_c2f
 #define MPI_Status_f2c PMPI_Status_f2c
 #define MPI_Status_set_cancelled PMPI_Status_set_cancelled 
-#define MPI_Status_set_elements PMPI_Status_set_elements 
+#define MPI_Status_set_elements PMPI_Status_set_elements
+#define MPI_Status_set_elements_x PMPI_Status_set_elements_x
 #define MPI_Test_cancelled PMPI_Test_cancelled
 #define MPI_Test PMPI_Test
 #define MPI_Testall PMPI_Testall
@@ -321,8 +323,10 @@
 #define MPI_Type_get_contents PMPI_Type_get_contents
 #define MPI_Type_get_envelope PMPI_Type_get_envelope
 #define MPI_Type_get_extent PMPI_Type_get_extent
+#define MPI_Type_get_extent_x PMPI_Type_get_extent_x
 #define MPI_Type_get_name PMPI_Type_get_name
 #define MPI_Type_get_true_extent PMPI_Type_get_true_extent
+#define MPI_Type_get_true_extent_x PMPI_Type_get_true_extent_x
 #define MPI_Type_hindexed PMPI_Type_hindexed
 #define MPI_Type_hvector PMPI_Type_hvector
 #define MPI_Type_indexed PMPI_Type_indexed
@@ -331,6 +335,7 @@
 #define MPI_Type_set_attr PMPI_Type_set_attr
 #define MPI_Type_set_name PMPI_Type_set_name
 #define MPI_Type_size PMPI_Type_size
+#define MPI_Type_size_x PMPI_Type_size_x
 #define MPI_Type_struct PMPI_Type_struct
 #define MPI_Type_ub PMPI_Type_ub
 #define MPI_Type_vector PMPI_Type_vector

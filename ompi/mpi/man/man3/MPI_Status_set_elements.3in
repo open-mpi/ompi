@@ -1,9 +1,10 @@
+.\" Copyright 2013 Los Alamos National Security, LLC. All rights reserved.
 .\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
 .\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines
 .TH MPI_Status_set_elements 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
-\fBMPI_Status_set_elements\fP \- Modifies opaque part of \fIstatus\fP to allow MPI_Get_elements to return \fIcount\fP.
+\fBMPI_Status_set_elements\fP, \fBMPI_Status_set_elements_x\fP \- Modifies opaque part of \fIstatus\fP to allow MPI_Get_elements to return \fIcount\fP.
 
 .SH SYNTAX
 .ft R
@@ -11,6 +12,7 @@
 .nf
 #include <mpi.h>
 int MPI_Status_set_elements(MPI_Status *\fIstatus\fP, MPI_Datatype \fIdatatype\fP, int \fIcount\fP) 
+int MPI_Status_set_elements_x(MPI_Status *\fIstatus\fP, MPI_Datatype \fIdatatype\fP, MPI_Count \fIcount\fP) 
 
 .fi
 .SH Fortran Syntax
@@ -18,6 +20,10 @@ int MPI_Status_set_elements(MPI_Status *\fIstatus\fP, MPI_Datatype \fIdatatype\f
 INCLUDE 'mpif.h'
 MPI_STATUS_SET_ELEMENTS(\fISTATUS, DATATYPE, COUNT, IERROR\fP)
 	INTEGER	\fISTATUS\fP(MPI_STATUS_SIZE), DATATYPE, COUNT, IERROR\fP
+MPI_STATUS_SET_ELEMENTS_X(\fISTATUS, DATATYPE, COUNT, IERROR\fP)
+	INTEGER	\fISTATUS\fP(MPI_STATUS_SIZE), DATATYPE\fP
+        INTEGER(KIND=MPI_COUNT_KIND) \fICOUNT\fP
+        INTEGER \fIIERROR\fP
 
 .fi
 .SH C++ Syntax
@@ -49,9 +55,9 @@ Fortran only: Error status (integer).
 
 .SH DESCRIPTION
 .ft R
-MPI_Status_set_elements modifies the opaque part of \fIstatus\fP so that a call to MPI_Get_elements will return \fIcount\fP. MPI_Get_count will return a compatible value.
+MPI_Status_set_elements modifies the opaque part of \fIstatus\fP so that a call to MPI_Get_elements or MPI_Get_elements_x will return \fIcount\fP. MPI_Get_count will return a compatible value.
 .sp
-A subsequent call to MPI_Get_count(\fIstatus, datatype, count\fP) or to MPI_Get_elements(\fIstatus, datatype, count\fP) must use a data-type argument that has the same type signature as the data-type argument that was used in the call to MPI_Status_set_elements. 
+A subsequent call to MPI_Get_count(\fIstatus, datatype, count\fP), to MPI_Get_elements(\fIstatus, datatype, count\fP), or to MPI_Get_elements_x(\fIstatus, datatype, count\fP) must use a data-type argument that has the same type signature as the data-type argument that was used in the call to MPI_Status_set_elements. 
 
 .SH NOTES
 .ft R
@@ -63,3 +69,11 @@ Almost all MPI routines return an error value; C routines as the value of the fu
 Before the error value is returned, the current MPI error handler is
 called. By default, this error handler aborts the MPI job, except for I/O function errors. The error handler may be changed with MPI_Comm_set_errhandler; the predefined error handler MPI_ERRORS_RETURN may be used to cause error values to be returned. Note that MPI does not guarantee that an MPI program can continue past an error.  
 
+.SH FORTRAN 77 NOTES
+.ft R
+The MPI standard prescribes portable Fortran syntax for the \fICOUNT\fP argument of MPI_Status_set_elements_x only for Fortran 90. FORTRAN 77 users may use the non-portable syntax
+.sp
+.nf
+     INTEGER*MPI_COUNT_KIND \fICOUNT\fP
+.sp
+where MPI_COUNT_KIND is a constant defined in mpif.h and gives the length of the declared integer in bytes.

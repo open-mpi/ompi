@@ -159,6 +159,7 @@
 #define ompi_get_address_f pompi_get_address_f
 #define ompi_get_count_f pompi_get_count_f
 #define ompi_get_elements_f pompi_get_elements_f
+#define ompi_get_elements_x_f pompi_get_elements_x_f
 #define ompi_get_f pompi_get_f
 #define ompi_get_library_version_f pompi_get_library_version_f
 #define ompi_get_processor_name_f pompi_get_processor_name_f
@@ -266,6 +267,7 @@
 #define ompi_startall_f pompi_startall_f
 #define ompi_status_set_cancelled_f pompi_status_set_cancelled_f
 #define ompi_status_set_elements_f pompi_status_set_elements_f
+#define ompi_status_set_elements_x_f pompi_status_set_elements_x_f
 #define ompi_testall_f pompi_testall_f
 #define ompi_testany_f pompi_testany_f
 #define ompi_test_f pompi_test_f
@@ -295,8 +297,10 @@
 #define ompi_type_get_contents_f pompi_type_get_contents_f
 #define ompi_type_get_envelope_f pompi_type_get_envelope_f
 #define ompi_type_get_extent_f pompi_type_get_extent_f
+#define ompi_type_get_extent_x_f pompi_type_get_extent_x_f
 #define ompi_type_get_name_f pompi_type_get_name_f
 #define ompi_type_get_true_extent_f pompi_type_get_true_extent_f
+#define ompi_type_get_true_extent_x_f pompi_type_get_true_extent_x_f
 #define ompi_type_hindexed_f pompi_type_hindexed_f
 #define ompi_type_hvector_f pompi_type_hvector_f
 #define ompi_type_indexed_f pompi_type_indexed_f
@@ -305,6 +309,7 @@
 #define ompi_type_set_attr_f pompi_type_set_attr_f
 #define ompi_type_set_name_f pompi_type_set_name_f
 #define ompi_type_size_f pompi_type_size_f
+#define ompi_type_size_x_f pompi_type_size_x_f
 #define ompi_type_struct_f pompi_type_struct_f
 #define ompi_type_ub_f pompi_type_ub_f
 #define ompi_type_vector_f pompi_type_vector_f
