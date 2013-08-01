@@ -706,18 +706,12 @@ int orte_daemon(int argc, char *argv[])
             char **aliases=NULL;
             uint8_t naliases, ni;
             char hostname[ORTE_MAX_HOSTNAME_SIZE];
-            char *ptr;
 
-            /* if we stripped the prefix, include full hostname as an alias */
-            if (orte_process_info.strip_prefix_from_node_names) {
-                gethostname(hostname, ORTE_MAX_HOSTNAME_SIZE);
-                /* if the hostname is an IP address, leave it alone */
-                if (!opal_net_isaddr(hostname) && !orte_keep_fqdn_hostnames) {
-                    /* not an IP address, so remove any domain info */
-                    if (NULL != (ptr = strchr(hostname, '.'))) {
-                        *ptr = '\0';
-                    }
-                }
+            /* if we stripped the prefix or removed the fqdn,
+             * include full hostname as an alias
+             */
+            gethostname(hostname, ORTE_MAX_HOSTNAME_SIZE);
+            if (strlen(orte_process_info.nodename) < strlen(hostname)) {
                 opal_argv_append_nosize(&aliases, hostname);
             }
             opal_ifgetaliases(&aliases);

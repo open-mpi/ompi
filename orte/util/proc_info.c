@@ -35,6 +35,7 @@
 
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_var.h"
+#include "opal/util/argv.h"
 #include "opal/util/net.h"
 #include "opal/util/output.h"
 
@@ -80,8 +81,7 @@ ORTE_DECLSPEC orte_proc_info_t orte_process_info = {
     /*  .app_rank =                     */   -1,
     /*  .peer_modex =                   */   -1,
     /*  .peer_init_barrier =            */   -1,
-    /*  .peer_fini_barrier =            */   -1,
-    /*  .strip_prefix_from_node_names = */ false
+    /*  .peer_fini_barrier =            */   -1
 };
 
 static bool init=false;
@@ -94,10 +94,12 @@ static char *orte_strip_prefix;
 int orte_proc_info(void)
 {
     
-    int idx;
+    int idx, i;
     char *ptr;
     char hostname[ORTE_MAX_HOSTNAME_SIZE];
-    
+    char **prefixes;
+    bool match;
+
     if (init) {
         return ORTE_SUCCESS;
     }
@@ -171,38 +173,42 @@ int orte_proc_info(void)
         }
     }
 
-    orte_process_info.strip_prefix_from_node_names = false;
-    (void) mca_base_var_register ("orte", "orte", NULL, "strip_prefix_from_node_names",
-                                  "Whether to strip leading characters and zeroes from node names returned by daemons",
-                                  MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
-                                  OPAL_INFO_LVL_9,
-                                  MCA_BASE_VAR_SCOPE_READONLY,
-                                  &orte_process_info.strip_prefix_from_node_names);
-
-    orte_strip_prefix = "";
+    orte_strip_prefix = NULL;
     (void) mca_base_var_register ("orte", "orte", NULL, "strip_prefix",
-				  "Prefix to match when deciding whether to strip leading characters and zeroes from "
-				  "node names returned by daemons (empty = strip all). Does nothing if orte_strip_prefix_from_node_names "
-				  "is set to false", MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
+				  "Prefix(es) to match when deciding whether to strip leading characters and zeroes from "
+				  "node names returned by daemons", MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
 				  OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
 				  &orte_strip_prefix);
 
     /* we have to strip node names here, if user directs, to ensure that
      * the names exchanged in the modex match the names found locally
      */
-    if (orte_process_info.strip_prefix_from_node_names && 0 == strncmp (hostname, orte_strip_prefix, strlen (orte_strip_prefix))) {
-        /* remove all leading characters and zeroes */
-        idx = 0;
-        while (idx < (int)strlen(hostname) &&
-               (hostname[idx] <= '0' || '9' < hostname[idx])) {
-            idx++;
+    if (NULL != orte_strip_prefix) {
+        prefixes = opal_argv_split(orte_strip_prefix, ',');
+        match = false;
+        for (i=0; NULL != prefixes[i]; i++) {
+            if (0 == strncmp(hostname, prefixes[i], strlen(prefixes[i]))) {
+                /* remove the prefix and leading zeroes */
+                idx = strlen(prefixes[i]);
+                while (idx < (int)strlen(hostname) &&
+                       (hostname[idx] <= '0' || '9' < hostname[idx])) {
+                    idx++;
+                }
+                if ((int)strlen(hostname) <= idx) {
+                    /* there were no non-zero numbers in the name */
+                    orte_process_info.nodename = strdup(&hostname[strlen(prefixes[i])]);
+                } else {
+                    orte_process_info.nodename = strdup(&hostname[idx]);
+                }
+                match = true;
+                break;
+            }
         }
-        if ((int)strlen(hostname) <= idx) {
-            /* there were no non-zero numbers in the name */
+        /* if we didn't find a match, then just use the hostname as-is */
+        if (!match) {
             orte_process_info.nodename = strdup(hostname);
-        } else {
-            orte_process_info.nodename = strdup(&hostname[idx]);
         }
+        opal_argv_free(prefixes);
     } else {
         orte_process_info.nodename = strdup(hostname);
     }
