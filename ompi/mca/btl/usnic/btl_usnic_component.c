@@ -38,6 +38,7 @@
 #include <errno.h>
 #include <infiniband/verbs.h>
 #include <unistd.h>
+#include <stdlib.h>
 #include <sys/time.h>
 #include <sys/resource.h>
 #include <sys/types.h>
@@ -152,7 +153,8 @@ static int usnic_component_open(void)
 {
     /* initialize state */
     mca_btl_usnic_component.num_modules = 0;
-    mca_btl_usnic_component.usnic_modules = NULL;
+    mca_btl_usnic_component.usnic_all_modules = NULL;
+    mca_btl_usnic_component.usnic_active_modules = NULL;
 
     /* In this version, the USNIC stack does not support having more
      * than one GID.  So just hard-wire this value to 0. */
@@ -202,6 +204,9 @@ static int usnic_component_close(void)
         usnic_clock_timer_event_set = false;
     }
 
+    free(mca_btl_usnic_component.usnic_all_modules);
+    free(mca_btl_usnic_component.usnic_active_modules);
+
     return OMPI_SUCCESS;
 }
 
@@ -227,7 +232,7 @@ static int usnic_modex_send(void)
 
         for (i = 0; i < mca_btl_usnic_component.num_modules; i++) {
             ompi_btl_usnic_module_t* module = 
-                &mca_btl_usnic_component.usnic_modules[i];
+                mca_btl_usnic_component.usnic_active_modules[i];
             addrs[i] = module->local_addr;
             opal_output_verbose(5, USNIC_OUT,
                                 "btl:usnic: modex_send DQP:%d, CQP:%d, subnet = 0x%016" PRIx64 " interface =0x%016" PRIx64,
@@ -345,7 +350,7 @@ static int check_usnic_config(struct ibv_device_attr *device_attr,
     }
 
     if (num_vfs * qp_per_vf < num_local_procs * USNIC_NUM_CHANNELS) {
-        snprintf(str, sizeof(str), "Not enough SQ/RQ (found %d, need %d)",
+        snprintf(str, sizeof(str), "Not enough WQ/RQ (found %d, need %d)",
                  num_vfs * qp_per_vf,
                  num_local_procs * USNIC_NUM_CHANNELS);
         goto error;
@@ -441,6 +446,8 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
 
     seed_prng();
 
+    srandom((unsigned int)getpid());
+
     /* Find the ports that we want to use.  We do our own interface name
      * filtering below, so don't let the verbs code see our
      * if_include/if_exclude strings */
@@ -459,18 +466,19 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
         malloc(mca_btl_usnic_component.num_modules * 
                sizeof(ompi_btl_usnic_module_t*));
     if (NULL == btls) {
-        btls = NULL;
         goto free_include_list;
     }
 
     /* Allocate space for btl module instances */
-    mca_btl_usnic_component.usnic_modules = (ompi_btl_usnic_module_t*)
+    mca_btl_usnic_component.usnic_all_modules =
         calloc(mca_btl_usnic_component.num_modules,
-               sizeof(ompi_btl_usnic_module_t));
-    if (NULL == mca_btl_usnic_component.usnic_modules) {
-        free(btls);
-        btls = NULL;
-        goto free_include_list;
+               sizeof(*mca_btl_usnic_component.usnic_all_modules));
+    mca_btl_usnic_component.usnic_active_modules =
+         calloc(mca_btl_usnic_component.num_modules,
+               sizeof(*mca_btl_usnic_component.usnic_active_modules));
+    if (NULL == mca_btl_usnic_component.usnic_all_modules ||
+        NULL == mca_btl_usnic_component.usnic_active_modules) {
+        goto error;
     }
 
     /* If we have include or exclude list, parse and set up now
@@ -506,7 +514,7 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
          item != opal_list_get_end(port_list) &&
              (0 == mca_btl_usnic_component.max_modules ||
               i < mca_btl_usnic_component.max_modules);
-         ++i, item = opal_list_get_next(item)) {
+         item = opal_list_get_next(item)) {
         port = (ompi_common_verbs_port_item_t*) item;
 
         opal_output_verbose(5, USNIC_OUT,
@@ -520,15 +528,13 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
             opal_output_verbose(5, USNIC_OUT,
                                 "btl:usnic: this is not a usnic-capable device");
             --mca_btl_usnic_component.num_modules;
-            --i;
             continue; /* next port */
         }
 
         /* Fill in a bunch of the module struct */
-        module = &(mca_btl_usnic_component.usnic_modules[i]);
+        module = &(mca_btl_usnic_component.usnic_all_modules[i]);
         if (OMPI_SUCCESS != init_module_from_port(module, port)) {
             --mca_btl_usnic_component.num_modules;
-            --i;
             continue; /* next port */
         }
 
@@ -542,7 +548,6 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
                                 (filter_incl ? "if_include" : "if_exclude"));
             if (!keep_module) {
                 --mca_btl_usnic_component.num_modules;
-                --i;
                 continue; /* next port */
             }
         }
@@ -557,7 +562,6 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
                            "ibv_query_device", __FILE__, __LINE__,
                            "Failed to query usNIC device; is the usnic_verbs Linux kernel module loaded?");
             --mca_btl_usnic_component.num_modules;
-            --i;
             continue;
         }
         opal_memchecker_base_mem_defined(&device_attr, sizeof(device_attr));
@@ -566,7 +570,6 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
         if (check_usnic_config(&device_attr, module,
                                num_local_procs) != OMPI_SUCCESS) {
             --mca_btl_usnic_component.num_modules;
-            --i;
             continue;
         }
 
@@ -595,8 +598,8 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
          * override.
          */
         if (-1 == mca_btl_usnic_component.prio_sd_num) {
-            module->prio_sd_num = 
-                max(128, 32 * ompi_process_info.num_procs) - 1;
+            module->prio_sd_num =
+                max(128, 32 * orte_process_info.num_procs) - 1;
         } else {
             module->prio_sd_num = mca_btl_usnic_component.prio_sd_num;
         }
@@ -604,8 +607,8 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
             module->prio_sd_num = device_attr.max_qp_wr;
         }
         if (-1 == mca_btl_usnic_component.prio_rd_num) {
-            module->prio_rd_num = 
-                max(128, 32 * ompi_process_info.num_procs) - 1;
+            module->prio_rd_num =
+                max(128, 32 * orte_process_info.num_procs) - 1;
         } else {
             module->prio_rd_num = mca_btl_usnic_component.prio_rd_num;
         }
@@ -651,7 +654,7 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
         opal_hash_table_init(&module->senders, 4096);
 
         /* Let this module advance to the next round! */
-        btls[i] = &(module->super);
+        btls[i++] = &(module->super);
     }
 
     /* free filter if created */
@@ -747,6 +750,10 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
                             module->super.btl_exclusivity);
     }
 
+    /* We may have skipped some modules, so reset
+       component.num_modules */
+    mca_btl_usnic_component.num_modules = num_final_modules;
+
     /* We've packed all the modules and pointers to those modules in
        the lower ends of their respective arrays.  If not all the
        modules initialized successfully, we're wasting a little space.
@@ -756,23 +763,15 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
        That being said, if we ended up with zero acceptable ports,
        then free everything. */
     if (0 == num_final_modules) {
-        if (NULL != mca_btl_usnic_component.usnic_modules) {
-            free(mca_btl_usnic_component.usnic_modules);
-            mca_btl_usnic_component.usnic_modules = NULL;
-        }
-        if (NULL != btls) {
-            free(btls);
-            btls = NULL;
-        }
-
         opal_output_verbose(5, USNIC_OUT,
                             "btl:usnic: returning 0 modules");
-        goto modex_send;
+        goto error;
     }
 
-    /* We may have skipped some modules, so reset
-       component.num_modules */
-    mca_btl_usnic_component.num_modules = num_final_modules;
+    /* we have a nonzero number of modules, so save a copy of the btls array
+     * for later use */
+    memcpy(mca_btl_usnic_component.usnic_active_modules, btls,
+           num_final_modules*sizeof(*btls));
 
     /* Loop over the modules and find the minimum value for
        module->numa_distance.  For every module that has a
@@ -822,6 +821,16 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
  modex_send:
     usnic_modex_send();
     return btls;
+
+ error:
+    /* clean up as much allocated memory as possible */
+    free(btls);
+    btls = NULL;
+    free(mca_btl_usnic_component.usnic_all_modules);
+    mca_btl_usnic_component.usnic_all_modules = NULL;
+    free(mca_btl_usnic_component.usnic_active_modules);
+    mca_btl_usnic_component.usnic_active_modules = NULL;
+    goto free_include_list;
 }
 
 /*
@@ -845,7 +854,7 @@ static int usnic_component_progress(void)
 
     /* Poll for completions */
     for (i = 0; i < mca_btl_usnic_component.num_modules; i++) {
-        module = &mca_btl_usnic_component.usnic_modules[i];
+        module = mca_btl_usnic_component.usnic_active_modules[i];
 
         /* poll each channel */
         for (c=0; c<USNIC_NUM_CHANNELS; ++c) {
@@ -855,7 +864,8 @@ static int usnic_component_progress(void)
             opal_memchecker_base_mem_defined(&num_events, sizeof(num_events));
             opal_memchecker_base_mem_defined(wc, sizeof(wc[0]) * num_events);
             if (OPAL_UNLIKELY(num_events < 0)) {
-                BTL_ERROR(("error polling CQ with %d: %s",
+                BTL_ERROR(("%s: error polling CQ[%d] with %d: %s",
+                        ibv_get_device_name(module->device), c,
                         num_events, strerror(errno)));
                 return OMPI_ERROR;
             }
@@ -874,11 +884,11 @@ static int usnic_component_progress(void)
                         if (cwc->byte_len <
                              (sizeof(ompi_btl_usnic_protocol_header_t)+
                               sizeof(ompi_btl_usnic_btl_header_t))) {
-                        BTL_ERROR(("RX error polling CQ[%d] with status %d for wr_id %" PRIx64 " vend_err %d, byte_len %d (%d of %d)",
+                        BTL_ERROR(("%s: RX error polling CQ[%d] with status %d for wr_id %" PRIx64 " vend_err %d, byte_len %d (%d of %d)",
+                               ibv_get_device_name(module->device),
                                c, cwc->status, cwc->wr_id,
-                               cwc->vendor_err,
-                               j, num_events, cwc->byte_len));
-abort();
+                               cwc->vendor_err, cwc->byte_len,
+                               j, num_events));
                         } else {
                             /* silently count CRC errors */
                             ++module->num_crc_errors;
@@ -887,7 +897,8 @@ abort();
                         repost_recv_head = &rseg->rs_recv_desc;
                         continue;
                     } else {
-                        BTL_ERROR(("error polling CQ with status %d for wr_id %" PRIx64 " opcode %d, vend_err %d (%d of %d)",
+                        BTL_ERROR(("%s: error polling CQ[%d] with status %d for wr_id %" PRIx64 " opcode %d, vend_err %d (%d of %d)",
+                               ibv_get_device_name(module->device), c,
                                cwc->status, cwc->wr_id, cwc->opcode,
                                cwc->vendor_err,
                                j, num_events));
@@ -1144,6 +1155,7 @@ static usnic_if_filter_t *parse_ifex_str(const char *orig_str,
     argv = opal_argv_split(orig_str, ',');
     if (NULL == argv || 0 == (n_argv = opal_argv_count(argv))) {
         free(filter);
+        opal_argv_free(argv);
         return NULL;
     }
 

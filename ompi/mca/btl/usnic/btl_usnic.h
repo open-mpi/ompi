@@ -115,8 +115,10 @@ typedef struct ompi_btl_usnic_component_t {
        protocol headers) */
     uint64_t my_hashed_rte_name;
 
-    /** array of available BTLs */
-    struct ompi_btl_usnic_module_t* usnic_modules;
+    /** array of possible BTLs (>= num_modules elements) */
+    struct ompi_btl_usnic_module_t* usnic_all_modules;
+    /** array of pointers to active BTLs (num_modules elements) */
+    struct ompi_btl_usnic_module_t** usnic_active_modules;
 
     /** list of usnic proc structures */
     opal_list_t usnic_procs;
