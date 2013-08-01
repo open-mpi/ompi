@@ -1,0 +1,13 @@
+# (c) 2013 Los Alamos National Security, LLC. All rights reserved.
+# Open MPI optimized configuration for TOSS/TOSS2 v1.7.x/1.8.x
+
+source ./toss-common
+source ./optimized-common
+
+# Enable panasas support in romio
+with_io_romio_flags=--with-file-system=ufs+nfs+panfs
+CFLAGS="-I/opt/panfs/include"
+CXXFLAGS="-I/opt/panfs/include"
+FCFLAGS="-I/opt/panfs/include"
+FFLAGS="-I/opt/panfs/include"
+CCASFLAGS="-I/opt/panfs/include"
