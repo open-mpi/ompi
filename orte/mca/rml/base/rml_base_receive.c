@@ -143,5 +143,4 @@ orte_rml_base_recv(int status, orte_process_name_t* sender,
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(buf);
     }
-    OBJ_RELEASE(buf);
 }
