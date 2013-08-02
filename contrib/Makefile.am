@@ -89,7 +89,7 @@ EXTRA_DIST = \
         platform/lanl/toss/optimized-nopanasas.conf \
         platform/lanl/toss/optimized-panasas \
         platform/lanl/toss/optimized-panasas.conf \
-        platform/lanl/toss/common \
+        platform/lanl/toss/toss-common \
 	platform/snl/portals4-m5 \
 	platform/snl/portals4-orte \
 	platform/cisco/macosx-dynamic \
