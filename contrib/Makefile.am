@@ -79,22 +79,17 @@ EXTRA_DIST = \
         platform/lanl/rr-class/optimized-nopanasas-nocell.conf \
         platform/lanl/rr-class/optimized-panasas-nocell \
         platform/lanl/rr-class/optimized-panasas-nocell.conf \
-        platform/lanl/tlcc/debug-nopanasas \
-        platform/lanl/tlcc/debug-nopanasas.conf \
-        platform/lanl/tlcc/debug-panasas \
-        platform/lanl/tlcc/debug-panasas.conf \
-        platform/lanl/tlcc/optimized-nopanasas \
-        platform/lanl/tlcc/optimized-nopanasas.conf \
-        platform/lanl/tlcc/optimized-panasas \
-        platform/lanl/tlcc/optimized-panasas.conf \
-        platform/lanl/tlcc2/debug-nopanasas \
-        platform/lanl/tlcc2/debug-nopanasas.conf \
-        platform/lanl/tlcc2/debug-panasas \
-        platform/lanl/tlcc2/debug-panasas.conf \
-        platform/lanl/tlcc2/optimized-nopanasas \
-        platform/lanl/tlcc2/optimized-nopanasas.conf \
-        platform/lanl/tlcc2/optimized-panasas \
-        platform/lanl/tlcc2/optimized-panasas.conf \
+        platform/lanl/toss/debug-common \
+        platform/lanl/toss/debug-nopanasas \
+        platform/lanl/toss/debug-nopanasas.conf \
+        platform/lanl/toss/debug-panasas \
+        platform/lanl/toss/debug-panasas.conf \
+        platform/lanl/toss/optimized-common \
+        platform/lanl/toss/optimized-nopanasas \
+        platform/lanl/toss/optimized-nopanasas.conf \
+        platform/lanl/toss/optimized-panasas \
+        platform/lanl/toss/optimized-panasas.conf \
+        platform/lanl/toss/common \
 	platform/snl/portals4-m5 \
 	platform/snl/portals4-orte \
 	platform/cisco/macosx-dynamic \
