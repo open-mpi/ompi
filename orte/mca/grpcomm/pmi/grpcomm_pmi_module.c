@@ -186,8 +186,8 @@ static int modex(orte_grpcomm_collective_t *coll)
 
      /* our RTE data was constructed and pushed in the ESS pmi component */
 
-    /* commit our modex info */
-     opal_db.commit();
+     /* commit our modex info */
+     opal_db.commit((opal_identifier_t *)ORTE_PROC_MY_NAME);
 
     /* cycle thru all my peers and collect their RTE info */
     name.jobid = ORTE_PROC_MY_NAME->jobid;

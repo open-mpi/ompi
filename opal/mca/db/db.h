@@ -82,7 +82,7 @@ typedef int (*opal_db_base_module_store_pointer_fn_t)(const opal_identifier_t *p
 /*
  * Commit data to the database
  */
-typedef void (*opal_db_base_module_commit_fn_t)(void);
+typedef void (*opal_db_base_module_commit_fn_t)(const opal_identifier_t *proc);
 
 /*
  * Retrieve data

@@ -92,7 +92,7 @@ int opal_db_base_store_pointer(const opal_identifier_t *proc,
     return OPAL_SUCCESS;
 }
 
-void opal_db_base_commit(void)
+void opal_db_base_commit(const opal_identifier_t *proc)
 {
     opal_db_active_module_t *mod;
 
@@ -101,7 +101,7 @@ void opal_db_base_commit(void)
         if (NULL == mod->module->commit) {
             continue;
         }
-        mod->module->commit();
+        mod->module->commit(proc);
     }
 }
 
