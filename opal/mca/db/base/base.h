@@ -69,7 +69,7 @@ OPAL_DECLSPEC int opal_db_base_remove_data(const opal_identifier_t *proc,
 OPAL_DECLSPEC int opal_db_base_add_log(const char *table,
                                        const opal_value_t *kvs, int nkvs);
 
-OPAL_DECLSPEC void opal_db_base_commit(void);
+OPAL_DECLSPEC void opal_db_base_commit(const opal_identifier_t *proc);
 
 END_C_DECLS
 
