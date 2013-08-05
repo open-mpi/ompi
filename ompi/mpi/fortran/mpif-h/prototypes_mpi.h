@@ -215,6 +215,7 @@ PN2(void, MPI_Gatherv, mpi_gatherv, MPI_GATHERV, (char *sendbuf, MPI_Fint *sendc
 PN2(void, MPI_Get_address, mpi_get_address, MPI_GET_ADDRESS, (char *location, MPI_Aint *address, MPI_Fint *ierr));
 PN2(void, MPI_Get_count, mpi_get_count, MPI_GET_COUNT, (MPI_Fint *status, MPI_Fint *datatype, MPI_Fint *count, MPI_Fint *ierr));
 PN2(void, MPI_Get_elements, mpi_get_elements, MPI_GET_ELEMENTS, (MPI_Fint *status, MPI_Fint *datatype, MPI_Fint *count, MPI_Fint *ierr));
+PN2(void, MPI_Get_elements_x, mpi_get_elements_x, MPI_GET_ELEMENTS_X, (MPI_Fint *status, MPI_Fint *datatype, MPI_Count *count, MPI_Fint *ierr));
 PN2(void, MPI_Get, mpi_get, MPI_GET, (char *origin_addr, MPI_Fint *origin_count, MPI_Fint *origin_datatype, MPI_Fint *target_rank, MPI_Aint *target_disp, MPI_Fint *target_count, MPI_Fint *target_datatype, MPI_Fint *win, MPI_Fint *ierr));
 PN2(void, MPI_Get_library_version, mpi_get_library_version, MPI_GET_LIBRARY_VERSION, (char *version, MPI_Fint *resultlen, MPI_Fint *ierr, MPI_Fint version_len));
 PN2(void, MPI_Get_processor_name, mpi_get_processor_name, MPI_GET_PROCESSOR_NAME, (char *name, MPI_Fint *resultlen, MPI_Fint *ierr, int name_len));
@@ -321,6 +322,7 @@ PN2(void, MPI_Start, mpi_start, MPI_START, (MPI_Fint *request, MPI_Fint *ierr));
 PN2(void, MPI_Startall, mpi_startall, MPI_STARTALL, (MPI_Fint *count, MPI_Fint *array_of_requests, MPI_Fint *ierr));
 PN2(void, MPI_Status_set_cancelled, mpi_status_set_cancelled, MPI_STATUS_SET_CANCELLED, (MPI_Fint *status, ompi_fortran_logical_t *flag, MPI_Fint *ierr));
 PN2(void, MPI_Status_set_elements, mpi_status_set_elements, MPI_STATUS_SET_ELEMENTS, (MPI_Fint *status, MPI_Fint *datatype, MPI_Fint *count, MPI_Fint *ierr));
+PN2(void, MPI_Status_set_elements_x, mpi_status_set_elements_x, MPI_STATUS_SET_ELEMENTS_X, (MPI_Fint *status, MPI_Fint *datatype, MPI_Count *count, MPI_Fint *ierr));
 PN2(void, MPI_Testall, mpi_testall, MPI_TESTALL, (MPI_Fint *count, MPI_Fint *array_of_requests, ompi_fortran_logical_t *flag, MPI_Fint *array_of_statuses, MPI_Fint *ierr));
 PN2(void, MPI_Testany, mpi_testany, MPI_TESTANY, (MPI_Fint *count, MPI_Fint *array_of_requests, MPI_Fint *index, ompi_fortran_logical_t *flag, MPI_Fint *status, MPI_Fint *ierr));
 PN2(void, MPI_Test, mpi_test, MPI_TEST, (MPI_Fint *request, ompi_fortran_logical_t *flag, MPI_Fint *status, MPI_Fint *ierr));
@@ -350,8 +352,10 @@ PN2(void, MPI_Type_get_attr, mpi_type_get_attr, MPI_TYPE_GET_ATTR, (MPI_Fint *ty
 PN2(void, MPI_Type_get_contents, mpi_type_get_contents, MPI_TYPE_GET_CONTENTS, (MPI_Fint *mtype, MPI_Fint *max_integers, MPI_Fint *max_addresses, MPI_Fint *max_datatypes, MPI_Fint *array_of_integers, MPI_Aint *array_of_addresses, MPI_Fint *array_of_datatypes, MPI_Fint *ierr));
 PN2(void, MPI_Type_get_envelope, mpi_type_get_envelope, MPI_TYPE_GET_ENVELOPE, (MPI_Fint *type, MPI_Fint *num_integers, MPI_Fint *num_addresses, MPI_Fint *num_datatypes, MPI_Fint *combiner, MPI_Fint *ierr));
 PN2(void, MPI_Type_get_extent, mpi_type_get_extent, MPI_TYPE_GET_EXTENT, (MPI_Fint *type, MPI_Aint *lb, MPI_Aint *extent, MPI_Fint *ierr));
+PN2(void, MPI_Type_get_extent_x, mpi_type_get_extent_x, MPI_TYPE_GET_EXTENT_X, (MPI_Fint *type, MPI_Count *lb, MPI_Count *extent, MPI_Fint *ierr));
 PN2(void, MPI_Type_get_name, mpi_type_get_name, MPI_TYPE_GET_NAME, (MPI_Fint *type, char *type_name, MPI_Fint *resultlen, MPI_Fint *ierr, int name_len));
 PN2(void, MPI_Type_get_true_extent, mpi_type_get_true_extent, MPI_TYPE_GET_TRUE_EXTENT, (MPI_Fint *datatype, MPI_Aint *true_lb, MPI_Aint *true_extent, MPI_Fint *ierr));
+PN2(void, MPI_Type_get_true_extent_x, mpi_type_get_true_extent_x, MPI_TYPE_GET_TRUE_EXTENT_X, (MPI_Fint *datatype, MPI_Count *true_lb, MPI_Count *true_extent, MPI_Fint *ierr));
 PN2(void, MPI_Type_hindexed, mpi_type_hindexed, MPI_TYPE_HINDEXED, (MPI_Fint *count, MPI_Fint *array_of_blocklengths, MPI_Fint *array_of_displacements, MPI_Fint *oldtype, MPI_Fint *newtype, MPI_Fint *ierr));
 PN2(void, MPI_Type_hvector, mpi_type_hvector, MPI_TYPE_HVECTOR, (MPI_Fint *count, MPI_Fint *blocklength, MPI_Fint *stride, MPI_Fint *oldtype, MPI_Fint *newtype, MPI_Fint *ierr));
 PN2(void, MPI_Type_indexed, mpi_type_indexed, MPI_TYPE_INDEXED, (MPI_Fint *count, MPI_Fint *array_of_blocklengths, MPI_Fint *array_of_displacements, MPI_Fint *oldtype, MPI_Fint *newtype, MPI_Fint *ierr));
@@ -360,6 +364,7 @@ PN2(void, MPI_Type_match_size, mpi_type_match_size, MPI_TYPE_MATCH_SIZE, (MPI_Fi
 PN2(void, MPI_Type_set_attr, mpi_type_set_attr, MPI_TYPE_SET_ATTR, (MPI_Fint *type, MPI_Fint *type_keyval, MPI_Aint *attr_val, MPI_Fint *ierr));
 PN2(void, MPI_Type_set_name, mpi_type_set_name, MPI_TYPE_SET_NAME, (MPI_Fint *type, char *type_name, MPI_Fint *ierr, int name_len));
 PN2(void, MPI_Type_size, mpi_type_size, MPI_TYPE_SIZE, (MPI_Fint *type, MPI_Fint *size, MPI_Fint *ierr));
+PN2(void, MPI_Type_size_x, mpi_type_size_x, MPI_TYPE_SIZE_X, (MPI_Fint *type, MPI_Count *size, MPI_Fint *ierr));
 PN2(void, MPI_Type_struct, mpi_type_struct, MPI_TYPE_STRUCT, (MPI_Fint *count, MPI_Fint *array_of_blocklengths, MPI_Fint *array_of_displacements, MPI_Fint *array_of_types, MPI_Fint *newtype, MPI_Fint *ierr));
 PN2(void, MPI_Type_ub, mpi_type_ub, MPI_TYPE_UB, (MPI_Fint *mtype, MPI_Fint *ub, MPI_Fint *ierr));
 PN2(void, MPI_Type_vector, mpi_type_vector, MPI_TYPE_VECTOR, (MPI_Fint *count, MPI_Fint *blocklength, MPI_Fint *stride, MPI_Fint *oldtype, MPI_Fint *newtype, MPI_Fint *ierr));
