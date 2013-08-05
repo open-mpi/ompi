@@ -173,7 +173,7 @@ ompi_btl_portals4_get_md(const void *ptr, ptl_handle_md_t *md_h, void **base_ptr
 #if OMPI_PORTALS4_MAX_MD_SIZE < OMPI_PORTALS4_MAX_VA_SIZE
     int mask = (1ULL << (OMPI_PORTALS4_MAX_VA_SIZE - OMPI_PORTALS4_MAX_MD_SIZE + 1)) - 1;
     int which = (((uintptr_t) ptr) >> (OMPI_PORTALS4_MAX_MD_SIZE - 1)) & mask;
-    *md_h = ompi_btl_portals4.send_md_hs[which];
+    *md_h = mca_btl_portals4_module.send_md_hs[which];
     *base_ptr = (void*) (which * (1ULL << (OMPI_PORTALS4_MAX_MD_SIZE - 1)));
 #else
     *md_h = mca_btl_portals4_module.send_md_h;
@@ -183,7 +183,7 @@ ompi_btl_portals4_get_md(const void *ptr, ptl_handle_md_t *md_h, void **base_ptr
 
 
 static inline int
-ompi_btl_portals4_get_num_mds(void)
+mca_btl_portals4_get_num_mds(void)
 {
 #if OMPI_PORTALS4_MAX_MD_SIZE < OMPI_PORTALS4_MAX_VA_SIZE
     return (1 << (OMPI_PORTALS4_MAX_VA_SIZE - OMPI_PORTALS4_MAX_MD_SIZE + 1));

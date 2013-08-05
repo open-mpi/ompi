@@ -351,7 +351,7 @@ ompi_mtl_portals4_component_init(bool enable_progress_threads,
     {
         int i;
         int num_mds = ompi_mtl_portals4_get_num_mds();
-        ptl_size_t size = 1ULL << OMPI_PORTALS4_MAX_MD_SIZE;
+        ptl_size_t size = (1ULL << OMPI_PORTALS4_MAX_MD_SIZE) - 1;
         ptl_size_t offset_unit = (1ULL << OMPI_PORTALS4_MAX_MD_SIZE) / 2;
 
         ompi_mtl_portals4.send_md_hs = malloc(sizeof(ptl_handle_md_t) * num_mds);

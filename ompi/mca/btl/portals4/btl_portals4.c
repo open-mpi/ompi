@@ -426,7 +426,7 @@ mca_btl_portals4_finalize(struct mca_btl_base_module_t *btl)
 #if OMPI_PORTALS4_MAX_MD_SIZE < OMPI_PORTALS4_MAX_VA_SIZE
     if (NULL != mca_btl_portals4_module.send_md_hs) {
         int i;
-        int num_mds = mca_btl_portals4_module_get_num_mds();
+        int num_mds = mca_btl_portals4_get_num_mds();
 
         for (i = 0 ; i < num_mds ; ++i) {
             if (!PtlHandleIsEqual(mca_btl_portals4_module.send_md_hs[i], PTL_INVALID_HANDLE)) {

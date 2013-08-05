@@ -418,8 +418,8 @@ static mca_btl_base_module_t** mca_btl_portals4_component_init(int *num_btls,
 #if OMPI_PORTALS4_MAX_MD_SIZE < OMPI_PORTALS4_MAX_VA_SIZE
     {
         int i;
-        int num_mds = ompi_btl_portals4_get_num_mds();
-        ptl_size_t size = 1ULL << OMPI_PORTALS4_MAX_MD_SIZE;
+        int num_mds = mca_btl_portals4_get_num_mds();
+        ptl_size_t size = (1ULL << OMPI_PORTALS4_MAX_MD_SIZE) - 1;
         ptl_size_t offset_unit = (1ULL << OMPI_PORTALS4_MAX_MD_SIZE) / 2;
 
         mca_btl_portals4_module.send_md_hs = malloc(sizeof(ptl_handle_md_t) * num_mds);
@@ -439,7 +439,7 @@ static mca_btl_base_module_t** mca_btl_portals4_component_init(int *num_btls,
             md.start = (char*) (offset_unit * i);
             md.length = (i - 1 == num_mds) ? size / 2 : size;
             md.options = 0;
-            md.eq_handle = mca_btl_portals4_module.send_eq_h;
+            md.eq_handle = mca_btl_portals4_module.recv_eq_h;
             md.ct_handle = PTL_CT_NONE;
 
             opal_output_verbose(50, ompi_btl_base_framework.framework_output,

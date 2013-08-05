@@ -307,8 +307,8 @@ portals4_init_query(bool enable_progress_threads,
     {
         int i;
         int num_mds = ompi_coll_portals4_get_num_mds();
-        ptl_size_t size = OMPI_PORTALS4_MAX_MD_SIZE;
-        ptl_size_t offset_unit = OMPI_PORTALS4_MAX_MD_SIZE / 2;
+        ptl_size_t size = (1ULL << OMPI_PORTALS4_MAX_MD_SIZE) - 1;
+        ptl_size_t offset_unit = (1ULL << OMPI_PORTALS4_MAX_MD_SIZE) / 2;
 
         mca_coll_portals4_component.md_hs = malloc(sizeof(ptl_handle_md_t) * num_mds);
         if (NULL == mca_coll_portals4_component.md_hs) {

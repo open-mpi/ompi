@@ -50,7 +50,7 @@ static void
 mca_btl_portals4_frag_eager_destructor(mca_btl_portals4_frag_t* frag)
 {
     if (PTL_INVALID_HANDLE == frag->me_h) {
-/*        PtlMDUnlink(frag->me_h); */
+        PtlMDRelease(frag->me_h);
         frag->me_h = PTL_INVALID_HANDLE;
     }
 }
