@@ -543,6 +543,15 @@ static int fetch(const opal_identifier_t *uid,
         stored_type = (opal_data_type_t) strtol (tmp, NULL, 16);
         size = strtol (tmp2, NULL, 16);
 
+        /* cache value locally so we don't have to look it up via pmi again */
+        if (OPAL_BYTE_OBJECT == stored_type) {
+            opal_byte_object_t bo = {.bytes = (unsigned char *) tmp3, .size = size};
+
+            opal_db.store (uid, OPAL_DB_INTERNAL, tmp_val + offset, &bo, stored_type);
+        } else {
+            opal_db.store (uid, OPAL_DB_INTERNAL, tmp_val + offset, tmp3, stored_type);
+        }
+
         if (0 != strcmp (key, tmp_val + offset)) {
 	    offset = (size_t) (tmp3 - tmp_val) + size;
 	    continue;
@@ -565,7 +574,8 @@ static int fetch(const opal_identifier_t *uid,
             rc = OPAL_ERR_TYPE_MISMATCH;
         }
 
-        break;
+        /* keep going and cache everything locally */
+        offset = (size_t) (tmp3 - tmp_val) + size;
     }
 
     free (tmp_val);
