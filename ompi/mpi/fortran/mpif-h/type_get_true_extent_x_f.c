@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2013 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -37,7 +37,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_TYPE_GET_TRUE_EXTENT_X,
                            pmpi_type_get_true_extent_x_,
                            pmpi_type_get_true_extent_x__,
                            pompi_type_get_true_extent_x_f,
-                           (MPI_Fint *datatype, MPI_Aint *true_lb, MPI_Count *true_extent, MPI_Count *ierr),
+                           (MPI_Fint *datatype, MPI_Count *true_lb, MPI_Count *true_extent, MPI_Fint *ierr),
                            (datatype, true_lb, true_extent, ierr) )
 #endif
 
