@@ -62,12 +62,12 @@ int MPI_Pack_external_size(char *datarep, int incount,
     OBJ_CONSTRUCT(&local_convertor, opal_convertor_t);
 
     /* the resulting convertor will be set to the position ZERO */
-    opal_convertor_copy_and_prepare_for_send( ompi_mpi_external32_convertor,
+    opal_convertor_copy_and_prepare_for_recv( ompi_mpi_external32_convertor,
                                               &(datatype->super), incount, NULL,
                                               CONVERTOR_SEND_CONVERSION,
                                               &local_convertor );
 
-    opal_convertor_get_packed_size( &local_convertor, &length );
+    opal_convertor_get_unpacked_size( &local_convertor, &length );
     *size = (MPI_Aint)length;
     OBJ_DESTRUCT( &local_convertor );
 
