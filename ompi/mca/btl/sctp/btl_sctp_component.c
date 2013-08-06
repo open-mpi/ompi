@@ -107,7 +107,7 @@ static inline char* mca_btl_sctp_param_register_string(
         const char* default_value,
         char **storage)
 {
-    *storage = default_value;
+    *storage = (char*)default_value;
     (void) mca_base_component_var_register(&mca_btl_sctp_component.super.btl_version,
                                            param_name, NULL, MCA_BASE_VAR_TYPE_STRING,
                                            NULL, 0, 0, OPAL_INFO_LVL_9,
@@ -376,11 +376,11 @@ static int mca_btl_sctp_create(int if_index, const char* if_name)
 
         /* allow user to specify interface bandwidth */
         sprintf(param, "bandwidth_%s", if_name);
-        mca_btl_sctp_param_register_int(param, 0, &btl->super.btl_bandwidth);
+        mca_btl_sctp_param_register_int(param, 0, (int*)&btl->super.btl_bandwidth);
 
         /* allow user to override/specify latency ranking */
         sprintf(param, "latency_%s", if_name);
-        mca_btl_sctp_param_register_int(param, 0, &btl->super.btl_latency);
+        mca_btl_sctp_param_register_int(param, 0, (int*)&btl->super.btl_latency);
 
 #if 0 && OPAL_ENABLE_DEBUG
         BTL_OUTPUT(("interface: %s bandwidth %d latency %d",
@@ -422,11 +422,11 @@ static int mca_btl_sctp_create(int if_index, const char* if_name)
 
             /* allow user to specify interface bandwidth */
             sprintf(param, "bandwidth_%s", if_name);
-            mca_btl_sctp_param_register_int(param, 0, &btl->super.btl_bandwidth);
+            mca_btl_sctp_param_register_int(param, 0, (int*)&btl->super.btl_bandwidth);
 
             /* allow user to override/specify latency ranking */
             sprintf(param, "latency_%s", if_name);
-            mca_btl_sctp_param_register_int(param, 0, &btl->super.btl_latency);
+            mca_btl_sctp_param_register_int(param, 0, (int*)&btl->super.btl_latency);
 
 #if 0 && OPAL_ENABLE_DEBUG
             BTL_OUTPUT(("interface: %s bandwidth %d latency %d",
