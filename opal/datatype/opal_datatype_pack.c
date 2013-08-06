@@ -268,7 +268,8 @@ opal_generic_simple_pack_function( opal_convertor_t* pConvertor,
     size_t iov_len_local;
     uint32_t iov_count;
 
-    DO_DEBUG( opal_output( 0, "opal_convertor_generic_simple_pack( %p, {%p, %lu}, %d )\n", (void*)pConvertor,
+    DO_DEBUG( opal_output( 0, "opal_convertor_generic_simple_pack( %p:%p, {%p, %lu}, %d )\n",
+                           (void*)pConvertor, (void*)pConvertor->pBaseBuf,
                            iov[0].iov_base, (unsigned long)iov[0].iov_len, *out_size ); );
 
     description = pConvertor->use_desc->desc;
