@@ -28,17 +28,9 @@
 #include "opal/mca/base/mca_base_component_repository.h"
 #include "opal/constants.h"
 
-void mca_base_component_close (const mca_base_component_t *component, int output_id)
+void mca_base_component_unload (const mca_base_component_t *component, int output_id)
 {
     int ret;
-
-    /* Close */
-    if (NULL != component->mca_close_component) {
-        component->mca_close_component();
-        opal_output_verbose(10, output_id, 
-                            "mca: base: close: component %s closed",
-                            component->mca_component_name);
-    }
 
     /* Unload */
     opal_output_verbose(10, output_id, 
@@ -52,7 +44,20 @@ void mca_base_component_close (const mca_base_component_t *component, int output
         mca_base_var_group_deregister (ret);
     }
 
-    mca_base_component_repository_release((mca_base_component_t *) component);
+    mca_base_component_repository_release((mca_base_component_t *) component);    
+}
+
+void mca_base_component_close (const mca_base_component_t *component, int output_id)
+{
+    /* Close */
+    if (NULL != component->mca_close_component) {
+        component->mca_close_component();
+        opal_output_verbose(10, output_id, 
+                            "mca: base: close: component %s closed",
+                            component->mca_component_name);
+    }
+
+    mca_base_component_unload (component, output_id);
 }
 
 int mca_base_framework_components_close (mca_base_framework_t *framework,
