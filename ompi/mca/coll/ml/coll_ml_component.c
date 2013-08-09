@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2009-2012 Oak Ridge National Laboratory.  All rights reserved.
  * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
@@ -77,6 +78,7 @@ mca_coll_ml_component_t mca_coll_ml_component = {
 
             ml_open,
             ml_close,
+            .mca_register_component_params = mca_coll_ml_register_params
         },
         {
             /* The component is not checkpoint ready */
@@ -357,7 +359,7 @@ static void adjust_coll_config_by_mca_param(void)
 {
     assert(false == mca_coll_ml_component.use_static_bcast ||
            false == mca_coll_ml_component.use_sequential_bcast);
-	
+
     /* setting bcast mca params */
     if (mca_coll_ml_component.use_static_bcast) {
         mca_coll_ml_component.coll_config[ML_BCAST][ML_SMALL_MSG].algorithm_id = ML_BCAST_SMALL_DATA_KNOWN;
@@ -380,18 +382,9 @@ static int ml_open(void)
     int rc, c_idx, m_idx;
     mca_coll_ml_component_t *cs = &mca_coll_ml_component;
 
-
     /* set the starting sequence number */
     cs->base_sequence_number = -1;
     cs->progress_is_busy = false;
-
-    mca_coll_ml_component.config_file_name = NULL;
-
-    /* load mca parametres */
-    rc = mca_coll_ml_register_params();
-    if (OMPI_SUCCESS != rc) {
-        return OMPI_ERROR;
-    }
 
     /* If the priority is zero (default) disable the component */
     if (mca_coll_ml_component.ml_priority <= 0) {
@@ -424,6 +417,7 @@ static int ml_open(void)
     if (OMPI_SUCCESS != rc) {
         return OMPI_ERROR;
     }
+
 
     /* reigster the progress function */
     rc = opal_progress_register(coll_ml_progress);
@@ -473,12 +467,6 @@ static int ml_close(void)
     int ret;
 
     mca_coll_ml_component_t *cs = &mca_coll_ml_component;
-
-    /* Free the config file name (allocated by mca_coll_ml_register_params) */
-    if (NULL != mca_coll_ml_component.config_file_name) {
-        free (mca_coll_ml_component.config_file_name);
-        mca_coll_ml_component.config_file_name = NULL;
-    }
 
     /* There is not need to release/close resource if the 
      * priority was set to zero */
