@@ -142,13 +142,7 @@ static int register_components(const char *project_name, const char *type_name,
                                     component->mca_component_name);
             }
 
-            ret = mca_base_var_group_find (component->reserved, component->mca_type_name,
-                                           component->mca_component_name);
-            if (0 <= ret) {
-                mca_base_var_group_deregister (ret);
-            }
-
-            mca_base_component_repository_release((mca_base_component_t *) component);
+            mca_base_component_unload (component, output_id);
 
             /* Release this list item */
             OBJ_RELEASE(cli);

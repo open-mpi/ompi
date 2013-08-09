@@ -285,7 +285,7 @@ int mca_base_components_filter (const char *framework_name, opal_list_t *compone
 
             opal_list_remove_item (components, &cli->super);
 
-            mca_base_component_close (component, output_id);
+            mca_base_component_unload (component, output_id);
 
             OBJ_RELEASE(cli);
         } else if (filter_flags & MCA_BASE_METADATA_PARAM_CHECKPOINT) {
