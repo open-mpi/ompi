@@ -336,6 +336,9 @@ static int rte_init(void)
             error = "proc_binding";
             goto error;
         }
+
+	/* this needs to be set to enable debugger use when direct launched */
+	orte_standalone_operation = true;
     }
 
     /* set max procs */
