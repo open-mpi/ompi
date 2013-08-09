@@ -1,3 +1,16 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
+/*
+ * Copyright (c) 2009-2012 Oak Ridge National Laboratory.  All rights reserved.
+ * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
+ * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
+ *                         reserved.
+ * $COPYRIGHT$
+ *
+ * Additional copyrights may follow
+ *
+ * $HEADER$
+ */
+
 #include "ompi_config.h"
 
 #include <string.h>
@@ -270,14 +283,22 @@ void mca_coll_ml_reset_config(per_collective_configuration_t *config)
 
 static void reset_section(section_config_t *section_cf)
 {
-    section_cf->section_name = NULL;
+    if (section_cf->section_name) {
+        free (section_cf->section_name);
+        section_cf->section_name = NULL;
+    }
+
     section_cf->section_id = ML_UNDEFINED;
     mca_coll_ml_reset_config(&section_cf->config);
 }
 
 static void reset_collective(coll_config_t *coll_cf)
 {
-    coll_cf->coll_name = NULL;
+    if (coll_cf->coll_name) {
+        free (coll_cf->coll_name);
+        coll_cf->coll_name = NULL;
+    }
+
     coll_cf->coll_id = ML_UNDEFINED;
     reset_section(&coll_cf->section);
 }
@@ -340,7 +361,7 @@ static int parse_fragmentation_key(section_config_t *section, char *value)
     } else if (!strcasecmp(value, "disable")) {
         section->config.fragmentation_enabled = 0;
     } else {
-        ML_ERROR(("Line %d, unexpected fragmentation value %s. Ligal values are: enable/disable",
+        ML_ERROR(("Line %d, unexpected fragmentation value %s. Legal values are: enable/disable",
                     coll_ml_config_yynewlines, value));
         return OMPI_ERROR;
     }
@@ -350,8 +371,13 @@ static int parse_fragmentation_key(section_config_t *section, char *value)
 /* Save configuration that have been collected so far */
 static void save_settings(coll_config_t *coll_config)
 {
-    per_collective_configuration_t *cf = 
-        &mca_coll_ml_component.coll_config[coll_config->coll_id][coll_config->section.section_id];
+    per_collective_configuration_t *cf;
+
+    if (ML_UNDEFINED == coll_config->coll_id || ML_UNDEFINED == coll_config->section.section_id) {
+        return;
+    }
+
+    cf = &mca_coll_ml_component.coll_config[coll_config->coll_id][coll_config->section.section_id];
 
     cf->topology_id = coll_config->section.config.topology_id;
     cf->threshold = coll_config->section.config.threshold; 
@@ -469,11 +495,10 @@ static int parse_file(char *filename)
 {
     int val;
     int ret = OMPI_SUCCESS;
-    bool first_section = true,
-         first_coll = true;
 
     coll_config_t coll_config;
 
+    memset (&coll_config, 0, sizeof (coll_config));
     reset_collective(&coll_config);
 
     /* Open the file */
@@ -492,15 +517,12 @@ static int parse_file(char *filename)
         val = coll_ml_config_yylex();
         switch (val) {
         case COLL_ML_CONFIG_PARSE_DONE:
-            break;
         case COLL_ML_CONFIG_PARSE_NEWLINE:
             break;
         case COLL_ML_CONFIG_PARSE_COLLECTIVE:
-            /* dump all the information to last section that was defined*/
-            if(!first_coll) {
-                save_settings(&coll_config);
-            }
-            first_coll = false;
+            /* dump all the information to last section that was defined */
+            save_settings(&coll_config);
+
             /* reset collective config */
             reset_collective(&coll_config);
 
@@ -510,18 +532,18 @@ static int parse_file(char *filename)
             }
             break;
         case COLL_ML_CONFIG_PARSE_SECTION:
-            if (NULL == coll_config.coll_name) {
+            if (ML_UNDEFINED == coll_config.coll_id) {
                 ML_ERROR(("Collective section wasn't defined !"));
                 ret = OMPI_ERROR;
                 goto cleanup;
             }
+
             /* dump all the information to last section that was defined */
-            if(!first_section) {
-                save_settings(&coll_config);
-            }
-            first_section = false;
+            save_settings(&coll_config);
+
             /* reset all section values */
             reset_section(&coll_config.section);
+
             /* set new section name */
             ret = set_section_name(&coll_config.section);
             if (OMPI_SUCCESS != ret) {
@@ -529,8 +551,8 @@ static int parse_file(char *filename)
             }
             break;
         case COLL_ML_CONFIG_PARSE_SINGLE_WORD:
-            if (NULL == coll_config.coll_name ||
-                NULL == coll_config.section.section_name) {
+            if (ML_UNDEFINED == coll_config.coll_id ||
+                ML_UNDEFINED == coll_config.section.section_id) {
                 ML_ERROR(("Collective section or sub-section was not defined !"));
                 ret = OMPI_ERROR;
                 goto cleanup;
@@ -547,6 +569,7 @@ static int parse_file(char *filename)
             break;
         }
     }
+
     save_settings(&coll_config);
     fclose(coll_ml_config_yyin);
     coll_ml_config_yylex_destroy ();
@@ -564,12 +587,6 @@ cleanup:
 
 int mca_coll_ml_config_file_init(void)
 {
-
-    int ret = OMPI_ERR_NOT_FOUND;
-
-    ret = parse_file(mca_coll_ml_component.config_file_name);
-
-    return (OMPI_SUCCESS == ret ) ?
-        OMPI_SUCCESS : ret;
+    return parse_file(mca_coll_ml_component.config_file_name);
 }
 
