@@ -519,7 +519,7 @@ int orte_register_params(void)
 #endif
 
     /* allow specification of the launch agent */
-    orte_launch_agent = strdup ("orted");
+    orte_launch_agent = "orted";
     (void) mca_base_var_register ("orte", "orte", NULL, "launch_agent",
                                   "Command used to start processes on remote nodes (default: orted)",
                                   MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,

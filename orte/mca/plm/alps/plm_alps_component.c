@@ -110,7 +110,7 @@ static int plm_alps_register(void)
                                             MCA_BASE_VAR_SCOPE_READONLY,
                                             &mca_plm_alps_component.priority);
 
-    mca_plm_alps_component.aprun_cmd = strdup ("aprun");
+    mca_plm_alps_component.aprun_cmd = "aprun";
     (void) mca_base_component_var_register (comp, "aprun", "Command to run instead of aprun",
                                             MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
                                             OPAL_INFO_LVL_9,
