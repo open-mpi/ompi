@@ -213,10 +213,11 @@ int mca_mpool_grdma_register(mca_mpool_base_module_t *mpool, void *addr,
                               mca_mpool_base_registration_t **reg)
 {
     mca_mpool_grdma_module_t *mpool_grdma = (mca_mpool_grdma_module_t*)mpool;
+    const bool bypass_cache = !!(flags & MCA_MPOOL_FLAGS_CACHE_BYPASS);
+    const bool persist = !!(flags & MCA_MPOOL_FLAGS_PERSIST);
     mca_mpool_base_registration_t *grdma_reg;
     ompi_free_list_item_t *item;
     unsigned char *base, *bound;
-    bool bypass_cache = !!(flags & MCA_MPOOL_FLAGS_CACHE_BYPASS);
     int rc;
 
     OPAL_THREAD_LOCK(&mpool->rcache->lock);
@@ -230,18 +231,17 @@ int mca_mpool_grdma_register(mca_mpool_base_module_t *mpool, void *addr,
 
     /* look through existing regs if not persistent registration requested.
      * Persistent registration are always registered and placed in the cache */
-    if(!(flags & MCA_MPOOL_FLAGS_PERSIST) && !bypass_cache) {
+    if(!(bypass_cache || persist)) {
         /* check to see if memory is registered */
         mpool->rcache->rcache_find(mpool->rcache, addr, size, reg);
-        if(*reg != NULL &&
-           (mca_mpool_grdma_component.leave_pinned ||
-            ((*reg)->flags & MCA_MPOOL_FLAGS_PERSIST) ||
-            ((*reg)->base == base && (*reg)->bound == bound))) {
-            if(0 == (*reg)->ref_count &&
-               mca_mpool_grdma_component.leave_pinned) {
+        if (*reg && !(flags & MCA_MPOOL_FLAGS_INVALID)) {
+            if (0 == (*reg)->ref_count) {
+                /* Leave pinned must be set for this to still be in the rcache. */
                 opal_list_remove_item(&mpool_grdma->pool->lru_list,
-                                      (opal_list_item_t*)(*reg));
+                                      (opal_list_item_t *)(*reg));
             }
+
+            /* This segment fits fully within an existing segment. */
             mpool_grdma->stat_cache_hit++;
             (*reg)->ref_count++;
             OPAL_THREAD_UNLOCK(&mpool->rcache->lock);
@@ -251,16 +251,11 @@ int mca_mpool_grdma_register(mca_mpool_base_module_t *mpool, void *addr,
         mpool_grdma->stat_cache_miss++;
         *reg = NULL; /* in case previous find found something */
 
-        /* If no suitable registration is in cache and leave_pinned isn't
-         * set don't use the cache.
-         * This is optimisation in case limit is not set. If limit is set we
-         * have to put registration into the cache to determine when we hit
-         * memory registration limit.
-         * NONE: cache is still used for persistent registrations so previous
-         * find can find something */
-        if(!mca_mpool_grdma_component.leave_pinned) {
-            bypass_cache = true;
-        }
+        /* Unless explicitly requested by the caller always store the
+         * registration in the rcache. This will speed up the case where
+         * no leave pinned protocol is in use but the same segment is in
+         * use in multiple simultaneous transactions. We used to set bypass_cache
+         * here is !mca_mpool_grdma_component.leave_pinned. */
     }
 
     OMPI_FREE_LIST_GET(&mpool_grdma->reg_list, item, rc);
@@ -373,7 +368,7 @@ int mca_mpool_grdma_find(struct mca_mpool_base_module_t *mpool, void *addr,
     return rc;
 }
 
-static inline bool registration_is_cachebale(mca_mpool_base_registration_t *reg)
+static inline bool registration_is_cacheable(mca_mpool_base_registration_t *reg)
 {
     return (mca_mpool_grdma_component.leave_pinned &&
             !(reg->flags &
@@ -396,7 +391,7 @@ int mca_mpool_grdma_deregister(struct mca_mpool_base_module_t *mpool,
         return OMPI_SUCCESS;
     }
 
-    if(registration_is_cachebale(reg)) {
+    if(registration_is_cacheable(reg)) {
         opal_list_append(&mpool_grdma->pool->lru_list, (opal_list_item_t *) reg);
     } else {
         rc = dereg_mem (reg);
