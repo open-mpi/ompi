@@ -36,7 +36,7 @@
  */
 
 #ifndef OPAL_MEMORY_MEMORY_H
-#define OPAl_MEMORY_MEMORY_H
+#define OPAL_MEMORY_MEMORY_H
 
 #include "opal_config.h"
 #include "memory_internal.h"
