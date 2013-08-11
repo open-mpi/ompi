@@ -68,6 +68,7 @@ fortran_scripts = \
      mpi_gather_f90.f90.sh \
      mpi_gatherv_f90.f90.sh \
      mpi_get_f90.f90.sh \
+     mpi_get_address_f90.f90.sh \
      mpi_iallgather_f90.f90.sh \
      mpi_iallgatherv_f90.f90.sh \
      mpi_iallreduce_f90.f90.sh \
