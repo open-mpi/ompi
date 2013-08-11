@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2007 Voltaire. All rights reserved.
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2010-2012 Los Alamos National Security, LLC.  
+ * Copyright (c) 2010-2013 Los Alamos National Security, LLC.  
  *                         All rights reserved. 
  * $COPYRIGHT$
  *
@@ -41,9 +41,8 @@ int mca_btl_vader_send (struct mca_btl_base_module_t *btl,
 {
     mca_btl_vader_frag_t *frag = (mca_btl_vader_frag_t *) descriptor;
 
-    if (frag->hdr->flags & MCA_BTL_VADER_FLAG_FBOX) {
+    if (OPAL_LIKELY(frag->hdr->flags & MCA_BTL_VADER_FLAG_FBOX)) {
         mca_btl_vader_fbox_send (frag->segments[0].seg_addr.pval, tag, frag->segments[0].seg_len);
-
         mca_btl_vader_frag_complete (frag);
 
         return 1;
@@ -54,12 +53,10 @@ int mca_btl_vader_send (struct mca_btl_base_module_t *btl,
     /* type of message, pt-2-pt, one-sided, etc */
     frag->hdr->tag = tag;
 
-    opal_list_append (&mca_btl_vader_component.active_sends, (opal_list_item_t *) frag);
-
     /* post the relative address of the descriptor into the peer's fifo */
-    vader_fifo_write (frag->hdr, endpoint->peer_smp_rank);
+    vader_fifo_write (frag->hdr, endpoint);
 
-    if (frag->hdr->flags & MCA_BTL_VADER_FLAG_SINGLE_COPY ||
+    if ((frag->hdr->flags & MCA_BTL_VADER_FLAG_SINGLE_COPY) ||
         !(frag->base.des_flags & MCA_BTL_DES_FLAGS_BTL_OWNERSHIP)) {
         frag->base.des_flags |= MCA_BTL_DES_SEND_ALWAYS_CALLBACK;
 
