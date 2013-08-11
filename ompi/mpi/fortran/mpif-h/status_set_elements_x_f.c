@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2013 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -38,7 +38,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_STATUS_SET_ELEMENTS_X,
                            pmpi_status_set_elements_x_,
                            pmpi_status_set_elements_x__,
                            pompi_status_set_elements_x_f,
-                           (MPI_Fint *status, MPI_Fint *datatype, MPI_Fint *count, MPI_Fint *ierr),
+                           (MPI_Fint *status, MPI_Fint *datatype, MPI_Count *count, MPI_Fint *ierr),
                            (status, datatype, count, ierr) )
 #endif
 
@@ -68,7 +68,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_STATUS_SET_ELEMENTS_X,
 #endif
 
 void ompi_status_set_elements_x_f(MPI_Fint *status, MPI_Fint *datatype, 
-			       MPI_Fint *count, MPI_Fint *ierr)
+			       MPI_Count *count, MPI_Fint *ierr)
 {
     int c_ierr;
     MPI_Datatype c_type = MPI_Type_f2c(*datatype);
@@ -81,7 +81,7 @@ void ompi_status_set_elements_x_f(MPI_Fint *status, MPI_Fint *datatype,
     } else {
         MPI_Status_f2c( status, &c_status );
 
-        c_ierr = MPI_Status_set_elements_x(&c_status, c_type, (MPI_Count)*count);
+        c_ierr = MPI_Status_set_elements_x(&c_status, c_type, *count);
 
         /* If datatype is really being set, then that needs to be
            converted.... */
