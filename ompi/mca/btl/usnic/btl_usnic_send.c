@@ -130,33 +130,13 @@ ompi_btl_usnic_send_slower(
          */
         if (frag->sf_base.uf_base.des_src_cnt > 1) {
 
-            /* If not convertor, just copy */
+            /* If not convertor, copy now.  Already copied in convertor case */
             if (frag->sf_convertor == NULL) {
                 memcpy(((char *)frag->sf_base.uf_src_seg[0].seg_addr.lval +
                          frag->sf_base.uf_src_seg[0].seg_len),
                         frag->sf_base.uf_src_seg[1].seg_addr.pval,
                         frag->sf_base.uf_src_seg[1].seg_len);
 
-            /* convertor needed, do the unpack */
-            } else {
-                struct iovec iov;
-                uint32_t iov_count;
-                size_t max_data;
-                int rc;
-
-                /* put user data just after end of 1st seg (PML header) */
-                iov.iov_len = frag->sf_base.uf_src_seg[1].seg_len;
-                iov.iov_base = (IOVBASE_TYPE*)
-                    (frag->sf_base.uf_src_seg[0].seg_addr.lval +
-                     frag->sf_base.uf_src_seg[0].seg_len);
-                iov_count = 1;
-                max_data = iov.iov_len;
-                rc = opal_convertor_pack(frag->sf_convertor,
-                        &iov, &iov_count, &max_data);
-                if (OPAL_UNLIKELY(rc < 0)) {
-                    ompi_btl_usnic_send_frag_return_cond(module, frag);
-                    abort();    /* XXX */
-                }
             }
 
             /* update 1st segment length */

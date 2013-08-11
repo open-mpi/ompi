@@ -322,13 +322,25 @@ usnic_prepare_src(
 {
     ompi_btl_usnic_module_t *module = (ompi_btl_usnic_module_t*) base_module;
     ompi_btl_usnic_send_frag_t *frag;
+    void *data_ptr;
     uint32_t payload_len;
 
     /*
-     * if total payload len fits in one MTU, use small send, else large
+     * If data is contiguous, get the data pointer for it, else leave
+     * data_ptr == NULL to indicate converter in use.
+     */
+    if (OPAL_UNLIKELY(opal_convertor_need_buffers(convertor))) {
+        data_ptr = NULL;
+    } else {
+        opal_convertor_get_current_pointer (convertor, &data_ptr);
+    }
+
+    /*
+     * if convertor is involved, or total payload len fits in one MTU,
+     * use small send, else large
      */
     payload_len = *size + reserve;
-    if (payload_len <= module->max_frag_payload) {
+    if (data_ptr == NULL || payload_len <= module->max_frag_payload) {
         ompi_btl_usnic_small_send_frag_t *sfrag;
 
         /* Get holder for the msg */
@@ -338,6 +350,35 @@ usnic_prepare_src(
         }
         frag = &sfrag->ssf_base;
 
+        /* In the case of a convertor, we will copy the data in now, since 
+         * that is the only way to discover how much we can actually send
+         * The reason we do not copy non-convertor pointer at this point is
+         * because we might still use INLINE for the send, and in that case
+         * we do not want to copy the data at all.
+         */
+        if (data_ptr == NULL) {
+            struct iovec iov;
+            uint32_t iov_count;
+            size_t max_data;
+            int rc;
+
+            /* put user data just after end of 1st seg (PML header) */
+            if (payload_len > module->max_frag_payload) {
+                payload_len = module->max_frag_payload;
+            }
+            iov.iov_len = payload_len - reserve;
+            iov.iov_base = (IOVBASE_TYPE*)
+                (frag->sf_base.uf_src_seg[0].seg_addr.lval + reserve);
+            iov_count = 1;
+            max_data = iov.iov_len;
+            rc = opal_convertor_pack(convertor, &iov, &iov_count, &max_data);
+            if (OPAL_UNLIKELY(rc < 0)) {
+                ompi_btl_usnic_send_frag_return_cond(module, frag);
+                abort();    /* XXX */
+            }
+            *size = max_data;
+            payload_len = max_data + reserve;
+        }
     } else {
         ompi_btl_usnic_large_send_frag_t *lfrag;
 
@@ -361,18 +402,12 @@ usnic_prepare_src(
     frag->sf_base.uf_src_seg[1].seg_len = *size;
     frag->sf_size = payload_len;
     frag->sf_base.uf_base.des_src_cnt = 2;
-
-    /*
-     * If converter really needed, save it, else just keep the
-     * data pointer
-     */
-    if (OPAL_UNLIKELY(opal_convertor_need_buffers(convertor))) {
-        frag->sf_convertor = convertor;
-    } else {
+    if (data_ptr != NULL) {
+        frag->sf_base.uf_src_seg[1].seg_addr.pval = data_ptr;
         frag->sf_convertor = NULL;
-        opal_convertor_get_current_pointer (convertor,
-                &frag->sf_base.uf_src_seg[1].seg_addr.pval);
-    }
+    } else {
+        frag->sf_convertor = convertor;
+    } 
 
     /* set up common parts of frag */
     frag->sf_base.uf_base.des_flags = flags;
@@ -388,8 +423,7 @@ usnic_prepare_src(
             (void *)frag, (int)reserve, (int)*size,
             frag->sf_base.uf_base.des_src[0].seg_addr.pval);
         opal_output(0, "    data_ptr = %p, conv=%p\n",
-                frag->sf_base.uf_src_seg[1].seg_addr.pval,
-                (void *)frag->sf_convertor);
+                data_ptr, (void *)frag->sf_convertor);
 #endif
 
     return &frag->sf_base.uf_base;
@@ -483,33 +517,13 @@ usnic_put(
          */
         if (frag->sf_base.uf_base.des_src_cnt > 1) {
 
-            /* If not convertor, just copy */
+            /* If not convertor, copy now.  Already copied in convertor case */
             if (frag->sf_convertor == NULL) {
                 memcpy(((char *)frag->sf_base.uf_src_seg[0].seg_addr.lval +
                          frag->sf_base.uf_src_seg[0].seg_len),
                         frag->sf_base.uf_src_seg[1].seg_addr.pval,
                         frag->sf_base.uf_src_seg[1].seg_len);
 
-            /* convertor needed, do the unpack */
-            } else {
-                struct iovec iov;
-                uint32_t iov_count;
-                size_t max_data;
-                int rc;
-
-                /* put user data just after end of 1st segment (PML header) */
-                iov.iov_len = frag->sf_base.uf_src_seg[1].seg_len;
-                iov.iov_base = (IOVBASE_TYPE*)
-                    (frag->sf_base.uf_src_seg[0].seg_addr.lval +
-                     frag->sf_base.uf_src_seg[0].seg_len);
-                iov_count = 1;
-                max_data = iov.iov_len;
-                rc = opal_convertor_pack(frag->sf_convertor, &iov, &iov_count,
-                        &max_data);
-                if (OPAL_UNLIKELY(rc < 0)) {
-                    ompi_btl_usnic_send_frag_return_cond(module, frag);
-                    abort();    /* XXX */
-                }
             }
 
             /* update 1st segment length */
@@ -893,24 +907,11 @@ usnic_handle_large_send(
     iov.iov_len = max_data;
     iov_count = 1;
 
-    /* pack the next bit of data */
-    if (OPAL_UNLIKELY(lfrag->lsf_base.sf_convertor != NULL)) {
-        ret = opal_convertor_pack(lfrag->lsf_base.sf_convertor,
-                &iov, &iov_count, &max_data);
-#if MSGDEBUG1
-        opal_output(0, "  converted %d/%d bytes into %p, ret=%d\n",
-                max_data, iov.iov_len, iov.iov_base, ret);
-#endif
-        if (OPAL_UNLIKELY(ret < 0)) {
-            /* XXX do something better here */
-            abort();
-        }
-    } else {
-        memcpy(iov.iov_base,
-                lfrag->lsf_base.sf_base.uf_src_seg[1].seg_addr.pval,
-                max_data);
-        lfrag->lsf_base.sf_base.uf_src_seg[1].seg_addr.lval += max_data;
-    }
+    /* pack the next bit of data (large frags never have convertors) */
+    memcpy(iov.iov_base,
+            lfrag->lsf_base.sf_base.uf_src_seg[1].seg_addr.pval,
+            max_data);
+    lfrag->lsf_base.sf_base.uf_src_seg[1].seg_addr.lval += max_data;
 
     /* get real payload length */
     payload_len += max_data;
@@ -958,7 +959,6 @@ usnic_handle_large_send(
             ++module->pml_send_callbacks;
         }
 
-        /* remove frag from send queue */
         opal_list_remove_item(&endpoint->endpoint_frag_send_queue,
                 &frag->sf_base.uf_base.super.super);
     }
@@ -976,6 +976,17 @@ ompi_btl_usnic_module_progress_sends(
     ompi_btl_usnic_endpoint_t *endpoint;
     struct ompi_btl_usnic_channel_t *data_channel;
     struct ompi_btl_usnic_channel_t *prio_channel;
+    static bool progressing = false;
+
+    /*
+     * Since we call this routine from within enqueue_frag, it is possible
+     * that we will be called re-entrantly from a callback routine.
+     * Do nothing if re-entrantly called.
+     */
+    if (progressing) {
+        return;
+    }
+    progressing = true;
 
     /*
      * Post all the sends that we can 
@@ -1069,7 +1080,6 @@ ompi_btl_usnic_module_progress_sends(
                     &endpoint->super);
             endpoint->endpoint_ready_to_send = false;
         }
-
     }
 
     /*
@@ -1091,6 +1101,8 @@ ompi_btl_usnic_module_progress_sends(
 
         endpoint = next_endpoint;
     }
+
+    progressing = false;
 }
 
 /*
