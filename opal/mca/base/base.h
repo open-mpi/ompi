@@ -204,6 +204,15 @@ OPAL_DECLSPEC int mca_base_components_open(const char *type_name, int output_id,
  */
 OPAL_DECLSPEC void mca_base_component_close (const mca_base_component_t *component, int output_id);
 
+/**
+ * Release a component without closing it.
+ * @param[in] component Component to close
+ * @param[in] output_id Output id for debugging output
+ *
+ * After calling this function the component may no longer be used.
+ */
+void mca_base_component_unload (const mca_base_component_t *component, int output_id);
+
 OPAL_DECLSPEC int mca_base_components_close(int output_id, opal_list_t *components_available, 
                                             const mca_base_component_t *skip);
 

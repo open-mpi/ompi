@@ -1889,6 +1889,7 @@ int mca_base_var_dump(int index, char ***out, mca_base_var_dump_type_t output_ty
         tmp = out[0][0];
         if (VAR_IS_DEPRECATED(var[0])) {
             asprintf (out[0], "%s, deprecated", tmp);
+            free (tmp);
             tmp = out[0][0];
         }
 

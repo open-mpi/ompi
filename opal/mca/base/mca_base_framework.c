@@ -193,8 +193,15 @@ int mca_base_framework_close (struct mca_base_framework_t *framework) {
             return ret;
         }
     } else {
+        opal_list_item_t *item;
+        while (NULL != (item = opal_list_remove_first (&framework->framework_components))) {
+            mca_base_component_unload ((mca_base_component_t *) item, framework->framework_output);
+            OBJ_RELEASE(item);
+        }
         ret = OPAL_SUCCESS;
     }
+
+    framework->framework_flags &= ~MCA_BASE_FRAMEWORK_FLAG_REGISTERED;
 
     framework_close_output (framework);
 
