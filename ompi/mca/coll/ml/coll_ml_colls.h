@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2009-2012 Oak Ridge National Laboratory.  All rights reserved.
  * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
@@ -406,8 +407,8 @@ do {                                                                            
         /* back to the free list  (free list may release memory on distruct )*/ \
         struct ompi_communicator_t *comm = GET_COMM(op);                        \
         bool is_coll_sync = IS_COLL_SYNCMEM(op);                                \
-        assert(&coll_op->full_message !=                                        \
-                                    coll_op->fragment_data.message_descriptor); \
+        assert(&(op)->full_message !=                                           \
+               (op)->fragment_data.message_descriptor);                         \
         ML_VERBOSE(10, ("Releasing %p", op));                                   \
         OMPI_FREE_LIST_RETURN_MT(&(((mca_coll_ml_module_t *)(op)->coll_module)->   \
                     coll_ml_collective_descriptors),                            \
