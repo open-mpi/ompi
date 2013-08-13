@@ -308,10 +308,12 @@ static char* lookup ( char *service_name, ompi_info_t *info )
         if (!server_setup) {
             setup_server();
         }
-        if (!mca_pubsub_orte_component.server_found) {
+        lookup[1] = NONE;
+        if (mca_pubsub_orte_component.server_found) {
+            lookup[0] = GLOBAL;
+        } else {
             /* global server was not found - just look local */
             lookup[0] = LOCAL;
-            lookup[1] = NONE;
         }
     }
     
@@ -388,6 +390,10 @@ static char* lookup ( char *service_name, ompi_info_t *info )
             goto CLEANUP;
         }
 
+        OPAL_OUTPUT_VERBOSE((1, ompi_pubsub_base_framework.framework_output,
+                             "%s pubsub:orte: lookup returned status %d",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), rc));
+
         if (ORTE_SUCCESS == rc) {
             /* the server was able to lookup the port - unpack the port name */
             cnt=1;
@@ -396,6 +402,11 @@ static char* lookup ( char *service_name, ompi_info_t *info )
                 goto CLEANUP;
             }
             
+            OPAL_OUTPUT_VERBOSE((1, ompi_pubsub_base_framework.framework_output,
+                                 "%s pubsub:orte: lookup returned port %s",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 (NULL == port_name) ? "NULL" : port_name));
+
             if (NULL != port_name) {
                 /* got an answer - return it */
                 OBJ_DESTRUCT(&buf);
@@ -412,9 +423,9 @@ static char* lookup ( char *service_name, ompi_info_t *info )
      */
     return NULL;
 
-CLEANUP:
+ CLEANUP:
     OBJ_DESTRUCT(&buf);
-    
+
     return NULL;
     
 }
