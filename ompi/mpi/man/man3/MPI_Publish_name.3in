@@ -74,6 +74,11 @@ ompi_global_scope     bool      If set to true, publish the name in
                                 the global scope.  Publish in the local
                                 scope otherwise.  See the NAME SCOPE
                                 section for more details.
+
+ompi_unique           bool      If set to true, return an error if the
+                                specified service_name already exists.
+                                Default to overwriting any pre-existing
+                                value.
 .fi
 
 .sp 
