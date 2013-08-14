@@ -743,10 +743,10 @@ static int rte_finalize(void)
     (void) mca_base_framework_close(&orte_grpcomm_base_framework);
     (void) mca_base_framework_close(&opal_db_base_framework);
     (void) mca_base_framework_close(&orte_routed_base_framework);
-    (void) mca_base_framework_close(&orte_rml_base_framework);
     (void) mca_base_framework_close(&orte_plm_base_framework);
     (void) mca_base_framework_close(&orte_errmgr_base_framework);
     (void) mca_base_framework_close(&orte_state_base_framework);
+    (void) mca_base_framework_close(&orte_rml_base_framework);
 
     /* cleanup the pstat stuff */
     (void) mca_base_framework_close(&opal_pstat_base_framework);
