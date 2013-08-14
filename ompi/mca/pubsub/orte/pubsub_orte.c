@@ -132,6 +132,7 @@ static int publish ( char *service_name, ompi_info_t *info, char *port_name )
     opal_buffer_t buf;
     orte_data_server_cmd_t cmd=ORTE_DATA_SERVER_PUBLISH;
     orte_std_cntr_t cnt;
+    bool unique=false;
 
     ompi_info_get_bool(info, "ompi_global_scope", &global_scope, &flag);
 
@@ -172,6 +173,12 @@ static int publish ( char *service_name, ompi_info_t *info, char *port_name )
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          service_name, global_scope ? "Global" : "Local"));
 
+    ompi_info_get_bool(info, "ompi_unique", &unique, &flag);
+    if (0 == flag) {
+        /* uniqueness not specified - overwrite by default */
+        unique = false;
+    }
+
     /* construct the buffer */
     OBJ_CONSTRUCT(&buf, opal_buffer_t);
     
@@ -189,6 +196,12 @@ static int publish ( char *service_name, ompi_info_t *info, char *port_name )
     
     /* pack the port name */
     if (OPAL_SUCCESS != (rc = opal_dss.pack(&buf, &port_name, 1, OPAL_STRING))) {
+        ORTE_ERROR_LOG(rc);
+        goto CLEANUP;
+    }
+
+    /* pack the uniqueness flag */
+    if (OPAL_SUCCESS != (rc = opal_dss.pack(&buf, &unique, 1, OPAL_BOOL))) {
         ORTE_ERROR_LOG(rc);
         goto CLEANUP;
     }
