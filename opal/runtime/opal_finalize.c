@@ -35,8 +35,10 @@
 #include "opal/mca/base/base.h"
 #include "opal/runtime/opal.h"
 #include "opal/constants.h"
+#include "opal/datatype/opal_datatype.h"
 #include "opal/mca/if/base/base.h"
 #include "opal/mca/installdirs/base/base.h"
+#include "opal/mca/memchecker/base/base.h"
 #include "opal/mca/memcpy/base/base.h"
 #include "opal/mca/memory/base/base.h"
 #include "opal/mca/backtrace/base/base.h"
@@ -98,6 +100,8 @@ opal_finalize_util(void)
     /* close the dss */
     opal_dss_close();
 
+    opal_datatype_finalize();
+
     /* finalize the class/object system */
     opal_class_finalize();
 
@@ -115,6 +119,8 @@ opal_finalize(void)
         return OPAL_SUCCESS;
     }
 
+    opal_progress_finalize();
+
     /* close the checkpoint and restart service */
     opal_cr_finalize();
 
@@ -122,7 +128,8 @@ opal_finalize(void)
     (void) mca_base_framework_close(&opal_compress_base_framework);
 #endif
     
-    opal_progress_finalize();
+    /* close the shmem framework */
+    (void) mca_base_framework_close(&opal_shmem_base_framework);
 
     (void) mca_base_framework_close(&opal_event_base_framework);
 
@@ -130,6 +137,7 @@ opal_finalize(void)
     (void) mca_base_framework_close(&opal_timer_base_framework);
 
     (void) mca_base_framework_close(&opal_backtrace_base_framework);
+    (void) mca_base_framework_close(&opal_memchecker_base_framework);
 
     /* close the memory manager components.  Registered hooks can
        still be fired any time between now and the call to
@@ -138,17 +146,14 @@ opal_finalize(void)
        time between now and end of application (even post main()!) */
     (void) mca_base_framework_close(&opal_memory_base_framework);
 
+    /* close the memcpy framework */
+    (void) mca_base_framework_close(&opal_memcpy_base_framework);
+
     /* finalize the memory manager / tracker */
     opal_mem_hooks_finalize();
 
-    /* close the shmem framework */
-    (void) mca_base_framework_close(&opal_shmem_base_framework);
-
     /* close the hwloc framework */
     (void) mca_base_framework_close(&opal_hwloc_base_framework);
-
-    /* close the memcpy framework */
-    (void) mca_base_framework_close(&opal_memcpy_base_framework);
 
     /* finalize the mca */
     mca_base_close();

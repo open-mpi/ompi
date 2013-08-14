@@ -733,19 +733,23 @@ static int rte_finalize(void)
     /* close the dfs */
     (void) mca_base_framework_close(&orte_dfs_base_framework);
     (void) mca_base_framework_close(&orte_filem_base_framework);
-    (void) mca_base_framework_close(&orte_grpcomm_base_framework);
     /* output any lingering stdout/err data */
     fflush(stdout);
     fflush(stderr);
     (void) mca_base_framework_close(&orte_iof_base_framework);
-    (void) mca_base_framework_close(&orte_ras_base_framework);
-    (void) mca_base_framework_close(&orte_rmaps_base_framework);
-    (void) mca_base_framework_close(&orte_plm_base_framework);
     (void) mca_base_framework_close(&orte_odls_base_framework);
-    (void) mca_base_framework_close(&orte_errmgr_base_framework);
+    (void) mca_base_framework_close(&orte_rmaps_base_framework);
+    (void) mca_base_framework_close(&orte_ras_base_framework);
+    (void) mca_base_framework_close(&orte_grpcomm_base_framework);
+    (void) mca_base_framework_close(&opal_db_base_framework);
     (void) mca_base_framework_close(&orte_routed_base_framework);
     (void) mca_base_framework_close(&orte_rml_base_framework);
+    (void) mca_base_framework_close(&orte_plm_base_framework);
+    (void) mca_base_framework_close(&orte_errmgr_base_framework);
     (void) mca_base_framework_close(&orte_state_base_framework);
+
+    /* cleanup the pstat stuff */
+    (void) mca_base_framework_close(&opal_pstat_base_framework);
 
     /* remove my contact info file, if we have session directories */
     if (NULL != orte_process_info.job_session_dir) {
