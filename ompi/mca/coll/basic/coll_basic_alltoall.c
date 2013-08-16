@@ -37,7 +37,7 @@ mca_coll_basic_alltoall_intra_inplace(void *rbuf, int rcount,
                                       mca_coll_base_module_t *module)
 {
     mca_coll_basic_module_t *basic_module = (mca_coll_basic_module_t*) module;
-    int i, j, size, rank, err;
+    int i, j, size, rank, err=MPI_SUCCESS;
     MPI_Request *preq;
     char *tmp_buffer;
     size_t max_size;
