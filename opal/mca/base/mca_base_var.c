@@ -1758,7 +1758,7 @@ int mca_base_var_dump(int index, char ***out, mca_base_var_dump_type_t output_ty
     int i, line_count, line = 0, enum_count = 0;
     char *value_string, *source_string, *tmp;
     int synonym_count, ret, *synonyms = NULL;
-    mca_base_var_t *var, *original;
+    mca_base_var_t *var, *original=NULL;
     mca_base_var_group_t *group;
 
     ret = var_get(index, &var, false);
@@ -1775,6 +1775,10 @@ int mca_base_var_dump(int index, char ***out, mca_base_var_dump_type_t output_ty
         ret = var_get(var->mbv_synonym_for, &original, false);
         if (OPAL_SUCCESS != ret) {
             return ret;
+        }
+        /* just for protection... */
+        if (NULL == original) {
+            return OPAL_ERR_NOT_FOUND;
         }
     }
 
