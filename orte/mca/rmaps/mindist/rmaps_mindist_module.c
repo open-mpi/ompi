@@ -64,9 +64,9 @@ static int mindist_map(orte_job_t *jdata)
     orte_node_t *node;
     orte_proc_t *proc;
     int nprocs_mapped;
-    int extra_procs, navg, nextra;
+    int extra_procs, navg, nextra=0;
     orte_std_cntr_t num_nodes, num_slots;
-    unsigned int npus, total_npus, num_procs_to_assign, required;
+    unsigned int npus, total_npus, num_procs_to_assign=0, required;
     int rc;
     mca_base_component_t *c = &mca_rmaps_mindist_component.base_version;
     bool initial_map=true;
