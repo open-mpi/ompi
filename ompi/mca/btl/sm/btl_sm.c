@@ -243,7 +243,7 @@ sm_btl_first_time_init(mca_btl_sm_t *sm_btl,
 
         /* If we find >0 NUMA nodes, then investigate further */
         if (i > 0) {
-            int numa, w;
+            int numa=0, w;
             unsigned n_bound=0;
             hwloc_cpuset_t avail;
             hwloc_obj_t obj;
