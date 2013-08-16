@@ -42,7 +42,7 @@ int mca_topo_base_dist_graph_distribute(mca_topo_base_module_t* module,
     size_t int_size, how_much;
     ompi_status_public_t status;
     ompi_request_t **reqs = NULL;
-    mca_topo_base_comm_dist_graph_2_1_0_t* topo;
+    mca_topo_base_comm_dist_graph_2_1_0_t* topo=NULL;
 
     ompi_datatype_type_size( (ompi_datatype_t*)&ompi_mpi_int, &int_size);
 
