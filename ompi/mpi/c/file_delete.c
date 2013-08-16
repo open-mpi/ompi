@@ -65,7 +65,7 @@ int MPI_File_delete(char *filename, MPI_Info info)
        initialized). We might want to add a check to see if the 
        framework is open instead of just incrementing the open count. */
 
-    if (OMPI_SUCCESS != (mca_base_framework_open(&ompi_io_base_framework, 0))) {
+    if (OMPI_SUCCESS != (rc = mca_base_framework_open(&ompi_io_base_framework, 0))) {
         return OMPI_ERRHANDLER_INVOKE(MPI_FILE_NULL, rc, FUNC_NAME);
     }
 
