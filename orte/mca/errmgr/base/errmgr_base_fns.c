@@ -306,7 +306,7 @@ int orte_errmgr_base_register_error_callback(orte_errmgr_error_callback_fn_t *cb
 void orte_errmgr_base_execute_error_callbacks(opal_pointer_array_t *errors)
 {
     orte_errmgr_cback_t *cb;
-    char *errstring;
+    char *errstring=NULL;
     orte_error_t *err;
     int errcode = ORTE_ERROR_DEFAULT_EXIT_CODE;
 
