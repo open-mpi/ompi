@@ -241,7 +241,7 @@ static int info_register_framework (mca_base_framework_t *framework, opal_pointe
 int opal_info_register_project_frameworks (const char *project_name, mca_base_framework_t **frameworks,
                                            opal_pointer_array_t *component_map)
 {
-    int i, rc;
+    int i, rc=OPAL_SUCCESS;
 
     for (i=0; NULL != frameworks[i]; i++) {
         if (OPAL_SUCCESS != (rc = info_register_framework(frameworks[i], component_map))) {
