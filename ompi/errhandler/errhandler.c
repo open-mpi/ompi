@@ -220,7 +220,7 @@ int ompi_errhandler_runtime_callback(opal_pointer_array_t *errors) {
     ompi_rte_error_report_t *err;
     int errcode = 1;
 
-    if (NULL != errors ||
+    if (NULL != errors && 
         (NULL != (err = (ompi_rte_error_report_t*)opal_pointer_array_get_item(errors, 0)))) {
         errcode = err->errcode;
     }
