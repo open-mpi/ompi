@@ -52,7 +52,7 @@ mca_coll_tuned_alltoallv_intra_basic_inplace(void *rbuf, const int *rcounts, con
                                              mca_coll_base_module_t *module)
 {
     mca_coll_tuned_module_t *tuned_module = (mca_coll_tuned_module_t*) module;
-    int i, j, size, rank, err;
+    int i, j, size, rank, err=MPI_SUCCESS;
     MPI_Request *preq;
     char *tmp_buffer;
     size_t max_size;
