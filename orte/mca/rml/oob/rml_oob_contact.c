@@ -21,6 +21,8 @@
 #include "orte/mca/routed/routed.h"
 #include "orte/util/name_fns.h"
 #include "orte/runtime/orte_globals.h"
+#include "opal/mca/db/db.h"
+#include "opal/mca/db/base/base.h"
 
 #include "rml_oob.h"
 
@@ -48,6 +50,27 @@ orte_rml_oob_get_uri(void)
     return contact_info;
 }
 
+int
+orte_rml_oob_set_contact_from_db (orte_process_name_t name)
+{
+    int ret;
+
+    if (NULL == orte_rml_oob_module.active_oob->oob_get_addr()) {
+	const char *rmluri;
+
+	if (ORTE_SUCCESS != (ret = opal_db.fetch_pointer((opal_identifier_t*)&name, ORTE_DB_RMLURI, (void **)&rmluri, OPAL_STRING))) {
+            ORTE_ERROR_LOG(ret);
+            return ret;
+        }
+
+        /* set the contact info into the hash table */
+        if (ORTE_SUCCESS != (ret = orte_rml.set_contact_info(rmluri))) {
+	    return ret;
+        }
+    }
+
+    return ORTE_SUCCESS;
+}
 
 int
 orte_rml_oob_set_uri(const char* uri)

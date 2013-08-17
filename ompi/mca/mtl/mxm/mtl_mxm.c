@@ -508,7 +508,7 @@ int ompi_mtl_mxm_add_procs(struct mca_mtl_base_module_t *mtl, size_t nprocs,
         MXM_ERROR("MXM returned connect error: %s\n", mxm_error_string(err));
         for (i = 0; i < nprocs; ++i) {
             if (MXM_OK != conn_reqs[i].error) {
-                MXM_ERROR("MXM EP connect to %s error: %s\n", procs[i]->proc_hostname,
+		MXM_ERROR("MXM EP connect to %s error: %s\n", ompi_proc_get_hostname(procs[i]),
                           mxm_error_string(conn_reqs[i].error));
             }
         }

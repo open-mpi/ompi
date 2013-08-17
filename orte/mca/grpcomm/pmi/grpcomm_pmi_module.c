@@ -171,129 +171,86 @@ static int pmi_allgather(orte_grpcomm_collective_t *coll)
 /***   MODEX SECTION ***/
 static int modex(orte_grpcomm_collective_t *coll)
 {
-    char *cptr, **fields;
-    orte_vpid_t v;
-    orte_process_name_t name;
-    int rc;
+    int *local_ranks, local_rank_count;
     opal_hwloc_locality_t locality;
-    orte_local_rank_t local_rank;
-    orte_node_rank_t node_rank;
-    bool bound;
+    const char *cpuset, *rmluri;
+    orte_process_name_t name;
+    orte_vpid_t v;
+    bool local;
+    int rc, i;
 
-     OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_framework.framework_output,
+    OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_framework.framework_output,
                          "%s grpcomm:pmi: modex entered",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
-     /* our RTE data was constructed and pushed in the ESS pmi component */
+    /* discover the local ranks */
+    rc = PMI_Get_clique_size (&local_rank_count);
+    if (PMI_SUCCESS != rc) {
+	ORTE_ERROR_LOG(ORTE_ERROR);
+	return ORTE_ERROR;
+    }
 
-     /* commit our modex info */
-     opal_db.commit((opal_identifier_t *)ORTE_PROC_MY_NAME);
+    local_ranks = calloc (local_rank_count, sizeof (int));
+    if (NULL == local_ranks) {
+	ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+	return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+
+    rc = PMI_Get_clique_ranks (local_ranks, local_rank_count);
+    if (PMI_SUCCESS != rc) {
+	ORTE_ERROR_LOG(ORTE_ERROR);
+	return ORTE_ERROR;
+    }
+
+
+    /* our RTE data was constructed and pushed in the ESS pmi component */
+
+    /* commit our modex info */
+    opal_db.commit((opal_identifier_t *)ORTE_PROC_MY_NAME);
 
     /* cycle thru all my peers and collect their RTE info */
     name.jobid = ORTE_PROC_MY_NAME->jobid;
-    fields = NULL;
     for (v=0; v < orte_process_info.num_procs; v++) {
         if (v == ORTE_PROC_MY_NAME->vpid) {
             continue;
         }
         name.vpid = v;
-        /* fetch the RTE data for this proc */
-	if (ORTE_SUCCESS != (rc = opal_db.fetch((opal_identifier_t*)&name, "RTE", (void **)&cptr, OPAL_STRING))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-        /* split on commas */
-        fields = opal_argv_split(cptr, ',');
-        free(cptr);
-        /* sanity check */
-        if (4 > opal_argv_count(fields)) {
-            ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
-            opal_argv_free(fields);
-            return ORTE_ERR_BAD_PARAM;
-        }
-        
-        /* store the composite parts */
-        /* first field is the URI */
-        if (ORTE_SUCCESS != (rc = opal_db.store((opal_identifier_t*)&name, OPAL_DB_INTERNAL, ORTE_DB_RMLURI, fields[0], OPAL_STRING))) {
-            ORTE_ERROR_LOG(rc);
-            opal_argv_free(fields);
-            return rc;
-        }
-        OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base_framework.framework_output,
-                             "%s grpcomm:pmi: proc %s oob endpoint %s",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             ORTE_NAME_PRINT(&name), fields[0]));
-        /* set the contact info into the hash table */
-        if (ORTE_SUCCESS != (rc = orte_rml.set_contact_info(fields[0]))) {
-            opal_argv_free(fields);
-            return rc;
-        }
-        /* next is the hostname */
-        if (ORTE_SUCCESS != (rc = opal_db.store((opal_identifier_t*)&name, OPAL_DB_INTERNAL, ORTE_DB_HOSTNAME, fields[1], OPAL_STRING))) {
-            ORTE_ERROR_LOG(rc);
-            opal_argv_free(fields);
-            return rc;
-        }
-        /* local rank */
-        local_rank = strtoul(fields[2], NULL, 10);
-        if (ORTE_SUCCESS != (rc = opal_db.store((opal_identifier_t*)&name, OPAL_DB_INTERNAL, ORTE_DB_LOCALRANK, &local_rank, ORTE_LOCAL_RANK))) {
-            ORTE_ERROR_LOG(rc);
-            opal_argv_free(fields);
-            return rc;
-        }
-        /* node rank */
-        node_rank = strtoul(fields[3], NULL, 10);
-        if (ORTE_SUCCESS != (rc = opal_db.store((opal_identifier_t*)&name, OPAL_DB_INTERNAL, ORTE_DB_NODERANK, &node_rank, ORTE_NODE_RANK))) {
-            ORTE_ERROR_LOG(rc);
-            opal_argv_free(fields);
-            return rc;
-        }
-        /* if the process was bound, then there will be another field
-         * that contains its cpuset
-         */
-        if (5 == opal_argv_count(fields)) {
-            if (ORTE_SUCCESS != (rc = opal_db.store((opal_identifier_t*)&name, OPAL_DB_INTERNAL, ORTE_DB_CPUSET, fields[4], OPAL_STRING))) {
-                ORTE_ERROR_LOG(rc);
-                opal_argv_free(fields);
-                return rc;
-            }
-            bound = true;
-        } else {
-            /* store a placeholder so we know that this value was retrieved,
-             * but the proc wasn't bound
-             */
-            if (ORTE_SUCCESS != (rc = opal_db.store((opal_identifier_t*)&name, OPAL_DB_INTERNAL, ORTE_DB_CPUSET, NULL, OPAL_STRING))) {
-                ORTE_ERROR_LOG(rc);
-                opal_argv_free(fields);
-                return rc;
-            }
-            bound = false;
-        }
 
-        /* compute and store the locality as it isn't something that gets pushed to PMI */
-        if (0 != strcmp(fields[1], orte_process_info.nodename)) {
+	/* check if this is a local process */
+	for (i = 0, local = false ; i < local_rank_count ; ++i) {
+	    if ((orte_vpid_t) local_ranks[i] == v) {
+		local = true;
+		break;
+	    }
+	}
+
+	/* compute and store the locality as it isn't something that gets pushed to PMI */
+        if (local) {
+	    if (ORTE_SUCCESS != (rc = opal_db.fetch_pointer((opal_identifier_t*)&name, ORTE_DB_CPUSET, (void **)&cpuset, OPAL_STRING))) {
+		ORTE_ERROR_LOG(rc);
+		return rc;
+	    }
+
+	    if (NULL == cpuset) {
+		/* if we share a node, but we don't know anything more, then
+		 * mark us as on the node as this is all we know
+		 */
+		locality = OPAL_PROC_ON_NODE;
+	    } else {
+		/* determine relative location on our node */
+		locality = opal_hwloc_base_get_relative_locality(opal_hwloc_topology,
+								 orte_process_info.cpuset,
+								 (char *) cpuset);
+	    }
+	} else {
             /* this is on a different node, then mark as non-local */
             locality = OPAL_PROC_NON_LOCAL;
-        } else if (!bound) {
-            /* if we share a node, but we don't know anything more, then
-             * mark us as on the node as this is all we know
-             */
-            locality = OPAL_PROC_ON_NODE;
-        } else {
-            /* determine relative location on our node */
-            locality = opal_hwloc_base_get_relative_locality(opal_hwloc_topology,
-                                                             orte_process_info.cpuset,
-                                                             fields[4]);
-        }
+	}
+
         if (ORTE_SUCCESS != (rc = opal_db.store((opal_identifier_t*)&name, OPAL_DB_INTERNAL, ORTE_DB_LOCALITY, &locality, OPAL_HWLOC_LOCALITY_T))) {
             ORTE_ERROR_LOG(rc);
-            opal_argv_free(fields);
             return rc;
         }
-
-        /* cleanup */
-        opal_argv_free(fields);
-        fields = NULL;
     }
 
     /* execute the callback */

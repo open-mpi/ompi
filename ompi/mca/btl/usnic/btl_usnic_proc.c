@@ -295,10 +295,10 @@ static int match_modex(ompi_btl_usnic_module_t *module,
 
     /* If MTU does not match, throw an error */
     if (proc->proc_modex[i].mtu != module->if_mtu) {
-        char *peer_hostname;
+	const char *peer_hostname;
 
-        if (NULL != proc->proc_ompi->proc_hostname) {
-            peer_hostname = proc->proc_ompi->proc_hostname;
+        if (NULL != ompi_proc_get_hostname(proc->proc_ompi)) {
+            peer_hostname = ompi_proc_get_hostname(proc->proc_ompi);
         } else {
             peer_hostname =
                 "<unknown -- please run with mpi_keep_peer_hostnames=1>";

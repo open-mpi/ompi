@@ -716,7 +716,7 @@ static int rdmacm_module_start_connect(ompi_btl_openib_connect_base_module_t *cp
                  (void*) endpoint,
                  (void*) endpoint->endpoint_local_cpc,
                  endpoint->endpoint_initiator ? "am" : "am NOT",
-                 endpoint->endpoint_proc->proc_ompi->proc_hostname));
+                 ompi_proc_get_hostname(endpoint->endpoint_proc->proc_ompi)));
 
     /* If we're the initiator, then open all the QPs */
     if (contents->endpoint->endpoint_initiator) {
@@ -845,7 +845,7 @@ static int handle_connect_request(struct rdma_cm_event *event)
                  (void*) endpoint,
                  (void*) endpoint->endpoint_local_cpc,
                  endpoint->endpoint_initiator ? "am" : "am NOT",
-                 endpoint->endpoint_proc->proc_ompi->proc_hostname));
+                 ompi_proc_get_hostname(endpoint->endpoint_proc->proc_ompi)));
     if (endpoint->endpoint_initiator) {
         reject_reason_t reason = REJECT_WRONG_DIRECTION;
 
@@ -906,7 +906,7 @@ static int handle_connect_request(struct rdma_cm_event *event)
         }
         OPAL_OUTPUT((-1, "Posted CTS receiver buffer (%p) for peer %s, qp index %d (QP num %d), WR ID %p, SG addr %p, len %d, lkey %d",
                      (void*) wr->sg_list[0].addr,
-                     endpoint->endpoint_proc->proc_ompi->proc_hostname,
+                     ompi_proc_get_hostname(endpoint->endpoint_proc->proc_ompi),
                      qpnum,
                      endpoint->qps[qpnum].qp->lcl_qp->qp_num,
                      (void*) wr->wr_id,
@@ -1097,7 +1097,7 @@ static void *local_endpoint_cpc_complete(void *context)
     mca_btl_openib_endpoint_t *endpoint = (mca_btl_openib_endpoint_t *)context;
 
     OPAL_OUTPUT((-1, "MAIN local_endpoint_cpc_complete to %s",
-                 endpoint->endpoint_proc->proc_ompi->proc_hostname));
+		 ompi_proc_get_hostname(endpoint->endpoint_proc->proc_ompi)));
     mca_btl_openib_endpoint_cpc_complete(endpoint);
 
     return NULL;
@@ -1117,7 +1117,7 @@ static int rdmacm_connect_endpoint(id_context_t *context,
     if (contents->server) {
         endpoint = context->endpoint;
         OPAL_OUTPUT((-1, "SERVICE Server CPC complete to %s",
-                     endpoint->endpoint_proc->proc_ompi->proc_hostname));
+                     ompi_proc_get_hostname(endpoint->endpoint_proc->proc_ompi)));
     } else {
         endpoint = contents->endpoint;
         endpoint->rem_info.rem_index =
@@ -1132,7 +1132,7 @@ static int rdmacm_connect_endpoint(id_context_t *context,
             contents->on_client_list = true;
         }
         OPAL_OUTPUT((-1, "SERVICE Client CPC complete to %s",
-                     endpoint->endpoint_proc->proc_ompi->proc_hostname));
+                     ompi_proc_get_hostname(endpoint->endpoint_proc->proc_ompi)));
     }
     if (NULL == endpoint) {
         BTL_ERROR(("Can't find endpoint"));
@@ -1144,8 +1144,8 @@ static int rdmacm_connect_endpoint(id_context_t *context,
     /* Only notify the upper layers after the last QP has been
        connected */
     if (++data->rdmacm_counter < mca_btl_openib_component.num_qps) {
-        BTL_VERBOSE(("%s to peer %s, count == %d", contents->server?"server":"client", endpoint->endpoint_proc->proc_ompi->proc_hostname, data->rdmacm_counter));
-        OPAL_OUTPUT((-1, "%s to peer %s, count == %d", contents->server?"server":"client", endpoint->endpoint_proc->proc_ompi->proc_hostname, data->rdmacm_counter));
+	BTL_VERBOSE(("%s to peer %s, count == %d", contents->server?"server":"client", ompi_proc_get_hostname(endpoint->endpoint_proc->proc_ompi), data->rdmacm_counter));
+        OPAL_OUTPUT((-1, "%s to peer %s, count == %d", contents->server?"server":"client", ompi_proc_get_hostname(endpoint->endpoint_proc->proc_ompi), data->rdmacm_counter));
         return OMPI_SUCCESS;
     }
 
@@ -1376,7 +1376,7 @@ static int finish_connect(id_context_t *context)
             OPAL_OUTPUT((-1, "Posted initiator CTS buffer (%p, length %d) for peer %s, qp index %d (QP num %d)",
                          (void*) wr->sg_list[0].addr,
                          wr->sg_list[0].length,
-                         contents->endpoint->endpoint_proc->proc_ompi->proc_hostname,
+                         ompi_proc_get_hostname(contents->endpoint->endpoint_proc->proc_ompi),
                          context->qpnum,
                          contents->endpoint->qps[context->qpnum].qp->lcl_qp->qp_num));
         }
@@ -1443,7 +1443,7 @@ static int finish_connect(id_context_t *context)
                  (void*) contents->endpoint,
                  (void*) contents->endpoint->endpoint_local_cpc,
                  contents->endpoint->endpoint_initiator ? "am" : "am NOT",
-                 contents->endpoint->endpoint_proc->proc_ompi->proc_hostname));
+                 ompi_proc_get_hostname(contents->endpoint->endpoint_proc->proc_ompi)));
     rc = rdma_connect(context->id, &conn_param);
     if (0 != rc) {
         BTL_ERROR(("rdma_connect Failed with %d", rc));
@@ -1485,7 +1485,7 @@ static void *show_help_rdmacm_event_error(void *c)
                        ompi_process_info.nodename,
                        device,
                        rdma_event_str(event->event),
-                       context->endpoint->endpoint_proc->proc_ompi->proc_hostname);
+                       ompi_proc_get_hostname(context->endpoint->endpoint_proc->proc_ompi));
     }
 
     return NULL;

@@ -108,6 +108,12 @@ orte_rml_oob_send(orte_process_name_t* peer,
         opal_output(0, "%s could not get route to %s", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_NAME_PRINT(peer));
         return ORTE_ERR_ADDRESSEE_UNKNOWN;
     }
+
+    ret = orte_rml_oob_set_contact_from_db (next);
+    if (ORTE_SUCCESS != ret) {
+	return ret;
+    }
+
     msg->msg_data = (struct iovec *) malloc(sizeof(struct iovec) * (count + 1));
     msg->msg_data[0].iov_base = (ompi_iov_base_ptr_t)&msg->msg_header;
     msg->msg_data[0].iov_len = sizeof(orte_rml_oob_msg_header_t);
@@ -196,6 +202,11 @@ orte_rml_oob_send_nb(orte_process_name_t* peer,
         ORTE_ERROR_LOG(ORTE_ERR_ADDRESSEE_UNKNOWN);
         opal_output(0, "%s could not get route to %s", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_NAME_PRINT(peer));
         return ORTE_ERR_ADDRESSEE_UNKNOWN;
+    }
+
+    ret = orte_rml_oob_set_contact_from_db (next);
+    if (ORTE_SUCCESS != ret) {
+	return ret;
     }
 
     msg->msg_data = (struct iovec *) malloc(sizeof(struct iovec) * (count + 1));
@@ -318,6 +329,11 @@ orte_rml_oob_send_buffer_nb(orte_process_name_t* peer,
                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                     ORTE_NAME_PRINT(peer));
         return ORTE_ERR_ADDRESSEE_UNKNOWN;
+    }
+
+    ret = orte_rml_oob_set_contact_from_db (next);
+    if (ORTE_SUCCESS != ret) {
+	return ret;
     }
 
     msg->msg_data[0].iov_base = (ompi_iov_base_ptr_t)&msg->msg_header;

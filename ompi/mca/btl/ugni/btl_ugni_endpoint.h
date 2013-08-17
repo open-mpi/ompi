@@ -27,6 +27,8 @@ struct mca_btl_ugni_smsg_mbox_t;
 typedef struct mca_btl_base_endpoint_t {
     opal_list_item_t super;
 
+    ompi_proc_t *peer_proc;
+
     opal_mutex_t lock;
     mca_btl_ugni_endpoint_state_t state;
 
@@ -64,13 +66,9 @@ static inline int mca_btl_ugni_init_ep (mca_btl_base_endpoint_t **ep,
     endpoint->smsg_progressing = 0;
     endpoint->state = MCA_BTL_UGNI_EP_STATE_INIT;
 
-    rc = ompi_common_ugni_endpoint_for_proc (btl->device, peer_proc, &endpoint->common);
-    if (OMPI_SUCCESS != rc) {
-        assert (0);
-        return rc;
-    }
-
     endpoint->btl = btl;
+    endpoint->peer_proc = peer_proc;
+    endpoint->common = NULL;
 
     *ep = endpoint;
 
@@ -80,12 +78,14 @@ static inline int mca_btl_ugni_init_ep (mca_btl_base_endpoint_t **ep,
 static inline void mca_btl_ugni_release_ep (mca_btl_base_endpoint_t *ep) {
     int rc;
 
-    rc = mca_btl_ugni_ep_disconnect (ep, false);
-    if (OPAL_UNLIKELY(OMPI_SUCCESS != rc)) {
-        BTL_VERBOSE(("btl/ugni error disconnecting endpoint"));
-    }
+    if (ep->common) {
+        rc = mca_btl_ugni_ep_disconnect (ep, false);
+        if (OPAL_UNLIKELY(OMPI_SUCCESS != rc)) {
+            BTL_VERBOSE(("btl/ugni error disconnecting endpoint"));
+        }
 
-    ompi_common_ugni_endpoint_return (ep->common);
+        ompi_common_ugni_endpoint_return (ep->common);
+    }
 
     OBJ_RELEASE(ep);
 }

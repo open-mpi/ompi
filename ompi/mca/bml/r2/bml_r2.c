@@ -408,11 +408,11 @@ static int mca_bml_r2_add_procs( size_t nprocs,
                        "unreachable proc",
                        true, 
                        OMPI_NAME_PRINT(&(ompi_proc_local_proc->proc_name)),
-                       (ompi_proc_local_proc->proc_hostname ?
-                        ompi_proc_local_proc->proc_hostname : "unknown!"),
+                       (ompi_proc_get_hostname(ompi_proc_local_proc) ?
+                        ompi_proc_get_hostname(ompi_proc_local_proc) : "unknown!"),
                        OMPI_NAME_PRINT(&(unreach_proc->proc_name)),
-                       (unreach_proc->proc_hostname ? 
-                        unreach_proc->proc_hostname : "unknown!"),
+                       (ompi_proc_get_hostname(unreach_proc) ? 
+                        ompi_proc_get_hostname(unreach_proc) : "unknown!"),
                        btl_names);
     }
 

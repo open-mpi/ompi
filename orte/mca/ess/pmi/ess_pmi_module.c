@@ -85,7 +85,7 @@ static bool app_init_complete=false;
 static int rte_init(void)
 {
     int ret, i, j;
-    char *error = NULL, *localj, *pmirte=NULL;
+    char *error = NULL, *localj;
     int32_t jobfam, stepid;
     char *envar, *ev1, *ev2;
     uint64_t unique_key[2];
@@ -348,54 +348,41 @@ static int rte_init(void)
 
     /* construct the PMI RTE string */
     rmluri = orte_rml.get_contact_info();
-    if (NULL == orte_process_info.cpuset) {
-        asprintf(&pmirte, "%s,%s,%d,%d", rmluri, orte_process_info.nodename,
-                 (int)orte_process_info.my_local_rank, (int)orte_process_info.my_node_rank);
-    } else {
-        asprintf(&pmirte, "%s,%s,%d,%d,%s", rmluri, orte_process_info.nodename,
-                 (int)orte_process_info.my_local_rank, (int)orte_process_info.my_node_rank,
-                 orte_process_info.cpuset);
-    }
-    /* push our info into the cloud */
-    if (ORTE_SUCCESS != (ret = opal_db.store((opal_identifier_t*)ORTE_PROC_MY_NAME,
-                                             OPAL_DB_GLOBAL, "RTE",
-                                             pmirte, OPAL_STRING))) {
-        error = "db store RTE info";
-        goto error;
-    }
-    free(pmirte);
+
     /* store our info in the internal database */
     if (ORTE_SUCCESS != (ret = opal_db.store((opal_identifier_t*)ORTE_PROC_MY_NAME,
-                                             OPAL_DB_INTERNAL, ORTE_DB_RMLURI,
+                                             OPAL_DB_GLOBAL, ORTE_DB_RMLURI,
                                              rmluri, OPAL_STRING))) {
         error = "db store uri";
         goto error;
     }
     free(rmluri);
     if (ORTE_SUCCESS != (ret = opal_db.store((opal_identifier_t*)ORTE_PROC_MY_NAME,
-                                             OPAL_DB_INTERNAL, ORTE_DB_HOSTNAME,
+                                             OPAL_DB_GLOBAL, ORTE_DB_HOSTNAME,
                                              orte_process_info.nodename, OPAL_STRING))) {
         error = "db store hostname";
         goto error;
     }
     if (ORTE_SUCCESS != (ret = opal_db.store((opal_identifier_t*)ORTE_PROC_MY_NAME,
-                                             OPAL_DB_INTERNAL, ORTE_DB_CPUSET,
+                                             OPAL_DB_GLOBAL, ORTE_DB_CPUSET,
                                              orte_process_info.cpuset, OPAL_STRING))) {
         error = "db store cpuset";
         goto error;
     }
     if (ORTE_SUCCESS != (ret = opal_db.store((opal_identifier_t*)ORTE_PROC_MY_NAME,
-                                             OPAL_DB_INTERNAL, ORTE_DB_LOCALRANK,
+                                             OPAL_DB_GLOBAL, ORTE_DB_LOCALRANK,
                                              &orte_process_info.my_local_rank, ORTE_LOCAL_RANK))) {
         error = "db store local rank";
         goto error;
     }
     if (ORTE_SUCCESS != (ret = opal_db.store((opal_identifier_t*)ORTE_PROC_MY_NAME,
-                                             OPAL_DB_INTERNAL, ORTE_DB_NODERANK,
+                                             OPAL_DB_GLOBAL, ORTE_DB_NODERANK,
                                              &orte_process_info.my_node_rank, ORTE_NODE_RANK))) {
         error = "db store node rank";
         goto error;
     }
+
+    /* save local locality */
     locality = OPAL_PROC_ALL_LOCAL;
     if (ORTE_SUCCESS != (ret = opal_db.store((opal_identifier_t*)ORTE_PROC_MY_NAME,
                                              OPAL_DB_INTERNAL, ORTE_DB_LOCALITY,

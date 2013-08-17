@@ -507,7 +507,7 @@ static void cts_sent(mca_btl_base_module_t* btl,
     /* Nothing to do/empty function (we can't pass in a NULL pointer
        for the des_cbfunc) */
     OPAL_OUTPUT((-1, "CTS send to %s completed",
-                 ep->endpoint_proc->proc_ompi->proc_hostname));
+                 ompi_proc_get_hostname(ep->endpoint_proc->proc_ompi)));
 }
 
 /*
@@ -522,7 +522,7 @@ void mca_btl_openib_endpoint_send_cts(mca_btl_openib_endpoint_t *endpoint)
     mca_btl_openib_control_header_t *ctl_hdr;
 
     OPAL_OUTPUT((-1, "SENDING CTS to %s on qp index %d (QP num %d)",
-                 endpoint->endpoint_proc->proc_ompi->proc_hostname,
+                 ompi_proc_get_hostname(endpoint->endpoint_proc->proc_ompi),
                  mca_btl_openib_component.credits_qp,
                  endpoint->qps[mca_btl_openib_component.credits_qp].qp->lcl_qp->qp_num));
     sc_frag = alloc_control_frag(endpoint->endpoint_btl);
@@ -592,7 +592,7 @@ void mca_btl_openib_endpoint_cpc_complete(mca_btl_openib_endpoint_t *endpoint)
         transport_type_ib_p = (IBV_TRANSPORT_IB == endpoint->endpoint_btl->device->ib_dev->transport_type);
 #endif
         OPAL_OUTPUT((-1, "cpc_complete to peer %s: is IB %d, initiatior %d, cts received: %d",
-                     endpoint->endpoint_proc->proc_ompi->proc_hostname,
+                     ompi_proc_get_hostname(endpoint->endpoint_proc->proc_ompi),
                      transport_type_ib_p,
                      endpoint->endpoint_initiator,
                      endpoint->endpoint_cts_received));
@@ -605,13 +605,13 @@ void mca_btl_openib_endpoint_cpc_complete(mca_btl_openib_endpoint_t *endpoint)
                mark us as connected */
             if (endpoint->endpoint_cts_received) {
                 OPAL_OUTPUT((-1, "cpc_complete to %s -- already got CTS, so marking endpoint as complete",
-                             endpoint->endpoint_proc->proc_ompi->proc_hostname));
+                             ompi_proc_get_hostname(endpoint->endpoint_proc->proc_ompi)));
                 mca_btl_openib_endpoint_connected(endpoint);
             }
         }
 
         OPAL_OUTPUT((-1, "cpc_complete to %s -- done",
-                     endpoint->endpoint_proc->proc_ompi->proc_hostname));
+                     ompi_proc_get_hostname(endpoint->endpoint_proc->proc_ompi)));
         return;
     }
 

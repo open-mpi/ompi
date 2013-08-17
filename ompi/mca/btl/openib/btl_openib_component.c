@@ -535,7 +535,7 @@ static void btl_openib_control(mca_btl_base_module_t* btl,
        break;
     case MCA_BTL_OPENIB_CONTROL_CTS:
         OPAL_OUTPUT((-1, "received CTS from %s (buffer %p): posted recvs %d, sent cts %d",
-                     ep->endpoint_proc->proc_ompi->proc_hostname,
+                     ompi_proc_get_hostname(ep->endpoint_proc->proc_ompi),
                      (void*) ctl_hdr,
                      ep->endpoint_posted_recvs, ep->endpoint_cts_sent));
         ep->endpoint_cts_received = true;
@@ -3531,8 +3531,8 @@ error:
     if (IBV_WC_RNR_RETRY_EXC_ERR == wc->status ||
         IBV_WC_RETRY_EXC_ERR == wc->status) {
         char *peer_hostname =
-            (NULL != endpoint->endpoint_proc->proc_ompi->proc_hostname) ?
-            endpoint->endpoint_proc->proc_ompi->proc_hostname :
+            (NULL != ompi_proc_get_hostname(endpoint->endpoint_proc->proc_ompi)) ?
+            (char*)ompi_proc_get_hostname(endpoint->endpoint_proc->proc_ompi) :
             "<unknown -- please run with mpi_keep_peer_hostnames=1>";
         const char *device_name =
             ibv_get_device_name(endpoint->qps[qp].qp->lcl_qp->context->device);
