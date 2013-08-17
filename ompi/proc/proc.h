@@ -304,6 +304,15 @@ OMPI_DECLSPEC int ompi_proc_unpack(opal_buffer_t *buf,
  */
 OMPI_DECLSPEC int ompi_proc_refresh(void);
 
+/**
+ * Retrieve the hostname for a process
+ *
+ * @note Retrieving the hostname may require communication.
+ *
+ * @param proc process to retrieve hostname from
+ */
+OMPI_DECLSPEC const char *ompi_proc_get_hostname (ompi_proc_t *proc);
+
 END_C_DECLS
 
 #endif /* OMPI_PROC_PROC_H */

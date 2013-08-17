@@ -368,11 +368,11 @@ mca_pml_base_pml_check_selected(const char *my_pml,
     /* if that module doesn't match my own, return an error */
     if ((size != strlen(my_pml) + 1) ||
         (0 != strcmp(my_pml, remote_pml))) {
-        if (procs[0]->proc_hostname) {
+        if (ompi_proc_get_hostname(procs[0])) {
             opal_output(0, "%s selected pml %s, but peer %s on %s selected pml %s",
                         OMPI_NAME_PRINT(&ompi_proc_local()->proc_name),
                         my_pml, OMPI_NAME_PRINT(&procs[0]->proc_name),
-                        procs[0]->proc_hostname,
+                        ompi_proc_get_hostname(procs[0]),
                         remote_pml);
         } else {
             opal_output(0, "%s selected pml %s, but peer %s selected pml %s",

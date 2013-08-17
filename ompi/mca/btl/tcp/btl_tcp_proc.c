@@ -372,9 +372,12 @@ int mca_btl_tcp_proc_insert( mca_btl_tcp_proc_t* btl_proc,
                              mca_btl_base_endpoint_t* btl_endpoint )
 {
     struct sockaddr_storage endpoint_addr_ss;
+    const char *proc_hostname;
     unsigned int perm_size;
     int rc, *a = NULL;
     size_t i, j;
+
+    proc_hostname = ompi_proc_get_hostname(btl_proc->proc_ompi);
 
 #ifndef WORDS_BIGENDIAN
     /* if we are little endian and our peer is not so lucky, then we
@@ -510,7 +513,7 @@ int mca_btl_tcp_proc_insert( mca_btl_tcp_proc_t* btl_proc,
                     || (opal_net_islocalhost((struct sockaddr *)peer_interfaces[j]->ipv4_address)
                         && !opal_net_islocalhost((struct sockaddr *)local_interfaces[i]->ipv4_address))
                     || (opal_net_islocalhost((struct sockaddr *)local_interfaces[i]->ipv4_address)
-                        && !opal_ifislocal(btl_proc->proc_ompi->proc_hostname))) {
+                        && !opal_ifislocal(proc_hostname))) {
 
                     /* No connection is possible on these interfaces */
                 
@@ -551,7 +554,7 @@ int mca_btl_tcp_proc_insert( mca_btl_tcp_proc_t* btl_proc,
                     || (opal_net_islocalhost((struct sockaddr *)peer_interfaces[j]->ipv6_address)
                         && !opal_net_islocalhost((struct sockaddr *)local_interfaces[i]->ipv6_address))
                     || (opal_net_islocalhost((struct sockaddr *)local_interfaces[i]->ipv6_address)
-                        && !opal_ifislocal(btl_proc->proc_ompi->proc_hostname))) {
+                        && !opal_ifislocal(proc_hostname))) {
 
                     /* No connection is possible on these interfaces */
 

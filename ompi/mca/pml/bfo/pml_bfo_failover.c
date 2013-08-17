@@ -408,7 +408,7 @@ void mca_pml_bfo_recv_frag_callback_rndvrestartnotify(mca_btl_base_module_t* btl
                             recvreq->remote_req_send.pval, (void *)recvreq,
                             recvreq->req_recv.req_base.req_ompi.req_status.MPI_SOURCE,
                             hdr->hdr_restart.hdr_jobid, hdr->hdr_restart.hdr_vpid, 
-                            ompi_proc->proc_hostname);
+                            ompi_proc_get_hostname(ompi_proc));
         mca_pml_bfo_recv_request_rndvrestartnack(des, ompi_proc, false);
         return;
     }
@@ -1415,7 +1415,7 @@ void mca_pml_bfo_map_out_btl(struct mca_btl_base_module_t* btl,
                             btl->btl_component->btl_version.mca_component_name,
                             OMPI_PROC_MY_NAME->vpid,
                             btlname, errproc->proc_name.vpid,
-                            errproc->proc_hostname);
+                            ompi_proc_get_hostname(errproc));
 
         /* Need to search for any pending packets associated
          * with this endpoint and remove them.  We may also

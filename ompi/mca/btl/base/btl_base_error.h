@@ -62,8 +62,8 @@ do {                                                      \
                      OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),  \
                      __FILE__, __LINE__, __func__,        \
                      ompi_process_info.nodename);         \
-    if(proc && proc->proc_hostname) {                     \
-        mca_btl_base_err("to: %s ", proc->proc_hostname); \
+    if(proc && ompi_proc_get_hostname(proc)) {            \
+      mca_btl_base_err("to: %s ", ompi_proc_get_hostname(proc));        \
     }                                                     \
     mca_btl_base_err args;                                \
     mca_btl_base_err("\n");                               \

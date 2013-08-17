@@ -180,6 +180,9 @@ void orte_rml_oob_exception_callback(const orte_process_name_t *peer,
 
 int orte_rml_oob_purge(orte_process_name_t *peer);
 
+int
+orte_rml_oob_set_contact_from_db (orte_process_name_t name);
+
 END_C_DECLS
 
 #endif

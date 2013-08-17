@@ -259,7 +259,7 @@ static int mca_btl_udapl_proc_address_match(
         BTL_UDAPL_VERBOSE_HELP(VERBOSE_SHOW_HELP,
             ("help-mpi-btl-udapl.txt", "no network match",
             true, btl_addr_string, ompi_process_info.nodename,
-            peer_proc->proc_ompi->proc_hostname));
+	    ompi_proc_get_hostname(peer_proc->proc_ompi)));
         return OMPI_ERR_OUT_OF_RESOURCE;
     }    
 
