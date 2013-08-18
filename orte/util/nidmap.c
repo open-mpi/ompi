@@ -255,6 +255,10 @@ int orte_util_encode_nodemap(opal_byte_object_t *boptr, bool update)
     orte_job_t *daemons;
     orte_proc_t *dmn;
 
+    OPAL_OUTPUT_VERBOSE((2, orte_nidmap_output,
+                         "%s orte:util:encode_nidmap",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+    
     /* if the daemon job has not been updated, then there is
      * nothing to send
      */
@@ -342,6 +346,10 @@ int orte_util_encode_nodemap(opal_byte_object_t *boptr, bool update)
     /* transfer the payload to the byte object */
     opal_dss.unload(&buf, (void**)&boptr->bytes, &boptr->size);
     OBJ_DESTRUCT(&buf);
+    
+    OPAL_OUTPUT_VERBOSE((2, orte_nidmap_output,
+                         "%s orte:util:build:daemon:nidmap packed %d bytes",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), boptr->size));
     
     return ORTE_SUCCESS;
 }

@@ -469,6 +469,9 @@ static int rte_init(void)
         free(contact_path);
     }
 
+    /* init the nidmap - just so we register that verbosity */
+    orte_util_nidmap_init(NULL);
+
     /* setup the global job and node arrays */
     orte_job_data = OBJ_NEW(opal_pointer_array_t);
     if (ORTE_SUCCESS != (ret = opal_pointer_array_init(orte_job_data,
