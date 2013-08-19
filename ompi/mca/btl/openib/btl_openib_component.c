@@ -2566,12 +2566,6 @@ btl_openib_component_init(int *num_btl_modules,
         }
     }
 
-    if (mca_btl_openib_module.super.btl_flags & MCA_BTL_FLAGS_GET) {
-        /* Until GET flow is fixed - we do not support GET
-           in openib btl. */
-        BTL_ERROR(("openib btl does not support GET flag"));
-    }
-
     OBJ_CONSTRUCT(&mca_btl_openib_component.send_free_coalesced, ompi_free_list_t);
     OBJ_CONSTRUCT(&mca_btl_openib_component.send_user_free, ompi_free_list_t);
     OBJ_CONSTRUCT(&mca_btl_openib_component.recv_user_free, ompi_free_list_t);
