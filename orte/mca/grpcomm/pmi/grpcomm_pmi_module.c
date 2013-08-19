@@ -863,15 +863,10 @@ static int setup_pmi(void)
 	return ORTE_ERR_OUT_OF_RESOURCE;
     }
 
-#if WANT_PMI2_SUPPORT
-    /* TODO -- is this ok */
-    max_length = 1024;
-#else
     if (PMI_SUCCESS != (rc = PMI_KVS_Get_name_length_max(&max_length))) {
         OPAL_PMI_ERROR(rc, "PMI_KVS_Get_name_length_max");
         return ORTE_ERROR;
     }
-#endif
     pmi_kvs_name = (char*)malloc(max_length);
     if (NULL == pmi_kvs_name) {
         return ORTE_ERR_OUT_OF_RESOURCE;
