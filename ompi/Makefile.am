@@ -140,6 +140,13 @@ libmpi_la_LIBADD = \
         $(MCA_ompi_FRAMEWORK_LIBS) \
         $(OMPI_MPIEXT_C_LIBS) \
         $(OMPI_LIBMPI_EXTRA_LIBS)
+
+if WANT_MPI_PROFILING
+libmpi_la_LIBADD += \
+        mpi/tool/libmpi_mpit.la
+endif
+
+
 if OMPI_RTE_ORTE
 libmpi_la_LIBADD += \
         $(top_ompi_builddir)/orte/libopen-rte.la
