@@ -818,7 +818,6 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
         OBJ_RELEASE(port_list);
     }
 
- modex_send:
     usnic_modex_send();
     return btls;
 

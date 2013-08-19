@@ -482,11 +482,9 @@ usnic_put(
     struct mca_btl_base_endpoint_t *endpoint,
     struct mca_btl_base_descriptor_t *des)
 {
-    ompi_btl_usnic_module_t *module;
     ompi_btl_usnic_send_frag_t *frag;
     ompi_btl_usnic_send_segment_t *sseg;
 
-    module = (ompi_btl_usnic_module_t *)btl;
     frag = (ompi_btl_usnic_send_frag_t *)des;
 
 #if MSGDEBUG2
@@ -849,9 +847,7 @@ usnic_handle_large_send(
     ompi_btl_usnic_send_segment_t *sseg;
     size_t payload_len;
     struct iovec iov;
-    uint32_t iov_count;
     size_t max_data;
-    int ret;
 
     lfrag = (ompi_btl_usnic_large_send_frag_t *)frag;
 
@@ -905,7 +901,6 @@ usnic_handle_large_send(
 
     /* fill in destination for pack */
     iov.iov_len = max_data;
-    iov_count = 1;
 
     /* pack the next bit of data (large frags never have convertors) */
     memcpy(iov.iov_base,
