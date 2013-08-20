@@ -170,7 +170,7 @@ static const char *transport_name_to_str(enum ibv_transport_type transport_type)
     }
 }
 
-#if defined(HAVE_IBV_LINK_LAYER_ETHERNET)
+#if defined(HAVE_DECL_IBV_LINK_LAYER_ETHERNET)
 static const char *link_layer_to_str(int link_type)
 {
     switch(link_type) {
@@ -417,7 +417,7 @@ opal_list_t *ompi_common_verbs_find_ports(const char *if_include,
                 /* If they specified neither link layer, then we want this port */
                 want = true;
             } 
-#if defined(HAVE_IBV_LINK_LAYER_ETHERNET)
+#if defined(HAVE_DECL_IBV_LINK_LAYER_ETHERNET)
             else if (flags & OMPI_COMMON_VERBS_FLAGS_LINK_LAYER_IB) {
                 if (IBV_LINK_LAYER_INFINIBAND == port_attr.link_layer) {
                     want = true;
