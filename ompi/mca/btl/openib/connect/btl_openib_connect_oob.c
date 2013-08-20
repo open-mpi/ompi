@@ -127,7 +127,7 @@ static int oob_component_query(mca_btl_openib_module_t *btl,
        IB (this CPC will not work with iWarp).  If we do not have the
        transport_type member, then we must be < OFED v1.2, and
        therefore we must be IB. */
-#if defined(HAVE_STRUCT_IBV_DEVICE_TRANSPORT_TYPE) && defined(HAVE_IBV_LINK_LAYER_ETHERNET)
+#if defined(HAVE_STRUCT_IBV_DEVICE_TRANSPORT_TYPE) && defined(HAVE_DECL_IBV_LINK_LAYER_ETHERNET)
     if (BTL_OPENIB_CONNECT_BASE_CHECK_IF_NOT_IB(btl)) {
         opal_output_verbose(5, ompi_btl_base_framework.framework_output,
                             "openib BTL: oob CPC only supported on InfiniBand; skipped on  %s:%d",
