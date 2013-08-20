@@ -12,6 +12,7 @@
  * Copyright (c) 2006-2007 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
+ * Copyright (c) 2013      Intel, Inc. All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -156,8 +157,20 @@ int ompi_proc_complete_init(void)
                 break;
             }
 
-            /* get the remote architecture */
+            if (ompi_process_info.num_daemons < ompi_rte_hostname_cutoff) {
+                /* retrieve the hostname */
+                ret = ompi_modex_recv_string_pointer(OMPI_DB_HOSTNAME, proc, (void**)&(proc->proc_hostname), OPAL_STRING);
+                if (OMPI_SUCCESS != ret) {
+                    break;
+                }
+            } else {
+                /* just set the hostname to NULL for now - we'll fill it in
+                 * as modex_recv's are called for procs we will talk to
+                 */
+                proc->proc_hostname = NULL;
+            }
 #if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
+            /* get the remote architecture */
             {
                 uint32_t *ui32ptr;
                 ui32ptr = &(proc->proc_arch);
@@ -183,21 +196,6 @@ int ompi_proc_complete_init(void)
     }
     OPAL_THREAD_UNLOCK(&ompi_proc_lock);
     return errcode;
-}
-
-const char *ompi_proc_get_hostname (ompi_proc_t *proc)
-{
-    int ret;
-
-    if (NULL == proc->proc_hostname) {
-	/* get a pointer to the name of the node it is on */
-	ret = ompi_modex_recv_string_pointer(OMPI_DB_HOSTNAME, proc, (void**)&(proc->proc_hostname), OPAL_STRING);
-	if (OMPI_SUCCESS != ret) {
-	    return NULL;
-	}
-    }
-
-    return proc->proc_hostname;
 }
 
 int ompi_proc_finalize (void)
@@ -371,7 +369,6 @@ int ompi_proc_refresh(void) {
     ompi_vpid_t i = 0;
     int ret=OMPI_SUCCESS;
     opal_hwloc_locality_t *hwlocale;
-    uint32_t *uiptr;
 
     OPAL_THREAD_LOCK(&ompi_proc_lock);
 
@@ -397,25 +394,31 @@ int ompi_proc_refresh(void) {
             if (OMPI_SUCCESS != ret) {
                 break;
             }
-	    proc->proc_hostname = NULL;
+            if (ompi_process_info.num_daemons < ompi_rte_hostname_cutoff) {
+                /* retrieve the hostname */
+                ret = ompi_modex_recv_string_pointer(OMPI_DB_HOSTNAME, proc, (void**)&(proc->proc_hostname), OPAL_STRING);
+                if (OMPI_SUCCESS != ret) {
+                    break;
+                }
+            } else {
+                /* just set the hostname to NULL for now - we'll fill it in
+                 * as modex_recv's are called for procs we will talk to
+                 */
+                proc->proc_hostname = NULL;
+            }
+#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
             /* get the remote architecture */
             uiptr = &(proc->proc_arch);
             ret = ompi_modex_recv_key_value("OMPI_ARCH", proc, (void**)&uiptr, OPAL_UINT32);
             /* if arch is different than mine, create a new convertor for this proc */
             if (proc->proc_arch != opal_local_arch) {
-#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
                 OBJ_RELEASE(proc->proc_convertor);
                 proc->proc_convertor = opal_convertor_create(proc->proc_arch, 0);
-#else
-                opal_show_help("help-mpi-runtime",
-                               "heterogeneous-support-unavailable",
-                               true, ompi_process_info.nodename, 
-                               proc->proc_hostname == NULL ? "<hostname unavailable>" :
-                               proc->proc_hostname);
-                OPAL_THREAD_UNLOCK(&ompi_proc_lock);
-                return OMPI_ERR_NOT_SUPPORTED;
-#endif
             } 
+#else
+            /* must be same arch as my own */
+            proc->proc_arch = opal_local_arch;
+#endif
         }
     }
 
@@ -456,7 +459,6 @@ ompi_proc_pack(ompi_proc_t **proclist, int proclistsize, opal_buffer_t* buf)
             OPAL_THREAD_UNLOCK(&ompi_proc_lock);
             return rc;
         }
-	(void) ompi_proc_get_hostname (proclist[i]);
         rc = opal_dss.pack(buf, &(proclist[i]->proc_hostname), 1, OPAL_STRING);
         if(rc != OPAL_SUCCESS) {
             OMPI_ERROR_LOG(rc);

@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2010 Oracle and/or its affiliates.  All rights reserved
+ * Copyright (c) 2013      Intel, Inc. All rights reserved
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -377,7 +378,9 @@ int mca_btl_tcp_proc_insert( mca_btl_tcp_proc_t* btl_proc,
     int rc, *a = NULL;
     size_t i, j;
 
-    proc_hostname = ompi_proc_get_hostname(btl_proc->proc_ompi);
+    if (NULL == (proc_hostname = btl_proc->proc_ompi->proc_hostname)) {
+        return OMPI_ERR_UNREACH;
+    }
 
 #ifndef WORDS_BIGENDIAN
     /* if we are little endian and our peer is not so lucky, then we

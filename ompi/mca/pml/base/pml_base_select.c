@@ -12,6 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
+ * Copyright (c) 2013      Intel, Inc. All rights reserved
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -368,18 +369,11 @@ mca_pml_base_pml_check_selected(const char *my_pml,
     /* if that module doesn't match my own, return an error */
     if ((size != strlen(my_pml) + 1) ||
         (0 != strcmp(my_pml, remote_pml))) {
-        if (ompi_proc_get_hostname(procs[0])) {
-            opal_output(0, "%s selected pml %s, but peer %s on %s selected pml %s",
-                        OMPI_NAME_PRINT(&ompi_proc_local()->proc_name),
-                        my_pml, OMPI_NAME_PRINT(&procs[0]->proc_name),
-                        ompi_proc_get_hostname(procs[0]),
-                        remote_pml);
-        } else {
-            opal_output(0, "%s selected pml %s, but peer %s selected pml %s",
-                        OMPI_NAME_PRINT(&ompi_proc_local()->proc_name),
-                        my_pml, OMPI_NAME_PRINT(&procs[0]->proc_name),
-                        remote_pml);
-        }
+        opal_output(0, "%s selected pml %s, but peer %s on %s selected pml %s",
+                    OMPI_NAME_PRINT(&ompi_proc_local()->proc_name),
+                    my_pml, OMPI_NAME_PRINT(&procs[0]->proc_name),
+                    (NULL == procs[0]->proc_hostname) ? "unknown" : procs[0]->proc_hostname,
+                    remote_pml);
         free(remote_pml); /* cleanup before returning */
         return OMPI_ERR_UNREACH;
     }

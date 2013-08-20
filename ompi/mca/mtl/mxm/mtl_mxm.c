@@ -1,5 +1,6 @@
 /*
  * Copyright (C) Mellanox Technologies Ltd. 2001-2011.  ALL RIGHTS RESERVED.
+ * Copyright (c) 2013      Intel, Inc. All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -508,7 +509,9 @@ int ompi_mtl_mxm_add_procs(struct mca_mtl_base_module_t *mtl, size_t nprocs,
         MXM_ERROR("MXM returned connect error: %s\n", mxm_error_string(err));
         for (i = 0; i < nprocs; ++i) {
             if (MXM_OK != conn_reqs[i].error) {
-		MXM_ERROR("MXM EP connect to %s error: %s\n", ompi_proc_get_hostname(procs[i]),
+		MXM_ERROR("MXM EP connect to %s error: %s\n",
+                          (NULL == procs[i]->proc_hostname) ?
+                          "unknown" : procs[i]->proc_hostname,
                           mxm_error_string(conn_reqs[i].error));
             }
         }
