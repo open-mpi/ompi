@@ -13,6 +13,7 @@
  * Copyright (c) 2007-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
+ * Copyright (c) 2013      Intel, Inc. All rights reserved
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -606,6 +607,7 @@ ORTE_DECLSPEC extern bool orte_have_fqdn_allocation;
 ORTE_DECLSPEC extern bool orte_show_resolved_nodenames;
 ORTE_DECLSPEC extern bool orte_retain_aliases;
 ORTE_DECLSPEC extern int orte_use_hostname_alias;
+ORTE_DECLSPEC extern orte_vpid_t orte_hostname_cutoff;
 
 /* debug flags */
 ORTE_DECLSPEC extern int orted_debug_failure;

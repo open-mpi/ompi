@@ -14,6 +14,7 @@
  * Copyright (c) 2007-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2013      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2013      Intel, Inc. All rights reserved
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -57,7 +58,6 @@ bool ompi_mpi_show_mca_params = false;
 char *ompi_mpi_show_mca_params_file = NULL;
 bool ompi_mpi_abort_print_stack = false;
 int ompi_mpi_abort_delay = 0;
-bool ompi_mpi_keep_peer_hostnames = true;
 bool ompi_mpi_keep_fqdn_hostnames = false;
 int ompi_mpi_leave_pinned = -1;
 bool ompi_mpi_leave_pinned_pipeline = false;
@@ -210,16 +210,6 @@ int ompi_mpi_register_params(void)
                                  &ompi_mpi_show_mca_params_file);
     
     /* User-level process pinning controls */
-
-    /* Do we want to save hostnames for debugging messages?  This can
-       eat quite a bit of memory... */
-    ompi_mpi_keep_peer_hostnames = true;
-    (void) mca_base_var_register("ompi", "mpi", NULL, "keep_peer_hostnames",
-                                 "If nonzero, save the string hostnames of all MPI peer processes (mostly for error / debugging output messages).  This can add quite a bit of memory usage to each MPI process.",
-                                 MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
-                                 OPAL_INFO_LVL_9,
-                                 MCA_BASE_VAR_SCOPE_READONLY,
-                                 &ompi_mpi_keep_peer_hostnames);
 
     /* MPI_ABORT controls */
     ompi_mpi_abort_delay = 0;

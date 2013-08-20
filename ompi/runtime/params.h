@@ -13,6 +13,7 @@
  *                         reserved. 
  * Copyright (c) 2006-2009 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2013      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2013      Intel, Inc. All rights reserved
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -95,12 +96,6 @@ OMPI_DECLSPEC extern bool ompi_mpi_show_mca_params;
  * when the mpi_show_mca_params is set.
  */
 OMPI_DECLSPEC extern char * ompi_mpi_show_mca_params_file;
-
-/**
- * Whether we should keep the string hostnames of all the MPI
- * process peers around or not (eats up a good bit of memory).
- */
-OMPI_DECLSPEC extern bool ompi_mpi_keep_peer_hostnames;
 
 /**
  * Whether an MPI_ABORT should print out a stack trace or not.

@@ -3,6 +3,7 @@
  * Copyright (c) 2007 Mellanox Technologies, Inc.  All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
+ * Copyright (c) 2013      Intel, Inc. All rights reserved
  *
  * $COPYRIGHT$
  *
@@ -457,7 +458,8 @@ int ompi_btl_openib_connect_base_alloc_cts(mca_btl_base_endpoint_t *endpoint)
         mca_btl_openib_component.credits_qp;
     endpoint->endpoint_cts_frag.super.endpoint = endpoint;
     OPAL_OUTPUT((-1, "Got a CTS frag for peer %s, addr %p, length %d, lkey %d",
-                 ompi_proc_get_hostname(endpoint->endpoint_proc->proc_ompi),
+                 (NULL == endpoint->endpoint_proc->proc_ompi->proc_hostname) ?
+                 "unknown" : endpoint->endpoint_proc->proc_ompi->proc_hostname,
                  (void*) endpoint->endpoint_cts_frag.super.sg_entry.addr,
                  endpoint->endpoint_cts_frag.super.sg_entry.length,
                  endpoint->endpoint_cts_frag.super.sg_entry.lkey));

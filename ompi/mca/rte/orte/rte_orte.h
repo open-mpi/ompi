@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
+ * Copyright (c) 2013      Intel, Inc. All rights reserved
  *
  * $COPYRIGHT$
  * 
@@ -65,6 +66,7 @@ typedef orte_node_rank_t ompi_node_rank_t;
 typedef orte_local_rank_t ompi_local_rank_t;
 #define ompi_process_info orte_process_info
 #define ompi_rte_proc_is_bound orte_proc_is_bound
+#define ompi_rte_hostname_cutoff orte_hostname_cutoff
 
 /* Error handling objects and operations */
 OMPI_DECLSPEC void ompi_rte_abort(int error_code, char *fmt, ...);

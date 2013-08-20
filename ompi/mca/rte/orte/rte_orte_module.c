@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
+ * Copyright (c) 2013      Intel, Inc. All rights reserved
  */
 #include "ompi_config.h"
 #include "ompi/constants.h"
@@ -35,6 +36,7 @@
 #include "ompi/mca/rte/base/base.h"
 #include "ompi/mca/rte/rte.h"
 #include "ompi/debuggers/debuggers.h"
+#include "ompi/proc/proc.h"
 
 void ompi_rte_abort(int error_code, char *fmt, ...)
 {
@@ -149,21 +151,54 @@ int ompi_rte_db_fetch(const orte_process_name_t *nm,
                       const char *key,
                       void **data, opal_data_type_t type)
 {
-    return opal_db.fetch((opal_identifier_t*)nm, key, data, type);
+    ompi_proc_t *proct;
+    int rc;
+
+    if (OPAL_SUCCESS != (rc = opal_db.fetch((opal_identifier_t*)nm, key, data, type))) {
+        return rc;
+    }
+    /* update the hostname */
+    proct = ompi_proc_find(nm);
+    if (NULL == proct->proc_hostname) {
+        opal_db.fetch_pointer((opal_identifier_t*)nm, ORTE_DB_HOSTNAME, (void**)&proct->proc_hostname, OPAL_STRING);
+    }
+    return OMPI_SUCCESS;
 }
 
 int ompi_rte_db_fetch_pointer(const orte_process_name_t *nm,
                               const char *key,
                               void **data, opal_data_type_t type)
 {
-    return opal_db.fetch_pointer((opal_identifier_t*)nm, key, data, type);
+    ompi_proc_t *proct;
+    int rc;
+
+    if (OPAL_SUCCESS != (rc = opal_db.fetch_pointer((opal_identifier_t*)nm, key, data, type))) {
+        return rc;
+    }
+    /* update the hostname */
+    proct = ompi_proc_find(nm);
+    if (NULL == proct->proc_hostname) {
+        opal_db.fetch_pointer((opal_identifier_t*)nm, ORTE_DB_HOSTNAME, (void**)&proct->proc_hostname, OPAL_STRING);
+    }
+    return OMPI_SUCCESS;
 }
 
 int ompi_rte_db_fetch_multiple(const orte_process_name_t *nm,
                                const char *key,
                                opal_list_t *kvs)
 {
-    return opal_db.fetch_multiple((opal_identifier_t*)nm, key, kvs);
+    ompi_proc_t *proct;
+    int rc;
+
+    if (OPAL_SUCCESS != (rc = opal_db.fetch_multiple((opal_identifier_t*)nm, key, kvs))) {
+        return rc;
+    }
+    /* update the hostname */
+    proct = ompi_proc_find(nm);
+    if (NULL == proct->proc_hostname) {
+        opal_db.fetch_pointer((opal_identifier_t*)nm, ORTE_DB_HOSTNAME, (void**)&proct->proc_hostname, OPAL_STRING);
+    }
+    return OMPI_SUCCESS;
 }
 
 int ompi_rte_db_remove(const orte_process_name_t *nm,

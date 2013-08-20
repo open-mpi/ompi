@@ -13,7 +13,8 @@
  * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, LLC.
  *                         All rights reserved.
-  * $COPYRIGHT$
+ * Copyright (c) 2013      Intel, Inc. All rights reserved
+ * $COPYRIGHT$
  * 
  * Additional copyrights may follow
  * 
@@ -62,8 +63,9 @@ do {                                                      \
                      OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),  \
                      __FILE__, __LINE__, __func__,        \
                      ompi_process_info.nodename);         \
-    if(proc && ompi_proc_get_hostname(proc)) {            \
-      mca_btl_base_err("to: %s ", ompi_proc_get_hostname(proc));        \
+    if(proc) {                                                      \
+        mca_btl_base_err("to: %s ", (NULL == proc->proc_hostname) ? \
+                         "unknown" : proc->proc_hostname);          \
     }                                                     \
     mca_btl_base_err args;                                \
     mca_btl_base_err("\n");                               \

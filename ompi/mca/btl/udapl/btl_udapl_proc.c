@@ -12,6 +12,7 @@
  * Copyright (c) 2006      Sandia National Laboratories. All rights
  *                         reserved.
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2013      Intel, Inc. All rights reserved
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -259,7 +260,8 @@ static int mca_btl_udapl_proc_address_match(
         BTL_UDAPL_VERBOSE_HELP(VERBOSE_SHOW_HELP,
             ("help-mpi-btl-udapl.txt", "no network match",
             true, btl_addr_string, ompi_process_info.nodename,
-	    ompi_proc_get_hostname(peer_proc->proc_ompi)));
+             (NULL == peer_proc->proc_ompi->proc_hostname) ?
+             "unknown" : peer_proc->proc_ompi->proc_hostname));
         return OMPI_ERR_OUT_OF_RESOURCE;
     }    
 

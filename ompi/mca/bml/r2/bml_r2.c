@@ -13,6 +13,7 @@
  * Copyright (c) 2007-2012 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2008-2009 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013      Intel, Inc. All rights reserved
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -408,11 +409,11 @@ static int mca_bml_r2_add_procs( size_t nprocs,
                        "unreachable proc",
                        true, 
                        OMPI_NAME_PRINT(&(ompi_proc_local_proc->proc_name)),
-                       (ompi_proc_get_hostname(ompi_proc_local_proc) ?
-                        ompi_proc_get_hostname(ompi_proc_local_proc) : "unknown!"),
+                       (NULL != ompi_proc_local_proc->proc_hostname ?
+                        ompi_proc_local_proc->proc_hostname : "unknown!"),
                        OMPI_NAME_PRINT(&(unreach_proc->proc_name)),
-                       (ompi_proc_get_hostname(unreach_proc) ? 
-                        ompi_proc_get_hostname(unreach_proc) : "unknown!"),
+                       (NULL != ompi_proc_local_proc->proc_hostname ?
+                        ompi_proc_local_proc->proc_hostname : "unknown!"),
                        btl_names);
     }
 
