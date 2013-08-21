@@ -1499,7 +1499,7 @@ static void *show_help_rdmacm_event_error(void *c)
                        device,
                        rdma_event_str(event->event),
                        (NULL == context->endpoint->endpoint_proc->proc_ompi->proc_hostname) ?
-                       "unknown" : context->endpoint->endpoint_proc->proc_ompi->proc_hostname));
+                       "unknown" : context->endpoint->endpoint_proc->proc_ompi->proc_hostname);
     }
 
     return NULL;

@@ -491,7 +491,7 @@ static int mca_btl_openib_tune_endpoint(mca_btl_openib_module_t* openib_btl,
                        (openib_btl->device->ib_dev_attr).vendor_part_id,
                        mca_btl_openib_transport_name_strings[mca_btl_openib_get_transport_type(openib_btl)],
                        (NULL == endpoint->endpoint_proc->proc_ompi->proc_hostname) ?
-                       "unknown" : NULL == endpoint->endpoint_proc->proc_ompi->proc_hostname,
+                       "unknown" : endpoint->endpoint_proc->proc_ompi->proc_hostname,
                        endpoint->rem_info.rem_vendor_id,
                        endpoint->rem_info.rem_vendor_part_id,
                        mca_btl_openib_transport_name_strings[endpoint->rem_info.rem_transport_type]);
@@ -554,7 +554,7 @@ static int mca_btl_openib_tune_endpoint(mca_btl_openib_module_t* openib_btl,
                                (openib_btl->device->ib_dev_attr).vendor_part_id,
                                mca_btl_openib_component.receive_queues,
                                (NULL == endpoint->endpoint_proc->proc_ompi->proc_hostname) ?
-                               "unknown", endpoint->endpoint_proc->proc_ompi->proc_hostname,
+                               "unknown": endpoint->endpoint_proc->proc_ompi->proc_hostname,
                                endpoint->rem_info.rem_vendor_id,
                                endpoint->rem_info.rem_vendor_part_id,
                                recv_qps);
@@ -577,7 +577,7 @@ static int mca_btl_openib_tune_endpoint(mca_btl_openib_module_t* openib_btl,
                                (openib_btl->device->ib_dev_attr).vendor_part_id,
                                mca_btl_openib_component.receive_queues,
                                (NULL == endpoint->endpoint_proc->proc_ompi->proc_hostname) ?
-                               "unknown", endpoint->endpoint_proc->proc_ompi->proc_hostname,
+                               "unknown": endpoint->endpoint_proc->proc_ompi->proc_hostname,
                                endpoint->rem_info.rem_vendor_id,
                                endpoint->rem_info.rem_vendor_part_id,
                                values.receive_queues);

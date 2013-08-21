@@ -3532,10 +3532,12 @@ error:
 
     if (IBV_WC_RNR_RETRY_EXC_ERR == wc->status ||
         IBV_WC_RETRY_EXC_ERR == wc->status) {
-        const char *peer_hostname =
-            (NULL != endpoint->endpoint_proc->proc_ompi) ?
-            endpoint->endpoint_proc->proc_ompi) :
-            "<unknown -- please run with mpi_keep_peer_hostnames=1>";
+        const char *peer_hostname;
+        if (endpoint->endpoint_proc->proc_ompi && endpoint->endpoint_proc->proc_ompi->proc_hostname) {
+            peer_hostname = endpoint->endpoint_proc->proc_ompi->proc_hostname;
+        } else {
+            peer_hostname = "<unknown -- please run with mpi_keep_peer_hostnames=1>";
+        }
         const char *device_name =
             ibv_get_device_name(endpoint->qps[qp].qp->lcl_qp->context->device);
 
@@ -3545,15 +3547,12 @@ error:
                            "pp rnr retry exceeded" :
                            "srq rnr retry exceeded", true,
                            ompi_process_info.nodename, device_name,
-                           (NULL == endpoint->endpoint_proc->proc_ompi->proc_hostname) ?
-                           "unknown" : endpoint->endpoint_proc->proc_ompi->proc_hostname);
+                           peer_hostname);
         } else if (IBV_WC_RETRY_EXC_ERR == wc->status) {
             opal_show_help("help-mpi-btl-openib.txt",
                            "pp retry exceeded", true,
                            ompi_process_info.nodename,
-                           device_name,
-                           (NULL == endpoint->endpoint_proc->proc_ompi->proc_hostname) ?
-                           "unknown" : endpoint->endpoint_proc->proc_ompi->proc_hostname);
+                           device_name, peer_hostname);
         }
     }
 
