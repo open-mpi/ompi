@@ -616,7 +616,8 @@ void mca_btl_openib_endpoint_cpc_complete(mca_btl_openib_endpoint_t *endpoint)
         }
 
         OPAL_OUTPUT((-1, "cpc_complete to %s -- done",
-                     ompi_proc_get_hostname(endpoint->endpoint_proc->proc_ompi)));
+                     (NULL == endpoint->endpoint_proc->proc_ompi->proc_hostname) ?
+                     "unknown" : endpoint->endpoint_proc->proc_ompi->proc_hostname));
         return;
     }
 
