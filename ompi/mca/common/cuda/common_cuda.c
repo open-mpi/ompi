@@ -100,7 +100,7 @@ static bool stage_three_init_complete = false;
 static bool common_cuda_initialized = false;
 static int mca_common_cuda_verbose;
 static int mca_common_cuda_output = 0;
-static bool mca_common_cuda_enabled = false;
+bool mca_common_cuda_enabled = false;
 static bool mca_common_cuda_register_memory = true;
 static bool mca_common_cuda_warning = false;
 static opal_list_t common_cuda_memory_registrations;
@@ -1500,5 +1500,32 @@ static int mca_common_cuda_memmove(void *dest, void *src, size_t size)
         return res;
     }
     cuFunc.cuMemFree(tmp);
+    return 0;
+}
+
+int mca_common_cuda_get_device(int *devicenum)
+{
+    CUdevice cuDev;
+    int res;
+
+    res = cuFunc.cuCtxGetDevice(&cuDev);
+    if(res != CUDA_SUCCESS){
+        opal_output(0, "CUDA: cuCtxGetDevice failed: res=%d",
+                    res);
+        return res;
+    }
+    *devicenum = cuDev;
+    return 0;
+}
+
+int mca_common_cuda_device_can_access_peer(int *access, int dev1, int dev2)
+{
+    int res;
+    res = cuFunc.cuDeviceCanAccessPeer(access, (CUdevice)dev1, (CUdevice)dev2);
+    if(res != CUDA_SUCCESS){
+        opal_output(0, "CUDA: cuDeviceCanAccessPeer failed: res=%d",
+                    res);
+        return res;
+    }
     return 0;
 }

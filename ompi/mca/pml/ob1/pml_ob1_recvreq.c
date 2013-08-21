@@ -654,9 +654,11 @@ void mca_pml_ob1_recv_request_progress_rget( mca_pml_ob1_recv_request_t* recvreq
 #if OMPI_CUDA_SUPPORT
     if (OPAL_UNLIKELY(NULL == rdma_bml)) {
         if (recvreq->req_recv.req_base.req_convertor.flags & CONVERTOR_CUDA) {
+            mca_bml_base_btl_t *bml_btl;
+            bml_btl = mca_bml_base_btl_array_find(&bml_endpoint->btl_send, btl);
             /* Check to see if this is a CUDA get */
-            if (btl->btl_flags & MCA_BTL_FLAGS_CUDA_GET) {
-                rdma_bml = mca_bml_base_btl_array_find(&bml_endpoint->btl_send, btl);
+            if (bml_btl->btl_flags & MCA_BTL_FLAGS_CUDA_GET) {
+                rdma_bml = bml_btl;
             }
         } else {
             /* Just default back to send and receive.  Must be mix of GPU and HOST memory. */

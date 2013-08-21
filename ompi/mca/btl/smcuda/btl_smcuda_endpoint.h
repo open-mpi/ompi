@@ -45,6 +45,11 @@ struct mca_btl_base_endpoint_t {
     /** lock for concurrent access to endpoint state */
     opal_mutex_t endpoint_lock;
 
+#if OMPI_CUDA_SUPPORT
+    ompi_proc_t *proc_ompi;  /**< Needed for adding CUDA IPC support dynamically */
+    enum ipcState ipcstate;  /**< CUDA IPC connection status */
+    int ipctries;            /**< Number of times CUDA IPC connect was sent */
+#endif /* OMPI_CUDA_SUPPORT */
 };
 
 void btl_smcuda_process_pending_sends(struct mca_btl_base_endpoint_t *ep);
