@@ -1,0 +1,113 @@
+Copyright (c) 2013      NVIDIA Corporation.  All rights reserved.
+August 21, 2013
+
+SMCUDA DESIGN DOCUMENT
+This document describes the design and use of the smcuda BTL.
+
+BACKGROUND
+The smcuda btl is a copy of the sm btl but with some additional features.
+The main extra feature is the ability to make use of the CUDA IPC APIs to
+quickly move GPU buffers from one GPU to another.  Without this support,
+the GPU buffers would all be moved into and then out of host memory.
+
+GENERAL DESIGN
+
+The general design makes use of the large message RDMA RGET support in the
+OB1 PML.  However, there are some interesting choices to make use of it.
+First, we disable any large message RDMA support in the BTL for host
+messages.  This is done because we need to use the mca_btl_smcuda_get() for
+the GPU buffers.  This is also done because the upper layers expect there
+to be a single mpool but we need one for the GPU memory and one for the
+host memory.  Since the advantages of using RDMA with host memory is
+unclear, we disabled it.  This means no KNEM or CMA support built in to the
+smcuda BTL.
+
+Also note that we give the smcuda BTL a higher rank than the sm BTL.  This
+means it will always be selected even if we are doing host only data
+transfers.  The smcuda BTL is not built if it is not requested via the
+--with-cuda flag to the configure line.
+
+Secondly, the smcuda does not make use of the traditional method of
+enabling RDMA operations.  The traditional method checks for the existence
+of an RDMA btl hanging off the endpoint.  The smcuda works in conjunction
+with the OB1 PML and uses flags that it sends in the BML layer.
+
+OTHER CONSIDERATIONS
+CUDA IPC is not necessarily supported by all GPUs on a node.  In NUMA
+nodes, CUDA IPC may only work between GPUs that are not connected 
+over the IOH.  In addition, we want to check for CUDA IPC support lazily,
+when the first GPU access occurs, rather than during MPI_Init() time.
+This complicates the design.
+
+INITIALIZATION
+When the smcuda BTL initializes, it starts with no support for CUDA IPC.
+Upon the first access of a GPU buffer, the smcuda checks which GPU device
+it has and sends that to the remote side using a smcuda specific control
+message.  The other rank receives the message, and checks to see if there
+is CUDA IPC support between the two GPUs via a call to
+cuDeviceCanAccessPeer().  If it is true, then the smcuda BTL piggy backs on
+the PML error handler callback to make a call into the PML and let it know
+to enable CUDA IPC. We created a new flag so that the error handler does
+the right thing.  Large message RDMA is enabled by setting a flag in the
+bml->btl_flags field.  Control returns to the smcuda BTL where a reply
+message is sent so the sending side can set its flag.
+
+At that point, the PML layer starts using the large message RDMA support
+in the smcuda BTL.  This is done in some special CUDA code in the PML layer.
+
+ESTABLISHING CUDA IPC SUPPORT
+A check has been added into both the send and sendi path in the smcuda btl
+that checks to see if it should send a request for CUDA IPC setup message.
+
+    /* Initiate setting up CUDA IPC support. */
+    if (mca_common_cuda_enabled && (IPC_INIT == endpoint->ipcstatus)) {
+        mca_btl_smcuda_send_cuda_ipc_request(btl, endpoint);
+    }
+
+The first check is to see if the CUDA environment has been initialized.  If
+not, then presumably we are not sending any GPU buffers yet and there is
+nothing to be done.  If we are initialized, then check the status of the
+CUDA IPC endpoint.  If it is in the IPC_INIT stage, then call the function
+to send of a control message to the endpoint.
+
+On the receiving side, we first check to see if we are initialized.  If
+not, then send a message back to the sender saying we are not initialized.
+This will cause the sender to reset its state to IPC_INIT so it can try
+again on the next send.
+
+I considered putting the receiving side into a new state like IPC_NOTREADY,
+and then when it switches to ready, to then sending the ACK to the sender.
+The problem with this is that we would need to do these checks during the
+progress loop which adds some extra overhead as we would have to check all
+endpoints to see if they were ready.
+
+Note that any rank can initiate the setup of CUDA IPC.  It is triggered by
+whichever side does a send or sendi call of a GPU buffer.
+
+I have the sender attempt 5 times to set up the connection.  After that, we
+give up.  Note that I do not expect many scenarios where the sender has to
+resend.  It could happen in a race condition where one rank has initialized
+its CUDA environment but the other side has not.
+
+There are several states the connections can go through.
+
+IPC_INIT   - nothing has happened
+IPC_SENT   - message has been sent to other side
+IPC_ACKING - Received request and figuring out what to send back
+IPC_ACKED  - IPC ACK sent
+IPC_OK     - IPC ACK received back
+IPC_BAD    - Something went wrong, so marking as no IPC support
+
+NOTE ABOUT CUDA IPC AND MEMORY POOLS
+The CUDA IPC support works in the following way.  A sender makes a call to
+cuIpcGetMemHandle() and gets a memory handle for its local memory.  The
+sender then sends that handle to receiving side.  The receiver calls
+cuIpcOpenMemHandle() using that handle and gets back an address to the
+remote memory.  The receiver then calls cuMemcpyAsync() to initiate a
+remote read of the GPU data.
+
+The receiver maintains a cache of remote memory that it has handles open on.
+This is because a call to cuIpcOpenMemHandle() can be very expensive (90usec) so
+we want to avoid it when we can.  The cache of remote memory is kept in a memory
+pool that is associated with each endpoint.  Note that we do not cache the loca
+memory handles because getting them is very cheap and there is no need.

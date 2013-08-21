@@ -107,6 +107,11 @@ mca_btl_smcuda_t mca_btl_smcuda = {
     }
 };
 
+#if OMPI_CUDA_SUPPORT
+static void mca_btl_smcuda_send_cuda_ipc_request(struct mca_btl_base_module_t* btl,
+                                                 struct mca_btl_base_endpoint_t* endpoint);
+#endif /* OMPI_CUDA_SUPPORT */
+
 /*
  * calculate offset of an address from the beginning of a shared memory segment
  */
@@ -538,6 +543,12 @@ int mca_btl_smcuda_add_procs(
             return_code = OMPI_ERROR;
             goto CLEANUP;
         }
+#if OMPI_CUDA_SUPPORT
+        peers[proc]->proc_ompi = procs[proc];
+        peers[proc]->ipcstate = IPC_INIT;
+        peers[proc]->ipctries = 0;
+#endif /* OMPI_CUDA_SUPPORT */
+
         n_local_procs++;
 
         /* add this proc to shared memory accessibility list */
@@ -908,6 +919,13 @@ int mca_btl_smcuda_sendi( struct mca_btl_base_module_t* btl,
         mca_btl_smcuda_component_progress();
     }
 
+#if OMPI_CUDA_SUPPORT
+    /* Initiate setting up CUDA IPC support. */
+    if (mca_common_cuda_enabled && (IPC_INIT == endpoint->ipcstate)) {
+        mca_btl_smcuda_send_cuda_ipc_request(btl, endpoint);
+    }
+#endif /* OMPI_CUDA_SUPPORT */
+
     /* this check should be unnecessary... turn into an assertion? */
     if( length < mca_btl_smcuda_component.eager_limit ) {
 
@@ -984,6 +1002,11 @@ int mca_btl_smcuda_send( struct mca_btl_base_module_t* btl,
 
     if ( mca_btl_smcuda_component.num_outstanding_frags * 2 > (int) mca_btl_smcuda_component.fifo_size ) {
         mca_btl_smcuda_component_progress();
+    }
+
+    /* Initiate setting up CUDA IPC support */
+    if (mca_common_cuda_enabled && (IPC_INIT == endpoint->ipcstate)) {
+        mca_btl_smcuda_send_cuda_ipc_request(btl, endpoint);
     }
 
     /* available header space */
@@ -1136,6 +1159,87 @@ int mca_btl_smcuda_get_cuda(struct mca_btl_base_module_t* btl,
     return OMPI_SUCCESS;
 
 }
+
+/**
+ * Send a CUDA IPC request message to the peer.  This indicates that this rank
+ * is interested in establishing CUDA IPC support between this rank and GPU
+ * and the remote rank and GPU.  This is called when we do a send of some
+ * type.
+ *
+ * @param btl (IN)      BTL module
+ * @param peer (IN)     BTL peer addressing
+ */
+#define MAXTRIES 5
+static void mca_btl_smcuda_send_cuda_ipc_request(struct mca_btl_base_module_t* btl,
+                                                 struct mca_btl_base_endpoint_t* endpoint)
+{
+    mca_btl_smcuda_frag_t* frag;
+    int rc, mydevnum, res;
+    ctrlhdr_t ctrlhdr;
+
+    /* We need to grab the lock when changing the state from IPC_INIT as multiple
+     * threads could be doing sends. */
+    OPAL_THREAD_LOCK(&endpoint->endpoint_lock);
+    if (endpoint->ipcstate != IPC_INIT) {
+        OPAL_THREAD_UNLOCK(&endpoint->endpoint_lock);
+        return;
+    } else {
+        endpoint->ipctries++;
+        if (endpoint->ipctries > MAXTRIES) {
+            endpoint->ipcstate = IPC_BAD;
+            OPAL_THREAD_UNLOCK(&endpoint->endpoint_lock);
+            return;
+        }
+        /* All is good.  Set up state and continue. */
+        endpoint->ipcstate = IPC_SENT;
+        OPAL_THREAD_UNLOCK(&endpoint->endpoint_lock);
+    }
+
+    if ( mca_btl_smcuda_component.num_outstanding_frags * 2 > (int) mca_btl_smcuda_component.fifo_size ) {
+        mca_btl_smcuda_component_progress();
+    }
+    
+    if (0 != (res = mca_common_cuda_get_device(&mydevnum))) {
+        opal_output(0, "Cannot determine device.  IPC cannot be set.");
+        endpoint->ipcstate = IPC_BAD;
+        return;
+    }
+
+    /* allocate a fragment, giving up if we can't get one */
+    MCA_BTL_SMCUDA_FRAG_ALLOC_EAGER(frag);
+    if( OPAL_UNLIKELY(NULL == frag) ) {
+        endpoint->ipcstate = IPC_BAD;
+        return;
+    }
+
+    /* Fill in fragment fields. */
+    frag->hdr->tag = MCA_BTL_TAG_SMCUDA;
+    frag->base.des_flags = MCA_BTL_DES_FLAGS_BTL_OWNERSHIP;
+    frag->endpoint = endpoint;
+    ctrlhdr.ctag = IPC_REQ;
+    ctrlhdr.cudev = mydevnum;
+    memcpy(frag->segment.base.seg_addr.pval, &ctrlhdr, sizeof(struct ctrlhdr_st));
+
+    MCA_BTL_SMCUDA_TOUCH_DATA_TILL_CACHELINE_BOUNDARY(frag);
+    /* write the fragment pointer to the FIFO */
+    /*
+     * Note that we don't care what the FIFO-write return code is.  Even if
+     * the return code indicates failure, the write has still "completed" from
+     * our point of view:  it has been posted to a "pending send" queue.
+     */
+    OPAL_THREAD_ADD32(&mca_btl_smcuda_component.num_outstanding_frags, +1);
+    opal_output_verbose(10, mca_btl_smcuda_component.cuda_ipc_output,
+                        "Sending CUDA IPC REQ (try=%d): myrank=%d, mydev=%d, peerrank=%d",
+                        endpoint->ipctries,
+                        mca_btl_smcuda_component.my_smp_rank,
+                        mydevnum, endpoint->peer_smp_rank);
+
+    MCA_BTL_SMCUDA_FIFO_WRITE(endpoint, endpoint->my_smp_rank,
+                              endpoint->peer_smp_rank, (void *) VIRTUAL2RELATIVE(frag->hdr), false, true, rc);
+    return;
+
+}
+
 #endif /* OMPI_CUDA_SUPPORT */
 
 /**

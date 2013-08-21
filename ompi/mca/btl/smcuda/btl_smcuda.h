@@ -202,6 +202,10 @@ struct mca_btl_smcuda_component_t {
     char *sm_mpool_rndv_file_name;
     char *sm_ctl_file_name;
     char *sm_rndv_file_name;
+#if OMPI_CUDA_SUPPORT
+    int cuda_ipc_verbose;
+    int cuda_ipc_output;
+#endif /* OMPI_CUDA_SUPPORT */
 };
 typedef struct mca_btl_smcuda_component_t mca_btl_smcuda_component_t;
 OMPI_MODULE_DECLSPEC extern mca_btl_smcuda_component_t mca_btl_smcuda_component;
@@ -489,6 +493,30 @@ extern struct mca_btl_base_descriptor_t* mca_btl_smcuda_prepare_dst(
 		size_t reserve,
 		size_t* size,
 		uint32_t flags);
+
+/* CUDA IPC control message tags */
+enum ipcCtrlMsg {
+    IPC_REQ = 10,
+    IPC_ACK,
+    IPC_NOTREADY,
+};
+
+/* CUDA IPC control message */
+typedef struct ctrlhdr_st {
+        enum ipcCtrlMsg ctag;
+        int cudev;
+} ctrlhdr_t;
+
+/* State of setting up CUDA IPC on an endpoint */
+enum ipcState {
+    IPC_INIT = 1,
+    IPC_SENT,
+    IPC_ACKING,
+    IPC_ACKED,
+    IPC_OK,
+    IPC_BAD
+};
+
 #endif /* OMPI_CUDA_SUPPORT */
 
 

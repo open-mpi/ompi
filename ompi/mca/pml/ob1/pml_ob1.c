@@ -79,6 +79,11 @@ mca_pml_ob1_t mca_pml_ob1 = {
     }
 };
 
+#if OMPI_CUDA_SUPPORT
+void mca_pml_ob1_cuda_add_ipc_support(struct mca_btl_base_module_t* btl,
+                                      int32_t flags, ompi_proc_t* errproc,
+                                      char* btlinfo);
+#endif /* OMPI_CUDA_SUPPORT */
 
 void mca_pml_ob1_error_handler( struct mca_btl_base_module_t* btl,
                                 int32_t flags, ompi_proc_t* errproc,
@@ -732,6 +737,12 @@ void mca_pml_ob1_process_pending_rdma(void)
 void mca_pml_ob1_error_handler(
         struct mca_btl_base_module_t* btl, int32_t flags,
         ompi_proc_t* errproc, char* btlinfo ) { 
+#if OMPI_CUDA_SUPPORT
+    if (flags & MCA_BTL_ERROR_FLAGS_ADD_CUDA_IPC) {
+        mca_pml_ob1_cuda_add_ipc_support(btl, flags, errproc, btlinfo);
+        return;
+    }
+#endif /* OMPI_CUDA_SUPPORT */
     ompi_rte_abort(-1, NULL);
 }
 
