@@ -447,7 +447,7 @@ mca_btl_openib_transport_type_t mca_btl_openib_get_transport_type(mca_btl_openib
 #ifdef HAVE_STRUCT_IBV_DEVICE_TRANSPORT_TYPE
     switch(openib_btl->device->ib_dev->transport_type) {
         case IBV_TRANSPORT_IB:
-#if defined(HAVE_IBV_LINK_LAYER_ETHERNET)
+#if HAVE_DECL_IBV_LINK_LAYER_ETHERNET
             switch(openib_btl->ib_port_attr.link_layer) {
                 case IBV_LINK_LAYER_ETHERNET:
                     return MCA_BTL_OPENIB_TRANSPORT_RDMAOE;
