@@ -136,6 +136,8 @@ void orte_quit(int fd, short args, void *cbdata)
      * so we will exit
      */
     orte_event_base_active = false;
+    /* break out of the event loop */
+    opal_event_base_loopbreak(orte_event_base);
 }
 
 /*

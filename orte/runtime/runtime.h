@@ -74,7 +74,7 @@ ORTE_DECLSPEC    int orte_register_params(void);
      * orte_init should call \code orte_finalize. 
      *
      */
-ORTE_DECLSPEC    int orte_finalize(void);
+ORTE_DECLSPEC int orte_finalize(void);
 
 END_C_DECLS
 

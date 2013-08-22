@@ -63,7 +63,7 @@ static void failed_cmd(int fd, short event, void *cbdata)
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     OBJ_RELEASE(tm);
 /*
-    ORTE_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
+    ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
 */
 }
 #endif
@@ -80,7 +80,7 @@ int orte_plm_base_orted_exit(orte_daemon_cmd_flag_t command)
     /* flag that orteds are being terminated */
     orte_orteds_term_ordered = true;
     
-    /* we are not abnormally terminating - send it express delivery! */
+    /* send it express delivery! */
     cmd = OBJ_NEW(opal_buffer_t);
     /* pack the command */
     if (ORTE_SUCCESS != (rc = opal_dss.pack(cmd, &command, 1, ORTE_DAEMON_CMD))) {

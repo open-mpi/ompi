@@ -72,7 +72,7 @@ void orte_iof_orted_send_xonxoff(orte_iof_tag_t tag)
 
     /* send the buffer to the HNP */
     if (0 > (rc = orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, buf, ORTE_RML_TAG_IOF_HNP,
-                                          0, send_cb, NULL))) {
+                                          send_cb, NULL))) {
         ORTE_ERROR_LOG(rc);
     }
 }

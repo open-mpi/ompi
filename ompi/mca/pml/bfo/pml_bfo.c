@@ -676,7 +676,7 @@ int mca_pml_bfo_ft_event( int state )
         if( opal_cr_timing_barrier_enabled ) {
             OPAL_CR_SET_TIMER(OPAL_CR_TIMER_CRCPBR1);
             ompi_rte_barrier(coll);
-            ORTE_WAIT_FOR_COMPLETION(coll->active);
+            OMPI_WAIT_FOR_COMPLETION(coll->active);
         }
 
         OPAL_CR_SET_TIMER(OPAL_CR_TIMER_P2P0);
@@ -688,7 +688,7 @@ int mca_pml_bfo_ft_event( int state )
             if( opal_cr_timing_barrier_enabled ) {
                 OPAL_CR_SET_TIMER(OPAL_CR_TIMER_COREBR0);
                 ompi_rte_barrier(coll);
-                ORTE_WAIT_FOR_COMPLETION(coll->active);
+                OMPI_WAIT_FOR_COMPLETION(coll->active);
             }
             OPAL_CR_SET_TIMER(OPAL_CR_TIMER_P2P2);
         }
@@ -791,7 +791,7 @@ int mca_pml_bfo_ft_event( int state )
             if( opal_cr_timing_barrier_enabled ) {
                 OPAL_CR_SET_TIMER(OPAL_CR_TIMER_P2PBR1);
                 ompi_rte_barrier(coll);
-                ORTE_WAIT_FOR_COMPLETION(coll->active);
+                OMPI_WAIT_FOR_COMPLETION(coll->active);
             }
             OPAL_CR_SET_TIMER(OPAL_CR_TIMER_P2P3);
         }
@@ -810,7 +810,7 @@ int mca_pml_bfo_ft_event( int state )
                 OBJ_RELEASE(modex);
                 goto clean;
             }
-            ORTE_WAIT_FOR_COMPLETION(modex->active);
+            OMPI_WAIT_FOR_COMPLETION(modex->active);
             OBJ_RELEASE(modex);
 
             /*
@@ -827,7 +827,7 @@ int mca_pml_bfo_ft_event( int state )
                 opal_output(0, "pml:bfo: ft_event(Restart): Failed in ompi_rte_barrier (%d)", ret);
                 return ret;
             }
-            ORTE_WAIT_FOR_COMPLETION(coll->active);
+            OMPI_WAIT_FOR_COMPLETION(coll->active);
 
             if( NULL != procs ) {
                 for(p = 0; p < (int)num_procs; ++p) {
@@ -841,7 +841,7 @@ int mca_pml_bfo_ft_event( int state )
             if( opal_cr_timing_barrier_enabled ) {
                 OPAL_CR_SET_TIMER(OPAL_CR_TIMER_P2PBR2);
                 ompi_rte_barrier(coll);
-                ORTE_WAIT_FOR_COMPLETION(coll->active);
+                OMPI_WAIT_FOR_COMPLETION(coll->active);
             }
             OPAL_CR_SET_TIMER(OPAL_CR_TIMER_CRCP1);
         }
@@ -863,7 +863,7 @@ int mca_pml_bfo_ft_event( int state )
             OBJ_RELEASE(modex);
             goto clean;
         }
-        ORTE_WAIT_FOR_COMPLETION(modex->active);
+        OMPI_WAIT_FOR_COMPLETION(modex->active);
         OBJ_RELEASE(modex);
 
         /*
@@ -880,7 +880,7 @@ int mca_pml_bfo_ft_event( int state )
             opal_output(0, "pml:bfo: ft_event(Restart): Failed in ompi_rte_barrier (%d)", ret);
             goto clean;
         }
-        ORTE_WAIT_FOR_COMPLETION(coll->active);
+        OMPI_WAIT_FOR_COMPLETION(coll->active);
 
         if( NULL != procs ) {
             for(p = 0; p < (int)num_procs; ++p) {

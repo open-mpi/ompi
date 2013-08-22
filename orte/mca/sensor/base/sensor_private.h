@@ -60,7 +60,6 @@ OBJ_CLASS_DECLARATION(orte_sensor_active_module_t);
 ORTE_DECLSPEC extern orte_sensor_base_t orte_sensor_base;
 ORTE_DECLSPEC void orte_sensor_base_start(orte_jobid_t job);
 ORTE_DECLSPEC void orte_sensor_base_stop(orte_jobid_t job);
-
 ORTE_DECLSPEC void orte_sensor_base_sample(int fd, short args, void *cbdata);
 ORTE_DECLSPEC void orte_sensor_base_log(char *comp, opal_buffer_t *data);
 

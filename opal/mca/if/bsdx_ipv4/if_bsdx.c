@@ -120,6 +120,7 @@ static int if_bsdx_open(void)
                         (int) sizeof(opal_if_t));
             return OPAL_ERR_OUT_OF_RESOURCE;
         }
+        intf->af_family = AF_INET;
 
         /* fill values into the opal_if_t */
         memcpy(&a4, &(sin_addr->sin_addr), sizeof(struct in_addr));

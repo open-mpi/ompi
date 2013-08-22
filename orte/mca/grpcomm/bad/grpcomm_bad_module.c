@@ -120,10 +120,10 @@ static int xcast(orte_jobid_t job,
         ORTE_ERROR_LOG(rc);
         goto CLEANUP;
     }
-    
+
     /* send it to the HNP (could be myself) for relay */
     if (0 > (rc = orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, buf, ORTE_RML_TAG_XCAST,
-                                          0, orte_rml_send_callback, NULL))) {
+                                          orte_rml_send_callback, NULL))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(buf);
         goto CLEANUP;
@@ -165,7 +165,7 @@ static void process_barrier(int fd, short args, void *cbdata)
 
     /* send the buffer to my daemon */
     if (0 > (rc = orte_rml.send_buffer_nb(ORTE_PROC_MY_DAEMON, buf, ORTE_RML_TAG_COLLECTIVE,
-                                          0, orte_rml_send_callback, NULL))) {
+                                          orte_rml_send_callback, NULL))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(buf);
         opal_list_remove_item(&orte_grpcomm_base.active_colls, &coll->super);
@@ -183,18 +183,6 @@ static int bad_barrier(orte_grpcomm_collective_t *coll)
                          "%s grpcomm:bad entering barrier",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
-    /* if I am alone, just execute the callback */
-    if (1 == orte_process_info.num_procs) {
-        coll->active = false;
-        if (NULL != coll->cbfunc) {
-            coll->cbfunc(NULL, coll->cbdata);
-        }
-        return ORTE_SUCCESS;
-    }
-    
-    /* mark the collective as active */
-    coll->active = true;
-
     /* push it into the event library for processing as
      * we will be accessing global lists
      */
@@ -237,7 +225,7 @@ static void process_allgather(int fd, short args, void *cbdata)
                              (int)gather->id));
         /* send to our daemon */
         if (0 > (rc = orte_rml.send_buffer_nb(ORTE_PROC_MY_DAEMON, buf,
-                                              ORTE_RML_TAG_COLLECTIVE, 0,
+                                              ORTE_RML_TAG_COLLECTIVE,
                                               orte_rml_send_callback, NULL))) {
             ORTE_ERROR_LOG(rc);
             OBJ_RELEASE(buf);
@@ -261,7 +249,7 @@ static void process_allgather(int fd, short args, void *cbdata)
                                  (int)gather->id,
                                  ORTE_NAME_PRINT(&nm->name)));
             if (0 > (rc = orte_rml.send_buffer_nb(&nm->name, buf,
-                                                  ORTE_RML_TAG_COLLECTIVE, 0,
+                                                  ORTE_RML_TAG_COLLECTIVE,
                                                   orte_rml_send_callback, NULL))) {
                 ORTE_ERROR_LOG(rc);
                 OBJ_RELEASE(buf);
@@ -283,21 +271,6 @@ static int bad_allgather(orte_grpcomm_collective_t *gather)
                          "%s grpcomm:bad entering allgather",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
-    /* if I am alone and nobody else is participating, then
-     * nothing really to do
-     */
-    if (1 == orte_process_info.num_procs &&
-        0 == opal_list_get_size(&gather->participants)) {
-        gather->active = false;
-        if (NULL != gather->cbfunc) {
-            gather->cbfunc(&gather->buffer, gather->cbdata);
-        }
-        return ORTE_SUCCESS;
-    }
-    
-    /* mark the collective as active */
-    gather->active = true;
-
     /* push it into the event library for processing as
      * we will be accessing global lists
      */
@@ -307,9 +280,6 @@ static int bad_allgather(orte_grpcomm_collective_t *gather)
 
 static int bad_modex(orte_grpcomm_collective_t *modex)
 {
-    /* mark the collective as active */
-    modex->active = true;
-
     /* we need to get this into the event library
      * to avoid race conditions with modex data arriving
      * from other sources via the RML

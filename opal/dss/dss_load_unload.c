@@ -27,9 +27,6 @@
 int opal_dss_unload(opal_buffer_t *buffer, void **payload,
                     int32_t *bytes_used)
 {
-    char *hdr_dst = NULL;
-    opal_dss_buffer_type_t type;
-    
     /* check that buffer is not null */
     if (!buffer) {
         return OPAL_ERR_BAD_PARAM;
@@ -47,18 +44,6 @@ int opal_dss_unload(opal_buffer_t *buffer, void **payload,
         return OPAL_SUCCESS;
     }
 
-    /* add room for our description of the buffer -- currently just the type */
-    if (NULL == (hdr_dst = opal_dss_buffer_extend(buffer, 
-                                                  sizeof(opal_dss_buffer_type_t)))) {
-        return OPAL_ERR_OUT_OF_RESOURCE;
-    }
-
-    /* add the header (at the end, so perhaps it's a footer? */
-    type = buffer->type;
-    OPAL_DSS_BUFFER_TYPE_HTON(type);
-    memcpy(hdr_dst, &type, sizeof(opal_dss_buffer_type_t));
-    buffer->bytes_used += sizeof(opal_dss_buffer_type_t);
-    
     /* okay, we have something to provide - pass it back */
     *payload = buffer->base_ptr;
     *bytes_used = buffer->bytes_used;
@@ -77,17 +62,9 @@ int opal_dss_unload(opal_buffer_t *buffer, void **payload,
 int opal_dss_load(opal_buffer_t *buffer, void *payload,
                   int32_t bytes_used)
 {
-    char *hdr_ptr;
-    opal_dss_buffer_type_t type;
-
     /* check to see if the buffer has been initialized */
     if (NULL == buffer) {
         return OPAL_ERR_BAD_PARAM;
-    }
-    
-    /* check that the payload is there */
-    if (NULL == payload) {
-        return OPAL_SUCCESS;
     }
     
     /* check if buffer already has payload - free it if so */
@@ -95,13 +72,6 @@ int opal_dss_load(opal_buffer_t *buffer, void *payload,
         free(buffer->base_ptr);
     }
 
-    /* get our header */
-    hdr_ptr = (char*) payload + bytes_used - sizeof(opal_dss_buffer_type_t);
-    memcpy(&type, hdr_ptr, sizeof(opal_dss_buffer_type_t));
-    OPAL_DSS_BUFFER_TYPE_NTOH(type);
-    buffer->type = type;
-    bytes_used -= sizeof(opal_dss_buffer_type_t);
-    
     /* populate the buffer */
     buffer->base_ptr = (char*)payload; 
 

@@ -424,25 +424,27 @@ static int rte_init(void)
 
 static int rte_finalize(void)
 {
-    int ret = ORTE_SUCCESS;
-   
+    int ret;
+
     if (app_init_complete) {
         /* if I am a daemon, finalize using the default procedure */
         if (ORTE_PROC_IS_DAEMON) {
             if (ORTE_SUCCESS != (ret = orte_ess_base_orted_finalize())) {
                 ORTE_ERROR_LOG(ret);
+                return ret;
             }
         } else {
-            /* use the default app procedure to finish */
-            if (ORTE_SUCCESS != (ret = orte_ess_base_app_finalize())) {
-                ORTE_ERROR_LOG(ret);
-            }
             /* remove the envars that we pushed into environ
              * so we leave that structure intact
              */
             unsetenv("OMPI_MCA_grpcomm");
             unsetenv("OMPI_MCA_routed");
             unsetenv("OMPI_MCA_orte_precondition_transports");
+            /* use the default app procedure to finish */
+            if (ORTE_SUCCESS != (ret = orte_ess_base_app_finalize())) {
+                ORTE_ERROR_LOG(ret);
+                return ret;
+            }
         }
     }
     
@@ -458,8 +460,7 @@ static int rte_finalize(void)
         opal_hwloc_topology = NULL;
     }
 #endif
-
-    return ret;    
+    return ORTE_SUCCESS;
 }
 
 static void rte_abort(int error_code, bool report)

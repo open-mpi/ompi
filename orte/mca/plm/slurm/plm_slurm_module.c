@@ -431,7 +431,7 @@ static void launch_daemons(int fd, short args, void *cbdata)
 
     /* check for failed launch - if so, force terminate */
     if (failed_launch) {
-        ORTE_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
+        ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
     }
 }
 
@@ -637,15 +637,12 @@ static int plm_slurm_start_proc(int argc, char **argv, char **env,
             if (fd >= 0) {
                 if (fd != 1) {
                     dup2(fd,1);
-                }
-                if (fd != 2) {
+                } else if (fd != 2) {
                     dup2(fd,2);
+                } else {
+                    close(fd);
                 }
             }
-        }
-
-        if (fd > 2) {
-            close(fd);
         }
 
         /* get the srun process out of orterun's process group so that

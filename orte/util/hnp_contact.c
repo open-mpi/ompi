@@ -128,10 +128,7 @@ int orte_read_hnp_contact_file(char *filename, orte_hnp_contact_t *hnp, bool con
 
     if (connect) {
         /* set the contact info into the comm hash tables*/
-        if (ORTE_SUCCESS != (rc = orte_rml.set_contact_info(hnp_uri))) {
-            ORTE_ERROR_LOG(rc);
-            return(rc);
-        }
+        orte_rml.set_contact_info(hnp_uri);
         
         /* extract the HNP's name and store it */
         if (ORTE_SUCCESS != (rc = orte_rml_base_parse_uris(hnp_uri, &hnp->name, NULL))) {

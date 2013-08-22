@@ -158,7 +158,7 @@ mca_btl_tcp2_proc_t* mca_btl_tcp2_proc_create(ompi_proc_t* ompi_proc)
             if (MCA_BTL_TCP_AF_INET == btl_proc->proc_addrs[i].addr_family) {
                 btl_proc->proc_addrs[i].addr_family = AF_INET;
             }
-#if OPAL_WANT_IPV6
+#if OPAL_ENABLE_IPV6
             if (MCA_BTL_TCP_AF_INET6 == btl_proc->proc_addrs[i].addr_family) {
                 btl_proc->proc_addrs[i].addr_family = AF_INET6;
             }
@@ -740,7 +740,7 @@ bool mca_btl_tcp2_proc_accept(mca_btl_tcp2_proc_t* btl_proc, struct sockaddr* ad
                 continue;
             }
             break;
-#if OPAL_WANT_IPV6
+#if OPAL_ENABLE_IPV6
         case AF_INET6:
             if( memcmp( &btl_endpoint->endpoint_addr->addr_inet,
                         &(((struct sockaddr_in6*)addr)->sin6_addr),
@@ -777,7 +777,7 @@ bool mca_btl_tcp2_proc_tosocks(mca_btl_tcp2_addr_t* proc_addr,
                &proc_addr->addr_inet, sizeof(struct in_addr));
         ((struct sockaddr_in*)output)->sin_port = proc_addr->addr_port;
         break;
-#if OPAL_WANT_IPV6
+#if OPAL_ENABLE_IPV6
     case AF_INET6:
         {
             struct sockaddr_in6* inaddr = (struct sockaddr_in6*)output;

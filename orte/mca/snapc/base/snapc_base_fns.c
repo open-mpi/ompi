@@ -302,25 +302,18 @@ static void snapc_none_global_cmdline_request(int status,
                                               void* cbdata);
 int orte_snapc_base_none_setup_job(orte_jobid_t jobid)
 {
-    int exit_status = ORTE_SUCCESS;
-    int rc;
 
     /*
      * Coordinator command listener
      */
     orte_snapc_base_snapshot_seq_number = -1;
-    if (ORTE_SUCCESS != (rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
-                                                      ORTE_RML_TAG_CKPT,
-                                                      ORTE_RML_PERSISTENT,
-                                                      snapc_none_global_cmdline_request,
-                                                      NULL))) {
-        ORTE_ERROR_LOG(rc);
-        exit_status = rc;
-        goto cleanup;
-    }
+    orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
+                            ORTE_RML_TAG_CKPT,
+                            ORTE_RML_PERSISTENT,
+                            snapc_none_global_cmdline_request,
+                            NULL);
 
- cleanup:
-    return exit_status;
+    return ORTE_SUCCESS;
 }
 
 int orte_snapc_base_none_release_job(orte_jobid_t jobid)
@@ -691,6 +684,7 @@ int orte_snapc_base_global_coord_ckpt_update_cmd(orte_process_name_t* peer,
     if (ORTE_SUCCESS != (ret = opal_dss.pack(loc_buffer, &command, 1, ORTE_SNAPC_CMD)) ) {
         ORTE_ERROR_LOG(ret);
         exit_status = ret;
+        OBJ_RELEASE(loc_buffer);
         goto cleanup;
     }
 
@@ -701,6 +695,7 @@ int orte_snapc_base_global_coord_ckpt_update_cmd(orte_process_name_t* peer,
                     ret, __LINE__);
         ORTE_ERROR_LOG(ret);
         exit_status = ret;
+        OBJ_RELEASE(loc_buffer);
         goto cleanup;
     }
 
@@ -757,6 +752,7 @@ int orte_snapc_base_global_coord_ckpt_update_cmd(orte_process_name_t* peer,
                         ret, __LINE__);
             ORTE_ERROR_LOG(ret);
             exit_status = ret;
+            OBJ_RELEASE(loc_buffer);
             goto cleanup;
         }
 
@@ -767,25 +763,25 @@ int orte_snapc_base_global_coord_ckpt_update_cmd(orte_process_name_t* peer,
                         ret, __LINE__);
             ORTE_ERROR_LOG(ret);
             exit_status = ret;
+            OBJ_RELEASE(loc_buffer);
             goto cleanup;
         }
     }
 
-    if (0 > (ret = orte_rml.send_buffer(peer, loc_buffer, ORTE_RML_TAG_CKPT, 0))) {
+    if (0 > (ret = orte_rml.send_buffer_nb(peer, loc_buffer,
+                                           ORTE_RML_TAG_CKPT,
+                                           orte_rml_send_callback, NULL))) {
         opal_output(orte_snapc_base_framework.framework_output,
                     "%s) base:ckpt_update_cmd: Error: Send (ckpt_status) Failure (ret = %d) (LINE = %d)\n",
                     ORTE_SNAPC_COORD_NAME_PRINT(orte_snapc_coord_type),
                     ret, __LINE__);
         ORTE_ERROR_LOG(ret);
         exit_status = ret;
+        OBJ_RELEASE(loc_buffer);
         goto cleanup;
     }
 
  cleanup:
-    if(NULL != loc_buffer) {
-        OBJ_RELEASE(loc_buffer);
-        loc_buffer = NULL;
-    }
     if( NULL != global_snapshot_handle ){
         free(global_snapshot_handle);
         global_snapshot_handle = NULL;

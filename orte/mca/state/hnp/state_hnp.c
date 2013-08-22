@@ -83,8 +83,7 @@ static orte_job_state_t launch_states[] = {
     /* termination states */
     ORTE_JOB_STATE_TERMINATED,
     ORTE_JOB_STATE_NOTIFY_COMPLETED,
-    ORTE_JOB_STATE_ALL_JOBS_COMPLETE,
-    ORTE_JOB_STATE_DAEMONS_TERMINATED
+    ORTE_JOB_STATE_ALL_JOBS_COMPLETE
 };
 static orte_state_cbfunc_t launch_callbacks[] = {
     orte_plm_base_setup_job,
@@ -103,7 +102,6 @@ static orte_state_cbfunc_t launch_callbacks[] = {
     orte_plm_base_registered,
     orte_state_base_check_all_complete,
     orte_state_base_cleanup_job,
-    orte_quit,
     orte_quit
 };
 
@@ -121,6 +119,15 @@ static orte_state_cbfunc_t proc_callbacks[] = {
     orte_state_base_track_procs,
     orte_state_base_track_procs
 };
+
+static void force_quit(int fd, short args, void *cbdata)
+{
+    orte_state_caddy_t *caddy = (orte_state_caddy_t*)cbdata;
+
+    /* give us a chance to stop the orteds */
+    orte_plm.terminate_orteds();
+    OBJ_RELEASE(caddy);
+}
 
 /************************
  * API Definitions
@@ -143,9 +150,14 @@ static int init(void)
             ORTE_ERROR_LOG(rc);
         }
     }
+    /* add the termination response */
+    if (ORTE_SUCCESS != (rc = orte_state.add_job_state(ORTE_JOB_STATE_DAEMONS_TERMINATED,
+                                                       orte_quit, ORTE_ERROR_PRI))) {
+        ORTE_ERROR_LOG(rc);
+    }
     /* add a default error response */
     if (ORTE_SUCCESS != (rc = orte_state.add_job_state(ORTE_JOB_STATE_FORCED_EXIT,
-                                                       orte_quit, ORTE_ERROR_PRI))) {
+                                                       force_quit, ORTE_ERROR_PRI))) {
         ORTE_ERROR_LOG(rc);
     }
     /* add callback to report progress, if requested */

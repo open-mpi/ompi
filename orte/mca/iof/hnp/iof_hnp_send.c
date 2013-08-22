@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2012      Los Alamos National Security, LLC
+ *                         All rights reserved
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -39,17 +41,6 @@
 #include "orte/mca/iof/base/base.h"
 
 #include "iof_hnp.h"
-
-/*
- * Callback when non-blocking RML send completes.
- */
-static void send_cb(int status, orte_process_name_t *peer,
-                          opal_buffer_t *buf, orte_rml_tag_t tag,
-                          void *cbdata)
-{
-    /* nothing to do here - just release buffer and return */
-    OBJ_RELEASE(buf);
-}
 
 int orte_iof_hnp_send_data_to_endpoint(orte_process_name_t *host,
                                        orte_process_name_t *target,
@@ -112,7 +103,7 @@ int orte_iof_hnp_send_data_to_endpoint(orte_process_name_t *host,
      * a tool that requested IOF
      */
     if (0 > (rc = orte_rml.send_buffer_nb(host, buf, ORTE_RML_TAG_IOF_PROXY,
-                                          0, send_cb, NULL))) {
+                                          orte_rml_send_callback, NULL))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }

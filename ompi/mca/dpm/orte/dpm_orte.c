@@ -12,7 +12,7 @@
  * Copyright (c) 2007-2011 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2006-2009 University of Houston.  All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
- * Copyright (c) 2011-2012 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * $COPYRIGHT$
  *
@@ -30,8 +30,8 @@
 
 #include "opal/util/argv.h"
 #include "opal/util/opal_getcwd.h"
-
 #include "opal/dss/dss.h"
+
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/grpcomm/grpcomm.h"
 #include "orte/mca/plm/plm.h"
@@ -50,6 +50,7 @@
 #include "ompi/group/group.h"
 #include "ompi/proc/proc.h"
 #include "ompi/mca/pml/pml.h"
+#include "ompi/mca/rte/rte.h"
 #include "ompi/info/info.h"
 
 #include "ompi/mca/dpm/base/base.h"
@@ -58,14 +59,6 @@
 /* Local static variables */
 static opal_mutex_t ompi_dpm_port_mutex;
 static orte_rml_tag_t next_tag;
-static bool waiting_for_recv = false;
-static opal_buffer_t *cabuf=NULL;
-static orte_process_name_t carport;
-
-/* Local static functions */
-static void recv_cb(int status, orte_process_name_t* sender,
-                    opal_buffer_t *buffer,
-                    orte_rml_tag_t tag, void *cbdata);
 
 /* API functions */
 static int init(void);
@@ -104,14 +97,6 @@ ompi_dpm_base_module_t ompi_dpm_orte_module = {
     finalize
 };
 
-static void rml_cbfunc(int status, orte_process_name_t* sender,
-                       opal_buffer_t* buffer, orte_rml_tag_t tag,
-                       void* cbdata)
-{
-    OBJ_RELEASE(buffer);
-}
-
-
 /*
  * Init the module
  */
@@ -147,6 +132,8 @@ static int connect_accept ( ompi_communicator_t *comm, int root,
     orte_grpcomm_collective_t modex;
     opal_list_item_t *item;
     orte_namelist_t *nm;
+    orte_rml_recv_cb_t xfer;
+    orte_process_name_t carport;
 
     OPAL_OUTPUT_VERBOSE((1, ompi_dpm_base_framework.framework_output,
                          "%s dpm:orte:connect_accept with port %s %s",
@@ -190,6 +177,7 @@ static int connect_accept ( ompi_communicator_t *comm, int root,
     opal_progress_event_users_increment();
 
     if ( rank == root ) {
+        OBJ_CONSTRUCT(&xfer, orte_rml_recv_cb_t);
         if (send_first) {
             /* Get a collective id for the modex we need later on - we
              * have to get a globally unique id for this purpose as
@@ -203,21 +191,23 @@ static int connect_accept ( ompi_communicator_t *comm, int root,
                 return OMPI_ERROR;
             }
             /* send the request - doesn't have to include any data */
-            rc = orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, nbuf, ORTE_RML_TAG_COLL_ID_REQ, 0, rml_cbfunc, NULL);
+            rc = orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, nbuf,
+                                         ORTE_RML_TAG_COLL_ID_REQ,
+                                         orte_rml_send_callback, NULL);
             /* wait for the id */
-            waiting_for_recv = true;
-            cabuf = OBJ_NEW(opal_buffer_t);
-            rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_COLL_ID,
-                                         ORTE_RML_NON_PERSISTENT, recv_cb, NULL);
+            orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_COLL_ID,
+                                    ORTE_RML_NON_PERSISTENT,
+                                    orte_rml_recv_callback, &xfer);
             /* wait for response */
-            ORTE_WAIT_FOR_COMPLETION(waiting_for_recv);
+            xfer.active = true;
+            OMPI_WAIT_FOR_COMPLETION(xfer.active);
             i=1;
-            if (OPAL_SUCCESS != (rc = opal_dss.unpack(cabuf, &id, &i, ORTE_GRPCOMM_COLL_ID_T))) {
+            if (OPAL_SUCCESS != (rc = opal_dss.unpack(&xfer.data, &id, &i, ORTE_GRPCOMM_COLL_ID_T))) {
                 ORTE_ERROR_LOG(rc);
-                OBJ_RELEASE(cabuf);
+                OBJ_DESTRUCT(&xfer);
                 return OMPI_ERROR;
             }
-            OBJ_RELEASE(cabuf);
+            OBJ_DESTRUCT(&xfer);
             /* send it to my peer on the other side */
             nbuf = OBJ_NEW(opal_buffer_t);
             if (NULL == nbuf) {
@@ -227,22 +217,22 @@ static int connect_accept ( ompi_communicator_t *comm, int root,
                 ORTE_ERROR_LOG(rc);
                 goto exit;
             }
-            rc = orte_rml.send_buffer_nb(&port, nbuf, tag, 0, rml_cbfunc, NULL);
+            rc = orte_rml.send_buffer_nb(&port, nbuf, tag, orte_rml_send_callback, NULL);
         } else {
             /* wait to recv the collective id */
-            waiting_for_recv = true;
-            cabuf = OBJ_NEW(opal_buffer_t);
-            rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, tag,
-                                         ORTE_RML_NON_PERSISTENT, recv_cb, NULL);
+            orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, tag,
+                                    ORTE_RML_NON_PERSISTENT,
+                                    orte_rml_recv_callback, &xfer);
             /* wait for response */
-            ORTE_WAIT_FOR_COMPLETION(waiting_for_recv);
+            xfer.active = true;
+            OMPI_WAIT_FOR_COMPLETION(xfer.active);
             i=1;
-            if (OPAL_SUCCESS != (rc = opal_dss.unpack(cabuf, &id, &i, ORTE_GRPCOMM_COLL_ID_T))) {
+            if (OPAL_SUCCESS != (rc = opal_dss.unpack(&xfer.data, &id, &i, ORTE_GRPCOMM_COLL_ID_T))) {
                 ORTE_ERROR_LOG(rc);
-                OBJ_RELEASE(cabuf);
+                OBJ_DESTRUCT(&xfer);
                 return OMPI_ERROR;
             }
-            OBJ_RELEASE(cabuf);
+            OBJ_DESTRUCT(&xfer);
         }
 
         /* Generate the message buffer containing the number of processes and the list of
@@ -296,59 +286,56 @@ static int connect_accept ( ompi_communicator_t *comm, int root,
             goto exit;
         }
 
-        if (NULL != cabuf) {
-            OBJ_RELEASE(cabuf);
-        }
-        
-        cabuf = OBJ_NEW(opal_buffer_t);
-        if (NULL == cabuf ) {
-            rc = OMPI_ERROR;
-            goto exit;
-        }
-
+        OBJ_CONSTRUCT(&xfer, orte_rml_recv_cb_t);
         /* Exchange the number and the list of processes in the groups */
         if ( send_first ) {
             OPAL_OUTPUT_VERBOSE((3, ompi_dpm_base_framework.framework_output,
                                  "%s dpm:orte:connect_accept sending first to %s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  ORTE_NAME_PRINT(&port)));
-            rc = orte_rml.send_buffer(&port, nbuf, tag, 0);
+            rc = orte_rml.send_buffer_nb(&port, nbuf, tag, orte_rml_send_callback, NULL);
             /* setup to recv */
             OPAL_OUTPUT_VERBOSE((3, ompi_dpm_base_framework.framework_output,
                                  "%s dpm:orte:connect_accept waiting for response",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-            waiting_for_recv = true;
-            rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, tag,
-                                         ORTE_RML_NON_PERSISTENT, recv_cb, NULL);
+            xfer.active = true;
+            orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, tag,
+                                    ORTE_RML_NON_PERSISTENT,
+                                    orte_rml_recv_callback, &xfer);
             /* wait for response */
-            ORTE_WAIT_FOR_COMPLETION(waiting_for_recv);
+            OMPI_WAIT_FOR_COMPLETION(xfer.active);
             OPAL_OUTPUT_VERBOSE((3, ompi_dpm_base_framework.framework_output,
                                  "%s dpm:orte:connect_accept got data from %s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 ORTE_NAME_PRINT(&carport)));
+                                 ORTE_NAME_PRINT(&xfer.name)));
             
         } else {
             OPAL_OUTPUT_VERBOSE((3, ompi_dpm_base_framework.framework_output,
                                  "%s dpm:orte:connect_accept recving first",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
             /* setup to recv */
-            waiting_for_recv = true;
-            rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, tag,
-                                         ORTE_RML_NON_PERSISTENT, recv_cb, NULL);
+            xfer.active = true;
+            orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, tag,
+                                    ORTE_RML_NON_PERSISTENT,
+                                    orte_rml_recv_callback, &xfer);
             /* wait for response */
-            ORTE_WAIT_FOR_COMPLETION(waiting_for_recv);
+            OMPI_WAIT_FOR_COMPLETION(xfer.active);
             /* now send our info */
             OPAL_OUTPUT_VERBOSE((3, ompi_dpm_base_framework.framework_output,
                                  "%s dpm:orte:connect_accept sending info to %s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 ORTE_NAME_PRINT(&carport)));
-            rc = orte_rml.send_buffer(&carport, nbuf, tag, 0);
+                                 ORTE_NAME_PRINT(&xfer.name)));
+            rc = orte_rml.send_buffer_nb(&xfer.name, nbuf, tag, orte_rml_send_callback, NULL);
         }
 
-        if (OPAL_SUCCESS != (rc = opal_dss.unload(cabuf, &rnamebuf, &rnamebuflen))) {
+        if (OPAL_SUCCESS != (rc = opal_dss.unload(&xfer.data, &rnamebuf, &rnamebuflen))) {
             ORTE_ERROR_LOG(rc);
+            OBJ_DESTRUCT(&xfer.data);
             goto exit;
         }
+        carport.jobid = xfer.name.jobid;
+        carport.vpid = xfer.name.vpid;
+        OBJ_DESTRUCT(&xfer);
     }
 
     /* First convert the size_t to an int so we can cast in the bcast to a void *
@@ -504,9 +491,8 @@ static int connect_accept ( ompi_communicator_t *comm, int root,
             ORTE_ERROR_LOG(rc);
             goto exit;
         }
-        while (modex.active) {
-            opal_progress();
-        }
+        modex.active = true;
+        OMPI_WAIT_FOR_COMPLETION(modex.active);
         OBJ_DESTRUCT(&modex);
 
         OPAL_OUTPUT_VERBOSE((3, ompi_dpm_base_framework.framework_output,
@@ -535,9 +521,6 @@ static int connect_accept ( ompi_communicator_t *comm, int root,
     }
 
     OBJ_RELEASE(nrbuf);
-    if ( rank == root ) {
-        OBJ_RELEASE(nbuf);
-    }
 
     OPAL_OUTPUT_VERBOSE((3, ompi_dpm_base_framework.framework_output,
                          "%s dpm:orte:connect_accept allocating group size %d",
@@ -1594,20 +1577,3 @@ static int finalize(void)
     OBJ_DESTRUCT(&ompi_dpm_port_mutex);
     return OMPI_SUCCESS;
 }
-
-
-static void recv_cb(int status, orte_process_name_t* sender,
-                    opal_buffer_t *buffer,
-                    orte_rml_tag_t tag, void *cbdata)
-{
-    /* copy the payload to the global buffer */
-    opal_dss.copy_payload(cabuf, buffer);
-    
-    /* flag the identity of the remote proc */
-    carport.jobid = sender->jobid;
-    carport.vpid = sender->vpid;
-    
-    /* flag complete */
-    waiting_for_recv = false;
-}
-

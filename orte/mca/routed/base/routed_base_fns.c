@@ -54,13 +54,16 @@ void orte_routed_base_xcast_routing(orte_grpcomm_collective_t *coll,
                 if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(daemons->procs, i))) {
                     continue;
                 }
-                nm = OBJ_NEW(orte_namelist_t);
-                nm->name.jobid = ORTE_PROC_MY_NAME->jobid;
-                nm->name.vpid = proc->name.vpid;
-                opal_list_append(&coll->targets, &nm->super);
+                /* exclude anyone known not alive */
+                if (proc->alive) {
+                    nm = OBJ_NEW(orte_namelist_t);
+                    nm->name.jobid = ORTE_PROC_MY_NAME->jobid;
+                    nm->name.vpid = proc->name.vpid;
+                    opal_list_append(&coll->targets, &nm->super);
+                }
             }
         } else {
-            /* the binomial xcast always goes to our children */
+            /* the xcast always goes to our children */
             for (item = opal_list_get_first(my_children);
                  item != opal_list_get_end(my_children);
                  item = opal_list_get_next(item)) {
@@ -234,30 +237,41 @@ void orte_routed_base_coll_peers(orte_grpcomm_collective_t *coll,
  }
 
 
-static bool sync_waiting = false;
-
 static void report_sync(int status, orte_process_name_t* sender,
                         opal_buffer_t *buffer,
                         orte_rml_tag_t tag, void *cbdata)
 {
+    bool *sync_waiting = (bool*)cbdata;
+
     /* just copy the payload to the sync_buf */
     opal_dss.copy_payload(orte_process_info.sync_buf, buffer);
     /* flag as complete */
-    sync_waiting = false;
+    *sync_waiting = false;
 }
 
 int orte_routed_base_register_sync(bool setup)
 {
     opal_buffer_t *buffer;
     int rc;
-    orte_daemon_cmd_flag_t command=ORTE_DAEMON_SYNC_BY_PROC;
+    orte_daemon_cmd_flag_t command;
     char *rml_uri;
     uint8_t flag;
+    bool sync_waiting;
+
+    if (orte_abnormal_term_ordered) {
+        /* if we are abnormally terminating, don't
+         * even try to deregister from the daemon - there
+         * is no guarantee we won't just hang in
+         * the communication
+         */
+        return ORTE_SUCCESS;
+    }
 
     OPAL_OUTPUT_VERBOSE((5, orte_routed_base_framework.framework_output,
-                         "%s registering sync to daemon %s",
+                         "%s %s with daemon %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_DAEMON)));
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_DAEMON),
+                         setup ? "registering" : "deregistering"));
     
     /* we need to get the oob to establish
      * the connection - the oob will leave the connection "alive"
@@ -266,55 +280,56 @@ int orte_routed_base_register_sync(bool setup)
     
     buffer = OBJ_NEW(opal_buffer_t);
     
-    /* if we are setting up, tell the daemon to send back a nidmap */
     if (setup) {
+        /* tell the daemon to send back a nidmap */
         command = ORTE_DAEMON_SYNC_WANT_NIDMAP;
-    }
-
-
-    /* tell the daemon to sync */
-    if (ORTE_SUCCESS != (rc = opal_dss.pack(buffer, &command, 1, ORTE_DAEMON_CMD))) {
-        ORTE_ERROR_LOG(rc);
-        OBJ_RELEASE(buffer);
-        return rc;
-    }
+        if (ORTE_SUCCESS != (rc = opal_dss.pack(buffer, &command, 1, ORTE_DAEMON_CMD))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_RELEASE(buffer);
+            return rc;
+        }
     
-    /* add our contact info to the buffer so the daemon can explicitly
-     * store it
-     */
-    rml_uri = orte_rml.get_contact_info();
-    if (ORTE_SUCCESS != (rc = opal_dss.pack(buffer, &rml_uri, 1, OPAL_STRING))) {
-        ORTE_ERROR_LOG(rc);
-        OBJ_RELEASE(buffer);
-        free(rml_uri);
-        return rc;
-    }
-    if (NULL != rml_uri) free(rml_uri);
+        /* add our contact info to the buffer so the daemon can explicitly
+         * store it
+         */
+        rml_uri = orte_rml.get_contact_info();
+        if (ORTE_SUCCESS != (rc = opal_dss.pack(buffer, &rml_uri, 1, OPAL_STRING))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_RELEASE(buffer);
+            free(rml_uri);
+            return rc;
+        }
+        if (NULL != rml_uri) free(rml_uri);
     
-    /* tell the daemon if we are an MPI proc */
-    if (ORTE_PROC_IS_MPI) {
-        flag = 1;
+        /* tell the daemon if we are an MPI proc */
+        if (ORTE_PROC_IS_MPI) {
+            flag = 1;
+        } else {
+            flag = 0;
+        }
+        if (ORTE_SUCCESS != (rc = opal_dss.pack(buffer, &flag, 1, OPAL_UINT8))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_RELEASE(buffer);
+            return rc;
+        }
     } else {
-        flag = 0;
-    }
-    if (ORTE_SUCCESS != (rc = opal_dss.pack(buffer, &flag, 1, OPAL_UINT8))) {
-        ORTE_ERROR_LOG(rc);
-        OBJ_RELEASE(buffer);
-        return rc;
+        /* deregister with the daemon */
+        command = ORTE_DAEMON_SYNC_BY_PROC;
+        if (ORTE_SUCCESS != (rc = opal_dss.pack(buffer, &command, 1, ORTE_DAEMON_CMD))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_RELEASE(buffer);
+            return rc;
+        }
     }
 
     /* setup to receive the response */
     sync_waiting = true;
-    rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_SYNC,
-                                 ORTE_RML_NON_PERSISTENT, report_sync, NULL);
-    if (rc != ORTE_SUCCESS && rc != ORTE_ERR_NOT_IMPLEMENTED) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
+    orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_SYNC,
+                            ORTE_RML_NON_PERSISTENT, report_sync, &sync_waiting);
 
     /* send the sync command to our daemon */
     if (0 > (rc = orte_rml.send_buffer_nb(ORTE_PROC_MY_DAEMON, buffer,
-                                          ORTE_RML_TAG_DAEMON, 0,
+                                          ORTE_RML_TAG_DAEMON,
                                           orte_rml_send_callback, NULL))) {
         ORTE_ERROR_LOG(rc);
         return rc;
@@ -325,15 +340,12 @@ int orte_routed_base_register_sync(bool setup)
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
     
-    /* get the ack - need this to ensure that the sync communication
-     * gets serviced by the event library on the orted prior to the
-     * process exiting
-     */
+    /* get the ack - includes the nidmap */
     ORTE_WAIT_FOR_COMPLETION(sync_waiting);
     OPAL_OUTPUT_VERBOSE((5, orte_routed_base_framework.framework_output,
                          "%s registering sync ack recvd",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-    
+
     return ORTE_SUCCESS;
 }
 

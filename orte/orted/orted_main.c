@@ -423,12 +423,8 @@ int orte_daemon(int argc, char *argv[])
     }
     
     /* setup the primary daemon command receive function */
-    ret = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_DAEMON,
-                                  ORTE_RML_PERSISTENT, orte_daemon_recv, NULL);
-    if (ret != ORTE_SUCCESS && ret != ORTE_ERR_NOT_IMPLEMENTED) {
-        ORTE_ERROR_LOG(ret);
-        goto DONE;
-    }
+    orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_DAEMON,
+                            ORTE_RML_PERSISTENT, orte_daemon_recv, NULL);
     
     /* output a message indicating we are alive, our name, and our pid
      * for debugging purposes
@@ -635,14 +631,9 @@ int orte_daemon(int argc, char *argv[])
         orte_process_name_t parent;
 
         /* set the contact info into the hash table */
-        if (ORTE_SUCCESS != (ret = orte_rml.set_contact_info(orte_parent_uri))) {
-            ORTE_ERROR_LOG(ret);
-            free (orte_parent_uri);
-            orte_parent_uri = NULL;
-            goto DONE;
-        }
-        ret = orte_rml_base_parse_uris(orte_parent_uri, &parent, NULL );
-        if( ORTE_SUCCESS != ret ) {
+        orte_rml.set_contact_info(orte_parent_uri);
+        ret = orte_rml_base_parse_uris(orte_parent_uri, &parent, NULL);
+        if (ORTE_SUCCESS != ret) {
             ORTE_ERROR_LOG(ret);
             free (orte_parent_uri);
             orte_parent_uri = NULL;
@@ -650,7 +641,7 @@ int orte_daemon(int argc, char *argv[])
         }
 
         /* don't need this value anymore */
-        free (orte_parent_uri);
+        free(orte_parent_uri);
         orte_parent_uri = NULL;
 
         /* tell the routed module that we have a path
@@ -743,7 +734,7 @@ int orte_daemon(int argc, char *argv[])
 
         /* send to the HNP's callback - will be routed if routes are available */
         if (0 > (ret = orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, buffer,
-                                               ORTE_RML_TAG_ORTED_CALLBACK, 0,
+                                               ORTE_RML_TAG_ORTED_CALLBACK,
                                                orte_rml_send_callback, NULL))) {
             ORTE_ERROR_LOG(ret);
             OBJ_RELEASE(buffer);

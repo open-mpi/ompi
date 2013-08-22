@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
+ * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * $COPYRIGHT$
  * 
@@ -194,7 +194,7 @@ static void send_fms(opal_buffer_t *bptr, void *cbdata)
             return;
         }
         if (0 > (rc = orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, xfer,
-                                              ORTE_RML_TAG_DFS_CMD, 0,
+                                              ORTE_RML_TAG_DFS_CMD,
                                               orte_rml_send_callback, NULL))) {
             ORTE_ERROR_LOG(rc);
             OBJ_RELEASE(xfer);
@@ -230,7 +230,7 @@ static void send_fms(opal_buffer_t *bptr, void *cbdata)
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(&pdata->name)));
     if (0 > (rc = orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, alert,
-                                          ORTE_RML_TAG_PLM, 0,
+                                          ORTE_RML_TAG_PLM,
                                           orte_rml_send_callback, NULL))) {
         ORTE_ERROR_LOG(rc);
     }

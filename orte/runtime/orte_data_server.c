@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2012      Los Alamos National Security, LLC.
+ *                         All rights reserved
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -93,13 +95,11 @@ int orte_data_server_init(void)
     }
     
     if (!recv_issued) {
-        if (ORTE_SUCCESS != (rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
-                                                          ORTE_RML_TAG_DATA_SERVER,
-                                                          ORTE_RML_PERSISTENT,
-                                                          orte_data_server,
-                                                          NULL))) {
-            ORTE_ERROR_LOG(rc);
-        }
+        orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
+                                ORTE_RML_TAG_DATA_SERVER,
+                                ORTE_RML_PERSISTENT,
+                                orte_data_server,
+                                NULL);
         recv_issued = true;
     }
     
@@ -110,7 +110,6 @@ void orte_data_server_finalize(void)
 {
     orte_std_cntr_t i;
     orte_data_object_t **data;
-    int rc;
     
     if (NULL != orte_data_server_store) {
         data = (orte_data_object_t**)orte_data_server_store->addr;
@@ -121,9 +120,7 @@ void orte_data_server_finalize(void)
     }
     
     if (recv_issued) {
-        if (ORTE_SUCCESS != (rc = orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_DATA_SERVER))) {
-            ORTE_ERROR_LOG(rc);
-        }
+        orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_DATA_SERVER);
         recv_issued = false;
     }
 }
@@ -418,7 +415,7 @@ void orte_data_server(int status, orte_process_name_t* sender,
     }
     
  SEND_ANSWER:
-    if (0 > (rc = orte_rml.send_buffer_nb(sender, answer, ORTE_RML_TAG_DATA_CLIENT, 0, rml_cbfunc, NULL))) {
+    if (0 > (rc = orte_rml.send_buffer_nb(sender, answer, ORTE_RML_TAG_DATA_CLIENT, rml_cbfunc, NULL))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(answer);
     }

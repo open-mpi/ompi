@@ -178,7 +178,7 @@ static void track_jobs(int fd, short argc, void *cbdata)
         }
         /* send it */
         if (0 > (rc = orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, alert,
-                                              ORTE_RML_TAG_PLM, 0,
+                                              ORTE_RML_TAG_PLM,
                                               orte_rml_send_callback, NULL))) {
             ORTE_ERROR_LOG(rc);
             OBJ_RELEASE(alert);
@@ -280,7 +280,7 @@ static void track_procs(int fd, short argc, void *cbdata)
             }
             /* send it */
             if (0 > (rc = orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, alert,
-                                                  ORTE_RML_TAG_PLM, 0,
+                                                  ORTE_RML_TAG_PLM,
                                                   orte_rml_send_callback, NULL))) {
                 ORTE_ERROR_LOG(rc);
             } else {
@@ -322,7 +322,7 @@ static void track_procs(int fd, short argc, void *cbdata)
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                      ORTE_JOBID_PRINT(jdata->jobid)));
                 if (0 > (rc = orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, alert,
-                                                      ORTE_RML_TAG_PLM, 0,
+                                                      ORTE_RML_TAG_PLM,
                                                       orte_rml_send_callback, NULL))) {
                     ORTE_ERROR_LOG(rc);
                 }
@@ -373,7 +373,7 @@ static void track_procs(int fd, short argc, void *cbdata)
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                      ORTE_JOBID_PRINT(jdata->jobid)));
                 if (0 > (rc = orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, alert,
-                                                      ORTE_RML_TAG_PLM, 0,
+                                                      ORTE_RML_TAG_PLM,
                                                       orte_rml_send_callback, NULL))) {
                     ORTE_ERROR_LOG(rc);
                 }

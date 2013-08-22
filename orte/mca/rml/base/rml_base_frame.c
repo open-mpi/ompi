@@ -23,6 +23,7 @@
 #include "opal/util/output.h"
 
 #include "orte/mca/rml/rml.h"
+#include "orte/mca/state/state.h"
 #include "orte/util/name_fns.h"
 
 #include "orte/mca/rml/base/base.h"
@@ -32,31 +33,13 @@
  * component's public mca_base_component_t struct. */
 #include "orte/mca/rml/base/static-components.h"
 
-orte_rml_module_t orte_rml = {
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    orte_rml_base_null_send,
-    orte_rml_base_null_send_nb,
-    orte_rml_base_null_send_buffer,
-    orte_rml_base_null_send_buffer_nb,
-    orte_rml_base_null_recv,
-    orte_rml_base_null_recv_nb,
-    orte_rml_base_null_recv_buffer,
-    orte_rml_base_null_recv_buffer_nb,
-    orte_rml_base_null_recv_cancel,
-    NULL,
-    NULL,
-    NULL
-};
+orte_rml_module_t orte_rml;
+orte_rml_base_t   orte_rml_base;
 
-opal_list_t       orte_rml_base_subscriptions;
 orte_rml_component_t *orte_rml_component = NULL;
 
-static bool       selected = false;
-static char      *orte_rml_base_wrapper = NULL;
+static bool selected = false;
+static char *orte_rml_base_wrapper = NULL;
 
 static int orte_rml_base_register(mca_base_register_flag_t flags)
 {
@@ -81,7 +64,12 @@ static int orte_rml_base_register(mca_base_register_flag_t flags)
 
 static int orte_rml_base_close(void)
 {
-    OBJ_DESTRUCT(&orte_rml_base_subscriptions);
+    opal_list_item_t *item;
+
+    while (NULL != (item = opal_list_remove_first(&orte_rml_base.posted_recvs))) {
+        OBJ_RELEASE(item);
+    }
+    OBJ_DESTRUCT(&orte_rml_base.posted_recvs);
 
     return mca_base_framework_components_close(&orte_rml_base_framework, NULL);
 }
@@ -89,7 +77,8 @@ static int orte_rml_base_close(void)
 static int orte_rml_base_open(mca_base_open_flag_t flags)
 {
     /* Initialize globals */
-    OBJ_CONSTRUCT(&orte_rml_base_subscriptions, opal_list_t);
+    OBJ_CONSTRUCT(&orte_rml_base.posted_recvs, opal_list_t);
+    OBJ_CONSTRUCT(&orte_rml_base.unmatched_msgs, opal_list_t);
     
     /* Open up all available components */
     return mca_base_framework_components_open(&orte_rml_base_framework, flags);
@@ -220,10 +209,89 @@ int orte_rml_base_select(void)
     return ORTE_SUCCESS;
 }
 
-void orte_rml_send_callback(int status, orte_process_name_t* sender,
+void orte_rml_send_callback(int status, orte_process_name_t *peer,
                             opal_buffer_t* buffer, orte_rml_tag_t tag,
                             void* cbdata)
 
 {
     OBJ_RELEASE(buffer);
+    if (ORTE_SUCCESS != status) {
+        ORTE_ACTIVATE_PROC_STATE(peer, ORTE_PROC_STATE_UNABLE_TO_SEND_MSG);
+    }
 }
+
+void orte_rml_recv_callback(int status, orte_process_name_t* sender,
+                            opal_buffer_t *buffer,
+                            orte_rml_tag_t tag, void *cbdata)
+{
+    orte_rml_recv_cb_t *blob = (orte_rml_recv_cb_t*)cbdata;
+
+    /* transfer the sender */
+    blob->name.jobid = sender->jobid;
+    blob->name.vpid = sender->vpid;
+    /* just copy the payload to the buf */
+    opal_dss.copy_payload(&blob->data, buffer);
+    /* flag as complete */
+    blob->active = false;
+}
+
+/***   RML CLASS INSTANCES   ***/
+static void send_cons(orte_rml_send_t *ptr)
+{
+    ptr->cbdata = NULL;
+    ptr->iov = NULL;
+    ptr->buffer = NULL;
+}
+OBJ_CLASS_INSTANCE(orte_rml_send_t,
+                   opal_list_item_t,
+                   send_cons, NULL);
+
+static void recv_cons(orte_rml_recv_t *ptr)
+{
+    ptr->iov.iov_base = NULL;
+}
+static void recv_des(orte_rml_recv_t *ptr)
+{
+    if (NULL != ptr->iov.iov_base) {
+        free(ptr->iov.iov_base);
+    }
+}
+OBJ_CLASS_INSTANCE(orte_rml_recv_t,
+                   opal_list_item_t,
+                   recv_cons, recv_des);
+
+static void rcv_cons(orte_rml_recv_cb_t *ptr)
+{
+    OBJ_CONSTRUCT(&ptr->data, opal_buffer_t);
+    ptr->active = false;
+}
+static void rcv_des(orte_rml_recv_cb_t *ptr)
+{
+    OBJ_DESTRUCT(&ptr->data);
+}
+OBJ_CLASS_INSTANCE(orte_rml_recv_cb_t, opal_object_t,
+                   rcv_cons, rcv_des);
+
+static void prcv_cons(orte_rml_posted_recv_t *ptr)
+{
+    ptr->cbdata = NULL;
+}
+OBJ_CLASS_INSTANCE(orte_rml_posted_recv_t,
+                   opal_list_item_t,
+                   prcv_cons, NULL);
+
+static void prq_cons(orte_rml_recv_request_t *ptr)
+{
+    ptr->cancel = false;
+    ptr->post = OBJ_NEW(orte_rml_posted_recv_t);
+}
+static void prq_des(orte_rml_recv_request_t *ptr)
+{
+    if (NULL != ptr->post) {
+        OBJ_RELEASE(ptr->post);
+    }
+}
+OBJ_CLASS_INSTANCE(orte_rml_recv_request_t,
+                   opal_object_t,
+                   prq_cons, prq_des);
+

@@ -45,7 +45,7 @@ opal_if_base_component_t mca_if_solaris_ipv6_component = {
 /* configure using getifaddrs(3) */
 static int if_solaris_ipv6_open(void)
 {
-#if OPAL_WANT_IPV6
+#if OPAL_ENABLE_IPV6
     int i;
     int sd;
     int error;
@@ -138,6 +138,7 @@ static int if_solaris_ipv6_open(void)
                                  sizeof (opal_if_t));
                     return OPAL_ERR_OUT_OF_RESOURCE;
                 }
+                intf->af_family = AF_INET6;
 
                 strncpy (intf->if_name, lifreq->lifr_name, IF_NAMESIZE);
                 intf->if_index = opal_list_get_size(&opal_if_list)+1;
@@ -156,7 +157,7 @@ static int if_solaris_ipv6_open(void)
     if (NULL != lifconf.lifc_buf) {
         free (lifconf.lifc_buf);
     }
-#endif  /* OPAL_WANT_IPV6 */
+#endif  /* OPAL_ENABLE_IPV6 */
 
     return OPAL_SUCCESS;
 }

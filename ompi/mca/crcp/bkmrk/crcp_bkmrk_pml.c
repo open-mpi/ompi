@@ -3034,7 +3034,7 @@ ompi_crcp_base_pml_state_t* ompi_crcp_bkmrk_pml_ft_event(
         if( opal_cr_timing_barrier_enabled ) {
             OPAL_CR_SET_TIMER(OPAL_CR_TIMER_CRCPBR0);
             ompi_rte_barrier(&coll);
-            ORTE_WAIT_FOR_COMPLETION(coll.active);
+            OMPI_WAIT_FOR_COMPLETION(coll.active);
         }
         OPAL_CR_SET_TIMER(OPAL_CR_TIMER_CRCP0);
 
@@ -3103,7 +3103,7 @@ ompi_crcp_base_pml_state_t* ompi_crcp_bkmrk_pml_ft_event(
         if( opal_cr_timing_barrier_enabled ) {
             OPAL_CR_SET_TIMER(OPAL_CR_TIMER_COREBR1);
             ompi_rte_barrier(&coll);
-            ORTE_WAIT_FOR_COMPLETION(coll.active);
+            OMPI_WAIT_FOR_COMPLETION(coll.active);
         }
         OPAL_CR_SET_TIMER(OPAL_CR_TIMER_CORE2);
     }
@@ -6270,7 +6270,7 @@ static void display_all_timers(int state) {
         }
         else if( 2 == timing_enabled ) {
             ompi_rte_barrier(&coll);
-            ORTE_WAIT_FOR_COMPLETION(coll.active);
+            OMPI_WAIT_FOR_COMPLETION(coll.active);
             goto done;
         }
     }
@@ -6292,7 +6292,7 @@ static void display_all_timers(int state) {
     if( timing_enabled >= 2) {
         barrier_start = get_time();
         ompi_rte_barrier(&coll);
-        ORTE_WAIT_FOR_COMPLETION(coll.active);
+        OMPI_WAIT_FOR_COMPLETION(coll.active);
         barrier_stop = get_time();
         opal_output(0,
                     "crcp:bkmrk: timing(%20s): %20s = %10.2f s\n",

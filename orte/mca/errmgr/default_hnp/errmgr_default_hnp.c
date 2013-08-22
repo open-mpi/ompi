@@ -248,14 +248,8 @@ static void proc_errors(int fd, short args, void *cbdata)
 
     /* get the job object */
     if (NULL == (jdata = orte_get_job_data_object(proc->jobid))) {
-        /* if the orteds are terminating, check job complete */
-        if (orte_orteds_term_ordered) {
-            opal_output(0, "TERM ORDERED - CHECKING COMPLETE");
-            goto cleanup;
-        } else {
-            ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-            goto cleanup;
-        }
+        /* could be a race condition */
+        goto cleanup;
     }
     pptr = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, proc->vpid);
 
@@ -279,6 +273,8 @@ static void proc_errors(int fd, short args, void *cbdata)
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
             goto cleanup;
         }
+        /* mark the daemon as gone */
+        pptr->alive = false;
         /* if we have ordered orteds to terminate or abort
          * is in progress, record it */
         if (orte_orteds_term_ordered || orte_abnormal_term_ordered) {
@@ -518,6 +514,15 @@ static void proc_errors(int fd, short args, void *cbdata)
         }
         /* remove from dependent routes, if it is one */
         orte_routed.route_lost(proc);
+        /* kill all jobs */
+        default_hnp_abort(jdata);
+        break;
+
+    case ORTE_PROC_STATE_UNABLE_TO_SEND_MSG:
+        OPAL_OUTPUT_VERBOSE((5, orte_errmgr_base_framework.framework_output,
+                             "%s errmgr:hnp: unable to send message to proc %s",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             ORTE_NAME_PRINT(proc)));
         /* kill all jobs */
         default_hnp_abort(jdata);
         break;

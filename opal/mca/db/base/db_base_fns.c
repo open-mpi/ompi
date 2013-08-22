@@ -128,14 +128,12 @@ int opal_db_base_fetch(const opal_identifier_t *proc,
          * the operation - anything else is a true error.
          */
         if (OPAL_ERR_TAKE_NEXT_OPTION != rc) {
-            OPAL_ERROR_LOG(rc);
             return rc;
         }
     }
 
     /* if we get here without performing the operation, that's an error */
     if (!did_op) {
-        OPAL_ERROR_LOG(OPAL_ERR_DATA_VALUE_NOT_FOUND);
         return OPAL_ERR_DATA_VALUE_NOT_FOUND;
     }
     return OPAL_SUCCESS;
@@ -163,14 +161,12 @@ int opal_db_base_fetch_pointer(const opal_identifier_t *proc,
          * the operation - anything else is a true error.
          */
         if (OPAL_ERR_TAKE_NEXT_OPTION != rc) {
-            OPAL_ERROR_LOG(rc);
             return rc;
         }
     }
 
     /* if we get here without performing the operation, that's an error */
     if (!did_op) {
-        OPAL_ERROR_LOG(OPAL_ERR_DATA_VALUE_NOT_FOUND);
         return OPAL_ERR_DATA_VALUE_NOT_FOUND;
     }
     return OPAL_SUCCESS;
@@ -198,14 +194,12 @@ int opal_db_base_fetch_multiple(const opal_identifier_t *proc,
          * the operation - anything else is a true error.
          */
         if (OPAL_ERR_TAKE_NEXT_OPTION != rc) {
-            OPAL_ERROR_LOG(rc);
             return rc;
         }
     }
 
     /* if we get here without performing the operation, that's an error */
     if (!did_op) {
-        OPAL_ERROR_LOG(OPAL_ERR_DATA_VALUE_NOT_FOUND);
         return OPAL_ERR_DATA_VALUE_NOT_FOUND;
     }
     return OPAL_SUCCESS;

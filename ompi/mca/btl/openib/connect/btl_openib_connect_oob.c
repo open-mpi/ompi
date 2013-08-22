@@ -121,8 +121,6 @@ static void oob_component_register(void)
 static int oob_component_query(mca_btl_openib_module_t *btl,
                                ompi_btl_openib_connect_base_module_t **cpc)
 {
-    int rc;
-
     /* If we have the transport_type member, check to ensure we're on
        IB (this CPC will not work with iWarp).  If we do not have the
        transport_type member, then we must be < OFED v1.2, and
@@ -148,17 +146,11 @@ static int oob_component_query(mca_btl_openib_module_t *btl,
        ensure to only post it *once*, because another btl may have
        come in before this and already posted it. */
     if (!rml_recv_posted) {
-        rc = ompi_rte_recv_buffer_nb(OMPI_NAME_WILDCARD,
-                                     OMPI_RML_TAG_OPENIB,
-                                     OMPI_RML_PERSISTENT,
-                                     rml_recv_cb,
-                                     NULL);
-        if (OMPI_SUCCESS != rc) {
-            opal_output_verbose(5, ompi_btl_base_framework.framework_output,
-                                "openib BTL: oob CPC system error %d (%s)",
-                                rc, opal_strerror(rc));
-            return rc;
-        }
+        ompi_rte_recv_buffer_nb(OMPI_NAME_WILDCARD,
+                                OMPI_RML_TAG_OPENIB,
+                                OMPI_RML_PERSISTENT,
+                                rml_recv_cb,
+                                NULL);
         rml_recv_posted = true;
     }
 
@@ -625,7 +617,7 @@ static int send_connect_data(mca_btl_base_endpoint_t* endpoint,
 
     /* send to remote endpoint */
     rc = ompi_rte_send_buffer_nb(&endpoint->endpoint_proc->proc_ompi->proc_name,
-                                 buffer, OMPI_RML_TAG_OPENIB, 0,
+                                 buffer, OMPI_RML_TAG_OPENIB,
                                  rml_send_cb, NULL);
     if (OMPI_SUCCESS != rc) {
         OMPI_ERROR_LOG(rc);

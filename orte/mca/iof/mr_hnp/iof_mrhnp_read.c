@@ -365,7 +365,7 @@ static void send_data(orte_process_name_t *name, orte_iof_tag_t tag,
     }
 
     if (0 > (rc = orte_rml.send_buffer_nb(name, buf, ORTE_RML_TAG_IOF_PROXY,
-                                          0, orte_rml_send_callback, NULL))) {
+                                          orte_rml_send_callback, NULL))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(buf);
     }

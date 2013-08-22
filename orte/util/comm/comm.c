@@ -106,10 +106,7 @@ int orte_util_comm_connect_tool(char *uri)
     int rc;
     
     /* set the contact info into the comm hash tables*/
-    if (ORTE_SUCCESS != (rc = orte_rml.set_contact_info(uri))) {
-        ORTE_ERROR_LOG(rc);
-        return(rc);
-    }
+    orte_rml.set_contact_info(uri);
     
     /* extract the tool's name and store it */
     if (ORTE_SUCCESS != (rc = orte_rml_base_parse_uris(uri, &tool, NULL))) {
@@ -183,7 +180,7 @@ int orte_util_comm_report_event(orte_comm_event_t ev)
     opal_event_evtimer_add(quicktime, &tv);
 
     /* do the send */
-    if (0 > (rc = orte_rml.send_buffer_nb(&tool, buf, ORTE_RML_TAG_TOOL, 0, send_cbfunc, NULL))) {
+    if (0 > (rc = orte_rml.send_buffer_nb(&tool, buf, ORTE_RML_TAG_TOOL, send_cbfunc, NULL))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(buf);
         return rc;
@@ -206,15 +203,11 @@ int orte_util_comm_report_event(orte_comm_event_t ev)
         error_exit = ORTE_SUCCESS;
         
         /* get the answer */
-        if (ORTE_SUCCESS != (rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
-                                                           ORTE_RML_TAG_TOOL,
-                                                           ORTE_RML_NON_PERSISTENT,
-                                                           recv_info,
-                                                           NULL))) {
-            ORTE_ERROR_LOG(rc);
-            OBJ_DESTRUCT(&answer);
-            return rc;
-        }
+        orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
+                                ORTE_RML_TAG_TOOL,
+                                ORTE_RML_NON_PERSISTENT,
+                                recv_info,
+                                NULL);
         /* set a timer for getting the answer */
         quicktime = opal_event_alloc();
         tv.tv_sec = 0;
@@ -277,7 +270,7 @@ int orte_util_comm_query_job_info(const orte_process_name_t *hnp, orte_jobid_t j
     opal_event_evtimer_add(quicktime, &tv);
 
     /* do the send */
-    if (0 > (ret = orte_rml.send_buffer_nb((orte_process_name_t*)hnp, cmd, ORTE_RML_TAG_DAEMON, 0, send_cbfunc, NULL))) {
+    if (0 > (ret = orte_rml.send_buffer_nb((orte_process_name_t*)hnp, cmd, ORTE_RML_TAG_DAEMON, send_cbfunc, NULL))) {
         ORTE_ERROR_LOG(ret);
         OBJ_RELEASE(cmd);
         return ret;
@@ -295,15 +288,12 @@ int orte_util_comm_query_job_info(const orte_process_name_t *hnp, orte_jobid_t j
     error_exit = ORTE_SUCCESS;
     
     /* get the answer */
-    if (ORTE_SUCCESS != (ret = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
-                                                      ORTE_RML_TAG_TOOL,
-                                                      ORTE_RML_NON_PERSISTENT,
-                                                      recv_info,
-                                                      NULL))) {
-        ORTE_ERROR_LOG(ret);
-        OBJ_DESTRUCT(&answer);
-        return ret;
-    }
+    orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
+                            ORTE_RML_TAG_TOOL,
+                            ORTE_RML_NON_PERSISTENT,
+                            recv_info,
+                            NULL);
+
     /* set a timer for getting the answer */
     quicktime = opal_event_alloc();
     tv.tv_sec = 0;
@@ -387,7 +377,7 @@ int orte_util_comm_query_node_info(const orte_process_name_t *hnp, char *node,
     opal_event_evtimer_add(quicktime, &tv);
 
     /* do the send */
-    if (0 > (ret = orte_rml.send_buffer_nb((orte_process_name_t*)hnp, cmd, ORTE_RML_TAG_DAEMON, 0, send_cbfunc, NULL))) {
+    if (0 > (ret = orte_rml.send_buffer_nb((orte_process_name_t*)hnp, cmd, ORTE_RML_TAG_DAEMON, send_cbfunc, NULL))) {
         ORTE_ERROR_LOG(ret);
         OBJ_RELEASE(cmd);
         return ret;
@@ -408,15 +398,12 @@ int orte_util_comm_query_node_info(const orte_process_name_t *hnp, char *node,
     
     /* get the answer */
     OBJ_CONSTRUCT(&answer, opal_buffer_t);
-    if (ORTE_SUCCESS != (ret = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
-                                                      ORTE_RML_TAG_TOOL,
-                                                      ORTE_RML_NON_PERSISTENT,
-                                                      recv_info,
-                                                      NULL))) {
-        ORTE_ERROR_LOG(ret);
-        OBJ_DESTRUCT(&answer);
-        return ret;
-    }
+    orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
+                            ORTE_RML_TAG_TOOL,
+                            ORTE_RML_NON_PERSISTENT,
+                            recv_info,
+                            NULL);
+
     /* set a timer for getting the answer */
     quicktime = opal_event_alloc();
     tv.tv_sec = 0;
@@ -505,7 +492,7 @@ int orte_util_comm_query_proc_info(const orte_process_name_t *hnp, orte_jobid_t 
     opal_event_evtimer_add(quicktime, &tv);
     
     /* do the send */
-    if (0 > (ret = orte_rml.send_buffer_nb((orte_process_name_t*)hnp, cmd, ORTE_RML_TAG_DAEMON, 0,
+    if (0 > (ret = orte_rml.send_buffer_nb((orte_process_name_t*)hnp, cmd, ORTE_RML_TAG_DAEMON,
                                            send_cbfunc, NULL))) {
         ORTE_ERROR_LOG(ret);
         OBJ_RELEASE(cmd);
@@ -527,15 +514,12 @@ int orte_util_comm_query_proc_info(const orte_process_name_t *hnp, orte_jobid_t 
     
     /* get the answer */
     OBJ_CONSTRUCT(&answer, opal_buffer_t);
-    if (ORTE_SUCCESS != (ret = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
-                                                      ORTE_RML_TAG_TOOL,
-                                                      ORTE_RML_NON_PERSISTENT,
-                                                      recv_info,
-                                                      NULL))) {
-        ORTE_ERROR_LOG(ret);
-        OBJ_DESTRUCT(&answer);
-        return ret;
-    }
+    orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
+                            ORTE_RML_TAG_TOOL,
+                            ORTE_RML_NON_PERSISTENT,
+                            recv_info,
+                            NULL);
+
     /* set a timer for getting the answer */
     quicktime = opal_event_alloc();
     tv.tv_sec = 0;
@@ -587,9 +571,23 @@ int orte_util_comm_query_proc_info(const orte_process_name_t *hnp, orte_jobid_t 
  * to the plm_proxy tag! So we have to go another route to get this
  * request processed
  */
+static bool reply_waiting;
+
+static void comm_cbfunc(int status, orte_process_name_t* sender,
+                        opal_buffer_t* buffer, orte_rml_tag_t tag,
+                        void* cbdata)
+{
+    opal_buffer_t *buf = (opal_buffer_t*)cbdata;
+
+    if (NULL != buf) {
+        opal_dss.copy_payload(buf, buffer);
+    }
+    reply_waiting = false;
+}
+
 int orte_util_comm_spawn_job(const orte_process_name_t *hnp, orte_job_t *jdata)
 {
-    opal_buffer_t buf;
+    opal_buffer_t *buf;
     orte_daemon_cmd_flag_t command;
     orte_std_cntr_t count;
     int rc;
@@ -600,18 +598,20 @@ int orte_util_comm_spawn_job(const orte_process_name_t *hnp, orte_job_t *jdata)
                          ORTE_NAME_PRINT(hnp)));
     
     /* setup the buffer */
-    OBJ_CONSTRUCT(&buf, opal_buffer_t);
+    buf = OBJ_NEW(opal_buffer_t);
     
     /* tell the HNP we are sending a launch request */
     command = ORTE_DAEMON_SPAWN_JOB_CMD;
-    if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &command, 1, ORTE_DAEMON_CMD))) {
+    if (ORTE_SUCCESS != (rc = opal_dss.pack(buf, &command, 1, ORTE_DAEMON_CMD))) {
         ORTE_ERROR_LOG(rc);
+        OBJ_RELEASE(buf);
         goto CLEANUP;
     }
     
     /* pack the jdata object */
-    if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &jdata, 1, ORTE_JOB))) {
+    if (ORTE_SUCCESS != (rc = opal_dss.pack(buf, &jdata, 1, ORTE_JOB))) {
         ORTE_ERROR_LOG(rc);
+        OBJ_RELEASE(buf);
         goto CLEANUP;
         
     }
@@ -622,11 +622,13 @@ int orte_util_comm_spawn_job(const orte_process_name_t *hnp, orte_job_t *jdata)
                          ORTE_NAME_PRINT(hnp)));
     
     /* tell the target HNP to launch the job */
-    if (0 > (rc = orte_rml.send_buffer((orte_process_name_t*)hnp, &buf, ORTE_RML_TAG_DAEMON, 0))) {
+    if (0 > (rc = orte_rml.send_buffer_nb((orte_process_name_t*)hnp, buf,
+                                          ORTE_RML_TAG_DAEMON,
+                                          orte_rml_send_callback, NULL))) {
         ORTE_ERROR_LOG(rc);
+        OBJ_RELEASE(buf);
         goto CLEANUP;
     }
-    OBJ_DESTRUCT(&buf);
     
     
     OPAL_OUTPUT_VERBOSE((5, orte_debug_output,
@@ -634,36 +636,37 @@ int orte_util_comm_spawn_job(const orte_process_name_t *hnp, orte_job_t *jdata)
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
     /* wait for the target's response */
-    OBJ_CONSTRUCT(&buf, opal_buffer_t);
-    if (0 > (rc = orte_rml.recv_buffer(ORTE_NAME_WILDCARD, &buf, ORTE_RML_TAG_TOOL, 0))) {
-        ORTE_ERROR_LOG(rc);
-        goto CLEANUP;
-    }
-    
+    reply_waiting = true;
+    buf = OBJ_NEW(opal_buffer_t);
+    orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_TOOL, 0,
+                            comm_cbfunc, buf);
+    ORTE_WAIT_FOR_COMPLETION(reply_waiting);
+
     /* get the new jobid back in case the caller wants it */
     count = 1;
-    if (ORTE_SUCCESS != (rc = opal_dss.unpack(&buf, &(jdata->jobid), &count, ORTE_JOBID))) {
+    if (ORTE_SUCCESS != (rc = opal_dss.unpack(buf, &(jdata->jobid), &count, ORTE_JOBID))) {
         ORTE_ERROR_LOG(rc);
+        OBJ_RELEASE(buf);
         goto CLEANUP;
     }
     if (ORTE_JOBID_INVALID == jdata->jobid) {
         /* something went wrong on far end - go no further */
         rc = ORTE_ERR_FAILED_TO_START;
+        OBJ_RELEASE(buf);
         goto CLEANUP;
     }
+    OBJ_RELEASE(buf);
     
     /* good to go! */
     
-CLEANUP:
-    OBJ_DESTRUCT(&buf);
-    
+CLEANUP:    
     return rc;
 }
 
 
 int orte_util_comm_terminate_job(const orte_process_name_t *hnp, orte_jobid_t job)
 {
-    opal_buffer_t buf;
+    opal_buffer_t *buf;
     orte_daemon_cmd_flag_t command;
     orte_std_cntr_t count;
     int rc, ret = ORTE_ERROR;
@@ -675,20 +678,22 @@ int orte_util_comm_terminate_job(const orte_process_name_t *hnp, orte_jobid_t jo
                          ORTE_JOBID_PRINT(job)));
     
     /* setup the buffer */
-    OBJ_CONSTRUCT(&buf, opal_buffer_t);
+    buf = OBJ_NEW(opal_buffer_t);
     
     /* tell the HNP we are sending a terminate request */
     command = ORTE_DAEMON_TERMINATE_JOB_CMD;
-    if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &command, 1, ORTE_DAEMON_CMD))) {
+    if (ORTE_SUCCESS != (rc = opal_dss.pack(buf, &command, 1, ORTE_DAEMON_CMD))) {
         ORTE_ERROR_LOG(rc);
         ret = rc;
+        OBJ_RELEASE(buf);
         goto CLEANUP;
     }
     
     /* pack the jobid */
-    if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &job, 1, ORTE_JOBID))) {
+    if (ORTE_SUCCESS != (rc = opal_dss.pack(buf, &job, 1, ORTE_JOBID))) {
         ORTE_ERROR_LOG(rc);
         ret = rc;
+        OBJ_RELEASE(buf);
         goto CLEANUP;
     }
     
@@ -698,12 +703,14 @@ int orte_util_comm_terminate_job(const orte_process_name_t *hnp, orte_jobid_t jo
                          ORTE_NAME_PRINT(hnp)));
     
     /* tell the target HNP to terminate the job */
-    if (0 > (rc = orte_rml.send_buffer((orte_process_name_t*)hnp, &buf, ORTE_RML_TAG_DAEMON, 0))) {
+    if (0 > (rc = orte_rml.send_buffer_nb((orte_process_name_t*)hnp, buf,
+                                          ORTE_RML_TAG_DAEMON,
+                                          orte_rml_send_callback, NULL))) {
         ORTE_ERROR_LOG(rc);
         ret = rc;
+        OBJ_RELEASE(buf);
         goto CLEANUP;
     }
-    OBJ_DESTRUCT(&buf);
     
     
     OPAL_OUTPUT_VERBOSE((5, orte_debug_output,
@@ -711,30 +718,28 @@ int orte_util_comm_terminate_job(const orte_process_name_t *hnp, orte_jobid_t jo
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
     /* wait for the target's response */
-    OBJ_CONSTRUCT(&buf, opal_buffer_t);
-    if (0 > (rc = orte_rml.recv_buffer(ORTE_NAME_WILDCARD, &buf, ORTE_RML_TAG_TOOL, 0))) {
-        ORTE_ERROR_LOG(rc);
-        ret = rc;
-        goto CLEANUP;
-    }
-    
+    reply_waiting = true;
+    buf = OBJ_NEW(opal_buffer_t);
+    orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
+                            ORTE_RML_TAG_TOOL, 0,
+                            comm_cbfunc, buf);
+    ORTE_WAIT_FOR_COMPLETION(reply_waiting);
+
     /* get the status code */
     count = 1;
-    if (ORTE_SUCCESS != (rc = opal_dss.unpack(&buf, &ret, &count, OPAL_INT))) {
+    if (ORTE_SUCCESS != (rc = opal_dss.unpack(buf, &ret, &count, OPAL_INT))) {
         ORTE_ERROR_LOG(rc);
         ret = rc;
-        goto CLEANUP;
     }
+    OBJ_RELEASE(buf);
     
 CLEANUP:
-    OBJ_DESTRUCT(&buf);
-    
     return ret;
 }
 
 int orte_util_comm_halt_vm(const orte_process_name_t *hnp)
 {
-    opal_buffer_t buf;
+    opal_buffer_t *buf;
     orte_daemon_cmd_flag_t command;
     int rc;
     
@@ -744,26 +749,28 @@ int orte_util_comm_halt_vm(const orte_process_name_t *hnp)
                          ORTE_NAME_PRINT(hnp)));
     
     /* setup the buffer */
-    OBJ_CONSTRUCT(&buf, opal_buffer_t);
+    buf = OBJ_NEW(opal_buffer_t);
     
     /* tell the HNP to die */
     command = ORTE_DAEMON_HALT_VM_CMD;
-    if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &command, 1, ORTE_DAEMON_CMD))) {
+    if (ORTE_SUCCESS != (rc = opal_dss.pack(buf, &command, 1, ORTE_DAEMON_CMD))) {
         ORTE_ERROR_LOG(rc);
+        OBJ_RELEASE(buf);
         goto CLEANUP;
     }
     
     /* send the order */
-    if (0 > (rc = orte_rml.send_buffer((orte_process_name_t*)hnp, &buf, ORTE_RML_TAG_DAEMON, 0))) {
+    if (0 > (rc = orte_rml.send_buffer_nb((orte_process_name_t*)hnp, buf,
+                                          ORTE_RML_TAG_DAEMON,
+                                          orte_rml_send_callback, NULL))) {
         ORTE_ERROR_LOG(rc);
+        OBJ_RELEASE(buf);
         goto CLEANUP;
     }
-    OBJ_DESTRUCT(&buf);
+    OBJ_RELEASE(buf);
     
     /* don't bother waiting around */
-CLEANUP:
-    OBJ_DESTRUCT(&buf);
-    
+CLEANUP:    
     return rc;
 }
 

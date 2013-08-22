@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2011      Los Alamos National Security, LLC.
+ * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved. 
  * $COPYRIGHT$
  * 
@@ -33,18 +33,11 @@
 #include "orte/runtime/runtime.h"
 #include "orte/runtime/orte_locks.h"
 #include "orte/util/name_fns.h"
-#include "orte/util/show_help.h"
 
-/**
- * Leave ORTE.
- *
- * @retval ORTE_SUCCESS Upon success.
- * @retval ORTE_ERROR Upon failure.
- *
- * This function performs 
- */
 int orte_finalize(void)
 {
+    int rc;
+
     --orte_initialized;
     if (0 != orte_initialized) {
         /* check for mismatched calls */
@@ -52,7 +45,7 @@ int orte_finalize(void)
             opal_output(0, "%s MISMATCHED CALLS TO ORTE FINALIZE",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
         }
-        return ORTE_SUCCESS;
+        return ORTE_ERROR;
     }
 
     /* protect against multiple calls */
@@ -60,20 +53,18 @@ int orte_finalize(void)
         return ORTE_SUCCESS;
     }
     
-    /* set the flag indicating we are finalizing */
+    /* flag that we are finalizing */
     orte_finalizing = true;
 
-    /* close the orte_show_help system */
-    orte_show_help_finalize();
-
     /* call the finalize function for this environment */
-    orte_ess.finalize();
-    
+    if (ORTE_SUCCESS != (rc = orte_ess.finalize())) {
+        return rc;
+    }
+
     /* close the ess itself */
     (void) mca_base_framework_close(&orte_ess_base_framework);
 
     if (ORTE_PROC_IS_APP) {
-#if ORTE_ENABLE_PROGRESS_THREADS
         /* stop the progress thread */
         orte_event_base_active = false;
         /* break the event loop */
@@ -83,7 +74,6 @@ int orte_finalize(void)
         OBJ_DESTRUCT(&orte_progress_thread);
         /* release the event base */
         opal_event_base_free(orte_event_base);
-#endif
     }
 
     /* cleanup the process info */
@@ -93,7 +83,7 @@ int orte_finalize(void)
     opal_output_close(orte_debug_output);
     
     /* finalize the opal utilities */
-    opal_finalize();
-    
-    return ORTE_SUCCESS;
+    rc = opal_finalize();
+
+    return rc;
 }

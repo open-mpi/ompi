@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007-2013 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2007-2012 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2007-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * $COPYRIGHT$
  *
@@ -233,13 +233,8 @@ int main(int argc, char *argv[])
     }
     
     /* setup to listen for commands sent specifically to me */
-    ret = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_DAEMON,
-                                  ORTE_RML_NON_PERSISTENT, orte_daemon_recv, NULL);
-    if (ret != ORTE_SUCCESS && ret != ORTE_ERR_NOT_IMPLEMENTED) {
-        ORTE_ERROR_LOG(ret);
-        orte_finalize();
-        exit(1);
-    }
+    orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_DAEMON,
+                            ORTE_RML_NON_PERSISTENT, orte_daemon_recv, NULL);
 
     /* Set signal handlers to catch kill signals so we can properly clean up
      * after ourselves. 
@@ -292,23 +287,17 @@ int main(int argc, char *argv[])
     /* should never get here, but if we do... */
     
     /* Finalize and clean up ourselves */
-    if (ORTE_SUCCESS != (ret = orte_finalize())) {
-        ORTE_ERROR_LOG(ret);
-    }
-    return ret;
+    orte_finalize();
+    return orte_exit_status;
 }
 
 static void shutdown_callback(int fd, short flags, void *arg)
 {
-    int ret;
-    
     if (debug) {
         opal_output(0, "%s orte-server: finalizing", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
     }
     
     /* Finalize and clean up ourselves */
-    if (ORTE_SUCCESS != (ret = orte_finalize())) {
-        ORTE_ERROR_LOG(ret);
-    }
-    exit(ret);
+    orte_finalize();
+    exit(orte_exit_status);
 }

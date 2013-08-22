@@ -77,15 +77,6 @@ static int init(void)
 
 static int finalize(void)
 {
-    int rc;
-    
-    if (ORTE_PROC_IS_MPI && NULL != orte_process_info.my_daemon_uri) {
-        /* if a daemon launched me, register that I am leaving */
-        if (ORTE_SUCCESS != (rc = orte_routed_base_register_sync(false))) {
-            ORTE_ERROR_LOG(rc);
-        }
-    }
-    
     return ORTE_SUCCESS;
 }
 
@@ -171,10 +162,7 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndat)
                 return ORTE_ERR_FATAL;
             }
             /* set the contact info into the hash table */
-            if (ORTE_SUCCESS != (rc = orte_rml.set_contact_info(orte_process_info.my_hnp_uri))) {
-                ORTE_ERROR_LOG(rc);
-                return(rc);
-            }
+            orte_rml.set_contact_info(orte_process_info.my_hnp_uri);
             
             /* extract the hnp name and store it */
             if (ORTE_SUCCESS != (rc = orte_rml_base_parse_uris(orte_process_info.my_hnp_uri,
@@ -239,10 +227,7 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndat)
              * the connection, but just tells the RML how to reach the daemon
              * if/when we attempt to send to it
              */
-            if (ORTE_SUCCESS != (rc = orte_rml.set_contact_info(orte_process_info.my_daemon_uri))) {
-                ORTE_ERROR_LOG(rc);
-                return(rc);
-            }
+            orte_rml.set_contact_info(orte_process_info.my_daemon_uri);
             /* extract the daemon's name so we can update the routing table */
             if (ORTE_SUCCESS != (rc = orte_rml_base_parse_uris(orte_process_info.my_daemon_uri,
                                                                ORTE_PROC_MY_DAEMON, NULL))) {

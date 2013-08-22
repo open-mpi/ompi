@@ -1628,7 +1628,7 @@ int orte_odls_base_default_deliver_message(orte_jobid_t job, opal_buffer_t *buff
         /* if so, send the message */
         relay = OBJ_NEW(opal_buffer_t);
         opal_dss.copy_payload(relay, buffer);
-        rc = orte_rml.send_buffer_nb(&child->name, relay, tag, 0, orte_rml_send_callback, NULL);
+        rc = orte_rml.send_buffer_nb(&child->name, relay, tag, orte_rml_send_callback, NULL);
         if (rc < 0 && rc != ORTE_ERR_ADDRESSEE_UNKNOWN) {
             /* ignore if the addressee is unknown as a race condition could
              * have allowed the child to exit before we send it a barrier
@@ -1810,7 +1810,7 @@ int orte_odls_base_default_require_sync(orte_process_name_t *proc,
                         ORTE_NAME_PRINT(proc), (long)buffer->bytes_used));
     
     if (0 > (rc = orte_rml.send_buffer_nb(proc, buffer, ORTE_RML_TAG_SYNC,
-                                          0, orte_rml_send_callback, NULL))) {
+                                          orte_rml_send_callback, NULL))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(buffer);
         goto CLEANUP;
@@ -1862,7 +1862,7 @@ void orte_odls_base_default_report_abort(orte_process_name_t *proc)
             /* send ack */
             buffer = OBJ_NEW(opal_buffer_t);
             if (0 > (rc = orte_rml.send_buffer_nb(proc, buffer,
-                                                  ORTE_RML_TAG_ABORT, 0,
+                                                  ORTE_RML_TAG_ABORT,
                                                   orte_rml_send_callback, NULL))) {
                 ORTE_ERROR_LOG(rc);
                 OBJ_RELEASE(buffer);
@@ -1970,11 +1970,12 @@ void odls_base_default_wait_local_proc(pid_t pid, int status, void* cbdata)
         
         /* check to see if a sync was required and if it was received */
         if (proc->registered) {
-            if (proc->deregistered || orte_allowed_exit_without_sync) {
+            if (proc->deregistered || orte_allowed_exit_without_sync || 0 != proc->exit_code) {
                 /* if we did recv a finalize sync, or one is not required,
                  * then declare it normally terminated
                  * unless it returned with a non-zero status indicating the code
-                 * felt it was non-normal
+                 * felt it was non-normal - in this latter case, we do not
+                 * require that the proc deregister before terminating
                  */
                 if (0 != proc->exit_code) {
                     state = ORTE_PROC_STATE_TERM_NON_ZERO;

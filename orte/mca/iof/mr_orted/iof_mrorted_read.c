@@ -187,7 +187,7 @@ void orte_iof_mrorted_read_handler(int fd, short event, void *cbdata)
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), numbytes));
     
         orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, buf, ORTE_RML_TAG_IOF_HNP,
-                                0, orte_rml_send_callback, NULL);
+                                orte_rml_send_callback, NULL);
     }
     
     /* re-add the event */
@@ -265,7 +265,7 @@ static void send_data(orte_process_name_t *name, orte_iof_tag_t tag,
     }
 
     if (0 > (rc = orte_rml.send_buffer_nb(name, buf, ORTE_RML_TAG_IOF_PROXY,
-                                          0, orte_rml_send_callback, NULL))) {
+                                          orte_rml_send_callback, NULL))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(buf);
     }

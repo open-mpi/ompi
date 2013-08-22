@@ -223,9 +223,6 @@ static int pmi_store_encoded(const opal_identifier_t *uid, const char *key, cons
 	data_len = bo->size;
     }
 
-    /* need to bump up the needed if the type ever gets larger than 255 */
-    assert (type < (1 << 8) && data_len < 0xffff);
-
     needed = 10 + data_len + strlen (key);
 
     if (NULL == pmi_packed_data) {
@@ -259,6 +256,10 @@ static int pmi_get_packed (const opal_identifier_t *uid, char **packed_data, siz
     size_t bytes_read;
     opal_identifier_t proc;
     int rc;
+
+    /* set default */
+    *packed_data = NULL;
+    *len = 0;
 
     /* to protect alignment, copy the data across */
     memcpy(&proc, uid, sizeof(opal_identifier_t));
@@ -306,15 +307,18 @@ static int pmi_get_packed (const opal_identifier_t *uid, char **packed_data, siz
         }
     }
 
-    OPAL_OUTPUT_VERBOSE((10, opal_db_base_framework.framework_output,
-                         "Read data %s\n", tmp_encoded));
-
     free (pmi_tmp);
 
-    *packed_data = (char *) pmi_decode (tmp_encoded, len);
-    free (tmp_encoded);
-    if (NULL == *packed_data) {
-	return OPAL_ERR_OUT_OF_RESOURCE;
+    OPAL_OUTPUT_VERBOSE((10, opal_db_base_framework.framework_output,
+                         "Read data %s\n",
+                         (NULL == tmp_encoded) ? "NULL" : tmp_encoded));
+
+    if (NULL != tmp_encoded) {
+        *packed_data = (char *) pmi_decode (tmp_encoded, len);
+        free (tmp_encoded);
+        if (NULL == *packed_data) {
+	    return OPAL_ERR_OUT_OF_RESOURCE;
+        }
     }
 
     return OPAL_SUCCESS;

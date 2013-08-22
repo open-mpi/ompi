@@ -34,6 +34,7 @@
 #include "opal/mca/hwloc/base/base.h"
 
 #include "orte/util/proc_info.h"
+#include "orte/runtime/runtime.h"
 
 BEGIN_C_DECLS
 

@@ -173,7 +173,7 @@ static void job_errors(int fd, short args, void *cbdata)
         /* kill all local procs */
         killprocs(ORTE_JOBID_WILDCARD, ORTE_VPID_WILDCARD);
         /* order termination */
-        ORTE_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
+        ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
         goto cleanup;
         break;
     case ORTE_JOB_STATE_HEARTBEAT_FAILED:
@@ -200,7 +200,7 @@ static void job_errors(int fd, short args, void *cbdata)
     }
     /* send it */
     if (0 > (rc = orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, alert,
-                                          ORTE_RML_TAG_PLM, 0,
+                                          ORTE_RML_TAG_PLM,
                                           orte_rml_send_callback, NULL))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(alert);
@@ -246,6 +246,20 @@ static void proc_errors(int fd, short args, void *cbdata)
     /* if this was a failed comm, then see if it was to our
      * lifeline
      */
+    if (ORTE_PROC_STATE_LIFELINE_LOST == state ||
+        ORTE_PROC_STATE_UNABLE_TO_SEND_MSG == state) {
+        OPAL_OUTPUT_VERBOSE((2, orte_errmgr_base_framework.framework_output,
+                             "%s errmgr:orted lifeline lost - exiting",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+        /* kill our children */
+        killprocs(ORTE_JOBID_WILDCARD, ORTE_VPID_WILDCARD);
+        /* terminate - our routed children will see
+         * us leave and automatically die
+         */
+        ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
+        goto cleanup;
+    }
+
     if (ORTE_PROC_STATE_COMM_FAILED == state) {
         /* if it is our own connection, ignore it */
         if (OPAL_EQUAL == orte_util_compare_name_fields(ORTE_NS_CMP_ALL, ORTE_PROC_MY_NAME, proc)) {
@@ -260,20 +274,6 @@ static void proc_errors(int fd, short args, void *cbdata)
                              "%s errmgr:default:orted daemon %s exited",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_NAME_PRINT(proc)));
-        /* see if this was a lifeline */
-        if (ORTE_SUCCESS != orte_routed.route_lost(proc)) {
-            OPAL_OUTPUT_VERBOSE((2, orte_errmgr_base_framework.framework_output,
-                                 "%s errmgr:orted daemon %s was a lifeline - exiting",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 ORTE_NAME_PRINT(proc)));
-            /* kill our children */
-            killprocs(ORTE_JOBID_WILDCARD, ORTE_VPID_WILDCARD);
-            /* terminate - our routed children will see
-             * us leave and automatically die
-             */
-            ORTE_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
-            goto cleanup;
-        }
         /* are any of my children still alive */
         for (i=0; i < orte_local_children->size; i++) {
             if (NULL != (child = (orte_proc_t*)opal_pointer_array_get_item(orte_local_children, i))) {
@@ -288,7 +288,7 @@ static void proc_errors(int fd, short args, void *cbdata)
             OPAL_OUTPUT_VERBOSE((2, orte_errmgr_base_framework.framework_output,
                                  "%s errmgr:default:orted all routes gone - exiting",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-            ORTE_TERMINATE(0);
+            ORTE_FORCED_TERMINATE(0);
         } else {
             OPAL_OUTPUT_VERBOSE((2, orte_errmgr_base_framework.framework_output,
                                  "%s errmgr:default:orted not exiting, num_routes() == %d",
@@ -402,7 +402,7 @@ static void proc_errors(int fd, short args, void *cbdata)
 
         /* send it */
         if (0 > (rc = orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, alert,
-                                              ORTE_RML_TAG_PLM, 0,
+                                              ORTE_RML_TAG_PLM,
                                               orte_rml_send_callback, NULL))) {
             ORTE_ERROR_LOG(rc);
             OBJ_RELEASE(alert);
@@ -466,7 +466,7 @@ static void proc_errors(int fd, short args, void *cbdata)
 
         /* send it */
         if (0 > (rc = orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, alert,
-                                              ORTE_RML_TAG_PLM, 0,
+                                              ORTE_RML_TAG_PLM,
                                               orte_rml_send_callback, NULL))) {
             ORTE_ERROR_LOG(rc);
         }
@@ -523,7 +523,7 @@ static void proc_errors(int fd, short args, void *cbdata)
             }
             /* send it */
             if (0 > (rc = orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, alert,
-                                                  ORTE_RML_TAG_PLM, 0,
+                                                  ORTE_RML_TAG_PLM,
                                                   orte_rml_send_callback, NULL))) {
                 ORTE_ERROR_LOG(rc);
             }
@@ -573,7 +573,7 @@ static void proc_errors(int fd, short args, void *cbdata)
 
         /* send it */
         if (0 > (rc = orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, alert,
-                                              ORTE_RML_TAG_PLM, 0,
+                                              ORTE_RML_TAG_PLM,
                                               orte_rml_send_callback, NULL))) {
             ORTE_ERROR_LOG(rc);
         }

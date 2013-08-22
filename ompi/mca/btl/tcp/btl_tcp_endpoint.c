@@ -131,7 +131,7 @@ static void mca_btl_tcp_endpoint_dump(mca_btl_base_endpoint_t* btl_endpoint, con
     char src[64];
     char dst[64];
     int sndbuf,rcvbuf,nodelay,flags;
-#if OPAL_WANT_IPV6
+#if OPAL_ENABLE_IPV6
     struct sockaddr_storage inaddr;
 #else
     struct sockaddr_in inaddr;
@@ -140,7 +140,7 @@ static void mca_btl_tcp_endpoint_dump(mca_btl_base_endpoint_t* btl_endpoint, con
     opal_socklen_t addrlen = sizeof(inaddr);
 
     getsockname(btl_endpoint->endpoint_sd, (struct sockaddr*)&inaddr, &addrlen);
-#if OPAL_WANT_IPV6
+#if OPAL_ENABLE_IPV6
     {
         char *address;
         address = (char *) opal_net_get_hostname((struct sockaddr*) &inaddr);
@@ -152,7 +152,7 @@ static void mca_btl_tcp_endpoint_dump(mca_btl_base_endpoint_t* btl_endpoint, con
     sprintf(src, "%s", inet_ntoa(inaddr.sin_addr));
 #endif
     getpeername(btl_endpoint->endpoint_sd, (struct sockaddr*)&inaddr, &addrlen);
-#if OPAL_WANT_IPV6
+#if OPAL_ENABLE_IPV6
     {
         char *address;
         address = (char *) opal_net_get_hostname ((struct sockaddr*) &inaddr);
@@ -572,7 +572,7 @@ static int mca_btl_tcp_endpoint_start_connect(mca_btl_base_endpoint_t* btl_endpo
     uint16_t af_family = AF_INET;
     opal_socklen_t addrlen = sizeof(struct sockaddr_in);
     
-#if OPAL_WANT_IPV6
+#if OPAL_ENABLE_IPV6
     if (AF_INET6 == btl_endpoint->endpoint_addr->addr_family) {
         af_family = AF_INET6;
         addrlen = sizeof (struct sockaddr_in6);

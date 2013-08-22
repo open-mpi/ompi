@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2008-2010 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2010-2012 Los Alamos National Security, LLC.
+ * Copyright (c) 2010-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * $COPYRIGHT$
  *
@@ -36,6 +36,25 @@
 #include <string.h>
 #endif
 
+typedef struct {
+    opal_buffer_t buf;
+    bool active;
+    int status;
+} sm_return_t;
+
+static void sml_recv(int status,
+                     ompi_process_name_t* peer,
+                     opal_buffer_t* buffer,
+                     ompi_rml_tag_t tag,
+                     void* cbdata)
+{
+    sm_return_t *smr = (sm_return_t*)cbdata;
+
+    opal_dss.copy_payload(&smr->buf, buffer);
+    smr->active = false;
+    smr->status = status;
+}
+
 /* ////////////////////////////////////////////////////////////////////////// */
 /**
  * this routine assumes that sorted_procs is in the following state:
@@ -53,10 +72,13 @@ mca_common_sm_rml_info_bcast(opal_shmem_ds_t *out_ds_buf,
     int rc = OMPI_SUCCESS, tmprc;
     char *msg_id_str_to_tx = NULL;
     opal_buffer_t *buffer = NULL;
+    sm_return_t smr;
 
     if (NULL == (buffer = OBJ_NEW(opal_buffer_t))) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
+    OBJ_CONSTRUCT(&smr.buf, opal_buffer_t);
+
     /* figure out if i am the root proc in the group.  if i am, bcast the
      * message the rest of the local procs. */
     if (proc0) {
@@ -83,8 +105,8 @@ mca_common_sm_rml_info_bcast(opal_shmem_ds_t *out_ds_buf,
         /* first num_local_procs items should be local procs */
         for (p = 1; p < num_local_procs; ++p) {
             /* a potential future optimization: use non-blocking routines */
-            tmprc = ompi_rte_send_buffer(&(procs[p]->proc_name), buffer, tag,
-                                         0);
+            tmprc = ompi_rte_send_buffer_nb(&(procs[p]->proc_name), buffer, tag,
+                                            ompi_rte_send_cbfunc, NULL);
             if (0 > tmprc) {
                 OMPI_ERROR_LOG(tmprc);
                 opal_progress_event_users_decrement();
@@ -100,16 +122,24 @@ mca_common_sm_rml_info_bcast(opal_shmem_ds_t *out_ds_buf,
         /* bump up the libevent polling frequency while we're in this RML recv,
          * just to ensure we're checking libevent frequently. */
         opal_progress_event_users_increment();
-        tmprc = ompi_rte_recv_buffer(&(procs[0]->proc_name), buffer, tag, 0);
+        smr.active = true;
+        smr.status = OMPI_ERROR;
+        ompi_rte_recv_buffer_nb(&(procs[0]->proc_name),tag,
+                                OMPI_RML_NON_PERSISTENT,
+                                sml_recv, &smr);
+        while (smr.active) {
+            opal_progress();
+        }
+        
         opal_progress_event_users_decrement();
-        if (0 > tmprc) {
-            OMPI_ERROR_LOG(tmprc);
-            rc = OMPI_ERROR;
+        if (OMPI_SUCCESS != smr.status) {
+            OMPI_ERROR_LOG(smr.status);
+            rc = smr.status;
             goto out;
         }
         /* unpack the buffer */
         num_vals = 1;
-        tmprc = opal_dss.unpack(buffer, &msg_id_str_to_tx, &num_vals,
+        tmprc = opal_dss.unpack(&smr.buf, &msg_id_str_to_tx, &num_vals,
                                 OPAL_STRING);
         if (0 > tmprc) {
             OMPI_ERROR_LOG(OMPI_ERR_UNPACK_FAILURE);
@@ -117,7 +147,7 @@ mca_common_sm_rml_info_bcast(opal_shmem_ds_t *out_ds_buf,
             goto out;
         }
         num_vals = (int32_t)sizeof(opal_shmem_ds_t);
-        tmprc = opal_dss.unpack(buffer, out_ds_buf, &num_vals, OPAL_BYTE);
+        tmprc = opal_dss.unpack(&smr.buf, out_ds_buf, &num_vals, OPAL_BYTE);
         if (0 > tmprc) {
             OMPI_ERROR_LOG(OMPI_ERR_UNPACK_FAILURE);
             rc = OMPI_ERROR;
@@ -143,6 +173,6 @@ out:
         free(msg_id_str_to_tx);
         msg_id_str_to_tx = NULL;
     }
-    OBJ_RELEASE(buffer);
+    OBJ_DESTRUCT(&smr.buf);
     return rc;
 }

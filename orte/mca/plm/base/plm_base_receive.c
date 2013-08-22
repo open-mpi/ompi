@@ -62,8 +62,6 @@ static bool recv_issued=false;
 
 int orte_plm_base_comm_start(void)
 {
-    int rc;
-
     if (recv_issued) {
         return ORTE_SUCCESS;
     }
@@ -72,30 +70,24 @@ int orte_plm_base_comm_start(void)
                          "%s plm:base:receive start comm",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
-    if (ORTE_SUCCESS != (rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
-                                                      ORTE_RML_TAG_PLM,
-                                                      ORTE_RML_PERSISTENT,
-                                                      orte_plm_base_recv,
-                                                      NULL))) {
-        ORTE_ERROR_LOG(rc);
-    }
+    orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
+                            ORTE_RML_TAG_PLM,
+                            ORTE_RML_PERSISTENT,
+                            orte_plm_base_recv,
+                            NULL);
     if (ORTE_PROC_IS_HNP) {
-        if (ORTE_SUCCESS != (rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
-                                                          ORTE_RML_TAG_ORTED_CALLBACK,
-                                                          ORTE_RML_PERSISTENT,
-                                                          orte_plm_base_daemon_callback, NULL))) {
-            ORTE_ERROR_LOG(rc);
-        }
-        if (ORTE_SUCCESS != (rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
-                                                          ORTE_RML_TAG_REPORT_REMOTE_LAUNCH,
-                                                          ORTE_RML_PERSISTENT,
-                                                          orte_plm_base_daemon_failed, NULL))) {
-            ORTE_ERROR_LOG(rc);
-        }
+        orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
+                                ORTE_RML_TAG_ORTED_CALLBACK,
+                                ORTE_RML_PERSISTENT,
+                                orte_plm_base_daemon_callback, NULL);
+        orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
+                                ORTE_RML_TAG_REPORT_REMOTE_LAUNCH,
+                                ORTE_RML_PERSISTENT,
+                                orte_plm_base_daemon_failed, NULL);
     }
     recv_issued = true;
     
-    return rc;
+    return ORTE_SUCCESS;
 }
 
 
@@ -234,7 +226,7 @@ void orte_plm_base_recv(int status, orte_process_name_t* sender,
         }
                 
         /* send the response back to the sender */
-        if (0 > (ret = orte_rml.send_buffer_nb(sender, answer, ORTE_RML_TAG_PLM_PROXY, 0,
+        if (0 > (ret = orte_rml.send_buffer_nb(sender, answer, ORTE_RML_TAG_PLM_PROXY,
                                                orte_rml_send_callback, NULL))) {
             ORTE_ERROR_LOG(ret);
             OBJ_RELEASE(answer);
@@ -296,7 +288,7 @@ void orte_plm_base_recv(int status, orte_process_name_t* sender,
                     /* get the proc data object */
                     if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, vpid))) {
                         ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-                        ORTE_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
+                        ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
                     }
                     proc->state = state;
                     proc->pid = pid;
@@ -367,7 +359,7 @@ void orte_plm_base_recv(int status, orte_process_name_t* sender,
          */
         if (ORTE_SUCCESS != (rc = orte_routed.init_routes(job, buffer))) {
             ORTE_ERROR_LOG(rc);
-            ORTE_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
+            ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
         }
         break;
 
@@ -386,7 +378,7 @@ void orte_plm_base_recv(int status, orte_process_name_t* sender,
     /* see if an error occurred - if so, wakeup the HNP so we can exit */
     if (ORTE_PROC_IS_HNP && ORTE_SUCCESS != rc) {
         jdata = NULL;
-        ORTE_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
+        ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
     }
     
     OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,

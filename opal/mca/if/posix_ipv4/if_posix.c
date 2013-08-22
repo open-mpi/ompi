@@ -211,6 +211,7 @@ static int if_posix_open(void)
             close(sd);
             return OPAL_ERR_OUT_OF_RESOURCE;
         }
+        intf->af_family = AF_INET;
 
         /* copy entry over into our data structure */
         memset(intf->if_name, 0, sizeof(intf->if_name));

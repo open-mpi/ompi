@@ -368,7 +368,7 @@ static void launch_daemons(int fd, short args, void *cbdata)
 
     /* check for failed launch - if so, force terminate */
     if (failed_launch) {
-        ORTE_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
+        ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
     }
 }
 

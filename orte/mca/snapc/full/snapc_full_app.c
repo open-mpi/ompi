@@ -161,6 +161,7 @@ int app_coord_init()
         exit_status = ret;
         goto cleanup;
     }
+    coll->active = true;
     ORTE_WAIT_FOR_COMPLETION(coll->active);
     OBJ_RELEASE(coll);
 
@@ -235,6 +236,7 @@ int app_coord_finalize()
         exit_status = ret;
         goto cleanup;
     }
+    coll->active = true;
     ORTE_WAIT_FOR_COMPLETION(coll->active);
 
     if( 0 == ORTE_PROC_MY_NAME->vpid ) {

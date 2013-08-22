@@ -10,6 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2013      Intel Inc. All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -20,6 +21,8 @@
 use File::Find;
 use File::Basename;
 use File::Compare;
+use Text::Diff;
+use Getopt::Long;
 
 if (scalar(@ARGV) != 2) {
     print "Usage: search_compare.pl src_dir target_dir\n";
@@ -33,6 +36,25 @@ my $len_tgt_dir = length($target_dir);
 my @src_tree = ();
 my @tgt_tree = ();
 my $flag;
+
+my $ok = Getopt::Long::GetOptions("diff" => \$diff_arg,
+                                  "debug|d" => \$debug_arg,
+                                  "help|h" => \$help_arg,
+                                  "ignore=s" => \$exclude_arg,
+    );
+
+if (!$ok || $help_arg) {
+    print "Invalid command line argument.\n\n"
+        if (!$ok);
+    print "Options:
+  --diff | -diff      Output a diff of files that were modified - turns
+                      off the output of files added/deleted
+  --debug | -d        Output lots of debug information
+  --help | -h         This help list
+  --ignore | -ignore  Name of file containing typical ignore list - e.g.,
+                      .hgignore or .gitignore\n";
+    my_exit($ok ? 0 : 1);
+}
 
 sub construct {
     # don't process directories or links, and dont' recurse down 
@@ -84,6 +106,7 @@ my $tgt_file;
 my @modified = ();
 my @src_pared = ();
 my $i;
+my $d;
 foreach $src (@src_tree) {
     # strip the leading elements of the path that was given to us
     $src_file = substr($src, $len_src_dir);
@@ -97,42 +120,46 @@ foreach $src (@src_tree) {
             # file has been found - ignore it
             $found = 1;
             if (compare($src, $tgt) != 0) {
-                push(@modified, $src);
+                $d = diff $src, $tgt;
+                print "Index: $tgt\n";
+                print "===================================================================\n";
+                print "$d\n";
+#                push(@modified, $src);
             }
             # remove this file from the target tree as it has been found
             # splice @tgt_tree, $i, 1;
             break;
         }
     }
-    if ($found == 0) {
-        print "Add: " . $src . "\n";
-    } else {
-        push(@src_pared, $src);
-    }
+#    if ($found == 0) {
+#        print "Add: " . $src . "\n";
+##    } else {
+#        push(@src_pared, $src);
+#    }
 }
 
 print "\n";
 
 # print a list of files in the target tree that need to be deleted
-foreach $tgt (@tgt_tree) {
-    $found = 0;
-    $tgt_file = substr($tgt, $len_tgt_dir);
-    foreach $src (@src_pared) {
-        $src_file = substr($src, $len_src_dir);
-        if ($src_file eq $tgt_file) {
-            # file has been found - ignore it
-            $found = 1;
-            break;
-        }
-    }
-    if ($found == 0) {
-        print "Delete: " . $tgt . "\n";
-    }
-}
+#foreach $tgt (@tgt_tree) {
+#    $found = 0;
+#    $tgt_file = substr($tgt, $len_tgt_dir);
+#    foreach $src (@src_pared) {
+#        $src_file = substr($src, $len_src_dir);
+#        if ($src_file eq $tgt_file) {
+#            # file has been found - ignore it
+#            $found = 1;
+#            break;
+#        }
+#    }
+#    if ($found == 0) {
+#        print "Delete: " . $tgt . "\n";
+#    }
+#}
 
-print "\n";
+#print "\n";
 
 # print a list of files that have been modified
-foreach $tgt (@modified) {
-    print "Modified: " . $tgt . "\n";
-}
+#foreach $tgt (@modified) {
+#    print "Modified: " . $tgt . "\n";
+#}

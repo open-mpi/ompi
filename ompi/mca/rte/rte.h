@@ -210,6 +210,28 @@ BEGIN_C_DECLS
 
 #define OMPI_RML_TAG_DYNAMIC                        OMPI_RML_TAG_BASE+200
 
+/*
+ * MCA Framework
+ */
+OMPI_DECLSPEC extern mca_base_framework_t ompi_rte_base_framework;
+
+/* In a few places, we need to barrier until something happens
+ * that changes a flag to indicate we can release - e.g., waiting
+ * for a specific RTE message to arrive. We don't want to block MPI
+ * progress while waiting, so we loop over opal_progress, letting
+ * the RTE progress thread move the RTE along
+ */
+#define OMPI_WAIT_FOR_COMPLETION(flg)                                   \
+    do {                                                                \
+        opal_output_verbose(1, ompi_rte_base_framework.framework_output, \
+                            "%s waiting on RTE event at %s:%d",         \
+                            OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),         \
+                            __FILE__, __LINE__);                        \
+        while ((flg)) {                                                \
+            opal_progress();                                            \
+        }                                                               \
+    }while(0);
+
 typedef struct {
     opal_list_item_t super;
     ompi_process_name_t name;

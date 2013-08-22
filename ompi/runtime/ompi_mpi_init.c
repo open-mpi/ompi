@@ -612,6 +612,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
      */
     coll = OBJ_NEW(ompi_rte_collective_t);
     coll->id = ompi_process_info.peer_modex;
+    coll->active = true;
     if (OMPI_SUCCESS != (ret = ompi_rte_modex(coll))) {
         error = "rte_modex failed";
         goto error;
@@ -620,9 +621,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
      * so long as it occurs prior to calling a function that needs
      * the modex info!
      */
-    while (coll->active) {
-        opal_progress();  /* block in progress pending events */
-    }
+    OMPI_WAIT_FOR_COMPLETION(coll->active);
     OBJ_RELEASE(coll);
 
     if (ompi_enable_timing && 0 == OMPI_PROC_MY_NAME->vpid) {
@@ -802,14 +801,13 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     /* wait for everyone to reach this point */
     coll = OBJ_NEW(ompi_rte_collective_t);
     coll->id = ompi_process_info.peer_init_barrier;
+    coll->active = true;
     if (OMPI_SUCCESS != (ret = ompi_rte_barrier(coll))) {
         error = "rte_barrier failed";
         goto error;
     }
     /* wait for barrier to complete */
-    while (coll->active) {
-        opal_progress();  /* block in progress pending events */
-    }
+    OMPI_WAIT_FOR_COMPLETION(coll->active);
     OBJ_RELEASE(coll);
 
     /* check for timing request - get stop time and report elapsed

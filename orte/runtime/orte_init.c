@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2012 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2006-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2007-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2007-2008 Sun Microsystems, Inc.  All rights reserved.
@@ -68,9 +68,7 @@ orte_process_name_t orte_name_wildcard = {ORTE_JOBID_WILDCARD, ORTE_VPID_WILDCAR
 
 orte_process_name_t orte_name_invalid = {ORTE_JOBID_INVALID, ORTE_VPID_INVALID}; 
 
-#if ORTE_ENABLE_PROGRESS_THREADS
 static void* orte_progress_thread_engine(opal_object_t *obj);
-#endif
 
 #if OPAL_CC_USE_PRAGMA_IDENT
 #pragma ident ORTE_IDENT_STRING
@@ -139,7 +137,6 @@ int orte_init(int* pargc, char*** pargv, orte_proc_type_t flags)
     }
 
     if (ORTE_PROC_IS_APP) {
-#if ORTE_ENABLE_PROGRESS_THREADS
         /* get a separate orte event base */
         orte_event_base = opal_event_base_create();
        /* construct the thread object */
@@ -150,10 +147,6 @@ int orte_init(int* pargc, char*** pargv, orte_proc_type_t flags)
             error = "orte progress thread start";
             goto error;
         }
-#else
-        /* set the event base to the opal one */
-        orte_event_base = opal_event_base;
-#endif
     } else {
         /* ORTE tools "block" in their own loop over the event
          * base, so no progress thread is required
@@ -181,7 +174,6 @@ int orte_init(int* pargc, char*** pargv, orte_proc_type_t flags)
 }
 
 
-#if ORTE_ENABLE_PROGRESS_THREADS
 static void* orte_progress_thread_engine(opal_object_t *obj)
 {
     while (orte_event_base_active) {
@@ -189,4 +181,3 @@ static void* orte_progress_thread_engine(opal_object_t *obj)
     }
     return OPAL_THREAD_CANCELLED;
 }
-#endif

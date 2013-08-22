@@ -40,6 +40,7 @@
 #include "orte/util/proc_info.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/ess/ess.h"
+#include "orte/mca/rml/rml.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/util/name_fns.h"
 #include "orte/util/nidmap.h"
@@ -71,6 +72,7 @@ void orte_grpcomm_base_modex(int fd, short args, void *cbdata)
     opal_list_item_t *item;
     bool found;
     orte_grpcomm_collective_t *cptr;
+    char *rml_uri;
 
     OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_framework.framework_output,
                          "%s grpcomm:base:modex: performing modex",
@@ -85,6 +87,16 @@ void orte_grpcomm_base_modex(int fd, short args, void *cbdata)
         if (ORTE_SUCCESS != (rc = opal_dss.pack(&modex->buffer, ORTE_PROC_MY_NAME, 1, ORTE_NAME))) {
             ORTE_ERROR_LOG(rc);
             goto cleanup;
+        }
+
+        if (ORTE_PROC_IS_NON_MPI) {
+            /* add my RML contact info */
+            rml_uri = orte_rml.get_contact_info();
+            if (ORTE_SUCCESS != (rc = opal_dss.pack(&modex->buffer, &rml_uri, 1, OPAL_STRING))) {
+                ORTE_ERROR_LOG(rc);
+                goto cleanup;
+            }
+            free(rml_uri);
         }
 
         /* add a wildcard name to the participants so the daemon knows
@@ -372,8 +384,6 @@ void orte_grpcomm_base_store_peer_modex(opal_buffer_t *rbuf, void *cbdata)
     }    
 
  cleanup:
-    /* flag the collective as complete */
-    modex->active = false;
     /* cleanup the list, but don't release the
      * collective object as it was passed into us
      */
@@ -389,6 +399,8 @@ void orte_grpcomm_base_store_peer_modex(opal_buffer_t *rbuf, void *cbdata)
                              "%s store:peer:modex NO MODEX RELEASE CBFUNC",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     }
+    /* flag the collective as complete */
+    modex->active = false;
 }
 
 void orte_grpcomm_base_store_modex(opal_buffer_t *rbuf, void *cbdata)
@@ -397,6 +409,7 @@ void orte_grpcomm_base_store_modex(opal_buffer_t *rbuf, void *cbdata)
     orte_process_name_t proc_name;
     int rc=ORTE_SUCCESS;
     orte_grpcomm_collective_t *modex = (orte_grpcomm_collective_t*)cbdata;
+    char *rml_uri;
 
     OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base_framework.framework_output,
                          "%s STORING MODEX DATA",
@@ -411,6 +424,16 @@ void orte_grpcomm_base_store_modex(opal_buffer_t *rbuf, void *cbdata)
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_NAME_PRINT(&proc_name)));
         
+        if (ORTE_PROC_IS_NON_MPI) {
+            cnt = 1;
+            if (ORTE_SUCCESS != (rc = opal_dss.unpack(rbuf, &rml_uri, &cnt, OPAL_STRING))) {
+                ORTE_ERROR_LOG(rc);
+                goto cleanup;
+            }
+            orte_rml.set_contact_info(rml_uri);
+            free(rml_uri);
+        }
+
         /* update the modex database */
         if (ORTE_SUCCESS != (rc = orte_grpcomm_base_update_modex_entries(&proc_name, rbuf))) {
             ORTE_ERROR_LOG(rc);
@@ -422,8 +445,6 @@ void orte_grpcomm_base_store_modex(opal_buffer_t *rbuf, void *cbdata)
     }
 
  cleanup:
-    /* flag the modex as complete */
-    modex->active = false;
     /* cleanup */
     opal_list_remove_item(&orte_grpcomm_base.active_colls, &modex->super);
     /* execute user callback, if requested */
@@ -433,6 +454,8 @@ void orte_grpcomm_base_store_modex(opal_buffer_t *rbuf, void *cbdata)
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
         modex->cbfunc(NULL, modex->cbdata);
     }
+    /* flag the modex as complete */
+    modex->active = false;
 }
 
 

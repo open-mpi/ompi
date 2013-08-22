@@ -53,6 +53,7 @@ static char *orte_remote_tmpdir_base = NULL;
 int orte_register_params(void)
 {
     int id;
+    opal_output_stream_t lds;
 
     /* only go thru this once - mpirun calls it twice, which causes
      * any error messages to show up twice
@@ -66,14 +67,11 @@ int orte_register_params(void)
      * we use it below, and orterun and some other tools call this
      * function prior to calling orte_init
      */
-    {
-        opal_output_stream_t lds;
-        OBJ_CONSTRUCT(&lds, opal_output_stream_t);
-        lds.lds_want_stdout = true;
-        orte_clean_output = opal_output_open(&lds);
-        OBJ_DESTRUCT(&lds);
-    }
-
+    OBJ_CONSTRUCT(&lds, opal_output_stream_t);
+    lds.lds_want_stdout = true;
+    orte_clean_output = opal_output_open(&lds);
+    OBJ_DESTRUCT(&lds);
+    
     orte_help_want_aggregate = true;
     (void) mca_base_var_register ("orte", "orte", "base", "help_aggregate",
                                   "If orte_base_help_aggregate is true, duplicate help messages will be aggregated rather than displayed individually.  This can be helpful for parallel jobs that experience multiple identical failures; rather than print out the same help/failure message N times, display it once with a count of how many processes sent the same message.",
@@ -754,6 +752,6 @@ int orte_register_params(void)
                                   MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
                                   OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
                                   &orte_soft_locations);
-    
+
     return ORTE_SUCCESS;
 }

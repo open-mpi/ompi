@@ -104,35 +104,27 @@ static void write_handler(int fd, short event, void *cbdata);
 
 static int raw_init(void)
 {
-    int rc;
-
     OBJ_CONSTRUCT(&incoming_files, opal_list_t);
 
     /* start a recv to catch any files sent to me */
-    if (ORTE_SUCCESS != (rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
-                                                      ORTE_RML_TAG_FILEM_BASE,
-                                                      ORTE_RML_PERSISTENT,
-                                                      recv_files,
-                                                      NULL))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
+    orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
+                            ORTE_RML_TAG_FILEM_BASE,
+                            ORTE_RML_PERSISTENT,
+                            recv_files,
+                            NULL);
 
     /* if I'm the HNP, start a recv to catch acks sent to me */
     if (ORTE_PROC_IS_HNP) {
         OBJ_CONSTRUCT(&outbound_files, opal_list_t);
         OBJ_CONSTRUCT(&positioned_files, opal_list_t);
-        if (ORTE_SUCCESS != (rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
-                                                          ORTE_RML_TAG_FILEM_BASE_RESP,
-                                                          ORTE_RML_PERSISTENT,
-                                                          recv_ack,
-                                                          NULL))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
+        orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
+                                ORTE_RML_TAG_FILEM_BASE_RESP,
+                                ORTE_RML_PERSISTENT,
+                                recv_ack,
+                                NULL);
     }
 
-    return rc;
+    return ORTE_SUCCESS;
 }
 
 static int raw_finalize(void)
@@ -911,7 +903,7 @@ static void send_complete(char *file, int status)
         return;
     }
     if (0 > (rc = orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, buf,
-                                          ORTE_RML_TAG_FILEM_BASE_RESP, 0,
+                                          ORTE_RML_TAG_FILEM_BASE_RESP,
                                           orte_rml_send_callback, NULL))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(buf);

@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2011      Los Alamos National Security, LLC.
+ * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
  *                         All rights reserved. 
  * $COPYRIGHT$
  *
@@ -37,14 +37,59 @@ int orte_plm_proxy_init(void)
     return ORTE_SUCCESS;
 }
 
+typedef struct {
+    opal_object_t super;
+    orte_jobid_t jobid;
+    int32_t rc;
+    bool active;
+} orte_proxy_spawn_t;
+static void proxy_const(orte_proxy_spawn_t *p)
+{
+    p->jobid = ORTE_JOBID_INVALID;
+    p->rc = ORTE_ERROR;
+    p->active = false;
+}
+OBJ_CLASS_INSTANCE(orte_proxy_spawn_t, opal_object_t, proxy_const, NULL);
+
+static void proxy_spawn_response(int status, orte_process_name_t* sender,
+                                 opal_buffer_t* buffer, orte_rml_tag_t tag,
+                                 void* cbdata)
+{
+    int rc;
+    orte_std_cntr_t count;
+    orte_proxy_spawn_t *ps = (orte_proxy_spawn_t*)cbdata;
+
+    OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
+                         "%s plm:base:proxy recvd spawn response",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+
+    /* get the returned status code for the launch request */
+    count = 1;
+    if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &ps->rc, &count, OPAL_INT32))) {
+        ORTE_ERROR_LOG(rc);
+        ps->rc = rc;
+        goto done;
+    }
+
+    /* get the new jobid back in case the caller wants it */
+    count = 1;
+    if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &ps->jobid, &count, ORTE_JOBID))) {
+        ORTE_ERROR_LOG(rc);
+        ps->rc = rc;
+    }
+
+ done:
+    /* release the waiting call */
+    ps->active = false;
+}
+
 int orte_plm_proxy_spawn(orte_job_t *jdata)
 {
     opal_buffer_t *buf;
     orte_plm_cmd_flag_t command;
-    orte_std_cntr_t count;
     int rc;
-    int32_t retval;
-    
+    orte_proxy_spawn_t *ps;
+
     OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
                          "%s plm:base:proxy spawn child job",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
@@ -66,9 +111,18 @@ int orte_plm_proxy_spawn(orte_job_t *jdata)
         
     }
     
+    /* create the proxy spawn object */
+    ps = OBJ_NEW(orte_proxy_spawn_t);
+    /* post the recv the HNP's response */
+    orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
+                            ORTE_RML_TAG_PLM_PROXY,
+                            ORTE_RML_NON_PERSISTENT,
+                            proxy_spawn_response,
+                            ps);
+    
     /* tell the HNP to launch the job */
     if (0 > (rc = orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, buf,
-                                          ORTE_RML_TAG_PLM, 0,
+                                          ORTE_RML_TAG_PLM,
                                           orte_rml_send_callback, NULL))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(buf);
@@ -80,36 +134,15 @@ int orte_plm_proxy_spawn(orte_job_t *jdata)
                          "%s plm:base:proxy waiting for response",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
-    /* wait for the HNP's response */
-    buf = OBJ_NEW(opal_buffer_t);
-    if (0 > (rc = orte_rml.recv_buffer(ORTE_NAME_WILDCARD, buf, ORTE_RML_TAG_PLM_PROXY, 0))) {
-        ORTE_ERROR_LOG(rc);
-        OBJ_RELEASE(buf);
-        goto CLEANUP;
-    }
+    ps->active = true;
+    ORTE_WAIT_FOR_COMPLETION(ps->active);
 
-    /* get the returned status code for the launch request */
-    count = 1;
-    if (ORTE_SUCCESS != (rc = opal_dss.unpack(buf, &retval, &count, OPAL_INT32))) {
-        ORTE_ERROR_LOG(rc);
-        OBJ_RELEASE(buf);
-        goto CLEANUP;
-    }
+    /* return the values */
+    jdata->jobid = ps->jobid;
+    rc = ps->rc;
+    /* cleanup the memory */
+    OBJ_RELEASE(ps);
 
-    /* get the new jobid back in case the caller wants it */
-    count = 1;
-    if (ORTE_SUCCESS != (rc = opal_dss.unpack(buf, &(jdata->jobid), &count, ORTE_JOBID))) {
-        ORTE_ERROR_LOG(rc);
-        OBJ_RELEASE(buf);
-        goto CLEANUP;
-    }
-    OBJ_RELEASE(buf);
-
-    if (ORTE_SUCCESS != retval || ORTE_JOBID_INVALID == jdata->jobid) {
-        /* something went wrong on far end */
-        rc = ORTE_ERR_FAILED_TO_START;
-    }
-    
 CLEANUP:    
     return rc;
 }

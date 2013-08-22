@@ -88,6 +88,7 @@ typedef struct opal_if_t {
     char                if_name[IF_NAMESIZE];
     int                 if_index;
     uint16_t            if_kernel_index;
+    uint16_t            af_family;
     int                 if_flags;
     int                 if_speed;
     struct sockaddr_storage  if_addr;

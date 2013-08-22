@@ -330,13 +330,11 @@ orte_waitpid(pid_t wpid, int *status, int options)
             /* if we have pthreads and progress threads and we are the
                event thread, opal_condition_timedwait won't progress
                anything, so we need to do it. */
-#if OPAL_HAVE_POSIX_THREADS && ORTE_ENABLE_PROGRESS_THREADS
             if (opal_using_threads()) {
                 opal_mutex_unlock(&mutex);
                 opal_event_loop(orte_event_base, OPAL_EVLOOP_NONBLOCK);
                 opal_mutex_lock(&mutex);
             }
-#endif            
 	    do_waitall(0);
         }
 

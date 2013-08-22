@@ -178,12 +178,13 @@ error:
 static int rte_finalize(void)
 {
     int ret;
-    
+
     /* if I am a daemon, finalize using the default procedure */
     if (ORTE_PROC_IS_DAEMON) {
         if (ORTE_SUCCESS != (ret = orte_ess_base_orted_finalize())) {
             ORTE_ERROR_LOG(ret);
         }
+        return ret;
     } else if (ORTE_PROC_IS_TOOL) {
         /* otherwise, if I am a tool proc, use that procedure */
         if (ORTE_SUCCESS != (ret = orte_ess_base_tool_finalize())) {
@@ -191,19 +192,19 @@ static int rte_finalize(void)
         }
         /* as a tool, I didn't create a nidmap - so just return now */
         return ret;
-    } else {
-        /* otherwise, I must be an application process
-         * use the default procedure to finish
-         */
-        if (ORTE_SUCCESS != (ret = orte_ess_base_app_finalize())) {
-            ORTE_ERROR_LOG(ret);
-        }
     }
-    
+
+    /* otherwise, I must be an application process
+     * use the default procedure to finish
+     */
+    if (ORTE_SUCCESS != (ret = orte_ess_base_app_finalize())) {
+        ORTE_ERROR_LOG(ret);
+    }
+
     /* deconstruct the nidmap and jobmap arrays */
     orte_util_nidmap_finalize();
-    
-    return ret;    
+
+    return ORTE_SUCCESS;
 }
 
 static int env_set_name(void)
@@ -328,6 +329,7 @@ static int rte_ft_event(int state)
                 exit_status = ret;
                 goto cleanup;
             }
+            coll.active = true;
             ORTE_WAIT_FOR_COMPLETION(coll.active);
 
             if( orte_cr_flush_restart_files ) {
@@ -453,6 +455,7 @@ static int rte_ft_event(int state)
             exit_status = ret;
             goto cleanup;
         }
+        coll.active = true;
 	ORTE_WAIT_FOR_COMPLETION(coll.active);
 
         if( orte_cr_flush_restart_files ) {

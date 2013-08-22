@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2007-2011 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2007-2012 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2009      Sun Microsystems, Inc. All rights reserved.
  * Copyright (c) 2010-2011 Oak Ridge National Labs.  All rights reserved.
@@ -411,7 +411,7 @@ void orte_daemon_recv(int status, orte_process_name_t* sender,
                 }
             } else {
                 /* just deliver it to ourselves */
-                if ((ret = orte_rml.send_buffer_nb(ORTE_PROC_MY_NAME, relay_msg, target_tag, 0,
+                if ((ret = orte_rml.send_buffer_nb(ORTE_PROC_MY_NAME, relay_msg, target_tag,
                                                    orte_rml_send_callback, NULL)) < 0) {
                     ORTE_ERROR_LOG(ret);
                     OBJ_RELEASE(relay_msg);
@@ -498,7 +498,7 @@ void orte_daemon_recv(int status, orte_process_name_t* sender,
             goto CLEANUP;
         }
         /* return response */
-        if (0 > (ret = orte_rml.send_buffer_nb(sender, answer, ORTE_RML_TAG_TOOL, 0,
+        if (0 > (ret = orte_rml.send_buffer_nb(sender, answer, ORTE_RML_TAG_TOOL,
                                                orte_rml_send_callback, NULL))) {
             ORTE_ERROR_LOG(ret);
             OBJ_RELEASE(answer);
@@ -528,7 +528,7 @@ void orte_daemon_recv(int status, orte_process_name_t* sender,
             goto CLEANUP;
         }
             
-        if (0 > (ret = orte_rml.send_buffer_nb(sender, answer, ORTE_RML_TAG_TOOL, 0,
+        if (0 > (ret = orte_rml.send_buffer_nb(sender, answer, ORTE_RML_TAG_TOOL,
                                                orte_rml_send_callback, NULL))) {
             ORTE_ERROR_LOG(ret);
             OBJ_RELEASE(answer);
@@ -553,7 +553,7 @@ void orte_daemon_recv(int status, orte_process_name_t* sender,
                 OBJ_RELEASE(answer);
                 goto CLEANUP;
             }
-            if (0 > (ret = orte_rml.send_buffer_nb(sender, answer, ORTE_RML_TAG_TOOL, 0,
+            if (0 > (ret = orte_rml.send_buffer_nb(sender, answer, ORTE_RML_TAG_TOOL,
                                                    orte_rml_send_callback, NULL))) {
                 ORTE_ERROR_LOG(ret);
                 OBJ_RELEASE(answer);
@@ -626,7 +626,7 @@ void orte_daemon_recv(int status, orte_process_name_t* sender,
                     }
                 }
             }
-            if (0 > (ret = orte_rml.send_buffer_nb(sender, answer, ORTE_RML_TAG_TOOL, 0,
+            if (0 > (ret = orte_rml.send_buffer_nb(sender, answer, ORTE_RML_TAG_TOOL,
                                                    orte_rml_send_callback, NULL))) {
                 ORTE_ERROR_LOG(ret);
                 OBJ_RELEASE(answer);
@@ -652,7 +652,7 @@ void orte_daemon_recv(int status, orte_process_name_t* sender,
                 OBJ_RELEASE(answer);
                 goto CLEANUP;
             }
-            if (0 > (ret = orte_rml.send_buffer_nb(sender, answer, ORTE_RML_TAG_TOOL, 0,
+            if (0 > (ret = orte_rml.send_buffer_nb(sender, answer, ORTE_RML_TAG_TOOL,
                                                    orte_rml_send_callback, NULL))) {
                 ORTE_ERROR_LOG(ret);
                 OBJ_RELEASE(answer);
@@ -721,7 +721,7 @@ void orte_daemon_recv(int status, orte_process_name_t* sender,
                 }
             }
             /* send the info */
-            if (0 > (ret = orte_rml.send_buffer_nb(sender, answer, ORTE_RML_TAG_TOOL, 0,
+            if (0 > (ret = orte_rml.send_buffer_nb(sender, answer, ORTE_RML_TAG_TOOL,
                                                    orte_rml_send_callback, NULL))) {
                 ORTE_ERROR_LOG(ret);
                 OBJ_RELEASE(answer);
@@ -747,7 +747,7 @@ void orte_daemon_recv(int status, orte_process_name_t* sender,
                 OBJ_RELEASE(answer);
                 goto CLEANUP;
             }
-            if (0 > (ret = orte_rml.send_buffer_nb(sender, answer, ORTE_RML_TAG_TOOL, 0,
+            if (0 > (ret = orte_rml.send_buffer_nb(sender, answer, ORTE_RML_TAG_TOOL,
                                                    orte_rml_send_callback, NULL))) {
                 ORTE_ERROR_LOG(ret);
                 OBJ_RELEASE(answer);
@@ -830,7 +830,7 @@ void orte_daemon_recv(int status, orte_process_name_t* sender,
                 }
             }
             /* send the info */
-            if (0 > (ret = orte_rml.send_buffer_nb(sender, answer, ORTE_RML_TAG_TOOL, 0,
+            if (0 > (ret = orte_rml.send_buffer_nb(sender, answer, ORTE_RML_TAG_TOOL,
                                                    orte_rml_send_callback, NULL))) {
                 ORTE_ERROR_LOG(ret);
                 OBJ_RELEASE(answer);
@@ -913,7 +913,9 @@ void orte_daemon_recv(int status, orte_process_name_t* sender,
                             goto SEND_TOP_ANSWER;
                         }
                         /* the callback function will release relay_msg buffer */
-                        if (0 > orte_rml.send_buffer(&proc2, relay_msg, ORTE_RML_TAG_DAEMON, 0)) {
+                        if (0 > orte_rml.send_buffer_nb(&proc2, relay_msg,
+                                                        ORTE_RML_TAG_DAEMON,
+                                                        orte_rml_send_callback, NULL)) {
                             ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
                             OBJ_RELEASE(relay_msg);
                             ret = ORTE_ERR_COMM_FAILURE;
@@ -962,7 +964,9 @@ void orte_daemon_recv(int status, orte_process_name_t* sender,
                         goto SEND_TOP_ANSWER;
                     }
                     /* the callback function will release relay_msg buffer */
-                    if (0 > orte_rml.send_buffer(&proc2, relay_msg, ORTE_RML_TAG_DAEMON, 0)) {
+                    if (0 > orte_rml.send_buffer_nb(&proc2, relay_msg,
+                                                    ORTE_RML_TAG_DAEMON,
+                                                    orte_rml_send_callback, NULL)) {
                         ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
                         OBJ_RELEASE(relay_msg);
                         ret = ORTE_ERR_COMM_FAILURE;
@@ -1024,7 +1028,7 @@ void orte_daemon_recv(int status, orte_process_name_t* sender,
             ret = ORTE_ERR_COMM_FAILURE;
             break;
         }
-        if (0 > (ret = orte_rml.send_buffer_nb(return_addr, answer, ORTE_RML_TAG_TOOL, 0,
+        if (0 > (ret = orte_rml.send_buffer_nb(return_addr, answer, ORTE_RML_TAG_TOOL,
                                                orte_rml_send_callback, NULL))) {
             ORTE_ERROR_LOG(ret);
             OBJ_RELEASE(answer);

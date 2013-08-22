@@ -63,6 +63,7 @@
 #include "opal/util/if.h"
 #include "opal/util/output.h"
 #include "opal/mca/if/if.h"
+#include "opal/mca/if/base/base.h"
 
 static int if_linux_ipv6_open(void);
 
@@ -92,7 +93,7 @@ opal_if_base_component_t mca_if_linux_ipv6_component = {
 /* configure using getifaddrs(3) */
 static int if_linux_ipv6_open(void)
 {
-#if OPAL_WANT_IPV6
+#if OPAL_ENABLE_IPV6
     FILE *f;
     if ((f = fopen("/proc/net/if_inet6", "r"))) {
         char ifname[IF_NAMESIZE];
@@ -110,8 +111,21 @@ static int if_linux_ipv6_open(void)
                       &idx, &pfxlen, &scope, &dadstat, ifname) != EOF) {
             opal_if_t *intf;
 
-            /* we don't want any other scope than global */
-            if (scope != 0) {
+            opal_output_verbose(1, opal_if_base_framework.framework_output,
+                                "found interface %2x%2x:%2x%2x:%2x%2x:%2x%2x:%2x%2x:%2x%2x:%2x%2x:%2x%2x scope %x\n",
+                                addrbyte[0], addrbyte[1], addrbyte[2], addrbyte[3],
+                                addrbyte[4], addrbyte[5], addrbyte[6], addrbyte[7],
+                                addrbyte[8], addrbyte[9], addrbyte[10], addrbyte[11],
+                                addrbyte[12], addrbyte[13], addrbyte[14], addrbyte[15], scope);
+
+            /* we don't want any other scope less than link-local */
+            if (scope < 0x20) {
+                opal_output_verbose(1, opal_if_base_framework.framework_output,
+                                    "skipping interface %2x%2x:%2x%2x:%2x%2x:%2x%2x:%2x%2x:%2x%2x:%2x%2x:%2x%2x scope %x\n",
+                                    addrbyte[0], addrbyte[1], addrbyte[2], addrbyte[3],
+                                    addrbyte[4], addrbyte[5], addrbyte[6], addrbyte[7],
+                                    addrbyte[8], addrbyte[9], addrbyte[10], addrbyte[11],
+                                    addrbyte[12], addrbyte[13], addrbyte[14], addrbyte[15], scope);
                 continue;
             }
 
@@ -122,7 +136,8 @@ static int if_linux_ipv6_open(void)
                 fclose(f);
                 return OPAL_ERR_OUT_OF_RESOURCE;
             }
-        
+            intf->af_family = AF_INET6;
+
             for (iter = 0; iter < 16; iter++) {
                 a6.s6_addr[iter] = addrbyte[iter];
             }
@@ -144,10 +159,16 @@ static int if_linux_ipv6_open(void)
             /* copy new interface information to heap and append
                to list */
             opal_list_append(&opal_if_list, &(intf->super));
+            opal_output_verbose(1, opal_if_base_framework.framework_output,
+                                "added interface %2x%2x:%2x%2x:%2x%2x:%2x%2x:%2x%2x:%2x%2x:%2x%2x:%2x%2x\n",
+                                addrbyte[0], addrbyte[1], addrbyte[2], addrbyte[3],
+                                addrbyte[4], addrbyte[5], addrbyte[6], addrbyte[7],
+                                addrbyte[8], addrbyte[9], addrbyte[10], addrbyte[11],
+                                addrbyte[12], addrbyte[13], addrbyte[14], addrbyte[15]);
         } /* of while */
         fclose(f);
     }
-#endif  /* OPAL_WANT_IPV6 */
+#endif  /* OPAL_ENABLE_IPV6 */
 
     return OPAL_SUCCESS;
 }

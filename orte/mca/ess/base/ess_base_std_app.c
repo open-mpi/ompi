@@ -44,6 +44,7 @@
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/dfs/base/base.h"
 #include "orte/mca/grpcomm/base/base.h"
+#include "orte/mca/oob/base/base.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/odls/odls_types.h"
 #include "orte/mca/plm/plm.h"
@@ -109,6 +110,19 @@ int orte_ess_base_app_setup(void)
     }
 
     /* Setup the communication infrastructure */
+    /*
+     * OOB Layer
+     */
+    if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_oob_base_framework, 0))) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_oob_base_open";
+        goto error;
+    }
+    if (ORTE_SUCCESS != (ret = orte_oob_base_select())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_oob_base_select";
+        goto error;
+    }
     
     /* Runtime Messaging Layer */
     if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_rml_base_framework, 0))) {
@@ -274,12 +288,10 @@ int orte_ess_base_app_setup(void)
     }
 
     /* if we are an ORTE app - and not an MPI app - then
-     * we need to barrier here. MPI_Init has its own barrier,
-     * so we don't need to do two of them. However, if we
-     * don't do a barrier at all, then one process could
-     * finalize before another one called orte_init. This
-     * causes ORTE to believe that the proc abnormally
-     * terminated
+     * we need to exchange our connection info here.
+     * MPI_Init has its own modex, so we don't need to do
+     * two of them. However, if we don't do a modex at all,
+     * then processes have no way to communicate
      *
      * NOTE: only do this when the process originally launches.
      * Cannot do this on a restart as the rest of the processes
@@ -288,12 +300,13 @@ int orte_ess_base_app_setup(void)
     if (ORTE_PROC_IS_NON_MPI && !orte_do_not_barrier) {
         orte_grpcomm_collective_t coll;
         OBJ_CONSTRUCT(&coll, orte_grpcomm_collective_t);
-        coll.id = orte_process_info.peer_init_barrier;
-        if (ORTE_SUCCESS != (ret = orte_grpcomm.barrier(&coll))) {
+        coll.id = orte_process_info.peer_modex;
+        if (ORTE_SUCCESS != (ret = orte_grpcomm.modex(&coll))) {
             ORTE_ERROR_LOG(ret);
-            error = "orte barrier";
+            error = "orte modex";
             goto error;
         }
+        coll.active = true;
         ORTE_WAIT_FOR_COMPLETION(coll.active);
         OBJ_DESTRUCT(&coll);
     }
@@ -311,7 +324,7 @@ error:
 int orte_ess_base_app_finalize(void)
 {
     orte_cr_finalize();
-    
+
 #if OPAL_ENABLE_FT_CR == 1
     (void) mca_base_framework_close(&orte_snapc_base_framework);
     (void) mca_base_framework_close(&orte_sstore_base_framework);
@@ -327,7 +340,8 @@ int orte_ess_base_app_finalize(void)
     (void) mca_base_framework_close(&orte_dfs_base_framework);
     (void) mca_base_framework_close(&orte_routed_base_framework);
     (void) mca_base_framework_close(&orte_rml_base_framework);
-    
+    (void) mca_base_framework_close(&orte_oob_base_framework);
+
     orte_session_dir_finalize(ORTE_PROC_MY_NAME);
         
     return ORTE_SUCCESS;    
@@ -359,21 +373,21 @@ int orte_ess_base_app_finalize(void)
  * to prevent the abort file from being created. This allows the
  * session directory tree to cleanly be eliminated.
  */
-static bool sync_waiting = false;
-
 static void report_sync(int status, orte_process_name_t* sender,
                         opal_buffer_t *buffer,
                         orte_rml_tag_t tag, void *cbdata)
 {
+    bool *sync_waiting = (bool*)cbdata;
     /* flag as complete */
-    sync_waiting = false;
+    *sync_waiting = false;
 }
 
 void orte_ess_base_app_abort(int status, bool report)
 {
     orte_daemon_cmd_flag_t cmd=ORTE_DAEMON_ABORT_CALLED;
     opal_buffer_t *buf;
-    
+    bool sync_waiting = true;
+
     /* Exit - do NOT do a normal finalize as this will very likely
      * hang the process. We are aborting due to an abnormal condition
      * that precludes normal cleanup 
@@ -390,7 +404,7 @@ void orte_ess_base_app_abort(int status, bool report)
     if (report) {
         buf = OBJ_NEW(opal_buffer_t);
         opal_dss.pack(buf, &cmd, 1, ORTE_DAEMON_CMD);
-        orte_rml.send_buffer_nb(ORTE_PROC_MY_DAEMON, buf, ORTE_RML_TAG_DAEMON, 0, orte_rml_send_callback, NULL);
+        orte_rml.send_buffer_nb(ORTE_PROC_MY_DAEMON, buf, ORTE_RML_TAG_DAEMON, orte_rml_send_callback, NULL);
         OPAL_OUTPUT_VERBOSE((5, orte_debug_output,
                              "%s orte_ess_app_abort: sent abort msg to %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
@@ -400,10 +414,8 @@ void orte_ess_base_app_abort(int status, bool report)
          * process exiting
          */
         sync_waiting = true;
-        if (ORTE_SUCCESS != orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_ABORT,
-                                                    ORTE_RML_NON_PERSISTENT, report_sync, NULL)) {
-            exit(status);
-        }
+        orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_ABORT,
+                                ORTE_RML_NON_PERSISTENT, report_sync, &sync_waiting);
         ORTE_WAIT_FOR_COMPLETION(sync_waiting);
     }
     

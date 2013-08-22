@@ -189,9 +189,7 @@ bool orte_map_stddiag_to_stderr = false;
 int orte_max_vm_size = -1;
 
 /* progress thread */
-#if ORTE_ENABLE_PROGRESS_THREADS
 opal_thread_t orte_progress_thread;
-#endif
 
 /* global nidmap/pidmap for daemons to give to apps */
 opal_byte_object_t orte_nidmap;

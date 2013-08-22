@@ -173,7 +173,7 @@ static int modex(orte_grpcomm_collective_t *coll)
 {
     int *local_ranks, local_rank_count;
     opal_hwloc_locality_t locality;
-    const char *cpuset, *rmluri;
+    const char *cpuset;
     orte_process_name_t name;
     orte_vpid_t v;
     bool local;

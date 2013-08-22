@@ -102,12 +102,11 @@ OMPI_DECLSPEC int ompi_rte_db_remove(const ompi_process_name_t *nm,
 
 /* Communications */
 typedef orte_rml_tag_t ompi_rml_tag_t;
-#define ompi_rte_send_buffer(a, b, c, d) orte_rml.send_buffer(a, b, c, d)
-#define ompi_rte_send_buffer_nb(a, b, c, d, e, f) orte_rml.send_buffer_nb(a, b, c, d, e, f)
-#define ompi_rte_recv_buffer(a, b, c, d) orte_rml.recv_buffer(a, b, c, d)
+#define ompi_rte_send_buffer_nb(a, b, c, d, e) orte_rml.send_buffer_nb(a, b, c, d, e)
 #define ompi_rte_recv_buffer_nb(a, b, c, d, e) orte_rml.recv_buffer_nb(a, b, c, d, e)
 #define ompi_rte_recv_cancel(a, b) orte_rml.recv_cancel(a, b)
 #define ompi_rte_parse_uris(a, b, c) orte_rml_base_parse_uris(a, b, c)
+#define ompi_rte_send_cbfunc orte_rml_send_callback
 
 /* Communication tags */
 /* carry over the INVALID def */
@@ -115,7 +114,8 @@ typedef orte_rml_tag_t ompi_rml_tag_t;
 /* define a starting point to avoid conflicts */
 #define OMPI_RML_TAG_BASE    ORTE_RML_TAG_MAX
 
-#define OMPI_RML_PERSISTENT  ORTE_RML_PERSISTENT
+#define OMPI_RML_PERSISTENT      ORTE_RML_PERSISTENT
+#define OMPI_RML_NON_PERSISTENT  ORTE_RML_NON_PERSISTENT
 
 END_C_DECLS
 
