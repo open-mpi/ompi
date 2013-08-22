@@ -554,33 +554,33 @@ int orte_util_decode_daemon_nodemap(opal_byte_object_t *bo)
                 free(alias);
             }
         }
-    }
-    /* unpack the oversubscribed flag */
-    n=1;
-    if (ORTE_SUCCESS != (rc = opal_dss.unpack(&buf, &oversub, &n, OPAL_UINT8))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-    if (NULL == (dptr = (orte_proc_t*)opal_pointer_array_get_item(daemons->procs, vpid))) {
-        dptr = OBJ_NEW(orte_proc_t);
-        dptr->name.jobid = ORTE_PROC_MY_NAME->jobid;
-        dptr->name.vpid = vpid;
-        opal_pointer_array_set_item(daemons->procs, vpid, dptr);
-    }
-    if (NULL != node->daemon) {
-        OBJ_RELEASE(node->daemon);
-    }
-    OBJ_RETAIN(dptr);
-    node->daemon = dptr;
-    if (NULL != dptr->node) {
-        OBJ_RELEASE(dptr->node);
-    }
-    OBJ_RETAIN(node);
-    dptr->node = node;
-    if (0 == oversub) {
-        node->oversubscribed = false;
-    } else {
-        node->oversubscribed = true;
+        /* unpack the oversubscribed flag */
+        n=1;
+        if (ORTE_SUCCESS != (rc = opal_dss.unpack(&buf, &oversub, &n, OPAL_UINT8))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        if (NULL == (dptr = (orte_proc_t*)opal_pointer_array_get_item(daemons->procs, vpid))) {
+            dptr = OBJ_NEW(orte_proc_t);
+            dptr->name.jobid = ORTE_PROC_MY_NAME->jobid;
+            dptr->name.vpid = vpid;
+            opal_pointer_array_set_item(daemons->procs, vpid, dptr);
+        }
+        if (NULL != node->daemon) {
+            OBJ_RELEASE(node->daemon);
+        }
+        OBJ_RETAIN(dptr);
+        node->daemon = dptr;
+        if (NULL != dptr->node) {
+            OBJ_RELEASE(dptr->node);
+        }
+        OBJ_RETAIN(node);
+        dptr->node = node;
+        if (0 == oversub) {
+            node->oversubscribed = false;
+        } else {
+            node->oversubscribed = true;
+        }
     }
     if (ORTE_ERR_UNPACK_READ_PAST_END_OF_BUFFER != rc) {
         ORTE_ERROR_LOG(rc);
