@@ -7,6 +7,7 @@
  *                         reserved.
  * Copyright (c) 2012      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
+ * Copyright (c) 2013      NVIDIA Corporation.  All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -355,7 +356,7 @@ static int xoob_send_connect_data(mca_btl_base_endpoint_t* endpoint,
 
     /* send to remote endpoint */
     rc = ompi_rte_send_buffer_nb(&endpoint->endpoint_proc->proc_ompi->proc_name,
-            buffer, OMPI_RML_TAG_XOPENIB, 0,
+            buffer, OMPI_RML_TAG_XOPENIB,
             xoob_rml_send_cb, NULL);
     if (OMPI_SUCCESS != rc) {
         OMPI_ERROR_LOG(rc);
@@ -1003,8 +1004,6 @@ static void xoob_rml_recv_cb(int status, ompi_process_name_t* process_name,
 static int xoob_component_query(mca_btl_openib_module_t *openib_btl,
         ompi_btl_openib_connect_base_module_t **cpc)
 {
-    int rc;
-
     if (mca_btl_openib_component.num_xrc_qps <= 0) {
         opal_output_verbose(5, ompi_btl_base_framework.framework_output,
                             "openib BTL: xoob CPC only supported with XRC receive queues; skipped on %s:%d",
@@ -1024,17 +1023,11 @@ static int xoob_component_query(mca_btl_openib_module_t *openib_btl,
        ensure to only post it *once*, because another btl may have
        come in before this and already posted it. */
     if (!rml_recv_posted) {
-        rc = ompi_rte_recv_buffer_nb(OMPI_NAME_WILDCARD,
-                                     OMPI_RML_TAG_XOPENIB,
-                                     OMPI_RML_PERSISTENT,
-                                     xoob_rml_recv_cb,
-                                     NULL);
-        if (OMPI_SUCCESS != rc) {
-            opal_output_verbose(5, ompi_btl_base_framework.framework_output,
-                                "openib BTL: xoob CPC system error %d (%s)",
-                                rc, opal_strerror(rc));
-            return rc;
-        }
+        ompi_rte_recv_buffer_nb(OMPI_NAME_WILDCARD,
+                                OMPI_RML_TAG_XOPENIB,
+                                OMPI_RML_PERSISTENT,
+                                xoob_rml_recv_cb,
+                                NULL);
         rml_recv_posted = true;
     }
 
