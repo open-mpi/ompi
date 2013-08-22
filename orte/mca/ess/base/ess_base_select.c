@@ -21,13 +21,9 @@
 #include "orte_config.h"
 #include "orte/constants.h"
 
-#include "opal/class/opal_list.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_component_repository.h"
-
-#include "orte/util/nidmap.h"
-#include "orte/runtime/orte_globals.h"
 
 #include "orte/mca/ess/base/base.h"
 

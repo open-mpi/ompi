@@ -79,6 +79,7 @@ static void opal_if_construct(opal_if_t *obj)
     memset(obj->if_name, 0, sizeof(obj->if_name));
     obj->if_index = -1;
     obj->if_kernel_index = (uint16_t) -1;
+    obj->af_family = PF_UNSPEC;
     obj->if_flags = 0;
     obj->if_speed = 0;
     memset(&obj->if_addr, 0, sizeof(obj->if_addr));

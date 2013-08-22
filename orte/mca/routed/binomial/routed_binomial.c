@@ -85,7 +85,6 @@ static orte_process_name_t      *lifeline=NULL;
 static orte_process_name_t      local_lifeline;
 static int                      num_children;
 static opal_list_t              my_children;
-static bool                     ack_waiting = false;
 static bool                     hnp_direct=true;
 
 static int init(void)
@@ -108,9 +107,7 @@ static int finalize(void)
     /* if I am an application process, indicate that I am
         * truly finalizing prior to departure
         */
-    if (!ORTE_PROC_IS_HNP &&
-        !ORTE_PROC_IS_DAEMON &&
-        !ORTE_PROC_IS_TOOL) {
+    if (ORTE_PROC_IS_APP) {
         if (ORTE_SUCCESS != (rc = orte_routed_base_register_sync(false))) {
             ORTE_ERROR_LOG(rc);
             return rc;
@@ -445,12 +442,14 @@ static orte_process_name_t get_route(orte_process_name_t *target)
 }
 
 static void recv_ack(int status, orte_process_name_t* sender,
-                     opal_buffer_t* buffer, orte_rml_tag_t tag,
-                     void* cbdata)
+                     opal_buffer_t *buffer,
+                     orte_rml_tag_t tag, void *cbdata)
 {
-    ack_waiting = false;
-}
+    bool *ack_waiting = (bool*)cbdata;
 
+    /* flag as complete */
+    *ack_waiting = false;
+}
 
 static int init_routes(orte_jobid_t job, opal_buffer_t *ndat)
 {
@@ -464,6 +463,7 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndat)
      * for each proc
      */
     int rc;
+    bool ack_waiting;
 
     /* if I am a tool, then I stand alone - there is nothing to do */
     if (ORTE_PROC_IS_TOOL) {
@@ -492,10 +492,7 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndat)
                 return ORTE_ERR_FATAL;
             }
             /* set the contact info into the hash table */
-            if (ORTE_SUCCESS != (rc = orte_rml.set_contact_info(orte_process_info.my_hnp_uri))) {
-                ORTE_ERROR_LOG(rc);
-                return(rc);
-            }
+            orte_rml.set_contact_info(orte_process_info.my_hnp_uri);
             
             /* extract the hnp name and store it */
             if (ORTE_SUCCESS != (rc = orte_rml_base_parse_uris(orte_process_info.my_hnp_uri,
@@ -578,7 +575,7 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndat)
          */
         if (NULL != ndat) {
             int rc;
-            opal_buffer_t xfer;
+            opal_buffer_t *xfer;
             orte_rml_cmd_flag_t cmd=ORTE_RML_UPDATE_CMD;
 
             OPAL_OUTPUT_VERBOSE((1, orte_routed_base_framework.framework_output,
@@ -597,30 +594,31 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndat)
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_HNP)));
                 
                 /* prep the buffer for transmission to the HNP */
-                OBJ_CONSTRUCT(&xfer, opal_buffer_t);
-                opal_dss.pack(&xfer, &cmd, 1, ORTE_RML_CMD);
-                opal_dss.copy_payload(&xfer, ndat);
+                xfer = OBJ_NEW(opal_buffer_t);
+                opal_dss.pack(xfer, &cmd, 1, ORTE_RML_CMD);
+                opal_dss.copy_payload(xfer, ndat);
 
                 /* save any new connections for use in subsequent connect_accept calls */
                 orte_routed_base_update_hnps(ndat);
 
-                if (0 > (rc = orte_rml.send_buffer(ORTE_PROC_MY_HNP, &xfer,
-                                                   ORTE_RML_TAG_RML_INFO_UPDATE, 0))) {
+                if (0 > (rc = orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, xfer,
+                                                      ORTE_RML_TAG_RML_INFO_UPDATE,
+                                                      orte_rml_send_callback, NULL))) {
                     ORTE_ERROR_LOG(rc);
-                    OBJ_DESTRUCT(&xfer);
+                    OBJ_RELEASE(xfer);
                     return rc;
                 }
-                OBJ_DESTRUCT(&xfer);
 
                 /* wait right here until the HNP acks the update to ensure that
                  * any subsequent messaging can succeed
                  */
                 ack_waiting = true;
-                rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_UPDATE_ROUTE_ACK,
-                                             ORTE_RML_NON_PERSISTENT, recv_ack, NULL);
-                
+                orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
+                                        ORTE_RML_TAG_UPDATE_ROUTE_ACK,
+                                        ORTE_RML_NON_PERSISTENT,
+                                        recv_ack, &ack_waiting);
                 ORTE_WAIT_FOR_COMPLETION(ack_waiting);
-                
+
                 OPAL_OUTPUT_VERBOSE((1, orte_routed_base_framework.framework_output,
                                      "%s routed_binomial_init_routes: ack recvd",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
@@ -671,10 +669,7 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndat)
          * the connection, but just tells the RML how to reach the daemon
          * if/when we attempt to send to it
          */
-        if (ORTE_SUCCESS != (rc = orte_rml.set_contact_info(orte_process_info.my_daemon_uri))) {
-            ORTE_ERROR_LOG(rc);
-            return(rc);
-        }
+        orte_rml.set_contact_info(orte_process_info.my_daemon_uri);
         /* extract the daemon's name so we can update the routing table */
         if (ORTE_SUCCESS != (rc = orte_rml_base_parse_uris(orte_process_info.my_daemon_uri,
                                                            ORTE_PROC_MY_DAEMON, NULL))) {

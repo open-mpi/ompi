@@ -191,14 +191,8 @@ int opal_ifindextokindex(int if_index)
 int opal_ifaddrtoname(const char* if_addr, char* if_name, int length)
 {
     opal_if_t* intf;
-#if OPAL_WANT_IPV6
     int error;
     struct addrinfo hints, *res = NULL, *r;
-#else
-    int i;
-    in_addr_t inaddr;
-    struct hostent *h;
-#endif
 
     /* if the user asked us not to resolve interfaces, then just return */
     if (opal_if_do_not_resolve) {
@@ -212,7 +206,6 @@ int opal_ifaddrtoname(const char* if_addr, char* if_name, int length)
         return OPAL_ERROR;
     }
 
-#if OPAL_WANT_IPV6
     memset(&hints, 0, sizeof(hints));
     hints.ai_family = PF_UNSPEC;
     hints.ai_socktype = SOCK_STREAM;
@@ -241,36 +234,23 @@ int opal_ifaddrtoname(const char* if_addr, char* if_name, int length)
                     strncpy(if_name, intf->if_name, length);
                     return OPAL_SUCCESS;
                 }
-            } else {
+            }
+#if OPAL_ENABLE_IPV6
+            else {
                 if (IN6_ARE_ADDR_EQUAL(&((struct sockaddr_in6*) &intf->if_addr)->sin6_addr,
                     &((struct sockaddr_in6*) r->ai_addr)->sin6_addr)) {
                     strncpy(if_name, intf->if_name, length);
                     return OPAL_SUCCESS;
                 }
             }
+#endif
         }
     }
     if (NULL != res) {
         freeaddrinfo (res);
     }
-#else
-    h = gethostbyname(if_addr);
-    if (0 == h) {
-        return OPAL_ERR_NOT_FOUND;
-    }
 
-    for (i=0; NULL != h->h_addr_list[i]; i++) {
-        memcpy(&inaddr, h->h_addr_list[i], sizeof(inaddr));
-        for (intf =  (opal_if_t*)opal_list_get_first(&opal_if_list);
-             intf != (opal_if_t*)opal_list_get_end(&opal_if_list);
-             intf =  (opal_if_t*)opal_list_get_next(intf)) {
-            if (((struct sockaddr_in*) &intf->if_addr)->sin_addr.s_addr == inaddr) {
-                strncpy(if_name, intf->if_name, length);
-                return OPAL_SUCCESS;
-            }
-        }
-    }
-#endif
+    /* if we get here, it wasn't found */
     return OPAL_ERR_NOT_FOUND;
 }
 
@@ -284,6 +264,7 @@ int16_t opal_ifaddrtokindex(const char* if_addr)
     opal_if_t* intf;
     int error;
     struct addrinfo hints, *res = NULL, *r;
+    size_t len;
 
     if (OPAL_SUCCESS != mca_base_framework_open(&opal_if_base_framework, 0)) {
         return OPAL_ERROR;
@@ -306,18 +287,21 @@ int16_t opal_ifaddrtokindex(const char* if_addr)
             intf != (opal_if_t*)opal_list_get_end(&opal_if_list);
             intf =  (opal_if_t*)opal_list_get_next(intf)) {
             
-            if (AF_INET == r->ai_family) {
+            if (AF_INET == r->ai_family && AF_INET == intf->af_family) {
                 struct sockaddr_in ipv4;
-
-                memcpy (&ipv4, r->ai_addr, r->ai_addrlen);
+                len = (r->ai_addrlen < sizeof(struct sockaddr_in)) ? r->ai_addrlen : sizeof(struct sockaddr_in);
+                memcpy(&ipv4, r->ai_addr, len);
                 if (opal_net_samenetwork((struct sockaddr*)&ipv4, (struct sockaddr*)&intf->if_addr, intf->if_mask)) {
                     return intf->if_kernel_index;
                 }
             }
-#if OPAL_WANT_IPV6
-            else {
-                if (opal_net_samenetwork((struct sockaddr*)&((struct sockaddr_in6*)&intf->if_addr)->sin6_addr,
-                                         (struct sockaddr*)&((struct sockaddr_in6*) r->ai_addr)->sin6_addr, intf->if_mask)) {
+#if OPAL_ENABLE_IPV6
+            else if (AF_INET6 == r->ai_family && AF_INET6 == intf->af_family) {
+                struct sockaddr_in6 ipv6;
+                len = (r->ai_addrlen < sizeof(struct sockaddr_in6)) ? r->ai_addrlen : sizeof(struct sockaddr_in6);
+                memcpy(&ipv6, r->ai_addr, len);
+                if (opal_net_samenetwork((struct sockaddr*)((struct sockaddr_in6*)&intf->if_addr),
+                                         (struct sockaddr*)&ipv6, intf->if_mask)) {
                     return intf->if_kernel_index;
                 }
             }
@@ -566,7 +550,7 @@ int opal_ifkindextoname(int if_kindex, char* if_name, int length)
 bool
 opal_ifislocal(const char *hostname)
 {
-#if OPAL_WANT_IPV6
+#if OPAL_ENABLE_IPV6
     char addrname[NI_MAXHOST]; /* should be larger than ADDRLEN, but I think
                                   they really mean IFNAMESIZE */
 #else

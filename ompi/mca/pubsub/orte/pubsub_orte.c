@@ -10,8 +10,9 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2012      Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2012-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
+ * Copyright (c) 2013      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -40,6 +41,7 @@
 #include "orte/runtime/orte_data_server.h"
 
 #include "ompi/info/info.h"
+#include "ompi/mca/rte/rte.h"
 
 #include "ompi/mca/pubsub/base/base.h"
 #include "pubsub_orte.h"
@@ -129,9 +131,10 @@ static int publish ( char *service_name, ompi_info_t *info, char *port_name )
     int rc, ret, flag;
     bool global_scope = false;
     orte_process_name_t *info_host;
-    opal_buffer_t buf;
+    opal_buffer_t *buf;
     orte_data_server_cmd_t cmd=ORTE_DATA_SERVER_PUBLISH;
     orte_std_cntr_t cnt;
+    orte_rml_recv_cb_t xfer;
     bool unique=false;
 
     ompi_info_get_bool(info, "ompi_global_scope", &global_scope, &flag);
@@ -180,54 +183,56 @@ static int publish ( char *service_name, ompi_info_t *info, char *port_name )
     }
 
     /* construct the buffer */
-    OBJ_CONSTRUCT(&buf, opal_buffer_t);
+    buf = OBJ_NEW(opal_buffer_t);
     
     /* pack the publish command */
-    if (OPAL_SUCCESS != (rc = opal_dss.pack(&buf, &cmd, 1, ORTE_DATA_SERVER_CMD))) {
+    if (OPAL_SUCCESS != (rc = opal_dss.pack(buf, &cmd, 1, ORTE_DATA_SERVER_CMD))) {
         ORTE_ERROR_LOG(rc);
         goto CLEANUP;
     }
     
     /* pack the service name */
-    if (OPAL_SUCCESS != (rc = opal_dss.pack(&buf, &service_name, 1, OPAL_STRING))) {
+    if (OPAL_SUCCESS != (rc = opal_dss.pack(buf, &service_name, 1, OPAL_STRING))) {
         ORTE_ERROR_LOG(rc);
         goto CLEANUP;
     }
     
     /* pack the port name */
-    if (OPAL_SUCCESS != (rc = opal_dss.pack(&buf, &port_name, 1, OPAL_STRING))) {
+    if (OPAL_SUCCESS != (rc = opal_dss.pack(buf, &port_name, 1, OPAL_STRING))) {
         ORTE_ERROR_LOG(rc);
         goto CLEANUP;
     }
 
     /* pack the uniqueness flag */
-    if (OPAL_SUCCESS != (rc = opal_dss.pack(&buf, &unique, 1, OPAL_BOOL))) {
+    if (OPAL_SUCCESS != (rc = opal_dss.pack(buf, &unique, 1, OPAL_BOOL))) {
         ORTE_ERROR_LOG(rc);
         goto CLEANUP;
     }
     
     /* send the data */
-    if (0 > (rc = orte_rml.send_buffer(info_host, &buf, ORTE_RML_TAG_DATA_SERVER, 0))) {
+    if (0 > (rc = orte_rml.send_buffer_nb(info_host, buf,
+                                          ORTE_RML_TAG_DATA_SERVER,
+                                          orte_rml_send_callback, NULL))) {
         ORTE_ERROR_LOG(rc);
         goto CLEANUP;
     }
-    OBJ_DESTRUCT(&buf);
 
     /* get the answer */
-    OBJ_CONSTRUCT(&buf, opal_buffer_t);
-    if (0 > (rc = orte_rml.recv_buffer(ORTE_NAME_WILDCARD, &buf, ORTE_RML_TAG_DATA_CLIENT, 0))) {
-        ORTE_ERROR_LOG(rc);
-        goto CLEANUP;
-    }
-    
+    OBJ_CONSTRUCT(&xfer, orte_rml_recv_cb_t);
+    orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
+                            ORTE_RML_TAG_DATA_CLIENT,
+                            ORTE_RML_NON_PERSISTENT,
+                            orte_rml_recv_callback, &xfer);
+    xfer.active = true;
+    OMPI_WAIT_FOR_COMPLETION(xfer.active);
+
     /* unpack the result */
     cnt = 1;
-    if (OPAL_SUCCESS != (rc = opal_dss.unpack(&buf, &ret, &cnt, OPAL_INT))) {
+    if (OPAL_SUCCESS != (rc = opal_dss.unpack(&xfer.data, &ret, &cnt, OPAL_INT))) {
         ORTE_ERROR_LOG(rc);
-        goto CLEANUP;
     }
     rc = ret;
-    
+    OBJ_DESTRUCT(&xfer);
     
 CLEANUP:
     OBJ_DESTRUCT(&buf);
@@ -240,7 +245,7 @@ enum { NONE, LOCAL, GLOBAL };
 static char* lookup ( char *service_name, ompi_info_t *info )
 {
     orte_process_name_t *info_host;
-    opal_buffer_t buf;
+    opal_buffer_t *buf;
     orte_data_server_cmd_t cmd=ORTE_DATA_SERVER_LOOKUP;
     orte_std_cntr_t cnt=0;
     char *port_name=NULL;
@@ -248,6 +253,7 @@ static char* lookup ( char *service_name, ompi_info_t *info )
     char value[256], **tokens, *ptr;
     int lookup[2] = { GLOBAL, LOCAL };
     size_t num_tokens;
+    orte_rml_recv_cb_t xfer;
 
     /* Look in the MPI_Info (ompi_info_t*) for the key
      * "ompi_lookup_order".  Acceptable values are:
@@ -368,37 +374,40 @@ static char* lookup ( char *service_name, ompi_info_t *info )
         
         /* go look it up */
         /* construct the buffer */
-        OBJ_CONSTRUCT(&buf, opal_buffer_t);
+        buf = OBJ_NEW(opal_buffer_t);
         
         /* pack the lookup command */
-        if (OPAL_SUCCESS != (ret = opal_dss.pack(&buf, &cmd, 1, ORTE_DATA_SERVER_CMD))) {
+        if (OPAL_SUCCESS != (ret = opal_dss.pack(buf, &cmd, 1, ORTE_DATA_SERVER_CMD))) {
             ORTE_ERROR_LOG(ret);
             goto CLEANUP;
         }
         
         /* pack the service name */
-        if (OPAL_SUCCESS != (ret = opal_dss.pack(&buf, &service_name, 1, OPAL_STRING))) {
+        if (OPAL_SUCCESS != (ret = opal_dss.pack(buf, &service_name, 1, OPAL_STRING))) {
             ORTE_ERROR_LOG(ret);
             goto CLEANUP;
         }
         
         /* send the cmd */
-        if (0 > (ret = orte_rml.send_buffer(info_host, &buf, ORTE_RML_TAG_DATA_SERVER, 0))) {
+        if (0 > (ret = orte_rml.send_buffer_nb(info_host, buf,
+                                               ORTE_RML_TAG_DATA_SERVER,
+                                               orte_rml_send_callback, NULL))) {
             ORTE_ERROR_LOG(ret);
             goto CLEANUP;
         }
-        OBJ_DESTRUCT(&buf);
         
         /* get the answer */
-        OBJ_CONSTRUCT(&buf, opal_buffer_t);
-        if (0 > (ret = orte_rml.recv_buffer(ORTE_NAME_WILDCARD, &buf, ORTE_RML_TAG_DATA_CLIENT, 0))) {
-            ORTE_ERROR_LOG(ret);
-            goto CLEANUP;
-        }
-        
+        OBJ_CONSTRUCT(&xfer, orte_rml_recv_cb_t);
+        orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, 
+                                ORTE_RML_TAG_DATA_CLIENT,
+                                ORTE_RML_NON_PERSISTENT,
+                                orte_rml_recv_callback, &xfer);
+        xfer.active = true;
+        OMPI_WAIT_FOR_COMPLETION(xfer.active);
+
         /* unpack the return code */
         cnt = 1;
-        if (OPAL_SUCCESS != (ret = opal_dss.unpack(&buf, &rc, &cnt, OPAL_INT))) {
+        if (OPAL_SUCCESS != (ret = opal_dss.unpack(&xfer.data, &rc, &cnt, OPAL_INT))) {
             ORTE_ERROR_LOG(ret);
             goto CLEANUP;
         }
@@ -410,8 +419,9 @@ static char* lookup ( char *service_name, ompi_info_t *info )
         if (ORTE_SUCCESS == rc) {
             /* the server was able to lookup the port - unpack the port name */
             cnt=1;
-            if (OPAL_SUCCESS != (ret = opal_dss.unpack(&buf, &port_name, &cnt, OPAL_STRING))) {
+            if (OPAL_SUCCESS != (ret = opal_dss.unpack(&xfer.data, &port_name, &cnt, OPAL_STRING))) {
                 ORTE_ERROR_LOG(ret);
+                OBJ_DESTRUCT(&xfer);
                 goto CLEANUP;
             }
             
@@ -422,25 +432,20 @@ static char* lookup ( char *service_name, ompi_info_t *info )
 
             if (NULL != port_name) {
                 /* got an answer - return it */
-                OBJ_DESTRUCT(&buf);
+                OBJ_DESTRUCT(&xfer);
                 return port_name;
             }
         }
         
         /* if we didn't get a port_name, then continue */
-        OBJ_DESTRUCT(&buf);
+        OBJ_DESTRUCT(&xfer);
     }
     
     /* only get here if we tried both options and failed - since the
      * buffer will already have been cleaned up, just return
      */
-    return NULL;
-
  CLEANUP:
-    OBJ_DESTRUCT(&buf);
-
     return NULL;
-    
 }
 
 /*
@@ -453,10 +458,11 @@ static int unpublish ( char *service_name, ompi_info_t *info )
     int rc, ret, flag;
     bool global_scope;
     orte_process_name_t *info_host;
-    opal_buffer_t buf;
+    opal_buffer_t *buf;
     orte_data_server_cmd_t cmd=ORTE_DATA_SERVER_UNPUBLISH;
     orte_std_cntr_t cnt;
-    
+    orte_rml_recv_cb_t xfer;
+
     ompi_info_get_bool(info, "ompi_global_scope", &global_scope, &flag);
 
     if (0 == flag) {
@@ -497,45 +503,49 @@ static int unpublish ( char *service_name, ompi_info_t *info )
                          service_name, global_scope ? "Global" : "Local"));
     
     /* construct the buffer */
-    OBJ_CONSTRUCT(&buf, opal_buffer_t);
+    buf = OBJ_NEW(opal_buffer_t);
     
     /* pack the unpublish command */
-    if (OPAL_SUCCESS != (rc = opal_dss.pack(&buf, &cmd, 1, ORTE_DATA_SERVER_CMD))) {
+    if (OPAL_SUCCESS != (rc = opal_dss.pack(buf, &cmd, 1, ORTE_DATA_SERVER_CMD))) {
         ORTE_ERROR_LOG(rc);
+        OBJ_RELEASE(buf);
         goto CLEANUP;
     }
     
     /* pack the service name */
-    if (OPAL_SUCCESS != (rc = opal_dss.pack(&buf, &service_name, 1, OPAL_STRING))) {
+    if (OPAL_SUCCESS != (rc = opal_dss.pack(buf, &service_name, 1, OPAL_STRING))) {
         ORTE_ERROR_LOG(rc);
+        OBJ_RELEASE(buf);
         goto CLEANUP;
     }
     
     /* send the command */
-    if (0 > (rc = orte_rml.send_buffer(info_host, &buf, ORTE_RML_TAG_DATA_SERVER, 0))) {
+    if (0 > (rc = orte_rml.send_buffer_nb(info_host, buf, ORTE_RML_TAG_DATA_SERVER,
+                                          orte_rml_send_callback, NULL))) {
         ORTE_ERROR_LOG(rc);
+        OBJ_RELEASE(buf);
         goto CLEANUP;
     }
-    OBJ_DESTRUCT(&buf);
     
     /* get the answer */
-    OBJ_CONSTRUCT(&buf, opal_buffer_t);
-    if (0 > (rc = orte_rml.recv_buffer(ORTE_NAME_WILDCARD, &buf, ORTE_RML_TAG_DATA_CLIENT, 0))) {
-        ORTE_ERROR_LOG(rc);
-        goto CLEANUP;
-    }
+    OBJ_CONSTRUCT(&xfer, orte_rml_recv_cb_t);
+    orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_DATA_CLIENT,
+                            ORTE_RML_NON_PERSISTENT,
+                            orte_rml_recv_callback, &xfer);
+    xfer.active = true;
+    OMPI_WAIT_FOR_COMPLETION(xfer.active);
     
     /* unpack the result */
     cnt = 1;
-    if (OPAL_SUCCESS != (rc = opal_dss.unpack(&buf, &ret, &cnt, OPAL_INT))) {
+    if (OPAL_SUCCESS != (rc = opal_dss.unpack(&xfer.data, &ret, &cnt, OPAL_INT))) {
         ORTE_ERROR_LOG(rc);
+        OBJ_DESTRUCT(&xfer);
         goto CLEANUP;
     }
+    OBJ_DESTRUCT(&xfer);
     rc = ret;
     
-CLEANUP:
-    OBJ_DESTRUCT(&buf);
-    
+CLEANUP:    
     return rc;
 }
 

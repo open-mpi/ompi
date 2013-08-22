@@ -262,13 +262,12 @@ void ompi_info_do_config(bool want_all)
 
     if (OPAL_HAVE_SOLARIS_THREADS || OPAL_HAVE_POSIX_THREADS) {        /* should just test OPAL_HAVE_THREADS */
 #if OMPI_RTE_ORTE
-        (void)asprintf(&threads, "%s (MPI_THREAD_MULTIPLE: %s, OPAL support: %s, OMPI progress: %s, ORTE progress: %s, Event lib: yes)",
+        (void)asprintf(&threads, "%s (MPI_THREAD_MULTIPLE: %s, OPAL support: %s, OMPI progress: %s, ORTE progress: yes, Event lib: yes)",
                        OPAL_HAVE_SOLARIS_THREADS ? "solaris" :
                        (OPAL_HAVE_POSIX_THREADS ? "posix" : "type unknown"), /* "type unknown" can presumably never happen */
                        OMPI_ENABLE_THREAD_MULTIPLE ? "yes" : "no",
                        OPAL_ENABLE_MULTI_THREADS ? "yes" : "no",
-                       OMPI_ENABLE_PROGRESS_THREADS ? "yes" : "no",
-                       ORTE_ENABLE_PROGRESS_THREADS ? "yes" : "no");
+                       OMPI_ENABLE_PROGRESS_THREADS ? "yes" : "no");
 #else
         (void)asprintf(&threads, "%s (MPI_THREAD_MULTIPLE: %s, OPAL support: %s, OMPI progress: %s, Event lib: yes)",
                        OPAL_HAVE_SOLARIS_THREADS ? "solaris" :

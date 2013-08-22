@@ -79,6 +79,8 @@ typedef uint32_t orte_proc_state_t;
 #define ORTE_PROC_STATE_CANNOT_RESTART          (ORTE_PROC_STATE_ERROR + 11)  /* process failed and cannot be restarted */
 #define ORTE_PROC_STATE_TERM_NON_ZERO           (ORTE_PROC_STATE_ERROR + 12)  /* process exited with a non-zero status, indicating abnormal */
 #define ORTE_PROC_STATE_FAILED_TO_LAUNCH        (ORTE_PROC_STATE_ERROR + 13)  /* unable to launch process */
+#define ORTE_PROC_STATE_UNABLE_TO_SEND_MSG      (ORTE_PROC_STATE_ERROR + 14)  /* unable to send a message */
+#define ORTE_PROC_STATE_LIFELINE_LOST           (ORTE_PROC_STATE_ERROR + 15)  /* unable to send a message */
 
 /* Define a boundary so that external developers
  * have a starting point for defining their own

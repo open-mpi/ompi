@@ -44,6 +44,11 @@
 
 BEGIN_C_DECLS
 
+/* Convenience def for readability */
+#define ORTE_RML_PERSISTENT      true
+#define ORTE_RML_NON_PERSISTENT  false
+
+
 /**
  * Constant tag values for well-known services
  */
@@ -140,6 +145,9 @@ BEGIN_C_DECLS
 #define ORTE_RML_TAG_MAX                   100
 
 
+#define ORTE_RML_TAG_NTOH(t) ntohl(t)
+#define ORTE_RML_TAG_HTON(t) htonl(t)
+
 /** 
  * Message matching tag
  *
@@ -160,47 +168,6 @@ typedef uint32_t orte_rml_tag_t;
 typedef uint8_t orte_rml_cmd_flag_t;
 #define ORTE_RML_CMD    OPAL_UINT8
 #define ORTE_RML_UPDATE_CMD    1
-
-
-/* ******************************************************************** */
-/* Flags to send/recv */
-
-/**
- * Non-persistent request that can be deleted when the request is
- * completed.  This is the default behavior.
- */
-#define ORTE_RML_NON_PERSISTENT          0x00000000
-
-/**
- * flag to oob_recv to allow caller to peek a portion of the next
- * available message w/out removing the message from the queue.
- */
-#define ORTE_RML_PEEK                    0x00000001
-
-/** 
- * flag to oob_recv to return the actual size of the message even if
- * the receive buffer is smaller than the number of bytes available 
- */
-#define ORTE_RML_TRUNC                   0x00000002
-
-/** 
- * flag to oob_recv to request the oob to allocate a buffer of the
- * appropriate size for the receive and return the allocated buffer
- * and size in the first element of the iovec array.
- */
-#define ORTE_RML_ALLOC                   0x00000004
-
-/**
- * posted non-blocking recv is persistent 
- */
-#define ORTE_RML_PERSISTENT              0x00000008
-
-/**
- * The request is a non-blocking request that can have its callback
- * triggered as soon as the request is completed, even if the OOB is
- * currently in the middle of another non-blocking request callback.
- */
-#define ORTE_RML_FLAG_RECURSIVE_CALLBACK 0x00000010
 
 
 typedef enum {

@@ -874,14 +874,14 @@ static void recv_data(int fd, short args, void *cbdata)
          */
         OBJ_DESTRUCT(&nds);
         orte_show_help("help-ras-base.txt", "ras-base:no-allocation", true);
-        ORTE_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
+        ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
     }
 
     /* store the found nodes */
     if (ORTE_SUCCESS != (rc = orte_ras_base_node_insert(&nds, jdata))) {
         ORTE_ERROR_LOG(rc);
         OBJ_DESTRUCT(&nds);
-        ORTE_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
+        ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
         return;
     }
     OBJ_DESTRUCT(&nds);

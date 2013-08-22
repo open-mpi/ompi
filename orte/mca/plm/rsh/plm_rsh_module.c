@@ -283,7 +283,7 @@ static void rsh_wait_daemon(pid_t pid, int status, void* cbdata)
             opal_dss.pack(buf, &(daemon->name.vpid), 1, ORTE_VPID);
             opal_dss.pack(buf, &status, 1, OPAL_INT);
             orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, buf,
-                                    ORTE_RML_TAG_REPORT_REMOTE_LAUNCH, 0,
+                                    ORTE_RML_TAG_REPORT_REMOTE_LAUNCH,
                                     orte_rml_send_callback, NULL);
             /* note that this daemon failed */
             daemon->state = ORTE_PROC_STATE_FAILED_TO_START;
@@ -878,7 +878,7 @@ cleanup:
         opal_dss.pack(buf, &target.vpid, 1, ORTE_VPID);
         opal_dss.pack(buf, &rc, 1, OPAL_INT);
         orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, buf,
-                                ORTE_RML_TAG_REPORT_REMOTE_LAUNCH, 0,
+                                ORTE_RML_TAG_REPORT_REMOTE_LAUNCH,
                                 orte_rml_send_callback, NULL);
     }
     
@@ -1234,7 +1234,7 @@ static void launch_daemons(int fd, short args, void *cbdata)
     
 cleanup:
     OBJ_RELEASE(state);
-    ORTE_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
+    ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
 }
 
 /**

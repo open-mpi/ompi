@@ -83,19 +83,13 @@ orte_iof_base_module_t orte_iof_mrorted_module = {
 
 static int init(void)
 {
-    int rc;
-
     /* post a non-blocking RML receive to get messages
      from the HNP IOF component */
-    if (ORTE_SUCCESS != (rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
-                                                      ORTE_RML_TAG_IOF_PROXY,
-                                                      ORTE_RML_PERSISTENT,
-                                                      orte_iof_mrorted_recv,
-                                                      NULL))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-        
-    }
+    orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
+                            ORTE_RML_TAG_IOF_PROXY,
+                            ORTE_RML_PERSISTENT,
+                            orte_iof_mrorted_recv,
+                            NULL);
     
     /* setup the local global variables */
     OBJ_CONSTRUCT(&mca_iof_mr_orted_component.sinks, opal_list_t);
@@ -349,7 +343,6 @@ static void mrorted_complete(const orte_job_t *jdata)
 
 static int finalize(void)
 {
-    int rc;
     opal_list_item_t *item;
     
     while ((item = opal_list_remove_first(&mca_iof_mr_orted_component.sinks)) != NULL) {
@@ -361,8 +354,8 @@ static int finalize(void)
     }
     OBJ_DESTRUCT(&mca_iof_mr_orted_component.procs);
     /* Cancel the RML receive */
-    rc = orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_IOF_PROXY);
-    return rc;
+    orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_IOF_PROXY);
+    return ORTE_SUCCESS;
 }
 
 /*

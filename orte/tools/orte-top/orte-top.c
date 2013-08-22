@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007-2012 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2007-2012 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2007-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * $COPYRIGHT$
  *
@@ -175,11 +175,18 @@ static void print_headers(void);
 static void send_cmd(int fd, short dummy, void *arg)
 {
     int ret;
+    opal_buffer_t *buf;
+
     all_recvd = false;
     num_replies = INT_MAX;
     num_recvd = 0;
-    if (0 > (ret = orte_rml.send_buffer(&(target_hnp->name), &cmdbuf, ORTE_RML_TAG_DAEMON, 0))) {
+    buf = OBJ_NEW(opal_buffer_t);
+    opal_dss.copy_payload(buf, &cmdbuf);
+    if (0 > (ret = orte_rml.send_buffer_nb(&(target_hnp->name), buf,
+                                           ORTE_RML_TAG_DAEMON,
+                                           orte_rml_send_callback, NULL))) {
         ORTE_ERROR_LOG(ret);
+        OBJ_RELEASE(buf);
         orte_quit(0,0,NULL);
         return;
     }
@@ -402,11 +409,7 @@ main(int argc, char *argv[])
             target_hnp->rml_uri = strdup(hnpuristr);
         }
         /* set the info in our contact table */
-        if (ORTE_SUCCESS != orte_rml.set_contact_info(target_hnp->rml_uri)) {
-            orte_show_help("help-orte-top.txt", "orte-top:hnp-uri-bad", true, target_hnp->rml_uri);
-            orte_finalize();
-            exit(1);
-        }
+        orte_rml.set_contact_info(target_hnp->rml_uri);
         /* extract the name */
         if (ORTE_SUCCESS != orte_rml_base_parse_uris(target_hnp->rml_uri, &target_hnp->name, NULL)) {
             orte_show_help("help-orte-top.txt", "orte-top:hnp-uri-bad", true, target_hnp->rml_uri);
@@ -444,12 +447,8 @@ main(int argc, char *argv[])
      * many daemons are going to send replies, so we just have to
      * accept whatever comes back
      */
-    ret = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_TOOL,
-                                  ORTE_RML_NON_PERSISTENT, recv_stats, NULL);
-    if (ret != ORTE_SUCCESS) {
-        ORTE_ERROR_LOG(ret);
-        goto cleanup;
-    }
+    orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_TOOL,
+                            ORTE_RML_NON_PERSISTENT, recv_stats, NULL);
     
     
     /* setup the command to get the resource usage */
@@ -710,11 +709,8 @@ static void recv_stats(int status, orte_process_name_t* sender,
     }
 
     /* repost the receive */
-    ret = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_TOOL,
-                                  ORTE_RML_NON_PERSISTENT, recv_stats, NULL);
-    if (ret != ORTE_SUCCESS) {
-        ORTE_ERROR_LOG(ret);
-    }
+    orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_TOOL,
+                            ORTE_RML_NON_PERSISTENT, recv_stats, NULL);
 }
 
 /* static values needed for printing */

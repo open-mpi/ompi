@@ -34,7 +34,6 @@
 #define ORTE_PRINT_NAME_ARG_NUM_BUFS    16
 
 #define ORTE_SCHEMA_DELIMITER_CHAR      '.'
-#define ORTE_SCHEMA_DELIMITER_STRING    "."
 #define ORTE_SCHEMA_WILDCARD_CHAR       '*'
 #define ORTE_SCHEMA_WILDCARD_STRING     "*"
 #define ORTE_SCHEMA_INVALID_CHAR        '$'
@@ -392,31 +391,25 @@ int orte_util_convert_string_to_process_name(orte_process_name_t *name,
     }
     
     temp = strdup(name_string);  /** copy input string as the strtok process is destructive */
-    token = strtok(temp, ORTE_SCHEMA_DELIMITER_STRING); /** get first field -> jobid */
+    token = strchr(temp, ORTE_SCHEMA_DELIMITER_CHAR); /** get first field -> jobid */
     
     /* check for error */
     if (NULL == token) {
         ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
         return ORTE_ERR_BAD_PARAM;
     }
+    *token = '\0';
+    token++;
     
     /* check for WILDCARD character - assign
      * value accordingly, if found
      */
-    if (0 == strcmp(token, ORTE_SCHEMA_WILDCARD_STRING)) {
+    if (0 == strcmp(temp, ORTE_SCHEMA_WILDCARD_STRING)) {
         job = ORTE_JOBID_WILDCARD;
-    } else if (0 == strcmp(token, ORTE_SCHEMA_INVALID_STRING)) {
+    } else if (0 == strcmp(temp, ORTE_SCHEMA_INVALID_STRING)) {
         job = ORTE_JOBID_INVALID;
     } else {
-        job = strtoul(token, NULL, 10);
-    }
-    
-    token = strtok(NULL, ORTE_SCHEMA_DELIMITER_STRING);  /** get next field -> vpid */
-    
-    /* check for error */
-    if (NULL == token) {
-        ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
-        return ORTE_ERR_BAD_PARAM;
+        job = strtoul(temp, NULL, 10);
     }
     
     /* check for WILDCARD character - assign
@@ -599,28 +592,22 @@ int orte_util_convert_string_to_sysinfo(char **cpu_type, char **cpu_model,
     }
 
     temp = strdup(sysinfo_string);  /** copy input string as the strtok process is destructive */
-    token = strtok(temp, ORTE_SCHEMA_DELIMITER_STRING); /** get first field -> cpu_type */
+    token = strchr(temp, ORTE_SCHEMA_DELIMITER_CHAR); /** get first field -> cpu_type */
     
     /* check for error */
     if (NULL == token) {
         ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
         return ORTE_ERR_BAD_PARAM;
     } 
-    
+    *token = '\0';
+    token++;
+
     /* If type is a valid string get the value otherwise leave cpu_type untouched.
      */
-    if (0 != strcmp(token, ORTE_SCHEMA_INVALID_STRING)) {
-        *cpu_type = strdup(token);
+    if (0 != strcmp(temp, ORTE_SCHEMA_INVALID_STRING)) {
+        *cpu_type = strdup(temp);
     } 
 
-    token = strtok(NULL, ORTE_SCHEMA_DELIMITER_STRING);  /** get next field -> cpu_model */
-    
-    /* check for error */
-    if (NULL == token) {
-        ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
-        return ORTE_ERR_BAD_PARAM;
-    }
-    
     /* If type is a valid string get the value otherwise leave cpu_type untouched.
      */
     if (0 != strcmp(token, ORTE_SCHEMA_INVALID_STRING)) {

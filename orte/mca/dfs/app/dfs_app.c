@@ -100,18 +100,14 @@ static void recv_dfs(int status, orte_process_name_t* sender,
 
 static int init(void)
 {
-    int rc;
-
     OBJ_CONSTRUCT(&requests, opal_list_t);
     OBJ_CONSTRUCT(&active_files, opal_list_t);
-    if (ORTE_SUCCESS != (rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
-                                                      ORTE_RML_TAG_DFS_DATA,
-                                                      ORTE_RML_PERSISTENT,
-                                                      recv_dfs,
-                                                      NULL))) {
-        ORTE_ERROR_LOG(rc);
-    }
-    return rc;
+    orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
+                            ORTE_RML_TAG_DFS_DATA,
+                            ORTE_RML_PERSISTENT,
+                            recv_dfs,
+                            NULL);
+    return ORTE_SUCCESS;
 }
 
 static int finalize(void)
@@ -615,7 +611,7 @@ static void process_opens(int fd, short args, void *cbdata)
                         filename);
     /* send it */
     if (0 > (rc = orte_rml.send_buffer_nb(&daemon, buffer,
-                                          ORTE_RML_TAG_DFS_CMD, 0,
+                                          ORTE_RML_TAG_DFS_CMD,
                                           orte_rml_send_callback, NULL))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(buffer);
@@ -721,7 +717,7 @@ static void process_close(int fd, short args, void *cbdata)
                         trk->local_fd);
     /* send it */
     if (0 > (rc = orte_rml.send_buffer_nb(&trk->host_daemon, buffer,
-                                          ORTE_RML_TAG_DFS_CMD, 0,
+                                          ORTE_RML_TAG_DFS_CMD,
                                           orte_rml_send_callback, NULL))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(buffer);
@@ -843,7 +839,7 @@ static void process_sizes(int fd, short args, void *cbdata)
                         trk->local_fd);
     /* send it */
     if (0 > (rc = orte_rml.send_buffer_nb(&trk->host_daemon, buffer,
-                                          ORTE_RML_TAG_DFS_CMD, 0,
+                                          ORTE_RML_TAG_DFS_CMD,
                                           orte_rml_send_callback, NULL))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(buffer);
@@ -997,7 +993,7 @@ static void process_seeks(int fd, short args, void *cbdata)
                         trk->local_fd);
     /* send it */
     if (0 > (rc = orte_rml.send_buffer_nb(&trk->host_daemon, buffer,
-                                          ORTE_RML_TAG_DFS_CMD, 0,
+                                          ORTE_RML_TAG_DFS_CMD,
                                           orte_rml_send_callback, NULL))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(buffer);
@@ -1109,7 +1105,7 @@ static void process_reads(int fd, short args, void *cbdata)
                         trk->local_fd);
     /* send it */
     if (0 > (rc = orte_rml.send_buffer_nb(&trk->host_daemon, buffer,
-                                          ORTE_RML_TAG_DFS_CMD, 0,
+                                          ORTE_RML_TAG_DFS_CMD,
                                           orte_rml_send_callback, NULL))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(buffer);
@@ -1176,7 +1172,7 @@ static void process_posts(int fd, short args, void *cbdata)
     }
     /* send it */
     if (0 > (rc = orte_rml.send_buffer_nb(ORTE_PROC_MY_DAEMON, buffer,
-                                          ORTE_RML_TAG_DFS_CMD, 0,
+                                          ORTE_RML_TAG_DFS_CMD,
                                           orte_rml_send_callback, NULL))) {
         ORTE_ERROR_LOG(rc);
         goto error;
@@ -1237,7 +1233,7 @@ static void process_getfm(int fd, short args, void *cbdata)
     }
     /* send it */
     if (0 > (rc = orte_rml.send_buffer_nb(ORTE_PROC_MY_DAEMON, buffer,
-                                          ORTE_RML_TAG_DFS_CMD, 0,
+                                          ORTE_RML_TAG_DFS_CMD,
                                           orte_rml_send_callback, NULL))) {
         ORTE_ERROR_LOG(rc);
         goto error;

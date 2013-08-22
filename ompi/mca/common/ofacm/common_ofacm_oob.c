@@ -146,8 +146,6 @@ static void oob_component_register(void)
 static int oob_component_query(ompi_common_ofacm_base_dev_desc_t *dev,
                                ompi_common_ofacm_base_module_t **cpc)
 {
-    int rc;
-
     if (oob_priority > 100) {
         oob_priority = 100;
     } else if (oob_priority < -1) {
@@ -174,16 +172,11 @@ static int oob_component_query(ompi_common_ofacm_base_dev_desc_t *dev,
        ensure to only post it *once*, because another btl may have
        come in before this and already posted it. */
     if (!rml_recv_posted) {
-        rc = ompi_rte_recv_buffer_nb(OMPI_NAME_WILDCARD,
-                                     OMPI_RML_TAG_OFACM,
-                                     OMPI_RML_PERSISTENT,
-                                     rml_recv_cb,
-                                     NULL);
-        if (OMPI_SUCCESS != rc) {
-            OFACM_VERBOSE(("OFACM: oob CPC system error %d (%s)",
-                                rc, opal_strerror(rc)));
-            return rc;
-        }
+        ompi_rte_recv_buffer_nb(OMPI_NAME_WILDCARD,
+                                OMPI_RML_TAG_OFACM,
+                                OMPI_RML_PERSISTENT,
+                                rml_recv_cb,
+                                NULL);
         rml_recv_posted = true;
     }
 
@@ -728,7 +721,7 @@ static int send_connect_data(ompi_common_ofacm_base_local_connection_context_t* 
 
     /* send to remote endpoint */
     rc = ompi_rte_send_buffer_nb(&context->proc->proc_ompi->proc_name,
-                                 buffer, OMPI_RML_TAG_OFACM, 0,
+                                 buffer, OMPI_RML_TAG_OFACM,
                                  rml_send_cb, NULL);
     if (OMPI_SUCCESS != rc) {
         OMPI_ERROR_LOG(rc);

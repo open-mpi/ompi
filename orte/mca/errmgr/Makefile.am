@@ -25,6 +25,9 @@ libmca_errmgr_la_SOURCES =
 headers = errmgr.h
 libmca_errmgr_la_SOURCES += $(headers)
 
+# pkgdata setup
+dist_pkgdata_DATA =
+
 # Conditionally install the header files
 if WANT_INSTALL_HEADERS
 ortedir = $(includedir)/openmpi/$(subdir)

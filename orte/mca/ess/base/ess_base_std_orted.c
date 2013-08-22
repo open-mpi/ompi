@@ -14,6 +14,7 @@
  * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
+ * Copyright (c) 2013      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -37,7 +38,6 @@
 #include "opal/mca/event/event.h"
 #include "opal/runtime/opal.h"
 #include "opal/runtime/opal_cr.h"
-#include "opal/mca/db/base/base.h"
 #include "opal/mca/hwloc/base/base.h"
 #include "opal/mca/pstat/base/base.h"
 #include "opal/util/os_path.h"
@@ -45,6 +45,7 @@
 #include "orte/mca/rml/base/base.h"
 #include "orte/mca/routed/base/base.h"
 #include "orte/mca/routed/routed.h"
+#include "orte/mca/oob/base/base.h"
 #include "orte/mca/dfs/base/base.h"
 #include "orte/mca/grpcomm/grpcomm.h"
 #include "orte/mca/grpcomm/base/base.h"
@@ -233,8 +234,16 @@ int orte_ess_base_orted_setup(char **hosts)
     }
     
     /* Setup the communication infrastructure */
-    
-    /* Runtime Messaging Layer - this opens/selects the OOB as well */
+        if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_oob_base_framework, 0))) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_oob_base_open";
+        goto error;
+    }
+    if (ORTE_SUCCESS != (ret = orte_oob_base_select())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_oob_base_select";
+        goto error;
+    }
     if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_rml_base_framework, 0))) {
         ORTE_ERROR_LOG(ret);
         error = "orte_rml_base_open";
@@ -265,18 +274,6 @@ int orte_ess_base_orted_setup(char **hosts)
         goto error;
     }
     
-    /* database */
-    if (ORTE_SUCCESS != (ret = mca_base_framework_open(&opal_db_base_framework, 0))) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_db_base_open";
-        goto error;
-    }
-    if (ORTE_SUCCESS != (ret = opal_db_base_select())) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_db_base_select";
-        goto error;
-    }
-
     /*
      * Group communications
      */
@@ -648,6 +645,7 @@ int orte_ess_base_orted_finalize(void)
     (void) mca_base_framework_close(&orte_odls_base_framework);
     (void) mca_base_framework_close(&orte_routed_base_framework);
     (void) mca_base_framework_close(&orte_rml_base_framework);
+    (void) mca_base_framework_close(&orte_oob_base_framework);
     (void) mca_base_framework_close(&orte_state_base_framework);
 
     /* cleanup any lingering session directories */
@@ -671,9 +669,7 @@ static void shutdown_signal(int fd, short flags, void *arg)
  */
 static void epipe_signal_callback(int fd, short flags, void *arg)
 {
-    /* for now, we just announce and ignore them */
-    opal_output(0, "%s reports a SIGPIPE error on fd %d",
-                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), fd);
+    /* for now, we just ignore them */
     return;
 }
 

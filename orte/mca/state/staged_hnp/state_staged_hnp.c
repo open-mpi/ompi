@@ -311,7 +311,7 @@ static void track_procs(int fd, short args, void *cbdata)
     /* get the job object for this proc */
     if (NULL == (jdata = orte_get_job_data_object(proc->jobid))) {
         ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-        ORTE_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
+        ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
         OBJ_RELEASE(caddy);
         return;
     }

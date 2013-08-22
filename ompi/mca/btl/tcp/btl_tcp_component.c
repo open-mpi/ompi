@@ -42,7 +42,7 @@
 #ifdef HAVE_ARPA_INET_H
 #include <arpa/inet.h>
 #endif
-#if OPAL_WANT_IPV6
+#if OPAL_ENABLE_IPV6
 #  ifdef HAVE_NETDB_H
 #  include <netdb.h>
 #  endif
@@ -201,7 +201,7 @@ static int mca_btl_tcp_component_verify(void)
                        mca_btl_tcp_component.tcp_port_min );
         mca_btl_tcp_component.tcp_port_min = 1024;
     }
-#if OPAL_WANT_IPV6
+#if OPAL_ENABLE_IPV6
     if( mca_btl_tcp_component.tcp6_port_min > USHRT_MAX ) {
         opal_show_help("help-mpi-btl-tcp.txt", "invalid minimum port",
                        true, "v6", ompi_process_info.nodename,
@@ -253,7 +253,7 @@ static int mca_btl_tcp_component_register(void)
                                     (0x1 << 16) - mca_btl_tcp_component.tcp_port_min - 1,
                                     OPAL_INFO_LVL_2, &mca_btl_tcp_component.tcp_port_range);
     free(message);
-#if OPAL_WANT_IPV6
+#if OPAL_ENABLE_IPV6
     mca_btl_tcp_param_register_int( "port_min_v6",
                                     "The minimum port where the TCP BTL will try to bind (default 1024)", 1024,
                                     OPAL_INFO_LVL_2, & mca_btl_tcp_component.tcp6_port_min );
@@ -350,7 +350,7 @@ static int mca_btl_tcp_component_open(void)
 
     /* initialize state */
     mca_btl_tcp_component.tcp_listen_sd = -1;
-#if OPAL_WANT_IPV6
+#if OPAL_ENABLE_IPV6
     mca_btl_tcp_component.tcp6_listen_sd = -1;
 #endif
     mca_btl_tcp_component.tcp_num_btls=0;
@@ -405,7 +405,7 @@ static int mca_btl_tcp_component_close(void)
         CLOSE_THE_SOCKET(mca_btl_tcp_component.tcp_listen_sd);
         mca_btl_tcp_component.tcp_listen_sd = -1;
     }
-#if OPAL_WANT_IPV6
+#if OPAL_ENABLE_IPV6
     if (mca_btl_tcp_component.tcp6_listen_sd >= 0) {
         opal_event_del(&mca_btl_tcp_component.tcp6_recv_event);
         CLOSE_THE_SOCKET(mca_btl_tcp_component.tcp6_listen_sd);
@@ -754,7 +754,7 @@ static int mca_btl_tcp_component_create_listen(uint16_t af_family)
 
     mca_btl_tcp_set_socket_options(sd);
 
-#if OPAL_WANT_IPV6
+#if OPAL_ENABLE_IPV6
     {
         struct addrinfo hints, *res = NULL;
         int error;
@@ -810,19 +810,19 @@ static int mca_btl_tcp_component_create_listen(uint16_t af_family)
         
         range = mca_btl_tcp_component.tcp_port_range;
         port = mca_btl_tcp_component.tcp_port_min;
-#if OPAL_WANT_IPV6
+#if OPAL_ENABLE_IPV6
         if (AF_INET6 == af_family) {
             range = mca_btl_tcp_component.tcp6_port_range;
             port = mca_btl_tcp_component.tcp6_port_min;
         }
-#endif  /* OPAL_WANT_IPV6 */
+#endif  /* OPAL_ENABLE_IPV6 */
 
         for( index = 0;  index < range; index++ ) {
-#if OPAL_WANT_IPV6
+#if OPAL_ENABLE_IPV6
             ((struct sockaddr_in6*) &inaddr)->sin6_port = htons(port + index);
 #else
             ((struct sockaddr_in*) &inaddr)->sin_port = htons(port + index);
-#endif  /* OPAL_WANT_IPV6 */
+#endif  /* OPAL_ENABLE_IPV6 */
             if(bind(sd, (struct sockaddr*)&inaddr, addrlen) < 0) {
                 if( (EADDRINUSE == opal_socket_errno) || (EADDRNOTAVAIL == opal_socket_errno) ) {
                     continue;
@@ -839,13 +839,13 @@ static int mca_btl_tcp_component_create_listen(uint16_t af_family)
                        mca_btl_tcp_component.tcp_port_min,
                        mca_btl_tcp_component.tcp_port_min + range));
         }
-#if OPAL_WANT_IPV6
+#if OPAL_ENABLE_IPV6
         if (AF_INET6 == af_family) {
             BTL_ERROR(("bind6() failed: no port available in the range [%d..%d]",
                        mca_btl_tcp_component.tcp6_port_min,
                        mca_btl_tcp_component.tcp6_port_min + range));
         }
-#endif  /* OPAL_WANT_IPV6 */
+#endif  /* OPAL_ENABLE_IPV6 */
         CLOSE_THE_SOCKET(sd);
         return OMPI_ERROR;
     }
@@ -862,7 +862,7 @@ static int mca_btl_tcp_component_create_listen(uint16_t af_family)
         mca_btl_tcp_component.tcp_listen_port = ((struct sockaddr_in*) &inaddr)->sin_port;
         mca_btl_tcp_component.tcp_listen_sd = sd;
     }
-#if OPAL_WANT_IPV6
+#if OPAL_ENABLE_IPV6
     if (AF_INET6 == af_family) {
         mca_btl_tcp_component.tcp6_listen_port = ((struct sockaddr_in6*) &inaddr)->sin6_port;
         mca_btl_tcp_component.tcp6_listen_sd = sd;
@@ -902,7 +902,7 @@ static int mca_btl_tcp_component_create_listen(uint16_t af_family)
                         0 );
         opal_event_add(&mca_btl_tcp_component.tcp_recv_event, 0);
     }
-#if OPAL_WANT_IPV6
+#if OPAL_ENABLE_IPV6
     if (AF_INET6 == af_family) {
         opal_event_set(opal_event_base, &mca_btl_tcp_component.tcp6_recv_event,
                         mca_btl_tcp_component.tcp6_listen_sd,
@@ -977,7 +977,7 @@ static int mca_btl_tcp_component_exchange(void)
                          opal_ifindextokindex (index);
                      current_addr++;
                  }
-#if OPAL_WANT_IPV6
+#if OPAL_ENABLE_IPV6
                  if ((AF_INET6 == my_ss.ss_family) &&
                      (6 != mca_btl_tcp_component.tcp_disable_family)) {
                      memcpy(&addrs[current_addr].addr_inet,
@@ -1059,7 +1059,7 @@ mca_btl_base_module_t** mca_btl_tcp_component_init(int *num_btl_modules,
     if(OMPI_SUCCESS != (ret = mca_btl_tcp_component_create_listen(AF_INET) )) {
         return 0;
     }
-#if OPAL_WANT_IPV6
+#if OPAL_ENABLE_IPV6
     if((ret = mca_btl_tcp_component_create_listen(AF_INET6)) != OMPI_SUCCESS) {
         if (!(OMPI_ERR_IN_ERRNO == ret &&
               EAFNOSUPPORT == opal_socket_errno)) {
@@ -1096,7 +1096,7 @@ static void mca_btl_tcp_component_accept_handler( int incoming_sd,
                                                   void* unused )
 {
     while(true) {
-#if OPAL_WANT_IPV6
+#if OPAL_ENABLE_IPV6
         struct sockaddr_in6 addr;
 #else
         struct sockaddr_in addr;

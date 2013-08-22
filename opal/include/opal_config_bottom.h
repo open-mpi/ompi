@@ -467,9 +467,9 @@ static inline uint16_t ntohs(uint16_t netvar) { return netvar; }
  * this makes it simpler to check throughout the code base.
  */
 #if OPAL_ENABLE_IPV6 && defined(HAVE_STRUCT_SOCKADDR_IN6)
-#define OPAL_WANT_IPV6 1
+#define OPAL_ENABLE_IPV6 1
 #else
-#define OPAL_WANT_IPV6 0
+#define OPAL_ENABLE_IPV6 0
 #endif
 
 #if !defined(HAVE_STRUCT_SOCKADDR_STORAGE) && defined(HAVE_STRUCT_SOCKADDR_IN)

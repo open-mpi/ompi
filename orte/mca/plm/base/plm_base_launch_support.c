@@ -202,7 +202,7 @@ static void files_ready(int status, void *cbdata)
     orte_job_t *jdata = (orte_job_t*)cbdata;
 
     if (ORTE_SUCCESS != status) {
-        ORTE_TERMINATE(status);
+        ORTE_FORCED_TERMINATE(status);
     } else {
         ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_MAP);
     }
@@ -217,7 +217,7 @@ void orte_plm_base_vm_ready(int fd, short args, void *cbdata)
 
     /* position any required files */
     if (ORTE_SUCCESS != orte_filem.preposition_files(caddy->jdata, files_ready, caddy->jdata)) {
-        ORTE_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
+        ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
     }
 
     /* cleanup */
@@ -252,7 +252,7 @@ void orte_plm_base_setup_job(int fd, short args, void *cbdata)
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
     if (ORTE_JOB_STATE_INIT != caddy->job_state) {
-        ORTE_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
+        ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
         OBJ_RELEASE(caddy);
         return;
     }
@@ -262,7 +262,7 @@ void orte_plm_base_setup_job(int fd, short args, void *cbdata)
     /* start by getting a jobid */
     if (ORTE_SUCCESS != (rc = orte_plm_base_create_jobid(caddy->jdata))) {
         ORTE_ERROR_LOG(rc);
-        ORTE_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
+        ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
         OBJ_RELEASE(caddy);
         return;
     }
@@ -338,14 +338,14 @@ void orte_plm_base_complete_setup(int fd, short args, void *cbdata)
     /* if we don't want to launch the apps, now is the time to leave */
     if (orte_do_not_launch) {
         orte_never_launched = true;
-        ORTE_TERMINATE(0);
+        ORTE_FORCED_TERMINATE(0);
         OBJ_RELEASE(caddy);
         return;
     }
 
     /* bozo check */
     if (ORTE_JOB_STATE_SYSTEM_PREP != caddy->job_state) {
-        ORTE_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
+        ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
         OBJ_RELEASE(caddy);
         return;
     }
@@ -355,7 +355,7 @@ void orte_plm_base_complete_setup(int fd, short args, void *cbdata)
     /* get the orted job data object */
     if (NULL == (jdatorted = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid))) {
         ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-        ORTE_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
+        ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
         OBJ_RELEASE(caddy);
         return;
     }
@@ -374,7 +374,7 @@ void orte_plm_base_complete_setup(int fd, short args, void *cbdata)
                        ORTE_VPID_PRINT(jdata->stdin_target),
                        ORTE_VPID_PRINT(jdata->num_procs));
         orte_never_launched = true;
-        ORTE_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
+        ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
         OBJ_RELEASE(caddy);
         return;
     }
@@ -440,7 +440,7 @@ void orte_plm_base_launch_apps(int fd, short args, void *cbdata)
     jdata = caddy->jdata;
 
     if (ORTE_JOB_STATE_LAUNCH_APPS != caddy->job_state) {
-        ORTE_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
+        ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
         OBJ_RELEASE(caddy);
         return;
     }
@@ -460,7 +460,7 @@ void orte_plm_base_launch_apps(int fd, short args, void *cbdata)
     if (ORTE_SUCCESS != (rc = opal_dss.pack(buffer, &command, 1, ORTE_DAEMON_CMD))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(buffer);
-        ORTE_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
+        ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
         OBJ_RELEASE(caddy);
         return;
     }
@@ -468,7 +468,7 @@ void orte_plm_base_launch_apps(int fd, short args, void *cbdata)
     /* get the local launcher's required data */
     if (ORTE_SUCCESS != (rc = orte_odls.get_add_procs_data(buffer, jdata->jobid))) {
         ORTE_ERROR_LOG(rc);
-        ORTE_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
+        ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
         OBJ_RELEASE(caddy);
         return;
     }
@@ -478,7 +478,7 @@ void orte_plm_base_launch_apps(int fd, short args, void *cbdata)
                                                  buffer, ORTE_RML_TAG_DAEMON))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(buffer);
-        ORTE_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
+        ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
         OBJ_RELEASE(caddy);
         return;
     }
@@ -510,7 +510,7 @@ void orte_plm_base_post_launch(int fd, short args, void *cbdata)
     jdata = caddy->jdata;
 
     if (ORTE_JOB_STATE_RUNNING != caddy->job_state) {
-        ORTE_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
+        ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
         OBJ_RELEASE(caddy);
         return;
     }
@@ -529,7 +529,7 @@ void orte_plm_base_post_launch(int fd, short args, void *cbdata)
     
     if (ORTE_SUCCESS != (rc = orte_iof.push(&name, ORTE_IOF_STDIN, 0))) {
         ORTE_ERROR_LOG(rc);
-        ORTE_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
+        ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
         OBJ_RELEASE(caddy);
         return;
     }
@@ -559,7 +559,7 @@ void orte_plm_base_registered(int fd, short args, void *cbdata)
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_JOBID_PRINT(jdata->jobid),
                              orte_job_state_to_str(caddy->job_state)));
-        ORTE_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
+        ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
         OBJ_RELEASE(caddy);
         return;
     }
@@ -579,13 +579,13 @@ void orte_plm_base_registered(int fd, short args, void *cbdata)
     answer = OBJ_NEW(opal_buffer_t);
     if (ORTE_SUCCESS != (ret = opal_dss.pack(answer, &rc, 1, OPAL_INT32))) {
         ORTE_ERROR_LOG(ret);
-        ORTE_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
+        ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
         OBJ_RELEASE(caddy);
         return;
     }
     if (ORTE_SUCCESS != (ret = opal_dss.pack(answer, &jdata->jobid, 1, ORTE_JOBID))) {
         ORTE_ERROR_LOG(ret);
-        ORTE_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
+        ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
         OBJ_RELEASE(caddy);
         return;
     }
@@ -595,11 +595,11 @@ void orte_plm_base_registered(int fd, short args, void *cbdata)
                          ORTE_JOBID_PRINT(jdata->jobid),
                          ORTE_NAME_PRINT(&jdata->originator)));
     if (0 > (ret = orte_rml.send_buffer_nb(&jdata->originator, answer,
-                                           ORTE_RML_TAG_PLM_PROXY, 0,
+                                           ORTE_RML_TAG_PLM_PROXY,
                                            orte_rml_send_callback, NULL))) {
         ORTE_ERROR_LOG(ret);
         OBJ_RELEASE(answer);
-        ORTE_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
+        ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
         OBJ_RELEASE(caddy);
         return;
     }
@@ -645,11 +645,7 @@ void orte_plm_base_daemon_callback(int status, orte_process_name_t* sender,
         }
         
         /* set the contact info into the hash table */
-        if (ORTE_SUCCESS != (rc = orte_rml.set_contact_info(rml_uri))) {
-            ORTE_ERROR_LOG(rc);
-            orted_failed_launch = true;
-            goto CLEANUP;
-        }
+        orte_rml.set_contact_info(rml_uri);
 
         OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
                              "%s plm:base:orted_report_launch from daemon %s",
@@ -858,7 +854,7 @@ void orte_plm_base_daemon_callback(int status, orte_process_name_t* sender,
         relay = OBJ_NEW(opal_buffer_t);
         opal_dss.copy_payload(relay, orte_tree_launch_cmd);
         orte_rml.send_buffer_nb(sender, relay,
-                                ORTE_RML_TAG_DAEMON, 0,
+                                ORTE_RML_TAG_DAEMON,
                                 orte_rml_send_callback, NULL);
     }
 
@@ -906,7 +902,7 @@ void orte_plm_base_daemon_failed(int st, orte_process_name_t* sender,
 
  finish:
     if (NULL == daemon) {
-        ORTE_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
+        ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
         return;
     }
     ORTE_ACTIVATE_PROC_STATE(&daemon->name, ORTE_PROC_STATE_FAILED_TO_START);
@@ -1281,7 +1277,7 @@ int orte_plm_base_setup_virtual_machine(orte_job_t *jdata)
             /* well, if the HNP doesn't have any procs, and neither did
              * anyone else...then we have a big problem
              */
-            ORTE_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
+            ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
             return ORTE_ERR_FATAL;
         }
         goto process;

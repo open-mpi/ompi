@@ -182,31 +182,24 @@ static void remote_seek(int fd, short args, void *cbdata);
 
 static int init(void)
 {
-    int rc;
     int i;
     worker_thread_t *wt;
 
     OBJ_CONSTRUCT(&requests, opal_list_t);
     OBJ_CONSTRUCT(&active_files, opal_list_t);
     OBJ_CONSTRUCT(&file_maps, opal_list_t);
+    orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
+                            ORTE_RML_TAG_DFS_CMD,
+                            ORTE_RML_PERSISTENT,
+                            recv_dfs_cmd,
+                            NULL);
+    orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
+                            ORTE_RML_TAG_DFS_DATA,
+                            ORTE_RML_PERSISTENT,
+                            recv_dfs_data,
+                            NULL);
     OBJ_CONSTRUCT(&worker_threads, opal_pointer_array_t);
     opal_pointer_array_init(&worker_threads, 1, INT_MAX, 1);
-    if (ORTE_SUCCESS != (rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
-                                                      ORTE_RML_TAG_DFS_CMD,
-                                                      ORTE_RML_PERSISTENT,
-                                                      recv_dfs_cmd,
-                                                      NULL))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-    if (ORTE_SUCCESS != (rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
-                                                      ORTE_RML_TAG_DFS_DATA,
-                                                      ORTE_RML_PERSISTENT,
-                                                      recv_dfs_data,
-                                                      NULL))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
 
     opal_output_verbose(1, orte_dfs_base_framework.framework_output,
                         "%s starting %d worker threads",
@@ -218,7 +211,7 @@ static int init(void)
         opal_pointer_array_add(&worker_threads, wt);
     }
 
-    return rc;
+    return ORTE_SUCCESS;
 }
 
 static int finalize(void)
@@ -415,7 +408,7 @@ static void process_opens(int fd, short args, void *cbdata)
                         filename);
     /* send it */
     if (0 > (rc = orte_rml.send_buffer_nb(&node->daemon->name, buffer,
-                                          ORTE_RML_TAG_DFS_CMD, 0,
+                                          ORTE_RML_TAG_DFS_CMD,
                                           orte_rml_send_callback, NULL))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(buffer);
@@ -515,7 +508,7 @@ static void process_close(int fd, short args, void *cbdata)
                         trk->local_fd);
     /* send it */
     if (0 > (rc = orte_rml.send_buffer_nb(&trk->host_daemon, buffer,
-                                          ORTE_RML_TAG_DFS_CMD, 0,
+                                          ORTE_RML_TAG_DFS_CMD,
                                           orte_rml_send_callback, NULL))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(buffer);
@@ -620,7 +613,7 @@ static void process_sizes(int fd, short args, void *cbdata)
                         trk->local_fd);
     /* send it */
     if (0 > (rc = orte_rml.send_buffer_nb(&trk->host_daemon, buffer,
-                                          ORTE_RML_TAG_DFS_CMD, 0,
+                                          ORTE_RML_TAG_DFS_CMD,
                                           orte_rml_send_callback, NULL))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(buffer);
@@ -768,7 +761,7 @@ static void process_seeks(int fd, short args, void *cbdata)
                         trk->local_fd);
     /* send it */
     if (0 > (rc = orte_rml.send_buffer_nb(&trk->host_daemon, buffer,
-                                          ORTE_RML_TAG_DFS_CMD, 0,
+                                          ORTE_RML_TAG_DFS_CMD,
                                           orte_rml_send_callback, NULL))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(buffer);
@@ -878,7 +871,7 @@ static void process_reads(int fd, short args, void *cbdata)
                         trk->local_fd);
     /* send it */
     if (0 > (rc = orte_rml.send_buffer_nb(&trk->host_daemon, buffer,
-                                          ORTE_RML_TAG_DFS_CMD, 0,
+                                          ORTE_RML_TAG_DFS_CMD,
                                           orte_rml_send_callback, NULL))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(buffer);
@@ -1375,7 +1368,7 @@ static void recv_dfs_cmd(int status, orte_process_name_t* sender,
         }
         /* send it */
         if (0 > (rc = orte_rml.send_buffer_nb(sender, answer,
-                                              ORTE_RML_TAG_DFS_DATA, 0,
+                                              ORTE_RML_TAG_DFS_DATA,
                                               orte_rml_send_callback, NULL))) {
             ORTE_ERROR_LOG(rc);
             OBJ_RELEASE(answer);
@@ -1463,7 +1456,7 @@ static void recv_dfs_cmd(int status, orte_process_name_t* sender,
         }
         /* send it */
         if (0 > (rc = orte_rml.send_buffer_nb(sender, answer,
-                                              ORTE_RML_TAG_DFS_DATA, 0,
+                                              ORTE_RML_TAG_DFS_DATA,
                                               orte_rml_send_callback, NULL))) {
             ORTE_ERROR_LOG(rc);
             OBJ_RELEASE(answer);
@@ -1572,7 +1565,7 @@ static void recv_dfs_cmd(int status, orte_process_name_t* sender,
                             (long)bytes_read,
                             ORTE_NAME_PRINT(sender));
         if (0 > (rc = orte_rml.send_buffer_nb(sender, answer,
-                                              ORTE_RML_TAG_DFS_DATA, 0,
+                                              ORTE_RML_TAG_DFS_DATA,
                                               orte_rml_send_callback, NULL))) {
             ORTE_ERROR_LOG(rc);
             OBJ_RELEASE(answer);
@@ -1665,7 +1658,7 @@ static void recv_dfs_cmd(int status, orte_process_name_t* sender,
                             (long)bytes_read,
                             ORTE_NAME_PRINT(sender));
         if (0 > (rc = orte_rml.send_buffer_nb(sender, answer,
-                                              ORTE_RML_TAG_DFS_DATA, 0,
+                                              ORTE_RML_TAG_DFS_DATA,
                                               orte_rml_send_callback, NULL))) {
             ORTE_ERROR_LOG(rc);
             OBJ_RELEASE(answer);
@@ -1720,7 +1713,7 @@ static void recv_dfs_cmd(int status, orte_process_name_t* sender,
                 return;
             }
             if (0 > (rc = orte_rml.send_buffer_nb(sender, answer,
-                                                  ORTE_RML_TAG_DFS_DATA, 0,
+                                                  ORTE_RML_TAG_DFS_DATA,
                                                   orte_rml_send_callback, NULL))) {
                 ORTE_ERROR_LOG(rc);
                 OBJ_RELEASE(answer);
@@ -1889,7 +1882,7 @@ static void recv_dfs_cmd(int status, orte_process_name_t* sender,
                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), nmaps,
                             (int)answer->bytes_used, ORTE_NAME_PRINT(sender));
         if (0 > (rc = orte_rml.send_buffer_nb(sender, answer,
-                                              ORTE_RML_TAG_DFS_DATA, 0,
+                                              ORTE_RML_TAG_DFS_DATA,
                                               orte_rml_send_callback, NULL))) {
             ORTE_ERROR_LOG(rc);
             OBJ_RELEASE(answer);
@@ -2144,7 +2137,7 @@ static void remote_open(int fd, short args, void *cbdata)
     }
     /* send it */
     if (0 > (rc = orte_rml.send_buffer_nb(&req->trk->requestor, answer,
-                                          ORTE_RML_TAG_DFS_DATA, 0,
+                                          ORTE_RML_TAG_DFS_DATA,
                                           orte_rml_send_callback, NULL))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(answer);
@@ -2185,7 +2178,7 @@ static void remote_size(int fd, short args, void *cbdata)
     }
     /* send it */
     if (0 > (rc = orte_rml.send_buffer_nb(&req->trk->requestor, answer,
-                                          ORTE_RML_TAG_DFS_DATA, 0,
+                                          ORTE_RML_TAG_DFS_DATA,
                                           orte_rml_send_callback, NULL))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(answer);
@@ -2249,7 +2242,7 @@ static void remote_seek(int fd, short args, void *cbdata)
     }
     /* send it */
     if (0 > (rc = orte_rml.send_buffer_nb(&req->trk->requestor, answer,
-                                          ORTE_RML_TAG_DFS_DATA, 0,
+                                          ORTE_RML_TAG_DFS_DATA,
                                           orte_rml_send_callback, NULL))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(answer);
@@ -2304,7 +2297,7 @@ static void remote_read(int fd, short args, void *cbdata)
                         (long)bytes_read,
                         ORTE_NAME_PRINT(&req->trk->requestor));
     if (0 > (rc = orte_rml.send_buffer_nb(&req->trk->requestor, answer,
-                                          ORTE_RML_TAG_DFS_DATA, 0,
+                                          ORTE_RML_TAG_DFS_DATA,
                                           orte_rml_send_callback, NULL))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(answer);

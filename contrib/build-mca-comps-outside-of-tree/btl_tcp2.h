@@ -71,7 +71,7 @@ struct mca_btl_tcp2_component_t {
     unsigned short tcp_listen_port;         /**< IPv4 listen port */
     int32_t tcp_port_min;                   /**< IPv4 minimum port */
     int32_t tcp_port_range;                 /**< IPv4 port range */
-#if OPAL_WANT_IPV6
+#if OPAL_ENABLE_IPV6
     opal_event_t tcp6_recv_event;           /**< recv event for IPv6 listen socket */
     int tcp6_listen_sd;                     /**< IPv6 listen socket for incoming connection requests */
     unsigned short tcp6_listen_port;        /**< IPv6 listen port */

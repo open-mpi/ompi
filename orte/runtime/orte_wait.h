@@ -118,35 +118,20 @@ OBJ_CLASS_DECLARATION(orte_timer_t);
  * is active, then we need to just nanosleep to avoid cross-thread
  * confusion
  */
-#if ORTE_ENABLE_PROGRESS_THREADS
 #define ORTE_WAIT_FOR_COMPLETION(flg)                                   \
     do {                                                                \
         opal_output_verbose(1, orte_progress_thread_debug,              \
                             "%s waiting on progress thread at %s:%d",   \
                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),         \
                             __FILE__, __LINE__);                        \
-        while ((flg)) {                                                 \
-            /* provide a very short quiet period so we                  \
-             * don't hammer the cpu while                               \
+        while ((flg)) {                                                \
+            /* provide a short quiet period so we                       \
+             * don't hammer the cpu while waiting                       \
              */                                                         \
-            struct timespec tp = {0, 100};                              \
+            struct timespec tp = {0, 100000};                           \
             nanosleep(&tp, NULL);                                       \
         }                                                               \
     }while(0);
-
-
-#else
-#define ORTE_WAIT_FOR_COMPLETION(flg)                                   \
-    do {                                                                \
-        opal_output_verbose(1, orte_progress_thread_debug,              \
-                            "%s looping opal_progress at %s:%d",        \
-                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),         \
-                            __FILE__, __LINE__);                        \
-        while ((flg)) {                                                 \
-            opal_progress();                                            \
-        }                                                               \
-    }while(0);
-#endif
 
 /**
  * In a number of places within the code, we want to setup a timer

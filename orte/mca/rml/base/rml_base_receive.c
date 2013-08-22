@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2011 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2007-2012 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * $COPYRIGHT$
  *
@@ -50,41 +50,29 @@ static void orte_rml_base_recv(int status, orte_process_name_t* sender,
                                opal_buffer_t* buffer, orte_rml_tag_t tag,
                                void* cbdata);
 
-int orte_rml_base_comm_start(void)
+void orte_rml_base_comm_start(void)
 {
-    int rc;
-
     if (recv_issued) {
-        return ORTE_SUCCESS;
+        return;
     }
     
-    if (ORTE_SUCCESS != (rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
-                                                      ORTE_RML_TAG_RML_INFO_UPDATE,
-                                                      ORTE_RML_PERSISTENT,
-                                                      orte_rml_base_recv,
-                                                      NULL))) {
-        ORTE_ERROR_LOG(rc);
-    }
+    orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
+                            ORTE_RML_TAG_RML_INFO_UPDATE,
+                            ORTE_RML_PERSISTENT,
+                            orte_rml_base_recv,
+                            NULL);
     recv_issued = true;
-    
-    return rc;
 }
 
 
-int orte_rml_base_comm_stop(void)
+void orte_rml_base_comm_stop(void)
 {
-    int rc;
-    
     if (!recv_issued) {
-        return ORTE_SUCCESS;
+        return;
     }
     
-    if (ORTE_SUCCESS != (rc = orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_RML_INFO_UPDATE))) {
-        ORTE_ERROR_LOG(rc);
-    }
+    orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_RML_INFO_UPDATE);
     recv_issued = false;
-    
-    return rc;
 }
 
 /* handle message from proxies
@@ -138,7 +126,7 @@ orte_rml_base_recv(int status, orte_process_name_t* sender,
                          ORTE_NAME_PRINT(sender)));
 
     buf = OBJ_NEW(opal_buffer_t);
-    if (0 > (rc = orte_rml.send_buffer_nb(sender, buf, ORTE_RML_TAG_UPDATE_ROUTE_ACK, 0,
+    if (0 > (rc = orte_rml.send_buffer_nb(sender, buf, ORTE_RML_TAG_UPDATE_ROUTE_ACK,
                                           orte_rml_send_callback, NULL))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(buf);

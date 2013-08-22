@@ -79,20 +79,14 @@ orte_iof_base_module_t orte_iof_mrhnp_module = {
 /* Initialize the module */
 static int init(void)
 {
-    int rc;
-    
     /* post non-blocking recv to catch forwarded IO from
      * the orteds
      */    
-    if (ORTE_SUCCESS != (rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
-                                                      ORTE_RML_TAG_IOF_HNP,
-						      ORTE_RML_PERSISTENT,
-                                                      orte_iof_mrhnp_recv,
-                                                      NULL))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-        
-    }
+    orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
+                            ORTE_RML_TAG_IOF_HNP,
+                            ORTE_RML_PERSISTENT,
+                            orte_iof_mrhnp_recv,
+                            NULL);
 
     OBJ_CONSTRUCT(&mca_iof_mr_hnp_component.sinks, opal_list_t);
     OBJ_CONSTRUCT(&mca_iof_mr_hnp_component.procs, opal_list_t);
@@ -462,7 +456,7 @@ static void send_data(orte_process_name_t *name, orte_iof_tag_t tag,
     }
 
     if (0 > (rc = orte_rml.send_buffer_nb(name, buf, ORTE_RML_TAG_IOF_PROXY,
-                                          0, orte_rml_send_callback, NULL))) {
+                                          orte_rml_send_callback, NULL))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(buf);
     }

@@ -36,6 +36,7 @@
 #include "orte/mca/odls/base/base.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/routed/routed.h"
+#include "orte/mca/state/state.h"
 #include "orte/util/name_fns.h"
 #include "orte/util/nidmap.h"
 #include "orte/runtime/orte_globals.h"
@@ -61,8 +62,9 @@ void orte_grpcomm_base_xcast_recv(int status, orte_process_name_t* sender,
     orte_proc_t *rec;
 
     OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_framework.framework_output,
-                         "%s grpcomm:xcast:recv:send_relay",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+                         "%s grpcomm:xcast:recv: with %d bytes",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         (int)buffer->bytes_used));
 
     /* setup the relay message */
     relay = OBJ_NEW(opal_buffer_t);
@@ -72,7 +74,8 @@ void orte_grpcomm_base_xcast_recv(int status, orte_process_name_t* sender,
     cnt=1;
     if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &command, &cnt, ORTE_DAEMON_CMD))) {
         ORTE_ERROR_LOG(ret);
-        goto relay;
+        ORTE_FORCED_TERMINATE(ret);
+        return;
     }
 
     /* if it is add_procs, then... */
@@ -184,7 +187,7 @@ void orte_grpcomm_base_xcast_recv(int status, orte_process_name_t* sender,
             OBJ_RELEASE(rly);
             continue;
         }
-        if (0 > (ret = orte_rml.send_buffer_nb(&nm->name, rly, ORTE_RML_TAG_XCAST, 0,
+        if (0 > (ret = orte_rml.send_buffer_nb(&nm->name, rly, ORTE_RML_TAG_XCAST,
                                                orte_rml_send_callback, NULL))) {
             ORTE_ERROR_LOG(ret);
             OBJ_RELEASE(rly);
@@ -198,7 +201,7 @@ void orte_grpcomm_base_xcast_recv(int status, orte_process_name_t* sender,
 
     /* now send it to myself for processing */
     if (0 > (ret = orte_rml.send_buffer_nb(ORTE_PROC_MY_NAME, relay,
-                                           ORTE_RML_TAG_DAEMON, 0,
+                                           ORTE_RML_TAG_DAEMON,
                                            orte_rml_send_callback, NULL))) {
         ORTE_ERROR_LOG(ret);
         OBJ_RELEASE(relay);

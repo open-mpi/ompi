@@ -933,13 +933,8 @@ int orterun(int argc, char *argv[])
      * there are times I need to send a command to "all daemons", and that means *I* have
      * to receive it too
      */
-    rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_DAEMON,
-                                 ORTE_RML_PERSISTENT, orte_daemon_recv, NULL);
-    if (rc != ORTE_SUCCESS && rc != ORTE_ERR_NOT_IMPLEMENTED) {
-        ORTE_ERROR_LOG(rc);
-        ORTE_UPDATE_EXIT_STATUS(ORTE_ERROR_DEFAULT_EXIT_CODE);
-        goto DONE;
-    }
+    orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_DAEMON,
+                            ORTE_RML_PERSISTENT, orte_daemon_recv, NULL);
     
     /* setup the data server */
     if (ORTE_SUCCESS != (rc = orte_data_server_init())) {
@@ -2493,8 +2488,7 @@ static void run_debugger(char *basename, opal_cmd_line_t *cmd_line,
  * parallel debuggers (i.e., attaching to only some of the MPI
  * processes; not necessarily all of them).
  *
- * 2. If not using orterun: in this case, ORTE_DISABLE_FULL_SUPPORT
- * will be true, and we know that there will not be an RML message
+ * 2. If not using orterun: in this case, we know that there will not be an RML message
  * sent to VPID 0.  So we have to look for a magic environment
  * variable from the launcher to know if the jobs will be attached by
  * a debugger (e.g., set by yod, srun, ...etc.), and if so, spin on
@@ -2773,7 +2767,7 @@ void orte_debugger_init_after_spawn(int fd, short event, void *cbdata)
                 }
                 buf = OBJ_NEW(opal_buffer_t); /* don't need anything in this */
                 if (0 > (rc = orte_rml.send_buffer_nb(&proc->name, buf,
-                                                      ORTE_RML_TAG_DEBUGGER_RELEASE, 0,
+                                                      ORTE_RML_TAG_DEBUGGER_RELEASE,
                                                       orte_rml_send_callback, NULL))) {
                     opal_output(0, "Error: could not send debugger release to MPI procs - error %s", ORTE_ERROR_NAME(rc));
                     OBJ_RELEASE(buf);
@@ -2886,7 +2880,7 @@ void orte_debugger_init_after_spawn(int fd, short event, void *cbdata)
                                     ORTE_NAME_PRINT(&proc->name));
                 buf = OBJ_NEW(opal_buffer_t); /* don't need anything in this */
                 if (0 > (rc = orte_rml.send_buffer_nb(&proc->name, buf,
-                                                      ORTE_RML_TAG_DEBUGGER_RELEASE, 0,
+                                                      ORTE_RML_TAG_DEBUGGER_RELEASE,
                                                       orte_rml_send_callback, NULL))) {
                     opal_output(0, "Error: could not send debugger release to MPI procs - error %s", ORTE_ERROR_NAME(rc));
                     OBJ_RELEASE(buf);

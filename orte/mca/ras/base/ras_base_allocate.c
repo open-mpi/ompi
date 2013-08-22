@@ -165,7 +165,7 @@ void orte_ras_base_allocate(int fd, short args, void *cbdata)
                     /* an allocation is required, so this is fatal */
                     OBJ_DESTRUCT(&nodes);
                     orte_show_help("help-ras-base.txt", "ras-base:no-allocation", true);
-                    ORTE_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
+                    ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
                     OBJ_RELEASE(caddy);
                     return;
                 } else {
@@ -177,7 +177,7 @@ void orte_ras_base_allocate(int fd, short args, void *cbdata)
             }
             ORTE_ERROR_LOG(rc);
             OBJ_DESTRUCT(&nodes);
-            ORTE_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
+            ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
             OBJ_RELEASE(caddy);
             return;
         }
@@ -190,7 +190,7 @@ void orte_ras_base_allocate(int fd, short args, void *cbdata)
         if (ORTE_SUCCESS != (rc = orte_ras_base_node_insert(&nodes, jdata))) {
             ORTE_ERROR_LOG(rc);
             OBJ_DESTRUCT(&nodes);
-            ORTE_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
+            ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
             OBJ_RELEASE(caddy);
             return;
         }
@@ -208,7 +208,7 @@ void orte_ras_base_allocate(int fd, short args, void *cbdata)
          */
         OBJ_DESTRUCT(&nodes);
         orte_show_help("help-ras-base.txt", "ras-base:no-allocation", true);
-        ORTE_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
+        ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
         OBJ_RELEASE(caddy);
         return;
     }
@@ -256,7 +256,7 @@ void orte_ras_base_allocate(int fd, short args, void *cbdata)
                 ORTE_ERROR_LOG(rc);
                 OBJ_DESTRUCT(&nodes);
                 /* set an error event */
-                ORTE_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
+                ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
                 OBJ_RELEASE(caddy);
                 return;
             }
@@ -275,7 +275,7 @@ void orte_ras_base_allocate(int fd, short args, void *cbdata)
                                                                     app->dash_host))) {
                 ORTE_ERROR_LOG(rc);
                 OBJ_DESTRUCT(&nodes);
-                ORTE_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
+                ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
                 OBJ_RELEASE(caddy);
                 return;
             }
@@ -291,7 +291,7 @@ void orte_ras_base_allocate(int fd, short args, void *cbdata)
                                                                        orte_default_hostfile))) {
                     ORTE_ERROR_LOG(rc);
                     OBJ_DESTRUCT(&nodes);
-                    ORTE_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
+                    ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
                     OBJ_RELEASE(caddy);
                     return;
                 }
@@ -310,7 +310,7 @@ void orte_ras_base_allocate(int fd, short args, void *cbdata)
          */
         if (ORTE_SUCCESS != (rc = orte_ras_base_node_insert(&nodes, jdata))) {
             ORTE_ERROR_LOG(rc);
-            ORTE_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
+            ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
             OBJ_RELEASE(caddy);
             return;
         }
@@ -332,7 +332,7 @@ void orte_ras_base_allocate(int fd, short args, void *cbdata)
                                                                orte_rankfile))) {
             ORTE_ERROR_LOG(rc);
             OBJ_DESTRUCT(&nodes);
-            ORTE_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
+            ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
             OBJ_RELEASE(caddy);
             return ;
         }
@@ -346,7 +346,7 @@ void orte_ras_base_allocate(int fd, short args, void *cbdata)
          */
         if (ORTE_SUCCESS != (rc = orte_ras_base_node_insert(&nodes, jdata))) {
             ORTE_ERROR_LOG(rc);
-            ORTE_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
+            ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
             OBJ_RELEASE(caddy);
             return;
         }
@@ -372,7 +372,7 @@ void orte_ras_base_allocate(int fd, short args, void *cbdata)
     if (NULL == node) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         OBJ_DESTRUCT(&nodes);
-        ORTE_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
+        ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
         OBJ_RELEASE(caddy);
         return;
     }
@@ -392,7 +392,7 @@ void orte_ras_base_allocate(int fd, short args, void *cbdata)
     if (ORTE_SUCCESS != (rc = orte_ras_base_node_insert(&nodes, jdata))) {
         ORTE_ERROR_LOG(rc);
         OBJ_DESTRUCT(&nodes);
-        ORTE_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
+        ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
         OBJ_RELEASE(caddy);
         return;
     }
@@ -409,7 +409,7 @@ void orte_ras_base_allocate(int fd, short args, void *cbdata)
     if (orte_report_events) {
         if (ORTE_SUCCESS != (rc = orte_util_comm_report_event(ORTE_COMM_EVENT_ALLOCATE))) {
             ORTE_ERROR_LOG(rc);
-            ORTE_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
+            ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
             OBJ_RELEASE(caddy);
         }
     }

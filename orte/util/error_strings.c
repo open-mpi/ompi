@@ -193,6 +193,9 @@ int orte_err2str(int errnum, const char **errmsg)
     case ORTE_ERR_ALLOCATION_PENDING:
         retval = "Allocation pending";
         break;
+    case ORTE_ERR_NO_PATH_TO_TARGET:
+        retval = "No OOB path to target";
+        break;
     default:
         if (orte_report_silent_errors) {
             retval = "Unknown error";
@@ -368,6 +371,10 @@ const char *orte_proc_state_to_str(orte_proc_state_t state)
         return "EXITED WITH NON-ZERO STATUS";
     case ORTE_PROC_STATE_FAILED_TO_LAUNCH:
         return "FAILED TO LAUNCH";
+    case ORTE_PROC_STATE_UNABLE_TO_SEND_MSG:
+        return "UNABLE TO SEND MSG";
+    case ORTE_PROC_STATE_LIFELINE_LOST:
+        return "LIFELINE LOST";
     case ORTE_PROC_STATE_ANY:
         return "ANY";
     default:

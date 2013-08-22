@@ -160,7 +160,7 @@ void orte_iof_orted_read_handler(int fd, short event, void *cbdata)
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), numbytes));
     
     orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, buf, ORTE_RML_TAG_IOF_HNP,
-                            0, send_cb, NULL);
+                            send_cb, NULL);
     
  RESTART:
     /* re-add the event */

@@ -60,68 +60,42 @@ static void coll_id_req(int status, orte_process_name_t* sender,
 
 int orte_grpcomm_base_comm_start(void)
 {
-    int rc;
-
     OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_framework.framework_output,
                          "%s grpcomm:base:receive start comm",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
     if (!recv_issued) {
         if (ORTE_PROC_IS_HNP || ORTE_PROC_IS_DAEMON) {
-            if (ORTE_SUCCESS != (rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
-                                                              ORTE_RML_TAG_COLLECTIVE,
-                                                              ORTE_RML_PERSISTENT,
-                                                              daemon_local_recv, NULL))) {
-                ORTE_ERROR_LOG(rc);
-                recv_issued = false;
-                return rc;
-            }
-            if (ORTE_SUCCESS != (rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
-                                                              ORTE_RML_TAG_XCAST,
-                                                              ORTE_RML_PERSISTENT,
-                                                              orte_grpcomm_base_xcast_recv, NULL))) {
-                ORTE_ERROR_LOG(rc);
-                recv_issued = false;
-                return rc;
-            }
-            if (ORTE_SUCCESS != (rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
-                                                              ORTE_RML_TAG_DAEMON_COLL,
-                                                              ORTE_RML_PERSISTENT,
-                                                              daemon_coll_recv, NULL))) {
-                ORTE_ERROR_LOG(rc);
-                recv_issued = false;
-                return rc;
-            }
+            orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
+                                    ORTE_RML_TAG_COLLECTIVE,
+                                    ORTE_RML_PERSISTENT,
+                                    daemon_local_recv, NULL);
+            orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
+                                    ORTE_RML_TAG_XCAST,
+                                    ORTE_RML_PERSISTENT,
+                                    orte_grpcomm_base_xcast_recv, NULL);
+            orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
+                                    ORTE_RML_TAG_DAEMON_COLL,
+                                    ORTE_RML_PERSISTENT,
+                                    daemon_coll_recv, NULL);
             if (ORTE_PROC_IS_DAEMON) {
-                if (ORTE_SUCCESS != (rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
-                                                                  ORTE_RML_TAG_ROLLUP,
-                                                                  ORTE_RML_PERSISTENT,
-                                                                  orte_grpcomm_base_rollup_recv, NULL))) {
-                    ORTE_ERROR_LOG(rc);
-                    recv_issued = false;
-                    return rc;
-                }
+                orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
+                                        ORTE_RML_TAG_ROLLUP,
+                                        ORTE_RML_PERSISTENT,
+                                        orte_grpcomm_base_rollup_recv, NULL);
             }
             if (ORTE_PROC_IS_HNP) {
-                if (ORTE_SUCCESS != (rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
-                                                                  ORTE_RML_TAG_COLL_ID_REQ,
-                                                                  ORTE_RML_PERSISTENT,
-                                                                  coll_id_req, NULL))) {
-                    ORTE_ERROR_LOG(rc);
-                    recv_issued = false;
-                    return rc;
-                }
+                orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
+                                        ORTE_RML_TAG_COLL_ID_REQ,
+                                        ORTE_RML_PERSISTENT,
+                                        coll_id_req, NULL);
             }
             recv_issued = true;
         } else if (ORTE_PROC_IS_APP) {
-            if (ORTE_SUCCESS != (rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
-                                                              ORTE_RML_TAG_COLLECTIVE,
-                                                              ORTE_RML_PERSISTENT,
-                                                              app_recv, NULL))) {
-                ORTE_ERROR_LOG(rc);
-                recv_issued = false;
-                return rc;
-            }
+            orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
+                                    ORTE_RML_TAG_COLLECTIVE,
+                                    ORTE_RML_PERSISTENT,
+                                    app_recv, NULL);
             recv_issued = true;
         }
     }
@@ -167,7 +141,7 @@ static void coll_id_req(int status, orte_process_name_t* sender,
         OBJ_RELEASE(relay);
         return;
     }
-    if (0 > (rc = orte_rml.send_buffer_nb(sender, relay, ORTE_RML_TAG_COLL_ID, 0,
+    if (0 > (rc = orte_rml.send_buffer_nb(sender, relay, ORTE_RML_TAG_COLL_ID,
                                           orte_rml_send_callback, NULL))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(relay);
@@ -186,6 +160,7 @@ static void app_recv(int status, orte_process_name_t* sender,
     int n, rc;
     orte_grpcomm_coll_id_t id;
     orte_namelist_t *nm;
+    bool added;
 
     /* get the collective id */
     n = 1;
@@ -220,10 +195,8 @@ static void app_recv(int status, orte_process_name_t* sender,
                     coll->next_cb(buffer, coll->next_cbdata);
                     break;
                 }
-                /* flag the collective as complete */
-                coll->active = false;
                 /* cleanup */
-                opal_list_remove_item(&orte_grpcomm_base.active_colls, item);
+                opal_list_remove_item(&orte_grpcomm_base.active_colls, &coll->super);
                 /* callback the specified function */
                 if (NULL != coll->cbfunc) {
                     OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_framework.framework_output,
@@ -232,6 +205,11 @@ static void app_recv(int status, orte_process_name_t* sender,
                     
                     coll->cbfunc(buffer, coll->cbdata);
                 }
+                /* flag the collective as complete - must do this after we remove the
+                 * item and do the callback because someone may be waiting inside
+                 * a different event base
+                 */
+                coll->active = false;
                 /* do NOT release the collective - it is the responsibility
                  * of whomever passed it down to us
                  */
@@ -249,6 +227,7 @@ static void app_recv(int status, orte_process_name_t* sender,
      * the collective on our list - see if we do
      */
     coll = NULL;
+    added = false;
     for (item = opal_list_get_first(&orte_grpcomm_base.active_colls);
          item != opal_list_get_end(&orte_grpcomm_base.active_colls);
          item = opal_list_get_next(item)) {
@@ -269,7 +248,12 @@ static void app_recv(int status, orte_process_name_t* sender,
         coll = OBJ_NEW(orte_grpcomm_collective_t);
         coll->id = id;
         opal_list_append(&orte_grpcomm_base.active_colls, &coll->super);
-   }
+        /* mark that we added it - since we can't possibly know
+         * the participants, we need to mark this collective so
+         * we don't try to test for completeness
+         */
+        added = true;
+    }
     /* append the sender to the list of targets so
      * we know we already have their contribution
      */
@@ -284,11 +268,12 @@ static void app_recv(int status, orte_process_name_t* sender,
      */
     opal_dss.copy_payload(&coll->local_bucket, buffer);
 
-    /* if the length of the participant list equals the
-     * length of the target list, then the collective is
-     * complete
+    /* if we already know the participants, and the length of the
+     * participant list equals the length of the target list, then
+     * the collective is complete
      */
-    if (opal_list_get_size(&coll->participants) ==  opal_list_get_size(&coll->targets)) {
+    if (!added && 
+        opal_list_get_size(&coll->participants) ==  opal_list_get_size(&coll->targets)) {
         /* replace whatever is in the collective's buffer
          * field with what we collected
          */
@@ -301,10 +286,8 @@ static void app_recv(int status, orte_process_name_t* sender,
             coll->next_cb(&coll->buffer, coll->next_cbdata);
             return;
         }
-        /* flag the collective as complete */
-        coll->active = false;
         /* cleanup */
-        opal_list_remove_item(&orte_grpcomm_base.active_colls, item);
+        opal_list_remove_item(&orte_grpcomm_base.active_colls, &coll->super);
         /* callback the specified function */
         if (NULL != coll->cbfunc) {
             OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_framework.framework_output,
@@ -313,6 +296,11 @@ static void app_recv(int status, orte_process_name_t* sender,
             
             coll->cbfunc(&coll->buffer, coll->cbdata);
         }
+        /* flag the collective as complete - must do this after we remove the
+         * item and do the callback because someone may be waiting inside
+         * a different event base
+         */
+        coll->active = false;
         /* do NOT release the collective - it is the responsibility
          * of whomever passed it down to us
          */
@@ -449,7 +437,7 @@ void orte_grpcomm_base_progress_collectives(void)
                                               coll, ORTE_GRPCOMM_INTERNAL_STG_LOCAL);
             /* send it to our global collective handler */
             if (0 > (rc = orte_rml.send_buffer_nb(ORTE_PROC_MY_NAME, relay,
-                                                  ORTE_RML_TAG_DAEMON_COLL, 0,
+                                                  ORTE_RML_TAG_DAEMON_COLL,
                                                   orte_rml_send_callback, NULL))) {
                 ORTE_ERROR_LOG(rc);
                 OBJ_RELEASE(relay);
@@ -594,7 +582,7 @@ static void daemon_coll_recv(int status, orte_process_name_t* sender,
             if (nm->name.vpid == sender->vpid) {
                 OBJ_RELEASE(relay);
             } else {
-                if (0 > orte_rml.send_buffer_nb(&nm->name, relay, ORTE_RML_TAG_DAEMON_COLL, 0,
+                if (0 > orte_rml.send_buffer_nb(&nm->name, relay, ORTE_RML_TAG_DAEMON_COLL,
                                                 orte_rml_send_callback, NULL)) {
                     ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
                     OBJ_RELEASE(relay);
@@ -655,7 +643,7 @@ static void daemon_coll_recv(int status, orte_process_name_t* sender,
             OBJ_RELEASE(relay);
         } else {
             /* send it to this proc */
-            if (0 > orte_rml.send_buffer_nb(&nm->name, relay, ORTE_RML_TAG_COLLECTIVE, 0,
+            if (0 > orte_rml.send_buffer_nb(&nm->name, relay, ORTE_RML_TAG_COLLECTIVE,
                                             orte_rml_send_callback, NULL)) {
                 ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
                 OBJ_RELEASE(relay);

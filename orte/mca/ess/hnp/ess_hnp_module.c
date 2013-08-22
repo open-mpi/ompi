@@ -13,6 +13,7 @@
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
+ * Copyright (c) 2013      Intel, Inc.  All rights reserved. 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -48,6 +49,7 @@
 #include "opal/mca/pstat/base/base.h"
 #include "opal/mca/hwloc/base/base.h"
 
+#include "orte/mca/oob/base/base.h"
 #include "orte/mca/rml/base/base.h"
 #include "orte/mca/rml/rml_types.h"
 #include "orte/mca/routed/base/base.h"
@@ -291,6 +293,20 @@ static int rte_init(void)
     /* Setup the communication infrastructure */
     
     /*
+     * OOB Layer
+     */
+    if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_oob_base_framework, 0))) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_oob_base_open";
+        goto error;
+    }
+    if (ORTE_SUCCESS != (ret = orte_oob_base_select())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_oob_base_select";
+        goto error;
+    }
+
+    /*
      * Runtime Messaging Layer
      */
     if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_rml_base_framework, 0))) {
@@ -310,6 +326,103 @@ static int rte_init(void)
         goto error;
     }
     
+    /* setup the global job and node arrays */
+    orte_job_data = OBJ_NEW(opal_pointer_array_t);
+    if (ORTE_SUCCESS != (ret = opal_pointer_array_init(orte_job_data,
+                                                      1,
+                                                      ORTE_GLOBAL_ARRAY_MAX_SIZE,
+                                                      1))) {
+        ORTE_ERROR_LOG(ret);
+        error = "setup job array";
+        goto error;
+    }
+    
+    orte_node_pool = OBJ_NEW(opal_pointer_array_t);
+    if (ORTE_SUCCESS != (ret = opal_pointer_array_init(orte_node_pool,
+                                                      ORTE_GLOBAL_ARRAY_BLOCK_SIZE,
+                                                      ORTE_GLOBAL_ARRAY_MAX_SIZE,
+                                                      ORTE_GLOBAL_ARRAY_BLOCK_SIZE))) {
+        ORTE_ERROR_LOG(ret);
+        error = "setup node array";
+        goto error;
+    }
+    orte_node_topologies = OBJ_NEW(opal_pointer_array_t);
+    if (ORTE_SUCCESS != (ret = opal_pointer_array_init(orte_node_topologies,
+                                                      ORTE_GLOBAL_ARRAY_BLOCK_SIZE,
+                                                      ORTE_GLOBAL_ARRAY_MAX_SIZE,
+                                                      ORTE_GLOBAL_ARRAY_BLOCK_SIZE))) {
+        ORTE_ERROR_LOG(ret);
+        error = "setup node topologies array";
+        goto error;
+    }
+
+    /* init the nidmap - just so we register that verbosity */
+    orte_util_nidmap_init(NULL);
+
+    /* Setup the job data object for the daemons */        
+    /* create and store the job data object */
+    jdata = OBJ_NEW(orte_job_t);
+    jdata->jobid = ORTE_PROC_MY_NAME->jobid;
+    opal_pointer_array_set_item(orte_job_data, 0, jdata);
+    /* mark that the daemons have reported as we are the
+     * only ones in the system right now, and we definitely
+     * are running!
+     */
+    jdata->state = ORTE_JOB_STATE_DAEMONS_REPORTED;
+   
+    /* every job requires at least one app */
+    app = OBJ_NEW(orte_app_context_t);
+    opal_pointer_array_set_item(jdata->apps, 0, app);
+    jdata->num_apps++;
+
+    /* create and store a node object where we are */
+    node = OBJ_NEW(orte_node_t);
+    node->name = strdup(orte_process_info.nodename);
+    node->index = opal_pointer_array_set_item(orte_node_pool, 0, node);
+#if OPAL_HAVE_HWLOC
+    /* point our topology to the one detected locally */
+    node->topology = opal_hwloc_topology;
+    /* add it to the array of known topologies */
+    opal_pointer_array_add(orte_node_topologies, opal_hwloc_topology);
+#endif
+
+    /* create and store a proc object for us */
+    proc = OBJ_NEW(orte_proc_t);
+    proc->name.jobid = ORTE_PROC_MY_NAME->jobid;
+    proc->name.vpid = ORTE_PROC_MY_NAME->vpid;
+    
+    proc->pid = orte_process_info.pid;
+    proc->rml_uri = orte_rml.get_contact_info();
+    proc->state = ORTE_PROC_STATE_RUNNING;
+    OBJ_RETAIN(node);  /* keep accounting straight */
+    proc->node = node;
+    proc->nodename = node->name;
+    opal_pointer_array_set_item(jdata->procs, proc->name.vpid, proc);
+
+    /* record that the daemon (i.e., us) is on this node 
+     * NOTE: we do not add the proc object to the node's
+     * proc array because we are not an application proc.
+     * Instead, we record it in the daemon field of the
+     * node object
+     */
+    OBJ_RETAIN(proc);   /* keep accounting straight */
+    node->daemon = proc;
+    node->daemon_launched = true;
+    node->state = ORTE_NODE_STATE_UP;
+    
+    /* if we are to retain aliases, get ours */
+    if (orte_retain_aliases) {
+        opal_ifgetaliases(&node->alias);
+        /* add our own local name to it */
+        opal_argv_append_nosize(&node->alias, orte_process_info.nodename);
+    }
+
+    /* record that the daemon job is running */
+    jdata->num_procs = 1;
+    jdata->state = ORTE_JOB_STATE_RUNNING;
+    /* obviously, we have "reported" */
+    jdata->num_reported = 1;
+
     /*
      * Routed system
      */
@@ -410,18 +523,14 @@ static int rte_init(void)
 
     /* we are an hnp, so update the contact info field for later use */
     orte_process_info.my_hnp_uri = orte_rml.get_contact_info();
-    
+    proc->rml_uri = strdup(orte_process_info.my_hnp_uri);
+
     /* we are also officially a daemon, so better update that field too */
-    orte_process_info.my_daemon_uri = orte_rml.get_contact_info();
+    orte_process_info.my_daemon_uri = strdup(orte_process_info.my_hnp_uri);
     
     /* setup the orte_show_help system to recv remote output */
-    ret = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_SHOW_HELP,
-                                 ORTE_RML_PERSISTENT, orte_show_help_recv, NULL);
-    if (ret != ORTE_SUCCESS && ret != ORTE_ERR_NOT_IMPLEMENTED) {
-        ORTE_ERROR_LOG(ret);
-        error = "setup receive for orte_show_help";
-        goto error;
-    }
+    orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_SHOW_HELP,
+                            ORTE_RML_PERSISTENT, orte_show_help_recv, NULL);
 
     /* setup my session directory */
     if (orte_create_session_dirs) {
@@ -468,103 +577,6 @@ static int rte_init(void)
         }
         free(contact_path);
     }
-
-    /* init the nidmap - just so we register that verbosity */
-    orte_util_nidmap_init(NULL);
-
-    /* setup the global job and node arrays */
-    orte_job_data = OBJ_NEW(opal_pointer_array_t);
-    if (ORTE_SUCCESS != (ret = opal_pointer_array_init(orte_job_data,
-                                                      1,
-                                                      ORTE_GLOBAL_ARRAY_MAX_SIZE,
-                                                      1))) {
-        ORTE_ERROR_LOG(ret);
-        error = "setup job array";
-        goto error;
-    }
-    
-    orte_node_pool = OBJ_NEW(opal_pointer_array_t);
-    if (ORTE_SUCCESS != (ret = opal_pointer_array_init(orte_node_pool,
-                                                      ORTE_GLOBAL_ARRAY_BLOCK_SIZE,
-                                                      ORTE_GLOBAL_ARRAY_MAX_SIZE,
-                                                      ORTE_GLOBAL_ARRAY_BLOCK_SIZE))) {
-        ORTE_ERROR_LOG(ret);
-        error = "setup node array";
-        goto error;
-    }
-    orte_node_topologies = OBJ_NEW(opal_pointer_array_t);
-    if (ORTE_SUCCESS != (ret = opal_pointer_array_init(orte_node_topologies,
-                                                      ORTE_GLOBAL_ARRAY_BLOCK_SIZE,
-                                                      ORTE_GLOBAL_ARRAY_MAX_SIZE,
-                                                      ORTE_GLOBAL_ARRAY_BLOCK_SIZE))) {
-        ORTE_ERROR_LOG(ret);
-        error = "setup node topologies array";
-        goto error;
-    }
-
-    /* Setup the job data object for the daemons */        
-    /* create and store the job data object */
-    jdata = OBJ_NEW(orte_job_t);
-    jdata->jobid = ORTE_PROC_MY_NAME->jobid;
-    opal_pointer_array_set_item(orte_job_data, 0, jdata);
-    /* mark that the daemons have reported as we are the
-     * only ones in the system right now, and we definitely
-     * are running!
-     */
-    jdata->state = ORTE_JOB_STATE_DAEMONS_REPORTED;
-   
-    /* every job requires at least one app */
-    app = OBJ_NEW(orte_app_context_t);
-    opal_pointer_array_set_item(jdata->apps, 0, app);
-    jdata->num_apps++;
-
-    /* create and store a node object where we are */
-    node = OBJ_NEW(orte_node_t);
-    node->name = strdup(orte_process_info.nodename);
-    node->index = opal_pointer_array_set_item(orte_node_pool, 0, node);
-#if OPAL_HAVE_HWLOC
-    /* point our topology to the one detected locally */
-    node->topology = opal_hwloc_topology;
-    /* add it to the array of known topologies */
-    opal_pointer_array_add(orte_node_topologies, opal_hwloc_topology);
-#endif
-
-    /* create and store a proc object for us */
-    proc = OBJ_NEW(orte_proc_t);
-    proc->name.jobid = ORTE_PROC_MY_NAME->jobid;
-    proc->name.vpid = ORTE_PROC_MY_NAME->vpid;
-    
-    proc->pid = orte_process_info.pid;
-    proc->rml_uri = orte_rml.get_contact_info();
-    proc->state = ORTE_PROC_STATE_RUNNING;
-    OBJ_RETAIN(node);  /* keep accounting straight */
-    proc->node = node;
-    proc->nodename = node->name;
-    opal_pointer_array_set_item(jdata->procs, proc->name.vpid, proc);
-
-    /* record that the daemon (i.e., us) is on this node 
-     * NOTE: we do not add the proc object to the node's
-     * proc array because we are not an application proc.
-     * Instead, we record it in the daemon field of the
-     * node object
-     */
-    OBJ_RETAIN(proc);   /* keep accounting straight */
-    node->daemon = proc;
-    node->daemon_launched = true;
-    node->state = ORTE_NODE_STATE_UP;
-    
-    /* if we are to retain aliases, get ours */
-    if (orte_retain_aliases) {
-        opal_ifgetaliases(&node->alias);
-        /* add our own local name to it */
-        opal_argv_append_nosize(&node->alias, orte_process_info.nodename);
-    }
-
-    /* record that the daemon job is running */
-    jdata->num_procs = 1;
-    jdata->state = ORTE_JOB_STATE_RUNNING;
-    /* obviously, we have "reported" */
-    jdata->num_reported = 1;
 
     /* setup the routed info - the selected routed component
      * will know what to do. 
@@ -749,7 +761,6 @@ static int rte_finalize(void)
     (void) mca_base_framework_close(&orte_plm_base_framework);
     (void) mca_base_framework_close(&orte_errmgr_base_framework);
     (void) mca_base_framework_close(&orte_state_base_framework);
-    (void) mca_base_framework_close(&orte_rml_base_framework);
 
     /* cleanup the pstat stuff */
     (void) mca_base_framework_close(&opal_pstat_base_framework);
@@ -763,6 +774,10 @@ static int rte_finalize(void)
         free(contact_path);
     }
 
+    /* shutdown the messaging frameworks */
+    (void) mca_base_framework_close(&orte_rml_base_framework);
+    (void) mca_base_framework_close(&orte_oob_base_framework);
+
     /* ensure we scrub the session directory tree */
     orte_session_dir_cleanup(ORTE_JOBID_WILDCARD);
     
@@ -774,8 +789,7 @@ static int rte_finalize(void)
             fclose(orte_xml_fp);
         }
     }
-
-    return ORTE_SUCCESS;    
+    return ORTE_SUCCESS;
 }
 
 static void rte_abort(int status, bool report)
@@ -848,7 +862,7 @@ static void clean_abort(int fd, short flags, void *arg)
        (which is a Bad Thing), so we can't call it directly.
        Instead, we have to exit this handler and setup to call
        job_completed() after this. */
-    ORTE_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
+    ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
 }
 
 static struct timeval current, last={0,0};
