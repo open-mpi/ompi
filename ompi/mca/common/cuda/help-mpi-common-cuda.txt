@@ -157,10 +157,11 @@ MPI developers.
 #
 [dlopen failed]
 The library attempted to open the following supporting CUDA libraries, 
-but each of them failed.
+but each of them failed.  CUDA-aware support is disabled.
 %s
 #
 [dlsym failed]
 An error occurred while trying to map in the address of a function.
   Function Name: %s
   Error string:  %s
+CUDA-aware support is disabled.
