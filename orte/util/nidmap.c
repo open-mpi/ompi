@@ -306,41 +306,39 @@ int orte_util_encode_nodemap(opal_byte_object_t *boptr, bool update)
             ORTE_ERROR_LOG(rc);
             return rc;
         }
-        if (daemons->num_procs < orte_hostname_cutoff) {
-            /* pack the name of the node */
-            if (!orte_keep_fqdn_hostnames) {
-                nodename = strdup(node->name);
-                /* if the nodename is an IP address, do not mess with it! */
-                if (!opal_net_isaddr(nodename)) {
-                    /* not an IP address */
-                    if (NULL != (ptr = strchr(nodename, '.'))) {
-                        *ptr = '\0';
-                    }
-                }
-                if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &nodename, 1, OPAL_STRING))) {
-                    ORTE_ERROR_LOG(rc);
-                    return rc;
-                }
-                free(nodename);
-            } else {
-                if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &node->name, 1, OPAL_STRING))) {
-                    ORTE_ERROR_LOG(rc);
-                    return rc;
+        /* pack the name of the node */
+        if (!orte_keep_fqdn_hostnames) {
+            nodename = strdup(node->name);
+            /* if the nodename is an IP address, do not mess with it! */
+            if (!opal_net_isaddr(nodename)) {
+                /* not an IP address */
+                if (NULL != (ptr = strchr(nodename, '.'))) {
+                    *ptr = '\0';
                 }
             }
-            /* if requested, pack any aliases */
-            if (orte_retain_aliases) {
-                uint8_t naliases, ni;
-                naliases = opal_argv_count(node->alias);
-                if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &naliases, 1, OPAL_UINT8))) {
+            if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &nodename, 1, OPAL_STRING))) {
+                ORTE_ERROR_LOG(rc);
+                return rc;
+            }
+            free(nodename);
+        } else {
+            if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &node->name, 1, OPAL_STRING))) {
+                ORTE_ERROR_LOG(rc);
+                return rc;
+            }
+        }
+        /* if requested, pack any aliases */
+        if (orte_retain_aliases) {
+            uint8_t naliases, ni;
+            naliases = opal_argv_count(node->alias);
+            if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &naliases, 1, OPAL_UINT8))) {
+                ORTE_ERROR_LOG(rc);
+                return rc;
+            }
+            for (ni=0; ni < naliases; ni++) {
+                if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &node->alias[ni], 1, OPAL_STRING))) {
                     ORTE_ERROR_LOG(rc);
                     return rc;
-                }
-                for (ni=0; ni < naliases; ni++) {
-                    if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &node->alias[ni], 1, OPAL_STRING))) {
-                        ORTE_ERROR_LOG(rc);
-                        return rc;
-                    }
                 }
             }
         }
@@ -399,70 +397,68 @@ int orte_util_decode_nodemap(opal_byte_object_t *bo)
 
     n=1;
     while (OPAL_SUCCESS == (rc = opal_dss.unpack(&buf, &daemon.vpid, &n, ORTE_VPID))) {
-        if (num_daemons < orte_hostname_cutoff) {
-            /* unpack and store the node's name */
+        /* unpack and store the node's name */
+        n=1;
+        if (ORTE_SUCCESS != (rc = opal_dss.unpack(&buf, &nodename, &n, OPAL_STRING))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        if (ORTE_SUCCESS != (rc = opal_db.store((opal_identifier_t*)&daemon, OPAL_DB_INTERNAL, ORTE_DB_HOSTNAME, nodename, OPAL_STRING))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        /* now store a direct reference so we can quickly lookup the daemon from a hostname */
+        opal_output_verbose(2, orte_nidmap_output,
+                            "%s storing nodename %s for daemon %s",
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                            nodename, ORTE_VPID_PRINT(daemon.vpid));
+        if (ORTE_SUCCESS != (rc = opal_db.store((opal_identifier_t*)ORTE_NAME_WILDCARD, OPAL_DB_INTERNAL, nodename, &daemon.vpid, OPAL_UINT32))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+
+        OPAL_OUTPUT_VERBOSE((2, orte_nidmap_output,
+                             "%s orte:util:decode:nidmap daemon %s node %s",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             ORTE_VPID_PRINT(daemon.vpid), nodename));
+
+        /* if this is my daemon, then store the data for me too */
+        if (daemon.vpid == ORTE_PROC_MY_DAEMON->vpid) {
+            if (ORTE_SUCCESS != (rc = opal_db.store((opal_identifier_t*)ORTE_PROC_MY_NAME, OPAL_DB_INTERNAL, ORTE_DB_HOSTNAME, nodename, OPAL_STRING))) {
+                ORTE_ERROR_LOG(rc);
+                return rc;
+            }
+            if (ORTE_SUCCESS != (rc = opal_db.store((opal_identifier_t*)ORTE_PROC_MY_NAME, OPAL_DB_INTERNAL, ORTE_DB_DAEMON_VPID, &daemon.vpid, OPAL_UINT32))) {
+                ORTE_ERROR_LOG(rc);
+                return rc;
+            }
+        }
+
+        /* if requested, unpack any aliases */
+        if (orte_retain_aliases) {
+            char *alias;
+            uint8_t naliases, ni;
             n=1;
-            if (ORTE_SUCCESS != (rc = opal_dss.unpack(&buf, &nodename, &n, OPAL_STRING))) {
+            if (ORTE_SUCCESS != (rc = opal_dss.unpack(&buf, &naliases, &n, OPAL_UINT8))) {
                 ORTE_ERROR_LOG(rc);
                 return rc;
             }
-            if (ORTE_SUCCESS != (rc = opal_db.store((opal_identifier_t*)&daemon, OPAL_DB_INTERNAL, ORTE_DB_HOSTNAME, nodename, OPAL_STRING))) {
-                ORTE_ERROR_LOG(rc);
-                return rc;
-            }
-            /* now store a direct reference so we can quickly lookup the daemon from a hostname */
-            opal_output_verbose(2, orte_nidmap_output,
-                                "%s storing nodename %s for daemon %s",
-                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                nodename, ORTE_VPID_PRINT(daemon.vpid));
-            if (ORTE_SUCCESS != (rc = opal_db.store((opal_identifier_t*)ORTE_NAME_WILDCARD, OPAL_DB_INTERNAL, nodename, &daemon.vpid, OPAL_UINT32))) {
-                ORTE_ERROR_LOG(rc);
-                return rc;
-            }
-
-            OPAL_OUTPUT_VERBOSE((2, orte_nidmap_output,
-                                 "%s orte:util:decode:nidmap daemon %s node %s",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 ORTE_VPID_PRINT(daemon.vpid), nodename));
-
-            /* if this is my daemon, then store the data for me too */
-            if (daemon.vpid == ORTE_PROC_MY_DAEMON->vpid) {
-                if (ORTE_SUCCESS != (rc = opal_db.store((opal_identifier_t*)ORTE_PROC_MY_NAME, OPAL_DB_INTERNAL, ORTE_DB_HOSTNAME, nodename, OPAL_STRING))) {
-                    ORTE_ERROR_LOG(rc);
-                    return rc;
-                }
-                if (ORTE_SUCCESS != (rc = opal_db.store((opal_identifier_t*)ORTE_PROC_MY_NAME, OPAL_DB_INTERNAL, ORTE_DB_DAEMON_VPID, &daemon.vpid, OPAL_UINT32))) {
-                    ORTE_ERROR_LOG(rc);
-                    return rc;
-                }
-            }
-
-            /* if requested, unpack any aliases */
-            if (orte_retain_aliases) {
-                char *alias;
-                uint8_t naliases, ni;
+            for (ni=0; ni < naliases; ni++) {
                 n=1;
-                if (ORTE_SUCCESS != (rc = opal_dss.unpack(&buf, &naliases, &n, OPAL_UINT8))) {
+                if (ORTE_SUCCESS != (rc = opal_dss.unpack(&buf, &alias, &n, OPAL_STRING))) {
                     ORTE_ERROR_LOG(rc);
                     return rc;
                 }
-                for (ni=0; ni < naliases; ni++) {
-                    n=1;
-                    if (ORTE_SUCCESS != (rc = opal_dss.unpack(&buf, &alias, &n, OPAL_STRING))) {
-                        ORTE_ERROR_LOG(rc);
-                        return rc;
-                    }
-                    /* store a cross-reference to the daemon for this nodename */
-                    opal_output_verbose(2, orte_nidmap_output,
-                                        "%s storing alias %s for daemon %s",
-                                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                        alias, ORTE_VPID_PRINT(daemon.vpid));
-                    if (ORTE_SUCCESS != (rc = opal_db.store((opal_identifier_t*)ORTE_NAME_WILDCARD, OPAL_DB_INTERNAL, alias, &daemon.vpid, OPAL_UINT32))) {
-                        ORTE_ERROR_LOG(rc);
-                        return rc;
-                    }
-                    free(alias);
+                /* store a cross-reference to the daemon for this nodename */
+                opal_output_verbose(2, orte_nidmap_output,
+                                    "%s storing alias %s for daemon %s",
+                                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                    alias, ORTE_VPID_PRINT(daemon.vpid));
+                if (ORTE_SUCCESS != (rc = opal_db.store((opal_identifier_t*)ORTE_NAME_WILDCARD, OPAL_DB_INTERNAL, alias, &daemon.vpid, OPAL_UINT32))) {
+                    ORTE_ERROR_LOG(rc);
+                    return rc;
                 }
+                free(alias);
             }
         }
 
@@ -525,68 +521,66 @@ int orte_util_decode_daemon_nodemap(opal_byte_object_t *bo)
     daemons->num_procs = num_daemons;
     n=1;
     while (OPAL_SUCCESS == (rc = opal_dss.unpack(&buf, &vpid, &n, ORTE_VPID))) {
-        if (daemons->num_procs < orte_hostname_cutoff) {
-            /* unpack and store the node's name */
-            n=1;
-            if (ORTE_SUCCESS != (rc = opal_dss.unpack(&buf, &name, &n, OPAL_STRING))) {
-                ORTE_ERROR_LOG(rc);
-                return rc;
-            }
-            /* do we already have this node? */
-            if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, vpid))) {
-                node = OBJ_NEW(orte_node_t);
-                node->name = name;
-                opal_pointer_array_set_item(orte_node_pool, vpid, node);
-            } else {
-                free(name);
-            }
-            /* if requested, unpack any aliases */
-            if (orte_retain_aliases) {
-                char *alias;
-                uint8_t naliases, ni;
-                n=1;
-                if (ORTE_SUCCESS != (rc = opal_dss.unpack(&buf, &naliases, &n, OPAL_UINT8))) {
-                    ORTE_ERROR_LOG(rc);
-                    return rc;
-                }
-                for (ni=0; ni < naliases; ni++) {
-                    n=1;
-                    if (ORTE_SUCCESS != (rc = opal_dss.unpack(&buf, &alias, &n, OPAL_STRING))) {
-                        ORTE_ERROR_LOG(rc);
-                        return rc;
-                    }
-                    opal_argv_append_nosize(&node->alias, alias);
-                    free(alias);
-                }
-            }
-        }
-        /* unpack the oversubscribed flag */
+        /* unpack and store the node's name */
         n=1;
-        if (ORTE_SUCCESS != (rc = opal_dss.unpack(&buf, &oversub, &n, OPAL_UINT8))) {
+        if (ORTE_SUCCESS != (rc = opal_dss.unpack(&buf, &name, &n, OPAL_STRING))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
-        if (NULL == (dptr = (orte_proc_t*)opal_pointer_array_get_item(daemons->procs, vpid))) {
-            dptr = OBJ_NEW(orte_proc_t);
-            dptr->name.jobid = ORTE_PROC_MY_NAME->jobid;
-            dptr->name.vpid = vpid;
-            opal_pointer_array_set_item(daemons->procs, vpid, dptr);
-        }
-        if (NULL != node->daemon) {
-            OBJ_RELEASE(node->daemon);
-        }
-        OBJ_RETAIN(dptr);
-        node->daemon = dptr;
-        if (NULL != dptr->node) {
-            OBJ_RELEASE(dptr->node);
-        }
-        OBJ_RETAIN(node);
-        dptr->node = node;
-        if (0 == oversub) {
-            node->oversubscribed = false;
+        /* do we already have this node? */
+        if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, vpid))) {
+            node = OBJ_NEW(orte_node_t);
+            node->name = name;
+            opal_pointer_array_set_item(orte_node_pool, vpid, node);
         } else {
-            node->oversubscribed = true;
+            free(name);
         }
+        /* if requested, unpack any aliases */
+        if (orte_retain_aliases) {
+            char *alias;
+            uint8_t naliases, ni;
+            n=1;
+            if (ORTE_SUCCESS != (rc = opal_dss.unpack(&buf, &naliases, &n, OPAL_UINT8))) {
+                ORTE_ERROR_LOG(rc);
+                return rc;
+            }
+            for (ni=0; ni < naliases; ni++) {
+                n=1;
+                if (ORTE_SUCCESS != (rc = opal_dss.unpack(&buf, &alias, &n, OPAL_STRING))) {
+                    ORTE_ERROR_LOG(rc);
+                    return rc;
+                }
+                opal_argv_append_nosize(&node->alias, alias);
+                free(alias);
+            }
+        }
+    }
+    /* unpack the oversubscribed flag */
+    n=1;
+    if (ORTE_SUCCESS != (rc = opal_dss.unpack(&buf, &oversub, &n, OPAL_UINT8))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    if (NULL == (dptr = (orte_proc_t*)opal_pointer_array_get_item(daemons->procs, vpid))) {
+        dptr = OBJ_NEW(orte_proc_t);
+        dptr->name.jobid = ORTE_PROC_MY_NAME->jobid;
+        dptr->name.vpid = vpid;
+        opal_pointer_array_set_item(daemons->procs, vpid, dptr);
+    }
+    if (NULL != node->daemon) {
+        OBJ_RELEASE(node->daemon);
+    }
+    OBJ_RETAIN(dptr);
+    node->daemon = dptr;
+    if (NULL != dptr->node) {
+        OBJ_RELEASE(dptr->node);
+    }
+    OBJ_RETAIN(node);
+    dptr->node = node;
+    if (0 == oversub) {
+        node->oversubscribed = false;
+    } else {
+        node->oversubscribed = true;
     }
     if (ORTE_ERR_UNPACK_READ_PAST_END_OF_BUFFER != rc) {
         ORTE_ERROR_LOG(rc);
@@ -928,16 +922,14 @@ int orte_util_decode_pidmap(opal_byte_object_t *bo)
                     ORTE_ERROR_LOG(rc);
                     goto cleanup;
                 }
-                if (orte_process_info.num_daemons < orte_hostname_cutoff) {
-                    /* lookup and store the hostname for this proc */
-                    if (ORTE_SUCCESS != (rc = opal_db.fetch_pointer((opal_identifier_t*)&dmn, ORTE_DB_HOSTNAME, (void**)&hostname, OPAL_STRING))) {
-                        ORTE_ERROR_LOG(rc);
-                        goto cleanup;
-                    }
-                    if (ORTE_SUCCESS != (rc = opal_db.store((opal_identifier_t*)&proc, OPAL_DB_INTERNAL, ORTE_DB_HOSTNAME, hostname, OPAL_STRING))) {
-                        ORTE_ERROR_LOG(rc);
-                        goto cleanup;
-                    }
+                /* lookup and store the hostname for this proc */
+                if (ORTE_SUCCESS != (rc = opal_db.fetch_pointer((opal_identifier_t*)&dmn, ORTE_DB_HOSTNAME, (void**)&hostname, OPAL_STRING))) {
+                    ORTE_ERROR_LOG(rc);
+                    goto cleanup;
+                }
+                if (ORTE_SUCCESS != (rc = opal_db.store((opal_identifier_t*)&proc, OPAL_DB_INTERNAL, ORTE_DB_HOSTNAME, hostname, OPAL_STRING))) {
+                    ORTE_ERROR_LOG(rc);
+                    goto cleanup;
                 }
             }
         }

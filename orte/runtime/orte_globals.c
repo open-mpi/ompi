@@ -79,7 +79,6 @@ bool orte_have_fqdn_allocation = false;
 bool orte_show_resolved_nodenames;
 bool orte_retain_aliases;
 int orte_use_hostname_alias;
-orte_vpid_t orte_hostname_cutoff;
 
 int orted_debug_failure;
 int orted_debug_failure_delay;

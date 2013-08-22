@@ -35,6 +35,7 @@
 #include "ompi/datatype/ompi_datatype.h"
 #include "ompi/runtime/mpiruntime.h"
 #include "ompi/runtime/ompi_module_exchange.h"
+#include "ompi/runtime/params.h"
 
 static opal_list_t  ompi_proc_list;
 static opal_mutex_t ompi_proc_lock;
@@ -157,7 +158,7 @@ int ompi_proc_complete_init(void)
                 break;
             }
 
-            if (ompi_process_info.num_daemons < ompi_rte_hostname_cutoff) {
+            if (ompi_process_info.num_procs < ompi_hostname_cutoff) {
                 /* retrieve the hostname */
                 ret = ompi_modex_recv_string_pointer(OMPI_DB_HOSTNAME, proc, (void**)&(proc->proc_hostname), OPAL_STRING);
                 if (OMPI_SUCCESS != ret) {
@@ -394,7 +395,7 @@ int ompi_proc_refresh(void) {
             if (OMPI_SUCCESS != ret) {
                 break;
             }
-            if (ompi_process_info.num_daemons < ompi_rte_hostname_cutoff) {
+            if (ompi_process_info.num_procs < ompi_hostname_cutoff) {
                 /* retrieve the hostname */
                 ret = ompi_modex_recv_string_pointer(OMPI_DB_HOSTNAME, proc, (void**)&(proc->proc_hostname), OPAL_STRING);
                 if (OMPI_SUCCESS != ret) {
