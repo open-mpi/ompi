@@ -718,7 +718,7 @@ static int init_one_port(opal_list_t *btl_list, mca_btl_openib_device_t *device,
             return OMPI_ERR_NOT_FOUND;
         }
 
-#if defined(HAVE_DECL_IBV_LINK_LAYER_ETHERNET)
+#if HAVE_DECL_IBV_LINK_LAYER_ETHERNET
         if (IBV_LINK_LAYER_ETHERNET == ib_port_attr->link_layer) {
             subnet_id = mca_btl_openib_get_ip_subnet_id(device->ib_dev,
                                                            port_num);
