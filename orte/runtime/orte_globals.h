@@ -607,7 +607,6 @@ ORTE_DECLSPEC extern bool orte_have_fqdn_allocation;
 ORTE_DECLSPEC extern bool orte_show_resolved_nodenames;
 ORTE_DECLSPEC extern bool orte_retain_aliases;
 ORTE_DECLSPEC extern int orte_use_hostname_alias;
-ORTE_DECLSPEC extern orte_vpid_t orte_hostname_cutoff;
 
 /* debug flags */
 ORTE_DECLSPEC extern int orted_debug_failure;

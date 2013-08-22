@@ -436,15 +436,6 @@ int orte_register_params(void)
                                   OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
                                   &orte_use_hostname_alias);
 
-    /* cutoff for including hostnames in modex */
-    orte_hostname_cutoff = UINT_MAX;
-    (void) mca_base_var_register ("orte", "orte", NULL, "hostname_cutoff",
-                                  "If the number of nodes in the allocation exceeds the provided value,"
-                                  "hostnames for remote processes will not be supplied to applications [default: UINT_MAX]",
-                                  MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
-                                  OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
-                                  &orte_hostname_cutoff);
-
     orte_xml_output = false;
     (void) mca_base_var_register ("orte", "orte", NULL, "xml_output",
                                   "Display all output in XML format (default: false)",

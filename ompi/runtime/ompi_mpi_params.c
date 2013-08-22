@@ -66,6 +66,7 @@ bool ompi_use_sparse_group_storage = OPAL_INT_TO_BOOL(OMPI_GROUP_SPARSE);
 bool ompi_mpi_built_with_cuda_support = OPAL_INT_TO_BOOL(OMPI_CUDA_SUPPORT);
 bool ompi_mpi_cuda_support;
 
+uint32_t ompi_hostname_cutoff = UINT32_MAX;
 bool ompi_mpi_yield_when_idle = true;
 int ompi_mpi_event_tick_rate = -1;
 char *ompi_mpi_show_mca_params_string = NULL;
@@ -332,6 +333,16 @@ int ompi_mpi_register_params(void)
                        true);
         ompi_rte_abort(1, NULL);
     }
+
+    /* cutoff for retrieving hostnames */
+    ompi_hostname_cutoff = UINT32_MAX;
+    (void) mca_base_var_register ("ompi", "ompi", NULL, "hostname_cutoff",
+                                  "If the number of processes in the application exceeds the provided value,"
+                                  "hostnames for remote processes will not be retrieved by applications [default: UINT32_MAX]",
+                                  MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                  OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
+                                  &ompi_hostname_cutoff);
+
 
     return OMPI_SUCCESS;
 }
