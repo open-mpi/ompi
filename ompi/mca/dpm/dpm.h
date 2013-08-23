@@ -9,7 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * $COPYRIGHT$
+ * Copyright (c) 2013      Intel, Inc. All rights reserved
+* $COPYRIGHT$
  * 
  * Additional copyrights may follow
  * 
@@ -26,6 +27,13 @@
 #define OMPI_MCA_DPM_H
 
 #include "ompi_config.h"
+
+#if HAVE_TIME_H
+#include <time.h>
+#endif
+#if HAVE_SYS_TIME_H
+#include <sys/time.h>
+#endif
 
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
@@ -46,6 +54,51 @@ typedef int (*ompi_dpm_base_module_init_fn_t)(void);
 typedef int (*ompi_dpm_base_module_connect_accept_fn_t)(ompi_communicator_t *comm, int root,
                                                         char *port, bool send_first,
                                                         ompi_communicator_t **newcomm);
+
+/* define a callback function for use by non-blocking persistent connect/accept operations */
+typedef void (*ompi_dpm_base_paccept_connect_callback_fn_t)(ompi_communicator_t *newcomm,
+                                                            ompi_proc_t *remote_proc,
+                                                            void *cbdata);
+
+/*
+ * Create a persistent connection point for accepting non-blocking connection requests.
+ * The accept is persistent and will remain open until explicitly closed, or during
+ * dpm_framework_close. Any incoming connection request will be used to create a new
+ * communicator which will be returned via callback, along with the process name.
+ *
+ * In both cases, the callback function will return the new communicator plus the
+ * user's original cbdata.
+ *
+ * paccept requires a port (typically obtained by a prior call to MPI_Open_port).
+ * This must be published so it can be found by processes wanting to
+ * connect to this process, and is passed by those processes as the "port" argument for
+ * pconnect.
+ *
+ * Calls to pconnect are also non-blocking, with callback upon completion. Periodic
+ * attempts to complete the connection may be made at the discretion of the implementation.
+ * Failure to connect will be indicated by a callback returning a NULL communicator. Callers
+ * should use the cbdata to track the corresponding pconnect request. A timeout
+ * is provided to avoid hanging should the other process not have an active paccept
+ * on the specified port (e.g., the process may have closed it). A NULL value for
+ * the timeout argument indicates that the pconnect operation should not timeout,
+ * and will regularly retry the connection forever.
+ *
+ * Processes may create and publish as many ports, and call paccept as many times, as
+ * they like. When a process no longer wishes to accept connect requests, it can "close"
+ * a paccept request by passing in the port used when calling paccept. A call to "close"
+ * with a NULL argument will close *all* currently registered paccept channels.
+ */
+typedef int (*ompi_dpm_base_module_paccept_fn_t)(char *port,
+                                                 ompi_dpm_base_paccept_connect_callback_fn_t cbfunc,
+                                                 void *cbdata);
+
+typedef int (*ompi_dpm_base_module_pconnect_fn_t)(char *port,
+                                                  struct timeval *timeout,
+                                                  ompi_dpm_base_paccept_connect_callback_fn_t cbfunc,
+                                                  void *cbdata);
+
+typedef void (*ompi_dpm_base_module_pclose_fn_t)(char *port);
+
 
 /**
  * Executes internally a disconnect on all dynamic communicators
@@ -144,6 +197,10 @@ struct ompi_dpm_base_module_1_0_0_t {
     ompi_dpm_base_module_close_port_fn_t        close_port;
     /* finalize */
     ompi_dpm_base_module_finalize_fn_t          finalize;
+    /* pconnect/accept */
+    ompi_dpm_base_module_pconnect_fn_t          pconnect;
+    ompi_dpm_base_module_paccept_fn_t           paccept;
+    ompi_dpm_base_module_pclose_fn_t            pclose;
 };
 typedef struct ompi_dpm_base_module_1_0_0_t ompi_dpm_base_module_1_0_0_t;
 typedef struct ompi_dpm_base_module_1_0_0_t ompi_dpm_base_module_t;

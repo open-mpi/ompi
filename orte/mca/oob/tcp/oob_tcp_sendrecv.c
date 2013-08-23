@@ -540,11 +540,17 @@ void mca_oob_tcp_recv_handler(int sd, short flags, void *cbdata)
                             OBJ_RELEASE(peer->recv_msg);
                             return;
                         }
-                        /* yes - post the message for retransmission */
                         opal_output_verbose(OOB_TCP_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
                                             "%s ROUTING TO %s FROM HERE",
                                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                             ORTE_NAME_PRINT(&relay->name));
+                        /* if this came from a different job family, then ensure
+                         * we know how to return
+                         */
+                        if (ORTE_JOB_FAMILY(peer->recv_msg->hdr.origin.jobid) != ORTE_JOB_FAMILY(ORTE_PROC_MY_NAME->jobid)) {
+                            orte_routed.update_route(&(peer->recv_msg->hdr.origin), &peer->name);
+                        }
+                        /* post the message for retransmission */
                         MCA_OOB_TCP_QUEUE_RELAY(peer->recv_msg, relay);
                         OBJ_RELEASE(peer->recv_msg);
                     }
