@@ -97,7 +97,6 @@ static int rte_init(void)
     orte_node_rank_t node_rank;
     char *rmluri;
     opal_hwloc_locality_t locality;
-    char *tmp;
 
     /* run the prolog */
     if (ORTE_SUCCESS != (ret = orte_ess_base_std_prolog())) {
@@ -345,21 +344,6 @@ static int rte_init(void)
     /* set max procs */
     if (orte_process_info.max_procs < orte_process_info.num_procs) {
         orte_process_info.max_procs = orte_process_info.num_procs;
-    }
-
-    /* set the number of nodes - have to test as it could be
-     * one of multiple environments
-     */
-    if (NULL != (tmp = getenv("SLURM_NNODES"))) {
-        orte_process_info.num_daemons = strtol(tmp, NULL, 10);
-    } else if (NULL != (tmp = getenv("PBS_NUM_NODES"))) {
-        orte_process_info.num_daemons = strtol(tmp, NULL, 10);
-    } else {
-        if (0 == ORTE_PROC_MY_NAME->vpid) {
-            orte_show_help("help-orte-runtime.txt",
-                           "orte_init:startup:num_daemons", true);
-        }
-        orte_process_info.num_daemons = UINT_MAX;
     }
 
     /* construct the PMI RTE string */
