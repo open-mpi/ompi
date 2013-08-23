@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2013      Intel, Inc. All rights reserved
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -20,6 +21,13 @@
 
 #include "ompi_config.h"
 #include "ompi/constants.h"
+
+#if HAVE_TIME_H
+#include <time.h>
+#endif
+#if HAVE_SYS_TIME_H
+#include <sys/time.h>
+#endif
 
 #include "ompi/mca/dpm/dpm.h"
 
@@ -72,6 +80,14 @@ int ompi_dpm_base_null_parse_port(char *port_name,
                                   char **hnp_uri, char **rml_uri, ompi_rml_tag_t *tag);
 int ompi_dpm_base_null_route_to_port(char *rml_uri, ompi_process_name_t *rproc);
 int ompi_dpm_base_null_close_port(char *port_name);
+int ompi_dpm_base_null_pconnect(char *port,
+                                struct timeval *timeout,
+                                ompi_dpm_base_paccept_connect_callback_fn_t cbfunc,
+                                void *cbdata);
+int ompi_dpm_base_null_paccept(char *port,
+                               ompi_dpm_base_paccept_connect_callback_fn_t cbfunc,
+                               void *cbdata);
+void ompi_dpm_base_null_pclose(char *port);
 
 /* useful globals */
 OMPI_DECLSPEC extern ompi_dpm_base_component_t ompi_dpm_base_selected_component;

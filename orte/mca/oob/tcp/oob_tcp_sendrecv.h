@@ -81,10 +81,17 @@ OBJ_CLASS_DECLARATION(mca_oob_tcp_recv_t);
             opal_list_append(&(p)->send_queue, &(s)->super);            \
         }                                                               \
         if ((f)) {                                                      \
-            /* ensure the send event is active */                       \
-            if (!(p)->send_ev_active) {                                 \
-                opal_event_add(&(p)->send_event, 0);                    \
-                (p)->send_ev_active = true;                             \
+            /* if we aren't connected, then start connecting */         \
+            if (MCA_OOB_TCP_CONNECTED != (p)->state) {                  \
+                (p)->state = MCA_OOB_TCP_CONNECTING;                    \
+                ORTE_ACTIVATE_TCP_CONN_STATE((p)->mod, (p),             \
+                                         mca_oob_tcp_peer_try_connect); \
+            } else {                                                    \
+                /* ensure the send event is active */                   \
+                if (!(p)->send_ev_active) {                             \
+                    opal_event_add(&(p)->send_event, 0);                \
+                    (p)->send_ev_active = true;                         \
+                }                                                       \
             }                                                           \
         }                                                               \
     }while(0);

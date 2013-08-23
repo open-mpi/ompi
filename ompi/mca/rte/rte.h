@@ -208,6 +208,8 @@ BEGIN_C_DECLS
 #define OMPI_RML_TAG_OFACM                          OMPI_RML_TAG_BASE+11
 #define OMPI_RML_TAG_XOFACM                         OMPI_RML_TAG_BASE+12
 
+#define OMPI_RML_PCONNECT_TAG                       OMPI_RML_TAG_BASE+13
+
 #define OMPI_RML_TAG_DYNAMIC                        OMPI_RML_TAG_BASE+200
 
 /*

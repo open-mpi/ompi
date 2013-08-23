@@ -384,6 +384,9 @@ void orte_grpcomm_base_store_peer_modex(opal_buffer_t *rbuf, void *cbdata)
     }    
 
  cleanup:
+    if (NULL == cbdata) {
+        return;
+    }
     /* cleanup the list, but don't release the
      * collective object as it was passed into us
      */
