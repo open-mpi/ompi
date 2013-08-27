@@ -905,6 +905,6 @@ OBJ_CLASS_INSTANCE(mca_oob_tcp_listener_t,
                    tcp_ev_cons, tcp_ev_des);
 
 OBJ_CLASS_INSTANCE(mca_oob_tcp_pending_connection_t,
-                   opal_free_list_item_t,
+                   opal_object_t,
                    NULL,
                    NULL);
