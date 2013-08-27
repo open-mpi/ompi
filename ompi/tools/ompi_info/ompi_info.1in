@@ -57,6 +57,11 @@ Show the hostname that Open MPI was configured and built on
 .I \-\-internal
 Show internal MCA parameters (not meant to be modified by users)
 .TP 8
+.I \-\-level
+Show only variables with at most this level (1-9). The default is 1 unless
+\-\-all is specified without \-\-level in which case the default is 9. See
+the LEVEL section for more information.
+.TP 8
 .I \-mca|\-\-mca <param> <value>
 Pass context-specific MCA parameters; they are considered global if --gmca is
 not used and only one context is specified.
@@ -80,8 +85,51 @@ parameters: prefix, bindir, libdir, incdir, pkglibdir, sysconfdir.
 When used in conjunction with other parameters, the output is
 displayed in 'prettyprint' format (default)
 .TP 8
+.I \-\-selected-only
+Show only variables from selected components.
+.TP 8
 .I \-V|\-\-version
 Show version of Open MPI.
+.
+.\" **************************
+.\"    Levels Section
+.\" **************************
+.SH LEVELS
+.TP 4
+1
+Basic information of interest to users
+.
+.TP
+2
+Detailed information of interest to users
+.
+.TP
+3
+All remaining information of interest to users
+.
+.TP
+4
+Basic information required for tuning
+.
+.TP
+5
+Detailed information required for tuning
+.
+.TP
+6
+All remaining information required for tuning
+.
+.TP
+7
+Basic information for MPI implementors
+.
+.TP
+8
+Detailed information for MPI implementors
+.
+.TP
+9
+All remaining information for MPI implementors
 .
 .\" **************************
 .\"    Examples Section
