@@ -473,25 +473,16 @@ int mca_base_pvar_handle_alloc (mca_base_pvar_session_t *session, int index, voi
                 ret = OPAL_ERR_OUT_OF_RESOURCE;
                 break;
             }
+        }
 
+        if (!mca_base_pvar_is_continuous (pvar) || mca_base_pvar_is_sum (pvar) ||
+            mca_base_pvar_is_watermark (pvar)) {
             pvar_handle->tmp_value = calloc (*count, datatype_size);
             if (NULL == pvar_handle->tmp_value) {
                 ret = OPAL_ERR_OUT_OF_RESOURCE;
                 break;
             }
        
-            /* get the current value of the performance variable if this is a
-               continuous sum. if this variable needs to be started first the
-               current value is not relevant. */
-            if (mca_base_pvar_is_continuous (pvar)) {
-                ret = pvar->get_value (pvar, pvar_handle->last_value, pvar_handle->obj_handle);
-                if (OPAL_SUCCESS != ret) {
-                    return ret;
-                }
-            }
-        }
-
-        if (!mca_base_pvar_is_continuous (pvar) || mca_base_pvar_is_sum (pvar)) {
             /* if a variable is not continuous we will need to keep track of its last value
                to support start->stop->read correctly. use calloc to initialize the current
                value to 0. */
@@ -499,6 +490,23 @@ int mca_base_pvar_handle_alloc (mca_base_pvar_session_t *session, int index, voi
             if (NULL == pvar_handle->current_value) {
                 ret = OPAL_ERR_OUT_OF_RESOURCE;
                 break;
+            }
+        }
+
+        /* get the current value of the performance variable if this is a
+           continuous sum or watermark. if this variable needs to be started first the
+           current value is not relevant. */
+        if (mca_base_pvar_is_continuous (pvar) && (mca_base_pvar_is_sum (pvar) || mca_base_pvar_is_sum (pvar))) {
+            if (mca_base_pvar_is_sum (pvar)) {
+                /* the initial value of a sum is 0 */
+                ret = pvar->get_value (pvar, pvar_handle->last_value, pvar_handle->obj_handle);
+            } else {
+                /* the initial value of a watermark is the current value of the variable */
+                ret = pvar->get_value (pvar, pvar_handle->current_value, pvar_handle->obj_handle);
+            }
+
+            if (OPAL_SUCCESS != ret) {
+                return ret;
             }
         }
 
