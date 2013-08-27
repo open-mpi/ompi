@@ -12,6 +12,7 @@
  * Copyright (c) 2006-2007 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
+ * Copyright (c) 2013      Intel, Inc. All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -34,6 +35,7 @@
 #include "ompi/datatype/ompi_datatype.h"
 #include "ompi/runtime/mpiruntime.h"
 #include "ompi/runtime/ompi_module_exchange.h"
+#include "ompi/runtime/params.h"
 
 static opal_list_t  ompi_proc_list;
 static opal_mutex_t ompi_proc_lock;
@@ -91,7 +93,9 @@ void ompi_proc_destruct(ompi_proc_t* proc)
 int ompi_proc_init(void)
 {
     ompi_vpid_t i;
+#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
     int ret;
+#endif
 
     OBJ_CONSTRUCT(&ompi_proc_list, opal_list_t);
     OBJ_CONSTRUCT(&ompi_proc_lock, opal_mutex_t);
@@ -109,10 +113,12 @@ int ompi_proc_init(void)
             proc->proc_flags = OPAL_PROC_ALL_LOCAL;
             proc->proc_hostname = ompi_process_info.nodename;
             proc->proc_arch = opal_local_arch;
+#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
             /* add our arch to the modex */
             if (OMPI_SUCCESS != (ret = ompi_modex_send_key_value("OMPI_ARCH", &proc->proc_arch, OPAL_UINT32))) {
                 return ret;
             }
+#endif
         }
     }
 
@@ -135,7 +141,6 @@ int ompi_proc_complete_init(void)
     opal_list_item_t *item = NULL;
     int ret, errcode = OMPI_SUCCESS;
     opal_hwloc_locality_t *hwlocale;
-    uint32_t *ui32ptr;
 
     OPAL_THREAD_LOCK(&ompi_proc_lock);
 
@@ -152,42 +157,47 @@ int ompi_proc_complete_init(void)
                 errcode = ret;
                 break;
             }
-            /* get a pointer to the name of the node it is on */
-            ret = ompi_modex_recv_string_pointer(OMPI_DB_HOSTNAME, proc, (void**)&(proc->proc_hostname), OPAL_STRING);
-            if (OMPI_SUCCESS != ret) {
-                errcode = ret;
-                break;
-            }
-            /* get the remote architecture */
-            ui32ptr = &(proc->proc_arch);
-            ret = ompi_modex_recv_key_value("OMPI_ARCH", proc, (void**)&ui32ptr, OPAL_UINT32);
-            if (OMPI_SUCCESS == ret) {
-                /* if arch is different than mine, create a new convertor for this proc */
-                if (proc->proc_arch != opal_local_arch) {
-#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
-                    OBJ_RELEASE(proc->proc_convertor);
-                    proc->proc_convertor = opal_convertor_create(proc->proc_arch, 0);
-#else
-                    opal_show_help("help-mpi-runtime",
-                                   "heterogeneous-support-unavailable",
-                                   true, ompi_process_info.nodename, 
-                                   proc->proc_hostname == NULL ? "<hostname unavailable>" : proc->proc_hostname);
-                    errcode = OMPI_ERR_NOT_SUPPORTED;
+
+            if (ompi_process_info.num_procs < ompi_hostname_cutoff) {
+                /* retrieve the hostname */
+                ret = ompi_modex_recv_string_pointer(OMPI_DB_HOSTNAME, proc, (void**)&(proc->proc_hostname), OPAL_STRING);
+                if (OMPI_SUCCESS != ret) {
                     break;
-#endif
                 }
-            } else if (OMPI_ERR_NOT_IMPLEMENTED == ret) {
-                proc->proc_arch = opal_local_arch;
             } else {
-                errcode = ret;
-                break;
+                /* just set the hostname to NULL for now - we'll fill it in
+                 * as modex_recv's are called for procs we will talk to
+                 */
+                proc->proc_hostname = NULL;
             }
+#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
+            /* get the remote architecture */
+            {
+                uint32_t *ui32ptr;
+                ui32ptr = &(proc->proc_arch);
+                ret = ompi_modex_recv_key_value("OMPI_ARCH", proc, (void**)&ui32ptr, OPAL_UINT32);
+                if (OMPI_SUCCESS == ret) {
+                    /* if arch is different than mine, create a new convertor for this proc */
+                    if (proc->proc_arch != opal_local_arch) {
+                        OBJ_RELEASE(proc->proc_convertor);
+                        proc->proc_convertor = opal_convertor_create(proc->proc_arch, 0);
+                    }
+                } else if (OMPI_ERR_NOT_IMPLEMENTED == ret) {
+                    proc->proc_arch = opal_local_arch;
+                } else {
+                    errcode = ret;
+                    break;
+                }
+            }
+#else
+            /* must be same arch as my own */
+            proc->proc_arch = opal_local_arch;
+#endif
         }
     }
     OPAL_THREAD_UNLOCK(&ompi_proc_lock);
     return errcode;
 }
-
 
 int ompi_proc_finalize (void)
 {
@@ -360,7 +370,6 @@ int ompi_proc_refresh(void) {
     ompi_vpid_t i = 0;
     int ret=OMPI_SUCCESS;
     opal_hwloc_locality_t *hwlocale;
-    uint32_t *uiptr;
 
     OPAL_THREAD_LOCK(&ompi_proc_lock);
 
@@ -386,29 +395,33 @@ int ompi_proc_refresh(void) {
             if (OMPI_SUCCESS != ret) {
                 break;
             }
-            /* get the name of the node it is on */
-            ret = ompi_modex_recv_string_pointer(OMPI_DB_HOSTNAME, proc, (void**)&(proc->proc_hostname), OPAL_STRING);
-            if (OMPI_SUCCESS != ret) {
-                break;
+            if (ompi_process_info.num_procs < ompi_hostname_cutoff) {
+                /* retrieve the hostname */
+                ret = ompi_modex_recv_string_pointer(OMPI_DB_HOSTNAME, proc, (void**)&(proc->proc_hostname), OPAL_STRING);
+                if (OMPI_SUCCESS != ret) {
+                    break;
+                }
+            } else {
+                /* just set the hostname to NULL for now - we'll fill it in
+                 * as modex_recv's are called for procs we will talk to
+                 */
+                proc->proc_hostname = NULL;
             }
-            /* get the remote architecture */
-            uiptr = &(proc->proc_arch);
-            ret = ompi_modex_recv_key_value("OMPI_ARCH", proc, (void**)&uiptr, OPAL_UINT32);
-            /* if arch is different than mine, create a new convertor for this proc */
-            if (proc->proc_arch != opal_local_arch) {
 #if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
-                OBJ_RELEASE(proc->proc_convertor);
-                proc->proc_convertor = opal_convertor_create(proc->proc_arch, 0);
+            {
+                /* get the remote architecture */
+                uint32_t* uiptr = &(proc->proc_arch);
+                ret = ompi_modex_recv_key_value("OMPI_ARCH", proc, (void**)&uiptr, OPAL_UINT32);
+                /* if arch is different than mine, create a new convertor for this proc */
+                if (proc->proc_arch != opal_local_arch) {
+                    OBJ_RELEASE(proc->proc_convertor);
+                    proc->proc_convertor = opal_convertor_create(proc->proc_arch, 0);
+                }
+            }
 #else
-                opal_show_help("help-mpi-runtime",
-                               "heterogeneous-support-unavailable",
-                               true, ompi_process_info.nodename, 
-                               proc->proc_hostname == NULL ? "<hostname unavailable>" :
-                               proc->proc_hostname);
-                OPAL_THREAD_UNLOCK(&ompi_proc_lock);
-                return OMPI_ERR_NOT_SUPPORTED;
+            /* must be same arch as my own */
+            proc->proc_arch = opal_local_arch;
 #endif
-            } 
         }
     }
 

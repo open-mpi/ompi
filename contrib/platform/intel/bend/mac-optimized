@@ -1,4 +1,3 @@
-enable_event_thread_support=yes
 enable_opal_multi_threads=yes
 enable_orte_progress_threads=yes
 enable_mem_debug=no
@@ -26,3 +25,4 @@ with_xgrid=no
 with_slurm=no
 with_jdk_bindir=/usr/bin
 with_jdk_headers=/System/Library/Frameworks/JavaVM.framework/Versions/Current/Headers
+with_mpi_param_check=no

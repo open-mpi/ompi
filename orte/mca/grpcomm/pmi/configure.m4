@@ -9,7 +9,6 @@
 # 
 # $HEADER$
 #
-AC_DEFUN([MCA_orte_grpcomm_pmi_PRIORITY], [10])
 
 # MCA_grpcomm_pmi_CONFIG([action-if-found], [action-if-not-found])
 # -----------------------------------------------------------

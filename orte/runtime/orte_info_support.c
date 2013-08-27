@@ -70,7 +70,6 @@ int orte_info_register_framework_params(opal_pointer_array_t *component_map)
         fprintf(stderr, "orte_info_register: orte_register_params failed\n");
         return rc;
     }
-
     rc = opal_info_register_framework_params(component_map);
     if (OPAL_SUCCESS != rc) {
         return rc;

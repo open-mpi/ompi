@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2012      Los Alamos National Security, Inc.  All rights reserved. 
+ * Copyright (c) 2012-2013 Los Alamos National Security, Inc.  All rights reserved. 
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -155,6 +155,34 @@ OBJ_CLASS_INSTANCE(opal_pstats_t, opal_list_item_t,
                    opal_pstat_construct,
                    NULL);
 
+static void diskstat_cons(opal_diskstats_t *ptr)
+{
+    ptr->disk = NULL;
+}
+static void diskstat_dest(opal_diskstats_t *ptr)
+{
+    if (NULL != ptr->disk) {
+        free(ptr->disk);
+    }
+}
+OBJ_CLASS_INSTANCE(opal_diskstats_t,
+                   opal_list_item_t,
+                   diskstat_cons, diskstat_dest);
+
+static void netstat_cons(opal_netstats_t *ptr)
+{
+    ptr->interface = NULL;
+}
+static void netstat_dest(opal_netstats_t *ptr)
+{
+    if (NULL != ptr->interface) {
+        free(ptr->interface);
+    }
+}
+OBJ_CLASS_INSTANCE(opal_netstats_t,
+                   opal_list_item_t,
+                   netstat_cons, netstat_dest);
+
 static void opal_node_stats_construct(opal_node_stats_t *obj)
 {
     obj->la = 0.0;
@@ -170,10 +198,24 @@ static void opal_node_stats_construct(opal_node_stats_t *obj)
     obj->mapped = 0.0;
     obj->sample_time.tv_sec = 0;
     obj->sample_time.tv_usec = 0;
+    OBJ_CONSTRUCT(&obj->diskstats, opal_list_t);
+    OBJ_CONSTRUCT(&obj->netstats, opal_list_t);
+}
+static void opal_node_stats_destruct(opal_node_stats_t *obj)
+{
+    opal_list_item_t *item;
+    while (NULL != (item = opal_list_remove_first(&obj->diskstats))) {
+        OBJ_RELEASE(item);
+    }
+    OBJ_DESTRUCT(&obj->diskstats);
+    while (NULL != (item = opal_list_remove_first(&obj->netstats))) {
+        OBJ_RELEASE(item);
+    }
+    OBJ_DESTRUCT(&obj->netstats);
 }
 OBJ_CLASS_INSTANCE(opal_node_stats_t, opal_object_t,
                    opal_node_stats_construct,
-                   NULL);
+                   opal_node_stats_destruct);
 
 
 int opal_dss_register_vars (void)
@@ -471,6 +513,36 @@ int opal_dss_open(void)
                                                      (opal_dss_print_fn_t)opal_dss_print_value,
                                                      OPAL_DSS_STRUCTURED,
                                                      "OPAL_VALUE", &tmp))) {
+        return rc;
+    }
+    tmp = OPAL_BUFFER;
+    if (OPAL_SUCCESS != (rc = opal_dss.register_type(opal_dss_pack_buffer_contents,
+                                                     opal_dss_unpack_buffer_contents,
+                                                     (opal_dss_copy_fn_t)opal_dss_copy_buffer_contents,
+                                                     (opal_dss_compare_fn_t)opal_dss_compare_buffer_contents,
+                                                     (opal_dss_print_fn_t)opal_dss_print_buffer_contents,
+                                                     OPAL_DSS_STRUCTURED,
+                                                     "OPAL_BUFFER", &tmp))) {
+        return rc;
+    }
+    tmp = OPAL_FLOAT;
+    if (OPAL_SUCCESS != (rc = opal_dss.register_type(opal_dss_pack_float,
+                                                     opal_dss_unpack_float,
+                                                     (opal_dss_copy_fn_t)opal_dss_std_copy,
+                                                     (opal_dss_compare_fn_t)opal_dss_compare_float,
+                                                     (opal_dss_print_fn_t)opal_dss_print_float,
+                                                     OPAL_DSS_UNSTRUCTURED,
+                                                     "OPAL_FLOAT", &tmp))) {
+        return rc;
+    }
+    tmp = OPAL_TIMEVAL;
+    if (OPAL_SUCCESS != (rc = opal_dss.register_type(opal_dss_pack_timeval,
+                                                     opal_dss_unpack_timeval,
+                                                     (opal_dss_copy_fn_t)opal_dss_std_copy,
+                                                     (opal_dss_compare_fn_t)opal_dss_compare_timeval,
+                                                     (opal_dss_print_fn_t)opal_dss_print_timeval,
+                                                     OPAL_DSS_UNSTRUCTURED,
+                                                     "OPAL_TIMEVAL", &tmp))) {
         return rc;
     }
     /* All done */

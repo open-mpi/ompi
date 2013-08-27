@@ -34,6 +34,7 @@
 #endif
 
 #include "opal/class/opal_list.h"
+#include "opal/mca/db/base/base.h"
 #include "opal/mca/event/event.h"
 #include "opal/runtime/opal.h"
 #include "opal/runtime/opal_cr.h"
@@ -50,7 +51,6 @@
 #include "orte/mca/rml/rml_types.h"
 #include "orte/mca/routed/base/base.h"
 #include "orte/mca/routed/routed.h"
-#include "orte/mca/db/base/base.h"
 #include "orte/mca/errmgr/base/base.h"
 #include "orte/mca/grpcomm/base/base.h"
 #include "orte/mca/iof/base/base.h"
@@ -316,14 +316,14 @@ static int rte_init(void)
     }
     
     /* database */
-    if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_db_base_framework, 0))) {
+    if (ORTE_SUCCESS != (ret = mca_base_framework_open(&opal_db_base_framework, 0))) {
         ORTE_ERROR_LOG(ret);
-        error = "orte_db_base_open";
+        error = "opal_db_base_open";
         goto error;
     }
-    if (ORTE_SUCCESS != (ret = orte_db_base_select())) {
+    if (ORTE_SUCCESS != (ret = opal_db_base_select())) {
         ORTE_ERROR_LOG(ret);
-        error = "orte_db_base_select";
+        error = "opal_db_base_select";
         goto error;
     }
 

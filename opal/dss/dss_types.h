@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007-2011 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2012      Los Alamos National Security, Inc. All rights reserved.
+ * Copyright (c) 2012-2013 Los Alamos National Security, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -34,6 +34,7 @@
 #endif
 
 #include "opal/class/opal_object.h"
+#include "opal/class/opal_pointer_array.h"
 #include "opal/class/opal_list.h"
 
 BEGIN_C_DECLS
@@ -68,15 +69,19 @@ typedef struct {
 #define    OPAL_UINT16              (opal_data_type_t)   13 /**< a 16-bit unsigned integer */
 #define    OPAL_UINT32              (opal_data_type_t)   14 /**< a 32-bit unsigned integer */
 #define    OPAL_UINT64              (opal_data_type_t)   15 /**< a 64-bit unsigned integer */
-    /* we don't support floating point types */
-    /* General types */
-#define    OPAL_BYTE_OBJECT         (opal_data_type_t)   16 /**< byte object structure */
-#define    OPAL_DATA_TYPE           (opal_data_type_t)   17 /**< data type */
-#define    OPAL_NULL                (opal_data_type_t)   18 /**< don't interpret data type */
-#define    OPAL_PSTAT               (opal_data_type_t)   19 /**< process statistics */
-#define    OPAL_NODE_STAT           (opal_data_type_t)   20 /**< node statistics */
-#define    OPAL_HWLOC_TOPO          (opal_data_type_t)   21 /**< hwloc topology */
-#define    OPAL_VALUE               (opal_data_type_t)   22
+    /* simple floating point type */
+#define    OPAL_FLOAT               (opal_data_type_t)   16
+    /* system types */
+#define OPAL_TIMEVAL                (opal_data_type_t)   17
+    /* OPAL types */
+#define    OPAL_BYTE_OBJECT         (opal_data_type_t)   18 /**< byte object structure */
+#define    OPAL_DATA_TYPE           (opal_data_type_t)   19 /**< data type */
+#define    OPAL_NULL                (opal_data_type_t)   20 /**< don't interpret data type */
+#define    OPAL_PSTAT               (opal_data_type_t)   21 /**< process statistics */
+#define    OPAL_NODE_STAT           (opal_data_type_t)   22 /**< node statistics */
+#define    OPAL_HWLOC_TOPO          (opal_data_type_t)   23 /**< hwloc topology */
+#define    OPAL_VALUE               (opal_data_type_t)   24 /**< opal value structure */
+#define    OPAL_BUFFER              (opal_data_type_t)   25 /**< pack the remaining contents of a buffer as an object */
 
 #define    OPAL_DSS_ID_DYNAMIC      (opal_data_type_t)   30
 
@@ -106,6 +111,8 @@ typedef struct {
         uint32_t uint32;
         uint64_t uint64;
         opal_byte_object_t bo;
+        float fval;
+        struct timeval tv;
     } data;
 } opal_value_t;
 OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_value_t);
@@ -134,6 +141,33 @@ typedef struct {
 } opal_pstats_t;
 OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_pstats_t);
 typedef struct {
+    opal_list_item_t super;
+    char *disk;
+    unsigned long num_reads_completed;
+    unsigned long num_reads_merged;
+    unsigned long num_sectors_read;
+    unsigned long milliseconds_reading;
+    unsigned long num_writes_completed;
+    unsigned long num_writes_merged;
+    unsigned long num_sectors_written;
+    unsigned long milliseconds_writing;
+    unsigned long num_ios_in_progress;
+    unsigned long milliseconds_io;
+    unsigned long weighted_milliseconds_io;
+} opal_diskstats_t;
+OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_diskstats_t);
+typedef struct {
+    opal_list_item_t super;
+    char *interface;
+    unsigned long num_bytes_recvd;
+    unsigned long num_packets_recvd;
+    unsigned long num_recv_errs;
+    unsigned long num_bytes_sent;
+    unsigned long num_packets_sent;
+    unsigned long num_send_errs;
+} opal_netstats_t;
+OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_netstats_t);
+typedef struct {
     opal_object_t super;
     /* node-level load averages */
     float la;
@@ -150,6 +184,11 @@ typedef struct {
     float mapped;       /* in MBytes */
     /* time at which sample was taken */
     struct timeval sample_time;
+    /* list of disk stats, one per disk */
+    opal_list_t diskstats;
+    /* list of net stats, one per interface */
+    opal_list_t netstats;
+
 } opal_node_stats_t;
 OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_node_stats_t);
 

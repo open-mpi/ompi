@@ -8,8 +8,6 @@
 # 
 # $HEADER$
 #
-AC_DEFUN([MCA_orte_grpcomm_bad_PRIORITY], [10])
-
 # MCA_grpcomm_bad_CONFIG([action-if-found], [action-if-not-found])
 # -----------------------------------------------------------
 AC_DEFUN([MCA_orte_grpcomm_bad_CONFIG], [

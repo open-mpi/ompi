@@ -83,6 +83,13 @@ int mca_btl_ugni_ep_disconnect (mca_btl_base_endpoint_t *ep, bool send_disconnec
 static inline int mca_btl_ugni_ep_connect_start (mca_btl_base_endpoint_t *ep) {
     int rc;
 
+    /* get the modex info for this endpoint and setup a ugni endpoint */
+    rc = ompi_common_ugni_endpoint_for_proc (ep->btl->device, ep->peer_proc, &ep->common);
+    if (OMPI_SUCCESS != rc) {
+        assert (0);
+        return rc;
+    }
+
     BTL_VERBOSE(("initiaiting connection to remote peer with address: %u id: %u",
                  ep->common->ep_rem_addr, ep->common->ep_rem_id));
 

@@ -12,6 +12,7 @@
  * Copyright (c) 2006      Sandia National Laboratories. All rights
  *                         reserved.
  * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013      Intel, Inc. All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -293,22 +294,15 @@ static int match_modex(ompi_btl_usnic_module_t *module,
 
     /* If MTU does not match, throw an error */
     if (proc->proc_modex[i].mtu != module->if_mtu) {
-        char *peer_hostname;
-
-        if (NULL != proc->proc_ompi->proc_hostname) {
-            peer_hostname = proc->proc_ompi->proc_hostname;
-        } else {
-            peer_hostname =
-                "<unknown -- please run with mpi_keep_peer_hostnames=1>";
-        }
         opal_show_help("help-mpi-btl-usnic.txt", "MTU mismatch",
-                true,
-                ompi_process_info.nodename,
-                ibv_get_device_name(module->device),
-                module->port_num,
-                module->if_mtu,
-                peer_hostname,
-                proc->proc_modex[i].mtu);
+                       true,
+                       ompi_process_info.nodename,
+                       ibv_get_device_name(module->device),
+                       module->port_num,
+                       module->if_mtu,
+                       (NULL == proc->proc_ompi->proc_hostname) ?
+                       "unknown" : proc->proc_ompi->proc_hostname,
+                       proc->proc_modex[i].mtu);
         return -1;
     } 
 

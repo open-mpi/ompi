@@ -51,50 +51,58 @@ int opal_dss_std_copy(void **dest, void *src, opal_data_type_t type)
     uint8_t *val = NULL;
 
     switch(type) {
-        case OPAL_BOOL:
-            datasize = sizeof(bool);
-            break;
+    case OPAL_BOOL:
+        datasize = sizeof(bool);
+        break;
 
-        case OPAL_INT:
-        case OPAL_UINT:
-            datasize = sizeof(int);
-            break;
+    case OPAL_INT:
+    case OPAL_UINT:
+        datasize = sizeof(int);
+        break;
 
-        case OPAL_SIZE:
-            datasize = sizeof(size_t);
-            break;
+    case OPAL_SIZE:
+        datasize = sizeof(size_t);
+        break;
 
-        case OPAL_PID:
-            datasize = sizeof(pid_t);
-            break;
+    case OPAL_PID:
+        datasize = sizeof(pid_t);
+        break;
 
-        case OPAL_BYTE:
-        case OPAL_INT8:
-        case OPAL_UINT8:
-            datasize = 1;
-            break;
+    case OPAL_BYTE:
+    case OPAL_INT8:
+    case OPAL_UINT8:
+        datasize = 1;
+        break;
 
-        case OPAL_INT16:
-        case OPAL_UINT16:
-            datasize = 2;
-            break;
+    case OPAL_INT16:
+    case OPAL_UINT16:
+        datasize = 2;
+        break;
 
-        case OPAL_INT32:
-        case OPAL_UINT32:
-            datasize = 4;
-            break;
+    case OPAL_INT32:
+    case OPAL_UINT32:
+        datasize = 4;
+        break;
 
-        case OPAL_INT64:
-        case OPAL_UINT64:
-            datasize = 8;
-            break;
+    case OPAL_INT64:
+    case OPAL_UINT64:
+        datasize = 8;
+        break;
 
-        case OPAL_DATA_TYPE:
-            datasize = sizeof(opal_data_type_t);
-            break;
+    case OPAL_DATA_TYPE:
+        datasize = sizeof(opal_data_type_t);
+        break;
 
-        default:
-            return OPAL_ERR_UNKNOWN_DATA_TYPE;
+    case OPAL_FLOAT:
+        datasize = sizeof(float);
+        break;
+
+    case OPAL_TIMEVAL:
+        datasize = sizeof(struct timeval);
+        break;
+
+    default:
+        return OPAL_ERR_UNKNOWN_DATA_TYPE;
     }
 
     val = (uint8_t*)malloc(datasize);
@@ -161,14 +169,17 @@ int opal_dss_copy_byte_object(opal_byte_object_t **dest, opal_byte_object_t *src
     (*dest)->size = src->size;
 
     /* allocate the required space for the bytes */
-    (*dest)->bytes = (uint8_t*)malloc(src->size);
-    if (NULL == (*dest)->bytes) {
-        OBJ_RELEASE(*dest);
-        return OPAL_ERR_OUT_OF_RESOURCE;
+    if (NULL == src->bytes) {
+        (*dest)->bytes = NULL;
+    } else {
+        (*dest)->bytes = (uint8_t*)malloc(src->size);
+        if (NULL == (*dest)->bytes) {
+            OBJ_RELEASE(*dest);
+            return OPAL_ERR_OUT_OF_RESOURCE;
+        }
+        /* copy the data across */
+        memcpy((*dest)->bytes, src->bytes, src->size);
     }
-
-    /* copy the data across */
-    memcpy((*dest)->bytes, src->bytes, src->size);
 
     return OPAL_SUCCESS;
 }
@@ -293,9 +304,14 @@ int opal_dss_copy_value(opal_value_t **dest, opal_value_t *src,
         p->data.uint64 = src->data.uint64;
         break;
     case OPAL_BYTE_OBJECT:
-        p->data.bo.bytes = malloc(src->data.bo.size);
-        memcpy(p->data.bo.bytes, src->data.bo.bytes, src->data.bo.size);
-        p->data.bo.size = src->data.bo.size;
+        if (NULL != src->data.bo.bytes && 0 < src->data.bo.size) {
+            p->data.bo.bytes = malloc(src->data.bo.size);
+            memcpy(p->data.bo.bytes, src->data.bo.bytes, src->data.bo.size);
+            p->data.bo.size = src->data.bo.size;
+        } else {
+            p->data.bo.bytes = NULL;
+            p->data.bo.size = 0;
+        }
         break;
     default:
         opal_output(0, "COPY-OPAL-VALUE: UNSUPPORTED TYPE %d", (int)src->type);
@@ -304,3 +320,10 @@ int opal_dss_copy_value(opal_value_t **dest, opal_value_t *src,
 
     return OPAL_SUCCESS;
 }
+
+int opal_dss_copy_buffer_contents(opal_buffer_t **dest, opal_buffer_t *src,
+                                  opal_data_type_t type)
+{
+    return OPAL_SUCCESS;
+}
+

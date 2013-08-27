@@ -13,6 +13,7 @@
  * Copyright (c) 2007-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
+ * Copyright (c) 2013      Intel, Inc. All rights reserved
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -111,6 +112,19 @@ ORTE_DECLSPEC extern int orte_exit_status;
 #define ORTE_MSG_PRI    OPAL_EV_MSG_LO_PRI
 #define ORTE_SYS_PRI    OPAL_EV_SYS_LO_PRI
 #define ORTE_INFO_PRI   OPAL_EV_INFO_LO_PRI
+
+/* define some common keys used in ORTE */
+#define ORTE_DB_HOSTNAME     "orte.hostname"
+#define ORTE_DB_DAEMON_VPID  "orte.daemon.vpid"
+#define ORTE_DB_NODERANK     "orte.node.rank"
+#define ORTE_DB_LOCALRANK    "orte.local.rank"
+#define ORTE_DB_LOCALITY     "orte.locality"
+#define ORTE_DB_ARCH         "orte.arch"
+#define ORTE_DB_NPROCS       "orte.nprocs"
+#define ORTE_DB_RMLURI       "orte.rmluri"
+#define ORTE_DB_CPUSET       "orte.cpuset"
+#define ORTE_DB_BIND_LEVEL   "orte.bind.level"
+#define ORTE_DB_BIND_INDEX   "orte.bind.index"
 
 /* State Machine lists */
 ORTE_DECLSPEC extern opal_list_t orte_job_states;

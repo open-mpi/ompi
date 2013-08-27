@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006      QLogic Corporation. All rights reserved.
+ * Copyright (c) 2013      Intel, Inc. All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -313,7 +314,8 @@ ompi_mtl_psm_add_procs(struct mca_mtl_base_module_t *mtl,
 			    errstr ? errstr : "unknown connect error");
 		for (j = 0; j < (int) nprocs; j++) {
 		  if (errs_out[j] == thiserr) {
-		    opal_output(0, " %s", procs[j]->proc_hostname);
+                      opal_output(0, " %s", (NULL == procs[j]->proc_hostname) ?
+                                  "unknown" : procs[j]->proc_hostname);
 		  }
 		}
 		opal_output(0, "\n");

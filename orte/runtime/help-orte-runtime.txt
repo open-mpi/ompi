@@ -56,3 +56,8 @@ again.
 An error occurred while trying to pack the information about the job. More nodes
 have been found than the %d expected. Please check your configuration files such
 as the mapping.
+#
+[orte_init:startup:num_daemons]
+Open MPI was unable to determine the number of nodes in your allocation. We
+are therefore assuming a very large number to ensure you receive proper error
+messages.

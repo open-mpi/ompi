@@ -13,6 +13,7 @@
  *                         reserved. 
  * Copyright (c) 2006-2009 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2013      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2013      Intel, Inc. All rights reserved
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -97,12 +98,6 @@ OMPI_DECLSPEC extern bool ompi_mpi_show_mca_params;
 OMPI_DECLSPEC extern char * ompi_mpi_show_mca_params_file;
 
 /**
- * Whether we should keep the string hostnames of all the MPI
- * process peers around or not (eats up a good bit of memory).
- */
-OMPI_DECLSPEC extern bool ompi_mpi_keep_peer_hostnames;
-
-/**
  * Whether an MPI_ABORT should print out a stack trace or not.
  */
 OMPI_DECLSPEC extern bool ompi_mpi_abort_print_stack;
@@ -143,6 +138,11 @@ OMPI_DECLSPEC extern bool ompi_use_sparse_group_storage;
  * Whether we want to enable CUDA GPU buffer send and receive support.
  */
 OMPI_DECLSPEC extern bool ompi_mpi_cuda_support;
+
+/*
+ * Cutoff point for retrieving hostnames
+ */
+OMPI_DECLSPEC extern uint32_t ompi_hostname_cutoff;
 
 /**
  * Register MCA parameters used by the MPI layer.

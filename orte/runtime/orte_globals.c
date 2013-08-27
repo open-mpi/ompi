@@ -13,6 +13,7 @@
  * Copyright (c) 2009-2010 Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
+ * Copyright (c) 2013      Intel, Inc. All rights reserved
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -28,6 +29,7 @@
 #include <sys/time.h>
 #endif
 
+#include "opal/mca/db/db.h"
 #include "opal/mca/hwloc/hwloc.h"
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
@@ -36,7 +38,6 @@
 #include "opal/dss/dss.h"
 #include "opal/threads/threads.h"
 
-#include "orte/mca/db/db.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/util/proc_info.h"
@@ -500,7 +501,7 @@ char* orte_get_proc_hostname(orte_process_name_t *proc)
     }
 
     /* if we are an app, get the pointer from the modex db */
-    if (ORTE_SUCCESS != (rc = orte_db.fetch_pointer(proc, ORTE_DB_HOSTNAME,
+    if (ORTE_SUCCESS != (rc = opal_db.fetch_pointer((opal_identifier_t*)proc, ORTE_DB_HOSTNAME,
                                                     (void**)&hostname, OPAL_STRING))) {
         ORTE_ERROR_LOG(rc);
         return NULL;
@@ -525,7 +526,7 @@ orte_node_rank_t orte_get_proc_node_rank(orte_process_name_t *proc)
 
     /* if we are an app, get the value from the modex db */
     nr = &noderank;
-    if (ORTE_SUCCESS != (rc = orte_db.fetch_pointer(proc, ORTE_DB_NODERANK,
+    if (ORTE_SUCCESS != (rc = opal_db.fetch_pointer((opal_identifier_t*)proc, ORTE_DB_NODERANK,
                                                     (void**)&nr, ORTE_NODE_RANK))) {
         ORTE_ERROR_LOG(rc);
         return ORTE_NODE_RANK_INVALID;

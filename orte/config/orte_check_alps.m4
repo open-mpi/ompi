@@ -51,7 +51,7 @@ AC_DEFUN([ORTE_CHECK_ALPS],[
         if test "$with_alps" = "no" -o -z "$with_alps" ; then
             orte_check_alps_happy="no"
         else
-           # Only need to do these tests once (this macro is invoked
+           # Only need to do these tests once - this macro is invoked
            # from multiple different components' configure.m4 scripts
 
            orte_check_alps_happy="yes"
@@ -84,8 +84,6 @@ AC_DEFUN([ORTE_CHECK_ALPS],[
                # will have added the -lpmi flag to LIBS. We then need
                # to add a couple of alps libs to support static
                # builds
-               orte_check_alps_pmi_happy=no
-
                if test "$opal_enable_pmi" = 1 ; then
                    AC_MSG_CHECKING([for alps libraries in "$orte_check_alps_libdir"])
 
@@ -93,9 +91,6 @@ AC_DEFUN([ORTE_CHECK_ALPS],[
                    AS_IF([test -f "$orte_check_alps_libdir/libalpslli.a" -a -f "$orte_check_alps_libdir/libalpsutil.a"],
                          [AC_MSG_RESULT([found])
                           orte_check_alps_pmi_happy=yes],
-                         [AC_MSG_RESULT([not found])])
-
-                   AS_IF([test "$orte_check_alps_pmi_happy" = "yes" -a "$orte_without_full_support" = 0], [],
                          [AC_MSG_WARN([PMI support for Alps requested but not found])
                           AC_MSG_ERROR([Cannot continue])])
                fi

@@ -12,6 +12,7 @@
  * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -82,31 +83,23 @@
 /* this function doesn't depend on sockaddr_h */
 bool opal_net_isaddr(const char *name)
 {
-    unsigned int groups[8];
-    int i;
+    struct addrinfo hint, *res = NULL;
 
-    if (4 != sscanf(name, "%u.%u.%u.%u",
-                    &groups[0], &groups[1], &groups[2], &groups[3])) {
-        /* this isn't an IPv4 address */
-        goto checkipv6;
-    }
+    /* initialize the hint */
+    memset(&hint, '\0', sizeof hint);
 
-    for (i=0; i < 4; i++) {
-        if (255 < groups[i]) {
-            return false;
-        }
-    }
-    return true;
+    /* indicate that we don't know the family */
+    hint.ai_family = PF_UNSPEC;
+    hint.ai_flags = AI_NUMERICHOST;
 
- checkipv6:
-    /* TODO: deal with all the shorthand notations for IPv6! */
-    if (8 != sscanf(name, "%x:%x:%x:%x:%x:%x:%x:%x",
-                    &groups[0], &groups[1], &groups[2], &groups[3],
-                    &groups[4], &groups[5], &groups[6], &groups[7])) {
-        /* this isn't an IPv6 address */
+    if (0 != getaddrinfo(name, NULL, &hint, &res)) {
+        /* the input wasn't a recognizable address */
         return false;
     }
-    /* there are no value limits on the individual groups */
+    /* we don't care what family - all we care is that
+     * it is indeed an address
+     */
+    freeaddrinfo(res);
     return true;
 }
 
@@ -119,7 +112,7 @@ typedef struct private_ipv4_t {
 
 static private_ipv4_t* private_ipv4 = NULL;
 
-#if OPAL_WANT_IPV6
+#if OPAL_ENABLE_IPV6
 static opal_tsd_key_t hostname_tsd_key;
 
 
@@ -190,7 +183,7 @@ opal_net_init()
     }
 
  do_local_init:
-#if OPAL_WANT_IPV6
+#if OPAL_ENABLE_IPV6
     return opal_tsd_key_create(&hostname_tsd_key, hostname_cleanup);
 #else
     return OPAL_SUCCESS;
@@ -231,7 +224,7 @@ opal_net_islocalhost(const struct sockaddr *addr)
             return false;
         }
         break;
-#if OPAL_WANT_IPV6
+#if OPAL_ENABLE_IPV6
     case AF_INET6:
         {
             const struct sockaddr_in6 *inaddr = (struct sockaddr_in6*) addr;
@@ -255,8 +248,10 @@ opal_net_islocalhost(const struct sockaddr *addr)
 bool
 opal_net_samenetwork(const struct sockaddr *addr1, 
                      const struct sockaddr *addr2,
-                     uint32_t prefixlen)
+                     uint32_t plen)
 {
+    uint32_t prefixlen;
+
     if(addr1->sa_family != addr2->sa_family) {
         return false; /* address families must be equal */
     }
@@ -264,18 +259,23 @@ opal_net_samenetwork(const struct sockaddr *addr1,
     switch (addr1->sa_family) {
     case AF_INET:
         {
+            if (0 == plen) {
+                prefixlen = 32;
+            } else {
+                prefixlen = plen;
+            }
             const struct sockaddr_in *inaddr1 = (struct sockaddr_in*) addr1;
             const struct sockaddr_in *inaddr2 = (struct sockaddr_in*) addr2;
             uint32_t netmask = opal_net_prefix2netmask (prefixlen);
 
             if((inaddr1->sin_addr.s_addr & netmask) ==
-              (inaddr2->sin_addr.s_addr & netmask)) {
+               (inaddr2->sin_addr.s_addr & netmask)) {
                 return true;
             }
             return false;
         }
         break;
-#if OPAL_WANT_IPV6
+#if OPAL_ENABLE_IPV6
     case AF_INET6:
         {
             const struct sockaddr_in6 *inaddr1 = (struct sockaddr_in6*) addr1;
@@ -283,6 +283,11 @@ opal_net_samenetwork(const struct sockaddr *addr1,
             struct in6_addr *a6_1 = (struct in6_addr*) &inaddr1->sin6_addr;
             struct in6_addr *a6_2 = (struct in6_addr*) &inaddr2->sin6_addr;
 
+            if (0 == plen) {
+                prefixlen = 64;
+            } else {
+                prefixlen = plen;
+            }
             if (64 == prefixlen) {
                 /* prefixlen is always /64, any other case would be routing.
                    Compare the first eight bytes (64 bits) and hope that
@@ -316,7 +321,7 @@ bool
 opal_net_addr_isipv4public(const struct sockaddr *addr)
 {
     switch (addr->sa_family) {
-#if OPAL_WANT_IPV6
+#if OPAL_ENABLE_IPV6
         case AF_INET6:
             return false;
 #endif
@@ -350,10 +355,11 @@ opal_net_addr_isipv4public(const struct sockaddr *addr)
 char*
 opal_net_get_hostname(const struct sockaddr *addr)
 {
-#if OPAL_WANT_IPV6
+#if OPAL_ENABLE_IPV6
     char *name = get_hostname_buffer();
     int error;
     socklen_t addrlen;
+    char *p;
 
     if (NULL == name) {
         opal_output(0, "opal_sockaddr2str: malloc() failed\n");
@@ -395,7 +401,10 @@ opal_net_get_hostname(const struct sockaddr *addr)
        free (name);
        return NULL;
     }
-
+    /* strip any trailing % data as it isn't pertinent */
+    if (NULL != (p = strrchr(name, '%'))) {
+        *p = '\0';
+    }
     return name;
 #else
     return inet_ntoa(((struct sockaddr_in*) addr)->sin_addr);
@@ -410,7 +419,7 @@ opal_net_get_port(const struct sockaddr *addr)
     case AF_INET:
         return ntohs(((struct sockaddr_in*) addr)->sin_port);
         break;
-#if OPAL_WANT_IPV6
+#if OPAL_ENABLE_IPV6
     case AF_INET6:
         return ntohs(((struct sockaddr_in6*) addr)->sin6_port);
         break;
