@@ -17,9 +17,15 @@ SUBDIRS = profile
 
 AM_CPPFLAGS = -DOMPI_PROFILING_DEFINES=0
 
-noinst_LTLIBRARIES = libmpi_mpit.la
+noinst_LTLIBRARIES = libmpi_mpit_common.la
+
+if BUILD_MPI_BINDINGS_LAYER
+noinst_LTLIBRARIES += libmpi_mpit.la
+endif
 
 headers = mpit-internal.h
+
+libmpi_mpit_common_la_SOURCES = mpit_common.c
 
 libmpi_mpit_la_SOURCES = init_thread.c finalize.c cvar_get_num.c \
 		     cvar_get_info.c cvar_read.c cvar_write.c \
@@ -31,7 +37,7 @@ libmpi_mpit_la_SOURCES = init_thread.c finalize.c cvar_get_num.c \
                      pvar_handle_free.c pvar_read.c pvar_readreset.c \
                      pvar_reset.c pvar_session_create.c pvar_session_free.c \
                      pvar_start.c pvar_stop.c pvar_write.c \
-                     enum_get_info.c enum_get_item.c mpit_common.c
+                     enum_get_info.c enum_get_item.c
 
 # Conditionally install the header files
 
