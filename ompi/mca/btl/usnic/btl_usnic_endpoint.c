@@ -70,8 +70,6 @@ static void endpoint_construct(mca_btl_base_endpoint_t* endpoint)
     endpoint->endpoint_next_frag_id = 1;
     endpoint->endpoint_acktime = 0;
 
-    endpoint->endpoint_rfstart = endpoint->endpoint_next_contig_seq_to_recv;
-
     /* endpoint starts not-ready-to-send */
     endpoint->endpoint_ready_to_send = 0;
     endpoint->endpoint_ack_needed = false;
