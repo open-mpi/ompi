@@ -810,6 +810,7 @@ void opal_memory_linux_malloc_init_hook(void)
         0 == access("/dev/myri9", F_OK) ||
         0 == access("/dev/ipath", F_OK) ||
         0 == access("/dev/kgni0", F_OK) ||
+        0 == access("/dev/mic/scif", F_OK) ||
         0 == access("/dev/scif", F_OK)) {
         found_driver = true;
     }
