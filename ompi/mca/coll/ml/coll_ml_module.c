@@ -3106,14 +3106,18 @@ static int mca_coll_ml_need_multi_topo(int bcol_collective)
 static int setup_bcast_table(mca_coll_ml_module_t *module)
 {
     mca_coll_ml_component_t *cm = &mca_coll_ml_component;
+    bool has_zero_copy;
 
     /* setup bcast index table */
     if (cm->use_static_bcast) {
         module->bcast_fn_index_table[0] = ML_BCAST_SMALL_DATA_KNOWN;
-        if (cm->enable_fragmentation) {
+
+	has_zero_copy = !!(MCA_BCOL_BASE_ZERO_COPY &
+			   module->coll_ml_bcast_functions[ML_BCAST_LARGE_DATA_KNOWN]->topo_info->all_bcols_mode);
+
+        if (1 == cm->enable_fragmentation || (2 == cm->enable_fragmentation && !has_zero_copy)) {
             module->bcast_fn_index_table[1] = ML_BCAST_SMALL_DATA_KNOWN;
-        } else if (!(MCA_BCOL_BASE_ZERO_COPY &
-                    module->coll_ml_bcast_functions[ML_BCAST_LARGE_DATA_KNOWN]->topo_info->all_bcols_mode)) {
+        } else if (!has_zero_copy) {
             ML_ERROR(("ML couldn't be used: because the mca param coll_ml_enable_fragmentation "
                       "was set to zero and there is a bcol doesn't support zero copy method."));
             return OMPI_ERROR;
@@ -3122,10 +3126,19 @@ static int setup_bcast_table(mca_coll_ml_module_t *module)
         }
     } else {
         module->bcast_fn_index_table[0] = ML_BCAST_SMALL_DATA_UNKNOWN;
-        if (cm->enable_fragmentation) {
+
+	if (NULL == module->coll_ml_bcast_functions[ML_BCAST_LARGE_DATA_UNKNOWN]) {
+	    ML_ERROR(("ML couldn't be used: because the mca param coll_ml_use_static_bcast was set "
+		      "to zero and no function is available."));
+	    return OMPI_ERROR;
+	}
+
+	has_zero_copy = !!(MCA_BCOL_BASE_ZERO_COPY &
+			   module->coll_ml_bcast_functions[ML_BCAST_LARGE_DATA_UNKNOWN]->topo_info->all_bcols_mode);
+
+        if (1 == cm->enable_fragmentation || (2 == cm->enable_fragmentation && !has_zero_copy)) {
             module->bcast_fn_index_table[1] = ML_BCAST_SMALL_DATA_UNKNOWN;
-        } else if (!(MCA_BCOL_BASE_ZERO_COPY &
-                    module->coll_ml_bcast_functions[ML_BCAST_LARGE_DATA_UNKNOWN]->topo_info->all_bcols_mode)) {
+        } else if (!has_zero_copy) {
             ML_ERROR(("ML couldn't be used: because the mca param coll_ml_enable_fragmentation "
                       "was set to zero and there is a bcol doesn't support zero copy method."));
             return OMPI_ERROR;

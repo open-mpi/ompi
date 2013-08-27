@@ -480,9 +480,12 @@ mca_bcol_basesmuma_comm_query(mca_sbgp_base_module_t *module, int *num_modules)
 
     sm_module->super.supported_mode = 0;
 
+    /* NTH: this is not set anywhere on the trunk as of 08/13/13 */
+#if 0
     if (module->use_hdl) {
         sm_module->super.supported_mode = MCA_BCOL_BASE_ZERO_COPY;
     }
+#endif
 
 	/* Initializes portals library required for basesmuma large message */
 #ifdef __PORTALS_AVAIL__
