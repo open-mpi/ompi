@@ -35,6 +35,7 @@
 #endif
 
 #include "opal/dss/dss.h"
+#include "opal/mca/db/base/base.h"
 #include "opal/mca/event/event.h"
 #include "opal/runtime/opal.h"
 #include "opal/runtime/opal_cr.h"
@@ -274,6 +275,18 @@ int orte_ess_base_orted_setup(char **hosts)
         goto error;
     }
     
+    /* database */
+    if (ORTE_SUCCESS != (ret = mca_base_framework_open(&opal_db_base_framework, 0))) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_db_base_open";
+        goto error;
+    }
+    if (ORTE_SUCCESS != (ret = opal_db_base_select())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_db_base_select";
+        goto error;
+    }
+
     /*
      * Group communications
      */
@@ -647,6 +660,8 @@ int orte_ess_base_orted_finalize(void)
     (void) mca_base_framework_close(&orte_rml_base_framework);
     (void) mca_base_framework_close(&orte_oob_base_framework);
     (void) mca_base_framework_close(&orte_state_base_framework);
+
+    (void) mca_base_framework_close(&opal_db_base_framework);
 
     /* cleanup any lingering session directories */
     orte_session_dir_cleanup(ORTE_JOBID_WILDCARD);
