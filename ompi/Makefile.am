@@ -79,7 +79,7 @@ SUBDIRS = \
         debuggers \
         etc \
         mpi/c \
-	mpi/tool \
+        mpi/tool \
         $(OMPI_MPIEXT_C_DIRS) \
         mpi/fortran/base/ \
         $(MCA_ompi_FRAMEWORKS_SUBDIRS) \
@@ -111,7 +111,7 @@ DIST_SUBDIRS = \
         debuggers \
         etc \
         mpi/c \
-	mpi/tool \
+        mpi/tool \
         mpi/cxx \
         mpi/fortran/base \
         mpi/fortran/mpif-h \
@@ -134,17 +134,13 @@ libmpi_la_LIBADD = \
         datatype/libdatatype.la \
         debuggers/libdebuggers.la \
         mpi/c/libmpi_c.la \
+        mpi/tool/libmpi_mpit_common.la \
         $(c_mpi_lib) \
         $(c_pmpi_lib) \
         $(mpi_fortran_base_lib) \
         $(MCA_ompi_FRAMEWORK_LIBS) \
         $(OMPI_MPIEXT_C_LIBS) \
         $(OMPI_LIBMPI_EXTRA_LIBS)
-
-if WANT_MPI_PROFILING
-libmpi_la_LIBADD += \
-        mpi/tool/libmpi_mpit.la
-endif
 
 
 if OMPI_RTE_ORTE
