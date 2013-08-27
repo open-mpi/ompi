@@ -525,8 +525,8 @@ struct mca_coll_ml_component_t {
     /* use hdl_framework */
     bool use_hdl_bcast;
 
-    /* Enable / Disable fragmentation */
-    bool enable_fragmentation;
+    /* Enable / Disable fragmentation (0 - off, 1 - on, 2 - auto) */
+    int enable_fragmentation;
 
     /* Use sequential bcast algorithm */
     bool use_sequential_bcast;

@@ -276,9 +276,9 @@ static int set_section_name(section_config_t *section_config)
 void mca_coll_ml_reset_config(per_collective_configuration_t *config) 
 {
     config->topology_id = ML_UNDEFINED;
-    config->threshold = ML_UNDEFINED;;
-    config->algorithm_id = ML_UNDEFINED;;
-    config->fragmentation_enabled = ML_UNDEFINED;;
+    config->threshold = ML_UNDEFINED;
+    config->algorithm_id = ML_UNDEFINED;
+    config->fragmentation_enabled = ML_UNDEFINED;
 }
 
 static void reset_section(section_config_t *section_cf)
@@ -369,12 +369,12 @@ static int parse_fragmentation_key(section_config_t *section, char *value)
 }
 
 /* Save configuration that have been collected so far */
-static void save_settings(coll_config_t *coll_config)
+static int save_settings(coll_config_t *coll_config)
 {
     per_collective_configuration_t *cf;
 
     if (ML_UNDEFINED == coll_config->coll_id || ML_UNDEFINED == coll_config->section.section_id) {
-        return;
+        return OMPI_ERROR;
     }
 
     cf = &mca_coll_ml_component.coll_config[coll_config->coll_id][coll_config->section.section_id];
@@ -383,6 +383,8 @@ static void save_settings(coll_config_t *coll_config)
     cf->threshold = coll_config->section.config.threshold; 
     cf->algorithm_id = coll_config->section.config.algorithm_id;
     cf->fragmentation_enabled = coll_config->section.config.fragmentation_enabled;
+
+    return OMPI_SUCCESS;
 }
 
 /*
@@ -495,7 +497,7 @@ static int parse_file(char *filename)
 {
     int val;
     int ret = OMPI_SUCCESS;
-
+    bool first_section = true, first_coll = true;
     coll_config_t coll_config;
 
     memset (&coll_config, 0, sizeof (coll_config));
@@ -521,10 +523,20 @@ static int parse_file(char *filename)
             break;
         case COLL_ML_CONFIG_PARSE_COLLECTIVE:
             /* dump all the information to last section that was defined */
-            save_settings(&coll_config);
+            if (!first_coll) {
+                ret = save_settings(&coll_config);
 
+                if (OMPI_SUCCESS != ret) {
+                    ML_ERROR(("Error in syntax for collective %s", coll_config.coll_name));
+                    goto cleanup;
+                }
+            }
+            
             /* reset collective config */
             reset_collective(&coll_config);
+
+            first_coll    = false;
+            first_section = true;
 
             ret = set_collective_name(&coll_config);
             if (OMPI_SUCCESS != ret) {
@@ -538,8 +550,17 @@ static int parse_file(char *filename)
                 goto cleanup;
             }
 
-            /* dump all the information to last section that was defined */
-            save_settings(&coll_config);
+            if (!first_section) {
+                /* dump all the information to last section that was defined */
+                ret = save_settings(&coll_config);
+                if (OMPI_SUCCESS != ret) {
+                    ML_ERROR(("Error in syntax for collective %s section %s", coll_config.coll_name,
+                              coll_config.section.section_name));
+                    goto cleanup;
+                }
+            }
+
+            first_section = false;
 
             /* reset all section values */
             reset_section(&coll_config.section);
