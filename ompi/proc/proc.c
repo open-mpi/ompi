@@ -192,8 +192,8 @@ int ompi_proc_complete_init(void)
 #else
             /* must be same arch as my own */
             proc->proc_arch = opal_local_arch;
-        }
 #endif
+        }
     }
     OPAL_THREAD_UNLOCK(&ompi_proc_lock);
     return errcode;
@@ -408,14 +408,16 @@ int ompi_proc_refresh(void) {
                 proc->proc_hostname = NULL;
             }
 #if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
-            /* get the remote architecture */
-            uiptr = &(proc->proc_arch);
-            ret = ompi_modex_recv_key_value("OMPI_ARCH", proc, (void**)&uiptr, OPAL_UINT32);
-            /* if arch is different than mine, create a new convertor for this proc */
-            if (proc->proc_arch != opal_local_arch) {
-                OBJ_RELEASE(proc->proc_convertor);
-                proc->proc_convertor = opal_convertor_create(proc->proc_arch, 0);
-            } 
+            {
+                /* get the remote architecture */
+                uint32_t* uiptr = &(proc->proc_arch);
+                ret = ompi_modex_recv_key_value("OMPI_ARCH", proc, (void**)&uiptr, OPAL_UINT32);
+                /* if arch is different than mine, create a new convertor for this proc */
+                if (proc->proc_arch != opal_local_arch) {
+                    OBJ_RELEASE(proc->proc_convertor);
+                    proc->proc_convertor = opal_convertor_create(proc->proc_arch, 0);
+                }
+            }
 #else
             /* must be same arch as my own */
             proc->proc_arch = opal_local_arch;
