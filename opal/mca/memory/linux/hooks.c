@@ -1,5 +1,8 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2012-2013 Los Alamos National Security, LLC. All rights
+ *                         reserved.
  *
  * Additional copyrights may follow.
  */
@@ -806,7 +809,8 @@ void opal_memory_linux_malloc_init_hook(void)
         0 == access("/dev/myri8", F_OK) ||
         0 == access("/dev/myri9", F_OK) ||
         0 == access("/dev/ipath", F_OK) ||
-        0 == access("/dev/kgni0", F_OK)) {
+        0 == access("/dev/kgni0", F_OK) ||
+        0 == access("/dev/scif", F_OK)) {
         found_driver = true;
     }
     
