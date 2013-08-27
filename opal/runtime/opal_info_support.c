@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -66,6 +67,7 @@ const char *opal_info_path_pkgdatadir = "pkgdatadir";
 const char *opal_info_path_pkgincludedir = "pkgincludedir";
 
 bool opal_info_pretty = true;
+mca_base_register_flag_t opal_info_register_flags = MCA_BASE_REGISTER_ALL;
 
 const char *opal_info_type_all = "all";
 const char *opal_info_type_opal = "opal";
@@ -148,6 +150,8 @@ int opal_info_init(int argc, char **argv,
                             "Show all configuration options and MCA parameters");
     opal_cmd_line_make_opt3(opal_info_cmd_line, 'l', NULL, "level", 1,
                             "Show only variables with at most this level (1-9)");
+    opal_cmd_line_make_opt3(opal_info_cmd_line, 's', NULL, "selected-only", 0,
+                            "Show only variables from selected components");
 
     /* set our threading level */
     opal_set_using_threads(false);
@@ -208,6 +212,11 @@ int opal_info_init(int argc, char **argv,
     } else if (opal_cmd_line_is_taken(opal_info_cmd_line, "parsable") || opal_cmd_line_is_taken(opal_info_cmd_line, "parseable")) {
         opal_info_pretty = false;
     }
+
+    if (opal_cmd_line_is_taken(opal_info_cmd_line, "selected-only")) {
+        /* register only selected components */
+        opal_info_register_flags = MCA_BASE_REGISTER_DEFAULT;
+    }
     
     return OPAL_SUCCESS;
 }
@@ -223,7 +232,7 @@ static int info_register_framework (mca_base_framework_t *framework, opal_pointe
     opal_info_component_map_t *map;
     int rc;
 
-    rc = mca_base_framework_register(framework, MCA_BASE_REGISTER_ALL);
+    rc = mca_base_framework_register(framework, opal_info_register_flags);
     if (OPAL_SUCCESS != rc && OPAL_ERR_BAD_PARAM != rc) {
         return rc;
     }
@@ -440,6 +449,9 @@ void opal_info_do_params(bool want_all_in, bool want_internal,
             free(usage);
             exit(1);
         }
+    } else if (want_all_in) {
+        /* if not specified default to level 9 if all components are requested */
+        max_level = OPAL_INFO_LVL_9;
     }
 
     if (want_all_in) {
