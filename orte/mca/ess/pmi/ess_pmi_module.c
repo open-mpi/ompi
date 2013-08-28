@@ -363,12 +363,20 @@ static int rte_init(void)
         error = "db store hostname";
         goto error;
     }
+#if OPAL_HAVE_HWLOC
     if (ORTE_SUCCESS != (ret = opal_db.store((opal_identifier_t*)ORTE_PROC_MY_NAME,
-                                             OPAL_DB_GLOBAL, ORTE_DB_CPUSET,
-                                             orte_process_info.cpuset, OPAL_STRING))) {
-        error = "db store cpuset";
+                                             OPAL_DB_GLOBAL, ORTE_DB_BIND_LEVEL,
+                                             &orte_process_info.bind_level, OPAL_HWLOC_LEVEL_T))) {
+        error = "db store bind level";
         goto error;
     }
+    if (ORTE_SUCCESS != (ret = opal_db.store((opal_identifier_t*)ORTE_PROC_MY_NAME,
+                                             OPAL_DB_GLOBAL, ORTE_DB_BIND_INDEX,
+                                             &orte_process_info.bind_idx, OPAL_UINT))) {
+        error = "db store bind index";
+        goto error;
+    }
+#endif
     if (ORTE_SUCCESS != (ret = opal_db.store((opal_identifier_t*)ORTE_PROC_MY_NAME,
                                              OPAL_DB_GLOBAL, ORTE_DB_LOCALRANK,
                                              &orte_process_info.my_local_rank, ORTE_LOCAL_RANK))) {

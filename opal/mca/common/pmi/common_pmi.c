@@ -23,6 +23,7 @@
 #include <pmi2.h>
 #endif
 
+#include "opal/util/output.h"
 #include "common_pmi.h"
 
 static int mca_common_pmi_init_count = 0;
@@ -46,9 +47,9 @@ bool mca_common_pmi_init (void) {
         if (PMI_SUCCESS == PMI2_Init(&spawned, &size, &rank, &appnum)) {
             mca_common_pmi_init_size = size;
             mca_common_pmi_init_rank = rank;
-            mca_common_pmi_init_count--;
             return true;
         } else {
+            mca_common_pmi_init_count--;
             return false;
         }
     }
