@@ -166,9 +166,6 @@ typedef struct mca_base_pvar_t {
     int pvar_index;
 
     /** Full name of the variable: form is framework_component_name */
-    char *full_name;
-
-    /** Short name of the variable */
     char *name;
 
     /** Description of this performance variable */
