@@ -120,6 +120,7 @@ static int ompi_comm_world_thread_level_mult=0;
 
 int ompi_comm_cid_init (void)
 {
+#if OMPI_ENABLE_THREAD_MULTIPLE
     ompi_proc_t **procs, *thisproc;
     uint8_t thread_level;
     void *tlpointer;
@@ -153,7 +154,9 @@ int ompi_comm_cid_init (void)
         }
     }
     free(procs);
-
+#else
+    ompi_comm_world_thread_level_mult = 0; // silence compiler warning if not used
+#endif
     return OMPI_SUCCESS;
 }
 
