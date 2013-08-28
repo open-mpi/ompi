@@ -1729,7 +1729,7 @@ static int dist_cmp_fn (opal_list_item_t **a, opal_list_item_t **b)
     }
 }
 
-static void sort_by_dist(hwloc_topology_t topo, const char* device_name, opal_list_t *sorted_list)
+static void sort_by_dist(hwloc_topology_t topo, char* device_name, opal_list_t *sorted_list)
 {
     hwloc_obj_t device_obj = NULL;
     hwloc_obj_t obj = NULL, root = NULL;
@@ -1751,6 +1751,9 @@ static void sort_by_dist(hwloc_topology_t topo, const char* device_name, opal_li
                     obj = obj->parent;
                 }
                 if (obj == NULL) {
+                    opal_output_verbose(5, opal_hwloc_base_framework.framework_output,
+                            "hwloc:base:get_sorted_numa_list: NUMA node closest to %s wasn't found.",
+                            device_name);
                     return;
                 } else {
                     close_node_index = obj->logical_index;
@@ -1762,6 +1765,8 @@ static void sort_by_dist(hwloc_topology_t topo, const char* device_name, opal_li
                     /* we can try to find distances under group object. This info can be there. */
                     depth = hwloc_get_type_depth(topo, HWLOC_OBJ_NODE);
                     if (depth < 0) {
+                        opal_output_verbose(5, opal_hwloc_base_framework.framework_output,
+                                "hwloc:base:get_sorted_numa_list: There is no information about distances on the node.");
                         return;
                     }
                     root = hwloc_get_root_obj(topo);
@@ -1779,6 +1784,8 @@ static void sort_by_dist(hwloc_topology_t topo, const char* device_name, opal_li
                 }
                 /* find all distances for our close node with logical index = close_node_index as close_node_index + nbobjs*j */
                 if ((NULL == distances) || (0 == distances->nbobjs)) {
+                    opal_output_verbose(5, opal_hwloc_base_framework.framework_output,
+                            "hwloc:base:get_sorted_numa_list: There is no information about distances on the node.");
                     return;
                 }
                 /* fill list of numa nodes */
@@ -1797,13 +1804,28 @@ static void sort_by_dist(hwloc_topology_t topo, const char* device_name, opal_li
     }
 }
 
-void opal_hwloc_get_sorted_numa_list(hwloc_topology_t topo, const char* device_name, opal_list_t *sorted_list)
+static int find_devices(hwloc_topology_t topo, char* device_name) 
+{
+    hwloc_obj_t device_obj = NULL;
+    int count = 0;
+    for (device_obj = hwloc_get_obj_by_type(topo, HWLOC_OBJ_OS_DEVICE, 0); device_obj; device_obj = hwloc_get_next_osdev(topo, device_obj)) {
+        if (device_obj->attr->osdev.type == HWLOC_OBJ_OSDEV_OPENFABRICS) {
+            count++;
+            free(device_name);
+            device_name = strdup(device_obj->name);
+        }
+    }
+    return count;
+}
+
+int opal_hwloc_get_sorted_numa_list(hwloc_topology_t topo, char* device_name, opal_list_t *sorted_list)
 {
     hwloc_obj_t obj;
     opal_list_item_t *item;
     opal_hwloc_summary_t *sum;
     opal_hwloc_topo_data_t *data;
     orte_rmaps_numa_node_t *numa, *copy_numa;
+    int count;
 
     obj = hwloc_get_root_obj(topo);
 
@@ -1823,9 +1845,19 @@ void opal_hwloc_get_sorted_numa_list(hwloc_topology_t topo, const char* device_n
                         copy_numa->dist_from_closed = numa->dist_from_closed;
                         opal_list_append(sorted_list, &copy_numa->super);
                     }
-                    return;
+                    return 0;
                 }else {
                     /* don't already know it - go get it */
+                    /* firstly we check if we need to autodetect OpenFabrics  devices or we have the specified one */
+                    if (!strcmp(device_name, "auto")) {
+                        count = find_devices(topo, device_name);
+                       if (count > 1) {
+                           return count;
+                       }
+                    }
+                    if (!device_name || (strlen(device_name) == 0)) {
+                        return 1;
+                    }
                     sort_by_dist(topo, device_name, sorted_list);
                     /* store this info in summary object for later usage */
                     OPAL_LIST_FOREACH(numa, sorted_list, orte_rmaps_numa_node_t) {
@@ -1834,7 +1866,7 @@ void opal_hwloc_get_sorted_numa_list(hwloc_topology_t topo, const char* device_n
                         copy_numa->dist_from_closed = numa->dist_from_closed;
                         opal_list_append(&(sum->sorted_by_dist_list), &copy_numa->super);
                     }
-                    return;
+                    return 0;
                 }
             }
         }

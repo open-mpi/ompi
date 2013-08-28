@@ -169,8 +169,8 @@ OPAL_DECLSPEC unsigned int opal_hwloc_base_get_obj_idx(hwloc_topology_t topo,
                                                        hwloc_obj_t obj,
                                                        opal_hwloc_resource_type_t rtype);
 
-OPAL_DECLSPEC void opal_hwloc_get_sorted_numa_list(hwloc_topology_t topo, 
-                                    const char* device_name, 
+OPAL_DECLSPEC int opal_hwloc_get_sorted_numa_list(hwloc_topology_t topo, 
+                                    char* device_name, 
                                     opal_list_t *sorted_list);
 
 /**
