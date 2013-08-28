@@ -948,6 +948,7 @@ int mca_btl_sm_sendi( struct mca_btl_base_module_t* btl,
         OPAL_THREAD_ADD32(&mca_btl_sm_component.num_outstanding_frags, +1);
         MCA_BTL_SM_FIFO_WRITE(endpoint, endpoint->my_smp_rank,
                               endpoint->peer_smp_rank, (void *) VIRTUAL2RELATIVE(frag->hdr), false, true, rc);
+        (void)rc; /* this is safe to ignore as the message is requeued till success */
         return OMPI_SUCCESS;
     }
 

@@ -1097,6 +1097,7 @@ int mca_btl_sm_component_progress(void)
                 break;
         }
     }
+    (void)rc; /* this is safe to ignore as the message is requeued till success */
 
 #if OMPI_BTL_SM_HAVE_KNEM
     /* The sm btl is currently hard-wired for a single module.  So
