@@ -414,7 +414,4 @@ static void ompi_comm_destruct(ompi_communicator_t* comm)
                                       comm->c_f_to_c_index, NULL);
 
     }
-
-
-    return;
 }
