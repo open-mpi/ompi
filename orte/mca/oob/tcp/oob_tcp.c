@@ -167,6 +167,8 @@ mca_oob_tcp_component_t mca_oob_tcp_component = {
   }
 };
 
+static bool mca_oob_tcp_is_reachable(orte_process_name_t *proc);
+
 mca_oob_t mca_oob_tcp = {
     mca_oob_tcp_init,
     mca_oob_tcp_fini,
@@ -181,8 +183,30 @@ mca_oob_t mca_oob_tcp = {
     mca_oob_tcp_recv_nb,
     mca_oob_tcp_recv_cancel,
 
-    mca_oob_tcp_ft_event
+    mca_oob_tcp_ft_event,
+    NULL,
+
+    mca_oob_tcp_is_reachable
 };
+
+static bool mca_oob_tcp_is_reachable(orte_process_name_t *name)
+{
+    mca_oob_tcp_addr_t* addr = NULL;
+    /* if this is for myself, I am always reachable */
+    if (name->jobid == ORTE_PROC_MY_NAME->jobid &&
+        name->vpid == ORTE_PROC_MY_NAME->vpid) {
+        return true;
+    }
+
+    OPAL_THREAD_LOCK(&mca_oob_tcp_component.tcp_lock);
+    opal_hash_table_get_value_uint64(&mca_oob_tcp_component.tcp_peer_names,
+                                     orte_util_hash_name(name), (void**)&addr);
+    OPAL_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
+    if (NULL == addr) {
+        return false;
+    }
+    return true;
+}
 
 static int mca_oob_tcp_component_register(void)
 {

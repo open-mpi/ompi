@@ -154,6 +154,10 @@ typedef int (*mca_oob_base_module_fini_fn_t)(void);
 /* ft event */
 typedef int (*mca_oob_base_module_ft_event_fn_t)( int state );
 
+/*
+ * Check if a process is reachable - i.e., we know its contact info
+ */
+typedef bool (*mca_oob_base_module_is_reachable_fn_t)(orte_process_name_t *proc);
 
 /**
  * OOB Module
@@ -175,6 +179,7 @@ struct mca_oob_1_0_0_t {
     mca_oob_base_module_ft_event_fn_t            oob_ft_event;
 
     orte_rml_exception_callback_t                oob_exception_callback;
+    mca_oob_base_module_is_reachable_fn_t        oob_is_reachable;
 };
 
 /**

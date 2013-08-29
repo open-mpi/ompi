@@ -55,11 +55,10 @@ orte_rml_oob_set_contact_from_db (orte_process_name_t name)
 {
     int ret;
 
-    if (NULL == orte_rml_oob_module.active_oob->oob_get_addr()) {
+    if (!orte_rml_oob_module.active_oob->oob_is_reachable(&name)) {
 	const char *rmluri;
 
 	if (ORTE_SUCCESS != (ret = opal_db.fetch_pointer((opal_identifier_t*)&name, ORTE_DB_RMLURI, (void **)&rmluri, OPAL_STRING))) {
-            ORTE_ERROR_LOG(ret);
             return ret;
         }
 
