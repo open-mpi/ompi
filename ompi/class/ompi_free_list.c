@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2007 Mellanox Technologies. All rights reserved.
- * Copyright (c) 2010      Cisco Systems, Inc. All rights reserved.
+ * Copyright (c) 2010-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, LLC. All rights
  *                         reserved.
@@ -62,6 +62,7 @@ static void ompi_free_list_construct(ompi_free_list_t* fl)
 static void ompi_free_list_destruct(ompi_free_list_t* fl)
 {
     opal_list_item_t *item;
+    ompi_free_list_item_t *fl_item;
     ompi_free_list_memory_t *fl_mem;
 
 #if 0 && OPAL_ENABLE_DEBUG
@@ -71,6 +72,15 @@ static void ompi_free_list_destruct(ompi_free_list_t* fl)
             fl->super.super.cls_init_file_name, fl->super.super.cls_init_lineno);
     }
 #endif
+
+    while(NULL != (item = opal_atomic_lifo_pop(&(fl->super)))) {
+        fl_item = (ompi_free_list_item_t*)item;
+
+        /* destruct the item (we constructed it), the underlying memory will be
+         * reclaimed when we free the slab (ompi_free_list_memory_t ptr)
+         * containing it */
+        OBJ_DESTRUCT(fl_item);
+    }
 
     while(NULL != (item = opal_list_remove_first(&(fl->fl_allocations)))) {
         fl_mem = (ompi_free_list_memory_t*)item;
