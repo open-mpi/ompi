@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2013 Los Alamos National Security, LLC. 
  *                         All rights reserved.
- * Copyright (c) 2010-2011 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2010-2013 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -115,6 +115,7 @@ OBJ_CLASS_DECLARATION(mca_oob_tcp_recv_t);
         /* setup the header */                                          \
         msg->hdr.origin = *ORTE_PROC_MY_NAME;                           \
         msg->hdr.dst = (m)->peer;                                       \
+        msg->hdr.type = MCA_OOB_TCP_USER;                               \
         msg->hdr.tag = (m)->tag;                                        \
         /* point to the actual message */                               \
         msg->msg = (m);                                                 \
@@ -155,6 +156,7 @@ OBJ_CLASS_DECLARATION(mca_oob_tcp_recv_t);
         /* setup the header */                                          \
         msg->hdr.origin = *ORTE_PROC_MY_NAME;                           \
         msg->hdr.dst = (m)->peer;                                       \
+        msg->hdr.type = MCA_OOB_TCP_USER;                               \
         msg->hdr.tag = (m)->tag;                                        \
         /* point to the actual message */                               \
         msg->msg = (m);                                                 \
@@ -194,6 +196,7 @@ OBJ_CLASS_DECLARATION(mca_oob_tcp_recv_t);
         /* setup the header */                                          \
         msg->hdr.origin = (m)->hdr.origin;                              \
         msg->hdr.dst = (m)->hdr.dst;                                    \
+        msg->hdr.type = MCA_OOB_TCP_USER;                               \
         msg->hdr.tag = (m)->hdr.tag;                                    \
         /* point to the actual message */                               \
         msg->data = (m)->data;                                          \

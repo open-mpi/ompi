@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2013 Los Alamos National Security, LLC. 
  *                         All rights reserved.
- * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2009-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
  * $COPYRIGHT$
  * 
@@ -298,6 +298,7 @@ static int tcp_peer_send_connect_ack(mca_oob_tcp_module_t *mod,
     hdr.dst = peer->name;
     hdr.type = MCA_OOB_TCP_IDENT;
     hdr.tag = 0;
+    hdr.nbytes = 0;
     MCA_OOB_TCP_HDR_HTON(&hdr);
     if (0 > tcp_peer_send_blocking(mod, peer, &hdr, sizeof(hdr))) {
         ORTE_ERROR_LOG(ORTE_ERR_UNREACH);
