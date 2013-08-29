@@ -1690,7 +1690,12 @@ int orte_odls_base_default_require_sync(orte_process_name_t *proc,
         cnt = 1;
         if (ORTE_SUCCESS != (rc = opal_dss.unpack(buf, &(child->rml_uri), &cnt, OPAL_STRING))) {
             ORTE_ERROR_LOG(rc);
+            return rc;
         }
+        /* push the contact info into the rml to be sure we
+         * know it
+         */
+        orte_rml.set_contact_info(child->rml_uri);
     }
     
     /* ack the call */
