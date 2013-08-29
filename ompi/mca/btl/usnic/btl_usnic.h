@@ -28,6 +28,7 @@
 #include <sys/types.h>
 #include <infiniband/verbs.h>
 
+#include "opal_stdint.h"
 #include "opal/class/opal_hash_table.h"
 #include "opal/class/opal_hash_table.h"
 #include "opal/mca/event/event.h"
@@ -164,7 +165,7 @@ typedef mca_btl_base_recv_reg_t ompi_btl_usnic_recv_reg_t;
  * everywhere)
  */
 typedef uint64_t ompi_btl_usnic_seq_t;
-#define UDSEQ "lu"
+#define UDSEQ PRIu64
 
 /**
  * Register the usnic BTL MCA params
