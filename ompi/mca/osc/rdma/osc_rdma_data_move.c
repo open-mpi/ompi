@@ -1309,10 +1309,6 @@ ompi_osc_rdma_control_send_cb(struct mca_btl_base_module_t* btl,
                                struct mca_btl_base_descriptor_t* descriptor,
                                int status)
 {
-    ompi_osc_rdma_control_header_t *header = NULL;
-
-    header = (ompi_osc_rdma_control_header_t*) descriptor->des_src[0].seg_addr.pval;
-
     /* release the descriptor and sendreq */
     btl->btl_free(btl, descriptor);
 }
