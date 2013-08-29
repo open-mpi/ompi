@@ -28,7 +28,7 @@ No PCI locality information could be found on at least one node:
 
   Node: %s
 
-Open MPI therefore cannot mapp the application as specified.
+Open MPI therefore cannot mapp\ the application as specified.
 #
 [orte-rmaps-mindist:several-hca-devices]
 There are several OpenFabrics devices found on at least one node. Please specify the definite one.
@@ -36,4 +36,12 @@ There are several OpenFabrics devices found on at least one node. Please specify
   Devices: %d
   Node: %s
 
-Open MPI therefore cannot mapp the application as specified.
+Open MPI therefore cannot map the application as specified.
+#
+[orte-rmaps-mindist:device-not-found]
+An OpenFabrics device was specified that cannot be found on at least one node.
+
+  Device: %s
+  Node: %s
+
+Open MPI therefore cannot map the application as specified.
