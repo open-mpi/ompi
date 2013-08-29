@@ -722,15 +722,12 @@ void mca_oob_tcp_peer_dump(mca_oob_tcp_peer_t* peer, const char* msg)
 
 bool mca_oob_tcp_peer_accept(mca_oob_tcp_module_t *mod, mca_oob_tcp_peer_t* peer)
 {
-    int cmpval;
-
     opal_output_verbose(OOB_TCP_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
                         "%s tcp:peer_accept called for peer %s in state %s",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                         ORTE_NAME_PRINT(&peer->name),
                         mca_oob_tcp_state_print(peer->state));
 
-    cmpval = orte_util_compare_name_fields(ORTE_NS_CMP_ALL, &peer->name, ORTE_PROC_MY_NAME);
     if (peer->state != MCA_OOB_TCP_CONNECTED) {
 
         tcp_peer_event_init(mod, peer);
