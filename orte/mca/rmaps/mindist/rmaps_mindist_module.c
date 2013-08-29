@@ -252,6 +252,11 @@ static int mindist_map(orte_job_t *jdata)
                         true, ret, node->name);
                 rc = ORTE_ERR_SILENT;
                 goto error;
+            } else if (ret < 0) {
+                orte_show_help("help-orte-rmaps-md.txt", "orte-rmaps-mindist:device-not-found",
+                        true, orte_rmaps_base.device, node->name);
+                rc = ORTE_ERR_SILENT;
+                goto error;
             }
             if (opal_list_get_size(&numa_list) > 0) {
                 j = 0;

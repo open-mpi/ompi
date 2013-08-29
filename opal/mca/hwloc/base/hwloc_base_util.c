@@ -1845,7 +1845,7 @@ int opal_hwloc_get_sorted_numa_list(hwloc_topology_t topo, char* device_name, op
                         copy_numa->dist_from_closed = numa->dist_from_closed;
                         opal_list_append(sorted_list, &copy_numa->super);
                     }
-                    return 0;
+                    return OPAL_SUCCESS;
                 }else {
                     /* don't already know it - go get it */
                     /* firstly we check if we need to autodetect OpenFabrics  devices or we have the specified one */
@@ -1856,7 +1856,7 @@ int opal_hwloc_get_sorted_numa_list(hwloc_topology_t topo, char* device_name, op
                        }
                     }
                     if (!device_name || (strlen(device_name) == 0)) {
-                        return 1;
+                        return OPAL_ERR_NOT_FOUND;
                     }
                     sort_by_dist(topo, device_name, sorted_list);
                     /* store this info in summary object for later usage */
@@ -1866,9 +1866,10 @@ int opal_hwloc_get_sorted_numa_list(hwloc_topology_t topo, char* device_name, op
                         copy_numa->dist_from_closed = numa->dist_from_closed;
                         opal_list_append(&(sum->sorted_by_dist_list), &copy_numa->super);
                     }
-                    return 0;
+                    return OPAL_SUCCESS;
                 }
             }
         }
     }
+    return OPAL_ERR_NOT_FOUND;
 }
