@@ -18,6 +18,7 @@
  * Copyright (c) 2010-2011 IBM Corporation.  All rights reserved.
  * Copyright (c) 2010-2011 Oracle and/or its affiliates.  All rights reserved
  * Copyright (c) 2013      Intel, Inc. All rights reserved
+ * Copyright (c) 2013      NVIDIA Corporation.  All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -550,7 +551,7 @@ void mca_btl_openib_endpoint_send_cts(mca_btl_openib_endpoint_t *endpoint)
     openib_frag->segment.base.seg_len = sizeof(mca_btl_openib_control_header_t);
     com_frag->endpoint = endpoint;
 
-    sc_frag->hdr->tag = MCA_BTL_TAG_BTL;
+    sc_frag->hdr->tag = MCA_BTL_TAG_IB;
     sc_frag->hdr->cm_seen = 0;
     sc_frag->hdr->credits = 0;
 
@@ -786,7 +787,7 @@ void mca_btl_openib_endpoint_send_credits(mca_btl_openib_endpoint_t* endpoint,
         to_base_frag(frag)->base.des_cbdata = NULL;
         to_base_frag(frag)->base.des_flags |= MCA_BTL_DES_SEND_ALWAYS_CALLBACK;;
         to_com_frag(frag)->endpoint = endpoint;
-        frag->hdr->tag = MCA_BTL_TAG_BTL;
+        frag->hdr->tag = MCA_BTL_TAG_IB;
         to_base_frag(frag)->segment.base.seg_len =
             sizeof(mca_btl_openib_rdma_credits_header_t);
     }
@@ -882,7 +883,7 @@ static int mca_btl_openib_endpoint_send_eager_rdma(
         sizeof(mca_btl_openib_eager_rdma_header_t);
     to_com_frag(frag)->endpoint = endpoint;
 
-    frag->hdr->tag = MCA_BTL_TAG_BTL;
+    frag->hdr->tag = MCA_BTL_TAG_IB;
     rdma_hdr = (mca_btl_openib_eager_rdma_header_t*)to_base_frag(frag)->segment.base.seg_addr.pval;
     rdma_hdr->control.type = MCA_BTL_OPENIB_CONTROL_RDMA;
     rdma_hdr->rkey = endpoint->eager_rdma_local.reg->mr->rkey;

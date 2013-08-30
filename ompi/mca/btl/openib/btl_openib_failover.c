@@ -3,6 +3,7 @@
  * Copyright (c) 2011      NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
+ * Copyright (c) 2013      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -679,7 +680,7 @@ static void mca_btl_openib_endpoint_notify(mca_btl_base_endpoint_t* endpoint, ui
         sizeof(mca_btl_openib_broken_connection_header_t);
     to_com_frag(frag)->endpoint = newep;
 
-    frag->hdr->tag = MCA_BTL_TAG_BTL;
+    frag->hdr->tag = MCA_BTL_TAG_IB;
     bc_hdr = (mca_btl_openib_broken_connection_header_t*)to_base_frag(frag)->segment.base.seg_addr.pval;
     bc_hdr->control.type = type;
     bc_hdr->lid = endpoint->endpoint_btl->port_info.lid;
@@ -721,7 +722,7 @@ static void dump_local_rdma_frags(mca_btl_openib_endpoint_t * endpoint) {
                ((unsigned char* )frag->hdr) + sizeof(mca_btl_openib_header_t);
 
         chdr = to_base_frag(frag)->segment.base.seg_addr.pval;
-        if ((MCA_BTL_TAG_BTL == frag->hdr->tag) &&
+        if ((MCA_BTL_TAG_IB == frag->hdr->tag) &&
             (MCA_BTL_OPENIB_CONTROL_CREDITS == chdr->type)) {
             opal_output(0, "tag[%d] is credit message", i);
         } else {

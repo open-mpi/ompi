@@ -1330,7 +1330,7 @@ static bool inline is_credit_message(const mca_btl_openib_recv_frag_t *frag)
 {
     mca_btl_openib_control_header_t* chdr =
         (mca_btl_openib_control_header_t *) to_base_frag(frag)->segment.base.seg_addr.pval;
-    return (MCA_BTL_TAG_BTL == frag->hdr->tag) &&
+    return (MCA_BTL_TAG_IB == frag->hdr->tag) &&
         (MCA_BTL_OPENIB_CONTROL_CREDITS == chdr->type);
 }
 
@@ -1338,7 +1338,7 @@ static bool inline is_cts_message(const mca_btl_openib_recv_frag_t *frag)
 {
     mca_btl_openib_control_header_t* chdr =
         (mca_btl_openib_control_header_t *) to_base_frag(frag)->segment.base.seg_addr.pval;
-    return (MCA_BTL_TAG_BTL == frag->hdr->tag) &&
+    return (MCA_BTL_TAG_IB == frag->hdr->tag) &&
         (MCA_BTL_OPENIB_CONTROL_CTS == chdr->type);
 }
 
