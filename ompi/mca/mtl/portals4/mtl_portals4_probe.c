@@ -23,7 +23,6 @@
 
 #include "mtl_portals4.h"
 #include "mtl_portals4_request.h"
-#include "mtl_portals4_endpoint.h"
 #include "mtl_portals4_message.h"
 
 static int
@@ -63,7 +62,6 @@ ompi_mtl_portals4_iprobe(struct mca_mtl_base_module_t* mtl,
                          struct ompi_status_public_t *status)
 {
     struct ompi_mtl_portals4_probe_request_t request;
-    mca_mtl_base_endpoint_t *endpoint = NULL;
     ptl_me_t me;
     ptl_process_t remote_proc;
     ptl_match_bits_t match_bits, ignore_bits;
@@ -74,8 +72,7 @@ ompi_mtl_portals4_iprobe(struct mca_mtl_base_module_t* mtl,
         remote_proc.phys.pid = PTL_PID_ANY;
     } else {
         ompi_proc_t* ompi_proc = ompi_comm_peer_lookup( comm, src );
-        endpoint = (mca_mtl_base_endpoint_t*) ompi_proc->proc_pml;
-        remote_proc = endpoint->ptl_proc;
+        remote_proc = *((ptl_process_t*) ompi_proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_PORTALS4]);
     }
 
     MTL_PORTALS4_SET_RECV_BITS(match_bits, ignore_bits, comm->c_contextid,
@@ -133,7 +130,6 @@ ompi_mtl_portals4_improbe(struct mca_mtl_base_module_t *mtl,
                           struct ompi_status_public_t *status)
 {
     struct ompi_mtl_portals4_probe_request_t request;
-    mca_mtl_base_endpoint_t *endpoint = NULL;
     ptl_me_t me;
     ptl_process_t remote_proc;
     ptl_match_bits_t match_bits, ignore_bits;
@@ -148,8 +144,7 @@ ompi_mtl_portals4_improbe(struct mca_mtl_base_module_t *mtl,
         remote_proc.phys.pid = PTL_PID_ANY;
     } else {
         ompi_proc_t* ompi_proc = ompi_comm_peer_lookup( comm, src );
-        endpoint = (mca_mtl_base_endpoint_t*) ompi_proc->proc_pml;
-        remote_proc = endpoint->ptl_proc;
+        remote_proc = *((ptl_process_t*) ompi_proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_PORTALS4]);
     }
 
     MTL_PORTALS4_SET_RECV_BITS(match_bits, ignore_bits, comm->c_contextid,

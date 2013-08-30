@@ -863,7 +863,7 @@ component_fragment_cb(struct mca_btl_base_module_t *btl,
 
                 /* find the bml_btl */
                 proc = ompi_comm_peer_lookup(module->m_comm, origin);
-                endpoint = (mca_bml_base_endpoint_t*) proc->proc_bml;
+                endpoint = (mca_bml_base_endpoint_t*) proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML];
                 bml_btl = mca_bml_base_btl_array_find(&endpoint->btl_rdma, btl);
                 if (NULL == bml_btl) {
                     opal_output(ompi_osc_base_framework.framework_output,
@@ -1173,7 +1173,7 @@ setup_rdma(ompi_osc_rdma_module_t *module)
         ompi_proc_t *proc = ompi_comm_peer_lookup(module->m_comm, i);
         ompi_osc_rdma_peer_info_t *peer_info = &module->m_peer_info[i];
         mca_bml_base_endpoint_t *endpoint = 
-            (mca_bml_base_endpoint_t*) proc->proc_bml;
+            (mca_bml_base_endpoint_t*) proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML];
         int num_avail =
             mca_bml_base_btl_array_get_size(&endpoint->btl_rdma);
         size_t j, size;

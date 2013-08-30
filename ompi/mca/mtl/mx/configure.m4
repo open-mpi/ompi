@@ -11,6 +11,7 @@
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2013      Sandia National Laboratories.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -18,6 +19,12 @@
 # $HEADER$
 #
 
+# MCA_ompi_mtl_mx_POST_CONFIG(will_build)
+# ----------------------------------------
+# Only require the tag if we're actually going to be built
+AC_DEFUN([MCA_ompi_mtl_mx_POST_CONFIG], [
+    AS_IF([test "$1" = "1"], [OMPI_REQUIRE_ENDPOINT_TAG([MTL])])
+])dnl
 
 # MCA_mtl_mx_CONFIG([action-if-can-compile],
 #                      [action-if-cant-compile])
@@ -26,8 +33,8 @@ AC_DEFUN([MCA_ompi_mtl_mx_CONFIG],[
     AC_CONFIG_FILES([ompi/mca/mtl/mx/Makefile])
 
     OMPI_CHECK_MX([mtl_mx],
-                     [mtl_mx_happy="yes"],
-                     [mtl_mx_happy="no"])
+                  [mtl_mx_happy="yes"],
+                  [mtl_mx_happy="no"])
 
     AS_IF([test "$mtl_mx_happy" = "yes"],
           [$1],

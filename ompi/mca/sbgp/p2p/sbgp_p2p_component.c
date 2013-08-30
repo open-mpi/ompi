@@ -169,15 +169,18 @@ static mca_sbgp_base_module_t * mca_sbgp_p2p_select_procs(struct ompi_proc_t ** 
    /* count the number of ranks in the group */
    cnt=0;
     for( proc=0 ; proc < n_procs_in ; proc++) {
+        mca_bml_base_endpoint_t* endpoint = 
+            (mca_bml_base_endpoint_t*) procs[proc]->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML];
+
         if(my_rank == proc ) {
             cnt++;
             continue;
         }
         /* loop over btls */
-        for( i_btl=0 ; i_btl < (int) mca_bml_base_btl_array_get_size(&(procs[proc]->proc_bml->btl_eager)) ; i_btl++ ) {
+        for( i_btl=0 ; i_btl < (int) mca_bml_base_btl_array_get_size(&(endpoint->btl_eager)) ; i_btl++ ) {
             if(key) {
                 /* I am checking for specific btl */
-                if( strcmp(procs[proc]->proc_bml->btl_eager.bml_btls[i_btl].btl->btl_component->btl_version.mca_component_name,key)) {
+                if( strcmp(endpoint->btl_eager.bml_btls[i_btl].btl->btl_component->btl_version.mca_component_name,key)) {
                     cnt++;
                     break;
 
@@ -206,6 +209,9 @@ fflush(stderr);
 
    cnt=0;
     for( proc=0 ; proc < n_procs_in ; proc++) {
+        mca_bml_base_endpoint_t* endpoint = 
+            (mca_bml_base_endpoint_t*) procs[proc]->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML];
+
         if(my_rank == proc ) {
             module->super.group_list[cnt]=proc;
             cnt++;
@@ -214,11 +220,11 @@ fflush(stderr);
         /* loop over btls */
 
         for( i_btl=0 ;
-                i_btl < (int) mca_bml_base_btl_array_get_size(&(procs[proc]->proc_bml->btl_eager)) ;
+                i_btl < (int) mca_bml_base_btl_array_get_size(&(endpoint->btl_eager)) ;
                 i_btl++ ) {
             if(key) {
                 /* I am checking for specific btl */
-                if( strcmp(procs[proc]->proc_bml->btl_eager.bml_btls[i_btl].btl->
+                if( strcmp(endpoint->btl_eager.bml_btls[i_btl].btl->
                             btl_component->btl_version.mca_component_name,key)) {
                     module->super.group_list[cnt]=proc;
                     cnt++;

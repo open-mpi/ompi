@@ -444,8 +444,7 @@ int ompi_mtl_mxm_finalize(struct mca_mtl_base_module_t* mtl)
 }
 
 int ompi_mtl_mxm_add_procs(struct mca_mtl_base_module_t *mtl, size_t nprocs,
-                           struct ompi_proc_t** procs, /*const*/
-                           struct mca_mtl_base_endpoint_t **mtl_peer_data)
+                           struct ompi_proc_t** procs)
 {
 #if MXM_API < MXM_VERSION(2,0)
     ompi_mtl_mxm_ep_conn_info_t *ep_info;
@@ -457,6 +456,7 @@ int ompi_mtl_mxm_add_procs(struct mca_mtl_base_module_t *mtl, size_t nprocs,
     mxm_error_t err;
     size_t i;
     int rc;
+    mca_mtl_mxm_endpoint_t *endpoint;
 
     assert(mtl == &ompi_mtl_mxm.super);
 
@@ -489,14 +489,15 @@ int ompi_mtl_mxm_add_procs(struct mca_mtl_base_module_t *mtl, size_t nprocs,
         conn_reqs[i].ptl_addr[MXM_PTL_SHM]  = (struct sockaddr *)&(ep_info[i].ptl_addr[MXM_PTL_SHM]);
         conn_reqs[i].ptl_addr[MXM_PTL_RDMA] = (struct sockaddr *)&(ep_info[i].ptl_addr[MXM_PTL_RDMA]);
 #else
-        mtl_peer_data[i] = (mca_mtl_mxm_endpoint_t *) OBJ_NEW(mca_mtl_mxm_endpoint_t);
-        mtl_peer_data[i]->mtl_mxm_module = &ompi_mtl_mxm;
-        err = mxm_ep_connect(ompi_mtl_mxm.ep, ep_address, &mtl_peer_data[i]->mxm_conn);
+        endpoint = OBJ_NEW(mca_mtl_mxm_endpoint_t);
+        endpoint->mtl_mxm_module = &ompi_mtl_mxm;
+        err = mxm_ep_connect(ompi_mtl_mxm.ep, ep_address, &endpoint->mxm_conn);
         if (err != MXM_OK) {
             MXM_ERROR("MXM returned connect error: %s\n", mxm_error_string(err));
             rc = OMPI_ERROR;
             goto bail;
         }
+        procs[i]->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_MTL] = endpoint;
 #endif
         free(ep_address);
     }
@@ -521,9 +522,10 @@ int ompi_mtl_mxm_add_procs(struct mca_mtl_base_module_t *mtl, size_t nprocs,
 
     /* Save returned connections */
     for (i = 0; i < nprocs; ++i) {
-        mtl_peer_data[i] = (mca_mtl_mxm_endpoint_t *) OBJ_NEW(mca_mtl_mxm_endpoint_t);
-        mtl_peer_data[i]->mtl_mxm_module = &ompi_mtl_mxm;
-        mtl_peer_data[i]->mxm_conn = conn_reqs[i].conn;
+        endpoint = OBJ_NEW(mca_mtl_mxm_endpoint_t);
+        endpoint->mtl_mxm_module = &ompi_mtl_mxm;
+        endpoint->mxm_conn = conn_reqs[i].conn;
+        procs[i]->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_MTL] = endpoint;
     }
 #endif
     rc = OMPI_SUCCESS;
@@ -537,14 +539,15 @@ bail:
 }
 
 int ompi_mtl_mxm_del_procs(struct mca_mtl_base_module_t *mtl, size_t nprocs,
-                           struct ompi_proc_t** procs,
-                           struct mca_mtl_base_endpoint_t **mtl_peer_data)
+                           struct ompi_proc_t** procs)
 {
     size_t i;
 
     for (i = 0; i < nprocs; ++i) {
-        mxm_ep_disconnect(mtl_peer_data[i]->mxm_conn);
-        OBJ_RELEASE(mtl_peer_data[i]);
+        mca_mtl_mxm_endpoint_t *endpoint = (mca_mtl_mxm_endpoint_t*)
+            procs[i]->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_MTL];
+        mxm_ep_disconnect(endpoint->mxm_conn);
+        OBJ_RELEASE(endpoint);
     }
     return OMPI_SUCCESS;
 }

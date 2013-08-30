@@ -281,7 +281,7 @@ void mca_pml_bfo_repost_fin(struct mca_btl_base_descriptor_t* des) {
     mca_bml_base_btl_t* bml_btl;
 
     proc = (ompi_proc_t*) des->des_cbdata;
-    bml_endpoint = (mca_bml_base_endpoint_t*) proc->proc_bml;
+    bml_endpoint = (mca_bml_base_endpoint_t*) proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML];
     hdr = (mca_pml_bfo_fin_hdr_t*)des->des_src->seg_addr.pval;
 
     opal_output_verbose(20, mca_pml_bfo_output,
@@ -665,7 +665,7 @@ void mca_pml_bfo_send_request_rndvrestartnotify(mca_pml_bfo_send_request_t* send
     int rc;
     mca_bml_base_btl_t* bml_btl;
     ompi_proc_t* proc = (ompi_proc_t*)sendreq->req_send.req_base.req_proc;
-    mca_bml_base_endpoint_t* bml_endpoint = (mca_bml_base_endpoint_t*) proc->proc_bml;
+    mca_bml_base_endpoint_t* bml_endpoint = (mca_bml_base_endpoint_t*) proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML];
 
     /* If this message is not a repost, then update the sequence number. */
     if (!repost) {
@@ -811,7 +811,7 @@ void mca_pml_bfo_send_request_restart(mca_pml_bfo_send_request_t* sendreq,
     /* This code here is essentially the same is mca_pml_bfo_send_request_start()
      * but with a few modifications since we are restarting the request, not
      * starting entirely from scratch. */
-    endpoint = (mca_bml_base_endpoint_t*)sendreq->req_send.req_base.req_proc->proc_bml;
+    endpoint = (mca_bml_base_endpoint_t*)sendreq->req_send.req_base.req_proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML];
     sendreq->req_endpoint = endpoint;
     sendreq->req_state = 0;
     sendreq->req_lock = 0;
@@ -1040,7 +1040,7 @@ void mca_pml_bfo_recv_request_recverrnotify(mca_pml_bfo_recv_request_t* recvreq,
     mca_btl_base_descriptor_t* des;
     mca_pml_bfo_restart_hdr_t* restart;
     ompi_proc_t* proc = (ompi_proc_t*)recvreq->req_recv.req_base.req_proc;
-    mca_bml_base_endpoint_t* bml_endpoint = (mca_bml_base_endpoint_t*) proc->proc_bml;
+    mca_bml_base_endpoint_t* bml_endpoint = (mca_bml_base_endpoint_t*) proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML];
     mca_bml_base_btl_t* bml_btl;
     int rc;
 
@@ -1112,7 +1112,7 @@ void mca_pml_bfo_recv_request_rndvrestartack(mca_pml_bfo_recv_request_t* recvreq
     mca_btl_base_descriptor_t* des;
     mca_pml_bfo_restart_hdr_t* restart;
     ompi_proc_t* proc = (ompi_proc_t*)recvreq->req_recv.req_base.req_proc;
-    mca_bml_base_endpoint_t* bml_endpoint = (mca_bml_base_endpoint_t*) proc->proc_bml;
+    mca_bml_base_endpoint_t* bml_endpoint = (mca_bml_base_endpoint_t*) proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML];
     mca_bml_base_btl_t* bml_btl;
     int rc;
 
@@ -1210,7 +1210,7 @@ void mca_pml_bfo_recv_request_rndvrestartnack(mca_btl_base_descriptor_t* olddes,
     }
     hdr = (mca_pml_bfo_restart_hdr_t*)segments->seg_addr.pval;
 
-    bml_endpoint = ompi_proc->proc_bml;
+    bml_endpoint = ompi_proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML];
     assert(0 != bml_endpoint->btl_eager.arr_size);
     bml_btl = mca_bml_base_btl_array_get_next(&bml_endpoint->btl_eager);
 
@@ -1383,7 +1383,7 @@ void mca_pml_bfo_map_out_btl(struct mca_btl_base_module_t* btl,
     bool remove = false;
     int i;
 
-    ep = (mca_bml_base_endpoint_t*)errproc->proc_bml;
+    ep = (mca_bml_base_endpoint_t*)errproc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML];
 
     /* The bml_del_proc_btl function does not indicate if it
      * actually removed a btl, so let me check up front.  This is
@@ -1539,7 +1539,7 @@ static void mca_pml_bfo_error_pending_packets(mca_btl_base_module_t* btl,
          * not pointing at a stale bml.  We do not really care
          * which BML it is pointing at as long as it is valid.
          * In either case, then put entry back on the list. */
-        if (pckt->proc->proc_bml == ep) {
+        if (pckt->proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML] == ep) {
             opal_output_verbose(15, mca_pml_bfo_output,
                                 "INFO: Found matching pckt on pckt_pending list, adjusting bml");
             pckt->bml_btl = mca_bml_base_btl_array_get_next(&ep->btl_eager);
@@ -1667,7 +1667,7 @@ static void mca_pml_bfo_error_pending_packets(mca_btl_base_module_t* btl,
             break;
 
         proc = (ompi_proc_t*)sendreq->req_send.req_base.req_proc;
-        bml_endpoint = (mca_bml_base_endpoint_t*) proc->proc_bml;
+        bml_endpoint = (mca_bml_base_endpoint_t*) proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML];
 
         /* Check to see if it matches our endpoint.  If it does not,
          * then just put it back on the list as there is nothing
@@ -1734,7 +1734,7 @@ static void mca_pml_bfo_error_pending_packets(mca_btl_base_module_t* btl,
             break;
 
         proc = (ompi_proc_t*)recvreq->req_recv.req_base.req_proc;
-        bml_endpoint = (mca_bml_base_endpoint_t*) proc->proc_bml;
+        bml_endpoint = (mca_bml_base_endpoint_t*) proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML];
 
         if (bml_endpoint != ep) {
             OPAL_THREAD_LOCK(&mca_pml_bfo.lock);
@@ -2033,7 +2033,7 @@ void mca_pml_bfo_find_recvreq_eager_bml_btl(mca_bml_base_btl_t** bml_btl,
 {
     if ((*bml_btl)->btl != btl) {
         ompi_proc_t *proc = (ompi_proc_t*)recvreq->req_recv.req_base.req_proc;
-        mca_bml_base_endpoint_t* bml_endpoint = (mca_bml_base_endpoint_t*) proc->proc_bml;
+        mca_bml_base_endpoint_t* bml_endpoint = (mca_bml_base_endpoint_t*) proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML];
 
         opal_output_verbose(25, mca_pml_bfo_output,
                             "%s completion: BML does not match BTL, find it back, "
@@ -2063,7 +2063,7 @@ void mca_pml_bfo_find_recvreq_rdma_bml_btl(mca_bml_base_btl_t** bml_btl,
 {
     if ((*bml_btl)->btl != btl) {
         ompi_proc_t *proc = (ompi_proc_t*)recvreq->req_recv.req_base.req_proc;
-        mca_bml_base_endpoint_t* bml_endpoint = (mca_bml_base_endpoint_t*) proc->proc_bml;
+        mca_bml_base_endpoint_t* bml_endpoint = (mca_bml_base_endpoint_t*) proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML];
 
         opal_output_verbose(25, mca_pml_bfo_output,
                             "%s completion: BML does not match BTL, find it back, "

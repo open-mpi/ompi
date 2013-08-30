@@ -33,13 +33,11 @@ BEGIN_C_DECLS
 /* MTL interface functions */
 extern int ompi_mtl_psm_add_procs(struct mca_mtl_base_module_t* mtl, 
                           size_t nprocs,
-                          struct ompi_proc_t** procs, 
-                          struct mca_mtl_base_endpoint_t **mtl_peer_data);
+                          struct ompi_proc_t** procs);
     
 extern int ompi_mtl_psm_del_procs(struct mca_mtl_base_module_t* mtl, 
                                  size_t nprocs,
-                                 struct ompi_proc_t** procs, 
-                                 struct mca_mtl_base_endpoint_t **mtl_peer_data);
+                                 struct ompi_proc_t** procs);
 
 int
 ompi_mtl_psm_send(struct mca_mtl_base_module_t* mtl, 

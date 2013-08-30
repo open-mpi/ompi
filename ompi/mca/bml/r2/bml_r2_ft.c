@@ -190,9 +190,9 @@ int mca_bml_r2_ft_event(int state)
             mca_bml_r2.btls_added = false;
 
             for(p = 0; p < (int)num_procs; ++p) {
-                if( NULL != procs[p]->proc_bml) {
-                    OBJ_RELEASE(procs[p]->proc_bml);
-                    procs[p]->proc_bml = NULL;
+                if( NULL != procs[p]->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML]) {
+                    OBJ_RELEASE((mca_bml_base_endpoint_t*) procs[p]->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML]);
+                    procs[p]->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML] = NULL;
                 }
 
                 OBJ_RELEASE(procs[p]);
@@ -285,9 +285,9 @@ int mca_bml_r2_ft_event(int state)
         mca_bml_r2.btls_added = false;
 
         for(p = 0; p < (int)num_procs; ++p) {
-            if( NULL != procs[p]->proc_bml) {
-                OBJ_RELEASE(procs[p]->proc_bml);
-                procs[p]->proc_bml = NULL;
+            if( NULL != procs[p]->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML]) {
+                OBJ_RELEASE((mca_bml_base_endpoint_t*) procs[p]->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML]);
+                procs[p]->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML] = NULL;
             }
 
             OBJ_RELEASE(procs[p]);

@@ -1068,6 +1068,8 @@ AC_MSG_RESULT([$ompi_subdir_args])
 
 OMPI_MCA
 
+m4_ifdef([project_ompi], [OMPI_REQUIRE_ENDPOINT_TAG_FINI])
+
 # checkpoint results
 AC_CACHE_SAVE
 

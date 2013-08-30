@@ -115,11 +115,25 @@ mca_btl_portals4_add_procs(struct mca_btl_base_module_t* btl_base,
             return OMPI_ERROR;
         }
 
-        btl_peer_data[i] = malloc(sizeof(mca_btl_base_endpoint_t));
-        if (NULL == btl_peer_data[i]) return OMPI_ERROR;
-        btl_peer_data[i]->ptl_proc = *id;
+        if (NULL == procs[i]->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_PORTALS4]) {
+            btl_peer_data[i] = malloc(sizeof(mca_btl_base_endpoint_t));
+            if (NULL == btl_peer_data[i]) return OMPI_ERROR;
+            btl_peer_data[i]->ptl_proc = *id;
+            procs[i]->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_PORTALS4] = btl_peer_data[i];            
 
-        OPAL_OUTPUT_VERBOSE((90, ompi_btl_base_framework.framework_output, "add_procs: nid=%x pid=%x\n", id->phys.nid, id->phys.pid));
+            OPAL_OUTPUT_VERBOSE((90, ompi_btl_base_framework.framework_output,
+                                 "add_procs: nid=%x pid=%x\n", id->phys.nid, id->phys.pid));
+        }  else {
+            ptl_process_t *proc = (ptl_process_t*) procs[i]->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_PORTALS4];
+            if (proc->phys.nid != id->phys.nid ||
+                proc->phys.pid != id->phys.pid) {
+                opal_output_verbose(1, ompi_btl_base_framework.framework_output,
+                                    "%s:%d: existing peer and modex peer don't match\n",
+                                    __FILE__, __LINE__);
+                return OMPI_ERROR;
+            }
+            btl_peer_data[i] = (mca_btl_base_endpoint_t*) proc;
+        }
 
         OPAL_THREAD_ADD32(&mca_btl_portals4_module.portals_num_procs, 1);
         /* and here we can reach */
@@ -147,8 +161,13 @@ mca_btl_portals4_del_procs(struct mca_btl_base_module_t *btl,
                         "mca_btl_portals4_del_procs: Removing %d procs (%d)", (int) nprocs,
                         (int) mca_btl_portals4_module.portals_num_procs);
 
+    /* See comment in btl_portals4_endpoint.h about why we look at the
+       portals4 entry in proc_endpoints instead of the peer_data */
     for (i = 0 ; i < nprocs ; ++i) {
-        free(btl_peer_data[i]);
+        if (NULL != procs[i]->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_PORTALS4]) {
+            free(procs[i]->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_PORTALS4]);
+            procs[i]->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_PORTALS4] = NULL;
+        }
         OPAL_THREAD_ADD32(&mca_btl_portals4_module.portals_num_procs, -1);
     }
 

@@ -64,7 +64,7 @@ OMPI_DECLSPEC mca_mtl_mxm_component_t mca_mtl_mxm_component;
 
 static inline mxm_conn_h ompi_mtl_mxm_conn_lookup(struct ompi_communicator_t* comm, int rank) {
     ompi_proc_t* ompi_proc = ompi_comm_peer_lookup(comm, rank);
-    mca_mtl_mxm_endpoint_t *endpoint = (mca_mtl_mxm_endpoint_t*) ompi_proc->proc_pml;
+    mca_mtl_mxm_endpoint_t *endpoint = (mca_mtl_mxm_endpoint_t*) ompi_proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_MTL];
 
     return endpoint->mxm_conn;
 }

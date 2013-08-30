@@ -1,11 +1,20 @@
-/*
- * Copyright (C) Mellanox Technologies Ltd. 2001-2011.  ALL RIGHTS RESERVED.
- * $COPYRIGHT$
- *
- * Additional copyrights may follow
- *
- * $HEADER$
- */
+# -*- shell-script -*-
+#
+# Copyright (C) Mellanox Technologies Ltd. 2001-2011.  ALL RIGHTS RESERVED.
+# Copyright (c) 2013      Sandia National Laboratories.  All rights reserved.
+# $COPYRIGHT$
+#
+# Additional copyrights may follow
+#
+# $HEADER$
+#
+
+# MCA_ompi_mtl_mxm_POST_CONFIG(will_build)
+# ----------------------------------------
+# Only require the tag if we're actually going to be built
+AC_DEFUN([MCA_ompi_mtl_mxm_POST_CONFIG], [
+    AS_IF([test "$1" = "1"], [OMPI_REQUIRE_ENDPOINT_TAG([MTL])])
+])dnl
 
 # MCA_mtl_mxm_CONFIG([action-if-can-compile],
 #                    [action-if-cant-compile])

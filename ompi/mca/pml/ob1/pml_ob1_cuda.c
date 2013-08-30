@@ -150,7 +150,7 @@ int mca_pml_ob1_cuda_need_buffers(void * rreq,
 {
     mca_pml_ob1_recv_request_t* recvreq = (mca_pml_ob1_recv_request_t*)rreq;
     mca_bml_base_endpoint_t* bml_endpoint = 
-        (mca_bml_base_endpoint_t*)recvreq->req_recv.req_base.req_proc->proc_bml;
+        (mca_bml_base_endpoint_t*)recvreq->req_recv.req_base.req_proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML];
     mca_bml_base_btl_t *bml_btl = mca_bml_base_btl_array_find(&bml_endpoint->btl_send, btl);
 
     if ((recvreq->req_recv.req_base.req_convertor.flags & CONVERTOR_CUDA) &&
@@ -180,11 +180,11 @@ void mca_pml_ob1_cuda_add_ipc_support(struct mca_btl_base_module_t* btl, int32_t
     int i;
 
     assert(NULL != errproc);
-    assert(NULL != errproc->proc_bml);
+    assert(NULL != errproc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML]);
     if (NULL != btlinfo) {
         btl_verbose_stream = *(int *)btlinfo;
     }
-    ep = (mca_bml_base_endpoint_t*)errproc->proc_bml;
+    ep = (mca_bml_base_endpoint_t*)errproc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML];
 
     /* Find the corresponding bml and adjust the flag to support CUDA get */
     for( i = 0; i < (int)ep->btl_send.arr_size; i++ ) {

@@ -8,6 +8,13 @@
 # $HEADER$
 #
 
+# MCA_ompi_coll_portals4_POST_CONFIG(will_build)
+# ----------------------------------------
+# Only require the tag if we're actually going to be built
+AC_DEFUN([MCA_ompi_coll_portals4_POST_CONFIG], [
+    AS_IF([test "$1" = "1"], [OMPI_REQUIRE_ENDPOINT_TAG([PORTALS4])])
+])dnl
+
 # MCA_coll_portals4_CONFIG(action-if-can-compile, 
 #                        [action-if-cant-compile])
 # ------------------------------------------------
