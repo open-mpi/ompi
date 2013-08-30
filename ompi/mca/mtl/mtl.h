@@ -46,8 +46,6 @@ struct opal_convertor_t;
 
 struct mca_mtl_base_module_t;
     
-struct mca_mtl_base_endpoint_t;
-
 struct mca_mtl_request_t {
     /** pointer to associated ompi_request_t */
     struct ompi_request_t *ompi_req;
@@ -129,19 +127,15 @@ typedef int (*mca_mtl_base_module_finalize_fn_t)(struct mca_mtl_base_module_t* m
  * peer process.
  *
  * It is an error for a proc to not be reachable by the given MTL, and
- * an error should be returned if that case is detected.  The PML
- * provides the MTL the option to return a pointer to a data structure
- * defined by the MTL that is passed in with all communication
- * functions.  The array of procinfo pointers will be allocated by the
- * PML, but it is up to the MTL module to create the memory for the
- * procinfo structure itself.  The procinfo structure is opaque to the
- * PML and is only used internally by the MTL.
+ * an error should be returned if that case is detected.  If a MTL
+ * requires per-endpoint data, it must handle storage, either using a
+ * static endpoint tag (MTL is the default tag that should generally
+ * be used) or a dynamic endpoint tag (although it should be noted
+ * that OMPI can be built without dynamic endpoint tag support).
  *
  * @param mtl (IN)            MTL module
  * @param nprocs (IN)         Number of processes
  * @param procs (IN)          Set of processes
- * @param endpoint (OUT)      Array of (optional) mca_mtl_base_procinfo_t 
- *                            structures, one per proc in procs
  *
  * @retval OMPI_SUCCESS successfully connected to processes
  * @retval other failure during setup
@@ -149,8 +143,7 @@ typedef int (*mca_mtl_base_module_finalize_fn_t)(struct mca_mtl_base_module_t* m
 typedef int (*mca_mtl_base_module_add_procs_fn_t)(
                             struct mca_mtl_base_module_t* mtl, 
                             size_t nprocs,
-                            struct ompi_proc_t** procs, 
-                            struct mca_mtl_base_endpoint_t **mtl_peer_data);
+                            struct ompi_proc_t** procs);
 
 
 /**
@@ -158,7 +151,9 @@ typedef int (*mca_mtl_base_module_add_procs_fn_t)(
  *
  * When the process list changes, the PML notifies the MTL of the
  * change, to provide the opportunity to cleanup or release any
- * resources associated with the peer.
+ * resources associated with the peer.  The MTL is responsible for
+ * releasing any memory associated with the endpoint data it may have
+ * stored during add_procs().
  *
  * @param mtl (IN)     MTL module
  * @param nprocs (IN)  Number of processes
@@ -170,8 +165,7 @@ typedef int (*mca_mtl_base_module_add_procs_fn_t)(
 typedef int (*mca_mtl_base_module_del_procs_fn_t)(
                             struct mca_mtl_base_module_t* mtl, 
                             size_t nprocs,
-                            struct ompi_proc_t** procs, 
-                            struct mca_mtl_base_endpoint_t **mtl_peer_data);
+                            struct ompi_proc_t** procs);
 
 
 /**

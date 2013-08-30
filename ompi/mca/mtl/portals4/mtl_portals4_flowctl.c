@@ -9,9 +9,10 @@
 
 #include "ompi_config.h"
 
+#include "ompi/proc/proc.h"
+
 #include "mtl_portals4.h"
 #include "mtl_portals4_flowctl.h"
-#include "mtl_portals4_endpoint.h"
 #include "mtl_portals4_recv_short.h"
 
 OBJ_CLASS_INSTANCE(ompi_mtl_portals4_pending_request_t, opal_free_list_item_t,
@@ -227,7 +228,7 @@ ompi_mtl_portals4_flowctl_fini(void)
 int
 ompi_mtl_portals4_flowctl_add_procs(size_t me,
                                     size_t npeers,
-                                    struct mca_mtl_base_endpoint_t **peers)
+                                    struct ompi_proc_t **procs)
 {
     int i;
 
@@ -239,21 +240,24 @@ ompi_mtl_portals4_flowctl_add_procs(size_t me,
     }
 
     ompi_mtl_portals4.flowctl.num_procs = npeers;
-    ompi_mtl_portals4.flowctl.root = peers[0]->ptl_proc;
+    ompi_mtl_portals4.flowctl.root =
+        *((ptl_process_t*) procs[0]->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_PORTALS4]);
     if (0 == me) {
         ompi_mtl_portals4.flowctl.i_am_root = true;
     } else {
         ompi_mtl_portals4.flowctl.i_am_root = false;
         ompi_mtl_portals4.flowctl.parent = 
-            peers[(me - 1) / 2]->ptl_proc;
+            *((ptl_process_t*) procs[(me - 1) / 2]->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_PORTALS4]);
     }
-    ompi_mtl_portals4.flowctl.me = peers[me]->ptl_proc;
+    ompi_mtl_portals4.flowctl.me =
+        *((ptl_process_t*) procs[me]->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_PORTALS4]);
 
     for (i = 0 ; i < 2 ; ++i) {
         size_t tmp = (2 * me) + i + 1;
         if (tmp < npeers) {
             ompi_mtl_portals4.flowctl.num_children++;
-            ompi_mtl_portals4.flowctl.children[i] = peers[tmp]->ptl_proc;
+            ompi_mtl_portals4.flowctl.children[i] = 
+                *((ptl_process_t*) procs[tmp]->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_PORTALS4]);
         }
     }
 

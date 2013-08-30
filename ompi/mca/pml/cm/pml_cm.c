@@ -112,8 +112,6 @@ int
 mca_pml_cm_add_procs(struct ompi_proc_t** procs, size_t nprocs)
 {
     int ret;
-    size_t i;
-    struct mca_mtl_base_endpoint_t **endpoints;
 
 #if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
     for (i = 0 ; i < nprocs ; ++i) {
@@ -130,27 +128,8 @@ mca_pml_cm_add_procs(struct ompi_proc_t** procs, size_t nprocs)
         return ret;
     }
 
-    endpoints = (struct mca_mtl_base_endpoint_t**)malloc(nprocs * sizeof(struct mca_mtl_base_endpoint_t*));
-    if (NULL == endpoints) return OMPI_ERROR;
-
-#if OPAL_ENABLE_DEBUG
-    for (i = 0 ; i < nprocs ; ++i) {
-        endpoints[i] = NULL;
-    }
-#endif
-
-    ret = OMPI_MTL_CALL(add_procs(ompi_mtl, nprocs, procs, endpoints));
-    if (OMPI_SUCCESS != ret) {
-        free(endpoints);
-        return ret;
-    }
-
-    for (i = 0 ; i < nprocs ; ++i) {
-        procs[i]->proc_pml = (struct mca_pml_endpoint_t*) endpoints[i];
-    }
-
-    free(endpoints);
-    return OMPI_SUCCESS;
+    ret = OMPI_MTL_CALL(add_procs(ompi_mtl, nprocs, procs));
+    return ret;
 }
 
 
@@ -158,24 +137,9 @@ int
 mca_pml_cm_del_procs(struct ompi_proc_t** procs, size_t nprocs)
 {
     int ret;
-    size_t i;
-    struct mca_mtl_base_endpoint_t **endpoints;
 
-    endpoints = (struct mca_mtl_base_endpoint_t**)malloc(nprocs * sizeof(struct mca_mtl_base_endpoint_t*));
-    if (NULL == endpoints) return OMPI_ERROR;
-
-    for (i = 0 ; i < nprocs ; ++i) {
-        endpoints[i] = (struct mca_mtl_base_endpoint_t*) procs[i]->proc_pml;
-    }
-
-    ret = OMPI_MTL_CALL(del_procs(ompi_mtl, nprocs, procs, endpoints));
-    if (OMPI_SUCCESS != ret) {
-        free(endpoints);
-        return ret;
-    }
-
-    free(endpoints);
-    return OMPI_SUCCESS;
+    ret = OMPI_MTL_CALL(del_procs(ompi_mtl, nprocs, procs));
+    return ret;
 }
 
 

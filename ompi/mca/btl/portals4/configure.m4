@@ -19,6 +19,16 @@
 # $HEADER$
 #
 
+# MCA_ompi_btl_portals4_POST_CONFIG(will_build)
+# ----------------------------------------
+# Unlike most of the BTLs, we need to register an endpoint tag so that
+# we can get our endpoint information from the same place as all the
+# other Portals components (one-sided, mtl, coll, etc.).  See comment
+# in btl_portals4_endpoint.h for how the pieces fit together.
+AC_DEFUN([MCA_ompi_btl_portals4_POST_CONFIG], [
+    AS_IF([test "$1" = "1"], [OMPI_REQUIRE_ENDPOINT_TAG([PORTALS4])])
+])dnl
+
 # MCA_btl_portals4_CONFIG(action-if-can-compile, 
 #                        [action-if-cant-compile])
 # ------------------------------------------------

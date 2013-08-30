@@ -94,9 +94,7 @@ static inline ptl_process_t
 ompi_coll_portals4_get_peer(struct ompi_communicator_t *comm, int rank)
 {
     ompi_proc_t *proc = ompi_comm_peer_lookup(comm, rank);
-    mca_mtl_base_endpoint_t * endpoint = 
-        (mca_mtl_base_endpoint_t*) proc->proc_pml;
-    return endpoint->ptl_proc;
+    return *((ptl_process_t*) proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_PORTALS4]);
 }
 
 static inline int

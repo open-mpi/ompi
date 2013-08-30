@@ -248,8 +248,7 @@ ompi_mtl_psm_connect_error_msg(psm_error_t err)
 int
 ompi_mtl_psm_add_procs(struct mca_mtl_base_module_t *mtl,
                       size_t nprocs,
-                      struct ompi_proc_t** procs, /*const*/
-                      struct mca_mtl_base_endpoint_t **mtl_peer_data)
+                      struct ompi_proc_t** procs)
 {
     int i,j; 
     int rc;
@@ -332,10 +331,11 @@ ompi_mtl_psm_add_procs(struct mca_mtl_base_module_t *mtl,
 		
 	/* Fill in endpoint data */
 	for (i = 0; i < (int) nprocs; i++) { 
-	    mtl_peer_data[i] =
+            mca_mtl_psm_endpoint_t *endpoint = 
 		(mca_mtl_psm_endpoint_t *) OBJ_NEW(mca_mtl_psm_endpoint_t);
-	    mtl_peer_data[i]->peer_epid = epids_in[i];
-	    mtl_peer_data[i]->peer_addr = epaddrs_out[i];
+	    endpoint->peer_epid = epids_in[i];
+	    endpoint->peer_addr = epaddrs_out[i];
+            procs[i]->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_MTL] = endpoint;
 	}
 
 	rc = OMPI_SUCCESS;
@@ -358,8 +358,7 @@ bail:
 int
 ompi_mtl_psm_del_procs(struct mca_mtl_base_module_t *mtl,
                       size_t nprocs,
-                      struct ompi_proc_t** procs, 
-                      struct mca_mtl_base_endpoint_t **mtl_peer_data)
+                      struct ompi_proc_t** procs)
 {
     return OMPI_SUCCESS;
 }

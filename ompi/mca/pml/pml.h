@@ -73,20 +73,6 @@ BEGIN_C_DECLS
  */
 
 typedef uint64_t mca_pml_sequence_t;
-
-/** 
- * Base PML endpoint structure
- *
- * Base PML structure for caching endpoint information on a proc.  A
- * pointer to an mca_pml_endpoint_t is maintained on each ompi_proc_t,
- * in the proc_pml field, to provide per-process cache information.
- * The data is opaque to the active PML -- no other subsystem will
- * attempt to access the information in the cache.
- *
- * The PML is responsible for allocation and deallocation of the
- * endpoint data during pml_add_procs and pml_del_procs.
- */
-struct mca_pml_endpoint_t;
 struct ompi_proc_t;
 
 typedef enum {

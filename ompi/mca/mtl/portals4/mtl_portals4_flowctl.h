@@ -26,7 +26,7 @@ struct ompi_mtl_portals4_pending_request_t {
     int tag;
     int my_rank;
     int fc_notified;
-    struct mca_mtl_base_endpoint_t *endpoint;
+    ptl_process_t *proc;
     struct ompi_mtl_portals4_isend_request_t *ptl_request;
 };
 typedef struct ompi_mtl_portals4_pending_request_t ompi_mtl_portals4_pending_request_t;
@@ -91,7 +91,7 @@ int ompi_mtl_portals4_flowctl_fini(void);
 
 int ompi_mtl_portals4_flowctl_add_procs(size_t me,
                                         size_t npeers,
-                                        struct mca_mtl_base_endpoint_t **peers);
+                                        struct ompi_proc_t **procs);
 
 int ompi_mtl_portals4_flowctl_trigger(void);
 

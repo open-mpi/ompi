@@ -427,7 +427,7 @@ mca_pml_bfo_send_request_start( mca_pml_bfo_send_request_t* sendreq )
 {   
     mca_pml_bfo_comm_t* comm = sendreq->req_send.req_base.req_comm->c_pml_comm;
     mca_bml_base_endpoint_t* endpoint = (mca_bml_base_endpoint_t*)
-                                        sendreq->req_send.req_base.req_proc->proc_bml;
+                                        sendreq->req_send.req_base.req_proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML];
     size_t i;
 
     if( OPAL_UNLIKELY(endpoint == NULL) ) {

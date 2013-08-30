@@ -164,7 +164,7 @@ static int mca_bml_r2_add_procs( size_t nprocs,
         struct ompi_proc_t* proc = procs[p_index]; 
 
         OBJ_RETAIN(proc); 
-        if(NULL !=  proc->proc_bml) { 
+        if(NULL !=  proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML]) { 
             continue;  /* go to the next proc */
         }
         /* Allocate the new_procs on demand */
@@ -217,7 +217,8 @@ static int mca_bml_r2_add_procs( size_t nprocs,
         for( p = 0; p < n_new_procs; p++ ) {
             if(opal_bitmap_is_set_bit(reachable, p)) {
                 ompi_proc_t *proc = new_procs[p]; 
-                mca_bml_base_endpoint_t * bml_endpoint = (mca_bml_base_endpoint_t*) proc->proc_bml; 
+                mca_bml_base_endpoint_t * bml_endpoint = 
+                    (mca_bml_base_endpoint_t*) proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML]; 
                 mca_bml_base_btl_t* bml_btl; 
                 size_t size;
                 
@@ -237,7 +238,7 @@ static int mca_bml_r2_add_procs( size_t nprocs,
                     mca_bml_base_btl_array_reserve(&bml_endpoint->btl_rdma,  mca_bml_r2.num_btl_modules);
                     bml_endpoint->btl_max_send_size = -1;
                     bml_endpoint->btl_proc = proc;
-                    proc->proc_bml = bml_endpoint; 
+                    proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML] = bml_endpoint; 
                  
                     bml_endpoint->btl_flags_or = 0;
                 }
@@ -309,7 +310,8 @@ static int mca_bml_r2_add_procs( size_t nprocs,
     /* iterate back through procs and compute metrics for registered r2s */
     for(p=0; p<n_new_procs; p++) {
         ompi_proc_t *proc = new_procs[p];
-        mca_bml_base_endpoint_t* bml_endpoint = (mca_bml_base_endpoint_t*) proc->proc_bml;
+        mca_bml_base_endpoint_t* bml_endpoint = 
+            (mca_bml_base_endpoint_t*) proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML];
         double total_bandwidth = 0;
         uint32_t latency = 0xffffffff;
         size_t n_index;
@@ -395,7 +397,7 @@ static int mca_bml_r2_add_procs( size_t nprocs,
     for(p=0; p<n_new_procs; p++) {
         ompi_proc_t *proc = new_procs[p];
 
-        if (NULL == proc->proc_bml) {
+        if (NULL == proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML]) {
             if (NULL == unreach_proc) {
                 unreach_proc = proc;
             }
@@ -449,7 +451,8 @@ static int mca_bml_r2_del_procs(size_t nprocs,
     
     for(p = 0; p < n_del_procs; p++) {
         ompi_proc_t *proc = del_procs[p];
-        mca_bml_base_endpoint_t* bml_endpoint = (mca_bml_base_endpoint_t*) proc->proc_bml;
+        mca_bml_base_endpoint_t* bml_endpoint =
+            (mca_bml_base_endpoint_t*) proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML];
         size_t f_index, f_size;
         size_t n_index, n_size;
  
@@ -520,7 +523,7 @@ static inline int bml_r2_remove_btl_progress(mca_btl_base_module_t* btl)
 
 static int mca_bml_r2_del_proc_btl(ompi_proc_t* proc, mca_btl_base_module_t* btl)
 {
-    mca_bml_base_endpoint_t* ep = (mca_bml_base_endpoint_t*)proc->proc_bml;
+    mca_bml_base_endpoint_t* ep = (mca_bml_base_endpoint_t*)proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML];
     mca_bml_base_btl_t* bml_btl;
     mca_btl_base_module_t* ep_btl;
     double total_bandwidth = 0;
