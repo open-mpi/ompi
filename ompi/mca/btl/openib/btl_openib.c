@@ -18,6 +18,7 @@
  * Copyright (c) 2008-2012 Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2009      IBM Corporation.  All rights reserved.
  * Copyright (c) 2013      Intel, Inc. All rights reserved
+ * Copyright (c) 2013      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -1088,7 +1089,7 @@ mca_btl_base_descriptor_t* mca_btl_openib_alloc(
         sfrag->hdr = sfrag->chdr;
         ctrl_hdr = (mca_btl_openib_control_header_t*)(sfrag->hdr + 1);
         clsc_hdr = (mca_btl_openib_header_coalesced_t*)(ctrl_hdr + 1);
-        sfrag->hdr->tag = MCA_BTL_TAG_BTL;
+        sfrag->hdr->tag = MCA_BTL_TAG_IB;
         ctrl_hdr->type = MCA_BTL_OPENIB_CONTROL_COALESCED;
         clsc_hdr->tag = org_tag;
         clsc_hdr->size = to_base_frag(sfrag)->segment.base.seg_len;
