@@ -43,14 +43,88 @@
 
 /* Open MPI includes */
 #include "opal/mca/event/event.h"
-#include "opal/mca/btl/btl.h"
-#include "opal/mca/btl/base/base.h"
-#include "opal/mca/mpool/mpool.h"
+#include "ompi/class/ompi_free_list.h"
+#include "ompi/mca/btl/btl.h"
+#include "ompi/mca/btl/base/base.h"
+#include "ompi/mca/mpool/mpool.h"
 #include "opal/class/opal_hash_table.h"
 
 #define MCA_BTL_TCP_STATISTICS 0
 BEGIN_C_DECLS
 
+#if (HAVE_PTHREAD_H == 1)
+#define MCA_BTL_TCP_USES_PROGRESS_THREAD 1
+#else
+#define MCA_BTL_TCP_USES_PROGRESS_THREAD 0
+#endif  /* (HAVE_PTHREAD_H == 1) */
+
+extern opal_event_base_t* mca_btl_tcp_event_base;
+
+#define MCA_BTL_TCP_COMPLETE_FRAG_SEND(frag)                            \
+    do {                                                                \
+        int btl_ownership = (frag->base.des_flags & MCA_BTL_DES_FLAGS_BTL_OWNERSHIP); \
+        if( frag->base.des_flags & MCA_BTL_DES_SEND_ALWAYS_CALLBACK ) { \
+            frag->base.des_cbfunc(&frag->endpoint->endpoint_btl->super, frag->endpoint, \
+                                  &frag->base, frag->rc);               \
+        }                                                               \
+        if( btl_ownership ) {                                           \
+            MCA_BTL_TCP_FRAG_RETURN(frag);                              \
+        }                                                               \
+    } while (0)
+#define MCA_BTL_TCP_RECV_TRIGGER_CB(frag)                               \
+    do {                                                                \
+        if( MCA_BTL_TCP_HDR_TYPE_SEND == frag->hdr.type ) {             \
+            mca_btl_active_message_callback_t* reg;                     \
+            reg = mca_btl_base_active_message_trigger + frag->hdr.base.tag; \
+            reg->cbfunc(&frag->endpoint->endpoint_btl->super, frag->hdr.base.tag, &frag->base, reg->cbdata); \
+        }                                                               \
+    } while (0)
+
+#if MCA_BTL_TCP_USES_PROGRESS_THREAD
+extern opal_list_t mca_btl_tcp_ready_frag_pending_queue;
+extern opal_mutex_t mca_btl_tcp_ready_frag_mutex;
+extern int mca_btl_tcp_pipe_to_progress[2];
+
+#define MCA_BTL_TCP_CRITICAL_SECTION_ENTER(name) \
+    opal_mutex_atomic_lock((name))
+#define MCA_BTL_TCP_CRITICAL_SECTION_LEAVE(name) \
+    opal_mutex_atomic_unlock((name))
+
+#define TODO_MCA_BTL_TCP_COMPLETE_FRAG_SEND(frag)                       \
+    do {                                                                \
+        (frag)->next_step = MCA_BTL_TCP_FRAG_STEP_SEND_COMPLETE;        \
+        MCA_BTL_TCP_CRITICAL_SECTION_ENTER(&mca_btl_tcp_ready_frag_mutex); \
+        opal_list_append(&mca_btl_tcp_ready_frag_pending_queue,         \
+                         (opal_list_item_t*)frag);                      \
+        MCA_BTL_TCP_CRITICAL_SECTION_LEAVE(&mca_btl_tcp_ready_frag_mutex); \
+    } while (0)
+
+#define TODO_MCA_BTL_TCP_RECV_TRIGGER_CB(frag)                          \
+    do {                                                                \
+        (frag)->next_step = MCA_BTL_TCP_FRAG_STEP_RECV_COMPLETE;        \
+        MCA_BTL_TCP_CRITICAL_SECTION_ENTER(&mca_btl_tcp_ready_frag_mutex); \
+        opal_list_append(&mca_btl_tcp_ready_frag_pending_queue,         \
+                         (opal_list_item_t*)frag);                      \
+        MCA_BTL_TCP_CRITICAL_SECTION_LEAVE(&mca_btl_tcp_ready_frag_mutex); \
+    } while (0)
+#define MCA_BTL_TCP_ACTIVATE_EVENT(event, value)                        \
+    do {                                                                \
+        opal_event_t* _event = (opal_event_t*)(event);                  \
+        opal_fd_write( mca_btl_tcp_pipe_to_progress[1], sizeof(opal_event_t*), \
+                       &_event);                                        \
+    } while (0)
+#else
+#define MCA_BTL_TCP_CRITICAL_SECTION_ENTER(name)
+#define MCA_BTL_TCP_CRITICAL_SECTION_LEAVE(name)
+#define TODO_MCA_BTL_TCP_COMPLETE_FRAG_SEND(frag)                       \
+    MCA_BTL_TCP_COMPLETE_FRAG_SEND(frag)
+#define TODO_MCA_BTL_TCP_RECV_TRIGGER_CB(frag)                          \
+    MCA_BTL_TCP_RECV_TRIGGER_CB(frag)
+#define MCA_BTL_TCP_ACTIVATE_EVENT(event, value)                    \
+    do {                                                            \
+        opal_event_add(event, (value));                             \
+    } while (0)
+#endif  /* MCA_BTL_TCP_USES_PROGRESS_THREAD */
 
 /**
  * TCP BTL component.
@@ -95,6 +169,12 @@ struct mca_btl_tcp_component_t {
     opal_free_list_t tcp_frag_max;
     opal_free_list_t tcp_frag_user;
 
+#if MCA_BTL_TCP_USES_PROGRESS_THREAD
+    opal_event_t tcp_recv_thread_async_event;
+    opal_mutex_t tcp_frag_eager_mutex;
+    opal_mutex_t tcp_frag_max_mutex;
+    opal_mutex_t tcp_frag_user_mutex;
+#endif
     /* Do we want to use TCP_NODELAY? */
     int    tcp_not_use_nodelay;
 
@@ -292,6 +372,20 @@ mca_btl_base_descriptor_t* mca_btl_tcp_prepare_src(
     uint32_t flags
 );
 
+extern mca_btl_base_descriptor_t* mca_btl_tcp_prepare_dst( 
+    struct mca_btl_base_module_t* btl, 
+    struct mca_btl_base_endpoint_t* peer,
+    struct mca_mpool_base_registration_t*,
+    struct opal_convertor_t* convertor,
+    uint8_t order,
+    size_t reserve,
+    size_t* size,
+    uint32_t flags); 
+
+extern void
+mca_btl_tcp_dump(struct mca_btl_base_module_t* btl,
+                 struct mca_btl_base_endpoint_t* endpoint,
+                 int verbose);
 
 /**
   * Fault Tolerance Event Notification Function
