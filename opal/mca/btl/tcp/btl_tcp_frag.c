@@ -10,7 +10,6 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008-2012 Oracle and/or all its affiliates.  All rights reserved.
  * Copyright (c) 2014      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2015      Research Organization for Information Science
@@ -47,9 +46,9 @@
 #include "btl_tcp_frag.h"
 #include "btl_tcp_endpoint.h"
 
-static void mca_btl_tcp_frag_eager_constructor(mca_btl_tcp_frag_t* frag)
-{
-    frag->size = mca_btl_tcp_module.super.btl_eager_limit;
+static void mca_btl_tcp_frag_eager_constructor(mca_btl_tcp_frag_t* frag) 
+{ 
+    frag->size = mca_btl_tcp_module.super.btl_eager_limit;   
     frag->my_list = &mca_btl_tcp_component.tcp_frag_eager;
 }
 
@@ -150,6 +149,11 @@ bool mca_btl_tcp_frag_send(mca_btl_tcp_frag_t* frag, int sd)
             frag->iov_ptr->iov_base = (opal_iov_base_ptr_t)
                 (((unsigned char*)frag->iov_ptr->iov_base) + cnt);
             frag->iov_ptr->iov_len -= cnt;
+#define GB_DEFINED 0
+#if GB_DEFINED
+        opal_output(0, "%s:%d write %lu bytes from socket %d\n",
+                    __FILE__, __LINE__, cnt, sd); /* GB */
+#endif  /* GB_DEFINED */
             break;
         }
     }
@@ -158,12 +162,14 @@ bool mca_btl_tcp_frag_send(mca_btl_tcp_frag_t* frag, int sd)
 
 bool mca_btl_tcp_frag_recv(mca_btl_tcp_frag_t* frag, int sd)
 {
-    int cnt, dont_copy_data = 0;
-    size_t i, num_vecs;
     mca_btl_base_endpoint_t* btl_endpoint = frag->endpoint;
+    int i, num_vecs, dont_copy_data = 0;
+    ssize_t cnt;
+    struct iovec *iov_ptr;
 
  repeat:
     num_vecs = frag->iov_cnt;
+    iov_ptr = &frag->iov[frag->iov_idx];
 #if MCA_BTL_TCP_ENDPOINT_CACHE
     if( 0 != btl_endpoint->endpoint_cache_length ) {
         size_t length;
@@ -264,11 +270,13 @@ bool mca_btl_tcp_frag_recv(mca_btl_tcp_frag_t* frag, int sd)
                 frag->iov[1].iov_len = frag->hdr.size;
                 frag->iov_cnt++;
 #ifndef __sparc
-                /* The following cannot be done for sparc code
+#if !MCA_BTL_TCP_USES_PROGRESS_THREAD
+                /* The following cannot be done for sparc code 
                  * because it causes alignment errors when accessing
                  * structures later on in the btl and pml code.
                  */
                 dont_copy_data = 1;
+#endif
 #endif
                 goto repeat;
             }
@@ -295,4 +303,21 @@ bool mca_btl_tcp_frag_recv(mca_btl_tcp_frag_t* frag, int sd)
         return true;
     }
     return false;
+}
+
+void mca_btl_tcp_dump_frag( mca_btl_tcp_frag_t* frag, char* msg )
+{
+    int i;
+
+    mca_btl_base_err("%s %s frag %p (endpoint %p) size %lu iov_cnt %d iov_idx %d next_step %s rc %d\n",
+                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), msg, (void*)frag, (void*)frag->endpoint, frag->size, frag->iov_cnt, frag->iov_idx,
+                     (MCA_BTL_TCP_FRAG_STEP_UNDEFINED == frag->next_step ? "undefined" :
+                  (MCA_BTL_TCP_FRAG_STEP_SEND_COMPLETE == frag->next_step ? "send_complete" :
+                   (MCA_BTL_TCP_FRAG_STEP_RECV_COMPLETE == frag->next_step ? "recv_complete" : "unknown"))),
+                     frag->rc);
+    for( i = 0; i < frag->iov_cnt; i++ ) {
+        mca_btl_base_err("%s %s |   iov[%d] = {%p, %lu}\n",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), msg, i, frag->iov[i].iov_base, frag->iov[i].iov_len);
+    }
+    mca_btl_base_err("%s +\n", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
 }
