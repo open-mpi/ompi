@@ -345,6 +345,7 @@ ompi_btl_usnic_create_endpoint(ompi_btl_usnic_module_t *module,
         endpoint->endpoint_remote_addr.isn;
     endpoint->endpoint_highest_seq_rcvd =
         endpoint->endpoint_next_contig_seq_to_recv - 1;
+    endpoint->endpoint_rfstart = WINDOW_SIZE_MOD(endpoint->endpoint_next_contig_seq_to_recv);
 
     /* Create the address handle on this endpoint from the modex info.
        memset to both silence valgrind warnings (since the attr struct
