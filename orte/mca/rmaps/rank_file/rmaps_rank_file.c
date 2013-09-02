@@ -58,6 +58,7 @@ char *orte_rmaps_rank_file_slot_list;
  * Local variable
  */
 static opal_pointer_array_t rankmap;
+static int num_ranks=0;
 
 /*
  * Create a rank_file  mapping for the job.
@@ -167,10 +168,16 @@ static int orte_rmaps_rf_map(orte_job_t *jdata)
 
         /* we already checked for sanity, so it's okay to just do here */
         if (0 == app->num_procs) {
-            /** set the num_procs to equal the number of slots on these mapped nodes */
-            app->num_procs = num_slots;
+            if (NULL != orte_rankfile) {
+                /* if we were given a rankfile, then we set the number of procs
+                 * to the number of entries in that rankfile
+                 */
+                app->num_procs = num_ranks;
+            } else {
+                /** set the num_procs to equal the number of slots on these mapped nodes */
+                app->num_procs = num_slots;
+            }
         }
-
         for (k=0; k < app->num_procs; k++) {
             rank = vpid_start + k;
             /* get the rankfile entry for this rank */
@@ -403,6 +410,7 @@ static int orte_rmaps_rank_file_parse(const char *rankfile)
                     rank = orte_rmaps_rank_file_value.ival;
                     rfmap = OBJ_NEW(orte_rmaps_rank_file_map_t);
                     opal_pointer_array_set_item(&rankmap, rank, rfmap);
+                    num_ranks++;  // keep track of number of provided ranks
                 } else {
                     orte_show_help("help-rmaps_rank_file.txt", "bad-syntax", true, rankfile);
                     rc = ORTE_ERR_BAD_PARAM;
