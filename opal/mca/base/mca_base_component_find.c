@@ -154,9 +154,6 @@ static bool use_component(const bool include_mode,
                           const char **requested_component_names,
                           const char *component_name);
 
-static int parse_requested (const char *requested, bool *include_mode,
-                            char ***requested_component_names);
-
 
 /*
  * Function to find as many components of a given type as possible.  This
@@ -178,7 +175,7 @@ int mca_base_component_find(const char *directory, const char *type,
     bool include_mode;
     int i, ret;
 
-    ret = parse_requested (requested_components, &include_mode,
+    ret = mca_base_component_parse_requested (requested_components, &include_mode,
                            &requested_component_names);
     if (OPAL_SUCCESS != ret) {
         return ret;
@@ -263,7 +260,7 @@ int mca_base_components_filter (const char *framework_name, opal_list_t *compone
         return OPAL_SUCCESS;
     }
 
-    ret = parse_requested (filter_names, &include_mode,
+    ret = mca_base_component_parse_requested (filter_names, &include_mode,
                            &requested_component_names);
     if (OPAL_SUCCESS != ret) {
         return ret;
@@ -1032,8 +1029,8 @@ static int component_find_check (const char *framework_name, char **requested_co
     return OPAL_SUCCESS;
 }
 
-static int parse_requested (const char *requested, bool *include_mode,
-                            char ***requested_component_names)
+int mca_base_component_parse_requested (const char *requested, bool *include_mode,
+                                        char ***requested_component_names)
 {
     const char *requested_orig = requested;
 

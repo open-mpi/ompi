@@ -784,7 +784,7 @@ int mca_base_pvar_dump(int index, char ***out, mca_base_var_dump_type_t output_t
     mca_base_var_group_t *group;
     int line = 0, line_count, i;
     const mca_base_pvar_t *pvar;
-    int ret, enum_count;
+    int ret, enum_count = 0;
     char *tmp;
 
     ret = mca_base_pvar_get (index, &pvar);

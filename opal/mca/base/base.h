@@ -153,6 +153,13 @@ OPAL_DECLSPEC int mca_base_component_find(const char *directory, const char *typ
                                           bool open_dso_components);
 
 /**
+ * Parse the requested component string and return an opal_argv of the requested
+ * (or not requested) components.
+ */
+int mca_base_component_parse_requested (const char *requested, bool *include_mode,
+                                        char ***requested_component_names);
+
+/**
  * Filter a list of components based on a comma-delimted list of names and/or
  * a set of meta-data flags.
  *

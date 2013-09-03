@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -66,6 +67,7 @@ const char *opal_info_path_pkgdatadir = "pkgdatadir";
 const char *opal_info_path_pkgincludedir = "pkgincludedir";
 
 bool opal_info_pretty = true;
+mca_base_register_flag_t opal_info_register_flags = MCA_BASE_REGISTER_ALL;
 
 const char *opal_info_type_all = "all";
 const char *opal_info_type_opal = "opal";
@@ -148,6 +150,8 @@ int opal_info_init(int argc, char **argv,
                             "Show all configuration options and MCA parameters");
     opal_cmd_line_make_opt3(opal_info_cmd_line, 'l', NULL, "level", 1,
                             "Show only variables with at most this level (1-9)");
+    opal_cmd_line_make_opt3(opal_info_cmd_line, 's', NULL, "selected-only", 0,
+                            "Show only variables from selected components");
 
     /* set our threading level */
     opal_set_using_threads(false);
@@ -208,6 +212,11 @@ int opal_info_init(int argc, char **argv,
     } else if (opal_cmd_line_is_taken(opal_info_cmd_line, "parsable") || opal_cmd_line_is_taken(opal_info_cmd_line, "parseable")) {
         opal_info_pretty = false;
     }
+
+    if (opal_cmd_line_is_taken(opal_info_cmd_line, "selected-only")) {
+        /* register only selected components */
+        opal_info_register_flags = MCA_BASE_REGISTER_DEFAULT;
+    }
     
     return OPAL_SUCCESS;
 }
@@ -223,7 +232,7 @@ static int info_register_framework (mca_base_framework_t *framework, opal_pointe
     opal_info_component_map_t *map;
     int rc;
 
-    rc = mca_base_framework_register(framework, MCA_BASE_REGISTER_ALL);
+    rc = mca_base_framework_register(framework, opal_info_register_flags);
     if (OPAL_SUCCESS != rc && OPAL_ERR_BAD_PARAM != rc) {
         return rc;
     }
@@ -440,6 +449,9 @@ void opal_info_do_params(bool want_all_in, bool want_internal,
             free(usage);
             exit(1);
         }
+    } else if (want_all_in) {
+        /* if not specified default to level 9 if all components are requested */
+        max_level = OPAL_INFO_LVL_9;
     }
 
     if (want_all_in) {
@@ -520,14 +532,47 @@ void opal_info_err_params(opal_pointer_array_t *component_map)
 
 static void opal_info_show_mca_group_params(const mca_base_var_group_t *group, mca_base_var_info_lvl_t max_level, bool want_internal)
 {
+    const int *variables, *groups;
+    const mca_base_pvar_t *pvar;
+    const char *group_component;
     const mca_base_var_t *var;
-    const int *variables;
+    char **strings, *message;
+    bool requested = true;
     int ret, i, j, count;
-    const int *groups;
-    char **strings;
 
     variables = OPAL_VALUE_ARRAY_GET_BASE(&group->group_vars, const int);
     count = opal_value_array_get_size((opal_value_array_t *)&group->group_vars);
+
+    /* the default component name is "base". depending on how the
+     * group was registered the group may or not have this set.  */
+    group_component = group->group_component ? group->group_component : "base";
+
+    /* check if this group may be disabled due to a selection variable */
+    if (0 != strcmp (group_component, "base")) {
+        int var_id;
+
+        /* read the selection parameter */
+        var_id = mca_base_var_find (group->group_project, group->group_framework, NULL, NULL);
+        if (0 <= var_id) {
+            const mca_base_var_storage_t *value;
+            char **requested_components;
+            bool include_mode;
+
+            mca_base_var_get_value (var_id, &value, NULL, NULL);
+            if (NULL != value->stringval && '\0' != value->stringval[0]) {
+                mca_base_component_parse_requested (value->stringval, &include_mode, &requested_components);
+
+                for (i = 0, requested = !include_mode ; requested_components[i] ; ++i) {
+                    if (0 == strcmp (requested_components[i], group->group_component)) {
+                        requested = include_mode;
+                        break;
+                    }
+                }
+
+                opal_argv_free (requested_components);
+            }
+        }
+    }
 
     for (i = 0 ; i < count ; ++i) {
         ret = mca_base_var_get(variables[i], &var);
@@ -544,15 +589,21 @@ static void opal_info_show_mca_group_params(const mca_base_var_group_t *group, m
 
         for (j = 0 ; strings[j] ; ++j) {
             if (0 == j && opal_info_pretty) {
-                char *message;
-
-                asprintf (&message, "MCA %s", group->group_framework);
+                asprintf (&message, "MCA%s %s", requested ? "" : " (disabled)", group->group_framework);
                 opal_info_out(message, message, strings[j]);
                 free(message);
             } else {
                 opal_info_out("", "", strings[j]);
             }
             free(strings[j]);
+        }
+        if (!opal_info_pretty) {
+            /* generate an entry indicating whether this variable is disabled or not. if the
+             * format in mca_base_var/pvar.c changes this needs to be changed as well */
+            asprintf (&message, "mca:%s:%s:param:%s:disabled:%s", group->group_framework,
+                      group_component, var->mbv_full_name, requested ? "false" : "true");
+            opal_info_out("", "", message);
+            free (message);
         }
         free(strings);
     }
@@ -561,6 +612,11 @@ static void opal_info_show_mca_group_params(const mca_base_var_group_t *group, m
     count = opal_value_array_get_size((opal_value_array_t *)&group->group_pvars);
 
     for (i = 0 ; i < count ; ++i) {
+        ret = mca_base_pvar_get(variables[i], &pvar);
+        if (OPAL_SUCCESS != ret || max_level < pvar->verbosity) {
+            continue;
+        }
+
         ret = mca_base_pvar_dump (variables[i], &strings, !opal_info_pretty ? MCA_BASE_VAR_DUMP_PARSABLE : MCA_BASE_VAR_DUMP_READABLE);
         if (OPAL_SUCCESS != ret) {
             continue;
@@ -568,15 +624,21 @@ static void opal_info_show_mca_group_params(const mca_base_var_group_t *group, m
 
         for (j = 0 ; strings[j] ; ++j) {
             if (0 == j && opal_info_pretty) {
-                char *message;
-
-                asprintf (&message, "MCA %s", group->group_framework);
+                asprintf (&message, "MCA%s %s", requested ? "" : " (disabled)", group->group_framework);
                 opal_info_out(message, message, strings[j]);
                 free(message);
             } else {
                 opal_info_out("", "", strings[j]);
             }
             free(strings[j]);
+        }
+        if (!opal_info_pretty) {
+            /* generate an entry indicating whether this variable is disabled or not. if the
+             * format in mca_base_var/pvar.c changes this needs to be changed as well */
+            asprintf (&message, "mca:%s:%s:pvar:%s:disabled:%s", group->group_framework,
+                      group_component, pvar->name, requested ? "false" : "true");
+            opal_info_out("", "", message);
+            free (message);
         }
         free(strings);      
     }
