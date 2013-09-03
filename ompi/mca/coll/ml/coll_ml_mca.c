@@ -1,6 +1,9 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2009-2012 Oak Ridge National Laboratory.  All rights reserved.
  * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
+ * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -39,6 +42,15 @@ enum {
 enum {
     REGSTR_EMPTY_OK = 0x01,
     REGSTR_MAX = 0x88
+};
+
+/*
+ * Enumerators
+ */
+mca_base_var_enum_value_t fragmentation_enable_enum[] = {
+    {0, "disable"},
+    {1, "enable"},
+    {2, "auto"}
 };
 
 /*
@@ -172,6 +184,7 @@ static int mca_coll_ml_verify_params(void)
 
 int mca_coll_ml_register_params(void)
 {
+    mca_base_var_enum_t *new_enum;
     int ret, tmp;
     char *str = NULL;
 
@@ -241,9 +254,21 @@ int mca_coll_ml_register_params(void)
                   "Alltoall disabling",
                    false, &mca_coll_ml_component.disable_alltoall));
 
-    CHECK(reg_bool("enable_fragmentation", NULL,
-                   "Disable/Enable fragmentation for large messages",
-                   false, &mca_coll_ml_component.enable_fragmentation));
+    tmp = mca_base_var_enum_create ("coll_ml_enable_fragmentation_enum", fragmentation_enable_enum, &new_enum);
+    if (OPAL_SUCCESS != ret) {
+	return tmp;
+    }
+
+    /* default to auto-enable fragmentation */
+    mca_coll_ml_component.enable_fragmentation = 2;
+    tmp = mca_base_component_var_register (&mca_coll_ml_component.super.collm_version, "enable_fragmentation",
+					   "Disable/Enable fragmentation for large messages", MCA_BASE_VAR_TYPE_INT,
+					   new_enum, 0, 0, OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
+					   &mca_coll_ml_component.enable_fragmentation);
+    if (0 > tmp) {
+        ret = tmp;
+    }
+    OBJ_RELEASE(new_enum);
 
     CHECK(reg_int("use_brucks_smsg_alltoall", NULL,
                 "Use Bruck's Algo for Small Msg Alltoall"
