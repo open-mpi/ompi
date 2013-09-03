@@ -69,6 +69,7 @@ static int mindist_map(orte_job_t *jdata)
     mca_base_component_t *c = &mca_rmaps_mindist_component.base_version;
     bool initial_map=true;
     bool bynode = false;
+    int ret;
 
     /* this mapper can only handle initial launch
      * when mindist mapping is desired
@@ -243,7 +244,18 @@ static int mindist_map(orte_job_t *jdata)
              * so we call opal_hwloc_base_get_nbobjs_by_type */
             opal_hwloc_base_get_nbobjs_by_type(node->topology, HWLOC_OBJ_NODE, 0, OPAL_HWLOC_AVAILABLE);
             OBJ_CONSTRUCT(&numa_list, opal_list_t);
-            opal_hwloc_get_sorted_numa_list(node->topology, orte_rmaps_base.device, &numa_list);
+            ret = opal_hwloc_get_sorted_numa_list(node->topology, orte_rmaps_base.device, &numa_list);
+            if (ret > 1) {
+                orte_show_help("help-orte-rmaps-md.txt", "orte-rmaps-mindist:several-hca-devices",
+                        true, ret, node->name);
+                rc = ORTE_ERR_SILENT;
+                goto error;
+            } else if (ret < 0) {
+                orte_show_help("help-orte-rmaps-md.txt", "orte-rmaps-mindist:device-not-found",
+                        true, orte_rmaps_base.device, node->name);
+                rc = ORTE_ERR_SILENT;
+                goto error;
+            }
             if (opal_list_get_size(&numa_list) > 0) {
                 j = 0;
                 required = 0;
@@ -388,7 +400,7 @@ static int mindist_map(orte_job_t *jdata)
         }
         OBJ_DESTRUCT(&node_list);
     }
-
+    free(orte_rmaps_base.device);
     return ORTE_SUCCESS;
 
 error:
