@@ -124,16 +124,16 @@ static int orte_rmaps_lama_register(void)
 
     opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                         "mca:rmaps:lama: Map   : %s",
-                        rmaps_lama_cmd_map);
+                        (NULL == rmaps_lama_cmd_map) ? "NULL" : rmaps_lama_cmd_map);
     opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                         "mca:rmaps:lama: Bind  : %s",
-                        rmaps_lama_cmd_bind);
+                        (NULL == rmaps_lama_cmd_bind) ? "NULL" : rmaps_lama_cmd_bind);
     opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                         "mca:rmaps:lama: MPPR  : %s",
-                        rmaps_lama_cmd_mppr);
+                        (NULL == rmaps_lama_cmd_mppr) ? "NULL" : rmaps_lama_cmd_mppr);
     opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                         "mca:rmaps:lama: Order : %s",
-                        rmaps_lama_cmd_ordering);
+                        (NULL == rmaps_lama_cmd_ordering) ? "NULL" : rmaps_lama_cmd_ordering);
 
     return ORTE_SUCCESS;
 }
