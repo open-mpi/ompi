@@ -116,7 +116,7 @@ mca_pml_cm_add_procs(struct ompi_proc_t** procs, size_t nprocs)
     struct mca_mtl_base_endpoint_t **endpoints;
 
 #if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
-    for (i = 0 ; i < nprocs ; ++i) {
+    for (size_t i = 0 ; i < nprocs ; ++i) {
         if (procs[i]->proc_arch != ompi_proc_local()->proc_arch) {
             return OMPI_ERR_NOT_SUPPORTED;
         }

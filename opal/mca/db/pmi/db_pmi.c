@@ -580,13 +580,19 @@ static int setup_pmi(void)
 #else
     rc = PMI_KVS_Get_value_length_max(&pmi_vallen_max);
     if (PMI_SUCCESS != rc) {
-        OPAL_PMI_ERROR(rc, "PMI_Get_value_length_max");
+        OPAL_OUTPUT_VERBOSE((1, opal_db_base_framework.framework_output,
+                             "db:pmi:pmi_setup failed %s with error %s",
+                             "PMI_Get_value_length_max",
+                             opal_errmgr_base_pmi_error(rc)));
         return OPAL_ERROR;
     }
 #endif
 
     if (PMI_SUCCESS != (rc = PMI_KVS_Get_name_length_max(&max_length))) {
-        OPAL_PMI_ERROR(rc, "PMI_KVS_Get_name_length_max");
+        OPAL_OUTPUT_VERBOSE((1, opal_db_base_framework.framework_output,
+                             "db:pmi:pmi_setup failed %s with error %s",
+                             "PMI_KVS_Get_name_length_max",
+                             opal_errmgr_base_pmi_error(rc)));
         return OPAL_ERROR;
     }
     pmi_kvs_name = (char*)malloc(max_length);
@@ -600,7 +606,10 @@ static int setup_pmi(void)
     rc = PMI_KVS_Get_my_name(pmi_kvs_name,max_length);
 #endif
     if (PMI_SUCCESS != rc) {
-        OPAL_PMI_ERROR(rc, "PMI_KVS_Get_my_name");
+        OPAL_OUTPUT_VERBOSE((1, opal_db_base_framework.framework_output,
+                             "db:pmi:pmi_setup failed %s with error %s",
+                             "PMI_KVS_Get_my_name",
+                             opal_errmgr_base_pmi_error(rc)));
         return OPAL_ERROR;
     }
 
@@ -608,7 +617,10 @@ static int setup_pmi(void)
     pmi_keylen_max = PMI2_MAX_KEYLEN;
 #else
     if (PMI_SUCCESS != (rc = PMI_KVS_Get_key_length_max(&pmi_keylen_max))) {
-        OPAL_PMI_ERROR(rc, "PMI_KVS_Get_key_length_max");
+        OPAL_OUTPUT_VERBOSE((1, opal_db_base_framework.framework_output,
+                             "db:pmi:pmi_setup failed %s with error %s",
+                             "PMI_KVS_Get_key_length_max",
+                             opal_errmgr_base_pmi_error(rc)));
         return OPAL_ERROR;
     }
 #endif
