@@ -333,15 +333,14 @@ void ompi_mpi_thread_level(int requested, int *provided)
 
     if (OMPI_ENABLE_THREAD_MULTIPLE == 1) {
         ompi_mpi_thread_provided = *provided = requested;
-        ompi_mpi_main_thread = opal_thread_get_self();
     } else {
         if (MPI_THREAD_MULTIPLE == requested) {
             ompi_mpi_thread_provided = *provided = MPI_THREAD_SERIALIZED;
         } else {
             ompi_mpi_thread_provided = *provided = requested;
         }
-        ompi_mpi_main_thread = (OPAL_ENABLE_MULTI_THREADS ? opal_thread_get_self() : NULL);
     }
+    ompi_mpi_main_thread = opal_thread_get_self();
 
     ompi_mpi_thread_multiple = (ompi_mpi_thread_provided == 
                                 MPI_THREAD_MULTIPLE);
