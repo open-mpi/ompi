@@ -379,18 +379,16 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     ompi_mpi_thread_requested = requested;
     if (OPAL_HAVE_THREAD_SUPPORT == 0) {
         ompi_mpi_thread_provided = *provided = MPI_THREAD_SINGLE;
-        ompi_mpi_main_thread = NULL;
     } else if (OMPI_ENABLE_THREAD_MULTIPLE == 1) {
         ompi_mpi_thread_provided = *provided = requested;
-        ompi_mpi_main_thread = opal_thread_get_self();
     } else {
         if (MPI_THREAD_MULTIPLE == requested) {
             ompi_mpi_thread_provided = *provided = MPI_THREAD_SERIALIZED;
         } else {
             ompi_mpi_thread_provided = *provided = requested;
         }
-        ompi_mpi_main_thread = opal_thread_get_self();
     }
+    ompi_mpi_main_thread = opal_thread_get_self();
 
     ompi_mpi_thread_multiple = (ompi_mpi_thread_provided == 
                                 MPI_THREAD_MULTIPLE);
