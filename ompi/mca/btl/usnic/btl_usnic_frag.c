@@ -178,12 +178,11 @@ small_send_frag_constructor(ompi_btl_usnic_small_send_frag_t *frag)
 {
     ompi_btl_usnic_frag_segment_t *fseg;
 
-    send_frag_constructor(&frag->ssf_base);
-
     /* construct the embedded segment */
     fseg = &frag->ssf_segment;
+    /* us_list.ptr is "input" to the constructor, must come before ctor */
     fseg->ss_base.us_list.ptr = frag->ssf_base.sf_base.uf_base.super.ptr;
-    frag_seg_constructor(fseg);
+    OBJ_CONSTRUCT(fseg, ompi_btl_usnic_frag_segment_t);
 
     /* set us as parent in dedicated frag */
     fseg->ss_parent_frag = (struct ompi_btl_usnic_send_frag_t *)frag;
@@ -196,10 +195,19 @@ small_send_frag_constructor(ompi_btl_usnic_small_send_frag_t *frag)
 }
 
 static void
+small_send_frag_destructor(ompi_btl_usnic_small_send_frag_t *frag)
+{
+    ompi_btl_usnic_frag_segment_t *fseg;
+
+    fseg = &frag->ssf_segment;
+    assert(fseg->ss_parent_frag == (struct ompi_btl_usnic_send_frag_t *)frag);
+    assert(frag->ssf_base.sf_base.uf_type == OMPI_BTL_USNIC_FRAG_SMALL_SEND);
+    OBJ_DESTRUCT(fseg);
+}
+
+static void
 large_send_frag_constructor(ompi_btl_usnic_large_send_frag_t *lfrag)
 {
-    send_frag_constructor(&lfrag->lsf_base);
-
     lfrag->lsf_base.sf_base.uf_type = OMPI_BTL_USNIC_FRAG_LARGE_SEND;
 
     /* save data pointer for PML */
@@ -252,7 +260,7 @@ OBJ_CLASS_INSTANCE(ompi_btl_usnic_frag_t,
 
 OBJ_CLASS_INSTANCE(ompi_btl_usnic_send_frag_t,
                    ompi_btl_usnic_frag_t,
-                   NULL,
+                   send_frag_constructor,
                    NULL);
 
 OBJ_CLASS_INSTANCE(ompi_btl_usnic_large_send_frag_t,
@@ -263,7 +271,7 @@ OBJ_CLASS_INSTANCE(ompi_btl_usnic_large_send_frag_t,
 OBJ_CLASS_INSTANCE(ompi_btl_usnic_small_send_frag_t,
                    ompi_btl_usnic_send_frag_t,
                    small_send_frag_constructor,
-                   NULL);
+                   small_send_frag_destructor);
 
 OBJ_CLASS_INSTANCE(ompi_btl_usnic_put_dest_frag_t,
                    ompi_btl_usnic_frag_t,
