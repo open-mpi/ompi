@@ -1347,6 +1347,17 @@ int orte_plm_base_setup_virtual_machine(orte_job_t *jdata)
                     ORTE_ERROR_LOG(rc);
                     return rc;
                 }
+            } else if (NULL != orte_rankfile) {
+                /* use the rankfile, if provided */
+                OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
+                                     "%s using rankfile %s",
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                     orte_rankfile));
+                if (ORTE_SUCCESS != (rc = orte_util_add_hostfile_nodes(&tnodes,
+                                                                       orte_rankfile))) {
+                    ORTE_ERROR_LOG(rc);
+                    return rc;
+                }
             } else if (NULL != orte_default_hostfile) {
                 if (!default_hostfile_used) {
                     /* fall back to the default hostfile, if provided */
