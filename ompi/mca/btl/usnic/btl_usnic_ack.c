@@ -45,7 +45,7 @@ ompi_btl_usnic_force_retrans(
     opal_hotel_checkout(&endpoint->endpoint_hotel, sseg->ss_hotel_room);
     sseg->ss_hotel_room = -1;
 
-    /* Queue up this frag to be resent */
+    /* Queue up this segment to be resent */
     opal_list_append(&(endpoint->endpoint_module->pending_resend_segs),
                      &(sseg->ss_base.us_list.super));
 
