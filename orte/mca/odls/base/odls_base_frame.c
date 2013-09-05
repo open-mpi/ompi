@@ -59,7 +59,7 @@
 /*
  * Instantiate globals
  */
-orte_odls_base_module_t orte_odls;
+orte_odls_base_module_t orte_odls = {0};
 
 /*
  * Framework global variables
