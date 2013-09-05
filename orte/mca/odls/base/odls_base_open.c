@@ -73,7 +73,7 @@ int orte_odls_base_open(void)
 /*
  * Instantiate globals
  */
-orte_odls_base_module_t orte_odls;
+orte_odls_base_module_t orte_odls = {0};
 
 /* instance the child list object */
 static void orte_odls_child_constructor(orte_odls_child_t *ptr)
