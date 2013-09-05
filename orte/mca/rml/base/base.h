@@ -131,6 +131,14 @@ typedef struct {
 } orte_rml_send_t;
 OBJ_CLASS_DECLARATION(orte_rml_send_t);
 
+/* define an object for transferring send requests to the event lib */
+typedef struct {
+    opal_object_t super;
+    opal_event_t ev;
+    orte_rml_send_t post;
+} orte_rml_send_request_t;
+OBJ_CLASS_DECLARATION(orte_rml_send_request_t);
+
 /* structure to recv RML messages - used internally */
 typedef struct {
     opal_list_item_t super;

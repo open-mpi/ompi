@@ -246,6 +246,14 @@ OBJ_CLASS_INSTANCE(orte_rml_send_t,
                    opal_list_item_t,
                    send_cons, NULL);
 
+static void send_req_cons(orte_rml_send_request_t *ptr)
+{
+    OBJ_CONSTRUCT(&ptr->post, orte_rml_send_t);
+}
+OBJ_CLASS_INSTANCE(orte_rml_send_request_t,
+                   opal_object_t,
+                   send_req_cons, NULL);
+
 static void recv_cons(orte_rml_recv_t *ptr)
 {
     ptr->iov.iov_base = NULL;
