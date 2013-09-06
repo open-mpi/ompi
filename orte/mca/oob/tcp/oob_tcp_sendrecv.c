@@ -13,6 +13,7 @@
  *                         All rights reserved.
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
+ * Copyright (c) 2013      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -202,19 +203,19 @@ void mca_oob_tcp_send_handler(int sd, short flags, void *cbdata)
                     if (NULL != msg->data || NULL == msg->msg) {
                         /* the relay is complete - release the data */
                         opal_output_verbose(2, orte_oob_base_framework.framework_output,
-                                            "%s MESSAGE RELAY COMPLETE TO %s OF %d BYTES",
+                                            "%s MESSAGE RELAY COMPLETE TO %s OF %d BYTES ON SOCKET %d",
                                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                             ORTE_NAME_PRINT(&(peer->name)),
-                                            (int)ntohl(msg->hdr.nbytes));
+                                            (int)ntohl(msg->hdr.nbytes), peer->sd);
                         OBJ_RELEASE(msg);
                         peer->send_msg = NULL;
                     } else if (NULL != msg->msg->buffer) {
                         /* we are done - notify the RML */
                         opal_output_verbose(2, orte_oob_base_framework.framework_output,
-                                            "%s MESSAGE SEND COMPLETE TO %s OF %d BYTES",
+                                            "%s MESSAGE SEND COMPLETE TO %s OF %d BYTES ON SOCKET %d",
                                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                             ORTE_NAME_PRINT(&(peer->name)),
-                                            (int)ntohl(msg->hdr.nbytes));
+                                            (int)ntohl(msg->hdr.nbytes), peer->sd);
                         msg->msg->status = ORTE_SUCCESS;
                         ORTE_RML_SEND_COMPLETE(msg->msg);
                         OBJ_RELEASE(msg);
@@ -233,10 +234,10 @@ void mca_oob_tcp_send_handler(int sd, short flags, void *cbdata)
                         } else {
                             /* this message is complete - notify the RML */
                             opal_output_verbose(2, orte_oob_base_framework.framework_output,
-                                                "%s MESSAGE SEND COMPLETE TO %s OF %d BYTES",
+                                                "%s MESSAGE SEND COMPLETE TO %s OF %d BYTES ON SOCKET %d",
                                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                                 ORTE_NAME_PRINT(&(peer->name)),
-                                                (int)ntohl(msg->hdr.nbytes));
+                                                (int)ntohl(msg->hdr.nbytes), peer->sd);
                             msg->msg->status = ORTE_SUCCESS;
                             ORTE_RML_SEND_COMPLETE(msg->msg);
                             OBJ_RELEASE(msg);
@@ -250,9 +251,9 @@ void mca_oob_tcp_send_handler(int sd, short flags, void *cbdata)
                     return;
                 } else {
                     // report the error
-                    opal_output(0, "%s-%s mca_oob_tcp_peer_send_handler: unable to send message",
+                    opal_output(0, "%s-%s mca_oob_tcp_peer_send_handler: unable to send message ON SOCKET %d",
                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                ORTE_NAME_PRINT(&(peer->name)));
+                                ORTE_NAME_PRINT(&(peer->name)), peer->sd);
                     opal_event_del(&peer->send_event);
                     msg->msg->status = rc;
                     ORTE_RML_SEND_COMPLETE(msg->msg);
@@ -281,10 +282,10 @@ void mca_oob_tcp_send_handler(int sd, short flags, void *cbdata)
         }
         break;
     default:
-        opal_output(0, "%s-%s mca_oob_tcp_peer_send_handler: invalid connection state (%d)",
+        opal_output(0, "%s-%s mca_oob_tcp_peer_send_handler: invalid connection state (%d) on socket %d",
                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                     ORTE_NAME_PRINT(&(peer->name)),
-                    peer->state);
+                    peer->state, peer->sd);
         if (peer->send_ev_active) {
             opal_event_del(&peer->send_event);
             peer->send_ev_active = false;
@@ -436,6 +437,9 @@ void mca_oob_tcp_recv_handler(int sd, short flags, void *cbdata)
                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
         /* allocate a new message and setup for recv */
         if (NULL == peer->recv_msg) {
+            opal_output_verbose(OOB_TCP_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
+                                "%s:tcp:recv:handler allocate new recv msg",
+                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
             peer->recv_msg = OBJ_NEW(mca_oob_tcp_recv_t);
             if (NULL == peer->recv_msg) {
                 opal_output(0, "%s-%s mca_oob_tcp_peer_recv_handler: unable to allocate recv message\n",
@@ -449,6 +453,9 @@ void mca_oob_tcp_recv_handler(int sd, short flags, void *cbdata)
         }
         /* if the header hasn't been completely read, read it */
         if (!peer->recv_msg->hdr_recvd) {
+            opal_output_verbose(OOB_TCP_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
+                                "%s:tcp:recv:handler read hdr",
+                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
             if (ORTE_SUCCESS == (rc = read_bytes(peer))) {
                 /* completed reading the header */
                 peer->recv_msg->hdr_recvd = true;
@@ -462,6 +469,9 @@ void mca_oob_tcp_recv_handler(int sd, short flags, void *cbdata)
                                         ORTE_NAME_PRINT(&peer->name), peer->recv_msg->hdr.tag);
                     peer->recv_msg->data = NULL;  // make sure
                 } else {
+                    opal_output_verbose(OOB_TCP_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
+                                        "%s:tcp:recv:handler allocate data region",
+                                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
                     /* allocate the data region */
                     peer->recv_msg->data = (char*)malloc(peer->recv_msg->hdr.nbytes);
                     /* point to it */
@@ -475,6 +485,9 @@ void mca_oob_tcp_recv_handler(int sd, short flags, void *cbdata)
                 return;
             } else {
                 /* close the connection */
+                opal_output_verbose(OOB_TCP_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
+                                    "%s:tcp:recv:handler error reading bytes - closing connection",
+                                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
                 mca_oob_tcp_peer_close(mod, peer);
                 return;
             }

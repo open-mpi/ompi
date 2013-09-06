@@ -13,6 +13,7 @@
  *                         All rights reserved.
  * Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
+ * Copyright (c) 2013      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -768,7 +769,7 @@ static void connection_handler(int sd, short flags, void* cbdata)
                         opal_net_get_hostname((struct sockaddr*) &new_connection->addr),
                         opal_net_get_port((struct sockaddr*) &new_connection->addr));
 
-    /* cycle across all interfaces untile we find the one that
+    /* cycle across all interfaces until we find the one that
      * "owns" this connection - i.e., it is handling the
      * incoming address space
      */

@@ -104,7 +104,8 @@ typedef enum {
     MCA_OOB_TCP_CONNECTING,
     MCA_OOB_TCP_CONNECT_ACK,
     MCA_OOB_TCP_CONNECTED,
-    MCA_OOB_TCP_FAILED
+    MCA_OOB_TCP_FAILED,
+    MCA_OOB_TCP_ACCEPTING
 } mca_oob_tcp_state_t;
 
 /* module-level shared functions */

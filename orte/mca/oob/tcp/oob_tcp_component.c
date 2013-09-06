@@ -13,6 +13,7 @@
  *                         All rights reserved.
  * Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
+ * Copyright (c) 2013      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -1129,6 +1130,9 @@ void mca_oob_tcp_component_no_route(int fd, short args, void *cbdata)
         ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
         goto cleanup;
     }
+    
+    /* ensure we mark that this peer isn't reachable by this module */
+    opal_bitmap_clear_bit(&pr->reachable, mop->mod->if_kidx);
 
     /* do we have any other modules (i.e., NICs) we can try? */
     for (k=0; k < mca_oob_tcp_component.modules.size; k++) {
@@ -1187,6 +1191,9 @@ void mca_oob_tcp_component_hop_unknown(int fd, short args, void *cbdata)
         ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
         goto cleanup;
     }
+    
+    /* ensure we mark that this peer isn't reachable by this module */
+    opal_bitmap_clear_bit(&pr->reachable, mop->mod->if_kidx);
 
     /* do we have any other modules (i.e., NICs) we can try? */
     for (k=0; k < mca_oob_tcp_component.modules.size; k++) {

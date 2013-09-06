@@ -13,6 +13,7 @@
  *                         All rights reserved.
  * Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
+ * Copyright (c) 2013      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -616,10 +617,70 @@ static void recv_connect(mca_oob_tcp_module_t *mod,
     }
 
     opal_output_verbose(OOB_TCP_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
-                        "%s mca_oob_tcp_recv_handler: processing connection from %s",
+                        "%s mca_oob_tcp_recv_connect: processing connection from %s for socket %d",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                        ORTE_NAME_PRINT(&hdr->origin));
+                        ORTE_NAME_PRINT(&hdr->origin), sd);
 
+    /* lookup the corresponding process */
+    peer = mca_oob_tcp_peer_lookup(mod, &hdr->origin);
+    if (NULL == peer) {
+        ui64 = (uint64_t*)(&peer->name);
+        opal_output_verbose(OOB_TCP_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
+                            "%s mca_oob_tcp_recv_connect: connection from new peer",
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+        peer = OBJ_NEW(mca_oob_tcp_peer_t);
+        peer->mod = mod;
+        peer->name = hdr->origin;
+        peer->state = MCA_OOB_TCP_ACCEPTING;
+        ui64 = (uint64_t*)(&peer->name);
+        if (OPAL_SUCCESS != opal_hash_table_set_value_uint64(&mod->peers, (*ui64), peer)) {
+            OBJ_RELEASE(peer);
+            return;
+        }
+    } else {
+        /* check for a race condition - if I was in the process of
+         * creating a connection to the peer, or have already established
+         * such a connection, then we need to reject this connection. We will
+         * let the higher ranked process retry - if I'm the lower ranked
+         * process, I'll simply defer until I receive the request
+         */
+        if (MCA_OOB_TCP_CONNECTED == peer->state ||
+            MCA_OOB_TCP_CONNECTING == peer->state ||
+            MCA_OOB_TCP_CONNECT_ACK == peer->state) {
+            opal_output_verbose(OOB_TCP_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
+                                "%s SIMUL CONNECTION WITH %s",
+                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                ORTE_NAME_PRINT(&hdr->origin));
+            if (peer->recv_ev_active) {
+                opal_event_del(&peer->recv_event);
+                peer->recv_ev_active = false;
+            }
+            if (peer->send_ev_active) {
+                opal_event_del(&peer->send_event);
+                peer->send_ev_active = false;
+            }
+            if (0 < peer->sd) {
+                CLOSE_THE_SOCKET(peer->sd);
+                peer->sd = -1;
+            }
+            CLOSE_THE_SOCKET(sd);
+            if (NULL != peer->active_addr) {
+                peer->active_addr->retries = 0;
+            }
+            cmpval = orte_util_compare_name_fields(ORTE_NS_CMP_ALL, &hdr->origin, ORTE_PROC_MY_NAME);
+            if (OPAL_VALUE1_GREATER == cmpval) {
+                /* force the other end to retry the connection */
+                peer->state = MCA_OOB_TCP_UNCONNECTED;
+                return;
+            } else {
+                /* retry the connection */
+                peer->state = MCA_OOB_TCP_CONNECTING;
+                ORTE_ACTIVATE_TCP_CONN_STATE(mod, peer, mca_oob_tcp_peer_try_connect);
+                return;
+            }
+        }
+    }
+    
     /* set socket up to be non-blocking */
     if ((flags = fcntl(sd, F_GETFL, 0)) < 0) {
         opal_output(0, "%s mca_oob_tcp_recv_connect: fcntl(F_GETFL) failed: %s (%d)",
@@ -632,27 +693,11 @@ static void recv_connect(mca_oob_tcp_module_t *mod,
         }
     }
 
-    /* lookup the corresponding process */
-    peer = mca_oob_tcp_peer_lookup(mod, &hdr->origin);
-    if (NULL == peer) {
-        ui64 = (uint64_t*)(&peer->name);
-        opal_output_verbose(OOB_TCP_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
-                            "%s mca_oob_tcp_recv_handler: connection from new peer",
-                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
-        peer = OBJ_NEW(mca_oob_tcp_peer_t);
-        peer->mod = mod;
-        peer->name = hdr->origin;
-        ui64 = (uint64_t*)(&peer->name);
-        if (OPAL_SUCCESS != opal_hash_table_set_value_uint64(&mod->peers, (*ui64), peer)) {
-            OBJ_RELEASE(peer);
-            return;
-        }
-    }
     /* is the peer instance willing to accept this connection */
     peer->sd = sd;
     if (mca_oob_tcp_peer_accept(mod, peer) == false) {
         if (OOB_TCP_DEBUG_CONNECT <= opal_output_get_verbosity(orte_oob_base_framework.framework_output)) {
-            opal_output(0, "%s-%s mca_oob_tcp_recv_handler: "
+            opal_output(0, "%s-%s mca_oob_tcp_recv_connect: "
                         "rejected connection from %s connection state %d",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                         ORTE_NAME_PRINT(&(peer->name)),
