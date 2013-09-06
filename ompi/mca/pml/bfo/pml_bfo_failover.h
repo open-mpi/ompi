@@ -334,7 +334,7 @@ extern void mca_pml_bfo_recv_frag_callback_recverrnotify( mca_btl_base_module_t 
 #define MCA_PML_BFO_CHECK_EAGER_BML_BTL_ON_FIN_COMPLETION(bml_btl, btl, des)               \
     if (bml_btl->btl != btl) {                                                             \
         ompi_proc_t *proc = (ompi_proc_t*) des->des_cbdata;                                \
-        mca_bml_base_endpoint_t* bml_endpoint = (mca_bml_base_endpoint_t*) proc->proc_bml; \
+        mca_bml_base_endpoint_t* bml_endpoint = (mca_bml_base_endpoint_t*) proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML]; \
         bml_btl = mca_bml_base_btl_array_find(&bml_endpoint->btl_eager, btl);              \
     }                  
 #define MCA_PML_BFO_CHECK_SENDREQ_EAGER_BML_BTL(bml_btl, btl, sendreq, type)   \

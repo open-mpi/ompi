@@ -205,13 +205,11 @@ extern int ompi_mtl_portals4_finalize(struct mca_mtl_base_module_t *mtl);
 
 extern int ompi_mtl_portals4_add_procs(struct mca_mtl_base_module_t* mtl, 
                                        size_t nprocs,
-                                       struct ompi_proc_t** procs, 
-                                       struct mca_mtl_base_endpoint_t **mtl_peer_data);
+                                       struct ompi_proc_t** procs);
 
 extern int ompi_mtl_portals4_del_procs(struct mca_mtl_base_module_t* mtl, 
                                        size_t nprocs,
-                                       struct ompi_proc_t** procs, 
-                                       struct mca_mtl_base_endpoint_t **mtl_peer_data);
+                                       struct ompi_proc_t** procs);
 
 extern int ompi_mtl_portals4_send(struct mca_mtl_base_module_t* mtl,
                                   struct ompi_communicator_t* comm,

@@ -27,7 +27,6 @@
 #include "ompi/runtime/ompi_module_exchange.h"
 
 #include "mtl_portals4.h"
-#include "mtl_portals4_endpoint.h"
 #include "mtl_portals4_recv_short.h"
 
 extern mca_mtl_base_component_2_0_0_t mca_mtl_portals4_component;
@@ -60,15 +59,14 @@ mca_mtl_portals4_module_t ompi_mtl_portals4 = {
 int
 ompi_mtl_portals4_add_procs(struct mca_mtl_base_module_t *mtl,
                             size_t nprocs,
-                            struct ompi_proc_t** procs, 
-                            struct mca_mtl_base_endpoint_t **mtl_peer_data)
+                            struct ompi_proc_t** procs)
 {
     int ret, me;
     size_t i;
 
     /* Get the list of ptl_process_id_t from the runtime and copy into structure */
     for (i = 0 ; i < nprocs ; ++i) {
-        ptl_process_t *id;
+        ptl_process_t *modex_id;
         size_t size;
 
         if( procs[i] == ompi_proc_local_proc ) {
@@ -85,16 +83,8 @@ ompi_mtl_portals4_add_procs(struct mca_mtl_base_module_t *mtl,
             return OMPI_ERR_NOT_SUPPORTED;
         }
 
-        mtl_peer_data[i] = malloc(sizeof(struct mca_mtl_base_endpoint_t));
-        if (NULL == mtl_peer_data[i]) {
-            opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
-                                "%s:%d: malloc failed: %d\n",
-                                __FILE__, __LINE__, ret);
-            return OMPI_ERR_OUT_OF_RESOURCE;
-        }
-
         ret = ompi_modex_recv(&mca_mtl_portals4_component.mtl_version,
-                              procs[i], (void**) &id, &size);
+                              procs[i], (void**) &modex_id, &size);
         if (OMPI_SUCCESS != ret) {
             opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                                 "%s:%d: ompi_modex_recv failed: %d\n",
@@ -106,12 +96,32 @@ ompi_mtl_portals4_add_procs(struct mca_mtl_base_module_t *mtl,
                                 __FILE__, __LINE__, ret);
             return OMPI_ERR_BAD_PARAM;
         }
- 
-        mtl_peer_data[i]->ptl_proc = *id;
+
+        if (NULL == procs[i]->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_PORTALS4]) {
+            ptl_process_t *peer_id;
+            peer_id = malloc(sizeof(ptl_process_t));
+            if (NULL == peer_id) {
+                opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
+                                    "%s:%d: malloc failed: %d\n",
+                                    __FILE__, __LINE__, ret);
+                return OMPI_ERR_OUT_OF_RESOURCE;
+            }
+            *peer_id = *modex_id;
+            procs[i]->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_PORTALS4] = peer_id;
+        } else {
+            ptl_process_t *proc = (ptl_process_t*) procs[i]->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_PORTALS4];
+            if (proc->phys.nid != modex_id->phys.nid ||
+                proc->phys.pid != modex_id->phys.pid) {
+                opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
+                                    "%s:%d: existing peer and modex peer don't match\n",
+                                    __FILE__, __LINE__);
+                return OMPI_ERROR;
+            }
+        }
     }
 
 #if OMPI_MTL_PORTALS4_FLOW_CONTROL
-    ret = ompi_mtl_portals4_flowctl_add_procs(me, nprocs, mtl_peer_data);
+    ret = ompi_mtl_portals4_flowctl_add_procs(me, nprocs, procs);
     if (OMPI_SUCCESS != ret) {
         opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                             "%s:%d: flowctl_add_procs failed: %d\n",
@@ -127,14 +137,14 @@ ompi_mtl_portals4_add_procs(struct mca_mtl_base_module_t *mtl,
 int
 ompi_mtl_portals4_del_procs(struct mca_mtl_base_module_t *mtl,
                             size_t nprocs,
-                            struct ompi_proc_t** procs, 
-                            struct mca_mtl_base_endpoint_t **mtl_peer_data)
+                            struct ompi_proc_t** procs) 
 {
     size_t i;
 
     for (i = 0 ; i < nprocs ; ++i) {
-        if (NULL != mtl_peer_data[i]) {
-            free(mtl_peer_data[i]);
+        if (NULL != procs[i]->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_PORTALS4]) {
+            free(procs[i]->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_PORTALS4]);
+            procs[i]->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_PORTALS4] = NULL;
         }
     }
 

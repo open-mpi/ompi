@@ -299,17 +299,10 @@ int mca_pml_ob1_add_procs(ompi_proc_t** procs, size_t nprocs)
 {
     opal_bitmap_t reachable;
     int rc;
-    size_t i;
     opal_list_item_t *item;
 
     if(nprocs == 0)
         return OMPI_SUCCESS;
-
-    /* we don't have any endpoint data we need to cache on the
-       ompi_proc_t, so set proc_pml to NULL */
-    for (i = 0 ; i < nprocs ; ++i) {
-        procs[i]->proc_pml = NULL;
-    }
 
     OBJ_CONSTRUCT(&reachable, opal_bitmap_t);
     rc = opal_bitmap_init(&reachable, (int)nprocs);
@@ -445,7 +438,7 @@ int mca_pml_ob1_dump(struct ompi_communicator_t* comm, int verbose)
     /* iterate through all procs on communicator */
     for( i = 0; i < (int)pml_comm->num_procs; i++ ) {
         mca_pml_ob1_comm_proc_t* proc = &pml_comm->procs[i];
-        mca_bml_base_endpoint_t* ep = (mca_bml_base_endpoint_t*)proc->ompi_proc->proc_bml;
+        mca_bml_base_endpoint_t* ep = (mca_bml_base_endpoint_t*)proc->ompi_proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML];
         size_t n;
 
         opal_output(0, "[Rank %d]\n", i);
@@ -539,8 +532,10 @@ void mca_pml_ob1_process_pending_packets(mca_bml_base_btl_t* bml_btl)
                 pckt->bml_btl->btl == bml_btl->btl) {
             send_dst = pckt->bml_btl;
         } else {
+            mca_bml_base_endpoint_t* endpoint = 
+                (mca_bml_base_endpoint_t*) pckt->proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML];
             send_dst = mca_bml_base_btl_array_find(
-                    &pckt->proc->proc_bml->btl_eager, bml_btl->btl);
+                    &endpoint->btl_eager, bml_btl->btl);
         }
         if(NULL == send_dst) {
             OPAL_THREAD_LOCK(&mca_pml_ob1.lock);

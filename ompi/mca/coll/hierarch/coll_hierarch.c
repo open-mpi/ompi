@@ -101,12 +101,8 @@ mca_coll_hierarch_comm_query(struct ompi_communicator_t *comm, int *priority )
 	return NULL;
     }
 
-    /* This module only works with ob1 pml respectively btl's. Opt out
-       of we use cm/mtl's. */
-    if ( strcmp ( mca_pml_base_selected_component.pmlm_version.mca_component_name, "ob1")) {
-	return NULL;
-    }
-
+    /* This module only works when the BTLs are alive.  If they aren't, time to exit. */
+    if (!mca_bml_base_inited()) return NULL;
 
     size = ompi_comm_size(comm);
     if (size < 3) {
@@ -611,6 +607,7 @@ mca_coll_hierarch_checkfor_component ( struct ompi_communicator_t *comm,
     struct mca_bml_base_btl_array_t *bml_btl_array=NULL;
     mca_bml_base_btl_t *bml_btl=NULL;
     mca_btl_base_component_t *btl=NULL;
+    mca_bml_base_endpoint_t *endpoint;
 
     int i, size, rc;
 
@@ -647,11 +644,12 @@ mca_coll_hierarch_checkfor_component ( struct ompi_communicator_t *comm,
             continue;
         }
 	
+        endpoint = (mca_bml_base_endpoint_t*) procs[i]->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML];
         if ( use_rdma ) {
-            bml_btl_array = &(procs[i]->proc_bml->btl_rdma);
+            bml_btl_array = &(endpoint->btl_rdma);
         }
         else {
-            bml_btl_array = &(procs[i]->proc_bml->btl_send);
+            bml_btl_array = &(endpoint->btl_send);
         }
         bml_btl = mca_bml_base_btl_array_get_index ( bml_btl_array, 0 );
         btl = bml_btl->btl->btl_component;

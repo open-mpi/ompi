@@ -43,7 +43,7 @@ ompi_mtl_mx_send(struct mca_mtl_base_module_t* mtl,
     mx_status_t mx_status;
     uint32_t result;
     ompi_proc_t* ompi_proc = ompi_comm_peer_lookup( comm, dest );
-    mca_mtl_mx_endpoint_t* mx_endpoint = (mca_mtl_mx_endpoint_t*) ompi_proc->proc_pml;
+    mca_mtl_mx_endpoint_t* mx_endpoint = (mca_mtl_mx_endpoint_t*) ompi_proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_MTL];
     char* where;
 
     assert(mtl == &ompi_mtl_mx.super);
@@ -139,7 +139,7 @@ ompi_mtl_mx_isend(struct mca_mtl_base_module_t* mtl,
     mca_mtl_mx_request_t * mtl_mx_request = (mca_mtl_mx_request_t*) mtl_request;
     size_t length;
     ompi_proc_t* ompi_proc = ompi_comm_peer_lookup( comm, dest );
-    mca_mtl_mx_endpoint_t* mx_endpoint = (mca_mtl_mx_endpoint_t*) ompi_proc->proc_pml;
+    mca_mtl_mx_endpoint_t* mx_endpoint = (mca_mtl_mx_endpoint_t*) ompi_proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_MTL];
     char* where;
 
     assert(mtl == &ompi_mtl_mx.super);

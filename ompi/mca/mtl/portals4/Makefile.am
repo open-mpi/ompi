@@ -37,7 +37,6 @@ local_sources = \
 	mtl_portals4.h \
 	mtl_portals4_cancel.c \
 	mtl_portals4_component.c \
-	mtl_portals4_endpoint.h \
 	mtl_portals4_message.c \
 	mtl_portals4_message.h \
 	mtl_portals4_probe.c \

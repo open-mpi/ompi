@@ -463,7 +463,7 @@ ompi_osc_rdma_sendreq_send(ompi_osc_rdma_module_t *module,
         }
 
         /* get a buffer... */
-        endpoint = (mca_bml_base_endpoint_t*) sendreq->req_target_proc->proc_bml;
+        endpoint = (mca_bml_base_endpoint_t*) sendreq->req_target_proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML];
         bml_btl = mca_bml_base_btl_array_get_next(&endpoint->btl_eager);
         btl = bml_btl->btl;
         mca_bml_base_alloc(bml_btl, &descriptor, MCA_BTL_NO_ORDER,
@@ -727,7 +727,7 @@ ompi_osc_rdma_replyreq_send(ompi_osc_rdma_module_t *module,
     size_t written_data = 0;
         
     /* Get a BTL and a fragment to go with it */
-    endpoint = (mca_bml_base_endpoint_t*) replyreq->rep_origin_proc->proc_bml;
+    endpoint = (mca_bml_base_endpoint_t*) replyreq->rep_origin_proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML];
     bml_btl = mca_bml_base_btl_array_get_next(&endpoint->btl_eager);
     mca_bml_base_alloc(bml_btl, &descriptor, MCA_BTL_NO_ORDER,
             bml_btl->btl->btl_eager_limit, MCA_BTL_DES_FLAGS_PRIORITY | MCA_BTL_DES_SEND_ALWAYS_CALLBACK);
@@ -1331,7 +1331,7 @@ ompi_osc_rdma_control_send(ompi_osc_rdma_module_t *module,
     ompi_osc_rdma_control_header_t *header = NULL;
         
     /* Get a BTL and a fragment to go with it */
-    endpoint = (mca_bml_base_endpoint_t*) proc->proc_bml;
+    endpoint = (mca_bml_base_endpoint_t*) proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML];
     bml_btl = mca_bml_base_btl_array_get_next(&endpoint->btl_eager);
     mca_bml_base_alloc(bml_btl, &descriptor, MCA_BTL_NO_ORDER,
             sizeof(ompi_osc_rdma_control_header_t),

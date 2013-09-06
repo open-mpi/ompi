@@ -33,13 +33,11 @@
 static int
 ompi_mtl_mx_add_procs(struct mca_mtl_base_module_t *mtl,
                       size_t nprocs,
-                      struct ompi_proc_t** procs, 
-                      struct mca_mtl_base_endpoint_t **mtl_peer_data);
+                      struct ompi_proc_t** procs);
 static int
 ompi_mtl_mx_del_procs(struct mca_mtl_base_module_t *mtl,
                       size_t nprocs,
-                      struct ompi_proc_t** procs, 
-                      struct mca_mtl_base_endpoint_t **mtl_peer_data);
+                      struct ompi_proc_t** procs);
 
 static int
 ompi_mtl_mx_add_comm(struct mca_mtl_base_module_t *mtl,
@@ -158,8 +156,7 @@ ompi_mtl_mx_finalize(struct mca_mtl_base_module_t* mtl) {
 int
 ompi_mtl_mx_add_procs(struct mca_mtl_base_module_t *mtl,
                       size_t nprocs,
-                      struct ompi_proc_t** procs, 
-                      struct mca_mtl_base_endpoint_t **mtl_peer_data)
+                      struct ompi_proc_t** procs)
 {
     int i; 
     assert(mtl == &ompi_mtl_mx.super);
@@ -170,7 +167,7 @@ ompi_mtl_mx_add_procs(struct mca_mtl_base_module_t *mtl,
         if(NULL == mtl_mx_endpoint) { 
             return OMPI_ERROR; 
         }
-        mtl_peer_data[i] =  (struct mca_mtl_base_endpoint_t*) 
+        procs[i]->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_MTL] = 
             mtl_mx_endpoint;
     }
 
@@ -191,8 +188,7 @@ ompi_mtl_mx_add_procs(struct mca_mtl_base_module_t *mtl,
 int
 ompi_mtl_mx_del_procs(struct mca_mtl_base_module_t *mtl,
                       size_t nprocs,
-                      struct ompi_proc_t** procs, 
-                      struct mca_mtl_base_endpoint_t **mtl_peer_data)
+                      struct ompi_proc_t** procs)
 {
     return OMPI_SUCCESS;
 }

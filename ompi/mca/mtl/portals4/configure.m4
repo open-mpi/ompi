@@ -11,13 +11,20 @@
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
-# Copyright (c) 2010      Sandia National Laboratories.  All rights reserved.
+# Copyright (c) 2013      Sandia National Laboratories.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
 # 
 # $HEADER$
 #
+
+# MCA_ompi_mtl_portals4_POST_CONFIG(will_build)
+# ----------------------------------------
+# Only require the tag if we're actually going to be built
+AC_DEFUN([MCA_ompi_mtl_portals4_POST_CONFIG], [
+    AS_IF([test "$1" = "1"], [OMPI_REQUIRE_ENDPOINT_TAG([PORTALS4])])
+])dnl
 
 # MCA_mtl_portals4_CONFIG(action-if-can-compile, 
 #                        [action-if-cant-compile])

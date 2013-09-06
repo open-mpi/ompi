@@ -23,6 +23,7 @@
 #include "ompi_config.h"
 
 #include <string.h>
+#include <strings.h>
 
 #include "ompi/constants.h"
 #include "opal/datatype/opal_convertor.h"
@@ -54,8 +55,7 @@ OBJ_CLASS_INSTANCE(
 
 void ompi_proc_construct(ompi_proc_t* proc)
 {
-    proc->proc_bml = NULL;
-    proc->proc_pml = NULL;
+    bzero(proc->proc_endpoints, sizeof(proc->proc_endpoints));
 
     /* By default all processors are supposedly having the same architecture as me. Thus,
      * by default we run in a homogeneous environment. Later, when the RTE can tell us

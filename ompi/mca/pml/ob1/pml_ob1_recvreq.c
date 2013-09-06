@@ -255,7 +255,7 @@ static int mca_pml_ob1_recv_request_ack(
     ompi_proc_t* proc = (ompi_proc_t*)recvreq->req_recv.req_base.req_proc;
     mca_bml_base_endpoint_t* bml_endpoint = NULL;
 
-    bml_endpoint = (mca_bml_base_endpoint_t*) proc->proc_bml; 
+    bml_endpoint = (mca_bml_base_endpoint_t*) proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML]; 
 
     /* by default copy everything */
     recvreq->req_send_offset = bytes_received;
@@ -648,7 +648,7 @@ void mca_pml_ob1_recv_request_progress_rget( mca_pml_ob1_recv_request_t* recvreq
     }
     
     /* lookup bml datastructures */
-    bml_endpoint = (mca_bml_base_endpoint_t*)recvreq->req_recv.req_base.req_proc->proc_bml;
+    bml_endpoint = (mca_bml_base_endpoint_t*)recvreq->req_recv.req_base.req_proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML];
     rdma_bml = mca_bml_base_btl_array_find(&bml_endpoint->btl_rdma, btl);
 
 #if OMPI_CUDA_SUPPORT

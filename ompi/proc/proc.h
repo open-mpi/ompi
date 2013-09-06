@@ -51,16 +51,26 @@ BEGIN_C_DECLS
  * 
  * Remote Open MPI process structure.  Each process contains exactly
  * one ompi_proc_t structure for each remote process it knows about.
+ *
+ * Each proc entry has an array of endpoint data associated with it.
+ * The size of this array, and its entries, is unique to a particular
+ * build of Open MPI.  As the endpoint list (or index values) are
+ * local to a process, this does not negatively impact heterogeneous
+ * builds.  If a component or framework requires a tag index, it
+ * should call OMPI_REQUIRE_ENDPOINT_TAG(<name>).  Requests which
+ * share the same name will have the same value, allowing
+ * cross-component sharing of endpoint data.  The tag may be referenced
+ * by the pre-processor define OMPI_PROC_ENDPOINT_TAG_<name>.  Adding 
+ * a tag increases the memory consumed by Open MPI, so should only be done
+ * if unavoidable.
  */
 struct ompi_proc_t {
     /** allow proc to be placed on a list */
     opal_list_item_t                super;
     /** this process' name */
     ompi_process_name_t             proc_name;
-    /** PML specific proc data */
-    struct mca_pml_endpoint_t*      proc_pml;
-    /** BML specific proc data */
-    struct mca_bml_base_endpoint_t* proc_bml;
+    /* endpoint data */
+    void *proc_endpoints[OMPI_PROC_ENDPOINT_TAG_MAX];
     /** architecture of this process */
     uint32_t                        proc_arch;
     /** flags for this proc */
