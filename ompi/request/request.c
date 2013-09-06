@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
  * $COPYRIGHT$
@@ -51,7 +51,11 @@ ompi_request_fns_t               ompi_request_functions = {
 
 static void ompi_request_construct(ompi_request_t* req)
 {
-    OMPI_REQUEST_INIT(req, false);
+    /* don't call _INIT, we don't to set the request to _INACTIVE and there will
+     * be no matching _FINI invocation */
+    req->req_state        = OMPI_REQUEST_INVALID;
+    req->req_complete     = false;
+    req->req_persistent   = false;
     req->req_free         = NULL;
     req->req_cancel       = NULL;
     req->req_complete_cb  = NULL;
