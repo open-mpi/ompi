@@ -11,6 +11,7 @@
 #include "opal_config.h"
 #include "opal/constants.h"
 
+#include <time.h>
 #include <string.h>
 #include <sys/types.h>
 #ifdef HAVE_LIMITS_H
