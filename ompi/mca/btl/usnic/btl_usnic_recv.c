@@ -103,8 +103,8 @@ void ompi_btl_usnic_recv_call(ompi_btl_usnic_module_t *module,
     /* Segment is an incoming frag */
     if (OMPI_BTL_USNIC_PAYLOAD_TYPE_FRAG == bseg->us_btl_header->payload_type) {
 
-        /* do the receive bookeeping */
-        ompi_btl_usnic_recv_frag_bookeeping(module, seg, channel);
+        /* do the receive bookkeeping */
+        ompi_btl_usnic_recv_frag_bookkeeping(module, seg, channel);
 
 #if MSGDEBUG1
         opal_output(0, "<-- Received FRAG ep %p, seq %" UDSEQ ", len=%d\n",
@@ -156,7 +156,7 @@ void ompi_btl_usnic_recv_call(ompi_btl_usnic_module_t *module,
                     seg->rs_base.us_btl_header->payload_len);
         }
 
-        /* do not jump to repost, alresdy done by bookeeping */
+        /* do not jump to repost, already done by bookkeeping */
         return;
     }
 
