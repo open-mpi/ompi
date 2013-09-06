@@ -180,6 +180,29 @@ When the last chunk of a fragment arrives, a PML callback is made for non-PUTs,
 then the fragment info descriptor is released.
 
 ======================================
+fast receive optimization
+
+In order to optimize latency of small packets, the component progress routine
+implements a fast path for receives.  If the first completion is a receive on
+the priority queue, then it is handled by a routine called
+ompi_btl_usnic_recv_fast() which does nothing but validates that the packet
+is OK to be received (sequence number OK and not a DUP) and then delivers it
+to the PML.  This packet is recorded in the channel structure, and all
+bookeeping for the packet is deferred until the next time component_progress
+is called again.
+
+This fast path cannot be taken every time we pass through component_progress
+because there will be other completions that need processing, and the receive
+bookeeping for one fast receive must be complete before allowing another fast
+receive to occur, as only one recv segment can be saved for deferred
+processing at a time.  This is handled by maintaining a variable in
+ompi_btl_usnic_recv_fast() called fastpath_ok which is set to false every time
+the fastpath is taken.  A call into the regular progress routine will set this
+flag back to true.
+
+
+
+======================================
 reliability:
 
 every packet has sequence #
