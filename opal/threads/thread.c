@@ -37,14 +37,14 @@ OBJ_CLASS_INSTANCE(opal_thread_t,
 static void opal_thread_construct(opal_thread_t *t)
 {
     t->t_run = 0;
-#ifdef OPAL_HAVE_POSIX_THREADS
+#if OPAL_HAVE_POSIX_THREADS
     t->t_handle = (pthread_t) -1;
 #elif OPAL_HAVE_SOLARIS_THREADS
     t->t_handle = (thread_t) -1;
 #endif
 }
 
-#ifdef OPAL_HAVE_POSIX_THREADS
+#if OPAL_HAVE_POSIX_THREADS
 
 /************************************************************************
  * POSIX threads
