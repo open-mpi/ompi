@@ -95,7 +95,7 @@ ompi_btl_usnic_handle_ack(
 #if MSGDEBUG1
         opal_output(0, "  Checking ACK/sent_segs window %p, index %lu, seq %lu, occupied=%p, seg_room=%d",
             (void*) endpoint->endpoint_sent_segs,
-            WINDOW_SIZE_MOD(is), is, sseg, (sseg?sseg->ss_hotel_room:-2));
+            WINDOW_SIZE_MOD(is), is, (void*)sseg, (sseg?sseg->ss_hotel_room:-2));
 #endif
 
         assert(sseg != NULL);
@@ -130,8 +130,8 @@ ompi_btl_usnic_handle_ack(
         /* when no bytes left to ACK, fragment send is truly done */
         frag->sf_ack_bytes_left -= bytes_acked;
 #if MSGDEBUG1
-        opal_output(0, "   ACKED seg %p, frag %p, ack_bytes=%d, left=%d\n",
-                sseg, frag, bytes_acked, frag->sf_ack_bytes_left);
+        opal_output(0, "   ACKED seg %p, frag %p, ack_bytes=%"PRIu32", left=%zd\n",
+                (void*)sseg, (void*)frag, bytes_acked, frag->sf_ack_bytes_left);
 #endif
 
         /* perform completion callback for PUT here */
@@ -139,7 +139,7 @@ ompi_btl_usnic_handle_ack(
             frag->sf_base.uf_dst_seg[0].seg_addr.pval != NULL) {
 #if MSGDEBUG1
             opal_output(0, "Calling back %p for PUT completion, frag=%p\n", 
-                    frag->sf_base.uf_base.des_cbfunc, frag);
+                    (void*)(uintptr_t)frag->sf_base.uf_base.des_cbfunc, (void*)frag);
 #endif
             frag->sf_base.uf_base.des_cbfunc(&module->super, frag->sf_endpoint,
                     &frag->sf_base.uf_base, OMPI_SUCCESS);
@@ -251,9 +251,8 @@ ompi_btl_usnic_ack_timeout(
 
 #if MSGDEBUG2
     {
-        static int num_timeouts = 0;
         opal_output(0, "Send timeout!  seg %p, room %d, seq %" UDSEQ "\n",
-                    seg, seg->ss_hotel_room,
+                    (void*)seg, seg->ss_hotel_room,
                     seg->ss_base.us_btl_header->seq);
     }
 #endif

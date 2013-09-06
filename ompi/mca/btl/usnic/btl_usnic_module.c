@@ -280,7 +280,7 @@ static int usnic_free(struct mca_btl_base_module_t* btl,
     ompi_btl_usnic_frag_t* frag = (ompi_btl_usnic_frag_t*)des;
 
 #if MSGDEBUG1
-    opal_output(0, "usnic_free: %p\n", frag);
+    opal_output(0, "usnic_free: %p\n", (void*)frag);
 #endif
     OMPI_FREE_LIST_RETURN(frag->uf_freelist, &(frag->uf_base.super));
 
@@ -488,7 +488,7 @@ usnic_put(
     frag = (ompi_btl_usnic_send_frag_t *)des;
 
 #if MSGDEBUG2
-    opal_output(0, "usnic_put: %d bytes to %p\n", 
+    opal_output(0, "usnic_put: %"PRIu64" bytes to %p\n",
             des->des_dst->seg_len,
             des->des_dst->seg_addr.pval);
     opal_output(0, "  des_dst=%p, frag->uf_dst_seg=%p\n",
@@ -857,7 +857,7 @@ usnic_handle_large_send(
         abort();
     }
 #if MSGDEBUG1
-    opal_output(0, "send large, frag=%p, addr=%p\n", lfrag, sseg->ss_base.us_payload.raw);
+    opal_output(0, "send large, frag=%p, addr=%p\n", (void*)lfrag, (void*)sseg->ss_base.us_payload.raw);
 #endif
 
     /* save back pointer to fragment */
@@ -932,7 +932,7 @@ usnic_handle_large_send(
     lfrag->lsf_bytes_left -= payload_len;
 
 #if MSGDEBUG1
-    opal_output(0, "payload_len = %d, bytes_left=%d\n",
+    opal_output(0, "payload_len = %zd, bytes_left=%zd\n",
             payload_len, lfrag->lsf_bytes_left);
 #endif
     /* done with fragment? */
@@ -944,8 +944,8 @@ usnic_handle_large_send(
         if (frag->sf_base.uf_dst_seg[0].seg_addr.pval == NULL) {
 
 #if MSGDEBUG1
-            opal_output(0, "    calling back %p, len=%d\n",
-                    frag->sf_base.uf_base.des_cbfunc,
+            opal_output(0, "    calling back %p, len=%zd\n",
+                    (void*)(uintptr_t)frag->sf_base.uf_base.des_cbfunc,
                     frag->sf_size);
 #endif
             frag->sf_base.uf_base.des_cbfunc(&module->super,
@@ -1032,7 +1032,7 @@ ompi_btl_usnic_module_progress_sends(
             sseg->ss_base.us_btl_header->payload_len = payload_len;
 
 #if MSGDEBUG1
-            opal_output(0, "send small, ptr=%p, payload=%d, len=%d\n",
+            opal_output(0, "send small, ptr=%"PRIu64", payload=%zd, len=%"PRIu32"\n",
                     sseg->ss_base.us_sg_entry[0].addr, payload_len,
                     sseg->ss_base.us_sg_entry[0].length);
 #endif
@@ -1043,8 +1043,8 @@ ompi_btl_usnic_module_progress_sends(
             /* don't do callback yet if this is a put */
             if (frag->sf_base.uf_dst_seg[0].seg_addr.pval == NULL) {
 #if MSGDEBUG1
-                opal_output(0, "    calling back %p, len=%d\n",
-                        frag->sf_base.uf_base.des_cbfunc,
+                opal_output(0, "    calling back %p, len=%"PRIu64"\n",
+                        (void*)(uintptr_t)frag->sf_base.uf_base.des_cbfunc,
                         frag->sf_base.uf_src_seg[0].seg_len);
 #endif
                 /* we have copied the data, proceed with callback */

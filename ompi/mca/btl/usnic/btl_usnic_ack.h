@@ -55,7 +55,7 @@ ompi_btl_usnic_piggyback_ack(
         sseg->ss_base.us_btl_header->ack_seq = 
             endpoint->endpoint_next_contig_seq_to_recv - 1;
 #if MSGDEBUG1
-        opal_output(0, "Piggy-backing ACK for sequence %d\n",
+        opal_output(0, "Piggy-backing ACK for sequence %"UDSEQ"\n",
                 sseg->ss_base.us_btl_header->ack_seq);
 #endif
     } else {

@@ -255,7 +255,7 @@ ompi_btl_usnic_remove_from_endpoints_needing_ack(
     endpoint->endpoint_ack_needed = false;
     endpoint->endpoint_acktime = 0;
 #if MSGDEBUG1
-    opal_output(0, "clear ack_needed on %p\n", endpoint);
+    opal_output(0, "clear ack_needed on %p\n", (void*)endpoint);
 #endif
 }
 
@@ -267,7 +267,7 @@ ompi_btl_usnic_add_to_endpoints_needing_ack(
             &endpoint->endpoint_ack_li);
     endpoint->endpoint_ack_needed = true;
 #if MSGDEBUG1
-    opal_output(0, "set ack_needed on %p\n", endpoint);
+    opal_output(0, "set ack_needed on %p\n", (void*)endpoint);
 #endif
 }
 

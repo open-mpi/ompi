@@ -42,7 +42,7 @@ ompi_btl_usnic_check_rts(
                 &endpoint->super);
         endpoint->endpoint_ready_to_send = true;
 #if MSGDEBUG1
-        opal_output(0, "make endpoint %p RTS\n", endpoint);
+        opal_output(0, "make endpoint %p RTS\n", (void*)endpoint);
     } else {
         opal_output(0, "rts:%d empty:%d cred:%d open%d\n",
                 endpoint->endpoint_ready_to_send,
@@ -171,7 +171,7 @@ ompi_btl_usnic_endpoint_send_segment(
             sseg->ss_base.us_btl_header->sender, 
             endpoint->endpoint_module->device->name,
             mac_str1, module->local_addr.qp_num[sseg->ss_channel],
-            sseg, sseg->ss_hotel_room,
+            (void*)sseg, sseg->ss_hotel_room,
             sseg->ss_base.us_sg_entry[0].length,
             mac_str2, endpoint->endpoint_remote_addr.qp_num[sseg->ss_channel]);
     }
@@ -218,13 +218,13 @@ ompi_btl_usnic_endpoint_enqueue_frag(
 
     module = endpoint->endpoint_module;
 #if MSGDEBUG1
-    opal_output(0, "enq_frag: frag=%p, endpoint=%p, type=%d, len=%d\n",
-            frag, endpoint, frag->sf_base.uf_type,
+    opal_output(0, "enq_frag: frag=%p, endpoint=%p, type=%d, len=%"PRIu64"\n",
+            (void*)frag, (void*)endpoint, frag->sf_base.uf_type,
             frag->sf_base.uf_base.des_src->seg_len);
     if (frag->sf_base.uf_type == OMPI_BTL_USNIC_FRAG_LARGE_SEND) {
         ompi_btl_usnic_large_send_frag_t *lfrag;
         lfrag = (ompi_btl_usnic_large_send_frag_t *)frag;
-        opal_output(0, "   large size=%d\n", lfrag->lsf_base.sf_size);
+        opal_output(0, "   large size=%zd\n", lfrag->lsf_base.sf_size);
     }
 #endif
 

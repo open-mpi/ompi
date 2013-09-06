@@ -95,7 +95,7 @@ ompi_btl_usnic_check_rx_seq(
      */
     if (seg->rs_base.us_btl_header->ack_seq != 0) {
 #if MSGDEBUG1
-        opal_output(0, "Handle piggy-packed ACK seq %d\n", seg->rs_base.us_btl_header->ack_seq);
+        opal_output(0, "Handle piggy-packed ACK seq %"UDSEQ"\n", seg->rs_base.us_btl_header->ack_seq);
 #endif
         ompi_btl_usnic_handle_ack(endpoint,
                 seg->rs_base.us_btl_header->ack_seq);
@@ -218,7 +218,7 @@ ompi_btl_usnic_update_window(
 
     /* Enable ACK reply if not enabled */
 #if MSGDEBUG1
-    opal_output(0, "ep: %p, ack_needed = %s\n", endpoint, endpoint->endpoint_ack_needed?"true":"false");
+    opal_output(0, "ep: %p, ack_needed = %s\n", (void*)endpoint, endpoint->endpoint_ack_needed?"true":"false");
 #endif
     if (!endpoint->endpoint_ack_needed) {
         ompi_btl_usnic_add_to_endpoints_needing_ack(endpoint);
@@ -369,7 +369,7 @@ void ompi_btl_usnic_recv(ompi_btl_usnic_module_t *module,
 #if MSGDEBUG1
             opal_output(0, "Copy %d PUT bytes to %p\n", 
                 seg->rs_base.us_btl_header->payload_len,
-                chunk_hdr->ch_hdr.put_addr);
+                (void*)seg->rs_base.us_btl_header->put_addr);
 #endif
             memcpy(seg->rs_base.us_btl_header->put_addr,
                     seg->rs_base.us_payload.raw,
@@ -502,7 +502,7 @@ opal_output(0, "Start PUT to %p\n", chunk_hdr->ch_hdr.put_addr);
 
                 /* Pass this segment up to the PML */
 #if MSGDEBUG2
-                opal_output(0, "  large FRAG complete, pass up %p, %d bytes, tag=%d\n",
+                opal_output(0, "  large FRAG complete, pass up %p, %"PRIu64" bytes, tag=%d\n",
                         desc.des_dst->seg_addr.pval, desc.des_dst->seg_len,
                         pml_header->tag);
 #endif
