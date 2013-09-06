@@ -46,11 +46,14 @@ BEGIN_C_DECLS
  * Forward declarations to avoid include loops
  */
 struct ompi_btl_usnic_send_segment_t;
+struct ompi_btl_usnic_recv_segment_t;
 
 /*
  * Abstraction of a set of IB queues
  */
 typedef struct ompi_btl_usnic_channel_t {
+    int chan_index;
+
     struct ibv_cq *cq;
 
     int chan_mtu;
@@ -63,11 +66,18 @@ typedef struct ompi_btl_usnic_channel_t {
     /* fastsend enabled if sd_wqe >= fastsend_wqe_thresh */
     int fastsend_wqe_thresh;
 
+    /* pointer to receive segment whose bookeeping has been deferred */
+    struct ompi_btl_usnic_recv_segment_t *chan_deferred_recv;
+
     /** queue pair */
     struct ibv_qp* qp;
 
+    struct ibv_recv_wr *repost_recv_head;
+
     /** receive segments & buffers */
     ompi_free_list_t recv_segs;
+
+    bool chan_error;    /* set when error detected on channel */
 
     /* statistics */
     uint32_t num_channel_sends;

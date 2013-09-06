@@ -1516,11 +1516,13 @@ static int
 ompi_btl_usnic_channel_init(
     ompi_btl_usnic_module_t *module,
     struct ompi_btl_usnic_channel_t *channel,
+    int index,
     int mtu,
     int rd_num,
     int sd_num)
 {
     struct ibv_context *ctx;
+    uint32_t segsize;
     ompi_btl_usnic_recv_segment_t *rseg;
     ompi_free_list_item_t* item;
     struct ibv_recv_wr* bad_wr;
@@ -1528,10 +1530,12 @@ ompi_btl_usnic_channel_init(
     int rc;
 
     ctx = module->device_context;
-
     channel->chan_mtu = mtu;
     channel->chan_rd_num = rd_num;
     channel->chan_sd_num = sd_num;
+    channel->chan_index = index;
+    channel->chan_deferred_recv = NULL;
+    channel->chan_error = false;
 
     channel->sd_wqe = sd_num;
     channel->fastsend_wqe_thresh = sd_num - 10;
@@ -1557,14 +1561,18 @@ ompi_btl_usnic_channel_init(
         goto error;
     }
 
-    /* Initialize pool of receive segments */
+    /*
+     * Initialize pool of receive segments.  round MTU up to cache line size
+     * so that each segment is guaranteed to start on a cache line boundary
+     */
+    segsize = (mtu + opal_cache_line_size - 1) & ~(opal_cache_line_size - 1);
     OBJ_CONSTRUCT(&channel->recv_segs, ompi_free_list_t);
     channel->recv_segs.ctx = module;
     rc = ompi_free_list_init_new(&channel->recv_segs,
                                  sizeof(ompi_btl_usnic_recv_segment_t),
                                  opal_cache_line_size,
                                  OBJ_CLASS(ompi_btl_usnic_recv_segment_t),
-                                 mtu,
+                                 segsize,
                                  opal_cache_line_size,
                                  rd_num,
                                  rd_num,
@@ -1649,6 +1657,7 @@ int ompi_btl_usnic_module_init(ompi_btl_usnic_module_t *module)
     struct mca_mpool_base_resources_t mpool_resources;
     struct ibv_context *ctx = module->device_context;
     uint32_t ack_segment_len;
+    uint32_t segsize;
 
 #if OPAL_HAVE_HWLOC
     /* If this process is bound to a single NUMA locality, calculate
@@ -1707,12 +1716,14 @@ int ompi_btl_usnic_module_init(ompi_btl_usnic_module_t *module)
     /* initialize data and priority channels */
     rc = ompi_btl_usnic_channel_init(module,
             &module->mod_channels[USNIC_PRIORITY_CHANNEL],
+            USNIC_PRIORITY_CHANNEL,
             module->tiny_mtu, module->prio_rd_num, module->prio_sd_num);
     if (rc != OMPI_SUCCESS) {
         goto chan_destroy;
     }
     rc = ompi_btl_usnic_channel_init(module,
             &module->mod_channels[USNIC_DATA_CHANNEL],
+            USNIC_DATA_CHANNEL,
             module->if_mtu, module->rd_num, module->sd_num);
     if (rc != OMPI_SUCCESS) {
         goto chan_destroy;
@@ -1745,6 +1756,9 @@ int ompi_btl_usnic_module_init(ompi_btl_usnic_module_t *module)
 
     /* list of endpoints that are ready to send */
     OBJ_CONSTRUCT(&module->endpoints_with_sends, opal_list_t);
+    
+    segsize = (module->if_mtu + opal_cache_line_size - 1) &
+        ~(opal_cache_line_size - 1);
 
     /* Send frags freelists */
     module->small_send_frags.ctx = module;
@@ -1753,7 +1767,7 @@ int ompi_btl_usnic_module_init(ompi_btl_usnic_module_t *module)
                                  sizeof(ompi_btl_usnic_small_send_frag_t),
                                  opal_cache_line_size,
                                  OBJ_CLASS(ompi_btl_usnic_small_send_frag_t),
-                                 module->if_mtu,
+                                 segsize,
                                  opal_cache_line_size,
                                  module->sd_num * 4,
                                  -1,
@@ -1796,7 +1810,7 @@ int ompi_btl_usnic_module_init(ompi_btl_usnic_module_t *module)
                                  sizeof(ompi_btl_usnic_chunk_segment_t),
                                  opal_cache_line_size,
                                  OBJ_CLASS(ompi_btl_usnic_chunk_segment_t),
-                                 module->if_mtu,
+                                 segsize,
                                  opal_cache_line_size,
                                  module->sd_num * 4,
                                  -1,
@@ -1806,7 +1820,8 @@ int ompi_btl_usnic_module_init(ompi_btl_usnic_module_t *module)
 
     /* ACK segments freelist */
     module->ack_segs.ctx = module;
-    ack_segment_len = sizeof(ompi_btl_usnic_btl_header_t);
+    ack_segment_len = (sizeof(ompi_btl_usnic_btl_header_t) +
+            opal_cache_line_size - 1) & ~(opal_cache_line_size - 1);
     OBJ_CONSTRUCT(&module->ack_segs, ompi_free_list_t);
     rc = ompi_free_list_init_new(&module->ack_segs,
                                  sizeof(ompi_btl_usnic_ack_segment_t),
