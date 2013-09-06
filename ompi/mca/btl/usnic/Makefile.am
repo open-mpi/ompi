@@ -25,6 +25,7 @@ dist_pkgdata_DATA = \
     help-mpi-btl-usnic.txt
 
 sources = \
+    btl_usnic_compat.h \
     btl_usnic_module.c \
     btl_usnic_module.h \
     btl_usnic.h \

@@ -274,6 +274,8 @@ typedef struct ompi_btl_usnic_large_send_frag_t {
     uint32_t lsf_frag_id;       /* fragment ID for reassembly */
     size_t lsf_cur_offset;      /* current offset into message */
     size_t lsf_bytes_left;      /* bytes remaining to send */
+
+    opal_list_t lsf_seg_chain;  /* chain of segments for converted data */
     
 } ompi_btl_usnic_large_send_frag_t;
 
@@ -323,11 +325,10 @@ OBJ_CLASS_DECLARATION(ompi_btl_usnic_ack_segment_t);
 static inline ompi_btl_usnic_small_send_frag_t *
 ompi_btl_usnic_small_send_frag_alloc(ompi_btl_usnic_module_t *module)
 {
-    int rc;
     ompi_free_list_item_t *item;
     ompi_btl_usnic_small_send_frag_t *frag;
 
-    OMPI_FREE_LIST_GET(&(module->small_send_frags), item, rc);
+    OMPI_FREE_LIST_GET_MT(&(module->small_send_frags), item);
     if (OPAL_UNLIKELY(NULL == item)) {
         return NULL;
     }
@@ -349,11 +350,10 @@ ompi_btl_usnic_small_send_frag_alloc(ompi_btl_usnic_module_t *module)
 static inline ompi_btl_usnic_large_send_frag_t *
 ompi_btl_usnic_large_send_frag_alloc(ompi_btl_usnic_module_t *module)
 {
-    int rc;
     ompi_free_list_item_t *item;
     ompi_btl_usnic_large_send_frag_t *frag;
 
-    OMPI_FREE_LIST_GET(&(module->large_send_frags), item, rc);
+    OMPI_FREE_LIST_GET_MT(&(module->large_send_frags), item);
     if (OPAL_UNLIKELY(NULL == item)) {
         return NULL;
     }
@@ -373,11 +373,10 @@ static inline ompi_btl_usnic_put_dest_frag_t *
 ompi_btl_usnic_put_dest_frag_alloc(
     struct ompi_btl_usnic_module_t *module)
 {
-    int rc;
     ompi_free_list_item_t *item;
     ompi_btl_usnic_put_dest_frag_t *frag;
 
-    OMPI_FREE_LIST_GET(&(module->put_dest_frags), item, rc);
+    OMPI_FREE_LIST_GET_MT(&(module->put_dest_frags), item);
     if (OPAL_UNLIKELY(NULL == item)) {
         return NULL;
     }
@@ -425,7 +424,7 @@ ompi_btl_usnic_frag_return(
     struct ompi_btl_usnic_module_t *module,
     ompi_btl_usnic_frag_t *frag)
 {
-    OMPI_FREE_LIST_RETURN(frag->uf_freelist, &(frag->uf_base.super));
+    OMPI_FREE_LIST_RETURN_MT(frag->uf_freelist, &(frag->uf_base.super));
 }
 
 /*
@@ -445,11 +444,10 @@ static inline ompi_btl_usnic_chunk_segment_t *
 ompi_btl_usnic_chunk_segment_alloc(
     ompi_btl_usnic_module_t *module)
 {
-    int rc;
     ompi_free_list_item_t *item;
     ompi_btl_usnic_send_segment_t *seg;
 
-    OMPI_FREE_LIST_GET(&(module->chunk_segs), item, rc);
+    OMPI_FREE_LIST_GET_MT(&(module->chunk_segs), item);
     if (OPAL_UNLIKELY(NULL == item)) {
         return NULL;
     }
@@ -471,7 +469,7 @@ ompi_btl_usnic_chunk_segment_return(
     assert(seg);
     assert(OMPI_BTL_USNIC_SEG_CHUNK == seg->ss_base.us_type);
 
-    OMPI_FREE_LIST_RETURN(&(module->chunk_segs), &(seg->ss_base.us_list));
+    OMPI_FREE_LIST_RETURN_MT(&(module->chunk_segs), &(seg->ss_base.us_list));
 }
 
 
@@ -481,11 +479,10 @@ ompi_btl_usnic_chunk_segment_return(
 static inline ompi_btl_usnic_ack_segment_t *
 ompi_btl_usnic_ack_segment_alloc(ompi_btl_usnic_module_t *module)
 {
-    int rc;
     ompi_free_list_item_t *item;
     ompi_btl_usnic_send_segment_t *ack;
 
-    OMPI_FREE_LIST_GET(&(module->ack_segs), item, rc);
+    OMPI_FREE_LIST_GET_MT(&(module->ack_segs), item);
     if (OPAL_UNLIKELY(NULL == item)) {
         return NULL;
     }
@@ -510,7 +507,7 @@ ompi_btl_usnic_ack_segment_return(
     assert(ack);
     assert(OMPI_BTL_USNIC_SEG_ACK == ack->ss_base.us_type);
 
-    OMPI_FREE_LIST_RETURN(&(module->ack_segs), &(ack->ss_base.us_list));
+    OMPI_FREE_LIST_RETURN_MT(&(module->ack_segs), &(ack->ss_base.us_list));
 }
 
 END_C_DECLS

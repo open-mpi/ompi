@@ -466,6 +466,7 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
         malloc(mca_btl_usnic_component.num_modules * 
                sizeof(ompi_btl_usnic_module_t*));
     if (NULL == btls) {
+        OMPI_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         goto free_include_list;
     }
 
@@ -474,10 +475,11 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
         calloc(mca_btl_usnic_component.num_modules,
                sizeof(*mca_btl_usnic_component.usnic_all_modules));
     mca_btl_usnic_component.usnic_active_modules =
-         calloc(mca_btl_usnic_component.num_modules,
+        calloc(mca_btl_usnic_component.num_modules,
                sizeof(*mca_btl_usnic_component.usnic_active_modules));
     if (NULL == mca_btl_usnic_component.usnic_all_modules ||
         NULL == mca_btl_usnic_component.usnic_active_modules) {
+        OMPI_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         goto error;
     }
 
@@ -599,7 +601,7 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
          */
         if (-1 == mca_btl_usnic_component.prio_sd_num) {
             module->prio_sd_num =
-                max(128, 32 * orte_process_info.num_procs) - 1;
+                max(128, 32 * ompi_process_info.num_procs) - 1;
         } else {
             module->prio_sd_num = mca_btl_usnic_component.prio_sd_num;
         }
@@ -608,7 +610,7 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
         }
         if (-1 == mca_btl_usnic_component.prio_rd_num) {
             module->prio_rd_num =
-                max(128, 32 * orte_process_info.num_procs) - 1;
+                max(128, 32 * ompi_process_info.num_procs) - 1;
         } else {
             module->prio_rd_num = mca_btl_usnic_component.prio_rd_num;
         }
@@ -834,18 +836,146 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
 
 /*
  * Component progress
+ * The fast-path of an incoming packet available on the priority
+ * receive queue is handled directly in this routine, everything else
+ * is deferred to an external call, usnic_component_progress_2()
+ * This helps keep usnic_component_progress() very small and very responsive
+ * to a single incoming packet.  We make sure not to always return 
+ * immediately after one packet to avoid starvation, "fastpath_ok" is
+ * used for this.
  */
+static int usnic_handle_completion(ompi_btl_usnic_module_t* module,
+    ompi_btl_usnic_channel_t *channel, struct ibv_wc *cwc);
+static int usnic_component_progress_2(void);
+
 static int usnic_component_progress(void)
 {
     uint32_t i;
-    int j, count = 0, num_events;
+    int count;
+    ompi_btl_usnic_recv_segment_t* rseg;
+    ompi_btl_usnic_module_t* module;
+    struct ibv_wc wc;
+    ompi_btl_usnic_channel_t *channel;
+    static bool fastpath_ok=true;
+
+    /* update our simulated clock */
+    usnic_ticks += 5000;
+
+    count = 0;
+    if (fastpath_ok) {
+        for (i = 0; i < mca_btl_usnic_component.num_modules; i++) {
+            module = mca_btl_usnic_component.usnic_active_modules[i];
+            channel = &module->mod_channels[USNIC_PRIORITY_CHANNEL];
+
+            assert(channel->chan_deferred_recv == NULL);
+
+            if (ibv_poll_cq(channel->cq, 1, &wc) == 1) {
+                if (OPAL_LIKELY(wc.opcode == IBV_WC_RECV &&
+                                wc.status == IBV_WC_SUCCESS)) {
+                    rseg = (ompi_btl_usnic_recv_segment_t*)wc.wr_id;
+                    ompi_btl_usnic_recv_fast(module, rseg, channel);
+                    fastpath_ok = false;    /* prevent starvation */
+                    return 1;
+                } else {
+                    count += usnic_handle_completion(module, channel, &wc);
+                }
+            }
+        }
+    }
+
+    fastpath_ok = true;
+    return count + usnic_component_progress_2();
+}
+
+static int usnic_handle_completion(
+    ompi_btl_usnic_module_t* module,
+    ompi_btl_usnic_channel_t *channel,
+    struct ibv_wc *cwc)
+{
     ompi_btl_usnic_segment_t* seg;
     ompi_btl_usnic_recv_segment_t* rseg;
-    struct ibv_recv_wr *bad_wr, *repost_recv_head;
-    struct ibv_wc* cwc;
+
+    seg = (ompi_btl_usnic_segment_t*)(unsigned long)cwc->wr_id;
+    rseg = (ompi_btl_usnic_recv_segment_t*)seg;
+
+    if (OPAL_UNLIKELY(cwc->status != IBV_WC_SUCCESS)) {
+
+        /* If it was a receive error, just drop it and keep
+           going.  The sender will eventually re-send it. */
+        if (IBV_WC_RECV == cwc->opcode) {
+            if (cwc->byte_len <
+                 (sizeof(ompi_btl_usnic_protocol_header_t)+
+                  sizeof(ompi_btl_usnic_btl_header_t))) {
+                BTL_ERROR(("%s: RX error polling CQ[%d] with status %d for wr_id %" PRIx64 " vend_err %d, byte_len %d",
+                   ibv_get_device_name(module->device),
+                   channel->chan_index, cwc->status, cwc->wr_id,
+                   cwc->vendor_err, cwc->byte_len));
+            } else {
+                /* silently count CRC errors */
+                ++module->num_crc_errors;
+            }
+            rseg->rs_recv_desc.next = channel->repost_recv_head;
+            channel->repost_recv_head = &rseg->rs_recv_desc;
+            return 0;
+        } else {
+            BTL_ERROR(("%s: error polling CQ[%d] with status %d for wr_id %" PRIx64 " opcode %d, vend_err %d",
+                   ibv_get_device_name(module->device), channel->chan_index,
+                   cwc->status, cwc->wr_id, cwc->opcode,
+                   cwc->vendor_err));
+
+            /* mark error on this channel */
+            channel->chan_error = true;
+            return 0;
+        }
+    }
+
+    /* Handle work completions */
+    switch(seg->us_type) {
+
+    /**** Send ACK completions ****/
+    case OMPI_BTL_USNIC_SEG_ACK:
+        assert(IBV_WC_SEND == cwc->opcode);
+        ompi_btl_usnic_ack_complete(module,
+                (ompi_btl_usnic_ack_segment_t *)seg);
+        break;
+
+    /**** Send of frag segment completion ****/
+    case OMPI_BTL_USNIC_SEG_FRAG:
+        assert(IBV_WC_SEND == cwc->opcode);
+        ompi_btl_usnic_frag_send_complete(module,
+                (ompi_btl_usnic_frag_segment_t*)seg);
+        break;
+
+    /**** Send of chunk segment completion ****/
+    case OMPI_BTL_USNIC_SEG_CHUNK:
+        assert(IBV_WC_SEND == cwc->opcode);
+        ompi_btl_usnic_chunk_send_complete(module,
+                (ompi_btl_usnic_chunk_segment_t*)seg);
+        break;
+
+    /**** Receive completions ****/
+    case OMPI_BTL_USNIC_SEG_RECV:
+        assert(IBV_WC_RECV == cwc->opcode);
+        ompi_btl_usnic_recv(module, rseg, channel);
+        break;
+
+    default:
+        BTL_ERROR(("Unhandled completion opcode %d segment type %d",
+                    cwc->opcode, seg->us_type));
+        break;
+    }
+    return 1;
+}
+
+static int usnic_component_progress_2(void)
+{
+    uint32_t i;
+    int j, count = 0, num_events;
+    struct ibv_recv_wr *bad_wr;
     ompi_btl_usnic_module_t* module;
     static struct ibv_wc wc[OMPI_BTL_USNIC_NUM_WC];
     ompi_btl_usnic_channel_t *channel;
+    int rc;
     int c;
 
     /* update our simulated clock */
@@ -859,6 +989,12 @@ static int usnic_component_progress(void)
         for (c=0; c<USNIC_NUM_CHANNELS; ++c) {
             channel = &module->mod_channels[c];
 
+            if (channel->chan_deferred_recv != NULL) {
+                (void) ompi_btl_usnic_recv_frag_bookkeeping(module,
+                        channel->chan_deferred_recv, channel);
+                channel->chan_deferred_recv = NULL;
+            }
+
             num_events = ibv_poll_cq(channel->cq, OMPI_BTL_USNIC_NUM_WC, wc);
             opal_memchecker_base_mem_defined(&num_events, sizeof(num_events));
             opal_memchecker_base_mem_defined(wc, sizeof(wc[0]) * num_events);
@@ -869,106 +1005,31 @@ static int usnic_component_progress(void)
                 return OMPI_ERROR;
             }
 
-            repost_recv_head = NULL;
+            /* Handle each event */
             for (j = 0; j < num_events; j++) {
-                cwc = &wc[j];
-                seg = (ompi_btl_usnic_segment_t*)(unsigned long)cwc->wr_id;
-                rseg = (ompi_btl_usnic_recv_segment_t*)seg;
-
-                if (OPAL_UNLIKELY(cwc->status != IBV_WC_SUCCESS)) {
-
-                    /* If it was a receive error, just drop it and keep
-                       going.  The sender will eventually re-send it. */
-                    if (IBV_WC_RECV == cwc->opcode) {
-                        if (cwc->byte_len <
-                             (sizeof(ompi_btl_usnic_protocol_header_t)+
-                              sizeof(ompi_btl_usnic_btl_header_t))) {
-                        BTL_ERROR(("%s: RX error polling CQ[%d] with status %d for wr_id %" PRIx64 " vend_err %d, byte_len %d (%d of %d)",
-                               ibv_get_device_name(module->device),
-                               c, cwc->status, cwc->wr_id,
-                               cwc->vendor_err, cwc->byte_len,
-                               j, num_events));
-                        } else {
-                            /* silently count CRC errors */
-                            ++module->num_crc_errors;
-                        }
-                        rseg->rs_recv_desc.next = repost_recv_head;
-                        repost_recv_head = &rseg->rs_recv_desc;
-                        continue;
-                    } else {
-                        BTL_ERROR(("%s: error polling CQ[%d] with status %d for wr_id %" PRIx64 " opcode %d, vend_err %d (%d of %d)",
-                               ibv_get_device_name(module->device), c,
-                               cwc->status, cwc->wr_id, cwc->opcode,
-                               cwc->vendor_err,
-                               j, num_events));
-                    }
-                    return OMPI_ERROR;
-                }
-
-                /* Handle work completions */
-                switch(seg->us_type) {
-
-                /**** Send ACK completions ****/
-                case OMPI_BTL_USNIC_SEG_ACK:
-                    assert(IBV_WC_SEND == cwc->opcode);
-                    ompi_btl_usnic_ack_complete(module,
-                            (ompi_btl_usnic_ack_segment_t *)seg);
-                    break;
-
-                /**** Send of frag segment completion ****/
-                case OMPI_BTL_USNIC_SEG_FRAG:
-                    assert(IBV_WC_SEND == cwc->opcode);
-                    ompi_btl_usnic_frag_send_complete(module,
-                            (ompi_btl_usnic_frag_segment_t*)seg);
-                    break;
-
-                /**** Send of chunk segment completion ****/
-                case OMPI_BTL_USNIC_SEG_CHUNK:
-                    assert(IBV_WC_SEND == cwc->opcode);
-                    ompi_btl_usnic_chunk_send_complete(module,
-                            (ompi_btl_usnic_chunk_segment_t*)seg);
-                    break;
-
-                /**** Receive completions ****/
-                case OMPI_BTL_USNIC_SEG_RECV:
-                    assert(IBV_WC_RECV == cwc->opcode);
-                    ompi_btl_usnic_recv(module, rseg, &repost_recv_head);
-                    break;
-
-                default:
-                    BTL_ERROR(("Unhandled completion opcode %d segment type %d",
-                                cwc->opcode, seg->us_type));
-                    break;
-                }
+                count += usnic_handle_completion(module, channel, &wc[j]);
             }
-            count += num_events;
+
+            /* return error if detected - this may be slightly deferred
+             * since fastpath avoids the "if" of checking this.
+             */
+            if (channel->chan_error) {
+                channel->chan_error = false;
+                return OMPI_ERROR;
+            }
 
             /* progress sends */
             ompi_btl_usnic_module_progress_sends(module);
 
             /* Re-post all the remaining receive buffers */
-            if (OPAL_LIKELY(repost_recv_head)) {
-#if MSGDEBUG
-                /* For the debugging case, check the state of each
-                   segment */
-                {
-                    struct ibv_recv_wr *wr = repost_recv_head;
-                    while (wr) {
-                        seg = (ompi_btl_usnic_recv_segment_t*)(unsigned long)
-                            wr->wr_id;
-                        assert(OMPI_BTL_USNIC_SEG_RECV == seg->us_type);
-                        FRAG_HISTORY(frag, "Re-post: ibv_post_recv");
-                        wr = wr->next;
-                    }
-                }
-#endif
-
-                if (OPAL_UNLIKELY(ibv_post_recv(channel->qp, 
-                                            repost_recv_head, &bad_wr) != 0)) {
+            if (OPAL_LIKELY(channel->repost_recv_head)) {
+                rc = ibv_post_recv(channel->qp, 
+                                channel->repost_recv_head, &bad_wr);
+                channel->repost_recv_head = NULL;
+                if (OPAL_UNLIKELY(rc != 0)) {
                     BTL_ERROR(("error posting recv: %s\n", strerror(errno)));
                     return OMPI_ERROR;
                 }
-                repost_recv_head = NULL;
             }
         }
     }
@@ -1148,6 +1209,7 @@ static usnic_if_filter_t *parse_ifex_str(const char *orig_str,
     /* Get a wrapper for the filter */
     filter = calloc(sizeof(*filter), 1);
     if (NULL == filter) {
+        OMPI_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         return NULL;
     }
 
@@ -1161,6 +1223,7 @@ static usnic_if_filter_t *parse_ifex_str(const char *orig_str,
     /* upper bound: each entry could be a mask */
     filter->elts = malloc(sizeof(*filter->elts) * n_argv);
     if (NULL == filter->elts) {
+        OMPI_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         free(filter);
         opal_argv_free(argv);
         return NULL;

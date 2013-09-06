@@ -214,9 +214,6 @@ ompi_btl_usnic_endpoint_enqueue_frag(
     ompi_btl_usnic_endpoint_t *endpoint,
     ompi_btl_usnic_send_frag_t *frag)
 {
-    ompi_btl_usnic_module_t *module;
-
-    module = endpoint->endpoint_module;
 #if MSGDEBUG1
     opal_output(0, "enq_frag: frag=%p, endpoint=%p, type=%d, len=%"PRIu64"\n",
             (void*)frag, (void*)endpoint, frag->sf_base.uf_type,
@@ -234,9 +231,6 @@ ompi_btl_usnic_endpoint_enqueue_frag(
 
     /* possibly make this endpoint ready to send again */
     ompi_btl_usnic_check_rts(endpoint);
-    
-    /* post sends now if space available */
-    ompi_btl_usnic_module_progress_sends(module);
 
     return OMPI_SUCCESS;
 }

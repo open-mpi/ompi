@@ -39,6 +39,8 @@
 #include "ompi/mca/btl/base/base.h"
 #include "ompi/mca/mpool/grdma/mpool_grdma.h"
 
+#include "btl_usnic_compat.h"
+
 BEGIN_C_DECLS
 
 /*
@@ -56,9 +58,6 @@ get_nsec(void)
 
 #define container_of(ptr, type, member) ( \
         (type *)( ((char *)(ptr)) - offsetof(type,member) ))
-
-/* Isolate code differences between v1.6, v1.7, etc. */
-#define USNIC_OUT ompi_btl_base_framework.framework_output
 
 /* Set to 1 to turn out a LOT of debugging ouput */
 #define MSGDEBUG2 (MSGDEBUG1||0)     /* temp */

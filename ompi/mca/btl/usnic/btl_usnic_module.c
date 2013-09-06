@@ -240,7 +240,8 @@ usnic_alloc(struct mca_btl_base_module_t* btl,
         }
         frag = &lfrag->lsf_base;
 
-abort();    /* XXX - we don't ever want to see this... */
+        BTL_ERROR(("large frag in usnic_alloc()\n"));
+        abort();    /* XXX - we don't ever want to see this... */
     }
 
 #if MSGDEBUG2
@@ -282,7 +283,7 @@ static int usnic_free(struct mca_btl_base_module_t* btl,
 #if MSGDEBUG1
     opal_output(0, "usnic_free: %p\n", (void*)frag);
 #endif
-    OMPI_FREE_LIST_RETURN(frag->uf_freelist, &(frag->uf_base.super));
+    OMPI_FREE_LIST_RETURN_MT(frag->uf_freelist, &(frag->uf_base.super));
 
     return OMPI_SUCCESS;
 }
@@ -308,6 +309,22 @@ static int usnic_free(struct mca_btl_base_module_t* btl,
 /**
  * Pack data and return a descriptor that can be used for send (or
  * put, but we don't do that here in usnic).
+ * Four different cases to handle:
+ * large vs small, small means fits into a single segment
+ * convertor or not, if convertor we need to copy the data, non-convertor
+ *   we will leave data in place
+ *
+ * small,convertor: copy the data into the segment associated with small frag,
+ *      PML will put header in this seg, single entry in desc SG
+ * small,no convertor: PML will put header in attached segment SG[0],
+ *      save pointer to user data in SG[1], 2 SG entries
+ * large,convertor: copy data into chain of segments, leaving room for 
+ *      PML header at start of 1st segment, 2 SG entries
+ * large,not convertor: PML will put header in buffer in the large frag itself,
+ *      save pointer to user data in SG[1]. 2 SG entries
+ *
+ * NOTE that the *only* reason this routine is allowed to return a size smaller
+ * than was requested is if the convertor cannot process the entire amount.
  */
 static mca_btl_base_descriptor_t*
 usnic_prepare_src(
@@ -322,25 +339,17 @@ usnic_prepare_src(
 {
     ompi_btl_usnic_module_t *module = (ompi_btl_usnic_module_t*) base_module;
     ompi_btl_usnic_send_frag_t *frag;
-    void *data_ptr;
     uint32_t payload_len;
+    struct iovec iov;
+    uint32_t iov_count;
+    size_t max_data;
+    int rc;
 
     /*
-     * If data is contiguous, get the data pointer for it, else leave
-     * data_ptr == NULL to indicate converter in use.
-     */
-    if (OPAL_UNLIKELY(opal_convertor_need_buffers(convertor))) {
-        data_ptr = NULL;
-    } else {
-        opal_convertor_get_current_pointer (convertor, &data_ptr);
-    }
-
-    /*
-     * if convertor is involved, or total payload len fits in one MTU,
-     * use small send, else large
+     * if total payload len fits in one MTU use small send, else large
      */
     payload_len = *size + reserve;
-    if (data_ptr == NULL || payload_len <= module->max_frag_payload) {
+    if (payload_len <= module->max_frag_payload) {
         ompi_btl_usnic_small_send_frag_t *sfrag;
 
         /* Get holder for the msg */
@@ -356,11 +365,7 @@ usnic_prepare_src(
          * because we might still use INLINE for the send, and in that case
          * we do not want to copy the data at all.
          */
-        if (data_ptr == NULL) {
-            struct iovec iov;
-            uint32_t iov_count;
-            size_t max_data;
-            int rc;
+        if (OPAL_UNLIKELY(opal_convertor_need_buffers(convertor))) {
 
             /* put user data just after end of 1st seg (PML header) */
             if (payload_len > module->max_frag_payload) {
@@ -374,10 +379,21 @@ usnic_prepare_src(
             rc = opal_convertor_pack(convertor, &iov, &iov_count, &max_data);
             if (OPAL_UNLIKELY(rc < 0)) {
                 ompi_btl_usnic_send_frag_return_cond(module, frag);
+                BTL_ERROR(("small convertor error"));
                 abort();    /* XXX */
             }
             *size = max_data;
             payload_len = max_data + reserve;
+            sfrag->ssf_base.sf_convertor = convertor;
+            frag->sf_base.uf_base.des_src_cnt = 1;
+            frag->sf_base.uf_src_seg[0].seg_len = payload_len;
+        } else {
+            opal_convertor_get_current_pointer(convertor,
+                    &sfrag->ssf_base.sf_base.uf_src_seg[1].seg_addr.pval);
+            sfrag->ssf_base.sf_convertor = NULL;
+            frag->sf_base.uf_base.des_src_cnt = 2;
+            frag->sf_base.uf_src_seg[0].seg_len = reserve;
+            frag->sf_base.uf_src_seg[1].seg_len = *size;
         }
     } else {
         ompi_btl_usnic_large_send_frag_t *lfrag;
@@ -389,25 +405,92 @@ usnic_prepare_src(
         }
         frag = &lfrag->lsf_base;
 
+        /*
+         * If a covertor is required, pack the data into a chain of segments.
+         * We will later send from the segments one at a time.  This allows
+         * us to absorb a large convertor-based send and still give an accurate
+         * data count back to the PML
+         */
+        if (OPAL_UNLIKELY(opal_convertor_need_buffers(convertor))) {
+            ompi_btl_usnic_chunk_segment_t *seg;
+            unsigned pml_hdr_len;
+            unsigned bytes_to_pack;
+
+            pml_hdr_len = reserve;
+            bytes_to_pack = *size;
+            while (bytes_to_pack > 0) {
+                seg = ompi_btl_usnic_chunk_segment_alloc(module);
+                if (OPAL_UNLIKELY(NULL == seg)) {
+                    BTL_ERROR(("large convertor segment allocation error"));
+                    abort(); /* XXX */
+                }
+
+                /* put user data just after end of 1st seg (PML header) */
+                payload_len = pml_hdr_len + bytes_to_pack;
+                if (payload_len > module->max_chunk_payload) {
+                    payload_len = module->max_chunk_payload;
+                }
+                iov.iov_len = payload_len - pml_hdr_len;
+                iov.iov_base = (IOVBASE_TYPE*)
+                    (seg->ss_base.us_payload.raw + pml_hdr_len);
+                iov_count = 1;
+                max_data = iov.iov_len;
+                rc = opal_convertor_pack(convertor, &iov, &iov_count, &max_data);
+                if (OPAL_UNLIKELY(rc < 0)) {
+                    ompi_btl_usnic_send_frag_return_cond(module, frag);
+                    BTL_ERROR(("large convertor error"));
+                    abort();    /* XXX */
+                }
+
+                /* If unable to pack any of the remaining bytes, release the
+                 * most recently allocated segment and finish processing.
+                 */
+                if (max_data == 0) {
+                    ompi_btl_usnic_chunk_segment_return(module, seg);
+                    *size -= bytes_to_pack;
+                    break;
+                }
+
+                /* append segment of data to chain to send */
+                opal_list_append(&lfrag->lsf_seg_chain,
+                        &seg->ss_base.us_list.super);
+                seg->ss_parent_frag = &lfrag->lsf_base;
+                seg->ss_base.us_sg_entry[0].length = max_data + pml_hdr_len;
+
+                pml_hdr_len = 0;
+                bytes_to_pack -= max_data;
+            }
+            payload_len = *size + reserve;
+
+            seg = (ompi_btl_usnic_chunk_segment_t *)
+                opal_list_get_first(&lfrag->lsf_seg_chain);
+            lfrag->lsf_base.sf_base.uf_src_seg[0].seg_addr.pval =
+                seg->ss_base.us_payload.raw;
+
+            lfrag->lsf_base.sf_convertor = convertor;
+        } else {
+            opal_convertor_get_current_pointer(convertor,
+                    &lfrag->lsf_base.sf_base.uf_src_seg[1].seg_addr.pval);
+            lfrag->lsf_base.sf_convertor = NULL;
+            lfrag->lsf_base.sf_base.uf_src_seg[0].seg_addr.pval =
+                &lfrag->lsf_pml_header;
+        }
+
+
         /* Save info about the frag */
         lfrag->lsf_cur_offset = 0;
         lfrag->lsf_bytes_left = payload_len;
 
         /* make sure PML header small enough */
         assert(reserve < sizeof(lfrag->lsf_pml_header));
+
+        frag->sf_base.uf_base.des_src_cnt = 2;
+        frag->sf_base.uf_src_seg[0].seg_len = reserve;
+        frag->sf_base.uf_src_seg[1].seg_len = *size;
     }
 
     /* fill in segment sizes */
-    frag->sf_base.uf_src_seg[0].seg_len = reserve;
-    frag->sf_base.uf_src_seg[1].seg_len = *size;
     frag->sf_size = payload_len;
-    frag->sf_base.uf_base.des_src_cnt = 2;
-    if (data_ptr != NULL) {
-        frag->sf_base.uf_src_seg[1].seg_addr.pval = data_ptr;
-        frag->sf_convertor = NULL;
-    } else {
-        frag->sf_convertor = convertor;
-    } 
 
     /* set up common parts of frag */
     frag->sf_base.uf_base.des_flags = flags;
@@ -454,7 +537,7 @@ usnic_prepare_dst(
     }
 
     /* find start of the data */
-    opal_convertor_get_current_pointer (convertor, (void **) &data_ptr);
+    opal_convertor_get_current_pointer(convertor, (void **) &data_ptr);
 
     /* make a seg entry pointing at data_ptr */
     pfrag->uf_dst_seg[0].seg_addr.pval = data_ptr;
@@ -831,6 +914,7 @@ usnic_do_resends(
         ret = opal_hotel_checkin(&endpoint->endpoint_hotel,
                 sseg, &sseg->ss_hotel_room);
         if (OPAL_UNLIKELY(OPAL_SUCCESS != ret)) {
+            BTL_ERROR(("hotel checkin failed\n"));
             abort();    /* should not be possible */
         }
     }
@@ -850,66 +934,80 @@ usnic_handle_large_send(
     size_t max_data;
 
     lfrag = (ompi_btl_usnic_large_send_frag_t *)frag;
-
-    sseg = ompi_btl_usnic_chunk_segment_alloc(module);
-    if (OPAL_UNLIKELY(NULL == sseg)) {
-        /* XXX do something better here */
-        abort();
-    }
-#if MSGDEBUG1
-    opal_output(0, "send large, frag=%p, addr=%p\n", (void*)lfrag, (void*)sseg->ss_base.us_payload.raw);
-#endif
-
-    /* save back pointer to fragment */
-    sseg->ss_parent_frag = frag;
-
-    /* If this is the first chunk of the frag, need to insert
-     * the PML header at the start.  On subsequent chunks,
-     * skip the PML header
-     */
     if (lfrag->lsf_cur_offset == 0) {
 
         /* assign a fragment ID */
         do {
             lfrag->lsf_frag_id = endpoint->endpoint_next_frag_id++;
         } while (lfrag->lsf_frag_id == 0);
-
-        /* copy in the PML header */
-        memcpy(sseg->ss_base.us_payload.raw, lfrag->lsf_pml_header,
-                lfrag->lsf_base.sf_base.uf_src_seg[0].seg_len);
-
-        /* adjust data pointer and len to skip PML */
-        iov.iov_base = sseg->ss_base.us_payload.raw +
-            lfrag->lsf_base.sf_base.uf_src_seg[0].seg_len;
-
-        /* payload so far, modified later */
-        payload_len = lfrag->lsf_base.sf_base.uf_src_seg[0].seg_len;
-    } else {
-        iov.iov_base = sseg->ss_base.us_payload.raw;
-        payload_len = 0;
     }
 
-    /* payload_len is how much payload we have already used up
-     * with header.  max_data is the amount of further data we
-     * can put into this segment
+    if (OPAL_LIKELY(lfrag->lsf_base.sf_convertor == NULL)) {
+
+        sseg = ompi_btl_usnic_chunk_segment_alloc(module);
+        if (OPAL_UNLIKELY(NULL == sseg)) {
+            /* XXX do something better here */
+            BTL_ERROR(("error alloc seg for large send\n"));
+            abort();
+        }
+#if MSGDEBUG1
+        opal_output(0, "send large, frag=%p, addr=%p\n", (void*)lfrag, (void*)sseg->ss_base.us_payload.raw);
+#endif
+
+        /* save back pointer to fragment */
+        sseg->ss_parent_frag = frag;
+
+        /* If this is the first chunk of the frag, need to insert
+         * the PML header at the start.  On subsequent chunks,
+         * skip the PML header
+         */
+        if (lfrag->lsf_cur_offset == 0) {
+
+            /* copy in the PML header */
+            memcpy(sseg->ss_base.us_payload.raw, lfrag->lsf_pml_header,
+                    lfrag->lsf_base.sf_base.uf_src_seg[0].seg_len);
+
+            /* adjust data pointer and len to skip PML */
+            iov.iov_base = sseg->ss_base.us_payload.raw +
+                lfrag->lsf_base.sf_base.uf_src_seg[0].seg_len;
+
+            /* payload so far, modified later */
+            payload_len = lfrag->lsf_base.sf_base.uf_src_seg[0].seg_len;
+        } else {
+            iov.iov_base = sseg->ss_base.us_payload.raw;
+            payload_len = 0;
+        }
+
+        /* payload_len is how much payload we have already used up
+         * with header.  max_data is the amount of further data we
+         * can put into this segment
+         */
+        max_data = payload_len + lfrag->lsf_bytes_left;
+        if (max_data > module->max_chunk_payload) {
+            max_data = module->max_chunk_payload;
+        }
+        max_data -= payload_len;
+
+        /* fill in destination for pack */
+        iov.iov_len = max_data;
+
+        /* pack the next bit of data */
+        memcpy(iov.iov_base,
+                lfrag->lsf_base.sf_base.uf_src_seg[1].seg_addr.pval,
+                max_data);
+        lfrag->lsf_base.sf_base.uf_src_seg[1].seg_addr.lval += max_data;
+
+        /* get real payload length */
+        payload_len += max_data;
+
+    /* We are sending converted data, which means we have a list of segments 
+     * containing the data.  PML header is already in first segment
      */
-    max_data = payload_len + lfrag->lsf_bytes_left;
-    if (max_data > module->max_chunk_payload) {
-        max_data = module->max_chunk_payload;
+    } else {
+        sseg = (ompi_btl_usnic_send_segment_t *)
+            opal_list_remove_first(&lfrag->lsf_seg_chain);
+        payload_len = sseg->ss_base.us_sg_entry[0].length;
     }
-    max_data -= payload_len;
-
-    /* fill in destination for pack */
-    iov.iov_len = max_data;
-
-    /* pack the next bit of data (large frags never have convertors) */
-    memcpy(iov.iov_base,
-            lfrag->lsf_base.sf_base.uf_src_seg[1].seg_addr.pval,
-            max_data);
-    lfrag->lsf_base.sf_base.uf_src_seg[1].seg_addr.lval += max_data;
-
-    /* get real payload length */
-    payload_len += max_data;
 
     /* fill in BTL header with frag info */
     chp = sseg->ss_base.us_btl_chunk_header;
@@ -961,6 +1059,8 @@ usnic_handle_large_send(
 
 /*
  * Progress the send engine.
+ * Should only ever be called from usnic_component_progress() to 
+ * avoid re-entrancy issues.
  */
 void
 ompi_btl_usnic_module_progress_sends(
@@ -971,17 +1071,6 @@ ompi_btl_usnic_module_progress_sends(
     ompi_btl_usnic_endpoint_t *endpoint;
     struct ompi_btl_usnic_channel_t *data_channel;
     struct ompi_btl_usnic_channel_t *prio_channel;
-    static bool progressing = false;
-
-    /*
-     * Since we call this routine from within enqueue_frag, it is possible
-     * that we will be called re-entrantly from a callback routine.
-     * Do nothing if re-entrantly called.
-     */
-    if (progressing) {
-        return;
-    }
-    progressing = true;
 
     /*
      * Post all the sends that we can 
@@ -1096,8 +1185,6 @@ ompi_btl_usnic_module_progress_sends(
 
         endpoint = next_endpoint;
     }
-
-    progressing = false;
 }
 
 /*
@@ -1138,12 +1225,10 @@ static int usnic_send(struct mca_btl_base_module_t* base_module,
 
     /*
      * If this fragment is small enough to inline,
-     * and the data is contiguous (sf_convertor == NULL)
      * and we have enough send WQEs,
      * then inline and fastpath it
      */
     if (frag->sf_ack_bytes_left < module->max_tiny_payload &&
-            frag->sf_convertor == NULL &&
             WINDOW_OPEN(endpoint) &&
             (module->mod_channels[USNIC_PRIORITY_CHANNEL].sd_wqe >= 
              module->mod_channels[USNIC_PRIORITY_CHANNEL].fastsend_wqe_thresh)) {
@@ -1173,6 +1258,7 @@ static int usnic_send(struct mca_btl_base_module_t* base_module,
         sseg->ss_send_desc.send_flags |= IBV_SEND_INLINE;
         sseg->ss_channel = USNIC_PRIORITY_CHANNEL;
 #if MSGDEBUG2
+        opal_output(0, "conv = %p\n", frag->sf_convertor);
         opal_output(0, "  inline frag %d segs %p(%d) + %p(%d)\n",
                 (int)frag->sf_base.uf_base.des_src_cnt,
                 frag->sf_base.uf_src_seg[0].seg_addr.pval,
@@ -1516,11 +1602,13 @@ static int
 ompi_btl_usnic_channel_init(
     ompi_btl_usnic_module_t *module,
     struct ompi_btl_usnic_channel_t *channel,
+    int index,
     int mtu,
     int rd_num,
     int sd_num)
 {
     struct ibv_context *ctx;
+    uint32_t segsize;
     ompi_btl_usnic_recv_segment_t *rseg;
     ompi_free_list_item_t* item;
     struct ibv_recv_wr* bad_wr;
@@ -1528,10 +1616,12 @@ ompi_btl_usnic_channel_init(
     int rc;
 
     ctx = module->device_context;
-
     channel->chan_mtu = mtu;
     channel->chan_rd_num = rd_num;
     channel->chan_sd_num = sd_num;
+    channel->chan_index = index;
+    channel->chan_deferred_recv = NULL;
+    channel->chan_error = false;
 
     channel->sd_wqe = sd_num;
     channel->fastsend_wqe_thresh = sd_num - 10;
@@ -1557,14 +1647,18 @@ ompi_btl_usnic_channel_init(
         goto error;
     }
 
-    /* Initialize pool of receive segments */
+    /*
+     * Initialize pool of receive segments.  round MTU up to cache line size
+     * so that each segment is guaranteed to start on a cache line boundary
+     */
+    segsize = (mtu + opal_cache_line_size - 1) & ~(opal_cache_line_size - 1);
     OBJ_CONSTRUCT(&channel->recv_segs, ompi_free_list_t);
     channel->recv_segs.ctx = module;
     rc = ompi_free_list_init_new(&channel->recv_segs,
                                  sizeof(ompi_btl_usnic_recv_segment_t),
                                  opal_cache_line_size,
                                  OBJ_CLASS(ompi_btl_usnic_recv_segment_t),
-                                 mtu,
+                                 segsize,
                                  opal_cache_line_size,
                                  rd_num,
                                  rd_num,
@@ -1576,7 +1670,7 @@ ompi_btl_usnic_channel_init(
 
     /* Post receive descriptors */
     for (i = 0; i < rd_num; i++) {
-        OMPI_FREE_LIST_GET(&channel->recv_segs, item, rc);
+        OMPI_FREE_LIST_GET_MT(&channel->recv_segs, item);
         assert(NULL != item);
         rseg = (ompi_btl_usnic_recv_segment_t*)item;
 
@@ -1649,6 +1743,7 @@ int ompi_btl_usnic_module_init(ompi_btl_usnic_module_t *module)
     struct mca_mpool_base_resources_t mpool_resources;
     struct ibv_context *ctx = module->device_context;
     uint32_t ack_segment_len;
+    uint32_t segsize;
 
 #if OPAL_HAVE_HWLOC
     /* If this process is bound to a single NUMA locality, calculate
@@ -1707,12 +1802,14 @@ int ompi_btl_usnic_module_init(ompi_btl_usnic_module_t *module)
     /* initialize data and priority channels */
     rc = ompi_btl_usnic_channel_init(module,
             &module->mod_channels[USNIC_PRIORITY_CHANNEL],
+            USNIC_PRIORITY_CHANNEL,
             module->tiny_mtu, module->prio_rd_num, module->prio_sd_num);
     if (rc != OMPI_SUCCESS) {
         goto chan_destroy;
     }
     rc = ompi_btl_usnic_channel_init(module,
             &module->mod_channels[USNIC_DATA_CHANNEL],
+            USNIC_DATA_CHANNEL,
             module->if_mtu, module->rd_num, module->sd_num);
     if (rc != OMPI_SUCCESS) {
         goto chan_destroy;
@@ -1745,6 +1842,9 @@ int ompi_btl_usnic_module_init(ompi_btl_usnic_module_t *module)
 
     /* list of endpoints that are ready to send */
     OBJ_CONSTRUCT(&module->endpoints_with_sends, opal_list_t);
+    
+    segsize = (module->if_mtu + opal_cache_line_size - 1) &
+        ~(opal_cache_line_size - 1);
 
     /* Send frags freelists */
     module->small_send_frags.ctx = module;
@@ -1753,7 +1853,7 @@ int ompi_btl_usnic_module_init(ompi_btl_usnic_module_t *module)
                                  sizeof(ompi_btl_usnic_small_send_frag_t),
                                  opal_cache_line_size,
                                  OBJ_CLASS(ompi_btl_usnic_small_send_frag_t),
-                                 module->if_mtu,
+                                 segsize,
                                  opal_cache_line_size,
                                  module->sd_num * 4,
                                  -1,
@@ -1796,7 +1896,7 @@ int ompi_btl_usnic_module_init(ompi_btl_usnic_module_t *module)
                                  sizeof(ompi_btl_usnic_chunk_segment_t),
                                  opal_cache_line_size,
                                  OBJ_CLASS(ompi_btl_usnic_chunk_segment_t),
-                                 module->if_mtu,
+                                 segsize,
                                  opal_cache_line_size,
                                  module->sd_num * 4,
                                  -1,
@@ -1806,7 +1906,8 @@ int ompi_btl_usnic_module_init(ompi_btl_usnic_module_t *module)
 
     /* ACK segments freelist */
     module->ack_segs.ctx = module;
-    ack_segment_len = sizeof(ompi_btl_usnic_btl_header_t);
+    ack_segment_len = (sizeof(ompi_btl_usnic_btl_header_t) +
+            opal_cache_line_size - 1) & ~(opal_cache_line_size - 1);
     OBJ_CONSTRUCT(&module->ack_segs, ompi_free_list_t);
     rc = ompi_free_list_init_new(&module->ack_segs,
                                  sizeof(ompi_btl_usnic_ack_segment_t),
@@ -1893,7 +1994,9 @@ ompi_btl_usnic_module_t ompi_btl_usnic_module_template = {
         MCA_BTL_FLAGS_SEND | 
             MCA_BTL_FLAGS_PUT |
             MCA_BTL_FLAGS_SEND_INPLACE,
+#ifndef OMPI_BTL_USNIC_CISCO_V1_6
         sizeof(mca_btl_base_segment_t), /* seg size */
+#endif
         usnic_add_procs,
         usnic_del_procs,
         NULL, /*ompi_btl_usnic_register*/

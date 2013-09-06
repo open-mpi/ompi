@@ -112,7 +112,7 @@ ompi_btl_usnic_proc_lookup_ompi(ompi_proc_t* ompi_proc)
  */
 ompi_btl_usnic_endpoint_t *
 ompi_btl_usnic_proc_lookup_endpoint(ompi_btl_usnic_module_t *receiver,
-                                      uint64_t sender_hashed_rte_name)
+                                    uint64_t sender_hashed_rte_name)
 {
     size_t i;
     uint32_t mynet, peernet;
@@ -224,6 +224,7 @@ static ompi_btl_usnic_proc_t *create_proc(ompi_proc_t *ompi_proc)
     proc->proc_modex_claimed = (bool*) 
         calloc(proc->proc_modex_count, sizeof(bool));
     if (NULL == proc->proc_modex_claimed) {
+        OMPI_ERROR_LOG(OMPI_ERR_OUT_OF_RESOURCE);
         OBJ_RELEASE(proc);
         return NULL;
     }
@@ -231,6 +232,7 @@ static ompi_btl_usnic_proc_t *create_proc(ompi_proc_t *ompi_proc)
     proc->proc_endpoints = (mca_btl_base_endpoint_t**)
         calloc(proc->proc_modex_count, sizeof(mca_btl_base_endpoint_t*));
     if (NULL == proc->proc_endpoints) {
+        OMPI_ERROR_LOG(OMPI_ERR_OUT_OF_RESOURCE);
         OBJ_RELEASE(proc);
         return NULL;
     }
