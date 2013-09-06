@@ -300,7 +300,7 @@ drop:
 /*
  */
 static inline void
-ompi_btl_usnic_recv_frag_bookeeping(
+ompi_btl_usnic_recv_frag_bookkeeping(
     ompi_btl_usnic_module_t* module,
     ompi_btl_usnic_recv_segment_t *seg,
     ompi_btl_usnic_channel_t *channel)
@@ -362,8 +362,8 @@ ompi_btl_usnic_recv(ompi_btl_usnic_module_t *module,
                 bseg->us_btl_header->payload_type) &&
             seg->rs_base.us_btl_header->put_addr == NULL) {
 
-        /* do the receive bookeeping */
-        ompi_btl_usnic_recv_frag_bookeeping(module, seg, channel);
+        /* do the receive bookkeeping */
+        ompi_btl_usnic_recv_frag_bookkeeping(module, seg, channel);
 
         /* Pass this segment up to the PML.
          * Be sure to get the payload length from the BTL header because

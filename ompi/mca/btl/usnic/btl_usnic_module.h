@@ -66,7 +66,7 @@ typedef struct ompi_btl_usnic_channel_t {
     /* fastsend enabled if sd_wqe >= fastsend_wqe_thresh */
     int fastsend_wqe_thresh;
 
-    /* pointer to receive segment whose bookeeping has been deferred */
+    /* pointer to receive segment whose bookkeeping has been deferred */
     struct ompi_btl_usnic_recv_segment_t *chan_deferred_recv;
 
     /** queue pair */
