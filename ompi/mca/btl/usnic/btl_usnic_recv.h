@@ -247,7 +247,6 @@ ompi_btl_usnic_recv_fast(ompi_btl_usnic_module_t *module,
     mca_btl_active_message_callback_t* reg;
     ompi_btl_usnic_seq_t seq;
     ompi_btl_usnic_endpoint_t *endpoint;
-    uint32_t window_index;
     int i;
 
     bseg = &seg->rs_base;
@@ -300,7 +299,7 @@ drop:
 
 /*
  */
-static inline int
+static inline void
 ompi_btl_usnic_recv_frag_bookeeping(
     ompi_btl_usnic_module_t* module,
     ompi_btl_usnic_recv_segment_t *seg,
@@ -347,8 +346,6 @@ ompi_btl_usnic_recv(ompi_btl_usnic_module_t *module,
     ompi_btl_usnic_segment_t *bseg;
     mca_btl_active_message_callback_t* reg;
     ompi_btl_usnic_endpoint_t *endpoint;
-    ompi_btl_usnic_btl_chunk_header_t *chunk_hdr;
-    uint32_t window_index;
 #if MSGDEBUG1
     char src_mac[32];
     char dest_mac[32];

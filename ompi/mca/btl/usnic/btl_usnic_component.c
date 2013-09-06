@@ -970,7 +970,6 @@ static int usnic_component_progress_2(void)
     uint32_t i;
     int j, count = 0, num_events;
     struct ibv_recv_wr *bad_wr;
-    struct ibv_wc* cwc;
     ompi_btl_usnic_module_t* module;
     static struct ibv_wc wc[OMPI_BTL_USNIC_NUM_WC];
     ompi_btl_usnic_channel_t *channel;
