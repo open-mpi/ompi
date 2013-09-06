@@ -32,14 +32,6 @@
 #  define OMPI_ERROR_LOG ORTE_ERROR_LOG
 #  define OMPI_NAME_PRINT ORTE_NAME_PRINT
 
-#  define OMPI_FREE_LIST_GET_MT(list_, item_) \
-    do { \
-        int rc_ __opal_attribute_unused__; \
-        OMPI_FREE_LIST_GET(list_, item_, rc_); \
-    } while (0)
-#  define OMPI_FREE_LIST_RETURN_MT(list_, item_) \
-        OMPI_FREE_LIST_RETURN(list_, item_)
-
 #  define USNIC_OUT mca_btl_base_output
 #  define proc_bound() ompi_btl_usnic_proc_bound_v1_6_helper()
 
@@ -61,6 +53,19 @@
 
 #else
 #  error OMPI version too old (<= 1.6)
+#endif
+
+/* The FREE_LIST_*_MT stuff was introduced on the SVN trunk in r28722
+   (2013-07-04), but so far, has not been merged into the v1.7 branch
+   yet (2013-09-06). */
+#ifndef OMPI_FREE_LIST_GET_MT
+#  define OMPI_FREE_LIST_GET_MT(list_, item_) \
+    do { \
+        int rc_ __opal_attribute_unused__; \
+        OMPI_FREE_LIST_GET(list_, item_, rc_); \
+    } while (0)
+#  define OMPI_FREE_LIST_RETURN_MT(list_, item_) \
+        OMPI_FREE_LIST_RETURN(list_, item_)
 #endif
 
 #endif /* BTL_USNIC_COMPAT_H */
