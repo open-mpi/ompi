@@ -213,6 +213,8 @@ large_send_frag_constructor(ompi_btl_usnic_large_send_frag_t *lfrag)
     /* save data pointer for PML */
     lfrag->lsf_base.sf_base.uf_src_seg[0].seg_addr.pval =
                     &lfrag->lsf_pml_header;
+
+    OBJ_CONSTRUCT(&lfrag->lsf_seg_chain, opal_list_t);
 }
 
 static void

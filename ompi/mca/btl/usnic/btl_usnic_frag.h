@@ -274,6 +274,8 @@ typedef struct ompi_btl_usnic_large_send_frag_t {
     uint32_t lsf_frag_id;       /* fragment ID for reassembly */
     size_t lsf_cur_offset;      /* current offset into message */
     size_t lsf_bytes_left;      /* bytes remaining to send */
+
+    opal_list_t lsf_seg_chain;  /* chain of segments for converted data */
     
 } ompi_btl_usnic_large_send_frag_t;
 
