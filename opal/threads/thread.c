@@ -46,7 +46,6 @@ static void opal_thread_construct(opal_thread_t *t)
 #endif
 }
 
-
 #ifdef __WINDOWS__
 
 /************************************************************************
