@@ -222,13 +222,13 @@ ompi_btl_usnic_check_rx_seq(
     }
 
     *window_index = i;
-    return true;
+    return 0;
 
 dup_needs_ack:
     if (!endpoint->endpoint_ack_needed) {
         ompi_btl_usnic_add_to_endpoints_needing_ack(endpoint);
     }
-    return false;
+    return -1;
 }
 
 /*
@@ -299,7 +299,7 @@ drop:
 
 /*
  */
-static inline void
+static inline int
 ompi_btl_usnic_recv_frag_bookkeeping(
     ompi_btl_usnic_module_t* module,
     ompi_btl_usnic_recv_segment_t *seg,
@@ -307,6 +307,7 @@ ompi_btl_usnic_recv_frag_bookkeeping(
 {
     ompi_btl_usnic_endpoint_t* endpoint;
     uint32_t window_index;
+    int rc;
 
     endpoint = seg->rs_endpoint;
 
@@ -318,7 +319,8 @@ ompi_btl_usnic_recv_frag_bookkeeping(
     ++module->num_total_recvs;
 
     /* Do late processing of incoming sequence # */
-    if (!ompi_btl_usnic_check_rx_seq(endpoint, seg, &window_index)) {
+    rc = ompi_btl_usnic_check_rx_seq(endpoint, seg, &window_index);
+    if (OPAL_UNLIKELY(rc != 0)) {
         goto repost;
     }
 
@@ -327,11 +329,18 @@ ompi_btl_usnic_recv_frag_bookkeeping(
     ompi_btl_usnic_update_window(endpoint, window_index);
 
 repost:
+    /* if endpoint exiting, and all ACKs received, release the endpoint */
+    if (endpoint->endpoint_exiting && ENDPOINT_DRAINED(endpoint)) {
+        OBJ_RELEASE(endpoint);
+    }
+
     ++module->num_recv_reposts;
 
     /* Add recv to linked list for reposting */
     seg->rs_recv_desc.next = channel->repost_recv_head;
     channel->repost_recv_head = &seg->rs_recv_desc;
+
+    return rc;
 }
 
 /*
@@ -346,6 +355,7 @@ ompi_btl_usnic_recv(ompi_btl_usnic_module_t *module,
     ompi_btl_usnic_segment_t *bseg;
     mca_btl_active_message_callback_t* reg;
     ompi_btl_usnic_endpoint_t *endpoint;
+    int rc;
 #if MSGDEBUG1
     char src_mac[32];
     char dest_mac[32];
@@ -363,7 +373,10 @@ ompi_btl_usnic_recv(ompi_btl_usnic_module_t *module,
             seg->rs_base.us_btl_header->put_addr == NULL) {
 
         /* do the receive bookkeeping */
-        ompi_btl_usnic_recv_frag_bookkeeping(module, seg, channel);
+        rc = ompi_btl_usnic_recv_frag_bookkeeping(module, seg, channel);
+        if (rc != 0) {
+            return;
+        }
 
         /* Pass this segment up to the PML.
          * Be sure to get the payload length from the BTL header because

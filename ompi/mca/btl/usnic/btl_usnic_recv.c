@@ -57,6 +57,7 @@ void ompi_btl_usnic_recv_call(ompi_btl_usnic_module_t *module,
     ompi_btl_usnic_endpoint_t *endpoint;
     ompi_btl_usnic_btl_chunk_header_t *chunk_hdr;
     uint32_t window_index;
+    int rc;
 #if MSGDEBUG1
     char src_mac[32];
     char dest_mac[32];
@@ -104,7 +105,10 @@ void ompi_btl_usnic_recv_call(ompi_btl_usnic_module_t *module,
     if (OMPI_BTL_USNIC_PAYLOAD_TYPE_FRAG == bseg->us_btl_header->payload_type) {
 
         /* do the receive bookkeeping */
-        ompi_btl_usnic_recv_frag_bookkeeping(module, seg, channel);
+        rc = ompi_btl_usnic_recv_frag_bookkeeping(module, seg, channel);
+        if (rc != 0) {
+            return;
+        }
 
 #if MSGDEBUG1
         opal_output(0, "<-- Received FRAG ep %p, seq %" UDSEQ ", len=%d\n",
@@ -167,7 +171,8 @@ void ompi_btl_usnic_recv_call(ompi_btl_usnic_module_t *module,
         ompi_btl_usnic_rx_frag_info_t *fip;
 
         /* Is incoming sequence # ok? */
-        if (!ompi_btl_usnic_check_rx_seq(endpoint, seg, &window_index)) {
+        if (OPAL_UNLIKELY(ompi_btl_usnic_check_rx_seq(endpoint, seg,
+                        &window_index) != 0)) {
             goto repost;
         }
 

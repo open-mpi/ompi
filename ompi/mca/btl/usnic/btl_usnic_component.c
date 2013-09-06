@@ -988,7 +988,7 @@ static int usnic_component_progress_2(void)
             channel = &module->mod_channels[c];
 
             if (channel->chan_deferred_recv != NULL) {
-                ompi_btl_usnic_recv_frag_bookkeeping(module,
+                (void) ompi_btl_usnic_recv_frag_bookkeeping(module,
                         channel->chan_deferred_recv, channel);
                 channel->chan_deferred_recv = NULL;
             }
