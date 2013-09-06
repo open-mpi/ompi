@@ -466,6 +466,7 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
         malloc(mca_btl_usnic_component.num_modules * 
                sizeof(ompi_btl_usnic_module_t*));
     if (NULL == btls) {
+        OMPI_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         goto free_include_list;
     }
 
@@ -474,10 +475,11 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
         calloc(mca_btl_usnic_component.num_modules,
                sizeof(*mca_btl_usnic_component.usnic_all_modules));
     mca_btl_usnic_component.usnic_active_modules =
-         calloc(mca_btl_usnic_component.num_modules,
+        calloc(mca_btl_usnic_component.num_modules,
                sizeof(*mca_btl_usnic_component.usnic_active_modules));
     if (NULL == mca_btl_usnic_component.usnic_all_modules ||
         NULL == mca_btl_usnic_component.usnic_active_modules) {
+        OMPI_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         goto error;
     }
 
@@ -599,7 +601,7 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
          */
         if (-1 == mca_btl_usnic_component.prio_sd_num) {
             module->prio_sd_num =
-                max(128, 32 * orte_process_info.num_procs) - 1;
+                max(128, 32 * ompi_process_info.num_procs) - 1;
         } else {
             module->prio_sd_num = mca_btl_usnic_component.prio_sd_num;
         }
@@ -608,7 +610,7 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
         }
         if (-1 == mca_btl_usnic_component.prio_rd_num) {
             module->prio_rd_num =
-                max(128, 32 * orte_process_info.num_procs) - 1;
+                max(128, 32 * ompi_process_info.num_procs) - 1;
         } else {
             module->prio_rd_num = mca_btl_usnic_component.prio_rd_num;
         }
@@ -1207,6 +1209,7 @@ static usnic_if_filter_t *parse_ifex_str(const char *orig_str,
     /* Get a wrapper for the filter */
     filter = calloc(sizeof(*filter), 1);
     if (NULL == filter) {
+        OMPI_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         return NULL;
     }
 
@@ -1220,6 +1223,7 @@ static usnic_if_filter_t *parse_ifex_str(const char *orig_str,
     /* upper bound: each entry could be a mask */
     filter->elts = malloc(sizeof(*filter->elts) * n_argv);
     if (NULL == filter->elts) {
+        OMPI_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         free(filter);
         opal_argv_free(argv);
         return NULL;
