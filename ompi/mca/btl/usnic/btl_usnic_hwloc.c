@@ -173,7 +173,7 @@ int ompi_btl_usnic_hwloc_distance(ompi_btl_usnic_module_t *module)
     assert(NULL != module);
 
     /* Is this process bound? */
-    if (!ompi_rte_proc_is_bound) {
+    if (!proc_bound()) {
         opal_output_verbose(5, USNIC_OUT,
                             "btl:usnic:filter_numa: not sorting devices by NUMA distance (process not bound)");
         return OMPI_SUCCESS;

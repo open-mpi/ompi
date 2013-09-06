@@ -1994,7 +1994,9 @@ ompi_btl_usnic_module_t ompi_btl_usnic_module_template = {
         MCA_BTL_FLAGS_SEND | 
             MCA_BTL_FLAGS_PUT |
             MCA_BTL_FLAGS_SEND_INPLACE,
+#ifndef OMPI_BTL_USNIC_CISCO_V1_6
         sizeof(mca_btl_base_segment_t), /* seg size */
+#endif
         usnic_add_procs,
         usnic_del_procs,
         NULL, /*ompi_btl_usnic_register*/
