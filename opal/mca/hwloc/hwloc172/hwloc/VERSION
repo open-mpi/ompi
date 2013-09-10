@@ -16,7 +16,7 @@ release=2
 # requirement is that it must be entirely printable ASCII characters
 # and have no white space.
 
-greek=rc1
+greek=
 
 # If want_repo_rev=1, then the SVN r number will be included in the overall
 # hwloc version number in some form.
@@ -41,11 +41,11 @@ want_repo_rev=0
 # from an SVN checkout, if repo_rev=-1, then its value is replaced
 # with the output of "svnversion".
 
-repo_rev=r5771M
+repo_rev=r5778M
 
 # The date when this release was created
 
-date="Aug 29, 2013"
+date="Sep 03, 2013"
 
 # The shared library version of hwloc's public library.  This version
 # is maintained in accordance with the "Library Interface Versions"
