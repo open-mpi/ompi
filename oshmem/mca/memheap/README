@@ -1,0 +1,50 @@
+# Copyright (c) 2013      Mellanox Technologies, Inc.
+#                         All rights reserved
+# $COPYRIGHT$
+MEMHEAP Infrustructure documentation
+------------------------------------
+
+MEMHEAP Infrustructure is responsible for managing the symmetric heap.
+The framework currently has following components: buddy and ptmalloc. buddy which uses a buddy allocator in order to manage the Memory allocations on the symmetric heap. Ptmalloc is an adaptation of ptmalloc3. 
+
+Additional components may be added easily to the framework by defining the component's and the module's base and extended structures, and their funtionalities.
+
+The buddy allocator has the following data structures: 
+1. Base component - of type struct mca_memheap_base_component_2_0_0_t
+2. Base module - of type struct mca_memheap_base_module_t 
+3. Buddy component - of type struct mca_memheap_base_component_2_0_0_t
+4. Buddy module - of type struct mca_memheap_buddy_module_t extending the base module (struct mca_memheap_base_module_t)
+
+Each data structure includes the following fields:
+1. Base component - memheap_version, memheap_data and memheap_init
+2. Base module - Holds pointers to the base component and to the functions: alloc, free and finalize
+3. Buddy component - is a base component.
+4. Buddy module - Extends the base module and holds additional data on the components's priority, buddy allocator, 
+   maximal order of the symmetric heap, symmetric heap, pointer to the symmetric heap and hashtable maintaining the size of each allocated address.
+
+In the case that the user decides to implement additional components, the Memheap infrastructure chooses a component with the maximal priority.
+Handling the component opening is done under the base directory, in three stages: 
+1. Open all available components. Implemented by memheap_base_open.c and called from shmem_init. 
+2. Select the maximal priority component. This procedure involves the initialization of all components and then their
+   finalization except to the chosen component. It is implemented by memheap_base_select.c and called from shmem_init.
+3. Close the max priority active cmponent. Implemented by memheap_base_close.c and called from shmem finalize. 
+
+ 
+Buddy Component/Module
+----------------------
+
+Responsible for handling the entire activities of the symmetric heap.
+The supported activities are: 
+                            - buddy_init (Initialization) 
+                            - buddy_alloc (Allocates a variable on the symmetric heap)
+                            - buddy_free (frees a variable previously allocated on the symetric heap)
+                            - buddy_finalize (Finalization).
+ 
+Data members of buddy module: - priority. The module's priority.
+                              - buddy allocator: bits, num_free, lock and the maximal order (log2 of the maximal size) 
+                                of a variable on the symmetric heap. Buddy Allocator gives the offset in the symmetric heap
+                                where a variable should be allocated. 
+                              - symmetric_heap: a range of reserved addresses (equal in all executing PE's) dedicated to "shared memory" allocation.
+                              - symmetric_heap_hashtable (holding the size of an allocated variable on the symmetric heap.
+                                 used to free an allocated variable on the symmetric heap)
+

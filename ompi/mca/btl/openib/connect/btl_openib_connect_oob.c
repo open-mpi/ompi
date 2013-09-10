@@ -12,7 +12,7 @@
  * Copyright (c) 2006-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2006-2012 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2008-2011 Mellanox Technologies.  All rights reserved.
+ * Copyright (c) 2008-2013 Mellanox Technologies.  All rights reserved.
  * Copyright (c) 2009-2011 IBM Corporation.  All rights reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved
  *
@@ -375,6 +375,40 @@ static int qp_connect_all(mca_btl_openib_endpoint_t *endpoint)
 }
 
 
+static void permute_array(int *permuted_qps, int nqps)
+{
+    int i;
+    int idx;
+    int tmp;
+    int control[nqps];
+
+    for (i = 0; i < nqps; i++) {
+        permuted_qps[i] = i;
+        control[i] = 0;
+    }
+
+    for (i = 0; i < nqps - 1; i++) {
+        idx = i + random() % (nqps - i);
+        tmp = permuted_qps[i];
+        permuted_qps[i] = permuted_qps[idx];
+        permuted_qps[idx] = tmp;
+    }
+
+    /* verify that permutation is ok: */
+    for (i = 0; i < nqps; i++) {
+        control[permuted_qps[i]] ++;
+    }
+    for (i = 0; i < nqps; i++) {
+        if (control[i] != 1) {
+            BTL_VERBOSE(("bad permutation detected: "));
+            for (i = 0; i < nqps; i++) BTL_VERBOSE(("%d ", permuted_qps[i]));
+            BTL_VERBOSE(("\n"));
+            abort();
+        }
+    }
+}
+
+
 /*
  * Create the local side of all the qp's.  The remote sides will be
  * connected later.
@@ -383,6 +417,12 @@ static int qp_create_all(mca_btl_base_endpoint_t* endpoint)
 {
     int qp, rc, pp_qp_num = 0;
     int32_t rd_rsv_total = 0;
+
+    int rand_qpns[mca_btl_openib_component.num_qps];
+    int i;
+
+    permute_array(rand_qpns, mca_btl_openib_component.num_qps);
+
 
     for (qp = 0; qp < mca_btl_openib_component.num_qps; ++qp)
         if(BTL_OPENIB_QP_TYPE_PP(qp)) {
@@ -396,11 +436,12 @@ static int qp_create_all(mca_btl_base_endpoint_t* endpoint)
     if(0 == pp_qp_num && true == endpoint->use_eager_rdma)
         pp_qp_num = 1;
 
-    for (qp = 0; qp < mca_btl_openib_component.num_qps; ++qp) {
+    for (i = 0; i < mca_btl_openib_component.num_qps; ++i) {
         struct ibv_srq *srq = NULL;
         uint32_t max_recv_wr, max_send_wr;
         int32_t rd_rsv, rd_num_credits;
 
+        qp = rand_qpns[i];
         /* QP used for SW flow control need some additional recourses */
         if(qp == mca_btl_openib_component.credits_qp) {
             rd_rsv = rd_rsv_total;
@@ -467,7 +508,7 @@ static int qp_create_one(mca_btl_base_endpoint_t* endpoint, int qp,
     memset(&attr, 0, sizeof(attr));
 
     init_attr.qp_type = IBV_QPT_RC;
-    init_attr.send_cq = openib_btl->device->ib_cq[BTL_OPENIB_LP_CQ];
+    init_attr.send_cq = openib_btl->device->ib_cq[BTL_OPENIB_RDMA_QP(qp) ? BTL_OPENIB_HP_CQ: BTL_OPENIB_LP_CQ];
     init_attr.recv_cq = openib_btl->device->ib_cq[qp_cq_prio(qp)];
     init_attr.srq     = srq;
     init_attr.cap.max_inline_data = req_inline =

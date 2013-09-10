@@ -10,6 +10,8 @@
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2013      Mellanox Technologies, Inc.
+#                         All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -97,7 +99,7 @@
 # Should we use the default "check_files" RPM step (i.e., check for
 # unpackaged files)?  It is discouraged to disable this, but some
 # installers need it (e.g., older versions of OFED, because they
-# installed lots of other stuff in the BUILD_ROOT before Open MPI).
+# installed lots of other stuff in the BUILD_ROOT before Open MPI/SHMEM).
 # type: bool (0/1)
 %{!?use_check_files: %define use_check_files 1}
 
@@ -122,7 +124,7 @@
 # type: bool (0/1)
 %{!?disable_auto_requires: %define disable_auto_requires 0}
 
-# On some platforms, Open MPI just flat-out doesn't work with
+# On some platforms, Open MPI/SHMEM just flat-out doesn't work with
 # -D_FORTIFY_SOURCE (e.g., some users have reported that there are
 # problems on ioa64 platforms).  In this case, just turn it off
 # (meaning: this specfile will strip out that flag from the
@@ -194,7 +196,7 @@
 #
 #############################################################################
 
-Summary: A powerful implementation of MPI
+Summary: A powerful implementation of MPI/SHMEM
 Name: %{?_name:%{_name}}%{!?_name:openmpi}
 Version: $VERSION
 Release: 1
@@ -222,8 +224,14 @@ Open MPI is a project combining technologies and resources from
 several other projects (FT-MPI, LA-MPI, LAM/MPI, and PACX-MPI) in
 order to build the best MPI library available.
 
+The project includes implementation of SHMEM parallel
+programming library in the Partitioned Global Address Space.
+This library provides fast inter-processor communication for large
+messages using data passing and one-sided communication techniques.
+SHMEM API based on OpenSHMEM standard from http://www.openshmem.org/
+
 This RPM contains all the tools necessary to compile, link, and run
-Open MPI jobs.
+Open MPI/SHMEM jobs.
 
 %if !%{build_all_in_one_rpm}
 
@@ -234,7 +242,7 @@ Open MPI jobs.
 #############################################################################
 
 %package runtime
-Summary: Tools and plugin modules for running Open MPI jobs
+Summary: Tools and plugin modules for running Open MPI/SHMEM jobs
 Group: Development/Libraries
 Provides: mpi
 %if %{disable_auto_requires}
@@ -249,9 +257,15 @@ Open MPI is a project combining technologies and resources from several other
 projects (FT-MPI, LA-MPI, LAM/MPI, and PACX-MPI) in order to build the best
 MPI library available.
 
+The project includes implementation of SHMEM parallel
+programming library in the Partitioned Global Address Space.
+This library provides fast inter-processor communication for large
+messages using data passing and one-sided communication techniques.
+SHMEM API based on OpenSHMEM standard from http://www.openshmem.org/
+
 This subpackage provides general tools (mpirun, mpiexec, etc.) and the
 Module Component Architecture (MCA) base and plugins necessary for
-running Open MPI jobs.
+running Open MPI/SHMEM jobs.
 
 %endif
 
@@ -262,7 +276,7 @@ running Open MPI jobs.
 #############################################################################
 
 %package devel
-Summary: Development tools and header files for Open MPI
+Summary: Development tools and header files for Open MPI/SHMEM
 Group: Development/Libraries
 %if %{disable_auto_requires}
 AutoReq: no
@@ -274,8 +288,14 @@ Open MPI is a project combining technologies and resources from
 several other projects (FT-MPI, LA-MPI, LAM/MPI, and PACX-MPI) in
 order to build the best MPI library available.
 
-This subpackage provides the development files for Open MPI, such as
-wrapper compilers and header files for MPI development.
+The project includes implementation of SHMEM parallel
+programming library in the Partitioned Global Address Space.
+This library provides fast inter-processor communication for large
+messages using data passing and one-sided communication techniques.
+SHMEM API based on OpenSHMEM standard from http://www.openshmem.org/
+
+This subpackage provides the development files for Open MPI/SHMEM, such as
+wrapper compilers and header files for MPI/SHMEM development.
 
 #############################################################################
 #
@@ -284,7 +304,7 @@ wrapper compilers and header files for MPI development.
 #############################################################################
 
 %package docs
-Summary: Documentation for Open MPI
+Summary: Documentation for Open MPI/SHMEM
 Group: Development/Documentation
 %if %{disable_auto_requires}
 AutoReq: no
@@ -296,7 +316,13 @@ Open MPI is a project combining technologies and resources from several other
 projects (FT-MPI, LA-MPI, LAM/MPI, and PACX-MPI) in order to build the best
 MPI library available.
 
-This subpackage provides the documentation for Open MPI.
+The project includes implementation of SHMEM parallel
+programming library in the Partitioned Global Address Space.
+This library provides fast inter-processor communication for large
+messages using data passing and one-sided communication techniques.
+SHMEM API based on OpenSHMEM standard from http://www.openshmem.org/
+
+This subpackage provides the documentation for Open MPI/SHMEM.
 
 #############################################################################
 #
@@ -423,14 +449,14 @@ cat <<EOF >$RPM_BUILD_ROOT/%{modulefile_path}/%{modulefile_subdir}/%{modulefile_
 #%Module
 
 # NOTE: This is an automatically-generated file!  (generated by the
-# Open MPI RPM).  Any changes made here will be lost a) if the RPM is
+# Open MPI/SHMEM RPM).  Any changes made here will be lost a) if the RPM is
 # uninstalled, or b) if the RPM is upgraded or uninstalled.
 
 proc ModulesHelp { } {
-   puts stderr "This module adds Open MPI v%{version} to various paths"
+   puts stderr "This module adds Open MPI/SHMEM v%{version} to various paths"
 }
 
-module-whatis   "Sets up Open MPI v%{version} in your enviornment"
+module-whatis   "Sets up Open MPI/SHMEM v%{version} in your enviornment"
 
 prepend-path PATH "%{_prefix}/bin/"
 prepend-path LD_LIBRARY_PATH %{_libdir}
@@ -445,7 +471,7 @@ EOF
 %{__mkdir_p} $RPM_BUILD_ROOT/%{shell_scripts_path}
 cat <<EOF > $RPM_BUILD_ROOT/%{shell_scripts_path}/%{shell_scripts_basename}.sh
 # NOTE: This is an automatically-generated file!  (generated by the
-# Open MPI RPM).  Any changes made here will be lost if the RPM is
+# Open MPI/SHMEM RPM).  Any changes made here will be lost if the RPM is
 # uninstalled or upgraded.
 
 # PATH
@@ -472,7 +498,7 @@ export MPI_ROOT
 EOF
 cat <<EOF > $RPM_BUILD_ROOT/%{shell_scripts_path}/%{shell_scripts_basename}.csh
 # NOTE: This is an automatically-generated file!  (generated by the
-# Open MPI RPM).  Any changes made here will be lost if the RPM is
+# Open MPI/SHMEM RPM).  Any changes made here will be lost if the RPM is
 # uninstalled or upgraded.
 
 # path
@@ -718,6 +744,9 @@ test "x$RPM_BUILD_ROOT" != "x" && rm -rf $RPM_BUILD_ROOT
 #
 #############################################################################
 %changelog
+* Mon Jun 24 2013 Igor Ivanov <Igor.Ivanov@itseez.com>
+- Add Open SHMEM parallel programming library as part of Open MPI
+
 * Tue Dec 11 2012 Jeff Squyres <jsquyres@cisco.com>
 - Re-release 1.6.0-1.6.3 SRPMs (with new SRPM Release numbers) with
   patch for VampirTrace's configure script to make it install the

@@ -1,0 +1,23 @@
+# -*- text -*-
+#
+# Copyright (c) 2013      Mellanox Technologies, Inc.
+#                         All rights reserved.
+# $COPYRIGHT$
+# 
+# Additional copyrights may follow
+# 
+# $HEADER$
+#
+# This is the US/English help file for Open SHMEM MCA error messages.
+#
+[find-available:none-found]
+No available %s components were found!
+
+This means that there are no components of this type installed on your
+system or all the components reported that they could not be used.
+
+This is a fatal error; your SHMEM process is likely to abort.  Check the
+output of the "ompi_info" command and ensure that components of this
+type are available on your system.  You may also wish to check the
+value of the "component_path" MCA parameter and ensure that it has at
+least one directory that contains valid MCA components.
