@@ -29,6 +29,7 @@ different MPI interfaces:
   Fortran use mpi:     hello_usempi.f90
   Fortran use mpi_f08: hello_usempif08.f90
   Java:                Hello.java
+  OSHMEM:              hello_shmem.c
 
 - Send a trivial message around in a ring
   C:                   ring_c.c

@@ -28,7 +28,7 @@ CXX = mpic++
 CCC = mpic++
 FC = mpifort
 JAVAC = mpijavac
-
+SHMEM = shmemcc
 # Using -g is not necessary, but it is helpful for example programs,
 # especially if users want to examine them with debuggers.  Note that
 # gmake requires the CXXFLAGS macro, while other versions of make
@@ -47,6 +47,7 @@ EXAMPLES = \
 	 hello_mpifh \
 	 hello_usempi \
 	 hello_usempif08 \
+     hello_shmem \
 	 Hello.class \
          ring_c \
 	 ring_cxx \
@@ -75,6 +76,9 @@ all: hello_c ring_c connectivity_c
 	@ if ompi_info --parsable | grep bindings:java:yes >/dev/null; then \
 	    $(MAKE) Hello.class Ring.class; \
 	fi
+	@ if ompi_info --parsable | grep mca:shmem >/dev/null; then \
+	    $(MAKE) hello_shmem; \
+	fi
 
 # The usual "clean" target
 
@@ -102,3 +106,8 @@ Hello.class: Hello.java
 	$(JAVAC) Hello.java
 Ring.class: Ring.java
 	$(JAVAC) Ring.java
+
+hello_shmem: hello_shmem.c
+	$(SHMEM) $(CFLAGS) $^ -o $@
+
+

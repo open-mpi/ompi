@@ -1,5 +1,7 @@
 /*
  * Copyright (c) 2012      Los Alamos National Security, LLC.  All rights reserved.
+ * Copyright (c) 2013      Mellanox Technologies, Inc.
+ *                         All rights reserved.
  *
  * $COPYRIGHT$
  * 
@@ -209,6 +211,9 @@ BEGIN_C_DECLS
 #define OMPI_RML_TAG_XOFACM                         OMPI_RML_TAG_BASE+12
 
 #define OMPI_RML_PCONNECT_TAG                       OMPI_RML_TAG_BASE+13
+
+/* open shmem oob communication */
+#define OMPI_RML_TAG_SHMEM                          OMPI_RML_TAG_BASE+14
 
 #define OMPI_RML_TAG_DYNAMIC                        OMPI_RML_TAG_BASE+200
 
