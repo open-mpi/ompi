@@ -630,3 +630,12 @@ More than one combiner was specified. The combiner takes the output
 from the final reducer in each chain to produce a single, combined
 result. Thus, there can only be one combiner for a job. Please
 review your command line and try again.
+#
+[orterun:negative-nprocs]
+%s has detected that one or more applications was given a negative
+number of processes to run:
+
+  Application:  %s
+  Num procs:    %d
+
+Please correct this value and try again.
