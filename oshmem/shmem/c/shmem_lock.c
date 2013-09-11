@@ -94,7 +94,7 @@ int shmem_lock_init()
     void* ptr = 0;
 
 #if (OPAL_BITWISE_SIZEOF_LONG == 32)
-    int number_of_pes = shmem_num_pes();
+    int number_of_pes = shmem_n_pes();
     if (number_of_pes >= 65534)
     {
         SHMEM_API_ERROR("SHMEM distributed locking implementation does not support total number of PEs greater than 65534 if sizeof(long) = 4");
