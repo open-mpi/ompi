@@ -167,7 +167,7 @@ int shmem_lock_finalize()
 
 static int shmem_lock_get_server(const void *lock)
 {
-    return (int) (((uint64_t) lock) / 8) % shmem_n_pes();
+    return (int) (((uintptr_t) lock) / 8) % shmem_n_pes();
 }
 
 static uint64_t get_lock_value(const void *lock, int lock_size)

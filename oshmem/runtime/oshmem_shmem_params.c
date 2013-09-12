@@ -26,7 +26,7 @@ int oshmem_shmem_register_params(void)
                                  MCA_BASE_VAR_TYPE_INT,
                                  NULL,
                                  0,
-                                 0,
+                                 MCA_BASE_VAR_FLAG_SETTABLE,
                                  OPAL_INFO_LVL_9,
                                  MCA_BASE_VAR_SCOPE_READONLY,
                                  &oshmem_shmem_lock_recursive);
@@ -39,7 +39,7 @@ int oshmem_shmem_register_params(void)
                                  MCA_BASE_VAR_TYPE_INT,
                                  NULL,
                                  0,
-                                 0,
+                                 MCA_BASE_VAR_FLAG_SETTABLE,
                                  OPAL_INFO_LVL_9,
                                  MCA_BASE_VAR_SCOPE_READONLY,
                                  &oshmem_shmem_api_verbose);

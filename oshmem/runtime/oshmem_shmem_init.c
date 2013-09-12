@@ -305,7 +305,7 @@ int oshmem_shmem_preconnect_all(void)
                                  MCA_BASE_VAR_TYPE_INT,
                                  NULL,
                                  0,
-                                 0,
+                                 MCA_BASE_VAR_FLAG_SETTABLE,
                                  OPAL_INFO_LVL_9,
                                  MCA_BASE_VAR_SCOPE_READONLY,
                                  &mca_value);
@@ -373,12 +373,12 @@ static int __shmem_init(int argc, char **argv, int requested, int *provided)
         goto error;
     }
 
-    if (OSHMEM_SUCCESS != (ret = mca_base_framework_open(&oshmem_spml_base_framework, 0))) {
+    if (OSHMEM_SUCCESS != (ret = mca_base_framework_open(&oshmem_spml_base_framework, MCA_BASE_OPEN_DEFAULT))) {
         error = "mca_spml_base_open() failed";
         goto error;
     }
 
-    if (OSHMEM_SUCCESS != (ret = mca_base_framework_open(&oshmem_scoll_base_framework, 0))) {
+    if (OSHMEM_SUCCESS != (ret = mca_base_framework_open(&oshmem_scoll_base_framework, MCA_BASE_OPEN_DEFAULT))) {
         error = "mca_scoll_base_open() failed";
         goto error;
     }
@@ -441,7 +441,7 @@ static int __shmem_init(int argc, char **argv, int requested, int *provided)
         goto error;
     }
 
-    if (OSHMEM_SUCCESS != (ret = mca_base_framework_open(&oshmem_memheap_base_framework, 0))) {
+    if (OSHMEM_SUCCESS != (ret = mca_base_framework_open(&oshmem_memheap_base_framework, MCA_BASE_OPEN_DEFAULT))) {
         error = "mca_memheap_base_open() failed";
         goto error;
     }
@@ -451,7 +451,7 @@ static int __shmem_init(int argc, char **argv, int requested, int *provided)
         goto error;
     }
 
-    if (OSHMEM_SUCCESS != (ret = mca_base_framework_open(&oshmem_atomic_base_framework, 0))) {
+    if (OSHMEM_SUCCESS != (ret = mca_base_framework_open(&oshmem_atomic_base_framework, MCA_BASE_OPEN_DEFAULT))) {
         error = "mca_atomic_base_open() failed";
         goto error;
     }

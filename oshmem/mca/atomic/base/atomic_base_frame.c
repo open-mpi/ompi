@@ -88,4 +88,4 @@ MCA_BASE_FRAMEWORK_DECLARE(oshmem, atomic,
                            mca_atomic_base_open,
                            mca_atomic_base_close,
                            mca_atomic_base_static_components,
-                           0);
+                           MCA_BASE_FRAMEWORK_FLAG_DEFAULT);

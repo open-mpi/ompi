@@ -33,6 +33,7 @@ AC_DEFUN([MCA_oshmem_atomic_mxm_CONFIG],[
                                 return 0;
                                 }],
                     [AC_DEFINE([OSHMEM_HAS_ATOMIC_MXM], [1], [mxm support is available]) atomic_mxm_happy="yes"],
+                   [atomic_mxm_happy="no"],
                    [atomic_mxm_happy="no"])
                    CPPFLAGS=$save_CPPFLAGS
                    LDFLAGS=$save_LDFLAGS
