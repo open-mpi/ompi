@@ -35,7 +35,7 @@ OSHMEM_DECLSPEC int oshmem_shmem_exchange_allgather(void *buf,
         ranks_in_comm[i] = i;
     }
     void* buf_temp = malloc(buf_size);
-    memcpy(buf_temp, buf + buf_size * ORTE_PROC_MY_NAME->vpid, buf_size);
+    memcpy(buf_temp, (char*)buf + buf_size * ORTE_PROC_MY_NAME->vpid, buf_size);
 
     rc = comm_allgather_pml( buf_temp,
                              buf,

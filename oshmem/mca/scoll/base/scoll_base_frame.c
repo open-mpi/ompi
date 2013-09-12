@@ -109,4 +109,4 @@ MCA_BASE_FRAMEWORK_DECLARE(oshmem, scoll,
                            mca_scoll_base_open,
                            mca_scoll_base_close,
                            mca_scoll_base_static_components,
-                           0);
+                           MCA_BASE_FRAMEWORK_FLAG_DEFAULT);

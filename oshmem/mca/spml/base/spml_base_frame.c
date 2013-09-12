@@ -156,4 +156,4 @@ MCA_BASE_FRAMEWORK_DECLARE(oshmem, spml,
                            mca_spml_base_open,
                            mca_spml_base_close,
                            mca_spml_base_static_components,
-                           0);
+                           MCA_BASE_FRAMEWORK_FLAG_DEFAULT);

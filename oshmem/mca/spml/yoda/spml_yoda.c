@@ -263,7 +263,7 @@ static void mca_yoda_get_response_callback(mca_btl_base_module_t* btl,
     /* unpacking data*/
     size = (size_t *) ( ((char*)des->des_dst->seg_addr.pval) );
     l_addr = (void**)( ((char*)size) + sizeof(*size));
-    getreq = (mca_spml_yoda_get_request_t*)*(void**)((void*)l_addr + sizeof(*l_addr) + *size);
+    getreq = (mca_spml_yoda_get_request_t*)*(void**)((char*)l_addr + sizeof(*l_addr) + *size);
 
     /* Complete get request*/
     OPAL_THREAD_ADD32(&getreq->parent->active_count, -1);
@@ -271,7 +271,7 @@ static void mca_yoda_get_response_callback(mca_btl_base_module_t* btl,
     oshmem_request_complete(&getreq->req_get.req_base.req_oshmem, 1);
     oshmem_request_free((oshmem_request_t**) &getreq);
 
-    memcpy(*l_addr, (void*)l_addr + sizeof(*l_addr), *size);
+    memcpy(*l_addr, (char*)l_addr + sizeof(*l_addr), *size);
 }
 
 /**

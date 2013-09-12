@@ -57,7 +57,7 @@ static int mca_memheap_base_register(mca_base_register_flag_t flags)
                                  MCA_BASE_VAR_TYPE_INT,
                                  NULL,
                                  0,
-                                 0,
+                                 MCA_BASE_VAR_FLAG_SETTABLE,
                                  OPAL_INFO_LVL_9,
                                  MCA_BASE_VAR_SCOPE_READONLY,
                                  &mca_memheap_base_alloc_type);
@@ -70,7 +70,7 @@ static int mca_memheap_base_register(mca_base_register_flag_t flags)
                                  MCA_BASE_VAR_TYPE_INT,
                                  NULL,
                                  0,
-                                 0,
+                                 MCA_BASE_VAR_FLAG_SETTABLE,
                                  OPAL_INFO_LVL_9,
                                  MCA_BASE_VAR_SCOPE_READONLY,
                                  &mca_memheap_base_alloc_type);
@@ -84,7 +84,7 @@ static int mca_memheap_base_register(mca_base_register_flag_t flags)
                                  MCA_BASE_VAR_TYPE_UNSIGNED_LONG_LONG,
                                  NULL,
                                  0,
-                                 0,
+                                 MCA_BASE_VAR_FLAG_SETTABLE,
                                  OPAL_INFO_LVL_9,
                                  MCA_BASE_VAR_SCOPE_READONLY,
                                  &mca_memheap_base_start_address);
@@ -97,7 +97,7 @@ static int mca_memheap_base_register(mca_base_register_flag_t flags)
                                  MCA_BASE_VAR_TYPE_INT,
                                  NULL,
                                  0,
-                                 0,
+                                 MCA_BASE_VAR_FLAG_SETTABLE,
                                  OPAL_INFO_LVL_9,
                                  MCA_BASE_VAR_SCOPE_READONLY,
                                  &mca_memheap_base_key_exchange);
@@ -110,7 +110,7 @@ static int mca_memheap_base_register(mca_base_register_flag_t flags)
                                  MCA_BASE_VAR_TYPE_INT,
                                  NULL,
                                  0,
-                                 0,
+                                 MCA_BASE_VAR_FLAG_SETTABLE,
                                  OPAL_INFO_LVL_9,
                                  MCA_BASE_VAR_SCOPE_READONLY,
                                  &mca_memheap_base_mr_interleave_factor);
@@ -123,7 +123,7 @@ static int mca_memheap_base_register(mca_base_register_flag_t flags)
                                  MCA_BASE_VAR_TYPE_STRING,
                                  NULL,
                                  0,
-                                 0,
+                                 MCA_BASE_VAR_FLAG_SETTABLE,
                                  OPAL_INFO_LVL_9,
                                  MCA_BASE_VAR_SCOPE_READONLY,
                                  &mca_memheap_base_include);
@@ -144,7 +144,7 @@ static int mca_memheap_base_register(mca_base_register_flag_t flags)
                                  MCA_BASE_VAR_TYPE_STRING,
                                  NULL,
                                  0,
-                                 0,
+                                 MCA_BASE_VAR_FLAG_SETTABLE,
                                  OPAL_INFO_LVL_9,
                                  MCA_BASE_VAR_SCOPE_READONLY,
                                  &mca_memheap_base_exclude);
@@ -157,7 +157,7 @@ static int mca_memheap_base_register(mca_base_register_flag_t flags)
                                  MCA_BASE_VAR_TYPE_STRING,
                                  NULL,
                                  0,
-                                 0,
+                                 MCA_BASE_VAR_FLAG_SETTABLE,
                                  OPAL_INFO_LVL_9,
                                  MCA_BASE_VAR_SCOPE_READONLY,
                                  &mca_memheap_base_param_hca_name);
@@ -212,4 +212,4 @@ MCA_BASE_FRAMEWORK_DECLARE(oshmem, memheap,
                            mca_memheap_base_open,
                            mca_memheap_base_close,
                            mca_memheap_base_static_components,
-                           0);
+                           MCA_BASE_FRAMEWORK_FLAG_DEFAULT);

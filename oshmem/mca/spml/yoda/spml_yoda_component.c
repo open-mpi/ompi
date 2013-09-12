@@ -62,7 +62,7 @@ static inline int mca_spml_yoda_param_register_int(const char *param_name,
     (void) mca_base_component_var_register(&mca_spml_yoda_component.spmlm_version,
                                            param_name,
                                            help_msg,
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
                                            OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &param_value);
@@ -87,7 +87,7 @@ static int mca_spml_yoda_component_register(void)
 
 static int mca_spml_yoda_component_open(void)
 {
-    return mca_base_framework_open(&ompi_bml_base_framework, 0);
+    return mca_base_framework_open(&ompi_bml_base_framework, MCA_BASE_OPEN_DEFAULT);
 }
 
 static int mca_spml_yoda_component_close(void)

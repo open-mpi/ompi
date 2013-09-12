@@ -83,7 +83,7 @@ static int basic_register(void)
     (void) mca_base_component_var_register(comp,
                                            "priority",
                                            "Priority of the basic scoll:basic component",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
                                            OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &mca_scoll_basic_priority_param);
@@ -99,7 +99,7 @@ static int basic_register(void)
     (void) mca_base_component_var_register(comp,
                                            "barrier_alg",
                                            help_msg,
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
                                            OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &mca_scoll_basic_param_barrier_algorithm);
@@ -111,7 +111,7 @@ static int basic_register(void)
     (void) mca_base_component_var_register(comp,
                                            "broadcast_alg",
                                            help_msg,
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
                                            OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &mca_scoll_basic_param_broadcast_algorithm);
@@ -125,7 +125,7 @@ static int basic_register(void)
     (void) mca_base_component_var_register(comp,
                                            "collect_alg",
                                            help_msg,
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
                                            OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &mca_scoll_basic_param_collect_algorithm);
@@ -140,7 +140,7 @@ static int basic_register(void)
     (void) mca_base_component_var_register(comp,
                                            "reduce_alg",
                                            help_msg,
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
                                            OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &mca_scoll_basic_param_reduce_algorithm);
