@@ -33,7 +33,7 @@ int mca_memheap_base_alloc_type = 5;
 int mca_memheap_base_alloc_type = 1;
 #endif /* MPAGE_ENABLE */
 
-unsigned long long int mca_memheap_base_start_address = 0xFF000000;
+void* mca_memheap_base_start_address = (void*)0xFF000000;
 int mca_memheap_base_output = -1;
 int mca_memheap_base_key_exchange = 1;
 int mca_memheap_base_mr_interleave_factor = 2;

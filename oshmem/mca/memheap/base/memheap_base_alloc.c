@@ -243,7 +243,7 @@ static int __shm_attach(map_segment_t *s, size_t size, int use_hp, int do_rmid)
 
     s->type = MAP_SEGMENT_ALLOC_SHM;
     s->shmid = shmid;
-    s->start = (uintptr_t) addr;
+    s->start = addr;
     s->size = size;
     s->end = s->start + s->size;
     s->context = &shm_context;
@@ -295,7 +295,7 @@ MAP_ANONYMOUS
 
     s->type = MAP_SEGMENT_ALLOC_MMAP;
     s->shmid = MEMHEAP_SHM_INVALID;
-    s->start = (uintptr_t) addr;
+    s->start = addr;
     s->size = size;
     s->end = s->start + s->size;
     s->context = NULL;
@@ -472,7 +472,7 @@ static int __ibv_attach(map_segment_t *s, size_t size)
 
             s->type = MAP_SEGMENT_ALLOC_IBV;
             s->shmid = device->ib_mr_shared->handle;
-            s->start = (intptr_t)ib_mr->addr;
+            s->start = ib_mr->addr;
             s->size = size;
             s->end = s->start + s->size;
             s->context = &memheap_device;

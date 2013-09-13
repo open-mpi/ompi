@@ -177,7 +177,7 @@ OSHMEM_DECLSPEC int oshmem_shmem_register_params(void);
  */
 #include "oshmem/mca/memheap/memheap.h"
 #define RUNTIME_CHECK_ADDR(x)    \
-    if (OPAL_UNLIKELY(!MCA_MEMHEAP_CALL(is_symmetric_addr((unsigned long)(x)))))        \
+    if (OPAL_UNLIKELY(!MCA_MEMHEAP_CALL(is_symmetric_addr((x)))))        \
     {                                                                                   \
         RUNTIME_CHECK_ERROR("Required address %p is not in symmetric space\n", (x));    \
         oshmem_shmem_abort(-1);                                                         \

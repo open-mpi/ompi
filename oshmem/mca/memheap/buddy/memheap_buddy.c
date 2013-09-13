@@ -90,13 +90,12 @@ static inline int test_bit(int nr, const volatile void * addr)
 static inline __opal_attribute_always_inline__ unsigned long __ffs(unsigned long word)
 {
     int num = 0;
-
-    if(bits_per_long() == 64) {
+#if __SIZEOF_LONG__ == 8
         if ((word & 0xffffffff) == 0) {
             num += 32;
             word >>= 32;
         }
-    }
+#endif
 
     if ((word & 0xffff) == 0) {
         num += 16;

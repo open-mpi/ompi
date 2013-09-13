@@ -38,7 +38,7 @@ OSHMEM_DECLSPEC extern struct mca_memheap_base_module_t* mca_memheap_base_module
 #define MEMHEAP_BASE_PRIVATE_SIZE      (1ULL << MEMHEAP_BASE_PAGE_ORDER) /* should be at least the same as a huge page size */
 #define MEMHEAP_BASE_MIN_SIZE          (1ULL << MEMHEAP_BASE_PAGE_ORDER)    /* must fit into at least one huge page */
 
-extern unsigned long long mca_memheap_base_start_address;
+extern void* mca_memheap_base_start_address;
 extern char* mca_memheap_base_include;
 extern char* mca_memheap_base_exclude;
 extern int mca_memheap_base_already_opened;
@@ -84,8 +84,8 @@ typedef struct map_segment_t {
     int             is_active;      /* enable/disable flag */
     int             shmid;
 
-    uint64_t        start;          /* base address of the segment */
-    uint64_t        end;            /* final address of the segment */
+    void*           start;          /* base address of the segment */
+    void*           end;            /* final address of the segment */
     size_t          size;           /* length of the segment */
 
     segment_type_t  type;           /* type of the segment */
@@ -111,15 +111,15 @@ void memheap_oob_destruct(void);
 
 OSHMEM_DECLSPEC uint64_t mca_memheap_base_find_offset(int pe,
                                                       int tr_id,
-                                                      unsigned long va,
-                                                      uint64_t rva);
-OSHMEM_DECLSPEC int mca_memheap_base_is_symmetric_addr(unsigned long va);
-OSHMEM_DECLSPEC mca_spml_mkey_t *mca_memheap_base_get_mkey(unsigned long va,
+                                                      void* va,
+                                                      void* rva);
+OSHMEM_DECLSPEC int mca_memheap_base_is_symmetric_addr(const void* va);
+OSHMEM_DECLSPEC mca_spml_mkey_t *mca_memheap_base_get_mkey(void* va,
                                                            int tr_id);
 OSHMEM_DECLSPEC mca_spml_mkey_t * mca_memheap_base_get_cached_mkey(int pe,
-                                                                   unsigned long va,
+                                                                   void* va,
                                                                    int btl_id,
-                                                                   uint64_t *rva);
+                                                                   void** rva);
 OSHMEM_DECLSPEC void mca_memheap_modex_recv_all(void);
 
 /* This function is for internal usage only
@@ -133,7 +133,7 @@ typedef enum {
     ADDR_INVALID = 0, ADDR_USER, ADDR_PRIVATE, ADDR_STATIC,
 } addr_type_t;
 
-OSHMEM_DECLSPEC int mca_memheap_base_detect_addr_type(unsigned long va);
+OSHMEM_DECLSPEC int mca_memheap_base_detect_addr_type(void* va);
 
 static inline unsigned memheap_log2(unsigned long long val)
 {
