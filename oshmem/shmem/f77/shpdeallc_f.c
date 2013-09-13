@@ -25,6 +25,6 @@ OMPI_GENERATE_F77_BINDINGS (void,
 void shpdeallc_f(FORTRAN_POINTER_T *addr, MPI_Fint *errcode, MPI_Fint *abort)
 {
     *errcode = 0;
-    shfree((void *)*addr);
+    shfree((void *)((uintptr_t)*addr));
 }
 
