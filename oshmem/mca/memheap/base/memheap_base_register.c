@@ -27,10 +27,10 @@ int mca_memheap_base_reg(mca_memheap_map_t *memheap_map)
         map_segment_t *s = &memheap_map->mem_segs[i];
 
         MEMHEAP_VERBOSE(5,
-                        "register seg#%02d: 0x%llX - 0x%llX %llu bytes type=0x%X id=0x%X",
+                        "register seg#%02d: 0x%p - 0x%p %llu bytes type=0x%X id=0x%X",
                         i,
-                        (long long)s->start,
-                        (long long)s->end,
+                        s->start,
+                        s->end,
                         (long long)(s->end - s->start),
                         s->type,
                         s->shmid);
@@ -52,10 +52,10 @@ int mca_memheap_base_dereg(mca_memheap_map_t *memheap_map)
             continue;
 
         MEMHEAP_VERBOSE(5,
-                        "deregistering segment#%d: %llx - %llx %llu bytes",
+                        "deregistering segment#%d: %p - %p %llu bytes",
                         i,
-                        (long long)s->start,
-                        (long long)s->end,
+                        s->start,
+                        s->end,
                         (long long)(s->end - s->start));
         ret = __dereg_segment(s);
     }

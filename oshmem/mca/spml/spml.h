@@ -80,7 +80,7 @@ typedef struct mca_spml_mkey {
         } ib;
         uint64_t key;
     };
-    uint64_t va_base;
+    void* va_base;
     void *spml_context;       /* spml module can attach internal structures here */
 } mca_spml_mkey_t;
 

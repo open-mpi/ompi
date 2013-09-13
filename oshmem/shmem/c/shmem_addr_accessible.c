@@ -17,12 +17,12 @@
 
 int shmem_addr_accessible(void *addr, int pe)
 {
-    uint64_t rva;
+    void* rva;
     mca_spml_mkey_t *mkey;
 
     RUNTIME_CHECK_INIT();
 
-    mkey = MCA_MEMHEAP_CALL(get_cached_mkey(pe, (unsigned long)addr,
+    mkey = MCA_MEMHEAP_CALL(get_cached_mkey(pe, addr,
                     oshmem_get_transport_id(pe), &rva));
 
     return mkey ? 1 : 0;

@@ -16,8 +16,8 @@
 #include <stdio.h>
 
 struct map_segment_desc {
-    uint64_t start;
-    uint64_t end;
+    void* start;
+    void* end;
     char perms[8];
     uint64_t offset;
     char dev[8];
@@ -27,8 +27,8 @@ struct map_segment_desc {
 
 typedef struct memheap_static_context {
     struct {
-        uint64_t start;
-        uint64_t end;
+        void* start;
+        void* end;
     } mem_segs[MCA_MEMHEAP_MAX_SEGMENTS];
     int n_segments;
 } memheap_static_context_t;
@@ -93,7 +93,7 @@ static int __check_perms(struct map_segment_desc *seg)
 static int __check_address(struct map_segment_desc *seg)
 {
     extern unsigned _end;
-    unsigned long data_end = (unsigned long) &_end;
+    void* data_end = &_end;
 
     /**
      * SGI shmem only supports globals&static in main program. 
@@ -104,10 +104,10 @@ static int __check_address(struct map_segment_desc *seg)
      * FIXME: make sure we do not register symmetric heap twice
      * if we decide to allow shared objects
      */
-    if (seg->start > data_end) {
+    if ((uintptr_t)seg->start > (uintptr_t)data_end) {
         MEMHEAP_VERBOSE(100,
-                        "skip segment: data _end < segment start (%llx < %llx)",
-                        (unsigned long long)data_end, (unsigned long long)seg->start);
+                        "skip segment: data _end < segment start (%p < %p)",
+                        data_end, seg->start);
         return OSHMEM_ERROR;
     }
     return OSHMEM_SUCCESS;

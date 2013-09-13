@@ -98,7 +98,7 @@ static char *btl_type2str(int btl_type)
 
 static inline void calc_nfrags(mca_bml_base_btl_t* bml_btl,
                                size_t size,
-                               int *frag_size,
+                               unsigned int *frag_size,
                                int *nfrags,
                                int use_send)
 {
@@ -428,11 +428,11 @@ mca_spml_mkey_t *mca_spml_yoda_register(void* addr,
             }
         }
 
-        mkeys[i].va_base = (unsigned long) addr;
+        mkeys[i].va_base = addr;
 
         SPML_VERBOSE(5,
-                     "rank %d btl %s rkey %x lkey %x key %llx address 0x%llX len %llu shmid 0x%X|0x%X",
-                     oshmem_proc_local_proc->proc_name.vpid, btl_type2str(ybtl->btl_type), mkeys[i].ib.rkey, mkeys[i].ib.lkey, (unsigned long long)mkeys[i].key, (unsigned long long)mkeys[i].va_base, (unsigned long long)size, MEMHEAP_SHM_GET_TYPE(shmid), MEMHEAP_SHM_GET_ID(shmid));
+                     "rank %d btl %s rkey %x lkey %x key %llx address 0x%p len %llu shmid 0x%X|0x%X",
+                     oshmem_proc_local_proc->proc_name.vpid, btl_type2str(ybtl->btl_type), mkeys[i].ib.rkey, mkeys[i].ib.lkey, (unsigned long long)mkeys[i].key, mkeys[i].va_base, (unsigned long long)size, MEMHEAP_SHM_GET_TYPE(shmid), MEMHEAP_SHM_GET_ID(shmid));
     }
     OBJ_DESTRUCT(&convertor);
     *count = mca_spml_yoda.n_btls;
@@ -724,10 +724,10 @@ static inline int mca_spml_yoda_put_internal(void *dst_addr,
     int nfrags;
     int i;
     unsigned ncopied = 0;
-    int frag_size = 0;
+    unsigned int frag_size = 0;
     char *p_src, *p_dst;
     mca_spml_yoda_context_t* yoda_context;
-    uint64_t rva;
+    void* rva;
     mca_spml_mkey_t *r_mkey;
     int btl_id = 0;
     struct yoda_btl *ybtl;
@@ -749,7 +749,7 @@ static inline int mca_spml_yoda_put_internal(void *dst_addr,
 
     /* Get rkey of remote PE (dst proc) which must be on memheap*/
     r_mkey = mca_memheap.memheap_get_cached_mkey(dst,
-                                                 (unsigned long) dst_addr,
+                                                 dst_addr,
                                                  btl_id,
                                                  &rva);
     if (!r_mkey) {
@@ -769,7 +769,7 @@ static inline int mca_spml_yoda_put_internal(void *dst_addr,
      * just do memcpy
      */
     if ((ybtl->btl_type == YODA_BTL_SM)
-        && OPAL_LIKELY(mca_memheap.memheap_is_symmetric_addr((unsigned long)dst_addr) && (unsigned long)dst_addr != rva)) {
+        && OPAL_LIKELY(mca_memheap.memheap_is_symmetric_addr(dst_addr) && dst_addr != rva)) {
         memcpy((void *) (unsigned long) rva, src_addr, size);
         return OSHMEM_SUCCESS;
     }
@@ -783,7 +783,7 @@ static inline int mca_spml_yoda_put_internal(void *dst_addr,
         /* Allocating send request from free list */
         putreq = mca_spml_yoda_putreq_alloc(dst);
         frag = &putreq->put_frag;
-        ncopied = i < nfrags - 1 ? (unsigned)frag_size : (char *) src_addr + size - p_src;
+        ncopied = i < nfrags - 1 ? frag_size :(unsigned) ((char *) src_addr + size - p_src);
 
         /* Preparing source buffer */
 
@@ -993,9 +993,9 @@ int mca_spml_yoda_get(void* src_addr, size_t size, void* dst_addr, int src)
 {
     int rc = OSHMEM_SUCCESS;
     mca_spml_mkey_t *r_mkey, *l_mkey;
-    uint64_t rva;
+    void* rva;
     unsigned ncopied = 0;
-    int frag_size = 0;
+    unsigned int frag_size = 0;
     char *p_src, *p_dst;
     int i;
     int nfrags;
@@ -1032,7 +1032,7 @@ int mca_spml_yoda_get(void* src_addr, size_t size, void* dst_addr, int src)
 
     /* Get rkey of remote PE (src proc) which must be on memheap*/
     r_mkey = mca_memheap.memheap_get_cached_mkey(src,
-                                                 (unsigned long) src_addr,
+                                                 src_addr,
                                                  btl_id,
                                                  &rva);
     if (!r_mkey) {
@@ -1053,8 +1053,8 @@ int mca_spml_yoda_get(void* src_addr, size_t size, void* dst_addr, int src)
      * just do memcpy
      */
     if ((ybtl->btl_type == YODA_BTL_SM)
-        && OPAL_LIKELY(mca_memheap.memheap_is_symmetric_addr((unsigned long)src_addr) && (unsigned long)src_addr != rva)) {
-        memcpy(dst_addr, (void *) (unsigned long) rva, size);
+        && OPAL_LIKELY(mca_memheap.memheap_is_symmetric_addr(src_addr) && src_addr != rva)) {
+        memcpy(dst_addr, (void *) rva, size);
         /* must call progress here to avoid deadlock. Scenarion:
          * pe1 pols pe2 via shm get. pe2 tries to get static variable from node one, which goes to sm btl
          * In this case pe2 is stuck forever because pe1 never calls opal_progress.
@@ -1064,13 +1064,13 @@ int mca_spml_yoda_get(void* src_addr, size_t size, void* dst_addr, int src)
         return OSHMEM_SUCCESS;
     }
 
-    l_mkey = mca_memheap.memheap_get_local_mkey((unsigned long) dst_addr,
+    l_mkey = mca_memheap.memheap_get_local_mkey(dst_addr,
                                                 btl_id);
     /*
      * Need a copy if local memory has not been registered or
      * we make GET via SEND
      */
-    frag_size = (int)ncopied;
+    frag_size = ncopied;
     if ((NULL == l_mkey) || get_via_send)
     {
         calc_nfrags(bml_btl, size, &frag_size, &nfrags, get_via_send);
@@ -1091,7 +1091,7 @@ int mca_spml_yoda_get(void* src_addr, size_t size, void* dst_addr, int src)
         frag = &getreq->get_frag;
         getreq->parent = &get_holder;
 
-        ncopied = i < nfrags - 1 ? (unsigned)frag_size : (char *) dst_addr + size - p_dst;
+        ncopied = i < nfrags - 1 ? frag_size :(unsigned) ((char *) dst_addr + size - p_dst);
             frag->allocated = 0;
         /* Prepare destination descriptor*/
         yoda_context = r_mkey->spml_context;
