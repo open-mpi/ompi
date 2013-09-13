@@ -16,6 +16,7 @@
  *                         reserved.
  * Copyright (c) 2006-2007 Voltaire All rights reserved.
  * Copyright (c) 2009-2010 Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2013      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -284,10 +285,8 @@ struct mca_btl_openib_component_t {
     unsigned int cq_poll_progress;
     unsigned int cq_poll_batch;
     unsigned int eager_rdma_poll_ratio;
-#ifdef HAVE_IBV_FORK_INIT
     /** Whether we want fork support or not */
     int want_fork_support;
-#endif
     int rdma_qp;
     int credits_qp; /* qp used for software flow control */
     bool cpc_explicitly_defined;
