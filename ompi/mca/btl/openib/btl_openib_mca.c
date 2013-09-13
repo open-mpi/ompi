@@ -15,6 +15,7 @@
  *                         reserved.
  * Copyright (c) 2006-2007 Voltaire All rights reserved.
  * Copyright (c) 2009-2010 Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2013      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -556,10 +557,6 @@ int btl_openib_register_mca_params(void)
     /* Default to bandwidth auto-detection */
     mca_btl_openib_module.super.btl_bandwidth = 0;
     mca_btl_openib_module.super.btl_latency = 4;
-    CHECK(mca_btl_base_param_register(
-            &mca_btl_openib_component.super.btl_version,
-            &mca_btl_openib_module.super));
-
 #if OMPI_CUDA_SUPPORT /* CUDA_ASYNC_RECV */
     /* Default is enabling CUDA asynchronous send copies */
     CHECK(reg_bool("cuda_async_send", NULL,
@@ -573,10 +570,13 @@ int btl_openib_register_mca_params(void)
                    "(true = async; false = sync)",
                    true, &mca_btl_openib_component.cuda_async_recv));
     /* Also make the max send size larger for better GPU buffer performance */
-   mca_btl_openib_module.super.btl_max_send_size = 128 * 1024;
-   /* Turn of message coalescing - not sure if it works with GPU buffers */
-   mca_btl_openib_component.use_message_coalescing = 0;
+    mca_btl_openib_module.super.btl_max_send_size = 128 * 1024;
+    /* Turn of message coalescing - not sure if it works with GPU buffers */
+    mca_btl_openib_component.use_message_coalescing = 0;
 #endif /* OMPI_CUDA_SUPPORT */
+    CHECK(mca_btl_base_param_register(
+            &mca_btl_openib_component.super.btl_version,
+            &mca_btl_openib_module.super));
 
     /* setup all the qp stuff */
     /* round mid_qp_size to smallest power of two */
