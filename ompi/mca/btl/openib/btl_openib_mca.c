@@ -220,7 +220,7 @@ int btl_openib_register_mca_params(void)
     char default_qps[100];
     uint32_t mid_qp_size;
     char *msg, *str;
-    int ret, tmp;
+    int ret, tmp, tmp1;
 
     ret = OMPI_SUCCESS;
 #define CHECK(expr) do {\
@@ -521,6 +521,13 @@ int btl_openib_register_mca_params(void)
     CHECK(reg_uint("max_hw_msg_size", NULL,
                    "Maximum size (in bytes) of a single fragment of a long message when using the RDMA protocols (must be > 0 and <= hw capabilities).",
                    0, &mca_btl_openib_component.max_hw_msg_size, 0));
+
+    /* Help debug memory registration issues */
+    CHECK(reg_int("memory_registration_verbose", NULL,
+                  "Output some verbose memory registration information "
+                  "(0 = no output, nonzero = output)", 0, &tmp1, 0));
+    mca_btl_openib_component.memory_registration_verbose = opal_output_open(NULL);
+    opal_output_set_verbosity(mca_btl_openib_component.memory_registration_verbose, tmp1);
 
     /* Info only */
     tmp = mca_base_component_var_register(&mca_btl_openib_component.super.btl_version,
