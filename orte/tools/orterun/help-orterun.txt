@@ -635,3 +635,12 @@ review your command line and try again.
 %s in the v1.7 series does not support preloading of binaries
 or files at this time. It is expected that this capability will
 be restored in later releases.
+#
+[orterun:negative-nprocs]
+%s has detected that one or more applications was given a negative
+number of processes to run:
+
+  Application:  %s
+  Num procs:    %d
+
+Please correct this value and try again.
