@@ -66,6 +66,7 @@ OMPI_DECLSPEC int ompi_dpm_base_disconnect_waitall (int count, ompi_dpm_base_dis
 int ompi_dpm_base_null_connect_accept (ompi_communicator_t *comm, int root,
                                        char *port_string, bool send_first,
                                        ompi_communicator_t **newcomm);
+int ompi_dpm_base_null_merge(ompi_communicator_t *comm, int root);
 int ompi_dpm_base_null_disconnect(ompi_communicator_t *comm);
 int ompi_dpm_base_null_spawn(int count, char **array_of_commands,
                              char ***array_of_argv,

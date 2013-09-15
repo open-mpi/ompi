@@ -142,6 +142,9 @@ BEGIN_C_DECLS
 /* sensor data */
 #define ORTE_RML_TAG_SENSOR_DATA            47
 
+/* merge support */
+#define ORTE_RML_TAG_MERGE                  48
+
 #define ORTE_RML_TAG_MAX                   100
 
 
