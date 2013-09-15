@@ -993,9 +993,9 @@ static int socket_core_to_cpu_set(char *socket_core_list,
                                   hwloc_topology_t topo,
                                   hwloc_bitmap_t cpumask)
 {
-    int rc=OPAL_SUCCESS, i;
+    int rc=OPAL_SUCCESS, i, j;
     char **socket_core, *corestr;
-    char **range;
+    char **range, **list;
     int range_cnt;
     int lower_range, upper_range;
     int socket_id, core_id;
@@ -1041,18 +1041,22 @@ static int socket_core_to_cpu_set(char *socket_core_list,
             range_cnt = opal_argv_count(range);
             /* see if a range was set or not */
             switch (range_cnt) {
-            case 1:  /* only one core specified */
-                core_id = atoi(range[0]);
-                /* get that object */
-                idx = 0;
-                if (NULL == (core = df_search(topo, socket, obj_type, 0,
-                                              core_id, OPAL_HWLOC_AVAILABLE,
-                                              &idx, NULL))) {
-                    return OPAL_ERR_NOT_FOUND;
+            case 1:  /* only one core, or a list of cores, specified */
+                list = opal_argv_split(range[0], ',');
+                for (j=0; NULL != list[j]; j++) {
+                    core_id = atoi(list[j]);
+                    /* get that object */
+                    idx = 0;
+                    if (NULL == (core = df_search(topo, socket, obj_type, 0,
+                                                  core_id, OPAL_HWLOC_AVAILABLE,
+                                                  &idx, NULL))) {
+                        return OPAL_ERR_NOT_FOUND;
+                    }
+                    /* get the cpus */
+                    res = opal_hwloc_base_get_available_cpus(topo, core);
+                    hwloc_bitmap_or(cpumask, cpumask, res);
                 }
-                /* get the cpus */
-                res = opal_hwloc_base_get_available_cpus(topo, core);
-                hwloc_bitmap_or(cpumask, cpumask, res);
+                opal_argv_free(list);
                 break;
                 
             case 2:  /* range of core id's was given */
@@ -1094,10 +1098,10 @@ int opal_hwloc_base_slot_list_parse(const char *slot_str,
                                     hwloc_cpuset_t cpumask)
 {
     char **item;
-    int rc, i;
+    int rc, i, j;
     hwloc_obj_t pu;
     hwloc_cpuset_t pucpus;
-    char **range;
+    char **range, **list;
     size_t range_cnt;
     int core_id, lower_range, upper_range;
 
@@ -1163,18 +1167,22 @@ int opal_hwloc_base_slot_list_parse(const char *slot_str,
             range_cnt = opal_argv_count(range);
             /* see if a range was set or not */
             switch (range_cnt) {
-            case 1:  /* only one core specified */
-                core_id = atoi(range[0]);
-                /* find the specified logical available cpu */
-                if (NULL == (pu = get_pu(topo, core_id))) {
-                    opal_argv_free(range);
-                    opal_argv_free(item);
-                    return OPAL_ERROR;
+            case 1:  /* only one core, or a list of cores, specified */
+                list = opal_argv_split(range[0], ',');
+                for (j=0; NULL != list[j]; j++) {
+                    core_id = atoi(list[j]);
+                    /* find the specified logical available cpu */
+                    if (NULL == (pu = get_pu(topo, core_id))) {
+                        opal_argv_free(range);
+                        opal_argv_free(item);
+                        return OPAL_ERROR;
+                    }
+                    /* get the available cpus for that object */
+                    pucpus = opal_hwloc_base_get_available_cpus(topo, pu);
+                    /* set that in the mask */
+                    hwloc_bitmap_or(cpumask, cpumask, pucpus);
                 }
-                /* get the available cpus for that object */
-                pucpus = opal_hwloc_base_get_available_cpus(topo, pu);
-                 /* set that in the mask */
-                hwloc_bitmap_or(cpumask, cpumask, pucpus);
+                opal_argv_free(list);
                 break;
                     
             case 2:  /* range of core id's was given */
