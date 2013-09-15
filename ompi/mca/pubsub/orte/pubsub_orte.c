@@ -188,24 +188,28 @@ static int publish ( char *service_name, ompi_info_t *info, char *port_name )
     /* pack the publish command */
     if (OPAL_SUCCESS != (rc = opal_dss.pack(buf, &cmd, 1, ORTE_DATA_SERVER_CMD))) {
         ORTE_ERROR_LOG(rc);
+        OBJ_RELEASE(buf);
         goto CLEANUP;
     }
     
     /* pack the service name */
     if (OPAL_SUCCESS != (rc = opal_dss.pack(buf, &service_name, 1, OPAL_STRING))) {
         ORTE_ERROR_LOG(rc);
+        OBJ_RELEASE(buf);
         goto CLEANUP;
     }
     
     /* pack the port name */
     if (OPAL_SUCCESS != (rc = opal_dss.pack(buf, &port_name, 1, OPAL_STRING))) {
         ORTE_ERROR_LOG(rc);
+        OBJ_RELEASE(buf);
         goto CLEANUP;
     }
 
     /* pack the uniqueness flag */
     if (OPAL_SUCCESS != (rc = opal_dss.pack(buf, &unique, 1, OPAL_BOOL))) {
         ORTE_ERROR_LOG(rc);
+        OBJ_RELEASE(buf);
         goto CLEANUP;
     }
     
@@ -214,16 +218,17 @@ static int publish ( char *service_name, ompi_info_t *info, char *port_name )
                                           ORTE_RML_TAG_DATA_SERVER,
                                           orte_rml_send_callback, NULL))) {
         ORTE_ERROR_LOG(rc);
+        OBJ_RELEASE(buf);
         goto CLEANUP;
     }
 
     /* get the answer */
     OBJ_CONSTRUCT(&xfer, orte_rml_recv_cb_t);
+    xfer.active = true;
     orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
                             ORTE_RML_TAG_DATA_CLIENT,
                             ORTE_RML_NON_PERSISTENT,
                             orte_rml_recv_callback, &xfer);
-    xfer.active = true;
     OMPI_WAIT_FOR_COMPLETION(xfer.active);
 
     /* unpack the result */
@@ -234,9 +239,7 @@ static int publish ( char *service_name, ompi_info_t *info, char *port_name )
     rc = ret;
     OBJ_DESTRUCT(&xfer);
     
-CLEANUP:
-    OBJ_DESTRUCT(&buf);
-    
+CLEANUP:    
     return rc;
 }
 
@@ -398,11 +401,11 @@ static char* lookup ( char *service_name, ompi_info_t *info )
         
         /* get the answer */
         OBJ_CONSTRUCT(&xfer, orte_rml_recv_cb_t);
+        xfer.active = true;
         orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, 
                                 ORTE_RML_TAG_DATA_CLIENT,
                                 ORTE_RML_NON_PERSISTENT,
                                 orte_rml_recv_callback, &xfer);
-        xfer.active = true;
         OMPI_WAIT_FOR_COMPLETION(xfer.active);
 
         /* unpack the return code */
@@ -529,10 +532,10 @@ static int unpublish ( char *service_name, ompi_info_t *info )
     
     /* get the answer */
     OBJ_CONSTRUCT(&xfer, orte_rml_recv_cb_t);
+    xfer.active = true;
     orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_DATA_CLIENT,
                             ORTE_RML_NON_PERSISTENT,
                             orte_rml_recv_callback, &xfer);
-    xfer.active = true;
     OMPI_WAIT_FOR_COMPLETION(xfer.active);
     
     /* unpack the result */
