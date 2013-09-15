@@ -17,22 +17,21 @@
 project=Open SHMEM
 project_short=OSHMEM
 version=@OSHMEM_VERSION@
-language=C
-compiler_env=CC
-compiler_flags_env=CFLAGS
-compiler=@CC@
-extra_includes=@OMPI_WRAPPER_EXTRA_INCLUDES@
-preprocessor_flags=@OMPI_WRAPPER_EXTRA_CPPFLAGS@
-compiler_flags=@OMPI_WRAPPER_EXTRA_CFLAGS@
-linker_flags=@OMPI_WRAPPER_EXTRA_LDFLAGS@    
+language=Fortran
+compiler_env=FC
+compiler_flags_env=FCFLAGS
+compiler=@FC@
+preprocessor_flags=
+compiler_flags=@OMPI_WRAPPER_EXTRA_FCFLAGS@
+linker_flags=@OMPI_WRAPPER_EXTRA_LDFLAGS@ 
 # Note that per https://svn.open-mpi.org/trac/ompi/ticket/3422, we
-# intentionally only link in the MPI libraries (ORTE, OPAL, etc. are
-# pulled in implicitly) because we intend MPI applications to only use
-# the MPI API.
-libs=-lshmem -lmpi @OMPI_WRAPPER_EXTRA_LIBS@
-libs_static=-lshmem -lmpi -lopen-rte -lopen-pal @OMPI_WRAPPER_EXTRA_LIBS@
-dyn_lib_file=libmpi.@OPAL_DYN_LIB_SUFFIX@
-static_lib_file=libmpi.a
-required_file=
+# intentionally only link in the SHMEM and MPI libraries (ORTE, OPAL,
+# etc. are pulled in implicitly) because we intend MPI applications to
+# only use the SHMEM and MPI APIs.
+libs=-lshmem -lmpi_mpifh -lmpi @OMPI_WRAPPER_EXTRA_LIBS@
+libs_static=-shmem -lmpi_mpifh -lmpi -lopen-rte -lopen-pal @OMPI_WRAPPER_EXTRA_LIBS@
+dyn_lib_file=libshmem.@OPAL_DYN_LIB_SUFFIX@
+static_lib_file=libshmem.a
+required_file=@OMPI_WRAPPER_FORTRAN_REQUIRED_FILE@
 includedir=${includedir}
 libdir=${libdir}
