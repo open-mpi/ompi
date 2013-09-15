@@ -382,12 +382,14 @@ static char* lookup ( char *service_name, ompi_info_t *info )
         /* pack the lookup command */
         if (OPAL_SUCCESS != (ret = opal_dss.pack(buf, &cmd, 1, ORTE_DATA_SERVER_CMD))) {
             ORTE_ERROR_LOG(ret);
+            OBJ_RELEASE(buf);
             goto CLEANUP;
         }
         
         /* pack the service name */
         if (OPAL_SUCCESS != (ret = opal_dss.pack(buf, &service_name, 1, OPAL_STRING))) {
             ORTE_ERROR_LOG(ret);
+            OBJ_RELEASE(buf);
             goto CLEANUP;
         }
         
@@ -396,6 +398,7 @@ static char* lookup ( char *service_name, ompi_info_t *info )
                                                ORTE_RML_TAG_DATA_SERVER,
                                                orte_rml_send_callback, NULL))) {
             ORTE_ERROR_LOG(ret);
+            OBJ_RELEASE(buf);
             goto CLEANUP;
         }
         
