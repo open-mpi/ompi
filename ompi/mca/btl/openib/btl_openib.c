@@ -403,7 +403,11 @@ static int mca_btl_openib_size_queues(struct mca_btl_openib_module_t* openib_btl
 
     /* figure out reasonable sizes for completion queues */
     for(qp = 0; qp < mca_btl_openib_component.num_qps; qp++) {
-        if(BTL_OPENIB_QP_TYPE_SRQ(qp)) {
+        if(BTL_OPENIB_QP_TYPE_SRQ(qp)
+#if HAVE_XRC
+           || BTL_OPENIB_QP_TYPE_XRC(qp)
+#endif
+         ) {
             send_cqes = mca_btl_openib_component.qp_infos[qp].u.srq_qp.sd_max;
             recv_cqes = mca_btl_openib_component.qp_infos[qp].rd_num;
         } else {

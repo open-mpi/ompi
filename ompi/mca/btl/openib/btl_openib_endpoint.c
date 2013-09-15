@@ -251,9 +251,13 @@ endpoint_init_qp_xrc(mca_btl_base_endpoint_t *ep, const int qp)
     int max = ep->endpoint_btl->device->ib_dev_attr.max_qp_wr -
         (mca_btl_openib_component.use_eager_rdma ?
          mca_btl_openib_component.max_eager_rdma : 0);
+    int N;
     mca_btl_openib_endpoint_qp_t *ep_qp = &ep->qps[qp];
     ep_qp->qp = ep->ib_addr->qp;
-    ep_qp->qp->sd_wqe += mca_btl_openib_component.qp_infos[qp].u.srq_qp.sd_max;
+
+    N = 1 + ep_qp->qp->users/mca_btl_openib_component.num_qps;
+    ep_qp->qp->sd_wqe += mca_btl_openib_component.qp_infos[qp].u.srq_qp.sd_max/N;
+
     /* make sure that we don't overrun maximum supported by device */
     if (ep_qp->qp->sd_wqe > max)
         ep_qp->qp->sd_wqe =  max;
