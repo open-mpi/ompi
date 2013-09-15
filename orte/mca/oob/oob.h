@@ -77,6 +77,28 @@ typedef struct {
   MCA_BASE_VERSION_2_0_0, \
   "oob", 2, 0, 0
 
+
+/* macro to safely release an object being used by OOB */
+typedef struct { 
+    opal_object_t super;
+    opal_event_t ev;
+    void *object;
+} orte_oob_caddy_t;
+OBJ_CLASS_DECLARATION(orte_oob_caddy_t);
+#define ORTE_OOB_RELEASE(p)                                     \
+    do {                                                        \
+        orte_oob_caddy_t *cd;                                   \
+        cd = OBJ_NEW(orte_oob_caddy_t);                         \
+        cd->object = (p);                                       \
+        opal_event_set(orte_event_base, &cd->ev, -1,            \
+                       OPAL_EV_WRITE,                           \
+                       orte_oob_base_object_release, cd);       \
+        opal_event_set_priority(&cd->ev, ORTE_MSG_PRI);         \
+        opal_event_active(&cd->ev, OPAL_EV_WRITE, 1);           \
+    } while(0);
+
+ORTE_DECLSPEC void orte_oob_base_object_release(int fd, short args, void *cbdata);
+
 END_C_DECLS
 
 #endif

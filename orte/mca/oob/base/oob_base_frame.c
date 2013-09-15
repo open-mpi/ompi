@@ -95,6 +95,12 @@ MCA_BASE_FRAMEWORK_DECLARE(orte, oob, "Out-of-Band Messaging Subsystem",
                            mca_oob_base_static_components, 0);
 
 
+void orte_oob_base_object_release(int fd, short args, void *cbdata)
+{
+    orte_oob_caddy_t *cd = (orte_oob_caddy_t*)cbdata;
+    OBJ_RELEASE(cd->object);
+}
+
 OBJ_CLASS_INSTANCE(mca_oob_base_component_t,
                    opal_list_item_t,
                    NULL, NULL);
@@ -113,3 +119,6 @@ OBJ_CLASS_INSTANCE(orte_oob_base_peer_t,
                    opal_object_t,
                    pr_cons, pr_des);
 
+OBJ_CLASS_INSTANCE(orte_oob_caddy_t,
+                   opal_object_t,
+                   NULL, NULL);
