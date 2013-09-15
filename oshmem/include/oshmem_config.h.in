@@ -2,6 +2,7 @@
  *
  * Copyright (c) 2013      Mellanox Technologies, Inc.
  *                         All rights reserved.
+ * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -14,65 +15,10 @@
 #ifndef OSHMEM_CONFIG_H
 #define OSHMEM_CONFIG_H
 
-#include "opal_config.h"
+/* Need to include a bunch of infrastructure from the OMPI layer */
+#include "ompi_config.h"
 
 #define OSHMEM_IDENT_STRING OPAL_IDENT_STRING
-
-/***********************************************************************
- *
- * OMPI-specific Fortran code that should be in ompi_config.h, but not
- * in the other projects.
- *
- **********************************************************************/
-
-/* MPI_Fint is the same as ompi_fortran_INTEGER_t */
-#define MPI_Fint ompi_fortran_integer_t
-
-#if OMPI_HAVE_FORTRAN_REAL && OMPI_HAVE_FORTRAN_COMPLEX
-/* * C type for Fortran COMPLEX */
-/*typedef struct {
-  ompi_fortran_real_t real;
-  ompi_fortran_real_t imag;
-} ompi_fortran_complex_t;*/
-#endif
-
-#if OMPI_HAVE_FORTRAN_REAL4 && OMPI_HAVE_FORTRAN_COMPLEX8
-/* * C type for Fortran COMPLEX*8 */
-/*typedef struct {
-  ompi_fortran_real4_t real;
-  ompi_fortran_real4_t imag;
-} ompi_fortran_complex8_t;*/
-#endif
-
-#if OMPI_HAVE_FORTRAN_REAL8 && OMPI_HAVE_FORTRAN_COMPLEX16
-/* * C type for Fortran COMPLEX*16 */
-/*typedef struct {
-  ompi_fortran_real8_t real;
-  ompi_fortran_real8_t imag;
-} ompi_fortran_complex16_t;*/
-#endif
-
-#if OMPI_HAVE_FORTRAN_REAL16 && OMPI_HAVE_FORTRAN_COMPLEX32
-/* * C type for Fortran COMPLEX*32 */
-/*typedef struct {
-  ompi_fortran_real16_t real;
-  ompi_fortran_real16_t imag;
-} ompi_fortran_complex32_t;*/
-#endif
-
-#if OMPI_HAVE_FORTRAN_DOUBLE_PRECISION
-/* * C type for Fortran DOUBLE COMPLEX */
-/*typedef struct {
-  ompi_fortran_double_precision_t real;
-  ompi_fortran_double_precision_t imag;
-} ompi_fortran_double_complex_t;*/
-#endif
-
-#if OPAL_HAVE_ATTRIBUTE_DESTRUCTOR
-#    define __opal_attribute_destructor__    __attribute__((__destructor__))
-#else
-#    define __opal_attribute_destructor__
-#endif
 
 #if defined(__WINDOWS__)
 
