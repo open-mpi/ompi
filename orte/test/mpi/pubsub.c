@@ -6,6 +6,7 @@
  */
 
 #include <stdio.h>
+#include <stdbool.h>
 #include "mpi.h"
 
 int main(int argc, char* argv[])
@@ -13,6 +14,13 @@ int main(int argc, char* argv[])
     int rank, size;
     MPI_Info info, srch;
     char port[MPI_MAX_PORT_NAME];
+    bool local=false;
+
+    if (1 < argc) {
+        if (0 == strcmp("local", argv[1])) {
+            local = true;
+        }
+    }
 
     MPI_Init(&argc, &argv);
 
@@ -22,8 +30,12 @@ int main(int argc, char* argv[])
     printf("Hello, World, I am %d of %d\n", rank, size);
     
     MPI_Info_create(&info);
-    MPI_Info_set(info, "ompi_global_scope", "true");
-    
+    if (local) {
+        MPI_Info_set(info, "ompi_global_scope", "false");
+    } else {
+        MPI_Info_set(info, "ompi_global_scope", "true");
+    }
+
     if (0 == rank) {
         MPI_Open_port(MPI_INFO_NULL, port);
         MPI_Publish_name("pubsub-test", info, port);
