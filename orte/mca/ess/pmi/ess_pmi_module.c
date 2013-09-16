@@ -159,6 +159,9 @@ static int rte_init(void)
     if (NULL == (string_key = orte_pre_condition_transports_print(unique_key))) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         return ORTE_ERR_OUT_OF_RESOURCE;
+
+	/* this needs to be set to enable debugger use when direct launched */
+	orte_standalone_operation = true;
     }
     if (NULL == (cs_env = mca_base_param_environ_variable("orte_precondition_transports",NULL,NULL))) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
