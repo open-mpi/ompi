@@ -272,6 +272,7 @@ hwloc_opendir(const char *p, int d __hwloc_attribute_unused)
 }
 
 
+#if defined(HWLOC_HAVE_CPU_SET_S) && !defined(HWLOC_HAVE_OLD_SCHED_SETAFFINITY)
 static int
 hwloc_linux_parse_cpuset_file(FILE *file, hwloc_bitmap_t set)
 {
@@ -312,7 +313,7 @@ hwloc_linux_parse_cpuset_file(FILE *file, hwloc_bitmap_t set)
 
   return 0;
 }
-
+#endif
 
 /*****************************
  ******* CpuBind Hooks *******
