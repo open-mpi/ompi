@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -11,6 +12,8 @@
  *                         All rights reserved.
  * Copyright (c) 2007-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -92,6 +95,10 @@ ompi_predefined_op_t *ompi_mpi_op_replace_addr = &ompi_mpi_op_replace;
  */
 int ompi_op_ddt_map[OMPI_DATATYPE_MAX_PREDEFINED];
 
+/* Get the c complex operator associated with a fortran complex type */
+#define FORTRAN_COMPLEX_OP_TYPE_X(type) OMPI_OP_BASE_TYPE_ ## type
+/* Preprocessor hack to ensure type gets expanded correctly */
+#define FORTRAN_COMPLEX_OP_TYPE(type) FORTRAN_COMPLEX_OP_TYPE_X(type)
 
 #define FLAGS_NO_FLOAT \
     (OMPI_OP_FLAGS_INTRINSIC | OMPI_OP_FLAGS_ASSOC | OMPI_OP_FLAGS_COMMUTE)
@@ -131,15 +138,20 @@ int ompi_op_init(void)
     ompi_op_ddt_map[OMPI_DATATYPE_MPI_FLOAT] = OMPI_OP_BASE_TYPE_FLOAT;
     ompi_op_ddt_map[OMPI_DATATYPE_MPI_DOUBLE] = OMPI_OP_BASE_TYPE_DOUBLE;
     ompi_op_ddt_map[OMPI_DATATYPE_MPI_LONG_DOUBLE] = OMPI_OP_BASE_TYPE_LONG_DOUBLE;
-#if OMPI_SIZEOF_FORTRAN_COMPLEX8 == SIZEOF_FLOAT__COMPLEX
-    ompi_op_ddt_map[OMPI_DATATYPE_MPI_COMPLEX8] = OMPI_OP_BASE_TYPE_COMPLEX8;
+
+#if OMPI_HAVE_FORTRAN_COMPLEX8
+    ompi_op_ddt_map[OMPI_DATATYPE_MPI_COMPLEX8] = FORTRAN_COMPLEX_OP_TYPE(OMPI_KIND_FORTRAN_COMPLEX8);
 #endif
-#if OMPI_SIZEOF_FORTRAN_COMPLEX16 == SIZEOF_DOUBLE__COMPLEX
-    ompi_op_ddt_map[OMPI_DATATYPE_MPI_COMPLEX16] = OMPI_OP_BASE_TYPE_COMPLEX16;
+
+#if OMPI_HAVE_FORTRAN_COMPLEX16
+    ompi_op_ddt_map[OMPI_DATATYPE_MPI_COMPLEX16] = FORTRAN_COMPLEX_OP_TYPE(OMPI_KIND_FORTRAN_COMPLEX16);
 #endif
-#if OMPI_SIZEOF_FORTRAN_COMPLEX32 == SIZEOF_LONG_DOUBLE__COMPLEX
-    ompi_op_ddt_map[OMPI_DATATYPE_MPI_COMPLEX32] = OMPI_OP_BASE_TYPE_COMPLEX32;
+
+    /* Only enable reductions on COMPLEX32 if the REAL*16 matches the equivalent C type */
+#if OMPI_REAL16_MATCHES_C && OMPI_HAVE_FORTRAN_COMPLEX32
+    ompi_op_ddt_map[OMPI_DATATYPE_MPI_COMPLEX32] = FORTRAN_COMPLEX_OP_TYPE(OMPI_KIND_FORTRAN_COMPLEX32);
 #endif
+
     ompi_op_ddt_map[OMPI_DATATYPE_MPI_WCHAR] = OMPI_OP_BASE_TYPE_WCHAR;
     ompi_op_ddt_map[OMPI_DATATYPE_MPI_BOOL] = OMPI_OP_BASE_TYPE_BOOL;
     ompi_op_ddt_map[OMPI_DATATYPE_MPI_LOGICAL] = OMPI_OP_BASE_TYPE_LOGICAL;
@@ -148,9 +160,15 @@ int ompi_op_init(void)
     ompi_op_ddt_map[OMPI_DATATYPE_MPI_REAL] = OMPI_OP_BASE_TYPE_REAL;
     ompi_op_ddt_map[OMPI_DATATYPE_MPI_DOUBLE_PRECISION] = OMPI_OP_BASE_TYPE_DOUBLE_PRECISION;
 
-    ompi_op_ddt_map[OMPI_DATATYPE_MPI_COMPLEX] = OMPI_OP_BASE_TYPE_COMPLEX8;
-    ompi_op_ddt_map[OMPI_DATATYPE_MPI_DOUBLE_COMPLEX] = OMPI_OP_BASE_TYPE_COMPLEX16;
-    ompi_op_ddt_map[OMPI_DATATYPE_MPI_LONG_DOUBLE_COMPLEX] = OMPI_OP_BASE_TYPE_COMPLEX32;
+#if OMPI_HAVE_FORTRAN_COMPLEX
+    ompi_op_ddt_map[OMPI_DATATYPE_MPI_COMPLEX] = FORTRAN_COMPLEX_OP_TYPE(OMPI_KIND_FORTRAN_COMPLEX);
+#endif
+
+#if OMPI_HAVE_FORTRAN_DOUBLE_COMPLEX
+    ompi_op_ddt_map[OMPI_DATATYPE_MPI_DOUBLE_COMPLEX] = FORTRAN_COMPLEX_OP_TYPE(OMPI_KIND_FORTRAN_DOUBLE_COMPLEX);
+#endif
+
+    ompi_op_ddt_map[OMPI_DATATYPE_MPI_LONG_DOUBLE_COMPLEX] = OMPI_OP_BASE_TYPE_C_LONG_DOUBLE_COMPLEX;
 
     ompi_op_ddt_map[OMPI_DATATYPE_MPI_2INT] = OMPI_OP_BASE_TYPE_2INT;
     ompi_op_ddt_map[OMPI_DATATYPE_MPI_2INTEGER] = OMPI_OP_BASE_TYPE_2INTEGER;
@@ -180,10 +198,10 @@ int ompi_op_init(void)
 #warning Unsupported definition for MPI_OFFSET
 #endif
     ompi_op_ddt_map[OMPI_DATATYPE_MPI_C_BOOL] = OMPI_OP_BASE_TYPE_BOOL;
-    ompi_op_ddt_map[OMPI_DATATYPE_MPI_C_COMPLEX] = OMPI_OP_BASE_TYPE_C_FLOAT__COMPLEX;
-    ompi_op_ddt_map[OMPI_DATATYPE_MPI_C_FLOAT_COMPLEX] = OMPI_OP_BASE_TYPE_C_FLOAT__COMPLEX;
-    ompi_op_ddt_map[OMPI_DATATYPE_MPI_C_DOUBLE_COMPLEX] = OMPI_OP_BASE_TYPE_C_DOUBLE__COMPLEX;
-    ompi_op_ddt_map[OMPI_DATATYPE_MPI_C_LONG_DOUBLE_COMPLEX] = OMPI_OP_BASE_TYPE_C_LONG_DOUBLE__COMPLEX;
+    ompi_op_ddt_map[OMPI_DATATYPE_MPI_C_COMPLEX] = OMPI_OP_BASE_TYPE_C_FLOAT_COMPLEX;
+    ompi_op_ddt_map[OMPI_DATATYPE_MPI_C_FLOAT_COMPLEX] = OMPI_OP_BASE_TYPE_C_FLOAT_COMPLEX;
+    ompi_op_ddt_map[OMPI_DATATYPE_MPI_C_DOUBLE_COMPLEX] = OMPI_OP_BASE_TYPE_C_DOUBLE_COMPLEX;
+    ompi_op_ddt_map[OMPI_DATATYPE_MPI_C_LONG_DOUBLE_COMPLEX] = OMPI_OP_BASE_TYPE_C_LONG_DOUBLE_COMPLEX;
 
     /* MPI 3.0 datatypes */
 #if OMPI_MPI_COUNT_SIZE == 4
