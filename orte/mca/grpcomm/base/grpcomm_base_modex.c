@@ -557,7 +557,7 @@ int orte_grpcomm_base_pack_modex_entries(opal_buffer_t *buf)
     
     /* if there are entries, store them */
     while (NULL != (kv = (opal_value_t*)opal_list_remove_first(&data))) {
-        if (ORTE_SUCCESS != (opal_dss.pack(buf, &kv, 1, OPAL_VALUE))) {
+        if (ORTE_SUCCESS != (rc = opal_dss.pack(buf, &kv, 1, OPAL_VALUE))) {
             ORTE_ERROR_LOG(rc);
             break;
         }
