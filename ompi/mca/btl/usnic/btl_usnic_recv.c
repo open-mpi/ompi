@@ -281,8 +281,9 @@ opal_output(0, "Start PUT to %p\n", chunk_hdr->ch_hdr.put_addr);
 
                 /* Pass this segment up to the PML */
 #if MSGDEBUG2
-                opal_output(0, "  large FRAG complete, pass up %p, %"PRIu64" bytes, tag=%d\n",
-                        desc.des_dst->seg_addr.pval, desc.des_dst->seg_len,
+                opal_output(0, "  large FRAG complete, pass up %p, %u bytes, tag=%d\n",
+                        desc.des_dst->seg_addr.pval,
+                        (unsigned)desc.des_dst->seg_len,
                         (int)chunk_hdr->ch_hdr.tag);
 #endif
                 reg = mca_btl_base_active_message_trigger +

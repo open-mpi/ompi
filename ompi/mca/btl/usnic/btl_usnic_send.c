@@ -64,7 +64,6 @@ ompi_btl_usnic_frag_send_complete(ompi_btl_usnic_module_t *module,
 
     /* see if this endpoint needs to be made ready-to-send */
     ompi_btl_usnic_check_rts(frag->sf_endpoint);
-
 }
 
 /*
@@ -84,7 +83,7 @@ ompi_btl_usnic_chunk_send_complete(ompi_btl_usnic_module_t *module,
     --frag->sf_seg_post_cnt;
 
     if (sseg->ss_send_posted == 0 && !sseg->ss_ack_pending) {
-        ompi_btl_usnic_chunk_segment_return(module, sseg);
+        ompi_btl_usnic_release_send_segment(module, frag, sseg);
     }
 
     /* done with whole fragment? */
@@ -146,33 +145,30 @@ ompi_btl_usnic_send_slower(
         }
 
         /* set up VERBS SG list */
-        sseg->ss_send_desc.num_sge = 1;
         sseg->ss_base.us_sg_entry[0].length =
             sizeof(ompi_btl_usnic_btl_header_t) + frag->sf_size;
 
         /* use standard channel */
         sseg->ss_channel = USNIC_DATA_CHANNEL;
         sseg->ss_base.us_btl_header->tag = tag;
-#if MSGDEBUG2
-    opal_output(0, "  small frag %d segs %p(%d) + %p(%d)\n",
-            (int)frag->sf_base.uf_base.des_src_cnt,
-            frag->sf_base.uf_src_seg[0].seg_addr.pval,
-            (int)frag->sf_base.uf_src_seg[0].seg_len,
-            frag->sf_base.uf_src_seg[1].seg_addr.pval,
-            (int)frag->sf_base.uf_src_seg[1].seg_len);
-    opal_output(0, "  small seg  %d segs %p(%d) + %p(%d)\n",
-            sseg->ss_send_desc.num_sge,
-            (void *)sseg->ss_send_desc.sg_list[0].addr,
-            sseg->ss_send_desc.sg_list[0].length,
-            (void *)sseg->ss_send_desc.sg_list[1].addr,
-            sseg->ss_send_desc.sg_list[1].length);
-#endif
     } else {
         ompi_btl_usnic_large_send_frag_t *lfrag;
+        mca_btl_base_descriptor_t *desc;
+        unsigned i;
 
         lfrag = (ompi_btl_usnic_large_send_frag_t *)frag;
+        desc = &frag->sf_base.uf_base;
 
+        /* Save info about the frag */
         lfrag->lsf_tag = tag;
+        lfrag->lsf_cur_offset = 0;
+        lfrag->lsf_cur_ptr = desc->des_src[0].seg_addr.pval;
+        lfrag->lsf_cur_sge = 0;
+        lfrag->lsf_bytes_left_in_sge = desc->des_src[0].seg_len;
+        lfrag->lsf_bytes_left = desc->des_src[0].seg_len;
+        for (i=1; i<desc->des_src_cnt; ++i) {
+            lfrag->lsf_bytes_left += desc->des_src[i].seg_len;
+        }
     }
 
     /* queue this fragment into the send engine */

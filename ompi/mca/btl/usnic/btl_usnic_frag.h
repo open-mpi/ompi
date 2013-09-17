@@ -215,7 +215,6 @@ typedef struct ompi_btl_usnic_send_segment_t {
 
     /* channel upon which send was posted */
     ompi_btl_usnic_channel_id_t ss_channel;
-    uint32_t ss_flags;
 
     struct ompi_btl_usnic_send_frag_t *ss_parent_frag;
     int ss_hotel_room;          /* current retrans room, or -1 if none */
@@ -225,6 +224,9 @@ typedef struct ompi_btl_usnic_send_segment_t {
     bool ss_ack_pending;        /* true until this segment is ACKed */
 
 } ompi_btl_usnic_send_segment_t;
+
+typedef ompi_btl_usnic_send_segment_t ompi_btl_usnic_frag_segment_t;
+typedef ompi_btl_usnic_send_segment_t ompi_btl_usnic_chunk_segment_t;
 
 /**
  * Common part of usNIC fragment descriptor
@@ -276,7 +278,13 @@ typedef struct ompi_btl_usnic_large_send_frag_t {
     uint32_t lsf_frag_id;       /* fragment ID for reassembly */
     size_t lsf_cur_offset;      /* current offset into message */
     size_t lsf_bytes_left;      /* bytes remaining to send */
+    uint8_t *lsf_cur_ptr;       /* current send pointer */
+    int lsf_cur_sge;
+    size_t lsf_bytes_left_in_sge;
 
+    uint8_t *lsf_buffer;        /* attached storage for usnic_alloc() */
+
+    /* this will go away when we update convertor approach */
     opal_list_t lsf_seg_chain;  /* chain of segments for converted data */
     
 } ompi_btl_usnic_large_send_frag_t;
@@ -309,9 +317,6 @@ OBJ_CLASS_DECLARATION(ompi_btl_usnic_send_frag_t);
 OBJ_CLASS_DECLARATION(ompi_btl_usnic_small_send_frag_t);
 OBJ_CLASS_DECLARATION(ompi_btl_usnic_large_send_frag_t);
 OBJ_CLASS_DECLARATION(ompi_btl_usnic_put_dest_frag_t);
-
-typedef ompi_btl_usnic_send_segment_t ompi_btl_usnic_frag_segment_t;
-typedef ompi_btl_usnic_send_segment_t ompi_btl_usnic_chunk_segment_t;
 
 OBJ_CLASS_DECLARATION(ompi_btl_usnic_segment_t);
 OBJ_CLASS_DECLARATION(ompi_btl_usnic_frag_segment_t);
@@ -426,12 +431,25 @@ ompi_btl_usnic_frag_return(
     struct ompi_btl_usnic_module_t *module,
     ompi_btl_usnic_frag_t *frag)
 {
-#if MSGDEBUG2
+#if MSGDEBUG1
     opal_output(0, "freeing frag %p, type %s\n", (void *)frag,
             usnic_frag_type(frag->uf_type));
 #endif
     frag->uf_src_seg[0].seg_len = 0;
     frag->uf_src_seg[1].seg_len = 0;
+
+    /* If this is a large fragment, we need to free any
+     * attached storage
+     */
+    if (frag->uf_type == OMPI_BTL_USNIC_FRAG_LARGE_SEND) {
+        ompi_btl_usnic_large_send_frag_t *lfrag;
+        lfrag = (ompi_btl_usnic_large_send_frag_t *)frag;
+        if (lfrag->lsf_buffer != NULL) {
+            free(lfrag->lsf_buffer);
+            lfrag->lsf_buffer = NULL;
+        }
+    }
+
     OMPI_FREE_LIST_RETURN_MT(frag->uf_freelist, &(frag->uf_base.super));
 }
 
@@ -479,7 +497,6 @@ ompi_btl_usnic_chunk_segment_return(
 
     OMPI_FREE_LIST_RETURN_MT(&(module->chunk_segs), &(seg->ss_base.us_list));
 }
-
 
 /*
  * Alloc an ACK segment

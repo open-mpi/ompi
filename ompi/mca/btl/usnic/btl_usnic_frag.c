@@ -69,7 +69,6 @@ chunk_seg_constructor(
 
     /* some more common initializaiton */
     common_send_seg_helper(seg);
-    seg->ss_flags = 0;
 
     /* payload starts next byte beyond BTL chunk header */
     bseg->us_payload.raw = (uint8_t *)(bseg->us_btl_chunk_header + 1);
@@ -88,7 +87,6 @@ frag_seg_constructor(
 
     /* some more common initializaiton */
     common_send_seg_helper(seg);
-    seg->ss_flags = 0;
 
     /* payload starts next byte beyond BTL header */
     bseg->us_payload.raw = (uint8_t *)(bseg->us_btl_header + 1);
@@ -216,6 +214,7 @@ large_send_frag_constructor(ompi_btl_usnic_large_send_frag_t *lfrag)
     lfrag->lsf_base.sf_base.uf_src_seg[0].seg_addr.pval =
                     &lfrag->lsf_ompi_header;
 
+    lfrag->lsf_buffer = NULL;
     OBJ_CONSTRUCT(&lfrag->lsf_seg_chain, opal_list_t);
 }
 

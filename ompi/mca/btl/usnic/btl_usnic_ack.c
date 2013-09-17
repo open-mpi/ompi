@@ -145,16 +145,17 @@ ompi_btl_usnic_handle_ack(
             opal_output(0, "completion callback for frag=%p, dest=%p\n",
                     (void*)frag, frag->sf_base.uf_dst_seg[0].seg_addr.pval);
 #endif
-            frag->sf_base.uf_base.des_cbfunc(&module->super, frag->sf_endpoint,
-                    &frag->sf_base.uf_base, OMPI_SUCCESS);
-            frag->sf_base.uf_base.des_flags &= ~MCA_BTL_DES_SEND_ALWAYS_CALLBACK;
+            frag->sf_base.uf_base.des_cbfunc(&module->super,
+                    frag->sf_endpoint, &frag->sf_base.uf_base,
+                    OMPI_SUCCESS);
+            frag->sf_base.uf_base.des_flags &=
+                ~MCA_BTL_DES_SEND_ALWAYS_CALLBACK;
         }
 
         /* free this segment */
         sseg->ss_ack_pending = false;
-        if (sseg->ss_base.us_type == OMPI_BTL_USNIC_SEG_CHUNK &&
-            sseg->ss_send_posted == 0) {
-            ompi_btl_usnic_chunk_segment_return(module, sseg);
+        if (sseg->ss_send_posted == 0) {
+            ompi_btl_usnic_release_send_segment(module, frag, sseg);
         }
 
         /* OK to return this fragment? */

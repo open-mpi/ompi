@@ -252,6 +252,20 @@ ompi_btl_usnic_endpoint_enqueue_frag(
     return OMPI_SUCCESS;
 }
 
+static inline void
+ompi_btl_usnic_release_send_segment(
+    ompi_btl_usnic_module_t *module,
+    ompi_btl_usnic_send_frag_t *frag,
+    ompi_btl_usnic_send_segment_t *sseg)
+{
+    /* We only return CHUNK segments because they are the only send-style 
+     * segments that are dynamically allocated.
+     */
+    if (sseg->ss_base.us_type == OMPI_BTL_USNIC_SEG_CHUNK) {
+        ompi_btl_usnic_chunk_segment_return(module, sseg);
+    }
+}
+
 void ompi_btl_usnic_frag_complete(ompi_btl_usnic_send_frag_t *frag);
 
 void ompi_btl_usnic_frag_send_complete(ompi_btl_usnic_module_t *module,
