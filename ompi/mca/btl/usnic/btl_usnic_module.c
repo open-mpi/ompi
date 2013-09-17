@@ -658,7 +658,7 @@ usnic_put(
         /* set up VERBS SG list */
         sseg->ss_base.us_sg_entry[0].length =
             sizeof(ompi_btl_usnic_btl_header_t) +
-            frag->sf_base.uf_base.des_src[1].seg_len;
+            frag->sf_base.uf_base.des_src[0].seg_len;
 
         /* use standard channel */
         sseg->ss_channel = USNIC_DATA_CHANNEL;
