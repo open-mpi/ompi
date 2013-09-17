@@ -53,6 +53,21 @@ ompi_btl_usnic_check_rts(
     }
 }
 
+#if MSGDEBUG2
+static inline
+int sge_total(struct ibv_send_wr *wr)
+{
+    int i;
+    int len;
+    len=0;
+    for (i=0; i<wr->num_sge; ++i) {
+        len += wr->sg_list[i].length;
+    }
+
+    return len;
+}
+#endif
+
 /*
  * Common point for posting a segment to VERBS
  */
@@ -68,10 +83,11 @@ ompi_btl_usnic_post_segment(
     int ret;
 
 #if MSGDEBUG1
-    opal_output(0, "post_send: type=%d, addr=%p, len=%d\n",
-                sseg->ss_base.us_type,
+    opal_output(0, "post_send: type=%s, addr=%p, len=%d, payload=%d\n",
+                usnic_seg_type(sseg->ss_base.us_type),
                 (void*) sseg->ss_send_desc.sg_list->addr, 
-                sseg->ss_send_desc.sg_list->length);
+                sge_total(&sseg->ss_send_desc),
+                sseg->ss_base.us_btl_header->payload_len);
     /*ompi_btl_usnic_dump_hex((void *)(sseg->ss_send_desc.sg_list->addr + sizeof(ompi_btl_usnic_btl_header_t)), 16); */
 #endif
 
@@ -215,8 +231,9 @@ ompi_btl_usnic_endpoint_enqueue_frag(
     ompi_btl_usnic_send_frag_t *frag)
 {
 #if MSGDEBUG1
-    opal_output(0, "enq_frag: frag=%p, endpoint=%p, type=%d, len=%"PRIu64"\n",
-            (void*)frag, (void*)endpoint, frag->sf_base.uf_type,
+    opal_output(0, "enq_frag: frag=%p, endpoint=%p, %s, len=%"PRIu64"\n",
+            (void*)frag, (void*)endpoint,
+            usnic_frag_type(frag->sf_base.uf_type),
             frag->sf_base.uf_base.des_src->seg_len);
     if (frag->sf_base.uf_type == OMPI_BTL_USNIC_FRAG_LARGE_SEND) {
         ompi_btl_usnic_large_send_frag_t *lfrag;

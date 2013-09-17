@@ -152,6 +152,7 @@ ompi_btl_usnic_send_slower(
 
         /* use standard channel */
         sseg->ss_channel = USNIC_DATA_CHANNEL;
+        sseg->ss_base.us_btl_header->tag = tag;
 #if MSGDEBUG2
     opal_output(0, "  small frag %d segs %p(%d) + %p(%d)\n",
             (int)frag->sf_base.uf_base.des_src_cnt,
@@ -166,6 +167,12 @@ ompi_btl_usnic_send_slower(
             (void *)sseg->ss_send_desc.sg_list[1].addr,
             sseg->ss_send_desc.sg_list[1].length);
 #endif
+    } else {
+        ompi_btl_usnic_large_send_frag_t *lfrag;
+
+        lfrag = (ompi_btl_usnic_large_send_frag_t *)frag;
+
+        lfrag->lsf_tag = tag;
     }
 
     /* queue this fragment into the send engine */

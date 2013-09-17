@@ -57,12 +57,39 @@ typedef enum {
     OMPI_BTL_USNIC_FRAG_PUT_DEST
 } ompi_btl_usnic_frag_type_t;
 
+#if MSGDEBUG2
+static inline char *
+usnic_frag_type(ompi_btl_usnic_frag_type_t t)
+{
+    switch (t) {
+    case OMPI_BTL_USNIC_FRAG_LARGE_SEND: return "large";
+    case OMPI_BTL_USNIC_FRAG_SMALL_SEND: return "small";
+    case OMPI_BTL_USNIC_FRAG_PUT_DEST: return "put dest";
+    default: return "unknown";
+    }
+}
+#endif
+
 typedef enum {
     OMPI_BTL_USNIC_SEG_ACK,
     OMPI_BTL_USNIC_SEG_FRAG,
     OMPI_BTL_USNIC_SEG_CHUNK,
     OMPI_BTL_USNIC_SEG_RECV
 } ompi_btl_usnic_seg_type_t;
+
+#if MSGDEBUG2
+static inline char *
+usnic_seg_type(ompi_btl_usnic_seg_type_t t)
+{
+    switch (t) {
+    case OMPI_BTL_USNIC_SEG_ACK: return "ACK";
+    case OMPI_BTL_USNIC_SEG_FRAG: return "FRAG";
+    case OMPI_BTL_USNIC_SEG_CHUNK: return "CHUNK";
+    case OMPI_BTL_USNIC_SEG_RECV: return "RECV";
+    default: return "unknown";
+    }
+}
+#endif
 
 
 typedef struct ompi_btl_usnic_reg_t {
@@ -94,6 +121,7 @@ typedef enum {
  * holes.
  */
 typedef struct {
+
     /* Hashed RTE process name of the sender */
     uint64_t sender;
 
@@ -112,8 +140,9 @@ typedef struct {
 
     /* Type of BTL header (see enum, above) */
     uint8_t payload_type;
-    /* Yuck */
-    uint8_t padding;
+
+    /* tag for PML, etc */
+    mca_btl_base_tag_t tag;
 } ompi_btl_usnic_btl_header_t; 
 
 /**
@@ -146,15 +175,6 @@ typedef enum {
     FRAG_MAX = 0xff
 } ompi_btl_usnic_frag_state_flags_t;
 
-
-/* 
- * Convenience macros for states
- */
-#define FRAG_STATE_SET(frag, state) (frag)->state_flags |= (state)
-#define FRAG_STATE_CLR(frag, state) (frag)->state_flags &= ~(state)
-#define FRAG_STATE_GET(frag, state) ((frag)->state_flags & (state))
-#define FRAG_STATE_ISSET(frag, state) (((frag)->state_flags & (state)) != 0)
-
 /**
  * Descriptor for a common segment.  This is exactly one packet and may
  * be send or receive
@@ -177,7 +197,7 @@ typedef struct ompi_btl_usnic_segment_t {
 
     union {
         uint8_t *raw;
-        mca_btl_base_header_t *pml_header;
+        void *pml_header;
     } us_payload;
 } ompi_btl_usnic_segment_t;
 
@@ -270,6 +290,7 @@ typedef struct ompi_btl_usnic_large_send_frag_t {
     ompi_btl_usnic_send_frag_t lsf_base;
 
     char lsf_pml_header[64];    /* space for PML header */
+    mca_btl_base_tag_t lsf_tag; /* save tag */
 
     uint32_t lsf_frag_id;       /* fragment ID for reassembly */
     size_t lsf_cur_offset;      /* current offset into message */
@@ -424,6 +445,10 @@ ompi_btl_usnic_frag_return(
     struct ompi_btl_usnic_module_t *module,
     ompi_btl_usnic_frag_t *frag)
 {
+#if MSGDEBUG2
+    opal_output(0, "freeing frag %p, type %s\n", (void *)frag,
+            usnic_frag_type(frag->uf_type));
+#endif
     OMPI_FREE_LIST_RETURN_MT(frag->uf_freelist, &(frag->uf_base.super));
 }
 

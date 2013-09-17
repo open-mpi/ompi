@@ -134,19 +134,21 @@ ompi_btl_usnic_handle_ack(
                 (void*)sseg, (void*)frag, bytes_acked, frag->sf_ack_bytes_left);
 #endif
 
-        /* perform completion callback for PUT here */
+        /* If all ACKs received, and this is a put or a regular send
+         * that needs a callback, perform the callback now
+         */
         if (frag->sf_ack_bytes_left == 0 &&
-            frag->sf_base.uf_dst_seg[0].seg_addr.pval != NULL) {
-#if MSGDEBUG1
-            opal_output(0, "Calling back %p for PUT completion, frag=%p\n", 
-                    (void*)(uintptr_t)frag->sf_base.uf_base.des_cbfunc, (void*)frag);
+            ((frag->sf_base.uf_dst_seg[0].seg_addr.pval != NULL) ||
+             (frag->sf_base.uf_base.des_flags &
+              MCA_BTL_DES_SEND_ALWAYS_CALLBACK))) {
+#if MSGDEBUG2
+            opal_output(0, "completion callback for frag=%p, dest=%p\n",
+                    (void*)frag, frag->sf_base.uf_dst_seg[0].seg_addr.pval);
 #endif
             frag->sf_base.uf_base.des_cbfunc(&module->super, frag->sf_endpoint,
                     &frag->sf_base.uf_base, OMPI_SUCCESS);
+            frag->sf_base.uf_base.des_flags &= ~MCA_BTL_DES_SEND_ALWAYS_CALLBACK;
         }
-
-        /* OK to return this fragment? */
-        ompi_btl_usnic_send_frag_return_cond(module, frag);
 
         /* free this segment */
         sseg->ss_ack_pending = false;
@@ -154,6 +156,9 @@ ompi_btl_usnic_handle_ack(
             sseg->ss_send_posted == 0) {
             ompi_btl_usnic_chunk_segment_return(module, sseg);
         }
+
+        /* OK to return this fragment? */
+        ompi_btl_usnic_send_frag_return_cond(module, frag);
 
         /* indicate this segment has been ACKed */
         endpoint->endpoint_sent_segs[WINDOW_SIZE_MOD(is)] = NULL;
