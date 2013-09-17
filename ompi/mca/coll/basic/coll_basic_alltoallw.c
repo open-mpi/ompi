@@ -13,6 +13,7 @@
  * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2013      FUJITSU LIMITED.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -56,7 +57,7 @@ mca_coll_basic_alltoallw_intra_inplace(void *rbuf, int *rcounts, const int *rdis
     /* Find the largest receive amount */
     for (i = 0, max_size = 0 ; i < size ; ++i) {
         ompi_datatype_type_extent (rdtypes[i], &ext);
-        ext *= rcounts[rank];
+        ext *= rcounts[i];
 
         max_size = ext > max_size ? ext : max_size;
     }

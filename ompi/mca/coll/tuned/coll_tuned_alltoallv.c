@@ -13,6 +13,7 @@
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC. All Rights
  *                         reserved.
+ * Copyright (c) 2013      FUJITSU LIMITED.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -71,7 +72,7 @@ mca_coll_tuned_alltoallv_intra_basic_inplace(void *rbuf, const int *rcounts, con
     /* Find the largest receive amount */
     ompi_datatype_type_extent (rdtype, &ext);
     for (i = 0, max_size = 0 ; i < size ; ++i) {
-        size_t size = ext * rcounts[rank];
+        size_t size = ext * rcounts[i];
 
         max_size = size > max_size ? size : max_size;
     }
@@ -91,11 +92,11 @@ mca_coll_tuned_alltoallv_intra_basic_inplace(void *rbuf, const int *rcounts, con
             if (i == rank && rcounts[j]) {
                 /* Copy the data into the temporary buffer */
                 err = ompi_datatype_copy_content_same_ddt (rdtype, rcounts[j],
-                                                           tmp_buffer, (char *) rbuf + rdisps[j]);
+                                                           tmp_buffer, (char *) rbuf + rdisps[j] * ext);
                 if (MPI_SUCCESS != err) { goto error_hndl; }
 
                 /* Exchange data with the peer */
-                err = MCA_PML_CALL(irecv ((char *) rbuf + rdisps[j], rcounts[j], rdtype,
+                err = MCA_PML_CALL(irecv ((char *) rbuf + rdisps[j] * ext, rcounts[j], rdtype,
                                           j, MCA_COLL_BASE_TAG_ALLTOALLV, comm, preq++));
                 if (MPI_SUCCESS != err) { goto error_hndl; }
 
@@ -106,11 +107,11 @@ mca_coll_tuned_alltoallv_intra_basic_inplace(void *rbuf, const int *rcounts, con
             } else if (j == rank && rcounts[i]) {
                 /* Copy the data into the temporary buffer */
                 err = ompi_datatype_copy_content_same_ddt (rdtype, rcounts[i],
-                                                           tmp_buffer, (char *) rbuf + rdisps[i]);
+                                                           tmp_buffer, (char *) rbuf + rdisps[i] * ext);
                 if (MPI_SUCCESS != err) { goto error_hndl; }
 
                 /* Exchange data with the peer */
-                err = MCA_PML_CALL(irecv ((char *) rbuf + rdisps[i], rcounts[i], rdtype,
+                err = MCA_PML_CALL(irecv ((char *) rbuf + rdisps[i] * ext, rcounts[i], rdtype,
                                           i, MCA_COLL_BASE_TAG_ALLTOALLV, comm, preq++));
                 if (MPI_SUCCESS != err) { goto error_hndl; }
 

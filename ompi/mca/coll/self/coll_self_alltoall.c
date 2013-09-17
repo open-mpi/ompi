@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2013      FUJITSU LIMITED.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -37,6 +38,10 @@ int mca_coll_self_alltoall_intra(void *sbuf, int scount,
                                  struct ompi_communicator_t *comm,
                                  mca_coll_base_module_t *module)
 {
+    if (MPI_IN_PLACE == sbuf) {
+        return MPI_SUCCESS;
+    }
+
     return ompi_datatype_sndrcv(sbuf, scount, sdtype,
                            rbuf, rcount, rdtype);
 }
