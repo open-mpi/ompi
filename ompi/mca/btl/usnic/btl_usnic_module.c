@@ -272,12 +272,8 @@ static int usnic_free(struct mca_btl_base_module_t* btl,
     opal_output(0, "usnic_free: %p\n", (void*)frag);
 #endif
 
-#if 1 /* seperate commit for seperate bug */
-    OMPI_FREE_LIST_RETURN_MT(frag->uf_freelist, &(frag->uf_base.super));
-#else
     ompi_btl_usnic_send_frag_return_cond((struct ompi_btl_usnic_module_t *)btl,
             frag);
-#endif
 
     return OMPI_SUCCESS;
 }
