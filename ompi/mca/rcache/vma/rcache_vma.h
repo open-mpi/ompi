@@ -82,6 +82,10 @@ void mca_rcache_vma_module_init(mca_rcache_vma_module_t *rcache);
 
 void mca_rcache_vma_finalize(struct mca_rcache_base_module_t*);
 
+void mca_rcache_vma_dump_range(struct mca_rcache_base_module_t *rcache,
+                               unsigned char* addr, size_t size);
+
+
 END_C_DECLS
 
 #endif /* MCA_RCACHE_VMA_H */
