@@ -200,9 +200,8 @@ ompi_btl_usnic_check_rx_seq(
     i = WINDOW_SIZE_MOD(i + endpoint->endpoint_rfstart);
     if (endpoint->endpoint_rcvd_segs[i]) {
 #if MSGDEBUG
-        opal_output(0, "<-- Received FRAG/CHUNK ep %p, seq %" UDSEQ " from %s to %s, seg %p: duplicate -- DROPPED\n",
-            (void*) endpoint, bseg->us_btl_header->seq, src_mac, dest_mac,
-            (void*) seg);
+        opal_output(0, "<-- Received FRAG/CHUNK ep %p, seq %" UDSEQ ", seg %p: duplicate -- DROPPED\n",
+            (void*) endpoint, seg->rs_base.us_btl_header->seq, (void*) seg);
 #endif
         /* highest_seq_rcvd is for debug stats only; it's not used
            in any window calculations */
