@@ -283,10 +283,9 @@ ompi_btl_usnic_recv_fast(ompi_btl_usnic_module_t *module,
          * the frame length to meet minimum sizes, add protocol information,
          * etc.
          */
-        reg = mca_btl_base_active_message_trigger +
-            bseg->us_payload.pml_header->tag;
+        reg = mca_btl_base_active_message_trigger + bseg->us_btl_header->tag;
         seg->rs_segment.seg_len = bseg->us_btl_header->payload_len;
-        reg->cbfunc(&module->super, bseg->us_payload.pml_header->tag, 
+        reg->cbfunc(&module->super, bseg->us_btl_header->tag, 
                     &seg->rs_desc, reg->cbdata);
 
 drop:
@@ -384,10 +383,9 @@ ompi_btl_usnic_recv(ompi_btl_usnic_module_t *module,
          * the frame length to meet minimum sizes, add protocol information,
          * etc.
          */
-        reg = mca_btl_base_active_message_trigger +
-            bseg->us_payload.pml_header->tag;
+        reg = mca_btl_base_active_message_trigger + bseg->us_btl_header->tag;
         seg->rs_segment.seg_len = bseg->us_btl_header->payload_len;
-        reg->cbfunc(&module->super, bseg->us_payload.pml_header->tag, 
+        reg->cbfunc(&module->super, bseg->us_btl_header->tag,
                     &seg->rs_desc, reg->cbdata);
 
     } else {
