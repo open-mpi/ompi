@@ -17,7 +17,7 @@
 #include "oshmem/mca/spml/spml.h"
 #include "stdio.h"
 
-OMPI_GENERATE_FORTRAN_BINDINGS (void,
+SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
         SHMEM_GETMEM,
         shmem_getmem_,
         shmem_getmem__,

@@ -18,7 +18,7 @@
 #include "oshmem/proc/proc_group_cache.h"
 #include "oshmem/op/op.h"
 
-OMPI_GENERATE_FORTRAN_BINDINGS (void,
+SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
         SHMEM_INT4_SUM_TO_ALL,
         shmem_int4_sum_to_all_,
         shmem_int4_sum_to_all__,
@@ -26,7 +26,7 @@ OMPI_GENERATE_FORTRAN_BINDINGS (void,
         (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *nreduce, MPI_Fint *PE_start, MPI_Fint * logPE_stride, MPI_Fint *PE_size, FORTRAN_POINTER_T *pWrk, FORTRAN_POINTER_T pSync), 
         (target,source,nreduce,PE_start,logPE_stride,PE_size,pWrk,pSync) )
 
-OMPI_GENERATE_FORTRAN_BINDINGS (void,
+SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
         SHMEM_INT8_SUM_TO_ALL,
         shmem_int8_sum_to_all_,
         shmem_int8_sum_to_all__,
@@ -34,7 +34,7 @@ OMPI_GENERATE_FORTRAN_BINDINGS (void,
         (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *nreduce, MPI_Fint *PE_start, MPI_Fint * logPE_stride, MPI_Fint *PE_size, FORTRAN_POINTER_T *pWrk, FORTRAN_POINTER_T pSync), 
         (target,source,nreduce,PE_start,logPE_stride,PE_size,pWrk,pSync) )
 
-OMPI_GENERATE_FORTRAN_BINDINGS (void,
+SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
         SHMEM_REAL4_SUM_TO_ALL,
         shmem_real4_sum_to_all_,
         shmem_real4_sum_to_all__,
@@ -42,7 +42,7 @@ OMPI_GENERATE_FORTRAN_BINDINGS (void,
         (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *nreduce, MPI_Fint *PE_start, MPI_Fint * logPE_stride, MPI_Fint *PE_size, FORTRAN_POINTER_T *pWrk, FORTRAN_POINTER_T pSync), 
         (target,source,nreduce,PE_start,logPE_stride,PE_size,pWrk,pSync) )
 
-OMPI_GENERATE_FORTRAN_BINDINGS (void,
+SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
         SHMEM_REAL8_SUM_TO_ALL,
         shmem_real8_sum_to_all_,
         shmem_real8_sum_to_all__,

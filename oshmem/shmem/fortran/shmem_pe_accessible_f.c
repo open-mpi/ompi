@@ -15,7 +15,7 @@
 #include "oshmem/shmem/shmem_api_logger.h"
 #include "stdio.h"
 
-OMPI_GENERATE_FORTRAN_BINDINGS (ompi_fortran_logical_t,
+SHMEM_GENERATE_FORTRAN_BINDINGS_FUNCTION (ompi_fortran_logical_t,
         SHMEM_PE_ACCESSIBLE,
         shmem_pe_accessible_,
         shmem_pe_accessible__,

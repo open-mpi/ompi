@@ -15,7 +15,7 @@
 #include "oshmem/shmem/shmem_api_logger.h"
 #include "ompi/datatype/ompi_datatype.h"
 
-OMPI_GENERATE_FORTRAN_BINDINGS (void,
+SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
         SHMEM_SET_CACHE_INV,
         shmem_set_cache_inv_,
         shmem_set_cache_inv__,
@@ -23,7 +23,7 @@ OMPI_GENERATE_FORTRAN_BINDINGS (void,
         (void), 
         ());
 
-OMPI_GENERATE_FORTRAN_BINDINGS (void,
+SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
         SHMEM_SET_CACHE_LINE_INV,
         shmem_set_cache_line_inv_,
         shmem_set_cache_line_inv__,
@@ -31,7 +31,7 @@ OMPI_GENERATE_FORTRAN_BINDINGS (void,
         (FORTRAN_POINTER_T target), 
         (target));
 
-OMPI_GENERATE_FORTRAN_BINDINGS (void,
+SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
         SHMEM_CLEAR_CACHE_INV,
         shmem_clear_cache_inv_,
         shmem_clear_cache_inv__,
@@ -39,7 +39,7 @@ OMPI_GENERATE_FORTRAN_BINDINGS (void,
         (void), 
         ());
 
-OMPI_GENERATE_FORTRAN_BINDINGS (void,
+SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
         SHMEM_CLEAR_CACHE_LINE_INV,
         shmem_clear_cache_line_inv_,
         shmem_clear_cache_line_inv__,
@@ -47,7 +47,7 @@ OMPI_GENERATE_FORTRAN_BINDINGS (void,
         (FORTRAN_POINTER_T target), 
         (target));
 
-OMPI_GENERATE_FORTRAN_BINDINGS (void,
+SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
         SHMEM_UDCFLUSH,
         shmem_udcflush_,
         shmem_udcflush__,
@@ -55,7 +55,7 @@ OMPI_GENERATE_FORTRAN_BINDINGS (void,
         (void), 
         ());
 
-OMPI_GENERATE_FORTRAN_BINDINGS (void,
+SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
         SHMEM_UDCFLUSH_LINE,
         shmem_udcflush_line_,
         shmem_udcflush_line__,

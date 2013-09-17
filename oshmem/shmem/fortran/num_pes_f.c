@@ -13,7 +13,7 @@
 #include "oshmem/shmem/fortran/bindings.h"
 #include "oshmem/include/shmem.h"
 
-OMPI_GENERATE_FORTRAN_BINDINGS (MPI_Fint,
+SHMEM_GENERATE_FORTRAN_BINDINGS_FUNCTION (MPI_Fint,
         NUM_PES,
         num_pes_,
         num_pes__,

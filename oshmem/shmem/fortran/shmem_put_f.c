@@ -16,7 +16,7 @@
 #include "oshmem/runtime/runtime.h"
 #include "stdio.h"
 
-OMPI_GENERATE_FORTRAN_BINDINGS (void,
+SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
         SHMEM_PUT,
         shmem_put_,
         shmem_put__,

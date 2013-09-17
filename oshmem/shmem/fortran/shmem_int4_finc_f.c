@@ -19,7 +19,7 @@
 #include "oshmem/op/op.h"
 #include "stdio.h"
 
-OMPI_GENERATE_FORTRAN_BINDINGS (ompi_fortran_integer4_t,
+SHMEM_GENERATE_FORTRAN_BINDINGS_FUNCTION (ompi_fortran_integer4_t,
         SHMEM_INT4_FINC,
         shmem_int4_finc_,
         shmem_int4_finc__,

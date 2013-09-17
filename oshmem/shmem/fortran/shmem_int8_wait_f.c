@@ -16,7 +16,7 @@
 #include "oshmem/mca/spml/spml.h"
 #include "ompi/datatype/ompi_datatype.h"
 
-OMPI_GENERATE_FORTRAN_BINDINGS (void,
+SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
         SHMEM_INT8_WAIT,
         shmem_int8_wait_,
         shmem_int8_wait__,
