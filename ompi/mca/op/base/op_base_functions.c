@@ -1287,7 +1287,7 @@ LOC_FUNC_3BUF(minloc, long_double_int, <)
 #define FLOATING_POINT_FORTRAN_DOUBLE_PRECISION(name, ftype)  \
     ompi_op_base_##ftype##_##name##_fortran_double_precision
 #else
-#define FLOATING_POINT_FORTRAN_DOUBLE_PRECISION(name) NULL
+#define FLOATING_POINT_FORTRAN_DOUBLE_PRECISION(name, ftype) NULL
 #endif
 
 /** Floating point, including all the Fortran reals *********************/
@@ -1305,7 +1305,7 @@ LOC_FUNC_3BUF(minloc, long_double_int, <)
 #define FORTRAN_LOGICAL(name, ftype)                                          \
   ompi_op_base_##ftype##_##name##_fortran_logical  /* OMPI_OP_BASE_TYPE_LOGICAL */
 #else
-#define FORTRAN_LOGICAL(name) NULL
+#define FORTRAN_LOGICAL(name, ftype) NULL
 #endif
 
 #define LOGICAL(name, ftype)                                    \
