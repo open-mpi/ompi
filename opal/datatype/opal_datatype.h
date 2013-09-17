@@ -1,4 +1,4 @@
-/* -*- Mode: C; c-basic-offset:4 ; -*- */
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2007-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
@@ -49,7 +49,9 @@ BEGIN_C_DECLS
  *
  * This must match the same definition as in opal_datatype_internal.h
  */
+#if !defined(OPAL_DATATYPE_MAX_PREDEFINED)
 #define OPAL_DATATYPE_MAX_PREDEFINED 25
+#endif
 /*
  * No more than this number of _Basic_ datatypes in C/CPP or Fortran
  * are supported (in order to not change setup and usage of btypes).
@@ -166,9 +168,9 @@ OPAL_DECLSPEC extern const opal_datatype_t opal_datatype_float4;     /* in bytes
 OPAL_DECLSPEC extern const opal_datatype_t opal_datatype_float8;     /* in bytes */
 OPAL_DECLSPEC extern const opal_datatype_t opal_datatype_float12;    /* in bytes */
 OPAL_DECLSPEC extern const opal_datatype_t opal_datatype_float16;    /* in bytes */
-OPAL_DECLSPEC extern const opal_datatype_t opal_datatype_complex8;   /* in bytes */
-OPAL_DECLSPEC extern const opal_datatype_t opal_datatype_complex16;  /* in bytes */
-OPAL_DECLSPEC extern const opal_datatype_t opal_datatype_complex32;  /* in bytes */
+OPAL_DECLSPEC extern const opal_datatype_t opal_datatype_float_complex;
+OPAL_DECLSPEC extern const opal_datatype_t opal_datatype_double_complex;
+OPAL_DECLSPEC extern const opal_datatype_t opal_datatype_long_double_complex;
 OPAL_DECLSPEC extern const opal_datatype_t opal_datatype_bool;
 OPAL_DECLSPEC extern const opal_datatype_t opal_datatype_wchar;
 

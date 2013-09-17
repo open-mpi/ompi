@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -13,6 +14,8 @@
  *                         reserved. 
  * Copyright (c) 2007-2008 UT-Battelle, LLC
  * Copyright (c) 2007-2009 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -153,23 +156,12 @@ enum {
     OMPI_OP_BASE_TYPE_BOOL,
 
     /** Complex */
-    OMPI_OP_BASE_TYPE_COMPLEX,
-    /** Double complex */
-    OMPI_OP_BASE_TYPE_DOUBLE_COMPLEX,
-    /** Complex8 */
-    OMPI_OP_BASE_TYPE_COMPLEX8,
-    /** Complex16 */
-    OMPI_OP_BASE_TYPE_COMPLEX16,
-    /** Complex32 */
-    OMPI_OP_BASE_TYPE_COMPLEX32,
-
-    /** C Complex */
-    /* float _Complex */
-    OMPI_OP_BASE_TYPE_C_FLOAT__COMPLEX,
-    /* double _Complex */
-    OMPI_OP_BASE_TYPE_C_DOUBLE__COMPLEX,
-    /* long double _Complex */
-    OMPI_OP_BASE_TYPE_C_LONG_DOUBLE__COMPLEX,
+    /* float complex */
+    OMPI_OP_BASE_TYPE_C_FLOAT_COMPLEX,
+    /* double complex */
+    OMPI_OP_BASE_TYPE_C_DOUBLE_COMPLEX,
+    /* long double complex */
+    OMPI_OP_BASE_TYPE_C_LONG_DOUBLE_COMPLEX,
 
     /** Byte */
     OMPI_OP_BASE_TYPE_BYTE,
