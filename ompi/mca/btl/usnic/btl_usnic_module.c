@@ -290,13 +290,18 @@ usnic_alloc(struct mca_btl_base_module_t* btl,
 static int usnic_free(struct mca_btl_base_module_t* btl,
                         mca_btl_base_descriptor_t* des)
 {
-    ompi_btl_usnic_send_frag_t* frag = (ompi_btl_usnic_send_frag_t*)des;
+    ompi_btl_usnic_frag_t* frag = (ompi_btl_usnic_frag_t*)des;
 
 #if MSGDEBUG2
-    opal_output(0, "usnic_free: %p\n", (void*)frag);
+    opal_output(0, "usnic_free: %p (%s)\n", (void*)frag,
+            usnic_frag_type(frag->uf_type));
 #endif
+    /* calling free routine gives us ownership - we need to make sure
+     * the flag is set for lower layers.
+     */
+    frag->uf_base.des_flags |= MCA_BTL_DES_FLAGS_BTL_OWNERSHIP;
 
-    ompi_btl_usnic_send_frag_return_cond((struct ompi_btl_usnic_module_t *)btl,
+    ompi_btl_usnic_frag_return_cond((struct ompi_btl_usnic_module_t *)btl,
             frag);
 
     return OMPI_SUCCESS;
@@ -359,7 +364,7 @@ usnic_prepare_src(
     uint32_t iov_count;
     size_t max_data;
     int rc;
-#ifdef MSGDEBUG2
+#if MSGDEBUG2
     size_t osize = *size;
 #endif
 
@@ -1007,9 +1012,6 @@ usnic_handle_large_send(
 
         /* save back pointer to fragment */
         sseg->ss_parent_frag = frag;
-#if MSGDEBUG1
-        opal_output(0, "handle large, frag=%p, cur_sge=%d, sge_left=%d left=%d\n", frag, lfrag->lsf_cur_sge, lfrag->lsf_bytes_left_in_sge, lfrag->lsf_bytes_left);
-#endif
 
         /* keep copying in as long as we have space and there is data
          * to be copied.
@@ -1097,7 +1099,7 @@ usnic_handle_large_send(
                 (frag->sf_base.uf_base.des_flags &
                  MCA_BTL_DES_FLAGS_BTL_OWNERSHIP)) {
 
-#if MSGDEBUG2
+#if MSGDEBUG1
             opal_output(0, "callback for large frag %p, len=%zd\n",
                     (void *)(uintptr_t)frag->sf_base.uf_base.des_cbfunc,
                     frag->sf_size);
@@ -1206,7 +1208,7 @@ ompi_btl_usnic_module_progress_sends(
                          MCA_BTL_DES_FLAGS_BTL_OWNERSHIP)) ==
                         (MCA_BTL_DES_SEND_ALWAYS_CALLBACK |
                          MCA_BTL_DES_FLAGS_BTL_OWNERSHIP)) {
-#if MSGDEBUG2
+#if MSGDEBUG1
                 opal_output(0, "callback frag small %p, len=%"PRIu64"\n",
                         (void*)frag,
                         (unsigned long)frag->sf_base.uf_src_seg[0].seg_len);
@@ -1361,7 +1363,7 @@ usnic_send(
         sseg->ss_send_desc.send_flags |= IBV_SEND_INLINE;
         sseg->ss_channel = USNIC_PRIORITY_CHANNEL;
         sseg->ss_base.us_btl_header->tag = tag;
-#if MSGDEBUG2
+#if MSGDEBUG1
         opal_output(0, "INLINE send, conv=%p", (void *)frag->sf_convertor);
 #endif
 
@@ -1392,7 +1394,7 @@ usnic_send(
          */
         if (descriptor->des_flags & MCA_BTL_DES_FLAGS_BTL_OWNERSHIP) {
             if (descriptor->des_flags & MCA_BTL_DES_SEND_ALWAYS_CALLBACK) {
-#if MSGDEBUG2
+#if MSGDEBUG1
                 opal_output(0, "immediate callback for frag %p\n", (void *)frag);
 #endif
                 frag->sf_base.uf_base.des_cbfunc(&module->super,
@@ -1401,7 +1403,7 @@ usnic_send(
                 rc = 0;
                 descriptor->des_flags &= ~MCA_BTL_DES_SEND_ALWAYS_CALLBACK;
             } else {
-#if MSGDEBUG2
+#if MSGDEBUG1
                 opal_output(0, "skipping callback for frag %p\n", (void *)frag);
 #endif
                 rc = 1;

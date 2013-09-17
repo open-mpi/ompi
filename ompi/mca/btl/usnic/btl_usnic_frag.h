@@ -466,6 +466,28 @@ ompi_btl_usnic_send_frag_return_cond(
     }
 }
 
+/*
+ * Return a frag if it's all done and owned by BTL
+ * If this is a PUT destination, only condition is that we own it.  If it's 
+ * a send frag, there are other conditions, so use the specific send frag 
+ * return checker.
+ */
+static inline void
+ompi_btl_usnic_frag_return_cond(
+    struct ompi_btl_usnic_module_t *module,
+    ompi_btl_usnic_frag_t *frag)
+{
+    if (OMPI_BTL_USNIC_FRAG_PUT_DEST == frag->uf_type) {
+        if (OPAL_LIKELY(frag->uf_base.des_flags &
+                                    MCA_BTL_DES_FLAGS_BTL_OWNERSHIP)) {
+            ompi_btl_usnic_frag_return(module, frag);
+        }
+    } else {
+        ompi_btl_usnic_send_frag_return_cond(module,
+                (ompi_btl_usnic_send_frag_t *)frag);
+    }
+}
+
 static inline ompi_btl_usnic_chunk_segment_t *
 ompi_btl_usnic_chunk_segment_alloc(
     ompi_btl_usnic_module_t *module)
