@@ -100,7 +100,7 @@ ompi_btl_usnic_update_window(
         endpoint->endpoint_next_contig_seq_to_recv++;
         i = WINDOW_SIZE_MOD(i + 1);
 
-#if MSGDEBUG
+#if MSGDEBUG1
         opal_output(0, "Advance window to %d; next seq to send %" UDSEQ, i,
                     endpoint->endpoint_next_contig_seq_to_recv);
 #endif
@@ -154,7 +154,7 @@ ompi_btl_usnic_check_rx_seq(
     seq = seg->rs_base.us_btl_header->seq;
     if (seq < endpoint->endpoint_next_contig_seq_to_recv ||
         seq >= endpoint->endpoint_next_contig_seq_to_recv + WINDOW_SIZE) {
-#if MSGDEBUG
+#if MSGDEBUG1
             opal_output(0, "<-- Received FRAG/CHUNK ep %p, seq %" UDSEQ " outside of window (%" UDSEQ " - %" UDSEQ "), %p, module %p -- DROPPED\n",
                         (void*)endpoint, seg->rs_base.us_btl_header->seq, 
                         endpoint->endpoint_next_contig_seq_to_recv,
@@ -199,10 +199,9 @@ ompi_btl_usnic_check_rx_seq(
     i = seq - endpoint->endpoint_next_contig_seq_to_recv;
     i = WINDOW_SIZE_MOD(i + endpoint->endpoint_rfstart);
     if (endpoint->endpoint_rcvd_segs[i]) {
-#if MSGDEBUG
-        opal_output(0, "<-- Received FRAG/CHUNK ep %p, seq %" UDSEQ " from %s to %s, seg %p: duplicate -- DROPPED\n",
-            (void*) endpoint, bseg->us_btl_header->seq, src_mac, dest_mac,
-            (void*) seg);
+#if MSGDEBUG1
+        opal_output(0, "<-- Received FRAG/CHUNK ep %p, seq %" UDSEQ ", seg %p: duplicate -- DROPPED\n",
+            (void*) endpoint, seg->rs_base.us_btl_header->seq, (void*) seg);
 #endif
         /* highest_seq_rcvd is for debug stats only; it's not used
            in any window calculations */
@@ -283,10 +282,9 @@ ompi_btl_usnic_recv_fast(ompi_btl_usnic_module_t *module,
          * the frame length to meet minimum sizes, add protocol information,
          * etc.
          */
-        reg = mca_btl_base_active_message_trigger +
-            bseg->us_payload.pml_header->tag;
+        reg = mca_btl_base_active_message_trigger + bseg->us_btl_header->tag;
         seg->rs_segment.seg_len = bseg->us_btl_header->payload_len;
-        reg->cbfunc(&module->super, bseg->us_payload.pml_header->tag, 
+        reg->cbfunc(&module->super, bseg->us_btl_header->tag, 
                     &seg->rs_desc, reg->cbdata);
 
 drop:
@@ -356,10 +354,6 @@ ompi_btl_usnic_recv(ompi_btl_usnic_module_t *module,
     mca_btl_active_message_callback_t* reg;
     ompi_btl_usnic_endpoint_t *endpoint;
     int rc;
-#if MSGDEBUG1
-    char src_mac[32];
-    char dest_mac[32];
-#endif
 
     bseg = &seg->rs_base;
 
@@ -384,10 +378,9 @@ ompi_btl_usnic_recv(ompi_btl_usnic_module_t *module,
          * the frame length to meet minimum sizes, add protocol information,
          * etc.
          */
-        reg = mca_btl_base_active_message_trigger +
-            bseg->us_payload.pml_header->tag;
+        reg = mca_btl_base_active_message_trigger + bseg->us_btl_header->tag;
         seg->rs_segment.seg_len = bseg->us_btl_header->payload_len;
-        reg->cbfunc(&module->super, bseg->us_payload.pml_header->tag, 
+        reg->cbfunc(&module->super, bseg->us_btl_header->tag,
                     &seg->rs_desc, reg->cbdata);
 
     } else {

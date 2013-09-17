@@ -56,6 +56,7 @@ void ompi_btl_usnic_recv_call(ompi_btl_usnic_module_t *module,
     mca_btl_active_message_callback_t* reg;
     ompi_btl_usnic_endpoint_t *endpoint;
     ompi_btl_usnic_btl_chunk_header_t *chunk_hdr;
+    ompi_btl_usnic_btl_header_t *hdr;
     uint32_t window_index;
     int rc;
 #if MSGDEBUG1
@@ -79,11 +80,9 @@ void ompi_btl_usnic_recv_call(ompi_btl_usnic_module_t *module,
     ompi_btl_usnic_sprintf_gid_mac(dest_mac, 
             &seg->rs_protocol_header->grh.dgid);
 
-#if MSGDEBUG
     opal_output(0, "Got message from MAC %s", src_mac);
     opal_output(0, "Looking for sender: 0x%016lx",
         bseg->us_btl_header->sender);
-#endif
 #endif
 
     /* Find out who sent this segment */
@@ -110,11 +109,11 @@ void ompi_btl_usnic_recv_call(ompi_btl_usnic_module_t *module,
             return;
         }
 
+        hdr = seg->rs_base.us_btl_header;
+
 #if MSGDEBUG1
         opal_output(0, "<-- Received FRAG ep %p, seq %" UDSEQ ", len=%d\n",
-                    (void*) endpoint,
-                    seg->rs_base.us_btl_header->seq,
-                    seg->rs_base.us_btl_header->payload_len);
+                    (void*) endpoint, hdr->seq, hdr->payload_len);
 #if 0
 
         opal_output(0, "<-- Received FRAG ep %p, seq %" UDSEQ " from %s to %s: GOOD! (rel seq %d, lowest seq %" UDSEQ ", highest seq: %" UDSEQ ", rwstart %d) seg %p, module %p\n",
@@ -126,7 +125,7 @@ void ompi_btl_usnic_recv_call(ompi_btl_usnic_module_t *module,
                     endpoint->endpoint_highest_seq_rcvd,
                     endpoint->endpoint_rfstart,
                     (void*) seg, (void*) module);
-        if (seg->rs_base.us_btl_header->put_addr != NULL) {
+        if (hdr->put_addr != NULL) {
             opal_output(0, "  put_addr = %p\n",
                     seg->rs_base.us_btl_header->put_addr);
         }
@@ -139,12 +138,15 @@ void ompi_btl_usnic_recv_call(ompi_btl_usnic_module_t *module,
          * the frame length to meet minimum sizes, add protocol information,
          * etc.
          */
-        if (seg->rs_base.us_btl_header->put_addr == NULL) {
-            reg = mca_btl_base_active_message_trigger +
-                bseg->us_payload.pml_header->tag;
-            seg->rs_segment.seg_len = bseg->us_btl_header->payload_len;
-            reg->cbfunc(&module->super, bseg->us_payload.pml_header->tag, 
-                        &seg->rs_desc, reg->cbdata);
+        if (hdr->put_addr == NULL) {
+            reg = mca_btl_base_active_message_trigger + hdr->tag;
+            seg->rs_segment.seg_len = hdr->payload_len;
+#if MSGDEBUG2
+                opal_output(0, "small recv complete, pass up %u bytes, tag=%d\n",
+                        (unsigned)bseg->us_btl_header->payload_len,
+                        (int)bseg->us_btl_header->tag);
+#endif
+            reg->cbfunc(&module->super, hdr->tag, &seg->rs_desc, reg->cbdata);
 
         /*
          * If this is a PUT, need to copy it to user buffer
@@ -227,12 +229,12 @@ void ompi_btl_usnic_recv_call(ompi_btl_usnic_module_t *module,
                 if (fip->rfi_data == NULL) {
                     abort();
                 }
-#if MSGDEBUG2
+#if MSGDEBUG1
 opal_output(0, "Start large recv to %p, size=%d\n",
         fip->rfi_data, chunk_hdr->ch_frag_size);
 #endif
             } else {
-#if MSGDEBUG2
+#if MSGDEBUG1
 opal_output(0, "Start PUT to %p\n", chunk_hdr->ch_hdr.put_addr);
 #endif
                 fip->rfi_data = chunk_hdr->ch_hdr.put_addr;
@@ -269,15 +271,10 @@ opal_output(0, "Start PUT to %p\n", chunk_hdr->ch_hdr.put_addr);
 
         fip->rfi_bytes_left -= chunk_hdr->ch_hdr.payload_len;
         if (0 == fip->rfi_bytes_left) {
-            mca_btl_base_header_t *pml_header;
             mca_btl_base_descriptor_t desc;
             mca_btl_base_segment_t segment;
 
-            /* Get access to PML header in assembled fragment so we
-             * can pull out the tag
-             */
-            pml_header = (mca_btl_base_header_t *)(fip->rfi_data);
-            segment.seg_addr.pval = pml_header;
+            segment.seg_addr.pval = fip->rfi_data;
             segment.seg_len = fip->rfi_frag_size;
             desc.des_dst = &segment;
             desc.des_dst_cnt = 1;
@@ -287,14 +284,16 @@ opal_output(0, "Start PUT to %p\n", chunk_hdr->ch_hdr.put_addr);
 
                 /* Pass this segment up to the PML */
 #if MSGDEBUG2
-                opal_output(0, "  large FRAG complete, pass up %p, %"PRIu64" bytes, tag=%d\n",
-                        desc.des_dst->seg_addr.pval, desc.des_dst->seg_len,
-                        pml_header->tag);
+                opal_output(0, "large recv complete, pass up %p, %u bytes, tag=%d\n",
+                        desc.des_dst->seg_addr.pval,
+                        (unsigned)desc.des_dst->seg_len,
+                        (int)chunk_hdr->ch_hdr.tag);
 #endif
-                reg = mca_btl_base_active_message_trigger + pml_header->tag;
+                reg = mca_btl_base_active_message_trigger +
+                    chunk_hdr->ch_hdr.tag;
 
                 /* mca_pml_ob1_recv_frag_callback_frag() */
-                reg->cbfunc(&module->super, pml_header->tag,
+                reg->cbfunc(&module->super, chunk_hdr->ch_hdr.tag,
                         &desc, reg->cbdata);
 
                 /* free temp buffer for non-put */
@@ -306,9 +305,9 @@ opal_output(0, "Start PUT to %p\n", chunk_hdr->ch_hdr.put_addr);
                             (ompi_free_list_item_t *)fip->rfi_data);
                 }
 
-#if MSGDEBUG2
+#if MSGDEBUG1
             } else {
-                opal_output(0, "PUT complete, suppressing callback\n");
+                opal_output(0, "PUT recv complete, no callback\n");
 #endif
             }
 

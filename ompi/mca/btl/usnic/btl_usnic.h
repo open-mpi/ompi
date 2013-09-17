@@ -59,12 +59,11 @@ get_nsec(void)
 #define container_of(ptr, type, member) ( \
         (type *)( ((char *)(ptr)) - offsetof(type,member) ))
 
-/* Set to 1 to turn out a LOT of debugging ouput */
-#define MSGDEBUG2 (MSGDEBUG1||0)     /* temp */
-#define MSGDEBUG1 (MSGDEBUG||0)     /* temp */
-#define MSGDEBUG 0
-/* Set to 1 to get frag history */
-#define HISTORY 0
+/* MSGDEBUG2 prints 1 line at each BTL entry point */
+#define MSGDEBUG2 (MSGDEBUG1||0)
+/* MSGDEBUG1 prints more info about arguments and internal functions */
+#define MSGDEBUG1 0
+
 /* Set to >0 to randomly drop received frags.  The higher the number,
    the more frequent the drops. */
 #define WANT_RECV_FRAG_DROPS 0

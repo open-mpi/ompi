@@ -72,8 +72,8 @@ ompi_btl_usnic_handle_ack(
 
     /* ignore if this is an old ACK */
     if (ack_seq < endpoint->endpoint_ack_seq_rcvd) {
-#if MSGDEBUG
-        opal_output(0, "Got OLD DUP ACK seq %d < %d\n",
+#if MSGDEBUG1
+        opal_output(0, "Got OLD DUP ACK seq %"UDSEQ" < %"UDSEQ"\n",
                 ack_seq, endpoint->endpoint_ack_seq_rcvd);
 #endif
         ++module->num_old_dup_acks;
@@ -100,7 +100,7 @@ ompi_btl_usnic_handle_ack(
 
         assert(sseg != NULL);
         assert(sseg->ss_base.us_btl_header->seq == is);
-#if MSGDEBUG
+#if MSGDEBUG1
         if (sseg->ss_hotel_room == -1) {
             opal_output(0, "=== ACKed frag in sent_frags array is not in hotel/enqueued, module %p, endpoint %p, seg %p, seq %" UDSEQ ", slot %lu",
                         (void*) module, (void*) endpoint,
@@ -134,26 +134,32 @@ ompi_btl_usnic_handle_ack(
                 (void*)sseg, (void*)frag, bytes_acked, frag->sf_ack_bytes_left);
 #endif
 
-        /* perform completion callback for PUT here */
+        /* If all ACKs received, and this is a put or a regular send
+         * that needs a callback, perform the callback now
+         */
         if (frag->sf_ack_bytes_left == 0 &&
-            frag->sf_base.uf_dst_seg[0].seg_addr.pval != NULL) {
-#if MSGDEBUG1
-            opal_output(0, "Calling back %p for PUT completion, frag=%p\n", 
-                    (void*)(uintptr_t)frag->sf_base.uf_base.des_cbfunc, (void*)frag);
+            ((frag->sf_base.uf_dst_seg[0].seg_addr.pval != NULL) ||
+             (frag->sf_base.uf_base.des_flags &
+              MCA_BTL_DES_SEND_ALWAYS_CALLBACK))) {
+#if MSGDEBUG2
+            opal_output(0, "completion callback for put frag=%p, dest=%p\n",
+                    (void*)frag, frag->sf_base.uf_dst_seg[0].seg_addr.pval);
 #endif
-            frag->sf_base.uf_base.des_cbfunc(&module->super, frag->sf_endpoint,
-                    &frag->sf_base.uf_base, OMPI_SUCCESS);
+            frag->sf_base.uf_base.des_cbfunc(&module->super,
+                    frag->sf_endpoint, &frag->sf_base.uf_base,
+                    OMPI_SUCCESS);
+            frag->sf_base.uf_base.des_flags &=
+                ~MCA_BTL_DES_SEND_ALWAYS_CALLBACK;
+        }
+
+        /* free this segment */
+        sseg->ss_ack_pending = false;
+        if (sseg->ss_send_posted == 0) {
+            ompi_btl_usnic_release_send_segment(module, frag, sseg);
         }
 
         /* OK to return this fragment? */
         ompi_btl_usnic_send_frag_return_cond(module, frag);
-
-        /* free this segment */
-        sseg->ss_ack_pending = false;
-        if (sseg->ss_base.us_type == OMPI_BTL_USNIC_SEG_CHUNK &&
-            sseg->ss_send_posted == 0) {
-            ompi_btl_usnic_chunk_segment_return(module, sseg);
-        }
 
         /* indicate this segment has been ACKed */
         endpoint->endpoint_sent_segs[WINDOW_SIZE_MOD(is)] = NULL;
@@ -249,7 +255,7 @@ ompi_btl_usnic_ack_timeout(
     endpoint = seg->ss_parent_frag->sf_endpoint;
     module = endpoint->endpoint_module;
 
-#if MSGDEBUG2
+#if MSGDEBUG1
     {
         opal_output(0, "Send timeout!  seg %p, room %d, seq %" UDSEQ "\n",
                     (void*)seg, seg->ss_hotel_room,

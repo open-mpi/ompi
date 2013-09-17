@@ -39,7 +39,7 @@ struct ompi_btl_usnic_module_t;
 
 /*
  * Some definitions:
- * frag - what the PML later hands us to send, may be large or small
+ * frag - what the upper layer hands us to send, may be large or small
  * segment - one packet on the wire
  * chunk - when a fragment is too big to fit into one segment, it is
  *      broken into chunks, each chunk fitting in one segment
@@ -47,7 +47,7 @@ struct ompi_btl_usnic_module_t;
 
 /**
  * Fragment types
- * The PML may give us very large "fragements" to send, larger than
+ * The upper layer may give us very large "fragements" to send, larger than
  * an MTU.  We break fragments into segments for sending, a segment being 
  * defined to fit within an MTU.
  */
@@ -57,12 +57,39 @@ typedef enum {
     OMPI_BTL_USNIC_FRAG_PUT_DEST
 } ompi_btl_usnic_frag_type_t;
 
+#if MSGDEBUG2
+static inline const char *
+usnic_frag_type(ompi_btl_usnic_frag_type_t t)
+{
+    switch (t) {
+    case OMPI_BTL_USNIC_FRAG_LARGE_SEND: return "large";
+    case OMPI_BTL_USNIC_FRAG_SMALL_SEND: return "small";
+    case OMPI_BTL_USNIC_FRAG_PUT_DEST: return "put dest";
+    default: return "unknown";
+    }
+}
+#endif
+
 typedef enum {
     OMPI_BTL_USNIC_SEG_ACK,
     OMPI_BTL_USNIC_SEG_FRAG,
     OMPI_BTL_USNIC_SEG_CHUNK,
     OMPI_BTL_USNIC_SEG_RECV
 } ompi_btl_usnic_seg_type_t;
+
+#if MSGDEBUG2
+static inline const char *
+usnic_seg_type(ompi_btl_usnic_seg_type_t t)
+{
+    switch (t) {
+    case OMPI_BTL_USNIC_SEG_ACK: return "ACK";
+    case OMPI_BTL_USNIC_SEG_FRAG: return "FRAG";
+    case OMPI_BTL_USNIC_SEG_CHUNK: return "CHUNK";
+    case OMPI_BTL_USNIC_SEG_RECV: return "RECV";
+    default: return "unknown";
+    }
+}
+#endif
 
 
 typedef struct ompi_btl_usnic_reg_t {
@@ -84,8 +111,8 @@ typedef struct {
  */
 typedef enum {
     OMPI_BTL_USNIC_PAYLOAD_TYPE_ACK = 1,
-    OMPI_BTL_USNIC_PAYLOAD_TYPE_FRAG = 2,       /* an entire PML fragment */
-    OMPI_BTL_USNIC_PAYLOAD_TYPE_CHUNK = 3       /* one chunk of PML frag */
+    OMPI_BTL_USNIC_PAYLOAD_TYPE_FRAG = 2,       /* an entire fragment */
+    OMPI_BTL_USNIC_PAYLOAD_TYPE_CHUNK = 3       /* one chunk of fragment */
 } ompi_btl_usnic_payload_type_t;
 
 /**
@@ -94,6 +121,7 @@ typedef enum {
  * holes.
  */
 typedef struct {
+
     /* Hashed RTE process name of the sender */
     uint64_t sender;
 
@@ -112,8 +140,9 @@ typedef struct {
 
     /* Type of BTL header (see enum, above) */
     uint8_t payload_type;
-    /* Yuck */
-    uint8_t padding;
+
+    /* tag for upper layer */
+    mca_btl_base_tag_t tag;
 } ompi_btl_usnic_btl_header_t; 
 
 /**
@@ -126,34 +155,6 @@ typedef struct {
     uint32_t ch_frag_size;      /* total frag len */
     uint32_t ch_frag_offset;    /* where in fragment this goes */
 } ompi_btl_usnic_btl_chunk_header_t;
-
-/*
- * Enums for the states of frags
- */
-typedef enum {
-    /* Frag states: all frags */
-    FRAG_ALLOCED = 0x01,
-
-    /* Frag states: send frags */
-    FRAG_SEND_ACKED = 0x02,
-    FRAG_SEND_ENQUEUED = 0x04,
-    FRAG_PML_CALLED_BACK = 0x08,
-    FRAG_IN_HOTEL = 0x10,
-
-    /* Frag states: receive frags */
-    FRAG_RECV_WR_POSTED = 0x40,
-
-    FRAG_MAX = 0xff
-} ompi_btl_usnic_frag_state_flags_t;
-
-
-/* 
- * Convenience macros for states
- */
-#define FRAG_STATE_SET(frag, state) (frag)->state_flags |= (state)
-#define FRAG_STATE_CLR(frag, state) (frag)->state_flags &= ~(state)
-#define FRAG_STATE_GET(frag, state) ((frag)->state_flags & (state))
-#define FRAG_STATE_ISSET(frag, state) (((frag)->state_flags & (state)) != 0)
 
 /**
  * Descriptor for a common segment.  This is exactly one packet and may
@@ -177,7 +178,7 @@ typedef struct ompi_btl_usnic_segment_t {
 
     union {
         uint8_t *raw;
-        mca_btl_base_header_t *pml_header;
+        void *ompi_header;
     } us_payload;
 } ompi_btl_usnic_segment_t;
 
@@ -214,7 +215,6 @@ typedef struct ompi_btl_usnic_send_segment_t {
 
     /* channel upon which send was posted */
     ompi_btl_usnic_channel_id_t ss_channel;
-    uint32_t ss_flags;
 
     struct ompi_btl_usnic_send_frag_t *ss_parent_frag;
     int ss_hotel_room;          /* current retrans room, or -1 if none */
@@ -224,6 +224,9 @@ typedef struct ompi_btl_usnic_send_segment_t {
     bool ss_ack_pending;        /* true until this segment is ACKed */
 
 } ompi_btl_usnic_send_segment_t;
+
+typedef ompi_btl_usnic_send_segment_t ompi_btl_usnic_frag_segment_t;
+typedef ompi_btl_usnic_send_segment_t ompi_btl_usnic_chunk_segment_t;
 
 /**
  * Common part of usNIC fragment descriptor
@@ -250,7 +253,7 @@ typedef struct ompi_btl_usnic_send_frag_t {
 
     struct mca_btl_base_endpoint_t *sf_endpoint;
 
-    size_t sf_size;            /* total_fragment size (PML + user payload) */
+    size_t sf_size;            /* total_fragment size (upper + user payload) */
 
     /* original message data if convertor required */
     struct opal_convertor_t* sf_convertor;
@@ -263,18 +266,25 @@ typedef struct ompi_btl_usnic_send_frag_t {
 
 /**
  * Descriptor for a large fragment
- * Large fragment uses two SG entries - one points to PML header,
+ * Large fragment uses two SG entries - one points to upper layer header,
  * other points to data.
  */
 typedef struct ompi_btl_usnic_large_send_frag_t {
     ompi_btl_usnic_send_frag_t lsf_base;
 
-    char lsf_pml_header[64];    /* space for PML header */
+    char lsf_ompi_header[64];   /* space for upper layer header */
+    mca_btl_base_tag_t lsf_tag; /* save tag */
 
     uint32_t lsf_frag_id;       /* fragment ID for reassembly */
     size_t lsf_cur_offset;      /* current offset into message */
     size_t lsf_bytes_left;      /* bytes remaining to send */
+    uint8_t *lsf_cur_ptr;       /* current send pointer */
+    int lsf_cur_sge;
+    size_t lsf_bytes_left_in_sge;
 
+    uint8_t *lsf_buffer;        /* attached storage for usnic_alloc() */
+
+    /* this will go away when we update convertor approach */
     opal_list_t lsf_seg_chain;  /* chain of segments for converted data */
     
 } ompi_btl_usnic_large_send_frag_t;
@@ -285,10 +295,10 @@ typedef struct ompi_btl_usnic_large_send_frag_t {
  * an inline send, but will convert to a single SG entry is inline cannot
  * be done and data must be copied.  
  * First segment will point to registered memory of associated segment to
- * hold BTL and PML headers.
+ * hold BTL and upper layer headers.
  * Second segment will point directly to user data.  If inlining fails, we
- * will copy user data into the registered memory after the PML header and 
- * convert to a single segment.
+ * will copy user data into the registered memory after the upper layer header
+ * and convert to a single segment.
  */
 typedef struct ompi_btl_usnic_small_send_frag_t {
     ompi_btl_usnic_send_frag_t ssf_base;
@@ -307,9 +317,6 @@ OBJ_CLASS_DECLARATION(ompi_btl_usnic_send_frag_t);
 OBJ_CLASS_DECLARATION(ompi_btl_usnic_small_send_frag_t);
 OBJ_CLASS_DECLARATION(ompi_btl_usnic_large_send_frag_t);
 OBJ_CLASS_DECLARATION(ompi_btl_usnic_put_dest_frag_t);
-
-typedef ompi_btl_usnic_send_segment_t ompi_btl_usnic_frag_segment_t;
-typedef ompi_btl_usnic_send_segment_t ompi_btl_usnic_chunk_segment_t;
 
 OBJ_CLASS_DECLARATION(ompi_btl_usnic_segment_t);
 OBJ_CLASS_DECLARATION(ompi_btl_usnic_frag_segment_t);
@@ -396,7 +403,7 @@ ompi_btl_usnic_put_dest_frag_alloc(
  * A send frag can be returned to the freelist when all of the
  * following are true:
  *
- * 1. PML is freeing it (via module.free())
+ * 1. upper layer is freeing it (via module.free())
  * 2. Or all of these:
  *    a) it finishes sending all its segments
  *    b) all of its segments have been ACKed
@@ -424,6 +431,25 @@ ompi_btl_usnic_frag_return(
     struct ompi_btl_usnic_module_t *module,
     ompi_btl_usnic_frag_t *frag)
 {
+#if MSGDEBUG1
+    opal_output(0, "freeing frag %p, type %s\n", (void *)frag,
+            usnic_frag_type(frag->uf_type));
+#endif
+    frag->uf_src_seg[0].seg_len = 0;
+    frag->uf_src_seg[1].seg_len = 0;
+
+    /* If this is a large fragment, we need to free any
+     * attached storage
+     */
+    if (frag->uf_type == OMPI_BTL_USNIC_FRAG_LARGE_SEND) {
+        ompi_btl_usnic_large_send_frag_t *lfrag;
+        lfrag = (ompi_btl_usnic_large_send_frag_t *)frag;
+        if (lfrag->lsf_buffer != NULL) {
+            free(lfrag->lsf_buffer);
+            lfrag->lsf_buffer = NULL;
+        }
+    }
+
     OMPI_FREE_LIST_RETURN_MT(frag->uf_freelist, &(frag->uf_base.super));
 }
 
@@ -437,6 +463,28 @@ ompi_btl_usnic_send_frag_return_cond(
 {
     if (ompi_btl_usnic_send_frag_ok_to_return(module, frag)) {
         ompi_btl_usnic_frag_return(module, &frag->sf_base);
+    }
+}
+
+/*
+ * Return a frag if it's all done and owned by BTL
+ * If this is a PUT destination, only condition is that we own it.  If it's 
+ * a send frag, there are other conditions, so use the specific send frag 
+ * return checker.
+ */
+static inline void
+ompi_btl_usnic_frag_return_cond(
+    struct ompi_btl_usnic_module_t *module,
+    ompi_btl_usnic_frag_t *frag)
+{
+    if (OMPI_BTL_USNIC_FRAG_PUT_DEST == frag->uf_type) {
+        if (OPAL_LIKELY(frag->uf_base.des_flags &
+                                    MCA_BTL_DES_FLAGS_BTL_OWNERSHIP)) {
+            ompi_btl_usnic_frag_return(module, frag);
+        }
+    } else {
+        ompi_btl_usnic_send_frag_return_cond(module,
+                (ompi_btl_usnic_send_frag_t *)frag);
     }
 }
 
@@ -471,7 +519,6 @@ ompi_btl_usnic_chunk_segment_return(
 
     OMPI_FREE_LIST_RETURN_MT(&(module->chunk_segs), &(seg->ss_base.us_list));
 }
-
 
 /*
  * Alloc an ACK segment

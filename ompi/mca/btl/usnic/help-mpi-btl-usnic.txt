@@ -99,6 +99,12 @@ highly unusual and shouldn't happen.  It suggests that there may be
 something wrong with the usNIC or OpenFabrics configuration on this
 server.
 
+  Server:       %s
+  Message:      %s
+  File:         %s
+  Line:         %d
+  Error:        %s
+#
 [ibv API failed after init]
 Open MPI failed a basic verbs operation on a Cisco usNIC device.  This
 is highly unusual and shouldn't happen.  It suggests that there may be
