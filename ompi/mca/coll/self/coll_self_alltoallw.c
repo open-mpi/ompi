@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2013      FUJITSU LIMITED.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -39,6 +40,11 @@ int mca_coll_self_alltoallw_intra(void *sbuf, int *scounts, int *sdisps,
 {
     int err;        
     ptrdiff_t lb, rextent, sextent;
+
+    if (MPI_IN_PLACE == sbuf) {
+        return MPI_SUCCESS;
+    }
+
     err = ompi_datatype_get_extent(sdtypes[0], &lb, &sextent);
     if (OMPI_SUCCESS != err) {
         return OMPI_ERROR;
