@@ -18,7 +18,7 @@
 #include "oshmem/proc/proc_group_cache.h"
 #include "oshmem/op/op.h"
 
-OMPI_GENERATE_FORTRAN_BINDINGS (void,
+SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
         SHMEM_BROADCAST4,
         shmem_broadcast4_,
         shmem_broadcast4__,
@@ -26,7 +26,7 @@ OMPI_GENERATE_FORTRAN_BINDINGS (void,
         (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *nlong, MPI_Fint *PE_root, MPI_Fint *PE_start, MPI_Fint * logPE_stride, MPI_Fint *PE_size, FORTRAN_POINTER_T pSync), 
         (target, source, nlong, PE_root, PE_start, logPE_stride, PE_size, pSync));
 
-OMPI_GENERATE_FORTRAN_BINDINGS (void,
+SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
         SHMEM_BROADCAST8,
         shmem_broadcast8_,
         shmem_broadcast8__,
@@ -34,7 +34,7 @@ OMPI_GENERATE_FORTRAN_BINDINGS (void,
         (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *nlong, MPI_Fint *PE_root, MPI_Fint *PE_start, MPI_Fint * logPE_stride, MPI_Fint *PE_size, FORTRAN_POINTER_T pSync), 
         (target, source, nlong, PE_root, PE_start, logPE_stride, PE_size, pSync));
 
-OMPI_GENERATE_FORTRAN_BINDINGS (void,
+SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
         SHMEM_BROADCAST32,
         shmem_broadcast32_,
         shmem_broadcast32__,
@@ -42,7 +42,7 @@ OMPI_GENERATE_FORTRAN_BINDINGS (void,
         (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *nlong, MPI_Fint *PE_root, MPI_Fint *PE_start, MPI_Fint * logPE_stride, MPI_Fint *PE_size, FORTRAN_POINTER_T pSync), 
         (target, source, nlong, PE_root, PE_start, logPE_stride, PE_size, pSync));
 
-OMPI_GENERATE_FORTRAN_BINDINGS (void,
+SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
         SHMEM_BROADCAST64,
         shmem_broadcast64_,
         shmem_broadcast64__,

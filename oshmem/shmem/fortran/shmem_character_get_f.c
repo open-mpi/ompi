@@ -18,7 +18,7 @@
 #include "ompi/datatype/ompi_datatype.h"
 #include "stdio.h"
 
-OMPI_GENERATE_FORTRAN_BINDINGS (void,
+SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
         SHMEM_CHARACTER_GET,
         shmem_character_get_,
         shmem_character_get__,

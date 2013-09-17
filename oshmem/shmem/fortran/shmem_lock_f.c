@@ -16,7 +16,7 @@
 #include "ompi/datatype/ompi_datatype.h"
 #include "oshmem/shmem/shmem_lock.h"
 
-OMPI_GENERATE_FORTRAN_BINDINGS (void,
+SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
         SHMEM_SET_LOCK,
         shmem_set_lock_,
         shmem_set_lock__,
@@ -24,7 +24,7 @@ OMPI_GENERATE_FORTRAN_BINDINGS (void,
         (FORTRAN_POINTER_T lock), 
         (lock));
 
-OMPI_GENERATE_FORTRAN_BINDINGS (void,
+SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
         SHMEM_CLEAR_LOCK,
         shmem_clear_lock_,
         shmem_clear_lock__,
@@ -32,7 +32,7 @@ OMPI_GENERATE_FORTRAN_BINDINGS (void,
         (FORTRAN_POINTER_T lock), 
         (lock));
 
-OMPI_GENERATE_FORTRAN_BINDINGS (MPI_Fint,
+SHMEM_GENERATE_FORTRAN_BINDINGS_FUNCTION (MPI_Fint,
         SHMEM_TEST_LOCK,
         shmem_test_lock_,
         shmem_test_lock__,

@@ -18,7 +18,7 @@
 #include "oshmem/proc/proc_group_cache.h"
 #include "oshmem/op/op.h"
 
-OMPI_GENERATE_FORTRAN_BINDINGS (void,
+SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
         SHMEM_COLLECT4,
         shmem_collect4_,
         shmem_collect4__,
@@ -26,7 +26,7 @@ OMPI_GENERATE_FORTRAN_BINDINGS (void,
         (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *nlong, MPI_Fint *PE_start, MPI_Fint * logPE_stride, MPI_Fint *PE_size, FORTRAN_POINTER_T pSync), 
         (target,source,nlong,PE_start,logPE_stride,PE_size,pSync) )
 
-OMPI_GENERATE_FORTRAN_BINDINGS (void,
+SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
         SHMEM_COLLECT8,
         shmem_collect8_,
         shmem_collect8__,
@@ -34,7 +34,7 @@ OMPI_GENERATE_FORTRAN_BINDINGS (void,
         (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *nlong, MPI_Fint *PE_start, MPI_Fint * logPE_stride, MPI_Fint *PE_size, FORTRAN_POINTER_T pSync), 
         (target,source,nlong,PE_start,logPE_stride,PE_size,pSync) )
 
-OMPI_GENERATE_FORTRAN_BINDINGS (void,
+SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
         SHMEM_COLLECT32,
         shmem_collect32_,
         shmem_collect32__,
@@ -42,7 +42,7 @@ OMPI_GENERATE_FORTRAN_BINDINGS (void,
         (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *nlong, MPI_Fint *PE_start, MPI_Fint * logPE_stride, MPI_Fint *PE_size, FORTRAN_POINTER_T pSync), 
         (target,source,nlong,PE_start,logPE_stride,PE_size,pSync) )
 
-OMPI_GENERATE_FORTRAN_BINDINGS (void,
+SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
         SHMEM_COLLECT64,
         shmem_collect64_,
         shmem_collect64__,
@@ -50,7 +50,7 @@ OMPI_GENERATE_FORTRAN_BINDINGS (void,
         (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *nlong, MPI_Fint *PE_start, MPI_Fint * logPE_stride, MPI_Fint *PE_size, FORTRAN_POINTER_T pSync), 
         (target,source,nlong,PE_start,logPE_stride,PE_size,pSync) )
 
-OMPI_GENERATE_FORTRAN_BINDINGS (void,
+SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
         SHMEM_FCOLLECT4,
         shmem_fcollect4_,
         shmem_fcollect4__,
@@ -58,7 +58,7 @@ OMPI_GENERATE_FORTRAN_BINDINGS (void,
         (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *nlong, MPI_Fint *PE_start, MPI_Fint * logPE_stride, MPI_Fint *PE_size, FORTRAN_POINTER_T pSync), 
         (target,source,nlong,PE_start,logPE_stride,PE_size,pSync) )
 
-OMPI_GENERATE_FORTRAN_BINDINGS (void,
+SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
         SHMEM_FCOLLECT8,
         shmem_fcollect8_,
         shmem_fcollect8__,
@@ -66,7 +66,7 @@ OMPI_GENERATE_FORTRAN_BINDINGS (void,
         (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *nlong, MPI_Fint *PE_start, MPI_Fint * logPE_stride, MPI_Fint *PE_size, FORTRAN_POINTER_T pSync), 
         (target,source,nlong,PE_start,logPE_stride,PE_size,pSync) )
 
-OMPI_GENERATE_FORTRAN_BINDINGS (void,
+SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
         SHMEM_FCOLLECT32,
         shmem_fcollect32_,
         shmem_fcollect32__,
@@ -74,7 +74,7 @@ OMPI_GENERATE_FORTRAN_BINDINGS (void,
         (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *nlong, MPI_Fint *PE_start, MPI_Fint * logPE_stride, MPI_Fint *PE_size, FORTRAN_POINTER_T pSync), 
         (target,source,nlong,PE_start,logPE_stride,PE_size,pSync) )
 
-OMPI_GENERATE_FORTRAN_BINDINGS (void,
+SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
         SHMEM_FCOLLECT64,
         shmem_fcollect64_,
         shmem_fcollect64__,

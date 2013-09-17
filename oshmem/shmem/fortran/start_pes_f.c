@@ -13,7 +13,7 @@
 #include "oshmem/shmem/fortran/bindings.h"
 #include "oshmem/include/shmem.h"
 
-OMPI_GENERATE_FORTRAN_BINDINGS (void,
+SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
         START_PES,
         start_pes_,
         start_pes__,

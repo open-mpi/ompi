@@ -19,7 +19,7 @@
 #include "oshmem/op/op.h"
 #include "stdio.h"
 
-OMPI_GENERATE_FORTRAN_BINDINGS (void,
+SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
         SHMEM_INT8_INC,
         shmem_int8_inc_,
         shmem_int8_inc__,
