@@ -101,6 +101,7 @@ orte_iof_base_setup_prefork(orte_iof_base_io_conf_t *opts)
      */
 #else
     if (ret < 0) {
+        opts->usepty = 0;
         if (pipe(opts->p_stdout) < 0) {
             ORTE_ERROR_LOG(ORTE_ERR_SYS_LIMITS_PIPES);
             return ORTE_ERR_SYS_LIMITS_PIPES;
