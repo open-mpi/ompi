@@ -80,11 +80,9 @@ void ompi_btl_usnic_recv_call(ompi_btl_usnic_module_t *module,
     ompi_btl_usnic_sprintf_gid_mac(dest_mac, 
             &seg->rs_protocol_header->grh.dgid);
 
-#if MSGDEBUG
     opal_output(0, "Got message from MAC %s", src_mac);
     opal_output(0, "Looking for sender: 0x%016lx",
         bseg->us_btl_header->sender);
-#endif
 #endif
 
     /* Find out who sent this segment */
@@ -143,6 +141,11 @@ void ompi_btl_usnic_recv_call(ompi_btl_usnic_module_t *module,
         if (hdr->put_addr == NULL) {
             reg = mca_btl_base_active_message_trigger + hdr->tag;
             seg->rs_segment.seg_len = hdr->payload_len;
+#if MSGDEBUG2
+                opal_output(0, "small recv complete, pass up %u bytes, tag=%d\n",
+                        (unsigned)bseg->us_btl_header->payload_len,
+                        (int)bseg->us_btl_header->tag);
+#endif
             reg->cbfunc(&module->super, hdr->tag, &seg->rs_desc, reg->cbdata);
 
         /*
@@ -226,12 +229,12 @@ void ompi_btl_usnic_recv_call(ompi_btl_usnic_module_t *module,
                 if (fip->rfi_data == NULL) {
                     abort();
                 }
-#if MSGDEBUG2
+#if MSGDEBUG1
 opal_output(0, "Start large recv to %p, size=%d\n",
         fip->rfi_data, chunk_hdr->ch_frag_size);
 #endif
             } else {
-#if MSGDEBUG2
+#if MSGDEBUG1
 opal_output(0, "Start PUT to %p\n", chunk_hdr->ch_hdr.put_addr);
 #endif
                 fip->rfi_data = chunk_hdr->ch_hdr.put_addr;
@@ -281,7 +284,7 @@ opal_output(0, "Start PUT to %p\n", chunk_hdr->ch_hdr.put_addr);
 
                 /* Pass this segment up to the PML */
 #if MSGDEBUG2
-                opal_output(0, "  large FRAG complete, pass up %p, %u bytes, tag=%d\n",
+                opal_output(0, "large recv complete, pass up %p, %u bytes, tag=%d\n",
                         desc.des_dst->seg_addr.pval,
                         (unsigned)desc.des_dst->seg_len,
                         (int)chunk_hdr->ch_hdr.tag);
@@ -302,9 +305,9 @@ opal_output(0, "Start PUT to %p\n", chunk_hdr->ch_hdr.put_addr);
                             (ompi_free_list_item_t *)fip->rfi_data);
                 }
 
-#if MSGDEBUG2
+#if MSGDEBUG1
             } else {
-                opal_output(0, "PUT complete, suppressing callback\n");
+                opal_output(0, "PUT recv complete, no callback\n");
 #endif
             }
 

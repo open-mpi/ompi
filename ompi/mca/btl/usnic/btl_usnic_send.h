@@ -231,10 +231,10 @@ ompi_btl_usnic_endpoint_enqueue_frag(
     ompi_btl_usnic_send_frag_t *frag)
 {
 #if MSGDEBUG1
-    opal_output(0, "enq_frag: frag=%p, endpoint=%p, %s, len=%"PRIu64"\n",
+    opal_output(0, "enq_frag: frag=%p, endpoint=%p, %s, len=%lu\n",
             (void*)frag, (void*)endpoint,
             usnic_frag_type(frag->sf_base.uf_type),
-            frag->sf_base.uf_base.des_src->seg_len);
+            (long unsigned)frag->sf_base.uf_base.des_src->seg_len);
     if (frag->sf_base.uf_type == OMPI_BTL_USNIC_FRAG_LARGE_SEND) {
         ompi_btl_usnic_large_send_frag_t *lfrag;
         lfrag = (ompi_btl_usnic_large_send_frag_t *)frag;
