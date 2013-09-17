@@ -204,7 +204,7 @@ static int usnic_register_pml_err_cb(struct mca_btl_base_module_t* btl,
 }
 
 /**
- * Allocate PML control messages or eager frags if BTL does not have
+ * Allocate control messages or eager frags if BTL does not have
  * INPLACE flag.  To be clear: max it will ever alloc is eager_limit.
  * THEREFORE: eager_limit is the max that ALLOC must always be able to
  * alloc.
@@ -222,9 +222,9 @@ usnic_alloc(struct mca_btl_base_module_t* btl,
     ompi_btl_usnic_small_send_frag_t *sfrag;
     mca_btl_base_descriptor_t *desc;
 
-    if (size > module->max_frag_payload)
+    if (size > module->max_frag_payload) {
         size = module->max_frag_payload;
-
+    }
 
     sfrag = ompi_btl_usnic_small_send_frag_alloc(module);
     if (NULL == sfrag) {
@@ -237,10 +237,6 @@ usnic_alloc(struct mca_btl_base_module_t* btl,
                 (size <= module->max_frag_payload)?"small":"large",
                 (void *)frag, (int)size, flags);
 #endif
-
-    /* set # of bytes remaining to be ACKed */
-    frag->sf_ack_bytes_left = size;
-    frag->sf_size = size;
 
     /* set endpoint */
     frag->sf_endpoint = endpoint;
@@ -281,7 +277,7 @@ static int usnic_free(struct mca_btl_base_module_t* btl,
 /*
  * Notes from george:
  *
- * - BTL ALLOC: allocating PML control messages or eager frags if BTL
+ * - BTL ALLOC: allocating control messages or eager frags if BTL
      does not have INPLACE flag.  To be clear: max it will ever alloc
      is eager_limit.  THEREFORE: eager_limit is the max that ALLOC
      must always be able to alloc.
@@ -305,12 +301,12 @@ static int usnic_free(struct mca_btl_base_module_t* btl,
  *   we will leave data in place
  *
  * small,convertor: copy the data into the segment associated with small frag,
- *      PML will put header in this seg, single entry in desc SG
- * small,no convertor: PML will put header in attached segment SG[0],
+ *      caller will put header in this seg, single entry in desc SG
+ * small,no convertor: caller will put header in attached segment SG[0],
  *      save pointer to user data in SG[1], 2 SG entries
  * large,convertor: copy data into chain of segments, leaving room for 
- *      PML header at start of 1st segment, 2 SG entries
- * large,not convertor: PML will put header in buffer in the large frag itself,
+ *      caller header at start of 1st segment, 2 SG entries
+ * large,not convertor: caller will put header in buffer in the large frag itself,
  *      save pointer to user data in SG[1]. 2 SG entries
  *
  * NOTE that the *only* reason this routine is allowed to return a size smaller
@@ -358,7 +354,7 @@ usnic_prepare_src(
          */
         if (OPAL_UNLIKELY(opal_convertor_need_buffers(convertor))) {
 
-            /* put user data just after end of 1st seg (PML header) */
+            /* put user data just after end of 1st seg (upper layer header) */
             if (payload_len > module->max_frag_payload) {
                 payload_len = module->max_frag_payload;
             }
@@ -400,14 +396,14 @@ usnic_prepare_src(
          * If a covertor is required, pack the data into a chain of segments.
          * We will later send from the segments one at a time.  This allows
          * us to absorb a large convertor-based send and still give an accurate
-         * data count back to the PML
+         * data count back to the upper layer
          */
         if (OPAL_UNLIKELY(opal_convertor_need_buffers(convertor))) {
             ompi_btl_usnic_chunk_segment_t *seg;
-            unsigned pml_hdr_len;
+            unsigned ompi_hdr_len;
             unsigned bytes_to_pack;
 
-            pml_hdr_len = reserve;
+            ompi_hdr_len = reserve;
             bytes_to_pack = *size;
             while (bytes_to_pack > 0) {
                 seg = ompi_btl_usnic_chunk_segment_alloc(module);
@@ -416,14 +412,14 @@ usnic_prepare_src(
                     abort(); /* XXX */
                 }
 
-                /* put user data just after end of 1st seg (PML header) */
-                payload_len = pml_hdr_len + bytes_to_pack;
+                /* put user data just after end of 1st seg (upper header) */
+                payload_len = ompi_hdr_len + bytes_to_pack;
                 if (payload_len > module->max_chunk_payload) {
                     payload_len = module->max_chunk_payload;
                 }
-                iov.iov_len = payload_len - pml_hdr_len;
+                iov.iov_len = payload_len - ompi_hdr_len;
                 iov.iov_base = (IOVBASE_TYPE*)
-                    (seg->ss_base.us_payload.raw + pml_hdr_len);
+                    (seg->ss_base.us_payload.raw + ompi_hdr_len);
                 iov_count = 1;
                 max_data = iov.iov_len;
                 rc = opal_convertor_pack(convertor, &iov, &iov_count, &max_data);
@@ -446,9 +442,9 @@ usnic_prepare_src(
                 opal_list_append(&lfrag->lsf_seg_chain,
                         &seg->ss_base.us_list.super);
                 seg->ss_parent_frag = &lfrag->lsf_base;
-                seg->ss_base.us_sg_entry[0].length = max_data + pml_hdr_len;
+                seg->ss_base.us_sg_entry[0].length = max_data + ompi_hdr_len;
 
-                pml_hdr_len = 0;
+                ompi_hdr_len = 0;
                 bytes_to_pack -= max_data;
             }
             payload_len = *size + reserve;
@@ -464,7 +460,7 @@ usnic_prepare_src(
                     &lfrag->lsf_base.sf_base.uf_src_seg[1].seg_addr.pval);
             lfrag->lsf_base.sf_convertor = NULL;
             lfrag->lsf_base.sf_base.uf_src_seg[0].seg_addr.pval =
-                &lfrag->lsf_pml_header;
+                &lfrag->lsf_ompi_header;
         }
 
 
@@ -472,23 +468,18 @@ usnic_prepare_src(
         lfrag->lsf_cur_offset = 0;
         lfrag->lsf_bytes_left = payload_len;
 
-        /* make sure PML header small enough */
-        assert(reserve < sizeof(lfrag->lsf_pml_header));
+        /* make sure upper header small enough */
+        assert(reserve < sizeof(lfrag->lsf_ompi_header));
 
         frag->sf_base.uf_base.des_src_cnt = 2;
         frag->sf_base.uf_src_seg[0].seg_len = reserve;
         frag->sf_base.uf_src_seg[1].seg_len = *size;
     }
 
-    /* fill in segment sizes */
-    frag->sf_size = payload_len;
-
     /* set up common parts of frag */
     frag->sf_base.uf_base.des_flags = flags;
     frag->sf_endpoint = endpoint;
 
-    /* fragment accounting */
-    frag->sf_ack_bytes_left = payload_len;
     desc = &frag->sf_base.uf_base;
 
 #if MSGDEBUG2
@@ -496,10 +487,10 @@ usnic_prepare_src(
             module->device->name,
             payload_len <= module->max_frag_payload?"small":"large",
             (void *)frag, (int)reserve, (int)*size);
-        { int i;
+        { unsigned i;
             for (i=0; i<desc->des_src_cnt; ++i)
                 opal_output(0, "  %d: ptr:%p len:%d\n", i,
-                        desc->des_src[i].seg_addr.pval,
+                        (void *)desc->des_src[i].seg_addr.pval,
                         desc->des_src[i].seg_len);
         }
 #endif
@@ -565,16 +556,27 @@ usnic_put(
 
     frag = (ompi_btl_usnic_send_frag_t *)des;
 
+    /*
+     * Our descriptors are always either 1 or 2 segments.
+     * We always clear these lengths when the fragment is freed
+     * and only fill in what's needed in either prepare_src or usnic_alloc,
+     * so the total fragment length is always the sum of the 2 lengths.
+     */
+    frag->sf_size = frag->sf_base.uf_src_seg[0].seg_len +
+            frag->sf_base.uf_src_seg[1].seg_len;
+    frag->sf_ack_bytes_left = frag->sf_size;
+
 #if MSGDEBUG2
-    opal_output(0, "usnic_put, frag=%p, source=\n", frag);
-    { int i;
+    opal_output(0, "usnic_put, frag=%p, size=%d, source=\n", (void *)frag,
+            (int)frag->sf_size);
+    { unsigned i;
         for (i=0; i<des->des_src_cnt; ++i)
             opal_output(0, "  %d: ptr:%p len:%d\n", i,
                     des->des_src[i].seg_addr.pval,
                     des->des_src[i].seg_len);
     }
     opal_output(0, "dest:\n");
-    { int i;
+    { unsigned i;
         for (i=0; i<des->des_dst_cnt; ++i)
             opal_output(0, "  %d: ptr:%p len:%d\n", i,
                     des->des_dst[i].seg_addr.pval,
@@ -582,7 +584,7 @@ usnic_put(
     }
 #endif
 
-    /* copy out address - why does he not use ours?  silly PML */
+    /* copy out address - why does he not use ours? */
     frag->sf_base.uf_dst_seg[0].seg_addr.pval = des->des_dst->seg_addr.pval;
 
     /*
@@ -619,7 +621,8 @@ usnic_put(
         /* set up VERBS SG list */
         sseg->ss_send_desc.num_sge = 1;
         sseg->ss_base.us_sg_entry[0].length =
-            sizeof(ompi_btl_usnic_btl_header_t) + frag->sf_size;
+            sizeof(ompi_btl_usnic_btl_header_t) +
+            frag->sf_base.uf_base.des_src[1].seg_len;
 
         /* use standard channel */
         sseg->ss_channel = USNIC_DATA_CHANNEL;
@@ -961,16 +964,16 @@ usnic_handle_large_send(
         sseg->ss_parent_frag = frag;
 
         /* If this is the first chunk of the frag, need to insert
-         * the PML header at the start.  On subsequent chunks,
-         * skip the PML header
+         * the upper header at the start.  On subsequent chunks,
+         * skip the upper header
          */
         if (lfrag->lsf_cur_offset == 0) {
 
-            /* copy in the PML header */
-            memcpy(sseg->ss_base.us_payload.raw, lfrag->lsf_pml_header,
+            /* copy in the upper header */
+            memcpy(sseg->ss_base.us_payload.raw, lfrag->lsf_ompi_header,
                     lfrag->lsf_base.sf_base.uf_src_seg[0].seg_len);
 
-            /* adjust data pointer and len to skip PML */
+            /* adjust data pointer and len to skip upper header */
             iov.iov_base = sseg->ss_base.us_payload.raw +
                 lfrag->lsf_base.sf_base.uf_src_seg[0].seg_len;
 
@@ -1004,7 +1007,7 @@ usnic_handle_large_send(
         payload_len += max_data;
 
     /* We are sending converted data, which means we have a list of segments 
-     * containing the data.  PML header is already in first segment
+     * containing the data.  upper layer header is already in first segment
      */
     } else {
         sseg = (ompi_btl_usnic_send_segment_t *)
@@ -1040,7 +1043,7 @@ usnic_handle_large_send(
     /* done with fragment? */
     if (lfrag->lsf_bytes_left == 0) {
 
-        /* remove this frag from sending list now because PML may
+        /* remove this frag from sending list now because upper layer may
          * decide to put it on some other list in the callback
          */
         opal_list_remove_item(&endpoint->endpoint_frag_send_queue,
@@ -1055,7 +1058,8 @@ usnic_handle_large_send(
 
 #if MSGDEBUG2
             opal_output(0, "callback for large frag %p, len=%zd\n",
-                    (void *)frag->sf_base.uf_base.des_cbfunc, frag->sf_size);
+                    (void *)(uintptr_t)frag->sf_base.uf_base.des_cbfunc,
+                    frag->sf_size);
 #endif
             frag->sf_base.uf_base.des_cbfunc(&module->super,
                           frag->sf_endpoint, &frag->sf_base.uf_base,
@@ -1123,7 +1127,7 @@ ompi_btl_usnic_module_progress_sends(
          */
         if (frag->sf_base.uf_type == OMPI_BTL_USNIC_FRAG_SMALL_SEND) {
 
-            /* remove this frag from sending list now because PML may
+            /* remove this frag from sending list now because upper layer may
              * decide to put it on some other list in the callback
              */
             opal_list_remove_item(&endpoint->endpoint_frag_send_queue,
@@ -1163,7 +1167,8 @@ ompi_btl_usnic_module_progress_sends(
                          MCA_BTL_DES_FLAGS_BTL_OWNERSHIP)) {
 #if MSGDEBUG2
                 opal_output(0, "callback frag small %p, len=%"PRIu64"\n",
-                        (void*)frag, frag->sf_base.uf_src_seg[0].seg_len);
+                        (void*)frag,
+                        (unsigned long)frag->sf_base.uf_src_seg[0].seg_len);
 #endif
                     frag->sf_base.uf_base.des_cbfunc(&module->super,
                                   frag->sf_endpoint, &frag->sf_base.uf_base,
@@ -1247,27 +1252,30 @@ static int usnic_send(struct mca_btl_base_module_t* base_module,
     module = (ompi_btl_usnic_module_t *)base_module;
     frag = (ompi_btl_usnic_send_frag_t*) descriptor;
 
+    assert(frag->sf_endpoint == endpoint);
+    frag->sf_base.uf_dst_seg[0].seg_addr.pval = NULL;      /* not a PUT */
+
+    /*
+     * Our descriptors are always either 1 or 2 segments.
+     * We always clear these lengths when the fragment is freed
+     * and only fill in what's needed in either prepare_src or usnic_alloc,
+     * so the total fragment length is always the sum of the 2 lengths.
+     */
+    frag->sf_size = frag->sf_base.uf_src_seg[0].seg_len +
+            frag->sf_base.uf_src_seg[1].seg_len;
+    frag->sf_ack_bytes_left = frag->sf_size;
+
 #if MSGDEBUG2
-    opal_output(0, "usnic_send: frag=%p, endpoint=%p, tag=%d, sendreq=%p\n",
+    opal_output(0, "usnic_send: frag=%p, endpoint=%p, tag=%d, sf_size=%d\n",
             (void *)frag, (void *)endpoint,
-            tag, (void *)descriptor->des_cbdata);
-    { int i;
+            tag, (int)frag->sf_size);
+    { unsigned i;
         for (i=0; i<descriptor->des_src_cnt; ++i)
             opal_output(0, "  %d: ptr:%p len:%d\n", i,
                     descriptor->des_src[i].seg_addr.pval,
                     descriptor->des_src[i].seg_len);
     }
 #endif
-
-    assert(frag->sf_endpoint == endpoint);
-    frag->sf_base.uf_dst_seg[0].seg_addr.pval = NULL;      /* not a PUT */
-
-    /* JMS From Dec OMPI meeting....
-
-       if PML doesn't set SEND_ALWAYS_CALLBACK, then we can return 1
-       here to say "the data is gone, PML can complete the request".
-       And then we don't need to do the PML callback (!).  WE DON'T
-       NEED TO SET ALWAYS_CALLBACK! */
 
     /*
      * If this fragment is small enough to inline,
@@ -1305,19 +1313,7 @@ static int usnic_send(struct mca_btl_base_module_t* base_module,
         sseg->ss_channel = USNIC_PRIORITY_CHANNEL;
         sseg->ss_base.us_btl_header->tag = tag;
 #if MSGDEBUG2
-        opal_output(0, "conv = %p\n", frag->sf_convertor);
-        opal_output(0, "  inline frag %d segs %p(%d) + %p(%d)\n",
-                (int)frag->sf_base.uf_base.des_src_cnt,
-                frag->sf_base.uf_src_seg[0].seg_addr.pval,
-                (int)frag->sf_base.uf_src_seg[0].seg_len,
-                frag->sf_base.uf_src_seg[1].seg_addr.pval,
-                (int)frag->sf_base.uf_src_seg[1].seg_len);
-        opal_output(0, "  inline seg  %d segs %p(%d) + %p(%d)\n",
-                sseg->ss_send_desc.num_sge,
-                (void *)sseg->ss_send_desc.sg_list[0].addr,
-                sseg->ss_send_desc.sg_list[0].length,
-                (void *)sseg->ss_send_desc.sg_list[1].addr,
-                sseg->ss_send_desc.sg_list[1].length);
+        opal_output(0, "INLINE send, conv=%p", (void *)frag->sf_convertor);
 #endif
 
         /* post the segment now */
