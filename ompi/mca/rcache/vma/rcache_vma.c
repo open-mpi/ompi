@@ -40,6 +40,7 @@ void mca_rcache_vma_module_init( mca_rcache_vma_module_t* rcache ) {
     rcache->base.rcache_delete = mca_rcache_vma_delete; 
     rcache->base.rcache_clean = mca_rcache_vma_clean; 
     rcache->base.rcache_finalize = mca_rcache_vma_finalize; 
+    rcache->base.rcache_dump_range = mca_rcache_vma_dump_range;
     OBJ_CONSTRUCT(&rcache->base.lock, opal_mutex_t);
     mca_rcache_vma_tree_init(rcache);
 }
@@ -170,4 +171,11 @@ int mca_rcache_vma_clean(struct mca_rcache_base_module_t* rcache)
   */
 void mca_rcache_vma_finalize(struct mca_rcache_base_module_t* rcache)
 {
+}
+
+void mca_rcache_vma_dump_range(struct mca_rcache_base_module_t* rcache,
+                               unsigned char *base, size_t size)
+{
+    mca_rcache_vma_module_t *vma_rcache = (struct mca_rcache_vma_module_t*) rcache;
+    mca_rcache_vma_tree_dump_range(vma_rcache, base, size);
 }
