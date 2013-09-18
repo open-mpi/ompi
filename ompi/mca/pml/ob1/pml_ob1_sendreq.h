@@ -395,7 +395,7 @@ mca_pml_ob1_send_request_start_btl( mca_pml_ob1_send_request_t* sendreq,
                 (opal_convertor_need_buffers(&sendreq->req_send.req_base.req_convertor) == false) {
             unsigned char *base;
             opal_convertor_get_current_pointer( &sendreq->req_send.req_base.req_convertor, (void**)&base );
-            
+
             if( 0 != (sendreq->req_rdma_cnt = (uint32_t)mca_pml_ob1_rdma_btls(
                                                                               sendreq->req_endpoint,
                                                                               base,
