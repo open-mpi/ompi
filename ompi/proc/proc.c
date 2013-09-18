@@ -463,7 +463,6 @@ ompi_proc_pack(ompi_proc_t **proclist, int proclistsize,
             int32_t num_entries;
             opal_value_t *kv;
             opal_list_t data;
-            opal_list_item_t *item, *next;
 
             /* fetch what we know about the peer */
             OBJ_CONSTRUCT(&data, opal_list_t);
@@ -471,27 +470,14 @@ ompi_proc_pack(ompi_proc_t **proclist, int proclistsize,
             if (OPAL_SUCCESS != rc) {
                 OMPI_ERROR_LOG(rc);
                 num_entries = 0;
-                goto save_and_continue;
+            } else {
+                /* count the number of entries we will send, purging the rest
+                 * sadly, there is no RTE-agnostic way of pruning these, so
+                 * just send them all
+                 */
+                num_entries = opal_list_get_size(&data);
             }
 
-            /* count the number of entries we will send, purging the rest */
-            num_entries = 0;
-            item = opal_list_get_first(&data);
-            while (item != opal_list_get_end(&data)) {
-                kv = (opal_value_t*)item;
-                next = opal_list_get_next(item);
-                /* if this is an entry we get from the nidmap, then don't include it here */
-                if (0 == strcmp(kv->key, ORTE_DB_NODERANK) ||
-                    0 == strcmp(kv->key, ORTE_DB_LOCALRANK) ||
-                    0 == strcmp(kv->key, ORTE_DB_CPUSET)) {
-                    opal_list_remove_item(&data, item);
-                } else {
-                    num_entries++;
-                }
-                item = next;
-            }
-
-        save_and_continue:
             /* put the number of entries into the buffer */
             rc = opal_dss.pack(buf, &num_entries, 1, OPAL_INT32);
             if (OPAL_SUCCESS != rc) {
