@@ -11,7 +11,6 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2006-2009 University of Houston.  All rights reserved.
- * Copyright (c) 2013      Intel, Inc. All rights reserved
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -28,7 +27,6 @@
 #include "ompi/communicator/communicator.h"
 #include "ompi/proc/proc.h"
 #include "ompi/memchecker.h"
-#include "ompi/mca/dpm/dpm.h"
 
 #if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Intercomm_merge = PMPI_Intercomm_merge
@@ -118,14 +116,6 @@ int MPI_Intercomm_merge(MPI_Comm intercomm, int high,
     ompi_group_decrement_proc_count(new_group_pointer);
     OBJ_RELEASE(new_group_pointer);
     new_group_pointer = MPI_GROUP_NULL;
-
-    /* ensure all processes in the merged communicator know how
-     * to communicate to each other
-     */
-    rc = ompi_dpm.merge(newcomp, first);
-    if ( OMPI_SUCCESS != rc ) {
-        goto exit;
-    }
 
     /* Determine context id. It is identical to f_2_c_handle */
     rc = ompi_comm_nextcid ( newcomp,              /* new comm */ 

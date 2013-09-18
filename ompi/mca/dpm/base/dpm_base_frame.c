@@ -32,7 +32,6 @@
 OMPI_DECLSPEC ompi_dpm_base_module_t ompi_dpm = {
     NULL,
     ompi_dpm_base_null_connect_accept,
-    ompi_dpm_base_null_merge,
     ompi_dpm_base_null_disconnect,
     ompi_dpm_base_null_spawn,
     ompi_dpm_base_null_dyn_init,
