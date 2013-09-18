@@ -92,6 +92,9 @@ static void* get_coll_handle(void);
 static int coll_handle_test(void* handle);
 static void coll_handle_free(void *handle);
 static void coll_handle_complete(void *handle);
+static int group_id(rte_grp_handle_t group);
+
+static int world_rank(rte_grp_handle_t grp_h, rte_ec_handle_t ec);
 /* Module Constructors */
 
 static void init_module_fns(void){
@@ -110,6 +113,8 @@ static void init_module_fns(void){
     hcoll_rte_functions.rte_coll_handle_test_fn = coll_handle_test;
     hcoll_rte_functions.rte_coll_handle_free_fn = coll_handle_free;
     hcoll_rte_functions.rte_coll_handle_complete_fn = coll_handle_complete;
+    hcoll_rte_functions.rte_group_id_fn = group_id;
+    hcoll_rte_functions.rte_world_rank_fn = world_rank;
 }
 
 
@@ -165,7 +170,7 @@ static int recv_nb(struct dte_data_representation_t data,
 #if RTE_DEBUG
     assert(ec_h.group == grp_h);
 #endif
-    if (! ec_h.handle) {
+    if (NULL == ec_h.handle && -1 != ec_h.rank) {
         fprintf(stderr,"***Error in hcolrte_rml_recv_nb: wrong null argument: "
                 "ec_h.handle = %p, ec_h.rank = %d\n",ec_h.handle,ec_h.rank);
         return 1;
@@ -381,6 +386,9 @@ static uint32_t jobid(void){
     return ORTE_PROC_MY_NAME->jobid;
 }
 
+static int group_id(rte_grp_handle_t group){
+    return ((ompi_communicator_t *)group)->c_contextid;
+}
 
 static void* get_coll_handle(void)
 {
@@ -393,6 +401,8 @@ static void* get_coll_handle(void)
     }
     ompi_req = (ompi_request_t *)item;
     OMPI_REQUEST_INIT(ompi_req,false);
+    ompi_req->req_complete_cb = NULL;
+    ompi_req->req_status.MPI_ERROR = MPI_SUCCESS;
     return (void *)ompi_req;
 }
 
@@ -415,3 +425,7 @@ static void coll_handle_complete(void *handle)
 }
 
 
+static int world_rank(rte_grp_handle_t grp_h, rte_ec_handle_t ec){
+    ompi_proc_t *proc = (ompi_proc_t *)ec.handle;
+    return proc->proc_name.vpid;
+}
