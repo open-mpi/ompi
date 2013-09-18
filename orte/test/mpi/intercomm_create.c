@@ -109,8 +109,9 @@ do_parent(char *argv[], int rank, int count)
     err = spawn_and_merge( argv, cmd_argv1, count, &ab_inter, &ab_intra );
     err = spawn_and_merge( argv, cmd_argv2, count, &ac_inter, &ac_intra );
     
-    printf( "%s: MPI_Intercomm_create( ab_intra, 0, ac_intra, 0, %d, &inter) (%d)\n", whoami, tag, err );
-    err = MPI_Intercomm_create( ab_intra, 0, ac_intra, 1, tag, &ab_c_inter );
+    printf( "%s: MPI_Intercomm_create( ab_intra, 0, ac_intra, %d, %d, &inter) (%d)\n",
+            whoami, count, tag, err );
+    err = MPI_Intercomm_create( ab_intra, 0, ac_intra, count, tag, &ab_c_inter );
     printf( "%s: intercomm_create (%d)\n", whoami, err );
 
     printf( "%s: barrier on inter-comm - before\n", whoami );
@@ -142,7 +143,7 @@ do_target(char* argv[], MPI_Comm parent)
 
     if( first ) {
         printf( "%s: MPI_Intercomm_create( intra, 0, intra, MPI_COMM_NULL, %d, &inter) [rank %d]\n", whoami, tag, rank );
-        err = MPI_Intercomm_create( intra, 0, MPI_COMM_WORLD, 0, tag, &inter);
+        err = MPI_Intercomm_create( intra, 0, MPI_COMM_NULL, 0, tag, &inter);
         printf( "%s: intercomm_create (%d)\n", whoami, err );
     } else {
         printf( "%s: MPI_Intercomm_create( MPI_COMM_WORLD, 0, intra, 0, %d, &inter) [rank %d]\n", whoami, tag, rank );
