@@ -68,7 +68,7 @@ mca_coll_hcoll_component_t mca_coll_hcoll_component = {
 int mca_coll_hcoll_get_lib(void)
 {
 
-    memset(&mca_coll_hcoll_component.hcoll_ops, 
+    memset(&mca_coll_hcoll_component.hcoll_ops,
             0, sizeof(mca_coll_hcoll_component.hcoll_ops));
 
     return OMPI_SUCCESS;
@@ -115,12 +115,12 @@ static int reg_string(const char* param_name,
             NULL, 0, 0, OPAL_INFO_LVL_9,
             MCA_BASE_VAR_SCOPE_READONLY, storage);
     if (NULL != deprecated_param_name) {
-        (void) mca_base_var_register_synonym(index, 
+        (void) mca_base_var_register_synonym(index,
                 "ompi", "coll", "hcoll", deprecated_param_name,
                 MCA_BASE_VAR_SYN_FLAG_DEPRECATED);
     }
 
-    if (0 != (flags & REGSTR_EMPTY_OK) && 
+    if (0 != (flags & REGSTR_EMPTY_OK) &&
             (NULL == *storage || 0 == strlen(*storage))) {
         opal_output(0, "Bad parameter value for parameter \"%s\"",
                 param_name);
@@ -132,8 +132,8 @@ static int reg_string(const char* param_name,
 
 
 
-/* 
- * Utility routine for integer parameter registration 
+/*
+ * Utility routine for integer parameter registration
  */
 static int reg_int(const char* param_name,
         const char* deprecated_param_name,
@@ -149,7 +149,7 @@ static int reg_int(const char* param_name,
             NULL, 0, 0,OPAL_INFO_LVL_9,
             MCA_BASE_VAR_SCOPE_READONLY, storage);
     if (NULL != deprecated_param_name) {
-        (void) mca_base_var_register_synonym(index, 
+        (void) mca_base_var_register_synonym(index,
                 "ompi", "coll", "hcoll", deprecated_param_name,
                 MCA_BASE_VAR_SYN_FLAG_DEPRECATED);
     }
@@ -174,9 +174,9 @@ static int hcoll_register(void)
 {
 
     int ret, tmp;
-    
+
     ret = OMPI_SUCCESS;
-    
+
 #define CHECK(expr) do {                    \
             tmp = (expr);                       \
             if (OMPI_SUCCESS != tmp) ret = tmp; \
@@ -221,20 +221,13 @@ static int hcoll_open(void)
 
     hcoll_rte_fns_setup();
 
-    opal_progress_register(hcoll_progress_fn);
-    rc = hcoll_init();
-
-    if (HCOLL_SUCCESS != rc){
-        opal_progress_unregister(hcoll_progress_fn);
-        HCOL_VERBOSE(1,"Hcol library init failed");
-        return OMPI_ERROR;
-    }
     return OMPI_SUCCESS;
 }
 
 static int hcoll_close(void)
 {
     int rc;
+    HCOL_VERBOSE(5,"HCOLL FINALIZE");
     rc = hcoll_finalize();
     opal_progress_unregister(hcoll_progress_fn);
     if (HCOLL_SUCCESS != rc){

@@ -56,7 +56,8 @@ static void mca_coll_hcoll_module_destruct(mca_coll_hcoll_module_t *hcoll_module
     OBJ_RELEASE(hcoll_module->previous_alltoallv_module);
     OBJ_RELEASE(hcoll_module->previous_alltoallw_module);
     OBJ_RELEASE(hcoll_module->previous_reduce_scatter_module);
-    hcoll_destroy_context(hcoll_module->hcoll_context);
+    hcoll_destroy_context(hcoll_module->hcoll_context,
+                          (rte_grp_handle_t) hcoll_module->comm);
     mca_coll_hcoll_module_clear(hcoll_module);
 }
 
@@ -106,7 +107,7 @@ static int mca_coll_hcoll_module_enable(mca_coll_base_module_t *module,
 
     hcoll_set_runtime_tag_offset(-100,mca_pml.pml_max_tag);
 
-    hcoll_module->hcoll_context = 
+    hcoll_module->hcoll_context =
             hcoll_create_context((rte_grp_handle_t)comm);
     if (NULL == hcoll_module->hcoll_context){
         HCOL_VERBOSE(1,"hcoll_create_context returned NULL");
@@ -153,7 +154,6 @@ static int mca_coll_hcoll_module_enable(mca_coll_base_module_t *module,
         sleep(1);
     }
 #endif
-    hcoll_module->super.coll_barrier(comm,module);
     return OMPI_SUCCESS;
 }
 
@@ -171,7 +171,7 @@ mca_coll_hcoll_comm_query(struct ompi_communicator_t *comm, int *priority)
 {
     mca_coll_base_module_t *module;
     mca_coll_hcoll_module_t *hcoll_module;
-
+    static bool libhcoll_initialized = false;
     *priority = 0;
     module = NULL;
 
@@ -179,6 +179,24 @@ mca_coll_hcoll_comm_query(struct ompi_communicator_t *comm, int *priority)
         goto exit;
     }
 
+    if (!libhcoll_initialized)
+    {
+        /* libhcoll should be initialized here since current implmentation of
+           mxm bcol in libhcoll needs world_group fully functional during init
+
+           world_group, i.e. ompi_comm_world, is not ready at hcoll component open
+           call */
+        opal_progress_register(hcoll_progress_fn);
+        int rc = hcoll_init();
+
+        if (HCOLL_SUCCESS != rc){
+            mca_coll_hcoll_component.hcoll_enable = 0;
+            opal_progress_unregister(hcoll_progress_fn);
+            HCOL_VERBOSE(0,"Hcol library init failed");
+            return NULL;
+        }
+        libhcoll_initialized = true;
+    }
     hcoll_module = OBJ_NEW(mca_coll_hcoll_module_t);
     if (!hcoll_module){
         goto exit;
