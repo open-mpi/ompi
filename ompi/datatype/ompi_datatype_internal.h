@@ -1,10 +1,12 @@
-/* -*- Mode: C; c-basic-offset:4 ; -*- */
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil  -*- */
 /*
  * Copyright (c) 2009-2010 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2010-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -375,7 +377,6 @@
 #endif
 
 
-OMPI_DECLSPEC extern union dt_elem_desc ompi_datatype_predefined_elem_desc[2 * OMPI_DATATYPE_MPI_MAX_PREDEFINED];
 extern const ompi_datatype_t* ompi_datatype_basicDatatypes[OMPI_DATATYPE_MPI_MAX_PREDEFINED];
 
 /* There 3 types of predefined data types.
@@ -392,17 +393,17 @@ extern const ompi_datatype_t* ompi_datatype_basicDatatypes[OMPI_DATATYPE_MPI_MAX
  */
 
 #define OMPI_DATATYPE_EMPTY_DATA(NAME)                                               \
-    OMPI_DATATYPE_MPI_ ## NAME /*id*/,                                               \
-    0 /*d_f_to_c_index*/,                                                            \
-    NULL /*d_keyhash*/,                                                              \
-    NULL /*args*/,                                                                   \
-    NULL /*packed_description*/,                                                     \
-    "MPI_" # NAME /*name*/
+    .id = OMPI_DATATYPE_MPI_ ## NAME,                                                \
+    .d_f_to_c_index = 0,                                                             \
+    .d_keyhash = NULL,                                                               \
+    .args = NULL,                                                                    \
+    .packed_description = NULL,                                                      \
+    .name = "MPI_" # NAME
 
 #define OMPI_DATATYPE_INITIALIZER_UNAVAILABLE(FLAGS)                                 \
     OPAL_DATATYPE_INITIALIZER_UNAVAILABLE(FLAGS)
 
-#define OMPI_DATATYPE_INIT_PREDEFINED_BASIC_TYPE( TYPE, NAME, FLAGS )                \
+#define OMPI_DATATYPE_INIT_PREDEFINED_BASIC_TYPE_X( TYPE, NAME, FLAGS )              \
     { /*ompi_predefined_datatype_t*/                                                 \
         { /* ompi_datatype_t */                                                      \
             OMPI_DATATYPE_INITIALIZER_ ## TYPE (OMPI_DATATYPE_FLAG_PREDEFINED |      \
@@ -411,6 +412,10 @@ extern const ompi_datatype_t* ompi_datatype_basicDatatypes[OMPI_DATATYPE_MPI_MAX
         },                                                                           \
         {0, } /* padding */                                                          \
     }
+
+/* Preprocessor hack to make sure TYPE gets expanded properly */
+#define OMPI_DATATYPE_INIT_PREDEFINED_BASIC_TYPE(TYPE, NAME, FLAGS) OMPI_DATATYPE_INIT_PREDEFINED_BASIC_TYPE_X(TYPE, NAME, FLAGS)
+
 /*
  * Two macros for convenience
  */
@@ -433,48 +438,34 @@ extern const ompi_datatype_t* ompi_datatype_basicDatatypes[OMPI_DATATYPE_MPI_MAX
 
 #if OMPI_BUILD_FORTRAN_BINDINGS
 /*
- * For Fortran, we need to pass information, such as ALIGNMENT and SIZE as well
- * Therefore, for initialization at compile-time, pass this data as well.
- *
- * However, there is no underlying OPAL-TYPE, therefore we just pass NAME, SIZE,
- * ALIGN and the FLAGS. Additionally, ONLY for Fortran we need the
- * ompi_datatype_predefined_elem_desc for the additional types.
- */
-#define OMPI_DATATYPE_INIT_DESC_PREDEFINED(TYPE, SIZE)                               \
-    {                                                                                \
-        1 /*length*/, 1 /*used*/,                                                    \
-        &(ompi_datatype_predefined_elem_desc[2 * OPAL_DATATYPE_ ## TYPE ## SIZE]) /*desc*/ \
-    }
-
-/*
  * Fortran types are based on the underlying OPAL types: They share the ID -- however,
  * the alignment is overwritten.
  */
 #define OMPI_DATATYPE_INITIALIZER_FORTRAN( TYPE, NAME, SIZE, ALIGN, FLAGS )          \
     {                                                                                \
-        OPAL_OBJ_STATIC_INIT(opal_datatype_t),                                       \
-        OPAL_DATATYPE_FLAG_BASIC |                                                   \
+        .super = OPAL_OBJ_STATIC_INIT(opal_datatype_t),                              \
+        .flags = OPAL_DATATYPE_FLAG_BASIC |                                          \
             OMPI_DATATYPE_FLAG_PREDEFINED |                                          \
-            OMPI_DATATYPE_FLAG_DATA_FORTRAN | (FLAGS) /*flag*/,                      \
-        OPAL_DATATYPE_ ## TYPE ## SIZE /*id*/,                                       \
-        (((uint32_t)1)<<(OPAL_DATATYPE_ ## TYPE ## SIZE)) /*bdt_used*/,              \
-        SIZE /*size*/,                                                               \
-        0 /*true_lb*/, SIZE /*true_ub*/, 0 /*lb*/, SIZE /*ub*/,                      \
-        (ALIGN) /*align*/,                                                           \
-        1 /*nbElems*/,                                                               \
-        OPAL_DATATYPE_INIT_NAME(TYPE ## SIZE) /*name*/,                              \
-        OMPI_DATATYPE_INIT_DESC_PREDEFINED(TYPE, SIZE) /*desc*/,                     \
-        OMPI_DATATYPE_INIT_DESC_PREDEFINED(TYPE, SIZE) /*opt_desc*/,                 \
-        OPAL_DATATYPE_INIT_BTYPES_ARRAY_ ## TYPE ## SIZE /*btypes*/                  \
+            OMPI_DATATYPE_FLAG_DATA_FORTRAN | (FLAGS),                               \
+        .id = OPAL_DATATYPE_ ## TYPE ## SIZE,                                        \
+        .bdt_used = (((uint32_t)1)<<(OPAL_DATATYPE_ ## TYPE ## SIZE)),               \
+        .size = SIZE,                                                                \
+        .true_lb = 0, .true_ub = SIZE, .lb = 0, .ub = SIZE,                          \
+        .align = (ALIGN),                                                            \
+        .nbElems = 1,                                                                \
+        .name = OPAL_DATATYPE_INIT_NAME(TYPE ## SIZE),                               \
+        .desc = OPAL_DATATYPE_INIT_DESC_PREDEFINED(TYPE ## SIZE),                    \
+        .opt_desc = OPAL_DATATYPE_INIT_DESC_PREDEFINED(TYPE ## SIZE),                \
+	.btypes = OPAL_DATATYPE_INIT_BTYPES_ARRAY(TYPE ## SIZE)                      \
     }
 
 #define OMPI_DATATYPE_INIT_PREDEFINED_BASIC_TYPE_FORTRAN( TYPE, NAME, SIZE, ALIGN, FLAGS ) \
     { /*ompi_predefined_datatype_t*/                                                 \
-        { /*ompi_datatype_t*/                                                        \
-            OMPI_DATATYPE_INITIALIZER_FORTRAN( TYPE, NAME, SIZE, ALIGN, FLAGS) /*super*/, \
+        .dt = {                                                                      \
+            .super = OMPI_DATATYPE_INITIALIZER_FORTRAN( TYPE, NAME, SIZE, ALIGN, FLAGS), \
             OMPI_DATATYPE_EMPTY_DATA(NAME) /*id,d_f_to_c_index,d_keyhash,args,packed_description,name*/ \
         },                                                                           \
-        {0, } /* padding */                                                          \
+        .padding = {0, }                                                             \
     }
 #else
 #define OMPI_DATATYPE_INIT_PREDEFINED_BASIC_TYPE_FORTRAN( TYPE, NAME, SIZE, ALIGN, FLAGS ) \
@@ -616,18 +607,15 @@ extern const ompi_datatype_t* ompi_datatype_basicDatatypes[OMPI_DATATYPE_MPI_MAX
 
 #define OMPI_DATATYPE_INITIALIZER_WCHAR               OPAL_DATATYPE_INITIALIZER_WCHAR
 
+#define OMPI_DATATYPE_INITIALIZER_C_FLOAT_COMPLEX       OPAL_DATATYPE_INITIALIZER_FLOAT_COMPLEX
+#define OMPI_DATATYPE_INITIALIZER_C_DOUBLE_COMPLEX      OPAL_DATATYPE_INITIALIZER_DOUBLE_COMPLEX
+#define OMPI_DATATYPE_INITIALIZER_C_LONG_DOUBLE_COMPLEX OPAL_DATATYPE_INITIALIZER_LONG_DOUBLE_COMPLEX
+
 /*
  * Following are the structured types, that cannot be represented
  * by one single OPAL basic type
  */
 #define OMPI_DATATYPE_FIRST_TYPE                      OPAL_DATATYPE_MAX_PREDEFINED
-#define OMPI_DATATYPE_COMPLEX                         (OMPI_DATATYPE_FIRST_TYPE+0)   /* Equal to OMPI_DATATYPE_FIRST_TYPE */
-#define OMPI_DATATYPE_DOUBLE_COMPLEX                  (OMPI_DATATYPE_FIRST_TYPE+1)
-#define OMPI_DATATYPE_LONG_DOUBLE_COMPLEX             (OMPI_DATATYPE_FIRST_TYPE+2)
-
-#define OMPI_DATATYPE_COMPLEX8                        (OMPI_DATATYPE_FIRST_TYPE+3)
-#define OMPI_DATATYPE_COMPLEX16                       (OMPI_DATATYPE_FIRST_TYPE+4)
-#define OMPI_DATATYPE_COMPLEX32                       (OMPI_DATATYPE_FIRST_TYPE+5)
 
 /*
  * Derived datatypes supposely contiguous

@@ -1,4 +1,4 @@
-/* -*- Mode: C; c-basic-offset:4 ; -*- */
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -13,6 +13,8 @@
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
+ * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -67,74 +69,73 @@ OPAL_DECLSPEC const opal_datatype_t opal_datatype_float4 =      OPAL_DATATYPE_IN
 OPAL_DECLSPEC const opal_datatype_t opal_datatype_float8 =      OPAL_DATATYPE_INITIALIZER_FLOAT8(0);
 OPAL_DECLSPEC const opal_datatype_t opal_datatype_float12 =     OPAL_DATATYPE_INITIALIZER_FLOAT12(0);
 OPAL_DECLSPEC const opal_datatype_t opal_datatype_float16 =     OPAL_DATATYPE_INITIALIZER_FLOAT16(0);
-OPAL_DECLSPEC const opal_datatype_t opal_datatype_complex8 =    OPAL_DATATYPE_INITIALIZER_COMPLEX8(0);
-OPAL_DECLSPEC const opal_datatype_t opal_datatype_complex16 =   OPAL_DATATYPE_INITIALIZER_COMPLEX16(0);
-OPAL_DECLSPEC const opal_datatype_t opal_datatype_complex32 =   OPAL_DATATYPE_INITIALIZER_COMPLEX32(0);
+OPAL_DECLSPEC const opal_datatype_t opal_datatype_float_complex = OPAL_DATATYPE_INITIALIZER_FLOAT_COMPLEX(0);
+OPAL_DECLSPEC const opal_datatype_t opal_datatype_double_complex = OPAL_DATATYPE_INITIALIZER_DOUBLE_COMPLEX(0);
+OPAL_DECLSPEC const opal_datatype_t opal_datatype_long_double_complex = OPAL_DATATYPE_INITIALIZER_LONG_DOUBLE_COMPLEX(0);
 OPAL_DECLSPEC const opal_datatype_t opal_datatype_bool =        OPAL_DATATYPE_INITIALIZER_BOOL(0);
 OPAL_DECLSPEC const opal_datatype_t opal_datatype_wchar =       OPAL_DATATYPE_INITIALIZER_WCHAR(0);
 OPAL_DECLSPEC const opal_datatype_t opal_datatype_unavailable = OPAL_DATATYPE_INITIALIZER_UNAVAILABLE_NAMED(UNAVAILABLE, 0);
 
 OPAL_DECLSPEC dt_elem_desc_t opal_datatype_predefined_elem_desc[2 * OPAL_DATATYPE_MAX_PREDEFINED];
 
-/* NOTE: The order of this array *MUST* match the order in opal_datatype_basicDatatypes */
+/*
+ * NOTE: The order of this array *MUST* match the order in opal_datatype_basicDatatypes
+ * (use of designated initializers should relax this restrictions some)
+ */
 OPAL_DECLSPEC const size_t opal_datatype_local_sizes[OPAL_DATATYPE_MAX_PREDEFINED] =
 {
-    0,
-    0,
-    0,
-    0,
-    1,   /* sizeof (int8_t) */
-    2,   /* sizeof (int16_t) */
-    4,   /* sizeof (int32_t) */
-    8,   /* sizeof (int64_t) */
-    16,  /* sizeof (int128_t) */
-    1,   /* sizeof (uint8_t) */
-    2,   /* sizeof (uint16_t) */
-    4,   /* sizeof (uint32_t) */
-    8,   /* sizeof (uint64_t) */
-    16,  /* sizeof (uint128_t) */
-    2,   /* sizeof (float2) */
-    4,   /* sizeof (float4) */
-    8,   /* sizeof (float8) */
-    12,  /* sizeof (float12) */
-    16,  /* sizeof (float16) */
-    8,   /* 2 * sizeof(float4) */
-    16,  /* 2 * sizeof(float8) */
-    32,  /* 2 * sizeof(float16) */
-    sizeof (_Bool),
-    sizeof (wchar_t),
-    0    /* unavailable */
+    [OPAL_DATATYPE_INT1] = sizeof(int8_t),
+    [OPAL_DATATYPE_INT2] = sizeof(int16_t),
+    [OPAL_DATATYPE_INT4] = sizeof(int32_t),
+    [OPAL_DATATYPE_INT8] = sizeof(int64_t),
+    [OPAL_DATATYPE_INT16] = 16,    /* sizeof (int128_t) */
+    [OPAL_DATATYPE_UINT1] = sizeof(uint8_t),
+    [OPAL_DATATYPE_UINT2] = sizeof(uint16_t),
+    [OPAL_DATATYPE_UINT4] = sizeof(uint32_t),
+    [OPAL_DATATYPE_UINT8] = sizeof(uint64_t),
+    [OPAL_DATATYPE_UINT16] = 16,    /* sizeof (uint128_t) */
+    [OPAL_DATATYPE_FLOAT2] = 2,     /* sizeof (float2) */
+    [OPAL_DATATYPE_FLOAT4] = 4,     /* sizeof (float4) */
+    [OPAL_DATATYPE_FLOAT8] = 8,     /* sizeof (float8) */
+    [OPAL_DATATYPE_FLOAT12] = 12,   /* sizeof (float12) */
+    [OPAL_DATATYPE_FLOAT16] = 16,   /* sizeof (float16) */
+    [OPAL_DATATYPE_FLOAT_COMPLEX] = sizeof(float _Complex),
+    [OPAL_DATATYPE_DOUBLE_COMPLEX] = sizeof(double _Complex),
+    [OPAL_DATATYPE_LONG_DOUBLE_COMPLEX] = sizeof(long double _Complex),
+    [OPAL_DATATYPE_BOOL] = sizeof (_Bool),
+    [OPAL_DATATYPE_WCHAR] = sizeof (wchar_t),
 };
 
 /*
  * NOTE: The order of this array *MUST* match what is listed in datatype.h
+ * (use of designated initializers should relax this restrictions some)
  */
 OPAL_DECLSPEC const opal_datatype_t* opal_datatype_basicDatatypes[OPAL_DATATYPE_MAX_PREDEFINED] = {
-    &opal_datatype_loop,
-    &opal_datatype_end_loop,
-    &opal_datatype_lb,
-    &opal_datatype_ub,
-    &opal_datatype_int1,
-    &opal_datatype_int2,
-    &opal_datatype_int4,
-    &opal_datatype_int8,
-    &opal_datatype_int16,       /* Yes, double-machine word integers are available */
-    &opal_datatype_uint1,
-    &opal_datatype_uint2,
-    &opal_datatype_uint4,
-    &opal_datatype_uint8,
-    &opal_datatype_uint16,      /* Yes, double-machine word integers are available */
-    &opal_datatype_float2,
-    &opal_datatype_float4,
-    &opal_datatype_float8,
-    &opal_datatype_float12,
-    &opal_datatype_float16,
-    &opal_datatype_complex8,
-    &opal_datatype_complex16,
-    &opal_datatype_complex32,
-    &opal_datatype_bool,
-    &opal_datatype_wchar,
-    &opal_datatype_unavailable
+    [OPAL_DATATYPE_LOOP] = &opal_datatype_loop,
+    [OPAL_DATATYPE_END_LOOP] = &opal_datatype_end_loop,
+    [OPAL_DATATYPE_LB] = &opal_datatype_lb,
+    [OPAL_DATATYPE_UB] = &opal_datatype_ub,
+    [OPAL_DATATYPE_INT1] = &opal_datatype_int1,
+    [OPAL_DATATYPE_INT2] = &opal_datatype_int2,
+    [OPAL_DATATYPE_INT4] = &opal_datatype_int4,
+    [OPAL_DATATYPE_INT8] = &opal_datatype_int8,
+    [OPAL_DATATYPE_INT16] = &opal_datatype_int16,       /* Yes, double-machine word integers are available */
+    [OPAL_DATATYPE_UINT1] = &opal_datatype_uint1,
+    [OPAL_DATATYPE_UINT2] = &opal_datatype_uint2,
+    [OPAL_DATATYPE_UINT4] = &opal_datatype_uint4,
+    [OPAL_DATATYPE_UINT8] = &opal_datatype_uint8,
+    [OPAL_DATATYPE_UINT16] = &opal_datatype_uint16,      /* Yes, double-machine word integers are available */
+    [OPAL_DATATYPE_FLOAT2] = &opal_datatype_float2,
+    [OPAL_DATATYPE_FLOAT4] = &opal_datatype_float4,
+    [OPAL_DATATYPE_FLOAT8] = &opal_datatype_float8,
+    [OPAL_DATATYPE_FLOAT12] = &opal_datatype_float12,
+    [OPAL_DATATYPE_FLOAT16] = &opal_datatype_float16,
+    [OPAL_DATATYPE_FLOAT_COMPLEX] = &opal_datatype_float_complex,
+    [OPAL_DATATYPE_DOUBLE_COMPLEX] = &opal_datatype_double_complex,
+    [OPAL_DATATYPE_LONG_DOUBLE_COMPLEX] = &opal_datatype_long_double_complex,
+    [OPAL_DATATYPE_BOOL] = &opal_datatype_bool,
+    [OPAL_DATATYPE_WCHAR] = &opal_datatype_wchar,
+    [OPAL_DATATYPE_UNAVAILABLE] = &opal_datatype_unavailable,
 };
 
 
@@ -220,30 +221,6 @@ int32_t opal_datatype_init( void )
         datatype->desc.desc[1].end_loop.first_elem_disp = datatype->desc.desc[0].elem.disp;
         datatype->desc.desc[1].end_loop.size            = datatype->size;
     }
-
-#if !(OPAL_USE_FLOAT__COMPLEX && (SIZEOF_FLOAT__COMPLEX == 8)) && (SIZEOF_FLOAT == 4)
-    datatype = opal_datatype_basicDatatypes[OPAL_DATATYPE_COMPLEX8];
-
-    datatype->desc.desc[0].elem.common.type  = OPAL_DATATYPE_FLOAT4;
-    datatype->desc.desc[0].elem.count        = 2;
-    datatype->desc.desc[0].elem.extent       = SIZEOF_FLOAT;
-#endif
-
-#if !(OPAL_USE_DOUBLE__COMPLEX && (SIZEOF_DOUBLE__COMPLEX == 16)) && (SIZEOF_DOUBLE == 8)
-    datatype = opal_datatype_basicDatatypes[OPAL_DATATYPE_COMPLEX16];
-
-    datatype->desc.desc[0].elem.common.type  = OPAL_DATATYPE_FLOAT8;
-    datatype->desc.desc[0].elem.count        = 2;
-    datatype->desc.desc[0].elem.extent       = SIZEOF_DOUBLE;
-#endif
-
-#if !(OPAL_USE_LONG_DOUBLE__COMPLEX && (SIZEOF_LONG_DOUBLE__COMPLEX == 32)) && (HAVE_LONG_DOUBLE && (SIZEOF_LONG_DOUBLE == 16))
-    datatype = opal_datatype_basicDatatypes[OPAL_DATATYPE_COMPLEX32];
-
-    datatype->desc.desc[0].elem.common.type  = OPAL_DATATYPE_FLOAT16;
-    datatype->desc.desc[0].elem.count        = 2;
-    datatype->desc.desc[0].elem.extent       = SIZEOF_LONG_DOUBLE;
-#endif
 
     return OPAL_SUCCESS;
 }
