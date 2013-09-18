@@ -630,7 +630,7 @@ ompi_proc_unpack(opal_buffer_t* buf,
                     OMPI_ERROR_LOG(rc);
                     break;
                 }
-    
+
                 /*
                  * Extract the attribute names and values
                  */
@@ -666,6 +666,7 @@ ompi_proc_unpack(opal_buffer_t* buf,
                     new_hostname = NULL;
                 }
             }
+
             /* update all the values */
             plist[i]->proc_arch = new_arch;
             /* if arch is different than mine, create a new convertor for this proc */
@@ -712,7 +713,7 @@ ompi_proc_unpack(opal_buffer_t* buf,
                 } else {
                     OMPI_ERROR_LOG(rc);
                 }
-            }    
+            }
         }
     }
 
