@@ -279,11 +279,11 @@ static int __mmap_attach(map_segment_t *s, size_t size)
                 PROT_READ | PROT_WRITE,
                 MAP_SHARED |
 #if defined (__APPLE__)
-MAP_ANON
+MAP_ANON |
 #elif defined (__GNUC__)
-MAP_ANONYMOUS
+MAP_ANONYMOUS |
 #endif
-                | MAP_FIXED,
+                MAP_FIXED,
                 0,
                 0);
 
