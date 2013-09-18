@@ -1204,27 +1204,27 @@ ompi_proc_t **ompi_comm_get_rprocs ( ompi_communicator_t *local_comm,
     char *recvbuf;
     ompi_proc_t **proc_list=NULL;
     int i;
-    
+
     local_rank = ompi_comm_rank (local_comm);
-    local_size = ompi_comm_size (local_comm);    
+    local_size = ompi_comm_size (local_comm);
 
     if (local_rank == local_leader) {
         sbuf = OBJ_NEW(opal_buffer_t);
         if (NULL == sbuf) {
             rc = OMPI_ERROR;
             goto err_exit;
-        } 
+        }
         if(OMPI_GROUP_IS_DENSE(local_comm->c_local_group)) {
-            rc = ompi_proc_pack(local_comm->c_local_group->grp_proc_pointers, 
-                                local_size, sbuf);
+            rc = ompi_proc_pack(local_comm->c_local_group->grp_proc_pointers,
+                                local_size, true, sbuf);
         }
         /* get the proc list for the sparse implementations */
-        else { 
-            proc_list = (ompi_proc_t **) calloc (local_comm->c_local_group->grp_proc_count, 
+        else {
+            proc_list = (ompi_proc_t **) calloc (local_comm->c_local_group->grp_proc_count,
                                                  sizeof (ompi_proc_t *));
             for(i=0 ; i<local_comm->c_local_group->grp_proc_count ; i++)
                 proc_list[i] = ompi_group_peer_lookup(local_comm->c_local_group,i);
-            rc = ompi_proc_pack (proc_list, local_size, sbuf);
+            rc = ompi_proc_pack (proc_list, local_size, true, sbuf);
         }
         if ( OMPI_SUCCESS != rc ) {
             goto err_exit;
@@ -1232,7 +1232,7 @@ ompi_proc_t **ompi_comm_get_rprocs ( ompi_communicator_t *local_comm,
         if (OPAL_SUCCESS != (rc = opal_dss.unload(sbuf, &sendbuf, &size_len))) {
             goto err_exit;
         }
-    
+
         /* send the remote_leader the length of the buffer */
         rc = MCA_PML_CALL(irecv (&rlen, 1, MPI_INT, remote_leader, tag,
                                  bridge_comm, &req ));
@@ -1240,8 +1240,8 @@ ompi_proc_t **ompi_comm_get_rprocs ( ompi_communicator_t *local_comm,
             goto err_exit;
         }
         int_len = (int)size_len;
-        
-        rc = MCA_PML_CALL(send (&int_len, 1, MPI_INT, remote_leader, tag, 
+
+        rc = MCA_PML_CALL(send (&int_len, 1, MPI_INT, remote_leader, tag,
                                 MCA_PML_BASE_SEND_STANDARD, bridge_comm ));
         if ( OMPI_SUCCESS != rc ) {
             goto err_exit;
@@ -1250,17 +1250,16 @@ ompi_proc_t **ompi_comm_get_rprocs ( ompi_communicator_t *local_comm,
         if ( OMPI_SUCCESS != rc ) {
             goto err_exit;
         }
-        
     }
-    
+
     /* broadcast buffer length to all processes in local_comm */
-    rc = local_comm->c_coll.coll_bcast( &rlen, 1, MPI_INT, 
+    rc = local_comm->c_coll.coll_bcast( &rlen, 1, MPI_INT,
                                         local_leader, local_comm,
                                         local_comm->c_coll.coll_bcast_module );
     if ( OMPI_SUCCESS != rc ) {
         goto err_exit;
     }
-    
+
     /* Allocate temporary buffer */
     recvbuf = (char *)malloc(rlen);
     if ( NULL == recvbuf ) {
@@ -1274,7 +1273,7 @@ ompi_proc_t **ompi_comm_get_rprocs ( ompi_communicator_t *local_comm,
         if ( OMPI_SUCCESS != rc ) {
             goto err_exit;
         }
-        rc = MCA_PML_CALL(send(sendbuf, int_len, MPI_BYTE, remote_leader, tag, 
+        rc = MCA_PML_CALL(send(sendbuf, int_len, MPI_BYTE, remote_leader, tag,
                                MCA_PML_BASE_SEND_STANDARD, bridge_comm ));
         if ( OMPI_SUCCESS != rc ) {
             goto err_exit;
@@ -1288,7 +1287,7 @@ ompi_proc_t **ompi_comm_get_rprocs ( ompi_communicator_t *local_comm,
     }
 
     /* broadcast name list to all proceses in local_comm */
-    rc = local_comm->c_coll.coll_bcast( recvbuf, rlen, MPI_BYTE, 
+    rc = local_comm->c_coll.coll_bcast( recvbuf, rlen, MPI_BYTE,
                                         local_leader, local_comm,
                                         local_comm->c_coll.coll_bcast_module);
     if ( OMPI_SUCCESS != rc ) {
@@ -1300,19 +1299,24 @@ ompi_proc_t **ompi_comm_get_rprocs ( ompi_communicator_t *local_comm,
         rc = OMPI_ERROR;
         goto err_exit;
     }
-    
+
     if (OMPI_SUCCESS != (rc = opal_dss.load(rbuf, recvbuf, rlen))) {
         goto err_exit;
     }
-    
-    /* decode the names into a proc-list -- will never add a new proc
-       as the result of this operation, so no need to get the newprocs
-       list or call PML add_procs(). */
-    rc = ompi_proc_unpack(rbuf, rsize, &rprocs, NULL, NULL);
+
+    /* decode the names into a proc-list */
+    rc = ompi_proc_unpack(rbuf, rsize, &rprocs, true, NULL, NULL);
     OBJ_RELEASE(rbuf);
-    
+
+    /* And now add the information into the database */
+    /* Store the remote processes into the opal_db */
+    if (OMPI_SUCCESS != (rc = MCA_PML_CALL(add_procs(rprocs, rsize)))) {
+        ORTE_ERROR_LOG(rc);
+        goto err_exit;
+    }
+
  err_exit:
-    /* rprocs isn't freed unless we have an error, 
+    /* rprocs isn't freed unless we have an error,
        since it is used in the communicator */
     if ( OMPI_SUCCESS != rc ) {
         opal_output(0, "%d: Error in ompi_get_rprocs\n", local_rank);
@@ -1331,7 +1335,7 @@ ompi_proc_t **ompi_comm_get_rprocs ( ompi_communicator_t *local_comm,
     if ( NULL != proc_list ) {
         free ( proc_list );
     }
-        
+
     return rprocs;
 }
 /**********************************************************************/

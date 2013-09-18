@@ -65,8 +65,7 @@ main(int argc, char *argv[])
     }
 
     /* All done */
-    fprintf(stderr, "%s: finalizing\n", whoami);
-    fflush(stderr);
+
     MPI_Finalize();
     return 0;
 }
@@ -114,13 +113,17 @@ do_parent(char *argv[], int rank, int count)
     err = MPI_Intercomm_create( ab_intra, 0, ac_intra, 1, tag, &ab_c_inter );
     printf( "%s: intercomm_create (%d)\n", whoami, err );
 
+    printf( "%s: barrier on inter-comm - before\n", whoami );
+    err = MPI_Barrier(ab_c_inter);
+    printf( "%s: barrier on inter-comm - after\n", whoami );
+
     err = MPI_Intercomm_merge(ab_c_inter, 0, &abc_intra);
     printf( "%s: intercomm_merge(%d) (%d) [rank %d]\n", whoami, 0, err, rank );
-
     err = MPI_Barrier(abc_intra);
     printf( "%s: barrier (%d)\n", whoami, err );
-    fflush(stdout);
-    fflush(stderr);
+
+    MPI_Comm_disconnect(&ab_inter);
+    MPI_Comm_disconnect(&ac_inter);
 }
 
 
@@ -146,22 +149,20 @@ do_target(char* argv[], MPI_Comm parent)
         err = MPI_Intercomm_create( MPI_COMM_WORLD, 0, intra, 0, tag, &inter);
         printf( "%s: intercomm_create (%d)\n", whoami, err );
     }
+    printf( "%s: barrier on inter-comm - before\n", whoami );
+    err = MPI_Barrier(inter);
+    printf( "%s: barrier on inter-comm - after\n", whoami );
+
     err = MPI_Intercomm_merge( inter, 0, &merge1 );
     MPI_Comm_rank(merge1, &rank);
     printf( "%s: intercomm_merge(%d) (%d) [rank %d]\n", whoami, first, err, rank );
     err = MPI_Barrier(merge1);
     printf( "%s: barrier (%d)\n", whoami, err );
-    fflush(stdout);
-    fflush(stderr);
 
     MPI_Comm_free(&merge1);
-    printf( "%s: merge1 free\n", whoami );
-    fflush(stdout);
     MPI_Comm_free(&inter);
-    printf( "%s: inter free\n", whoami );
-    fflush(stdout);
     MPI_Comm_free(&intra);
-    printf( "%s: intra free\n", whoami );
-    fflush(stdout);
 
+    MPI_Comm_disconnect(&parent);
 }
+
