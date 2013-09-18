@@ -174,8 +174,8 @@ void mca_rcache_vma_finalize(struct mca_rcache_base_module_t* rcache)
 }
 
 void mca_rcache_vma_dump_range(struct mca_rcache_base_module_t* rcache,
-                               unsigned char *base, size_t size)
+                               unsigned char *base, size_t size, char *msg)
 {
     mca_rcache_vma_module_t *vma_rcache = (struct mca_rcache_vma_module_t*) rcache;
-    mca_rcache_vma_tree_dump_range(vma_rcache, base, size);
+    mca_rcache_vma_tree_dump_range(vma_rcache, base, size, msg);
 }

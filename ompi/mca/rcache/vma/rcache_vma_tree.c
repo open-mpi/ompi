@@ -535,17 +535,22 @@ int mca_rcache_vma_tree_delete(mca_rcache_vma_module_t* vma_rcache,
 
 /* Dump out rcache entries within a range of memory.  Useful for debugging. */
 void mca_rcache_vma_tree_dump_range(mca_rcache_vma_module_t *vma_rcache,
-                                    unsigned char *base, size_t size)
+                                    unsigned char *base, size_t size, char *msg)
 {
     unsigned char * bound = base + size -1;
     mca_mpool_base_registration_t *reg;
 
+    if (NULL == msg) {
+        msg = "";
+    }
+
+    opal_output(0, "Dumping rcache entries: %s", msg);
+
     if(opal_list_get_size(&vma_rcache->vma_list) == 0) {
-        opal_output(0, "rcache is empty");
+        opal_output(0, "  rcache is empty");
         return;
     }
 
-    opal_output(0, "Dumping rcache entries");
     do {
         mca_rcache_vma_t *vma;
         opal_list_item_t *item;
@@ -563,16 +568,17 @@ void mca_rcache_vma_tree_dump_range(mca_rcache_vma_module_t *vma_rcache,
             continue;
         }
 
-        opal_output(0, " vma: base=%p, bound=%p, size=%d", (void *)vma->start, (void *)vma->end,
-                    (int)(vma->end - vma->start + 1));
+        opal_output(0, "  vma: base=%p, bound=%p, size=%d, number of registrations=%d",
+                    (void *)vma->start, (void *)vma->end, (int)(vma->end - vma->start + 1),
+                    (int)opal_list_get_size(&vma->reg_list));
         for(item = opal_list_get_first(&vma->reg_list);
                 item != opal_list_get_end(&vma->reg_list);
                 item = opal_list_get_next(item)) {
             mca_rcache_vma_reg_list_item_t *vma_item;
             vma_item = (mca_rcache_vma_reg_list_item_t*)item;
             reg = vma_item->reg;
-            opal_output(0, "   reg: base=%p, bound=%p, alloc_base=%p, ref_count=%d, flags=0x%x",
-			reg->base, reg->bound, reg->alloc_base, reg->ref_count, reg->flags);
+            opal_output(0, "    reg: base=%p, bound=%p, alloc_base=%p, ref_count=%d, flags=0x%x",
+                        reg->base, reg->bound, reg->alloc_base, reg->ref_count, reg->flags);
         }
         base = (unsigned char *)vma->end + 1;
     } while(bound >= base);
