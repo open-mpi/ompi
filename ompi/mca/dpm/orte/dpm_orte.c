@@ -43,7 +43,6 @@
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/grpcomm/base/base.h"
 #include "orte/mca/plm/plm.h"
-#include "orte/mca/oob/oob.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/rml/rml_types.h"
 #include "orte/mca/rmaps/rmaps.h"
@@ -77,7 +76,6 @@ static int init(void);
 static int connect_accept (ompi_communicator_t *comm, int root,
                            char *port_string, bool send_first,
                            ompi_communicator_t **newcomm);
-static int merge(ompi_communicator_t *comm, int root);
 static int disconnect(ompi_communicator_t *comm);
 static int spawn(int count, char **array_of_commands,
                  char ***array_of_argv,
@@ -106,7 +104,6 @@ static void dpm_pclose(char *port);
 ompi_dpm_base_module_t ompi_dpm_orte_module = {
     init,
     connect_accept,
-    merge,
     disconnect,
     spawn,
     dyn_init,
@@ -229,11 +226,11 @@ static int connect_accept(ompi_communicator_t *comm, int root,
                                          ORTE_RML_TAG_COLL_ID_REQ,
                                          orte_rml_send_callback, NULL);
             /* wait for the id */
-            xfer.active = true;  // must set before the recv is defined in case the msg is waiting for us
             orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_COLL_ID,
                                     ORTE_RML_NON_PERSISTENT,
                                     orte_rml_recv_callback, &xfer);
             /* wait for response */
+            xfer.active = true;
             OMPI_WAIT_FOR_COMPLETION(xfer.active);
             i=1;
             if (OPAL_SUCCESS != (rc = opal_dss.unpack(&xfer.data, &id, &i, ORTE_GRPCOMM_COLL_ID_T))) {
@@ -254,11 +251,11 @@ static int connect_accept(ompi_communicator_t *comm, int root,
             rc = orte_rml.send_buffer_nb(&port, nbuf, tag, orte_rml_send_callback, NULL);
         } else {
             /* wait to recv the collective id */
-            xfer.active = true;  // must set before the recv is defined in case the msg is waiting for us
             orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, tag,
                                     ORTE_RML_NON_PERSISTENT,
                                     orte_rml_recv_callback, &xfer);
             /* wait for response */
+            xfer.active = true;
             OMPI_WAIT_FOR_COMPLETION(xfer.active);
             i=1;
             if (OPAL_SUCCESS != (rc = opal_dss.unpack(&xfer.data, &id, &i, ORTE_GRPCOMM_COLL_ID_T))) {
@@ -521,11 +518,11 @@ static int connect_accept(ompi_communicator_t *comm, int root,
         }
 
         /* perform it */
-        modex.active = true;
         if (OMPI_SUCCESS != (rc = orte_grpcomm.modex(&modex))) {
             ORTE_ERROR_LOG(rc);
             goto exit;
         }
+        modex.active = true;
         OMPI_WAIT_FOR_COMPLETION(modex.active);
         OBJ_DESTRUCT(&modex);
 
@@ -654,197 +651,6 @@ static int connect_accept(ompi_communicator_t *comm, int root,
     *newcomm = newcomp;
     OPAL_OUTPUT_VERBOSE((3, ompi_dpm_base_framework.framework_output,
                          "%s dpm:orte:connect_accept complete",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-
-    return rc;
-}
-
-static int merge(ompi_communicator_t *comm, int root)
-{
-    int rc=OMPI_SUCCESS, rank, size, i;
-    opal_buffer_t *buffer=NULL;
-    orte_rml_recv_cb_t xfer;
-    ompi_group_t *group=comm->c_local_group;
-    ompi_proc_t *proc, **newprocs;
-    opal_list_t data;
-    opal_value_t *kv;
-    int32_t num_entries, cnt, n;
-    opal_hwloc_locality_t locality;
-    orte_vpid_t daemon;
-
-    size = ompi_comm_size ( comm );
-    rank = ompi_comm_rank ( comm );
-
-    OPAL_OUTPUT_VERBOSE((3, ompi_dpm_base_framework.framework_output,
-                         "%s dpm:orte:merge rank %d with root %d of size %d",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         rank, root, size));
-
-    /* if we are rank 0 of the root communicator, then
-     * we are the only process guaranteed to know the
-     * modex info for everyone in this merging communicator
-     */
-    if (root && 0 == rank) {
-        /* prepare and send the modex data */
-        buffer = OBJ_NEW(opal_buffer_t);
-        /* collect all the modex info from the processes in the comm */
-        for (i=0 ; i<size ; i++) {
-            if (NULL == (proc = ompi_group_peer_lookup(group,i))) {
-                ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-                return ORTE_ERR_NOT_FOUND;
-            }
-            OBJ_CONSTRUCT(&data, opal_list_t);
-            if (ORTE_SUCCESS != (rc = opal_db.fetch_multiple((opal_identifier_t*)&proc->proc_name, NULL, &data))) {
-                ORTE_ERROR_LOG(rc);
-                OBJ_RELEASE(buffer);
-                OPAL_LIST_DESTRUCT(&data);
-                return rc;
-            }
-            /* pack the number of entries for this proc */
-            num_entries = opal_list_get_size(&data);
-            if (ORTE_SUCCESS != (rc = opal_dss.pack(buffer, &num_entries, 1, OPAL_INT32))) {
-                ORTE_ERROR_LOG(rc);
-                OBJ_RELEASE(buffer);
-                OPAL_LIST_DESTRUCT(&data);
-                return rc;
-            }
-            /* if there are entries, pack them */
-            while (NULL != (kv = (opal_value_t*)opal_list_remove_first(&data))) {
-                if (ORTE_SUCCESS != (opal_dss.pack(buffer, &kv, 1, OPAL_VALUE))) {
-                    ORTE_ERROR_LOG(rc);
-                    break;
-                }
-                OBJ_RELEASE(kv);
-            }
-            OPAL_LIST_DESTRUCT(&data);
-        }
-        /* send it to each of the other processes */
-        for (i=0 ; i<size ; i++) {
-            if (rank == i) {
-                /* don't bother sending to myself */
-                continue;
-            }
-            if (NULL == (proc = ompi_group_peer_lookup(group,i))) {
-                ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-                rc = ORTE_ERR_NOT_FOUND;
-                break;
-            }
-            OPAL_OUTPUT_VERBOSE((3, ompi_dpm_base_framework.framework_output,
-                                 "%s dpm:orte:merge sending modex data to %s",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 ORTE_NAME_PRINT(&proc->proc_name)));
-            /* maintain accounting */
-            OBJ_RETAIN(buffer);
-            orte_rml.send_buffer_nb(&proc->proc_name, buffer,
-                                    ORTE_RML_TAG_MERGE,
-                                    orte_rml_send_callback, NULL);
-        }
-        /* maintain accounting - have to ensure we do the
-         * release of the buffer object while in an OOB event
-         * to avoid threaded race condition
-         */
-        ORTE_OOB_RELEASE(buffer);
-    } else {
-        /* wait for data to arrive */
-        OBJ_CONSTRUCT(&xfer, orte_rml_recv_cb_t);
-        xfer.active = true;
-        orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_MERGE,
-                                ORTE_RML_NON_PERSISTENT,
-                                orte_rml_recv_callback, &xfer);
-        OPAL_OUTPUT_VERBOSE((3, ompi_dpm_base_framework.framework_output,
-                             "%s dpm:orte:merge waiting to recv modex data",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-        OMPI_WAIT_FOR_COMPLETION(xfer.active);
-        /* load it into our local database - we know the entries
-         * were packed in comm rank order
-         *
-         * Because we may have added modex info for procs, we have to
-         * give the BTL's a chance to determine how to connect to 
-         * remote peers, so track the procs
-         */
-        newprocs = (ompi_proc_t**)calloc(size, sizeof(ompi_proc_t*));
-        for (i=0 ; i<size ; i++) {
-            if (NULL == (proc = ompi_group_peer_lookup(group,i))) {
-                ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-                OBJ_DESTRUCT(&xfer);
-                free(newprocs);
-                return ORTE_ERR_NOT_FOUND;
-            }
-            /* track this proc */
-            newprocs[i] = proc;
-            /* unpack the number of entries for this proc */
-            cnt=1;
-            if (ORTE_SUCCESS != (rc = opal_dss.unpack(&xfer.data, &num_entries, &cnt, OPAL_INT32))) {
-                ORTE_ERROR_LOG(rc);
-                OBJ_DESTRUCT(&xfer);
-                free(newprocs);
-                return rc;
-            }
-            OPAL_OUTPUT_VERBOSE((3, ompi_dpm_base_framework.framework_output,
-                                 "%s dpm:orte:merge unpack data for %s",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 ORTE_NAME_PRINT(&proc->proc_name)));
-            /* unpack and store the entries */
-            daemon = ORTE_VPID_INVALID;
-            for (n=0; n < num_entries; n++) {
-                cnt = 1;
-                if (ORTE_SUCCESS != (rc = opal_dss.unpack(&xfer.data, &kv, &cnt, OPAL_VALUE))) {
-                    ORTE_ERROR_LOG(rc);
-                    OBJ_DESTRUCT(&xfer);
-                    free(newprocs);
-                    return rc;
-                }
-                /* if this is me, dump the data - we already have it in the db */
-                if (ORTE_PROC_MY_NAME->jobid == proc->proc_name.jobid &&
-                    ORTE_PROC_MY_NAME->vpid == proc->proc_name.vpid) {
-                    OBJ_RELEASE(kv);
-                } else if (0 == strcmp(kv->key, ORTE_DB_LOCALITY)) {
-                    /* ignore locality entries */
-                    OBJ_RELEASE(kv);
-                } else {
-                    /* store it in the database */
-                    if (ORTE_SUCCESS != (rc = opal_db.store_pointer((opal_identifier_t*)&proc->proc_name, OPAL_DB_INTERNAL, kv))) {
-                        ORTE_ERROR_LOG(rc);
-                        OBJ_DESTRUCT(&xfer);
-                        free(newprocs);
-                        return rc;
-                    }
-                    /* if it was the daemon vpid for this proc, save it */
-                    if (0 == strcmp(kv->key, ORTE_DB_DAEMON_VPID)) {
-                        daemon = kv->data.uint32;
-                    }
-                    /* do not release the kv - the db holds that pointer */
-                }
-            }
-            /* set the locality - if the jobid is different, then
-             * we declare the proc to be non-local to ensure shared
-             * memory isn't used
-             */
-            if (ORTE_PROC_MY_NAME->jobid != proc->proc_name.jobid) {
-                locality = OPAL_PROC_NON_LOCAL;
-            } else if (daemon == ORTE_PROC_MY_DAEMON->vpid) {
-                locality = OPAL_PROC_ON_NODE;
-            } else {
-                locality = OPAL_PROC_NON_LOCAL;
-            }
-            if (ORTE_SUCCESS != (rc = opal_db.store((opal_identifier_t*)&proc->proc_name, OPAL_DB_INTERNAL,
-                                                    ORTE_DB_LOCALITY, &locality, OPAL_HWLOC_LOCALITY_T))) {
-                ORTE_ERROR_LOG(rc);
-                OBJ_DESTRUCT(&xfer);
-                free(newprocs);
-                return rc;
-            }
-        }
-        OBJ_DESTRUCT(&xfer);
-        /* now trigger the PML */
-        if (OMPI_SUCCESS != (rc = MCA_PML_CALL(add_procs(newprocs, size)))) {
-            ORTE_ERROR_LOG(rc);
-        }
-        free(newprocs);
-    }
-
-    OPAL_OUTPUT_VERBOSE((3, ompi_dpm_base_framework.framework_output,
-                         "%s dpm:orte:merge complete",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
     return rc;

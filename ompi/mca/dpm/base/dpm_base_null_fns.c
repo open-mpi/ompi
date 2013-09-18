@@ -44,11 +44,6 @@ int ompi_dpm_base_null_connect_accept (ompi_communicator_t *comm, int root,
     return OMPI_ERR_NOT_SUPPORTED;
 }
 
-int ompi_dpm_base_null_merge(ompi_communicator_t *comm, int root)
-{
-    return OMPI_ERR_NOT_SUPPORTED;
-}
-
 int ompi_dpm_base_null_disconnect(ompi_communicator_t *comm)
 {
     return OMPI_SUCCESS;

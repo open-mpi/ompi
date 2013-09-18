@@ -55,16 +55,6 @@ typedef int (*ompi_dpm_base_module_connect_accept_fn_t)(ompi_communicator_t *com
                                                         char *port, bool send_first,
                                                         ompi_communicator_t **newcomm);
 
-/*
- * Merge communicator - ensure that all processes in a communicator
- * know how to talk to each other. This is used to support Intercomm_merge
- * as multiple merges can occur between jobs that have not exchanged
- * modex information. We assume that the root process knows how to
- * communicate via OOB with all processes in the communicator - i.e., that
- * the root process is common across the communicators involved in the merge
- */
-typedef int (*ompi_dpm_base_module_merge_fn_t)(ompi_communicator_t *comm, int root);
-
 /* define a callback function for use by non-blocking persistent connect/accept operations */
 typedef void (*ompi_dpm_base_paccept_connect_callback_fn_t)(ompi_communicator_t *newcomm,
                                                             ompi_proc_t *remote_proc,
@@ -187,8 +177,6 @@ struct ompi_dpm_base_module_1_0_0_t {
     ompi_dpm_base_module_init_fn_t              init;
     /* connect/accept */
     ompi_dpm_base_module_connect_accept_fn_t    connect_accept;
-    /* merge */
-    ompi_dpm_base_module_merge_fn_t             merge;
     /* disconnect */
     ompi_dpm_base_module_disconnect_fn_t        disconnect;
     /* spawn processes */
