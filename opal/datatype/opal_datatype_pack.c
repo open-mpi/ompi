@@ -310,9 +310,9 @@ opal_generic_simple_pack_function( opal_convertor_t* pConvertor,
             }
             if( OPAL_DATATYPE_END_LOOP == pElem->elem.common.type ) { /* end of the current loop */
                 DO_DEBUG( opal_output( 0, "pack end_loop count %d stack_pos %d"
-				       " pos_desc %d disp %ld space %lu\n",
+                                       " pos_desc %d disp %ld space %lu\n",
                                        (int)pStack->count, pConvertor->stack_pos,
-				       pos_desc, (long)pStack->disp, (unsigned long)iov_len_local ); );
+                                       pos_desc, (long)pStack->disp, (unsigned long)iov_len_local ); );
                 if( --(pStack->count) == 0 ) { /* end of loop */
                     if( pConvertor->stack_pos == 0 ) {
                         /* we lie about the size of the next element in order to

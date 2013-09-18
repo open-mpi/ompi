@@ -472,7 +472,7 @@ int mca_pml_ob1_send_request_start_buffered(
 
 
 /**
- *  We work on a buffered request with a size smaller than the eager size 
+ *  We work on a buffered request with a size smaller than the eager size
  *  or the BTL is not able to send the data IN_PLACE. Request a segment
  *  that is used for initial hdr and any eager data. This is used only
  *  from the _START macro.
@@ -497,16 +497,16 @@ int mca_pml_ob1_send_request_start_copy( mca_pml_ob1_send_request_t* sendreq,
         match.hdr_src = sendreq->req_send.req_base.req_comm->c_my_rank;
         match.hdr_tag = sendreq->req_send.req_base.req_tag;
         match.hdr_seq = (uint16_t)sendreq->req_send.req_base.req_sequence;
-        
+
         ob1_hdr_hton(&match, MCA_PML_OB1_HDR_TYPE_MATCH,
                      sendreq->req_send.req_base.req_proc);
 
         /* try to send immediately */
         rc = mca_bml_base_sendi( bml_btl, &sendreq->req_send.req_base.req_convertor,
-                                 &match, OMPI_PML_OB1_MATCH_HDR_LEN, 
-                                 size, MCA_BTL_NO_ORDER, 
+                                 &match, OMPI_PML_OB1_MATCH_HDR_LEN,
+                                 size, MCA_BTL_NO_ORDER,
                                  MCA_BTL_DES_FLAGS_PRIORITY | MCA_BTL_DES_FLAGS_BTL_OWNERSHIP,
-                                 MCA_PML_OB1_HDR_TYPE_MATCH, 
+                                 MCA_PML_OB1_HDR_TYPE_MATCH,
                                  &des);
         if( OPAL_LIKELY(OMPI_SUCCESS == rc) ) {
             /* signal request completion */
