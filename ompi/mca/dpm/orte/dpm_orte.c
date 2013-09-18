@@ -285,7 +285,7 @@ static int connect_accept(ompi_communicator_t *comm, int root,
         }
         
         if (OMPI_GROUP_IS_DENSE(group)) {
-            ompi_proc_pack(group->grp_proc_pointers, size, nbuf);
+            ompi_proc_pack(group->grp_proc_pointers, size, false, nbuf);
         } else {
             proc_list = (ompi_proc_t **) calloc (group->grp_proc_count, 
                                                  sizeof (ompi_proc_t *));
@@ -301,7 +301,7 @@ static int connect_accept(ompi_communicator_t *comm, int root,
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                      ORTE_NAME_PRINT(&proc_list[i]->proc_name)));
             }
-            ompi_proc_pack(proc_list, size, nbuf);
+            ompi_proc_pack(proc_list, size, false, nbuf);
         }
         
         /* pack wireup info - this is required so that all involved parties can
@@ -432,7 +432,7 @@ static int connect_accept(ompi_communicator_t *comm, int root,
         goto exit;
     }
 
-    rc = ompi_proc_unpack(nrbuf, rsize, &rprocs, &new_proc_len, &new_proc_list);
+    rc = ompi_proc_unpack(nrbuf, rsize, &rprocs, false, &new_proc_len, &new_proc_list);
     if ( OMPI_SUCCESS != rc ) {
         goto exit;
     }
@@ -1634,7 +1634,7 @@ static int pack_request(opal_buffer_t *buf, ompi_group_t *group)
     int rc;
 
     /* pack the MPI info */
-    ompi_proc_pack(group->grp_proc_pointers, 1, buf);
+    ompi_proc_pack(group->grp_proc_pointers, 1, false, buf);
 
     /* pack our hostname */
     if (ORTE_SUCCESS != (rc = opal_dss.pack(buf, &orte_process_info.nodename, 1, OPAL_STRING))) {
@@ -1708,7 +1708,7 @@ static void process_request(orte_process_name_t* sender,
     }
 
     /* unpack the proc info */
-    if (OMPI_SUCCESS != (rc = ompi_proc_unpack(buffer, 1, &rprocs, &new_proc_len, &new_proc_list))) {
+    if (OMPI_SUCCESS != (rc = ompi_proc_unpack(buffer, 1, &rprocs, false, &new_proc_len, &new_proc_list))) {
         ORTE_ERROR_LOG(rc);
         return;
     }

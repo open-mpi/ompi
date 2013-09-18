@@ -254,6 +254,7 @@ OMPI_DECLSPEC ompi_proc_t * ompi_proc_find ( const ompi_process_name_t* name );
  * @retval OMPI_ERROR      Unspecified error
  */
 OMPI_DECLSPEC int ompi_proc_pack(ompi_proc_t **proclist, int proclistsize,
+                                 bool full_info,
                                  opal_buffer_t *buf);
 
 
@@ -298,6 +299,7 @@ OMPI_DECLSPEC int ompi_proc_pack(ompi_proc_t **proclist, int proclistsize,
  */
 OMPI_DECLSPEC int ompi_proc_unpack(opal_buffer_t *buf, 
                                    int proclistsize, ompi_proc_t ***proclist,
+                                   bool full_info,
                                    int *newproclistsize, ompi_proc_t ***newproclist);
 
 /**
