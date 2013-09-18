@@ -103,7 +103,7 @@ void mca_rcache_vma_destroy(mca_rcache_vma_t *vma);
  * Dump out the contents of the rcache for debugging.
  */
 void mca_rcache_vma_tree_dump_range(mca_rcache_vma_module_t *vma_rcache,
-                                    unsigned char *base, size_t size);
+                                    unsigned char *base, size_t size, char *msg);
 
 
 #endif /* MCA_RCACHE_VMA_TREE_H */

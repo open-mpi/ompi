@@ -55,7 +55,7 @@ typedef int (*mca_rcache_base_module_clean_fn_t)(
         struct mca_rcache_base_module_t* rcache);
 
 typedef void (*mca_rcache_base_module_dump_range_fn_t)(
-        struct mca_rcache_base_module_t* rcache, unsigned char* addr, size_t size);
+        struct mca_rcache_base_module_t* rcache, unsigned char* addr, size_t size, char *msg);
 
 /**
   * finalize
