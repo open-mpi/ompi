@@ -342,7 +342,7 @@ ompi_btl_openib_connect_base_component_t ompi_btl_openib_connect_udcm = {
 
 static void udcm_component_register(void)
 {
-    udcm_priority = 0;
+    /* the priority is initialized in the declaration above */
     (void) mca_base_component_var_register(&mca_btl_openib_component.super.btl_version,
                                            "connect_udcm_priority",
                                            "The selection method priority for ud",
