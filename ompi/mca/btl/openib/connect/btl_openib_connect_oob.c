@@ -51,7 +51,7 @@ typedef enum {
     ENDPOINT_CONNECT_ACK
 } connect_message_type_t;
 
-static int oob_priority = 50;
+static int oob_priority = 0;
 static bool rml_recv_posted = false;
 
 static void oob_component_register(void);
@@ -98,7 +98,7 @@ ompi_btl_openib_connect_base_component_t ompi_btl_openib_connect_oob = {
 /* Open - this functions sets up any oob specific commandline params */
 static void oob_component_register(void)
 {
-    oob_priority = 50;
+    /* the priority is initialized in the declaration above */
     (void) mca_base_component_var_register(&mca_btl_openib_component.super.btl_version,
                                            "connect_oob_priority",
                                            "The selection method priority for oob",
