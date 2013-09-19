@@ -14,6 +14,10 @@
 #include "oshmem/runtime/runtime.h" 
 #include "oshmem/mca/scoll/base/base.h" 
 
+#ifdef HAVE_STRINGS_H
+#include <strings.h>
+#endif
+
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/ess/ess.h"
 #include "orte/util/proc_info.h"
