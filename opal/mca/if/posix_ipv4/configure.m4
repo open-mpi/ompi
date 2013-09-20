@@ -20,6 +20,9 @@ AC_DEFUN([MCA_opal_if_posix_ipv4_COMPILE_MODE], [
 AC_DEFUN([MCA_opal_if_posix_ipv4_CONFIG], [
     AC_CONFIG_FILES([opal/mca/if/posix_ipv4/Makefile])
 
+    OPAL_VAR_SCOPE_PUSH([opal_if_posix_ipv4_happy])
+    opal_if_posix_ipv4_happy=no
+
     AC_REQUIRE([OPAL_CHECK_OS_FLAVORS])
 
     # If we found struct sockaddr and we're NOT on most of the BSDs,
@@ -32,9 +35,16 @@ AC_DEFUN([MCA_opal_if_posix_ipv4_CONFIG], [
            AC_MSG_CHECKING([not NetBSD, FreeBSD, OpenBSD, or DragonFly])
            AS_IF([test "$opal_found_netbsd" = "no" -a "$opal_found_freebsd" = "no" -a "$opal_found_openbsd" = "no" -a "$opal_found_dragonfly" = "no"],
                  [AC_MSG_RESULT([yes])
-                  $1],
-                 [AC_MSG_RESULT([no])
-                  $2])],
-          [AC_MSG_RESULT([no (cached)])
-           $2])
+                  opal_if_posix_ipv4_happy=yes],
+                 [AC_MSG_RESULT([no])]
+                )],
+          [AC_MSG_RESULT([no (cached)])]
+         )
+
+    AS_IF([test "$opal_if_posix_ipv4_happy" = "yes"],
+          [AC_CHECK_MEMBERS([struct ifreq.ifr_mtu], [], [],
+                           [[#include <net/if.h>]])
+          ])
+
+    AS_IF([test "$opal_if_posix_ipv4_happy" = "yes"], [$1], [$2]);
 ])dnl
