@@ -80,28 +80,28 @@ static int orte_rmaps_lama_register(void)
     rmaps_lama_cmd_map = NULL;
     (void) mca_base_component_var_register (c, "map", "LAMA Map: Process layout iteration ordering (See documentation)",
                                             MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
-                                            OPAL_INFO_LVL_9,
+                                            OPAL_INFO_LVL_5,
                                             MCA_BASE_VAR_SCOPE_READONLY,
                                             &rmaps_lama_cmd_map);
 
     rmaps_lama_cmd_bind = NULL;
     (void) mca_base_component_var_register (c, "bind", "LAMA Bind: Bind to the specified number of resources (See documentation)",
                                             MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
-                                            OPAL_INFO_LVL_9,
+                                            OPAL_INFO_LVL_5,
                                             MCA_BASE_VAR_SCOPE_READONLY,
                                             &rmaps_lama_cmd_bind);
 
     rmaps_lama_cmd_mppr = NULL;
     (void) mca_base_component_var_register (c, "mppr", "LAMA MPPR: Maximum number of the specified resources available (See documentation)",
                                             MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
-                                            OPAL_INFO_LVL_9,
+                                            OPAL_INFO_LVL_5,
                                             MCA_BASE_VAR_SCOPE_READONLY,
                                             &rmaps_lama_cmd_mppr);
 
     rmaps_lama_cmd_ordering = NULL;
     (void) mca_base_component_var_register (c, "ordering", "LAMA Ordering: Ordering (s) sequential, (n) natural - Default: n (See documentation)",
                                             MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
-                                            OPAL_INFO_LVL_9,
+                                            OPAL_INFO_LVL_5,
                                             MCA_BASE_VAR_SCOPE_READONLY,
                                             &rmaps_lama_cmd_ordering);
 
