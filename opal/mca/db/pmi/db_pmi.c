@@ -355,7 +355,8 @@ static bool cache_keys_locally (const opal_identifier_t *uid, const char *key)
 
         /* cache value locally so we don't have to look it up via pmi again */
         if (OPAL_BYTE_OBJECT == stored_type) {
-            opal_byte_object_t bo = {.bytes = (unsigned char *) tmp3, .size = size};
+            opal_byte_object_t bo = {.bytes = (unsigned char *) (size == 0xffff) ? NULL : tmp3,
+                                     .size = (size == 0xffff) ? 0 : size};
 
             opal_db.store (uid, OPAL_DB_INTERNAL, tmp_val + offset, &bo, stored_type);
         } else if (size < 0xffff) {
