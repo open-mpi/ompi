@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2009-2010 The Trustees of Indiana University.
  *                         All rights reserved.
- * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved. 
+ * Copyright (c) 2010-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010-2011 Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
@@ -213,7 +213,6 @@ static void proc_errors(int fd, short args, void *cbdata)
 {
     orte_state_caddy_t *caddy = (orte_state_caddy_t*)cbdata;
     orte_job_t *jdata;
-    orte_proc_t *pptr;
     orte_process_name_t *proc = &caddy->name;
     orte_proc_state_t state = caddy->proc_state;
 
@@ -304,7 +303,6 @@ static void proc_errors(int fd, short args, void *cbdata)
         /* must already be complete */
         goto cleanup;
     }
-    pptr = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, proc->vpid);
 
     /* if there are no local procs for this job, we can
      * ignore this call

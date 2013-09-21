@@ -15,6 +15,7 @@
  * Copyright (c) 2010      IBM Corporation.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
+ * Copyright (c) 2013      Intel, Inc.  All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -366,7 +367,6 @@ static int send_warn_show_help(int fd, const char *file,
 static void send_error_show_help(int fd, int exit_status,
                                  const char *file, const char *topic, ...)
 {
-    int ret;
     va_list ap;
     pipe_err_msg_t msg;
 
@@ -375,7 +375,7 @@ static void send_error_show_help(int fd, int exit_status,
 
     /* Send it */
     va_start(ap, topic);
-    ret = write_help_msg(fd, &msg, file, topic, ap);
+    (void)write_help_msg(fd, &msg, file, topic, ap);
     va_end(ap);
 
     exit(exit_status);

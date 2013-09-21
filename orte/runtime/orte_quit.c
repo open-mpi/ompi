@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2011 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2007-2009 Sun Microsystems, Inc. All rights reserved.
  * Copyright (c) 2007-2012 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
@@ -148,7 +148,7 @@ static void dump_aborted_procs(void)
 {
     orte_std_cntr_t i, n;
     orte_proc_t *proc, *pptr;
-    orte_app_context_t *app, *approc;
+    orte_app_context_t *approc;
     orte_job_t *job;
     orte_node_t *node;
     
@@ -168,8 +168,6 @@ static void dump_aborted_procs(void)
             ORTE_JOB_STATE_ABORT_ORDERED != job->state) {
             /* this is a guilty party */
             proc = job->aborted_proc;
-            /* always must be at least one app */
-            app = (orte_app_context_t*)opal_pointer_array_get_item(job->apps, 0);
             /* cycle through and count the number that were killed or aborted */
             for (i=0; i < job->procs->size; i++) {
                 if (NULL == (pptr = (orte_proc_t*)opal_pointer_array_get_item(job->procs, i))) {

@@ -5,6 +5,7 @@
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2011      Los Alamos National Security, LLC.
  *                         All rights reserved.
+ * Copyright (c) 2013      Intel, Inc.  All rights reserved.
  *
  * $COPYRIGHT$
  * 
@@ -688,7 +689,6 @@ static int map_to_ftgrps(orte_job_t *jdata)
     orte_node_t *node, *nd=NULL;
     orte_rmaps_res_ftgrp_t *ftgrp, *target = NULL;
     orte_vpid_t totprocs, num_assigned;
-    orte_proc_t *proc;
     bool initial_map=true;
 
     OPAL_OUTPUT_VERBOSE((1, orte_rmaps_base_framework.framework_output,
@@ -827,7 +827,7 @@ static int map_to_ftgrps(orte_job_t *jdata)
                 opal_pointer_array_add(map->nodes, nd);
                 nd->mapped = true;
             }
-            proc = orte_rmaps_base_setup_proc(jdata, nd, app->idx);
+            (void)orte_rmaps_base_setup_proc(jdata, nd, app->idx);
             if ((nd->slots < (int)nd->num_procs) ||
                 (0 < nd->slots_max && nd->slots_max < (int)nd->num_procs)) {
                 if (ORTE_MAPPING_NO_OVERSUBSCRIBE & ORTE_GET_MAPPING_DIRECTIVE(jdata->map->mapping)) {

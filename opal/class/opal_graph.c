@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Voltaire All rights reserved.
+ * Copyright (c) 2013      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -278,7 +279,7 @@ void opal_graph_add_vertex(opal_graph_t *graph, opal_graph_vertex_t *vertex)
  */
 int opal_graph_add_edge(opal_graph_t *graph, opal_graph_edge_t *edge) 
 {
-    opal_adjacency_list_t *aj_list, *start_aj_list= NULL, *end_aj_list;
+    opal_adjacency_list_t *aj_list, *start_aj_list= NULL;
     opal_list_item_t *item;
     bool start_found = false, end_found = false;
 
@@ -296,7 +297,6 @@ int opal_graph_add_edge(opal_graph_t *graph, opal_graph_edge_t *edge)
         }
         if (aj_list->vertex == edge->end) {
             end_found = true;
-            end_aj_list = aj_list;
         }
     }
     /**

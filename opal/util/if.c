@@ -260,6 +260,12 @@ int opal_ifaddrtoname(const char* if_addr, char* if_name, int length)
 
     for (i=0; NULL != h->h_addr_list[i]; i++) {
         memcpy(&inaddr, h->h_addr_list[i], sizeof(inaddr));
+	/* JMS This chunk of code did not merge cleanly from the trunk
+           (from r28538.  Ralph and I did some more changes to if.c on
+           the trunk and it looks like those have not come over.
+           Someday, probably the easiest way to fix these conflicts is
+           to just copy over a whole new copy of
+           opal_ifaddrtoname(). */
         for (intf =  (opal_if_t*)opal_list_get_first(&opal_if_list);
              intf != (opal_if_t*)opal_list_get_end(&opal_if_list);
              intf =  (opal_if_t*)opal_list_get_next(intf)) {

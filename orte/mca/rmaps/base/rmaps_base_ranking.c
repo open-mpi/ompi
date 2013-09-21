@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -54,7 +55,6 @@ static int rank_span(orte_job_t *jdata,
                      hwloc_obj_type_t target,
                      unsigned cache_level)
 {
-    orte_job_map_t *map;
     hwloc_obj_t obj;
     int num_objs, i, j, rc;
     orte_vpid_t num_ranked=0;
@@ -85,7 +85,6 @@ static int rank_span(orte_job_t *jdata,
      * are mapped
      */
 
-    map = jdata->map;
     vpid = jdata->num_procs;
     cnt = 0;
     while (cnt < app->num_procs) {
@@ -172,7 +171,6 @@ static int rank_fill(orte_job_t *jdata,
                      hwloc_obj_type_t target,
                      unsigned cache_level)
 {
-    orte_job_map_t *map;
     hwloc_obj_t obj;
     int num_objs, i, j, rc;
     orte_vpid_t num_ranked=0;
@@ -195,7 +193,6 @@ static int rank_fill(orte_job_t *jdata,
      *     2 3       6 7        10 11     14 15
      */
 
-    map = jdata->map;
     vpid = jdata->num_procs;
     cnt = 0;
     for (item = opal_list_get_first(nodes);
@@ -278,7 +275,6 @@ static int rank_by(orte_job_t *jdata,
                    hwloc_obj_type_t target,
                    unsigned cache_level)
 {
-    orte_job_map_t *map;
     hwloc_obj_t obj;
     int num_objs, i, j;
     orte_vpid_t num_ranked=0;
@@ -312,7 +308,6 @@ static int rank_by(orte_job_t *jdata,
     OBJ_CONSTRUCT(&objs, opal_pointer_array_t);
     opal_pointer_array_init(&objs, 2, INT_MAX, 2);
 
-    map = jdata->map;
     vpid = jdata->num_procs;
     cnt = 0;
     for (item = opal_list_get_first(nodes);

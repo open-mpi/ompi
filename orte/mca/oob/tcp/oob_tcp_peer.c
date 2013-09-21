@@ -13,6 +13,7 @@
  *                         All rights reserved.
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
+ * Copyright (c) 2013      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -238,7 +239,7 @@ mca_oob_tcp_peer_t * mca_oob_tcp_peer_lookup(const orte_process_name_t* name)
 
     /* allocate from free list */
     MCA_OOB_TCP_PEER_ALLOC(peer, rc);
-    if(NULL == peer) {
+    if(NULL == peer || ORTE_SUCCESS != rc) {
         OPAL_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
         return NULL;
     }
@@ -910,7 +911,7 @@ static void mca_oob_tcp_peer_recv_handler(int sd, short flags, void* user)
                 int rc;
                 mca_oob_tcp_msg_t* msg;
                 MCA_OOB_TCP_MSG_ALLOC(msg, rc);
-                if(NULL == msg) {
+                if(NULL == msg || ORTE_SUCCESS != rc) {
                     opal_output(0, "%s-%s mca_oob_tcp_peer_recv_handler: unable to allocate recv message\n",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                         ORTE_NAME_PRINT(&(peer->peer_name)));

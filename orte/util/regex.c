@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -518,7 +519,6 @@ static int regex_parse_node_range(char *base, char *range, int num_digits, char 
     char *str, tmp[132];
     size_t i, k, start, end;
     size_t base_len, len;
-    size_t str_start, str_end;
     bool found;
     int ret;
     
@@ -533,7 +533,6 @@ static int regex_parse_node_range(char *base, char *range, int num_digits, char 
     for (found = false, i = 0; i < len; ++i) {
         if (isdigit((int) range[i])) {
             if (!found) {
-                str_start = i;
                 start = atoi(range + i);
                 found = true;
                 break;
@@ -556,14 +555,12 @@ static int regex_parse_node_range(char *base, char *range, int num_digits, char 
     /* Was there no range, just a single number? */
     
     if (i >= len) {
-        str_end = len;
         end = start;
         found = true;
     } else {
         /* Nope, there was a range.  Look for the beginning of the second
          * number
          */
-        str_end = i - 1;
         for (; i < len; ++i) {
             if (isdigit(range[i])) {
                 end = strtol(range + i, NULL, 10);

@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2013 Los Alamos National Security, LLC. 
  *                         All rights reserved.
- * Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2009-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
  * $COPYRIGHT$
  *
@@ -341,6 +341,7 @@ static int mca_oob_tcp_component_register(void)
 
     /* if ports were provided, parse the provided range */
     if (NULL != mca_oob_tcp_ipv4_static_ports) {
+#endif
         orte_static_ports = true;
         orte_util_parse_range_options(mca_oob_tcp_ipv4_static_ports,
                                       &mca_oob_tcp_component.tcp4_static_ports);
@@ -353,7 +354,7 @@ static int mca_oob_tcp_component_register(void)
         orte_static_ports = false;
         mca_oob_tcp_component.tcp4_static_ports = NULL;
     }
-#endif
+
     mca_oob_tcp_ipv4_dynamic_ports = NULL;
     (void) mca_base_component_var_register (component, "dynamic_ports",
                                             "Range of ports to be dynamically used by daemons and procs (IPv4)",
@@ -1797,7 +1798,6 @@ int mca_oob_tcp_resolve(mca_oob_tcp_peer_t* peer)
  */
 int mca_oob_tcp_init(void)
 {
-    orte_jobid_t jobid;
     int rc;
     int randval = orte_process_info.num_procs;
 
@@ -1813,9 +1813,6 @@ int mca_oob_tcp_init(void)
         usleep((ORTE_PROC_MY_NAME->vpid % randval % 1000) * 1000);
     }
 #endif
-
-    /* get my jobid */
-    jobid = ORTE_PROC_MY_NAME->jobid;
 
     /* Fix up the listen type.  This is the first call into the OOB in
        which the ORTE_PROC_IS_HNP field is reliably set.  The

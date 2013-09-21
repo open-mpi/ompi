@@ -2,6 +2,7 @@
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
  *
  * Copyright (c) 2012-2013 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -582,7 +583,7 @@ static int orte_rmaps_lama_map_core(orte_job_t *jdata)
 {
     int ret, exit_status = ORTE_SUCCESS;
     int cur_app_idx = 0;
-    int num_slots, num_nodes;
+    int num_slots;
     orte_app_context_t *cur_app_context = NULL;
     orte_node_t *cur_mach = NULL;
     orte_node_t **cur_mach_ptr = NULL;
@@ -636,7 +637,6 @@ static int orte_rmaps_lama_map_core(orte_job_t *jdata)
             exit_status = ret;
             goto cleanup;
         }
-        num_nodes = (orte_std_cntr_t)opal_list_get_size(node_list);
         /* Flag that all subsequent requests should not reset the node->mapped flag */
         initial_map = false;
 

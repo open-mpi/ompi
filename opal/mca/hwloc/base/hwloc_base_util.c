@@ -12,6 +12,7 @@
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
+ * Copyright (c) 2013      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -869,7 +870,7 @@ hwloc_obj_t opal_hwloc_base_get_obj_by_type(hwloc_topology_t topo,
                                             unsigned int instance,
                                             opal_hwloc_resource_type_t rtype)
 {
-    unsigned int num_objs, idx;
+    unsigned int idx;
     hwloc_obj_t obj;
 
     /* bozo check */
@@ -886,7 +887,6 @@ hwloc_obj_t opal_hwloc_base_get_obj_by_type(hwloc_topology_t topo,
     }
 
     /* for everything else, we have to do some work */
-    num_objs = 0;
     idx = 0;
     obj = hwloc_get_root_obj(topo);
     return df_search(topo, obj, target, cache_level, instance, rtype, &idx, NULL);

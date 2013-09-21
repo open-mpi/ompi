@@ -4,6 +4,7 @@
  *                         reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
+ * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -107,9 +108,7 @@ int orte_rml_base_select(void)
     orte_rml_component_t *selected_component = NULL;
     orte_rml_module_t *selected_module = NULL;
 
-    int wrapper_priority = -1;
     orte_rml_component_t *wrapper_component = NULL;
-    orte_rml_module_t *wrapper_module = NULL;
     bool return_silent=false;
 
     if (selected) {
@@ -153,9 +152,7 @@ int orte_rml_base_select(void)
                 if( 0 == strncmp(component->rml_version.mca_component_name, 
                                  orte_rml_base_wrapper,
                                  strlen(orte_rml_base_wrapper) ) ) {
-                    wrapper_priority  = priority;
                     wrapper_component = component;
-                    wrapper_module    = module;
                 }
             } else if (priority > selected_priority) {
                 /* Otherwise this is a normal module and subject to normal selection */

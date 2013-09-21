@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008-2011 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2008-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
@@ -1754,7 +1754,7 @@ int mca_base_var_get_count (void)
 
 int mca_base_var_dump(int index, char ***out, mca_base_var_dump_type_t output_type)
 {
-    const char *project, *framework, *component, *full_name;
+    const char *framework, *component, *full_name;
     int i, line_count, line = 0, enum_count = 0;
     char *value_string, *source_string, *tmp;
     int synonym_count, ret, *synonyms = NULL;
@@ -1778,7 +1778,6 @@ int mca_base_var_dump(int index, char ***out, mca_base_var_dump_type_t output_ty
         }
     }
 
-    project   = group->group_project;
     framework = group->group_framework;
     component = group->group_component ? group->group_component : "base";
     full_name = var->mbv_full_name;

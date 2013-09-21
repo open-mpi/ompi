@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2010-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2013      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -66,7 +67,7 @@ static int prefix (uint32_t netmask)
 static int if_posix_open(void)
 {
     int sd;
-    int lastlen, num, rem;
+    int lastlen, rem;
     char *ptr;
     struct ifconf ifconf;
     int ifc_len;
@@ -153,7 +154,6 @@ static int if_posix_open(void)
      */
     ptr = (char*) ifconf.ifc_req;
     rem = ifconf.ifc_len;
-    num = 0;
         
     /* loop through all interfaces */
     while (rem > 0) {
