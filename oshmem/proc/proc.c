@@ -49,7 +49,7 @@ OBJ_CLASS_INSTANCE( oshmem_proc_t,
 
 void oshmem_proc_construct(oshmem_proc_t* proc)
 {
-    bzero(proc->proc_endpoints, sizeof(proc->proc_endpoints));
+    memset(proc->proc_endpoints, 0, sizeof(proc->proc_endpoints));
 
     /* By default all processors are supposedly having the same architecture as me. Thus,
      * by default we run in a homogeneous environment. Later, when the RTE can tell us
