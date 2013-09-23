@@ -942,7 +942,6 @@ ompi_osc_rdma_sendreq_recv_accum_long_cb(ompi_request_t *request)
         (ompi_osc_rdma_longreq_t*) request->req_complete_cb_data;
     ompi_osc_rdma_send_header_t *header = longreq->req_basereq.req_sendhdr;
     void *payload = (void*) (header + 1);
-    int ret;
     ompi_osc_rdma_module_t *module = longreq->req_module;
     unsigned char *target_buffer =
         (unsigned char*) module->m_win->w_baseptr + 
@@ -986,7 +985,7 @@ ompi_osc_rdma_sendreq_recv_accum_long_cb(ompi_request_t *request)
         OBJ_DESTRUCT(&convertor);
     } else {
         /* copy the data from the temporary buffer into the user window */
-        ret = ompi_osc_base_process_op(target_buffer,
+        (void)ompi_osc_base_process_op(target_buffer,
                                        payload,
                                        header->hdr_msg_length,
                                        longreq->req_datatype,
@@ -1310,10 +1309,6 @@ ompi_osc_rdma_control_send_cb(struct mca_btl_base_module_t* btl,
                                struct mca_btl_base_descriptor_t* descriptor,
                                int status)
 {
-    ompi_osc_rdma_control_header_t *header = NULL;
-
-    header = (ompi_osc_rdma_control_header_t*) descriptor->des_src[0].seg_addr.pval;
-
     /* release the descriptor and sendreq */
     btl->btl_free(btl, descriptor);
 }

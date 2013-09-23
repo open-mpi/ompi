@@ -1,6 +1,9 @@
 /*
  * Copyright (c) 2009-2012 Oak Ridge National Laboratory.  All rights reserved.
  * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
+ * Copyright (c) 2013      The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -168,8 +171,6 @@ static int mca_bcol_iboffload_fanout_init(
                 mca_bcol_iboffload_module_t *iboffload,
                 struct mca_bcol_iboffload_collreq_t **coll_request)
 {
-    int rc;
-
     ompi_free_list_item_t *item = NULL;
     mca_bcol_iboffload_collfrag_t *coll_fragment = NULL;
 
@@ -177,10 +178,10 @@ static int mca_bcol_iboffload_fanout_init(
 
     IBOFFLOAD_VERBOSE(10, ("Calling for mca_bcol_iboffload_barrier_init"));
 
-    OMPI_FREE_LIST_WAIT(&cm->collreqs_free, item, rc);
-    if(OMPI_SUCCESS != rc) {
+    OMPI_FREE_LIST_WAIT_MT(&cm->collreqs_free, item);
+    if(NULL == item) {
         IBOFFLOAD_VERBOSE(10, ("Failing for coll request free list waiting.\n"));
-        return rc;
+        return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
     (*coll_request) = (mca_bcol_iboffload_collreq_t *) item;

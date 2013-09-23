@@ -44,13 +44,12 @@ mca_coll_inter_allreduce_inter(void *sbuf, void *rbuf, int count,
                                struct ompi_communicator_t *comm,
                                mca_coll_base_module_t *module)
 {
-    int err, rank, root = 0, rsize;
+    int err, root = 0, rank;
     ptrdiff_t lb, extent;
     char *tmpbuf = NULL, *pml_buffer = NULL;
     ompi_request_t *req[2];
 
     rank = ompi_comm_rank(comm);
-    rsize = ompi_comm_remote_size(comm);
     
     /* Perform the reduction locally */
     err = ompi_datatype_get_extent(dtype, &lb, &extent);

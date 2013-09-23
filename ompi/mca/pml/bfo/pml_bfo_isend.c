@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2007 The University of Tennessee and The University
+ * Copyright (c) 2004-2013 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -35,12 +35,10 @@ int mca_pml_bfo_isend_init(void *buf,
                            ompi_communicator_t * comm,
                            ompi_request_t ** request)
 {
-    int rc;
-    
     mca_pml_bfo_send_request_t *sendreq = NULL;
-    MCA_PML_BFO_SEND_REQUEST_ALLOC(comm, dst, sendreq, rc);
-    if (rc != OMPI_SUCCESS)
-        return rc;
+    MCA_PML_BFO_SEND_REQUEST_ALLOC(comm, dst, sendreq);
+    if (NULL == sendreq)
+        return OMPI_ERR_OUT_OF_RESOURCE;
 
     MCA_PML_BFO_SEND_REQUEST_INIT(sendreq,
                                   buf,
@@ -70,9 +68,9 @@ int mca_pml_bfo_isend(void *buf,
     int rc;
     mca_pml_bfo_send_request_t *sendreq = NULL;
     
-    MCA_PML_BFO_SEND_REQUEST_ALLOC(comm, dst, sendreq, rc);
-    if (rc != OMPI_SUCCESS)
-        return rc;
+    MCA_PML_BFO_SEND_REQUEST_ALLOC(comm, dst, sendreq);
+    if (NULL == sendreq)
+        return OMPI_ERR_OUT_OF_RESOURCE;
     
     MCA_PML_BFO_SEND_REQUEST_INIT(sendreq,
                                   buf,
@@ -102,9 +100,9 @@ int mca_pml_bfo_send(void *buf,
     int rc;
     mca_pml_bfo_send_request_t *sendreq;
 
-    MCA_PML_BFO_SEND_REQUEST_ALLOC(comm, dst, sendreq, rc);
-    if (rc != OMPI_SUCCESS)
-        return rc;
+    MCA_PML_BFO_SEND_REQUEST_ALLOC(comm, dst, sendreq);
+    if (NULL == sendreq)
+        return OMPI_ERR_OUT_OF_RESOURCE;
     
     MCA_PML_BFO_SEND_REQUEST_INIT(sendreq,
                                   buf,

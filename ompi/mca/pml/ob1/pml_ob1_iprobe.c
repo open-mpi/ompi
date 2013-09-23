@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2013 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -94,10 +94,10 @@ mca_pml_ob1_improbe(int src,
     *message = ompi_message_alloc();
     if (NULL == *message) return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
 
-    MCA_PML_OB1_RECV_REQUEST_ALLOC(recvreq, rc);
+    MCA_PML_OB1_RECV_REQUEST_ALLOC(recvreq);
     if (NULL == recvreq) {
         ompi_message_return(*message);
-        return rc;
+        return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
     }
     recvreq->req_recv.req_base.req_type = MCA_PML_REQUEST_IMPROBE;
 
@@ -148,10 +148,10 @@ mca_pml_ob1_mprobe(int src,
     *message = ompi_message_alloc();
     if (NULL == *message) return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
 
-    MCA_PML_OB1_RECV_REQUEST_ALLOC(recvreq, rc);
+    MCA_PML_OB1_RECV_REQUEST_ALLOC(recvreq);
     if (NULL == recvreq) {
         ompi_message_return(*message);
-        return rc;
+        return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
     }
     recvreq->req_recv.req_base.req_type = MCA_PML_REQUEST_MPROBE;
 

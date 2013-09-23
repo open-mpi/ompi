@@ -92,7 +92,7 @@ int ompi_cr_verbosity = 0;
 
 #define NUM_COLLECTIVES 16
 
-#define SIGNAL(comm, modules, highest_module, msg, ret, func)   \
+#define SIGNAL(comm, modules, highest_module, msg, func)        \
     do {                                                        \
         bool found = false;                                     \
         int k;                                                  \
@@ -105,7 +105,7 @@ int ompi_cr_verbosity = 0;
             if (!found) {                                       \
                 modules[highest_module++] = my_module;          \
                 if (NULL != my_module->ft_event) {              \
-                    ret = my_module->ft_event(msg);             \
+                    (void)my_module->ft_event(msg);             \
                 }                                               \
             }                                                   \
         }                                                       \
@@ -116,7 +116,7 @@ static int
 notify_collectives(int msg)
 {
     mca_coll_base_module_t *modules[NUM_COLLECTIVES];
-    int i, max, ret, highest_module = 0;
+    int i, max, highest_module = 0;
 
     memset(&modules, 0, sizeof(mca_coll_base_module_t*) * NUM_COLLECTIVES);
 
@@ -126,22 +126,22 @@ notify_collectives(int msg)
             (ompi_communicator_t *)opal_pointer_array_get_item(&ompi_mpi_communicators, i);
         if (NULL == comm) continue;
 
-        SIGNAL(comm, modules, highest_module, msg, ret, allgather); 
-        SIGNAL(comm, modules, highest_module, msg, ret, allgatherv); 
-        SIGNAL(comm, modules, highest_module, msg, ret, allreduce); 
-        SIGNAL(comm, modules, highest_module, msg, ret, alltoall); 
-        SIGNAL(comm, modules, highest_module, msg, ret, alltoallv); 
-        SIGNAL(comm, modules, highest_module, msg, ret, alltoallw); 
-        SIGNAL(comm, modules, highest_module, msg, ret, barrier); 
-        SIGNAL(comm, modules, highest_module, msg, ret, bcast); 
-        SIGNAL(comm, modules, highest_module, msg, ret, exscan); 
-        SIGNAL(comm, modules, highest_module, msg, ret, gather); 
-        SIGNAL(comm, modules, highest_module, msg, ret, gatherv); 
-        SIGNAL(comm, modules, highest_module, msg, ret, reduce); 
-        SIGNAL(comm, modules, highest_module, msg, ret, reduce_scatter); 
-        SIGNAL(comm, modules, highest_module, msg, ret, scan); 
-        SIGNAL(comm, modules, highest_module, msg, ret, scatter); 
-        SIGNAL(comm, modules, highest_module, msg, ret, scatterv); 
+        SIGNAL(comm, modules, highest_module, msg, allgather); 
+        SIGNAL(comm, modules, highest_module, msg, allgatherv); 
+        SIGNAL(comm, modules, highest_module, msg, allreduce); 
+        SIGNAL(comm, modules, highest_module, msg, alltoall); 
+        SIGNAL(comm, modules, highest_module, msg, alltoallv); 
+        SIGNAL(comm, modules, highest_module, msg, alltoallw); 
+        SIGNAL(comm, modules, highest_module, msg, barrier); 
+        SIGNAL(comm, modules, highest_module, msg, bcast); 
+        SIGNAL(comm, modules, highest_module, msg, exscan); 
+        SIGNAL(comm, modules, highest_module, msg, gather); 
+        SIGNAL(comm, modules, highest_module, msg, gatherv); 
+        SIGNAL(comm, modules, highest_module, msg, reduce); 
+        SIGNAL(comm, modules, highest_module, msg, reduce_scatter); 
+        SIGNAL(comm, modules, highest_module, msg, scan); 
+        SIGNAL(comm, modules, highest_module, msg, scatter); 
+        SIGNAL(comm, modules, highest_module, msg, scatterv); 
     }
 
     return OMPI_SUCCESS;

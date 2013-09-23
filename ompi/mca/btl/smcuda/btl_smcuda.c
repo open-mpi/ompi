@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2011 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2009 The University of Tennessee and The University
+ * Copyright (c) 2004-2013 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2007 High Performance Computing Center Stuttgart,
@@ -648,11 +648,10 @@ extern mca_btl_base_descriptor_t* mca_btl_smcuda_alloc(
     uint32_t flags)
 {
     mca_btl_smcuda_frag_t* frag = NULL;
-    int rc;
     if(size <= mca_btl_smcuda_component.eager_limit) {
-        MCA_BTL_SMCUDA_FRAG_ALLOC_EAGER(frag,rc);
+        MCA_BTL_SMCUDA_FRAG_ALLOC_EAGER(frag);
     } else if (size <= mca_btl_smcuda_component.max_frag_size) {
-        MCA_BTL_SMCUDA_FRAG_ALLOC_MAX(frag,rc);
+        MCA_BTL_SMCUDA_FRAG_ALLOC_MAX(frag);
     }
 
     if (OPAL_LIKELY(frag != NULL)) {
@@ -703,9 +702,9 @@ struct mca_btl_base_descriptor_t* mca_btl_smcuda_prepare_src(
     if (0 != reserve) {
 #endif /* OMPI_CUDA_SUPPORT */
         if ( reserve + max_data <= mca_btl_smcuda_component.eager_limit ) {
-            MCA_BTL_SMCUDA_FRAG_ALLOC_EAGER(frag,rc);
+            MCA_BTL_SMCUDA_FRAG_ALLOC_EAGER(frag);
         } else {
-            MCA_BTL_SMCUDA_FRAG_ALLOC_MAX(frag, rc);
+            MCA_BTL_SMCUDA_FRAG_ALLOC_MAX(frag);
         }
         if( OPAL_UNLIKELY(NULL == frag) ) {
             return NULL;
@@ -735,7 +734,7 @@ struct mca_btl_base_descriptor_t* mca_btl_smcuda_prepare_src(
             return NULL;
         }
 
-        MCA_BTL_SMCUDA_FRAG_ALLOC_USER(frag, rc);
+        MCA_BTL_SMCUDA_FRAG_ALLOC_USER(frag);
         if( OPAL_UNLIKELY(NULL == frag) ) {
             return NULL;
         }
@@ -828,10 +827,10 @@ int mca_btl_smcuda_sendi( struct mca_btl_base_module_t* btl,
 
         /* allocate a fragment, giving up if we can't get one */
         /* note that frag==NULL is equivalent to rc returning an error code */
-        MCA_BTL_SMCUDA_FRAG_ALLOC_EAGER(frag, rc);
+        MCA_BTL_SMCUDA_FRAG_ALLOC_EAGER(frag);
         if( OPAL_UNLIKELY(NULL == frag) ) {
             *descriptor = NULL;
-            return rc;
+            return OMPI_ERR_OUT_OF_RESOURCE;
         }
 
         /* fill in fragment fields */
@@ -937,7 +936,6 @@ struct mca_btl_base_descriptor_t* mca_btl_smcuda_prepare_dst(
         size_t* size,
         uint32_t flags)
 {
-    int rc;
     void *ptr;
     mca_btl_smcuda_frag_t* frag;
 
@@ -946,7 +944,7 @@ struct mca_btl_base_descriptor_t* mca_btl_smcuda_prepare_dst(
         return NULL;
     }
 
-    MCA_BTL_SMCUDA_FRAG_ALLOC_USER(frag, rc);
+    MCA_BTL_SMCUDA_FRAG_ALLOC_USER(frag);
     if(OPAL_UNLIKELY(NULL == frag)) {
         return NULL;
     }

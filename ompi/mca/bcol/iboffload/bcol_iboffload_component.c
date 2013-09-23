@@ -757,10 +757,10 @@ mca_bcol_iboffload_free_tasks_frags_resources(
         /* Return task: if the pointer is NULL => we assume the task
            is a member of the common task list (tasks_free) */
         if (NULL == task->task_list) {
-            OMPI_FREE_LIST_RETURN(&cm->tasks_free,
+            OMPI_FREE_LIST_RETURN_MT(&cm->tasks_free,
                     (ompi_free_list_item_t *) task);
         } else {
-            OMPI_FREE_LIST_RETURN(task->task_list,
+            OMPI_FREE_LIST_RETURN_MT(task->task_list,
                     (ompi_free_list_item_t *) task);
         }
 
@@ -781,7 +781,7 @@ static void fatal_error(char *mesg)
         opal_list_remove_item(&(cf)->coll_full_req->work_requests,              \
                                (opal_list_item_t *) (cf));                      \
         if (&(cf)->coll_full_req->first_collfrag != (cf)) {                     \
-            OMPI_FREE_LIST_RETURN(&mca_bcol_iboffload_component.collfrags_free, \
+            OMPI_FREE_LIST_RETURN_MT(&mca_bcol_iboffload_component.collfrags_free, \
                                  (ompi_free_list_item_t *) (cf));               \
         }                                                                       \
     } while (0)

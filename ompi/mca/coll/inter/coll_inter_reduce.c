@@ -43,14 +43,13 @@ mca_coll_inter_reduce_inter(void *sbuf, void *rbuf, int count,
                             int root, struct ompi_communicator_t *comm,
                             mca_coll_base_module_t *module)
 {
-    int rank, err, size;
+    int rank, err;
     ptrdiff_t true_lb, true_extent, lb, extent;
     char *free_buffer = NULL;
     char *pml_buffer = NULL;
 
     /* Initialize */
     rank = ompi_comm_rank(comm);
-    size = ompi_comm_remote_size(comm);
 
     if (MPI_PROC_NULL == root) {
         /* do nothing */

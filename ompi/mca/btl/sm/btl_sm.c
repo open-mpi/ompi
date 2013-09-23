@@ -559,8 +559,8 @@ int mca_btl_sm_add_procs(
     mca_btl_sm_component.num_smp_procs += n_local_procs;
 
     /* make sure we have enough eager fragmnents for each process */
-    return_code = ompi_free_list_resize(&mca_btl_sm_component.sm_frags_eager,
-                                        mca_btl_sm_component.num_smp_procs * 2);
+    return_code = ompi_free_list_resize_mt(&mca_btl_sm_component.sm_frags_eager,
+                                           mca_btl_sm_component.num_smp_procs * 2);
     if (OMPI_SUCCESS != return_code)
         goto CLEANUP;
 
@@ -623,11 +623,10 @@ extern mca_btl_base_descriptor_t* mca_btl_sm_alloc(
     uint32_t flags)
 {
     mca_btl_sm_frag_t* frag = NULL;
-    int rc;
     if(size <= mca_btl_sm_component.eager_limit) {
-        MCA_BTL_SM_FRAG_ALLOC_EAGER(frag,rc);
+        MCA_BTL_SM_FRAG_ALLOC_EAGER(frag);
     } else if (size <= mca_btl_sm_component.max_frag_size) {
-        MCA_BTL_SM_FRAG_ALLOC_MAX(frag,rc);
+        MCA_BTL_SM_FRAG_ALLOC_MAX(frag);
     }
 
     if (OPAL_LIKELY(frag != NULL)) {
@@ -682,9 +681,9 @@ struct mca_btl_base_descriptor_t* mca_btl_sm_prepare_src(
                             && OPAL_UNLIKELY(!mca_btl_sm_component.use_cma)) ) {
 #endif
         if ( reserve + max_data <= mca_btl_sm_component.eager_limit ) {
-            MCA_BTL_SM_FRAG_ALLOC_EAGER(frag,rc);
+            MCA_BTL_SM_FRAG_ALLOC_EAGER(frag);
         } else {
-            MCA_BTL_SM_FRAG_ALLOC_MAX(frag, rc);
+            MCA_BTL_SM_FRAG_ALLOC_MAX(frag);
         }
         if( OPAL_UNLIKELY(NULL == frag) ) {
             return NULL;
@@ -709,7 +708,7 @@ struct mca_btl_base_descriptor_t* mca_btl_sm_prepare_src(
         struct knem_cmd_create_region knem_cr;
         struct knem_cmd_param_iovec knem_iov;
 #endif /* OMPI_BTL_SM_HAVE_KNEM */
-        MCA_BTL_SM_FRAG_ALLOC_USER(frag, rc);
+        MCA_BTL_SM_FRAG_ALLOC_USER(frag);
         if( OPAL_UNLIKELY(NULL == frag) ) {
             return NULL;
         }
@@ -819,10 +818,10 @@ int mca_btl_sm_sendi( struct mca_btl_base_module_t* btl,
 
         /* allocate a fragment, giving up if we can't get one */
         /* note that frag==NULL is equivalent to rc returning an error code */
-        MCA_BTL_SM_FRAG_ALLOC_EAGER(frag, rc);
+        MCA_BTL_SM_FRAG_ALLOC_EAGER(frag);
         if( OPAL_UNLIKELY(NULL == frag) ) {
             *descriptor = NULL;
-            return rc;
+            return OMPI_ERR_OUT_OF_RESOURCE;
         }
 
         /* fill in fragment fields */
@@ -864,7 +863,9 @@ int mca_btl_sm_sendi( struct mca_btl_base_module_t* btl,
          */
         OPAL_THREAD_ADD32(&mca_btl_sm_component.num_outstanding_frags, +1);
         MCA_BTL_SM_FIFO_WRITE(endpoint, endpoint->my_smp_rank,
-                              endpoint->peer_smp_rank, (void *) VIRTUAL2RELATIVE(frag->hdr), false, true, rc);
+                              endpoint->peer_smp_rank, (void *) VIRTUAL2RELATIVE(frag->hdr),
+                              false, true, rc);
+        (void)rc;  // silence compiler warning
         return OMPI_SUCCESS;
     }
 
@@ -929,11 +930,10 @@ struct mca_btl_base_descriptor_t* mca_btl_sm_prepare_dst(
 		size_t* size,
 		uint32_t flags)
 {
-    int rc;
     void *ptr;
     mca_btl_sm_frag_t* frag;
 
-    MCA_BTL_SM_FRAG_ALLOC_USER(frag, rc);
+    MCA_BTL_SM_FRAG_ALLOC_USER(frag);
     if(OPAL_UNLIKELY(NULL == frag)) {
         return NULL;
     }

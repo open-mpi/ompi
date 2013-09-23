@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2007 The University of Tennessee and The University
+ * Copyright (c) 2004-2013 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -112,7 +112,7 @@ static inline int dereg_mem(mca_mpool_base_registration_t *reg)
     OPAL_THREAD_LOCK(&reg->mpool->rcache->lock);
 
     if (OPAL_LIKELY(OMPI_SUCCESS == rc)) {
-        OMPI_FREE_LIST_RETURN(&mpool_grdma->reg_list,
+        OMPI_FREE_LIST_RETURN_MT(&mpool_grdma->reg_list,
                               (ompi_free_list_item_t *) reg);
     }
 
@@ -258,10 +258,10 @@ int mca_mpool_grdma_register(mca_mpool_base_module_t *mpool, void *addr,
          * here is !mca_mpool_grdma_component.leave_pinned. */
     }
 
-    OMPI_FREE_LIST_GET(&mpool_grdma->reg_list, item, rc);
-    if(OMPI_SUCCESS != rc) {
+    OMPI_FREE_LIST_GET_MT(&mpool_grdma->reg_list, item);
+    if(NULL == item) {
         OPAL_THREAD_UNLOCK(&mpool->rcache->lock);
-        return rc;
+        return OMPI_ERR_OUT_OF_RESOURCE;
     }
     grdma_reg = (mca_mpool_base_registration_t*)item;
 
@@ -275,7 +275,7 @@ int mca_mpool_grdma_register(mca_mpool_base_module_t *mpool, void *addr,
 
         if (OPAL_UNLIKELY(rc != OMPI_SUCCESS)) {
             OPAL_THREAD_UNLOCK(&mpool->rcache->lock);
-            OMPI_FREE_LIST_RETURN(&mpool_grdma->reg_list, item);
+            OMPI_FREE_LIST_RETURN_MT(&mpool_grdma->reg_list, item);
             return rc;
         }
     }
@@ -294,7 +294,7 @@ int mca_mpool_grdma_register(mca_mpool_base_module_t *mpool, void *addr,
             mpool->rcache->rcache_delete(mpool->rcache, grdma_reg);
         }
         OPAL_THREAD_UNLOCK(&mpool->rcache->lock);
-        OMPI_FREE_LIST_RETURN(&mpool_grdma->reg_list, item);
+        OMPI_FREE_LIST_RETURN_MT(&mpool_grdma->reg_list, item);
         return rc;
     }
 

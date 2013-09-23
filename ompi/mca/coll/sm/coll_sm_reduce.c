@@ -232,7 +232,6 @@ static int reduce_inorder(void *sbuf, void* rbuf, int count,
         size_t count_left = (size_t)count;
         int frag_num = 0;
         bool first_operation = true;
-        bool sbuf_copied_to_rbuf = false;
 
         /* If the datatype is the same packed as it is unpacked, we
            can save a memory copy and just do the reduction operation
@@ -364,7 +363,6 @@ static int reduce_inorder(void *sbuf, void* rbuf, int count,
                             ompi_datatype_copy_content_same_ddt(dtype, count,
                                                reduce_target, (char*)sbuf);
                         }
-                        sbuf_copied_to_rbuf = true;
                     }
                 } 
 
@@ -397,9 +395,7 @@ static int reduce_inorder(void *sbuf, void* rbuf, int count,
                 for (peer = size - 2; peer >= 0; --peer) {
 
                     /* Handle the case where the source is this
-                       process (which, by definition, excludes the
-                       sbuf_copied_to_rbuf case because that can
-                       *only* happen when root==0).  In this case, we
+                       process.  In this case, we
                        don't need to wait for the peer (i.e., me) to
                        copy into shmem -- just reduce directly from my
                        sbuf. */

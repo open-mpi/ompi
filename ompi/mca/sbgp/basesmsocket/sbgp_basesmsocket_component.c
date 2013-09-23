@@ -259,7 +259,7 @@ static mca_sbgp_base_module_t *mca_sbgp_basesmsocket_select_procs(struct ompi_pr
     mca_sbgp_basesmsocket_module_t *module;
     int ret;
     int my_socket_index;
-    int proc, cnt, local, n_local_peers, my_index, my_rank;
+    int proc, cnt, local, n_local_peers, my_rank;
     ompi_proc_t* my_proc;
     int *local_ranks_in_comm=NULL;
     int *socket_info=NULL, my_socket_info;
@@ -269,11 +269,6 @@ static mca_sbgp_base_module_t *mca_sbgp_basesmsocket_select_procs(struct ompi_pr
     output_data=NULL;
     my_rank=ompi_comm_rank(comm);
     my_proc=ompi_comm_peer_lookup(comm,my_rank);
-    for( proc=0 ; proc < n_procs_in ; proc++) {
-        if( procs[proc]==my_proc){
-            my_index=proc;
-        }
-    }
 
     /*create a new module*/
     module=OBJ_NEW(mca_sbgp_basesmsocket_module_t);

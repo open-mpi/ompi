@@ -250,7 +250,7 @@ static int mca_coll_ml_request_free(ompi_request_t** request)
     assert(0 == ml_request->fragment_data.offset_into_user_buffer);
     assert(ml_request->dag_description.status_array[0].item.opal_list_item_refcount == 0);
     ML_VERBOSE(10, ("Releasing Master %p", ml_request));
-    OMPI_FREE_LIST_RETURN(&(ml_module->coll_ml_collective_descriptors),
+    OMPI_FREE_LIST_RETURN_MT(&(ml_module->coll_ml_collective_descriptors),
             (ompi_free_list_item_t *)ml_request);
 
     /* MPI needs to return with the request object set to MPI_REQUEST_NULL
@@ -624,7 +624,6 @@ exit_ERROR:
 static void ml_init_k_nomial_trees(mca_coll_ml_topology_t *topo, int *list_of_ranks_in_all_subgroups, int my_rank_in_list)
 {
     int *list_n_connected;
-    int *list;
     int group_size, rank, i, j, knt, offset, k, my_sbgp = 0;
     int my_root;
     int level_one_knt;
@@ -689,8 +688,6 @@ static void ml_init_k_nomial_trees(mca_coll_ml_topology_t *topo, int *list_of_ra
            on the bcol module
          */
         list_n_connected = (int *) malloc(sizeof(int)*group_size);
-        /* pointer to group list */
-        list = pair->subgroup_module->group_list;
         /* next thing to do is to find out which subgroup I'm in
          * at this particular level
          */
@@ -1939,7 +1936,6 @@ static int mca_coll_ml_tree_hierarchy_discovery(mca_coll_ml_module_t *ml_module,
                 *my_proc = NULL;
 
     const mca_sbgp_base_component_2_0_0_t *sbgp_component = NULL;
-    const mca_bcol_base_component_2_0_0_t *bcol_component = NULL;
 
 
     int i_hier = 0, n_hier = 0, ll_p1,
@@ -2074,7 +2070,6 @@ static int mca_coll_ml_tree_hierarchy_discovery(mca_coll_ml_module_t *ml_module,
          */
 
         sbgp_component = (mca_sbgp_base_component_2_0_0_t *) sbgp_cli->component.cli_component;
-        bcol_component = (mca_bcol_base_component_2_0_0_t *) bcol_cli->cli_component;
 
         /* Skip excluded levels */
         if (NULL != exclude_sbgp_name) {
@@ -2702,7 +2697,6 @@ static int mca_coll_ml_fill_in_route_tab(mca_coll_ml_topology_t *topo, ompi_comm
     int32_t **route_table = NULL;
     int32_t *all_reachable_ranks = NULL;
 
-    struct ompi_proc_t **ompi_procs = NULL;
     struct ompi_proc_t **sbgp_procs = NULL;
 
     mca_sbgp_base_module_t *sbgp_group = NULL;
@@ -2735,7 +2729,6 @@ static int mca_coll_ml_fill_in_route_tab(mca_coll_ml_topology_t *topo, ompi_comm
     }
 
     all_reachable_ranks[my_rank] = IS_RECHABLE;
-    ompi_procs = comm->c_local_group->grp_proc_pointers;
 
     for (level = 0; level < topo->n_levels; ++level) {
         sbgp_group = topo->component_pairs[level].subgroup_module;
@@ -3260,7 +3253,6 @@ mca_coll_ml_comm_query(struct ompi_communicator_t *comm, int *priority)
 
     mca_coll_ml_module_t *ml_module = NULL;
     mca_coll_ml_component_t *cs = &mca_coll_ml_component;
-    double start, end, tic;
     bool iboffload_was_requested = mca_coll_ml_check_if_bcol_is_requested("iboffload");
 
     ML_VERBOSE(10, ("ML comm query start.\n"));
@@ -3328,15 +3320,11 @@ mca_coll_ml_comm_query(struct ompi_communicator_t *comm, int *priority)
      * setup communicator hierarchy - the ml component is available for
      * caching information about the sbgp modules selected.
      */
-    start = ret_us();
     ret = ml_discover_hierarchy(ml_module);
     if (OMPI_SUCCESS != ret) {
         ML_ERROR(("ml_discover_hierarchy exited with error.\n"));
         goto CLEANUP;
     }
-    end = ret_us();
-    tic = end - start;
-    /*fprintf(stderr,"discover hierarchy %1.8f\n",tic);*/
 
     /* gvm Disabled for debuggin */
     ret = mca_coll_ml_build_filtered_fn_table(ml_module);

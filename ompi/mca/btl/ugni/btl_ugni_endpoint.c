@@ -2,7 +2,7 @@
 /*
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2011      UT-Battelle, LLC. All rights reserved.
+ * Copyright (c) 2011-2013 UT-Battelle, LLC. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -34,9 +34,8 @@ OBJ_CLASS_INSTANCE(mca_btl_base_endpoint_t, opal_list_item_t,
 static inline int mca_btl_ugni_ep_smsg_get_mbox (mca_btl_base_endpoint_t *ep) {
     mca_btl_ugni_module_t *ugni_module = ep->btl;
     ompi_free_list_item_t *mbox;
-    int rc;
 
-    OMPI_FREE_LIST_GET(&ugni_module->smsg_mboxes, mbox, rc);
+    OMPI_FREE_LIST_GET_MT(&ugni_module->smsg_mboxes, mbox);
     if (OPAL_UNLIKELY(NULL == mbox)) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
@@ -46,7 +45,7 @@ static inline int mca_btl_ugni_ep_smsg_get_mbox (mca_btl_base_endpoint_t *ep) {
     /* per ugni spec we need to zero mailbox data before connecting */
     memset ((char *)ep->mailbox->smsg_attrib.msg_buffer + ep->mailbox->smsg_attrib.mbox_offset, 0,
             ep->mailbox->smsg_attrib.buff_size);
-    return rc;
+    return OMPI_SUCCESS;
 }
 
 int mca_btl_ugni_ep_disconnect (mca_btl_base_endpoint_t *ep, bool send_disconnect) {
@@ -71,7 +70,7 @@ int mca_btl_ugni_ep_disconnect (mca_btl_base_endpoint_t *ep, bool send_disconnec
         (void) ompi_common_ugni_ep_destroy (&ep->smsg_ep_handle);
         (void) ompi_common_ugni_ep_destroy (&ep->rdma_ep_handle);
 
-        OMPI_FREE_LIST_RETURN(&ep->btl->smsg_mboxes, ((ompi_free_list_item_t *) ep->mailbox));
+        OMPI_FREE_LIST_RETURN_MT(&ep->btl->smsg_mboxes, ((ompi_free_list_item_t *) ep->mailbox));
         ep->mailbox = NULL;
 
         ep->state = MCA_BTL_UGNI_EP_STATE_INIT;

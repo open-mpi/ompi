@@ -3,7 +3,7 @@
   * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
   *                         University Research and Technology
   *                         Corporation.  All rights reserved.
-  * Copyright (c) 2004-2007 The University of Tennessee and The University
+  * Copyright (c) 2004-2013 The University of Tennessee and The University
   *                         of Tennessee Research Foundation.  All rights
   *                         reserved.
   * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -108,7 +108,6 @@ static int mca_rcache_vma_tree_node_compare_closest(void *key1, void *key2)
 static inline mca_rcache_vma_t *mca_rcache_vma_new(
         mca_rcache_vma_module_t *vma_rcache, uintptr_t start, uintptr_t end)
 {
-    int rc;
     mca_rcache_vma_t *vma = OBJ_NEW(mca_rcache_vma_t);
 
     if(NULL == vma)
@@ -118,7 +117,7 @@ static inline mca_rcache_vma_t *mca_rcache_vma_new(
     vma->end = end;
     vma->rcache = vma_rcache;
 
-    rc = ompi_rb_tree_insert(&vma_rcache->rb_tree, vma, vma);
+    (void)ompi_rb_tree_insert(&vma_rcache->rb_tree, vma, vma);
 
     return vma;
 }

@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2004-2011 The Trustees of Indiana University.
  *                         All rights reserved.
- * Copyright (c) 2010-2011 The University of Tennessee and The University
+ * Copyright (c) 2010-2013 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2010-2012 Oracle and/or its affiliates.  All rights reserved.
@@ -618,74 +618,74 @@ static void traffic_message_dump_drain_msg_indv(ompi_crcp_bkmrk_pml_drain_messag
 /*
  * Free List Maintenance
  */
-#define HOKE_PEER_REF_ALLOC(peer_ref, rc)             \
+#define HOKE_PEER_REF_ALLOC(peer_ref)                 \
 do {                                                  \
   ompi_free_list_item_t* item;                        \
-  OMPI_FREE_LIST_WAIT(&peer_ref_free_list, item, rc); \
-  peer_ref = (ompi_crcp_bkmrk_pml_peer_ref_t*)item;    \
+  OMPI_FREE_LIST_WAIT_MT(&peer_ref_free_list, item);     \
+  peer_ref = (ompi_crcp_bkmrk_pml_peer_ref_t*)item;   \
 } while(0); 
 
 #define HOKE_PEER_REF_RETURN(peer_ref)        \
 do {                                          \
-   OMPI_FREE_LIST_RETURN(&peer_ref_free_list, \
+   OMPI_FREE_LIST_RETURN_MT(&peer_ref_free_list, \
    (ompi_free_list_item_t*)peer_ref);         \
 } while(0);
 
 
-#define HOKE_CONTENT_REF_ALLOC(content_ref, rc)                  \
-do {                                                             \
-  ompi_free_list_item_t* item;                                   \
-  OMPI_FREE_LIST_WAIT(&content_ref_free_list, item, rc);         \
+#define HOKE_CONTENT_REF_ALLOC(content_ref)                       \
+do {                                                              \
+  ompi_free_list_item_t* item;                                    \
+  OMPI_FREE_LIST_WAIT_MT(&content_ref_free_list, item);              \
   content_ref = (ompi_crcp_bkmrk_pml_message_content_ref_t*)item; \
-  content_ref->msg_id = content_ref_seq_num;                     \
+  content_ref->msg_id = content_ref_seq_num;                      \
   content_ref_seq_num++;\
 } while(0); 
 
 #define HOKE_CONTENT_REF_RETURN(content_ref)     \
 do {                                             \
-   OMPI_FREE_LIST_RETURN(&content_ref_free_list, \
+   OMPI_FREE_LIST_RETURN_MT(&content_ref_free_list, \
    (ompi_free_list_item_t*)content_ref);         \
 } while(0);
 
 
-#define HOKE_TRAFFIC_MSG_REF_ALLOC(msg_ref, rc)              \
-do {                                                         \
-  ompi_free_list_item_t* item;                               \
-  OMPI_FREE_LIST_WAIT(&traffic_msg_ref_free_list, item, rc); \
+#define HOKE_TRAFFIC_MSG_REF_ALLOC(msg_ref)                   \
+do {                                                          \
+  ompi_free_list_item_t* item;                                \
+  OMPI_FREE_LIST_WAIT_MT(&traffic_msg_ref_free_list, item);      \
   msg_ref = (ompi_crcp_bkmrk_pml_traffic_message_ref_t*)item; \
 } while(0); 
 
 #define HOKE_TRAFFIC_MSG_REF_RETURN(msg_ref)         \
 do {                                                 \
-   OMPI_FREE_LIST_RETURN(&traffic_msg_ref_free_list, \
+   OMPI_FREE_LIST_RETURN_MT(&traffic_msg_ref_free_list, \
    (ompi_free_list_item_t*)msg_ref);                 \
 } while(0);
 
 
-#define HOKE_DRAIN_MSG_REF_ALLOC(msg_ref, rc)              \
-do {                                                       \
-  ompi_free_list_item_t* item;                             \
-  OMPI_FREE_LIST_WAIT(&drain_msg_ref_free_list, item, rc); \
+#define HOKE_DRAIN_MSG_REF_ALLOC(msg_ref)                   \
+do {                                                        \
+  ompi_free_list_item_t* item;                              \
+  OMPI_FREE_LIST_WAIT_MT(&drain_msg_ref_free_list, item);      \
   msg_ref = (ompi_crcp_bkmrk_pml_drain_message_ref_t*)item; \
 } while(0); 
 
 #define HOKE_DRAIN_MSG_REF_RETURN(msg_ref)         \
 do {                                               \
-   OMPI_FREE_LIST_RETURN(&drain_msg_ref_free_list, \
+   OMPI_FREE_LIST_RETURN_MT(&drain_msg_ref_free_list, \
    (ompi_free_list_item_t*)msg_ref);               \
 } while(0);
 
 
-#define HOKE_DRAIN_ACK_MSG_REF_ALLOC(msg_ref, rc)              \
-do {                                                           \
-  ompi_free_list_item_t* item;                                 \
-  OMPI_FREE_LIST_WAIT(&drain_ack_msg_ref_free_list, item, rc); \
+#define HOKE_DRAIN_ACK_MSG_REF_ALLOC(msg_ref)                   \
+do {                                                            \
+  ompi_free_list_item_t* item;                                  \
+  OMPI_FREE_LIST_WAIT_MT(&drain_ack_msg_ref_free_list, item);      \
   msg_ref = (ompi_crcp_bkmrk_pml_drain_message_ack_ref_t*)item; \
 } while(0); 
 
 #define HOKE_DRAIN_ACK_MSG_REF_RETURN(msg_ref)         \
 do {                                                   \
-   OMPI_FREE_LIST_RETURN(&drain_ack_msg_ref_free_list, \
+   OMPI_FREE_LIST_RETURN_MT(&drain_ack_msg_ref_free_list, \
    (ompi_free_list_item_t*)msg_ref);                   \
 } while(0);
 
@@ -969,22 +969,22 @@ OBJ_CLASS_INSTANCE(ompi_crcp_bkmrk_pml_state_t,
 /************************************
  * Some Macro shortcuts
  ************************************/
-#define CRCP_COORD_STATE_ALLOC(state_ref, rc)            \
-do {                                                     \
-  ompi_free_list_item_t* item;                           \
-  OMPI_FREE_LIST_WAIT(&coord_state_free_list, item, rc); \
+#define CRCP_COORD_STATE_ALLOC(state_ref)                 \
+do {                                                      \
+  ompi_free_list_item_t* item;                            \
+  OMPI_FREE_LIST_WAIT_MT(&coord_state_free_list, item);      \
   state_ref = (ompi_crcp_bkmrk_pml_state_t*)item;         \
 } while(0); 
 
 #define CRCP_COORD_STATE_RETURN(state_ref)       \
 do {                                             \
-   OMPI_FREE_LIST_RETURN(&coord_state_free_list, \
+   OMPI_FREE_LIST_RETURN_MT(&coord_state_free_list, \
    (ompi_free_list_item_t*)state_ref);           \
 } while(0);
 
 #define CREATE_COORD_STATE(coord_state, pml_state, v_peer_ref, v_msg_ref)         \
  {                                                                                \
-   CRCP_COORD_STATE_ALLOC(coord_state, ret);                                      \
+   CRCP_COORD_STATE_ALLOC(coord_state);                                           \
                                                                                   \
    coord_state->prev_ptr           = pml_state;                                   \
    coord_state->p_super.super      = pml_state->super;                            \
@@ -1008,7 +1008,7 @@ do {                                             \
 
 #define CREATE_NEW_MSG(msg_ref, v_type, v_count, v_ddt_size, v_tag, v_rank, v_comm, p_jobid, p_vpid) \
  {                                                               \
-   HOKE_TRAFFIC_MSG_REF_ALLOC(msg_ref, ret);                     \
+   HOKE_TRAFFIC_MSG_REF_ALLOC(msg_ref);                          \
                                                                  \
    msg_ref->msg_id   = message_seq_num;                          \
    message_seq_num++;                                            \
@@ -1035,7 +1035,7 @@ do {                                             \
 
 #define CREATE_NEW_DRAIN_MSG(msg_ref, v_type, v_count, v_ddt_size, v_tag, v_rank, v_comm, p_jobid, p_vpid) \
  {                                                               \
-   HOKE_DRAIN_MSG_REF_ALLOC(msg_ref, ret);                       \
+   HOKE_DRAIN_MSG_REF_ALLOC(msg_ref);                            \
                                                                  \
    msg_ref->msg_id   = message_seq_num;                          \
    message_seq_num++;                                            \
@@ -1430,7 +1430,6 @@ ompi_crcp_base_pml_state_t* ompi_crcp_bkmrk_pml_add_procs(
                                    size_t nprocs, 
                                    ompi_crcp_base_pml_state_t* pml_state )
 {
-    int ret;
     ompi_crcp_bkmrk_pml_peer_ref_t *new_peer_ref;
     size_t i;
 
@@ -1451,7 +1450,7 @@ ompi_crcp_base_pml_state_t* ompi_crcp_bkmrk_pml_add_procs(
      * Create a peer_ref for each peer added
      */
     for( i = 0; i < nprocs; ++i) {
-        HOKE_PEER_REF_ALLOC(new_peer_ref, ret);
+        HOKE_PEER_REF_ALLOC(new_peer_ref);
 
         new_peer_ref->proc_name.jobid  = procs[i]->proc_name.jobid;
         new_peer_ref->proc_name.vpid   = procs[i]->proc_name.vpid;
@@ -1564,7 +1563,7 @@ ompi_crcp_base_pml_state_t* ompi_crcp_bkmrk_pml_isend_init(
         /*
          * Update Message
          */
-        HOKE_CONTENT_REF_ALLOC(new_content, ret);
+        HOKE_CONTENT_REF_ALLOC(new_content);
         new_content->buffer  =  buf;
         new_content->request = *request;
         new_content->done    =  false;
@@ -1780,7 +1779,7 @@ ompi_crcp_base_pml_state_t* ompi_crcp_bkmrk_pml_isend(
         /*
          * Update Message
          */
-        HOKE_CONTENT_REF_ALLOC(new_content, ret);
+        HOKE_CONTENT_REF_ALLOC(new_content);
         new_content->buffer  =  NULL; /* No Tracked */
         new_content->request = *request;
         new_content->done    =  false;
@@ -2041,7 +2040,7 @@ ompi_crcp_base_pml_state_t* ompi_crcp_bkmrk_pml_irecv_init(
         /*
          * Do the update
          */
-        HOKE_CONTENT_REF_ALLOC(new_content, ret);
+        HOKE_CONTENT_REF_ALLOC(new_content);
         new_content->buffer  =  buf;
         new_content->request = *request;
         new_content->done    =  false;
@@ -2491,7 +2490,7 @@ ompi_crcp_base_pml_state_t* ompi_crcp_bkmrk_pml_irecv(
         /* 
          * Do the update
          */
-        HOKE_CONTENT_REF_ALLOC(new_content, ret);
+        HOKE_CONTENT_REF_ALLOC(new_content);
         new_content->buffer  =  NULL; /* No tracked */
         new_content->request = *request;
         new_content->done    =  false;
@@ -3349,7 +3348,7 @@ static int traffic_message_move(ompi_crcp_bkmrk_pml_traffic_message_ref_t *old_m
     }
 
     if( NULL != request ) {
-        HOKE_CONTENT_REF_ALLOC(new_content, ret);
+        HOKE_CONTENT_REF_ALLOC(new_content);
         new_content->buffer  =  NULL;
         new_content->request =  request;
         new_content->done    =  false;
@@ -3550,7 +3549,7 @@ static int traffic_message_create_drain_message(bool post_drain,
         (*posted_msg_ref)->active_drain++;
 
         /* Create a new content for the drained message */
-        HOKE_CONTENT_REF_ALLOC(new_content, ret);
+        HOKE_CONTENT_REF_ALLOC(new_content);
         new_content->buffer  = NULL;
         if( NULL == prev_content ) {
             new_content->request  = NULL;
@@ -5506,7 +5505,7 @@ static int send_msg_details(ompi_crcp_bkmrk_pml_peer_ref_t *peer_ref,
      * which is sent when they have finished receiving all of the 
      * inflight messages into a local buffer
      */
-    HOKE_DRAIN_ACK_MSG_REF_ALLOC(d_msg_ack, ret);
+    HOKE_DRAIN_ACK_MSG_REF_ALLOC(d_msg_ack);
     d_msg_ack->peer.jobid  = peer_ref->proc_name.jobid;
     d_msg_ack->peer.vpid   = peer_ref->proc_name.vpid;
 

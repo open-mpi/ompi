@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2010 The University of Tennessee and The University
+ * Copyright (c) 2004-2013 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2007 High Performance Computing Center Stuttgart, 
@@ -72,11 +72,10 @@ static inline bool unlock_recv_request(mca_pml_ob1_recv_request_t *recvreq)
  *  @param rc (OUT)  OMPI_SUCCESS or error status on failure.
  *  @return          Receive request.
  */
-#define MCA_PML_OB1_RECV_REQUEST_ALLOC(recvreq, rc)                \
+#define MCA_PML_OB1_RECV_REQUEST_ALLOC(recvreq)                    \
 do {                                                               \
    ompi_free_list_item_t* item;                                    \
-   rc = OMPI_SUCCESS;                                              \
-   OMPI_FREE_LIST_GET(&mca_pml_base_recv_requests, item, rc);      \
+   OMPI_FREE_LIST_GET_MT(&mca_pml_base_recv_requests, item);          \
    recvreq = (mca_pml_ob1_recv_request_t*)item;                    \
 } while(0)
 
@@ -130,7 +129,7 @@ do {                                                                \
 #define MCA_PML_OB1_RECV_REQUEST_RETURN(recvreq)                        \
     {                                                                   \
         MCA_PML_BASE_RECV_REQUEST_FINI(&(recvreq)->req_recv);           \
-        OMPI_FREE_LIST_RETURN( &mca_pml_base_recv_requests,             \
+        OMPI_FREE_LIST_RETURN_MT( &mca_pml_base_recv_requests,             \
                                (ompi_free_list_item_t*)(recvreq));      \
     }
 
@@ -386,9 +385,8 @@ static inline void mca_pml_ob1_recv_request_schedule(
 #define MCA_PML_OB1_ADD_ACK_TO_PENDING(P, S, D, O)                      \
     do {                                                                \
         mca_pml_ob1_pckt_pending_t *_pckt;                              \
-        int _rc;                                                        \
                                                                         \
-        MCA_PML_OB1_PCKT_PENDING_ALLOC(_pckt,_rc);                      \
+        MCA_PML_OB1_PCKT_PENDING_ALLOC(_pckt);                          \
         _pckt->hdr.hdr_common.hdr_type = MCA_PML_OB1_HDR_TYPE_ACK;      \
         _pckt->hdr.hdr_ack.hdr_src_req.lval = (S);                      \
         _pckt->hdr.hdr_ack.hdr_dst_req.pval = (D);                      \

@@ -144,11 +144,7 @@ int
 mca_coll_inter_module_enable(mca_coll_base_module_t *module,
                              struct ompi_communicator_t *comm)
 {
-    int size, rank;
     mca_coll_inter_module_t *inter_module = (mca_coll_inter_module_t*) module;
-    
-    rank = ompi_comm_rank(comm);
-    size = ompi_comm_size(comm);
     
     inter_module->inter_comm = comm;
     

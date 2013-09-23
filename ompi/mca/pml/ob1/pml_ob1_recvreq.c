@@ -684,11 +684,11 @@ void mca_pml_ob1_recv_request_progress_rget( mca_pml_ob1_recv_request_t* recvreq
      * accumulates the number of bytes that were sent so far. */
     while (bytes_remaining > 0) {
         /* allocate/initialize a fragment */
-        MCA_PML_OB1_RDMA_FRAG_ALLOC(frag,rc);
+        MCA_PML_OB1_RDMA_FRAG_ALLOC(frag);
         if (OPAL_UNLIKELY(NULL == frag)) {
             /* GLB - FIX */
-             ORTE_ERROR_LOG(rc);
-             orte_errmgr.abort(-1, NULL);
+             ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+             ompi_rte_abort(-1, NULL);
         }
 
         assert (btl->btl_seg_size * hdr->hdr_seg_cnt <= sizeof (frag->rdma_segs));

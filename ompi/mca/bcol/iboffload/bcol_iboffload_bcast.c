@@ -1,6 +1,9 @@
 /*
  * Copyright (c) 2009-2012 Oak Ridge National Laboratory.  All rights reserved.
  * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
+ * Copyright (c) 2013      The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -34,17 +37,15 @@ static int mca_bcol_iboffload_bcast_init(
                                bool if_bcol_last, int mq_credits,
                                collective_message_progress_function progress_fn)
 {
-    int rc;
-
     ompi_free_list_item_t *item;
     mca_bcol_iboffload_collfrag_t *coll_fragment;
     mca_bcol_iboffload_component_t *cm = &mca_bcol_iboffload_component;
     int my_group_index = iboffload_module->super.sbgp_partner_module->my_index;
 
-    OMPI_FREE_LIST_WAIT(&cm->collreqs_free, item, rc);
-    if (OPAL_UNLIKELY(OMPI_SUCCESS != rc)) {
+    OMPI_FREE_LIST_WAIT_MT(&cm->collreqs_free, item);
+    if (OPAL_UNLIKELY(NULL == item)) {
         IBOFFLOAD_ERROR(("Wait for free list failed.\n"));
-        return rc;
+        return OMPI_ERR_OUT_OF_RESOURCE;
     }
     /* setup call request */
     (*coll_request) = (mca_bcol_iboffload_collreq_t *) item;

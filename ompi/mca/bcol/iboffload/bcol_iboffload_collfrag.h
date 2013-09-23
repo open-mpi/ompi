@@ -1,6 +1,9 @@
 /*
  * Copyright (c) 2009-2012 Oak Ridge National Laboratory.  All rights reserved.
  * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
+ * Copyright (c) 2013      The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -115,13 +118,12 @@ static inline __opal_attribute_always_inline__
                 struct mca_bcol_iboffload_collfrag_t *
                        mca_bcol_iboffload_get_collfrag(void)
 {
-    int rc;
     ompi_free_list_item_t *item;
     mca_bcol_iboffload_collfrag_t *cf;
     mca_bcol_iboffload_component_t *cm = &mca_bcol_iboffload_component;
 
     /* blocking allocation for collectives fragment */
-    OMPI_FREE_LIST_GET(&cm->collfrags_free, item, rc);
+    OMPI_FREE_LIST_GET_MT(&cm->collfrags_free, item);
     if (OPAL_UNLIKELY(NULL == item)) {
         IBOFFLOAD_ERROR(("Failed to allocated collfrag.\n"));
         return NULL;

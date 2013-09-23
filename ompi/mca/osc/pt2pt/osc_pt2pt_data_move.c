@@ -640,7 +640,6 @@ ompi_osc_pt2pt_sendreq_recv_accum_long_cb(ompi_request_t *request)
     ompi_osc_pt2pt_module_t *module = longreq->req_module;
     ompi_osc_pt2pt_send_header_t *header = longreq->req_basereq.req_sendhdr;
     void *payload = (void*) (header + 1);
-    int ret;
     void *target = (unsigned char*) module->p2p_win->w_baseptr + 
         ((unsigned long)header->hdr_target_disp * module->p2p_win->w_disp_unit);    
 
@@ -681,7 +680,7 @@ ompi_osc_pt2pt_sendreq_recv_accum_long_cb(ompi_request_t *request)
             opal_memchecker_base_mem_defined( target, header->hdr_msg_length );
         );
         /* copy the data from the temporary buffer into the user window */
-        ret = ompi_osc_base_process_op(target,
+        (void)ompi_osc_base_process_op(target,
                                        payload,
                                        header->hdr_msg_length,
                                        longreq->req_datatype,

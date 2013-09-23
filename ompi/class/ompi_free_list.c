@@ -280,7 +280,7 @@ int ompi_free_list_grow(ompi_free_list_t* flist, size_t num_elements)
  * initialization.
  */
 int
-ompi_free_list_resize(ompi_free_list_t* flist, size_t size)
+ompi_free_list_resize_mt(ompi_free_list_t* flist, size_t size)
 {
     ssize_t inc_num;
     int ret = OMPI_SUCCESS;

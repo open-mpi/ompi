@@ -706,12 +706,11 @@ static void mca_btl_tcp_endpoint_recv_handler(int sd, short flags, void* user)
 
             frag = btl_endpoint->endpoint_recv_frag;
             if(NULL == frag) {
-                int rc;
                 if(mca_btl_tcp_module.super.btl_max_send_size > 
                    mca_btl_tcp_module.super.btl_eager_limit) { 
-                    MCA_BTL_TCP_FRAG_ALLOC_MAX(frag, rc);
+                    MCA_BTL_TCP_FRAG_ALLOC_MAX(frag);
                 } else { 
-                    MCA_BTL_TCP_FRAG_ALLOC_EAGER(frag, rc);
+                    MCA_BTL_TCP_FRAG_ALLOC_EAGER(frag);
                 }
                 
                 if(NULL == frag) {

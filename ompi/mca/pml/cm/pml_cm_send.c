@@ -1,6 +1,9 @@
 /*
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2013      The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -28,12 +31,11 @@ mca_pml_cm_isend_init(void* buf,
                         ompi_communicator_t* comm,
                         ompi_request_t** request)
 {
-    int ret;
     mca_pml_cm_hvy_send_request_t *sendreq;
     ompi_proc_t* ompi_proc;
     
-    MCA_PML_CM_HVY_SEND_REQUEST_ALLOC(sendreq, comm, dst, ompi_proc, ret);
-    if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) return ret;
+    MCA_PML_CM_HVY_SEND_REQUEST_ALLOC(sendreq, comm, dst, ompi_proc);
+    if (OPAL_UNLIKELY(NULL == sendreq)) return OMPI_ERR_OUT_OF_RESOURCE;
     
     MCA_PML_CM_HVY_SEND_REQUEST_INIT(sendreq, ompi_proc, comm, tag, dst, 
                                      datatype, sendmode, true, false, buf, count);
@@ -60,8 +62,8 @@ mca_pml_cm_isend(void* buf,
         mca_pml_cm_hvy_send_request_t* sendreq;
         ompi_proc_t* ompi_proc;
         
-        MCA_PML_CM_HVY_SEND_REQUEST_ALLOC(sendreq, comm, dst, ompi_proc, ret);
-        if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) return ret;
+        MCA_PML_CM_HVY_SEND_REQUEST_ALLOC(sendreq, comm, dst, ompi_proc);
+        if (OPAL_UNLIKELY(NULL == sendreq)) return OMPI_ERR_OUT_OF_RESOURCE;
         
         MCA_PML_CM_HVY_SEND_REQUEST_INIT(sendreq, 
                                          ompi_proc, 
@@ -82,8 +84,8 @@ mca_pml_cm_isend(void* buf,
     } else { 
         mca_pml_cm_thin_send_request_t* sendreq;
         ompi_proc_t* ompi_proc;
-        MCA_PML_CM_THIN_SEND_REQUEST_ALLOC(sendreq, comm, dst, ompi_proc, ret);
-        if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) return ret;
+        MCA_PML_CM_THIN_SEND_REQUEST_ALLOC(sendreq, comm, dst, ompi_proc);
+        if (OPAL_UNLIKELY(NULL == sendreq)) return OMPI_ERR_OUT_OF_RESOURCE;
         
         MCA_PML_CM_THIN_SEND_REQUEST_INIT(sendreq, 
                                           ompi_proc, 
@@ -126,8 +128,8 @@ mca_pml_cm_send(void *buf,
     if(sendmode == MCA_PML_BASE_SEND_BUFFERED) { 
         mca_pml_cm_hvy_send_request_t *sendreq;
         ompi_proc_t * ompi_proc;
-        MCA_PML_CM_HVY_SEND_REQUEST_ALLOC(sendreq, comm, dst, ompi_proc, ret);
-        if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) return ret;
+        MCA_PML_CM_HVY_SEND_REQUEST_ALLOC(sendreq, comm, dst, ompi_proc);
+        if (OPAL_UNLIKELY(NULL == sendreq)) return OMPI_ERR_OUT_OF_RESOURCE;
         
         MCA_PML_CM_HVY_SEND_REQUEST_INIT(sendreq,
                                          ompi_proc,
@@ -150,8 +152,8 @@ mca_pml_cm_send(void *buf,
     } else { 
         mca_pml_cm_thin_send_request_t *sendreq;
         ompi_proc_t * ompi_proc;
-        MCA_PML_CM_THIN_SEND_REQUEST_ALLOC(sendreq, comm, dst, ompi_proc, ret);
-        if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) return ret;
+        MCA_PML_CM_THIN_SEND_REQUEST_ALLOC(sendreq, comm, dst, ompi_proc);
+        if (OPAL_UNLIKELY(NULL == sendreq)) return OMPI_ERR_OUT_OF_RESOURCE;
         
         MCA_PML_CM_THIN_SEND_REQUEST_INIT(sendreq,
                                           ompi_proc,

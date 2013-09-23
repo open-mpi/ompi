@@ -616,7 +616,7 @@ int mca_btl_sm_component_progress(void)
     sm_fifo_t *fifo = NULL;
     mca_btl_sm_hdr_t *hdr;
     int my_smp_rank = mca_btl_sm_component.my_smp_rank;
-    int peer_smp_rank, j, rc = 0, nevents = 0;
+    int peer_smp_rank, j, rc, nevents = 0;
 
     /* first, deal with any pending sends */
     /* This check should be fast since we only need to check one variable. */
@@ -683,6 +683,7 @@ int mca_btl_sm_component_progress(void)
                 MCA_BTL_SM_FIFO_WRITE(
                         mca_btl_sm_component.sm_peers[peer_smp_rank],
                         my_smp_rank, peer_smp_rank, hdr->frag, false, true, rc);
+                (void)rc;  // silence compilier warning
                 break;
             }
         case MCA_BTL_SM_FRAG_ACK:
@@ -731,6 +732,7 @@ int mca_btl_sm_component_progress(void)
                 MCA_BTL_SM_FIFO_WRITE(
                         mca_btl_sm_component.sm_peers[peer_smp_rank],
                         my_smp_rank, peer_smp_rank, hdr, false, true, rc);
+                (void)rc;  // silence compilier warning
                 break;
         }
     }

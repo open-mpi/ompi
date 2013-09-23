@@ -41,11 +41,9 @@ mca_coll_inter_bcast_inter(void *buff, int count,
                            struct ompi_communicator_t *comm,
                            mca_coll_base_module_t *module)
 {
-    int rsize;
     int rank;
     int err;
 
-    rsize = ompi_comm_remote_size(comm);
     rank = ompi_comm_rank(comm);
 
     if (MPI_PROC_NULL == root) {

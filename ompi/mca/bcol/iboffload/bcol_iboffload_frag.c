@@ -1,6 +1,9 @@
 /*
  * Copyright (c) 2009-2012 Oak Ridge National Laboratory.  All rights reserved.
  * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
+ * Copyright (c) 2013      The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -103,7 +106,7 @@ mca_bcol_iboffload_get_packed_frag(mca_bcol_iboffload_module_t *iboffload,
     mca_bcol_iboffload_device_t *device = iboffload->device;
 
     /* Get frag from free list */
-    OMPI_FREE_LIST_GET(&device->frags_free[qp_index], item, rc);
+    OMPI_FREE_LIST_GET_MT(&device->frags_free[qp_index], item);
     if (OPAL_UNLIKELY(NULL == item)) {
         return NULL;
     }
@@ -120,7 +123,7 @@ mca_bcol_iboffload_get_packed_frag(mca_bcol_iboffload_module_t *iboffload,
             &out_size, &max_size);
     if (OPAL_UNLIKELY(rc < 0)) {
         /* Error: put the fragment back */
-        OMPI_FREE_LIST_RETURN(&device->frags_free[qp_index], item);
+        OMPI_FREE_LIST_RETURN_MT(&device->frags_free[qp_index], item);
         return NULL;
     }
 
@@ -143,7 +146,7 @@ mca_bcol_iboffload_get_calc_frag(mca_bcol_iboffload_module_t *iboffload, int qp_
     IBOFFLOAD_VERBOSE(10, ("Start to pack frag.\n"));
 
     /* Get frag from free list */
-    OMPI_FREE_LIST_GET(&device->frags_free[qp_index], item, rc);
+    OMPI_FREE_LIST_GET_MT(&device->frags_free[qp_index], item);
     if (OPAL_UNLIKELY(NULL == item)) {
         return NULL;
     }
@@ -202,12 +205,11 @@ mca_bcol_iboffload_get_send_frag(mca_bcol_iboffload_collreq_t *coll_request,
 
         case MCA_BCOL_IBOFFLOAD_SEND_FRAG:
         {
-            int rc;
             ompi_free_list_item_t *item;
             IBOFFLOAD_VERBOSE(10, ("Getting MCA_BCOL_IBOFFLOAD_SEND_FRAG"));
 
             /* Get frag from free list */
-            OMPI_FREE_LIST_GET(&iboffload->device->frags_free[qp_index], item, rc);
+            OMPI_FREE_LIST_GET_MT(&iboffload->device->frags_free[qp_index], item);
 
             frag = (mca_bcol_iboffload_frag_t *) item;
         }

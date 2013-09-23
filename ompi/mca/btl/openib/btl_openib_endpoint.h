@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2013 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -357,9 +357,8 @@ static inline int post_recvs(mca_btl_base_endpoint_t *ep, const int qp,
         return OMPI_SUCCESS;
 
     for(i = 0; i < num_post; i++) {
-        int rc;
         ompi_free_list_item_t* item;
-        OMPI_FREE_LIST_WAIT(&openib_btl->device->qps[qp].recv_free, item, rc);
+        OMPI_FREE_LIST_WAIT_MT(&openib_btl->device->qps[qp].recv_free, item);
         to_base_frag(item)->base.order = qp;
         to_com_frag(item)->endpoint = ep;
         if(NULL == wr)

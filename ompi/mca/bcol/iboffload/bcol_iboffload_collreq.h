@@ -196,7 +196,7 @@ OBJ_CLASS_DECLARATION(mca_bcol_iboffload_collreq_t);
 #define RELEASE_COLLREQ(cr)                                            \
 do {                                                                   \
     (cr)->user_handle_freed = false;                                   \
-    OMPI_FREE_LIST_RETURN(&mca_bcol_iboffload_component.collreqs_free, \
+    OMPI_FREE_LIST_RETURN_MT(&mca_bcol_iboffload_component.collreqs_free, \
         (ompi_free_list_item_t *) (cr));                               \
 } while (0)
 

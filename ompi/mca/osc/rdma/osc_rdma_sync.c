@@ -629,7 +629,6 @@ ompi_osc_rdma_passive_lock(ompi_osc_rdma_module_t *module,
                            int32_t lock_type)
 {
     bool send_ack = false;
-    int ret = OMPI_SUCCESS;
     ompi_proc_t *proc = ompi_comm_peer_lookup( module->m_comm, origin );
     ompi_osc_rdma_pending_lock_t *new_pending;
 
@@ -665,8 +664,6 @@ ompi_osc_rdma_passive_lock(ompi_osc_rdma_module_t *module,
             new_pending->lock_type = lock_type;
             opal_list_append(&(module->m_locks_pending), &(new_pending->super));
         }
-    } else {
-        ret = OMPI_ERROR;
     }
     OPAL_THREAD_UNLOCK(&(module->m_lock));
 

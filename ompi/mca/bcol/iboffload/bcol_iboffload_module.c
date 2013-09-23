@@ -1,6 +1,9 @@
 /*
  * Copyright (c) 2009-2012 Oak Ridge National Laboratory.  All rights reserved.
  * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
+ * Copyright (c) 2013      The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -1373,10 +1376,10 @@ int mca_bcol_iboffload_exchange_rem_addr(mca_bcol_iboffload_endpoint_t *ep)
 
     mca_bcol_iboffload_component_t *cm = &mca_bcol_iboffload_component;
 
-    OMPI_FREE_LIST_WAIT(&cm->collreqs_free, item, rc);
-    if (OMPI_SUCCESS != rc) {
+    OMPI_FREE_LIST_WAIT_MT(&cm->collreqs_free, item);
+    if (NULL == item) {
         IBOFFLOAD_ERROR(("Failing for coll request free list waiting.\n"));
-        return rc;
+        return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
     coll_request = (mca_bcol_iboffload_collreq_t *) item;

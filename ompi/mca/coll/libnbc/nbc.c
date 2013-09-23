@@ -1,9 +1,12 @@
 /*
- * Copyright (c) 2006 The Trustees of Indiana University and Indiana
- *                    University Research and Technology
- *                    Corporation.  All rights reserved.
- * Copyright (c) 2006 The Technical University of Chemnitz. All 
- *                    rights reserved.
+ * Copyright (c) 2006      The Trustees of Indiana University and Indiana
+ *                         University Research and Technology
+ *                         Corporation.  All rights reserved.
+ * Copyright (c) 2013      The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
+ * Copyright (c) 2006      The Technical University of Chemnitz. All 
+ *                         rights reserved.
  *
  * Author(s): Torsten Hoefler <htor@cs.indiana.edu>
  *
@@ -521,12 +524,12 @@ error:
 
 int NBC_Init_handle(struct ompi_communicator_t *comm, ompi_coll_libnbc_request_t **request, ompi_coll_libnbc_module_t *comminfo)
 {
-  int res, tmp_tag;
+  int tmp_tag;
   bool need_register = false;
   ompi_coll_libnbc_request_t *handle;
 
-  OMPI_COLL_LIBNBC_REQUEST_ALLOC(comm, handle, res);
-  if (OMPI_SUCCESS != res) return res;
+  OMPI_COLL_LIBNBC_REQUEST_ALLOC(comm, handle);
+  if (NULL == handle) return OMPI_ERR_OUT_OF_RESOURCE;
   *request = handle;
 
   handle->tmpbuf = NULL;
