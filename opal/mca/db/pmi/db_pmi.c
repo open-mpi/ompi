@@ -112,10 +112,12 @@ static int init(void)
 {
     int rc;
 
-    if (OPAL_SUCCESS != (rc = setup_pmi())) {
-        OPAL_ERROR_LOG(rc);
-    }
-
+    rc = setup_pmi();
+    /* don't error log this return status as it
+     * could just mean we don't have PMI setup
+     * for this job
+     */
+ 
     return rc;
 }
 
@@ -583,6 +585,7 @@ static int setup_pmi(void)
 
 #if WANT_PMI2_SUPPORT
     pmi_vallen_max = PMI2_MAX_VALLEN;
+    max_length = PMI2_MAX_VALLEN;
 #else
     rc = PMI_KVS_Get_value_length_max(&pmi_vallen_max);
     if (PMI_SUCCESS != rc) {
@@ -592,7 +595,6 @@ static int setup_pmi(void)
                              opal_errmgr_base_pmi_error(rc)));
         return OPAL_ERROR;
     }
-#endif
 
     if (PMI_SUCCESS != (rc = PMI_KVS_Get_name_length_max(&max_length))) {
         OPAL_OUTPUT_VERBOSE((1, opal_db_base_framework.framework_output,
@@ -601,6 +603,7 @@ static int setup_pmi(void)
                              opal_errmgr_base_pmi_error(rc)));
         return OPAL_ERROR;
     }
+#endif
     pmi_kvs_name = (char*)malloc(max_length);
     if (NULL == pmi_kvs_name) {
         return OPAL_ERR_OUT_OF_RESOURCE;
@@ -613,9 +616,9 @@ static int setup_pmi(void)
 #endif
     if (PMI_SUCCESS != rc) {
         OPAL_OUTPUT_VERBOSE((1, opal_db_base_framework.framework_output,
-                             "db:pmi:pmi_setup failed %s with error %s",
+                             "db:pmi:pmi_setup failed %s with error %s on maxlength %d",
                              "PMI_KVS_Get_my_name",
-                             opal_errmgr_base_pmi_error(rc)));
+                             opal_errmgr_base_pmi_error(rc), max_length));
         return OPAL_ERROR;
     }
 
