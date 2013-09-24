@@ -16,6 +16,7 @@
  * Copyright (c) 2010      IBM Corporation.  All rights reserved.
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2013      NVIDIA Corporation.  All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -233,7 +234,7 @@ int mca_mpool_grdma_register(mca_mpool_base_module_t *mpool, void *addr,
      * Persistent registration are always registered and placed in the cache */
     if(!(bypass_cache || persist)) {
         /* check to see if memory is registered */
-        mpool->rcache->rcache_find(mpool->rcache, addr, size, reg);
+        mpool->rcache->rcache_find(mpool->rcache, base, bound - base + 1, reg);
         if (*reg && !(flags & MCA_MPOOL_FLAGS_INVALID)) {
             if (0 == (*reg)->ref_count) {
                 /* Leave pinned must be set for this to still be in the rcache. */
@@ -346,7 +347,7 @@ int mca_mpool_grdma_find(struct mca_mpool_base_module_t *mpool, void *addr,
 
     OPAL_THREAD_LOCK(&mpool->rcache->lock);
 
-    rc = mpool->rcache->rcache_find(mpool->rcache, addr, size, reg);
+    rc = mpool->rcache->rcache_find(mpool->rcache, base, bound - base + 1, reg);
     if(NULL != *reg &&
             (mca_mpool_grdma_component.leave_pinned ||
              ((*reg)->flags & MCA_MPOOL_FLAGS_PERSIST) ||
