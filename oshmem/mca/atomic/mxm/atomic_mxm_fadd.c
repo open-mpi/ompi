@@ -32,7 +32,6 @@ int mca_atomic_mxm_fadd(void *target,
 {
     unsigned my_pe;
     uint8_t nlong_order;
-    //uint64_t remote_addr;
     void *remote_addr;
     int ptl_id;
     mxm_send_req_t sreq;
@@ -79,7 +78,6 @@ int mca_atomic_mxm_fadd(void *target,
     }
 
     if (!mca_memheap.memheap_get_cached_mkey(pe,
-                                             //(unsigned long) target,
                                              target,
                                              ptl_id,
                                              &remote_addr)) {

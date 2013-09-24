@@ -543,7 +543,6 @@ mca_spml_mkey_t *mca_spml_ikrit_register(void* addr,
                 mkeys[i].va_base = 0;
             } else {
                 mkeys[i].key = 0;
-                //mkeys[i].va_base = (unsigned long) addr;
                 mkeys[i].va_base = addr;
             }
             mkeys[i].spml_context = 0;
@@ -551,7 +550,6 @@ mca_spml_mkey_t *mca_spml_ikrit_register(void* addr,
         case MXM_PTL_SELF:
             mkeys[i].key = 0;
             mkeys[i].spml_context = 0;
-            //mkeys[i].va_base = (unsigned long) addr;
             mkeys[i].va_base = addr;
             break;
         case MXM_PTL_RDMA:
@@ -561,7 +559,6 @@ mca_spml_mkey_t *mca_spml_ikrit_register(void* addr,
             mkeys[i].ib.lkey = mkeys[i].ib.rkey = 0;
 #endif
             mkeys[i].spml_context = 0;
-            //mkeys[i].va_base = (unsigned long) addr;
             mkeys[i].va_base = addr;
             break;
 
@@ -654,7 +651,6 @@ static int mca_spml_ikrit_get_helper(mxm_send_req_t *sreq,
 {
     /* shmem spec states that get() operations are blocking. So it is enough
      to have single mxm request. Also we count on mxm doing copy */
-    //uint64_t rva;
     void *rva;
     mca_spml_mkey_t *r_mkey;
     int ptl_id;
@@ -668,7 +664,6 @@ static int mca_spml_ikrit_get_helper(mxm_send_req_t *sreq,
      * Get the address to the remote rkey.
      **/
     r_mkey = mca_memheap.memheap_get_cached_mkey(src,
-                                                 //(unsigned long) src_addr,
                                                  src_addr,
                                                  ptl_id,
                                                  &rva);
@@ -711,7 +706,6 @@ static inline int mca_spml_ikrit_get_shm(void *src_addr,
                                          int src)
 {
     int ptl_id;
-    //uint64_t rva;
     void *rva;
     mca_spml_mkey_t *r_mkey;
 
@@ -723,7 +717,6 @@ static inline int mca_spml_ikrit_get_shm(void *src_addr,
         return OSHMEM_ERROR;
 
     r_mkey = mca_memheap.memheap_get_cached_mkey(src,
-                                                 //(unsigned long) src_addr,
                                                  src_addr,
                                                  ptl_id,
                                                  &rva);
@@ -734,7 +727,6 @@ static inline int mca_spml_ikrit_get_shm(void *src_addr,
         return OSHMEM_ERROR;
     }
 
-    //if (OPAL_UNLIKELY(!mca_memheap.memheap_is_symmetric_addr((unsigned long)src_addr) || (unsigned long)src_addr == rva))
     if (OPAL_UNLIKELY(!mca_memheap.memheap_is_symmetric_addr(src_addr) || src_addr == rva))
         return OSHMEM_ERROR;
 
@@ -917,14 +909,12 @@ static inline void put_completion_cb(void *ctx)
 #if MXM_API < MXM_VERSION(2,0)
         if (0 == peer->n_active_puts &&
                 (put_req->mxm_req.base.flags & MXM_REQ_FLAG_SEND_SYNC)) {
-            //SPML_VERBOSE(20, "removed pe %d from active list", put_req->pe);
             opal_list_remove_item(&mca_spml_ikrit.active_peers, &peer->super);
             peer->need_fence = 0;
         }
 #else
         if (0 == peer->n_active_puts &&
                 (put_req->mxm_req.opcode == MXM_REQ_OP_PUT_SYNC)) {
-            //SPML_VERBOSE(20, "removed pe %d from active list", put_req->pe);
             opal_list_remove_item(&mca_spml_ikrit.active_peers, &peer->super);
             peer->need_fence = 0;
         }
@@ -948,7 +938,6 @@ static inline int mca_spml_ikrit_put_internal(void* dst_addr,
                                               void **handle,
                                               int zcopy)
 {
-    //uint64_t rva;
     void *rva;
     mca_spml_ikrit_put_request_t *put_req;
     int ptl_id;
@@ -963,7 +952,6 @@ static inline int mca_spml_ikrit_put_internal(void* dst_addr,
     ptl_id = get_ptl_id(dst);
     /* Get rkey of remote PE (dst proc) which must be on memheap  */
     r_mkey = mca_memheap.memheap_get_cached_mkey(dst,
-                                                 //(unsigned long) dst_addr,
                                                  dst_addr,
                                                  ptl_id,
                                                  &rva);
@@ -981,7 +969,6 @@ static inline int mca_spml_ikrit_put_internal(void* dst_addr,
 #endif
     if (ptl_id == MXM_PTL_SHM) {
 
-        //if (OPAL_LIKELY(mca_memheap.memheap_is_symmetric_addr((unsigned long)dst_addr) && (unsigned long)dst_addr != rva)) {
         if (OPAL_LIKELY(mca_memheap.memheap_is_symmetric_addr(dst_addr) && dst_addr != rva)) {
             memcpy((void *) (unsigned long) rva, src_addr, size);
             /* call progress as often as we would have with regular put */
@@ -992,7 +979,6 @@ static inline int mca_spml_ikrit_put_internal(void* dst_addr,
         /* segment not mapped - fallback to rmda */
         ptl_id = MXM_PTL_RDMA;
         r_mkey = mca_memheap.memheap_get_cached_mkey(dst,
-                                                     //(unsigned long) dst_addr,
                                                      dst_addr,
                                                      ptl_id,
                                                      &rva);
@@ -1064,7 +1050,6 @@ static inline int mca_spml_ikrit_put_internal(void* dst_addr,
 #endif
 
     if (mca_spml_ikrit.mxm_peers[dst]->pe_relay >= 0
-            //&& mca_memheap_base_detect_addr_type((unsigned long) dst_addr)
             && mca_memheap_base_detect_addr_type(dst_addr)
                     == ADDR_USER) {
         put_req->mxm_req.op.am.hid = 0;
@@ -1130,7 +1115,6 @@ int mca_spml_ikrit_put_simple(void* dst_addr,
                               void* src_addr,
                               int dst)
 {
-    //uint64_t rva;
     void *rva;
     mxm_send_req_t mxm_req;
     mxm_wait_t wait;
@@ -1158,7 +1142,6 @@ int mca_spml_ikrit_put_simple(void* dst_addr,
 #endif
     if (ptl_id == MXM_PTL_SHM) {
 
-        //if (OPAL_LIKELY(mca_memheap.memheap_is_symmetric_addr((unsigned long)dst_addr) && (unsigned long)dst_addr != rva)) {
         if (OPAL_LIKELY(mca_memheap.memheap_is_symmetric_addr(dst_addr) && dst_addr != rva)) {
             memcpy((void *) (unsigned long) rva, src_addr, size);
             /* call progress as often as we would have with regular put */
@@ -1290,7 +1273,6 @@ static void mxm_relay_handler(mxm_conn_h conn,
                               size_t offset,
                               int is_lf)
 {
-    //uint64_t va, rva;
     void *va, *rva;
     char *pkt_data;
     mca_spml_mkey_t *r_mkey;
@@ -1298,21 +1280,18 @@ static void mxm_relay_handler(mxm_conn_h conn,
     mxm_peer_t *peer;
 
     if (offset == 0) {
-        //va = *(uint64_t *) data;
         va = data;
         pkt_data = (char *) data + sizeof(va);
         len -= sizeof(va);
         if (!is_lf) {
             /* we expect more fragments: save destination virtual address */
             peer = mxm_conn_ctx_get(conn);
-            //peer->dst_va = va;
             peer->dst_va = (uintptr_t) va;
         }
     } else {
         /* next fragment: use saved va and offset to compute va */
         pkt_data = data;
         peer = mxm_conn_ctx_get(conn);
-        //va = peer->dst_va + offset - sizeof(va);
         va = (void *)(peer->dst_va + offset - sizeof(va));
     }
 
