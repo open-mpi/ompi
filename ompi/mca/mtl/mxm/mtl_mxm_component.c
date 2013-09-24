@@ -72,7 +72,11 @@ static int ompi_mtl_mxm_component_register(void)
                                            MCA_BASE_VAR_SCOPE_LOCAL,
                                            &ompi_mtl_mxm.verbose);
 
+#if MXM_API >= MXM_VERSION(2,0)
+    ompi_mtl_mxm.mxm_np = 0;
+#else
     ompi_mtl_mxm.mxm_np = 128;
+#endif
     (void) mca_base_component_var_register(c, "np",
                                            "[integer] Minimal number of MPI processes in a single job "
                                            "required to activate the MXM transport",
