@@ -295,11 +295,12 @@ static void launch_daemons(int fd, short args, void *cbdata)
         if (NULL != param) free(param);
     }
 
-    rc = plm_tm_connect();
-    if (ORTE_SUCCESS != rc) {
-        goto cleanup;
+    if (!connected) {
+        if (ORTE_SUCCESS != plm_tm_connect()) {
+            goto cleanup;
+        }
+        connected = true;
     }
-    connected = true;
 
     /* Figure out the basenames for the libdir and bindir.  There is a
        lengthy comment about this in plm_rsh_module.c explaining all
@@ -543,6 +544,7 @@ static int plm_tm_connect(void)
     int ret;
     struct tm_roots tm_root;
     int count;
+    struct timespec tp = {0, 100};
 
     /* try a couple times to connect - might get busy signals every
        now and then */
@@ -552,29 +554,14 @@ static int plm_tm_connect(void)
             return ORTE_SUCCESS;
         }
 
-#if ORTE_ENABLE_PROGRESS_THREADS
-        {
-            /* provide a very short quiet period so we
-             * don't hammer the cpu while we wait
-             */
-            struct timespec tp = {0, 100};
-            nanosleep(&tp, NULL);
+        /* provide a very short quiet period so we
+         * don't hammer the cpu while we wait
+         */
+        nanosleep(&tp, NULL);
 #if HAVE_SCHED_YIELD
-            sched_yield();
-#endif
-        }
-#else
-        {
-            int progress;
-            for (progress = 0 ; progress < 10 ; ++progress) {
-                opal_progress();
-#if HAVE_SCHED_YIELD
-                sched_yield();
-#endif
-            }
-        }
+        sched_yield();
 #endif
     }
-
+    
     return ORTE_ERR_RESOURCE_BUSY;
 }
