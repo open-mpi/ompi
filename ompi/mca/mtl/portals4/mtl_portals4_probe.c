@@ -82,7 +82,7 @@ ompi_mtl_portals4_iprobe(struct mca_mtl_base_module_t* mtl,
     me.length = 0;
     me.ct_handle = PTL_CT_NONE;
     me.min_free = 0;
-    me.uid = PTL_UID_ANY;
+    me.uid = ompi_mtl_portals4.uid;
     me.options = PTL_ME_OP_PUT | PTL_ME_USE_ONCE;
     me.match_id = remote_proc;
     me.match_bits = match_bits;
@@ -154,7 +154,7 @@ ompi_mtl_portals4_improbe(struct mca_mtl_base_module_t *mtl,
     me.length = 0;
     me.ct_handle = PTL_CT_NONE;
     me.min_free = 0;
-    me.uid = PTL_UID_ANY;
+    me.uid = ompi_mtl_portals4.uid;
     me.options = PTL_ME_OP_PUT | PTL_ME_USE_ONCE;
     me.match_id = remote_proc;
     me.match_bits = match_bits;

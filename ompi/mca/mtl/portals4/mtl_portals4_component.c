@@ -147,8 +147,7 @@ ompi_mtl_portals4_component_register(void)
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &ompi_mtl_portals4.protocol);
     OBJ_RELEASE(new_enum);
-    if (OPAL_SUCCESS != ret) {
-        opal_output(ompi_mtl_base_framework.framework_output, "Unknown protocol");
+    if (0 > ret) {
         return OMPI_ERR_NOT_SUPPORTED;
     }
 
@@ -197,7 +196,13 @@ ompi_mtl_portals4_component_open(void)
     ompi_mtl_portals4.send_eq_h = PTL_INVALID_HANDLE;
     ompi_mtl_portals4.recv_eq_h = PTL_INVALID_HANDLE;
     ompi_mtl_portals4.zero_md_h = PTL_INVALID_HANDLE;
-    ompi_mtl_portals4.md_h = PTL_INVALID_HANDLE;
+
+#if OMPI_PORTALS4_MAX_MD_SIZE < OMPI_PORTALS4_MAX_VA_SIZE
+    ompi_mtl_portals4.send_md_hs = NULL;
+#else
+    ompi_mtl_portals4.send_md_h = PTL_INVALID_HANDLE;
+#endif
+
     ompi_mtl_portals4.long_overflow_me_h = PTL_INVALID_HANDLE;
     ompi_mtl_portals4.recv_idx = (ptl_pt_index_t) ~0UL;
     ompi_mtl_portals4.read_idx = (ptl_pt_index_t) ~0UL;
@@ -242,6 +247,14 @@ ompi_mtl_portals4_component_init(bool enable_progress_threads,
     if (PTL_OK != ret) {
         opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                             "%s:%d: PtlNIInit failed: %d\n",
+                            __FILE__, __LINE__, ret);
+        goto error;
+    }
+
+    ret = PtlGetUid(ompi_mtl_portals4.ni_h, &ompi_mtl_portals4.uid);
+    if (PTL_OK != ret) {
+        opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
+                            "%s:%d: PtlGetUid failed: %d\n",
                             __FILE__, __LINE__, ret);
         goto error;
     }
@@ -332,29 +345,74 @@ ompi_mtl_portals4_component_init(bool enable_progress_threads,
         goto error;
     }
 
-    /* bind md across all of memory */
-    md.start     = 0;
-    md.length    = SIZE_MAX;
-    md.options   = 0;
-    md.eq_handle = ompi_mtl_portals4.send_eq_h;
-    md.ct_handle = PTL_CT_NONE;
+    /* Bind MD/MDs across all memory.  We prefer (for obvious reasons)
+       to have a single MD across all of memory */
+#if OMPI_PORTALS4_MAX_MD_SIZE < OMPI_PORTALS4_MAX_VA_SIZE
+    {
+        int i;
+        int num_mds = ompi_mtl_portals4_get_num_mds();
+        ptl_size_t size = (1ULL << OMPI_PORTALS4_MAX_MD_SIZE) - 1;
+        ptl_size_t offset_unit = (1ULL << OMPI_PORTALS4_MAX_MD_SIZE) / 2;
 
-    ret = PtlMDBind(ompi_mtl_portals4.ni_h,
-                    &md,
-                    &ompi_mtl_portals4.md_h); 
-    if (PTL_OK != ret) {
-        opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
-                            "%s:%d: PtlMDBind failed: %d\n",
-                            __FILE__, __LINE__, ret);
-        goto error;
+        ompi_mtl_portals4.send_md_hs = malloc(sizeof(ptl_handle_md_t) * num_mds);
+        if (NULL == ompi_mtl_portals4.send_md_hs) {
+            opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
+                                "%s:%d: Error allocating MD array",
+                                __FILE__, __LINE__);
+            ret = OMPI_ERR_TEMP_OUT_OF_RESOURCE;
+            goto error;
+        }
+
+        for (i = 0 ; i < num_mds ; ++i) {
+            ompi_mtl_portals4.send_md_hs[i] = PTL_INVALID_HANDLE;
+        }
+
+        for (i = 0 ; i < num_mds ; ++i) {
+            md.start = (char*) (offset_unit * i);
+            md.length = (i - 1 == num_mds) ? size / 2 : size;
+            md.options = 0;
+            md.eq_handle = ompi_mtl_portals4.send_eq_h;
+            md.ct_handle = PTL_CT_NONE;
+
+            opal_output_verbose(50, ompi_mtl_base_framework.framework_output,
+                                "Binding md from %p of length %lx",
+                                md.start, md.length);
+
+            ret = PtlMDBind(ompi_mtl_portals4.ni_h,
+                            &md,
+                            &ompi_mtl_portals4.send_md_hs[i]); 
+            if (PTL_OK != ret) {
+                opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
+                                    "%s:%d: PtlMDBind failed: %d\n",
+                                    __FILE__, __LINE__, ret);
+                goto error;
+            }
+        }
     }
+#else
+        md.start = 0;
+        md.length = PTL_SIZE_MAX;
+        md.options = 0;
+        md.eq_handle = ompi_mtl_portals4.send_eq_h;
+        md.ct_handle = PTL_CT_NONE;
+
+        ret = PtlMDBind(ompi_mtl_portals4.ni_h,
+                        &md,
+                        &ompi_mtl_portals4.send_md_h); 
+        if (PTL_OK != ret) {
+            opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
+                                "%s:%d: PtlMDBind failed: %d\n",
+                                __FILE__, __LINE__, ret);
+            goto error;
+        }
+#endif
 
     /* Handle long overflows */
     me.start = NULL;
     me.length = 0;
     me.ct_handle = PTL_CT_NONE;
     me.min_free = 0;
-    me.uid = PTL_UID_ANY;
+    me.uid = ompi_mtl_portals4.uid;
     me.options = PTL_ME_OP_PUT | 
         PTL_ME_EVENT_LINK_DISABLE |
         PTL_ME_EVENT_COMM_DISABLE | 
@@ -420,9 +478,24 @@ ompi_mtl_portals4_component_init(bool enable_progress_threads,
     if (!PtlHandleIsEqual(ompi_mtl_portals4.zero_md_h, PTL_INVALID_HANDLE)) {
         PtlMDRelease(ompi_mtl_portals4.zero_md_h);
     }
-    if (!PtlHandleIsEqual(ompi_mtl_portals4.md_h, PTL_INVALID_HANDLE)) {
-        PtlMDRelease(ompi_mtl_portals4.md_h);
+#if OMPI_PORTALS4_MAX_MD_SIZE < OMPI_PORTALS4_MAX_VA_SIZE
+    if (NULL != ompi_mtl_portals4.send_md_hs) {
+        int i;
+        int num_mds = ompi_mtl_portals4_get_num_mds();
+
+        for (i = 0 ; i < num_mds ; ++i) {
+            if (!PtlHandleIsEqual(ompi_mtl_portals4.send_md_hs[i], PTL_INVALID_HANDLE)) {
+                PtlMDRelease(ompi_mtl_portals4.send_md_hs[i]);
+            }
+        }
+
+        free(ompi_mtl_portals4.send_md_hs);
     }
+#else
+    if (!PtlHandleIsEqual(ompi_mtl_portals4.send_md_h, PTL_INVALID_HANDLE)) {
+        PtlMDRelease(ompi_mtl_portals4.send_md_h);
+    }
+#endif
     if (ompi_mtl_portals4.read_idx != (ptl_pt_index_t) ~0UL) {
         PtlPTFree(ompi_mtl_portals4.ni_h, ompi_mtl_portals4.read_idx);
     }

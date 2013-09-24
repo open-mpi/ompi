@@ -80,7 +80,7 @@ ompi_mtl_portals4_flowctl_init(void)
     me.start = NULL;
     me.length = 0;
     me.min_free = 0;
-    me.uid = PTL_UID_ANY;
+    me.uid = ompi_mtl_portals4.uid;
     me.match_id.phys.nid = PTL_NID_ANY;
     me.match_id.phys.pid = PTL_PID_ANY;
     me.ignore_bits = 0;

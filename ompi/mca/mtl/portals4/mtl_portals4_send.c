@@ -46,8 +46,14 @@ ompi_mtl_portals4_callback(ptl_event_t *ev,
             ptl_request->pending;
 
         OPAL_OUTPUT_VERBOSE((10, ompi_mtl_base_framework.framework_output,
-                             "send %lu hit flow control",
-                             ptl_request->opcount));
+                             "send %lu hit flow control (%d)",
+                             ptl_request->opcount, ev->type));
+
+        /* BWB: FIX ME: this is a hack.. */
+        if (pending->fc_notified) {
+            return OMPI_SUCCESS;
+        }
+        pending->fc_notified = 1;
 
         if (!PtlHandleIsEqual(ptl_request->me_h, PTL_INVALID_HANDLE)) {
             ret = PtlMEUnlink(ptl_request->me_h);
@@ -105,8 +111,10 @@ ompi_mtl_portals4_callback(ptl_event_t *ev,
         if (NULL != ptl_request->buffer_ptr) {
             free(ptl_request->buffer_ptr);
         }
+
         OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_framework.framework_output, "send %lu completed",
                              ptl_request->opcount));
+
         *complete = true;
 #if OMPI_MTL_PORTALS4_FLOW_CONTROL
         OPAL_THREAD_ADD32(&ompi_mtl_portals4.flowctl.send_slots, 1);
@@ -173,6 +181,8 @@ ompi_mtl_portals4_short_isend(mca_pml_base_send_mode_t mode,
     ptl_match_bits_t match_bits;
     ptl_me_t me;
     ptl_hdr_data_t hdr_data;
+    ptl_handle_md_t md_h;
+    void *base;
 
     MTL_PORTALS4_SET_SEND_BITS(match_bits, contextid, localrank, tag, 
                                MTL_PORTALS4_SHORT_MSG);
@@ -185,7 +195,7 @@ ompi_mtl_portals4_short_isend(mca_pml_base_send_mode_t mode,
         me.length = 0;
         me.ct_handle = PTL_CT_NONE;
         me.min_free = 0;
-        me.uid = PTL_UID_ANY;
+        me.uid = ompi_mtl_portals4.uid;
         me.options = 
             PTL_ME_OP_PUT | 
             PTL_ME_USE_ONCE | 
@@ -220,8 +230,15 @@ ompi_mtl_portals4_short_isend(mca_pml_base_send_mode_t mode,
                              ptl_request->opcount, hdr_data, match_bits));
     }
 
-    ret = PtlPut(ompi_mtl_portals4.md_h,
-                 (ptl_size_t) start,
+    ompi_mtl_portals4_get_md(start, &md_h, &base);
+
+    OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_framework.framework_output,
+                         "Send %lu, start: %p, base: %p, offset: %lx",
+                         ptl_request->opcount, start, base,
+                         (ptl_size_t) ((char*) start - (char*) base)));
+
+    ret = PtlPut(md_h,
+                 (ptl_size_t) ((char*) start - (char*) base),
                  length,
 		 PTL_ACK_REQ,
 		 *proc,
@@ -254,6 +271,8 @@ ompi_mtl_portals4_long_isend(void *start, int length, int contextid, int tag,
     ptl_me_t me;
     ptl_hdr_data_t hdr_data;
     ptl_size_t put_length;
+    ptl_handle_md_t md_h;
+    void *base;
 
     MTL_PORTALS4_SET_SEND_BITS(match_bits, contextid, localrank, tag, 
                                MTL_PORTALS4_LONG_MSG);
@@ -264,7 +283,7 @@ ompi_mtl_portals4_long_isend(void *start, int length, int contextid, int tag,
     me.length = length;
     me.ct_handle = PTL_CT_NONE;
     me.min_free = 0;
-    me.uid = PTL_UID_ANY;
+    me.uid = ompi_mtl_portals4.uid;
     me.options = 
         PTL_ME_OP_GET | 
         PTL_ME_USE_ONCE | 
@@ -293,8 +312,11 @@ ompi_mtl_portals4_long_isend(void *start, int length, int contextid, int tag,
 
     put_length = (rndv == ompi_mtl_portals4.protocol) ? 
         (ptl_size_t) ompi_mtl_portals4.eager_limit : (ptl_size_t) length;
-    ret = PtlPut(ompi_mtl_portals4.md_h,
-                 (ptl_size_t) start,
+
+    ompi_mtl_portals4_get_md(start, &md_h, &base);
+
+    ret = PtlPut(md_h,
+                 (ptl_size_t) ((char*) start - (char*) base),
                  put_length,
                  PTL_ACK_REQ,
                  *proc,
@@ -412,6 +434,7 @@ ompi_mtl_portals4_send_start(struct mca_mtl_base_module_t* mtl,
     pending->contextid = comm->c_contextid;
     pending->tag = tag;
     pending->my_rank = comm->c_my_rank;
+    pending->fc_notified = 0;
     pending->proc = proc;
     pending->ptl_request = ptl_request;
 
@@ -520,4 +543,3 @@ ompi_mtl_portals4_isend(struct mca_mtl_base_module_t* mtl,
 
     return ret;
 }
-

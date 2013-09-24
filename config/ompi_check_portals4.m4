@@ -59,6 +59,36 @@ AC_DEFUN([OMPI_CHECK_PORTALS4],[
     LDFLAGS="$ompi_check_portals4_$1_save_LDFLAGS"
     LIBS="$ompi_check_portals4_$1_save_LIBS"
 
+    max_md_size=0
+    AC_ARG_WITH([portals4-max-md-size],
+      [AC_HELP_STRING([--with-portals4-max-md-size=SIZE],
+         [Log base 2 of the maximum size in bytes of a memory descriptor.  Should only be set for implementations which do not support binding all of virtual address space.])])
+    AS_IF([test "$with_portals4_max_md_size" = "yes" -o "$with_portals4_max_md_size" = "no"],
+          [AC_MSG_ERROR([--with-portals4-max-md-size requires an integer argument])],
+          [AS_IF([test -n "$with_portals4_max_md_size"],
+                 [max_md_size="$with_portals4_max_md_size"])])
+    AC_DEFINE_UNQUOTED([OMPI_PORTALS4_MAX_MD_SIZE], [$max_md_size],
+      [Log base 2 of the maximum size in bytes of a memory descriptor.  Set to 0 if MD can bind all of memory.])
+
+    max_va_size=0
+    AC_ARG_WITH([portals4-max-va-size],
+      [AC_HELP_STRING([--with-portals4-max-va-size=SIZE],
+         [Log base 2 of the maximum size in bytes of the user virtual address space.  Should only be set for implementations which do not support binding all of virtual address space.])])
+    AS_IF([test "$with_portals4_max_va_size" = "yes" -o "$with_portals4_max_va_size" = "no"],
+          [AC_MSG_ERROR([--with-portals4-max-va-size requires an integer argument])],
+          [AS_IF([test -n "$with_portals4_max_va_size"],
+                 [max_va_size="$with_portals4_max_va_size"])])
+    AC_DEFINE_UNQUOTED([OMPI_PORTALS4_MAX_VA_SIZE], [$max_va_size],
+      [Log base 2 of the maximum size in bytes of the user virtual address space.  Set to 0 if MD can bind all of memory.])
+
+    AS_IF([test \( $max_md_size -eq 0 -a $max_va_size -ne 0 \) -o \( $max_md_size -ne 0 -a $max_va_size -eq 0 \)],
+          [AC_ERROR([If either --with-portals4-max-md-size or --with-portals4-max-va-size is set, both must be set.])])
+    AS_IF([test $max_md_size -ge $max_va_size],
+          [max_md_size=0
+           max_va_size=0])
+    AS_IF([test $max_md_size -ne 0 -a $max_va_size -ne 0],
+          [AC_MSG_NOTICE([Portals 4 address space size: $max_md_size, $max_va_size])])
+
     AS_IF([test "$ompi_check_portals4_happy" = "yes"],
           [$2],
           [AS_IF([test ! -z "$with_portals4" -a "$with_portals4" != "no"],
