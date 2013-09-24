@@ -12,6 +12,7 @@
  * Copyright (c) 2006      Voltaire. All rights reserved.
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2009      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2013      NVIDIA Corporation.  All rights reserved.
  *
  * $COPYRIGHT$
  * 
@@ -49,15 +50,13 @@ int mca_rcache_vma_find(struct mca_rcache_base_module_t* rcache,
         void* addr, size_t size, mca_mpool_base_registration_t **reg)
 {
     int rc;
-    void* base_addr; 
-    void* bound_addr; 
+    unsigned char* bound_addr; 
 
     if(size == 0) { 
         return OMPI_ERROR; 
     }
 
-    base_addr = down_align_addr(addr, mca_mpool_base_page_size_log);
-    bound_addr = up_align_addr((void*) ((unsigned long) addr + size - 1), mca_mpool_base_page_size_log);
+    bound_addr = addr + size - 1;
         
     /* Check to ensure that the cache is valid */
     if (OPAL_UNLIKELY(opal_memory_changed() && 
@@ -66,8 +65,8 @@ int mca_rcache_vma_find(struct mca_rcache_base_module_t* rcache,
         return rc;
     }
 
-    *reg = mca_rcache_vma_tree_find((mca_rcache_vma_module_t*)rcache, (unsigned char*)base_addr,
-            (unsigned char*)bound_addr); 
+    *reg = mca_rcache_vma_tree_find((mca_rcache_vma_module_t*)rcache, (unsigned char*)addr,
+            bound_addr); 
 
     return OMPI_SUCCESS;
 }
@@ -77,14 +76,13 @@ int mca_rcache_vma_find_all(struct mca_rcache_base_module_t* rcache,
         int reg_cnt)
 {
     int rc;
-    void *base_addr, *bound_addr;
+    unsigned char *bound_addr;
 
     if(size == 0) {
         return OMPI_ERROR;
     }
 
-    base_addr = down_align_addr(addr, mca_mpool_base_page_size_log);
-    bound_addr = up_align_addr((void*) ((unsigned long) addr + size - 1), mca_mpool_base_page_size_log);
+    bound_addr = addr + size - 1;
 
     /* Check to ensure that the cache is valid */
     if (OPAL_UNLIKELY(opal_memory_changed() && 
@@ -94,7 +92,7 @@ int mca_rcache_vma_find_all(struct mca_rcache_base_module_t* rcache,
     }
 
     return mca_rcache_vma_tree_find_all((mca_rcache_vma_module_t*)rcache,
-            (unsigned char*)base_addr, (unsigned char*)bound_addr, regs,
+            (unsigned char*)addr, bound_addr, regs,
             reg_cnt);
 }
 
