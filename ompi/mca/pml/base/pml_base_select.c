@@ -345,10 +345,10 @@ mca_pml_base_pml_check_selected(const char *my_pml,
                           procs[0],
                           (void**) &remote_pml, &size);
     
-    /* if modex isn't implemented, then just assume all is well... */
-    if (OMPI_ERR_NOT_IMPLEMENTED == ret) {
+    /* if this key wasn't found, then just assume all is well... */
+    if (OMPI_SUCCESS != ret) {
         opal_output_verbose( 10, ompi_pml_base_framework.framework_output,
-                            "check:select: modex not implemented");
+                            "check:select: modex data not found");
         return OMPI_SUCCESS;
     }
 
