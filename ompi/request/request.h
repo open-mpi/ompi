@@ -351,9 +351,7 @@ static inline int ompi_request_cancel(ompi_request_t* request)
  */
 static inline int ompi_request_free(ompi_request_t** request)
 {
-    if ((*request)->req_free) {
-        return (*request)->req_free(request);
-    }
+    return (*request)->req_free(request);
 }
 
 #define ompi_request_test       (ompi_request_functions.req_test)
