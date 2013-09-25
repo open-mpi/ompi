@@ -151,9 +151,13 @@ int ompi_proc_complete_init(void)
         proc = (ompi_proc_t*)item;
         
         if (proc->proc_name.vpid != OMPI_PROC_MY_NAME->vpid) {
-            /* get the locality information */
+            /* get the locality information - do not use modex recv for
+             * this request as that will automatically cause the hostname
+             * to be loaded as well
+             */
             hwlocale = &(proc->proc_flags);
-            ret = ompi_modex_recv_key_value(OMPI_DB_LOCALITY, proc, (void**)&hwlocale, OPAL_HWLOC_LOCALITY_T);
+            ret = opal_db.fetch((opal_identifier_t*)&proc->proc_name, OMPI_DB_LOCALITY,
+                                (void**)&hwlocale, OPAL_HWLOC_LOCALITY_T);
             if (OMPI_SUCCESS != ret) {
                 errcode = ret;
                 break;
@@ -391,8 +395,13 @@ int ompi_proc_refresh(void) {
             proc->proc_hostname = ompi_process_info.nodename;
             proc->proc_arch = opal_local_arch;
         } else {
+            /* get the locality information - do not use modex recv for
+             * this request as that will automatically cause the hostname
+             * to be loaded as well
+             */
             hwlocale = &(proc->proc_flags);
-            ret = ompi_modex_recv_key_value(OMPI_DB_LOCALITY, proc, (void**)&hwlocale, OPAL_HWLOC_LOCALITY_T);
+            ret = opal_db.fetch((opal_identifier_t*)&proc->proc_name, OMPI_DB_LOCALITY,
+                                (void**)&hwlocale, OPAL_HWLOC_LOCALITY_T);
             if (OMPI_SUCCESS != ret) {
                 break;
             }
