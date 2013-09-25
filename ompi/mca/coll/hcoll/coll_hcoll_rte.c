@@ -390,6 +390,18 @@ static int group_id(rte_grp_handle_t group){
     return ((ompi_communicator_t *)group)->c_contextid;
 }
 
+static int 
+request_free(struct ompi_request_t **ompi_req)
+{
+    ompi_request_t *req = *ompi_req;
+    if (!coll_handle_test(req)) {
+        return OMPI_ERROR;
+    }
+    coll_handle_free(req);
+    *ompi_req = &ompi_request_empty;
+    return OMPI_SUCCESS;
+}
+
 static void* get_coll_handle(void)
 {
     ompi_request_t *ompi_req;
@@ -403,6 +415,7 @@ static void* get_coll_handle(void)
     OMPI_REQUEST_INIT(ompi_req,false);
     ompi_req->req_complete_cb = NULL;
     ompi_req->req_status.MPI_ERROR = MPI_SUCCESS;
+    ompi_req->req_free = request_free;
     return (void *)ompi_req;
 }
 
