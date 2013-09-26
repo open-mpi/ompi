@@ -1397,11 +1397,11 @@ usnic_send(
 #if MSGDEBUG1
                 opal_output(0, "immediate callback for frag %p\n", (void *)frag);
 #endif
+                descriptor->des_flags &= ~MCA_BTL_DES_SEND_ALWAYS_CALLBACK;
                 frag->sf_base.uf_base.des_cbfunc(&module->super,
                         frag->sf_endpoint, &frag->sf_base.uf_base,
                         OMPI_SUCCESS);
                 rc = 0;
-                descriptor->des_flags &= ~MCA_BTL_DES_SEND_ALWAYS_CALLBACK;
             } else {
 #if MSGDEBUG1
                 opal_output(0, "skipping callback for frag %p\n", (void *)frag);
