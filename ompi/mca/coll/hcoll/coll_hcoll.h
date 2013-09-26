@@ -100,6 +100,14 @@ struct mca_coll_hcoll_module_t {
     mca_coll_base_module_t *previous_gatherv_module;
     mca_coll_base_module_reduce_scatter_fn_t previous_reduce_scatter;
     mca_coll_base_module_t *previous_reduce_scatter_module;
+    mca_coll_base_module_ibcast_fn_t previous_ibcast;
+    mca_coll_base_module_t *previous_ibcast_module;
+    mca_coll_base_module_ibarrier_fn_t previous_ibarrier;
+    mca_coll_base_module_t *previous_ibarrier_module;
+    mca_coll_base_module_iallgather_fn_t previous_iallgather;
+    mca_coll_base_module_t *previous_iallgather_module;
+    mca_coll_base_module_iallreduce_fn_t previous_iallreduce;
+    mca_coll_base_module_t *previous_iallreduce_module;
 };
 typedef struct mca_coll_hcoll_module_t mca_coll_hcoll_module_t;
 
@@ -140,6 +148,31 @@ int mca_coll_hcoll_alltoall(void *sbuf, int scount,
                            struct ompi_datatype_t *rdtype,
                            struct ompi_communicator_t *comm,
                            mca_coll_base_module_t *module);
+
+int mca_coll_hcoll_ibarrier(struct ompi_communicator_t *comm,
+                            ompi_request_t** request,
+                            mca_coll_base_module_t *module);
+
+int mca_coll_hcoll_ibcast(void *buff, int count,
+                        struct ompi_datatype_t *datatype, int root,
+                        struct ompi_communicator_t *comm,
+                        ompi_request_t** request,
+                        mca_coll_base_module_t *module);
+
+int mca_coll_hcoll_iallgather(void *sbuf, int scount,
+                            struct ompi_datatype_t *sdtype,
+                            void *rbuf, int rcount,
+                            struct ompi_datatype_t *rdtype,
+                            struct ompi_communicator_t *comm,
+                            ompi_request_t** request,
+                            mca_coll_base_module_t *module);
+
+int mca_coll_hcoll_iallreduce(void *sbuf, void *rbuf, int count,
+                            struct ompi_datatype_t *dtype,
+                            struct ompi_op_t *op,
+                            struct ompi_communicator_t *comm,
+                            ompi_request_t** request,
+                            mca_coll_base_module_t *module);
 
 END_C_DECLS
 
