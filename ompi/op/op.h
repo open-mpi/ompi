@@ -71,6 +71,19 @@ typedef void (ompi_op_cxx_handler_fn_t)(void *, void *, int *,
                                         struct ompi_datatype_t **,
                                         MPI_User_function * op);
 
+/**
+ * Typedef for Java op functions intercept (used for user-defined
+ * MPI.Ops).
+ *
+ * See the lengthy explanation for why this is different than the C
+ * intercept in ompi/mpi/cxx/intercepts.cc in the
+ * ompi_mpi_cxx_op_intercept() function.
+ */
+typedef void (ompi_op_java_handler_fn_t)(void *, void *, int *,
+                                         struct ompi_datatype_t **,
+                                         int baseType,
+                                         void *jnienv, void *object);
+
 /*
  * Flags for MPI_Op
  */
@@ -80,18 +93,20 @@ typedef void (ompi_op_cxx_handler_fn_t)(void *, void *, int *,
 #define OMPI_OP_FLAGS_FORTRAN_FUNC 0x0002
 /** Set if the callback function is in C++ */
 #define OMPI_OP_FLAGS_CXX_FUNC     0x0004
+/** Set if the callback function is in Java */
+#define OMPI_OP_FLAGS_JAVA_FUNC    0x0008
 /** Set if the callback function is associative (MAX and SUM will both
     have ASSOC set -- in fact, it will only *not* be set if we
     implement some extensions to MPI, because MPI says that all
     MPI_Op's should be associative, so this flag is really here for
     future expansion) */
-#define OMPI_OP_FLAGS_ASSOC        0x0008
+#define OMPI_OP_FLAGS_ASSOC        0x0010
 /** Set if the callback function is associative for floating point
     operands (e.g., MPI_SUM will have ASSOC set, but will *not* have
     FLOAT_ASSOC set)  */
-#define OMPI_OP_FLAGS_FLOAT_ASSOC  0x0010
+#define OMPI_OP_FLAGS_FLOAT_ASSOC  0x0020
 /** Set if the callback function is communative */
-#define OMPI_OP_FLAGS_COMMUTE      0x0020
+#define OMPI_OP_FLAGS_COMMUTE      0x0040
 
 
 /**
@@ -133,6 +148,13 @@ struct ompi_op_t {
             /* The OMPI C++ callback/intercept function */
             ompi_op_cxx_handler_fn_t *intercept_fn;
         } cxx_data;
+        struct {
+            /* The OMPI C++ callback/intercept function */
+            ompi_op_java_handler_fn_t *intercept_fn;
+            /* The Java run time environment */
+            void *jnienv, *object;
+            int baseType;
+        } java_data;
     } o_func;
     
     /** 3-buffer functions, which is only for intrinsic ops.  No need
@@ -343,6 +365,13 @@ OMPI_DECLSPEC void ompi_op_set_cxx_callback(ompi_op_t * op,
                                             MPI_User_function * fn);
 
 /**
+ * Similar to ompi_op_set_cxx_callback(), mark an MPI_Op as holding a
+ * Java calback function, and cache that function in the MPI_Op.
+ */
+OMPI_DECLSPEC void ompi_op_set_java_callback(ompi_op_t *op,  void *jnienv,
+                                             void *object, int baseType);
+
+/**
  * Check to see if an op is intrinsic.
  *
  * @param op The op to check
@@ -521,10 +550,15 @@ static inline void ompi_op_reduce(ompi_op_t * op, void *source,
         f_count = OMPI_INT_2_FINT(count);
         op->o_func.fort_fn(source, target, &f_count, &f_dtype);
         return;
-    }
-    if (0 != (op->o_flags & OMPI_OP_FLAGS_CXX_FUNC)) {
+    } else if (0 != (op->o_flags & OMPI_OP_FLAGS_CXX_FUNC)) {
         op->o_func.cxx_data.intercept_fn(source, target, &count, &dtype,
                                          op->o_func.cxx_data.user_fn);
+        return;
+    } else if (0 != (op->o_flags & OMPI_OP_FLAGS_JAVA_FUNC)) {
+        op->o_func.java_data.intercept_fn(source, target, &count, &dtype,
+                                          op->o_func.java_data.baseType,
+                                          op->o_func.java_data.jnienv,
+                                          op->o_func.java_data.object);
         return;
     }
     op->o_func.c_fn(source, target, &count, &dtype);
