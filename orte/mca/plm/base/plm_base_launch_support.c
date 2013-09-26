@@ -669,6 +669,9 @@ void orte_plm_base_daemon_callback(int status, orte_process_name_t* sender,
             goto CLEANUP;
         }
         
+        /* mark the daemon as launched */
+        node->daemon_launched = true;
+
         if (orte_retain_aliases) {
             char *alias;
             uint8_t naliases, ni;
